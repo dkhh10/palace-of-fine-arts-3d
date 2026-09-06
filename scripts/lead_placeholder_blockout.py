@@ -62,8 +62,8 @@ def ring(name, a_out, a_in, z0, z1, mat, rot=8.0):
 
 
 stone = common.placeholder_material("MAT_concrete_ochre", (0.62, 0.50, 0.34, 1))
-col = common.placeholder_material("MAT_column_terracotta", (0.45, 0.26, 0.20, 1))
-dome_m = common.placeholder_material("MAT_dome_plaster", (0.72, 0.64, 0.50, 1))
+col = common.placeholder_material("MAT_column_rose", (0.45, 0.26, 0.20, 1))
+dome_m = common.placeholder_material("MAT_dome_membrane", (0.72, 0.64, 0.50, 1))
 water = common.placeholder_material("MAT_water_lagoon", (0.05, 0.10, 0.09, 1), roughness=0.05)
 lawn = common.placeholder_material("MAT_lawn", (0.10, 0.18, 0.05, 1))
 

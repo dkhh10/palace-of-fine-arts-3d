@@ -6,10 +6,10 @@ MORNING sun from the east-south-east), `docs/reference_sheet.md` (golden-hour se
 sky node API, NOAA function), `scripts/common.py` (`aim_sun`, `configure_*`).
 
 ## Chosen moment
-2026-11-08 07:30 PST at 37.8029 N, 122.4484 W: sun azimuth 118.1 deg (clockwise from north; north = -X, east = +Y),
-elevation 7.8 deg. Recompute with `sun_calc.get_sun_coordinates(7.5, 37.8029, -122.4484, 8, 11, 8, 2026)` and store
+2026-11-10 07:30 PST at 37.8029 N, 122.4484 W: sun azimuth 118.5 deg (clockwise from north; north = -X, east = +Y),
+elevation 7.4 deg (matches the golden-hour reference photo ref 169). Recompute with `sun_calc.get_sun_coordinates(7.5, 37.8029, -122.4484, 8, 11, 10, 2026)` and store
 date/time/lat/lon as custom properties on the sun object and in the notes. Make the time a single parameter so the lead
-can render an evening alternate (2026-10-25 17:30 PDT, az 247, el 8.4) with one change.
+can render an evening alternate (2026-10-20 17:45 PDT, az 251, el 6.9) with one change.
 
 ## Deliverables
 1. `scripts/light_build.py`: idempotently builds `LIGHT` (sun `LIGHT_sun` aimed with `common.aim_sun`, any fill you

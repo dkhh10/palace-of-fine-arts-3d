@@ -38,3 +38,19 @@ Format: date · decision · why · consequences. Newest at the bottom.
   object), cloth simulation + evaluated-mesh bake (for the maidens' drapery), Sun Position NOAA call.
 - **Socket contract** written in docs/sockets.md before ARCH and ORN start, so instancing in Phase 3 is mechanical.
 - **Specialist briefs** live in docs/briefs/ so each agent's instructions are durable and reviewable.
+
+## 2026-09-06 · Phase 1 gate (reference sheet accepted)
+
+- **Reference sheet accepted** (docs/reference_sheet.md, 499 lines, sources cited). Biggest corrections vs attempt 2:
+  dome 33 m Ø × 7.6 m rise (was 36 × 11.5), drum 3.5 m, attic 7.1 m, apothem 21.5 m, column pair 4.5 m, a 4.3 m podium
+  under the pedestals, colonnade ~5 m shorter, 52 maidens of ~4.5 m on 13 boxes, attic corner figures 6.7 m.
+- **The user's target image is composition/mood only.** Its dome is ~25% too wide and its drum a third of the real height
+  (measured against refs 085/022/070). Proportions come from photos; framing, light and colour from the user image and
+  ref 169 (a real golden-hour photo from the same spot).
+- **Sun moment revised to 2026-11-10 07:30 PST → az 118.5°, el 7.4°** to match ref 169. Evening alternate 2026-10-20 17:45 PDT (az 251, el 6.9).
+- **QA cameras replaced** with the sheet's photo-matched set (hero at (-16, 113.9, 1.0), 31 mm, shift_y 0.17).
+- **Material names** follow the sheet: MAT_column_rose, MAT_dome_membrane (semi-gloss urethane roof), MAT_concrete_podium,
+  MAT_column_tan_inner, MAT_plaster_ceiling, MAT_drum_band, plus MAT_concrete_inner. Placeholder albedos halved to the
+  measured values (attempt 2's stone was twice too bright).
+- **Agents hit the API session limit** at ~14:30 (reset 18:30). Phase 2 runs five agents in parallel and will burn
+  through budget faster; if limits recur, stagger them (arch + materials first, then ornament + environment + lighting).

@@ -20,9 +20,9 @@ bright stone, plastic pink columns, mirror water. Your library is the single big
    (Poly Haven, ambientCG: download with curl, record URL + license in the notes). Procedurally generated images are welcome.
 
 ## Material contract (names are binding; other agents assign by these names)
-MAT_concrete_ochre (upper rotunda walls, entablature, attic, drum), MAT_concrete_weathered (piers, pedestals, rostra,
-platform, lower zone with algae band), MAT_concrete_inner (vault soffits, inner columns, ceiling; cooler, dustier,
-darker), MAT_column_terracotta (fluted pink column shafts), MAT_dome_plaster, MAT_concrete_colonnade, MAT_paving
+MAT_concrete_ochre (upper rotunda walls, entablature, attic, drum), MAT_concrete_podium (piers, pedestals, rostra,
+platform, lower zone with algae band), MAT_concrete_inner (vault soffits, inner arch ring), MAT_column_tan_inner (8 inner columns and their blocks),
+MAT_plaster_ceiling (coffered saucer), MAT_drum_band (bronze-brown guilloche band), MAT_column_rose (fluted pink column shafts), MAT_dome_membrane (urethane-coated roof, semi-gloss), MAT_concrete_colonnade, MAT_paving
 (platform floor/steps), MAT_ornament_concrete (all ORN instances: capitals, maidens, urns, panels; must include a
 per-instance variation and a recess-darkening term that works from geometry, since ornament has dust in the hollows),
 MAT_water_lagoon, MAT_lawn, MAT_soil, MAT_gravel_path, MAT_rock_riprap, MAT_bark_cypress, MAT_bark_eucalyptus,

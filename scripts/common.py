@@ -197,10 +197,17 @@ def placeholder_material(name, color=(0.7, 0.6, 0.45, 1.0), roughness=0.7):
 
 
 PLACEHOLDER_COLORS = {
-    "MAT_concrete_ochre": (0.62, 0.50, 0.34, 1.0),
-    "MAT_concrete_weathered": (0.55, 0.45, 0.32, 1.0),
-    "MAT_column_terracotta": (0.45, 0.26, 0.20, 1.0),
-    "MAT_dome_plaster": (0.72, 0.64, 0.50, 1.0),
+    "MAT_concrete_ochre": (0.42, 0.29, 0.17, 1.0),
+    "MAT_concrete_podium": (0.36, 0.30, 0.22, 1.0),
+    "MAT_column_rose": (0.40, 0.17, 0.12, 1.0),
+    "MAT_dome_membrane": (0.70, 0.66, 0.58, 1.0),
+    "MAT_column_tan_inner": (0.45, 0.32, 0.17, 1.0),
+    "MAT_concrete_inner": (0.36, 0.27, 0.16, 1.0),
+    "MAT_plaster_ceiling": (0.50, 0.40, 0.25, 1.0),
+    "MAT_drum_band": (0.28, 0.18, 0.10, 1.0),
+    "MAT_concrete_colonnade": (0.44, 0.31, 0.17, 1.0),
+    "MAT_ornament_concrete": (0.42, 0.29, 0.17, 1.0),
+    "MAT_paving": (0.45, 0.45, 0.42, 1.0),
     "MAT_water_lagoon": (0.05, 0.10, 0.09, 1.0),
     "MAT_lawn": (0.10, 0.18, 0.05, 1.0),
     "MAT_path_gravel": (0.45, 0.42, 0.36, 1.0),

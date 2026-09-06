@@ -36,9 +36,9 @@ their framed panels, pylons at the ends with taller boxes. The exhibition hall i
   (values: wall, pier, column, entablature, attic, drum, dome, ceiling, rostra, platform, colonnade_column,
   colonnade_entablature, box, pylon) and the materials agent will map it to materials.
 - Assign materials by name with `common.load_material` (placeholders are fine now): MAT_concrete_ochre (upper rotunda:
-  walls, entablature, attic, drum), MAT_concrete_weathered (piers, pedestals, rostra, platform, everything below ~6 m),
-  MAT_column_terracotta (pink column shafts), MAT_concrete_inner (inner columns, vault soffits, ceiling),
-  MAT_dome_plaster (dome), MAT_concrete_colonnade (all colonnade concrete), MAT_paving (platform floor and steps).
+  walls, entablature, attic, drum), MAT_concrete_podium (piers, pedestals, rostra, platform, everything below ~6 m),
+  MAT_column_rose (pink column shafts), MAT_concrete_inner (inner columns, vault soffits, ceiling),
+  MAT_dome_membrane (dome), MAT_concrete_colonnade (all colonnade concrete), MAT_paving (platform floor and steps).
 - Sockets exactly per `docs/sockets.md`. Give every socket the custom properties described there.
 - Keep it viewable: full ARCH at LOD1 under 2.5 M triangles. Use instancing (linked mesh data) for repeated columns.
 

@@ -62,10 +62,10 @@ def sheet(out, panels, cols=2):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--render"); ap.add_argument("--ref"); ap.add_argument("--out"); ap.add_argument("--label")
-    ap.add_argument("--sheet"); ap.add_argument("panels", nargs="*")
+    ap.add_argument("--sheet"); ap.add_argument("--cols", type=int, default=2); ap.add_argument("panels", nargs="*")
     a = ap.parse_args()
     if a.sheet:
-        sheet(a.sheet, a.panels)
+        sheet(a.sheet, a.panels, cols=a.cols)
     else:
         if not (a.render and a.ref and a.out):
             sys.exit(__doc__)
