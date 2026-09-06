@@ -32,3 +32,9 @@ Format: date · decision · why · consequences. Newest at the bottom.
   Blend files are committed (binary, ~MBs). Renders/previews are committed as evidence; raw photos are not.
 - **QA cameras**: six canonical views defined in `scripts/qa_cameras.py` (lead-owned). Initial positions are estimates;
   the reference agent proposes refinements matched to specific photos, lead applies them.
+- **Sun moment fixed: 2026-11-08 07:30 PST → azimuth 118.1°, elevation 7.8°** (NOAA via the Sun Position module, table in
+  docs/tech_notes.md). Evening alternate for delivery: 2026-10-25 17:30 PDT → az 247°, el 8.4°.
+- **Verified headless recipes** (tech_notes.md): Eevee/Cycles render, Sapling tree generation (needs an empty active
+  object), cloth simulation + evaluated-mesh bake (for the maidens' drapery), Sun Position NOAA call.
+- **Socket contract** written in docs/sockets.md before ARCH and ORN start, so instancing in Phase 3 is mechanical.
+- **Specialist briefs** live in docs/briefs/ so each agent's instructions are durable and reviewable.
