@@ -54,3 +54,8 @@ Format: date · decision · why · consequences. Newest at the bottom.
   measured values (attempt 2's stone was twice too bright).
 - **Agents hit the API session limit** at ~14:30 (reset 18:30). Phase 2 runs five agents in parallel and will burn
   through budget faster; if limits recur, stagger them (arch + materials first, then ornament + environment + lighting).
+- **User delegated the gate decisions** ("only have me weigh in where you're not sure"). Lead confirms: morning sun
+  primary (evening variant rendered at delivery); user image = composition/mood only; six QA viewpoints as in
+  qa_cameras.py; ornament scope = the 18 catalog items minus lamps/signs/fences; public-domain relief scans allowed ONLY
+  as heavily reworked raw material for the attic relief panels (never as figures); measured material direction; all five
+  Phase 2 builders launched in parallel, resumed after any API limit.
