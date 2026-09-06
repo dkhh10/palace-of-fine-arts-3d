@@ -137,7 +137,7 @@ sun = bpy.data.lights.new("PH_sun", "SUN"); sun.energy = 3.0; sun.color = (1.0, 
 so = bpy.data.objects.new("PH_sun", sun); lc.objects.link(so); common.aim_sun(so, 118, 7)
 world = bpy.data.worlds.new("WORLD_placeholder"); world.use_nodes = True
 nt = world.node_tree; sky = nt.nodes.new("ShaderNodeTexSky"); sky.sky_type = "MULTIPLE_SCATTERING"
-sky.sun_elevation = math.radians(7); sky.sun_azimuth = math.radians(0); sky.sun_disc = False
+sky.sun_elevation = math.radians(7); sky.sun_rotation = math.radians(0); sky.sun_disc = False
 bg = nt.nodes.get("Background"); nt.links.new(sky.outputs[0], bg.inputs[0]); bg.inputs[1].default_value = 0.6
 scene.world = world
 scene.view_settings.exposure = -1.0

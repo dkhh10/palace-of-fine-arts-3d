@@ -14,6 +14,7 @@ Success: a render from the classic lagoon-side viewpoint at golden hour is hard 
 - Color management: `view_transform = 'AgX'` works. Looks are set by string, e.g. `'AgX - Punchy'`.
 - Sky texture types: `MULTIPLE_SCATTERING` (physically based successor of Nishita), `SINGLE_SCATTERING`, `PREETHAM`, `HOSEK_WILKIE`.
 - Cycles denoiser: set by string `scene.cycles.denoiser = 'OPENIMAGEDENOISE'`.
+- `ShaderNodeTexSky` props in 5.2: `sky_type, sun_disc, sun_size, sun_intensity, sun_elevation, sun_rotation, altitude, air_density, aerosol_density, ozone_density` (no `sun_azimuth`; `sun_rotation` is the azimuth). Sun lights have `use_temperature/temperature`, `angle`, `energy`, `exposure`.
 - Installed and enabled extensions (user prefs): `bl_ext.blender_org.sun_position`, `bl_ext.blender_org.sapling_tree_gen`.
   Online access is enabled in prefs; other extensions can be installed headless with
   `bpy.ops.extensions.package_install(repo_index=0, pkg_id='...')` (see scripts/common.py `ensure_extension`).
