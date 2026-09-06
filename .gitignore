@@ -1,0 +1,19 @@
+# Blender backups and caches
+*.blend1
+*.blend2
+*.blend@
+__pycache__/
+*.pyc
+.DS_Store
+# Large read-only inputs (shared via absolute path from the main checkout)
+reference/photos/raw/
+reference/photos/contact_sheets/
+# Heavy intermediate render output
+renders/previews/**/*.exr
+renders/final/frames/
+renders/anim/
+# Worktrees
+.claude/worktrees/
+# Baked caches
+assets/cache/
+assets/textures/baked_hi/

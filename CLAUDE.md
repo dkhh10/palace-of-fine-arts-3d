@@ -1,0 +1,90 @@
+# Palace of Fine Arts — photoreal Blender build (3rd attempt)
+
+## Mission
+Build a stunningly beautiful, photoreal 3D model of the Palace of Fine Arts (the current 1974 concrete
+reconstruction, not the 1915 original) in Blender, lit at golden hour. First deliverable: a .blend we can
+open and fly around in. It must be render-ready (Cycles) and camera-ready for a later flythrough video.
+Success: a render from the classic lagoon-side viewpoint at golden hour is hard to tell from a photograph.
+
+## Environment (verified 2026-09-06 by the lead)
+- Blender **5.2.1 LTS** at `/Applications/Blender.app/Contents/MacOS/Blender` (also `blender` on PATH). Python 3.13.
+  The brief said 4.x; 5.2 API differences that matter are listed below.
+- GPU: Apple M2, 10-core Metal. Cycles GPU works headless. Keep preview sample counts low.
+- Render engines: `BLENDER_EEVEE` (this IS Eevee Next in 4.2+/5.x; there is no `BLENDER_EEVEE_NEXT` id) and `CYCLES`.
+- Color management: `view_transform = 'AgX'` works. Looks are set by string, e.g. `'AgX - Punchy'`.
+- Sky texture types: `MULTIPLE_SCATTERING` (physically based successor of Nishita), `SINGLE_SCATTERING`, `PREETHAM`, `HOSEK_WILKIE`.
+- Cycles denoiser: set by string `scene.cycles.denoiser = 'OPENIMAGEDENOISE'`.
+- Installed and enabled extensions (user prefs): `bl_ext.blender_org.sun_position`, `bl_ext.blender_org.sapling_tree_gen`.
+  Online access is enabled in prefs; other extensions can be installed headless with
+  `bpy.ops.extensions.package_install(repo_index=0, pkg_id='...')` (see scripts/common.py `ensure_extension`).
+- ffmpeg 8.1 on PATH.
+- Headless Eevee render of a trivial scene at 640x360 takes ~20 s (mostly shader compile); Cycles 32 spp ~12 s.
+
+## Conventions (binding)
+- Units metric, 1 BU = 1 m. **World origin = centre of the rotunda floor (z = 0 is the rotunda floor slab).**
+  Lagoon water surface is at z = WATER_Z (see common.py; currently -1.3 m, confirm from reference sheet).
+- **+Y points toward the lagoon (east). -X is north, +X is south.** The classic hero camera stands at +Y looking toward -Y.
+  OpenStreetMap-derived site data in `reference/plans/site_local.json` uses +x = east, +y = north; convert with
+  `common.osm_to_world(x_east, y_north) -> (-y_north, x_east)`.
+- Sun azimuth convention: degrees clockwise from north. Use `common.sun_direction(az, el)` / `common.aim_sun(...)`.
+- All scene construction is Python (bpy) run headless: `blender --background --python scripts/<name>.py [-- args]`.
+  Never rely on manual clicks. Everything reproducible from scripts.
+- Every script is idempotent: it clears/rebuilds its own collection(s) at the start. Use `common.rebuild_collection`.
+- Each specialist owns ONE .blend under `assets/` and ONE top-level collection:
+  ARCH -> assets/architecture.blend, ORN -> assets/ornament.blend, materials library -> assets/materials.blend,
+  ENV -> assets/environment.blend, LIGHT (+ world) -> assets/lighting.blend. The lead assembles master.blend by linking.
+  Nobody edits another agent's file. Requests go through the lead.
+- Object naming: `ARCH_rotunda_dome`, `ARCH_colonnade_column_01`, `ORN_capital_corinthian_LOD1`, `ENV_tree_cypress_03`,
+  `SOCKET_capital_##`, `SOCKET_maiden_##`, `LIGHT_sun`, `CAM_qa_01_lagoon_hero`. Prefix = owning collection.
+- LODs: `<name>_LOD0` (hi), `_LOD1` (mid, viewport default), `_LOD2` (low). Viewport shows LOD1 by default.
+- Materials come from the library by name: `common.load_material('MAT_concrete_ochre')` (appends from
+  assets/materials.blend, falls back to a flat placeholder if missing). Never duplicate library materials.
+- Previews: Eevee, 1280x720, from the fixed QA cameras (scripts/qa_cameras.py) into
+  `renders/previews/<agent>/<timestamp>_<cam>.png` via `common.render_previews('<agent>')`. Finals: Cycles + denoise.
+- Reference photos live in the MAIN checkout only (gitignored, 175 MB):
+  `/Users/dk/Projects/3d render blender 3rd attempt building/reference/` (also `common.REFERENCE_DIR`).
+  Worktrees do not contain them; read them via that absolute path.
+- Commit often on your own branch. One agent, one branch, one worktree. The lead merges into main.
+
+## Repository layout
+```
+CLAUDE.md
+docs/reference_sheet.md   measurements, ornament catalog, material catalog, photo index, 6 QA viewpoints
+docs/decisions.md         lead's log of choices and why
+docs/quality_checklist.md living QA rubric (QA agent)
+reference/photos/raw/     214 Wikimedia Commons + Flickr photos (index: reference/photos/index_wikimedia.csv)
+reference/photos/user/    user-supplied reference (user_wide_midday.png = THE target composition)
+reference/plans/          OSM footprints (site_local.json), satellite tiles, prior measurement overlays
+reference/prior_attempt_notes/  spec + gate critique + params from attempts 1-2 (useful measurements, NOT the art target)
+scripts/common.py         shared helpers   scripts/qa_cameras.py  fixed QA camera set
+scripts/build_master.py   assembles master.blend from assets    scripts/<agent>_*.py  each agent's builders
+assets/*.blend            one per specialist
+master.blend
+renders/previews/<agent>/  renders/qa_comparisons/  renders/final/  renders/prior_attempts/ (what NOT to repeat)
+```
+
+## Lessons from attempts 1 and 2 (why they failed the photoreal bar)
+- Stone read as clean, bright, uniform "CAD". Real PFA concrete is a muted, variegated ochre/tan with rain streaks,
+  a dark algae band at the waterline, patched repairs, soft edge wear, and dust in the ornament recesses.
+- Columns were rendered saturated salmon-pink. Real ones are a dusty terracotta-rose with strong tonal variation and
+  much lower saturation; in golden light they warm up but never look plastic.
+- Trees were blobs/scaled cones. Need real branching (Sapling), leaf cards with translucency, and species mix:
+  Monterey cypress, eucalyptus, Monterey pine, willows at the water.
+- Water was a glossy mirror. Real lagoon: slight murk, green tint, gentle ripples breaking the reflection into streaks,
+  correct Fresnel.
+- Proportions drifted (attic zone too tall, dome too smooth/bright). Measure, don't eyeball.
+- Nothing was ever compared side by side with a photo. This time every acceptance requires a comparison image.
+
+## The team (see the original brief below for full role descriptions)
+Lead/Art Director (only agent that talks to the user) · Reference & Research · Architectural Modeler ·
+Ornament & Sculpture Modeler · Materials & Texturing · Environment · Lighting & Rendering · QA/Critic.
+
+## Phases
+0 Lead setup → 1 Reference sheet (blocking gate) → 2 Parallel build (arch, ornament, materials, env, lighting) →
+gate: first master.blend + first comparison sheet → 3 Integration → 4 Polish loop (≥3 rounds) → 5 Deliver
+(master.blend opens < 1 min, Eevee navigable, Cycles hero 3840x2160, flythrough path + low-res Eevee test animation).
+
+## Non-negotiables
+Real dimensions from reference, never eyeballed. No ornament asset identical twice at hero distance (vary weathering
+per instance). No flat/clean/plastic materials. Every "matches reference" claim is backed by a side-by-side in
+renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log every significant decision in docs/decisions.md.
