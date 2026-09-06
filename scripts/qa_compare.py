@@ -51,7 +51,10 @@ def sheet(out, panels, cols=2):
         fc += f"color=black:s={tw}x{th}:d=1[p{i}];"
         panels = panels + [None]
     for r in range(rows):
-        fc += "".join(f"[p{r * cols + c}]" for c in range(cols)) + f"hstack=inputs={cols}[row{r}];"
+        if cols == 1:
+            fc += f"[p{r}]null[row{r}];"
+        else:
+            fc += "".join(f"[p{r * cols + c}]" for c in range(cols)) + f"hstack=inputs={cols}[row{r}];"
     fc += "".join(f"[row{r}]" for r in range(rows)) + (f"vstack=inputs={rows}[out]" if rows > 1 else "null[out]")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     cmd = [FFMPEG, "-y", "-loglevel", "error"] + inputs + ["-filter_complex", fc, "-map", "[out]", "-frames:v", "1", str(out)]
