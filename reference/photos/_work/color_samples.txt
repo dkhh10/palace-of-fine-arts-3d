@@ -1,0 +1,7 @@
+label | file | rect(x,y,w,h) | sRGB mean 0-255 | linear 0-1 | sRGB std | sat
+085:wall_attic_plain_overcast | ref_085_rotunda_San_Fran | (521,658,68,150) |  141.9  111.3   82.0 | 0.270 0.160 0.084 | 21.2 19.7 18.4 | 0.42
+017:wall_attic_plain_overcast | ref_017_rotunda_Palace_o | (452,438,82,205) |  151.1  122.6   95.2 | 0.310 0.197 0.115 | 19.8 19.8 19.9 | 0.37
+label | file | rect(x,y,w,h) | sRGB mean 0-255 | linear 0-1 | sRGB std | sat
+047:wall_plain_goldenhour_sun | ref_047_rotunda_Palace_o | (685,301,274,82) |  249.2  210.6  157.0 | 0.949 0.649 0.337 |  8.4 12.1 14.0 | 0.37
+label | file | rect(x,y,w,h) | sRGB mean 0-255 | linear 0-1 | sRGB std | sat
+054:pink_col_L_lit_goldenhour | ref_054_rotunda_Palace_o | (521,891,82,342) |  228.9  148.1   91.9 | 0.783 0.297 0.107 | 25.9 25.2 21.2 | 0.60

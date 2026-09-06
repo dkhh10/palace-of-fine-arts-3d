@@ -1,0 +1,1 @@
+I need to check the crops for framing accuracy — the crop coordinates were estimated from downscaled views. First batch: the capitals, bases and Zimm panels.

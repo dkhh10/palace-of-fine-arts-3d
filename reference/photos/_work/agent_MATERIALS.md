@@ -1,0 +1,1 @@
+Some crops failed — the actual file dimensions may differ from the CSV. Let me check.
