@@ -46,32 +46,32 @@ def place(obj, rot_z_deg=0.0, loc=(0, 0, 0), tilt_x_deg=0.0, scale=1.0):
 # only flares to 1.10 R under the volutes; the leaves are lofted along an explicit spine that hugs that surface and
 # then curls its tip outward AND DOWN through a 105-120 deg arc, so each tip has a genuine sky-lit-only undercut.
 BELL_PROFILE = [(1.00, 0.000), (1.06, 0.020), (1.055, 0.040), (0.995, 0.062), (0.925, 0.090), (0.885, 0.140),
-                (0.868, 0.230), (0.865, 0.340), (0.880, 0.450), (0.912, 0.560), (0.960, 0.660), (1.020, 0.750),
-                (1.070, 0.820), (1.100, 0.870), (1.105, 0.890)]
+                (0.868, 0.230), (0.865, 0.340), (0.880, 0.450), (0.912, 0.560), (0.960, 0.660), (1.040, 0.750),
+                (1.100, 0.820), (1.145, 0.870), (1.155, 0.890)]
 
 # Where the bell is scalloped: radius dips between the leaves of each row so the slot between two neighbouring
 # leaves bottoms out in a real groove instead of on a smooth cylinder.
 CAPITAL_PRESETS = {
     # rotunda: h 2.6, shaft top D 2.1, abacus ~3.0 across corners; figured centre
-    "capital_rotunda": dict(H=2.6, R=1.05, abacus_across=3.0, figure=True, lower_len=0.40, upper_len=0.42,
-                            lower_w=0.90, upper_w=0.96, ribs=7, curl=0.32, droop=0.18, volute_r=0.170, helix_r=0.075,
-                            lower_z=0.105, upper_z=0.355, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
-                            proud=(0.055, 0.040), arc_deg=(120.0, 104.0), arc_frac=(0.30, 0.28), mid_dip=0.050,
-                            scallop=0.055, thickness=0.062, volute_z=0.800, volute_er=1.270, helix_er=1.150,
+    "capital_rotunda": dict(H=2.6, R=1.05, abacus_across=3.0, figure=True, lower_len=0.44, upper_len=0.37,
+                            lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.112, helix_r=0.055,
+                            lower_z=0.060, upper_z=0.440, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
+                            proud=(0.140, 0.130), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                            scallop=0.078, thickness=0.062, volute_z=0.805, volute_er=1.380, helix_er=1.245,
                             helix_z=0.775),
     # inner tan columns: h 1.8 on a ~1.6 m shaft, same design, fleuron centre
-    "capital_inner": dict(H=1.8, R=0.80, abacus_across=2.15, figure=False, lower_len=0.40, upper_len=0.42,
-                          lower_w=0.90, upper_w=0.96, ribs=7, curl=0.32, droop=0.18, volute_r=0.170, helix_r=0.080,
-                          lower_z=0.105, upper_z=0.355, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
-                          proud=(0.055, 0.040), arc_deg=(118.0, 102.0), arc_frac=(0.30, 0.28), mid_dip=0.050,
-                          scallop=0.055, thickness=0.064, volute_z=0.800, volute_er=1.270, helix_er=1.150,
+    "capital_inner": dict(H=1.8, R=0.80, abacus_across=2.15, figure=False, lower_len=0.44, upper_len=0.37,
+                          lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.115, helix_r=0.058,
+                          lower_z=0.060, upper_z=0.440, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
+                          proud=(0.140, 0.130), arc_deg=(99.0, 89.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                          scallop=0.078, thickness=0.064, volute_z=0.805, volute_er=1.380, helix_er=1.245,
                           helix_z=0.775),
     # colonnade: h 1.8 on a 1.7 m shaft: squatter, big shell leaves + big scrolls, small lower leaves, fleuron
-    "capital_colonnade": dict(H=1.8, R=0.85, abacus_across=2.3, figure=False, lower_len=0.32, upper_len=0.46,
-                              lower_w=0.86, upper_w=1.00, ribs=7, curl=0.30, droop=0.16, volute_r=0.185, helix_r=0.080,
-                              lower_z=0.100, upper_z=0.300, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
-                              proud=(0.050, 0.045), arc_deg=(115.0, 108.0), arc_frac=(0.30, 0.29), mid_dip=0.048,
-                              scallop=0.055, thickness=0.066, volute_z=0.795, volute_er=1.285, helix_er=1.150,
+    "capital_colonnade": dict(H=1.8, R=0.85, abacus_across=2.3, figure=False, lower_len=0.36, upper_len=0.40,
+                              lower_w=1.20, upper_w=1.34, ribs=7, curl=0.30, droop=0.16, volute_r=0.122, helix_r=0.058,
+                              lower_z=0.058, upper_z=0.420, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
+                              proud=(0.135, 0.135), arc_deg=(98.0, 94.0), arc_frac=(0.28, 0.27), mid_dip=0.075,
+                              scallop=0.076, thickness=0.066, volute_z=0.800, volute_er=1.390, helix_er=1.250,
                               helix_z=0.770),
 }
 
@@ -91,7 +91,7 @@ def bell_radius(P, z_m):
     return BELL_PROFILE[-1][0] * R
 
 
-def leaf_spine(P, base_z, length, proud, arc_deg, arc_frac, lean=0.035, n=30):
+def leaf_spine(P, base_z, length, proud, arc_deg, arc_frac, lean=0.060, n=30):
     """Centreline for one acanthus leaf, in the leaf-local (y outward, z up) frame with the base at (0, 0).
     Body: follows the bell surface with a growing outward offset (so the whole leaf stands proud, not just the tip).
     Tip: a circular arc of `arc_deg` over the last `arc_frac` of the length, bending outward and then downward -
@@ -169,9 +169,9 @@ def build_leaf_ring(P, count, offset_deg, base_zH, length_H, width_scale, rng, c
                         arc_deg=P["arc_deg"][row] * rng.uniform(0.94, 1.07),
                         arc_frac=P["arc_frac"][row])
         leaf = L.acanthus_leaf(f"leaf_{tag}_{k}", length=ln, width=width * rng.uniform(0.96, 1.04), spine=sp,
-                               ribs=P["ribs"], rib_amp=0.022 * R, bulge=0.075 * R, mid_dip=P["mid_dip"] * R,
-                               thickness=P["thickness"] * R, lobes=4, lobe_depth=0.17, nu=22, nv=len(sp) - 1,
-                               coll=coll, seed=rng.randint(0, 9999), base_width=0.28)
+                               ribs=P["ribs"], rib_amp=0.032 * R, bulge=0.032 * R, mid_dip=P["mid_dip"] * R,
+                               thickness=P["thickness"] * R, lobes=5, lobe_depth=0.26, nu=30, nv=len(sp) - 1,
+                               coll=coll, seed=rng.randint(0, 9999), base_width=0.55)
         tilt = -P["leaf_tilt"][row] + rng.uniform(-1.5, 1.5)
         place(leaf, rot_z_deg=phi - 90.0, loc=(r0 * 0.965 * math.cos(math.radians(phi)),
                                                r0 * 0.965 * math.sin(math.radians(phi)), base_z), tilt_x_deg=tilt)
@@ -281,19 +281,23 @@ def build_capital(typ, variant, coll, bake=True):
             eye = Vector((eye_r * math.cos(math.radians(phi_c)), eye_r * math.sin(math.radians(phi_c)), eye_z))
             eye -= Vector((math.cos(math.radians(phi_c)), math.sin(math.radians(phi_c)), 0)) * 0.03 * R
             # local frame: X = radial at n_dir, Y = tangential (increasing phi)
-            v = L.volute(f"vol_{face}_{sign}", eye=(0, 0, 0), radius=P["volute_r"] * H, turns=1.8,
-                         band=(0.30 * R, 0.14 * R), stem_base=(-0.26 * R, -sign * 0.22 * R, -0.30 * H),
-                         stem_ctrl=(-0.14 * R, -sign * 0.10 * R, -0.12 * H), coll=work, direction=sign, taper=0.45)
+            v = L.volute(f"vol_{face}_{sign}", eye=(0, 0, 0), radius=P["volute_r"] * H, turns=2.25,
+                         band=(0.24 * R, 0.105 * R), stem_base=(-0.24 * R, -sign * 0.20 * R, -0.26 * H),
+                         stem_ctrl=(-0.13 * R, -sign * 0.09 * R, -0.10 * H), coll=work, direction=sign, taper=0.55)
             place(v, rot_z_deg=n_dir, loc=eye)
             parts.append(v)
+            # eye button: closes the spiral so the volute reads as a rolled scroll, not a length of pipe
+            btn = L.sphere(f"volb_{face}_{sign}", 0.075 * R, work, scale=(0.85, 1.0, 1.0))
+            place(btn, rot_z_deg=n_dir, loc=eye)
+            parts.append(btn)
         # inner helices flanking the face centre, rolling toward the centre
         for sign in (+1, -1):
             phi_h = face + sign * 16.0
             eye = Vector((P["helix_er"] * R * math.cos(math.radians(phi_h)),
                           P["helix_er"] * R * math.sin(math.radians(phi_h)), P["helix_z"] * H))
-            v = L.volute(f"hel_{face}_{sign}", eye=(0, 0, 0), radius=P["helix_r"] * H, turns=1.6,
-                         band=(0.18 * R, 0.10 * R), stem_base=(-0.22 * R, sign * 0.18 * R, -0.26 * H),
-                         stem_ctrl=(-0.11 * R, sign * 0.07 * R, -0.10 * H), coll=work, direction=-sign, taper=0.4)
+            v = L.volute(f"hel_{face}_{sign}", eye=(0, 0, 0), radius=P["helix_r"] * H, turns=1.9,
+                         band=(0.15 * R, 0.075 * R), stem_base=(-0.20 * R, sign * 0.16 * R, -0.24 * H),
+                         stem_ctrl=(-0.10 * R, sign * 0.06 * R, -0.09 * H), coll=work, direction=-sign, taper=0.5)
             place(v, rot_z_deg=face + sign * 8.0, loc=eye)
             parts.append(v)
         if P["figure"]:
