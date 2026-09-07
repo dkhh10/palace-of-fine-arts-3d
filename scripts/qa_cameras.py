@@ -22,7 +22,7 @@ CAMERAS = [
     dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-45.0, 52.0, 1.3), target=(0.0, 0.0, 22.0), lens=20.0,
          ref="canonical/cam_02_ne_shore_threequarter.jpg",
          note="Ref 062: north-east shore, 50 m, 3/4 view; south colonnade visible behind the rotunda on the left."),
-    dict(name="CAM_qa_03_colonnade_walk", loc=(58.0, -4.0, 1.7), target=(0.0, 0.0, 16.0), lens=20.0,
+    dict(name="CAM_qa_03_colonnade_walk", loc=(81.0, 12.04, 1.7), target=(0.0, 0.0, 9.2), lens=18.0,
          ref="canonical/cam_03_colonnade_walk.jpg",
          note="Ref 128: inside the south colonnade looking north-west at the rotunda between two fluted columns."),
     dict(name="CAM_qa_04_rotunda_ceiling", loc=(0.0, 3.0, 1.6), target=(0.0, 3.0, 40.0), lens=15.0,
