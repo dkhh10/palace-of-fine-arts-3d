@@ -202,7 +202,7 @@ def build_group_concrete():
     nd = t.noise(P, t.div(1.0, I["Drift Size"]), detail=4, rough=0.6)
     tone_dr = t.maprange(nd, 0.25, 0.75, t.sub(1.0, TV), t.add(1.0, TV))
     nb = t.noise(P, t.div(1.0, I["Blotch Size"]), detail=3, rough=0.55)
-    tone_n = t.maprange(nb, 0.3, 0.7, t.sub(1.0, t.mul(TV, 0.6)), t.add(1.0, t.mul(TV, 0.6)))
+    tone_n = t.maprange(nb, 0.28, 0.72, t.sub(1.0, TV), t.add(1.0, TV))
     ns = t.noise(P, 30.0, detail=4, rough=0.7)
     tone_s = t.maprange(ns, 0.35, 0.65, 0.93, 1.07)
     # 5. photo detail (luminance only, normalised around its mean)
@@ -240,10 +240,14 @@ def build_group_concrete():
     st = t.group(G["streaks"], Offset=off, Scale=I["Streak Scale"], Length=I["Streak Length"], Normal=N,
                  **{"Ledge Distance": I["Ledge Distance"], "Ledge Weight": I["Ledge Weight"], "Shade Bias": I["Streak Shade Bias"]})
     smask = t.clamp01(t.mul(t.mul(st.outputs["Mask"], I["Streaks"]), wvar))
+    # a continuous dirty run-off band right under every overhang, under the drips (QA-02-3). The streak group's
+    # Ledge output is the sheltered mask; v2 only used it to gate the drips, so cornices had no soiling at all.
+    lband = t.clamp01(t.mul(t.mul(st.outputs["Ledge"], t.mul(I["Streaks"], 0.40)), wvar))
+    c = t.mix(lband, c, t.vmul(c, (0.74, 0.695, 0.615)))
     # QA-02-2: the v2 streak tint (0.36, 0.37, 0.31) had G > R -- a green multiplier over a broad low-contrast mask,
     # which is where the olive cast on the shaded piers and arch soffits came from. Rain grime on this concrete is a
     # warm dark grey: R > G > B, and it now rides a narrow high-contrast mask so it reads as drips, not as a wash.
-    c = t.mix(smask, c, t.vmul(c, (0.52, 0.465, 0.375)))
+    c = t.mix(smask, c, t.vmul(c, (0.46, 0.405, 0.325)))
     # 10. recess dirt (AO) + baked/extra dirt + underside soot
     ao = t.ao(distance=I["Recess Distance"], samples=8, normal=N)
     dirt = t.clamp01(t.add(t.mul(t.mul(t.sub(1.0, ao), I["Recess Dirt"]), wvar), I["Extra Dirt"]))
@@ -466,7 +470,7 @@ def build_concrete_family():
         "Base Color": C(0.645, 0.436, 0.068), "Grey Color": C(0.44, 0.318, 0.098), "Grey Drift": 0.24,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.15, "Block Size": 3.6, "Blotch Size": 1.8,
         "Drift Size": 14.0,
-        "Detail Strength": 0.85, "Streaks": 1.0, "Streak Scale": 7.0, "Streak Length": 9.0, "Ledge Distance": 3.0, "Ledge Weight": 0.82,
+        "Detail Strength": 0.85, "Streaks": 1.0, "Streak Scale": 7.0, "Streak Length": 9.0, "Ledge Distance": 3.0, "Ledge Weight": 0.50,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.55,
         "Patches": 0.18, "Edge Wear": 0.60, "Edge Radius": 0.12, "Recess Dirt": 0.60, "Recess Distance": 0.4,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
@@ -475,7 +479,7 @@ def build_concrete_family():
         "Base Color": C(0.495, 0.372, 0.115), "Grey Color": C(0.395, 0.318, 0.136), "Grey Drift": 0.38,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.15, "Block Size": 2.4, "Blotch Size": 2.5,
         "Drift Size": 9.0,
-        "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 6.0, "Streak Length": 7.0, "Ledge Distance": 2.0, "Ledge Weight": 0.78,
+        "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 6.0, "Streak Length": 7.0, "Ledge Distance": 2.0, "Ledge Weight": 0.48,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.55, "Efflorescence": 1.15,
         "Patches": 0.22, "Edge Wear": 0.60, "Edge Radius": 0.11, "Recess Dirt": 0.65, "Recess Distance": 0.4,
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
@@ -484,7 +488,7 @@ def build_concrete_family():
         "Base Color": C(0.655, 0.442, 0.068), "Grey Color": C(0.41, 0.307, 0.104), "Grey Drift": 0.22,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.16, "Block Size": 3.0, "Blotch Size": 3.0,
         "Drift Size": 16.0,
-        "Detail Strength": 0.55, "Streaks": 0.9, "Streak Scale": 7.5, "Streak Length": 10.0, "Ledge Distance": 2.5, "Ledge Weight": 0.72,
+        "Detail Strength": 0.55, "Streaks": 0.9, "Streak Scale": 7.5, "Streak Length": 10.0, "Ledge Distance": 2.5, "Ledge Weight": 0.45,
         "Streak Shade Bias": 0.6,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.55,
         "Patches": 0.15, "Edge Wear": 0.60, "Edge Radius": 0.12, "Recess Dirt": 0.6, "Recess Distance": 0.4,
@@ -494,7 +498,7 @@ def build_concrete_family():
         "Base Color": C(0.470, 0.335, 0.082), "Grey Color": C(0.375, 0.291, 0.120), "Grey Drift": 0.34,
         "Grey Below Z": 40.0, "Grey Above Z": 60.0, "Tone Variation": 0.13, "Block Size": 3.0, "Blotch Size": 2.5,
         "Drift Size": 10.0,
-        "Detail Strength": 0.5, "Streaks": 0.45, "Streak Scale": 6.0, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.8,
+        "Detail Strength": 0.5, "Streaks": 0.45, "Streak Scale": 6.0, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.55,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.55,
         "Patches": 0.08, "Edge Wear": 0.55, "Edge Radius": 0.10, "Recess Dirt": 0.7, "Recess Distance": 0.5, "Underside Dirt": 0.6,
         "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.35, "Pour Lines": 0.4, "Pour Spacing": 0.6})

@@ -1,0 +1,107 @@
+"""Materials verification inside the FULL assembled scene (round 3, QA-02-2 / -3 / -6).
+
+    blender -b --python scripts/mat_scene_check.py -- [--blend master.blend] [--samples 48] [--tag r3]
+
+The lineup in materials.blend cannot answer "does the algae band read at the waterline in the master" or "is the
+stone still blotchy at 100 m", because it has neither ARCH's geometry nor ENV's water. This opens the assembled
+master, adds two materials-owned close cameras (never saved back), and renders them with the lighting agent's final
+Cycles preset:
+
+  CAM_mat_scene_waterline  - a 50 mm three-quarter close on the podium / rostra where the stone meets z = WATER_Z,
+                             placed from the actual bounding box of the podium objects so it does not need hand-tuning.
+  CAM_mat_scene_stone      - a long lens on the entablature / spandrel zone from the hero station, i.e. QA's
+                             "1:1 crop" of the hero, rendered directly instead of upscaled.
+
+Outputs renders/previews/materials/<tag>_scene_<name>.png. Nothing is written back to any .blend.
+"""
+import bpy, sys, os, time, math
+from pathlib import Path
+from mathutils import Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import common
+
+args = common.script_args()
+
+
+def arg(name, default=None):
+    if name in args:
+        i = args.index(name)
+        return args[i + 1] if i + 1 < len(args) else True
+    return default
+
+
+BLEND = Path(arg("--blend", str(common.ROOT / "master.blend")))
+SAMPLES = int(arg("--samples", 48))
+TAG = str(arg("--tag", "r3"))
+OUT = common.RENDERS / "previews" / "materials"
+OUT.mkdir(parents=True, exist_ok=True)
+
+t0 = time.time()
+bpy.ops.wm.open_mainfile(filepath=str(BLEND), load_ui=False)
+scene = bpy.context.scene
+print(f"[mat_scene] opened {BLEND.name} in {time.time() - t0:.1f}s; {len(bpy.data.objects)} objects")
+
+
+def visible_bbox(pred):
+    lo = Vector((1e9, 1e9, 1e9))
+    hi = Vector((-1e9, -1e9, -1e9))
+    n = 0
+    for o in scene.objects:
+        if o.type != "MESH" or o.hide_render or not pred(o.name):
+            continue
+        for c in o.bound_box:
+            w = o.matrix_world @ Vector(c)
+            lo = Vector((min(lo[i], w[i]) for i in range(3)))
+            hi = Vector((max(hi[i], w[i]) for i in range(3)))
+        n += 1
+    return (lo, hi, n) if n else (None, None, 0)
+
+
+def add_cam(name, loc, aim, lens=50.0):
+    cam = bpy.data.cameras.new(name)
+    cam.lens = lens
+    cam.clip_start, cam.clip_end = 0.1, 2000.0
+    ob = bpy.data.objects.new(name, cam)
+    scene.collection.objects.link(ob)
+    ob.location = Vector(loc)
+    d = Vector(aim) - Vector(loc)
+    ob.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
+    return ob
+
+
+# --- waterline camera: derived from the podium / rostra geometry, aimed at its +Y (lagoon) face at WATER_Z
+lo, hi, n = visible_bbox(lambda s: ("podium" in s.lower() or "rostra" in s.lower() or "pedestal" in s.lower())
+                         and s.startswith("ARCH"))
+if n == 0:
+    lo, hi, n = visible_bbox(lambda s: s.startswith("ARCH_site"))
+if n == 0:
+    lo, hi = Vector((-20, -10, -2)), Vector((20, 20, 2))
+print(f"[mat_scene] podium bbox from {n} objects: {[round(v,1) for v in lo]} .. {[round(v,1) for v in hi]}")
+cx = (lo.x + hi.x) * 0.5
+face_y = hi.y                                   # the lagoon-facing edge
+target = Vector((cx + 4.0, face_y - 1.0, common.WATER_Z + 0.3))
+station = Vector((cx + 11.0, face_y + 17.0, common.WATER_Z + 1.5))
+add_cam("CAM_mat_scene_waterline", station, target, lens=70.0)
+
+# --- stone camera: the hero station, long lens onto the entablature / spandrel band QA crops at 1:1
+hero = bpy.data.objects.get("CAM_qa_01_lagoon_hero")
+hloc = hero.location.copy() if hero else Vector((-16.0, 113.9, 1.0))
+add_cam("CAM_mat_scene_stone", hloc, Vector((-2.0, 6.0, 20.0)), lens=135.0)
+
+import light_presets
+light_presets.apply_final_cycles(scene, samples=SAMPLES)
+common.setup_scene(scene)
+scene.render.image_settings.color_depth = "8"
+scene.render.resolution_x, scene.render.resolution_y = 1600, 900
+
+for name in ("CAM_mat_scene_waterline", "CAM_mat_scene_stone"):
+    ob = bpy.data.objects[name]
+    scene.camera = ob
+    fp = OUT / f"{TAG}_scene_{name.replace('CAM_mat_scene_', '')}.png"
+    scene.render.filepath = str(fp)
+    t = time.time()
+    bpy.ops.render.render(write_still=True)
+    print(f"[mat_scene] {name} {SAMPLES} spp in {time.time() - t:.1f}s -> {fp.name}")
+
+print(f"[mat_scene] done in {time.time() - t0:.1f}s")
