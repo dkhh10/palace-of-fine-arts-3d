@@ -90,7 +90,7 @@ def sky_rotation_for_azimuth(az_deg):
     return az_deg - 90.0
 
 
-def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0, master=False):
+def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0, master=False, res=(1280, 720)):
     """master=True renders the lead's master.blend (full scene: ARCH + ORN + ENV + LIGHT rig and look) into
     renders/previews/environment/ - the ENV file must have been rebuilt AND build_master.py run first."""
     if master:
@@ -110,7 +110,7 @@ def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0, ma
         cams_all = [o for o in bpy.data.objects if o.type == "CAMERA" and o.name.startswith("CAM_qa_")]
         if cams:
             cams_all = [c for c in cams_all if any(k in c.name for k in cams)]
-        scene.render.resolution_x, scene.render.resolution_y = 1280, 720
+        scene.render.resolution_x, scene.render.resolution_y = res
         scene.render.resolution_percentage = 100
         if engine.upper() == "CYCLES":
             scene.render.engine = "CYCLES"
@@ -131,7 +131,7 @@ def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0, ma
             outs.append(fp)
         return outs
     build_scene(local=local, lod=lod)
-    return common.render_previews("environment", cameras=cams, samples=samples, tag=tag, engine=engine, cycles_samples=48)
+    return common.render_previews("environment", cameras=cams, res=res, samples=samples, tag=tag, engine=engine, cycles_samples=48)
 
 
 EXTRA_CAMS = [   # diagnostic views (not QA cameras): name, location, target, lens
@@ -255,6 +255,7 @@ if __name__ == "__main__":
     local = "--local" in args
     master = "--master" in args
     lod = 0
+    res = (1280, 720)
     for a in args:
         if a.startswith("--lod="):
             lod = int(a.split("=")[1])
@@ -266,6 +267,8 @@ if __name__ == "__main__":
             samples = int(args[i + 1])
         elif a == "--tag":
             tag = args[i + 1]
+        elif a == "--res":
+            res = tuple(int(v) for v in args[i + 1].split("x"))
         elif a == "--cycles":
             engine = "CYCLES"
     if "--skytest" in args:
@@ -276,5 +279,5 @@ if __name__ == "__main__":
     elif "--extra" in args:
         render_extra(tag=tag or "extra", local=local, lod=lod)
     else:
-        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master)
+        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master, res=res)
         print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")

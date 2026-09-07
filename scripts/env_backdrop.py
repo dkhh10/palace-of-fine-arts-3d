@@ -167,8 +167,19 @@ def build_hall(SUB, hall_poly, hall_field):
     _box(bm, q.x, q.y, (8.2 + zc) / 2, 6.2, 5.0, zc - 8.2, rot)                 # lintel over the 6 m opening
     _box(bm, q.x, q.y, zc + 0.4, 17.0, 6.2, 0.8, rot)                            # cornice
     _box(bm, q.x - nrm.x * 0.6, q.y - nrm.y * 0.6, zc + 1.4, 16.0, 5.0, 1.2, rot)  # parapet block
+    # Aperture seal (carried QA-01-8 / materials note): the 6 m opening between the piers must never be an
+    # unfilled hole in the massing - through the rotunda's west arch the hero camera looks straight into it.
+    # A full-height backing slab spans wider and taller than the opening, then the reveal (jambs + head + sill)
+    # is built in front of it so the doorway still reads as a recess rather than a painted rectangle.
     q2 = P + nrm * 0.9
+    _box(bm, q2.x, q2.y, (z0 + 11.4) / 2, 9.0, 0.7, 11.4 - z0, rot)            # backing slab, seals the aperture
     _box(bm, q2.x, q2.y, (z0 + 8.2) / 2, 6.6, 0.6, 8.2 - z0, rot)              # recess back wall (door surround)
+    for sgn in (-1, 1):                                                         # jambs
+        qj = P + d * (sgn * 2.75) + nrm * 1.7
+        _box(bm, qj.x, qj.y, (z0 + 8.2) / 2, 0.9, 2.0, 8.2 - z0, rot)
+    qh = P + nrm * 1.7
+    _box(bm, qh.x, qh.y, 8.55, 6.6, 2.0, 0.9, rot)                              # head of the reveal
+    _box(bm, qh.x, qh.y, z0 + 0.12, 6.6, 2.2, 0.26, rot)                        # threshold
     me = bpy.data.meshes.new("ENV_backdrop_hall_pavilion")
     bm.to_mesh(me); bm.free()
     me.materials.append(m_wall)
@@ -373,7 +384,7 @@ def build_landscape(SUB, terrain_height):
                 fs.append((a, a + 1, a + seg + 2, a + seg + 1))
         return L.mesh_from_tris(name, vs, fs, coll, [mat], smooth=True)
 
-    ridge("ENV_backdrop_presidio_ridge", 200, 335, 700, 1600, 45.0, 18.0, m_forest, seg=60, rings=8)
+    ridge("ENV_backdrop_presidio_ridge", 200, 335, 690, 1600, 45.0, 18.0, m_forest, seg=60, rings=8)
     ridge("ENV_backdrop_presidio_hill_sw", 205, 262, 1200, 2600, 110.0, 25.0, m_forest, seg=40, rings=6)
     # distant hills: Pacific Heights / Russian Hill to the south and south-east, bare hill material
     ridge("ENV_backdrop_hills_south", 120, 200, 1200, 2600, 90.0, 10.0, m_hill, seg=40, rings=5)
@@ -383,9 +394,12 @@ def build_landscape(SUB, terrain_height):
     print("[env_backdrop] landscape: far ground, bay, presidio ridge, hills")
 
 
-def build_all(SUB, terrain_height, site, hall_poly, hall_field=None):
+def build_all(SUB, terrain_height, site, hall_poly, hall_field=None, lagoon_field=None, colonnade_polys=()):
     if hall_field is None:
         hall_field = L.PolyField(hall_poly, cell=10.0)
     build_hall(SUB, hall_poly, hall_field)
     build_houses(SUB, site)
     build_landscape(SUB, terrain_height)
+    if lagoon_field is not None:
+        import env_city
+        env_city.build_all(SUB, terrain_height, lagoon_field, hall_field, colonnade_polys)

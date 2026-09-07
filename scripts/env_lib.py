@@ -36,6 +36,10 @@ ENV_PLACEHOLDER_COLORS = {
     "MAT_water_lagoon": ((0.04, 0.09, 0.08, 1.0), 0.08),
     "MAT_backdrop_building": ((0.40, 0.31, 0.19, 1.0), 0.85),
     "MAT_backdrop_roof": ((0.17, 0.16, 0.145, 1.0), 0.85),
+    # far-field only (QA-03-11): asphalt carriageways and the Presidio's red clay tile roofs. Not in the library
+    # yet - see docs/environment_notes.md "open issues".
+    "MAT_backdrop_asphalt": ((0.052, 0.050, 0.049, 1.0), 0.72),
+    "MAT_backdrop_roof_tile": ((0.185, 0.072, 0.042, 1.0), 0.80),
     "MAT_backdrop_skylight": ((0.045, 0.055, 0.065, 1.0), 0.18),
     "MAT_backdrop_door_green": ((0.03, 0.11, 0.05, 1.0), 0.5),
     "MAT_backdrop_forest": ((0.05, 0.09, 0.04, 1.0), 0.9),
