@@ -46,14 +46,33 @@ SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA + GLOSSY r
                                    # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
                                    # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
-EXPOSURE_BIAS = 1.10               # EV added to the grey-card calibration. Round 07 (QA-01-12): at +0.5 the sunlit
-                                   # attic rendered Y 0.287 against ref 169's 0.410 (30 % dark). +0.6 EV closes about
-                                   # two thirds of that; the rest is albedo (materials is warming the concrete).
+EXPOSURE_BIAS = 2.00               # EV added to the grey-card calibration. Round 07 (QA-01-12) shipped 1.10.
+                                   # Round 08 (QA-02-4, blocker): QA's exposure sweep (scripts/qa_exposure_sweep.py)
+                                   # rendered the hero at +0/+0.5/+1.0 EV and measured the display response directly:
+                                   # +32.0 / +35.2 / +30.5 / +33.8 sRGB units per EV on attic / column / sky / water.
+                                   # The sunlit attic was 142.4 against ref 169's 179.4 -> +1.16 EV, dome +1.07,
+                                   # column +0.78, sky top +0.70, water reflection +0.94; the recommendation is +0.9 EV.
+                                   # My round-07 estimate of "+0.15" was wrong: I read the deficit as display-referred
+                                   # and AgX compresses a 14-26 % display gap into most of a stop of SCENE exposure.
+                                   # 1.10 + 0.90 = 2.00 -> view exposure -3.29 -> -2.39. Warmth is NOT chased here:
+                                   # hue falls 1.1 deg per +1 EV, so QA-02-14 is a materials/albedo job.
 LOOK = "AgX - Base Contrast"       # 'Punchy' crushes the sky-lit shade (A/B in lighting_notes)
-MIST = dict(start=30.0, depth=700.0, falloff="LINEAR")    # mist pass 0 at 30 m -> 1 at 730 m. Round 07 (QA-01-12):
-                                   # 1500 m put only 6 % haze on the colonnade ends at 200 m; ref 169 clearly veils
-                                   # them. 700 m gives 12 % at 110 m, 24 % at 200 m, 67 % at 500 m (backdrop hills).
-COMP = dict(haze_strength=0.85, haze_warmth=(1.22, 1.0, 0.74),   # haze colour = measured west-horizon radiance x warmth
+# QA-02-8. Round 07 used the mist pass RAW (LINEAR, 30 -> 730 m) as the haze factor, x 0.85. That is a ramp with no
+# asymptote: everything past ~730 m sat at 0.85 haze, so at cam06 the dome, the lawn and the lagoon all mixed to the
+# same flat colour (measured saturation 0.076-0.091, hue 60-76 deg). Two things were wrong and both are fixed here.
+#  1. SHAPE. Airlight is 1 - exp(-d/L), not d/L: it rises fast near the camera and then flattens. So the mist pass is
+#     now a plain LINEAR distance ramp over a long baseline (20 -> 2020 m, i.e. mist = (d - 20) / 2000) and the
+#     compositor turns it into cap * (1 - exp(-k * mist)) with k = 5.0, i.e. an extinction length L = 2000/5 = 400 m.
+#     Matched to round 07 where round 07 was right (0.12 at 110 m, 0.22 at 200 m) and capped where it was wrong:
+#     0.42 at 500 m, 0.51 at 800 m, 0.55 at 1200 m instead of 0.85 flat.
+#  2. COLOUR. haze_warmth (1.22, 1.0, 0.74) on the measured west-horizon radiance gave (3.82, 3.74, 3.02) - a neutral
+#     grey-yellow at linear saturation 0.21, which is exactly the grey-olive QA measured. The anti-solar horizon IS
+#     blue-grey physically; the warm veil in ref 169 is the low sun scattering into it, and that is an art bias with a
+#     measured target: display hue 30-45 deg. (1.50, 1.00, 0.58) gives (4.70, 3.74, 2.37), hue 35 deg, sat 0.50.
+MIST = dict(start=20.0, depth=2000.0, falloff="LINEAR")   # mist pass = (d - 20) / 2000, clamped; SHAPED in the compositor
+COMP = dict(haze_strength=0.60,          # now the CAP: the maximum airlight fraction at infinite distance, not a scale
+            haze_extinction=5.0,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 400 m
+            haze_warmth=(1.50, 1.00, 0.58),   # haze colour = measured west-horizon radiance x warmth
             bloom_threshold_display=0.9,   # scene-linear threshold = this / 2^exposure, i.e. only near-white pixels bloom
             bloom_strength=0.05, bloom_size=0.6, vignette=0.08)
 
@@ -65,9 +84,27 @@ COMP = dict(haze_strength=0.85, haze_warmth=(1.22, 1.0, 0.74),   # haze colour =
 # up into the vault. FILL models exactly that and nothing else - an up-facing area light under the vault, so it lights
 # the soffits and the coffers and adds almost nothing to what cam01 sees through the arch. It is an art bias, sized by
 # measurement; ENERGY is the one number to change if QA wants it dialled back.
-FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=9000.0,
+FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=7600.0,   # 9000 in
+            # round 07; the coffer field came in at 0.50 of cam04's own sky against ref 083's 0.39, and VAULT_FILL
+            # below now adds to it as well, so the central disk gives back 0.24 EV (QA-02-12).
             color=(1.0, 0.86, 0.68), spread_deg=150.0,
             note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
+
+# QA-02-12. The probes + the central disk fixed the coffered ceiling (cam04 coffer field / own sky 0.50 vs ref 083's
+# 0.39) but NOT the eight barrel-vault soffits around it: 0.20 of the frame's sky vs 0.58 in ref 083. The reason is
+# geometric, not a bounce-count: FILL is a disk of radius 18 m at z 7.5 centred on the rotunda axis, and the vault
+# soffits are an annulus at radius 15.4-19.5 m, z 17.5 (springing) to 23.75 (crown), facing down and inward. From a
+# soffit patch the disk is nearly edge-on and half of it is occluded by the inner colonnade ring, so it collects a
+# fraction of what the coffers (straight above the disk centre) collect. Raising FILL fixes the soffits only by
+# overshooting the coffers, which are already 28 % over ref 083's ratio.
+# So: a separate up-facing rectangle under EACH of the eight vault bays, on the bay axis, below the springing line.
+# Real lights, not probes, so Eevee and Cycles agree (QA wants the fix confirmed in both). They face up, and Blender
+# area lights are single-sided, so nothing below them (cam04 at z 1.6, cam01 through the arch) ever sees the emitter.
+# arch_params: FACE_AZ0 82.0, faces at 82 + 45k; WALL_APOTHEM 21.5, WALL_THICKNESS 2.0 -> soffit outer edge r 19.5;
+# INNER_WALL_APOTHEM 15.38 -> soffit inner edge; ARCH_SPAN 12.5; ARCH_SPRING_Z 17.5.
+VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5, z=8.0,
+                  size=12.5, size_y=4.0, energy=520.0, color=(1.0, 0.86, 0.68), spread_deg=140.0,
+                  note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
 COLLECTION = "LIGHT"
 WORLD_NAME = "WORLD_golden_hour"
@@ -146,6 +183,38 @@ def build_fill(coll):
     return obj
 
 
+def build_vault_fill(coll):
+    """QA-02-12: eight up-facing rectangles, one under each rotunda vault bay (see the VAULT_FILL comment above)."""
+    V = VAULT_FILL
+    made = []
+    for k in range(V["n"]):
+        a = math.radians(V["az0"] + 360.0 / V["n"] * k)
+        nx, ny = -math.cos(a), math.sin(a)          # arch_params.az_dir: azimuth clockwise from north, north = -X
+        name = f"{V['name']}_{k:02d}"
+        light = bpy.data.lights.new(name, "AREA")
+        light.shape = "RECTANGLE"
+        light.size, light.size_y = V["size"], V["size_y"]
+        light.energy = V["energy"]
+        light.color = V["color"]
+        light.use_shadow = True
+        try:
+            light.spread = math.radians(V["spread_deg"])
+        except Exception:
+            pass
+        obj = bpy.data.objects.new(name, light)
+        obj.location = (nx * V["radius"], ny * V["radius"], V["z"])
+        # face UP (flip about X), then spin about Z so the long edge runs tangentially across the bay
+        obj.rotation_euler = (math.pi, 0.0, math.atan2(ny, nx))
+        obj["note"] = V["note"]
+        obj["bay_azimuth_deg"] = V["az0"] + 360.0 / V["n"] * k
+        coll.objects.link(obj)
+        made.append(obj)
+    area = V["size"] * V["size_y"]
+    print(f"[light_build] {V['name']}: {V['n']} x {V['size']}x{V['size_y']} m up-facing rectangles at r {V['radius']} "
+          f"z {V['z']}, {V['energy']} W each (radiance {V['energy'] / (math.pi * area):.3f} sky units)")
+    return made
+
+
 def build_world(az, el, calib, moment):
     old = bpy.data.worlds.get(WORLD_NAME)
     if old:
@@ -200,6 +269,7 @@ def build_compositor_group(haze_color, exposure):
     it.new_socket("Depth", in_out="INPUT", socket_type="NodeSocketFloat")
     s = it.new_socket("Haze Color", in_out="INPUT", socket_type="NodeSocketColor"); s.default_value = (*haze_color, 1.0)
     s = it.new_socket("Haze Strength", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["haze_strength"]; s.min_value = 0.0; s.max_value = 1.0
+    s = it.new_socket("Haze Falloff", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["haze_extinction"]; s.min_value = 0.1; s.max_value = 20.0
     s = it.new_socket("Bloom Threshold", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_threshold_display"] / (2.0 ** exposure); s.min_value = 0.0
     s = it.new_socket("Bloom Strength", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_strength"]; s.min_value = 0.0; s.max_value = 1.0
     s = it.new_socket("Bloom Size", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_size"]; s.min_value = 0.0; s.max_value = 1.0
@@ -211,8 +281,17 @@ def build_compositor_group(haze_color, exposure):
     # --- geometry mask from depth: background pixels (depth beyond the camera clip) get no haze; the sky model already has it
     is_geo = _new(g, "ShaderNodeMath", "is_geometry", (-600, -250)); is_geo.operation = "LESS_THAN"; is_geo.inputs[1].default_value = 4000.0
     g.links.new(gi.outputs["Depth"], is_geo.inputs[0])
-    f_mist = _new(g, "ShaderNodeMath", "mist_x_strength", (-400, -150)); f_mist.operation = "MULTIPLY"
-    g.links.new(gi.outputs["Mist"], f_mist.inputs[0]); g.links.new(gi.outputs["Haze Strength"], f_mist.inputs[1])
+    # --- airlight = cap * (1 - exp(-k * mist)); mist is a plain linear distance ramp (see the MIST/COMP comment)
+    kt = _new(g, "ShaderNodeMath", "k_x_mist", (-600, -100)); kt.operation = "MULTIPLY"
+    g.links.new(gi.outputs["Mist"], kt.inputs[0]); g.links.new(gi.outputs["Haze Falloff"], kt.inputs[1])
+    neg = _new(g, "ShaderNodeMath", "negate", (-500, -60)); neg.operation = "SUBTRACT"; neg.inputs[0].default_value = 0.0
+    g.links.new(kt.outputs[0], neg.inputs[1])
+    ex = _new(g, "ShaderNodeMath", "exp_minus_kd", (-500, -20)); ex.operation = "EXPONENT"
+    g.links.new(neg.outputs[0], ex.inputs[0])
+    tr = _new(g, "ShaderNodeMath", "airlight_fraction", (-450, -20)); tr.operation = "SUBTRACT"; tr.inputs[0].default_value = 1.0
+    g.links.new(ex.outputs[0], tr.inputs[1])
+    f_mist = _new(g, "ShaderNodeMath", "airlight_x_cap", (-400, -150)); f_mist.operation = "MULTIPLY"
+    g.links.new(tr.outputs[0], f_mist.inputs[0]); g.links.new(gi.outputs["Haze Strength"], f_mist.inputs[1])
     f_haze = _new(g, "ShaderNodeMath", "haze_factor", (-200, -150)); f_haze.operation = "MULTIPLY"
     g.links.new(f_mist.outputs[0], f_haze.inputs[0]); g.links.new(is_geo.outputs[0], f_haze.inputs[1])
     haze = _new(g, "ShaderNodeMix", "aerial_haze", (0, 100)); haze.data_type = "RGBA"; haze.blend_type = "MIX"; haze.clamp_factor = True
@@ -292,6 +371,7 @@ def build(moment="morning", calibrate=True, save=True):
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
     sun = build_sun(coll, az, el, energy, color, moment, meta)
     fill = build_fill(coll)
+    vault_fill = build_vault_fill(coll)     # QA-02-12
     probes.ensure_probes(scene, coll)      # QA-01-9: unbaked here (no geometry); the lead bakes them on master
     world = build_world(az, el, calib, moment)
     scene.world = world
@@ -309,6 +389,14 @@ def build(moment="morning", calibrate=True, save=True):
     print(f"[light_build] LIGHT_sun energy {energy:.2f} W/m2 colour ({color[0]:.3f}, {color[1]:.3f}, {color[2]:.3f}) angle {SUN_ANGLE} rad")
     print(f"[light_build] exposure {calib['exposure_ev']:.2f} EV (18 % card) + bias {EXPOSURE_BIAS:+.2f} = {exposure:.2f} EV, look {LOOK}")
     print(f"[light_build] haze colour (scene units) {tuple(round(c, 3) for c in haze_color)}; bloom threshold {COMP['bloom_threshold_display'] / 2 ** exposure:.1f} scene units")
+
+    # QA-02-11: the flythrough deliverable used to be built by scripts/light_flythrough.py into the same LIGHT
+    # collection AFTER this script, so the next light_build run wiped it (rebuild_collection) and the committed
+    # assets/lighting.blend shipped without CAM_flythrough*. build_master.py appends the whole LIGHT collection, so
+    # the objects have to survive a rig rebuild. Build them here, last, as part of the rig.
+    import light_flythrough as fly
+    fly.build(scene)
+
     if save:
         common.save_blend(common.ASSET_FILES["LIGHT"])
     print(f"[light_build] done in {time.time() - t0:.1f}s")
