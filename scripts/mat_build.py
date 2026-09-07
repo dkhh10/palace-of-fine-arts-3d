@@ -211,7 +211,7 @@ def build_group_concrete():
     st = t.group(G["streaks"], Offset=off, Scale=I["Streak Scale"], Length=I["Streak Length"], Normal=N,
                  **{"Ledge Distance": I["Ledge Distance"], "Ledge Weight": I["Ledge Weight"], "Shade Bias": I["Streak Shade Bias"]})
     smask = t.mul(st.outputs["Mask"], I["Streaks"])
-    c = t.mix(smask, c, t.vmul(c, (0.40, 0.40, 0.34)))
+    c = t.mix(smask, c, t.vmul(c, (0.36, 0.37, 0.31)))
     # 10. recess dirt (AO) + baked/extra dirt + underside soot
     ao = t.ao(distance=I["Recess Distance"], samples=8, normal=N)
     dirt = t.clamp01(t.add(t.mul(t.sub(1.0, ao), I["Recess Dirt"]), I["Extra Dirt"]))
@@ -425,7 +425,7 @@ def build_concrete_family():
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
         "Base Color": C(0.47, 0.31, 0.135), "Grey Color": C(0.32, 0.26, 0.175), "Grey Drift": 0.35,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.08, "Block Size": 3.6, "Blotch Size": 1.8,
-        "Detail Strength": 0.85, "Streaks": 0.85, "Streak Scale": 2.5, "Streak Length": 10.0, "Ledge Distance": 3.0, "Ledge Weight": 0.6,
+        "Detail Strength": 0.85, "Streaks": 1.0, "Streak Scale": 2.5, "Streak Length": 10.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
         "Patches": 0.25, "Edge Wear": 0.45, "Edge Radius": 0.03, "Recess Dirt": 0.55, "Recess Distance": 0.4,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
@@ -534,22 +534,23 @@ def build_water():
     rough = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.06)
     bsdf = t.principled(**{"Base Color": C(0.62, 0.80, 0.68), "Roughness": rough, "IOR": 1.333, "Transmission Weight": 1.0,
                            "Specular IOR Level": 0.5, "Normal": normal})
-    absorb = t.new("ShaderNodeVolumeAbsorption")
-    t.plug(absorb.inputs["Color"], C(0.30, 0.50, 0.28)); t.plug(absorb.inputs["Density"], 0.55)
-    scat = t.new("ShaderNodeVolumeScatter")
-    t.plug(scat.inputs["Color"], C(0.25, 0.42, 0.28)); t.plug(scat.inputs["Density"], 0.12)
-    try:
-        t.plug(scat.inputs["Anisotropy"], 0.4)
-    except Exception:
-        pass
-    addv = t.new("ShaderNodeAddShader")
-    t.link(absorb.outputs[0], addv.inputs[0]); t.link(scat.outputs[0], addv.inputs[1])
-    t.output(surface=bsdf.outputs[0], volume=addv.outputs[0], target="CYCLES")
+    # one Principled Volume (absorption + weak scatter): Absorption + Scatter + Add Shader pushed Cycles past its
+    # 64-closure budget (76) and closures were silently dropped. extinction = density * (color + 1 - absorption_color):
+    # absorption ~ (0.385, 0.275, 0.395)/m, scatter ~ (0.03, 0.05, 0.035)/m -> green-tea murk, 1.5 m visibility.
+    vol = t.new("ShaderNodeVolumePrincipled")
+    t.plug(vol.inputs["Color"], C(0.06, 0.10, 0.07)); t.plug(vol.inputs["Density"], 0.5)
+    t.plug(vol.inputs["Absorption Color"], C(0.23, 0.45, 0.21)); t.plug(vol.inputs["Anisotropy"], 0.4)
+    t.output(surface=bsdf.outputs[0], volume=vol.outputs[0], target="CYCLES")
     # Eevee cannot reflect through its transmission path (tested: no Fresnel reflection with or without raytraced
     # refraction), so Eevee gets an opaque dark-murk surface with the same ripples: reflections come from raytracing/probes.
+    # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
+    #  tree against its 64-closure budget, two Principled BSDFs blew it to 76.)
     murk = t.mix(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.05, detail=2), 0.35, 0.65, 0.0, 1.0), C(0.025, 0.05, 0.035), C(0.045, 0.075, 0.045))
-    bsdf_e = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Specular IOR Level": 0.5, "Normal": normal})
-    t.output(surface=bsdf_e.outputs[0], target="EEVEE")
+    dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk); t.plug(dif.inputs["Normal"], normal)
+    glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
+    fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
+    mx = t.new("ShaderNodeMixShader"); t.link(fr.outputs[0], mx.inputs[0]); t.link(dif.outputs[0], mx.inputs[1]); t.link(glo.outputs[0], mx.inputs[2])
+    t.output(surface=mx.outputs[0], target="EEVEE")
     m.use_raytrace_refraction = False
     m.surface_render_method = "DITHERED"
     m.use_backface_culling = False

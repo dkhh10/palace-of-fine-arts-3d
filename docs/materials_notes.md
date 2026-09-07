@@ -55,7 +55,7 @@ the local test sun; `--env` appends `ENV` into the hero scene (materials remappe
    rotunda go grey-tan, the attic stays warm;
 5. formwork/pour lines every `Pour Spacing` (object z), broken by noise; slab grid joints (`Grid Joints`, paving);
 6. repair patches: sparse sharp Chebychev cells, +14 % value, -20 % saturation, tiny bump step;
-7. rain streaks (`PFA_streaks` x `Streaks`), tint x (0.40, 0.40, 0.34);
+7. rain streaks (`PFA_streaks` x `Streaks`), tint x (0.36, 0.37, 0.31);
 8. recess dirt: `1 - AO(Recess Distance)` x `Recess Dirt` (+ `Extra Dirt` from bakes, + `Underside Dirt` on down-facing
    faces for soffits), tint x (0.5, 0.47, 0.42) = the sheet's "recesses 0.55 x plain";
 9. edge wear (`PFA_edge` x `Edge Wear`): +22 % value, -15 % saturation, -0.15 roughness on convex arrises;
@@ -71,7 +71,7 @@ Base albedos are linear RGB. "Y" = luminance. Photo texture sets are CC0 from Po
 
 | material | base albedo (Y) | texture set | notes |
 |---|---|---|---|
-| MAT_concrete_ochre | (0.47, 0.31, 0.135) Y 0.33 | concrete_wall_008 (2.71 m tile: precast panel with tie holes + faint joints) | upper rotunda: walls, entablature, attic, drum. Streaks 0.85 under ledges (shelter 3 m), patches 0.25, edge wear 0.45 @ 3 cm, recess dirt 0.55 @ 0.4 m, pour lines 0.6 m, rough 0.78 +- 0.12 |
+| MAT_concrete_ochre | (0.47, 0.31, 0.135) Y 0.33 | concrete_wall_008 (2.71 m tile: precast panel with tie holes + faint joints) | upper rotunda: walls, entablature, attic, drum. Streaks 1.0 under ledges (shelter 3 m, weight 0.55), patches 0.25, edge wear 0.45 @ 3 cm, recess dirt 0.55 @ 0.4 m, pour lines 0.6 m, rough 0.78 +- 0.12 |
 | MAT_concrete_podium | (0.37, 0.30, 0.19) Y 0.31 | concrete_wall_007 (2.16 m: streaky, pour layers) | piers, pedestals, rostra, platform; greyer/damper (grey drift 0.5 below z 0.5..5), **algae band at WATER_Z** (height 0.6), patches 0.35 |
 | MAT_concrete_colonnade | (0.48, 0.315, 0.135) Y 0.34 | concrete_wall_007 | strongest streaks (0.8, 12 m long, shade-side bias 0.6 = north/-X faces), shelter weight 0.4 so shafts streak too |
 | MAT_concrete_inner | (0.36, 0.27, 0.14) Y 0.28 | concrete_wall_008 | vault soffits / inner rings: full grey drift, recess dirt 0.7 @ 0.5 m, underside soot 0.6, rough 0.85 |
@@ -83,7 +83,7 @@ Base albedos are linear RGB. "Y" = luminance. Photo texture sets are CC0 from Po
 | MAT_drum_band | (0.28, 0.18, 0.09) | concrete_wall_007 | bronze-brown guilloche: recess dirt 0.7 @ 0.25 m -> 0.15 in the pattern hollows |
 | MAT_backdrop_building | (0.50, 0.42, 0.27) | concrete_wall_008 (0.3) | exhibition hall / massing: coarse 4-6 m variation, streaks 0.4 |
 | MAT_dome_membrane | (0.70, 0.645, 0.535) | procedural | semi-gloss urethane: roughness 0.35 (+0.22 in streaks), Coat 0.4 where clean, specular 0.5; 48 lap seams (5 cm, bump), radial streaks strongest on the lower third (`Base Normal Z` 0.66 = the cap's base slope), moss patches (0.34, 0.42, 0.28) on the -X flank, grime ring (0.20, 0.13, 0.06) at the base with a 6 mm-in-nz irregular edge |
-| MAT_water_lagoon | surface (0.62, 0.80, 0.68) tint, IOR 1.333, transmission 1 | procedural | roughness 0.02-0.06 (noise 0.12/m), normal = bump of 0.3 m + 3 m + 0.1 m ripple noises (4D, `WATER_TIME` value driven by `frame*0.03`), calmer patches (wind shadow, 25 m noise); volume: absorption (0.30, 0.50, 0.28) x 0.55 + scatter (0.25, 0.42, 0.28) x 0.12 aniso 0.4. Eevee: raytraced transmission on, dithered |
+| MAT_water_lagoon | Cycles: surface tint (0.62, 0.80, 0.68), IOR 1.333, transmission 1 + volume; Eevee: opaque murk (0.025-0.045, 0.05-0.075, 0.035-0.045) glossy, IOR 1.333 | procedural | roughness 0.02-0.06 (noise 0.12/m), normal = bump of 0.3 m + 3 m + 0.1 m ripple noises (4D, `WATER_TIME` value driven by `frame*0.03`), calmer patches (wind shadow, 25 m noise); volume (Cycles output): one Principled Volume, density 0.5, scatter colour (0.06, 0.10, 0.07), absorption colour (0.23, 0.45, 0.21), anisotropy 0.4 (= absorption ~0.39/0.28/0.40 per m + weak scatter; Absorption+Scatter+Add exceeded Cycles' 64-closure budget). Two Material Output nodes (`target` CYCLES / EEVEE); the Eevee one is Diffuse+Glossy by Fresnel |
 | MAT_lawn | green (0.11, 0.19, 0.05) / dry (0.22, 0.21, 0.07) / wet (0.07, 0.13, 0.035) | procedural | patchy November lawn: 8 m dry patches, 12 m damp patches, blade grain 90/m (+-25 %), bump, rough 0.85, sheen 0.1 |
 | MAT_soil | (0.18, 0.12, 0.08) mixed 40 % with the photo | forest_ground_04 (3.15 m) | bump 0.5, rough 0.9 |
 | MAT_gravel_path | (0.32, 0.28, 0.21) mixed 45 % with the photo | gravelly_sand (2.48 m) | decomposed granite; damp patches |
@@ -127,10 +127,12 @@ cypress 0.28, pine 0.23, eucalyptus 0.31, broadleaf 0.39, shrub 0.53, reeds 0.33
 - AO node: works in both; Eevee's is weaker/softer (horizon scan), so recess dirt and the under-ledge shelter read at
   roughly half strength in Eevee. Bevel node: Cycles only (Eevee silently passes the normal through), so Eevee edge wear
   comes only from the inside-AO term (faint). Nothing breaks; Cycles is simply dirtier at the edges and in the hollows.
-- Water: Cycles gives proper Fresnel reflections + murk (transmission tint + volume). Eevee needs scene raytracing on
-  (`common.configure_eevee` / `light_presets.apply_preview_eevee`); the reflection is screen-space, so off-screen sky is
-  missing and the hero water reads dark in Eevee. The volume only works inside a closed mesh (ENV's lagoon bed + surface
-  must form a closed volume for the murk; on a single plane only the surface tint acts).
+- Water: Cycles gives proper Fresnel reflections + murk (transmission tint + volume). Eevee Next does not reflect
+  through its transmission path (A/B tested with and without raytraced refraction and with the lighting preset: no
+  Fresnel reflection at all), so the material has a second Material Output targeted at EEVEE: an opaque dark-murk
+  Principled surface with the same ripple normal and IOR; reflections then come from Eevee raytracing/probes and the
+  hero water reads like the Cycles one. The Cycles volume only works inside a closed mesh (ENV's lagoon bed + surface
+  should form a closed volume for the murk; on a single plane only the surface tint acts).
 - Foliage alpha: hashed/dithered in Eevee (noisy at low samples, clean at 32), exact in Cycles.
 - Driver `frame * 0.03` on `WATER_TIME` animates the ripples; if drivers are disabled the value stays 0 (static water).
 
