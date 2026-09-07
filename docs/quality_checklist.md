@@ -57,3 +57,45 @@ Minors: QA-01-12..16, 18..20 (see report).
 
 Tools added: `scripts/qa_render_round.py` (round renderer, `--eevee` / `--final`), `scripts/qa_silhouette.py`
 (silhouette measure + W_a-aligned overlay; use it for the 2 % silhouette test).
+
+### Round 02 — 2026-09-07 (Phase 3 gate; first round with the real materials library)
+
+Full report: `docs/qa_round_02.md`. **Gate composite: `renders/qa_comparisons/round02_gate.png`** (Cycles hero beside
+ref 169, the six Eevee views, and the score deltas burnt in). Evidence: `renders/qa_comparisons/round02_cam0K.png`,
+`round02_sheet.png`, `round02_cam01_aligned_vs_ref169 / _vs_ref085 / _vs_user.png`.
+Renders: `renders/previews/qa/round02_*` (Eevee 1280x720 x6: 46.3 / 45.4 / 36.7 / 33.6 / 54.8 / 32.8 s;
+Cycles hero 1920x1080 128 spp: 446 s).
+
+| row | cam01 | cam02 | cam03 | cam04 | cam05 | cam06 |
+|---|---|---|---|---|---|---|
+| Silhouette match | 4 | 2 | 1.5 | 3.5 | 2 | 4 |
+| Proportion | 3.5 | 3 | 3 | 3.5 | 3 | 3.5 |
+| Ornament fidelity | 3 | 2.5 | 2.5 | 1.5 | 2 | 2.5 |
+| Material realism | 2.5 | 2 | 2 | 2 | 2 | 1.5 |
+| Edge wear | 1 | 1 | 1 | 0.5 | 1 | 0.5 |
+| Lighting mood | 3.5 | 2.5 | 2 | 3 | 3 | 2 |
+| Water reflection | 3 | 2 | n/a | n/a | 2 | 1.5 |
+| Repetition visibility | 2.5 | 2 | 2 | 2 | 2 | 2 |
+| Scale cues | 3.5 | 2 | 1.5 | 2.5 | 2 | 2 |
+| average (delta vs round 01) | 2.94 (+0.78) | 2.11 (+0.11) | 1.94 (-0.06) | 2.31 (0.00) | 2.11 (+0.22) | 2.17 (0.00) |
+
+**Viewport performance**: master.blend opens in **1.8 s** headless (budget 60 s, pass); LOD1 **15.18 M tris**
+(62.0 M over all LODs, 6043 objects); Eevee 1280x720 previews **33-55 s per camera**, 2-7x slower than round 01;
+Cycles 1080p/128 spp 65 s -> 446 s.
+**Deliverables present**: Cycles final config pass (GPU, 768 spp adaptive, OIDN — but the saved file's own
+`cycles.device` is CPU); Eevee viewport config pass (taa 16/32, raytracing, AgX Base Contrast, 2 baked irradiance
+volumes); **`CAM_flythrough_path` FAIL — no curve objects in master.blend at all** (QA-02-11).
+
+Verdict: **gate not passed.** Real progress — dome apex now within 1.3 % of ref 169 (was 6.3 %), hero framing fixed,
+water believable, ceiling lit, zero placeholder materials — but at 1:1 the stone still reads as clean CAD with decals
+and there is effectively no edge wear in the build, the exact failure of attempts 1-2.
+Blockers: **QA-02-1** dome reads absent from cam05 (3.7 % vs 12.2 % of rotunda width, architecture); **QA-02-2** blotchy
+decal stone, olive cast, per-instance *hue* variation (materials); **QA-02-3** no edge wear and no algae/waterline band
+anywhere (materials); **QA-02-4** exposure 0.9 EV under ref 169, measured against the AgX response (lighting).
+Majors: QA-02-5 cam03 framing (lead), -6 lagoon tonal range, -7 colonnades buried in trees (environment), -8 haze too
+dense and olive (lighting), -9 relief reads as decal, -10 corner figures/scrolls (ornament), -11 flythrough path missing
+(lead), -12 vault soffits light-starved (lighting). Minors: QA-02-13..18.
+
+Tools added: `scripts/qa_measure.py` (regions / waterline / EV delta), `scripts/qa_exposure_sweep.py` (measured AgX
+exposure response), `scripts/qa_gate_sheet.py` (gate composite). `scripts/qa_silhouette.py`'s building mask changed from
+"warm pixels" to "not sky and not foliage" so a pale cream dome cap is no longer lost (`--mask warm` restores round 01).
