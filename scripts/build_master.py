@@ -253,8 +253,12 @@ if "LIGHT" in linked:
     try:
         import light_presets
         light_presets.apply_look(scene, link=LINK)
+        # QA-03-17: the saved file carries the final Cycles configuration (GPU, adaptive 768 spp, OIDN) so a manual
+        # render from the opened file is the deliverable setup; the engine goes back to Eevee for the viewport.
+        light_presets.apply_final_cycles(scene)
+        scene.render.engine = "BLENDER_EEVEE"
     except Exception as e:
-        print("[build_master] light_presets.apply_look failed:", e)
+        print("[build_master] light_presets.apply_look/apply_final_cycles failed:", e)
 
 tri = 0
 dg = bpy.context.evaluated_depsgraph_get()
