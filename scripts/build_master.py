@@ -65,9 +65,15 @@ if "LIGHT" not in linked:
     coll.objects.link(so)
     common.aim_sun(so, azimuth_deg=118.0, elevation_deg=7.0)
 
-# cameras + render settings
+# cameras + render settings + the lighting agent's look (exposure, AgX look, compositor)
 qa_cameras.ensure(scene)
 common.configure_eevee(scene, samples=32)
+if "LIGHT" in linked:
+    try:
+        import light_presets
+        light_presets.apply_look(scene)
+    except Exception as e:
+        print("[build_master] light_presets.apply_look failed:", e)
 scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
 common.set_lod_visibility(1)
 

@@ -10,7 +10,7 @@ All snippets were run with `/Applications/Blender.app/Contents/MacOS/Blender --b
 
 ## Sky texture (world)
 `ShaderNodeTexSky` props: `sky_type` ('MULTIPLE_SCATTERING' = physically based, use this), `sun_disc`, `sun_size`, `sun_intensity`,
-`sun_elevation`, `sun_rotation` (azimuth; verify direction empirically, see lighting brief), `altitude`, `air_density`,
+`sun_elevation`, `sun_rotation` (**verified: rotation 0 puts the sun toward world +Y and increases clockwise, so `sun_rotation = radians(azimuth - 90)` in our frame**; always build skies with `light_calibrate.make_sky_world`), `altitude`, `air_density`,
 `aerosol_density`, `ozone_density`. No `sun_azimuth` attribute. The node outputs physically scaled radiance; expect to use a strongly
 negative exposure (around -6 to -9 EV) or scale the Background strength.
 
@@ -74,3 +74,10 @@ Image texture paths must be relative (`//textures/...`) and the files committed 
 ## Comparison sheets
 `python3 scripts/qa_compare.py --render r.png --ref p.jpg --out renders/qa_comparisons/x.png` (render | reference | 50% blend)
 and `--sheet out.png a.png b.png ...` for grids. This ffmpeg build has no drawtext filter; label via filenames.
+
+## Lighting rig numbers (lighting agent, verified 2026-09-07)
+Morning 2026-11-10 07:30 PST: az 118.49, el 7.36. `LIGHT_sun` energy 71.83 W/m2, colour (1.0, 0.616, 0.269), angle 0.0093;
+world sky MULTIPLE_SCATTERING (aerosol 1.0, ozone 2.0, altitude 5 m, disc OFF) strength 2.0 with a camera/glossy-ray boost 1.6;
+exposure -3.90 EV (18% card facing the sun = middle grey at -4.40, +0.5 bias), look 'AgX - Base Contrast'; compositor
+`COMP_golden_hour` (mist haze 3% at 120 m, bloom, 2-3% vignette). Apply to any scene with `light_presets.apply_look(scene)`.
+Cycles 768 spp 1280x720 = 65 s on the placeholder -> 4K estimate ~10 min; real scene expected 5-10x heavier.
