@@ -611,9 +611,11 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
 # Offenders are pushed along the camera's right axis - which moves them across the frame without changing their
 # distance much - to the nearer edge of the band, and only shortened if no clear spot exists.
 FRAME_BANDS = [
-    dict(cam="_qa_01_", x0=0.031, x1=0.205, y0=0.40, y1=0.60, arc_r=93.0,
+    dict(cam="_qa_01_", x0=0.031, x1=0.205, y0=0.40, y1=0.60, behind="colonnade",
          label="QA-03-10 hero south-wing band"),
-    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.00, y1=0.86, near=112.0,
+    # cam 05's guard stops at y 0.66: the rotunda's body ends there, and the 7-9 m willows and broadleaves of the
+    # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
+    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0,
          label="QA-03-13 cam05 rotunda silhouette"),
 ]
 CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
@@ -651,7 +653,28 @@ def _frame_box(spec, f, r, u, x, y, h, species):
             min(p[1] for p in pts), max(p[1] for p in pts), min(p[2] for p in pts))
 
 
-def frame_band_relief(plan, land_ok=None, verbose=True):
+def _crosses(cam_loc, x, y, polys):
+    """True if the camera->tree segment crosses one of `polys` - i.e. the tree stands behind that wall.
+
+    The colonnade polygons are not annuli (roof306 runs r 68.7-105.5 m about ARC_CENTRE because the end pylon
+    sticks out), so a single radius threshold mis-sorts the first screen row.  The segment test is exact.
+    """
+    ax, ay = cam_loc[0], cam_loc[1]
+    for poly in polys:
+        n = len(poly)
+        for k in range(n):
+            cx, cy = poly[k]
+            dx, dy = poly[(k + 1) % n]
+            d1 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx)
+            d2 = (dx - cx) * (y - cy) - (dy - cy) * (x - cx)
+            d3 = (x - ax) * (cy - ay) - (y - ay) * (cx - ax)
+            d4 = (x - ax) * (dy - ay) - (y - ay) * (dx - ax)
+            if ((d1 > 0) != (d2 > 0)) and ((d3 > 0) != (d4 > 0)):
+                return True
+    return False
+
+
+def frame_band_relief(plan, land_ok=None, occluders=(), verbose=True):
     """Move (or, failing that, shorten) any tree that stands in front of a guarded frame band."""
     try:
         specs = {s["name"]: s for s in _cam_specs()}
@@ -677,9 +700,8 @@ def frame_band_relief(plan, land_ok=None, verbose=True):
             bx0, bx1, by0, by1, dist = box
             if bx1 < band["x0"] or bx0 > band["x1"] or by1 < band["y0"] or by0 > band["y1"]:
                 continue
-            if "arc_r" in band:
-                if math.hypot(x - L.ARC_CENTRE[0], y - L.ARC_CENTRE[1]) > band["arc_r"]:
-                    continue                                   # behind the wing: this is the screen, keep it
+            if band.get("behind") == "colonnade" and _crosses(spec["loc"], x, y, occluders):
+                continue                                       # behind the wing: this is the screen, keep it
             if "near" in band and dist > band["near"]:
                 continue                                       # behind the subject
             # push along the camera's right axis, whichever way is shorter, in 2 m steps
@@ -770,7 +792,7 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
                 return False
             return all(not L.point_in_poly(px, py, L.offset_polygon(p, 2.0)) for p in colonnade_polys)
 
-        plan = frame_band_relief(plan, land_ok=_land)
+        plan = frame_band_relief(plan, land_ok=_land, occluders=colonnade_polys)
     rnd = random.Random(77)
     counts = {}
     per_species_idx = {}
