@@ -1,0 +1,32 @@
+{
+  "concrete_wall_008": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/concrete_wall_008",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_ao_2k.jpg"
+    }
+  },
+  "concrete_wall_007": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/concrete_wall_007",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_ao_2k.jpg"
+    }
+  },
+  "concrete_moss": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/concrete_moss",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/concrete_moss/concrete_moss_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/concrete_moss/concrete_moss_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/concrete_moss/concrete_moss_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/concrete_moss/concrete_moss_ao_2k.jpg"
+    }
+  }
+}
