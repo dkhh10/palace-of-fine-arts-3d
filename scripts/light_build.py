@@ -51,22 +51,50 @@ SKY_STRENGTH = 0.80                # world strength for LIGHTING. 2.0 was a roun
                                    # High Contrast: attic R-B 119.0 at 1.00, 122.9 at 0.80, 125.8 at 0.60; shade
                                    # 134.7 / 132.3 / 129.7 against ref 169's 117.2. 0.80 takes most of the gain
                                    # for the smallest departure from physical; 0.60 is on record if more is wanted.
-SKY_CAMERA_BOOST = 1.50            # what the CAMERA sees of the sky: sky x boost = 0.80 x 1.50 = 1.20, i.e. the
+SKY_CAMERA_BOOST = 2.10            # ROUND 10: 1.50 -> 2.10. This knob does NOT change the look of the sky; it holds
+                                   # it still while the view exposure moves. Round 10 took 0.50 EV out of the whole
+                                   # frame (EXPOSURE_BIAS below), which would have dropped the visible sky from
+                                   # sky_top 168.4 to 144.6 and out of QA's 149-182 window; 1.50 x 2^0.5 = 2.12,
+                                   # and 2.10 measured sky_top 168.7 against the 168.4 it had before the exposure
+                                   # move (ref 169: 165.7). The old note below still describes what the knob is.
+                                   # what the CAMERA sees of the sky: sky x boost = 0.80 x 1.50 = 1.20, i.e. the
                                    # visible sky is EXACTLY what round 08b calibrated, and the round-09 sky trim
                                    # is invisible to the camera and visible only to the diffuse lighting.
                                    # Round 08b swept 3.0 / 2.4 / 2.0 / 1.5 / 1.2 / 1.0 against
                                    # ref 169's sky-top luminance of 165.7: 213.6 / 204.3 / 195.7 / 179.9 / 165.7 /
                                    # 153.2. 1.20 lands on the reference exactly. (The sky is deep on the AgX shoulder,
                                    # which is why it takes a 2.5x cut in scene radiance to move it 23 %.)
-SKY_GLOSSY_BOOST = 3.75            # what GLOSSY (reflection) rays see: 0.80 x 3.75 = 3.00, again unchanged from
+SKY_GLOSSY_BOOST = 5.25            # ROUND 10: 3.75 -> 5.25, the same 2^0.5 exposure hold as SKY_CAMERA_BOOST, so
+                                   # the lagoon keeps the sky brightness it reflected before the exposure move
+                                   # (water_refl 132.2 at 3.75 after -0.5 EV, 142.1 at 5.25, 153.4 before).
+                                   # what GLOSSY (reflection) rays see: 0.80 x 3.75 = 3.00, again unchanged from
                                    # round 08b, so the lagoon reflects the same sky it did. Split from the camera
                                    # boost in round 08b: the
                                    # camera's sky had to come down to match ref 169 while the lagoon's reflection had
                                    # to stay up, and one socket could not do both. 1.0 x 3.00 = the 2.0 x 1.50 the
                                    # lagoon reflected before, so the water keeps its brightness.
-SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
+SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA rays only (Hue/Sat node in the world);
                                    # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
                                    # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
+                                   # Round 10 verified it is still right: sky_top hue 208.7 against ref 169's 208.2
+                                   # and saturation 0.427 against 0.487.
+SKY_GLOSSY_SATURATION = 0.90       # ROUND 10 (QA-03-7). Split out of SKY_CAMERA_SATURATION, which glossy rays used
+                                   # to share. At grazing angles the lagoon is a Fresnel mirror of the horizon sky, so
+                                   # the near-water chroma IS the sky's chroma on the glossy socket and nothing in the
+                                   # water shader can reach it (materials measured murk / tint / transmission at
+                                   # ~0 effect there). Measured on the cam01 hero, near-water saturation against QA's
+                                   # 0.22-0.32 window (ref 169: 0.270): gsat 1.20 -> 0.525, 0.85 -> 0.243,
+                                   # 0.70 -> 0.173, 0.45 -> 0.086; 0.90 interpolates to ~0.27.
+                                   # The remaining 17 deg of near-water HUE (209 vs ref 192) is NOT the sky: the
+                                   # visible sky's own hue is 208.7 against ref 169's 208.2, i.e. exact. In the photo
+                                   # the water is 16 deg greener than the sky it mirrors, which is the lagoon's own
+                                   # upwelling green - environment's water shader, not lighting's.
+SKY_DIFFUSE_SATURATION = 1.00      # saturation of the sky for DIFFUSE rays, i.e. the light that lands on the shaded
+                                   # stone. Kept physical. Round 10 swept it to 2.0 and 3.0 hunting the shaded
+                                   # attic's hue (43.0 against ref 169's 29.5) and it moved the shade's BLUE channel
+                                   # by 1 sRGB unit out of 36 needed (142,112,36 -> 135,107,34): >97 % of the light
+                                   # on the shaded stone is warm interreflection off the sunlit stone and ground, not
+                                   # sky, so no sky colour can reach it. Handed to materials (see docs/lighting_notes 19).
 SUN_BLUE_MULT = 0.75               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
                                    # own sun disc has been integrated (so the calibration itself stays physical and
                                    # reproducible). Round 09 lever for QA-02-14 / the sunlit-stone chroma: the lamp
@@ -78,7 +106,25 @@ SUN_BLUE_MULT = 0.75               # multiplier on the CALIBRATED lamp colour's 
                                    # the attic luminance flat (blue carries 7 % of luminance), taken together
                                    # with SKY_STRENGTH 0.80 in the same sweep row.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
-EXPOSURE_BIAS = 1.75               # EV added to the grey-card calibration. Round 08b: SKY_STRENGTH 2.0 -> 1.0 takes
+EXPOSURE_BIAS = 1.25               # ROUND 10: 1.75 -> 1.25 (view exposure -4.083 + 1.25 = -2.833 EV).
+                                   # QA-03 closed QA-02-4 with the attic at 0.94 of ref 169 and told lighting not to
+                                   # move the exposure again - but that reading was taken on a master that was still
+                                   # rendering at "AgX - Base Contrast" (the round-09 look bug) and before materials
+                                   # r4. On the rebuilt master the same box reads 197.5 against ref 169's 189.6, i.e.
+                                   # 1.04x and 19 units above QA's own floor: the +0.9 EV bought in round 08 was
+                                   # paying for albedo that materials has since supplied.
+                                   # Giving it back is the single strongest CHROMA lever left, because the sunlit
+                                   # stone had climbed onto the AgX shoulder where the transform desaturates: at
+                                   # 1920x1080 the same rig at -0.5 EV moves the attic from 234,196,133 to
+                                   # 222,179,99 - saturation 0.433 -> 0.554, R-B 101 -> 123, hue 37.4 -> 38.8
+                                   # (ref 40.3), luminance 199 -> 182 (ref 190). Nothing else in the round-10 sweep
+                                   # came close: sun blue x0.35 was worth +4 R-B, a 5x aerosol change -2, and a
+                                   # 2x diffuse sky saturation +3. It also closes QA-03-2's column defect on its
+                                   # own (mask luminance 145 -> 104 against ref 96) and lands the shaded attic at
+                                   # 113.0 against ref 115.0. The visible sky and the lagoon's reflection are held
+                                   # still through SKY_CAMERA_BOOST / SKY_GLOSSY_BOOST above, so this is a stone
+                                   # exposure change, not a global one.
+                                   # EV added to the grey-card calibration. Round 08b: SKY_STRENGTH 2.0 -> 1.0 takes
                                    # light out of the scene, so the 18 % card calibration moved -4.39 -> -4.14 EV and
                                    # the old bias of 2.00 would have landed the view at -2.14, a quarter stop above
                                    # the number QA's sweep asked for AND above the setting every round-08b measurement
@@ -293,7 +339,8 @@ def build_world(az, el, calib, moment):
         bpy.data.worlds.remove(old)
     w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
                            camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION,
-                           glossy_boost=SKY_GLOSSY_BOOST)  # disc OFF: LIGHT_sun carries it
+                           glossy_boost=SKY_GLOSSY_BOOST, glossy_saturation=SKY_GLOSSY_SATURATION,
+                           diffuse_saturation=SKY_DIFFUSE_SATURATION)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -308,7 +355,9 @@ def build_world(az, el, calib, moment):
     w["sky_strength_lighting"] = SKY_STRENGTH
     w["sky_camera_boost"] = SKY_CAMERA_BOOST
     w["sky_glossy_boost"] = SKY_GLOSSY_BOOST
-    w["sky_camera_glossy_saturation"] = SKY_CAMERA_SATURATION
+    w["sky_camera_saturation"] = SKY_CAMERA_SATURATION
+    w["sky_glossy_saturation"] = SKY_GLOSSY_SATURATION
+    w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]

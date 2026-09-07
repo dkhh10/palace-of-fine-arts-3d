@@ -254,6 +254,31 @@ for case in VAULT:
     shoot(CAM04, OUT / f"{PREFIX}v_{tag}_eevee.png")
     set_fills(1.0, 1.0, base_spread)
 
+# ---- Eevee Fast-GI cases (item 6) ---------------------------------------------------------------------------------
+# Round 10 finding: at 960x540 switching the eight vault emitters OFF moved the Eevee coffer ratio by 0.002, and the
+# same scene reads 0.246 at 960x540 against 1.082 at 1920x1080. Neither is possible for a real light: the emitters are
+# not what lights the Eevee vault. `apply_preview_eevee` turns on Fast GI (GLOBAL_ILLUMINATION, distance 60 m) and
+# screen-traced raytracing at half resolution, and BOTH are screen-space, i.e. resolution-dependent and blind to the
+# emitters' 45 deg cone. That ambient term is what floods the closed vault volume in Eevee and not in Cycles.
+EEV = arg("--eevee", [])
+for case in EEV:
+    d = dict(fgi=1.0, dist=60.0, ao=0.0, rays=2.0, rt=1.0)
+    for part in case.split(";"):
+        if part.strip():
+            k, val = part.split("=", 1)
+            d[k.strip()] = float(val)
+    lp.apply_preview_eevee(scene, samples=64)
+    e = scene.eevee
+    e.use_fast_gi = d["fgi"] > 0.5
+    e.fast_gi_method = "AMBIENT_OCCLUSION" if d["ao"] > 0.5 else "GLOBAL_ILLUMINATION"
+    e.fast_gi_distance = d["dist"]
+    e.fast_gi_ray_count = int(d["rays"])
+    e.use_raytracing = d["rt"] > 0.5
+    tag = f"fgi{d['fgi']:g}_d{d['dist']:g}" + ("_ao" if d["ao"] else "") + ("" if d["rt"] else "_nort")
+    print(f"[r10] eevee {tag}: fast_gi {e.use_fast_gi} {e.fast_gi_method} dist {e.fast_gi_distance} "
+          f"rays {e.fast_gi_ray_count}, raytracing {e.use_raytracing}", flush=True)
+    shoot(CAM04, OUT / f"{PREFIX}e04_{tag}.png")
+
 # ---- compositor haze cases (item 5) -------------------------------------------------------------------------------
 COMPC = arg("--comp", [])
 if COMPC:

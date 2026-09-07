@@ -1,0 +1,25 @@
+00:00.392  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r10] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend: exposure -2.3331, look 'AgX - High Contrast', sun az 118.49 el 7.36 (sun_position.sun_calc (NOAA)), energy 67.32, colour (1.0, 0.6073, 0.1933), world 'WORLD_golden_hour'
+[r10] light_build says: sky {'sun_size_deg': 0.533, 'sun_intensity': 1.0, 'altitude': 5.0, 'air_density': 1.0, 'aerosol_density': 1.6, 'ozone_density': 2.0}, strength 0.8, camboost 2.1, glossyboost 5.25, csat 1.2, sunblue 0.75, bias 1.25, look 'AgX - High Contrast'
+[r10] eevee fgi1_d60: fast_gi True GLOBAL_ILLUMINATION dist 60.0 rays 2, raytracing True
+01:34.305  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10e04_fgi1_d60.png'
+[r10] -> r10e04_fgi1_d60.png (93.2s)
+[r10] eevee fgi0_d60: fast_gi False GLOBAL_ILLUMINATION dist 60.0 rays 2, raytracing True
+03:04.686  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10e04_fgi0_d60.png'
+[r10] -> r10e04_fgi0_d60.png (90.4s)
+[r10] eevee fgi1_d10: fast_gi True GLOBAL_ILLUMINATION dist 10.0 rays 2, raytracing True
+04:34.087  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10e04_fgi1_d10.png'
+[r10] -> r10e04_fgi1_d10.png (89.4s)
+[r10] eevee fgi1_d25: fast_gi True GLOBAL_ILLUMINATION dist 25.0 rays 2, raytracing True
+06:02.393  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10e04_fgi1_d25.png'
+[r10] -> r10e04_fgi1_d25.png (88.3s)
+Traceback (most recent call last):
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/scripts/light_r10_sweep.py", line 273, in <module>
+    e.fast_gi_method = "AMBIENT_OCCLUSION" if d["ao"] > 0.5 else "GLOBAL_ILLUMINATION"
+    ^^^^^^^^^^^^^^^^
+TypeError: bpy_struct: item.attr = val: enum "AMBIENT_OCCLUSION" not found in ('AMBIENT_OCCLUSION_ONLY', 'GLOBAL_ILLUMINATION')
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+EXIT 0

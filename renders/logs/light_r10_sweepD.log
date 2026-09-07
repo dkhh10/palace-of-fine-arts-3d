@@ -57,3 +57,31 @@ Info: No orphaned data-blocks to purge
 Info: No orphaned data-blocks to purge
 [r10] calibrate aer 4 oz 2 air 1 sky 0.8: lamp 51.87 W/m2 colour [1.0, 0.5729, 0.2181], exposure -3.813 EV, L_zenith [0.392, 0.772, 1.737], L_horizon_west [2.181, 2.574, 3.087], L_sunward [102.013, 65.974, 31.674] (5s)
 00:12.071  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r10] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend: exposure -2.3331, look 'AgX - High Contrast', sun az 118.49 el 7.36 (sun_position.sun_calc (NOAA)), energy 67.32, colour (1.0, 0.6073, 0.1933), world 'WORLD_golden_hour'
+[r10] light_build says: sky {'sun_size_deg': 0.533, 'sun_intensity': 1.0, 'altitude': 5.0, 'air_density': 1.0, 'aerosol_density': 1.6, 'ozone_density': 2.0}, strength 0.8, camboost 1.5, glossyboost 3.75, csat 1.2, sunblue 0.75, bias 1.75, look 'AgX - High Contrast'
+[r10] case H_gb525: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+00:53.114  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_gb525.png'
+[r10] -> r10hero_H_gb525.png (40.1s)
+[r10] case H_gsat085: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+01:30.616  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_gsat085.png'
+[r10] -> r10hero_H_gsat085.png (37.3s)
+[r10] case H_gsat070: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+02:20.805  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_gsat070.png'
+[r10] -> r10hero_H_gsat070.png (50.1s)
+[r10] case H_aer4gsat085: exposure -2.563 EV (cal -3.813 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 51.87 W/m2 (1.0, 0.5729, 0.1636)
+03:27.882  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_aer4gsat085.png'
+[r10] -> r10hero_H_aer4gsat085.png (67.0s)
+[r10] case H_dsat20: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+04:32.633  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_dsat20.png'
+[r10] -> r10hero_H_dsat20.png (64.6s)
+[r10] case H_dsat30: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+05:13.976  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_dsat30.png'
+[r10] -> r10hero_H_dsat30.png (41.2s)
+[r10] case H_full: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+05:54.850  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_full.png'
+[r10] -> r10hero_H_full.png (40.7s)
+[r10] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+EXIT 0
