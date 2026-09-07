@@ -135,10 +135,10 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |
 |---|---|---|---|---|---|
-| 00 | pine | -44 | 4 | 21 | A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10) |
-| 01 | redwood | -37 | -2 | 16 | A young redwood at the north arch (ref 070) |
-| 02 | cypress | -41 | -1 | 24 | A dark mass right of the dome |
-| 03 | pine | -46 | 8 | 22 | A cluster, second crown |
+| 00 | pine | -44 | 4 | 17 | A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10) |
+| 01 | redwood | -40 | -2 | 16 | A young redwood at the north arch (ref 070) |
+| 02 | cypress | -44 | -1 | 20 | A dark mass right of the dome |
+| 03 | pine | -46 | 8 | 18 | A cluster, second crown |
 | 04 | willow | -40 | 16 | 10 | A pale weeping willow at the water in front of the cluster (ref 169) |
 | 05 | broadleaf | -49 | 13 | 11 | A shore broadleaf at cam02's right edge |
 | 06 | cypress | -48 | 0 | 23 | A cluster depth (QA-01-6: mass kept dense after the move west) |
@@ -148,26 +148,26 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 10 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
 | 11 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
 | 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
-| 13 | broadleaf | 31 | 18 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
-| 14 | cypress_column | -36 | -18 | 27 | A2 tall column right of the rotunda (user image x~1020) |
+| 13 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
+| 14 | cypress_column | -47 | -39 | 22 | A2 tall column right of the rotunda (user image x~1020) |
 | 15 | pine | -47 | -13 | 17 | A2 strip along the north wing (kept below the colonnade entablature) |
 | 16 | cypress_column | -58 | -12 | 27 | A2 second column (user image x~1220) |
-| 17 | cypress | -68 | 10 | 24 | A2 at the wing's first box |
-| 18 | eucalyptus | -79 | 26 | 28 | B big eucalyptus on the strip (ref 141) |
-| 19 | pine | -90 | 22 | 20 | B |
+| 17 | cypress | -74 | -1 | 20 | A2 at the wing's first box |
+| 18 | eucalyptus | -90 | 5 | 20 | B big eucalyptus on the strip (ref 141) |
+| 19 | pine | -90 | 22 | 16 | B |
 | 20 | willow | -100 | 37 | 9 | B willow at the water (refs 144/145) |
 | 21 | eucalyptus | -106 | 20 | 30 | B big eucalyptus behind the willows (ref 171) |
 | 22 | cypress | -118 | 8 | 22 | B beyond the north pylon |
 | 23 | cypress_column | -112 | 40 | 24 | B tall column beyond the north pylon (ref 169 right) |
-| 24 | cypress_column | 31 | 18 | 26 | C cypress column left of the rotunda (user image x~290): peninsula south lobe, base at the water |
-| 25 | cypress_column | 26 | 23 | 24 | C second column (user image x~330), south lobe |
-| 26 | broadleaf | 20 | 17 | 13 | C small dark tree touching the rotunda's left edge (user image x~410), in the podium planter zone |
+| 24 | cypress_column | 36 | 21 | 26 | C cypress column left of the rotunda (user image x~290): peninsula south lobe, base at the water |
+| 25 | cypress_column | 31 | 28 | 24 | C second column (user image x~330), south lobe |
+| 26 | broadleaf | 32 | 27 | 13 | C small dark tree touching the rotunda's left edge (user image x~410), in the podium planter zone |
 | 27 | eucalyptus | 62 | -30 | 30 | C broad eucalyptus behind the south wing (ref 169 left) |
 | 28 | pine | 62 | -46 | 18 | C QA-01-6: moved out of cam03 (was 24,-22 = 7 m in front of the camera) |
 | 29 | broadleaf | 74 | -38 | 10 | C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera) |
-| 30 | cypress_column | 66 | 40 | 22 | D dense cypress behind the south pylon (ref 169 far left) |
-| 31 | eucalyptus | 76 | 46 | 28 | D |
-| 32 | pine | 92 | 58 | 18 | D |
+| 30 | cypress_column | 66 | 40 | 18 | D dense cypress behind the south pylon (ref 169 far left) |
+| 31 | eucalyptus | 59 | 15 | 20 | D |
+| 32 | pine | 92 | 58 | 15 | D |
 | 33 | willow | 78 | 50 | 9 | D willow at the south end of the lagoon |
 | 34 | eucalyptus | 104 | 52 | 30 | D south pylon |
 | 35 | cypress | 112 | 40 | 22 | D |
@@ -175,142 +175,226 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 37 | eucalyptus | -90 | 126 | 28 | F east shore row |
 | 38 | eucalyptus | -70 | 122 | 32 | F east shore row |
 | 39 | eucalyptus | -48 | 127 | 30 | F east shore row |
-| 40 | eucalyptus | 12 | 128 | 30 | F east shore row |
-| 41 | broadleaf | 24 | 130 | 12 | F east lawn |
-| 42 | eucalyptus | 34 | 126 | 28 | F east shore row |
-| 43 | eucalyptus | 54 | 124 | 30 | F east shore row |
-| 44 | eucalyptus | 73 | 120 | 30 | F |
-| 45 | eucalyptus | 95 | 118 | 32 | F |
-| 46 | eucalyptus | 126 | 127 | 28 | F |
-| 47 | cypress | 168 | 114 | 22 | F |
-| 48 | eucalyptus | 158 | 28 | 32 | F |
-| 49 | pine | 130 | -20 | 20 | F |
-| 50 | eucalyptus | 130 | -68 | 28 | F |
-| 51 | cypress | 110 | 14 | 20 | F |
-| 52 | eucalyptus | 125 | 74 | 30 | F |
-| 53 | cypress | 155 | 94 | 24 | F |
-| 54 | cypress | -130 | 110 | 24 | F NE-corner Monterey cypress (DPR, Harbor View Inn era) |
-| 55 | cypress | -118 | 96 | 22 | F NE corner |
-| 56 | cypress | -140 | 82 | 22 | F NE corner |
-| 57 | eucalyptus | -158 | 131 | 30 | F |
-| 58 | willow | -80 | 72 | 9 | G islet willow (herons, DPR) |
-| 59 | broadleaf | -92 | 68 | 12 | G |
-| 60 | eucalyptus | -108 | 65 | 24 | G |
-| 61 | willow | -100 | 72 | 8 | G |
-| 62 | broadleaf | -115 | 62 | 10 | G |
-| 63 | eucalyptus | -80 | -111 | 30 | H |
-| 64 | cypress | -95 | -100 | 22 | H |
-| 65 | eucalyptus | -70 | -125 | 28 | H |
-| 66 | pine | -105 | -118 | 20 | H |
-| 67 | eucalyptus | -268 | -120 | 30 | H |
-| 68 | cypress | -245 | -304 | 24 | H |
-| 69 | eucalyptus | -280 | -26 | 30 | H |
-| 70 | cypress | -197 | 54 | 22 | H |
-| 71 | eucalyptus | -216 | 27 | 28 | H |
-| 72 | cypress | -255 | 120 | 24 | H |
-| 73 | eucalyptus | -259 | -79 | 30 | H |
-| 74 | pine | -253 | -174 | 22 | H |
-| 75 | eucalyptus | 24 | -295 | 30 | H |
-| 76 | cypress | 170 | -102 | 24 | H |
-| 77 | eucalyptus | 168 | 112 | 30 | H |
-| 78 | eucalyptus | -88 | -308 | 30 | H |
-| 79 | cypress | -30 | -290 | 24 | H |
-| 80 | redwood | 58 | -19 | 30 | E1 screen behind the colonnade |
-| 81 | redwood | 60 | -15 | 31 | E1 screen behind the colonnade |
-| 82 | redwood | 63 | -12 | 33 | E1 screen behind the colonnade |
-| 83 | redwood | 65 | -9 | 32 | E1 screen behind the colonnade |
-| 84 | cypress | 67 | -5 | 27 | E1 screen behind the colonnade |
-| 85 | pine | 69 | -2 | 21 | E1 screen behind the colonnade |
-| 86 | pine | 75 | -2 | 22 | E1 screen behind the colonnade |
-| 87 | redwood | 77 | 2 | 31 | E1 screen behind the colonnade |
-| 88 | pine | 77 | 6 | 24 | E1 screen behind the colonnade |
-| 89 | redwood | 80 | 10 | 29 | E1 screen behind the colonnade |
-| 90 | redwood | 79 | 15 | 27 | E1 screen behind the colonnade |
-| 91 | cypress | 81 | 18 | 26 | E1 screen behind the colonnade |
-| 92 | redwood | 84 | 21 | 28 | E1 screen behind the colonnade |
-| 93 | redwood | 86 | 25 | 30 | E1 screen behind the colonnade |
-| 94 | redwood | 87 | 28 | 34 | E1 screen behind the colonnade |
-| 95 | cypress | 86 | 33 | 33 | E1 screen behind the colonnade |
-| 96 | redwood | 87 | 37 | 31 | E1 screen behind the colonnade |
-| 97 | redwood | 106 | 38 | 27 | E1 screen behind the colonnade |
-| 98 | redwood | 111 | 42 | 32 | E1 screen behind the colonnade |
-| 99 | pine | 111 | 46 | 22 | E1 screen behind the colonnade |
-| 100 | redwood | 109 | 50 | 32 | E1 screen behind the colonnade |
-| 101 | cypress | 108 | 54 | 32 | E1 screen behind the colonnade |
-| 102 | redwood | 38 | -40 | 31 | E2 screen behind the colonnade |
-| 103 | redwood | 56 | -25 | 29 | E2 screen behind the colonnade |
-| 104 | cypress | 61 | -23 | 36 | E2 screen behind the colonnade |
-| 105 | eucalyptus | 64 | -19 | 32 | E2 screen behind the colonnade |
-| 106 | redwood | 69 | -16 | 33 | E2 screen behind the colonnade |
-| 107 | redwood | 72 | -11 | 28 | E2 screen behind the colonnade |
-| 108 | redwood | 76 | -7 | 35 | E2 screen behind the colonnade |
-| 109 | cypress | 79 | -3 | 36 | E2 screen behind the colonnade |
-| 110 | redwood | 84 | 1 | 31 | E2 screen behind the colonnade |
-| 111 | eucalyptus | 83 | 8 | 30 | E2 screen behind the colonnade |
-| 112 | eucalyptus | 88 | 12 | 36 | E2 screen behind the colonnade |
-| 113 | cypress | 89 | 17 | 32 | E2 screen behind the colonnade |
-| 114 | redwood | 91 | 22 | 29 | E2 screen behind the colonnade |
-| 115 | redwood | 87 | 34 | 31 | E2 screen behind the colonnade |
-| 116 | redwood | 92 | 39 | 34 | E2 screen behind the colonnade |
-| 117 | cypress | 115 | 41 | 34 | E2 screen behind the colonnade |
-| 118 | cypress | 117 | 46 | 34 | E2 screen behind the colonnade |
-| 119 | cypress | 116 | 52 | 30 | E2 screen behind the colonnade |
-| 120 | cypress | 123 | 40 | 33 | E3 screen behind the colonnade |
-| 121 | redwood | 125 | 48 | 33 | E3 screen behind the colonnade |
-| 122 | cypress | 124 | 56 | 28 | E3 screen behind the colonnade |
-| 123 | cypress | -118 | 13 | 28 | E1 screen behind the colonnade |
-| 124 | cypress | -118 | 9 | 26 | E1 screen behind the colonnade |
-| 125 | redwood | -117 | 5 | 28 | E1 screen behind the colonnade |
-| 126 | redwood | -113 | 2 | 29 | E1 screen behind the colonnade |
-| 127 | redwood | -88 | 6 | 30 | E1 screen behind the colonnade |
-| 128 | cypress | -91 | -1 | 28 | E1 screen behind the colonnade |
-| 129 | redwood | -90 | -5 | 29 | E1 screen behind the colonnade |
-| 130 | redwood | -86 | -7 | 27 | E1 screen behind the colonnade |
-| 131 | redwood | -83 | -10 | 26 | E1 screen behind the colonnade |
-| 132 | redwood | -80 | -12 | 30 | E1 screen behind the colonnade |
-| 133 | cypress | -77 | -15 | 34 | E1 screen behind the colonnade |
-| 134 | redwood | -75 | -19 | 33 | E1 screen behind the colonnade |
-| 135 | redwood | -72 | -22 | 27 | E1 screen behind the colonnade |
-| 136 | cypress | -69 | -24 | 34 | E1 screen behind the colonnade |
-| 137 | cypress | -67 | -28 | 29 | E1 screen behind the colonnade |
-| 138 | redwood | -61 | -26 | 31 | E1 screen behind the colonnade |
-| 139 | redwood | -58 | -30 | 31 | E1 screen behind the colonnade |
-| 140 | redwood | -56 | -33 | 29 | E1 screen behind the colonnade |
-| 141 | redwood | -51 | -33 | 34 | E1 screen behind the colonnade |
-| 142 | pine | -48 | -36 | 25 | E1 screen behind the colonnade |
-| 143 | redwood | -45 | -38 | 34 | E1 screen behind the colonnade |
-| 144 | redwood | -40 | -38 | 29 | E1 screen behind the colonnade |
-| 145 | redwood | -36 | -38 | 30 | E1 screen behind the colonnade |
-| 146 | cypress | -32 | -39 | 30 | E1 screen behind the colonnade |
-| 147 | cypress | -28 | -41 | 33 | E1 screen behind the colonnade |
-| 148 | redwood | -24 | -41 | 28 | E1 screen behind the colonnade |
-| 149 | cypress | -21 | -44 | 28 | E1 screen behind the colonnade |
-| 150 | redwood | -126 | 10 | 33 | E2 screen behind the colonnade |
-| 151 | cypress | -123 | 5 | 33 | E2 screen behind the colonnade |
-| 152 | redwood | -122 | -0 | 34 | E2 screen behind the colonnade |
-| 153 | redwood | -118 | -5 | 31 | E2 screen behind the colonnade |
-| 154 | redwood | -98 | -1 | 31 | E2 screen behind the colonnade |
-| 155 | cypress | -96 | -6 | 28 | E2 screen behind the colonnade |
-| 156 | eucalyptus | -92 | -10 | 35 | E2 screen behind the colonnade |
-| 157 | redwood | -88 | -14 | 34 | E2 screen behind the colonnade |
-| 158 | cypress | -83 | -17 | 34 | E2 screen behind the colonnade |
-| 159 | eucalyptus | -80 | -22 | 31 | E2 screen behind the colonnade |
-| 160 | eucalyptus | -76 | -26 | 30 | E2 screen behind the colonnade |
-| 161 | redwood | -73 | -31 | 35 | E2 screen behind the colonnade |
-| 162 | redwood | -69 | -34 | 30 | E2 screen behind the colonnade |
-| 163 | redwood | -63 | -36 | 32 | E2 screen behind the colonnade |
-| 164 | redwood | -58 | -38 | 31 | E2 screen behind the colonnade |
-| 165 | cypress | -53 | -41 | 29 | E2 screen behind the colonnade |
-| 166 | cypress | -48 | -42 | 34 | E2 screen behind the colonnade |
-| 167 | cypress | -42 | -42 | 36 | E2 screen behind the colonnade |
-| 168 | cypress | -37 | -46 | 28 | E2 screen behind the colonnade |
-| 169 | cypress | -32 | -46 | 36 | E2 screen behind the colonnade |
-| 170 | redwood | -27 | -49 | 30 | E2 screen behind the colonnade |
-| 171 | cypress | -21 | -48 | 31 | E2 screen behind the colonnade |
-| 172 | redwood | -132 | 8 | 29 | E3 screen behind the colonnade |
-| 173 | redwood | -129 | 0 | 28 | E3 screen behind the colonnade |
-| 174 | eucalyptus | -127 | -8 | 29 | E3 screen behind the colonnade |
+| 40 | broadleaf | 24 | 130 | 8 | F east lawn |
+| 41 | eucalyptus | 34 | 126 | 28 | F east shore row |
+| 42 | eucalyptus | 54 | 124 | 30 | F east shore row |
+| 43 | eucalyptus | 73 | 120 | 30 | F |
+| 44 | eucalyptus | 95 | 118 | 32 | F |
+| 45 | eucalyptus | 126 | 127 | 23 | F |
+| 46 | cypress | 168 | 114 | 22 | F |
+| 47 | eucalyptus | 158 | 28 | 32 | F |
+| 48 | pine | 130 | -20 | 20 | F |
+| 49 | eucalyptus | 130 | -68 | 28 | F |
+| 50 | cypress | 110 | 14 | 20 | F |
+| 51 | eucalyptus | 125 | 74 | 30 | F |
+| 52 | cypress | 155 | 94 | 24 | F |
+| 53 | cypress | -130 | 110 | 24 | F NE-corner Monterey cypress (DPR, Harbor View Inn era) |
+| 54 | cypress | -118 | 96 | 22 | F NE corner |
+| 55 | cypress | -140 | 82 | 22 | F NE corner |
+| 56 | eucalyptus | -158 | 131 | 30 | F |
+| 57 | willow | -80 | 72 | 9 | G islet willow (herons, DPR) |
+| 58 | broadleaf | -92 | 68 | 12 | G |
+| 59 | eucalyptus | -108 | 65 | 24 | G |
+| 60 | willow | -100 | 72 | 8 | G |
+| 61 | broadleaf | -115 | 62 | 10 | G |
+| 62 | eucalyptus | -80 | -111 | 30 | H |
+| 63 | cypress | -95 | -100 | 22 | H |
+| 64 | eucalyptus | -70 | -125 | 28 | H |
+| 65 | pine | -105 | -118 | 20 | H |
+| 66 | eucalyptus | -268 | -120 | 30 | H |
+| 67 | cypress | -245 | -304 | 24 | H |
+| 68 | eucalyptus | -280 | -26 | 30 | H |
+| 69 | cypress | -197 | 54 | 22 | H |
+| 70 | eucalyptus | -216 | 27 | 28 | H |
+| 71 | cypress | -255 | 120 | 24 | H |
+| 72 | eucalyptus | -259 | -79 | 30 | H |
+| 73 | pine | -253 | -174 | 22 | H |
+| 74 | eucalyptus | 24 | -295 | 30 | H |
+| 75 | cypress | 170 | -102 | 24 | H |
+| 76 | eucalyptus | 168 | 112 | 30 | H |
+| 77 | eucalyptus | -88 | -308 | 30 | H |
+| 78 | cypress | -30 | -290 | 24 | H |
+| 79 | pine | 35 | -35 | 21 | E1 screen behind the colonnade |
+| 80 | redwood | 39 | -31 | 23 | E1 screen behind the colonnade |
+| 81 | redwood | 44 | -31 | 21 | E1 screen behind the colonnade |
+| 82 | cypress | 47 | -25 | 21 | E1 screen behind the colonnade |
+| 83 | redwood | 51 | -22 | 23 | E1 screen behind the colonnade |
+| 84 | redwood | 76 | -3 | 23 | E1 screen behind the colonnade |
+| 85 | pine | 81 | 12 | 19 | E1 screen behind the colonnade |
+| 86 | redwood | 82 | 17 | 19 | E1 screen behind the colonnade |
+| 87 | redwood | 86 | 21 | 22 | E1 screen behind the colonnade |
+| 88 | redwood | 87 | 26 | 22 | E1 screen behind the colonnade |
+| 89 | redwood | 88 | 31 | 22 | E1 screen behind the colonnade |
+| 90 | pine | 81 | 37 | 12 | E1 screen behind the colonnade |
+| 91 | redwood | 112 | 49 | 19 | E1 screen behind the colonnade |
+| 92 | redwood | 112 | 54 | 22 | E1 screen behind the colonnade |
+| 93 | cypress | 39 | -39 | 24 | E2 screen behind the colonnade |
+| 94 | cypress | 45 | -38 | 24 | E2 screen behind the colonnade |
+| 95 | redwood | 50 | -34 | 22 | E2 screen behind the colonnade |
+| 96 | eucalyptus | 54 | -29 | 22 | E2 screen behind the colonnade |
+| 97 | redwood | 60 | -27 | 22 | E2 screen behind the colonnade |
+| 98 | redwood | 64 | -22 | 23 | E2 screen behind the colonnade |
+| 99 | cypress | 75 | -8 | 24 | E2 screen behind the colonnade |
+| 100 | redwood | 80 | -5 | 25 | E2 screen behind the colonnade |
+| 101 | eucalyptus | 84 | 0 | 21 | E2 screen behind the colonnade |
+| 102 | eucalyptus | 86 | 6 | 23 | E2 screen behind the colonnade |
+| 103 | eucalyptus | 92 | 22 | 24 | E2 screen behind the colonnade |
+| 104 | redwood | 89 | 34 | 21 | E2 screen behind the colonnade |
+| 105 | redwood | 115 | 37 | 25 | E2 screen behind the colonnade |
+| 106 | cypress | 119 | 42 | 22 | E2 screen behind the colonnade |
+| 107 | eucalyptus | 126 | 39 | 24 | E3 screen behind the colonnade |
+| 108 | cypress | 126 | 46 | 25 | E3 screen behind the colonnade |
+| 109 | cypress | -119 | 10 | 21 | E1 screen behind the colonnade |
+| 110 | redwood | -118 | 5 | 19 | E1 screen behind the colonnade |
+| 111 | redwood | -116 | 0 | 22 | E1 screen behind the colonnade |
+| 112 | redwood | -92 | 7 | 21 | E1 screen behind the colonnade |
+| 113 | redwood | -92 | 1 | 19 | E1 screen behind the colonnade |
+| 114 | cypress | -84 | -10 | 21 | E1 screen behind the colonnade |
+| 115 | pine | -79 | -13 | 18 | E1 screen behind the colonnade |
+| 116 | redwood | -76 | -17 | 19 | E1 screen behind the colonnade |
+| 117 | redwood | -74 | -22 | 19 | E1 screen behind the colonnade |
+| 118 | pine | -61 | -30 | 20 | E1 screen behind the colonnade |
+| 119 | redwood | -56 | -33 | 19 | E1 screen behind the colonnade |
+| 120 | cypress | -52 | -36 | 23 | E1 screen behind the colonnade |
+| 121 | redwood | -48 | -38 | 23 | E1 screen behind the colonnade |
+| 122 | redwood | -42 | -37 | 21 | E1 screen behind the colonnade |
+| 123 | redwood | -38 | -40 | 21 | E1 screen behind the colonnade |
+| 124 | pine | -21 | -46 | 22 | E1 screen behind the colonnade |
+| 125 | redwood | -126 | 9 | 22 | E2 screen behind the colonnade |
+| 126 | redwood | -126 | 3 | 21 | E2 screen behind the colonnade |
+| 127 | redwood | -122 | -2 | 23 | E2 screen behind the colonnade |
+| 128 | cypress | -96 | 4 | 24 | E2 screen behind the colonnade |
+| 129 | cypress | -96 | -3 | 21 | E2 screen behind the colonnade |
+| 130 | redwood | -96 | -9 | 21 | E2 screen behind the colonnade |
+| 131 | cypress | -85 | -18 | 23 | E2 screen behind the colonnade |
+| 132 | cypress | -80 | -22 | 22 | E2 screen behind the colonnade |
+| 133 | redwood | -77 | -28 | 21 | E2 screen behind the colonnade |
+| 134 | redwood | -73 | -32 | 24 | E2 screen behind the colonnade |
+| 135 | redwood | -66 | -33 | 22 | E2 screen behind the colonnade |
+| 136 | cypress | -52 | -44 | 24 | E2 screen behind the colonnade |
+| 137 | eucalyptus | -45 | -44 | 22 | E2 screen behind the colonnade |
+| 138 | eucalyptus | -40 | -46 | 21 | E2 screen behind the colonnade |
+| 139 | redwood | -34 | -49 | 24 | E2 screen behind the colonnade |
+| 140 | redwood | -28 | -49 | 24 | E2 screen behind the colonnade |
+| 141 | redwood | -132 | 5 | 25 | E3 screen behind the colonnade |
+| 142 | redwood | -129 | -1 | 26 | E3 screen behind the colonnade |
+| 143 | cypress | -128 | -8 | 21 | E3 screen behind the colonnade |
 <!-- PLAN_TABLE_END -->
+
+## Polish round 1 (QA round 02 defects) — 2026-09-07
+
+### QA-02-7 — the wings were buried in trees AND standing in tree shadow
+Two separate causes, and the second one was invisible until it was measured.
+
+1. **The screen was a wall.** Round 01's `redwood_screen` planted three continuous rows 4.5 / 11 / 19 m outside the
+   wing at 26–36 m tall — 5–15 m over a 19–21 m entablature, with no gaps. Now: rows at **6 / 12.5 / 20 m**, crowns
+   **18.5–27 m**, and each row is **clumped** (a 15–38 m run of trees, then a 7–13 m gap) so bays open onto sky.
+   Pushing the rows further than ~20 m walks them into the exhibition-hall footprint, which deletes the two back
+   rows entirely — that is the limit, not a preference.
+2. **The low sun.** At az 118.5 / el 7.4 a 30 m crown throws a **230 m** shadow to the north-west. Measured with
+   `env_sightlines.py --shadow`, **92.5 % of the south wing and 70 % of the north wing entablature band was in tree
+   shadow** — the wings could not have been lit whatever the exposure. The same rays cross the lagoon: **33 % of the
+   water the hero camera sees** was shadowed by the east-shore eucalyptus row (Y 118–131, 28–32 m), which is a large
+   part of QA-02-6's dark cyan near field.
+
+`env_trees.shadow_relief()` now runs after the plan is assembled. It samples the lagoon-facing colonnade faces at
+z = 12 / 17 m plus a grid of the hero camera's water, ray-casts each sample at the sun against every crown
+(ellipsoid, 0.35 H–1.02 H), and worst-caster-first lowers the offending crown, pushes it 12 m down-sun, or drops it.
+Height floors are by role: generated screen trees 55 % and droppable, east-shore / backdrop trees behind the hero
+camera 45 % and droppable, the peninsula "A" cluster (the dark mass right of the rotunda in ref 169) 80 % and never
+dropped, everything else 72 %.
+
+Result: **north wing 82.5 → 12.5 %, south wing 70.0 → 20.0 %, hero water 33.3 → 6.1 %** in shadow, for 22 crowns
+lowered (80 m of height in total), 14 moved and 1 dropped. Sky through the bays from cam 01
+(`env_preview.py -- --skytest`) went **1.7 → 22.8 %** (north) and **9.5 → 30.3 %** (south); ref 169 is 15–20 %, so
+the north wing is on target and the south is a little open.
+
+The geometry lives in `env_lib` (`sun_vector`, `crown_ellipsoid`, `ray_hits_ellipsoid`, `wing_samples`,
+`shadowed_fraction`) so the planner and the checker cannot drift apart. Re-check any time with
+`blender -b --python scripts/env_sightlines.py -- --shadow --only-shadow`.
+
+**Naming warning.** QA round 02 called the x 60–560 band of the hero frame "north". North is −X, and the hero camera
+at (−14.1, 100) looking at the origin puts −X on the **right** of the frame, so QA's "north band" is in fact the
+**south** (roof306) colonnade and its "south band" is the north (roof310) one. `scripts/env_measure.py` calls them
+`left_wing` / `right_wing` to stop the swap propagating.
+
+### QA-02-6 — lagoon flanks and the cyan near field (mesh side; MAT_water_lagoon is the materials agent's)
+* The shadow relief above lit the water QA measured (6.1 % shadowed, was 33.3 %).
+* **Bed profile.** The old bed dropped to its full 1.5 m within 7.5 m of the shore, so the water the hero sees at
+  6–12 m already had the longest possible absorption path through the murk — it could only read near-black cyan.
+  The bed is now a shelf: 0.25 m at the edge, 0.85 m at 14 m out, 1.5 m by 30 m (refs 022, 169 show bed pebbles and
+  rip-rap several metres out).
+
+### QA-02-13 / QA-02-18 — the shrub band
+* Every shrub inside r = 54 m of the rotunda is clamped to **1.2 m** tall, so the podium and its Greek-key band are
+  no longer hidden from cams 02 / 05.
+* `shadow_relief` also pushes any tree whose crown comes within **6 m** of the podium (r = 31 m) radially out.
+* Variety: **9 mound seeds** instead of 4 across three material families (`MAT_shrub` / `MAT_shrub_light` /
+  `MAT_shrub_dry`), 3 mahonia sizes, a 2.2:1 instance size spread, no two neighbours drawn from the same source
+  mesh, and dry reeds / twigs seeded into the peninsula belt (they used to start past r = 50 m) — **30 % of the band
+  is now a warm dry material**, against QA's ">= 20 %" test.
+
+### QA-02-15 — backdrop houses
+Round 02 joined every OSM footprint into one flat-topped prism with one material ("plain grey boxes"). Each
+building is now its own object — which gives the library material's per-object random a per-building hue and value —
+and carries a pitched roof in `MAT_backdrop_roof`: a gable along the footprint's oriented bounding box, hipped on
+plans squarer than 1.8:1, pitch 18–29 deg.
+
+### Performance
+The round-02 master ran 33–55 s per Eevee camera with LOD1 at 15.2 M tris; 1761 LOD-less shrubs contributed 3.3 M
+of that **at every LOD and in every render**. A 0.8 m bush is 8–15 px from the hero camera, so its ~1300 leaf cards
+buy nothing. Leaf *coverage* (n_cards x card^2) is what makes the silhouette read, so `SHRUB_LOD` keeps the coverage
+and multiplies the card size instead — cards k x wider and k^2 x fewer:
+
+| | cards | tris (1423 instances) |
+|---|---|---|
+| LOD0 | full | 2.31 M |
+| LOD1 | 2.2 x wider | 0.53 M |
+| LOD2 | 4.5 x wider, coarser core | 0.14 M |
+
+Each placement is now three objects with the tree convention (`hide_render` on all but LOD0, `hide_viewport` on all
+but LOD1), and a shrub farther than `SHRUB_FAR` = 80 m from every QA camera renders its LOD1 mesh even at LOD0
+(LOD2 past 160 m). Instance count also came down 1761 -> 1423 as part of the QA-02-18 variety work.
+
+### Verification in the full master (2026-09-07, polish round 1)
+
+Built with `scripts/lead_build.sh` in this worktree (master 8458 -> 9030 objects, viewport LOD1 **11.62 M tris**,
+down from round 02's 15.18 M). Measured with `scripts/env_measure.py`, whose boxes reproduce QA round 02's numbers
+exactly against the aligned ref-169 panel of `renders/qa_comparisons/round02_cam01_aligned_vs_ref169.png`.
+
+| box (hero frame) | round 02 | ENV round 3 | at +0.9 EV | ref 169 | test |
+|---|---|---|---|---|---|
+| left_wing (QA's "north", = south colonnade) | 66.0 (0.48) | 82.6 (0.60) | 102.3 (**0.75**) | 137.2 | within 25 % |
+| right_wing (QA's "south", = north colonnade) | 88.3 (0.63) | 99.1 (0.70) | 115.4 (**0.82**) | 141.0 | within 25 % |
+| water_flank | 35.9 (0.28) | 114.8 (**0.89**) | 145.3 (1.12) | 129.6 | within 30 % |
+| water_near saturation | 0.533 | 0.531 | **0.457** | 0.106 | <= 0.45 |
+
+The +0.9 EV column is `scripts/qa_exposure_sweep.py` on the same master (Eevee, 1920x1080) and stands in for
+lighting's pending QA-02-4 exposure fix: both wings land inside the 25 % band once it arrives, and the near field's
+saturation lands 0.007 over the line — the rest of that one is `MAT_water_lagoon`'s hue, not the mesh.
+
+Composite for the lead: **`renders/qa_comparisons/env_r3_sheet.png`** (round-02 hero | ENV round 3 hero | aligned
+ref 169 with the measurement boxes drawn, plus cams 02 / 03 / 06). Frames:
+`renders/previews/qa/roundenv3_01_lagoon_hero_cycles.png` (Cycles 64 spp, 314 s),
+`roundenv3_0{1,2,3}_*.png` (Eevee), `roundenv3b_0{1,6}_*.png` (Eevee, after the backdrop-roof rebuild).
+
+**Timings are not trustworthy on this machine right now.** Three other agents were rendering throughout: the same
+cam-01 Eevee frame at 1280x720 took 124 s, 209 s and 66 s in one three-frame run, and 63 s / 50 s at 1920x1080
+when only one other Blender was up. The reliable number is the triangle count. Note also that ENV's *render* path
+is LOD0, so the shrub ladder helps the viewport far more than the render: ENV LOD0 is 14.53 M (shrubs 3.3 -> 2.31 M
+via the SHRUB_FAR rule and the lower instance count), and trees are still ~85 % of it. The next cheap render-time
+lever is still `env_trees.FAR_RADIUS` (130 m -> 105 m, roughly another 2 M), untouched this round because it needs
+its own visual check.
+
+Re-checked on the saved `assets/environment.blend` (positions are snapped onto land after the relief pass, so these
+are the numbers that ship, slightly off the planner's):
+`blender -b --python scripts/env_sightlines.py -- --shadow --only-shadow` ->
+**north wing readable band (z >= 12 m) 78.8 % lit, south wing 77.5 % lit** (round 02: ~31 % and ~4 %). The south
+wing's z = 6 m shaft band is still 95 % shaded, which matches ref 169 - the low shafts there are in shade in the
+photograph too.
+
+LOD1 fidelity: the widest LOD1 leaf card is 0.105 x 2.2 x 1.45 = 33 cm, which at the nearest shore (60 m, 20 mm
+lens, 1920 px) subtends ~6 px - at QA-01-7's limit, and only ever in the viewport.
 
 ## Previews and comparisons
 

@@ -186,37 +186,6 @@ def render_topdown(extent=320.0, centre=(0.0, 20.0), res=1024, tag="topdown", lo
     return out
 
 
-if __name__ == "__main__":
-    args = common.script_args()
-    cams = None
-    samples = 16
-    tag = ""
-    engine = "EEVEE"
-    local = "--local" in args
-    master = "--master" in args
-    lod = 0
-    for a in args:
-        if a.startswith("--lod="):
-            lod = int(a.split("=")[1])
-            local = True
-    for i, a in enumerate(args):
-        if a == "--cams":
-            cams = args[i + 1].split(",")
-        elif a == "--samples":
-            samples = int(args[i + 1])
-        elif a == "--tag":
-            tag = args[i + 1]
-        elif a == "--cycles":
-            engine = "CYCLES"
-    if "--topdown" in args:
-        render_topdown(local=local, lod=lod)
-    elif "--extra" in args:
-        render_extra(tag=tag or "extra", local=local, lod=lod)
-    else:
-        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master)
-        print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")
-
-
 # ----------------------------------------------------------------------------- QA-01-6 sky-through-the-bays test
 def sky_through_wing(wing="north", samples=8, res=(1920, 1080), lod=0):
     """Measure how much sky shows through the colonnade bays behind a wing, from the hero camera (QA-01-6).
@@ -275,3 +244,37 @@ def sky_through_wing(wing="north", samples=8, res=(1920, 1080), lod=0):
           f"({px1 - px0} x {py1 - py0} px), background {bg}/{total} = {frac * 100:.1f} %")
     print(json.dumps({"wing": wing, "box": [x0, y0, x1, y1], "sky_fraction": frac}))
     return frac
+
+
+if __name__ == "__main__":
+    args = common.script_args()
+    cams = None
+    samples = 16
+    tag = ""
+    engine = "EEVEE"
+    local = "--local" in args
+    master = "--master" in args
+    lod = 0
+    for a in args:
+        if a.startswith("--lod="):
+            lod = int(a.split("=")[1])
+            local = True
+    for i, a in enumerate(args):
+        if a == "--cams":
+            cams = args[i + 1].split(",")
+        elif a == "--samples":
+            samples = int(args[i + 1])
+        elif a == "--tag":
+            tag = args[i + 1]
+        elif a == "--cycles":
+            engine = "CYCLES"
+    if "--skytest" in args:
+        for w in ("north", "south"):
+            sky_through_wing(w, samples=samples, lod=lod)
+    elif "--topdown" in args:
+        render_topdown(local=local, lod=lod)
+    elif "--extra" in args:
+        render_extra(tag=tag or "extra", local=local, lod=lod)
+    else:
+        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master)
+        print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")

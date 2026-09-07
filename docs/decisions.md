@@ -101,3 +101,9 @@ Format: date · decision · why · consequences. Newest at the bottom.
   proposed, so build_master routes them to `ORN_corner_scroll`; no ARCH change.
 - **Per-instance seed**: `PFA_instance` decorrelates by Object Info Random today; the materials agent is wiring the
   `instance_seed` object attribute into it so the lead's variant/seed choice is what the shader uses.
+- **2026-09-07 · QA-02-1 (dome absent from cam05) is a camera-station error, not geometry.** ARCH's silhouette fit of ref 063
+  (`scripts/arch_domecheck.py`, residual 24 px at 1920) puts the photo at az 104°, 115 m, ~40 mm; at that station the
+  unmodified model gives rise/W 0.120 vs the photo's 0.118. The geometry sweep that would fake it from 71 m (attic -11 %,
+  drum +50 %, dome +12 %) breaks the ref 063 match. cam05 re-stationed to (28.1, 111.8, 1.5), target (0,0,20), 40 mm.
+- **Eevee preview regression** is the LOD0 render set (ORN instances 26.7 M + ENV 17.9 M of 50.4 M), not ARCH bevels (0.5 %).
+  QA previews render at LOD1 (`common.set_lod(viewport=1, render=1)` in the Eevee pass); Cycles finals stay LOD0.
