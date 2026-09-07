@@ -53,7 +53,7 @@ def depth_report(obj, nx=260, nz=120):
     polys = [tuple(p.vertices) for p in me.polygons]
     bvh = BVHTree.FromPolygons(verts, polys, all_triangles=False, epsilon=0.0)
     s = common.sun_direction(SUN_AZ, SUN_EL)
-    depths, cosines = [], []
+    depths, cosines, samples = [], [], []
     misses = 0
     for i in range(nx):
         x = x0 + (i + 0.5) * (x1 - x0) / nx
@@ -64,7 +64,28 @@ def depth_report(obj, nx=260, nz=120):
                 misses += 1
                 continue
             depths.append(loc.y - y0)
-            cosines.append(max(0.0, nor.normalized().dot(s)))
+            nn = nor.normalized()
+            cosines.append(max(0.0, nn.dot(s)))
+            if (i * nz + k) % 7 == 0:
+                samples.append((x, z, loc.y, nn))
+    # occlusion: what actually darkens a relief when the sun is nearly normal to the panel and casts no shadow.
+    # sun_block = fraction of lit samples whose ray to the sun is blocked by the relief itself;
+    # ao = mean fraction of a 13-ray forward hemisphere that escapes (1 = open sky, 0 = fully buried).
+    import random as _rnd
+    rr = _rnd.Random(7)
+    dirs = []
+    while len(dirs) < 13:
+        d = Vector((rr.uniform(-1, 1), rr.uniform(0.05, 1), rr.uniform(-1, 1)))
+        if 0.2 < d.length <= 1.0:
+            dirs.append(d.normalized())
+    blocked, ao_sum, ao_n = 0, 0.0, 0
+    for (px, pz, pyv, nvec) in samples:
+        o = Vector((px, pyv, pz)) + nvec * 0.004
+        if nvec.dot(s) > 0.0 and bvh.ray_cast(o, s)[0] is not None:
+            blocked += 1
+        open_rays = sum(1 for d in dirs if bvh.ray_cast(o + d * 0.004, d)[0] is None)
+        ao_sum += open_rays / len(dirs)
+        ao_n += 1
     depths.sort()
     n = len(depths)
     if not n:
@@ -85,6 +106,8 @@ def depth_report(obj, nx=260, nz=120):
     dark = sum(1 for c in cosines if c < 0.35 * max(cosines)) / len(cosines)
     print(f"      N.L (sun {SUN_AZ}/{SUN_EL} on a +Y face): mean {mean:.3f} sd {sd:.3f} rel-sd {sd/max(1e-6,mean):.3f} "
           f"frac dark(<35% of max) {dark*100:.1f} %")
+    print(f"      occlusion over {ao_n} samples: sun-blocked {100.0*blocked/max(1,ao_n):5.1f} %   mean sky-openness "
+          f"{ao_sum/max(1,ao_n):.3f}  (lower openness = darker recesses in Cycles)")
 
 
 def arch_objects_report(patterns):
