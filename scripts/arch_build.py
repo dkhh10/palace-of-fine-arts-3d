@@ -599,13 +599,16 @@ def build_vault_coffers(name, k, X, n, coll):
         if dr > 0.1:
             holes.append([(cx + dr, tm), (cx, tm + dr * 1.02), (cx - dr, tm), (cx, tm - dr * 1.02)])
     outline = [(0.0, 0.0), (arc, 0.0), (arc, depth), (0.0, depth)]
-    obj = L.plate(name, outline, holes, 0.12, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_INNER, part_type="wall", bevel=False,
-                  smooth=False)
+    # QA-02-9 / QA-01-15: the rib plate stands proud of the soffit, so its thickness IS the coffer depth. It was
+    # 0.12 m, under the 0.15 m acceptance ("coffer depth >= 15 cm casting visible shadow at cam04"); 0.20 m gives
+    # the box a readable shadow at cam04 without eating the 0.33 m diamond coffers between the rows.
+    obj = L.plate(name, outline, holes, P.VAULT_COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_INNER,
+                  part_type="wall", bevel=False, smooth=False)
     me = obj.data
     for v in me.vertices:
         s = v.co.x / r_mean            # angle 0..pi
         t = v.co.y / depth             # 0 at the outer wall face
-        delta = -v.co.z                # 0 front (on the soffit), 0.12 back (hangs below the soffit)
+        delta = -v.co.z                # 0 front (on the soffit), VAULT_COFFER_DEPTH back (proud of it)
         r = r0 + (r1 - r0) * t - delta
         ap = ap0 + (ap1 - ap0) * t
         a = math.pi - s

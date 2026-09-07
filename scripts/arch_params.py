@@ -92,7 +92,8 @@ CEILING_R = 15.0          # base ring radius of the coffered saucer (catalog: ~3
 CEILING_RISE = 5.0
 CEILING_SPHERE_R = (CEILING_R ** 2 + CEILING_RISE ** 2) / (2 * CEILING_RISE)   # 25.0
 CEILING_SPHERE_CZ = CEILING_RING_Z + CEILING_RISE - CEILING_SPHERE_R
-COFFER_DEPTH = 0.3
+COFFER_DEPTH = 0.3        # rotunda saucer-ceiling coffers (rib plate hangs this far below the field)
+VAULT_COFFER_DEPTH = 0.20  # QA-02-9: barrel-vault soffit ribs stand this far proud (was 0.12, under the 0.15 acceptance)
 
 # ----------------------------------------------------------------------------- podium / rostra (OSM lobes, section 3b; DERIVED widths)
 PODIUM_LOBE_R = 27.3      # outer radius of the podium block around each pier (OSM lobes r 27-28)
