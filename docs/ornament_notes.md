@@ -290,6 +290,22 @@ what is left as the exposure rises. The remaining distance is a **materials** jo
 which now have recesses to sit in) and a lighting one, not a geometry one — the geometry metrics are all now
 between 1.7x and 3x better. Flagged to the lead.
 
+### Verification in the full scene (orn3)
+`scripts/lead_build.sh` on this branch, then
+`blender -b --python scripts/qa_render_round.py -- --round orn3 --final --samples 64 --cams 01 05`
+(Cycles 1920x1080, 363 s cam01 / 621 s cam05, exposure still -3.2911: the lighting agent's -2.39 had not landed).
+Sheet: `renders/previews/ornament/orn3_qa02_9_10_sheet.png` (cam05 new / cam05 round 02 / ref 063, then
+cam01 new / cam01 round 02 / ref 169). Panel box relative luminance std, `scripts/orn_relief_stats.py`:
+
+| camera | box | round 02 | **orn3** | reference | QA-02-9 bar (60 % of ref) |
+|---|---|---|---|---|---|
+| cam05 | 872,134-1076,225 (ref 702,199-913,307) | 0.136 | **0.206** | 0.296 (ref 063) | 0.178 — **met** |
+| cam01 | 888,197-1038,254 (ref 902,243-1016,288) | 0.123 | **0.162** | 0.271 (ref 169) | 0.163 — at the bar |
+
+So QA-02-9's acceptance is met at cam05 (70 % of ref 063) and lands on the line at cam01. Both numbers will move
+when the exposure goes to -2.39: measured in the look-dev, +0.9 EV costs about 0.02-0.03 of relative std because
+AgX compresses the highlights, so a re-measure after the lighting merge is worth doing.
+
 ### QA-02-10 / QA-01-13 — attic corner figures and the scroll pair
 - **Corner figure.** Two failures: `union_blob(..., smooth=3)` at a 2.8 cm voxel closed the arm-to-torso gaps and
   the drapery channels, and the wrap/gown was `0.27·S` half-width = a **2.07 m wide bell** on a 6.7 m figure.
