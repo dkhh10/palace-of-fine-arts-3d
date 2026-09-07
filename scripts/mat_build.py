@@ -37,7 +37,13 @@ def build_group_instance():
     # instances that share an Object Info Random (linked duplicates, geometry-nodes instances). Absent -> 0 -> no-op.
     iattr = t.new("ShaderNodeAttribute", attribute_type="OBJECT")
     iattr.attribute_name = "instance_seed"
-    r = t.fract(t.add(r, t.fract(t.mul(iattr.outputs["Fac"], 0.6180339887))))
+    ihash = t.fract(t.mul(t.math("SINE", t.mul(iattr.outputs["Fac"], 12.9898)), 43758.5453))
+    ihash = t.mul(ihash, t.math("SIGN", t.absval(iattr.outputs["Fac"])))     # property absent -> 0 -> no shift
+    # Object Info Random is 0 for every object in some evaluated contexts (and identical for linked duplicates), so the
+    # object's own origin is hashed in as well: two instances at different places are then never the same shade.
+    loc = t.objinfo().outputs["Location"]
+    lhash = t.fract(t.mul(t.math("SINE", t.dot(loc, (12.9898, 78.233, 37.719))), 43758.5453))
+    r = t.fract(t.add(t.add(r, ihash), lhash))
     seed = gi.outputs["Seed"]
     r1 = t.fract(t.madd(seed, 0.6180339, r))
     r2 = t.fract(t.madd(r1, 7.31, 0.137))
@@ -466,7 +472,7 @@ def build_concrete_family():
         "Detail Strength": 0.4, "Streaks": 0.35, "Streak Scale": 5.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.5,
         "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02, "Recess Dirt": 0.75, "Recess Distance": 0.3,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
-        "Instance Variation": 1.0}, baked=True)
+        "Instance Variation": 1.7}, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
     concrete_material("MAT_column_rose", "concrete_wall_008", 6.0, {
         "Base Color": C(0.455, 0.190, 0.098), "Grey Color": C(0.37, 0.215, 0.155), "Grey Drift": 0.22,
@@ -880,7 +886,7 @@ def build_all_materials():
     leaf_material("MAT_shrub_light", "leaves_shrub", (0.85, 1.05, 0.6), rough=0.45, hue_var=0.06, val_var=0.45, seed=24.0,
                   translucency=0.28, spec=0.45, tint=(1.25, 1.30, 1.05), sheen=0.2)
     leaf_material("MAT_shrub_dry", "leaves_shrub", (1.05, 0.95, 0.5), rough=0.62, hue_var=0.05, val_var=0.5, seed=25.0,
-                  translucency=0.22, spec=0.25, tint=(2.30, 1.75, 0.75), sheen=0.1, cluster_var=0.3)
+                  translucency=0.22, spec=0.25, tint=(2.80, 1.70, 0.62), sheen=0.1, cluster_var=0.3)
     leaf_material("MAT_reeds", "reeds", (0.9, 1.0, 0.5), rough=0.6, hue_var=0.06, val_var=0.4, seed=26.0, translucency=0.35, cluster_var=0.35)
     build_extra_env()
     build_backdrop_details()
