@@ -423,14 +423,14 @@ def C(r, g, b):
 def build_concrete_family():
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
-        "Base Color": C(0.47, 0.31, 0.135), "Grey Color": C(0.32, 0.26, 0.175), "Grey Drift": 0.35,
+        "Base Color": C(0.545, 0.360, 0.115), "Grey Color": C(0.35, 0.27, 0.135), "Grey Drift": 0.28,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.08, "Block Size": 3.6, "Blotch Size": 1.8,
         "Detail Strength": 0.85, "Streaks": 1.0, "Streak Scale": 2.5, "Streak Length": 10.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
         "Patches": 0.25, "Edge Wear": 0.45, "Edge Radius": 0.03, "Recess Dirt": 0.55, "Recess Distance": 0.4,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
-        "Base Color": C(0.37, 0.30, 0.19), "Grey Color": C(0.30, 0.275, 0.23), "Grey Drift": 0.5,
+        "Base Color": C(0.425, 0.330, 0.175), "Grey Color": C(0.33, 0.285, 0.20), "Grey Drift": 0.42,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.08, "Block Size": 2.4, "Blotch Size": 2.5,
         "Detail Strength": 0.6, "Streaks": 0.55, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.5,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6,
@@ -438,7 +438,7 @@ def build_concrete_family():
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.48, 0.315, 0.135), "Grey Color": C(0.29, 0.255, 0.185), "Grey Drift": 0.3,
+        "Base Color": C(0.555, 0.365, 0.115), "Grey Color": C(0.32, 0.26, 0.145), "Grey Drift": 0.25,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.08, "Block Size": 3.0, "Blotch Size": 3.0,
         "Detail Strength": 0.55, "Streaks": 0.8, "Streak Scale": 3.0, "Streak Length": 12.0, "Ledge Distance": 2.5, "Ledge Weight": 0.4,
         "Streak Shade Bias": 0.6,
@@ -446,14 +446,14 @@ def build_concrete_family():
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.25, "Pour Spacing": 0.6})
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
-        "Base Color": C(0.36, 0.27, 0.14), "Grey Color": C(0.28, 0.25, 0.20), "Grey Drift": 0.45,
+        "Base Color": C(0.405, 0.295, 0.125), "Grey Color": C(0.31, 0.26, 0.175), "Grey Drift": 0.40,
         "Grey Below Z": 40.0, "Grey Above Z": 60.0, "Tone Variation": 0.08, "Block Size": 3.0, "Blotch Size": 2.5,
         "Detail Strength": 0.5, "Streaks": 0.3, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.6,
         "Patches": 0.1, "Edge Wear": 0.4, "Edge Radius": 0.03, "Recess Dirt": 0.7, "Recess Distance": 0.5, "Underside Dirt": 0.6,
         "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.35, "Pour Lines": 0.4, "Pour Spacing": 0.6})
     # ornament: capitals, maidens, urns, panels -- dust in the hollows, worn arrises, per-instance variation, baked-map hooks
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.47, 0.31, 0.135), "Grey Color": C(0.32, 0.26, 0.175), "Grey Drift": 0.25,
+        "Base Color": C(0.545, 0.360, 0.115), "Grey Color": C(0.35, 0.27, 0.135), "Grey Drift": 0.20,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.12, "Block Size": 1.2, "Blotch Size": 0.8,
         "Detail Strength": 0.4, "Streaks": 0.35, "Streak Scale": 5.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.5,
         "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02, "Recess Dirt": 0.75, "Recess Distance": 0.3,
@@ -461,28 +461,28 @@ def build_concrete_family():
         "Instance Variation": 1.0}, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
     concrete_material("MAT_column_rose", "concrete_wall_008", 6.0, {
-        "Base Color": C(0.40, 0.165, 0.105), "Grey Color": C(0.34, 0.20, 0.17), "Grey Drift": 0.25,
+        "Base Color": C(0.455, 0.190, 0.098), "Grey Color": C(0.37, 0.215, 0.155), "Grey Drift": 0.22,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 3.2, "Blotch Size": 1.5,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02,
         "Recess Dirt": 0.6, "Recess Distance": 0.25, "Roughness": 0.72, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         column={"Wash Color": C(0.42, 0.24, 0.21), "Wash": 0.55, "Drum Height": 3.25, "Drum Variation": 0.07, "Top Z": 16.3, "Top Darkening": 0.35})
     # the 8 inner tan columns (and their blocks)
     concrete_material("MAT_column_tan_inner", "concrete_wall_008", 7.0, {
-        "Base Color": C(0.45, 0.32, 0.15), "Grey Color": C(0.36, 0.30, 0.21), "Grey Drift": 0.2,
+        "Base Color": C(0.505, 0.350, 0.130), "Grey Color": C(0.38, 0.305, 0.180), "Grey Drift": 0.18,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.15, "Block Size": 3.0, "Blotch Size": 1.5,
         "Detail Strength": 0.5, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.45, "Edge Radius": 0.02,
         "Recess Dirt": 0.6, "Recess Distance": 0.25, "Roughness": 0.78, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         column={"Wash Color": C(0.40, 0.33, 0.26), "Wash": 0.35, "Drum Height": 3.0, "Drum Variation": 0.06, "Top Z": 11.0, "Top Darkening": 0.3})
     # platform floor / steps: light neutral concrete slabs with joints
     concrete_material("MAT_paving", "concrete_wall_008", 8.0, {
-        "Base Color": C(0.45, 0.45, 0.42), "Grey Color": C(0.34, 0.34, 0.32), "Grey Drift": 0.3,
+        "Base Color": C(0.50, 0.475, 0.405), "Grey Color": C(0.37, 0.355, 0.305), "Grey Drift": 0.28,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 1.5, "Blotch Size": 4.0,
         "Detail Strength": 0.5, "Streaks": 0.0, "Patches": 0.2, "Edge Wear": 0.3, "Edge Radius": 0.02,
         "Recess Dirt": 0.5, "Recess Distance": 0.3, "Roughness": 0.7, "Roughness Variation": 0.12, "Bump": 0.3, "Pour Lines": 0.0,
         "Grid Joints": 0.8, "Grid Size": 1.5}, specular=0.45)
     # coffered plaster saucer (only bounce-lit)
     concrete_material("MAT_plaster_ceiling", "concrete_wall_008", 9.0, {
-        "Base Color": C(0.50, 0.40, 0.23), "Grey Color": C(0.35, 0.28, 0.16), "Grey Drift": 0.2,
+        "Base Color": C(0.565, 0.435, 0.215), "Grey Color": C(0.39, 0.30, 0.155), "Grey Drift": 0.18,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 1.5, "Blotch Size": 1.0,
         "Detail Strength": 0.3, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.3, "Edge Radius": 0.02,
         "Recess Dirt": 0.7, "Recess Distance": 0.4, "Roughness": 0.9, "Roughness Variation": 0.05, "Bump": 0.25, "Pour Lines": 0.0}, specular=0.3)
@@ -495,7 +495,7 @@ def build_concrete_family():
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0})
     # exhibition hall / distant massing: buff stucco, coarse
     concrete_material("MAT_backdrop_building", "concrete_wall_008", 11.0, {
-        "Base Color": C(0.50, 0.42, 0.27), "Grey Color": C(0.38, 0.34, 0.26), "Grey Drift": 0.3,
+        "Base Color": C(0.555, 0.445, 0.245), "Grey Color": C(0.41, 0.35, 0.235), "Grey Drift": 0.28,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.15, "Block Size": 4.0, "Blotch Size": 6.0,
         "Detail Strength": 0.3, "Streaks": 0.4, "Streak Scale": 1.0, "Streak Length": 5.0, "Ledge Weight": 0.6,
         "Patches": 0.1, "Edge Wear": 0.2, "Edge Radius": 0.03, "Recess Dirt": 0.4, "Recess Distance": 0.5,
@@ -508,9 +508,9 @@ def build_dome():
     N = t.geometry().outputs["Normal"]
     g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.70, 0.645, 0.535), "Streak Color": C(0.50, 0.50, 0.47), "Moss Color": C(0.34, 0.42, 0.28),
                                         "Grime Color": C(0.20, 0.13, 0.06), "Seams": 48.0, "Seam Width": 0.05, "Streaks": 0.8, "Moss": 0.3,
-                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.35, "Bump": 0.3, "Seed": 12.0})
+                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.50, "Bump": 0.3, "Seed": 12.0})
     bsdf = t.principled(**{"Base Color": g.outputs["Color"], "Roughness": g.outputs["Roughness"], "Normal": g.outputs["Normal"],
-                           "Specular IOR Level": 0.5, "Coat Weight": g.outputs["Coat"], "Coat Roughness": 0.25, "Coat Normal": g.outputs["Normal"]})
+                           "Specular IOR Level": 0.40, "Coat Weight": t.mul(g.outputs["Coat"], 0.35), "Coat Roughness": 0.35, "Coat Normal": g.outputs["Normal"]})
     t.output(surface=bsdf.outputs[0])
     return ML.finish(m)
 
@@ -522,31 +522,45 @@ def build_water():
     N = t.geometry().outputs["Normal"]
     time = t.value(0.0, "WATER_TIME")          # driver: frame-based drift (see below)
     wx, wy, wz = t.sepxyz(W)
-    # slight anisotropy: ripples a little longer along X (across the hero view) so reflections streak vertically
-    Pa = t.combxyz(t.mul(wx, 0.75), wy, 0.0)
+    # Distance filtering (Toksvig): a 0.3 m ripple is far smaller than a pixel at 150 m, so past ~45 m its slope must
+    # move out of the normal and into the roughness. Without this the far water tips every grazing reflection ray away
+    # from the sunlit building and the lagoon reads brown-black (QA-01-3).
+    cam = t.new("ShaderNodeCameraData")
+    depth = cam.outputs["View Z Depth"]
+    ripple_lod = t.maprange(depth, 45.0, 200.0, 1.0, 0.18)
+    far_rough = t.maprange(depth, 45.0, 200.0, 0.0, 0.030)
+    # anisotropy: crests run ~3x longer along X (across the hero view), so the reflection breaks into vertical streaks
+    Pa = t.combxyz(t.mul(wx, 0.33), wy, 0.0)
+    Ps = t.combxyz(t.mul(wx, 0.55), wy, 0.0)
     h1 = t.noise(Pa, 3.3, detail=3, rough=0.55, w=t.mul(time, 1.0))          # 0.3 m ripples
-    h2 = t.noise(Pa, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
+    h2 = t.noise(Ps, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
     h3 = t.noise(Pa, 9.0, detail=2, rough=0.5, w=t.mul(time, 1.7))           # 0.1 m capillary
     h = t.add(t.add(t.mul(h1, 0.6), h2), t.mul(h3, 0.18))
     # calmer patches (wind shadow) so the reflection is glassy in places
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
-    normal = t.bump(h, strength=t.mul(0.6, calm), distance=0.03, normal=N)
-    rough = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.06)
-    bsdf = t.principled(**{"Base Color": C(0.62, 0.80, 0.68), "Roughness": rough, "IOR": 1.333, "Transmission Weight": 1.0,
+    normal = t.bump(h, strength=t.mul(t.mul(0.55, calm), ripple_lod), distance=0.03, normal=N)
+    rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
+    # green murk body. Transmission 0.55 (not 1.0) so the material reads the same on ENV's single water plane as it
+    # does inside a closed lagoon volume: the opaque 45 % is a green murk lambertian that picks up sky and sun, the
+    # transmissive 55 % carries the volume when there is one. Fresnel reflection is on top of both.
+    murk_far = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.05, detail=2), 0.35, 0.65, 0.0, 1.0)
+    murk = t.mix(murk_far, C(0.030, 0.060, 0.040), C(0.055, 0.100, 0.062))
+    bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.55,
                            "Specular IOR Level": 0.5, "Normal": normal})
     # one Principled Volume (absorption + weak scatter): Absorption + Scatter + Add Shader pushed Cycles past its
     # 64-closure budget (76) and closures were silently dropped. extinction = density * (color + 1 - absorption_color):
-    # absorption ~ (0.385, 0.275, 0.395)/m, scatter ~ (0.03, 0.05, 0.035)/m -> green-tea murk, 1.5 m visibility.
+    # scatter (0.117, 0.234, 0.144)/m, absorption (0.36, 0.135, 0.36)/m -> single-scatter albedo 0.25/0.63/0.29, i.e. a
+    # LIT green murk (the v1 numbers gave albedo 0.07-0.15, which made a closed lagoon volume read black).
     vol = t.new("ShaderNodeVolumePrincipled")
-    t.plug(vol.inputs["Color"], C(0.06, 0.10, 0.07)); t.plug(vol.inputs["Density"], 0.5)
-    t.plug(vol.inputs["Absorption Color"], C(0.23, 0.45, 0.21)); t.plug(vol.inputs["Anisotropy"], 0.4)
+    t.plug(vol.inputs["Color"], C(0.13, 0.26, 0.16)); t.plug(vol.inputs["Density"], 0.9)
+    t.plug(vol.inputs["Absorption Color"], C(0.60, 0.85, 0.60)); t.plug(vol.inputs["Anisotropy"], 0.3)
     t.output(surface=bsdf.outputs[0], volume=vol.outputs[0], target="CYCLES")
     # Eevee cannot reflect through its transmission path (tested: no Fresnel reflection with or without raytraced
     # refraction), so Eevee gets an opaque dark-murk surface with the same ripples: reflections come from raytracing/probes.
     # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
     #  tree against its 64-closure budget, two Principled BSDFs blew it to 76.)
-    murk = t.mix(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.05, detail=2), 0.35, 0.65, 0.0, 1.0), C(0.025, 0.05, 0.035), C(0.045, 0.075, 0.045))
-    dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk); t.plug(dif.inputs["Normal"], normal)
+    murk_e = t.mix(murk_far, C(0.038, 0.075, 0.050), C(0.065, 0.115, 0.072))
+    dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk_e); t.plug(dif.inputs["Normal"], normal)
     glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
     fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
     mx = t.new("ShaderNodeMixShader"); t.link(fr.outputs[0], mx.inputs[0]); t.link(dif.outputs[0], mx.inputs[1]); t.link(glo.outputs[0], mx.inputs[2])
