@@ -31,6 +31,7 @@ RIG = "--rig" in args              # use the lighting agent's rig (assets/lighti
 ENV = "--env" in args              # append ENV (trees, terrain, water) into the hero scene, materials remapped by name
 EEVEE_PRESET = "--eevee-preset" in args   # use light_presets.apply_preview_eevee instead of common.configure_eevee
 NO_REFRACTION = "--no-refraction" in args # A/B: water without raytraced transmission in Eevee
+CPU = "--cpu" in args                     # Cycles on the CPU (fallback when Metal is wedged)
 CAMS = arg("--cams", None)
 CAMS = CAMS.split(",") if isinstance(CAMS, str) else None
 HERO = "--no-hero" not in args
@@ -222,7 +223,7 @@ if QUICK:
 
 def configure(sc, engine):
     if engine == "CYCLES":
-        common.configure_cycles(sc, samples=SPP)
+        common.configure_cycles(sc, samples=SPP, device="CPU" if CPU else "GPU")
         sc.cycles.denoising_use_gpu = False
         sc.cycles.adaptive_threshold = 0.03
         sc.cycles.max_bounces = 8
