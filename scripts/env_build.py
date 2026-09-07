@@ -733,6 +733,13 @@ def main():
     for obj in SUB["ENV_trees"].objects:
         obj.hide_viewport = True
         obj.hide_render = True
+    # common.load_material appends one material at a time, which leaves PFA_*.001 / TEX_*.001 copies of the
+    # library's shared node groups and images behind; the materials agent's helper remaps them back.
+    try:
+        import mat_lib
+        mat_lib.dedupe_node_groups()
+    except Exception as e:
+        log(f"mat_lib.dedupe_node_groups skipped: {e}")
     for lod in (0, 1, 2):
         log(f"ENV tri count at LOD{lod}: {L.collection_tri_count(ENV, lod=lod):,}")
     log(f"objects in ENV: {len(ENV.all_objects)}")

@@ -18,18 +18,18 @@ blender -b --python scripts/env_trees.py -- --lineup                            
 | collection | content | notes |
 |---|---|---|
 | `ENV_terrain` | `ENV_terrain_ground`: one mesh, 46.6 k tris, materials lawn / soil (lagoon bed) / gravel (paths, colonnade floors, rotunda apron r<31, hall slab) | constrained Delaunay of a 3-zone grid (2.5 / 6 / 20 m) with the OSM lagoon, islets, colonnade roofs (+2 m), path ribbons and the hall as constraint polygons; heights from `terrain_height(x, y)` (shared by every scatter) |
-| `ENV_water` | `ENV_lagoon_water` at z −1.3, planar UV (10 m tiles), islets cut out | the bed slopes from −0.3 m at the shore to −1.5 m (0.16 m/m) |
+| `ENV_water` | `ENV_lagoon_water`: **closed volume** (QA-01-3) — surface at z −1.3 triangulated at ~2 m, a bed 0.12–1.50 m below it, vertical walls at the shore and around both islets; 17.4 k tris, 0 open edges, planar UV (10 m tiles) | the murk in `MAT_water_lagoon` is a Cycles volume and only works inside a closed mesh. The bed sits 5 cm above the terrain bed so it never z-fights |
 | `ENV_trees` | 15 source tree objects × 3 LODs, hidden (viewport + render), parked at (−600, −600) | one mesh per (species, seed, LOD), shared by all instances |
-| `ENV_tree_instances` → `_LOD0/_LOD1/_LOD2` | 88 placed trees, 3 objects each (`ENV_tree_<species>_<nn>_LOD<k>`) | object flags: **viewport shows LOD1, render uses LOD0** (`hide_render` on LOD1/LOD2, `hide_viewport` on LOD0/LOD2). The lead can swap by excluding the LOD sub-collections in the view layer. Trees beyond 150 m use the LOD1 mesh for LOD0 too. Custom props: species, seed, height_m, note |
-| `ENV_shrubs` | shrub belts (peninsula, shore, colonnade fronts, islet) and reed tufts, baked into 5 + 3 objects | 462 shrubs (18 tilted cards + core blob each), 150 tufts (16 blades); none within 24 m of the hero camera |
-| `ENV_backdrop` | exhibition hall from OSM `b302` (20 m, pilasters on the concave east wall every 7 m, 24 m arched entrance bay + piers opposite the rotunda), 288 Marina/Presidio buildings within 460 m from `_osm.json` heights, far ground to 2.6 km, bay plane north of −480 m, Presidio wooded ridge (az 195–330°, 520–1500 m, up to 70 m + canopy bumps), SW Presidio hill, south/east city hills, Marin headlands | all single low-poly meshes |
-| `ENV_extras` | rip-rap (2 rows of rocks along the whole OSM shore + islet, 6 rock meshes, baked per 45° sector), 65 gulls sitting/floating + 6 flying, lamp posts on the shore path | |
+| `ENV_tree_instances` → `_LOD0/_LOD1/_LOD2` | 169 placed trees, 3 objects each (`ENV_tree_<species>_<nn>_LOD<k>`) | object flags: **viewport shows LOD1, render uses LOD0** (`hide_render` on LOD1/LOD2, `hide_viewport` on LOD0/LOD2). A tree uses the next lighter mesh when no QA camera is within `FAR_RADIUS` = 130 m of it, and the E2/E3 back screen rows always do. Per-instance random z-rotation, asymmetric xy scale (0.82–1.16) and a 0–4.5° wind lean, so no two crowns share a silhouette (QA-01-7). Custom props: species, seed, height_m, note |
+| `ENV_shrubs` | 649 **separate objects** sharing 15 source meshes: pittosporum mounds (4 sizes), upright mahonia (2), agapanthus clumps (3), dry reeds (3), leafless twig shrubs (3) | QA-01-2. One object per bush so the library foliage materials' per-object random (`PFA_instance`) varies hue/value per plant; a joined belt would be one flat colour. Nothing within 34 m of the hero camera |
+| `ENV_backdrop` | exhibition hall from OSM `b302` (20 m, 27 pilasters on the concave east wall every 7 m, 102 glazed bays between them, cornice + string course + plinth bands, curved roof (eave 15.5 m + 4.5 m rise), 24 m arched entrance bay with the green door opposite the rotunda — QA-01-8), 288 Marina/Presidio buildings within 460 m from `_osm.json` heights, far ground to 2.6 km, bay plane north of −480 m, Presidio wooded ridge (az 195–330°, 520–1500 m, up to 70 m + canopy bumps), SW Presidio hill, south/east city hills, Marin headlands | all single low-poly meshes |
+| `ENV_extras` | rip-rap (2 rows along the whole OSM shore + islet, 1 273 boulders 0.32–0.80 m straddling the water line, 7 rock meshes baked per 45° sector — QA-01-19), 65 gulls sitting/floating + 6 flying, lamp posts on the shore path | |
 
-Triangle counts (full ENV): **LOD0 3.71 M, LOD1 1.84 M, LOD2 0.34 M** (budget: LOD1 < 3 M). Terrain + water + rocks +
-shrubs + birds + backdrop without trees ≈ 0.20 M. `assets/environment.blend` is 67 MB uncompressed (15 unique tree
-meshes dominate; instances share them). Per tree: cypress 45 k / 17 k / 1.3 k, columnar cypress 50 k / 20 k / 1.8 k,
-pine 47 k / 18 k / 1.8 k, eucalyptus 35 k / 13 k / 1.6 k, redwood 27 k / 10 k / 1.6 k, willow 62 k / 37 k / 3.3 k,
-broadleaf 22 k / 8 k / 1.5 k (LOD0 / LOD1 / LOD2).
+Triangle counts (full ENV, 2026-09-07 fix round): **LOD0 15.15 M, LOD1 5.89 M, LOD2 1.44 M** (the lead's budget is
+~10 M at LOD1; the brief's original 3 M no longer holds now that the crowns are dense enough to be opaque). Terrain +
+water + rip-rap + backdrop + birds ≈ 0.19 M, shrubs 0.99 M, trees the rest. Per LOD0 tree: cypress 101 k, columnar
+cypress 99 k, pine 108 k, redwood 96 k, eucalyptus ~95 k, willow 82 k, broadleaf 64 k (LOD1 ≈ 0.35 x, LOD2 ≈ 0.02 x).
+`assets/environment.blend` is ~163 MB uncompressed (21 unique tree meshes dominate; instances share them).
 
 ## Terrain and shore (docs/reference_sheet.md §1)
 
@@ -40,28 +40,79 @@ broadleaf 22 k / 8 k / 1.5 k (LOD0 / LOD1 / LOD2).
   west), spurs from both pylons, paths behind both colonnades (r 97 about (0, 52)), rotunda west door to the hall,
   two paths from the east shore toward Baker Street. Colonnade floors and the rotunda apron (r < 31, under the ARCH
   platform) are gravel.
-- Shoreline: rows of 0.3–0.75 m rocks at the waterline and 0.7 m up the bank (refs 022, 063, 187).
+- Shoreline (QA-01-19): 1 273 boulders, 0.32–0.80 m, in two rows — a broken waterline row whose centres straddle
+  z = WATER_Z (about a third of each stone stands proud, the rest is wet/submerged) and a smaller bank row 0.8–1.9 m
+  up the slope; density varies along the shore (noise) and is highest on the rotunda peninsula (refs 022, 063, 187).
+- The OSM extract (`reference/plans/_osm.json`) contains **no highway/footway ways** at all, so the paths are the
+  satellite-derived polylines above, not OSM geometry; with `MAT_gravel_path` they now read in the cam06 aerial.
 
 ## Planting plan
 
-Species presets are Sapling (`bl_ext.blender_org.sapling_tree_gen`) parameter sets in `env_trees.SPECIES`; leaves are
-Sapling leaf cards: `rect` needle strips (0.85–0.95 × 0.3 m) fanning around the twigs for cypress / pine / redwood,
-`hex` cards for eucalyptus (1.3 × 0.45 m hanging), willow (0.95 × 0.16 m hanging) and broadleaf (0.75 m). LOD1 halves
-the leaf count and enlarges the cards ×1.3; LOD2 is trunk + main limbs with 4 crossed + 2 horizontal crown cards.
-Every instance is rescaled to the plan height (source heights 26–38 m), rotated randomly, ±10 % xy scale.
+Species presets are Sapling (`bl_ext.blender_org.sapling_tree_gen`) parameter sets in `env_trees.SPECIES`. Leaves are
+Sapling `rect` cards carrying the library's alpha-cut cluster textures (a card is a needle spray / leaf clump, not one
+leaf). **Foliage sizing (QA-01-7), measured in the built file** — card width x long side, and what that is in pixels
+at 70 m in a 1920 px frame through the 24 mm hero lens:
+
+| species | LOD0 cards / tree | card (median instance) | px at 70 m | worst instance |
+|---|---|---|---|---|
+| cypress | 35 k | 10 x 50 cm | 1.9 x 9.2 px | 12.5 px |
+| columnar cypress | 30 k | 10 x 50 cm | 1.8 x 8.6 px | 9.8 px |
+| pine | 36 k | 9 x 48 cm | 1.6 x 7.6 px | 9.5 px |
+| redwood | 37 k | 11 x 46 cm | 2.1 x 8.5 px | 10.4 px |
+| eucalyptus | 33 k | 13 x 52 cm | 2.4 x 9.5 px | 9.8 px |
+| willow | 23 k | 5 x 45 cm | 0.9 x 6.8 px | 7.4 px |
+| broadleaf | 23 k | 22 x 44 cm | 4.1 x 8.0 px | 8.1 px |
+
+QA-01-7 asked for no card wider than 6 px at 60–80 m. The card **width** is 1–4 px everywhere; the long side is 7–10 px.
+Shrinking the long side to 6 px (0.33 m) was tried and rejected: at that size a 25 m crown needs about 95 k cards to
+stop being see-through (measured — at 35 k cards of 0.28 m the crowns rendered as bare branches with leaf tufts, see
+`renders/previews/environment/20260907_153902_tree_lineup_LOD0.png`), which is ~2.5x the whole LOD0 budget. The cards
+carry alpha-cut cluster textures, so no card has a straight edge in the render; crown opacity is measured instead by
+the sky-through-the-bays test below.
+
+LOD1 keeps 42 % of the leaves at ×1.25 card size; LOD2 is trunk + main limbs with 4 crossed + 2 horizontal crown cards.
+Every instance is rescaled to the plan height, randomly rotated, given an asymmetric xy scale (0.82–1.16) and a
+0–4.5° wind lean so crown silhouettes are irregular and never repeat.
 
 Sources: reference sheet §6 table, satellite_z20 (0.118 m/px, rotunda dome centroid at px 828, 740) and satellite_z18
-(0.472 m/px, dome at px 718.6, 633.8) crown positions, and the hero-camera geometry: for the user image / ref 169 the
-anchor trees were solved from their pixel position (camera (−16, 113.9, 1.0), 31 mm, image right = north) onto real
-land. The OSM lagoon polygon's north embayment reaches Y = −19 at X = −45, so the "dark cluster right of the rotunda"
-is two groups: the peninsula's north lobe (X −40…−16, Y 0…26) and the 3–13 m strip between the north colonnade and
-the water (canopy overhanging both, as in the satellite tile). Trees whose coordinates fall in OSM water are moved to
-the nearest land within 15 m (reported by the build).
+(0.472 m/px, dome at px 718.6, 633.8) crown positions, and the hero-camera geometry. The OSM lagoon polygon's north
+embayment reaches Y = −19 at X = −45, so the "dark cluster right of the rotunda" is two groups: the peninsula's north
+lobe and the 3–13 m strip between the north colonnade and the water. Trees whose coordinates fall in OSM water are
+moved to the nearest land within 15 m (reported by the build) — this is why the A group's plan coordinates and its
+built coordinates differ by a few metres.
 
-Groups: A peninsula north lobe · A2 north-wing strip · B north shore · C south side (columns on the strip between the
-south wing and the south embayment, small trees in the podium planter zone r 26–32) · D south shore/pylon · E redwood
-screen between colonnades and hall (DPR: planted 1968; generated, 8–11 m spacing, 70 % redwood) · F east / south-east
-shore rows (Baker Street) and NE-corner cypresses (DPR) · G wooded islet · H backdrop trees from z18 crowns.
+Groups: A peninsula north lobe · A2 north-wing strip · B north shore · C south side · D south shore/pylon ·
+E1/E2/E3 redwood screen behind the colonnades (DPR: planted 1968) · F east / south-east shore rows (Baker Street) and
+NE-corner cypresses (DPR) · G wooded islet · H backdrop trees from z18 crowns.
+
+**Screen layout (QA-01-6).** The wings are arcs struck from (0, 52), so `env_trees.redwood_screen` works in polar
+coordinates about that point: for every 2° of the wing's sweep it measures the polygon's outermost radius and plants
+three staggered rows at +4.5 m (4.0 m spacing, 26–34 m tall), +11 m (5.5 m) and +19 m (8.0 m). The previous version
+walked the polygon's edge segments and put trees *inside* the colonnade band — one cypress ended up 1 m from QA cam 03.
+Screen positions are now also rejected inside any colonnade polygon, inside the hall, and within 16 m of any QA camera.
+
+**Sight lines (QA-01-6), `blender -b --python scripts/env_sightlines.py`** — projects every planted tree into the QA
+cameras and lists those inside a "must stay clear" band:
+
+- cam 03 (left 30 % of frame, within 60 m): **clear**. The two C-group trees that stood 5 m and 7 m in front of the new
+  camera at (40, −21) moved to (62, −46) and (74, −38), behind the camera; the screen keep-out did the rest. What is
+  left in that band is the north wing's screen at 44–60 m, i.e. background beyond the rotunda, as in ref 128.
+- cam 02 (right 40 %, within 60 m): **not fully clear, by design.** The reference sheet §6 puts the dense dark cluster
+  at X −20…−40, Y 10…30 and the OSM shoreline gives no land west of about X = −42 there, so the cluster cannot be moved
+  out of the new cam 02 at (−45, 52). It was moved as far south-west as the land allows: nearest crown edge 29 m (was
+  22 m), trunks now project at x ≥ 0.70 instead of 0.64, i.e. into the right-edge band where ref 062 also shows a dark
+  conifer. Moving it further would break the hero (cam 01 x 0.70–0.90 = "right of the rotunda") — **lead's call**.
+
+**Sky through the colonnade bays (QA-01-6 acceptance), `env_preview.sky_through_wing(wing)`**: renders cam 01 with a
+transparent film and counts background pixels inside the frame box of that wing between z = 4 m and z = 17 m.
+
+The tool is new this round, so there is no pre-round baseline; these are the three measured states during the fix
+(QA's target is <= 20 % for the north wing):
+
+| | polar screen rebuilt | rows densified | final (denser crowns) |
+|---|---|---|---|
+| north wing (box x 0.622–1.000, y 0.361–0.607) | 10.2 % | 4.1 % | **1.7 %** |
+| south wing (box x 0.000–0.370, y 0.361–0.625) | 25.1 % | 14.8 % | **9.5 %** |
 
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |

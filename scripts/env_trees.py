@@ -30,7 +30,7 @@ SPECIES = {
         downAngle=(90.0, 52.0, 42.0, 45.0), downAngleV=(0.0, -35.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 30.0, 40.0, 0.0), attractUp=(0.0, 0.8, 0.6, 0.0), segSplits=(0.0, 0.25, 0.1, 0.0),
         splitAngle=(0.0, 25.0, 20.0, 0.0), splitAngleV=(0.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3,
-        scale=20.0, scaleV=2.0, leaves=195, leafScale=0.285, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
+        scale=20.0, scaleV=2.0, leaves=230, leafScale=0.50, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=55.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(15, 25)),
     # columnar Monterey cypress (younger / grouped trees): the narrow dark columns left of the rotunda in the user image
@@ -42,7 +42,7 @@ SPECIES = {
         downAngle=(90.0, 45.0, 42.0, 45.0), downAngleV=(0.0, -25.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 30.0, 40.0, 0.0), attractUp=(0.0, 1.0, 0.7, 0.0), segSplits=(0.0, 0.15, 0.1, 0.0),
         splitAngle=(0.0, 20.0, 20.0, 0.0), splitAngleV=(0.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3,
-        scale=24.0, scaleV=2.0, leaves=195, leafScale=0.285, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
+        scale=24.0, scaleV=2.0, leaves=230, leafScale=0.50, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=55.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(18, 28)),
     # tall straight trunk, high open crown, hanging foliage
@@ -50,11 +50,11 @@ SPECIES = {
         levels=3, length=(1.0, 0.24, 0.5, 0.0), lengthV=(0.0, 0.2, 0.25, 0.0), branches=(0, 20, 14, 0),
         curveRes=(10, 5, 4, 1), curve=(0.0, 10.0, -25.0, 0.0), curveV=(25.0, 50.0, 80.0, 0.0),
         shape="8", customShape=(0.4, 1.0, 0.55, 0.6), branchDist=1.4, baseSize=0.4, baseSize_s=0.35,
-        ratio=0.016, ratioPower=1.3, scale0=1.0, scaleV0=0.1, rootFlare=1.15,
+        ratio=0.013, ratioPower=1.3, scale0=1.0, scaleV0=0.1, rootFlare=1.15,
         downAngle=(90.0, 32.0, 50.0, 45.0), downAngleV=(0.0, -20.0, 20.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 20.0, 40.0, 0.0), attractUp=(0.4, 0.8, -1.3, 0.0), segSplits=(0.15, 0.3, 0.0, 0.0),
         splitAngle=(20.0, 25.0, 0.0, 0.0), splitAngleV=(5.0, 8.0, 0.0, 0.0), splitByLen=True, splitHeight=0.35, baseSplits=1,
-        scale=30.0, scaleV=3.0, leaves=140, leafScale=0.33, leafScaleX=0.42, leafScaleV=0.35, bend=0.2, leafangle=-70.0,
+        scale=30.0, scaleV=3.0, leaves=400, leafScale=0.52, leafScaleX=0.42, leafScaleV=0.35, bend=0.2, leafangle=-70.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=70.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_eucalyptus", leaf="MAT_leaf_eucalyptus", height=(22, 34)),
     # Monterey pine: irregular rounded crown of dense dark needle tufts
@@ -66,7 +66,7 @@ SPECIES = {
         downAngle=(90.0, 55.0, 45.0, 45.0), downAngleV=(0.0, -30.0, 10.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(25.0, 30.0, 40.0, 0.0), attractUp=(0.0, 0.5, 0.35, 0.0), segSplits=(0.1, 0.25, 0.1, 0.0),
         splitAngle=(25.0, 25.0, 20.0, 0.0), splitAngleV=(5.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3, baseSplits=1,
-        scale=21.0, scaleV=2.0, leaves=205, leafScale=0.285, leafScaleX=0.35, leafScaleV=0.35, bend=0.3, leafangle=0.0,
+        scale=21.0, scaleV=2.0, leaves=240, leafScale=0.48, leafScaleX=0.35, leafScaleV=0.35, bend=0.3, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=60.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(15, 24)),
     # weeping willow at the water's edge
@@ -78,7 +78,7 @@ SPECIES = {
         downAngle=(0.0, 20.0, 30.0, 20.0), downAngleV=(0.0, 20.0, 10.0, 10.0), rotate=(99.5, 137.5, -60.0, 140.0),
         rotateV=(15.0, 15.0, 45.0, 0.0), attractUp=(0.0, 0.0, -2.75, -3.0), segSplits=(0.1, 0.2, 0.2, 0.0),
         splitAngle=(12.0, 30.0, 16.0, 0.0), splitAngleV=(0.0, 10.0, 20.0, 0.0), splitByLen=True, handleType="1",
-        scale=11.0, scaleV=1.5, leaves=165, leafScale=0.33, leafScaleX=0.18, leafScaleV=0.35, bend=0.0, leafangle=-70.0,
+        scale=11.0, scaleV=1.5, leaves=180, leafScale=0.45, leafScaleX=0.18, leafScaleV=0.35, bend=0.0, leafangle=-70.0,
         leafShape="rect", leafDownAngle=30.0, leafDownAngleV=10.0, leafRotate=137.5, leafRotateV=30.0, horzLeaves=False, leafDist="10",
         bark="MAT_bark_cypress", leaf="MAT_leaf_broadleaf", height=(8, 12)),
     # coast redwood: narrow conical, flat horizontal sprays
@@ -86,11 +86,11 @@ SPECIES = {
         levels=3, length=(1.0, 0.24, 0.45, 0.0), lengthV=(0.0, 0.15, 0.2, 0.0), branches=(0, 55, 9, 0),
         curveRes=(10, 4, 3, 1), curve=(0.0, 5.0, -5.0, 0.0), curveV=(15.0, 30.0, 40.0, 0.0),
         shape="0", branchDist=1.0, baseSize=0.15, baseSize_s=0.3,
-        ratio=0.014, ratioPower=1.2, scale0=1.1, scaleV0=0.05, rootFlare=1.4,
+        ratio=0.0115, ratioPower=1.2, scale0=1.1, scaleV0=0.05, rootFlare=1.4,
         downAngle=(90.0, 82.0, 50.0, 45.0), downAngleV=(0.0, 10.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(15.0, 20.0, 30.0, 0.0), attractUp=(0.0, 0.25, 0.1, 0.0), segSplits=(0.0, 0.0, 0.0, 0.0),
         splitAngle=(0.0, 0.0, 0.0, 0.0), splitAngleV=(0.0, 0.0, 0.0, 0.0), splitByLen=True,
-        scale=30.0, scaleV=3.0, leaves=165, leafScale=0.275, leafScaleX=0.40, leafScaleV=0.35, bend=0.25, leafangle=0.0,
+        scale=30.0, scaleV=3.0, leaves=480, leafScale=0.46, leafScaleX=0.40, leafScaleV=0.35, bend=0.25, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=50.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=30.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(18, 32)),
     # generic round-crowned broadleaf (acacia / plane / young oak)
@@ -102,7 +102,7 @@ SPECIES = {
         downAngle=(90.0, 55.0, 45.0, 45.0), downAngleV=(0.0, -30.0, 10.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 20.0, 30.0, 0.0), attractUp=(0.5, 0.3, 0.2, 0.0), segSplits=(0.2, 0.3, 0.1, 0.0),
         splitAngle=(25.0, 25.0, 20.0, 0.0), splitAngleV=(5.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.25,
-        scale=12.0, scaleV=1.5, leaves=105, leafScale=0.245, leafScaleX=0.85, leafScaleV=0.35, bend=0.3, leafangle=0.0,
+        scale=12.0, scaleV=1.5, leaves=380, leafScale=0.44, leafScaleX=0.85, leafScaleV=0.35, bend=0.3, leafangle=0.0,
         leafShape="rect", leafDownAngle=45.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_broadleaf", height=(8, 14)),
 }
@@ -112,7 +112,7 @@ SEEDS = {"cypress": (3, 17, 41), "cypress_column": (2, 31), "eucalyptus": (5, 23
 # LOD overrides: geometry resolution and leaf density (skeleton stays identical for the same seed)
 LOD_OVERRIDES = {
     0: dict(bevelRes=1, resU=2),
-    1: dict(bevelRes=0, resU=1, leaf_factor=0.38, leaf_scale=1.32),
+    1: dict(bevelRes=0, resU=1, leaf_factor=0.42, leaf_scale=1.25),
     2: dict(bevelRes=0, resU=1, levels=2, leaf_factor=0.0, leaf_scale=1.0),
 }
 NON_OP_KEYS = ("bark", "leaf", "height")
@@ -369,7 +369,12 @@ PLAN = [
     ("eucalyptus", -88.0, -308.0, 30.0, "H"),
     ("cypress", -30.0, -290.0, 24.0, "H"),
 ]
-FAR_RADIUS = 150.0   # beyond this, LOD0/LOD1 objects use the LOD1 mesh (LOD1 cap)
+FAR_RADIUS = 130.0   # no QA camera within this distance -> LOD0/LOD1 objects use the LOD1/LOD2 mesh
+try:
+    import qa_cameras as _qc
+    CAM_XY = [(c["loc"][0], c["loc"][1]) for c in _qc.CAMERAS]
+except Exception:
+    CAM_XY = [(-14.1, 100.0)]
 
 
 def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
@@ -489,7 +494,10 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
             else:
                 print(f"[env_trees] WARNING {sp} at ({x0:.0f},{y0:.0f}) is in the water and no land within 15 m ({note[:30]})")
         z = terrain_height(x, y) - 0.15
-        far = math.hypot(x, y) > FAR_RADIUS or note.startswith("H")      # backdrop trees: LOD1 mesh for LOD0
+        # LOD0 budget: a tree uses the LOD1 mesh for LOD0 when no QA camera is within FAR_RADIUS of it, and the
+        # E2/E3 back screen rows always do (they stand 100-140 m behind the wings and are half occluded by row E1).
+        cam_d = min([math.hypot(x - cx, y - cy) for (cx, cy) in CAM_XY], default=1e9)
+        far = cam_d > FAR_RADIUS or note.startswith(("H", "E2", "E3"))
         light = note.startswith("E2") or note.startswith("E3")           # back screen rows: LOD2 mesh for LOD1
         n = per_species_idx.get(sp, 0)
         per_species_idx[sp] = n + 1
