@@ -21,12 +21,13 @@ blender -b --python scripts/env_trees.py -- --lineup                            
 | `ENV_water` | `ENV_lagoon_water` at z −1.3, planar UV (10 m tiles), islets cut out | the bed slopes from −0.3 m at the shore to −1.5 m (0.16 m/m) |
 | `ENV_trees` | 15 source tree objects × 3 LODs, hidden (viewport + render), parked at (−600, −600) | one mesh per (species, seed, LOD), shared by all instances |
 | `ENV_tree_instances` → `_LOD0/_LOD1/_LOD2` | 88 placed trees, 3 objects each (`ENV_tree_<species>_<nn>_LOD<k>`) | object flags: **viewport shows LOD1, render uses LOD0** (`hide_render` on LOD1/LOD2, `hide_viewport` on LOD0/LOD2). The lead can swap by excluding the LOD sub-collections in the view layer. Trees beyond 150 m use the LOD1 mesh for LOD0 too. Custom props: species, seed, height_m, note |
-| `ENV_shrubs` | shrub belts (peninsula, shore, colonnade fronts, islet) and reed tufts, baked into 5 + 3 objects | 459 shrubs, 160 tufts; none within 24 m of the hero camera |
+| `ENV_shrubs` | shrub belts (peninsula, shore, colonnade fronts, islet) and reed tufts, baked into 5 + 3 objects | 462 shrubs (18 tilted cards + core blob each), 150 tufts (16 blades); none within 24 m of the hero camera |
 | `ENV_backdrop` | exhibition hall from OSM `b302` (20 m, pilasters on the concave east wall every 7 m, 24 m arched entrance bay + piers opposite the rotunda), 288 Marina/Presidio buildings within 460 m from `_osm.json` heights, far ground to 2.6 km, bay plane north of −480 m, Presidio wooded ridge (az 195–330°, 520–1500 m, up to 70 m + canopy bumps), SW Presidio hill, south/east city hills, Marin headlands | all single low-poly meshes |
 | `ENV_extras` | rip-rap (2 rows of rocks along the whole OSM shore + islet, 6 rock meshes, baked per 45° sector), 65 gulls sitting/floating + 6 flying, lamp posts on the shore path | |
 
-Triangle counts (full ENV): **LOD0 3.70 M, LOD1 1.83 M, LOD2 0.33 M** (budget: LOD1 < 3 M). Terrain + water + rocks +
-shrubs + birds + backdrop without trees ≈ 0.19 M. Per tree: cypress 45 k / 17 k / 1.3 k, columnar cypress 50 k / 20 k / 1.8 k,
+Triangle counts (full ENV): **LOD0 3.71 M, LOD1 1.84 M, LOD2 0.34 M** (budget: LOD1 < 3 M). Terrain + water + rocks +
+shrubs + birds + backdrop without trees ≈ 0.20 M. `assets/environment.blend` is 67 MB uncompressed (15 unique tree
+meshes dominate; instances share them). Per tree: cypress 45 k / 17 k / 1.3 k, columnar cypress 50 k / 20 k / 1.8 k,
 pine 47 k / 18 k / 1.8 k, eucalyptus 35 k / 13 k / 1.6 k, redwood 27 k / 10 k / 1.6 k, willow 62 k / 37 k / 3.3 k,
 broadleaf 22 k / 8 k / 1.5 k (LOD0 / LOD1 / LOD2).
 
@@ -157,9 +158,10 @@ shore rows (Baker Street) and NE-corner cypresses (DPR) · G wooded islet · H b
 
 ## Previews and comparisons
 
-`renders/previews/environment/` (Eevee, QA cameras) and `renders/qa_comparisons/env_*.png` (render | reference | blend):
-`env_trees5_cam01_vs_user.png`, `env_trees5_cam01_vs_ref169.png`, `env_trees5_cam06_vs_ref105.png`,
-`env_trees5_cam03_vs_ref128.png`, `env_trees4_topdown_vs_satellite_z18.png` (plan view | satellite | blend).
+`renders/previews/environment/*_final*.png` (Eevee, QA cameras 01/02/03/05/06 + three diagnostic views + hero at LOD1)
+and `renders/qa_comparisons/env_final_*.png` (render | reference | 50 % blend): `cam01_vs_user`, `cam01_vs_ref169`,
+`cam02_vs_ref062`, `cam03_vs_ref128`, `cam05_vs_ref063`, `cam06_vs_ref105`, `topdown_vs_satellite_z18` (plan view |
+satellite | blend) and `env_final_sheet.png` (contact sheet). Earlier rounds are kept as `env_trees1..5_*`.
 
 Hero-view check against the user image (cam 01): two narrow dark cypress columns left of the rotunda at x ≈ 250–330 px
 with the south colonnade visible through the gap, a small dark tree touching the rotunda's left edge, the dense dark
@@ -189,3 +191,5 @@ el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
 - The exhibition hall footprint (`b302`) is the full OSM polygon (97 m deep); the satellite shows a ≈ 45 m crescent
   with roads west of it. Backdrop only — replace when/if ARCH models the hall.
 - Wind-sculpting of the cypresses (leaning away from the westerlies) is not modelled; no per-instance weathering.
+- Diagnostic camera `CAM_env_hall_from_colonnade` mostly sees the placeholder rotunda; the hall's pilasters show on the
+  right of that frame. A proper hall view needs the ARCH colonnade (open, not the placeholder's solid wall).

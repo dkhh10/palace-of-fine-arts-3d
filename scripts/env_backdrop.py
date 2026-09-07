@@ -222,8 +222,8 @@ def build_landscape(SUB, terrain_height):
                 fs.append((a, a + 1, a + seg + 2, a + seg + 1))
         return L.mesh_from_tris(name, vs, fs, coll, [mat], smooth=True)
 
-    ridge("ENV_backdrop_presidio_ridge", 195, 330, 520, 1500, 70.0, 22.0, m_forest, seg=60, rings=8)
-    ridge("ENV_backdrop_presidio_hill_sw", 200, 260, 900, 2400, 110.0, 25.0, m_forest, seg=40, rings=6)
+    ridge("ENV_backdrop_presidio_ridge", 200, 335, 700, 1600, 45.0, 18.0, m_forest, seg=60, rings=8)
+    ridge("ENV_backdrop_presidio_hill_sw", 205, 262, 1200, 2600, 110.0, 25.0, m_forest, seg=40, rings=6)
     # distant hills: Pacific Heights / Russian Hill to the south and south-east, bare hill material
     ridge("ENV_backdrop_hills_south", 120, 200, 1200, 2600, 90.0, 10.0, m_hill, seg=40, rings=5)
     ridge("ENV_backdrop_hills_east", 60, 125, 1600, 2600, 60.0, 8.0, m_hill, seg=30, rings=4)

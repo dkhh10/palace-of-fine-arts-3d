@@ -96,7 +96,7 @@ def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0):
 
 
 EXTRA_CAMS = [   # diagnostic views (not QA cameras): name, location, target, lens
-    ("CAM_env_hall_from_rotunda", (0.0, 12.0, 6.0), (-10.0, -70.0, 12.0), 24.0),
+    ("CAM_env_hall_from_colonnade", (6.0, -36.0, 14.0), (-4.0, -80.0, 12.0), 20.0),
     ("CAM_env_north_wing_from_water", (-60.0, 60.0, 2.0), (-50.0, -20.0, 12.0), 28.0),
     ("CAM_env_east_shore_high", (-40.0, 170.0, 25.0), (0.0, 0.0, 15.0), 35.0),
 ]

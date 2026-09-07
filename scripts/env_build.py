@@ -277,7 +277,7 @@ def build_riprap():
 
 
 # ----------------------------------------------------------------------------- shrubs and reeds
-def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=14):
+def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=18):
     """Low-poly shrub: a squashed noisy icosphere plus crossed leaf cards."""
     rnd = random.Random(seed)
     bm = bmesh.new()
@@ -291,12 +291,18 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=14):
     bm.free()
     for c in range(cards):
         a = rnd.uniform(0, math.pi)
-        r = radius * rnd.uniform(0.3, 1.0)
-        cx, cy = math.cos(a * 2) * r * 0.5, math.sin(a * 2) * r * 0.5
-        w, h = radius * rnd.uniform(0.7, 1.2), height * rnd.uniform(0.9, 1.4)
+        r = radius * rnd.uniform(0.2, 0.9)
+        b = rnd.uniform(0, 2 * math.pi)
+        cx, cy = math.cos(b) * r, math.sin(b) * r
+        w, h = radius * rnd.uniform(0.5, 0.9), height * rnd.uniform(0.7, 1.25)
         dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
+        # tilt the card outward from the shrub centre so the crown reads as a mound of foliage, not a box
+        tilt = rnd.uniform(0.15, 0.6)
+        tx, ty = math.cos(b) * h * math.sin(tilt), math.sin(b) * h * math.sin(tilt)
+        hz = h * math.cos(tilt)
         base = len(verts)
-        verts += [Vector((cx - dx, cy - dy, 0.0)), Vector((cx + dx, cy + dy, 0.0)), Vector((cx + dx, cy + dy, h)), Vector((cx - dx, cy - dy, h))]
+        verts += [Vector((cx - dx, cy - dy, 0.0)), Vector((cx + dx, cy + dy, 0.0)),
+                  Vector((cx + dx + tx, cy + dy + ty, hz)), Vector((cx - dx + tx, cy - dy + ty, hz))]
         faces.append([base, base + 1, base + 2, base + 3])
     me = bpy.data.meshes.new(name)
     me.from_pydata([tuple(v) for v in verts], [], faces)
@@ -310,17 +316,19 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=14):
     return me
 
 
-def make_reed_mesh(name, seed, height=1.1, blades=9):
+def make_reed_mesh(name, seed, height=1.1, blades=16):
     rnd = random.Random(seed)
     verts, faces = [], []
     for b in range(blades):
         a = rnd.uniform(0, math.pi)
-        w = rnd.uniform(0.35, 0.7)
-        h = height * rnd.uniform(0.7, 1.3)
-        ox, oy = rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25)
+        w = rnd.uniform(0.12, 0.3)
+        h = height * rnd.uniform(0.6, 1.3)
+        ox, oy = rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3)
+        lean = rnd.uniform(0, 0.35)
+        lx, ly = math.cos(rnd.uniform(0, 6.283)) * h * lean, math.sin(rnd.uniform(0, 6.283)) * h * lean
         dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
         base = len(verts)
-        verts += [(ox - dx, oy - dy, 0.0), (ox + dx, oy + dy, 0.0), (ox + dx * 0.6, oy + dy * 0.6, h), (ox - dx * 0.6, oy - dy * 0.6, h)]
+        verts += [(ox - dx, oy - dy, 0.0), (ox + dx, oy + dy, 0.0), (ox + dx * 0.3 + lx, oy + dy * 0.3 + ly, h), (ox - dx * 0.3 + lx, oy - dy * 0.3 + ly, h)]
         faces.append([base, base + 1, base + 2, base + 3])
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], faces)
@@ -519,8 +527,11 @@ def main():
     if not NO_BACKDROP:
         import env_backdrop
         env_backdrop.build_all(SUB, terrain_height, SITE, HALL)
-    # viewport default LOD1, report
+    # viewport default LOD1 (instances only); source trees stay hidden everywhere
     L.set_object_lod_visibility(ENV, 1)
+    for obj in SUB["ENV_trees"].objects:
+        obj.hide_viewport = True
+        obj.hide_render = True
     for lod in (0, 1, 2):
         log(f"ENV tri count at LOD{lod}: {L.collection_tri_count(ENV, lod=lod):,}")
     log(f"objects in ENV: {len(ENV.all_objects)}")
