@@ -179,8 +179,53 @@ def pair(render, ref, out, regions=None, width=1400, labels=("render", "referenc
     return out
 
 
+# --------------------------------------------------------------------------- round-09 acceptance summaries
+# Display-referred luminance of an sRGB 0-255 mean (this is what QA's numbers and lighting_notes 17 quote as "lum";
+# it is NOT the scene-linear Y above). ref 169 / ref 083 targets are baked in so one call answers "does it pass?".
+def disp_lum(srgb):
+    return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2]
+
+
+# ref 169 measured with REGIONS["hero_ref169"]: attic_sunlit_b 232.7/189.1/98.6, sky_top 116.0/174.4/226.1,
+# shade_north 147.5/112.1/78.0. Windows are QA's: attic lum -10 %, sky top +-10 %, shade -20 %, R-B >= 110.
+HERO_TARGETS = dict(attic_lum=(172.6, None), attic_rb=(110.0, None), sky_lum=(149.1, 182.3), shade_lum=(93.8, None))
+HERO_REF = dict(attic_lum=191.8, attic_rb=134.1, sky_lum=165.7, shade_lum=117.2)
+# ref 083 (rotunda ceiling): vault soffit / the frame's own sky 0.58, coffer field / own sky 0.39.
+CEILING_REF = dict(soffit=0.58, coffer=0.39)
+
+
+def summary(path, kind="hero"):
+    if kind == "hero":
+        m = measure(path, REGIONS["hero"])
+        a, sk, sh = m["attic_sunlit_b"]["srgb"], m["sky_top"]["srgb"], m["shade_north"]["srgb"]
+        out = dict(attic_lum=disp_lum(a), attic_rb=a[0] - a[2], sky_lum=disp_lum(sk), shade_lum=disp_lum(sh),
+                   attic_srgb=a)
+        print(f"--- {Path(path).name}")
+        for k in ("attic_lum", "attic_rb", "sky_lum", "shade_lum"):
+            lo, hi = HERO_TARGETS[k]
+            ok = (out[k] >= lo) and (hi is None or out[k] <= hi)
+            print(f"    {k:10s} {out[k]:6.1f}   ref {HERO_REF[k]:6.1f}   target "
+                  f"{lo:.1f}{'-' + format(hi, '.1f') if hi else '+':>8s}   {'PASS' if ok else 'fail'}")
+        print(f"    attic sRGB {a[0]:.1f}, {a[1]:.1f}, {a[2]:.1f}")
+        return out
+    m = measure(path, REGIONS["ceiling"])
+    sky = disp_lum(m["own_sky"]["srgb"])
+    sw, se = disp_lum(m["vault_soffit_w"]["srgb"]), disp_lum(m["vault_soffit_e"]["srgb"])
+    cof = disp_lum(m["coffer_field"]["srgb"])
+    out = dict(soffit_w=sw / sky, soffit_e=se / sky, soffit=(sw + se) / (2 * sky), coffer=cof / sky, sky=sky)
+    print(f"--- {Path(path).name}")
+    print(f"    own_sky lum {sky:6.1f}")
+    for k in ("soffit", "coffer"):
+        r = CEILING_REF[k]
+        print(f"    {k:8s}/sky {out[k]:.3f}   ref 083 {r:.2f}   delta {out[k] - r:+.3f}   "
+              f"{'PASS' if abs(out[k] - r) <= 0.08 else 'fail'}")
+    print(f"    soffit W/E {out['soffit_w']:.3f} / {out['soffit_e']:.3f}   soffit/coffer {out['soffit'] / out['coffer']:.3f}")
+    return out
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("--summary", choices=["hero", "ceiling"])
     ap.add_argument("images", nargs="*")
     ap.add_argument("--regions")
     ap.add_argument("--rect", action="append", default=[])
@@ -197,6 +242,6 @@ if __name__ == "__main__":
         print(pair(a.pair[0], a.pair[1], a.pair[2], regions=regs))
     out = {}
     for p in a.images:
-        out[p] = report(p, regs)
+        out[p] = summary(p, a.summary) if a.summary else report(p, regs)
     if a.json:
         Path(a.json).write_text(json.dumps(out, indent=1))

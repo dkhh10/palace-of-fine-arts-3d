@@ -17,7 +17,19 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
 LIGHT_BLEND = common.ASSET_FILES["LIGHT"]
-LOOK = "AgX - Base Contrast"
+# THE look, and the ONE place it is defined. Round 08b set light_build.LOOK to "AgX - High Contrast" but this
+# constant kept its round-05 value, and it is THIS one that build_master.py writes into master.blend (via
+# apply_look), so the delivered master rendered at Base Contrast and the whole round-08b chroma gain was invisible
+# in every QA render. Measured on the cam01 hero, same rig, same exposure: Base Contrast gives the sunlit attic
+# R-B 94.8 at 960x540 and 97.4 at 1920x1080; High Contrast gives 117.9 at 960x540. In other words round 08b's
+# "the sweep is 20 R-B optimistic at delivery resolution" was not a resolution effect at all (resolution is worth
+# +2.6 R-B / -2.1 luminance) - it was this divergence. light_build.LOOK now aliases this constant so the two files
+# cannot drift apart again.
+# Why High Contrast: at +0.9 EV (QA-02-4) the sky-lit shade is 25 % LIGHTER than ref 169, so crushing it is the
+# correction rather than the damage that made round 05 pick Base Contrast. Looks measured at strength 1.0 -
+# Base 94.8, Medium High 108.6, High 117.9, Punchy 112.7; Punchy also costs a stop on the attic and drops the water
+# from 111 to 71 for no extra chroma.
+LOOK = "AgX - High Contrast"
 FINAL_SAMPLES = 768          # sized by the timing test in docs/lighting_notes.md (4K in < 2 h on the M2 10-core)
 FINAL_TIME_LIMIT_S = 0.0     # 0 = none; the lead may set e.g. 6000 s per 4K frame as a hard stop
 IRRADIANCE_POOL = "64"       # MB of Eevee irradiance pool; the default 16 cannot hold the two baked probe volumes
