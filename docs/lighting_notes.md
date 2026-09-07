@@ -545,3 +545,19 @@ so it would break the "confirmed in both engines" half of the acceptance.
 **One number for the lead**, as in round 07: `light_build.VAULT_FILL["energy"]`. 2400 shipped (soffit 0.36, coffer
 0.71); **8000 with `FILL["energy"] = 0` meets QA's 0.45 literally** (soffit 0.45, coffer 0.86). Both renders are on
 disk under `renders/previews/lighting/r08sweep_04_*`. Re-run `scripts/lead_build.sh` after changing it (probe re-bake).
+
+### Side effect of the lighter haze the lead needs to know about (hands QA-02-7 back to environment)
+
+On the same Cycles hero, the far colonnade band went **93.9 -> 65.4** between the heavy round-07-style haze
+(`roundlight3`) and the shipped one (`roundlight4`), against ref 169's 92.7. It did not get darker: the round-07 haze
+was *lifting* it by 44 %, which is why round 02 measured the wings at "only" 52 % dark. **The veil was cosmetically
+hiding QA-02-7.** With an honest haze the wings read 1.42x under ref 169 and environment has to fix the tree screen
+for real. Everything else in the hero is unchanged within 0.03 EV.
+
+| hero region | roundlight3 (cap 0.60 / L 400 m) | roundlight4 (shipped, cap 0.50 / L 800 m) | ref 169 |
+|---|---|---|---|
+| sunlit attic | 178.8 / 175.6 | **177.6 / 174.2** | 168.7 / 191.8 |
+| sky top / left | 193.9 / 186.7 | **193.9 / 186.7** | 165.7 / 193.8 |
+| water centre | 104.2 | **104.0** | 106.0 |
+| shade north | 146.0 | **139.9** | 117.2 |
+| colonnade far | 93.9 | **65.4** | 92.7 |
