@@ -34,7 +34,17 @@ def build(out, panels, cols=2, width=1800):
     title_f, body_f = _font(17), _font(14)
     rendered = []
     for caption, path in panels:
+        # "file.png:x,y,w,h" crops a FRACTIONAL rect before scaling, so a hero crop and a full frame can sit on the
+        # same sheet at the same panel width (round 09: the attic band is 3 % of the frame and unreadable uncropped).
+        crop = None
+        if ":" in str(path) and not Path(path).exists():
+            path, _, spec = str(path).rpartition(":")
+            crop = [float(v) for v in spec.split(",")]
         im = Image.open(path).convert("RGB")
+        if crop:
+            W, H = im.size
+            im = im.crop((round(crop[0] * W), round(crop[1] * H),
+                          round((crop[0] + crop[2]) * W), round((crop[1] + crop[3]) * H)))
         im = im.resize((cell_w, round(im.height * cell_w / im.width)), Image.LANCZOS)
         raw = caption.split("|")
         # wrap to the panel width so a long line of numbers never runs off the sheet

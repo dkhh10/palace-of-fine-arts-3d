@@ -54,6 +54,13 @@ SKY_GLOSSY_BOOST = 3.00            # what GLOSSY (reflection) rays see. Split fr
 SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
                                    # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
                                    # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
+SUN_BLUE_MULT = 1.00               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
+                                   # own sun disc has been integrated (so the calibration itself stays physical and
+                                   # reproducible). Round 09 lever for QA-02-14 / the sunlit-stone chroma: the lamp
+                                   # colour is (1.000, 0.607, 0.258) and on a sun-facing surface the sky still
+                                   # supplies 10.4 of the 27.7 blue units (calibration_report E_sunfacing), so the
+                                   # sun's own blue is the only part of it lighting can take out without touching
+                                   # the shade. 1.00 = the physical colour.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
 EXPOSURE_BIAS = 1.75               # EV added to the grey-card calibration. Round 08b: SKY_STRENGTH 2.0 -> 1.0 takes
                                    # light out of the scene, so the 18 % card calibration moved -4.39 -> -4.14 EV and
@@ -391,6 +398,7 @@ def build(moment="morning", calibrate=True, save=True):
     if calib is None:
         calib = cal.calibrate(az, el, SKY, verbose=False, sky_strength=SKY_STRENGTH)   # ~6 s of tiny Cycles renders
     energy, color = calib["lamp_energy"], tuple(calib["lamp_color"])
+    color = (color[0], color[1], color[2] * SUN_BLUE_MULT)      # round 09 chroma lever, see SUN_BLUE_MULT
     exposure = calib["exposure_ev"] + EXPOSURE_BIAS
 
     # fresh file
@@ -403,7 +411,7 @@ def build(moment="morning", calibrate=True, save=True):
     meta = dict(solar_source=source, exposure_calibrated_ev=calib["exposure_ev"], exposure_bias_ev=EXPOSURE_BIAS,
                 sky_strength_lighting=SKY_STRENGTH, sky_camera_boost=SKY_CAMERA_BOOST,
                 sky_glossy_boost=SKY_GLOSSY_BOOST,
-                exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE,
+                exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
     sun = build_sun(coll, az, el, energy, color, moment, meta)
