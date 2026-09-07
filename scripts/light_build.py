@@ -38,11 +38,11 @@ SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0,
 SKY_STRENGTH = 2.0                 # world strength for LIGHTING. The model's direct:diffuse ratio at el 7.4 is 9.9
                                    # (E_sun 59.7 vs E_sky_horizontal 6.0, luminance); real clear-sky data at this
                                    # elevation give ~5, and refs 054/169 show shade only ~3 stops under sunlit. x2.
-SKY_CAMERA_BOOST = 1.15            # extra factor for camera + glossy rays only. Round 07 (QA-01-12): with the
+SKY_CAMERA_BOOST = 1.50            # extra factor for camera + glossy rays only. Round 07 (QA-01-12): with the
                                    # exposure bias below the sky no longer needs 1.6; a smaller boost also keeps the
                                    # blue out of AgX's desaturating highlight roll-off. Glossy still gets it, so the
                                    # lagoon keeps a bright sky reflection.
-SKY_CAMERA_SATURATION = 1.35       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
+SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
                                    # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
                                    # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
@@ -65,7 +65,7 @@ COMP = dict(haze_strength=0.85, haze_warmth=(1.22, 1.0, 0.74),   # haze colour =
 # up into the vault. FILL models exactly that and nothing else - an up-facing area light under the vault, so it lights
 # the soffits and the coffers and adds almost nothing to what cam01 sees through the arch. It is an art bias, sized by
 # measurement; ENERGY is the one number to change if QA wants it dialled back.
-FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=170.0,
+FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=9000.0,
             color=(1.0, 0.86, 0.68), spread_deg=150.0,
             note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
 
@@ -136,11 +136,13 @@ def build_fill(coll):
     except Exception:
         pass
     obj = bpy.data.objects.new(FILL["name"], light)
-    obj.location = FILL["location"]      # rotation 0 -> an area light emits along +Z, i.e. straight up into the vault
+    obj.location = FILL["location"]
+    obj.rotation_euler = (math.pi, 0.0, 0.0)   # Blender lights emit along local -Z; flip so this one faces UP
     obj["note"] = FILL["note"]
     obj["energy_W"] = FILL["energy"]
     coll.objects.link(obj)
-    print(f"[light_build] {FILL['name']}: disk r {FILL['size']/2:.1f} m at z {FILL['location'][2]}, {FILL['energy']} W, up-facing")
+    print(f"[light_build] {FILL['name']}: disk r {FILL['size']/2:.1f} m at z {FILL['location'][2]}, {FILL['energy']} W, "
+          f"up-facing (radiance {FILL['energy'] / (math.pi * math.pi * (FILL['size']/2)**2):.3f} sky units)")
     return obj
 
 
