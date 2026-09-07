@@ -48,3 +48,8 @@ In flight: MAT, ENV follow-up. Next: merge both, scripts/lead_build.sh, QA round
 ## 2026-09-07 17:20 · environment follow-up merged
 Merged: peninsula planting band (319 bushes, 6 low trees; vegetation cover in the podium-to-water strip 16 -> 26 %), env_lib.mat_or remaps to MAT_leaf_pine / MAT_shrub_light / MAT_shrub_dry as soon as they exist; ENV LOD1 8.39 M tris. Composite renders/qa_comparisons/env_peninsula_band.png.
 In flight: MAT only. Next: merge MAT, scripts/lead_build.sh, QA round 2 on Opus.
+
+## 2026-09-07 17:45 · materials merged; all round-1 owners done
+Merged: MAT fix round: water (distance-filtered ripples, murk, reflection 108,80,48 vs ref 129,95,57; near water blue-green), concrete +20-25 % albedo (attic hue within 4.8 deg, 14 % under in luminance, asks lighting for +1 EV), dome membrane cream (0.905,0.72,0.44), leaf normal+translucency maps, MAT_leaf_pine/shrub_light/shrub_dry/backdrop_*, efflorescence, instance_seed hashed into PFA_instance (20 % spread over 6 capitals). Library 35 materials. Composite renders/qa_comparisons/materials_r2_water_stone.png.
+In flight: none. Building master via scripts/lead_build.sh (assemble + probe bake), then QA round 2 (Opus).
+Open for after QA: exposure (materials says +1 EV, lighting says ~+0.15; decide from the QA hero numbers), LOD1 tri count ~15 M.
