@@ -81,7 +81,11 @@ def show(name, key, scene):
             scene.collection.objects.link(o)
         except RuntimeError:
             pass
-    o.matrix_world = socket_matrix(key)
+    M = socket_matrix(key)
+    loc, rot, sca = M.decompose()
+    o.rotation_mode = "QUATERNION"
+    o.location, o.rotation_quaternion, o.scale = loc, rot, sca
+    MATKEY[o.name] = key
     return group(key.replace("2", ""), o)
 
 
@@ -146,10 +150,10 @@ def make_cam(name, loc, target, lens, scene, shift_y=0.0):
 def close_cam(key, obj, scene):
     dist, az_off, elev, lens = CLOSE[key]
     loc, n = SOCKETS[key]
-    (x0, y0, z0), (x1, y1, z1) = ([min(v[i] for v in [obj.matrix_world @ Vector(c) for c in obj.bound_box])
-                                   for i in range(3)],
-                                  [max(v[i] for v in [obj.matrix_world @ Vector(c) for c in obj.bound_box])
-                                   for i in range(3)])
+    M = socket_matrix(MATKEY.get(obj.name, key))
+    ws = [M @ Vector(c) for c in obj.bound_box]
+    (x0, y0, z0) = [min(v[i] for v in ws) for i in range(3)]
+    (x1, y1, z1) = [max(v[i] for v in ws) for i in range(3)]
     centre = Vector(((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
     a = math.atan2(n[1], n[0]) + math.radians(az_off) + (math.pi if key.startswith("rosette") else 0.0)
     e = math.radians(elev)
@@ -157,31 +161,53 @@ def close_cam(key, obj, scene):
     return make_cam(f"CAM_close_{key}", p, centre, lens, scene)
 
 
-def border_for(scene, cam, obj, pad_px=26, res=(1920, 1080)):
-    """Screen-space box of obj in cam, expanded by pad_px, as (min_x, max_x, min_y, max_y) in 0..1."""
+MATKEY = {}
+
+
+def crop_box(scene, cam, obj, key, pad_px=22, res=(1920, 1080)):
+    """Pixel box (PIL, top-left origin) of obj in cam, expanded by pad_px.
+
+    Blender's render border was tried first and placed the crop about half a crop-height low on small objects,
+    so the hero views are rendered full-frame and cropped with PIL instead - slower but verifiable."""
     from bpy_extras.object_utils import world_to_camera_view
-    pts = [world_to_camera_view(scene, cam, obj.matrix_world @ Vector(c)) for c in obj.bound_box]
-    xs = [p.x for p in pts]
-    ys = [p.y for p in pts]
-    px, py = pad_px / res[0], pad_px / res[1]
-    return (max(0.0, min(xs) - px), min(1.0, max(xs) + px), max(0.0, min(ys) - py), min(1.0, max(ys) + py))
+    M = socket_matrix(MATKEY.get(obj.name, key))
+    pts = [world_to_camera_view(scene, cam, M @ Vector(c)) for c in obj.bound_box]
+    xs = [p.x * res[0] for p in pts]
+    ys = [(1.0 - p.y) * res[1] for p in pts]
+    return (max(0, int(min(xs)) - pad_px), max(0, int(min(ys)) - pad_px),
+            min(res[0], int(max(xs)) + pad_px), min(res[1], int(max(ys)) + pad_px))
 
 
-def render(scene, path, res, border=None):
+def render(scene, path, res, crop=None):
     scene.render.resolution_x, scene.render.resolution_y = res
     scene.render.resolution_percentage = 100
-    if border:
-        scene.render.use_border = True
-        scene.render.use_crop_to_border = True
-        (scene.render.border_min_x, scene.render.border_max_x,
-         scene.render.border_min_y, scene.render.border_max_y) = border
-    else:
-        scene.render.use_border = False
+    scene.render.use_border = False
     scene.render.filepath = str(path)
     scene.render.image_settings.file_format = "PNG"
     t = time.time()
     bpy.ops.render.render(write_still=True)
-    print(f"[r4] {path.name} in {time.time() - t:.0f}s")
+    if crop:
+        # Blender's python has no PIL: crop in place with bpy.data.images (top-left origin -> flip for Blender)
+        img = bpy.data.images.load(str(path))
+        w, h = img.size
+        x0, y0, x1, y1 = crop
+        cw, ch = x1 - x0, y1 - y0
+        px = list(img.pixels)
+        out = bpy.data.images.new(path.stem + "_crop", cw, ch, alpha=True)
+        buf = [0.0] * (cw * ch * 4)
+        for j in range(ch):
+            sy = h - 1 - (y0 + j)                  # PIL row -> Blender row (bottom-up)
+            dy = ch - 1 - j
+            src = (sy * w + x0) * 4
+            dst = (dy * cw) * 4
+            buf[dst:dst + cw * 4] = px[src:src + cw * 4]
+        out.pixels = buf
+        out.file_format = "PNG"
+        out.filepath_raw = str(path)
+        out.save()
+        bpy.data.images.remove(img)
+        bpy.data.images.remove(out)
+    print(f"[r4] {path.name} in {time.time() - t:.0f}s {('crop ' + str(crop)) if crop else ''}")
 
 
 def main():
@@ -239,16 +265,18 @@ def main():
                 o.hide_render = o.hide_viewport = (k != key)
         hero = hero01 if HERO_CAM[key] == "01" else hero04
         scene.camera = hero
+        # world_to_camera_view uses the CURRENT scene resolution: the previous asset's 900x900 close render would
+        # otherwise be baked into this asset's crop box (that bug put the keystone 70 px outside its own crop)
+        scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
         bpy.context.view_layer.update()
-        b = border_for(scene, hero, obj, pad_px=22)
-        render(scene, OUT / f"r4_{TAG}_hero_{key}.png", (1920, 1080), border=b)
+        b = crop_box(scene, hero, obj, key, pad_px=22)
+        render(scene, OUT / f"r4_{TAG}_hero_{key}.png", (1920, 1080), crop=b)
         scene.camera = close_cam(key, obj, scene)
         scene.render.use_border = False
         render(scene, OUT / f"r4_{TAG}_close_{key}.png", (900, 900))
-        (x0, y0, z0), (x1, y1, z1) = ([min(v[i] for v in [obj.matrix_world @ Vector(c) for c in obj.bound_box])
-                                       for i in range(3)],
-                                      [max(v[i] for v in [obj.matrix_world @ Vector(c) for c in obj.bound_box])
-                                       for i in range(3)])
+        ws = [socket_matrix(key) @ Vector(c) for c in obj.bound_box]
+        (x0, y0, z0) = [min(v[i] for v in ws) for i in range(3)]
+        (x1, y1, z1) = [max(v[i] for v in ws) for i in range(3)]
         print(f"[r4] {key}: {obj.name} size {x1 - x0:.2f} x {y1 - y0:.2f} x {z1 - z0:.2f} m, "
               f"tris {len(obj.data.polygons)} faces")
 

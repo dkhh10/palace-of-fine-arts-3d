@@ -339,6 +339,124 @@ its normal map are untouched). 114 instances, so **−3.6 M tris** in the master
   cam05 station with the real rig, Cycles, ~10 s a look. `--exposure` to preview the lighting agent's −2.39.
 - `scripts/orn_trim_lod0.py` — in-place LOD0 decimation.
 
+## Round 4 (2026-09-08) — QA-03-15 capitals, QA-03-8 rosettes, carried keystone depth
+
+Composite: `renders/previews/ornament/orn4_sheet.png` (before / after / reference for all three, hero 1:1 crops at
+x6 plus look-dev views). Variant strips: `orn4_variants_capital_rotunda.png`, `..._capital_colonnade.png`,
+`..._rosette_ceiling.png`, `..._keystone.png`.
+
+### How this round was measured
+`scripts/orn_r4_render.py` places the three assets on their REAL ARCH socket frames with the real lighting rig and
+renders each twice: a **hero** view that is a 1:1 crop out of the full CAM_qa_01 (or CAM_qa_04) 1920x1080 frame —
+exactly the pixels QA judges — and a **look-dev** view from the angle the reference crop was shot from. One stone
+(`MAT_concrete_ochre`) is used for ornament and stand-in wall alike so the sheet compares geometry, not materials.
+`scripts/orn_tier_stats.py` turns a hero crop into a vertical luminance profile and reports the relative luminance
+std (std/mean) and the number of light/dark alternations clearing a Michelson contrast threshold.
+
+**The bar, measured from the photograph.** Three rotunda capitals cropped out of ref 169 (aligned panel of
+`renders/qa_comparisons/round03_cam01_aligned_vs_ref169.png`) are 38-44 px tall — the same scale as ours at cam01
+(2.6 m at 82 m through a 20 mm lens = 34 px). They measure **relative std 0.428 / 0.445 / 0.459 with 6-7
+alternations** at Michelson >= 0.05. That is the target; a photograph and an AgX render do not share a tone curve,
+so treat it as a direction, not a ratio.
+
+### QA-03-15 — Corinthian capitals: why they were blobs
+The round-3 bell flared to **1.30 R** at the top while the leaves' bodies sat at ~1.00 R and only their last third
+broke the surface: every acanthus leaf was **buried inside the kalathos** and showed as a faint embossed outline.
+That is the whole defect — it was never a shading or a tri-budget problem.
+
+Rebuilt:
+- **New kalathos**: 1.00 R at the astragal, necks to **0.865 R** at the waist, flares to **1.155 R** under the
+  volutes (was 1.30 R). The bell is also **scalloped** (`scallop = 0.078 R`, 16 dips, `revolve(scale_fn=...)`) so
+  the slot between two neighbouring leaves bottoms out in a groove instead of on a smooth cylinder.
+- **Leaves on an explicit spine** (`leaf_spine()` + new `spine=` argument on `orn_lib.acanthus_leaf`): the body
+  follows the bell surface with a growing outward offset (`proud` 0.14 R lower / 0.13 R upper), then the last
+  26-28 % of the length is a circular arc of **100 deg (lower) / 90 deg (upper)** that carries the tip outward and
+  DOWN. Leaf tips now stand **0.40 m proud** of the bell (was 0.29 m, and the body was inside it), at radius
+  1.31 m (lower) / 1.37 m (upper) against an abacus whose flats are at 1.06 m and corners at 1.50 m — so the
+  ornament fills the abacus instead of sitting pinched under it.
+- **The upper row was lifted to 0.44 H** (was 0.345 H), clear of the lower row's tips at 0.40 H, which opens a real
+  annular notch ~0.35 m deep between the two tiers. That notch, not an overhang shadow, is what reads at hero
+  distance: with the sun at el 7.4 deg a 0.3 m overhang throws its shadow 2.3 m down the shaft, so only enclosed
+  voids and turned-away normals go dark.
+- Leaf cross-section flattened (`bulge` 0.075 -> 0.032 R), 5 lobes at 0.26 depth, `mid_dip` 0.078 R cupping.
+- **Volutes** shrunk from 0.17 H to 0.112 H radius (0.58 m across, was 0.88 m), 2.25 turns with a taper of 0.55 and
+  a new **eye button** so they read as rolled scrolls, not lengths of pipe; pushed out to 1.38 R, eye at 0.805 H.
+  Inner helices 0.055 H at 1.245 R.
+- `union_blob` smoothing **2 passes at 0.50 -> 1 pass at 0.30** (the old pass rounded the leaf edges and undercuts
+  away), adaptivity 0.40 -> 0.35.
+- Per-variant styles now drive the new parameters (`arc_mul`, `proud_mul`) as well as widths and volute size, so the
+  three variants still differ in silhouette, not only in weathering seed — see `orn4_variants_capital_rotunda.png`.
+
+| | LOD0 | LOD1 | LOD2 | instances | master tris |
+|---|---|---|---|---|---|
+| capital_rotunda | 100k -> **64k** | 20k -> **16k** | 344 | 16 | 1.60 M -> **1.02 M** |
+| capital_inner | 80k -> **48k** | 16k -> **12k** | 344 | 8 | 0.64 M -> **0.38 M** |
+| capital_colonnade | 48k (trim, kept) | 16k -> **12k** | 344 | 114 | 5.47 M (unchanged) |
+
+Measured on the hero 1:1 crop (Cycles 48 spp, rig r09, same session for before and after):
+
+| box | before | after | reference (ref 169) |
+|---|---|---|---|
+| full crop (bbox + 22 px), rel std | 0.2650 | **0.2857** | — |
+| capital only, 44x34 px, rel std | 0.5721 | **0.6202** | 0.428-0.459 (photo tone curve) |
+| capital only, alternations >= 0.05 | 3 | **3** | 6-7 |
+| keystone only, 22x24 px, rel std | 0.2571 | **0.3311** | — |
+
+**Honest limit.** The tier count did not move: 3 alternations before and after. What did move is the depth and the
+darkness of the accents inside the leaf zone (see the x6 crops on the sheet — the round-3 capital is a pale mush
+with faint scratches, this one has black slots). The remaining distance to the photograph is recess dirt: QA-03-15
+names "shading, recess dirt" alongside the geometry, and the reference's dark accents are mostly dirt in the leaf
+recesses, not shadow. The geometry now has the recesses to hold it — see the hand-off below.
+
+### Cavity attribute for materials (new)
+`orn_lib.vertex_cavity()` bakes a per-vertex AO into a **FLOAT_COLOR attribute named `cavity`** (1.0 = open,
+0.0 = enclosed) on the POINT domain of **LOD0 and LOD1** of every capital, rosette and keystone; the objects carry
+`cavity_attr = "cavity"`. This matters because **LOD0 is the render LOD and has no UVs**, so a vertex attribute is
+the only channel a shader has for darkening ornament recesses on the geometry that is actually rendered. Read it
+with an Attribute node named `cavity` (Color or Fac). Measured mean on the rotunda capital 0.45, min 0.00; rosette
+0.78; keystone 0.79. `finalize_asset(..., ao=True)` also now bakes an **AO map** for LOD1 next to the normal map,
+so `ao_map` is no longer empty for these three types (`assets/textures/orn/ORN_*_ao.png`).
+
+### QA-03-8 (ornament half) — coffer / rib rosettes
+The round-3 rosette was a lathe with a `cos(12*theta)` radius wobble: a smooth 12-point star with **no undercut
+anywhere**, which is exactly the "flat inset outline" QA saw. Rebuilt as real geometry: a sunk back disc with a
+raised rim, a ring of 8 modelled petals (`rosette_petal()`, flat for 66 % of their length then the tip lifts),
+a second ring of 8 rotated half a pitch, a 0.045 m annular groove and a beaded central boss.
+- **Relief 0.14 m -> 0.21 m on a 0.60 m rosette (0.35 of the diameter)**, petal tips 0.082 m off the disc floor,
+  back face at y = 0. Raised from 0.155 m after ARCH deepened the coffer interiors to 0.55 m (saucer) / 0.38 m
+  (barrel): a 0.155 m boss disappears at the bottom of a 0.55 m box. Total depth of the LOD0 mesh 0.29 m including
+  the noise displacement, so it sits **inside** a 0.55 m box with 0.26 m to spare and never breaks the rib face.
+- 3 variants (was 2): 8+8 petals at 0.60 m / 10+10 at 0.56 m / 6+6 at 0.62 m. LOD0 20k -> **26k** tris, LOD1 5k.
+- Depth provenance: ref 083 and `ornament_crops/coffered_ceiling_1-3` are all straight-up shots in which the rib
+  rosettes are 0.45-0.60 m across and read as bosses roughly a quarter to a third of their diameter proud. There
+  is no photograph in the set that measures a rosette in profile, so 0.35 of the diameter is a reasoned choice from
+  the boss/shadow ratio in `coffered_ceiling_1`, not a measured section. Flagged as such.
+
+**The rosettes do not appear at cam04 at all, and it is not the asset.** All 24 `SOCKET_rosette_ceiling_*` point
+radially OUTWARD (`dot(+Y, radial) = 1.000`), so every rosette projects into the masonry. Full write-up, the two
+different corrections the two socket groups need, and a proof render are in `docs/sockets.md` under
+"ORN request 2026-09-08". `renders/previews/ornament/orn4_cam04_rosette_fix2.png` shows the 8 ring-1 rosettes
+appearing inside their coffers once the frames are corrected.
+
+### Carried defect — keystone depth
+Two things were missing. (1) There was **no voussoir**: the mask sat straight on a 0.10 m plate flush with the
+archivolt, so at hero distance it was a pale nub with nothing to cast a shadow — ref `keystone_mask_1/2` show a
+wedge block breaking forward out of the archivolt roll with a moulded cap under the frieze. (2) The mask was all
+convex blobs and its eye/mouth dents (0.03 / 0.09 m) were wiped by `smooth=2` on a 0.006 m remesh.
+- New **tapered voussoir**, 0.43 m wide at the springing to 0.60 m under the cap, standing **0.30 m proud** of the
+  archivolt face, plus a 0.075 m moulded cap.
+- Mask nose now **~0.66 m proud** of the archivolt (was 0.50 m). Brow ridge moved forward and up so it **overhangs**
+  the eye sockets. Dents: eye 0.03 -> **0.072 m**, mouth 0.09 -> **0.115 m**, nostrils added at 0.035 m.
+- Mane 14 thin leaves -> **10 bold** ones (0.30 m long, 0.036 m thick, `mid_dip` 0.022) standing clear of the face.
+- `union_blob` voxel 0.006 -> 0.005, smoothing 2 passes at 0.50 -> 1 at 0.25.
+- 3 variants (was 2), sized +/-4 %. LOD0 50k tris unchanged. Hero-crop rel std **0.2571 -> 0.3311**.
+
+### Tools added this round (ORN-owned)
+- `scripts/orn_r4_render.py` — the socket-frame look-dev + hero 1:1 crop rig described above.
+- `scripts/orn_tier_stats.py` — vertical luminance profile, relative std and alternation count for a hero crop.
+- `scripts/orn_r4_sheet.py` — assembles `orn4_sheet.png` (pure PIL, no Blender).
+- `orn_lib.vertex_cavity()`, `orn_lib.acanthus_leaf(spine=, mid_dip=)`, `finalize_asset(cavity=)`.
+
 ## Open issues (ORN)
 - `ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget (the mesh has too many disjoint shells
   after the field clamp for the collapse to go further). LOD2 is only used beyond ~200 m, so I left it.
@@ -358,7 +476,12 @@ its normal map are untouched). 114 instances, so **−3.6 M tris** in the master
   scales. ARCH may prefer to model the band itself with a texture.
 - Capital: the abacus fleuron/figure and the astragal are simplified; the colonnade and inner capitals share the
   rotunda generator with different proportions (the real colonnade capital has slightly different leaves).
-- No AO maps baked (`ao_map` empty) - can be added with `bake_maps(..., ao=True)` if the materials agent wants them.
+- AO maps: baked from round 4 for capitals, rosettes and keystones (`ao_map` set); still empty for maidens, attic
+  panels/figures, urns, mouldings - say the word and they get the same `finalize_asset(..., ao=True, cavity=True)`.
+- Capital close-up honesty: at look-dev range the leaves still read as smooth tongues rather than the dense, deeply
+  lobed acanthus of `corinthian_capital_1-3`. The design is correct at the 34 px hero scale and at cam02/cam04
+  distance; a close fly-through pass would want a real sculpted leaf (more lobes, a curled-under edge roll, a
+  carved midrib) rather than a lofted shell.
 
 ## Requests
 - **ARCH / lead - maiden socket**: the socket must be at the figure's FEET, which are at the level of the box base

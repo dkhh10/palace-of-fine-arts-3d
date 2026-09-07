@@ -63,3 +63,19 @@ and finials. State which in docs/arch_notes.md.
 
 LOD rule: the lead instances LOD1 by default in the viewport and switches to LOD0 for Cycles finals via
 `common.set_lod_visibility`. LOD0 target < 150k tris per capital, < 300k per maiden; LOD1 < 20k; LOD2 < 2k.
+
+**ORN request 2026-09-08 (round 4, QA-03-8) — `rosette_ceiling` socket orientation is wrong for all 24.**
+Measured in `assets/architecture.blend` after the 28f0caf merge: every `SOCKET_rosette_ceiling_*` has
+`+Y` exactly radially OUTWARD (`dot(+Y, radial) = 1.000` for all 24) and `+Z` = world up. The contract says
+`+Y` is the direction the ornament projects from its back face, so as delivered every rosette projects
+*into* the masonry and none is visible from inside. Verified: cam04 Eevee off `master.blend` shows no rosette
+at all (`renders/previews/qa/roundorn4_04_rotunda_ceiling.png`).
+- **16 rim-band sockets** (r 13.73 / 14.85, z 24.32 / 23.41): these are bosses on the rib's ROOM face, so
+  `+Y` must be **-radial** (a 180° turn about the socket's Z).
+- **8 ring-1 sockets** (r 5.20, z 28.91): these sit on a saucer-coffer FLOOR, so `+Y` must be the coffer
+  floor's normal, i.e. pointing DOWN into the room (roughly `-Z`, tilted outward with the dome), not
+  horizontal. A `Rx(-90°)` on the current frame is enough at this dome slope.
+Proof render with both corrections applied to a local master: `renders/previews/ornament/orn4_cam04_rosette_fix2.png`
+(the 8 ring-1 rosettes appear inside their coffers; compare `roundorn4_04_rotunda_ceiling.png`).
+Fix in ARCH's socket build, or as a `ROT_Z_FIX`-style entry in `scripts/build_master.py` — ORN owns neither file.
+The asset itself is correct per contract: back face at y = 0, projecting +Y, 0.21 m of relief.
