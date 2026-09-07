@@ -92,3 +92,12 @@ Format: date · decision · why · consequences. Newest at the bottom.
 - **Phase 3 order** (hero-view impact first, two agents at a time): wave 1 architecture (QA-01-1, maiden sockets to box base,
   QA-01-11 geometry, 14, 15, 16) + environment (QA-01-2, 3 geometry, 6, 7, 8, 19); wave 2 ornament (QA-01-10, 11, 13, 18) +
   lighting (QA-01-9, 12, 20 after materials); then materials fixes from the master hero if needed; then QA round 2 on Opus.
+- **2026-09-07 · Podium Greek-key band (QA-01-11): ARCH geometry, not ORN units.** ARCH built the meander + rosette bosses
+  as geometry standing proud of a recessed band face on all rostra walls and box bases, and it reads correctly in
+  `arch_06_phase3_sheet.png`. ORN's `ORN_greek_key` / `ORN_rosette_band` units (8 cm backing slab) and
+  `orn_lib.array_unit_along_run` stay in the library for future runs but are not instanced on the 98 greek_key sockets:
+  arraying them would double the band (or need the slab thinned to an unmeasured recess) and add ~1400 objects.
+- **Corner scrolls (QA-01-13)**: ARCH's 8 `finial` sockets with `subtype='volute_scroll'` already carry the frame ORN
+  proposed, so build_master routes them to `ORN_corner_scroll`; no ARCH change.
+- **Per-instance seed**: `PFA_instance` decorrelates by Object Info Random today; the materials agent is wiring the
+  `instance_seed` object attribute into it so the lead's variant/seed choice is what the shader uses.
