@@ -53,7 +53,7 @@ def ensure(scene=None):
         obj = bpy.data.objects.new(spec["name"], cam_data)
         obj.location = spec["loc"]
         if abs(spec["target"][0] - spec["loc"][0]) < 1e-6 and abs(spec["target"][1] - spec["loc"][1]) < 1e-6:
-            obj.rotation_euler = (0.0, 0.0, math.radians(180.0))   # straight up, top of frame toward -Y (west)
+            obj.rotation_euler = (math.pi, 0.0, 0.0)   # straight up (camera looks along local -Z); frame top toward -Y (west)
         else:
             obj.rotation_euler = common.lookat_rotation(spec["loc"], spec["target"])
         obj["reference_photo"] = spec["ref"]

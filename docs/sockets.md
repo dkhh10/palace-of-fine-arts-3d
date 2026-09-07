@@ -29,6 +29,13 @@ Socket types (counts are for the whole building; ARCH reports the actual numbers
 | `drum_band` | the scale/rosette band around the drum: one socket at band start with `run_length` = circumference | 1 | height |
 | `finial` | dome top / drum corner finials | per sheet | height |
 | `rosette_ceiling` | coffer rosettes inside the dome | per sheet | diameter |
+| `inner_figure` | the 8 winged "Priestess of Culture" figures on the inner entablature blocks, +Y toward the rotunda centre's opposite (outward), figure faces the centre | 8 | figure height (4.6) |
+
+Contract additions after the Phase 2 build (2026-09-07): sockets may carry a `subtype` string property: keystone
+(`crown` / `impost`), finial (`volute_scroll` / `dome_apex`), frieze_run (`greek_fret` plus arc data `arc_center`,
+`arc_radius`, `arc_start`, `arc_end` for curved colonnade runs). Podium urns are 24 (3 per pier), attic urns 16.
+Actual socket counts delivered by ARCH: capital_rotunda 16, capital_inner 8, capital_colonnade 114, maiden 48, urn 40,
+attic_panel 8, attic_figure 8, keystone 24, frieze_run 28, drum_band 1, finial 9, rosette_ceiling 24, inner_figure 8.
 
 Repeated linear ornament (dentils, egg-and-dart, Greek key, rosette bands) is modelled by ORN as ONE unit with a known
 length; ARCH either arrays it itself along its profile sweeps using `frieze_run`-style sockets, or (preferred) ARCH
