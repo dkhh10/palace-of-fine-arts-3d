@@ -16,10 +16,10 @@ COLLECTION = "QA_CAMERAS"
 
 # name, location (x, y, z), look-at target, focal length mm (36 mm sensor), reference photo, note
 CAMERAS = [
-    dict(name="CAM_qa_01_lagoon_hero", loc=(-16.0, 113.9, 1.0), target=(0.0, 0.0, 1.0), lens=31.0, shift_y=0.17,
+    dict(name="CAM_qa_01_lagoon_hero", loc=(-14.1, 100.0, 1.0), target=(0.0, 0.0, 1.0), lens=27.0, shift_y=0.17,
          ref="canonical/cam_01_lagoon_hero.png",
          note="THE hero. On the lagoon-face normal (az 82 deg), east shore ~115 m, eye level; real-photo twin ref 169 (golden hour)."),
-    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-32.0, 38.0, 1.3), target=(0.0, 0.0, 20.0), lens=26.0,
+    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-30.0, 35.0, 1.3), target=(0.0, 0.0, 20.0), lens=26.0,
          ref="canonical/cam_02_ne_shore_threequarter.jpg",
          note="Ref 062: north-east shore, 50 m, 3/4 view; south colonnade visible behind the rotunda on the left."),
     dict(name="CAM_qa_03_colonnade_walk", loc=(58.0, -4.0, 1.7), target=(0.0, 0.0, 16.0), lens=20.0,

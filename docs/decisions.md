@@ -59,3 +59,7 @@ Format: date · decision · why · consequences. Newest at the bottom.
   qa_cameras.py; ornament scope = the 18 catalog items minus lamps/signs/fences; public-domain relief scans allowed ONLY
   as heavily reworked raw material for the attic relief panels (never as figures); measured material direction; all five
   Phase 2 builders launched in parallel, resumed after any API limit.
+- **2026-09-07 · Lighting and environment merged.** Sky node `sun_rotation = azimuth − 90°` (rotation 0 = +Y), verified by
+  two agents independently; recorded in CLAUDE.md and tech notes. Hero camera moved from r = 115 m to the OSM shoreline
+  (r = 101 m, (-14.1, 100.0), lens 27 mm) so water reaches the frame bottom as in the user image and ref 169; cam 02 pulled
+  3 m onto land at (-30, 35).

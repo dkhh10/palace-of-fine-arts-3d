@@ -1,0 +1,38 @@
+{
+ "markers_px": {
+  "north": [
+   359.9898785425101,
+   359.97975708502025
+  ],
+  "east": [
+   719.9969696969697,
+   359.9969696969697
+  ],
+  "zenith": [
+   720.0537970088573,
+   718.5036300275882
+  ]
+ },
+ "disc_px": [
+  833.8753817225244,
+  389.7248309483331
+ ],
+ "disc_peak_value": 808101.3352593749,
+ "deg_per_px": [
+  0.24999507568417828,
+  0.2510353348250242
+ ],
+ "requested": [
+  118.5,
+  7.4
+ ],
+ "measured_disc": [
+  118.46904223312258,
+  7.464904089769833
+ ],
+ "delta": [
+  -0.03095776687740681,
+  0.06490408976983275
+ ],
+ "pole_shadow_png": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/convention_pole_shadow_and_disc.png"
+}
