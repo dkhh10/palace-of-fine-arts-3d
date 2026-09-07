@@ -91,6 +91,14 @@ scene.render.image_settings.color_depth = "8"
 
 # The merged lighting.blend still carries round 2's exposure; the lighting agent is raising it by +0.9 EV this round
 # (QA-02-4). Judge materials at the exposure they will ship at, so albedo does not silently compensate for it.
+# Up to four agents share one 10-core M2, and a 15 M-triangle scene at 1080p OOM'd the Metal queue mid-render
+# ("Insufficient Memory ... integrator_queued_paths_array"). Guiding is the biggest optional buffer and small tiles
+# cap the path-state allocation, so both are forced here regardless of what the lighting preset asked for.
+cy = scene.cycles
+for k, v in (("use_guiding", False), ("use_auto_tile", True), ("tile_size", 256), ("debug_use_spatial_splits", False)):
+    if hasattr(cy, k):
+        setattr(cy, k, v)
+
 EV = float(arg("--ev", 0.9))
 scene.view_settings.exposure += EV
 print(f"[mat_scene] view exposure {scene.view_settings.exposure - EV:.4f} {EV:+.2f} EV -> {scene.view_settings.exposure:.4f}")
