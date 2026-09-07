@@ -628,3 +628,129 @@ fills are now oversized for the halved sky — cam04 Eevee soffit/own-sky went 0
 so `FILL["energy"]` 7600 and `VAULT_FILL["energy"]` 2400 both want scaling down by roughly half, re-measured against
 ref 083's 0.58 / 0.39. Neither was started. cam06 improved on its own: far-shore saturation 0.218 -> **0.296**,
 hue 43.8 -> 39.3.
+
+## 18. Round 09 — chroma at delivery resolution (A) and the interior fills (B). BOTH CLOSED
+
+### The finding that reframes round 08b: the shipped AgX look never reached master.blend
+
+There were two `LOOK` constants. `light_build.LOOK` has said `"AgX - High Contrast"` since round 08b and sets the
+look inside `assets/lighting.blend`; `light_presets.LOOK` still said `"AgX - Base Contrast"` from round 05, and it is
+**that** one `build_master.py` writes into `master.blend` through `apply_look`. So every QA render and the
+deliverable rendered at Base Contrast while round 08b's strongest chroma lever sat in a file nothing renders from.
+The rebuilt master's own report line now reads `look 'AgX - High Contrast', exposure -2.333`.
+
+This also means **round 08b's "the sweep is ~16 lum / ~20 R-B optimistic at delivery resolution" was wrong**, and
+anyone acting on it would have gone hunting in the wrong place. Same rig, same exposure, cam01 attic R-B:
+
+| | 960x540 / 32 spp | 1920x1080 / 64 spp |
+|---|---|---|
+| AgX - Base Contrast | 94.8 (lum 170.0) | **97.4 (lum 167.9)** |
+| AgX - High Contrast | 117.9 (lum 183.1) | **119.0 (lum 181.1)** |
+
+Resolution is worth **+2.6 R-B and -2.1 luminance**, not +20/+16. The whole gap was the look divergence. The look is
+now defined once, in `light_presets.py`, and `light_build.LOOK` aliases it so they cannot drift apart again.
+
+### A. What each knob bought at 1920x1080 / 64 spp, Cycles, cam01 hero
+
+Every row is a real render (`scripts/light_r09_sweep.py --hero`, one at a time on the lead's freshly built master).
+The exposure is **not** held constant when the sky moves: `light_build` re-runs the 18 % grey-card calibration
+whenever `SKY_STRENGTH` changes, and the sweep reproduces that in closed form (`exposure_compensation`, asserted
+against the two calibrations on record), so each row is "less sky-blue", not "less light".
+
+| # | sky | cam boost | sun blue | look | attic lum | **attic R-B** | sky top | shade | attic sat |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | 1.00 | 1.20 | 1.00 | Base Contrast | 167.9 | **97.4** | 154.1 | 131.8 | 0.473 |
+| 1 | 1.00 | 1.20 | 1.00 | **High Contrast** | 181.1 | **119.0** | 165.9 | 134.7 | 0.523 |
+| 2 | 0.80 | 1.50 | 0.75 | High Contrast | 180.7 | **122.9** | 168.4 | 132.3 | 0.538 |
+| 3 | 0.60 | 2.00 | 0.55 | High Contrast | 180.4 | **125.8** | 170.9 | 129.7 | 0.550 |
+| 4 | 1.00 | 1.20 | 1.00 | Very High Contrast | 186.7 | **118.9** | 170.9 | 136.0 | 0.509 |
+| — | ref 169 | | | | 191.8 | **134.1** | 165.7 | 117.2 | 0.576 |
+| | target | | | | >= 172.6 | >= 110 | 149.1-182.3 | >= 93.8 | |
+
+Row 0 is the control and it reproduced `roundlight6` to the last digit (97.4 / 167.9 / 154.1 / 131.8), so the
+sweep and QA are measuring the same thing.
+
+- **The look is worth +21.6 R-B and +13.2 luminance on its own** (row 0 -> 1) and by itself moves all four numbers
+  into their windows. Nothing else was needed to meet the brief; everything below is the margin.
+- **Sky 1.00 -> 0.80 with the camera boost raised 1.20 -> 1.50 is worth ~+2.5 R-B for free.** The product
+  `sky x camboost` stays at 1.20, so the visible sky is bit-identical to round 08b's and only the diffuse fill
+  changes. It is a chroma knob, not a level knob: on a sun-facing surface the sky supplies 10.4 of 27.7 blue units
+  against 11.2 of 78.5 red (`calibration_report` `E_sunfacing_disc_on/off`), i.e. 2.6x more leverage on blue.
+  `SKY_GLOSSY_BOOST` went 3.00 -> 3.75 for the same reason, so the lagoon reflects the same sky it did.
+- **Sun blue x0.75 is worth ~+1.4 R-B and +0.015 saturation at no luminance cost** (blue carries 7 % of luminance).
+  Applied to the *calibrated* lamp colour, after the sun-disc integration, so the calibration stays physical:
+  (1.000, 0.607, 0.258) -> (1.000, 0.607, 0.193).
+- **Very High Contrast is not better than High Contrast.** It buys luminance (186.7, nearest ref) but *loses*
+  saturation (0.509 vs 0.523) and pushes the shade further from ref 169 (136.0 vs 117.2). Rejected.
+- **Exposure was never traded.** The luminance floor was the binding constraint at row 0, and the look fixed it; a
+  negative exposure delta would have bought chroma at the cost of the one number that was already failing.
+
+**Shipped: row 2** — `SKY_STRENGTH 0.80`, `SKY_CAMERA_BOOST 1.50`, `SKY_GLOSSY_BOOST 3.75`, `SUN_BLUE_MULT 0.75`,
+`LOOK "AgX - High Contrast"`, `EXPOSURE_BIAS` unchanged at 1.75 (calibration -4.08 + 1.75 = **-2.33 EV**, exactly
+what the sweep measured). Row 3 is on record if the lead wants +3 more R-B for a 40 % sky cut; I stopped at 0.80
+because it is the smallest departure from the physical sky that takes most of the gain.
+
+**Verified on the rebuilt master** (`r09_verify_01_hero_cycles.png`, Cycles 1920x1080 / 64 spp): attic sRGB
+229.3, 176.5, 109.7 -> **R-B 119.6, lum 182.9, sky top 168.5, shade 137.2 — all four pass.** The verification
+number differs from row 2 by -3.3 R-B / +4.9 shade because the interior fills changed underneath it (B, below);
+row 2 was measured on the old fills.
+
+**Still open and NOT lighting's:** attic hue 33.3 against ref 169's 40.5 (QA-02-14). Seven degrees, and the whole
+round-09 sweep moved it by 0.5 deg. Saturation is now 0.523 against 0.576, inside QA's 0.06 window. The hue is in
+the albedo.
+
+### B. Interior fills — and the soffit/coffer lock is broken
+
+Round 08 measured soffit/coffer at 0.486-0.556 across height, radius, tilt, spread and the central disk, and
+concluded ref 083's 0.58/0.39 (a **1.49** ratio the other way round) was unreachable from inside the building.
+That conclusion was wrong, and the knob is **spread**. At 90 deg each vault emitter floods the whole vault volume,
+so most of its light lands on the central coffered dome instead of the soffit above it — which is also physically
+wrong: the plaza light these bays actually receive arrives through their own arch opening, which subtends roughly
++-25 deg from a point under the vault. **A restricted cone is the more faithful model, not a cheat.**
+
+Cycles, cam04, round-09 rig (960x540 / 48 spp for the sweep; ratios are large-region means and move < 0.01 with
+resolution — confirmed by the 1920x1080 verification below):
+
+| disk W | vault W each | spread | soffit / own sky | coffer / own sky | soffit/coffer |
+|---|---|---|---|---|---|
+| 7600 | 2400 | 90 | 0.617 | **1.016** | 0.61 |
+| 3800 | 1200 | 90 | 0.371 | 0.647 | 0.57 |
+| 2280 | 720 | 90 | 0.253 | 0.459 | 0.55 |
+| 0 | 1560 | 90 | 0.316 | 0.472 | 0.67 |
+| 0 | 2400 | 30 | 0.309 | 0.186 | 1.66 |
+| 3040 | 3360 | 45 | 0.531 | 0.489 | 1.09 |
+| 0 | 4320 | 45 | 0.538 | 0.305 | 1.76 |
+| **1140** | **3960** | **45** | **0.535** | **0.376** | **1.42** |
+| ref 083 | | | 0.58 | 0.39 | 1.49 |
+
+Uniform scaling could never work: at 90 deg the pair walks along a line of slope 0.6 and the two targets are on a
+line of slope 1.49, so every uniform scale trades QA-02-12 against QA-01-9 — which is exactly what round 08
+observed. Narrowing the cone rotates the line.
+
+**Shipped: `FILL["energy"] 7600 -> 1140 W`, `VAULT_FILL["energy"] 2400 -> 3960 W`, `spread_deg 90 -> 45`.**
+Verified on the rebuilt master at delivery resolution (`r09_verify_04_ceiling_cycles.png`, Cycles 1920x1080):
+**soffit / own sky 0.541 (ref 0.58, delta -0.039) and coffer / own sky 0.384 (ref 0.39, delta -0.006) — inside
++-0.08 of both, for the first time.** soffit/coffer 1.408 against ref's 1.49.
+
+**Eevee, same file, same frame: soffit 0.405, coffer 1.137.** Eevee and Cycles agreed to 2 % on the coffer field in
+round 08 and they now disagree by 3x. The probes were re-baked by `scripts/lead_build.sh` after the change, so it is
+not a stale bake: Eevee Next is not honouring the 45 deg spread the way Cycles does — its baked irradiance
+redistributes the emitters' power over the whole vault volume, which is precisely the 90 deg behaviour the fix
+removes. Cycles is the deliverable engine (hero, Phase-5 finals) so **the defect is closed where it counts**, but
+the Eevee viewport now shows a coffered dome about 3x too bright. Two honest routes if that matters: split the
+emitters into a Cycles-only narrow set plus an Eevee-only weak wide set (breaks "confirmed in both engines"), or
+model the arch opening as real geometry with an emissive plane inside it. Neither was attempted.
+
+**Second cost on record:** at 45 deg the two soffit boxes read 0.404 W / 0.679 E in Cycles, a 1.7:1 imbalance
+against 1.14:1 at 90 deg — a narrow cone leaves the obliquest part of the vault to the sky alone. Eevee, which is
+ignoring the spread, stays balanced (0.420 / 0.390). If QA flags the imbalance, spread 60 deg halves it but costs
+the coffer target (0.535 / 0.570 at the nearest energy tried).
+
+### Where round 09 stopped
+
+- Attic hue 33.3 vs ref 169's 40.5 is materials' (QA-02-14); no lighting knob moves it more than 0.5 deg.
+- The Eevee/Cycles vault disagreement above.
+- cam06 and the aerial haze were not re-touched; round 08's finding stands (the grey-olive is the scene's own
+  colour, not the veil).
+- Water: `water_centre` saturation 0.228 -> 0.314 and hue 27.9 -> 30.6 (ref 30.6) came free with the look; luminance
+  96.6 -> 90.2 against ref 106.0, i.e. still ~0.2 EV dark. Not chased.
