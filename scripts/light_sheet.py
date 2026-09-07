@@ -9,7 +9,7 @@ measured numbers, so the sheet carries its own evidence and nobody has to re-mea
 
 Captions are '|'-separated lines; the first line is the panel title.
 """
-import argparse
+import argparse, textwrap
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
@@ -36,7 +36,12 @@ def build(out, panels, cols=2, width=1800):
     for caption, path in panels:
         im = Image.open(path).convert("RGB")
         im = im.resize((cell_w, round(im.height * cell_w / im.width)), Image.LANCZOS)
-        lines = caption.split("|")
+        raw = caption.split("|")
+        # wrap to the panel width so a long line of numbers never runs off the sheet
+        ncols = max(20, int((cell_w - 8) / (body_f.getlength("M") or 8.0)))   # NOT `cols`: that is the grid width
+        lines = [raw[0]]
+        for ln in raw[1:]:
+            lines.extend(textwrap.wrap(ln, ncols) or [""])
         cap_h = PAD + 22 + 19 * (len(lines) - 1) + PAD // 2
         rendered.append((im, lines, cap_h))
     rows = [rendered[i:i + cols] for i in range(0, len(rendered), cols)]
