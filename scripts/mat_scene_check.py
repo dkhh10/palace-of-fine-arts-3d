@@ -70,23 +70,18 @@ def add_cam(name, loc, aim, lens=50.0):
     return ob
 
 
-# --- waterline camera: derived from the podium / rostra geometry, aimed at its +Y (lagoon) face at WATER_Z
-lo, hi, n = visible_bbox(lambda s: ("podium" in s.lower() or "rostra" in s.lower() or "pedestal" in s.lower())
-                         and s.startswith("ARCH"))
-if n == 0:
-    lo, hi, n = visible_bbox(lambda s: s.startswith("ARCH_site"))
-if n == 0:
-    lo, hi = Vector((-20, -10, -2)), Vector((20, 20, 2))
-print(f"[mat_scene] podium bbox from {n} objects: {[round(v,1) for v in lo]} .. {[round(v,1) for v in hi]}")
-cx = (lo.x + hi.x) * 0.5
-face_y = hi.y                                   # the lagoon-facing edge
-target = Vector((cx + 4.0, face_y - 1.0, common.WATER_Z + 0.3))
-station = Vector((cx + 11.0, face_y + 17.0, common.WATER_Z + 1.5))
-add_cam("CAM_mat_scene_waterline", station, target, lens=70.0)
+lo, hi, n = visible_bbox(lambda s: s.startswith("ARCH_site"))
+if n:
+    print(f"[mat_scene] ARCH_site bbox from {n} objects: {[round(v,1) for v in lo]} .. {[round(v,1) for v in hi]}")
 
-# --- stone camera: the hero station, long lens onto the entablature / spandrel band QA crops at 1:1
+# Both close cameras stand at the hero station and use long lenses, so they crop exactly what QA crops out of the
+# hero at 1:1 rather than showing a view nobody scores. (A bbox-placed camera picked up the whole site and framed a
+# lawn instead of the shoreline.)
 hero = bpy.data.objects.get("CAM_qa_01_lagoon_hero")
 hloc = hero.location.copy() if hero else Vector((-16.0, 113.9, 1.0))
+# waterline: the shore / podium base in front of the rotunda, where stone, rip-rap and z = WATER_Z meet
+add_cam("CAM_mat_scene_waterline", hloc, Vector((-6.0, 34.0, -1.0)), lens=200.0)
+# stone: the entablature / spandrel band, QA's "clean CAD at 1:1" crop
 add_cam("CAM_mat_scene_stone", hloc, Vector((-2.0, 6.0, 20.0)), lens=135.0)
 
 import light_presets
