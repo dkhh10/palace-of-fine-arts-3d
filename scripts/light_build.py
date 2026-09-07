@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import light_calibrate as cal
+import light_presets as lp
 
 # ----------------------------------------------------------------------------- THE parameter
 MOMENTS = {
@@ -189,44 +190,18 @@ def build_compositor_group(haze_color):
     g.links.new(glare.outputs["Image"], vig.inputs[6]); g.links.new(fac.outputs[0], vig.inputs[7])
     g.links.new(vig.outputs[2], go.inputs["Image"])
 
-    # --- scene-level tree that feeds the group from the render layers (passes must exist BEFORE the node is made)
-    scene = bpy.context.scene
-    scene.view_layers[0].use_pass_mist = True
-    scene.view_layers[0].use_pass_z = True
-    st = bpy.data.node_groups.new(SCENE_TREE_NAME, "CompositorNodeTree")
-    st.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
-    rl = _new(st, "CompositorNodeRLayers", "render_layers", (-400, 0))
-    rl.scene = scene
-    rl.layer = scene.view_layers[0].name
-    print("[light_build] render layer outputs:", [o.name for o in rl.outputs if o.enabled])
     print("[light_build] glare sockets:", {i.name: (round(i.default_value, 3) if i.type == "VALUE" else i.default_value) for i in glare.inputs if i.type in ("VALUE", "MENU", "INT")})
-    grp = _new(st, "CompositorNodeGroup", "COMP_golden_hour", (0, 0)); grp.node_tree = g
-    out = _new(st, "NodeGroupOutput", "out", (400, 0))
-    for sock in ("Image", "Mist", "Depth"):
-        if sock in rl.outputs:
-            st.links.new(rl.outputs[sock], grp.inputs[sock])
-        else:
-            print(f"[light_build] WARNING render layer output {sock} missing (enable the pass on the view layer)")
-    st.links.new(grp.outputs["Image"], out.inputs["Image"])
-    return g, st
+    return g
 
 
-def apply_scene_settings(scene, exposure, scene_tree):
+def apply_scene_settings(scene, exposure, group):
     """Colour management + passes + compositor on a scene (light_presets.apply_look does the same on master)."""
     common.setup_scene(scene)
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = LOOK
     scene.view_settings.exposure = exposure
     scene.view_settings.gamma = 1.0
-    vl = scene.view_layers[0]
-    vl.use_pass_mist = True
-    vl.use_pass_z = True
-    scene.render.use_compositing = True
-    scene.compositing_node_group = scene_tree
-    try:
-        scene.render.compositor_device = "GPU"
-    except Exception:
-        pass
+    return lp.build_scene_compositor(scene, group, SCENE_TREE_NAME)
 
 
 # ----------------------------------------------------------------------------- main
@@ -263,14 +238,14 @@ def build(moment="morning", calibrate=True, save=True):
     scene.world = world
     Lh = calib["sky"]["L_horizon_west"]
     haze_color = tuple(Lh[i] * COMP["haze_warmth"][i] for i in range(3))
-    group, scene_tree = build_compositor_group(haze_color)
-    apply_scene_settings(scene, exposure, scene_tree)
+    group = build_compositor_group(haze_color)
+    scene_tree = apply_scene_settings(scene, exposure, group)
     scene["light_moment"] = moment
     scene["light_exposure_ev"] = exposure
     # fake-user so linking/appending by name always finds them
     world.use_fake_user = True
     group.use_fake_user = True
-    scene_tree.use_fake_user = True
+    scene_tree.use_fake_user = False     # scene trees are rebuilt locally by light_presets.build_scene_compositor
 
     print(f"[light_build] LIGHT_sun energy {energy:.2f} W/m2 colour ({color[0]:.3f}, {color[1]:.3f}, {color[2]:.3f}) angle {SUN_ANGLE} rad")
     print(f"[light_build] exposure {calib['exposure_ev']:.2f} EV (18 % card) + bias {EXPOSURE_BIAS:+.2f} = {exposure:.2f} EV, look {LOOK}")
