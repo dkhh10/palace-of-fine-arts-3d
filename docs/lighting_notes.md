@@ -353,3 +353,22 @@ shipped (boost 1.50, sat 1.20) gives Y 0.417 / sat 0.333. Along that one-dimensi
 reachable, so the next move is to raise `SKY_CAMERA_SATURATION` alone (1.20 -> ~1.45) at the shipped boost and re-measure;
 I did not ship that untested. The remaining hue gap on the stone (8.8 deg vs the 8 deg target) is mostly albedo and
 should shrink with the same materials change.
+
+## 12. What the lead has to do (round 07 delivery)
+
+1. `blender --background --python scripts/build_master.py` — as usual. The rig now brings in, inside `LIGHT`:
+   `LIGHT_sun`, `LIGHT_rotunda_bounce`, `LIGHTPROBE_rotunda`, `LIGHTPROBE_colonnade`, plus the flythrough objects.
+2. **New, required step:** `blender --background --python scripts/light_probes.py -- --blend master.blend --bake --save`
+   (~10-50 s). Without it the two probe volumes are present but unbaked and Eevee falls back to fast GI.
+   Re-run it after any architecture change or a change of moment. `-- --free` clears the caches.
+3. Nothing else changes: `light_presets.apply_final_cycles` / `apply_preview_eevee` / `apply_viewport_eevee` remain the
+   single source of truth for render settings, and `build_master.py` already calls `light_presets.apply_look`.
+   The viewport preset is untouched apart from the irradiance pool size, so the Eevee fly-around stays as fast as it was
+   (viewport preset: 16 TAA, shadows on, raytracing and fast GI off).
+4. Two knobs are deliberately left for the art director, both one line + a re-bake: `light_build.FILL["energy"]`
+   (9 000 shipped; 20 000 matches ref 083 exactly) and `light_build.EXPOSURE_BIAS` (1.10 shipped; ~1.25 if the materials
+   albedo warming lands short of the 14 % the sunlit stone still needs).
+
+New/changed files this round: `scripts/light_probes.py` (new), `scripts/light_measure.py` (new),
+`scripts/light_lookdev.py` (new), `scripts/light_build.py`, `scripts/light_calibrate.py`, `scripts/light_presets.py`,
+`scripts/light_preview.py`, `assets/lighting.blend`.
