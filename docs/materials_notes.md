@@ -370,3 +370,23 @@ sky straight back); it is now 0.25 across the concrete family, 0.30 paving, 0.20
   (0.072, 0.080, 0.092)) so a dark opening reads as dirty glazing catching sky rather than a hole in the image.
   **The hard black opening itself is geometry:** if that aperture is an unfilled hole rather than a face carrying
   `MAT_backdrop_skylight`, no shader change will close it -- it needs a face from whoever owns the hall massing.
+
+### Round 3 result: hero regions vs ref 169 (aligned, identical boxes, both at the shipping +0.9 EV)
+`renders/previews/materials/r3v_scene_hero.png` against the aligned ref 169 panel of
+`renders/qa_comparisons/round02_cam01_aligned_vs_ref169.png`. Composite:
+`renders/qa_comparisons/mat_r3_stone_water.png`.
+
+| region | round 2 | round 3 | ref 169 | verdict |
+|---|---|---|---|---|
+| sunlit attic | 194,144,94 hue 29.7 sat 0.519 | 216,180,134 hue **33.8** sat 0.383 | 220,171,87 hue 37.8 sat 0.603 | hue 4.0 deg (was 8.1); saturation still short |
+| dome cap | hue 33.3 | hue **33.5** | hue 33.9 | 0.4 deg **pass** |
+| column shaft | hue 23.4 | hue **29.2** | hue 25.0 | now 4.2 deg *warm* |
+| shaded pier | hue 28.0 sat 0.414 | hue **34.6** sat 0.313 | hue 32.9 sat 0.491 | inside QA-02-2's 34-42 band |
+| lagoon mid-left | lum 55.1 | lum **140.2** | lum 134.6 | **+4 % of the photo** (was 3.9x dark) -- QA-02-6 luminance **pass** |
+| lagoon mid-left sat | 0.601 | 0.367 | 0.118 | still 3x: this water is a mirror, so its colour *is* the horizon sky's |
+| near water | lum 55.5 sat 0.534 | lum 93.7 sat **0.298** | lum 76.9 sat 0.611 | now slightly *under*-saturated; ENV's 0.11 target was the flank, not the near field |
+| capitals at 60 m (4 instances) | hue spread ~35 deg | **1.2 deg**, value spread 19 % | - | QA-02-2 per-instance **pass** |
+
+Round 2's saturation numbers are 0.9 EV darker and so are not comparable on that axis; the hue and lagoon numbers are.
+**Remaining, and not materials':** the flank water's chroma is the reflected horizon sky (lighting's haze/aerosol), and
+the sunlit-stone saturation gap is illuminant warmth plus the AgX shoulder (see the section above).
