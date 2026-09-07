@@ -27,7 +27,6 @@ def coverage(obj, proud=PROUD, nx=GRID):
     ny = max(8, int(nx * h / w))
     face = None
     # slab face = the modal y of hits in the outer 4 % margin of the field (the plain border of the slab)
-    margin = []
     hits = 0
     total = 0
     depths = []
@@ -40,12 +39,16 @@ def coverage(obj, proud=PROUD, nx=GRID):
                 continue
             total += 1
             depths.append(loc.y)
-            if ix < nx * 0.02 or ix > nx * 0.98 or iz < ny * 0.02 or iz > ny * 0.98:
-                margin.append(loc.y)
     if not total:
         return 0.0, 0.0, 0.0
-    margin.sort()
-    face = margin[len(margin) // 2] if margin else min(depths)
+    # the slab face is the modal hit depth: the plain background is by far the largest single-depth area
+    lo_d, hi_d = min(depths), max(depths)
+    nb = 200
+    bins = [0] * nb
+    for d in depths:
+        bins[min(nb - 1, int((d - lo_d) / max(1e-9, hi_d - lo_d) * nb))] += 1
+    k = max(range(nb), key=lambda i: bins[i])
+    face = lo_d + (k + 0.5) * (hi_d - lo_d) / nb
     hits = sum(1 for d in depths if d > face + proud)
     depths.sort()
     return hits / total, face, depths[int(0.98 * len(depths))] - face
@@ -56,8 +59,13 @@ def main():
     print(f"[coverage] panel field coverage at >= {PROUD * 100:.0f} cm proud of the slab face, {GRID} px wide grid")
     for o in sorted(bpy.data.objects, key=lambda o: o.name):
         if o.get("orn_type") == "attic_panel" and o.name.endswith(f"_LOD{LOD}"):
-            cov, face, peak = coverage(o)
+            probe = bpy.data.objects.new("probe_" + o.name, o.data)   # ray_cast needs an evaluated, visible object
+            bpy.context.scene.collection.objects.link(probe)
+            probe.hide_viewport = False
+            bpy.context.view_layer.update()
+            cov, face, peak = coverage(probe)
             (x0, y0, z0), (x1, y1, z1) = L.bbox(o)
+            bpy.data.objects.remove(probe)
             print(f"[coverage] {o.name}: field {x1 - x0:.2f} x {z1 - z0:.2f} m, slab face y={face:.3f}, "
                   f"max relief {peak:.2f} m, FIGURE COVERAGE {cov * 100:.1f} %  ({o.get('size_note', '')})")
 

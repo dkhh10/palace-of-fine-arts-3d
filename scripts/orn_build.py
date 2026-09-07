@@ -816,20 +816,40 @@ def horse_joints(S, rearing=True):
     return out
 
 
-def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0, proud=0.20, z=0.25, rng=None):
+def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0, proud=0.20, z=0.25, rng=None,
+                  bulk=1.45, drape=True, seed=0):
     """A from-scratch figure in high relief: skin-figure body proxy embedded in the slab so that about `proud` m of
-    its front stands out of the panel face; mirrored/rotated for variety."""
+    its front stands out of the panel face; mirrored/rotated for variety.
+    QA-01-10: `bulk` fattens the limbs (Zimm's figures are heavy, not stick-thin) and `drape` adds a folded garment
+    mass from the chest to the ankles, so a figure covers ~0.9 x 3.2 m of field instead of a thin silhouette."""
     J = human_joints(S, front=1.0, pose=pose)
+    if bulk != 1.0:
+        J = {k: (p, (r[0] * bulk, r[1] * bulk)) for k, (p, r) in J.items()}
     body = L.skin_figure(name, J, HUMAN_BONES, coll, subdiv=2)
     hc = J["head"][0]
-    hair = L.sphere(name + "_hair", 0.105 * S, coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)), scale=(1.0, 0.95, 0.9))
-    (x0, y0, z0), (x1, y1, z1) = L.bbox(body)
-    depth = y1 - y0
-    m = (Matrix.Translation((x, face_y - (y1 - proud), z)) @ Euler((0, 0, math.radians(rot_deg)), "XYZ").to_matrix().to_4x4()
+    hair = L.sphere(name + "_hair", 0.115 * S * bulk, coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)),
+                    scale=(1.0, 0.95, 0.9))
+    made = [body, hair]
+    if drape:
+        (bx0, by0, bz0), (bx1, by1, bz1) = L.bbox(body)
+        H = bz1 - bz0
+        cx, cy = 0.5 * (bx0 + bx1), 0.5 * (by0 + by1)
+        a_hem, a_top = 0.215 * H, 0.130 * H
+        b = 0.42 * a_hem
+        g = drapery_tube(f"{name}_drape",
+                         [(bz0 + 0.012 * H, cx, cy, a_hem, b),
+                          (bz0 + 0.30 * H, cx, cy, a_hem * 0.94, b * 0.95),
+                          (bz0 + 0.55 * H, cx, cy, a_hem * 0.80, b * 0.90),
+                          (bz0 + 0.70 * H, cx, cy, a_top, b * 0.85)],
+                         coll, folds=7, fold_amp=(0.03, 0.10), seed=seed, nu=48, nz=44, power=2.4)
+        made.append(g)
+    lo = Vector((min(L.bbox(o)[0][i] for o in made) for i in range(3)))
+    hi = Vector((max(L.bbox(o)[1][i] for o in made) for i in range(3)))
+    m = (Matrix.Translation((x, face_y - (hi.y - proud), z)) @ Euler((0, 0, math.radians(rot_deg)), "XYZ").to_matrix().to_4x4()
          @ Matrix.Diagonal((-1.0 if mirror else 1.0, 1.0, 1.0, 1.0)))
-    for o in (body, hair):
+    for o in made:
         o.data.transform(m)
-    return [body, hair]
+    return made
 
 
 def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25, rearing=True):
@@ -844,13 +864,17 @@ def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25
 # Panel layouts (QA-01-10): >= 8 figures ~3.5 m tall per 10.5 m field, three distinct designs.
 # ("scan", key, x, height, mirror) | ("fig", pose, x, mirror, rot) | ("horse", x, mirror)
 PANEL_LAYOUTS = {
-    1: [("scan", "soldiers", -3.85, 4.0, True), ("fig", "kneel", -2.25, True, 0), ("fig", "arms_up", -1.35, False, 5),
-        ("horse", 0.55, False), ("fig", "stride", 2.15, True, -6), ("fig", "kneel", 3.2, False, 0), ("fig", "arms_out", 4.35, False, 4)],
-    2: [("scan", "dacians", -3.7, 4.1, False), ("fig", "stride", -1.85, False, -5), ("fig", "arms_out", -0.65, False, 0),
-        ("fig", "stride", 0.55, True, 5), ("scan", "soldiers", 2.55, 4.0, False), ("fig", "arms_up", 4.35, True, 0)],
-    3: [("scan", "centaur", -3.7, 3.1, False), ("fig", "stride", -1.85, True, 0), ("fig", "kneel", -0.95, False, 0),
-        ("fig", "arms_up", 0.0, False, 0), ("fig", "kneel", 0.95, True, 0), ("fig", "stride", 1.9, False, 0),
-        ("scan", "dacians", 3.75, 4.1, True)],
+    1: [("scan", "soldiers", -4.05, 4.15, True), ("fig", "kneel", -2.60, True, 0), ("fig", "arms_up", -1.80, False, 5),
+        ("fig", "stride", -1.05, True, -4), ("fig", "arms_out", -0.30, False, 3), ("horse", 0.55, False),
+        ("fig", "kneel", 1.15, True, 0), ("fig", "arms_up", 1.85, False, 4), ("fig", "kneel", 2.55, True, 0),
+        ("fig", "stride", 3.30, False, -5), ("scan", "dacians", 4.35, 4.20, True)],
+    2: [("scan", "dacians", -4.00, 4.20, False), ("fig", "stride", -2.35, False, -5), ("fig", "arms_out", -1.60, False, 0),
+        ("fig", "stride", -0.85, True, 5), ("fig", "arms_up", -0.10, False, 0), ("fig", "arms_out", 0.65, True, -3),
+        ("scan", "soldiers", 2.45, 4.15, False), ("fig", "stride", 4.15, True, 4), ("fig", "kneel", 4.90, False, 0)],
+    3: [("scan", "centaur", -3.95, 3.30, False), ("fig", "stride", -2.45, True, 0), ("fig", "kneel", -1.75, False, 0),
+        ("fig", "arms_up", -1.00, False, 3), ("fig", "kneel", -0.30, True, 0), ("fig", "stride", 0.45, False, -4),
+        ("fig", "arms_out", 1.20, True, 0), ("fig", "kneel", 1.95, False, 0), ("fig", "stride", 2.70, True, 4),
+        ("scan", "dacians", 4.05, 4.20, True)],
 }
 
 
@@ -874,12 +898,13 @@ def build_attic_panel(variant, coll, bake=True):
             fig_count += {"soldiers": 3, "dacians": 3, "centaur": 2}[key]
         elif item[0] == "fig":
             _, pose, x, mirror, rot = item
-            parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.0 * rng.uniform(0.96, 1.04), mirror=mirror,
-                                   rot_deg=rot + rng.uniform(-3, 3), proud=0.22, rng=rng)
+            parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * rng.uniform(0.95, 1.05), mirror=mirror,
+                                   rot_deg=rot + rng.uniform(-3, 3), proud=0.28, rng=rng,
+                                   bulk=rng.uniform(1.45, 1.70), seed=6000 + variant * 40 + fig_count)
             fig_count += 1
         elif item[0] == "horse":
             _, x, mirror = item
-            parts += relief_horse("rf_horse", x, face_y, work, S=1.85, mirror=mirror, proud=0.24)
+            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.32)
             fig_count += 1
     print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures")
     parts = [p for p in parts if p is not None]
@@ -888,8 +913,16 @@ def build_attic_panel(variant, coll, bake=True):
         for i in range(2):
             x = rng.uniform(-4.9, 4.9)
             parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, face_y - 0.06, rng.uniform(0.9, 3.4)), scale=(1.0, 0.3, 1.0)))
+    # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field)
+    parts.append(L.box("panel_plinth", (W - 0.30, 0.14, 0.42), work, location=(0, face_y + 0.05, 0.24), bevel=0.03))
     t = time.time()
     hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.025), smooth=1, smooth_factor=0.3, coll=work)
+    # clamp anything that overhangs the framed field: the frame crops the relief (QA-01-10 field is 10.5 x 4.5 m)
+    for v in hi.data.vertices:
+        v.co.x = max(-W / 2, min(W / 2, v.co.x))
+        v.co.z = max(0.0, min(Hh, v.co.z))
+        v.co.y = max(0.0, v.co.y)          # nothing behind the slab's back plane (it is buried in the attic wall)
+    hi.data.update()
     print(f"[orn] attic_panel v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
     L.displace_noise(hi, strength=0.02, size=0.6, seed=1400 + variant, depth=2)
     L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
