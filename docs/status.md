@@ -147,3 +147,8 @@ In flight: ORN code review, ARCH socket fix, LIGHT r10 (docs/briefs/lighting_r10
 ## 2026-09-08 · architecture socket fix merged (786966a); ornament review fixes in flight
 Merged: rosette sockets re-framed: 16 band sockets on the vertical inner face of the base ring (r 14.18 m plane, z 23.19, +Y = face normal inward), 8 coffer-floor sockets facing down; scripts/arch_socket_check.py verifies all 24. Socket contract decision logged in docs/reviews/orn_r4_review.md.
 In flight: ORN r4 review fixes (scallop phase, keystone plate, sockets.md rewrite), LIGHT r10. Next: merge ORN, lead_build.sh, QA round 4 (Fable xhigh; cam02 station search included), then MAT r5 (cavity attribute + AO in the capital shader, backdrop asphalt/roof tile, backdrop forest) and ENV r5 (shift_y aspect, azimuth helper, clear() corners).
+
+## 2026-09-08 · ornament r4 merged (479f3f6); master rebuilt; MAT r5 + ENV r5 dispatched
+Merged: ORN r4 after review + fixes (scallop phase, keystone plate, sockets.md contract, cavity contract in notes). Master rebuilt (log renders/logs/lead_build_r4b.log).
+In flight (3 Blender agents): LIGHT r10 (chroma via sky fill, columns, horizon haze, Eevee vault, 4K timing), MAT r5 (cavity/AO into ornament shaders, backdrop asphalt/roof tile/forest, rib grime check), ENV r5 (review fixes, north-wing band re-measure).
+Next: review + merge all three, lead_build.sh, QA round 4 (Fable xhigh; cam02 station search included).
