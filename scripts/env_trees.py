@@ -429,9 +429,9 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
         # keep the main run of the sweep (drop 2 deg stragglers) and smooth the outer radius
         outer = {k: max(bins.get(k + j, bins[k]) for j in (-1, 0, 1)) for k in ks}
         for row, (off, spacing, hmin, hmax, run, gap, tag) in enumerate((
-                (6.0, 5.0, 18.5, 23.0, (13.0, 24.0), (10.0, 19.0), "E1"),
-                (12.5, 6.0, 20.0, 25.0, (16.0, 30.0), (9.0, 16.0), "E2"),
-                (20.0, 8.0, 21.0, 27.0, (20.0, 36.0), (9.0, 17.0), "E3"))):
+                (6.0, 5.0, 18.5, 23.0, (15.0, 27.0), (7.0, 13.0), "E1"),
+                (12.5, 6.0, 20.0, 25.0, (18.0, 33.0), (7.0, 12.0), "E2"),
+                (20.0, 7.0, 21.0, 27.0, (22.0, 38.0), (7.0, 13.0), "E3"))):
             carry = rnd.uniform(0, spacing)
             # clumping state: metres of run left before the next gap, and metres of gap left
             run_left = rnd.uniform(*run)
