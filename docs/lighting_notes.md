@@ -372,3 +372,78 @@ should shrink with the same materials change.
 New/changed files this round: `scripts/light_probes.py` (new), `scripts/light_measure.py` (new),
 `scripts/light_lookdev.py` (new), `scripts/light_build.py`, `scripts/light_calibrate.py`, `scripts/light_presets.py`,
 `scripts/light_preview.py`, `assets/lighting.blend`.
+
+---
+
+# Round 08 — Phase 4 polish round 1, from QA round 02
+
+Four defects: QA-02-4 (blocker, exposure), QA-02-11 (flythrough missing from master), QA-02-8 (haze greys cam06),
+QA-02-12 (vault soffits dark). Everything below was measured on a local master built with `scripts/lead_build.sh`
+from this branch. Renders: `renders/previews/qa/roundlight3_*`.
+
+## 13. QA-02-4 — exposure: QA was right and I was wrong, +0.9 EV
+
+`EXPOSURE_BIAS` 1.10 -> **2.00**, i.e. `view_settings.exposure` -3.2911 -> **-2.3911**. Nothing else changed: not the
+sun colour, not the sky strength, not an albedo. QA-02-14 (stone 5-9 deg cool) is deliberately left to materials,
+because the measured response is -1.1 deg of hue per +1 EV — exposure moves warmth the *wrong* way.
+
+**Why my round-07 estimate of "+0.15 EV" was an order of magnitude short.** I measured the deficit in display-referred
+sRGB (the sunlit attic was 14 % under ref 169) and reasoned about it as if the transfer were roughly linear. It is not:
+AgX's shoulder compresses about 1.6x of display gain into each stop of scene exposure in that range, so a 14-26 %
+display gap is most of a stop of scene light. QA measured the response curve instead of assuming it
+(`scripts/qa_exposure_sweep.py`, three renders at +0/+0.5/+1.0 EV) and got +32.0 / +35.2 / +30.5 / +33.8 sRGB units
+per EV on attic / column / sky / water. That is the right way to answer this question and I should have done it in
+round 07. **Rule for the rest of this build: never convert a display-referred error into an exposure change by
+reasoning; render the sweep.**
+
+### Result, Cycles hero 1920x1080 64 spp vs ref 169 (`scripts/light_measure.py --regions hero`)
+
+Same `light_measure` boxes on the render (`hero`) and on ref 169 (`hero_ref169`); "lum" is display-referred
+relative luminance of the mean sRGB, the same quantity QA used.
+
+| region | round 02 | round 08 | ref 169 | ref/render | EV gap |
+|---|---|---|---|---|---|
+| sunlit attic | 142.4 | **178.8** | 168.7 | 0.94 | -0.08 |
+| sunlit attic (b) | — | **175.6** | 191.8 | 1.09 | +0.13 |
+| sky top | 153.7 | **193.9** | 165.7 | 0.85 | -0.23 |
+| sky left | — | **186.7** | 193.8 | 1.04 | +0.05 |
+| colonnade far | — | **93.9** | 92.7 | 0.99 | -0.02 |
+| water centre | 108.9 | **104.2** | 106.0 | 1.02 | +0.02 |
+| shade, north face | — | **146.0** | 117.2 | 0.80 | -0.32 |
+
+Every region is now inside +-0.33 EV of ref 169, against +0.70 to +1.44 EV before. **QA's acceptance test — sunlit
+attic within +-10 % of 179.4 — is met at 175.6-178.8, i.e. within 2 %.** Closed.
+
+**Two residuals I am flagging rather than hiding, because neither is an exposure error:**
+
+1. **Sky gradient, not sky level.** The render's sky is nearly flat top-to-horizon (193.9 / 186.7) while ref 169 falls
+   17 % from the hazy low sky to the top (193.8 / 165.7). The two-box mean is 190.3 vs 179.8, +6 %, inside the window;
+   but no single value of `SKY_CAMERA_BOOST` fixes both boxes, because the shape is wrong, not the scale. Trimming the
+   boost to hit the top box would put the horizon box 13 % under. This is a sky-model job (ozone/aerosol profile, or
+   letting the compositor haze reach the sky instead of masking it off with `is_geometry`), and it is the next thing
+   I would do on the world if the lead wants it in round 09.
+2. **Shade is now 25 % too light.** Shaded stone / sunlit stone reads 0.82 in the render against 0.70 in ref 169, i.e.
+   the render's dynamic range is 0.23 EV flatter than the photo's. The cause is `SKY_STRENGTH = 2.0`, the round-05 art
+   bias that doubled the sky's *lighting* contribution to open the shadows; +0.9 EV has made that bias visible. The
+   knob is one line, but it feeds `light_calibrate` and so moves the calibrated exposure I just closed, which is why I
+   did not touch it in the same round. Recommend it as a round-09 item, swept, not guessed.
+
+## 14. QA-02-11 — the flythrough was being deleted by my own rebuild
+
+Not a modelling bug and not the lead's: **`light_build.py` rebuilds the LIGHT collection with
+`common.rebuild_collection` at the top of every run**, and `light_flythrough.py` wrote `CAM_flythrough_path` /
+`_target` / `CAM_flythrough` into that same collection *afterwards*, as a separate manual step. So every later
+`light_build.py` run silently deleted the deliverable, and the committed `assets/lighting.blend` shipped without it.
+`build_master.py` was innocent — it appends the whole LIGHT collection and would have carried the objects through.
+
+Fix: `light_build.build()` now calls `light_flythrough.build(scene)` itself, last, before the save. The flythrough is
+part of the rig, so it cannot be out of step with the rig again.
+
+Verified headlessly on both files:
+
+- `assets/lighting.blend` LIGHT collection: `LIGHT_sun`, `LIGHT_rotunda_bounce`,
+  `LIGHT_rotunda_vault_bounce_00..07`, `LIGHTPROBE_rotunda`, `LIGHTPROBE_colonnade`,
+  **`CAM_flythrough_path`, `CAM_flythrough_target`, `CAM_flythrough`**.
+- `master.blend` after `scripts/lead_build.sh`: all three present; `CAM_flythrough` carries `FOLLOW_PATH` ->
+  `CAM_flythrough_path` and `TRACK_TO` -> `CAM_flythrough_target`, and the path evaluates —
+  frame 1 (-16.0, 113.9, 1.0), 240 (73.5, 95.3, 4.3), 480 (66.6, 4.4, 6.0), 720 (0.0, 1.0, 2.5).
