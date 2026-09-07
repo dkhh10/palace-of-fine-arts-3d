@@ -101,7 +101,8 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
 - The QA critic runs on Opus 5 for round 2; if its scoring is lenient vs the lead's own read it moves to Fable.
 
 ### Concurrency
-- At most **two** builder or fix agents run at the same time. Never more (the machine cannot render more concurrently).
+- At most **four** builder or fix agents run at the same time (raised from two by the user on 2026-09-07). Their files
+  must not overlap. Keep render sample counts low on every agent: they share one GPU.
 - Do not spawn an agent for anything one shell command can do.
 
 ### Durability
