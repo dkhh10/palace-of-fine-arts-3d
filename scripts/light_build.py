@@ -35,18 +35,31 @@ FALLBACK_SUN = {"morning": (118.5, 7.4), "evening": (250.9, 6.9)}   # docs/refer
 # seen by the hero camera (looking away from the sun) but warms the sun-side horizon. ozone 2.0 deepens the blue at
 # low sun (B/R 1.59 vs ref 169's 1.65; ozone 1.0 gives a grey-blue 1.39). altitude 5 m (sea-level lagoon).
 SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0, aerosol_density=1.6, ozone_density=2.0)
-SKY_STRENGTH = 2.0                 # world strength for LIGHTING. The model's direct:diffuse ratio at el 7.4 is 9.9
-                                   # (E_sun 59.7 vs E_sky_horizontal 6.0, luminance); real clear-sky data at this
-                                   # elevation give ~5, and refs 054/169 show shade only ~3 stops under sunlit. x2.
-SKY_CAMERA_BOOST = 1.50            # extra factor for camera + glossy rays only. Round 07 (QA-01-12): with the
-                                   # exposure bias below the sky no longer needs 1.6; a smaller boost also keeps the
-                                   # blue out of AgX's desaturating highlight roll-off. Glossy still gets it, so the
-                                   # lagoon keeps a bright sky reflection.
+# Round 08b (materials' hand-off after QA-02-4). Materials measured that at +0.9 EV albedo has no authority left over
+# chroma - a 44 % cut of albedo blue moved display blue 3 % - and that the sunlit attic's R-B spread was 81 against ref
+# 169's 127: right hue, no gold. On a SUNLIT face the excess blue is sky fill, so the round-05 x2 art bias was the
+# culprit; it was propping the shade open, and at +0.9 EV the shade no longer needs propping (it measured 146.5
+# against ref 169's 117.2, i.e. 25 % too LIGHT). Back to the physical 1.0. Measured on the Cycles hero, five settings:
+# attic R-B 88.1 -> 94.8 at strength 1.0, 97.8 at 0.6; shade 146.5 -> 134.0 -> 128.1.
+SKY_STRENGTH = 1.0                 # world strength for LIGHTING (physical). Was 2.0: an art bias from round 05 to open
+                                   # the shade, which is what was washing blue over every sunlit face.
+SKY_CAMERA_BOOST = 1.20            # what the CAMERA sees of the sky. Swept 3.0 / 2.4 / 2.0 / 1.5 / 1.2 / 1.0 against
+                                   # ref 169's sky-top luminance of 165.7: 213.6 / 204.3 / 195.7 / 179.9 / 165.7 /
+                                   # 153.2. 1.20 lands on the reference exactly. (The sky is deep on the AgX shoulder,
+                                   # which is why it takes a 2.5x cut in scene radiance to move it 23 %.)
+SKY_GLOSSY_BOOST = 3.00            # what GLOSSY (reflection) rays see. Split from the camera boost in round 08b: the
+                                   # camera's sky had to come down to match ref 169 while the lagoon's reflection had
+                                   # to stay up, and one socket could not do both. 1.0 x 3.00 = the 2.0 x 1.50 the
+                                   # lagoon reflected before, so the water keeps its brightness.
 SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
                                    # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
                                    # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
-EXPOSURE_BIAS = 2.00               # EV added to the grey-card calibration. Round 07 (QA-01-12) shipped 1.10.
+EXPOSURE_BIAS = 1.75               # EV added to the grey-card calibration. Round 08b: SKY_STRENGTH 2.0 -> 1.0 takes
+                                   # light out of the scene, so the 18 % card calibration moved -4.39 -> -4.14 EV and
+                                   # the old bias of 2.00 would have landed the view at -2.14, a quarter stop above
+                                   # the number QA's sweep asked for AND above the setting every round-08b measurement
+                                   # was made at. 1.75 holds the view exposure at -2.39 exactly. EV added to the card. Round 07 (QA-01-12) shipped 1.10.
                                    # Round 08 (QA-02-4, blocker): QA's exposure sweep (scripts/qa_exposure_sweep.py)
                                    # rendered the hero at +0/+0.5/+1.0 EV and measured the display response directly:
                                    # +32.0 / +35.2 / +30.5 / +33.8 sRGB units per EV on attic / column / sky / water.
@@ -56,7 +69,12 @@ EXPOSURE_BIAS = 2.00               # EV added to the grey-card calibration. Roun
                                    # and AgX compresses a 14-26 % display gap into most of a stop of SCENE exposure.
                                    # 1.10 + 0.90 = 2.00 -> view exposure -3.29 -> -2.39. Warmth is NOT chased here:
                                    # hue falls 1.1 deg per +1 EV, so QA-02-14 is a materials/albedo job.
-LOOK = "AgX - Base Contrast"       # 'Punchy' crushes the sky-lit shade (A/B in lighting_notes)
+LOOK = "AgX - High Contrast"       # Round 05 chose Base Contrast because Punchy crushed the sky-lit shade. At +0.9 EV
+                                   # that reason is gone (the shade is 25 % too light, so crushing it is the fix), and
+                                   # the look turned out to be the strongest chroma lever of the three available:
+                                   # attic R-B, all at strength 1.0 - Base 94.8, Medium High 108.6, High 113.5-118.1,
+                                   # Punchy 112.7. Punchy also drops the attic to 144.9 and the water to 71.3, i.e. a
+                                   # stop of luminance for no extra chroma over High Contrast. High Contrast it is.
 # QA-02-8. Round 07 used the mist pass RAW (LINEAR, 30 -> 730 m) as the haze factor, x 0.85. That is a ramp with no
 # asymptote: everything past ~730 m sat at 0.85 haze, so at cam06 the dome, the lawn and the lagoon all mixed to the
 # same flat colour (measured saturation 0.076-0.091, hue 60-76 deg). Two things were wrong and both are fixed here.
@@ -236,7 +254,8 @@ def build_world(az, el, calib, moment):
     if old:
         bpy.data.worlds.remove(old)
     w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
-                           camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION)  # disc OFF: LIGHT_sun carries it
+                           camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION,
+                           glossy_boost=SKY_GLOSSY_BOOST)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -249,7 +268,8 @@ def build_world(az, el, calib, moment):
     for k, v in SKY.items():
         w["sky_" + k] = v
     w["sky_strength_lighting"] = SKY_STRENGTH
-    w["sky_camera_glossy_boost"] = SKY_CAMERA_BOOST
+    w["sky_camera_boost"] = SKY_CAMERA_BOOST
+    w["sky_glossy_boost"] = SKY_GLOSSY_BOOST
     w["sky_camera_glossy_saturation"] = SKY_CAMERA_SATURATION
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
@@ -381,7 +401,8 @@ def build(moment="morning", calibrate=True, save=True):
     coll = common.rebuild_collection(COLLECTION)
 
     meta = dict(solar_source=source, exposure_calibrated_ev=calib["exposure_ev"], exposure_bias_ev=EXPOSURE_BIAS,
-                sky_strength_lighting=SKY_STRENGTH, sky_camera_glossy_boost=SKY_CAMERA_BOOST,
+                sky_strength_lighting=SKY_STRENGTH, sky_camera_boost=SKY_CAMERA_BOOST,
+                sky_glossy_boost=SKY_GLOSSY_BOOST,
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
