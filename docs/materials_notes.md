@@ -46,19 +46,28 @@ the local test sun; `--env` appends `ENV` into the hero scene (materials remappe
 | `PFA_dome` | membrane: meridional lap seams (`Seams`=48 -> ~2.2 m at the base), radial streaks in polar coords, moss on the north (-X) flank, grime ring at the base (from the world normal's z so it works for any dome origin) | both |
 
 ## The concrete stack (`PFA_concrete`), in evaluation order
-1. base albedo (sheet values, warmed: see "calibration") with per-instance hue +-3 % / value +-8 % (`Instance Variation`);
-2. cast-block tone steps: axis-aligned Chebychev Voronoi cells (`Block Size`, +-`Tone Variation`), soft pour blotches
-   (`Blotch Size`), fine speckle (30/m, +-7 %);
+1. base albedo (sheet values, warmed: see "calibration") with per-instance hue +-0.3 % (~1.7 deg) / value +-11 %, plus
+   `wvar` = a per-instance weathering multiplier (0.05..1.9 at `Instance Variation` 1.7) applied to the streak, ledge and
+   recess-dirt masks. Round 3: the per-instance spread is VALUE and WEATHERING, not hue (QA-02-2);
+2. tone: soft drift (`Drift Size`, 8-22 m, +-`Tone Variation`) x mid-scale mottle (`Blotch Size`, +-`Tone Variation`) x
+   noise-warped cast-block steps (`Block Size`, only +-0.35 x TV, borders broken so they do not read as pasted blotches)
+   x fine speckle (30/m, +-7 %);
 3. photo detail: box-projected CC0 concrete diffuse used as *luminance only*, normalised by its mean (`Detail Mean`) so it
    never changes the hue, weight `Detail Strength`; its roughness map modulates roughness, its displacement drives the bump;
 4. grey/damp drift toward `Grey Color`: 0.7 x (world z below `Grey Below Z`..`Grey Above Z`) + noise; the lower 8 m of the
    rotunda go grey-tan, the attic stays warm;
 5. formwork/pour lines every `Pour Spacing` (object z), broken by noise; slab grid joints (`Grid Joints`, paving);
-6. repair patches: sparse sharp Chebychev cells, +14 % value, -20 % saturation, tiny bump step;
-7. rain streaks (`PFA_streaks` x `Streaks`), tint x (0.36, 0.37, 0.31);
-8. recess dirt: `1 - AO(Recess Distance)` x `Recess Dirt` (+ `Extra Dirt` from bakes, + `Underside Dirt` on down-facing
-   faces for soffits), tint x (0.5, 0.47, 0.42) = the sheet's "recesses 0.55 x plain";
-9. edge wear (`PFA_edge` x `Edge Wear`): +22 % value, -15 % saturation, -0.15 roughness on convex arrises;
+6. repair patches: noise-warped Chebychev cells with a 0.05-wide threshold ramp (feathered skim coats, not stencils),
+   +6 % value, -8 % saturation, tiny bump step;
+7. ledge run-off band (`PFA_streaks` Ledge x 0.40 x `Streaks` x `wvar`), tint x (0.74, 0.695, 0.615): the continuous
+   soiling directly under every overhang; then rain streaks (`PFA_streaks` x `Streaks` x `wvar`), tint x
+   (0.46, 0.405, 0.325) -- warm dark grey, R > G > B. Round 3: the old (0.36, 0.37, 0.31) had G > R and was the olive
+   cast QA-02-2 measured on the shaded piers and arch soffits;
+8. recess dirt: `1 - AO(Recess Distance)` x `Recess Dirt` x `wvar` (+ `Extra Dirt` from bakes, + `Underside Dirt` on
+   down-facing faces for soffits), tint x (0.56, 0.495, 0.405);
+9. edge wear (`PFA_edge` x `Edge Wear`): +22 % value, -15 % saturation, -0.15 roughness on convex arrises. `Edge Radius`
+   is 0.10-0.12 m on wall-scale materials (0.05 on ornament, whose features are 0.4 m): at the hero's 7 cm/px a 3 cm
+   arris is sub-pixel and cannot read, which is why round 2 scored "no edge wear anywhere" (QA-02-3);
 10. algae band + efflorescence (`Algae`, `Algae Z`, `Algae Height`): band -> 65 % toward (0.045, 0.07, 0.04), roughness 0.45
     (slick); efflorescence -> chalky (0.58, 0.56, 0.50), roughness 0.92;
 11. bird droppings on up-facing surfaces (sparse Voronoi, `Bird Droppings`, ornament only);

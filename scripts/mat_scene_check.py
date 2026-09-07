@@ -93,15 +93,31 @@ import light_presets
 light_presets.apply_final_cycles(scene, samples=SAMPLES)
 common.setup_scene(scene)
 scene.render.image_settings.color_depth = "8"
-scene.render.resolution_x, scene.render.resolution_y = 1600, 900
 
-for name in ("CAM_mat_scene_waterline", "CAM_mat_scene_stone"):
-    ob = bpy.data.objects[name]
+# The merged lighting.blend still carries round 2's exposure; the lighting agent is raising it by +0.9 EV this round
+# (QA-02-4). Judge materials at the exposure they will ship at, so albedo does not silently compensate for it.
+EV = float(arg("--ev", 0.9))
+scene.view_settings.exposure += EV
+print(f"[mat_scene] view exposure {scene.view_settings.exposure - EV:.4f} {EV:+.2f} EV -> {scene.view_settings.exposure:.4f}")
+
+JOBS = [("waterline", "CAM_mat_scene_waterline", (1600, 900)),
+        ("stone", "CAM_mat_scene_stone", (1600, 900)),
+        ("hero", "CAM_qa_01_lagoon_hero", (1920, 1080))]
+WANT = str(arg("--cams", "waterline,stone,hero")).split(",")
+
+for short, name, res in JOBS:
+    if short not in WANT:
+        continue
+    ob = bpy.data.objects.get(name)
+    if ob is None:
+        print(f"[mat_scene] camera {name} missing, skipped")
+        continue
     scene.camera = ob
-    fp = OUT / f"{TAG}_scene_{name.replace('CAM_mat_scene_', '')}.png"
+    scene.render.resolution_x, scene.render.resolution_y = res
+    fp = OUT / f"{TAG}_scene_{short}.png"
     scene.render.filepath = str(fp)
     t = time.time()
     bpy.ops.render.render(write_still=True)
-    print(f"[mat_scene] {name} {SAMPLES} spp in {time.time() - t:.1f}s -> {fp.name}")
+    print(f"[mat_scene] {short} {res[0]}x{res[1]} {SAMPLES} spp in {time.time() - t:.1f}s -> {fp.name}")
 
 print(f"[mat_scene] done in {time.time() - t0:.1f}s")
