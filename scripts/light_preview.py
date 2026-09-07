@@ -2,6 +2,7 @@
 compositor from assets/lighting.blend; renders the QA cameras in Eevee and a Cycles hero into renders/previews/lighting/.
 
     blender -b --python scripts/light_preview.py                       # Eevee QA set + Cycles 128 spp hero
+    blender -b --python scripts/light_preview.py -- --master --tag r07 # from the assembled master.blend (Phase 3+)
     blender -b --python scripts/light_preview.py -- --hero-only        # just the Cycles hero
     blender -b --python scripts/light_preview.py -- --eevee-only
     blender -b --python scripts/light_preview.py -- --moment evening --tag evening   # rig rebuilt in memory for the
@@ -24,6 +25,18 @@ PLACEHOLDER = common.ASSETS / "placeholder_blockout.blend"
 
 def arg(args, key, default=None, cast=str):
     return cast(args[args.index(key) + 1]) if key in args else default
+
+
+def open_master():
+    """Phase 3+: render from the lead's assembled master.blend (build_master.py) with the look re-applied."""
+    path = common.ROOT / "master.blend"
+    if not path.exists():
+        sys.exit("[light_preview] master.blend missing; run scripts/build_master.py first")
+    bpy.ops.wm.open_mainfile(filepath=str(path))
+    s = bpy.context.scene
+    lp.apply_look(s, link=False)
+    print("[light_preview] opened master.blend:", len(bpy.data.objects), "objects; probes:", [o.name for o in bpy.data.objects if o.type == "LIGHT_PROBE"])
+    return s
 
 
 def build_temp_scene(moment=None):
@@ -126,7 +139,7 @@ def sky_sweep(s, values=SWEEP, res=(1280, 720)):
 if __name__ == "__main__":
     args = common.script_args()
     tag = arg(args, "--tag", "")
-    s = build_temp_scene(arg(args, "--moment"))
+    s = open_master() if "--master" in args else build_temp_scene(arg(args, "--moment"))
     if "--sky-strength" in args:          # A/B of the world Background strength (sun:sky ratio), local copy of the world
         w = s.world.copy() if s.world.library else s.world
         s.world = w

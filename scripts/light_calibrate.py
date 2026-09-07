@@ -130,10 +130,12 @@ def _ortho_camera_looking_along(scene, direction, distance=5.0, ortho_scale=1.0)
     return cam
 
 
-def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0):
+def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
+                   camera_saturation=1.0):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera and glossy
-    (reflection) rays see, leaving diffuse lighting untouched (Light Path node)."""
+    (reflection) rays see, leaving diffuse lighting untouched (Light Path node); camera_saturation does the same for
+    saturation (AgX desaturates the bright sky, so the visible blue needs help that the lighting must not get)."""
     sky = dict(DEFAULT_SKY, **(sky or {}))
     w = bpy.data.worlds.new(name)
     w.use_nodes = True
@@ -154,17 +156,28 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     node.air_density = sky["air_density"]
     node.aerosol_density = sky["aerosol_density"]
     node.ozone_density = sky["ozone_density"]
-    nt.links.new(node.outputs[0], bg.inputs["Color"])
-    bg.inputs["Strength"].default_value = strength
-    if camera_boost != 1.0:
-        lp = nt.nodes.new("ShaderNodeLightPath"); lp.name = "LIGHT_PATH"
+    sky_color = node.outputs[0]
+    vis_out = None
+    if camera_boost != 1.0 or camera_saturation != 1.0:
+        lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
         vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
-        nt.links.new(lp.outputs["Is Camera Ray"], vis.inputs[0]); nt.links.new(lp.outputs["Is Glossy Ray"], vis.inputs[1])
+        nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0]); nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
         clampn = nt.nodes.new("ShaderNodeMath"); clampn.operation = "MINIMUM"; clampn.inputs[1].default_value = 1.0
         nt.links.new(vis.outputs[0], clampn.inputs[0])
+        vis_out = clampn.outputs[0]
+    if camera_saturation != 1.0:
+        # saturate ONLY what the camera / a reflection sees; the diffuse lighting keeps the physical sky colour
+        hs = nt.nodes.new("ShaderNodeHueSaturation"); hs.name = "sky_saturation"
+        hs.inputs["Saturation"].default_value = camera_saturation
+        nt.links.new(node.outputs[0], hs.inputs["Color"])
+        nt.links.new(vis_out, hs.inputs["Fac"])          # Fac blends between the input and the saturated colour
+        sky_color = hs.outputs["Color"]
+    nt.links.new(sky_color, bg.inputs["Color"])
+    bg.inputs["Strength"].default_value = strength
+    if camera_boost != 1.0:
         boost = nt.nodes.new("ShaderNodeMath"); boost.operation = "MULTIPLY_ADD"; boost.name = "camera_boost"
         boost.inputs[1].default_value = camera_boost - 1.0; boost.inputs[2].default_value = 1.0   # 1 + vis*(boost-1)
-        nt.links.new(clampn.outputs[0], boost.inputs[0])
+        nt.links.new(vis_out, boost.inputs[0])
         mult = nt.nodes.new("ShaderNodeMath"); mult.operation = "MULTIPLY"; mult.name = "strength"
         mult.inputs[1].default_value = strength
         nt.links.new(boost.outputs[0], mult.inputs[0])
