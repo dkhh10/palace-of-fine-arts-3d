@@ -318,9 +318,9 @@ PLAN = [
     ("cypress", -118.0, 8.0, 22.0, "B beyond the north pylon"),
     ("cypress_column", -112.0, 40.0, 24.0, "B tall column beyond the north pylon (ref 169 right)"),
     # C. south side: columns on the strip between the south wing and the south embayment
-    ("cypress_column", 31.0, 18.0, 26.0, "C cypress column left of the rotunda (user image x~290): peninsula south lobe, base at the water"),
-    ("cypress_column", 26.0, 23.0, 24.0, "C second column (user image x~330), south lobe"),
-    ("broadleaf", 20.0, 17.0, 13.0, "C small dark tree touching the rotunda's left edge (user image x~410), in the podium planter zone"),
+    ("cypress_column", 31.0, 18.0, 16.0, "C cypress column left of the rotunda (user image x~290): QA-03-10/-13 26 -> 16 m, the user image spire tops out at the colonnade cornice"),
+    ("cypress_column", 26.0, 23.0, 13.0, "C second column (user image x~330), south lobe; QA-03-13 24 -> 13 m"),
+    ("broadleaf", 20.0, 17.0, 9.0, "C small dark tree left of the rotunda (user image x~410); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05"),
     ("eucalyptus", 62.0, -30.0, 30.0, "C broad eucalyptus behind the south wing (ref 169 left)"),
     ("pine", 62.0, -46.0, 18.0, "C QA-01-6: moved out of cam03 (was 24,-22 = 7 m in front of the camera)"),
     ("broadleaf", 74.0, -38.0, 10.0, "C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera)"),
@@ -595,6 +595,137 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
     return out
 
 
+# ----------------------------------------------------------------------------- QA-03-10 / QA-03-13 frame bands
+# Two QA boxes ask for parts of the *architecture* to be readable through the planting, not for the planting to
+# go away.  Both are stated in frame coordinates, so they are enforced in frame coordinates.
+#
+#   QA-03-10  hero (cam 01), box x 60-560 / y 480-600 of 1920x1080 = frame x 0.031-0.292, y 0.444-0.556: the south
+#             colonnade (QA calls it "north").  Ref 169 has that band open - eight sunlit shafts and sky between
+#             them - with foliage only at the frame's left edge and one conifer group at x 0.19-0.29.  So the
+#             guarded span stops at 0.205: the composition conifers of the user image (x ~290/330) stay.
+#   QA-03-13  cam 05, the rotunda's own silhouette: no crown inside it.  The rotunda spans frame x 0.235-0.78.
+#
+# Only trees BETWEEN the camera and the subject can offend, so a tree is a candidate when it is nearer than the
+# subject.  For the hero that is the colonnade arc: the wings are struck from ARC_CENTRE (0, 52) at radius ~93, so
+# a tree inside that radius stands in front of the wing and a tree outside it stands behind (the redwood screen).
+# Offenders are pushed along the camera's right axis - which moves them across the frame without changing their
+# distance much - to the nearer edge of the band, and only shortened if no clear spot exists.
+FRAME_BANDS = [
+    dict(cam="_qa_01_", x0=0.031, x1=0.205, y0=0.40, y1=0.60, arc_r=93.0,
+         label="QA-03-10 hero south-wing band"),
+    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.00, y1=0.86, near=112.0,
+         label="QA-03-13 cam05 rotunda silhouette"),
+]
+CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
+
+
+def _cam_specs():
+    import qa_cameras
+    return qa_cameras.CAMERAS
+
+
+def _cam_basis(spec):
+    f = (Vector(spec["target"]) - Vector(spec["loc"])).normalized()
+    r = f.cross(Vector((0.0, 0.0, 1.0))).normalized()
+    u = r.cross(f).normalized()
+    return f, r, u
+
+
+def _frame_box(spec, f, r, u, x, y, h, species):
+    """Crown bounding box in frame coordinates, plus the distance along the view axis."""
+    rad = L.CROWN_R.get(species, 0.35) * h * CROWN_SAFETY
+    half_w = 0.5 * 36.0 / spec["lens"]
+    half_h = half_w * 9.0 / 16.0
+    pts = []
+    for dx, dy in ((rad, 0), (-rad, 0), (0, rad), (0, -rad)):
+        for z in (h * 0.25, h * 0.6, h):
+            d = Vector((x + dx, y + dy, -0.5 + z)) - Vector(spec["loc"])
+            zz = d.dot(f)
+            if zz <= 0.5:
+                continue
+            pts.append((0.5 + 0.5 * (d.dot(r) / zz) / half_w,
+                        0.5 - 0.5 * (d.dot(u) / zz) / half_h + spec.get("shift_y", 0.0), zz))
+    if not pts:
+        return None
+    return (min(p[0] for p in pts), max(p[0] for p in pts),
+            min(p[1] for p in pts), max(p[1] for p in pts), min(p[2] for p in pts))
+
+
+def frame_band_relief(plan, land_ok=None, verbose=True):
+    """Move (or, failing that, shorten) any tree that stands in front of a guarded frame band."""
+    try:
+        specs = {s["name"]: s for s in _cam_specs()}
+    except Exception as e:
+        print(f"[env_trees] frame_band_relief skipped: {e}")
+        return plan
+    trees = [list(t) for t in plan]
+    moved = shortened = dropped = 0
+    report = []
+    for band in FRAME_BANDS:
+        name = next((n for n in specs if band["cam"] in n), None)
+        if not name:
+            continue
+        spec = specs[name]
+        f, r, u = _cam_basis(spec)
+        for i, t in enumerate(trees):
+            if t[3] <= 0.1:
+                continue
+            sp, x, y, h = t[0], t[1], t[2], t[3]
+            box = _frame_box(spec, f, r, u, x, y, h, sp)
+            if box is None:
+                continue
+            bx0, bx1, by0, by1, dist = box
+            if bx1 < band["x0"] or bx0 > band["x1"] or by1 < band["y0"] or by0 > band["y1"]:
+                continue
+            if "arc_r" in band:
+                if math.hypot(x - L.ARC_CENTRE[0], y - L.ARC_CENTRE[1]) > band["arc_r"]:
+                    continue                                   # behind the wing: this is the screen, keep it
+            if "near" in band and dist > band["near"]:
+                continue                                       # behind the subject
+            # push along the camera's right axis, whichever way is shorter, in 2 m steps
+            best = None
+            for sgn in (-1.0, 1.0):
+                for step in range(1, 26):
+                    nx, ny = x + sgn * 2.0 * step * r.x, y + sgn * 2.0 * step * r.y
+                    if land_ok is not None and not land_ok(nx, ny):
+                        continue
+                    nb = _frame_box(spec, f, r, u, nx, ny, h, sp)
+                    if nb is None:
+                        continue
+                    if nb[1] < band["x0"] or nb[0] > band["x1"]:
+                        if best is None or step < best[0]:
+                            best = (step, nx, ny)
+                        break
+            if best:
+                t[1], t[2] = best[1], best[2]
+                moved += 1
+                report.append(f"    moved {sp:14s} ({x:6.1f},{y:6.1f}) -> ({best[1]:6.1f},{best[2]:6.1f}) "
+                              f"{best[0] * 2:3.0f} m   {str(t[4])[:34]}")
+                continue
+            # nowhere to go: shorten until the crown drops below the band, or drop it
+            new_h = h
+            while new_h > 6.0:
+                new_h -= 1.5
+                nb = _frame_box(spec, f, r, u, x, y, new_h, sp)
+                if nb is None or nb[2] > band["y1"]:
+                    break
+            if new_h > 6.0 and new_h < h:
+                t[3] = new_h
+                shortened += 1
+                report.append(f"    shortened {sp:11s} ({x:6.1f},{y:6.1f}) {h:.0f} -> {new_h:.0f} m   {str(t[4])[:34]}")
+            else:
+                t[3] = 0.0
+                dropped += 1
+                report.append(f"    dropped {sp:13s} ({x:6.1f},{y:6.1f}) h{h:.0f}   {str(t[4])[:34]}")
+    out = [tuple(t) for t in trees if t[3] > 0.1]
+    if verbose:
+        print(f"[env_trees] frame-band relief: moved {moved}, shortened {shortened}, dropped {dropped} "
+              f"({len(plan)} -> {len(out)} trees)")
+        for line in report:
+            print(line)
+    return out
+
+
 def plan_markdown(plan):
     lines = ["| # | species | X (S+) | Y (E+) | height m | note |", "|---|---|---|---|---|---|"]
     for i, (sp, x, y, h, note) in enumerate(plan):
@@ -628,6 +759,18 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
         plan += redwood_screen(colonnade_polys, hall_poly, hall_field)
         # QA-02-7: keep the low sun off the colonnade faces (see shadow_relief)
         plan = shadow_relief(plan, colonnade_polys, lagoon_field)
+
+        # QA-03-10 / QA-03-13: clear the guarded frame bands last, so the sun relief cannot push a crown back in
+        def _land(px, py):
+            if lagoon_field is not None and lagoon_field.signed(px, py) < 1.5:
+                return False
+            if math.hypot(px, py) < 37.0:                    # the podium apron
+                return False
+            if hall_field is not None and hall_field.signed(px, py) < 2.0:
+                return False
+            return all(not L.point_in_poly(px, py, L.offset_polygon(p, 2.0)) for p in colonnade_polys)
+
+        plan = frame_band_relief(plan, land_ok=_land)
     rnd = random.Random(77)
     counts = {}
     per_species_idx = {}

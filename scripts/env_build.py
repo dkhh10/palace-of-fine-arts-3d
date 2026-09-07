@@ -137,8 +137,10 @@ def build_terrain():
     path_width = 3.0
     path_fields = [L.PolyField(p, cell=8.0, closed=False) for p in paths]
     ribbons = []
+    verges = []
     for p in paths:
         ribbons += L.ribbon_polygons(p, path_width)
+        verges += L.ribbon_polygons(p, path_width + 3.0)      # QA-03-9: soil verge each side of every walk
     # grid points, three resolutions
     pts = []
     step_in = 4.0 if QUICK else 2.5
@@ -169,7 +171,12 @@ def build_terrain():
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 3.5), 3.0, closed=True):
         pts.append((x, y))
     apron = [(APRON_R * math.cos(a), APRON_R * math.sin(a)) for a in [k * 2 * math.pi / 72 for k in range(72)]]
-    constraints = [LAGOON] + ISLETS + [L.offset_polygon(p, 2.0) for p in COLONNADE_ROOFS] + [apron] + ribbons + [HALL]
+    # QA-03-9: cam 03 stood on "a flat olive plane".  The ground now carries real bands: the gravel walk inside
+    # the colonnade, a soil planting bed 2-5.5 m outside it (where the foundation shrubs stand), lawn, and a soil
+    # verge along every path.  All four are CDT constraints so the edges are clean rather than sampled.
+    col_bed = [L.offset_polygon(p, 5.5) for p in COLONNADE_ROOFS]
+    constraints = ([LAGOON] + ISLETS + [L.offset_polygon(p, 2.0) for p in COLONNADE_ROOFS] + col_bed
+                   + [apron] + verges + ribbons + [HALL])
     # keep points away from the constraint edges (CDT epsilon issues) - cheap filter near the lagoon only
     pts = [p for p in pts if abs(LAGOON_FIELD.dist(p[0], p[1])) > 0.6]
     log(f"terrain: {len(pts)} grid points, {len(constraints)} constraint polygons")
@@ -193,6 +200,10 @@ def build_terrain():
             face_mat.append(2)
         elif any(f.dist(cx, cy) < path_width / 2 + 0.05 for f in path_fields):
             face_mat.append(2)
+        elif any(L.point_in_poly(cx, cy, p) for p in col_bed):
+            face_mat.append(1)                                          # colonnade planting bed (QA-03-9)
+        elif any(f.dist(cx, cy) < path_width / 2 + 1.5 for f in path_fields):
+            face_mat.append(1)                                          # soil verge (QA-03-9)
         elif L.point_in_poly(cx, cy, HALL):
             face_mat.append(2)
         else:
@@ -541,8 +552,13 @@ def build_shrubs():
     log("shrubs + grasses + reeds")
     coll = SUB["ENV_shrubs"]
     rnd = random.Random(23)
-    ROSTRA_R = 54.0        # inside this radius the band must not hide the podium / rostra (QA-02-13)
-    ROSTRA_H = 1.2
+    # QA-02-13 / QA-03-13: inside ROSTRA_R the band must not hide the podium or its Greek-key course.  Round 03
+    # clamped every one of those shrubs to exactly ROSTRA_H, which is why QA-03-14 then measured "evenly spaced
+    # same-size mounds, size spread ~1.5:1": the clamp, not the placement, was flattening the row.  The cap is now
+    # drawn per instance from ROSTRA_H_RANGE (2.9:1 on its own, before the base scale spread), so the row keeps a
+    # real silhouette while nothing in it is taller than 1.2 m.
+    ROSTRA_R = 54.0
+    ROSTRA_H_RANGE = (0.42, 1.20)
 
     # (key, material(s), {lod: mesh}, nominal height) - meshes are shared by every instance of that key
     src = {}
@@ -583,6 +599,8 @@ def build_shrubs():
             return False
         if math.hypot(x + 14.1, y - 100.0) < 34.0:      # hero camera foreground stays clean (user image, ref 169)
             return False
+        if math.hypot(x - 81.0, y - 12.04) < 17.0:     # QA-03-9: cam 03's own foreground - a 0.9 m bush 3 m from an
+            return False                               # 18 mm lens is nothing but black leaf cards in the shade
         if math.hypot(x, y) < APRON_R + 1.0:
             return False
         if any(L.point_in_poly(x, y, L.offset_polygon(p, 2.5)) for p in COLONNADE_ROOFS):
@@ -591,11 +609,13 @@ def build_shrubs():
             return False
         return True
 
-    def put(key, x, y, dz=-0.06, s=(0.72, 1.55)):
-        sc = rnd.uniform(*s)
+    def put(key, x, y, dz=-0.06, s=(0.58, 1.80)):
+        sc = rnd.uniform(*s) * rnd.uniform(0.85, 1.18)        # QA-03-14: 3.1:1 nominal size spread
         h = src[key][2] * sc
-        if math.hypot(x, y) < ROSTRA_R and h > ROSTRA_H:      # QA-02-13
-            sc *= ROSTRA_H / h
+        if math.hypot(x, y) < ROSTRA_R:                       # QA-02-13 / QA-03-13
+            cap = rnd.uniform(*ROSTRA_H_RANGE)
+            if h > cap:
+                sc *= cap / h
         placed.append((key, (x, y, terrain_height(x, y) + dz), rnd.uniform(0, 6.283), sc))
 
     def clump(cx, cy, n, spread, keys, min_shore=0.9, max_shore=7.0):
@@ -627,7 +647,12 @@ def build_shrubs():
         az = math.degrees(math.atan2(y, -x)) % 360
         ne = L.smoothstep(150.0, 60.0, abs(az - 40.0)) if az < 180 else 0.0
         se = L.smoothstep(150.0, 60.0, abs(az - 140.0)) if az < 200 else 0.0
-        p = 0.60 + 0.30 * ne - 0.20 * se
+        # QA-03-14: a ~11 m gate opens and closes the belt, so the gaps between clumps are metres long and the
+        # spacing standard deviation is a real fraction of the mean instead of Poisson noise.
+        gate = L.fnoise(x, y, 0.095, 91) + 0.55 * L.fnoise(x, y, 0.031, 92)
+        if gate < -0.16:
+            continue
+        p = (0.60 + 0.30 * ne - 0.20 * se) * L.smoothstep(-0.16, 0.25, gate)
         if rnd.random() < p:
             keys = MOUNDS + MAHONIA if ne > 0.5 else LOWMOUNDS + MAHONIA
             clump(x, y, rnd.randint(2, 5), 2.6, keys, min_shore=0.5, max_shore=9.0)
@@ -639,6 +664,8 @@ def build_shrubs():
     # 2. the rest of the shore: the same belt, a little sparser, with more dry reeds at the water
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.0), 3.4, closed=True):
         if math.hypot(x, y) < 50 or not land_ok(x, y, 0.4, 9.0):
+            continue
+        if L.fnoise(x, y, 0.085, 93) < -0.20:                 # QA-03-14: same gate on the outer shore
             continue
         if rnd.random() < 0.58:
             clump(x, y, rnd.randint(2, 4), 2.8, LOWMOUNDS + MAHONIA, min_shore=0.5, max_shore=9.0)
@@ -671,10 +698,13 @@ def build_shrubs():
     n_band = len(placed) - n_band
 
     # 3. foundation planting along the colonnade fronts
+    # QA-03-9: everything along the colonnade fronts sits in the wing's own shade, where MAT_shrub's dark cards
+    # read as black holes at cam 03.  Use the pale / dry families and mahonia there instead.
+    PALE = ("pitto1", "pitto5", "pitto7", "maho0", "maho1", "maho2")
     for p in COLONNADE_ROOFS[:2]:
         for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.5, closed=True):
             if land_ok(x, y, 1.0) and rnd.random() < 0.45:
-                clump(x, y, rnd.randint(1, 3), 2.0, LOWMOUNDS + MAHONIA, min_shore=1.0, max_shore=1e9)
+                clump(x, y, rnd.randint(1, 3), 2.0, PALE + TWIGS, min_shore=1.0, max_shore=1e9)
     # 4. the wooded islet: dense dark mounds under the willows
     for _ in range(80):
         p = ISLETS[0]
