@@ -586,6 +586,19 @@ def build_shrubs():
         add(f"twig{i}", ("MAT_shrub_dry", "MAT_reeds"), make_twig_shrub_mesh, 0.9 + 0.25 * i, seed=350 + i,
             radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i, twigs=70)
 
+    # the clamp below has to work on the mesh's real z extent, not on the nominal height the factory was asked
+    # for: round 03's "1.2 m" shrubs measured 1.87 m in the file because the mound meshes overshoot their nominal
+    # height and the instancing step then adds its own +-15 % z jitter.
+    REAL_H = {}
+    for k, (_, lods, _) in src.items():
+        hh = []
+        for me in lods.values():                # LOD1/LOD2 use wider cards, so they are the taller meshes
+            zs = [v.co.z for v in me.vertices]
+            if zs:
+                hh.append(max(zs) - min(zs))
+        REAL_H[k] = max(hh) if hh else src[k][2]
+    Z_JITTER_MAX = 1.15
+
     mats = {k: L.mat_or(*m) for k, (m, _, _) in src.items()}
     for k, (_, lods, _) in src.items():
         for me in lods.values():
@@ -611,7 +624,7 @@ def build_shrubs():
 
     def put(key, x, y, dz=-0.06, s=(0.58, 1.80)):
         sc = rnd.uniform(*s) * rnd.uniform(0.85, 1.18)        # QA-03-14: 3.1:1 nominal size spread
-        h = src[key][2] * sc
+        h = REAL_H[key] * sc * Z_JITTER_MAX
         if math.hypot(x, y) < ROSTRA_R:                       # QA-02-13 / QA-03-13
             cap = rnd.uniform(*ROSTRA_H_RANGE)
             if h > cap:
