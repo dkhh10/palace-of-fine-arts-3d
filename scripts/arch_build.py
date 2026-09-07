@@ -252,7 +252,8 @@ def build_rotunda():
             p = add2(add2(mid, mul2(tang, sgn * 2.2)), mul2(fr.v, -0.2))
             SOCK.add("urn", (p[0], p[1], top), fr.v, 1.6)
         p = add2(mid, mul2(fr.v, -0.6))
-        SOCK.add("finial", (p[0], p[1], top), fr.v, 1.5, extra={"subtype": "volute_scroll"})
+        SOCK.add("finial", (p[0], p[1], top), fr.v, 1.5, extra={"subtype": "volute_scroll", "modelled_by_arch": True})
+        build_volutes(f"ARCH_rotunda_attic_volute_{fr.k:02d}", mid, tang, fr.v, top, C, M_OCHRE)
         L.box(f"PH_attic_figure_{fr.k:02d}", add2(mid, mul2(fr.v, -0.25)), (1.4, 0.9), P.ATTIC_Z0, P.ATTIC_Z0 + 6.7, C_PH,
               rot_deg=ang_deg(tang), mat=M_OCHRE, part_type="attic")
         for sgn in (-1, 1):
@@ -383,10 +384,11 @@ def build_rotunda():
 
     # ---- drum (plain band, guilloche cushion, cornice ring) and dome
     z0 = P.DRUM_Z0 - 0.4
-    L.lathe("ARCH_rotunda_drum", [(P.DRUM_BAND_R - 0.5, z0), (P.DRUM_BAND_R, z0), (P.DRUM_BAND_R, P.DRUM_Z0 + 1.0),
-                                  (P.DRUM_BAND_R - 0.5, P.DRUM_Z0 + 1.0)], C, segments=128, mat=M_OCHRE, part_type="drum",
-            origin=(0, 0, P.DRUM_Z0), close_top=True, close_bottom=True, bevel=False)
-    zb = P.DRUM_Z0 + 1.0 - SINK
+    zp = P.DRUM_Z0 + P.DRUM_PLAIN_H
+    L.lathe("ARCH_rotunda_drum", [(P.DRUM_BAND_R - 0.5, z0), (P.DRUM_BAND_R, z0), (P.DRUM_BAND_R, zp - 0.5),
+                                  (P.DRUM_BAND_R + 0.12, zp - 0.4), (P.DRUM_BAND_R + 0.12, zp), (P.DRUM_BAND_R - 0.5, zp)], C,
+            segments=128, mat=M_OCHRE, part_type="drum", origin=(0, 0, P.DRUM_Z0), close_top=True, close_bottom=True, bevel=False)
+    zb = zp - SINK
     cushion = [(P.DRUM_BAND_R - 0.3, zb), (P.DRUM_BAND_R, zb)]
     for i in range(1, 8):
         a = -math.pi / 2 + math.pi * i / 8
@@ -397,7 +399,7 @@ def build_rotunda():
     SOCK.add("drum_band", (P.DRUM_BAND_R + 0.55, 0.0, zb), (1.0, 0.0), P.DRUM_BAND_H,
              extra={"run_length": 2 * math.pi * (P.DRUM_BAND_R + 0.55), "radius": P.DRUM_BAND_R + 0.55}, size=1.0)
     zc = zb + P.DRUM_BAND_H - SINK
-    cornice = [(P.DRUM_BAND_R - 0.3, zc), (P.DRUM_BAND_R + 0.2, zc), (P.DRUM_BAND_R + 0.6, zc + 0.15), (P.DRUM_CORNICE_R, zc + 0.35),
+    cornice = [(P.DRUM_BAND_R - 0.3, zc), (P.DRUM_BAND_R + 0.2, zc), (P.DRUM_BAND_R + 0.6, zc + 0.2), (P.DRUM_CORNICE_R, zc + 0.45),
                (P.DRUM_CORNICE_R, P.DRUM_Z1 - 0.15), (P.DRUM_CORNICE_R - 0.25, P.DRUM_Z1), (P.DOME_BASE_R + 0.25, P.DRUM_Z1),
                (P.DOME_BASE_R + 0.25, P.DRUM_Z1 + 0.12), (P.DOME_BASE_R - 0.3, P.DRUM_Z1 + 0.12)]
     L.lathe("ARCH_rotunda_drum_cornice", cornice, C, segments=128, mat=M_OCHRE, part_type="drum", origin=(0, 0, zc),
@@ -576,21 +578,29 @@ def build_vault_coffers(name, k, X, n, coll):
     depth = ap0 - ap1
     r_mean = (r0 + r1) / 2
     arc = math.pi * r_mean
-    rows, cols = 3, 9
-    margin_s, margin_t = 0.35, 0.30
-    rib = 0.35
-    cw = (arc - 2 * margin_s - (cols - 1) * rib) / cols
-    ch = (depth - 2 * margin_t - (rows - 1) * rib) / rows
-    xs, ys = [0.0], [0.0]
+    # ref 062: two rows of large octagonal coffers with small square (diamond) coffers between them
+    rows, cols = 2, 7
+    pitch_s = (arc - 0.8) / cols
+    row_t = [depth * 0.27, depth * 0.73]
+    oct_r = min(0.95, pitch_s * 0.42, (row_t[1] - row_t[0]) * 0.45)
+    holes = []
+    for j, ty in enumerate(row_t):
+        for i in range(cols):
+            cx = 0.4 + pitch_s * (i + 0.5)
+            holes.append([add2((cx, ty), p) for p in L.regular_polygon(oct_r, 8, 22.5)])
+            if i < cols - 1:
+                dx = cx + pitch_s / 2
+                dr = min(0.33, (pitch_s / 2 - oct_r * 0.924) * 0.8)
+                holes.append([(dx + dr * 1.02, ty), (dx, ty + dr), (dx - dr * 1.02, ty), (dx, ty - dr)])
+    tm = (row_t[0] + row_t[1]) / 2
     for i in range(cols):
-        x0 = margin_s + i * (cw + rib)
-        xs += [x0, x0 + cw]
-    xs.append(arc)
-    for j in range(rows):
-        y0 = margin_t + j * (ch + rib)
-        ys += [y0, y0 + ch]
-    ys.append(depth)
-    obj = L.grid_frame(name, xs, ys, 0.12, coll, mat=M_INNER, part_type="wall", bevel=False, smooth=False)
+        cx = 0.4 + pitch_s * (i + 0.5)
+        dr = min(0.33, ((row_t[1] - row_t[0]) / 2 - oct_r * 0.924) * 0.8)
+        if dr > 0.1:
+            holes.append([(cx + dr, tm), (cx, tm + dr * 1.02), (cx - dr, tm), (cx, tm - dr * 1.02)])
+    outline = [(0.0, 0.0), (arc, 0.0), (arc, depth), (0.0, depth)]
+    obj = L.plate(name, outline, holes, 0.12, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_INNER, part_type="wall", bevel=False,
+                  smooth=False)
     me = obj.data
     for v in me.vertices:
         s = v.co.x / r_mean            # angle 0..pi
@@ -604,6 +614,92 @@ def build_vault_coffers(name, k, X, n, coll):
     obj.location = (0, 0, 0)
     L.cube_project_uv(obj)
     return obj
+
+
+def _lbox(bm, a, d, out, zb, x0, x1, y0, y1, z0, z1):
+    """Axis box in a segment-local frame: x along d, y along out (proud of the face), z up; zb = base height."""
+    pts = []
+    for (x, y) in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
+        pts.append((a[0] + d[0] * x + out[0] * y, a[1] + d[1] * x + out[1] * y))
+    vb = [bm.verts.new((px, py, zb + z0)) for px, py in pts]
+    vt = [bm.verts.new((px, py, zb + z1)) for px, py in pts]
+    for q in range(4):
+        bm.faces.new((vb[q], vb[(q + 1) % 4], vt[(q + 1) % 4], vt[q]))
+    bm.faces.new(vt)
+    bm.faces.new(list(reversed(vb)))
+
+
+def _ldisc(bm, a, d, out, zb, cx, cz, r, y0, y1, n=12):
+    """Disc (n-gon prism) in the local x-z plane, extruded from y0 to y1 along out."""
+    ring0, ring1 = [], []
+    for i in range(n):
+        ang = 2 * math.pi * i / n
+        x, z = cx + r * math.cos(ang), cz + r * math.sin(ang)
+        ring0.append(bm.verts.new((a[0] + d[0] * x + out[0] * y0, a[1] + d[1] * x + out[1] * y0, zb + z)))
+        ring1.append(bm.verts.new((a[0] + d[0] * x + out[0] * y1, a[1] + d[1] * x + out[1] * y1, zb + z)))
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((ring0[i], ring0[j], ring1[j], ring1[i]))
+    bm.faces.new(ring1)
+    bm.faces.new(list(reversed(ring0)))
+
+
+def build_meander_band(name, poly, zb, h, coll, mat, closed=True, proud=P.BAND_PROUD, unit=P.BAND_UNIT, part_type="rostra"):
+    """Greek-key meander units alternating with square rosette bosses along a plan path (the recessed band face is the
+    path line; the pattern stands `proud` of it, still behind the wall plane). One mesh per path."""
+    bm = bmesh.new()
+    w = 0.06
+    m = 0.04
+    idx = 0
+    for a, b, d, out, length in _path_segments(poly, closed):
+        cnt = int(length // unit)
+        if cnt < 1:
+            continue
+        start = (length - cnt * unit) / 2
+        for j in range(cnt):
+            s = start + j * unit
+            c = add2(a, mul2(d, s))
+            if idx % 2 == 0:
+                # meander hook: top rail, descender, inner return, bottom rail (continuous key line)
+                _lbox(bm, c, d, out, zb, 0.08, 0.08 + w, m + 0.10, h - m, 0.0, proud)                 # left riser
+                _lbox(bm, c, d, out, zb, 0.08, 0.66, h - m - w, h - m, 0.0, proud)                    # top rail
+                _lbox(bm, c, d, out, zb, 0.66 - w, 0.66, m + 0.18, h - m, 0.0, proud)                # right descender
+                _lbox(bm, c, d, out, zb, 0.30, 0.66, m + 0.18, m + 0.18 + w, 0.0, proud)             # inner return
+                _lbox(bm, c, d, out, zb, 0.30, 0.30 + w, m, m + 0.18 + w, 0.0, proud)                # inner riser
+                _lbox(bm, c, d, out, zb, 0.30, 0.92, m, m + w, 0.0, proud)                           # bottom rail
+                _lbox(bm, c, d, out, zb, 0.92 - w, 0.92, m, h - m - 0.10, 0.0, proud)                # end riser
+            else:
+                _lbox(bm, c, d, out, zb, 0.12, 0.88, m, h - m, 0.0, proud * 0.5)                      # boss plate
+                _ldisc(bm, c, d, out, zb, 0.50, h / 2, (h - 2 * m) * 0.42, proud * 0.5 - 0.005, proud, 14)   # rosette disc
+                _ldisc(bm, c, d, out, zb, 0.50, h / 2, 0.05, proud - 0.005, proud + 0.03, 8)                # centre knob
+            idx += 1
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    return L._finish(name, bm, coll, mat, part_type, origin=(0, 0, zb), smooth=False, bevel=False)
+
+
+def build_volutes(name, mid, tang, v, z_top, coll, mat):
+    """Pair of volute scrolls (Ionic-like, ~1.5 m) side by side on a corner-block cap; spirals in the (tang, z) plane."""
+    objs = []
+    objs.append(L.box(name + "_plinth", add2(mid, mul2(v, -0.55)), (1.9, 0.6), z_top - SINK, z_top + 0.22, coll, rot_deg=ang_deg(tang),
+                      mat=mat, part_type="attic"))
+    for sgn, tag in ((-1, "a"), (1, "b")):
+        cz = z_top + 0.22 + 0.62
+        cxy = add2(add2(mid, mul2(tang, sgn * 0.47)), mul2(v, -0.55))
+        path, nrm, bnr = [], [], []
+        turns = 2.4
+        n = 72
+        for i in range(n + 1):
+            t = turns * 2 * math.pi * i / n
+            r = 0.60 - 0.52 * (i / n)
+            ang = math.pi / 2 + sgn * t          # start at the top, spiral inward
+            px, pz = r * math.cos(ang), r * math.sin(ang)
+            path.append((cxy[0] + tang[0] * px, cxy[1] + tang[1] * px, cz + pz))
+            nrm.append((tang[0] * math.cos(ang), tang[1] * math.cos(ang), math.sin(ang)))
+            bnr.append((v[0], v[1], 0.0))
+        prof = [(-0.09, -0.16), (0.09, -0.16), (0.09, 0.16), (-0.09, 0.16), (-0.09, -0.16)]
+        objs.append(L.sweep_open(f"{name}_{tag}", path, nrm, bnr, prof, coll, mat=mat, part_type="attic",
+                                 origin=(cxy[0], cxy[1], cz), bevel=False))
+    return objs
 
 
 def build_kerb_wall(coll):
@@ -764,6 +860,8 @@ def build_site():
         inner = L.offset_polygon(poly, -P.PODIUM_BAND_RECESS)
         L.prism(f"ARCH_site_rostra_band_{k:02d}", inner, band_z0, P.PODIUM_TOP_Z - 0.1 + SINK, C, mat=M_PODIUM, part_type="rostra",
                 ngon=False, bevel=False)
+        # Greek-key meander with rosette bosses standing proud of the recessed band face (catalog #12, QA-01-11)
+        build_meander_band(f"ARCH_site_rostra_meander_{k:02d}", inner, band_z0, P.PODIUM_BAND_H, C, M_PODIUM)
         L.prism(f"ARCH_site_rostra_cap_{k:02d}", poly, P.PODIUM_TOP_Z - 0.1, P.PODIUM_TOP_Z, C, mat=M_PODIUM, part_type="rostra",
                 ngon=False)
         # urn plinths: one in front of the chamfer and one each side beyond the pedestals
@@ -797,12 +895,19 @@ def build_stair(name, fr, side, C):
         prof.append(((i + 1) * tread, z))
     prof.append((n_steps * tread, P.GROUND_Z - 0.3))
     radial = norm2(p_top)
-    origin = (p_top[0] + radial[0] * width / 2, p_top[1] + radial[1] * width / 2, 0.0)
     X = (tdir[0], tdir[1], 0.0)
     N = Vector(X).cross(Vector((0, 0, 1)))
-    if N.dot(Vector((radial[0], radial[1], 0))) < 0:
-        origin = (p_top[0] - radial[0] * width / 2, p_top[1] - radial[1] * width / 2, 0.0)
+    sgn = 1.0 if N.dot(Vector((radial[0], radial[1], 0))) > 0 else -1.0
+    origin = (p_top[0] + sgn * radial[0] * width / 2, p_top[1] + sgn * radial[1] * width / 2, 0.0)
     L.plate(name, prof, [], width, origin, X, (0, 0, 1), C, mat=M_PAVING, part_type="platform")
+    # cheek walls (refs 063/031): 0.35 thick, parapet 0.9 above the treads, following the slope
+    run = n_steps * tread
+    cheek = [(-0.35, P.GROUND_Z - 0.3), (-0.35, P.PODIUM_TOP_Z + 0.9), (run + 0.35, P.GROUND_Z + 0.9), (run + 0.35, P.GROUND_Z - 0.3)]
+    for side_sgn, tag in ((1.0, "a"), (-1.0, "b")):
+        off = width / 2 + 0.175 if side_sgn > 0 else -(width / 2 + 0.175)
+        o = (p_top[0] + sgn * radial[0] * (width / 2 + off), p_top[1] + sgn * radial[1] * (width / 2 + off), 0.0)
+        o = (o[0] + sgn * radial[0] * 0.175, o[1] + sgn * radial[1] * 0.175, 0.0)
+        L.plate(f"{name}_cheek_{tag}", cheek, [], 0.35, o, X, (0, 0, 1), C, mat=M_PODIUM, part_type="rostra")
 
 
 # ============================================================================= colonnade
@@ -983,6 +1088,7 @@ def build_box(name, centre, rot_deg, z0, coll, inward):
     # base band (recessed 0.06) as a slightly smaller prism, then the walls above
     base = [add2(centre, rot2(c, rot_deg)) for c in [(-half + 0.06, -half + 0.06), (half - 0.06, -half + 0.06), (half - 0.06, half - 0.06), (-half + 0.06, half - 0.06)]]
     L.prism(name + "_band", base, z0 - SINK, z0 + band_h + SINK, coll, mat=M_COLON, part_type="box", bevel=False)
+    build_meander_band(name + "_meander", L.ensure_ccw(base), z0 + 0.05, band_h - 0.08, coll, M_COLON, part_type="box")
     full = [add2(centre, rot2(c, rot_deg)) for c in [(-half, -half), (half, -half), (half, half), (-half, half)]]
     L.prism(name + "_plinth", L.offset_polygon(L.ensure_ccw(full), 0.08), z0 - SINK, z0 + 0.12, coll, mat=M_COLON, part_type="box")
     # walls: plates with a panel hole per face, lid on top
@@ -1011,13 +1117,14 @@ def build_box(name, centre, rot_deg, z0, coll, inward):
                 mat=M_COLON, part_type="box", bevel=False)
     lid = [add2(centre, rot2(c, rot_deg)) for c in [(-half + 0.4, -half + 0.4), (half - 0.4, -half + 0.4), (half - 0.4, half - 0.4), (-half + 0.4, half - 0.4)]]
     L.prism(name + "_lid", lid, zw1 - 0.5, zw1 + 0.05, coll, mat=M_COLON, part_type="box", bevel=False)
-    # maidens at the four corners, backs outward (diagonal)
+    # maidens at the four corners: feet at the box BASE level (top of the entablature), standing 0.32 m outward from
+    # the box's vertical corner edge on the corner diagonal, backs outward; the rim is BOX_H above their feet
     for cx, cy in [(-1, -1), (1, -1), (1, 1), (-1, 1)]:
         diag = norm2(rot2((cx, cy), rot_deg))
-        p = add2(centre, mul2(diag, (half - 0.55) * math.sqrt(2)))
-        SOCK.add("maiden", (p[0], p[1], zw1 + 0.05), diag, 4.5, size=0.5)
-        L.box(f"PH_{name.split('ARCH_')[-1]}_maiden_{cx + 1}{cy + 1}", p, (0.9, 0.7), zw1 + 0.05, zw1 + 4.5, C_PH, rot_deg=ang_deg(diag) + 90,
-              mat=M_COLON, part_type="box", bevel=False)
+        p = add2(centre, mul2(diag, half * math.sqrt(2) + P.MAIDEN_OUT))
+        SOCK.add("maiden", (p[0], p[1], z0), diag, 4.4, extra={"rim_height": P.BOX_H, "box_corner_y": -P.MAIDEN_OUT}, size=0.5)
+        L.box(f"PH_{name.split('ARCH_')[-1]}_maiden_{cx + 1}{cy + 1}", add2(p, mul2(diag, -0.5)), (0.9, 0.7), z0, z0 + 4.4, C_PH,
+              rot_deg=ang_deg(diag) + 90, mat=M_COLON, part_type="box", bevel=False)
 
 
 # ============================================================================= build everything
@@ -1031,11 +1138,7 @@ print(f"[arch] colonnades done {time.time() - T0:.1f}s")
 
 # LOD default: LOD1 in the viewport AND in renders (LOD0/LOD2 are hide_render=True in the saved file so that a naive
 # render never stacks three shafts; the lead's common.set_lod_visibility switches hide_viewport, flip hide_render alike)
-common.set_lod_visibility(1)
-for o in list(ARCH.all_objects):   # materialize: all_objects is recomputed when objects change, truncating iteration
-    if "_LOD" in o.name:
-        lod = o.name.rsplit("_LOD", 1)[1][:1]
-        o.hide_render = lod != "1"
+common.set_lod_visibility(1)   # lead's convention since Phase 3: viewport LOD1, render LOD0 (common.set_lod)
 
 # ---- stats
 stats = {"sockets": dict(SOCK.counts), "wings": wing_stats}
@@ -1053,10 +1156,8 @@ if SAVE:
 
 # ============================================================================= preview rig (not saved)
 if PREVIEW:
-    if "--lod0" in ARGS:   # preview the hi LOD (finals configuration) instead of the viewport default
-        for o in list(ARCH.all_objects):
-            if "_LOD" in o.name:
-                o.hide_render = o.name.rsplit("_LOD", 1)[1][:1] != "0"
+    if "--lod1" in ARGS:   # preview the viewport LOD instead of the render default (LOD0)
+        common.set_lod(viewport=1, render=1)
     rig = common.rebuild_collection("PREVIEW_RIG")
     site = common.load_site_local()
     sun = bpy.data.lights.new("PREVIEW_sun", "SUN")
