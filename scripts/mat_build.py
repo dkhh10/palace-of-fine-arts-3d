@@ -152,6 +152,7 @@ CONCRETE_INPUTS = [
     ("Edge Wear", "FACTOR", 0.6, 0, 1), ("Edge Radius", "FLOAT", 0.10, 0.001, 0.5),
     ("Recess Dirt", "FACTOR", 0.55, 0, 1), ("Recess Distance", "FLOAT", 0.4, 0.02, 5), ("Extra Dirt", "FACTOR", 0.0, 0, 1),
     ("Cavity", "FACTOR", 0.0, 0, 1),
+    ("Vertex Cavity", "FACTOR", 0.0, 0, 1), ("Vertex Dust", "FACTOR", 0.0, 0, 1),
     ("Underside Dirt", "FACTOR", 0.0, 0, 1), ("Rib Grime", "FACTOR", 0.0, 0, 1),
     ("Roughness", "FLOAT", 0.78, 0, 1), ("Roughness Variation", "FLOAT", 0.12, 0, 1),
     ("Bump", "FLOAT", 0.35, 0, 3),
@@ -249,9 +250,26 @@ def build_group_concrete():
     # which is where the olive cast on the shaded piers and arch soffits came from. Rain grime on this concrete is a
     # warm dark grey: R > G > B, and it now rides a narrow high-contrast mask so it reads as drips, not as a wash.
     c = t.mix(smask, c, t.vmul(c, (0.46, 0.405, 0.325)))
-    # 10. recess dirt (AO) + baked/extra dirt + underside soot
+    # 9b. ORN's per-vertex `cavity` attribute (contract in docs/ornament_notes.md, "Cavity attribute for materials"):
+    # POINT / FLOAT_COLOR, 1.0 = open surface, 0.0 = fully enclosed, carried by LOD0 AND LOD1 of the capitals,
+    # ceiling rosettes and keystones -- the only recess channel LOD0 has, since LOD0 carries no UVs and LOD0 is the
+    # render LOD. Measured distribution (10 rays, quantised to 0.1): capitals p25 0.30 / p50 0.60, keystones and
+    # rosettes p25 0.60 / p50 0.90.
+    # A shader CANNOT tell "attribute missing" from "attribute = 0": measured in both Cycles and Eevee, a missing
+    # geometry attribute reads Fac 0, Color 0 and Alpha *1.0*, so Alpha is not a presence flag. 92 of the 106 ORN
+    # meshes (maidens, urns, attic panels, figures, mouldings) carry no `cavity` and share this same material, so a
+    # naive (1 - cavity) would paint every one of them uniformly black. `vpres` is therefore a ramp that is exactly
+    # 0 at cavity = 0.0: the term vanishes on meshes without the attribute, and on meshes with it the cost is only
+    # the deepest ~5 % of vertices (p05 = 0.10), whose immediate neighbours still get the full effect.
+    vattr = t.new("ShaderNodeAttribute", attribute_type="GEOMETRY", attribute_name="cavity")
+    vraw = vattr.outputs["Fac"]
+    vpres = t.maprange(vraw, 0.0, 0.05, 0.0, 1.0)
+    vdeep = t.maprange(vraw, 0.62, 0.08, 0.0, 1.0)
+    vcav = t.mul(vpres, vdeep)
+    # 10. recess dirt (AO) + baked/extra dirt + underside soot + vertex-cavity dust
     ao = t.ao(distance=I["Recess Distance"], samples=8, normal=N)
     dirt = t.clamp01(t.add(t.mul(t.mul(t.sub(1.0, ao), I["Recess Dirt"]), wvar), I["Extra Dirt"]))
+    dirt = t.clamp01(t.add(dirt, t.mul(t.mul(vcav, I["Vertex Dust"]), wvar)))
     under = t.mul(t.maprange(nz, -0.15, -0.8, 0.0, 1.0), I["Underside Dirt"])
     # near-vertical faces (coffer ribs seen from below): darker than the panels they frame
     under = t.clamp01(t.add(under, t.mul(t.maprange(t.absval(nz), 0.60, 0.16, 0.0, 1.0), I["Rib Grime"])))
@@ -260,7 +278,10 @@ def build_group_concrete():
     # 10b. cavity darkening (short AO, value only) -- makes leaf tiers / undercuts read at 100 m (QA-03-4, -15)
     ao_c = t.ao(distance=t.mul(I["Recess Distance"], 0.34), samples=8, normal=N)
     cav = t.mul(t.mul(t.sub(1.0, ao_c), t.sub(1.0, ao_c)), I["Cavity"])
-    c = t.vscale(c, t.sub(1.0, t.mul(cav, 0.55)))
+    # the vertex cavity resolves slots the 0.14 m AO probe cannot (leaf-tier undercuts are 20-60 mm deep), so the two
+    # add rather than replace each other; clamped so the deepest points stop at 78 % darkening, not black.
+    cdark = t.math("MINIMUM", t.add(t.mul(cav, 0.55), t.mul(vcav, t.mul(I["Vertex Cavity"], 0.55))), 0.78)
+    c = t.vscale(c, t.sub(1.0, cdark))
     # 11. edge wear (lighter, cleaner, smoother on convex arrises)
     em = t.mul(t.group(G["edge"], Radius=I["Edge Radius"], Normal=N).outputs["Mask"], I["Edge Wear"])
     c = t.mix(em, c, t.hsv(c, sat=0.85, val=1.22))
@@ -436,14 +457,24 @@ def concrete_material(name, tex_set, seed, params, specular=0.30, column=None, b
     geo = t.geometry()
     N = geo.outputs["Normal"]
     if baked:
-        # hooks for ORN's baked maps (see docs/materials_notes.md): mat_lib.wire_baked_maps() fills these.
-        nm_img = t.new("ShaderNodeTexImage"); nm_img.name = nm_img.label = "BAKED_NORMAL"
-        ao_img = t.new("ShaderNodeTexImage"); ao_img.name = ao_img.label = "BAKED_AO"
-        w = t.value(0.0, "BAKED_WEIGHT")
+        # Hooks for ORN's baked LOD1 maps. build_master.orn_material_for() copies this material per asset and loads
+        # assets/textures/orn/ORN_<asset>_nrm.png / _ao.png (Non-Color) into the nodes named ORN_NORMAL / ORN_AO.
+        # The nodes are NOT left empty: an Image Texture node with no image returns Alpha 1.0 in both engines and
+        # Color (1,0,1) in Cycles / (0,0,0) in Eevee (measured), i.e. neither the alpha nor the colour can be used to
+        # detect "no bake plugged", and both fallbacks are wrong (a pink normal, or full AO dirt in Eevee). Each node
+        # therefore ships with a 4x4 generated NEUTRAL image -- flat tangent normal and pure white AO -- so the
+        # library material and every LOD0 instance behave exactly as if the hooks were not there, and build_master
+        # only has to swap the image datablock.
+        nm_img = t.new("ShaderNodeTexImage"); nm_img.name = nm_img.label = "ORN_NORMAL"
+        nm_img.image = ML.neutral_image("ORN_NEUTRAL_normal", (0.5, 0.5, 1.0, 1.0))
+        ao_img = t.new("ShaderNodeTexImage"); ao_img.name = ao_img.label = "ORN_AO"
+        ao_img.image = ML.neutral_image("ORN_NEUTRAL_ao", (1.0, 1.0, 1.0, 1.0))
+        w = t.value(1.0, "ORN_MAP_WEIGHT")
         nmap = t.normal_map(nm_img.outputs["Color"], strength=1.0)
         N = t.mixv(w, geo.outputs["Normal"], nmap)
         extra = dict(extra or {})
-        extra["Extra Dirt"] = t.mul(w, t.mul(t.sub(1.0, ao_img.outputs["Color"]), 0.6))
+        ao_r = t.sepxyz(ao_img.outputs["Color"])[0]
+        extra["Extra Dirt"] = t.mul(w, t.mul(t.sub(1.0, ao_r), 0.6))
     kw = {"Detail Color": tex["diff"], "Detail Rough": tex["rough"], "Detail Height": tex["disp"],
           "Detail Mean": ML.TEXTURE_SETS[tex_set]["mean_lum"], "Seed": seed, "Normal": N}
     kw.update(params)
@@ -519,6 +550,7 @@ def build_concrete_family():
         "Detail Strength": 0.4, "Streaks": 0.55, "Streak Scale": 6.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.6,
         "Algae": 0.0,
         "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.055, "Recess Dirt": 0.85, "Recess Distance": 0.42, "Cavity": 1.0,
+        "Vertex Cavity": 0.85, "Vertex Dust": 0.55,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
         "Instance Variation": 1.7}, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
@@ -746,17 +778,75 @@ def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=
 
 def build_extra_env():
     # Presidio ridge / tree masses at 300+ m: dark crown-clumped green
+    # Round 5: on ENV's new 250-450 m canopy this read bright and yellow in direct sun (cam06, env_r4_sheet). A real
+    # canopy is not a Lambertian shell of leaf albedo: most of what the eye sees is self-shadowed gaps between and
+    # inside the crowns. Ref 105's tree masses measure lum 120-152 against a sunlit lawn at 142 and sunlit stucco at
+    # 182, at saturation 0.04-0.13 and a hue that is never below 50 deg -- i.e. NOT brighter than grass, and barely
+    # coloured. Three changes: albedo down ~45 % and shifted cool (B/G 0.43 -> 0.63, so warm sun cannot drive it
+    # yellow), an explicit gap-shadow mask that puts ~40 % of the surface at 0.42x, and specular 0.15 -> 0.06.
     m = ML.new_material("MAT_backdrop_forest")
     t = Tree(m.node_tree)
     W = t.geometry().outputs["Position"]
     N = t.geometry().outputs["Normal"]
     crowns = t.voronoi(W, 1.0 / 9.0, feature="SMOOTH_F1", randomness=1.0)
     cr = t.sepxyz(crowns.outputs["Color"])[0]
-    c = t.mix(cr, C(0.035, 0.07, 0.03), C(0.07, 0.11, 0.045))
-    haze = t.maprange(t.noise(W, 0.02, detail=2), 0.35, 0.65, 0.85, 1.15)
+    c = t.mix(cr, C(0.0175, 0.0295, 0.0185), C(0.038, 0.055, 0.0345))
+    # gaps: the shaded flanks and the holes between crowns. Two scales (whole crowns, 3 m branch clumps) so the mass
+    # never reads as one lit plane, plus a downward bias -- the underside of a canopy is always the dark part.
+    gap = t.maximum(t.maprange(crowns.outputs["Distance"], 0.55, 0.10, 0.0, 1.0),
+                    t.maprange(t.noise(W, 0.33, detail=3, rough=0.65), 0.52, 0.30, 0.0, 1.0))
+    gap = t.clamp01(t.add(t.mul(gap, 0.8), t.mul(t.maprange(t.sepxyz(N)[2], 0.35, -0.2, 0.0, 1.0), 0.35)))
+    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.58)))
+    haze = t.maprange(t.noise(W, 0.02, detail=2), 0.35, 0.65, 0.88, 1.12)
     c = t.vscale(c, haze)
     normal = t.bump(t.add(crowns.outputs["Distance"], t.mul(t.noise(W, 0.8, detail=3), 0.4)), strength=0.7, distance=0.6, normal=N)
-    t.output(surface=t.principled(**{"Base Color": c, "Roughness": 0.9, "Specular IOR Level": 0.15, "Normal": normal}).outputs[0])
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": 0.92, "Specular IOR Level": 0.06, "Normal": normal}).outputs[0])
+    ML.finish(m)
+    # far-field street asphalt (ENV's Marina / Presidio city field, env_lib placeholder was 0.052 grey / rough 0.72).
+    # Cheap by design: no textures, everything from world-space noise, per-object value spread from PFA_instance
+    # (Object Info Random hashed with ENV's `instance_seed` custom property).
+    m = ML.new_material("MAT_backdrop_asphalt")
+    t = Tree(m.node_tree)
+    inst = t.group(G["instance"], Seed=31.0)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    P = t.vadd(W, inst.outputs["Offset"])
+    lanes = t.maprange(t.noise(P, 0.06, detail=3, rough=0.6), 0.35, 0.70, 0.0, 1.0)    # sun-bleached wheel tracks
+    patch = t.maprange(t.noise(P, 0.45, detail=2), 0.56, 0.63, 0.0, 1.0)               # darker resurfacing patches
+    grit = t.maprange(t.noise(P, 9.0, detail=3), 0.35, 0.65, 0.92, 1.08)
+    c = t.mix(lanes, C(0.030, 0.029, 0.029), C(0.078, 0.076, 0.074))
+    c = t.mix(t.mul(patch, 0.75), c, C(0.021, 0.020, 0.021))
+    c = t.vscale(c, t.mul(grit, t.madd(t.sub(inst.outputs["R3"], 0.5), 0.30, 1.0)))    # +-15 % per object
+    rough = t.add(0.72, t.mul(t.sub(t.noise(P, 3.0, detail=2), 0.5), 0.18))
+    normal = t.bump(t.noise(P, 14.0, detail=3), strength=0.25, distance=0.006, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.35, "Normal": normal}).outputs[0])
+    ML.finish(m)
+    # far-field mission-tile roofs (env_lib placeholder was 0.185/0.072/0.042 / rough 0.80). Courses come off world Z
+    # so they stay parallel to the eaves whatever way a building faces; pans off world X+Y. Both are sub-pixel past
+    # 250 m -- they exist so the near ones in cam 06 are not flat -- and the per-building hue/value spread is what
+    # actually reads: a tile roof field is dozens of clay lots, never one colour.
+    m = ML.new_material("MAT_backdrop_roof_tile")
+    t = Tree(m.node_tree)
+    inst = t.group(G["instance"], Seed=32.0)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    P = t.vadd(W, inst.outputs["Offset"])
+    wx, wy, wz = t.sepxyz(W)
+    course = t.smoothstep(t.absval(t.sub(t.fract(t.mul(wz, 3.2)), 0.5)), 0.30, 0.5)    # ~0.31 m courses
+    pan = t.smoothstep(t.absval(t.sub(t.fract(t.mul(t.add(wx, wy), 3.6)), 0.5)), 0.26, 0.5)
+    mottle = t.maprange(t.noise(P, 1.4, detail=3, rough=0.6), 0.30, 0.70, 0.0, 1.0)
+    c = t.mix(mottle, C(0.128, 0.048, 0.028), C(0.232, 0.100, 0.058))
+    c = t.mix(t.mul(course, 0.55), c, t.scale_color(c, 0.55))                          # shadow under each course
+    c = t.mix(t.mul(pan, 0.30), c, t.scale_color(c, 1.22))                             # sunlit pan crowns
+    c = t.hsv(c, hue=t.madd(t.sub(inst.outputs["R2"], 0.5), 0.033, 0.5),               # +-6 deg per building
+              val=t.madd(t.sub(inst.outputs["R3"], 0.5), 0.34, 1.0))                   # +-17 %
+    grey = t.maprange(inst.outputs["R4"], 0.82, 0.86, 0.0, 1.0)                        # ~15 % are grey composition
+    c = t.mix(grey, c, C(0.058, 0.055, 0.052))
+    moss = t.mul(t.maprange(t.noise(P, 2.2, detail=3, rough=0.6), 0.62, 0.78, 0.0, 1.0), 0.6)
+    c = t.mix(moss, c, C(0.045, 0.050, 0.030))
+    rough = t.add(0.80, t.mul(t.sub(t.noise(P, 4.0, detail=2), 0.5), 0.14))
+    normal = t.bump(t.add(t.mul(pan, 0.6), t.mul(course, 0.3)), strength=0.4, distance=0.02, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.30, "Normal": normal}).outputs[0])
     ML.finish(m)
     # distant hill: dry grass and scrub
     m = ML.new_material("MAT_backdrop_hill")
@@ -1208,6 +1298,12 @@ for i in range(2):
         b = ceil.modifiers.new(f"cut{i}{j}", "BOOLEAN"); b.operation = "DIFFERENCE"; b.object = c
 box("MAT_test_drumband", (2.5, 0.4, 0.6), (-10.5, -0.2, GZ + 3.4), "MAT_drum_band", bevel=0.02)
 box("MAT_test_backdrop", (3.0, 0.4, 2.5), (-16.5, -0.2, GZ + 1.25), "MAT_backdrop_building")
+# far-field city fill (round 5): three tile roofs so the per-object hue spread is visible, and a strip of asphalt
+for i in range(3):
+    r = box(f"MAT_test_roof_tile_{i}", (1.5, 1.5, 0.9), (-13.6 + i * 1.7, 3.6, GZ + 0.45), "MAT_backdrop_roof_tile", bevel=0.02)
+    r.rotation_euler = (0, 0, math.radians(17 * i))
+    r["instance_seed"] = 0.13 + 0.31 * i
+plane("MAT_test_asphalt", (5.0, 3.0), (-12.0, 6.5, GZ + 0.01), "MAT_backdrop_asphalt")
 # exhibition-hall details for ENV: roof membrane (tilted up so the misc camera sees it), skylight glazing, green door
 roofp = box("MAT_test_backdrop_roof", (2.4, 1.6, 0.15), (-19.6, 0.6, GZ + 2.2), "MAT_backdrop_roof", bevel=0)
 roofp.rotation_euler = (math.radians(-55), 0, 0)
