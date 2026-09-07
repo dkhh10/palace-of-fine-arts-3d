@@ -39,23 +39,84 @@ def place(obj, rot_z_deg=0.0, loc=(0, 0, 0), tilt_x_deg=0.0, scale=1.0):
 # =============================================================================== CAPITALS
 # Proportions in units of H (capital height) for z and R (shaft-top radius) for r. Measured against the crops
 # corinthian_capital_1-3 (rotunda), inner_capital_1-2, colonnade_capital_1-2, pylon_capital_1.
-BELL_PROFILE = [(0.97, 0.0), (1.05, 0.012), (1.085, 0.035), (1.05, 0.058), (1.00, 0.075), (0.99, 0.12), (0.99, 0.30),
-                (1.02, 0.50), (1.08, 0.66), (1.16, 0.78), (1.24, 0.86), (1.30, 0.89)]
+#
+# Round 4 (QA-03-15). The round-3 bell flared to 1.30 R while the leaves' bodies sat at ~1.00 R, so every leaf was
+# BURIED inside the bell and only the last third of its tip broke the surface: the capital rendered as a smooth vase
+# with faint embossed outlines ("low-contrast blob"). The kalathos is now a slim vase that necks in to 0.865 R and
+# only flares to 1.10 R under the volutes; the leaves are lofted along an explicit spine that hugs that surface and
+# then curls its tip outward AND DOWN through a 105-120 deg arc, so each tip has a genuine sky-lit-only undercut.
+BELL_PROFILE = [(1.00, 0.000), (1.06, 0.020), (1.055, 0.040), (0.995, 0.062), (0.925, 0.090), (0.885, 0.140),
+                (0.868, 0.230), (0.865, 0.340), (0.880, 0.450), (0.912, 0.560), (0.960, 0.660), (1.040, 0.750),
+                (1.100, 0.820), (1.145, 0.870), (1.155, 0.890)]
 
+# Where the bell is scalloped: radius dips between the leaves of each row so the slot between two neighbouring
+# leaves bottoms out in a real groove instead of on a smooth cylinder.
 CAPITAL_PRESETS = {
-    # rotunda: h 2.6, shaft top D 2.1, abacus ~3.0 across; figured centre
-    "capital_rotunda": dict(H=2.6, R=1.05, abacus_across=3.0, figure=True, lower_len=0.42, upper_len=0.50,
-                            lower_w=1.12, upper_w=1.15, ribs=9, curl=0.32, droop=0.18, volute_r=0.165, helix_r=0.08,
-                            lower_z=0.075, upper_z=0.34, rows=2, voxel=0.014, leaf_tilt=(9.0, 11.0)),
+    # rotunda: h 2.6, shaft top D 2.1, abacus ~3.0 across corners; figured centre
+    "capital_rotunda": dict(H=2.6, R=1.05, abacus_across=3.0, figure=True, lower_len=0.44, upper_len=0.37,
+                            lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.112, helix_r=0.055,
+                            lower_z=0.060, upper_z=0.440, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
+                            proud=(0.140, 0.130), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                            scallop=0.078, thickness=0.062, volute_z=0.805, volute_er=1.380, helix_er=1.245,
+                            helix_z=0.775),
     # inner tan columns: h 1.8 on a ~1.6 m shaft, same design, fleuron centre
-    "capital_inner": dict(H=1.8, R=0.80, abacus_across=2.15, figure=False, lower_len=0.42, upper_len=0.50,
-                          lower_w=1.12, upper_w=1.15, ribs=9, curl=0.32, droop=0.18, volute_r=0.165, helix_r=0.085,
-                          lower_z=0.075, upper_z=0.34, rows=2, voxel=0.010, leaf_tilt=(9.0, 11.0)),
+    "capital_inner": dict(H=1.8, R=0.80, abacus_across=2.15, figure=False, lower_len=0.44, upper_len=0.37,
+                          lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.115, helix_r=0.058,
+                          lower_z=0.060, upper_z=0.440, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
+                          proud=(0.140, 0.130), arc_deg=(99.0, 89.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                          scallop=0.078, thickness=0.064, volute_z=0.805, volute_er=1.380, helix_er=1.245,
+                          helix_z=0.775),
     # colonnade: h 1.8 on a 1.7 m shaft: squatter, big shell leaves + big scrolls, small lower leaves, fleuron
-    "capital_colonnade": dict(H=1.8, R=0.85, abacus_across=2.3, figure=False, lower_len=0.30, upper_len=0.54,
-                              lower_w=1.0, upper_w=1.18, ribs=9, curl=0.30, droop=0.16, volute_r=0.18, helix_r=0.085,
-                              lower_z=0.075, upper_z=0.24, rows=2, voxel=0.010, leaf_tilt=(8.0, 10.0)),
+    "capital_colonnade": dict(H=1.8, R=0.85, abacus_across=2.3, figure=False, lower_len=0.36, upper_len=0.40,
+                              lower_w=1.20, upper_w=1.34, ribs=7, curl=0.30, droop=0.16, volute_r=0.122, helix_r=0.058,
+                              lower_z=0.058, upper_z=0.420, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
+                              proud=(0.135, 0.135), arc_deg=(98.0, 94.0), arc_frac=(0.28, 0.27), mid_dip=0.075,
+                              scallop=0.076, thickness=0.066, volute_z=0.800, volute_er=1.390, helix_er=1.250,
+                              helix_z=0.770),
 }
+
+
+def bell_radius(P, z_m):
+    """Kalathos radius (metres) at height z_m, interpolated from BELL_PROFILE (r in R, z in H)."""
+    R, H = P["R"], P["H"]
+    t = max(0.0, min(z_m / H, BELL_PROFILE[-1][1]))
+    prev = BELL_PROFILE[0]
+    for r, z in BELL_PROFILE:
+        if z >= t:
+            if z - prev[1] < 1e-9:
+                return r * R
+            f = (t - prev[1]) / (z - prev[1])
+            return (prev[0] + (r - prev[0]) * f) * R
+        prev = (r, z)
+    return BELL_PROFILE[-1][0] * R
+
+
+def leaf_spine(P, base_z, length, proud, arc_deg, arc_frac, lean=0.060, n=30):
+    """Centreline for one acanthus leaf, in the leaf-local (y outward, z up) frame with the base at (0, 0).
+    Body: follows the bell surface with a growing outward offset (so the whole leaf stands proud, not just the tip).
+    Tip: a circular arc of `arc_deg` over the last `arc_frac` of the length, bending outward and then downward -
+    the down-turned underside is what stays unlit under a 7.4 deg sun and reads as the dark recess QA-03-15 asks for."""
+    r0 = bell_radius(P, base_z)
+    body_frac = 1.0 - arc_frac
+    nb = max(6, int(n * 0.62))
+    pts = []
+    for i in range(nb + 1):
+        u = i / nb
+        z = length * body_frac * u
+        y = (bell_radius(P, base_z + z) - r0) + proud * (u ** 0.85) + lean * length * u * u
+        pts.append((y, z))
+    (y1, z1), (y0, z0) = pts[-1], pts[-2]
+    th0 = math.atan2(y1 - y0, max(z1 - z0, 1e-6))
+    La = length * arc_frac
+    na = max(6, n - nb)
+    A = math.radians(arc_deg)
+    y, z = y1, z1
+    for k in range(1, na + 1):
+        th = th0 + A * (k / na)
+        y += math.sin(th) * La / na
+        z += math.cos(th) * La / na
+        pts.append((y, z))
+    return pts
 
 
 def abacus_outline(R, across, sag=0.16, chamfer=0.12, per_side=14):
@@ -93,24 +154,27 @@ def build_abacus(name, P, coll):
     return ab
 
 
-def build_leaf_ring(P, count, offset_deg, base_z, length_H, width_scale, rng, coll, tag, row):
+def build_leaf_ring(P, count, offset_deg, base_zH, length_H, width_scale, rng, coll, tag, row):
+    """One ring of `count` acanthus leaves standing proud of the kalathos, tips curled outward and down."""
     R, H = P["R"], P["H"]
-    r_bell = 0.985 * R if row == 0 else 1.0 * R
+    base_z = base_zH * H
+    r0 = bell_radius(P, base_z)
     leaves = []
-    circ = TAU * r_bell
-    width = circ / count * width_scale
+    width = (TAU * r0) / count * width_scale     # < pitch, so a real slot is left between neighbours
     for k in range(count):
-        phi = offset_deg + k * (360.0 / count) + rng.uniform(-2.0, 2.0)
-        ln = length_H * H * rng.uniform(0.95, 1.05)
-        curl_row = P["curl"] * (1.0 if row == 0 else 1.5)
-        droop_row = P["droop"] * (1.0 if row == 0 else 1.4)
-        leaf = L.acanthus_leaf(f"leaf_{tag}_{k}", length=ln, width=width, curl=curl_row * rng.uniform(0.9, 1.1),
-                               droop=droop_row * rng.uniform(0.85, 1.15), ribs=P["ribs"], rib_amp=0.018 * R,
-                               bulge=0.09 * R, thickness=0.065 * R, lobes=4, lobe_depth=0.12, nu=20, nv=26, coll=coll,
-                               seed=rng.randint(0, 9999), base_width=0.30)
+        phi = offset_deg + k * (360.0 / count) + rng.uniform(-1.6, 1.6)
+        ln = length_H * H * rng.uniform(0.96, 1.04)
+        sp = leaf_spine(P, base_z, ln,
+                        proud=P["proud"][row] * R * rng.uniform(0.88, 1.12),
+                        arc_deg=P["arc_deg"][row] * rng.uniform(0.94, 1.07),
+                        arc_frac=P["arc_frac"][row])
+        leaf = L.acanthus_leaf(f"leaf_{tag}_{k}", length=ln, width=width * rng.uniform(0.96, 1.04), spine=sp,
+                               ribs=P["ribs"], rib_amp=0.032 * R, bulge=0.032 * R, mid_dip=P["mid_dip"] * R,
+                               thickness=P["thickness"] * R, lobes=5, lobe_depth=0.26, nu=30, nv=len(sp) - 1,
+                               coll=coll, seed=rng.randint(0, 9999), base_width=0.55)
         tilt = -P["leaf_tilt"][row] + rng.uniform(-1.5, 1.5)
-        place(leaf, rot_z_deg=phi - 90.0, loc=(r_bell * 0.96 * math.cos(math.radians(phi)),
-                                                r_bell * 0.96 * math.sin(math.radians(phi)), base_z * H), tilt_x_deg=tilt)
+        place(leaf, rot_z_deg=phi - 90.0, loc=(r0 * 0.965 * math.cos(math.radians(phi)),
+                                               r0 * 0.965 * math.sin(math.radians(phi)), base_z), tilt_x_deg=tilt)
         leaves.append(leaf)
     return leaves
 
@@ -162,8 +226,10 @@ def build_fleuron(P, phi_deg, coll):
 # Per-variant silhouette styles (QA-01-18: variants must differ at hero distance, not just in weathering seed)
 CAPITAL_STYLE = {
     1: {},
-    2: {"lower_w": 1.08, "curl": 1.3, "droop": 0.85, "volute_r": 1.15, "upper_len": 0.96, "clip_leaf": 3},
-    3: {"upper_len": 1.08, "droop": 1.45, "curl": 0.9, "volute_r": 0.88, "lower_w": 0.94, "tilt_add": 4.0, "helix_r": 1.2},
+    2: {"lower_w": 1.06, "volute_r": 1.15, "upper_len": 0.95, "clip_leaf": 3,
+        "arc_mul": (1.08, 0.92), "proud_mul": (1.20, 0.85)},
+    3: {"upper_len": 1.07, "volute_r": 0.88, "lower_w": 0.94, "tilt_add": 4.0, "helix_r": 1.2,
+        "arc_mul": (0.90, 1.10), "proud_mul": (0.85, 1.25)},
 }
 
 
@@ -173,6 +239,9 @@ def build_capital(typ, variant, coll, bake=True):
     for k, v in style.items():
         if k in P and isinstance(P[k], (int, float)):
             P[k] = P[k] * v
+    for key, mul in (("arc_deg", "arc_mul"), ("proud", "proud_mul")):
+        if mul in style:
+            P[key] = tuple(a * b for a, b in zip(P[key], style[mul]))
     if "tilt_add" in style:
         P["leaf_tilt"] = (P["leaf_tilt"][0] + style["tilt_add"], P["leaf_tilt"][1] + style["tilt_add"] * 0.5)
     P["clip_leaf"] = style.get("clip_leaf", -1)
@@ -180,7 +249,17 @@ def build_capital(typ, variant, coll, bake=True):
     rng = random.Random(7919 * variant + len(typ))
     work = L.work_collection()
     parts = []
-    bell = L.revolve("bell", L.resample_profile([(r * R, z * H) for r, z in BELL_PROFILE], 36), segments=64, coll=work)
+    # Kalathos, scalloped so the slot between two neighbouring leaves bottoms out in a groove. cos(16*th) peaks at
+    # every 22.5 deg, which is exactly where a leaf sits (lower row 0 + k*45, upper row 22.5 + k*45), so the sign must
+    # be MINUS: full radius under each leaf (a firm seat for the union), the dip 11.25 deg away, in the gap.
+    sc = P["scallop"]
+
+    def bell_scallop(th, t):
+        band = math.sin(math.pi * min(max((t - 0.03) / 0.80, 0.0), 1.0)) ** 0.6
+        return 1.0 - sc * band * (0.55 - 0.45 * math.cos(16.0 * th))
+
+    bell = L.revolve("bell", L.resample_profile([(r * R, z * H) for r, z in BELL_PROFILE], 44), segments=96,
+                     coll=work, scale_fn=bell_scallop)
     parts.append(bell)
     parts.append(build_abacus("abacus", P, work))
     # leaves
@@ -194,8 +273,8 @@ def build_capital(typ, variant, coll, bake=True):
     parts += lower
     parts += build_leaf_ring(P, 8, 22.5, P["upper_z"], P["upper_len"], P["upper_w"], rng, work, "up", 1)
     # volutes: two per corner (one facing each side), stems rising from the gaps between the upper leaves
-    eye_r = 1.30 * R
-    eye_z = 0.76 * H
+    eye_r = P["volute_er"] * R
+    eye_z = P["volute_z"] * H
     for face in (0, 90, 180, 270):
         for sign in (+1, -1):
             phi_c = face + sign * 45.0
@@ -203,18 +282,23 @@ def build_capital(typ, variant, coll, bake=True):
             eye = Vector((eye_r * math.cos(math.radians(phi_c)), eye_r * math.sin(math.radians(phi_c)), eye_z))
             eye -= Vector((math.cos(math.radians(phi_c)), math.sin(math.radians(phi_c)), 0)) * 0.03 * R
             # local frame: X = radial at n_dir, Y = tangential (increasing phi)
-            v = L.volute(f"vol_{face}_{sign}", eye=(0, 0, 0), radius=P["volute_r"] * H, turns=1.8,
-                         band=(0.30 * R, 0.14 * R), stem_base=(-0.26 * R, -sign * 0.22 * R, -0.30 * H),
-                         stem_ctrl=(-0.14 * R, -sign * 0.10 * R, -0.12 * H), coll=work, direction=sign, taper=0.45)
+            v = L.volute(f"vol_{face}_{sign}", eye=(0, 0, 0), radius=P["volute_r"] * H, turns=2.25,
+                         band=(0.24 * R, 0.105 * R), stem_base=(-0.24 * R, -sign * 0.20 * R, -0.26 * H),
+                         stem_ctrl=(-0.13 * R, -sign * 0.09 * R, -0.10 * H), coll=work, direction=sign, taper=0.55)
             place(v, rot_z_deg=n_dir, loc=eye)
             parts.append(v)
+            # eye button: closes the spiral so the volute reads as a rolled scroll, not a length of pipe
+            btn = L.sphere(f"volb_{face}_{sign}", 0.075 * R, work, scale=(0.85, 1.0, 1.0))
+            place(btn, rot_z_deg=n_dir, loc=eye)
+            parts.append(btn)
         # inner helices flanking the face centre, rolling toward the centre
         for sign in (+1, -1):
             phi_h = face + sign * 16.0
-            eye = Vector((1.31 * R * math.cos(math.radians(phi_h)), 1.31 * R * math.sin(math.radians(phi_h)), 0.735 * H))
-            v = L.volute(f"hel_{face}_{sign}", eye=(0, 0, 0), radius=P["helix_r"] * H, turns=1.6,
-                         band=(0.18 * R, 0.10 * R), stem_base=(-0.22 * R, sign * 0.18 * R, -0.26 * H),
-                         stem_ctrl=(-0.11 * R, sign * 0.07 * R, -0.10 * H), coll=work, direction=-sign, taper=0.4)
+            eye = Vector((P["helix_er"] * R * math.cos(math.radians(phi_h)),
+                          P["helix_er"] * R * math.sin(math.radians(phi_h)), P["helix_z"] * H))
+            v = L.volute(f"hel_{face}_{sign}", eye=(0, 0, 0), radius=P["helix_r"] * H, turns=1.9,
+                         band=(0.15 * R, 0.075 * R), stem_base=(-0.20 * R, sign * 0.16 * R, -0.24 * H),
+                         stem_ctrl=(-0.10 * R, sign * 0.06 * R, -0.09 * H), coll=work, direction=-sign, taper=0.5)
             place(v, rot_z_deg=face + sign * 8.0, loc=eye)
             parts.append(v)
         if P["figure"]:
@@ -224,16 +308,17 @@ def build_capital(typ, variant, coll, bake=True):
     # union into one cast-concrete surface, soften, weather
     t = time.time()
     voxel = P["voxel"] * (1.6 if FAST else 1.0)
-    hi = L.union_blob(parts, f"{typ}_v{variant}", voxel=voxel, smooth=2, smooth_factor=0.5, coll=work, adaptivity=0.4)
+    # smooth=1 at 0.30 (was 2 at 0.50): the round-3 pass rounded the leaf edges away with the undercuts
+    hi = L.union_blob(parts, f"{typ}_v{variant}", voxel=voxel, smooth=1, smooth_factor=0.30, coll=work, adaptivity=0.35)
     print(f"[orn] {typ} v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
-    L.displace_noise(hi, strength=0.006 * R, size=0.12 * R, seed=100 + variant, depth=2)
-    L.displace_noise(hi, strength=0.0025 * R, size=0.025 * R, seed=200 + variant, depth=1)
+    L.displace_noise(hi, strength=0.005 * R, size=0.12 * R, seed=100 + variant, depth=2)
+    L.displace_noise(hi, strength=0.0022 * R, size=0.025 * R, seed=200 + variant, depth=1)
     # LOD2: bell + abacus only
     bell2 = L.revolve("bell2", L.resample_profile([(r * R, z * H) for r, z in BELL_PROFILE], 8), segments=16, coll=work)
     ab2 = L.loft_rings("ab2", [[Vector((p.x * s, p.y * s, z * H)) for p in abacus_outline(R, P["abacus_across"], per_side=4)]
                                 for s, z in ((0.87, 0.89), (1.0, 0.985), (1.0, 1.0))], work)
     lod2 = L.join([bell2, ab2], f"{typ}_v{variant}_lod2", work)
-    return L.finalize_asset(hi, typ, variant, coll, bake=bake, bake_size=2048, lod2_obj=lod2,
+    return L.finalize_asset(hi, typ, variant, coll, bake=bake, bake_size=2048, lod2_obj=lod2, ao=True, cavity=True,
                             size_note=f"h {H} m, shaft top r {R} m, abacus {P['abacus_across']} m across corners")
 
 
@@ -655,34 +740,61 @@ def build_keystone(variant, coll, bake=True):
     rng = random.Random(3000 + variant)
     work = L.work_collection()
     parts = []
-    # back plate hugging the archivolt
-    parts.append(L.box("ks_back", (0.62, 0.10, 0.62), work, location=(0, 0.05, 0.0), bevel=0.03))
-    face = L.sphere("ks_face", 0.24, work, location=(0, 0.16, 0.02), scale=(1.0, 0.75, 1.05))
+    S = 1.0 + 0.04 * (variant - 2)      # small per-variant size drift
+    # Round 4 (carried defect: "keystone depth on the arches"). Two things were missing.
+    # 1. The keystone had no VOUSSOIR: the mask sat straight on a 0.10 m plate flush with the archivolt, so at
+    #    hero distance it was a pale disc with nothing to cast a shadow. Ref keystone_mask_1/2 show a wedge block
+    #    that breaks forward out of the archivolt roll and carries a moulded cap under the frieze.
+    # 2. The mask itself was all convex blobs: the eye/mouth dents were 0.03-0.09 m on a 0.006 m remesh and
+    #    smooth=2 wiped them. Now the brow, cheeks and mane overhang, and the dents are 2-3x deeper.
+    KEY_PROUD = 0.30 * S                # the voussoir face, proud of the archivolt (y = 0 is the archivolt face)
+    parts.append(L.box("ks_back", (0.62 * S, 0.10, 0.66 * S), work, location=(0, 0.05, 0.0), bevel=0.02))
+    # tapered voussoir: narrow at the springing side, wide under the cap
+    VOUSSOIR = ((0.215, 0.10, -0.33), (0.245, 0.20, -0.20), (0.268, 0.26, 0.00),
+                (0.283, 0.28, 0.16), (0.290, 0.24, 0.29), (0.300, 0.16, 0.33))
+    parts.append(L.loft_rings("ks_voussoir",
+                              [[Vector((-w * S, 0.02, z * S)), Vector((-w * S, y, z * S)),
+                                Vector((w * S, y, z * S)), Vector((w * S, 0.02, z * S))]
+                               for w, y, z in VOUSSOIR], work, cap_bottom=True, cap_top=True))
+    # moulded cap under the frieze: a hard horizontal shadow line at the top of the block
+    # depth 0.30 (not 0.34): the cap must not reach behind y = 0, or origin_bottom_centre(y_mode="back") re-origins
+    # off the mounting plane and the whole keystone floats 2 cm proud of the archivolt.
+    parts.append(L.box("ks_cap", (0.66 * S, 0.30, 0.075 * S), work, location=(0, 0.15, 0.335 * S), bevel=0.012))
+    face = L.sphere("ks_face", 0.235 * S, work, location=(0, KEY_PROUD + 0.06, 0.00), scale=(1.02, 0.80, 1.05))
     parts.append(face)
-    parts.append(L.sphere("ks_muzzle", 0.14, work, location=(0, 0.33, -0.05), scale=(1.15, 0.9, 0.85)))
-    parts.append(L.sphere("ks_nose", 0.055, work, location=(0, 0.44, -0.01), scale=(1.2, 0.8, 0.7)))
-    parts.append(L.sphere("ks_jaw", 0.11, work, location=(0, 0.30, -0.17), scale=(1.1, 0.9, 0.7)))
+    parts.append(L.sphere("ks_muzzle", 0.135 * S, work, location=(0, KEY_PROUD + 0.20, -0.075 * S), scale=(1.15, 0.95, 0.82)))
+    parts.append(L.sphere("ks_nose", 0.055 * S, work, location=(0, KEY_PROUD + 0.30, -0.02 * S), scale=(1.25, 0.85, 0.72)))
+    parts.append(L.sphere("ks_jaw", 0.115 * S, work, location=(0, KEY_PROUD + 0.16, -0.20 * S), scale=(1.1, 0.95, 0.68)))
     for side in (1, -1):
-        parts.append(L.sphere(f"ks_brow{side}", 0.07, work, location=(side * 0.10, 0.34, 0.09), scale=(1.4, 0.8, 0.7)))
-        parts.append(L.sphere(f"ks_cheek{side}", 0.09, work, location=(side * 0.15, 0.30, -0.06)))
-        parts.append(L.sphere(f"ks_ear{side}", 0.06, work, location=(side * 0.20, 0.20, 0.20), scale=(1.0, 0.6, 1.2)))
-    # mane: ring of leaves radiating in the mask plane, tilted forward
-    n = 14
+        # brow ridge, pushed forward and up so it OVERHANGS the eye socket (the dark accent at hero distance)
+        parts.append(L.sphere(f"ks_brow{side}", 0.078 * S, work,
+                              location=(side * 0.098 * S, KEY_PROUD + 0.235, 0.105 * S), scale=(1.5, 0.85, 0.62)))
+        parts.append(L.sphere(f"ks_cheek{side}", 0.098 * S, work,
+                              location=(side * 0.152 * S, KEY_PROUD + 0.155, -0.065 * S), scale=(1.0, 0.9, 1.0)))
+        parts.append(L.sphere(f"ks_ear{side}", 0.062 * S, work,
+                              location=(side * 0.205 * S, KEY_PROUD + 0.05, 0.205 * S), scale=(1.0, 0.62, 1.25)))
+    # mane: fewer, bolder, thicker leaves standing clear of the face so a shadow slot is left behind each
+    n = 10
     for i in range(n):
-        ang = i * 360.0 / n + rng.uniform(-4, 4)
-        leaf = L.acanthus_leaf(f"ks_mane{i}", length=0.25 * rng.uniform(0.85, 1.1), width=0.16, curl=0.5, droop=0.25,
-                               ribs=5, rib_amp=0.012, bulge=0.02, thickness=0.02, lobes=3, lobe_depth=0.15, nu=10, nv=14,
-                               coll=work, seed=i, base_width=0.4)
-        # leaf grows along +Z, curls toward +Y: rotate so it radiates at 'ang' in the XZ plane, base at the face rim
-        m = (Matrix.Translation((0.22 * math.sin(math.radians(ang)), 0.14, 0.03 + 0.22 * math.cos(math.radians(ang))))
+        ang = i * 360.0 / n + rng.uniform(-5, 5)
+        leaf = L.acanthus_leaf(f"ks_mane{i}", length=0.30 * S * rng.uniform(0.86, 1.12), width=0.20 * S, curl=0.62,
+                               droop=0.30, ribs=4, rib_amp=0.016, bulge=0.012, mid_dip=0.022, thickness=0.036,
+                               lobes=3, lobe_depth=0.26, nu=14, nv=16, coll=work, seed=i, base_width=0.42)
+        m = (Matrix.Translation((0.215 * S * math.sin(math.radians(ang)), KEY_PROUD + 0.055,
+                                 0.02 + 0.215 * S * math.cos(math.radians(ang))))
              @ Euler((0, math.radians(ang), 0), "XYZ").to_matrix().to_4x4()
-             @ Euler((math.radians(-25), 0, 0), "XYZ").to_matrix().to_4x4())
+             @ Euler((math.radians(-32), 0, 0), "XYZ").to_matrix().to_4x4())
         leaf.data.transform(m)
         parts.append(leaf)
-    hi = L.union_blob(parts, f"keystone_v{variant}", voxel=(0.01 if FAST else 0.006), smooth=2, coll=work)
-    # open mouth + eye sockets: dent the remeshed surface (booleans after a remesh proved unreliable)
-    dents = [((0.0, 0.47, -0.11), (0.10, 0.10, 0.06), 0.09), ((0.085, 0.43, 0.055), (0.04, 0.05, 0.035), 0.03),
-             ((-0.085, 0.43, 0.055), (0.04, 0.05, 0.035), 0.03)]
+    hi = L.union_blob(parts, f"keystone_v{variant}", voxel=(0.009 if FAST else 0.005), smooth=1, smooth_factor=0.25,
+                      coll=work)
+    # open mouth + eye sockets + nostrils: dent the remeshed surface (booleans after a remesh proved unreliable)
+    yb = KEY_PROUD
+    dents = [((0.0, yb + 0.35, -0.135 * S), (0.105, 0.115, 0.062), 0.115),     # mouth
+             ((0.088 * S, yb + 0.245, 0.048 * S), (0.045, 0.060, 0.040), 0.072),   # eyes, under the brow
+             ((-0.088 * S, yb + 0.245, 0.048 * S), (0.045, 0.060, 0.040), 0.072),
+             ((0.030 * S, yb + 0.315, 0.008 * S), (0.024, 0.040, 0.024), 0.035),   # nostrils
+             ((-0.030 * S, yb + 0.315, 0.008 * S), (0.024, 0.040, 0.024), 0.035)]
     for v in hi.data.vertices:
         for (cx, cy, cz), (rx, ry, rz), depth_ in dents:
             d = ((v.co.x - cx) / rx) ** 2 + ((v.co.y - cy) / ry) ** 2 + ((v.co.z - cz) / rz) ** 2
@@ -690,8 +802,10 @@ def build_keystone(variant, coll, bake=True):
                 v.co.y -= depth_ * (1.0 - d) ** 0.7
     hi.data.update()
     L.displace_noise(hi, strength=0.003, size=0.05, seed=1200 + variant, depth=2)
-    return L.finalize_asset(hi, "keystone", variant, coll, bake=bake, bake_size=1024, y_mode="back",
-                            budgets=L.BUDGETS["keystone"], size_note="lion mask 0.8 m; origin = back-face bottom-centre")
+    return L.finalize_asset(hi, "keystone", variant, coll, bake=bake, bake_size=1024, y_mode="back", ao=True,
+                            cavity=True, budgets=L.BUDGETS["keystone"],
+                            size_note=f"lion-mask keystone: {0.30 * S:.2f} m voussoir + mask to ~{0.30 * S + 0.36:.2f} m "
+                                      f"proud of the archivolt face; origin = back-face bottom-centre")
 
 
 def build_finial(variant, coll, bake=True):
@@ -705,23 +819,84 @@ def build_finial(variant, coll, bake=True):
                             size_note="dome apex cap 0.8 m diameter x 0.6 m")
 
 
+def rosette_petal(name, length, width, rise, curl, coll, seed=0, thickness=0.018, lobes=3, nu=16):
+    """One rosette petal, built in the leaf frame (grows +Z, curls toward +Y) so it can be laid radially into the
+    rosette plane: nearly flat for the first 70 % of its length, then the tip lifts off the ground plane."""
+    n = 20
+    sp = []
+    for i in range(n + 1):
+        u = i / n
+        z = length * u
+        y = 0.004 + rise * (u ** 1.5)
+        if u > 0.66:
+            f = (u - 0.66) / 0.34
+            y += curl * (f ** 1.7)
+            z -= curl * 0.35 * (f ** 2.2)
+        sp.append((y, z))
+    return L.acanthus_leaf(name, length=length, width=width, spine=sp, ribs=3, rib_amp=0.010, bulge=0.010,
+                           mid_dip=0.014, thickness=thickness, lobes=lobes, lobe_depth=0.22, nu=nu, nv=n,
+                           coll=coll, seed=seed, base_width=0.42)
+
+
+# Per-variant rosette designs (petals outer/inner, overall diameter, relief). Measured against ref 083 / 003 /
+# coffered_ceiling_1-3: the rib rosettes are 0.45-0.60 m across and stand roughly a quarter of their diameter
+# proud of the rib face, with a deep annular groove between the petal ring and the central boss.
+# relief raised from 0.155 to 0.21 m on 2026-09-07 after ARCH deepened the coffer interiors (saucer coffers
+# 0.55 m, barrel vault 0.38 m): a 0.155 m boss disappears at the bottom of a 0.55 m box.
+ROSETTE_STYLE = {
+    1: dict(n_out=8, n_in=8, dia=0.60, relief=0.210),
+    2: dict(n_out=10, n_in=10, dia=0.56, relief=0.196),
+    3: dict(n_out=6, n_in=6, dia=0.62, relief=0.225),
+}
+
+
 def build_rosette(variant, coll, bake=True):
-    """Coffer rosette for the plaster ceiling, 0.6 m diameter: two rings of petals around a boss. Origin at the
-    back (mounting) face centre; the rosette projects toward +Z... no: like all wall-mounted pieces it projects
-    toward +Y (socket +Y = radially outward on the ceiling), so it is built lying in the XZ plane."""
+    """Coffer / rib rosette, ~0.6 m across. Origin at the back (mounting) face centre; like every wall-mounted
+    piece it projects toward +Y, so it is built face-up along +Z and laid down at the end.
+
+    Round 4 (QA-03-8): the round-3 rosette was a lathe with a cos(12*theta) radius wobble - a smooth 12-point star
+    with no undercut anywhere, which is exactly the "flat outline" QA saw at cam04. It is now modelled: a sunk
+    back disc, a ring of real petals whose tips lift 0.055 m off the disc (so there is a shadow slot behind every
+    petal tip), a second ring rotated half a pitch, a 0.045 m annular groove and a beaded central boss."""
+    st = ROSETTE_STYLE.get(variant, ROSETTE_STYLE[1])
+    Rr = st["dia"] / 2.0
+    relief = st["relief"]
     rng = random.Random(2000 + variant)
     work = L.work_collection()
-    prof = [(0.30, 0.0), (0.30, 0.02), (0.26, 0.05), (0.18, 0.08), (0.10, 0.10), (0.06, 0.13), (0.0, 0.14)]
-    def petals(th, t):
-        return 1.0 + 0.10 * math.cos(12 * th + variant) * (0.3 + 0.7 * (1 - t)) + 0.05 * math.cos(6 * th) * t
-    ros = L.revolve("rosette", L.resample_profile(prof, 20), segments=96, coll=work, scale_fn=petals)
-    boss = L.sphere("ros_boss", 0.06, work, location=(0, 0, 0.11))
-    hi = L.union_blob([ros, boss], f"rosette_ceiling_v{variant}", voxel=0.005, smooth=1, coll=work)
-    L.displace_noise(hi, strength=0.002, size=0.03, seed=1300 + variant, depth=1)
+    parts = []
+    # back disc with a raised rim: the rim is what the annular groove is cut against
+    disc = L.revolve("ros_disc", L.resample_profile(
+        [(0.0, 0.0), (Rr * 0.60, 0.0), (Rr * 0.88, 0.008), (Rr * 0.97, 0.030), (Rr, 0.050),
+         (Rr * 0.97, 0.062), (Rr * 0.86, 0.052), (Rr * 0.55, 0.018), (0.0, 0.014)], 26), segments=72, coll=work)
+    parts.append(disc)
+    for ring, (count, r0, ln, wd, rise, curl, z0) in enumerate((
+            (st["n_out"], Rr * 0.34, Rr * 0.70, TAU * Rr * 0.62 / st["n_out"] * 1.02, 0.044, 0.082, 0.016),
+            (st["n_in"], Rr * 0.16, Rr * 0.40, TAU * Rr * 0.30 / st["n_in"] * 1.06, 0.038, 0.064, 0.068))):
+        off = 0.0 if ring == 0 else 180.0 / count
+        for k in range(count):
+            a = off + k * 360.0 / count + rng.uniform(-2.0, 2.0)
+            p = rosette_petal(f"ros_p{ring}_{k}", ln * rng.uniform(0.95, 1.05), wd, rise, curl, work,
+                              seed=100 * ring + k, thickness=0.020 if ring == 0 else 0.016)
+            # leaf frame (+Z growth, +Y curl) -> radial in the XY plane with the curl lifting toward +Z
+            m = (Matrix.Translation((r0 * math.cos(math.radians(a)), r0 * math.sin(math.radians(a)), z0))
+                 @ Euler((0, 0, math.radians(a + 90.0)), "XYZ").to_matrix().to_4x4()
+                 @ Euler((math.radians(90.0), 0, 0), "XYZ").to_matrix().to_4x4())
+            p.data.transform(m)
+            parts.append(p)
+    # beaded central boss standing the full relief height
+    boss = L.revolve("ros_boss", L.resample_profile(
+        [(0.0, 0.045), (Rr * 0.30, 0.045), (Rr * 0.33, 0.062), (Rr * 0.28, 0.082), (Rr * 0.30, 0.098),
+         (Rr * 0.24, relief * 0.80), (Rr * 0.13, relief * 0.96), (0.0, relief)], 24), segments=40, coll=work,
+        scale_fn=lambda th, t: 1.0 + 0.07 * math.cos(10 * th) * (1.0 - t))
+    parts.append(boss)
+    hi = L.union_blob(parts, f"rosette_ceiling_v{variant}", voxel=0.004, smooth=1, smooth_factor=0.25, coll=work)
+    L.displace_noise(hi, strength=0.0018, size=0.03, seed=1300 + variant, depth=1)
     # lay it down: +Z -> +Y
     hi.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
-    return L.finalize_asset(hi, "rosette_ceiling", variant, coll, bake=bake, bake_size=512, y_mode="back",
-                            budgets=L.BUDGETS["rosette_ceiling"], size_note="coffer rosette 0.6 m; back face at y=0, projects +Y")
+    return L.finalize_asset(hi, "rosette_ceiling", variant, coll, bake=bake, bake_size=1024, y_mode="back",
+                            ao=True, cavity=True, budgets=L.BUDGETS["rosette_ceiling"],
+                            size_note=f"rib/coffer rosette {st['dia']:.2f} m across, {relief:.3f} m of relief "
+                                      f"({relief / st['dia']:.2f} of the diameter); back face at y=0, projects +Y")
 
 
 # =============================================================================== ZIMM ATTIC RELIEF PANELS
@@ -1332,7 +1507,7 @@ ALL_TYPES = ["capital_rotunda", "maiden", "capital_colonnade", "capital_inner", 
              "urn_tub", "attic_panel", "keystone", "winged_figure", "finial", "corner_scroll", "drum_band", "rosette_ceiling",
              "dentil", "egg_and_dart", "greek_key", "rosette_band", "modillion", "anthemion"]
 VARIANTS = {"capital_rotunda": 3, "capital_inner": 2, "capital_colonnade": 3, "maiden": 3, "attic_figure": 2,
-            "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 2, "winged_figure": 2, "finial": 1, "rosette_ceiling": 2,
+            "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 3, "winged_figure": 2, "finial": 1, "rosette_ceiling": 3,
             "attic_panel": 3, "drum_band": 1, "dentil": 1, "egg_and_dart": 1, "greek_key": 1, "rosette_band": 1,
             "modillion": 1, "anthemion": 1, "corner_scroll": 2}
 

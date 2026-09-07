@@ -63,3 +63,17 @@ and finials. State which in docs/arch_notes.md.
 
 LOD rule: the lead instances LOD1 by default in the viewport and switches to LOD0 for Cycles finals via
 `common.set_lod_visibility`. LOD0 target < 150k tris per capital, < 300k per maiden; LOD1 < 20k; LOD2 < 2k.
+
+**`rosette_ceiling` orientation — final contract (lead decision 2026-09-08, ARCH rebuilding on branch architecture).**
+The 24 sockets are two groups and the generic "for the ceiling, +Y = radially outward" line above does NOT apply to
+either of them:
+- **16 band sockets**: on the VERTICAL INNER FACE of the base ring above the inner arches, **+Y = -radial** (facing
+  the room), +Z = world up.
+- **8 ring-1 sockets**: on the FLOOR of a saucer coffer, **+Y = down (-Z)**; the socket's own +Z then lies in the
+  ceiling plane.
+Background: as delivered before this change all 24 had +Y exactly radially outward (`dot(+Y, radial) = 1.000`), so
+every rosette projected into the masonry and none appeared at cam04
+(`renders/previews/qa/roundorn4_04_rotunda_ceiling.png`; corrected proof
+`renders/previews/ornament/orn4_cam04_rosette_fix2.png`).
+The ORN asset is unchanged and correct under either frame: back face at y = 0, projecting +Y, 0.20-0.22 m of relief
+on a 0.55-0.62 m rosette, which fits inside the 0.55 m saucer coffer and stands clear on the band face.
