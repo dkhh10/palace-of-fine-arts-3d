@@ -28,7 +28,7 @@ Socket types (counts are for the whole building; ARCH reports the actual numbers
 | `frieze_run` | start of a straight entablature frieze run; `size_hint` = run length, custom prop `run_length` | per face/ressaut | length |
 | `drum_band` | the scale/rosette band around the drum: one socket at band start with `run_length` = circumference | 1 | height |
 | `finial` | dome top / drum corner finials | per sheet | height |
-| `rosette_ceiling` | coffer rosettes inside the dome | per sheet | diameter |
+| `rosette_ceiling` | ceiling rosettes, two families: **16** on the vertical inner face of the base ring above the inner arches (sheet line 258; z 23.19, face plane 14.18 m from the axis, +Y = the inward face normal, +Z world up), **8** on the floor of the ring-1 square coffers (z 28.91, r 5.20, +Y straight DOWN) | per sheet | diameter |
 | `inner_figure` | the 8 winged "Priestess of Culture" figures on the inner entablature blocks, +Y toward the rotunda centre's opposite (outward), figure faces the centre | 8 | figure height (4.6) |
 
 Contract additions after the Phase 2 build (2026-09-07): sockets may carry a `subtype` string property: keystone

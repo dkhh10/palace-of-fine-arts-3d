@@ -538,3 +538,28 @@ type keeps the exact frame it had.
 Caveat for ornament: a -radial facing suits a rosette on the *vertical inner face* of the base ring, but these 16
 sockets sit on the rib's horizontal room face (z = `sz - 0.53`). If the band rosettes should stand on that vertical
 face instead, say so and I will move them out to the rim edge rather than only re-aim them.
+
+### Base-ring rosette band moved onto the vertical face (lead, 2026-09-08)
+
+Following the caveat above, the 16 band rosettes are off the rib's horizontal underside and onto the surface the
+sheet actually describes (line 258, "base ring with rosette band above the inner arches"): the **vertical inner
+face of the inner ring wall**, radius `INNER_WALL_APOTHEM - INNER_WALL_THICKNESS` = **14.182 m** from the axis.
+Band height is derived from the two things that bound it, not eyeballed:
+
+| bound | value |
+|---|---|
+| crown of the inner arches `INNER_ARCH_SPRING_Z + INNER_ARCH_SPAN / 2` | 22.423 |
+| underside of the saucer rim `CEILING_RING_Z - COFFER_DEPTH` | 23.950 |
+| **`P.ROSETTE_BAND_Z`** = midpoint of that 1.53 m zone | **23.186** |
+
+Placement is now **two per octagon face at ±`ROSETTE_BAND_HALF_ANGLE` (11.25 deg) from the face normal** instead of
+alternating face centre / octagon vertex: same 16 sockets and the same 22.5 deg spacing round the ring, but every
+one of them stands on a real flat face (the old vertex sockets sat on the corner, where there is no face). Each
+socket's own distance from the axis is 14.182 / cos 11.25 = **14.46 m**; its `+Y` is the inward **face** normal, so
+`dot(+Y, radial)` is **-0.981**, not -1.000 — the two sockets sharing a face lean 11.25 deg either side of their
+own radius. `+Z` is world up (upright on the face). `size_hint` is 0.7 for all 16 (they are one band, one size);
+the 8 coffer-floor sockets are unchanged at z 28.914, r 5.20, `+Y.z = -1.000`.
+
+`scripts/arch_socket_check.py` now checks the band against its face plane rather than against radial, and reports
+the spread of the 16 face-plane distances (0.0 mm). All 24 OK. Counts and types unchanged; `docs/sockets.md` has
+the one-line placement note the lead authorised.
