@@ -799,6 +799,56 @@ def build_ground():
     ML.finish(m)
 
 
+def build_backdrop_details():
+    """Exhibition-hall details ENV needs by name: roof membrane, skylight glazing, the green door on the rotunda axis."""
+    # roof: pale grey built-up membrane with tar seams and pooled grime, seen from above in the aerial only
+    m = ML.new_material("MAT_backdrop_roof")
+    t = Tree(m.node_tree)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    seams = t.smoothstep(t.absval(t.sub(t.fract(t.mul(t.sepxyz(W)[1], 0.4)), 0.5)), 0.44, 0.5)
+    grime = t.maprange(t.noise(W, 0.35, detail=3, rough=0.6), 0.35, 0.7, 0.0, 1.0)
+    c = t.mix(grime, C(0.155, 0.150, 0.135), C(0.085, 0.082, 0.075))
+    c = t.mix(t.mul(seams, 0.8), c, C(0.045, 0.043, 0.040))
+    rough = t.add(0.82, t.mul(t.sub(t.noise(W, 2.0, detail=2), 0.5), 0.16))
+    normal = t.bump(t.add(t.mul(t.noise(W, 12.0, detail=3), 0.5), t.mul(seams, 0.5)), strength=0.35, distance=0.01, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.35, "Normal": normal}).outputs[0])
+    ML.finish(m)
+    # skylight glazing: dirty wired glass, mostly a dark reflective panel at hero distance
+    m = ML.new_material("MAT_backdrop_skylight")
+    t = Tree(m.node_tree)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    dirt = t.maprange(t.noise(W, 1.6, detail=3, rough=0.6), 0.3, 0.75, 0.0, 1.0)
+    c = t.mix(dirt, C(0.055, 0.062, 0.070), C(0.13, 0.125, 0.105))
+    rough = t.add(0.14, t.mul(dirt, 0.30))
+    normal = t.bump(t.mul(t.noise(W, 6.0, detail=2), 0.4), strength=0.2, distance=0.008, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.75,
+                                     "Coat Weight": 0.25, "Coat Roughness": 0.12, "Normal": normal}).outputs[0])
+    ML.finish(m)
+    # the hall's green door on the rotunda axis (visible through the central arch in the hero): old semi-gloss
+    # park-service green paint on wood, chalked and streaked, with a dull bronze push-plate zone at object z 1.0-1.2
+    m = ML.new_material("MAT_backdrop_door_green")
+    t = Tree(m.node_tree)
+    P = t.texcoord().outputs["Object"]
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    px, py, pz = t.sepxyz(P)
+    boards = t.smoothstep(t.absval(t.sub(t.fract(t.mul(px, 1.6)), 0.5)), 0.42, 0.5)
+    chalk = t.maprange(t.noise(W, 3.0, detail=3, rough=0.6), 0.3, 0.72, 0.0, 1.0)
+    c = t.mix(chalk, C(0.028, 0.055, 0.036), C(0.060, 0.088, 0.062))
+    c = t.mix(t.mul(boards, 0.8), c, C(0.014, 0.028, 0.019))
+    # weathered lower edge (kicked, damp)
+    c = t.mix(t.maprange(pz, 0.05, 0.35, 0.7, 0.0), c, C(0.030, 0.038, 0.030))
+    plate = t.mul(t.maprange(pz, 0.95, 1.02, 0.0, 1.0), t.maprange(pz, 1.18, 1.25, 1.0, 0.0))
+    c = t.mix(plate, c, C(0.115, 0.085, 0.045))
+    rough = t.mixf(plate, t.add(0.42, t.mul(chalk, 0.30)), 0.45)
+    normal = t.bump(t.add(t.mul(t.noise(W, 40.0, detail=3), 0.3), t.mul(boards, 0.6)), strength=0.3, distance=0.006, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.5,
+                                     "Metallic": t.mul(plate, 0.7), "Normal": normal}).outputs[0])
+    ML.finish(m)
+
+
 def build_misc():
     # gulls: white body, grey mantle from object z, matte
     m = ML.new_material("MAT_bird_white")
@@ -825,8 +875,15 @@ def build_all_materials():
     leaf_material("MAT_leaf_eucalyptus", "leaves_eucalyptus", (0.8, 1.0, 0.5), rough=0.42, hue_var=0.06, val_var=0.3, seed=21.0, spec=0.4, translucency=0.3)
     leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.4), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35)
     leaf_material("MAT_shrub", "leaves_shrub", (0.8, 1.1, 0.5), rough=0.5, hue_var=0.08, val_var=0.4, seed=23.0, translucency=0.2, spec=0.4)
+    # shore planting mix (ENV): a paler grey-green (pittosporum / agapanthus) and a straw-dry one, so a 1400-bush belt
+    # is not one flat green. Same card texture, different tint / value spread.
+    leaf_material("MAT_shrub_light", "leaves_shrub", (0.85, 1.05, 0.6), rough=0.45, hue_var=0.06, val_var=0.45, seed=24.0,
+                  translucency=0.28, spec=0.45, tint=(1.25, 1.30, 1.05), sheen=0.2)
+    leaf_material("MAT_shrub_dry", "leaves_shrub", (1.05, 0.95, 0.5), rough=0.62, hue_var=0.05, val_var=0.5, seed=25.0,
+                  translucency=0.22, spec=0.25, tint=(2.30, 1.75, 0.75), sheen=0.1, cluster_var=0.3)
     leaf_material("MAT_reeds", "reeds", (0.9, 1.0, 0.5), rough=0.6, hue_var=0.06, val_var=0.4, seed=26.0, translucency=0.35, cluster_var=0.35)
     build_extra_env()
+    build_backdrop_details()
     bark_material("MAT_bark_cypress", "chinese_cedar_bark", C(0.20, 0.15, 0.11), 24.0, tile=1.6, rough=0.9, bump=0.7, stringy=0.4)
     bark_material("MAT_bark_eucalyptus", "bark_bluegum", C(0.40, 0.35, 0.29), 25.0, tile=1.82, rough=0.75, bump=0.5)
     build_ground()
@@ -1030,6 +1087,10 @@ for i, (nm, matn) in enumerate((("cypress", "MAT_leaf_cypress"), ("pine", "MAT_l
     # a crossed-card cluster of the same material for the distance read
     for j in range(3):
         card(f"MAT_test_cluster_{nm}_{j}", (1.4, 1.4), (7.4 + i * 1.15, 30.0, GZ + 0.8), matn, rot=(math.radians(90), 0, j * math.pi / 3))
+for i, (nm, matn) in enumerate((("shrub_light", "MAT_shrub_light"), ("shrub_dry", "MAT_shrub_dry"))):
+    card(f"MAT_test_card_{nm}", (1.0, 1.0), (7.4 + i * 1.15, 10.5, GZ + 0.55), matn)
+    for j in range(3):
+        card(f"MAT_test_cluster_{nm}_{j}", (1.4, 1.4), (7.4 + i * 1.15, 32.5, GZ + 0.8), matn, rot=(math.radians(90), 0, j * math.pi / 3))
 box("MAT_test_backdrop_forest", (6.0, 3.0, 4.0), (-4.0, 34.0, GZ + 2.0), "MAT_backdrop_forest", bevel=0)
 box("MAT_test_backdrop_hill", (6.0, 3.0, 2.0), (-11.0, 34.0, GZ + 1.0), "MAT_backdrop_hill", bevel=0)
 bpy.ops.mesh.primitive_cylinder_add(radius=0.08, depth=3.6, location=(13.5, 7.0, GZ + 1.8), vertices=12)
@@ -1056,6 +1117,12 @@ for i in range(2):
         b = ceil.modifiers.new(f"cut{i}{j}", "BOOLEAN"); b.operation = "DIFFERENCE"; b.object = c
 box("MAT_test_drumband", (2.5, 0.4, 0.6), (-10.5, -0.2, GZ + 3.4), "MAT_drum_band", bevel=0.02)
 box("MAT_test_backdrop", (3.0, 0.4, 2.5), (-16.5, -0.2, GZ + 1.25), "MAT_backdrop_building")
+# exhibition-hall details for ENV: roof membrane (tilted up so the misc camera sees it), skylight glazing, green door
+roofp = box("MAT_test_backdrop_roof", (2.4, 1.6, 0.15), (-19.6, 0.6, GZ + 2.2), "MAT_backdrop_roof", bevel=0)
+roofp.rotation_euler = (math.radians(-55), 0, 0)
+box("MAT_test_backdrop_skylight", (1.1, 0.15, 0.9), (-19.6, -0.2, GZ + 0.9), "MAT_backdrop_skylight", bevel=0.01)
+door = box("MAT_test_backdrop_door", (1.6, 0.12, 2.4), (-22.4, -0.2, GZ + 1.2), "MAT_backdrop_door_green", bevel=0.01)
+door.location.z = GZ + 1.2
 
 # grey card: an 18 % reflectance reference next to the ochre wall (test-only material)
 gc = ML.new_material("MAT_test_greycard18")

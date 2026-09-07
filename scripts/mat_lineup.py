@@ -145,7 +145,7 @@ lineup_cams = [
     add_cam(scene, "CAM_mat_ground", (-9.5, 12.0, GZ + 4.0), (-10.0, 6.0, GZ)),
     add_cam(scene, "CAM_mat_foliage", (9.7, 12.0, GZ + 1.3), (9.7, 8.0, GZ + 0.7), lens=26.0),
     add_cam(scene, "CAM_mat_foliage_far", (9.7, 150.0, GZ + 8.0), (9.7, 30.0, GZ + 1.0), lens=80.0),
-    add_cam(scene, "CAM_mat_misc", (-12.5, 5.5, GZ + 1.8), (-12.5, 0.0, GZ + 1.6), lens=28.0),
+    add_cam(scene, "CAM_mat_misc", (-16.5, 9.5, GZ + 2.2), (-16.5, 0.0, GZ + 1.6), lens=20.0),
     add_cam(scene, "CAM_mat_lineup", (0.0, 19.0, GZ + 5.0), (0.0, 0.0, GZ + 2.5), lens=22.0),
     # per-instance ornament variation, judged at 60 m (six capital proxies with different `instance_seed`)
     add_cam(scene, "CAM_mat_ornament_far", (24.9, 80.0, GZ + 2.6), (24.9, 20.0, GZ + 1.55), lens=200.0),
