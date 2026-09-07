@@ -222,6 +222,13 @@ def build_rotunda():
         cb = fr.bump(P.RESSAUT_ALONG, P.CHAMFER_CIRCUMRADIUS, inset=0.05)
         cA, cB = cb[1], cb[2]
         mid = mul2(add2(cA, cB), 0.5)
+        # solid ressaut core (fills the entablature tube over the column pair: soffit seen from below) and the
+        # corner block cap (the attic roof slab stops at the octagon)
+        core_poly = L.offset_polygon(L.ensure_ccw(cb), -0.04)
+        L.prism(f"ARCH_rotunda_ressaut_core_{fr.k:02d}", core_poly, P.ENTABLATURE_Z0, P.ENTABLATURE_Z1 - 0.05, C, mat=M_OCHRE,
+                part_type="entablature", bevel=False)
+        L.prism(f"ARCH_rotunda_attic_corner_cap_{fr.k:02d}", core_poly, P.ATTIC_Z1 - 0.35, P.ATTIC_Z1 - 0.02, C, mat=M_OCHRE,
+                part_type="attic", bevel=False)
         L.prism(f"ARCH_rotunda_attic_corner_{fr.k:02d}", cb, P.ATTIC_Z0 + SINK, P.ATTIC_Z1 - P.ATTIC_TOP_CORNICE_H + SINK, C,
                 mat=M_OCHRE, part_type="attic")
         # niche: recessed panel = plate with a hole in front of the block face (block face is at chamfer radius)
@@ -404,6 +411,10 @@ def build_rotunda():
     dome[0] = (P.DOME_BASE_R, P.DRUM_Z1 + 0.05)
     L.lathe("ARCH_rotunda_dome", dome, C, segments=128, mat=M_DOME, part_type="dome", origin=(0, 0, P.DRUM_Z1), bevel=False)
     SOCK.add("finial", (0.0, 0.0, P.DOME_APEX_Z), (0.0, 1.0), 0.6, extra={"subtype": "dome_apex"})
+    za = P.DOME_APEX_Z - 0.05
+    L.lathe("ARCH_rotunda_dome_apex_cap", [(0.0, za), (0.55, za), (0.55, za + 0.12), (0.35, za + 0.2), (0.3, za + 0.45),
+                                           (0.18, za + 0.55), (0.0, za + 0.6)], C, segments=32, mat=M_DOME, part_type="dome",
+            origin=(0, 0, za), bevel=False)
 
     # ---- inner order: 8 tan columns, bases, blocks, capital sockets, winged-figure sockets
     ri = P.INNER_COL_D / 2
@@ -946,6 +957,8 @@ def build_wing(name, coll):
                     (0.55, 2.0), (0.55, 2.4), (-0.55, 2.4), (-0.55, 0.0), (0.0, 0.0)]
         L.sweep_closed(f"ARCH_colonnade_{name}_pylon_{label}_entablature", rectp, pyl_prof, coll, mat=M_COLON,
                        part_type="colonnade_entablature", z0=z_py, origin=(centre[0], centre[1], z_py))
+        L.prism(f"ARCH_colonnade_{name}_pylon_{label}_core", L.offset_polygon(L.ensure_ccw(rectp), -0.5), z_py, z_py + P.COLONNADE_ENTABLATURE_H - 0.03,
+                coll, mat=M_COLON, part_type="colonnade_entablature", bevel=False)
         build_box(f"ARCH_colonnade_{name}_pylon_{label}_box", centre, ang_deg(tang), z_py + P.COLONNADE_ENTABLATURE_H, coll,
                   W.inward(W.L) if label == "A" else (-ret_dir[0], -ret_dir[1]))
     # return beams (row height) between the pylons, two rows

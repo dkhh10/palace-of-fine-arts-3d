@@ -24,6 +24,28 @@ Stats of the last build are written to `docs/arch_stats.json`.
   silently truncates - materialize the list first). Previews `20260907_073920_*_detail2` (LOD1) and
   `20260907_073726_*_detail2_lod0` (LOD0); comparisons `arch_04_detail2_*`. Inspection helper `scripts/arch_inspect.py`.
 
+- **Detail pass 2 (milestone 3, current)**: solid ressaut cores and attic-corner caps (no hollow tube interiors seen
+  from below/above), pylon entablature cores, dome apex cap. Final previews `20260907_074425_*_detail3` (LOD1),
+  golden-hour hero `20260907_074252_01_lagoon_hero_golden.png`, close-ups `inspect_column_lod0.png`,
+  `inspect_vault_lod0_v2.png`; comparison set `renders/qa_comparisons/arch_05_detail3_*` (contact sheet
+  `arch_05_detail3_sheet.png`; the hero overlay is `arch_05_detail3_cam01_fov_zoom120.png`).
+
+## Build statistics (docs/arch_stats.json)
+
+| | value |
+|---|---|
+| objects in ARCH | 2069 (incl. 336 socket empties, 300 preview placeholders) |
+| triangles, LOD0 configuration (all non-LOD geometry + `_LOD0`) | 2.71 M |
+| triangles, LOD1 configuration (viewport default) | 0.87 M (budget 2.5 M) |
+| triangles, LOD2 configuration | 0.53 M (the floor is the non-LOD architecture; column shafts alone: LOD0 15 k, LOD1 2.6 k, LOD2 0.2 k each) |
+| build time | ~10 s; save 20 MB |
+| columns | rotunda 16 (D 2.5/2.1, shaft 16.3) + inner 8 (D 1.7) + colonnade 114 (north 56, south 58; D 1.7, incl. 2 x 4 pylon columns and 4 return columns per wing) |
+| colonnade | 4 row boxes + 2 pylon boxes per wing; arc lengths north 99.2 m, south 102.2 m |
+
+Socket counts: capital_rotunda 16, capital_inner 8, capital_colonnade 114, maiden 48, urn 40 (24 podium + 16 attic),
+attic_panel 8, attic_figure 8, keystone 24 (8 crown + 16 impost), frieze_run 28, drum_band 1, finial 9, rosette_ceiling 24,
+inner_figure 8 (contract addition) = 336.
+
 ## Derivations (where the reference sheet is silent or was refined)
 
 | item | value | derivation |
@@ -61,7 +83,35 @@ Counts are in `docs/arch_stats.json` (`sockets`). Additions/interpretations beyo
 - Bases are modelled by ARCH (no `base_*` sockets). Dentils are geometry (LOD0 object); egg-and-dart is a plain ovolo
   in the sweep profile (ORN may overlay a strip using the `frieze_run` sockets' geometry).
 
+## Requests for the lead / other agents
+
+1. Hero camera (lead): move to ~138 m on the face normal, e.g. `loc=(-19.3, 137.0, 1.0)`, or lens 37 mm, to match the
+   user image's framing with the sheet's dimensions (see the Known gaps entry below; evidence
+   `renders/qa_comparisons/arch_02_blockout_cam01_fov.png` vs `_zoom120`).
+2. QA cam 04 (lead): `rotation_euler=(pi,0,0)` to look up; the current `(0,0,pi)` looks at the floor.
+3. Socket contract (lead/ORN): add type `inner_figure` (8, on the inner blocks, +Y toward the rotunda centre,
+   size_hint 4.6); `keystone` sockets carry `subtype='impost_mask'` for the 16 small masks; `finial` carries
+   `subtype` (`volute_scroll` x8 on the attic corners, `dome_apex` x1); `frieze_run` carries `run_length`, `run_dir`
+   and, on the colonnade, `arc_center`/`arc_radius`/`subtype='greek_fret'`.
+4. ORN: podium urns are 24 (3 per pier, 070/022), size_hint 3.0; attic corner urns 16 at 1.6.
+5. build_master (lead): exclude `ARCH_placeholders` once ORN assets exist; keep `hide_render` in sync with
+   `set_lod_visibility` (LOD0 objects are `hide_render=True` in the file).
+6. Materials: every object has `part_type` and `instance_seed` (0-996) custom properties; column shafts are linked
+   duplicates (one mesh per type and LOD), so per-instance variation must key on the object, not the mesh.
+7. ENV: the colonnade stands on `COLONNADE_GROUND_Z = -0.6`; the rotunda platform steps reach -0.6 at r 26.7; the lagoon
+   kerb (`ARCH_site_lagoon_kerb_0`) follows the OSM lagoon polygon within 52 m of the centre, top at -0.7 (0.6 above water).
+
 ## Known gaps / open issues
+
+- Vault coffers are a 3 x 9 rectangular grid; ref 088 shows a fan of lozenge/hexagonal coffers - a later pass could
+  remap a hexagonal pattern with the same `grid_frame`-then-map approach.
+- Stairs: two straight flights placed tangentially along the lobes at piers 59.5 and 104.5; run direction not verified.
+- Podium rustication joints, dome seam lines, column pour lines: material work (documented in the sheet), not geometry.
+- The 13th planter box (52 maidens) could not be located in OSM; 12 boxes / 48 maidens are modelled.
+- The return sections between the pylon pairs are an interpretation of ref 167 (two rows 3 m apart, 2 intermediate
+  columns each); the OSM trace stops 20-27 m short of the pylons.
+- Colonnade bay layout is regenerated from parameters in `arch_params.py` (COL_BAY, COL_MODULE, COL_CLUSTER_PAIR,
+  COL_FIRST_CLUSTER_S), not from a geometry-nodes array.
 
 - Placeholders: `ARCH_placeholders` holds crude capitals, urns, figures, keystones so previews have a silhouette; the lead
   should EXCLUDE that collection when linking if ORN assets are present.
