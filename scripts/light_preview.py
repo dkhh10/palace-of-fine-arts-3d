@@ -4,7 +4,8 @@ compositor from assets/lighting.blend; renders the QA cameras in Eevee and a Cyc
     blender -b --python scripts/light_preview.py                       # Eevee QA set + Cycles 128 spp hero
     blender -b --python scripts/light_preview.py -- --hero-only        # just the Cycles hero
     blender -b --python scripts/light_preview.py -- --eevee-only
-    blender -b --python scripts/light_preview.py -- --tag evening      # name tag for the outputs
+    blender -b --python scripts/light_preview.py -- --moment evening --tag evening   # rig rebuilt in memory for the
+                                                                        # evening alternate (asset untouched)
     blender -b --python scripts/light_preview.py -- --look "AgX - Punchy" --exposure -3.5   # A/B overrides
     blender -b --python scripts/light_preview.py -- --sky-sweep        # world only through the hero camera at several
                                                                         # aerosol densities (look test against ref 169)
@@ -25,10 +26,17 @@ def arg(args, key, default=None, cast=str):
     return cast(args[args.index(key) + 1]) if key in args else default
 
 
-def build_temp_scene():
-    bpy.ops.wm.read_homefile(use_empty=True)
-    common.wipe_scene()
-    s = bpy.context.scene
+def build_temp_scene(moment=None):
+    """moment=None: link the saved rig from assets/lighting.blend. moment='evening'/'morning': rebuild the rig
+    in memory with light_build.build(save=False) so alternates never overwrite the asset."""
+    if moment:
+        import light_build
+        light_build.build(moment, save=False)
+        s = bpy.context.scene
+    else:
+        bpy.ops.wm.read_homefile(use_empty=True)
+        common.wipe_scene()
+        s = bpy.context.scene
     linked = []
     for key in ("ARCH", "ENV", "ORN"):
         path = common.ASSET_FILES[key]
@@ -53,7 +61,10 @@ def build_temp_scene():
                 for ch in lc.children:
                     _exclude(ch)
             _exclude(vl_layer)
-    lp.apply_rig(s)
+    if moment:
+        lp.apply_look(s, exposure=float(s["light_exposure_ev"]), link=False)
+    else:
+        lp.apply_rig(s)
     print("[light_preview] linked:", linked, "world:", s.world.name, "exposure:", round(s.view_settings.exposure, 2))
     return s
 
@@ -79,8 +90,13 @@ def render_cams(s, cams, engine, tag, res=(1280, 720), cycles_samples=128):
     return outs
 
 
-def sky_sweep(s, values=(0.5, 1.0, 2.0, 3.0), res=(1280, 720)):
-    """World only (all geometry hidden) through the hero camera, one image per aerosol density."""
+SWEEP = [(0.3, 1.0), (0.5, 1.0), (1.0, 1.0), (2.0, 1.0), (0.5, 2.0), (1.0, 2.0), (0.5, 3.0)]   # (aerosol, ozone)
+
+
+def sky_sweep(s, values=SWEEP, res=(1280, 720)):
+    """World only (all geometry hidden) through the hero camera, one image per (aerosol, ozone) pair, with display-
+    referred samples of the sky top (0.5, 0.04) and the west horizon (0.9, 0.30) printed for comparison with ref 169
+    (sky top 145/194/239, horizon 217/246/254)."""
     cams = common.qa_cameras(s)
     hero = [c for c in cams if "01_lagoon_hero" in c.name][0]
     for o in s.objects:
@@ -92,21 +108,36 @@ def sky_sweep(s, values=(0.5, 1.0, 2.0, 3.0), res=(1280, 720)):
         s.world = world
     sky = world.node_tree.nodes["SKY"]
     lp.apply_preview_eevee(s, samples=8)
+    import light_calibrate as cal
     outs = []
-    for a in values:
+    for a, oz in values:
         sky.aerosol_density = a
-        outs += render_cams(s, [hero], "EEVEE", f"skysweep_aerosol{a:g}", res=res)
+        sky.ozone_density = oz
+        out = render_cams(s, [hero], "EEVEE", f"skysweep_aerosol{a:g}_ozone{oz:g}", res=res)
+        w, h, px = cal.read_image(out[0][0])
+        def samp(fx, fy):
+            i = (int((1 - fy) * h) * w + int(fx * w)) * 4          # bpy rows count from the bottom
+            return tuple(round(px[i + c] * 255) for c in range(3))
+        print(f"[light_preview] sky aerosol {a:g} ozone {oz:g}: top {samp(0.5, 0.04)}  horizon_right {samp(0.9, 0.30)}  30deg {samp(0.5, 0.18)}")
+        outs += out
     return outs
 
 
 if __name__ == "__main__":
     args = common.script_args()
     tag = arg(args, "--tag", "")
-    s = build_temp_scene()
+    s = build_temp_scene(arg(args, "--moment"))
     if "--sky-strength" in args:          # A/B of the world Background strength (sun:sky ratio), local copy of the world
         w = s.world.copy() if s.world.library else s.world
         s.world = w
         w.node_tree.nodes["Background"].inputs["Strength"].default_value = arg(args, "--sky-strength", cast=float)
+    if "--no-comp" in args:               # A/B: bypass COMP_golden_hour (haze/bloom/vignette)
+        s.render.use_compositing = False
+    if "--comp-test" in args:             # exaggerate the group inputs to prove the compositor runs
+        grp = [n for n in s.compositing_node_group.nodes if n.bl_idname == "CompositorNodeGroup"][0]
+        grp.inputs["Haze Strength"].default_value = 1.0
+        grp.inputs["Vignette"].default_value = 0.1
+        grp.inputs["Bloom Strength"].default_value = 0.5
     if "--look" in args:
         s.view_settings.look = arg(args, "--look")
     if "--exposure" in args:

@@ -1,0 +1,43 @@
+[
+ {
+  "preset": "preview_eevee",
+  "res": [
+   1280,
+   720
+  ],
+  "samples": 32,
+  "seconds": 1.506014108657837,
+  "seconds_warm": 1.243603229522705
+ },
+ {
+  "preset": "viewport_eevee",
+  "res": [
+   1280,
+   720
+  ],
+  "samples": 16,
+  "seconds": 0.4658851623535156
+ },
+ {
+  "preset": "final_cycles",
+  "res": [
+   1280,
+   720
+  ],
+  "samples": 256,
+  "seconds": 28.4052951335907,
+  "est_4k_seconds": 255.64765620231628,
+  "est_4k_minutes": 4.260794270038605
+ },
+ {
+  "preset": "final_cycles",
+  "res": [
+   1280,
+   720
+  ],
+  "samples": 768,
+  "seconds": 65.16313433647156,
+  "est_4k_seconds": 586.468209028244,
+  "est_4k_minutes": 9.774470150470734
+ }
+]

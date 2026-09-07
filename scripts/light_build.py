@@ -30,8 +30,15 @@ MOMENTS = {
 FALLBACK_SUN = {"morning": (118.5, 7.4), "evening": (250.9, 6.9)}   # docs/reference_sheet.md table, if sun_calc is missing
 
 # Sky: clear autumn morning. aerosol 1.0 = the model's 'clear' default (measured horizon-west radiance 4.7/5.1/4.5,
-# zenith 0.46/0.87/1.72 in sky units, i.e. a ~5:1 horizon:zenith ratio like ref 169). altitude 5 m (sea level lagoon).
-SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0, aerosol_density=1.0, ozone_density=1.0)
+# zenith 0.46/0.87/1.72 in sky units, i.e. a ~5:1 horizon:zenith ratio like ref 169); aerosol hardly changes the sky
+# seen by the hero camera (looking away from the sun) but warms the sun-side horizon. ozone 2.0 deepens the blue at
+# low sun (B/R 1.59 vs ref 169's 1.65; ozone 1.0 gives a grey-blue 1.39). altitude 5 m (sea-level lagoon).
+SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0, aerosol_density=1.0, ozone_density=2.0)
+SKY_STRENGTH = 2.0                 # world strength for LIGHTING. The model's direct:diffuse ratio at el 7.4 is 9.9
+                                   # (E_sun 59.7 vs E_sky_horizontal 6.0, luminance); real clear-sky data at this
+                                   # elevation give ~5, and refs 054/169 show shade only ~3 stops under sunlit. x2.
+SKY_CAMERA_BOOST = 1.6             # extra factor for camera + glossy rays only: the visible sky and its reflection in
+                                   # the lagoon reach ref 169's brightness without flattening the sun/shade contrast
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
 EXPOSURE_BIAS = 0.5                # EV added to the grey-card calibration (see lighting_notes: sunlit stone in ref 169
                                    # sits ~1/2 stop above a sun-facing 18 % card; keeps the sky-lit shade readable)
@@ -98,7 +105,7 @@ def build_world(az, el, calib, moment):
     old = bpy.data.worlds.get(WORLD_NAME)
     if old:
         bpy.data.worlds.remove(old)
-    w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False)    # disc OFF: LIGHT_sun carries the disc
+    w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH, camera_boost=SKY_CAMERA_BOOST)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -110,6 +117,8 @@ def build_world(az, el, calib, moment):
     w["sky_rotation_convention"] = "sun_rotation = azimuth - 90 deg (node rotation 0 = world +Y, clockwise); verified empirically"
     for k, v in SKY.items():
         w["sky_" + k] = v
+    w["sky_strength_lighting"] = SKY_STRENGTH
+    w["sky_camera_glossy_boost"] = SKY_CAMERA_BOOST
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]
@@ -214,11 +223,11 @@ def build(moment="morning", calibrate=True, save=True):
     calib = None
     if not calibrate and report.exists():
         calib = json.loads(report.read_text())
-        if abs(calib["azimuth"] - az) > 0.05 or abs(calib["elevation"] - el) > 0.05:
+        if abs(calib["azimuth"] - az) > 0.05 or abs(calib["elevation"] - el) > 0.05 or calib.get("sky_strength") != SKY_STRENGTH:
             print("[light_build] cached calibration is for another moment; recalibrating")
             calib = None
     if calib is None:
-        calib = cal.calibrate(az, el, SKY, verbose=False)   # ~6 s of tiny Cycles renders, leaves a report + PNG
+        calib = cal.calibrate(az, el, SKY, verbose=False, sky_strength=SKY_STRENGTH)   # ~6 s of tiny Cycles renders
     energy, color = calib["lamp_energy"], tuple(calib["lamp_color"])
     exposure = calib["exposure_ev"] + EXPOSURE_BIAS
 
@@ -230,6 +239,7 @@ def build(moment="morning", calibrate=True, save=True):
     coll = common.rebuild_collection(COLLECTION)
 
     meta = dict(solar_source=source, exposure_calibrated_ev=calib["exposure_ev"], exposure_bias_ev=EXPOSURE_BIAS,
+                sky_strength_lighting=SKY_STRENGTH, sky_camera_glossy_boost=SKY_CAMERA_BOOST,
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
