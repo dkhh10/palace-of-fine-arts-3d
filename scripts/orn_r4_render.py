@@ -60,8 +60,14 @@ def rz_for(n):
 
 
 def socket_matrix(key):
+    """ARCH socket frame. NOTE (round 4): SOCKET_rosette_ceiling_* all point radially OUTWARD, i.e. the rosettes
+    face away from the rotunda interior and are invisible/buried at cam04. This rig applies the 180 deg fix that
+    build_master's ROT_Z_FIX would need (or that ARCH should bake into the sockets) so the asset can be judged."""
     loc, n = SOCKETS[key]
-    return Matrix.Translation(loc) @ Euler((0, 0, rz_for(n)), "XYZ").to_matrix().to_4x4()
+    m = Matrix.Translation(loc) @ Euler((0, 0, rz_for(n)), "XYZ").to_matrix().to_4x4()
+    if key.startswith("rosette"):
+        m = m @ Matrix.Rotation(math.pi, 4, "Z")
+    return m
 
 
 def show(name, key, scene):
@@ -76,7 +82,15 @@ def show(name, key, scene):
         except RuntimeError:
             pass
     o.matrix_world = socket_matrix(key)
-    return o
+    return group(key.replace("2", ""), o)
+
+
+GROUPS = {}
+
+
+def group(key, ob):
+    GROUPS.setdefault(key, []).append(ob)
+    return ob
 
 
 def slab(name, key, size, offset, mat, scene):
@@ -95,7 +109,7 @@ def slab(name, key, size, offset, mat, scene):
     scene.collection.objects.link(ob)
     ob.matrix_world = socket_matrix(key) @ Matrix.Translation(offset)
     common.assign_material(ob, mat)
-    return ob
+    return group(key.replace("2", ""), ob)
 
 
 def cylinder(name, key, r, h, offset, mat, scene, seg=48):
@@ -115,7 +129,7 @@ def cylinder(name, key, r, h, offset, mat, scene, seg=48):
     scene.collection.objects.link(ob)
     ob.matrix_world = socket_matrix(key) @ Matrix.Translation(offset)
     common.assign_material(ob, mat)
-    return ob
+    return group(key.replace("2", ""), ob)
 
 
 def make_cam(name, loc, target, lens, scene, shift_y=0.0):
@@ -137,7 +151,7 @@ def close_cam(key, obj, scene):
                                   [max(v[i] for v in [obj.matrix_world @ Vector(c) for c in obj.bound_box])
                                    for i in range(3)])
     centre = Vector(((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
-    a = math.atan2(n[1], n[0]) + math.radians(az_off)
+    a = math.atan2(n[1], n[0]) + math.radians(az_off) + (math.pi if key.startswith("rosette") else 0.0)
     e = math.radians(elev)
     p = centre + Vector((math.cos(a) * math.cos(e), math.sin(a) * math.cos(e), math.sin(e))) * dist
     return make_cam(f"CAM_close_{key}", p, centre, lens, scene)
@@ -220,6 +234,9 @@ def main():
     hero01 = make_cam("CAM_r4_hero01", CAM01["loc"], CAM01["target"], CAM01["lens"], scene, shift_y=CAM01["shift_y"])
     hero04 = make_cam("CAM_r4_hero04", CAM04["loc"], CAM04["target"], CAM04["lens"], scene)
     for key, obj in placed.items():
+        for k, obs in GROUPS.items():
+            for o in obs:
+                o.hide_render = o.hide_viewport = (k != key)
         hero = hero01 if HERO_CAM[key] == "01" else hero04
         scene.camera = hero
         bpy.context.view_layer.update()

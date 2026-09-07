@@ -1504,7 +1504,7 @@ ALL_TYPES = ["capital_rotunda", "maiden", "capital_colonnade", "capital_inner", 
              "urn_tub", "attic_panel", "keystone", "winged_figure", "finial", "corner_scroll", "drum_band", "rosette_ceiling",
              "dentil", "egg_and_dart", "greek_key", "rosette_band", "modillion", "anthemion"]
 VARIANTS = {"capital_rotunda": 3, "capital_inner": 2, "capital_colonnade": 3, "maiden": 3, "attic_figure": 2,
-            "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 2, "winged_figure": 2, "finial": 1, "rosette_ceiling": 2,
+            "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 3, "winged_figure": 2, "finial": 1, "rosette_ceiling": 3,
             "attic_panel": 3, "drum_band": 1, "dentil": 1, "egg_and_dart": 1, "greek_key": 1, "rosette_band": 1,
             "modillion": 1, "anthemion": 1, "corner_scroll": 2}
 
