@@ -86,6 +86,37 @@ def case_tag(c):
     return "_".join(bits) or "base"
 
 
+# --- every calibration runs BEFORE master.blend is opened ---------------------------------------------------------
+# light_calibrate._fresh_scene() calls wm.read_homefile(use_empty=True), i.e. it wipes the whole session. Calibrating
+# after opening master.blend therefore destroys it (round-10 bug: "StructRNA of type Scene has been removed").
+AZ, EL, SRC = lb.solar_position("morning")
+CASES = [parse(c) for c in HERO]
+_calib_cache = {}
+
+
+def _sky_dict(c):
+    return dict(lb.SKY, aerosol_density=c["aer"], ozone_density=c["oz"], air_density=c["air"], altitude=c["alt"])
+
+
+def _key(c):
+    return (c["aer"], c["oz"], c["air"], c["alt"], c["sky"])
+
+
+for c in CASES:
+    if _key(c) in _calib_cache:
+        continue
+    skyd = _sky_dict(c)
+    t = time.time()
+    m = cal.measure_sky(AZ, EL, skyd, samples=512)
+    e = cal.measure_exposure(AZ, EL, m["lamp_energy"], m["sun_color_normalised"], skyd,
+                             samples=256, sky_strength=c["sky"])
+    _calib_cache[_key(c)] = (m["lamp_energy"], list(m["sun_color_normalised"]), e["exposure_ev"])
+    print(f"[r10] calibrate aer {c['aer']:g} oz {c['oz']:g} air {c['air']:g} sky {c['sky']:g}: "
+          f"lamp {m['lamp_energy']:.2f} W/m2 colour {[round(v,4) for v in m['sun_color_normalised']]}, "
+          f"exposure {e['exposure_ev']:.3f} EV, L_zenith {[round(v,3) for v in m['L_zenith']]}, "
+          f"L_horizon_west {[round(v,3) for v in m['L_horizon_west']]}, "
+          f"L_sunward {[round(v,3) for v in m['L_horizon_sunward']]} ({time.time()-t:.0f}s)", flush=True)
+
 bpy.ops.wm.open_mainfile(filepath=MASTER, load_ui=False)
 scene = bpy.context.scene
 common.setup_scene(scene)
@@ -93,38 +124,17 @@ sun = bpy.data.objects.get("LIGHT_sun")
 master_world = scene.world
 base_exp = scene.view_settings.exposure
 base_look = scene.view_settings.look
-AZ = float(sun["azimuth_deg"])
-EL = float(sun["elevation_deg"])
-print(f"[r10] master {MASTER}: exposure {base_exp:.4f}, look {base_look!r}, sun az {AZ:.2f} el {EL:.2f}, "
+print(f"[r10] master {MASTER}: exposure {base_exp:.4f}, look {base_look!r}, sun az {AZ:.2f} el {EL:.2f} ({SRC}), "
       f"energy {sun.data.energy:.2f}, colour {tuple(round(v,4) for v in sun.data.color)}, "
       f"world {master_world.name!r}", flush=True)
 print(f"[r10] light_build says: sky {lb.SKY}, strength {lb.SKY_STRENGTH}, camboost {lb.SKY_CAMERA_BOOST}, "
       f"glossyboost {lb.SKY_GLOSSY_BOOST}, csat {lb.SKY_CAMERA_SATURATION}, sunblue {lb.SUN_BLUE_MULT}, "
       f"bias {lb.EXPOSURE_BIAS}, look {lp.LOOK!r}", flush=True)
 
-_calib_cache = {}
-
-
-def calibrated(c):
-    """(lamp_energy, lamp_colour, exposure_ev) for this case's atmosphere + sky strength, exactly as light_build would
-    derive them: integrate the sky's own sun disc, then expose an 18 % grey card facing the sun to 0.18."""
-    skyd = dict(lb.SKY, aerosol_density=c["aer"], ozone_density=c["oz"], air_density=c["air"], altitude=c["alt"])
-    key = (c["aer"], c["oz"], c["air"], c["alt"], c["sky"])
-    if key not in _calib_cache:
-        t = time.time()
-        m = cal.measure_sky(AZ, EL, skyd, samples=512)
-        e = cal.measure_exposure(AZ, EL, m["lamp_energy"], m["sun_color_normalised"], skyd,
-                                 samples=256, sky_strength=c["sky"])
-        _calib_cache[key] = (m["lamp_energy"], list(m["sun_color_normalised"]), e["exposure_ev"], m)
-        print(f"[r10] calibrate aer {c['aer']:g} oz {c['oz']:g} air {c['air']:g} sky {c['sky']:g}: "
-              f"lamp {m['lamp_energy']:.2f} W/m2 colour {[round(v,4) for v in m['sun_color_normalised']]}, "
-              f"exposure {e['exposure_ev']:.3f} EV, L_zenith {[round(v,3) for v in m['L_zenith']]}, "
-              f"L_horizon_west {[round(v,3) for v in m['L_horizon_west']]} ({time.time()-t:.0f}s)", flush=True)
-    return _calib_cache[key], skyd
-
 
 def apply_case(c):
-    (energy, colour, exp_ev, _m), skyd = calibrated(c)
+    energy, colour, exp_ev = _calib_cache[_key(c)]
+    skyd = _sky_dict(c)
     w = cal.make_sky_world(f"R10_{case_tag(c)}", AZ, EL, skyd, sun_disc=False, strength=c["sky"],
                            camera_boost=c["cb"], camera_saturation=c["csat"], glossy_boost=c["gb"],
                            glossy_saturation=c["gsat"], diffuse_saturation=c["dsat"])
@@ -174,8 +184,7 @@ _disk0 = bpy.data.objects.get(lb.FILL["name"])
 _vault0 = sorted([o for o in bpy.data.objects if o.name.startswith(lb.VAULT_FILL["name"])], key=lambda o: o.name)
 _e_disk0 = _disk0.data.energy if _disk0 else 0.0
 _e_vault0 = _vault0[0].data.energy if _vault0 else 0.0
-for case in HERO:
-    c = parse(case)
+for c in CASES:
     apply_case(c)
     if _disk0:
         _disk0.data.energy = _e_disk0 * c["f"]
@@ -202,31 +211,45 @@ base_spread = math.degrees(vault[0].data.spread) if vault else 0.0
 if VAULT:
     print(f"[r10] fills: disk {base_disk:.0f} W, {len(vault)} vault emitters {base_vault:.0f} W, "
           f"spread {base_spread:.0f} deg", flush=True)
+def set_fills(fscale, vscale, spread, cut=0.0, dcut=0.0):
+    """cut/dcut = Eevee `Custom Distance` (light.cutoff_distance) in metres, 0 = off.
+    Cycles IGNORES cutoff_distance, Eevee honours it, so it is a genuinely engine-conditional lever that needs no
+    second set of lights: it is the one knob that can stop the vault emitters from reaching the central coffered
+    dome (~20.7 m away) while still lighting their own soffit (4.5-11 m)."""
+    if disk:
+        disk.data.energy = base_disk * fscale
+        disk.data.use_custom_distance = dcut > 0.0
+        if dcut > 0.0:
+            disk.data.cutoff_distance = dcut
+    for o in vault:
+        o.data.energy = base_vault * vscale
+        o.data.spread = math.radians(spread)
+        o.data.use_custom_distance = cut > 0.0
+        if cut > 0.0:
+            o.data.cutoff_distance = cut
+
+
 for case in VAULT:
-    d = dict(f=1.0, v=1.0, sp=base_spread, ef=None, ev=None, esp=None)
+    d = dict(f=1.0, v=1.0, sp=base_spread, cut=0.0, dcut=0.0, ef=None, ev=None, esp=None, ecut=None, edcut=None)
     for part in case.split(";"):
         if part.strip():
             k, val = part.split("=", 1)
             d[k.strip()] = float(val)
-    tag = f"f{d['f']:g}_v{d['v']:g}_sp{d['sp']:g}"
-
-    def set_fills(fscale, vscale, spread):
-        if disk:
-            disk.data.energy = base_disk * fscale
-        for o in vault:
-            o.data.energy = base_vault * vscale
-            o.data.spread = math.radians(spread)
-
-    set_fills(d["f"], d["v"], d["sp"])
-    lp.apply_final_cycles(scene, samples=SAMPLES)
-    shoot(CAM04, OUT / f"{PREFIX}v_{tag}_cycles.png")
-    # Eevee gets its OWN energies if the case supplies them (ef/ev/esp); this is the engine-conditional fix item 6 asks for
-    if d["ef"] is not None or d["ev"] is not None or d["esp"] is not None:
+    tag = f"f{d['f']:g}_v{d['v']:g}_sp{d['sp']:g}" + (f"_cut{d['cut']:g}" if d["cut"] else "") \
+        + (f"_dcut{d['dcut']:g}" if d["dcut"] else "")
+    set_fills(d["f"], d["v"], d["sp"], d["cut"], d["dcut"])
+    if "--noC" not in args:
+        lp.apply_final_cycles(scene, samples=SAMPLES)
+        shoot(CAM04, OUT / f"{PREFIX}v_{tag}_cycles.png")
+    # Eevee gets its OWN energies / cutoffs if the case supplies them (ef/ev/esp/ecut/edcut): the engine-conditional fix
+    if any(d[k] is not None for k in ("ef", "ev", "esp", "ecut", "edcut")):
         ef = d["f"] if d["ef"] is None else d["ef"]
         ev = d["v"] if d["ev"] is None else d["ev"]
         esp = d["sp"] if d["esp"] is None else d["esp"]
-        set_fills(ef, ev, esp)
-        tag += f"_E{ef:g}_{ev:g}_{esp:g}"
+        ecut = d["cut"] if d["ecut"] is None else d["ecut"]
+        edcut = d["dcut"] if d["edcut"] is None else d["edcut"]
+        set_fills(ef, ev, esp, ecut, edcut)
+        tag += f"_E{ef:g}_{ev:g}_{esp:g}_{ecut:g}_{edcut:g}"
     lp.apply_preview_eevee(scene, samples=64)
     shoot(CAM04, OUT / f"{PREFIX}v_{tag}_eevee.png")
     set_fills(1.0, 1.0, base_spread)
