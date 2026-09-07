@@ -34,7 +34,8 @@ for name in ("ENV_terrain", "ENV_water", "ENV_trees", "ENV_tree_instances", "ENV
     SUB[name] = common.get_collection(name, parent=ENV)
 
 SITE = common.load_site_local()
-LAGOON = L.ensure_ccw(L.dedupe_poly(SITE["lagoon0"][0]))
+LAGOON_OSM = L.ensure_ccw(L.dedupe_poly(SITE["lagoon0"][0]))
+LAGOON = L.jitter_polygon(LAGOON_OSM, step=2.0, amp=0.5, seed=3)     # irregular stone edge (refs 169, 022)
 ISLETS = [L.ensure_ccw(L.dedupe_poly(SITE["lagoon1"][0])), L.ensure_ccw(L.dedupe_poly(SITE["lagoon2"][0]))]
 COLONNADE_ROOFS = [L.ensure_ccw(L.dedupe_poly(p)) for k in ("roof306 h20", "roof310 h19", "roof313 h21", "roof314 h21") for p in SITE[k]]
 HALL = L.ensure_ccw(L.dedupe_poly(SITE["b302 h20m"][0]))
@@ -64,8 +65,10 @@ def terrain_height(x, y):
     base = base * (1 - pen) + (-0.6 + 0.03 * L.fnoise(x, y, 0.08, 5)) * pen
     if HALL_FIELD.signed(x, y) < 0:              # the hall stands on a slab at lawn level
         base = -0.4
-    bank = L.smoothstep(0.0, 4.5, d)
-    return L.SHORE_Z + (base - L.SHORE_Z) * bank
+    bank_w = 3.0 + 2.0 * L.fnoise(x, y, 0.08, 7)             # 1-5 m wide bank
+    bank = L.smoothstep(0.0, max(1.5, bank_w), d)
+    shore_z = L.SHORE_Z + 0.12 * L.fnoise(x, y, 0.5, 8)       # +-12 cm irregular edge
+    return shore_z + (base - shore_z) * bank
 
 
 def on_ground(x, y, dz=0.0):
@@ -158,6 +161,8 @@ def build_terrain():
         pts.append((x, y))
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 1.5), 3.0, closed=True):
         pts.append((x, y))
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 3.5), 3.0, closed=True):
+        pts.append((x, y))
     apron = [(APRON_R * math.cos(a), APRON_R * math.sin(a)) for a in [k * 2 * math.pi / 72 for k in range(72)]]
     constraints = [LAGOON] + ISLETS + [L.offset_polygon(p, 2.0) for p in COLONNADE_ROOFS] + [apron] + ribbons + [HALL]
     # keep points away from the constraint edges (CDT epsilon issues) - cheap filter near the lagoon only
@@ -177,7 +182,7 @@ def build_terrain():
         cy = (verts2d[a][1] + verts2d[b][1] + verts2d[c][1]) / 3
         if any(L.point_in_poly(cx, cy, p) for p in ISLETS):
             face_mat.append(0)
-        elif L.point_in_poly(cx, cy, LAGOON):
+        elif L.point_in_poly(cx, cy, LAGOON) or LAGOON_FIELD.dist(cx, cy) < 1.4:
             face_mat.append(1)
         elif math.hypot(cx, cy) < APRON_R + 0.5 or any(L.point_in_poly(cx, cy, p) for p in col_exp):
             face_mat.append(2)
@@ -195,75 +200,131 @@ def build_terrain():
 
 
 # ----------------------------------------------------------------------------- water
+WATER_BED_CLEARANCE = 0.05     # the water bed sits this far above the terrain bed (no z-fighting)
+
+
 def build_water():
-    log("water")
+    """Closed lagoon volume (QA-01-3): a dense surface at WATER_Z, a bed 0.3-1.5 m below it and vertical walls at the
+    shore and around both islets, so Cycles' volume absorption in MAT_water_lagoon has something to be inside.
+    The surface is triangulated at ~2 m so the material's ripple normals/displacement resolve at hero distance."""
+    log("water (closed volume)")
     coll = SUB["ENV_water"]
+    step = 4.0 if QUICK else 2.0
     pts = []
-    # interior lattice so the surface has some density for shader displacement / reflections
-    step = 8.0
     xs = [p[0] for p in LAGOON]
     ys = [p[1] for p in LAGOON]
     x = min(xs)
     while x < max(xs):
         y = min(ys)
         while y < max(ys):
-            if LAGOON_FIELD.signed(x, y) < -1.0:
-                pts.append((x, y))
+            if LAGOON_FIELD.signed(x, y) < -0.6 and not any(f.signed(x, y) < 0.6 for f in ISLET_FIELDS):
+                pts.append((x + 0.35 * L.fnoise(x, y, 0.9, 21), y + 0.35 * L.fnoise(x, y, 0.9, 22)))
             y += step
         x += step
-    verts2d, tris = L.cdt_triangulate(pts, [LAGOON] + ISLETS)
+    # the boundary rings are resampled finely so the shoreline reads as a curve, not a chord
+    top_ring = L.resample_polyline(LAGOON, 2.0, closed=True)
+    islet_rings = [L.resample_polyline(p, 2.0, closed=True) for p in ISLETS]
+    verts2d, tris = L.cdt_triangulate(pts, [top_ring] + islet_rings)
     keep = []
     for (a, b, c) in tris:
         cx = (verts2d[a][0] + verts2d[b][0] + verts2d[c][0]) / 3
         cy = (verts2d[a][1] + verts2d[b][1] + verts2d[c][1]) / 3
         if L.point_in_poly(cx, cy, LAGOON) and not any(L.point_in_poly(cx, cy, p) for p in ISLETS):
             keep.append((a, b, c))
-    verts = [(x, y, L.WATER_Z) for (x, y) in verts2d]
-    obj = L.mesh_from_tris("ENV_lagoon_water", verts, keep, coll, [L.mat("MAT_water_lagoon")], smooth=True)
-    # simple planar UVs (10 m tiles) for the water shader
+
+    n = len(verts2d)
+    top = [(vx, vy, L.WATER_Z) for (vx, vy) in verts2d]
+    bed = [(vx, vy, min(L.WATER_Z - 0.12, terrain_height(vx, vy) + WATER_BED_CLEARANCE)) for (vx, vy) in verts2d]
+    verts = top + bed
+    faces = [list(t) for t in keep]                                   # surface, up
+    faces += [[c + n, b + n, a + n] for (a, b, c) in keep]            # bed, down
+
+    # walls: every boundary edge of the surface (used by exactly one triangle) gets a quad down to the bed
+    edge_use = {}
+    for (a, b, c) in keep:
+        for (p0, p1) in ((a, b), (b, c), (c, a)):
+            key = (min(p0, p1), max(p0, p1))
+            edge_use[key] = edge_use.get(key, 0) + 1
+    border = []
+    for (a, b, c) in keep:
+        for (p0, p1) in ((a, b), (b, c), (c, a)):
+            if edge_use[(min(p0, p1), max(p0, p1))] == 1:
+                border.append((p0, p1))
+    for (p0, p1) in border:
+        faces.append([p1, p0, p0 + n, p1 + n])
+
+    obj = L.mesh_from_tris("ENV_lagoon_water", verts, faces, coll, [L.mat("MAT_water_lagoon")], smooth=False)
     me = obj.data
+    # smooth only the surface; the walls and the bed stay flat
+    for poly in me.polygons:
+        poly.use_smooth = all(me.vertices[i].co.z > L.WATER_Z - 0.01 for i in poly.vertices)
     uv = me.uv_layers.new(name="UVMap")
     for loop in me.loops:
         v = me.vertices[loop.vertex_index].co
         uv.data[loop.index].uv = (v.x / 10.0, v.y / 10.0)
-    log(f"water: {L.tri_count(obj)} tris")
+    # manifold check
+    counts = {}
+    for poly in me.polygons:
+        vs = list(poly.vertices)
+        for i in range(len(vs)):
+            key = (min(vs[i], vs[(i + 1) % len(vs)]), max(vs[i], vs[(i + 1) % len(vs)]))
+            counts[key] = counts.get(key, 0) + 1
+    open_edges = sum(1 for v in counts.values() if v != 2)
+    depths = [L.WATER_Z - b[2] for b in bed]
+    log(f"water: {L.tri_count(obj)} tris, {len(keep)} surface tris, {len(border)} wall quads, "
+        f"open edges {open_edges}, depth {min(depths):.2f}-{max(depths):.2f} m")
+    obj["closed_volume"] = open_edges == 0
+    obj["mean_surface_edge_m"] = step
     return obj
 
 
 # ----------------------------------------------------------------------------- rip-rap
 def build_riprap():
+    """Irregular rows of 0.4-1.1 m boulders along the water line (refs 022, 063, 169, 187): a broken line at the
+    waterline (some half submerged), a second row up the bank, extra clusters where the shore is a 'hard' edge."""
     log("rip-rap")
     coll = SUB["ENV_extras"]
-    rocks = [L.make_rock_mesh(f"ENV_rock_src_{i}", radius=0.5, seed=100 + i, subdiv=1) for i in range(6)]
+    rocks = [L.make_rock_mesh(f"ENV_rock_src_{i}", radius=0.5, seed=100 + i, subdiv=1 if i < 4 else 2) for i in range(7)]
     m_rock = L.mat("MAT_rock_riprap")
     rnd = random.Random(11)
-    step = 1.3 if QUICK else 0.8
+    step = 1.4 if QUICK else 0.9
     shore = L.resample_polyline(LAGOON, step, closed=True)
     sectors = {}
+    n = len(shore)
     for i, (x, y) in enumerate(shore):
-        # local outward normal (approx) from the neighbouring points
-        p0 = Vector(shore[i - 1])
-        p1 = Vector(shore[(i + 1) % len(shore)])
+        p0 = Vector(shore[i - 1]); p1 = Vector(shore[(i + 1) % n])
         d = (p1 - p0)
         if d.length < 1e-6:
             continue
         d.normalize()
-        outward = Vector((d.y, -d.x))     # CCW polygon: right-hand side is outside (land)
-        for row, (off, zc, smin, smax) in enumerate(((-0.15, L.WATER_Z + 0.05, 0.35, 0.75), (0.7, L.SHORE_Z - 0.25, 0.3, 0.6))):
-            if row == 1 and rnd.random() < 0.35:
-                continue
-            px = x + outward.x * (off + rnd.uniform(-0.25, 0.25)) + rnd.uniform(-0.2, 0.2) * d.x
-            py = y + outward.y * (off + rnd.uniform(-0.25, 0.25)) + rnd.uniform(-0.2, 0.2) * d.y
-            s = rnd.uniform(smin, smax)
-            pz = zc + rnd.uniform(-0.12, 0.12) + s * 0.25
-            ang = int((math.degrees(math.atan2(y, x)) + 360) % 360) // 45
-            sectors.setdefault(ang, []).append((rnd.randrange(len(rocks)), ((px, py, pz), rnd.uniform(0, 6.283), (s * rnd.uniform(0.8, 1.3), s, s * rnd.uniform(0.6, 1.0)))))
-    # islet shore too
+        outward = Vector((d.y, -d.x))
+        density = 0.55 + 0.45 * L.fnoise(x, y, 0.06, 12)      # stretches of dense stone and stretches of bare bank
+        r = math.hypot(x, y)
+        if r < 50:
+            density += 0.25                                      # the rotunda peninsula is fully armoured
+        ang = int((math.degrees(math.atan2(y, x)) + 360) % 360) // 45
+        # waterline row: big boulders, partly submerged, jittered across the line
+        if rnd.random() < density:
+            s0 = rnd.uniform(0.45, 1.1)
+            off = rnd.uniform(-0.9, 0.5)
+            px, py = x + outward.x * off + rnd.uniform(-0.3, 0.3) * d.x, y + outward.y * off + rnd.uniform(-0.3, 0.3) * d.y
+            pz = L.WATER_Z + 0.05 + s0 * 0.3 + rnd.uniform(-0.25, 0.1) - max(0.0, -off) * 0.25
+            sectors.setdefault(ang, []).append((rnd.randrange(len(rocks)), ((px, py, pz), rnd.uniform(0, 6.283),
+                                                (s0 * rnd.uniform(0.8, 1.4), s0 * rnd.uniform(0.8, 1.2), s0 * rnd.uniform(0.55, 0.9)))))
+        # bank row: smaller stones, sparser
+        if rnd.random() < density * 0.55:
+            s1 = rnd.uniform(0.3, 0.7)
+            off = rnd.uniform(0.8, 1.9)
+            px, py = x + outward.x * off, y + outward.y * off
+            pz = terrain_height(px, py) - 0.12 + s1 * 0.25
+            sectors.setdefault(ang, []).append((rnd.randrange(len(rocks)), ((px, py, pz), rnd.uniform(0, 6.283),
+                                                (s1 * rnd.uniform(0.8, 1.3), s1, s1 * rnd.uniform(0.6, 0.9)))))
     for isl in ISLETS[:1]:
         for (x, y) in L.resample_polyline(isl, 1.0, closed=True):
-            s = rnd.uniform(0.3, 0.6)
-            sectors.setdefault(9, []).append((rnd.randrange(len(rocks)), ((x + rnd.uniform(-0.3, 0.3), y + rnd.uniform(-0.3, 0.3), L.WATER_Z + 0.1 + s * 0.2), rnd.uniform(0, 6.283), s)))
+            s0 = rnd.uniform(0.35, 0.8)
+            sectors.setdefault(9, []).append((rnd.randrange(len(rocks)), ((x + rnd.uniform(-0.4, 0.4), y + rnd.uniform(-0.4, 0.4), L.WATER_Z + 0.05 + s0 * 0.25), rnd.uniform(0, 6.283), s0)))
     total = 0
+    count = 0
     for ang, items in sorted(sectors.items()):
         for ri in range(len(rocks)):
             tr = [t for (k, t) in items if k == ri]
@@ -271,90 +332,201 @@ def build_riprap():
                 continue
             obj = L.join_instances(f"ENV_riprap_s{ang:02d}_r{ri}", rocks[ri], tr, coll, m_rock)
             total += L.tri_count(obj)
+            count += len(tr)
     for me in rocks:
         bpy.data.meshes.remove(me)
-    log(f"rip-rap: {total} tris")
+    log(f"rip-rap: {count} boulders, {total} tris")
 
 
-# ----------------------------------------------------------------------------- shrubs and reeds
-def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=18):
-    """Low-poly shrub: a squashed noisy icosphere plus crossed leaf cards."""
+# ----------------------------------------------------------------------------- shrubs, grasses and reeds
+# QA-01-2: the shore planting is mounded foliage built from small per-leaf cards, not extruded slabs. Every card is
+# a 9-13 cm quad with a v = up UV so the library's alpha-cut MAT_shrub / MAT_reeds textures give the silhouette.
+# Instances are separate objects sharing one mesh, so the library materials' per-object random (PFA_instance) gives
+# each bush its own hue/value; joined meshes would make a whole belt one colour.
+SHRUB_CARD = 0.10          # leaf card width (m); height is 1.25 x this
+BLADE_W = 0.05             # grass / reed blade width (m)
+
+
+def _uv_quads(me):
+    uv = me.uv_layers.new(name="UVMap")
+    for poly in me.polygons:
+        n = len(poly.vertices)
+        for k, li in enumerate(poly.loop_indices):
+            uv.data[li].uv = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))[k % 4] if n == 4 else \
+                             ((0.0, 0.0), (1.0, 0.0), (0.5, 1.0))[k % 3]
+    return uv
+
+
+def _card(verts, faces, cx, cy, cz, w, h, angle, tilt):
+    """One leaf card: bottom edge (v=0) at (cx,cy,cz), leaning by `tilt` from vertical."""
+    dx, dy = math.cos(angle) * w / 2, math.sin(angle) * w / 2
+    ux = -math.sin(angle) * math.sin(tilt) * h
+    uy = math.cos(angle) * math.sin(tilt) * h
+    uz = math.cos(tilt) * h
+    b = len(verts)
+    verts += [(cx - dx, cy - dy, cz), (cx + dx, cy + dy, cz),
+              (cx + dx + ux, cy + dy + uy, cz + uz), (cx - dx + ux, cy - dy + uy, cz + uz)]
+    faces.append([b, b + 1, b + 2, b + 3])
+
+
+def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="mound", cover=1.5):
+    """Mounded evergreen bush (pittosporum / mahonia): a dark inner blob wrapped in a shell of small leaf cards.
+    `form='upright'` gives the coarser, more open mahonia habit (cards clustered on a few upright sprays)."""
     rnd = random.Random(seed)
     bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=radius * 0.72)
+    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
     for v in bm.verts:
-        n = L.noise.noise(v.co * 2.6 + Vector((seed, seed, 0)))
-        v.co = v.co * (1.0 + 0.28 * n)
-        v.co.z = v.co.z * (height / radius) * 0.55 + height * 0.45
+        nz = L.noise.noise(v.co * 2.4 + Vector((seed, seed, 0)))
+        r = 1.0 + 0.26 * nz
+        v.co = Vector((v.co.x * radius * 0.72 * r, v.co.y * radius * 0.72 * r,
+                       max(-0.05, v.co.z) * height * 0.72 * r))
     verts = [v.co.copy() for v in bm.verts]
     faces = [[v.index for v in f.verts] for f in bm.faces]
+    n_core = len(faces)
     bm.free()
-    for c in range(cards):
-        a = rnd.uniform(0, math.pi)
-        r = radius * rnd.uniform(0.2, 0.9)
-        b = rnd.uniform(0, 2 * math.pi)
-        cx, cy = math.cos(b) * r, math.sin(b) * r
-        w, h = radius * rnd.uniform(0.5, 0.9), height * rnd.uniform(0.7, 1.25)
-        dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
-        # tilt the card outward from the shrub centre so the crown reads as a mound of foliage, not a box
-        tilt = rnd.uniform(0.15, 0.6)
-        tx, ty = math.cos(b) * h * math.sin(tilt), math.sin(b) * h * math.sin(tilt)
-        hz = h * math.cos(tilt)
-        base = len(verts)
-        verts += [Vector((cx - dx, cy - dy, 0.0)), Vector((cx + dx, cy + dy, 0.0)),
-                  Vector((cx + dx + tx, cy + dy + ty, hz)), Vector((cx - dx + tx, cy - dy + ty, hz))]
-        faces.append([base, base + 1, base + 2, base + 3])
+    area = 2 * math.pi * radius * (0.6 * radius + 0.4 * height)
+    n_cards = max(40, int(cover * area / (card * card * 1.25 * 0.53)))
+    if form == "upright":
+        n_stems = rnd.randint(5, 9)
+        stems = []
+        for _ in range(n_stems):
+            a = rnd.uniform(0, 2 * math.pi)
+            rr = radius * rnd.uniform(0.0, 0.6)
+            lean = rnd.uniform(0.05, 0.35)
+            stems.append((math.cos(a) * rr, math.sin(a) * rr, a, lean, height * rnd.uniform(0.7, 1.15)))
+        for _ in range(n_cards):
+            sx, sy, sa, lean, sh = stems[rnd.randrange(n_stems)]
+            t = rnd.uniform(0.25, 1.0) ** 0.55
+            cz = t * sh
+            spread = radius * 0.38 * (0.3 + t)
+            cx = sx + math.cos(sa) * lean * cz + rnd.uniform(-spread, spread)
+            cy = sy + math.sin(sa) * lean * cz + rnd.uniform(-spread, spread)
+            _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.75, 1.25), card * 1.25 * rnd.uniform(0.8, 1.4),
+                  rnd.uniform(0, math.pi), rnd.uniform(-1.1, 1.1))
+    else:
+        for _ in range(n_cards):
+            u = rnd.uniform(0, 2 * math.pi)
+            zt = rnd.uniform(0.02, 1.0) ** 0.55
+            rr = math.sqrt(max(0.0, 1.0 - zt * zt)) * radius * rnd.uniform(0.80, 1.12)
+            cx, cy = math.cos(u) * rr, math.sin(u) * rr
+            cz = zt * height * rnd.uniform(0.80, 1.05)
+            _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.7, 1.2), card * 1.25 * rnd.uniform(0.85, 1.45),
+                  rnd.uniform(0, math.pi), rnd.uniform(-1.2, 1.2))
     me = bpy.data.meshes.new(name)
     me.from_pydata([tuple(v) for v in verts], [], faces)
     me.update()
-    uv = me.uv_layers.new(name="UVMap")
-    for poly in me.polygons:
-        for k, li in enumerate(poly.loop_indices):
-            uv.data[li].uv = ((0, 0), (1, 0), (1, 1), (0, 1))[k % 4]
-    for p in me.polygons:
-        p.use_smooth = True
+    _uv_quads(me)
+    for i, p in enumerate(me.polygons):
+        p.use_smooth = i < n_core
+    me["cards"] = n_cards
+    me["card_m"] = card
     return me
 
 
-def make_reed_mesh(name, seed, height=1.1, blades=16):
+def make_blade_clump(name, seed, height=1.1, blades=60, width=BLADE_W, arch=0.35, spread=0.28):
+    """Strappy clump: agapanthus (short, wide arch) and dry reeds (tall, upright). Blades are three-segment strips
+    (<= 6 cm wide) that bend over, so the silhouette is never a straight-edged slab."""
     rnd = random.Random(seed)
     verts, faces = [], []
-    for b in range(blades):
+    for _ in range(blades):
         a = rnd.uniform(0, math.pi)
-        w = rnd.uniform(0.12, 0.3)
-        h = height * rnd.uniform(0.6, 1.3)
-        ox, oy = rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3)
-        lean = rnd.uniform(0, 0.35)
-        lx, ly = math.cos(rnd.uniform(0, 6.283)) * h * lean, math.sin(rnd.uniform(0, 6.283)) * h * lean
+        w = width * rnd.uniform(0.6, 1.15)
+        h = height * rnd.uniform(0.5, 1.35)
+        ox, oy = rnd.uniform(-spread, spread), rnd.uniform(-spread, spread)
+        la = rnd.uniform(0, 2 * math.pi)
+        lean = arch * rnd.uniform(0.4, 1.6)
+        lx, ly = math.cos(la) * h * lean, math.sin(la) * h * lean
         dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
-        base = len(verts)
-        verts += [(ox - dx, oy - dy, 0.0), (ox + dx, oy + dy, 0.0), (ox + dx * 0.3 + lx, oy + dy * 0.3 + ly, h), (ox - dx * 0.3 + lx, oy - dy * 0.3 + ly, h)]
-        faces.append([base, base + 1, base + 2, base + 3])
+        b = len(verts)
+        verts += [(ox - dx, oy - dy, 0.0), (ox + dx, oy + dy, 0.0),
+                  (ox + dx * 0.75 + lx * 0.30, oy + dy * 0.75 + ly * 0.30, h * 0.52),
+                  (ox - dx * 0.75 + lx * 0.30, oy - dy * 0.75 + ly * 0.30, h * 0.52),
+                  (ox + dx * 0.45 + lx * 0.72, oy + dy * 0.45 + ly * 0.72, h * 0.85),
+                  (ox - dx * 0.45 + lx * 0.72, oy - dy * 0.45 + ly * 0.72, h * 0.85),
+                  (ox + dx * 0.10 + lx, oy + dy * 0.10 + ly, h * 0.99),
+                  (ox - dx * 0.10 + lx, oy - dy * 0.10 + ly, h * 0.99)]
+        faces += [[b, b + 1, b + 2, b + 3], [b + 3, b + 2, b + 4, b + 5], [b + 5, b + 4, b + 6, b + 7]]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    # v runs 0..1 up the blade so the reed texture's roots/tips land where they should
+    uv = me.uv_layers.new(name="UVMap")
+    vs = (0.0, 0.0, 0.34, 0.34, 0.62, 0.62, 1.0, 1.0)
+    us = (0.0, 1.0, 1.0, 0.0)
+    for pi, poly in enumerate(me.polygons):
+        seg = pi % 3
+        for k, li in enumerate(poly.loop_indices):
+            vi = poly.vertices[k] % 8
+            uv.data[li].uv = (us[k % 4], vs[vi])
+    return me
+
+
+def make_twig_shrub_mesh(name, seed, radius=0.7, height=1.2, twigs=70):
+    """Leafless winter shrub (many along the shore in ref 169): thin brown strips fanning out of a base."""
+    rnd = random.Random(seed)
+    verts, faces = [], []
+    for t in range(twigs):
+        a = rnd.uniform(0, 2 * math.pi)
+        lean = rnd.uniform(0.15, 0.75)
+        h = height * rnd.uniform(0.5, 1.2)
+        w = rnd.uniform(0.02, 0.045)
+        ox, oy = rnd.uniform(-0.15, 0.15), rnd.uniform(-0.15, 0.15)
+        tx, ty = math.cos(a) * radius * lean, math.sin(a) * radius * lean
+        mx, my, mz = ox + tx * 0.4, oy + ty * 0.4, h * 0.55
+        ex, ey, ez = ox + tx, oy + ty, h
+        pa = rnd.uniform(0, math.pi)
+        dx, dy = math.cos(pa) * w, math.sin(pa) * w
+        b = len(verts)
+        verts += [(ox - dx, oy - dy, 0.0), (ox + dx, oy + dy, 0.0), (mx + dx * 0.8, my + dy * 0.8, mz), (mx - dx * 0.8, my - dy * 0.8, mz),
+                  (ex + dx * 0.3, ey + dy * 0.3, ez), (ex - dx * 0.3, ey - dy * 0.3, ez)]
+        faces.append([b, b + 1, b + 2, b + 3])
+        faces.append([b + 3, b + 2, b + 4, b + 5])
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], faces)
     me.update()
     uv = me.uv_layers.new(name="UVMap")
+    vs = (0.0, 0.0, 0.55, 0.55, 1.0, 1.0)
+    us = (0.0, 1.0, 1.0, 0.0)
     for poly in me.polygons:
         for k, li in enumerate(poly.loop_indices):
-            uv.data[li].uv = ((0, 0), (1, 0), (1, 1), (0, 1))[k % 4]
+            uv.data[li].uv = (us[k % 4], vs[poly.vertices[k] % 6])
     return me
 
 
 def build_shrubs():
-    log("shrubs + reeds")
+    """Shore planting per reference sheet s6: pittosporum mounds (dark), mahonia (upright, coarser), agapanthus
+    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through."""
+    log("shrubs + grasses + reeds")
     coll = SUB["ENV_shrubs"]
     rnd = random.Random(23)
-    shrubs = [make_shrub_mesh(f"ENV_shrub_src_{i}", 300 + i, radius=rnd.uniform(0.6, 1.1), height=rnd.uniform(0.6, 1.3)) for i in range(5)]
-    reeds = [make_reed_mesh(f"ENV_reed_src_{i}", 400 + i) for i in range(3)]
-    m_shrub, m_reed = L.mat("MAT_shrub"), L.mat("MAT_reeds")
-    placements = {"pen": [], "shore": [], "col": [], "islet": []}
-    reed_pl = []
+    # (key, material, mesh factory) - meshes are shared by every instance of that key
+    src = {}
+    for i, (r, h) in enumerate(((0.55, 0.55), (0.8, 0.8), (1.1, 1.0), (1.5, 1.25))):
+        src[f"pitto{i}"] = ("MAT_shrub", make_shrub_mesh(f"ENV_src_pittosporum_{i}", 300 + i, radius=r, height=h,
+                                                         form="mound", cover=1.6))
+    for i, (r, h) in enumerate(((0.7, 1.15), (0.95, 1.55))):
+        src[f"maho{i}"] = ("MAT_shrub", make_shrub_mesh(f"ENV_src_mahonia_{i}", 320 + i, radius=r, height=h,
+                                                        card=0.13, form="upright", cover=1.1))
+    for i in range(3):
+        src[f"agap{i}"] = ("MAT_reeds", make_blade_clump(f"ENV_src_agapanthus_{i}", 340 + i, height=0.62 + 0.12 * i,
+                                                         blades=70, width=0.050, arch=0.55, spread=0.30))
+    for i in range(3):
+        src[f"reed{i}"] = ("MAT_reeds", make_blade_clump(f"ENV_src_reed_{i}", 400 + i, height=1.0 + 0.22 * i,
+                                                         blades=54, width=0.045, arch=0.18, spread=0.26))
+    for i in range(3):
+        src[f"twig{i}"] = ("MAT_reeds", make_twig_shrub_mesh(f"ENV_src_twig_{i}", 350 + i,
+                                                             radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i))
+    mats = {k: L.mat(m) for k, (m, _) in {k: v for k, v in src.items()}.items()}
+    for k, (mname, me) in src.items():
+        me.materials.append(mats[k])
+
+    placed = []            # (key, (x, y, z), rot, scale)
 
     def land_ok(x, y, min_shore=0.0, max_shore=1e9):
         d = LAGOON_FIELD.signed(x, y)
         if d < min_shore or d > max_shore:
             return False
-        if math.hypot(x + 16.0, y - 113.9) < 24.0:      # hero camera foreground stays clean (user image, ref 169)
+        if math.hypot(x + 14.1, y - 100.0) < 34.0:      # hero camera foreground stays clean (user image, ref 169)
             return False
         if math.hypot(x, y) < APRON_R + 1.0:
             return False
@@ -364,51 +536,79 @@ def build_shrubs():
             return False
         return True
 
-    # peninsula: a shrub belt along the rotunda island shore (dense on the lagoon side)
-    for _ in range(900):
-        a = rnd.uniform(-math.pi, math.pi)
-        r = rnd.uniform(APRON_R + 1.5, 47.0)
-        x, y = r * math.cos(a), r * math.sin(a)
-        if not land_ok(x, y, 0.9, 7.0):
+    def put(key, x, y, dz=-0.06, s=(0.85, 1.25)):
+        placed.append((key, (x, y, terrain_height(x, y) + dz), rnd.uniform(0, 6.283), rnd.uniform(*s)))
+
+    def clump(cx, cy, n, spread, keys, min_shore=0.9, max_shore=7.0):
+        for _ in range(n):
+            x, y = cx + rnd.uniform(-spread, spread), cy + rnd.uniform(-spread, spread)
+            if land_ok(x, y, min_shore, max_shore):
+                put(rnd.choice(keys), x, y)
+
+    MOUNDS = ("pitto0", "pitto1", "pitto2", "pitto3")
+    LOWMOUNDS = ("pitto0", "pitto1", "pitto2")
+    MAHONIA = ("maho0", "maho1")
+    AGAP = ("agap0", "agap1", "agap2")
+    REEDS = ("reed0", "reed1", "reed2")
+    TWIGS = ("twig0", "twig1", "twig2")
+
+    # 1. rotunda peninsula: dense on the north-east (user image, right of the rotunda), open on the south-east
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.6), 4.0, closed=True):
+        r = math.hypot(x, y)
+        if not (APRON_R + 1.0 < r < 49.0):
             continue
-        east = L.smoothstep(-0.4, 0.7, y / max(1e-6, r))
-        if rnd.random() > 0.35 + 0.55 * east:
-            continue
-        placements["pen"].append(((x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.9, 1.9)))
-    # shore belt around the rest of the lagoon (between water and path)
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.2), 2.4, closed=True):
-        if math.hypot(x, y) < 50 or not land_ok(x, y, 0.8, 6.0):
+        az = math.degrees(math.atan2(y, -x)) % 360
+        ne = L.smoothstep(150.0, 60.0, abs(az - 40.0)) if az < 180 else 0.0
+        se = L.smoothstep(150.0, 60.0, abs(az - 140.0)) if az < 200 else 0.0
+        p = 0.40 + 0.5 * ne - 0.15 * se
+        if rnd.random() < p:
+            keys = MOUNDS + MAHONIA if ne > 0.5 else LOWMOUNDS + MAHONIA
+            clump(x, y, rnd.randint(2, 5), 2.2, keys)
+        if rnd.random() < 0.5:
+            clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.4, max_shore=3.0)
+        if rnd.random() < 0.30:
+            clump(x, y, 1, 1.5, TWIGS, min_shore=0.6, max_shore=6.0)
+    # 2. the rest of the shore: sparser mounds, dry reeds and agapanthus at the waterline
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.2), 5.0, closed=True):
+        if math.hypot(x, y) < 50 or not land_ok(x, y, 0.6, 7.0):
             continue
         if rnd.random() < 0.45:
-            placements["shore"].append(((x + rnd.uniform(-1, 1), y + rnd.uniform(-1, 1), terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.7, 1.6)))
-        if rnd.random() < 0.7 and math.hypot(x + 16.0, y - 113.9) > 24.0:   # not in front of the hero camera
-            rx, ry = x + rnd.uniform(-1.2, 0.6), y + rnd.uniform(-1.2, 0.6)
-            reed_pl.append(((rx, ry, terrain_height(rx, ry) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.7, 1.4)))
-    # foundation planting along the colonnade fronts and the islet
+            clump(x, y, rnd.randint(1, 4), 2.6, LOWMOUNDS + MAHONIA)
+        if rnd.random() < 0.45:
+            clump(x, y, 1, 1.5, TWIGS, min_shore=0.5, max_shore=6.0)
+        if rnd.random() < 0.75:
+            clump(x, y, rnd.randint(1, 3), 1.8, REEDS, min_shore=0.25, max_shore=3.2)
+        if rnd.random() < 0.55:
+            clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.25, max_shore=2.8)
+    # 3. foundation planting along the colonnade fronts
     for p in COLONNADE_ROOFS[:2]:
-        for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 3.0, closed=True):
+        for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.0, closed=True):
             if land_ok(x, y, 1.0) and rnd.random() < 0.5:
-                placements["col"].append(((x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.8, 1.7)))
-    for _ in range(120):
+                clump(x, y, rnd.randint(1, 3), 2.0, LOWMOUNDS + MAHONIA, min_shore=1.0, max_shore=1e9)
+    # 4. the wooded islet: dense dark mounds under the willows
+    for _ in range(90):
         p = ISLETS[0]
         xs = [q[0] for q in p]
         ys = [q[1] for q in p]
         x, y = rnd.uniform(min(xs), max(xs)), rnd.uniform(min(ys), max(ys))
-        if L.point_in_poly(x, y, p) and ISLET_FIELDS[0].signed(x, y) < -1.0:
-            placements["islet"].append(((x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.8, 1.8)))
+        if L.point_in_poly(x, y, p) and ISLET_FIELDS[0].signed(x, y) < -0.8:
+            key = rnd.choice(MOUNDS + AGAP + REEDS)
+            placed.append((key, (x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.8, 1.5)))
+
+    counts = {}
     total = 0
-    for key, items in placements.items():
-        for si in range(len(shrubs)):
-            tr = [t for i, t in enumerate(items) if (i % len(shrubs)) == si]
-            if tr:
-                total += L.tri_count(L.join_instances(f"ENV_shrubs_{key}_{si}", shrubs[si], tr, coll, m_shrub))
-    for si in range(len(reeds)):
-        tr = [t for i, t in enumerate(reed_pl) if (i % len(reeds)) == si]
-        if tr:
-            total += L.tri_count(L.join_instances(f"ENV_reeds_{si}", reeds[si], tr, coll, m_reed))
-    for me in shrubs + reeds:
-        bpy.data.meshes.remove(me)
-    log(f"shrubs: {sum(len(v) for v in placements.values())} shrubs, {len(reed_pl)} reed tufts, {total} tris")
+    for i, (key, loc, rot, sc) in enumerate(placed):
+        me = src[key][1]
+        obj = bpy.data.objects.new(f"ENV_shrub_{key}_{i:04d}", me)
+        obj.location = loc
+        obj.rotation_euler = (0.0, 0.0, rot)
+        obj.scale = (sc * rnd.uniform(0.92, 1.1), sc * rnd.uniform(0.92, 1.1), sc * rnd.uniform(0.9, 1.15))
+        coll.objects.link(obj)
+        counts[key] = counts.get(key, 0) + 1
+        total += L.tri_count(obj)
+    card_max = max(src[k][1].get("card_m", 0.0) * 1.45 for k in src if src[k][1].get("card_m"))
+    log(f"shrubs: {len(placed)} instances of {len(src)} meshes, {total} tris, "
+        f"largest leaf card {card_max * 100:.0f} cm; {counts}")
 
 
 # ----------------------------------------------------------------------------- birds
@@ -513,7 +713,7 @@ def main():
     if not NO_TREES:
         import env_trees
         plan = env_trees.build_all(SUB, terrain_height, LAGOON_FIELD, ISLET_FIELDS, quick=QUICK,
-                                   colonnade_polys=COLONNADE_ROOFS, hall_poly=HALL)
+                                   colonnade_polys=COLONNADE_ROOFS, hall_poly=HALL, hall_field=HALL_FIELD)
         notes = common.DOCS / "environment_notes.md"
         if notes.exists():
             txt = notes.read_text()
@@ -526,7 +726,7 @@ def main():
                 log("planting plan table written into docs/environment_notes.md")
     if not NO_BACKDROP:
         import env_backdrop
-        env_backdrop.build_all(SUB, terrain_height, SITE, HALL)
+        env_backdrop.build_all(SUB, terrain_height, SITE, HALL, HALL_FIELD)
     # viewport default LOD1 (instances only); source trees stay hidden everywhere
     L.set_object_lod_visibility(ENV, 1)
     for obj in SUB["ENV_trees"].objects:

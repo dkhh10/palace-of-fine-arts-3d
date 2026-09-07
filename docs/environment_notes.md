@@ -66,12 +66,12 @@ shore rows (Baker Street) and NE-corner cypresses (DPR) · G wooded islet · H b
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |
 |---|---|---|---|---|---|
-| 00 | pine | -31 | 14 | 21 | A peninsula north lobe, cluster core (satellite crown (-35,16)) |
-| 01 | redwood | -27 | 8 | 16 | A young redwood in front of the north arch (ref 070) |
+| 00 | pine | -40 | 10 | 21 | A peninsula north lobe, cluster core (satellite crown (-35,16)); outside QA cam02's frame |
+| 01 | redwood | -35 | 0 | 16 | A young redwood at the north arch (ref 070), west edge of cam02 |
 | 02 | cypress | -36 | 6 | 24 | A dark mass right of the dome |
 | 03 | pine | -38 | 17 | 22 | A |
 | 04 | willow | -36 | 24 | 10 | A pale weeping willow at the water in front of the cluster (ref 169) |
-| 05 | broadleaf | -30 | 22 | 11 | A shore broadleaf |
+| 05 | broadleaf | -41 | 18 | 11 | A shore broadleaf (moved off cam02's line of sight) |
 | 06 | cypress_column | -36 | -18 | 27 | A2 tall column right of the rotunda (user image x~1020) |
 | 07 | pine | -47 | -13 | 17 | A2 strip along the north wing (kept below the colonnade entablature) |
 | 08 | cypress_column | -58 | -12 | 27 | A2 second column (user image x~1220) |
@@ -82,12 +82,12 @@ shore rows (Baker Street) and NE-corner cypresses (DPR) · G wooded islet · H b
 | 13 | eucalyptus | -106 | 20 | 30 | B big eucalyptus behind the willows (ref 171) |
 | 14 | cypress | -118 | 8 | 22 | B beyond the north pylon |
 | 15 | cypress_column | -112 | 40 | 24 | B tall column beyond the north pylon (ref 169 right) |
-| 16 | cypress_column | 45 | -8 | 26 | C cypress column left of the rotunda (user image x~290) |
-| 17 | cypress_column | 41 | -13 | 24 | C second column (user image x~330) |
+| 16 | cypress_column | 31 | 18 | 26 | C cypress column left of the rotunda (user image x~290): peninsula south lobe, base at the water |
+| 17 | cypress_column | 26 | 23 | 24 | C second column (user image x~330), south lobe |
 | 18 | broadleaf | 20 | 17 | 13 | C small dark tree touching the rotunda's left edge (user image x~410), in the podium planter zone |
 | 19 | eucalyptus | 62 | -30 | 30 | C broad eucalyptus behind the south wing (ref 169 left) |
 | 20 | pine | 24 | -22 | 18 | C satellite crown (19,-13) |
-| 21 | broadleaf | 31 | -7 | 10 | C satellite crown (26,-3), small |
+| 21 | broadleaf | 33 | -20 | 10 | C satellite crown (26,-3), small; off cam03's axis |
 | 22 | cypress_column | 66 | 40 | 22 | D dense cypress behind the south pylon (ref 169 far left) |
 | 23 | eucalyptus | 76 | 46 | 28 | D |
 | 24 | pine | 92 | 58 | 18 | D |
@@ -138,22 +138,70 @@ shore rows (Baker Street) and NE-corner cypresses (DPR) · G wooded islet · H b
 | 69 | eucalyptus | 168 | 112 | 30 | H |
 | 70 | eucalyptus | -88 | -308 | 30 | H |
 | 71 | cypress | -30 | -290 | 24 | H |
-| 72 | pine | 34 | -36 | 24 | E redwood screen |
-| 73 | redwood | 45 | -33 | 31 | E redwood screen |
-| 74 | redwood | 55 | -25 | 24 | E redwood screen |
-| 75 | redwood | 66 | -18 | 25 | E redwood screen |
-| 76 | cypress | 73 | -6 | 22 | E redwood screen |
-| 77 | redwood | 85 | 12 | 24 | E redwood screen |
-| 78 | pine | 92 | 32 | 22 | E redwood screen |
-| 79 | pine | -110 | -4 | 20 | E redwood screen |
-| 80 | redwood | -100 | -1 | 25 | E redwood screen |
-| 81 | redwood | -83 | -18 | 30 | E redwood screen |
-| 82 | cypress | -76 | -22 | 24 | E redwood screen |
-| 83 | redwood | -64 | -28 | 30 | E redwood screen |
-| 84 | redwood | -52 | -38 | 24 | E redwood screen |
-| 85 | pine | -46 | -37 | 20 | E redwood screen |
-| 86 | redwood | -34 | -41 | 29 | E redwood screen |
-| 87 | cypress | -25 | -47 | 20 | E redwood screen |
+| 72 | pine | 39 | -31 | 22 | E1 screen behind the colonnade |
+| 73 | redwood | 45 | -23 | 31 | E1 screen behind the colonnade |
+| 74 | redwood | 46 | -26 | 27 | E1 screen behind the colonnade |
+| 75 | redwood | 50 | -21 | 22 | E1 screen behind the colonnade |
+| 76 | pine | 55 | -18 | 23 | E1 screen behind the colonnade |
+| 77 | redwood | 59 | -9 | 28 | E1 screen behind the colonnade |
+| 78 | pine | 62 | -11 | 19 | E1 screen behind the colonnade |
+| 79 | pine | 68 | -5 | 20 | E1 screen behind the colonnade |
+| 80 | cypress | 73 | -2 | 24 | E1 screen behind the colonnade |
+| 81 | pine | 75 | 11 | 23 | E1 screen behind the colonnade |
+| 82 | redwood | 77 | 8 | 23 | E1 screen behind the colonnade |
+| 83 | cypress | 79 | 14 | 22 | E1 screen behind the colonnade |
+| 84 | redwood | 82 | 20 | 30 | E1 screen behind the colonnade |
+| 85 | redwood | 87 | 28 | 29 | E1 screen behind the colonnade |
+| 86 | redwood | 79 | 34 | 29 | E1 screen behind the colonnade |
+| 87 | cypress | 81 | 39 | 26 | E1 screen behind the colonnade |
+| 88 | redwood | 106 | 47 | 24 | E1 screen behind the colonnade |
+| 89 | cypress | 82 | 46 | 31 | E1 screen behind the colonnade |
+| 90 | redwood | 70 | 52 | 27 | E1 screen behind the colonnade |
+| 91 | cypress | 58 | -5 | 30 | E1 screen behind the colonnade |
+| 92 | redwood | 44 | -36 | 29 | E2 screen behind the colonnade |
+| 93 | redwood | 51 | -32 | 33 | E2 screen behind the colonnade |
+| 94 | redwood | 59 | -26 | 27 | E2 screen behind the colonnade |
+| 95 | cypress | 64 | -20 | 34 | E2 screen behind the colonnade |
+| 96 | eucalyptus | 71 | -14 | 30 | E2 screen behind the colonnade |
+| 97 | redwood | 80 | -7 | 33 | E2 screen behind the colonnade |
+| 98 | redwood | 83 | 2 | 33 | E2 screen behind the colonnade |
+| 99 | eucalyptus | 87 | 13 | 27 | E2 screen behind the colonnade |
+| 100 | cypress | 93 | 26 | 32 | E2 screen behind the colonnade |
+| 101 | redwood | 87 | 36 | 33 | E2 screen behind the colonnade |
+| 102 | eucalyptus | 117 | 48 | 33 | E2 screen behind the colonnade |
+| 103 | redwood | 90 | 49 | 32 | E2 screen behind the colonnade |
+| 104 | redwood | 76 | 18 | 27 | E2 screen behind the colonnade |
+| 105 | cypress | -119 | 9 | 27 | E1 screen behind the colonnade |
+| 106 | redwood | -86 | 11 | 30 | E1 screen behind the colonnade |
+| 107 | cypress | -87 | 4 | 30 | E1 screen behind the colonnade |
+| 108 | cypress | -87 | -4 | 26 | E1 screen behind the colonnade |
+| 109 | redwood | -83 | -9 | 30 | E1 screen behind the colonnade |
+| 110 | pine | -79 | -14 | 22 | E1 screen behind the colonnade |
+| 111 | redwood | -75 | -18 | 25 | E1 screen behind the colonnade |
+| 112 | pine | -71 | -23 | 22 | E1 screen behind the colonnade |
+| 113 | cypress | -66 | -26 | 29 | E1 screen behind the colonnade |
+| 114 | pine | -60 | -29 | 23 | E1 screen behind the colonnade |
+| 115 | pine | -53 | -33 | 21 | E1 screen behind the colonnade |
+| 116 | pine | -51 | -35 | 24 | E1 screen behind the colonnade |
+| 117 | cypress | -43 | -36 | 29 | E1 screen behind the colonnade |
+| 118 | redwood | -37 | -37 | 29 | E1 screen behind the colonnade |
+| 119 | cypress | -31 | -39 | 28 | E1 screen behind the colonnade |
+| 120 | redwood | -28 | -42 | 26 | E1 screen behind the colonnade |
+| 121 | cypress | -33 | -29 | 28 | E1 screen behind the colonnade |
+| 122 | redwood | -69 | -12 | 23 | E1 screen behind the colonnade |
+| 123 | redwood | -83 | 25 | 24 | E1 screen behind the colonnade |
+| 124 | redwood | -114 | 17 | 28 | E1 screen behind the colonnade |
+| 125 | redwood | -95 | 12 | 29 | E2 screen behind the colonnade |
+| 126 | redwood | -93 | 2 | 33 | E2 screen behind the colonnade |
+| 127 | cypress | -91 | -10 | 27 | E2 screen behind the colonnade |
+| 128 | redwood | -85 | -19 | 34 | E2 screen behind the colonnade |
+| 129 | eucalyptus | -79 | -8 | 31 | E2 screen behind the colonnade |
+| 130 | redwood | -70 | -31 | 31 | E2 screen behind the colonnade |
+| 131 | redwood | -44 | -45 | 31 | E2 screen behind the colonnade |
+| 132 | cypress | -34 | -47 | 33 | E2 screen behind the colonnade |
+| 133 | redwood | -28 | -49 | 28 | E2 screen behind the colonnade |
+| 134 | eucalyptus | -77 | -5 | 33 | E2 screen behind the colonnade |
+| 135 | eucalyptus | -87 | 34 | 30 | E2 screen behind the colonnade |
 <!-- PLAN_TABLE_END -->
 
 ## Previews and comparisons

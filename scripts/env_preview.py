@@ -90,7 +90,46 @@ def sky_rotation_for_azimuth(az_deg):
     return az_deg - 90.0
 
 
-def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0):
+def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0, master=False):
+    """master=True renders the lead's master.blend (full scene: ARCH + ORN + ENV + LIGHT rig and look) into
+    renders/previews/environment/ - the ENV file must have been rebuilt AND build_master.py run first."""
+    if master:
+        mp = common.ROOT / "master.blend"
+        if not mp.exists():
+            raise SystemExit("master.blend missing: run scripts/build_master.py first")
+        bpy.ops.wm.open_mainfile(filepath=str(mp))
+        scene = bpy.context.scene
+        try:
+            import light_presets
+            if engine.upper() == "CYCLES":
+                light_presets.apply_final_cycles(scene)
+            else:
+                light_presets.apply_preview_eevee(scene)
+        except Exception as e:
+            print("[env_preview] light_presets not applied:", e)
+        cams_all = [o for o in bpy.data.objects if o.type == "CAMERA" and o.name.startswith("CAM_qa_")]
+        if cams:
+            cams_all = [c for c in cams_all if any(k in c.name for k in cams)]
+        scene.render.resolution_x, scene.render.resolution_y = 1280, 720
+        scene.render.resolution_percentage = 100
+        if engine.upper() == "CYCLES":
+            scene.render.engine = "CYCLES"
+            scene.cycles.samples = 64
+        else:
+            scene.render.engine = "BLENDER_EEVEE"
+            scene.eevee.taa_render_samples = samples
+        out_dir = common.RENDERS / "previews" / "environment"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        ts = common.timestamp()
+        outs = []
+        for cam in sorted(cams_all, key=lambda c: c.name):
+            scene.camera = cam
+            fp = out_dir / f"{ts}_{cam.name.replace('CAM_qa_', '')}{('_' + tag) if tag else ''}_master.png"
+            scene.render.filepath = str(fp)
+            bpy.ops.render.render(write_still=True)
+            print("[env_preview] rendered", fp)
+            outs.append(fp)
+        return outs
     build_scene(local=local, lod=lod)
     return common.render_previews("environment", cameras=cams, samples=samples, tag=tag, engine=engine, cycles_samples=48)
 
@@ -154,6 +193,7 @@ if __name__ == "__main__":
     tag = ""
     engine = "EEVEE"
     local = "--local" in args
+    master = "--master" in args
     lod = 0
     for a in args:
         if a.startswith("--lod="):
@@ -173,5 +213,5 @@ if __name__ == "__main__":
     elif "--extra" in args:
         render_extra(tag=tag or "extra", local=local, lod=lod)
     else:
-        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod)
+        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master)
         print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")
