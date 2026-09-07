@@ -437,14 +437,14 @@ def C(r, g, b):
 def build_concrete_family():
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
-        "Base Color": C(0.575, 0.363, 0.082), "Grey Color": C(0.37, 0.272, 0.105), "Grey Drift": 0.28,
+        "Base Color": C(0.640, 0.398, 0.070), "Grey Color": C(0.41, 0.298, 0.090), "Grey Drift": 0.28,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.08, "Block Size": 3.6, "Blotch Size": 1.8,
         "Detail Strength": 0.85, "Streaks": 1.0, "Streak Scale": 2.5, "Streak Length": 10.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
         "Patches": 0.25, "Edge Wear": 0.45, "Edge Radius": 0.03, "Recess Dirt": 0.55, "Recess Distance": 0.4,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
-        "Base Color": C(0.445, 0.333, 0.140), "Grey Color": C(0.35, 0.288, 0.165), "Grey Drift": 0.42,
+        "Base Color": C(0.490, 0.362, 0.122), "Grey Color": C(0.385, 0.313, 0.143), "Grey Drift": 0.42,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.08, "Block Size": 2.4, "Blotch Size": 2.5,
         "Detail Strength": 0.6, "Streaks": 0.55, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.5,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6, "Efflorescence": 1.15,
@@ -452,7 +452,7 @@ def build_concrete_family():
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.585, 0.368, 0.082), "Grey Color": C(0.34, 0.262, 0.112), "Grey Drift": 0.25,
+        "Base Color": C(0.650, 0.403, 0.070), "Grey Color": C(0.38, 0.287, 0.096), "Grey Drift": 0.25,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.08, "Block Size": 3.0, "Blotch Size": 3.0,
         "Detail Strength": 0.55, "Streaks": 0.8, "Streak Scale": 3.0, "Streak Length": 12.0, "Ledge Distance": 2.5, "Ledge Weight": 0.4,
         "Streak Shade Bias": 0.6,
@@ -460,14 +460,14 @@ def build_concrete_family():
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.25, "Pour Spacing": 0.6})
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
-        "Base Color": C(0.425, 0.297, 0.098), "Grey Color": C(0.33, 0.262, 0.145), "Grey Drift": 0.40,
+        "Base Color": C(0.468, 0.323, 0.086), "Grey Color": C(0.36, 0.284, 0.126), "Grey Drift": 0.40,
         "Grey Below Z": 40.0, "Grey Above Z": 60.0, "Tone Variation": 0.08, "Block Size": 3.0, "Blotch Size": 2.5,
         "Detail Strength": 0.5, "Streaks": 0.3, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.6,
         "Patches": 0.1, "Edge Wear": 0.4, "Edge Radius": 0.03, "Recess Dirt": 0.7, "Recess Distance": 0.5, "Underside Dirt": 0.6,
         "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.35, "Pour Lines": 0.4, "Pour Spacing": 0.6})
     # ornament: capitals, maidens, urns, panels -- dust in the hollows, worn arrises, per-instance variation, baked-map hooks
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.575, 0.363, 0.082), "Grey Color": C(0.37, 0.272, 0.105), "Grey Drift": 0.20,
+        "Base Color": C(0.640, 0.398, 0.070), "Grey Color": C(0.41, 0.298, 0.090), "Grey Drift": 0.20,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.12, "Block Size": 1.2, "Blotch Size": 0.8,
         "Detail Strength": 0.4, "Streaks": 0.35, "Streak Scale": 5.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.5,
         "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02, "Recess Dirt": 0.75, "Recess Distance": 0.3,
@@ -475,14 +475,14 @@ def build_concrete_family():
         "Instance Variation": 1.7}, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
     concrete_material("MAT_column_rose", "concrete_wall_008", 6.0, {
-        "Base Color": C(0.455, 0.190, 0.098), "Grey Color": C(0.37, 0.215, 0.155), "Grey Drift": 0.22,
+        "Base Color": C(0.500, 0.207, 0.090), "Grey Color": C(0.40, 0.232, 0.140), "Grey Drift": 0.22,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 3.2, "Blotch Size": 1.5,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02,
         "Recess Dirt": 0.6, "Recess Distance": 0.25, "Roughness": 0.72, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         column={"Wash Color": C(0.42, 0.24, 0.21), "Wash": 0.55, "Drum Height": 3.25, "Drum Variation": 0.07, "Top Z": 16.3, "Top Darkening": 0.35})
     # the 8 inner tan columns (and their blocks)
     concrete_material("MAT_column_tan_inner", "concrete_wall_008", 7.0, {
-        "Base Color": C(0.530, 0.352, 0.100), "Grey Color": C(0.40, 0.307, 0.148), "Grey Drift": 0.18,
+        "Base Color": C(0.585, 0.385, 0.086), "Grey Color": C(0.44, 0.334, 0.128), "Grey Drift": 0.18,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.15, "Block Size": 3.0, "Blotch Size": 1.5,
         "Detail Strength": 0.5, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.45, "Edge Radius": 0.02,
         "Recess Dirt": 0.6, "Recess Distance": 0.25, "Roughness": 0.78, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
@@ -520,11 +520,11 @@ def build_dome():
     m = ML.new_material("MAT_dome_membrane")
     t = Tree(m.node_tree)
     N = t.geometry().outputs["Normal"]
-    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.70, 0.645, 0.535), "Streak Color": C(0.50, 0.50, 0.47), "Moss Color": C(0.34, 0.42, 0.28),
+    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.905, 0.720, 0.442), "Streak Color": C(0.62, 0.555, 0.42), "Moss Color": C(0.34, 0.42, 0.28),
                                         "Grime Color": C(0.20, 0.13, 0.06), "Seams": 48.0, "Seam Width": 0.05, "Streaks": 0.8, "Moss": 0.3,
-                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.50, "Bump": 0.3, "Seed": 12.0})
+                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.42, "Bump": 0.3, "Seed": 12.0})
     bsdf = t.principled(**{"Base Color": g.outputs["Color"], "Roughness": g.outputs["Roughness"], "Normal": g.outputs["Normal"],
-                           "Specular IOR Level": 0.40, "Coat Weight": t.mul(g.outputs["Coat"], 0.35), "Coat Roughness": 0.35, "Coat Normal": g.outputs["Normal"]})
+                           "Specular IOR Level": 0.44, "Coat Weight": t.mul(g.outputs["Coat"], 0.35), "Coat Roughness": 0.30, "Coat Normal": g.outputs["Normal"]})
     t.output(surface=bsdf.outputs[0])
     return ML.finish(m)
 
