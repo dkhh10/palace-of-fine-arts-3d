@@ -256,3 +256,25 @@ cannot hold the two volumes).
 lagoon throwing light up into the vault — and because an area light emits only along its +Z it lifts the coffers and the
 vault soffits while adding almost nothing to what cam01 sees through the arch (which already matches ref 169). This is an
 art bias, sized by measurement, exactly like `EXPOSURE_BIAS`: `light_build.FILL["energy"]` is the single number to dial.
+
+## 11. QA-01-20 — the dome from above
+
+The defect was written against the placeholder ("blows out to near white from above, roughness 0.7"). With
+`MAT_dome_membrane` in place that is gone: on cam06 (aerial, Eevee) the dome cap now reads **sRGB 130.2, 100.8, 76.7**
+(Y 0.146) against the lawn's 64.5, 70.7, 64.5 (Y 0.060) — no clipped channel anywhere on the cap, dome/lawn = 2.45.
+
+`ref 105` is a poor photometric reference for this: it is a distant, hazy, high-sun aerial in which the palace is about
+100 px across, and neither the dome cap nor a comparable lawn patch can be isolated with confidence (the teal mask picks
+up the whole marina, not the lagoon). The honest exposure-invariant test uses **ref 169**, a golden-hour photograph of
+our exact moment, where the dome and a sunlit attic panel share one exposure:
+
+| | dome cap | sunlit attic | dome / attic (Y) |
+|---|---|---|---|
+| render, Cycles hero | 160.3, 118.5, 82.1 (Y 0.2118) | 182.5, 136.9, 93.7 (Y 0.2867) | **0.74** |
+| ref 169 | 226.6, 192.1, 134.6 (Y 0.5576) | 208.5, 164.5, 93.4 (Y 0.4100) | **1.36** |
+
+In the photograph the dome is 36 % *brighter* than the sunlit wall; in the render it is 26 % darker — the membrane is
+about 46 % too dark relative to the concrete, and it is much less warm (hue 28.0 vs 37.5). Both surfaces see the same
+sun, so this is albedo, not lighting: **hand to materials** — `MAT_dome_membrane` needs to be lifted and warmed relative
+to `MAT_concrete_ochre` until the ratio lands near 1.3. The lighting side of QA-01-20 (no blow-out, correct roughness
+response) is closed.
