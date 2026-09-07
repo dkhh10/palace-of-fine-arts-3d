@@ -103,6 +103,10 @@ if __name__ == "__main__":
     args = common.script_args()
     tag = arg(args, "--tag", "")
     s = build_temp_scene()
+    if "--sky-strength" in args:          # A/B of the world Background strength (sun:sky ratio), local copy of the world
+        w = s.world.copy() if s.world.library else s.world
+        s.world = w
+        w.node_tree.nodes["Background"].inputs["Strength"].default_value = arg(args, "--sky-strength", cast=float)
     if "--look" in args:
         s.view_settings.look = arg(args, "--look")
     if "--exposure" in args:
