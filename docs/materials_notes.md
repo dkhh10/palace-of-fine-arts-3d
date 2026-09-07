@@ -46,19 +46,28 @@ the local test sun; `--env` appends `ENV` into the hero scene (materials remappe
 | `PFA_dome` | membrane: meridional lap seams (`Seams`=48 -> ~2.2 m at the base), radial streaks in polar coords, moss on the north (-X) flank, grime ring at the base (from the world normal's z so it works for any dome origin) | both |
 
 ## The concrete stack (`PFA_concrete`), in evaluation order
-1. base albedo (sheet values, warmed: see "calibration") with per-instance hue +-3 % / value +-8 % (`Instance Variation`);
-2. cast-block tone steps: axis-aligned Chebychev Voronoi cells (`Block Size`, +-`Tone Variation`), soft pour blotches
-   (`Blotch Size`), fine speckle (30/m, +-7 %);
+1. base albedo (sheet values, warmed: see "calibration") with per-instance hue +-0.3 % (~1.7 deg) / value +-11 %, plus
+   `wvar` = a per-instance weathering multiplier (0.05..1.9 at `Instance Variation` 1.7) applied to the streak, ledge and
+   recess-dirt masks. Round 3: the per-instance spread is VALUE and WEATHERING, not hue (QA-02-2);
+2. tone: soft drift (`Drift Size`, 8-22 m, +-`Tone Variation`) x mid-scale mottle (`Blotch Size`, +-`Tone Variation`) x
+   noise-warped cast-block steps (`Block Size`, only +-0.35 x TV, borders broken so they do not read as pasted blotches)
+   x fine speckle (30/m, +-7 %);
 3. photo detail: box-projected CC0 concrete diffuse used as *luminance only*, normalised by its mean (`Detail Mean`) so it
    never changes the hue, weight `Detail Strength`; its roughness map modulates roughness, its displacement drives the bump;
 4. grey/damp drift toward `Grey Color`: 0.7 x (world z below `Grey Below Z`..`Grey Above Z`) + noise; the lower 8 m of the
    rotunda go grey-tan, the attic stays warm;
 5. formwork/pour lines every `Pour Spacing` (object z), broken by noise; slab grid joints (`Grid Joints`, paving);
-6. repair patches: sparse sharp Chebychev cells, +14 % value, -20 % saturation, tiny bump step;
-7. rain streaks (`PFA_streaks` x `Streaks`), tint x (0.36, 0.37, 0.31);
-8. recess dirt: `1 - AO(Recess Distance)` x `Recess Dirt` (+ `Extra Dirt` from bakes, + `Underside Dirt` on down-facing
-   faces for soffits), tint x (0.5, 0.47, 0.42) = the sheet's "recesses 0.55 x plain";
-9. edge wear (`PFA_edge` x `Edge Wear`): +22 % value, -15 % saturation, -0.15 roughness on convex arrises;
+6. repair patches: noise-warped Chebychev cells with a 0.05-wide threshold ramp (feathered skim coats, not stencils),
+   +6 % value, -8 % saturation, tiny bump step;
+7. ledge run-off band (`PFA_streaks` Ledge x 0.40 x `Streaks` x `wvar`), tint x (0.74, 0.695, 0.615): the continuous
+   soiling directly under every overhang; then rain streaks (`PFA_streaks` x `Streaks` x `wvar`), tint x
+   (0.46, 0.405, 0.325) -- warm dark grey, R > G > B. Round 3: the old (0.36, 0.37, 0.31) had G > R and was the olive
+   cast QA-02-2 measured on the shaded piers and arch soffits;
+8. recess dirt: `1 - AO(Recess Distance)` x `Recess Dirt` x `wvar` (+ `Extra Dirt` from bakes, + `Underside Dirt` on
+   down-facing faces for soffits), tint x (0.56, 0.495, 0.405);
+9. edge wear (`PFA_edge` x `Edge Wear`): +22 % value, -15 % saturation, -0.15 roughness on convex arrises. `Edge Radius`
+   is 0.10-0.12 m on wall-scale materials (0.05 on ornament, whose features are 0.4 m): at the hero's 7 cm/px a 3 cm
+   arris is sub-pixel and cannot read, which is why round 2 scored "no edge wear anywhere" (QA-02-3);
 10. algae band + efflorescence (`Algae`, `Algae Z`, `Algae Height`): band -> 65 % toward (0.045, 0.07, 0.04), roughness 0.45
     (slick); efflorescence -> chalky (0.58, 0.56, 0.50), roughness 0.92;
 11. bird droppings on up-facing surfaces (sparse Voronoi, `Bird Droppings`, ornament only);
@@ -255,3 +264,129 @@ a second foliage row at y 10.5 / y 32.5). Library is now **35 materials**.
 - `scripts/mat_compare.py` -- labelled comparison sheets from renders/photos with optional crops (plain PIL).
 - `mat_lineup --ev <delta>` -- exposure-offset diagnostic (used to quantify what lighting owed).
 - `CAM_mat_ornament_far` -- the 60 m per-instance variation camera.
+
+## Round 3 (Phase 4 polish round 1, 2026-09-07) -- QA-02-2 / -3 / -6 / -14
+
+Everything below was judged at the exposure the build will ship at (`scene.view_settings.exposure` -3.2911 **+0.9 EV**
+= -2.3911, lighting's QA-02-4 change), so none of it silently compensates for the exposure. Two new tools:
+`scripts/mat_scene_check.py` renders a waterline / stone / hero set out of the *assembled* master with that exposure
+applied (`--ev`, default +0.9), because the lineup in `materials.blend` has neither ARCH's geometry nor ENV's water and
+was giving the wrong answer about both the algae band and the sunlit-stone colour.
+
+### QA-02-2 blotchy "decal" stone, olive cast, per-instance hue (blocker)
+Three separate causes, all confirmed by reading the shader rather than by eye:
+
+1. **Hard-edged pale blotches.** Two node stages produced literal hard borders. The cast-block tone step is an
+   axis-aligned Chebychev Voronoi (`Block Size` 2.4-4.0 m = 34-56 px on the hero) and the repair patches used a
+   `maprange(cell, thr, thr+0.004)` -- a 0.4 %-wide ramp, i.e. a stencil. Fixes: both cell fields are now noise-warped
+   before the Voronoi so their borders are broken and plaster-like; the block step amplitude is cut to 0.35 x
+   `Tone Variation`; the patch ramp is 0.05 wide and the patch tone step is +6 % value / -8 % sat (was +14 % / -20 %).
+   A new `Drift Size` input (8-22 m, +- full `Tone Variation`) carries the large soft tonal drift that is what actually
+   reads across 100 m of wall, and the mid-scale mottle went from +-0.6 x TV to +-1.0 x TV.
+2. **Olive cast on shaded piers and arch soffits.** The rain-streak tint was `(0.36, 0.37, 0.31)` -- **G > R**, a green
+   multiplier, riding a broad low-contrast mask, so it read as a green wash over every sheltered surface instead of as
+   drips. It is now `(0.46, 0.405, 0.325)` (R > G > B, warm dark grey) on a narrow high-contrast mask. Measured on the
+   hero's shaded pier: hue **28.0 -> 33.6 deg** (acceptance 34-42; the albedo-blue cut below carries it the rest of the
+   way). The recess-dirt tint was warmed the same way, (0.5, 0.47, 0.42) -> (0.56, 0.495, 0.405).
+3. **Per-instance hue instead of weathering.** `PFA_concrete` spread instances by +-0.06 in HSV hue x
+   `Instance Variation` 1.7 = **+-18 deg**, which is why a yellow capital (hue ~55) stood next to a salmon one (~20).
+   Hue variation is now +-0.0055 x IV (+-1.7 deg, pigment-lot scale), value went +-0.16 -> +-0.22 x IV, and a new
+   per-instance `wvar` (0.05..1.9 at IV 1.7) scales that instance's streak, ledge and recess-dirt masks, so instances
+   differ by how weathered they are. Measured on `CAM_mat_ornament_far` (four capitals, 60 m, 200 mm, +0.9 EV):
+   hue **32.4 / 32.6 / 33.0 / 33.6 deg = 1.2 deg spread** (was ~35 deg; acceptance <= 4), luminance 124.8 / 128.5 /
+   133.0 / 148.4 = a 19 % value spread.
+
+### QA-02-3 no edge wear, no rain streaks, no algae band (blocker)
+- **Edge wear could not read at any strength.** `Edge Radius` was 0.02-0.03 m; the hero is ~7 cm/px, so a 3 cm arris is
+  sub-pixel. It is now 0.10-0.12 m on wall-scale materials (0.05 m on ornament, whose features are 0.4 m, 0.03 m on the
+  drum band), with `Edge Wear` 0.45 -> 0.6. The `PFA_edge` group is unchanged (Bevel-normal difference in Cycles,
+  inside-AO in both engines).
+- **Streaks were a wash, not drips.** `Streak Scale` 1.5-3.0 / `Streak Length` 3-10 gave features 0.3-0.7 m wide and
+  ~2 m long -- a 3:1 aspect, which averages to a flat tint. Now 6-14 / 4-10 = 0.07-0.17 m wide by 1-1.4 m long
+  (8-15:1), with tighter smoothstep ramps in `PFA_streaks`. `Ledge Weight` went the *other* way, 0.75-0.85 -> 0.45-0.55:
+  the ledge mask is an AO probe only ~3 m deep, so a high weight left the open wall faces bare instead of streaked.
+  A new **ledge run-off band** (`Ledge` x 0.40 x `Streaks` x `wvar`, tint x (0.74, 0.695, 0.615)) puts continuous
+  soiling directly under every overhang, under the drips.
+- **The algae band was switched off nearly everywhere.** `Algae` defaulted to 0.0 and only `MAT_concrete_podium` set
+  it. The band mask is height-gated, so it costs nothing on high geometry: the default is now 1.0 and every material
+  that can reach the water carries it (ochre, podium, colonnade, inner, paving; off on ornament, columns, ceiling,
+  drum band, backdrop). `MAT_rock_riprap`'s band went 0.35 m at WATER_Z+0.05 -> 0.55 m at WATER_Z+0.10.
+- **The podium does not actually touch the water in this site.** Its base sits at z ~ -0.9 behind a soil/rip-rap shore
+  while WATER_Z is -1.3, so a 0.55 m band at the water line was entirely underground. The podium/colonnade/ochre band
+  heights are 1.0-1.1 m, which puts ~0.6 m of dark damp stone on the *visible* podium base -- what the acceptance is
+  measuring. **For ARCH/ENV:** in ref 169 the podium stonework runs straight into the lagoon; here a shore band is
+  interposed, which is a terrain/footprint difference, not a shader one.
+
+### QA-02-6 lagoon flanks 3.9x dark, near field over-saturated cyan (shared with environment)
+Same single cause: 45 % of the water surface was transmitting into a dense absorbing volume, so the lagoon body was a
+light sink and the only bright thing left was the specular sky mirror -- a black body with a blue mirror on it.
+`Transmission Weight` 0.45 -> 0.28, murk brightened and moved toward neutral green-grey ((0.042, 0.084, 0.055) /
+(0.078, 0.140, 0.086) -> (0.088, 0.122, 0.086) / (0.140, 0.178, 0.130), Eevee's opaque murk to match), volume density
+0.9 -> 0.7. **ENV still owns the mesh and the bed depth**; if the flanks are still short after this, the next lever is
+the bed, not the shader.
+
+### QA-02-14 sunlit stone 5-9 deg cool and under-saturated
+The blue channel, not the red or green, is the whole error: at +0.9 EV the sunlit attic read **216, 182, 140**
+(hue 32.9, sat 0.352) against ref 169's **220, 176, 93** (hue 39.1, sat 0.577) -- R and G already match to within 3 %.
+Albedo blue was cut ~40-45 % across the concrete family (ochre/colonnade/ornament 0.068 -> 0.038, podium 0.115 ->
+0.082, inner and tan columns 0.082 -> 0.052, rose 0.086 -> 0.048, paving/plaster/backdrop/drum in proportion), and the
+`Grey Color` of each material with it so the damp drift does not put the blue back. `MAT_dome_membrane` went
+(0.905, 0.720, 0.442) -> (0.905, 0.720, 0.378) (measured hue 32.6 vs ref 37.4). **Left to lighting:** a real part of
+the residual blue is skylight fill rather than albedo -- the render's R-B spread is far narrower than ref 169's -- and
+albedo cannot be pushed further without becoming an orange pigment rather than concrete.
+
+### The saturation result, and why it is now lighting's (measured, QA-02-14)
+Cutting the concrete albedo blue by **44 %** (0.068 -> 0.038) moved the hero attic's *display* blue by **3 %**
+(140 -> 136) and its saturation from 0.352 to 0.372. That is the whole experiment: at the shipping +0.9 EV the sunlit
+stone sits on the **AgX shoulder**, where albedo has almost no authority over display chroma. Pushing albedo further
+would make the concrete an orange pigment and still not reach ref 169's sat 0.577.
+
+What is left is illuminant and view transform, not albedo:
+- ref 169's R-B spread on sunlit stone is **127** (220,176,93); ours is **81** (216,181,136). A photograph of low sun
+  through coastal haze is a much redder illuminant than our sun + sky mix.
+- The measured AgX response is -1.1 deg of hue and falling saturation per +1 EV, so the exposure lift QA asked for
+  costs chroma; our attic lands at lum 185.6 against ref's 179.4, i.e. ~4 % hot, which costs a little more.
+
+**Requests to lighting:** (a) warm `LIGHT_sun` (temperature) rather than expecting albedo to carry it; (b) the sky
+saturation node currently puts a lot of blue fill on every surface -- the shaded pier reads sat 0.315 where the photo's
+shade is far warmer; (c) if the hero still reads pale after that, half a stop less exposure buys chroma back.
+The one lever materials still had was the specular veil (a 0.4 Specular IOR Level on rough concrete reflects the blue
+sky straight back); it is now 0.25 across the concrete family, 0.30 paving, 0.20 plaster.
+
+### Coordinator additions folded into round 3
+- **Near-water chroma (with ENV).** The murk was still doing half the colouring, so murk and sky reflection compounded.
+  Murk moved toward neutral grey-green: near (0.088, 0.122, 0.086) -> (0.104, 0.118, 0.100), far (0.140, 0.178, 0.130)
+  -> (0.152, 0.168, 0.142), volume Color (0.16, 0.28, 0.18) -> (0.205, 0.250, 0.195), Absorption (0.60, 0.85, 0.60) ->
+  (0.70, 0.80, 0.68); the Eevee opaque murk follows. The Fresnel sky reflection now supplies the blue on its own.
+  **Note a conflict in the reference numbers:** QA round 2 measured ref 169's near water at sat **0.426**, ENV reports
+  **0.11** for the same region. Our r3t near-field box already reads 0.341, i.e. below QA's figure. The step above is
+  deliberately moderate; if 0.11 is the right target the murk should go essentially neutral, but that should be settled
+  against one agreed crop before pushing further.
+- **QA-01-8 hall wall through the hero arch.** `MAT_backdrop_building` had `Detail Strength` 0.3 with a 22 m drift --
+  nothing at all at the 60-90 m the hall actually sits at, hence "flat untextured cream". Now Detail Strength 0.7,
+  Tone Variation 0.16 -> 0.24, Drift Size 22 -> 11 m, Blotch Size 6 -> 3.2 m, Bump 0.25 -> 0.5 (stucco), Streaks
+  0.5 -> 0.8 with `Ledge Distance` 3.5 m and `Recess Distance` 0.9 m so the cornice throws a real soiling band, and
+  Patches 0.1 -> 0.18. `MAT_backdrop_skylight`'s base was lifted off black ((0.055, 0.062, 0.070) ->
+  (0.072, 0.080, 0.092)) so a dark opening reads as dirty glazing catching sky rather than a hole in the image.
+  **The hard black opening itself is geometry:** if that aperture is an unfilled hole rather than a face carrying
+  `MAT_backdrop_skylight`, no shader change will close it -- it needs a face from whoever owns the hall massing.
+
+### Round 3 result: hero regions vs ref 169 (aligned, identical boxes, both at the shipping +0.9 EV)
+`renders/previews/materials/r3v_scene_hero.png` against the aligned ref 169 panel of
+`renders/qa_comparisons/round02_cam01_aligned_vs_ref169.png`. Composite:
+`renders/qa_comparisons/mat_r3_stone_water.png`.
+
+| region | round 2 | round 3 | ref 169 | verdict |
+|---|---|---|---|---|
+| sunlit attic | 194,144,94 hue 29.7 sat 0.519 | 216,180,134 hue **33.8** sat 0.383 | 220,171,87 hue 37.8 sat 0.603 | hue 4.0 deg (was 8.1); saturation still short |
+| dome cap | hue 33.3 | hue **33.5** | hue 33.9 | 0.4 deg **pass** |
+| column shaft | hue 23.4 | hue **29.2** | hue 25.0 | now 4.2 deg *warm* |
+| shaded pier | hue 28.0 sat 0.414 | hue **34.6** sat 0.313 | hue 32.9 sat 0.491 | inside QA-02-2's 34-42 band |
+| lagoon mid-left | lum 55.1 | lum **140.2** | lum 134.6 | **+4 % of the photo** (was 3.9x dark) -- QA-02-6 luminance **pass** |
+| lagoon mid-left sat | 0.601 | 0.367 | 0.118 | still 3x: this water is a mirror, so its colour *is* the horizon sky's |
+| near water | lum 55.5 sat 0.534 | lum 93.7 sat **0.298** | lum 76.9 sat 0.611 | now slightly *under*-saturated; ENV's 0.11 target was the flank, not the near field |
+| capitals at 60 m (4 instances) | hue spread ~35 deg | **1.2 deg**, value spread 19 % | - | QA-02-2 per-instance **pass** |
+
+Round 2's saturation numbers are 0.9 EV darker and so are not comparable on that axis; the hue and lagoon numbers are.
+**Remaining, and not materials':** the flank water's chroma is the reflected horizon sky (lighting's haze/aerosol), and
+the sunlit-stone saturation gap is illuminant warmth plus the AgX shoulder (see the section above).

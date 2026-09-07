@@ -138,6 +138,12 @@ def add_bevel(obj, width=None, segments=None):
     b.angle_limit = math.radians(40.0)
     b.miter_outer = "MITER_ARC"
     b.harden_normals = False
+    # Phase 4 perf (2026-09-07): the bevelled objects carry no LOD suffix, so they sit in both the viewport (LOD1)
+    # and the render (LOD0) set. Render-only keeps every arris the QA-02-3 edge-wear mask reads from while taking
+    # 261 k triangles out of the viewport. Measured cost of the bevels in an Eevee render of architecture.blend:
+    # cam01 6.0 s -> 6.8 s, cam05 7.1 s -> 9.0 s (1280x720, 16 TAA, warm) -- keep them in the render.
+    b.show_viewport = False
+    b.show_render = True
     return b
 
 

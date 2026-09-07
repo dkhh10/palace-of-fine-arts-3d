@@ -1,6 +1,6 @@
 """QA round renderer (QA / Critic owned). Renders an EXISTING master.blend from the fixed QA cameras; never edits assets.
 
-    blender -b --python scripts/qa_render_round.py -- --round 01 --eevee            # six cams, Eevee 1280x720, 32 spp
+    blender -b --python scripts/qa_render_round.py -- --round 01 --eevee            # six cams, Eevee 1280x720, 32 spp, LOD1
     (the Cycles pass is "--final", not "--cycles": Blender prefix-matches --cycles-* even after "--")
     blender -b --python scripts/qa_render_round.py -- --round 01 --final [--samples 128] [--res 1920 1080] [--cams 01]
     blender -b --python scripts/qa_render_round.py -- --round 01 --eevee --cams 01 02   # subset
@@ -56,6 +56,11 @@ def round_name(fp, suffix=""):
 
 
 if "--eevee" in args:
+    # Lead decision (round 02 -> 03): the Eevee preview pass renders LOD1, not LOD0. The 2-7x slowdown between
+    # rounds 01 and 02 was the LOD0 *render* set (ORN instances 26.7 M + ENV 17.9 M tris), not new geometry.
+    # The --final Cycles pass below is left at LOD0 (render=0), which is what the deliverable finals use.
+    common.set_lod(viewport=1, render=1)
+    print("[qa_render] eevee pass: LOD1 for both viewport and render")
     try:
         import light_presets
         light_presets.apply_preview_eevee(scene, samples=32)

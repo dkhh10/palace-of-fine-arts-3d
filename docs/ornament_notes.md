@@ -235,6 +235,110 @@ differently. `rim_z` 3.30 m; feet at z = -3.30 in the socket frame; custom props
   `CAPITAL_STYLE` scales lower-leaf width, upper-leaf length, curl, droop, volute radius and helix radius per variant
   and variant 2 has one chipped/short leaf tip. Same for the maidens (pose parameters above) and the urns.
 
+## QA round 02 fixes (Phase 4 polish round 1, 2026-09-07)
+
+### Why the relief read as a decal (QA-02-9) — measured, not guessed
+`scripts/orn_relief_check.py` ray-casts a 260 x 120 grid at an asset from the front and reports the depth
+histogram, the spread of N·L for the morning sun, the fraction of the surface that shadows itself, and the mean
+sky-openness of every sample (the occlusion term). Two measurements explain the defect:
+
+1. **The sun is within 11° of the panel's own normal.** `--sockets` prints s·n for every attic socket with
+   sun az 118.5 / el 7.4 (`s = (0.473, 0.872, 0.129)`): `SOCKET_attic_panel_001` — the face cam05 and cam01 both
+   see — has **s·n = 0.981**, `attic_figure_001` 0.962, `finial_001` (the corner scroll) 0.962. A body standing
+   `d` proud of a vertical wall casts a shadow only `d·√(1−(s·n)²)/(s·n)` along that wall = **2 cm for a 10 cm
+   projection** here. No amount of relief will produce ref 063's cast shadows at this sun angle; the darkness has
+   to come from *occlusion*, i.e. from ground that is deep and narrow relative to what stands over it.
+2. **There was no ground.** The old panel measured p10 depth **0.168 m** with **100 % of the field ≥ 15 cm proud**:
+   `place_scan` sank each relief scan's own background plate to 2 cm behind the slab face, so the "field" was the
+   scan's backing, and the figures were a 0.28 m mound on top of it. Sun-blocked 0.3 %, sky-openness 0.900 — an
+   essentially unoccluded surface, which is exactly what "engraved decal" looks like.
+
+### QA-02-9 — attic panels
+| | before | after |
+|---|---|---|
+| depth p10 / p50 / max above the back plane | 0.168 / 0.287 / 0.482 m | **0.022 / 0.347 / 0.628 m** |
+| field ≥ 25 / 40 / 55 cm proud | 58.9 / 8.5 / 0.0 % | 60.6 / 36.4 / 7.0 % |
+| N·L relative spread (sun on a +Y face) | 0.189 | **0.328** |
+| self-shadowed samples / mean sky-openness | 0.3 % / 0.900 | **6.6 % / 0.737** |
+| LOD0 / LOD1 / LOD2 tris (v1) | 142571 / 23960 / 2389 | 128606 / 23751 / 15343 |
+| figures per panel | 15 / 13 / 13 | **22 / 20 / 20** |
+
+What changed:
+- **The field ground is sunk to y = 0.015** with a 0.115 m border left standing at y = 0.16, and the scans'
+  background plates go down to it (`place_scan(..., bg_y=, front_y=)` solves each scan's depth scale from its own
+  `bg_frac`, which differs a lot: 0.36 centaur, 0.53 soldiers, 0.63 dacians).
+- **Two depth registers plus a back row.** Front row fronts at y ≈ 0.575, alternating figures at 0.415, and a new
+  back row of 7 figures at 0.215 filling the gaps. What reads as carving at 100 m is the ladder of dark slots
+  between a front body and the half-hidden one behind it (ref 063 / zimm_panel_1 are a two-deep crowd).
+- **The figures were far too fat**: `bulk` 1.45–1.70 gave a 1.4 m wide torso on a 3.85 m figure and the garment
+  half-width was `0.215·H` = a 1.7 m wide cone, so the whole panel voxel-fused into one pale mound. Now
+  `bulk` 1.02–1.18, garment `0.128·H`, and the body is depth-compressed (`flatten` 0.42–0.54 front, 0.30–0.40
+  back) so the exposed cap of each body carries the full sweep of turned normals instead of a 40° cap.
+- **The envelope is ARCH's, measured**: `ARCH_rotunda_attic_panel_*` (the sunk field block) has its front face at
+  socket-local y = 0.00 and `ARCH_rotunda_attic_frame_*` (the 4.7 cm moulding ring) stands at y = 0.234–0.281,
+  so the recess is 0.28 m deep. The panel mass stays inside it; only the boldest figures break the frame plane,
+  by ≈ 0.35 m, as limbs do in ref 063. An earlier pass at 0.83 m of relief measured better (rendered relative
+  luminance std 0.158 vs 0.139) but stood 0.55 m proud of ARCH's frame, which is wrong, so it was pulled back.
+- Remesh smoothing 1 pass at factor 0.18 (was 0.3) at a 0.024 voxel.
+
+**Honest limit.** QA-02-9 asks for the panel's luminance std ≥ 60 % of ref 063's over the same box. Measured with
+`scripts/orn_relief_stats.py` (relative std = std/mean, exposure-invariant): ref 063 **0.296**, so the bar is
+0.178. The rebuilt panel renders **0.139** at exposure −3.29 and 0.117 at −2.39 in the look-dev, against 0.136
+for the old panel in the round-02 master. Ref 063 was shot with a high sun that throws 10–20 cm cast shadows
+across the field; at az 118.5 / el 7.4 the sun is 11° off this panel's normal and throws none, and AgX compresses
+what is left as the exposure rises. The remaining distance is a **materials** job (QA-02-3 dust in the recesses,
+which now have recesses to sit in) and a lighting one, not a geometry one — the geometry metrics are all now
+between 1.7x and 3x better. Flagged to the lead.
+
+### Verification in the full scene (orn3)
+`scripts/lead_build.sh` on this branch, then
+`blender -b --python scripts/qa_render_round.py -- --round orn3 --final --samples 64 --cams 01 05`
+(Cycles 1920x1080, 363 s cam01 / 621 s cam05, exposure still -3.2911: the lighting agent's -2.39 had not landed).
+Sheet: `renders/previews/ornament/orn3_qa02_9_10_sheet.png` (cam05 new / cam05 round 02 / ref 063, then
+cam01 new / cam01 round 02 / ref 169). Panel box relative luminance std, `scripts/orn_relief_stats.py`:
+
+| camera | box | round 02 | **orn3** | reference | QA-02-9 bar (60 % of ref) |
+|---|---|---|---|---|---|
+| cam05 | 872,134-1076,225 (ref 702,199-913,307) | 0.136 | **0.206** | 0.296 (ref 063) | 0.178 — **met** |
+| cam01 | 888,197-1038,254 (ref 902,243-1016,288) | 0.123 | **0.162** | 0.271 (ref 169) | 0.163 — at the bar |
+
+So QA-02-9's acceptance is met at cam05 (70 % of ref 063) and lands on the line at cam01. Both numbers will move
+when the exposure goes to -2.39: measured in the look-dev, +0.9 EV costs about 0.02-0.03 of relative std because
+AgX compresses the highlights, so a re-measure after the lighting merge is worth doing.
+
+### QA-02-10 / QA-01-13 — attic corner figures and the scroll pair
+- **Corner figure.** Two failures: `union_blob(..., smooth=3)` at a 2.8 cm voxel closed the arm-to-torso gaps and
+  the drapery channels, and the wrap/gown was `0.27·S` half-width = a **2.07 m wide bell** on a 6.7 m figure.
+  Now: remesh `smooth=1, factor 0.25` at 2.2 cm; wrap, mantle, gown and overfold narrowed ×0.56–0.57; and
+  `attic_side_cascades()` adds the two heavy cloth panels that hang from behind the arms to the hem on both
+  sides in `attic_corner_figure_1` / ref 085, at 0.325·S out with 0.20–0.44 relative folds (fold depth 0.09–0.19 m
+  on a 0.44 m half-width cascade), leaving a ≈ 0.2 m dark slot between each cascade and the body.
+  Bbox 2.96 → **3.71 m** wide (v1) / 3.48 m (v2), height unchanged at 6.78 / 6.82 m, LOD0 still 120 k.
+  Measured: relief ≥ 0.55 m over 99 % of the front, N·L relative spread 0.312 → 0.319, sky-openness 0.774 → 0.788.
+- **Scroll pair.** `ORN_corner_scroll` is now **a pair** of Ionic volute blocks 0.83 m apart on a shared moulded
+  plinth (2.44 × 0.89 × 1.60 m, spiral eye r 0.44, LOD0 40 k), not the single 1.78 m block that used to sit
+  *between* ARCH's own pair. ARCH already models crude volutes on the same sockets
+  (`ARCH_rotunda_attic_volute_NN_a/_b`, 290 tris, centres at local x = ±0.415, z 0.25–1.52, y −0.10…0.22, on a
+  1.90 × 0.60 × 0.25 plinth); the new asset is built to **those centres and to an envelope that fully encloses
+  them**, so the two cannot z-fight whichever the lead hides. If the lead prefers the photographed arrangement
+  (a scroll over each flanking pilaster, ±1.95 m — attic_corner_figure_1), ARCH must move its volutes and add the
+  16 `corner_scroll` sockets proposed under QA-01-13; the asset would then be split back into single blocks.
+
+### LOD0 budget
+`capital_colonnade` LOD0 trimmed **80 k → 48 k** in place with `scripts/orn_trim_lod0.py` (no re-bake: LOD1 and
+its normal map are untouched). 114 instances, so **−3.6 M tris** in the master. Panel LOD0 also came down
+(142–147 k → 129–143 k). No LOD0 budget was raised.
+
+### New tools (ORN-owned)
+- `scripts/orn_relief_check.py` — `--sockets` (ARCH socket frames + s·n for the morning sun), `--arch <patterns>`
+  (ARCH object sizes in the socket frame), `--objects <names>` (depth histogram, N·L spread, self-shadow and
+  sky-openness). Reads only; never writes a .blend.
+- `scripts/orn_relief_stats.py` — python3/PIL: relative luminance std of a box in any image, `--save` writes the
+  crops side by side. The exposure-invariant form of QA-02-9's acceptance test.
+- `scripts/orn_relief_render.py` — the attic band (panel + corner figure + scroll + stand-in wall) from the real
+  cam05 station with the real rig, Cycles, ~10 s a look. `--exposure` to preview the lighting agent's −2.39.
+- `scripts/orn_trim_lod0.py` — in-place LOD0 decimation.
+
 ## Open issues (ORN)
 - `ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget (the mesh has too many disjoint shells
   after the field clamp for the collapse to go further). LOD2 is only used beyond ~200 m, so I left it.

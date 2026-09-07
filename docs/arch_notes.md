@@ -230,3 +230,126 @@ Garland relief panels remain plain sunk panels with Greek-key frames (relief is 
 - QA cam 04 (`CAM_qa_04_rotunda_ceiling`) has rotation (0,0,pi) which looks DOWN; (pi,0,0) looks up with the top of the
   frame toward -Y. Previews add `CAM_arch_ceiling_up` for the ceiling view.
 - `common.set_lod_visibility` toggles only `hide_viewport`; the saved file also has `hide_render=True` on LOD0/LOD2.
+
+## Phase 4 polish round 1 (2026-09-07)
+
+### QA-02-1 (blocker) — "the dome reads absent from cam05": measured, and it is the camera, not the dome
+
+**The QA metric could not be reproduced, so a new one was built.** `qa_silhouette.measure` is a face-on tool: its
+`corner_top` is the median of the outer 12 % of the crop and its `apex` the min over the central 30 %. From an
+oblique, low station those land on the *receding* attic edge and on the *near attic corner block* respectively, so
+on `round02_05_south_lawn.png` it reports `rise_over_wa = 0.179` where the eye sees a sliver of drum. New tool:
+`scripts/arch_domecheck.py` — pure numpy, no Blender. It projects the parameterised solids themselves
+(attic top ring = `entablature_plan()` offset out by the 0.74 m cornice projection at `ATTIC_Z1`; drum wall, drum
+cornice and dome as surfaces of revolution from `arch_params`) through a pinhole matching Blender
+(`f = res_x * lens / 36`, `cy = res_y/2 + shift_y * res_x`; the `+` sign was verified against the round-02 hero,
+predicted apex row 76 vs QA's mask apex 88) and reports per image column `attic_top_y - dome_top_y`:
+
+| metric | meaning |
+|---|---|
+| `W_rot` | on-screen width of the attic top ring = the on-screen rotunda width |
+| `rise_over_W` | max visible dome+drum rise above the attic cornice / `W_rot` (QA-02-1 acceptance: >= 0.09) |
+| `cover` | fraction of `W_rot` where the dome/drum is above the attic cornice (acceptance: >= 0.60) |
+| `clear_over_W` | dome apex above the *highest* attic point (the near corner block) — "does a cap read at all" |
+
+**Current geometry at `CAM_qa_05` (45, 55, 1.4), target (0,0,20), lens 20:** `W_rot` 498 px,
+`rise_over_W` **0.046**, `cover` 0.34, `clear_over_W` **-0.005** (the dome apex is *below* the near attic corner
+block). That is the defect QA saw, and QA's "3.7 %" is the same reading.
+
+**Same numbers measured off ref 063** (grid read of `reference/photos/canonical/cam_05_south_lawn.jpg`, rotunda
+x 480-1640 so W = 1160 px): dome apex row 57-58, flanking-face attic cornice row ~195, near corner-block cornice
+row ~103 -> `rise_over_W` **0.118**, `clear_over_W` **+0.037**, dome above the cornice over ~55-65 % of W.
+
+**Cause.** Sweeping the station with the geometry frozen (`arch_domecheck`, az held at a vertex azimuth,
+lens scaled to keep the rotunda the same on-screen size):
+
+| station | 71 m | 85 m | 95 m | 105 m | 115 m | 125 m |
+|---|---|---|---|---|---|---|
+| `rise_over_W` | 0.039 | 0.068 | 0.090 | 0.108 | 0.123 | 0.135 |
+
+Azimuth barely matters (face-on 0.046 vs corner-on 0.039 at 71 m); **distance is the whole effect**, because the
+attic cornice is 49 m from a 71 m camera and the dome is 71 m away, so the near parapet eats it. A five-parameter
+least-median fit of the silhouette to the photograph (`arch_domecheck.py --fit`) puts ref 063 at
+**az 104.1 deg, 115.3 m, eye height ~0.5 m, ~40 mm** (world (28.1, 111.8); residual 23.7 px median on a 1920 px
+image) — i.e. the photo is a *long-lens shot from more than 1.6x the distance*, not the 71 mm/20 mm station
+`CAM_qa_05` uses. At that fitted station **the unmodified model gives `rise_over_W` = 0.120 and `cover` = 0.69
+against the photograph's 0.118** — a 2 % relative match. Overlay:
+`renders/qa_comparisons/arch_qa02_1_ref063_fit_overlay.png` (model silhouette in red on ref 063).
+
+**Conclusion: the dome/drum/attic proportion is right; `CAM_qa_05`'s station does not match its canonical photo,
+exactly as QA-02-17 found for `CAM_qa_02`.** No geometry change is made for QA-02-1.
+
+**What a geometry fix would have cost** (swept at the current cam05 station, apex held at 52.8 so the cam01
+arbitration survives):
+
+| change | cam05 `rise_over_W` | cover | cam01 apex row shift |
+|---|---|---|---|
+| baseline | 0.046 | 0.34 | 0 |
+| `ATTIC_H` 7.1 -> 6.1 | 0.063 | 0.35 | +0.07 %H |
+| `DRUM_PLAIN_H` 2.7 -> 4.7 (dome rise 9.4 -> 7.4) | 0.085 | 0.49 | -0.42 %H |
+| `DOME_BASE_R` 16.5 -> 19.5 | 0.075 | 0.44 | -0.83 %H |
+| `ATTIC_H` 6.3 + `DRUM_PLAIN_H` 5.2 + `DOME_BASE_R` 18.5 | 0.101 | 0.60 | -1.29 %H |
+
+Only the last row clears the 0.09 / 0.60 acceptance, and it needs an 11 % attic cut, a 50 % taller drum and a 12 %
+wider dome all at once — three measured/arbitrated values broken, and it would *break* the ref-063 match above
+(the model already reads slightly tall against the photo at the fitted station). Not done; handed to the lead.
+
+**Recommended `CAM_qa_05`** (lead's file, not mine): `loc = (28.1, 111.8, 1.5)`, `target = (0, 0, 20)`, `lens 40`.
+`arch_domecheck.py` then predicts `rise_over_W` 0.120, `cover` 0.69 against ref 063's 0.118.
+
+### QA-01-15 / QA-02-9 — barrel-vault coffers had 12 cm ribs, under the 15 cm acceptance
+
+`build_vault_coffers` laid the rib network as an `L.plate` whose *thickness is the coffer depth* (the plate's back
+face is remapped to a smaller barrel radius, so the ribs stand proud of the soffit into the bay). It was hard-coded
+`0.12`, i.e. **12 cm** — under QA-02-9's "coffer depth >= 15 cm casting visible shadow at cam04". Now
+`P.VAULT_COFFER_DEPTH = 0.20`. The rotunda *saucer-ceiling* coffers were already right at
+`P.COFFER_DEPTH = 0.30` (the rib plate hangs 0.30 m below the field, which sits 2 cm above the sphere).
+Verified: `ARCH_rotunda_vault_coffers_00_LOD0`, 384 verts, z 17.50-23.64, `hide_render=False`.
+Bottom panel of `renders/qa_comparisons/arch_p4r1_sheet.png` — two rows of octagonal coffers with the diamonds
+between them, reading with shadow at 24 mm from under the bay.
+
+At `CAM_qa_04` itself the vault soffits are seen almost edge-on at the frame edge and stay murky; that is
+QA-02-12 (soffit / sky 0.20 vs ref 083's 0.58), not depth. The geometry now clears the acceptance by 5 cm.
+
+### Performance — ARCH is 6-8 % of the master, and the bevels are not the regression
+
+`scripts/arch_perf.py` (new) reports base vs *evaluated* triangles; `arch_stats.json`'s `tris_LOD*` are base
+polygon counts and never saw the modifiers. Measured on `master.blend` (155 MB, 4022 visible objects):
+
+| | viewport (LOD1) | render (LOD0) |
+|---|---|---|
+| ENV | 8,391,436 | 17,889,492 |
+| ORN socket instances (`INST_*`) | 5,209,485 | **26,648,271** |
+| ARCH | 1,250,670 (8.1 %) | 3,095,134 (6.1 %) |
+| ORN library assets | 509,822 | 2,684,571 |
+| **total** | **15,437,021** | **50,393,076** |
+
+ARCH's 831 bevel modifiers (249 from the `BEVEL_ALSO` sweep + 582 from `_finish(bevel=True)`) add **261,056**
+triangles — 1.7 % of the viewport count and **0.5 % of the render count**. Timed directly (Eevee 1280x720,
+16 TAA, on `architecture.blend`, warm-up render first, alternated ON/OFF twice):
+
+| | bevels OFF | bevels ON | cost |
+|---|---|---|---|
+| cam01 | 6.4 / 5.6 s | 7.0 / 6.6 s | **+0.8 s** |
+| cam05 | 7.1 / 7.1 s | 9.0 / 8.9 s | **+1.9 s** |
+
+So the whole ARCH bevel set is worth ~1-2 s of the master's 33-55 s per camera, and deleting it would re-open
+QA-02-3 (edge wear is a blocker). **Kept in the render, removed from the viewport**: the 685 bevelled objects
+carry no LOD suffix, so there is no `_LOD1` copy to strip — the equivalent is `show_viewport=False` /
+`show_render=True`, now set in `arch_lib.add_bevel` so a rebuild reproduces it.
+
+**ARCH viewport (LOD1 + un-LODed): 1,250,670 -> 1,002,478 evaluated triangles (-19.8 %).** Render set unchanged
+at 3,095,134 (the bevels are still there for Cycles; `arch_perf.py` counts on the viewport depsgraph, so after the
+change it reports the render row as 2,846,942 — that is the tool's viewport read, not a render regression).
+
+**For the lead: the regression is not ARCH.** The master renders `INST_*` and `ENV` at **LOD0**, so the Eevee
+previews push 50.4 M triangles, of which ornament instances alone are 26.6 M over 412 objects (65 k each) and
+environment 17.9 M. Rendering previews with `common.set_lod(viewport=1, render=1)` would take the render set from
+50.4 M to ~15.4 M. ARCH's own heavy geometry is the fluted shafts (2.17 M of ARCH's 2.83 M LOD0 across 342
+colonnade columns) and they already have LOD1/LOD2, so the viewport never pays for them.
+
+### Socket contract
+
+**Nothing moved.** `docs/sockets.md` is byte-identical before and after the rebuild, and every `arch_stats.json`
+socket count and triangle total is unchanged (only `build_seconds` 3.3 -> 4.4). The coffer change alters vertex
+positions inside one object per bay; the bevel change touches modifier visibility only.
