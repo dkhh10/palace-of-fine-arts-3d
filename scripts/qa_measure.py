@@ -28,7 +28,7 @@ def stats(img, box):
     lum = 0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]
     h, s, v = colorsys.rgb_to_hsv(*(m / 255.0))
     return dict(mean=[round(float(c), 1) for c in m], lum=round(float(lum), 1),
-                hue=round(h * 360.0, 1), sat=round(s, 3))
+                hue=round(float(h) * 360.0, 1), sat=round(float(s), 3))
 
 
 def parse_boxes(args, w, h):
