@@ -90,7 +90,46 @@ def sky_rotation_for_azimuth(az_deg):
     return az_deg - 90.0
 
 
-def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0):
+def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0, master=False):
+    """master=True renders the lead's master.blend (full scene: ARCH + ORN + ENV + LIGHT rig and look) into
+    renders/previews/environment/ - the ENV file must have been rebuilt AND build_master.py run first."""
+    if master:
+        mp = common.ROOT / "master.blend"
+        if not mp.exists():
+            raise SystemExit("master.blend missing: run scripts/build_master.py first")
+        bpy.ops.wm.open_mainfile(filepath=str(mp))
+        scene = bpy.context.scene
+        try:
+            import light_presets
+            if engine.upper() == "CYCLES":
+                light_presets.apply_final_cycles(scene)
+            else:
+                light_presets.apply_preview_eevee(scene)
+        except Exception as e:
+            print("[env_preview] light_presets not applied:", e)
+        cams_all = [o for o in bpy.data.objects if o.type == "CAMERA" and o.name.startswith("CAM_qa_")]
+        if cams:
+            cams_all = [c for c in cams_all if any(k in c.name for k in cams)]
+        scene.render.resolution_x, scene.render.resolution_y = 1280, 720
+        scene.render.resolution_percentage = 100
+        if engine.upper() == "CYCLES":
+            scene.render.engine = "CYCLES"
+            scene.cycles.samples = 64
+        else:
+            scene.render.engine = "BLENDER_EEVEE"
+            scene.eevee.taa_render_samples = samples
+        out_dir = common.RENDERS / "previews" / "environment"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        ts = common.timestamp()
+        outs = []
+        for cam in sorted(cams_all, key=lambda c: c.name):
+            scene.camera = cam
+            fp = out_dir / f"{ts}_{cam.name.replace('CAM_qa_', '')}{('_' + tag) if tag else ''}_master.png"
+            scene.render.filepath = str(fp)
+            bpy.ops.render.render(write_still=True)
+            print("[env_preview] rendered", fp)
+            outs.append(fp)
+        return outs
     build_scene(local=local, lod=lod)
     return common.render_previews("environment", cameras=cams, samples=samples, tag=tag, engine=engine, cycles_samples=48)
 
@@ -154,6 +193,7 @@ if __name__ == "__main__":
     tag = ""
     engine = "EEVEE"
     local = "--local" in args
+    master = "--master" in args
     lod = 0
     for a in args:
         if a.startswith("--lod="):
@@ -173,5 +213,65 @@ if __name__ == "__main__":
     elif "--extra" in args:
         render_extra(tag=tag or "extra", local=local, lod=lod)
     else:
-        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod)
+        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master)
         print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")
+
+
+# ----------------------------------------------------------------------------- QA-01-6 sky-through-the-bays test
+def sky_through_wing(wing="north", samples=8, res=(1920, 1080), lod=0):
+    """Measure how much sky shows through the colonnade bays behind a wing, from the hero camera (QA-01-6).
+
+    Renders cam 01 with a transparent film so 'background' == 'sky', then counts background pixels inside the frame
+    box of that wing's colonnade (the wing footprint between z = 4 m, above the shrubs, and z = 17 m, the entablature).
+    Prints the fraction; the acceptance test is <= 20 %.
+    """
+    import json
+    from bpy_extras.object_utils import world_to_camera_view
+    scene = build_scene(lod=lod)
+    site = common.load_site_local()
+    key = "roof310 h19" if wing == "north" else "roof306 h20"
+    ring = site[key][0]          # load_site_local already returns world coordinates
+    import qa_cameras
+    qa_cameras.ensure(scene)
+    cam = next(o for o in bpy.data.objects if o.name.startswith("CAM_qa_01"))
+    scene.camera = cam
+    scene.render.film_transparent = True
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.eevee.taa_render_samples = samples
+    scene.render.resolution_x, scene.render.resolution_y = res
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.color_mode = "RGBA"
+    deps = bpy.context.evaluated_depsgraph_get()
+    xs, ys = [], []
+    for (x, y) in ring:
+        for z in (4.0, 17.0):
+            co = world_to_camera_view(scene, cam, common.Vector((x, y, z)))
+            if co.z > 0:
+                xs.append(co.x); ys.append(co.y)
+    if not xs:
+        raise SystemExit("wing not in frame")
+    x0, x1 = max(0.0, min(xs)), min(1.0, max(xs))
+    y0, y1 = max(0.0, min(ys)), min(1.0, max(ys))
+    out = common.RENDERS / "previews" / "environment" / f"skytest_{wing}.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    scene.render.filepath = str(out)
+    bpy.ops.render.render(write_still=True)
+    img = bpy.data.images.load(str(out))
+    w, h = img.size
+    px = list(img.pixels)
+    px0, px1 = int(x0 * w), int(x1 * w)
+    # image row 0 is the bottom; camera view y = 0 is also the bottom
+    py0, py1 = int(y0 * h), int(y1 * h)
+    total = bg = 0
+    for j in range(py0, py1):
+        base = j * w * 4
+        for i in range(px0, px1):
+            total += 1
+            if px[base + i * 4 + 3] < 0.5:
+                bg += 1
+    frac = bg / max(1, total)
+    print(f"[env_preview] sky through the {wing} wing: box x {x0:.3f}-{x1:.3f} y {y0:.3f}-{y1:.3f} "
+          f"({px1 - px0} x {py1 - py0} px), background {bg}/{total} = {frac * 100:.1f} %")
+    print(json.dumps({"wing": wing, "box": [x0, y0, x1, y1], "sky_fraction": frac}))
+    return frac
