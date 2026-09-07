@@ -296,3 +296,60 @@ wider dome all at once — three measured/arbitrated values broken, and it would
 
 **Recommended `CAM_qa_05`** (lead's file, not mine): `loc = (28.1, 111.8, 1.5)`, `target = (0, 0, 20)`, `lens 40`.
 `arch_domecheck.py` then predicts `rise_over_W` 0.120, `cover` 0.69 against ref 063's 0.118.
+
+### QA-01-15 / QA-02-9 — barrel-vault coffers had 12 cm ribs, under the 15 cm acceptance
+
+`build_vault_coffers` laid the rib network as an `L.plate` whose *thickness is the coffer depth* (the plate's back
+face is remapped to a smaller barrel radius, so the ribs stand proud of the soffit into the bay). It was hard-coded
+`0.12`, i.e. **12 cm** — under QA-02-9's "coffer depth >= 15 cm casting visible shadow at cam04". Now
+`P.VAULT_COFFER_DEPTH = 0.20`. The rotunda *saucer-ceiling* coffers were already right at
+`P.COFFER_DEPTH = 0.30` (the rib plate hangs 0.30 m below the field, which sits 2 cm above the sphere).
+Verified: `ARCH_rotunda_vault_coffers_00_LOD0`, 384 verts, z 17.50-23.64, `hide_render=False`.
+Bottom panel of `renders/qa_comparisons/arch_p4r1_sheet.png` — two rows of octagonal coffers with the diamonds
+between them, reading with shadow at 24 mm from under the bay.
+
+At `CAM_qa_04` itself the vault soffits are seen almost edge-on at the frame edge and stay murky; that is
+QA-02-12 (soffit / sky 0.20 vs ref 083's 0.58), not depth. The geometry now clears the acceptance by 5 cm.
+
+### Performance — ARCH is 6-8 % of the master, and the bevels are not the regression
+
+`scripts/arch_perf.py` (new) reports base vs *evaluated* triangles; `arch_stats.json`'s `tris_LOD*` are base
+polygon counts and never saw the modifiers. Measured on `master.blend` (155 MB, 4022 visible objects):
+
+| | viewport (LOD1) | render (LOD0) |
+|---|---|---|
+| ENV | 8,391,436 | 17,889,492 |
+| ORN socket instances (`INST_*`) | 5,209,485 | **26,648,271** |
+| ARCH | 1,250,670 (8.1 %) | 3,095,134 (6.1 %) |
+| ORN library assets | 509,822 | 2,684,571 |
+| **total** | **15,437,021** | **50,393,076** |
+
+ARCH's 831 bevel modifiers (249 from the `BEVEL_ALSO` sweep + 582 from `_finish(bevel=True)`) add **261,056**
+triangles — 1.7 % of the viewport count and **0.5 % of the render count**. Timed directly (Eevee 1280x720,
+16 TAA, on `architecture.blend`, warm-up render first, alternated ON/OFF twice):
+
+| | bevels OFF | bevels ON | cost |
+|---|---|---|---|
+| cam01 | 6.4 / 5.6 s | 7.0 / 6.6 s | **+0.8 s** |
+| cam05 | 7.1 / 7.1 s | 9.0 / 8.9 s | **+1.9 s** |
+
+So the whole ARCH bevel set is worth ~1-2 s of the master's 33-55 s per camera, and deleting it would re-open
+QA-02-3 (edge wear is a blocker). **Kept in the render, removed from the viewport**: the 685 bevelled objects
+carry no LOD suffix, so there is no `_LOD1` copy to strip — the equivalent is `show_viewport=False` /
+`show_render=True`, now set in `arch_lib.add_bevel` so a rebuild reproduces it.
+
+**ARCH viewport (LOD1 + un-LODed): 1,250,670 -> 1,002,478 evaluated triangles (-19.8 %).** Render set unchanged
+at 3,095,134 (the bevels are still there for Cycles; `arch_perf.py` counts on the viewport depsgraph, so after the
+change it reports the render row as 2,846,942 — that is the tool's viewport read, not a render regression).
+
+**For the lead: the regression is not ARCH.** The master renders `INST_*` and `ENV` at **LOD0**, so the Eevee
+previews push 50.4 M triangles, of which ornament instances alone are 26.6 M over 412 objects (65 k each) and
+environment 17.9 M. Rendering previews with `common.set_lod(viewport=1, render=1)` would take the render set from
+50.4 M to ~15.4 M. ARCH's own heavy geometry is the fluted shafts (2.17 M of ARCH's 2.83 M LOD0 across 342
+colonnade columns) and they already have LOD1/LOD2, so the viewport never pays for them.
+
+### Socket contract
+
+**Nothing moved.** `docs/sockets.md` is byte-identical before and after the rebuild, and every `arch_stats.json`
+socket count and triangle total is unchanged (only `build_seconds` 3.3 -> 4.4). The coffer change alters vertex
+positions inside one object per bay; the bevel change touches modifier visibility only.
