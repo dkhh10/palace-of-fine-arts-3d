@@ -104,8 +104,8 @@ def main():
     args = common.script_args()
     plan = env_trees.PLAN if "--plan" in args else placed_trees()
     if "--shadow" in args:
-        az = float(args[args.index("--az") + 1]) if "--az" in args else SUN_AZ
-        el = float(args[args.index("--el") + 1]) if "--el" in args else SUN_EL
+        az = float(args[args.index("--az") + 1]) if "--az" in args else L.SUN_AZ
+        el = float(args[args.index("--el") + 1]) if "--el" in args else L.SUN_EL
         shadow_report(plan, common.load_site_local(), az, el)
         if "--only-shadow" in args:
             return

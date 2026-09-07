@@ -386,6 +386,13 @@ via the SHRUB_FAR rule and the lower instance count), and trees are still ~85 % 
 lever is still `env_trees.FAR_RADIUS` (130 m -> 105 m, roughly another 2 M), untouched this round because it needs
 its own visual check.
 
+Re-checked on the saved `assets/environment.blend` (positions are snapped onto land after the relief pass, so these
+are the numbers that ship, slightly off the planner's):
+`blender -b --python scripts/env_sightlines.py -- --shadow --only-shadow` ->
+**north wing readable band (z >= 12 m) 78.8 % lit, south wing 77.5 % lit** (round 02: ~31 % and ~4 %). The south
+wing's z = 6 m shaft band is still 95 % shaded, which matches ref 169 - the low shafts there are in shade in the
+photograph too.
+
 LOD1 fidelity: the widest LOD1 leaf card is 0.105 x 2.2 x 1.45 = 33 cm, which at the nearest shore (60 m, 20 mm
 lens, 1920 px) subtends ~6 px - at QA-01-7's limit, and only ever in the viewport.
 
