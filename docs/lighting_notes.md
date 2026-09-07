@@ -583,3 +583,48 @@ I tested the obvious cause and it is **not** bake resolution. Re-baked `LIGHTPRO
 irradiance-volume + screen-trace approximation under-lighting a concave soffit that Cycles path-traces properly.
 Reverted to (20, 20, 14) and a 64 MB pool rather than pay 3x the bake time and a 128 MB pool for nothing; the negative
 result is recorded in `scripts/light_probes.py` so it does not get re-tried.
+
+## 17. Round 08b — sunlit-stone chroma (materials' hand-off). PARTIAL, and one measurement caveat matters
+
+Materials measured that at +0.9 EV albedo has no authority left over chroma (a 44 % cut of albedo blue moved display
+blue 3 %), leaving the sunlit attic's R-B spread at 81-89 against ref 169's 134. Three lighting levers were swept on
+the Cycles hero; all three help, none is enough on its own.
+
+| lever | attic R-B | note |
+|---|---|---|
+| baseline (sky x2.0, Base Contrast) | 88.1 | |
+| `SKY_STRENGTH` 2.0 -> 1.0 | 94.8 | the round-05 art bias was washing sky-blue over every sunlit face |
+| `SKY_STRENGTH` 2.0 -> 0.6 | 97.8 | shade 146.5 -> 128.1 |
+| sun blue x0.7 | 97.7 | at strength 1.0 |
+| -0.35 EV | 102.2 | but attic luminance falls out of the +-10 % window |
+| **`LOOK` -> `AgX - High Contrast`** | **113.5-118.1** | the strongest lever by far |
+| `LOOK` -> `AgX - Punchy` | 112.7 | same chroma, but a stop of luminance and water 111 -> 71: rejected again |
+
+**Shipped: `SKY_STRENGTH` 1.0, `LOOK` "AgX - High Contrast", `SKY_CAMERA_BOOST` 1.20, new `SKY_GLOSSY_BOOST` 3.00,
+`EXPOSURE_BIAS` 1.75 (view exposure still -2.39; the calibration moved -4.39 -> -4.14 when the sky halved).**
+`light_calibrate.make_sky_world` gained a `glossy_boost` split from `camera_boost`, because the camera's sky had to
+come DOWN to ref 169 while the lagoon's reflection had to stay UP, and one socket could not do both.
+
+### The caveat, and it invalidates part of the sweep
+
+The sweep was run at 960x540 / 32 spp. Re-rendering the *identical* shipped rig at 1920x1080 / 64 spp gives
+materially different numbers on these small regions:
+
+| same rig, same exposure, same look | attic sRGB | attic lum | R-B | sky top |
+|---|---|---|---|---|
+| 960x540, 32 spp (what the sweep measured) | 229.8, 177.0, 112.5 | 183.6 | 117.3 | 165.8 |
+| **1920x1080, 64 spp (the real deliverable)** | 206.0, 162.5, 108.6 | **167.9** | **97.4** | **154.1** |
+
+So **every knob choice above was picked against numbers that are ~16 luminance and ~20 R-B optimistic.** The chroma
+targets are NOT met at delivery resolution: R-B 97.4 against the >= 110 asked for, attic luminance 167.9 just under
+the 172.6 floor. Sky top 154.1 (window 149.1-182.3) and shade 131.8 (floor 93.8) do pass, and R-B did improve
+88.8 -> 97.4 while the sky's 17 % excess was fixed. **Anyone continuing this must re-sweep at 1920x1080.**
+
+### Where I stopped
+
+Unfinished: (a) re-sweep at delivery resolution to close R-B 97.4 -> 110, most likely by combining High Contrast with
+a warmer sun (`sun blue x0.4-0.7`, worth ~+3 to +7) and a small albedo/exposure trade with materials; (b) the interior
+fills are now oversized for the halved sky — cam04 Eevee soffit/own-sky went 0.360 -> 0.803 and coffer 0.710 -> 1.040,
+so `FILL["energy"]` 7600 and `VAULT_FILL["energy"]` 2400 both want scaling down by roughly half, re-measured against
+ref 083's 0.58 / 0.39. Neither was started. cam06 improved on its own: far-shore saturation 0.218 -> **0.296**,
+hue 43.8 -> 39.3.
