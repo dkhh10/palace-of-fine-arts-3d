@@ -886,7 +886,7 @@ def build_all_materials():
     leaf_material("MAT_shrub_light", "leaves_shrub", (0.85, 1.05, 0.6), rough=0.45, hue_var=0.06, val_var=0.45, seed=24.0,
                   translucency=0.28, spec=0.45, tint=(1.25, 1.30, 1.05), sheen=0.2)
     leaf_material("MAT_shrub_dry", "leaves_shrub", (1.05, 0.95, 0.5), rough=0.62, hue_var=0.05, val_var=0.5, seed=25.0,
-                  translucency=0.22, spec=0.25, tint=(2.80, 1.70, 0.62), sheen=0.1, cluster_var=0.3)
+                  translucency=0.22, spec=0.25, tint=(4.50, 1.15, 0.70), sheen=0.1, cluster_var=0.3)
     leaf_material("MAT_reeds", "reeds", (0.9, 1.0, 0.5), rough=0.6, hue_var=0.06, val_var=0.4, seed=26.0, translucency=0.35, cluster_var=0.35)
     build_extra_env()
     build_backdrop_details()
