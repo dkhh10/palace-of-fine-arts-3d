@@ -107,3 +107,7 @@ Resume: merge lighting (`git merge lighting`), run scripts/lead_build.sh, dispat
 Merged: LIGHT p4r1 (d62402d): exposure +0.9 EV closed (attic 177.6 vs ref 179.4), flythrough objects now built by light_build.py and present in lighting.blend/master, shaped mist (far-shore sat 0.30), 8 soffit emitters (Cycles 0.48, Eevee 0.36), chroma pass: SKY_STRENGTH 1.0, AgX High Contrast, SKY_GLOSSY_BOOST 3.0, EXPOSURE_BIAS 1.75 (attic R-B 97, target 110).
 Caveats from lighting for round 3: its knob sweep ran at 960x540/32 spp and reads ~16 lum / ~20 R-B optimistic vs 1920x1080; interior FILL 7600 / VAULT_FILL 2400 want ~halving after the sky was halved (cam04 soffit/sky 0.80 now); aerial grey-olive is scene colour (env+materials), not haze.
 Resume: scripts/lead_build.sh, then QA round 3 (Opus). All worktrees clean, all branches merged, no Blender running. Nothing in flight.
+
+## 2026-09-07 · session resumed (lead on Fable 5.1)
+State verified: main 99c8250, five worktrees clean, all branches merged, no Blender running. Stray untracked session.txt (terminal dump) left alone.
+In flight: scripts/lead_build.sh (master rebuild + probe bake, log renders/logs/lead_build_r3.log). Next: QA round 3 (Fable 5.1 xhigh per the user; folds in lighting's two caveats: chroma re-measure at 1920x1080, interior fills ~halved), then polish round 2 by owner.
