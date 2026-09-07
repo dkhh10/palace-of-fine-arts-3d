@@ -478,3 +478,42 @@ and **ornament** (the acanthus rib frames and rosettes). Flagged to the lead rat
 - Coffer depth is one value per plate. Ring-3 trapezoids (4.5 m wide) would want ~0.9 m by the measured ratio and
   get 0.55; giving each ring its own depth needs the rib network split into three plates or per-coffer lids.
 - `scripts/arch_build.py` gained `--cams a,b` and `--res WxH` for the preview rig.
+
+### Polish round 2 — code-review fixes (docs/reviews/arch_p4r2_review.md, items 1-4)
+
+1. **Vault coffer registers overlapped their neighbours (HIGH).** Confirmed the review's numbers by replaying the
+   layout: the in-row diamond left only **75 mm** of rib to its octagons and the mid-row diamond only **29 mm**,
+   against a 70 mm splay. Fixed by opening the gaps rather than shrinking the reveal to invisibility: the in-row
+   diamond factor is 0.8 -> **0.55** (gap 75 -> **180 mm**) and the mid-row diamond, 0.26 m across and unreadable
+   at cam04, is gated off (`dr > 0.2`). `VAULT_COFFER_REGISTERS` is now `((-0.030, 0.04), (0.055, 0.10))`, leaving
+   **70 mm** of rib. Belt and braces: `L.polygon_clearance()` measures the tightest boundary-to-boundary distance
+   in a plate's hole set and `L.plate` **clamps the registers** to keep `REVEAL_CLEARANCE` (20 mm) of solid rib,
+   printing when it does — so this class of bug can no longer be silent. It fires once, harmlessly, on the ceiling
+   (widen 0.100 -> 0.097). Both plates are now **0 non-manifold edges** (vault 2,250 edges, ceiling 4,696).
+2. **`rosette_ceiling` socket planes (MEDIUM).** The 24 sockets are two different things and now say so:
+   * **16 rim-band sockets** (rr 13.73 / 14.85) are not in a coffer at all — that band is solid rib between the
+     outermost coffers and the octagon edge, and the sheet calls them a "base ring with rosette band above the
+     inner arches" (083). They are bosses on the rib's **room face**, so their plane follows it:
+     `sz(x, y) - COFFER_DEPTH + ROSETTE_RIM_INSET` = **`sz - 0.53`** (0.02 m set back into the plaster).
+     They were at `sz - 0.30`, so the correction for ornament is **down 0.23 m, not 0.25 m.** World z 23.41 / 24.32.
+   * **8 ring-1 square-coffer sockets** (rr 5.2) are inside a box, so they sit on the box **floor** — the field
+     saucer, `sz + CEILING_FIELD_LIFT` = **`sz + 0.02`**, not on the bare sphere as before: **up 0.02 m.**
+     World z 28.91. `CEILING_FIELD_LIFT` now drives both the field loft and this socket, so they cannot drift.
+   Counts and types are unchanged, `docs/sockets.md` untouched.
+3. **LOD1 flute run-out ladder (LOW).** `height - fade - 0.05` inserted into the top ladder, so the 0.35 m run-out
+   is resolved instead of smeared over 1.63 m. LOD1 rings 10 -> 11, +288 tris per shaft.
+4. **`--cams` / `--res` index guard (LOW).** Both check `index + 1 < len(ARGS)`.
+5. INFO (apophyge flares 4 mm outward, effectively a no-op) left as is: harmless, and the base profile is the one
+   part the review verified clean.
+
+**Found while verifying, and fixed:** the barrel-vault coffers were built as `ARCH_rotunda_vault_coffers_NN_LOD0`,
+**LOD0 only**, so `common.set_lod(render=1)` — what every QA pass and every preview uses — hid them and the barrel
+soffits rendered bare. **That is the real root of QA-03-8's "no coffer casts a shadow" on the vaults: at LOD1 there
+were no vault coffers to cast one.** They now carry no LOD suffix and render at every level, like the ceiling ribs
+(2,036 tris x 8 bays = 16,288). Verified at LOD1 in `renders/previews/architecture/p4r2fix_vault_check.png`
+(24 mm from under a bay): two rows of deep octagons with the diamonds between them, clean reveals, no overlaps.
+
+**Triangles after the fixes:** LOD0 2,834,078 -> **2,713,406** (-4.3 %); LOD1 989,614 -> **1,101,326**
+(+111,712, +11.3 % of ARCH, ~+1 % of the 11.62 M master -> ~11.73 M, still under the 13 M cap); LOD2 725,966.
+Of the LOD1 increase, 55,680 is the coffers and bases, 39,744 the flute run-out ring, 16,288 the vault coffers
+that were previously invisible at this LOD.

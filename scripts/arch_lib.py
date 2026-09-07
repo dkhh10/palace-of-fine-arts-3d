@@ -16,6 +16,7 @@ import arch_params as P
 
 SINK = 0.03          # stacked solids are sunk this much into the solid below (never coplanar faces)
 SHARP_ANGLE = math.radians(32.0)
+REVEAL_CLEARANCE = 0.02   # metres of solid rib that must survive between two widened coffer openings
 
 
 # ============================================================================= 2D helpers
@@ -87,6 +88,41 @@ def offset_polygon(poly, d):
             m = ((n0[0] + n1[0]) / den, (n0[1] + n1[1]) / den)
         out.append((p1[0] + d * m[0], p1[1] + d * m[1]))
     return out
+
+
+def _seg_dist(a, b, c, d):
+    """Distance between segments ab and cd in 2D."""
+    def pt_seg(p, q, r):
+        vx, vy = r[0] - q[0], r[1] - q[1]
+        L2 = vx * vx + vy * vy
+        t = 0.0 if L2 < 1e-18 else max(0.0, min(1.0, ((p[0] - q[0]) * vx + (p[1] - q[1]) * vy) / L2))
+        return math.hypot(p[0] - (q[0] + t * vx), p[1] - (q[1] + t * vy))
+    return min(pt_seg(a, c, d), pt_seg(b, c, d), pt_seg(c, a, b), pt_seg(d, a, b))
+
+
+def polygon_clearance(loops, outline=None):
+    """Smallest distance between the boundaries of any two of `loops` (and to `outline` if given).
+
+    Used to clamp `plate`'s reveal registers: widening a hole by more than half this makes neighbouring holes
+    overlap, which silently produces self-intersecting cap loops and interpenetrating reveal walls."""
+    polys = list(loops) + ([outline] if outline else [])
+    segs, bbs = [], []
+    for lp in polys:
+        segs.append([(lp[i], lp[(i + 1) % len(lp)]) for i in range(len(lp))])
+        xs = [p[0] for p in lp]
+        ys = [p[1] for p in lp]
+        bbs.append((min(xs), min(ys), max(xs), max(ys)))
+    best = float("inf")
+    for i in range(len(polys)):
+        for j in range(i + 1, len(polys)):
+            bi, bj = bbs[i], bbs[j]
+            gap = max(bi[0] - bj[2], bj[0] - bi[2], bi[1] - bj[3], bj[1] - bi[3])
+            if gap >= best:            # bounding boxes already further apart than the best pair
+                continue
+            for a, b in segs[i]:
+                for c, d in segs[j]:
+                    best = min(best, _seg_dist(a, b, c, d))
+    return best
 
 
 # ============================================================================= mesh finishing
@@ -292,6 +328,22 @@ def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=Non
     regs = [(w, d) for w, d in registers if abs(w) > 1e-6 and d > 1e-6]
     if sum(d for _, d in regs) >= thickness:
         regs = []
+    if regs and holes_ccw:
+        # A register that widens a hole by more than half the clearance to its neighbour makes the two openings
+        # overlap: the cap loops self-intersect (tessellation drops or garbles faces) and the reveal walls
+        # interpenetrate. Clamp to what the layout can carry and say so, rather than emitting broken geometry.
+        cum, w_max = 0.0, 0.0
+        for w, _ in reversed(regs):
+            cum += w
+            w_max = max(w_max, cum)
+        if w_max > 1e-6:
+            limit = max(0.0, (polygon_clearance(holes_ccw, outline) - REVEAL_CLEARANCE) / 2)
+            if w_max > limit:
+                k = limit / w_max
+                print(f"[arch_lib] plate '{name}': reveal registers clamped x{k:.2f} "
+                      f"(widen {w_max:.3f} -> {limit:.3f} m) to keep {REVEAL_CLEARANCE * 1000:.0f} mm between holes")
+                regs = [(w * k, d) for w, d in regs]
+                regs = [(w, d) for w, d in regs if abs(w) > 1e-6]
     # levels from the FRONT (panel) face to the BACK (room) face: (depth from the front, cumulative widening)
     levels = [(0.0, 0.0)]
     z = thickness - sum(d for _, d in regs)
@@ -548,7 +600,7 @@ def shaft_rings(height, lod, apophyge, fade):
         n_mid = 18
     else:
         zs = [0.0, apophyge, foot]
-        top = [height - 0.06, height]
+        top = [height - fade - 0.05, height - 0.06, height]   # review item 3: resolve the top flute run-out
         n_mid = 6
     z0, z1 = foot, top[0]
     zs += [z0 + (z1 - z0) * i / n_mid for i in range(1, n_mid)]

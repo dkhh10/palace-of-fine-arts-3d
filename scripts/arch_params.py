@@ -106,7 +106,11 @@ VAULT_COFFER_DEPTH = 0.38  # barrel-vault soffit ribs stand this far proud (0.12
 # The lip's underside is a bright ring and the splay's floor a dark one, so every coffer gets a light/shadow line
 # pair even seen almost face-on from cam04 -- the reason a single straight reveal read as a flat inset outline.
 COFFER_REGISTERS = ((-0.05, 0.05), (0.10, 0.13))
-VAULT_COFFER_REGISTERS = ((-0.04, 0.04), (0.07, 0.10))
+# Vault: the in-row diamonds were opened up (arch_build build_vault_coffers) so 0.18 m of rib survives between
+# every pair of openings; L.plate clamps these against L.polygon_clearance anyway and prints when it does.
+VAULT_COFFER_REGISTERS = ((-0.030, 0.04), (0.055, 0.10))
+CEILING_FIELD_LIFT = 0.02     # the field saucer sits this far above the ceiling sphere (build_ceiling)
+ROSETTE_RIM_INSET = 0.02      # rim-band rosette bosses are set this far back into the rib's room face
 
 # ----------------------------------------------------------------------------- podium / rostra (OSM lobes, section 3b; DERIVED widths)
 PODIUM_LOBE_R = 27.3      # outer radius of the podium block around each pier (OSM lobes r 27-28)
