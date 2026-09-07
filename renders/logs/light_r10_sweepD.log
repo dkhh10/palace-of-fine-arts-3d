@@ -1,0 +1,59 @@
+00:01.069  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.638  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:02.170  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.742  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:03.338  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:03.820  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:04.624  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:05.105  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:06.076  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:06.832  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r10] calibrate aer 1.6 oz 2 air 1 sky 0.8: lamp 67.31 W/m2 colour [1.0, 0.6073, 0.2577], exposure -4.083 EV, L_zenith [0.35, 0.743, 1.708], L_horizon_west [3.13, 3.739, 4.084], L_sunward [70.507, 48.765, 25.766] (6s)
+00:07.306  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:07.941  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:08.626  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:09.206  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:09.681  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:10.099  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:10.569  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:11.026  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:11.592  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:12.070  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r10] calibrate aer 4 oz 2 air 1 sky 0.8: lamp 51.87 W/m2 colour [1.0, 0.5729, 0.2181], exposure -3.813 EV, L_zenith [0.392, 0.772, 1.737], L_horizon_west [2.181, 2.574, 3.087], L_sunward [102.013, 65.974, 31.674] (5s)
+00:12.071  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
