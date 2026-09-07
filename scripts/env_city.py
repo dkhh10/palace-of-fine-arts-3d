@@ -67,7 +67,15 @@ def xy(u, v):
     return p.x, p.y
 
 
-def azimuth(x, y):
+def city_az(x, y):
+    """Local *city-grid* azimuth: 0 deg = +X = south, increasing COUNTER-clockwise (90 deg = +Y = east).
+
+    This is NOT the project compass convention (`common.sun_direction` / `env_lib.sun_vector` / `env_build`
+    use degrees CLOCKWISE FROM NORTH, and north is -X).  It exists only because the sector bands below
+    (`RESIDENTIAL_AZ` / `PRESIDIO_AZ` / `OPEN_AZ`) were measured straight off atan2(y, x) when the OSM
+    footprints were binned; keeping the name distinct stops it being mistaken for a compass bearing.
+    Compass bearing = (270 - city_az) mod 360.
+    """
     return math.degrees(math.atan2(y, x)) % 360.0
 
 
@@ -126,7 +134,7 @@ class RoadField:
         self.pts = {}
         for pts, w, kind in roads:
             for (x, y) in L.resample_polyline(pts, 5.0):
-                if kind == "street" and not in_az(azimuth(x, y), RESIDENTIAL_AZ):
+                if kind == "street" and not in_az(city_az(x, y), RESIDENTIAL_AZ):
                     continue
                 if math.hypot(x, y) < ROAD_R0 - 24.0:
                     continue
@@ -185,7 +193,9 @@ def build_ground(SUB, terrain_height, clear):
             v1 = PHASE_V + (j + 1) * PITCH_V - corridor
             cx, cy = xy((u0 + u1) / 2, (v0 + v1) / 2)
             r = math.hypot(cx, cy)
-            if not (BLOCK_R0 <= r <= CITY_R1) or not clear(cx, cy) or not in_az(azimuth(cx, cy), RESIDENTIAL_AZ):
+            corners = (xy(u0, v0), xy(u1, v0), xy(u1, v1), xy(u0, v1))
+            if not (BLOCK_R0 <= r <= CITY_R1) or not clear(cx, cy, *corners) \
+                    or not in_az(city_az(cx, cy), RESIDENTIAL_AZ):
                 continue
             t = rnd.random()
             quad(xy(u0, v0), xy(u1, v0), xy(u1, v1), xy(u0, v1),
@@ -202,8 +212,10 @@ def build_ground(SUB, terrain_height, clear):
         for r0, r1 in rings:
             rm = (r0 + r1) / 2
             cx, cy = rm * math.cos(am), rm * math.sin(am)
-            az = azimuth(cx, cy)
-            if in_az(az, RESIDENTIAL_AZ) or not clear(cx, cy):
+            az = city_az(cx, cy)
+            wedge = [(rr * math.cos(math.radians(aa)), rr * math.sin(math.radians(aa)))
+                     for (rr, aa) in ((r0, a), (r1, a), (r1, a + seg), (r0, a + seg))]
+            if in_az(az, RESIDENTIAL_AZ) or not clear(cx, cy, *wedge):
                 continue
             # First cam-06 test: SOIL over the whole Presidio sector read as one purple-grey paved plaza, because
             # a 430 000 m2 photo-textured quad averages to a flat tone at 300 m.  The forest floor is mostly the
@@ -214,9 +226,7 @@ def build_ground(SUB, terrain_height, clear):
                 mi = SOIL if t < 0.22 else (DRY if t < 0.38 else LAWN)
             else:
                 mi = DRY if rnd.random() < 0.22 else LAWN
-            p = [(rr * math.cos(math.radians(aa)), rr * math.sin(math.radians(aa)))
-                 for (rr, aa) in ((r0, a), (r1, a), (r1, a + seg), (r0, a + seg))]
-            quad(p[0], p[1], p[2], p[3], mi)
+            quad(wedge[0], wedge[1], wedge[2], wedge[3], mi)
         a += seg
     # --- the theatre car park immediately west of the exhibition hall (r 125-200 m).  Down-sun of the palace at
     #     az 118.5 / el 7.4 the whole west side is in shadow, and in round 03 that band was an unbroken sheet of
@@ -240,15 +250,21 @@ def build_ground(SUB, terrain_height, clear):
             (ax, ay), (bx, by) = line[i], line[i + 1]
             mx, my = (ax + bx) / 2, (ay + by) / 2
             r = math.hypot(mx, my)
-            if not (ROAD_R0 <= r <= CITY_R1) or not clear(mx, my):
+            if not (ROAD_R0 <= r <= CITY_R1):
                 continue
-            if kind == "street" and not in_az(azimuth(mx, my), RESIDENTIAL_AZ):
+            if kind == "street" and not in_az(city_az(mx, my), RESIDENTIAL_AZ):
                 continue
             d = Vector((bx - ax, by - ay))
             if d.length < 1e-6:
                 continue
             d.normalize()
             n = Vector((d.y, -d.x))
+            # the ribbon is up to 18.2 m wide and 14 m long, so its four outer corners are tested, not just
+            # the centreline midpoint (a centroid-only test let a verge cross the lagoon or the hall)
+            hf = w / 2 + WALK_W
+            if not clear(mx, my, (ax + n.x * hf, ay + n.y * hf), (bx + n.x * hf, by + n.y * hf),
+                         (bx - n.x * hf, by - n.y * hf), (ax - n.x * hf, ay - n.y * hf)):
+                continue
             for half, mi, dz in ((w / 2 + WALK_W, GRAVEL, 0.01), (w / 2, ASPHALT, 0.03)):
                 quad((ax + n.x * half, ay + n.y * half), (bx + n.x * half, by + n.y * half),
                      (bx - n.x * half, by - n.y * half), (ax - n.x * half, ay - n.y * half), mi, dz)
@@ -511,7 +527,7 @@ def build_canopy(SUB, clear):
             r = math.hypot(x, y)
             if not (ROAD_R0 - 24.0 < r < CITY_R1) or not clear(x, y):
                 continue
-            if kind == "street" and not in_az(azimuth(x, y), RESIDENTIAL_AZ):
+            if kind == "street" and not in_az(city_az(x, y), RESIDENTIAL_AZ):
                 continue
             d = Vector((line[i + 1][0] - x, line[i + 1][1] - y))
             if d.length < 1e-6:
@@ -547,14 +563,22 @@ def build_all(SUB, terrain_height, lagoon_field, hall_field, colonnade_polys=())
     """`clear(x, y)` keeps the far field off the lagoon, the hall, the colonnades and the Palace platform."""
     col_fields = [L.PolyField(L.offset_polygon(p, 14.0), cell=8.0) for p in colonnade_polys]
 
-    def clear(x, y):
-        if lagoon_field.signed(x, y) < 25.0 or hall_field.signed(x, y) < 22.0:
-            return False
-        if math.hypot(x, y) < 108.0:
-            return False
-        for f in col_fields:
-            if f.signed(x, y) < 0.0:
+    def clear(x, y, *corners):
+        """True when (x, y) AND every extra point in `corners` is off the lagoon, the hall, the colonnades
+        and the Palace platform.
+
+        Callers that place a large quad must pass its corners: the residential blocks are 95 x 137 m and the
+        annulus wedges up to 3 deg x 140 m, so a centroid-only test would let one straddle the lagoon or the
+        hall if PITCH_U/PITCH_V/PHASE_* or the ring radii were ever retuned.
+        """
+        for (px, py) in ((x, y),) + corners:
+            if lagoon_field.signed(px, py) < 25.0 or hall_field.signed(px, py) < 22.0:
                 return False
+            if math.hypot(px, py) < 108.0:
+                return False
+            for f in col_fields:
+                if f.signed(px, py) < 0.0:
+                    return False
         return True
 
     blocks = build_ground(SUB, terrain_height, clear)

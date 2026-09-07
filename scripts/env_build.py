@@ -874,8 +874,8 @@ def main():
                 log("planting plan table written into docs/environment_notes.md")
     if not NO_BACKDROP:
         import env_backdrop
-        env_backdrop.build_all(SUB, terrain_height, SITE, HALL, HALL_FIELD,
-                               lagoon_field=LAGOON_FIELD, colonnade_polys=COLONNADE_ROOFS)
+        env_backdrop.build_all(SUB, terrain_height, SITE, HALL, LAGOON_FIELD,
+                               hall_field=HALL_FIELD, colonnade_polys=COLONNADE_ROOFS)
     # viewport default LOD1 (instances only); source trees stay hidden everywhere
     L.set_object_lod_visibility(ENV, 1)
     for obj in SUB["ENV_trees"].objects:

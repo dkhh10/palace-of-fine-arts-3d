@@ -394,12 +394,13 @@ def build_landscape(SUB, terrain_height):
     print("[env_backdrop] landscape: far ground, bay, presidio ridge, hills")
 
 
-def build_all(SUB, terrain_height, site, hall_poly, hall_field=None, lagoon_field=None, colonnade_polys=()):
+def build_all(SUB, terrain_height, site, hall_poly, lagoon_field, hall_field=None, colonnade_polys=()):
+    """`lagoon_field` is REQUIRED: env_city's keep-out test is built from it, and without it the whole Marina /
+    Presidio far field (QA-03-11) would silently not be built at all."""
     if hall_field is None:
         hall_field = L.PolyField(hall_poly, cell=10.0)
     build_hall(SUB, hall_poly, hall_field)
     build_houses(SUB, site)
     build_landscape(SUB, terrain_height)
-    if lagoon_field is not None:
-        import env_city
-        env_city.build_all(SUB, terrain_height, lagoon_field, hall_field, colonnade_polys)
+    import env_city
+    env_city.build_all(SUB, terrain_height, lagoon_field, hall_field, colonnade_polys)

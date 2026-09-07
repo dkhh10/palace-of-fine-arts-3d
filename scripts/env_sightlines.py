@@ -38,7 +38,10 @@ def project(spec, p):
     half_w = 0.5 * 36.0 / spec["lens"]                 # tan(half hfov)
     half_h = half_w * 9.0 / 16.0
     x = 0.5 + 0.5 * (d.dot(r) / z) / half_w
-    y = 0.5 - 0.5 * (d.dot(u) / z) / half_h + spec.get("shift_y", 0.0)
+    # shift_y is in units of the larger sensor dimension (the 36 mm width), so as a fraction of frame HEIGHT
+    # it carries the aspect factor W/H = half_w/half_h = 16/9.  cam 01's shift_y 0.06 = 0.107 of the height
+    # (115 px of 1080), not 0.06 (65 px).
+    y = 0.5 - 0.5 * (d.dot(u) / z) / half_h + spec.get("shift_y", 0.0) * (half_w / half_h)
     return x, y, z
 
 
@@ -151,7 +154,7 @@ def coverage(move_back=(), step=2):
         for py in range(y0, y1, step):
             for px in range(x0, x1, step):
                 sx = ((px + 0.5) / W - 0.5) * 2
-                sy = (0.5 - (py + 0.5) / H) * 2 + 2.0 * spec.get("shift_y", 0.0)
+                sy = (0.5 - (py + 0.5) / H) * 2 + 2.0 * spec.get("shift_y", 0.0) * (hw / hh)
                 d = (f + r * hw * sx + u * hh * sy).normalized()
                 ok, hit, nrm, idx, obj, _ = scene.ray_cast(dg, loc, d, distance=4000)
                 tot += 1

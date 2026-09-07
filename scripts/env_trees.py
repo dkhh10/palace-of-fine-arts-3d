@@ -638,6 +638,10 @@ def _frame_box(spec, f, r, u, x, y, h, species):
     rad = L.CROWN_R.get(species, 0.35) * h * CROWN_SAFETY
     half_w = 0.5 * 36.0 / spec["lens"]
     half_h = half_w * 9.0 / 16.0
+    # Blender's shift_y is in units of the LARGER sensor dimension (the width here, sensor_fit HORIZONTAL),
+    # so as a fraction of frame HEIGHT it must be scaled by the aspect ratio W/H = half_w/half_h = 16/9.
+    # Positive shift_y moves the rendered content DOWN the image, i.e. up the frame-y axis used here.
+    shift = spec.get("shift_y", 0.0) * (half_w / half_h)
     pts = []
     for dx, dy in ((rad, 0), (-rad, 0), (0, rad), (0, -rad)):
         for z in (h * 0.25, h * 0.6, h):
@@ -646,7 +650,7 @@ def _frame_box(spec, f, r, u, x, y, h, species):
             if zz <= 0.5:
                 continue
             pts.append((0.5 + 0.5 * (d.dot(r) / zz) / half_w,
-                        0.5 - 0.5 * (d.dot(u) / zz) / half_h + spec.get("shift_y", 0.0), zz))
+                        0.5 - 0.5 * (d.dot(u) / zz) / half_h + shift, zz))
     if not pts:
         return None
     return (min(p[0] for p in pts), max(p[0] for p in pts),
