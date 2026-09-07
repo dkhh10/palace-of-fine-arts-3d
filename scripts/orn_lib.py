@@ -39,6 +39,7 @@ BUDGETS = {
     "finial": (20000, 4000, 400),
     "rosette_ceiling": (20000, 4000, 400),
     "moulding": (30000, 6000, 600),
+    "corner_scroll": (40000, 8000, 800),
 }
 
 
@@ -670,6 +671,9 @@ def origin_bottom_centre(obj, y_mode="centre"):
     'back' (min y at 0; the asset projects toward +Y, e.g. relief panels, keystones), 'keep' (XY as built: figures
     whose feet are already at the origin)."""
     (x0, y0, z0), (x1, y1, z1) = bbox(obj)
+    if y_mode == "asis":          # mesh already in its socket frame (e.g. maidens hanging from the box rim)
+        obj.matrix_world = Matrix.Identity(4)
+        return obj
     if y_mode == "keep":
         cx, cy = 0.0, 0.0
     else:
@@ -865,3 +869,114 @@ def report(typ=None):
                 continue
             lines.append(f"{o.name}: {tri_count(o)} tris, {o.get('size', '')}, nrm={o.get('normal_map', '-')}")
     return "\n".join(lines)
+
+
+# ----------------------------------------------------------------------------- frieze runs (QA-01-11)
+def unit_length_of(unit_obj):
+    """Documented repeat length of a linear moulding unit, in metres. Every ORN moulding LOD carries the custom
+    property `unit_length`; fall back to the X size of its bounding box."""
+    ul = unit_obj.get("unit_length")
+    if ul:
+        return float(ul)
+    (x0, _, _), (x1, _, _) = bbox(unit_obj)
+    return max(1e-6, x1 - x0)
+
+
+def _run_geometry(socket, unit_length):
+    """Resolve a `frieze_run` socket into a list of (matrix_world, x_scale) placements for consecutive units.
+
+    Straight run  : custom prop `run_length` (or `size_hint`); the socket sits at the START of the run, local +X =
+                    run direction, +Y = outward, +Z = up (docs/sockets.md).
+    Curved run    : additionally `arc_center` (3 floats, world), `arc_radius`, and optionally `arc_start` / `arc_end`
+                    (radians, measured in the world XY plane from +X). Without the angles they are derived from the
+                    socket's position (start angle) and its local +X (sweep direction) plus `run_length`.
+    Units are laid end to end and scaled along X by <= a few % so the run ends flush; curved units are chords.
+    """
+    M = socket.matrix_world
+    origin = M.translation.copy()
+    ax_x = (M.to_3x3() @ Vector((1, 0, 0))).normalized()
+    ax_z = (M.to_3x3() @ Vector((0, 0, 1))).normalized()
+    run = float(socket.get("run_length", socket.get("size_hint", 0.0)) or 0.0)
+    centre = socket.get("arc_center")
+    radius = float(socket.get("arc_radius", 0.0) or 0.0)
+    out = []
+    if centre is not None and radius > 1e-6:
+        c = Vector((float(centre[0]), float(centre[1]), origin.z))
+        a0 = socket.get("arc_start")
+        a1 = socket.get("arc_end")
+        if a0 is None:
+            a0 = math.atan2(origin.y - c.y, origin.x - c.x)
+        a0 = float(a0)
+        if a1 is None:
+            perp = Vector((-math.sin(a0), math.cos(a0), 0.0))       # CCW tangent at a0
+            sign = 1.0 if ax_x.dot(perp) >= 0.0 else -1.0
+            if run <= 0.0:
+                run = radius * TAU
+            a1 = a0 + sign * (run / radius)
+        a1 = float(a1)
+        sweep = a1 - a0
+        n = max(1, int(round(abs(sweep) * radius / unit_length)))
+        dt = sweep / n
+        for i in range(n):
+            pa = c + Vector((radius * math.cos(a0 + i * dt), radius * math.sin(a0 + i * dt), 0.0))
+            pb = c + Vector((radius * math.cos(a0 + (i + 1) * dt), radius * math.sin(a0 + (i + 1) * dt), 0.0))
+            chord = pb - pa
+            clen = chord.length
+            x = chord.normalized()
+            z = ax_z
+            y = z.cross(x).normalized()                              # matches the socket's own frame at i = 0
+            z = x.cross(y).normalized()
+            rot = Matrix((( x.x, y.x, z.x), ( x.y, y.y, z.y), ( x.z, y.z, z.z))).to_4x4()
+            out.append((Matrix.Translation((pa + pb) * 0.5) @ rot, clen / unit_length))
+        return out, n, abs(sweep) * radius
+    # straight
+    if run <= 0.0:
+        run = unit_length
+    n = max(1, int(round(run / unit_length)))
+    sx = run / (n * unit_length)
+    for i in range(n):
+        out.append((M @ Matrix.Translation(((i + 0.5) * unit_length * sx, 0.0, 0.0)), sx))
+    return out, n, run
+
+
+def array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=None, instances=True,
+                         seed_base=None, extra_props=None, fit=True):
+    """Lay copies of a linear moulding unit end to end along a `frieze_run` socket. Returns the new objects.
+
+    `unit_obj`     an `ORN_<kind>_v<n>_LOD<k>` mesh whose origin is the bottom-centre of its BACK face, that runs
+                   along +X for `unit_obj["unit_length"]` metres and projects toward +Y (docs/sockets.md).
+    `socket_empty` a `SOCKET_frieze_run_###` empty (straight: `run_length`; curved: `arc_center` / `arc_radius` and
+                   optionally `arc_start` / `arc_end`).
+    `instances`    True -> every copy shares `unit_obj.data` (linked duplicates, one mesh in memory).
+    `fit`          True -> the last few per-mille of the run are absorbed by scaling every unit along X so the run
+                   ends flush; False -> units keep their exact length and the run may over/undershoot.
+    Each copy carries `orn_type`, `unit_index`, `run_socket` and a decorrelated `instance_seed` so that
+    MAT_ornament_concrete's Object-Info-Random / instance_seed variation differs per unit.
+    """
+    kind = unit_obj.get("orn_type") or unit_obj.name
+    ul = unit_length_of(unit_obj)
+    places, n, run = _run_geometry(socket_empty, ul)
+    if collection is None:
+        collection = unit_obj.users_collection[0] if unit_obj.users_collection else bpy.context.scene.collection
+    prefix = name_prefix or f"INST_{kind}"
+    sidx = socket_empty.name.rsplit("_", 1)[-1]
+    if seed_base is None:
+        seed_base = abs(hash(socket_empty.name)) % 100000
+    made = []
+    for i, (mat, sx) in enumerate(places):
+        ob = bpy.data.objects.new(f"{prefix}_{sidx}_{i:03d}", unit_obj.data if instances else unit_obj.data.copy())
+        collection.objects.link(ob)
+        ob.matrix_world = mat @ Matrix.Diagonal(((sx if fit else 1.0), 1.0, 1.0, 1.0))
+        ob["orn_type"] = kind
+        ob["unit_index"] = i
+        ob["run_socket"] = socket_empty.name
+        ob["instance_seed"] = (seed_base + i * 7919) % 100000
+        if extra_props:
+            for k, v in extra_props.items():
+                ob[k] = v
+        made.append(ob)
+    sx0 = places[0][1]
+    warn = "  *** x-fit off by more than 6 %: this unit does not divide the run; use a shorter unit ***" if abs(sx0 - 1.0) > 0.06 else ""
+    print(f"[orn] array_unit_along_run: {unit_obj.name} x{n} ({ul:.3f} m unit) along {socket_empty.name} "
+          f"({run:.2f} m{', curved' if socket_empty.get('arc_center') is not None else ''}), x-fit {sx0:.4f}{warn}")
+    return made

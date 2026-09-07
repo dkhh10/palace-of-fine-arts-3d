@@ -115,11 +115,12 @@ def context_geometry(o, coll):
     made = []
     typ = o.get("orn_type", "")
     if typ == "maiden":
-        rim = float(o.get("rim_height", 3.55))
-        cy = float(o.get("box_corner_y", -0.32))
+        # socket frame: origin on the box lid, corner edge at (0, box_corner_y, 0), rim top at z=0, walls hang below
+        cy = float(o.get("box_corner_y", 0.78))
+        depth = abs(float(o.get("feet_z", -3.3)))
         mat = bpy.data.materials.get("preview_ground_mat")
         for side in (1, -1):
-            wall = L.box(f"ctx_wall_{side}", (2.4, 0.3, rim - 0.55), coll, location=(1.2, 0, 0.55 + (rim - 0.55) / 2))
+            wall = L.box(f"ctx_wall_{side}", (2.6, 0.3, depth), coll, location=(1.3, 0, -depth / 2 + 0.02))
             ang = -45.0 if side > 0 else -135.0
             wall.data.transform(Matrix.Translation((0, cy, 0)) @ Euler((0, 0, math.radians(ang)), "XYZ").to_matrix().to_4x4()
                                 @ Matrix.Translation((0, -0.15 if side > 0 else 0.15, 0)))
@@ -157,6 +158,9 @@ def render_group(base, objs, cam, tag, lod2=False, engine="EEVEE"):
             ctx_objs.append(c)
     lo = Vector((min(L.bbox(o)[0][i] + o.location[i] for o in shown) for i in range(3)))
     hi = Vector((max(L.bbox(o)[1][i] + o.location[i] for o in shown) for i in range(3)))
+    ground = bpy.data.objects.get("preview_ground")
+    if ground is not None:
+        ground.location.z = min(0.0, lo.z)
     frame_camera(cam, lo, hi)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     fp = OUT_DIR / f"{tag}_{base[4:]}.png"
