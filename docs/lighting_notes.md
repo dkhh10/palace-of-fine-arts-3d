@@ -561,3 +561,25 @@ for real. Everything else in the hero is unchanged within 0.03 EV.
 | water centre | 104.2 | **104.0** | 106.0 |
 | shade north | 146.0 | **139.9** | 117.2 |
 | colonnade far | 93.9 | **65.4** | 92.7 |
+
+### QA-02-12 cross-engine check: **Cycles meets the target, Eevee does not, and it is not the bake**
+
+QA asked for the fix to be confirmed in Cycles so it is not Eevee-only. Cycles cam04, 1920x1080, 64 spp, 606 s
+(`roundlight4_04_rotunda_ceiling_cycles.png`):
+
+| cam04, same rig | vault soffit W / E | mean soffit / own sky | coffer field / own sky |
+|---|---|---|---|
+| round 02 Eevee (before) | 0.197 / 0.215 | 0.206 | 0.411 |
+| round 08 **Eevee** | 0.352 / 0.367 | **0.360** | 0.710 |
+| round 08 **Cycles 64 spp** | 0.451 / 0.507 | **0.479** | 0.696 |
+
+**In Cycles the soffits land at 0.479, i.e. QA's `>= 0.45` acceptance is met**, and the two engines agree to 2 % on
+the coffer field (0.710 vs 0.696) — so the fix is real and not an Eevee artefact. The 33 % that Eevee is missing is
+on the soffits only. Since the deliverable hero and the Phase-5 finals are Cycles, **the defect is closed where it
+counts**; Eevee, which is the viewport/preview engine, reads the vaults about a third darker than they will render.
+
+I tested the obvious cause and it is **not** bake resolution. Re-baked `LIGHTPROBE_rotunda` at (28, 28, 20) —
+2.0 x 2.0 x 1.8 m spacing, 2.8x the samples — and the Eevee soffit moved **0.360 -> 0.359**. That is Eevee Next's
+irradiance-volume + screen-trace approximation under-lighting a concave soffit that Cycles path-traces properly.
+Reverted to (20, 20, 14) and a 64 MB pool rather than pay 3x the bake time and a 128 MB pool for nothing; the negative
+result is recorded in `scripts/light_probes.py` so it does not get re-tried.
