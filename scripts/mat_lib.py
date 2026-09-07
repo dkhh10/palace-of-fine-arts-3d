@@ -428,3 +428,45 @@ def linear_to_srgb(c):
 
 def luminance(c):
     return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+# ----------------------------------------------------------------------------- library use from other files
+def append_materials(names, link=False):
+    """Append (or link) several library materials in ONE load so shared node groups/images are not duplicated."""
+    lib = ROOT / "assets" / "materials.blend"
+    if not lib.exists():
+        print(f"[mat_lib] missing {lib}")
+        return []
+    with bpy.data.libraries.load(str(lib), link=link) as (src, dst):
+        dst.materials = [n for n in names if n in src.materials]
+    out = []
+    for n in names:
+        m = bpy.data.materials.get(n)
+        if m is not None:
+            if "placeholder" in m:
+                del m["placeholder"]
+            out.append(m)
+    dedupe_node_groups()
+    return out
+
+
+def dedupe_node_groups():
+    """Remap 'PFA_x.001'-style copies of node groups and 'TEX_x.001' images to the original datablocks (after appends)."""
+    import re
+    n_fixed = 0
+    for coll in (bpy.data.node_groups, bpy.data.images):
+        for blk in list(coll):
+            m = re.match(r"^(.*)\.(\d{3})$", blk.name)
+            if not m:
+                continue
+            base = coll.get(m.group(1))
+            if base is None or base is blk:
+                continue
+            if getattr(blk, "filepath", None) is not None and getattr(base, "filepath", None) != blk.filepath:
+                continue     # different image files, leave alone
+            blk.user_remap(base)
+            coll.remove(blk)
+            n_fixed += 1
+    if n_fixed:
+        print(f"[mat_lib] deduplicated {n_fixed} node groups / images")
+    return n_fixed

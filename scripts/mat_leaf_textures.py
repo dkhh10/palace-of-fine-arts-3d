@@ -112,12 +112,14 @@ def tex_needles_cypress(seed=1):
     dark = (0.030, 0.062, 0.020)
     mid = (0.045, 0.085, 0.026)
     light = (0.075, 0.120, 0.035)
+    centres = [(N / 2, N / 2)] + [(N / 2 + rnd.uniform(-0.3, 0.3) * N, N / 2 + rnd.uniform(-0.3, 0.3) * N) for _ in range(5)]
     # branchlets
-    for k in range(230):
+    for k in range(520):
+        c0 = rnd.choice(centres)
         ang = rnd.uniform(0, 2 * math.pi)
-        r0 = rnd.uniform(0, 0.42) * N / 2
-        L = rnd.uniform(90, 230)
-        cx, cy = N / 2 + math.cos(ang) * r0, N / 2 + math.sin(ang) * r0
+        r0 = rnd.uniform(0, 0.3) * N / 2
+        L = rnd.uniform(70, 200)
+        cx, cy = c0[0] + math.cos(ang) * r0, c0[1] + math.sin(ang) * r0
         ex, ey = cx + math.cos(ang) * L, cy + math.sin(ang) * L
         col = rnd.choice((dark, mid, mid, light))
         splat_line(img, cx, cy, ex, ey, 3.2, tuple(c * 0.8 for c in col))
@@ -137,7 +139,7 @@ def tex_needles_cypress(seed=1):
                     a3 = a2 + rnd.choice((-1, 1)) * rnd.uniform(0.5, 1.0)
                     l3 = rnd.uniform(4, 9)
                     splat_line(img, rx, ry, rx + math.cos(a3) * l3, ry + math.sin(a3) * l3, 2.0, light if rnd.random() < 0.3 else col, taper=True)
-    radial_fade(img, 0.45, 0.97)
+    radial_fade(img, 0.55, 0.99)
     save(img, "needles_cypress")
 
 
@@ -145,13 +147,15 @@ def tex_leaves_eucalyptus(seed=2):
     """Long pendulous lanceolate leaves, grey-green with warm stems, radiating cluster."""
     rnd = random.Random(seed)
     img = blank()
-    for k in range(260):
+    centres = [(N / 2, N / 2)] + [(N / 2 + rnd.uniform(-0.3, 0.3) * N, N / 2 + rnd.uniform(-0.3, 0.3) * N) for _ in range(6)]
+    for k in range(520):
+        c0 = rnd.choice(centres)
         ang = rnd.uniform(0, 2 * math.pi)
-        r0 = rnd.uniform(0, 0.5) * N / 2
-        cx, cy = N / 2 + math.cos(ang) * r0, N / 2 + math.sin(ang) * r0
-        L = rnd.uniform(150, 260)
+        r0 = rnd.uniform(0, 0.35) * N / 2
+        cx, cy = c0[0] + math.cos(ang) * r0, c0[1] + math.sin(ang) * r0
+        L = rnd.uniform(130, 230)
         W = rnd.uniform(22, 36)
-        a = ang + rnd.uniform(-0.5, 0.5)
+        a = ang + rnd.uniform(-0.8, 0.8)
         g = rnd.uniform(0.8, 1.2)
         col = (0.085 * g, 0.125 * g, 0.07 * g)
         tip = (0.11 * g, 0.12 * g, 0.06 * g)
@@ -159,26 +163,28 @@ def tex_leaves_eucalyptus(seed=2):
         sx, sy = cx - math.cos(a) * L * 0.6, cy - math.sin(a) * L * 0.6
         splat_line(img, sx, sy, cx - math.cos(a) * L * 0.45, cy - math.sin(a) * L * 0.45, 3.0, (0.25, 0.15, 0.08))
         splat_leaf(img, cx, cy, L, W, a, col, tip_color=tip, shape="lanceolate")
-    radial_fade(img, 0.5, 0.98)
+    radial_fade(img, 0.6, 0.99)
     save(img, "leaves_eucalyptus")
 
 
 def tex_leaves_broadleaf(seed=3):
     rnd = random.Random(seed)
     img = blank()
-    for k in range(320):
+    centres = [(N / 2, N / 2)] + [(N / 2 + rnd.uniform(-0.3, 0.3) * N, N / 2 + rnd.uniform(-0.3, 0.3) * N) for _ in range(6)]
+    for k in range(700):
+        c0 = rnd.choice(centres)
         ang = rnd.uniform(0, 2 * math.pi)
-        r0 = rnd.uniform(0, 0.5) * N / 2
-        cx, cy = N / 2 + math.cos(ang) * r0, N / 2 + math.sin(ang) * r0
-        L = rnd.uniform(95, 160)
-        W = rnd.uniform(55, 95)
-        a = ang + rnd.uniform(-0.7, 0.7)
+        r0 = rnd.uniform(0, 0.35) * N / 2
+        cx, cy = c0[0] + math.cos(ang) * r0, c0[1] + math.sin(ang) * r0
+        L = rnd.uniform(85, 150)
+        W = rnd.uniform(50, 90)
+        a = ang + rnd.uniform(-1.2, 1.2)
         g = rnd.uniform(0.7, 1.25)
         col = (0.055 * g, 0.125 * g, 0.03 * g)
         tip = (0.07 * g, 0.13 * g, 0.03 * g)
         splat_line(img, cx - math.cos(a) * L * 0.7, cy - math.sin(a) * L * 0.7, cx - math.cos(a) * L * 0.45, cy - math.sin(a) * L * 0.45, 2.6, (0.2, 0.13, 0.06))
         splat_leaf(img, cx, cy, L, W, a, col, tip_color=tip, shape="ovate")
-    radial_fade(img, 0.5, 0.98)
+    radial_fade(img, 0.6, 0.99)
     save(img, "leaves_broadleaf")
 
 
@@ -231,16 +237,18 @@ def tex_needles_pine(seed=6):
     """Long needle bundles (Monterey pine / redwood fallback) radiating from the centre."""
     rnd = random.Random(seed)
     img = blank()
-    for k in range(700):
+    centres = [(N / 2, N / 2)] + [(N / 2 + rnd.uniform(-0.3, 0.3) * N, N / 2 + rnd.uniform(-0.3, 0.3) * N) for _ in range(5)]
+    for k in range(1600):
+        c0 = rnd.choice(centres)
         ang = rnd.uniform(0, 2 * math.pi)
-        r0 = rnd.uniform(0, 0.4) * N / 2
-        cx, cy = N / 2 + math.cos(ang) * r0, N / 2 + math.sin(ang) * r0
-        L = rnd.uniform(110, 240)
+        r0 = rnd.uniform(0, 0.3) * N / 2
+        cx, cy = c0[0] + math.cos(ang) * r0, c0[1] + math.sin(ang) * r0
+        L = rnd.uniform(90, 200)
         a = ang + rnd.uniform(-0.35, 0.35)
         g = rnd.uniform(0.7, 1.25)
         col = (0.035 * g, 0.075 * g, 0.022 * g)
         splat_line(img, cx, cy, cx + math.cos(a) * L, cy + math.sin(a) * L, 3.4, col, taper=True)
-    radial_fade(img, 0.45, 0.97)
+    radial_fade(img, 0.55, 0.99)
     save(img, "needles_pine")
 
 

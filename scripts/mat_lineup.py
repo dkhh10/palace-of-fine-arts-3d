@@ -29,6 +29,8 @@ TS = arg("--ts", None)
 NEUTRAL = "--neutral" in args      # lab light: white sun, irradiance pi, black world, Standard view -> pixels = albedo
 RIG = "--rig" in args              # use the lighting agent's rig (assets/lighting.blend: LIGHT + WORLD_golden_hour + look)
 ENV = "--env" in args              # append ENV (trees, terrain, water) into the hero scene, materials remapped by name
+EEVEE_PRESET = "--eevee-preset" in args   # use light_presets.apply_preview_eevee instead of common.configure_eevee
+NO_REFRACTION = "--no-refraction" in args # A/B: water without raytraced transmission in Eevee
 CAMS = arg("--cams", None)
 CAMS = CAMS.split(",") if isinstance(CAMS, str) else None
 HERO = "--no-hero" not in args
@@ -208,6 +210,11 @@ out_dir = common.RENDERS / "previews" / "materials"
 out_dir.mkdir(parents=True, exist_ok=True)
 ts = TS or common.timestamp()
 engines = [ENGINE.upper()]
+if NO_REFRACTION:
+    w = bpy.data.materials.get("MAT_water_lagoon")
+    if w:
+        w.use_raytrace_refraction = False
+        w.use_screen_refraction = False
 if QUICK:
     RES = (960, 540)
     SPP = min(SPP, 48)
@@ -222,6 +229,9 @@ def configure(sc, engine):
         sc.cycles.transmission_bounces = 6
         sc.cycles.volume_bounces = 1
         sc.cycles.volume_step_rate = 2.0
+    elif EEVEE_PRESET:
+        import light_presets as lp
+        lp.apply_preview_eevee(sc, samples=32 if not QUICK else 16)
     else:
         common.configure_eevee(sc, samples=32 if not QUICK else 16)
         sc.eevee.use_raytracing = True
@@ -240,6 +250,8 @@ def render(sc, cam, engine, tag):
     sc.camera = cam
     dbg = ("_dbg_" + DEBUG.replace(" ", "").lower()) if isinstance(DEBUG, str) else ("_neutral" if NEUTRAL else "")
     dbg += "_rig" if RIG else ""
+    dbg += "_preset" if EEVEE_PRESET else ""
+    dbg += "_norefr" if NO_REFRACTION else ""
     fp = out_dir / f"{ts}_{tag}{dbg}_{engine.lower()}.png"
     sc.render.filepath = str(fp)
     t0 = time.time()
