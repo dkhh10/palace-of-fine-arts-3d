@@ -26,19 +26,19 @@ TAU = math.tau
 
 # LOD triangle budgets per type (docs/sockets.md): (LOD0, LOD1, LOD2)
 BUDGETS = {
-    "default": (120000, 18000, 1800),
-    "capital_rotunda": (150000, 20000, 2000),
-    "capital_inner": (120000, 16000, 1500),
-    "capital_colonnade": (120000, 16000, 1500),
-    "maiden": (300000, 20000, 2000),
-    "attic_figure": (300000, 20000, 2000),
-    "winged_figure": (250000, 20000, 2000),
-    "attic_panel": (300000, 24000, 2400),
-    "urn": (100000, 12000, 1200),
-    "keystone": (80000, 8000, 800),
-    "finial": (30000, 4000, 400),
-    "rosette_ceiling": (30000, 4000, 400),
-    "moulding": (40000, 6000, 600),
+    "default": (80000, 18000, 1800),
+    "capital_rotunda": (100000, 20000, 2000),
+    "capital_inner": (80000, 16000, 1500),
+    "capital_colonnade": (80000, 16000, 1500),
+    "maiden": (100000, 20000, 2000),
+    "attic_figure": (120000, 20000, 2000),
+    "winged_figure": (100000, 20000, 2000),
+    "attic_panel": (150000, 24000, 2400),
+    "urn": (60000, 12000, 1200),
+    "keystone": (50000, 8000, 800),
+    "finial": (20000, 4000, 400),
+    "rosette_ceiling": (20000, 4000, 400),
+    "moulding": (30000, 6000, 600),
 }
 
 
@@ -459,10 +459,20 @@ def skin_figure(name, joints, bones, coll=None, subdiv=2, smooth_iters=0):
 
 # ----------------------------------------------------------------------------- modifiers & mesh ops
 def apply_all(obj):
-    """Replace obj.data with the evaluated mesh (all modifiers applied)."""
+    """Replace obj.data with the evaluated mesh (all modifiers applied). Objects hidden in the viewport are not
+    evaluated by the depsgraph (modifiers would be silently skipped), so visibility is forced on for the evaluation."""
+    hv, hr = obj.hide_viewport, obj.hide_render
+    obj.hide_viewport = False
+    obj.hide_render = False
+    try:
+        obj.hide_set(False)
+    except Exception:
+        pass
+    bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
     ev = obj.evaluated_get(dg)
     me = bpy.data.meshes.new_from_object(ev, preserve_all_data_layers=True, depsgraph=dg)
+    obj.hide_viewport, obj.hide_render = hv, hr
     old = obj.data
     obj.modifiers.clear()
     obj.data = me

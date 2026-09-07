@@ -652,54 +652,77 @@ _scan_cache = {}
 
 def load_scan(key, tris=120000):
     """Import a public-domain relief scan (cm -> m), decimate, orient to face +Y with +Z up, bottom at z=0, centred
-    in x, back plane at y=0. Cached per session. Returns a work-collection object (copy it before editing)."""
-    if key in _scan_cache and _scan_cache[key].name in bpy.data.objects:
-        return _scan_cache[key]
-    fname, pre, bgfrac = SCANS[key]
-    path = SCAN_DIR / fname
-    if not path.exists():
-        print(f"[orn] WARNING scan {path} missing")
-        return None
-    t = time.time()
-    bpy.ops.wm.stl_import(filepath=str(path), global_scale=0.01)
-    ob = bpy.context.selected_objects[0]
-    ob.name = f"scan_{key}"
-    L.common.link_object(ob, L.work_collection())
-    ob.data.transform(ob.matrix_world)
-    ob.matrix_world = Matrix.Identity(4)
-    if pre is not None:
-        ob.data.transform(pre)
-    # face +Z / up +Y  ->  face +Y / up +Z  (proper rotation: x -> -x, y <-> z)
-    ob.data.transform(Matrix(((-1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0), (0, 0, 0, 1))))
-    L.decimate(ob, target=tris)
-    (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
-    ob.data.transform(Matrix.Translation((-0.5 * (x0 + x1), -y0, -z0)))
-    # background depth: area-weighted median of face-centre y (flat background = few, large faces)
-    me = ob.data
-    depth = max(1e-6, y1 - y0)
-    pairs = sorted((poly.center.y / depth, poly.area) for poly in me.polygons if poly.normal.y > 0.6)
-    total = sum(a for _, a in pairs)
-    acc, med = 0.0, bgfrac
-    for yv, a in pairs:
-        acc += a
-        if acc >= 0.5 * total:
-            med = yv
-            break
-    ob["bg_frac"] = med
-    bgfrac = med
-    ob.data.polygons.foreach_set("use_smooth", [True] * len(ob.data.polygons))
-    _scan_cache[key] = ob
-    print(f"[orn] scan {key}: {L.tri_count(ob)} tris, {x1 - x0:.2f} x {y1 - y0:.2f} x {z1 - z0:.2f} m, background at {bgfrac:.2f} of depth, in {time.time() - t:.1f}s")
+    in x, back plane at y=0. The oriented mesh is cached (fake user, survives clear_work); every call returns a fresh
+    work-collection object with its own copy of the mesh."""
+    me = _scan_cache.get(key)
+    if me is not None:
+        try:
+            _ = me.name
+        except ReferenceError:
+            me = None
+    if me is None:
+        fname, pre, bgfrac = SCANS[key]
+        path = SCAN_DIR / fname
+        if not path.exists():
+            print(f"[orn] WARNING scan {path} missing")
+            return None
+        t = time.time()
+        bpy.ops.wm.stl_import(filepath=str(path), global_scale=0.01)
+        ob = bpy.context.selected_objects[0]
+        ob.name = f"scan_{key}"
+        common.link_object(ob, L.work_collection())
+        ob.data.transform(ob.matrix_world)
+        ob.matrix_world = Matrix.Identity(4)
+        if pre is not None:
+            ob.data.transform(pre)
+        # face +Z / up +Y  ->  face +Y / up +Z  (proper rotation: x -> -x, y <-> z)
+        ob.data.transform(Matrix(((-1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0), (0, 0, 0, 1))))
+        L.decimate(ob, target=tris)
+        (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
+        ob.data.transform(Matrix.Translation((-0.5 * (x0 + x1), -y0, -z0)))
+        # background depth: area-weighted median of front-facing face-centre y (flat background = few, large faces)
+        me = ob.data
+        depth = max(1e-6, y1 - y0)
+        pairs = sorted((poly.center.y / depth, poly.area) for poly in me.polygons if poly.normal.y > 0.6)
+        total = sum(a for _, a in pairs)
+        acc, med = 0.0, bgfrac
+        for yv, a in pairs:
+            acc += a
+            if acc >= 0.5 * total:
+                med = yv
+                break
+        me["bg_frac"] = med
+        me.polygons.foreach_set("use_smooth", [True] * len(me.polygons))
+        me.name = f"scancache_{key}"
+        me.use_fake_user = True
+        _scan_cache[key] = me
+        bpy.data.objects.remove(ob)
+        print(f"[orn] scan {key}: {len(me.polygons)} tris, {x1 - x0:.2f} x {y1 - y0:.2f} x {z1 - z0:.2f} m, background at {med:.2f} of depth, in {time.time() - t:.1f}s")
+    ob = bpy.data.objects.new(f"scan_{key}", me.copy())
+    ob["bg_frac"] = me["bg_frac"]
+    L.work_collection().objects.link(ob)
     return ob
+
+
+def release_scans():
+    for key, me in list(_scan_cache.items()):
+        try:
+            me.use_fake_user = False
+            if me.users == 0:
+                bpy.data.meshes.remove(me)
+        except ReferenceError:
+            pass
+    _scan_cache.clear()
 
 
 def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=0.0, coll=None):
     """Copy a scan into the panel: scaled to `height` (m) tall and `depth` (m) of relief, its background surface
     sunk to the slab face so only the figures stand proud."""
-    src = load_scan(key)
-    if src is None:
+    ob = load_scan(key)
+    if ob is None:
         return None
-    ob = L.duplicate(src, f"rel_{key}_{x:.1f}", coll or L.work_collection())
+    src = ob
+    ob.name = f"rel_{key}_{x:.1f}"
     (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
     sz = height / (z1 - z0)
     sy = depth / (y1 - y0)
@@ -963,13 +986,27 @@ def main():
         common.wipe_scene()
     scene = common.setup_scene()
     L.orn_collection()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    failed = []
     for typ in (only or ALL_TYPES):
         n = min(VARIANTS.get(typ, 1), NVAR) if "--variants" in ARGS else VARIANTS.get(typ, 1)
-        build_type(typ, n, BAKE)
+        try:
+            build_type(typ, n, BAKE)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"[orn] ERROR building {typ}: {e}")
+            failed.append(typ)
+            L.clear_work()
+        if "--no-checkpoint" not in ARGS:
+            common.set_lod_visibility(1)
+            bpy.ops.wm.save_as_mainfile(filepath=str(OUT), relative_remap=True, compress=False)
+    release_scans()
     L.clear_work()
     common.set_lod_visibility(1)
-    OUT.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(OUT), relative_remap=True, compress=True)
+    if failed:
+        print(f"[orn] FAILED types: {failed}")
     print(f"[orn] saved {OUT}")
     print(L.report())
 
