@@ -281,6 +281,81 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 143 | cypress | -128 | -8 | 21 | E3 screen behind the colonnade |
 <!-- PLAN_TABLE_END -->
 
+## Polish round 1 (QA round 02 defects) — 2026-09-07
+
+### QA-02-7 — the wings were buried in trees AND standing in tree shadow
+Two separate causes, and the second one was invisible until it was measured.
+
+1. **The screen was a wall.** Round 01's `redwood_screen` planted three continuous rows 4.5 / 11 / 19 m outside the
+   wing at 26–36 m tall — 5–15 m over a 19–21 m entablature, with no gaps. Now: rows at **6 / 12.5 / 20 m**, crowns
+   **18.5–27 m**, and each row is **clumped** (a 15–38 m run of trees, then a 7–13 m gap) so bays open onto sky.
+   Pushing the rows further than ~20 m walks them into the exhibition-hall footprint, which deletes the two back
+   rows entirely — that is the limit, not a preference.
+2. **The low sun.** At az 118.5 / el 7.4 a 30 m crown throws a **230 m** shadow to the north-west. Measured with
+   `env_sightlines.py --shadow`, **92.5 % of the south wing and 70 % of the north wing entablature band was in tree
+   shadow** — the wings could not have been lit whatever the exposure. The same rays cross the lagoon: **33 % of the
+   water the hero camera sees** was shadowed by the east-shore eucalyptus row (Y 118–131, 28–32 m), which is a large
+   part of QA-02-6's dark cyan near field.
+
+`env_trees.shadow_relief()` now runs after the plan is assembled. It samples the lagoon-facing colonnade faces at
+z = 12 / 17 m plus a grid of the hero camera's water, ray-casts each sample at the sun against every crown
+(ellipsoid, 0.35 H–1.02 H), and worst-caster-first lowers the offending crown, pushes it 12 m down-sun, or drops it.
+Height floors are by role: generated screen trees 55 % and droppable, east-shore / backdrop trees behind the hero
+camera 45 % and droppable, the peninsula "A" cluster (the dark mass right of the rotunda in ref 169) 80 % and never
+dropped, everything else 72 %.
+
+Result: **north wing 82.5 → 12.5 %, south wing 70.0 → 20.0 %, hero water 33.3 → 6.1 %** in shadow, for 22 crowns
+lowered (80 m of height in total), 14 moved and 1 dropped. Sky through the bays from cam 01
+(`env_preview.py -- --skytest`) went **1.7 → 22.8 %** (north) and **9.5 → 30.3 %** (south); ref 169 is 15–20 %, so
+the north wing is on target and the south is a little open.
+
+The geometry lives in `env_lib` (`sun_vector`, `crown_ellipsoid`, `ray_hits_ellipsoid`, `wing_samples`,
+`shadowed_fraction`) so the planner and the checker cannot drift apart. Re-check any time with
+`blender -b --python scripts/env_sightlines.py -- --shadow --only-shadow`.
+
+**Naming warning.** QA round 02 called the x 60–560 band of the hero frame "north". North is −X, and the hero camera
+at (−14.1, 100) looking at the origin puts −X on the **right** of the frame, so QA's "north band" is in fact the
+**south** (roof306) colonnade and its "south band" is the north (roof310) one. `scripts/env_measure.py` calls them
+`left_wing` / `right_wing` to stop the swap propagating.
+
+### QA-02-6 — lagoon flanks and the cyan near field (mesh side; MAT_water_lagoon is the materials agent's)
+* The shadow relief above lit the water QA measured (6.1 % shadowed, was 33.3 %).
+* **Bed profile.** The old bed dropped to its full 1.5 m within 7.5 m of the shore, so the water the hero sees at
+  6–12 m already had the longest possible absorption path through the murk — it could only read near-black cyan.
+  The bed is now a shelf: 0.25 m at the edge, 0.85 m at 14 m out, 1.5 m by 30 m (refs 022, 169 show bed pebbles and
+  rip-rap several metres out).
+
+### QA-02-13 / QA-02-18 — the shrub band
+* Every shrub inside r = 54 m of the rotunda is clamped to **1.2 m** tall, so the podium and its Greek-key band are
+  no longer hidden from cams 02 / 05.
+* `shadow_relief` also pushes any tree whose crown comes within **6 m** of the podium (r = 31 m) radially out.
+* Variety: **9 mound seeds** instead of 4 across three material families (`MAT_shrub` / `MAT_shrub_light` /
+  `MAT_shrub_dry`), 3 mahonia sizes, a 2.2:1 instance size spread, no two neighbours drawn from the same source
+  mesh, and dry reeds / twigs seeded into the peninsula belt (they used to start past r = 50 m) — **30 % of the band
+  is now a warm dry material**, against QA's ">= 20 %" test.
+
+### QA-02-15 — backdrop houses
+Round 02 joined every OSM footprint into one flat-topped prism with one material ("plain grey boxes"). Each
+building is now its own object — which gives the library material's per-object random a per-building hue and value —
+and carries a pitched roof in `MAT_backdrop_roof`: a gable along the footprint's oriented bounding box, hipped on
+plans squarer than 1.8:1, pitch 18–29 deg.
+
+### Performance
+The round-02 master ran 33–55 s per Eevee camera with LOD1 at 15.2 M tris; 1761 LOD-less shrubs contributed 3.3 M
+of that **at every LOD and in every render**. A 0.8 m bush is 8–15 px from the hero camera, so its ~1300 leaf cards
+buy nothing. Leaf *coverage* (n_cards x card^2) is what makes the silhouette read, so `SHRUB_LOD` keeps the coverage
+and multiplies the card size instead — cards k x wider and k^2 x fewer:
+
+| | cards | tris (1423 instances) |
+|---|---|---|
+| LOD0 | full | 2.31 M |
+| LOD1 | 2.2 x wider | 0.53 M |
+| LOD2 | 4.5 x wider, coarser core | 0.14 M |
+
+Each placement is now three objects with the tree convention (`hide_render` on all but LOD0, `hide_viewport` on all
+but LOD1), and a shrub farther than `SHRUB_FAR` = 80 m from every QA camera renders its LOD1 mesh even at LOD0
+(LOD2 past 160 m). Instance count also came down 1761 -> 1423 as part of the QA-02-18 variety work.
+
 ## Previews and comparisons
 
 Fix round (2026-09-07): `renders/previews/environment/*_fix2_*.png` and `fix3_cam01_1920.png` / `fix3_cam05_1920.png`
