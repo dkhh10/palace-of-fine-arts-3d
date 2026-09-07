@@ -677,6 +677,42 @@ def build_meander_band(name, poly, zb, h, coll, mat, closed=True, proud=P.BAND_P
     return L._finish(name, bm, coll, mat, part_type, origin=(0, 0, zb), smooth=False, bevel=False)
 
 
+def add_frieze_sockets(poly, zb, h, subtype="greek_key", closed=True, min_len=1.4, extra=None):
+    """One `frieze_run` socket per straight run of a band, per the frame convention in docs/sockets.md:
+    origin at the RUN START, +Y = the outward face normal, +X along the run. `_path_segments` walks a CCW polygon
+    so its `out` is the right-hand (outward) normal and the run therefore starts at the segment's far end `b` and
+    runs back along -d (that is the direction that lands on local +X in a right-handed frame with +Y = out)."""
+    n = 0
+    for a, b, d, out, length in _path_segments(poly, closed):
+        if length < min_len:
+            continue
+        e = dict(run_length=round(length, 3), run_dir=(-d[0], -d[1], 0.0), band_height=round(h, 3), subtype=subtype)
+        if extra:
+            e.update(extra)
+        SOCK.add("frieze_run", (b[0], b[1], zb), out, length, extra=e, size=0.35)
+        n += 1
+    return n
+
+
+def build_rustication(name, poly, z0, z1, coll, mat, course=0.6, joint=0.04, recess=0.035, part_type="rostra"):
+    """Rusticated podium wall: the core is set back by `recess` and the ashlar courses stand out to the real face,
+    leaving a `joint` gap at every course line (sheet s4 #12 / s5: 'plain rusticated courses, joints ~0.6 m').
+    Modelled as geometry (no booleans) so the joints throw a real shadow line; the materials agent asked for this."""
+    inner = L.offset_polygon(poly, -recess)
+    L.prism(name, inner, z0, z1, coll, mat=mat, part_type=part_type, ngon=False)
+    n = max(1, int(round((z1 - z0) / course)))
+    ch = (z1 - z0) / n
+    objs = []
+    for i in range(n):
+        a = z0 + i * ch
+        b = a + ch - joint
+        if i == n - 1:
+            b = z1                      # top course runs into the band above, no joint at the very top
+        objs.append(L.prism(f"{name}_course_{i:02d}", poly, a, b, coll, mat=mat, part_type=part_type, ngon=False,
+                            bevel=False))
+    return objs
+
+
 def build_volutes(name, mid, tang, v, z_top, coll, mat):
     """Pair of volute scrolls (Ionic-like, ~1.5 m) side by side on a corner-block cap; spirals in the (tang, z) plane."""
     objs = []
@@ -856,12 +892,15 @@ def build_site():
         side, reach = sweeps.get(fr.az, (1, None))
         poly = lobe_polygon(fr.az, side, reach)
         band_z0 = P.PODIUM_TOP_Z - P.PODIUM_BAND_H - 0.1
-        L.prism(f"ARCH_site_rostra_{k:02d}", poly, P.GROUND_Z - 0.3, band_z0 + SINK, C, mat=M_PODIUM, part_type="rostra", ngon=False)
+        build_rustication(f"ARCH_site_rostra_{k:02d}", poly, P.GROUND_Z - 0.3, band_z0 + SINK, C, M_PODIUM)
         inner = L.offset_polygon(poly, -P.PODIUM_BAND_RECESS)
         L.prism(f"ARCH_site_rostra_band_{k:02d}", inner, band_z0, P.PODIUM_TOP_Z - 0.1 + SINK, C, mat=M_PODIUM, part_type="rostra",
                 ngon=False, bevel=False)
-        # Greek-key meander with rosette bosses standing proud of the recessed band face (catalog #12, QA-01-11)
+        # Greek-key meander with rosette bosses standing proud of the recessed band face (catalog #12, QA-01-11).
+        # ARCH models it as geometry; the sockets let ORN replace it with ORN_greek_key / ORN_rosette_band (hide the
+        # ARCH_*_meander_* objects first - see docs/sockets.md, contract additions 2026-09-07).
         build_meander_band(f"ARCH_site_rostra_meander_{k:02d}", inner, band_z0, P.PODIUM_BAND_H, C, M_PODIUM)
+        add_frieze_sockets(inner, band_z0, P.PODIUM_BAND_H, extra={"host": "rostra", "modelled_by_arch": True})
         L.prism(f"ARCH_site_rostra_cap_{k:02d}", poly, P.PODIUM_TOP_Z - 0.1, P.PODIUM_TOP_Z, C, mat=M_PODIUM, part_type="rostra",
                 ngon=False)
         # urn plinths: one in front of the chamfer and one each side beyond the pedestals
@@ -1089,6 +1128,8 @@ def build_box(name, centre, rot_deg, z0, coll, inward):
     base = [add2(centre, rot2(c, rot_deg)) for c in [(-half + 0.06, -half + 0.06), (half - 0.06, -half + 0.06), (half - 0.06, half - 0.06), (-half + 0.06, half - 0.06)]]
     L.prism(name + "_band", base, z0 - SINK, z0 + band_h + SINK, coll, mat=M_COLON, part_type="box", bevel=False)
     build_meander_band(name + "_meander", L.ensure_ccw(base), z0 + 0.05, band_h - 0.08, coll, M_COLON, part_type="box")
+    add_frieze_sockets(L.ensure_ccw(base), z0 + 0.05, band_h - 0.08, min_len=1.0,
+                       extra={"host": "planter_box", "modelled_by_arch": True})
     full = [add2(centre, rot2(c, rot_deg)) for c in [(-half, -half), (half, -half), (half, half), (-half, half)]]
     L.prism(name + "_plinth", L.offset_polygon(L.ensure_ccw(full), 0.08), z0 - SINK, z0 + 0.12, coll, mat=M_COLON, part_type="box")
     # walls: plates with a panel hole per face, lid on top
@@ -1135,6 +1176,24 @@ build_site()
 print(f"[arch] site done {time.time() - T0:.1f}s; building colonnades ...")
 wing_stats = {n: build_wing(n, c) for n, c in (("north", C_CN), ("south", C_CS))}
 print(f"[arch] colonnades done {time.time() - T0:.1f}s")
+
+# ---- bevel sweep (materials request 2026-09-07: 2-4 cm on every arris the edge-wear mask reads from -- cornices,
+# pedestals, attic blocks, podium edges, box and pylon blocks, column bases). Objects built with bevel=False for a
+# reason (flute geometry, dentil/egg arrays, meander and coffer detail, the dome shell, sunk panels) stay unbevelled:
+# a 3 cm bevel on a 15 cm dentil eats the moulding and multiplies the tri count.
+BEVEL_ALSO = ("attic_corner_cap", "attic_frame", "attic_roof", "attic_volute", "drum_cornice", "dome_apex_cap",
+              "colbase", "ressaut_core", "impost_", "archivolt", "rostra_band", "rostra_cap", "rostra_course",
+              "pylon_A_core", "pylon_B_core", "box_band", "box_lid", "box_frame", "stair")
+_bev = 0
+for o in ARCH.all_objects:
+    if o.type != "MESH" or not o.name.startswith("ARCH_"):
+        continue
+    if any(m.type == "BEVEL" for m in o.modifiers):
+        continue
+    if any(t in o.name for t in BEVEL_ALSO):
+        L.add_bevel(o)
+        _bev += 1
+print(f"[arch] bevels added to {_bev} objects (width {P.BEVEL_WIDTH} m, {P.BEVEL_SEGMENTS} segments)")
 
 # LOD default: LOD1 in the viewport AND in renders (LOD0/LOD2 are hide_render=True in the saved file so that a naive
 # render never stacks three shafts; the lead's common.set_lod_visibility switches hide_viewport, flip hide_render alike)
