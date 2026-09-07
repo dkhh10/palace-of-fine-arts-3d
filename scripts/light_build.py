@@ -76,12 +76,11 @@ EXPOSURE_BIAS = 1.75               # EV added to the grey-card calibration. Roun
                                    # and AgX compresses a 14-26 % display gap into most of a stop of SCENE exposure.
                                    # 1.10 + 0.90 = 2.00 -> view exposure -3.29 -> -2.39. Warmth is NOT chased here:
                                    # hue falls 1.1 deg per +1 EV, so QA-02-14 is a materials/albedo job.
-LOOK = "AgX - High Contrast"       # Round 05 chose Base Contrast because Punchy crushed the sky-lit shade. At +0.9 EV
-                                   # that reason is gone (the shade is 25 % too light, so crushing it is the fix), and
-                                   # the look turned out to be the strongest chroma lever of the three available:
-                                   # attic R-B, all at strength 1.0 - Base 94.8, Medium High 108.6, High 113.5-118.1,
-                                   # Punchy 112.7. Punchy also drops the attic to 144.9 and the water to 71.3, i.e. a
-                                   # stop of luminance for no extra chroma over High Contrast. High Contrast it is.
+LOOK = lp.LOOK                     # ALIAS, not a copy. Round 08b set this string here and left
+                                   # light_presets.LOOK at "AgX - Base Contrast"; build_master.py applies the
+                                   # light_presets one, so master.blend - every QA render and the deliverable -
+                                   # rendered at Base Contrast while lighting.blend rendered at High Contrast.
+                                   # The look is now defined once, in light_presets.py, with the rationale.
 # QA-02-8. Round 07 used the mist pass RAW (LINEAR, 30 -> 730 m) as the haze factor, x 0.85. That is a ramp with no
 # asymptote: everything past ~730 m sat at 0.85 haze, so at cam06 the dome, the lawn and the lagoon all mixed to the
 # same flat colour (measured saturation 0.076-0.091, hue 60-76 deg). Two things were wrong and both are fixed here.
