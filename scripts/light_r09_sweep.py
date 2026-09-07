@@ -122,14 +122,22 @@ for case in HERO:
           f"exposure {base_exp:.3f} {comp:+.3f} (recalib) {de:+.3f} = {scene.view_settings.exposure:.3f}", flush=True)
     shoot("CAM_qa_01_lagoon_hero", OUT / f"r09hero_{tag}.png")
 
-# restore before the vault pass
-scene.view_settings.look = base_look
-scene.view_settings.exposure = base_exp
+# --- the rig the vault pass runs under -----------------------------------------------------------------------
+# The interior fills are absolute watts, so what they are worth as a RATIO depends on the sky the frame's own sky
+# patch shows and on the sky light the vault gets. --rig takes the same case string as --hero so the fills can be
+# sized against the rig that is actually going to ship rather than against the one master.blend happens to hold.
+RIG = arg("--rig", ["1.00,1.20,1.00,+0.00"], n=1)[0].split(",")
+_s, _cb, _bm, _de = (float(x) for x in RIG[:4])
+scene.view_settings.look = ("AgX - " + RIG[4].replace("_", " ")) if len(RIG) > 4 and RIG[4] else base_look
+scene.view_settings.exposure = base_exp + exposure_compensation(_s) + _de
 if n_strength:
-    n_strength.inputs[1].default_value = 1.0
+    n_strength.inputs[1].default_value = _s
 if n_camboost:
-    n_camboost.inputs[1].default_value = 1.20 - 1.0
-sun.data.color = base_col
+    n_camboost.inputs[1].default_value = _cb - 1.0
+sun.data.color = (base_col[0], base_col[1], base_col[2] * _bm)
+if VAULT:
+    print(f"[r09] vault pass rig: sky {_s}, camboost {_cb}, sun blue {_bm}, look "
+          f"{scene.view_settings.look!r}, exposure {scene.view_settings.exposure:.3f}")
 
 disk = bpy.data.objects.get("LIGHT_rotunda_bounce")
 vault = sorted([o for o in bpy.data.objects if o.name.startswith("LIGHT_rotunda_vault_bounce")], key=lambda o: o.name)
