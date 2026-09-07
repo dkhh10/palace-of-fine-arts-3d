@@ -5,12 +5,14 @@ Owner: Environment specialist. Files: `scripts/env_build.py` (entry), `scripts/e
 World: +Y east (lagoon), −X north, +X south, z = 0 rotunda floor, water at `common.WATER_Z` = −1.3.
 
 ```
-blender -b --python scripts/env_build.py                 # full rebuild (~30 s) -> assets/environment.blend
+blender -b --python scripts/env_build.py                 # full rebuild (~100 s) -> assets/environment.blend
 blender -b --python scripts/env_build.py -- --quick      # coarse terrain, one seed per species
 blender -b --python scripts/env_preview.py -- --cams 01,02,06 --samples 16 --tag x   # linked ENV + placeholder/ARCH
 blender -b --python scripts/env_preview.py -- --topdown                              # plan view vs satellite
 blender -b --python scripts/env_preview.py -- --lod=1 --cams 01                      # opens the file directly, any LOD
 blender -b --python scripts/env_trees.py -- --lineup                                 # species line-up per LOD
+blender -b --python scripts/env_sightlines.py                                        # QA-01-6 tree/camera sight lines
+blender -b --python-expr "import sys;sys.path.insert(0,'scripts');import env_preview;env_preview.sky_through_wing('north')" 
 ```
 
 ## Collections and LODs
@@ -290,16 +292,12 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 
 ## Previews and comparisons
 
-`renders/previews/environment/*_final*.png` (Eevee, QA cameras 01/02/03/05/06 + three diagnostic views + hero at LOD1)
-and `renders/qa_comparisons/env_final_*.png` (render | reference | 50 % blend): `cam01_vs_user`, `cam01_vs_ref169`,
-`cam02_vs_ref062`, `cam03_vs_ref128`, `cam05_vs_ref063`, `cam06_vs_ref105`, `topdown_vs_satellite_z18` (plan view |
-satellite | blend) and `env_final_sheet.png` (contact sheet). Earlier rounds are kept as `env_trees1..5_*`.
-
-Hero-view check against the user image (cam 01): two narrow dark cypress columns left of the rotunda at x ≈ 250–330 px
-with the south colonnade visible through the gap, a small dark tree touching the rotunda's left edge, the dense dark
-pine/cypress cluster from the rotunda's right edge to ≈ 1130 px, the tall column at ≈ 1190 px, the north colonnade
-visible at the right edge. Tree tops reach the attic base as in the photo. Silhouette match is good; the leaf cards
-still read as flat placeholders until the leaf materials arrive (see requests).
+Fix round (2026-09-07): `renders/previews/environment/20260907_*_fix2_*.png` (Eevee, QA cams 01/02/03/05/06, ENV +
+linked ARCH, placeholder sun az 118.5 / el 7.4) and the composite for the lead
+**`renders/qa_comparisons/env_fix2_sheet.png`** — cam 01 render next to ref 169, and cam 02 / 03 / 05 / 06 next to
+refs 062 / 128 / 063 / 105. Foliage line-ups: `*_tree_lineup_LOD{0,1,2}.png` and `*_tree_lineup_hero120m.png`.
+Sky-through-the-bays test frames: `skytest_north.png`, `skytest_south.png` (transparent film; black = sky).
+The Phase 2 set is still there as `*_final*` / `env_final_*`; earlier rounds as `env_trees1..5_*`.
 
 ## Sky / sun convention (verified for the preview)
 
@@ -309,19 +307,29 @@ el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
 
 ## Open issues / requests
 
-- **Materials agent**: `MAT_leaf_cypress`, `MAT_leaf_eucalyptus`, `MAT_leaf_broadleaf`, `MAT_shrub`, `MAT_reeds` need
-  alpha-cut card textures (UV map `UVMap`: conifer cards are `rect` quads 0–1 UV = needle-tuft strip; eucalyptus /
-  willow / broadleaf cards are Sapling `hex` (two quads, UV fan) = leaf cluster). Two-sided, translucent. Bark UVs are
-  cylindrical fallbacks (u = angle, v = z / 4 m); an object-space triplanar bark is safer. Also requested (not in the
-  list): `MAT_backdrop_forest`, `MAT_backdrop_hill`, `MAT_lamp_post` (placeholders exist).
-- **Lead / QA**: the hero camera at (−16, 113.9) stands ≈ 14 m behind the OSM shoreline (water at Y ≈ 100 there); the
-  user image and ref 169 have water to the frame bottom. Either move the camera to Y ≈ 101 or accept a strip of
-  lawn + rip-rap in the foreground (kept clear of shrubs and reeds within 24 m).
-- QA cam 02 (−32, 38) is 2–4 m outside the OSM peninsula (in the water); the shore willow was placed at (−36, 24) so it
-  stays at the right edge of that frame.
-- The OSM north-wing trace is ≈ 5–8 m east of the satellite's; tree positions follow the satellite where they conflict.
-- The exhibition hall footprint (`b302`) is the full OSM polygon (97 m deep); the satellite shows a ≈ 45 m crescent
-  with roads west of it. Backdrop only — replace when/if ARCH models the hall.
-- Wind-sculpting of the cypresses (leaning away from the westerlies) is not modelled; no per-instance weathering.
-- Diagnostic camera `CAM_env_hall_from_colonnade` mostly sees the placeholder rotunda; the hall's pilasters show on the
-  right of that frame. A proper hall view needs the ARCH colonnade (open, not the placeholder's solid wall).
+- **Materials agent (blocking one QA item)**: the library has no separate pine/redwood needle material.
+  `docs/materials_notes.md` says `assets/textures/foliage/needles_pine.png` is generated but unused; QA-01-7 asks for
+  "conifer foliage darker (map pines/redwoods to the pine needle material, not cypress)". ENV maps pine, redwood,
+  cypress and columnar cypress all to `MAT_leaf_cypress` because creating a local copy would violate the
+  library-by-name rule. **Please add `MAT_leaf_pine`** (darker, blue-green, translucency ~0.2) and ENV will remap in
+  one line (`env_trees.SPECIES[...]["leaf"]`). Mitigation meanwhile: pine and redwood carry 36–37 k cards per LOD0
+  tree, ~55 % more than cypress, so the crowns self-shadow darker.
+- **Materials agent**: `MAT_shrub_light`, `MAT_shrub_dry`, `MAT_backdrop_roof`, `MAT_backdrop_skylight` and
+  `MAT_backdrop_door_green` are not in the library, so those five are still ENV placeholders (`env_lib.mat` recolours
+  them). The shore now uses only library materials — `MAT_shrub` for the mounds and `MAT_reeds` for agapanthus, dry
+  reeds and twig shrubs — but a second, lighter/greyer shrub material would let the mahonia read differently from the
+  pittosporum. The hall's roof, glazing and green door are the other three.
+- **Lead / QA (cam 02)**: see "Sight lines" above — the reference sheet's dark cluster and the new cam 02 at (−45, 52)
+  cannot both be satisfied on the available land. The cluster now sits in cam 02's right-edge band at 29–52 m.
+- **Lead / build_master**: ENV's materials are appended one at a time by `common.load_material`, which duplicates the
+  library's shared node groups; `env_build` now calls `mat_lib.dedupe_node_groups()` before saving, but if the lead
+  re-appends ENV into master it should do the same (the materials notes give the one-call recipe).
+- **Performance**: LOD0 is 15.1 M tris (LOD1 5.9 M). Trees are ~97 % of it. If the Cycles hero gets too slow, the
+  cheapest lever is `env_trees.FAR_RADIUS` (130 m: no QA camera within this distance -> the tree uses the lighter
+  mesh); 100 m saves roughly another 2 M.
+- The OSM extract has no paths/roads (`_osm.json` contains only buildings and the two water polygons), so QA-01-19's
+  "paths from OSM" is served by the satellite-derived path ribbons already baked into the terrain material zones.
+- Wind-sculpting of the cypresses (leaning away from the westerlies) is only a 0–4.5° per-instance tilt; no
+  per-instance weathering of bark or foliage beyond the library materials' own object-random.
+- Diagnostic camera `CAM_env_hall_from_colonnade` mostly sees the colonnade; a proper hall view needs a camera outside
+  the wings.
