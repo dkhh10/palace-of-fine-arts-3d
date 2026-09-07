@@ -162,4 +162,25 @@ for case in VAULT:
     print(f"[r09] cam04 {tag}: disk {base_disk * fs:.0f} W, vault {base_vault * vs:.0f} W each", flush=True)
     shoot("CAM_qa_04_rotunda_ceiling", OUT / f"r09vault_{tag}.png")
 
+# --- verification pass: render the rig EXACTLY as master.blend holds it, no overrides ---------------------------
+# Everything above perturbs the file in memory. --verify skips all of it and renders what the rebuilt master
+# actually contains, which is the only number that may be quoted as shipped.
+if "--verify" in args or "--verify04" in args:
+    for n, v in (("strength", None), ("camera_boost", None)):
+        pass                      # deliberately untouched
+    scene.view_settings.look = base_look
+    scene.view_settings.exposure = base_exp
+    sun.data.color = base_col
+    print(f"[r09] verify: look {base_look!r}, exposure {base_exp:.3f}, sun {tuple(round(c,4) for c in base_col)}")
+    lp.apply_final_cycles(scene, samples=SAMPLES)
+    scene.render.image_settings.color_depth = "8"
+    scene.render.resolution_x, scene.render.resolution_y = RES
+    if "--verify04" not in args:
+        shoot("CAM_qa_01_lagoon_hero", OUT / "r09_verify_01_hero_cycles.png")
+    shoot("CAM_qa_04_rotunda_ceiling", OUT / "r09_verify_04_ceiling_cycles.png")
+    lp.apply_preview_eevee(scene, samples=64)
+    scene.render.image_settings.color_depth = "8"
+    scene.render.resolution_x, scene.render.resolution_y = RES
+    shoot("CAM_qa_04_rotunda_ceiling", OUT / "r09_verify_04_ceiling_eevee.png")
+
 print("[r09] done")
