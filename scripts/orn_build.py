@@ -963,36 +963,68 @@ def _strip(name, coll, length=1.0, depth=0.05, height=0.2):
     return L.box(name, (length, depth, height), coll, location=(0, depth / 2, height / 2))
 
 
-# QA-01-11 rostra / podium band (reference sheet s4 #12: band h ~ 0.5, rosettes ~ 0.45 dia; crops rostra_band_1-2)
+# QA-01-11 rostra / podium band (reference sheet s4 #12: band h ~ 0.5, rosettes ~ 0.45 dia; crops rostra_band_1-2).
+# In the photos the meander is INCISED into the top course of the podium (deep rectangular grooves in a flat face)
+# and only the round paterae stand proud, so the unit is a flat slab with the fret cut out of it by boolean.
 KEY_UNIT = 0.60          # one meander repeat = one greek_key unit (unit_length)
 KEY_BAND_H = 0.52        # band height, shared by greek_key and rosette_band so they mix on one run
-KEY_GROUND = 0.03        # backing strip depth (the sunk field of the band)
-KEY_RELIEF = 0.05        # how far the fret bars stand proud of that field  -> total relief 5 cm (>= 3 cm required)
-KEY_BAR = 0.058          # fret bar width (bar : gap about 1 : 0.8, as in rostra_band_1/2)
+KEY_FACE = 0.08          # slab thickness (the band face stands 8 cm off the wall behind it)
+KEY_GROOVE = 0.045       # how deep the fret is cut into that face  (>= 3 cm required by QA-01-11)
+KEY_BAR = 0.052          # groove width (groove : land about 1 : 0.9, as in rostra_band_1/2)
+KEY_BOSS = 0.45          # patera diameter
 
 
-def greek_key_bars(coll, x0, unit, band_h, tag="k"):
-    """One classic running-fret repeat starting at local x = x0, spanning `unit` metres. Grid g = unit/7, inner field
-    5 g tall; the top rail runs the full width so consecutive units join into one continuous meander. Bar boxes."""
+def greek_key_cutters(coll, x0, unit, band_h, tag="k"):
+    """Cutter boxes for one classic running-fret repeat starting at local x = x0 and spanning `unit` metres.
+    Grid g = unit/7, inner field 5 g tall; the top groove runs the full width so consecutive units join into one
+    continuous meander. Each box protrudes through the front face so a boolean difference leaves a groove."""
     g = unit / 7.0
     w = KEY_BAR
     zb = (band_h - 5.0 * g) / 2.0                      # bottom of the inner field
-    y = KEY_GROUND + KEY_RELIEF / 2.0
+    dy = KEY_GROOVE + 0.02
+    y = KEY_FACE - KEY_GROOVE + dy / 2.0
     out = []
 
     def seg(gx0, gz0, gx1, gz1):
         ax, az = x0 + gx0 * g, zb + gz0 * g
         bx, bz = x0 + gx1 * g, zb + gz1 * g
-        out.append(L.box(f"{tag}{len(out)}", (abs(bx - ax) + w, KEY_RELIEF, abs(bz - az) + w), coll,
-                         location=(0.5 * (ax + bx), y, 0.5 * (az + bz)), bevel=0.004, segments=1))
+        out.append(L.box(f"{tag}{len(out)}", (abs(bx - ax) + w, dy, abs(bz - az) + w), coll,
+                         location=(0.5 * (ax + bx), y, 0.5 * (az + bz)), segments=1))
 
-    seg(-0.02, 5, 7.02, 5)          # continuous top rail (overlaps the neighbouring unit by 2 %)
+    seg(-0.05, 5, 7.05, 5)          # continuous top groove (overlaps the neighbouring unit by 5 %)
     seg(6, 5, 6, 1)                 # down stroke
     seg(6, 1, 1, 1)                 # bottom stroke
     seg(1, 1, 1, 3.5)               # up stroke
     seg(1, 3.5, 4, 3.5)             # inner return
     seg(4, 3.5, 4, 2.0)             # spiral tail
     return out
+
+
+def cut_boxes(obj, cutters):
+    """Boolean-difference every cutter out of `obj` (before any remesh: exact booleans on boxes are reliable)."""
+    for c in cutters:
+        m = obj.modifiers.new("Cut", "BOOLEAN")
+        m.operation = "DIFFERENCE"
+        m.solver = "EXACT"
+        m.object = c
+        L.apply_all(obj)
+        L.remove_object(c)
+    return obj
+
+
+def patera_boss(name, coll, diameter=KEY_BOSS, proud=0.055):
+    """The round rosette boss of the rostra band: a low petalled patera with a knob centre, facing +Y."""
+    r = diameter / 2.0
+    prof = [(0.000, proud * 0.95), (0.030, proud * 1.05), (0.060, proud * 0.72), (0.090, proud * 0.62),
+            (0.135, proud * 0.80), (0.175, proud * 0.62), (r * 0.93, proud * 0.34), (r, proud * 0.10), (r, 0.0)]
+
+    def petals(th, t):
+        return 1.0 + 0.045 * math.cos(12 * th) * t
+
+    ob = L.revolve(name, L.resample_profile(prof, 24), segments=72, coll=coll, scale_fn=petals,
+                   cap_bottom=True, cap_top=True)
+    ob.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
+    return ob
 
 
 def build_moulding(kind, variant, coll, bake=True):
@@ -1024,29 +1056,23 @@ def build_moulding(kind, variant, coll, bake=True):
         h, d = 0.20, 0.13
     elif kind == "greek_key":
         # QA-01-11 running meander (rostra_band_1/2, sheet s4 #12): band 0.52 m, ONE key repeat per unit so the unit
-        # tiles seamlessly at any run length. Grid g = U/8, inner field 6g = 0.45 m, bar 0.05 m proud of the ground.
+        # tiles seamlessly at any run length. Grid g = U/7, inner field 5g = 0.43 m, groove 4.5 cm deep.
         band_h, ulen = KEY_BAND_H, KEY_UNIT
-        parts.append(_strip("m_back", work, depth=KEY_GROUND, height=band_h, length=ulen))
-        parts += greek_key_bars(work, x0=-ulen / 2, unit=ulen, band_h=band_h, tag="k")
-        h, d = band_h, KEY_GROUND + KEY_RELIEF
+        slab = L.box("m_face", (ulen, KEY_FACE, band_h), work, location=(0, KEY_FACE / 2, band_h / 2))
+        parts.append(cut_boxes(slab, greek_key_cutters(work, x0=-ulen / 2, unit=ulen, band_h=band_h, tag="k")))
+        h, d = band_h, KEY_FACE
     elif kind == "rosette_band":
-        # QA-01-11 rostra band: square rosette boss (0.45 m rosette) ALTERNATING with one meander repeat.
-        # unit = 1.20 m = 0.60 rosette panel + 0.60 key repeat; same band height as greek_key so the two mix on a run.
+        # QA-01-11 rostra band: a round patera boss (0.45 m) ALTERNATING with one incised meander repeat.
+        # unit = 1.20 m = 0.60 boss panel + 0.60 key repeat; same band height as greek_key so the two mix on a run.
         band_h, ulen = KEY_BAND_H, 2 * KEY_UNIT
-        parts.append(_strip("m_back", work, depth=KEY_GROUND, height=band_h, length=ulen))
+        slab = L.box("m_face", (ulen, KEY_FACE, band_h), work, location=(0, KEY_FACE / 2, band_h / 2))
         cx = -ulen / 2 + KEY_UNIT / 2
-        # sunk square frame + boss
-        parts.append(L.box("ros_frame", (0.54, KEY_GROUND + 0.030, 0.48), work, location=(cx, (KEY_GROUND + 0.03) / 2, band_h / 2), bevel=0.008))
-        prof = [(0.225, 0.0), (0.225, 0.012), (0.205, 0.040), (0.150, 0.070), (0.085, 0.090), (0.0, 0.098)]
-        def petals(th, t):
-            return 1.0 + 0.10 * math.cos(12 * th) * (1 - 0.6 * t)
-        ros = L.revolve("rosette", L.resample_profile(prof, 16), segments=72, coll=work, scale_fn=petals)
-        ros.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
-        ros.data.transform(Matrix.Translation((cx, KEY_GROUND + 0.020, band_h / 2)))
-        parts.append(ros)
-        parts.append(L.sphere("ros_eye", 0.055, work, location=(cx, KEY_GROUND + 0.085, band_h / 2), scale=(1.0, 0.7, 1.0)))
-        parts += greek_key_bars(work, x0=cx + KEY_UNIT / 2, unit=KEY_UNIT, band_h=band_h, tag="r")
-        h, d = band_h, KEY_GROUND + 0.098
+        cut_boxes(slab, greek_key_cutters(work, x0=cx + KEY_UNIT / 2, unit=KEY_UNIT, band_h=band_h, tag="r"))
+        parts.append(slab)
+        boss = patera_boss("boss", work)
+        boss.data.transform(Matrix.Translation((cx, KEY_FACE - 0.004, band_h / 2)))
+        parts.append(boss)
+        h, d = band_h, KEY_FACE + 0.055
     elif kind == "modillion":
         # block bracket with a scrolled underside, 2 per metre (pitch 0.5), backing = the soffit strip
         parts.append(_strip("m_back", work, depth=0.03, height=0.30))
@@ -1076,11 +1102,11 @@ def build_moulding(kind, variant, coll, bake=True):
         raise KeyError(kind)
     hi = L.union_blob(parts, f"{kind}_v{variant}", voxel=(0.01 if FAST else 0.006), smooth=1, coll=work)
     L.displace_noise(hi, strength=0.002, size=0.03, seed=1600 + variant, depth=1)
-    relief = d - (KEY_GROUND if kind in ("greek_key", "rosette_band") else 0.0)
+    relief = KEY_GROOVE if kind in ("greek_key", "rosette_band") else d
     return L.finalize_asset(hi, kind, variant, coll, bake=bake, bake_size=1024, y_mode="back", budgets=L.BUDGETS["moulding"],
                             extra_props={"unit_length": ulen, "band_height": h, "relief_depth": relief},
                             size_note=(f"repeat unit: unit_length {ulen:.2f} m along X, {h:.2f} m tall, projects {d:.2f} m "
-                                       f"toward +Y (relief {relief * 100:.0f} cm over the sunk field); origin back-face "
+                                       f"toward +Y (fret incised {relief * 100:.1f} cm into the face); origin back-face "
                                        f"bottom-centre; array with orn_lib.array_unit_along_run"))
 
 

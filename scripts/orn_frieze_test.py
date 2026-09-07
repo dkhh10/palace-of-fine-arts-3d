@@ -120,8 +120,9 @@ def main():
         if sk is None or not made:
             continue
         shown = made[:max(2, min(len(made), int(6.0 / L.unit_length_of(made[0]))))]
-        for o in made:
-            o.hide_render = o not in shown          # frame a 6 m stretch, hide the rest of the run
+        keep = {o.name for o in shown}            # frame a 6 m stretch of THIS run only
+        for o in coll.objects:
+            o.hide_render = o.name not in keep
         pts = [o.matrix_world.translation for o in shown]
         mid = sum(pts, Vector((0, 0, 0))) / len(pts) + Vector((0, 0, 0.26))
         span = max((a - b).length for a in pts for b in pts) + L.unit_length_of(made[0])
@@ -134,9 +135,10 @@ def main():
         bpy.context.view_layer.update()
         scene.render.filepath = str(OUT_DIR / f"frieze_run_{tag}.png")
         bpy.ops.render.render(write_still=True)
-        for o in made:
+        for o in coll.objects:
             o.hide_render = False
-        print(f"[frieze_test] rendered {scene.render.filepath} ({len(shown)} of {len(made)} units, span {span:.2f} m)")
+        print(f"[frieze_test] rendered {scene.render.filepath} ({len(shown)} of {len(made)} units, span {span:.2f} m, "
+              f"mesh {shown[0].data.name}, visible-in-scene {sum(1 for o in bpy.data.objects if o.type == 'MESH' and not o.hide_render)})")
 
 
 if __name__ == "__main__":
