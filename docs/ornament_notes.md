@@ -367,7 +367,11 @@ That is the whole defect — it was never a shading or a tri-budget problem.
 Rebuilt:
 - **New kalathos**: 1.00 R at the astragal, necks to **0.865 R** at the waist, flares to **1.155 R** under the
   volutes (was 1.30 R). The bell is also **scalloped** (`scallop = 0.078 R`, 16 dips, `revolve(scale_fn=...)`) so
-  the slot between two neighbouring leaves bottoms out in a groove instead of on a smooth cylinder.
+  the slot between two neighbouring leaves bottoms out in a 0.064 m groove instead of on a smooth cylinder.
+  *Review fix (2026-09-08):* the phase was inverted on first delivery - `cos(16*theta)` peaks every 22.5 deg, which is
+  exactly where a leaf sits (lower row 0 + k*45, upper row 22.5 + k*45), so `+0.45*cos` put the trough UNDER each leaf
+  and the ridge in the gap, and left the upper leaf bases seated on air. Now `-0.45*cos`: full radius under each leaf,
+  the dip 11.25 deg away. Capital hero rel-std went 0.6202 -> **0.6570** on the fix alone.
 - **Leaves on an explicit spine** (`leaf_spine()` + new `spine=` argument on `orn_lib.acanthus_leaf`): the body
   follows the bell surface with a growing outward offset (`proud` 0.14 R lower / 0.13 R upper), then the last
   26-28 % of the length is a circular arc of **100 deg (lower) / 90 deg (upper)** that carries the tip outward and
@@ -398,9 +402,9 @@ Measured on the hero 1:1 crop (Cycles 48 spp, rig r09, same session for before a
 | box | before | after | reference (ref 169) |
 |---|---|---|---|
 | full crop (bbox + 22 px), rel std | 0.2650 | **0.2857** | — |
-| capital only, 44x34 px, rel std | 0.5721 | **0.6202** | 0.428-0.459 (photo tone curve) |
+| capital only, 44x34 px, rel std | 0.5721 | **0.6570** | 0.428-0.459 (photo tone curve) |
 | capital only, alternations >= 0.05 | 3 | **3** | 6-7 |
-| keystone only, 22x24 px, rel std | 0.2571 | **0.3311** | — |
+| keystone only, 22x24 px, rel std | 0.2571 | **0.3672** | — |
 
 **Honest limit.** The tier count did not move: 3 alternations before and after. What did move is the depth and the
 darkness of the accents inside the leaf zone (see the x6 crops on the sheet — the round-3 capital is a pale mush
@@ -408,14 +412,31 @@ with faint scratches, this one has black slots). The remaining distance to the p
 names "shading, recess dirt" alongside the geometry, and the reference's dark accents are mostly dirt in the leaf
 recesses, not shadow. The geometry now has the recesses to hold it — see the hand-off below.
 
-### Cavity attribute for materials (new)
-`orn_lib.vertex_cavity()` bakes a per-vertex AO into a **FLOAT_COLOR attribute named `cavity`** (1.0 = open,
-0.0 = enclosed) on the POINT domain of **LOD0 and LOD1** of every capital, rosette and keystone; the objects carry
-`cavity_attr = "cavity"`. This matters because **LOD0 is the render LOD and has no UVs**, so a vertex attribute is
-the only channel a shader has for darkening ornament recesses on the geometry that is actually rendered. Read it
-with an Attribute node named `cavity` (Color or Fac). Measured mean on the rotunda capital 0.45, min 0.00; rosette
-0.78; keystone 0.79. `finalize_asset(..., ao=True)` also now bakes an **AO map** for LOD1 next to the normal map,
-so `ao_map` is no longer empty for these three types (`assets/textures/orn/ORN_*_ao.png`).
+### Cavity attribute for materials (new) — what to read
+
+`orn_lib.vertex_cavity()` bakes a per-vertex ambient occlusion into the mesh. **Exact contract for the materials
+shader:**
+
+| | |
+|---|---|
+| attribute name | `cavity` |
+| domain | `POINT` (per vertex) |
+| type | `FLOAT_COLOR` (greyscale: R = G = B = the value, A = 1) |
+| range / sense | **1.0 = fully open surface, 0.0 = fully enclosed recess** — so multiply albedo by it (or by `mix(dirt, 1, cavity)`), never by `1 - cavity` |
+| carried by | **LOD0 and LOD1** of `capital_rotunda`, `capital_inner`, `capital_colonnade`, `rosette_ceiling`, `keystone`. LOD2 has none. |
+| read it with | a Shader `Attribute` node, Type = Geometry, Name = `cavity`; use the **Color** output (or Fac, same value) |
+| marker property | each object also carries `cavity_attr = "cavity"` so a script can detect it |
+| measured means | rotunda capital 0.45 (min 0.00), colonnade 0.46, rosette 0.78, keystone 0.79 |
+| sampling | 10 cosine-distributed rays per vertex over a radius of 6 % of the object diagonal, deterministic (same value on every rebuild) |
+
+This matters because **LOD0 is the render LOD and has no UVs**, so a vertex attribute is the only channel a shader has
+for darkening ornament recesses on the geometry that is actually rendered. `finalize_asset(..., ao=True)` also bakes an
+**AO map** for LOD1 next to the normal map, so `ao_map` is no longer empty for those five types
+(`assets/textures/orn/ORN_*_ao.png`, tangent-space normals in `ORN_*_nrm.png`).
+
+**Both are inert today** (noted in the round-4 code review): `mat_build.py` creates no `ORN_NORMAL` / `ORN_AO` image
+nodes, so `build_master.orn_material_for()` returns `None` and no shader reads a `cavity` Attribute node. The data is
+delivered and waiting for materials round 5.
 
 ### QA-03-8 (ornament half) — coffer / rib rosettes
 The round-3 rosette was a lathe with a `cos(12*theta)` radius wobble: a smooth 12-point star with **no undercut
@@ -424,8 +445,9 @@ raised rim, a ring of 8 modelled petals (`rosette_petal()`, flat for 66 % of the
 a second ring of 8 rotated half a pitch, a 0.045 m annular groove and a beaded central boss.
 - **Relief 0.14 m -> 0.21 m on a 0.60 m rosette (0.35 of the diameter)**, petal tips 0.082 m off the disc floor,
   back face at y = 0. Raised from 0.155 m after ARCH deepened the coffer interiors to 0.55 m (saucer) / 0.38 m
-  (barrel): a 0.155 m boss disappears at the bottom of a 0.55 m box. Total depth of the LOD0 mesh 0.29 m including
-  the noise displacement, so it sits **inside** a 0.55 m box with 0.26 m to spare and never breaks the rib face.
+  (barrel): a 0.155 m boss disappears at the bottom of a 0.55 m box. Delivered LOD0 y-extent measured from the meshes:
+  **v1 0.210 m, v2 0.197 m, v3 0.225 m** (the noise displacement averages out; an earlier note said 0.29 m - wrong).
+  So it sits **inside** a 0.55 m saucer coffer with >= 0.32 m to spare and never breaks the rib face.
 - 3 variants (was 2): 8+8 petals at 0.60 m / 10+10 at 0.56 m / 6+6 at 0.62 m. LOD0 20k -> **26k** tris, LOD1 5k.
 - Depth provenance: ref 083 and `ornament_crops/coffered_ceiling_1-3` are all straight-up shots in which the rib
   rosettes are 0.45-0.60 m across and read as bosses roughly a quarter to a third of their diameter proud. There
@@ -445,11 +467,14 @@ wedge block breaking forward out of the archivolt roll with a moulded cap under 
 convex blobs and its eye/mouth dents (0.03 / 0.09 m) were wiped by `smooth=2` on a 0.006 m remesh.
 - New **tapered voussoir**, 0.43 m wide at the springing to 0.60 m under the cap, standing **0.30 m proud** of the
   archivolt face, plus a 0.075 m moulded cap.
-- Mask nose now **~0.66 m proud** of the archivolt (was 0.50 m). Brow ridge moved forward and up so it **overhangs**
+- Mask nose now **0.634 / 0.647 / 0.677 m proud** of the archivolt by variant (was 0.50 m). Brow ridge moved forward and up so it **overhangs**
   the eye sockets. Dents: eye 0.03 -> **0.072 m**, mouth 0.09 -> **0.115 m**, nostrils added at 0.035 m.
 - Mane 14 thin leaves -> **10 bold** ones (0.30 m long, 0.036 m thick, `mid_dip` 0.022) standing clear of the face.
 - `union_blob` voxel 0.006 -> 0.005, smoothing 2 passes at 0.50 -> 1 at 0.25.
-- 3 variants (was 2), sized +/-4 %. LOD0 50k tris unchanged. Hero-crop rel std **0.2571 -> 0.3311**.
+- *Review fix (2026-09-08):* the moulded cap was 0.34 m deep at y = 0.15, i.e. it reached to y = -0.02, so
+  `origin_bottom_centre(y_mode="back")` re-originned off the mounting plane and the whole keystone stood 2 cm proud
+  of the archivolt. Cap depth is now 0.30 m and all three variants measure local y_min = 0.0000.
+- 3 variants (was 2), sized +/-4 %. LOD0 50k tris unchanged. Hero-crop rel std **0.2571 -> 0.3672**.
 
 ### Tools added this round (ORN-owned)
 - `scripts/orn_r4_render.py` — the socket-frame look-dev + hero 1:1 crop rig described above.

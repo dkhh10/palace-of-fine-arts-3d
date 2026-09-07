@@ -20,14 +20,17 @@ ROWS = [
     ("capital", "corinthian_capital_1.jpg", "QA-03-15  ORN_capital_rotunda",
      "LOD0 100k -> 64k, LOD1 20k -> 16k tris. Kalathos necked 1.30 R -> 1.155 R at the top, 0.865 R at the waist; "
      "leaves lofted on a bell-hugging spine, tips curl out+down through 90-100 deg; leaf tips 0.29 -> 0.40 m proud "
-     "of the bell; bell scalloped 0.078 R between the leaves. Cavity vertex attribute on LOD0/LOD1."),
+     "of the bell; bell scalloped 0.078 R with the 0.064 m groove BETWEEN the leaves (phase fixed in review). "
+     "Cavity FLOAT_COLOR vertex attribute 'cavity' on LOD0/LOD1, 1 = open."),
     ("rosette", "coffered_ceiling_1.jpg", "QA-03-8 (ornament half)  ORN_rosette_ceiling",
      "LOD0 20k -> 26k tris. Was a lathe with a cos(12t) radius wobble (no undercut anywhere). Now a sunk back disc, "
      "8+8 modelled petals whose tips lift 0.082 m off the disc, a 0.045 m annular groove and a beaded boss. "
-     "Relief 0.14 -> 0.21 m on a 0.60 m rosette (0.35 of the diameter), sized for ARCH's 0.55 m saucer coffers."),
+     "Relief 0.14 -> 0.21 m on a 0.60 m rosette (0.35 of the diameter); delivered mesh depth 0.197-0.225 m, "
+     "inside ARCH's 0.55 m saucer coffers."),
     ("keystone", "keystone_mask_1.jpg", "carried defect  ORN_keystone",
      "LOD0 50k tris (unchanged). New tapered voussoir standing 0.30 m proud of the archivolt face plus a 0.075 m "
-     "moulded cap; mask nose now ~0.66 m proud (was 0.50). Brow overhangs the eye sockets; eye 0.03 -> 0.072 m, "
+     "moulded cap (back plane now exactly y = 0); mask nose 0.63-0.68 m proud (was 0.50). Brow overhangs the eyes; "
+     "eye 0.03 -> 0.072 m, "
      "mouth 0.09 -> 0.115 m, nostrils added; mane 14 thin -> 10 bold leaves. 3 variants (was 2)."),
 ]
 HERO_ZOOM = 6

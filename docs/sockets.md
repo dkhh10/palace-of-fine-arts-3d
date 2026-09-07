@@ -64,18 +64,16 @@ and finials. State which in docs/arch_notes.md.
 LOD rule: the lead instances LOD1 by default in the viewport and switches to LOD0 for Cycles finals via
 `common.set_lod_visibility`. LOD0 target < 150k tris per capital, < 300k per maiden; LOD1 < 20k; LOD2 < 2k.
 
-**ORN request 2026-09-08 (round 4, QA-03-8) — `rosette_ceiling` socket orientation is wrong for all 24.**
-Measured in `assets/architecture.blend` after the 28f0caf merge: every `SOCKET_rosette_ceiling_*` has
-`+Y` exactly radially OUTWARD (`dot(+Y, radial) = 1.000` for all 24) and `+Z` = world up. The contract says
-`+Y` is the direction the ornament projects from its back face, so as delivered every rosette projects
-*into* the masonry and none is visible from inside. Verified: cam04 Eevee off `master.blend` shows no rosette
-at all (`renders/previews/qa/roundorn4_04_rotunda_ceiling.png`).
-- **16 rim-band sockets** (r 13.73 / 14.85, z 24.32 / 23.41): these are bosses on the rib's ROOM face, so
-  `+Y` must be **-radial** (a 180° turn about the socket's Z).
-- **8 ring-1 sockets** (r 5.20, z 28.91): these sit on a saucer-coffer FLOOR, so `+Y` must be the coffer
-  floor's normal, i.e. pointing DOWN into the room (roughly `-Z`, tilted outward with the dome), not
-  horizontal. A `Rx(-90°)` on the current frame is enough at this dome slope.
-Proof render with both corrections applied to a local master: `renders/previews/ornament/orn4_cam04_rosette_fix2.png`
-(the 8 ring-1 rosettes appear inside their coffers; compare `roundorn4_04_rotunda_ceiling.png`).
-Fix in ARCH's socket build, or as a `ROT_Z_FIX`-style entry in `scripts/build_master.py` — ORN owns neither file.
-The asset itself is correct per contract: back face at y = 0, projecting +Y, 0.21 m of relief.
+**`rosette_ceiling` orientation — final contract (lead decision 2026-09-08, ARCH rebuilding on branch architecture).**
+The 24 sockets are two groups and the generic "for the ceiling, +Y = radially outward" line above does NOT apply to
+either of them:
+- **16 band sockets**: on the VERTICAL INNER FACE of the base ring above the inner arches, **+Y = -radial** (facing
+  the room), +Z = world up.
+- **8 ring-1 sockets**: on the FLOOR of a saucer coffer, **+Y = down (-Z)**; the socket's own +Z then lies in the
+  ceiling plane.
+Background: as delivered before this change all 24 had +Y exactly radially outward (`dot(+Y, radial) = 1.000`), so
+every rosette projected into the masonry and none appeared at cam04
+(`renders/previews/qa/roundorn4_04_rotunda_ceiling.png`; corrected proof
+`renders/previews/ornament/orn4_cam04_rosette_fix2.png`).
+The ORN asset is unchanged and correct under either frame: back face at y = 0, projecting +Y, 0.20-0.22 m of relief
+on a 0.55-0.62 m rosette, which fits inside the 0.55 m saucer coffer and stands clear on the band face.

@@ -249,13 +249,14 @@ def build_capital(typ, variant, coll, bake=True):
     rng = random.Random(7919 * variant + len(typ))
     work = L.work_collection()
     parts = []
-    # Kalathos, scalloped so the slot between two neighbouring leaves bottoms out in a groove (16 dips: 8 under the
-    # lower row's gaps at 22.5 deg, 8 under the upper row's gaps at 0 deg).
+    # Kalathos, scalloped so the slot between two neighbouring leaves bottoms out in a groove. cos(16*th) peaks at
+    # every 22.5 deg, which is exactly where a leaf sits (lower row 0 + k*45, upper row 22.5 + k*45), so the sign must
+    # be MINUS: full radius under each leaf (a firm seat for the union), the dip 11.25 deg away, in the gap.
     sc = P["scallop"]
 
     def bell_scallop(th, t):
         band = math.sin(math.pi * min(max((t - 0.03) / 0.80, 0.0), 1.0)) ** 0.6
-        return 1.0 - sc * band * (0.55 + 0.45 * math.cos(16.0 * th))
+        return 1.0 - sc * band * (0.55 - 0.45 * math.cos(16.0 * th))
 
     bell = L.revolve("bell", L.resample_profile([(r * R, z * H) for r, z in BELL_PROFILE], 44), segments=96,
                      coll=work, scale_fn=bell_scallop)
@@ -756,7 +757,9 @@ def build_keystone(variant, coll, bake=True):
                                 Vector((w * S, y, z * S)), Vector((w * S, 0.02, z * S))]
                                for w, y, z in VOUSSOIR], work, cap_bottom=True, cap_top=True))
     # moulded cap under the frieze: a hard horizontal shadow line at the top of the block
-    parts.append(L.box("ks_cap", (0.66 * S, 0.34, 0.075 * S), work, location=(0, 0.15, 0.335 * S), bevel=0.012))
+    # depth 0.30 (not 0.34): the cap must not reach behind y = 0, or origin_bottom_centre(y_mode="back") re-origins
+    # off the mounting plane and the whole keystone floats 2 cm proud of the archivolt.
+    parts.append(L.box("ks_cap", (0.66 * S, 0.30, 0.075 * S), work, location=(0, 0.15, 0.335 * S), bevel=0.012))
     face = L.sphere("ks_face", 0.235 * S, work, location=(0, KEY_PROUD + 0.06, 0.00), scale=(1.02, 0.80, 1.05))
     parts.append(face)
     parts.append(L.sphere("ks_muzzle", 0.135 * S, work, location=(0, KEY_PROUD + 0.20, -0.075 * S), scale=(1.15, 0.95, 0.82)))
