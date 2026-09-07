@@ -590,16 +590,19 @@ def build_shrubs():
     # 2c. peninsula planting band 9-18 m back from the water, between the shore belt and the podium (lead's call
     #     after the hero camera stayed put): ref 169 shows beds of mounded shrubs and low trees there, not bare lawn.
     #     Beds, not a carpet - the gaps keep the mown lawn reading.
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 12.0), 3.0, closed=True):
-        r = math.hypot(x, y)
-        if not (APRON_R + 2.0 < r < 54.0):
-            continue
-        bed = L.fnoise(x, y, 0.10, 31)                       # 10 m beds with lawn between them
-        if bed < 0.05:
-            continue
-        keys = LOWMOUNDS + MAHONIA + AGAP
-        if rnd.random() < 0.30 + 0.45 * bed:
-            clump(x, y, rnd.randint(2, 5), 3.0, keys, min_shore=9.0, max_shore=18.0)
+    n_band = len(placed)
+    keys_band = LOWMOUNDS + MAHONIA + AGAP
+    for off in (8.5, 11.5, 14.5, 17.5):
+        for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, off), 2.5, closed=True):
+            r = math.hypot(x, y)
+            if not (APRON_R - 1.0 < r < 58.0):       # the strip between the platform apron and the shore belt
+                continue
+            bed = L.fnoise(x, y, 0.10, 31)           # ~10 m beds with mown lawn between them
+            if bed < -0.25:
+                continue
+            if rnd.random() < 0.75 + 0.25 * bed:
+                clump(x, y, rnd.randint(3, 7), 2.8, keys_band, min_shore=6.5, max_shore=21.0)
+    n_band = len(placed) - n_band
 
     # 3. foundation planting along the colonnade fronts
     for p in COLONNADE_ROOFS[:2]:
@@ -628,7 +631,8 @@ def build_shrubs():
         counts[key] = counts.get(key, 0) + 1
         total += L.tri_count(obj)
     card_max = max(src[k][1].get("card_m", 0.0) * 1.45 for k in src if src[k][1].get("card_m"))
-    log(f"shrubs: {len(placed)} instances of {len(src)} meshes, {total} tris, "
+    log(f"shrubs: {len(placed)} instances ({n_band} in the peninsula band 7.5-19.5 m from the water) "
+        f"of {len(src)} meshes, {total} tris, "
         f"largest leaf card {card_max * 100:.0f} cm; {counts}")
 
 
