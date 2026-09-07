@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import light_calibrate as cal
 import light_presets as lp
+import light_probes as probes
 
 # ----------------------------------------------------------------------------- THE parameter
 MOMENTS = {
@@ -33,20 +34,40 @@ FALLBACK_SUN = {"morning": (118.5, 7.4), "evening": (250.9, 6.9)}   # docs/refer
 # zenith 0.46/0.87/1.72 in sky units, i.e. a ~5:1 horizon:zenith ratio like ref 169); aerosol hardly changes the sky
 # seen by the hero camera (looking away from the sun) but warms the sun-side horizon. ozone 2.0 deepens the blue at
 # low sun (B/R 1.59 vs ref 169's 1.65; ozone 1.0 gives a grey-blue 1.39). altitude 5 m (sea-level lagoon).
-SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0, aerosol_density=1.0, ozone_density=2.0)
+SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0, aerosol_density=1.6, ozone_density=2.0)
 SKY_STRENGTH = 2.0                 # world strength for LIGHTING. The model's direct:diffuse ratio at el 7.4 is 9.9
                                    # (E_sun 59.7 vs E_sky_horizontal 6.0, luminance); real clear-sky data at this
                                    # elevation give ~5, and refs 054/169 show shade only ~3 stops under sunlit. x2.
-SKY_CAMERA_BOOST = 1.6             # extra factor for camera + glossy rays only: the visible sky and its reflection in
-                                   # the lagoon reach ref 169's brightness without flattening the sun/shade contrast
+SKY_CAMERA_BOOST = 1.15            # extra factor for camera + glossy rays only. Round 07 (QA-01-12): with the
+                                   # exposure bias below the sky no longer needs 1.6; a smaller boost also keeps the
+                                   # blue out of AgX's desaturating highlight roll-off. Glossy still gets it, so the
+                                   # lagoon keeps a bright sky reflection.
+SKY_CAMERA_SATURATION = 1.35       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
+                                   # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
+                                   # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
-EXPOSURE_BIAS = 0.5                # EV added to the grey-card calibration (see lighting_notes: sunlit stone in ref 169
-                                   # sits ~1/2 stop above a sun-facing 18 % card; keeps the sky-lit shade readable)
+EXPOSURE_BIAS = 1.10               # EV added to the grey-card calibration. Round 07 (QA-01-12): at +0.5 the sunlit
+                                   # attic rendered Y 0.287 against ref 169's 0.410 (30 % dark). +0.6 EV closes about
+                                   # two thirds of that; the rest is albedo (materials is warming the concrete).
 LOOK = "AgX - Base Contrast"       # 'Punchy' crushes the sky-lit shade (A/B in lighting_notes)
-MIST = dict(start=40.0, depth=1500.0, falloff="LINEAR")   # mist pass 0 at 40 m -> 1 at 1540 m
-COMP = dict(haze_strength=0.55, haze_warmth=(1.06, 1.0, 0.88),   # haze colour = measured west-horizon radiance x warmth
+MIST = dict(start=30.0, depth=700.0, falloff="LINEAR")    # mist pass 0 at 30 m -> 1 at 730 m. Round 07 (QA-01-12):
+                                   # 1500 m put only 6 % haze on the colonnade ends at 200 m; ref 169 clearly veils
+                                   # them. 700 m gives 12 % at 110 m, 24 % at 200 m, 67 % at 500 m (backdrop hills).
+COMP = dict(haze_strength=0.85, haze_warmth=(1.22, 1.0, 0.74),   # haze colour = measured west-horizon radiance x warmth
             bloom_threshold_display=0.9,   # scene-linear threshold = this / 2^exposure, i.e. only near-white pixels bloom
             bloom_strength=0.05, bloom_size=0.6, vignette=0.08)
+
+# QA-01-9. Measured on master (Cycles 48 spp, cam04): the rotunda vault renders sRGB 12/255 with 3 diffuse bounces
+# and 12/255 with 8 - the interior is not bounce-limited, it simply sees almost no sky: a 7.4 deg sun never reaches
+# the floor and the four arches subtend a small solid angle from the coffers. That is 7 stops under the sunlit attic
+# (182/255); ref 083 shows the coffers ~3.5 stops under a sunlit surface, but ref 083 is exposed FOR the ceiling.
+# The real site gets what our model does not: a large pale concrete plaza, the lagoon and the open lawn throwing light
+# up into the vault. FILL models exactly that and nothing else - an up-facing area light under the vault, so it lights
+# the soffits and the coffers and adds almost nothing to what cam01 sees through the arch. It is an art bias, sized by
+# measurement; ENERGY is the one number to change if QA wants it dialled back.
+FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=170.0,
+            color=(1.0, 0.86, 0.68), spread_deg=150.0,
+            note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
 
 COLLECTION = "LIGHT"
 WORLD_NAME = "WORLD_golden_hour"
@@ -102,11 +123,33 @@ def build_sun(coll, az, el, energy, color, moment, meta):
     return obj
 
 
+def build_fill(coll):
+    """QA-01-9: up-facing area light under the rotunda vault (see the FILL comment above)."""
+    light = bpy.data.lights.new(FILL["name"], "AREA")
+    light.shape = "DISK"
+    light.size = FILL["size"]
+    light.energy = FILL["energy"]
+    light.color = FILL["color"]
+    light.use_shadow = True
+    try:
+        light.spread = math.radians(FILL["spread_deg"])
+    except Exception:
+        pass
+    obj = bpy.data.objects.new(FILL["name"], light)
+    obj.location = FILL["location"]      # rotation 0 -> an area light emits along +Z, i.e. straight up into the vault
+    obj["note"] = FILL["note"]
+    obj["energy_W"] = FILL["energy"]
+    coll.objects.link(obj)
+    print(f"[light_build] {FILL['name']}: disk r {FILL['size']/2:.1f} m at z {FILL['location'][2]}, {FILL['energy']} W, up-facing")
+    return obj
+
+
 def build_world(az, el, calib, moment):
     old = bpy.data.worlds.get(WORLD_NAME)
     if old:
         bpy.data.worlds.remove(old)
-    w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH, camera_boost=SKY_CAMERA_BOOST)  # disc OFF: LIGHT_sun carries it
+    w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
+                           camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -120,6 +163,7 @@ def build_world(az, el, calib, moment):
         w["sky_" + k] = v
     w["sky_strength_lighting"] = SKY_STRENGTH
     w["sky_camera_glossy_boost"] = SKY_CAMERA_BOOST
+    w["sky_camera_glossy_saturation"] = SKY_CAMERA_SATURATION
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]
@@ -245,6 +289,8 @@ def build(moment="morning", calibrate=True, save=True):
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
     sun = build_sun(coll, az, el, energy, color, moment, meta)
+    fill = build_fill(coll)
+    probes.ensure_probes(scene, coll)      # QA-01-9: unbaked here (no geometry); the lead bakes them on master
     world = build_world(az, el, calib, moment)
     scene.world = world
     Lh = calib["sky"]["L_horizon_west"]
