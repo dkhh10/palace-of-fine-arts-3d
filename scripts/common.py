@@ -172,13 +172,31 @@ def add_empty(name, location, coll, size=0.5, rotation=(0, 0, 0), display="ARROW
     return e
 
 
+def set_lod(viewport=1, render=0):
+    """LOD manager: objects AND collections whose names end in _LOD<k>: viewport shows <viewport>, render uses <render>."""
+    import re
+    pat = re.compile(r"_LOD(\d)$")
+    n_obj = n_coll = 0
+    for obj in list(bpy.data.objects):
+        m = pat.search(obj.name)
+        if m:
+            k = int(m.group(1))
+            obj.hide_viewport = (k != viewport)
+            obj.hide_render = (k != render)
+            n_obj += 1
+    for coll in list(bpy.data.collections):
+        m = pat.search(coll.name)
+        if m:
+            k = int(m.group(1))
+            coll.hide_viewport = (k != viewport)
+            coll.hide_render = (k != render)
+            n_coll += 1
+    print(f"[common] set_lod viewport=LOD{viewport} render=LOD{render}: {n_obj} objects, {n_coll} collections")
+
+
 def set_lod_visibility(level=1):
-    """Show only *_LOD<level> variants in viewport (all LODs stay render-controllable by the lead)."""
-    for obj in bpy.data.objects:
-        n = obj.name
-        if "_LOD" in n:
-            lod = n.rsplit("_LOD", 1)[1][:1]
-            obj.hide_viewport = lod != str(level)
+    """Backward-compatible alias: viewport LOD<level>, render LOD0."""
+    set_lod(viewport=level, render=0)
 
 
 # ----------------------------------------------------------------------------- materials
