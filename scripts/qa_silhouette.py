@@ -8,8 +8,8 @@
          render | aligned photo | 50% blend (+ both profiles: render red, photo cyan). Use this, not the letterboxed
          qa_compare blend, when checking "edges align within ~2% of frame height".
 
-The "building" mask is warm pixels (r > b + 0.06, r >= g), "sky" is anything bluish/pale above it; trees are ignored
-(green). The profile is the first building row per column inside the crop. corner_top = median profile height over the
+The "building" mask (round 02+) is "not sky and not foliage": sky = bluish and bright (b >= r - 0.01, b > 0.30),
+foliage = clearly green. --mask warm restores the round-01 rule (r > b + 0.06), which loses the pale cream dome cap. The profile is the first building row per column inside the crop. corner_top = median profile height over the
 outer 12% of the building's width (the attic corner blocks + their urns), apex = min over the central 30%.
 """
 import sys, argparse, json
@@ -21,9 +21,26 @@ def load(path):
     return np.asarray(Image.open(path).convert("RGB")).astype(np.float32) / 255.0
 
 
-def building_mask(img):
+MASK_MODE = "sky"
+
+
+def building_mask(img, mode=None):
+    """Building = not sky, not foliage.
+
+    mode "warm" (round 01): warm pixels only (r > b + 0.06). This UNDER-REPORTS the apex once the dome carries the
+    pale cream MAT_dome_membrane, because a sky-lit cream cap has r - b < 0.06 (QA round 02 finding; the architecture
+    agent measured ~3 m of apex lost). Kept for reproducing round-01 numbers.
+    mode "sky" (default from round 02): sky = bluish AND bright (b >= r - 0.01 and b > 0.30); foliage = clearly green.
+    Anything else that is not near-black is building. Verified against the geometric silhouette from
+    scripts/arch_silhouette.py flatten / arch_inspect.py --alpha.
+    """
+    mode = mode or MASK_MODE
     r, g, b = img[..., 0], img[..., 1], img[..., 2]
-    return (r > b + 0.06) & (r >= g - 0.01)
+    if mode == "warm":
+        return (r > b + 0.06) & (r >= g - 0.01)
+    sky = (b >= r - 0.01) & (b > 0.30)
+    foliage = (g > r + 0.03) & (g > b + 0.03)
+    return (~sky) & (~foliage) & (r + g + b > 0.06)
 
 
 def profile(mask, x0, y0, x1, y1, run=3):
@@ -122,7 +139,11 @@ if __name__ == "__main__":
     ap.add_argument("image")
     ap.add_argument("--crop", type=int, nargs=4, required=True)
     ap.add_argument("--ref"); ap.add_argument("--ref-crop", type=int, nargs=4); ap.add_argument("--out")
+    ap.add_argument("--mask", choices=["sky", "warm"], default="sky",
+                    help="silhouette mask: 'sky' (default, round 02+) or 'warm' (round 01 behaviour)")
     a = ap.parse_args()
+    MASK_MODE = a.mask
+    globals()["MASK_MODE"] = a.mask
     if a.mode == "measure":
         img = load(a.image)
         res, prof, crop = measure(img, a.crop)
