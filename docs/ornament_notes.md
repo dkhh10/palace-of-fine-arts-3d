@@ -16,8 +16,10 @@ Previews: `blender --background --python scripts/orn_preview.py -- [--only maide
 - Material `MAT_ornament_concrete` via `common.load_material` (placeholder until the library lands).
 - LOD1 carries custom props `normal_map` / `ao_map` (`//textures/orn/<name>_nrm.png`, relative to assets/) plus
   `orn_type`, `variant`, `tris`, `size`, `size_note` (and asset-specific props, e.g. `rim_height` on the maidens).
-- Baked maps: tangent-space normal 2048 px (figures, capitals) / 1024 px (small pieces), Cycles selected-to-active,
-  LOD0 -> LOD1, cage 2 % of the diagonal.
+- Baked maps: tangent-space normal 4096 px (attic panels), 2048 px (figures, capitals, urns), 1024 px (small pieces),
+  Cycles GPU selected-to-active LOD0 -> LOD1, smart-UV islands on LOD1, **cage 0.5 % of the diagonal, unlimited ray**
+  (verified: larger cages make rays hit neighbouring leaves first and leave black patches on curled acanthus).
+  AO is not baked (the materials agent's shader has its own cavity; `ao_map` is left empty).
 
 ## How things are generated (and deviations from the brief)
 - **No sculpting, no cloth sim.** Everything is parametric geometry built with bmesh/parametric surfaces, joined and
@@ -43,15 +45,48 @@ Previews: `blender --background --python scripts/orn_preview.py -- [--only maide
   colonnade capitals get a rosette fleuron instead. Every leaf/scroll gets small random rotation/length/curl jitter
   per variant so no two variants are identical.
 
+- **Relief panels**: the three public-domain relief scans (`reference/scans/`: Parthenon centaur metope, two
+  Trajan's-column cast slabs; 1-2 M tris each) are imported (cm -> m), decimated to 120 k, re-oriented (face +Y,
+  up +Z), scaled to ~4.1-4.2 m figure height and 0.40 m relief depth, mirrored where needed, and sunk into the slab
+  so that their own background plane sits 2 cm behind the panel face (background depth = area-weighted median of
+  the front-facing faces). The union is voxel-remeshed at 2.5 cm, so the scan surfaces merge with the slab and lose
+  their scan-specific crispness (they become "cast concrete" like everything else). Three designs by variant.
+- **Urns, finial, rosettes, mouldings**: lathe profiles with angular scale functions (gadroons, scales, petals),
+  band sweeps for handles/scrolls, boxes for dentils/keys, all unioned by voxel remesh.
+
 ## Assets
 
-(Sizes are bounding boxes of LOD0 in metres. Tri counts LOD0 / LOD1 / LOD2. Preview = latest accepted render.)
+(Sizes = LOD0 bounding box in metres (x width, y depth, z height). Tri counts LOD0 / LOD1 / LOD2. Previews are
+`renders/previews/ornament/full01_<asset>.png` (LOD0 on the left, LOD1 with its baked normal map on the right) and
+the contact sheet `full01_contact_sheet.png`; render-vs-crop sheets `compare_<asset>.png` / `compare_sheet.png`
+from `scripts/orn_compare.py`.)
 
-| asset | size (w x d x h) | tris | variants | preview | notes |
-|---|---|---|---|---|---|
-| capital_rotunda | see table below | | 3 | | in progress |
+ASSET_TABLE_PLACEHOLDER
 
-Detailed per-asset entries are appended below as each asset lands.
+### Per-asset notes
+- **capital_rotunda** (h 2.60, shaft-top r 1.05, abacus 3.0 m across the corners, overall 3.5 m across the leaf tips).
+  Figured Corinthian per corinthian_capital_1-3: lower row of 8 shell leaves (0.42 H), upper row (0.50 H, more curl),
+  8 corner scrolls (band 0.30 R wide) + 8 helices, a half-length female figure at each face centre (torso rising from
+  the upper leaves, arms to the helices, head under the abacus), bead astragal at the bottom. Variants differ in leaf
+  jitter, curl/droop and the weathering seed. LOD2 = bell + abacus only.
+- **capital_inner** (h 1.8, shaft-top r 0.80, abacus 2.15) and **capital_colonnade** (h 1.8, r 0.85, abacus 2.3,
+  squatter: small lower leaves, big upper shells and scrolls) share the generator; rosette fleuron instead of the figure.
+  The pylon-cluster capitals are the colonnade capital (ARCH raises the shaft 2.4 m).
+- **maiden** (4.5 m standing, 4.3 m tall with the head bowed, footprint about 1.3 x 1.3 m). Skin-figure body leaning
+  forward, forearms along the two rim edges of the box corner, peplos tube + overfold with dipping hem, sleeve
+  cascades under the elbows, hair bound in a bun. Custom props `rim_height` = 3.55, `box_corner_y` = -0.32.
+- **attic_figure** (6.7 m). v1 male: skin body with a nude torso, both arms raised to the chest, wrapped cloth from
+  the waist with heavy frontal folds, mantle behind; v2 female: full gown + overfold, one arm across the chest.
+  Faces +Y; the niche (ARCH) is 0.6 m deep behind it.
+- **winged_figure** (4.6 m): gown with frontal folds, two tall fluted wing slabs behind the shoulders (top above the
+  head, tips at the calves), cornucopia horns from the hands. Faces -Y (toward the rotunda centre).
+- **urn** (3.0 m podium urn incl. 0.32 m plinth), **urn_niche** (1.6 m corner urn with a scale pattern), **urn_tub**
+  (pylon planter 1.6 m diameter): note the three are separate socket types.
+- **keystone** (0.8 m lion mask on a 0.62 m back plate, mane of 14 shell leaves), origin at the back-face bottom-centre.
+- **attic_panel** v1/v2/v3 = designs A/B/C (combat with centaur; procession of draped figures; kneeling group).
+- **finial** (dome apex cap 0.6 m), **rosette_ceiling** (0.6 m coffer rosette, projects +Y), **drum_band** (1 m
+  unit, 1.6 m tall scale cushion), **dentil / egg_and_dart / greek_key / rosette_band / modillion / anthemion**
+  (1 m units, origin at the back-face bottom-centre, projecting +Y; sizes in the table).
 
 ## Open issues / requests
 - ARCH (`maiden` socket): the socket must be at the figure's FEET, which are at the level of the box base (top of the

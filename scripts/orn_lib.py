@@ -487,6 +487,19 @@ def decimate(obj, target=None, ratio=None, planar=False):
     m.ratio = max(0.001, min(1.0, ratio))
     m.use_collapse_triangulate = True
     apply_all(obj)
+    fix_normals(obj)
+    return obj
+
+
+def fix_normals(obj):
+    """Consistent outward face normals + drop degenerate faces (collapse decimation can flip slivers)."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.dissolve_degenerate(bm, dist=1e-5, edges=bm.edges)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(obj.data)
+    bm.free()
+    obj.data.update()
     return obj
 
 
@@ -584,10 +597,10 @@ def join(objs, name, coll=None):
     return obj
 
 
-def union_blob(objs, name, voxel=0.03, smooth=6, smooth_factor=0.5, coll=None, keep_volume=False):
+def union_blob(objs, name, voxel=0.03, smooth=6, smooth_factor=0.5, coll=None, keep_volume=False, adaptivity=0.0):
     """Merge overlapping parts into ONE smooth watertight surface (sculpture look)."""
     j = join(objs, name + "_join", coll)
-    remesh_voxel(j, voxel=voxel)
+    remesh_voxel(j, voxel=voxel, adaptivity=adaptivity)
     if smooth:
         smooth_verts(j, smooth, smooth_factor, keep_volume=keep_volume)
     j.name = name
@@ -690,8 +703,10 @@ def bake_maps(hi, lo, name, size=2048, ao=False, ao_samples=16, cage=None, ray=N
     ensure_uv(lo)
     (x0, y0, z0), (x1, y1, z1) = bbox(lo)
     diag = (Vector((x1, y1, z1)) - Vector((x0, y0, z0))).length
-    cage = cage if cage is not None else max(0.01, diag * 0.02)
-    ray = ray if ray is not None else max(0.02, diag * 0.06)
+    # Verified 2026-09-07 on the rotunda capital: a tiny cage (0.5 % of the diagonal) with an unlimited ray gives a
+    # clean map; larger cages make rays hit neighbouring leaves first (black patches on LOD1).
+    cage = cage if cage is not None else max(0.006, diag * 0.005)
+    ray = ray if ray is not None else 0.0
     scene = bpy.context.scene
     prev_engine = scene.render.engine
     common.configure_cycles(scene, samples=ao_samples, denoise=False, device="GPU")

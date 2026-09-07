@@ -1,7 +1,7 @@
 """Build the ornament library assets/ornament.blend (collection ORN) headless and idempotently.
 
     blender --background --python scripts/orn_build.py -- [--only capital_rotunda,maiden] [--no-bake] [--fast]
-                                                          [--variants N] [--fresh]
+                                                          [--variants N] [--fresh] [--out other.blend]
 
 Without --only every asset type is rebuilt from an empty file. With --only the existing ornament.blend is opened and
 just those sub-collections (ORN_<type>) are wiped and rebuilt, so heavy assets can be iterated one at a time.
@@ -21,7 +21,7 @@ ARGS = common.script_args()
 FAST = "--fast" in ARGS
 BAKE = "--no-bake" not in ARGS
 NVAR = int(ARGS[ARGS.index("--variants") + 1]) if "--variants" in ARGS else 3
-OUT = common.ASSET_FILES["ORN"]
+OUT = Path(ARGS[ARGS.index("--out") + 1]) if "--out" in ARGS else common.ASSET_FILES["ORN"]
 
 
 def rot_z(deg):
@@ -46,7 +46,7 @@ CAPITAL_PRESETS = {
     # rotunda: h 2.6, shaft top D 2.1, abacus ~3.0 across; figured centre
     "capital_rotunda": dict(H=2.6, R=1.05, abacus_across=3.0, figure=True, lower_len=0.42, upper_len=0.50,
                             lower_w=1.12, upper_w=1.15, ribs=9, curl=0.32, droop=0.18, volute_r=0.165, helix_r=0.08,
-                            lower_z=0.075, upper_z=0.34, rows=2, voxel=0.012, leaf_tilt=(9.0, 11.0)),
+                            lower_z=0.075, upper_z=0.34, rows=2, voxel=0.014, leaf_tilt=(9.0, 11.0)),
     # inner tan columns: h 1.8 on a ~1.6 m shaft, same design, fleuron centre
     "capital_inner": dict(H=1.8, R=0.80, abacus_across=2.15, figure=False, lower_len=0.42, upper_len=0.50,
                           lower_w=1.12, upper_w=1.15, ribs=9, curl=0.32, droop=0.18, volute_r=0.165, helix_r=0.085,
@@ -105,8 +105,8 @@ def build_leaf_ring(P, count, offset_deg, base_z, length_H, width_scale, rng, co
         curl_row = P["curl"] * (1.0 if row == 0 else 1.5)
         droop_row = P["droop"] * (1.0 if row == 0 else 1.4)
         leaf = L.acanthus_leaf(f"leaf_{tag}_{k}", length=ln, width=width, curl=curl_row * rng.uniform(0.9, 1.1),
-                               droop=droop_row * rng.uniform(0.85, 1.15), ribs=P["ribs"], rib_amp=0.032 * R,
-                               bulge=0.09 * R, thickness=0.04 * R, lobes=4, lobe_depth=0.12, nu=20, nv=26, coll=coll,
+                               droop=droop_row * rng.uniform(0.85, 1.15), ribs=P["ribs"], rib_amp=0.018 * R,
+                               bulge=0.09 * R, thickness=0.065 * R, lobes=4, lobe_depth=0.12, nu=20, nv=26, coll=coll,
                                seed=rng.randint(0, 9999), base_width=0.30)
         tilt = -P["leaf_tilt"][row] + rng.uniform(-1.5, 1.5)
         place(leaf, rot_z_deg=phi - 90.0, loc=(r_bell * 0.96 * math.cos(math.radians(phi)),
@@ -202,7 +202,7 @@ def build_capital(typ, variant, coll, bake=True):
     # union into one cast-concrete surface, soften, weather
     t = time.time()
     voxel = P["voxel"] * (1.6 if FAST else 1.0)
-    hi = L.union_blob(parts, f"{typ}_v{variant}", voxel=voxel, smooth=2, smooth_factor=0.5, coll=work)
+    hi = L.union_blob(parts, f"{typ}_v{variant}", voxel=voxel, smooth=2, smooth_factor=0.5, coll=work, adaptivity=0.4)
     print(f"[orn] {typ} v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
     L.displace_noise(hi, strength=0.006 * R, size=0.12 * R, seed=100 + variant, depth=2)
     L.displace_noise(hi, strength=0.0025 * R, size=0.025 * R, seed=200 + variant, depth=1)
@@ -363,7 +363,7 @@ def human_joints(S, front=1.0, pose="attic_male"):
         "chest": ((0, 0.01 * f, 1.33), (0.195, 0.125)),
         "shL": ((0.215, 0.0, 1.46), (0.075, 0.07)), "shR": ((-0.215, 0.0, 1.46), (0.075, 0.07)),
         "neck": ((0, 0.015 * f, 1.53), (0.06, 0.06)),
-        "head": ((0, 0.035 * f, 1.66), (0.10, 0.115)),
+        "head": ((0, 0.035 * f, 1.655), (0.115, 0.125)),
     }
     if pose == "attic_male":       # both arms raised, hands at the chest / opposite shoulder (attic_corner_figure_1-2)
         J.update({"elL": ((0.37, 0.09 * f, 1.30), (0.06, 0.06)), "haL": ((0.02, 0.17 * f, 1.31), (0.055, 0.045)),
@@ -459,12 +459,12 @@ def build_winged_figure(variant, coll, bake=True):
     # wings: two tall fluted slabs behind the shoulders, rounded top above the head, tips at the calves
     for side in (1, -1):
         x = side * 0.19 * S
-        wsecs = [(0.35 * S, x + side * 0.02 * S, 0.14 * S, 0.06 * S, 0.035 * S),
-                 (0.7 * S, x + side * 0.05 * S, 0.15 * S, 0.12 * S, 0.04 * S),
-                 (1.1 * S, x + side * 0.08 * S, 0.16 * S, 0.17 * S, 0.045 * S),
-                 (1.45 * S, x + side * 0.10 * S, 0.17 * S, 0.19 * S, 0.05 * S),
-                 (1.72 * S, x + side * 0.10 * S, 0.17 * S, 0.15 * S, 0.045 * S),
-                 (1.86 * S, x + side * 0.08 * S, 0.16 * S, 0.06 * S, 0.03 * S)]
+        wsecs = [(0.35 * S, x + side * 0.02 * S, 0.18 * S, 0.05 * S, 0.03 * S),
+                 (0.7 * S, x + side * 0.04 * S, 0.19 * S, 0.09 * S, 0.035 * S),
+                 (1.1 * S, x + side * 0.06 * S, 0.20 * S, 0.12 * S, 0.04 * S),
+                 (1.45 * S, x + side * 0.07 * S, 0.21 * S, 0.13 * S, 0.045 * S),
+                 (1.72 * S, x + side * 0.07 * S, 0.21 * S, 0.11 * S, 0.04 * S),
+                 (1.88 * S, x + side * 0.05 * S, 0.20 * S, 0.05 * S, 0.025 * S)]
         parts.append(drapery_tube(f"wing{side}", wsecs, work, folds=7, fold_amp=(0.10, 0.10), seed=variant * 5 + side,
                                   nu=48, nz=40, power=3.2, sharp=0.5))
     # cornucopias: tapered horns from the hands, curling up and outward
@@ -639,6 +639,281 @@ def build_rosette(variant, coll, bake=True):
                             budgets=L.BUDGETS["rosette_ceiling"], size_note="coffer rosette 0.6 m; back face at y=0, projects +Y")
 
 
+# =============================================================================== ZIMM ATTIC RELIEF PANELS
+SCAN_DIR = common.REFERENCE_DIR / "scans"
+# name -> (file, pre-rotation to the 'face +Z, up +Y' frame, background depth fraction (0=back .. 1=front))
+SCANS = {
+    "centaur": ("centaur_metope.stl", None, 0.35),
+    "soldiers": ("trajan_soldiers.stl", None, 0.45),
+    "dacians": ("trajan_dacians.stl", Euler((0, 0, math.pi), "XYZ").to_matrix().to_4x4() @ Euler((-math.pi / 2, 0, 0), "XYZ").to_matrix().to_4x4(), 0.40),
+}
+_scan_cache = {}
+
+
+def load_scan(key, tris=120000):
+    """Import a public-domain relief scan (cm -> m), decimate, orient to face +Y with +Z up, bottom at z=0, centred
+    in x, back plane at y=0. Cached per session. Returns a work-collection object (copy it before editing)."""
+    if key in _scan_cache and _scan_cache[key].name in bpy.data.objects:
+        return _scan_cache[key]
+    fname, pre, bgfrac = SCANS[key]
+    path = SCAN_DIR / fname
+    if not path.exists():
+        print(f"[orn] WARNING scan {path} missing")
+        return None
+    t = time.time()
+    bpy.ops.wm.stl_import(filepath=str(path), global_scale=0.01)
+    ob = bpy.context.selected_objects[0]
+    ob.name = f"scan_{key}"
+    L.common.link_object(ob, L.work_collection())
+    ob.data.transform(ob.matrix_world)
+    ob.matrix_world = Matrix.Identity(4)
+    if pre is not None:
+        ob.data.transform(pre)
+    # face +Z / up +Y  ->  face +Y / up +Z  (proper rotation: x -> -x, y <-> z)
+    ob.data.transform(Matrix(((-1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0), (0, 0, 0, 1))))
+    L.decimate(ob, target=tris)
+    (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
+    ob.data.transform(Matrix.Translation((-0.5 * (x0 + x1), -y0, -z0)))
+    # background depth: area-weighted median of face-centre y (flat background = few, large faces)
+    me = ob.data
+    depth = max(1e-6, y1 - y0)
+    pairs = sorted((poly.center.y / depth, poly.area) for poly in me.polygons if poly.normal.y > 0.6)
+    total = sum(a for _, a in pairs)
+    acc, med = 0.0, bgfrac
+    for yv, a in pairs:
+        acc += a
+        if acc >= 0.5 * total:
+            med = yv
+            break
+    ob["bg_frac"] = med
+    bgfrac = med
+    ob.data.polygons.foreach_set("use_smooth", [True] * len(ob.data.polygons))
+    _scan_cache[key] = ob
+    print(f"[orn] scan {key}: {L.tri_count(ob)} tris, {x1 - x0:.2f} x {y1 - y0:.2f} x {z1 - z0:.2f} m, background at {bgfrac:.2f} of depth, in {time.time() - t:.1f}s")
+    return ob
+
+
+def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=0.0, coll=None):
+    """Copy a scan into the panel: scaled to `height` (m) tall and `depth` (m) of relief, its background surface
+    sunk to the slab face so only the figures stand proud."""
+    src = load_scan(key)
+    if src is None:
+        return None
+    ob = L.duplicate(src, f"rel_{key}_{x:.1f}", coll or L.work_collection())
+    (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
+    sz = height / (z1 - z0)
+    sy = depth / (y1 - y0)
+    m = Matrix.Diagonal((-sz if mirror else sz, sy, sz, 1.0))
+    ob.data.transform(m)
+    if rot_deg:
+        ob.data.transform(Euler((0, math.radians(rot_deg), 0), "XYZ").to_matrix().to_4x4())
+    bg = src["bg_frac"] * depth
+    ob.data.transform(Matrix.Translation((x, slab_face_y - bg - 0.02, z)))   # background 2 cm behind the face
+    return ob
+
+
+def build_attic_panel(variant, coll, bake=True):
+    """One of the three Zimm 'Struggle for the Beautiful' relief designs, field 10.5 x 4.5 m, relief ~0.25 m,
+    composed from the public-domain relief scans (cut, scaled, mirrored, embedded, decimated, weathered - lead
+    decision: scans only as reworked raw material for these panels). Design 1 = combat with centaur (centre),
+    2 = procession (draped spectators), 3 = kneeling/standing group. Origin: back-face bottom-centre; +Y = face."""
+    rng = random.Random(6000 + variant)
+    work = L.work_collection()
+    W, Hh, T = 10.5, 4.5, 0.16
+    face_y = T
+    parts = [L.box("panel_slab", (W, T, Hh), work, location=(0, T / 2, Hh / 2))]
+    depth = 0.40
+    design = (variant - 1) % 3 + 1
+    if design == 1:
+        parts.append(place_scan("centaur", 0.0, 4.2, depth, face_y, z=0.15))
+        parts.append(place_scan("soldiers", -3.7, 4.1, depth, face_y, mirror=True, z=0.2))
+        parts.append(place_scan("soldiers", 3.7, 4.1, depth, face_y, z=0.2))
+    elif design == 2:
+        parts.append(place_scan("dacians", -3.6, 4.2, depth, face_y, z=0.15))
+        parts.append(place_scan("soldiers", 0.0, 4.1, depth, face_y, z=0.2))
+        parts.append(place_scan("dacians", 3.6, 4.2, depth, face_y, mirror=True, z=0.15))
+    else:
+        parts.append(place_scan("soldiers", -3.6, 4.1, depth, face_y, z=0.2))
+        parts.append(place_scan("centaur", 0.0, 4.2, depth, face_y, mirror=True, z=0.15))
+        parts.append(place_scan("dacians", 3.7, 4.2, depth, face_y, mirror=True, z=0.15))
+    parts = [p for p in parts if p is not None]
+    # a few modelled extras so the composition is not just the scans: shields / discs in the gaps
+    for i in range(3):
+        x = rng.uniform(-4.8, 4.8)
+        parts.append(L.sphere(f"shield{i}", rng.uniform(0.25, 0.45), work, location=(x, face_y - 0.05, rng.uniform(0.8, 3.6)), scale=(1.0, 0.25, 1.0)))
+    t = time.time()
+    hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.025), smooth=1, smooth_factor=0.3, coll=work)
+    print(f"[orn] attic_panel v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
+    L.displace_noise(hi, strength=0.02, size=0.6, seed=1400 + variant, depth=2)
+    L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
+    return L.finalize_asset(hi, "attic_panel", variant, coll, bake=bake, bake_size=4096 if not FAST else 2048, y_mode="back",
+                            budgets=L.BUDGETS["attic_panel"],
+                            size_note=f"Zimm panel design {design}: field 10.5 x 4.5 m, slab 0.16 + relief 0.3 m; origin back-face bottom-centre")
+
+
+# =============================================================================== LINEAR MOULDINGS (1 m units) + DRUM BAND
+def _strip(name, coll, length=1.0, depth=0.05, height=0.2):
+    """Backing strip: origin at the bottom-centre of its BACK face, runs along X, projects toward +Y."""
+    return L.box(name, (length, depth, height), coll, location=(0, depth / 2, height / 2))
+
+
+def build_moulding(kind, variant, coll, bake=True):
+    """One-metre unit of a repeating moulding, to be arrayed by ARCH along its profile sweeps. Sizes from the
+    reference sheet (dentil pitch 0.15, egg-and-dart ~0.17 pitch, Greek key band 0.45-0.5 with 0.45 rosettes,
+    modillion brackets, anthemion/palmette band 0.25 pitch)."""
+    rng = random.Random(8000 + variant + hash(kind) % 100)
+    work = L.work_collection()
+    parts = []
+    if kind == "dentil":
+        n = 6
+        pitch = 1.0 / n
+        parts.append(_strip("m_back", work, depth=0.04, height=0.22))
+        for i in range(n):
+            x = -0.5 + pitch * (i + 0.5)
+            parts.append(L.box(f"dentil{i}", (pitch * 0.62, 0.12, 0.16), work, location=(x, 0.04 + 0.06, 0.03 + 0.08), bevel=0.006))
+        h, d = 0.22, 0.16
+    elif kind == "egg_and_dart":
+        n = 6
+        pitch = 1.0 / n
+        parts.append(_strip("m_back", work, depth=0.04, height=0.20))
+        for i in range(n):
+            x = -0.5 + pitch * (i + 0.5)
+            # egg: half-ellipsoid on the strip; shell: a thicker ring around it; dart between
+            parts.append(L.sphere(f"egg{i}", 0.052, work, location=(x, 0.06, 0.10), scale=(1.0, 1.1, 1.45)))
+            parts.append(L.sphere(f"shell{i}", 0.068, work, location=(x, 0.03, 0.095), scale=(1.0, 0.7, 1.45)))
+            parts.append(L.box(f"dart{i}", (0.022, 0.06, 0.13), work, location=(x + pitch / 2, 0.05, 0.10), bevel=0.006))
+        h, d = 0.20, 0.13
+    elif kind == "greek_key":
+        # meander: a path of square turns, relief 0.02 on a 0.45 band, two repeats per metre
+        band_h = 0.45
+        parts.append(_strip("m_back", work, depth=0.03, height=band_h))
+        w = 0.035   # line width
+        def seg(x0, z0, x1, z1):
+            cx, cz = 0.5 * (x0 + x1), 0.5 * (z0 + z1)
+            parts.append(L.box(f"key_{len(parts)}", (abs(x1 - x0) + w, 0.02, abs(z1 - z0) + w), work, location=(cx, 0.04, cz)))
+        rep = 2
+        pw = 1.0 / rep
+        for r in range(rep):
+            ox = -0.5 + r * pw
+            u = pw / 6.0
+            zb, zt = 0.07, band_h - 0.07
+            zm = 0.5 * (zb + zt)
+            # classic meander (one repeat): outer top rail, hook down, inner spiral
+            seg(ox + 0.5 * u, zt, ox + 5.5 * u, zt)
+            seg(ox + 5.5 * u, zt, ox + 5.5 * u, zb)
+            seg(ox + 5.5 * u, zb, ox + 2.0 * u, zb)
+            seg(ox + 2.0 * u, zb, ox + 2.0 * u, zm + 0.5 * u)
+            seg(ox + 2.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm + 0.5 * u)
+            seg(ox + 4.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm - 0.6 * u)
+            seg(ox + 0.5 * u, zt, ox + 0.5 * u, zm - 0.6 * u)
+        h, d = band_h, 0.05
+    elif kind == "rosette_band":
+        # rostra band: square rosette bosses 0.45 alternating with meander squares; unit = 1 m = rosette + key field
+        band_h = 0.5
+        parts.append(_strip("m_back", work, depth=0.03, height=band_h))
+        parts.append(L.box("frame", (0.44, 0.02, 0.44), work, location=(-0.27, 0.04, band_h / 2)))
+        prof = [(0.19, 0.0), (0.19, 0.01), (0.16, 0.035), (0.10, 0.06), (0.05, 0.075), (0.0, 0.08)]
+        def petals(th, t):
+            return 1.0 + 0.09 * math.cos(10 * th) * (1 - t)
+        ros = L.revolve("rosette", L.resample_profile(prof, 14), segments=64, coll=work, scale_fn=petals)
+        ros.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
+        ros.data.transform(Matrix.Translation((-0.27, 0.05, band_h / 2)))
+        parts.append(ros)
+        w = 0.035
+        u = 0.5 / 6.0
+        ox = 0.0
+        zb, zt = 0.07, band_h - 0.07
+        zm = 0.5 * (zb + zt)
+        def seg(x0, z0, x1, z1):
+            cx, cz = 0.5 * (x0 + x1), 0.5 * (z0 + z1)
+            parts.append(L.box(f"key_{len(parts)}", (abs(x1 - x0) + w, 0.02, abs(z1 - z0) + w), work, location=(cx, 0.04, cz)))
+        seg(ox + 0.5 * u, zt, ox + 5.5 * u, zt)
+        seg(ox + 5.5 * u, zt, ox + 5.5 * u, zb)
+        seg(ox + 5.5 * u, zb, ox + 2.0 * u, zb)
+        seg(ox + 2.0 * u, zb, ox + 2.0 * u, zm + 0.5 * u)
+        seg(ox + 2.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm + 0.5 * u)
+        seg(ox + 4.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm - 0.6 * u)
+        seg(ox + 0.5 * u, zt, ox + 0.5 * u, zm - 0.6 * u)
+        h, d = band_h, 0.08
+    elif kind == "modillion":
+        # block bracket with a scrolled underside, 2 per metre (pitch 0.5), backing = the soffit strip
+        parts.append(_strip("m_back", work, depth=0.03, height=0.30))
+        for i in range(2):
+            x = -0.25 + 0.5 * i
+            parts.append(L.box(f"mod{i}", (0.22, 0.30, 0.22), work, location=(x, 0.18, 0.15), bevel=0.01))
+            scroll = L.volute(f"mods{i}", eye=(0, 0, 0), radius=0.07, turns=1.3, band=(0.20, 0.05), coll=work, direction=1.0)
+            scroll.data.transform(Matrix.Translation((x, 0.32, 0.10)))
+            parts.append(scroll)
+            parts.append(L.sphere(f"acorn{i}", 0.04, work, location=(x, 0.34, 0.05)))
+        h, d = 0.30, 0.36
+    elif kind == "anthemion":
+        # palmette fan band: 4 fans per metre, each 7 lobes from a small base, alternating with a lotus bud
+        parts.append(_strip("m_back", work, depth=0.03, height=0.22))
+        for i in range(4):
+            x = -0.5 + 0.25 * (i + 0.5)
+            for k in range(7):
+                a = -60 + 20 * k
+                lobe = L.acanthus_leaf(f"lobe{i}_{k}", length=0.14 + 0.02 * (3 - abs(k - 3)), width=0.035, curl=0.15, droop=0.05,
+                                       ribs=1, rib_amp=0.0, bulge=0.008, thickness=0.02, lobes=1, lobe_depth=0.0, nu=6, nv=8, coll=work, base_width=0.6)
+                lobe.data.transform(Matrix.Translation((x, 0.045, 0.04)) @ Euler((0, math.radians(a), 0), "XYZ").to_matrix().to_4x4())
+                parts.append(lobe)
+            parts.append(L.sphere(f"base{i}", 0.03, work, location=(x, 0.045, 0.04), scale=(1.3, 1.0, 0.8)))
+            parts.append(L.sphere(f"bud{i}", 0.02, work, location=(x + 0.125, 0.045, 0.10), scale=(1.0, 1.0, 3.0)))
+        h, d = 0.22, 0.08
+    else:
+        raise KeyError(kind)
+    hi = L.union_blob(parts, f"{kind}_v{variant}", voxel=(0.01 if FAST else 0.006), smooth=1, coll=work)
+    L.displace_noise(hi, strength=0.002, size=0.03, seed=1600 + variant, depth=1)
+    return L.finalize_asset(hi, kind, variant, coll, bake=bake, bake_size=1024, y_mode="back", budgets=L.BUDGETS["moulding"],
+                            size_note=f"1 m unit along X, {h:.2f} m tall, projects {d:.2f} m toward +Y; origin back-face bottom-centre")
+
+
+def build_drum_band(variant, coll, bake=True):
+    """One metre of the drum's 'broad cushion ring with guilloche moulding' (DPR): a torus-section cushion 1.6 m
+    tall covered with an imbricated scale pattern (0.35 pitch) over a plain torus, plus the bead moulding of the
+    cornice ring above. Straight unit (ARCH curves it with an array + curve modifier or arrays it in 1 m facets
+    around r 17.5)."""
+    rng = random.Random(8500 + variant)
+    work = L.work_collection()
+    Hb = 1.6
+    prof = [(0.0, 0.0), (0.06, 0.02), (0.14, 0.10), (0.24, 0.30), (0.33, 0.60), (0.36, 0.85), (0.33, 1.10),
+            (0.24, 1.35), (0.14, 1.52), (0.06, 1.58), (0.0, Hb)]
+    prof = L.smooth_profile(prof, 1)
+    n = len(prof)
+    pitch = 0.35
+    def fn(u, v):
+        x = -0.5 + u
+        k = v * (n - 1)
+        i = min(int(k), n - 2)
+        f = k - i
+        y = prof[i][0] * (1 - f) + prof[i + 1][0] * f
+        z = prof[i][1] * (1 - f) + prof[i + 1][1] * f
+        # scales: rows offset by half a pitch, each a shallow dome
+        # hex lattice of overlapping scale domes (continuous: max over the two nearest rows)
+        bump = 0.0
+        for row in (int(z / pitch), int(z / pitch) + 1):
+            off = pitch / 2 if row % 2 else 0.0
+            cx = ((x + 10.0 + off) % pitch) - pitch / 2
+            cz = z - (row * pitch - pitch * 0.45)
+            d = (cx / (pitch * 0.55)) ** 2 + (cz / (pitch * 0.55)) ** 2
+            bump = max(bump, 0.035 * max(0.0, 1.0 - d))
+        if not (0.15 < z < Hb - 0.15):
+            bump = 0.0
+        # normal of the profile in the yz plane
+        dy = prof[i + 1][0] - prof[i][0]
+        dz = prof[i + 1][1] - prof[i][1]
+        ln = math.hypot(dy, dz) or 1.0
+        ny, nz = dz / ln, -dy / ln
+        return (x, y + ny * bump, z + nz * bump)
+    cushion = L.surface("drum_cushion", fn, 120, 80, work)
+    L.solidify(cushion, 0.05, offset=-1.0)
+    back = L.box("drum_back", (1.0, 0.08, Hb), work, location=(0, 0.02, Hb / 2))
+    hi = L.union_blob([cushion, back], f"drum_band_v{variant}", voxel=(0.02 if FAST else 0.01), smooth=1, coll=work)
+    L.displace_noise(hi, strength=0.004, size=0.06, seed=1700 + variant, depth=2)
+    return L.finalize_asset(hi, "drum_band", variant, coll, bake=bake, bake_size=1024, y_mode="back", budgets=L.BUDGETS["moulding"],
+                            size_note="1 m unit of the drum scale band, 1.6 m tall, 0.36 m proud; origin back-face bottom-centre")
+
+
 # =============================================================================== registry / main
 def build_type(typ, variants, bake):
     coll = L.rebuild_type(typ)
@@ -659,20 +934,30 @@ def build_type(typ, variants, bake):
 BUILDERS = {
     "attic_figure": build_attic_figure, "winged_figure": build_winged_figure, "urn": build_urn,
     "urn_niche": build_urn_niche, "urn_tub": build_urn_tub, "keystone": build_keystone, "finial": build_finial,
-    "rosette_ceiling": build_rosette,
+    "rosette_ceiling": build_rosette, "attic_panel": build_attic_panel, "drum_band": build_drum_band,
+    "dentil": lambda v, c, bake=True: build_moulding("dentil", v, c, bake),
+    "egg_and_dart": lambda v, c, bake=True: build_moulding("egg_and_dart", v, c, bake),
+    "greek_key": lambda v, c, bake=True: build_moulding("greek_key", v, c, bake),
+    "rosette_band": lambda v, c, bake=True: build_moulding("rosette_band", v, c, bake),
+    "modillion": lambda v, c, bake=True: build_moulding("modillion", v, c, bake),
+    "anthemion": lambda v, c, bake=True: build_moulding("anthemion", v, c, bake),
 }
 ALL_TYPES = ["capital_rotunda", "maiden", "capital_colonnade", "capital_inner", "attic_figure", "urn", "urn_niche",
-             "urn_tub", "keystone", "winged_figure", "finial", "rosette_ceiling"]
+             "urn_tub", "attic_panel", "keystone", "winged_figure", "finial", "drum_band", "rosette_ceiling",
+             "dentil", "egg_and_dart", "greek_key", "rosette_band", "modillion", "anthemion"]
 VARIANTS = {"capital_rotunda": 3, "capital_inner": 2, "capital_colonnade": 3, "maiden": 3, "attic_figure": 2,
-            "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 2, "winged_figure": 2, "finial": 1, "rosette_ceiling": 2}
+            "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 2, "winged_figure": 2, "finial": 1, "rosette_ceiling": 2,
+            "attic_panel": 3, "drum_band": 1, "dentil": 1, "egg_and_dart": 1, "greek_key": 1, "rosette_band": 1,
+            "modillion": 1, "anthemion": 1}
 
 
 def main():
     only = None
     if "--only" in ARGS:
         only = [s.strip() for s in ARGS[ARGS.index("--only") + 1].split(",") if s.strip()]
-    if only and OUT.exists() and "--fresh" not in ARGS:
-        bpy.ops.wm.open_mainfile(filepath=str(OUT))
+    src = common.ASSET_FILES["ORN"] if "--out" in ARGS else OUT
+    if only and src.exists() and "--fresh" not in ARGS:
+        bpy.ops.wm.open_mainfile(filepath=str(src))
     else:
         bpy.ops.wm.read_homefile(use_empty=True)
         common.wipe_scene()
@@ -683,7 +968,9 @@ def main():
         build_type(typ, n, BAKE)
     L.clear_work()
     common.set_lod_visibility(1)
-    common.save_blend(OUT)
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(OUT), relative_remap=True, compress=True)
+    print(f"[orn] saved {OUT}")
     print(L.report())
 
 

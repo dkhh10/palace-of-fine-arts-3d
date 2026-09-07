@@ -2,7 +2,7 @@
 neutral ground, placeholder golden-hour sun (az 118.5, el 7.4), Eevee 1280x720.
 
     blender --background --python scripts/orn_preview.py -- [--only capital_rotunda,maiden] [--tag t] [--lod2]
-                                                            [--cycles] [--sheet]
+                                                            [--engine cycles] [--sheet]
 Output: renders/previews/ornament/<timestamp>_<asset>[_tag].png (+ contact sheet with --sheet).
 """
 import bpy, math, os, sys, time, subprocess
@@ -146,7 +146,7 @@ def render_group(base, objs, cam, tag, lod2=False, engine="EEVEE"):
             continue
         o.hide_render = False
         o.hide_viewport = False
-        o.location = (-gap * (len(order) - 1) / 2 + k * gap, 0, 0)
+        o.location = (gap * (len(order) - 1) / 2 - k * gap, 0, 0)   # camera at +X+Y: +X shows on the left
         nm = o.get("normal_map") if key == "1" else None
         m = clay_material(f"preview_{o.name}", normal_map=nm)
         o.data.materials.clear()
@@ -172,13 +172,13 @@ def render_group(base, objs, cam, tag, lod2=False, engine="EEVEE"):
 
 
 def main():
-    src = common.ASSET_FILES["ORN"]
+    src = Path(ARGS[ARGS.index("--src") + 1]) if "--src" in ARGS else common.ASSET_FILES["ORN"]
     if not src.exists():
         print("[orn_preview] no assets/ornament.blend yet")
         return
     bpy.ops.wm.open_mainfile(filepath=str(src))
     scene = common.setup_scene()
-    if "--cycles" in ARGS:
+    if ("--engine" in ARGS and ARGS[ARGS.index("--engine") + 1].lower() == "cycles"):
         common.configure_cycles(scene, samples=64)
     else:
         common.configure_eevee(scene, samples=32)
@@ -193,7 +193,7 @@ def main():
     for base, objs in sorted(asset_groups(only).items()):
         if "0" not in objs or "1" not in objs:
             continue
-        outs.append(render_group(base, objs, cam, tag, lod2="--lod2" in ARGS, engine="CYCLES" if "--cycles" in ARGS else "EEVEE"))
+        outs.append(render_group(base, objs, cam, tag, lod2="--lod2" in ARGS, engine="CYCLES" if ("--engine" in ARGS and ARGS[ARGS.index("--engine") + 1].lower() == "cycles") else "EEVEE"))
     if "--sheet" in ARGS and outs:
         sheet = OUT_DIR / f"{tag}_contact_sheet.png"
         cmd = ["python3", str(common.ROOT / "scripts" / "qa_compare.py"), "--sheet", str(sheet)] + [str(p) for p in outs]
