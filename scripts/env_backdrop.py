@@ -45,47 +45,49 @@ def _box(bm, cx, cy, cz, sx, sy, sz, rot=0.0):
 
 
 # ----------------------------------------------------------------------------- exhibition hall
-def build_hall(SUB, hall_poly):
-    """b302 massing (20 m per OSM; DPR: 45 ft truss + parapet) + pilasters + arched entrance bay facing the rotunda."""
+ARC_CENTRE = Vector((0.0, 52.0))     # DPR: hall and colonnade radii struck from a point on the east side of the lagoon
+HALL_Z0, HALL_EAVE, HALL_RISE = -0.4, 15.5, 4.5     # eave 15.5 + curved roof rise 4.5 = 20 m (OSM height)
+
+
+def _hall_roof_z(x, y, r_mid, hd):
+    r = (Vector((x, y)) - ARC_CENTRE).length
+    t = (r - r_mid) / max(1e-6, hd)
+    return HALL_EAVE + HALL_RISE * max(0.0, 1.0 - t * t)
+
+
+def build_hall(SUB, hall_poly, hall_field):
+    """Exhibition hall from OSM b302: buff stucco walls to a 15.5 m eave with a parapet, a shallow curved roof
+    (rise 4.5 m, darker), pilasters every 7 m on the concave east wall, and the east entrance pavilion with the
+    tall green double door on the rotunda's west-arch axis (ref 169 through the main arch; ref 022)."""
     coll = SUB["ENV_backdrop"]
-    m = L.mat("MAT_backdrop_building")
-    z0, z1 = -0.4, 19.6
-    obj = _prism("ENV_backdrop_hall", hall_poly, z0, z1, coll, m)
-    # the hall's east (concave) wall faces the rotunda: pilasters every ~7 m on the segments whose outward normal
-    # points toward the rotunda (dot(normal, to_origin) > 0.3)
-    bm = bmesh.new()
+    m_wall, m_roof = L.mat("MAT_backdrop_building"), L.mat("MAT_backdrop_roof")
+    m_sky, m_door = L.mat("MAT_backdrop_skylight"), L.mat("MAT_backdrop_door_green")
     poly = L.ensure_ccw(hall_poly)
+    _prism("ENV_backdrop_hall", poly, HALL_Z0, HALL_EAVE - 0.05, coll, m_wall)
+    # curved roof: CDT of the footprint with interior points, parabolic section across the crescent
+    rs = [(Vector(p) - ARC_CENTRE).length for p in poly]
+    r_min, r_max = min(rs), max(rs)
+    r_mid, hd = (r_min + r_max) / 2, (r_max - r_min) / 2
+    xs = [p[0] for p in poly]; ys = [p[1] for p in poly]
+    pts = []
+    step = 6.0
+    x = min(xs)
+    while x < max(xs):
+        y = min(ys)
+        while y < max(ys):
+            if hall_field.signed(x, y) < -2.0:
+                pts.append((x, y))
+            y += step
+        x += step
+    v2, tris = L.cdt_triangulate(pts, [poly])
+    keep = [t for t in tris if L.point_in_poly(sum(v2[i][0] for i in t) / 3, sum(v2[i][1] for i in t) / 3, poly)]
+    verts = [(x, y, _hall_roof_z(x, y, r_mid, hd)) for (x, y) in v2]
+    L.mesh_from_tris("ENV_backdrop_hall_roof", verts, keep, coll, [m_roof], smooth=True)
+    # parapet band + pilasters on the concave (east) wall
+    bm = bmesh.new()
     n = len(poly)
     count = 0
-    arch_done = False
-    for i in range(n):
-        a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
-        d = b - a
-        seg = d.length
-        if seg < 3.0:
-            continue
-        d.normalize()
-        nrm = Vector((d.y, -d.x))         # outward for CCW
-        mid = (a + b) / 2
-        to_origin = (Vector((0.0, 0.0)) - mid).normalized()
-        if nrm.dot(to_origin) < 0.3 or mid.length > 130:
-            continue
-        rot = math.atan2(d.y, d.x)
-        k = max(1, int(seg / 7.0))
-        for j in range(k):
-            t = (j + 0.5) / k
-            p = a + d * (seg * t) + nrm * 0.45
-            _box(bm, p.x, p.y, (z0 + z1) / 2 + 1.0, 1.4, 0.9, z1 - z0 - 2.0, rot)
-            count += 1
-        # the big arched entrance bay: on the segment closest to the west axis of the rotunda (y < 0, |x| small)
-        if not arch_done and abs(mid.x) < 12 and mid.y < 0:
-            arch_done = True
-            p = mid + nrm * 1.2
-            _box(bm, p.x, p.y, (z0 + 24.0) / 2, 16.0, 2.4, 24.4, rot)        # tall entrance bay with a parapet
-            for s in (-1, 1):
-                q = mid + d * (s * 9.0) + nrm * 1.8
-                _box(bm, q.x, q.y, (z0 + 25.0) / 2, 3.0, 3.6, 25.4, rot)   # flanking piers
-    # parapet / cornice band
+    win_pl = []
     for i in range(n):
         a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
         d = b - a
@@ -95,16 +97,104 @@ def build_hall(SUB, hall_poly):
         d.normalize()
         nrm = Vector((d.y, -d.x))
         rot = math.atan2(d.y, d.x)
-        mid = (a + b) / 2 + nrm * 0.3
-        _box(bm, mid.x, mid.y, z1 + 0.4, seg, 1.2, 1.4, rot)
+        mid = (a + b) / 2
+        _box(bm, mid.x + nrm.x * 0.2, mid.y + nrm.y * 0.2, HALL_EAVE + 0.5, seg + 0.4, 1.0, 1.4, rot)   # parapet
+        _box(bm, mid.x + nrm.x * 0.35, mid.y + nrm.y * 0.35, HALL_EAVE - 0.9, seg + 0.3, 1.3, 1.1, rot)  # cornice
+        _box(bm, mid.x + nrm.x * 0.25, mid.y + nrm.y * 0.25, 9.0, seg + 0.2, 1.0, 0.55, rot)             # string course
+        _box(bm, mid.x + nrm.x * 0.30, mid.y + nrm.y * 0.30, HALL_Z0 + 0.55, seg + 0.2, 1.1, 1.1, rot)   # plinth
+        to_origin = (Vector((0.0, 0.0)) - mid).normalized()
+        if seg >= 3.0 and nrm.dot(to_origin) > 0.3 and mid.length < 135:
+            k = max(1, int(seg / 7.0))
+            for j in range(k):
+                t = (j + 0.5) / k
+                p = a + d * (seg * t) + nrm * 0.4
+                _box(bm, p.x, p.y, (HALL_Z0 + HALL_EAVE) / 2, 1.2, 0.8, HALL_EAVE - HALL_Z0, rot)
+                count += 1
+            # glazed bays halfway between pilasters: they read as window recesses at hero distance
+            ts = [0.15, 0.85] if k == 1 else [j / k for j in range(1, k)] + [0.07, 0.93]
+            for t in ts:
+                if seg < 4.0:
+                    continue
+                q = a + d * (seg * t) + nrm * 0.18
+                win_pl.append(((q.x, q.y, 6.6), (min(3.4, seg / k * 0.55), 0.30, 4.6), rot))
+                win_pl.append(((q.x, q.y, 12.0), (min(3.4, seg / k * 0.55), 0.30, 3.0), rot))
     me = bpy.data.meshes.new("ENV_backdrop_hall_detail")
-    bm.to_mesh(me)
-    bm.free()
-    me.materials.append(m)
+    bm.to_mesh(me); bm.free()
+    me.materials.append(m_wall)
     o = bpy.data.objects.new("ENV_backdrop_hall_detail", me)
     coll.objects.link(o)
-    print(f"[env_backdrop] hall: {count} pilasters, arch bay {'placed' if arch_done else 'NOT placed'}")
-    return obj
+    if win_pl:
+        bmw = bmesh.new()
+        for ((wx, wy, wz), (sx, sy, sz), wrot) in win_pl:
+            _box(bmw, wx, wy, wz, sx, sy, sz, wrot)
+        mew = bpy.data.meshes.new("ENV_backdrop_hall_windows")
+        bmw.to_mesh(mew); bmw.free()
+        mew.materials.append(m_sky)
+        ow = bpy.data.objects.new("ENV_backdrop_hall_windows", mew)
+        coll.objects.link(ow)
+    # entrance pavilion on the west-arch axis (compass az 262): march from the origin until inside the hall
+    az = math.radians(262.0)
+    ray = Vector((-math.cos(az), math.sin(az)))
+    hit = None
+    for r in range(20, 200):
+        q = ray * float(r)
+        if hall_field.signed(q.x, q.y) < 0:
+            hit = q; break
+    if hit is None:
+        print("[env_backdrop] hall: no axis hit, pavilion skipped")
+        return
+    # wall segment at the hit point
+    best = None
+    for i in range(n):
+        a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
+        dd = L.seg_dist(hit.x, hit.y, a.x, a.y, b.x, b.y)
+        if best is None or dd < best[0]:
+            best = (dd, a, b)
+    _, a, b = best
+    d = (b - a).normalized()
+    nrm = Vector((d.y, -d.x))
+    if nrm.dot(-hit.normalized()) < 0:
+        nrm = -nrm
+    rot = math.atan2(d.y, d.x)
+    P = hit + nrm * 0.0
+    bm = bmesh.new()
+    z0, zc = HALL_Z0, 11.0
+    # piers, lintel, cornice, parapet
+    for sgn in (-1, 1):
+        q = P + d * (sgn * 5.5) + nrm * 2.5
+        _box(bm, q.x, q.y, (z0 + zc) / 2, 5.0, 5.0, zc - z0, rot)
+    q = P + nrm * 2.5
+    _box(bm, q.x, q.y, (8.2 + zc) / 2, 6.2, 5.0, zc - 8.2, rot)                 # lintel over the 6 m opening
+    _box(bm, q.x, q.y, zc + 0.4, 17.0, 6.2, 0.8, rot)                            # cornice
+    _box(bm, q.x - nrm.x * 0.6, q.y - nrm.y * 0.6, zc + 1.4, 16.0, 5.0, 1.2, rot)  # parapet block
+    q2 = P + nrm * 0.9
+    _box(bm, q2.x, q2.y, (z0 + 8.2) / 2, 6.6, 0.6, 8.2 - z0, rot)              # recess back wall (door surround)
+    me = bpy.data.meshes.new("ENV_backdrop_hall_pavilion")
+    bm.to_mesh(me); bm.free()
+    me.materials.append(m_wall)
+    o = bpy.data.objects.new("ENV_backdrop_hall_pavilion", me)
+    coll.objects.link(o)
+    # the green double door (ref 169): 4.6 x 7.6 m, in the recess
+    bm = bmesh.new()
+    q3 = P + nrm * 1.25
+    _box(bm, q3.x, q3.y, (z0 + 7.6) / 2, 4.6, 0.12, 7.6 - z0, rot)
+    me = bpy.data.meshes.new("ENV_backdrop_hall_door")
+    bm.to_mesh(me); bm.free()
+    me.materials.append(m_door)
+    o = bpy.data.objects.new("ENV_backdrop_hall_door", me)
+    coll.objects.link(o)
+    # skylight strip on the roof behind the pavilion
+    bm = bmesh.new()
+    q4 = P - nrm * 7.0
+    zr = _hall_roof_z(q4.x, q4.y, r_mid, hd)
+    _box(bm, q4.x, q4.y, zr + 0.25, 14.0, 3.0, 0.5, rot)
+    me = bpy.data.meshes.new("ENV_backdrop_hall_skylight")
+    bm.to_mesh(me); bm.free()
+    me.materials.append(m_sky)
+    o = bpy.data.objects.new("ENV_backdrop_hall_skylight", me)
+    coll.objects.link(o)
+    print(f"[env_backdrop] hall: {count} pilasters, {len(win_pl)} glazed bays, cornice + string course + plinth, "
+          f"curved roof (eave {HALL_EAVE} + rise {HALL_RISE}), pavilion + green door at ({P.x:.1f}, {P.y:.1f})")
 
 
 # ----------------------------------------------------------------------------- Marina houses
@@ -232,7 +322,9 @@ def build_landscape(SUB, terrain_height):
     print("[env_backdrop] landscape: far ground, bay, presidio ridge, hills")
 
 
-def build_all(SUB, terrain_height, site, hall_poly):
-    build_hall(SUB, hall_poly)
+def build_all(SUB, terrain_height, site, hall_poly, hall_field=None):
+    if hall_field is None:
+        hall_field = L.PolyField(hall_poly, cell=10.0)
+    build_hall(SUB, hall_poly, hall_field)
     build_houses(SUB, site)
     build_landscape(SUB, terrain_height)

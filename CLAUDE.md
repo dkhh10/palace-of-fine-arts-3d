@@ -105,6 +105,16 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
   must not overlap. Keep render sample counts low on every agent: they share one GPU.
 - Do not spawn an agent for anything one shell command can do.
 
+### Blender process hygiene (added 2026-09-07; the machine swapped with three idle Blender instances holding 13 GB)
+- Every `blender --background --python` run must exit when its script finishes. Never leave a Blender process
+  waiting on stdin, a modal operator, or an interactive prompt; never launch Blender without `--background`;
+  do not start a new Blender while your previous one is still running (`pgrep -fl "MacOS/Blender"` first).
+- If a run wedges, kill it (`pkill -f "MacOS/Blender --background"` for your own runs) before starting another.
+- Any headless Blender idle for more than 5 minutes gets killed. `scripts/blender_watchdog.sh` does this
+  (one pass, or `--loop`); the lead keeps the loop running during agent waves. Do not depend on it: exit cleanly.
+- Keep memory in mind: one full-scene render per agent at a time, low samples, and `bpy.ops.wm.quit_blender()` /
+  natural script end, never `input()` or `time.sleep` loops inside Blender.
+
 ### Durability
 - Every agent commits after every script that runs successfully, or every 15 minutes, whichever comes first.
   No agent may run 30 minutes without a commit.

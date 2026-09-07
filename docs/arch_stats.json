@@ -4,7 +4,7 @@
   "attic_figure": 8,
   "urn": 40,
   "finial": 9,
-  "frieze_run": 28,
+  "frieze_run": 126,
   "attic_panel": 8,
   "keystone": 24,
   "drum_band": 1,
@@ -28,10 +28,10 @@
    "pylons": 2
   }
  },
- "tris_LOD0": 2711978,
- "tris_LOD1": 868730,
- "tris_LOD2": 533114,
+ "tris_LOD0": 2834078,
+ "tris_LOD1": 989614,
+ "tris_LOD2": 653998,
  "tris_placeholders": 75608,
- "objects": 2069,
- "build_seconds": 3.7
+ "objects": 2279,
+ "build_seconds": 3.3
 }

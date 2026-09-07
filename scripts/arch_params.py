@@ -52,16 +52,25 @@ ATTIC_TOP_CORNICE_H = 0.8      # DERIVED (085)
 ATTIC_PANEL_FRAME = 0.45       # Greek-key band around the relief panels (catalog #6)
 ATTIC_PANEL_DEPTH = 0.25
 DRUM_Z0 = ATTIC_Z1
-DRUM_H = 3.5
-DRUM_Z1 = DRUM_Z0 + DRUM_H                      # 41.8
+# Phase 3 (QA-01-1), lead arbitration 2026-09-07: THE PHOTOGRAPHS OVERRIDE the reference sheet's 49.4 m apex (the
+# sheet forced the DPR's 162 ft after deriving the rise from a foreshortened telephoto). The sheet's drum height 3.5 was
+# the part VISIBLE above the attic cornice from a low camera; ~1.6 m more is hidden behind it. Drum = plain 2.7 +
+# guilloche cushion 1.5 + cornice ring 0.9 = 5.1 m, top 43.4. DOME_RISE solved (not eyeballed) against the silhouette
+# test: apex 52.8 (+0.6 apex cap = 53.4) puts the visible dome rise at 150 px / W_a 673 px = 0.223 on the cam01 hero at
+# 1920x1080, i.e. +1.8 % of frame height vs ref 169 and -1.7 % vs ref 085 (tolerance 2 %; the only band that satisfies
+# BOTH photos is rise/W_a 0.219-0.228). Derivation in docs/arch_notes.md "QA-01-1".
+DRUM_PLAIN_H = 2.7
+DRUM_BAND_H = 1.5
+DRUM_CORNICE_H = 0.9
+DRUM_H = DRUM_PLAIN_H + DRUM_BAND_H + DRUM_CORNICE_H   # 5.1
+DRUM_Z1 = DRUM_Z0 + DRUM_H                      # 43.4
 DRUM_BAND_R = 17.5        # scale/guilloche cushion band
-DRUM_BAND_H = 1.6
 DRUM_CORNICE_R = 18.7
 DOME_BASE_R = 16.5
-DOME_APEX_Z = 49.4
-DOME_RISE = DOME_APEX_Z - DRUM_Z1               # 7.6
-DOME_SPHERE_R = (DOME_BASE_R ** 2 + DOME_RISE ** 2) / (2 * DOME_RISE)   # 21.7
-DOME_SPHERE_CZ = DOME_APEX_Z - DOME_SPHERE_R    # 27.7
+DOME_RISE = 9.4           # SOLVED, see the note above; do not eyeball
+DOME_APEX_Z = DRUM_Z1 + DOME_RISE               # 52.8 (apex cap top 53.4)
+DOME_SPHERE_R = (DOME_BASE_R ** 2 + DOME_RISE ** 2) / (2 * DOME_RISE)   # 19.18
+DOME_SPHERE_CZ = DOME_APEX_Z - DOME_SPHERE_R    # 33.6
 
 # ----------------------------------------------------------------------------- inner order (section 3b + DERIVED, see arch_notes.md)
 INNER_COL_R = 16.0        # axis circumradius of the 8 tan columns (at the vertex azimuths)
@@ -90,6 +99,8 @@ PODIUM_LOBE_R = 27.3      # outer radius of the podium block around each pier (O
 PODIUM_LOBE_HALF_ANGLE = 14.5    # degrees each side of the pier azimuth (OSM lobes ~29 deg wide)
 PODIUM_BAND_H = 0.5       # Greek-key/rosette band at the top of every podium wall (catalog #12)
 PODIUM_BAND_RECESS = 0.06
+BAND_UNIT = 1.0           # Greek-key meander unit pitch; rosette bosses alternate (catalog #12)
+BAND_PROUD = 0.035
 URN_PLINTH = 1.8
 URN_PLINTH_H = 0.6
 URN_H = 3.0
@@ -117,7 +128,8 @@ COLONNADE_ABACUS = COLONNADE_BASE_H + COLONNADE_SHAFT_H + COLONNADE_CAPITAL_H   
 COLONNADE_ENTABLATURE_H = 2.4
 PYLON_EXTRA_H = 2.4              # pylon-cluster shafts are taller: their capitals reach the entablature top
 BOX_SIZE = 5.3
-BOX_H = 3.0
+BOX_H = 3.55              # rim 3.55 above the box base: maidens (4.36 m, ORN) lean on it at shoulder height (refs 187/167)
+MAIDEN_OUT = 0.32         # ORN maiden asset: box corner edge at local (0, -0.32) -> socket 0.32 m outward on the corner diagonal
 PERGOLA_BEAM = 0.6
 PYLON_RETURN = 17.0              # OSM: second pylon of each end pair is 17 m west (toward the hall) of the first
 PYLON_RETURN_DIR = (0.0, -1.0)   # world direction of the return (west)
