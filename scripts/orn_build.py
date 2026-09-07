@@ -438,6 +438,32 @@ HUMAN_BONES = [("pelvis", "hipL"), ("pelvis", "hipR"), ("hipL", "kneeL"), ("hipR
                ("elL", "haL"), ("elR", "haR")]
 
 
+def narrow(secs, f):
+    """Scale the half-widths of a drapery section list. QA-02-10: the corner figure's wrap was 2.07 m wide on a
+    6.7 m figure (a_hem 0.27 * S) which turned the whole figure into a bell; a standing draped figure that tall
+    is ~1.2 m across the cloth, ~2.2 m including the flanking cascades."""
+    return [(z, cx, cy, a * f, b * f) for (z, cx, cy, a, b) in secs]
+
+
+def attic_side_cascades(S, work, variant, top_z=1.44, hem_z=0.05, out=0.42, a=0.20, b=0.135, cy=-0.05,
+                        folds=6, fold_amp=(0.16, 0.36)):
+    """QA-02-10: the two heavy cloth panels that hang from behind the figure's arms down past the knees on BOTH
+    sides (attic_corner_figure_1 / ref 085). They are what gives the corner figure its wide, broken silhouette and
+    the deep vertical shadow channels that survive a near-normal sun; without them a nude torso in a niche is a
+    smooth tapered mass = the 'bollard' QA saw. Fold depth here is a * fold_amp[1] ~ 0.26-0.28 m at the hem."""
+    made = []
+    for side in (1, -1):
+        cx = side * out * S
+        secs = [(hem_z * S, cx, cy * S, a * S * 0.98, b * S),
+                (0.30 * S, cx + side * 0.02 * S, cy * S, a * S, b * S * 1.03),
+                (0.70 * S, cx + side * 0.01 * S, cy * S * 0.9, a * S * 0.92, b * S * 0.98),
+                (1.05 * S, cx, cy * S * 0.8, a * S * 0.80, b * S * 0.88),
+                (top_z * S, cx - side * 0.06 * S, cy * S * 0.6, a * S * 0.52, b * S * 0.62)]
+        made.append(drapery_tube(f"attic_cascade{side}", secs, work, folds=folds, fold_amp=fold_amp,
+                                 seed=variant * 23 + side, nu=72, nz=64, power=2.5, sharp=0.5))
+    return made
+
+
 def build_attic_figure(variant, coll, bake=True):
     """Attic corner figure ('Contemplation / Wonderment / Meditation'), 6.7 m, standing frontal in its niche,
     facing +Y. Odd variants male (nude torso, wrapped cloth from the waist, mantle behind), even variants female
@@ -458,13 +484,15 @@ def build_attic_figure(variant, coll, bake=True):
         secs = [(0.03 * S, 0.0, 0.02 * S, 0.27 * S, 0.21 * S), (0.30 * S, 0.0, 0.01 * S, 0.24 * S, 0.18 * S),
                 (0.60 * S, 0.0, 0.0, 0.22 * S, 0.16 * S), (0.92 * S, 0.0, 0.0, 0.215 * S, 0.15 * S),
                 (1.08 * S, 0.0, 0.0, 0.18 * S, 0.12 * S), (1.14 * S, 0.0, 0.0, 0.16 * S, 0.11 * S)]
-        parts.append(drapery_tube("attic_wrap", secs, work, folds=rng.choice([6, 7, 8]), fold_amp=(0.03, 0.12),
+        parts.append(drapery_tube("attic_wrap", narrow(secs, 0.56), work, folds=rng.choice([6, 7, 8]), fold_amp=(0.03, 0.12),
                                   seed=variant * 13, fold_side=(90.0, 130.0), nu=80, nz=60, sharp=0.6))
         # mantle hanging behind the shoulders to the calves, seen beside the torso
         msecs = [(0.35 * S, 0.0, -0.12 * S, 0.34 * S, 0.07 * S), (0.9 * S, 0.0, -0.12 * S, 0.33 * S, 0.075 * S),
                  (1.30 * S, 0.0, -0.10 * S, 0.30 * S, 0.07 * S), (1.47 * S, 0.0, -0.06 * S, 0.24 * S, 0.06 * S)]
-        parts.append(drapery_tube("attic_mantle", msecs, work, folds=9, fold_amp=(0.06, 0.16), seed=variant * 17,
+        parts.append(drapery_tube("attic_mantle", narrow(msecs, 0.56), work, folds=9, fold_amp=(0.06, 0.16), seed=variant * 17,
                                   nu=64, nz=40, power=3.0, sharp=0.55))
+        parts += attic_side_cascades(S, work, variant, top_z=1.44, hem_z=0.05, out=0.325, a=0.115, b=0.105,
+                                     cy=-0.05, folds=5, fold_amp=(0.20, 0.44))
     else:
         parts.append(L.sphere("attic_hair", 0.115 * S, work, location=hc + Vector((0, -0.02 * S, 0.035 * S)), scale=(1.05, 1.0, 0.85)))
         parts.append(L.sphere("attic_bun", 0.06 * S, work, location=hc + Vector((0, -0.11 * S, 0.06 * S))))
@@ -473,21 +501,27 @@ def build_attic_figure(variant, coll, bake=True):
                 (1.12 * S, 0.0, 0.0, 0.19 * S, 0.13 * S), (1.33 * S, 0.0, 0.01 * S, 0.22 * S, 0.145 * S),
                 (1.44 * S, 0.0, 0.01 * S, 0.245 * S, 0.12 * S), (1.50 * S, 0.0, 0.01 * S, 0.14 * S, 0.09 * S),
                 (1.55 * S, 0.0, 0.015 * S, 0.07 * S, 0.07 * S)]
-        parts.append(drapery_tube("attic_gown", secs, work, folds=rng.choice([9, 10, 11]), fold_amp=(0.02, 0.10),
+        parts.append(drapery_tube("attic_gown", narrow(secs, 0.57), work, folds=rng.choice([9, 10, 11]), fold_amp=(0.02, 0.10),
                                   seed=variant * 13, fold_side=(90.0, 140.0), nu=96, nz=80, sharp=0.6))
         # overfold to the hips
         osecs = [(0.98 * S, 0.0, 0.03 * S, 0.24 * S, 0.17 * S), (1.15 * S, 0.0, 0.02 * S, 0.21 * S, 0.15 * S),
                  (1.34 * S, 0.0, 0.02 * S, 0.235 * S, 0.155 * S), (1.45 * S, 0.0, 0.02 * S, 0.25 * S, 0.13 * S),
                  (1.50 * S, 0.0, 0.02 * S, 0.15 * S, 0.10 * S)]
-        parts.append(drapery_tube("attic_over", osecs, work, folds=12, fold_amp=(0.02, 0.08), seed=variant * 19,
+        parts.append(drapery_tube("attic_over", narrow(osecs, 0.57), work, folds=12, fold_amp=(0.02, 0.08), seed=variant * 19,
                                   fold_side=(90.0, 140.0), nu=80, nz=30))
+        parts += attic_side_cascades(S, work, variant, top_z=1.40, hem_z=0.04, out=0.315, a=0.105, b=0.095,
+                                     cy=-0.04, folds=5, fold_amp=(0.18, 0.42))
     t = time.time()
-    hi = L.union_blob(parts, f"attic_figure_v{variant}", voxel=(0.045 if FAST else 0.028), smooth=3, coll=work)
+    # QA-02-10: smooth=3 at 2.8 cm closed the arm-to-torso gaps and the drapery channels, which is what made the
+    # figure read as a featureless bollard at cam05. One light pass at 2.2 cm keeps the silhouette breaks open.
+    hi = L.union_blob(parts, f"attic_figure_v{variant}", voxel=(0.045 if FAST else 0.022), smooth=1,
+                      smooth_factor=0.25, coll=work)
     print(f"[orn] attic_figure v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
     L.displace_noise(hi, strength=0.014, size=0.5, seed=500 + variant, depth=2)
     L.displace_noise(hi, strength=0.004, size=0.07, seed=600 + variant, depth=1)
     return L.finalize_asset(hi, "attic_figure", variant, coll, bake=bake, bake_size=2048, y_mode="keep",
-                            size_note="6.7 m (22 ft) standing, faces +Y; odd variants male, even female")
+                            size_note="6.7 m (22 ft) standing, faces +Y; odd variants male, even female; "
+                                      "flanking cloth cascades (attic_corner_figure_1) break the silhouette")
 
 
 def build_winged_figure(variant, coll, bake=True):
@@ -766,14 +800,22 @@ def release_scans():
     _scan_cache.clear()
 
 
-def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=0.0, coll=None):
+def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=0.0, coll=None, bg_y=None,
+               front_y=None):
     """Copy a scan into the panel: scaled to `height` (m) tall and `depth` (m) of relief, its background surface
-    sunk to the slab face so only the figures stand proud."""
+    put at absolute y = `bg_y` (QA-02-9: the field ground is now SUNK, so the scan's own background plate must go
+    down to it and the figures stand the full `depth` proud of it; the old default put the background at the slab
+    face, which is why 100 % of the field measured >= 15 cm proud and the panel rendered as one flat mound)."""
     ob = load_scan(key)
     if ob is None:
         return None
     src = ob
     ob.name = f"rel_{key}_{x:.1f}"
+    if front_y is not None and bg_y is not None:
+        # solve the depth scale so the scan's own background plate lands on the field ground and its highest
+        # figures reach `front_y`; bg_frac differs per scan (0.36 centaur .. 0.63 dacians) so a fixed depth
+        # put the three scans at three different heights above the ground.
+        depth = max(0.05, (front_y - bg_y) / max(0.15, 1.0 - src["bg_frac"]))
     (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
     sz = height / (z1 - z0)
     sy = depth / (y1 - y0)
@@ -782,7 +824,8 @@ def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=
     if rot_deg:
         ob.data.transform(Euler((0, math.radians(rot_deg), 0), "XYZ").to_matrix().to_4x4())
     bg = src["bg_frac"] * depth
-    ob.data.transform(Matrix.Translation((x, slab_face_y - bg - 0.02, z)))   # background 2 cm behind the face
+    ty = (bg_y - bg) if bg_y is not None else (slab_face_y - bg - 0.02)
+    ob.data.transform(Matrix.Translation((x, ty, z)))
     return ob
 
 
@@ -818,7 +861,7 @@ def horse_joints(S, rearing=True):
 
 
 def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0, proud=0.20, z=0.25, rng=None,
-                  bulk=1.45, drape=True, seed=0):
+                  bulk=1.45, drape=True, seed=0, flatten=1.0):
     """A from-scratch figure in high relief: skin-figure body proxy embedded in the slab so that about `proud` m of
     its front stands out of the panel face; mirrored/rotated for variety.
     QA-01-10: `bulk` fattens the limbs (Zimm's figures are heavy, not stick-thin) and `drape` adds a folded garment
@@ -828,15 +871,15 @@ def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0,
         J = {k: (p, (r[0] * bulk, r[1] * bulk)) for k, (p, r) in J.items()}
     body = L.skin_figure(name, J, HUMAN_BONES, coll, subdiv=2)
     hc = J["head"][0]
-    hair = L.sphere(name + "_hair", 0.115 * S * bulk, coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)),
+    hair = L.sphere(name + "_hair", 0.115 * S * min(bulk, 1.05), coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)),
                     scale=(1.0, 0.95, 0.9))
     made = [body, hair]
     if drape:
         (bx0, by0, bz0), (bx1, by1, bz1) = L.bbox(body)
         H = bz1 - bz0
         cx, cy = 0.5 * (bx0 + bx1), 0.5 * (by0 + by1)
-        a_hem, a_top = 0.215 * H, 0.130 * H
-        b = 0.42 * a_hem
+        a_hem, a_top = 0.128 * H, 0.082 * H
+        b = 0.50 * a_hem
         g = drapery_tube(f"{name}_drape",
                          [(bz0 + 0.012 * H, cx, cy, a_hem, b),
                           (bz0 + 0.30 * H, cx, cy, a_hem * 0.94, b * 0.95),
@@ -844,23 +887,36 @@ def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0,
                           (bz0 + 0.70 * H, cx, cy, a_top, b * 0.85)],
                          coll, folds=7, fold_amp=(0.03, 0.10), seed=seed, nu=48, nz=44, power=2.4)
         made.append(g)
+    # QA-02-9: relief sculptors compress the depth of the figure and let it stand well proud of a sunk ground.
+    # Scale in y FIRST (about the figure's own mid-depth) so more of the body's curvature is exposed above the
+    # ground: with the old 1:1 depth only the outermost 0.28 m cap of a ~1.5 m thick body showed, and every
+    # exposed normal pointed within ~40 deg of +Y -> one flat luminance under a near-normal sun.
     lo = Vector((min(L.bbox(o)[0][i] for o in made) for i in range(3)))
     hi = Vector((max(L.bbox(o)[1][i] for o in made) for i in range(3)))
-    m = (Matrix.Translation((x, face_y - (hi.y - proud), z)) @ Euler((0, 0, math.radians(rot_deg)), "XYZ").to_matrix().to_4x4()
-         @ Matrix.Diagonal((-1.0 if mirror else 1.0, 1.0, 1.0, 1.0)))
+    pre = (Euler((0, 0, math.radians(rot_deg)), "XYZ").to_matrix().to_4x4()
+           @ Matrix.Diagonal((-1.0 if mirror else 1.0, flatten, 1.0, 1.0))
+           @ Matrix.Translation((0, -0.5 * (lo.y + hi.y), 0)))
     for o in made:
-        o.data.transform(m)
+        o.data.transform(pre)
+    hi2 = Vector((max(L.bbox(o)[1][i] for o in made) for i in range(3)))
+    post = Matrix.Translation((x, face_y - (hi2.y - proud), z))
+    for o in made:
+        o.data.transform(post)
     return made
 
 
-def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25, rearing=True):
+def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25, rearing=True, flatten=1.0):
     J = horse_joints(S, rearing=rearing)
     h = L.skin_figure(name, J, HORSE_BONES, coll, subdiv=2)
     (x0, y0, z0), (x1, y1, z1) = L.bbox(h)
-    m = Matrix.Translation((x, face_y - (y1 - proud), z)) @ Matrix.Diagonal((-1.0 if mirror else 1.0, 1.0, 1.0, 1.0))
-    h.data.transform(m)
+    h.data.transform(Matrix.Diagonal((-1.0 if mirror else 1.0, flatten, 1.0, 1.0))
+                     @ Matrix.Translation((0, -0.5 * (y0 + y1), 0)))
+    (_, y0b, _), (_, y1b, _) = L.bbox(h)
+    h.data.transform(Matrix.Translation((x, face_y - (y1b - proud), z)))
     return [h]
 
+
+PANEL_GROUND_Y = 0.015    # QA-02-9: the field ground, sunk behind the 0.16 m frame plane
 
 # Panel layouts (QA-01-10): >= 8 figures ~3.5 m tall per 10.5 m field, three distinct designs.
 # ("scan", key, x, height, mirror) | ("fig", pose, x, mirror, rot) | ("horse", x, mirror)
@@ -887,37 +943,72 @@ def build_attic_panel(variant, coll, bake=True):
     rng = random.Random(6000 + variant)
     work = L.work_collection()
     W, Hh, T = 10.5, 4.5, 0.16
-    face_y = T
-    parts = [L.box("panel_slab", (W, T, Hh), work, location=(0, T / 2, Hh / 2))]
-    depth = 0.50
+    face_y = T                     # the frame / border plane ARCH's moulding meets
+    GROUND = PANEL_GROUND_Y        # the sunk field ground behind the figures
+    RIM = 0.115                    # width of the border left standing at the frame plane
+    # ARCH's recess measured from architecture.blend: ARCH_rotunda_attic_panel_* (the sunk field block) has its
+    # front face at socket-local y = 0.00 and ARCH_rotunda_attic_frame_* (the moulding ring, 4.7 cm thick) stands
+    # at y = 0.234-0.281. So the panel has 0.28 m of recess to work in; the boldest figures break the frame plane
+    # by ~0.17 m as they do in ref 063, nothing more.
+    FRONT_HI, FRONT_MID, FRONT_LO = 0.575, 0.415, 0.215
     design = (variant - 1) % 3 + 1
+    # QA-02-9: a sunk field with a standing border, not a flat slab. The ground is 0.42-0.50 m behind the fronts
+    # of the figures, so the slivers of ground between them go dark by occlusion even when the low morning sun
+    # hits the panel nearly head-on (s.n = 0.98 on the face cam05 sees) and casts almost no shadow of its own.
+    parts = [L.box("panel_ground", (W, GROUND, Hh), work, location=(0, GROUND / 2, Hh / 2)),
+             L.box("panel_rim_b", (W, T, RIM), work, location=(0, T / 2, RIM / 2)),
+             L.box("panel_rim_t", (W, T, RIM), work, location=(0, T / 2, Hh - RIM / 2)),
+             L.box("panel_rim_l", (RIM, T, Hh), work, location=(-W / 2 + RIM / 2, T / 2, Hh / 2)),
+             L.box("panel_rim_r", (RIM, T, Hh), work, location=(W / 2 - RIM / 2, T / 2, Hh / 2))]
+    depth = 0.80                   # (overridden per scan by front_y/bg_y below)
     fig_count = 0
     for item in PANEL_LAYOUTS[design]:
         if item[0] == "scan":
             _, key, x, h, mirror = item
-            parts.append(place_scan(key, x, h, depth, face_y, mirror=mirror, z=0.2))
+            parts.append(place_scan(key, x, h, depth, face_y, mirror=mirror, z=0.2, bg_y=GROUND + 0.01,
+                                    front_y=FRONT_HI - 0.02))
             fig_count += {"soldiers": 3, "dacians": 3, "centaur": 2}[key]
         elif item[0] == "fig":
             _, pose, x, mirror, rot = item
             parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * rng.uniform(0.95, 1.05), mirror=mirror,
-                                   rot_deg=rot + rng.uniform(-3, 3), proud=0.28, rng=rng,
-                                   bulk=rng.uniform(1.45, 1.70), seed=6000 + variant * 40 + fig_count)
+                                   rot_deg=rot + rng.uniform(-3, 3),
+                                   # depth layering: alternate figures sit ~0.17 m further back so the overlaps
+                                   # themselves make dark edges (ref 063 is a two-deep crowd, not a single plane)
+                                   proud=(rng.uniform(FRONT_HI - 0.04, FRONT_HI + 0.02) if fig_count % 2 == 0
+                                          else rng.uniform(FRONT_MID - 0.03, FRONT_MID + 0.03)) - face_y, rng=rng,
+                                   bulk=rng.uniform(1.02, 1.18), seed=6000 + variant * 40 + fig_count,
+                                   flatten=rng.uniform(0.42, 0.54))
             fig_count += 1
         elif item[0] == "horse":
             _, x, mirror = item
-            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.32)
+            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.62 - face_y, flatten=0.46)
             fig_count += 1
+    # QA-02-9: a BACK ROW between the front figures. Zimm's panels are a two-deep crowd (ref 063 / zimm_panel_1):
+    # what reads as "carving" at 100 m is the ladder of dark slots between a front body and the half-hidden one
+    # behind it, not cast shadow - at az 118.5 / el 7.4 the sun is within 11 deg of this panel's normal and casts
+    # essentially none. Front row stands 0.50-0.62 m proud of the sunk ground, the back row 0.19-0.27 m.
+    back_poses = ["stride", "arms_up", "arms_out", "kneel", "stride", "arms_out", "arms_up"]
+    for i in range(7):
+        bx = -4.55 + i * 1.52 + rng.uniform(-0.15, 0.15)
+        parts += relief_figure(f"rb_{i}", back_poses[i], bx, face_y, work, S=2.05 * rng.uniform(0.94, 1.04),
+                               mirror=(i % 2 == 0), rot_deg=rng.uniform(-6, 6),
+                               proud=rng.uniform(FRONT_LO - 0.03, FRONT_LO + 0.04) - face_y, rng=rng,
+                               bulk=rng.uniform(1.00, 1.12), seed=6500 + variant * 40 + i,
+                               flatten=rng.uniform(0.30, 0.40), drape=(i % 3 != 0))
+        fig_count += 1
     print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures")
     parts = [p for p in parts if p is not None]
     # shields / discs in the remaining gaps (design 1 and 3 are combats)
     if design != 2:
         for i in range(2):
             x = rng.uniform(-4.9, 4.9)
-            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, face_y - 0.06, rng.uniform(0.9, 3.4)), scale=(1.0, 0.3, 1.0)))
-    # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field)
-    parts.append(L.box("panel_plinth", (W - 0.30, 0.14, 0.42), work, location=(0, face_y + 0.05, 0.24), bevel=0.03))
+            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, 0.20, rng.uniform(0.9, 3.4)), scale=(1.0, 0.42, 1.0)))
+    # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field); it now stands
+    # 0.36 m proud of the sunk ground so the bottom of the field carries a hard ledge line as it does in ref 063
+    parts.append(L.box("panel_plinth", (W - 0.30, 0.34 - GROUND, 0.44), work,
+                       location=(0, 0.5 * (GROUND + 0.34), 0.25), bevel=0.03))
     t = time.time()
-    hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.025), smooth=1, smooth_factor=0.3, coll=work)
+    hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.024), smooth=1, smooth_factor=0.18, coll=work)
     # clamp anything that overhangs the framed field: the frame crops the relief (QA-01-10 field is 10.5 x 4.5 m)
     for v in hi.data.vertices:
         v.co.x = max(-W / 2, min(W / 2, v.co.x))
@@ -929,66 +1020,81 @@ def build_attic_panel(variant, coll, bake=True):
     L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
     return L.finalize_asset(hi, "attic_panel", variant, coll, bake=bake, bake_size=4096 if not FAST else 2048, y_mode="back",
                             budgets=L.BUDGETS["attic_panel"],
-                            size_note=f"Zimm panel design {design}: field 10.5 x 4.5 m, slab 0.16 + relief up to 0.5 m, {fig_count} figures; origin back-face bottom-centre")
+                            size_note=f"Zimm panel design {design}: field 10.5 x 4.5 m, ground sunk to y={GROUND:.2f}, border at "
+                                      f"y={T:.2f}, relief fronts to y ~0.60 (>= 0.45 m above the ground), {fig_count} figures; "
+                                      f"origin back-face bottom-centre")
 
 
 def build_corner_scroll(variant, coll, bake=True):
-    """QA-01-13: the paired volute scroll that caps each pilaster flanking an attic corner figure niche
-    (refs 085 / attic_corner_figure_1-3). One unit = an Ionic-type capital block 1.50 m wide, 0.78 m tall,
-    0.62 m deep: two spiral volutes (0.40 m eye radius) at the ends, their faces toward +Y, joined by a
-    channelled bolster and an egg-moulded echinus, under a moulded abacus plate, with a small palmette in the
-    centre of the channel. Origin bottom-centre of the block (it sits on the pilaster shaft), +Y outward.
-    Socket type `corner_scroll` (proposed to ARCH: 2 per attic corner niche, 16 total)."""
+    """QA-02-10 / QA-01-13: the PAIRED Ionic volute acroterion that caps each attic corner, directly over the
+    corner figure (refs 085 / attic_corner_figure_1 and _3). One asset = TWO volute blocks on a shared moulded
+    plinth, their spiral faces looking +Y (outward), 0.83 m apart.
+
+    Placement note (important): ARCH already models a crude pair of volutes on every corner cap
+    (`ARCH_rotunda_attic_volute_NN_a/_b`, 290 tris, centres at local x = +-0.415, z 0.25-1.52, y -0.10-0.22, on a
+    1.90 x 0.60 x 0.25 plinth) at exactly the `SOCKET_finial_*` (subtype `volute_scroll`) that `build_master.py`
+    routes this asset onto. This asset is therefore built to the SAME centres and to an envelope that fully
+    encloses ARCH's blocks (x +-1.13 at the bolster, y -0.29..0.55, z 0..1.60), so the two never fight: whichever
+    the lead hides, the silhouette is the same and only the detailed one shows. Previously this was a single
+    1.78 m block sitting between ARCH's two, which is why QA saw no scroll pair at cam05.
+
+    Origin: bottom-centre of the plinth = the corner cap top (z = 38.30 in world), +Y outward, y_mode 'keep'."""
     rng = random.Random(1900 + variant)
     work = L.work_collection()
-    W, H, D = 1.50, 0.78, 0.62
-    parts = []
-    # abacus: thin moulded slab on top
-    parts.append(L.box("cs_abacus", (W, D, 0.13), work, location=(0, D / 2, H - 0.065), bevel=0.02))
-    parts.append(L.box("cs_abacus_fillet", (W - 0.10, D - 0.08, 0.06), work, location=(0, D / 2, H - 0.16), bevel=0.015))
-    # echinus / bolster core between the two volutes
-    ech = L.revolve("cs_echinus", [(0.0, 0.0), (0.20, 0.015), (0.235, 0.09), (0.225, 0.24), (0.19, 0.31), (0.0, 0.33)],
-                    segments=40, coll=work)
-    ech.data.transform(Euler((0, math.radians(90), 0), "XYZ").to_matrix().to_4x4())     # axis along X
-    ech.data.transform(Matrix.Translation((0, D * 0.44, H - 0.34)) @ Matrix.Diagonal((W * 0.62 / 0.33, 1.0, 1.0, 1.0)))
-    parts.append(ech)
-    # channel band across the bolster (the "cushion" fluting)
-    for i in range(3):
-        parts.append(L.box(f"cs_chan{i}", (W * 0.60, 0.05, 0.035), work,
-                           location=(0, D * 0.44 + 0.19 - 0.02 * i, H - 0.34 + 0.16 - 0.14 * i), bevel=0.01))
+    SEP = 0.415          # half the centre-to-centre spacing of the two volute blocks (ARCH's spacing)
+    PL_W, PL_D, PL_H = 2.10, 0.68, 0.26
+    CY = 0.05            # the blocks sit 5 cm proud of the socket plane, as ARCH's do
+    ABZ = 1.40           # abacus underside
+    H = 1.60
+    parts = [L.box("cs_plinth", (PL_W, PL_D, PL_H), work, location=(0, CY, PL_H / 2), bevel=0.03),
+             L.box("cs_plinth_fillet", (PL_W - 0.14, PL_D - 0.10, 0.07), work, location=(0, CY, PL_H + 0.035), bevel=0.015),
+             L.box("cs_abacus", (2.14, 0.64, H - ABZ), work, location=(0, CY, 0.5 * (ABZ + H)), bevel=0.025)]
     for side in (1, -1):
-        x = side * (W / 2 - 0.36)
-        v = L.volute(f"cs_scroll{side}", eye=(0, 0, 0), radius=0.40, turns=2.1, band=(0.40, 0.17), coll=work,
-                     direction=-side, taper=0.34, segments=12, steps=72)
-        # the volute is built spiralling about the local X axis; turn it 90 deg about Z so the spiral face looks +Y
-        v.data.transform(Matrix.Translation((x, D * 0.80, H - 0.36)) @ Euler((0, 0, math.radians(90)), "XYZ").to_matrix().to_4x4())
+        cx = side * SEP
+        # cushion / bolster core: the block behind the scrolls (also the piece that hides ARCH's crude volute)
+        parts.append(L.box(f"cs_core{side}", (1.42, 0.46, ABZ - 0.24), work,
+                           location=(cx, CY, 0.5 * (0.24 + ABZ)), bevel=0.04))
+        # channelled cushion fluting across the core
+        for i in range(3):
+            parts.append(L.box(f"cs_chan{side}_{i}", (1.10, 0.06, 0.05), work,
+                               location=(cx, CY + 0.24, 0.62 + 0.20 * i), bevel=0.012))
+        # the spiral itself, face toward +Y, overhanging the block outward
+        ex = cx + side * 0.30
+        v = L.volute(f"cs_scroll{side}", eye=(0, 0, 0), radius=0.44, turns=2.15, band=(0.44, 0.19), coll=work,
+                     direction=-side, taper=0.32, segments=12, steps=80)
+        v.data.transform(Matrix.Translation((ex, CY + 0.26, 0.94)) @ Euler((0, 0, math.radians(90)), "XYZ").to_matrix().to_4x4())
         parts.append(v)
-        # eye boss in the middle of the spiral
-        parts.append(L.sphere(f"cs_eye{side}", 0.055, work, location=(x, D * 0.86, H - 0.36), scale=(1.0, 0.8, 1.0)))
-        # the volute's roll continuing back to the wall
-        bol = L.revolve(f"cs_bol{side}", [(0.0, 0.0), (0.15, 0.01), (0.175, 0.07), (0.17, 0.30), (0.14, 0.36), (0.0, 0.37)],
+        parts.append(L.sphere(f"cs_eye{side}", 0.075, work, location=(ex, CY + 0.50, 0.94), scale=(1.0, 0.7, 1.0)))
+        # the roll of the volute continuing back into the block
+        bol = L.revolve(f"cs_bol{side}", [(0.0, 0.0), (0.17, 0.012), (0.20, 0.08), (0.195, 0.34), (0.16, 0.41), (0.0, 0.42)],
                         segments=28, coll=work)
         bol.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
-        bol.data.transform(Matrix.Translation((x, D * 0.80, H - 0.36)))
+        bol.data.transform(Matrix.Translation((ex, CY + 0.10, 0.94)))
         parts.append(bol)
-    # small palmette fan in the centre of the channel
+        # egg-and-dart echinus under the scroll, along the front of the core
+        for i in range(5):
+            ex2 = cx + (i - 2) * 0.26
+            parts.append(L.sphere(f"cs_egg{side}_{i}", 0.085, work, location=(ex2, CY + 0.235, 0.40), scale=(0.85, 0.75, 1.15)))
+    # palmette fan in the channel between the two blocks (attic_corner_figure_1)
     for k in range(7):
         a = -54 + 18 * k
-        lobe = L.acanthus_leaf(f"palm{k}", length=0.20 + 0.035 * (3 - abs(k - 3)), width=0.055, curl=0.18, droop=0.04,
-                               ribs=1, rib_amp=0.0, bulge=0.012, thickness=0.03, lobes=1, lobe_depth=0.0, nu=6, nv=10,
+        lobe = L.acanthus_leaf(f"palm{k}", length=0.28 + 0.05 * (3 - abs(k - 3)), width=0.075, curl=0.20, droop=0.05,
+                               ribs=1, rib_amp=0.0, bulge=0.016, thickness=0.04, lobes=1, lobe_depth=0.0, nu=6, nv=10,
                                coll=work, base_width=0.55)
-        lobe.data.transform(Matrix.Translation((0, D * 0.72, H - 0.52)) @ Euler((0, math.radians(a), 0), "XYZ").to_matrix().to_4x4())
+        lobe.data.transform(Matrix.Translation((0, CY + 0.24, 0.52)) @ Euler((0, math.radians(a), 0), "XYZ").to_matrix().to_4x4())
         parts.append(lobe)
-    parts.append(L.sphere("palm_base", 0.055, work, location=(0, D * 0.72, H - 0.52), scale=(1.4, 1.0, 0.8)))
-    # necking astragal at the bottom, where the block meets the pilaster shaft
-    parts.append(L.box("cs_neck", (W - 0.42, D - 0.16, 0.10), work, location=(0, (D - 0.16) / 2, 0.05), bevel=0.02))
-    hi = L.union_blob(parts, f"corner_scroll_v{variant}", voxel=(0.02 if FAST else 0.010), smooth=2, coll=work)
-    L.displace_noise(hi, strength=0.004, size=0.12, seed=1950 + variant, depth=2)
-    L.displace_noise(hi, strength=0.0015, size=0.03, seed=1970 + variant, depth=1)
-    return L.finalize_asset(hi, "corner_scroll", variant, coll, bake=bake, bake_size=1024, budgets=L.BUDGETS["corner_scroll"],
-                            extra_props={"unit_length": W},
-                            size_note=f"paired volute scroll block over an attic corner figure: {W:.2f} x {D:.2f} x {H:.2f} m, "
-                                      f"volute eye r 0.40; origin bottom-centre of the block, +Y outward (socket type corner_scroll)")
+    parts.append(L.sphere("palm_base", 0.075, work, location=(0, CY + 0.24, 0.52), scale=(1.4, 1.0, 0.8)))
+    hi = L.union_blob(parts, f"corner_scroll_v{variant}", voxel=(0.02 if FAST else 0.011), smooth=1,
+                      smooth_factor=0.25, coll=work)
+    L.displace_noise(hi, strength=0.005, size=0.14, seed=1950 + variant, depth=2)
+    L.displace_noise(hi, strength=0.002, size=0.03, seed=1970 + variant, depth=1)
+    return L.finalize_asset(hi, "corner_scroll", variant, coll, bake=bake, bake_size=1024, y_mode="keep",
+                            budgets=L.BUDGETS["corner_scroll"],
+                            extra_props={"unit_length": PL_W, "pair_separation": 2 * SEP,
+                                         "encloses": "ARCH_rotunda_attic_volute_*"},
+                            size_note=f"PAIRED attic-corner volute acroterion: plinth {PL_W:.2f} m, two scroll blocks "
+                                      f"{2*SEP:.2f} m apart, spiral eye r 0.44, overall ~2.5 x 0.85 x {H:.2f} m; origin "
+                                      f"bottom-centre on the corner cap, +Y outward (socket finial/volute_scroll)")
 
 
 # =============================================================================== LINEAR MOULDINGS (1 m units) + DRUM BAND
