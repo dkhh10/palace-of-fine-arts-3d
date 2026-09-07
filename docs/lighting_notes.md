@@ -184,3 +184,191 @@ the column positions may need the entry point (`colonnade_in`) nudged.
    inside the gallery.
 6. The placeholder's own `PLACEHOLDER_LIGHT` collection (sun + world) is excluded in my previews; master must not
    link it once `LIGHT` exists.
+
+---
+
+# Phase 3 fix round (round 07, 2026-09-07) — QA-01-9, QA-01-12, QA-01-20
+
+Measured with `scripts/light_measure.py` (plain python3 + numpy/PIL; fractional region rectangles so the same region
+set applies to a render and to a photo). Every number below is an sRGB mean of a named rectangle plus its linear
+luminance Y (sRGB primaries). The region sets live in `light_measure.REGIONS` (`hero`, `hero_ref169`, `ceiling`,
+`aerial`, `dome_hero`, `dome_hero_ref169`) so any later round re-measures exactly the same patches.
+
+Baseline for the round: `master.blend` rebuilt in the lighting worktree from main at `e84b67e` (materials library v1 +
+the raised dome), Eevee `apply_preview_eevee` 32 TAA and Cycles `apply_final_cycles` 48 spp, both 1280x720.
+
+## 9. QA-01-9 — the rotunda ceiling: what is actually wrong
+
+The defect said "4x too dark in Eevee, no light probes". Both halves needed measuring before fixing.
+
+**There were no probes** (`master.blend` contained zero `LIGHT_PROBE` objects), so Eevee Next was lighting the vault
+with nothing but its screen-space *Fast GI* approximation. Measurements on cam04 (coffer field = the central 20 % x 20 %
+of the frame, the same patch in the render and in ref 083):
+
+| configuration | coffer field sRGB | Y |
+|---|---|---|
+| Eevee, no probe, fast GI on (the QA-01-9 baseline) | 24.5, 22.1, 14.3 | 0.0081 |
+| Eevee, no probe, fast GI **off** | 0.1, 0.1, 0.1 | 0.00003 |
+| Eevee, baked irradiance volume | 5.2, 2.1, 0.4 | 0.0008 |
+| **Cycles 48 spp, 3 diffuse bounces (ground truth)** | **11.9, 6.3, 2.8** | **0.0022** |
+| Cycles 48 spp, 8 diffuse bounces | 12.3, 6.4, 2.9 | 0.0023 |
+| Cycles 48 spp, 8 bounces, no indirect clamp | 12.3, 6.4, 2.9 | 0.0023 |
+| ref 083 (photo) | 91.7, 76.1, 52.5 | 0.0770 |
+
+Three conclusions, all of which change the fix:
+
+1. **Eevee was not 4x too dark, it was 2x too bright** — its 24/255 was a screen-space guess. Cycles, the ground truth,
+   says 12/255. A correct baked volume lands at 5/255, i.e. the probe bake works and is *more* right than fast GI.
+   (The bake itself was verified headless on a control scene: an open-sky sphere keeps its world irradiance and gains
+   correct occlusion under the probe, so `bpy.ops.object.lightprobe_cache_bake` is not silently failing in background.)
+2. **The vault is not bounce-limited.** 3 vs 8 diffuse bounces differ by 0.4/255. Raising `diffuse_bounces` buys nothing
+   and costs render time, so `apply_final_cycles` keeps 3 (noted in the code).
+3. **The rotunda genuinely receives almost no light in this model.** At 7.4 deg the sun never reaches the interior floor,
+   and from a coffer 25 m up the four arches subtend a small solid angle of sky. The interior lands ~7 stops under the
+   sunlit attic (12/255 vs 182/255). Ref 083 shows ~3.5 stops — but ref 083 is *exposed for the ceiling* (its sky in the
+   arch openings reads 219-254/255, i.e. blown), so it is not a photometric reference for a frame exposed for the
+   exterior. The one honest in-frame comparison, ref 169's arch soffits against its own sunlit attic
+   (136,92,64 vs 209,165,93, ratio 0.65 sRGB), the render already matches (94,70,45 vs 182,137,94, ratio 0.51-0.80).
+
+**The fix, in two parts.**
+
+*Probes.* `scripts/light_probes.py` builds two Eevee Next irradiance volumes inside `LIGHT`, so they travel with the rig:
+
+| probe | centre | half-extent | grid | spacing |
+|---|---|---|---|---|
+| `LIGHTPROBE_rotunda` | (0, 0, 15) | 27 x 27 x 17 m | 20 x 20 x 14 | 2.8 x 2.8 x 2.6 m |
+| `LIGHTPROBE_colonnade` | (-3, 8, 6.5) | 112 x 46 x 8 m | 48 x 20 x 6 | 4.8 x 4.8 x 3.2 m |
+
+`light_build.py` creates them (unbaked) in `assets/lighting.blend`. **A bake is a function of the scene, not of the rig**:
+baking inside `lighting.blend` would only ever see an empty world, so the delivery is a bake step the lead runs on the
+assembled file after `build_master.py`:
+
+```
+blender --background --python scripts/light_probes.py -- --blend master.blend --bake --save
+```
+
+It takes ~50 s on the M2, changes nothing but the probe caches, and must be re-run whenever the architecture or the
+sun moves. `apply_preview_eevee` / `apply_viewport_eevee` now set `gi_irradiance_pool_size = 64` MB (the default 16
+cannot hold the two volumes).
+
+*Interior bounce fill (`LIGHT_rotunda_bounce`).* An up-facing 36 m disk area light at z 7.5 in the rotunda centre, warm
+(1.0, 0.86, 0.68). It models the one thing the model has no geometry for — the pale concrete plaza, the lawn and the
+lagoon throwing light up into the vault — and because an area light emits only along its +Z it lifts the coffers and the
+vault soffits while adding almost nothing to what cam01 sees through the arch (which already matches ref 169). This is an
+art bias, sized by measurement, exactly like `EXPOSURE_BIAS`: `light_build.FILL["energy"]` is the single number to dial.
+
+## 11. QA-01-20 — the dome from above
+
+The defect was written against the placeholder ("blows out to near white from above, roughness 0.7"). With
+`MAT_dome_membrane` in place that is gone: on cam06 (aerial, Eevee) the dome cap now reads **sRGB 130.2, 100.8, 76.7**
+(Y 0.146) against the lawn's 64.5, 70.7, 64.5 (Y 0.060) — no clipped channel anywhere on the cap, dome/lawn = 2.45.
+
+`ref 105` is a poor photometric reference for this: it is a distant, hazy, high-sun aerial in which the palace is about
+100 px across, and neither the dome cap nor a comparable lawn patch can be isolated with confidence (the teal mask picks
+up the whole marina, not the lagoon). The honest exposure-invariant test uses **ref 169**, a golden-hour photograph of
+our exact moment, where the dome and a sunlit attic panel share one exposure:
+
+| | dome cap | sunlit attic | dome / attic (Y) |
+|---|---|---|---|
+| render, Cycles hero | 160.3, 118.5, 82.1 (Y 0.2118) | 182.5, 136.9, 93.7 (Y 0.2867) | **0.74** |
+| ref 169 | 226.6, 192.1, 134.6 (Y 0.5576) | 208.5, 164.5, 93.4 (Y 0.4100) | **1.36** |
+
+In the photograph the dome is 36 % *brighter* than the sunlit wall; in the render it is 26 % darker — the membrane is
+about 46 % too dark relative to the concrete, and it is much less warm (hue 28.0 vs 37.5). Both surfaces see the same
+sun, so this is albedo, not lighting: **hand to materials** — `MAT_dome_membrane` needs to be lifted and warmed relative
+to `MAT_concrete_ochre` until the ratio lands near 1.3. The lighting side of QA-01-20 (no blow-out, correct roughness
+response) is closed.
+
+## 10. QA-01-12 — exposure, sky colour and haze
+
+Baseline (master built from main `e84b67e`, Cycles 48 spp hero) against ref 169, same regions:
+
+| region | render (baseline) | ref 169 | verdict |
+|---|---|---|---|
+| sunlit attic (south corner) | 182.5, 136.9, 93.7 · Y 0.287 · hue 29.2 | 208.5, 164.5, 93.4 · Y 0.410 · hue 37.1 | **30 % dark**, hue -7.9 deg |
+| sunlit attic (centre band) | 179.4, 135.2, 90.2 · Y 0.278 | 232.7, 189.1, 98.6 · Y 0.546 | 49 % dark |
+| sky top | 143.1, 169.3, 196.5 · Y 0.384 · sat 0.272 | 116.0, 174.4, 226.1 · Y 0.396 · sat 0.487 | luminance **already within 3 %**; saturation 44 % low (B/R 1.37 vs 1.95) |
+| far colonnade | 166.4, 182.7, 196.0 · Y 0.459 | 107.4, 90.4, 72.1 · Y 0.110 | (different framing; used only for the haze gradient) |
+
+The important correction to the defect text: **the sky was not 10 % dark, it was desaturated.** At `SKY_CAMERA_BOOST`
+1.6 the visible sky sat high enough in AgX's highlight roll-off to lose its blue. So the fix is not "brighten the sky";
+it is "raise the exposure for the stone and take the boost back out of the sky, then put the saturation back with a
+node that only camera and glossy rays see".
+
+Changes in `light_build.py` (all four are single named constants):
+
+| constant | was | now | why |
+|---|---|---|---|
+| `EXPOSURE_BIAS` | +0.50 EV | **+1.10 EV** | closes about two thirds of the sunlit-stone gap. **Assumption stated for the lead: the materials agent is warming the concrete albedo by a few percent concurrently, so this deliberately leaves ~0.1-0.2 EV of headroom rather than chasing the whole 30 %.** If materials overshoots, drop this constant, not the albedo. |
+| `SKY_CAMERA_BOOST` | 1.60 | **1.50** | the exposure lift alone would push the sky ~25 % over ref 169; the boost is trimmed so the sky lands back on it. Glossy rays keep it, so the lagoon still reflects a bright sky. |
+| `SKY_CAMERA_SATURATION` | — (new) | **1.20** | Hue/Saturation node in the world, driven by `Is Camera Ray + Is Glossy Ray`, so the *lighting* keeps the physical sky colour while the *visible* sky gets its blue back. Implemented in `light_calibrate.make_sky_world(camera_saturation=…)`. |
+| `SKY["aerosol_density"]` | 1.0 | **1.6** | Mie extinction reddens the direct beam (lamp colour 1.000/0.607/0.258 vs 1.000/0.616/0.269) and warms the sun-side horizon — the physical way to buy back the hue instead of tinting the lamp by hand. The greying it causes in the anti-solar sky is exactly what `SKY_CAMERA_SATURATION` undoes. |
+| `MIST` depth | 1500 m | **700 m** | at 1500 m the mist pass reached only 0.11 at 200 m, so the compositor haze was 6 % on the colonnade ends. 700 m gives mist 0.24 at 200 m. |
+| `COMP["haze_strength"]` | 0.55 | **0.85** | with the shorter mist depth this is 12 % haze at 110 m, 24 % at 200 m (the colonnade ends), 67 % at 500 m (the backdrop). |
+| `COMP["haze_warmth"]` | (1.06, 1.0, 0.88) | **(1.22, 1.0, 0.74)** | ref 169's veil behind the wings is distinctly warm, not neutral. |
+
+### QA-01-9 result: the fill sweep (cam04, Eevee 32 TAA, probes baked, master rebuilt on main `6b54fbd`)
+
+| `FILL["energy"]` | coffer field sRGB | Y | hue | ratio to the sunlit attic (197/255) |
+|---|---|---|---|---|
+| 0 (probes baked, no fill) | 0.3, 0.1, 0.1 | 0.0000 | — | 0.00 |
+| baseline (no probes, fast GI) | 24.5, 22.1, 14.3 | 0.0081 | 45.5 | 0.12 |
+| 4 000 W | 40.1, 28.5, 13.7 | 0.0134 | 33.7 | 0.20 |
+| **9 000 W (shipped)** | **60.4, 45.6, 26.2** | **0.0297** | **34.0** | **0.31** |
+| 20 000 W | 91.0, 71.2, 44.7 | 0.0695 | 34.3 | 0.46 |
+| ref 083 (exposed for the ceiling) | 91.7, 76.1, 52.5 | 0.0770 | 36.2 | — |
+
+Evidence: `renders/qa_comparisons/light_r07_qa0109_ceiling.png` (before / Cycles ground truth / 4 000 W / 9 000 W /
+ref 083 / probes-with-no-fill).
+
+**Shipped 9 000 W, ratio 0.31 against QA's 0.35 target — deliberately, and here is the argument.** At 9 000 W the octagonal
+coffers, the rosettes and the vault ribs are all legible and the hue (34.0) matches ref 083 (36.2) within 2 deg; the
+"before" frame is a shapeless blue-grey murk. 20 000 W lands the coffer field on ref 083's own numbers (91.0 vs 91.7)
+and passes 0.35 comfortably — but ref 083 is exposed *for the ceiling*, and a hero frame exposed for the sunlit exterior
+should not show the interior at a ceiling-exposure brightness. **`light_build.FILL["energy"]` is one number**: if QA wants
+the acceptance ratio met literally, set it to 20 000 (or 12 000 for ~0.37) and re-run the probe bake. Both bracketing
+renders are committed, so the choice is an art-direction call with the evidence already on disk.
+
+### QA-01-12 result (cam01, master rebuilt on main `6b54fbd` with ARCH + ENV merged)
+
+| region | before (Cycles 48 spp) | after | ref 169 | after / ref |
+|---|---|---|---|---|
+| sunlit attic | 182.5, 136.9, 93.7 · Y 0.287 · hue 29.2 | **192.0, 153.3, 118.7 · Y 0.354 · hue 28.3** | 208.5, 164.5, 93.4 · Y 0.410 · hue 37.1 | **0.86** (was 0.70); hue -8.8 deg |
+| sky top | 143.1, 169.3, 196.5 · Y 0.384 · sat 0.272 | **140.4, 176.9, 210.5 · Y 0.417 · sat 0.333** | 116.0, 174.4, 226.1 · Y 0.396 · sat 0.487 | **1.05 — inside the +-10 % target** |
+| shaded north face | 120.9, 88.6, 54.5 · Y 0.114 | 137.0, 103.0, 70.0 · Y 0.155 | 147.5, 112.1, 78.0 · Y 0.184 | 0.84 (was 0.62) |
+
+Composite with the numbers burnt in: `renders/qa_comparisons/light_r07_qa0112_hero.png` (before Cycles / after / ref 169).
+The warm haze is visibly doing its job in the after frame: the north wing behind the rotunda is veiled and lifted,
+which it was not before.
+
+**Sky luminance: closed (within 5 %).** **Sunlit stone: 0.86 of ref 169, i.e. 14 % dark, and this is on purpose.**
+The materials agent is warming the concrete albedo in the same round; a 5 % albedo lift lands the attic inside the
++-10 % window without touching the rig again. **If materials comes in short, raise `light_build.EXPOSURE_BIAS` from 1.10
+to about 1.25 and trim `SKY_CAMERA_BOOST` from 1.50 to ~1.40 to keep the sky where it is.** Do not close it by
+brightening albedos past the measured neutral values — the rig is calibrated to a physical 18 % card.
+
+**Not fully closed: sky saturation.** 0.272 -> 0.333 against ref 169's 0.487 (B/R 1.37 -> 1.50 vs 1.95). Two measured
+points bracket the knobs: (boost 1.15, sat 1.35) gave sky Y 0.300 / sat 0.572 — saturated enough but a stop dark; the
+shipped (boost 1.50, sat 1.20) gives Y 0.417 / sat 0.333. Along that one-dimensional line the target pair is not
+reachable, so the next move is to raise `SKY_CAMERA_SATURATION` alone (1.20 -> ~1.45) at the shipped boost and re-measure;
+I did not ship that untested. The remaining hue gap on the stone (8.8 deg vs the 8 deg target) is mostly albedo and
+should shrink with the same materials change.
+
+## 12. What the lead has to do (round 07 delivery)
+
+1. `blender --background --python scripts/build_master.py` — as usual. The rig now brings in, inside `LIGHT`:
+   `LIGHT_sun`, `LIGHT_rotunda_bounce`, `LIGHTPROBE_rotunda`, `LIGHTPROBE_colonnade`, plus the flythrough objects.
+2. **New, required step:** `blender --background --python scripts/light_probes.py -- --blend master.blend --bake --save`
+   (~10-50 s). Without it the two probe volumes are present but unbaked and Eevee falls back to fast GI.
+   Re-run it after any architecture change or a change of moment. `-- --free` clears the caches.
+3. Nothing else changes: `light_presets.apply_final_cycles` / `apply_preview_eevee` / `apply_viewport_eevee` remain the
+   single source of truth for render settings, and `build_master.py` already calls `light_presets.apply_look`.
+   The viewport preset is untouched apart from the irradiance pool size, so the Eevee fly-around stays as fast as it was
+   (viewport preset: 16 TAA, shadows on, raytracing and fast GI off).
+4. Two knobs are deliberately left for the art director, both one line + a re-bake: `light_build.FILL["energy"]`
+   (9 000 shipped; 20 000 matches ref 083 exactly) and `light_build.EXPOSURE_BIAS` (1.10 shipped; ~1.25 if the materials
+   albedo warming lands short of the 14 % the sunlit stone still needs).
+
+New/changed files this round: `scripts/light_probes.py` (new), `scripts/light_measure.py` (new),
+`scripts/light_lookdev.py` (new), `scripts/light_build.py`, `scripts/light_calibrate.py`, `scripts/light_presets.py`,
+`scripts/light_preview.py`, `assets/lighting.blend`.

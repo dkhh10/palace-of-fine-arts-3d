@@ -20,6 +20,7 @@ LIGHT_BLEND = common.ASSET_FILES["LIGHT"]
 LOOK = "AgX - Base Contrast"
 FINAL_SAMPLES = 768          # sized by the timing test in docs/lighting_notes.md (4K in < 2 h on the M2 10-core)
 FINAL_TIME_LIMIT_S = 0.0     # 0 = none; the lead may set e.g. 6000 s per 4K frame as a hard stop
+IRRADIANCE_POOL = "64"       # MB of Eevee irradiance pool; the default 16 cannot hold the two baked probe volumes
 
 
 def _metal_gpu():
@@ -58,7 +59,10 @@ def apply_final_cycles(scene=None, samples=None, time_limit=None):
     c.use_light_tree = True
     c.light_sampling_threshold = 0.01
     c.max_bounces = 8
-    c.diffuse_bounces = 3                # sky-lit shade needs real bounce light between warm stone faces
+    c.diffuse_bounces = 3                # sky-lit shade needs real bounce light between warm stone faces.
+                                         # QA-01-9: measured on master, cam04 coffers render 11.9/255 at 3 bounces and
+                                         # 12.3/255 at 8 - the rotunda vault is starved of light, not of bounces, so
+                                         # raising this buys nothing and costs render time. See FILL in light_build.
     c.glossy_bounces = 4
     c.transmission_bounces = 4
     c.transparent_max_bounces = 16       # leaf cards
@@ -102,7 +106,7 @@ def apply_viewport_eevee(scene=None):
     e.light_threshold = 0.05
     try:
         e.shadow_pool_size = "256"
-        e.gi_irradiance_pool_size = "16"
+        e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
     except Exception:
         pass
     s.render.use_motion_blur = False
@@ -146,6 +150,7 @@ def apply_preview_eevee(scene=None, samples=32):
     e.light_threshold = 0.01
     try:
         e.shadow_pool_size = "512"
+        e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
     except Exception:
         pass
     s.render.use_motion_blur = False
@@ -215,6 +220,30 @@ def apply_look(scene=None, exposure=None, link=True):
     if group is not None:
         build_scene_compositor(s, group)
     return exposure
+
+
+def reload_rig(scene=None, link=False):
+    """Swap the rig in an ALREADY ASSEMBLED scene (master.blend) for the current assets/lighting.blend, so a rig change
+    can be tested without a full build_master run. Removes the local LIGHT collection, its objects, the world and the
+    compositor group, then re-appends. build_master.py is unaffected; the lead still rebuilds master normally."""
+    s = scene or bpy.context.scene
+    for name in ("LIGHT",):
+        c = bpy.data.collections.get(name)
+        if c is not None and c.library is None:
+            for ob in list(c.all_objects):
+                bpy.data.objects.remove(ob, do_unlink=True)
+            bpy.data.collections.remove(c)
+    for coll, names in ((bpy.data.worlds, ("WORLD_golden_hour",)),
+                        (bpy.data.node_groups, ("COMP_golden_hour", "COMP_scene_golden_hour"))):
+        for n in names:
+            d = coll.get(n)
+            if d is not None and d.library is None:
+                coll.remove(d)
+    for ob in list(bpy.data.objects):          # stale probes from an earlier rig
+        if ob.type == "LIGHT_PROBE":
+            bpy.data.objects.remove(ob, do_unlink=True)
+    bpy.ops.outliner.orphans_purge(do_recursive=True)
+    return apply_rig(s, link=link)
 
 
 def apply_rig(scene=None, link=True):
