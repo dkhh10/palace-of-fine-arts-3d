@@ -733,15 +733,21 @@ def placeholder_capital(name, r_top, height, coll, mat=None, origin=(0.0, 0.0, 0
 
 
 # ============================================================================= sockets
-def add_socket(name, location, outward, coll, orn_type, size_hint, variant_seed=0, extra=None, size=0.6):
-    """Empty with local +Z up and local +Y = outward (horizontal direction)."""
+def add_socket(name, location, outward, coll, orn_type, size_hint, variant_seed=0, extra=None, size=0.6,
+               pitch_deg=0.0):
+    """Empty whose local +Y is the FACING direction -- the way the ornament's front looks (the socket contract:
+    ARCH socket +Y = facing, ORN asset +Y = back) -- with local +Z up.
+
+    `outward` gives the horizontal component of that facing. `pitch_deg` tilts it out of the horizontal about the
+    socket's own X: -90 points +Y straight DOWN (a soffit or coffer-floor socket, e.g. a rosette on a ceiling),
+    +90 straight up. At |pitch| = 90 the facing is vertical and `outward` only sets the ornament's in-plane roll."""
     dx, dy = norm2((outward[0], outward[1]))
     yaw = math.atan2(-dx, dy)
     e = bpy.data.objects.new(name, None)
     e.empty_display_type = "ARROWS"
     e.empty_display_size = size
     e.location = location
-    e.rotation_euler = (0.0, 0.0, yaw)
+    e.rotation_euler = (math.radians(pitch_deg), 0.0, yaw)
     e["orn_type"] = orn_type
     e["size_hint"] = float(size_hint)
     e["variant_seed"] = int(variant_seed)
@@ -757,8 +763,8 @@ class SocketCounter:
         self.coll = coll
         self.counts = {}
 
-    def add(self, orn_type, location, outward, size_hint, extra=None, size=0.6):
+    def add(self, orn_type, location, outward, size_hint, extra=None, size=0.6, pitch_deg=0.0):
         i = self.counts.get(orn_type, 0)
         self.counts[orn_type] = i + 1
         return add_socket(f"SOCKET_{orn_type}_{i:03d}", location, outward, self.coll, orn_type, size_hint,
-                          variant_seed=i * 7919 % 1000, extra=extra, size=size)
+                          variant_seed=i * 7919 % 1000, extra=extra, size=size, pitch_deg=pitch_deg)

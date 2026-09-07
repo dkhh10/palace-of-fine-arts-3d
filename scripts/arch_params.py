@@ -110,7 +110,16 @@ COFFER_REGISTERS = ((-0.05, 0.05), (0.10, 0.13))
 # every pair of openings; L.plate clamps these against L.polygon_clearance anyway and prints when it does.
 VAULT_COFFER_REGISTERS = ((-0.030, 0.04), (0.055, 0.10))
 CEILING_FIELD_LIFT = 0.02     # the field saucer sits this far above the ceiling sphere (build_ceiling)
-ROSETTE_RIM_INSET = 0.02      # rim-band rosette bosses are set this far back into the rib's room face
+# Sheet line 258: "Base ring with rosette band above the inner arches." That band is the VERTICAL inner face of
+# the inner ring wall (radius INNER_WALL_APOTHEM - INNER_WALL_THICKNESS = 14.18), in the zone between the crown of
+# the inner arches and the underside of the coffered saucer's rim. Both bounds are derived, not eyeballed:
+#   crown   = INNER_ARCH_SPRING_Z + INNER_ARCH_SPAN / 2                     = 22.425
+#   soffit  = CEILING_RING_Z - COFFER_DEPTH (the rib room face at the face centre) = 23.95
+# The 16 band rosettes sit at the middle of that 1.53 m zone. Two per octagon face at +-11.25 deg from the face
+# normal, which keeps the 22.5 deg spacing the ring had while putting every socket on a real flat face (the old
+# alternate-vertex sockets sat on the octagon corner, where there is no face to stand on).
+ROSETTE_BAND_HALF_ANGLE = 11.25
+ROSETTE_BAND_Z = (INNER_ARCH_SPRING_Z + INNER_ARCH_SPAN / 2 + CEILING_RING_Z - COFFER_DEPTH) / 2
 
 # ----------------------------------------------------------------------------- podium / rostra (OSM lobes, section 3b; DERIVED widths)
 PODIUM_LOBE_R = 27.3      # outer radius of the podium block around each pier (OSM lobes r 27-28)

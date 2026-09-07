@@ -517,3 +517,49 @@ were no vault coffers to cast one.** They now carry no LOD suffix and render at 
 (+111,712, +11.3 % of ARCH, ~+1 % of the 11.62 M master -> ~11.73 M, still under the 13 M cap); LOD2 725,966.
 Of the LOD1 increase, 55,680 is the coffers and bases, 39,744 the flute run-out ring, 16,288 the vault coffers
 that were previously invisible at this LOD.
+
+### rosette_ceiling socket facings (ornament, 2026-09-08)
+
+All 24 `SOCKET_rosette_ceiling_*` had `dot(+Y, radial) = +1.000`, i.e. every rosette faced radially OUTWARD into
+the masonry and none was visible from cam04. `L.add_socket` only ever built a yaw, so a socket's facing could not
+leave the horizontal plane. It now takes `pitch_deg` (rotation about the socket's own X applied before the yaw;
+-90 points +Y straight down, and `outward` then only sets the ornament's in-plane roll). Fixed in `build_ceiling`:
+
+| sockets | facing | check |
+|---|---|---|
+| 16 rim-band (r 13.73 / 14.85, z 24.323 / 23.410) | `+Y = -radial` (toward the rotunda axis) | `dot(+Y, radial) = -1.000` |
+| 8 ring-1 coffer floor (r 5.20, z 28.914) | `+Y` straight down into the room, `pitch_deg = -90` | `+Y.z = -1.000` |
+
+`scripts/arch_socket_check.py` (new) prints the frame of every socket of a type and passes/fails it; run it with
+`blender -b assets/architecture.blend --python scripts/arch_socket_check.py [-- --type <orn_type>]`. All 24 OK.
+Positions, counts, types and `docs/sockets.md` are unchanged, and `pitch_deg` defaults to 0 so every other socket
+type keeps the exact frame it had.
+
+Caveat for ornament: a -radial facing suits a rosette on the *vertical inner face* of the base ring, but these 16
+sockets sit on the rib's horizontal room face (z = `sz - 0.53`). If the band rosettes should stand on that vertical
+face instead, say so and I will move them out to the rim edge rather than only re-aim them.
+
+### Base-ring rosette band moved onto the vertical face (lead, 2026-09-08)
+
+Following the caveat above, the 16 band rosettes are off the rib's horizontal underside and onto the surface the
+sheet actually describes (line 258, "base ring with rosette band above the inner arches"): the **vertical inner
+face of the inner ring wall**, radius `INNER_WALL_APOTHEM - INNER_WALL_THICKNESS` = **14.182 m** from the axis.
+Band height is derived from the two things that bound it, not eyeballed:
+
+| bound | value |
+|---|---|
+| crown of the inner arches `INNER_ARCH_SPRING_Z + INNER_ARCH_SPAN / 2` | 22.423 |
+| underside of the saucer rim `CEILING_RING_Z - COFFER_DEPTH` | 23.950 |
+| **`P.ROSETTE_BAND_Z`** = midpoint of that 1.53 m zone | **23.186** |
+
+Placement is now **two per octagon face at ±`ROSETTE_BAND_HALF_ANGLE` (11.25 deg) from the face normal** instead of
+alternating face centre / octagon vertex: same 16 sockets and the same 22.5 deg spacing round the ring, but every
+one of them stands on a real flat face (the old vertex sockets sat on the corner, where there is no face). Each
+socket's own distance from the axis is 14.182 / cos 11.25 = **14.46 m**; its `+Y` is the inward **face** normal, so
+`dot(+Y, radial)` is **-0.981**, not -1.000 — the two sockets sharing a face lean 11.25 deg either side of their
+own radius. `+Z` is world up (upright on the face). `size_hint` is 0.7 for all 16 (they are one band, one size);
+the 8 coffer-floor sockets are unchanged at z 28.914, r 5.20, `+Y.z = -1.000`.
+
+`scripts/arch_socket_check.py` now checks the band against its face plane rather than against radial, and reports
+the spread of the 16 face-plane distances (0.0 mm). All 24 OK. Counts and types unchanged; `docs/sockets.md` has
+the one-line placement note the lead authorised.

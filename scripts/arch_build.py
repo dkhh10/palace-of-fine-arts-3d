@@ -850,13 +850,25 @@ def build_ceiling(C):
     #     COFFER_DEPTH; that is correct, and P.ROSETTE_RIM_INSET lifts them back into the plaster by 0.02 m.
     #   * 8 inside the ring-1 square coffers (rr 5.2): a rosette inside a box belongs on the box FLOOR, i.e. the
     #     field saucer, which sits P.CEILING_FIELD_LIFT above the sphere -- not on the sphere as before.
+    # Two families of rosette, both `rosette_ceiling`. Socket contract: ARCH socket +Y = the way the ornament's
+    # FRONT faces (ornament, 2026-09-08: all 24 used to face radially outward, into the masonry).
+    #  * 16 BASE-RING BAND rosettes on the VERTICAL inner face of the inner ring wall, the sheet's "base ring with
+    #    rosette band above the inner arches" (line 258). Two per octagon face at +-ROSETTE_BAND_HALF_ANGLE from
+    #    the face normal, so all 16 stand on a real flat face at the same 22.5 deg spacing the ring had before.
+    #    +Y = -face normal (they face the rotunda axis), +Z = world up, i.e. up the face.
+    #  * 8 rosettes on the floor of the ring-1 square coffers: they lie on a ceiling, so +Y points straight DOWN
+    #    into the room (pitch -90; the horizontal argument then only sets their in-plane roll).
+    ca = math.cos(math.radians(P.ROSETTE_BAND_HALF_ANGLE))
     for k in range(8):
         n, v = face_dir(k), vertex_dir(k)
-        for (dvec, rr, sh, dz) in ((n, apo - 0.45, 0.7, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET),
-                                   (v, apo / COS22 - 0.5, 0.6, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET),
-                                   (v, 5.2, 0.5, P.CEILING_FIELD_LIFT)):
-            p = mul2(dvec, rr)
-            SOCK.add("rosette_ceiling", (p[0], p[1], sz(p[0], p[1]) + dz), dvec, sh, size=0.3)
+        inward = (-n[0], -n[1])
+        for s in (-1, 1):
+            d = rot2(n, s * P.ROSETTE_BAND_HALF_ANGLE)      # on the face plane, apo away along the face normal
+            q = mul2(d, apo / ca)
+            SOCK.add("rosette_ceiling", (q[0], q[1], P.ROSETTE_BAND_Z), inward, 0.7, size=0.3)
+        p = mul2(v, 5.2)
+        SOCK.add("rosette_ceiling", (p[0], p[1], sz(p[0], p[1]) + P.CEILING_FIELD_LIFT), v, 0.5,
+                 size=0.3, pitch_deg=-90.0)
 
 
 # ============================================================================= site (platform, steps, rostra, planters, stairs)
