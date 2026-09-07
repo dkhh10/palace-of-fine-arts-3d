@@ -107,11 +107,20 @@ def entablature_plan(along=P.RESSAUT_ALONG, r_ch=P.CHAMFER_CIRCUMRADIUS, inset=0
 
 
 # ============================================================================= profiles (d outward, z relative)
+# Corinthian cornice sequence (bottom -> top): cyma reversa, dentil band, ovolo (egg-and-dart), modillion band, corona,
+# cyma recta. Dentils / eggs / modillions are separate LOD0 geometry placed at the beds below.
+CORNICE = dict(dentil_z=2.70, dentil_h=0.20, dentil_bed=0.36, dentil_size=0.15,
+               egg_z=2.92, egg_h=0.16, egg_bed=0.44,
+               modillion_z=3.08, modillion_h=0.24, modillion_bed=0.62, modillion_w=0.45, modillion_d=0.40, modillion_pitch=0.90)
+
+
 def rotunda_entablature_profile():
+    c = CORNICE
     return [(0.0, 0.0), (0.12, 0.0), (0.12, 0.42), (0.20, 0.42), (0.20, 0.86), (0.28, 0.86), (0.28, 1.22),
-            (0.36, 1.30), (0.40, 1.40), (0.24, 1.40), (0.24, 2.60), (0.34, 2.68), (0.40, 2.70), (0.52, 2.84),
-            (0.52, 3.04), (0.60, 3.04), (0.60, 3.10), (1.00, 3.10), (1.00, 3.55), (1.05, 3.58), (1.16, 3.72),
-            (1.16, 3.80), (0.0, 3.80)]
+            (0.36, 1.30), (0.40, 1.40), (0.24, 1.40), (0.24, 2.60), (0.36, 2.70),
+            (c["dentil_bed"], c["dentil_z"]), (c["dentil_bed"], c["dentil_z"] + c["dentil_h"]), (0.40, 2.92),
+            (0.44, 2.92), (0.56, 3.00), (0.62, 3.08), (c["modillion_bed"], c["modillion_z"] + c["modillion_h"]),
+            (1.05, 3.32), (1.05, 3.60), (1.10, 3.62), (1.18, 3.76), (1.18, 3.80), (0.0, 3.80)]
 
 
 def attic_base_profile():
@@ -132,8 +141,10 @@ def archivolt_profile():
 
 
 def colonnade_entablature_profile():
-    right = [(0.80, 0.0), (0.86, 0.02), (0.86, 0.88), (0.95, 0.94), (0.95, 1.0), (0.86, 1.03), (0.86, 1.75),
-             (1.0, 1.80), (1.15, 1.95), (1.35, 2.0), (1.35, 2.4)]
+    # architrave with the Greek-fret band recessed 0.04 (z 0.22-0.72), plain frieze, mutule cornice (mutules are geometry)
+    right = [(0.80, 0.0), (0.86, 0.02), (0.86, 0.22), (0.82, 0.22), (0.82, 0.72), (0.86, 0.72), (0.86, 0.88), (0.95, 0.94),
+             (0.95, 1.0), (0.86, 1.03), (0.86, 1.72), (0.98, 1.78), (1.02, 1.80), (1.02, 2.02), (1.30, 2.06), (1.30, 2.30),
+             (1.38, 2.34), (1.38, 2.4)]
     left = [(-d, z) for d, z in reversed(right)]
     return right + left + [right[0]]
 
@@ -172,8 +183,9 @@ def build_rotunda():
         else:
             for j, so in enumerate(base_src):
                 L.instance(f"ARCH_rotunda_colbase_{i:02d}_{j}", so, loc, math.atan2(u[1], u[0]) if j == 0 else 0.0, C)
-        # capital socket at the shaft top, +Y outward (face normal)
+        # capital socket at the shaft top, +Y outward (face normal); astragal bead just below it
         SOCK.add("capital_rotunda", (ax[0], ax[1], P.COL_SHAFT_Z1), n, P.COL_D_TOP)
+        astragal(f"ARCH_rotunda_astragal_{i:02d}", ax, P.COL_SHAFT_Z1, r_t, C, M_ROSE)
         # pedestal
         L.box(f"ARCH_rotunda_pedestal_{i:02d}", ax, (P.PEDESTAL_SIZE, P.PEDESTAL_SIZE), P.PODIUM_TOP_Z - SINK,
               P.PEDESTAL_TOP_Z, C, rot_deg=ang_deg(u), mat=M_PODIUM, part_type="pier")
@@ -280,6 +292,8 @@ def build_rotunda():
                 mat=M_OCHRE, part_type="attic", bevel=False)
         SOCK.add("attic_panel", (Cw[0] - n[0] * P.ATTIC_PANEL_DEPTH, Cw[1] - n[1] * P.ATTIC_PANEL_DEPTH, panel_z0), n, panel_w,
                  extra={"panel_height": panel_z1 - panel_z0, "design": designs[k]})
+        panel_frame(f"ARCH_rotunda_attic_frame_{k:02d}", (Cw[0], Cw[1], 0.0), tuple(X), panel_w, panel_z1 - panel_z0,
+                    (panel_z0 + panel_z1) / 2, P.ATTIC_PANEL_FRAME, C, M_OCHRE)
         # archivolt around the outer arch (leaf-and-dart + bead-and-reel band, 0.8 wide)
         path, nrm, bnr = [], [], []
         for i in range(n_arc + 1):
@@ -315,6 +329,7 @@ def build_rotunda():
         nrm0 = face_normal(Vector(rings[0][0]), Vector(rings[0][1]), Vector(rings[1][1]))
         L.loft(f"ARCH_rotunda_vault_{k:02d}", rings, C, mat=M_INNER, part_type="wall", flip=(nrm0.z > 0),
                origin=(Cw[0], Cw[1], P.ARCH_SPRING_Z))
+        build_vault_coffers(f"ARCH_rotunda_vault_coffers_{k:02d}_LOD0", k, X, n, C)
         # inner ring spandrel plate (outer face at INNER_WALL_APOTHEM, 1.2 thick, arch notch of the inner arch)
         hi = P.INNER_ARCH_SPAN / 2
         Ci = mul2(n, P.INNER_WALL_APOTHEM)
@@ -344,8 +359,16 @@ def build_rotunda():
                    z0=P.ATTIC_Z0, origin=(0, 0, P.ATTIC_Z0))
     L.sweep_closed("ARCH_rotunda_attic_cornice", plan, attic_top_profile(), C, mat=M_OCHRE, part_type="attic",
                    z0=P.ATTIC_Z1 - P.ATTIC_TOP_CORNICE_H, origin=(0, 0, P.ATTIC_Z1))
-    # dentil course (geometry, LOD0 only): 0.15 blocks at 0.30 pitch along the cornice bed
-    build_dentils("ARCH_rotunda_dentils_LOD0", plan, P.ENTABLATURE_Z0 + 2.84, 0.20, 0.52, 0.15, C)
+    # dentils, egg-and-dart eggs and modillions as LOD0 geometry along the cornice beds
+    c = CORNICE
+    build_dentils("ARCH_rotunda_dentils_LOD0", plan, P.ENTABLATURE_Z0 + c["dentil_z"], c["dentil_h"], c["dentil_bed"],
+                  c["dentil_size"], C)
+    build_dentils("ARCH_rotunda_modillions_LOD0", plan, P.ENTABLATURE_Z0 + c["modillion_z"], c["modillion_h"], c["modillion_bed"],
+                  c["modillion_w"], C, pitch=c["modillion_pitch"], depth=c["modillion_d"])
+    build_eggs("ARCH_rotunda_eggs_LOD0", plan, P.ENTABLATURE_Z0 + c["egg_z"] + c["egg_h"] / 2, c["egg_bed"] + 0.02, C,
+               size=(0.11, 0.09, 0.09), pitch=0.30)
+    # impost mouldings at the arch springing (both jambs of every face) and astragals at the shaft tops
+    build_imposts(C)
     # attic roof slab (octagon minus the drum) seen from above
     oct_out = L.octagon_world(P.WALL_APOTHEM + 0.2)
     L.plate("ARCH_rotunda_attic_roof", oct_out, [L.regular_polygon(P.DRUM_BAND_R - 0.3, 64)], 0.4,
@@ -405,6 +428,7 @@ def build_rotunda():
             for j, so in enumerate(srcs["base"]):
                 L.instance(f"ARCH_rotunda_inner_colbase_{k:02d}_{j}", so, (ax[0], ax[1], -SINK), rz if j == 0 else 0.0, C)
         SOCK.add("capital_inner", (ax[0], ax[1], P.INNER_COL_SHAFT_Z1), fr.v, ri * 2 * 0.86)
+        astragal(f"ARCH_rotunda_inner_astragal_{k:02d}", ax, P.INNER_COL_SHAFT_Z1, ri * 0.86, C, M_TAN)
         L.placeholder_capital(f"PH_capital_inner_{k:02d}", ri * 0.86, P.INNER_CAPITAL_H, C_PH, mat=M_TAN,
                               origin=(ax[0], ax[1], P.INNER_COL_SHAFT_Z1))
         bz0 = P.INNER_BLOCK_Z0
@@ -421,16 +445,24 @@ def build_rotunda():
     build_ceiling(C)
 
 
-def build_dentils(name, plan, z, h, bed, size, coll, pitch=None):
-    """Dentil blocks along a closed plan path at offset `bed` from the path, `size` wide/deep, `h` tall."""
-    pitch = pitch or size * 2
-    bm = bmesh.new()
+def _path_segments(plan, closed=True):
     n = len(plan)
-    for i in range(n):
+    rng = range(n) if closed else range(n - 1)
+    for i in rng:
         a, b = plan[i], plan[(i + 1) % n]
         d = norm2(sub2(b, a))
-        out = (d[1], -d[0])
-        length = math.dist(a, b)
+        yield a, b, d, (d[1], -d[0]), math.dist(a, b)
+
+
+def build_dentils(name, plan, z, h, bed, size, coll, pitch=None, depth=None, closed=True, mat=None, outward_sign=1.0,
+                  part_type="entablature"):
+    """Blocks (dentils / modillions / mutules) along a plan path at offset `bed` from the path line (outward = right of
+    travel for a CCW path), `size` wide, `depth` deep (default = size), `h` tall, every `pitch`."""
+    pitch = pitch or size * 2
+    depth = depth or size
+    bm = bmesh.new()
+    for a, b, d, out, length in _path_segments(plan, closed):
+        out = mul2(out, outward_sign)
         cnt = int(length // pitch)
         if cnt < 1:
             continue
@@ -438,15 +470,153 @@ def build_dentils(name, plan, z, h, bed, size, coll, pitch=None):
         for j in range(cnt):
             s = start + j * pitch
             c = add2(add2(a, mul2(d, s)), mul2(out, bed))
-            corners = [add2(add2(c, mul2(d, -size / 2)), mul2(out, 0.0)), add2(add2(c, mul2(d, size / 2)), mul2(out, 0.0)),
-                       add2(add2(c, mul2(d, size / 2)), mul2(out, size)), add2(add2(c, mul2(d, -size / 2)), mul2(out, size))]
+            corners = [add2(c, mul2(d, -size / 2)), add2(c, mul2(d, size / 2)),
+                       add2(add2(c, mul2(d, size / 2)), mul2(out, depth)), add2(add2(c, mul2(d, -size / 2)), mul2(out, depth))]
             vb = [bm.verts.new((x, y, z)) for x, y in corners]
             vt = [bm.verts.new((x, y, z + h)) for x, y in corners]
             for q in range(4):
                 bm.faces.new((vb[q], vb[(q + 1) % 4], vt[(q + 1) % 4], vt[q]))
             bm.faces.new(vt)
+            bm.faces.new(list(reversed(vb)))
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    return L._finish(name, bm, coll, M_OCHRE, "entablature", origin=(0, 0, z), smooth=False, bevel=False)
+    return L._finish(name, bm, coll, mat or M_OCHRE, part_type, origin=(0, 0, z), smooth=False, bevel=False)
+
+
+def build_eggs(name, plan, z, bed, coll, size=(0.11, 0.09, 0.09), pitch=0.30, closed=True, mat=None, outward_sign=1.0):
+    """Egg-and-dart 'eggs': half-embedded ellipsoids along a plan path (LOD0 ornament as geometry)."""
+    egg = bmesh.new()
+    bmesh.ops.create_uvsphere(egg, u_segments=8, v_segments=6, radius=1.0)
+    egg_me = bpy.data.meshes.new("_egg_tmp")
+    egg.to_mesh(egg_me)
+    egg.free()
+    bm = bmesh.new()
+    from mathutils import Matrix
+    for a, b, d, out, length in _path_segments(plan, closed):
+        out = mul2(out, outward_sign)
+        cnt = int(length // pitch)
+        if cnt < 1:
+            continue
+        start = (length - (cnt - 1) * pitch) / 2
+        for j in range(cnt):
+            s = start + j * pitch
+            c = add2(add2(a, mul2(d, s)), mul2(out, bed))
+            n0 = len(bm.verts)
+            bm.from_mesh(egg_me)
+            bm.verts.ensure_lookup_table()
+            new = bm.verts[n0:]
+            M = Matrix(((d[0] * size[0], out[0] * size[1], 0.0, c[0]),
+                        (d[1] * size[0], out[1] * size[1], 0.0, c[1]),
+                        (0.0, 0.0, size[2], z),
+                        (0.0, 0.0, 0.0, 1.0)))
+            bmesh.ops.transform(bm, matrix=M, verts=new)
+    bpy.data.meshes.remove(egg_me)
+    for f in bm.faces:
+        f.smooth = True
+    return L._finish(name, bm, coll, mat or M_OCHRE, "entablature", origin=(0, 0, z), smooth=False, bevel=False)
+
+
+def build_imposts(C):
+    """Impost moulding (short horizontal cornice) on each arch jamb at the springing, and astragal rings at the shaft tops."""
+    prof = [(0.0, -0.30), (0.10, -0.30), (0.10, -0.12), (0.22, -0.06), (0.30, 0.0), (0.30, 0.08), (0.0, 0.08)]
+    half = P.ARCH_SPAN / 2
+    for k in range(8):
+        n = face_dir(k)
+        u = FRAMES[k].uA
+        Cw = mul2(n, P.WALL_APOTHEM)
+        for sgn in (-1, 1):
+            a = add2(Cw, mul2(u, sgn * (half + 0.82)))
+            b = add2(Cw, mul2(u, sgn * (half + 2.10)))
+            p3, nrm, bnr = L.plan_path_to_3d([a, b], P.ARCH_SPRING_Z)
+            if dot2((nrm[0][0], nrm[0][1]), n) < 0:
+                nrm = [(-x, -y, zz) for x, y, zz in nrm]
+            L.sweep_open(f"ARCH_rotunda_impost_{k:02d}_{'a' if sgn < 0 else 'b'}", p3, nrm, bnr, prof, C, mat=M_OCHRE,
+                         part_type="wall", origin=(a[0], a[1], P.ARCH_SPRING_Z), bevel=False)
+
+
+_ASTRAGALS = {}
+
+
+def astragal(name, xy, z, r, coll, mat):
+    """Bead ring at the top of a shaft (r = shaft top radius); one mesh per radius, instanced."""
+    key = (round(r, 3), mat)
+    if key in _ASTRAGALS:
+        return L.instance(name, _ASTRAGALS[key], (xy[0], xy[1], z), 0.0, coll)
+    prof = [(r * 0.96, z - 0.16), (r * 1.0, z - 0.15), (r * 1.06, z - 0.11), (r * 1.08, z - 0.07), (r * 1.06, z - 0.03),
+            (r * 1.0, z + 0.0), (r * 0.96, z + 0.01)]
+    o = L.lathe(name, prof, coll, segments=48, mat=mat, part_type="column", origin=(xy[0], xy[1], z), center=xy, bevel=False)
+    _ASTRAGALS[key] = o
+    return o
+
+
+def panel_frame(name, origin3d, X, w, h, cy, band, coll, mat, proud=0.035):
+    """Raised Greek-key frame band around a sunk panel: a thin plate ring `band` wide standing `proud` of the wall."""
+    outer = L.rect(0.0, cy, w + 2 * band, h + 2 * band)
+    inner = L.rect(0.0, cy, w, h)
+    N = Vector(X).cross(Vector((0, 0, 1))).normalized()
+    o = (origin3d[0] + N.x * proud, origin3d[1] + N.y * proud, origin3d[2])
+    return L.plate(name, outer, [inner], proud + 0.02, o, X, (0, 0, 1), coll, mat=mat, part_type="attic", bevel=False)
+
+
+def build_vault_coffers(name, k, X, n, coll):
+    """Rib network (frames) on the tapering barrel soffit of bay k: 3 rows x 9 coffers, mapped from a flat plate."""
+    half = P.ARCH_SPAN / 2
+    r0, r1 = half, P.INNER_ARCH_SPAN / 2
+    ap0, ap1 = P.INNER_APOTHEM, P.INNER_WALL_APOTHEM
+    depth = ap0 - ap1
+    r_mean = (r0 + r1) / 2
+    arc = math.pi * r_mean
+    rows, cols = 3, 9
+    margin_s, margin_t = 0.35, 0.30
+    rib = 0.35
+    cw = (arc - 2 * margin_s - (cols - 1) * rib) / cols
+    ch = (depth - 2 * margin_t - (rows - 1) * rib) / rows
+    xs, ys = [0.0], [0.0]
+    for i in range(cols):
+        x0 = margin_s + i * (cw + rib)
+        xs += [x0, x0 + cw]
+    xs.append(arc)
+    for j in range(rows):
+        y0 = margin_t + j * (ch + rib)
+        ys += [y0, y0 + ch]
+    ys.append(depth)
+    obj = L.grid_frame(name, xs, ys, 0.12, coll, mat=M_INNER, part_type="wall", bevel=False, smooth=False)
+    me = obj.data
+    for v in me.vertices:
+        s = v.co.x / r_mean            # angle 0..pi
+        t = v.co.y / depth             # 0 at the outer wall face
+        delta = -v.co.z                # 0 front (on the soffit), 0.12 back (hangs below the soffit)
+        r = r0 + (r1 - r0) * t - delta
+        ap = ap0 + (ap1 - ap0) * t
+        a = math.pi - s
+        v.co = (n[0] * ap + X.x * r * math.cos(a), n[1] * ap + X.y * r * math.cos(a), P.ARCH_SPRING_Z + r * math.sin(a))
+    me.update()
+    obj.location = (0, 0, 0)
+    L.cube_project_uv(obj)
+    return obj
+
+
+def build_kerb_wall(coll):
+    """Low concrete kerb along the lagoon edge of the rotunda peninsula (OSM lagoon polygon within 52 m of the centre)."""
+    site = common.load_site_local()
+    poly = site["lagoon0"][0]
+    n = len(poly)
+    runs, cur = [], []
+    for i in range(n + 1):
+        p = poly[i % n]
+        if math.hypot(p[0], p[1]) < 52.0 and p[1] > -22.0:
+            cur.append(p)
+        elif cur:
+            runs.append(cur)
+            cur = []
+    if cur:
+        runs.append(cur)
+    prof = [(-0.3, -0.5), (0.3, -0.5), (0.3, 0.55), (0.25, 0.6), (-0.25, 0.6), (-0.3, 0.55), (-0.3, -0.5)]
+    for i, run in enumerate(runs):
+        if len(run) < 2:
+            continue
+        p3, nrm, bnr = L.plan_path_to_3d(run, P.WATER_Z)
+        L.sweep_open(f"ARCH_site_lagoon_kerb_{i}", p3, nrm, bnr, prof, coll, mat=M_PODIUM, part_type="rostra",
+                     origin=(run[0][0], run[0][1], P.WATER_Z))
 
 
 def build_ceiling(C):
@@ -599,6 +769,7 @@ def build_site():
         # stairs on the lagoon side
         if fr.az in P.STAIR_PIERS:
             build_stair(f"ARCH_site_stair_{k:02d}", fr, side, C)
+    build_kerb_wall(C)
 
 
 def build_stair(name, fr, side, C):
@@ -708,6 +879,7 @@ def build_wing(name, coll):
                 L.instance(f"ARCH_colonnade_{name}_colbase_{idx:03d}_{j}", so, (xy[0], xy[1], g - SINK), 0.0, coll)
         ztop = g + P.COLONNADE_BASE_H + h
         SOCK.add("capital_colonnade", (xy[0], xy[1], ztop), inward, P.COLONNADE_D_TOP, extra={"tall": bool(tall), "wing": name})
+        astragal(f"ARCH_colonnade_{name}_astragal_{idx:03d}", xy, ztop, r_t, coll, M_COLON)
         L.placeholder_capital(f"PH_capital_colonnade_{name}_{idx:03d}", r_t, P.COLONNADE_CAPITAL_H, C_PH, mat=M_COLON,
                               origin=(xy[0], xy[1], ztop))
         cols.append((xy, ztop, tall, inward))
@@ -742,6 +914,11 @@ def build_wing(name, coll):
             nrm = [(-a, -b, c) for a, b, c in nrm]
         L.sweep_open(f"ARCH_colonnade_{name}_entablature_{tag}", p3, nrm, bnr, prof, coll, mat=M_COLON,
                      part_type="colonnade_entablature", origin=(path2[0][0], path2[0][1], z_ent))
+        # mutules under the corona on both sides of the row (LOD0 geometry)
+        for sgn, side in ((1.0, "o"), (-1.0, "i")):
+            build_dentils(f"ARCH_colonnade_{name}_mutules_{tag}_{side}_LOD0", path2, z_ent + 1.80, 0.20, 1.02, 0.50, coll,
+                          pitch=1.125, depth=0.26, closed=False, mat=M_COLON, outward_sign=sgn if W.sgn > 0 else -sgn,
+                          part_type="colonnade_entablature")
         SOCK.add("frieze_run", (path2[0][0], path2[0][1], z_ent + 0.02), (rad[0], rad[1]), s_b - s_a,
                  extra={"run_length": s_b - s_a, "arc_center": (W.C[0], W.C[1], 0.0), "arc_radius": r, "subtype": "greek_fret"}, size=0.5)
     # pergola cross beams, one per bay, spanning the two rows
@@ -814,6 +991,8 @@ def build_box(name, centre, rot_deg, z0, coll, inward):
         if N.dot(Vector((out[0], out[1], 0))) < 0:
             X = (-d[0], -d[1], 0.0)
         L.plate(f"{name}_wall_{i}", outline, [hole], 0.45, (mid[0], mid[1], 0.0), X, (0, 0, 1), coll, mat=M_COLON, part_type="box")
+        fr_obj = panel_frame(f"{name}_frame_{i}", (mid[0], mid[1], 0.0), X, pw, ph, (zw0 + zw1) / 2 - 0.05, 0.30, coll, M_COLON, proud=0.03)
+        fr_obj["part_type"] = "box"
         field = L.rect(0.0, (zw0 + zw1) / 2 - 0.05, pw + 0.2, ph + 0.2)
         L.plate(f"{name}_panel_{i}", field, [], 0.5, (mid[0] - out[0] * 0.15, mid[1] - out[1] * 0.15, 0.0), X, (0, 0, 1), coll,
                 mat=M_COLON, part_type="box", bevel=False)
@@ -840,7 +1019,7 @@ print(f"[arch] colonnades done {time.time() - T0:.1f}s")
 # LOD default: LOD1 in the viewport AND in renders (LOD0/LOD2 are hide_render=True in the saved file so that a naive
 # render never stacks three shafts; the lead's common.set_lod_visibility switches hide_viewport, flip hide_render alike)
 common.set_lod_visibility(1)
-for o in ARCH.all_objects:
+for o in list(ARCH.all_objects):   # materialize: all_objects is recomputed when objects change, truncating iteration
     if "_LOD" in o.name:
         lod = o.name.rsplit("_LOD", 1)[1][:1]
         o.hide_render = lod != "1"
@@ -861,6 +1040,10 @@ if SAVE:
 
 # ============================================================================= preview rig (not saved)
 if PREVIEW:
+    if "--lod0" in ARGS:   # preview the hi LOD (finals configuration) instead of the viewport default
+        for o in list(ARCH.all_objects):
+            if "_LOD" in o.name:
+                o.hide_render = o.name.rsplit("_LOD", 1)[1][:1] != "0"
     rig = common.rebuild_collection("PREVIEW_RIG")
     site = common.load_site_local()
     sun = bpy.data.lights.new("PREVIEW_sun", "SUN")

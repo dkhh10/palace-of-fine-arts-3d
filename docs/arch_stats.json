@@ -28,10 +28,10 @@
    "pylons": 2
   }
  },
- "tris_LOD0": 2561562,
- "tris_LOD1": 780330,
- "tris_LOD2": 444714,
+ "tris_LOD0": 2711418,
+ "tris_LOD1": 868170,
+ "tris_LOD2": 532554,
  "tris_placeholders": 75608,
- "objects": 1819,
- "build_seconds": 3.7
+ "objects": 2048,
+ "build_seconds": 18.0
 }

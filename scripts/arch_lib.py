@@ -123,6 +123,7 @@ def _finish(name, bm, coll, mat=None, part_type=None, origin=(0.0, 0.0, 0.0), sm
         common.assign_material(obj, common.load_material(mat))
     if part_type:
         obj["part_type"] = part_type
+    obj["instance_seed"] = sum(ord(c) for c in name) % 997   # per-object variation seed for the materials agent
     if props:
         for k, v in props.items():
             obj[k] = v
@@ -177,6 +178,7 @@ def instance(name, src_obj, location, rot_z=0.0, coll=None, part_type=None, prop
     for k in src_obj.keys():
         if not k.startswith("_"):
             o[k] = src_obj[k]
+    o["instance_seed"] = sum(ord(c) for c in name) % 997
     if part_type:
         o["part_type"] = part_type
     if props:
@@ -298,6 +300,36 @@ def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=Non
             pass
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     return _finish(name, bm, coll, mat, part_type, origin=tuple(O), **kw)
+
+
+def grid_frame(name, xs, ys, thickness, coll, mat=None, part_type=None, hole=None, **kw):
+    """All-quad rib network: a flat slab in the XY plane (front at z=0, back at z=-thickness) divided by the breakpoints
+    xs/ys into cells; cell (i, j) is a through-hole when hole(i, j) is True (default: odd i and odd j)."""
+    hole = hole or (lambda i, j: i % 2 == 1 and j % 2 == 1)
+    nx, ny = len(xs) - 1, len(ys) - 1
+    bm = bmesh.new()
+    front = [[bm.verts.new((x, y, 0.0)) for y in ys] for x in xs]
+    back = [[bm.verts.new((x, y, -thickness)) for y in ys] for x in xs]
+    for i in range(nx):
+        for j in range(ny):
+            if hole(i, j):
+                # side walls of the hole (inward facing)
+                bm.faces.new((front[i][j], front[i + 1][j], back[i + 1][j], back[i][j]))
+                bm.faces.new((front[i + 1][j], front[i + 1][j + 1], back[i + 1][j + 1], back[i + 1][j]))
+                bm.faces.new((front[i + 1][j + 1], front[i][j + 1], back[i][j + 1], back[i + 1][j + 1]))
+                bm.faces.new((front[i][j + 1], front[i][j], back[i][j], back[i][j + 1]))
+            else:
+                bm.faces.new((front[i][j], front[i + 1][j], front[i + 1][j + 1], front[i][j + 1]))
+                bm.faces.new((back[i][j + 1], back[i + 1][j + 1], back[i + 1][j], back[i][j]))
+    # outer side walls
+    for i in range(nx):
+        bm.faces.new((front[i + 1][0], front[i][0], back[i][0], back[i + 1][0]))
+        bm.faces.new((front[i][ny], front[i + 1][ny], back[i + 1][ny], back[i][ny]))
+    for j in range(ny):
+        bm.faces.new((front[0][j], front[0][j + 1], back[0][j + 1], back[0][j]))
+        bm.faces.new((front[nx][j + 1], front[nx][j], back[nx][j], back[nx][j + 1]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    return _finish(name, bm, coll, mat, part_type, origin=(0.0, 0.0, 0.0), **kw)
 
 
 def lathe(name, profile, coll, segments=64, mat=None, part_type=None, origin=(0.0, 0.0, 0.0), center=(0.0, 0.0),

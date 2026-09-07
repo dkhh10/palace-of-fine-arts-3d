@@ -16,6 +16,14 @@ Stats of the last build are written to `docs/arch_stats.json`.
   sockets. Previews: `renders/previews/architecture/20260907_072055_*`; comparison
   `renders/qa_comparisons/arch_02_blockout_cam01_fov.png`.
 
+- **Detail pass 1 (milestone 2)**: Corinthian cornice sequence with dentils, egg-and-dart eggs and modillions as LOD0
+  geometry; impost mouldings at the arch springings; astragals on every shaft; raised Greek-key frames on the attic
+  panels and the box panels; coffered barrel vault soffits (3 x 9, LOD0) built as an all-quad rib grid mapped onto the
+  tapering barrel; colonnade fret-band recess and mutules (LOD0); lagoon-edge kerb wall; `instance_seed` custom
+  property on every object; LOD0/LOD2 `hide_render` fixed (iterating `Collection.all_objects` while editing objects
+  silently truncates - materialize the list first). Previews `20260907_073920_*_detail2` (LOD1) and
+  `20260907_073726_*_detail2_lod0` (LOD0); comparisons `arch_04_detail2_*`. Inspection helper `scripts/arch_inspect.py`.
+
 ## Derivations (where the reference sheet is silent or was refined)
 
 | item | value | derivation |
