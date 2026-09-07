@@ -274,24 +274,39 @@ def ring_prism(name, outer, inner, z0, z1, coll, mat=None, part_type=None, **kw)
 
 
 def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=None, part_type=None,
-          step=0.0, step_depth=0.0, **kw):
+          registers=(), **kw):
     """A slab built in a local 2D frame: outline/holes are 2D polygons in (xaxis, yaxis) coordinates;
     the plate's front face is at the frame origin plane, the back face `thickness` behind (along -normal,
     normal = xaxis x yaxis). Holes go right through. Caps are tessellated, sides are quads.
 
-    `step` > 0 gives every hole a two-register reveal (QA-03-8): the last `step_depth` of the thickness, at the
-    BACK face, is widened by `step` all round, so a coffer shows a wide shallow outer register stepping in to the
-    deep box. That break is what catches a grazing light and puts a shadow line round every coffer; a single
-    straight reveal seen nearly face-on shows nothing."""
+    `registers` is a tuple of (widen, depth) pairs read from the BACK (room) face inwards, giving every hole a
+    moulded multi-register reveal (QA-03-8). A positive `widen` steps the opening out (a splayed outer register),
+    a negative one steps it in (a bolection lip projecting into the opening at the room face). What is left of
+    `thickness` after the registers is the straight deep box against the panel. A single straight reveal seen
+    nearly face-on shows nothing; these breaks put a light/shadow line pair round every coffer."""
     X, Y = Vector(xaxis).normalized(), Vector(yaxis).normalized()
     N = X.cross(Y).normalized()
     O = Vector(origin3d)
     outline = ensure_ccw(outline)
     holes_ccw = [ensure_ccw(h) for h in holes]
-    stepped = step > 1e-6 and 0.0 < step_depth < thickness
-    holes_back = [offset_polygon(h, step) for h in holes_ccw] if stepped else holes_ccw
+    regs = [(w, d) for w, d in registers if abs(w) > 1e-6 and d > 1e-6]
+    if sum(d for _, d in regs) >= thickness:
+        regs = []
+    # levels from the FRONT (panel) face to the BACK (room) face: (depth from the front, cumulative widening)
+    levels = [(0.0, 0.0)]
+    z = thickness - sum(d for _, d in regs)
+    levels.append((z, 0.0))
+    widen = 0.0
+    for w, d in reversed(regs):          # registers are given from the room face inwards
+        widen += w
+        levels.append((z, widen))
+        z += d
+        levels.append((z, widen))
+    holes_at = {}
+    for w in sorted({lv[1] for lv in levels}):
+        holes_at[w] = holes_ccw if abs(w) < 1e-9 else [offset_polygon(h, w) for h in holes_ccw]
     holes = [list(reversed(h)) for h in holes_ccw]
-    holes_b = [list(reversed(h)) for h in holes_back]
+    holes_b = [list(reversed(h)) for h in holes_at[levels[-1][1]]]
     bm = bmesh.new()
     front, back = [], []
 
@@ -306,26 +321,19 @@ def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=Non
     for i in range(len(outline)):
         j = (i + 1) % len(outline)
         bm.faces.new((f[i], f[j], b[j], b[i]))
-    # hole walls
-    for hn, hb in zip(holes, holes_b):
-        n = len(hn)
-        f = ring(hn, 0.0)
-        front.append(f)
-        if stepped:
-            m0 = ring(hn, thickness - step_depth)
-            m1 = ring(hb, thickness - step_depth)
-            b = ring(hb, thickness)
+    # hole walls: one loop per level, stitched in order (vertical reveal / horizontal ledge alternating)
+    for k, hccw in enumerate(holes_ccw):
+        n = len(hccw)
+        loops = [ring(list(reversed(holes_at[w][k])), d) for d, w in levels]
+        front.append(loops[0])
+        back.append(loops[-1])
+        for a, b_ in zip(loops[:-1], loops[1:]):
             for i in range(n):
                 j = (i + 1) % n
-                bm.faces.new((f[i], f[j], m0[j], m0[i]))       # deep box wall
-                bm.faces.new((m0[i], m0[j], m1[j], m1[i]))     # the ledge
-                bm.faces.new((m1[i], m1[j], b[j], b[i]))       # outer register wall
-        else:
-            b = ring(hn, thickness)
-            for i in range(n):
-                j = (i + 1) % n
-                bm.faces.new((f[i], f[j], b[j], b[i]))
-        back.append(b)
+                try:
+                    bm.faces.new((a[i], a[j], b_[j], b_[i]))
+                except ValueError:
+                    pass
     for loops, verts in ((( [outline] + holes ), front), (([outline] + holes_b), back)):
         flat = [[(x, y, 0.0) for x, y in loop] for loop in loops]
         allv = [v for lp in verts for v in lp]

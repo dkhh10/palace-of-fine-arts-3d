@@ -100,11 +100,13 @@ CEILING_SPHERE_CZ = CEILING_RING_Z + CEILING_RISE - CEILING_SPHERE_R
 # The last 0.13 m at the room face steps out by COFFER_STEP so each coffer has a two-register reveal that catches the
 # soffit lights instead of one flat inset outline. Was 0.30 / 0.20 with no step (read as flat at cam04).
 COFFER_DEPTH = 0.55       # rotunda saucer-ceiling coffers (rib plate hangs this far below the field)
-COFFER_STEP = 0.10        # the room-side register of a saucer coffer is this much wider all round
-COFFER_STEP_DEPTH = 0.13  # ... over this much of the depth
 VAULT_COFFER_DEPTH = 0.38  # barrel-vault soffit ribs stand this far proud (0.12 -> 0.20 in round 1 -> 0.38 now)
-VAULT_COFFER_STEP = 0.07
-VAULT_COFFER_STEP_DEPTH = 0.10
+# Reveal registers, read from the room face inwards as (widen, depth): a bolection lip projecting 0.05 m into the
+# opening, then a splayed outer register 0.10 m wider than the box; the rest of the depth is the straight deep box.
+# The lip's underside is a bright ring and the splay's floor a dark one, so every coffer gets a light/shadow line
+# pair even seen almost face-on from cam04 -- the reason a single straight reveal read as a flat inset outline.
+COFFER_REGISTERS = ((-0.05, 0.05), (0.10, 0.13))
+VAULT_COFFER_REGISTERS = ((-0.04, 0.04), (0.07, 0.10))
 
 # ----------------------------------------------------------------------------- podium / rostra (OSM lobes, section 3b; DERIVED widths)
 PODIUM_LOBE_R = 27.3      # outer radius of the podium block around each pier (OSM lobes r 27-28)
@@ -157,9 +159,9 @@ FILLET_FRACTION = 0.25    # fillet width / flute width (sheet, ornament catalog 
 # QA-03-4 / QA-03-9: the flute hollow is a segmental circular arc, sampled at equal arc angles so the two samples
 # nearest each fillet sit close to the arris and the flute wall there is steep (~72 deg off the tangent at LOD1).
 # The old half-sine profile with evenly spaced samples never exceeded 56 deg, so the hollows caught almost full sun
-# and the shafts read smooth at hero scale. Half-angle 80 deg -> depth / flute width = (1-cos80)/(2 sin80) = 0.420,
-# which for a 24-flute 2.46 m shaft is a 0.108 m hollow (ref 054, 128: flutes read as narrow hard dark lines).
-FLUTE_ARC_HALF_DEG = 80.0
+# and the shafts read smooth at hero scale. Half-angle 90 deg -> depth / flute width = (1-cos90)/(2 sin90) = 0.500,
+# the semicircular hollow of a Roman Corinthian order, 0.129 m on a 24-flute 2.46 m shaft (ref 054, 128: flutes read as narrow hard dark lines).
+FLUTE_ARC_HALF_DEG = 90.0
 # Attic base (sheet ornament catalog row 4: "base h 1.0, torus-scotia-torus Attic base on a square plinth,
 # plinth square = 1.15 x shaft D"). Fractions of the height above the plinth, bottom to top; ref 113 shows the
 # bold carved lower torus, a plain scotia and a smaller upper torus.
