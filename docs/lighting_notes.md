@@ -306,3 +306,25 @@ Changes in `light_build.py` (all four are single named constants):
 | `MIST` depth | 1500 m | **700 m** | at 1500 m the mist pass reached only 0.11 at 200 m, so the compositor haze was 6 % on the colonnade ends. 700 m gives mist 0.24 at 200 m. |
 | `COMP["haze_strength"]` | 0.55 | **0.85** | with the shorter mist depth this is 12 % haze at 110 m, 24 % at 200 m (the colonnade ends), 67 % at 500 m (the backdrop). |
 | `COMP["haze_warmth"]` | (1.06, 1.0, 0.88) | **(1.22, 1.0, 0.74)** | ref 169's veil behind the wings is distinctly warm, not neutral. |
+
+### QA-01-9 result: the fill sweep (cam04, Eevee 32 TAA, probes baked, master rebuilt on main `6b54fbd`)
+
+| `FILL["energy"]` | coffer field sRGB | Y | hue | ratio to the sunlit attic (197/255) |
+|---|---|---|---|---|
+| 0 (probes baked, no fill) | 0.3, 0.1, 0.1 | 0.0000 | — | 0.00 |
+| baseline (no probes, fast GI) | 24.5, 22.1, 14.3 | 0.0081 | 45.5 | 0.12 |
+| 4 000 W | 40.1, 28.5, 13.7 | 0.0134 | 33.7 | 0.20 |
+| **9 000 W (shipped)** | **60.4, 45.6, 26.2** | **0.0297** | **34.0** | **0.31** |
+| 20 000 W | 91.0, 71.2, 44.7 | 0.0695 | 34.3 | 0.46 |
+| ref 083 (exposed for the ceiling) | 91.7, 76.1, 52.5 | 0.0770 | 36.2 | — |
+
+Evidence: `renders/qa_comparisons/light_r07_qa0109_ceiling.png` (before / Cycles ground truth / 4 000 W / 9 000 W /
+ref 083 / probes-with-no-fill).
+
+**Shipped 9 000 W, ratio 0.31 against QA's 0.35 target — deliberately, and here is the argument.** At 9 000 W the octagonal
+coffers, the rosettes and the vault ribs are all legible and the hue (34.0) matches ref 083 (36.2) within 2 deg; the
+"before" frame is a shapeless blue-grey murk. 20 000 W lands the coffer field on ref 083's own numbers (91.0 vs 91.7)
+and passes 0.35 comfortably — but ref 083 is exposed *for the ceiling*, and a hero frame exposed for the sunlit exterior
+should not show the interior at a ceiling-exposure brightness. **`light_build.FILL["energy"]` is one number**: if QA wants
+the acceptance ratio met literally, set it to 20 000 (or 12 000 for ~0.37) and re-run the probe bake. Both bracketing
+renders are committed, so the choice is an art-direction call with the evidence already on disk.
