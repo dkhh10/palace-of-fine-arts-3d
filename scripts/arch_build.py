@@ -648,7 +648,7 @@ def build_meander_band(name, poly, zb, h, coll, mat, closed=True, proud=P.BAND_P
     """Greek-key meander units alternating with square rosette bosses along a plan path (the recessed band face is the
     path line; the pattern stands `proud` of it, still behind the wall plane). One mesh per path."""
     bm = bmesh.new()
-    w = 0.06
+    w = 0.075     # key-line width: reads at 720 px in cam05 (sheet s4 #12)
     m = 0.04
     idx = 0
     for a, b, d, out, length in _path_segments(poly, closed):
@@ -669,8 +669,13 @@ def build_meander_band(name, poly, zb, h, coll, mat, closed=True, proud=P.BAND_P
                 _lbox(bm, c, d, out, zb, 0.30, 0.92, m, m + w, 0.0, proud)                           # bottom rail
                 _lbox(bm, c, d, out, zb, 0.92 - w, 0.92, m, h - m - 0.10, 0.0, proud)                # end riser
             else:
-                _lbox(bm, c, d, out, zb, 0.12, 0.88, m, h - m, 0.0, proud * 0.5)                      # boss plate
-                _ldisc(bm, c, d, out, zb, 0.50, h / 2, (h - 2 * m) * 0.42, proud * 0.5 - 0.005, proud, 14)   # rosette disc
+                _lbox(bm, c, d, out, zb, 0.12, 0.88, 0.02, h - 0.02, 0.0, proud * 0.5)                # boss plate
+                _ldisc(bm, c, d, out, zb, 0.50, h / 2, (h - 0.05) * 0.5, proud * 0.5 - 0.005, proud, 16)   # rosette disc
+                for pk in range(8):                                                                      # petals
+                    import math as _m
+                    ang = 2 * _m.pi * pk / 8
+                    _ldisc(bm, c, d, out, zb, 0.50 + (h - 0.05) * 0.30 * _m.cos(ang),
+                           h / 2 + (h - 0.05) * 0.30 * _m.sin(ang), (h - 0.05) * 0.14, proud - 0.004, proud + 0.012, 8)
                 _ldisc(bm, c, d, out, zb, 0.50, h / 2, 0.05, proud - 0.005, proud + 0.03, 8)                # centre knob
             idx += 1
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
@@ -942,10 +947,10 @@ def build_stair(name, fr, side, C):
     # cheek walls (refs 063/031): 0.35 thick, parapet 0.9 above the treads, following the slope
     run = n_steps * tread
     cheek = [(-0.35, P.GROUND_Z - 0.3), (-0.35, P.PODIUM_TOP_Z + 0.9), (run + 0.35, P.GROUND_Z + 0.9), (run + 0.35, P.GROUND_Z - 0.3)]
-    for side_sgn, tag in ((1.0, "a"), (-1.0, "b")):
-        off = width / 2 + 0.175 if side_sgn > 0 else -(width / 2 + 0.175)
-        o = (p_top[0] + sgn * radial[0] * (width / 2 + off), p_top[1] + sgn * radial[1] * (width / 2 + off), 0.0)
-        o = (o[0] + sgn * radial[0] * 0.175, o[1] + sgn * radial[1] * 0.175, 0.0)
+    # `plate` puts its front face on the origin plane and extrudes `thickness` along -N; with u = sgn * radial the
+    # flight itself spans u in [-width/2, +width/2] about p_top, so a cheek at origin p_top + u*c spans [c - 0.35, c].
+    for c, tag in ((width / 2 + 0.35, "a"), (-width / 2, "b")):
+        o = (p_top[0] + sgn * radial[0] * c, p_top[1] + sgn * radial[1] * c, 0.0)
         L.plate(f"{name}_cheek_{tag}", cheek, [], 0.35, o, X, (0, 0, 1), C, mat=M_PODIUM, part_type="rostra")
 
 

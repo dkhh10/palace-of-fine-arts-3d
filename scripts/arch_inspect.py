@@ -26,6 +26,11 @@ scene = common.setup_scene()
 for o in list(bpy.data.objects):
     if "_LOD" in o.name:
         o.hide_render = o.name.rsplit("_LOD", 1)[1][:1] != lod
+if "--hide" in args:   # hide every object whose name contains one of the comma-separated substrings
+    for pat in opt("--hide").split(","):
+        for o in bpy.data.objects:
+            if pat in o.name:
+                o.hide_render = True
 if "--no-placeholders" in args:
     for o in bpy.data.collections["ARCH_placeholders"].objects:
         o.hide_render = True

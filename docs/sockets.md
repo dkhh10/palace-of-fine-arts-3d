@@ -37,6 +37,25 @@ Contract additions after the Phase 2 build (2026-09-07): sockets may carry a `su
 Actual socket counts delivered by ARCH: capital_rotunda 16, capital_inner 8, capital_colonnade 114, maiden 48, urn 40,
 attic_panel 8, attic_figure 8, keystone 24, frieze_run 28, drum_band 1, finial 9, rosette_ceiling 24, inner_figure 8.
 
+**Contract additions 2026-09-07 (Phase 3 fix round, ARCH):**
+- `maiden` sockets moved from the box RIM to the box BASE plane (z 15.80 on the arc boxes, 18.20 on the pylon boxes),
+  0.32 m outward from the box's vertical corner edge along the corner diagonal; +Y still = the direction the figure's
+  BACK faces. New properties `rim_height` (3.55 m above the socket, where the arms rest) and `box_corner_y` (-0.32,
+  the box corner edge in socket-local coordinates). `size_hint` 4.4. Count unchanged: 48.
+- `frieze_run` extended to 126 (was 28) by 98 sockets with `subtype = 'greek_key'` for QA-01-11: 50 along the rostra /
+  podium band runs (8 lobes, runs 1.4-6.2 m, `band_height` 0.5) and 48 along the planter-box base bands (4 per box on
+  12 boxes, runs 5.18 m, `band_height` 0.42). Extra properties: `run_length`, `run_dir` (a 3-vector, identical to the
+  socket's local +X), `band_height`, `host` (`rostra` / `planter_box`), `modelled_by_arch` (True).
+  Frame exactly per the convention above: origin at the RUN START, local +Y = the outward face normal, local +X along
+  the run (asserted in the build for all 98). The socket sits on the recessed band face; the ornament stands proud of
+  it (ARCH's own meander stands 3.5 cm proud).
+- **ARCH also models this band as geometry** (`ARCH_site_rostra_meander_*`, `ARCH_colonnade_*_box_*_meander`, 20 meshes:
+  alternating 1.0 m Greek-key units and 0.45 m rosette bosses) so the band is present in the master render whether or
+  not ORN is instanced on it. Whoever arrays `ORN_greek_key` / `ORN_rosette_band` on these sockets MUST hide the
+  `ARCH_*_meander_*` objects first, or the two will z-fight.
+- `finial` sockets with `subtype = 'volute_scroll'` now also carry `modelled_by_arch = True`: ARCH builds the paired
+  attic-corner volutes itself (QA-01-13's scroll half).
+
 Repeated linear ornament (dentils, egg-and-dart, Greek key, rosette bands) is modelled by ORN as ONE unit with a known
 length; ARCH either arrays it itself along its profile sweeps using `frieze_run`-style sockets, or (preferred) ARCH
 models these small mouldings as geometry directly and only uses ORN for capitals, figures, urns, keystones, relief panels

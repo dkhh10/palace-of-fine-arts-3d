@@ -77,8 +77,12 @@ Counts are in `docs/arch_stats.json` (`sockets`). Additions/interpretations beyo
 - `keystone` (24): 8 crown lion masks (size_hint 0.8) + 16 impost masks (size_hint 0.5, custom prop `subtype='impost_mask'`).
 - `urn` (40): 24 podium urns (size_hint 3.0) + 16 attic-corner urns (1.6).
 - `finial` (9): 8 volute scrolls on the attic corner blocks (`subtype='volute_scroll'`, 1.5) + the dome apex (0.6).
-- `frieze_run` (28): 24 on the ressaut faces (`run_length`, `run_dir`) + 4 colonnade row runs (`subtype='greek_fret'`,
-  `arc_center`, `arc_radius`, `run_length`) for the fret architrave.
+- `frieze_run` (126 after Phase 3): 24 on the ressaut faces (`run_length`, `run_dir`) + 4 colonnade row runs
+  (`subtype='greek_fret'`, `arc_center`, `arc_radius`, `run_length`) + **98 new `subtype='greek_key'` runs** (50 on the
+  rostra/podium bands, 8 lobes; 48 on the planter-box base bands, 4 per box on 12 boxes) — QA-01-11. Every greek_key
+  socket carries `run_length` (1.4-6.2 m on the rostra, 5.18 m on the boxes), `run_dir` (== the socket's local +X,
+  asserted in the build), `band_height` (0.5 rostra / 0.42 box), `host` (`rostra` / `planter_box`) and
+  `modelled_by_arch=True`.
 - `rosette_ceiling` (24): 8 rim (face centres), 8 rim (corners), 8 ring-1 squares.
 - Bases are modelled by ARCH (no `base_*` sockets). Dentils are geometry (LOD0 object); egg-and-dart is a plain ovolo
   in the sweep profile (ORN may overlay a strip using the `frieze_run` sockets' geometry).
@@ -101,13 +105,118 @@ Counts are in `docs/arch_stats.json` (`sockets`). Additions/interpretations beyo
 7. ENV: the colonnade stands on `COLONNADE_GROUND_Z = -0.6`; the rotunda platform steps reach -0.6 at r 26.7; the lagoon
    kerb (`ARCH_site_lagoon_kerb_0`) follows the OSM lagoon polygon within 52 m of the centre, top at -0.7 (0.6 above water).
 
+## Phase 3 fix round (2026-09-07)
+
+### QA-01-1 — dome + drum (blocker): derivation
+
+The lead arbitrated that the photographs override the reference sheet's 49.4 m apex (decisions.md, "Phase 3 start").
+Everything below the attic cornice is untouched; only `DRUM_*` and `DOME_*` in `scripts/arch_params.py` moved.
+
+**Measuring tool.** `qa_silhouette.py`'s building mask is `r > b + 0.06`. On the ARCH preview the sky-lit crown of the
+dome renders at sRGB (122,117,110), i.e. r-b = 12/255 = 0.047, so the tool walked past the top ~3 m of the dome and
+reported an apex three metres too low; the same bug flatters or punishes any dome depending on its material. Added
+`arch_inspect.py --alpha` (transparent film + flat white) and `scripts/arch_silhouette.py flatten`, which turn the
+alpha channel into a warm-on-blue mask. The photographs need no such treatment (their sunlit stone is strongly warm),
+so the comparison stays apples-to-apples, and `ref169`/`ref085` re-measure to exactly QA's round-01 numbers
+(rise/W_a 0.252 and 0.195) with QA's crops, which confirms the pipeline.
+
+**Solving the rise.** Camera = the current `CAM_qa_01_lagoon_hero` (loc (-14.1, 100.0, 1.6), 24 mm, shift_y 0.09),
+1920x1080, ARCH-only, LOD1. Crops: render (620, 20, 1305, 420); ref 169 1920x1192 (680, 100, 1220, 360);
+ref 085 1920x1280 (384, 0, 1536, 576) — the same crops QA used, recovered from the yellow rectangles in
+`round01_profile_ref*.png`. W_a = 673 px, corner-urn row 182. `align` scales each photo by W_a and matches the
+corner-urn row, so the only free variable is the visible dome rise:
+
+| dome rise | apex_y | rise px | rise / W_a | delta vs ref 169 | delta vs ref 085 |
+|---|---|---|---|---|---|
+| 7.9 (start of the round) | 45 | 137 | 0.204 | +3.0 % | -0.6 % |
+| 9.4 **(chosen)** | 32 | 150 | 0.223 | **+1.8 %** | **-1.7 %** |
+| 10.3 | 21 | 161 | 0.239 | +0.8 % | -2.8 % |
+
+The two photographs disagree with each other by 4.5 % of frame height (ref 085 is a distant telephoto and foreshortens
+the rise; ref 169 is a stitched wide panorama), so the band that satisfies **both** within 2 % is only
+rise/W_a = 0.219-0.228, i.e. dome rise 9.2-9.6 m. Chosen 9.4 (centre of the band): 12.2 px per metre at the dome axis,
+so ±0.2 m is ±2.4 px = ±0.22 % of frame height.
+
+**Final values.** `DRUM_H` 5.1 (plain 2.7 + guilloche cushion 1.5 + cornice ring 0.9), `DRUM_Z1` 43.4,
+`DOME_BASE_R` 16.5, `DOME_RISE` 9.4, `DOME_SPHERE_R` 19.18, `DOME_APEX_Z` 52.8 (apex cap top 53.4). Total height above
+the rotunda floor 53.4 m = 175 ft against the DPR's 162 ft; the photographs win, per the lead's ruling.
+
+**Drum visibility.** Measured by differencing three alpha passes at the centre columns (x 880-1040) with
+`arch_inspect.py --hide`: attic cornice behind the drum at y 117, top of the drum cornice ring at y 66, apex at y 32.
+The plain band + cushion + cornice therefore stand **51 px** above the attic cornice at 1080p (QA asked for >= 12 px),
+and the dome springs a further 34 px above that ring.
+
+Evidence: `renders/qa_comparisons/arch_06_phase3_sheet.png` (panels 1-4),
+`arch_06_align_vs_ref169.png`, `arch_06_align_vs_ref085.png`.
+
+### Maiden sockets moved to the box BASE
+
+`BOX_H` 3.0 -> 3.55 (the rim sits 3.55 m above the figures' feet, decisions.md). All 48 `SOCKET_maiden_*` now sit at
+the box base plane (z 15.80 on the arc boxes, 18.20 on the pylon boxes) instead of the box rim, 0.32 m outward from
+the box's vertical corner edge along the corner diagonal (`MAIDEN_OUT`), +Y still = the direction the figure's back
+faces. Each socket carries `rim_height` (3.55) and `box_corner_y` (-0.32) so ORN can seat the arms on the rim.
+`size_hint` 4.4.
+
+### QA-01-11 — Greek-key band (ARCH half)
+
+ARCH models the meander as geometry **and** publishes sockets, so the band exists in the master render whether or not
+the lead wires ORN to it: `build_meander_band` lays alternating 1.0 m key units (7.5 cm line, 3.5 cm proud) and square
+rosette bosses (0.45 m disc with 8 petals) along the recessed band face of every rostra wall and every planter-box base
+band — 20 meander meshes. The 98 `frieze_run` / `greek_key` sockets described above let ORN replace that geometry with
+`ORN_greek_key` / `ORN_rosette_band`; whoever does that must hide the `ARCH_*_meander_*` objects first (noted in
+docs/sockets.md).
+
+### Materials-agent requests (docs/materials_notes.md "Open issues")
+
+- **Fluted at LOD0/LOD1** — verified, not changed: rotunda shaft flute depth 0.120 m (LOD0) / 0.106 m (LOD1) / 0.0
+  (LOD2); colonnade 0.088 / 0.072 / 0.0. 24 flutes with fillets as built in Phase 2.
+- **Column origins at the shaft base** — verified: every `*_column_*` object has its origin on the shaft axis at the
+  shaft base (rotunda z 8.5 = pedestal top).
+- **Dome origin on the dome axis** — verified: `ARCH_rotunda_dome` origin (0, 0, 43.4), `_drum` (0, 0, 38.3),
+  `_drum_cornice` (0, 0, 42.44).
+- **Bevels** — a sweep at the end of `arch_build.py` adds a 3 cm / 2-segment angle-limited bevel to any ARCH mesh in
+  `BEVEL_ALSO` that has none: 249 objects (attic corner caps, frames and roof, attic volutes, drum cornice, dome apex
+  cap, all column bases, ressaut cores, imposts, archivolts, rostra band/cap/rustication courses, pylon cores, planter
+  box band/lid/frames, stairs and cheek walls). Deliberately still sharp: flute geometry, dentil / egg-and-dart /
+  modillion arrays, meander units, coffer plates, sunk panels and the dome shell — a 3 cm bevel on a 15 cm dentil eats
+  the moulding and multiplies the tri count.
+- **Podium rustication as geometry** — `build_rustication`: the podium core is set back 3.5 cm and 0.6 m ashlar courses
+  stand out to the true face with a 4 cm joint between them (64 course objects over the 8 lobes), so the joints throw a
+  real shadow line instead of relying on a texture. Sheet s4 #12 / s5 ("plain rusticated courses, joints ~0.6 m").
+
+### QA-01-14 — planter box count: DECISION, 12 boxes / 48 maidens (not 13 / 52)
+
+Evidence checked: the OSM wing polygons (`common.load_site_local`, traces `w319/w321/w323` and
+`reference/plans/site_northwing_zoom.png`) carry only the two colonnade wall lines — there is no per-cluster geometry,
+so OSM cannot place boxes at all; ref 187 shows three boxes on one visible stretch of arc and ref 167 the two boxes of
+a pylon pair, neither of which resolves a total; the aerial 105 is far too distant. The reference sheet itself flags
+the count "uncertain" and derives 13 arithmetically from secondary sources (52 maidens / 4, 26 garland panels / 2).
+**Decision: keep the symmetric 12** — 6 per wing (4 clusters along the arc + the 2 boxes of the end pylon pair). The
+building is symmetric about the east-west axis, so an odd 13 cannot be realised without breaking that symmetry, and
+the alternative reading of the sheet (5 along the arc per wing + pylons) gives 14, not 13. If the lead wants 52
+figures, the cheapest change is 5 clusters per wing (`COL_CLUSTER_PAIR` / `COL_FIRST_CLUSTER_S` in arch_params.py) for
+14 boxes / 56 maidens; that would re-cut the colonnade rhythm QA scored as good, so it is not done unilaterally.
+Garland relief panels remain plain sunk panels with Greek-key frames (relief is ORN's `attic_panel`-class work).
+
+### QA-01-15 / QA-01-16
+
+- Vault coffers rebuilt as two rows of large octagons (r 0.95 max) with small square lozenges between and between the
+  rows, mapped onto the barrel-vault soffit, per ref 062 — replacing the 3x9 rectangular grid. Panel 6 of the sheet.
+- Lagoon-side stairs: each flight gets two 0.35 m cheek walls flush with the treads, parapet 0.9 m above the tread
+  line and sloping with the flight down to the lawn (refs 063/031). The flight itself keeps its Phase 2 position,
+  running tangentially along the podium lobe (refs 063/031 show it beside the podium, not centred on the axis);
+  `plate` puts its front face on the origin plane, so the cheek origins are p_top + sgn*radial*(width/2 + 0.35) and
+  p_top - sgn*radial*(width/2) - the first version left a 0.18 m gap on one side and straddled the tread edge on the
+  other.
+
 ## Known gaps / open issues
 
-- Vault coffers are a 3 x 9 rectangular grid; ref 088 shows a fan of lozenge/hexagonal coffers - a later pass could
-  remap a hexagonal pattern with the same `grid_frame`-then-map approach.
+- Vault coffers: octagon + square lozenge pattern since Phase 3 (QA-01-15). Ref 088 shows the fan converging toward
+  the crown; ours keeps a constant pitch along the arc.
 - Stairs: two straight flights placed tangentially along the lobes at piers 59.5 and 104.5; run direction not verified.
-- Podium rustication joints, dome seam lines, column pour lines: material work (documented in the sheet), not geometry.
-- The 13th planter box (52 maidens) could not be located in OSM; 12 boxes / 48 maidens are modelled.
+- Dome seam lines and column pour lines: material work (documented in the sheet), not geometry. Podium rustication IS
+  geometry since Phase 3.
+- 12 boxes / 48 maidens, by decision (QA-01-14 above), not by omission.
 - The return sections between the pylon pairs are an interpretation of ref 167 (two rows 3 m apart, 2 intermediate
   columns each); the OSM trace stops 20-27 m short of the pylons.
 - Colonnade bay layout is regenerated from parameters in `arch_params.py` (COL_BAY, COL_MODULE, COL_CLUSTER_PAIR,
