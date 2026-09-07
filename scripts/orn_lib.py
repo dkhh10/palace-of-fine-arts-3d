@@ -940,7 +940,7 @@ def _run_geometry(socket, unit_length):
 
 
 def array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=None, instances=True,
-                         seed_base=None, extra_props=None, fit=True):
+                         seed_base=None, extra_props=None, fit="auto", tol=0.06, alternatives=None):
     """Lay copies of a linear moulding unit end to end along a `frieze_run` socket. Returns the new objects.
 
     `unit_obj`     an `ORN_<kind>_v<n>_LOD<k>` mesh whose origin is the bottom-centre of its BACK face, that runs
@@ -948,14 +948,39 @@ def array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=No
     `socket_empty` a `SOCKET_frieze_run_###` empty (straight: `run_length`; curved: `arc_center` / `arc_radius` and
                    optionally `arc_start` / `arc_end`).
     `instances`    True -> every copy shares `unit_obj.data` (linked duplicates, one mesh in memory).
-    `fit`          True -> the last few per-mille of the run are absorbed by scaling every unit along X so the run
-                   ends flush; False -> units keep their exact length and the run may over/undershoot.
+    `fit`          "scale" (or True) -> the leftover is absorbed by scaling every unit along X so the run ends flush;
+                   "centre" -> floor(run / unit) unscaled units centred on the run, leaving equal plain margins at
+                   both ends (what a real frieze does on a short run); "auto" (default) -> scale when that costs less
+                   than `tol` (6 %), otherwise centre; False/"none" -> exact-length units laid from the start.
+    `alternatives` optional list of other unit objects; the one whose scale fit is closest to 1 is used, so the lead
+                   can hand the helper e.g. [ORN_rosette_band, ORN_greek_key] and let each run pick.
     Each copy carries `orn_type`, `unit_index`, `run_socket` and a decorrelated `instance_seed` so that
     MAT_ornament_concrete's Object-Info-Random / instance_seed variation differs per unit.
     """
+    if alternatives:
+        best, best_err = unit_obj, None
+        for cand in [unit_obj] + list(alternatives):
+            pl, _, _ = _run_geometry(socket_empty, unit_length_of(cand))
+            err = abs(pl[0][1] - 1.0)
+            if best_err is None or err < best_err:
+                best, best_err = cand, err
+        unit_obj = best
     kind = unit_obj.get("orn_type") or unit_obj.name
     ul = unit_length_of(unit_obj)
     places, n, run = _run_geometry(socket_empty, ul)
+    mode = {True: "scale", False: "none", None: "none"}.get(fit, fit)
+    if mode == "auto":
+        mode = "scale" if abs(places[0][1] - 1.0) <= tol else "centre"
+    if mode == "centre" and len(places) > 1 and socket_empty.get("arc_center") is None:
+        # unscaled units, centred on the run: n' = floor(run / unit), plain margins at both ends
+        M = socket_empty.matrix_world
+        n = max(1, int(run // ul))
+        margin = 0.5 * (run - n * ul)
+        places = [(M @ Matrix.Translation((margin + (i + 0.5) * ul, 0.0, 0.0)), 1.0) for i in range(n)]
+    elif mode == "centre":
+        places = [(m, 1.0) for m, _ in places]
+    elif mode == "none":
+        places = [(m, 1.0) for m, _ in places]
     if collection is None:
         collection = unit_obj.users_collection[0] if unit_obj.users_collection else bpy.context.scene.collection
     prefix = name_prefix or f"INST_{kind}"
@@ -966,7 +991,7 @@ def array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=No
     for i, (mat, sx) in enumerate(places):
         ob = bpy.data.objects.new(f"{prefix}_{sidx}_{i:03d}", unit_obj.data if instances else unit_obj.data.copy())
         collection.objects.link(ob)
-        ob.matrix_world = mat @ Matrix.Diagonal(((sx if fit else 1.0), 1.0, 1.0, 1.0))
+        ob.matrix_world = mat @ Matrix.Diagonal((sx, 1.0, 1.0, 1.0))
         ob["orn_type"] = kind
         ob["unit_index"] = i
         ob["run_socket"] = socket_empty.name
@@ -976,7 +1001,7 @@ def array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=No
                 ob[k] = v
         made.append(ob)
     sx0 = places[0][1]
-    warn = "  *** x-fit off by more than 6 %: this unit does not divide the run; use a shorter unit ***" if abs(sx0 - 1.0) > 0.06 else ""
-    print(f"[orn] array_unit_along_run: {unit_obj.name} x{n} ({ul:.3f} m unit) along {socket_empty.name} "
-          f"({run:.2f} m{', curved' if socket_empty.get('arc_center') is not None else ''}), x-fit {sx0:.4f}{warn}")
+    warn = "  *** x-fit off by more than %.0f %%; consider a shorter unit ***" % (tol * 100) if abs(sx0 - 1.0) > tol else ""
+    print(f"[orn] array_unit_along_run: {unit_obj.name} x{len(places)} ({ul:.3f} m unit) along {socket_empty.name} "
+          f"({run:.2f} m{', curved' if socket_empty.get('arc_center') is not None else ''}), {mode}, x-fit {sx0:.4f}{warn}")
     return made

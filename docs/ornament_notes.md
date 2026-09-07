@@ -167,27 +167,32 @@ on all three LODs.
 
 **Helper for the lead** (in `orn_lib.py`, call from `build_master.py`):
 
-    array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=None,
-                         instances=True, seed_base=None, extra_props=None, fit=True) -> [objects]
+    array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=None, instances=True,
+                         seed_base=None, extra_props=None, fit="auto", tol=0.06, alternatives=None) -> [objects]
 
 Lays copies of a moulding unit end to end along a `frieze_run` socket and returns them. Straight runs use
 `run_length` (or `size_hint`); curved runs use `arc_center` + `arc_radius` and, if present, `arc_start` / `arc_end` —
 without the angles the start angle comes from the socket's position and the sweep direction from its local +X, both
-per `docs/sockets.md`. `n = round(run / unit_length)`; every unit is scaled along X by `run / (n * unit_length)` so the
-run ends flush (a warning is printed if that scale is more than 6 % off, which means the unit does not divide the run).
-Curved units are chords of the arc, oriented X = chord tangent, Z = the socket's up, Y = Z x X (identical to the
-socket's own frame at the first unit). With `instances=True` every copy shares the unit's mesh (one mesh in memory).
-Each copy gets `orn_type`, `unit_index`, `run_socket` and a decorrelated `instance_seed`.
+per `docs/sockets.md`. `n = round(run / unit_length)`. `fit` decides what happens to the leftover:
+`"scale"` stretches every unit along X so the run ends flush; `"centre"` lays `floor(run / unit)` unscaled units
+centred on the run with equal plain margins at the ends (what a real frieze does on a short run); `"auto"` (default)
+scales when that costs less than `tol` = 6 % and otherwise centres. `alternatives=[other_unit, ...]` makes the helper
+pick, per run, whichever unit fits best — hand it `[ORN_rosette_band, ORN_greek_key]` and short box-base runs get the
+0.60 m meander while long rostra runs get the 1.20 m rosette band. Curved units are chords of the arc, oriented
+X = chord tangent, Z = the socket's up, Y = Z x X (identical to the socket's own frame at the first unit).
+With `instances=True` every copy shares the unit's mesh (one mesh in memory). Each copy gets `orn_type`,
+`unit_index`, `run_socket` and a decorrelated `instance_seed`.
 `orn_lib.unit_length_of(obj)` returns the documented repeat length (falls back to the bbox X size).
 
-Tested by `scripts/orn_frieze_test.py`: appends ARCH's 28 read-only `SOCKET_frieze_run_*` empties plus two mock
-rostra sockets (a straight 12 m run and a 90 deg curve of radius 9 m, standing in for the sockets ARCH is adding with
-`subtype='greek_key'`), arrays a unit on each and measures the result — **820 units on 30 sockets, worst
-spacing/end-flush error 8.7 mm, worst deviation of a unit from the arc 0.4 mm** (the chord sagitta), renders in
+Tested by `scripts/orn_frieze_test.py` against the **128 `frieze_run` sockets ARCH now ships** (98 straight rostra /
+box-base runs with `subtype='greek_key'`, 1.42-6.18 m, 434 m total; 4 curved colonnade architrave runs with
+`subtype='greek_fret'`, r 115.15/119.65, 383 m total; 24 rotunda ressaut runs with no subtype, 3.00 / 5.91 m, 95 m
+total) plus two mock sockets. Result: **1432 units on 128 sockets, worst unit-to-unit spacing error 1.8 mm, worst
+deviation of a unit from its arc 4.8 mm (the chord sagitta), worst plain margin left at a run end 518 mm** (less than
+one 0.60 m unit, by design on a centred fit). Renders in
 `renders/previews/ornament/frieze_run_{straight,curved,rostra_straight,rostra_curved}.png`. Mapping used in the test
-(recommended to the lead): `subtype == 'greek_key'` or `'rostra'` -> `ORN_rosette_band`, anything else
-(`'greek_fret'`, no subtype) -> `ORN_greek_key`. Note the existing 3.00 m ressaut runs divide exactly by 0.60 and not
-by 1.20, which is another reason the plain meander belongs on those.
+and recommended to the lead: `subtype == 'greek_key'` (or `'rostra'`) -> `ORN_rosette_band` with
+`alternatives=[ORN_greek_key]`; anything else -> `ORN_greek_key`.
 
 ### QA-01-13 — attic corner scrolls and the maiden pose
 

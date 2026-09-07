@@ -74,18 +74,19 @@ def main():
     coll = common.rebuild_collection("FRIEZE_TEST")
     runs = {}
     total = 0
-    worst_gap = worst_radial = 0.0
+    worst_gap = worst_radial = worst_margin = 0.0
     for sk in sockets:
         # subtype greek_fret (colonnade architrave, rotunda ressauts) -> plain meander;
         # subtype greek_key / rostra (podium + box bases, QA-01-11) -> meander with rosette bosses
         unit = units["rosette_band" if sk.get("subtype") in ("greek_key", "rostra") else "greek_key"]
-        made = L.array_unit_along_run(unit, sk, collection=coll)
+        made = L.array_unit_along_run(unit, sk, collection=coll, alternatives=[units["greek_key"]])
         runs[sk.name] = made
         total += len(made)
-        ul = L.unit_length_of(unit)
+        ul = L.unit_length_of(made[0])
         # measured spacing between consecutive unit origins vs the nominal unit length
         for a, b in zip(made, made[1:]):
-            worst_gap = max(worst_gap, abs((b.matrix_world.translation - a.matrix_world.translation).length - ul))
+            step = (b.matrix_world.translation - a.matrix_world.translation).length
+            worst_gap = max(worst_gap, abs(step - ul * a.matrix_world.to_scale().x))
         c = sk.get("arc_center")
         if c is not None:
             cen = Vector((float(c[0]), float(c[1])))
@@ -93,14 +94,16 @@ def main():
             for o in made:
                 t = o.matrix_world.translation
                 worst_radial = max(worst_radial, abs((Vector((t.x, t.y)) - cen).length - r))
-        # end-flush: last unit's far end vs run_length along the run
+        # plain margin left at the far end (0 for a scaled fit, < one unit for a centred fit)
         run = float(sk.get("run_length", 0.0))
-        end_local = made[-1].matrix_world @ Vector((L.unit_length_of(unit) / 2, 0, 0))
+        u = L.unit_length_of(made[-1])
+        end_local = made[-1].matrix_world @ Vector((u / 2, 0, 0))
         if c is None:
-            err = abs((end_local - sk.matrix_world.translation).length - run)
-            worst_gap = max(worst_gap, err)
-    print(f"[frieze_test] {total} units placed on {len(sockets)} sockets; worst spacing/flush error {worst_gap * 1000:.1f} mm; "
-          f"worst radial deviation from the arc (chord sagitta) {worst_radial * 1000:.1f} mm")
+            worst_margin = max(worst_margin, abs(run - (end_local - sk.matrix_world.translation).length))
+    print(f"[frieze_test] {total} units placed on {len(sockets)} sockets; worst unit-to-unit spacing error "
+          f"{worst_gap * 1000:.1f} mm; worst plain margin at a run end {worst_margin * 1000:.0f} mm (a centred fit "
+          f"leaves < one unit of plain band, by design); worst radial deviation from the arc (chord sagitta) "
+          f"{worst_radial * 1000:.1f} mm")
 
     if "--no-render" in ARGS:
         return
@@ -112,8 +115,15 @@ def main():
     common.configure_eevee(scene, samples=24)
     scene.render.resolution_x, scene.render.resolution_y = 1280, 720
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    shots = [("straight", "SOCKET_frieze_run_001"), ("curved", "SOCKET_frieze_run_024"),
-             ("rostra_straight", "SOCKET_frieze_run_900"), ("rostra_curved", "SOCKET_frieze_run_901")]
+    def pick(pred):
+        for sk in sockets:
+            if pred(sk):
+                return sk.name
+        return None
+    shots = [("straight", pick(lambda s: s.get("subtype") in (None, "greek_fret") and s.get("arc_center") is None)),
+             ("curved", pick(lambda s: s.get("arc_center") is not None and not s.name.endswith("901"))),
+             ("rostra_straight", pick(lambda s: s.get("subtype") == "greek_key" and float(s.get("run_length", 0)) > 5.0)),
+             ("rostra_curved", "SOCKET_frieze_run_901")]
     for tag, sname in shots:
         sk = bpy.data.objects.get(sname)
         made = runs.get(sname)
