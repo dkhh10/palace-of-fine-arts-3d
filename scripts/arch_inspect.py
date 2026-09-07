@@ -81,6 +81,18 @@ if "--cycles" in args:
 else:
     common.configure_eevee(scene, samples=16)
 scene.render.resolution_x, scene.render.resolution_y = rx, ry
+if "--alpha" in args:
+    # geometric silhouette pass: transparent film + flat emissive white, so the mask is the true outline of the
+    # geometry and not a function of the shading (the warm/blue test in qa_silhouette can miss a pale sky-lit dome).
+    scene.render.film_transparent = True
+    scene.render.image_settings.color_mode = "RGBA"
+    flat = bpy.data.materials.new("INSPECT_flat")
+    flat.use_nodes = False
+    flat.diffuse_color = (1.0, 1.0, 1.0, 1.0)
+    for o in bpy.data.objects:
+        if o.type == "MESH":
+            o.data.materials.clear()
+            o.data.materials.append(flat)
 scene.render.filepath = out
 bpy.ops.render.render(write_still=True)
 print("[inspect] wrote", out)
