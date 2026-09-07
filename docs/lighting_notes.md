@@ -328,3 +328,28 @@ and passes 0.35 comfortably — but ref 083 is exposed *for the ceiling*, and a 
 should not show the interior at a ceiling-exposure brightness. **`light_build.FILL["energy"]` is one number**: if QA wants
 the acceptance ratio met literally, set it to 20 000 (or 12 000 for ~0.37) and re-run the probe bake. Both bracketing
 renders are committed, so the choice is an art-direction call with the evidence already on disk.
+
+### QA-01-12 result (cam01, master rebuilt on main `6b54fbd` with ARCH + ENV merged)
+
+| region | before (Cycles 48 spp) | after | ref 169 | after / ref |
+|---|---|---|---|---|
+| sunlit attic | 182.5, 136.9, 93.7 · Y 0.287 · hue 29.2 | **192.0, 153.3, 118.7 · Y 0.354 · hue 28.3** | 208.5, 164.5, 93.4 · Y 0.410 · hue 37.1 | **0.86** (was 0.70); hue -8.8 deg |
+| sky top | 143.1, 169.3, 196.5 · Y 0.384 · sat 0.272 | **140.4, 176.9, 210.5 · Y 0.417 · sat 0.333** | 116.0, 174.4, 226.1 · Y 0.396 · sat 0.487 | **1.05 — inside the +-10 % target** |
+| shaded north face | 120.9, 88.6, 54.5 · Y 0.114 | 137.0, 103.0, 70.0 · Y 0.155 | 147.5, 112.1, 78.0 · Y 0.184 | 0.84 (was 0.62) |
+
+Composite with the numbers burnt in: `renders/qa_comparisons/light_r07_qa0112_hero.png` (before Cycles / after / ref 169).
+The warm haze is visibly doing its job in the after frame: the north wing behind the rotunda is veiled and lifted,
+which it was not before.
+
+**Sky luminance: closed (within 5 %).** **Sunlit stone: 0.86 of ref 169, i.e. 14 % dark, and this is on purpose.**
+The materials agent is warming the concrete albedo in the same round; a 5 % albedo lift lands the attic inside the
++-10 % window without touching the rig again. **If materials comes in short, raise `light_build.EXPOSURE_BIAS` from 1.10
+to about 1.25 and trim `SKY_CAMERA_BOOST` from 1.50 to ~1.40 to keep the sky where it is.** Do not close it by
+brightening albedos past the measured neutral values — the rig is calibrated to a physical 18 % card.
+
+**Not fully closed: sky saturation.** 0.272 -> 0.333 against ref 169's 0.487 (B/R 1.37 -> 1.50 vs 1.95). Two measured
+points bracket the knobs: (boost 1.15, sat 1.35) gave sky Y 0.300 / sat 0.572 — saturated enough but a stop dark; the
+shipped (boost 1.50, sat 1.20) gives Y 0.417 / sat 0.333. Along that one-dimensional line the target pair is not
+reachable, so the next move is to raise `SKY_CAMERA_SATURATION` alone (1.20 -> ~1.45) at the shipped boost and re-measure;
+I did not ship that untested. The remaining hue gap on the stone (8.8 deg vs the 8 deg target) is mostly albedo and
+should shrink with the same materials change.
