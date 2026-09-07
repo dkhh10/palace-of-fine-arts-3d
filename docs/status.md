@@ -111,3 +111,8 @@ Resume: scripts/lead_build.sh, then QA round 3 (Opus). All worktrees clean, all 
 ## 2026-09-07 · session resumed (lead on Fable 5.1)
 State verified: main 99c8250, five worktrees clean, all branches merged, no Blender running. Stray untracked session.txt (terminal dump) left alone.
 In flight: scripts/lead_build.sh (master rebuild + probe bake, log renders/logs/lead_build_r3.log). Next: QA round 3 (Fable 5.1 xhigh per the user; folds in lighting's two caveats: chroma re-measure at 1920x1080, interior fills ~halved), then polish round 2 by owner.
+
+## 2026-09-07 · master rebuilt; QA round 3 + lighting r09 dispatched
+Merged: master.blend rebuilt by lead_build.sh (9041 objects, LOD1 11.62 M tris, 34 library materials remapped, both probes baked).
+In flight: QA round 3 (Fable 5.1 xhigh, main checkout; commits only qa docs/scripts/renders; touches renders/previews/qa/round03_RENDERS_DONE when renders finish). LIGHT r09 on branch lighting (Opus; chroma re-sweep at 1920x1080 for attic R-B >= 110, interior fills ~halved vs ref 083); waits on the QA marker before its first Blender run.
+Next: gate report to the user from round03_gate.png; polish round 2 by owner from the QA-03 list (mat, env, orn, arch), code review (Opus, no Blender) of each branch before merge; lead_build.sh; QA round 4.
