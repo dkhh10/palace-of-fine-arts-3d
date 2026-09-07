@@ -420,7 +420,7 @@ G["dome"] = build_group_dome()
 
 
 # =============================================================================== materials
-def concrete_material(name, tex_set, seed, params, specular=0.4, column=None, baked=False, extra=None):
+def concrete_material(name, tex_set, seed, params, specular=0.25, column=None, baked=False, extra=None):
     m = ML.new_material(name)
     t = Tree(m.node_tree)
     inst = t.group(G["instance"], Seed=seed)
@@ -542,14 +542,14 @@ def build_concrete_family():
         "Detail Strength": 0.5, "Streaks": 0.0, "Patches": 0.16, "Edge Wear": 0.4, "Edge Radius": 0.06,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.5,
         "Recess Dirt": 0.5, "Recess Distance": 0.3, "Roughness": 0.7, "Roughness Variation": 0.12, "Bump": 0.3, "Pour Lines": 0.0,
-        "Grid Joints": 0.8, "Grid Size": 1.5}, specular=0.45)
+        "Grid Joints": 0.8, "Grid Size": 1.5}, specular=0.30)
     # coffered plaster saucer (only bounce-lit)
     concrete_material("MAT_plaster_ceiling", "concrete_wall_008", 9.0, {
         "Base Color": C(0.570, 0.446, 0.160), "Grey Color": C(0.40, 0.308, 0.115), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.13, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         "Detail Strength": 0.3, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.3, "Edge Radius": 0.05,
-        "Recess Dirt": 0.7, "Recess Distance": 0.4, "Roughness": 0.9, "Roughness Variation": 0.05, "Bump": 0.25, "Pour Lines": 0.0}, specular=0.3)
+        "Recess Dirt": 0.7, "Recess Distance": 0.4, "Roughness": 0.9, "Roughness Variation": 0.05, "Bump": 0.25, "Pour Lines": 0.0}, specular=0.20)
     # bronze-brown guilloche band on the drum
     concrete_material("MAT_drum_band", "concrete_wall_007", 10.0, {
         "Base Color": C(0.28, 0.185, 0.062), "Grey Color": C(0.22, 0.172, 0.078), "Grey Drift": 0.3,
@@ -802,7 +802,10 @@ def build_ground():
     clump = t.noise(flat, 8.0, detail=2)
     h = t.add(t.mul(blade, 0.6), clump)
     normal = t.bump(h, strength=0.5, distance=0.02, normal=N)
-    bsdf = t.principled(**{"Base Color": c, "Roughness": 0.85, "Specular IOR Level": 0.2, "Normal": normal, "Sheen Weight": 0.1})
+    band = t.group(G["algae"], Height=0.45, **{"Band Z": WATER_Z + 0.15}).outputs["Band"]
+    c = t.mix(t.mul(band, 0.85), c, C(0.035, 0.055, 0.028))
+    bsdf = t.principled(**{"Base Color": c, "Roughness": t.mixf(band, 0.85, 0.42), "Specular IOR Level": 0.2,
+                           "Normal": normal, "Sheen Weight": 0.1})
     t.output(surface=bsdf.outputs[0])
     ML.finish(m)
 
@@ -815,7 +818,11 @@ def build_ground():
     c = t.mix(0.4, tex["diff"], t.vscale(C(0.18, 0.12, 0.08), t.div(t.luminance(tex["diff"]), 0.25)))
     c = t.vscale(c, t.maprange(t.noise(W, 0.3, detail=2), 0.3, 0.7, 0.8, 1.15))
     normal = t.bump(tex["disp"], strength=0.5, distance=0.02, normal=N)
-    bsdf = t.principled(**{"Base Color": c, "Roughness": t.add(t.mul(t.sub(tex["rough"], 0.5), 0.3), 0.9), "Normal": normal, "Specular IOR Level": 0.25})
+    # wet margin: the shore darkens and slicks over the last ~0.5 m down to the water (QA-02-3)
+    band = t.group(G["algae"], Height=0.5, **{"Band Z": WATER_Z + 0.18}).outputs["Band"]
+    c = t.mix(t.mul(band, 0.88), c, C(0.030, 0.040, 0.026))
+    bsdf = t.principled(**{"Base Color": c, "Roughness": t.mixf(band, t.add(t.mul(t.sub(tex["rough"], 0.5), 0.3), 0.9), 0.38),
+                           "Normal": normal, "Specular IOR Level": 0.25})
     t.output(surface=bsdf.outputs[0])
     ML.finish(m)
 
@@ -829,7 +836,10 @@ def build_ground():
     damp = t.smoothstep(t.noise(W, 0.2, detail=2), 0.55, 0.75)
     c = t.mix(t.mul(damp, 0.5), c, t.vmul(c, (0.6, 0.58, 0.55)))
     normal = t.bump(tex["disp"], strength=0.5, distance=0.02, normal=N)
-    bsdf = t.principled(**{"Base Color": c, "Roughness": t.add(t.mul(t.sub(tex["rough"], 0.5), 0.3), 0.85), "Normal": normal, "Specular IOR Level": 0.3})
+    band = t.group(G["algae"], Height=0.45, **{"Band Z": WATER_Z + 0.15}).outputs["Band"]
+    c = t.mix(t.mul(band, 0.85), c, C(0.040, 0.052, 0.034))
+    bsdf = t.principled(**{"Base Color": c, "Roughness": t.mixf(band, t.add(t.mul(t.sub(tex["rough"], 0.5), 0.3), 0.85), 0.40),
+                           "Normal": normal, "Specular IOR Level": 0.3})
     t.output(surface=bsdf.outputs[0])
     ML.finish(m)
 
