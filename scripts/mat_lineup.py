@@ -59,6 +59,32 @@ if isinstance(DEBUG, str):
         nt = m.node_tree
         grp = [n for n in nt.nodes if n.type == "GROUP" and n.node_tree and n.node_tree.name == "PFA_concrete"]
         outn = [n for n in nt.nodes if n.type == "OUTPUT_MATERIAL"]
+        if outn and DEBUG in ("RND", "LOC", "ISEED"):
+            oi = nt.nodes.new("ShaderNodeObjectInfo")
+            em = nt.nodes.new("ShaderNodeEmission")
+            if DEBUG == "RND":
+                nt.links.new(oi.outputs["Random"], em.inputs["Color"])
+            elif DEBUG == "LOC":
+                nt.links.new(oi.outputs["Location"], em.inputs["Color"])
+            else:
+                at = nt.nodes.new("ShaderNodeAttribute"); at.attribute_type = "OBJECT"; at.attribute_name = "instance_seed"
+                nt.links.new(at.outputs["Fac"], em.inputs["Color"])
+            em.inputs["Strength"].default_value = 1.0
+            nt.links.new(em.outputs[0], outn[0].inputs["Surface"])
+            continue
+        if outn and DEBUG in ("R1", "R2", "R3", "R4"):
+            # per-instance random diagnostic: emit PFA_instance's output directly
+            ig = bpy.data.node_groups.get("PFA_instance")
+            if ig is None:
+                continue
+            gn = nt.nodes.new("ShaderNodeGroup"); gn.node_tree = ig
+            seedv = grp[0].inputs["Seed"].default_value if grp and "Seed" in grp[0].inputs else 0.0
+            gn.inputs["Seed"].default_value = seedv
+            em = nt.nodes.new("ShaderNodeEmission")
+            nt.links.new(gn.outputs[DEBUG], em.inputs["Color"])
+            em.inputs["Strength"].default_value = 1.0
+            nt.links.new(em.outputs[0], outn[0].inputs["Surface"])
+            continue
         if grp and outn and DEBUG in grp[0].outputs:
             em = nt.nodes.new("ShaderNodeEmission")
             nt.links.new(grp[0].outputs[DEBUG], em.inputs["Color"])
