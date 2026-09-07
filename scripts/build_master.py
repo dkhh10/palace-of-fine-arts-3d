@@ -144,7 +144,7 @@ if "ORN" in linked and "ARCH" in linked:
     at_origin = sum(1 for o in sockets if o.matrix_world.translation.length < 0.01)
     print(f"[build_master] {len(sockets)} sockets, {at_origin} at the origin (should be 0)")
     sub = {}
-    for sk in sorted(sockets, key=lambda o: o.name):
+    for idx_all, sk in enumerate(sorted(sockets, key=lambda o: o.name)):
         t = sk["orn_type"]
         seed = int(sk.get("variant_seed", 0))
         coll_name = ORN_COLL.get(t)
@@ -176,7 +176,7 @@ if "ORN" in linked and "ARCH" in linked:
             continue
         keys = sorted(variants)
         vi = DESIGN_VARIANT.get(sk.get("design"), None)
-        vi = vi if vi in variants else keys[seed % len(keys)]
+        vi = vi if vi in variants else keys[(idx_all * 7919 + seed * 104729) % len(keys)]   # spread variants evenly
         lods = variants[vi]
         sc = sub.setdefault(t, common.get_collection(f"INST_{t}", parent=inst_root))
         idx = counts.get(t, 0)
