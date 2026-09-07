@@ -23,13 +23,14 @@ blender -b --python-expr "import sys;sys.path.insert(0,'scripts');import env_pre
 | `ENV_water` | `ENV_lagoon_water`: **closed volume** (QA-01-3) — surface at z −1.3 triangulated at ~2 m, a bed 0.12–1.50 m below it, vertical walls at the shore and around both islets; 17.4 k tris, 0 open edges, planar UV (10 m tiles) | the murk in `MAT_water_lagoon` is a Cycles volume and only works inside a closed mesh. The bed sits 5 cm above the terrain bed so it never z-fights |
 | `ENV_trees` | 15 source tree objects × 3 LODs, hidden (viewport + render), parked at (−600, −600) | one mesh per (species, seed, LOD), shared by all instances |
 | `ENV_tree_instances` → `_LOD0/_LOD1/_LOD2` | 169 placed trees, 3 objects each (`ENV_tree_<species>_<nn>_LOD<k>`) | object flags: **viewport shows LOD1, render uses LOD0** (`hide_render` on LOD1/LOD2, `hide_viewport` on LOD0/LOD2). A tree uses the next lighter mesh when no QA camera is within `FAR_RADIUS` = 130 m of it, and the E2/E3 back screen rows always do. Per-instance random z-rotation, asymmetric xy scale (0.82–1.16) and a 0–4.5° wind lean, so no two crowns share a silhouette (QA-01-7). Custom props: species, seed, height_m, note |
-| `ENV_shrubs` | 649 **separate objects** sharing 15 source meshes: pittosporum mounds (4 sizes), upright mahonia (2), agapanthus clumps (3), dry reeds (3), leafless twig shrubs (3) | QA-01-2. One object per bush so the library foliage materials' per-object random (`PFA_instance`) varies hue/value per plant; a joined belt would be one flat colour. Nothing within 34 m of the hero camera |
+| `ENV_shrubs` | 1 461 **separate objects** sharing 15 source meshes: pittosporum mounds (4 sizes), upright mahonia (2), agapanthus clumps (3), dry reeds (3), leafless twig shrubs (3) | QA-01-2. One object per bush so the library foliage materials' per-object random (`PFA_instance`) varies hue/value per plant; a joined belt would be one flat colour. Nothing within 34 m of the hero camera |
 | `ENV_backdrop` | exhibition hall from OSM `b302` (20 m, 27 pilasters on the concave east wall every 7 m, 102 glazed bays between them, cornice + string course + plinth bands, curved roof (eave 15.5 m + 4.5 m rise), 24 m arched entrance bay with the green door opposite the rotunda — QA-01-8), 288 Marina/Presidio buildings within 460 m from `_osm.json` heights, far ground to 2.6 km, bay plane north of −480 m, Presidio wooded ridge (az 195–330°, 520–1500 m, up to 70 m + canopy bumps), SW Presidio hill, south/east city hills, Marin headlands | all single low-poly meshes |
 | `ENV_extras` | rip-rap (2 rows along the whole OSM shore + islet, 1 273 boulders 0.32–0.80 m straddling the water line, 7 rock meshes baked per 45° sector — QA-01-19), 65 gulls sitting/floating + 6 flying, lamp posts on the shore path | |
 
-Triangle counts (full ENV, 2026-09-07 fix round): **LOD0 15.15 M, LOD1 5.89 M, LOD2 1.44 M** (the lead's budget is
+Triangle counts (full ENV, 2026-09-07 fix round): **LOD0 16.92 M, LOD1 7.67 M, LOD2 3.21 M** (the lead's budget is
 ~10 M at LOD1; the brief's original 3 M no longer holds now that the crowns are dense enough to be opaque). Terrain +
-water + rip-rap + backdrop + birds ≈ 0.19 M, shrubs 0.99 M, trees the rest. Per LOD0 tree: cypress 101 k, columnar
+water + rip-rap + backdrop + birds ≈ 0.19 M, shrubs 2.76 M (the shrubs have no LOD, so they cost the same at
+every level — the lever is `cover` in `make_shrub_mesh`), trees the rest. Per LOD0 tree: cypress 101 k, columnar
 cypress 99 k, pine 108 k, redwood 96 k, eucalyptus ~95 k, willow 82 k, broadleaf 64 k (LOD1 ≈ 0.35 x, LOD2 ≈ 0.02 x).
 `assets/environment.blend` is ~163 MB uncompressed (21 unique tree meshes dominate; instances share them).
 
@@ -292,10 +293,12 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 
 ## Previews and comparisons
 
-Fix round (2026-09-07): `renders/previews/environment/20260907_*_fix2_*.png` (Eevee, QA cams 01/02/03/05/06, ENV +
-linked ARCH, placeholder sun az 118.5 / el 7.4) and the composite for the lead
-**`renders/qa_comparisons/env_fix2_sheet.png`** — cam 01 render next to ref 169, and cam 02 / 03 / 05 / 06 next to
-refs 062 / 128 / 063 / 105. Foliage line-ups: `*_tree_lineup_LOD{0,1,2}.png` and `*_tree_lineup_hero120m.png`.
+Fix round (2026-09-07): `renders/previews/environment/*_fix2_*.png` and `fix3_cam01_1920.png` / `fix3_cam05_1920.png`
+(Eevee, QA cams, ENV + linked ARCH, placeholder sun az 118.5 / el 7.4). **The composite for the lead is
+`renders/qa_comparisons/env_fix_round_sheet.png`** — cam 01 (1920 px) next to ref 169, and cams 02 / 03 / 05 / 06 next
+to refs 062 / 128 / 063 / 105. `env_fix3_waterline.png` is the QA-01-2 waterline crop (render band / ref 169 same band /
+cam 05 shore from 60 m); `env_fix2_sheet.png` and `env_fix2_waterline.png` are the same views before the shore was
+densified, kept for the before/after. Foliage line-ups: `*_tree_lineup_LOD{0,1,2}.png` and `*_tree_lineup_hero120m.png`.
 Sky-through-the-bays test frames: `skytest_north.png`, `skytest_south.png` (transparent film; black = sky).
 The Phase 2 set is still there as `*_final*` / `env_final_*`; earlier rounds as `env_trees1..5_*`.
 
@@ -329,6 +332,10 @@ el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
   mesh); 100 m saves roughly another 2 M.
 - The OSM extract has no paths/roads (`_osm.json` contains only buildings and the two water polygons), so QA-01-19's
   "paths from OSM" is served by the satellite-derived path ribbons already baked into the terrain material zones.
+- **Hero foreground**: between the shore belt and the rotunda podium the peninsula is bare lawn, which reads bright and
+  empty in cam 01. In ref 169 the camera is lower and closer so the water reaches the podium and that lawn is not in
+  frame — this is the lead's QA-01-4 (shoreline at 86 % of frame height instead of 65-72 %). If the camera does not
+  move, ENV should add a planting band 9-18 m back from the water on the peninsula.
 - Wind-sculpting of the cypresses (leaning away from the westerlies) is only a 0–4.5° per-instance tilt; no
   per-instance weathering of bark or foliage beyond the library materials' own object-random.
 - Diagnostic camera `CAM_env_hall_from_colonnade` mostly sees the colonnade; a proper hall view needs a camera outside
