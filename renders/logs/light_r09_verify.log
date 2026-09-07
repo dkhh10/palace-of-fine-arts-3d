@@ -1,0 +1,6 @@
+00:00.321  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+02:40.969  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09_verify_01_hero_cycles.png'
+[r09] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend
+[r09] base exposure -2.3331 EV, look 'AgX - High Contrast', sun colour (1.0, 0.6073, 0.1933), A 2.5688 B 0.6027
+[r09] verify: look 'AgX - High Contrast', exposure -2.333, sun (1.0, 0.6073, 0.1933)
+[r09] -> r09_verify_01_hero_cycles.png (160.0s)

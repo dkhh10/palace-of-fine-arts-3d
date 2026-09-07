@@ -1,0 +1,21 @@
+00:00.382  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r09] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend
+[r09] base exposure -2.3891 EV, look 'AgX - Base Contrast', sun colour (1.0, 0.6073, 0.2577), A 2.5688 B 0.6027
+[r09] vault pass rig: sky 0.8, camboost 1.5, sun blue 0.75, look 'AgX - High Contrast', exposure -2.333
+[r09] fills: disk 7600 W, 8 vault emitters at 2400 W
+[r09] cam04 f0.40_v1.40_sp45: disk 3040 W, vault 3360 W each
+01:24.478  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09vault_f0.40_v1.40_sp45.png'
+[r09] -> r09vault_f0.40_v1.40_sp45.png (83.2s)
+[r09] cam04 f0.40_v2.20_sp45: disk 3040 W, vault 5280 W each
+02:45.950  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09vault_f0.40_v2.20_sp45.png'
+[r09] -> r09vault_f0.40_v2.20_sp45.png (81.5s)
+[r09] cam04 f0.40_v1.20_sp60: disk 3040 W, vault 2880 W each
+04:07.677  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09vault_f0.40_v1.20_sp60.png'
+[r09] -> r09vault_f0.40_v1.20_sp60.png (81.7s)
+[r09] cam04 f0.40_v2.00_sp60: disk 3040 W, vault 4800 W each
+05:29.232  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09vault_f0.40_v2.00_sp60.png'
+[r09] -> r09vault_f0.40_v2.00_sp60.png (81.6s)
+[r09] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit

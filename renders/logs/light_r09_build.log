@@ -1,0 +1,59 @@
+00:00.717  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_lamp_convention.exr'
+00:01.229  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.728  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:02.232  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.718  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:03.162  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:03.600  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:04.039  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:04.491  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:04.986  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:05.525  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+[light_build] moment=morning PST -> azimuth 118.49 deg, elevation 7.36 deg (sun_position.sun_calc (NOAA))
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[light_build] LIGHT_rotunda_bounce: disk r 18.0 m at z 7.5, 1140.0 W, up-facing (radiance 0.357 sky units)
+[light_build] LIGHT_rotunda_vault_bounce: 8 x 12.5x4.0 m up-facing rectangles at r 17.5 z 13.0, 3960.0 W each (radiance 25.210 sky units)
+[light_probes] LIGHTPROBE_rotunda: (20, 20, 14) = 5600 samples, spacing 2.8 x 2.8 x 2.6 m
+[light_probes] LIGHTPROBE_colonnade: (48, 20, 6) = 5760 samples, spacing 4.8 x 4.8 x 3.2 m
+[light_build] glare sockets: {'Type': 'Bloom', 'Quality': 'High', 'Threshold': 1.0, 'Smoothness': 0.2, 'Maximum': 10.0, 'Strength': 1.0, 'Saturation': 0.9, 'Size': 0.5, 'Streaks': 4, 'Streaks Angle': 0.0, 'Iterations': 3, 'Fade': 0.9, 'Color Modulation': 0.25, 'Jitter': 0.0, 'Kernel Data Type': 'Float', 'Kernel': 0.0}
+[light_build] LIGHT_sun energy 67.32 W/m2 colour (1.000, 0.607, 0.193) angle 0.0093 rad
+[light_build] exposure -4.08 EV (18 % card) + bias +1.75 = -2.33 EV, look AgX - High Contrast
+[light_build] haze colour (scene units) (5.321, 3.739, 1.96); bloom threshold 4.5 scene units
+[light_flythrough] path 278.1 m, 720 frames @ 24 fps = 30 s, mean 9.3 m/s
+[light_flythrough] timing table:
+   frame    1  t= 0.00s  hero_start         arc 0.000  pos (-16.0, 113.9, 1.0)
+   frame   37  t= 1.50s  hero_start         arc 0.000  pos (-16.0, 113.9, 1.0)
+   frame  200  t= 8.29s  shore_se           arc 0.270  pos (58.0, 112.0, 3.0)
+   frame  330  t=13.71s  colonnade_end      arc 0.506  pos (79.0, 54.0, 6.0)
+   frame  580  t=24.12s  colonnade_out      arc 0.839  pos (37.0, -22.5, 5.5)
+   frame  700  t=29.12s  rotunda_centre     arc 1.000  pos (0.0, 1.0, 2.5)
+   frame  720  t=29.96s  rotunda_centre     arc 1.000  pos (0.0, 1.0, 2.5)
+Info: Saved as "lighting.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend
+[light_build] done in 5.2s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
