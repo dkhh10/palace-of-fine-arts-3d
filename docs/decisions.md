@@ -63,3 +63,17 @@ Format: date · decision · why · consequences. Newest at the bottom.
   two agents independently; recorded in CLAUDE.md and tech notes. Hero camera moved from r = 115 m to the OSM shoreline
   (r = 101 m, (-14.1, 100.0), lens 27 mm) so water reaches the frame bottom as in the user image and ref 169; cam 02 pulled
   3 m onto land at (-30, 35).
+
+## 2026-09-07 · Phase 2 gate
+
+- **First master.blend assembled** (110 MB, 3840 objects, 8.5 M tris at viewport LOD1) by APPENDING all asset
+  collections (not linking): materials can then be remapped to the library by name and LODs toggled per object.
+  master.blend is a build product (1 min from `build_master.py`) and is gitignored.
+- **Ornament instancing**: 336 sockets → 12 types instanced with variant by seed (attic panels by design letter);
+  urn sockets pick `ORN_urn_niche` when size_hint ≤ 2 m; inner figures rotated 180° (ARCH socket +Y = facing,
+  ORN asset +Y = back); drum band arrayed 113× around the drum. Frieze runs (28) not instanced yet (ARCH models the
+  mouldings as geometry; no rinceau unit exists).
+- **Lesson**: setting `matrix_world` on freshly created objects before they are evaluated silently left LOD0/LOD2
+  copies at the origin; instances are now placed with decomposed location/rotation/scale.
+- **Pending for Phase 3**: materials library (agent running); ARCH maiden sockets must move to the box base
+  (ORN figures stand at box-base level with the rim 3.55 m above their feet); QA round 1 scores and defects.
