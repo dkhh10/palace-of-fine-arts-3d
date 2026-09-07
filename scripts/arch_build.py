@@ -599,11 +599,13 @@ def build_vault_coffers(name, k, X, n, coll):
         if dr > 0.1:
             holes.append([(cx + dr, tm), (cx, tm + dr * 1.02), (cx - dr, tm), (cx, tm - dr * 1.02)])
     outline = [(0.0, 0.0), (arc, 0.0), (arc, depth), (0.0, depth)]
-    # QA-02-9 / QA-01-15: the rib plate stands proud of the soffit, so its thickness IS the coffer depth. It was
-    # 0.12 m, under the 0.15 m acceptance ("coffer depth >= 15 cm casting visible shadow at cam04"); 0.20 m gives
-    # the box a readable shadow at cam04 without eating the 0.33 m diamond coffers between the rows.
+    # QA-02-9 / QA-01-15 / QA-03-8: the rib plate stands proud of the soffit, so its thickness IS the coffer depth.
+    # 0.12 -> 0.20 (round 1) -> 0.38 now, which is 0.20 x the 1.9 m octagon width, the depth-to-width ratio measured
+    # off ref 083 (see arch_params). The last 0.10 m at the room face steps out by VAULT_COFFER_STEP so each coffer
+    # has an outer register: at cam04 the vaults are seen near edge-on and a single straight reveal showed nothing.
     obj = L.plate(name, outline, holes, P.VAULT_COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_INNER,
-                  part_type="wall", bevel=False, smooth=False)
+                  part_type="wall", bevel=False, smooth=False,
+                  step=P.VAULT_COFFER_STEP, step_depth=P.VAULT_COFFER_STEP_DEPTH)
     me = obj.data
     for v in me.vertices:
         s = v.co.x / r_mean            # angle 0..pi
@@ -825,8 +827,10 @@ def build_ceiling(C):
             trap.append(rot2((12.9 * math.cos(a), 12.9 * math.sin(a)), an))
         holes.append(trap)
         holes.append([add2(mul2(v, 12.0), (0, 0)), add2(mul2(v, 12.9), rot2((0.0, 0.8), av)), add2(mul2(v, 12.9), rot2((0.0, -0.8), av))])
+    # QA-03-8: 0.30 -> 0.55 deep with a 0.10 m outer register over the last 0.13 m (depth / width 0.20, ref 083).
     ribs = L.plate("ARCH_rotunda_ceiling_ribs", octo, holes, P.COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), C,
-                   mat=M_PLASTER, part_type="ceiling", bevel=False)
+                   mat=M_PLASTER, part_type="ceiling", bevel=False,
+                   step=P.COFFER_STEP, step_depth=P.COFFER_STEP_DEPTH)
     me = ribs.data
     for vtx in me.vertices:
         vtx.co.z += sz(vtx.co.x, vtx.co.y)
@@ -1274,10 +1278,12 @@ if PREVIEW:
     cams = None
     if "--hero-only" in ARGS:
         cams = ["01_lagoon"]
+    if "--cams" in ARGS:      # e.g. --cams 01,03  (substrings matched against the QA camera names)
+        cams = ARGS[ARGS.index("--cams") + 1].split(",")
     tag = "" if "--tag" not in ARGS else ARGS[ARGS.index("--tag") + 1]
     outs = common.render_previews("architecture", cameras=cams, samples=16, tag=tag)
     # extra: an up-looking ceiling camera (the QA cam 04 rotation (0,0,pi) looks down; reported to the lead)
-    if not cams:
+    if not cams or any("04" in c for c in cams):
         cd = bpy.data.cameras.new("CAM_arch_ceiling_up")
         cd.lens, cd.sensor_width, cd.sensor_fit, cd.clip_end = 15.0, 36.0, "HORIZONTAL", 5000.0
         co = bpy.data.objects.new("CAM_arch_ceiling_up", cd)

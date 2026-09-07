@@ -92,8 +92,19 @@ CEILING_R = 15.0          # base ring radius of the coffered saucer (catalog: ~3
 CEILING_RISE = 5.0
 CEILING_SPHERE_R = (CEILING_R ** 2 + CEILING_RISE ** 2) / (2 * CEILING_RISE)   # 25.0
 CEILING_SPHERE_CZ = CEILING_RING_Z + CEILING_RISE - CEILING_SPHERE_R
-COFFER_DEPTH = 0.3        # rotunda saucer-ceiling coffers (rib plate hangs this far below the field)
-VAULT_COFFER_DEPTH = 0.20  # QA-02-9: barrel-vault soffit ribs stand this far proud (was 0.12, under the 0.15 acceptance)
+# QA-03-8 (polish round 2): coffer depth measured from ref 083. A ring-3 trapezoid panel near the left edge of the
+# frame (x 480-700, y 645-665) shows an 18 px splayed reveal on a ~220 px / ~4.5 m panel = 8.2 % of the panel width,
+# at an off-axis angle of atan(9.5 / 25) = 20.8 deg, so the reveal implies a depth of 0.082 * 4.5 / tan(20.8) = 0.95 m,
+# i.e. a depth-to-width ratio of 0.21 (the Pantheon's coffers are 0.23). Applied as 0.20 x the mean coffer width:
+# saucer coffers average ~2.75 m across -> 0.55 m; barrel-vault octagons are 1.9 m across -> 0.38 m.
+# The last 0.13 m at the room face steps out by COFFER_STEP so each coffer has a two-register reveal that catches the
+# soffit lights instead of one flat inset outline. Was 0.30 / 0.20 with no step (read as flat at cam04).
+COFFER_DEPTH = 0.55       # rotunda saucer-ceiling coffers (rib plate hangs this far below the field)
+COFFER_STEP = 0.10        # the room-side register of a saucer coffer is this much wider all round
+COFFER_STEP_DEPTH = 0.13  # ... over this much of the depth
+VAULT_COFFER_DEPTH = 0.38  # barrel-vault soffit ribs stand this far proud (0.12 -> 0.20 in round 1 -> 0.38 now)
+VAULT_COFFER_STEP = 0.07
+VAULT_COFFER_STEP_DEPTH = 0.10
 
 # ----------------------------------------------------------------------------- podium / rostra (OSM lobes, section 3b; DERIVED widths)
 PODIUM_LOBE_R = 27.3      # outer radius of the podium block around each pier (OSM lobes r 27-28)
@@ -142,7 +153,22 @@ WINGS = {
 
 # ----------------------------------------------------------------------------- misc
 FLUTES = 24
-FILLET_FRACTION = 0.25    # fillet width / flute width
+FILLET_FRACTION = 0.25    # fillet width / flute width (sheet, ornament catalog row 5)
+# QA-03-4 / QA-03-9: the flute hollow is a segmental circular arc, sampled at equal arc angles so the two samples
+# nearest each fillet sit close to the arris and the flute wall there is steep (~72 deg off the tangent at LOD1).
+# The old half-sine profile with evenly spaced samples never exceeded 56 deg, so the hollows caught almost full sun
+# and the shafts read smooth at hero scale. Half-angle 80 deg -> depth / flute width = (1-cos80)/(2 sin80) = 0.420,
+# which for a 24-flute 2.46 m shaft is a 0.108 m hollow (ref 054, 128: flutes read as narrow hard dark lines).
+FLUTE_ARC_HALF_DEG = 80.0
+# Attic base (sheet ornament catalog row 4: "base h 1.0, torus-scotia-torus Attic base on a square plinth,
+# plinth square = 1.15 x shaft D"). Fractions of the height above the plinth, bottom to top; ref 113 shows the
+# bold carved lower torus, a plain scotia and a smaller upper torus.
+BASE_PLINTH_FRACTION = 0.20
+BASE_COURSES = (("torus", 0.34), ("fillet", 0.04), ("scotia", 0.22),
+                ("fillet", 0.04), ("torus", 0.28), ("apophyge", 0.08))
+BASE_LOWER_TORUS_R = 1.16   # x shaft radius, capped so the torus stays inside the plinth
+BASE_UPPER_TORUS_F = 0.80   # upper torus projection as a fraction of the lower torus projection
+BASE_SCOTIA_R = 0.975       # scotia throat, x shaft radius
 BEVEL_WIDTH = 0.03
 BEVEL_SEGMENTS = 2
 
