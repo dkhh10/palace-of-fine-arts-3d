@@ -110,7 +110,8 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
   waiting on stdin, a modal operator, or an interactive prompt; never launch Blender without `--background`;
   do not start a new Blender while your previous one is still running (`pgrep -fl "MacOS/Blender"` first).
 - If a run wedges, kill it (`pkill -f "MacOS/Blender --background"` for your own runs) before starting another.
-- Any headless Blender whose CPU time stops advancing for more than 5 minutes gets killed. `scripts/blender_watchdog.sh` does this
+- "Idle" means CPU time not increasing for more than 5 minutes, never "no log output": a bake or a Cycles render
+  can be silent for minutes while working. Never kill a Blender process that is using CPU. Such idle processes get killed. `scripts/blender_watchdog.sh` does this
   (one pass, or `--loop`); the lead keeps the loop running during agent waves. Do not depend on it: exit cleanly.
 - Keep memory in mind: one full-scene render per agent at a time, low samples, and `bpy.ops.wm.quit_blender()` /
   natural script end, never `input()` or `time.sleep` loops inside Blender.
