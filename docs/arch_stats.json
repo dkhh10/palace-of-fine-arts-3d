@@ -1,0 +1,37 @@
+{
+ "sockets": {
+  "capital_rotunda": 16,
+  "attic_figure": 8,
+  "urn": 40,
+  "finial": 9,
+  "frieze_run": 28,
+  "attic_panel": 8,
+  "keystone": 24,
+  "drum_band": 1,
+  "capital_inner": 8,
+  "inner_figure": 8,
+  "rosette_ceiling": 24,
+  "capital_colonnade": 114,
+  "maiden": 48
+ },
+ "wings": {
+  "north": {
+   "columns": 56,
+   "clusters": 4,
+   "arc_length": 99.24728552091514,
+   "pylons": 2
+  },
+  "south": {
+   "columns": 58,
+   "clusters": 4,
+   "arc_length": 102.2123518435804,
+   "pylons": 2
+  }
+ },
+ "tris_LOD0": 2711978,
+ "tris_LOD1": 868730,
+ "tris_LOD2": 533114,
+ "tris_placeholders": 75608,
+ "objects": 2069,
+ "build_seconds": 3.7
+}
