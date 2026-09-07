@@ -278,3 +278,31 @@ about 46 % too dark relative to the concrete, and it is much less warm (hue 28.0
 sun, so this is albedo, not lighting: **hand to materials** — `MAT_dome_membrane` needs to be lifted and warmed relative
 to `MAT_concrete_ochre` until the ratio lands near 1.3. The lighting side of QA-01-20 (no blow-out, correct roughness
 response) is closed.
+
+## 10. QA-01-12 — exposure, sky colour and haze
+
+Baseline (master built from main `e84b67e`, Cycles 48 spp hero) against ref 169, same regions:
+
+| region | render (baseline) | ref 169 | verdict |
+|---|---|---|---|
+| sunlit attic (south corner) | 182.5, 136.9, 93.7 · Y 0.287 · hue 29.2 | 208.5, 164.5, 93.4 · Y 0.410 · hue 37.1 | **30 % dark**, hue -7.9 deg |
+| sunlit attic (centre band) | 179.4, 135.2, 90.2 · Y 0.278 | 232.7, 189.1, 98.6 · Y 0.546 | 49 % dark |
+| sky top | 143.1, 169.3, 196.5 · Y 0.384 · sat 0.272 | 116.0, 174.4, 226.1 · Y 0.396 · sat 0.487 | luminance **already within 3 %**; saturation 44 % low (B/R 1.37 vs 1.95) |
+| far colonnade | 166.4, 182.7, 196.0 · Y 0.459 | 107.4, 90.4, 72.1 · Y 0.110 | (different framing; used only for the haze gradient) |
+
+The important correction to the defect text: **the sky was not 10 % dark, it was desaturated.** At `SKY_CAMERA_BOOST`
+1.6 the visible sky sat high enough in AgX's highlight roll-off to lose its blue. So the fix is not "brighten the sky";
+it is "raise the exposure for the stone and take the boost back out of the sky, then put the saturation back with a
+node that only camera and glossy rays see".
+
+Changes in `light_build.py` (all four are single named constants):
+
+| constant | was | now | why |
+|---|---|---|---|
+| `EXPOSURE_BIAS` | +0.50 EV | **+1.10 EV** | closes about two thirds of the sunlit-stone gap. **Assumption stated for the lead: the materials agent is warming the concrete albedo by a few percent concurrently, so this deliberately leaves ~0.1-0.2 EV of headroom rather than chasing the whole 30 %.** If materials overshoots, drop this constant, not the albedo. |
+| `SKY_CAMERA_BOOST` | 1.60 | **1.50** | the exposure lift alone would push the sky ~25 % over ref 169; the boost is trimmed so the sky lands back on it. Glossy rays keep it, so the lagoon still reflects a bright sky. |
+| `SKY_CAMERA_SATURATION` | — (new) | **1.20** | Hue/Saturation node in the world, driven by `Is Camera Ray + Is Glossy Ray`, so the *lighting* keeps the physical sky colour while the *visible* sky gets its blue back. Implemented in `light_calibrate.make_sky_world(camera_saturation=…)`. |
+| `SKY["aerosol_density"]` | 1.0 | **1.6** | Mie extinction reddens the direct beam (lamp colour 1.000/0.607/0.258 vs 1.000/0.616/0.269) and warms the sun-side horizon — the physical way to buy back the hue instead of tinting the lamp by hand. The greying it causes in the anti-solar sky is exactly what `SKY_CAMERA_SATURATION` undoes. |
+| `MIST` depth | 1500 m | **700 m** | at 1500 m the mist pass reached only 0.11 at 200 m, so the compositor haze was 6 % on the colonnade ends. 700 m gives mist 0.24 at 200 m. |
+| `COMP["haze_strength"]` | 0.55 | **0.85** | with the shorter mist depth this is 12 % haze at 110 m, 24 % at 200 m (the colonnade ends), 67 % at 500 m (the backdrop). |
+| `COMP["haze_warmth"]` | (1.06, 1.0, 0.88) | **(1.22, 1.0, 0.74)** | ref 169's veil behind the wings is distinctly warm, not neutral. |
