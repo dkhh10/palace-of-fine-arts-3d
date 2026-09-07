@@ -105,7 +105,8 @@ print(f"[mat_scene] view exposure {scene.view_settings.exposure - EV:.4f} {EV:+.
 
 JOBS = [("waterline", "CAM_mat_scene_waterline", (1600, 900)),
         ("stone", "CAM_mat_scene_stone", (1600, 900)),
-        ("hero", "CAM_qa_01_lagoon_hero", (1920, 1080))]
+        ("hero", "CAM_qa_01_lagoon_hero", (1920, 1080)),
+        ("ceiling", "CAM_qa_04_rotunda_ceiling", (1280, 720))]
 WANT = str(arg("--cams", "waterline,stone,hero")).split(",")
 
 for short, name, res in JOBS:
