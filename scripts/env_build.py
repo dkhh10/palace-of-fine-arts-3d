@@ -277,11 +277,11 @@ def build_riprap():
 
 
 # ----------------------------------------------------------------------------- shrubs and reeds
-def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=10):
+def make_shrub_mesh(name, seed, radius=0.8, height=0.9, cards=14):
     """Low-poly shrub: a squashed noisy icosphere plus crossed leaf cards."""
     rnd = random.Random(seed)
     bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=radius)
+    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=radius * 0.72)
     for v in bm.verts:
         n = L.noise.noise(v.co * 2.6 + Vector((seed, seed, 0)))
         v.co = v.co * (1.0 + 0.28 * n)
@@ -346,6 +346,8 @@ def build_shrubs():
         d = LAGOON_FIELD.signed(x, y)
         if d < min_shore or d > max_shore:
             return False
+        if math.hypot(x + 16.0, y - 113.9) < 24.0:      # hero camera foreground stays clean (user image, ref 169)
+            return False
         if math.hypot(x, y) < APRON_R + 1.0:
             return False
         if any(L.point_in_poly(x, y, L.offset_polygon(p, 2.5)) for p in COLONNADE_ROOFS):
@@ -371,7 +373,7 @@ def build_shrubs():
             continue
         if rnd.random() < 0.45:
             placements["shore"].append(((x + rnd.uniform(-1, 1), y + rnd.uniform(-1, 1), terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.7, 1.6)))
-        if rnd.random() < 0.7 and math.hypot(x + 16.0, y - 113.9) > 14.0:   # not in front of the hero camera
+        if rnd.random() < 0.7 and math.hypot(x + 16.0, y - 113.9) > 24.0:   # not in front of the hero camera
             rx, ry = x + rnd.uniform(-1.2, 0.6), y + rnd.uniform(-1.2, 0.6)
             reed_pl.append(((rx, ry, terrain_height(rx, ry) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.7, 1.4)))
     # foundation planting along the colonnade fronts and the islet
@@ -502,7 +504,18 @@ def main():
     build_lamp_posts(paths)
     if not NO_TREES:
         import env_trees
-        env_trees.build_all(SUB, terrain_height, LAGOON_FIELD, ISLET_FIELDS, quick=QUICK)
+        plan = env_trees.build_all(SUB, terrain_height, LAGOON_FIELD, ISLET_FIELDS, quick=QUICK,
+                                   colonnade_polys=COLONNADE_ROOFS, hall_poly=HALL)
+        notes = common.DOCS / "environment_notes.md"
+        if notes.exists():
+            txt = notes.read_text()
+            a, b = "<!-- PLAN_TABLE_START -->", "<!-- PLAN_TABLE_END -->"
+            if a in txt and b in txt:
+                head, rest = txt.split(a, 1)
+                _, tail = rest.split(b, 1)
+                txt = head + a + "\n" + env_trees.plan_markdown(plan) + "\n" + b + tail
+                notes.write_text(txt)
+                log("planting plan table written into docs/environment_notes.md")
     if not NO_BACKDROP:
         import env_backdrop
         env_backdrop.build_all(SUB, terrain_height, SITE, HALL)

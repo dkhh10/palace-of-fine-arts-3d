@@ -12,11 +12,20 @@ import common
 SUN_AZ, SUN_EL = 118.5, 7.4
 
 
-def build_scene():
-    bpy.ops.wm.read_homefile(use_empty=True)
-    common.wipe_scene()
-    scene = common.setup_scene()
-    env = common.link_collection(common.ASSET_FILES["ENV"], "ENV", link=True)
+def build_scene(local=False, lod=0):
+    """local=True opens environment.blend itself (objects editable) so any LOD can be rendered: --local --lod=1."""
+    if local:
+        bpy.ops.wm.open_mainfile(filepath=str(common.ASSET_FILES["ENV"]))
+        scene = common.setup_scene()
+        for obj in bpy.data.objects:
+            if obj.name.startswith("ENV_tree_") and "_LOD" in obj.name and obj.name.split("_")[-2].isdigit():
+                obj.hide_render = not obj.name.endswith(f"_LOD{lod}")
+        env = bpy.data.collections.get("ENV")
+    else:
+        bpy.ops.wm.read_homefile(use_empty=True)
+        common.wipe_scene()
+        scene = common.setup_scene()
+        env = common.link_collection(common.ASSET_FILES["ENV"], "ENV", link=True)
     if env is None:
         raise SystemExit("assets/environment.blend has no ENV collection - run env_build.py first")
     arch = common.ASSET_FILES["ARCH"]
@@ -27,8 +36,16 @@ def build_scene():
         ph = common.link_collection(common.ASSETS / "placeholder_blockout.blend", "PLACEHOLDER", link=False)
         if ph:
             for obj in list(ph.all_objects):
-                if obj.name.startswith(("PH_ground", "PH_lagoon")):
+                if obj.name.startswith(("PH_ground", "PH_lagoon", "PH_b302")):   # ENV owns ground, water, hall
                     bpy.data.objects.remove(obj, do_unlink=True)
+    # render one tree LOD only (object flags already do this for LOD0; excluding the other collections as well)
+    def _exclude(layer_coll):
+        for child in layer_coll.children:
+            n = child.name
+            if n.startswith("ENV_tree_instances_LOD"):
+                child.exclude = not n.endswith(f"LOD{lod}")
+            _exclude(child)
+    _exclude(scene.view_layers[0].layer_collection)
     # sun
     lc = common.rebuild_collection("PREVIEW_LIGHT")
     sun = bpy.data.lights.new("PREVIEW_sun", "SUN")
@@ -73,9 +90,61 @@ def sky_rotation_for_azimuth(az_deg):
     return az_deg - 90.0
 
 
-def render(tag="", cams=None, samples=16, engine="EEVEE"):
-    build_scene()
+def render(tag="", cams=None, samples=16, engine="EEVEE", local=False, lod=0):
+    build_scene(local=local, lod=lod)
     return common.render_previews("environment", cameras=cams, samples=samples, tag=tag, engine=engine, cycles_samples=48)
+
+
+EXTRA_CAMS = [   # diagnostic views (not QA cameras): name, location, target, lens
+    ("CAM_env_hall_from_rotunda", (0.0, 12.0, 6.0), (-10.0, -70.0, 12.0), 24.0),
+    ("CAM_env_north_wing_from_water", (-60.0, 60.0, 2.0), (-50.0, -20.0, 12.0), 28.0),
+    ("CAM_env_east_shore_high", (-40.0, 170.0, 25.0), (0.0, 0.0, 15.0), 35.0),
+]
+
+
+def render_extra(tag="extra", samples=12, local=False, lod=0):
+    scene = build_scene(local=local, lod=lod)
+    common.configure_eevee(scene, samples=samples)
+    scene.render.resolution_x, scene.render.resolution_y = 1280, 720
+    outs = []
+    ts = common.timestamp()
+    for name, loc, target, lens in EXTRA_CAMS:
+        cam = bpy.data.cameras.new(name)
+        cam.lens = lens
+        cam.clip_end = 5000
+        co = bpy.data.objects.new(name, cam)
+        co.location = loc
+        co.rotation_euler = common.lookat_rotation(loc, target)
+        scene.collection.objects.link(co)
+        scene.camera = co
+        out = common.RENDERS / "previews" / "environment" / f"{ts}_{name.replace('CAM_env_', '')}_{tag}.png"
+        scene.render.filepath = str(out)
+        bpy.ops.render.render(write_still=True)
+        print("[env_preview] wrote", out)
+        outs.append(out)
+    return outs
+
+
+def render_topdown(extent=320.0, centre=(0.0, 20.0), res=1024, tag="topdown", local=False, lod=0):
+    """Orthographic plan view (image up = north = -X, image right = east = +Y) for checking the planting plan
+    against reference/plans/satellite_z18.png (0.472 m/px, rotunda at px 718.6, 633.8)."""
+    scene = build_scene(local=local, lod=lod)
+    cam = bpy.data.cameras.new("CAM_topdown")
+    cam.type = "ORTHO"
+    cam.ortho_scale = extent
+    cam.clip_end = 2000
+    co = bpy.data.objects.new("CAM_topdown", cam)
+    co.location = (centre[0], centre[1], 400.0)
+    co.rotation_euler = (0.0, 0.0, math.pi / 2)
+    scene.collection.objects.link(co)
+    scene.camera = co
+    common.configure_eevee(scene, samples=8)
+    scene.render.resolution_x = scene.render.resolution_y = res
+    out = common.RENDERS / "previews" / "environment" / f"{common.timestamp()}_{tag}.png"
+    scene.render.filepath = str(out)
+    bpy.ops.render.render(write_still=True)
+    print("[env_preview] wrote", out)
+    return out
 
 
 if __name__ == "__main__":
@@ -84,6 +153,12 @@ if __name__ == "__main__":
     samples = 16
     tag = ""
     engine = "EEVEE"
+    local = "--local" in args
+    lod = 0
+    for a in args:
+        if a.startswith("--lod="):
+            lod = int(a.split("=")[1])
+            local = True
     for i, a in enumerate(args):
         if a == "--cams":
             cams = args[i + 1].split(",")
@@ -93,5 +168,10 @@ if __name__ == "__main__":
             tag = args[i + 1]
         elif a == "--cycles":
             engine = "CYCLES"
-    outs = render(tag=tag, cams=cams, samples=samples, engine=engine)
-    print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")
+    if "--topdown" in args:
+        render_topdown(local=local, lod=lod)
+    elif "--extra" in args:
+        render_extra(tag=tag or "extra", local=local, lod=lod)
+    else:
+        outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod)
+        print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")
