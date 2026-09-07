@@ -395,6 +395,141 @@ photograph too.
 LOD1 fidelity: the widest LOD1 leaf card is 0.105 x 2.2 x 1.45 = 33 cm, which at the nearest shore (60 m, 20 mm
 lens, 1920 px) subtends ~6 px - at QA-01-7's limit, and only ever in the viewport.
 
+## Polish round 4 (QA round 03 defects) — 2026-09-08
+
+Composite: **`renders/qa_comparisons/env_r4_sheet.png`** (before | after | reference for QA-03-11 / -10 / -13 with
+the numbers on each row). Previews: `renders/previews/environment/20260907_2358*_r4g.png` (cams 01 at 1920x1080,
+03 / 05 / 06 at 1280x720; Eevee, ENV + linked ARCH, placeholder sun az 118.5 / el 7.4).
+
+**Read the luminance numbers with care.** An ENV preview is lit by `env_preview`'s placeholder sun, not by the
+shipped rig, so it cannot be compared with a master render's absolute luminance. Everything below that ENV
+actually controls is therefore measured as *coverage* — what fraction of a QA box resolves to foliage rather than
+architecture — by ray-casting ENV + ARCH (`env_sightlines.py -- --coverage`, boxes in `COVERAGE_BOXES`).
+
+### QA-03-11 — cam 06 past 150 m ("a flat olive plane with five grey box houses; a game skybox")
+
+New module **`scripts/env_city.py`**. `reference/plans/_osm.json` has 294 building footprints with heights and
+street names but **no highway ways at all**, so the street grid is derived from the buildings:
+
+| what | measurement | value used |
+|---|---|---|
+| grid orientation | total footprint-edge length binned by angle mod 90 deg: 9.6 km at 9 deg, 4.4 km at 8 deg, next peak 1.3 km | `GRID_ANG` 8.5 deg |
+| N-S street pitch | line fits through the Lyon / Baker / Broderick centroid groups: 89 and 136 m apart across | `PITCH_V` 137 m, phase 145 (Baker) |
+| E-W street pitch | Marina Blvd / Jefferson / Beach / North Point / Bay / Francisco: 83 / 95 / 103 / 103 / 84 m | `PITCH_U` 95 m, phase -119 (Jefferson) |
+| where buildings exist | footprints binned by azimuth (0 = +X south, 90 = +Y east): 24-29 per 15 deg between 15 and 165 deg out to r 350; 0-6 per bin between 250 and 355 (Presidio: Thornburg / Edie / Birmingham / Gorgas / O'Reilly / Letterman / Mason); nothing between 170 and 250 (Marina Green, Crissy Field, the bay) | `RESIDENTIAL_AZ` / `PRESIDIO_AZ` / `OPEN_AZ` |
+
+cam 06 puts its horizon crop (rows 0-220) on the ground at r 115-413 m, azimuth 275-357 deg plus a sliver at
+0-15 — i.e. mostly the **Presidio**, not the Marina. That is why the Presidio side got as much work as the grid.
+What is built: a city ground mesh (2648 quads, r 178-720 m) carrying block yards in lawn / dry grass / soil,
+11 m asphalt carriageways with 3.6 m gravel sidewalks on every grid street, Palace Drive as a loop around the
+grounds, five Presidio boulevards (Richardson / Lombard / Lincoln / Presidio Blvd / the Main Post approach), and
+the theatre car park west of the hall (the shadowed band 125-200 m down-sun of the palace, which was the bare
+"olive plane" of the middle distance); 913 synthesised Marina lots in 252 run objects (7.5 m x 15 m lots, four to
+an object so the library material's per-object random gives row-house colour runs, 22 % flat-roofed apartment
+blocks, hip and gable, tile and membrane roofs) outside the OSM extract at r 320-620 m; 97 Presidio buildings in
+six clusters (Lombard Gate, Letterman, two Main Post ranks, the cavalry stables, the Crissy hangars), one object
+each; and 1822 far canopy crowns in 4 joined objects.
+
+The canopy took three passes to get right and the log is worth keeping: a single smooth ellipsoid per crown read
+as a **bright green boulder** at 250-400 m (nothing broke the highlight, nothing self-shadowed), and a subdiv-1
+icosphere read as a faceted crystal. The shipped crown is a cluster of 3-5 offset lobes (`_canopy_mesh`), which
+lets the library material's 9 m Voronoi clumps land *inside* one crown. Density is also easy to overdo: the first
+tuning buried every backdrop building.
+
+Measured on the 1280x720 aerial, round 03 master panel vs the ENV round-4 preview:
+
+| test (QA-03-11) | round 03 | round 4 | target |
+|---|---|---|---|
+| horizon crop luminance std-dev | 15.5 | **30.5** | structure, not a flat plane |
+| rotunda / far-shore contrast | 1.15 : 1 | **1.45 : 1** | >= 1.5 : 1 (the rest is lighting's mist) |
+| building volumes resolved in the crop (ray-cast, 3 px grid) | ~5 by QA's count | **37 objects** (25 wall + 12 roof; the fill runs carry 4 lots each, so >= 60 volumes) | >= 30 |
+| distinct materials in the crop | 1-2 | **13** | >= 3 colours |
+| ground materials in the crop | lawn only | lawn 2821 / soil 996 / dry 720 / asphalt 488 / gravel 83 samples | paths readable |
+
+### QA-03-10 / QA-03-13 — frame-band relief
+
+Both defects are stated in *frame* coordinates, so they are now enforced in frame coordinates by
+`env_trees.frame_band_relief`, which runs **after** `shadow_relief` so the sun pass cannot push a crown back in.
+A tree only offends if it stands between the camera and the subject; for the hero that is decided by an exact
+**segment-crossing test against the colonnade polygons** (`_crosses`), not by a radius about `ARC_CENTRE` — the
+first attempt used radius 93 m and mis-sorted the whole first screen row, because `roof306` runs r 68.7-105.5 m
+about that centre (the end pylon sticks out) and it threw three screen trees *in front of* the wing.
+
+* `_qa_01_` band x 0.031-0.205, y 0.40-0.60. It stops at 0.205, not at QA's 0.292, because ref 169 and the user
+  image both have a conifer group at x 0.19-0.29 — that is composition, not a defect.
+* `_qa_05_` band x 0.235-0.780, y 0.02-0.66 (the rotunda body). Not down to 0.86: the 7-9 m willows and
+  broadleaves of the peninsula bed top out at y 0.67-0.69 and belong in the picture. The first version guarded to
+  0.86 and threw them 42-48 m away.
+
+Three trees moved: the eucalyptus at (59.0, 14.6) 30 m out to (88.7, 18.8) — behind the wing — and the two "C"
+group trees 2 m each. The user-image cypress spires also went **26 / 24 m -> 16 / 13 m** and the small broadleaf
+13 -> 9 m: in the user image those spires top out at the colonnade cornice, they are not 26 m columns.
+
+| box | round 03 | round 4 | test |
+|---|---|---|---|
+| cam 01 left (south) wing, foliage coverage | 43.4 % | **40.0 %** | as low as ref 169's own conifer group allows |
+| cam 01 left wing, architecture coverage | 56.6 % | **60.0 %** | — |
+| cam 05 rotunda silhouette, foliage | — | **5.1 %** (73.7 % architecture) | no crown inside the silhouette |
+| cam 05 podium / Greek-key band box | — | **81.4 % architecture visible** | >= 60 % of the rotunda width |
+
+The remaining foliage in the hero band is the E1/E2 redwood screen seen *through the colonnade bays* — ref 169 has
+the same thing (dark fraction below lum 60: render 0.25, ref 0.28). The band's luminance ratio is set by the light
+rig: **the lead should re-measure `env_measure.py` left_wing on the merged master**, not on an ENV preview.
+
+### QA-03-14 — the shore shrub row
+
+The row was not evenly spaced by accident: round 03 clamped every shrub inside r = 54 m to *exactly* `ROSTRA_H`
+= 1.2 m, so the QA-02-13 fix was what flattened the silhouette. The cap is now drawn per instance from
+**`ROSTRA_H_RANGE` (0.42-1.20 m)** and applied to the source mesh's real z extent across all three LODs times the
+instancing z jitter — round 03's "1.2 m" shrubs actually measured **1.87 m** in the file, because the mound meshes
+overshoot their nominal height and the LOD1/LOD2 meshes are taller still (wider cards). A ~11 m noise gate also
+opens and closes the belt so the gaps are metres long rather than Poisson noise, and the base scale range went
+(0.72, 1.55) -> (0.58, 1.80) x (0.85, 1.18).
+
+Measured with `env_sightlines.py -- --shrubs` over the world box (-30, 20) - (30, 60), the ground under QA's crop
+(700 640 1200 720):
+
+| test (QA-03-14 / QA-03-13) | round 03 | round 4 | target |
+|---|---|---|---|
+| size spread (p90 / p10 height) | ~1.5 : 1 | **2.51 : 1** | >= 2 : 1 |
+| nearest-neighbour spacing sd / mean | — | **62 %** | >= 40 % |
+| tallest shrub inside r = 54 m | 1.87 m | **1.13 m** | <= 1.2 m |
+| warm dry fraction of the belt | 30 % | **34 %** | >= 20 % |
+
+### QA-03-9 (environment share) — the cam 03 ground and the near foliage
+
+* The colonnade walk now has bands instead of one gravel field: gravel inside the colonnade footprint + 2 m, a
+  **soil planting bed from +2 to +5.5 m** (where the foundation shrubs stand), a **1.5 m soil verge along every
+  path**, then lawn. All four are CDT constraints, so the edges are clean rather than sampled.
+* No shrub is placed within **17 m of cam 03**: a 0.9 m bush 3 m from an 18 mm lens in wing shade is nothing but
+  black leaf cards, which is what QA saw.
+* The foundation planting along both colonnade fronts switched from `MAT_shrub` to the pale / dry families
+  (`MAT_shrub_light`, `MAT_shrub_dry`, `MAT_reeds` twigs) — everything there is in the wing's own shade.
+* Crop (0 150 420 720) of cam 03: pixels below luminance 12 went 29.8 % -> 0.1 %, luminance std-dev 14.7 -> 21.4.
+  Both numbers move with the light rig as well as with ENV, so treat them as directional. The flutes, the column
+  base mouldings and the shaft luminance in that crop are architecture / materials, not ENV.
+
+### Carried — the hall aperture through the hero arch
+
+The 6 m entrance opening between the pavilion piers now has a full-height **backing slab** (9.0 x 11.4 m, wider and
+taller than the opening) behind the door surround, plus jambs, a head and a threshold so the doorway still reads as
+a recess. Verified in `20260907_235834_01_lagoon_hero_r4g.png`: through the rotunda's west arch the aperture shows
+the green door in a lit reveal, no hole.
+
+### Performance
+
+| | round 3 | round 4 |
+|---|---|---|
+| ENV LOD0 (render path) | 14.53 M tris | **13.98 M** |
+| ENV LOD1 (viewport) | 4.84 M tris | **4.80 M** |
+| ENV LOD2 | — | 0.65 M |
+| objects in ENV | ~4 400 | **5 101** |
+
+`env_city` costs 703 objects and ~0.16 M tris at every LOD (city ground 2648 quads, 504 fill house objects,
+194 Presidio objects, 4 canopy objects). It has no LOD ladder of its own: everything in it is already LOD2-class,
+and the whole far field is 1.2 % of ENV's triangles. The canopy does split by distance — 4-lobe crowns inside
+430 m, 2-lobe beyond.
+
 ## Previews and comparisons
 
 Fix round (2026-09-07): `renders/previews/environment/*_fix2_*.png` and `fix3_cam01_1920.png` / `fix3_cam05_1920.png`
@@ -413,6 +548,22 @@ The Phase 2 set is still there as `*_final*` / `env_final_*`; earlier rounds as 
 el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
 
 ## Open issues / requests
+
+- **Materials agent (round 4, new)**: `env_city` names two materials the library does not have and falls back to
+  `env_lib` placeholders — **`MAT_backdrop_asphalt`** (carriageways; placeholder (0.052, 0.050, 0.049) rough 0.72,
+  wants coarse aggregate, tyre polish in the wheel tracks, a lighter crown and patched seams) and
+  **`MAT_backdrop_roof_tile`** (the Presidio's red clay tile; placeholder (0.185, 0.072, 0.042) rough 0.80, wants
+  a barrel-tile bump and per-object tone). Both are far-field only (r > 150 m) so they need no fine detail.
+- **Materials agent (round 4)**: `MAT_backdrop_forest` reads noticeably **bright and yellow-green in direct sun**
+  on the new mid-distance canopy blobs at cam 06 (250-450 m). It was tuned for the 700 m+ ridge, where it is
+  right. A darker, bluer lit response (or a stronger AO / clump darkening) would help the whole Presidio side.
+- **Lighting (QA-03-11 share)**: the rotunda / far-shore contrast is now **1.45 : 1** from ENV geometry alone
+  (was 1.15 : 1); the last 0.05 is mist density, measured on `env_cam06_audit.py` boxes DOME and FAR_SHORE.
+- **Lead (QA-03-10)**: the left-wing band's *luminance* ratio cannot be measured in an ENV preview — the
+  placeholder sun is much dimmer than the shipped rig (right_wing reads 0.51 here and 0.80 in the round-03
+  master). Re-run `python3 scripts/env_measure.py <master hero 1920x1080>` after the merge. ENV's own lever,
+  foliage coverage of that box, is at 40 % against ref 169's ~28 % dark fraction, and the remainder is the
+  redwood screen seen through the bays, which QA-02-7 asked for.
 
 - **Materials agent (blocking one QA item)**: the library has no separate pine/redwood needle material.
   `docs/materials_notes.md` says `assets/textures/foliage/needles_pine.png` is generated but unused; QA-01-7 asks for
