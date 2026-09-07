@@ -502,7 +502,7 @@ def build_concrete_family():
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.25, "Pour Spacing": 0.6})
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
-        "Base Color": C(0.475, 0.398, 0.026), "Grey Color": C(0.382, 0.345, 0.050), "Grey Drift": 0.34,
+        "Base Color": C(0.475, 0.358, 0.034), "Grey Color": C(0.382, 0.318, 0.058), "Grey Drift": 0.34,
         "Grey Below Z": 40.0, "Grey Above Z": 60.0, "Tone Variation": 0.16, "Block Size": 3.0, "Blotch Size": 2.2,
         "Drift Size": 10.0,
         "Detail Strength": 0.6, "Streaks": 0.45, "Streak Scale": 3.0, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.55,
@@ -534,7 +534,7 @@ def build_concrete_family():
         column={"Wash Color": C(0.400, 0.245, 0.075), "Wash": 0.55, "Drum Height": 3.25, "Drum Variation": 0.11, "Top Z": 16.3, "Top Darkening": 0.40})
     # the 8 inner tan columns (and their blocks)
     concrete_material("MAT_column_tan_inner", "concrete_wall_008", 7.0, {
-        "Base Color": C(0.565, 0.455, 0.026), "Grey Color": C(0.442, 0.382, 0.050), "Grey Drift": 0.16,
+        "Base Color": C(0.565, 0.428, 0.032), "Grey Color": C(0.442, 0.360, 0.058), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 3.0, "Blotch Size": 1.3,
         "Drift Size": 6.0,
         "Detail Strength": 0.6, "Streaks": 0.3, "Streak Scale": 5.0, "Streak Length": 8.0, "Ledge Distance": 1.5, "Ledge Weight": 0.4,
@@ -553,7 +553,7 @@ def build_concrete_family():
         "Grid Joints": 0.8, "Grid Size": 1.5}, specular=0.34)
     # coffered plaster saucer (only bounce-lit)
     concrete_material("MAT_plaster_ceiling", "concrete_wall_008", 9.0, {
-        "Base Color": C(0.578, 0.540, 0.100), "Grey Color": C(0.405, 0.335, 0.090), "Grey Drift": 0.16,
+        "Base Color": C(0.572, 0.470, 0.130), "Grey Color": C(0.402, 0.312, 0.104), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.13, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         "Detail Strength": 0.3, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.3, "Edge Radius": 0.05,
@@ -616,10 +616,10 @@ def build_water():
     h2 = t.noise(Ps, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
     h3 = t.noise(Pa, 9.0, detail=2, rough=0.5, w=t.mul(time, 1.7))           # 0.1 m capillary
     h4 = t.noise(Pa, 24.0, detail=2, rough=0.5, w=t.mul(time, 2.4))          # 0.04 m near-field chop
-    h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.16, 0.18)), t.mul(h4, t.mul(near, 0.10))))
+    h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.18))))
     # calmer patches (wind shadow) so the reflection is glassy in places
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
-    normal = t.bump(h, strength=t.mul(t.mul(t.madd(near, 0.06, 0.45), calm), ripple_lod), distance=0.03, normal=N)
+    normal = t.bump(h, strength=t.mul(t.mul(t.madd(near, 0.14, 0.45), calm), ripple_lod), distance=0.03, normal=N)
     rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
     # green murk body. Transmission 0.55 (not 1.0) so the material reads the same on ENV's single water plane as it
     # does inside a closed lagoon volume: the opaque 45 % is a green murk lambertian that picks up sky and sun, the

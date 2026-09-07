@@ -390,3 +390,165 @@ sky straight back); it is now 0.25 across the concrete family, 0.30 paving, 0.20
 Round 2's saturation numbers are 0.9 EV darker and so are not comparable on that axis; the hue and lagoon numbers are.
 **Remaining, and not materials':** the flank water's chroma is the reflected horizon sky (lighting's haze/aerosol), and
 the sunlit-stone saturation gap is illuminant warmth plus the AgX shoulder (see the section above).
+
+## Round 4 (Phase 4 polish round 2, 2026-09-07/08) -- QA-03-2 / -03-4 / -03-7 / -03-9 / -03-15 + QA-02-3
+
+Everything below is measured on the **1920x1080 Cycles hero out of the assembled master**, on lighting's round-09
+rig (`assets/lighting.blend` commit 8ac655c), `AgX - High Contrast`, `view_settings.exposure -2.3331`, `--ev 0.0`.
+Two things had to be sorted out before any number meant anything:
+
+- **The worktree's `master.blend` was stale.** `build_master.py` *appends* the library rather than linking it, so a
+  rebuilt `assets/materials.blend` does not reach an existing master, and the master also still carried lighting's
+  round-08 rig (`LIGHT_sun["exposure_ev"] = -3.2911`, i.e. 0.96 EV under the shipping value). Every measurement round
+  here is therefore `mat_build.py` -> `build_master.py` -> `mat_scene_check.py`. Round 3's `--ev 0.9` compensation is
+  **obsolete**: with lighting r09 merged, use `--ev 0.0`.
+- **New tool `scripts/mat_r4_measure.py`** (plain python + PIL, no Blender). It reads the QA round-03 hero boxes and
+  prints mean sRGB / luminance / hue / saturation / R-B, plus the column mask, the entablature luminance std-dev and
+  a near-water ripple run-length. `--panel 1` runs the identical boxes against panel 1 of
+  `renders/qa_comparisons/round03_cam01_aligned_vs_ref169.png` (QA's warped photo), and it reproduces QA's published
+  reference numbers to within 0.5 -- so render and photo are read with one yardstick.
+  `scripts/mat_r4_sheet.py` builds the deliverable composite `renders/qa_comparisons/mat_r4_sheet.png`.
+
+### QA-03-2 sunlit stone chroma -- what albedo can and cannot do (measured twice)
+
+Baseline on the r09 rig was **236,188,130** against ref 169's **231,187,95**: R and G already matched to 2 %, the
+whole error was **blue, +35**. Cutting the concrete albedo blue 0.038 -> 0.024 (**-37 %**) moved display blue by
+**+2**. That is not a tuning failure, it is AgX's inset matrix: the blue output channel is
+`0.048 R + 0.101 G + 0.811 B` *before* the log curve, and on sunlit ochre stone (linear ~0.68 / 0.38 / 0.026) about
+**77 % of the blue channel is leakage from R and G**. Zeroing albedo blue entirely could move it -0.38 EV, ~14 display
+levels; the gap is 35. Round 3 measured the same thing from the other end (-44 % blue -> -3 % display blue).
+
+So the hue was carried by **green** instead, which does have authority (albedo G is 0.38 linear, no leakage problem):
+`MAT_concrete_ochre` Base Color went `(0.645, 0.436, 0.038)` -> `(0.655, 0.545, 0.018)`, and the ochre / colonnade /
+ornament / podium / paving / drum / backdrop family with it (each `Grey Color` moved in step so the damp drift does
+not put the old hue back).
+
+| hero box | round 3 library | round 4 library | ref 169 | QA-03-2 acceptance |
+|---|---|---|---|---|
+| attic sunlit 900 222 1020 256 | hue 32.8 sat 0.452 R-B 107 lum 194.1 | hue **37.7** sat 0.440 R-B 102 lum 197.6 | hue 40.3 sat 0.588 R-B 136 lum 189.6 | hue >= 37 **pass**; sat >= 0.53 **fail**; R-B >= 118 **fail**; lum +-10 % **pass** (1.04) |
+| attic string course | hue 33.7 | hue **38.6** | hue 39.3 | - |
+| entablature | hue 33.1 | hue **38.0** | hue 34.0 | now slightly warm |
+| dome cap | hue 29.8 lum 205.8 sat 0.283 | hue **36.6** lum 210.0 sat 0.288 | hue 42.7 lum 215.6 sat 0.288 | +6.8 deg, saturation and luminance both land |
+| columns (mask) | lum 186.4 hue 29.6 | lum **155.1** hue 30.1 | lum 95.8 hue 24.5 | still 1.62x -- see below |
+
+`MAT_dome_membrane`: the cap needed **green**, not less blue (render B 168 vs ref 167 already). Base Color
+`(0.905, 0.720, 0.378)` -> `(0.905, 0.960, 0.320)`, `Specular IOR Level` 0.44 -> 0.26 and coat weight x0.35 -> x0.18,
+because a 0.44 specular on an up-facing dome is a blue sky mirror.
+
+**Saturation and R-B are not materials'.** Two independent albedo experiments (round 3: -44 % blue; round 4: -37 %
+blue with +25 % green) moved the sunlit attic's saturation by less than 0.02 in either direction. At lum ~195 the
+stone sits where AgX compresses R hardest, so `(R-B)/R` cannot be opened from the albedo side. What is left is the
+illuminant: ref 169's sunlit stone has an R-B spread of 136 where ours has 102, and our **shaded** stone is the
+mirror image of the problem -- see the next paragraph.
+
+**The one real regression, and it is a hand-off.** Albedo has one hue and cannot know which light hits it. Warming it
+for the sunlit faces also warms the shaded ones, and the shaded ones were already too warm:
+
+| | render | ref 169 |
+|---|---|---|
+| sunlit attic hue | 37.7 | 40.3 |
+| shaded north attic hue (1110 225 1150 260) | **42.5** | **29.5** |
+| shaded saturation | 0.618 | 0.425 |
+
+The photo drops **11 deg from sun to shade**; we rise 5. That is the sky's share of the fill being too small and too
+warm, and it is the same quantity that sets the missing sunlit R-B. **For lighting:** more (and bluer) sky fill on
+shaded stone would fix the shade hue *and* widen the sunlit R-B spread at once; albedo cannot do either.
+Materials did put back what it could: the concrete `Specular IOR Level` went 0.25 -> **0.30** (it only ever reflects
+sky, so it lands almost entirely on the shade) after a trial at 0.18 made the olive worse.
+
+**Interior split (found from the cam04 crop, not from a number).** With the family green raised, the vault soffits and
+the coffered saucer -- lit only by warm bounce, with no sun to oppose the shift -- went visibly **olive**. The family
+is therefore split: sun-facing materials (`MAT_concrete_ochre` / `_colonnade` / `_podium` / `MAT_ornament_concrete`)
+keep the round-4 green; the shade-only ones went most of the way back (`MAT_concrete_inner` `(0.475, 0.358, 0.034)`,
+`MAT_plaster_ceiling` `(0.572, 0.470, 0.130)`, `MAT_column_tan_inner` `(0.565, 0.428, 0.032)`).
+
+### QA-03-4 / QA-02-3 "clean CAD" at 1:1 -- wear that reads at hero distance
+
+Sizes first, because that is what was wrong: the hero is ~5 cm/px, and round 3's rain streaks were 0.07-0.17 m wide,
+i.e. **1.4-3.4 px**, which averages to a flat tint no matter how dark the tint is.
+
+- `Streak Scale` 7.0 -> **3.2** on the ochre (6.0 -> 3.0 podium, 7.5 -> 3.4 colonnade, 12 -> 6 ornament): drips are
+  now ~0.31 m wide by ~2.2 m long, 6 px by 44 px on the hero.
+- `PFA_streaks` ramps widened (`m1` 0.54-0.60 -> 0.47-0.58, `m2` 0.58-0.64 -> 0.51-0.62) and the along-length fade
+  floor 0.2 -> 0.35, so drips cover a useful fraction of a wall instead of ~15 % of it.
+- The **ledge run-off band** under every overhang went `Streaks x 0.40` -> `x 0.62` and its tint
+  (0.74, 0.695, 0.615) -> (0.655, 0.605, 0.515). This is the "dark streak under the cornice" the acceptance asks for.
+- `Edge Radius` 0.12 -> **0.20 m** and `Edge Wear` 0.60 -> 0.70 on wall-scale concrete (a 0.12 m arris is 2 px).
+- `Recess Distance` 0.4 -> **0.7 m** with `Recess Dirt` 0.60 -> 0.72, and `Tone Variation` 0.15 -> **0.30** with
+  `Blotch Size` 1.8 -> 0.9 m (17 px features rather than 34 px ones), `Detail Strength` 0.85 -> 1.0.
+- **New `Cavity` input on `PFA_concrete`** (default 0.0, so nothing not listed changes): a second AO probe at
+  `Recess Distance x 0.34`, squared, darkening value only (`x (1 - 0.55 cav)`) -- pure shading depth, no hue shift,
+  where `Recess Dirt` is a tint on a much longer probe. Ochre 0.70, colonnade 0.65, inner/plaster 0.70/0.50,
+  ornament 1.0, columns 0.90-0.95.
+
+Measured: entablature luminance std-dev **30.8 -> 32.8** against the photo's 63.8 (the acceptance is >= 38.3). The
+crop pair in `mat_r4_sheet.png` shows the difference the number understates -- the round-3 panel is one flat ochre,
+the round-4 panel has mottle, drips and a soiling band under the cornice. **The rest of that std-dev is geometry, not
+shading:** in ref 169 the same box contains dentils, modillions and a deep cornice undercut throwing near-black
+shadow; ours contains a much shallower cornice, and no albedo texture makes a 5 cm shadow that is not modelled.
+**For architecture:** cornice projection / dentil depth on the attic entablature is the remaining half of QA-03-4.
+
+### QA-03-9 / QA-03-15 columns and capitals
+
+- `MAT_column_rose` Base Color `(0.505, 0.258, 0.048)` -> `(0.316, 0.158, 0.021)` (**-37 % albedo**, and G/R 0.51 ->
+  0.50 so it is less yellow), `Tone Variation` 0.14 -> 0.24, `Drift Size` 6 -> 4.5 m, `Detail Strength` 0.45 -> 0.70,
+  `Streaks` 0.25 -> 0.45, `Drum Variation` 0.07 -> 0.11, `Wash` 0.45 -> 0.55. Hero column mask **186.4 -> 155.1**
+  against ref 169's 95.8: still **1.62x**, and the remaining factor is fill, not albedo -- in the photo the shafts sit
+  in the entablature's shadow at 0.50 of the sunlit attic, in the render at 0.78. Another 40 % off the albedo would
+  make them brown mud in the sun-struck lower half. **For lighting: this is the other half of QA-03-2.**
+- **Flute relief (architecture's hand-off).** With 24 flutes at ~2.2 px on the hero, geometry alone gives 37 %
+  modulation against the photo's 68-79 %. Phase-locking is done *without* knowing ARCH's flute phase: the `Cavity` AO
+  probe is sized to half a flute pitch (`Recess Distance` 0.40 -> 0.30 m, so the probe is ~0.10 m on a 0.26 m pitch)
+  so it darkens the hollows, and the edge mask is narrowed to ~1 px (`Edge Radius` 0.07 -> 0.045, `Edge Wear`
+  0.5 -> 0.85) so it lights only the arrises. A radial-angle modulation would have to guess the phase and would beat
+  against the mesh. Same treatment on `MAT_column_tan_inner`.
+- **Capitals:** `MAT_ornament_concrete` `Cavity` 1.0, `Recess Dirt` 0.8 -> 0.85 at `Recess Distance` 0.3 -> 0.42,
+  `Edge Wear` 0.65 -> **0.85**. Dark hollows plus lit arrises is what makes leaf tiers separate at 100 m.
+- **Coffer ribs (architecture's second hand-off).** New `Rib Grime` input on `PFA_concrete` (default 0.0), keyed on
+  `|Nz|` (`maprange(|Nz|, 0.60, 0.16, 0, 1)`): rib flanks are near-vertical where the coffer panels face down, so it
+  picks the ribs and nothing else. `MAT_plaster_ceiling` runs it at 0.85. In the cam04 crop the ribs now read as dark
+  lines; they are thin because the modelled rib relief is shallow, so how far this goes is geometry's call.
+
+### QA-03-7 near water -- what moved and what did not
+
+Four configurations were rendered and measured at the same boxes:
+
+| | flank lum (ref 155.2) | flank sat (ref 0.279) | near sat (ref 0.270) | ripple runs (ref 15.3) |
+|---|---|---|---|---|
+| round 3 (glassy) | 158.2 | 0.387 | 0.463 | 19.3 |
+| + near roughness | 135.9 | 0.489 | 0.501 | 29.2 |
+| + strong near chop | 105.3 | 0.651 | 0.580 | 13.1 |
+| **shipped** (moderate chop) | **143.9** (0.93) | 0.450 | 0.486 | 27.8 |
+
+Three separate levers were tried and **measured to do nothing** to the near-water chroma: brightening the murk 1.8x
+(near saturation 0.475 -> 0.473), a warm `Specular Tint` on the Principled (0.475 -> 0.473 -- Blender tints only the
+*facing* reflectance and this crop is grazing, where Fresnel goes white whatever the tint), and dropping
+`Transmission Weight` / `Specular IOR Level`. All were reverted. At these angles the lagoon **is** a Fresnel mirror
+and its colour is the reflected horizon sky, which QA itself measured 0.74 of the photo's brightness with no haze
+band. **For lighting: the near-water hue (204.8 vs 192.1) and saturation (0.486 vs 0.270) are the horizon sky's, not
+this shader's** -- the same conclusion round 3 reached for the flank, now with the murk experiment to back it.
+
+What the shader does own is break-up, and there is a real cost curve: any near-field ripple amplitude tips grazing
+rays off the bright sky and onto a dark far shore, so it buys texture with flank luminance. The shipped setting
+(`near = maprange(depth, 70, 10, 0, 1)`, capillary gain +0.28, a 0.04 m chop layer at +0.18, bump +0.14) puts the
+flank at 0.93 of the photo -- comfortably inside QA-02-6's 25 % test -- and the 1:1 crop now shows a broken
+reflection where round 3 showed glass. **The run-length metric disagrees (19.3 -> 27.8 px) and the metric is the
+thing that is wrong here:** it counts sign changes about a row median, so render noise shortens runs and a smoother
+low-noise render lengthens them; judge this one from the crop pair in the sheet. The crest anisotropy stays
+X-elongated (0.36): at 0.62 the normals sweep sideways into open sky and the flank saturation went 0.387 -> 0.484.
+
+### Files
+
+`renders/previews/materials/r4b_scene_hero.png` (before, round-3 library on the r09 rig),
+`r4m_scene_hero.png` + `r4m_scene_ceiling.png` (after), composite
+`renders/qa_comparisons/mat_r4_sheet.png`. `mat_scene_check.py` gained a `ceiling` job (`CAM_qa_04_rotunda_ceiling`).
+
+### Open, and whose
+
+1. **Lighting** -- sunlit stone saturation 0.440 vs 0.588 and R-B 102 vs 136; shaded stone hue 42.5 vs 29.5 (the
+   photo drops 11 deg sun-to-shade, we rise 5). One cause: not enough blue sky fill in shade / not enough spread
+   between sun and sky. Albedo is exhausted, twice measured.
+2. **Lighting** -- hero column shafts 1.62x the photo after a 37 % albedo cut: fill on surfaces that should be in the
+   entablature's shadow.
+3. **Lighting** -- near-water hue/saturation is the reflected horizon sky (no haze band, QA measured 0.74).
+4. **Architecture** -- the other half of QA-03-4: the entablature std-dev gap is cornice/dentil depth, not shading.
