@@ -202,10 +202,11 @@ def main():
     if "rosette" in ONLY:
         ro = same_stone(show("ORN_rosette_ceiling_v1_LOD0", "rosette", scene))
         # coffer box: a 1.05 m square recess 0.34 m deep in a wall face, with the rosette on its floor
+        # ARCH deepened the saucer coffers to 0.55 m on 2026-09-07; the stand-in box matches
         for dx, dz in ((-0.70, 0.0), (0.70, 0.0), (0.0, 0.70), (0.0, -0.70)):
-            slab(f"S_cofrib_{dx}_{dz}", "rosette", (0.35 if dx else 1.75, 0.34, 1.75 if dx else 0.35),
-                 (dx, -0.17, dz + 0.30), mat, scene)
-        slab("S_cofback", "rosette", (2.4, 0.30, 2.4), (0, -0.35 - 0.15, 0.30), mat, scene)
+            slab(f"S_cofrib_{dx}_{dz}", "rosette", (0.35 if dx else 1.75, 0.55, 1.75 if dx else 0.35),
+                 (dx, -0.275, dz + 0.30), mat, scene)
+        slab("S_cofback", "rosette", (2.4, 0.30, 2.4), (0, -0.55 - 0.15, 0.30), mat, scene)
         placed["rosette"] = ro
 
     light_presets.apply_rig(scene, link=True)

@@ -739,34 +739,59 @@ def build_keystone(variant, coll, bake=True):
     rng = random.Random(3000 + variant)
     work = L.work_collection()
     parts = []
-    # back plate hugging the archivolt
-    parts.append(L.box("ks_back", (0.62, 0.10, 0.62), work, location=(0, 0.05, 0.0), bevel=0.03))
-    face = L.sphere("ks_face", 0.24, work, location=(0, 0.16, 0.02), scale=(1.0, 0.75, 1.05))
+    S = 1.0 + 0.04 * (variant - 2)      # small per-variant size drift
+    # Round 4 (carried defect: "keystone depth on the arches"). Two things were missing.
+    # 1. The keystone had no VOUSSOIR: the mask sat straight on a 0.10 m plate flush with the archivolt, so at
+    #    hero distance it was a pale disc with nothing to cast a shadow. Ref keystone_mask_1/2 show a wedge block
+    #    that breaks forward out of the archivolt roll and carries a moulded cap under the frieze.
+    # 2. The mask itself was all convex blobs: the eye/mouth dents were 0.03-0.09 m on a 0.006 m remesh and
+    #    smooth=2 wiped them. Now the brow, cheeks and mane overhang, and the dents are 2-3x deeper.
+    KEY_PROUD = 0.30 * S                # the voussoir face, proud of the archivolt (y = 0 is the archivolt face)
+    parts.append(L.box("ks_back", (0.62 * S, 0.10, 0.66 * S), work, location=(0, 0.05, 0.0), bevel=0.02))
+    # tapered voussoir: narrow at the springing side, wide under the cap
+    VOUSSOIR = ((0.215, 0.10, -0.33), (0.245, 0.20, -0.20), (0.268, 0.26, 0.00),
+                (0.283, 0.28, 0.16), (0.290, 0.24, 0.29), (0.300, 0.16, 0.33))
+    parts.append(L.loft_rings("ks_voussoir",
+                              [[Vector((-w * S, 0.02, z * S)), Vector((-w * S, y, z * S)),
+                                Vector((w * S, y, z * S)), Vector((w * S, 0.02, z * S))]
+                               for w, y, z in VOUSSOIR], work, cap_bottom=True, cap_top=True))
+    # moulded cap under the frieze: a hard horizontal shadow line at the top of the block
+    parts.append(L.box("ks_cap", (0.66 * S, 0.34, 0.075 * S), work, location=(0, 0.15, 0.335 * S), bevel=0.012))
+    face = L.sphere("ks_face", 0.235 * S, work, location=(0, KEY_PROUD + 0.06, 0.00), scale=(1.02, 0.80, 1.05))
     parts.append(face)
-    parts.append(L.sphere("ks_muzzle", 0.14, work, location=(0, 0.33, -0.05), scale=(1.15, 0.9, 0.85)))
-    parts.append(L.sphere("ks_nose", 0.055, work, location=(0, 0.44, -0.01), scale=(1.2, 0.8, 0.7)))
-    parts.append(L.sphere("ks_jaw", 0.11, work, location=(0, 0.30, -0.17), scale=(1.1, 0.9, 0.7)))
+    parts.append(L.sphere("ks_muzzle", 0.135 * S, work, location=(0, KEY_PROUD + 0.20, -0.075 * S), scale=(1.15, 0.95, 0.82)))
+    parts.append(L.sphere("ks_nose", 0.055 * S, work, location=(0, KEY_PROUD + 0.30, -0.02 * S), scale=(1.25, 0.85, 0.72)))
+    parts.append(L.sphere("ks_jaw", 0.115 * S, work, location=(0, KEY_PROUD + 0.16, -0.20 * S), scale=(1.1, 0.95, 0.68)))
     for side in (1, -1):
-        parts.append(L.sphere(f"ks_brow{side}", 0.07, work, location=(side * 0.10, 0.34, 0.09), scale=(1.4, 0.8, 0.7)))
-        parts.append(L.sphere(f"ks_cheek{side}", 0.09, work, location=(side * 0.15, 0.30, -0.06)))
-        parts.append(L.sphere(f"ks_ear{side}", 0.06, work, location=(side * 0.20, 0.20, 0.20), scale=(1.0, 0.6, 1.2)))
-    # mane: ring of leaves radiating in the mask plane, tilted forward
-    n = 14
+        # brow ridge, pushed forward and up so it OVERHANGS the eye socket (the dark accent at hero distance)
+        parts.append(L.sphere(f"ks_brow{side}", 0.078 * S, work,
+                              location=(side * 0.098 * S, KEY_PROUD + 0.235, 0.105 * S), scale=(1.5, 0.85, 0.62)))
+        parts.append(L.sphere(f"ks_cheek{side}", 0.098 * S, work,
+                              location=(side * 0.152 * S, KEY_PROUD + 0.155, -0.065 * S), scale=(1.0, 0.9, 1.0)))
+        parts.append(L.sphere(f"ks_ear{side}", 0.062 * S, work,
+                              location=(side * 0.205 * S, KEY_PROUD + 0.05, 0.205 * S), scale=(1.0, 0.62, 1.25)))
+    # mane: fewer, bolder, thicker leaves standing clear of the face so a shadow slot is left behind each
+    n = 10
     for i in range(n):
-        ang = i * 360.0 / n + rng.uniform(-4, 4)
-        leaf = L.acanthus_leaf(f"ks_mane{i}", length=0.25 * rng.uniform(0.85, 1.1), width=0.16, curl=0.5, droop=0.25,
-                               ribs=5, rib_amp=0.012, bulge=0.02, thickness=0.02, lobes=3, lobe_depth=0.15, nu=10, nv=14,
-                               coll=work, seed=i, base_width=0.4)
-        # leaf grows along +Z, curls toward +Y: rotate so it radiates at 'ang' in the XZ plane, base at the face rim
-        m = (Matrix.Translation((0.22 * math.sin(math.radians(ang)), 0.14, 0.03 + 0.22 * math.cos(math.radians(ang))))
+        ang = i * 360.0 / n + rng.uniform(-5, 5)
+        leaf = L.acanthus_leaf(f"ks_mane{i}", length=0.30 * S * rng.uniform(0.86, 1.12), width=0.20 * S, curl=0.62,
+                               droop=0.30, ribs=4, rib_amp=0.016, bulge=0.012, mid_dip=0.022, thickness=0.036,
+                               lobes=3, lobe_depth=0.26, nu=14, nv=16, coll=work, seed=i, base_width=0.42)
+        m = (Matrix.Translation((0.215 * S * math.sin(math.radians(ang)), KEY_PROUD + 0.055,
+                                 0.02 + 0.215 * S * math.cos(math.radians(ang))))
              @ Euler((0, math.radians(ang), 0), "XYZ").to_matrix().to_4x4()
-             @ Euler((math.radians(-25), 0, 0), "XYZ").to_matrix().to_4x4())
+             @ Euler((math.radians(-32), 0, 0), "XYZ").to_matrix().to_4x4())
         leaf.data.transform(m)
         parts.append(leaf)
-    hi = L.union_blob(parts, f"keystone_v{variant}", voxel=(0.01 if FAST else 0.006), smooth=2, coll=work)
-    # open mouth + eye sockets: dent the remeshed surface (booleans after a remesh proved unreliable)
-    dents = [((0.0, 0.47, -0.11), (0.10, 0.10, 0.06), 0.09), ((0.085, 0.43, 0.055), (0.04, 0.05, 0.035), 0.03),
-             ((-0.085, 0.43, 0.055), (0.04, 0.05, 0.035), 0.03)]
+    hi = L.union_blob(parts, f"keystone_v{variant}", voxel=(0.009 if FAST else 0.005), smooth=1, smooth_factor=0.25,
+                      coll=work)
+    # open mouth + eye sockets + nostrils: dent the remeshed surface (booleans after a remesh proved unreliable)
+    yb = KEY_PROUD
+    dents = [((0.0, yb + 0.35, -0.135 * S), (0.105, 0.115, 0.062), 0.115),     # mouth
+             ((0.088 * S, yb + 0.245, 0.048 * S), (0.045, 0.060, 0.040), 0.072),   # eyes, under the brow
+             ((-0.088 * S, yb + 0.245, 0.048 * S), (0.045, 0.060, 0.040), 0.072),
+             ((0.030 * S, yb + 0.315, 0.008 * S), (0.024, 0.040, 0.024), 0.035),   # nostrils
+             ((-0.030 * S, yb + 0.315, 0.008 * S), (0.024, 0.040, 0.024), 0.035)]
     for v in hi.data.vertices:
         for (cx, cy, cz), (rx, ry, rz), depth_ in dents:
             d = ((v.co.x - cx) / rx) ** 2 + ((v.co.y - cy) / ry) ** 2 + ((v.co.z - cz) / rz) ** 2
@@ -774,8 +799,10 @@ def build_keystone(variant, coll, bake=True):
                 v.co.y -= depth_ * (1.0 - d) ** 0.7
     hi.data.update()
     L.displace_noise(hi, strength=0.003, size=0.05, seed=1200 + variant, depth=2)
-    return L.finalize_asset(hi, "keystone", variant, coll, bake=bake, bake_size=1024, y_mode="back",
-                            budgets=L.BUDGETS["keystone"], size_note="lion mask 0.8 m; origin = back-face bottom-centre")
+    return L.finalize_asset(hi, "keystone", variant, coll, bake=bake, bake_size=1024, y_mode="back", ao=True,
+                            cavity=True, budgets=L.BUDGETS["keystone"],
+                            size_note=f"lion-mask keystone: {0.30 * S:.2f} m voussoir + mask to ~{0.30 * S + 0.36:.2f} m "
+                                      f"proud of the archivolt face; origin = back-face bottom-centre")
 
 
 def build_finial(variant, coll, bake=True):
@@ -789,23 +816,84 @@ def build_finial(variant, coll, bake=True):
                             size_note="dome apex cap 0.8 m diameter x 0.6 m")
 
 
+def rosette_petal(name, length, width, rise, curl, coll, seed=0, thickness=0.018, lobes=3, nu=16):
+    """One rosette petal, built in the leaf frame (grows +Z, curls toward +Y) so it can be laid radially into the
+    rosette plane: nearly flat for the first 70 % of its length, then the tip lifts off the ground plane."""
+    n = 20
+    sp = []
+    for i in range(n + 1):
+        u = i / n
+        z = length * u
+        y = 0.004 + rise * (u ** 1.5)
+        if u > 0.66:
+            f = (u - 0.66) / 0.34
+            y += curl * (f ** 1.7)
+            z -= curl * 0.35 * (f ** 2.2)
+        sp.append((y, z))
+    return L.acanthus_leaf(name, length=length, width=width, spine=sp, ribs=3, rib_amp=0.010, bulge=0.010,
+                           mid_dip=0.014, thickness=thickness, lobes=lobes, lobe_depth=0.22, nu=nu, nv=n,
+                           coll=coll, seed=seed, base_width=0.42)
+
+
+# Per-variant rosette designs (petals outer/inner, overall diameter, relief). Measured against ref 083 / 003 /
+# coffered_ceiling_1-3: the rib rosettes are 0.45-0.60 m across and stand roughly a quarter of their diameter
+# proud of the rib face, with a deep annular groove between the petal ring and the central boss.
+# relief raised from 0.155 to 0.21 m on 2026-09-07 after ARCH deepened the coffer interiors (saucer coffers
+# 0.55 m, barrel vault 0.38 m): a 0.155 m boss disappears at the bottom of a 0.55 m box.
+ROSETTE_STYLE = {
+    1: dict(n_out=8, n_in=8, dia=0.60, relief=0.210),
+    2: dict(n_out=10, n_in=10, dia=0.56, relief=0.196),
+    3: dict(n_out=6, n_in=6, dia=0.62, relief=0.225),
+}
+
+
 def build_rosette(variant, coll, bake=True):
-    """Coffer rosette for the plaster ceiling, 0.6 m diameter: two rings of petals around a boss. Origin at the
-    back (mounting) face centre; the rosette projects toward +Z... no: like all wall-mounted pieces it projects
-    toward +Y (socket +Y = radially outward on the ceiling), so it is built lying in the XZ plane."""
+    """Coffer / rib rosette, ~0.6 m across. Origin at the back (mounting) face centre; like every wall-mounted
+    piece it projects toward +Y, so it is built face-up along +Z and laid down at the end.
+
+    Round 4 (QA-03-8): the round-3 rosette was a lathe with a cos(12*theta) radius wobble - a smooth 12-point star
+    with no undercut anywhere, which is exactly the "flat outline" QA saw at cam04. It is now modelled: a sunk
+    back disc, a ring of real petals whose tips lift 0.055 m off the disc (so there is a shadow slot behind every
+    petal tip), a second ring rotated half a pitch, a 0.045 m annular groove and a beaded central boss."""
+    st = ROSETTE_STYLE.get(variant, ROSETTE_STYLE[1])
+    Rr = st["dia"] / 2.0
+    relief = st["relief"]
     rng = random.Random(2000 + variant)
     work = L.work_collection()
-    prof = [(0.30, 0.0), (0.30, 0.02), (0.26, 0.05), (0.18, 0.08), (0.10, 0.10), (0.06, 0.13), (0.0, 0.14)]
-    def petals(th, t):
-        return 1.0 + 0.10 * math.cos(12 * th + variant) * (0.3 + 0.7 * (1 - t)) + 0.05 * math.cos(6 * th) * t
-    ros = L.revolve("rosette", L.resample_profile(prof, 20), segments=96, coll=work, scale_fn=petals)
-    boss = L.sphere("ros_boss", 0.06, work, location=(0, 0, 0.11))
-    hi = L.union_blob([ros, boss], f"rosette_ceiling_v{variant}", voxel=0.005, smooth=1, coll=work)
-    L.displace_noise(hi, strength=0.002, size=0.03, seed=1300 + variant, depth=1)
+    parts = []
+    # back disc with a raised rim: the rim is what the annular groove is cut against
+    disc = L.revolve("ros_disc", L.resample_profile(
+        [(0.0, 0.0), (Rr * 0.60, 0.0), (Rr * 0.88, 0.008), (Rr * 0.97, 0.030), (Rr, 0.050),
+         (Rr * 0.97, 0.062), (Rr * 0.86, 0.052), (Rr * 0.55, 0.018), (0.0, 0.014)], 26), segments=72, coll=work)
+    parts.append(disc)
+    for ring, (count, r0, ln, wd, rise, curl, z0) in enumerate((
+            (st["n_out"], Rr * 0.34, Rr * 0.70, TAU * Rr * 0.62 / st["n_out"] * 1.02, 0.044, 0.082, 0.016),
+            (st["n_in"], Rr * 0.16, Rr * 0.40, TAU * Rr * 0.30 / st["n_in"] * 1.06, 0.038, 0.064, 0.068))):
+        off = 0.0 if ring == 0 else 180.0 / count
+        for k in range(count):
+            a = off + k * 360.0 / count + rng.uniform(-2.0, 2.0)
+            p = rosette_petal(f"ros_p{ring}_{k}", ln * rng.uniform(0.95, 1.05), wd, rise, curl, work,
+                              seed=100 * ring + k, thickness=0.020 if ring == 0 else 0.016)
+            # leaf frame (+Z growth, +Y curl) -> radial in the XY plane with the curl lifting toward +Z
+            m = (Matrix.Translation((r0 * math.cos(math.radians(a)), r0 * math.sin(math.radians(a)), z0))
+                 @ Euler((0, 0, math.radians(a + 90.0)), "XYZ").to_matrix().to_4x4()
+                 @ Euler((math.radians(90.0), 0, 0), "XYZ").to_matrix().to_4x4())
+            p.data.transform(m)
+            parts.append(p)
+    # beaded central boss standing the full relief height
+    boss = L.revolve("ros_boss", L.resample_profile(
+        [(0.0, 0.045), (Rr * 0.30, 0.045), (Rr * 0.33, 0.062), (Rr * 0.28, 0.082), (Rr * 0.30, 0.098),
+         (Rr * 0.24, relief * 0.80), (Rr * 0.13, relief * 0.96), (0.0, relief)], 24), segments=40, coll=work,
+        scale_fn=lambda th, t: 1.0 + 0.07 * math.cos(10 * th) * (1.0 - t))
+    parts.append(boss)
+    hi = L.union_blob(parts, f"rosette_ceiling_v{variant}", voxel=0.004, smooth=1, smooth_factor=0.25, coll=work)
+    L.displace_noise(hi, strength=0.0018, size=0.03, seed=1300 + variant, depth=1)
     # lay it down: +Z -> +Y
     hi.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
-    return L.finalize_asset(hi, "rosette_ceiling", variant, coll, bake=bake, bake_size=512, y_mode="back",
-                            budgets=L.BUDGETS["rosette_ceiling"], size_note="coffer rosette 0.6 m; back face at y=0, projects +Y")
+    return L.finalize_asset(hi, "rosette_ceiling", variant, coll, bake=bake, bake_size=1024, y_mode="back",
+                            ao=True, cavity=True, budgets=L.BUDGETS["rosette_ceiling"],
+                            size_note=f"rib/coffer rosette {st['dia']:.2f} m across, {relief:.3f} m of relief "
+                                      f"({relief / st['dia']:.2f} of the diameter); back face at y=0, projects +Y")
 
 
 # =============================================================================== ZIMM ATTIC RELIEF PANELS

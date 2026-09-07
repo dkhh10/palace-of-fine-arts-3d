@@ -39,7 +39,7 @@ BUDGETS = {
     "urn": (60000, 12000, 1200),
     "keystone": (50000, 8000, 800),
     "finial": (20000, 4000, 400),
-    "rosette_ceiling": (20000, 4000, 400),
+    "rosette_ceiling": (26000, 5000, 500),   # round 4: modelled petals instead of a lathe wobble
     "moulding": (30000, 6000, 600),
     "corner_scroll": (40000, 8000, 800),
 }
