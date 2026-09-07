@@ -68,7 +68,7 @@ SPECIES = {
         splitAngle=(25.0, 25.0, 20.0, 0.0), splitAngleV=(5.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3, baseSplits=1,
         scale=21.0, scaleV=2.0, leaves=240, leafScale=0.48, leafScaleX=0.35, leafScaleV=0.35, bend=0.3, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=60.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
-        bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(15, 24)),
+        bark="MAT_bark_cypress", leaf=("MAT_leaf_pine", "MAT_leaf_cypress"), height=(15, 24)),
     # weeping willow at the water's edge
     "willow": dict(
         levels=3, length=(0.75, 0.5, 1.4, 0.0), lengthV=(0.0, 0.1, 0.1, 0.0), branches=(0, 30, 14, 0),
@@ -92,7 +92,7 @@ SPECIES = {
         splitAngle=(0.0, 0.0, 0.0, 0.0), splitAngleV=(0.0, 0.0, 0.0, 0.0), splitByLen=True,
         scale=30.0, scaleV=3.0, leaves=480, leafScale=0.46, leafScaleX=0.40, leafScaleV=0.35, bend=0.25, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=50.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=30.0,
-        bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(18, 32)),
+        bark="MAT_bark_cypress", leaf=("MAT_leaf_pine", "MAT_leaf_cypress"), height=(18, 32)),
     # generic round-crowned broadleaf (acacia / plane / young oak)
     "broadleaf": dict(
         levels=3, length=(1.0, 0.5, 0.5, 0.0), lengthV=(0.0, 0.15, 0.2, 0.0), branches=(0, 22, 12, 0),
@@ -247,7 +247,8 @@ def generate_tree_mesh(species, seed, lod, name):
     bm.to_mesh(me)
     bm.free()
     me.materials.append(L.mat(sp["bark"]))
-    me.materials.append(L.mat(sp["leaf"]))
+    lm = sp["leaf"]
+    me.materials.append(L.mat_or(*lm) if isinstance(lm, tuple) else L.mat(lm))
     me["gen_height"] = height
     me["gen_radius"] = radius
     # clean up Sapling's objects
@@ -295,6 +296,15 @@ PLAN = [
     ("broadleaf", -49.0, 13.0, 11.0, "A shore broadleaf at cam02's right edge"),
     ("cypress", -48.0, 0.0, 23.0, "A cluster depth (QA-01-6: mass kept dense after the move west)"),
     ("pine", -52.0, 6.0, 20.0, "A cluster depth"),
+    # P. peninsula planting band in front of the podium (hero foreground; sheet s6 "low mounded shrubs ... small
+    #    trees in the podium planter zone"). Kept off the central bay: all six project to cam01 x 0.21-0.30 or
+    #    0.64-0.80 with their crowns below y 0.52, so the rotunda's body and arch stay clear.
+    ("broadleaf", -30.0, 30.0, 8.0, "P peninsula bed, right of the rotunda (cam01 x 0.71-0.78)"),
+    ("willow", -22.0, 38.0, 7.0, "P low willow at the water in front of the podium (cam01 x 0.64-0.71)"),
+    ("broadleaf", -36.0, 20.0, 7.0, "P peninsula bed (cam01 x 0.75-0.80)"),
+    ("broadleaf", 26.0, 32.0, 7.0, "P peninsula bed, left of the rotunda (cam01 x 0.21-0.26)"),
+    ("willow", 18.0, 40.0, 7.0, "P low willow at the water, left (cam01 x 0.24-0.30)"),
+    ("broadleaf", 31.0, 18.0, 6.0, "P peninsula bed (cam01 x 0.24-0.27)"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both)
     ("cypress_column", -36.0, -18.0, 27.0, "A2 tall column right of the rotunda (user image x~1020)"),
     ("pine", -47.0, -13.0, 17.0, "A2 strip along the north wing (kept below the colonnade entablature)"),
