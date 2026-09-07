@@ -356,6 +356,39 @@ Each placement is now three objects with the tree convention (`hide_render` on a
 but LOD1), and a shrub farther than `SHRUB_FAR` = 80 m from every QA camera renders its LOD1 mesh even at LOD0
 (LOD2 past 160 m). Instance count also came down 1761 -> 1423 as part of the QA-02-18 variety work.
 
+### Verification in the full master (2026-09-07, polish round 1)
+
+Built with `scripts/lead_build.sh` in this worktree (master 8458 -> 9030 objects, viewport LOD1 **11.62 M tris**,
+down from round 02's 15.18 M). Measured with `scripts/env_measure.py`, whose boxes reproduce QA round 02's numbers
+exactly against the aligned ref-169 panel of `renders/qa_comparisons/round02_cam01_aligned_vs_ref169.png`.
+
+| box (hero frame) | round 02 | ENV round 3 | at +0.9 EV | ref 169 | test |
+|---|---|---|---|---|---|
+| left_wing (QA's "north", = south colonnade) | 66.0 (0.48) | 82.6 (0.60) | 102.3 (**0.75**) | 137.2 | within 25 % |
+| right_wing (QA's "south", = north colonnade) | 88.3 (0.63) | 99.1 (0.70) | 115.4 (**0.82**) | 141.0 | within 25 % |
+| water_flank | 35.9 (0.28) | 114.8 (**0.89**) | 145.3 (1.12) | 129.6 | within 30 % |
+| water_near saturation | 0.533 | 0.531 | **0.457** | 0.106 | <= 0.45 |
+
+The +0.9 EV column is `scripts/qa_exposure_sweep.py` on the same master (Eevee, 1920x1080) and stands in for
+lighting's pending QA-02-4 exposure fix: both wings land inside the 25 % band once it arrives, and the near field's
+saturation lands 0.007 over the line — the rest of that one is `MAT_water_lagoon`'s hue, not the mesh.
+
+Composite for the lead: **`renders/qa_comparisons/env_r3_sheet.png`** (round-02 hero | ENV round 3 hero | aligned
+ref 169 with the measurement boxes drawn, plus cams 02 / 03 / 06). Frames:
+`renders/previews/qa/roundenv3_01_lagoon_hero_cycles.png` (Cycles 64 spp, 314 s),
+`roundenv3_0{1,2,3}_*.png` (Eevee), `roundenv3b_0{1,6}_*.png` (Eevee, after the backdrop-roof rebuild).
+
+**Timings are not trustworthy on this machine right now.** Three other agents were rendering throughout: the same
+cam-01 Eevee frame at 1280x720 took 124 s, 209 s and 66 s in one three-frame run, and 63 s / 50 s at 1920x1080
+when only one other Blender was up. The reliable number is the triangle count. Note also that ENV's *render* path
+is LOD0, so the shrub ladder helps the viewport far more than the render: ENV LOD0 is 14.53 M (shrubs 3.3 -> 2.31 M
+via the SHRUB_FAR rule and the lower instance count), and trees are still ~85 % of it. The next cheap render-time
+lever is still `env_trees.FAR_RADIUS` (130 m -> 105 m, roughly another 2 M), untouched this round because it needs
+its own visual check.
+
+LOD1 fidelity: the widest LOD1 leaf card is 0.105 x 2.2 x 1.45 = 33 cm, which at the nearest shore (60 m, 20 mm
+lens, 1920 px) subtends ~6 px - at QA-01-7's limit, and only ever in the viewport.
+
 ## Previews and comparisons
 
 Fix round (2026-09-07): `renders/previews/environment/*_fix2_*.png` and `fix3_cam01_1920.png` / `fix3_cam05_1920.png`
