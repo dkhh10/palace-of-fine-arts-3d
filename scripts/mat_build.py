@@ -33,6 +33,17 @@ def build_group_instance():
     ng, t, gi, go = new_group("PFA_instance", [("Seed", "FLOAT", 0.0)],
                               [("R1", "FLOAT", 0.0), ("R2", "FLOAT", 0.0), ("R3", "FLOAT", 0.0), ("R4", "FLOAT", 0.0), ("Offset", "VECTOR", (0, 0, 0))])
     r = t.objinfo().outputs["Random"]
+    # `instance_seed` object custom property (set by ORN / build_master on every ornament instance): decorrelates
+    # instances that share an Object Info Random (linked duplicates, geometry-nodes instances). Absent -> 0 -> no-op.
+    iattr = t.new("ShaderNodeAttribute", attribute_type="OBJECT")
+    iattr.attribute_name = "instance_seed"
+    ihash = t.fract(t.mul(t.math("SINE", t.mul(iattr.outputs["Fac"], 12.9898)), 43758.5453))
+    ihash = t.mul(ihash, t.math("SIGN", t.absval(iattr.outputs["Fac"])))     # property absent -> 0 -> no shift
+    # Object Info Random is 0 for every object in some evaluated contexts (and identical for linked duplicates), so the
+    # object's own origin is hashed in as well: two instances at different places are then never the same shade.
+    loc = t.objinfo().outputs["Location"]
+    lhash = t.fract(t.mul(t.math("SINE", t.dot(loc, (12.9898, 78.233, 37.719))), 43758.5453))
+    r = t.fract(t.add(t.add(r, ihash), lhash))
     seed = gi.outputs["Seed"]
     r1 = t.fract(t.madd(seed, 0.6180339, r))
     r2 = t.fract(t.madd(r1, 7.31, 0.137))
@@ -134,6 +145,7 @@ CONCRETE_INPUTS = [
     ("Streaks", "FACTOR", 0.55, 0, 1), ("Streak Scale", "FLOAT", 1.5, 0.1, 20), ("Streak Length", "FLOAT", 3.0, 0.2, 30),
     ("Ledge Distance", "FLOAT", 2.5, 0.1, 20), ("Ledge Weight", "FACTOR", 0.75, 0, 1), ("Streak Shade Bias", "FACTOR", 0.0, 0, 1),
     ("Algae", "FACTOR", 0.0, 0, 1), ("Algae Z", "FLOAT", WATER_Z), ("Algae Height", "FLOAT", 0.6, 0.05, 5),
+    ("Efflorescence", "FACTOR", 1.0, 0, 3),
     ("Patches", "FACTOR", 0.25, 0, 1),
     ("Edge Wear", "FACTOR", 0.45, 0, 1), ("Edge Radius", "FLOAT", 0.03, 0.001, 0.5),
     ("Recess Dirt", "FACTOR", 0.55, 0, 1), ("Recess Distance", "FLOAT", 0.4, 0.02, 5), ("Extra Dirt", "FACTOR", 0.0, 0, 1),
@@ -224,8 +236,10 @@ def build_group_concrete():
     # 12. algae band + efflorescence
     al = t.group(G["algae"], Offset=off, Height=I["Algae Height"], **{"Band Z": I["Algae Z"]})
     band = t.mul(al.outputs["Band"], I["Algae"])
-    effl = t.mul(al.outputs["Effl"], I["Algae"])
-    c = t.mix(t.mul(effl, 0.55), c, t.mix(0.6, c, (0.58, 0.56, 0.50)))
+    effl = t.mul(t.mul(al.outputs["Effl"], I["Algae"]), I["Efflorescence"])
+    effl = t.math("ADD", effl, 0.0, clamp=True)
+    # salt bloom: a chalky, slightly crusty white-grey wash just above the tide line (podium, rostra, rip-rap)
+    c = t.mix(t.mul(effl, 0.68), c, t.mix(0.85, c, (0.66, 0.635, 0.575)))
     c = t.mix(band, c, t.mix(0.35, (0.045, 0.07, 0.04), c))
     # 13. bird droppings on up-facing surfaces (sparse)
     vd = t.voronoi(t.vadd(P, (0.2, 0.7, 0.1)), 6.0, feature="F1", randomness=1.0)
@@ -246,7 +260,7 @@ def build_group_concrete():
     rough = t.mixf(effl, rough, 0.92)
     rough = t.math("ADD", rough, 0.0, clamp=True)
     # normal (bump from photo height + fine grain + lines + joints)
-    hfine = t.mul(t.noise(P, 60.0, detail=3, rough=0.6), 0.25)
+    hfine = t.add(t.mul(t.noise(P, 60.0, detail=3, rough=0.6), 0.25), t.mul(t.mul(effl, 0.30), t.noise(P, 22.0, detail=3, rough=0.6)))
     h = t.madd(I["Detail Height"], I["Detail Strength"], hfine)
     h = t.sub(h, t.mul(line, 0.35))
     h = t.sub(h, t.mul(grid, 0.6))
@@ -423,22 +437,22 @@ def C(r, g, b):
 def build_concrete_family():
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
-        "Base Color": C(0.47, 0.31, 0.135), "Grey Color": C(0.32, 0.26, 0.175), "Grey Drift": 0.35,
+        "Base Color": C(0.640, 0.398, 0.070), "Grey Color": C(0.41, 0.298, 0.090), "Grey Drift": 0.28,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.08, "Block Size": 3.6, "Blotch Size": 1.8,
         "Detail Strength": 0.85, "Streaks": 1.0, "Streak Scale": 2.5, "Streak Length": 10.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
         "Patches": 0.25, "Edge Wear": 0.45, "Edge Radius": 0.03, "Recess Dirt": 0.55, "Recess Distance": 0.4,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
-        "Base Color": C(0.37, 0.30, 0.19), "Grey Color": C(0.30, 0.275, 0.23), "Grey Drift": 0.5,
+        "Base Color": C(0.490, 0.362, 0.122), "Grey Color": C(0.385, 0.313, 0.143), "Grey Drift": 0.42,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.08, "Block Size": 2.4, "Blotch Size": 2.5,
         "Detail Strength": 0.6, "Streaks": 0.55, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.5,
-        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6,
+        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6, "Efflorescence": 1.15,
         "Patches": 0.35, "Edge Wear": 0.5, "Edge Radius": 0.03, "Recess Dirt": 0.6, "Recess Distance": 0.4,
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.48, 0.315, 0.135), "Grey Color": C(0.29, 0.255, 0.185), "Grey Drift": 0.3,
+        "Base Color": C(0.650, 0.403, 0.070), "Grey Color": C(0.38, 0.287, 0.096), "Grey Drift": 0.25,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.08, "Block Size": 3.0, "Blotch Size": 3.0,
         "Detail Strength": 0.55, "Streaks": 0.8, "Streak Scale": 3.0, "Streak Length": 12.0, "Ledge Distance": 2.5, "Ledge Weight": 0.4,
         "Streak Shade Bias": 0.6,
@@ -446,43 +460,43 @@ def build_concrete_family():
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.25, "Pour Spacing": 0.6})
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
-        "Base Color": C(0.36, 0.27, 0.14), "Grey Color": C(0.28, 0.25, 0.20), "Grey Drift": 0.45,
+        "Base Color": C(0.468, 0.323, 0.086), "Grey Color": C(0.36, 0.284, 0.126), "Grey Drift": 0.40,
         "Grey Below Z": 40.0, "Grey Above Z": 60.0, "Tone Variation": 0.08, "Block Size": 3.0, "Blotch Size": 2.5,
         "Detail Strength": 0.5, "Streaks": 0.3, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.6,
         "Patches": 0.1, "Edge Wear": 0.4, "Edge Radius": 0.03, "Recess Dirt": 0.7, "Recess Distance": 0.5, "Underside Dirt": 0.6,
         "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.35, "Pour Lines": 0.4, "Pour Spacing": 0.6})
     # ornament: capitals, maidens, urns, panels -- dust in the hollows, worn arrises, per-instance variation, baked-map hooks
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.47, 0.31, 0.135), "Grey Color": C(0.32, 0.26, 0.175), "Grey Drift": 0.25,
+        "Base Color": C(0.640, 0.398, 0.070), "Grey Color": C(0.41, 0.298, 0.090), "Grey Drift": 0.20,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.12, "Block Size": 1.2, "Blotch Size": 0.8,
         "Detail Strength": 0.4, "Streaks": 0.35, "Streak Scale": 5.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.5,
         "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02, "Recess Dirt": 0.75, "Recess Distance": 0.3,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
-        "Instance Variation": 1.0}, baked=True)
+        "Instance Variation": 1.7}, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
     concrete_material("MAT_column_rose", "concrete_wall_008", 6.0, {
-        "Base Color": C(0.40, 0.165, 0.105), "Grey Color": C(0.34, 0.20, 0.17), "Grey Drift": 0.25,
+        "Base Color": C(0.500, 0.207, 0.090), "Grey Color": C(0.40, 0.232, 0.140), "Grey Drift": 0.22,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 3.2, "Blotch Size": 1.5,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.02,
         "Recess Dirt": 0.6, "Recess Distance": 0.25, "Roughness": 0.72, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         column={"Wash Color": C(0.42, 0.24, 0.21), "Wash": 0.55, "Drum Height": 3.25, "Drum Variation": 0.07, "Top Z": 16.3, "Top Darkening": 0.35})
     # the 8 inner tan columns (and their blocks)
     concrete_material("MAT_column_tan_inner", "concrete_wall_008", 7.0, {
-        "Base Color": C(0.45, 0.32, 0.15), "Grey Color": C(0.36, 0.30, 0.21), "Grey Drift": 0.2,
+        "Base Color": C(0.585, 0.385, 0.086), "Grey Color": C(0.44, 0.334, 0.128), "Grey Drift": 0.18,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.15, "Block Size": 3.0, "Blotch Size": 1.5,
         "Detail Strength": 0.5, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.45, "Edge Radius": 0.02,
         "Recess Dirt": 0.6, "Recess Distance": 0.25, "Roughness": 0.78, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         column={"Wash Color": C(0.40, 0.33, 0.26), "Wash": 0.35, "Drum Height": 3.0, "Drum Variation": 0.06, "Top Z": 11.0, "Top Darkening": 0.3})
     # platform floor / steps: light neutral concrete slabs with joints
     concrete_material("MAT_paving", "concrete_wall_008", 8.0, {
-        "Base Color": C(0.45, 0.45, 0.42), "Grey Color": C(0.34, 0.34, 0.32), "Grey Drift": 0.3,
+        "Base Color": C(0.50, 0.475, 0.405), "Grey Color": C(0.37, 0.355, 0.305), "Grey Drift": 0.28,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 1.5, "Blotch Size": 4.0,
         "Detail Strength": 0.5, "Streaks": 0.0, "Patches": 0.2, "Edge Wear": 0.3, "Edge Radius": 0.02,
         "Recess Dirt": 0.5, "Recess Distance": 0.3, "Roughness": 0.7, "Roughness Variation": 0.12, "Bump": 0.3, "Pour Lines": 0.0,
         "Grid Joints": 0.8, "Grid Size": 1.5}, specular=0.45)
     # coffered plaster saucer (only bounce-lit)
     concrete_material("MAT_plaster_ceiling", "concrete_wall_008", 9.0, {
-        "Base Color": C(0.50, 0.40, 0.23), "Grey Color": C(0.35, 0.28, 0.16), "Grey Drift": 0.2,
+        "Base Color": C(0.565, 0.435, 0.215), "Grey Color": C(0.39, 0.30, 0.155), "Grey Drift": 0.18,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.12, "Block Size": 1.5, "Blotch Size": 1.0,
         "Detail Strength": 0.3, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.3, "Edge Radius": 0.02,
         "Recess Dirt": 0.7, "Recess Distance": 0.4, "Roughness": 0.9, "Roughness Variation": 0.05, "Bump": 0.25, "Pour Lines": 0.0}, specular=0.3)
@@ -495,7 +509,7 @@ def build_concrete_family():
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0})
     # exhibition hall / distant massing: buff stucco, coarse
     concrete_material("MAT_backdrop_building", "concrete_wall_008", 11.0, {
-        "Base Color": C(0.50, 0.42, 0.27), "Grey Color": C(0.38, 0.34, 0.26), "Grey Drift": 0.3,
+        "Base Color": C(0.555, 0.445, 0.245), "Grey Color": C(0.41, 0.35, 0.235), "Grey Drift": 0.28,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.15, "Block Size": 4.0, "Blotch Size": 6.0,
         "Detail Strength": 0.3, "Streaks": 0.4, "Streak Scale": 1.0, "Streak Length": 5.0, "Ledge Weight": 0.6,
         "Patches": 0.1, "Edge Wear": 0.2, "Edge Radius": 0.03, "Recess Dirt": 0.4, "Recess Distance": 0.5,
@@ -506,11 +520,11 @@ def build_dome():
     m = ML.new_material("MAT_dome_membrane")
     t = Tree(m.node_tree)
     N = t.geometry().outputs["Normal"]
-    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.70, 0.645, 0.535), "Streak Color": C(0.50, 0.50, 0.47), "Moss Color": C(0.34, 0.42, 0.28),
+    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.905, 0.720, 0.442), "Streak Color": C(0.62, 0.555, 0.42), "Moss Color": C(0.34, 0.42, 0.28),
                                         "Grime Color": C(0.20, 0.13, 0.06), "Seams": 48.0, "Seam Width": 0.05, "Streaks": 0.8, "Moss": 0.3,
-                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.35, "Bump": 0.3, "Seed": 12.0})
+                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.42, "Bump": 0.3, "Seed": 12.0})
     bsdf = t.principled(**{"Base Color": g.outputs["Color"], "Roughness": g.outputs["Roughness"], "Normal": g.outputs["Normal"],
-                           "Specular IOR Level": 0.5, "Coat Weight": g.outputs["Coat"], "Coat Roughness": 0.25, "Coat Normal": g.outputs["Normal"]})
+                           "Specular IOR Level": 0.44, "Coat Weight": t.mul(g.outputs["Coat"], 0.35), "Coat Roughness": 0.30, "Coat Normal": g.outputs["Normal"]})
     t.output(surface=bsdf.outputs[0])
     return ML.finish(m)
 
@@ -522,31 +536,45 @@ def build_water():
     N = t.geometry().outputs["Normal"]
     time = t.value(0.0, "WATER_TIME")          # driver: frame-based drift (see below)
     wx, wy, wz = t.sepxyz(W)
-    # slight anisotropy: ripples a little longer along X (across the hero view) so reflections streak vertically
-    Pa = t.combxyz(t.mul(wx, 0.75), wy, 0.0)
+    # Distance filtering (Toksvig): a 0.3 m ripple is far smaller than a pixel at 150 m, so past ~45 m its slope must
+    # move out of the normal and into the roughness. Without this the far water tips every grazing reflection ray away
+    # from the sunlit building and the lagoon reads brown-black (QA-01-3).
+    cam = t.new("ShaderNodeCameraData")
+    depth = cam.outputs["View Z Depth"]
+    ripple_lod = t.maprange(depth, 30.0, 180.0, 1.0, 0.13)
+    far_rough = t.maprange(depth, 45.0, 200.0, 0.0, 0.030)
+    # anisotropy: crests run ~3x longer along X (across the hero view), so the reflection breaks into vertical streaks
+    Pa = t.combxyz(t.mul(wx, 0.33), wy, 0.0)
+    Ps = t.combxyz(t.mul(wx, 0.55), wy, 0.0)
     h1 = t.noise(Pa, 3.3, detail=3, rough=0.55, w=t.mul(time, 1.0))          # 0.3 m ripples
-    h2 = t.noise(Pa, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
+    h2 = t.noise(Ps, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
     h3 = t.noise(Pa, 9.0, detail=2, rough=0.5, w=t.mul(time, 1.7))           # 0.1 m capillary
     h = t.add(t.add(t.mul(h1, 0.6), h2), t.mul(h3, 0.18))
     # calmer patches (wind shadow) so the reflection is glassy in places
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
-    normal = t.bump(h, strength=t.mul(0.6, calm), distance=0.03, normal=N)
-    rough = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.06)
-    bsdf = t.principled(**{"Base Color": C(0.62, 0.80, 0.68), "Roughness": rough, "IOR": 1.333, "Transmission Weight": 1.0,
+    normal = t.bump(h, strength=t.mul(t.mul(0.45, calm), ripple_lod), distance=0.03, normal=N)
+    rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
+    # green murk body. Transmission 0.55 (not 1.0) so the material reads the same on ENV's single water plane as it
+    # does inside a closed lagoon volume: the opaque 45 % is a green murk lambertian that picks up sky and sun, the
+    # transmissive 55 % carries the volume when there is one. Fresnel reflection is on top of both.
+    murk_far = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.05, detail=2), 0.35, 0.65, 0.0, 1.0)
+    murk = t.mix(murk_far, C(0.042, 0.084, 0.055), C(0.078, 0.140, 0.086))
+    bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.45,
                            "Specular IOR Level": 0.5, "Normal": normal})
     # one Principled Volume (absorption + weak scatter): Absorption + Scatter + Add Shader pushed Cycles past its
     # 64-closure budget (76) and closures were silently dropped. extinction = density * (color + 1 - absorption_color):
-    # absorption ~ (0.385, 0.275, 0.395)/m, scatter ~ (0.03, 0.05, 0.035)/m -> green-tea murk, 1.5 m visibility.
+    # scatter (0.117, 0.234, 0.144)/m, absorption (0.36, 0.135, 0.36)/m -> single-scatter albedo 0.25/0.63/0.29, i.e. a
+    # LIT green murk (the v1 numbers gave albedo 0.07-0.15, which made a closed lagoon volume read black).
     vol = t.new("ShaderNodeVolumePrincipled")
-    t.plug(vol.inputs["Color"], C(0.06, 0.10, 0.07)); t.plug(vol.inputs["Density"], 0.5)
-    t.plug(vol.inputs["Absorption Color"], C(0.23, 0.45, 0.21)); t.plug(vol.inputs["Anisotropy"], 0.4)
+    t.plug(vol.inputs["Color"], C(0.13, 0.26, 0.16)); t.plug(vol.inputs["Density"], 0.9)
+    t.plug(vol.inputs["Absorption Color"], C(0.60, 0.85, 0.60)); t.plug(vol.inputs["Anisotropy"], 0.3)
     t.output(surface=bsdf.outputs[0], volume=vol.outputs[0], target="CYCLES")
     # Eevee cannot reflect through its transmission path (tested: no Fresnel reflection with or without raytraced
     # refraction), so Eevee gets an opaque dark-murk surface with the same ripples: reflections come from raytracing/probes.
     # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
     #  tree against its 64-closure budget, two Principled BSDFs blew it to 76.)
-    murk = t.mix(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.05, detail=2), 0.35, 0.65, 0.0, 1.0), C(0.025, 0.05, 0.035), C(0.045, 0.075, 0.045))
-    dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk); t.plug(dif.inputs["Normal"], normal)
+    murk_e = t.mix(murk_far, C(0.050, 0.098, 0.064), C(0.088, 0.155, 0.096))
+    dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk_e); t.plug(dif.inputs["Normal"], normal)
     glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
     fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
     mx = t.new("ShaderNodeMixShader"); t.link(fr.outputs[0], mx.inputs[0]); t.link(dif.outputs[0], mx.inputs[1]); t.link(glo.outputs[0], mx.inputs[2])
@@ -564,7 +592,7 @@ def build_water():
     return ML.finish(m)
 
 
-def foliage_image(name):
+def foliage_image(name, data=False):
     p = ML.TEX_DIR / "foliage" / f"{name}.png"
     key = f"TEX_foliage_{name}"
     img = bpy.data.images.get(key)
@@ -574,13 +602,13 @@ def foliage_image(name):
             return None
         img = bpy.data.images.load(str(p), check_existing=True)
         img.name = key
-    img.colorspace_settings.name = "sRGB"
+    img.colorspace_settings.name = "Non-Color" if data else "sRGB"
     img.alpha_mode = "STRAIGHT"
     return img
 
 
 def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=0.3, seed=20.0, spec=0.3, translucency=0.3,
-                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2):
+                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2, nrm_strength=0.6):
     """Alpha-cut, two-sided, translucent card material on a generated RGBA foliage texture (UV map 'UVMap').
     Per-tree hue/value variation from Object Info Random, cluster-scale variation from object-space noise."""
     m = ML.new_material(name)
@@ -600,11 +628,32 @@ def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=
     c = t.vscale(c, cl)
     # alpha: hard-ish cut so cards read solid at 120 m, soft rim at 3 m
     alpha = t.maprange(tex.outputs["Alpha"], alpha_cut - 0.15, alpha_cut + 0.15, 0.0, 1.0)
-    bsdf = t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": spec, "Sheen Weight": sheen})
+    # blade relief: a real tangent-space normal map (generated with the colour/alpha, see mat_leaf_textures.save_maps)
+    nimg = foliage_image(texture + "_nrm", data=True)
+    normal = None
+    if nimg is not None:
+        ntex = t.new("ShaderNodeTexImage", projection="FLAT", interpolation="Linear", extension="EXTEND")
+        ntex.image = nimg
+        t.link(uv.outputs[0], ntex.inputs["Vector"])
+        normal = t.normal_map(ntex.outputs["Color"], strength=nrm_strength, uv_map="UVMap")
+    # translucency mask: thin margins and tips transmit, midribs/stems/needle spines do not
+    timg = foliage_image(texture + "_trn", data=True)
+    tfac = translucency
+    if timg is not None:
+        ttex = t.new("ShaderNodeTexImage", projection="FLAT", interpolation="Linear", extension="EXTEND")
+        ttex.image = timg
+        t.link(uv.outputs[0], ttex.inputs["Vector"])
+        tfac = t.mul(t.maprange(ttex.outputs["Color"], 0.05, 0.85, 0.35, 1.55), translucency)
+    pin = {"Base Color": c, "Roughness": rough, "Specular IOR Level": spec, "Sheen Weight": sheen}
+    if normal is not None:
+        pin["Normal"] = normal
+    bsdf = t.principled(**pin)
     tr = t.new("ShaderNodeBsdfTranslucent")
     t.plug(tr.inputs["Color"], t.vmul(c, translucent))
+    if normal is not None:
+        t.plug(tr.inputs["Normal"], normal)
     mix = t.new("ShaderNodeMixShader")
-    t.plug(mix.inputs[0], translucency)
+    t.plug(mix.inputs[0], tfac)
     t.link(bsdf.outputs[0], mix.inputs[1]); t.link(tr.outputs[0], mix.inputs[2])
     transp = t.new("ShaderNodeBsdfTransparent")
     cut = t.new("ShaderNodeMixShader")
@@ -756,6 +805,56 @@ def build_ground():
     ML.finish(m)
 
 
+def build_backdrop_details():
+    """Exhibition-hall details ENV needs by name: roof membrane, skylight glazing, the green door on the rotunda axis."""
+    # roof: pale grey built-up membrane with tar seams and pooled grime, seen from above in the aerial only
+    m = ML.new_material("MAT_backdrop_roof")
+    t = Tree(m.node_tree)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    seams = t.smoothstep(t.absval(t.sub(t.fract(t.mul(t.sepxyz(W)[1], 0.4)), 0.5)), 0.44, 0.5)
+    grime = t.maprange(t.noise(W, 0.35, detail=3, rough=0.6), 0.35, 0.7, 0.0, 1.0)
+    c = t.mix(grime, C(0.155, 0.150, 0.135), C(0.085, 0.082, 0.075))
+    c = t.mix(t.mul(seams, 0.8), c, C(0.045, 0.043, 0.040))
+    rough = t.add(0.82, t.mul(t.sub(t.noise(W, 2.0, detail=2), 0.5), 0.16))
+    normal = t.bump(t.add(t.mul(t.noise(W, 12.0, detail=3), 0.5), t.mul(seams, 0.5)), strength=0.35, distance=0.01, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.35, "Normal": normal}).outputs[0])
+    ML.finish(m)
+    # skylight glazing: dirty wired glass, mostly a dark reflective panel at hero distance
+    m = ML.new_material("MAT_backdrop_skylight")
+    t = Tree(m.node_tree)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    dirt = t.maprange(t.noise(W, 1.6, detail=3, rough=0.6), 0.3, 0.75, 0.0, 1.0)
+    c = t.mix(dirt, C(0.055, 0.062, 0.070), C(0.13, 0.125, 0.105))
+    rough = t.add(0.14, t.mul(dirt, 0.30))
+    normal = t.bump(t.mul(t.noise(W, 6.0, detail=2), 0.4), strength=0.2, distance=0.008, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.75,
+                                     "Coat Weight": 0.25, "Coat Roughness": 0.12, "Normal": normal}).outputs[0])
+    ML.finish(m)
+    # the hall's green door on the rotunda axis (visible through the central arch in the hero): old semi-gloss
+    # park-service green paint on wood, chalked and streaked, with a dull bronze push-plate zone at object z 1.0-1.2
+    m = ML.new_material("MAT_backdrop_door_green")
+    t = Tree(m.node_tree)
+    P = t.texcoord().outputs["Object"]
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    px, py, pz = t.sepxyz(P)
+    boards = t.smoothstep(t.absval(t.sub(t.fract(t.mul(px, 1.6)), 0.5)), 0.42, 0.5)
+    chalk = t.maprange(t.noise(W, 3.0, detail=3, rough=0.6), 0.3, 0.72, 0.0, 1.0)
+    c = t.mix(chalk, C(0.028, 0.055, 0.036), C(0.060, 0.088, 0.062))
+    c = t.mix(t.mul(boards, 0.8), c, C(0.014, 0.028, 0.019))
+    # weathered lower edge (kicked, damp)
+    c = t.mix(t.maprange(pz, 0.05, 0.35, 0.7, 0.0), c, C(0.030, 0.038, 0.030))
+    plate = t.mul(t.maprange(pz, 0.95, 1.02, 0.0, 1.0), t.maprange(pz, 1.18, 1.25, 1.0, 0.0))
+    c = t.mix(plate, c, C(0.115, 0.085, 0.045))
+    rough = t.mixf(plate, t.add(0.42, t.mul(chalk, 0.30)), 0.45)
+    normal = t.bump(t.add(t.mul(t.noise(W, 40.0, detail=3), 0.3), t.mul(boards, 0.6)), strength=0.3, distance=0.006, normal=N)
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.5,
+                                     "Metallic": t.mul(plate, 0.7), "Normal": normal}).outputs[0])
+    ML.finish(m)
+
+
 def build_misc():
     # gulls: white body, grey mantle from object z, matte
     m = ML.new_material("MAT_bird_white")
@@ -776,11 +875,21 @@ def build_all_materials():
     build_dome()
     build_water()
     leaf_material("MAT_leaf_cypress", "needles_cypress", (0.9, 1.1, 0.5), rough=0.6, hue_var=0.05, val_var=0.35, seed=20.0, translucency=0.25, alpha_cut=0.45)
+    # conifers other than cypress (Monterey pine, redwood): darker, bluer, longer needles -- ENV maps pines here
+    leaf_material("MAT_leaf_pine", "needles_pine", (0.7, 0.95, 0.5), rough=0.55, hue_var=0.04, val_var=0.28, seed=27.0,
+                  translucency=0.18, spec=0.35, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5)
     leaf_material("MAT_leaf_eucalyptus", "leaves_eucalyptus", (0.8, 1.0, 0.5), rough=0.42, hue_var=0.06, val_var=0.3, seed=21.0, spec=0.4, translucency=0.3)
     leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.4), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35)
     leaf_material("MAT_shrub", "leaves_shrub", (0.8, 1.1, 0.5), rough=0.5, hue_var=0.08, val_var=0.4, seed=23.0, translucency=0.2, spec=0.4)
+    # shore planting mix (ENV): a paler grey-green (pittosporum / agapanthus) and a straw-dry one, so a 1400-bush belt
+    # is not one flat green. Same card texture, different tint / value spread.
+    leaf_material("MAT_shrub_light", "leaves_shrub", (0.85, 1.05, 0.6), rough=0.45, hue_var=0.06, val_var=0.45, seed=24.0,
+                  translucency=0.28, spec=0.45, tint=(1.25, 1.30, 1.05), sheen=0.2)
+    leaf_material("MAT_shrub_dry", "leaves_shrub", (1.05, 0.95, 0.5), rough=0.62, hue_var=0.05, val_var=0.5, seed=25.0,
+                  translucency=0.22, spec=0.25, tint=(4.50, 1.15, 0.70), sheen=0.1, cluster_var=0.3)
     leaf_material("MAT_reeds", "reeds", (0.9, 1.0, 0.5), rough=0.6, hue_var=0.06, val_var=0.4, seed=26.0, translucency=0.35, cluster_var=0.35)
     build_extra_env()
+    build_backdrop_details()
     bark_material("MAT_bark_cypress", "chinese_cedar_bark", C(0.20, 0.15, 0.11), 24.0, tile=1.6, rough=0.9, bump=0.7, stringy=0.4)
     bark_material("MAT_bark_eucalyptus", "bark_bluegum", C(0.40, 0.35, 0.29), 25.0, tile=1.82, rough=0.75, bump=0.5)
     build_ground()
@@ -944,8 +1053,12 @@ def capital_proxy(name, loc, material, r=0.42, h=0.8, notches=12):
     return o
 
 
-for i in range(3):
-    capital_proxy(f"MAT_test_capital_v{i + 1}", (3.9 + i * 1.1, 0.0, GZ + 1.55), "MAT_ornament_concrete")
+# six capital proxies with distinct `instance_seed` values: the per-instance weathering test at 60 m (QA non-negotiable
+# "no ornament asset identical twice at hero distance"). They are separate meshes here, so Object Info Random already
+# differs; the explicit property is what ORN's linked/instanced copies will carry.
+for i in range(6):
+    cap = capital_proxy(f"MAT_test_capital_v{i + 1}", (22.0 + i * 1.15, 20.0, GZ + 1.55), "MAT_ornament_concrete")
+    cap["instance_seed"] = float(i) * 1.618 + 0.37
 lumpy("MAT_test_blob", 0.4, (6.2, 0.0, GZ + 0.4), "MAT_ornament_concrete", seed=4)
 basin = box("MAT_test_basin", (3.6, 2.8, 0.95), (1.5, 1.4, GZ + 0.475), "MAT_concrete_podium", bevel=0.015)
 bcut = box("MAT_test_basin_cut", (3.1, 2.3, 2.0), (1.5, 1.4, GZ + 0.15 + 1.0), "MAT_concrete_podium", bevel=0)
@@ -975,11 +1088,15 @@ def card(name, size, loc, material, rot=(math.radians(90), 0, 0)):
     return o
 
 
-for i, (nm, matn) in enumerate((("cypress", "MAT_leaf_cypress"), ("eucalyptus", "MAT_leaf_eucalyptus"), ("broadleaf", "MAT_leaf_broadleaf"), ("shrub", "MAT_shrub"), ("reeds", "MAT_reeds"))):
+for i, (nm, matn) in enumerate((("cypress", "MAT_leaf_cypress"), ("pine", "MAT_leaf_pine"), ("eucalyptus", "MAT_leaf_eucalyptus"), ("broadleaf", "MAT_leaf_broadleaf"), ("shrub", "MAT_shrub"), ("reeds", "MAT_reeds"))):
     card(f"MAT_test_card_{nm}", (1.0, 1.0), (7.4 + i * 1.15, 8.0, GZ + 0.55), matn)
     # a crossed-card cluster of the same material for the distance read
     for j in range(3):
         card(f"MAT_test_cluster_{nm}_{j}", (1.4, 1.4), (7.4 + i * 1.15, 30.0, GZ + 0.8), matn, rot=(math.radians(90), 0, j * math.pi / 3))
+for i, (nm, matn) in enumerate((("shrub_light", "MAT_shrub_light"), ("shrub_dry", "MAT_shrub_dry"))):
+    card(f"MAT_test_card_{nm}", (1.0, 1.0), (7.4 + i * 1.15, 10.5, GZ + 0.55), matn)
+    for j in range(3):
+        card(f"MAT_test_cluster_{nm}_{j}", (1.4, 1.4), (7.4 + i * 1.15, 32.5, GZ + 0.8), matn, rot=(math.radians(90), 0, j * math.pi / 3))
 box("MAT_test_backdrop_forest", (6.0, 3.0, 4.0), (-4.0, 34.0, GZ + 2.0), "MAT_backdrop_forest", bevel=0)
 box("MAT_test_backdrop_hill", (6.0, 3.0, 2.0), (-11.0, 34.0, GZ + 1.0), "MAT_backdrop_hill", bevel=0)
 bpy.ops.mesh.primitive_cylinder_add(radius=0.08, depth=3.6, location=(13.5, 7.0, GZ + 1.8), vertices=12)
@@ -1006,6 +1123,12 @@ for i in range(2):
         b = ceil.modifiers.new(f"cut{i}{j}", "BOOLEAN"); b.operation = "DIFFERENCE"; b.object = c
 box("MAT_test_drumband", (2.5, 0.4, 0.6), (-10.5, -0.2, GZ + 3.4), "MAT_drum_band", bevel=0.02)
 box("MAT_test_backdrop", (3.0, 0.4, 2.5), (-16.5, -0.2, GZ + 1.25), "MAT_backdrop_building")
+# exhibition-hall details for ENV: roof membrane (tilted up so the misc camera sees it), skylight glazing, green door
+roofp = box("MAT_test_backdrop_roof", (2.4, 1.6, 0.15), (-19.6, 0.6, GZ + 2.2), "MAT_backdrop_roof", bevel=0)
+roofp.rotation_euler = (math.radians(-55), 0, 0)
+box("MAT_test_backdrop_skylight", (1.1, 0.15, 0.9), (-19.6, -0.2, GZ + 0.9), "MAT_backdrop_skylight", bevel=0.01)
+door = box("MAT_test_backdrop_door", (1.6, 0.12, 2.4), (-22.4, -0.2, GZ + 1.2), "MAT_backdrop_door_green", bevel=0.01)
+door.location.z = GZ + 1.2
 
 # grey card: an 18 % reflectance reference next to the ochre wall (test-only material)
 gc = ML.new_material("MAT_test_greycard18")

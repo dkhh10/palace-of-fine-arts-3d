@@ -17,7 +17,14 @@ OUT = ROOT / "assets" / "textures" / "foliage"
 N = 1024
 
 
+HEIGHT = np.zeros((N, N), np.float32)     # per-leaf relief, accumulated by the splat helpers
+RIB = np.zeros((N, N), np.float32)        # midribs / stems / needle spines: opaque, NOT translucent
+
+
 def blank():
+    global HEIGHT, RIB
+    HEIGHT = np.zeros((N, N), np.float32)
+    RIB = np.zeros((N, N), np.float32)
     return np.zeros((N, N, 4), np.float32)
 
 
@@ -38,6 +45,12 @@ def splat_line(img, x0, y0, x1, y1, width, color, alpha=1.0, taper=False):
         c = np.asarray(color, np.float32)
         win[..., :3] = win[..., :3] * (1 - a[..., None]) + c[None, None, :] * a[..., None]
         win[..., 3] = np.maximum(win[..., 3], a)
+        # a needle / twig is a half-cylinder: height peaks on its axis, and it is a stem so it stays opaque
+        hp = np.clip(1.0 - d / max(w / 2, 0.7), 0, 1) ** 0.5
+        hw = HEIGHT[y - r:y + r + 1, x - r:x + r + 1]
+        np.maximum(hw, hp * 0.55 * alpha, out=hw)
+        rw = RIB[y - r:y + r + 1, x - r:x + r + 1]
+        np.maximum(rw, a * 0.8, out=rw)
 
 
 def splat_leaf(img, cx, cy, length, width, angle, color, tip_color=None, midrib=True, shape="ovate", alpha=1.0):
@@ -74,6 +87,15 @@ def splat_leaf(img, cx, cy, length, width, angle, color, tip_color=None, midrib=
     win = img[y0:y1, x0:x1]
     win[..., :3] = win[..., :3] * (1 - a[..., None]) + c * a[..., None]
     win[..., 3] = np.maximum(win[..., 3], a)
+    # blade relief: a cross-blade bulge (thick on the midrib, thin at the margin) so the card catches raking light
+    bulge = np.sqrt(np.clip(1.0 - np.clip(v, -1, 1) ** 2, 0, 1)) * np.sqrt(np.clip(1.0 - np.clip(u, -1, 1) ** 2, 0, 1))
+    hw = HEIGHT[y0:y1, x0:x1]
+    np.maximum(hw, inside * (0.35 + 0.65 * bulge) * alpha, out=hw)
+    if midrib:
+        ribm = np.clip(1.0 - np.abs(v) * (width / 2) / 1.4, 0, 1) * inside
+        np.maximum(hw, ribm * 0.95 * alpha, out=hw)
+        rw = RIB[y0:y1, x0:x1]
+        np.maximum(rw, ribm * alpha, out=rw)
 
 
 def radial_fade(img, inner=0.55, outer=0.98):
@@ -103,6 +125,45 @@ def save(img, name):
     im.file_format = "PNG"
     im.save()
     print(f"[leaf_textures] {p.name}  coverage {float((flat[..., 3] > 0.5).mean()):.2f}")
+    save_maps(flat, name)
+
+
+def _save_gray_or_rgb(arr, name, colorspace="Non-Color"):
+    key = f"FOLIAGE_{name}"
+    if key in bpy.data.images:
+        bpy.data.images.remove(bpy.data.images[key])
+    im = bpy.data.images.new(key, N, N, alpha=False, float_buffer=False, is_data=True)
+    im.colorspace_settings.name = colorspace
+    out = np.concatenate([np.clip(arr, 0, 1), np.ones((N, N, 1), np.float32)], axis=-1)
+    im.pixels.foreach_set(out.astype(np.float32).ravel())
+    pth = OUT / f"{name}.png"
+    im.filepath_raw = str(pth)
+    im.file_format = "PNG"
+    im.save()
+    return pth
+
+
+def save_maps(flat, name, nrm_strength=3.5):
+    """Tangent-space normal (OpenGL, +Y = +v) and a translucency mask, both derived from the HEIGHT/RIB buffers.
+
+    Translucency: a leaf blade transmits most where it is thin (margins, tips) and least on the midrib/stem, so
+    trn = (1 - relief) shaped by alpha and knocked down on the ribs. Needle textures come out mostly opaque-rib,
+    which is right: a needle scatters more than it transmits."""
+    h = HEIGHT.copy()
+    # smooth once (3x3 tent) so the derivative is not a single-pixel staircase
+    for _ in range(2):
+        h = (h + np.roll(h, 1, 0) + np.roll(h, -1, 0) + np.roll(h, 1, 1) + np.roll(h, -1, 1)) / 5.0
+    gx = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * 0.5
+    gy = (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * 0.5
+    nx, ny, nz = -gx * nrm_strength * N / 512.0, -gy * nrm_strength * N / 512.0, np.ones_like(h)
+    ln = np.sqrt(nx * nx + ny * ny + nz * nz)
+    nrm = np.stack([nx / ln, ny / ln, nz / ln], -1) * 0.5 + 0.5
+    _save_gray_or_rgb(nrm.astype(np.float32), f"{name}_nrm")
+    alpha = flat[..., 3]
+    trn = np.clip(1.05 - 0.85 * HEIGHT, 0.1, 1.0) * (1.0 - 0.75 * np.clip(RIB, 0, 1))
+    trn = np.clip(trn, 0.05, 1.0) * np.clip(alpha * 1.3, 0, 1)
+    _save_gray_or_rgb(np.repeat(trn[..., None], 3, -1).astype(np.float32), f"{name}_trn")
+    print(f"[leaf_textures] {name}_nrm.png + {name}_trn.png  mean trn {float(trn[alpha > 0.5].mean()) if (alpha > 0.5).any() else 0:.2f}")
 
 
 def tex_needles_cypress(seed=1):

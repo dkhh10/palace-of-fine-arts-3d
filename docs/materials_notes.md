@@ -71,7 +71,7 @@ Base albedos are linear RGB. "Y" = luminance. Photo texture sets are CC0 from Po
 
 | material | base albedo (Y) | texture set | notes |
 |---|---|---|---|
-| MAT_concrete_ochre | (0.47, 0.31, 0.135) Y 0.33 | concrete_wall_008 (2.71 m tile: precast panel with tie holes + faint joints) | upper rotunda: walls, entablature, attic, drum. Streaks 1.0 under ledges (shelter 3 m, weight 0.55), patches 0.25, edge wear 0.45 @ 3 cm, recess dirt 0.55 @ 0.4 m, pour lines 0.6 m, rough 0.78 +- 0.12 |
+| MAT_concrete_ochre | (0.640, 0.398, 0.070) Y 0.43 | concrete_wall_008 (2.71 m tile: precast panel with tie holes + faint joints) | upper rotunda: walls, entablature, attic, drum. Streaks 1.0 under ledges (shelter 3 m, weight 0.55), patches 0.25, edge wear 0.45 @ 3 cm, recess dirt 0.55 @ 0.4 m, pour lines 0.6 m, rough 0.78 +- 0.12 |
 | MAT_concrete_podium | (0.37, 0.30, 0.19) Y 0.31 | concrete_wall_007 (2.16 m: streaky, pour layers) | piers, pedestals, rostra, platform; greyer/damper (grey drift 0.5 below z 0.5..5), **algae band at WATER_Z** (height 0.6), patches 0.35 |
 | MAT_concrete_colonnade | (0.48, 0.315, 0.135) Y 0.34 | concrete_wall_007 | strongest streaks (0.8, 12 m long, shade-side bias 0.6 = north/-X faces), shelter weight 0.4 so shafts streak too |
 | MAT_concrete_inner | (0.36, 0.27, 0.14) Y 0.28 | concrete_wall_008 | vault soffits / inner rings: full grey drift, recess dirt 0.7 @ 0.5 m, underside soot 0.6, rough 0.85 |
@@ -82,8 +82,8 @@ Base albedos are linear RGB. "Y" = luminance. Photo texture sets are CC0 from Po
 | MAT_plaster_ceiling | (0.50, 0.40, 0.23) | concrete_wall_008 (0.3) | coffers: recess dirt 0.7, rough 0.9, low specular |
 | MAT_drum_band | (0.28, 0.18, 0.09) | concrete_wall_007 | bronze-brown guilloche: recess dirt 0.7 @ 0.25 m -> 0.15 in the pattern hollows |
 | MAT_backdrop_building | (0.50, 0.42, 0.27) | concrete_wall_008 (0.3) | exhibition hall / massing: coarse 4-6 m variation, streaks 0.4 |
-| MAT_dome_membrane | (0.70, 0.645, 0.535) | procedural | semi-gloss urethane: roughness 0.35 (+0.22 in streaks), Coat 0.4 where clean, specular 0.5; 48 lap seams (5 cm, bump), radial streaks strongest on the lower third (`Base Normal Z` 0.66 = the cap's base slope), moss patches (0.34, 0.42, 0.28) on the -X flank, grime ring (0.20, 0.13, 0.06) at the base with a 6 mm-in-nz irregular edge |
-| MAT_water_lagoon | Cycles: surface tint (0.62, 0.80, 0.68), IOR 1.333, transmission 1 + volume; Eevee: opaque murk (0.025-0.045, 0.05-0.075, 0.035-0.045) glossy, IOR 1.333 | procedural | roughness 0.02-0.06 (noise 0.12/m), normal = bump of 0.3 m + 3 m + 0.1 m ripple noises (4D, `WATER_TIME` value driven by `frame*0.03`), calmer patches (wind shadow, 25 m noise); volume (Cycles output): one Principled Volume, density 0.5, scatter colour (0.06, 0.10, 0.07), absorption colour (0.23, 0.45, 0.21), anisotropy 0.4 (= absorption ~0.39/0.28/0.40 per m + weak scatter; Absorption+Scatter+Add exceeded Cycles' 64-closure budget). Two Material Output nodes (`target` CYCLES / EEVEE); the Eevee one is Diffuse+Glossy by Fresnel |
+| MAT_dome_membrane | (0.905, 0.720, 0.442) | procedural | semi-gloss urethane: roughness 0.35 (+0.22 in streaks), Coat 0.4 where clean, specular 0.5; 48 lap seams (5 cm, bump), radial streaks strongest on the lower third (`Base Normal Z` 0.66 = the cap's base slope), moss patches (0.34, 0.42, 0.28) on the -X flank, grime ring (0.20, 0.13, 0.06) at the base with a 6 mm-in-nz irregular edge |
+| MAT_water_lagoon | Cycles: green murk base (0.042,0.084,0.055)..(0.078,0.140,0.086), IOR 1.333, transmission 0.45 + volume; Eevee: opaque murk (0.025-0.045, 0.05-0.075, 0.035-0.045) glossy, IOR 1.333 | procedural | roughness 0.02-0.06 (noise 0.12/m), normal = bump of 0.3 m + 3 m + 0.1 m ripple noises (4D, `WATER_TIME` value driven by `frame*0.03`), calmer patches (wind shadow, 25 m noise); volume (Cycles output): one Principled Volume, density 0.5, scatter colour (0.06, 0.10, 0.07), absorption colour (0.23, 0.45, 0.21), anisotropy 0.4 (= absorption ~0.39/0.28/0.40 per m + weak scatter; Absorption+Scatter+Add exceeded Cycles' 64-closure budget). Two Material Output nodes (`target` CYCLES / EEVEE); the Eevee one is Diffuse+Glossy by Fresnel |
 | MAT_lawn | green (0.11, 0.19, 0.05) / dry (0.22, 0.21, 0.07) / wet (0.07, 0.13, 0.035) | procedural | patchy November lawn: 8 m dry patches, 12 m damp patches, blade grain 90/m (+-25 %), bump, rough 0.85, sheen 0.1 |
 | MAT_soil | (0.18, 0.12, 0.08) mixed 40 % with the photo | forest_ground_04 (3.15 m) | bump 0.5, rough 0.9 |
 | MAT_gravel_path | (0.32, 0.28, 0.21) mixed 45 % with the photo | gravelly_sand (2.48 m) | decomposed granite; damp patches |
@@ -156,6 +156,102 @@ hero cameras on the placeholder blockout (+ ENV with `--env`).
   `mat_lib.dedupe_node_groups()`.
 - Lighting: the sunlit-stone hue now matches ref 169 within a few percent in the green/blue ratios; remaining brightness
   and warmth differences are illuminant/exposure. Eevee water reflections depend on the preview preset (raytracing on).
-- Not done: a leaf normal/translucency map (single colour+alpha only), separate pine/redwood needle material
-  (`needles_pine.png` is generated but ENV maps all conifers to MAT_leaf_cypress), rustication joints for the podium
-  (expected as geometry from ARCH), a dedicated efflorescence texture (procedural only).
+- Not done (after round 2): rustication joints for the podium (expected as geometry from ARCH); a photographed
+  efflorescence texture (still procedural); baked ORN normal/AO maps are wired but no asset has supplied them yet.
+
+## Round 2 (Phase 3 fix round, 2026-09-07) -- what changed and why
+
+All numbers are sRGB means from `scripts/mat_measure.py` on `--rig --env` Cycles heroes (960x540, 48 spp) at
+`renders/previews/materials/`; comparison sheet `renders/qa_comparisons/materials_r2_water_stone.png`
+(`scripts/mat_compare.py` builds it: labelled tiles, optional per-tile crop).
+
+### QA-01-3 water (blocker)
+The v1 water was a transmission-1.0 glass over a nearly black absorbing volume, with a full-amplitude 0.3 m ripple at
+every distance. At 120-200 m one ripple is far smaller than a pixel, so its slope tipped every grazing reflection ray
+off the sunlit building and into the dark shore: the lagoon read brown-black. Three changes:
+1. **Distance filtering (Toksvig).** `Camera Data > View Z Depth` drives `ripple_lod` (1.0 at 30 m -> 0.13 at 180 m) on
+   the bump strength, and adds up to +0.030 roughness over the same range. Near water keeps the full ripple (the
+   0.3-1 m streaks QA asked for), far water becomes a slightly blurred mirror instead of noise.
+2. **Anisotropy.** The 0.3 m ripple noise is stretched 3x along X (0.55x for the 3 m swell), so crests run across the
+   hero view and the reflection breaks into *vertical* streaks as in ref 169.
+3. **Lit green murk instead of black.** Transmission 1.0 -> **0.45** with a green murk base colour
+   (0.042,0.084,0.055)..(0.078,0.140,0.086); the volume went from single-scatter albedo 0.07-0.15 to 0.25/0.63/0.29
+   (Principled Volume: density 0.9, Color (0.13,0.26,0.16), Absorption Color (0.60,0.85,0.60), anisotropy 0.3 ->
+   scatter (0.117,0.234,0.144)/m, absorption (0.36,0.135,0.36)/m). The material now reads the same on ENV's single
+   water plane (the opaque 45 % carries the murk) and inside a closed lagoon volume (the transmissive 55 % carries it).
+   The Eevee output branch got the same brighter murk and is unchanged otherwise.
+
+| region (hero cam 01) | before | after | ref 169 |
+|---|---|---|---|
+| reflection under the rotunda | 90,64,40 | 108,80,48 | 129,95,57 |
+| its own source (the shore band it mirrors) | 123,105,80 | 109,86,53 | - |
+| reflection / source | 73 % | **99 %** | - |
+| reflection / sunlit stone | 55 % | 59 % | 61 % |
+| near water | 77,106,132 | 44,87,116 | 43,69,84 |
+| far water (left of the rotunda) | 30,28,23 brown | 37,32,24 green-grey | - |
+
+Reflection-vs-*building* is 59 % against the acceptance test's 70 %, but ref 169 itself is 61 %: the water in our hero
+mirrors the shaded lower building and the shore band, not the sunlit attic, because the water band is only ~14 % of the
+frame. Once the hero camera pulls back (lead/QA item) the attic lands in the water and the ratio follows the photo.
+Aerial haze over 150 m of water (the other half of ref 169's bright far water) is a lighting/compositing mist pass.
+
+### Sunlit stone luminance and warmth
+Concrete base albedos were lifted ~20-25 % and the blue channel cut ~40 % across the family (ochre
+(0.47,0.31,0.135) Y 0.33 -> **(0.640,0.398,0.070) Y 0.43**; colonnade, ornament, inner, podium, tan columns, paving,
+plaster, backdrop and the rose column moved with it; grey-drift colours warmed to match). Ochre stays well under
+attempt 2's Y 0.59.
+Measured (hero cam 01, merged lighting rig): sunlit attic **183,148,111** vs ref 169 212,167,103 -- 14 % under in sRGB,
+hue 30.4 deg vs 35.2 deg (**4.8 deg**, inside the 8 deg tolerance). Every further +10 % of albedo now buys only ~2 % of
+display value: AgX's shoulder is compressing it, so the last of the luminance is exposure, not albedo. Diagnostic
+`mat_lineup --ev <delta>`: at **+1.0 EV** the same shader reads 195,160,126 (Y 0.384 vs ref 0.4235 = 9 % under, hue
+29.6 deg) -- i.e. one more stop closes the acceptance test on both axes. **Left to lighting:** that last stop, the
+remaining R-B spread (ours 72, ref 109 -- the blue is skylight fill, not albedo), the grey horizon band and warm haze.
+
+### QA-01-20 dome
+`MAT_dome_membrane`: roughness 0.35 -> 0.42, Specular IOR Level 0.5 -> 0.44, coat weight x0.35 (was a flat 0.4) and
+coat roughness 0.25 -> 0.30, so the broad sheen that blew out from above is gone; then, on lighting's master-scene
+measurement (dome/attic 0.74 vs the photo's 1.36 and 9.5 deg cooler), the base albedo was raised and saturated:
+(0.70,0.645,0.535) -> **(0.905,0.720,0.442)** (ratios 1:0.79:0.49 vs ref 169's dome 1:0.81:0.46), streak colour
+(0.50,0.50,0.47) -> (0.62,0.555,0.42). In `CAM_mat_dome_wide` the dome top now reads 178,169,164 (Y 0.403) against the
+lawn's 111,111,82 (Y 0.153), ratio 2.63. The dome/attic ratio in `master.blend` must be re-measured by lighting/QA:
+my lineup has no attic next to the dome, and the hero placeholder dome is not ARCH's geometry.
+
+### Foliage
+`scripts/mat_leaf_textures.py` now accumulates a **HEIGHT** and a **RIB** buffer while it draws (a half-cylinder profile
+for needles/twigs, a cross-blade bulge plus a midrib ridge for leaves) and writes two more maps per texture:
+`<name>_nrm.png` (tangent-space OpenGL normal, Non-Color, from the smoothed height gradient) and `<name>_trn.png`
+(translucency: thin margins and tips transmit, midribs/stems/needle spines do not). `leaf_material()` plugs the normal
+into both the Principled and the Translucent BSDF and multiplies the translucency mix by the mask
+(0.35..1.55 x the material's base value). New materials: **MAT_leaf_pine** (needles_pine, darker and bluer than cypress,
+tint (0.80,0.92,0.78), translucency 0.18 -- ENV maps pines and redwoods here), **MAT_shrub_light** (pale grey-green
+pittosporum/agapanthus) and **MAT_shrub_dry** (straw, tint (4.50,1.15,0.70): reads 102,95,61 at 3 m against ref 169's
+dry shore 144,108,55).
+
+### Efflorescence / salt bloom
+`PFA_concrete` gained an **Efflorescence** input (0-3, default 1.0) scaling the `PFA_algae` Effl mask; the wash is
+chalkier (0.68 x a 0.85-mix toward (0.66,0.635,0.575), was 0.55 x 0.6) and now adds a crusty bump (0.30 x a 22/m noise).
+`MAT_concrete_podium` runs it at 1.15, so the 0.6-1.2 m zone above WATER_Z carries a salt bloom over the algae band.
+
+### Per-instance ornament variation (verified, and it was broken)
+`PFA_instance` now hashes **three** sources into the per-instance random: Object Info Random, the `instance_seed`
+object custom property (`ShaderNodeAttribute`, `attribute_type='OBJECT'`; absent -> 0 -> no shift, so nothing breaks)
+and the object's **origin** from Object Info Location -- Random is identical for linked duplicates and 0 in some
+evaluated contexts, which is why v1's ornament looked uniform. `MAT_ornament_concrete` runs Instance Variation 1.7
+(hue +-5 %, value +-14 %). Test: six capital proxies with `instance_seed` 0.37..8.47 at 60 m
+(`CAM_mat_ornament_far`, 200 mm) read 187,140,81 / 185,133,77 / 180,136,74 / 183,126,71 / 178,135,71 / 182,121,71 --
+Y 0.241..0.298, a 20 % spread, clearly different by eye (sheet tile 4).
+Debug hooks added to `mat_lineup`: `--debug R1|R2|R3|R4` emits `PFA_instance`'s output as emission, `--debug RND|LOC|ISEED`
+emits Object Info Random / Location / the `instance_seed` attribute. That is how the dead variation was found.
+
+### ENV-requested materials (new, all `use_fake_user`)
+**MAT_leaf_pine**, **MAT_shrub_light**, **MAT_shrub_dry**, **MAT_backdrop_roof** (grey built-up membrane, tar seams,
+pooled grime, rough 0.82), **MAT_backdrop_skylight** (dirty wired glass: dark base, roughness 0.14+0.30 x dirt, coat 0.25),
+**MAT_backdrop_door_green** (park-service green on boards, chalked, damp lower edge, dull bronze push-plate zone at
+object z 1.00-1.25 -- the door on the rotunda axis seen through the central arch). Test objects for all of them are in
+`MAT_test` (`CAM_mat_misc` was widened and moved to x -16.5 to frame the backdrop details; the two shrub variants sit in
+a second foliage row at y 10.5 / y 32.5). Library is now **35 materials**.
+
+### Other round-2 tooling
+- `scripts/mat_compare.py` -- labelled comparison sheets from renders/photos with optional crops (plain PIL).
+- `mat_lineup --ev <delta>` -- exposure-offset diagnostic (used to quantify what lighting owed).
+- `CAM_mat_ornament_far` -- the 60 m per-instance variation camera.

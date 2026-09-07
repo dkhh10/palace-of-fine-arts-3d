@@ -36,6 +36,7 @@ CAMS = arg("--cams", None)
 CAMS = CAMS.split(",") if isinstance(CAMS, str) else None
 HERO = "--no-hero" not in args
 SPP = int(arg("--spp", 128))
+EV = float(arg("--ev", 0.0))         # diagnostic: offset the view exposure (to quantify what lighting still owes)
 QUICK = "--quick" in args
 RES = (1280, 720)
 
@@ -58,6 +59,32 @@ if isinstance(DEBUG, str):
         nt = m.node_tree
         grp = [n for n in nt.nodes if n.type == "GROUP" and n.node_tree and n.node_tree.name == "PFA_concrete"]
         outn = [n for n in nt.nodes if n.type == "OUTPUT_MATERIAL"]
+        if outn and DEBUG in ("RND", "LOC", "ISEED"):
+            oi = nt.nodes.new("ShaderNodeObjectInfo")
+            em = nt.nodes.new("ShaderNodeEmission")
+            if DEBUG == "RND":
+                nt.links.new(oi.outputs["Random"], em.inputs["Color"])
+            elif DEBUG == "LOC":
+                nt.links.new(oi.outputs["Location"], em.inputs["Color"])
+            else:
+                at = nt.nodes.new("ShaderNodeAttribute"); at.attribute_type = "OBJECT"; at.attribute_name = "instance_seed"
+                nt.links.new(at.outputs["Fac"], em.inputs["Color"])
+            em.inputs["Strength"].default_value = 1.0
+            nt.links.new(em.outputs[0], outn[0].inputs["Surface"])
+            continue
+        if outn and DEBUG in ("R1", "R2", "R3", "R4"):
+            # per-instance random diagnostic: emit PFA_instance's output directly
+            ig = bpy.data.node_groups.get("PFA_instance")
+            if ig is None:
+                continue
+            gn = nt.nodes.new("ShaderNodeGroup"); gn.node_tree = ig
+            seedv = grp[0].inputs["Seed"].default_value if grp and "Seed" in grp[0].inputs else 0.0
+            gn.inputs["Seed"].default_value = seedv
+            em = nt.nodes.new("ShaderNodeEmission")
+            nt.links.new(gn.outputs[DEBUG], em.inputs["Color"])
+            em.inputs["Strength"].default_value = 1.0
+            nt.links.new(em.outputs[0], outn[0].inputs["Surface"])
+            continue
         if grp and outn and DEBUG in grp[0].outputs:
             em = nt.nodes.new("ShaderNodeEmission")
             nt.links.new(grp[0].outputs[DEBUG], em.inputs["Color"])
@@ -144,8 +171,10 @@ lineup_cams = [
     add_cam(scene, "CAM_mat_ground", (-9.5, 12.0, GZ + 4.0), (-10.0, 6.0, GZ)),
     add_cam(scene, "CAM_mat_foliage", (9.7, 12.0, GZ + 1.3), (9.7, 8.0, GZ + 0.7), lens=26.0),
     add_cam(scene, "CAM_mat_foliage_far", (9.7, 150.0, GZ + 8.0), (9.7, 30.0, GZ + 1.0), lens=80.0),
-    add_cam(scene, "CAM_mat_misc", (-12.5, 5.5, GZ + 1.8), (-12.5, 0.0, GZ + 1.6), lens=28.0),
+    add_cam(scene, "CAM_mat_misc", (-16.5, 9.5, GZ + 2.2), (-16.5, 0.0, GZ + 1.6), lens=20.0),
     add_cam(scene, "CAM_mat_lineup", (0.0, 19.0, GZ + 5.0), (0.0, 0.0, GZ + 2.5), lens=22.0),
+    # per-instance ornament variation, judged at 60 m (six capital proxies with different `instance_seed`)
+    add_cam(scene, "CAM_mat_ornament_far", (24.9, 80.0, GZ + 2.6), (24.9, 20.0, GZ + 1.55), lens=200.0),
 ]
 
 # --------------------------------------------------------------------------- hero scene: placeholder blockout with the library materials
@@ -245,6 +274,8 @@ def configure(sc, engine):
         sc.eevee.volumetric_samples = 32
     sc.render.resolution_x, sc.render.resolution_y = RES
     sc.render.film_transparent = False
+    if EV:
+        sc.view_settings.exposure += EV
 
 
 def render(sc, cam, engine, tag):
@@ -253,6 +284,7 @@ def render(sc, cam, engine, tag):
     dbg += "_rig" if RIG else ""
     dbg += "_preset" if EEVEE_PRESET else ""
     dbg += "_norefr" if NO_REFRACTION else ""
+    dbg += f"_ev{EV:+.1f}" if EV else ""
     fp = out_dir / f"{ts}_{tag}{dbg}_{engine.lower()}.png"
     sc.render.filepath = str(fp)
     t0 = time.time()
