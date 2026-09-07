@@ -334,3 +334,21 @@ Albedo blue was cut ~40-45 % across the concrete family (ochre/colonnade/ornamen
 (0.905, 0.720, 0.442) -> (0.905, 0.720, 0.378) (measured hue 32.6 vs ref 37.4). **Left to lighting:** a real part of
 the residual blue is skylight fill rather than albedo -- the render's R-B spread is far narrower than ref 169's -- and
 albedo cannot be pushed further without becoming an orange pigment rather than concrete.
+
+### The saturation result, and why it is now lighting's (measured, QA-02-14)
+Cutting the concrete albedo blue by **44 %** (0.068 -> 0.038) moved the hero attic's *display* blue by **3 %**
+(140 -> 136) and its saturation from 0.352 to 0.372. That is the whole experiment: at the shipping +0.9 EV the sunlit
+stone sits on the **AgX shoulder**, where albedo has almost no authority over display chroma. Pushing albedo further
+would make the concrete an orange pigment and still not reach ref 169's sat 0.577.
+
+What is left is illuminant and view transform, not albedo:
+- ref 169's R-B spread on sunlit stone is **127** (220,176,93); ours is **81** (216,181,136). A photograph of low sun
+  through coastal haze is a much redder illuminant than our sun + sky mix.
+- The measured AgX response is -1.1 deg of hue and falling saturation per +1 EV, so the exposure lift QA asked for
+  costs chroma; our attic lands at lum 185.6 against ref's 179.4, i.e. ~4 % hot, which costs a little more.
+
+**Requests to lighting:** (a) warm `LIGHT_sun` (temperature) rather than expecting albedo to carry it; (b) the sky
+saturation node currently puts a lot of blue fill on every surface -- the shaded pier reads sat 0.315 where the photo's
+shade is far warmer; (c) if the hero still reads pale after that, half a stop less exposure buys chroma back.
+The one lever materials still had was the specular veil (a 0.4 Specular IOR Level on rough concrete reflects the blue
+sky straight back); it is now 0.25 across the concrete family, 0.30 paving, 0.20 plaster.
