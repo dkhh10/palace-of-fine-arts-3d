@@ -404,9 +404,9 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
         ks = sorted(bins)
         # keep the main run of the sweep (drop 2 deg stragglers) and smooth the outer radius
         outer = {k: max(bins.get(k + j, bins[k]) for j in (-1, 0, 1)) for k in ks}
-        for row, (off, spacing, hmin, hmax, tag) in enumerate(((4.5, 4.5, 22.0, 32.0, "E1"),
-                                                               (11.0, 6.0, 26.0, 34.0, "E2"),
-                                                               (19.0, 9.0, 26.0, 34.0, "E3"))):
+        for row, (off, spacing, hmin, hmax, tag) in enumerate(((4.5, 4.0, 26.0, 34.0, "E1"),
+                                                               (11.0, 5.5, 28.0, 36.0, "E2"),
+                                                               (19.0, 8.0, 28.0, 36.0, "E3"))):
             carry = rnd.uniform(0, spacing)
             for k in ks:
                 r = outer[k] + off + rnd.uniform(-1.5, 1.5)
@@ -420,7 +420,7 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
                     if not inside and not near_cam and hall_field.signed(p.x, p.y) > 1.0:
                         u = rnd.random()
                         sp = "redwood" if u < 0.55 else ("cypress" if u < 0.82 else ("eucalyptus" if row else "pine"))
-                        h = rnd.uniform(hmin, hmax) if sp != "pine" else rnd.uniform(18, 24)
+                        h = rnd.uniform(hmin, hmax) if sp != "pine" else rnd.uniform(20, 26)
                         out.append((sp, p.x, p.y, h, f"{tag} screen behind the colonnade"))
                     t += spacing
                 carry = t - arc

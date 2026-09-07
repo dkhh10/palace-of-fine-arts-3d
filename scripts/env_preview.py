@@ -215,3 +215,63 @@ if __name__ == "__main__":
     else:
         outs = render(tag=tag, cams=cams, samples=samples, engine=engine, local=local, lod=lod, master=master)
         print("[env_preview] wrote:", *[str(o) for o in outs], sep="\n  ")
+
+
+# ----------------------------------------------------------------------------- QA-01-6 sky-through-the-bays test
+def sky_through_wing(wing="north", samples=8, res=(1920, 1080), lod=0):
+    """Measure how much sky shows through the colonnade bays behind a wing, from the hero camera (QA-01-6).
+
+    Renders cam 01 with a transparent film so 'background' == 'sky', then counts background pixels inside the frame
+    box of that wing's colonnade (the wing footprint between z = 4 m, above the shrubs, and z = 17 m, the entablature).
+    Prints the fraction; the acceptance test is <= 20 %.
+    """
+    import json
+    from bpy_extras.object_utils import world_to_camera_view
+    scene = build_scene(lod=lod)
+    site = common.load_site_local()
+    key = "roof310 h19" if wing == "north" else "roof306 h20"
+    ring = site[key][0]          # load_site_local already returns world coordinates
+    import qa_cameras
+    qa_cameras.ensure(scene)
+    cam = next(o for o in bpy.data.objects if o.name.startswith("CAM_qa_01"))
+    scene.camera = cam
+    scene.render.film_transparent = True
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.eevee.taa_render_samples = samples
+    scene.render.resolution_x, scene.render.resolution_y = res
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.color_mode = "RGBA"
+    deps = bpy.context.evaluated_depsgraph_get()
+    xs, ys = [], []
+    for (x, y) in ring:
+        for z in (4.0, 17.0):
+            co = world_to_camera_view(scene, cam, common.Vector((x, y, z)))
+            if co.z > 0:
+                xs.append(co.x); ys.append(co.y)
+    if not xs:
+        raise SystemExit("wing not in frame")
+    x0, x1 = max(0.0, min(xs)), min(1.0, max(xs))
+    y0, y1 = max(0.0, min(ys)), min(1.0, max(ys))
+    out = common.RENDERS / "previews" / "environment" / f"skytest_{wing}.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    scene.render.filepath = str(out)
+    bpy.ops.render.render(write_still=True)
+    img = bpy.data.images.load(str(out))
+    w, h = img.size
+    px = list(img.pixels)
+    px0, px1 = int(x0 * w), int(x1 * w)
+    # image row 0 is the bottom; camera view y = 0 is also the bottom
+    py0, py1 = int(y0 * h), int(y1 * h)
+    total = bg = 0
+    for j in range(py0, py1):
+        base = j * w * 4
+        for i in range(px0, px1):
+            total += 1
+            if px[base + i * 4 + 3] < 0.5:
+                bg += 1
+    frac = bg / max(1, total)
+    print(f"[env_preview] sky through the {wing} wing: box x {x0:.3f}-{x1:.3f} y {y0:.3f}-{y1:.3f} "
+          f"({px1 - px0} x {py1 - py0} px), background {bg}/{total} = {frac * 100:.1f} %")
+    print(json.dumps({"wing": wing, "box": [x0, y0, x1, y1], "sky_fraction": frac}))
+    return frac
