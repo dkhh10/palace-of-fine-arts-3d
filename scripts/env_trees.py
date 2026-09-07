@@ -398,7 +398,8 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
     and read as a wall in front of the wings - sky through the bays fell to 1.7 / 9.5 % and both wings went 37-52 %
     dark. Ref 169 has trees behind AND between the columns with 15-20 % sky through the bays and crowns only a few
     metres above the entablature (19-21 m). So now:
-      * the first row stands 13 m back, not 4.5, and no row is inside the colonnade band;
+      * the rows stand 6 / 12.5 / 20 m outside the wing instead of 4.5 / 11 / 19 (pushing them further than that
+        walks them into the exhibition hall footprint, which deletes most of the two back rows);
       * crowns are 19-27 m, not 26-36, so the screen tops out ~5 m over the entablature instead of ~15;
       * the rows are CLUMPED - a run of trees, then a 9-20 m gap - so bays open onto sky instead of a green wall;
       * density is roughly a third of round 01's.
@@ -428,9 +429,9 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
         # keep the main run of the sweep (drop 2 deg stragglers) and smooth the outer radius
         outer = {k: max(bins.get(k + j, bins[k]) for j in (-1, 0, 1)) for k in ks}
         for row, (off, spacing, hmin, hmax, run, gap, tag) in enumerate((
-                (13.0, 6.5, 19.0, 24.0, (14.0, 26.0), (11.0, 20.0), "E1"),
-                (23.0, 8.0, 21.0, 26.0, (18.0, 34.0), (9.0, 16.0), "E2"),
-                (35.0, 11.0, 22.0, 27.0, (22.0, 40.0), (9.0, 18.0), "E3"))):
+                (6.0, 5.0, 18.5, 23.0, (13.0, 24.0), (10.0, 19.0), "E1"),
+                (12.5, 6.0, 20.0, 25.0, (16.0, 30.0), (9.0, 16.0), "E2"),
+                (20.0, 8.0, 21.0, 27.0, (20.0, 36.0), (9.0, 17.0), "E3"))):
             carry = rnd.uniform(0, spacing)
             # clumping state: metres of run left before the next gap, and metres of gap left
             run_left = rnd.uniform(*run)
@@ -592,6 +593,13 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
               f"{100 * after.get(2, 0):.1f} % (was {100 * start.get(0, 0):.1f}/{100 * start.get(1, 0):.1f}/"
               f"{100 * start.get(2, 0):.1f}); {len(plan)} -> {len(out)} trees")
     return out
+
+
+def plan_markdown(plan):
+    lines = ["| # | species | X (S+) | Y (E+) | height m | note |", "|---|---|---|---|---|---|"]
+    for i, (sp, x, y, h, note) in enumerate(plan):
+        lines.append(f"| {i:02d} | {sp} | {x:.0f} | {y:.0f} | {h:.0f} | {note} |")
+    return "\n".join(lines)
 
 
 # ----------------------------------------------------------------------------- placement

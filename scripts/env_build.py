@@ -547,8 +547,8 @@ def build_shrubs():
     # (key, material(s), {lod: mesh}, nominal height) - meshes are shared by every instance of that key
     src = {}
 
-    def add(key, mats, factory, height, **kw):
-        src[key] = (mats, {lod: factory(f"ENV_src_{key}_LOD{lod}", lod=lod, **kw) for lod in (0, 1, 2)}, height)
+    def add(key, mats, factory, nom_h, **kw):
+        src[key] = (mats, {lod: factory(f"ENV_src_{key}_LOD{lod}", lod=lod, **kw) for lod in (0, 1, 2)}, nom_h)
 
     # nine mound seeds over three material families: the belt can no longer repeat a silhouette or a hue
     MOUND_SPEC = [(0.50, 0.50, "MAT_shrub"), (0.68, 0.62, "MAT_shrub_light"), (0.80, 0.80, "MAT_shrub"),
