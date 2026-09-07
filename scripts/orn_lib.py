@@ -27,9 +27,11 @@ TAU = math.tau
 # LOD triangle budgets per type (docs/sockets.md): (LOD0, LOD1, LOD2)
 BUDGETS = {
     "default": (80000, 18000, 1800),
-    "capital_rotunda": (100000, 20000, 2000),
-    "capital_inner": (80000, 16000, 1500),
-    "capital_colonnade": (80000, 16000, 1500),
+    # round 4: rotunda 100k -> 64k (16 instances, -0.6 M tris in the master); inner/colonnade 80k -> 48k, matching
+    # the in-place trim the round-3 pass applied to capital_colonnade (114 instances).
+    "capital_rotunda": (64000, 16000, 2000),
+    "capital_inner": (48000, 12000, 1500),
+    "capital_colonnade": (48000, 12000, 1500),
     "maiden": (100000, 20000, 2000),
     "attic_figure": (120000, 20000, 2000),
     "winged_figure": (100000, 20000, 2000),
@@ -321,17 +323,27 @@ def bezier(p0, p1, p2, p3, n):
 
 # ----------------------------------------------------------------------------- ornament primitives
 def acanthus_leaf(name, length=1.0, width=0.6, curl=0.55, droop=0.35, ribs=7, rib_amp=0.03, bulge=0.06,
-                  thickness=0.035, lobes=4, lobe_depth=0.10, nu=16, nv=24, coll=None, seed=0, base_width=0.35):
+                  thickness=0.035, lobes=4, lobe_depth=0.10, nu=16, nv=24, coll=None, seed=0, base_width=0.35,
+                  spine=None, mid_dip=0.0):
     """One 'shell' acanthus leaf as at the Palace: broad fan with radial ribs, the tip curling outward and down.
     Local frame: base at origin, grows along +Z, bends outward toward +Y (outward = away from the bell).
+    `spine`: optional explicit centreline as a list of (y, z) or (x, y, z); overrides curl/droop and sets nv.
+      Use it to make the leaf hug a flared bell and then curl its tip outward and DOWN (round 4, QA-03-15) - the
+      down-turned tip is what gives a sky-lit-only undercut and therefore a dark recess in raking sun.
+    `mid_dip`: extra cupping (metres) subtracted from the leaf centre at mid height, so the two halves of the leaf
+      read as separate lit lobes with a shadowed spine between them.
     Returns a solidified, subdivided mesh object."""
     rng = random.Random(seed)
-    # centreline: cubic bezier in the (y outward, z up) plane
-    p0 = (0.0, 0.0, 0.0)
-    p1 = (0.0, 0.04 * length, 0.50 * length)
-    p2 = (0.0, curl * 0.55 * length, 0.98 * length)
-    p3 = (0.0, curl * length, (1.0 - droop) * length)
-    centre = bezier(p0, p1, p2, p3, nv)
+    if spine is not None:
+        centre = [Vector((0.0, p[0], p[1])) if len(p) == 2 else Vector(p) for p in spine]
+        nv = len(centre) - 1
+    else:
+        # centreline: cubic bezier in the (y outward, z up) plane
+        p0 = (0.0, 0.0, 0.0)
+        p1 = (0.0, 0.04 * length, 0.50 * length)
+        p2 = (0.0, curl * 0.55 * length, 0.98 * length)
+        p3 = (0.0, curl * length, (1.0 - droop) * length)
+        centre = bezier(p0, p1, p2, p3, nv)
     frames = frames_along(centre)
     jit = [(rng.uniform(-1, 1)) for _ in range(ribs + 2)]
 
@@ -348,6 +360,9 @@ def acanthus_leaf(name, length=1.0, width=0.6, curl=0.55, droop=0.35, ribs=7, ri
         # cross-section: convex outward with radial ribs
         rib = rib_amp * math.cos(s * math.pi * ribs * 0.5 + 0.15 * jit[int((u * ribs)) % len(jit)]) * (0.3 + 0.7 * v)
         conv = bulge * (1.0 - s * s) * (0.4 + 0.6 * v)
+        if mid_dip:
+            # cup the leaf: pull the centre back, keep the two edges forward (a shadowed spine down the leaf)
+            conv -= mid_dip * math.exp(-(s / 0.42) ** 2) * math.sin(math.pi * min(v, 1.0) ** 0.8)
         # frame: n ~ outward, b ~ across.  Use across = world x, outward from frame normal
         across = Vector((1.0, 0.0, 0.0))
         outward = Vector((0.0, t.z, -t.y)).normalized()   # outer face normal, continuous along the curl
@@ -690,6 +705,64 @@ def recentre_xy_only(obj):
     return obj
 
 
+def vertex_cavity(obj, name="cavity", rays=10, dist=None, bias=None, gamma=1.0):
+    """Bake a per-vertex ambient-occlusion / cavity value into a FLOAT_COLOR attribute on the POINT domain.
+
+    LOD0 is the RENDER LOD and carries no UVs, so a vertex attribute is the only channel the materials shader has
+    for darkening the ornament recesses on the geometry that actually gets rendered (QA-03-15 / QA-02-3).
+    1.0 = fully open, 0.0 = fully enclosed. Read it in a shader with an Attribute node, name "cavity".
+    `dist` (default: 6 % of the object's diagonal) is the radius that counts as a recess."""
+    me = obj.data
+    me.calc_loop_triangles()
+    bb = [Vector(c) for c in obj.bound_box]
+    diag = (bb[6] - bb[0]).length
+    dist = dist if dist is not None else 0.06 * diag
+    bias = bias if bias is not None else max(1e-4, 0.004 * diag)
+    from mathutils.bvhtree import BVHTree
+    bvh = BVHTree.FromPolygons([v.co for v in me.vertices], [tuple(p.vertices) for p in me.polygons],
+                               all_triangles=False, epsilon=0.0)
+    # fixed cosine-ish hemisphere set (deterministic, so rebuilds are reproducible)
+    dirs = []
+    ga = math.pi * (3.0 - math.sqrt(5.0))
+    for i in range(rays):
+        z = (i + 0.5) / rays              # 0..1 -> cos(theta) from the normal
+        r = math.sqrt(max(0.0, 1.0 - z * z))
+        a = i * ga
+        dirs.append((r * math.cos(a), r * math.sin(a), z))
+    attr = me.color_attributes.get(name)
+    if attr is not None:
+        me.color_attributes.remove(attr)
+    attr = me.color_attributes.new(name=name, type="FLOAT_COLOR", domain="POINT")
+    up = Vector((0.0, 0.0, 1.0))
+    vals = []
+    for v in me.vertices:
+        n = Vector(v.normal)
+        if n.length < 1e-6:
+            vals.append(1.0)
+            continue
+        n.normalize()
+        t = n.cross(up if abs(n.z) < 0.9 else Vector((1.0, 0.0, 0.0)))
+        t.normalize()
+        b = n.cross(t)
+        o = v.co + n * bias
+        hits = 0
+        for dx, dy, dz in dirs:
+            d = (t * dx + b * dy + n * dz)
+            hit = bvh.ray_cast(o, d, dist)
+            if hit[0] is not None:
+                hits += 1
+        vals.append((1.0 - hits / rays) ** gamma)
+    data = []
+    for a in vals:
+        data += [a, a, a, 1.0]
+    attr.data.foreach_set("color", data)
+    me.update()
+    lo = min(vals) if vals else 1.0
+    print(f"[orn] cavity attribute on {obj.name}: {len(vals)} verts, dist {dist:.3f} m, min {lo:.2f}, "
+          f"mean {sum(vals) / max(1, len(vals)):.2f}")
+    return attr
+
+
 # ----------------------------------------------------------------------------- UV + baking
 def ensure_uv(obj, angle_limit=66.0, margin=0.01):
     if obj.data.uv_layers:
@@ -794,7 +867,7 @@ def asset_name(typ, variant=None, lod=None):
 
 
 def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_size=2048, ao=False,
-                   lod2_obj=None, y_mode="centre", size_note="", extra_props=None, sharp_angle=None):
+                   lod2_obj=None, y_mode="centre", size_note="", extra_props=None, sharp_angle=None, cavity=False):
     """Turn a hi-res work mesh into ORN_<typ>_v<n>_LOD0/1/2 in ORN_<typ>: origin, material, decimation, bakes, props.
     Returns (lod0, lod1, lod2)."""
     coll = coll or orn_collection(typ)
@@ -832,6 +905,12 @@ def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_
         if extra_props:
             for k, v in extra_props.items():
                 o[k] = v
+    if cavity:
+        t0 = time.time()
+        for o in (lod0, lod1):
+            vertex_cavity(o)
+            o["cavity_attr"] = "cavity"
+        print(f"[orn] cavity attributes for {asset_name(typ, variant)} in {time.time() - t0:.1f}s")
     if bake:
         try:
             maps = bake_maps(lod0, lod1, asset_name(typ, variant), size=bake_size, ao=ao)
