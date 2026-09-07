@@ -352,3 +352,21 @@ saturation node currently puts a lot of blue fill on every surface -- the shaded
 shade is far warmer; (c) if the hero still reads pale after that, half a stop less exposure buys chroma back.
 The one lever materials still had was the specular veil (a 0.4 Specular IOR Level on rough concrete reflects the blue
 sky straight back); it is now 0.25 across the concrete family, 0.30 paving, 0.20 plaster.
+
+### Coordinator additions folded into round 3
+- **Near-water chroma (with ENV).** The murk was still doing half the colouring, so murk and sky reflection compounded.
+  Murk moved toward neutral grey-green: near (0.088, 0.122, 0.086) -> (0.104, 0.118, 0.100), far (0.140, 0.178, 0.130)
+  -> (0.152, 0.168, 0.142), volume Color (0.16, 0.28, 0.18) -> (0.205, 0.250, 0.195), Absorption (0.60, 0.85, 0.60) ->
+  (0.70, 0.80, 0.68); the Eevee opaque murk follows. The Fresnel sky reflection now supplies the blue on its own.
+  **Note a conflict in the reference numbers:** QA round 2 measured ref 169's near water at sat **0.426**, ENV reports
+  **0.11** for the same region. Our r3t near-field box already reads 0.341, i.e. below QA's figure. The step above is
+  deliberately moderate; if 0.11 is the right target the murk should go essentially neutral, but that should be settled
+  against one agreed crop before pushing further.
+- **QA-01-8 hall wall through the hero arch.** `MAT_backdrop_building` had `Detail Strength` 0.3 with a 22 m drift --
+  nothing at all at the 60-90 m the hall actually sits at, hence "flat untextured cream". Now Detail Strength 0.7,
+  Tone Variation 0.16 -> 0.24, Drift Size 22 -> 11 m, Blotch Size 6 -> 3.2 m, Bump 0.25 -> 0.5 (stucco), Streaks
+  0.5 -> 0.8 with `Ledge Distance` 3.5 m and `Recess Distance` 0.9 m so the cornice throws a real soiling band, and
+  Patches 0.1 -> 0.18. `MAT_backdrop_skylight`'s base was lifted off black ((0.055, 0.062, 0.070) ->
+  (0.072, 0.080, 0.092)) so a dark opening reads as dirty glazing catching sky rather than a hole in the image.
+  **The hard black opening itself is geometry:** if that aperture is an unfilled hole rather than a face carrying
+  `MAT_backdrop_skylight`, no shader change will close it -- it needs a face from whoever owns the hall massing.
