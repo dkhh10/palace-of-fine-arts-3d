@@ -51,7 +51,7 @@ def arg(name, default, n=0):
 # --- grey-card calibration model (see the docstring) ------------------------------------------------------------
 _Y1 = 3.1715117446400227          # grey_card_linear_luminance at sky strength 1.0 (calibration_report.json)
 _R = 2.0 ** (4.390 - 4.139)       # Y(2)/Y(1) from the two calibrations on record
-_B = _Y1 * (_R - 1.0) / (2.0 - _R)   # sky-proportional part of Y at s = 1
+_B = _Y1 * (_R - 1.0)                # sky-proportional part of Y at s = 1: (A+2B)/(A+B) = R with A+B = Y1 gives B = Y1(R-1)
 _A = _Y1 - _B                        # sun + fill part, independent of the sky strength
 
 
