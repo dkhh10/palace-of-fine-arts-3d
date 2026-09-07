@@ -190,6 +190,21 @@ spacing/end-flush error 8.7 mm, worst deviation of a unit from the arc 0.4 mm** 
 by 1.20, which is another reason the plain meander belongs on those.
 
 ### QA-01-13 — attic corner scrolls and the maiden pose
+
+**Proposed `corner_scroll` socket frame (for the lead to pass to ARCH).** Origin at the **bottom-centre of the scroll
+block**, i.e. on the top face of the attic-corner cap (`ARCH_rotunda_attic_corner_cap_*`, top at z = 38.28); local
+**+Z up, +Y outward** (the same outward direction as the corner's `attic_figure` socket), scale 1, `size_hint` 1.50.
+Two per corner niche = **16 sockets**, at local x = **+-1.95 m** from the corner-cap centre (one on each pilaster
+flanking the figure niche), i.e. `location = cap_centre + rot_z(rz) @ (+-1.95, 0, 0)`, `z = 38.30`, `rz` copied from
+that corner's `attic_figure` socket.
+
+**Interim, no new socket needed:** ARCH already ships 8 `finial` sockets with `subtype='volute_scroll'`,
+`size_hint` 1.5, at z = 38.30 on the corner-cap centres (`SOCKET_finial_000..007`) with exactly this frame, so
+`ORN_corner_scroll` drops straight onto them — one centred block per corner instead of a flanking pair.
+**Important for `build_master.py`:** those 8 sockets are typed `finial`, so the current type -> collection mapping
+gives them the 0.6 m dome-apex cap. Route `finial` sockets by subtype: `volute_scroll` -> `ORN_corner_scroll`,
+`dome_apex` (`SOCKET_finial_008`, z = 49.4) -> `ORN_finial`.
+
 New asset **`ORN_corner_scroll`** (was drafted as `scroll_attic`; renamed to the socket type the lead asked for).
 One unit = the Ionic-type paired volute block that caps ONE pilaster flanking an attic corner figure niche
 (refs 085 / attic_corner_figure_1-3): two spiral volutes of 0.40 m eye radius at the ends, a channelled bolster with

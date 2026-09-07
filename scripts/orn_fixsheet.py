@@ -23,7 +23,8 @@ ROWS = [
      "rostra_band_1.jpg", (0.0, 0.15, 0.62, 0.75)),
     ("QA-01-11  greek_key unit on ARCH socket 001 (straight) ", "frieze_run_straight.png", "rostra_band_2.jpg", None),
     ("QA-01-13  corner_scroll (paired volutes, 1.5 m)", "fix01_corner_scroll_v1.png", "attic_corner_figure_1.jpg", None),
-    ("QA-01-13  maiden pose: arms on the rim, head bowed", "fix01_maiden_v1.png", "weeping_maidens_2.jpg", None),
+    ("QA-01-13  maiden pose: arms on the rim, head bowed (v1 v2 v3)", "fix01_variants_maiden.png",
+     "weeping_maidens_3.jpg", None),
     ("QA-01-18  the three rotunda capital variants side by side", "fix01_variants_capital_rotunda.png",
      "corinthian_capital_1.jpg", None),
 ]
