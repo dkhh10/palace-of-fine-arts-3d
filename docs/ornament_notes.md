@@ -236,9 +236,15 @@ differently. `rim_z` 3.30 m; feet at z = -3.30 in the socket frame; custom props
   and variant 2 has one chipped/short leaf tip. Same for the maidens (pose parameters above) and the urns.
 
 ## Open issues (ORN)
-- Attic panels read as relief but weaker than the real Zimm alto-relievo at 30 m; the figures are 0.40 m proud.
-  One-parameter fix if QA wants more punch: `depth` in `build_attic_panel` (0.40 -> 0.55) and the 2 cm sink.
-  Only three scan sources exist, so the three designs share figure groups (mirrored / re-ordered).
+- `ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget (the mesh has too many disjoint shells
+  after the field clamp for the collapse to go further). LOD2 is only used beyond ~200 m, so I left it.
+- `corner_scroll` is 1.78 m over the volute rolls, not the 1.50 m the defect quotes; 1.50 is the nominal block width
+  (`unit_length`) and the rolls overhang it, as they do in ref 085.
+- The rostra band units are modelled as a slab standing 8 cm off the wall. If ARCH's podium top course already has a
+  recessed field, the slab will double up - say so and I will drop the backing to 3 cm.
+- Attic panels: fixed under QA-01-10 (13-15 figures, 61-64 % coverage, 0.26 m of relief after the remesh). Only three
+  scan sources exist, so the three designs still share the scan groups (mirrored / re-ordered); the 8-10 modelled
+  figures per panel are what makes them read as three different compositions.
 - Winged figure: the cornucopia horns stick out sideways; should curl up in front of the hands. Wings read as two
   tall fluted slabs (right silhouette from cam 04, no feather detail).
 - Keystone: the mouth/eye boolean recesses barely show after the remesh; the mask reads as a lion-ish mask with a mane
