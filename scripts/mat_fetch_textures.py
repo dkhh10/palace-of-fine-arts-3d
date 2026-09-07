@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "assets" / "textures" / "polyhaven"
 DEFAULT = ["concrete_wall_008", "concrete_wall_007", "concrete_moss", "bark_bluegum", "chinese_cedar_bark", "sandy_gravel", "rock_boulder_dry"]
-MAPS = ["Diffuse", "Rough", "nor_gl", "AO"]
+MAPS = ["Diffuse", "Rough", "nor_gl", "AO", "Displacement"]
 RES = "2k"
 
 
