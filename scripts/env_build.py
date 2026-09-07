@@ -57,7 +57,12 @@ def terrain_height(x, y):
             return -0.78 + 0.5 * L.smoothstep(0.0, 9.0, -d) + 0.06 * L.fnoise(x, y, 0.3, 4)
     d = LAGOON_FIELD.signed(x, y)
     if d < 0:                                    # lagoon bed
-        depth = min(1.5, 0.3 + 0.16 * (-d))
+        # QA-02-6: the round-02 bed dropped to its full 1.5 m within 7.5 m of the shore, so the water the hero
+        # camera sees at 6-12 m already had the longest possible absorption path through MAT_water_lagoon's murk -
+        # it read as a near-black cyan. The real lagoon has a wide shallow shelf (refs 022, 169: the rip-rap and
+        # bed pebbles are visible several metres out). Shelf 0.25-0.85 m to 14 m out, then down to 1.5 m by 30 m.
+        e = -d
+        depth = 0.25 + 0.60 * L.smoothstep(0.0, 14.0, e) + 0.65 * L.smoothstep(14.0, 30.0, e)
         return L.WATER_Z - depth + 0.07 * L.fnoise(x, y, 0.15, 3)
     r = math.hypot(x, y)
     base = -0.45 + 0.10 * L.fnoise(x, y, 0.012, 1) + 0.04 * L.fnoise(x, y, 0.06, 2)
@@ -347,6 +352,17 @@ def build_riprap():
 SHRUB_CARD = 0.085         # leaf card width (m); height is 1.25 x this
 BLADE_W = 0.05             # grass / reed blade width (m)
 
+# Shrub LOD ladder (QA round 02 performance item). The round-02 master carried 1761 LOD-less shrubs at ~1870 tris
+# each = 3.3 M tris in EVERY LOD and in every render. A bush is 0.8 m across; at the hero camera's 60-115 m it is
+# 8-15 px, so 1300 leaf cards buy nothing. Leaf COVERAGE (n_cards * card^2) is what makes the silhouette read, so
+# each step keeps the coverage and multiplies the card size instead: cards get k x wider and k^2 x fewer.
+#   LOD0 full, LOD1 ~2.2 x cards (~21 % of the tris), LOD2 ~4.5 x cards (~5 %) on a coarser core.
+SHRUB_LOD = {0: dict(card=1.00, cover=1.00, blade=1.00, sub=2),
+             1: dict(card=2.20, cover=0.95, blade=0.33, sub=2),
+             2: dict(card=4.50, cover=0.85, blade=0.12, sub=1)}
+# a shrub farther than this from every QA camera renders its LOD1 mesh even at LOD0 (LOD2 beyond 2 x)
+SHRUB_FAR = 80.0
+
 
 def _uv_quads(me):
     uv = me.uv_layers.new(name="UVMap")
@@ -370,12 +386,15 @@ def _card(verts, faces, cx, cy, cz, w, h, angle, tilt):
     faces.append([b, b + 1, b + 2, b + 3])
 
 
-def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="mound", cover=1.5):
+def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="mound", cover=1.5, lod=0):
     """Mounded evergreen bush (pittosporum / mahonia): a dark inner blob wrapped in a shell of small leaf cards.
     `form='upright'` gives the coarser, more open mahonia habit (cards clustered on a few upright sprays)."""
+    step = SHRUB_LOD[lod]
+    card = card * step["card"]
+    cover = cover * step["cover"]
     rnd = random.Random(seed)
     bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
+    bmesh.ops.create_icosphere(bm, subdivisions=step["sub"], radius=1.0)
     for v in bm.verts:
         nz = L.noise.noise(v.co * 2.4 + Vector((seed, seed, 0)))
         r = 1.0 + 0.26 * nz
@@ -421,12 +440,17 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="m
         p.use_smooth = i < n_core
     me["cards"] = n_cards
     me["card_m"] = card
+    me["lod"] = lod
+    me["shrub_height_m"] = height
     return me
 
 
-def make_blade_clump(name, seed, height=1.1, blades=60, width=BLADE_W, arch=0.35, spread=0.28):
+def make_blade_clump(name, seed, height=1.1, blades=60, width=BLADE_W, arch=0.35, spread=0.28, lod=0):
     """Strappy clump: agapanthus (short, wide arch) and dry reeds (tall, upright). Blades are three-segment strips
     (<= 6 cm wide) that bend over, so the silhouette is never a straight-edged slab."""
+    step = SHRUB_LOD[lod]
+    blades = max(6, int(round(blades * step["blade"])))
+    width = width / max(0.2, step["blade"]) ** 0.5 if lod else width
     rnd = random.Random(seed)
     verts, faces = [], []
     for _ in range(blades):
@@ -459,11 +483,14 @@ def make_blade_clump(name, seed, height=1.1, blades=60, width=BLADE_W, arch=0.35
         for k, li in enumerate(poly.loop_indices):
             vi = poly.vertices[k] % 8
             uv.data[li].uv = (us[k % 4], vs[vi])
+    me["lod"] = lod
+    me["shrub_height_m"] = height
     return me
 
 
-def make_twig_shrub_mesh(name, seed, radius=0.7, height=1.2, twigs=70):
+def make_twig_shrub_mesh(name, seed, radius=0.7, height=1.2, twigs=70, lod=0):
     """Leafless winter shrub (many along the shore in ref 169): thin brown strips fanning out of a base."""
+    twigs = max(8, int(round(twigs * SHRUB_LOD[lod]["blade"])))
     rnd = random.Random(seed)
     verts, faces = [], []
     for t in range(twigs):
@@ -491,35 +518,62 @@ def make_twig_shrub_mesh(name, seed, radius=0.7, height=1.2, twigs=70):
     for poly in me.polygons:
         for k, li in enumerate(poly.loop_indices):
             uv.data[li].uv = (us[k % 4], vs[poly.vertices[k] % 6])
+    me["lod"] = lod
+    me["shrub_height_m"] = height
     return me
 
 
 def build_shrubs():
     """Shore planting per reference sheet s6: pittosporum mounds (dark), mahonia (upright, coarser), agapanthus
-    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through."""
+    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through.
+
+    Round 02 fixes:
+      * QA-02-18 "a regular row of near-identical dark pom-poms": 9 mound seeds instead of 4, three material
+        families across them (MAT_shrub / MAT_shrub_light / MAT_shrub_dry) so the belt carries a hue spread, a
+        2.4:1 instance size spread, no two neighbours drawn from the same source mesh, and dry reeds / twigs
+        seeded into the peninsula belt (they were only used past r = 50 m) for the warm dry fraction.
+      * QA-02-13 "the shrub band hides the podium and its Greek-key band": every shrub inside r = 54 m of the
+        rotunda is clamped to 1.2 m tall.
+      * performance: every source mesh is built at three LODs and each placement becomes three objects, like the
+        trees, so ENV_LOD1 no longer carries the full-density cards; shrubs past SHRUB_FAR from every QA camera
+        render their LOD1 mesh even at LOD0.
+    """
     log("shrubs + grasses + reeds")
     coll = SUB["ENV_shrubs"]
     rnd = random.Random(23)
-    # (key, material, mesh factory) - meshes are shared by every instance of that key
+    ROSTRA_R = 54.0        # inside this radius the band must not hide the podium / rostra (QA-02-13)
+    ROSTRA_H = 1.2
+
+    # (key, material(s), {lod: mesh}, nominal height) - meshes are shared by every instance of that key
     src = {}
-    for i, (r, h) in enumerate(((0.55, 0.55), (0.8, 0.8), (1.1, 1.0), (1.5, 1.25))):
-        src[f"pitto{i}"] = ("MAT_shrub", make_shrub_mesh(f"ENV_src_pittosporum_{i}", 300 + i, radius=r, height=h,
-                                                         form="mound", cover=1.6))
-    for i, (r, h) in enumerate(((0.7, 1.15), (0.95, 1.55))):
-        src[f"maho{i}"] = (("MAT_shrub_light", "MAT_shrub"), make_shrub_mesh(f"ENV_src_mahonia_{i}", 320 + i, radius=r, height=h,
-                                                        card=0.105, form="upright", cover=1.1))
+
+    def add(key, mats, factory, height, **kw):
+        src[key] = (mats, {lod: factory(f"ENV_src_{key}_LOD{lod}", lod=lod, **kw) for lod in (0, 1, 2)}, height)
+
+    # nine mound seeds over three material families: the belt can no longer repeat a silhouette or a hue
+    MOUND_SPEC = [(0.50, 0.50, "MAT_shrub"), (0.68, 0.62, "MAT_shrub_light"), (0.80, 0.80, "MAT_shrub"),
+                  (0.95, 0.72, "MAT_shrub_dry"), (1.10, 1.00, "MAT_shrub"), (1.25, 0.88, "MAT_shrub_light"),
+                  (1.50, 1.25, "MAT_shrub"), (1.05, 1.35, "MAT_shrub_light"), (0.72, 1.05, "MAT_shrub_dry")]
+    for i, (r, h, m) in enumerate(MOUND_SPEC):
+        add(f"pitto{i}", (m, "MAT_shrub"), make_shrub_mesh, h, seed=300 + i, radius=r, height=h,
+            form="mound", cover=1.6)
+    for i, (r, h) in enumerate(((0.62, 1.05), (0.78, 1.35), (0.95, 1.60))):
+        add(f"maho{i}", ("MAT_shrub_light", "MAT_shrub"), make_shrub_mesh, h, seed=320 + i, radius=r, height=h,
+            card=0.105, form="upright", cover=1.1)
     for i in range(3):
-        src[f"agap{i}"] = ("MAT_reeds", make_blade_clump(f"ENV_src_agapanthus_{i}", 340 + i, height=0.62 + 0.12 * i,
-                                                         blades=70, width=0.050, arch=0.55, spread=0.30))
+        add(f"agap{i}", ("MAT_reeds", "MAT_reeds"), make_blade_clump, 0.62 + 0.12 * i, seed=340 + i,
+            height=0.62 + 0.12 * i, blades=70, width=0.050, arch=0.55, spread=0.30)
     for i in range(3):
-        src[f"reed{i}"] = (("MAT_shrub_dry", "MAT_reeds"), make_blade_clump(f"ENV_src_reed_{i}", 400 + i, height=1.0 + 0.22 * i,
-                                                         blades=54, width=0.045, arch=0.18, spread=0.26))
+        add(f"reed{i}", ("MAT_shrub_dry", "MAT_reeds"), make_blade_clump, 1.0 + 0.22 * i, seed=400 + i,
+            height=1.0 + 0.22 * i, blades=54, width=0.045, arch=0.18, spread=0.26)
     for i in range(3):
-        src[f"twig{i}"] = (("MAT_shrub_dry", "MAT_reeds"), make_twig_shrub_mesh(f"ENV_src_twig_{i}", 350 + i,
-                                                             radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i))
-    mats = {k: (L.mat_or(*m) if isinstance(m, tuple) else L.mat(m)) for k, (m, _) in src.items()}
-    for k, (mname, me) in src.items():
-        me.materials.append(mats[k])
+        add(f"twig{i}", ("MAT_shrub_dry", "MAT_reeds"), make_twig_shrub_mesh, 0.9 + 0.25 * i, seed=350 + i,
+            radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i, twigs=70)
+
+    mats = {k: L.mat_or(*m) for k, (m, _, _) in src.items()}
+    for k, (_, lods, _) in src.items():
+        for me in lods.values():
+            me.materials.append(mats[k])
 
     placed = []            # (key, (x, y, z), rot, scale)
 
@@ -537,102 +591,128 @@ def build_shrubs():
             return False
         return True
 
-    def put(key, x, y, dz=-0.06, s=(0.85, 1.15)):
-        placed.append((key, (x, y, terrain_height(x, y) + dz), rnd.uniform(0, 6.283), rnd.uniform(*s)))
+    def put(key, x, y, dz=-0.06, s=(0.72, 1.55)):
+        sc = rnd.uniform(*s)
+        h = src[key][2] * sc
+        if math.hypot(x, y) < ROSTRA_R and h > ROSTRA_H:      # QA-02-13
+            sc *= ROSTRA_H / h
+        placed.append((key, (x, y, terrain_height(x, y) + dz), rnd.uniform(0, 6.283), sc))
 
     def clump(cx, cy, n, spread, keys, min_shore=0.9, max_shore=7.0):
+        last = None
         for _ in range(n):
             x, y = cx + rnd.uniform(-spread, spread), cy + rnd.uniform(-spread, spread)
-            if land_ok(x, y, min_shore, max_shore):
-                put(rnd.choice(keys), x, y)
+            if not land_ok(x, y, min_shore, max_shore):
+                continue
+            # QA-02-18: never two neighbours off the same source mesh
+            choices = [k for k in keys if k != last] or list(keys)
+            key = rnd.choice(choices)
+            last = key
+            put(key, x, y)
 
-    MOUNDS = ("pitto0", "pitto1", "pitto2", "pitto3")
-    LOWMOUNDS = ("pitto0", "pitto1", "pitto2")
-    MAHONIA = ("maho0", "maho1")
+    MOUNDS = tuple(f"pitto{i}" for i in range(len(MOUND_SPEC)))
+    LOWMOUNDS = ("pitto0", "pitto1", "pitto2", "pitto3", "pitto5", "pitto8")
+    MAHONIA = ("maho0", "maho1", "maho2")
     AGAP = ("agap0", "agap1", "agap2")
     REEDS = ("reed0", "reed1", "reed2")
     TWIGS = ("twig0", "twig1", "twig2")
+    DRY = REEDS + TWIGS
 
     # 1. rotunda peninsula: dense on the north-east (user image, right of the rotunda), open on the south-east.
     #    ref 169's shore is a continuous mass of foliage down to the rip-rap, so the belt is closed, not dotted.
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.4), 2.6, closed=True):
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.4), 2.9, closed=True):
         r = math.hypot(x, y)
         if not (APRON_R + 1.0 < r < 49.0):
             continue
         az = math.degrees(math.atan2(y, -x)) % 360
         ne = L.smoothstep(150.0, 60.0, abs(az - 40.0)) if az < 180 else 0.0
         se = L.smoothstep(150.0, 60.0, abs(az - 140.0)) if az < 200 else 0.0
-        p = 0.62 + 0.32 * ne - 0.20 * se
+        p = 0.60 + 0.30 * ne - 0.20 * se
         if rnd.random() < p:
             keys = MOUNDS + MAHONIA if ne > 0.5 else LOWMOUNDS + MAHONIA
-            clump(x, y, rnd.randint(2, 6), 2.4, keys, min_shore=0.5, max_shore=9.0)
-        if rnd.random() < 0.55:
+            clump(x, y, rnd.randint(2, 5), 2.6, keys, min_shore=0.5, max_shore=9.0)
+        if rnd.random() < 0.50:
             clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.25, max_shore=3.2)
-        if rnd.random() < 0.30:
-            clump(x, y, 1, 1.5, TWIGS, min_shore=0.6, max_shore=6.0)
+        # QA-02-18: warm dry material in the hero's own shore band, not only past r = 50 m
+        if rnd.random() < 0.52:
+            clump(x, y, rnd.randint(1, 3), 2.0, DRY, min_shore=0.4, max_shore=6.5)
     # 2. the rest of the shore: the same belt, a little sparser, with more dry reeds at the water
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.0), 3.0, closed=True):
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.0), 3.4, closed=True):
         if math.hypot(x, y) < 50 or not land_ok(x, y, 0.4, 9.0):
             continue
-        if rnd.random() < 0.62:
-            clump(x, y, rnd.randint(2, 5), 2.8, LOWMOUNDS + MAHONIA, min_shore=0.5, max_shore=9.0)
+        if rnd.random() < 0.58:
+            clump(x, y, rnd.randint(2, 4), 2.8, LOWMOUNDS + MAHONIA, min_shore=0.5, max_shore=9.0)
         if rnd.random() < 0.35:
             clump(x, y, 1, 1.5, TWIGS, min_shore=0.5, max_shore=6.0)
-        if rnd.random() < 0.7:
+        if rnd.random() < 0.62:
             clump(x, y, rnd.randint(1, 3), 1.8, REEDS, min_shore=0.2, max_shore=3.4)
-        if rnd.random() < 0.5:
+        if rnd.random() < 0.45:
             clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.2, max_shore=3.0)
     # 2b. bank cover: low mounds sitting on the rip-rap bank itself, so the pale stone band is broken up
     #     (in ref 169 the bank is visible only in gaps between the bushes)
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 1.2), 2.2, closed=True):
-        if rnd.random() < 0.55:
-            clump(x, y, rnd.randint(1, 3), 1.3, LOWMOUNDS, min_shore=0.15, max_shore=2.6)
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 1.2), 2.6, closed=True):
+        if rnd.random() < 0.50:
+            clump(x, y, rnd.randint(1, 3), 1.3, LOWMOUNDS + TWIGS, min_shore=0.15, max_shore=2.6)
     # 2c. peninsula planting band 9-18 m back from the water, between the shore belt and the podium (lead's call
     #     after the hero camera stayed put): ref 169 shows beds of mounded shrubs and low trees there, not bare lawn.
     #     Beds, not a carpet - the gaps keep the mown lawn reading.
     n_band = len(placed)
-    keys_band = LOWMOUNDS + MAHONIA + AGAP
+    keys_band = LOWMOUNDS + MAHONIA + AGAP + REEDS
     for off in (8.5, 11.5, 14.5, 17.5):
-        for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, off), 2.5, closed=True):
+        for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, off), 2.9, closed=True):
             r = math.hypot(x, y)
             if not (APRON_R - 1.0 < r < 58.0):       # the strip between the platform apron and the shore belt
                 continue
             bed = L.fnoise(x, y, 0.10, 31)           # ~10 m beds with mown lawn between them
-            if bed < -0.25:
+            if bed < -0.20:
                 continue
-            if rnd.random() < 0.75 + 0.25 * bed:
-                clump(x, y, rnd.randint(3, 7), 2.8, keys_band, min_shore=6.5, max_shore=21.0)
+            if rnd.random() < 0.70 + 0.25 * bed:
+                clump(x, y, rnd.randint(2, 6), 2.8, keys_band, min_shore=6.5, max_shore=21.0)
     n_band = len(placed) - n_band
 
     # 3. foundation planting along the colonnade fronts
     for p in COLONNADE_ROOFS[:2]:
-        for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.0, closed=True):
-            if land_ok(x, y, 1.0) and rnd.random() < 0.5:
+        for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.5, closed=True):
+            if land_ok(x, y, 1.0) and rnd.random() < 0.45:
                 clump(x, y, rnd.randint(1, 3), 2.0, LOWMOUNDS + MAHONIA, min_shore=1.0, max_shore=1e9)
     # 4. the wooded islet: dense dark mounds under the willows
-    for _ in range(90):
+    for _ in range(80):
         p = ISLETS[0]
         xs = [q[0] for q in p]
         ys = [q[1] for q in p]
         x, y = rnd.uniform(min(xs), max(xs)), rnd.uniform(min(ys), max(ys))
         if L.point_in_poly(x, y, p) and ISLET_FIELDS[0].signed(x, y) < -0.8:
-            key = rnd.choice(MOUNDS + AGAP + REEDS)
-            placed.append((key, (x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.8, 1.25)))
+            put(rnd.choice(MOUNDS + AGAP + REEDS), x, y, dz=-0.05)
 
-    counts = {}
-    total = 0
+    # ---- instancing: three objects per placement, mesh chosen by distance to the nearest QA camera
+    try:
+        import qa_cameras
+        CAM_XY = [(c["loc"][0], c["loc"][1]) for c in qa_cameras.CAMERAS]
+    except Exception:
+        CAM_XY = [(-14.1, 100.0)]
+    lod_colls = {lod: common.get_collection(f"ENV_shrubs_LOD{lod}", parent=coll) for lod in (0, 1, 2)}
+    counts, tris = {}, {0: 0, 1: 0, 2: 0}
+    dry_keys = set(DRY)
+    n_dry = 0
     for i, (key, loc, rot, sc) in enumerate(placed):
-        me = src[key][1]
-        obj = bpy.data.objects.new(f"ENV_shrub_{key}_{i:04d}", me)
-        obj.location = loc
-        obj.rotation_euler = (0.0, 0.0, rot)
-        obj.scale = (sc * rnd.uniform(0.92, 1.08), sc * rnd.uniform(0.92, 1.08), sc * rnd.uniform(0.9, 1.12))
-        coll.objects.link(obj)
+        cam_d = min(math.hypot(loc[0] - cx, loc[1] - cy) for (cx, cy) in CAM_XY)
+        shift = 0 if cam_d <= SHRUB_FAR else (1 if cam_d <= 2.0 * SHRUB_FAR else 2)
+        sxy = sc * rnd.uniform(0.88, 1.14)
+        for lod in (0, 1, 2):
+            me = src[key][1][min(2, lod + shift)]
+            obj = bpy.data.objects.new(f"ENV_shrub_{key}_{i:04d}_LOD{lod}", me)
+            obj.location = loc
+            obj.rotation_euler = (0.0, 0.0, rot)
+            obj.scale = (sxy, sc * rnd.uniform(0.88, 1.14), sc * rnd.uniform(0.9, 1.15))
+            obj.hide_render = lod != 0
+            obj.hide_viewport = lod != 1
+            lod_colls[lod].objects.link(obj)
+            tris[lod] += L.tri_count(obj)
         counts[key] = counts.get(key, 0) + 1
-        total += L.tri_count(obj)
-    card_max = max(src[k][1].get("card_m", 0.0) * 1.45 for k in src if src[k][1].get("card_m"))
-    log(f"shrubs: {len(placed)} instances ({n_band} in the peninsula band 7.5-19.5 m from the water) "
-        f"of {len(src)} meshes, {total} tris, "
+        n_dry += key in dry_keys
+    card_max = max(src[k][1][0].get("card_m", 0.0) * 1.45 for k in src if src[k][1][0].get("card_m"))
+    log(f"shrubs: {len(placed)} instances ({n_band} in the peninsula band, {100.0 * n_dry / max(1, len(placed)):.0f} % "
+        f"warm dry) of {len(src)} sources x 3 LODs; tris LOD0 {tris[0]:,} LOD1 {tris[1]:,} LOD2 {tris[2]:,}; "
         f"largest leaf card {card_max * 100:.0f} cm; {counts}")
 
 

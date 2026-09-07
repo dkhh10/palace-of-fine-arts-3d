@@ -470,3 +470,89 @@ def set_object_lod_visibility(coll, level=1):
         if "_LOD" in obj.name:
             lod = obj.name.rsplit("_LOD", 1)[1][:1]
             obj.hide_viewport = lod != str(level)
+
+
+# ----------------------------------------------------------------------------- sun geometry (QA-02-7)
+# The golden-hour sun agreed with lighting. At el 7.4 deg a 30 m crown throws a 230 m shadow, so any tall tree
+# up-sun of a colonnade wing puts it in shade: this is the geometry behind QA-02-7, and env_trees.shadow_relief
+# uses it to keep the wing faces lit.
+SUN_AZ, SUN_EL = 118.5, 7.4
+CROWN_R = {"cypress_column": 0.20, "redwood": 0.22, "cypress": 0.34, "pine": 0.36, "eucalyptus": 0.34,
+           "willow": 0.45, "broadleaf": 0.42}
+ARC_CENTRE = (0.0, 52.0)          # the wings are arcs struck from here (env_backdrop.ARC_CENTRE)
+
+
+def sun_vector(az=SUN_AZ, el=SUN_EL):
+    """Unit vector pointing FROM the scene TOWARD the sun. Azimuth is degrees clockwise from north; in this
+    project's world north is -X and east is +Y (CLAUDE.md)."""
+    a, e = math.radians(az), math.radians(el)
+    return (-math.cos(a) * math.cos(e), math.sin(a) * math.cos(e), math.sin(e))
+
+
+def crown_ellipsoid(species, x, y, h, base_z=-0.5):
+    """(centre, radii) of the crown blob used for sun-occlusion tests. Crowns run 0.35 H .. 1.02 H."""
+    r = CROWN_R.get(species, 0.35) * h
+    z0, z1 = base_z + 0.35 * h, base_z + 1.02 * h
+    return (x, y, 0.5 * (z0 + z1)), (r, r, 0.5 * (z1 - z0))
+
+
+def ray_hits_ellipsoid(origin, d, centre, radii, tmin=0.5):
+    """Distance along d at which the ray enters the ellipsoid, or None."""
+    ox = (origin[0] - centre[0]) / radii[0]
+    oy = (origin[1] - centre[1]) / radii[1]
+    oz = (origin[2] - centre[2]) / radii[2]
+    dx, dy, dz = d[0] / radii[0], d[1] / radii[1], d[2] / radii[2]
+    a = dx * dx + dy * dy + dz * dz
+    b = 2.0 * (ox * dx + oy * dy + oz * dz)
+    c = ox * ox + oy * oy + oz * oz - 1.0
+    disc = b * b - 4 * a * c
+    if disc < 0 or a < 1e-12:
+        return None
+    s = math.sqrt(disc)
+    for t in sorted(((-b - s) / (2 * a), (-b + s) / (2 * a))):
+        if t > tmin:
+            return t
+    return None
+
+
+def wing_samples(colonnade_polys, heights=(6.0, 12.0, 17.0), step=4.0):
+    """Sample points on the lagoon-facing (inner) face of each colonnade wing: [(wing_index, x, y, z), ...].
+
+    The wings are arcs about ARC_CENTRE; the face that carries the composition in ref 169 is the one turned
+    toward that centre, so ring points inside the ring's median radius are kept.
+    """
+    cx, cy = ARC_CENTRE
+    out = []
+    for wi, poly in enumerate(colonnade_polys[:2]):
+        ring = resample_polyline(ensure_ccw(poly), step, closed=True)
+        rads = sorted(math.hypot(x - cx, y - cy) for (x, y) in ring)
+        med = rads[len(rads) // 2]
+        for (x, y) in ring:
+            if math.hypot(x - cx, y - cy) <= med:
+                for z in heights:
+                    out.append((wi, x, y, z))
+    return out
+
+
+def shadowed_fraction(samples, trees, az=SUN_AZ, el=SUN_EL, base_z=-0.5):
+    """(per (wing, z) counts, {tree index: samples it shadows}) for trees given as (species, x, y, h, note)."""
+    s = sun_vector(az, el)
+    blobs = [crown_ellipsoid(t[0], t[1], t[2], max(0.5, t[3]), base_z) for t in trees]
+    alive = [t[3] > 0.1 for t in trees]
+    per, blockers = {}, {}
+    for (wi, x, y, z) in samples:
+        o = (x, y, z)
+        hit = None
+        for i, (c, r) in enumerate(blobs):
+            if not alive[i]:
+                continue
+            if (trees[i][1] - x) * s[0] + (trees[i][2] - y) * s[1] < -2.0:
+                continue                                     # caster must be up-sun of the sample
+            if ray_hits_ellipsoid(o, s, c, r) is not None:
+                hit = i
+                break
+        tot, sh = per.get((wi, z), (0, 0))
+        per[(wi, z)] = (tot + 1, sh + (1 if hit is not None else 0))
+        if hit is not None:
+            blockers[hit] = blockers.get(hit, 0) + 1
+    return per, blockers

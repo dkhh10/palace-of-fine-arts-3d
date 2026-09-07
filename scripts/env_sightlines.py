@@ -71,9 +71,44 @@ def placed_trees():
     return out
 
 
+
+# ----------------------------------------------------------------------------- sun shadowing (QA-02-7)
+# The geometry lives in env_lib so env_trees.shadow_relief and this checker cannot drift apart.
+import env_lib as L
+
+
+def shadow_report(trees, site, az=L.SUN_AZ, el=L.SUN_EL):
+    polys = [L.ensure_ccw(L.dedupe_poly(site[k][0])) for k in ("roof310 h19", "roof306 h20")]
+    samples = L.wing_samples(polys)
+    per, blockers = L.shadowed_fraction(samples, trees, az, el)
+    sv = L.sun_vector(az, el)
+    print(f"\n=== sun shadowing of the colonnade faces  (az {az} el {el}, sun {sv[0]:+.3f},{sv[1]:+.3f},{sv[2]:+.3f})")
+    for (wi, z), (tot, sh) in sorted(per.items()):
+        print(f"  {('north', 'south')[wi]:5s} wing z={z:4.0f} m: {sh:3d}/{tot:3d} in tree shadow = "
+              f"{100.0 * sh / max(1, tot):5.1f} %")
+    lit = {}
+    for (wi, z), (tot, sh) in per.items():
+        if z >= 12.0:
+            t, x = lit.get(wi, (0, 0))
+            lit[wi] = (t + tot, x + sh)
+    for wi, (tot, sh) in sorted(lit.items()):
+        print(f"  -> {('north', 'south')[wi]} wing readable band (z >= 12 m): {100.0 * (1 - sh / max(1, tot)):.1f} % lit")
+    print("  worst casters (samples shadowed):")
+    for i, n in sorted(blockers.items(), key=lambda kv: -kv[1])[:20]:
+        t = trees[i]
+        print(f"    {t[0]:15s} ({t[1]:6.0f},{t[2]:6.0f}) h{t[3]:3.0f}   {n:4d}   {str(t[4])[:36]}")
+    return per, blockers
+
+
 def main():
     args = common.script_args()
     plan = env_trees.PLAN if "--plan" in args else placed_trees()
+    if "--shadow" in args:
+        az = float(args[args.index("--az") + 1]) if "--az" in args else SUN_AZ
+        el = float(args[args.index("--el") + 1]) if "--el" in args else SUN_EL
+        shadow_report(plan, common.load_site_local(), az, el)
+        if "--only-shadow" in args:
+            return
     specs = {c["name"]: c for c in qa_cameras.CAMERAS}
     zones = dict(CLEAR_ZONES)
     if "--cam" in args:

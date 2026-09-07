@@ -388,13 +388,21 @@ except Exception:
 
 
 def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
-    """Tree screen behind both colonnade wings (DPR: redwoods planted 1968; ref 169: trees fill ~80 % of the bays
-    behind the north wing, QA-01-6).
+    """Tree screen BEHIND both colonnade wings (DPR: redwoods planted 1968).
 
-    The wings are arcs struck from (0, 52) (env_backdrop.ARC_CENTRE), so the screen is laid out in polar coordinates
-    about that point: for every 2 deg of the wing's angular sweep the polygon's outermost radius is measured, and
-    three staggered rows are planted at +4.5 / +11 / +19 m outside it. Planting from the polygon's edge segments
-    (the old method) put trees inside the colonnade band, e.g. 1 m in front of QA cam 03.
+    The wings are arcs struck from (0, 52) (env_backdrop.ARC_CENTRE), so the screen is laid out in polar
+    coordinates about that point: for every 2 deg of the wing's angular sweep the polygon's outermost radius is
+    measured, and the rows are planted outside it.
+
+    QA-02-7 (round 02): the round-01 screen (rows at +4.5 / +11 / +19 m, 26-36 m tall, continuous) filled every bay
+    and read as a wall in front of the wings - sky through the bays fell to 1.7 / 9.5 % and both wings went 37-52 %
+    dark. Ref 169 has trees behind AND between the columns with 15-20 % sky through the bays and crowns only a few
+    metres above the entablature (19-21 m). So now:
+      * the first row stands 13 m back, not 4.5, and no row is inside the colonnade band;
+      * crowns are 19-27 m, not 26-36, so the screen tops out ~5 m over the entablature instead of ~15;
+      * the rows are CLUMPED - a run of trees, then a 9-20 m gap - so bays open onto sky instead of a green wall;
+      * density is roughly a third of round 01's.
+    `shadow_relief` afterwards removes whatever still stands between the low sun and a wing face.
     """
     C = Vector((0.0, 52.0))
     out = []
@@ -419,34 +427,171 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
         ks = sorted(bins)
         # keep the main run of the sweep (drop 2 deg stragglers) and smooth the outer radius
         outer = {k: max(bins.get(k + j, bins[k]) for j in (-1, 0, 1)) for k in ks}
-        for row, (off, spacing, hmin, hmax, tag) in enumerate(((4.5, 4.0, 26.0, 34.0, "E1"),
-                                                               (11.0, 5.5, 28.0, 36.0, "E2"),
-                                                               (19.0, 8.0, 28.0, 36.0, "E3"))):
+        for row, (off, spacing, hmin, hmax, run, gap, tag) in enumerate((
+                (13.0, 6.5, 19.0, 24.0, (14.0, 26.0), (11.0, 20.0), "E1"),
+                (23.0, 8.0, 21.0, 26.0, (18.0, 34.0), (9.0, 16.0), "E2"),
+                (35.0, 11.0, 22.0, 27.0, (22.0, 40.0), (9.0, 18.0), "E3"))):
             carry = rnd.uniform(0, spacing)
+            # clumping state: metres of run left before the next gap, and metres of gap left
+            run_left = rnd.uniform(*run)
+            gap_left = 0.0
             for k in ks:
                 r = outer[k] + off + rnd.uniform(-1.5, 1.5)
                 arc = math.radians(2.0) * r          # metres covered by this 2 deg bin
                 t = carry
                 while t < arc:
+                    if gap_left > 0.0:
+                        step = min(gap_left, arc - t)
+                        gap_left -= step
+                        t += step
+                        if gap_left <= 0.0:
+                            run_left = rnd.uniform(*run)
+                            carry = t
+                        continue
                     ang = math.radians(2.0 * k) + (t / max(1e-6, r))
                     p = C + Vector((math.cos(ang), math.sin(ang))) * r
                     inside = any(f.signed(p.x, p.y) < 1.5 for f in fields)
                     near_cam = any(math.hypot(p.x - cx, p.y - cy) < 16.0 for (cx, cy) in keepout)
                     if not inside and not near_cam and hall_field.signed(p.x, p.y) > 1.0:
                         u = rnd.random()
-                        sp = "redwood" if u < 0.55 else ("cypress" if u < 0.82 else ("eucalyptus" if row else "pine"))
-                        h = rnd.uniform(hmin, hmax) if sp != "pine" else rnd.uniform(20, 26)
+                        sp = "redwood" if u < 0.50 else ("cypress" if u < 0.80 else ("eucalyptus" if row else "pine"))
+                        h = rnd.uniform(hmin, hmax) if sp != "pine" else rnd.uniform(18, 22)
                         out.append((sp, p.x, p.y, h, f"{tag} screen behind the colonnade"))
                     t += spacing
-                carry = t - arc
+                    run_left -= spacing
+                    if run_left <= 0.0:
+                        gap_left = rnd.uniform(*gap)
+                carry = max(0.0, t - arc)
     return out
 
 
-def plan_markdown(plan):
-    lines = ["| # | species | X (S+) | Y (E+) | height m | note |", "|---|---|---|---|---|---|"]
-    for i, (sp, x, y, h, note) in enumerate(plan):
-        lines.append(f"| {i:02d} | {sp} | {x:.0f} | {y:.0f} | {h:.0f} | {note} |")
-    return "\n".join(lines)
+# ----------------------------------------------------------------------------- QA-02-7 sun relief
+# The wing faces that carry the hero composition must be sunlit. At el 7.4 deg the sun's rays are nearly flat, so a
+# crown 40 m up-sun of the entablature only has to be ~5 m taller than it to put it in shade. The round-02 master had
+# 92.5 % (south) / 70.0 % (north) of the entablature band in tree shadow. This pass measures the shadow with
+# env_lib.shadowed_fraction and, worst caster first, lowers the offending crown (a screen tree may lose up to 45 % of
+# its height, a hand-placed PLAN tree only 25 %, since those carry named reference features), then drops screen trees
+# that still block. Nothing inside the peninsula "A" cluster is ever dropped: it is the dark mass right of the
+# rotunda in ref 169.
+SHADOW_TARGET = 0.22          # <= this fraction of the readable wing band (z >= 12 m) may be in tree shadow
+WATER_TARGET = 0.25           # ... and of the lagoon the hero camera actually sees (QA-02-6)
+SHADOW_BANDS = (12.0, 17.0)
+
+
+def hero_water_samples(lagoon_field, step=6.0):
+    """Points on the lagoon surface inside the hero camera's cone, as (2, x, y, z) samples.
+
+    QA-02-6 measured the near field 7-10 m in front of CAM_qa_01 and the "mid-left band" at ~9 m; both sat 3.9x
+    under ref 169 and went cyan. At sun elevation 7.4 deg the east-shore eucalyptus row (Y 118-131, 28-32 m) throws
+    a 230 m shadow to the north-west - straight across that water. Nothing lit it, so it could only return sky.
+    """
+    try:
+        import qa_cameras
+        cam = next(c for c in qa_cameras.CAMERAS if "_qa_01_" in c["name"])
+        cx, cy = cam["loc"][0], cam["loc"][1]
+        tx, ty = cam["target"][0], cam["target"][1]
+    except Exception:
+        cx, cy, tx, ty = -14.1, 100.0, 0.0, 0.0
+    fx, fy = tx - cx, ty - cy
+    fl = math.hypot(fx, fy) or 1.0
+    fx, fy = fx / fl, fy / fl
+    out = []
+    x = -110.0
+    while x <= 70.0:
+        y = 20.0
+        while y <= 99.0:
+            d = ((x - cx) * fx + (y - cy) * fy)
+            if 4.0 < d < 85.0 and lagoon_field.signed(x, y) < -1.0:
+                lat = abs(-(x - cx) * fy + (y - cy) * fx)
+                if lat < 0.60 * d:                       # inside the 20 mm lens' horizontal cone
+                    out.append((2, x, y, L.WATER_Z + 0.02))
+            y += step
+        x += step
+    return out
+
+
+def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
+    samples = L.wing_samples(colonnade_polys, heights=(6.0,) + SHADOW_BANDS)
+    band = [s for s in samples if s[3] >= min(SHADOW_BANDS)]
+    water = hero_water_samples(lagoon_field) if lagoon_field is not None else []
+    band = band + water
+    trees = [list(t) for t in plan]
+    targets = {0: SHADOW_TARGET, 1: SHADOW_TARGET, 2: WATER_TARGET}
+
+    def measure():
+        per, blockers = L.shadowed_fraction(band, trees)
+        frac = {}
+        for (wi, z), (tot, sh) in per.items():
+            t, x = frac.get(wi, (0, 0))
+            frac[wi] = (t + tot, x + sh)
+        return {wi: v[1] / max(1, v[0]) for wi, v in frac.items()}, blockers
+
+    def policy(note, x, y):
+        """(height floor as a fraction of the original, may this tree be dropped?)"""
+        n = str(note)
+        if n.startswith(("E1", "E2", "E3")):
+            return 0.55, True                       # generated screen: expendable
+        if n.startswith(("F", "H")) and y > 105.0:
+            return 0.45, True                       # east shore / backdrop, behind the hero camera
+        if n.startswith("A"):
+            return 0.80, False                      # the dark cluster right of the rotunda in ref 169: keep it
+        return 0.72, False
+
+    before, blockers = measure()
+    start = dict(before)
+    changed = {"lowered": 0, "dropped": 0, "moved": 0, "metres": 0.0}
+    pushes = {}
+    orig_h = {i: t[3] for i, t in enumerate(trees)}
+    for _ in range(140):
+        over = [wi for wi, f in before.items() if f > targets.get(wi, SHADOW_TARGET)]
+        if not over or not blockers:
+            break
+        i = max(blockers, key=lambda k: blockers[k])
+        sp, x, y, h, note = trees[i]
+        frac, droppable = policy(note, x, y)
+        floor = max(frac * orig_h[i], 8.0)
+        if h > floor + 0.5:
+            new_h = max(floor, h * 0.82)
+            changed["metres"] += h - new_h
+            changed["lowered"] += 1
+            trees[i][3] = new_h
+        elif droppable:
+            trees[i][3] = 0.0
+            changed["dropped"] += 1
+        elif pushes.get(i, 0) < 3:
+            sx, sy, _ = L.sun_vector()               # push 12 m down-sun so the shadow clears the target
+            trees[i][1] -= 12.0 * sx
+            trees[i][2] -= 12.0 * sy
+            pushes[i] = pushes.get(i, 0) + 1
+            changed["moved"] += 1
+        else:
+            blockers.pop(i, None)                    # give up on this one, move to the next worst
+            if not blockers:
+                break
+            continue
+        before, blockers = measure()
+
+    # QA-02-13: no tree crown within 6 m of the rotunda podium (podium radius ~31 m = env_build.APRON_R).
+    PODIUM_R, CLEAR = 31.0, 6.0
+    for t in trees:
+        if t[3] <= 0.1:
+            continue
+        d = math.hypot(t[1], t[2])
+        rad = L.CROWN_R.get(t[0], 0.35) * t[3]
+        if d - rad < PODIUM_R + CLEAR and d > 1e-3:
+            k = (PODIUM_R + CLEAR + rad) / d
+            t[1] *= k
+            t[2] *= k
+            changed["moved"] += 1
+    out = [tuple(t) for t in trees if t[3] > 0.1]
+    after, _ = measure()
+    if verbose:
+        print(f"[env_trees] shadow relief: lowered {changed['lowered']} crowns ({changed['metres']:.0f} m total), "
+              f"moved {changed['moved']}, dropped {changed['dropped']}; in shadow -> north wing "
+              f"{100 * after.get(0, 0):.1f} % south wing {100 * after.get(1, 0):.1f} % hero water "
+              f"{100 * after.get(2, 0):.1f} % (was {100 * start.get(0, 0):.1f}/{100 * start.get(1, 0):.1f}/"
+              f"{100 * start.get(2, 0):.1f}); {len(plan)} -> {len(out)} trees")
+    return out
 
 
 # ----------------------------------------------------------------------------- placement
@@ -473,6 +618,8 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
     plan = list(PLAN)
     if colonnade_polys and hall_poly:
         plan += redwood_screen(colonnade_polys, hall_poly, hall_field)
+        # QA-02-7: keep the low sun off the colonnade faces (see shadow_relief)
+        plan = shadow_relief(plan, colonnade_polys, lagoon_field)
     rnd = random.Random(77)
     counts = {}
     per_species_idx = {}
