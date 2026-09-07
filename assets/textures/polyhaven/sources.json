@@ -1,0 +1,90 @@
+{
+  "concrete_wall_008": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/concrete_wall_008",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_disp_2k.jpg"
+    }
+  },
+  "concrete_wall_007": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/concrete_wall_007",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_disp_2k.jpg"
+    }
+  },
+  "concrete_moss": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/concrete_moss",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/concrete_moss/concrete_moss_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/concrete_moss/concrete_moss_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/concrete_moss/concrete_moss_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/concrete_moss/concrete_moss_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/concrete_moss/concrete_moss_disp_2k.jpg"
+    }
+  },
+  "bark_bluegum": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/bark_bluegum",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/bark_bluegum/bark_bluegum_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/bark_bluegum/bark_bluegum_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/bark_bluegum/bark_bluegum_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/bark_bluegum/bark_bluegum_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/bark_bluegum/bark_bluegum_disp_2k.jpg"
+    }
+  },
+  "chinese_cedar_bark": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/chinese_cedar_bark",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_disp_2k.jpg"
+    }
+  },
+  "gravelly_sand": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/gravelly_sand",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/gravelly_sand/gravelly_sand_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/gravelly_sand/gravelly_sand_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/gravelly_sand/gravelly_sand_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/gravelly_sand/gravelly_sand_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/gravelly_sand/gravelly_sand_disp_2k.jpg"
+    }
+  },
+  "rock_boulder_dry": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/rock_boulder_dry",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_disp_2k.jpg"
+    }
+  },
+  "forest_ground_04": {
+    "license": "CC0 1.0",
+    "page": "https://polyhaven.com/a/forest_ground_04",
+    "files": {
+      "Diffuse": "assets/textures/polyhaven/forest_ground_04/forest_ground_04_diff_2k.jpg",
+      "Rough": "assets/textures/polyhaven/forest_ground_04/forest_ground_04_rough_2k.jpg",
+      "nor_gl": "assets/textures/polyhaven/forest_ground_04/forest_ground_04_nor_gl_2k.jpg",
+      "AO": "assets/textures/polyhaven/forest_ground_04/forest_ground_04_ao_2k.jpg",
+      "Displacement": "assets/textures/polyhaven/forest_ground_04/forest_ground_04_disp_2k.jpg"
+    }
+  }
+}
