@@ -372,3 +372,259 @@ should shrink with the same materials change.
 New/changed files this round: `scripts/light_probes.py` (new), `scripts/light_measure.py` (new),
 `scripts/light_lookdev.py` (new), `scripts/light_build.py`, `scripts/light_calibrate.py`, `scripts/light_presets.py`,
 `scripts/light_preview.py`, `assets/lighting.blend`.
+
+---
+
+# Round 08 — Phase 4 polish round 1, from QA round 02
+
+Four defects: QA-02-4 (blocker, exposure), QA-02-11 (flythrough missing from master), QA-02-8 (haze greys cam06),
+QA-02-12 (vault soffits dark). Everything below was measured on a local master built with `scripts/lead_build.sh`
+from this branch. Renders: `renders/previews/qa/roundlight3_*`.
+
+## 13. QA-02-4 — exposure: QA was right and I was wrong, +0.9 EV
+
+`EXPOSURE_BIAS` 1.10 -> **2.00**, i.e. `view_settings.exposure` -3.2911 -> **-2.3911**. Nothing else changed: not the
+sun colour, not the sky strength, not an albedo. QA-02-14 (stone 5-9 deg cool) is deliberately left to materials,
+because the measured response is -1.1 deg of hue per +1 EV — exposure moves warmth the *wrong* way.
+
+**Why my round-07 estimate of "+0.15 EV" was an order of magnitude short.** I measured the deficit in display-referred
+sRGB (the sunlit attic was 14 % under ref 169) and reasoned about it as if the transfer were roughly linear. It is not:
+AgX's shoulder compresses about 1.6x of display gain into each stop of scene exposure in that range, so a 14-26 %
+display gap is most of a stop of scene light. QA measured the response curve instead of assuming it
+(`scripts/qa_exposure_sweep.py`, three renders at +0/+0.5/+1.0 EV) and got +32.0 / +35.2 / +30.5 / +33.8 sRGB units
+per EV on attic / column / sky / water. That is the right way to answer this question and I should have done it in
+round 07. **Rule for the rest of this build: never convert a display-referred error into an exposure change by
+reasoning; render the sweep.**
+
+### Result, Cycles hero 1920x1080 64 spp vs ref 169 (`scripts/light_measure.py --regions hero`)
+
+Same `light_measure` boxes on the render (`hero`) and on ref 169 (`hero_ref169`); "lum" is display-referred
+relative luminance of the mean sRGB, the same quantity QA used.
+
+| region | round 02 | round 08 | ref 169 | ref/render | EV gap |
+|---|---|---|---|---|---|
+| sunlit attic | 142.4 | **178.8** | 168.7 | 0.94 | -0.08 |
+| sunlit attic (b) | — | **175.6** | 191.8 | 1.09 | +0.13 |
+| sky top | 153.7 | **193.9** | 165.7 | 0.85 | -0.23 |
+| sky left | — | **186.7** | 193.8 | 1.04 | +0.05 |
+| colonnade far | — | **93.9** | 92.7 | 0.99 | -0.02 |
+| water centre | 108.9 | **104.2** | 106.0 | 1.02 | +0.02 |
+| shade, north face | — | **146.0** | 117.2 | 0.80 | -0.32 |
+
+Every region is now inside +-0.33 EV of ref 169, against +0.70 to +1.44 EV before. **QA's acceptance test — sunlit
+attic within +-10 % of 179.4 — is met at 175.6-178.8, i.e. within 2 %.** Closed.
+
+**Two residuals I am flagging rather than hiding, because neither is an exposure error:**
+
+1. **Sky gradient, not sky level.** The render's sky is nearly flat top-to-horizon (193.9 / 186.7) while ref 169 falls
+   17 % from the hazy low sky to the top (193.8 / 165.7). The two-box mean is 190.3 vs 179.8, +6 %, inside the window;
+   but no single value of `SKY_CAMERA_BOOST` fixes both boxes, because the shape is wrong, not the scale. Trimming the
+   boost to hit the top box would put the horizon box 13 % under. This is a sky-model job (ozone/aerosol profile, or
+   letting the compositor haze reach the sky instead of masking it off with `is_geometry`), and it is the next thing
+   I would do on the world if the lead wants it in round 09.
+2. **Shade is now 25 % too light.** Shaded stone / sunlit stone reads 0.82 in the render against 0.70 in ref 169, i.e.
+   the render's dynamic range is 0.23 EV flatter than the photo's. The cause is `SKY_STRENGTH = 2.0`, the round-05 art
+   bias that doubled the sky's *lighting* contribution to open the shadows; +0.9 EV has made that bias visible. The
+   knob is one line, but it feeds `light_calibrate` and so moves the calibrated exposure I just closed, which is why I
+   did not touch it in the same round. Recommend it as a round-09 item, swept, not guessed.
+
+## 14. QA-02-11 — the flythrough was being deleted by my own rebuild
+
+Not a modelling bug and not the lead's: **`light_build.py` rebuilds the LIGHT collection with
+`common.rebuild_collection` at the top of every run**, and `light_flythrough.py` wrote `CAM_flythrough_path` /
+`_target` / `CAM_flythrough` into that same collection *afterwards*, as a separate manual step. So every later
+`light_build.py` run silently deleted the deliverable, and the committed `assets/lighting.blend` shipped without it.
+`build_master.py` was innocent — it appends the whole LIGHT collection and would have carried the objects through.
+
+Fix: `light_build.build()` now calls `light_flythrough.build(scene)` itself, last, before the save. The flythrough is
+part of the rig, so it cannot be out of step with the rig again.
+
+Verified headlessly on both files:
+
+- `assets/lighting.blend` LIGHT collection: `LIGHT_sun`, `LIGHT_rotunda_bounce`,
+  `LIGHT_rotunda_vault_bounce_00..07`, `LIGHTPROBE_rotunda`, `LIGHTPROBE_colonnade`,
+  **`CAM_flythrough_path`, `CAM_flythrough_target`, `CAM_flythrough`**.
+- `master.blend` after `scripts/lead_build.sh`: all three present; `CAM_flythrough` carries `FOLLOW_PATH` ->
+  `CAM_flythrough_path` and `TRACK_TO` -> `CAM_flythrough_target`, and the path evaluates —
+  frame 1 (-16.0, 113.9, 1.0), 240 (73.5, 95.3, 4.3), 480 (66.6, 4.4, 6.0), 720 (0.0, 1.0, 2.5).
+
+## 15. QA-02-8 — the aerial haze: the veil was wrong, but it is not what greys cam06
+
+Two things were wrong with the round-07 haze and both are fixed:
+
+1. **Shape.** The mist pass was used raw as the haze factor (LINEAR, 30 -> 730 m) times 0.85. That is a ramp with no
+   asymptote, so everything past ~730 m sat at 0.85 haze and the whole background mixed to one colour. Airlight is
+   `1 - exp(-d/L)`, which rises fast near the camera and then flattens. The mist pass is now a plain linear distance
+   ramp over a long baseline (20 -> 2020 m) and `COMP_golden_hour` shapes it: `cap * (1 - exp(-k * mist))`, exposed as
+   the **Haze Falloff** socket (`k`; extinction length `L = MIST["depth"] / k`) beside **Haze Strength** (now the cap,
+   not a scale). Shipped: L = 800 m, cap 0.50 — 5 % veil at 110 m, 10 % at 200 m, 23 % at 500 m, 42 % at 1200 m.
+2. **Colour.** `haze_warmth` (1.22, 1.0, 0.74) on the measured west-horizon radiance produced (3.82, 3.74, 3.02) —
+   a neutral grey-yellow at linear saturation 0.21. That *was* the grey-olive. Now (1.70, 1.00, 0.48) gives
+   (5.32, 3.74, 1.96): linear hue 32 deg, saturation 0.63. **The warmth is carried by the haze colour, not by more
+   haze** — which is the whole point, since more haze is exactly the global desaturation this fix had to avoid.
+
+### But the diagnosis in QA-02-8 is only half right, and the measurement says so
+
+`scripts/light_r08_sweep.py` rendered cam06 at five haze settings **including the haze switched off entirely**
+(640x360 Eevee, `--cap 0.0`):
+
+| cam06 setting | dome | far shore | far hills | dome/shore | shore hue | shore sat |
+|---|---|---|---|---|---|---|
+| **haze OFF (cap 0)** | 120.6 | 111.5 | 108.4 | **1.08:1** | **84.6** | **0.178** |
+| cap 0.60, L 1500 m | 140.6 | 136.6 | 136.9 | 1.03:1 | 53.8 | 0.171 |
+| cap 0.60, L 900 m | 148.0 | 145.5 | 146.5 | 1.02:1 | 48.2 | 0.172 |
+| cap 0.60, L 400 m | 160.1 | 158.9 | 160.2 | 1.01:1 | 42.6 | 0.164 |
+| round 02 (ramp x 0.85) | 135.9 | 135.4 | 139.3 | 1.00:1 | 57.8 | 0.089 |
+
+**With no haze at all the aerial is already hue 84.6 (olive) at saturation 0.178, and the dome/far-shore contrast is
+already 1.08:1.** The haze took saturation from 0.178 down to 0.089 and it flattened 1.08 to 1.00 — real damage, now
+undone — but it did not create the grey-olive and it did not create the flatness. Those are the scene's own colour and
+the scene's own tonal range at that distance: the same cam06 lawn QA-02-15 calls "a flat olive plane" and the same
+stone QA-02-3 calls "blotchy olive". **QA's acceptance numbers for this defect (contrast >= 1.5:1) are therefore not
+reachable from the lighting rig**: 1.08:1 is the ceiling with the haze deleted. I am not going to fake it by pushing
+contrast into the compositor, because that would hide an environment/materials defect behind a lighting knob.
+
+### Shipped result, cam06 Eevee 1280x720 (`roundlight4_06_aerial.png`)
+
+| measure | round 02 | round 08 | QA target |
+|---|---|---|---|
+| far shore saturation | 0.089 | **0.218** | >= 0.20 **met** |
+| far hills saturation | 0.081 | **0.177** | — |
+| dome cap saturation | 0.091 | **0.192** | — |
+| far shore hue | 57.8 | **43.8** | 30-45 warm band **met** |
+| far hills hue | 56.9 | **45.6** | 30-45 **just outside** |
+| dome / far shore contrast | 1.00:1 | **1.03:1** | 1.5:1 **not reachable** (1.08:1 with haze off) |
+
+Saturation at 0.218 is *above* the no-haze floor of 0.178, because the shipped haze colour is itself saturated (0.63)
+and warm — the veil now adds chroma instead of removing it. **Two of three acceptance numbers met; the contrast one
+belongs to environment + materials and I have put the haze-off measurement on record so it can be re-assigned.**
+
+## 16. QA-02-12 — vault soffits: improved 75 %, and the reason the target is unreachable from inside
+
+Added `LIGHT_rotunda_vault_bounce_00..07`: eight up-facing 12.5 x 4 m rectangles, one on each bay axis at radius
+17.5 m, z 13.0, spread 90 deg, 2400 W each. `scripts/light_vault_probe.py` (raycast, no render) first ruled out the
+obvious explanation: the soffits see the emitters perfectly well, at cos 0.87-0.97 over 14-15 m, and they see the
+central disk too at cos 0.34-0.43. It was never occlusion.
+
+### Shipped result, cam04 Eevee (`roundlight4_04_rotunda_ceiling.png`)
+
+| measure | round 02 | round 08 | QA target |
+|---|---|---|---|
+| vault soffit W / frame's own sky | 0.197 | **0.352** | >= 0.45 |
+| vault soffit E / own sky | 0.215 | **0.367** | >= 0.45 |
+| mean soffit / own sky | 0.206 | **0.360** (+75 %) | >= 0.45 |
+| coffer field / own sky | 0.411 | 0.710 | (was passing at 0.50 vs ref 083's 0.39) |
+
+### Why I stopped at 0.36 instead of buying 0.45
+
+**The soffit and the coffered ceiling are locked together.** Six configurations, measured on cam04 at 640x360:
+
+| emitter | soffit/sky | coffer/sky | **soffit/coffer** |
+|---|---|---|---|
+| none (disk only) | 0.241 / 0.265 | 0.455 | 0.556 |
+| r 17.5, z 13, 2400 W | 0.336 / 0.359 | 0.689 | 0.504 |
+| arch plane r 20, z 9, tilted 55 deg in, 4000 W | 0.380 / 0.405 | 0.778 | 0.505 |
+| r 17.5, z 13, 4000 W | 0.394 / 0.417 | 0.805 | 0.503 |
+| r 17.5, z 15, 4000 W, **central disk off** | 0.318 / 0.308 | 0.644 | 0.486 |
+| r 17.5, z 8, 5000 W | 0.411 / 0.458 | 0.842 | 0.516 |
+| r 17.5, z 15, 8000 W, **central disk off** | 0.452 / 0.423 | 0.855 | 0.512 |
+
+Height, radius, tilt, spread, and switching the central disk off entirely: the ratio never leaves 0.486-0.556.
+So hitting QA's 0.45 costs a coffer field at **0.855 of sky, 2.2x ref 083's 0.39** — it buys QA-02-12 by re-opening
+QA-01-9, which QA has already marked closed. That is a bad trade and I am not making it silently.
+
+**The physical reason.** In ref 083 the soffits are *brighter than* the coffers (0.58 vs 0.39, a 1.5:1 the other way
+round); in our render the coffers are 2x the soffits. That inversion is not a fill-light strength problem. The real
+soffits are lit by the sunlit plaza and lagoon seen through the great arches from a few metres away — a source that is
+*outside* the building. Our 7.4 deg morning sun genuinely never lands on that plaza, so there is nothing outside to
+bounce, and **no interior source can reproduce a ratio that comes from outside**: whatever I put under the vault
+lights the ceiling through the same open volume. The honest fixes are (a) let the sun actually reach the plaza (a
+moment/elevation change — art direction, not a knob), or (b) light linking, which Cycles has and Eevee Next does not,
+so it would break the "confirmed in both engines" half of the acceptance.
+
+**One number for the lead**, as in round 07: `light_build.VAULT_FILL["energy"]`. 2400 shipped (soffit 0.36, coffer
+0.71); **8000 with `FILL["energy"] = 0` meets QA's 0.45 literally** (soffit 0.45, coffer 0.86). Both renders are on
+disk under `renders/previews/lighting/r08sweep_04_*`. Re-run `scripts/lead_build.sh` after changing it (probe re-bake).
+
+### Side effect of the lighter haze the lead needs to know about (hands QA-02-7 back to environment)
+
+On the same Cycles hero, the far colonnade band went **93.9 -> 65.4** between the heavy round-07-style haze
+(`roundlight3`) and the shipped one (`roundlight4`), against ref 169's 92.7. It did not get darker: the round-07 haze
+was *lifting* it by 44 %, which is why round 02 measured the wings at "only" 52 % dark. **The veil was cosmetically
+hiding QA-02-7.** With an honest haze the wings read 1.42x under ref 169 and environment has to fix the tree screen
+for real. Everything else in the hero is unchanged within 0.03 EV.
+
+| hero region | roundlight3 (cap 0.60 / L 400 m) | roundlight4 (shipped, cap 0.50 / L 800 m) | ref 169 |
+|---|---|---|---|
+| sunlit attic | 178.8 / 175.6 | **177.6 / 174.2** | 168.7 / 191.8 |
+| sky top / left | 193.9 / 186.7 | **193.9 / 186.7** | 165.7 / 193.8 |
+| water centre | 104.2 | **104.0** | 106.0 |
+| shade north | 146.0 | **139.9** | 117.2 |
+| colonnade far | 93.9 | **65.4** | 92.7 |
+
+### QA-02-12 cross-engine check: **Cycles meets the target, Eevee does not, and it is not the bake**
+
+QA asked for the fix to be confirmed in Cycles so it is not Eevee-only. Cycles cam04, 1920x1080, 64 spp, 606 s
+(`roundlight4_04_rotunda_ceiling_cycles.png`):
+
+| cam04, same rig | vault soffit W / E | mean soffit / own sky | coffer field / own sky |
+|---|---|---|---|
+| round 02 Eevee (before) | 0.197 / 0.215 | 0.206 | 0.411 |
+| round 08 **Eevee** | 0.352 / 0.367 | **0.360** | 0.710 |
+| round 08 **Cycles 64 spp** | 0.451 / 0.507 | **0.479** | 0.696 |
+
+**In Cycles the soffits land at 0.479, i.e. QA's `>= 0.45` acceptance is met**, and the two engines agree to 2 % on
+the coffer field (0.710 vs 0.696) — so the fix is real and not an Eevee artefact. The 33 % that Eevee is missing is
+on the soffits only. Since the deliverable hero and the Phase-5 finals are Cycles, **the defect is closed where it
+counts**; Eevee, which is the viewport/preview engine, reads the vaults about a third darker than they will render.
+
+I tested the obvious cause and it is **not** bake resolution. Re-baked `LIGHTPROBE_rotunda` at (28, 28, 20) —
+2.0 x 2.0 x 1.8 m spacing, 2.8x the samples — and the Eevee soffit moved **0.360 -> 0.359**. That is Eevee Next's
+irradiance-volume + screen-trace approximation under-lighting a concave soffit that Cycles path-traces properly.
+Reverted to (20, 20, 14) and a 64 MB pool rather than pay 3x the bake time and a 128 MB pool for nothing; the negative
+result is recorded in `scripts/light_probes.py` so it does not get re-tried.
+
+## 17. Round 08b — sunlit-stone chroma (materials' hand-off). PARTIAL, and one measurement caveat matters
+
+Materials measured that at +0.9 EV albedo has no authority left over chroma (a 44 % cut of albedo blue moved display
+blue 3 %), leaving the sunlit attic's R-B spread at 81-89 against ref 169's 134. Three lighting levers were swept on
+the Cycles hero; all three help, none is enough on its own.
+
+| lever | attic R-B | note |
+|---|---|---|
+| baseline (sky x2.0, Base Contrast) | 88.1 | |
+| `SKY_STRENGTH` 2.0 -> 1.0 | 94.8 | the round-05 art bias was washing sky-blue over every sunlit face |
+| `SKY_STRENGTH` 2.0 -> 0.6 | 97.8 | shade 146.5 -> 128.1 |
+| sun blue x0.7 | 97.7 | at strength 1.0 |
+| -0.35 EV | 102.2 | but attic luminance falls out of the +-10 % window |
+| **`LOOK` -> `AgX - High Contrast`** | **113.5-118.1** | the strongest lever by far |
+| `LOOK` -> `AgX - Punchy` | 112.7 | same chroma, but a stop of luminance and water 111 -> 71: rejected again |
+
+**Shipped: `SKY_STRENGTH` 1.0, `LOOK` "AgX - High Contrast", `SKY_CAMERA_BOOST` 1.20, new `SKY_GLOSSY_BOOST` 3.00,
+`EXPOSURE_BIAS` 1.75 (view exposure still -2.39; the calibration moved -4.39 -> -4.14 when the sky halved).**
+`light_calibrate.make_sky_world` gained a `glossy_boost` split from `camera_boost`, because the camera's sky had to
+come DOWN to ref 169 while the lagoon's reflection had to stay UP, and one socket could not do both.
+
+### The caveat, and it invalidates part of the sweep
+
+The sweep was run at 960x540 / 32 spp. Re-rendering the *identical* shipped rig at 1920x1080 / 64 spp gives
+materially different numbers on these small regions:
+
+| same rig, same exposure, same look | attic sRGB | attic lum | R-B | sky top |
+|---|---|---|---|---|
+| 960x540, 32 spp (what the sweep measured) | 229.8, 177.0, 112.5 | 183.6 | 117.3 | 165.8 |
+| **1920x1080, 64 spp (the real deliverable)** | 206.0, 162.5, 108.6 | **167.9** | **97.4** | **154.1** |
+
+So **every knob choice above was picked against numbers that are ~16 luminance and ~20 R-B optimistic.** The chroma
+targets are NOT met at delivery resolution: R-B 97.4 against the >= 110 asked for, attic luminance 167.9 just under
+the 172.6 floor. Sky top 154.1 (window 149.1-182.3) and shade 131.8 (floor 93.8) do pass, and R-B did improve
+88.8 -> 97.4 while the sky's 17 % excess was fixed. **Anyone continuing this must re-sweep at 1920x1080.**
+
+### Where I stopped
+
+Unfinished: (a) re-sweep at delivery resolution to close R-B 97.4 -> 110, most likely by combining High Contrast with
+a warmer sun (`sun blue x0.4-0.7`, worth ~+3 to +7) and a small albedo/exposure trade with materials; (b) the interior
+fills are now oversized for the halved sky — cam04 Eevee soffit/own-sky went 0.360 -> 0.803 and coffer 0.710 -> 1.040,
+so `FILL["energy"]` 7600 and `VAULT_FILL["energy"]` 2400 both want scaling down by roughly half, re-measured against
+ref 083's 0.58 / 0.39. Neither was started. cam06 improved on its own: far-shore saturation 0.218 -> **0.296**,
+hue 43.8 -> 39.3.

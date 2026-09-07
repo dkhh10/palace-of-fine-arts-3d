@@ -28,6 +28,13 @@ COLLECTION = "LIGHT"
 # Rotunda: interior floor z 0, coffered ceiling + dome soffit up to z ~32; outer radius 26.4 m.
 # Colonnade: both wings, x -110..104, y -35..51, walkway and vault soffits z -1..15.
 PROBES = {
+    # QA-02-12, round 08 - TESTED AND REJECTED, recorded so nobody spends the GPU on it again. The Cycles ground
+    # truth for this rig reads vault soffit / sky 0.479 where Eevee reads 0.360, while the two engines agree to 2 % on
+    # the coffer field. The obvious hypothesis was bake resolution: 2.6 m of vertical spacing puts only 2-3 samples
+    # through a barrel vault running from the 17.5 m springing to the 23.75 m crown. Re-baked at (28, 28, 20), i.e.
+    # 2.0 x 2.0 x 1.8 m and 2.8x the samples, the soffit moved 0.360 -> 0.359. Not resolution: it is Eevee's
+    # irradiance-volume + screen-trace approximation under-lighting a concave soffit that Cycles path-traces properly.
+    # Reverted, because the finer grid cost a 128 MB pool and 3x the bake time for nothing.
     "LIGHTPROBE_rotunda": dict(
         location=(0.0, 0.0, 15.0), scale=(27.0, 27.0, 17.0), resolution=(20, 20, 14),
         note="rotunda interior: coffered ceiling, vault soffits, the four great arches"),

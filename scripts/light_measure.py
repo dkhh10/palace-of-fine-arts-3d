@@ -45,11 +45,28 @@ REGIONS = {
         "coffer_field":    [0.400, 0.400, 0.200, 0.200],
         "coffer_field_w":  [0.250, 0.430, 0.100, 0.140],
         "vault_ring":      [0.430, 0.180, 0.140, 0.070],
+        # QA-02-12: the two barrel-vault soffit bands flanking the coffered octagon, and the frame's own sky (the
+        # blue wedge in the bottom-left corner, seen out past the vault). These three boxes reproduce QA's round-02
+        # numbers on round02_04_rotunda_ceiling.png: soffit 25.7 / 28.1, sky 130.4, ratio 0.197 / 0.215 vs QA's 0.20.
+        "vault_soffit_w":  [0.075, 0.280, 0.075, 0.220],
+        "vault_soffit_e":  [0.800, 0.300, 0.075, 0.220],
+        "own_sky":         [0.005, 0.830, 0.045, 0.120],
     },
     # ---- cam06 aerial (render): dome cap and the lawn west of the lagoon ----
     "aerial": {
         "dome_top":        [0.435, 0.165, 0.050, 0.040],
         "lawn":            [0.060, 0.090, 0.100, 0.060],
+    },
+    # ---- cam06 aerial, QA-02-8: does distance still separate things, and is the veil warm rather than grey-olive?
+    # On round02_06_aerial.png these give sat 0.081-0.091 at hue 57-70 everywhere and dome/far-shore contrast 1.00:1,
+    # which is exactly the collapse QA measured.
+    "aerial_haze": {
+        "far_shore":       [0.250, 0.085, 0.220, 0.045],
+        "far_hills":       [0.560, 0.055, 0.180, 0.040],
+        "dome_cap":        [0.700, 0.135, 0.045, 0.035],
+        "rotunda_attic":   [0.690, 0.230, 0.060, 0.030],
+        "lagoon_far":      [0.300, 0.155, 0.150, 0.040],
+        "trees_far":       [0.120, 0.150, 0.100, 0.050],
     },
     "aerial_ref105": {
         "dome_top":        [0.676, 0.836, 0.020, 0.018],
