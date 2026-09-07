@@ -87,6 +87,7 @@ def build_hall(SUB, hall_poly, hall_field):
     bm = bmesh.new()
     n = len(poly)
     count = 0
+    win_pl = []
     for i in range(n):
         a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
         d = b - a
@@ -98,6 +99,9 @@ def build_hall(SUB, hall_poly, hall_field):
         rot = math.atan2(d.y, d.x)
         mid = (a + b) / 2
         _box(bm, mid.x + nrm.x * 0.2, mid.y + nrm.y * 0.2, HALL_EAVE + 0.5, seg + 0.4, 1.0, 1.4, rot)   # parapet
+        _box(bm, mid.x + nrm.x * 0.35, mid.y + nrm.y * 0.35, HALL_EAVE - 0.9, seg + 0.3, 1.3, 1.1, rot)  # cornice
+        _box(bm, mid.x + nrm.x * 0.25, mid.y + nrm.y * 0.25, 9.0, seg + 0.2, 1.0, 0.55, rot)             # string course
+        _box(bm, mid.x + nrm.x * 0.30, mid.y + nrm.y * 0.30, HALL_Z0 + 0.55, seg + 0.2, 1.1, 1.1, rot)   # plinth
         to_origin = (Vector((0.0, 0.0)) - mid).normalized()
         if seg >= 3.0 and nrm.dot(to_origin) > 0.3 and mid.length < 135:
             k = max(1, int(seg / 7.0))
@@ -106,11 +110,28 @@ def build_hall(SUB, hall_poly, hall_field):
                 p = a + d * (seg * t) + nrm * 0.4
                 _box(bm, p.x, p.y, (HALL_Z0 + HALL_EAVE) / 2, 1.2, 0.8, HALL_EAVE - HALL_Z0, rot)
                 count += 1
+            # glazed bays halfway between pilasters: they read as window recesses at hero distance
+            ts = [0.15, 0.85] if k == 1 else [j / k for j in range(1, k)] + [0.07, 0.93]
+            for t in ts:
+                if seg < 4.0:
+                    continue
+                q = a + d * (seg * t) + nrm * 0.18
+                win_pl.append(((q.x, q.y, 6.6), (min(3.4, seg / k * 0.55), 0.30, 4.6), rot))
+                win_pl.append(((q.x, q.y, 12.0), (min(3.4, seg / k * 0.55), 0.30, 3.0), rot))
     me = bpy.data.meshes.new("ENV_backdrop_hall_detail")
     bm.to_mesh(me); bm.free()
     me.materials.append(m_wall)
     o = bpy.data.objects.new("ENV_backdrop_hall_detail", me)
     coll.objects.link(o)
+    if win_pl:
+        bmw = bmesh.new()
+        for ((wx, wy, wz), (sx, sy, sz), wrot) in win_pl:
+            _box(bmw, wx, wy, wz, sx, sy, sz, wrot)
+        mew = bpy.data.meshes.new("ENV_backdrop_hall_windows")
+        bmw.to_mesh(mew); bmw.free()
+        mew.materials.append(m_sky)
+        ow = bpy.data.objects.new("ENV_backdrop_hall_windows", mew)
+        coll.objects.link(ow)
     # entrance pavilion on the west-arch axis (compass az 262): march from the origin until inside the hall
     az = math.radians(262.0)
     ray = Vector((-math.cos(az), math.sin(az)))
@@ -172,7 +193,8 @@ def build_hall(SUB, hall_poly, hall_field):
     me.materials.append(m_sky)
     o = bpy.data.objects.new("ENV_backdrop_hall_skylight", me)
     coll.objects.link(o)
-    print(f"[env_backdrop] hall: {count} pilasters, curved roof, pavilion + door at ({P.x:.1f}, {P.y:.1f})")
+    print(f"[env_backdrop] hall: {count} pilasters, {len(win_pl)} glazed bays, cornice + string course + plinth, "
+          f"curved roof (eave {HALL_EAVE} + rise {HALL_RISE}), pavilion + green door at ({P.x:.1f}, {P.y:.1f})")
 
 
 # ----------------------------------------------------------------------------- Marina houses

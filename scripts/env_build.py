@@ -287,7 +287,7 @@ def build_riprap():
     rocks = [L.make_rock_mesh(f"ENV_rock_src_{i}", radius=0.5, seed=100 + i, subdiv=1 if i < 4 else 2) for i in range(7)]
     m_rock = L.mat("MAT_rock_riprap")
     rnd = random.Random(11)
-    step = 1.4 if QUICK else 0.9
+    step = 1.2 if QUICK else 0.7
     shore = L.resample_polyline(LAGOON, step, closed=True)
     sectors = {}
     n = len(shore)
@@ -305,15 +305,16 @@ def build_riprap():
         ang = int((math.degrees(math.atan2(y, x)) + 360) % 360) // 45
         # waterline row: big boulders, partly submerged, jittered across the line
         if rnd.random() < density:
-            s0 = rnd.uniform(0.45, 1.1)
-            off = rnd.uniform(-0.9, 0.5)
+            s0 = rnd.uniform(0.32, 0.80)
+            off = rnd.uniform(-1.3, 0.5)
             px, py = x + outward.x * off + rnd.uniform(-0.3, 0.3) * d.x, y + outward.y * off + rnd.uniform(-0.3, 0.3) * d.y
-            pz = L.WATER_Z + 0.05 + s0 * 0.3 + rnd.uniform(-0.25, 0.1) - max(0.0, -off) * 0.25
+            # centre straddles the water line: about a third of each boulder stands proud (refs 022, 063, 187)
+            pz = L.WATER_Z + 0.02 + s0 * 0.22 + rnd.uniform(-0.22, 0.14) - max(0.0, -off) * 0.18
             sectors.setdefault(ang, []).append((rnd.randrange(len(rocks)), ((px, py, pz), rnd.uniform(0, 6.283),
                                                 (s0 * rnd.uniform(0.8, 1.4), s0 * rnd.uniform(0.8, 1.2), s0 * rnd.uniform(0.55, 0.9)))))
         # bank row: smaller stones, sparser
-        if rnd.random() < density * 0.55:
-            s1 = rnd.uniform(0.3, 0.7)
+        if rnd.random() < density * 0.7:
+            s1 = rnd.uniform(0.30, 0.62)
             off = rnd.uniform(0.8, 1.9)
             px, py = x + outward.x * off, y + outward.y * off
             pz = terrain_height(px, py) - 0.12 + s1 * 0.25
@@ -321,7 +322,7 @@ def build_riprap():
                                                 (s1 * rnd.uniform(0.8, 1.3), s1, s1 * rnd.uniform(0.6, 0.9)))))
     for isl in ISLETS[:1]:
         for (x, y) in L.resample_polyline(isl, 1.0, closed=True):
-            s0 = rnd.uniform(0.35, 0.8)
+            s0 = rnd.uniform(0.32, 0.72)
             sectors.setdefault(9, []).append((rnd.randrange(len(rocks)), ((x + rnd.uniform(-0.4, 0.4), y + rnd.uniform(-0.4, 0.4), L.WATER_Z + 0.05 + s0 * 0.25), rnd.uniform(0, 6.283), s0)))
     total = 0
     count = 0
