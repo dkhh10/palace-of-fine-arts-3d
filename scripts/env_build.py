@@ -344,7 +344,7 @@ def build_riprap():
 # a 9-13 cm quad with a v = up UV so the library's alpha-cut MAT_shrub / MAT_reeds textures give the silhouette.
 # Instances are separate objects sharing one mesh, so the library materials' per-object random (PFA_instance) gives
 # each bush its own hue/value; joined meshes would make a whole belt one colour.
-SHRUB_CARD = 0.10          # leaf card width (m); height is 1.25 x this
+SHRUB_CARD = 0.085         # leaf card width (m); height is 1.25 x this
 BLADE_W = 0.05             # grass / reed blade width (m)
 
 
@@ -507,7 +507,7 @@ def build_shrubs():
                                                          form="mound", cover=1.6))
     for i, (r, h) in enumerate(((0.7, 1.15), (0.95, 1.55))):
         src[f"maho{i}"] = ("MAT_shrub", make_shrub_mesh(f"ENV_src_mahonia_{i}", 320 + i, radius=r, height=h,
-                                                        card=0.13, form="upright", cover=1.1))
+                                                        card=0.105, form="upright", cover=1.1))
     for i in range(3):
         src[f"agap{i}"] = ("MAT_reeds", make_blade_clump(f"ENV_src_agapanthus_{i}", 340 + i, height=0.62 + 0.12 * i,
                                                          blades=70, width=0.050, arch=0.55, spread=0.30))
@@ -537,7 +537,7 @@ def build_shrubs():
             return False
         return True
 
-    def put(key, x, y, dz=-0.06, s=(0.85, 1.25)):
+    def put(key, x, y, dz=-0.06, s=(0.85, 1.15)):
         placed.append((key, (x, y, terrain_height(x, y) + dz), rnd.uniform(0, 6.283), rnd.uniform(*s)))
 
     def clump(cx, cy, n, spread, keys, min_shore=0.9, max_shore=7.0):
@@ -594,7 +594,7 @@ def build_shrubs():
         x, y = rnd.uniform(min(xs), max(xs)), rnd.uniform(min(ys), max(ys))
         if L.point_in_poly(x, y, p) and ISLET_FIELDS[0].signed(x, y) < -0.8:
             key = rnd.choice(MOUNDS + AGAP + REEDS)
-            placed.append((key, (x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.8, 1.5)))
+            placed.append((key, (x, y, terrain_height(x, y) - 0.05), rnd.uniform(0, 6.283), rnd.uniform(0.8, 1.25)))
 
     counts = {}
     total = 0
@@ -603,7 +603,7 @@ def build_shrubs():
         obj = bpy.data.objects.new(f"ENV_shrub_{key}_{i:04d}", me)
         obj.location = loc
         obj.rotation_euler = (0.0, 0.0, rot)
-        obj.scale = (sc * rnd.uniform(0.92, 1.1), sc * rnd.uniform(0.92, 1.1), sc * rnd.uniform(0.9, 1.15))
+        obj.scale = (sc * rnd.uniform(0.92, 1.08), sc * rnd.uniform(0.92, 1.08), sc * rnd.uniform(0.9, 1.12))
         coll.objects.link(obj)
         counts[key] = counts.get(key, 0) + 1
         total += L.tri_count(obj)
