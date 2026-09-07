@@ -337,7 +337,10 @@ def build_rotunda():
         nrm0 = face_normal(Vector(rings[0][0]), Vector(rings[0][1]), Vector(rings[1][1]))
         L.loft(f"ARCH_rotunda_vault_{k:02d}", rings, C, mat=M_INNER, part_type="wall", flip=(nrm0.z > 0),
                origin=(Cw[0], Cw[1], P.ARCH_SPRING_Z))
-        build_vault_coffers(f"ARCH_rotunda_vault_coffers_{k:02d}_LOD0", k, X, n, C)
+        # No LOD suffix: these were built as `_LOD0` only, so common.set_lod(render=1) -- what every QA pass and
+        # every preview uses -- HID them and the barrel soffits rendered bare. That is why QA-03-8 saw no coffer
+        # shadow on the vaults. 2,036 tris x 8 bays, cheap enough to carry at every LOD like the ceiling ribs.
+        build_vault_coffers(f"ARCH_rotunda_vault_coffers_{k:02d}", k, X, n, C)
         # inner ring spandrel plate (outer face at INNER_WALL_APOTHEM, 1.2 thick, arch notch of the inner arch)
         hi = P.INNER_ARCH_SPAN / 2
         Ci = mul2(n, P.INNER_WALL_APOTHEM)
@@ -589,21 +592,26 @@ def build_vault_coffers(name, k, X, n, coll):
             cx = 0.4 + pitch_s * (i + 0.5)
             holes.append([add2((cx, ty), p) for p in L.regular_polygon(oct_r, 8, 22.5)])
             if i < cols - 1:
+                # Review item 1: at factor 0.8 the in-row diamond left only 75 mm of rib to its octagons, so the
+                # 70 mm reveal splay overlapped them. 0.55 opens that to 180 mm, which carries the full register.
                 dx = cx + pitch_s / 2
-                dr = min(0.33, (pitch_s / 2 - oct_r * 0.924) * 0.8)
+                dr = min(0.33, (pitch_s / 2 - oct_r * 0.924) * 0.55)
                 holes.append([(dx + dr * 1.02, ty), (dx, ty + dr), (dx - dr * 1.02, ty), (dx, ty - dr)])
     tm = (row_t[0] + row_t[1]) / 2
     for i in range(cols):
         cx = 0.4 + pitch_s * (i + 0.5)
         dr = min(0.33, ((row_t[1] - row_t[0]) / 2 - oct_r * 0.924) * 0.8)
-        if dr > 0.1:
+        # ... and the mid-row diamond came out 0.26 m across with only 29 mm of rib above and below the octagons,
+        # i.e. a hole too small to read at cam04 and far too tight for a reveal. Gated off below 0.2 m.
+        if dr > 0.2:
             holes.append([(cx + dr, tm), (cx, tm + dr * 1.02), (cx - dr, tm), (cx, tm - dr * 1.02)])
     outline = [(0.0, 0.0), (arc, 0.0), (arc, depth), (0.0, depth)]
-    # QA-02-9 / QA-01-15: the rib plate stands proud of the soffit, so its thickness IS the coffer depth. It was
-    # 0.12 m, under the 0.15 m acceptance ("coffer depth >= 15 cm casting visible shadow at cam04"); 0.20 m gives
-    # the box a readable shadow at cam04 without eating the 0.33 m diamond coffers between the rows.
+    # QA-02-9 / QA-01-15 / QA-03-8: the rib plate stands proud of the soffit, so its thickness IS the coffer depth.
+    # 0.12 -> 0.20 (round 1) -> 0.38 now, which is 0.20 x the 1.9 m octagon width, the depth-to-width ratio measured
+    # off ref 083 (see arch_params). The room face carries VAULT_COFFER_REGISTERS so each coffer
+    # has an outer register: at cam04 the vaults are seen near edge-on and a single straight reveal showed nothing.
     obj = L.plate(name, outline, holes, P.VAULT_COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_INNER,
-                  part_type="wall", bevel=False, smooth=False)
+                  part_type="wall", bevel=False, smooth=False, registers=P.VAULT_COFFER_REGISTERS)
     me = obj.data
     for v in me.vertices:
         s = v.co.x / r_mean            # angle 0..pi
@@ -792,7 +800,7 @@ def build_ceiling(C):
             rim.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
     rings = []
     for f in [0.06] + [0.12 + 0.88 * i / 10 for i in range(11)]:
-        rings.append([(x * f, y * f, sz(x * f, y * f) + 0.02) for x, y in rim])
+        rings.append([(x * f, y * f, sz(x * f, y * f) + P.CEILING_FIELD_LIFT) for x, y in rim])
     nrm0 = face_normal(Vector(rings[0][0]), Vector(rings[0][1]), Vector(rings[1][1]))
     field = L.loft("ARCH_rotunda_ceiling_field", rings, C, mat=M_PLASTER, part_type="ceiling", flip=(nrm0.z > 0), closed=True,
                    origin=(0, 0, P.CEILING_RING_Z))
@@ -825,20 +833,30 @@ def build_ceiling(C):
             trap.append(rot2((12.9 * math.cos(a), 12.9 * math.sin(a)), an))
         holes.append(trap)
         holes.append([add2(mul2(v, 12.0), (0, 0)), add2(mul2(v, 12.9), rot2((0.0, 0.8), av)), add2(mul2(v, 12.9), rot2((0.0, -0.8), av))])
+    # QA-03-8: 0.30 -> 0.55 deep (depth / width 0.20, measured off ref 083) with COFFER_REGISTERS at the room face.
     ribs = L.plate("ARCH_rotunda_ceiling_ribs", octo, holes, P.COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), C,
-                   mat=M_PLASTER, part_type="ceiling", bevel=False)
+                   mat=M_PLASTER, part_type="ceiling", bevel=False, registers=P.COFFER_REGISTERS)
     me = ribs.data
     for vtx in me.vertices:
         vtx.co.z += sz(vtx.co.x, vtx.co.y)
     me.update()
     ribs.location = (0, 0, 0)
     ribs["part_type"] = "ceiling"
-    # rosette sockets: rim band at the face centres and vertices, ring-1 squares
+    # Rosette sockets (review item 2 -- the plane is now stated per socket instead of keyed off COFFER_DEPTH).
+    # Two different kinds share the `rosette_ceiling` type:
+    #   * 16 on the rim band (rr 13.73 / 14.85, between the outermost coffers and the octagon edge): that band is
+    #     SOLID rib, not a coffer, so these are bosses applied to the rib's room face -- the sheet's "base ring
+    #     with rosette band above the inner arches" (083). Their plane is the rib underside, which moved down with
+    #     COFFER_DEPTH; that is correct, and P.ROSETTE_RIM_INSET lifts them back into the plaster by 0.02 m.
+    #   * 8 inside the ring-1 square coffers (rr 5.2): a rosette inside a box belongs on the box FLOOR, i.e. the
+    #     field saucer, which sits P.CEILING_FIELD_LIFT above the sphere -- not on the sphere as before.
     for k in range(8):
         n, v = face_dir(k), vertex_dir(k)
-        for (dvec, rr, sh) in ((n, apo - 0.45, 0.7), (v, apo / COS22 - 0.5, 0.6), (v, 5.2, 0.5)):
+        for (dvec, rr, sh, dz) in ((n, apo - 0.45, 0.7, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET),
+                                   (v, apo / COS22 - 0.5, 0.6, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET),
+                                   (v, 5.2, 0.5, P.CEILING_FIELD_LIFT)):
             p = mul2(dvec, rr)
-            SOCK.add("rosette_ceiling", (p[0], p[1], sz(p[0], p[1]) - (P.COFFER_DEPTH if rr > 6 else 0.0)), dvec, sh, size=0.3)
+            SOCK.add("rosette_ceiling", (p[0], p[1], sz(p[0], p[1]) + dz), dvec, sh, size=0.3)
 
 
 # ============================================================================= site (platform, steps, rostra, planters, stairs)
@@ -1274,10 +1292,14 @@ if PREVIEW:
     cams = None
     if "--hero-only" in ARGS:
         cams = ["01_lagoon"]
+    if "--cams" in ARGS and ARGS.index("--cams") + 1 < len(ARGS):   # e.g. --cams 01,03 (matched as substrings)
+        cams = ARGS[ARGS.index("--cams") + 1].split(",")
     tag = "" if "--tag" not in ARGS else ARGS[ARGS.index("--tag") + 1]
-    outs = common.render_previews("architecture", cameras=cams, samples=16, tag=tag)
+    res = (tuple(int(v) for v in ARGS[ARGS.index("--res") + 1].split("x"))
+           if "--res" in ARGS and ARGS.index("--res") + 1 < len(ARGS) else (1280, 720))
+    outs = common.render_previews("architecture", cameras=cams, samples=16, tag=tag, res=res)
     # extra: an up-looking ceiling camera (the QA cam 04 rotation (0,0,pi) looks down; reported to the lead)
-    if not cams:
+    if not cams or any("04" in c for c in cams):
         cd = bpy.data.cameras.new("CAM_arch_ceiling_up")
         cd.lens, cd.sensor_width, cd.sensor_fit, cd.clip_end = 15.0, 36.0, "HORIZONTAL", 5000.0
         co = bpy.data.objects.new("CAM_arch_ceiling_up", cd)

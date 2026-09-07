@@ -16,6 +16,7 @@ import arch_params as P
 
 SINK = 0.03          # stacked solids are sunk this much into the solid below (never coplanar faces)
 SHARP_ANGLE = math.radians(32.0)
+REVEAL_CLEARANCE = 0.02   # metres of solid rib that must survive between two widened coffer openings
 
 
 # ============================================================================= 2D helpers
@@ -87,6 +88,41 @@ def offset_polygon(poly, d):
             m = ((n0[0] + n1[0]) / den, (n0[1] + n1[1]) / den)
         out.append((p1[0] + d * m[0], p1[1] + d * m[1]))
     return out
+
+
+def _seg_dist(a, b, c, d):
+    """Distance between segments ab and cd in 2D."""
+    def pt_seg(p, q, r):
+        vx, vy = r[0] - q[0], r[1] - q[1]
+        L2 = vx * vx + vy * vy
+        t = 0.0 if L2 < 1e-18 else max(0.0, min(1.0, ((p[0] - q[0]) * vx + (p[1] - q[1]) * vy) / L2))
+        return math.hypot(p[0] - (q[0] + t * vx), p[1] - (q[1] + t * vy))
+    return min(pt_seg(a, c, d), pt_seg(b, c, d), pt_seg(c, a, b), pt_seg(d, a, b))
+
+
+def polygon_clearance(loops, outline=None):
+    """Smallest distance between the boundaries of any two of `loops` (and to `outline` if given).
+
+    Used to clamp `plate`'s reveal registers: widening a hole by more than half this makes neighbouring holes
+    overlap, which silently produces self-intersecting cap loops and interpenetrating reveal walls."""
+    polys = list(loops) + ([outline] if outline else [])
+    segs, bbs = [], []
+    for lp in polys:
+        segs.append([(lp[i], lp[(i + 1) % len(lp)]) for i in range(len(lp))])
+        xs = [p[0] for p in lp]
+        ys = [p[1] for p in lp]
+        bbs.append((min(xs), min(ys), max(xs), max(ys)))
+    best = float("inf")
+    for i in range(len(polys)):
+        for j in range(i + 1, len(polys)):
+            bi, bj = bbs[i], bbs[j]
+            gap = max(bi[0] - bj[2], bj[0] - bi[2], bi[1] - bj[3], bj[1] - bi[3])
+            if gap >= best:            # bounding boxes already further apart than the best pair
+                continue
+            for a, b in segs[i]:
+                for c, d in segs[j]:
+                    best = min(best, _seg_dist(a, b, c, d))
+    return best
 
 
 # ============================================================================= mesh finishing
@@ -273,37 +309,91 @@ def ring_prism(name, outer, inner, z0, z1, coll, mat=None, part_type=None, **kw)
     return _finish(name, bm, coll, mat, part_type, origin=(0.0, 0.0, z0), **kw)
 
 
-def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=None, part_type=None, **kw):
+def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=None, part_type=None,
+          registers=(), **kw):
     """A slab built in a local 2D frame: outline/holes are 2D polygons in (xaxis, yaxis) coordinates;
     the plate's front face is at the frame origin plane, the back face `thickness` behind (along -normal,
-    normal = xaxis x yaxis). Holes go right through. Caps are tessellated, sides are quads."""
+    normal = xaxis x yaxis). Holes go right through. Caps are tessellated, sides are quads.
+
+    `registers` is a tuple of (widen, depth) pairs read from the BACK (room) face inwards, giving every hole a
+    moulded multi-register reveal (QA-03-8). A positive `widen` steps the opening out (a splayed outer register),
+    a negative one steps it in (a bolection lip projecting into the opening at the room face). What is left of
+    `thickness` after the registers is the straight deep box against the panel. A single straight reveal seen
+    nearly face-on shows nothing; these breaks put a light/shadow line pair round every coffer."""
     X, Y = Vector(xaxis).normalized(), Vector(yaxis).normalized()
     N = X.cross(Y).normalized()
     O = Vector(origin3d)
     outline = ensure_ccw(outline)
-    holes = [list(reversed(ensure_ccw(h))) for h in holes]
-    loops2d = [outline] + holes
+    holes_ccw = [ensure_ccw(h) for h in holes]
+    regs = [(w, d) for w, d in registers if abs(w) > 1e-6 and d > 1e-6]
+    if sum(d for _, d in regs) >= thickness:
+        regs = []
+    if regs and holes_ccw:
+        # A register that widens a hole by more than half the clearance to its neighbour makes the two openings
+        # overlap: the cap loops self-intersect (tessellation drops or garbles faces) and the reveal walls
+        # interpenetrate. Clamp to what the layout can carry and say so, rather than emitting broken geometry.
+        cum, w_max = 0.0, 0.0
+        for w, _ in reversed(regs):
+            cum += w
+            w_max = max(w_max, cum)
+        if w_max > 1e-6:
+            limit = max(0.0, (polygon_clearance(holes_ccw, outline) - REVEAL_CLEARANCE) / 2)
+            if w_max > limit:
+                k = limit / w_max
+                print(f"[arch_lib] plate '{name}': reveal registers clamped x{k:.2f} "
+                      f"(widen {w_max:.3f} -> {limit:.3f} m) to keep {REVEAL_CLEARANCE * 1000:.0f} mm between holes")
+                regs = [(w * k, d) for w, d in regs]
+                regs = [(w, d) for w, d in regs if abs(w) > 1e-6]
+    # levels from the FRONT (panel) face to the BACK (room) face: (depth from the front, cumulative widening)
+    levels = [(0.0, 0.0)]
+    z = thickness - sum(d for _, d in regs)
+    levels.append((z, 0.0))
+    widen = 0.0
+    for w, d in reversed(regs):          # registers are given from the room face inwards
+        widen += w
+        levels.append((z, widen))
+        z += d
+        levels.append((z, widen))
+    holes_at = {}
+    for w in sorted({lv[1] for lv in levels}):
+        holes_at[w] = holes_ccw if abs(w) < 1e-9 else [offset_polygon(h, w) for h in holes_ccw]
+    holes = [list(reversed(h)) for h in holes_ccw]
+    holes_b = [list(reversed(h)) for h in holes_at[levels[-1][1]]]
     bm = bmesh.new()
     front, back = [], []
-    for loop in loops2d:
-        f = [bm.verts.new(O + X * x + Y * y) for x, y in loop]
-        b = [bm.verts.new(O + X * x + Y * y - N * thickness) for x, y in loop]
-        front.append(f)
-        back.append(b)
-        n = len(loop)
-        for i in range(n):
-            j = (i + 1) % n
-            bm.faces.new((f[i], f[j], b[j], b[i]))
-    flat = [[(x, y, 0.0) for x, y in loop] for loop in loops2d]
-    tris = tessellate_polygon(flat)
-    allf = [v for loop in front for v in loop]
-    allb = [v for loop in back for v in loop]
-    for a, b_, c in tris:
-        try:
-            bm.faces.new((allf[a], allf[b_], allf[c]))
-            bm.faces.new((allb[c], allb[b_], allb[a]))
-        except ValueError:
-            pass
+
+    def ring(loop, depth):
+        return [bm.verts.new(O + X * x + Y * y - N * depth) for x, y in loop]
+
+    # outline walls (never stepped)
+    f = ring(outline, 0.0)
+    b = ring(outline, thickness)
+    front.append(f)
+    back.append(b)
+    for i in range(len(outline)):
+        j = (i + 1) % len(outline)
+        bm.faces.new((f[i], f[j], b[j], b[i]))
+    # hole walls: one loop per level, stitched in order (vertical reveal / horizontal ledge alternating)
+    for k, hccw in enumerate(holes_ccw):
+        n = len(hccw)
+        loops = [ring(list(reversed(holes_at[w][k])), d) for d, w in levels]
+        front.append(loops[0])
+        back.append(loops[-1])
+        for a, b_ in zip(loops[:-1], loops[1:]):
+            for i in range(n):
+                j = (i + 1) % n
+                try:
+                    bm.faces.new((a[i], a[j], b_[j], b_[i]))
+                except ValueError:
+                    pass
+    for loops, verts in ((( [outline] + holes ), front), (([outline] + holes_b), back)):
+        flat = [[(x, y, 0.0) for x, y in loop] for loop in loops]
+        allv = [v for lp in verts for v in lp]
+        for a, b_, c in tessellate_polygon(flat):
+            try:
+                bm.faces.new((allv[a], allv[b_], allv[c]) if verts is front else (allv[c], allv[b_], allv[a]))
+            except ValueError:
+                pass
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     return _finish(name, bm, coll, mat, part_type, origin=tuple(O), **kw)
 
@@ -472,35 +562,66 @@ def entasis_radius(t, r_b, r_t):
     return r_b - (r_b - r_t) * (s ** 1.6)
 
 
+def flute_section(flutes=None, k_arc=2, fillet_fraction=None, arc_half_deg=None):
+    """Cross-section of a fluted shaft as [(angle, depth_factor)] for one full turn, plus the radial depth
+    fraction that turns depth_factor into a radius scale.
+
+    The hollow is a true segmental circular arc of half-angle `arc_half_deg`, sampled at EQUAL ARC ANGLES, so the
+    samples crowd towards the arris and the flute wall is steep where it meets the fillet. depth_factor is 0 on the
+    fillet and 1 at the bottom of the hollow; the caller uses r * (1 - depth * factor)."""
+    flutes = flutes or P.FLUTES
+    ff = P.FILLET_FRACTION if fillet_fraction is None else fillet_fraction
+    th = math.radians(P.FLUTE_ARC_HALF_DEG if arc_half_deg is None else arc_half_deg)
+    pitch = 2 * math.pi / flutes
+    fillet_w = pitch * ff / (1 + ff)
+    flute_w = pitch - fillet_w
+    sec = []
+    for f in range(flutes):
+        a0 = f * pitch
+        sec.append((a0, 0.0))
+        sec.append((a0 + fillet_w, 0.0))
+        for k in range(1, k_arc + 1):
+            phi = -th + 2 * th * k / (k_arc + 1)
+            u = (math.sin(phi) + math.sin(th)) / (2 * math.sin(th))
+            sec.append((a0 + fillet_w + u * flute_w, (math.cos(phi) - math.cos(th)) / (1 - math.cos(th))))
+    # depth as a fraction of the radius: (arc depth / arc width) * flute width in radians
+    depth = (1 - math.cos(th)) / (2 * math.sin(th)) * flute_w
+    return sec, depth
+
+
+def shaft_rings(height, lod, apophyge, fade):
+    """Ring heights up a shaft, graded so the flute run-outs at both ends get rings and the plain middle does not."""
+    if lod == 2:
+        return [i * height / 6 for i in range(7)]
+    foot = apophyge + fade
+    if lod == 0:
+        zs = [0.0, 0.05, 0.11, 0.18, 0.27, 0.38, foot]
+        top = [height - 0.34, height - 0.24, height - 0.16, height - 0.09, height - 0.04, height]
+        n_mid = 18
+    else:
+        zs = [0.0, apophyge, foot]
+        top = [height - fade - 0.05, height - 0.06, height]   # review item 3: resolve the top flute run-out
+        n_mid = 6
+    z0, z1 = foot, top[0]
+    zs += [z0 + (z1 - z0) * i / n_mid for i in range(1, n_mid)]
+    zs += top
+    return sorted(set(round(z, 4) for z in zs if 0.0 <= z <= height))
+
+
 def column_shaft(name, r_b, r_t, height, coll, lod=1, flutes=P.FLUTES, mat=None, part_type="column",
                  origin=(0.0, 0.0, 0.0), fade=0.35, apophyge=0.18, **kw):
     """Fluted (LOD0/1) or plain (LOD2) shaft with entasis, origin at the bottom centre. The flutes fade out
     (rounded ends) over `fade` metres at both ends; the bottom `apophyge` flares to the base."""
-    if lod == 0:
-        n_rings, k_arc, depth = 40, 6, 0.10
-    elif lod == 1:
-        n_rings, k_arc, depth = 14, 2, 0.10
-    else:
-        n_rings, k_arc, depth = 6, 0, 0.0
-    pitch = 2 * math.pi / flutes
-    fillet_w = pitch * P.FILLET_FRACTION / (1 + P.FILLET_FRACTION)
-    flute_w = pitch - fillet_w
-    section = []   # (angle, radial factor 0..1 where 1 = full radius, 0 = deepest)
+    k_arc = {0: 8, 1: 4}.get(lod, 0)
     if k_arc == 0:
-        section = [(2 * math.pi * i / 32, 0.0) for i in range(32)]
+        section, depth = [(2 * math.pi * i / 32, 0.0) for i in range(32)], 0.0
     else:
-        for f in range(flutes):
-            a0 = f * pitch
-            section.append((a0, 0.0))
-            section.append((a0 + fillet_w, 0.0))
-            for k in range(1, k_arc + 1):
-                u = k / (k_arc + 1)
-                section.append((a0 + fillet_w + u * flute_w, math.sin(math.pi * u)))
+        section, depth = flute_section(flutes, k_arc)
+    zs = shaft_rings(height, lod, apophyge, fade)
     bm = bmesh.new()
     rings = []
-    for ri in range(n_rings + 1):
-        t = ri / n_rings
-        z = t * height
+    for z in zs:
+        t = z / height
         r = entasis_radius(t, r_b, r_t)
         if z < apophyge:
             r += 0.06 * (1 - z / apophyge) ** 2 * r_b
@@ -525,34 +646,71 @@ def column_shaft(name, r_b, r_t, height, coll, lod=1, flutes=P.FLUTES, mat=None,
     return _finish(name, bm, coll, mat, part_type, origin=origin, bevel=False, **kw)
 
 
-def attic_base_profile(r, h=1.0, plinth_h=0.22):
-    """(r, z) polyline of an Attic base (lower torus, scotia, upper torus) above a square plinth, for a shaft radius r."""
-    pts = [(r * 1.05 + 0.15, plinth_h)]
-    lt_r, lt_c = 0.2 * h, plinth_h + 0.2 * h          # lower torus
-    for i in range(1, 9):
-        a = -math.pi / 2 + math.pi * i / 8
-        pts.append((r * 1.05 + lt_r * math.cos(a) * 0.9, lt_c + lt_r * math.sin(a)))
-    sc_top = plinth_h + 0.62 * h                        # scotia
-    for i in range(1, 6):
-        u = i / 6
-        pts.append((r * 1.0 - 0.06 * h * math.sin(math.pi * u), lt_c + lt_r + (sc_top - lt_c - lt_r) * u))
-    ut_r, ut_c = 0.11 * h, sc_top + 0.11 * h            # upper torus
-    for i in range(0, 9):
-        a = -math.pi / 2 + math.pi * i / 8
-        pts.append((r * 1.0 + ut_r * math.cos(a) * 0.9, ut_c + ut_r * math.sin(a)))
-    pts.append((r * 0.98, h))
-    pts.append((r * 0.92, h))
+def attic_base_profile(r, h=1.0, plinth=None, seg=6):
+    """(r, z) polyline of a real Attic base above a square plinth, for a shaft of radius `r`; z 0 = bottom of
+    the plinth, z h = the shaft springing.
+
+    QA-03-9: the old profile was one smooth flare with a 6 cm scotia and an upper torus that overshot `h` (so the
+    lathe folded on itself) and it read as a smooth bell. This one lays the classical courses out from
+    P.BASE_COURSES -- lower torus, fillet, scotia, fillet, upper torus, apophyge -- with sharp fillets between
+    them, and caps the tori so nothing overhangs the square plinth."""
+    plinth_h = P.BASE_PLINTH_FRACTION * h
+    H = h - plinth_h
+    r_cap = (plinth / 2 - 0.05) if plinth else r * P.BASE_LOWER_TORUS_R
+    R_lt = min(r * P.BASE_LOWER_TORUS_R, r_cap)          # lower torus, widest element
+    R_ut = r + P.BASE_UPPER_TORUS_F * (R_lt - r)         # upper torus, 80 % of that projection
+    R_sc = r * P.BASE_SCOTIA_R                           # scotia throat, just inside the shaft
+    _, f_lt = P.BASE_COURSES[0]
+    _, f_f1 = P.BASE_COURSES[1]
+    _, f_sc = P.BASE_COURSES[2]
+    _, f_f2 = P.BASE_COURSES[3]
+    _, f_ut = P.BASE_COURSES[4]
+    _, f_ap = P.BASE_COURSES[5]
+    pts = []
+    z = plinth_h
+
+    def torus(R, dz):
+        nonlocal z
+        tr, base = dz / 2, R - dz / 2
+        for i in range(seg + 1):
+            a = -math.pi / 2 + math.pi * i / seg
+            pts.append((base + tr * math.cos(a), z + tr * (1 + math.sin(a))))
+        z += dz
+
+    def fillet(R, dz):
+        nonlocal z
+        pts.append((R, z))
+        pts.append((R, z + dz))
+        z += dz
+
+    R_f1 = R_sc + 0.30 * (R_lt - R_sc)
+    R_f2 = R_sc + 0.30 * (R_ut - R_sc)
+    pts.append((R_lt - f_lt * H / 2, plinth_h))          # the torus sits on the plinth top
+    torus(R_lt, f_lt * H)
+    fillet(R_f1, f_f1 * H)
+    dz = f_sc * H                                        # scotia: concave arc dipping to the throat
+    for i in range(1, seg + 1):
+        u = i / seg
+        edge = R_f1 + (R_f2 - R_f1) * u
+        pts.append((edge - (edge - R_sc) * math.sin(math.pi * u) ** 0.7, z + dz * u))
+    z += dz
+    fillet(R_f2, f_f2 * H)
+    torus(R_ut, f_ut * H)
+    dz = f_ap * H                                        # apophyge: flare in to the shaft
+    for i in range(1, seg + 1):
+        u = i / seg
+        pts.append((R_ut - f_ut * H / 2 - (R_ut - f_ut * H / 2 - r) * (u ** 0.55), z + dz * u))
     return pts
 
 
 def column_base(name, r, coll, height=1.0, plinth=None, segments=48, mat=None, origin=(0.0, 0.0, 0.0), **kw):
     """Square plinth + Attic base torus set, origin at the plinth bottom centre."""
     plinth = plinth or 2.3 * r
-    plinth_h = 0.22 * height
+    plinth_h = P.BASE_PLINTH_FRACTION * height
     objs = []
     objs.append(box(name + "_plinth", (origin[0], origin[1]), (plinth, plinth), origin[2], origin[2] + plinth_h, coll,
                     mat=mat, part_type="column", **kw))
-    prof = attic_base_profile(r, height, plinth_h)
+    prof = attic_base_profile(r, height, plinth)
     prof = [(rr, origin[2] + z) for rr, z in prof]
     prof.insert(0, (0.0, origin[2] + plinth_h - SINK))
     objs.append(lathe(name + "_torus", prof, coll, segments=segments, mat=mat, part_type="column", origin=origin,

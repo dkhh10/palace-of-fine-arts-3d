@@ -353,3 +353,167 @@ colonnade columns) and they already have LOD1/LOD2, so the viewport never pays f
 **Nothing moved.** `docs/sockets.md` is byte-identical before and after the rebuild, and every `arch_stats.json`
 socket count and triangle total is unchanged (only `build_seconds` 3.3 -> 4.4). The coffer change alters vertex
 positions inside one object per bay; the bevel change touches modifier visibility only.
+
+---
+
+## Polish round 2 (QA-03-4, QA-03-8, QA-03-9)
+
+Three defects, all geometry: no flutes on the shafts, a bell-shaped column base with no torus/scotia, and vault
+and saucer coffers that read as flat inset outlines. Before/after/reference contact sheet:
+`renders/qa_comparisons/arch_p4r2_sheet.png` (before = the previous commit's geometry rendered from the same
+cameras with the same preview rig, so only the geometry differs).
+
+### QA-03-4 / QA-03-9 — the flutes were there; the hollow was the wrong shape
+
+24 flutes with 0.25 fillets have been on every shaft since Phase 2 (`scripts/arch_lib.py column_shaft`), so
+"no flutes" was not a missing feature. The cross-section was a **half-sine sampled at even u**: for a 24-flute
+2.46 m shaft that made the flute wall at the arris only **56 deg** off the tangent, so both walls of every hollow
+caught nearly full sun and the shaft read as a soft gradient. The photographs (054, 128, 169) show the opposite:
+wide bright fillets separated by *narrow hard dark lines*.
+
+`L.flute_section()` now lays a **segmental circular arc sampled at EQUAL ARC ANGLES**, which crowds samples
+towards the arris. `P.FLUTE_ARC_HALF_DEG = 90` makes it the semicircular hollow of a Roman Corinthian order
+(depth / flute width = 0.500, i.e. 0.129 m on the 2.46 m rotunda shafts, 0.088 m on the 1.7 m colonnade shafts).
+`k_arc` (samples per hollow) 2 -> 4 at LOD1 and 6 -> 8 at LOD0; the arris wall is now **72 deg** at LOD1 and
+**81 deg** at LOD0.
+
+`L.shaft_rings()` replaces the uniform ring ladder with a graded one: rings where the flutes run out (the
+apophyge and the 0.35 m fade at each end) and only 6 (LOD1) / 18 (LOD0) across the plain middle, where nothing
+but the entasis varies. **LOD1 rings 15 -> 10, LOD0 41 -> 30.** That pays for the extra angular samples:
+
+| | verts/ring | rings | tris/shaft before | tris/shaft after |
+|---|---|---|---|---|
+| LOD0 | 192 -> 240 | 41 -> 30 | 15,360 | 14,396 (**-6.3 %**) |
+| LOD1 | 96 -> 144 | 15 -> 10 | 2,876 | 2,876 (**0 %**) |
+| LOD2 | 32 | 7 | 444 | 444 |
+
+So the LOD1 flutes are real geometry at no triangle cost at all; no normal-map shortcut was needed.
+
+**What it buys, measured.** Horizontal luminance profile across a front shaft of the rotunda (crop x 797-824,
+y 337-446; detrended, modulation contrast = peak-to-peak / mean):
+
+| | cycles | modulation contrast |
+|---|---|---|
+| before, 1920x1080 | 6.0 | 38.0 % |
+| after, 1920x1080 | 6.0 | 36.8 % |
+| **after, 3840x2160** | 7.0 | **51.5 %** (side shaft 61.3 %) |
+| ref 169, same crop | 6.5-7.0 | 67.6-79.0 % |
+
+**At 1920 the geometry cannot move this number and neither could any other geometry**: the shaft is 27 px wide,
+so 24 flutes are 2.2 px each and the renderer averages each hollow away. The change reads immediately at
+CAM_qa_03 (sheet row 2) and gains 14 points at the 4K delivery resolution. The remaining gap to ref 169 at hero
+scale is albedo, not shape, and the reference sheet says so itself under MAT_column_rose: *"flute ridges are
+paler, flute hollows hold dust"*. **Hand-off to materials: QA-03-4 needs a flute-phase-locked albedo/dirt
+modulation on MAT_column_rose (24 cycles round the shaft, in phase with the geometry), not more geometry.**
+
+### QA-03-9 — the Attic base was a smooth flare with a broken top
+
+`attic_base_profile` was one continuous curve: a 0.18 m torus bulge, a **0.06 m** scotia (5 % of the shaft
+radius, invisible), and an upper torus whose centre sat at `sc_top + 0.11 h` so its top reached **1.06 h** —
+above the base height, so the lathe folded back on itself at the shaft springing. It read as a bell.
+
+Rebuilt from `P.BASE_COURSES`, the classical division of the height above the plinth
+(plinth 0.20 h, then lower torus 0.34 / fillet 0.04 / scotia 0.22 / fillet 0.04 / upper torus 0.28 /
+apophyge 0.08 of the remaining 0.80 h), with sharp fillets between the courses and both tori capped inside the
+square plinth (sheet: plinth = 1.15 x shaft D). Measured off the rebuilt mesh, rotunda column (r 1.25, h 1.0):
+
+| course | z | max radius | projection past the shaft |
+|---|---|---|---|
+| plinth top | 0.200 | 1.4375 (square) | — |
+| lower torus | 0.206 - 0.478 | **1.388** | **+0.138** |
+| fillet | 0.486 - 0.519 | 1.269 | +0.019 |
+| scotia throat | 0.610 | **1.219** | **-0.031** |
+| fillet | 0.700 - 0.733 | 1.261 | +0.011 |
+| upper torus | 0.733 - 0.957 | **1.360** | **+0.110** |
+| apophyge | 0.957 - 1.000 | 1.250 | 0 |
+
+Colonnade bases (r 0.85, plinth 1.955) come out at +0.077 / -0.021 / +0.062 m; the lower torus is capped by the
+plinth there, which is why it is less bold than ref 113 looks. Base torus mesh 2,782 tris (4 unique meshes,
+everything else instanced); the base is not LODed, so the cost lands once in every LOD total.
+
+### QA-03-8 (architecture half) — coffer depth measured off ref 083
+
+**Depth-to-width ratio, derived.** On ref 083 a ring-3 trapezoid panel near the left edge of the frame (scan
+y 645-665) shows an 18 px splayed reveal on a ~220 px / ~4.5 m panel = 8.2 % of the panel width, at an off-axis
+angle of atan(9.5 / 25) = 20.8 deg. That implies a depth of 0.082 x 4.5 / tan(20.8) = **0.95 m**, i.e.
+**depth / width = 0.21** (the Pantheon's coffers are 0.23). Applied as 0.20 x the coffer width:
+
+| | width | depth before | depth now |
+|---|---|---|---|
+| saucer coffers (`ARCH_rotunda_ceiling_ribs`) | 1.4-4.5, mean ~2.75 m | 0.30 | **0.55** |
+| barrel-vault coffers (`ARCH_rotunda_vault_coffers_*`) | 1.9 m octagons | 0.20 | **0.38** |
+
+**Stepped reveals.** `L.plate()` takes `registers`, a list of (widen, depth) read from the room face inwards, so
+every coffer gets a moulded multi-register reveal instead of one straight wall. Ceiling:
+`((-0.05, 0.05), (0.10, 0.13))` — a bolection lip projecting 0.05 m into the opening at the room face, then a
+splay 0.10 m wider than the box over 0.13 m, then 0.37 m of straight box to the panel. Vault:
+`((-0.04, 0.04), (0.07, 0.10))`. The lip's underside reads bright and the splay floor dark, so each coffer has a
+light/shadow line pair even seen almost face-on from CAM_qa_04 — the reason a single straight reveal showed
+nothing there. Verified in `renders/previews/architecture/p4r2_vault_check.png` (24 mm from under a bay, LOD0):
+the two rows of vault octagons and the diamonds between them are deep dark boxes with visible reveals.
+
+**What it does NOT fix.** Coffer-field luminance std-dev over the central 0.40-0.60 box of the ceiling-up frame
+went 11.43 % -> 12.03 % of the mean, against ref 083's 46.65 % — still **26 % of the reference**. Scanning ref
+083 shows why: its coffer *panels* are bright (L 93-130) and its *ribs* are dark (L 22-50), a 2.5-3x ratio, and
+that darkness is a century of grime on ornate acanthus frames, not shape. Architecture's own contribution is
+now depth 0.20 x width with a three-register reveal; the rest is **materials** (recess dirt on the rib faces,
+the sheet's own MAT_plaster_ceiling note "coffers darker, ribs lighter" is the wrong way round for these ribs)
+and **ornament** (the acanthus rib frames and rosettes). Flagged to the lead rather than forced with geometry.
+
+### Hand-offs
+
+- **Ornament:** the 16 `SOCKET_rosette_ceiling` sockets on the rim band (radius > 6 m) sit on the rib room face,
+  which moved down 0.25 m with the coffer depth (`sz(x, y) - COFFER_DEPTH`, 0.30 -> 0.55). The 8 ring-1 sockets
+  on the panel face did not move. `docs/sockets.md` is unchanged (counts and types are identical); re-link
+  `assets/architecture.blend` to pick up the new z. Vault-coffer interiors are also 0.18 m deeper.
+- **Materials:** flute-phase albedo on MAT_column_rose (above); rib-face grime on MAT_plaster_ceiling.
+- **Lead:** ARCH LOD1 989,614 -> 1,045,294 base tris (+55,680, +5.6 % of ARCH, ~+0.5 % of the 11.62 M master).
+  All of it is the coffers and the bases; the fluted shafts cost nothing. LOD0 2,834,078 -> 2,716,318 (-4.2 %).
+- Nothing above the capitals and nothing in the rotunda's proportions was touched.
+
+### Open
+
+- The colonnade lower torus is capped by the sheet's `plinth = 1.15 x shaft D`; ref 113 reads slightly bolder.
+  If the sheet's plinth number is revised the cap in `attic_base_profile` will let the torus grow with it.
+- Coffer depth is one value per plate. Ring-3 trapezoids (4.5 m wide) would want ~0.9 m by the measured ratio and
+  get 0.55; giving each ring its own depth needs the rib network split into three plates or per-coffer lids.
+- `scripts/arch_build.py` gained `--cams a,b` and `--res WxH` for the preview rig.
+
+### Polish round 2 — code-review fixes (docs/reviews/arch_p4r2_review.md, items 1-4)
+
+1. **Vault coffer registers overlapped their neighbours (HIGH).** Confirmed the review's numbers by replaying the
+   layout: the in-row diamond left only **75 mm** of rib to its octagons and the mid-row diamond only **29 mm**,
+   against a 70 mm splay. Fixed by opening the gaps rather than shrinking the reveal to invisibility: the in-row
+   diamond factor is 0.8 -> **0.55** (gap 75 -> **180 mm**) and the mid-row diamond, 0.26 m across and unreadable
+   at cam04, is gated off (`dr > 0.2`). `VAULT_COFFER_REGISTERS` is now `((-0.030, 0.04), (0.055, 0.10))`, leaving
+   **70 mm** of rib. Belt and braces: `L.polygon_clearance()` measures the tightest boundary-to-boundary distance
+   in a plate's hole set and `L.plate` **clamps the registers** to keep `REVEAL_CLEARANCE` (20 mm) of solid rib,
+   printing when it does — so this class of bug can no longer be silent. It fires once, harmlessly, on the ceiling
+   (widen 0.100 -> 0.097). Both plates are now **0 non-manifold edges** (vault 2,250 edges, ceiling 4,696).
+2. **`rosette_ceiling` socket planes (MEDIUM).** The 24 sockets are two different things and now say so:
+   * **16 rim-band sockets** (rr 13.73 / 14.85) are not in a coffer at all — that band is solid rib between the
+     outermost coffers and the octagon edge, and the sheet calls them a "base ring with rosette band above the
+     inner arches" (083). They are bosses on the rib's **room face**, so their plane follows it:
+     `sz(x, y) - COFFER_DEPTH + ROSETTE_RIM_INSET` = **`sz - 0.53`** (0.02 m set back into the plaster).
+     They were at `sz - 0.30`, so the correction for ornament is **down 0.23 m, not 0.25 m.** World z 23.41 / 24.32.
+   * **8 ring-1 square-coffer sockets** (rr 5.2) are inside a box, so they sit on the box **floor** — the field
+     saucer, `sz + CEILING_FIELD_LIFT` = **`sz + 0.02`**, not on the bare sphere as before: **up 0.02 m.**
+     World z 28.91. `CEILING_FIELD_LIFT` now drives both the field loft and this socket, so they cannot drift.
+   Counts and types are unchanged, `docs/sockets.md` untouched.
+3. **LOD1 flute run-out ladder (LOW).** `height - fade - 0.05` inserted into the top ladder, so the 0.35 m run-out
+   is resolved instead of smeared over 1.63 m. LOD1 rings 10 -> 11, +288 tris per shaft.
+4. **`--cams` / `--res` index guard (LOW).** Both check `index + 1 < len(ARGS)`.
+5. INFO (apophyge flares 4 mm outward, effectively a no-op) left as is: harmless, and the base profile is the one
+   part the review verified clean.
+
+**Found while verifying, and fixed:** the barrel-vault coffers were built as `ARCH_rotunda_vault_coffers_NN_LOD0`,
+**LOD0 only**, so `common.set_lod(render=1)` — what every QA pass and every preview uses — hid them and the barrel
+soffits rendered bare. **That is the real root of QA-03-8's "no coffer casts a shadow" on the vaults: at LOD1 there
+were no vault coffers to cast one.** They now carry no LOD suffix and render at every level, like the ceiling ribs
+(2,036 tris x 8 bays = 16,288). Verified at LOD1 in `renders/previews/architecture/p4r2fix_vault_check.png`
+(24 mm from under a bay): two rows of deep octagons with the diamonds between them, clean reveals, no overlaps.
+
+**Triangles after the fixes:** LOD0 2,834,078 -> **2,713,406** (-4.3 %); LOD1 989,614 -> **1,101,326**
+(+111,712, +11.3 % of ARCH, ~+1 % of the 11.62 M master -> ~11.73 M, still under the 13 M cap); LOD2 725,966.
+Of the LOD1 increase, 55,680 is the coffers and bases, 39,744 the flute run-out ring, 16,288 the vault coffers
+that were previously invisible at this LOD.
