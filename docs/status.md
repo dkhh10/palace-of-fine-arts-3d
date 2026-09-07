@@ -87,3 +87,8 @@ In flight: MAT, LIGHT, ENV, ORN. Next: merge as they report; lead_build.sh; QA r
 Merged: ENV p4r1: wings de-shadowed (entablature 78 % lit from 31/4 %; wing luminance 0.75/0.82 of ref at +0.9 EV), sky through bays N 23 % / S 30 %, lagoon shelf bed + shore eucalyptus moved (flank 0.28 -> 0.89 of ref), shrub LODs (ENV LOD1 4.84 M, master LOD1 11.6 M), houses with pitched roofs. Composite renders/qa_comparisons/env_r3_sheet.png.
 In flight: MAT, LIGHT, ORN. Open for materials: near-water cyan hue (sat 0.46 vs ref 0.11), hall wall texture (MAT_backdrop_building flat cream).
 Next: merge the three; lead_build.sh; QA round 3 (re-time Eevee on a quiet machine).
+
+## 2026-09-07 21:20 · ornament polish merged (b509ce8)
+Merged: ORN p4r1: attic panels re-grounded (p10 depth 0.168 -> 0.022 m, sun-blocked 0.3 -> 6.6 %, 20-22 figures in three depth registers), corner figures slimmed with side cascades, corner scrolls as a real pair enclosing ARCH's volutes, colonnade capital LOD0 80k -> 48k (-3.6 M tris in master). Sheet renders/previews/ornament/orn3_qa02_9_10_sheet.png.
+In flight: MAT, LIGHT. Not done by ORN: capital leaf and keystone depth (next round if QA still flags).
+Next: merge MAT + LIGHT; lead_build.sh; QA round 3.
