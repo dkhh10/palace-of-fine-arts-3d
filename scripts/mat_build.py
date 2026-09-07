@@ -560,12 +560,13 @@ def build_concrete_family():
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0})
     # exhibition hall / distant massing: buff stucco, coarse
     concrete_material("MAT_backdrop_building", "concrete_wall_008", 11.0, {
-        "Base Color": C(0.560, 0.452, 0.188), "Grey Color": C(0.42, 0.356, 0.182), "Grey Drift": 0.26,
-        "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.16, "Block Size": 4.0, "Blotch Size": 6.0,
-        "Drift Size": 22.0, "Algae": 0.0,
-        "Detail Strength": 0.3, "Streaks": 0.5, "Streak Scale": 4.0, "Streak Length": 8.0, "Ledge Weight": 0.7,
-        "Patches": 0.1, "Edge Wear": 0.25, "Edge Radius": 0.08, "Recess Dirt": 0.4, "Recess Distance": 0.5,
-        "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.25, "Pour Lines": 0.0})
+        "Base Color": C(0.560, 0.452, 0.188), "Grey Color": C(0.42, 0.356, 0.182), "Grey Drift": 0.30,
+        "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.24, "Block Size": 3.0, "Blotch Size": 3.2,
+        "Drift Size": 11.0, "Algae": 0.0,
+        "Detail Strength": 0.7, "Streaks": 0.8, "Streak Scale": 5.0, "Streak Length": 8.0,
+        "Ledge Distance": 3.5, "Ledge Weight": 0.55,
+        "Patches": 0.18, "Edge Wear": 0.3, "Edge Radius": 0.08, "Recess Dirt": 0.65, "Recess Distance": 0.9,
+        "Roughness": 0.85, "Roughness Variation": 0.12, "Bump": 0.5, "Pour Lines": 0.0})
 
 
 def build_dome():
@@ -615,7 +616,7 @@ def build_water():
     # sky/building mirror -- a dark body with a blue mirror on it. The murk is now brighter and closer to neutral
     # green-grey and carries more of the surface, which lifts the flanks and desaturates the near field at once.
     murk_far = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.05, detail=2), 0.35, 0.65, 0.0, 1.0)
-    murk = t.mix(murk_far, C(0.088, 0.122, 0.086), C(0.140, 0.178, 0.130))
+    murk = t.mix(murk_far, C(0.104, 0.118, 0.100), C(0.152, 0.168, 0.142))
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.28,
                            "Specular IOR Level": 0.5, "Normal": normal})
     # one Principled Volume (absorption + weak scatter): Absorption + Scatter + Add Shader pushed Cycles past its
@@ -623,14 +624,14 @@ def build_water():
     # scatter (0.117, 0.234, 0.144)/m, absorption (0.36, 0.135, 0.36)/m -> single-scatter albedo 0.25/0.63/0.29, i.e. a
     # LIT green murk (the v1 numbers gave albedo 0.07-0.15, which made a closed lagoon volume read black).
     vol = t.new("ShaderNodeVolumePrincipled")
-    t.plug(vol.inputs["Color"], C(0.16, 0.28, 0.18)); t.plug(vol.inputs["Density"], 0.7)
-    t.plug(vol.inputs["Absorption Color"], C(0.60, 0.85, 0.60)); t.plug(vol.inputs["Anisotropy"], 0.3)
+    t.plug(vol.inputs["Color"], C(0.205, 0.250, 0.195)); t.plug(vol.inputs["Density"], 0.7)
+    t.plug(vol.inputs["Absorption Color"], C(0.70, 0.80, 0.68)); t.plug(vol.inputs["Anisotropy"], 0.3)
     t.output(surface=bsdf.outputs[0], volume=vol.outputs[0], target="CYCLES")
     # Eevee cannot reflect through its transmission path (tested: no Fresnel reflection with or without raytraced
     # refraction), so Eevee gets an opaque dark-murk surface with the same ripples: reflections come from raytracing/probes.
     # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
     #  tree against its 64-closure budget, two Principled BSDFs blew it to 76.)
-    murk_e = t.mix(murk_far, C(0.098, 0.134, 0.096), C(0.152, 0.190, 0.140))
+    murk_e = t.mix(murk_far, C(0.115, 0.128, 0.110), C(0.164, 0.180, 0.152))
     dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk_e); t.plug(dif.inputs["Normal"], normal)
     glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
     fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
@@ -894,7 +895,7 @@ def build_backdrop_details():
     W = t.geometry().outputs["Position"]
     N = t.geometry().outputs["Normal"]
     dirt = t.maprange(t.noise(W, 1.6, detail=3, rough=0.6), 0.3, 0.75, 0.0, 1.0)
-    c = t.mix(dirt, C(0.055, 0.062, 0.070), C(0.13, 0.125, 0.105))
+    c = t.mix(dirt, C(0.072, 0.080, 0.092), C(0.15, 0.144, 0.122))
     rough = t.add(0.14, t.mul(dirt, 0.30))
     normal = t.bump(t.mul(t.noise(W, 6.0, detail=2), 0.4), strength=0.2, distance=0.008, normal=N)
     t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.75,
