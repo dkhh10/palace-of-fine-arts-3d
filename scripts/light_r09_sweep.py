@@ -60,6 +60,9 @@ def exposure_compensation(sky_strength):
     return math.log2(_Y1 / (_A + sky_strength * _B))
 
 
+assert abs(exposure_compensation(2.0) + 0.251) < 0.002, "the model must reproduce the s=2.0 calibration on record"
+
+
 HERO = arg("--hero", [])
 VAULT = arg("--vault", [])
 RES = [int(v) for v in arg("--res", ["1920", "1080"], n=2)]
