@@ -184,3 +184,75 @@ the column positions may need the entry point (`colonnade_in`) nudged.
    inside the gallery.
 6. The placeholder's own `PLACEHOLDER_LIGHT` collection (sun + world) is excluded in my previews; master must not
    link it once `LIGHT` exists.
+
+---
+
+# Phase 3 fix round (round 07, 2026-09-07) — QA-01-9, QA-01-12, QA-01-20
+
+Measured with `scripts/light_measure.py` (plain python3 + numpy/PIL; fractional region rectangles so the same region
+set applies to a render and to a photo). Every number below is an sRGB mean of a named rectangle plus its linear
+luminance Y (sRGB primaries). The region sets live in `light_measure.REGIONS` (`hero`, `hero_ref169`, `ceiling`,
+`aerial`, `dome_hero`, `dome_hero_ref169`) so any later round re-measures exactly the same patches.
+
+Baseline for the round: `master.blend` rebuilt in the lighting worktree from main at `e84b67e` (materials library v1 +
+the raised dome), Eevee `apply_preview_eevee` 32 TAA and Cycles `apply_final_cycles` 48 spp, both 1280x720.
+
+## 9. QA-01-9 — the rotunda ceiling: what is actually wrong
+
+The defect said "4x too dark in Eevee, no light probes". Both halves needed measuring before fixing.
+
+**There were no probes** (`master.blend` contained zero `LIGHT_PROBE` objects), so Eevee Next was lighting the vault
+with nothing but its screen-space *Fast GI* approximation. Measurements on cam04 (coffer field = the central 20 % x 20 %
+of the frame, the same patch in the render and in ref 083):
+
+| configuration | coffer field sRGB | Y |
+|---|---|---|
+| Eevee, no probe, fast GI on (the QA-01-9 baseline) | 24.5, 22.1, 14.3 | 0.0081 |
+| Eevee, no probe, fast GI **off** | 0.1, 0.1, 0.1 | 0.00003 |
+| Eevee, baked irradiance volume | 5.2, 2.1, 0.4 | 0.0008 |
+| **Cycles 48 spp, 3 diffuse bounces (ground truth)** | **11.9, 6.3, 2.8** | **0.0022** |
+| Cycles 48 spp, 8 diffuse bounces | 12.3, 6.4, 2.9 | 0.0023 |
+| Cycles 48 spp, 8 bounces, no indirect clamp | 12.3, 6.4, 2.9 | 0.0023 |
+| ref 083 (photo) | 91.7, 76.1, 52.5 | 0.0770 |
+
+Three conclusions, all of which change the fix:
+
+1. **Eevee was not 4x too dark, it was 2x too bright** — its 24/255 was a screen-space guess. Cycles, the ground truth,
+   says 12/255. A correct baked volume lands at 5/255, i.e. the probe bake works and is *more* right than fast GI.
+   (The bake itself was verified headless on a control scene: an open-sky sphere keeps its world irradiance and gains
+   correct occlusion under the probe, so `bpy.ops.object.lightprobe_cache_bake` is not silently failing in background.)
+2. **The vault is not bounce-limited.** 3 vs 8 diffuse bounces differ by 0.4/255. Raising `diffuse_bounces` buys nothing
+   and costs render time, so `apply_final_cycles` keeps 3 (noted in the code).
+3. **The rotunda genuinely receives almost no light in this model.** At 7.4 deg the sun never reaches the interior floor,
+   and from a coffer 25 m up the four arches subtend a small solid angle of sky. The interior lands ~7 stops under the
+   sunlit attic (12/255 vs 182/255). Ref 083 shows ~3.5 stops — but ref 083 is *exposed for the ceiling* (its sky in the
+   arch openings reads 219-254/255, i.e. blown), so it is not a photometric reference for a frame exposed for the
+   exterior. The one honest in-frame comparison, ref 169's arch soffits against its own sunlit attic
+   (136,92,64 vs 209,165,93, ratio 0.65 sRGB), the render already matches (94,70,45 vs 182,137,94, ratio 0.51-0.80).
+
+**The fix, in two parts.**
+
+*Probes.* `scripts/light_probes.py` builds two Eevee Next irradiance volumes inside `LIGHT`, so they travel with the rig:
+
+| probe | centre | half-extent | grid | spacing |
+|---|---|---|---|---|
+| `LIGHTPROBE_rotunda` | (0, 0, 15) | 27 x 27 x 17 m | 20 x 20 x 14 | 2.8 x 2.8 x 2.6 m |
+| `LIGHTPROBE_colonnade` | (-3, 8, 6.5) | 112 x 46 x 8 m | 48 x 20 x 6 | 4.8 x 4.8 x 3.2 m |
+
+`light_build.py` creates them (unbaked) in `assets/lighting.blend`. **A bake is a function of the scene, not of the rig**:
+baking inside `lighting.blend` would only ever see an empty world, so the delivery is a bake step the lead runs on the
+assembled file after `build_master.py`:
+
+```
+blender --background --python scripts/light_probes.py -- --blend master.blend --bake --save
+```
+
+It takes ~50 s on the M2, changes nothing but the probe caches, and must be re-run whenever the architecture or the
+sun moves. `apply_preview_eevee` / `apply_viewport_eevee` now set `gi_irradiance_pool_size = 64` MB (the default 16
+cannot hold the two volumes).
+
+*Interior bounce fill (`LIGHT_rotunda_bounce`).* An up-facing 36 m disk area light at z 7.5 in the rotunda centre, warm
+(1.0, 0.86, 0.68). It models the one thing the model has no geometry for — the pale concrete plaza, the lawn and the
+lagoon throwing light up into the vault — and because an area light emits only along its +Z it lifts the coffers and the
+vault soffits while adding almost nothing to what cam01 sees through the arch (which already matches ref 169). This is an
+art bias, sized by measurement, exactly like `EXPOSURE_BIAS`: `light_build.FILL["energy"]` is the single number to dial.
