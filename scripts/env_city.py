@@ -117,24 +117,28 @@ PALACE_DRIVE = ROADS[-1][0]
 
 
 class RoadField:
-    """20 m bucket grid of every road corridor, so 'is this spot on a road?' is O(1)."""
+    """Bucketed road centre points, so 'is this spot on a road?' is O(1).  Only roads that are actually drawn go
+    in: the grid lines run right across the map but are only built inside the residential quadrant."""
 
-    def __init__(self, roads, cell=20.0):
-        self.cell = cell
-        self.cells = {}
+    CELL = 24.0
+
+    def __init__(self, roads):
+        self.pts = {}
         for pts, w, kind in roads:
-            half = w / 2 + WALK_W
-            for (x, y) in L.resample_polyline(pts, 6.0):
-                for i in range(int((x - half) // cell), int((x + half) // cell) + 1):
-                    for j in range(int((y - half) // cell), int((y + half) // cell) + 1):
-                        self.cells[(i, j)] = max(self.cells.get((i, j), 0.0), half)
+            for (x, y) in L.resample_polyline(pts, 5.0):
+                if kind == "street" and not in_az(azimuth(x, y), RESIDENTIAL_AZ):
+                    continue
+                if math.hypot(x, y) < ROAD_R0 - 24.0:
+                    continue
+                self.pts.setdefault((int(x // self.CELL), int(y // self.CELL)), []).append((x, y, w))
 
-    def on_road(self, x, y, pad=6.0):
-        i, j = int(x // self.cell), int(y // self.cell)
+    def on_road(self, x, y, pad=4.0):
+        i, j = int(x // self.CELL), int(y // self.CELL)
         for di in (-1, 0, 1):
             for dj in (-1, 0, 1):
-                if (i + di, j + dj) in self.cells:
-                    return True
+                for (px, py, w) in self.pts.get((i + di, j + dj), ()):
+                    if math.hypot(x - px, y - py) < w / 2 + WALK_W + pad:
+                        return True
         return False
 
 
@@ -189,24 +193,45 @@ def build_ground(SUB, terrain_height, clear):
             blocks.append((u0, u1, v0, v1))
     # --- everything else: coarse annulus wedges (Presidio forest floor, Marina Green, Crissy Field)
     seg = 3.0
-    rings = ((BLOCK_R0, 300.0), (300.0, 430.0), (430.0, 570.0), (570.0, CITY_R1))
     a = 0.0
     while a < 360.0:
         am = math.radians(a + seg / 2)
+        # the ring radii wobble per wedge so the tone patches do not line up into concentric arcs
+        w = 30.0 * L.fnoise(math.cos(am) * 100, math.sin(am) * 100, 0.02, 44)
+        rings = ((BLOCK_R0, 300.0 + w), (300.0 + w, 430.0 - w), (430.0 - w, 570.0 + w), (570.0 + w, CITY_R1))
         for r0, r1 in rings:
             rm = (r0 + r1) / 2
             cx, cy = rm * math.cos(am), rm * math.sin(am)
             az = azimuth(cx, cy)
             if in_az(az, RESIDENTIAL_AZ) or not clear(cx, cy):
                 continue
+            # First cam-06 test: SOIL over the whole Presidio sector read as one purple-grey paved plaza, because
+            # a 430 000 m2 photo-textured quad averages to a flat tone at 300 m.  The forest floor is mostly the
+            # canopy's own shadow, so the ground under it is lawn with soil only in the clearings; Marina Green
+            # and Crissy Field are mown lawn with dry patches.
             if in_az(az, PRESIDIO_AZ):
-                mi = DRY if rnd.random() < 0.30 else SOIL
+                t = rnd.random()
+                mi = SOIL if t < 0.22 else (DRY if t < 0.38 else LAWN)
             else:
-                mi = DRY if rnd.random() < 0.25 else LAWN
+                mi = DRY if rnd.random() < 0.22 else LAWN
             p = [(rr * math.cos(math.radians(aa)), rr * math.sin(math.radians(aa)))
                  for (rr, aa) in ((r0, a), (r1, a), (r1, a + seg), (r0, a + seg))]
             quad(p[0], p[1], p[2], p[3], mi)
         a += seg
+    # --- the theatre car park immediately west of the exhibition hall (r 125-200 m).  Down-sun of the palace at
+    #     az 118.5 / el 7.4 the whole west side is in shadow, and in round 03 that band was an unbroken sheet of
+    #     lawn - the "flat olive plane" of cam 06's middle distance.  The car park is what is actually there.
+    lot = [(-74.0, -196.0), (78.0, -190.0), (72.0, -124.0), (-70.0, -130.0)]
+    quad(lot[0], lot[1], lot[2], lot[3], ASPHALT, 0.02)
+    for k in range(9):                                   # parking aisles: gravel strips between the bays
+        t0 = (k + 0.42) / 9.0
+        t1 = (k + 0.58) / 9.0
+        p0 = (lot[0][0] + (lot[1][0] - lot[0][0]) * t0, lot[0][1] + (lot[1][1] - lot[0][1]) * t0)
+        p1 = (lot[0][0] + (lot[1][0] - lot[0][0]) * t1, lot[0][1] + (lot[1][1] - lot[0][1]) * t1)
+        p2 = (lot[3][0] + (lot[2][0] - lot[3][0]) * t1, lot[3][1] + (lot[2][1] - lot[3][1]) * t1)
+        p3 = (lot[3][0] + (lot[2][0] - lot[3][0]) * t0, lot[3][1] + (lot[2][1] - lot[3][1]) * t0)
+        quad(p0, p1, p2, p3, GRAVEL, 0.04)
+
     # --- roads: gravel sidewalk band with the asphalt carriageway laid 1 cm on top
     nroad = 0
     for pts, w, kind in ROADS:
@@ -342,7 +367,7 @@ def build_fill_houses(SUB, blocks, terrain_height, clear):
 PRESIDIO_CLUSTERS = [
     ("lombard_gate", 334.0, 375.0, 3, 8, 26.0, (13.0, 9.0), 8.5, "tile"),
     ("letterman", 350.0, 335.0, 2, 5, 46.0, (30.0, 20.0), 13.0, "roof"),
-    ("mainpost_a", 302.0, 505.0, 3, 9, 30.0, (17.0, 10.0), 9.5, "tile"),
+    ("mainpost_a", 302.0, 440.0, 3, 9, 30.0, (17.0, 10.0), 9.5, "tile"),
     ("mainpost_b", 286.0, 615.0, 2, 8, 32.0, (16.0, 10.0), 9.0, "tile"),
     ("cavalry", 317.0, 600.0, 2, 7, 34.0, (22.0, 11.0), 8.0, "tile"),
     ("crissy", 228.0, 435.0, 1, 6, 42.0, (24.0, 12.0), 7.0, "roof"),
@@ -390,17 +415,33 @@ def build_presidio_buildings(SUB, clear):
 
 
 # ----------------------------------------------------------------------------- far canopy
-def _canopy_mesh(name, seed=0):
-    """~40-tri lumpy blob: one far-field tree crown."""
+def _canopy_mesh(name, seed=0, lobes=4):
+    """One far-field tree crown as a cluster of overlapping lobes (80 tris each).
+
+    A single smooth ellipsoid at this size read as a bright green boulder in the first cam-06 tests: nothing broke
+    the highlight and nothing shadowed itself.  Three to five offset lobes give a lumpy canopy silhouette, let the
+    library material's 9 m Voronoi clumps land inside one crown, and self-shadow into something tree-coloured.
+    """
     bm = bmesh.new()
-    try:
-        bmesh.ops.create_icosphere(bm, subdivisions=1, radius=1.0)
-    except TypeError:
-        bmesh.ops.create_icosphere(bm, subdivisions=1, diameter=1.0)
     rnd = random.Random(seed)
-    for v in bm.verts:
-        v.co = v.co * rnd.uniform(0.70, 1.28)
-        v.co.z *= 1.30
+    for k in range(lobes):
+        sub = bmesh.new()
+        try:
+            bmesh.ops.create_icosphere(sub, subdivisions=1, radius=1.0)
+        except TypeError:
+            bmesh.ops.create_icosphere(sub, subdivisions=1, diameter=1.0)
+        sx = rnd.uniform(0.42, 0.72) if k else rnd.uniform(0.62, 0.80)
+        off = (rnd.uniform(-0.55, 0.55), rnd.uniform(-0.55, 0.55),
+               rnd.uniform(-0.30, 0.45) if k else rnd.uniform(-0.15, 0.05))
+        for v in sub.verts:
+            v.co.x = v.co.x * sx * rnd.uniform(0.85, 1.15) + off[0]
+            v.co.y = v.co.y * sx * rnd.uniform(0.85, 1.15) + off[1]
+            v.co.z = v.co.z * sx * rnd.uniform(0.95, 1.35) + off[2]
+        me_tmp = bpy.data.meshes.new(f"{name}_lobe{k}")
+        sub.to_mesh(me_tmp)
+        sub.free()
+        bm.from_mesh(me_tmp)
+        bpy.data.meshes.remove(me_tmp)
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)
     bm.free()
@@ -415,40 +456,52 @@ def build_canopy(SUB, clear):
     coll = SUB["ENV_backdrop"]
     m_forest = L.mat("MAT_backdrop_forest")
     rnd = random.Random(913)
-    src = {k: _canopy_mesh(f"ENV_src_canopy_{k}", 40 + k) for k in range(4)}
+    # keys 0-2 are 4-lobe crowns for the mid distance, key 3 a 2-lobe crown for anything past FAR
+    src = {k: _canopy_mesh(f"ENV_src_canopy_{k}", 40 + k, lobes=4 if k < 3 else 2) for k in range(4)}
+    CANOPY_FAR = 430.0
     rf = RoadField(ROADS)
     groups = {k: [] for k in src}
     n = 0
+    # the Main Post / Lombard Gate rows stand in clearings, not under the canopy
+    clearings = []
+    for (name, az, rad, ranks, per, spacing, (w, dpt), h, roofkind) in PRESIDIO_CLUSTERS:
+        a = math.radians(az)
+        clearings.append((rad * math.cos(a), rad * math.sin(a),
+                          0.5 * max(per * spacing, ranks * (dpt + 26.0)) + 34.0))
+
+    def in_clearing(x, y):
+        return any(math.hypot(x - cx, y - cy) < rr for (cx, cy, rr) in clearings)
 
     def add(x, y, h, slim):
         w = h * slim
-        groups[rnd.randrange(4)].append(((x, y, FAR_GROUND_Z + h * 0.54), rnd.uniform(0, 6.283),
-                                         (w, w, h * 0.54)))
+        k = 3 if math.hypot(x, y) > CANOPY_FAR else rnd.randrange(3)
+        groups[k].append(((x, y, FAR_GROUND_Z + h * 0.52), rnd.uniform(0, 6.283), (w, w, h * 0.52)))
 
     # 1. the woods
     a = PRESIDIO_AZ[0]
     while a < PRESIDIO_AZ[1]:
-        r = 192.0
+        r = 138.0
         while r < 700.0:
             x0, y0 = r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
-            dens = 0.30 + 0.55 * L.smoothstep(185.0, 280.0, r)
-            dens *= 0.45 + 0.75 * (0.5 + 0.5 * L.fnoise(x0, y0, 0.010, 71))
+            dens = 0.20 + 0.30 * L.smoothstep(150.0, 300.0, r)
+            dens *= 0.25 + 1.00 * (0.5 + 0.5 * L.fnoise(x0, y0, 0.009, 71))     # groves and clearings
+            dens *= L.smoothstep(357.0, 344.0, a)          # thins out toward Cow Hollow at the southern end
             if rnd.random() < dens:
-                aa = a + rnd.uniform(-1.7, 1.7)
-                rr = r + rnd.uniform(-9.0, 9.0)
+                aa = a + rnd.uniform(-1.0, 1.0)
+                rr = r + rnd.uniform(-5.0, 5.0)
                 x, y = rr * math.cos(math.radians(aa)), rr * math.sin(math.radians(aa))
-                if clear(x, y) and not rf.on_road(x, y):
-                    add(x, y, rnd.uniform(9.0, 23.0), rnd.uniform(0.28, 0.46))
+                if clear(x, y) and not rf.on_road(x, y) and not in_clearing(x, y):
+                    add(x, y, rnd.uniform(9.0, 20.0), rnd.uniform(0.42, 0.72))
                     n += 1
-            r += 15.0
-        a += 3.2
+            r += 8.0
+        a += 1.7
     # 2. Marina Green / Crissy Field: scattered, never a wood
     for _ in range(110):
         a = rnd.uniform(*OPEN_AZ)
         r = rnd.uniform(200.0, 640.0)
         x, y = r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
         if clear(x, y) and not rf.on_road(x, y):
-            add(x, y, rnd.uniform(7.0, 15.0), rnd.uniform(0.35, 0.62))
+            add(x, y, rnd.uniform(7.0, 16.0), rnd.uniform(0.50, 0.95))
             n += 1
     # 3. street tree lines: Palace Drive, then every grid street and Presidio boulevard
     for pts, w, kind in ROADS:
@@ -472,7 +525,7 @@ def build_canopy(SUB, clear):
                 ox, oy = x + sgn * nv.x * off, y + sgn * nv.y * off
                 if not clear(ox, oy):
                     continue
-                add(ox, oy, rnd.uniform(8.0, 15.0), rnd.uniform(0.30, 0.50))
+                add(ox, oy, rnd.uniform(8.0, 15.0), rnd.uniform(0.44, 0.72))
                 n += 1
     tris = 0
     nobj = 0
@@ -497,7 +550,7 @@ def build_all(SUB, terrain_height, lagoon_field, hall_field, colonnade_polys=())
     def clear(x, y):
         if lagoon_field.signed(x, y) < 25.0 or hall_field.signed(x, y) < 22.0:
             return False
-        if math.hypot(x, y) < 120.0:
+        if math.hypot(x, y) < 108.0:
             return False
         for f in col_fields:
             if f.signed(x, y) < 0.0:
