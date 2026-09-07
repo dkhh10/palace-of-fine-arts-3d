@@ -92,3 +92,8 @@ Next: merge the three; lead_build.sh; QA round 3 (re-time Eevee on a quiet machi
 Merged: ORN p4r1: attic panels re-grounded (p10 depth 0.168 -> 0.022 m, sun-blocked 0.3 -> 6.6 %, 20-22 figures in three depth registers), corner figures slimmed with side cascades, corner scrolls as a real pair enclosing ARCH's volutes, colonnade capital LOD0 80k -> 48k (-3.6 M tris in master). Sheet renders/previews/ornament/orn3_qa02_9_10_sheet.png.
 In flight: MAT, LIGHT. Not done by ORN: capital leaf and keystone depth (next round if QA still flags).
 Next: merge MAT + LIGHT; lead_build.sh; QA round 3.
+
+## 2026-09-07 22:10 · materials polish merged (e550acc)
+Merged: MAT p4r1: blotch/olive fixed (warped cells, streak tint no longer green, per-instance hue spread 35 -> 1.2 deg, value spread 19 %), edge radius 0.10 m, ledge run-off streaks, algae on by default + damp zone on lawn/soil/gravel at the waterline, lagoon no longer a light sink (flank +4 % vs ref), backdrop stucco detail. Composite renders/qa_comparisons/mat_r3_stone_water.png.
+Open: sunlit stone still pale/low-chroma vs ref 169 (R-B spread 81 vs 127) — illuminant/exposure, with lighting; hall opening is an unfilled hole in ENV's hall geometry (next ENV round); near-water saturation target disputed (QA 0.43 vs ENV 0.11 on different crops) — QA to fix one crop in round 3.
+In flight: LIGHT. Next: merge LIGHT; lead_build.sh; QA round 3.
