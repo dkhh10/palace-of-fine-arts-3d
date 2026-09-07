@@ -30,7 +30,7 @@ SPECIES = {
         downAngle=(90.0, 52.0, 42.0, 45.0), downAngleV=(0.0, -35.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 30.0, 40.0, 0.0), attractUp=(0.0, 0.8, 0.6, 0.0), segSplits=(0.0, 0.25, 0.1, 0.0),
         splitAngle=(0.0, 25.0, 20.0, 0.0), splitAngleV=(0.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3,
-        scale=20.0, scaleV=2.0, leaves=150, leafScale=0.33, leafScaleX=0.36, leafScaleV=0.35, bend=0.3, leafangle=5.0,
+        scale=20.0, scaleV=2.0, leaves=195, leafScale=0.285, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=55.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(15, 25)),
     # columnar Monterey cypress (younger / grouped trees): the narrow dark columns left of the rotunda in the user image
@@ -42,7 +42,7 @@ SPECIES = {
         downAngle=(90.0, 45.0, 42.0, 45.0), downAngleV=(0.0, -25.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 30.0, 40.0, 0.0), attractUp=(0.0, 1.0, 0.7, 0.0), segSplits=(0.0, 0.15, 0.1, 0.0),
         splitAngle=(0.0, 20.0, 20.0, 0.0), splitAngleV=(0.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3,
-        scale=24.0, scaleV=2.0, leaves=150, leafScale=0.33, leafScaleX=0.36, leafScaleV=0.35, bend=0.3, leafangle=5.0,
+        scale=24.0, scaleV=2.0, leaves=195, leafScale=0.285, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=55.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(18, 28)),
     # tall straight trunk, high open crown, hanging foliage
@@ -54,7 +54,7 @@ SPECIES = {
         downAngle=(90.0, 32.0, 50.0, 45.0), downAngleV=(0.0, -20.0, 20.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 20.0, 40.0, 0.0), attractUp=(0.4, 0.8, -1.3, 0.0), segSplits=(0.15, 0.3, 0.0, 0.0),
         splitAngle=(20.0, 25.0, 0.0, 0.0), splitAngleV=(5.0, 8.0, 0.0, 0.0), splitByLen=True, splitHeight=0.35, baseSplits=1,
-        scale=30.0, scaleV=3.0, leaves=110, leafScale=0.42, leafScaleX=0.4, leafScaleV=0.35, bend=0.2, leafangle=-70.0,
+        scale=30.0, scaleV=3.0, leaves=140, leafScale=0.33, leafScaleX=0.42, leafScaleV=0.35, bend=0.2, leafangle=-70.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=70.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_eucalyptus", leaf="MAT_leaf_eucalyptus", height=(22, 34)),
     # Monterey pine: irregular rounded crown of dense dark needle tufts
@@ -66,7 +66,7 @@ SPECIES = {
         downAngle=(90.0, 55.0, 45.0, 45.0), downAngleV=(0.0, -30.0, 10.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(25.0, 30.0, 40.0, 0.0), attractUp=(0.0, 0.5, 0.35, 0.0), segSplits=(0.1, 0.25, 0.1, 0.0),
         splitAngle=(25.0, 25.0, 20.0, 0.0), splitAngleV=(5.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3, baseSplits=1,
-        scale=21.0, scaleV=2.0, leaves=150, leafScale=0.34, leafScaleX=0.33, leafScaleV=0.35, bend=0.3, leafangle=0.0,
+        scale=21.0, scaleV=2.0, leaves=205, leafScale=0.285, leafScaleX=0.35, leafScaleV=0.35, bend=0.3, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=60.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(15, 24)),
     # weeping willow at the water's edge
@@ -78,7 +78,7 @@ SPECIES = {
         downAngle=(0.0, 20.0, 30.0, 20.0), downAngleV=(0.0, 20.0, 10.0, 10.0), rotate=(99.5, 137.5, -60.0, 140.0),
         rotateV=(15.0, 15.0, 45.0, 0.0), attractUp=(0.0, 0.0, -2.75, -3.0), segSplits=(0.1, 0.2, 0.2, 0.0),
         splitAngle=(12.0, 30.0, 16.0, 0.0), splitAngleV=(0.0, 10.0, 20.0, 0.0), splitByLen=True, handleType="1",
-        scale=11.0, scaleV=1.5, leaves=130, leafScale=0.45, leafScaleX=0.16, leafScaleV=0.35, bend=0.0, leafangle=-70.0,
+        scale=11.0, scaleV=1.5, leaves=165, leafScale=0.33, leafScaleX=0.18, leafScaleV=0.35, bend=0.0, leafangle=-70.0,
         leafShape="rect", leafDownAngle=30.0, leafDownAngleV=10.0, leafRotate=137.5, leafRotateV=30.0, horzLeaves=False, leafDist="10",
         bark="MAT_bark_cypress", leaf="MAT_leaf_broadleaf", height=(8, 12)),
     # coast redwood: narrow conical, flat horizontal sprays
@@ -90,7 +90,7 @@ SPECIES = {
         downAngle=(90.0, 82.0, 50.0, 45.0), downAngleV=(0.0, 10.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(15.0, 20.0, 30.0, 0.0), attractUp=(0.0, 0.25, 0.1, 0.0), segSplits=(0.0, 0.0, 0.0, 0.0),
         splitAngle=(0.0, 0.0, 0.0, 0.0), splitAngleV=(0.0, 0.0, 0.0, 0.0), splitByLen=True,
-        scale=30.0, scaleV=3.0, leaves=110, leafScale=0.32, leafScaleX=0.38, leafScaleV=0.35, bend=0.25, leafangle=0.0,
+        scale=30.0, scaleV=3.0, leaves=165, leafScale=0.275, leafScaleX=0.40, leafScaleV=0.35, bend=0.25, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=50.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=30.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(18, 32)),
     # generic round-crowned broadleaf (acacia / plane / young oak)
@@ -102,7 +102,7 @@ SPECIES = {
         downAngle=(90.0, 55.0, 45.0, 45.0), downAngleV=(0.0, -30.0, 10.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 20.0, 30.0, 0.0), attractUp=(0.5, 0.3, 0.2, 0.0), segSplits=(0.2, 0.3, 0.1, 0.0),
         splitAngle=(25.0, 25.0, 20.0, 0.0), splitAngleV=(5.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.25,
-        scale=12.0, scaleV=1.5, leaves=70, leafScale=0.3, leafScaleX=0.8, leafScaleV=0.35, bend=0.3, leafangle=0.0,
+        scale=12.0, scaleV=1.5, leaves=105, leafScale=0.245, leafScaleX=0.85, leafScaleV=0.35, bend=0.3, leafangle=0.0,
         leafShape="rect", leafDownAngle=45.0, leafDownAngleV=20.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_broadleaf", height=(8, 14)),
 }
@@ -112,7 +112,7 @@ SEEDS = {"cypress": (3, 17, 41), "cypress_column": (2, 31), "eucalyptus": (5, 23
 # LOD overrides: geometry resolution and leaf density (skeleton stays identical for the same seed)
 LOD_OVERRIDES = {
     0: dict(bevelRes=1, resU=2),
-    1: dict(bevelRes=0, resU=1, leaf_factor=0.3, leaf_scale=1.8),
+    1: dict(bevelRes=0, resU=1, leaf_factor=0.38, leaf_scale=1.32),
     2: dict(bevelRes=0, resU=1, levels=2, leaf_factor=0.0, leaf_scale=1.0),
 }
 NON_OP_KEYS = ("bark", "leaf", "height")
@@ -287,12 +287,14 @@ def generate_library(quick=False, species=None):
 # positions from satellite_z20/z18 crowns and the hero-view geometry (docs/environment_notes.md explains each group).
 PLAN = [
     # A. peninsula north lobe (land X -40..-16, Y 0..26): the dense dark cluster right of the rotunda (user image, 169)
-    ("pine", -40.0, 10.0, 21.0, "A peninsula north lobe, cluster core (satellite crown (-35,16)); outside QA cam02's frame"),
-    ("redwood", -35.0, 0.0, 16.0, "A young redwood at the north arch (ref 070), west edge of cam02"),
-    ("cypress", -36.0, 6.0, 24.0, "A dark mass right of the dome"),
-    ("pine", -38.0, 17.0, 22.0, "A"),
-    ("willow", -36.0, 24.0, 10.0, "A pale weeping willow at the water in front of the cluster (ref 169)"),
-    ("broadleaf", -41.0, 18.0, 11.0, "A shore broadleaf (moved off cam02's line of sight)"),
+    ("pine", -44.0, 4.0, 21.0, "A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10)"),
+    ("redwood", -37.0, -2.0, 16.0, "A young redwood at the north arch (ref 070)"),
+    ("cypress", -41.0, -1.0, 24.0, "A dark mass right of the dome"),
+    ("pine", -46.0, 8.0, 22.0, "A cluster, second crown"),
+    ("willow", -40.0, 16.0, 10.0, "A pale weeping willow at the water in front of the cluster (ref 169)"),
+    ("broadleaf", -49.0, 13.0, 11.0, "A shore broadleaf at cam02's right edge"),
+    ("cypress", -48.0, 0.0, 23.0, "A cluster depth (QA-01-6: mass kept dense after the move west)"),
+    ("pine", -52.0, 6.0, 20.0, "A cluster depth"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both)
     ("cypress_column", -36.0, -18.0, 27.0, "A2 tall column right of the rotunda (user image x~1020)"),
     ("pine", -47.0, -13.0, 17.0, "A2 strip along the north wing (kept below the colonnade entablature)"),
@@ -310,8 +312,8 @@ PLAN = [
     ("cypress_column", 26.0, 23.0, 24.0, "C second column (user image x~330), south lobe"),
     ("broadleaf", 20.0, 17.0, 13.0, "C small dark tree touching the rotunda's left edge (user image x~410), in the podium planter zone"),
     ("eucalyptus", 62.0, -30.0, 30.0, "C broad eucalyptus behind the south wing (ref 169 left)"),
-    ("pine", 24.0, -22.0, 18.0, "C satellite crown (19,-13)"),
-    ("broadleaf", 33.0, -20.0, 10.0, "C satellite crown (26,-3), small; off cam03's axis"),
+    ("pine", 62.0, -46.0, 18.0, "C QA-01-6: moved out of cam03 (was 24,-22 = 7 m in front of the camera)"),
+    ("broadleaf", 74.0, -38.0, 10.0, "C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera)"),
     # D. south shore near the south wing and pylon
     ("cypress_column", 66.0, 40.0, 22.0, "D dense cypress behind the south pylon (ref 169 far left)"),
     ("eucalyptus", 76.0, 46.0, 28.0, "D"),
@@ -372,41 +374,56 @@ FAR_RADIUS = 150.0   # beyond this, LOD0/LOD1 objects use the LOD1 mesh (LOD1 ca
 
 def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
     """Tree screen behind both colonnade wings (DPR: redwoods planted 1968; ref 169: trees fill ~80 % of the bays
-    behind the north wing). Two staggered rows along each wing's back edge: row 1 at 5 m (6 m spacing, 22-32 m),
-    row 2 at 13 m (9 m spacing, 26-34 m). Row-2 trees get the lighter LOD meshes (note prefix 'E2')."""
+    behind the north wing, QA-01-6).
+
+    The wings are arcs struck from (0, 52) (env_backdrop.ARC_CENTRE), so the screen is laid out in polar coordinates
+    about that point: for every 2 deg of the wing's angular sweep the polygon's outermost radius is measured, and
+    three staggered rows are planted at +4.5 / +11 / +19 m outside it. Planting from the polygon's edge segments
+    (the old method) put trees inside the colonnade band, e.g. 1 m in front of QA cam 03.
+    """
+    C = Vector((0.0, 52.0))
     out = []
     rnd = random.Random(5)
     if hall_field is None:
         hall_field = L.PolyField(L.ensure_ccw(hall_poly), cell=10.0)
+    fields = [L.PolyField(L.ensure_ccw(w), cell=6.0) for w in colonnade_polys]
+    # QA-01-6: never plant a screen tree on top of a QA camera (cam 03 stands inside the south wing)
+    try:
+        import qa_cameras
+        keepout = [(c["loc"][0], c["loc"][1]) for c in qa_cameras.CAMERAS if c["loc"][2] < 40.0]
+    except Exception:
+        keepout = []
     for wing in colonnade_polys[:2]:
         poly = L.ensure_ccw(wing)
-        n = len(poly)
-        back = []
-        for i in range(n):
-            a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
-            d = b - a
-            if d.length < 0.5:
-                continue
-            d.normalize()
-            nrm = Vector((d.y, -d.x))
-            mid = (a + b) / 2
-            if nrm.dot((-mid).normalized()) < -0.35:      # faces away from the rotunda = back edge
-                back.append((a, b, nrm))
-        for row, (off, spacing, hmin, hmax, tag) in enumerate(((5.0, 6.0, 22.0, 32.0, "E1"), (13.0, 9.0, 26.0, 34.0, "E2"))):
+        pts = L.resample_polyline(poly, 2.0, closed=True)
+        bins = {}
+        for (x, y) in pts:
+            v = Vector((x, y)) - C
+            k = int(round(math.degrees(math.atan2(v.y, v.x)) / 2.0))
+            bins[k] = max(bins.get(k, 0.0), v.length)
+        ks = sorted(bins)
+        # keep the main run of the sweep (drop 2 deg stragglers) and smooth the outer radius
+        outer = {k: max(bins.get(k + j, bins[k]) for j in (-1, 0, 1)) for k in ks}
+        for row, (off, spacing, hmin, hmax, tag) in enumerate(((4.5, 4.5, 22.0, 32.0, "E1"),
+                                                               (11.0, 6.0, 26.0, 34.0, "E2"),
+                                                               (19.0, 9.0, 26.0, 34.0, "E3"))):
             carry = rnd.uniform(0, spacing)
-            for (a, b, nrm) in back:
-                seg = (b - a).length
-                d = (b - a).normalized()
+            for k in ks:
+                r = outer[k] + off + rnd.uniform(-1.5, 1.5)
+                arc = math.radians(2.0) * r          # metres covered by this 2 deg bin
                 t = carry
-                while t < seg:
-                    p = a + d * t + nrm * (off + rnd.uniform(-1.5, 1.5)) + d * rnd.uniform(-1.0, 1.0)
-                    if hall_field.signed(p.x, p.y) > 2.5:
+                while t < arc:
+                    ang = math.radians(2.0 * k) + (t / max(1e-6, r))
+                    p = C + Vector((math.cos(ang), math.sin(ang))) * r
+                    inside = any(f.signed(p.x, p.y) < 1.5 for f in fields)
+                    near_cam = any(math.hypot(p.x - cx, p.y - cy) < 16.0 for (cx, cy) in keepout)
+                    if not inside and not near_cam and hall_field.signed(p.x, p.y) > 1.0:
                         u = rnd.random()
-                        sp = "redwood" if u < 0.6 else ("cypress" if u < 0.8 else ("eucalyptus" if row == 1 else "pine"))
+                        sp = "redwood" if u < 0.55 else ("cypress" if u < 0.82 else ("eucalyptus" if row else "pine"))
                         h = rnd.uniform(hmin, hmax) if sp != "pine" else rnd.uniform(18, 24)
                         out.append((sp, p.x, p.y, h, f"{tag} screen behind the colonnade"))
                     t += spacing
-                carry = t - seg
+                carry = t - arc
     return out
 
 
@@ -473,11 +490,15 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
                 print(f"[env_trees] WARNING {sp} at ({x0:.0f},{y0:.0f}) is in the water and no land within 15 m ({note[:30]})")
         z = terrain_height(x, y) - 0.15
         far = math.hypot(x, y) > FAR_RADIUS or note.startswith("H")      # backdrop trees: LOD1 mesh for LOD0
-        light = note.startswith("E2")                                    # second screen row: LOD2 mesh for LOD1
+        light = note.startswith("E2") or note.startswith("E3")           # back screen rows: LOD2 mesh for LOD1
         n = per_species_idx.get(sp, 0)
         per_species_idx[sp] = n + 1
         rot = rnd.uniform(0, 2 * math.pi)
-        sxy = scale * rnd.uniform(0.9, 1.1)
+        sx = scale * rnd.uniform(0.82, 1.16)
+        sy = scale * rnd.uniform(0.82, 1.16)
+        sz = scale * rnd.uniform(0.94, 1.08)
+        tilt_a = rnd.uniform(0, 2 * math.pi)
+        tilt = math.radians(rnd.uniform(0.0, 4.5))       # wind lean: no two crowns share a silhouette
         for lod in (0, 1, 2):
             me = lods[lod]
             if far and lod == 0:
@@ -488,8 +509,8 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
                 me = lods[2]
             o = bpy.data.objects.new(f"ENV_tree_{sp}_{n:02d}_LOD{lod}", me)
             o.location = (x, y, z)
-            o.rotation_euler = (0.0, 0.0, rot)
-            o.scale = (sxy, sxy, scale)
+            o.rotation_euler = (tilt * math.cos(tilt_a), tilt * math.sin(tilt_a), rot)
+            o.scale = (sx, sy, sz)
             o["species"] = sp
             o["seed"] = seed
             o["height_m"] = h
