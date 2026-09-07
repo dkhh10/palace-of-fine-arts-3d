@@ -198,9 +198,37 @@ def build_hall(SUB, hall_poly, hall_field):
 
 
 # ----------------------------------------------------------------------------- Marina houses
+def _oabb(poly):
+    """(centre, axis unit vector, half-length along it, half-width across it) of a polygon's best rectangle."""
+    best = None
+    for i in range(len(poly)):
+        ax, ay = poly[(i + 1) % len(poly)][0] - poly[i][0], poly[(i + 1) % len(poly)][1] - poly[i][1]
+        n = math.hypot(ax, ay)
+        if n < 1e-6:
+            continue
+        ax, ay = ax / n, ay / n
+        us = [x * ax + y * ay for (x, y) in poly]
+        vs = [-x * ay + y * ax for (x, y) in poly]
+        area = (max(us) - min(us)) * (max(vs) - min(vs))
+        if best is None or area < best[0]:
+            u0, u1, v0, v1 = min(us), max(us), min(vs), max(vs)
+            cu, cv = 0.5 * (u0 + u1), 0.5 * (v0 + v1)
+            best = (area, (cu * ax - cv * ay, cu * ay + cv * ax), (ax, ay),
+                    0.5 * (u1 - u0), 0.5 * (v1 - v0))
+    return best[1:] if best else None
+
+
 def build_houses(SUB, site):
+    """Marina / Presidio backdrop buildings from the OSM extract.
+
+    QA-02-15: round 02 joined every footprint into ONE flat-topped prism with ONE material, so the skyline in cam06
+    read as "plain grey boxes". Now each building is its own object - which gives the library material's per-object
+    random a per-building hue and value - and carries a pitched roof (gable along the footprint's long axis, hipped
+    on the squarer ones) in MAT_backdrop_roof.
+    """
     coll = SUB["ENV_backdrop"]
-    m = L.mat("MAT_backdrop_building")
+    m_wall = L.mat("MAT_backdrop_building")
+    m_roof = L.mat_or("MAT_backdrop_roof", "MAT_backdrop_building")
     path = common.REFERENCE_DIR / "plans" / "_osm.json"
     if not path.exists():
         print("[env_backdrop] no _osm.json, skipping houses")
@@ -209,7 +237,6 @@ def build_houses(SUB, site):
     LAT, LON = common.LAT, common.LON
     skip_ids = {288371295, 288371306, 288371310, 288371313, 288371314, 288371302, 1104852117}   # the palace itself
     rnd = random.Random(3)
-    bm = bmesh.new()
     count = 0
     for w in data["elements"]:
         if w.get("type") != "way" or "building" not in w.get("tags", {}) or not w.get("geometry"):
@@ -238,26 +265,60 @@ def build_houses(SUB, site):
             lv = tags.get("building:levels")
             h = float(lv) * 3.2 if lv else rnd.uniform(8.0, 12.0)
         poly = L.ensure_ccw(pts)
+        bm = bmesh.new()
         verts = [bm.verts.new((x, y, FAR_GROUND_Z)) for (x, y) in poly]
         try:
             f = bm.faces.new(verts)
         except ValueError:
+            bm.free()
             continue
         bmesh.ops.triangulate(bm, faces=[f])
-        # extrude this face region
         faces = [fc for fc in bm.faces if all(v in verts for v in fc.verts)]
         geom = bmesh.ops.extrude_face_region(bm, geom=faces)
         up = [v for v in geom["geom"] if isinstance(v, bmesh.types.BMVert)]
+        eaves = FAR_GROUND_Z + h + 0.6
         bmesh.ops.translate(bm, verts=up, vec=(0, 0, h + 0.6))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        me = bpy.data.meshes.new(f"ENV_backdrop_house_{count:03d}")
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(m_wall)
+        obj = bpy.data.objects.new(me.name, me)
+        obj["instance_seed"] = rnd.random()          # the library material's per-object random
+        coll.objects.link(obj)
+        # pitched roof over the footprint's oriented bounding box (QA-02-15)
+        box = _oabb(poly)
+        if box:
+            (bx, by), (ax, ay), half_l, half_w = box
+            if 1.0 < half_w < 26.0 and half_l < 40.0:
+                pitch = rnd.uniform(0.32, 0.55)      # 18-29 deg, the Marina norm
+                ridge = half_w * pitch
+                px, py = -ay, ax                     # across the ridge
+                hip = 0.0 if half_l > 1.8 * half_w else half_w * 0.75    # squarer plans get hipped ends
+                rb = bmesh.new()
+                def V(u, v, z):
+                    return rb.verts.new((bx + ax * u + px * v, by + ay * u + py * v, z))
+                e00, e01 = V(-half_l, -half_w, eaves), V(half_l, -half_w, eaves)
+                e11, e10 = V(half_l, half_w, eaves), V(-half_l, half_w, eaves)
+                r0, r1 = V(-half_l + hip, 0.0, eaves + ridge), V(half_l - hip, 0.0, eaves + ridge)
+                rb.faces.new((e00, e01, r1, r0))
+                rb.faces.new((r0, r1, e11, e10))
+                if hip > 0.0:
+                    rb.faces.new((e10, e00, r0))
+                    rb.faces.new((e01, e11, r1))
+                else:
+                    rb.faces.new((e00, e10, r0))
+                    rb.faces.new((e11, e01, r1))
+                bmesh.ops.recalc_face_normals(rb, faces=rb.faces[:])
+                rme = bpy.data.meshes.new(f"ENV_backdrop_roof_{count:03d}")
+                rb.to_mesh(rme)
+                rb.free()
+                rme.materials.append(m_roof)
+                ro = bpy.data.objects.new(rme.name, rme)
+                ro["instance_seed"] = obj["instance_seed"]
+                coll.objects.link(ro)
         count += 1
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    me = bpy.data.meshes.new("ENV_backdrop_houses")
-    bm.to_mesh(me)
-    bm.free()
-    me.materials.append(m)
-    o = bpy.data.objects.new("ENV_backdrop_houses", me)
-    coll.objects.link(o)
-    print(f"[env_backdrop] houses: {count} buildings within 460 m")
+    print(f"[env_backdrop] houses: {count} buildings within 460 m, separate objects with pitched roofs")
 
 
 # ----------------------------------------------------------------------------- Presidio ridge, hills, far ground, bay
