@@ -100,8 +100,135 @@ def shadow_report(trees, site, az=L.SUN_AZ, el=L.SUN_EL):
     return per, blockers
 
 
+# ----------------------------------------------------------------------------- QA-03-10 / QA-03-13 band coverage
+# The QA boxes are stated as luminance ratios against ref 169, but luminance in an ENV preview is set by the
+# placeholder sun, not by the shipped lighting rig, so it cannot be compared with a master render.  What ENV
+# actually controls is how much of the box is foliage rather than architecture or sky, and that is measured here by
+# ray-casting the box in assets/environment.blend + assets/architecture.blend.
+COVERAGE_BOXES = {
+    "cam01_left_wing": ("_qa_01_", (60, 480, 560, 600), (1920, 1080)),      # QA-03-10 / env_measure left_wing
+    "cam01_right_wing": ("_qa_01_", (1360, 480, 1860, 600), (1920, 1080)),
+    "cam05_rotunda": ("_qa_05_", (301, 27, 998, 713), (1280, 720)),          # QA-03-13, the rotunda silhouette
+    "cam01_shore": ("_qa_01_", (700, 640, 1200, 720), (1920, 1080)),         # QA-03-14 shrub row
+    "cam05_podium": ("_qa_05_", (320, 566, 1000, 624), (1280, 720)),        # QA-03-13 podium / Greek-key band
+}
+
+
+def coverage(move_back=(), step=2):
+    """Fraction of each box that resolves to foliage / architecture / sky.
+
+    `move_back` is a list of ((x, y), (x, y)) pairs: an object standing at the first position is put back at the
+    second before measuring, which is how the before/after for the frame-band relief is produced without a rebuild.
+    """
+    from mathutils import Vector
+    bpy.ops.wm.open_mainfile(filepath=str(common.ASSET_FILES["ENV"]))
+    scene = bpy.context.scene
+    arch = common.ASSET_FILES["ARCH"]
+    if arch.exists():
+        common.link_collection(arch, "ARCH", link=True)
+    for (frm, to) in move_back:
+        n = 0
+        for o in bpy.data.objects:
+            if o.name.startswith("ENV_tree_") and math.hypot(o.location.x - frm[0], o.location.y - frm[1]) < 1.2:
+                o.location.x, o.location.y = to[0], to[1]
+                n += 1
+        print(f"[coverage] put {n} objects back from {frm} to {to}")
+    qa_cameras.ensure(scene)
+    dg = bpy.context.evaluated_depsgraph_get()
+    print(f"\n{'box':18s} {'foliage':>8s} {'building':>9s} {'ground':>8s} {'sky':>6s}")
+    out = {}
+    for name, (cam_key, box, res) in COVERAGE_BOXES.items():
+        spec = next(c for c in qa_cameras.CAMERAS if cam_key in c["name"])
+        loc = Vector(spec["loc"])
+        f = (Vector(spec["target"]) - loc).normalized()
+        r = f.cross(Vector((0, 0, 1))).normalized()
+        u = r.cross(f).normalized()
+        hw = 0.5 * 36.0 / spec["lens"]
+        hh = hw * 9.0 / 16.0
+        W, H = res
+        x0, y0, x1, y1 = box
+        tot = fol = bld = gnd = 0
+        for py in range(y0, y1, step):
+            for px in range(x0, x1, step):
+                sx = ((px + 0.5) / W - 0.5) * 2
+                sy = (0.5 - (py + 0.5) / H) * 2 + 2.0 * spec.get("shift_y", 0.0)
+                d = (f + r * hw * sx + u * hh * sy).normalized()
+                ok, hit, nrm, idx, obj, _ = scene.ray_cast(dg, loc, d, distance=4000)
+                tot += 1
+                if not ok:
+                    continue
+                nm = obj.name
+                mat = ""
+                if obj.type == "MESH" and obj.data.materials:
+                    mi = obj.data.polygons[idx].material_index if idx < len(obj.data.polygons) else 0
+                    mm = obj.data.materials[min(mi, len(obj.data.materials) - 1)]
+                    mat = mm.name if mm else ""
+                if "leaf" in mat or "shrub" in mat or "reed" in mat or "forest" in mat or "canopy" in nm:
+                    fol += 1
+                elif "terrain" in nm or "ground" in nm or "water" in nm or "lawn" in mat or "gravel" in mat:
+                    gnd += 1
+                else:
+                    bld += 1
+        out[name] = (fol / tot, bld / tot, gnd / tot, 1 - (fol + bld + gnd) / tot)
+        print(f"{name:18s} {100 * out[name][0]:7.1f}% {100 * out[name][1]:8.1f}% "
+              f"{100 * out[name][2]:7.1f}% {100 * out[name][3]:5.1f}%")
+    return out
+
+
+def shrub_stats(region=(-30.0, 20.0, 30.0, 60.0)):
+    """QA-03-14: size spread and spacing irregularity of the shore shrub row in the hero's near-shore crop.
+
+    The crop QA measured (700 640 1200 720 of the 1920 hero) looks at the peninsula shore in front of the rotunda;
+    `region` is that patch of ground in world coordinates.  Reports the 10th/90th percentile height ratio and the
+    standard deviation of nearest-neighbour spacing as a fraction of its mean.
+    """
+    bpy.ops.wm.open_mainfile(filepath=str(common.ASSET_FILES["ENV"]))
+    x0, y0, x1, y1 = region
+    pts = []
+    for o in bpy.data.objects:
+        if not (o.name.startswith("ENV_shrub_") and o.name.endswith("_LOD1")):
+            continue
+        if not (x0 <= o.location.x <= x1 and y0 <= o.location.y <= y1):
+            continue
+        me = o.data
+        if not me.vertices:
+            continue
+        zs = [v.co.z * o.scale.z for v in me.vertices]
+        pts.append((o.location.x, o.location.y, max(zs) - min(zs)))
+    if len(pts) < 8:
+        print(f"[shrub_stats] only {len(pts)} shrubs in {region}")
+        return
+    hs = sorted(p[2] for p in pts)
+    n = len(hs)
+    lo, hi = hs[int(0.10 * n)], hs[int(0.90 * n)]
+    gaps = []
+    for i, a in enumerate(pts):
+        d = min(math.hypot(a[0] - b[0], a[1] - b[1]) for j, b in enumerate(pts) if j != i)
+        gaps.append(d)
+    mean = sum(gaps) / len(gaps)
+    var = sum((g - mean) ** 2 for g in gaps) / len(gaps)
+    sd = math.sqrt(var)
+    print(f"\n[shrub_stats] {n} shrubs in world box {region}")
+    print(f"  height p10 {lo:.2f} m, p90 {hi:.2f} m, tallest {hs[-1]:.2f} m -> size spread {hi / max(1e-6, lo):.2f}:1"
+          f"   (QA-03-14 wants >= 2:1)")
+    print(f"  nearest-neighbour spacing mean {mean:.2f} m, sd {sd:.2f} m -> sd/mean {100 * sd / mean:.0f} %"
+          f"   (QA-03-14 wants >= 40 %)")
+    print(f"  tallest within the rostra radius: {max(h for (x, y, h) in pts if math.hypot(x, y) < 54.0):.2f} m"
+          f"   (QA-03-13 wants <= 1.2 m)")
+
+
 def main():
     args = common.script_args()
+    if "--shrubs" in args:
+        shrub_stats()
+        return
+    if "--coverage" in args:
+        mb = []
+        if "--before" in args:
+            # the three trees frame_band_relief moved this round (see the build log)
+            mb = [((88.7, 18.8), (59.0, 14.6)), ((31.6, 25.8), (29.7, 26.2)), ((33.0, 25.9), (31.1, 26.4))]
+        coverage(move_back=mb)
+        return
     plan = env_trees.PLAN if "--plan" in args else placed_trees()
     if "--shadow" in args:
         az = float(args[args.index("--az") + 1]) if "--az" in args else L.SUN_AZ
