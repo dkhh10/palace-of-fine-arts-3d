@@ -133,6 +133,79 @@ LOD0 of the three attic panels (450 k) and the eight capitals (0.9 M) dominate; 
 at hero distance because LOD1 + normal map already carries the detail. Full rebuild time about 8 min (the three
 relief scans take 40 s to import and decimate).
 
+## QA round 01 fixes (Phase 3, 2026-09-07)
+
+### QA-01-10 — Zimm attic panels were sparse
+`PANEL_LAYOUTS` in `orn_build.py` now composes each of the three designs from the relief scans **plus** from-scratch
+figures (`relief_figure`, new poses `arms_up` / `stride` / `kneel` / `arms_out` in `human_joints`) and a rearing horse
+(`relief_horse`, `horse_joints`). Relief depth 0.40 -> 0.50 m, figures ~0.22 m proud of the face, figure height ~4 m
+(the scan groups) / ~3.5 m (the modelled figures). Coverage is measured, not eyeballed:
+`blender --background --python scripts/orn_panel_coverage.py` ray-casts a 420-px grid at the panel from the front and
+reports the fraction of the field standing >= 6 cm proud of the slab face. Numbers in the asset table below.
+
+### QA-01-11 — podium Greek-key meander with rosette bosses
+The photos (rostra_band_1/2) show the fret **incised** into a flat face, not raised, so both units are now a flat slab
+with the meander cut out of it by boolean (`greek_key_cutters` + `cut_boxes`), and only the round paterae stand proud.
+
+| unit | `unit_length` | band height | relief | composition |
+|---|---|---|---|---|
+| `ORN_greek_key` | **0.60 m** (one meander repeat) | 0.52 m | groove **4.5 cm** deep in an 8 cm slab | grid g = U/7, inner field 5g = 0.43 m, groove width 5.2 cm; the top groove overruns the unit by 5 % so consecutive units join into one continuous meander |
+| `ORN_rosette_band` | **1.20 m** | 0.52 m | groove 4.5 cm; boss 5.5 cm proud | one **0.45 m** petalled patera boss alternating with one meander repeat (sheet s4 #12) |
+
+Both share the band height, so a run can mix them. Every moulding unit (`dentil`, `egg_and_dart`, `greek_key`,
+`rosette_band`, `modillion`, `anthemion`) now carries custom properties `unit_length`, `band_height`, `relief_depth`
+on all three LODs.
+
+**Helper for the lead** (in `orn_lib.py`, call from `build_master.py`):
+
+    array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=None,
+                         instances=True, seed_base=None, extra_props=None, fit=True) -> [objects]
+
+Lays copies of a moulding unit end to end along a `frieze_run` socket and returns them. Straight runs use
+`run_length` (or `size_hint`); curved runs use `arc_center` + `arc_radius` and, if present, `arc_start` / `arc_end` —
+without the angles the start angle comes from the socket's position and the sweep direction from its local +X, both
+per `docs/sockets.md`. `n = round(run / unit_length)`; every unit is scaled along X by `run / (n * unit_length)` so the
+run ends flush (a warning is printed if that scale is more than 6 % off, which means the unit does not divide the run).
+Curved units are chords of the arc, oriented X = chord tangent, Z = the socket's up, Y = Z x X (identical to the
+socket's own frame at the first unit). With `instances=True` every copy shares the unit's mesh (one mesh in memory).
+Each copy gets `orn_type`, `unit_index`, `run_socket` and a decorrelated `instance_seed`.
+`orn_lib.unit_length_of(obj)` returns the documented repeat length (falls back to the bbox X size).
+
+Tested by `scripts/orn_frieze_test.py`: appends ARCH's 28 read-only `SOCKET_frieze_run_*` empties plus two mock
+rostra sockets (a straight 12 m run and a 90 deg curve of radius 9 m, standing in for the sockets ARCH is adding with
+`subtype='greek_key'`), arrays a unit on each and measures the result — **820 units on 30 sockets, worst
+spacing/end-flush error 8.7 mm, worst deviation of a unit from the arc 0.4 mm** (the chord sagitta), renders in
+`renders/previews/ornament/frieze_run_{straight,curved,rostra_straight,rostra_curved}.png`. Mapping used in the test
+(recommended to the lead): `subtype == 'greek_key'` or `'rostra'` -> `ORN_rosette_band`, anything else
+(`'greek_fret'`, no subtype) -> `ORN_greek_key`. Note the existing 3.00 m ressaut runs divide exactly by 0.60 and not
+by 1.20, which is another reason the plain meander belongs on those.
+
+### QA-01-13 — attic corner scrolls and the maiden pose
+New asset **`ORN_corner_scroll`** (was drafted as `scroll_attic`; renamed to the socket type the lead asked for).
+One unit = the Ionic-type paired volute block that caps ONE pilaster flanking an attic corner figure niche
+(refs 085 / attic_corner_figure_1-3): two spiral volutes of 0.40 m eye radius at the ends, a channelled bolster with
+an egg-moulded echinus between them, a moulded abacus over the top, a small palmette in the channel and a necking
+astragal underneath. 2 variants (weathering seed).
+
+Maiden: rebuilt in the socket frame ARCH actually uses (origin on the box lid, 0.78 m inward from the corner along
+the diagonal), forearms folded onto the rim near the corner with the elbows out and the hands drawn in, head bowed
+over the corner into the box (refs 187/163), per-variant lean / bow / head turn / hem / fold count so the three read
+differently. `rim_z` 3.30 m; feet at z = -3.30 in the socket frame; custom props `rim_height`, `box_corner_y` (0.78),
+`feet_z`, `origin_note`.
+
+### QA-01-18 — per-instance variation
+- `MAT_ornament_concrete` (materials library) drives its variation from the node group `PFA_instance`, which contains
+  an **Object Info** node — so its `Random` output already decorrelates separate instance objects in both engines.
+- **It does NOT read the `instance_seed` custom property**: there is no `ShaderNodeAttribute` anywhere in
+  `MAT_ornament_concrete` or in `PFA_instance` / `PFA_concrete` / `PFA_streaks` / `PFA_edge` / `PFA_algae`.
+  Request to the materials agent (I do not own that file): add
+  `ShaderNodeAttribute(attribute_type='OBJECT', attribute_name='instance_seed')` inside `PFA_instance` and add it to
+  the `Seed` input, so the lead's deliberate per-instance seed (and the one `array_unit_along_run` writes) actually
+  moves the pattern instead of relying on Blender's own object random.
+- Geometry side (mine): the capital variants now differ in **silhouette**, not only in the weathering seed —
+  `CAPITAL_STYLE` scales lower-leaf width, upper-leaf length, curl, droop, volute radius and helix radius per variant
+  and variant 2 has one chipped/short leaf tip. Same for the maidens (pose parameters above) and the urns.
+
 ## Open issues (ORN)
 - Attic panels read as relief but weaker than the real Zimm alto-relievo at 30 m; the figures are 0.40 m proud.
   One-parameter fix if QA wants more punch: `depth` in `build_attic_panel` (0.40 -> 0.55) and the 2 cm sink.

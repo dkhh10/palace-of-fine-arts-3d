@@ -175,6 +175,44 @@ def render_group(base, objs, cam, tag, lod2=False, engine="EEVEE"):
     return fp
 
 
+def render_variants(typ, cam, tag, lod="1"):
+    """QA-01-18: every variant of one type side by side at the same LOD, so repetition is judged the way the hero
+    camera sees it (a row of instances). Writes <tag>_variants_<typ>.png."""
+    scene = bpy.context.scene
+    for o in bpy.data.objects:
+        if o.name.startswith("ORN_") and o.type == "MESH":
+            o.hide_render = o.hide_viewport = True
+    objs = [o for o in sorted(bpy.data.objects, key=lambda o: o.name)
+            if o.get("orn_type") == typ and o.name.endswith(f"_LOD{lod}")]
+    if not objs:
+        print(f"[orn_preview] no variants for {typ}")
+        return None
+    lo0, hi0 = L.bbox(objs[0])
+    gap = max(hi0[0] - lo0[0], hi0[1] - lo0[1]) * 1.2
+    shown = []
+    for k, o in enumerate(objs):
+        o.hide_render = o.hide_viewport = False
+        o.location = (gap * (len(objs) - 1) / 2 - k * gap, 0, 0)
+        m = clay_material(f"preview_{o.name}", normal_map=o.get("normal_map"))
+        o.data.materials.clear()
+        o.data.materials.append(m)
+        shown.append(o)
+    lo = Vector((min(L.bbox(o)[0][i] + o.location[i] for o in shown) for i in range(3)))
+    hi = Vector((max(L.bbox(o)[1][i] + o.location[i] for o in shown) for i in range(3)))
+    ground = bpy.data.objects.get("preview_ground")
+    if ground is not None:
+        ground.location.z = min(0.0, lo.z)
+    frame_camera(cam, lo, hi, side_deg=8.0, elev_deg=4.0)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    fp = OUT_DIR / f"{tag}_variants_{typ}.png"
+    scene.render.filepath = str(fp)
+    bpy.ops.render.render(write_still=True)
+    for o in shown:
+        o.location = (0, 0, 0)
+    print(f"[orn_preview] {fp.name} ({len(shown)} variants of {typ} at LOD{lod})")
+    return fp
+
+
 def main():
     src = Path(ARGS[ARGS.index("--src") + 1]) if "--src" in ARGS else common.ASSET_FILES["ORN"]
     if not src.exists():
@@ -194,6 +232,13 @@ def main():
     tag = ARGS[ARGS.index("--tag") + 1] if "--tag" in ARGS else common.timestamp()
     coll, cam = build_rig()
     outs = []
+    if "--variants-of" in ARGS:
+        for t in ARGS[ARGS.index("--variants-of") + 1].split(","):
+            fp = render_variants(t.strip(), cam, tag)
+            if fp:
+                outs.append(fp)
+        if "--sheet" not in ARGS:
+            return
     for base, objs in sorted(asset_groups(only).items()):
         if "0" not in objs or "1" not in objs:
             continue
