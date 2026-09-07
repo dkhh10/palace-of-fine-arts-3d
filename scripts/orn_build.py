@@ -438,6 +438,13 @@ HUMAN_BONES = [("pelvis", "hipL"), ("pelvis", "hipR"), ("hipL", "kneeL"), ("hipR
                ("elL", "haL"), ("elR", "haR")]
 
 
+def narrow(secs, f):
+    """Scale the half-widths of a drapery section list. QA-02-10: the corner figure's wrap was 2.07 m wide on a
+    6.7 m figure (a_hem 0.27 * S) which turned the whole figure into a bell; a standing draped figure that tall
+    is ~1.2 m across the cloth, ~2.2 m including the flanking cascades."""
+    return [(z, cx, cy, a * f, b * f) for (z, cx, cy, a, b) in secs]
+
+
 def attic_side_cascades(S, work, variant, top_z=1.44, hem_z=0.05, out=0.42, a=0.20, b=0.135, cy=-0.05,
                         folds=6, fold_amp=(0.16, 0.36)):
     """QA-02-10: the two heavy cloth panels that hang from behind the figure's arms down past the knees on BOTH
@@ -477,15 +484,15 @@ def build_attic_figure(variant, coll, bake=True):
         secs = [(0.03 * S, 0.0, 0.02 * S, 0.27 * S, 0.21 * S), (0.30 * S, 0.0, 0.01 * S, 0.24 * S, 0.18 * S),
                 (0.60 * S, 0.0, 0.0, 0.22 * S, 0.16 * S), (0.92 * S, 0.0, 0.0, 0.215 * S, 0.15 * S),
                 (1.08 * S, 0.0, 0.0, 0.18 * S, 0.12 * S), (1.14 * S, 0.0, 0.0, 0.16 * S, 0.11 * S)]
-        parts.append(drapery_tube("attic_wrap", secs, work, folds=rng.choice([6, 7, 8]), fold_amp=(0.03, 0.12),
+        parts.append(drapery_tube("attic_wrap", narrow(secs, 0.56), work, folds=rng.choice([6, 7, 8]), fold_amp=(0.03, 0.12),
                                   seed=variant * 13, fold_side=(90.0, 130.0), nu=80, nz=60, sharp=0.6))
         # mantle hanging behind the shoulders to the calves, seen beside the torso
         msecs = [(0.35 * S, 0.0, -0.12 * S, 0.34 * S, 0.07 * S), (0.9 * S, 0.0, -0.12 * S, 0.33 * S, 0.075 * S),
                  (1.30 * S, 0.0, -0.10 * S, 0.30 * S, 0.07 * S), (1.47 * S, 0.0, -0.06 * S, 0.24 * S, 0.06 * S)]
-        parts.append(drapery_tube("attic_mantle", msecs, work, folds=9, fold_amp=(0.06, 0.16), seed=variant * 17,
+        parts.append(drapery_tube("attic_mantle", narrow(msecs, 0.56), work, folds=9, fold_amp=(0.06, 0.16), seed=variant * 17,
                                   nu=64, nz=40, power=3.0, sharp=0.55))
-        parts += attic_side_cascades(S, work, variant, top_z=1.44, hem_z=0.05, out=0.42, a=0.20, b=0.135,
-                                     cy=-0.05, folds=6, fold_amp=(0.16, 0.36))
+        parts += attic_side_cascades(S, work, variant, top_z=1.44, hem_z=0.05, out=0.325, a=0.115, b=0.105,
+                                     cy=-0.05, folds=5, fold_amp=(0.20, 0.44))
     else:
         parts.append(L.sphere("attic_hair", 0.115 * S, work, location=hc + Vector((0, -0.02 * S, 0.035 * S)), scale=(1.05, 1.0, 0.85)))
         parts.append(L.sphere("attic_bun", 0.06 * S, work, location=hc + Vector((0, -0.11 * S, 0.06 * S))))
@@ -494,16 +501,16 @@ def build_attic_figure(variant, coll, bake=True):
                 (1.12 * S, 0.0, 0.0, 0.19 * S, 0.13 * S), (1.33 * S, 0.0, 0.01 * S, 0.22 * S, 0.145 * S),
                 (1.44 * S, 0.0, 0.01 * S, 0.245 * S, 0.12 * S), (1.50 * S, 0.0, 0.01 * S, 0.14 * S, 0.09 * S),
                 (1.55 * S, 0.0, 0.015 * S, 0.07 * S, 0.07 * S)]
-        parts.append(drapery_tube("attic_gown", secs, work, folds=rng.choice([9, 10, 11]), fold_amp=(0.02, 0.10),
+        parts.append(drapery_tube("attic_gown", narrow(secs, 0.57), work, folds=rng.choice([9, 10, 11]), fold_amp=(0.02, 0.10),
                                   seed=variant * 13, fold_side=(90.0, 140.0), nu=96, nz=80, sharp=0.6))
         # overfold to the hips
         osecs = [(0.98 * S, 0.0, 0.03 * S, 0.24 * S, 0.17 * S), (1.15 * S, 0.0, 0.02 * S, 0.21 * S, 0.15 * S),
                  (1.34 * S, 0.0, 0.02 * S, 0.235 * S, 0.155 * S), (1.45 * S, 0.0, 0.02 * S, 0.25 * S, 0.13 * S),
                  (1.50 * S, 0.0, 0.02 * S, 0.15 * S, 0.10 * S)]
-        parts.append(drapery_tube("attic_over", osecs, work, folds=12, fold_amp=(0.02, 0.08), seed=variant * 19,
+        parts.append(drapery_tube("attic_over", narrow(osecs, 0.57), work, folds=12, fold_amp=(0.02, 0.08), seed=variant * 19,
                                   fold_side=(90.0, 140.0), nu=80, nz=30))
-        parts += attic_side_cascades(S, work, variant, top_z=1.40, hem_z=0.04, out=0.40, a=0.185, b=0.125,
-                                     cy=-0.04, folds=7, fold_amp=(0.14, 0.32))
+        parts += attic_side_cascades(S, work, variant, top_z=1.40, hem_z=0.04, out=0.315, a=0.105, b=0.095,
+                                     cy=-0.04, folds=5, fold_amp=(0.18, 0.42))
     t = time.time()
     # QA-02-10: smooth=3 at 2.8 cm closed the arm-to-torso gaps and the drapery channels, which is what made the
     # figure read as a featureless bollard at cam05. One light pass at 2.2 cm keeps the silhouette breaks open.
@@ -793,7 +800,8 @@ def release_scans():
     _scan_cache.clear()
 
 
-def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=0.0, coll=None, bg_y=None):
+def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=0.0, coll=None, bg_y=None,
+               front_y=None):
     """Copy a scan into the panel: scaled to `height` (m) tall and `depth` (m) of relief, its background surface
     put at absolute y = `bg_y` (QA-02-9: the field ground is now SUNK, so the scan's own background plate must go
     down to it and the figures stand the full `depth` proud of it; the old default put the background at the slab
@@ -803,6 +811,11 @@ def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=
         return None
     src = ob
     ob.name = f"rel_{key}_{x:.1f}"
+    if front_y is not None and bg_y is not None:
+        # solve the depth scale so the scan's own background plate lands on the field ground and its highest
+        # figures reach `front_y`; bg_frac differs per scan (0.36 centaur .. 0.63 dacians) so a fixed depth
+        # put the three scans at three different heights above the ground.
+        depth = max(0.05, (front_y - bg_y) / max(0.15, 1.0 - src["bg_frac"]))
     (x0, y0, z0), (x1, y1, z1) = L.bbox(ob)
     sz = height / (z1 - z0)
     sy = depth / (y1 - y0)
@@ -858,15 +871,15 @@ def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0,
         J = {k: (p, (r[0] * bulk, r[1] * bulk)) for k, (p, r) in J.items()}
     body = L.skin_figure(name, J, HUMAN_BONES, coll, subdiv=2)
     hc = J["head"][0]
-    hair = L.sphere(name + "_hair", 0.115 * S * bulk, coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)),
+    hair = L.sphere(name + "_hair", 0.115 * S * min(bulk, 1.05), coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)),
                     scale=(1.0, 0.95, 0.9))
     made = [body, hair]
     if drape:
         (bx0, by0, bz0), (bx1, by1, bz1) = L.bbox(body)
         H = bz1 - bz0
         cx, cy = 0.5 * (bx0 + bx1), 0.5 * (by0 + by1)
-        a_hem, a_top = 0.215 * H, 0.130 * H
-        b = 0.42 * a_hem
+        a_hem, a_top = 0.128 * H, 0.082 * H
+        b = 0.50 * a_hem
         g = drapery_tube(f"{name}_drape",
                          [(bz0 + 0.012 * H, cx, cy, a_hem, b),
                           (bz0 + 0.30 * H, cx, cy, a_hem * 0.94, b * 0.95),
@@ -903,7 +916,7 @@ def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25
     return [h]
 
 
-PANEL_GROUND_Y = 0.05     # QA-02-9: the field ground, sunk behind the 0.16 m frame plane
+PANEL_GROUND_Y = 0.015    # QA-02-9: the field ground, sunk behind the 0.16 m frame plane
 
 # Panel layouts (QA-01-10): >= 8 figures ~3.5 m tall per 10.5 m field, three distinct designs.
 # ("scan", key, x, height, mirror) | ("fig", pose, x, mirror, rot) | ("horse", x, mirror)
@@ -933,6 +946,11 @@ def build_attic_panel(variant, coll, bake=True):
     face_y = T                     # the frame / border plane ARCH's moulding meets
     GROUND = PANEL_GROUND_Y        # the sunk field ground behind the figures
     RIM = 0.115                    # width of the border left standing at the frame plane
+    # ARCH's recess measured from architecture.blend: ARCH_rotunda_attic_panel_* (the sunk field block) has its
+    # front face at socket-local y = 0.00 and ARCH_rotunda_attic_frame_* (the moulding ring, 4.7 cm thick) stands
+    # at y = 0.234-0.281. So the panel has 0.28 m of recess to work in; the boldest figures break the frame plane
+    # by ~0.17 m as they do in ref 063, nothing more.
+    FRONT_HI, FRONT_MID, FRONT_LO = 0.575, 0.415, 0.215
     design = (variant - 1) % 3 + 1
     # QA-02-9: a sunk field with a standing border, not a flat slab. The ground is 0.42-0.50 m behind the fronts
     # of the figures, so the slivers of ground between them go dark by occlusion even when the low morning sun
@@ -942,35 +960,53 @@ def build_attic_panel(variant, coll, bake=True):
              L.box("panel_rim_t", (W, T, RIM), work, location=(0, T / 2, Hh - RIM / 2)),
              L.box("panel_rim_l", (RIM, T, Hh), work, location=(-W / 2 + RIM / 2, T / 2, Hh / 2)),
              L.box("panel_rim_r", (RIM, T, Hh), work, location=(W / 2 - RIM / 2, T / 2, Hh / 2))]
-    depth = 0.80                   # scan relief stretched: background at GROUND, heads ~0.55 m proud of it
+    depth = 0.80                   # (overridden per scan by front_y/bg_y below)
     fig_count = 0
     for item in PANEL_LAYOUTS[design]:
         if item[0] == "scan":
             _, key, x, h, mirror = item
-            parts.append(place_scan(key, x, h, depth, face_y, mirror=mirror, z=0.2, bg_y=GROUND + 0.01))
+            parts.append(place_scan(key, x, h, depth, face_y, mirror=mirror, z=0.2, bg_y=GROUND + 0.01,
+                                    front_y=FRONT_HI - 0.02))
             fig_count += {"soldiers": 3, "dacians": 3, "centaur": 2}[key]
         elif item[0] == "fig":
             _, pose, x, mirror, rot = item
             parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * rng.uniform(0.95, 1.05), mirror=mirror,
-                                   rot_deg=rot + rng.uniform(-3, 3), proud=rng.uniform(0.34, 0.46), rng=rng,
-                                   bulk=rng.uniform(1.45, 1.70), seed=6000 + variant * 40 + fig_count,
-                                   flatten=rng.uniform(0.52, 0.66))
+                                   rot_deg=rot + rng.uniform(-3, 3),
+                                   # depth layering: alternate figures sit ~0.17 m further back so the overlaps
+                                   # themselves make dark edges (ref 063 is a two-deep crowd, not a single plane)
+                                   proud=(rng.uniform(FRONT_HI - 0.04, FRONT_HI + 0.02) if fig_count % 2 == 0
+                                          else rng.uniform(FRONT_MID - 0.03, FRONT_MID + 0.03)) - face_y, rng=rng,
+                                   bulk=rng.uniform(1.02, 1.18), seed=6000 + variant * 40 + fig_count,
+                                   flatten=rng.uniform(0.42, 0.54))
             fig_count += 1
         elif item[0] == "horse":
             _, x, mirror = item
-            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.50, flatten=0.60)
+            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.62 - face_y, flatten=0.46)
             fig_count += 1
+    # QA-02-9: a BACK ROW between the front figures. Zimm's panels are a two-deep crowd (ref 063 / zimm_panel_1):
+    # what reads as "carving" at 100 m is the ladder of dark slots between a front body and the half-hidden one
+    # behind it, not cast shadow - at az 118.5 / el 7.4 the sun is within 11 deg of this panel's normal and casts
+    # essentially none. Front row stands 0.50-0.62 m proud of the sunk ground, the back row 0.19-0.27 m.
+    back_poses = ["stride", "arms_up", "arms_out", "kneel", "stride", "arms_out", "arms_up"]
+    for i in range(7):
+        bx = -4.55 + i * 1.52 + rng.uniform(-0.15, 0.15)
+        parts += relief_figure(f"rb_{i}", back_poses[i], bx, face_y, work, S=2.05 * rng.uniform(0.94, 1.04),
+                               mirror=(i % 2 == 0), rot_deg=rng.uniform(-6, 6),
+                               proud=rng.uniform(FRONT_LO - 0.03, FRONT_LO + 0.04) - face_y, rng=rng,
+                               bulk=rng.uniform(1.00, 1.12), seed=6500 + variant * 40 + i,
+                               flatten=rng.uniform(0.30, 0.40), drape=(i % 3 != 0))
+        fig_count += 1
     print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures")
     parts = [p for p in parts if p is not None]
     # shields / discs in the remaining gaps (design 1 and 3 are combats)
     if design != 2:
         for i in range(2):
             x = rng.uniform(-4.9, 4.9)
-            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, face_y + 0.14, rng.uniform(0.9, 3.4)), scale=(1.0, 0.45, 1.0)))
+            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, 0.20, rng.uniform(0.9, 3.4)), scale=(1.0, 0.42, 1.0)))
     # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field); it now stands
     # 0.36 m proud of the sunk ground so the bottom of the field carries a hard ledge line as it does in ref 063
-    parts.append(L.box("panel_plinth", (W - 0.30, 0.36 - GROUND, 0.44), work,
-                       location=(0, 0.5 * (GROUND + 0.36), 0.25), bevel=0.03))
+    parts.append(L.box("panel_plinth", (W - 0.30, 0.34 - GROUND, 0.44), work,
+                       location=(0, 0.5 * (GROUND + 0.34), 0.25), bevel=0.03))
     t = time.time()
     hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.024), smooth=1, smooth_factor=0.18, coll=work)
     # clamp anything that overhangs the framed field: the frame crops the relief (QA-01-10 field is 10.5 x 4.5 m)
