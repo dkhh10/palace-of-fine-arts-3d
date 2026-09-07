@@ -101,7 +101,12 @@ for case in HERO:
     parts = case.split(",")
     s, cb, bm, de = (float(x) for x in parts[:4])
     look = ("AgX - " + parts[4].replace("_", " ")) if len(parts) > 4 and parts[4] else base_look
-    scene.view_settings.look = look
+    try:
+        scene.view_settings.look = look
+    except Exception as e:
+        print(f"[r09] look {look!r} rejected ({e}); available: "
+              f"{[i.identifier for i in scene.view_settings.bl_rna.properties['look'].enum_items]}")
+        continue
     if n_strength:
         n_strength.inputs[1].default_value = s
     if n_camboost:
