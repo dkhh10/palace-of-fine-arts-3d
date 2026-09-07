@@ -19,7 +19,7 @@ CAMERAS = [
     dict(name="CAM_qa_01_lagoon_hero", loc=(-14.1, 100.0, 1.6), target=(0.0, 0.0, 1.6), lens=20.0, shift_y=0.06,
          ref="canonical/cam_01_lagoon_hero.png",
          note="THE hero. On the lagoon-face normal (az 82 deg), east shore ~115 m, eye level; real-photo twin ref 169 (golden hour)."),
-    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-40.0, 15.0, 1.4), target=(0.0, 0.0, 20.0), lens=18.0,
+    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-45.0, 52.0, 1.3), target=(0.0, 0.0, 22.0), lens=20.0,
          ref="canonical/cam_02_ne_shore_threequarter.jpg",
          note="Ref 062: north-east shore, 50 m, 3/4 view; south colonnade visible behind the rotunda on the left."),
     dict(name="CAM_qa_03_colonnade_walk", loc=(81.0, 12.04, 1.7), target=(0.0, 0.0, 9.2), lens=18.0,
