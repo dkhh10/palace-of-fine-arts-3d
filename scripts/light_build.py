@@ -45,7 +45,8 @@ EXPOSURE_BIAS = 0.5                # EV added to the grey-card calibration (see 
 LOOK = "AgX - Base Contrast"       # 'Punchy' crushes the sky-lit shade (A/B in lighting_notes)
 MIST = dict(start=40.0, depth=1500.0, falloff="LINEAR")   # mist pass 0 at 40 m -> 1 at 1540 m
 COMP = dict(haze_strength=0.55, haze_warmth=(1.06, 1.0, 0.88),   # haze colour = measured west-horizon radiance x warmth
-            bloom_threshold=6.0, bloom_strength=0.035, bloom_size=0.6, vignette=0.08)
+            bloom_threshold_display=0.9,   # scene-linear threshold = this / 2^exposure, i.e. only near-white pixels bloom
+            bloom_strength=0.05, bloom_size=0.6, vignette=0.08)
 
 COLLECTION = "LIGHT"
 WORLD_NAME = "WORLD_golden_hour"
@@ -140,7 +141,7 @@ def _set_menu(sock, value):
         print(f"[light_build] WARNING could not set menu socket {sock.name} = {value}: {e}")
 
 
-def build_compositor_group(haze_color):
+def build_compositor_group(haze_color, exposure):
     """COMP_golden_hour: Image + Mist + Depth in -> warm depth haze (geometry only), bloom, <=0.1 vignette -> Image."""
     for name in (GROUP_NAME, SCENE_TREE_NAME):
         g = bpy.data.node_groups.get(name)
@@ -153,7 +154,7 @@ def build_compositor_group(haze_color):
     it.new_socket("Depth", in_out="INPUT", socket_type="NodeSocketFloat")
     s = it.new_socket("Haze Color", in_out="INPUT", socket_type="NodeSocketColor"); s.default_value = (*haze_color, 1.0)
     s = it.new_socket("Haze Strength", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["haze_strength"]; s.min_value = 0.0; s.max_value = 1.0
-    s = it.new_socket("Bloom Threshold", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_threshold"]; s.min_value = 0.0
+    s = it.new_socket("Bloom Threshold", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_threshold_display"] / (2.0 ** exposure); s.min_value = 0.0
     s = it.new_socket("Bloom Strength", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_strength"]; s.min_value = 0.0; s.max_value = 1.0
     s = it.new_socket("Bloom Size", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["bloom_size"]; s.min_value = 0.0; s.max_value = 1.0
     s = it.new_socket("Vignette", in_out="INPUT", socket_type="NodeSocketFloat"); s.default_value = COMP["vignette"]; s.min_value = 0.0; s.max_value = 0.1
@@ -182,10 +183,10 @@ def build_compositor_group(haze_color):
     glare.inputs["Saturation"].default_value = 0.9
     # --- vignette: 1 - v * (1 - blurred ellipse)
     mask = _new(g, "CompositorNodeEllipseMask", "vignette_mask", (-200, -450))
-    mask.inputs["Size"].default_value = (1.35, 1.35)
+    mask.inputs["Size"].default_value = (1.0, 1.0)        # ellipse touches the frame edges; corners outside, feathered
     blur = _new(g, "CompositorNodeBlur", "vignette_blur", (0, -450))
     _set_menu(blur.inputs["Type"], "Gaussian")
-    blur.inputs["Size"].default_value = (350.0, 350.0)
+    blur.inputs["Size"].default_value = (200.0, 200.0)
     blur.inputs["Extend Bounds"].default_value = False
     g.links.new(mask.outputs["Mask"], blur.inputs["Image"])
     inv = _new(g, "ShaderNodeMath", "one_minus_mask", (200, -450)); inv.operation = "SUBTRACT"; inv.inputs[0].default_value = 1.0
@@ -248,7 +249,7 @@ def build(moment="morning", calibrate=True, save=True):
     scene.world = world
     Lh = calib["sky"]["L_horizon_west"]
     haze_color = tuple(Lh[i] * COMP["haze_warmth"][i] for i in range(3))
-    group = build_compositor_group(haze_color)
+    group = build_compositor_group(haze_color, exposure)
     scene_tree = apply_scene_settings(scene, exposure, group)
     scene["light_moment"] = moment
     scene["light_exposure_ev"] = exposure
@@ -259,7 +260,7 @@ def build(moment="morning", calibrate=True, save=True):
 
     print(f"[light_build] LIGHT_sun energy {energy:.2f} W/m2 colour ({color[0]:.3f}, {color[1]:.3f}, {color[2]:.3f}) angle {SUN_ANGLE} rad")
     print(f"[light_build] exposure {calib['exposure_ev']:.2f} EV (18 % card) + bias {EXPOSURE_BIAS:+.2f} = {exposure:.2f} EV, look {LOOK}")
-    print(f"[light_build] haze colour (scene units) {tuple(round(c, 3) for c in haze_color)}")
+    print(f"[light_build] haze colour (scene units) {tuple(round(c, 3) for c in haze_color)}; bloom threshold {COMP['bloom_threshold_display'] / 2 ** exposure:.1f} scene units")
     if save:
         common.save_blend(common.ASSET_FILES["LIGHT"])
     print(f"[light_build] done in {time.time() - t0:.1f}s")

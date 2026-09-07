@@ -42,14 +42,14 @@ WAYPOINTS = [
     ("rotunda_centre",  (0.0, 1.0, 2.5)),        # under the dome
 ]
 # key frames at which the camera reaches a waypoint (index into WAYPOINTS); eased in between, holds at both ends
-KEYS = [(1, 0), (49, 0), (240, 2), (400, 4), (600, 10), (700, 12), (FRAMES, 12)]
+KEYS = [(1, 0), (37, 0), (200, 2), (330, 4), (580, 10), (700, 12), (FRAMES, 12)]
 # look-at target keyframes: (frame, (x, y, z))
 TARGET_KEYS = [
     (1,   (0.0, 0.0, 17.0)),     # rotunda, hero framing
-    (240, (0.0, 0.0, 15.0)),     # still on the rotunda while gliding
-    (330, (72.0, 40.0, 12.0)),   # swing toward the colonnade end pylons
-    (400, (74.0, 22.0, 9.0)),    # look down the gallery
-    (600, (12.0, -8.0, 12.0)),   # toward the rotunda from inside the colonnade
+    (200, (0.0, 0.0, 15.0)),     # still on the rotunda while gliding along the shore
+    (280, (72.0, 40.0, 12.0)),   # swing toward the colonnade end pylons while crossing the water
+    (330, (74.0, 22.0, 9.0)),    # look down the gallery
+    (580, (12.0, -8.0, 12.0)),   # toward the rotunda from inside the colonnade
     (700, (0.0, 0.0, 30.0)),     # rise toward the dome
     (FRAMES, (0.0, 1.0, 46.0)),  # straight up at the dome apex (dome top at ~47.9 m)
 ]
