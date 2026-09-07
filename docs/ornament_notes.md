@@ -66,29 +66,31 @@ from `scripts/orn_compare.py`.)
 | anthemion | v1 | 1.02 x 0.08 x 0.22 | 30000 / 6000 / 600 | yes | `full01_anthemion_v1.png` |
 | attic_figure | v1 | 2.96 x 1.68 x 6.78 | 120000 / 20000 / 2000 | yes | `full01_attic_figure_v1.png` |
 | attic_figure | v2 | 2.44 x 1.85 x 6.82 | 120000 / 20000 / 2000 | yes | `full01_attic_figure_v2.png` |
-| attic_panel | v1 | 10.51 x 0.47 x 4.51 | 150000 / 24000 / 2400 | yes | `full01_attic_panel_v1.png` |
-| attic_panel | v2 | 10.51 x 0.45 x 4.52 | 150000 / 24000 / 2400 | yes | `full01_attic_panel_v2.png` |
-| attic_panel | v3 | 10.51 x 0.52 x 4.52 | 150000 / 24000 / 2400 | yes | `full01_attic_panel_v3.png` |
+| **attic_panel** | v1 (design A) | 10.51 x 0.48 x 4.51 | 142571 / 23960 / 2389 | yes | `fix01_attic_panel_v1.png` |
+| **attic_panel** | v2 (design B) | 10.51 x 0.45 x 4.52 | 146564 / 23881 / 5598 | yes | `fix01_attic_panel_v2.png` |
+| **attic_panel** | v3 (design C) | 10.51 x 0.47 x 4.51 | 145438 / 23981 / 2386 | yes | `fix01_attic_panel_v3.png` |
 | capital_colonnade | v1 | 2.68 x 2.71 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v1.png` |
-| capital_colonnade | v2 | 2.65 x 2.67 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v2.png` |
-| capital_colonnade | v3 | 2.70 x 2.65 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v3.png` |
+| capital_colonnade | v2 | 2.85 x 2.88 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v2.png` |
+| capital_colonnade | v3 | 2.70 x 2.64 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v3.png` |
 | capital_inner | v1 | 2.63 x 2.54 x 1.81 | 80000 / 16000 / 344 | yes | `full01_capital_inner_v1.png` |
-| capital_inner | v2 | 2.60 x 2.56 x 1.81 | 80000 / 16000 / 344 | yes | `full01_capital_inner_v2.png` |
-| capital_rotunda | v1 | 3.52 x 3.49 x 2.60 | 100000 / 20000 / 344 | yes | `full01_capital_rotunda_v1.png` |
-| capital_rotunda | v2 | 3.44 x 3.51 x 2.60 | 100000 / 20000 / 344 | yes | `full01_capital_rotunda_v2.png` |
-| capital_rotunda | v3 | 3.53 x 3.44 x 2.60 | 100000 / 20000 / 344 | yes | `full01_capital_rotunda_v3.png` |
+| capital_inner | v2 | 2.81 x 2.76 x 1.81 | 80000 / 16000 / 344 | yes | `full01_capital_inner_v2.png` |
+| capital_rotunda | v1 | 3.52 x 3.49 x 2.60 | 100000 / 20000 / 344 | yes | `fix01_variants_capital_rotunda.png` |
+| capital_rotunda | v2 | 3.72 x 3.80 x 2.60 | 99998 / 20000 / 344 | yes | (same sheet) |
+| capital_rotunda | v3 | 3.50 x 3.42 x 2.60 | 100000 / 20000 / 344 | yes | (same sheet) |
+| **corner_scroll** | v1 | 1.78 x 0.87 x 0.91 | 40000 / 8000 / 800 | yes | `fix01_corner_scroll_v1.png` |
+| **corner_scroll** | v2 | 1.78 x 0.87 x 0.91 | 40000 / 8000 / 800 | yes | `fix01_corner_scroll_v2.png` |
 | dentil | v1 | 1.00 x 0.16 x 0.22 | 30000 / 6000 / 600 | yes | `full01_dentil_v1.png` |
-| drum_band | v1 | 1.01 x 0.42 x 1.63 | 30000 / 6000 / 600 | yes | `full01_drum_band_v1.png` |
+| drum_band | v1 | 1.08 x 0.42 x 1.63 | 30000 / 6000 / 600 | yes | `full01_drum_band_v1.png` |
 | egg_and_dart | v1 | 1.01 x 0.13 x 0.20 | 30000 / 6000 / 600 | yes | `full01_egg_and_dart_v1.png` |
 | finial | v1 | 0.80 x 0.80 x 0.60 | 20000 / 4000 / 400 | yes | `full01_finial_v1.png` |
-| greek_key | v1 | 1.00 x 0.05 x 0.45 | 30000 / 6000 / 600 | yes | `full01_greek_key_v1.png` |
+| **greek_key** | v1 | 0.60 x 0.08 x 0.52 | 30000 / 6000 / 600 | yes | `frieze_run_straight.png` |
 | keystone | v1 | 0.75 x 0.50 x 0.73 | 50000 / 8000 / 800 | yes | `full01_keystone_v1.png` |
 | keystone | v2 | 0.73 x 0.50 x 0.73 | 50000 / 8000 / 800 | yes | `full01_keystone_v2.png` |
-| maiden | v1 | 1.60 x 1.73 x 4.36 | 100000 / 20000 / 2000 | yes | `full01_maiden_v1.png` |
-| maiden | v2 | 1.60 x 1.72 x 4.36 | 100000 / 20000 / 2000 | yes | `full01_maiden_v2.png` |
-| maiden | v3 | 1.60 x 1.71 x 4.36 | 100000 / 20000 / 2000 | yes | `full01_maiden_v3.png` |
+| **maiden** | v1 | 1.39 x 1.46 x 3.84 | 100000 / 20000 / 2000 | yes | `fix01_variants_maiden.png` |
+| **maiden** | v2 | 1.52 x 1.67 x 3.77 | 100000 / 20000 / 2000 | yes | (same sheet) |
+| **maiden** | v3 | 1.32 x 1.38 x 3.88 | 100000 / 20000 / 2000 | yes | (same sheet) |
 | modillion | v1 | 1.00 x 0.40 x 0.30 | 30000 / 6000 / 600 | yes | `full01_modillion_v1.png` |
-| rosette_band | v1 | 1.00 x 0.13 x 0.50 | 30000 / 6000 / 600 | yes | `full01_rosette_band_v1.png` |
+| **rosette_band** | v1 | 1.20 x 0.13 x 0.52 | 30000 / 6000 / 600 | yes | `frieze_run_rostra_straight.png` |
 | rosette_ceiling | v1 | 0.65 x 0.17 x 0.65 | 20000 / 4000 / 400 | yes | `full01_rosette_ceiling_v1.png` |
 | rosette_ceiling | v2 | 0.65 x 0.17 x 0.65 | 20000 / 4000 / 400 | yes | `full01_rosette_ceiling_v2.png` |
 | urn | v1 | 1.76 x 1.54 x 3.00 | 60000 / 12000 / 1200 | yes | `full01_urn_v1.png` |
@@ -109,9 +111,12 @@ from `scripts/orn_compare.py`.)
 - **capital_inner** (h 1.8, shaft-top r 0.80, abacus 2.15) and **capital_colonnade** (h 1.8, r 0.85, abacus 2.3,
   squatter: small lower leaves, big upper shells and scrolls) share the generator; rosette fleuron instead of the figure.
   The pylon-cluster capitals are the colonnade capital (ARCH raises the shaft 2.4 m).
-- **maiden** (4.5 m standing, 4.3 m tall with the head bowed, footprint about 1.3 x 1.3 m). Skin-figure body leaning
-  forward, forearms along the two rim edges of the box corner, peplos tube + overfold with dipping hem, sleeve
-  cascades under the elbows, hair bound in a bun. Custom props `rim_height` = 3.55, `box_corner_y` = -0.32.
+- **maiden** (3.77-3.88 m of hanging figure in the socket frame; the figure is ~4.3 m from feet to crown). Skin-figure
+  body leaning forward and hunched, forearms folded on the two rim edges of the box corner with the elbows out, head
+  sunk between the shoulders and bowed over the corner into the box, peplos tube + overfold with a dipping hem and
+  deep vertical fluting, sleeve cascades under the elbows, hair in a bun. **Origin = ARCH's socket on the box lid**,
+  0.78 m inward from the corner along the diagonal: box corner edge at (0, +0.78, 0), rim at z ~ 0, feet at z = -3.30.
+  Custom props `rim_height` 3.30, `box_corner_y` 0.78, `feet_z` -3.30, `origin_note`.
 - **attic_figure** (6.7 m). v1 male: skin body with a nude torso, both arms raised to the chest, wrapped cloth from
   the waist with heavy frontal folds, mantle behind; v2 female: full gown + overfold, one arm across the chest.
   Faces +Y; the niche (ARCH) is 0.6 m deep behind it.
@@ -120,7 +125,11 @@ from `scripts/orn_compare.py`.)
 - **urn** (3.0 m podium urn incl. 0.32 m plinth), **urn_niche** (1.6 m corner urn with a scale pattern), **urn_tub**
   (pylon planter 1.6 m diameter): note the three are separate socket types.
 - **keystone** (0.8 m lion mask on a 0.62 m back plate, mane of 14 shell leaves), origin at the back-face bottom-centre.
-- **attic_panel** v1/v2/v3 = designs A/B/C (combat with centaur; procession of draped figures; kneeling group).
+- **attic_panel** v1/v2/v3 = designs A/B/C (combat with a rearing horse; procession of draped figures; kneeling group).
+  Field exactly 10.5 x 4.5 m, total depth 0.42 m (0.16 slab + up to 0.26 m of relief after the remesh), **15 / 13 / 13
+  figures**, measured figure coverage **63.5 / 61.6 / 64.2 %** (`scripts/orn_panel_coverage.py`, LOD1 within 0.3 %).
+  Anything overhanging the field is clamped onto the frame plane and nothing sits behind the slab's back face.
+- **corner_scroll** v1/v2 (QA-01-13): 1.78 x 0.87 x 0.91 m over the volute rolls, nominal `unit_length` 1.50 m.
 - **finial** (dome apex cap 0.6 m), **rosette_ceiling** (0.6 m coffer rosette, projects +Y), **drum_band** (1 m
   unit, 1.6 m tall scale cushion), **dentil / egg_and_dart / greek_key / rosette_band / modillion / anthemion**
   (1 m units, origin at the back-face bottom-centre, projecting +Y; sizes in the table).
@@ -133,10 +142,109 @@ LOD0 of the three attic panels (450 k) and the eight capitals (0.9 M) dominate; 
 at hero distance because LOD1 + normal map already carries the detail. Full rebuild time about 8 min (the three
 relief scans take 40 s to import and decimate).
 
+## QA round 01 fixes (Phase 3, 2026-09-07)
+
+### QA-01-10 — Zimm attic panels were sparse
+`PANEL_LAYOUTS` in `orn_build.py` now composes each of the three designs from the relief scans **plus** from-scratch
+figures (`relief_figure`, new poses `arms_up` / `stride` / `kneel` / `arms_out` in `human_joints`) and a rearing horse
+(`relief_horse`, `horse_joints`). Relief depth 0.40 -> 0.50 m, figures ~0.22 m proud of the face, figure height ~4 m
+(the scan groups) / ~3.5 m (the modelled figures). Coverage is measured, not eyeballed:
+`blender --background --python scripts/orn_panel_coverage.py` ray-casts a 420-px grid at the panel from the front and
+reports the fraction of the field standing >= 6 cm proud of the slab face. Numbers in the asset table below.
+
+### QA-01-11 — podium Greek-key meander with rosette bosses
+The photos (rostra_band_1/2) show the fret **incised** into a flat face, not raised, so both units are now a flat slab
+with the meander cut out of it by boolean (`greek_key_cutters` + `cut_boxes`), and only the round paterae stand proud.
+
+| unit | `unit_length` | band height | relief | composition |
+|---|---|---|---|---|
+| `ORN_greek_key` | **0.60 m** (one meander repeat) | 0.52 m | groove **4.5 cm** deep in an 8 cm slab | grid g = U/7, inner field 5g = 0.43 m, groove width 5.2 cm; the top groove overruns the unit by 5 % so consecutive units join into one continuous meander |
+| `ORN_rosette_band` | **1.20 m** | 0.52 m | groove 4.5 cm; boss 5.5 cm proud | one **0.45 m** petalled patera boss alternating with one meander repeat (sheet s4 #12) |
+
+Both share the band height, so a run can mix them. Every moulding unit (`dentil`, `egg_and_dart`, `greek_key`,
+`rosette_band`, `modillion`, `anthemion`) now carries custom properties `unit_length`, `band_height`, `relief_depth`
+on all three LODs.
+
+**Helper for the lead** (in `orn_lib.py`, call from `build_master.py`):
+
+    array_unit_along_run(unit_obj, socket_empty, collection=None, name_prefix=None, instances=True,
+                         seed_base=None, extra_props=None, fit="auto", tol=0.06, alternatives=None) -> [objects]
+
+Lays copies of a moulding unit end to end along a `frieze_run` socket and returns them. Straight runs use
+`run_length` (or `size_hint`); curved runs use `arc_center` + `arc_radius` and, if present, `arc_start` / `arc_end` —
+without the angles the start angle comes from the socket's position and the sweep direction from its local +X, both
+per `docs/sockets.md`. `n = round(run / unit_length)`. `fit` decides what happens to the leftover:
+`"scale"` stretches every unit along X so the run ends flush; `"centre"` lays `floor(run / unit)` unscaled units
+centred on the run with equal plain margins at the ends (what a real frieze does on a short run); `"auto"` (default)
+scales when that costs less than `tol` = 6 % and otherwise centres. `alternatives=[other_unit, ...]` makes the helper
+pick, per run, whichever unit fits best — hand it `[ORN_rosette_band, ORN_greek_key]` and short box-base runs get the
+0.60 m meander while long rostra runs get the 1.20 m rosette band. Curved units are chords of the arc, oriented
+X = chord tangent, Z = the socket's up, Y = Z x X (identical to the socket's own frame at the first unit).
+With `instances=True` every copy shares the unit's mesh (one mesh in memory). Each copy gets `orn_type`,
+`unit_index`, `run_socket` and a decorrelated `instance_seed`.
+`orn_lib.unit_length_of(obj)` returns the documented repeat length (falls back to the bbox X size).
+
+Tested by `scripts/orn_frieze_test.py` against the **128 `frieze_run` sockets ARCH now ships** (98 straight rostra /
+box-base runs with `subtype='greek_key'`, 1.42-6.18 m, 434 m total; 4 curved colonnade architrave runs with
+`subtype='greek_fret'`, r 115.15/119.65, 383 m total; 24 rotunda ressaut runs with no subtype, 3.00 / 5.91 m, 95 m
+total) plus two mock sockets. Result: **1432 units on 128 sockets, worst unit-to-unit spacing error 1.8 mm, worst
+deviation of a unit from its arc 4.8 mm (the chord sagitta), worst plain margin left at a run end 518 mm** (less than
+one 0.60 m unit, by design on a centred fit). Renders in
+`renders/previews/ornament/frieze_run_{straight,curved,rostra_straight,rostra_curved}.png`. Mapping used in the test
+and recommended to the lead: `subtype == 'greek_key'` (or `'rostra'`) -> `ORN_rosette_band` with
+`alternatives=[ORN_greek_key]`; anything else -> `ORN_greek_key`.
+
+### QA-01-13 — attic corner scrolls and the maiden pose
+
+**Proposed `corner_scroll` socket frame (for the lead to pass to ARCH).** Origin at the **bottom-centre of the scroll
+block**, i.e. on the top face of the attic-corner cap (`ARCH_rotunda_attic_corner_cap_*`, top at z = 38.28); local
+**+Z up, +Y outward** (the same outward direction as the corner's `attic_figure` socket), scale 1, `size_hint` 1.50.
+Two per corner niche = **16 sockets**, at local x = **+-1.95 m** from the corner-cap centre (one on each pilaster
+flanking the figure niche), i.e. `location = cap_centre + rot_z(rz) @ (+-1.95, 0, 0)`, `z = 38.30`, `rz` copied from
+that corner's `attic_figure` socket.
+
+**Interim, no new socket needed:** ARCH already ships 8 `finial` sockets with `subtype='volute_scroll'`,
+`size_hint` 1.5, at z = 38.30 on the corner-cap centres (`SOCKET_finial_000..007`) with exactly this frame, so
+`ORN_corner_scroll` drops straight onto them — one centred block per corner instead of a flanking pair.
+**Important for `build_master.py`:** those 8 sockets are typed `finial`, so the current type -> collection mapping
+gives them the 0.6 m dome-apex cap. Route `finial` sockets by subtype: `volute_scroll` -> `ORN_corner_scroll`,
+`dome_apex` (`SOCKET_finial_008`, z = 49.4) -> `ORN_finial`.
+
+New asset **`ORN_corner_scroll`** (was drafted as `scroll_attic`; renamed to the socket type the lead asked for).
+One unit = the Ionic-type paired volute block that caps ONE pilaster flanking an attic corner figure niche
+(refs 085 / attic_corner_figure_1-3): two spiral volutes of 0.40 m eye radius at the ends, a channelled bolster with
+an egg-moulded echinus between them, a moulded abacus over the top, a small palmette in the channel and a necking
+astragal underneath. 2 variants (weathering seed).
+
+Maiden: rebuilt in the socket frame ARCH actually uses (origin on the box lid, 0.78 m inward from the corner along
+the diagonal), forearms folded onto the rim near the corner with the elbows out and the hands drawn in, head bowed
+over the corner into the box (refs 187/163), per-variant lean / bow / head turn / hem / fold count so the three read
+differently. `rim_z` 3.30 m; feet at z = -3.30 in the socket frame; custom props `rim_height`, `box_corner_y` (0.78),
+`feet_z`, `origin_note`.
+
+### QA-01-18 — per-instance variation
+- `MAT_ornament_concrete` (materials library) drives its variation from the node group `PFA_instance`, which contains
+  an **Object Info** node — so its `Random` output already decorrelates separate instance objects in both engines.
+- **It does NOT read the `instance_seed` custom property**: there is no `ShaderNodeAttribute` anywhere in
+  `MAT_ornament_concrete` or in `PFA_instance` / `PFA_concrete` / `PFA_streaks` / `PFA_edge` / `PFA_algae`.
+  Request to the materials agent (I do not own that file): add
+  `ShaderNodeAttribute(attribute_type='OBJECT', attribute_name='instance_seed')` inside `PFA_instance` and add it to
+  the `Seed` input, so the lead's deliberate per-instance seed (and the one `array_unit_along_run` writes) actually
+  moves the pattern instead of relying on Blender's own object random.
+- Geometry side (mine): the capital variants now differ in **silhouette**, not only in the weathering seed —
+  `CAPITAL_STYLE` scales lower-leaf width, upper-leaf length, curl, droop, volute radius and helix radius per variant
+  and variant 2 has one chipped/short leaf tip. Same for the maidens (pose parameters above) and the urns.
+
 ## Open issues (ORN)
-- Attic panels read as relief but weaker than the real Zimm alto-relievo at 30 m; the figures are 0.40 m proud.
-  One-parameter fix if QA wants more punch: `depth` in `build_attic_panel` (0.40 -> 0.55) and the 2 cm sink.
-  Only three scan sources exist, so the three designs share figure groups (mirrored / re-ordered).
+- `ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget (the mesh has too many disjoint shells
+  after the field clamp for the collapse to go further). LOD2 is only used beyond ~200 m, so I left it.
+- `corner_scroll` is 1.78 m over the volute rolls, not the 1.50 m the defect quotes; 1.50 is the nominal block width
+  (`unit_length`) and the rolls overhang it, as they do in ref 085.
+- The rostra band units are modelled as a slab standing 8 cm off the wall. If ARCH's podium top course already has a
+  recessed field, the slab will double up - say so and I will drop the backing to 3 cm.
+- Attic panels: fixed under QA-01-10 (13-15 figures, 61-64 % coverage, 0.26 m of relief after the remesh). Only three
+  scan sources exist, so the three designs still share the scan groups (mirrored / re-ordered); the 8-10 modelled
+  figures per panel are what makes them read as three different compositions.
 - Winged figure: the cornucopia horns stick out sideways; should curl up in front of the hands. Wings read as two
   tall fluted slabs (right silhouette from cam 04, no feather detail).
 - Keystone: the mouth/eye boolean recesses barely show after the remesh; the mask reads as a lion-ish mask with a mane

@@ -150,6 +150,8 @@ if "ORN" in linked and "ARCH" in linked:
         coll_name = ORN_COLL.get(t)
         if t == "urn":
             coll_name = "ORN_urn_niche" if float(sk.get("size_hint", 3.0)) <= 2.0 else "ORN_urn"
+        if t == "finial" and sk.get("subtype") == "volute_scroll":
+            coll_name = "ORN_corner_scroll"   # paired volute scrolls over the attic corner figures (QA-01-13)
         if t == "drum_band":
             variants = orn_variants("ORN_drum_band")
             if not variants:

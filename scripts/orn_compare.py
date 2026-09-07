@@ -26,9 +26,13 @@ PAIRS = [
     ("urn_niche_v1", "drum_urn_finial_2.jpg"),
     ("attic_panel_v1", "zimm_panel_1.jpg"),
     ("attic_panel_v2", "zimm_panel_3.jpg"),
+    ("attic_panel_v3", "zimm_panel_4.jpg"),
+    ("corner_scroll_v1", "attic_corner_figure_1.jpg"),
+    ("greek_key_v1", "rostra_band_2.jpg"),
     ("keystone_v1", "keystone_mask_1.jpg"),
     ("drum_band_v1", "drum_urn_finial_2.jpg"),
     ("rosette_band_v1", "rostra_band_1.jpg"),
+    ("maiden_v3", "weeping_maidens_1.jpg"),
     ("entablature_note", None),
 ]
 

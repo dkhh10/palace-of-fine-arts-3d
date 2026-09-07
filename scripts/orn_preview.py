@@ -115,11 +115,12 @@ def context_geometry(o, coll):
     made = []
     typ = o.get("orn_type", "")
     if typ == "maiden":
-        rim = float(o.get("rim_height", 3.55))
-        cy = float(o.get("box_corner_y", -0.32))
+        # socket frame: origin on the box lid, corner edge at (0, box_corner_y, 0), rim top at z=0, walls hang below
+        cy = float(o.get("box_corner_y", 0.78))
+        depth = abs(float(o.get("feet_z", -3.3)))
         mat = bpy.data.materials.get("preview_ground_mat")
         for side in (1, -1):
-            wall = L.box(f"ctx_wall_{side}", (2.4, 0.3, rim - 0.55), coll, location=(1.2, 0, 0.55 + (rim - 0.55) / 2))
+            wall = L.box(f"ctx_wall_{side}", (2.6, 0.3, depth), coll, location=(1.3, 0, -depth / 2 + 0.02))
             ang = -45.0 if side > 0 else -135.0
             wall.data.transform(Matrix.Translation((0, cy, 0)) @ Euler((0, 0, math.radians(ang)), "XYZ").to_matrix().to_4x4()
                                 @ Matrix.Translation((0, -0.15 if side > 0 else 0.15, 0)))
@@ -157,6 +158,9 @@ def render_group(base, objs, cam, tag, lod2=False, engine="EEVEE"):
             ctx_objs.append(c)
     lo = Vector((min(L.bbox(o)[0][i] + o.location[i] for o in shown) for i in range(3)))
     hi = Vector((max(L.bbox(o)[1][i] + o.location[i] for o in shown) for i in range(3)))
+    ground = bpy.data.objects.get("preview_ground")
+    if ground is not None:
+        ground.location.z = min(0.0, lo.z)
     frame_camera(cam, lo, hi)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     fp = OUT_DIR / f"{tag}_{base[4:]}.png"
@@ -168,6 +172,44 @@ def render_group(base, objs, cam, tag, lod2=False, engine="EEVEE"):
         o.location = (0, 0, 0)
     for c in ctx_objs:
         L.remove_object(c)
+    return fp
+
+
+def render_variants(typ, cam, tag, lod="1"):
+    """QA-01-18: every variant of one type side by side at the same LOD, so repetition is judged the way the hero
+    camera sees it (a row of instances). Writes <tag>_variants_<typ>.png."""
+    scene = bpy.context.scene
+    for o in bpy.data.objects:
+        if o.name.startswith("ORN_") and o.type == "MESH":
+            o.hide_render = o.hide_viewport = True
+    objs = [o for o in sorted(bpy.data.objects, key=lambda o: o.name)
+            if o.get("orn_type") == typ and o.name.endswith(f"_LOD{lod}")]
+    if not objs:
+        print(f"[orn_preview] no variants for {typ}")
+        return None
+    lo0, hi0 = L.bbox(objs[0])
+    gap = max(hi0[0] - lo0[0], hi0[1] - lo0[1]) * 1.2
+    shown = []
+    for k, o in enumerate(objs):
+        o.hide_render = o.hide_viewport = False
+        o.location = (gap * (len(objs) - 1) / 2 - k * gap, 0, 0)
+        m = clay_material(f"preview_{o.name}", normal_map=o.get("normal_map"))
+        o.data.materials.clear()
+        o.data.materials.append(m)
+        shown.append(o)
+    lo = Vector((min(L.bbox(o)[0][i] + o.location[i] for o in shown) for i in range(3)))
+    hi = Vector((max(L.bbox(o)[1][i] + o.location[i] for o in shown) for i in range(3)))
+    ground = bpy.data.objects.get("preview_ground")
+    if ground is not None:
+        ground.location.z = min(0.0, lo.z)
+    frame_camera(cam, lo, hi, side_deg=8.0, elev_deg=4.0)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    fp = OUT_DIR / f"{tag}_variants_{typ}.png"
+    scene.render.filepath = str(fp)
+    bpy.ops.render.render(write_still=True)
+    for o in shown:
+        o.location = (0, 0, 0)
+    print(f"[orn_preview] {fp.name} ({len(shown)} variants of {typ} at LOD{lod})")
     return fp
 
 
@@ -190,6 +232,13 @@ def main():
     tag = ARGS[ARGS.index("--tag") + 1] if "--tag" in ARGS else common.timestamp()
     coll, cam = build_rig()
     outs = []
+    if "--variants-of" in ARGS:
+        for t in ARGS[ARGS.index("--variants-of") + 1].split(","):
+            fp = render_variants(t.strip(), cam, tag)
+            if fp:
+                outs.append(fp)
+        if "--sheet" not in ARGS:
+            return
     for base, objs in sorted(asset_groups(only).items()):
         if "0" not in objs or "1" not in objs:
             continue

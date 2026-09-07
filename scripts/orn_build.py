@@ -159,8 +159,23 @@ def build_fleuron(P, phi_deg, coll):
     return ros
 
 
+# Per-variant silhouette styles (QA-01-18: variants must differ at hero distance, not just in weathering seed)
+CAPITAL_STYLE = {
+    1: {},
+    2: {"lower_w": 1.08, "curl": 1.3, "droop": 0.85, "volute_r": 1.15, "upper_len": 0.96, "clip_leaf": 3},
+    3: {"upper_len": 1.08, "droop": 1.45, "curl": 0.9, "volute_r": 0.88, "lower_w": 0.94, "tilt_add": 4.0, "helix_r": 1.2},
+}
+
+
 def build_capital(typ, variant, coll, bake=True):
-    P = CAPITAL_PRESETS[typ]
+    P = dict(CAPITAL_PRESETS[typ])
+    style = CAPITAL_STYLE.get(variant, {})
+    for k, v in style.items():
+        if k in P and isinstance(P[k], (int, float)):
+            P[k] = P[k] * v
+    if "tilt_add" in style:
+        P["leaf_tilt"] = (P["leaf_tilt"][0] + style["tilt_add"], P["leaf_tilt"][1] + style["tilt_add"] * 0.5)
+    P["clip_leaf"] = style.get("clip_leaf", -1)
     R, H = P["R"], P["H"]
     rng = random.Random(7919 * variant + len(typ))
     work = L.work_collection()
@@ -169,7 +184,14 @@ def build_capital(typ, variant, coll, bake=True):
     parts.append(bell)
     parts.append(build_abacus("abacus", P, work))
     # leaves
-    parts += build_leaf_ring(P, 8, 0.0, P["lower_z"], P["lower_len"], P["lower_w"], rng, work, "lo", 0)
+    lower = build_leaf_ring(P, 8, 0.0, P["lower_z"], P["lower_len"], P["lower_w"], rng, work, "lo", 0)
+    if P.get("clip_leaf", -1) >= 0:      # one damaged/short leaf tip on this variant
+        lf = lower[P["clip_leaf"] % len(lower)]
+        (x0, y0, z0), (x1, y1, z1) = L.bbox(lf)
+        for v in lf.data.vertices:
+            if v.co.z > z0 + 0.65 * (z1 - z0):
+                v.co.z = z0 + 0.65 * (z1 - z0) + 0.15 * (v.co.z - z0 - 0.65 * (z1 - z0))
+    parts += lower
     parts += build_leaf_ring(P, 8, 22.5, P["upper_z"], P["upper_len"], P["upper_w"], rng, work, "up", 1)
     # volutes: two per corner (one facing each side), stems rising from the gaps between the upper leaves
     eye_r = 1.30 * R
@@ -258,34 +280,40 @@ def drapery_tube(name, sections, coll, folds=10, fold_amp=(0.02, 0.09), seed=0, 
 
 
 def build_maiden(variant, coll, bake=True):
-    """Ellerhusen weeping maiden, 4.5 m: stands at a planter-box corner, back to the outside (+Y), forearms on the
-    box rim (rim 3.55 m above the feet; box corner edge at local (0, -0.32)), head bowed into the box."""
+    """Ellerhusen weeping maiden. Built in a feet frame (feet at z=0, box corner edge at (0,-0.32), rim at rim_z), then
+    moved into ARCH's socket frame: the socket sits ON THE BOX LID 0.78 m inward from the corner along the diagonal
+    (arch_build.py planter box), +Y = outward diagonal. So in the delivered mesh the origin is on the lid, the box
+    corner edge is at (0, +0.78, 0), the figure hangs down the outside of the corner (feet at z = -rim_z) with the
+    forearms on the rim (z ~ 0) and the head bowed over the corner into the box (QA-01-13)."""
     rng = random.Random(4242 + variant)
     work = L.work_collection()
-    S = 4.5 / 1.75
-    lean = 0.22 + rng.uniform(-0.03, 0.03)          # forward (-Y) shift of the shoulders
-    bow = 0.22 + rng.uniform(-0.03, 0.03)           # head forward
+    height = {1: 4.30, 2: 4.22, 3: 4.36}.get(variant, 4.3)
+    S = height / 1.75
+    lean = {1: 0.22, 2: 0.30, 3: 0.26}.get(variant, 0.24) + rng.uniform(-0.02, 0.02)
+    bow = {1: 0.50, 2: 0.58, 3: 0.44}.get(variant, 0.50)
+    turn = {1: 0.0, 2: 12.0, 3: -9.0}.get(variant, 0.0)
+    rim_z = 3.30
     corner = Vector((0.0, -0.32, 0.0))
-    rim_z = 3.55
     def rim_point(side, d):
-        dirv = Vector((side * 0.7071, -0.7071, 0.0))
-        return corner + dirv * d
+        return corner + Vector((side * 0.7071, -0.7071, 0.0)) * d
     parts = []
-    # body proxy
+    k = height / 4.5
     j = {
-        "pelvis": (Vector((0, 0.0, 2.40)), (0.36, 0.23)),
-        "hipL": (Vector((0.20, 0.0, 2.30)), (0.21, 0.19)), "hipR": (Vector((-0.20, 0.0, 2.30)), (0.21, 0.19)),
-        "kneeL": (Vector((0.18, -0.02, 1.25)), (0.16, 0.16)), "kneeR": (Vector((-0.17, 0.0, 1.22)), (0.16, 0.16)),
+        "pelvis": (Vector((0, 0.0, 2.40 * k)), (0.36, 0.23)),
+        "hipL": (Vector((0.20, 0.0, 2.30 * k)), (0.21, 0.19)), "hipR": (Vector((-0.20, 0.0, 2.30 * k)), (0.21, 0.19)),
+        "kneeL": (Vector((0.18, -0.02, 1.25 * k)), (0.16, 0.16)), "kneeR": (Vector((-0.17, 0.0, 1.22 * k)), (0.16, 0.16)),
         "ankL": (Vector((0.17, 0.02, 0.25)), (0.10, 0.11)), "ankR": (Vector((-0.16, 0.04, 0.25)), (0.10, 0.11)),
-        "waist": (Vector((0, -0.03 - lean * 0.3, 2.78)), (0.27, 0.18)),
-        "chest": (Vector((0, -lean * 0.7, 3.28)), (0.35, 0.22)),
-        "shL": (Vector((0.56, -lean, 3.70)), (0.16, 0.14)), "shR": (Vector((-0.56, -lean, 3.70)), (0.16, 0.14)),
-        "neck": (Vector((0, -lean - 0.03, 3.86)), (0.12, 0.12)),
-        "head": (Vector((0, -lean - bow, 4.10)), (0.24, 0.27)),
+        "waist": (Vector((0, -0.03 - lean * 0.3, 2.78 * k)), (0.27, 0.18)),
+        "chest": (Vector((0, -lean * 0.7, 3.28 * k)), (0.35, 0.22)),
+        # hunched over the rim (refs 187/163): the shoulders come up, the head sinks between them and bows forward
+        "shL": (Vector((0.55, -lean, 3.66 * k)), (0.16, 0.15)), "shR": (Vector((-0.55, -lean, 3.66 * k)), (0.16, 0.15)),
+        "neck": (Vector((0, -lean - 0.09, 3.70 * k)), (0.13, 0.13)),
+        "head": (Vector((0, -lean - bow, 3.74 * k)), (0.25, 0.28)),
     }
+    # forearms folded onto the rim near the corner, elbows out (refs 163/187)
     for side, tag in ((1, "L"), (-1, "R")):
-        el = rim_point(side, 0.45) + Vector((0, 0, rim_z + 0.06))
-        ha = rim_point(side, 1.12) + Vector((0, 0, rim_z + 0.05))
+        el = rim_point(side, 0.55) + Vector((side * 0.05, 0.02, rim_z + 0.09))
+        ha = rim_point(side, 0.12) + Vector((-side * 0.10, -0.22, rim_z + 0.07))
         j["el" + tag] = (el, (0.11, 0.10))
         j["ha" + tag] = (ha, (0.09, 0.05))
     bones = [("pelvis", "hipL"), ("pelvis", "hipR"), ("hipL", "kneeL"), ("hipR", "kneeR"), ("kneeL", "ankL"),
@@ -293,49 +321,50 @@ def build_maiden(variant, coll, bake=True):
              ("chest", "neck"), ("neck", "head"), ("shL", "elL"), ("shR", "elR"), ("elL", "haL"), ("elR", "haR")]
     body = L.skin_figure("maiden_body", j, bones, work, subdiv=2)
     parts.append(body)
-    # hair: bound in a bun at the back of the bowed head
     hc = j["head"][0]
-    parts.append(L.sphere("maiden_hair", 0.23, work, location=hc + Vector((0, 0.10, 0.08)), scale=(1.05, 0.95, 0.85)))
-    parts.append(L.sphere("maiden_bun", 0.13, work, location=hc + Vector((0, 0.27, 0.16))))
-    # garment: peplos from the shoulders to the ground, folds on the back and sides
+    hair = L.sphere("maiden_hair", 0.23, work, location=hc + Vector((0, 0.10, 0.08)), scale=(1.05, 0.95, 0.85))
+    bun = L.sphere("maiden_bun", 0.13, work, location=hc + Vector((0, 0.27, 0.16)))
+    parts += [hair, bun]
+    if turn:
+        m = Matrix.Translation(hc) @ Euler((0, 0, math.radians(turn)), "XYZ").to_matrix().to_4x4() @ Matrix.Translation(-hc)
+        for o in (hair, bun):
+            o.data.transform(m)
     ly = -lean
+    hem = {1: 0.62, 2: 0.68, 3: 0.57}.get(variant, 0.62)
     sections = [
-        (0.03, 0.0, 0.02, 0.62 + rng.uniform(-0.04, 0.04), 0.54),
+        (0.03, 0.0, 0.02, hem, hem * 0.87),
         (0.60, 0.0, 0.01, 0.55, 0.47),
-        (1.30, 0.0, 0.0, 0.48, 0.40),
-        (2.10, 0.0, 0.0, 0.44, 0.33),
-        (2.45, 0.0, 0.0, 0.43, 0.30),
-        (2.80, 0.0, ly * 0.3, 0.37, 0.26),
-        (3.30, 0.0, ly * 0.65, 0.45, 0.28),
-        (3.60, 0.0, ly * 0.9, 0.56, 0.27),
-        (3.74, 0.0, ly, 0.46, 0.24),
-        (3.84, 0.0, ly, 0.28, 0.19),
-        (3.94, 0.0, ly - 0.02, 0.14, 0.14),
+        (1.30 * k, 0.0, 0.0, 0.48, 0.40),
+        (2.10 * k, 0.0, 0.0, 0.44, 0.33),
+        (2.45 * k, 0.0, 0.0, 0.43, 0.30),
+        (2.80 * k, 0.0, ly * 0.3, 0.37, 0.26),
+        (3.30 * k, 0.0, ly * 0.65, 0.45, 0.28),
+        (3.55 * k, 0.0, ly * 0.9, 0.56, 0.27),
+        (3.68 * k, 0.0, ly, 0.44, 0.24),
+        (3.78 * k, 0.0, ly, 0.26, 0.19),
+        (3.86 * k, 0.0, ly - 0.03, 0.14, 0.14),
     ]
-    folds = rng.choice([9, 10, 11, 12])
-    gar = drapery_tube("maiden_peplos", sections, work, folds=folds, fold_amp=(0.015, 0.11 + rng.uniform(-0.01, 0.015)),
+    folds = {1: 10, 2: 12, 3: 9}.get(variant, 10)
+    gar = drapery_tube("maiden_peplos", sections, work, folds=folds, fold_amp=(0.035, 0.155 + rng.uniform(-0.012, 0.018)),
                        seed=variant * 31, fold_side=(90.0, 120.0), sharp=0.6)
     parts.append(gar)
-    # overfold (apoptygma) from the shoulders to the hips, a little wider, with its own folds
-    zo = 2.30 + rng.uniform(-0.1, 0.1)
+    zo = {1: 2.25, 2: 2.45, 3: 2.10}.get(variant, 2.3) * k
     over = drapery_tube("maiden_overfold", [(zo, 0.0, 0.03, 0.46, 0.34),
                                             (zo + 0.25, 0.0, 0.03, 0.44, 0.32),
-                                            (2.80, 0.0, ly * 0.3 + 0.03, 0.39, 0.28),
-                                            (3.30, 0.0, ly * 0.65 + 0.03, 0.47, 0.30),
-                                            (3.60, 0.0, ly * 0.9 + 0.02, 0.57, 0.28),
-                                            (3.76, 0.0, ly, 0.42, 0.23)],
-                        work, folds=folds + 2, fold_amp=(0.02, 0.07), seed=variant * 31 + 5, fold_side=(90.0, 120.0), nz=40)
-    # dipping hem: pull the overfold's bottom down at the sides and up at the back centre
+                                            (2.80 * k, 0.0, ly * 0.3 + 0.03, 0.39, 0.28),
+                                            (3.30 * k, 0.0, ly * 0.65 + 0.03, 0.47, 0.30),
+                                            (3.55 * k, 0.0, ly * 0.9 + 0.02, 0.57, 0.28),
+                                            (3.70 * k, 0.0, ly, 0.42, 0.23)],
+                        work, folds=folds + 2, fold_amp=(0.03, 0.10), seed=variant * 31 + 5, fold_side=(90.0, 120.0), nz=40)
     for v in over.data.vertices:
         if v.co.z < zo + 0.3:
             ang = math.atan2(v.co.y, v.co.x)
             v.co.z -= 0.12 * abs(math.cos(ang)) * max(0.0, 1.0 - (v.co.z - zo) / 0.3)
     parts.append(over)
-    # sleeve/fold cascades hanging from the forearms over the rim
     for side, tag in ((1, "L"), (-1, "R")):
         el = j["el" + tag][0]
-        casc = drapery_tube(f"maiden_casc{tag}", [(el.z - 0.9, el.x + side * 0.05, el.y + 0.05, 0.16, 0.13),
-                                                   (el.z - 0.3, el.x, el.y + 0.02, 0.15, 0.12),
+        casc = drapery_tube(f"maiden_casc{tag}", [(el.z - 0.9, el.x + side * 0.05, el.y + 0.08, 0.16, 0.13),
+                                                   (el.z - 0.3, el.x, el.y + 0.04, 0.15, 0.12),
                                                    (el.z + 0.05, el.x, el.y, 0.12, 0.11)],
                             work, folds=5, fold_amp=(0.02, 0.10), seed=variant * 7 + side, nu=40, nz=20)
         parts.append(casc)
@@ -344,9 +373,12 @@ def build_maiden(variant, coll, bake=True):
     print(f"[orn] maiden v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
     L.displace_noise(hi, strength=0.010, size=0.35, seed=300 + variant, depth=2)
     L.displace_noise(hi, strength=0.003, size=0.05, seed=400 + variant, depth=1)
-    return L.finalize_asset(hi, "maiden", variant, coll, bake=bake, bake_size=2048, y_mode="keep",
-                            size_note="4.5 m standing (head bowed: 4.3 m tall); rim at +3.55 m; box corner at (0, -0.32)",
-                            extra_props={"rim_height": rim_z, "box_corner_y": -0.32})
+    # feet frame -> socket frame: corner edge (0,-0.32, rim_z) must land on (0, +0.78, 0)
+    hi.data.transform(Matrix.Translation((0.0, 0.78 + 0.32, -rim_z)))
+    return L.finalize_asset(hi, "maiden", variant, coll, bake=bake, bake_size=2048, y_mode="asis",
+                            size_note=f"{height} m standing; ORIGIN ON THE BOX LID (ARCH socket): box corner edge at (0, +0.78, 0), feet at z=-{rim_z}, forearms on the rim at z~0",
+                            extra_props={"rim_height": rim_z, "box_corner_y": 0.78, "feet_z": -rim_z,
+                                         "origin_note": "socket frame = on the box lid 0.78 m inward from the corner (arch_build planter box); NOT bottom-centre"})
 
 
 # =============================================================================== ATTIC CORNER FIGURES (6.7 m)
@@ -374,6 +406,28 @@ def human_joints(S, front=1.0, pose="attic_male"):
     elif pose == "winged":         # arms down-forward holding cornucopias at the hips
         J.update({"elL": ((0.29, 0.06 * f, 1.08), (0.055, 0.055)), "haL": ((0.24, 0.16 * f, 0.92), (0.05, 0.04)),
                   "elR": ((-0.29, 0.06 * f, 1.08), (0.055, 0.055)), "haR": ((-0.24, 0.16 * f, 0.92), (0.05, 0.04))})
+    elif pose == "arms_up":        # both arms raised above the head (central figure, zimm_panel_1)
+        J.update({"elL": ((0.34, 0.02 * f, 1.62), (0.055, 0.055)), "haL": ((0.22, 0.03 * f, 1.90), (0.05, 0.04)),
+                  "elR": ((-0.36, 0.02 * f, 1.60), (0.055, 0.055)), "haR": ((-0.20, 0.03 * f, 1.92), (0.05, 0.04))})
+    elif pose == "stride":         # striding, one arm thrust forward, the other back
+        J.update({"kneeL": ((0.28, 0.02 * f, 0.52), (0.075, 0.08)), "ankL": ((0.42, 0.02 * f, 0.10), (0.05, 0.06)),
+                  "footL": ((0.50, 0.08 * f, 0.03), (0.05, 0.03)),
+                  "kneeR": ((-0.20, 0.0, 0.50), (0.075, 0.08)), "ankR": ((-0.36, 0.0, 0.08), (0.05, 0.06)),
+                  "footR": ((-0.44, 0.04 * f, 0.03), (0.05, 0.03)),
+                  "elL": ((0.42, 0.06 * f, 1.42), (0.055, 0.055)), "haL": ((0.66, 0.08 * f, 1.52), (0.05, 0.04)),
+                  "elR": ((-0.36, 0.0, 1.20), (0.055, 0.055)), "haR": ((-0.48, 0.02 * f, 0.98), (0.05, 0.04))})
+    elif pose == "kneel":          # one knee down, torso upright, one arm raised in defence
+        J.update({"pelvis": ((0, 0, 0.62), (0.17, 0.11)), "hipL": ((0.10, 0, 0.58), (0.105, 0.10)), "hipR": ((-0.10, 0, 0.58), (0.105, 0.10)),
+                  "kneeL": ((0.34, 0.02 * f, 0.30), (0.075, 0.08)), "ankL": ((0.22, 0.0, 0.06), (0.05, 0.06)), "footL": ((0.30, 0.06 * f, 0.03), (0.05, 0.03)),
+                  "kneeR": ((-0.22, 0.0, 0.08), (0.075, 0.08)), "ankR": ((-0.50, 0.0, 0.08), (0.05, 0.06)), "footR": ((-0.58, 0.02 * f, 0.04), (0.05, 0.03)),
+                  "waist": ((0, 0, 0.80), (0.15, 0.10)), "chest": ((0.03, 0.01 * f, 1.02), (0.195, 0.125)),
+                  "shL": ((0.24, 0.0, 1.15), (0.075, 0.07)), "shR": ((-0.19, 0.0, 1.15), (0.075, 0.07)),
+                  "neck": ((0.03, 0.015 * f, 1.22), (0.06, 0.06)), "head": ((0.05, 0.035 * f, 1.35), (0.115, 0.125)),
+                  "elL": ((0.42, 0.05 * f, 1.35), (0.055, 0.055)), "haL": ((0.30, 0.06 * f, 1.60), (0.05, 0.04)),
+                  "elR": ((-0.36, 0.02 * f, 0.95), (0.055, 0.055)), "haR": ((-0.28, 0.08 * f, 0.72), (0.05, 0.04))})
+    elif pose == "arms_out":       # arms spread diagonally up (garland bearer / dancer)
+        J.update({"elL": ((0.44, 0.03 * f, 1.60), (0.055, 0.055)), "haL": ((0.66, 0.05 * f, 1.78), (0.05, 0.04)),
+                  "elR": ((-0.44, 0.03 * f, 1.58), (0.055, 0.055)), "haR": ((-0.68, 0.05 * f, 1.74), (0.05, 0.04))})
     out = {k: (Vector(v[0]) * S, (v[1][0] * S, v[1][1] * S)) for k, v in J.items()}
     return out
 
@@ -592,18 +646,15 @@ def build_keystone(variant, coll, bake=True):
         leaf.data.transform(m)
         parts.append(leaf)
     hi = L.union_blob(parts, f"keystone_v{variant}", voxel=(0.01 if FAST else 0.006), smooth=2, coll=work)
-    # open mouth: push a recess in with a sphere (boolean difference)
-    cutter = L.sphere("ks_mouth", 0.075, work, location=(0, 0.42, -0.10), scale=(1.3, 1.0, 0.7))
-    for side in (1, -1):
-        L.sphere(f"ks_eye{side}", 0.035, work, location=(side * 0.085, 0.395, 0.055))
-    for name in ("ks_mouth", "ks_eye1", "ks_eye-1"):
-        cut = bpy.data.objects[name]
-        m = hi.modifiers.new("Bool", "BOOLEAN")
-        m.operation = "DIFFERENCE"
-        m.solver = "EXACT"
-        m.object = cut
-        L.apply_all(hi)
-        L.remove_object(cut)
+    # open mouth + eye sockets: dent the remeshed surface (booleans after a remesh proved unreliable)
+    dents = [((0.0, 0.47, -0.11), (0.10, 0.10, 0.06), 0.09), ((0.085, 0.43, 0.055), (0.04, 0.05, 0.035), 0.03),
+             ((-0.085, 0.43, 0.055), (0.04, 0.05, 0.035), 0.03)]
+    for v in hi.data.vertices:
+        for (cx, cy, cz), (rx, ry, rz), depth_ in dents:
+            d = ((v.co.x - cx) / rx) ** 2 + ((v.co.y - cy) / ry) ** 2 + ((v.co.z - cz) / rz) ** 2
+            if d < 1.0 and v.co.y > cy - ry * 0.3:
+                v.co.y -= depth_ * (1.0 - d) ** 0.7
+    hi.data.update()
     L.displace_noise(hi, strength=0.003, size=0.05, seed=1200 + variant, depth=2)
     return L.finalize_asset(hi, "keystone", variant, coll, bake=bake, bake_size=1024, y_mode="back",
                             budgets=L.BUDGETS["keystone"], size_note="lion mask 0.8 m; origin = back-face bottom-centre")
@@ -735,6 +786,99 @@ def place_scan(key, x, height, depth, slab_face_y, mirror=False, z=0.0, rot_deg=
     return ob
 
 
+HORSE_BONES = [("rump", "belly"), ("belly", "chest"), ("chest", "neckb"), ("neckb", "head"), ("head", "muzzle"),
+               ("chest", "fshL"), ("fshL", "fknL"), ("fknL", "fhfL"), ("chest", "fshR"), ("fshR", "fknR"), ("fknR", "fhfR"),
+               ("rump", "hipL"), ("hipL", "hkL"), ("hkL", "hhfL"), ("rump", "hipR"), ("hipR", "hkR"), ("hkR", "hhfR"),
+               ("rump", "tail1"), ("tail1", "tail2")]
+
+
+def horse_joints(S, rearing=True):
+    """Side-view horse proxy (length along X, faces +X, viewer at +Y), 1.6 m at the withers before scaling."""
+    J = {
+        "rump": ((-0.60, 0.0, 1.20), (0.30, 0.24)), "belly": ((-0.05, 0.0, 1.05), (0.31, 0.25)), "chest": ((0.50, 0.0, 1.18), (0.28, 0.22)),
+        "neckb": ((0.82, 0.0, 1.45), (0.17, 0.14)), "head": ((1.22, 0.0, 1.78), (0.12, 0.10)), "muzzle": ((1.50, 0.0, 1.66), (0.07, 0.06)),
+        "fshL": ((0.55, 0.08, 0.95), (0.10, 0.09)), "fknL": ((0.62, 0.09, 0.55), (0.07, 0.07)), "fhfL": ((0.64, 0.09, 0.06), (0.06, 0.06)),
+        "fshR": ((0.50, -0.08, 0.95), (0.10, 0.09)), "fknR": ((0.56, -0.09, 0.55), (0.07, 0.07)), "fhfR": ((0.58, -0.09, 0.06), (0.06, 0.06)),
+        "hipL": ((-0.60, 0.08, 0.92), (0.11, 0.10)), "hkL": ((-0.72, 0.09, 0.48), (0.07, 0.07)), "hhfL": ((-0.64, 0.09, 0.06), (0.06, 0.06)),
+        "hipR": ((-0.66, -0.08, 0.92), (0.11, 0.10)), "hkR": ((-0.78, -0.09, 0.48), (0.07, 0.07)), "hhfR": ((-0.70, -0.09, 0.06), (0.06, 0.06)),
+        "tail1": ((-0.95, 0.0, 1.10), (0.06, 0.05)), "tail2": ((-1.15, 0.0, 0.70), (0.04, 0.03)),
+    }
+    if rearing:   # front legs tucked up, body pitched nose-up about the hind hooves
+        J.update({"fshL": ((0.62, 0.08, 1.00), (0.10, 0.09)), "fknL": ((0.95, 0.09, 0.85), (0.07, 0.07)), "fhfL": ((0.90, 0.09, 0.50), (0.06, 0.06)),
+                  "fshR": ((0.55, -0.08, 0.98), (0.10, 0.09)), "fknR": ((0.88, -0.09, 0.75), (0.07, 0.07)), "fhfR": ((0.80, -0.09, 0.42), (0.06, 0.06))})
+    out = {}
+    piv = Vector((-0.67, 0.0, 0.06))
+    rot = Euler((0, math.radians(-38.0 if rearing else 0.0), 0), "XYZ").to_matrix()
+    for k_, (pos, r) in J.items():
+        pv = Vector(pos)
+        if rearing and not k_.startswith("hhf") and not k_.startswith("hk"):
+            pv = piv + rot @ (pv - piv)
+        out[k_] = (pv * S, (r[0] * S, r[1] * S))
+    return out
+
+
+def relief_figure(name, pose, x, face_y, coll, S=2.0, mirror=False, rot_deg=0.0, proud=0.20, z=0.25, rng=None,
+                  bulk=1.45, drape=True, seed=0):
+    """A from-scratch figure in high relief: skin-figure body proxy embedded in the slab so that about `proud` m of
+    its front stands out of the panel face; mirrored/rotated for variety.
+    QA-01-10: `bulk` fattens the limbs (Zimm's figures are heavy, not stick-thin) and `drape` adds a folded garment
+    mass from the chest to the ankles, so a figure covers ~0.9 x 3.2 m of field instead of a thin silhouette."""
+    J = human_joints(S, front=1.0, pose=pose)
+    if bulk != 1.0:
+        J = {k: (p, (r[0] * bulk, r[1] * bulk)) for k, (p, r) in J.items()}
+    body = L.skin_figure(name, J, HUMAN_BONES, coll, subdiv=2)
+    hc = J["head"][0]
+    hair = L.sphere(name + "_hair", 0.115 * S * bulk, coll, location=hc + Vector((0, -0.02 * S, 0.03 * S)),
+                    scale=(1.0, 0.95, 0.9))
+    made = [body, hair]
+    if drape:
+        (bx0, by0, bz0), (bx1, by1, bz1) = L.bbox(body)
+        H = bz1 - bz0
+        cx, cy = 0.5 * (bx0 + bx1), 0.5 * (by0 + by1)
+        a_hem, a_top = 0.215 * H, 0.130 * H
+        b = 0.42 * a_hem
+        g = drapery_tube(f"{name}_drape",
+                         [(bz0 + 0.012 * H, cx, cy, a_hem, b),
+                          (bz0 + 0.30 * H, cx, cy, a_hem * 0.94, b * 0.95),
+                          (bz0 + 0.55 * H, cx, cy, a_hem * 0.80, b * 0.90),
+                          (bz0 + 0.70 * H, cx, cy, a_top, b * 0.85)],
+                         coll, folds=7, fold_amp=(0.03, 0.10), seed=seed, nu=48, nz=44, power=2.4)
+        made.append(g)
+    lo = Vector((min(L.bbox(o)[0][i] for o in made) for i in range(3)))
+    hi = Vector((max(L.bbox(o)[1][i] for o in made) for i in range(3)))
+    m = (Matrix.Translation((x, face_y - (hi.y - proud), z)) @ Euler((0, 0, math.radians(rot_deg)), "XYZ").to_matrix().to_4x4()
+         @ Matrix.Diagonal((-1.0 if mirror else 1.0, 1.0, 1.0, 1.0)))
+    for o in made:
+        o.data.transform(m)
+    return made
+
+
+def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25, rearing=True):
+    J = horse_joints(S, rearing=rearing)
+    h = L.skin_figure(name, J, HORSE_BONES, coll, subdiv=2)
+    (x0, y0, z0), (x1, y1, z1) = L.bbox(h)
+    m = Matrix.Translation((x, face_y - (y1 - proud), z)) @ Matrix.Diagonal((-1.0 if mirror else 1.0, 1.0, 1.0, 1.0))
+    h.data.transform(m)
+    return [h]
+
+
+# Panel layouts (QA-01-10): >= 8 figures ~3.5 m tall per 10.5 m field, three distinct designs.
+# ("scan", key, x, height, mirror) | ("fig", pose, x, mirror, rot) | ("horse", x, mirror)
+PANEL_LAYOUTS = {
+    1: [("scan", "soldiers", -4.05, 4.15, True), ("fig", "kneel", -2.60, True, 0), ("fig", "arms_up", -1.80, False, 5),
+        ("fig", "stride", -1.05, True, -4), ("fig", "arms_out", -0.30, False, 3), ("horse", 0.55, False),
+        ("fig", "kneel", 1.15, True, 0), ("fig", "arms_up", 1.85, False, 4), ("fig", "kneel", 2.55, True, 0),
+        ("fig", "stride", 3.30, False, -5), ("scan", "dacians", 4.35, 4.20, True)],
+    2: [("scan", "dacians", -4.00, 4.20, False), ("fig", "stride", -2.35, False, -5), ("fig", "arms_out", -1.60, False, 0),
+        ("fig", "stride", -0.85, True, 5), ("fig", "arms_up", -0.10, False, 0), ("fig", "arms_out", 0.65, True, -3),
+        ("scan", "soldiers", 2.45, 4.15, False), ("fig", "stride", 4.15, True, 4), ("fig", "kneel", 4.90, False, 0)],
+    3: [("scan", "centaur", -3.95, 3.30, False), ("fig", "stride", -2.45, True, 0), ("fig", "kneel", -1.75, False, 0),
+        ("fig", "arms_up", -1.00, False, 3), ("fig", "kneel", -0.30, True, 0), ("fig", "stride", 0.45, False, -4),
+        ("fig", "arms_out", 1.20, True, 0), ("fig", "kneel", 1.95, False, 0), ("fig", "stride", 2.70, True, 4),
+        ("scan", "dacians", 4.05, 4.20, True)],
+}
+
+
 def build_attic_panel(variant, coll, bake=True):
     """One of the three Zimm 'Struggle for the Beautiful' relief designs, field 10.5 x 4.5 m, relief ~0.25 m,
     composed from the public-domain relief scans (cut, scaled, mirrored, embedded, decimated, weathered - lead
@@ -745,39 +889,176 @@ def build_attic_panel(variant, coll, bake=True):
     W, Hh, T = 10.5, 4.5, 0.16
     face_y = T
     parts = [L.box("panel_slab", (W, T, Hh), work, location=(0, T / 2, Hh / 2))]
-    depth = 0.40
+    depth = 0.50
     design = (variant - 1) % 3 + 1
-    if design == 1:
-        parts.append(place_scan("centaur", 0.0, 4.2, depth, face_y, z=0.15))
-        parts.append(place_scan("soldiers", -3.7, 4.1, depth, face_y, mirror=True, z=0.2))
-        parts.append(place_scan("soldiers", 3.7, 4.1, depth, face_y, z=0.2))
-    elif design == 2:
-        parts.append(place_scan("dacians", -3.6, 4.2, depth, face_y, z=0.15))
-        parts.append(place_scan("soldiers", 0.0, 4.1, depth, face_y, z=0.2))
-        parts.append(place_scan("dacians", 3.6, 4.2, depth, face_y, mirror=True, z=0.15))
-    else:
-        parts.append(place_scan("soldiers", -3.6, 4.1, depth, face_y, z=0.2))
-        parts.append(place_scan("centaur", 0.0, 4.2, depth, face_y, mirror=True, z=0.15))
-        parts.append(place_scan("dacians", 3.7, 4.2, depth, face_y, mirror=True, z=0.15))
+    fig_count = 0
+    for item in PANEL_LAYOUTS[design]:
+        if item[0] == "scan":
+            _, key, x, h, mirror = item
+            parts.append(place_scan(key, x, h, depth, face_y, mirror=mirror, z=0.2))
+            fig_count += {"soldiers": 3, "dacians": 3, "centaur": 2}[key]
+        elif item[0] == "fig":
+            _, pose, x, mirror, rot = item
+            parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * rng.uniform(0.95, 1.05), mirror=mirror,
+                                   rot_deg=rot + rng.uniform(-3, 3), proud=0.28, rng=rng,
+                                   bulk=rng.uniform(1.45, 1.70), seed=6000 + variant * 40 + fig_count)
+            fig_count += 1
+        elif item[0] == "horse":
+            _, x, mirror = item
+            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.32)
+            fig_count += 1
+    print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures")
     parts = [p for p in parts if p is not None]
-    # a few modelled extras so the composition is not just the scans: shields / discs in the gaps
-    for i in range(3):
-        x = rng.uniform(-4.8, 4.8)
-        parts.append(L.sphere(f"shield{i}", rng.uniform(0.25, 0.45), work, location=(x, face_y - 0.05, rng.uniform(0.8, 3.6)), scale=(1.0, 0.25, 1.0)))
+    # shields / discs in the remaining gaps (design 1 and 3 are combats)
+    if design != 2:
+        for i in range(2):
+            x = rng.uniform(-4.9, 4.9)
+            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, face_y - 0.06, rng.uniform(0.9, 3.4)), scale=(1.0, 0.3, 1.0)))
+    # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field)
+    parts.append(L.box("panel_plinth", (W - 0.30, 0.14, 0.42), work, location=(0, face_y + 0.05, 0.24), bevel=0.03))
     t = time.time()
     hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.025), smooth=1, smooth_factor=0.3, coll=work)
+    # clamp anything that overhangs the framed field: the frame crops the relief (QA-01-10 field is 10.5 x 4.5 m)
+    for v in hi.data.vertices:
+        v.co.x = max(-W / 2, min(W / 2, v.co.x))
+        v.co.z = max(0.0, min(Hh, v.co.z))
+        v.co.y = max(0.0, v.co.y)          # nothing behind the slab's back plane (it is buried in the attic wall)
+    hi.data.update()
     print(f"[orn] attic_panel v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
     L.displace_noise(hi, strength=0.02, size=0.6, seed=1400 + variant, depth=2)
     L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
     return L.finalize_asset(hi, "attic_panel", variant, coll, bake=bake, bake_size=4096 if not FAST else 2048, y_mode="back",
                             budgets=L.BUDGETS["attic_panel"],
-                            size_note=f"Zimm panel design {design}: field 10.5 x 4.5 m, slab 0.16 + relief 0.3 m; origin back-face bottom-centre")
+                            size_note=f"Zimm panel design {design}: field 10.5 x 4.5 m, slab 0.16 + relief up to 0.5 m, {fig_count} figures; origin back-face bottom-centre")
+
+
+def build_corner_scroll(variant, coll, bake=True):
+    """QA-01-13: the paired volute scroll that caps each pilaster flanking an attic corner figure niche
+    (refs 085 / attic_corner_figure_1-3). One unit = an Ionic-type capital block 1.50 m wide, 0.78 m tall,
+    0.62 m deep: two spiral volutes (0.40 m eye radius) at the ends, their faces toward +Y, joined by a
+    channelled bolster and an egg-moulded echinus, under a moulded abacus plate, with a small palmette in the
+    centre of the channel. Origin bottom-centre of the block (it sits on the pilaster shaft), +Y outward.
+    Socket type `corner_scroll` (proposed to ARCH: 2 per attic corner niche, 16 total)."""
+    rng = random.Random(1900 + variant)
+    work = L.work_collection()
+    W, H, D = 1.50, 0.78, 0.62
+    parts = []
+    # abacus: thin moulded slab on top
+    parts.append(L.box("cs_abacus", (W, D, 0.13), work, location=(0, D / 2, H - 0.065), bevel=0.02))
+    parts.append(L.box("cs_abacus_fillet", (W - 0.10, D - 0.08, 0.06), work, location=(0, D / 2, H - 0.16), bevel=0.015))
+    # echinus / bolster core between the two volutes
+    ech = L.revolve("cs_echinus", [(0.0, 0.0), (0.20, 0.015), (0.235, 0.09), (0.225, 0.24), (0.19, 0.31), (0.0, 0.33)],
+                    segments=40, coll=work)
+    ech.data.transform(Euler((0, math.radians(90), 0), "XYZ").to_matrix().to_4x4())     # axis along X
+    ech.data.transform(Matrix.Translation((0, D * 0.44, H - 0.34)) @ Matrix.Diagonal((W * 0.62 / 0.33, 1.0, 1.0, 1.0)))
+    parts.append(ech)
+    # channel band across the bolster (the "cushion" fluting)
+    for i in range(3):
+        parts.append(L.box(f"cs_chan{i}", (W * 0.60, 0.05, 0.035), work,
+                           location=(0, D * 0.44 + 0.19 - 0.02 * i, H - 0.34 + 0.16 - 0.14 * i), bevel=0.01))
+    for side in (1, -1):
+        x = side * (W / 2 - 0.36)
+        v = L.volute(f"cs_scroll{side}", eye=(0, 0, 0), radius=0.40, turns=2.1, band=(0.40, 0.17), coll=work,
+                     direction=-side, taper=0.34, segments=12, steps=72)
+        # the volute is built spiralling about the local X axis; turn it 90 deg about Z so the spiral face looks +Y
+        v.data.transform(Matrix.Translation((x, D * 0.80, H - 0.36)) @ Euler((0, 0, math.radians(90)), "XYZ").to_matrix().to_4x4())
+        parts.append(v)
+        # eye boss in the middle of the spiral
+        parts.append(L.sphere(f"cs_eye{side}", 0.055, work, location=(x, D * 0.86, H - 0.36), scale=(1.0, 0.8, 1.0)))
+        # the volute's roll continuing back to the wall
+        bol = L.revolve(f"cs_bol{side}", [(0.0, 0.0), (0.15, 0.01), (0.175, 0.07), (0.17, 0.30), (0.14, 0.36), (0.0, 0.37)],
+                        segments=28, coll=work)
+        bol.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
+        bol.data.transform(Matrix.Translation((x, D * 0.80, H - 0.36)))
+        parts.append(bol)
+    # small palmette fan in the centre of the channel
+    for k in range(7):
+        a = -54 + 18 * k
+        lobe = L.acanthus_leaf(f"palm{k}", length=0.20 + 0.035 * (3 - abs(k - 3)), width=0.055, curl=0.18, droop=0.04,
+                               ribs=1, rib_amp=0.0, bulge=0.012, thickness=0.03, lobes=1, lobe_depth=0.0, nu=6, nv=10,
+                               coll=work, base_width=0.55)
+        lobe.data.transform(Matrix.Translation((0, D * 0.72, H - 0.52)) @ Euler((0, math.radians(a), 0), "XYZ").to_matrix().to_4x4())
+        parts.append(lobe)
+    parts.append(L.sphere("palm_base", 0.055, work, location=(0, D * 0.72, H - 0.52), scale=(1.4, 1.0, 0.8)))
+    # necking astragal at the bottom, where the block meets the pilaster shaft
+    parts.append(L.box("cs_neck", (W - 0.42, D - 0.16, 0.10), work, location=(0, (D - 0.16) / 2, 0.05), bevel=0.02))
+    hi = L.union_blob(parts, f"corner_scroll_v{variant}", voxel=(0.02 if FAST else 0.010), smooth=2, coll=work)
+    L.displace_noise(hi, strength=0.004, size=0.12, seed=1950 + variant, depth=2)
+    L.displace_noise(hi, strength=0.0015, size=0.03, seed=1970 + variant, depth=1)
+    return L.finalize_asset(hi, "corner_scroll", variant, coll, bake=bake, bake_size=1024, budgets=L.BUDGETS["corner_scroll"],
+                            extra_props={"unit_length": W},
+                            size_note=f"paired volute scroll block over an attic corner figure: {W:.2f} x {D:.2f} x {H:.2f} m, "
+                                      f"volute eye r 0.40; origin bottom-centre of the block, +Y outward (socket type corner_scroll)")
 
 
 # =============================================================================== LINEAR MOULDINGS (1 m units) + DRUM BAND
 def _strip(name, coll, length=1.0, depth=0.05, height=0.2):
     """Backing strip: origin at the bottom-centre of its BACK face, runs along X, projects toward +Y."""
     return L.box(name, (length, depth, height), coll, location=(0, depth / 2, height / 2))
+
+
+# QA-01-11 rostra / podium band (reference sheet s4 #12: band h ~ 0.5, rosettes ~ 0.45 dia; crops rostra_band_1-2).
+# In the photos the meander is INCISED into the top course of the podium (deep rectangular grooves in a flat face)
+# and only the round paterae stand proud, so the unit is a flat slab with the fret cut out of it by boolean.
+KEY_UNIT = 0.60          # one meander repeat = one greek_key unit (unit_length)
+KEY_BAND_H = 0.52        # band height, shared by greek_key and rosette_band so they mix on one run
+KEY_FACE = 0.08          # slab thickness (the band face stands 8 cm off the wall behind it)
+KEY_GROOVE = 0.045       # how deep the fret is cut into that face  (>= 3 cm required by QA-01-11)
+KEY_BAR = 0.052          # groove width (groove : land about 1 : 0.9, as in rostra_band_1/2)
+KEY_BOSS = 0.45          # patera diameter
+
+
+def greek_key_cutters(coll, x0, unit, band_h, tag="k"):
+    """Cutter boxes for one classic running-fret repeat starting at local x = x0 and spanning `unit` metres.
+    Grid g = unit/7, inner field 5 g tall; the top groove runs the full width so consecutive units join into one
+    continuous meander. Each box protrudes through the front face so a boolean difference leaves a groove."""
+    g = unit / 7.0
+    w = KEY_BAR
+    zb = (band_h - 5.0 * g) / 2.0                      # bottom of the inner field
+    dy = KEY_GROOVE + 0.02
+    y = KEY_FACE - KEY_GROOVE + dy / 2.0
+    out = []
+
+    def seg(gx0, gz0, gx1, gz1):
+        ax, az = x0 + gx0 * g, zb + gz0 * g
+        bx, bz = x0 + gx1 * g, zb + gz1 * g
+        out.append(L.box(f"{tag}{len(out)}", (abs(bx - ax) + w, dy, abs(bz - az) + w), coll,
+                         location=(0.5 * (ax + bx), y, 0.5 * (az + bz)), segments=1))
+
+    seg(-0.05, 5, 7.05, 5)          # continuous top groove (overlaps the neighbouring unit by 5 %)
+    seg(6, 5, 6, 1)                 # down stroke
+    seg(6, 1, 1, 1)                 # bottom stroke
+    seg(1, 1, 1, 3.5)               # up stroke
+    seg(1, 3.5, 4, 3.5)             # inner return
+    seg(4, 3.5, 4, 2.0)             # spiral tail
+    return out
+
+
+def cut_boxes(obj, cutters):
+    """Boolean-difference every cutter out of `obj` (before any remesh: exact booleans on boxes are reliable)."""
+    for c in cutters:
+        m = obj.modifiers.new("Cut", "BOOLEAN")
+        m.operation = "DIFFERENCE"
+        m.solver = "EXACT"
+        m.object = c
+        L.apply_all(obj)
+        L.remove_object(c)
+    return obj
+
+
+def patera_boss(name, coll, diameter=KEY_BOSS, proud=0.055):
+    """The round rosette boss of the rostra band: a low petalled patera with a knob centre, facing +Y."""
+    r = diameter / 2.0
+    prof = [(0.000, proud * 0.95), (0.030, proud * 1.05), (0.060, proud * 0.72), (0.090, proud * 0.62),
+            (0.135, proud * 0.80), (0.175, proud * 0.62), (r * 0.93, proud * 0.34), (r, proud * 0.10), (r, 0.0)]
+
+    def petals(th, t):
+        return 1.0 + 0.045 * math.cos(12 * th) * t
+
+    ob = L.revolve(name, L.resample_profile(prof, 24), segments=72, coll=coll, scale_fn=petals,
+                   cap_bottom=True, cap_top=True)
+    ob.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
+    return ob
 
 
 def build_moulding(kind, variant, coll, bake=True):
@@ -787,6 +1068,7 @@ def build_moulding(kind, variant, coll, bake=True):
     rng = random.Random(8000 + variant + hash(kind) % 100)
     work = L.work_collection()
     parts = []
+    ulen = 1.0                     # repeat length along X; published as the custom property `unit_length`
     if kind == "dentil":
         n = 6
         pitch = 1.0 / n
@@ -807,57 +1089,24 @@ def build_moulding(kind, variant, coll, bake=True):
             parts.append(L.box(f"dart{i}", (0.022, 0.06, 0.13), work, location=(x + pitch / 2, 0.05, 0.10), bevel=0.006))
         h, d = 0.20, 0.13
     elif kind == "greek_key":
-        # meander: a path of square turns, relief 0.02 on a 0.45 band, two repeats per metre
-        band_h = 0.45
-        parts.append(_strip("m_back", work, depth=0.03, height=band_h))
-        w = 0.035   # line width
-        def seg(x0, z0, x1, z1):
-            cx, cz = 0.5 * (x0 + x1), 0.5 * (z0 + z1)
-            parts.append(L.box(f"key_{len(parts)}", (abs(x1 - x0) + w, 0.02, abs(z1 - z0) + w), work, location=(cx, 0.04, cz)))
-        rep = 2
-        pw = 1.0 / rep
-        for r in range(rep):
-            ox = -0.5 + r * pw
-            u = pw / 6.0
-            zb, zt = 0.07, band_h - 0.07
-            zm = 0.5 * (zb + zt)
-            # classic meander (one repeat): outer top rail, hook down, inner spiral
-            seg(ox + 0.5 * u, zt, ox + 5.5 * u, zt)
-            seg(ox + 5.5 * u, zt, ox + 5.5 * u, zb)
-            seg(ox + 5.5 * u, zb, ox + 2.0 * u, zb)
-            seg(ox + 2.0 * u, zb, ox + 2.0 * u, zm + 0.5 * u)
-            seg(ox + 2.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm + 0.5 * u)
-            seg(ox + 4.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm - 0.6 * u)
-            seg(ox + 0.5 * u, zt, ox + 0.5 * u, zm - 0.6 * u)
-        h, d = band_h, 0.05
+        # QA-01-11 running meander (rostra_band_1/2, sheet s4 #12): band 0.52 m, ONE key repeat per unit so the unit
+        # tiles seamlessly at any run length. Grid g = U/7, inner field 5g = 0.43 m, groove 4.5 cm deep.
+        band_h, ulen = KEY_BAND_H, KEY_UNIT
+        slab = L.box("m_face", (ulen, KEY_FACE, band_h), work, location=(0, KEY_FACE / 2, band_h / 2))
+        parts.append(cut_boxes(slab, greek_key_cutters(work, x0=-ulen / 2, unit=ulen, band_h=band_h, tag="k")))
+        h, d = band_h, KEY_FACE
     elif kind == "rosette_band":
-        # rostra band: square rosette bosses 0.45 alternating with meander squares; unit = 1 m = rosette + key field
-        band_h = 0.5
-        parts.append(_strip("m_back", work, depth=0.03, height=band_h))
-        parts.append(L.box("frame", (0.44, 0.02, 0.44), work, location=(-0.27, 0.04, band_h / 2)))
-        prof = [(0.19, 0.0), (0.19, 0.01), (0.16, 0.035), (0.10, 0.06), (0.05, 0.075), (0.0, 0.08)]
-        def petals(th, t):
-            return 1.0 + 0.09 * math.cos(10 * th) * (1 - t)
-        ros = L.revolve("rosette", L.resample_profile(prof, 14), segments=64, coll=work, scale_fn=petals)
-        ros.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
-        ros.data.transform(Matrix.Translation((-0.27, 0.05, band_h / 2)))
-        parts.append(ros)
-        w = 0.035
-        u = 0.5 / 6.0
-        ox = 0.0
-        zb, zt = 0.07, band_h - 0.07
-        zm = 0.5 * (zb + zt)
-        def seg(x0, z0, x1, z1):
-            cx, cz = 0.5 * (x0 + x1), 0.5 * (z0 + z1)
-            parts.append(L.box(f"key_{len(parts)}", (abs(x1 - x0) + w, 0.02, abs(z1 - z0) + w), work, location=(cx, 0.04, cz)))
-        seg(ox + 0.5 * u, zt, ox + 5.5 * u, zt)
-        seg(ox + 5.5 * u, zt, ox + 5.5 * u, zb)
-        seg(ox + 5.5 * u, zb, ox + 2.0 * u, zb)
-        seg(ox + 2.0 * u, zb, ox + 2.0 * u, zm + 0.5 * u)
-        seg(ox + 2.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm + 0.5 * u)
-        seg(ox + 4.0 * u, zm + 0.5 * u, ox + 4.0 * u, zm - 0.6 * u)
-        seg(ox + 0.5 * u, zt, ox + 0.5 * u, zm - 0.6 * u)
-        h, d = band_h, 0.08
+        # QA-01-11 rostra band: a round patera boss (0.45 m) ALTERNATING with one incised meander repeat.
+        # unit = 1.20 m = 0.60 boss panel + 0.60 key repeat; same band height as greek_key so the two mix on a run.
+        band_h, ulen = KEY_BAND_H, 2 * KEY_UNIT
+        slab = L.box("m_face", (ulen, KEY_FACE, band_h), work, location=(0, KEY_FACE / 2, band_h / 2))
+        cx = -ulen / 2 + KEY_UNIT / 2
+        cut_boxes(slab, greek_key_cutters(work, x0=cx + KEY_UNIT / 2, unit=KEY_UNIT, band_h=band_h, tag="r"))
+        parts.append(slab)
+        boss = patera_boss("boss", work)
+        boss.data.transform(Matrix.Translation((cx, KEY_FACE - 0.004, band_h / 2)))
+        parts.append(boss)
+        h, d = band_h, KEY_FACE + 0.055
     elif kind == "modillion":
         # block bracket with a scrolled underside, 2 per metre (pitch 0.5), backing = the soffit strip
         parts.append(_strip("m_back", work, depth=0.03, height=0.30))
@@ -887,8 +1136,12 @@ def build_moulding(kind, variant, coll, bake=True):
         raise KeyError(kind)
     hi = L.union_blob(parts, f"{kind}_v{variant}", voxel=(0.01 if FAST else 0.006), smooth=1, coll=work)
     L.displace_noise(hi, strength=0.002, size=0.03, seed=1600 + variant, depth=1)
+    relief = KEY_GROOVE if kind in ("greek_key", "rosette_band") else d
     return L.finalize_asset(hi, kind, variant, coll, bake=bake, bake_size=1024, y_mode="back", budgets=L.BUDGETS["moulding"],
-                            size_note=f"1 m unit along X, {h:.2f} m tall, projects {d:.2f} m toward +Y; origin back-face bottom-centre")
+                            extra_props={"unit_length": ulen, "band_height": h, "relief_depth": relief},
+                            size_note=(f"repeat unit: unit_length {ulen:.2f} m along X, {h:.2f} m tall, projects {d:.2f} m "
+                                       f"toward +Y (fret incised {relief * 100:.1f} cm into the face); origin back-face "
+                                       f"bottom-centre; array with orn_lib.array_unit_along_run"))
 
 
 def build_drum_band(variant, coll, bake=True):
@@ -912,16 +1165,19 @@ def build_drum_band(variant, coll, bake=True):
         y = prof[i][0] * (1 - f) + prof[i + 1][0] * f
         z = prof[i][1] * (1 - f) + prof[i + 1][1] * f
         # scales: rows offset by half a pitch, each a shallow dome
-        # hex lattice of overlapping scale domes (continuous: max over the two nearest rows)
+        # imbricated scales: each row a line of rounded scales hanging from its top edge, overlapping the row below
+        # (height rises toward the free lower edge, then steps down onto the scale beneath); rows offset half a pitch
         bump = 0.0
-        for row in (int(z / pitch), int(z / pitch) + 1):
-            off = pitch / 2 if row % 2 else 0.0
-            cx = ((x + 10.0 + off) % pitch) - pitch / 2
-            cz = z - (row * pitch - pitch * 0.45)
-            d = (cx / (pitch * 0.55)) ** 2 + (cz / (pitch * 0.55)) ** 2
-            bump = max(bump, 0.035 * max(0.0, 1.0 - d))
-        if not (0.15 < z < Hb - 0.15):
-            bump = 0.0
+        if 0.15 < z < Hb - 0.15:
+            for row in (int(z / pitch), int(z / pitch) + 1):
+                off = pitch / 2 if row % 2 else 0.0
+                cx = ((x + 10.0 + off) % pitch) - pitch / 2
+                top = row * pitch + pitch * 0.55      # attachment edge of this row's scales
+                dz = top - z                          # distance below the attachment edge
+                if dz < 0 or dz > pitch * 1.05:
+                    continue
+                if (cx / (pitch * 0.5)) ** 2 + (dz / (pitch * 1.05)) ** 2 < 1.0:
+                    bump = max(bump, 0.012 + 0.03 * (dz / (pitch * 1.05)) ** 0.8)
         # normal of the profile in the yz plane
         dy = prof[i + 1][0] - prof[i][0]
         dz = prof[i + 1][1] - prof[i][1]
@@ -958,6 +1214,7 @@ BUILDERS = {
     "attic_figure": build_attic_figure, "winged_figure": build_winged_figure, "urn": build_urn,
     "urn_niche": build_urn_niche, "urn_tub": build_urn_tub, "keystone": build_keystone, "finial": build_finial,
     "rosette_ceiling": build_rosette, "attic_panel": build_attic_panel, "drum_band": build_drum_band,
+    "corner_scroll": build_corner_scroll,
     "dentil": lambda v, c, bake=True: build_moulding("dentil", v, c, bake),
     "egg_and_dart": lambda v, c, bake=True: build_moulding("egg_and_dart", v, c, bake),
     "greek_key": lambda v, c, bake=True: build_moulding("greek_key", v, c, bake),
@@ -966,12 +1223,12 @@ BUILDERS = {
     "anthemion": lambda v, c, bake=True: build_moulding("anthemion", v, c, bake),
 }
 ALL_TYPES = ["capital_rotunda", "maiden", "capital_colonnade", "capital_inner", "attic_figure", "urn", "urn_niche",
-             "urn_tub", "attic_panel", "keystone", "winged_figure", "finial", "drum_band", "rosette_ceiling",
+             "urn_tub", "attic_panel", "keystone", "winged_figure", "finial", "corner_scroll", "drum_band", "rosette_ceiling",
              "dentil", "egg_and_dart", "greek_key", "rosette_band", "modillion", "anthemion"]
 VARIANTS = {"capital_rotunda": 3, "capital_inner": 2, "capital_colonnade": 3, "maiden": 3, "attic_figure": 2,
             "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 2, "winged_figure": 2, "finial": 1, "rosette_ceiling": 2,
             "attic_panel": 3, "drum_band": 1, "dentil": 1, "egg_and_dart": 1, "greek_key": 1, "rosette_band": 1,
-            "modillion": 1, "anthemion": 1}
+            "modillion": 1, "anthemion": 1, "corner_scroll": 2}
 
 
 def main():
