@@ -35,6 +35,12 @@ def arg(name, default, n=0):
 
 
 HAZE = [float(v) for v in arg("--haze", ["1.33", "2.22", "5.0"])]
+CAPS = [float(v) for v in arg("--cap", [])]        # cam06 at these haze caps (k left at the file's value); 0 = haze off
+VZ = arg("--vaultz", [], n=1)
+VSPREAD = arg("--vaultspread", [], n=1)
+FILL = arg("--fill", [], n=1)          # override LIGHT_rotunda_bounce energy for the cam04 sweep
+VR = arg("--vaultr", [], n=1)          # move the vault emitters to this radius (the arch plane is ~20.5)
+VTILT = arg("--vaulttilt", [], n=1)    # degrees from vertical, tilted INWARD: 0 = up-facing, 90 = facing the axis
 VAULT = [float(v) for v in arg("--vault", ["520", "1600", "4000"])]
 RES = [int(v) for v in arg("--res", ["960", "540"], n=2)]
 SAMPLES = int(arg("--samples", ["16"], n=1)[0])
@@ -87,12 +93,42 @@ for k in HAZE:
 if HAZE:
     gn.inputs["Haze Falloff"].default_value = base_k
 
+for cap in CAPS:
+    gn.inputs["Haze Strength"].default_value = cap
+    print(f"[r08sweep] cam06 haze cap {cap:.2f} at k {gn.inputs['Haze Falloff'].default_value:.2f}")
+    shoot("CAM_qa_06_aerial", f"06_cap{cap:.2f}")
+if CAPS:
+    gn.inputs["Haze Strength"].default_value = base_cap
+
 vault = sorted([o for o in bpy.data.objects if o.name.startswith("LIGHT_rotunda_vault_bounce")], key=lambda o: o.name)
+if VZ or VSPREAD or VR or VTILT:
+    import math as _m
+    from mathutils import Vector as _V
+    for o in vault:
+        n = _V((o.location.x, o.location.y, 0.0))
+        n = n.normalized() if n.length > 1e-6 else _V((0, 1, 0))
+        if VR:
+            o.location.x, o.location.y = n.x * float(VR[0]), n.y * float(VR[0])
+        if VZ:
+            o.location.z = float(VZ[0])
+        if VSPREAD:
+            o.data.spread = _m.radians(float(VSPREAD[0]))
+        if VTILT:
+            th = _m.radians(float(VTILT[0]))
+            d = (-n * _m.sin(th) + _V((0, 0, 1)) * _m.cos(th)).normalized()   # emit inward and up
+            o.rotation_euler = (-d).to_track_quat("Z", "Y").to_euler()        # lights emit along local -Z
+    print(f"[r08sweep] vault emitters: r {VR or '-'} z {VZ or '-'} spread {VSPREAD or '-'} tilt {VTILT or '-'}")
 print(f"[r08sweep] {len(vault)} vault lights found")
+if FILL:
+    d = bpy.data.objects.get("LIGHT_rotunda_bounce")
+    if d:
+        d.data.energy = float(FILL[0])
+        print(f"[r08sweep] central disk LIGHT_rotunda_bounce -> {FILL[0]} W")
+
 for e in VAULT:
     for o in vault:
         o.data.energy = e
     print(f"[r08sweep] cam04 vault energy {e:.0f} W each")
-    shoot("CAM_qa_04_rotunda_ceiling", f"04_v{e:.0f}")
+    shoot("CAM_qa_04_rotunda_ceiling", f"04_v{e:.0f}{'_r' + VR[0] if VR else ''}{'_z' + VZ[0] if VZ else ''}{'_t' + VTILT[0] if VTILT else ''}{'_f' + FILL[0] if FILL else ''}")
 
 print("[r08sweep] done")
