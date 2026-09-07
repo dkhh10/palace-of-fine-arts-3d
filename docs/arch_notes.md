@@ -517,3 +517,24 @@ were no vault coffers to cast one.** They now carry no LOD suffix and render at 
 (+111,712, +11.3 % of ARCH, ~+1 % of the 11.62 M master -> ~11.73 M, still under the 13 M cap); LOD2 725,966.
 Of the LOD1 increase, 55,680 is the coffers and bases, 39,744 the flute run-out ring, 16,288 the vault coffers
 that were previously invisible at this LOD.
+
+### rosette_ceiling socket facings (ornament, 2026-09-08)
+
+All 24 `SOCKET_rosette_ceiling_*` had `dot(+Y, radial) = +1.000`, i.e. every rosette faced radially OUTWARD into
+the masonry and none was visible from cam04. `L.add_socket` only ever built a yaw, so a socket's facing could not
+leave the horizontal plane. It now takes `pitch_deg` (rotation about the socket's own X applied before the yaw;
+-90 points +Y straight down, and `outward` then only sets the ornament's in-plane roll). Fixed in `build_ceiling`:
+
+| sockets | facing | check |
+|---|---|---|
+| 16 rim-band (r 13.73 / 14.85, z 24.323 / 23.410) | `+Y = -radial` (toward the rotunda axis) | `dot(+Y, radial) = -1.000` |
+| 8 ring-1 coffer floor (r 5.20, z 28.914) | `+Y` straight down into the room, `pitch_deg = -90` | `+Y.z = -1.000` |
+
+`scripts/arch_socket_check.py` (new) prints the frame of every socket of a type and passes/fails it; run it with
+`blender -b assets/architecture.blend --python scripts/arch_socket_check.py [-- --type <orn_type>]`. All 24 OK.
+Positions, counts, types and `docs/sockets.md` are unchanged, and `pitch_deg` defaults to 0 so every other socket
+type keeps the exact frame it had.
+
+Caveat for ornament: a -radial facing suits a rosette on the *vertical inner face* of the base ring, but these 16
+sockets sit on the rib's horizontal room face (z = `sz - 0.53`). If the band rosettes should stand on that vertical
+face instead, say so and I will move them out to the rim edge rather than only re-aim them.

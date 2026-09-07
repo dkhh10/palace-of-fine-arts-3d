@@ -850,13 +850,19 @@ def build_ceiling(C):
     #     COFFER_DEPTH; that is correct, and P.ROSETTE_RIM_INSET lifts them back into the plaster by 0.02 m.
     #   * 8 inside the ring-1 square coffers (rr 5.2): a rosette inside a box belongs on the box FLOOR, i.e. the
     #     field saucer, which sits P.CEILING_FIELD_LIFT above the sphere -- not on the sphere as before.
+    # Facings (ornament, 2026-09-08: every one of these used to face radially OUTWARD, so the rosettes projected
+    # into the masonry and none was visible from cam04). Socket contract: ARCH socket +Y = the way the ornament's
+    # front faces. Rim-band bosses read as a rosette band on the inner face of the base ring, so they face the
+    # rotunda axis: +Y = -radial. Coffer-floor rosettes lie on a ceiling, so they face straight DOWN into the room
+    # (pitch -90; `dvec` then only sets their in-plane roll).
     for k in range(8):
         n, v = face_dir(k), vertex_dir(k)
-        for (dvec, rr, sh, dz) in ((n, apo - 0.45, 0.7, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET),
-                                   (v, apo / COS22 - 0.5, 0.6, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET),
-                                   (v, 5.2, 0.5, P.CEILING_FIELD_LIFT)):
+        for (dvec, rr, sh, dz, pitch) in ((n, apo - 0.45, 0.7, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET, 0.0),
+                                          (v, apo / COS22 - 0.5, 0.6, -P.COFFER_DEPTH + P.ROSETTE_RIM_INSET, 0.0),
+                                          (v, 5.2, 0.5, P.CEILING_FIELD_LIFT, -90.0)):
             p = mul2(dvec, rr)
-            SOCK.add("rosette_ceiling", (p[0], p[1], sz(p[0], p[1]) + dz), dvec, sh, size=0.3)
+            facing = dvec if pitch else (-dvec[0], -dvec[1])
+            SOCK.add("rosette_ceiling", (p[0], p[1], sz(p[0], p[1]) + dz), facing, sh, size=0.3, pitch_deg=pitch)
 
 
 # ============================================================================= site (platform, steps, rostra, planters, stairs)
