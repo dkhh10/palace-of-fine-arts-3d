@@ -148,7 +148,7 @@ lineup_cams = [
     add_cam(scene, "CAM_mat_misc", (-12.5, 5.5, GZ + 1.8), (-12.5, 0.0, GZ + 1.6), lens=28.0),
     add_cam(scene, "CAM_mat_lineup", (0.0, 19.0, GZ + 5.0), (0.0, 0.0, GZ + 2.5), lens=22.0),
     # per-instance ornament variation, judged at 60 m (six capital proxies with different `instance_seed`)
-    add_cam(scene, "CAM_mat_ornament_far", (-3.45, 53.0, GZ + 2.6), (-3.45, -7.0, GZ + 1.55), lens=200.0),
+    add_cam(scene, "CAM_mat_ornament_far", (24.9, 80.0, GZ + 2.6), (24.9, 20.0, GZ + 1.55), lens=200.0),
 ]
 
 # --------------------------------------------------------------------------- hero scene: placeholder blockout with the library materials

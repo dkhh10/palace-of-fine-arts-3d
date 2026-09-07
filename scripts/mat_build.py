@@ -233,7 +233,7 @@ def build_group_concrete():
     effl = t.mul(t.mul(al.outputs["Effl"], I["Algae"]), I["Efflorescence"])
     effl = t.math("ADD", effl, 0.0, clamp=True)
     # salt bloom: a chalky, slightly crusty white-grey wash just above the tide line (podium, rostra, rip-rap)
-    c = t.mix(t.mul(effl, 0.80), c, t.mix(0.85, c, (0.66, 0.635, 0.575)))
+    c = t.mix(t.mul(effl, 0.68), c, t.mix(0.85, c, (0.66, 0.635, 0.575)))
     c = t.mix(band, c, t.mix(0.35, (0.045, 0.07, 0.04), c))
     # 13. bird droppings on up-facing surfaces (sparse)
     vd = t.voronoi(t.vadd(P, (0.2, 0.7, 0.1)), 6.0, feature="F1", randomness=1.0)
@@ -441,7 +441,7 @@ def build_concrete_family():
         "Base Color": C(0.445, 0.333, 0.140), "Grey Color": C(0.35, 0.288, 0.165), "Grey Drift": 0.42,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.08, "Block Size": 2.4, "Blotch Size": 2.5,
         "Detail Strength": 0.6, "Streaks": 0.55, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.5,
-        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6, "Efflorescence": 1.7,
+        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6, "Efflorescence": 1.15,
         "Patches": 0.35, "Edge Wear": 0.5, "Edge Radius": 0.03, "Recess Dirt": 0.6, "Recess Distance": 0.4,
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
@@ -994,7 +994,7 @@ def capital_proxy(name, loc, material, r=0.42, h=0.8, notches=12):
 # "no ornament asset identical twice at hero distance"). They are separate meshes here, so Object Info Random already
 # differs; the explicit property is what ORN's linked/instanced copies will carry.
 for i in range(6):
-    cap = capital_proxy(f"MAT_test_capital_v{i + 1}", (-6.9 + i * 1.15, -7.0, GZ + 1.55), "MAT_ornament_concrete")
+    cap = capital_proxy(f"MAT_test_capital_v{i + 1}", (22.0 + i * 1.15, 20.0, GZ + 1.55), "MAT_ornament_concrete")
     cap["instance_seed"] = float(i) * 1.618 + 0.37
 lumpy("MAT_test_blob", 0.4, (6.2, 0.0, GZ + 0.4), "MAT_ornament_concrete", seed=4)
 basin = box("MAT_test_basin", (3.6, 2.8, 0.95), (1.5, 1.4, GZ + 0.475), "MAT_concrete_podium", bevel=0.015)
