@@ -506,18 +506,18 @@ def build_shrubs():
         src[f"pitto{i}"] = ("MAT_shrub", make_shrub_mesh(f"ENV_src_pittosporum_{i}", 300 + i, radius=r, height=h,
                                                          form="mound", cover=1.6))
     for i, (r, h) in enumerate(((0.7, 1.15), (0.95, 1.55))):
-        src[f"maho{i}"] = ("MAT_shrub", make_shrub_mesh(f"ENV_src_mahonia_{i}", 320 + i, radius=r, height=h,
+        src[f"maho{i}"] = (("MAT_shrub_light", "MAT_shrub"), make_shrub_mesh(f"ENV_src_mahonia_{i}", 320 + i, radius=r, height=h,
                                                         card=0.105, form="upright", cover=1.1))
     for i in range(3):
         src[f"agap{i}"] = ("MAT_reeds", make_blade_clump(f"ENV_src_agapanthus_{i}", 340 + i, height=0.62 + 0.12 * i,
                                                          blades=70, width=0.050, arch=0.55, spread=0.30))
     for i in range(3):
-        src[f"reed{i}"] = ("MAT_reeds", make_blade_clump(f"ENV_src_reed_{i}", 400 + i, height=1.0 + 0.22 * i,
+        src[f"reed{i}"] = (("MAT_shrub_dry", "MAT_reeds"), make_blade_clump(f"ENV_src_reed_{i}", 400 + i, height=1.0 + 0.22 * i,
                                                          blades=54, width=0.045, arch=0.18, spread=0.26))
     for i in range(3):
-        src[f"twig{i}"] = ("MAT_reeds", make_twig_shrub_mesh(f"ENV_src_twig_{i}", 350 + i,
+        src[f"twig{i}"] = (("MAT_shrub_dry", "MAT_reeds"), make_twig_shrub_mesh(f"ENV_src_twig_{i}", 350 + i,
                                                              radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i))
-    mats = {k: L.mat(m) for k, (m, _) in {k: v for k, v in src.items()}.items()}
+    mats = {k: (L.mat_or(*m) if isinstance(m, tuple) else L.mat(m)) for k, (m, _) in src.items()}
     for k, (mname, me) in src.items():
         me.materials.append(mats[k])
 
@@ -587,6 +587,23 @@ def build_shrubs():
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 1.2), 2.2, closed=True):
         if rnd.random() < 0.55:
             clump(x, y, rnd.randint(1, 3), 1.3, LOWMOUNDS, min_shore=0.15, max_shore=2.6)
+    # 2c. peninsula planting band 9-18 m back from the water, between the shore belt and the podium (lead's call
+    #     after the hero camera stayed put): ref 169 shows beds of mounded shrubs and low trees there, not bare lawn.
+    #     Beds, not a carpet - the gaps keep the mown lawn reading.
+    n_band = len(placed)
+    keys_band = LOWMOUNDS + MAHONIA + AGAP
+    for off in (8.5, 11.5, 14.5, 17.5):
+        for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, off), 2.5, closed=True):
+            r = math.hypot(x, y)
+            if not (APRON_R - 1.0 < r < 58.0):       # the strip between the platform apron and the shore belt
+                continue
+            bed = L.fnoise(x, y, 0.10, 31)           # ~10 m beds with mown lawn between them
+            if bed < -0.25:
+                continue
+            if rnd.random() < 0.75 + 0.25 * bed:
+                clump(x, y, rnd.randint(3, 7), 2.8, keys_band, min_shore=6.5, max_shore=21.0)
+    n_band = len(placed) - n_band
+
     # 3. foundation planting along the colonnade fronts
     for p in COLONNADE_ROOFS[:2]:
         for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.0, closed=True):
@@ -614,7 +631,8 @@ def build_shrubs():
         counts[key] = counts.get(key, 0) + 1
         total += L.tri_count(obj)
     card_max = max(src[k][1].get("card_m", 0.0) * 1.45 for k in src if src[k][1].get("card_m"))
-    log(f"shrubs: {len(placed)} instances of {len(src)} meshes, {total} tris, "
+    log(f"shrubs: {len(placed)} instances ({n_band} in the peninsula band 7.5-19.5 m from the water) "
+        f"of {len(src)} meshes, {total} tris, "
         f"largest leaf card {card_max * 100:.0f} cm; {counts}")
 
 

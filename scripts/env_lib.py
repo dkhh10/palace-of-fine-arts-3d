@@ -26,6 +26,7 @@ ENV_PLACEHOLDER_COLORS = {
     "MAT_bark_cypress": ((0.20, 0.14, 0.10, 1.0), 0.9),
     "MAT_bark_eucalyptus": ((0.55, 0.48, 0.40, 1.0), 0.8),
     "MAT_leaf_cypress": ((0.018, 0.038, 0.012, 1.0), 0.8),
+    "MAT_leaf_pine": ((0.015, 0.032, 0.011, 1.0), 0.8),
     "MAT_leaf_eucalyptus": ((0.075, 0.115, 0.05, 1.0), 0.7),
     "MAT_leaf_broadleaf": ((0.05, 0.11, 0.028, 1.0), 0.7),
     "MAT_shrub": ((0.045, 0.10, 0.03, 1.0), 0.8),
@@ -44,8 +45,8 @@ ENV_PLACEHOLDER_COLORS = {
 }
 
 
-FOLIAGE_MATS = ("MAT_leaf_cypress", "MAT_leaf_eucalyptus", "MAT_leaf_broadleaf", "MAT_shrub", "MAT_shrub_light",
-                "MAT_shrub_dry", "MAT_reeds")
+FOLIAGE_MATS = ("MAT_leaf_cypress", "MAT_leaf_pine", "MAT_leaf_eucalyptus", "MAT_leaf_broadleaf", "MAT_shrub",
+                "MAT_shrub_light", "MAT_shrub_dry", "MAT_reeds")
 
 
 def _foliage_placeholder_tree(m, col, rough, translucency=0.35, tint_attr="Col"):
@@ -105,6 +106,24 @@ def mat(name):
     if name in FOLIAGE_MATS:
         m.use_backface_culling = False
     return m
+
+
+def mat_or(preferred, fallback):
+    """Library material `preferred` if it exists, otherwise `fallback`. Lets ENV name materials the materials agent
+    is still building (MAT_leaf_pine, MAT_shrub_light, MAT_shrub_dry): the moment the name lands in the library the
+    remap takes effect with no code change. The unused placeholder datablock is discarded."""
+    m = common.load_material(preferred)
+    if not m.get("placeholder"):
+        if preferred in FOLIAGE_MATS or "leaf" in preferred or "shrub" in preferred or "reed" in preferred:
+            m.use_backface_culling = False
+        return m
+    if m.users == 0:
+        try:
+            m.use_fake_user = False
+            bpy.data.materials.remove(m)
+        except Exception:
+            pass
+    return mat(fallback)
 
 
 def jitter_polygon(poly, step=2.0, amp=0.45, seed=3):
