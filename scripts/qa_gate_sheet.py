@@ -42,6 +42,26 @@ R02 = {
     "Repetition visibility": [2.5, 2, 2, 2, 2, 2],
     "Scale cues":            [3.5, 2, 1.5, 2.5, 2, 2],
 }
+# round 03 (2026-09-07, first polish round: all five owners' p4r1 merged, cam03/cam05 re-stationed, Eevee at LOD1)
+R03 = {
+    "Silhouette match":      [4, 2, 2.5, 3.5, 3, 4],
+    "Proportion":            [4, 3, 3, 3.5, 3, 3.5],
+    "Ornament fidelity":     [3, 2.5, 2.5, 1.5, 3, 2.5],
+    "Material realism":      [3, 2.5, 1.5, 1.5, 2.5, 1.5],
+    "Edge wear":             [1.5, 1, 0.5, 0.5, 1.5, 0.5],
+    "Lighting mood":         [4, 3, 2.5, 2, 3.5, 2],
+    "Water reflection":      [3.5, 2.5, None, None, 2.5, 1.5],
+    "Repetition visibility": [3, 2, 2, 2, 2.5, 2],
+    "Scale cues":            [3.5, 2.5, 2.5, 2.5, 2.5, 2],
+}
+SCORES = {"01": R01, "02": R02, "03": R03}
+VERDICT = {
+    "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
+          "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
+    "03": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
+          "Blockers: hero stone still clean CAD at 1:1, chroma 6 deg cool (R-B 92 vs 138), "
+          "interior fills 2x, watchdog kills GPU renders.",
+}
 
 
 def font(size, bold=True):
@@ -69,6 +89,7 @@ def averages(tbl):
 
 
 def build(rnd, out):
+    prev_rnd = f"{int(rnd) - 1:02d}"
     W = 1920
     prev = ROOT / "renders" / "previews" / "qa"
     hero = Image.open(prev / f"round{rnd}_01_lagoon_hero_cycles.png").convert("RGB")
@@ -87,7 +108,7 @@ def build(rnd, out):
     d = ImageDraw.Draw(sheet)
     f_title, f_lab, f_cell = font(30), font(20), font(22)
 
-    d.text((20, 10), f"Palace of Fine Arts - QA round {rnd} gate (Phase 3).  "
+    d.text((20, 10), f"Palace of Fine Arts - QA round {rnd} gate (round {prev_rnd} -> {rnd}).  "
                      f"Cycles hero 1920x1080 128 spp vs ref 169 (golden-hour twin).", font=f_title, fill=(240, 240, 235))
     y = 44
     sheet.paste(hero_s, (10, y)); sheet.paste(ref_s, (960, y))
@@ -102,7 +123,8 @@ def build(rnd, out):
         d.text((i * tw + 8, y + 6), f"cam {CAMS[i]}", font=f_lab, fill=(255, 220, 120))
     y += strip_h + 26
 
-    a1, a2 = averages(R01), averages(R02)
+    T1, T2 = SCORES[prev_rnd], SCORES[rnd]
+    a1, a2 = averages(T1), averages(T2)
     col0, colw = 20, 300
     d.text((col0, y), "row", font=f_cell, fill=(200, 200, 200))
     for i, c in enumerate(CAMS):
@@ -111,7 +133,7 @@ def build(rnd, out):
     for r in ROWS:
         d.text((col0, y), r, font=f_cell, fill=(225, 225, 225))
         for i in range(6):
-            v1, v2 = R01[r][i], R02[r][i]
+            v1, v2 = T1[r][i], T2[r][i]
             if v2 is None:
                 txt, col = "n/a", (120, 120, 120)
             else:
@@ -128,9 +150,7 @@ def build(rnd, out):
         col = (140, 235, 140) if dv > 0 else (255, 140, 140)
         d.text((col0 + colw + i * 265, y), f"{a1[i]:.2f} -> {a2[i]:.2f}  {dv:+.2f}", font=f_cell, fill=col)
     y += 44
-    d.text((col0, y), "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
-                      "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
-           font=f_cell, fill=(255, 180, 120))
+    d.text((col0, y), VERDICT.get(rnd, "Gate: NOT passed."), font=f_cell, fill=(255, 180, 120))
 
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     sheet.save(out)
