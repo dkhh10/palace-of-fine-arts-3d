@@ -132,6 +132,17 @@ def main():
         box = a[y0:y1, x0:x1]
         g = 0.2126 * box[..., 0] + 0.7152 * box[..., 1] + 0.0722 * box[..., 2]
         print(f"  {'ripple_run_px':16s} {run_lengths(g):5.1f}")
+    if only and "shaft" in only:
+        g = shaft_profile(a)
+        print("  shaft profile (y 330-380, x 780-1240):")
+        print("   ", " ".join(f"{v:.0f}" for v in g))
+
+
+def shaft_profile(a, y0=330, y1=380, x0=780, x1=1240):
+    """Horizontal luminance profile across the front shafts: count local minima and their contrast."""
+    box = a[y0:y1, x0:x1]
+    g = (0.2126 * box[..., 0] + 0.7152 * box[..., 1] + 0.0722 * box[..., 2]).mean(axis=0)
+    return g
 
 
 if __name__ == "__main__":
