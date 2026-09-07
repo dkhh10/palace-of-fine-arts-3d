@@ -41,26 +41,42 @@ SKY = dict(sun_size_deg=0.533, sun_intensity=1.0, altitude=5.0, air_density=1.0,
 # culprit; it was propping the shade open, and at +0.9 EV the shade no longer needs propping (it measured 146.5
 # against ref 169's 117.2, i.e. 25 % too LIGHT). Back to the physical 1.0. Measured on the Cycles hero, five settings:
 # attic R-B 88.1 -> 94.8 at strength 1.0, 97.8 at 0.6; shade 146.5 -> 134.0 -> 128.1.
-SKY_STRENGTH = 1.0                 # world strength for LIGHTING (physical). Was 2.0: an art bias from round 05 to open
-                                   # the shade, which is what was washing blue over every sunlit face.
-SKY_CAMERA_BOOST = 1.20            # what the CAMERA sees of the sky. Swept 3.0 / 2.4 / 2.0 / 1.5 / 1.2 / 1.0 against
+SKY_STRENGTH = 0.80                # world strength for LIGHTING. 2.0 was a round-05 art bias, 1.0 the physical
+                                   # value; 0.80 is a measured 20 % trim, and it is a CHROMA knob, not a level
+                                   # knob - the exposure is re-calibrated against the 18 % card every time this
+                                   # moves, so the scene keeps its brightness and only loses sky-blue fill. On a
+                                   # sun-facing surface the sky still supplies 10.4 of 27.7 blue units against
+                                   # 11.2 of 78.5 red (calibration_report E_sunfacing), so trimming it is 2.6x
+                                   # more effective on blue than on red. Round 09, cam01 hero at 1920x1080/64 spp,
+                                   # High Contrast: attic R-B 119.0 at 1.00, 122.9 at 0.80, 125.8 at 0.60; shade
+                                   # 134.7 / 132.3 / 129.7 against ref 169's 117.2. 0.80 takes most of the gain
+                                   # for the smallest departure from physical; 0.60 is on record if more is wanted.
+SKY_CAMERA_BOOST = 1.50            # what the CAMERA sees of the sky: sky x boost = 0.80 x 1.50 = 1.20, i.e. the
+                                   # visible sky is EXACTLY what round 08b calibrated, and the round-09 sky trim
+                                   # is invisible to the camera and visible only to the diffuse lighting.
+                                   # Round 08b swept 3.0 / 2.4 / 2.0 / 1.5 / 1.2 / 1.0 against
                                    # ref 169's sky-top luminance of 165.7: 213.6 / 204.3 / 195.7 / 179.9 / 165.7 /
                                    # 153.2. 1.20 lands on the reference exactly. (The sky is deep on the AgX shoulder,
                                    # which is why it takes a 2.5x cut in scene radiance to move it 23 %.)
-SKY_GLOSSY_BOOST = 3.00            # what GLOSSY (reflection) rays see. Split from the camera boost in round 08b: the
+SKY_GLOSSY_BOOST = 3.75            # what GLOSSY (reflection) rays see: 0.80 x 3.75 = 3.00, again unchanged from
+                                   # round 08b, so the lagoon reflects the same sky it did. Split from the camera
+                                   # boost in round 08b: the
                                    # camera's sky had to come down to match ref 169 while the lagoon's reflection had
                                    # to stay up, and one socket could not do both. 1.0 x 3.00 = the 2.0 x 1.50 the
                                    # lagoon reflected before, so the water keeps its brightness.
 SKY_CAMERA_SATURATION = 1.20       # saturation of the sky for CAMERA + GLOSSY rays only (Hue/Sat node in the world);
                                    # the diffuse lighting keeps the physical colour. AgX desaturates the bright sky:
                                    # measured B/R 1.37 in the render vs 1.95 in ref 169 at matching luminance.
-SUN_BLUE_MULT = 1.00               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
+SUN_BLUE_MULT = 0.75               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
                                    # own sun disc has been integrated (so the calibration itself stays physical and
                                    # reproducible). Round 09 lever for QA-02-14 / the sunlit-stone chroma: the lamp
                                    # colour is (1.000, 0.607, 0.258) and on a sun-facing surface the sky still
                                    # supplies 10.4 of the 27.7 blue units (calibration_report E_sunfacing), so the
                                    # sun's own blue is the only part of it lighting can take out without touching
-                                   # the shade. 1.00 = the physical colour.
+                                   # the shade. 1.00 = the physical colour; 0.75 measured on the cam01 hero at
+                                   # 1920x1080/64 spp is worth +3.9 attic R-B and +0.015 attic saturation with
+                                   # the attic luminance flat (blue carries 7 % of luminance), taken together
+                                   # with SKY_STRENGTH 0.80 in the same sweep row.
 SUN_ANGLE = 0.0093                 # rad, real solar disc 0.533 deg (same as the sky's sun_size)
 EXPOSURE_BIAS = 1.75               # EV added to the grey-card calibration. Round 08b: SKY_STRENGTH 2.0 -> 1.0 takes
                                    # light out of the scene, so the 18 % card calibration moved -4.39 -> -4.14 EV and
@@ -115,9 +131,12 @@ COMP = dict(haze_strength=0.50,          # now the CAP: the maximum airlight fra
 # up into the vault. FILL models exactly that and nothing else - an up-facing area light under the vault, so it lights
 # the soffits and the coffers and adds almost nothing to what cam01 sees through the arch. It is an art bias, sized by
 # measurement; ENERGY is the one number to change if QA wants it dialled back.
-FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=7600.0,   # 9000 in
-            # round 07; the coffer field came in at 0.50 of cam04's own sky against ref 083's 0.39, and VAULT_FILL
-            # below now adds to it as well, so the central disk gives back 0.24 EV (QA-02-12).
+FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=1140.0,
+            # ROUND 09: 7600 -> 1140 (x 0.15). 9000 in round 07, 7600 in round 08. Halving the sky in round 08b
+            # left both fills oversized: the coffer field measured 1.016 of cam04's own sky (Cycles, round-09 rig)
+            # against ref 083's 0.39, i.e. a ceiling as bright as the sky seen past it. The central disk is the
+            # emitter the COFFERS see best, so it is the one that came down hardest; it still carries the last
+            # 0.07 of coffer ratio that the (now narrow) vault emitters no longer throw at the dome.
             color=(1.0, 0.86, 0.68), spread_deg=150.0,
             note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
 
@@ -142,8 +161,21 @@ FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, en
 # the plaza. An interior bounce source cannot reproduce a ratio that comes from outside the building.
 # So: ship the middle of the line, and leave the lead one number. energy 2400 -> soffit 0.34, coffer 0.69;
 # 8000 with FILL at 0 -> soffit 0.45 (QA's literal target), coffer 0.86. Both bracketing renders are on disk.
+# ROUND 09 BREAKS THE LOCK. Round 08 measured soffit/coffer at 0.486-0.556 across height, radius, tilt and the
+# central disk, and concluded ref 083's 0.58/0.39 (a 1.49 ratio the other way round) was unreachable from inside.
+# It is reachable, and the knob is SPREAD. At 90 deg each emitter floods the whole vault volume, so most of its
+# light lands on the central coffered dome rather than on the soffit above it - which is also physically wrong:
+# the plaza light these bays actually get arrives through their own arch opening, which subtends roughly +-25 deg
+# from a point under the vault, so a restricted cone is the MORE faithful model, not a cheat. Measured in Cycles
+# on cam04 at the round-09 rig (fill x, vault y, spread s -> soffit/sky, coffer/sky, soffit/coffer):
+#   1.00, 1.00, 90 -> 0.617, 1.016, 0.61     0.00, 0.65, 90 -> 0.316, 0.472, 0.67
+#   0.00, 1.00, 30 -> 0.309, 0.186, 1.66     0.40, 1.40, 45 -> 0.531, 0.489, 1.09
+#   0.00, 1.80, 45 -> 0.538, 0.305, 1.76     0.15, 1.65, 45 -> 0.535, 0.376, 1.42  <- shipped
+# ref 083 is 0.58 / 0.39 / 1.49. The shipped row is inside +-0.08 of BOTH for the first time, so QA-02-12 and
+# QA-01-9 stop trading against each other. Cost on record: the two soffit boxes read 0.396 W / 0.674 E, a 1.7:1
+# imbalance against 1.14:1 at 90 deg - a narrow cone leaves the obliquest part of the vault to the sky alone.
 VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5, z=13.0,
-                  size=12.5, size_y=4.0, energy=2400.0, color=(1.0, 0.86, 0.68), spread_deg=90.0,
+                  size=12.5, size_y=4.0, energy=3960.0, color=(1.0, 0.86, 0.68), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
 COLLECTION = "LIGHT"
