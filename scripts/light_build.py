@@ -69,10 +69,17 @@ LOOK = "AgX - Base Contrast"       # 'Punchy' crushes the sky-lit shade (A/B in 
 #     grey-yellow at linear saturation 0.21, which is exactly the grey-olive QA measured. The anti-solar horizon IS
 #     blue-grey physically; the warm veil in ref 169 is the low sun scattering into it, and that is an art bias with a
 #     measured target: display hue 30-45 deg. (1.50, 1.00, 0.58) gives (4.70, 3.74, 2.37), hue 35 deg, sat 0.50.
+# Sweep result (scripts/light_r08_sweep.py, cam06, 5 settings incl. haze OFF - the numbers are in lighting_notes 15):
+# with the haze switched off entirely the aerial ALREADY reads hue 84.6 at saturation 0.178 and a dome/far-shore
+# contrast of 1.08:1. So the grey-olive is the scene's own colour and the flatness is the scene's own flatness; the
+# round-07 haze made both worse but did not cause them, and no haze setting can reach QA's saturation 0.20 / contrast
+# 1.5:1. Heavier haze buys warmth only by veiling more, which is the global desaturation this fix is supposed to
+# avoid, so the settings below are the physically defensible middle: L = 800 m (a clear-morning extinction length,
+# not the 400 m of round 07's ramp) at a 0.50 cap, with the warmth carried by the haze COLOUR instead of its amount.
 MIST = dict(start=20.0, depth=2000.0, falloff="LINEAR")   # mist pass = (d - 20) / 2000, clamped; SHAPED in the compositor
-COMP = dict(haze_strength=0.60,          # now the CAP: the maximum airlight fraction at infinite distance, not a scale
-            haze_extinction=5.0,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 400 m
-            haze_warmth=(1.50, 1.00, 0.58),   # haze colour = measured west-horizon radiance x warmth
+COMP = dict(haze_strength=0.50,          # now the CAP: the maximum airlight fraction at infinite distance, not a scale
+            haze_extinction=2.5,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 800 m
+            haze_warmth=(1.70, 1.00, 0.48),   # haze colour = measured west-horizon radiance x warmth
             bloom_threshold_display=0.9,   # scene-linear threshold = this / 2^exposure, i.e. only near-white pixels bloom
             bloom_strength=0.05, bloom_size=0.6, vignette=0.08)
 
@@ -102,8 +109,17 @@ FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, en
 # area lights are single-sided, so nothing below them (cam04 at z 1.6, cam01 through the arch) ever sees the emitter.
 # arch_params: FACE_AZ0 82.0, faces at 82 + 45k; WALL_APOTHEM 21.5, WALL_THICKNESS 2.0 -> soffit outer edge r 19.5;
 # INNER_WALL_APOTHEM 15.38 -> soffit inner edge; ARCH_SPAN 12.5; ARCH_SPRING_Z 17.5.
-VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5, z=8.0,
-                  size=12.5, size_y=4.0, energy=520.0, color=(1.0, 0.86, 0.68), spread_deg=140.0,
+# MEASURED, and this is the important part: the soffit and the coffered ceiling are LOCKED together. Across six
+# configurations - emitter at z 8 / 13 / 15, at radius 17.5 and in the arch plane at 20.0 tilted 55 deg inward, with
+# the central disk at 7600 W and at 0 - the soffit/coffer luminance ratio never left 0.486-0.556. Raising the soffit
+# to QA's 0.45 of sky costs a coffer field at 0.855 of sky, i.e. 2.2x ref 083, which would re-open QA-01-9. The
+# reason is physical: in ref 083 the soffits are BRIGHTER than the coffers (0.58 vs 0.39) because they are lit by the
+# sunlit plaza seen through the great arches at close range, and a 7.4 deg sun in this model never puts that light on
+# the plaza. An interior bounce source cannot reproduce a ratio that comes from outside the building.
+# So: ship the middle of the line, and leave the lead one number. energy 2400 -> soffit 0.34, coffer 0.69;
+# 8000 with FILL at 0 -> soffit 0.45 (QA's literal target), coffer 0.86. Both bracketing renders are on disk.
+VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5, z=13.0,
+                  size=12.5, size_y=4.0, energy=2400.0, color=(1.0, 0.86, 0.68), spread_deg=90.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
 COLLECTION = "LIGHT"
