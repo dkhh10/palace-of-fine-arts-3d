@@ -99,7 +99,7 @@ for k, v in (("use_guiding", False), ("use_auto_tile", True), ("tile_size", 256)
     if hasattr(cy, k):
         setattr(cy, k, v)
 
-EV = float(arg("--ev", 0.9))
+EV = float(arg("--ev", 0.0))
 scene.view_settings.exposure += EV
 print(f"[mat_scene] view exposure {scene.view_settings.exposure - EV:.4f} {EV:+.2f} EV -> {scene.view_settings.exposure:.4f}")
 
