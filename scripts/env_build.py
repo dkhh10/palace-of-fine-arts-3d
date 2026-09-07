@@ -553,34 +553,40 @@ def build_shrubs():
     REEDS = ("reed0", "reed1", "reed2")
     TWIGS = ("twig0", "twig1", "twig2")
 
-    # 1. rotunda peninsula: dense on the north-east (user image, right of the rotunda), open on the south-east
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.6), 4.0, closed=True):
+    # 1. rotunda peninsula: dense on the north-east (user image, right of the rotunda), open on the south-east.
+    #    ref 169's shore is a continuous mass of foliage down to the rip-rap, so the belt is closed, not dotted.
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.4), 2.6, closed=True):
         r = math.hypot(x, y)
         if not (APRON_R + 1.0 < r < 49.0):
             continue
         az = math.degrees(math.atan2(y, -x)) % 360
         ne = L.smoothstep(150.0, 60.0, abs(az - 40.0)) if az < 180 else 0.0
         se = L.smoothstep(150.0, 60.0, abs(az - 140.0)) if az < 200 else 0.0
-        p = 0.40 + 0.5 * ne - 0.15 * se
+        p = 0.62 + 0.32 * ne - 0.20 * se
         if rnd.random() < p:
             keys = MOUNDS + MAHONIA if ne > 0.5 else LOWMOUNDS + MAHONIA
-            clump(x, y, rnd.randint(2, 5), 2.2, keys)
-        if rnd.random() < 0.5:
-            clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.4, max_shore=3.0)
+            clump(x, y, rnd.randint(2, 6), 2.4, keys, min_shore=0.5, max_shore=9.0)
+        if rnd.random() < 0.55:
+            clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.25, max_shore=3.2)
         if rnd.random() < 0.30:
             clump(x, y, 1, 1.5, TWIGS, min_shore=0.6, max_shore=6.0)
-    # 2. the rest of the shore: sparser mounds, dry reeds and agapanthus at the waterline
-    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.2), 5.0, closed=True):
-        if math.hypot(x, y) < 50 or not land_ok(x, y, 0.6, 7.0):
+    # 2. the rest of the shore: the same belt, a little sparser, with more dry reeds at the water
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.0), 3.0, closed=True):
+        if math.hypot(x, y) < 50 or not land_ok(x, y, 0.4, 9.0):
             continue
-        if rnd.random() < 0.45:
-            clump(x, y, rnd.randint(1, 4), 2.6, LOWMOUNDS + MAHONIA)
-        if rnd.random() < 0.45:
+        if rnd.random() < 0.62:
+            clump(x, y, rnd.randint(2, 5), 2.8, LOWMOUNDS + MAHONIA, min_shore=0.5, max_shore=9.0)
+        if rnd.random() < 0.35:
             clump(x, y, 1, 1.5, TWIGS, min_shore=0.5, max_shore=6.0)
-        if rnd.random() < 0.75:
-            clump(x, y, rnd.randint(1, 3), 1.8, REEDS, min_shore=0.25, max_shore=3.2)
+        if rnd.random() < 0.7:
+            clump(x, y, rnd.randint(1, 3), 1.8, REEDS, min_shore=0.2, max_shore=3.4)
+        if rnd.random() < 0.5:
+            clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.2, max_shore=3.0)
+    # 2b. bank cover: low mounds sitting on the rip-rap bank itself, so the pale stone band is broken up
+    #     (in ref 169 the bank is visible only in gaps between the bushes)
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 1.2), 2.2, closed=True):
         if rnd.random() < 0.55:
-            clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.25, max_shore=2.8)
+            clump(x, y, rnd.randint(1, 3), 1.3, LOWMOUNDS, min_shore=0.15, max_shore=2.6)
     # 3. foundation planting along the colonnade fronts
     for p in COLONNADE_ROOFS[:2]:
         for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.0, closed=True):
