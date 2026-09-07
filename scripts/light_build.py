@@ -325,6 +325,8 @@ def build_vault_fill(coll):
         obj.rotation_euler = (math.pi, 0.0, math.atan2(ny, nx))
         obj["note"] = V["note"]
         obj["bay_azimuth_deg"] = V["az0"] + 360.0 / V["n"] * k
+        obj["energy_W"] = V["energy"]        # the PHYSICAL (Cycles) energy; light_presets.apply_vault_for_engine
+                                             # reads it back when it swaps the Eevee-only override in and out
         coll.objects.link(obj)
         made.append(obj)
     area = V["size"] * V["size_y"]

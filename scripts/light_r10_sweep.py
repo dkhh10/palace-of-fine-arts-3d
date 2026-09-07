@@ -248,9 +248,12 @@ for case in VAULT:
         esp = d["sp"] if d["esp"] is None else d["esp"]
         ecut = d["cut"] if d["ecut"] is None else d["ecut"]
         edcut = d["dcut"] if d["edcut"] is None else d["edcut"]
-        set_fills(ef, ev, esp, ecut, edcut)
         tag += f"_E{ef:g}_{ev:g}_{esp:g}_{ecut:g}_{edcut:g}"
+    else:
+        ef, ev, esp, ecut, edcut = d["f"], d["v"], d["sp"], d["cut"], d["dcut"]
     lp.apply_preview_eevee(scene, samples=64)
+    set_fills(ef, ev, esp, ecut, edcut)   # AFTER the preset: light_presets.apply_preview_eevee now applies its own
+                                          # Eevee vault override, and this sweep has to stay in control of the numbers
     shoot(CAM04, OUT / f"{PREFIX}v_{tag}_eevee.png")
     set_fills(1.0, 1.0, base_spread)
 
@@ -270,7 +273,7 @@ for case in EEV:
     lp.apply_preview_eevee(scene, samples=64)
     e = scene.eevee
     e.use_fast_gi = d["fgi"] > 0.5
-    e.fast_gi_method = "AMBIENT_OCCLUSION" if d["ao"] > 0.5 else "GLOBAL_ILLUMINATION"
+    e.fast_gi_method = "AMBIENT_OCCLUSION_ONLY" if d["ao"] > 0.5 else "GLOBAL_ILLUMINATION"
     e.fast_gi_distance = d["dist"]
     e.fast_gi_ray_count = int(d["rays"])
     e.use_raytracing = d["rt"] > 0.5

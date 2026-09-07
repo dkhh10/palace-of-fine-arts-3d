@@ -1,0 +1,4 @@
+00:00.331  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r10] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend: exposure -2.3331, look 'AgX - High Contrast', sun az 118.49 el 7.36 (sun_position.sun_calc (NOAA)), energy 67.32, colour (1.0, 0.6073, 0.1933), world 'WORLD_golden_hour'
+[r10] light_build says: sky {'sun_size_deg': 0.533, 'sun_intensity': 1.0, 'altitude': 5.0, 'air_density': 1.0, 'aerosol_density': 1.6, 'ozone_density': 2.0}, strength 0.8, camboost 2.1, glossyboost 5.25, csat 1.2, sunblue 0.75, bias 1.25, look 'AgX - High Contrast'
+[r10] fills: disk 1140 W, 8 vault emitters 3960 W, spread 45 deg
