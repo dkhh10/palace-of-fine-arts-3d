@@ -145,13 +145,20 @@ base_disk = disk.data.energy if disk else 0.0
 base_vault = vault[0].data.energy if vault else 0.0
 if VAULT:
     print(f"[r09] fills: disk {base_disk:.0f} W, {len(vault)} vault emitters at {base_vault:.0f} W")
+base_spread = math.degrees(vault[0].data.spread) if vault else 0.0
 for case in VAULT:
-    fs, vs = (float(x) for x in case.split(","))
+    parts = case.split(",")
+    fs, vs = float(parts[0]), float(parts[1])
+    # Third field: the vault emitters' SPREAD in degrees. The soffit/coffer luminance ratio is locked at 0.53-0.67 by
+    # the fact that every emitter under the vault also lights the central coffered dome; narrowing the cone is the one
+    # geometric lever that aims an emitter at its OWN soffit instead, so it is the only way the ratio can move.
+    sp = float(parts[2]) if len(parts) > 2 else base_spread
     if disk:
         disk.data.energy = base_disk * fs
     for o in vault:
         o.data.energy = base_vault * vs
-    tag = f"f{fs:.2f}_v{vs:.2f}"
+        o.data.spread = math.radians(sp)
+    tag = f"f{fs:.2f}_v{vs:.2f}" + (f"_sp{sp:.0f}" if abs(sp - base_spread) > 0.5 else "")
     print(f"[r09] cam04 {tag}: disk {base_disk * fs:.0f} W, vault {base_vault * vs:.0f} W each", flush=True)
     shoot("CAM_qa_04_rotunda_ceiling", OUT / f"r09vault_{tag}.png")
 
