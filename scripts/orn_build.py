@@ -290,7 +290,7 @@ def build_maiden(variant, coll, bake=True):
     height = {1: 4.30, 2: 4.22, 3: 4.36}.get(variant, 4.3)
     S = height / 1.75
     lean = {1: 0.22, 2: 0.30, 3: 0.26}.get(variant, 0.24) + rng.uniform(-0.02, 0.02)
-    bow = {1: 0.34, 2: 0.40, 3: 0.30}.get(variant, 0.34)
+    bow = {1: 0.50, 2: 0.58, 3: 0.44}.get(variant, 0.50)
     turn = {1: 0.0, 2: 12.0, 3: -9.0}.get(variant, 0.0)
     rim_z = 3.30
     corner = Vector((0.0, -0.32, 0.0))
@@ -305,9 +305,10 @@ def build_maiden(variant, coll, bake=True):
         "ankL": (Vector((0.17, 0.02, 0.25)), (0.10, 0.11)), "ankR": (Vector((-0.16, 0.04, 0.25)), (0.10, 0.11)),
         "waist": (Vector((0, -0.03 - lean * 0.3, 2.78 * k)), (0.27, 0.18)),
         "chest": (Vector((0, -lean * 0.7, 3.28 * k)), (0.35, 0.22)),
-        "shL": (Vector((0.54, -lean, 3.62 * k)), (0.15, 0.14)), "shR": (Vector((-0.54, -lean, 3.62 * k)), (0.15, 0.14)),
-        "neck": (Vector((0, -lean - 0.05, 3.78 * k)), (0.12, 0.12)),
-        "head": (Vector((0, -lean - bow, 3.92 * k)), (0.24, 0.27)),
+        # hunched over the rim (refs 187/163): the shoulders come up, the head sinks between them and bows forward
+        "shL": (Vector((0.55, -lean, 3.66 * k)), (0.16, 0.15)), "shR": (Vector((-0.55, -lean, 3.66 * k)), (0.16, 0.15)),
+        "neck": (Vector((0, -lean - 0.09, 3.70 * k)), (0.13, 0.13)),
+        "head": (Vector((0, -lean - bow, 3.74 * k)), (0.25, 0.28)),
     }
     # forearms folded onto the rim near the corner, elbows out (refs 163/187)
     for side, tag in ((1, "L"), (-1, "R")):
@@ -344,7 +345,7 @@ def build_maiden(variant, coll, bake=True):
         (3.86 * k, 0.0, ly - 0.03, 0.14, 0.14),
     ]
     folds = {1: 10, 2: 12, 3: 9}.get(variant, 10)
-    gar = drapery_tube("maiden_peplos", sections, work, folds=folds, fold_amp=(0.015, 0.11 + rng.uniform(-0.01, 0.015)),
+    gar = drapery_tube("maiden_peplos", sections, work, folds=folds, fold_amp=(0.035, 0.155 + rng.uniform(-0.012, 0.018)),
                        seed=variant * 31, fold_side=(90.0, 120.0), sharp=0.6)
     parts.append(gar)
     zo = {1: 2.25, 2: 2.45, 3: 2.10}.get(variant, 2.3) * k
@@ -354,7 +355,7 @@ def build_maiden(variant, coll, bake=True):
                                             (3.30 * k, 0.0, ly * 0.65 + 0.03, 0.47, 0.30),
                                             (3.55 * k, 0.0, ly * 0.9 + 0.02, 0.57, 0.28),
                                             (3.70 * k, 0.0, ly, 0.42, 0.23)],
-                        work, folds=folds + 2, fold_amp=(0.02, 0.07), seed=variant * 31 + 5, fold_side=(90.0, 120.0), nz=40)
+                        work, folds=folds + 2, fold_amp=(0.03, 0.10), seed=variant * 31 + 5, fold_side=(90.0, 120.0), nz=40)
     for v in over.data.vertices:
         if v.co.z < zo + 0.3:
             ang = math.atan2(v.co.y, v.co.x)

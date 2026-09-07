@@ -66,29 +66,31 @@ from `scripts/orn_compare.py`.)
 | anthemion | v1 | 1.02 x 0.08 x 0.22 | 30000 / 6000 / 600 | yes | `full01_anthemion_v1.png` |
 | attic_figure | v1 | 2.96 x 1.68 x 6.78 | 120000 / 20000 / 2000 | yes | `full01_attic_figure_v1.png` |
 | attic_figure | v2 | 2.44 x 1.85 x 6.82 | 120000 / 20000 / 2000 | yes | `full01_attic_figure_v2.png` |
-| attic_panel | v1 | 10.51 x 0.47 x 4.51 | 150000 / 24000 / 2400 | yes | `full01_attic_panel_v1.png` |
-| attic_panel | v2 | 10.51 x 0.45 x 4.52 | 150000 / 24000 / 2400 | yes | `full01_attic_panel_v2.png` |
-| attic_panel | v3 | 10.51 x 0.52 x 4.52 | 150000 / 24000 / 2400 | yes | `full01_attic_panel_v3.png` |
+| **attic_panel** | v1 (design A) | 10.51 x 0.48 x 4.51 | 142571 / 23960 / 2389 | yes | `fix01_attic_panel_v1.png` |
+| **attic_panel** | v2 (design B) | 10.51 x 0.45 x 4.52 | 146564 / 23881 / 5598 | yes | `fix01_attic_panel_v2.png` |
+| **attic_panel** | v3 (design C) | 10.51 x 0.47 x 4.51 | 145438 / 23981 / 2386 | yes | `fix01_attic_panel_v3.png` |
 | capital_colonnade | v1 | 2.68 x 2.71 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v1.png` |
-| capital_colonnade | v2 | 2.65 x 2.67 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v2.png` |
-| capital_colonnade | v3 | 2.70 x 2.65 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v3.png` |
+| capital_colonnade | v2 | 2.85 x 2.88 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v2.png` |
+| capital_colonnade | v3 | 2.70 x 2.64 x 1.82 | 80000 / 16000 / 344 | yes | `full01_capital_colonnade_v3.png` |
 | capital_inner | v1 | 2.63 x 2.54 x 1.81 | 80000 / 16000 / 344 | yes | `full01_capital_inner_v1.png` |
-| capital_inner | v2 | 2.60 x 2.56 x 1.81 | 80000 / 16000 / 344 | yes | `full01_capital_inner_v2.png` |
-| capital_rotunda | v1 | 3.52 x 3.49 x 2.60 | 100000 / 20000 / 344 | yes | `full01_capital_rotunda_v1.png` |
-| capital_rotunda | v2 | 3.44 x 3.51 x 2.60 | 100000 / 20000 / 344 | yes | `full01_capital_rotunda_v2.png` |
-| capital_rotunda | v3 | 3.53 x 3.44 x 2.60 | 100000 / 20000 / 344 | yes | `full01_capital_rotunda_v3.png` |
+| capital_inner | v2 | 2.81 x 2.76 x 1.81 | 80000 / 16000 / 344 | yes | `full01_capital_inner_v2.png` |
+| capital_rotunda | v1 | 3.52 x 3.49 x 2.60 | 100000 / 20000 / 344 | yes | `fix01_variants_capital_rotunda.png` |
+| capital_rotunda | v2 | 3.72 x 3.80 x 2.60 | 99998 / 20000 / 344 | yes | (same sheet) |
+| capital_rotunda | v3 | 3.50 x 3.42 x 2.60 | 100000 / 20000 / 344 | yes | (same sheet) |
+| **corner_scroll** | v1 | 1.78 x 0.87 x 0.91 | 40000 / 8000 / 800 | yes | `fix01_corner_scroll_v1.png` |
+| **corner_scroll** | v2 | 1.78 x 0.87 x 0.91 | 40000 / 8000 / 800 | yes | `fix01_corner_scroll_v2.png` |
 | dentil | v1 | 1.00 x 0.16 x 0.22 | 30000 / 6000 / 600 | yes | `full01_dentil_v1.png` |
-| drum_band | v1 | 1.01 x 0.42 x 1.63 | 30000 / 6000 / 600 | yes | `full01_drum_band_v1.png` |
+| drum_band | v1 | 1.08 x 0.42 x 1.63 | 30000 / 6000 / 600 | yes | `full01_drum_band_v1.png` |
 | egg_and_dart | v1 | 1.01 x 0.13 x 0.20 | 30000 / 6000 / 600 | yes | `full01_egg_and_dart_v1.png` |
 | finial | v1 | 0.80 x 0.80 x 0.60 | 20000 / 4000 / 400 | yes | `full01_finial_v1.png` |
-| greek_key | v1 | 1.00 x 0.05 x 0.45 | 30000 / 6000 / 600 | yes | `full01_greek_key_v1.png` |
+| **greek_key** | v1 | 0.60 x 0.08 x 0.52 | 30000 / 6000 / 600 | yes | `frieze_run_straight.png` |
 | keystone | v1 | 0.75 x 0.50 x 0.73 | 50000 / 8000 / 800 | yes | `full01_keystone_v1.png` |
 | keystone | v2 | 0.73 x 0.50 x 0.73 | 50000 / 8000 / 800 | yes | `full01_keystone_v2.png` |
-| maiden | v1 | 1.60 x 1.73 x 4.36 | 100000 / 20000 / 2000 | yes | `full01_maiden_v1.png` |
-| maiden | v2 | 1.60 x 1.72 x 4.36 | 100000 / 20000 / 2000 | yes | `full01_maiden_v2.png` |
-| maiden | v3 | 1.60 x 1.71 x 4.36 | 100000 / 20000 / 2000 | yes | `full01_maiden_v3.png` |
+| **maiden** | v1 | 1.39 x 1.46 x 3.84 | 100000 / 20000 / 2000 | yes | `fix01_variants_maiden.png` |
+| **maiden** | v2 | 1.52 x 1.67 x 3.77 | 100000 / 20000 / 2000 | yes | (same sheet) |
+| **maiden** | v3 | 1.32 x 1.38 x 3.88 | 100000 / 20000 / 2000 | yes | (same sheet) |
 | modillion | v1 | 1.00 x 0.40 x 0.30 | 30000 / 6000 / 600 | yes | `full01_modillion_v1.png` |
-| rosette_band | v1 | 1.00 x 0.13 x 0.50 | 30000 / 6000 / 600 | yes | `full01_rosette_band_v1.png` |
+| **rosette_band** | v1 | 1.20 x 0.13 x 0.52 | 30000 / 6000 / 600 | yes | `frieze_run_rostra_straight.png` |
 | rosette_ceiling | v1 | 0.65 x 0.17 x 0.65 | 20000 / 4000 / 400 | yes | `full01_rosette_ceiling_v1.png` |
 | rosette_ceiling | v2 | 0.65 x 0.17 x 0.65 | 20000 / 4000 / 400 | yes | `full01_rosette_ceiling_v2.png` |
 | urn | v1 | 1.76 x 1.54 x 3.00 | 60000 / 12000 / 1200 | yes | `full01_urn_v1.png` |
@@ -109,9 +111,12 @@ from `scripts/orn_compare.py`.)
 - **capital_inner** (h 1.8, shaft-top r 0.80, abacus 2.15) and **capital_colonnade** (h 1.8, r 0.85, abacus 2.3,
   squatter: small lower leaves, big upper shells and scrolls) share the generator; rosette fleuron instead of the figure.
   The pylon-cluster capitals are the colonnade capital (ARCH raises the shaft 2.4 m).
-- **maiden** (4.5 m standing, 4.3 m tall with the head bowed, footprint about 1.3 x 1.3 m). Skin-figure body leaning
-  forward, forearms along the two rim edges of the box corner, peplos tube + overfold with dipping hem, sleeve
-  cascades under the elbows, hair bound in a bun. Custom props `rim_height` = 3.55, `box_corner_y` = -0.32.
+- **maiden** (3.77-3.88 m of hanging figure in the socket frame; the figure is ~4.3 m from feet to crown). Skin-figure
+  body leaning forward and hunched, forearms folded on the two rim edges of the box corner with the elbows out, head
+  sunk between the shoulders and bowed over the corner into the box, peplos tube + overfold with a dipping hem and
+  deep vertical fluting, sleeve cascades under the elbows, hair in a bun. **Origin = ARCH's socket on the box lid**,
+  0.78 m inward from the corner along the diagonal: box corner edge at (0, +0.78, 0), rim at z ~ 0, feet at z = -3.30.
+  Custom props `rim_height` 3.30, `box_corner_y` 0.78, `feet_z` -3.30, `origin_note`.
 - **attic_figure** (6.7 m). v1 male: skin body with a nude torso, both arms raised to the chest, wrapped cloth from
   the waist with heavy frontal folds, mantle behind; v2 female: full gown + overfold, one arm across the chest.
   Faces +Y; the niche (ARCH) is 0.6 m deep behind it.
@@ -120,7 +125,11 @@ from `scripts/orn_compare.py`.)
 - **urn** (3.0 m podium urn incl. 0.32 m plinth), **urn_niche** (1.6 m corner urn with a scale pattern), **urn_tub**
   (pylon planter 1.6 m diameter): note the three are separate socket types.
 - **keystone** (0.8 m lion mask on a 0.62 m back plate, mane of 14 shell leaves), origin at the back-face bottom-centre.
-- **attic_panel** v1/v2/v3 = designs A/B/C (combat with centaur; procession of draped figures; kneeling group).
+- **attic_panel** v1/v2/v3 = designs A/B/C (combat with a rearing horse; procession of draped figures; kneeling group).
+  Field exactly 10.5 x 4.5 m, total depth 0.42 m (0.16 slab + up to 0.26 m of relief after the remesh), **15 / 13 / 13
+  figures**, measured figure coverage **63.5 / 61.6 / 64.2 %** (`scripts/orn_panel_coverage.py`, LOD1 within 0.3 %).
+  Anything overhanging the field is clamped onto the frame plane and nothing sits behind the slab's back face.
+- **corner_scroll** v1/v2 (QA-01-13): 1.78 x 0.87 x 0.91 m over the volute rolls, nominal `unit_length` 1.50 m.
 - **finial** (dome apex cap 0.6 m), **rosette_ceiling** (0.6 m coffer rosette, projects +Y), **drum_band** (1 m
   unit, 1.6 m tall scale cushion), **dentil / egg_and_dart / greek_key / rosette_band / modillion / anthemion**
   (1 m units, origin at the back-face bottom-centre, projecting +Y; sizes in the table).
