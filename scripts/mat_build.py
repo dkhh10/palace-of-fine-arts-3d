@@ -33,6 +33,11 @@ def build_group_instance():
     ng, t, gi, go = new_group("PFA_instance", [("Seed", "FLOAT", 0.0)],
                               [("R1", "FLOAT", 0.0), ("R2", "FLOAT", 0.0), ("R3", "FLOAT", 0.0), ("R4", "FLOAT", 0.0), ("Offset", "VECTOR", (0, 0, 0))])
     r = t.objinfo().outputs["Random"]
+    # `instance_seed` object custom property (set by ORN / build_master on every ornament instance): decorrelates
+    # instances that share an Object Info Random (linked duplicates, geometry-nodes instances). Absent -> 0 -> no-op.
+    iattr = t.new("ShaderNodeAttribute", attribute_type="OBJECT")
+    iattr.attribute_name = "instance_seed"
+    r = t.fract(t.add(r, t.fract(t.mul(iattr.outputs["Fac"], 0.6180339887))))
     seed = gi.outputs["Seed"]
     r1 = t.fract(t.madd(seed, 0.6180339, r))
     r2 = t.fract(t.madd(r1, 7.31, 0.137))
@@ -134,6 +139,7 @@ CONCRETE_INPUTS = [
     ("Streaks", "FACTOR", 0.55, 0, 1), ("Streak Scale", "FLOAT", 1.5, 0.1, 20), ("Streak Length", "FLOAT", 3.0, 0.2, 30),
     ("Ledge Distance", "FLOAT", 2.5, 0.1, 20), ("Ledge Weight", "FACTOR", 0.75, 0, 1), ("Streak Shade Bias", "FACTOR", 0.0, 0, 1),
     ("Algae", "FACTOR", 0.0, 0, 1), ("Algae Z", "FLOAT", WATER_Z), ("Algae Height", "FLOAT", 0.6, 0.05, 5),
+    ("Efflorescence", "FACTOR", 1.0, 0, 3),
     ("Patches", "FACTOR", 0.25, 0, 1),
     ("Edge Wear", "FACTOR", 0.45, 0, 1), ("Edge Radius", "FLOAT", 0.03, 0.001, 0.5),
     ("Recess Dirt", "FACTOR", 0.55, 0, 1), ("Recess Distance", "FLOAT", 0.4, 0.02, 5), ("Extra Dirt", "FACTOR", 0.0, 0, 1),
@@ -224,8 +230,10 @@ def build_group_concrete():
     # 12. algae band + efflorescence
     al = t.group(G["algae"], Offset=off, Height=I["Algae Height"], **{"Band Z": I["Algae Z"]})
     band = t.mul(al.outputs["Band"], I["Algae"])
-    effl = t.mul(al.outputs["Effl"], I["Algae"])
-    c = t.mix(t.mul(effl, 0.55), c, t.mix(0.6, c, (0.58, 0.56, 0.50)))
+    effl = t.mul(t.mul(al.outputs["Effl"], I["Algae"]), I["Efflorescence"])
+    effl = t.math("ADD", effl, 0.0, clamp=True)
+    # salt bloom: a chalky, slightly crusty white-grey wash just above the tide line (podium, rostra, rip-rap)
+    c = t.mix(t.mul(effl, 0.80), c, t.mix(0.85, c, (0.66, 0.635, 0.575)))
     c = t.mix(band, c, t.mix(0.35, (0.045, 0.07, 0.04), c))
     # 13. bird droppings on up-facing surfaces (sparse)
     vd = t.voronoi(t.vadd(P, (0.2, 0.7, 0.1)), 6.0, feature="F1", randomness=1.0)
@@ -246,7 +254,7 @@ def build_group_concrete():
     rough = t.mixf(effl, rough, 0.92)
     rough = t.math("ADD", rough, 0.0, clamp=True)
     # normal (bump from photo height + fine grain + lines + joints)
-    hfine = t.mul(t.noise(P, 60.0, detail=3, rough=0.6), 0.25)
+    hfine = t.add(t.mul(t.noise(P, 60.0, detail=3, rough=0.6), 0.25), t.mul(t.mul(effl, 0.30), t.noise(P, 22.0, detail=3, rough=0.6)))
     h = t.madd(I["Detail Height"], I["Detail Strength"], hfine)
     h = t.sub(h, t.mul(line, 0.35))
     h = t.sub(h, t.mul(grid, 0.6))
@@ -433,7 +441,7 @@ def build_concrete_family():
         "Base Color": C(0.425, 0.330, 0.175), "Grey Color": C(0.33, 0.285, 0.20), "Grey Drift": 0.42,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.08, "Block Size": 2.4, "Blotch Size": 2.5,
         "Detail Strength": 0.6, "Streaks": 0.55, "Streak Scale": 2.5, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.5,
-        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6,
+        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.6, "Efflorescence": 1.7,
         "Patches": 0.35, "Edge Wear": 0.5, "Edge Radius": 0.03, "Recess Dirt": 0.6, "Recess Distance": 0.4,
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
@@ -578,7 +586,7 @@ def build_water():
     return ML.finish(m)
 
 
-def foliage_image(name):
+def foliage_image(name, data=False):
     p = ML.TEX_DIR / "foliage" / f"{name}.png"
     key = f"TEX_foliage_{name}"
     img = bpy.data.images.get(key)
@@ -588,13 +596,13 @@ def foliage_image(name):
             return None
         img = bpy.data.images.load(str(p), check_existing=True)
         img.name = key
-    img.colorspace_settings.name = "sRGB"
+    img.colorspace_settings.name = "Non-Color" if data else "sRGB"
     img.alpha_mode = "STRAIGHT"
     return img
 
 
 def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=0.3, seed=20.0, spec=0.3, translucency=0.3,
-                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2):
+                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2, nrm_strength=0.6):
     """Alpha-cut, two-sided, translucent card material on a generated RGBA foliage texture (UV map 'UVMap').
     Per-tree hue/value variation from Object Info Random, cluster-scale variation from object-space noise."""
     m = ML.new_material(name)
@@ -614,11 +622,32 @@ def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=
     c = t.vscale(c, cl)
     # alpha: hard-ish cut so cards read solid at 120 m, soft rim at 3 m
     alpha = t.maprange(tex.outputs["Alpha"], alpha_cut - 0.15, alpha_cut + 0.15, 0.0, 1.0)
-    bsdf = t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": spec, "Sheen Weight": sheen})
+    # blade relief: a real tangent-space normal map (generated with the colour/alpha, see mat_leaf_textures.save_maps)
+    nimg = foliage_image(texture + "_nrm", data=True)
+    normal = None
+    if nimg is not None:
+        ntex = t.new("ShaderNodeTexImage", projection="FLAT", interpolation="Linear", extension="EXTEND")
+        ntex.image = nimg
+        t.link(uv.outputs[0], ntex.inputs["Vector"])
+        normal = t.normal_map(ntex.outputs["Color"], strength=nrm_strength, uv_map="UVMap")
+    # translucency mask: thin margins and tips transmit, midribs/stems/needle spines do not
+    timg = foliage_image(texture + "_trn", data=True)
+    tfac = translucency
+    if timg is not None:
+        ttex = t.new("ShaderNodeTexImage", projection="FLAT", interpolation="Linear", extension="EXTEND")
+        ttex.image = timg
+        t.link(uv.outputs[0], ttex.inputs["Vector"])
+        tfac = t.mul(t.maprange(ttex.outputs["Color"], 0.05, 0.85, 0.35, 1.55), translucency)
+    pin = {"Base Color": c, "Roughness": rough, "Specular IOR Level": spec, "Sheen Weight": sheen}
+    if normal is not None:
+        pin["Normal"] = normal
+    bsdf = t.principled(**pin)
     tr = t.new("ShaderNodeBsdfTranslucent")
     t.plug(tr.inputs["Color"], t.vmul(c, translucent))
+    if normal is not None:
+        t.plug(tr.inputs["Normal"], normal)
     mix = t.new("ShaderNodeMixShader")
-    t.plug(mix.inputs[0], translucency)
+    t.plug(mix.inputs[0], tfac)
     t.link(bsdf.outputs[0], mix.inputs[1]); t.link(tr.outputs[0], mix.inputs[2])
     transp = t.new("ShaderNodeBsdfTransparent")
     cut = t.new("ShaderNodeMixShader")
@@ -790,6 +819,9 @@ def build_all_materials():
     build_dome()
     build_water()
     leaf_material("MAT_leaf_cypress", "needles_cypress", (0.9, 1.1, 0.5), rough=0.6, hue_var=0.05, val_var=0.35, seed=20.0, translucency=0.25, alpha_cut=0.45)
+    # conifers other than cypress (Monterey pine, redwood): darker, bluer, longer needles -- ENV maps pines here
+    leaf_material("MAT_leaf_pine", "needles_pine", (0.7, 0.95, 0.5), rough=0.55, hue_var=0.04, val_var=0.28, seed=27.0,
+                  translucency=0.18, spec=0.35, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5)
     leaf_material("MAT_leaf_eucalyptus", "leaves_eucalyptus", (0.8, 1.0, 0.5), rough=0.42, hue_var=0.06, val_var=0.3, seed=21.0, spec=0.4, translucency=0.3)
     leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.4), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35)
     leaf_material("MAT_shrub", "leaves_shrub", (0.8, 1.1, 0.5), rough=0.5, hue_var=0.08, val_var=0.4, seed=23.0, translucency=0.2, spec=0.4)
@@ -958,8 +990,12 @@ def capital_proxy(name, loc, material, r=0.42, h=0.8, notches=12):
     return o
 
 
-for i in range(3):
-    capital_proxy(f"MAT_test_capital_v{i + 1}", (3.9 + i * 1.1, 0.0, GZ + 1.55), "MAT_ornament_concrete")
+# six capital proxies with distinct `instance_seed` values: the per-instance weathering test at 60 m (QA non-negotiable
+# "no ornament asset identical twice at hero distance"). They are separate meshes here, so Object Info Random already
+# differs; the explicit property is what ORN's linked/instanced copies will carry.
+for i in range(6):
+    cap = capital_proxy(f"MAT_test_capital_v{i + 1}", (-6.9 + i * 1.15, -7.0, GZ + 1.55), "MAT_ornament_concrete")
+    cap["instance_seed"] = float(i) * 1.618 + 0.37
 lumpy("MAT_test_blob", 0.4, (6.2, 0.0, GZ + 0.4), "MAT_ornament_concrete", seed=4)
 basin = box("MAT_test_basin", (3.6, 2.8, 0.95), (1.5, 1.4, GZ + 0.475), "MAT_concrete_podium", bevel=0.015)
 bcut = box("MAT_test_basin_cut", (3.1, 2.3, 2.0), (1.5, 1.4, GZ + 0.15 + 1.0), "MAT_concrete_podium", bevel=0)
@@ -989,7 +1025,7 @@ def card(name, size, loc, material, rot=(math.radians(90), 0, 0)):
     return o
 
 
-for i, (nm, matn) in enumerate((("cypress", "MAT_leaf_cypress"), ("eucalyptus", "MAT_leaf_eucalyptus"), ("broadleaf", "MAT_leaf_broadleaf"), ("shrub", "MAT_shrub"), ("reeds", "MAT_reeds"))):
+for i, (nm, matn) in enumerate((("cypress", "MAT_leaf_cypress"), ("pine", "MAT_leaf_pine"), ("eucalyptus", "MAT_leaf_eucalyptus"), ("broadleaf", "MAT_leaf_broadleaf"), ("shrub", "MAT_shrub"), ("reeds", "MAT_reeds"))):
     card(f"MAT_test_card_{nm}", (1.0, 1.0), (7.4 + i * 1.15, 8.0, GZ + 0.55), matn)
     # a crossed-card cluster of the same material for the distance read
     for j in range(3):

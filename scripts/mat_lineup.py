@@ -36,6 +36,7 @@ CAMS = arg("--cams", None)
 CAMS = CAMS.split(",") if isinstance(CAMS, str) else None
 HERO = "--no-hero" not in args
 SPP = int(arg("--spp", 128))
+EV = float(arg("--ev", 0.0))         # diagnostic: offset the view exposure (to quantify what lighting still owes)
 QUICK = "--quick" in args
 RES = (1280, 720)
 
@@ -146,6 +147,8 @@ lineup_cams = [
     add_cam(scene, "CAM_mat_foliage_far", (9.7, 150.0, GZ + 8.0), (9.7, 30.0, GZ + 1.0), lens=80.0),
     add_cam(scene, "CAM_mat_misc", (-12.5, 5.5, GZ + 1.8), (-12.5, 0.0, GZ + 1.6), lens=28.0),
     add_cam(scene, "CAM_mat_lineup", (0.0, 19.0, GZ + 5.0), (0.0, 0.0, GZ + 2.5), lens=22.0),
+    # per-instance ornament variation, judged at 60 m (six capital proxies with different `instance_seed`)
+    add_cam(scene, "CAM_mat_ornament_far", (-3.45, 53.0, GZ + 2.6), (-3.45, -7.0, GZ + 1.55), lens=200.0),
 ]
 
 # --------------------------------------------------------------------------- hero scene: placeholder blockout with the library materials
@@ -245,6 +248,8 @@ def configure(sc, engine):
         sc.eevee.volumetric_samples = 32
     sc.render.resolution_x, sc.render.resolution_y = RES
     sc.render.film_transparent = False
+    if EV:
+        sc.view_settings.exposure += EV
 
 
 def render(sc, cam, engine, tag):
@@ -253,6 +258,7 @@ def render(sc, cam, engine, tag):
     dbg += "_rig" if RIG else ""
     dbg += "_preset" if EEVEE_PRESET else ""
     dbg += "_norefr" if NO_REFRACTION else ""
+    dbg += f"_ev{EV:+.1f}" if EV else ""
     fp = out_dir / f"{ts}_{tag}{dbg}_{engine.lower()}.png"
     sc.render.filepath = str(fp)
     t0 = time.time()
