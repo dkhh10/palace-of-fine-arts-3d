@@ -89,3 +89,45 @@ gate: first master.blend + first comparison sheet → 3 Integration → 4 Polish
 Real dimensions from reference, never eyeballed. No ornament asset identical twice at hero distance (vary weathering
 per instance). No flat/clean/plastic materials. Every "matches reference" claim is backed by a side-by-side in
 renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log every significant decision in docs/decisions.md.
+
+## Operating rules (added 2026-09-07 by the user; binding for the lead and every subagent)
+
+### Model casting
+- The lead / art director runs on Fable 5.1 at high effort: coordination, reviewing previews against reference, merging,
+  decisions. The lead does not write build scripts unless a fix is under 20 lines.
+- Every builder and fix agent (architecture, ornament, materials, environment, lighting) runs on **Opus 5**
+  (`model: opus`, set explicitly when spawning).
+- Mechanical tasks (texture fetching, image cropping/resizing, file inventory, log filtering) run on Sonnet or Haiku.
+- The QA critic runs on Opus 5 for round 2; if its scoring is lenient vs the lead's own read it moves to Fable.
+
+### Concurrency
+- At most **four** builder or fix agents run at the same time (raised from two by the user on 2026-09-07). Their files
+  must not overlap. Keep render sample counts low on every agent: they share one GPU.
+- Do not spawn an agent for anything one shell command can do.
+
+### Blender process hygiene (added 2026-09-07; the machine swapped with three idle Blender instances holding 13 GB)
+- Every `blender --background --python` run must exit when its script finishes. Never leave a Blender process
+  waiting on stdin, a modal operator, or an interactive prompt; never launch Blender without `--background`;
+  do not start a new Blender while your previous one is still running (`pgrep -fl "MacOS/Blender"` first).
+- If a run wedges, kill it (`pkill -f "MacOS/Blender --background"` for your own runs) before starting another.
+- Any headless Blender idle for more than 5 minutes gets killed. `scripts/blender_watchdog.sh` does this
+  (one pass, or `--loop`); the lead keeps the loop running during agent waves. Do not depend on it: exit cleanly.
+- Keep memory in mind: one full-scene render per agent at a time, low samples, and `bpy.ops.wm.quit_blender()` /
+  natural script end, never `input()` or `time.sleep` loops inside Blender.
+
+### Durability
+- Every agent commits after every script that runs successfully, or every 15 minutes, whichever comes first.
+  No agent may run 30 minutes without a commit.
+- `docs/status.md` is the handoff file. The lead appends an entry (three lines max) on every merge, dispatch, agent
+  report, or QA result: what is merged, what is in flight and on which branch, what is next.
+- If a usage limit hits: stop. Do not wait or auto-resume. The user restarts the session, which resumes from
+  `docs/status.md` and git.
+
+### Context and image discipline
+- Before viewing any render or comparison sheet, downscale it to 960 px wide JPEG
+  (`sips -Z 960 in.png --out out.jpg` or `magick in.png -resize 960x out.jpg`). View one composite per gate or per fix,
+  not individual crops. Never re-view an image already judged unless the underlying scene changed.
+- Read files with offset and limit. Never read a file over 300 lines in full; grep first.
+  Never read .blend, image, or texture files as text.
+- Spawn prompts point at files (the brief, the defect list in `docs/qa_round_01.md`, `docs/sockets.md`) instead of
+  pasting their contents.

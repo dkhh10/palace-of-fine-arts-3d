@@ -15,6 +15,11 @@ hero (cam_01) >= 4.5 average. Anything that reads as "game asset" or "clean CAD"
 | Repetition visibility | No two ornament instances identical at hero distance; no visible tiling in materials. |
 | Scale cues | Trees, shrubs, birds, railings, steps at believable sizes; nothing reads as miniature or giant. |
 
+Also reported every round (not scored 0-5, pass/fail against the brief's Phase 5 deliverables): **Viewport performance**
+(master.blend open time < 60 s, viewport LOD1 triangle count, Eevee preview seconds per QA camera) and **Deliverables present**
+(Cycles final config, Eevee viewport config, flythrough bezier path `CAM_flythrough_path`; at Phase 5 also the 3840x2160 Cycles
+hero and the low-res Eevee test animation).
+
 ## Round log
 (QA appends a dated section per round: scores table per camera, defects with camera id and measurable fix.)
 

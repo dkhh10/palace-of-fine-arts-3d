@@ -77,3 +77,18 @@ Format: date · decision · why · consequences. Newest at the bottom.
   copies at the origin; instances are now placed with decomposed location/rotation/scale.
 - **Pending for Phase 3**: materials library (agent running); ARCH maiden sockets must move to the box base
   (ORN figures stand at box-base level with the rim 3.55 m above their feet); QA round 1 scores and defects.
+
+## 2026-09-07 · Phase 3 start
+
+- **Operating rules from the user** (model casting, max two builders, commit cadence, docs/status.md handoff, stop on usage
+  limits, image downscaling) added to CLAUDE.md verbatim in spirit. Materials merged into main (4364e98).
+- **QA-01-1 arbitration: the photographs override the reference sheet's forced 49.4 m apex.** Five photos measured with the
+  same tool agree with each other (dome rise 0.195-0.30 W_a) and the aligned overlays show the stack below the attic cornice
+  is right, so the error is local to drum + dome. The sheet's 7.6 m rise was derived from a foreshortened telephoto and the
+  DPR's 162 ft total was then forced. Target: drum height 3.5 -> ~4.5 m (band r ~17.5, cornice r ~18.7), dome rise
+  7.6 -> ~10 m (sphere r ~18.6), apex ~52-53 m; the architecture agent tunes within those ranges until
+  `qa_silhouette.py align` puts the apex within 2 % of frame height of ref 169 AND ref 085 and the drum band + cornice ring
+  are visible above the attic from cam01. Everything below the attic cornice stays as built.
+- **Phase 3 order** (hero-view impact first, two agents at a time): wave 1 architecture (QA-01-1, maiden sockets to box base,
+  QA-01-11 geometry, 14, 15, 16) + environment (QA-01-2, 3 geometry, 6, 7, 8, 19); wave 2 ornament (QA-01-10, 11, 13, 18) +
+  lighting (QA-01-9, 12, 20 after materials); then materials fixes from the master hero if needed; then QA round 2 on Opus.
