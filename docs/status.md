@@ -193,3 +193,6 @@ In flight: ENV review, LIGHT r11, MAT r6. Next: merge, lead_build.sh, QA round 5
 ## 2026-09-08 · ENV r6 merged (8995384); review follow-up in flight
 Review (docs/reviews/env_r6_review.md): visual result stands; four maintenance fixes sent back (hand-copied camera stations in the sight-line cap, bed classified as architecture, loose verts on ENV_lagoon_bed, global 4 m shrub ceiling).
 In flight: ENV follow-up, LIGHT r11, MAT r6. Next: merge, lead_build.sh, QA round 5.
+
+## 2026-09-08 · ENV r6 follow-up merged (3c3ad97): stations now read from qa_cameras.py, bed compacted, numbers unchanged (LOD1 4.66 M)
+In flight: LIGHT r11 (branch shows Eevee vault x6/21 m: coffer gap 0.227 -> 0.062; Cycles coffer 0.261 -> 0.387), MAT r6 (macro grunge maps, waterline, MAT_lagoon_bed, water teal, ribs). Next: review + merge both, lead_build.sh, QA round 5.
