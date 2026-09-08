@@ -204,3 +204,7 @@ In flight: MAT review, LIGHT r11. Next: merge both, lead_build.sh, QA round 5. C
 ## 2026-09-08 · LIGHT r11 reported (822e92d), in review
 LIGHT r11: QA-04-1 root cause = probe bake on the Eevee cutoff rig (bake now forces the physical rig; EEVEE_VAULT x6/21 m: Eevee coffer 0.034 -> 0.325 vs Cycles 0.387); QA-04-7 closed (FILL 3648 W, VAULT_FILL 3564 W: Cycles coffer 0.387); QA-04-2 shade hue reassigned to materials with three measured levers, SHADE_FILL rig shipped at 0 W; sun angle confirmed against ref 169's shadow structure (-3 px); viewport preset raytracing on / light_threshold 0.01 (decisions.md). Sheet renders/previews/lighting/light_r11_sheet.png.
 In flight: MAT r6 review, LIGHT r11 review. Next: merge both, scripts/lead_build.sh (mandatory: build then bake), QA round 5 (Fable xhigh; re-base cam03's shade test on a golden-hour reference).
+
+## 2026-09-08 · MAT r6 merged (e7adc25) after review (MERGE, non-blocking findings)
+Follow-ups sent to materials: gate mat_make_grunge's network fetch behind --fetch; drop the water sheen (its own table: -1 deg hue for a further-from-ref stone reflection); note ao_up probe (+25 % secondary rays on concrete) if the 4K budget blows; Macro darkens mean albedo ~5 % (do not re-tune base colour to chase it).
+In flight: LIGHT r11 review fixes, MAT follow-up. Next: merge both, scripts/lead_build.sh, QA round 5.
