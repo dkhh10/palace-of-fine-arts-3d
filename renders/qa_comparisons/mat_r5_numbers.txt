@@ -1,0 +1,17 @@
+capital (768x768 Cycles, 400 mm from the hero station = 8x hero resolution, 48 spp)
+  before bell box lum mean  152.4 sd  65.2  p10  45.4 p50 180.7 p90 216.8  p10/p90 0.209  readable tiers 8   [control wall lum  188.6]
+  after  bell box lum mean  138.2 sd  66.1  p10  36.6 p50 161.3 p90 211.8  p10/p90 0.173  readable tiers 10   [control wall lum  188.5]
+cam06 far field (960x540 Cycles 48 spp): the 250-450 m canopy vs a lawn in the same frame
+  canopy left     before 155.5,133.3, 93.9 lum 135.2 hue  38.4 sat 0.247   after 155.0,132.6, 93.4 lum 134.6 hue  38.2 sat 0.248
+  canopy right    before 147.6,126.2, 87.6 lum 128.0 hue  38.6 sat 0.255   after 143.4,119.1, 82.7 lum 121.7 hue  36.0 sat 0.269
+  island lawn     before 132.2,113.0, 65.3 lum 113.6 hue  42.8 sat 0.339   after 132.2,113.0, 65.3 lum 113.6 hue  42.8 sat 0.339
+  before canopy / lawn luminance ratio 1.158   (ref 105: 0.85)
+  after  canopy / lawn luminance ratio 1.128   (ref 105: 0.85)
+cam04 coffered saucer (1280x720 Eevee LOD1): mean of the darkest quarter (ribs) / lightest quarter (panels)
+  before   dark quarter   72.2  light quarter  127.1  ratio 0.568   sd  23.6  median  109.6
+  after    dark quarter   72.1  light quarter  127.1  ratio 0.568   sd  23.6  median  109.6
+  ref 083  dark quarter   68.3  light quarter  155.6  ratio 0.439   sd  34.9  median  118.7
+canopy pixel decomposition (cam06, from the 45 % albedo cut): 128.0 -> 121.7 means the surface term is only
+  15.6 of 128 display levels -- 88 % of a 250-450 m canopy pixel is the atmospheric veil. LIGHTING, not albedo.
+ceiling: the cam04 before/after differ by up to 109 levels in the four CORNER cells -- that is the LOD1 ornament
+  picking up its per-asset ORN_AO / ORN_NORMAL bakes, i.e. build_master's routing now fires (27 materials, 307 instances).
