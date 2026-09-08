@@ -1,0 +1,44 @@
+{
+  "pfa_macro_stain": {
+    "asset": "Concrete019",
+    "url": "https://ambientcg.com/view?id=Concrete019",
+    "licence": "CC0 1.0 (ambientCG, https://ambientcg.com/license)",
+    "map": "Color (1K JPG)",
+    "tile_metres": 9.0,
+    "size": [
+      861,
+      861
+    ],
+    "mean": 0.988,
+    "std": 0.1374,
+    "derivation": "luminance / gaussian(sigma = 0.30 x min side) of itself, clipped at 3 sigma, rescaled to relative std 0.150, crop-and-feather tiled; 128 = ratio 1.0"
+  },
+  "pfa_macro_blotch": {
+    "asset": "Concrete035",
+    "url": "https://ambientcg.com/view?id=Concrete035",
+    "licence": "CC0 1.0 (ambientCG, https://ambientcg.com/license)",
+    "map": "Color (1K JPG)",
+    "tile_metres": 5.5,
+    "size": [
+      861,
+      861
+    ],
+    "mean": 0.9936,
+    "std": 0.1255,
+    "derivation": "luminance / gaussian(sigma = 0.26 x min side) of itself, clipped at 3 sigma, rescaled to relative std 0.130, crop-and-feather tiled; 128 = ratio 1.0"
+  },
+  "pfa_macro_streak": {
+    "asset": "Concrete036",
+    "url": "https://ambientcg.com/view?id=Concrete036",
+    "licence": "CC0 1.0 (ambientCG, https://ambientcg.com/license)",
+    "map": "Color (1K JPG)",
+    "tile_metres": 7.0,
+    "size": [
+      861,
+      861
+    ],
+    "mean": 1.0006,
+    "std": 0.1876,
+    "derivation": "luminance / gaussian(sigma = 0.22 x min side) of itself, clipped at 3 sigma, rescaled to relative std 0.200, pre-stretched 1x3.2, crop-and-feather tiled; 128 = ratio 1.0"
+  }
+}
