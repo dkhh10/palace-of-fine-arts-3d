@@ -568,7 +568,7 @@ SHORE_HEIGHTS = (0.6, 1.6, 2.6)            # crown heights of that belt (band_si
 
 def shore_sun_samples(lagoon_field, terrain_height=None, step=2.5):
     """Points on the hero's shore-shrub belt that land inside QA-05-10's crop, as (3, x, y, z) samples."""
-    cam = L.qa_camera("_qa_01_", ((-14.1, 100.0, 1.6), 20.0))
+    cam = L.qa_camera("_qa_01_", (-14.1, 100.0, 1.6), 20.0)
     if cam is None or lagoon_field is None:
         return []
     (loc, lens) = cam
