@@ -135,30 +135,30 @@ def entablature_plan(along=P.RESSAUT_ALONG, r_ch=P.CHAMFER_CIRCUMRADIUS, inset=0
 # (The photograph puts the fine 0.47 m course ABOVE the brackets, not below them: the old build had the egg course
 # between the dentils and the modillions.)  Dentils / eggs / modillions are block geometry on the beds below.
 CORNICE = dict(
-    frieze_d=0.20, frieze_z0=1.40, frieze_z1=2.50,
-    dentil_z=2.60, dentil_h=0.28, dentil_bed=0.40, dentil_size=0.16, dentil_pitch=0.32, dentil_d=0.30,
-    modillion_z=2.96, modillion_h=0.48, modillion_bed=0.62, modillion_w=0.42, modillion_d=0.58, modillion_pitch=1.06,
-    egg_z=3.44, egg_h=0.12, egg_bed=0.70, egg_pitch=0.47,
-    corona_d=1.72, corona_soffit_z=3.62, corona_z1=3.80)
+    frieze_d=0.20, frieze_z0=P.ARCHITRAVE_H, frieze_z1=P.ARCHITRAVE_H + P.FRIEZE_H,     # 1.15 -> 2.05
+    dentil_z=2.17, dentil_h=0.40, dentil_bed=0.40, dentil_size=0.18, dentil_pitch=0.38, dentil_d=0.34,
+    modillion_z=2.71, modillion_h=0.58, modillion_bed=0.52, modillion_w=0.50, modillion_d=0.68, modillion_pitch=1.06,
+    egg_z=3.33, egg_h=0.12, egg_bed=0.70, egg_pitch=0.47,
+    corona_d=1.66, corona_soffit_z=3.48, corona_z1=P.ARCHITRAVE_H + P.FRIEZE_H + P.CORNICE_H)   # 3.80
 
 
 def rotunda_entablature_profile():
     """d = outward from the wall plane, z relative to ENTABLATURE_Z0. The swept band carries no LOD suffix, so this
     one profile -- every projection in it -- is what both the viewport (LOD1) and the render (LOD0) show."""
     c = CORNICE
-    arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.46), (0.24, 0.46), (0.24, 0.92), (0.34, 0.92), (0.34, 1.20),
-            (0.42, 1.24), (0.42, 1.30),             # bead-and-reel astragal over the third fascia (sheet row 13)
-            (0.50, 1.34), (0.50, c["frieze_z0"])]   # architrave crown, projecting 0.50 over a 0.20 frieze
+    arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.42), (0.24, 0.42), (0.24, 0.82), (0.34, 0.82), (0.34, 1.02),
+            (0.42, 1.06), (0.42, 1.11),             # bead-and-reel astragal over the third fascia (sheet row 13)
+            (0.50, 1.14), (0.50, c["frieze_z0"])]   # architrave crown, projecting 0.50 over a 0.20 frieze
     frieze = [(c["frieze_d"], c["frieze_z0"] + 0.04), (c["frieze_d"], c["frieze_z1"])]
     cornice = [
-        (0.22, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
+        (0.24, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
         (c["dentil_bed"], c["dentil_z"] + c["dentil_h"]),                          # dentil band bed (back face)
-        (0.48, 2.92), (c["modillion_bed"], c["modillion_z"]),                      # ovolo under the modillions
+        (0.46, 2.63), (c["modillion_bed"], c["modillion_z"]),                      # ovolo under the modillions
         (c["modillion_bed"], c["modillion_z"] + c["modillion_h"]),                 # modillion band bed (back face)
-        (0.70, 3.50), (0.80, 3.56), (0.80, c["corona_soffit_z"]),                  # egg-and-dart ovolo + fascia
-        (c["corona_d"], c["corona_soffit_z"]),                                     # CORONA SOFFIT: 0.92 m, never sunlit
-        (c["corona_d"], 3.74), (c["corona_d"] + 0.04, 3.76),                       # corona fascia + drip
-        (1.62, 3.79), (1.40, c["corona_z1"]), (0.0, c["corona_z1"])]               # cyma recta
+        (0.70, 3.35), (0.80, 3.43), (0.80, c["corona_soffit_z"]),                  # egg-and-dart ovolo + fascia
+        (c["corona_d"], c["corona_soffit_z"]),                                     # CORONA SOFFIT: 0.86 m, never sunlit
+        (c["corona_d"], 3.64), (c["corona_d"] + 0.04, 3.68),                       # corona fascia + drip
+        (1.58, 3.75), (1.36, c["corona_z1"]), (0.0, c["corona_z1"])]               # cyma recta
     return arch + frieze + cornice
 
 

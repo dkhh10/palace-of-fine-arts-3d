@@ -70,9 +70,10 @@ if "--map" in args or OUT is None:
             print(f"{z:7.2f} {d:6.2f} {r:8.1f} {c:8.1f}")
 
 if OUT:
-    scene.render.engine = "CYCLES"
-    scene.cycles.samples = SPP
-    scene.cycles.use_denoising = True
+    # exactly the preset QA renders the hero with, so the crop's absolute luminances are comparable with
+    # renders/previews/qa/round05_01_lagoon_hero_cycles.png (the "before" of the QA-05-6 measurement)
+    import light_presets
+    light_presets.apply_final_cycles(scene, samples=SPP, time_limit=0.0)
     if BORDER:
         x0, y0, x1, y1 = BORDER
         scene.render.use_border = True
