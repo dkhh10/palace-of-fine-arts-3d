@@ -17,7 +17,7 @@ is an Eevee-only defect that depends on the BAKED light-probe volumes, so this s
 CASE keys (anything not given keeps light_build's shipped value):
     sky SKY_STRENGTH | cb SKY_CAMERA_BOOST | gb SKY_GLOSSY_BOOST | db SKY_DIFFUSE_BOOST
     csat/gsat/dsat the three saturations | bm SUN_BLUE_MULT | de extra EV | look AgX look (spaces as '_') | tag
-CAM ids: 01c 01e 03c 03e 04c 04e (number = QA camera, c = Cycles, e = Eevee preview preset).
+CAM ids: 01c 03e 04c 04e 04v (number = QA camera; c = Cycles, e = apply_preview_eevee, v = apply_viewport_eevee).
 """
 import bpy, os, sys, math, time
 from pathlib import Path
@@ -183,6 +183,8 @@ def shoot(cam_id, tag):
     scene.render.image_settings.color_depth = "8"
     if eng == "c":
         lp.apply_final_cycles(scene, samples=SAMPLES, time_limit=0.0)
+    elif eng == "v":                      # QA-04-12: the SAVED viewport preset (taa 8/16, raytracing off)
+        lp.apply_viewport_eevee(scene)
     else:
         lp.apply_preview_eevee(scene, samples=EEVEE_SAMPLES)
     fp = OUT / f"{PREFIX}_{tag}_{num}{eng}.png"
