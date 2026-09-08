@@ -54,6 +54,31 @@ def load_image(set_name, map_name, non_color=True):
     return img
 
 
+# Macro weathering maps (0.3-3 m features) derived from CC0 ambientCG scans by scripts/mat_make_grunge.py.
+# 128 = ratio 1.0; the shader uses them as mean-1.0 value multipliers.  `tile` is the physical size in metres the
+# box projection gives them, chosen so the source's own features land in the band that reads at hero distance.
+MACRO_MAPS = {
+    "pfa_macro_stain": dict(tile=5.5),      # broad soft pour / damp blotches
+    "pfa_macro_blotch": dict(tile=3.2),     # mid-scale weathered mottle (second, decorrelating layer)
+    "pfa_macro_streak": dict(tile=4.5),     # vertical run-off, a stain field stretched 3.2x down the wall
+}
+
+
+def macro_image(name):
+    """Load (once) one of the macro maps as Non-Color; returns None if mat_make_grunge.py has not been run."""
+    p = TEX_DIR / "pfa" / f"{name}.png"
+    key = f"TEX_{name}"
+    img = bpy.data.images.get(key)
+    if img is None:
+        if not p.exists():
+            print(f"[mat_lib] WARNING missing macro map {p} -- run scripts/mat_make_grunge.py")
+            return None
+        img = bpy.data.images.load(str(p), check_existing=True)
+        img.name = key
+    img.colorspace_settings.name = "Non-Color"
+    return img
+
+
 def neutral_image(name, color, size=4):
     """A tiny generated Non-Color image used as the *neutral* default of a swappable map socket.
 

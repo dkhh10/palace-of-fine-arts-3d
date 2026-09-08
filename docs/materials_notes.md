@@ -686,3 +686,234 @@ and `r5after_scene_*.png` (`capital`, `cam06`, `ceiling`), attribute debug `r5db
    yellow cast are the haze, not `MAT_backdrop_forest`.
 4. Round 4's three lighting hand-offs (sunlit stone saturation/R-B, shaded stone hue, column-shaft fill, near-water
    hue) are unchanged and still open.
+## Round 6 (Phase 4 polish round 4, 2026-09-08) -- QA-04-3 (blocker) / -04-5 / -04-7 / -04-8
+
+Method as in rounds 4 and 5: two library versions rendered on ONE `master.blend` with
+`mat_scene_check.py --swap`, so every before/after pair below differs **by the library and by nothing else** --
+same geometry, same lighting r10 rig, same baked probes, same exposure. "Before" is the round-5 library
+(`git show HEAD~1:assets/materials.blend`), "after" is round 6. Hero at 1920x1080 Cycles 96 spp; the chroma and
+std-dev boxes are `mat_r4_measure.py`'s (unchanged since round 4, so the numbers are comparable across four
+rounds), and the three tests QA-04 wrote in prose are now scripted in `scripts/mat_r6_measure.py`.
+
+### QA-04-3 (blocker, third round of the same finding) -- why procedural tuning could not fix it
+
+Rounds 4 and 5 moved the attic's luminance std-dev by 0.02 of the photo's between them. The reason is scale, and
+it is arithmetic, not taste. The library's only photographic input was the Poly Haven concrete set, box-projected
+on a **2.2-2.7 m tile**. The hero is 1920 px across a ~95 m frame, i.e. **~5 cm/px**; a 2K map on a 2.7 m tile is
+**1.3 mm/texel**, so every hero pixel averages ~1500 texels of it. No amount of `Detail Strength` survives that.
+Everything the eye actually reads as weathering on a building at 100 m lives at **0.3-3 m**, and the library had
+nothing there except band-limited procedural noise, whose amplitude had already been pushed to where any more
+would read as blotches rather than as surface.
+
+So this round brings real surface information in at the right scale.
+
+**`scripts/mat_make_grunge.py`** builds three macro maps from **CC0 ambientCG** flat-wall scans:
+
+| map | source (CC0 1.0) | tile | std | what it carries |
+|---|---|---|---|---|
+| `pfa_macro_stain` | Concrete019 | 9.0 m | 0.137 | broad soft pour / damp blotches, 1-3 m |
+| `pfa_macro_blotch` | Concrete035 | 5.5 m | 0.126 | mid-scale weathered mottle, 0.3-1.5 m (second, decorrelating layer) |
+| `pfa_macro_streak` | Concrete036, stretched 3.2x vertically | 7.0 m | 0.188 | run-off: 0.2-0.6 m wide, 1-3 m long dark runs |
+
+Each is luminance **divided by a heavy gaussian blur of itself** -- the scan's own lighting and exposure removed,
+leaving the reflectance ratio at mean exactly 1.0 -- then clipped at 3 sigma, rescaled to the amplitude that reads
+at hero distance, and made tileable by a crop-and-feather wrap (no mirroring: mirror symmetry is visible on a
+40 m wall). 8-bit greyscale, **128 = ratio 1.0**. Licence, URL, crop and derivation per map in
+`assets/textures/pfa/sources.json`; the downloaded colour maps are kept under `assets/textures/pfa/_src/` so the
+build is reproducible offline.
+
+**Why CC0 scans and not the PFA photos.** The reference corpus was tried first (`mat_make_grunge.py --preview`
+-> `renders/qa_comparisons/mat_grunge_candidates.png`). Every raw photo in `reference/photos/raw` is capped at
+1920 px on its long edge, and at that size every frontal wall region of this building also contains a moulding, a
+dentil course or a sculpture group. Tiling one of those over a wall stamps fake architecture on it. The
+PFA-specific part of the look is carried instead by the amplitudes, the tile sizes and the band placements, all
+measured from the reference, and by the procedural layers already in `PFA_concrete`.
+
+**New `PFA_concrete` inputs** (all default 0.0 except `Macro Rough`/`Ledge Band`, so nothing not listed changes):
+`Macro`, `Macro Scale`, `Macro Streak`, `Macro Rough`, `Ledge Band`, `Damp Band`. The maps are box-projected in
+**world** space (plus the per-instance offset), not object space, so the field runs continuously across ARCH's
+separate meshes and the run-off runs down the wall whatever an object's own axes are. They multiply albedo value
+(mean 1.0, so round 4's calibrated chroma is untouched) and push roughness with the same signal, because a dark
+stain on concrete is also a rougher, more porous patch -- that pairing is what stops it reading as a printed decal
+in raking sun.
+
+### QA-04-3b -- the dark streak under the cornice and the string course
+
+Round 4 already had a "ledge run-off" band, and QA still found no streak. The mask was the problem: the streak
+group's `Ledge` output is an **isotropic** shelter probe (AO along the surface normal), so it drops in every
+inside corner and only weakly under a projection -- it cannot tell "there is a cornice above me" from "I am in a
+reveal". Round 6 adds a second probe that asks the actual question: an AO probe whose **normal is tilted hard
+toward +Z** (`normalize(N + 1.6 Z)`), so most of its rays leave the wall going upward and only a cornice, string
+course or box rim above can occlude them. A pure +Z normal cannot be used -- half its rays would start into the
+wall itself and return a constant ~0.5 regardless of the geometry above.
+
+The band is then `max(isotropic ledge, overhang)`, gated to near-vertical faces, **broken up along its length by
+the macro streak map** (a clean painted stripe is exactly what a cornice does not have), scaled by the new
+`Ledge Band` input (ochre 1.20, podium 1.10, colonnade 1.15 against round 4's flat 0.62) and tinted
+(0.50, 0.455, 0.375) where round 4 used (0.655, 0.605, 0.515). Peak darkening goes from ~34 % to ~50 %.
+
+### QA-04-3c -- the waterline
+
+`--probe` (new in `mat_scene_check.py`) first checked the obvious explanation, that the shore belongs to somebody
+else's material: it does not. Every mesh crossing z = WATER_Z +- 1 m within 220 m of the origin carries a library
+material (626 slots `MAT_concrete_colonnade`, 61 `MAT_concrete_podium`, plus soil / lawn / gravel / rip-rap). The
+band was simply too narrow and too high-contrast-free to read: it was a hard algae line with nothing above it.
+
+`PFA_algae` now also outputs **`Damp`** (a wet zone reaching ~1.35 band-heights above the growth line, noise
+broken) and **`Brown`** (a second field that splits the band between filamentous green low down and rust-brown
+tide scum at the top edge, per the reference sheet's "green algae/black tide band ... efflorescence streaks below
+the band", refs 093 and 091). Concrete mixes the damp zone at 0.60 toward (0.60, 0.605, 0.575) of its own colour
+and drops roughness to 0.34 there (wet stone is dark and glossy); the algae band itself is mixed 0.70 toward
+green (0.052, 0.082, 0.040) / brown (0.098, 0.076, 0.040). `Algae Height` came down (ochre 1.0 -> 0.75, podium
+1.1 -> 0.85) so the growth line sits **0.3-0.8 m above WATER_Z**, which is what the lead specified and what the
+reference shows. The same damp zone is now on `MAT_soil`, `MAT_lawn`, `MAT_gravel_path` and `MAT_rock_riprap`.
+
+### QA-04-3d -- patched repairs
+
+The cell field was already Chebychev (rectangles) and noise-warped; what was wrong was that every patch was
+6 % *lighter* with a 0.05-wide ramp. Round 6: the ramp is 0.11 (a skim coat feathers into the wall), the tone step
+is +-16 % taken from a second component of the same cell, so roughly half the patches are lighter and half darker,
+and coverage went from ~5 % to ~7 % on the walls (`Patches` 0.22 -> 0.30 ochre, 0.22 -> 0.32 podium, 0.15 -> 0.22
+colonnade, 0.16 -> 0.24 paving).
+
+### QA-04-5 columns -- chroma, not level
+
+The hero column mask measured lum 122 (test <= 120), hue 31.2 (test 20-29) and sat 0.753 (ref 0.588). Round 4 had
+already cut 37 % of the albedo for 3 % of display value, so cutting again would only make brown mud in the sun.
+The error QA names is chroma, and chroma is cheap: `MAT_column_rose` Base Color
+`(0.316, 0.158, 0.021)` -> `(0.300, 0.1415, 0.056)`. Blue x2.7 (these shafts are integral-pigment concrete
+weathered toward mauve-grey, not saturated terracotta -- ref sheet: "vertical streaks of paler mauve-grey
+(0.42, 0.24, 0.21) where washed", "saturation ... never above 0.6") and G/R 0.500 -> 0.472, which is the -6 deg of
+hue the mask asks for, at only -6 % luminance. `Wash Color` follows to (0.372, 0.246, 0.172), `Wash` 0.55 -> 0.60,
+`Tone Variation` 0.24 -> 0.34, `Drum Variation` 0.11 -> 0.13, plus the macro layer at `Macro Scale` 0.45 -- that
+is the "strong tonal variation" the sheet describes and the lead asked for instead of a blind albedo cut.
+
+### QA-04-7 coffers -- the rib material the lead named
+
+`MAT_plaster_ceiling_rib` now exists (ARCH assigns it to the saucer-dome and barrel-vault rib faces this round).
+Ref 083 / `coffered_ceiling_1`: panel fields are the palest surface in the rotunda at L 93-130 and the rib bands
+read L 22-50, so the rib albedo is ~0.37-0.40 of the panel's and cooler. Base Color (0.212, 0.186, 0.070) against
+the panel's (0.572, 0.470, 0.130), red pulled down harder than green, `Recess Dirt` 0.85 at 0.35 m, `Cavity` 0.95,
+`Underside Dirt` 0.35, roughness 0.92, specular 0.18.
+
+The second half of QA-04-7 -- "no dirt gradient inside any coffer" -- becomes possible for the first time *because*
+of the split. Round 5 measured that a long AO probe on a shared material dirties the whole saucer (dark/light
+quarter ratio 0.568 -> 0.642 against ref 083's 0.439), because the rib plate hangs 0.55 m below the panel field on
+the same sphere: both are parallel down-facing planes with the same normal and the same AO openness. With the ribs
+carrying their own material, a **1.3 m AO probe on the panel material is exactly the in-coffer gradient** -- it
+sees the rib plate below and the coffer returns around, darkens each panel toward its own frame and leaves the
+middle of the field clean. `Recess Distance` 0.5 -> 1.30, `Recess Dirt` 0.70 -> 0.82, `Rib Grime` 0.85 -> 0.30
+(it only ever reached the 1-2 px coffer returns, which do belong to the panel object), `Tone Variation`
+0.13 -> 0.20 and the macro layer at `Macro Scale` 0.32 for per-coffer tonal spread.
+
+### QA-04-8 near water -- where the missing green can come from
+
+Round 4 measured three levers that did nothing: brightening the murk 1.8x, a warm `Specular Tint` (Blender tints
+F0 only and this crop is all F90) and dropping `Transmission Weight`. Round 6 uses the one grazing-weighted lobe
+the Principled has: **sheen**. A teal `Sheen Tint` (0.22, 0.62, 0.46) at `Sheen Weight = 0.34 x near` lands on the
+near, grazing water -- the same angular dependence a surface scum / biofilm film has -- and leaves the facing water
+and the building's reflection alone. The near murk also goes properly green, (0.140, 0.158, 0.130) ->
+(0.104, 0.186, 0.132), so the 15-25 % of the pixel that is not Fresnel carries green instead of green-grey.
+
+For the second half of QA-04-8 -- the sunlit-stone reflection reading grey (sat 0.146 vs ref 0.339) -- the cause is
+the chop, not the tint: at 20-45 m the ripple was smearing the ochre reflection together with the sky directly
+above it until the two averaged out. The near band is pulled in from 70 m to **45 m** and its 0.04 m chop layer
+weakened 0.18 -> 0.13, so the mid-distance reflection holds its colour while the last 20 m in front of the camera
+keep the break-up QA-03-7 bought.
+
+### Measured: round-5 library vs round-6 library, one master, `--swap`, 1920x1080 Cycles 48 spp
+
+Both columns are the same `master.blend`, the same lighting rig and the same exposure (-2.3331, `--ev 0.0`); only
+the library differs. **These absolute numbers are NOT comparable to QA round 04's**, which was rendered on
+lighting's r10 rig: this worktree's master still carries the rig it was built with, so the r5 column is the honest
+baseline here, not QA's table. Reference is QA's ref 169 warped into the render frame (panel 1 of
+`round04_cam01_aligned_vs_ref169.png`), read with the same script.
+
+| metric (mat_r4_measure boxes) | round-5 library | **round-6 library** | ref 169 | test |
+|---|---|---|---|---|
+| **attic luminance std** 900 222 1020 256 | 20.84 (0.476 of ref) | **26.15 (0.598)** | 43.77 | >= 0.60 -- **at the bar** |
+| **entablature luminance std** 900 262 1020 296 | 33.07 (0.512) | **32.79 (0.507)** | 64.62 | >= 0.60 -- **fails, see below** |
+| attic sunlit lum / hue / sat / R-B | 197.7 / 37.7 / 0.440 / 102 | **185.5 / 38.3 / 0.511 / 114** | 189.2 / 40.6 / 0.581 / 134 | lum 0.98 pass |
+| entablature lum / hue / sat | 181.1 / 38.0 / 0.507 | **152.7 / 39.1 / 0.681** | 145.5 / 33.7 / 0.586 | lum 1.24 -> **1.05** |
+| dome cap lum / sat | 209.9 / 0.288 | 206.6 / 0.305 | 227.9 / 0.266 | unchanged, as intended |
+| **columns (mask) lum / hue / sat** | 154.7 / 30.1 / 0.650 | **119.4 / 26.8 / 0.647** | 95.3 / 24.5 / 0.589 | hue 20-29 **pass**; lum 1.25x |
+| under-cornice run-off, attic col sd | 8.2 | **9.4** | 19.4 | |
+| under-cornice run-off, entablature col sd | 10.7 | **12.8** | 13.8 | **0.93 of the photo** |
+| waterline: columns >= 20 lum darker | 50.0 % | **59.2 %** | 39.2 % | median drop 19.4 -> **26.7** |
+| near water hue / sat | 204.8 / 0.487 | 203.8 / 0.505 | 189.9 / 0.248 | **fails** (185-200) |
+| sunlit-stone reflection hue / sat | 43.8 / 0.143 | 48.9 / 0.130 | 33.6 / 0.363 | **fails** (sat >= 0.28) |
+| coffer field dark/light quarter | 0.212 | 0.195 | 0.439 (ref 083) | ARCH's rib split not in this master yet |
+
+**Getting there took three passes and both of the first two are worth recording.**
+
+*r6a (macro at 9.0 / 5.5 / 7.0 m tiles, amplitude 0.15):* attic std 20.84 -> 23.36. Far less than the close-range
+A/B suggested, and the reason is that **QA measures the attic on a 120 x 34 px box, which is 6.0 x 1.7 m at the
+hero's 5 cm/px**. A 9 m tile puts most of its energy *outside* the measurement window. Tiles came down to
+5.5 / 3.2 / 4.5 m and amplitudes up to 0.19 / 0.17 / 0.24.
+
+*r6b (smaller tiles):* 23.36 -> 24.75. Still short, and the reason is AgX: a symmetric +-19 % linear swing at
+lum ~190 is only about +-5 % of display, because that is exactly where the curve compresses hardest. The macro
+layer is therefore **biased 35 % toward its dark half** (which is also what real staining does -- it darkens far
+more than it lightens) and `Macro` went to 1.85-1.95 on the wall concretes: **24.75 -> 26.15**.
+
+**The entablature box is not shading and this is now the second round saying so.** Its luminance std did not move
+(33.07 -> 32.79) while its *mean* fell 181 -> 153, i.e. relative contrast went 0.183 -> 0.215 against the photo's
+0.444. In ref 169 that box contains dentils, modillions and a deep cornice undercut throwing near-black shadow;
+ours contains a much shallower cornice. **For architecture: cornice projection and dentil depth on the attic
+entablature is the remaining half of QA-04-3, unchanged from the round-4 hand-off.** The columnwise run-off metric
+is the one that isolates shading in that box, and it now reads 12.8 against the photo's 13.8.
+
+### QA-04-8 -- three shader levers measured, and the conclusion is that this is not the water shader's to fix
+
+Environment's magenta-bed probe settled one half of it: at QA's 18-20 deg grazing crop **0.00 %** of the near-water
+pixels see the lagoon bed, so there is no upwelling to tint. That leaves the surface, and the surface has been
+measured three ways now:
+
+| water configuration | near-water hue (ref 189.9) | sunlit-stone reflection hue / sat (ref 33.6 / 0.363) |
+|---|---|---|
+| round 5 | 204.8 | 43.8 / 0.143 |
+| r6a: hard green near murk, chop band 45 m | 202.6 | **66.5 / 0.122** |
+| **r6c (shipped): teal sheen on a 22 -> 5 m ramp, near-neutral murk, chop band 62 m** | 203.8 | 48.9 / 0.130 |
+| r6d experiment: sheen weight 1.0 on a 70 -> 6 m ramp, tint (0.09, 0.72, 0.50) | 201.2 | **134.1 / 0.143** (green) |
+
+Round 4 had already measured the fourth lever, `Specular Tint`, at 0.475 -> 0.473 (Blender tints F0 only and this
+crop is all F90). So: **every knob that reaches the sky-reflecting crop also sits under the reflection column**, and
+the most any of them moves the crop hue is ~3.6 deg out of the ~14 deg needed, at the cost of turning the stone
+reflection green. That is not a tuning failure, it is what the crop is: at 18-20 deg the surface is >= 85 % Fresnel
+mirror, so its hue *is* the reflected sky's hue plus a few degrees of surface tint. **For lighting: the near-water
+hue 203.8 vs 189.9 is the horizon sky's, the third round in a row this measurement has landed there** (round 3 for
+the flank, round 4 for the near field with the murk experiment, round 6 with the sheen experiment and ENV's bed
+probe). The shipped r6c setting keeps the small honest gain (the murk stays near-neutral so the reflection is not
+greyed, the chop band is back to 62 m so the mid-distance reflection holds its colour) and does not fake the rest.
+
+### ENV hand-offs folded in this round
+
+- **`MAT_lagoon_bed`** (new, `use_fake_user`): the lagoon floor ENV split onto its own name. Deliberately cheap --
+  no textures, world-space silt drifts (5-15 m) over a mud/weed mottle (1-3 m), a lighter exposed-silt zone in the
+  last 0.5 m before the shore, roughness 0.94, specular 0.15. It is only ever seen through the first metre or two
+  of water at the shore.
+- **Shore foliage albedo**: ENV measured the hero shoreline crop at lum 72.9 against the photo's 107.2 and
+  attributed it to leaf albedo rather than planting. `MAT_shrub` (1.0 -> 1.42), `MAT_shrub_light`
+  (1.25 -> 1.78), `MAT_shrub_dry` (4.50 -> 6.30 on red) and `MAT_reeds` (1.0 -> 1.40) tints raised ~1.4x. This is a
+  first pass on somebody else's measurement and it wants re-measuring on the next hero.
+
+### Files
+
+Before/after on one master, `--swap` (round-5 library vs round-6): `renders/previews/materials/r6before_scene_*`
+and `r6after_scene_*` (`hero`, `ceiling`, `stone`); the maxed-sheen experiment is `r6sheen_scene_hero.png`.
+Composite **`renders/qa_comparisons/mat_r6_sheet.png`**; PFA-photo macro candidates (evaluated and rejected)
+`renders/qa_comparisons/mat_grunge_candidates.png`. New scripts: `mat_make_grunge.py`, `mat_r6_measure.py`,
+`mat_r6_sheet.py`; `mat_scene_check.py` gained `--probe` and `--lib`.
+
+### Open, and whose
+
+1. **Architecture** -- cornice projection / dentil depth on the attic entablature. Second round: the entablature
+   box's std did not move under shading (33.07 -> 32.79) while its mean fell to 1.05 of the photo's, and the
+   columnwise run-off metric that isolates shading now reads 12.8 against the photo's 13.8.
+2. **Architecture** -- `MAT_plaster_ceiling_rib` is built and waiting; this master does not carry the assignment
+   yet, so the coffer dark/light ratio (0.195 vs ref 083's 0.439) cannot be scored until it lands.
+3. **Lighting** -- near-water hue, third round (see the table above); column-shaft fill (the mask is 1.25x the
+   photo after this round's chroma work, down from 1.62x in round 4); sunlit stone saturation and the shaded-stone
+   hue from round 4 are unchanged and still open.
+4. **QA** -- the attic std ratio is 0.598 against a 0.60 bar. It is at the bar, not past it; the remaining lever on
+   the materials side is more macro amplitude, which starts to read as blotch rather than surface.

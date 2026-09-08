@@ -83,7 +83,10 @@ def swap_library():
     per-asset material pass. build_master *appends* the library, so a rebuilt library never reaches an existing
     master; doing the swap here means the before/after pair differs by the library and by nothing else (same
     geometry, same rig, same baked light probes) instead of by two whole master builds."""
-    lib = common.ASSET_FILES["MAT"]
+    # --lib lets the before/after pair be two *library versions* on one master: point it at a materials.blend
+    # extracted from git (git show <rev>:assets/materials.blend > /tmp/mat_rN.blend) for the "before" render.
+    lib = Path(str(arg("--lib", str(common.ASSET_FILES["MAT"]))))
+    print(f"[mat_scene] swap library: {lib}")
     with bpy.data.libraries.load(str(lib), link=False) as (src, dst):
         lib_names = set(src.materials)
         wanted = sorted({m.name.split(".")[0] for m in bpy.data.materials} & lib_names)
@@ -132,6 +135,31 @@ def swap_library():
 
 if "--swap" in args:
     swap_library()
+if "--probe" in args:
+    # QA-04-3c reported "the shore strip is one uniform pale concrete tone". Before spending a render on it, list
+    # every mesh whose bounding box actually crosses the waterline band and say which material is on it: a band the
+    # library paints at z = WATER_Z is invisible if the geometry there belongs to somebody else's material.
+    from collections import defaultdict
+    zlo, zhi = common.WATER_Z - 0.6, common.WATER_Z + 2.0
+    hit = defaultdict(lambda: [0, 0.0])
+    for o in scene.objects:
+        if o.type != "MESH" or o.hide_render:
+            continue
+        zs = [(o.matrix_world @ Vector(c)).z for c in o.bound_box]
+        if min(zs) > zhi or max(zs) < zlo:
+            continue
+        ctr = sum((o.matrix_world @ Vector(c) for c in o.bound_box), Vector()) / 8.0
+        if ctr.length > 220.0:
+            continue
+        for sl in o.material_slots:
+            key = (sl.material.name if sl.material else "<none>")
+            hit[key][0] += 1
+            hit[key][1] = max(hit[key][1], max(zs))
+    print(f"[mat_scene] probe: meshes crossing z {zlo:.2f}..{zhi:.2f} within 220 m")
+    for k, (n, ztop) in sorted(hit.items(), key=lambda kv: -kv[1][0]):
+        print(f"[mat_scene]   {n:5d} slots  top z {ztop:7.2f}  {k}")
+    sys.exit(0)
+
 
 if "--debug-attr" in args:
     # every ornament instance rendered as a raw emission of ORN's `cavity` attribute: black = enclosed, white = open,
