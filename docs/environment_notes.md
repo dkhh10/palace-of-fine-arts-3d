@@ -937,6 +937,13 @@ all the flat green-grey of the lagoon surface; the first land tone appears to th
 conclusion architecture had already reached from the lens (the photo is simply farther away). **No change: the
 lagoon polygon keeps its OSM extent, world X -135..107, Y -20..118.**
 
+*Do not try to automate this with a colour threshold.* A Mahalanobis water/land classifier trained on 1 485 water
+and 4 116 land patches of the tile (water mean RGB 79/97/82, land 114/125/105) and walked along each vertex's
+inward normal returns a mean "edge" **10 m outside** the polygon with 87 % of vertices off by more than 5 m -
+which is nonsense: the Presidio's tree shadows on the bank are darker and greener than the lagoon surface, so the
+classifier finds "water" in the canopy shade every time. The overlay and the direct point samples are the
+evidence here; a threshold metric on this tile is not.
+
 ### What the two reference photos actually show (read before touching anything)
 
 **ref 169, the shore band (QA-05-10).** Over QA's own crop the photo is lum **115.6**, saturation 0.663, median
