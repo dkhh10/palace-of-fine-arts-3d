@@ -90,8 +90,10 @@ def apply_vault_for_engine(engine):
         base = float(base)
         try:
             if "EEVEE" in engine:            # accepts "EEVEE" and Blender's "BLENDER_EEVEE"
-                o.data.use_custom_distance = True
-                o.data.cutoff_distance = EEVEE_VAULT["cutoff_distance"]
+                cut = float(EEVEE_VAULT["cutoff_distance"])
+                o.data.use_custom_distance = cut > 0.0        # round 11: 0 means "no cutoff", not "zero reach"
+                if cut > 0.0:
+                    o.data.cutoff_distance = cut
                 o.data.energy = base * EEVEE_VAULT["energy_scale"]
             else:
                 o.data.use_custom_distance = False

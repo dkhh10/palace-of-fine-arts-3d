@@ -140,7 +140,8 @@ def _sat_stage(nt, name, color_out, fac_out, saturation):
 
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
-                   camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0):
+                   camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
+                   diffuse_boost=1.0):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -149,7 +150,14 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
 
     Round 08b: camera and glossy used to share one boost. They want different numbers now - the sky the CAMERA sees has
     to come down to match ref 169 while the sky the LAGOON reflects has to stay up, and one socket cannot do both. If
-    glossy_boost is None it falls back to camera_boost, which is the old single-knob behaviour."""
+    glossy_boost is None it falls back to camera_boost, which is the old single-knob behaviour.
+
+    Round 11 (QA-04-2): `diffuse_boost` completes the set. It scales the sky on every ray that is neither camera nor
+    glossy, i.e. exactly the light that lands on shaded stone, and it is the only sky knob that does NOT move the
+    sunlit numbers through the exposure calibration (which is driven by SKY_STRENGTH). The per-ray gain becomes
+        gain = diffuse_boost + is_camera*(camera_boost - diffuse_boost) + is_glossy*(glossy_boost - diffuse_boost)
+    so the three sockets stay independent: raising diffuse_boost cannot change the visible sky or the lagoon's
+    reflection of it."""
     sky = dict(DEFAULT_SKY, **(sky or {}))
     w = bpy.data.worlds.new(name)
     w.use_nodes = True
@@ -176,7 +184,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     vis_out = None          # 1 for camera OR glossy rays (used by the saturation blend)
     cam_ray = gl_ray = None
     gain_out = None         # per-ray multiplier: camera_boost on camera rays, glossy_boost on glossy rays, else 1
-    if (camera_boost != 1.0 or glossy_boost != 1.0 or camera_saturation != 1.0
+    if (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
             or glossy_saturation != 1.0 or diffuse_saturation != 1.0):
         lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
         vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
@@ -185,12 +193,13 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         nt.links.new(vis.outputs[0], clampn.inputs[0])
         vis_out = clampn.outputs[0]
         cam_ray, gl_ray = lpn.outputs["Is Camera Ray"], lpn.outputs["Is Glossy Ray"]
-        # gain = 1 + is_camera*(camera_boost-1) + is_glossy*(glossy_boost-1); a camera ray is never also a glossy ray
+        # gain = diffuse_boost + is_camera*(camera_boost-db) + is_glossy*(glossy_boost-db); a camera ray is never
+        # also a glossy ray, and everything that is neither (the light landing on shaded stone) keeps diffuse_boost.
         cam_t = nt.nodes.new("ShaderNodeMath"); cam_t.operation = "MULTIPLY_ADD"; cam_t.name = "camera_boost"
-        cam_t.inputs[1].default_value = camera_boost - 1.0; cam_t.inputs[2].default_value = 1.0
+        cam_t.inputs[1].default_value = camera_boost - diffuse_boost; cam_t.inputs[2].default_value = diffuse_boost
         nt.links.new(lpn.outputs["Is Camera Ray"], cam_t.inputs[0])
         gl_t = nt.nodes.new("ShaderNodeMath"); gl_t.operation = "MULTIPLY_ADD"; gl_t.name = "glossy_boost"
-        gl_t.inputs[1].default_value = glossy_boost - 1.0
+        gl_t.inputs[1].default_value = glossy_boost - diffuse_boost
         nt.links.new(lpn.outputs["Is Glossy Ray"], gl_t.inputs[0])
         nt.links.new(cam_t.outputs[0], gl_t.inputs[2])
         gain_out = gl_t.outputs[0]
