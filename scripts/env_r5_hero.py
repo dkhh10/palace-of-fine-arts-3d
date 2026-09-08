@@ -27,6 +27,8 @@ out = Path(opt("--out", str(common.ROOT / "renders/previews/environment/r5_maste
 samples = int(opt("--samples", "96"))
 engine = opt("--engine", "CYCLES").upper()
 cam_name = opt("--cam", "CAM_qa_01_lagoon_hero")
+res = opt("--res")
+RES = tuple(int(v) for v in res.split("x")) if res else (1920, 1080)
 
 print(f"[env_r5_hero] opening {blend}")
 bpy.ops.wm.open_mainfile(filepath=str(blend))
@@ -36,7 +38,7 @@ if cam is None:
     cands = [o.name for o in bpy.data.objects if o.type == "CAMERA"]
     sys.exit(f"[env_r5_hero] no camera {cam_name}; have {cands}")
 scene.camera = cam
-scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
+scene.render.resolution_x, scene.render.resolution_y = RES
 scene.render.resolution_percentage = 100
 scene.render.engine = engine
 if engine == "CYCLES":
@@ -56,6 +58,6 @@ if engine == "CYCLES":
 scene.render.image_settings.file_format = "PNG"
 scene.render.filepath = str(out)
 out.parent.mkdir(parents=True, exist_ok=True)
-print(f"[env_r5_hero] {engine} {samples} spp 1920x1080 -> {out}")
+print(f"[env_r5_hero] {engine} {samples} spp {RES[0]}x{RES[1]} -> {out}")
 bpy.ops.render.render(write_still=True)
 print("[env_r5_hero] done")
