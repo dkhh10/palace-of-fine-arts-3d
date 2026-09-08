@@ -1,0 +1,12 @@
+{
+ "b_band_lum": "86.0  med 52.0  std 63.9  dark<60 55.9 %",
+ "b_band_mean": 86.0,
+ "b_shore_lum": "71.7  med 62.1  std 40.9  dark<60 47.7 %",
+ "b_shore_mean": 71.7,
+ "b_c03_std": "14.1  (full-width row band 12.9)",
+ "b_c03_stdn": 14.1,
+ "b_c03_ratio": "0.146  (ground 16.2 / sunlit 111.3)",
+ "b_c06_lum": "100.6  std 23.3",
+ "b_c06_lines": "0  [vert 0; horiz 0]",
+ "b_c06_n": 0
+}
