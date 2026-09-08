@@ -1112,3 +1112,28 @@ and near-vertical light; its 69.7 is the shade level of a colonnade under a high
 horizon by the lead's own decision, and the frame's whole point is the long raking light. 0.5 of ref 128 is not a
 golden-hour number. What round 11 does deliver on cam03 is the *ground* and the *hue*, and that is stated as a
 partial in the report rather than dressed up as a pass.
+
+**And the fill's cost, measured on the hero (Cycles 1920x1080 / 64 spp), is why it ships small.** The control row
+reproduces the lead's merged master to 0.5 R-B and 0.002 saturation, so the sweep and QA are measuring the same
+pixels:
+
+| SHADE_FILL (el 16 deg) | attic sat | attic R-B | **shaded attic hue** | shaded lum | columns | near-water sat |
+|---|---|---|---|---|---|---|
+| control (= master) | 0.556 | 122.4 | **43.1** | 112.2 | 1.29x | 0.274 |
+| 6 W/m2 | 0.544 | 119.9 | **44.4** | 120.8 | 1.37x | 0.207 |
+| 14 W/m2 | 0.528 | 116.7 | **45.9** | 130.8 | 1.40x | 0.165 |
+
+The sunlit stone holds up well (the budget was 0.02 sat / 5 R-B and 6 W/m2 costs 0.012 / 2.5, exactly as designed —
+the fill is behind the sunlit faces). Everything else says no:
+
+* **the shaded attic gets WARMER again**, 43.1 -> 44.4 -> 45.9, and this is the finding of the round. A blue light
+  on ochre stone does not make blue stone: at 6 W/m2 the shaded attic's blue rises 37 -> 44 (+7) but its green rises
+  111 -> 121 (+10), because the fill's own green is 0.62 of its blue AND because the fill lands on the plaza and
+  comes back warm. Hue is (G-B)/(R-B): green wins, so hue rises. **Three independent levers now say the same thing
+  — round 10's `SKY_DIFFUSE_SATURATION` (1 unit of blue out of 36), round 11's `SKY_DIFFUSE_BOOST` (+4.3 deg the
+  wrong way) and round 11's directional cool fill (+2.8 deg the wrong way). The shaded stone's hue is its albedo's
+  blue reflectance in shadow, it is materials', and lighting has now proved it from the level side, the saturation
+  side and the direction side.**
+* at elevation 16 deg the fill also lands on the water at sin(16) = 0.28 and takes the near-water saturation from
+  0.274 (dead centre of QA's 0.22-0.32 window, the one number round 10 hit exactly) to 0.207 at 6 W/m2, and it pushes
+  the columns from 1.29x to 1.37x of ref, i.e. it re-opens QA-03-7 and worsens QA-04-5 to buy shade luminance.
