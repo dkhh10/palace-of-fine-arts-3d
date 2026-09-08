@@ -1,0 +1,15 @@
+00:00.617  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+01:53.696  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r5after_scene_capital.png'
+03:03.295  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r5after_scene_cam06.png'
+[mat_scene] opened master.blend in 1.2s; 8757 objects
+[mat_scene] ARCH_site bbox from 130 objects: [-48.6, -29.3, -1.8] .. [52.1, 47.6, 5.2]
+[mat_scene] swap: 36 library materials re-appended, 36 old copies remapped
+[mat_scene] swap: 27 per-asset ornament materials on 307 instances
+[mat_scene] capital camera on INST_capital_rotunda_000_LOD0 at [-10.1, 21.6, 26.1], 82.2 m from the hero station
+[mat_scene] view exposure -2.3331 +0.00 EV -> -2.3331
+[mat_scene] capital 768x768 48 spp in 109.7s -> r5after_scene_capital.png
+[mat_scene] cam06 960x540 48 spp in 69.6s -> r5after_scene_cam06.png
+[mat_scene] done in 182.7s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit

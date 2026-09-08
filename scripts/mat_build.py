@@ -261,17 +261,27 @@ def build_group_concrete():
     # naive (1 - cavity) would paint every one of them uniformly black. `vpres` is therefore a ramp that is exactly
     # 0 at cavity = 0.0: the term vanishes on meshes without the attribute, and on meshes with it the cost is only
     # the deepest ~5 % of vertices (p05 = 0.10), whose immediate neighbours still get the full effect.
+    # The ramp is set from the SCREEN-space distribution, not the vertex one. Rendered as raw emission on the hero
+    # capital (`mat_scene_check.py --debug-attr`), the visible surface measures p02 0.61 / p10 0.75 / p25 0.93 /
+    # p50 1.00: ORN's probe is 10 rays over 6 % of the object diagonal (~66 mm on a capital), so it only finds
+    # enclosure deep inside crevices the camera never sees, and the per-vertex p25 of 0.30 is nearly all hidden
+    # geometry. A ramp keyed on the vertex statistics (0.62 -> 0.08) moved the rendered capital by 0.7 % and was
+    # invisible; 1.00 -> 0.60 puts the whole visible range to work. See the round-5 hand-off in materials_notes.
     vattr = t.new("ShaderNodeAttribute", attribute_type="GEOMETRY", attribute_name="cavity")
     vraw = vattr.outputs["Fac"]
     vpres = t.maprange(vraw, 0.0, 0.05, 0.0, 1.0)
-    vdeep = t.maprange(vraw, 0.62, 0.08, 0.0, 1.0)
+    vdeep = t.maprange(vraw, 1.0, 0.60, 0.0, 1.0)
     vcav = t.mul(vpres, vdeep)
     # 10. recess dirt (AO) + baked/extra dirt + underside soot + vertex-cavity dust
     ao = t.ao(distance=I["Recess Distance"], samples=8, normal=N)
     dirt = t.clamp01(t.add(t.mul(t.mul(t.sub(1.0, ao), I["Recess Dirt"]), wvar), I["Extra Dirt"]))
     dirt = t.clamp01(t.add(dirt, t.mul(t.mul(vcav, I["Vertex Dust"]), wvar)))
     under = t.mul(t.maprange(nz, -0.15, -0.8, 0.0, 1.0), I["Underside Dirt"])
-    # near-vertical faces (coffer ribs seen from below): darker than the panels they frame
+    # Coffer ribs: near-vertical faces, i.e. the coffer returns. This does NOT reach the rib web, and a shader cannot
+    # get there: ARCH hangs the rib plate 0.55 m BELOW the panel field, so ribs and panels are parallel down-facing
+    # planes -- same normal, and the AO probe reads both as open (a 1.1 m probe keyed on `ao` was tried this round
+    # and simply dirtied the whole saucer: dark/light 0.568 -> 0.642 against ref 083's 0.439). Separating them needs
+    # the rib plate to carry its own material; see the round-5 hand-off to architecture in materials_notes.
     under = t.clamp01(t.add(under, t.mul(t.maprange(t.absval(nz), 0.60, 0.16, 0.0, 1.0), I["Rib Grime"])))
     dirt_all = t.clamp01(t.add(dirt, t.mul(under, 0.6)))
     c = t.mix(dirt_all, c, t.vmul(c, (0.56, 0.495, 0.405)))
@@ -588,6 +598,10 @@ def build_concrete_family():
         "Base Color": C(0.572, 0.470, 0.130), "Grey Color": C(0.402, 0.312, 0.104), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.13, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
+        # Round 5 (measured, then left alone): on the assembled saucer NONE of this material's masks move the
+        # rib/panel relationship. `Rib Grime` only ever reaches the 1-2 px coffer returns; halving Recess Dirt and
+        # Cavity moved the dark/light quarter ratio 0.568 -> 0.571 (ref 083: 0.439); a 1.1 m AO probe keyed on
+        # openness dirtied the whole ceiling, 0.568 -> 0.642. The saucer's tone is geometry and light, not shading.
         "Detail Strength": 0.3, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.3, "Edge Radius": 0.05,
         "Recess Dirt": 0.7, "Recess Distance": 0.5, "Cavity": 0.70, "Rib Grime": 0.85, "Roughness": 0.9, "Roughness Variation": 0.05, "Bump": 0.25, "Pour Lines": 0.0}, specular=0.24)
     # bronze-brown guilloche band on the drum
@@ -790,13 +804,13 @@ def build_extra_env():
     N = t.geometry().outputs["Normal"]
     crowns = t.voronoi(W, 1.0 / 9.0, feature="SMOOTH_F1", randomness=1.0)
     cr = t.sepxyz(crowns.outputs["Color"])[0]
-    c = t.mix(cr, C(0.0175, 0.0295, 0.0185), C(0.038, 0.055, 0.0345))
+    c = t.mix(cr, C(0.0140, 0.0235, 0.0150), C(0.0305, 0.0440, 0.0280))
     # gaps: the shaded flanks and the holes between crowns. Two scales (whole crowns, 3 m branch clumps) so the mass
     # never reads as one lit plane, plus a downward bias -- the underside of a canopy is always the dark part.
     gap = t.maximum(t.maprange(crowns.outputs["Distance"], 0.55, 0.10, 0.0, 1.0),
                     t.maprange(t.noise(W, 0.33, detail=3, rough=0.65), 0.52, 0.30, 0.0, 1.0))
     gap = t.clamp01(t.add(t.mul(gap, 0.8), t.mul(t.maprange(t.sepxyz(N)[2], 0.35, -0.2, 0.0, 1.0), 0.35)))
-    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.58)))
+    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.66)))
     haze = t.maprange(t.noise(W, 0.02, detail=2), 0.35, 0.65, 0.88, 1.12)
     c = t.vscale(c, haze)
     normal = t.bump(t.add(crowns.outputs["Distance"], t.mul(t.noise(W, 0.8, detail=3), 0.4)), strength=0.7, distance=0.6, normal=N)
