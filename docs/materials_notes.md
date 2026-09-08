@@ -552,3 +552,137 @@ X-elongated (0.36): at 0.62 the normals sweep sideways into open sky and the fla
    entablature's shadow.
 3. **Lighting** -- near-water hue/saturation is the reflected horizon sky (no haze band, QA measured 0.74).
 4. **Architecture** -- the other half of QA-03-4: the entablature std-dev gap is cornice/dentil depth, not shading.
+
+## Round 5 (Phase 4 polish round 3, 2026-09-08) -- ornament cavity/AO, far-field library gaps, coffer ribs
+
+Method as in round 4, with one change that saved two master builds: `mat_scene_check.py` gained **`--swap`**, which
+re-appends `assets/materials.blend` over the copies `build_master` baked into an existing `master.blend` and then
+redoes the ornament per-asset material pass exactly as `build_master.orn_material_for()` does. The before/after pairs
+below therefore differ **by the library and by nothing else** -- same geometry, same lighting r09 rig, same baked
+light probes, same exposure -2.3331 -- instead of by two whole master builds. It also gained a `capital` camera, a
+`cam06` job, `--engine eevee --lod 1`, and `--debug-attr` (see below). New tools: `scripts/mat_r5_measure.py`
+(PIL only) and `scripts/mat_r5_sheet.py` -> `renders/qa_comparisons/mat_r5_sheet.png`.
+
+The **capital camera** stands at the hero station with a 400 mm lens at 768 px. That is exactly **8x** the hero's
+angular resolution (the hero is 20 mm at 1920 px), so downsampling the render by 8 reproduces the hero pixel for
+pixel; the sheet shows both. The nearest rotunda capital is 82 m away, ~39 px wide in the hero.
+
+### 1. ORN's `cavity` attribute and the baked AO / normal maps -- both live now
+
+**The maps.** `concrete_material(baked=True)` built nodes called `BAKED_NORMAL` / `BAKED_AO`; `build_master` looks for
+`ORN_NORMAL` / `ORN_AO`, so it always returned `None`. Renamed. The harder half was the default: **an Image Texture
+node with no image is not neutral.** Measured in both engines: it returns **Alpha 1.0** (so the alpha is not a
+"is a map plugged in?" flag) and Color **(1,0,1) in Cycles / (0,0,0) in Eevee** -- a pink normal, and in Eevee full AO
+occlusion over the whole asset. The old `BAKED_WEIGHT` value node defaulted to 0.0 to dodge this and nothing ever
+raised it. Both nodes now ship a 4x4 generated neutral image (`mat_lib.neutral_image`: flat tangent normal, white AO),
+so the library material behaves exactly as if the hooks were absent and `build_master` only has to swap the image
+datablock. Verified on the assembled master: **27 per-asset materials on 307 LOD1 instances**, and the cam04 Eevee
+before/after differs by up to **109 levels in the four corner cells** -- that is the LOD1 ornament picking up its
+bakes. (LOD0 is the render LOD and has no UVs, so the maps are a LOD1/viewport feature by construction; LOD0 is what
+the vertex attribute is for.)
+
+**The attribute.** New `Vertex Cavity` / `Vertex Dust` inputs on `PFA_concrete` (both default 0.0, so nothing outside
+`MAT_ornament_concrete` changes), read through a Geometry Attribute node named `cavity`.
+
+*A shader cannot tell "attribute missing" from "attribute = 0".* Measured in Cycles and Eevee: a missing geometry
+attribute reads Fac 0, Color 0 and **Alpha 1.0**. 92 of the 106 ORN meshes (maidens, urns, attic panels and figures,
+mouldings) carry no `cavity` and share this material, so the naive `1 - cavity` would paint every one of them black.
+The presence ramp `vpres = maprange(cavity, 0.0, 0.05, 0, 1)` is therefore **exactly 0 at cavity = 0**: the term
+vanishes on meshes without the attribute, and on meshes with it the only cost is the deepest ~0.5 % of the visible
+surface, whose neighbours still get the full effect.
+
+*The ramp has to be keyed on the screen-space distribution, not the vertex one.* The first attempt used ORN's
+published vertex statistics (capitals p25 0.30 / p50 0.60) and moved the rendered capital by **0.7 %** -- invisible.
+`mat_scene_check.py --debug-attr` renders every ornament instance as a raw emission of `cavity`; on the hero capital
+the **visible** surface measures **p02 0.61 / p10 0.75 / p25 0.93 / p50 1.00, mean 0.94**. ORN's probe is 10 rays over
+6 % of the object diagonal (~66 mm on a capital), so it only finds enclosure deep inside crevices the camera never
+sees, and the vertex p25 of 0.30 is almost entirely hidden geometry. Ramp changed to `1.00 -> 0.60`.
+
+| capital bell box (320x275 at 8x hero res) | round-4 library | round-5 | direction |
+|---|---|---|---|
+| luminance mean | 152.4 | **138.2** | -9.3 % |
+| p10 (the recesses) | 45.4 | **36.6** | -19 % |
+| p50 | 180.7 | **161.3** | |
+| p10/p90 | 0.209 | **0.173** | recesses further below the crests |
+| readable leaf tiers (dips >= 4 levels in the row profile) | 8 | **10** | QA-03-15 asks for >= 2 |
+| control: plain wall behind | 188.6 | 188.5 | unchanged, as intended |
+
+`MAT_ornament_concrete`: `Vertex Cavity` 0.85, `Vertex Dust` 0.55. The dust rides the existing recess-dirt tint
+(0.56, 0.495, 0.405) so the hollows go warm-grey, not just dark; the value darkening is clamped so the deepest point
+stops at 78 %.
+
+**For ORN (two requests).** (a) The cavity probe radius is too small to reach the screen: at 6 % of the diagonal the
+visible surface is 94 % "open". A second bake at ~15-20 % of the diagonal (leaf-tier scale, not crevice scale) would
+give the shader a signal at the scale that actually reads at 80-100 m; we would then drop the remapping. (b) Please
+extend `finalize_asset(..., cavity=True)` to the maidens, attic panels/figures, urns and mouldings -- 92 meshes have
+no attribute today, and with all of them covered the presence ramp can go away.
+
+### 2. Far-field library gaps (ENV)
+
+`MAT_backdrop_asphalt` and `MAT_backdrop_roof_tile` did not exist, so ENV's new Marina/Presidio city field shipped on
+`env_lib`'s flat placeholders. Both are now in the library, cheap by design (no textures, world-space noise only) with
+per-object variation through `PFA_instance` (Object Info Random hashed with ENV's `instance_seed` property):
+
+- **MAT_backdrop_asphalt** -- centred on the placeholder's 0.052 grey: sun-bleached wheel tracks (0.030 -> 0.078),
+  darker resurfacing patches, grit, +-15 % per object, roughness 0.72 +- 0.09.
+- **MAT_backdrop_roof_tile** -- mission tile: 0.31 m courses off world Z (parallel to the eaves whichever way a
+  building faces) and pans off world X+Y, both sub-pixel past 250 m; the part that reads is the per-building spread,
+  **+-6 deg of hue and +-17 % of value**, with ~15 % of roofs grey composition instead of clay, plus moss.
+  Test objects for both are in `MAT_test` (three rotated roof blocks with different `instance_seed`, an asphalt strip).
+
+**MAT_backdrop_forest** darkened and cooled: albedo -55 % and B/G 0.43 -> 0.63 (so warm sun cannot drive it yellow),
+a new two-scale gap-shadow mask with a downward bias that puts ~40 % of the surface at 0.34x, specular 0.15 -> 0.06,
+roughness 0.90 -> 0.92. Justification from ref 105: its tree masses measure lum 120-152 against a sunlit lawn at 142
+and sunlit stucco at 182, at saturation 0.04-0.13 -- a canopy is never brighter than grass and is barely coloured,
+because most of what the eye sees is self-shadowed gaps, not leaf albedo.
+
+**What that bought, and the measurement that matters more.** On cam06 the canopy band went lum 128.0 -> 121.7 and
+hue 38.6 -> 36.0; canopy/lawn 1.158 -> **1.128** against ref 105's 0.85. A 55 % albedo cut moving the display value
+by 5 % is not a tuning failure: solving `L = H + k*A` across the two renders gives **H = 112 of 128 display levels**,
+i.e. **88 % of a 250-450 m canopy pixel is the atmospheric veil**, and albedo has 12 % authority over it. **For
+lighting: the far field's brightness and its yellow are the haze, not the canopy shader** -- the same conclusion
+round 4 reached for the near water, now measured on land. Going further on albedo would leave the canopy as mud the
+moment the veil is reduced.
+
+### 3. Coffer ribs -- checked, and it is not materials'
+
+Ref 083 / `coffered_ceiling_1` is unambiguous: the panel fields are the **palest** surface in the rotunda and the rib
+bands are dark golden-brown. Statistic used (robust, no hand-placed boxes): over the saucer, mean of the darkest
+quarter of pixels over mean of the lightest quarter.
+
+| | dark quarter | light quarter | ratio | sd |
+|---|---|---|---|---|
+| ref 083 | 68.3 | 155.6 | **0.439** | 34.9 |
+| render, round-4 library (cam04 Eevee LOD1) | 72.2 | 127.1 | **0.568** | 23.6 |
+| + `Recess Dirt` and `Cavity` halved | 72.5 | 127.1 | 0.571 | 23.5 |
+| + rib mask keyed on AO openness, `Recess Distance` 1.1 m | 66.4 | 103.4 | **0.642** (worse) | 16.8 |
+
+`Rib Grime` **is** driven (0.85 on `MAT_plaster_ceiling`) but it is keyed on `|Nz|`, so it only ever reaches the 1-2 px
+coffer *returns*, never the rib web. And a shader cannot reach the web: ARCH hangs the rib plate 0.55 m **below** the
+panel field (`arch_build.build_ceiling`, both objects on the same sphere, both `MAT_plaster_ceiling`), so ribs and
+panels are parallel down-facing planes -- same normal, same object-space frame, and an AO probe reads both as open,
+which is why keying on openness simply dirtied the whole saucer. Halving the AO terms moved the ratio by 0.003, so
+the saucer's tone is geometry and light, not shading. **`MAT_plaster_ceiling` is therefore left exactly at its
+round-4 values** rather than shipping a change that measures as nothing.
+
+**For architecture:** give the rib plate its own material name (say `MAT_plaster_rib`) -- one string in
+`arch_build.build_ceiling`, since the field and the plate are already separate objects. Materials will ship a dark,
+grimy, ornamented rib material against ref 083 the same day. **For ornament:** ref 083's ribs are dark partly because
+they carry guilloche / bead-and-reel mouldings that self-shadow; ours are plain flat bands.
+
+### Files
+
+Before/after (round-4 library vs round-5, same master, `--swap`): `renders/previews/materials/r5before_scene_*.png`
+and `r5after_scene_*.png` (`capital`, `cam06`, `ceiling`), attribute debug `r5dbg_scene_capital.png`, composite
+**`renders/qa_comparisons/mat_r5_sheet.png`**, raw numbers `renders/qa_comparisons/mat_r5_numbers.txt`.
+
+### Open, and whose
+
+1. **Ornament** -- cavity probe radius (6 % of the diagonal is below the visible scale) and cavity coverage (92 of
+   106 meshes have none).
+2. **Architecture** -- a separate material name for the coffer rib plate; ref 083's panels are the palest surface in
+   the rotunda and ours are not.
+3. **Lighting** -- 88 % of a 250-450 m canopy pixel in cam06 is the atmospheric veil; the far field's brightness and
+   yellow cast are the haze, not `MAT_backdrop_forest`.
+4. Round 4's three lighting hand-offs (sunlit stone saturation/R-B, shaded stone hue, column-shaft fill, near-water
+   hue) are unchanged and still open.

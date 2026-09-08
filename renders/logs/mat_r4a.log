@@ -1,0 +1,11 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+02:08.974  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r4a_scene_hero.png'
+[mat_scene] opened master.blend in 0.9s; 9030 objects
+[mat_scene] ARCH_site bbox from 130 objects: [-48.6, -29.3, -1.8] .. [52.1, 47.6, 5.2]
+[mat_scene] view exposure -3.2911 +0.00 EV -> -3.2911
+[mat_scene] hero 1920x1080 32 spp in 127.7s -> r4a_scene_hero.png
+[mat_scene] done in 128.7s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+EXIT 0

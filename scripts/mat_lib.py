@@ -54,6 +54,24 @@ def load_image(set_name, map_name, non_color=True):
     return img
 
 
+def neutral_image(name, color, size=4):
+    """A tiny generated Non-Color image used as the *neutral* default of a swappable map socket.
+
+    An Image Texture node with no image is not neutral: it returns Alpha 1.0 in both engines (so the alpha cannot be
+    used as a "map plugged in?" flag) and Color (1,0,1) in Cycles / (0,0,0) in Eevee, which decodes to a broken
+    normal and, in Eevee, to full AO occlusion. Shipping a flat 4x4 constant instead makes the un-plugged material
+    behave exactly like the map-less one, and build_master only swaps the image datablock.
+    """
+    img = bpy.data.images.get(name)
+    if img is None:
+        img = bpy.data.images.new(name, size, size, alpha=True, float_buffer=False, is_data=True)
+    img.generated_width = img.generated_height = size
+    img.generated_color = color
+    img.colorspace_settings.name = "Non-Color"
+    img.use_fake_user = True
+    return img
+
+
 def sock(sockets, key):
     """Socket by name, falling back to identifier (Mix/ColorRamp/HueSat have duplicate or odd names)."""
     for s in sockets:

@@ -1,0 +1,14 @@
+00:00.351  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/scripts/mat_scene_check.py:139: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  dm = bpy.data.materials.new("MAT_debug_cavity"); dm.use_nodes = True
+00:56.341  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r5dbg_scene_capital.png'
+[mat_scene] opened master.blend in 0.7s; 8757 objects
+[mat_scene] ARCH_site bbox from 130 objects: [-48.6, -29.3, -1.8] .. [52.1, 47.6, 5.2]
+[mat_scene] debug-attr: cavity emission on 1236 instances
+[mat_scene] capital camera on INST_capital_rotunda_000_LOD0 at [-10.1, 21.6, 26.1], 82.2 m from the hero station
+[mat_scene] view exposure -2.3331 +0.00 EV -> -2.3331
+[mat_scene] capital 768x768 8 spp in 55.3s -> r5dbg_scene_capital.png
+[mat_scene] done in 56.0s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
