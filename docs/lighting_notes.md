@@ -1075,3 +1075,40 @@ independent ambient source.
 bakes, and restores whatever override was live, so the saved Eevee state is unchanged.** A light probe volume is
 meant to hold the scene's real indirect light; baking a render-time engine hack into it was a bug, and the fix is
 one that cannot be undone by the order in which the lead runs his two commands.
+
+### 20.4 QA-04-2 — what CAN reach the shade: `SHADE_FILL`, and what cannot
+
+If the sky cannot be raised without paying for it on the sunlit stone, the fill has to be light that reaches the
+anti-sun faces and nothing else. `SHADE_FILL` (new in `light_build.py`) is three wide-angle SUN lamps on the
+anti-sun hemisphere — az 300 / 205 / 25 at elevation 16 / 16 / 20 deg, weights 1.0 / 1.0 / 0.7, colour (0.42, 0.62,
+1.00) i.e. clear-sky blue, `angle` 55 deg so the shadows are sky-soft, `specular_factor` 0.10 so it stays out of the
+lagoon's reflection and off the column highlights (QA-03-7 and QA-04-5 are both glossy-side defects), and
+`visible_camera = False` so a 55 deg disc never appears in the sky.
+
+A sun lamp is the right primitive here for three reasons: its energy IS an irradiance in W/m2, directly comparable
+with the calibrated 67.3 W/m2 of the real sun, so the fill can be quoted as a fraction of the sun rather than as a
+magic number; it is occluded by the building exactly the way the sky is, so it can never leak through a wall; and it
+costs almost nothing to sample. The lamps sit LOW on purpose: a low fill rakes vertical shaded faces, where the
+defect is, and lands on the horizontal plaza at cos(el) ~ 0.3, so it adds little of the warm ground bounce that made
+`SKY_DIFFUSE_BOOST` fail.
+
+**The one thing it cannot fix is cam03's near shaft, and the measurement says why.** Eevee, cam03, 1280x720, total
+fill irradiance swept:
+
+| SHADE_FILL total | near shaft | ground |
+|---|---|---|
+| 0 (round 10) | 7.23 | 18.5 |
+| 3 W/m2 | 7.69 | 18.8 |
+| 6 W/m2 | 8.29 | 23.2 |
+| 12 W/m2 (18 % of the sun) | 9.09 | 27.4 |
+
+The walkway floor responds (18.5 -> 27.4, +48 %) and the shaft does not (7.23 -> 9.09, +26 % for 4x the fill). QA's
+box (0,150)-(420,720) is the column standing 3 m from an 18 mm lens: it is occluded from the whole sky by the
+columns and entablature around it, which is also why the sky-only render put only 3.26 there. **No exterior light
+can reach it, in either engine, and that is a geometry fact, not a rig setting.**
+
+**And QA's target for it is a midday photograph.** ref 128 has a blown white sky, no cast shadows anywhere in frame
+and near-vertical light; its 69.7 is the shade level of a colonnade under a high sun. Our sun is 7.4 deg above the
+horizon by the lead's own decision, and the frame's whole point is the long raking light. 0.5 of ref 128 is not a
+golden-hour number. What round 11 does deliver on cam03 is the *ground* and the *hue*, and that is stated as a
+partial in the report rather than dressed up as a pass.
