@@ -135,7 +135,7 @@ def entablature_plan(along=P.RESSAUT_ALONG, r_ch=P.CHAMFER_CIRCUMRADIUS, inset=0
 # (The photograph puts the fine 0.47 m course ABOVE the brackets, not below them: the old build had the egg course
 # between the dentils and the modillions.)  Dentils / eggs / modillions are block geometry on the beds below.
 CORNICE = dict(
-    frieze_d=0.12, frieze_z0=1.40, frieze_z1=2.50,
+    frieze_d=0.20, frieze_z0=1.40, frieze_z1=2.50,
     dentil_z=2.60, dentil_h=0.28, dentil_bed=0.40, dentil_size=0.16, dentil_pitch=0.32, dentil_d=0.30,
     modillion_z=2.96, modillion_h=0.48, modillion_bed=0.62, modillion_w=0.42, modillion_d=0.58, modillion_pitch=1.06,
     egg_z=3.44, egg_h=0.12, egg_bed=0.70, egg_pitch=0.47,
@@ -148,7 +148,7 @@ def rotunda_entablature_profile():
     c = CORNICE
     arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.46), (0.24, 0.46), (0.24, 0.92), (0.34, 0.92), (0.34, 1.20),
             (0.42, 1.24), (0.42, 1.30),             # bead-and-reel astragal over the third fascia (sheet row 13)
-            (0.50, 1.34), (0.50, c["frieze_z0"])]   # architrave crown, projecting 0.50 over a 0.12 frieze
+            (0.50, 1.34), (0.50, c["frieze_z0"])]   # architrave crown, projecting 0.50 over a 0.20 frieze
     frieze = [(c["frieze_d"], c["frieze_z0"] + 0.04), (c["frieze_d"], c["frieze_z1"])]
     cornice = [
         (0.22, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
@@ -308,7 +308,8 @@ def build_rotunda():
             if dot2(out, fr.v) < 0:
                 out = (-out[0], -out[1])
             m = mul2(add2(a, b), 0.5)
-            SOCK.add("frieze_run", (a[0] + out[0] * 0.24, a[1] + out[1] * 0.24, P.ENTABLATURE_Z0 + P.ARCHITRAVE_H), out,
+            fd = CORNICE["frieze_d"]   # the socket plane IS the frieze face: it moved with the round-4 profile
+            SOCK.add("frieze_run", (a[0] + out[0] * fd, a[1] + out[1] * fd, P.ENTABLATURE_Z0 + P.ARCHITRAVE_H), out,
                      math.dist(a, b), extra={"run_length": math.dist(a, b), "run_dir": (d[0], d[1], 0.0)}, size=0.4)
 
     # ---- faces: spandrel + attic plate with the arch notch and the sunk relief panel; vault; inner spandrel
