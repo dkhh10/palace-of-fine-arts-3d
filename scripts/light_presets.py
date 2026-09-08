@@ -47,6 +47,61 @@ def _metal_gpu():
             pass
 
 
+# ----------------------------------------------------------------------------- item 6: the Eevee vault fills
+# QA-03 / round-10 item 6. On cam04 the two engines disagreed 3x on the coffered dome (Cycles soffit/own-sky 0.536 and
+# coffer/own-sky 0.364; Eevee 0.375 and 1.075). Round 09 blamed the emitters' 45 deg spread. Round 10 measured it
+# properly and it is not the spread and not Fast GI:
+#   * turning Fast GI off, or dropping fast_gi_distance 60 -> 10 m, moves the Eevee coffer by less than 0.05;
+#   * the same file renders the Eevee coffer at 0.246 (960x540) and 1.075 (1280x720), which no real light can do.
+# Eevee Next's screen-traced ambient term fills the closed vault volume with light that is proportional to how much of
+# the vault is ON SCREEN, and cam04 looks straight up into it. Cycles has no such term. There is no rig that satisfies
+# both engines, so the fix is engine-conditional, and the honest lever is `cutoff_distance` (Blender's "Custom
+# Distance"), which EEVEE honours and CYCLES ignores: at 13 m each vault emitter still reaches its own soffit (4.5-11 m)
+# but can no longer reach the central coffered dome 20.7 m away. Measured on cam04 at 1280x720, Eevee:
+#   control                soffit 0.375  coffer 1.075
+#   cutoff 13 m            soffit 0.145  coffer 0.246
+#   cutoff 13 m, energy x2 soffit 0.201  coffer 0.247
+#   cutoff 20 m            soffit 0.165  coffer 0.256
+#   cutoff 13 m, energy x5 soffit 0.322  coffer 0.252
+#   cutoff 16 m, energy x5 soffit 0.348  coffer 0.255
+#   cutoff 13 m, energy x8 soffit 0.408  coffer 0.255   <- shipped: |0.128| and |0.109| from Cycles, both inside 0.15
+# Cost on record: Eevee's soffit W/E balance is 0.562 / 0.253 where Cycles reads 0.395 / 0.678, i.e. the two engines
+# now lean opposite ways across the vault. The engines agree on the two numbers QA measures and not on their split.
+# The coffer lands inside +-0.15 of Cycles as soon as the cutoff is on, and the energy then buys the soffit back
+# without touching it. Cycles keeps the physical rig exactly as light_build writes it.
+EEVEE_VAULT = dict(energy_scale=8.0, cutoff_distance=13.0)
+
+
+def _vault_lights():
+    return [o for o in bpy.data.objects
+            if o.type == "LIGHT" and o.name.startswith("LIGHT_rotunda_vault_bounce")]
+
+
+def apply_vault_for_engine(engine):
+    """Restore the physical vault-emitter energies for Cycles, or apply the Eevee-only cutoff + energy (see above).
+    The Cycles energy is read from the object's own `energy_W` custom property (written by light_build), so calling
+    this twice, or in either order, is idempotent."""
+    n = 0
+    for o in _vault_lights():
+        base = float(o.get("energy_W", o.data.energy))
+        try:
+            if engine == "EEVEE":
+                o.data.energy = base * EEVEE_VAULT["energy_scale"]
+                o.data.use_custom_distance = True
+                o.data.cutoff_distance = EEVEE_VAULT["cutoff_distance"]
+            else:
+                o.data.energy = base
+                o.data.use_custom_distance = False
+        except AttributeError as e:          # linked (read-only) light data: master appends LIGHT, but be safe
+            print(f"[light_presets] cannot retune {o.name} ({e}); leaving it as built")
+            continue
+        n += 1
+    if n:
+        print(f"[light_presets] vault emitters for {engine}: {n} lights, "
+              f"{'x%.1f + %.0f m cutoff' % (EEVEE_VAULT['energy_scale'], EEVEE_VAULT['cutoff_distance']) if engine == 'EEVEE' else 'physical energy, no cutoff'}")
+    return n
+
+
 def apply_final_cycles(scene=None, samples=None, time_limit=None):
     """Cycles settings for the 3840x2160 hero and the flythrough finals."""
     s = scene or bpy.context.scene
@@ -94,6 +149,7 @@ def apply_final_cycles(scene=None, samples=None, time_limit=None):
     s.render.image_settings.file_format = "PNG"
     s.render.image_settings.color_depth = "16"
     s.render.image_settings.compression = 15
+    apply_vault_for_engine("CYCLES")
     return s
 
 
@@ -122,6 +178,7 @@ def apply_viewport_eevee(scene=None):
     except Exception:
         pass
     s.render.use_motion_blur = False
+    apply_vault_for_engine("EEVEE")
     return s
 
 
@@ -166,6 +223,7 @@ def apply_preview_eevee(scene=None, samples=32):
     except Exception:
         pass
     s.render.use_motion_blur = False
+    apply_vault_for_engine("EEVEE")
     return s
 
 

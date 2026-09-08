@@ -1,0 +1,87 @@
+00:01.069  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.638  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:02.170  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.742  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:03.338  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:03.820  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:04.624  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:05.105  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:06.076  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:06.832  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r10] calibrate aer 1.6 oz 2 air 1 sky 0.8: lamp 67.31 W/m2 colour [1.0, 0.6073, 0.2577], exposure -4.083 EV, L_zenith [0.35, 0.743, 1.708], L_horizon_west [3.13, 3.739, 4.084], L_sunward [70.507, 48.765, 25.766] (6s)
+00:07.306  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:07.941  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:08.626  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:09.206  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:09.681  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:10.099  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:10.569  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:11.026  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:11.592  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:12.070  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r10] calibrate aer 4 oz 2 air 1 sky 0.8: lamp 51.87 W/m2 colour [1.0, 0.5729, 0.2181], exposure -3.813 EV, L_zenith [0.392, 0.772, 1.737], L_horizon_west [2.181, 2.574, 3.087], L_sunward [102.013, 65.974, 31.674] (5s)
+00:12.071  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r10] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend: exposure -2.3331, look 'AgX - High Contrast', sun az 118.49 el 7.36 (sun_position.sun_calc (NOAA)), energy 67.32, colour (1.0, 0.6073, 0.1933), world 'WORLD_golden_hour'
+[r10] light_build says: sky {'sun_size_deg': 0.533, 'sun_intensity': 1.0, 'altitude': 5.0, 'air_density': 1.0, 'aerosol_density': 1.6, 'ozone_density': 2.0}, strength 0.8, camboost 1.5, glossyboost 3.75, csat 1.2, sunblue 0.75, bias 1.75, look 'AgX - High Contrast'
+[r10] case H_gb525: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+00:53.114  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_gb525.png'
+[r10] -> r10hero_H_gb525.png (40.1s)
+[r10] case H_gsat085: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+01:30.616  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_gsat085.png'
+[r10] -> r10hero_H_gsat085.png (37.3s)
+[r10] case H_gsat070: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+02:20.805  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_gsat070.png'
+[r10] -> r10hero_H_gsat070.png (50.1s)
+[r10] case H_aer4gsat085: exposure -2.563 EV (cal -3.813 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 51.87 W/m2 (1.0, 0.5729, 0.1636)
+03:27.882  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_aer4gsat085.png'
+[r10] -> r10hero_H_aer4gsat085.png (67.0s)
+[r10] case H_dsat20: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+04:32.633  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_dsat20.png'
+[r10] -> r10hero_H_dsat20.png (64.6s)
+[r10] case H_dsat30: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+05:13.976  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_dsat30.png'
+[r10] -> r10hero_H_dsat30.png (41.2s)
+[r10] case H_full: exposure -2.833 EV (cal -4.083 + bias 1.75 + -0.50), look 'AgX - High Contrast', sun 67.31 W/m2 (1.0, 0.6073, 0.1933)
+05:54.850  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r10hero_H_full.png'
+[r10] -> r10hero_H_full.png (40.7s)
+[r10] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+EXIT 0

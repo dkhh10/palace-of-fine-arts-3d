@@ -1,0 +1,15 @@
+00:00.411  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r09] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend
+[r09] base exposure -2.3891 EV, look 'AgX - Base Contrast', sun colour (1.0, 0.6073, 0.2577), A 2.5688 B 0.6027
+[r09] hero s1.00_cb1.20_bm1.00_e+0.00_BaseContrast: sky lighting x1.0, visible sky x1.20, sun blue x1.0, exposure -2.389 +0.000 (recalib) +0.000 = -2.389
+04:15.104  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09hero_s1.00_cb1.20_bm1.00_e+0.00_BaseContrast.png'
+[r09] -> r09hero_s1.00_cb1.20_bm1.00_e+0.00_BaseContrast.png (253.7s)
+[r09] look 'AgX - VeryHighContrast' rejected (bpy_struct: item.attr = val: enum "AgX - VeryHighContrast" not found in ('None', 'AgX - Punchy', 'AgX - Greyscale', 'AgX - Very High Contrast', 'AgX - High Contrast', 'AgX - Medium High Contrast', 'AgX - Base Contrast', 'AgX - Medium Low Contrast', 'AgX - Low Contrast', 'AgX - Very Low Contrast')); available: ['NONE']
+[r09] hero s0.60_cb2.00_bm0.55_e+0.00_BaseContrast: sky lighting x0.6, visible sky x1.20, sun blue x0.55, exposure -2.389 +0.114 (recalib) +0.000 = -2.275
+08:43.243  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09hero_s0.60_cb2.00_bm0.55_e+0.00_BaseContrast.png'
+[r09] -> r09hero_s0.60_cb2.00_bm0.55_e+0.00_BaseContrast.png (268.1s)
+[r09] look 'AgX - VeryHighContrast' rejected (bpy_struct: item.attr = val: enum "AgX - VeryHighContrast" not found in ('None', 'AgX - Punchy', 'AgX - Greyscale', 'AgX - Very High Contrast', 'AgX - High Contrast', 'AgX - Medium High Contrast', 'AgX - Base Contrast', 'AgX - Medium Low Contrast', 'AgX - Low Contrast', 'AgX - Very Low Contrast')); available: ['NONE']
+[r09] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit

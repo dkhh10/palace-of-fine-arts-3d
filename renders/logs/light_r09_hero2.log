@@ -1,0 +1,19 @@
+00:00.321  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[r09] master /Users/dk/Projects/3d render blender 3rd attempt building/master.blend
+[r09] base exposure -2.3891 EV, look 'AgX - Base Contrast', sun colour (1.0, 0.6073, 0.2577), A 2.5688 B 0.6027
+[r09] hero s1.00_cb1.20_bm1.00_e+0.00_HighContrast: sky lighting x1.0, visible sky x1.20, sun blue x1.0, exposure -2.389 +0.000 (recalib) +0.000 = -2.389
+02:42.239  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09hero_s1.00_cb1.20_bm1.00_e+0.00_HighContrast.png'
+[r09] -> r09hero_s1.00_cb1.20_bm1.00_e+0.00_HighContrast.png (161.2s)
+[r09] hero s0.60_cb2.00_bm0.55_e+0.00_HighContrast: sky lighting x0.6, visible sky x1.20, sun blue x0.55, exposure -2.389 +0.114 (recalib) +0.000 = -2.275
+05:22.774  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09hero_s0.60_cb2.00_bm0.55_e+0.00_HighContrast.png'
+[r09] -> r09hero_s0.60_cb2.00_bm0.55_e+0.00_HighContrast.png (160.5s)
+[r09] hero s0.80_cb1.50_bm0.75_e+0.00_HighContrast: sky lighting x0.8, visible sky x1.20, sun blue x0.75, exposure -2.389 +0.056 (recalib) +0.000 = -2.333
+08:01.260  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09hero_s0.80_cb1.50_bm0.75_e+0.00_HighContrast.png'
+[r09] -> r09hero_s0.80_cb1.50_bm0.75_e+0.00_HighContrast.png (158.5s)
+[r09] hero s1.00_cb1.20_bm1.00_e+0.00_VeryHighContrast: sky lighting x1.0, visible sky x1.20, sun blue x1.0, exposure -2.389 +0.000 (recalib) +0.000 = -2.389
+10:39.141  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r09hero_s1.00_cb1.20_bm1.00_e+0.00_VeryHighContrast.png'
+[r09] -> r09hero_s1.00_cb1.20_bm1.00_e+0.00_VeryHighContrast.png (157.9s)
+[r09] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
