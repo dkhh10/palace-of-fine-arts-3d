@@ -43,9 +43,10 @@ bpy.ops.wm.open_mainfile(filepath=str(BLEND), load_ui=False)
 print(f"[qa_render] opened {BLEND.name} in {time.time() - t0:.1f}s; objects {len(bpy.data.objects)}")
 scene = bpy.context.scene
 
-if not any(o.name.startswith("CAM_qa_") for o in bpy.data.objects):
-    qa_cameras.ensure(scene)
-    print("[qa_render] QA cameras were missing; recreated")
+# QA owns the stations: always rebuild the QA_CAMERAS collection from scripts/qa_cameras.py (the saved master may carry
+# an older station, e.g. cam02 before round 04). Nothing is saved back to master.blend.
+qa_cameras.ensure(scene)
+print("[qa_render] QA cameras rebuilt from qa_cameras.CAMERAS")
 
 
 def round_name(fp, suffix=""):

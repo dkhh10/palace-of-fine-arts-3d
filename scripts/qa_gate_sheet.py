@@ -54,13 +54,29 @@ R03 = {
     "Repetition visibility": [3, 2, 2, 2, 2.5, 2],
     "Scale cues":            [3.5, 2.5, 2.5, 2.5, 2.5, 2],
 }
-SCORES = {"01": R01, "02": R02, "03": R03}
+# round 04 (2026-09-08, polish round 2: lighting r09/r10, arch p4r2 + sockets, materials r4/r5, env r4/r5, ornament r4;
+# cam02 re-stationed on land by QA's probe; Eevee at LOD1)
+R04 = {
+    "Silhouette match":      [4, 3.5, 2.5, 3.5, 3.5, 4],
+    "Proportion":            [4, 3.5, 3, 3.5, 3, 3.5],
+    "Ornament fidelity":     [3.5, 3, 2.5, 3, 3, 2.5],
+    "Material realism":      [3, 2.5, 1.5, 1.5, 2.5, 2],
+    "Edge wear":             [1.5, 1, 0.5, 0.5, 1.5, 0.5],
+    "Lighting mood":         [4, 3, 1.5, 2, 3.5, 2.5],
+    "Water reflection":      [3.5, 2, None, None, 2.5, 2],
+    "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2],
+    "Scale cues":            [3, 3, 2.5, 3, 2.5, 2.5],
+}
+SCORES = {"01": R01, "02": R02, "03": R03, "04": R04}
 VERDICT = {
     "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
     "03": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: hero stone still clean CAD at 1:1, chroma 6 deg cool (R-B 92 vs 138), "
           "interior fills 2x, watchdog kills GPU renders.",
+    "04": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
+          "Attic chroma and flutes landed; blockers: Eevee ceiling black (coffer/sky 0.04), cam03 foreground crushed "
+          "(shaft 0.10 of ref), stone still streak-free and uniform (std 55 % of photo), bare shoreline.",
 }
 
 

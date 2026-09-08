@@ -19,9 +19,15 @@ CAMERAS = [
     dict(name="CAM_qa_01_lagoon_hero", loc=(-14.1, 100.0, 1.6), target=(0.0, 0.0, 1.6), lens=20.0, shift_y=0.06,
          ref="canonical/cam_01_lagoon_hero.png",
          note="THE hero. On the lagoon-face normal (az 82 deg), east shore ~115 m, eye level; real-photo twin ref 169 (golden hour)."),
-    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-45.0, 52.0, 1.3), target=(0.0, 0.0, 22.0), lens=20.0,
+    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(70.5, 25.6, 1.1), target=(0.0, 0.0, 21.1), lens=24.0,
          ref="canonical/cam_02_ne_shore_threequarter.jpg",
-         note="Ref 062: north-east shore, 50 m, 3/4 view; south colonnade visible behind the rotunda on the left."),
+         note="Ref 062 twin, re-stationed by QA round 04 (scripts/qa_cam02_probe.py sweep, 30-90 m, 16-24 mm): SSE shore path "
+              "ON LAND at az 160 / 75 m, eye 1.5 m, 12 deg off the SE face normal (photo 13 deg), 24 mm (photo ~26 mm). "
+              "Letterboxed ref 062 targets: visible top 0.02 / apex 0.07 (dome peeks over the attic as in the photo) / podium "
+              "base 0.86 (ref 0.85) / attic width 0.41 (ref 0.55); tree occlusion 7 %. Deviations: 75 m (brief said 30-70) "
+              "and a strip of south-embayment water at the bottom - from every on-land station within 47 m (NE peninsula) "
+              "the build's podium base falls >= 17 % below the frame at 16 mm because the near attic hides the dome inside "
+              "~77 m and the apex-to-base span needs a 13 mm lens."),
     dict(name="CAM_qa_03_colonnade_walk", loc=(81.0, 12.04, 1.7), target=(0.0, 0.0, 9.2), lens=18.0,
          ref="canonical/cam_03_colonnade_walk.jpg",
          note="Ref 128: inside the south colonnade looking north-west at the rotunda between two fluted columns."),
