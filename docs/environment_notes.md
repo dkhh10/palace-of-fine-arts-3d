@@ -904,3 +904,34 @@ lagoon-bed samples out of the "architecture" bucket, which is the point of it).
    now legible. `SHORE_H_MIN` 0.55 m still floors the sight-line cap itself.
 5. `env_sheet_r6.panel` draws a "missing" placeholder instead of raising when a round-04 QA render is absent
    (they live in the main checkout only).
+
+## Polish round 7 (QA round 05 defects) — 2026-09-08
+
+Composite: **`renders/qa_comparisons/env_r7_sheet.png`** (`scripts/env_sheet_r7.py`, pure Pillow), five rows
+before | after | reference. Two new tools, because three of the four defects are luminance claims and luminance
+is not something an ENV preview can settle:
+
+* **`scripts/env_r7_probe.py`** — for any QA box, ray-cast every Nth pixel from the QA camera, classify the first
+  hit (foliage / building / ground / sky) **and then cast a second ray from that hit point towards the sun**.
+  That answers both halves of every one of these defects at once: what fills the box, and how much of it the sun
+  actually reaches, with the names of the objects doing the blocking. Runs on `assets/environment.blend` +
+  `assets/architecture.blend`; no master, no render. `--nofoliage` hides every ENV crown and shrub and re-measures
+  the same box, which is ENV's *ceiling* on that box.
+* **`scripts/env_r7_measure.py`** — the image side, pure Pillow/numpy, with the box definitions fixed in the
+  module docstring so BEFORE and AFTER are measured identically. It reproduces QA's own numbers on QA's own
+  round-05 renders (band 86.0, shore 71.7), which is the check that the measurement is the same measurement.
+
+### Site check — the OSM NE shoreline is NOT short
+
+`docs/decisions.md` flagged that architecture's ref-062 fit put the camera station at world **(-73, 55)**, which
+the OSM lagoon polygon calls water while the photograph's foreground is dry garden, "i.e. the NE shoreline in
+site_local.json is probably short; verify against the satellite tiles".
+
+Verified and **rejected**. `satellite_z18.png` (ESRI World Imagery, 0.472 m/px, rotunda dome at px 718.6, 633.8)
+is the only tile that reaches that far — `satellite_z20` at 0.118 m/px covers only ±60 m and stops 55 m short of
+the station. Overlaying `lagoon0` on z18 (`renders/qa_comparisons/env_r7_shoreline.png`, and the row on the r7
+sheet) the polygon follows the visible water edge along the whole NE arm, and the fitted station sits in **open
+water on the tile too** — 62/78/67 RGB, the same tone as the middle of the lagoon, with the nearest land ~25 m
+north-west of it. So the polygon is right and the ref-062 station is not reproducible on this site, which is the
+conclusion architecture had already reached from the lens (the photo is simply farther away). **No change: the
+lagoon polygon keeps its OSM extent, world X -135..107, Y -20..118.**
