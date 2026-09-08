@@ -104,7 +104,7 @@ def main(numbers):
     heights = []
     for title, panels in rows:
         heights.append(LABEL_H + 4 + LABEL_H + max(im.height for _, im in panels) + PAD)
-    nh = LABEL_H + 4 + 15 * len(numbers) + PAD
+    nh = LABEL_H + 4 + 15 * len(numbers) + 3 * PAD
     sheet = Image.new("RGB", (width, PAD + sum(heights) + nh), BG)
     d = ImageDraw.Draw(sheet)
     y = PAD

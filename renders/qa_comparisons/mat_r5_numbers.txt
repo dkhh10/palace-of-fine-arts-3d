@@ -11,3 +11,7 @@ cam04 coffered saucer (1280x720 Eevee LOD1): mean of the darkest quarter (ribs) 
   before   dark quarter   72.2  light quarter  127.1  ratio 0.568   sd  23.6  median  109.6
   after    dark quarter   72.1  light quarter  127.1  ratio 0.568   sd  23.6  median  109.6
   ref 083  dark quarter   68.3  light quarter  155.6  ratio 0.439   sd  34.9  median  118.7
+canopy pixel decomposition (cam06, from the 45 % albedo cut): 128.0 -> 121.7 means the surface term is only
+  15.6 of 128 display levels -- 88 % of a 250-450 m canopy pixel is the atmospheric veil. LIGHTING, not albedo.
+ceiling: the cam04 before/after differ by up to 109 levels in the four CORNER cells -- that is the LOD1 ornament
+  picking up its per-asset ORN_AO / ORN_NORMAL bakes, i.e. build_master's routing now fires (27 materials, 307 instances).
