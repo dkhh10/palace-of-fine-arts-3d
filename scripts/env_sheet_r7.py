@@ -110,8 +110,11 @@ def main():
             f"sun reach {n('a_band_sun')}"], mark=(60, 480, 560, 600)),
         panel(REF169, ref_box(*box), "REFERENCE  ref 169 (round-02 align transform)", [
             "aligned band lum 113.3  med 102.2  std 66.6  dark<60 26.2 %",
-            "QA's own aligned panel reads 136.5 (0.63) and the raw box 109.5 (0.79)",
-            "the deficit is rows 540-600 (ratio 0.48-0.60), not the entablature (1.02)"]),
+            "south face bears 47.2 deg, so at az 118.5 the sun rakes it at cos 0.32",
+            "(north wing 0.99) - and 118.5 IS this photo's own sun (solar position",
+            "for 2020-02-01 at el 7 = 118.3 deg).  Fit lum = A + k cos on both bands:",
+            "this build A 57.7 k 89.1   ref 169 A 97.9 k 48.4 -> it is the sky fill.",
+            "A 58 -> 98 with k 89 -> 48 lands both bands on the photo.  LIGHTING."]),
     ]))
 
     # ---- 2. QA-05-10 shore band
@@ -126,8 +129,12 @@ def main():
             f"ray-cast  {n('a_shore_cast')}",
             f"sun reach {n('a_shore_sun')}"], mark=(700, 600, 1200, 740)),
         panel(REF169, ref_box(*box2), "REFERENCE  ref 169", [
-            "sunlit soft-green mounds down to the rip-rap; QA reads lum 114",
-            "acceptance: band lum within 25 % of 114 with hue 40-60",
+            "aligned crop lum 115.6  sat 0.663  hue 40.7 (build 71.7 / 0.769 / 42.9)",
+            "deciles ratio ref/build 1.89 1.86 1.84 1.81 1.77 1.75 1.68 1.59 1.46:",
+            "a uniform level deficit, NOT an occlusion - nothing in the band is black.",
+            "hue already in QA's 40-60 window, saturation 16 % high.  MATERIALS +",
+            "LIGHTING (same ambient/direct split as QA-05-5).  Note: closing the belt",
+            "further over the pale bank would make this number WORSE, not better.",
             f"{n('shore_note', '')}"]),
     ]))
 
