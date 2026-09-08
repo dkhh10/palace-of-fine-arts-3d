@@ -196,3 +196,7 @@ In flight: ENV follow-up, LIGHT r11, MAT r6. Next: merge, lead_build.sh, QA roun
 
 ## 2026-09-08 · ENV r6 follow-up merged (3c3ad97): stations now read from qa_cameras.py, bed compacted, numbers unchanged (LOD1 4.66 M)
 In flight: LIGHT r11 (branch shows Eevee vault x6/21 m: coffer gap 0.227 -> 0.062; Cycles coffer 0.261 -> 0.387), MAT r6 (macro grunge maps, waterline, MAT_lagoon_bed, water teal, ribs). Next: review + merge both, lead_build.sh, QA round 5.
+
+## 2026-09-08 · MAT r6 reported (e7adc25), in review
+MAT r6: cause of "clean CAD" was texture scale (the only photo input was a 2.5 m tile sampled 40x below its texel size); three macro grunge maps (0.3-3 m, CC0 ambientCG, mat_make_grunge.py) drive albedo value + roughness at 3-5.5 m tiles; overhang AO probe for cornice run-off; damp/algae waterline zone; patches; MAT_plaster_ceiling_rib (ref 083) + in-coffer gradient; MAT_lagoon_bed; shore foliage x1.4; columns hue 26.8 (pass), lum 119. Attic std 0.476 -> 0.598 of ref (bar 0.60), entablature 0.51 unchanged (hand-off ARCH: cornice projection / dentil depth), near-water hue 204 (hand-off lighting: horizon sky). Sheet renders/qa_comparisons/mat_r6_sheet.png.
+In flight: MAT review, LIGHT r11. Next: merge both, lead_build.sh, QA round 5. Carried to ARCH r4: entablature cornice/dentil depth (QA-04-3 second half).
