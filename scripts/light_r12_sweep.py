@@ -81,6 +81,9 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 db=getattr(lb, "SKY_DIFFUSE_BOOST", 1.0),
                 csat=lb.SKY_CAMERA_SATURATION, gsat=lb.SKY_GLOSSY_SATURATION, dsat=lb.SKY_DIFFUSE_SATURATION,
                 dhue=getattr(lb, "SKY_DIFFUSE_HUE", 0.5),
+                tr=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[0],   # diffuse tint, one key per channel so the
+                tg=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[1],   # existing "k=v;" case syntax still parses
+                tb=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[2],
                 bm=lb.SUN_BLUE_MULT, de=0.0,
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
@@ -110,7 +113,7 @@ def case_tag(c):
     if c["tag"]:
         return c["tag"]
     bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "bm", "de",
-                                     "fill", "fel", "f", "v")
+                                     "tr", "tg", "tb", "fill", "fel", "f", "v")
             if abs(c[k] - DEFAULTS[k]) > 1e-9]
     if c["look"]:
         bits.append(c["look"].replace(" ", "").replace("_", ""))
@@ -155,7 +158,8 @@ def apply_case(c):
     w = cal.make_sky_world(f"R11_{case_tag(c)}", AZ, EL, lb.SKY, sun_disc=False, strength=c["sky"] * c["wm"],
                            camera_boost=c["cb"], camera_saturation=c["csat"],
                            glossy_boost=c["gb"], glossy_saturation=c["gsat"],
-                           diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"], diffuse_boost=c["db"])
+                           diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"],
+                           diffuse_tint=(c["tr"], c["tg"], c["tb"]), diffuse_boost=c["db"])
     ms = w.mist_settings
     ms.use_mist = True
     ms.start, ms.depth, ms.falloff = lb.MIST["start"], lb.MIST["depth"], lb.MIST["falloff"]
@@ -180,7 +184,8 @@ def apply_case(c):
         _DISK.data.energy = _E_DISK0 * c["f"]
     for o in _VAULT:
         o["energy_W"] = _E_VAULT0 * c["v"]
-    print(f"[r12] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} dhue {c['dhue']:g} cb {c['cb']:g} gb {c['gb']:g} "
+    print(f"[r12] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} dhue {c['dhue']:g} "
+          f"tint {c['tr']:g},{c['tg']:g},{c['tb']:g} cb {c['cb']:g} gb {c['gb']:g} "
           f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} f {c['f']:g} ({_E_DISK0*c['f']:.0f} W) "
           f"v {c['v']:g} ({_E_VAULT0*c['v']:.0f} W) "
           f"exposure {scene.view_settings.exposure:.3f} EV, sun {sun.data.energy:.2f} W/m2", flush=True)

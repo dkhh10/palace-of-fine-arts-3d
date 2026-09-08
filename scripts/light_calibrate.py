@@ -149,7 +149,7 @@ def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
-                   diffuse_boost=1.0, diffuse_hue=0.5):
+                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -228,6 +228,31 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
             sky_color = _sat_stage(nt, "sky_saturation", sky_color, cam_ray, camera_saturation)
         if glossy_saturation != 1.0:
             sky_color = _sat_stage(nt, "sky_saturation_glossy", sky_color, gl_ray, glossy_saturation)
+    # Round 12 (QA-05-1): a DIFFUSE-only colour tint, i.e. a white balance on the light that lands on shaded stone.
+    # It is the lever the shade actually needs and a hue rotation is not: the render's shaded attic is (122, 94, 22)
+    # against ref 169's (141, 111, 81), i.e. it is short 59 units of BLUE and only ~18 of R and G, and a hue rotation
+    # big enough to blue the warm horizon band (+0.47 of a turn) would rotate the zenith's blue round to red. A
+    # multiply by a blue-biased tint makes every sky direction bluer, horizon included, and leaves the ordering of
+    # the sky's own gradient intact. Camera and glossy rays never see it (Fac = not_cam_or_glossy), so the visible
+    # sky and the lagoon's reflection are held exactly still.
+    if diffuse_tint is not None and tuple(diffuse_tint) != (1.0, 1.0, 1.0):
+        if vis_out is None:
+            lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
+            vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
+            nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0])
+            nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
+            clampn = nt.nodes.new("ShaderNodeMath"); clampn.operation = "MINIMUM"; clampn.inputs[1].default_value = 1.0
+            nt.links.new(vis.outputs[0], clampn.inputs[0])
+            vis_out = clampn.outputs[0]
+        inv2 = nt.nodes.new("ShaderNodeMath"); inv2.operation = "SUBTRACT"; inv2.name = "not_cam_or_glossy_tint"
+        inv2.inputs[0].default_value = 1.0
+        nt.links.new(vis_out, inv2.inputs[1])
+        mixn = nt.nodes.new("ShaderNodeMix"); mixn.name = "sky_tint_diffuse"
+        mixn.data_type = "RGBA"; mixn.blend_type = "MULTIPLY"; mixn.clamp_factor = True
+        nt.links.new(inv2.outputs[0], mixn.inputs[0])          # inputs[0] = the Float Factor (two are named "Factor")
+        nt.links.new(sky_color, mixn.inputs[6])                       # A
+        mixn.inputs[7].default_value = (diffuse_tint[0], diffuse_tint[1], diffuse_tint[2], 1.0)   # B
+        sky_color = mixn.outputs[2]
     nt.links.new(sky_color, bg.inputs["Color"])
     bg.inputs["Strength"].default_value = strength
     if gain_out is not None:
