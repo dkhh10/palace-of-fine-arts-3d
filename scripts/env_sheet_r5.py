@@ -79,7 +79,7 @@ def row(panels, gap=10):
 
 def main():
     before = PREV / "r5_master_hero.png"          # merged master, ENV round 4
-    after = PREV / "r5_env5b_hero.png"            # same build, ENV round 5
+    after = PREV / "r5k_hero.png"                 # same build, ENV round 5 (final)
     ref = MAIN / "reference" / "photos" / "raw" / "ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
     ref_al = PREV / "ref169_aligned_cam01.png"
 
@@ -96,10 +96,10 @@ def main():
     rows = [row([
         panel(crop(before, BAND, 40), "QA-03-10 wing band - before (ENV r4 master)",
               [f"band lum {b_lum:5.1f}   dark<60 {b_dark:4.1f} %", verdict(b_lum),
-               "foliage 40.4 % of box (ray-cast), sky 7.0 %"]),
+               "foliage 39.5 % of box (ray-cast), sky 7.0 %"]),
         panel(crop(after, BAND, 40), "after (ENV r5, same light/materials)",
               [f"band lum {a_lum:5.1f}   dark<60 {a_dark:4.1f} %", verdict(a_lum),
-               "foliage 31.4 % of box, sky 11.2 %"]),
+               "foliage 30.5 % of box, sky 11.6 %"]),
         panel(crop(ref, BAND_REF, 32), "ref 169 (raw file, QA's mapped box)",
               [f"band lum {r_lum:5.1f}   dark<60 {r_dark:4.1f} %",
                f"aligned panel: lum {al_lum:5.1f}  dark {al_dark:4.1f} %",
@@ -111,9 +111,9 @@ def main():
         rows.append(row([
             panel(crop(b5, SIL), "QA-03-13 cam 05 silhouette - before (ENV r4)",
                   ["foliage 6.5 % of the silhouette box", "architecture 60.5 %"]),
-            panel(crop(a5, SIL), "after (ENV r5)",
-                  ["foliage 4.0 % of the silhouette box", "architecture 63.1 %",
-                   "PASS no crown inside the rotunda body"]),
+            panel(crop(a5, SIL), "after (ENV r5, hand-placed pinned)",
+                  ["foliage 6.6 % of the silhouette box", "architecture 60.4 %",
+                   "unchanged: the peninsula bed stays put"]),
             panel(crop(after, (60, 300, 1860, 1010)), "ENV r5 hero (context for both bands)",
                   ["cam 01, Cycles 64 spp, 1920x1080", "master rebuilt from the merged assets"]),
         ]))

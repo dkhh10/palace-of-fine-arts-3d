@@ -434,8 +434,15 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
         # was still about a third too dense THROUGH the bays: sky-ish pixels 13.6 % vs the photo's 16.5 %.  So the
         # two front rows keep their heights and their clumping but run shorter and gap wider.
         for row, (off, spacing, hmin, hmax, run, gap, tag) in enumerate((
-                (6.0, 5.0, 18.5, 23.0, (11.0, 20.0), (11.0, 19.0), "E1"),
+                # E1 crowns 17-21 m rather than 18.5-23: ref 169 has the screen topping out only a few metres over
+                # the entablature, and height is the one knob here that does NOT reshuffle the clumping RNG (same
+                # number of draws), so it thins the band's first-hit foliage without moving a single crown.
+                # Widening the gaps further was tried and rejected - it re-rolls the run/gap sequence and is not
+                # monotone: gap 13-21 / 12-18 put a clump straight into the hero band (foliage 30.9 -> 37.3 %).
+                (6.0, 5.0, 17.0, 21.0, (11.0, 20.0), (11.0, 19.0), "E1"),
                 (12.5, 6.0, 20.0, 25.0, (14.0, 26.0), (10.0, 16.0), "E2"),
+                # E3 keeps round 4's density: measured, thinning the back row changes the band by nothing at all
+                # (its crowns are behind E1/E2, so they are never the first hit) and only costs trees.
                 (20.0, 7.0, 21.0, 27.0, (22.0, 38.0), (7.0, 13.0), "E3"))):
             carry = rnd.uniform(0, spacing)
             # clumping state: metres of run left before the next gap, and metres of gap left
@@ -621,11 +628,15 @@ FRAME_BANDS = [
     # bed and the user-image cypress spires, and buys 2 lum).  But QA-03-10 *measures* 60-560 px = x 0.031-0.292,
     # so `x1_exit` makes a tree that has to move leave the measured box instead of being parked just inside it:
     # in round 4 cypress_column_04 was pushed 4 m from x 0.20 to x 0.21 and still darkened the band.
+    # `pin` are PLAN group letters whose trees stand where the reference puts them and are never relocated by this
+    # band: P is the peninsula bed and C the user-image group (the two cypress spires at user-image x~330/410).
+    # Lead decision after the round-5 review: the band is cleared by thinning the PROCEDURAL screen
+    # (`redwood_screen`), never by sweeping a hand-placed tree 36-48 m across the site.
     dict(cam="_qa_01_", x0=0.031, x1=0.205, x1_exit=0.292, y0=0.40, y1=0.60, behind="colonnade",
-         label="QA-03-10 hero south-wing band"),
+         pin=("P", "C"), label="QA-03-10 hero south-wing band"),
     # cam 05's guard stops at y 0.66: the rotunda's body ends there, and the 7-9 m willows and broadleaves of the
     # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
-    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0,
+    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=("P", "C"),
          label="QA-03-13 cam05 rotunda silhouette"),
 ]
 CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
@@ -696,7 +707,7 @@ def frame_band_relief(plan, land_ok=None, occluders=(), verbose=True):
         print(f"[env_trees] frame_band_relief skipped: {e}")
         return plan
     trees = [list(t) for t in plan]
-    moved = shortened = dropped = 0
+    moved = shortened = dropped = kept = 0
     report = []
     for band in FRAME_BANDS:
         name = next((n for n in specs if band["cam"] in n), None)
@@ -718,12 +729,17 @@ def frame_band_relief(plan, land_ok=None, occluders=(), verbose=True):
                 continue                                       # behind the wing: this is the screen, keep it
             if "near" in band and dist > band["near"]:
                 continue                                       # behind the subject
+            # A PINNED tree (a PLAN group listed in band["pin"]) stands where the reference puts it and is never
+            # relocated or dropped: the relief may only lower its crown, and if even that will not clear the band
+            # it stays and is reported.  Lead decision after the round-5 review - the bands are cleared by thinning
+            # the procedural screen, not by sweeping a hand-placed tree 36-48 m across the site.
+            pinned = bool(band.get("pin")) and str(t[4]).split(" ")[0] in band["pin"]
             # push along the camera's right axis, whichever way is shorter, in 2 m steps.  The escape edges are
             # x0_exit/x1_exit (the box QA measures), which can be wider than the offence band.
             ex0 = band.get("x0_exit", band["x0"])
             ex1 = band.get("x1_exit", band["x1"])
             best = None
-            for sgn in (-1.0, 1.0):
+            for sgn in () if pinned else (-1.0, 1.0):
                 for step in range(1, 26):
                     nx, ny = x + sgn * 2.0 * step * r.x, y + sgn * 2.0 * step * r.y
                     if land_ok is not None and not land_ok(nx, ny):
@@ -741,24 +757,31 @@ def frame_band_relief(plan, land_ok=None, occluders=(), verbose=True):
                 report.append(f"    moved {sp:14s} ({x:6.1f},{y:6.1f}) -> ({best[1]:6.1f},{best[2]:6.1f}) "
                               f"{best[0] * 2:3.0f} m   {str(t[4])[:34]}")
                 continue
-            # nowhere to go: shorten until the crown drops below the band, or drop it
+            # nowhere to go: shorten until the crown drops below the band, or drop it.  A pinned tree may lose at
+            # most 25 % of its height (the same allowance shadow_relief gives a hand-placed PLAN tree, which
+            # carries a named reference feature) - a 13 m user-image cypress spire cut to 7 m is no longer a spire.
+            floor = max(6.0, 0.75 * h) if pinned else 6.0
             new_h = h
-            while new_h > 6.0:
+            while new_h > floor:
                 new_h -= 1.5
                 nb = _frame_box(spec, f, r, u, x, y, new_h, sp)
                 if nb is None or nb[2] > band["y1"]:
                     break
-            if new_h > 6.0 and new_h < h:
+            if new_h > floor and new_h < h:
                 t[3] = new_h
                 shortened += 1
                 report.append(f"    shortened {sp:11s} ({x:6.1f},{y:6.1f}) {h:.0f} -> {new_h:.0f} m   {str(t[4])[:34]}")
+            elif pinned:
+                kept += 1
+                report.append(f"    kept {sp:16s} ({x:6.1f},{y:6.1f}) h{h:.0f}   hand-placed   {str(t[4])[:34]}")
             else:
                 t[3] = 0.0
                 dropped += 1
                 report.append(f"    dropped {sp:13s} ({x:6.1f},{y:6.1f}) h{h:.0f}   {str(t[4])[:34]}")
     out = [tuple(t) for t in trees if t[3] > 0.1]
     if verbose:
-        print(f"[env_trees] frame-band relief: moved {moved}, shortened {shortened}, dropped {dropped} "
+        print(f"[env_trees] frame-band relief: moved {moved}, shortened {shortened}, dropped {dropped}, "
+              f"kept (hand-placed) {kept} "
               f"({len(plan)} -> {len(out)} trees)")
         for line in report:
             print(line)

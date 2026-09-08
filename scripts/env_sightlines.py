@@ -186,8 +186,8 @@ def coverage(move_back=(), step=2, shift_aspect=True):
         if "--who" in common.script_args():          # which instances actually fill the box
             for nm, c in sorted(hist.items(), key=lambda kv: -kv[1])[:12]:
                 o = bpy.data.objects.get(nm)
-                loc = f"({o.location.x:6.1f},{o.location.y:6.1f})" if o else ""
-                print(f"      {100 * c / tot:5.2f}% of box  {nm:42s} {loc}")
+                where = f"({o.location.x:6.1f},{o.location.y:6.1f})" if o else ""
+                print(f"      {100 * c / tot:5.2f}% of box  {nm:42s} {where}")
     return out
 
 
@@ -296,13 +296,13 @@ def main():
         box_map(args[args.index("--boxmap") + 1] if len(args) > args.index("--boxmap") + 1 else "cam01_left_wing")
         return
     if "--coverage" in args:
-        mb = []
-        if "--before" in args:
-            # the three trees frame_band_relief moved this round (see the build log)
-            mb = [((88.7, 18.8), (59.0, 14.6)), ((31.6, 25.8), (29.7, 26.2)), ((33.0, 25.9), (31.1, 26.4))]
+        # `--before` and its hard-coded move-back table are gone: the round-4 pairs it listed no longer exist in
+        # the plan, so it silently put 0 objects back.  Before/after is now produced from two real renders of two
+        # built masters (scripts/env_r5_hero.py + scripts/env_sheet_r5.py).  coverage(move_back=...) still takes
+        # a table if a caller wants one.
         if "--both" in args:                 # round-4 boxes then the corrected ones, same scene
-            coverage(move_back=mb, shift_aspect=False)
-        coverage(move_back=mb)
+            coverage(shift_aspect=False)
+        coverage()
         return
     plan = env_trees.PLAN if "--plan" in args else placed_trees()
     if "--shadow" in args:

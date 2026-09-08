@@ -1,0 +1,12 @@
+00:00.347  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend"
+
+[coverage] shift_y aspect factor ON (correct)
+box                 foliage  building   ground    sky
+cam01_left_wing       29.5%     59.3%     0.0%  11.2%
+cam01_right_wing      74.8%     24.1%     0.0%   1.2%
+cam05_rotunda          6.5%     60.5%    16.0%  17.0%
+cam01_shore            8.7%     68.7%    22.6%   0.0%
+cam05_podium          13.3%     51.7%    35.0%   0.0%
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
