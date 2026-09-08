@@ -128,3 +128,11 @@ Format: date · decision · why · consequences. Newest at the bottom.
 - **Materials direction after three "clean CAD" rounds**: stop tuning procedural noise; bring in photo-based grunge/streak/
   waterline maps at 0.3-3 m feature scale (materials r6). If the hero does not move in round 5, consider texture projection
   from the reference photos.
+- **2026-09-08 · QA-04-12 saved Eevee viewport state** (lighting r11): raytracing ON in `apply_viewport_eevee`, `light_threshold`
+  0.05 -> 0.01 (0.05 culled the eight vault emitters: viewport coffer 0.218 -> 0.320), shadow_pool_size 512 viewport / 1024
+  preview (previews were logging "Shadow buffer full"), taa 8/16 kept. The Eevee vault blocker (QA-04-1) was the probe bake
+  running on the Eevee cutoff rig; `light_probes.bake` now bakes the physical rig and restores the override, so
+  `scripts/lead_build.sh` (build then bake) is the only valid master build.
+- **QA-04-2 shaded-stone hue is albedo, not lighting**: three independent lighting levers (diffuse sky boost, cool shade fill at
+  two elevations) all warm the shaded attic further or break the sunlit/near-water numbers; assigned to materials. cam03's
+  reference (ref 128) is a midday photo, so its 0.5-of-ref shade target is not a golden-hour number: QA to re-base that test.
