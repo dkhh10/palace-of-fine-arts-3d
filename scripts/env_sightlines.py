@@ -114,6 +114,18 @@ COVERAGE_BOXES = {
     "cam05_rotunda": ("_qa_05_", (301, 27, 998, 713), (1280, 720)),          # QA-03-13, the rotunda silhouette
     "cam01_shore": ("_qa_01_", (700, 640, 1200, 720), (1920, 1080)),         # QA-03-14 shrub row
     "cam05_podium": ("_qa_05_", (320, 566, 1000, 624), (1280, 720)),        # QA-03-13 podium / Greek-key band
+    # Round 6.  QA-03-13's "podium / Greek-key band" box is not on the band: projected, the podium wall's top
+    # course (world z 3.8-4.3 at r 27.3-37.6) lands on rows 528-552 of cam 05's 720, while 566-624 is the lawn and
+    # shore strip in front of it.  The three boxes below measure what the two round-6 defects actually ask for:
+    #   cam05_keyband  - the Greek-key course itself must stay visible (QA-03-13, carried into QA-04-4)
+    #   cam05_body     - the rotunda ABOVE the shore, i.e. "no crown inside the silhouette"
+    #   cam01_podium_base - the podium's base courses (world z 0-1.5 at r 27.3) which ref 169 hides in foliage
+    "cam05_keyband": ("_qa_05_", (330, 526, 990, 554), (1280, 720)),
+    "cam05_body": ("_qa_05_", (301, 27, 998, 520), (1280, 720)),
+    "cam01_podium_base": ("_qa_01_", (620, 648, 1300, 684), (1920, 1080)),
+    # QA-04-14: the bottom 12 % of cam 02's frame (rows 634-720 of 720) - world x 40-64, y -1..31, the south
+    # embayment 9-26 m in front of the lens.  Round 4 resolved to water and nothing else.
+    "cam02_foreground": ("_qa_02_", (0, 634, 1280, 720), (1280, 720)),
 }
 
 
@@ -143,7 +155,7 @@ def coverage(move_back=(), step=2, shift_aspect=True):
     qa_cameras.ensure(scene)
     dg = bpy.context.evaluated_depsgraph_get()
     print(f"\n[coverage] shift_y aspect factor {'ON (correct)' if shift_aspect else 'OFF (round-4 boxes)'}")
-    print(f"{'box':18s} {'foliage':>8s} {'building':>9s} {'ground':>8s} {'sky':>6s}")
+    print(f"{'box':18s} {'foliage':>8s} {'building':>9s} {'ground':>8s} {'sky':>6s} {'arch cols':>10s}")
     out = {}
     for name, (cam_key, box, res) in COVERAGE_BOXES.items():
         spec = next(c for c in qa_cameras.CAMERAS if cam_key in c["name"])
@@ -157,8 +169,14 @@ def coverage(move_back=(), step=2, shift_aspect=True):
         x0, y0, x1, y1 = box
         tot = fol = bld = gnd = 0
         hist = {}
-        for py in range(y0, y1, step):
-            for px in range(x0, x1, step):
+        # QA-03-13 / QA-04-4 phrase the podium test as "visible over >= 60 % of its LENGTH", so the area
+        # fractions are not the acceptance number: a column of the box counts as visible when any sample in it
+        # resolves to architecture.
+        cols_any, cols_arch = 0, 0
+        for px in range(x0, x1, step):
+            cols_any += 1
+            col_arch = False
+            for py in range(y0, y1, step):
                 sx = ((px + 0.5) / W - 0.5) * 2
                 sy = (0.5 - (py + 0.5) / H) * 2 \
                     + 2.0 * spec.get("shift_y", 0.0) * ((hw / hh) if shift_aspect else 1.0)
@@ -176,13 +194,19 @@ def coverage(move_back=(), step=2, shift_aspect=True):
                 if "leaf" in mat or "shrub" in mat or "reed" in mat or "forest" in mat or "canopy" in nm:
                     fol += 1
                     hist[nm] = hist.get(nm, 0) + 1
-                elif "terrain" in nm or "ground" in nm or "water" in nm or "lawn" in mat or "gravel" in mat:
+                elif ("terrain" in nm or "ground" in nm or "water" in nm or "bed" in nm
+                      or "lawn" in mat or "gravel" in mat or "bed" in mat):
+                    # "bed": ENV_lagoon_bed / MAT_lagoon_bed (round 6 split the lagoon floor out of the terrain
+                    # mesh).  Without this it counted as architecture and inflated every water-facing box.
                     gnd += 1
                 else:
                     bld += 1
-        out[name] = (fol / tot, bld / tot, gnd / tot, 1 - (fol + bld + gnd) / tot)
+                    col_arch = True
+            cols_arch += 1 if col_arch else 0
+        out[name] = (fol / tot, bld / tot, gnd / tot, 1 - (fol + bld + gnd) / tot,
+                     cols_arch / max(1, cols_any))
         print(f"{name:18s} {100 * out[name][0]:7.1f}% {100 * out[name][1]:8.1f}% "
-              f"{100 * out[name][2]:7.1f}% {100 * out[name][3]:5.1f}%")
+              f"{100 * out[name][2]:7.1f}% {100 * out[name][3]:5.1f}% {100 * out[name][4]:9.1f}%")
         if "--who" in common.script_args():          # which instances actually fill the box
             for nm, c in sorted(hist.items(), key=lambda kv: -kv[1])[:12]:
                 o = bpy.data.objects.get(nm)
@@ -283,8 +307,12 @@ def shrub_stats(region=(-30.0, 20.0, 30.0, 60.0)):
           f"   (QA-03-14 wants >= 2:1)")
     print(f"  nearest-neighbour spacing mean {mean:.2f} m, sd {sd:.2f} m -> sd/mean {100 * sd / mean:.0f} %"
           f"   (QA-03-14 wants >= 40 %)")
-    print(f"  tallest within the rostra radius: {max(h for (x, y, h) in pts if math.hypot(x, y) < 54.0):.2f} m"
-          f"   (QA-03-13 wants <= 1.2 m)")
+    mid = hs[n // 2]
+    win = sum(1 for h in hs if 1.5 <= h <= 4.0) / n
+    print(f"  median {mid:.2f} m; {100 * win:.0f} % of the belt inside QA-04-4's 1.5-4 m window")
+    print(f"  tallest within the old rostra radius: {max(h for (x, y, h) in pts if math.hypot(x, y) < 54.0):.2f} m"
+          f"   (round 03's flat <= 1.2 m rule is superseded by env_build.band_sightline_cap; the acceptance is"
+          f" now the Greek-key band's own visibility, measured as cam05_keyband in --coverage)")
 
 
 def main():

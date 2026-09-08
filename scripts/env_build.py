@@ -48,6 +48,67 @@ APRON_R = 31.0          # inside this radius the ARCH platform covers the ground
 TERRAIN_HALF = 360.0    # terrain covers +-360 m (720 x 720)
 
 
+# ------------------------------------------------------- QA-04-4 / QA-03-13: the shore cap is a SIGHT LINE
+# QA-03-13 asked for the podium's Greek-key course to stay legible from cam 05; round 03 answered with a radius
+# rule - every shrub inside r 54 m clamped to <= 1.2 m - and QA-04-4 then measured the result as "a bare pale
+# quay with 0.5-1 m dot shrubs at ~40 px spacing and an exposed podium base", against ref 169's 2-4 m mounds.
+# The two requirements only conflict while the cap is a radius.  What the references actually show (169 from the
+# east, 063 from the south-east) is a continuous mass of mounded shrubs 2-3.5 m high whose tops stop just under
+# the band: the podium wall is 4.3 m and the meander course is its top 0.5 m, so a 3.2 m mound on the shore
+# buries the base and leaves the band clear.  The cap below is exactly that - the height of the ray from each
+# camera's eye to the bottom of the band where it passes over the shrub.
+PODIUM_BAND_Z0 = 3.8         # bottom of the Greek-key / rosette course (sheet: podium wall 0 -> 4.3, band h 0.5)
+PODIUM_BAND_R = 27.3         # arch_params.PODIUM_LOBE_R - the innermost (hardest to keep clear) band stone
+BAND_MARGIN = 0.30           # crown tops stop this far under the sight line
+# `band_sightline_cap` returns None where no camera's ray to the band passes over the point - there is nothing to
+# keep clear there, and it is not the sight line's business to say how tall a shrub may be.  The blanket ceiling
+# that applies to EVERY shrub in the build, sight line or not, is SHRUB_H_CEILING, applied in `put`.
+SHRUB_H_CEILING = 4.00       # QA-04-4's acceptance window tops out at 4 m; nothing scattered is ever taller
+SHORE_H_MIN = 0.55           # ... and the cap never shrinks a shrub below this, however low the sight line runs
+# Eye points that must keep the band: cam 01 (hero), cam 05 (QA-03-13's own camera), cam 02 (the SSE station the
+# lead re-stationed in QA round 04).  Read from scripts/qa_cameras.py by name, never copied: a snapshot would keep
+# capping the shore against a station the QA renders no longer use.  A camera that is not in the set drops out.
+CAM01 = L.qa_camera("_qa_01_", (-14.1, 100.0, 1.6), 20.0)
+CAM02 = L.qa_camera("_qa_02_", (70.5, 25.6, 1.1), 24.0)
+CAM05 = L.qa_camera("_qa_05_", (28.1, 111.8, 1.5), 35.0)
+BAND_EYES = tuple(c[0] for c in (CAM01, CAM05, CAM02) if c is not None)
+CAM02_XY = CAM02[0][:2] if CAM02 is not None else (70.5, 25.6)
+
+
+def _ray_circle_t(ox, oy, dx, dy, radius):
+    """Distance along the unit ray (ox, oy) + t (dx, dy) to the first crossing of the circle r = radius about the
+    world origin, or None if it misses."""
+    b = ox * dx + oy * dy
+    c = ox * ox + oy * oy - radius * radius
+    disc = b * b - c
+    if disc <= 0.0:
+        return None
+    root = math.sqrt(disc)
+    t = -b - root
+    return t if t > 0.0 else None
+
+
+def band_sightline_cap(x, y, z_ground):
+    """Tallest shrub at (x, y) that still leaves the podium's Greek-key band visible from every hero camera.
+
+    Returns None when no camera's ray to the band passes over this point - beside or behind the podium there is
+    no band stone to hide, so the sight line imposes nothing.  `put` applies SHRUB_H_CEILING either way.
+    """
+    cap = None
+    for (ex, ey, ez) in BAND_EYES:
+        dx, dy = x - ex, y - ey
+        d = math.hypot(dx, dy)
+        if d < 1e-6:
+            continue
+        D = _ray_circle_t(ex, ey, dx / d, dy / d, PODIUM_BAND_R)
+        if D is None or d > D - 1.0:
+            continue                       # beside or behind the podium: this shrub hides no band stone
+        z_line = ez + (PODIUM_BAND_Z0 - ez) * d / D
+        c = z_line - BAND_MARGIN - z_ground
+        cap = c if cap is None else min(cap, c)
+    return None if cap is None else max(SHORE_H_MIN, cap)
+
+
 # ----------------------------------------------------------------------------- height field
 def terrain_height(x, y):
     """Ground height (m) at world (x, y). Shared by the terrain mesh and by everything scattered on it."""
@@ -61,8 +122,11 @@ def terrain_height(x, y):
         # camera sees at 6-12 m already had the longest possible absorption path through MAT_water_lagoon's murk -
         # it read as a near-black cyan. The real lagoon has a wide shallow shelf (refs 022, 169: the rip-rap and
         # bed pebbles are visible several metres out). Shelf 0.25-0.85 m to 14 m out, then down to 1.5 m by 30 m.
+        # QA-04-8 (round 6): the shelf is a little shallower and a little wider again.  The hero's near-field box
+        # (1150 1000 1450 1050) looks at water 8-9 m in front of the lens, ~5 m off the bank; every centimetre of
+        # absorption path there is a centimetre of the bed's green that does not come back up.
         e = -d
-        depth = 0.25 + 0.60 * L.smoothstep(0.0, 14.0, e) + 0.65 * L.smoothstep(14.0, 30.0, e)
+        depth = 0.22 + 0.52 * L.smoothstep(0.0, 16.0, e) + 0.72 * L.smoothstep(16.0, 32.0, e)
         return L.WATER_Z - depth + 0.07 * L.fnoise(x, y, 0.15, 3)
     r = math.hypot(x, y)
     base = -0.45 + 0.10 * L.fnoise(x, y, 0.012, 1) + 0.04 * L.fnoise(x, y, 0.06, 2)
@@ -186,6 +250,7 @@ def build_terrain():
     verts = [(x, y, z) for (x, y), z in zip(verts2d, heights)]
     # face materials
     m_lawn, m_soil, m_gravel = L.mat("MAT_lawn"), L.mat("MAT_soil"), L.mat("MAT_gravel_path")
+    m_bed = L.mat("MAT_lagoon_bed")            # QA-04-8: the bed is not brown soil, see below
     mats = [m_lawn, m_soil, m_gravel]
     col_exp = [L.offset_polygon(p, 2.0) for p in COLONNADE_ROOFS]
     face_mat = []
@@ -208,9 +273,37 @@ def build_terrain():
             face_mat.append(2)
         else:
             face_mat.append(0)
-    obj = L.mesh_from_tris("ENV_terrain_ground", verts, tris, coll, mats, face_mat, smooth=True)
-    # split the bed into its own object so the lead can hide it / the water shader can find it
-    log(f"terrain: mesh {L.tri_count(obj)} tris")
+    # QA-04-8: the lagoon bed is now its own object with its own material.  The near field read hue 208.7 (blue)
+    # against ref 169's 190-192 (teal); lighting measured the sky's hue as exact, so the missing green is the
+    # lagoon's upwelling - and the bed under the shallow 0.25-0.85 m shelf was carrying MAT_soil, a brown.  Split
+    # out as ENV_lagoon_bed so materials can address it (and the lead can hide it) without touching the lawn.
+    bed_tris, land_tris, land_mat = [], [], []
+    for (t, mi) in zip(tris, face_mat):
+        cx = (verts2d[t[0]][0] + verts2d[t[1]][0] + verts2d[t[2]][0]) / 3
+        cy = (verts2d[t[0]][1] + verts2d[t[1]][1] + verts2d[t[2]][1]) / 3
+        if L.point_in_poly(cx, cy, LAGOON) and not any(L.point_in_poly(cx, cy, p) for p in ISLETS):
+            bed_tris.append(t)
+        else:
+            land_tris.append(t)
+            land_mat.append(mi)
+    def compact(tri_list):
+        """Renumber a triangle list onto only the vertices it uses - otherwise each half of the split carries the
+        whole terrain's vertex array (ENV_lagoon_bed came out with ~100 k loose verts and a 720 m bounding box,
+        which breaks any bound-box test and every viewport frame-selected)."""
+        remap, tris_out = {}, []
+        for t in tri_list:
+            tris_out.append(tuple(remap.setdefault(i, len(remap)) for i in t))
+        vs = [None] * len(remap)
+        for old_i, new_i in remap.items():
+            vs[new_i] = verts[old_i]
+        return vs, tris_out
+
+    land_v, land_t = compact(land_tris)
+    bed_v, bed_t = compact(bed_tris)
+    obj = L.mesh_from_tris("ENV_terrain_ground", land_v, land_t, coll, mats, land_mat, smooth=True)
+    bed = L.mesh_from_tris("ENV_lagoon_bed", bed_v, bed_t, coll, [m_bed], [0] * len(bed_t), smooth=True)
+    log(f"terrain: mesh {L.tri_count(obj)} tris + ENV_lagoon_bed {L.tri_count(bed)} tris "
+        f"({m_bed.name}{' PLACEHOLDER' if m_bed.get('placeholder') else ''})")
     # soil beds on the peninsula and the islet: handled by shrub scatter (soil material patches under shrubs)
     return obj, paths
 
@@ -318,11 +411,19 @@ def build_riprap():
         r = math.hypot(x, y)
         if r < 50:
             density += 0.25                                      # the rotunda peninsula is fully armoured
+        # QA-04-14: cam 02's foreground strip is the south embayment.  Its bank is 7.4 m from the lens, just under
+        # the frame edge, so what has to read is the stone standing OUT in the shallows 9-26 m away: denser, and
+        # scaled up (`big_stone`) so a 0.5 m cobble does not vanish at 24 mm.
+        d_cam02 = math.hypot(x - CAM02_XY[0], y - CAM02_XY[1])
+        big_stone = 1.0
+        if d_cam02 < 40.0:
+            density += 0.30
+            big_stone = 1.55 - 0.35 * (d_cam02 / 40.0)
         ang = int((math.degrees(math.atan2(y, x)) + 360) % 360) // 45
         # waterline row: big boulders, partly submerged, jittered across the line
         if rnd.random() < density:
-            s0 = rnd.uniform(0.32, 0.80)
-            off = rnd.uniform(-1.3, 0.5)
+            s0 = rnd.uniform(0.32, 0.80) * big_stone
+            off = rnd.uniform(-1.3, 0.5) - (rnd.uniform(0.0, 2.4) if big_stone > 1.0 else 0.0)
             px, py = x + outward.x * off + rnd.uniform(-0.3, 0.3) * d.x, y + outward.y * off + rnd.uniform(-0.3, 0.3) * d.y
             # centre straddles the water line: about a third of each boulder stands proud (refs 022, 063, 187)
             pz = L.WATER_Z + 0.02 + s0 * 0.22 + rnd.uniform(-0.22, 0.14) - max(0.0, -off) * 0.18
@@ -330,7 +431,7 @@ def build_riprap():
                                                 (s0 * rnd.uniform(0.8, 1.4), s0 * rnd.uniform(0.8, 1.2), s0 * rnd.uniform(0.55, 0.9)))))
         # bank row: smaller stones, sparser
         if rnd.random() < density * 0.7:
-            s1 = rnd.uniform(0.30, 0.62)
+            s1 = rnd.uniform(0.30, 0.62) * big_stone
             off = rnd.uniform(0.8, 1.9)
             px, py = x + outward.x * off, y + outward.y * off
             pz = terrain_height(px, py) - 0.12 + s1 * 0.25
@@ -552,13 +653,11 @@ def build_shrubs():
     log("shrubs + grasses + reeds")
     coll = SUB["ENV_shrubs"]
     rnd = random.Random(23)
-    # QA-02-13 / QA-03-13: inside ROSTRA_R the band must not hide the podium or its Greek-key course.  Round 03
-    # clamped every one of those shrubs to exactly ROSTRA_H, which is why QA-03-14 then measured "evenly spaced
-    # same-size mounds, size spread ~1.5:1": the clamp, not the placement, was flattening the row.  The cap is now
-    # drawn per instance from ROSTRA_H_RANGE (2.9:1 on its own, before the base scale spread), so the row keeps a
-    # real silhouette while nothing in it is taller than 1.2 m.
-    ROSTRA_R = 54.0
-    ROSTRA_H_RANGE = (0.42, 1.20)
+    # QA-04-4 (round 6): the radius clamp is gone.  ROSTRA_R 54 m / ROSTRA_H_RANGE 0.42-1.20 m was round 03's
+    # answer to QA-03-13 and it is what made the hero shoreline "a bare pale quay with 0.5-1 m dot shrubs and an
+    # exposed podium base".  The cap is now `band_sightline_cap` (see the top of this file): per instance, the
+    # height of the ray from each hero camera's eye to the bottom of the podium's Greek-key course.  On the hero
+    # shoreline it comes out at 3.2-3.7 m, which is ref 169's own mound height, and it still guarantees the band.
 
     # (key, material(s), {lod: mesh}, nominal height) - meshes are shared by every instance of that key
     src = {}
@@ -573,6 +672,13 @@ def build_shrubs():
     for i, (r, h, m) in enumerate(MOUND_SPEC):
         add(f"pitto{i}", (m, "MAT_shrub"), make_shrub_mesh, h, seed=300 + i, radius=r, height=h,
             form="mound", cover=1.6)
+    # QA-04-4: ref 169's shoreline mounds are 2-4 m, not 1 m.  Four large sources, three silhouettes deep, so the
+    # hero belt can reach the sight-line cap without scaling one small mound to four times its design size.
+    BIG_SPEC = [(1.70, 2.10, "MAT_shrub_light"), (2.15, 2.60, "MAT_shrub_light"),
+                (2.60, 3.10, "MAT_shrub"), (1.55, 3.40, "MAT_shrub_light")]
+    for i, (r, h, m) in enumerate(BIG_SPEC):
+        add(f"big{i}", (m, "MAT_shrub"), make_shrub_mesh, h, seed=360 + i, radius=r, height=h,
+            card=0.135, form="mound" if i != 3 else "upright", cover=1.75)
     for i, (r, h) in enumerate(((0.62, 1.05), (0.78, 1.35), (0.95, 1.60))):
         add(f"maho{i}", ("MAT_shrub_light", "MAT_shrub"), make_shrub_mesh, h, seed=320 + i, radius=r, height=h,
             card=0.105, form="upright", cover=1.1)
@@ -625,13 +731,14 @@ def build_shrubs():
     def put(key, x, y, dz=-0.06, s=(0.58, 1.80)):
         sc = rnd.uniform(*s) * rnd.uniform(0.85, 1.18)        # QA-03-14: 3.1:1 nominal size spread
         h = REAL_H[key] * sc * Z_JITTER_MAX
-        if math.hypot(x, y) < ROSTRA_R:                       # QA-02-13 / QA-03-13
-            cap = rnd.uniform(*ROSTRA_H_RANGE)
-            if h > cap:
-                sc *= cap / h
-        placed.append((key, (x, y, terrain_height(x, y) + dz), rnd.uniform(0, 6.283), sc))
+        zg = terrain_height(x, y)
+        cap = band_sightline_cap(x, y, zg)                    # QA-04-4 / QA-03-13, see the top of this file
+        cap = SHRUB_H_CEILING if cap is None else min(cap, SHRUB_H_CEILING)
+        if h > cap:
+            sc *= cap / h
+        placed.append((key, (x, y, zg + dz), rnd.uniform(0, 6.283), sc))
 
-    def clump(cx, cy, n, spread, keys, min_shore=0.9, max_shore=7.0):
+    def clump(cx, cy, n, spread, keys, min_shore=0.9, max_shore=7.0, s=(0.58, 1.80), dz=-0.06):
         last = None
         for _ in range(n):
             x, y = cx + rnd.uniform(-spread, spread), cy + rnd.uniform(-spread, spread)
@@ -641,9 +748,10 @@ def build_shrubs():
             choices = [k for k in keys if k != last] or list(keys)
             key = rnd.choice(choices)
             last = key
-            put(key, x, y)
+            put(key, x, y, dz=dz, s=s)
 
     MOUNDS = tuple(f"pitto{i}" for i in range(len(MOUND_SPEC)))
+    BIG = tuple(f"big{i}" for i in range(len(BIG_SPEC)))
     LOWMOUNDS = ("pitto0", "pitto1", "pitto2", "pitto3", "pitto5", "pitto8")
     MAHONIA = ("maho0", "maho1", "maho2")
     AGAP = ("agap0", "agap1", "agap2")
@@ -665,14 +773,25 @@ def build_shrubs():
         gate = L.fnoise(x, y, 0.095, 91) + 0.55 * L.fnoise(x, y, 0.031, 92)
         if gate < -0.16:
             continue
-        p = (0.60 + 0.30 * ne - 0.20 * se) * L.smoothstep(-0.16, 0.25, gate)
+        p = (0.68 + 0.26 * ne - 0.18 * se) * L.smoothstep(-0.16, 0.25, gate)
         if rnd.random() < p:
-            keys = MOUNDS + MAHONIA if ne > 0.5 else LOWMOUNDS + MAHONIA
-            clump(x, y, rnd.randint(2, 5), 2.6, keys, min_shore=0.5, max_shore=9.0)
+            # QA-04-4: the hero shoreline gets the big mounds.  A second noise field decides which clumps are the
+            # 2-3.5 m ones, so the belt reads as a run of tall mounds with lower stuff between them rather than a
+            # uniformly raised hedge - ref 169's shore is exactly that.
+            tall = L.fnoise(x, y, 0.055, 94) + 0.4 * L.fnoise(x, y, 0.14, 95)
+            if tall > -0.05:
+                keys = BIG + MOUNDS + MAHONIA if ne > 0.35 else BIG[:3] + LOWMOUNDS + MAHONIA
+                clump(x, y, rnd.randint(2, 5), 3.0, keys, min_shore=0.5, max_shore=10.0, s=(0.80, 1.85))
+            else:
+                keys = MOUNDS + MAHONIA if ne > 0.5 else LOWMOUNDS + MAHONIA
+                clump(x, y, rnd.randint(2, 5), 2.6, keys, min_shore=0.5, max_shore=9.0)
         if rnd.random() < 0.50:
             clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.25, max_shore=3.2)
-        # QA-02-18: warm dry material in the hero's own shore band, not only past r = 50 m
-        if rnd.random() < 0.52:
+        # QA-02-18 wanted warm dry material in the hero's own shore band; round 6 measured the result at
+        # saturation 0.73 against ref 169's 0.64 over the same crop, with the rust-coloured twig clumps reading
+        # as the loudest thing on the shore.  In the photo they are a handful of bare shrubs at frame-left, not
+        # a third of the belt, so the probability comes back from 0.52 to 0.30.
+        if rnd.random() < 0.30:
             clump(x, y, rnd.randint(1, 3), 2.0, DRY, min_shore=0.4, max_shore=6.5)
     # 2. the rest of the shore: the same belt, a little sparser, with more dry reeds at the water
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.0), 3.4, closed=True):
@@ -707,8 +826,39 @@ def build_shrubs():
             if bed < -0.20:
                 continue
             if rnd.random() < 0.70 + 0.25 * bed:
-                clump(x, y, rnd.randint(2, 6), 2.8, keys_band, min_shore=6.5, max_shore=21.0)
+                # QA-04-4: the bed between the shore belt and the podium carries the big mounds too - in ref 169
+                # the foliage in front of the podium is continuous from the water up to the rostra.  The sight-line
+                # cap (band_sightline_cap) is what keeps the Greek-key course clear, not a height rule here.
+                kb = keys_band + (BIG if bed > 0.05 else BIG[:2])
+                clump(x, y, rnd.randint(2, 6), 2.8, kb, min_shore=6.5, max_shore=21.0, s=(0.70, 1.85))
     n_band = len(placed) - n_band
+
+    # 2d. QA-04-14: the south embayment in front of cam 02 (70.5, 25.6, 1.1).  The bottom 12 % of that frame
+    #     (rows 634-720 of 720) lands on the water 9-26 m out - world x 40-64, y -1..31 - and the near bank sits
+    #     7.4 m from the lens, just under the frame edge, so the foreground was a flat sheet of water with no edge
+    #     at all.  A reed / agapanthus fringe standing IN the shallows (signed distance negative = in the water)
+    #     plus the heavier rip-rap added in build_riprap gives that strip a readable shore.
+    n_emb = len(placed)
+    for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 0.4), 1.6, closed=True):
+        d_cam = math.hypot(x - CAM02_XY[0], y - CAM02_XY[1])
+        if not (4.0 < d_cam < 42.0):
+            continue
+        gate = L.fnoise(x, y, 0.13, 96)
+        if gate < -0.30:                       # reed beds are patchy: bare stone between the stands
+            continue
+        # emergent stands: 0.2-3.2 m OUT into the water, tall enough to break the horizon of the strip
+        for _ in range(rnd.randint(1, 3)):
+            ox, oy = x + rnd.uniform(-1.4, 1.4), y + rnd.uniform(-1.4, 1.4)
+            off = LAGOON_FIELD.signed(ox, oy)
+            if not (-3.2 < off < 1.4):
+                continue
+            key = rnd.choice(REEDS + AGAP if off < 0.2 else REEDS + TWIGS + AGAP)
+            put(key, ox, oy, dz=-0.10 if off < 0 else -0.06, s=(0.85, 1.75))
+        # bank mounds behind them, so the strip has a silhouette above the reeds
+        if rnd.random() < 0.55:
+            clump(x, y, rnd.randint(1, 3), 2.2, LOWMOUNDS + MAHONIA + BIG[:2],
+                  min_shore=0.6, max_shore=7.0, s=(0.70, 1.70))
+    log(f"shrubs: south-embayment cam02 fringe {len(placed) - n_emb} clumps")
 
     # 3. foundation planting along the colonnade fronts
     # QA-03-9: everything along the colonnade fronts sits in the wing's own shade, where MAT_shrub's dark cards

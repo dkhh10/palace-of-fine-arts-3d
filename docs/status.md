@@ -181,3 +181,26 @@ In flight: lead_build.sh (log renders/logs/lead_build_r4c.log), QA round 4 (Fabl
 Closed: QA-03-1 watchdog, -2 attic chroma (hue 38.9 / sat 0.554 / R-B 122), -4 flutes, -8 coffers + rosettes, -13 conifers, -15 capitals, -17 saved preset; Eevee 11-24 s/cam. cam02 re-stationed by QA to (70.5, 25.6, 1.1)/24 mm (SSE shore path; NE ref-062 station unreproducible on this build, QA-04-11). 4K: compositor exonerated (177 s at 16 spp); 768-spp frame still unproven.
 QA-04 blockers: 1 Eevee vault black (light), 2 shade collapsed/yellow-green after the -0.5 EV (light), 3 stone still clean CAD at 1:1, third round (mat). Majors: 4 hero shoreline bare quay (env), 5 columns 1.27x (light+mat), 6 wings 0.63/0.66 of ref (light+env), 7 Cycles coffer 0.26 + no rib/panel difference (light+mat, ARCH rib material name), 8 near-water hue 209 / reflection grey (env+mat). Composite renders/qa_comparisons/round04_gate.png.
 Dispatching polish round 3: LIGHT r11, MAT r6, ENV r6, ARCH mini (rib material name, QA-04-11 measurement). Lead: cam05 target z 21.5 (QA-04-10).
+
+## 2026-09-08 · architecture mini-round merged (083937b) after review (MERGE)
+Rib plates (ARCH_rotunda_ceiling_ribs + 8 vault coffer plates) carry MAT_plaster_ceiling_rib (placeholder until MAT r6 ships it; colour added to common.PLACEHOLDER_COLORS). Ref 062 fit: D 91.7 m / 42.4 mm, dome cap needs D > 76 m: no proportion change (decisions.md). Flag for ENV r7: OSM NE shoreline likely short (fitted station in water while the photo's foreground is garden).
+In flight: LIGHT r11, MAT r6, ENV r6. Next: review + merge, lead_build.sh, QA round 5.
+
+## 2026-09-08 · ENV r6 reported (8995384), in review
+ENV r6: shore cap is now a sight line to the Greek-key course from the lagoon cameras (shrubs p90 2.83 m, tallest 3.59 m, podium base hidden 78 %, key band visible 93.6 % from cam05), 3 willows at ref 169 positions, north wing band 1.00 of ref (foliage 74.6 -> 37.8 %), cam06 8 roof colours / 13 footprints, cam02 shore edge. Probe shows the near-water teal is MAT_water_lagoon, not the bed (0.00 % change from a magenta bed at grazing angles) -> materials told; new name MAT_lagoon_bed for materials. Note: qa_round_04 (e) has the wing compass labels swapped (frame-left = south wing). ENV LOD1 4.66 M.
+In flight: ENV review, LIGHT r11, MAT r6. Next: merge, lead_build.sh, QA round 5.
+
+## 2026-09-08 · ENV r6 merged (8995384); review follow-up in flight
+Review (docs/reviews/env_r6_review.md): visual result stands; four maintenance fixes sent back (hand-copied camera stations in the sight-line cap, bed classified as architecture, loose verts on ENV_lagoon_bed, global 4 m shrub ceiling).
+In flight: ENV follow-up, LIGHT r11, MAT r6. Next: merge, lead_build.sh, QA round 5.
+
+## 2026-09-08 · ENV r6 follow-up merged (3c3ad97): stations now read from qa_cameras.py, bed compacted, numbers unchanged (LOD1 4.66 M)
+In flight: LIGHT r11 (branch shows Eevee vault x6/21 m: coffer gap 0.227 -> 0.062; Cycles coffer 0.261 -> 0.387), MAT r6 (macro grunge maps, waterline, MAT_lagoon_bed, water teal, ribs). Next: review + merge both, lead_build.sh, QA round 5.
+
+## 2026-09-08 · MAT r6 reported (e7adc25), in review
+MAT r6: cause of "clean CAD" was texture scale (the only photo input was a 2.5 m tile sampled 40x below its texel size); three macro grunge maps (0.3-3 m, CC0 ambientCG, mat_make_grunge.py) drive albedo value + roughness at 3-5.5 m tiles; overhang AO probe for cornice run-off; damp/algae waterline zone; patches; MAT_plaster_ceiling_rib (ref 083) + in-coffer gradient; MAT_lagoon_bed; shore foliage x1.4; columns hue 26.8 (pass), lum 119. Attic std 0.476 -> 0.598 of ref (bar 0.60), entablature 0.51 unchanged (hand-off ARCH: cornice projection / dentil depth), near-water hue 204 (hand-off lighting: horizon sky). Sheet renders/qa_comparisons/mat_r6_sheet.png.
+In flight: MAT review, LIGHT r11. Next: merge both, lead_build.sh, QA round 5. Carried to ARCH r4: entablature cornice/dentil depth (QA-04-3 second half).
+
+## 2026-09-08 · LIGHT r11 reported (822e92d), in review
+LIGHT r11: QA-04-1 root cause = probe bake on the Eevee cutoff rig (bake now forces the physical rig; EEVEE_VAULT x6/21 m: Eevee coffer 0.034 -> 0.325 vs Cycles 0.387); QA-04-7 closed (FILL 3648 W, VAULT_FILL 3564 W: Cycles coffer 0.387); QA-04-2 shade hue reassigned to materials with three measured levers, SHADE_FILL rig shipped at 0 W; sun angle confirmed against ref 169's shadow structure (-3 px); viewport preset raytracing on / light_threshold 0.01 (decisions.md). Sheet renders/previews/lighting/light_r11_sheet.png.
+In flight: MAT r6 review, LIGHT r11 review. Next: merge both, scripts/lead_build.sh (mandatory: build then bake), QA round 5 (Fable xhigh; re-base cam03's shade test on a golden-hour reference).

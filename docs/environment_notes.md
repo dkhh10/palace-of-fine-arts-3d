@@ -135,24 +135,24 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |
 |---|---|---|---|---|---|
-| 00 | pine | -44 | 4 | 17 | A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10) |
+| 00 | pine | -90 | -2 | 17 | A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10) |
 | 01 | redwood | -40 | -2 | 16 | A young redwood at the north arch (ref 070) |
-| 02 | cypress | -44 | -1 | 20 | A dark mass right of the dome |
-| 03 | pine | -46 | 8 | 18 | A cluster, second crown |
-| 04 | willow | -40 | 16 | 10 | A pale weeping willow at the water in front of the cluster (ref 169) |
-| 05 | broadleaf | -49 | 13 | 11 | A shore broadleaf at cam02's right edge |
-| 06 | cypress | -48 | 0 | 23 | A cluster depth (QA-01-6: mass kept dense after the move west) |
-| 07 | pine | -52 | 6 | 20 | A cluster depth |
-| 08 | broadleaf | -30 | 30 | 8 | P peninsula bed, right of the rotunda (cam01 x 0.71-0.78) |
-| 09 | willow | -22 | 38 | 7 | P low willow at the water in front of the podium (cam01 x 0.64-0.71) |
-| 10 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
-| 11 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
-| 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
-| 13 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
-| 14 | cypress_column | -47 | -39 | 22 | A2 tall column right of the rotunda (user image x~1020) |
-| 15 | pine | -47 | -13 | 17 | A2 strip along the north wing (kept below the colonnade entablature) |
-| 16 | cypress_column | -58 | -12 | 27 | A2 second column (user image x~1220) |
-| 17 | cypress | -74 | -1 | 20 | A2 at the wing's first box |
+| 02 | pine | -90 | 2 | 18 | A cluster, second crown |
+| 03 | willow | -86 | 10 | 10 | A pale weeping willow at the water in front of the cluster (ref 169) |
+| 04 | broadleaf | -85 | 8 | 11 | A shore broadleaf at cam02's right edge |
+| 05 | cypress | -96 | -7 | 23 | A cluster depth (QA-01-6: mass kept dense after the move west) |
+| 06 | pine | -90 | 1 | 20 | A cluster depth |
+| 07 | broadleaf | -30 | 30 | 8 | P peninsula bed, right of the rotunda (cam01 x 0.71-0.78) |
+| 08 | willow | -22 | 38 | 7 | P low willow at the water in front of the podium (cam01 x 0.64-0.71) |
+| 09 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
+| 10 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
+| 11 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
+| 12 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
+| 13 | willow | 9 | 46 | 9 | P hero-shore willow, ref 169 frame x 0.33-0.42 |
+| 14 | willow | -2 | 47 | 7 | P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair) |
+| 15 | willow | -12 | 45 | 8 | P hero-shore willow, ref 169 frame x 0.56-0.64 |
+| 16 | cypress_column | -47 | -39 | 22 | A2 tall column right of the rotunda (user image x~1020) |
+| 17 | cypress | -92 | -3 | 20 | A2 at the wing's first box |
 | 18 | eucalyptus | -90 | 5 | 20 | B big eucalyptus on the strip (ref 141) |
 | 19 | pine | -90 | 22 | 16 | B |
 | 20 | willow | -100 | 37 | 9 | B willow at the water (refs 144/145) |
@@ -161,7 +161,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 23 | cypress_column | -112 | 40 | 24 | B tall column beyond the north pylon (ref 169 right) |
 | 24 | cypress_column | 35 | 20 | 16 | C cypress column left of the rotunda (user image x~290): QA-03-10/-13 26 -> 16 m, the user image spire tops out at the colonnade cornice |
 | 25 | cypress_column | 30 | 26 | 13 | C second column (user image x~330), south lobe; QA-03-13 24 -> 13 m |
-| 26 | broadleaf | 31 | 26 | 9 | C small dark tree left of the rotunda (user image x~410); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05 |
+| 26 | broadleaf | 31 | 26 | 8 | C small dark tree left of the rotunda (user image x~410); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05 |
 | 27 | eucalyptus | 62 | -30 | 30 | C broad eucalyptus behind the south wing (ref 169 left) |
 | 28 | pine | 62 | -46 | 18 | C QA-01-6: moved out of cam03 (was 24,-22 = 7 m in front of the camera) |
 | 29 | broadleaf | 74 | -38 | 10 | C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera) |
@@ -220,57 +220,57 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 82 | cypress | 47 | -25 | 19 | E1 screen behind the colonnade |
 | 83 | redwood | 60 | -17 | 19 | E1 screen behind the colonnade |
 | 84 | pine | 63 | -13 | 19 | E1 screen behind the colonnade |
-| 85 | pine | 66 | -8 | 21 | E1 screen behind the colonnade |
+| 85 | pine | 66 | -8 | 20 | E1 screen behind the colonnade |
 | 86 | cypress | 71 | -6 | 20 | E1 screen behind the colonnade |
-| 87 | redwood | 88 | 39 | 16 | E1 screen behind the colonnade |
+| 87 | redwood | 88 | 39 | 18 | E1 screen behind the colonnade |
 | 88 | redwood | 112 | 41 | 20 | E1 screen behind the colonnade |
 | 89 | redwood | 112 | 46 | 20 | E1 screen behind the colonnade |
 | 90 | redwood | 35 | -42 | 24 | E2 screen behind the colonnade |
 | 91 | eucalyptus | 40 | -40 | 22 | E2 screen behind the colonnade |
 | 92 | cypress | 45 | -37 | 21 | E2 screen behind the colonnade |
-| 93 | eucalyptus | 62 | -24 | 22 | E2 screen behind the colonnade |
-| 94 | redwood | 67 | -21 | 22 | E2 screen behind the colonnade |
+| 93 | eucalyptus | 62 | -24 | 21 | E2 screen behind the colonnade |
+| 94 | redwood | 67 | -21 | 21 | E2 screen behind the colonnade |
 | 95 | redwood | 70 | -16 | 21 | E2 screen behind the colonnade |
 | 96 | redwood | 75 | -12 | 20 | E2 screen behind the colonnade |
-| 97 | redwood | 93 | 39 | 24 | E2 screen behind the colonnade |
-| 98 | eucalyptus | 117 | 41 | 24 | E2 screen behind the colonnade |
+| 97 | redwood | 93 | 39 | 19 | E2 screen behind the colonnade |
+| 98 | eucalyptus | 117 | 41 | 22 | E2 screen behind the colonnade |
 | 99 | redwood | 119 | 47 | 22 | E2 screen behind the colonnade |
 | 100 | redwood | 117 | 53 | 22 | E2 screen behind the colonnade |
-| 101 | cypress | 96 | 33 | 26 | E3 screen behind the colonnade |
-| 102 | eucalyptus | 124 | 36 | 25 | E3 screen behind the colonnade |
+| 101 | cypress | 96 | 33 | 20 | E3 screen behind the colonnade |
+| 102 | eucalyptus | 124 | 36 | 23 | E3 screen behind the colonnade |
 | 103 | eucalyptus | 126 | 42 | 24 | E3 screen behind the colonnade |
 | 104 | eucalyptus | 124 | 50 | 27 | E3 screen behind the colonnade |
 | 105 | cypress | -118 | 10 | 19 | E1 screen behind the colonnade |
 | 106 | redwood | -118 | 5 | 19 | E1 screen behind the colonnade |
 | 107 | cypress | -116 | -0 | 17 | E1 screen behind the colonnade |
-| 108 | redwood | -90 | 7 | 20 | E1 screen behind the colonnade |
+| 108 | redwood | -90 | 7 | 18 | E1 screen behind the colonnade |
 | 109 | redwood | -84 | -9 | 18 | E1 screen behind the colonnade |
 | 110 | redwood | -80 | -12 | 17 | E1 screen behind the colonnade |
 | 111 | redwood | -77 | -17 | 19 | E1 screen behind the colonnade |
 | 112 | pine | -61 | -30 | 19 | E1 screen behind the colonnade |
 | 113 | redwood | -57 | -33 | 19 | E1 screen behind the colonnade |
 | 114 | cypress | -52 | -35 | 21 | E1 screen behind the colonnade |
-| 115 | pine | -31 | -42 | 22 | E1 screen behind the colonnade |
+| 115 | pine | -31 | -42 | 21 | E1 screen behind the colonnade |
 | 116 | pine | -26 | -43 | 18 | E1 screen behind the colonnade |
 | 117 | cypress | -21 | -43 | 19 | E1 screen behind the colonnade |
 | 118 | redwood | -125 | 7 | 21 | E2 screen behind the colonnade |
-| 119 | redwood | -125 | 1 | 25 | E2 screen behind the colonnade |
+| 119 | redwood | -125 | 1 | 23 | E2 screen behind the colonnade |
 | 120 | cypress | -122 | -4 | 21 | E2 screen behind the colonnade |
-| 121 | redwood | -97 | 1 | 22 | E2 screen behind the colonnade |
-| 122 | redwood | -98 | -6 | 21 | E2 screen behind the colonnade |
-| 123 | redwood | -85 | -20 | 23 | E2 screen behind the colonnade |
-| 124 | eucalyptus | -79 | -23 | 24 | E2 screen behind the colonnade |
-| 125 | redwood | -76 | -28 | 25 | E2 screen behind the colonnade |
-| 126 | cypress | -71 | -32 | 22 | E2 screen behind the colonnade |
-| 127 | redwood | -54 | -42 | 23 | E2 screen behind the colonnade |
-| 128 | redwood | -48 | -44 | 24 | E2 screen behind the colonnade |
-| 129 | redwood | -41 | -44 | 22 | E2 screen behind the colonnade |
-| 130 | eucalyptus | -37 | -48 | 23 | E2 screen behind the colonnade |
+| 121 | redwood | -97 | 1 | 20 | E2 screen behind the colonnade |
+| 122 | redwood | -98 | -6 | 20 | E2 screen behind the colonnade |
+| 123 | redwood | -85 | -20 | 21 | E2 screen behind the colonnade |
+| 124 | eucalyptus | -79 | -23 | 21 | E2 screen behind the colonnade |
+| 125 | redwood | -76 | -28 | 21 | E2 screen behind the colonnade |
+| 126 | cypress | -71 | -32 | 21 | E2 screen behind the colonnade |
+| 127 | redwood | -54 | -42 | 22 | E2 screen behind the colonnade |
+| 128 | redwood | -48 | -44 | 22 | E2 screen behind the colonnade |
+| 129 | redwood | -41 | -44 | 21 | E2 screen behind the colonnade |
+| 130 | eucalyptus | -37 | -48 | 22 | E2 screen behind the colonnade |
 | 131 | eucalyptus | -21 | -51 | 22 | E2 screen behind the colonnade |
 | 132 | redwood | -132 | 6 | 26 | E3 screen behind the colonnade |
-| 133 | cypress | -132 | -1 | 24 | E3 screen behind the colonnade |
-| 134 | cypress | -127 | -7 | 26 | E3 screen behind the colonnade |
-| 135 | redwood | -103 | -11 | 23 | E3 screen behind the colonnade |
+| 133 | cypress | -132 | -1 | 23 | E3 screen behind the colonnade |
+| 134 | cypress | -127 | -7 | 23 | E3 screen behind the colonnade |
+| 135 | redwood | -103 | -11 | 21 | E3 screen behind the colonnade |
 <!-- PLAN_TABLE_END -->
 
 ## Polish round 1 (QA round 02 defects) — 2026-09-07
@@ -700,3 +700,207 @@ el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
   per-instance weathering of bark or foliage beyond the library materials' own object-random.
 - Diagnostic camera `CAM_env_hall_from_colonnade` mostly sees the colonnade; a proper hall view needs a camera outside
   the wings.
+
+## Polish round 6 (QA round 04 defects) — 2026-09-08
+
+Composite: **`renders/qa_comparisons/env_r6_sheet.png`** (`scripts/env_sheet_r6.py`, pure Pillow) — five rows,
+before | after | reference, with the numbers on every panel. Renders: `renders/previews/environment/r6_hero.png`
+(1920x1080 Cycles 64 spp), `r6_cam05.png`, `r6_cam02.png`, `r6_cam06.png` (1280x720, 48 spp) — all from a master
+built **in this worktree** (`scripts/build_master.py`, ENV r6 + ARCH + ORN + LIGHT r10), because three of the five
+defects are luminance or colour tests and an ENV preview is lit by a placeholder sun.
+
+Ray-cast coverage numbers come from `scripts/env_sightlines.py -- --coverage`, which gained three boxes this round
+(and one more for cam 02) plus a **per-column "architecture visible" column**, because QA-03-13 and QA-04-4 both
+phrase the podium test as "visible over N % of its *length*", which is not an area fraction.
+
+| box | round 04 | round 06 |
+|---|---|---|
+| cam01_left_wing (60 480 560 600) | fol 30.5 / arch 57.8 / sky 11.6 | fol **29.1** / arch 58.3 / sky 12.5 |
+| cam01_right_wing (1360 480 1860 600) | fol **74.6** / arch 24.2 / sky 1.2 | fol **37.8** / arch 53.4 / sky 8.8 |
+| cam01_shore (700 640 1200 720) | fol 8.7 / arch 68.7 | fol **52.8** / arch 30.5 / ground 16.7 |
+| cam01_podium_base (620 648 1300 684) *new* | arch 78 % (base bare) | arch **22 %** -> **78 % hidden** |
+| cam05_body (301 27 998 520) *new* | fol 6.5 (whole silhouette) | fol **4.5** |
+| cam05_keyband (330 526 990 554) *new* | — | arch **58.9 % of area, 93.6 % of columns** |
+| cam02_foreground (0 634 1280 720) *new* | water only | fol 35.1 / stone 8.8 / water + bed 56.2 |
+
+### QA-04-4 — the shoreline cap was a radius; it should always have been a sight line
+
+Round 03 answered QA-03-13 ("the shrub band hides the podium and its Greek-key band") with `ROSTRA_R = 54 m` and
+`ROSTRA_H_RANGE = 0.42-1.20 m`: **every** shrub within 54 m of the origin clamped to at most 1.2 m. That rule is
+what QA-04-4 then measured as "a bare pale quay with 0.5-1 m dot shrubs and an exposed podium base".
+
+The two requirements only conflict while the cap is a radius. The podium wall is 4.3 m and the Greek-key/rosette
+course is its **top 0.5 m** (reference sheet §3b + catalog #12), so a 3.2 m mound standing 20 m in front of it
+buries the base and leaves the band clear — which is exactly what refs 169 (east) and **063 (south-east, i.e. cam
+05's own bearing)** show: a continuous mass of 2-3.5 m mounds with the meander course legible above it.
+
+`env_build.band_sightline_cap(x, y, z_ground)` replaces the clamp. For each of the three lagoon-side eyes
+(cam 01 1.6 m, cam 05 1.5 m, cam 02 1.1 m) it finds where that eye's ray over the shrub first crosses the podium
+circle (`PODIUM_BAND_R` 27.3 m = `arch_params.PODIUM_LOBE_R`, the innermost and therefore hardest-to-keep-clear
+band stone), and caps the crown at the height of the ray to the band's bottom (`PODIUM_BAND_Z0` 3.8 m) less a
+0.30 m margin. On the hero shoreline that comes out at **3.2-3.7 m**; on the peninsula bed behind it, 3.5-3.9 m;
+beside or behind the podium there is no cap at all. Four large mound sources were added (`BIG_SPEC`, radius
+1.55-2.60 m, height 2.1-3.4 m, 13.5 cm cards) and a second noise field decides which clumps get them, so the belt
+is a run of tall mounds with lower planting between rather than a raised hedge.
+
+| test (QA-04-4 / QA-03-14) | round 04 | round 06 | target |
+|---|---|---|---|
+| shrub height p10 / median / p90, world box (-30,20)-(30,60) | 0.50 / — / 1.20 m | **0.82 / 1.57 / 2.83 m** | 1.5-4 m along the shore |
+| tallest in that box | 1.13 m | **3.59 m** | — |
+| fraction of the belt inside 1.5-4 m | ~0 % | **55 %** | the belt also carries agapanthus and reeds |
+| size spread p90/p10 | 2.51:1 | **3.44:1** | >= 2:1 |
+| nearest-neighbour spacing sd/mean | 62 % | **66 %** | >= 40 % |
+| podium base hidden at cam 01 | 22 % | **78 %** | >= 60 % |
+| Greek-key course visible from cam 05 | (trivially, nothing was tall) | **93.6 % of its length** | >= 60 % |
+| crown inside the cam-05 rotunda body | 6.5 % | **4.5 %** | none |
+
+Three willows were added to `PLAN` at the frame positions ref 169 puts them — mapped through the round-02 align
+transform its two big weeping crowns sit at cam 01 x 0.33-0.47 and 0.56-0.73, i.e. world X -12..9 at Y 43-47 — at
+8.5-9 m rather than the peninsula bed's 7 m. They are group **P**, so `frame_band_relief` pins them.
+
+**Note for QA:** the old `cam05_podium` box (320 566 1000 624) that round 03 called "the podium / Greek-key band"
+is **not on the band**. Projected, the podium wall's top course lands on rows **526-554** of cam 05's 720; 566-624
+is the lawn and shore strip in front of it. That box now reads 63 % foliage and will look like a regression if it
+is re-measured as a band test — it is measuring the shore planting QA-04-4 asked for. `cam05_keyband` is the band.
+
+**Residual, for lighting / materials.** The shore mass is now structurally ref 169's, but it reads dark: crop
+700 640 1200 720 is lum **72.9** (dark<60 48.4 %, sat 0.72) against the photo's 107.2 (17.9 %, 0.64). The same
+ratio shows up wherever this build's foliage is lit (round 5 measured the screen at mean lum 78), so it is the
+leaf/shrub albedo and the rig, not the planting. The warm dry (twig/reed) probability in the peninsula belt came
+back 0.52 -> 0.30 and three of the four big mound sources are on `MAT_shrub_light` for that reason.
+
+### QA-04-6 — nobody had ever measured the frame-RIGHT wing band
+
+Round 5 measured and cleared the frame-**left** band. The frame-right band had never been ray-cast; it came back
+at **74.6 % foliage / 24.2 % architecture / 1.2 % sky** against the left band's 30.5 / 57.8 / 11.6. In ref 169 over
+that same box the colonnade is clear from about frame x 0.75 rightwards. Two fixes, both sight lines:
+
+1. **`env_trees.screen_height_cap`** (new). `redwood_screen` lays the screen out in polar coordinates about
+   (0, 52) while the wings are struck from (-11.2, 84.7) with r 117.4, so "outside the wing in C-polar" is not
+   "behind the wing from the hero" everywhere along the sweep — and `frame_band_relief`'s `behind="colonnade"`
+   exempts anything the exact `_crosses` test says is behind the wing. A screen tree at 110-115 m standing behind
+   a wing at 129-131 m therefore reads 20-80 % taller than the 16.4 m entablature, with nothing to stop it. The
+   cap allows a crown to stand `SCREEN_OVER = 2.2 %` of cam 01's frame height over the cornice line, measured
+   along its own bearing; 28 of 57 screen crowns were lowered, 50 m in total.
+2. **A `FRAME_BANDS` entry for the band** (x 0.760-0.985, y 0.40-0.60, `behind="colonnade"`, pinning P and C).
+   x0 is 0.760, not the box's own 0.708, because the "A" mass right of the rotunda projects to x 0.71-0.76 and
+   ref 169 has it there; the band only touches what stands over the wing itself.
+
+| cam 01 north-wing band 1360 480 1860 600 | round 04 | round 06 | ref 169 raw box |
+|---|---|---|---|
+| luminance (Cycles, LIGHT r10) | 91.6 = **0.63** | **146.0 = 1.00** | 145.9 |
+| dark < 60 | 36.2 % | **19.7 %** | 16.2 % |
+| ray-cast foliage / architecture / sky | 74.6 / 24.2 / 1.2 | **37.8 / 53.4 / 8.8** | — |
+
+The frame-left band is unchanged by this work (lum 90.2 -> 91.9, foliage 30.5 -> 29.1 %), i.e. **0.84 of the raw
+ref box and 0.67 of the aligned panel — still lighting's**. Round 5 measured 103.8 on its own master; the drop to
+~91 came with LIGHT r10, not with ENV. ENV's ceiling on that band with every crown removed was measured in round 5
+at 110.5.
+
+### QA-04-8 — the near field cannot get its teal from the lagoon bed. Measured.
+
+ENV's share was to give the bed a colour: the lagoon-bed triangles are now split out of `ENV_terrain_ground` into
+their own object **`ENV_lagoon_bed`** (6 377 tris) on **`MAT_lagoon_bed`** — an ENV placeholder (algae/silt olive
+0.055/0.085/0.048) until materials ships the name — and the shelf went a little shallower and wider again
+(0.22 m at the bank, 0.74 m at 16 m, 1.46 m at 32 m; was 0.25 / 0.85 / 1.50).
+
+It changes the near field by **nothing**, and this was measured rather than guessed. Two 960x540 Cycles renders of
+the same master, identical but for `MAT_lagoon_bed` recoloured to pure magenta: the two images differ over 6.4 % of
+the frame, but the difference is confined to **rows 660-780 of 1080** — the shallow water along the far shore. In
+QA's own near-water crop (1150 1000 1450 1050) **0.00 % of pixels differ**: hue 208.1, sat 0.238, lum 124.5 in
+both. At 8-9 m in front of a 1.6 m eye that water is seen 18-20 deg above the horizontal, and whatever
+`MAT_water_lagoon` is doing at that incidence, no light comes back up through it.
+
+So the remaining 208 -> 190-192 hue is entirely the water shader (**materials**): a base/volume tint, not an
+upwelling. The bed geometry and its material slot are in place for whenever the shader starts transmitting.
+Measured for the record: near water hue 208.7 -> **207.8**, sat 0.272 -> 0.237, lum 118.5 -> 124.2.
+
+### QA-04-13 — cam 06's far field
+
+`env_city.build_presidio_buildings` gave every building in a cluster the same footprint and every cluster **one**
+roof material, so the horizon crop could not show more than two roof colours however many objects were in it.
+Now each building draws one of three archetypes (quarters / a wider barrack block / a long low stable, with
+independent width, depth, height, pitch and hip-vs-gable) and its own roof material, the cluster's nominal kind
+only weighting the coin (0.72 tile in a tile cluster, 0.30 in a membrane one). Three more Presidio ways were added
+through the band the crop actually looks at (the Letterman-Lombard Gate connector, the Main Post cross street and
+the cemetery loop). `scripts/env_cam06_audit.py -- --cast` now reports roof colours and footprints directly.
+
+| test (QA-04-13) | round 04 | round 06 | target |
+|---|---|---|---|
+| roof colours in the crop (material x instance_seed decile) | <= 2 by construction | **8** | >= 3 |
+| distinct roof footprints (4 m bins) | 1 per cluster | **13** | >= 2 |
+| ground samples: asphalt / gravel | 488 / 83 | **780 / 164** | paths readable |
+| building volumes resolved | 37 | 34 | >= 30 |
+| dome / far-shore contrast | 1.30:1 | 1.27:1 | >= 1.5:1 — **mist, lighting's** |
+
+### QA-04-14 — cam 02's foreground
+
+The bottom 12 % of cam 02's frame (rows 634-720) lands on the water **9-26 m** in front of the lens — world
+x 40-64, y -1..31 — and the near bank of the south embayment sits **7.4 m** away, just under the frame edge, so
+there was no shore in the strip at all to give an edge to. Two additions, both inside the strip rather than at the
+bank: a reed / agapanthus fringe standing **in** the shallows (0.2-3.2 m out, signed distance to the lagoon
+negative, 157 clumps along the 4-42 m arc from the camera), and `build_riprap` scaling its boulders up to 1.55x
+and 30 % denser within 40 m of that camera, with the waterline row pushed further out into the water.
+
+| test (QA-04-14) | round 04 | round 06 |
+|---|---|---|
+| strip ray-cast | water only | foliage **35.1 %**, rip-rap/stone **8.8 %**, water + bed 56.2 % |
+| columns carrying a dark silhouette (lum < 30) | 48.0 % | **78.8 %** |
+| strip lum / std | 93.7 / 53.2 | 60.5 / 41.6 |
+
+Ripple break-up in that strip is materials' half of the defect.
+
+### Performance
+
+| | round 5 | round 6 |
+|---|---|---|
+| ENV LOD0 | 13.40 M tris | **13.55 M** |
+| ENV LOD1 (viewport, cap 4.84 M) | 4.60 M | **4.66 M** |
+| ENV LOD2 | 0.64 M | 0.68 M |
+| objects in ENV | 5 080 | **5 723** |
+| shrub instances | ~1 100 | 1 239 (LOD1 434 k tris) |
+
+### Round-6 hand-offs
+
+- **Materials**: `MAT_lagoon_bed` is named by `env_build` and is still an ENV placeholder. More importantly, the
+  magenta probe above shows the near-field water returns **nothing** from below it — QA-04-8's hue is a water
+  shader property at 18-20 deg grazing, not an upwelling, so the tint has to be in `MAT_water_lagoon` itself.
+- **Materials / lighting**: the shore mass reads lum 72.9 against ref 169's 107.2 over the same crop. Foliage
+  albedo, not planting: the geometry, heights and spacing all pass.
+- **Lighting**: the frame-LEFT wing band is still 0.84 raw / 0.67 aligned and unchanged by ENV (foliage already
+  29.1 %); ENV's measured ceiling there is 110.5. cam 06's dome/far-shore contrast is 1.27:1 against a 1.5:1 test
+  and moves with mist, not with geometry.
+- **Lead / QA**: `cam05_podium` (320 566 1000 624) is the shore strip, not the Greek-key course. Use
+  `cam05_keyband` (330 526 990 554) and the per-column number. Also for the record, the frame-left band
+  (60-560 px) is the **south** wing and 1360-1860 is the **north** wing: cam 01's right vector is
+  `f x z = (f_y, -f_x)` = north. `docs/qa_round_04.md` (e) has the two labels the other way round.
+- `env_city.city_az`'s docstring said "compass = (270 - city_az) mod 360"; it is **(180 - city_az) mod 360**
+  (city_az 0 = +X = south = compass 180). Fixed; no behaviour depended on it.
+
+### Round-6 review follow-up (`docs/reviews/env_r6_review.md`) — same day
+
+All five findings fixed; the build is byte-for-byte the same picture (shrubs 1 239 instances with the same source
+histogram, screen cap 28/57 crowns / 50 m, frame-band relief moved 8 / shortened 3 / dropped 3 / kept 3,
+LOD1 4 659 716 tris, and every foliage / architecture / sky number below identical except where finding 2 moves
+lagoon-bed samples out of the "architecture" bucket, which is the point of it).
+
+1. **Camera stations are read, not copied.** New `env_lib.qa_camera(key, fallback_loc, fallback_lens)` returns the
+   `(loc, lens)` of the QA camera whose name contains `key` straight from `scripts/qa_cameras.py`; it returns
+   `None` when qa_cameras is importable but has no such camera (the caller drops that eye) and the literal
+   fallback only when qa_cameras cannot be imported at all. `env_build.BAND_EYES` (and `CAM02_XY`, used by the
+   rip-rap boost and the cam-02 reed fringe) and `env_trees.screen_height_cap`'s hero station and lens all come
+   from it now. The lead re-stationed cam 02 in QA round 04; a snapshot would have kept capping the shore against
+   the old station without saying so.
+2. **`env_sightlines.coverage` counted the lagoon bed as architecture.** `ENV_lagoon_bed` / `MAT_lagoon_bed` are
+   ground: `cam01_shore` architecture 34.9 -> **30.5 %** (ground 12.3 -> 16.7), `cam02_foreground` "stone"
+   14.1 -> **8.8 %** (water + bed 50.8 -> 56.2). Foliage figures are unchanged everywhere, and the wing bands, the
+   keyband, the rotunda body and the podium base are bit-identical (they see no water).
+3. **The bed split carried the whole terrain's vertex array into both halves.** `compact()` renumbers each half
+   onto the vertices it actually uses: `ENV_lagoon_bed` goes from 25 867 verts (22 450 of them loose) and a
+   732 x 731 m bounding box to **3 417 verts, 6 377 polys, 241 x 137 m** - which is the lagoon.
+4. **`band_sightline_cap` no longer doubles as a global height rule.** It returns **None** where no camera's ray
+   to the band passes over the point, and `put` applies the blanket **`SHRUB_H_CEILING` = 4.00 m** (renamed from
+   `SHORE_H_MAX`) to every shrub in the build, sight line or not. Behaviour is identical; what is capping what is
+   now legible. `SHORE_H_MIN` 0.55 m still floors the sight-line cap itself.
+5. `env_sheet_r6.panel` draws a "missing" placeholder instead of raising when a round-04 QA render is absent
+   (they live in the main checkout only).

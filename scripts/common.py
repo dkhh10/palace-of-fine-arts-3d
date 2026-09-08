@@ -222,6 +222,7 @@ PLACEHOLDER_COLORS = {
     "MAT_column_tan_inner": (0.45, 0.32, 0.17, 1.0),
     "MAT_concrete_inner": (0.36, 0.27, 0.16, 1.0),
     "MAT_plaster_ceiling": (0.50, 0.40, 0.25, 1.0),
+    "MAT_plaster_ceiling_rib": (0.42, 0.34, 0.22, 1.0),
     "MAT_drum_band": (0.28, 0.18, 0.10, 1.0),
     "MAT_concrete_colonnade": (0.44, 0.31, 0.17, 1.0),
     "MAT_ornament_concrete": (0.42, 0.29, 0.17, 1.0),

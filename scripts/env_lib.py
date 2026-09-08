@@ -34,6 +34,11 @@ ENV_PLACEHOLDER_COLORS = {
     "MAT_shrub_dry": ((0.26, 0.15, 0.07, 1.0), 0.9),
     "MAT_reeds": ((0.32, 0.24, 0.10, 1.0), 0.85),
     "MAT_water_lagoon": ((0.04, 0.09, 0.08, 1.0), 0.08),
+    # QA-04-8: the near field reads blue (hue 209) instead of teal (190-192).  Lighting showed the sky hue is
+    # exact, so the missing green is the lagoon's own upwelling - the bed under the shallow shelf, which was on
+    # MAT_soil (brown).  ENV names MAT_lagoon_bed; until the library ships it this placeholder is the algae /
+    # silt olive the bed reads as through 0.3-0.9 m of water (refs 022, 169, 063).
+    "MAT_lagoon_bed": ((0.055, 0.085, 0.048, 1.0), 0.92),
     "MAT_backdrop_building": ((0.40, 0.31, 0.19, 1.0), 0.85),
     "MAT_backdrop_roof": ((0.17, 0.16, 0.145, 1.0), 0.85),
     # far-field only (QA-03-11): asphalt carriageways and the Presidio's red clay tile roofs. Not in the library
@@ -110,6 +115,25 @@ def mat(name):
     if name in FOLIAGE_MATS:
         m.use_backface_culling = False
     return m
+
+
+def qa_camera(key, fallback_loc, fallback_lens=None):
+    """`(location, lens)` of the QA camera whose name contains `key`, read from `scripts/qa_cameras.py`.
+
+    The sight-line caps (`env_build.band_sightline_cap`, `env_trees.screen_height_cap`) are only correct if they
+    use the stations the QA renders actually use, and those move: the lead re-stationed cam 02 in QA round 04.
+    A hand-copied snapshot would keep capping against the old station without saying so.  Returns **None** if
+    qa_cameras is importable but has no such camera (the caller drops that eye); returns the literal fallback
+    only if qa_cameras cannot be imported at all, so an ENV build outside the repo still runs.
+    """
+    try:
+        import qa_cameras
+    except Exception:                                    # noqa: BLE001 - running without the repo on sys.path
+        return (tuple(fallback_loc), fallback_lens)
+    spec = next((c for c in qa_cameras.CAMERAS if key in c["name"]), None)
+    if spec is None:
+        return None
+    return (tuple(spec["loc"]), spec.get("lens", fallback_lens))
 
 
 def mat_or(preferred, fallback):

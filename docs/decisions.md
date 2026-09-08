@@ -107,3 +107,32 @@ Format: date · decision · why · consequences. Newest at the bottom.
   drum +50 %, dome +12 %) breaks the ref 063 match. cam05 re-stationed to (28.1, 111.8, 1.5), target (0,0,20), 40 mm.
 - **Eevee preview regression** is the LOD0 render set (ORN instances 26.7 M + ENV 17.9 M of 50.4 M), not ARCH bevels (0.5 %).
   QA previews render at LOD1 (`common.set_lod(viewport=1, render=1)` in the Eevee pass); Cycles finals stay LOD0.
+
+## 2026-09-08 · Polish rounds 2-3 (lead)
+- **QA-04-11 / QA-02-17: no rotunda proportion change for cam02.** Architecture fitted ref 062 on four landmark rows: az 35.3°,
+  D 91.7 m, 42.4 mm, chi² 4.09 (`arch_ref062_fit.py`, overlay `renders/qa_comparisons/arch_qa04_11_ref062_fit.png`). The dome
+  cap can only show above the near attic beyond 76 m regardless of lens or podium radius, so the photo is simply farther away;
+  same conclusion as ref 063 (115 m / 40 mm). cam01 passes three photos within 1 %, so the stack stays. Flagged for ENV: the
+  OSM lagoon polygon puts the fitted station (-73, 55) in water while the photo's foreground is dry garden, i.e. the NE
+  shoreline in site_local.json is probably short; verify against the satellite tiles.
+- **cam02 station**: QA's probe (468 stations) chose (70.5, 25.6, 1.1) -> (0,0,21.1), 24 mm on the SSE shore path; the NE
+  ref-062 view is not reproducible on this build without water in the foreground.
+- **Ceiling rosette sockets**: 16 band sockets on the vertical inner face of the base ring (+Y = -radial), 8 coffer-floor
+  sockets facing down; from the reference sheet's "base ring with rosette band above the inner arches".
+- **Rib plate material**: rib plates (saucer ribs + 8 vault coffer plates) carry `MAT_plaster_ceiling_rib`, panels keep theirs,
+  so materials can separate rib and panel tone (ref 083 ribs L 22-50 vs panels 93-130).
+- **Watchdog**: liveness = CPU time at centisecond resolution; a Metal GPU render accrues ~0.3 s CPU per minute, so the old
+  integer-second test killed three live renders (QA-03-1). GPU-utilization readings are useless here (70-80 % idle).
+- **Exposure/chroma**: lighting r10 showed the AgX shoulder was killing saturation; bias 1.75 -> 1.25 with sky camera/glossy
+  boosts x1.41 keeps the sky and lagoon. The shade collapse this caused (QA-04-2) is lighting r11's first item.
+- **Materials direction after three "clean CAD" rounds**: stop tuning procedural noise; bring in photo-based grunge/streak/
+  waterline maps at 0.3-3 m feature scale (materials r6). If the hero does not move in round 5, consider texture projection
+  from the reference photos.
+- **2026-09-08 · QA-04-12 saved Eevee viewport state** (lighting r11): raytracing ON in `apply_viewport_eevee`, `light_threshold`
+  0.05 -> 0.01 (0.05 culled the eight vault emitters: viewport coffer 0.218 -> 0.320), shadow_pool_size 512 viewport / 1024
+  preview (previews were logging "Shadow buffer full"), taa 8/16 kept. The Eevee vault blocker (QA-04-1) was the probe bake
+  running on the Eevee cutoff rig; `light_probes.bake` now bakes the physical rig and restores the override, so
+  `scripts/lead_build.sh` (build then bake) is the only valid master build.
+- **QA-04-2 shaded-stone hue is albedo, not lighting**: three independent lighting levers (diffuse sky boost, cool shade fill at
+  two elevations) all warm the shaded attic further or break the sunlit/near-water numbers; assigned to materials. cam03's
+  reference (ref 128) is a midday photo, so its 0.5-of-ref shade target is not a golden-hour number: QA to re-base that test.
