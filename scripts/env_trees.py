@@ -485,6 +485,53 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
     return out
 
 
+# ------------------------------------------------- QA-04-6: the screen may not tower over the entablature
+# Ref 169 shows the screen behind both wings topping out only a few metres over the colonnade cornice.  Round 6
+# measured the hero's frame-RIGHT band at 74.6 % foliage against the frame-left band's 30.5 %, and the single
+# biggest contributor (15.9 % of the box on its own) was a screen eucalyptus at (-79.4, -23.3): it stands 113 m
+# from the hero camera while the wing it is meant to sit behind is 129 m away, so a 25 m crown reads 77 % taller
+# than the 16.4 m entablature.  `frame_band_relief` cannot touch it - `behind="colonnade"` exempts it on purpose,
+# because that IS where the screen belongs - so the discipline has to be a height cap, and the honest one is the
+# same sight line the shore shrubs use: the crown may stand SCREEN_OVER of the frame height over the cornice.
+# Only trees that really are behind a wing from the hero (the exact `_crosses` test) are capped.
+COLONNADE_TOP_Z = 16.0        # arch_params COLONNADE_ABACUS 14.0 + COLONNADE_ENTABLATURE_H 2.4, on the -0.45 lawn
+COLONNADE_ARC = ((-11.2, 84.7), 117.4)      # arch_params COL_ARC_CENTER / COL_ARC_R
+SCREEN_OVER = 0.022           # fraction of cam 01's frame height a screen crown may stand over the cornice
+SCREEN_H_FLOOR = 11.0         # never cut a screen tree below this: it has to stay a screen
+
+
+def screen_height_cap(entries, colonnade_polys, cam=(-14.1, 100.0, 1.6), lens=20.0, ground=-0.45, verbose=True):
+    """Lower any screen tree that stands over the colonnade cornice by more than SCREEN_OVER of the frame."""
+    half_h = (0.5 * 36.0 / lens) * 9.0 / 16.0
+    (cx, cy), R = COLONNADE_ARC
+    out, cut, metres = [], 0, 0.0
+    for e in entries:
+        sp, x, y, h, tag = e
+        if not _crosses(cam, x, y, colonnade_polys):
+            out.append(e)
+            continue
+        dx, dy = x - cam[0], y - cam[1]
+        d = math.hypot(dx, dy)
+        ox, oy = cam[0] - cx, cam[1] - cy
+        b = (ox * dx + oy * dy) / d
+        disc = b * b - (ox * ox + oy * oy - R * R)
+        if disc <= 0.0:
+            out.append(e)
+            continue
+        d_col = -b + math.sqrt(disc)                       # the wing arc along this bearing
+        tan_top = (COLONNADE_TOP_Z - cam[2]) / d_col + SCREEN_OVER * 2.0 * half_h
+        h_max = max(SCREEN_H_FLOOR, cam[2] + tan_top * d - ground)
+        if h > h_max + 0.05:
+            metres += h - h_max
+            cut += 1
+            h = h_max
+        out.append((sp, x, y, h, tag))
+    if verbose:
+        print(f"[env_trees] screen height cap: lowered {cut} of {len(entries)} screen crowns "
+              f"({metres:.0f} m total, cornice + {SCREEN_OVER * 100:.1f} % of frame at cam 01)")
+    return out
+
+
 # ----------------------------------------------------------------------------- QA-02-7 sun relief
 # The wing faces that carry the hero composition must be sunlit. At el 7.4 deg the sun's rays are nearly flat, so a
 # crown 40 m up-sun of the entablature only has to be ~5 m taller than it to put it in shade. The round-02 master had
@@ -656,7 +703,7 @@ FRAME_BANDS = [
     # cypress_02 (-73.7, -1.0) came to be 17.8 % of this box on its own - the screen is laid out in polar
     # coordinates about (0, 52) but the wings are struck from (-11.2, 84.7), so "outside the wing in C-polar" is
     # not "behind the wing from the hero" everywhere along the sweep.
-    dict(cam="_qa_01_", x0=0.775, x1=0.985, x0_exit=0.775, x1_exit=0.985, y0=0.40, y1=0.60,
+    dict(cam="_qa_01_", x0=0.760, x1=0.985, x0_exit=0.760, x1_exit=0.985, y0=0.40, y1=0.60,
          behind="colonnade", pin=("P", "C"), label="QA-04-6 hero north-wing band"),
 ]
 CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
@@ -838,7 +885,7 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
         k += 1
     plan = list(PLAN)
     if colonnade_polys and hall_poly:
-        plan += redwood_screen(colonnade_polys, hall_poly, hall_field)
+        plan += screen_height_cap(redwood_screen(colonnade_polys, hall_poly, hall_field), colonnade_polys)
         # QA-02-7: keep the low sun off the colonnade faces (see shadow_relief)
         plan = shadow_relief(plan, colonnade_polys, lagoon_field)
 

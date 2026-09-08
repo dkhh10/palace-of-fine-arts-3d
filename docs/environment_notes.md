@@ -135,24 +135,24 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |
 |---|---|---|---|---|---|
-| 00 | pine | -44 | 4 | 17 | A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10) |
+| 00 | pine | -90 | -2 | 17 | A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10) |
 | 01 | redwood | -40 | -2 | 16 | A young redwood at the north arch (ref 070) |
-| 02 | cypress | -44 | -1 | 20 | A dark mass right of the dome |
-| 03 | pine | -46 | 8 | 18 | A cluster, second crown |
-| 04 | willow | -40 | 16 | 10 | A pale weeping willow at the water in front of the cluster (ref 169) |
-| 05 | broadleaf | -49 | 13 | 11 | A shore broadleaf at cam02's right edge |
-| 06 | cypress | -48 | 0 | 23 | A cluster depth (QA-01-6: mass kept dense after the move west) |
-| 07 | pine | -52 | 6 | 20 | A cluster depth |
-| 08 | broadleaf | -30 | 30 | 8 | P peninsula bed, right of the rotunda (cam01 x 0.71-0.78) |
-| 09 | willow | -22 | 38 | 7 | P low willow at the water in front of the podium (cam01 x 0.64-0.71) |
-| 10 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
-| 11 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
-| 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
-| 13 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
-| 14 | cypress_column | -47 | -39 | 22 | A2 tall column right of the rotunda (user image x~1020) |
-| 15 | pine | -47 | -13 | 17 | A2 strip along the north wing (kept below the colonnade entablature) |
-| 16 | cypress_column | -58 | -12 | 27 | A2 second column (user image x~1220) |
-| 17 | cypress | -74 | -1 | 20 | A2 at the wing's first box |
+| 02 | pine | -90 | 2 | 18 | A cluster, second crown |
+| 03 | willow | -86 | 10 | 10 | A pale weeping willow at the water in front of the cluster (ref 169) |
+| 04 | broadleaf | -85 | 8 | 11 | A shore broadleaf at cam02's right edge |
+| 05 | cypress | -96 | -7 | 23 | A cluster depth (QA-01-6: mass kept dense after the move west) |
+| 06 | pine | -90 | 1 | 20 | A cluster depth |
+| 07 | broadleaf | -30 | 30 | 8 | P peninsula bed, right of the rotunda (cam01 x 0.71-0.78) |
+| 08 | willow | -22 | 38 | 7 | P low willow at the water in front of the podium (cam01 x 0.64-0.71) |
+| 09 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
+| 10 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
+| 11 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
+| 12 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
+| 13 | willow | 9 | 46 | 9 | P hero-shore willow, ref 169 frame x 0.33-0.42 |
+| 14 | willow | -2 | 47 | 7 | P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair) |
+| 15 | willow | -12 | 45 | 8 | P hero-shore willow, ref 169 frame x 0.56-0.64 |
+| 16 | cypress_column | -47 | -39 | 22 | A2 tall column right of the rotunda (user image x~1020) |
+| 17 | cypress | -92 | -3 | 20 | A2 at the wing's first box |
 | 18 | eucalyptus | -90 | 5 | 20 | B big eucalyptus on the strip (ref 141) |
 | 19 | pine | -90 | 22 | 16 | B |
 | 20 | willow | -100 | 37 | 9 | B willow at the water (refs 144/145) |
@@ -161,7 +161,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 23 | cypress_column | -112 | 40 | 24 | B tall column beyond the north pylon (ref 169 right) |
 | 24 | cypress_column | 35 | 20 | 16 | C cypress column left of the rotunda (user image x~290): QA-03-10/-13 26 -> 16 m, the user image spire tops out at the colonnade cornice |
 | 25 | cypress_column | 30 | 26 | 13 | C second column (user image x~330), south lobe; QA-03-13 24 -> 13 m |
-| 26 | broadleaf | 31 | 26 | 9 | C small dark tree left of the rotunda (user image x~410); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05 |
+| 26 | broadleaf | 31 | 26 | 8 | C small dark tree left of the rotunda (user image x~410); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05 |
 | 27 | eucalyptus | 62 | -30 | 30 | C broad eucalyptus behind the south wing (ref 169 left) |
 | 28 | pine | 62 | -46 | 18 | C QA-01-6: moved out of cam03 (was 24,-22 = 7 m in front of the camera) |
 | 29 | broadleaf | 74 | -38 | 10 | C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera) |
@@ -220,57 +220,57 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 82 | cypress | 47 | -25 | 19 | E1 screen behind the colonnade |
 | 83 | redwood | 60 | -17 | 19 | E1 screen behind the colonnade |
 | 84 | pine | 63 | -13 | 19 | E1 screen behind the colonnade |
-| 85 | pine | 66 | -8 | 21 | E1 screen behind the colonnade |
+| 85 | pine | 66 | -8 | 20 | E1 screen behind the colonnade |
 | 86 | cypress | 71 | -6 | 20 | E1 screen behind the colonnade |
-| 87 | redwood | 88 | 39 | 16 | E1 screen behind the colonnade |
+| 87 | redwood | 88 | 39 | 18 | E1 screen behind the colonnade |
 | 88 | redwood | 112 | 41 | 20 | E1 screen behind the colonnade |
 | 89 | redwood | 112 | 46 | 20 | E1 screen behind the colonnade |
 | 90 | redwood | 35 | -42 | 24 | E2 screen behind the colonnade |
 | 91 | eucalyptus | 40 | -40 | 22 | E2 screen behind the colonnade |
 | 92 | cypress | 45 | -37 | 21 | E2 screen behind the colonnade |
-| 93 | eucalyptus | 62 | -24 | 22 | E2 screen behind the colonnade |
-| 94 | redwood | 67 | -21 | 22 | E2 screen behind the colonnade |
+| 93 | eucalyptus | 62 | -24 | 21 | E2 screen behind the colonnade |
+| 94 | redwood | 67 | -21 | 21 | E2 screen behind the colonnade |
 | 95 | redwood | 70 | -16 | 21 | E2 screen behind the colonnade |
 | 96 | redwood | 75 | -12 | 20 | E2 screen behind the colonnade |
-| 97 | redwood | 93 | 39 | 24 | E2 screen behind the colonnade |
-| 98 | eucalyptus | 117 | 41 | 24 | E2 screen behind the colonnade |
+| 97 | redwood | 93 | 39 | 19 | E2 screen behind the colonnade |
+| 98 | eucalyptus | 117 | 41 | 22 | E2 screen behind the colonnade |
 | 99 | redwood | 119 | 47 | 22 | E2 screen behind the colonnade |
 | 100 | redwood | 117 | 53 | 22 | E2 screen behind the colonnade |
-| 101 | cypress | 96 | 33 | 26 | E3 screen behind the colonnade |
-| 102 | eucalyptus | 124 | 36 | 25 | E3 screen behind the colonnade |
+| 101 | cypress | 96 | 33 | 20 | E3 screen behind the colonnade |
+| 102 | eucalyptus | 124 | 36 | 23 | E3 screen behind the colonnade |
 | 103 | eucalyptus | 126 | 42 | 24 | E3 screen behind the colonnade |
 | 104 | eucalyptus | 124 | 50 | 27 | E3 screen behind the colonnade |
 | 105 | cypress | -118 | 10 | 19 | E1 screen behind the colonnade |
 | 106 | redwood | -118 | 5 | 19 | E1 screen behind the colonnade |
 | 107 | cypress | -116 | -0 | 17 | E1 screen behind the colonnade |
-| 108 | redwood | -90 | 7 | 20 | E1 screen behind the colonnade |
+| 108 | redwood | -90 | 7 | 18 | E1 screen behind the colonnade |
 | 109 | redwood | -84 | -9 | 18 | E1 screen behind the colonnade |
 | 110 | redwood | -80 | -12 | 17 | E1 screen behind the colonnade |
 | 111 | redwood | -77 | -17 | 19 | E1 screen behind the colonnade |
 | 112 | pine | -61 | -30 | 19 | E1 screen behind the colonnade |
 | 113 | redwood | -57 | -33 | 19 | E1 screen behind the colonnade |
 | 114 | cypress | -52 | -35 | 21 | E1 screen behind the colonnade |
-| 115 | pine | -31 | -42 | 22 | E1 screen behind the colonnade |
+| 115 | pine | -31 | -42 | 21 | E1 screen behind the colonnade |
 | 116 | pine | -26 | -43 | 18 | E1 screen behind the colonnade |
 | 117 | cypress | -21 | -43 | 19 | E1 screen behind the colonnade |
 | 118 | redwood | -125 | 7 | 21 | E2 screen behind the colonnade |
-| 119 | redwood | -125 | 1 | 25 | E2 screen behind the colonnade |
+| 119 | redwood | -125 | 1 | 23 | E2 screen behind the colonnade |
 | 120 | cypress | -122 | -4 | 21 | E2 screen behind the colonnade |
-| 121 | redwood | -97 | 1 | 22 | E2 screen behind the colonnade |
-| 122 | redwood | -98 | -6 | 21 | E2 screen behind the colonnade |
-| 123 | redwood | -85 | -20 | 23 | E2 screen behind the colonnade |
-| 124 | eucalyptus | -79 | -23 | 24 | E2 screen behind the colonnade |
-| 125 | redwood | -76 | -28 | 25 | E2 screen behind the colonnade |
-| 126 | cypress | -71 | -32 | 22 | E2 screen behind the colonnade |
-| 127 | redwood | -54 | -42 | 23 | E2 screen behind the colonnade |
-| 128 | redwood | -48 | -44 | 24 | E2 screen behind the colonnade |
-| 129 | redwood | -41 | -44 | 22 | E2 screen behind the colonnade |
-| 130 | eucalyptus | -37 | -48 | 23 | E2 screen behind the colonnade |
+| 121 | redwood | -97 | 1 | 20 | E2 screen behind the colonnade |
+| 122 | redwood | -98 | -6 | 20 | E2 screen behind the colonnade |
+| 123 | redwood | -85 | -20 | 21 | E2 screen behind the colonnade |
+| 124 | eucalyptus | -79 | -23 | 21 | E2 screen behind the colonnade |
+| 125 | redwood | -76 | -28 | 21 | E2 screen behind the colonnade |
+| 126 | cypress | -71 | -32 | 21 | E2 screen behind the colonnade |
+| 127 | redwood | -54 | -42 | 22 | E2 screen behind the colonnade |
+| 128 | redwood | -48 | -44 | 22 | E2 screen behind the colonnade |
+| 129 | redwood | -41 | -44 | 21 | E2 screen behind the colonnade |
+| 130 | eucalyptus | -37 | -48 | 22 | E2 screen behind the colonnade |
 | 131 | eucalyptus | -21 | -51 | 22 | E2 screen behind the colonnade |
 | 132 | redwood | -132 | 6 | 26 | E3 screen behind the colonnade |
-| 133 | cypress | -132 | -1 | 24 | E3 screen behind the colonnade |
-| 134 | cypress | -127 | -7 | 26 | E3 screen behind the colonnade |
-| 135 | redwood | -103 | -11 | 23 | E3 screen behind the colonnade |
+| 133 | cypress | -132 | -1 | 23 | E3 screen behind the colonnade |
+| 134 | cypress | -127 | -7 | 23 | E3 screen behind the colonnade |
+| 135 | redwood | -103 | -11 | 21 | E3 screen behind the colonnade |
 <!-- PLAN_TABLE_END -->
 
 ## Polish round 1 (QA round 02 defects) — 2026-09-07

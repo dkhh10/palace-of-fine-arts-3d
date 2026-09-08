@@ -152,7 +152,7 @@ def coverage(move_back=(), step=2, shift_aspect=True):
     qa_cameras.ensure(scene)
     dg = bpy.context.evaluated_depsgraph_get()
     print(f"\n[coverage] shift_y aspect factor {'ON (correct)' if shift_aspect else 'OFF (round-4 boxes)'}")
-    print(f"{'box':18s} {'foliage':>8s} {'building':>9s} {'ground':>8s} {'sky':>6s}")
+    print(f"{'box':18s} {'foliage':>8s} {'building':>9s} {'ground':>8s} {'sky':>6s} {'arch cols':>10s}")
     out = {}
     for name, (cam_key, box, res) in COVERAGE_BOXES.items():
         spec = next(c for c in qa_cameras.CAMERAS if cam_key in c["name"])
@@ -166,8 +166,14 @@ def coverage(move_back=(), step=2, shift_aspect=True):
         x0, y0, x1, y1 = box
         tot = fol = bld = gnd = 0
         hist = {}
-        for py in range(y0, y1, step):
-            for px in range(x0, x1, step):
+        # QA-03-13 / QA-04-4 phrase the podium test as "visible over >= 60 % of its LENGTH", so the area
+        # fractions are not the acceptance number: a column of the box counts as visible when any sample in it
+        # resolves to architecture.
+        cols_any, cols_arch = 0, 0
+        for px in range(x0, x1, step):
+            cols_any += 1
+            col_arch = False
+            for py in range(y0, y1, step):
                 sx = ((px + 0.5) / W - 0.5) * 2
                 sy = (0.5 - (py + 0.5) / H) * 2 \
                     + 2.0 * spec.get("shift_y", 0.0) * ((hw / hh) if shift_aspect else 1.0)
@@ -189,9 +195,12 @@ def coverage(move_back=(), step=2, shift_aspect=True):
                     gnd += 1
                 else:
                     bld += 1
-        out[name] = (fol / tot, bld / tot, gnd / tot, 1 - (fol + bld + gnd) / tot)
+                    col_arch = True
+            cols_arch += 1 if col_arch else 0
+        out[name] = (fol / tot, bld / tot, gnd / tot, 1 - (fol + bld + gnd) / tot,
+                     cols_arch / max(1, cols_any))
         print(f"{name:18s} {100 * out[name][0]:7.1f}% {100 * out[name][1]:8.1f}% "
-              f"{100 * out[name][2]:7.1f}% {100 * out[name][3]:5.1f}%")
+              f"{100 * out[name][2]:7.1f}% {100 * out[name][3]:5.1f}% {100 * out[name][4]:9.1f}%")
         if "--who" in common.script_args():          # which instances actually fill the box
             for nm, c in sorted(hist.items(), key=lambda kv: -kv[1])[:12]:
                 o = bpy.data.objects.get(nm)
