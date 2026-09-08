@@ -950,3 +950,26 @@ knob here that does not undo an accepted defect; this is environment's far-field
   render's entablature luminance sd at 28 against the photo's 64.
 * **water reflection 145.9 vs 168.9** (~0.2 EV dark) — carried over from round 09, not chased.
 * cam06 far-field contrast 1.22:1 — environment (above).
+
+### Item 7 (QA-03-16): the 4K timing test — ABORTED at the 60-minute limit, twice, and that is itself the result
+
+`blender -b --python scripts/light_r10_sweep.py -- --res 3840 2160 --samples 768 --timelimit 3600 --hero "tag=SHIP4K"`
+(the shipped round-10 rig, `apply_final_cycles`, `cycles.time_limit = 3600 s`).
+
+* Attempt 1 was killed at 24 min: the environment agent's r5 chain had the Metal GPU and my process had gained
+  0.04 s of CPU in 45 s. One GPU, two agents.
+* Attempt 2 ran on a free GPU for **1 h 32 min** and never wrote a frame. Its resident set dropped 1.76 GB -> 0.88 GB
+  at ~70 min (the render buffers being released) and its CPU time then flatlined at 1 s per 20 min, so it was past
+  the sampling stage and stuck in the tail — most likely the 3840x2160 compositor pass (`COMP_golden_hour` +
+  Mist + Depth) rather than Cycles itself. Killed per the brief's 60-minute rule.
+* **The sample count reached is not recoverable**: Blender writes background render progress to a carriage-return
+  stream that the redirected log does not capture. Anyone repeating this should add `--log-level 1` or write the
+  frame with `cycles.use_progressive_refine` off and poll `bpy.app.timers`, and should render the 4K frame with the
+  compositor DISABLED first to separate the two costs.
+
+What is measured and reliable: **cam01 at 1920x1080 / 64 spp takes 173 s on a quiet GPU and 205-256 s on a shared
+one** (five renders this round). Pure resolution scaling to 3840x2160 is 4x = ~690 s at 64 spp; `FINAL_SAMPLES = 768`
+is 12x that sample count before adaptive sampling claws any of it back. **The brief's "4K frame in under ~2 h"
+is not demonstrated, and `FINAL_SAMPLES = 768` should be treated as unvalidated at 4K until someone lands this
+test.** Recommendation to the lead: re-run it with the compositor off to isolate the cost, and if the compositor is
+the tail, either bake the haze into the world/volume or run the compositor as a separate pass on the saved EXR.
