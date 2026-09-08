@@ -185,7 +185,12 @@ COMP = dict(haze_strength=0.50,          # now the CAP: the maximum airlight fra
 # up into the vault. FILL models exactly that and nothing else - an up-facing area light under the vault, so it lights
 # the soffits and the coffers and adds almost nothing to what cam01 sees through the arch. It is an art bias, sized by
 # measurement; ENERGY is the one number to change if QA wants it dialled back.
-FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=1140.0,
+FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=3648.0,
+            # ROUND 11 (QA-04-7): 1140 -> 3648 (x3.2). Round 10 took half a stop out of the whole frame
+            # and never re-tuned the interior, so the round-09 rig fell from coffer/sky 0.384 to 0.261,
+            # out of QA's 0.35-0.55 window, while the soffit mean stayed on ref 083's 0.405. The sweep
+            # is in docs/lighting_notes.md 20.5: +1.0 of this knob is worth +0.062 coffer and only
+            # +0.019 soffit, because the central disk is the emitter the coffers see best.
             # ROUND 09: 7600 -> 1140 (x 0.15). 9000 in round 07, 7600 in round 08. Halving the sky in round 08b
             # left both fills oversized: the coffer field measured 1.016 of cam04's own sky (Cycles, round-09 rig)
             # against ref 083's 0.39, i.e. a ceiling as bright as the sky seen past it. The central disk is the
@@ -229,7 +234,10 @@ FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, en
 # QA-01-9 stop trading against each other. Cost on record: the two soffit boxes read 0.396 W / 0.674 E, a 1.7:1
 # imbalance against 1.14:1 at 90 deg - a narrow cone leaves the obliquest part of the vault to the sky alone.
 VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5, z=13.0,
-                  size=12.5, size_y=4.0, energy=3960.0, color=(1.0, 0.86, 0.68), spread_deg=45.0,
+                  # ROUND 11 (QA-04-7): 3960 -> 3564 (x0.9), the counterweight to FILL x3.2 above.
+                  # This knob trades 0.28 of soffit for 0.095 of coffer per unit, so a small cut here
+                  # keeps the soffit mean within 4 % of ref 083 while the disk lifts the coffer field.
+                  size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.86, 0.68), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
 # ----------------------------------------------------------------------------- QA-04-2: the shade fill
