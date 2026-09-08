@@ -1265,3 +1265,33 @@ aerosol / ozone / air density does, and part of the remaining gap is that the tw
 above the horizon in the two framings (the render's horizon is at y ~0.63 of frame, the photo's at ~0.54). Nothing
 was re-swept this round because nothing has changed that would move it. The only honest route left is a compositor
 sky gradient, which is an art bias on a physical sky and is the lead's call, not lighting's.
+
+### 20.10 Round 11 scoreboard, and what the lead has to do
+
+Comparison sheet: `renders/previews/lighting/light_r11_sheet.png` (before / after / reference for the three items,
+numbers burned into every cell).
+
+| item | before (QA round 04) | after (round 11) | verdict |
+|---|---|---|---|
+| QA-04-1 Eevee coffer / own sky | 0.034 (gap 0.227 from Cycles) | **0.325** (gap 0.062) | **closed** |
+| QA-04-1 Eevee soffit E | 0.142 (gap 0.380) | **0.419** (gap 0.113) | **closed** |
+| QA-04-1 Eevee soffit W | 0.399 (gap 0.110) | 0.546 (gap 0.230) | **cost, on record** |
+| QA-04-7 Cycles coffer / own sky | 0.261 | **0.387** | **closed** (window 0.35-0.55) |
+| QA-04-12 viewport ceiling | coffer 0.218 | **0.320** | **closed**, decision in 20.8 |
+| QA-04-2 cam03 near shaft | 7.25 | 7.23 | **open — occlusion + a midday reference; see 20.4** |
+| QA-04-2 shaded attic hue | 43.1 | 43.1 | **reassigned to materials, three ways; see 20.1 / 20.4** |
+| QA-04-6 sun angle | untested | shadow shift **-3 px** on the north wing | **confirmed correct; level is mat/env** |
+| QA-04-5 columns | 122.0 (1.27x) | 123.7 (1.29x) | open, 3 % from the test, materials |
+| QA-04-9 sky_left/sky_top | 0.922 | 0.922 | open, physical ceiling 0.965 |
+| hero sunlit attic sat / R-B / lum | 0.554 / 121.9 / 180.4 | **0.556 / 122.4 / 180.4** | held, as required |
+| near-water saturation | 0.272 | **0.275** | held inside 0.22-0.32 |
+
+**The lead has to re-run `scripts/lead_build.sh`, not just `build_master.py`.** The QA-04-1 fix is half in the rig
+(`EEVEE_VAULT` x6 / 21 m) and half in the bake (`light_probes.bake` now forces the physical vault rig), so
+master.blend needs both the new LIGHT collection and a fresh probe bake, in that order, which is exactly what
+`lead_build.sh` does. A `build_master.py` on its own would ship the new rig on top of the old, starved bake.
+
+Two things for `docs/decisions.md`: the QA-04-12 decision in 20.8 (raytracing on, `light_threshold` 0.05 -> 0.01,
+shadow pools 256 -> 512 / 512 -> 1024), and the fact that `SHADE_FILL` exists, is measured, and ships at 0 W/m2 with
+6 W/m2 as the largest value that has an acceptable sunlit cost, should the art direction ever want a cooler shade at
+the price of the near-water saturation.
