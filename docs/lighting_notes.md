@@ -1220,3 +1220,48 @@ tabulates a window for — are what round 11 lands.
 Both numbers QA flagged land inside the box, and so does the soffit mean. The soffit W is the price and it is
 stated as such: W and E move together in Eevee at every cutoff tried (x3/25 m gives 0.382 / 0.320, x6/21 m gives
 0.546 / 0.419) while Cycles wants them 0.22 apart in the other direction, so no single override lands all three.
+
+### 20.8 QA-04-12 — the decision, and the reason it is not the one the question implied
+
+QA asked whether the saved Eevee viewport state (taa 8/16, **raytracing off**) was intended, and the lead's brief
+asked lighting to decide whether the viewport preset should carry raytracing on, "since Eevee's screen-traced ambient
+is likely what lights the vault". **It is not.** Measured on cam04 at 1280x720 with the round-11 rig and a physical
+bake, turning raytracing ON in `apply_viewport_eevee` moved the coffer field **0.218 -> 0.218** and the soffit E
+0.084 -> 0.089. Nothing. Round 10's "screen-traced ambient" story does not survive a correct bake.
+
+The real difference between the two Eevee presets was **`light_threshold`**: 0.05 in the viewport preset against 0.01
+in the preview preset. At 0.05 Eevee culls the eight vault emitters wherever their estimated contribution is small,
+which is precisely the coffered dome. cam04, 1280x720:
+
+| viewport preset | soffit W | soffit E | coffer / own sky | frame |
+|---|---|---|---|---|
+| as saved (rt off, threshold 0.05) | 0.315 | 0.084 | **0.218** | 12.2 s |
+| rt on, threshold 0.05 | 0.315 | 0.089 | **0.218** | 11.2 s |
+| **rt on, threshold 0.01 (shipped)** | 0.345 | 0.132 | **0.320** | 24.2 s |
+| `apply_preview_eevee` for comparison | 0.546 | 0.419 | 0.325 | — |
+| Cycles ground truth | 0.316 | 0.532 | 0.387 | — |
+
+**Decision (for docs/decisions.md): raytracing goes back ON in `apply_viewport_eevee`, and `light_threshold` goes
+0.05 -> 0.01.** Raytracing is restored because it is what it always was — screen-space reflections for the lagoon,
+which is most of what a viewport user flies over — and it measured free on cam04 (11.2 s against 12.2 s); it is NOT
+restored on the vault's account, because it does nothing there. The threshold is the fix: it takes the viewport
+coffer to 0.320, i.e. within 0.067 of Cycles and level with the preview preset's 0.325, so the ceiling is readable
+when you fly under it. Also `shadow_pool_size` 256 -> 512 in the viewport preset and 512 -> 1024 in the preview
+preset: the QA previews were logging "Shadow buffer full (2118 / 2048)" on **every** frame, i.e. Eevee was silently
+dropping shadow pages. taa 8 / 16 is kept.
+
+### 20.9 QA-04-5 and QA-04-9 — measured, and no knob without a bigger cost
+
+**QA-04-5, the columns.** The shipped round-11 hero measures the QA mask at **123.7** against a test of <= 120
+(ref 95.8), i.e. it misses by 3 %, and the round-04 render of the *same rig* measured 122.0: the defect is inside
+the run-to-run spread of its own threshold. Everything lighting can do to it makes something else worse — the shade
+fill pushed it to 1.35-1.40x, and the only remaining lever, `SKY_GLOSSY_BOOST`, is what holds the lagoon's
+reflection, which is already 0.86x of ref 169 (146.2 against 168.9). QA's own round-04 measurement of the render's
+entablature luminance sd (28 against the photo's 64) says what is left is surface contrast, not level. **Materials.**
+
+**QA-04-9, the horizon haze band.** sky_left / sky_top is **0.922** against a 1.05-1.29 window, unchanged, and
+round 10 established why with a five-row atmosphere sweep: the physical sky model saturates at 0.965 no matter what
+aerosol / ozone / air density does, and part of the remaining gap is that the two boxes sit at different heights
+above the horizon in the two framings (the render's horizon is at y ~0.63 of frame, the photo's at ~0.54). Nothing
+was re-swept this round because nothing has changed that would move it. The only honest route left is a compositor
+sky gradient, which is an art bias on a physical sky and is the lead's call, not lighting's.
