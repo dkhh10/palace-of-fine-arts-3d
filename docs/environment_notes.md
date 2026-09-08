@@ -1056,6 +1056,11 @@ names, `ENV_ground_colonnade_walk` (`env_build.build_paving`):
   how a repaired walk actually looks - not salt-and-pepper.
 * Two triangles per slab; the whole walk is under 2 k triangles.
 
+The *level* half of QA-05-11's acceptance ("within 30 % of the shade window") is not ENV's: QA-05-1 puts cam 03's
+shade at **0.063** of the sunlit rotunda against a 0.30-0.70 window and calls it "bounced stone light only, no
+blue-sky component", which is the same missing ambient the wing bands measure above. ENV owns the **std** half -
+the structure inside the shade - and that is what the paving and the planting edge deliver.
+
 Plus the **planting edge** ref 128 shows: a low continuous row (agapanthus, low pittosporum, mahonia) on the soil
 band at the paving's edge (wing offset +2.8 m, 3 m spacing, p 0.60), and the existing foundation bed at +4.5 m
 tightened from 5.5 m / p 0.45 to 4.2 m / p 0.58. Both use the pale/dry families, per the QA-03-9 finding that
