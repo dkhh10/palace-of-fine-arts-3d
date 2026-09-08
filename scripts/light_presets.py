@@ -205,43 +205,38 @@ def apply_viewport_eevee(scene=None):
     e.shadow_step_count = 2
     e.shadow_resolution_scale = 0.5
     e.use_shadow_jitter_viewport = False
-    # QA-04-12, ROUND 11: raytracing goes back ON in the viewport preset, and the reason is measured, not stylistic.
-    # Eevee applies the baked irradiance volume through the screen trace; with raytracing off the rotunda vault reads
-    # coffer / own sky 0.218 and soffit E 0.084 (cam04, 1280x720, round-11 rig), against 0.325 / 0.419 with it on and
-    # a Cycles ground truth of 0.387 / 0.532. The ceiling is the one thing a viewport user flies UNDER, and at 0.084
-    # the east soffit is unreadable, so "fast" was buying an unusable frame. Kept cheap: half-resolution trace, low
-    # trace quality, roughness cut at 0.5, and the taa 8 / 16 sample counts are untouched.
-    e.use_raytracing = True
-    try:
-        e.ray_tracing_method = "SCREEN"
-        rt = e.ray_tracing_options
-        rt.resolution_scale = "2"
-        rt.use_denoise = True
-        rt.denoise_spatial = True
-        rt.screen_trace_quality = 0.15    # cheaper than the preview preset's 0.25
-        rt.trace_max_roughness = 0.5
-    except Exception as ex:
-        print("[light_presets] viewport raytracing options:", ex)
-    e.use_fast_gi = True
-    e.fast_gi_method = "GLOBAL_ILLUMINATION"
-    e.fast_gi_ray_count = 1              # half the preview preset's
-    e.fast_gi_step_count = 4
-    e.fast_gi_distance = 60.0
+    # QA-04-12, ROUND 11. The brief asked whether the viewport preset should carry raytracing on, because Eevee's
+    # screen-traced ambient was "likely what lights the vault". It is not, and the measurement is unambiguous: on
+    # cam04 at 1280x720 with the round-11 rig and a physical bake, turning raytracing ON in THIS preset moved the
+    # coffer field 0.218 -> 0.218 and the soffit E 0.084 -> 0.089. Nothing. So raytracing STAYS OFF here, which is
+    # what this preset is for (fast navigation); apply_preview_eevee keeps it on because the QA previews need
+    # screen-space reflections in the lagoon.
+    e.use_raytracing = False
+    e.use_fast_gi = False
     e.use_volumetric_shadows = False
     e.volumetric_tile_size = "16"
     e.volumetric_samples = 16
     e.use_overscan = False
     # ROUND 11, and this is the actual QA-04-12 answer: 0.05 culls the eight vault emitters wherever their estimated
-    # contribution is small, which is exactly the coffered dome. Raytracing was NOT the difference between the two
-    # Eevee presets - measured on cam04 at 1280x720, turning it on in this preset moved the coffer 0.218 -> 0.218 and
-    # the soffit E 0.084 -> 0.089, i.e. nothing. Dropping the threshold to the preview preset's 0.01 is what lets the
-    # viewport see the vault, and it costs nothing but eight more light evaluations.
+    # contribution is small, which is exactly the coffered dome. Dropping the threshold to the preview preset's 0.01
+    # is what lets the viewport see the vault - not raytracing (see the note above). cam04, 1280x720, round-11 rig:
+    #   threshold 0.05, rt off  soffit W 0.315  E 0.084  coffer 0.218
+    #   threshold 0.05, rt on   soffit W 0.315  E 0.089  coffer 0.218   <- raytracing buys nothing
+    #   threshold 0.01, rt off  soffit W 0.334  E 0.124  coffer 0.319   <- SHIPPED (7.9 s/frame)
+    # against a Cycles ground truth of W 0.316 / E 0.532 / coffer 0.387: the coffer lands within 0.07 of Cycles and
+    # level with apply_preview_eevee's 0.325, so the ceiling is readable when a viewport user flies under it.
     e.light_threshold = 0.01
+    # review fix 3: one try per assignment, and never a silent pass. Sharing a block meant that if "512"/"1024" were
+    # not valid enum items on this build, the irradiance pool assignment below it was skipped too and the baked
+    # LIGHTPROBE volumes went silently unused - exactly the failure this round spent a day diagnosing.
     try:
         e.shadow_pool_size = "512"      # round 11: 256 overflowed (see apply_preview_eevee)
+    except Exception as ex:
+        print("[light_presets] viewport shadow_pool_size:", ex)
+    try:
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
-    except Exception:
-        pass
+    except Exception as ex:
+        print("[light_presets] viewport gi_irradiance_pool_size:", ex)
     s.render.use_motion_blur = False
     apply_vault_for_engine("EEVEE")
     return s
@@ -282,14 +277,18 @@ def apply_preview_eevee(scene=None, samples=32):
     e.use_overscan = True
     e.overscan_size = 3.0
     e.light_threshold = 0.01
+    # ROUND 11: 512 -> 1024. At 512 the QA previews log "Shadow buffer full (2118 / 2048)" on every frame, i.e.
+    # Eevee is dropping shadow pages and the preview silently loses shadows it should be casting. The scene has
+    # ten shadow-casting lights (sun + disk + eight vault emitters) over 11 M triangles.
+    # review fix 3: separate try blocks, exceptions printed (see apply_viewport_eevee).
     try:
-        # ROUND 11: 512 -> 1024. At 512 the QA previews log "Shadow buffer full (2118 / 2048)" on every frame, i.e.
-        # Eevee is dropping shadow pages and the preview silently loses shadows it should be casting. The scene has
-        # ten shadow-casting lights (sun + disk + eight vault emitters) over 11 M triangles.
         e.shadow_pool_size = "1024"
+    except Exception as ex:
+        print("[light_presets] preview shadow_pool_size:", ex)
+    try:
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
-    except Exception:
-        pass
+    except Exception as ex:
+        print("[light_presets] preview gi_irradiance_pool_size:", ex)
     s.render.use_motion_blur = False
     apply_vault_for_engine("EEVEE")
     return s

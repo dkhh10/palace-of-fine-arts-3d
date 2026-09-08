@@ -53,7 +53,9 @@ RES = [int(v) for v in arg("--res", ["1280", "720"], n=2)]
 HERO_RES = [int(v) for v in arg("--herores", ["1920", "1080"], n=2)]
 SAMPLES = int(arg("--samples", ["64"], n=1)[0])
 EEVEE_SAMPLES = int(arg("--eevsamples", ["32"], n=1)[0])
-MASTER = arg("--master", [str(common.MAIN_ROOT / "master.blend")], n=1)[0]
+# review fix 6: honour $PFA_MAIN_ROOT the way common.REFERENCE_DIR does, so a relocated checkout still works
+MAIN_ROOT = Path(os.environ.get("PFA_MAIN_ROOT", str(common.MAIN_ROOT)))
+MASTER = arg("--master", [str(MAIN_ROOT / "master.blend")], n=1)[0]
 OUT = Path(arg("--out", [str(common.RENDERS / "previews" / "lighting")], n=1)[0])
 PREFIX = arg("--prefix", ["r11"], n=1)[0]
 OUT.mkdir(parents=True, exist_ok=True)
@@ -100,6 +102,7 @@ def case_tag(c):
 
 
 CASES = [parse(c) for c in CASES_IN] or [parse("tag=base")]
+_SHADE_FILL0 = dict(lb.SHADE_FILL, lamps=[dict(l) for l in lb.SHADE_FILL["lamps"]])   # pristine copy
 
 # --- calibration first: light_calibrate._fresh_scene() wipes the session, so it can never run after master is open
 AZ, EL, SRC = lb.solar_position("morning")
@@ -149,9 +152,10 @@ def apply_case(c):
     # `fill` is the TOTAL irradiance in W/m2 across the lamps, i.e. directly comparable with the sun's 67.3.
     coll = bpy.data.collections.get(lb.COLLECTION) or scene.collection
     lb.SUN_REFERENCE_W = energy
-    if c["fel"] >= 0.0:
-        lb.SHADE_FILL = dict(lb.SHADE_FILL,
-                             lamps=[dict(l, el=c["fel"]) for l in lb.SHADE_FILL["lamps"]])
+    # review fix 7: rebuild the elevation override from the PRISTINE definition every case, so a case with fel >= 0
+    # cannot leave its elevation behind for a later fel = -1 case to inherit.
+    lb.SHADE_FILL = dict(_SHADE_FILL0) if c["fel"] < 0.0 else dict(
+        _SHADE_FILL0, lamps=[dict(l, el=c["fel"]) for l in _SHADE_FILL0["lamps"]])
     lb.build_shade_fill(coll, energy=c["fill"])
     # interior fills (QA-04-7). Scale energy_W, not energy: apply_vault_for_engine rewrites energy from energy_W on
     # every preset call, so a scale written to energy alone would be silently undone before the render.
@@ -190,7 +194,8 @@ def shoot(cam_id, tag):
     scene.render.image_settings.color_depth = "8"
     if eng == "c":
         lp.apply_final_cycles(scene, samples=SAMPLES, time_limit=0.0)
-    elif eng == "v":                      # QA-04-12: the SAVED viewport preset (taa 8/16, raytracing off)
+    elif eng == "v":                      # QA-04-12: the viewport preset (taa 8/16, raytracing off,
+                                          # light_threshold 0.01 since round 11)
         lp.apply_viewport_eevee(scene)
     else:
         lp.apply_preview_eevee(scene, samples=EEVEE_SAMPLES)

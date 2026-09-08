@@ -1241,14 +1241,47 @@ which is precisely the coffered dome. cam04, 1280x720:
 | `apply_preview_eevee` for comparison | 0.546 | 0.419 | 0.325 | — |
 | Cycles ground truth | 0.316 | 0.532 | 0.387 | — |
 
-**Decision (for docs/decisions.md): raytracing goes back ON in `apply_viewport_eevee`, and `light_threshold` goes
-0.05 -> 0.01.** Raytracing is restored because it is what it always was — screen-space reflections for the lagoon,
-which is most of what a viewport user flies over — and it measured free on cam04 (11.2 s against 12.2 s); it is NOT
-restored on the vault's account, because it does nothing there. The threshold is the fix: it takes the viewport
-coffer to 0.320, i.e. within 0.067 of Cycles and level with the preview preset's 0.325, so the ceiling is readable
-when you fly under it. Also `shadow_pool_size` 256 -> 512 in the viewport preset and 512 -> 1024 in the preview
-preset: the QA previews were logging "Shadow buffer full (2118 / 2048)" on **every** frame, i.e. Eevee was silently
-dropping shadow pages. taa 8 / 16 is kept.
+**Decision (for docs/decisions.md), CORRECTED after the round-11 code review: raytracing stays OFF in
+`apply_viewport_eevee`; the fix is `light_threshold` 0.05 -> 0.01.** The first version of this section turned
+raytracing on and credited it with the vault, which contradicts the measurement three lines above it; the reviewer
+caught the contradiction and the measurement wins. Raytracing buys the viewport nothing on the ceiling and this
+preset exists to be fast, so it goes back to off (`apply_preview_eevee` keeps it on — the QA previews need
+screen-space reflections in the lagoon). Verified on the saved file with the shipped preset:
+
+| viewport preset, cam04 1280x720 | soffit W | soffit E | coffer / own sky | frame |
+|---|---|---|---|---|
+| threshold 0.05, rt off (round 10) | 0.315 | 0.084 | **0.218** | 12.2 s |
+| threshold 0.05, rt on | 0.315 | 0.089 | **0.218** | 11.2 s |
+| **threshold 0.01, rt off (SHIPPED)** | 0.334 | 0.124 | **0.319** | **7.9 s** |
+| `apply_preview_eevee` for comparison | 0.546 | 0.419 | 0.325 | — |
+| Cycles ground truth | 0.316 | 0.532 | 0.387 | — |
+
+The viewport coffer lands within 0.068 of Cycles and level with the preview preset's 0.325, so the ceiling is
+readable when a viewport user flies under it, and the preset got *faster* rather than slower. taa 8 / 16 is kept.
+Also `shadow_pool_size` 256 -> 512 in the viewport preset and 512 -> 1024 in the preview preset: the QA previews
+were logging "Shadow buffer full (2118 / 2048)" on **every** frame, i.e. Eevee was silently dropping shadow pages.
+Each pool assignment now sits in its own try/except that prints (they shared one block, so a rejected enum would
+have silently skipped the irradiance-pool assignment too and left the baked volumes unused).
+
+### 20.8b Review fixes, and the bake save sequence proved on a copy of master
+
+`scripts/light_r11_verify.py` runs the real `lead_build.sh` sequence on a COPY of master.blend and prints the vault
+state at each step (never touching the lead's file). On the lead's current master:
+
+| step | engine | vault energy | `energy_W` | cutoff |
+|---|---|---|---|---|
+| as opened (what `build_master.py` leaves) | BLENDER_EEVEE | 31680 W | 3960 | on @ 13 m |
+| after `light_probes.bake()` | BLENDER_EEVEE | 23760 W | 3960 | on @ 21 m |
+| after save + reopen | BLENDER_EEVEE | 23760 W | 3960 | on @ 21 m |
+
+i.e. the engine comes back, the Eevee override is what gets saved, and the physical energy survives untouched in
+`energy_W` (3960 here because that master predates the round-11 lighting.blend; the script says so). The bake itself
+costs **3.5 s**, so re-running it is free. The other review fixes: the probe-less early-out now happens *before* the
+vault is switched and the restore is in a `finally`, so a master with no light probes can no longer be saved holding
+the physical rig; the engine to restore is captured before anything forces BLENDER_EEVEE; `build_shade_fill` returns
+early at 0 W/m2 so three shadow-casting suns no longer ship for no light; `light_r11_sweep` honours
+`$PFA_MAIN_ROOT` and rebuilds `SHADE_FILL` from a pristine copy each case; and the round's intermediate previews are
+down from 127 MB to 5.4 MB (the four sheet inputs, re-encoded 8-bit, plus the sheet).
 
 ### 20.9 QA-04-5 and QA-04-9 — measured, and no knob without a bigger cost
 
@@ -1277,7 +1310,7 @@ numbers burned into every cell).
 | QA-04-1 Eevee soffit E | 0.142 (gap 0.380) | **0.419** (gap 0.113) | **closed** |
 | QA-04-1 Eevee soffit W | 0.399 (gap 0.110) | 0.546 (gap 0.230) | **cost, on record** |
 | QA-04-7 Cycles coffer / own sky | 0.261 | **0.387** | **closed** (window 0.35-0.55) |
-| QA-04-12 viewport ceiling | coffer 0.218 | **0.320** | **closed**, decision in 20.8 |
+| QA-04-12 viewport ceiling | coffer 0.218 | **0.319** | **closed**, decision in 20.8 (raytracing OFF; `light_threshold` was the fix) |
 | QA-04-2 cam03 near shaft | 7.25 | 7.23 | **open — occlusion + a midday reference; see 20.4** |
 | QA-04-2 shaded attic hue | 43.1 | 43.1 | **reassigned to materials, three ways; see 20.1 / 20.4** |
 | QA-04-6 sun angle | untested | shadow shift **-3 px** on the north wing | **confirmed correct; level is mat/env** |
@@ -1291,7 +1324,7 @@ numbers burned into every cell).
 master.blend needs both the new LIGHT collection and a fresh probe bake, in that order, which is exactly what
 `lead_build.sh` does. A `build_master.py` on its own would ship the new rig on top of the old, starved bake.
 
-Two things for `docs/decisions.md`: the QA-04-12 decision in 20.8 (raytracing on, `light_threshold` 0.05 -> 0.01,
-shadow pools 256 -> 512 / 512 -> 1024), and the fact that `SHADE_FILL` exists, is measured, and ships at 0 W/m2 with
+Two things for `docs/decisions.md`: the QA-04-12 decision in 20.8 (raytracing stays OFF in the viewport preset;
+`light_threshold` 0.05 -> 0.01 is the fix; shadow pools 256 -> 512 / 512 -> 1024), and the fact that `SHADE_FILL` exists, is measured, and ships at 0 W/m2 with
 6 W/m2 as the largest value that has an acceptable sunlit cost, should the art direction ever want a cooler shade at
 the price of the near-water saturation.

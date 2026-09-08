@@ -375,6 +375,12 @@ def build_shade_fill(coll, energy=None):
         bpy.data.objects.remove(o, do_unlink=True)
         if d is not None and d.users == 0:
             bpy.data.lights.remove(d)
+    if e_total <= 0.0:
+        # review fix 4: SHIPPED AT 0. Three SUN lamps at zero energy still cost three shadow maps in Eevee (the QA
+        # previews were already overflowing the shadow pool) and three lights in every Cycles light-tree traversal,
+        # for exactly no light. Build nothing; `energy` alone switches the whole rig on.
+        print(f"[light_build] {S['name']}: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)")
+        return []
     made = []
     for k, cfg in enumerate(S["lamps"]):
         name = f"{S['name']}_{k:02d}"

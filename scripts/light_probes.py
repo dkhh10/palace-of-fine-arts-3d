@@ -108,43 +108,58 @@ def bake(scene=None, free_first=True, physical_vault=True):
         bake taken with the EEVEE override (as shipped in round 10) -> coffer / own sky 0.035
         bake taken with the PHYSICAL rig (this fix)                 -> see docs/lighting_notes.md section 20
     A light probe volume is supposed to store the scene's real indirect light, so baking a render-time engine hack
-    into it was simply a bug. The override is restored afterwards, so the SAVED Eevee state is unchanged."""
+    into it was simply a bug.
+
+    ROUND-11 REVIEW FIXES 1 and 2. Both the vault rig and the render engine are restored in a `finally`, and the rig
+    that is restored is decided from the engine the file arrived with, captured BEFORE anything is forced:
+      * the probe-less early-out used to sit after the vault switch, so a master with no LIGHT_PROBE objects was left
+        holding the physical energies and `--save` wrote them as the saved "Eevee" state;
+      * `restore` used to be read after `s.render.engine` had already been forced to BLENDER_EEVEE, so `--bake --save`
+        on a Cycles-engine blend saved an Eevee engine with physical vault energies.
+    Whatever the file arrived as, it leaves as."""
     s = prepare_scene(scene)
-    restore = None
+    eng0 = s.render.engine                      # review fix 2: the engine the file ARRIVED with, before anything forces it
+    probes = [o for o in s.objects if o.type == "LIGHT_PROBE"]
+    if not probes:                              # review fix 1: bail out BEFORE touching the rig
+        print("[light_probes] no LIGHT_PROBE objects in the scene; nothing to bake")
+        return []
+    switched = False
     if physical_vault:
         try:
             import light_presets as lp
-            restore = "EEVEE" if s.render.engine.endswith("EEVEE") else None
             lp.apply_vault_for_engine("CYCLES")
+            switched = True
             print("[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the "
                   "scene's real indirect light, not the Eevee render-time override")
         except Exception as e:
             print("[light_probes] could not force the physical vault rig:", e)
-    probes = [o for o in s.objects if o.type == "LIGHT_PROBE"]
-    if not probes:
-        print("[light_probes] no LIGHT_PROBE objects in the scene; nothing to bake")
-        return []
-    if s.render.engine != "BLENDER_EEVEE":
-        s.render.engine = "BLENDER_EEVEE"
-    for p in probes:                       # probes must be visible to be baked
-        p.hide_viewport = False
-        p.hide_render = False
-    if free_first:
-        try:
-            bpy.ops.object.lightprobe_cache_free(subset="ALL")
-        except Exception as e:
-            print("[light_probes] cache_free:", e)
-    t = time.time()
-    res = bpy.ops.object.lightprobe_cache_bake(subset="ALL")
-    print(f"[light_probes] bake {res} in {time.time() - t:.1f}s for {[p.name for p in probes]}")
-    for p in probes:
-        print(f"[light_probes]   {p.name}: baked (grid {p.data.resolution_x}x{p.data.resolution_y}x{p.data.resolution_z})")
-    if restore:                    # put the render-time Eevee override back so the SAVED state is unchanged
-        try:
-            import light_presets as lp
-            lp.apply_vault_for_engine(restore)
-        except Exception as e:
-            print("[light_probes] could not restore the Eevee vault override:", e)
+    try:
+        if s.render.engine != "BLENDER_EEVEE":
+            s.render.engine = "BLENDER_EEVEE"   # the bake operator only exists for Eevee
+        for p in probes:                        # probes must be visible to be baked
+            p.hide_viewport = False
+            p.hide_render = False
+        if free_first:
+            try:
+                bpy.ops.object.lightprobe_cache_free(subset="ALL")
+            except Exception as e:
+                print("[light_probes] cache_free:", e)
+        t = time.time()
+        res = bpy.ops.object.lightprobe_cache_bake(subset="ALL")
+        print(f"[light_probes] bake {res} in {time.time() - t:.1f}s for {[p.name for p in probes]}")
+        for p in probes:
+            print(f"[light_probes]   {p.name}: baked "
+                  f"(grid {p.data.resolution_x}x{p.data.resolution_y}x{p.data.resolution_z})")
+    finally:
+        s.render.engine = eng0
+        if switched:
+            try:
+                import light_presets as lp
+                lp.apply_vault_for_engine("EEVEE" if eng0.endswith("EEVEE") else "CYCLES")
+            except Exception as e:
+                print("[light_probes] could not restore the vault rig:", e)
+        print(f"[light_probes] restored: engine {eng0}, vault rig "
+              f"{'EEVEE override' if eng0.endswith('EEVEE') else 'physical'}")
     return probes
 
 

@@ -124,9 +124,9 @@ if __name__ == "__main__":
     ], "ITEM 2  QA-04-1 / QA-04-7  cam04 rotunda vault  (Eevee must land within 0.15 of Cycles)"))
 
     rows.append(row([
-        cell(crop(Q / "round04_01_lagoon_hero_cycles.png", box=HERO_CROP), "BEFORE  round 04 hero, Cycles",
+        cell(crop(Q / "round04_01_lagoon_hero_cycles.png", size=(1920, 1080), box=HERO_CROP), "BEFORE  round 04 hero, Cycles",
              f_hero(Q / "round04_01_lagoon_hero_cycles.png")),
-        cell(crop(a.hero_after, box=HERO_CROP), "AFTER  r11 rig, Cycles", f_hero(a.hero_after)),
+        cell(crop(a.hero_after, size=(1920, 1080), box=HERO_CROP), "AFTER  r11 rig, Cycles", f_hero(a.hero_after)),
         cell(crop(m10.ALIGNED, panel=1, panels=3, box=HERO_CROP), "REF 169 warped into the render frame",
              f_hero(str(m10.ALIGNED), panel=1)),
     ], "ITEM 3  QA-04-2 hero half + QA-04-5  shaded north attic and the column shafts"))
