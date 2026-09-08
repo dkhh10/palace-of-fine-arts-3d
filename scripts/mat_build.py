@@ -811,11 +811,16 @@ def build_water():
     # it greys the reflection at the same time. The green therefore rides the SHEEN alone, which is grazing-weighted
     # and on a much tighter depth ramp (22 -> 5 m) than the chop's `near`, so it lands on the bottom-of-frame water
     # QA measures for hue and nowhere near the reflection column at 40-90 m.
+    # Round 6 review: the sheen SHIPS AT ZERO. Measured on the hero it bought 1.0 deg of near-water hue
+    # (204.8 -> 203.8, still far outside the 185-200 window) and moved the sunlit-stone reflection further from
+    # ref 169 on both axes (hue 43.8 -> 48.9 against 33.6, sat 0.143 -> 0.130 against 0.363); pushed to weight 1.0
+    # over a 70 m ramp it took the reflection to hue 134, green. It is left wired, at 0, as the record of the
+    # third measured lever: see the QA-04-8 table in docs/materials_notes.md. What is kept from round 6 is the
+    # near-neutral murk (the r6a green murk greyed the reflection) and the 62 m chop band.
     murk = t.mix(murk_far, C(0.132, 0.172, 0.144), C(0.152, 0.176, 0.152))
-    sheen_near = t.maprange(depth, 22.0, 5.0, 0.0, 1.0)
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.28,
                            "Specular IOR Level": 0.5, "Normal": normal,
-                           "Sheen Weight": t.mul(sheen_near, 0.55), "Sheen Roughness": 0.35,
+                           "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
                            "Sheen Tint": C(0.22, 0.62, 0.46)})
     # one Principled Volume (absorption + weak scatter): Absorption + Scatter + Add Shader pushed Cycles past its
     # 64-closure budget (76) and closures were silently dropped. extinction = density * (color + 1 - absorption_color):

@@ -27,7 +27,8 @@ Method per map:
 The shader uses these as value-only multipliers with mean 1.0, so round 4's calibrated chroma is untouched and only
 the variance moves.
 
-Usage:  python3 scripts/mat_make_grunge.py                 # fetch (once) + build the shipped set
+Usage:  python3 scripts/mat_make_grunge.py                 # build the shipped set from the committed _src maps
+        python3 scripts/mat_make_grunge.py --fetch         # allow downloading a missing _src map (CC0)
         python3 scripts/mat_make_grunge.py --preview       # contact sheet of PFA reference-photo candidates
 """
 import io, json, sys, urllib.request, zipfile
@@ -69,10 +70,16 @@ PATCHES = {
 }
 
 
-def fetch_colour(asset):
+def fetch_colour(asset, allow_fetch=False):
+    """The CC0 colour maps are committed under assets/textures/pfa/_src, so the normal build is offline. Downloading
+    only happens with an explicit --fetch: a build script must never quietly open a 300 s socket."""
     dest = CACHE / f"{asset}_Color.jpg"
     if dest.exists() and dest.stat().st_size > 0:
         return dest
+    if not allow_fetch:
+        raise SystemExit(f"[grunge] missing {dest}\n"
+                         f"[grunge] it is committed with the repo; re-run with --fetch to download it from "
+                         f"{ACG.format(asset)} (CC0 1.0, ambientCG)")
     dest.parent.mkdir(parents=True, exist_ok=True)
     url = ACG.format(asset)
     print(f"[grunge] fetch {asset} <- {url}")
@@ -153,7 +160,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     src = {}
     for name, cfg in BUILD.items():
-        colour = fetch_colour(cfg["asset"])
+        colour = fetch_colour(cfg["asset"], allow_fetch="--fetch" in sys.argv)
         im = Image.open(colour).convert("RGB")
         g = make_tileable(to_image(normalise(to_ratio(im, cfg["blur"], cfg["stretch"]), cfg["std"]), 1024))
         dest = OUT / f"{name}.png"
