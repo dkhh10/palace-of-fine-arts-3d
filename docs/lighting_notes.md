@@ -1389,3 +1389,41 @@ gradient as an explicit art bias.** The gradient is cheap (one screen-space ramp
 `COMP_golden_hour`, ~10 lines) and is the only route left, but it is an art bias painted onto a physically simulated
 sky and lighting will not ship it unasked. Lighting has no physical knob that reaches the window.
 
+### 21.3 r12 checkpoint (machine stopped before any Blender ran)
+
+**Status: code and analysis complete, ZERO renders taken.** The GPU was held for the whole session by QA's 4K timing
+render (pid 90755, ~95 min); it exited and the machine was stopped in the same minute, so nothing in section 21 above
+is measured on a new frame. Every number quoted so far is measured on QA's own round-05 files.
+
+**Done.**
+* `scripts/light_r12_measure.py` — QA's round-05 boxes, including the *re-based* cam03 test (near shaft 0,150-420,720
+  over the sunlit far rotunda 560,0-880,320 **in the same frame**, window 0.30-0.70), the hero shade/sunlit pair, the
+  cam04 coffer ratio and `mat_r6_measure`'s dark-quarter / light-quarter statistic, and the Eevee-Cycles gap
+  (QA-05-9). It reproduces **every** QA round-05 number exactly on QA's own PNGs (cam03 5.55 / 58.2 / 0.615, ratio
+  0.063, ground 0.197; hero 166.5 / 0.643 / 134.1 and shade 94.6 / 43.1 / 0.819; coffer 0.211 and quarter 0.121 with
+  dark 14.2 / light 117.6; gaps W 0.221 fail, E 0.066, coffer 0.049), so the sweep and QA measure the same pixels.
+* **The diagnosis in 21.1**: inverting the hero shade's lum/hue/sat into sRGB gives render (122, 94, 22) against
+  ref 169 (141, 111, 81) — short **59 units of blue** and only ~18 of R and G. That is why rounds 10 and 11 failed:
+  all three of their levers added light warmer than the deficit.
+* **Two new world sockets**, both DIFFUSE-only so camera and glossy rays (the visible sky, the lagoon's reflection)
+  are held still by construction: `SKY_DIFFUSE_HUE` (a hue rotation, `_sat_stage` now takes `hue`) and
+  `SKY_DIFFUSE_TINT` (a *white balance* multiply — the lever the arithmetic actually asks for; a hue rotation big
+  enough to blue the warm horizon would rotate the zenith round to red). Both ship at their no-op values.
+* `scripts/light_r12_sweep.py` (r11's sweep + `dhue` / `tr` / `tg` / `tb` keys, cam03 in both engines) and
+  `scripts/light_r12_sheet.py` (before / after / ref rows for cam03, the hero shade and cam04). Wave-1 command line
+  is ready in the scratchpad: control + `db=3` / `5` / `7` at 960x540, cams `03e 01c`.
+* **QA-05-7 closed as an accepted deviation in 21.2** with the matched-sky_top atmosphere sweep: the physical sky
+  saturates at 0.965 against a 1.05 floor, and part of the gap is that QA's two boxes sit at different heights above
+  the horizon in the two framings. The only route left is a compositor sky gradient, which is the lead's call.
+
+**Next, in order, when the GPU is free.** (1) Wave 1: the `SKY_DIFFUSE_BOOST` ladder on the lead's merged master —
+the round-11 sweep rejected `db` against a sunlit-stone budget that is now withdrawn, AND it was measured when the
+sunlit attic read 180.4; on the merged master it reads **166.5**, i.e. below QA's own window, so `db` now has to move
+two numbers in the same direction instead of trading them. Expect `db` 4-6. (2) Wave 2: `SKY_DIFFUSE_TINT` on top of
+the chosen `db`, to convert the extra sky into the blue the shade is short of rather than more warm plaza bounce;
+watch the shade hue, which is the number that went the wrong way three times. (3) Wave 3: confirm at
+1920x1080 / 64 spp (hero) and 1280x720 (cam03 in both engines), and check `EXPOSURE_BIAS` last. (4) QA-05-3:
+`FILL` / `VAULT_FILL` re-tuned on the **merged** master (lighting's 0.387 was measured on the branch before
+materials r6's in-coffer gradient; it now reads 0.211) and QA-05-9's soffit-W gap, which is Cycles reading 0.141
+where Eevee reads 0.362 — note the Cycles side is what collapsed, so it is likely materials' gradient and not probe
+coverage. (5) Rebuild `assets/lighting.blend`, sheet, report.
