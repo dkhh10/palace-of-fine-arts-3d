@@ -563,3 +563,93 @@ the 8 coffer-floor sockets are unchanged at z 28.914, r 5.20, `+Y.z = -1.000`.
 `scripts/arch_socket_check.py` now checks the band against its face plane rather than against radial, and reports
 the spread of the 16 face-plane distances (0.0 mm). All 24 OK. Counts and types unchanged; `docs/sockets.md` has
 the one-line placement note the lead authorised.
+
+## Polish round 3 (QA-04-7 rib material, QA-04-11 ref 062 station)
+
+### QA-04-7 (architecture half) — the coffer rib plates now carry their own material
+
+QA: "no tonal difference between rib and panel (ribs share the panel material; ARCH rib plate material name still
+pending)". Ref 083 has coffer **panels at L 93-130 and ribs at L 22-50**, a 2.5-3x ratio, so materials needs two
+surfaces to work with. Every coffer in the build is a *rib plate* (a slab whose holes are the coffers) standing proud
+of a *panel surface* behind it, so the split is one material per OBJECT — no face groups, no second slot:
+
+| surface | objects | material before | material now | part_type |
+|---|---|---|---|---|
+| saucer-dome ribs | `ARCH_rotunda_ceiling_ribs` (1) | `MAT_plaster_ceiling` | **`MAT_plaster_ceiling_rib`** | ceiling |
+| saucer-dome panels (coffer floors) | `ARCH_rotunda_ceiling_field` (1) | `MAT_plaster_ceiling` | unchanged | ceiling |
+| barrel-vault ribs | `ARCH_rotunda_vault_coffers_00..07` (8) | `MAT_concrete_inner` | **`MAT_plaster_ceiling_rib`** | wall |
+| barrel-vault panels (soffit) | `ARCH_rotunda_vault_00..07` (8) | `MAT_concrete_inner` | unchanged | wall |
+
+9 objects carry the new name. They also carry a custom property **`surface = "coffer_rib"`**, so materials can select
+them without matching object names (`[o for o in bpy.data.objects if o.get("surface") == "coffer_rib"]`). Assigned
+through `common.load_material` as usual, so it falls back to a placeholder until materials ships the material — it is
+a placeholder in `assets/architecture.blend` today, which is expected and harmless.
+
+Note for materials: the rib plate's geometry is **rib face + reveal walls + the coffer box sides** (the registers of
+`P.COFFER_REGISTERS` / `P.VAULT_COFFER_REGISTERS`); the coffer *floor* is the other object. So a recess-dirt gradient
+authored on `MAT_plaster_ceiling_rib` lands on the rib soffit and the splays, and the bright panel stays on
+`MAT_plaster_ceiling` / `MAT_concrete_inner`. Geometry, tri counts, sockets and `docs/sockets.md` are unchanged.
+
+### QA-04-11 — ref 062's station fitted: 92 m at 42 mm, not 50 m at 26 mm
+
+New tool `scripts/arch_ref062_fit.py` (numpy only, imports `arch_domecheck`'s camera and solids so the fit and the
+overlay cannot drift apart). Sheet: `renders/qa_comparisons/arch_qa04_11_ref062_fit.png` (annotated overlay on top;
+below, ARCH rendered at the fitted station beside the photograph).
+
+**Why not `arch_domecheck --fit` as for ref 063.** ref 063's fit matched the model's sky silhouette to the photo's.
+That cannot work on ref 062: its top silhouette is **ornament** — the attic corner-block volutes, urns and standing
+figures sit 20-80 px above the cornice the analytic model knows about (measured: the photo's top-profile minimum is
+row 13-19 at x 800-850, on a volute, while the attic cornice on the same face is at row 99). So the fit is on
+hand-read **landmark rows** on the near face's centre line instead, each at a known (z, radius from the axis):
+
+| landmark | z | radius | measured row | fitted row | Δ |
+|---|---|---|---|---|---|
+| dome apex (cap top) | 53.4 | 0 | 35 | 34.9 | -0.1 px |
+| attic top (drum springs) | 38.3 | 22.24 | 99 | 102.8 | +3.8 px (0.27 %H) |
+| attic base (modillion corbels) | 31.2 | 21.5 | 330 | 308.6 | -21.4 px (1.56 %H) |
+| outer arch springing | 17.5 | 21.5 | 700 | 710.7 | +10.7 px (0.78 %H) |
+
+**Fit (ref 062, 1920x1371): az 35.3 deg, D = 91.7 m, lens = 42.4 mm, pitch +13.45 deg, eye 1.55 m**, i.e. station
+world **(-73.2, 55.2, 1.55) looking at (0, 0, 23.5)**; chi2 4.09 on 4 rows / 3 free parameters. Eye height is not
+recoverable (1.30-1.85 m all give D 91.1-92.1, lens 42.0-42.7 — the fit is flat in it).
+
+**Independent checks the fit did not use:**
+
+| check | model at the fitted station | photo | error |
+|---|---|---|---|
+| attic-ring on-screen width | 1241 px | 1265 px | **-1.9 %** |
+| podium base row | 1306 | 1345 | -2.8 %H (0.953 vs 0.981 of frame) |
+| architrave bottom (z 27.4) | row 417 | 405-418 | within the moulding |
+| drum guilloche cushion top (z 42.5) | row 58 | 55 | +3 px |
+| a 1.7 m figure at r 47 | 92 px tall | 87 px | +6 % |
+
+Top, base and width are all inside QA-04-11's 3 % bar except the base row at 2.8 %H, which is itself inside it.
+
+**Which hypothesis this supports: (c), the photo was taken from farther away with a longer lens.** Not the attic/drum
+height and not the podium radius. The decisive point is *lens-, tilt- and framing-independent*: ref 062 shows the dome
+cap above the near face's attic cornice, which is purely a comparison of two elevation angles,
+
+    (apex - h) / D  >  (ATTIC_Z1 - h) / (WALL_APOTHEM + 0.74)   ->   D > 76.4 m
+
+with the current stack. Nothing about the camera can change that number. Inverted, to see the same thing from
+**45 m** the apex would have to be at **74.2 m** (it is 53.4) or the attic top at **27.8 m** (it is 38.3, and 27.8 is
+*below* the entablature) — and from 50 m, 67.7 m or 30.3 m. Both are impossible, and both would destroy the cam01
+silhouette that matches refs 169/085/169-crop within 1 %. **The podium (rostra) radius does not appear in the
+inequality at all**, so QA's hypothesis (2) cannot be the cause either. Recommendation to the lead: **change nothing
+in the rotunda's proportions**; ref 062 is a ~92 m / ~42 mm photograph and QA's "~50 m, ~26 mm" reading of it is the
+error. This is the same finding as round 1's ref 063 (fitted at 115 m / 40 mm when cam05 stood at 71 m / 20 mm): both
+canonical "close" photographs are long-lens shots.
+
+**One thing the fit does raise, for the lead not for me.** The OSM lagoon rings in
+`reference/plans/site_local.json` put every station at az 25-60 beyond ~45 m **in the water**, so the fitted station
+is not standable on the site as modelled — yet ref 062's foreground is dry garden with people on a path. Since the fit
+is face-on to the az-37 face within 1.7 deg, the likelier explanation is that the OSM shoreline is short on the north-
+east side (the peninsula/lawn there is bigger than `site_local.json` says) rather than that the photo is from due
+north. That is an ENV/site question and it is exactly what stopped QA reproducing the station on land; it is not a
+rotunda-proportion question. `arch_ref062_fit.py` prints the land/water table so the lead can see it.
+
+**Sub-metre detail noticed while fitting, NOT changed.** At the fitted station the drum's cornice-ring top rim
+(`DRUM_CORNICE_R` 18.7 at z 43.4) projects to row 22, i.e. **13 px above the dome apex**, whereas ref 062 has the dome
+apex 20 px above the ring. Everything else in the drum matches (the guilloche cushion top is 3 px out), so this is
+about **0.4 m of ring radius**, or the same amount of ring height — a moulding refinement, not a proportion. Left for
+the lead to decide, since any drum change touches the arbitrated round-1 dome fit.

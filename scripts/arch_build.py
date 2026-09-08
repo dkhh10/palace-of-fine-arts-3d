@@ -56,6 +56,11 @@ SOCK = L.SocketCounter(C_SOCK)
 M_OCHRE, M_PODIUM, M_ROSE, M_TAN, M_INNER = "MAT_concrete_ochre", "MAT_concrete_podium", "MAT_column_rose", "MAT_column_tan_inner", "MAT_concrete_inner"
 M_PLASTER, M_BAND, M_DOME, M_COLON, M_PAVING = "MAT_plaster_ceiling", "MAT_drum_band", "MAT_dome_membrane", "MAT_concrete_colonnade", "MAT_paving"
 M_ORN = "MAT_ornament_concrete"
+# QA-04-7: the coffer RIB plates used to share the panel material (ceiling ribs M_PLASTER, vault ribs M_INNER), so
+# materials had no surface to darken against the panels (ref 083: ribs L 22-50, panels L 93-130). The rib plates now
+# carry their own library name. Every object with it is a rib network only; the panels behind the holes are the
+# saucer field / barrel soffit and keep their own material. See docs/arch_notes.md "round 3".
+M_PLASTER_RIB = "MAT_plaster_ceiling_rib"
 
 
 # ============================================================================= rotunda frames
@@ -610,8 +615,9 @@ def build_vault_coffers(name, k, X, n, coll):
     # 0.12 -> 0.20 (round 1) -> 0.38 now, which is 0.20 x the 1.9 m octagon width, the depth-to-width ratio measured
     # off ref 083 (see arch_params). The room face carries VAULT_COFFER_REGISTERS so each coffer
     # has an outer register: at cam04 the vaults are seen near edge-on and a single straight reveal showed nothing.
-    obj = L.plate(name, outline, holes, P.VAULT_COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_INNER,
+    obj = L.plate(name, outline, holes, P.VAULT_COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_PLASTER_RIB,
                   part_type="wall", bevel=False, smooth=False, registers=P.VAULT_COFFER_REGISTERS)
+    obj["surface"] = "coffer_rib"      # QA-04-7: rib network only; the panel behind is ARCH_rotunda_vault_NN
     me = obj.data
     for v in me.vertices:
         s = v.co.x / r_mean            # angle 0..pi
@@ -835,13 +841,14 @@ def build_ceiling(C):
         holes.append([add2(mul2(v, 12.0), (0, 0)), add2(mul2(v, 12.9), rot2((0.0, 0.8), av)), add2(mul2(v, 12.9), rot2((0.0, -0.8), av))])
     # QA-03-8: 0.30 -> 0.55 deep (depth / width 0.20, measured off ref 083) with COFFER_REGISTERS at the room face.
     ribs = L.plate("ARCH_rotunda_ceiling_ribs", octo, holes, P.COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), C,
-                   mat=M_PLASTER, part_type="ceiling", bevel=False, registers=P.COFFER_REGISTERS)
+                   mat=M_PLASTER_RIB, part_type="ceiling", bevel=False, registers=P.COFFER_REGISTERS)
     me = ribs.data
     for vtx in me.vertices:
         vtx.co.z += sz(vtx.co.x, vtx.co.y)
     me.update()
     ribs.location = (0, 0, 0)
     ribs["part_type"] = "ceiling"
+    ribs["surface"] = "coffer_rib"     # QA-04-7: rib network only; the panel behind is ARCH_rotunda_ceiling_field
     # Rosette sockets (review item 2 -- the plane is now stated per socket instead of keyed off COFFER_DEPTH).
     # Two different kinds share the `rosette_ceiling` type:
     #   * 16 on the rim band (rr 13.73 / 14.85, between the outermost coffers and the octagon edge): that band is
