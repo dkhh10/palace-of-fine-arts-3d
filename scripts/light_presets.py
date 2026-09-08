@@ -205,15 +205,35 @@ def apply_viewport_eevee(scene=None):
     e.shadow_step_count = 2
     e.shadow_resolution_scale = 0.5
     e.use_shadow_jitter_viewport = False
-    e.use_raytracing = False             # screen-space GI/reflections off for speed
-    e.use_fast_gi = False
+    # QA-04-12, ROUND 11: raytracing goes back ON in the viewport preset, and the reason is measured, not stylistic.
+    # Eevee applies the baked irradiance volume through the screen trace; with raytracing off the rotunda vault reads
+    # coffer / own sky 0.218 and soffit E 0.084 (cam04, 1280x720, round-11 rig), against 0.325 / 0.419 with it on and
+    # a Cycles ground truth of 0.387 / 0.532. The ceiling is the one thing a viewport user flies UNDER, and at 0.084
+    # the east soffit is unreadable, so "fast" was buying an unusable frame. Kept cheap: half-resolution trace, low
+    # trace quality, roughness cut at 0.5, and the taa 8 / 16 sample counts are untouched.
+    e.use_raytracing = True
+    try:
+        e.ray_tracing_method = "SCREEN"
+        rt = e.ray_tracing_options
+        rt.resolution_scale = "2"
+        rt.use_denoise = True
+        rt.denoise_spatial = True
+        rt.screen_trace_quality = 0.15    # cheaper than the preview preset's 0.25
+        rt.trace_max_roughness = 0.5
+    except Exception as ex:
+        print("[light_presets] viewport raytracing options:", ex)
+    e.use_fast_gi = True
+    e.fast_gi_method = "GLOBAL_ILLUMINATION"
+    e.fast_gi_ray_count = 1              # half the preview preset's
+    e.fast_gi_step_count = 4
+    e.fast_gi_distance = 60.0
     e.use_volumetric_shadows = False
     e.volumetric_tile_size = "16"
     e.volumetric_samples = 16
     e.use_overscan = False
     e.light_threshold = 0.05
     try:
-        e.shadow_pool_size = "256"
+        e.shadow_pool_size = "512"      # round 11: 256 overflowed (see apply_preview_eevee)
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
     except Exception:
         pass
