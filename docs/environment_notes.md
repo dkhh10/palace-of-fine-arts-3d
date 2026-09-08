@@ -928,11 +928,12 @@ the OSM lagoon polygon calls water while the photograph's foreground is dry gard
 site_local.json is probably short; verify against the satellite tiles".
 
 Verified and **rejected**. `satellite_z18.png` (ESRI World Imagery, 0.472 m/px, rotunda dome at px 718.6, 633.8)
-is the only tile that reaches that far — `satellite_z20` at 0.118 m/px covers only ±60 m and stops 55 m short of
-the station. Overlaying `lagoon0` on z18 (`renders/qa_comparisons/env_r7_shoreline.png`, and the row on the r7
-sheet) the polygon follows the visible water edge along the whole NE arm, and the fitted station sits in **open
-water on the tile too** — 62/78/67 RGB, the same tone as the middle of the lagoon, with the nearest land ~25 m
-north-west of it. So the polygon is right and the ref-062 station is not reproducible on this site, which is the
+is the only tile that reaches that far — `satellite_z20` at 0.118 m/px is 1024 px, i.e. 121 m across with the
+dome at px (828, 740), so it stops **23 m east** of the rotunda and never sees the station at all. Overlaying
+`lagoon0` on z18 (`renders/qa_comparisons/env_r7_shoreline.png`, and the row on the r7 sheet) the polygon follows
+the visible water edge along the whole NE arm, and the fitted station sits in **open water on the tile too** —
+sampled RGB 62/78/67 there, and 55/77/64, 80/97/79, 78/95/89 at points 15-25 m west, north-east and north of it,
+all the flat green-grey of the lagoon surface; the first land tone appears to the north-west (136/145/142). So the polygon is right and the ref-062 station is not reproducible on this site, which is the
 conclusion architecture had already reached from the lens (the photo is simply farther away). **No change: the
 lagoon polygon keeps its OSM extent, world X -135..107, Y -20..118.**
 
