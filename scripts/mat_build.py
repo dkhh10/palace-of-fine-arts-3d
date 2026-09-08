@@ -598,7 +598,7 @@ def build_concrete_family():
         "Drift Size": 12.0,
         "Detail Strength": 1.0, "Streaks": 1.0, "Streak Scale": 3.2, "Streak Length": 7.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.75, "Damp Band": 1.0,
-        "Macro": 1.10, "Macro Scale": 1.0, "Macro Streak": 1.10, "Macro Rough": 0.60, "Ledge Band": 1.20,
+        "Macro": 1.45, "Macro Scale": 1.0, "Macro Streak": 1.35, "Macro Rough": 0.60, "Ledge Band": 1.20,
         "Patches": 0.30, "Edge Wear": 0.70, "Edge Radius": 0.20, "Recess Dirt": 0.72, "Recess Distance": 0.7, "Cavity": 0.70,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
@@ -608,7 +608,7 @@ def build_concrete_family():
         "Drift Size": 9.0,
         "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 3.0, "Streak Length": 6.5, "Ledge Distance": 2.0, "Ledge Weight": 0.52,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.85, "Efflorescence": 1.15, "Damp Band": 1.25,
-        "Macro": 1.15, "Macro Scale": 0.85, "Macro Streak": 1.05, "Macro Rough": 0.65, "Ledge Band": 1.10,
+        "Macro": 1.45, "Macro Scale": 0.85, "Macro Streak": 1.30, "Macro Rough": 0.65, "Ledge Band": 1.10,
         "Patches": 0.32, "Edge Wear": 0.65, "Edge Radius": 0.18, "Recess Dirt": 0.68, "Recess Distance": 0.6, "Cavity": 0.35,
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
@@ -619,7 +619,7 @@ def build_concrete_family():
         "Detail Strength": 0.80, "Streaks": 0.9, "Streak Scale": 3.4, "Streak Length": 7.5, "Ledge Distance": 2.5, "Ledge Weight": 0.50,
         "Streak Shade Bias": 0.6,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.80, "Damp Band": 1.0,
-        "Macro": 1.10, "Macro Scale": 0.9, "Macro Streak": 1.25, "Macro Rough": 0.60, "Ledge Band": 1.15,
+        "Macro": 1.40, "Macro Scale": 0.9, "Macro Streak": 1.45, "Macro Rough": 0.60, "Ledge Band": 1.15,
         "Patches": 0.22, "Edge Wear": 0.65, "Edge Radius": 0.18, "Recess Dirt": 0.6, "Recess Distance": 0.7, "Cavity": 0.65,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.25, "Pour Spacing": 0.6})
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides

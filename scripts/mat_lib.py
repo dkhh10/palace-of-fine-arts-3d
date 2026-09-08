@@ -58,9 +58,9 @@ def load_image(set_name, map_name, non_color=True):
 # 128 = ratio 1.0; the shader uses them as mean-1.0 value multipliers.  `tile` is the physical size in metres the
 # box projection gives them, chosen so the source's own features land in the band that reads at hero distance.
 MACRO_MAPS = {
-    "pfa_macro_stain": dict(tile=9.0),      # broad soft pour / damp blotches
-    "pfa_macro_blotch": dict(tile=5.5),     # mid-scale weathered mottle (second, decorrelating layer)
-    "pfa_macro_streak": dict(tile=7.0),     # vertical run-off, a stain field stretched 3.2x down the wall
+    "pfa_macro_stain": dict(tile=5.5),      # broad soft pour / damp blotches
+    "pfa_macro_blotch": dict(tile=3.2),     # mid-scale weathered mottle (second, decorrelating layer)
+    "pfa_macro_streak": dict(tile=4.5),     # vertical run-off, a stain field stretched 3.2x down the wall
 }
 
 

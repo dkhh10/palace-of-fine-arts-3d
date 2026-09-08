@@ -46,11 +46,11 @@ UA = {"User-Agent": "Mozilla/5.0 pfa-materials/1.0 (Blender build, CC0 assets)"}
 # at, chosen so the scan's own features land in the 0.3-3 m band.
 BUILD = {
     # broad soft pour/damp blotches -- the layer that does most of the work on a plain wall
-    "pfa_macro_stain":  dict(asset="Concrete019", std=0.150, blur=0.30, stretch=None,     tile_m=9.0),
+    "pfa_macro_stain":  dict(asset="Concrete019", std=0.190, blur=0.30, stretch=None,     tile_m=5.5),
     # mid-scale weathered mottle, decorrelating second layer (different tile, so no visible repeat beat)
-    "pfa_macro_blotch": dict(asset="Concrete035", std=0.130, blur=0.26, stretch=None,     tile_m=5.5),
+    "pfa_macro_blotch": dict(asset="Concrete035", std=0.170, blur=0.26, stretch=None,     tile_m=3.2),
     # vertical run-off: a heavy stain field stretched 3.2x down the wall -> 0.2-0.6 m wide, 1-3 m long dark runs
-    "pfa_macro_streak": dict(asset="Concrete036", std=0.200, blur=0.22, stretch=(1.0, 3.2), tile_m=7.0),
+    "pfa_macro_streak": dict(asset="Concrete036", std=0.240, blur=0.22, stretch=(1.0, 3.2), tile_m=4.5),
 }
 LICENCE = "CC0 1.0 (ambientCG, https://ambientcg.com/license)"
 
