@@ -990,6 +990,16 @@ but that only makes the conclusion safer: the SOUTH box holds *more* sky, 12.5 %
 still the darker of the two. Restricted to stone the contrast would be larger, not smaller.) The north wing hides the error because it is face-on — 57.7 + 89.1 and 97.9 + 48.4 both land on ~146 —
 and the south wing is where the split shows.
 
+**One ENV option was costed and rejected.** ref 169 shows a pale lit strip through some of the south wing's bays,
+and this build shows dark screen foliage there, so "open the screen behind the south wing and let the exhibition
+hall show through" looks like an ENV fix. Measured, it is not. Along every sight line through the box the hall
+stands only **20-22 m** behind the wing, and its wall is struck from `env_backdrop.ARC_CENTRE` (0, 52), which puts
+its face bearing at **28.5 deg** - exactly **90 deg** from the sun, cos 0. Opening the bays would trade dark
+foliage for an unlit wall. (The E1/E2 screen rows at +6 / +12.5 m are in the wing's own shadow only below
+z 1.2-8.3 m; their crowns are lit, and the +20 m row is lit outright.) So the offence band for the hero's south
+wing is widened to QA's own measured edge (x1 0.205 -> **0.292**, cheap insurance against a screen tree landing in
+front of the wing through the polar-layout mismatch that caused QA-04-6) and nothing else is taken out.
+
 **Hand-off to lighting.** Not the sun angle: the sky/ambient fill on the raking faces. Moving A from ~58 to ~98
 with k from ~89 to ~48 (same total at normal incidence) puts the south band at **113** and the north at **146**,
 i.e. both bands exactly on ref 169. Every +10 of A on its own lifts the south band by 10, so A 58 -> 75 already
