@@ -208,3 +208,7 @@ In flight: MAT r6 review, LIGHT r11 review. Next: merge both, scripts/lead_build
 ## 2026-09-08 · MAT r6 merged (e7adc25) after review (MERGE, non-blocking findings)
 Follow-ups sent to materials: gate mat_make_grunge's network fetch behind --fetch; drop the water sheen (its own table: -1 deg hue for a further-from-ref stone reflection); note ao_up probe (+25 % secondary rays on concrete) if the 4K budget blows; Macro darkens mean albedo ~5 % (do not re-tune base colour to chase it).
 In flight: LIGHT r11 review fixes, MAT follow-up. Next: merge both, scripts/lead_build.sh, QA round 5.
+
+## 2026-09-08 · polish round 3 fully merged (LIGHT r11 a72aee4, MAT r6 4336a12, ENV r6 3c3ad97, ARCH 083937b); master rebuilding; QA round 5 dispatched
+Lighting review fixes: bake sequence proven (engine + rig restored via try/finally), no 0 W shade suns, viewport RT off (measured), 127 MB of intermediate previews dropped. Master: scripts/lead_build.sh (log renders/logs/lead_build_r5.log).
+In flight: QA round 5 (Fable xhigh, docs/briefs/qa_round_05.md; lead does not commit on main until it reports). Next: gate report with trend; decide continue-polish vs approach change for the concrete; carried for ARCH r4: entablature cornice/dentil depth; ENV r7: OSM NE shoreline check.
