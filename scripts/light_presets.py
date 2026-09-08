@@ -231,7 +231,12 @@ def apply_viewport_eevee(scene=None):
     e.volumetric_tile_size = "16"
     e.volumetric_samples = 16
     e.use_overscan = False
-    e.light_threshold = 0.05
+    # ROUND 11, and this is the actual QA-04-12 answer: 0.05 culls the eight vault emitters wherever their estimated
+    # contribution is small, which is exactly the coffered dome. Raytracing was NOT the difference between the two
+    # Eevee presets - measured on cam04 at 1280x720, turning it on in this preset moved the coffer 0.218 -> 0.218 and
+    # the soffit E 0.084 -> 0.089, i.e. nothing. Dropping the threshold to the preview preset's 0.01 is what lets the
+    # viewport see the vault, and it costs nothing but eight more light evaluations.
+    e.light_threshold = 0.01
     try:
         e.shadow_pool_size = "512"      # round 11: 256 overflowed (see apply_preview_eevee)
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
