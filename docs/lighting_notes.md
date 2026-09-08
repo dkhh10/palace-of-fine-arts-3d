@@ -1180,3 +1180,29 @@ have been in the baked irradiance volume was never put there.
 It also shows the cutoff is doing far more than round 10 thought. Between 13 m and 25 m the coffer jumps 0.240 ->
 0.611, i.e. the emitters reach the central dome as soon as they are allowed to, and the Eevee soffit E follows the
 same knob (0.194 -> 0.375). The two numbers QA measures therefore move together and the tuning is one-dimensional.
+
+### 20.7 QA-04-7 CLOSED in Cycles, and what the Eevee vault can and cannot be made to match
+
+Verified at QA's own resolution (cam04, 1280x720, Cycles 64 spp, `r11j_SHIP_e8cut18_04c.png`), with the round-11
+interior fills:
+
+| | round 04 | **round 11** | ref 083 | QA's window |
+|---|---|---|---|---|
+| soffit W / own sky | 0.289 | **0.316** | 0.38 | — |
+| soffit E / own sky | 0.522 | **0.532** | 0.43 | — |
+| soffit mean | 0.405 | **0.424** | **0.405** | within 4 % |
+| coffer field / own sky | **0.261** | **0.387** | 0.437 | **0.35-0.55 PASS** |
+
+**The Eevee side is a double-count, and that is a better story than round 10's.** With the probe volumes baked on the
+physical rig, the baked irradiance already contains the vault emitters' light — and Eevee then adds their *direct*
+light on top of it, while Cycles path-traces the whole thing once. That is why Eevee with no cutoff and the plain
+physical energy (x1) puts the coffer at **0.839** where Cycles reads 0.387: it is counting the same emitters twice.
+The `cutoff_distance` override is therefore not a fudge for a missing ambient term (round 10's reading) but the
+removal of a duplicate: at 13-21 m each emitter still lights its own soffit (4.5-11 m) and stops double-counting into
+the coffered dome 20.7 m away, leaving the coffer to the bake alone at 0.24-0.25.
+
+What that leaves unreachable is the soffit **W/E split**. Cycles reads E much brighter than W (0.532 / 0.316) and
+Eevee reads the opposite (0.23 / 0.47) at every cutoff that keeps the coffer honest; opening the cutoff to 25-45 m
+brings Eevee's E up to 0.375-0.392 but takes the coffer to 0.611-1.145, i.e. it buys the split by re-opening the
+double-count. The soffit **mean** and the coffer field — the two numbers ref 083 is quoted on and the two QA
+tabulates a window for — are what round 11 lands.
