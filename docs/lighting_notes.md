@@ -1047,3 +1047,31 @@ photo's full amount of structure (sd 38.1 against 41.5) at 0.61 of its level, wh
 shadows on stone that is too dark — albedo and wing-shading trees, i.e. materials and environment, exactly as the
 lead split it. Lighting's only level knob here is the exposure, and the exposure is pinned by the sunlit attic
 (0.954x of ref 169, and QA-04-2 exists because round 10 already spent half a stop).
+
+### 20.3 QA-04-1 — the Eevee vault was black because `lead_build.sh` bakes the Eevee HACK into the light probes
+
+Round 10 shipped an engine-conditional vault rig: Eevee gets the eight vault emitters at x8 energy with a 13 m
+`cutoff_distance` (which Eevee honours and Cycles ignores), Cycles keeps the physical energy. Measured then, on
+cam04 at 1280x720, that gave Eevee soffit 0.408 / coffer 0.255 against Cycles 0.536 / 0.364 — both inside 0.15.
+QA round 04 measured the same override, on the same camera, at the same resolution, through the same
+`apply_preview_eevee`, and got soffit W 0.399 / E 0.142 and **coffer 0.034**. The log line even confirms the override
+ran. The soffit reproduced round 10's number and the coffer fell by a factor of 7.5.
+
+**What changed between the two measurements is not the rig, it is the BAKE.** The lead's review fix put
+`light_presets.apply_viewport_eevee` at the end of `build_master.py` so the saved Eevee state carries the vault
+override — correct in itself — and `scripts/lead_build.sh` then runs `light_probes.py --bake` on that saved state.
+So the two irradiance volumes were baked with the vault emitters **cut off at 13 m**, and the central coffered dome
+is 20.7 m from them. The coffers are therefore starved in the baked *indirect* term as well as in the direct one,
+and nothing is left to light them. Round 10's probe was taken before that review fix, i.e. on a bake made with the
+uncut rig, which is exactly why its coffer read 0.255 and why "switching the emitters off changes nothing" was true
+then: the bake was doing the work.
+
+This also retires round 10's story that Eevee's screen-traced ambient is what fills the vault. The screen trace has
+no light of its own; where a screen ray misses it falls back on the irradiance volume, so the resolution dependence
+round 10 measured (0.246 at 960x540, 1.075 at 1280x720) was the *bake* being sampled more or less, not an
+independent ambient source.
+
+**Fix, in `scripts/light_probes.py` (`bake(..., physical_vault=True)`): the bake now forces the PHYSICAL vault rig,
+bakes, and restores whatever override was live, so the saved Eevee state is unchanged.** A light probe volume is
+meant to hold the scene's real indirect light; baking a render-time engine hack into it was a bug, and the fix is
+one that cannot be undone by the order in which the lead runs his two commands.
