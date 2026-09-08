@@ -112,7 +112,7 @@ if __name__ == "__main__":
     rows.append(row([
         cell(crop(Q / "round04_03_colonnade_walk.png"), "BEFORE  round 04 Eevee", f_cam03(Q / "round04_03_colonnade_walk.png")),
         cell(crop(a.cam03_after), "AFTER  r11 rig, Eevee", f_cam03(a.cam03_after)),
-        cell(crop(REF128), "REF 128 (note: a MIDDAY photo)",
+        cell(crop(REF128).crop((0, 900, 1920, 1980)), "REF 128 (note: a MIDDAY photo)",
              ["QA's target 69.7 is measured on a photo with a", "blown sky and no cast shadows: it is not a",
               "golden-hour shade level. See notes section 20."]),
     ], "ITEM 1  QA-04-2  cam03 colonnade shade  (box 0,150-420,720)"))

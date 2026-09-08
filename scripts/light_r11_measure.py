@@ -26,7 +26,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import light_r10_measure as m10
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN_ROOT = Path(os.environ.get("PFA_MAIN_ROOT", str(ROOT)))
+# reference PHOTOS are gitignored and live in the MAIN checkout only (CLAUDE.md); tracked renders live here.
+MAIN_ROOT = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
 REFERENCE_DIR = Path(os.environ.get("PFA_REFERENCE_DIR", str(MAIN_ROOT / "reference")))
 
 # ---------------------------------------------------------------- cam03, QA round-04 (d), pixel boxes at 1280x720
