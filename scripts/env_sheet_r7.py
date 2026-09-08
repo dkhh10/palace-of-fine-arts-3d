@@ -142,9 +142,10 @@ def main():
             f"ground std {n('a_c03_std')}   ground/sunlit {n('a_c03_ratio')}",
             f"ray-cast  {n('a_c03_cast')}",
             f"{n('c03_note', '')}"]),
-        panel(REF128, None, "REFERENCE  ref 128 (Corinthian columns and rotunda)", [
-            "paving joints across the walk and a low planting edge at the colonnade",
-            "acceptance: ground std >= 12"]),
+        panel(REF128, (0, 1400, 1920, 2560), "REFERENCE  ref 128 (lower half: the walk and its planting)", [
+            "gravel/paved walk with joints and pale sunlit patches, a continuous planting",
+            "edge at the column bases and shrub masses between the columns",
+            "acceptance: ground std >= 12 at a level within 30 % of the shade window"]),
     ]))
 
     # ---- 4. QA-05-8 cam 06 horizon
