@@ -1021,3 +1021,38 @@ reaches the water as it does in ref 169, hiding the pale rip-rap bank - makes th
 replaces bright stone with foliage that is currently 1.6x too dark. The bank coverage is deliberately left where
 QA-04-4 put it (pale-stone 7.1 % of the band) until the foliage level is fixed. Owner: **materials / lighting**,
 same ambient/direct split as QA-05-5.
+
+### QA-05-11 — the colonnade walk had no walk. `ENV_ground_colonnade_walk`.
+
+`arch_params.COLONNADE_GROUND_Z = -0.6` is a *level*, not a slab: architecture models no colonnade floor, so what
+cam 03 stands on is ENV's terrain triangulation carrying one flat `MAT_gravel_path`. Round 7 adds the object QA
+names, `ENV_ground_colonnade_walk` (`env_build.build_paving`):
+
+* **radial courses**, struck from the same centre as the wings (`COL_ARC_CENTER` -11.2, 84.7), because the walk is
+  curved and a rectangular grid on a 117 m arc reads as a mistake;
+* slabs 1.55 m with a **5.5 cm joint** and **3.5 cm lift** over the terrain, so the joints are real geometry that
+  self-shadows at a 7.4 deg sun rather than a texture that flattens at grazing incidence;
+* alternate courses half a slab out of phase (running bond), each slab's four corners independently jittered by
+  +-6 mm and the slab itself by +-8 mm, so no two slabs return the sun identically;
+* a second material (`MAT_paving_stone_worn`, falling back to `MAT_soil`) on noise-selected **patches**, which is
+  how a repaired walk actually looks - not salt-and-pepper.
+* Two triangles per slab; the whole walk is under 2 k triangles.
+
+Plus the **planting edge** ref 128 shows: a low continuous row (agapanthus, low pittosporum, mahonia) on the soil
+band at the paving's edge (wing offset +2.8 m, 3 m spacing, p 0.60), and the existing foundation bed at +4.5 m
+tightened from 5.5 m / p 0.45 to 4.2 m / p 0.58. Both use the pale/dry families, per the QA-03-9 finding that
+`MAT_shrub`'s dark cards read as black holes in the wing's own shade.
+
+### QA-05-8 — the far field's roads were there; the woods were standing on them.
+
+Round 6 answered QA-04-13 with 780 asphalt ground samples, three more Presidio ways and 8 roof colours, and QA
+still read "one beige plane, no road grid". The reason is `env_city.build_canopy`: it rejected a canopy crown only
+within `rf.on_road(x, y)`'s default **4 m** pad. cam 06 stands 120 m up and looks down at about **19 deg**, so a
+15 m crown hides **15 / tan 19 = 43 m** of ground behind it - one tree on the verge closes the whole corridor.
+
+`CANOPY_ROAD_PAD` is now **17 m**, i.e. the woods keep clear of every way they flank, and the deliberate
+counterpart is that the *verge* rows go near-continuous on the Presidio ways (resampled every 10 m instead of 16,
+kept with p **0.90** instead of 0.55 per side). What an aerial of a treed street actually reads as is dark row /
+open corridor / dark row, and that is now what is built. The detector for the acceptance test is in
+`env_r7_measure.count_lines` (local minima of the crop's column and row profiles that sit >= 15 luminance under
+their own +-70-sample background); it scores the round-05 render **0**.
