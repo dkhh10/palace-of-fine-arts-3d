@@ -1328,3 +1328,33 @@ Two things for `docs/decisions.md`: the QA-04-12 decision in 20.8 (raytracing st
 `light_threshold` 0.05 -> 0.01 is the fix; shadow pools 256 -> 512 / 512 -> 1024), and the fact that `SHADE_FILL` exists, is measured, and ships at 0 W/m2 with
 6 W/m2 as the largest value that has an acceptable sunlit cost, should the art direction ever want a cooler shade at
 the price of the near-water saturation.
+
+## 21. Round 12 — the shade is a BLUE deficit, and the budget that forbade fixing it is withdrawn
+
+Brief: the lead's round-12 dispatch. Priorities, in order: (1) cam03 shade/sunlit 0.30-0.70 and the hero's shaded
+attic at sat <= 0.55 with hue within 8 deg of 29.5; (2) sunlit attic sat >= 0.50, R-B >= 110, lum 178-201;
+(3) columns <= 1.3x; (4) visible sky and lagoon reflection unchanged. **Rounds 10 and 11 rejected every diffuse
+boost against a budget of 0.02 saturation / 5 R-B on the sunlit stone. That budget is withdrawn.**
+
+### 21.1 The arithmetic that says what the shade is missing
+
+`scripts/light_r12_measure.py` re-states QA's round-05 boxes and reproduces QA's published numbers exactly before
+anything is changed (cam03 near shaft 5.55 / hue 58.2 / sat 0.615, sunlit rotunda 87.79, ratio 0.063, ground 0.197;
+hero sunlit attic 166.5 / 0.643 / 134.1, shaded attic 94.6 / 43.1 / 0.819, columns 95.9, near water 0.280 / 208.9;
+cam04 Cycles coffer/sky 0.211 and dark/light quarter 0.121 with dark 14.2 / light 117.6). So round 12 argues with
+QA's arithmetic, not around it.
+
+Inverting the hero's shaded-attic statistics into sRGB gives the whole round in one line:
+
+| shaded attic (hero box 1110 225 1150 260) | R | G | B | lum | hue | sat |
+|---|---|---|---|---|---|---|
+| render, round 05 | 122 | 94 | **22** | 94.6 | 43.1 | 0.819 |
+| ref 169 (aligned) | 141 | 111 | **81** | 115.0 | 29.5 | 0.425 |
+| deficit | +19 | +17 | **+59** | | | |
+
+**The shade is short 59 units of blue and only ~18 of red and green.** Every statistic QA flags follows from that one
+fact: hue = 60(G-B)/(R-B) falls to 29.5 as soon as the blue arrives, and saturation = (R-B)/R falls with it. Round 11
+argued the hue was materials' because three levers moved it the wrong way; all three added light that was warmer than
+this deficit (the fill's own green was 0.62 of its blue, and the extra sky came back off the sunlit plaza). The
+deficit is not a hue problem to be rotated, it is a **blue** problem to be supplied.
+
