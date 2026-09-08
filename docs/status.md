@@ -160,3 +160,7 @@ In flight: MAT r5 review, LIGHT r10, ENV r5. Carried: ORN bake cavity at 15-20 %
 ## 2026-09-08 · MAT r5 merged (c0a3b0b) after review (MERGE)
 Note for future rounds: RENDER_LOD is 0 and only LOD1 sources carry the ORN bakes, so at render time the recess channel is the `cavity` attribute alone (the ORN_NORMAL/ORN_AO path shows only in LOD1 previews). MAT_backdrop_asphalt / roof_tile reach master only once ENV objects use those names (ENV r5 told).
 In flight: LIGHT r10, ENV r5. Next: review + merge both, lead_build.sh, QA round 4.
+
+## 2026-09-08 · ENV r5 reported (9c4b940), in review
+ENV r5: shift_y aspect fixed (0.06 = 0.107 of frame height), city_az rename, clear() corners, build_all arg; north-wing band on the merged master 0.92/0.73 -> 0.95/0.76 of ref (both panels inside 25 %) by thinning the redwood screen's front rows; cam05 silhouette foliage 4.0 %; backdrop asphalt/roof tile names already in use, zero library warnings; ENV LOD1 4.60 M. Hand-off to lighting: the wing's own shaded stone is 16 points of the band's dark fraction. Sheet renders/qa_comparisons/env_r5_sheet.png.
+In flight: ENV r5 review, LIGHT r10. Next: merge both, lead_build.sh, QA round 4.
