@@ -646,7 +646,7 @@ def build_shrubs():
             form="mound", cover=1.6)
     # QA-04-4: ref 169's shoreline mounds are 2-4 m, not 1 m.  Four large sources, three silhouettes deep, so the
     # hero belt can reach the sight-line cap without scaling one small mound to four times its design size.
-    BIG_SPEC = [(1.70, 2.10, "MAT_shrub"), (2.15, 2.60, "MAT_shrub_light"),
+    BIG_SPEC = [(1.70, 2.10, "MAT_shrub_light"), (2.15, 2.60, "MAT_shrub_light"),
                 (2.60, 3.10, "MAT_shrub"), (1.55, 3.40, "MAT_shrub_light")]
     for i, (r, h, m) in enumerate(BIG_SPEC):
         add(f"big{i}", (m, "MAT_shrub"), make_shrub_mesh, h, seed=360 + i, radius=r, height=h,
@@ -758,8 +758,11 @@ def build_shrubs():
                 clump(x, y, rnd.randint(2, 5), 2.6, keys, min_shore=0.5, max_shore=9.0)
         if rnd.random() < 0.50:
             clump(x, y, rnd.randint(1, 3), 1.6, AGAP, min_shore=0.25, max_shore=3.2)
-        # QA-02-18: warm dry material in the hero's own shore band, not only past r = 50 m
-        if rnd.random() < 0.52:
+        # QA-02-18 wanted warm dry material in the hero's own shore band; round 6 measured the result at
+        # saturation 0.73 against ref 169's 0.64 over the same crop, with the rust-coloured twig clumps reading
+        # as the loudest thing on the shore.  In the photo they are a handful of bare shrubs at frame-left, not
+        # a third of the belt, so the probability comes back from 0.52 to 0.30.
+        if rnd.random() < 0.30:
             clump(x, y, rnd.randint(1, 3), 2.0, DRY, min_shore=0.4, max_shore=6.5)
     # 2. the rest of the shore: the same belt, a little sparser, with more dry reeds at the water
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 2.0), 3.4, closed=True):

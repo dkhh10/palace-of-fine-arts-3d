@@ -123,6 +123,9 @@ COVERAGE_BOXES = {
     "cam05_keyband": ("_qa_05_", (330, 526, 990, 554), (1280, 720)),
     "cam05_body": ("_qa_05_", (301, 27, 998, 520), (1280, 720)),
     "cam01_podium_base": ("_qa_01_", (620, 648, 1300, 684), (1920, 1080)),
+    # QA-04-14: the bottom 12 % of cam 02's frame (rows 634-720 of 720) - world x 40-64, y -1..31, the south
+    # embayment 9-26 m in front of the lens.  Round 4 resolved to water and nothing else.
+    "cam02_foreground": ("_qa_02_", (0, 634, 1280, 720), (1280, 720)),
 }
 
 
@@ -301,8 +304,12 @@ def shrub_stats(region=(-30.0, 20.0, 30.0, 60.0)):
           f"   (QA-03-14 wants >= 2:1)")
     print(f"  nearest-neighbour spacing mean {mean:.2f} m, sd {sd:.2f} m -> sd/mean {100 * sd / mean:.0f} %"
           f"   (QA-03-14 wants >= 40 %)")
-    print(f"  tallest within the rostra radius: {max(h for (x, y, h) in pts if math.hypot(x, y) < 54.0):.2f} m"
-          f"   (QA-03-13 wants <= 1.2 m)")
+    mid = hs[n // 2]
+    win = sum(1 for h in hs if 1.5 <= h <= 4.0) / n
+    print(f"  median {mid:.2f} m; {100 * win:.0f} % of the belt inside QA-04-4's 1.5-4 m window")
+    print(f"  tallest within the old rostra radius: {max(h for (x, y, h) in pts if math.hypot(x, y) < 54.0):.2f} m"
+          f"   (round 03's flat <= 1.2 m rule is superseded by env_build.band_sightline_cap; the acceptance is"
+          f" now the Greek-key band's own visibility, measured as cam05_keyband in --coverage)")
 
 
 def main():
