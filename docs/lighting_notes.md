@@ -1137,3 +1137,24 @@ the fill is behind the sunlit faces). Everything else says no:
 * at elevation 16 deg the fill also lands on the water at sin(16) = 0.28 and takes the near-water saturation from
   0.274 (dead centre of QA's 0.22-0.32 window, the one number round 10 hit exactly) to 0.207 at 6 W/m2, and it pushes
   the columns from 1.29x to 1.37x of ref, i.e. it re-opens QA-03-7 and worsens QA-04-5 to buy shade luminance.
+
+### 20.5 QA-04-7 — the Cycles coffer level: the -0.5 EV of round 10 cost the interior fills a factor of 3
+
+Round 09 shipped `FILL 1140 W` / `VAULT_FILL 3960 W` and measured coffer / own sky 0.384 at the round-09 exposure.
+Round 10 took half a stop out of the whole frame and did not re-tune the interior, so the same rig now reads 0.261,
+i.e. the exposure move cost 0.12 of ratio and dropped the coffer field out of QA's 0.35-0.55 window while leaving the
+soffit mean at 0.405, exactly ref 083's. Cycles, cam04, 960x540 / 48 spp (r09 established that these ratios move
+< 0.01 with resolution):
+
+| FILL x | VAULT x | soffit W | soffit E | soffit mean | coffer / sky |
+|---|---|---|---|---|---|
+| 1.0 (round 10) | 1.0 | 0.289 | 0.522 | **0.405** | **0.261** |
+| 1.8 | 1.0 | 0.301 | 0.537 | 0.419 | 0.310 |
+| 2.6 | 1.0 | 0.319 | 0.553 | 0.436 | 0.360 |
+| 2.6 | 0.8 | 0.278 | 0.482 | 0.380 | 0.341 |
+
+Both knobs are linear over this range and they separate cleanly: +1.0 of FILL is worth +0.062 coffer and only
++0.019 soffit (the central disk is the emitter the coffers see best), while VAULT trades 0.28 of soffit for 0.095 of
+coffer per unit. Shipped **FILL 1140 -> 3648 W (x3.2) and VAULT_FILL 3960 -> 3564 W (x0.9)**, which puts the coffer
+in the middle of QA's window instead of on its edge and keeps the soffit mean within 4 % of ref 083. The x3.2 is not
+a new art bias: it is the factor round 10's exposure change removed and never gave back.
