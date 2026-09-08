@@ -69,7 +69,31 @@ def _metal_gpu():
 # now lean opposite ways across the vault. The engines agree on the two numbers QA measures and not on their split.
 # The coffer lands inside +-0.15 of Cycles as soon as the cutoff is on, and the energy then buys the soffit back
 # without touching it. Cycles keeps the physical rig exactly as light_build writes it.
-EEVEE_VAULT = dict(energy_scale=8.0, cutoff_distance=13.0)
+# ROUND 11 REPLACES THE READING ABOVE. The Eevee vault was never short of an ambient term: with the probe volumes
+# baked on the physical rig (light_probes.bake, QA-04-1) the baked irradiance ALREADY contains the vault emitters,
+# and Eevee then adds their direct light on top, while Cycles path-traces the whole thing once. Eevee with no cutoff
+# at the plain physical energy puts the coffer field at 0.839 of the frame's own sky where Cycles reads 0.387: it is
+# counting the same eight emitters twice. `cutoff_distance` removes the duplicate rather than faking an ambient term
+# - at 21 m each emitter still lights its own soffit (4.5-11 m) and stops double-counting into the coffered dome
+# 20.7 m away. Measured on cam04 at 1280x720 against the round-11 Cycles frame (soffit W 0.316 / E 0.532 /
+# mean 0.424, coffer 0.387); QA's box is 0.15:
+#   x8  + 13 m, baked WITH the cutoff (what QA measured)  W 0.399  E 0.142  mean 0.270  coffer 0.034
+#   x8  + 13 m, physical bake                            W 0.428  E 0.194  mean 0.311  coffer 0.240
+#   x8  + 18 m                                           W 0.469  E 0.228  mean 0.349  coffer 0.246
+#   x6  + 21 m                                           W 0.546  E 0.419  mean 0.483  coffer 0.325   <- SHIPPED
+#   x5  + 24 m                                           W 0.517  E 0.413  mean 0.465  coffer 0.568
+#   x3  + 25 m                                           W 0.382  E 0.320  mean 0.351  coffer 0.530
+#   x4  + 25 m                                           W 0.459  E 0.375  mean 0.417  coffer 0.611
+#   x2  + 45 m                                           W 0.443  E 0.392  mean 0.418  coffer 1.145
+#   x1, no cutoff (physical)                             W 0.293  E 0.276  mean 0.284  coffer 0.839
+# Shipped x6 + 21 m: it puts BOTH numbers QA flagged inside 0.15 of Cycles - the coffer field 0.325 (gap 0.062,
+# against 0.227 before) and the soffit E 0.419 (gap 0.113, against 0.380 before) - and the soffit mean, which is how
+# ref 083 is quoted, at 0.483 against 0.424 (gap 0.059).
+# COST ON RECORD: the soffit W goes to 0.546 against Cycles' 0.316, i.e. 0.230 outside the box, and it was inside
+# before (0.399 vs 0.289). W and E move together in Eevee at every cutoff tried, while Cycles wants them 0.22 apart
+# in the other direction, so no single override lands all three. The two QA tabulates a window for are the two that
+# are landed; the split is an engine-level disagreement and is written up in docs/lighting_notes.md 20.7.
+EEVEE_VAULT = dict(energy_scale=6.0, cutoff_distance=21.0)
 
 
 def _vault_lights():
