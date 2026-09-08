@@ -308,6 +308,86 @@ def build_terrain():
     return obj, paths
 
 
+# ----------------------------------------------------------------------------- paving (QA-05-11)
+# cam 03 stands inside the south colonnade and its ground came back "bare": ground/sunlit 0.197, std 15.7, where
+# ref 128 shows a paved walk with joints and a planting edge.  ARCH does not model a colonnade floor
+# (`arch_params.COLONNADE_GROUND_Z = -0.6` is a level, not a slab), so the walk is ENV's terrain triangle soup -
+# one flat gravel material with nothing on it.
+#
+# The walk is a curved colonnade, so its paving is radial: courses struck from the same centre as the wings
+# (arch_params COL_ARC_CENTER, the centre env_trees.COLONNADE_ARC uses), alternate courses set half a slab out of
+# phase (running bond).  Each slab is one quad lifted PAVE_LIFT over the terrain with a PAVE_JOINT gap all round,
+# so the joints are real geometry that self-shadows at a 7.4 deg sun, and each slab's four corners carry an
+# independent few-millimetre jitter so no two slabs return the sun identically.  ~2 tris per slab.
+PAVE_CENTRE = (-11.2, 84.7)   # arch_params COL_ARC_CENTER
+PAVE_SLAB = 1.55              # course depth and nominal slab width (m)
+PAVE_JOINT = 0.055            # joint width (m)
+PAVE_LIFT = 0.035             # slab top over the terrain (m) - the joint gap is this deep
+PAVE_INSET = 1.6              # the paved area is the wing footprint offset outward by this (the gravel band
+                              # the terrain already lays down at +2.0 stays as a border)
+
+
+def build_paving():
+    """Radial paving slabs on both colonnade walks: `ENV_ground_colonnade_walk` (QA-05-11)."""
+    log("paving: colonnade walk")
+    coll = SUB["ENV_terrain"]
+    cx, cy = PAVE_CENTRE
+    rnd = random.Random(4021)
+    verts, faces, fmat = [], [], []
+    m_main = L.mat_or("MAT_paving_stone", "MAT_gravel_path")
+    m_worn = L.mat_or("MAT_paving_stone_worn", "MAT_soil")
+    n_slabs = 0
+    for wing in COLONNADE_ROOFS[:2]:
+        poly = L.offset_polygon(L.ensure_ccw(wing), PAVE_INSET)
+        ring = L.resample_polyline(poly, 2.0, closed=True)
+        # polar extent about the arc centre, unwrapped around the wing's own mean bearing
+        mx = sum(math.cos(math.atan2(y - cy, x - cx)) for (x, y) in ring) / len(ring)
+        my = sum(math.sin(math.atan2(y - cy, x - cx)) for (x, y) in ring) / len(ring)
+        a_mid = math.atan2(my, mx)
+        rs, das = [], []
+        for (x, y) in ring:
+            rs.append(math.hypot(x - cx, y - cy))
+            das.append((math.atan2(y - cy, x - cx) - a_mid + math.pi) % (2 * math.pi) - math.pi)
+        r0, r1 = min(rs) - 0.4, max(rs) + 0.4
+        a0, a1 = min(das) - 0.002, max(das) + 0.002
+        course = 0
+        rb = r0
+        while rb < r1:
+            rm = rb + PAVE_SLAB / 2
+            astep = PAVE_SLAB / max(1.0, rm)
+            phase = (0.5 * astep) if course % 2 else 0.0
+            ab = a0 - phase
+            while ab < a1:
+                am = ab + astep / 2
+                px = cx + rm * math.cos(a_mid + am)
+                py = cy + rm * math.sin(a_mid + am)
+                if not L.point_in_poly(px, py, poly):
+                    ab += astep
+                    continue
+                ja = PAVE_JOINT / max(1.0, rm) / 2
+                ri, ro = rb + PAVE_JOINT / 2, rb + PAVE_SLAB - PAVE_JOINT / 2
+                dz = PAVE_LIFT + rnd.uniform(-0.008, 0.008)
+                b = len(verts)
+                for (rr, aa) in ((ri, ab + ja), (ro, ab + ja), (ro, ab + astep - ja), (ri, ab + astep - ja)):
+                    vx = cx + rr * math.cos(a_mid + aa)
+                    vy = cy + rr * math.sin(a_mid + aa)
+                    verts.append((vx, vy, terrain_height(vx, vy) + dz + rnd.uniform(-0.006, 0.006)))
+                faces.append((b, b + 1, b + 2, b + 3))
+                # worn / repaired slabs in patches, not salt-and-pepper: a noise field picks the patches
+                fmat.append(1 if L.fnoise(px, py, 0.09, 44) + 0.5 * L.fnoise(px, py, 0.5, 45) > 0.42 else 0)
+                n_slabs += 1
+                ab += astep
+            rb += PAVE_SLAB
+            course += 1
+    if not faces:
+        log("paving: no slabs (no colonnade polygons?)")
+        return None
+    obj = L.mesh_from_tris("ENV_ground_colonnade_walk", verts, faces, coll, [m_main, m_worn], fmat, smooth=False)
+    log(f"paving: {n_slabs} slabs, {L.tri_count(obj):,} tris, "
+        f"{100.0 * sum(fmat) / max(1, len(fmat)):.0f} % worn ({m_main.name} / {m_worn.name})")
+    return obj
+
+
 # ----------------------------------------------------------------------------- water
 WATER_BED_CLEARANCE = 0.05     # the water bed sits this far above the terrain bed (no z-fighting)
 
@@ -864,10 +944,20 @@ def build_shrubs():
     # QA-03-9: everything along the colonnade fronts sits in the wing's own shade, where MAT_shrub's dark cards
     # read as black holes at cam 03.  Use the pale / dry families and mahonia there instead.
     PALE = ("pitto1", "pitto5", "pitto7", "maho0", "maho1", "maho2")
+    n_walk = len(placed)
     for p in COLONNADE_ROOFS[:2]:
-        for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 5.5, closed=True):
-            if land_ok(x, y, 1.0) and rnd.random() < 0.45:
+        # QA-05-11: a planting EDGE against the new paving (build_paving pave to offset 1.6, the terrain lays
+        # gravel to 2.0 and soil from there to 5.5).  Ref 128 has a low continuous edge - agapanthus and clipped
+        # low mounds - right where the slabs stop, then the deeper bed behind it.  Low and pale, because
+        # everything here stands in the wing's own shade (the QA-03-9 finding).
+        for (x, y) in L.resample_polyline(L.offset_polygon(p, 2.8), 3.0, closed=True):
+            if land_ok(x, y, 1.0) and rnd.random() < 0.60:
+                clump(x, y, rnd.randint(1, 2), 1.0, AGAP + ("pitto0", "pitto1", "maho0"),
+                      min_shore=1.0, max_shore=1e9, s=(0.55, 1.05))
+        for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 4.2, closed=True):
+            if land_ok(x, y, 1.0) and rnd.random() < 0.58:
                 clump(x, y, rnd.randint(1, 3), 2.0, PALE + TWIGS, min_shore=1.0, max_shore=1e9)
+    log(f"shrubs: colonnade walk edge + bed {len(placed) - n_walk} instances")
     # 4. the wooded islet: dense dark mounds under the willows
     for _ in range(80):
         p = ISLETS[0]
@@ -1003,6 +1093,7 @@ def build_lamp_posts(paths):
 # ----------------------------------------------------------------------------- main
 def main():
     terrain, paths = build_terrain()
+    build_paving()
     build_water()
     build_riprap()
     build_shrubs()

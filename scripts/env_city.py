@@ -515,6 +515,13 @@ def build_canopy(SUB, clear):
         groups[k].append(((x, y, FAR_GROUND_Z + h * 0.52), rnd.uniform(0, 6.283), (w, w, h * 0.52)))
 
     # 1. the woods
+    # QA-05-8 (round 7).  The far field "reads as one beige plane: no road grid, no block structure at 1280 px",
+    # and the reason is not the roads - round 6 put 780 asphalt samples on the ground - but this canopy.  cam 06
+    # stands 120 m up and looks down at about 19 deg, so a 15 m crown hides 15/tan(19) = 43 m of ground behind it;
+    # at `pad=4.0` the woods closed over every Presidio way within one tree of its verge and nothing of the
+    # corridor was left to see.  The pad is now the depression-angle clearance, so each way keeps an open corridor
+    # and the (deliberately near-continuous, see 3) tree rows on its verges draw the dark line QA is asking for.
+    CANOPY_ROAD_PAD = 17.0
     a = PRESIDIO_AZ[0]
     while a < PRESIDIO_AZ[1]:
         r = 138.0
@@ -527,7 +534,7 @@ def build_canopy(SUB, clear):
                 aa = a + rnd.uniform(-1.0, 1.0)
                 rr = r + rnd.uniform(-5.0, 5.0)
                 x, y = rr * math.cos(math.radians(aa)), rr * math.sin(math.radians(aa))
-                if clear(x, y) and not rf.on_road(x, y) and not in_clearing(x, y):
+                if clear(x, y) and not rf.on_road(x, y, CANOPY_ROAD_PAD) and not in_clearing(x, y):
                     add(x, y, rnd.uniform(9.0, 20.0), rnd.uniform(0.42, 0.72))
                     n += 1
             r += 8.0
@@ -542,7 +549,7 @@ def build_canopy(SUB, clear):
             n += 1
     # 3. street tree lines: Palace Drive, then every grid street and Presidio boulevard
     for pts, w, kind in ROADS:
-        line = L.resample_polyline(pts, 16.0)
+        line = L.resample_polyline(pts, 16.0 if kind == "street" else 10.0)
         for i in range(len(line) - 1):
             x, y = line[i]
             r = math.hypot(x, y)
@@ -557,7 +564,10 @@ def build_canopy(SUB, clear):
             nv = Vector((d.y, -d.x))
             off = w / 2 + WALK_W + 1.4
             for sgn in (-1, 1):
-                if rnd.random() > (0.72 if kind == "drive" else 0.55):
+                # QA-05-8: on the Presidio ways the verge rows are what actually draws the street line at 1280 px,
+                # so they are near-continuous there rather than a 55 % scatter.
+                keep = 0.90 if kind in ("boulevard", "drive") else 0.55
+                if rnd.random() > keep:
                     continue
                 ox, oy = x + sgn * nv.x * off, y + sgn * nv.y * off
                 if not clear(ox, oy):
