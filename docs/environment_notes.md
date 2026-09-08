@@ -985,7 +985,9 @@ two measured bands of each image (both bands, one image, two unknowns):
 | ref 169 (aligned boxes) | **97.9** | **48.4** | 113.3 | 145.9 |
 
 The photograph puts two thirds of its light on that stone as sky and one third as sun; this build has it the other
-way round. The north wing hides the error because it is face-on — 57.7 + 89.1 and 97.9 + 48.4 both land on ~146 —
+way round. (The fit is on whole-box luminance, so it carries each box's sky and foliage as well as its stone -
+but that only makes the conclusion safer: the SOUTH box holds *more* sky, 12.5 % against the north's 8.8 %, and is
+still the darker of the two. Restricted to stone the contrast would be larger, not smaller.) The north wing hides the error because it is face-on — 57.7 + 89.1 and 97.9 + 48.4 both land on ~146 —
 and the south wing is where the split shows.
 
 **Hand-off to lighting.** Not the sun angle: the sky/ambient fill on the raking faces. Moving A from ~58 to ~98
