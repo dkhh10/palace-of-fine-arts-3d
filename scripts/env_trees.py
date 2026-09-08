@@ -562,11 +562,13 @@ SHADOW_BANDS = (12.0, 17.0)
 # throws its shadow straight across that belt, and `shadow_relief` protected the wing faces and the hero's water
 # but never the shore.  These samples put the crop itself in the relief loop.
 SHORE_BOX = (700 / 1920.0, 1200 / 1920.0, 600 / 1080.0, 740 / 1080.0)      # QA-05-10's crop, in frame coords
-SHORE_OFFSETS = (1.5, 4.0, 8.0, 13.0)      # metres inland from the water line - the belt QA-04-4 planted
-SHORE_HEIGHTS = (0.6, 1.6, 2.6)            # crown heights of that belt (band_sightline_cap allows 3.2-3.7 m)
+SHORE_OFFSETS = (2.0, 7.0, 13.0)      # metres inland from the water line - the belt QA-04-4 planted
+SHORE_HEIGHTS = (1.0, 2.2)            # crown heights of that belt (band_sightline_cap allows 3.2-3.7 m)
+# `shadow_relief` re-measures every sample against every tree up to 140 times, so the sample count is kept in the
+# low hundreds: 3 offsets x 2 heights on a 5 m ring, clipped to QA's own crop, is ~150-250 points.
 
 
-def shore_sun_samples(lagoon_field, terrain_height=None, step=2.5):
+def shore_sun_samples(lagoon_field, terrain_height=None, step=5.0):
     """Points on the hero's shore-shrub belt that land inside QA-05-10's crop, as (3, x, y, z) samples."""
     cam = L.qa_camera("_qa_01_", (-14.1, 100.0, 1.6), 20.0)
     if cam is None or lagoon_field is None:
