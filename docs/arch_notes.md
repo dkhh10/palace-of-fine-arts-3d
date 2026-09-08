@@ -745,3 +745,34 @@ There is a second, larger finding behind it: **ref 062 puts the imbricated scale
 the moulded ring BELOW the scale band**, while the model (following the catalog's "scale pattern over a plain torus,
 *then* a moulded cornice ring") stacks the ring on top of the cushion. Since the cushion's own row is within 6-10 px,
 the whole discrepancy lives in that ring. Reported only — any drum change touches the arbitrated round-1 dome fit.
+
+### Round 4 checkpoint (session stopped before any Blender run)
+
+**Changed (code only — `assets/architecture.blend` has NOT been rebuilt yet, so the .blend on disk is still round 3):**
+`arch_params.ARCHITRAVE_H / FRIEZE_H / CORNICE_H` 1.4 / 1.2 / 1.2 → **1.15 / 0.90 / 1.75** (3.80 total unchanged);
+`arch_build.CORNICE` + `rotunda_entablature_profile()` rebuilt per the table above (corona 0.24 → **1.66 m** with a
+0.86 m soffit, modillions 1.06 pitch × 0.68 deep, dentils 0.38 pitch × 0.34 deep, egg-and-dart moved above the
+modillions, frieze 0.24 → 0.20 with its `frieze_run` sockets); dentils + modillions duplicated into `_LOD1`.
+New tools: `arch_entab_measure.py` (reproduces QA's metric exactly: 20.9 vs the photo's 54.1, texture 0.512),
+`arch_entab_probe.py` (prints which model (d, z) owns which cam01 row; renders border crops with QA's Cycles preset),
+`arch_p4r4_sheet.py` (the before/after/ref composite).
+
+**Measured:** everything in the two sections above — the solar geometry that rules out cast shadows, the ref-169 band
+heights and pitches, the two derivations (corona projection 1.65 m, cornice height 1.5-1.7 m), and the drum-ring
+re-measurement (−2.5 m of ring radius or −1.4 m of ring height, not round 3's 0.4 m; and ref 062 puts the scale band
+above the ring, not below).
+
+**Not yet done — next session, in this order:** (1) `blender -b master.blend --python scripts/arch_entab_probe.py --
+--map` to pin the row↔(d, z) mapping (the whole design was laid out on a 13.6-14.1 px/m estimate derived from the
+round-05 hero, and one number in it — which of the two dark rows at 262-270 is the modillion band — is still
+inferred); (2) BEFORE silhouette off the current .blend, then `arch_build.py`, then AFTER silhouette (crop
+690 40 1235 520, apex/corner rows within 1 %); (3) `build_master.py` in this worktree and a border-crop Cycles render
+of rows 180-340 with `arch_entab_probe --render`; (4) `arch_entab_measure stats` on box 900 262 1020 296 and iterate.
+
+**Known risk to flag to the lead now:** under QA's round-05 alignment the model's entablature sits ~15 px (≈1.1 m)
+HIGHER in the hero frame than ref 169's — the photo's cornice occupies render rows ~263-290, the model's rows
+~250-271 — while the entablature's *size* on screen matches (4.25 m apparent vs the photo's 4.35). The QA box
+900 262 1020 296 was drawn on the photograph's cornice, so part of it lands on the model's frieze no matter how the
+cornice is built. The rebuild should still roughly double the row-profile std; if it lands short of 0.75, the
+residual is a stack question (attic height vs entablature height, the arbitrated round-1 fit), not a cornice one,
+and the honest test is the same 34-row box placed on the model's own cornice. Nothing here changes the silhouette.
