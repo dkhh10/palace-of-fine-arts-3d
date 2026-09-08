@@ -156,3 +156,7 @@ Next: review + merge all three, lead_build.sh, QA round 4 (Fable xhigh; cam02 st
 ## 2026-09-08 · MAT r5 reported (5c360d4), in review
 MAT r5: ORN_NORMAL/ORN_AO nodes now match build_master (bakes plug into 27 per-asset materials on 307 instances), PFA_concrete reads ORN `cavity` (capital bell lum 152 -> 138, leaf tiers 8 -> 10), MAT_backdrop_asphalt / roof_tile added, MAT_backdrop_forest -55 % albedo (cam06 canopy moved only 5 %: 88 % of a far canopy pixel is atmosphere -> lighting), coffer ribs share the panel material so rib grime cannot separate them (ARCH: own material name for the rib plate). Sheet renders/qa_comparisons/mat_r5_sheet.png.
 In flight: MAT r5 review, LIGHT r10, ENV r5. Carried: ORN bake cavity at 15-20 % of the diagonal and on all meshes; ARCH rib plate material name.
+
+## 2026-09-08 · MAT r5 merged (c0a3b0b) after review (MERGE)
+Note for future rounds: RENDER_LOD is 0 and only LOD1 sources carry the ORN bakes, so at render time the recess channel is the `cavity` attribute alone (the ORN_NORMAL/ORN_AO path shows only in LOD1 previews). MAT_backdrop_asphalt / roof_tile reach master only once ENV objects use those names (ENV r5 told).
+In flight: LIGHT r10, ENV r5. Next: review + merge both, lead_build.sh, QA round 4.
