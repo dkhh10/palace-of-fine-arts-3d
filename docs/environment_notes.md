@@ -935,3 +935,19 @@ water on the tile too** — 62/78/67 RGB, the same tone as the middle of the lag
 north-west of it. So the polygon is right and the ref-062 station is not reproducible on this site, which is the
 conclusion architecture had already reached from the lens (the photo is simply farther away). **No change: the
 lagoon polygon keeps its OSM extent, world X -135..107, Y -20..118.**
+
+### What the two reference photos actually show (read before touching anything)
+
+**ref 169, the shore band (QA-05-10).** Over QA's own crop the photo is lum **115.6**, saturation 0.663, median
+hue 40.7; this build is lum **71.7**, saturation **0.769**, hue 42.9. So the hue is already right and the
+saturation is 16 % high — it is a *value* defect, not a colour one. Side by side the two differences are: the
+photo's shore is a **continuous** mass of foliage that tumbles into the water with almost no bank showing,
+willow crowns draping over it; this build shows a run of separate dark mounds with a pale rip-rap/stone bank
+between them and the water. Both a lighting question (is the mass lit?) and a geometry question (does the mass
+reach the water?), which is why the probe measures sun reach and coverage over the same crop.
+
+**ref 128, the colonnade walk (QA-05-11).** The walk itself is *dark* in the photo too — it stands in the wing's
+own shade, exactly as cam 03 renders it. What the photo has and this build did not is **structure inside that
+shade**: a jointed gravel/paved surface with pale sunlit patches where the sun comes through the bays, and a
+continuous planting edge at the column bases with shrub masses standing between the columns. So the fix is
+geometry and planting, not exposure: the acceptance number QA gives (std >= 12) is a floor on that structure.
