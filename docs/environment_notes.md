@@ -993,3 +993,31 @@ with k from ~89 to ~48 (same total at normal incidence) puts the south band at *
 i.e. both bands exactly on ref 169. Every +10 of A on its own lifts the south band by 10, so A 58 -> 75 already
 clears QA's >= 103 with the north at 163 (1.12 of ref, inside its 25 %). What ENV did this round is below; on this
 band it is worth a few luminance, not thirty.
+
+### QA-05-10 — the shore band is not in shadow; it is uniformly under-lit. Measured.
+
+QA's reading is "the new shrubs sit in shadow and read black-green". A shadow shows up as a **bimodal** band: some
+pixels at the photograph's level, the shadowed ones near black. Deciles of QA's own crop (700 600 1200 740), this
+build's hero against the aligned ref 169:
+
+| decile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | mean |
+|---|---|---|---|---|---|---|---|---|---|---|
+| this build | 27 | 37 | 45 | 53 | 62 | 72 | 85 | 104 | 134 | **71.7** |
+| ref 169 | 51 | 69 | 83 | 96 | 110 | 126 | 143 | 165 | 195 | **115.6** |
+| ratio | 1.89 | 1.86 | 1.84 | 1.81 | 1.77 | 1.75 | 1.68 | 1.59 | 1.46 | 1.61 |
+
+Every decile is short by the same 1.5-1.9x, slightly more in the shadows than in the highlights. That is a level,
+not an occlusion — nothing in the band is anywhere near black, and nothing in it is at the photograph's level
+either. Hue is already right (median 42.9 vs the photo's 40.7, QA's window 40-60); saturation is 16 % **high**
+(0.769 vs 0.663), which is what an under-exposed saturated leaf shader looks like.
+
+Round 7 still built the sun-reach test rather than arguing it — `env_r7_probe.py` casts a second ray from every
+sampled pixel of that crop toward the sun, and `env_trees.shore_sun_samples` puts the crop's own belt into
+`shadow_relief`'s loop as a fourth target (`SHORE_TARGET` 0.25) so a future planting change cannot quietly put
+that band back into shade. The measured numbers are in the round-7 results table below.
+
+**A warning for whoever takes this next.** The obvious geometric "fix" - closing the belt further so the foliage
+reaches the water as it does in ref 169, hiding the pale rip-rap bank - makes this **number worse**, because it
+replaces bright stone with foliage that is currently 1.6x too dark. The bank coverage is deliberately left where
+QA-04-4 put it (pale-stone 7.1 % of the band) until the foliage level is fixed. Owner: **materials / lighting**,
+same ambient/direct split as QA-05-5.
