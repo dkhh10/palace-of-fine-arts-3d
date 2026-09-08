@@ -113,8 +113,8 @@ def main():
             "south face bears 47.2 deg, so at az 118.5 the sun rakes it at cos 0.32",
             "(north wing 0.99) - and 118.5 IS this photo's own sun (solar position",
             "for 2020-02-01 at el 7 = 118.3 deg).  Fit lum = A + k cos on both bands:",
-            "this build A 57.7 k 89.1   ref 169 A 97.9 k 48.4 -> it is the sky fill.",
-            "A 58 -> 98 with k 89 -> 48 lands both bands on the photo.  LIGHTING."]),
+            "this build A 61.7 k 76.5   ref 169 A 97.9 k 48.4 -> it is the sky fill,",
+            "36 lum short.  A 62 -> 79 alone clears QA's >= 103.  LIGHTING (= QA-05-1)."]),
     ]))
 
     # ---- 2. QA-05-10 shore band
