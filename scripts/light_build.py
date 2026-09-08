@@ -95,6 +95,14 @@ SKY_DIFFUSE_SATURATION = 1.00      # saturation of the sky for DIFFUSE rays, i.e
                                    # by 1 sRGB unit out of 36 needed (142,112,36 -> 135,107,34): >97 % of the light
                                    # on the shaded stone is warm interreflection off the sunlit stone and ground, not
                                    # sky, so no sky colour can reach it. Handed to materials (see docs/lighting_notes 19).
+SKY_DIFFUSE_BOOST = 1.00           # ROUND 11 (QA-04-2), new socket, SHIPPED AT THE PHYSICAL 1.00. Scales the sky on
+                                   # every ray that is neither camera nor glossy, i.e. the light that lands on shaded
+                                   # stone, without touching the visible sky or the lagoon's reflection of it. It is
+                                   # the socket the round-11 brief asked for first and it is NOT the fix: the full
+                                   # sweep is in the SHADE_FILL comment below (boost 2 already costs 0.052 attic
+                                   # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
+                                   # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
+                                   # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
 SUN_BLUE_MULT = 0.75               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
                                    # own sun disc has been integrated (so the calibration itself stays physical and
                                    # reproducible). Round 09 lever for QA-02-14 / the sunlit-stone chroma: the lamp
@@ -224,6 +232,45 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   size=12.5, size_y=4.0, energy=3960.0, color=(1.0, 0.86, 0.68), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
+# ----------------------------------------------------------------------------- QA-04-2: the shade fill
+# ROUND 11. QA measured the shade collapsed: cam03's near shaft 7.3 against ref 128's 69.7, the cam03 ground 21.2,
+# and the hero's shaded north attic at hue 43.1 / saturation 0.736 against ref 169's 29.5 / 0.425 - i.e. the shade is
+# not only dark, it is the wrong colour, a yellow-green bounce with no sky in it.
+#
+# The obvious lever was tried first and MEASURED TO FAIL. `SKY_DIFFUSE_BOOST` (new socket, round 11) scales the sky on
+# every ray that is neither camera nor glossy, so it raises the shade without touching the visible sky or the lagoon's
+# reflection. Cycles, the lead's merged master, cam03 at 1280x720 and cam01 at 1920x1080 / 64 spp:
+#
+#   diffuse boost | cam03 shaft | cam03 ground | attic sat | attic R-B | attic lum | shade hue | columns
+#   1.0 (r10)     |     4.6     |     23.6     |   0.554   |   122     |   180.4   |   43.1    |  1.27x
+#   2.0           |     9.1     |     34.6     |   0.502   |   112.3   |   187.7   |   44.8    |  1.47x
+#   4.0           |    17.9     |     53.8     |   0.423   |    96.9   |   198.8   |   47.4    |  1.58x
+#
+# Two things kill it. (1) The brief's budget is 0.02 saturation and 5 R-B; a boost of 2 already costs 0.052 and 9.7,
+# because a sun-facing surface collects ~14 % of its red and ~38 % of its blue from the sky (r09 calibration), so more
+# sky lands on the sunlit stone too. (2) It makes the shade hue WARMER, not cooler (43.1 -> 44.8 -> 47.4): the extra
+# sky lands mostly on the sunlit plaza and comes back as warm bounce. SKY_DIFFUSE_BOOST therefore ships at 1.00 and is
+# kept only as a documented, measured socket.
+#
+# What the shade actually needs is light that reaches the ANTI-SUN faces and nothing else. Three wide-angle SUN lamps
+# on the anti-sun hemisphere do exactly that, and a sun lamp is the right primitive for three reasons: its energy is
+# an irradiance in W/m2, directly comparable with the calibrated 67.3 W/m2 of the real sun, so the fill can be quoted
+# as a fraction of the sun; it is occluded by the building exactly the way the sky is (no light through walls); and it
+# costs almost nothing to sample. They sit LOW (elevation 14-20 deg) on purpose: a low fill rakes vertical shaded
+# faces, where the defect is, and lands on the horizontal plaza at cos(el) ~ 0.3, so it adds little of the warm ground
+# bounce that made the diffuse boost fail.
+# `visible_camera = False` keeps a 55 deg disc out of the sky, and specular_factor 0.10 keeps it out of the lagoon's
+# reflection and off the column highlights (QA-03-7 and QA-04-5 are both glossy-side defects).
+SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irradiance, so SHADE_FILL can
+                                   # be quoted as a fraction of the real sun in the log and the notes
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, angle_deg=55.0, specular=0.10,
+                  color=(0.42, 0.62, 1.00),   # clear-sky blue, normalised to max 1; the cool half of the hemisphere
+                  lamps=[dict(az=300.0, el=16.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
+                         dict(az=205.0, el=16.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
+                         dict(az=25.0, el=20.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
+                  note="QA-04-2 sky fill on the anti-sun hemisphere: the cool share of the sky dome that a "
+                       "0.80-strength sky under a 7.4 deg sun cannot put on shaded stone")
+
 COLLECTION = "LIGHT"
 WORLD_NAME = "WORLD_golden_hour"
 GROUP_NAME = "COMP_golden_hour"
@@ -301,6 +348,44 @@ def build_fill(coll):
     return obj
 
 
+def build_shade_fill(coll, energy=None):
+    """QA-04-2: wide-angle cool sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
+    Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory."""
+    S = SHADE_FILL
+    e_total = S["energy"] if energy is None else energy
+    for o in [o for o in bpy.data.objects if o.name.startswith(S["name"])]:
+        d = o.data
+        bpy.data.objects.remove(o, do_unlink=True)
+        if d is not None and d.users == 0:
+            bpy.data.lights.remove(d)
+    made = []
+    for k, cfg in enumerate(S["lamps"]):
+        name = f"{S['name']}_{k:02d}"
+        light = bpy.data.lights.new(name, "SUN")
+        light.energy = e_total * cfg["w"]
+        light.color = S["color"]
+        light.angle = math.radians(S["angle_deg"])
+        light.use_shadow = True
+        try:
+            light.specular_factor = S["specular"]
+        except Exception:
+            pass
+        obj = bpy.data.objects.new(name, light)
+        obj.location = (0.0, 0.0, 80.0)
+        common.aim_sun(obj, cfg["az"], cfg["el"])
+        obj.visible_camera = False        # a 55 deg sun disc must never be visible in the sky
+        obj["azimuth_deg"], obj["elevation_deg"] = cfg["az"], cfg["el"]
+        obj["energy_W"] = light.energy    # the shipped irradiance; the r11 sweep scales from this
+        obj["note"] = cfg["note"]
+        obj["rig_note"] = S["note"]
+        coll.objects.link(obj)
+        made.append(obj)
+    print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, {e_total:.2f} W/m2 total "
+          f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun) at "
+          f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}")
+    return made
+
+
 def build_vault_fill(coll):
     """QA-02-12: eight up-facing rectangles, one under each rotunda vault bay (see the VAULT_FILL comment above)."""
     V = VAULT_FILL
@@ -342,7 +427,8 @@ def build_world(az, el, calib, moment):
     w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
                            camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION,
                            glossy_boost=SKY_GLOSSY_BOOST, glossy_saturation=SKY_GLOSSY_SATURATION,
-                           diffuse_saturation=SKY_DIFFUSE_SATURATION)  # disc OFF: LIGHT_sun carries it
+                           diffuse_saturation=SKY_DIFFUSE_SATURATION,
+                           diffuse_boost=SKY_DIFFUSE_BOOST)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -357,6 +443,7 @@ def build_world(az, el, calib, moment):
     w["sky_strength_lighting"] = SKY_STRENGTH
     w["sky_camera_boost"] = SKY_CAMERA_BOOST
     w["sky_glossy_boost"] = SKY_GLOSSY_BOOST
+    w["sky_diffuse_boost"] = SKY_DIFFUSE_BOOST
     w["sky_camera_saturation"] = SKY_CAMERA_SATURATION
     w["sky_glossy_saturation"] = SKY_GLOSSY_SATURATION
     w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
@@ -492,12 +579,17 @@ def build(moment="morning", calibrate=True, save=True):
 
     meta = dict(solar_source=source, exposure_calibrated_ev=calib["exposure_ev"], exposure_bias_ev=EXPOSURE_BIAS,
                 sky_strength_lighting=SKY_STRENGTH, sky_camera_boost=SKY_CAMERA_BOOST,
-                sky_glossy_boost=SKY_GLOSSY_BOOST,
+                sky_glossy_boost=SKY_GLOSSY_BOOST, sky_diffuse_boost=SKY_DIFFUSE_BOOST,
+                sky_camera_saturation=SKY_CAMERA_SATURATION,      # round-10 review nit: the three saturations were
+                sky_glossy_saturation=SKY_GLOSSY_SATURATION,      # on the world but not on the sun's meta block,
+                sky_diffuse_saturation=SKY_DIFFUSE_SATURATION,    # so a rig read back from the sun was incomplete
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
+    globals()["SUN_REFERENCE_W"] = energy
     sun = build_sun(coll, az, el, energy, color, moment, meta)
     fill = build_fill(coll)
+    shade = build_shade_fill(coll)
     vault_fill = build_vault_fill(coll)     # QA-02-12
     probes.ensure_probes(scene, coll)      # QA-01-9: unbaked here (no geometry); the lead bakes them on master
     world = build_world(az, el, calib, moment)

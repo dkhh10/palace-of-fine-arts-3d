@@ -25,6 +25,8 @@ import light_presets as lp
 import light_build as lb
 import light_calibrate as cal
 
+if __name__ != "__main__":       # round-10 review nit: importing this module must not render anything
+    raise ImportError("light_r10_sweep is a script, not a module: run it with blender -b --python")
 args = common.script_args()
 
 

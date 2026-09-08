@@ -73,8 +73,14 @@ EEVEE_VAULT = dict(energy_scale=8.0, cutoff_distance=13.0)
 
 
 def _vault_lights():
-    return [o for o in bpy.data.objects
-            if o.type == "LIGHT" and o.name.startswith("LIGHT_rotunda_vault_bounce")]
+    # round-10 review nit: the name lives in light_build.VAULT_FILL, not in a literal here. Imported lazily because
+    # light_build imports light_presets (for LOOK), so a module-level import would be circular.
+    try:
+        import light_build
+        prefix = light_build.VAULT_FILL["name"]
+    except Exception:
+        prefix = "LIGHT_rotunda_vault_bounce"
+    return [o for o in bpy.data.objects if o.type == "LIGHT" and o.name.startswith(prefix)]
 
 
 def apply_vault_for_engine(engine):

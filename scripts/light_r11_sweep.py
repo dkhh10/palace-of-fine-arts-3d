@@ -67,7 +67,7 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 bm=lb.SUN_BLUE_MULT, de=0.0,
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
-                fill=1.0)    # SHADE_FILL energy multiplier (0 = off)
+                fill=0.0)    # SHADE_FILL total irradiance in W/m2 across the three lamps (0 = off)
 
 
 def parse(case):
@@ -118,7 +118,7 @@ print(f"[r11] master {MASTER}: exposure {scene.view_settings.exposure:.4f}, look
 
 def apply_case(c):
     if case_tag(c) == "base" and not any(abs(c[k] - DEFAULTS[k]) > 1e-9 for k in DEFAULTS) and not c["look"]:
-        print("[r11] case base: master left exactly as saved", flush=True)
+        print("[r11] case base: master left exactly as saved (no world rebuild, no shade fill)", flush=True)
         return
     energy, colour, exp_ev = _calib[c["sky"]]
     w = cal.make_sky_world(f"R11_{case_tag(c)}", AZ, EL, lb.SKY, sun_disc=False, strength=c["sky"] * c["wm"],
@@ -133,9 +133,11 @@ def apply_case(c):
     sun.data.color = (colour[0], colour[1], colour[2] * c["bm"])
     scene.view_settings.exposure = exp_ev + lb.EXPOSURE_BIAS + c["de"]
     scene.view_settings.look = ("AgX - " + c["look"].replace("_", " ")) if c["look"] else base_look
-    for o in bpy.data.objects:
-        if o.type == "LIGHT" and o.name.startswith(getattr(lb, "SHADE_FILL", {}).get("name", "LIGHT_shade_fill")):
-            o.data.energy = float(o.get("energy_W", o.data.energy)) * c["fill"]
+    # SHADE_FILL: rebuilt in memory every case (master.blend does not carry it until the lead re-links LIGHT).
+    # `fill` is the TOTAL irradiance in W/m2 across the lamps, i.e. directly comparable with the sun's 67.3.
+    coll = bpy.data.collections.get(lb.COLLECTION) or scene.collection
+    lb.SUN_REFERENCE_W = energy
+    lb.build_shade_fill(coll, energy=c["fill"])
     print(f"[r11] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} cb {c['cb']:g} gb {c['gb']:g} "
           f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} "
           f"exposure {scene.view_settings.exposure:.3f} EV, sun {sun.data.energy:.2f} W/m2", flush=True)
