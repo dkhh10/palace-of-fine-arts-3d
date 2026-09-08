@@ -1158,3 +1158,25 @@ Both knobs are linear over this range and they separate cleanly: +1.0 of FILL is
 coffer per unit. Shipped **FILL 1140 -> 3648 W (x3.2) and VAULT_FILL 3960 -> 3564 W (x0.9)**, which puts the coffer
 in the middle of QA's window instead of on its edge and keeps the soffit mean within 4 % of ref 083. The x3.2 is not
 a new art bias: it is the factor round 10's exposure change removed and never gave back.
+
+### 20.6 QA-04-1 result — the bake fix on its own restores the coffers by a factor of 7
+
+Everything below is cam04 at **1280x720** (Eevee's vault reading is resolution-sensitive, so it is measured at QA's
+resolution, not at the sweep resolution), with the round-11 interior fills (FILL x3.2, VAULT x0.9) and the probe
+volumes re-baked **in memory on the physical rig** by `light_r11_sweep.py --rebake CYCLES`:
+
+| Eevee vault override | soffit W | soffit E | soffit mean | coffer / own sky |
+|---|---|---|---|---|
+| **round 10's x8 + 13 m, baked WITH the cutoff (what QA measured)** | 0.399 | **0.142** | 0.270 | **0.034** |
+| x8 + 13 m, baked on the physical rig | 0.428 | 0.194 | 0.311 | **0.240** |
+| x4 + 25 m | 0.459 | 0.375 | 0.417 | 0.611 |
+| x2 + 45 m | 0.443 | 0.392 | 0.418 | 1.145 |
+| x1, no cutoff (physical) | 0.293 | 0.276 | 0.284 | 0.839 |
+
+**Changing nothing but the bake takes the coffer field from 0.034 to 0.240 — a factor of 7 — with the identical
+render-time rig.** That is the proof of the diagnosis in 20.3: the coffers were dark because the light that should
+have been in the baked irradiance volume was never put there.
+
+It also shows the cutoff is doing far more than round 10 thought. Between 13 m and 25 m the coffer jumps 0.240 ->
+0.611, i.e. the emitters reach the central dome as soon as they are allowed to, and the Eevee soffit E follows the
+same knob (0.194 -> 0.375). The two numbers QA measures therefore move together and the tuning is one-dimensional.
