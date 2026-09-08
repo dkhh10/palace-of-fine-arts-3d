@@ -67,7 +67,18 @@ R04 = {
     "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2],
     "Scale cues":            [3, 3, 2.5, 3, 2.5, 2.5],
 }
-SCORES = {"01": R01, "02": R02, "03": R03, "04": R04}
+R05 = {
+    "Silhouette match":      [4, 3.5, 2.5, 3.5, 3.5, 4],
+    "Proportion":            [4, 3.5, 3, 3.5, 3, 3.5],
+    "Ornament fidelity":     [3.5, 3, 2, 3, 3, 2.5],
+    "Material realism":      [3, 2.5, 1, 2, 2.5, 2],
+    "Edge wear":             [2, 1.5, 0.5, 1, 1.5, 0.5],
+    "Lighting mood":         [3.5, 3, 1, 2, 3.5, 3],
+    "Water reflection":      [3, 2.5, None, None, 2.5, 2],
+    "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
+    "Scale cues":            [3.5, 3, 2, 3, 3, 2.5],
+}
+SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05}
 VERDICT = {
     "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
@@ -77,6 +88,10 @@ VERDICT = {
     "04": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Attic chroma and flutes landed; blockers: Eevee ceiling black (coffer/sky 0.04), cam03 foreground crushed "
           "(shaft 0.10 of ref), stone still streak-free and uniform (std 55 % of photo), bare shoreline.",
+    "05": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. Hero 3.28 for the third round. "
+          "Shoreline, columns, cam05 apex, Eevee vault (0.04 -> 0.16) landed; blockers: cam03 shade crushed (shaft 0.06 of "
+          "the sunlit stone, ref 0.61), hero stone now a dark isotropic blotch (attic lum 0.88 of ref, streak anisotropy "
+          "0.64 vs photo 4.07), Cycles coffers 0.21 with black floors (claimed 0.39), water reflection grey (sat 0.11).",
 }
 
 

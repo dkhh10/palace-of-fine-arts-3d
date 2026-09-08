@@ -183,3 +183,49 @@ lead), -12 saved Eevee state, -13 cam06 far field, -14 cam02 foreground water.
 
 Tools added: `scripts/qa_cam02_probe.py` (on-land station sweep with visible-top framing solve, ray-cast occlusion, low-cost renders),
 `scripts/qa_4k_probe.py` (4K compositor off/on timing). `qa_render_round.py` now always rebuilds the QA cameras from `qa_cameras.py`.
+
+### Round 05 — 2026-09-08 (Phase 4 polish round 3; lighting r11, materials r6, environment r6 + follow-up, architecture mini-round; probes baked on the physical rig)
+
+Full report: `docs/qa_round_05.md`. **Gate composite: `renders/qa_comparisons/round05_gate.png`.** Evidence:
+`renders/qa_comparisons/round05_cam0K.png`, `round05_cam01_cycles.png`, `round05_sheet.png`, `round05_cam01_aligned_vs_ref169.png` (raw ref 169: scale
+1.3108 / dx -291.8 / dy -124.6, round-04 boxes valid within 2 px), `round05_cam01_crops_vs_ref169.png` (1:1 crop pairs with numbers burnt in).
+Renders: `renders/previews/qa/round05_*` (Eevee 1280x720 LOD1 x6: 22.7 / 22.2 / 23.6 / 18.7 / 18.0 / 12.7 s, quiet machine; Cycles hero
+1920x1080 128 spp **uncapped**: 355.8 s; Cycles cam04 64 spp 1280x720: 219.1 s).
+
+| row | cam01 | cam02 | cam03 | cam04 | cam05 | cam06 |
+|---|---|---|---|---|---|---|
+| Silhouette match | 4 | 3.5 | 2.5 | 3.5 | 3.5 | 4 |
+| Proportion | 4 | 3.5 | 3 | 3.5 | 3 | 3.5 |
+| Ornament fidelity | 3.5 | 3 | 2 | 3 | 3 | 2.5 |
+| Material realism | 3 | 2.5 | 1 | 2 | 2.5 | 2 |
+| Edge wear | 2 | 1.5 | 0.5 | 1 | 1.5 | 0.5 |
+| Lighting mood | 3.5 | 3 | 1 | 2 | 3.5 | 3 |
+| Water reflection | 3 | 2.5 | n/a | n/a | 2.5 | 2 |
+| Repetition visibility | 3 | 2.5 | 2 | 2.5 | 2.5 | 2.5 |
+| Scale cues | 3.5 | 3 | 2 | 3 | 3 | 2.5 |
+| average (delta vs round 04) | 3.28 (0.00) | 2.78 (+0.11) | 1.75 (-0.25) | 2.56 (+0.12) | 2.78 (+0.06) | 2.50 (+0.11) |
+
+Trend r02 -> r05: cam01 2.94 / 3.28 / 3.28 / 3.28 (**stuck**; Material 3, Repetition 3 three rounds); cam02 2.11 / 2.33 / 2.67 / 2.78 (slow up);
+cam03 1.94 / 2.13 / 2.00 / 1.75 (**declining**; shade 23 -> 7 -> 5.5); cam04 2.31 / 2.13 / 2.44 / 2.56 (flat; Lighting 2 three rounds);
+cam05 2.11 / 2.67 / 2.72 / 2.78 (flat since r03); cam06 2.17 / 2.17 / 2.39 / 2.50 (slow up).
+
+**Viewport performance**: open **0.72 s** (pass); LOD1 **11.01 M tris** (pass); Eevee 12.7-23.6 s per camera at LOD1 (pass).
+**Deliverables**: GPU / 768 adaptive / OIDN / AgX High Contrast / exposure -2.833, flythrough camera + path + target, Eevee taa 8/16 RT off
+logged (QA-04-12 closed); Eevee ceiling dim but readable (coffer / sky 0.16, was 0.035).
+
+Verdict: **gate not passed.** Closed by number: hero shoreline (pale-stone 36.5 -> 7.1 %, base hidden 97 %, willow, 2-4 m mounds), columns
+(95.9 vs 95.8, hue 27.8), north wing 0.94, attic std 0.66, cam05 apex 3.75 %, cam06 contrast 2.07:1, cam02 foreground, ref 062 station
+documented, Eevee vault no longer black (0.16). Hero average **3.28 for the third round**: scale cues +0.5 and edge wear +0.5 paid for by
+lighting -0.5 (sunlit attic 166.5, window 178-201; shaded stone sat 0.82) and water -0.5 (reflection sat 0.106, was 0.146). Not reproduced on
+the merged master: lighting's Cycles coffer 0.387 (measures **0.21**, down from 0.26), materials' near-water hue 204 (208.9).
+Rejects (game asset / decal): hero stone is an isotropic dirt blotch (streak anisotropy 0.64 vs photo 4.07, crops pane 1); cam04 coffers are
+black holes with lit rims (dark / light quarter 0.121 vs 0.265); cam03 80 % black (shaft 0.063 of the sunlit stone, ref-169 anchor 0.61);
+near water a flat blue plane (hue 209).
+cam03 shade test re-based: shade-vs-sunlit ratio inside the cam03 frame, window 0.30-0.70 anchored on ref 169 (0.607); ref 128's absolute
+69.7 retired. Labels fixed: frame-left of the hero is the SOUTH wing.
+Blockers: QA-05-1 shade crushed (lighting), -2 stone as dark isotropic decal (materials), -3 Cycles coffers 0.21 / black floors (lighting +
+materials, integration). Majors: -4 water hue 209 / grey reflection (materials + environment), -5 south wing 0.63 (lighting + environment),
+-6 entablature cornice / dentil shadow (architecture). Minors: -7 haze band, -8 cam06 no streets, -9 Eevee soffit W gap 0.22, -10 shore band
+dark (0.63 of photo), -11 cam03 ground bare, -12 cam05 flat stone at 110 m.
+Recommendation to the lead: change approach for the hero-facing concrete (photo-projected albedo from the aligned refs); measure every
+owner's acceptance number on the lead's post-build master, not the owner's branch.
