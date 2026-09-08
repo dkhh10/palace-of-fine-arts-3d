@@ -820,3 +820,100 @@ the chop, not the tint: at 20-45 m the ripple was smearing the ochre reflection 
 above it until the two averaged out. The near band is pulled in from 70 m to **45 m** and its 0.04 m chop layer
 weakened 0.18 -> 0.13, so the mid-distance reflection holds its colour while the last 20 m in front of the camera
 keep the break-up QA-03-7 bought.
+
+### Measured: round-5 library vs round-6 library, one master, `--swap`, 1920x1080 Cycles 48 spp
+
+Both columns are the same `master.blend`, the same lighting rig and the same exposure (-2.3331, `--ev 0.0`); only
+the library differs. **These absolute numbers are NOT comparable to QA round 04's**, which was rendered on
+lighting's r10 rig: this worktree's master still carries the rig it was built with, so the r5 column is the honest
+baseline here, not QA's table. Reference is QA's ref 169 warped into the render frame (panel 1 of
+`round04_cam01_aligned_vs_ref169.png`), read with the same script.
+
+| metric (mat_r4_measure boxes) | round-5 library | **round-6 library** | ref 169 | test |
+|---|---|---|---|---|
+| **attic luminance std** 900 222 1020 256 | 20.84 (0.476 of ref) | **26.15 (0.598)** | 43.77 | >= 0.60 -- **at the bar** |
+| **entablature luminance std** 900 262 1020 296 | 33.07 (0.512) | **32.79 (0.507)** | 64.62 | >= 0.60 -- **fails, see below** |
+| attic sunlit lum / hue / sat / R-B | 197.7 / 37.7 / 0.440 / 102 | **185.5 / 38.3 / 0.511 / 114** | 189.2 / 40.6 / 0.581 / 134 | lum 0.98 pass |
+| entablature lum / hue / sat | 181.1 / 38.0 / 0.507 | **152.7 / 39.1 / 0.681** | 145.5 / 33.7 / 0.586 | lum 1.24 -> **1.05** |
+| dome cap lum / sat | 209.9 / 0.288 | 206.6 / 0.305 | 227.9 / 0.266 | unchanged, as intended |
+| **columns (mask) lum / hue / sat** | 154.7 / 30.1 / 0.650 | **119.4 / 26.8 / 0.647** | 95.3 / 24.5 / 0.589 | hue 20-29 **pass**; lum 1.25x |
+| under-cornice run-off, attic col sd | 8.2 | **9.4** | 19.4 | |
+| under-cornice run-off, entablature col sd | 10.7 | **12.8** | 13.8 | **0.93 of the photo** |
+| waterline: columns >= 20 lum darker | 50.0 % | **59.2 %** | 39.2 % | median drop 19.4 -> **26.7** |
+| near water hue / sat | 204.8 / 0.487 | 203.8 / 0.505 | 189.9 / 0.248 | **fails** (185-200) |
+| sunlit-stone reflection hue / sat | 43.8 / 0.143 | 48.9 / 0.130 | 33.6 / 0.363 | **fails** (sat >= 0.28) |
+| coffer field dark/light quarter | 0.212 | 0.195 | 0.439 (ref 083) | ARCH's rib split not in this master yet |
+
+**Getting there took three passes and both of the first two are worth recording.**
+
+*r6a (macro at 9.0 / 5.5 / 7.0 m tiles, amplitude 0.15):* attic std 20.84 -> 23.36. Far less than the close-range
+A/B suggested, and the reason is that **QA measures the attic on a 120 x 34 px box, which is 6.0 x 1.7 m at the
+hero's 5 cm/px**. A 9 m tile puts most of its energy *outside* the measurement window. Tiles came down to
+5.5 / 3.2 / 4.5 m and amplitudes up to 0.19 / 0.17 / 0.24.
+
+*r6b (smaller tiles):* 23.36 -> 24.75. Still short, and the reason is AgX: a symmetric +-19 % linear swing at
+lum ~190 is only about +-5 % of display, because that is exactly where the curve compresses hardest. The macro
+layer is therefore **biased 35 % toward its dark half** (which is also what real staining does -- it darkens far
+more than it lightens) and `Macro` went to 1.85-1.95 on the wall concretes: **24.75 -> 26.15**.
+
+**The entablature box is not shading and this is now the second round saying so.** Its luminance std did not move
+(33.07 -> 32.79) while its *mean* fell 181 -> 153, i.e. relative contrast went 0.183 -> 0.215 against the photo's
+0.444. In ref 169 that box contains dentils, modillions and a deep cornice undercut throwing near-black shadow;
+ours contains a much shallower cornice. **For architecture: cornice projection and dentil depth on the attic
+entablature is the remaining half of QA-04-3, unchanged from the round-4 hand-off.** The columnwise run-off metric
+is the one that isolates shading in that box, and it now reads 12.8 against the photo's 13.8.
+
+### QA-04-8 -- three shader levers measured, and the conclusion is that this is not the water shader's to fix
+
+Environment's magenta-bed probe settled one half of it: at QA's 18-20 deg grazing crop **0.00 %** of the near-water
+pixels see the lagoon bed, so there is no upwelling to tint. That leaves the surface, and the surface has been
+measured three ways now:
+
+| water configuration | near-water hue (ref 189.9) | sunlit-stone reflection hue / sat (ref 33.6 / 0.363) |
+|---|---|---|
+| round 5 | 204.8 | 43.8 / 0.143 |
+| r6a: hard green near murk, chop band 45 m | 202.6 | **66.5 / 0.122** |
+| **r6c (shipped): teal sheen on a 22 -> 5 m ramp, near-neutral murk, chop band 62 m** | 203.8 | 48.9 / 0.130 |
+| r6d experiment: sheen weight 1.0 on a 70 -> 6 m ramp, tint (0.09, 0.72, 0.50) | 201.2 | **134.1 / 0.143** (green) |
+
+Round 4 had already measured the fourth lever, `Specular Tint`, at 0.475 -> 0.473 (Blender tints F0 only and this
+crop is all F90). So: **every knob that reaches the sky-reflecting crop also sits under the reflection column**, and
+the most any of them moves the crop hue is ~3.6 deg out of the ~14 deg needed, at the cost of turning the stone
+reflection green. That is not a tuning failure, it is what the crop is: at 18-20 deg the surface is >= 85 % Fresnel
+mirror, so its hue *is* the reflected sky's hue plus a few degrees of surface tint. **For lighting: the near-water
+hue 203.8 vs 189.9 is the horizon sky's, the third round in a row this measurement has landed there** (round 3 for
+the flank, round 4 for the near field with the murk experiment, round 6 with the sheen experiment and ENV's bed
+probe). The shipped r6c setting keeps the small honest gain (the murk stays near-neutral so the reflection is not
+greyed, the chop band is back to 62 m so the mid-distance reflection holds its colour) and does not fake the rest.
+
+### ENV hand-offs folded in this round
+
+- **`MAT_lagoon_bed`** (new, `use_fake_user`): the lagoon floor ENV split onto its own name. Deliberately cheap --
+  no textures, world-space silt drifts (5-15 m) over a mud/weed mottle (1-3 m), a lighter exposed-silt zone in the
+  last 0.5 m before the shore, roughness 0.94, specular 0.15. It is only ever seen through the first metre or two
+  of water at the shore.
+- **Shore foliage albedo**: ENV measured the hero shoreline crop at lum 72.9 against the photo's 107.2 and
+  attributed it to leaf albedo rather than planting. `MAT_shrub` (1.0 -> 1.42), `MAT_shrub_light`
+  (1.25 -> 1.78), `MAT_shrub_dry` (4.50 -> 6.30 on red) and `MAT_reeds` (1.0 -> 1.40) tints raised ~1.4x. This is a
+  first pass on somebody else's measurement and it wants re-measuring on the next hero.
+
+### Files
+
+Before/after on one master, `--swap` (round-5 library vs round-6): `renders/previews/materials/r6before_scene_*`
+and `r6after_scene_*` (`hero`, `ceiling`, `stone`); the maxed-sheen experiment is `r6sheen_scene_hero.png`.
+Composite **`renders/qa_comparisons/mat_r6_sheet.png`**; PFA-photo macro candidates (evaluated and rejected)
+`renders/qa_comparisons/mat_grunge_candidates.png`. New scripts: `mat_make_grunge.py`, `mat_r6_measure.py`,
+`mat_r6_sheet.py`; `mat_scene_check.py` gained `--probe` and `--lib`.
+
+### Open, and whose
+
+1. **Architecture** -- cornice projection / dentil depth on the attic entablature. Second round: the entablature
+   box's std did not move under shading (33.07 -> 32.79) while its mean fell to 1.05 of the photo's, and the
+   columnwise run-off metric that isolates shading now reads 12.8 against the photo's 13.8.
+2. **Architecture** -- `MAT_plaster_ceiling_rib` is built and waiting; this master does not carry the assignment
+   yet, so the coffer dark/light ratio (0.195 vs ref 083's 0.439) cannot be scored until it lands.
+3. **Lighting** -- near-water hue, third round (see the table above); column-shaft fill (the mask is 1.25x the
+   photo after this round's chroma work, down from 1.62x in round 4); sunlit stone saturation and the shaded-stone
+   hue from round 4 are unchanged and still open.
+4. **QA** -- the attic std ratio is 0.598 against a 0.60 bar. It is at the bar, not past it; the remaining lever on
+   the materials side is more macro amplitude, which starts to read as blotch rather than surface.
