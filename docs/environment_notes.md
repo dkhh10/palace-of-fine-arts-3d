@@ -964,10 +964,14 @@ The colonnade is one arc struck from `COL_ARC_CENTER` (-11.2, 84.7), so each win
 bearing, and the two ends of that arc face very different ways. Sampling 21 sight lines across each QA box and
 taking the face normal at the wing hit point:
 
-| | face bearing (compass) | cos(incidence) at sun az 118.5, el 7.4 | band lum |
-|---|---|---|---|
-| SOUTH band 60-560 px (`roof306`) | 36.7-59.1 deg, mean **47.2** | **0.318** | 86.0 |
-| NORTH band 1360-1860 px (`roof310`) | 105.5-128.1 deg, mean **117.4** | **0.991** | 146.0 |
+| | face bearing (compass) | cos(incidence) at sun az 118.5, el 7.4 | band lum | ref 169 |
+|---|---|---|---|---|
+| SOUTH band 60-560 px (`roof306`) | 36.7-59.1 deg, mean **47.2** | **0.318** | **86.0** | 113.3 |
+| NORTH band 1360-1860 px (`roof310`) | 105.5-128.1 deg, mean **117.4** | **0.991** | **137.5** | 145.9 |
+
+(Both bands of both images measured off the one file, `renders/qa_comparisons/round05_cam01_aligned_vs_ref169.png`,
+so the render and the photograph are the same crop of the same alignment. North/south ratio **1.60** here against
+the photograph's **1.29**.)
 
 At the agreed morning azimuth the north wing is within 1 deg of face-on and the south wing is 71 deg off it: the
 sun rakes it at **cos 0.32**, a third of the north wing's. No planting change can move that.
@@ -982,11 +986,11 @@ two measured bands of each image (both bands, one image, two unknowns):
 
 | | A (ambient / sky) | k (direct sun) | south band | north band |
 |---|---|---|---|---|
-| this build (LIGHT r11) | **57.7** | **89.1** | 86.0 | 146.0 |
+| this build (LIGHT r11) | **61.7** | **76.5** | 86.0 | 137.5 |
 | ref 169 (aligned boxes) | **97.9** | **48.4** | 113.3 | 145.9 |
 
-The photograph puts two thirds of its light on that stone as sky and one third as sun; this build has it the other
-way round. (The fit is on whole-box luminance, so it carries each box's sky and foliage as well as its stone -
+The photograph puts two thirds of its light on that stone as sky and one third as sun; this build has it close to
+half and half, with the sky half **36 luminance short**. (The fit is on whole-box luminance, so it carries each box's sky and foliage as well as its stone -
 but that only makes the conclusion safer: the SOUTH box holds *more* sky, 12.5 % against the north's 8.8 %, and is
 still the darker of the two. Restricted to stone the contrast would be larger, not smaller.) The north wing hides the error because it is face-on — 57.7 + 89.1 and 97.9 + 48.4 both land on ~146 —
 and the south wing is where the split shows.
@@ -1001,11 +1005,12 @@ z 1.2-8.3 m; their crowns are lit, and the +20 m row is lit outright.) So the of
 wing is widened to QA's own measured edge (x1 0.205 -> **0.292**, cheap insurance against a screen tree landing in
 front of the wing through the polar-layout mismatch that caused QA-04-6) and nothing else is taken out.
 
-**Hand-off to lighting.** Not the sun angle: the sky/ambient fill on the raking faces. Moving A from ~58 to ~98
-with k from ~89 to ~48 (same total at normal incidence) puts the south band at **113** and the north at **146**,
-i.e. both bands exactly on ref 169. Every +10 of A on its own lifts the south band by 10, so A 58 -> 75 already
-clears QA's >= 103 with the north at 163 (1.12 of ref, inside its 25 %). What ENV did this round is below; on this
-band it is worth a few luminance, not thirty.
+**Hand-off to lighting.** Not the sun angle: the sky/ambient fill on the raking faces. Moving A from ~62 to ~98
+with k from ~77 to ~48 (the same total at normal incidence, 138 -> 146) puts the south band at **113** and the
+north at **146**, i.e. both bands on ref 169. Even A alone: every +10 of A lifts both bands by 10, so A 62 -> 79
+clears QA's >= 103 with the north at 155 (1.06 of ref, inside its 25 %). This is the same defect LIGHT r12 is
+already chasing as QA-05-1 "shade crushed" - the wing bands measure it on the architecture instead of the walk.
+What ENV did this round is below; on this band it is worth a few luminance, not thirty.
 
 ### QA-05-10 — the shore band is not in shadow; it is uniformly under-lit. Measured.
 
