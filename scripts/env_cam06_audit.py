@@ -65,6 +65,7 @@ def ray_cast():
     x0, y0, x1, y1 = HORIZON
     W, H = 1280, 720
     walls, roofs, mats, ground_mats, canopy = set(), set(), set(), {}, 0
+    roof_cols, footprints = set(), set()
     hits = 0
     step = 3
     for py in range(y0, y1, step):
@@ -85,6 +86,16 @@ def ray_cast():
             mats.add(mat)
             if "roof" in n or "roof" in mat:
                 roofs.add(n)
+                # QA-04-13 asks for >= 3 roof colours and >= 2 house footprints in this crop.  A "colour" is a
+                # (material, instance_seed decile) pair, because MAT_backdrop_roof_tile and MAT_backdrop_roof both
+                # recolour per object from the `instance_seed` custom property; a "footprint" is the object's
+                # plan bounding box rounded to 4 m.
+                seed = obj.get("instance_seed", 0.0)
+                roof_cols.add((mat, int(float(seed) * 10)))
+                bb = obj.bound_box
+                w = max(v[0] for v in bb) - min(v[0] for v in bb)
+                dp = max(v[1] for v in bb) - min(v[1] for v in bb)
+                footprints.add((round(w / 4.0), round(dp / 4.0)))
             elif "house" in n or "fill_" in n or "presidio_" in n or "backdrop_hall" in n:
                 walls.add(n)
             elif "canopy" in n or "forest" in n or "ridge" in n:
@@ -95,6 +106,8 @@ def ray_cast():
     print(f"  building volumes resolved : {len(walls | roofs)}  (wall objects {len(walls)}, roof objects {len(roofs)})")
     print(f"  with a pitched roof       : {len(roofs)}")
     print(f"  distinct materials in crop: {len(mats)}")
+    print(f"  roof colours (material x instance_seed decile): {len(roof_cols)}   (QA-04-13 wants >= 3)")
+    print(f"  distinct roof footprints (4 m bins)           : {len(footprints)}   (QA-04-13 wants >= 2)")
     print(f"  canopy samples            : {canopy}")
     print(f"  ground materials          : {ground_mats}")
 
