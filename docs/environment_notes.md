@@ -1074,3 +1074,29 @@ kept with p **0.90** instead of 0.55 per side). What an aerial of a treed street
 open corridor / dark row, and that is now what is built. The detector for the acceptance test is in
 `env_r7_measure.count_lines` (local minima of the crop's column and row profiles that sit >= 15 luminance under
 their own +-70-sample background); it scores the round-05 render **0**.
+
+### Round-7 hand-offs
+
+- **Lighting (QA-05-5, and it is the same defect as QA-05-1).** The hero's two wing bands, measured off one
+  aligned image pair, fit `lum = A + k cos(incidence)` at **A 61.7 / k 76.5** where ref 169 fits **A 97.9 / k
+  48.4**. The sun angle is already the photograph's (solar position for 2020-02-01 at el 7 = az 118.3 vs the
+  project's 118.5), and the south wing's face bears 47.2 deg so the sun rakes it at cos 0.32 in the photo too.
+  The gap is **36 luminance of sky/ambient**. A 62 -> 79 on its own clears QA's >= 103 on the south band and
+  leaves the north at 155 (1.06 of ref).
+- **Materials + lighting (QA-05-10).** The shore band is short by the same 1.5-1.9x at **every** decile, so it is
+  a level, not a shadow. Hue is already inside QA's window (42.9 vs the photo's 40.7); saturation is 16 % **high**
+  (0.769 vs 0.663). Raising the leaf value without raising its saturation is the ask. **Do not** close the shore
+  belt further to hide the pale bank - that trades bright stone for foliage that is currently too dark and makes
+  the band's number worse.
+- **Materials (new names).** `MAT_paving_stone` and `MAT_paving_stone_worn` are used by
+  `ENV_ground_colonnade_walk` and currently fall back to `MAT_gravel_path` / `MAT_soil`. The walk is cam 03's
+  whole lower frame and is worth its own surface: a warm grey concrete/asphalt paver with per-slab value spread,
+  and a dustier, patched variant for the worn slots.
+- **Architecture / lead (for the record).** ENV's lawn ran at -0.45 through the colonnade footprint while
+  `arch_params.COLONNADE_GROUND_Z` is -0.60, so every column base stood 15 cm buried. ENV's terrain now carries
+  the walk as a level (-0.60, blended back to lawn between the terrain's existing +2.0 and +5.5 constraint rings).
+  If ARCH ever moves that constant, `env_build.COLONNADE_WALK_Z` has to move with it.
+- **QA / lead (method).** The acceptance test for QA-05-8 is implemented in `env_r7_measure.count_lines` and is
+  stated in that module's docstring; note that the far field only occupies the **top ~110 rows** of QA's 220-row
+  horizon crop (below that the frame is the exhibition hall's roof and the near canopy), so a radial street is
+  diluted 3.7x if the profile is taken over all 220. Both numbers are reported.
