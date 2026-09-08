@@ -951,3 +951,43 @@ own shade, exactly as cam 03 renders it. What the photo has and this build did n
 shade**: a jointed gravel/paved surface with pale sunlit patches where the sun comes through the bays, and a
 continuous planting edge at the column bases with shrub masses standing between the columns. So the fix is
 geometry and planting, not exposure: the acceptance number QA gives (std >= 12) is a floor on that structure.
+
+### QA-05-5 — the south wing is not shaded, it is edge-on to the sun. Measured.
+
+QA reads the defect as "the north wing passed at 0.94 after its foliage thinning, so the same treatment is owed on
+the south side". The south band's foliage share is **already lower** than the north band's passing value
+(round 6: south 29.1 % foliage / 58.3 % architecture / 12.5 % sky, north **37.8** / 53.4 / 8.8 after its fix), so
+there is no foliage to take out that the north fix has not already taken. Where the two bands differ is the stone.
+
+The colonnade is one arc struck from `COL_ARC_CENTER` (-11.2, 84.7), so each wing's lagoon-facing face has a fixed
+bearing, and the two ends of the arc face very different ways. Sampling 21 sight lines across each QA box and
+taking the face normal at the wing hit point:
+
+| | face bearing (compass) | cos(incidence) at sun az 118.5, el 7.4 | band lum |
+|---|---|---|---|
+| SOUTH band 60-560 px (`roof306`) | 36.7-59.1 deg, mean **47.2** | **0.318** | 86.0 |
+| NORTH band 1360-1860 px (`roof310`) | 105.5-128.1 deg, mean **117.4** | **0.991** | 146.0 |
+
+At the agreed morning azimuth the north wing is within 1 deg of face-on and the south wing is 71 deg off it: the
+sun rakes it at **cos 0.32**, a third of the north wing's. That is the whole 86 vs 146, and no planting change can
+move it.
+
+Fitting the trivial model `lum = A + k cos(incidence)` to those two measured bands gives A 57.7, k 89.1 — i.e.
+about 58 luminance of ambient/sky and 89 of direct sun. With that fit:
+
+| sun az | cos S | cos N | predicted south band | predicted north band | N/S |
+|---|---|---|---|---|---|
+| 95 | 0.666 | 0.917 | 117.0 | 139.4 | 1.19 |
+| **100.5** | 0.592 | 0.949 | **110.4** | 142.2 | **1.29** |
+| 105 | 0.528 | 0.969 | 104.8 | 144.0 | 1.37 |
+| 118.5 (now) | 0.318 | 0.991 | 86.0 | 146.0 | 1.70 |
+
+**ref 169's own north/south ratio is 1.29** (145.9 / 113.3 over the two aligned boxes) against this build's 1.70,
+and the azimuth that reproduces 1.29 is **100.5 deg** — an almost-due-east early-morning sun, which is what a
+golden-hour photograph of an east-facing building is. At az 100.5 the model puts the south band at ~110 (QA wants
+>= 103 aligned, >= 82 raw-mapped) and the north at ~142, i.e. 0.97 of ref 169, still comfortably inside its 25 %.
+
+**Hand-off to lighting (the lead's call, not ENV's):** the single change that closes QA-05-5 is the sun azimuth,
+118.5 -> ~100-105. Failing that, sky/ambient fill: every +10 of A lifts both bands by 10, so A 58 -> 75 would put
+the south band at 103 with the north at 163 (1.12 of ref, still inside 25 %). What ENV did do this round is
+below - it is worth a few luminance, not twenty.
