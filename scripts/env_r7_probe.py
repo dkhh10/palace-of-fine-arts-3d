@@ -44,7 +44,7 @@ def classify(obj, mat_name, nm):
     return "building"
 
 
-def open_scene(nofoliage=False):
+def open_scene(nofoliage=False, hide_notes=()):
     bpy.ops.wm.open_mainfile(filepath=str(common.ASSET_FILES["ENV"]))
     arch = common.ASSET_FILES["ARCH"]
     if arch.exists():
@@ -53,11 +53,20 @@ def open_scene(nofoliage=False):
         n = 0
         for o in bpy.data.objects:
             if o.name.startswith(("ENV_tree_", "ENV_shrub_", "ENV_canopy", "ENV_forest")):
-                o.hide_set(True)
                 o.hide_viewport = True
                 o.hide_render = True
                 n += 1
         print(f"[probe] foliage hidden: {n} objects (ENV ceiling probe)")
+    if hide_notes:
+        # hide only the PLAN groups whose note starts with one of these letters - e.g. `--hide E` is "the
+        # procedural redwood screen and nothing else", which prices the screen against the hand-placed trees.
+        n = 0
+        for o in bpy.data.objects:
+            if o.name.startswith("ENV_tree_") and str(o.get("note", "")).startswith(tuple(hide_notes)):
+                o.hide_viewport = True
+                o.hide_render = True
+                n += 1
+        print(f"[probe] hidden by note prefix {tuple(hide_notes)}: {n} objects")
     qa_cameras.ensure(bpy.context.scene)
     return bpy.context.scene
 
@@ -152,7 +161,8 @@ def probe(scene, name, step=3, sun=True, top=14):
 def main():
     names = (_arg("--boxes") or "cam01_left_wing,cam01_shore,cam03_ground,cam06_horizon").split(",")
     step = int(_arg("--step", 3))
-    scene = open_scene(nofoliage="--nofoliage" in ARGS)
+    hide = tuple((_arg("--hide") or "").split(",")) if _arg("--hide") else ()
+    scene = open_scene(nofoliage="--nofoliage" in ARGS, hide_notes=hide)
     out = {}
     for n in names:
         if n not in BOXES:
