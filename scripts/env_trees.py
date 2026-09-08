@@ -428,9 +428,14 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
         ks = sorted(bins)
         # keep the main run of the sweep (drop 2 deg stragglers) and smooth the outer radius
         outer = {k: max(bins.get(k + j, bins[k]) for j in (-1, 0, 1)) for k in ks}
+        # Round 5 (QA-03-10): measured on the merged master's hero, the wing band (60 480 560 600) carried 36.1 %
+        # of pixels below luminance 60 against ref 169's own 27.8 % over the same box - and 25.0 of those 36.1
+        # points were foliage, 11.1 architecture (the wing's own shaded bays, which the photo has too).  The screen
+        # was still about a third too dense THROUGH the bays: sky-ish pixels 13.6 % vs the photo's 16.5 %.  So the
+        # two front rows keep their heights and their clumping but run shorter and gap wider.
         for row, (off, spacing, hmin, hmax, run, gap, tag) in enumerate((
-                (6.0, 5.0, 18.5, 23.0, (15.0, 27.0), (7.0, 13.0), "E1"),
-                (12.5, 6.0, 20.0, 25.0, (18.0, 33.0), (7.0, 12.0), "E2"),
+                (6.0, 5.0, 18.5, 23.0, (11.0, 20.0), (11.0, 19.0), "E1"),
+                (12.5, 6.0, 20.0, 25.0, (14.0, 26.0), (10.0, 16.0), "E2"),
                 (20.0, 7.0, 21.0, 27.0, (22.0, 38.0), (7.0, 13.0), "E3"))):
             carry = rnd.uniform(0, spacing)
             # clumping state: metres of run left before the next gap, and metres of gap left
@@ -611,7 +616,12 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
 # Offenders are pushed along the camera's right axis - which moves them across the frame without changing their
 # distance much - to the nearer edge of the band, and only shortened if no clear spot exists.
 FRAME_BANDS = [
-    dict(cam="_qa_01_", x0=0.031, x1=0.205, y0=0.40, y1=0.60, behind="colonnade",
+    # Offence band x 0.031-0.205: ref 169 and the user image both put a conifer group at x 0.19-0.29, so that is
+    # composition, not a defect (round 4's call, kept - widening the offence band to QA's 0.292 costs the peninsula
+    # bed and the user-image cypress spires, and buys 2 lum).  But QA-03-10 *measures* 60-560 px = x 0.031-0.292,
+    # so `x1_exit` makes a tree that has to move leave the measured box instead of being parked just inside it:
+    # in round 4 cypress_column_04 was pushed 4 m from x 0.20 to x 0.21 and still darkened the band.
+    dict(cam="_qa_01_", x0=0.031, x1=0.205, x1_exit=0.292, y0=0.40, y1=0.60, behind="colonnade",
          label="QA-03-10 hero south-wing band"),
     # cam 05's guard stops at y 0.66: the rotunda's body ends there, and the 7-9 m willows and broadleaves of the
     # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
@@ -708,7 +718,10 @@ def frame_band_relief(plan, land_ok=None, occluders=(), verbose=True):
                 continue                                       # behind the wing: this is the screen, keep it
             if "near" in band and dist > band["near"]:
                 continue                                       # behind the subject
-            # push along the camera's right axis, whichever way is shorter, in 2 m steps
+            # push along the camera's right axis, whichever way is shorter, in 2 m steps.  The escape edges are
+            # x0_exit/x1_exit (the box QA measures), which can be wider than the offence band.
+            ex0 = band.get("x0_exit", band["x0"])
+            ex1 = band.get("x1_exit", band["x1"])
             best = None
             for sgn in (-1.0, 1.0):
                 for step in range(1, 26):
@@ -718,7 +731,7 @@ def frame_band_relief(plan, land_ok=None, occluders=(), verbose=True):
                     nb = _frame_box(spec, f, r, u, nx, ny, h, sp)
                     if nb is None:
                         continue
-                    if nb[1] < band["x0"] or nb[0] > band["x1"]:
+                    if nb[1] < ex0 or nb[0] > ex1:
                         if best is None or step < best[0]:
                             best = (step, nx, ny)
                         break
