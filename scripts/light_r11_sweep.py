@@ -68,6 +68,10 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
                 fill=0.0,    # SHADE_FILL total irradiance in W/m2 across the three lamps (0 = off)
+                fel=-1.0,    # SHADE_FILL elevation override in degrees (-1 = keep light_build's per-lamp value).
+                             # The fill's elevation decides WHAT it lights: at 16 deg it lands on the water and the
+                             # plaza at sin(16) = 0.28 and drags the near-water saturation and the columns with it;
+                             # near the horizon it rakes vertical shaded stone and leaves horizontal surfaces alone.
                 f=1.0,       # LIGHT_rotunda_bounce (FILL) energy scale        -- QA-04-7
                 v=1.0)       # LIGHT_rotunda_vault_bounce (VAULT_FILL) scale, applied to the PHYSICAL energy_W so
                              # light_presets.apply_vault_for_engine reproduces it in either engine
@@ -88,7 +92,7 @@ def parse(case):
 def case_tag(c):
     if c["tag"]:
         return c["tag"]
-    bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "bm", "de", "fill", "f", "v")
+    bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "bm", "de", "fill", "fel", "f", "v")
             if abs(c[k] - DEFAULTS[k]) > 1e-9]
     if c["look"]:
         bits.append(c["look"].replace(" ", "").replace("_", ""))
@@ -145,6 +149,9 @@ def apply_case(c):
     # `fill` is the TOTAL irradiance in W/m2 across the lamps, i.e. directly comparable with the sun's 67.3.
     coll = bpy.data.collections.get(lb.COLLECTION) or scene.collection
     lb.SUN_REFERENCE_W = energy
+    if c["fel"] >= 0.0:
+        lb.SHADE_FILL = dict(lb.SHADE_FILL,
+                             lamps=[dict(l, el=c["fel"]) for l in lb.SHADE_FILL["lamps"]])
     lb.build_shade_fill(coll, energy=c["fill"])
     # interior fills (QA-04-7). Scale energy_W, not energy: apply_vault_for_engine rewrites energy from energy_W on
     # every preset call, so a scale written to energy alone would be silently undone before the render.
