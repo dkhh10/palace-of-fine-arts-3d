@@ -653,3 +653,95 @@ rotunda-proportion question. `arch_ref062_fit.py` prints the land/water table so
 apex 20 px above the ring. Everything else in the drum matches (the guilloche cushion top is 3 px out), so this is
 about **0.4 m of ring radius**, or the same amount of ring height — a moulding refinement, not a proportion. Left for
 the lead to decide, since any drum change touches the arbitrated round-1 dome fit.
+
+## Polish round 4 (QA-05-6 rotunda entablature; drum-ring re-measurement, report only)
+
+### QA-05-6 — why two rounds of shading could not put a shadow band under the cornice
+
+QA: "row-profile std **20.9** vs the photo's **53.6** on box 900 262 1020 296 of the cam01 Cycles hero; texture std
+0.52 of the photo's, unchanged three rounds; the dentil row casts no shadow under the corona." Materials had already
+shown twice that shading cannot supply it. The reason is in the solar geometry, and it is worth writing down because
+it inverts the usual intuition:
+
+- Sun **az 118.5 / el 7.4** (lighting's NOAA position); the hero (lagoon) face normal is **az 82**, so the sun is
+  Δ = 36.5° off the face and 7.4° above the horizon.
+- A horizontal ledge projecting *p* therefore drops a shadow of only `p · tan(7.4°)/cos(36.5°)` = **0.16 p** down the
+  wall. A 1 m cornice shades 16 cm of frieze. **None of ref 169's dark bands is a cast shadow** — at this sun the
+  light slides in under every overhang.
+
+What the photograph's bands actually are, all three of them geometry:
+
+| mechanism | rule | consequence for the profile |
+|---|---|---|
+| (a) downward-facing soffit | never sees the sun at any elevation; reads at 20-25 % of the sunlit wall | the corona needs a **deep** soffit, not just a projecting edge |
+| (b) wall hidden *behind* a projecting course | cam01 looks up at ~20°, so `p` metres of projection lift a point `p · tan 20° = 0.365 p` up the frame and hide that much wall | the corona's projection sets the *height* of the dark band |
+| (c) gaps laterally shadowed by the block in front | `tan 36.5° = 0.74` m of shadow per metre of block depth | dentils/modillions must be **deep** relative to their gaps |
+
+The old profile satisfied none of them: corona edge at d 1.05 with the modillion fronts at d 1.02 (0.03 m of
+overhang → **no visible soffit at all**), dentils at d 0.36-0.51 sitting *behind* the ovolo above them at d 0.56-0.62
+(so they could neither catch light nor shade anything), modillions 0.40 deep on a 0.45 gap (0.30 m of lateral
+shadow → a third of every gap stayed sunlit).
+
+### Measurements on ref 169 at hero scale
+
+Scale: QA's round-05 alignment maps ref 169 → the 1920x1080 hero by `p·1.3108 + (−291.8, −124.6)`; the render runs
+at **13.6-14.1 px/m** on the near face (two independent reads: the spacing of the two cornice bands the old build
+puts on screen, and the entablature's own on-screen height), so the raw photo is **10.7 px/m**.
+
+| measured on ref 169 | photo px | metres | used for |
+|---|---|---|---|
+| entablature, whole on-screen height (cornice top edge → the black line at the capitals) | 47.5 | 4.35 apparent | corona projection |
+| cornice band (crown fillet → bottom of the bracket band) | 20 | 1.83 apparent | `CORNICE_H` |
+| plain face below it (frieze + architrave read as one surface) | 22 | 2.02 apparent | `ARCHITRAVE_H + FRIEZE_H` |
+| bracket (modillion) band | 9 | 0.86 apparent | modillion height + corona projection |
+| fine course above the brackets | 4.5 | 0.43 apparent | egg-and-dart course |
+| fine course pitch along the run (sign changes + FFT) | 5.0 | **0.47** | `egg_pitch` |
+| bracket pitch along the run | 11.4 | **1.07** | `modillion_pitch` |
+
+Two derivations follow, neither of them eyeballed:
+
+1. **Corona projection.** 3.8 m of entablature reads 4.35 m tall on screen because its top course projects and its
+   bottom course does not: `4.35 = 3.80 + 0.365 · (corona_d − 0.14)` → **corona_d = 1.65 m** (built at 1.66).
+2. **The split.** `1.83 = CORNICE_H + 0.365 · (corona_d − frieze_d)` → `CORNICE_H = 1.83 − 0.53 = 1.30`; reading the
+   band down to where the last dark course ends instead gives 1.72. Built at **1.75**, with the plain face split
+   1.15 architrave / 0.90 frieze. **The 3.8 m total is untouched** — it is what carries the silhouette — but the
+   sheet's 1.4 / 1.2 / 1.2 split is superseded (the sheet's own "measured" column had the whole entablature at 3.3).
+3. **Order.** ref 169 puts the fine 0.47 m course **above** the brackets, not below: corona → egg-and-dart ovolo →
+   modillions → ovolo → dentils → frieze. The old build had the egg course between the dentils and the modillions.
+
+### The profile as built (d = outward from the wall plane at apothem 21.5, z relative to ENTABLATURE_Z0 = 27.4)
+
+| course | z | d | note |
+|---|---|---|---|
+| fascia 1 / 2 / 3 | 0.00-0.42 / 0.42-0.82 / 0.82-1.02 | 0.14 / 0.24 / 0.34 | 0.10 m steps (0.08 before) |
+| bead-and-reel astragal | 1.06-1.11 | 0.42 | sheet row 13 |
+| architrave crown | 1.14-1.15 | 0.50 | overhangs the frieze by 0.30 |
+| frieze | 1.15-2.05 | 0.20 | `frieze_run` sockets moved with it (0.24 → 0.20) |
+| cyma reversa foot | 2.05-2.17 | 0.24-0.40 | |
+| **dentils** | 2.17-2.57 | bed 0.40, **0.34 deep**, 0.18 wide, **0.38 pitch** | lateral shadow 0.25 > the 0.20 gap → every gap black |
+| ovolo | 2.57-2.71 | 0.46-0.52 | |
+| **modillions** | 2.71-3.29 | bed 0.52, **0.68 deep**, 0.50 wide, **1.06 pitch** | lateral shadow 0.50 vs a 0.56 gap; the bed is in any case hidden behind the corona for 0.38 m |
+| egg-and-dart ovolo | 3.29-3.43 | 0.52-0.80, eggs at 0.47 pitch | LOD0 only |
+| **corona soffit** | 3.48 | **0.80 → 1.66 (0.86 m deep)** | downward-facing: never sunlit |
+| corona fascia / drip / cyma recta | 3.48-3.80 | 1.66-1.70 → 1.36 | |
+
+Dentils and modillions are now in **both LODs** (one mesh, two objects: `_LOD0` and `_LOD1`) because they are what
+makes the band read; only the egg-and-dart stays LOD0.
+
+### Drum cornice ring — re-measured, NOT changed (round 3 flagged it as "about 0.4 m")
+
+Recomputed at round 3's own fitted ref-062 station (D 91.7 m, 42.4 mm, pitch +13.45°, eye 1.55 m), with
+`row(z, r)` from `arch_domecheck.Cam`:
+
+| | model | ref 062 (measured on the photo) |
+|---|---|---|
+| dome apex (z 54.0, r 0) | row 35.6 | row 34-35 |
+| drum cornice ring near rim (`DRUM_CORNICE_R` 18.7 at z 43.4) | row 21.0 — **14.6 px ABOVE the apex** | the ring's dark underside runs rows 90-120, its top rim ≈ row 88 — **~54 px BELOW the apex** |
+| guilloche/scale cushion top (z 42.5, r 17.5) | row 60.8 | scale band runs rows ~50-88 — the cushion itself is right |
+
+Closing ~69 px of image displacement needs `DRUM_CORNICE_R` 18.7 → **≈ 16.2 (−2.5 m)** or the ring top 43.4 →
+**≈ 42.0 (−1.4 m)**, not the 0.4 m round 3 estimated (that figure came from a different reading of the ring's rim).
+There is a second, larger finding behind it: **ref 062 puts the imbricated scale band directly under the dome, with
+the moulded ring BELOW the scale band**, while the model (following the catalog's "scale pattern over a plain torus,
+*then* a moulded cornice ring") stacks the ring on top of the cushion. Since the cushion's own row is within 6-10 px,
+the whole discrepancy lives in that ring. Reported only — any drum change touches the arbitrated round-1 dome fit.
