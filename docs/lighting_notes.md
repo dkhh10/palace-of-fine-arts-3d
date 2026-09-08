@@ -1358,3 +1358,34 @@ argued the hue was materials' because three levers moved it the wrong way; all t
 this deficit (the fill's own green was 0.62 of its blue, and the extra sky came back off the sunlit plaza). The
 deficit is not a hue problem to be rotated, it is a **blue** problem to be supplied.
 
+### 21.2 QA-05-7 — the horizon haze band: ACCEPTED DEVIATION, with the numbers
+
+sky_left / sky_top is **0.922** against a 1.05-1.29 window, for the third round (QA-03-12 / QA-04-9 / QA-05-7). The
+lead's round-12 dispatch asks for the accepted-deviation note if no knob reaches 1.05 without breaking the sky
+window, and round 10's five-row atmosphere sweep (section 19, item 4) is that proof. Reproduced here so QA can close
+the row without re-reading section 19; every row is measured at MATCHED sky_top (the camera boost pulled back so the
+visible sky stays inside QA's own 149-182 window), because otherwise the ratio moves only because the whole sky moved:
+
+| aerosol | ozone | air | sky_left/sky_top | what it costs |
+|---|---|---|---|---|
+| **1.6 (shipped)** | 2.0 | 1.0 | **0.922** | — |
+| 4 | 2.0 | 1.0 | 0.943 | attic R-B -0.9, shaded attic +3.8 hue, columns +9.5 |
+| 8 | 2.0 | 1.0 | 0.965 | attic R-B -3.2, shade +13 hue, the calibrated lamp halves (67.3 -> 33.5 W/m2) |
+| 8 | 2.0 | 1.5 | 0.965 | shade +22 hue |
+| 10 | 0.6 | 1.5 | 0.964 | attic hue -6, shade +21 hue |
+
+**The physical sky model saturates at 0.965 and cannot reach 1.05.** Two reasons, and the second is why the target
+itself is partly an artifact: (1) raising aerosol brightens the whole sky, so once the camera boost is pulled back to
+hold sky_top the gradient barely changes; (2) **QA's two boxes are not at the same height above the horizon in the
+two framings** — the render's horizon sits at y ~0.63 of frame and ref 169's at ~0.54, so `sky_left` (y 0.085-0.145)
+is 0.82 of the way from horizon to frame top in the render and 0.67 in the photo, and any clear sky is brighter
+lower down. Part of the 1.170 is framing, not haze.
+
+Nothing in round 12 moves it: the round's whole intervention is on the DIFFUSE socket, which camera rays never see,
+so sky_top and sky_left are held by construction (verified in the round-12 table below: both unchanged).
+
+**Recommendation to the lead: close QA-05-7 as an accepted deviation at 0.922, or commission a compositor sky
+gradient as an explicit art bias.** The gradient is cheap (one screen-space ramp multiplied into the sky mask in
+`COMP_golden_hour`, ~10 lines) and is the only route left, but it is an art bias painted onto a physically simulated
+sky and lighting will not ship it unasked. Lighting has no physical knob that reaches the window.
+
