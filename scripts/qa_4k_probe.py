@@ -39,14 +39,17 @@ scene.render.resolution_percentage = 100
 cam = bpy.data.objects.get("CAM_qa_01_lagoon_hero")
 if cam:
     scene.camera = cam
-print(f"[4k] compositor: use_nodes={scene.use_nodes} use_compositing={scene.render.use_compositing} "
-      f"nodes={len(scene.node_tree.nodes) if scene.node_tree else 0}; device {scene.cycles.device}; samples {scene.cycles.samples}; "
+# Blender 5.x: the compositor tree is scene.compositing_node_group (scene.node_tree / use_nodes are gone)
+ng = getattr(scene, "compositing_node_group", None) or getattr(scene, "node_tree", None)
+print(f"[4k] compositor: use_compositing={scene.render.use_compositing} tree={ng.name if ng else None} "
+      f"nodes={len(ng.nodes) if ng else 0}; device {scene.cycles.device}; samples {scene.cycles.samples}; "
       f"denoise {scene.cycles.use_denoising}")
 
 for mode in MODES:
     on = mode.strip().lower() == "on"
     scene.render.use_compositing = on
-    scene.use_nodes = on if scene.node_tree else False
+    if hasattr(scene, "use_nodes"):
+        scene.use_nodes = on and ng is not None
     fp = OUT / f"hero_4k_{SAMPLES}spp_comp_{mode.strip()}.png"
     scene.render.filepath = str(fp)
     t = time.time()

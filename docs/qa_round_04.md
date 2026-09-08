@@ -199,7 +199,7 @@ until the rotunda's height-to-width ratio or the podium radius is re-checked (se
 | QA-03-13 cam05 conifers / podium band | environment | **closed** | 0.0 % foliage over the rotunda band; podium band visible across the rotunda. |
 | QA-03-14 shore shrubs | environment | **open, changed** | the row is now 0.5-1 m dots on a bare pale strip (crop 700 640 1200 720: lum 118 hue 41, a flat quay); ref 169 has 2-4 m mounds and a willow. |
 | QA-03-15 capitals blobs | ornament | **closed** | two leaf tiers with dark recesses in the 1:1 pair; cavity attribute visible. |
-| QA-03-16 4K timing | lead | see "4K isolating test" below | |
+| QA-03-16 4K timing | lead + lighting | **open; compositor exonerated** | 4K 16 spp: compositor off 177.1 s / on 175.3 s, both frames written; no 768-spp 4K frame yet. |
 | QA-03-17 saved preset | lead + lighting | **closed** | GPU / 768 adaptive / OIDN / High Contrast / exposure -2.833 as saved. |
 
 ## Defect list — round 04
@@ -223,7 +223,21 @@ until the rotunda's height-to-width ratio or the podium radius is re-checked (se
 
 ## 4K isolating test (QA-03-16)
 
-(filled in below after the round-04 commit; conditions: all renders and this report committed, no builder on the GPU.)
+Run after the round-04 commit (f4b4b33) with no other Blender on the GPU: `scripts/qa_4k_probe.py -- --samples 16 --modes off,on
+--time-limit 1200` (log `renders/logs/qa_round04_4k.log`). Hero camera, 3840x2160, Cycles GPU, 16 spp, OIDN, `apply_final_cycles`;
+compositor tree `COMP_scene_golden_hour` (3 nodes).
+
+| compositor | wall | frame written |
+|---|---|---|
+| **off** (`render.use_compositing = False`) | **177.1 s** | yes, 12.9 MB |
+| **on** | **175.3 s** | yes, 13.3 MB |
+
+The compositor pass is **exonerated**: on / off differ by 2 s and both frames are written. Whatever stalled lighting's 60- and 92-minute
+runs is in the 768-spp sampling / denoise tail, not the compositor: scaling from this round's 1080p 128 spp (335 s) the 4K frame at
+128 spp is ~22 min and at 768 adaptive plausibly 45-90 min of GPU sampling before OIDN runs on a 4K buffer, i.e. the runs were killed
+or gave up inside normal sampling time. Note for Blender 5.2: `scene.node_tree` / `scene.use_nodes` no longer exist; the compositor is
+`scene.compositing_node_group` and `render.use_compositing`. Recommended next step for lighting: one 4K frame at 128 spp fixed
+(no adaptive, `time_limit` 0) with progress logged, then 768 adaptive; QA-03-16 stays **open** until a 768-spp 4K frame exists.
 
 ## Notes for the lead
 
