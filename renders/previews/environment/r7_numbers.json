@@ -7,6 +7,6 @@
  "b_c03_stdn": 14.1,
  "b_c03_ratio": "0.146  (ground 16.2 / sunlit 111.3)",
  "b_c06_lum": "100.6  std 23.3",
- "b_c06_lines": "0  [vert 0; horiz 0]",
+ "b_c06_lines": "0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]",
  "b_c06_n": 0
 }

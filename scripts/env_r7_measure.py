@@ -98,9 +98,13 @@ def measure(tag, hero, cam03, cam06):
         L = load(cam06, 1280)
         c = L[0:220, 0:1280]
         k, det = count_lines(c)
+        # The far field only occupies the TOP of QA's crop - below about row 110 the frame is the exhibition
+        # hall's roof and the near canopy - so a radial street that crosses only the top 60 rows is diluted 3.7x
+        # in a column profile taken over all 220.  Both numbers are reported; `_c06_n` is the far-field band.
+        kf, detf = count_lines(L[0:110, 0:1280])
         out[f"{tag}_c06_lum"] = f"{c.mean():.1f}  std {c.std():.1f}"
-        out[f"{tag}_c06_lines"] = f"{k}  [{det}]"
-        out[f"{tag}_c06_n"] = k
+        out[f"{tag}_c06_lines"] = f"{kf} in rows 0-110 [{detf}];  {k} over the whole crop [{det}]"
+        out[f"{tag}_c06_n"] = kf
     return out
 
 
