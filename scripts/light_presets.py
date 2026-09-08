@@ -234,7 +234,10 @@ def apply_preview_eevee(scene=None, samples=32):
     e.overscan_size = 3.0
     e.light_threshold = 0.01
     try:
-        e.shadow_pool_size = "512"
+        # ROUND 11: 512 -> 1024. At 512 the QA previews log "Shadow buffer full (2118 / 2048)" on every frame, i.e.
+        # Eevee is dropping shadow pages and the preview silently loses shadows it should be casting. The scene has
+        # ten shadow-casting lights (sun + disk + eight vault emitters) over 11 M triangles.
+        e.shadow_pool_size = "1024"
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
     except Exception:
         pass
