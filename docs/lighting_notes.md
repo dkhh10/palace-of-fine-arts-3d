@@ -1024,3 +1024,26 @@ saturation and 5 R-B; a boost of 2 costs **0.052 and 9.7** and pushes the column
 re-opens QA-04-5 as well. (2) It drives the shaded attic's hue the **wrong way** — 43.1 -> 44.8 -> 47.4 against a
 target of 29.5 — because most of the extra sky lands on the sunlit plaza and comes back as warm bounce. More sky
 makes the shade warmer. That is the same wall round 10 hit from the saturation side, measured from the level side.
+
+### 20.2 QA-04-6 — the sun angle is right; the wings are a LEVEL error, not a shadow-geometry error
+
+QA asked lighting to check the sun elevation / azimuth against the shadow edges in ref 169 **before** touching any
+fill, and it is a fair thing to ask: a mean cannot tell a shadow that is in the wrong place from stone that is simply
+too dark. `light_r11_measure.py --wings` separates them. Take the horizontal luminance profile of each wing band in
+the render and in ref 169 warped into the render frame (QA's own aligned panel), normalise both to zero mean and unit
+variance, and find the pixel shift that maximises their correlation. A wrong azimuth slides every shadow boundary
+along the wing, so it shows up as a large shift **in the same direction on both wings**.
+
+| band (1920x1080) | render | ref 169 aligned | ratio | corr at 0 px | best corr | best shift |
+|---|---|---|---|---|---|---|
+| north wing 60,480-560,600 | 82.6 (sd 18.1) | 107.3 (sd 29.2) | **0.77** | +0.319 | +0.337 | **-3 px** |
+| south wing 1360,480-1860,600 | 81.7 (sd 38.1) | 133.6 (sd 41.5) | **0.61** | +0.261 | +0.441 | **-25 px** |
+
+The north wing's shadow structure lands within **3 px out of a 500 px band** of the photo's, and the two wings
+disagree on the sign and size of their residual shift (-3 vs -25). A sun-azimuth error cannot do that: it would move
+both bands the same way by a similar amount. **The solar position (az 118.5, el 7.4, NOAA for 2026-11-10 07:30 PST)
+is confirmed against the photo's own shadows and is not touched this round.** The south wing also carries almost the
+photo's full amount of structure (sd 38.1 against 41.5) at 0.61 of its level, which is the signature of correct
+shadows on stone that is too dark — albedo and wing-shading trees, i.e. materials and environment, exactly as the
+lead split it. Lighting's only level knob here is the exposure, and the exposure is pinned by the sunlit attic
+(0.954x of ref 169, and QA-04-2 exists because round 10 already spent half a stop).
