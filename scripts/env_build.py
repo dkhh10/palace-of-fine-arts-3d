@@ -43,6 +43,8 @@ HALL = L.ensure_ccw(L.dedupe_poly(SITE["b302 h20m"][0]))
 LAGOON_FIELD = L.PolyField(LAGOON, cell=8.0)
 ISLET_FIELDS = [L.PolyField(p, cell=6.0) for p in ISLETS]
 HALL_FIELD = L.PolyField(HALL, cell=10.0)
+COL_FIELDS = [L.PolyField(p, cell=8.0) for p in COLONNADE_ROOFS[:2]]      # QA-05-11: the walk is a level
+COLONNADE_WALK_Z = -0.60      # arch_params.COLONNADE_GROUND_Z - the level the column bases are modelled on
 
 APRON_R = 31.0          # inside this radius the ARCH platform covers the ground
 TERRAIN_HALF = 360.0    # terrain covers +-360 m (720 x 720)
@@ -132,6 +134,17 @@ def terrain_height(x, y):
     base = -0.45 + 0.10 * L.fnoise(x, y, 0.012, 1) + 0.04 * L.fnoise(x, y, 0.06, 2)
     pen = L.smoothstep(62.0, 46.0, r)            # 1 on the peninsula (lawn a bit lower there)
     base = base * (1 - pen) + (-0.6 + 0.03 * L.fnoise(x, y, 0.08, 5)) * pen
+    # QA-05-11 (round 7): the colonnade walk is a defined level, not lawn.  `arch_params.COLONNADE_GROUND_Z` is
+    # -0.60 and ENV's lawn ran at -0.45 through the wings, so every column base stood 15 cm buried - visible at
+    # cam 03, which looks straight down the walk, and the new paving would have added 3.5 cm more.  The walk is
+    # pulled to -0.60 inside the wing footprint and blends back to lawn between the terrain's own two constraint
+    # rings (offset 2.0 and 5.5), so the slope change lands on a mesh edge instead of being sampled.
+    for f in COL_FIELDS:
+        d = f.signed(x, y)
+        if d < 5.5:
+            t = L.smoothstep(5.5, 2.0, d)
+            base = base * (1 - t) + (COLONNADE_WALK_Z + 0.02 * L.fnoise(x, y, 0.25, 6)) * t
+            break
     if HALL_FIELD.signed(x, y) < 0:              # the hall stands on a slab at lawn level
         base = -0.4
     bank_w = 3.0 + 2.0 * L.fnoise(x, y, 0.08, 7)             # 1-5 m wide bank
