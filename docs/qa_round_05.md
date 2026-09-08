@@ -234,7 +234,7 @@ Run after the round-05 commit (6c109ef) with no other Blender on the GPU: `scrip
 --time-limit 5400 --out renders/previews/qa/round05_4k` (log `renders/logs/qa_round05_4k.log`), started 08:20:06. At the machine-stop
 checkpoint (09:53:39, ~92 min wall) the process was still sampling / in its tail with **no frame written** (Cycles' 5400 s cap had
 elapsed, so the remaining time is the denoise tail or the cap was not honoured by adaptive sampling); the lead killed it at the checkpoint.
-**Result: killed at checkpoint; 4K timing needs re-running.** QA-03-16 stays open: 4K 16 spp completes in 177 s (round 04), 1080p 128 spp
+**Result: killed at checkpoint (SIGTERM, EXIT 143 at 09:55:12 = 95.1 min wall, no frame in `renders/previews/qa/round05_4k/`); 4K timing needs re-running.** QA-03-16 stays open: 4K 16 spp completes in 177 s (round 04), 1080p 128 spp
 in 356 s; a 4K 768-spp frame has now failed to appear inside 90 min in three attempts (lighting x2, QA x1). Recommended next attempt: 4K at
 **128 spp fixed, adaptive off, time_limit 0**, with `--time-limit` replaced by an outer wall-clock guard, to get the first finished 4K frame
 and its wall time before trying 768.
