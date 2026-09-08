@@ -523,6 +523,93 @@ the green door in a lit reveal, no hole.
 and the whole far field is 1.2 % of ENV's triangles. The canopy does split by distance — 4-lobe crowns inside
 430 m, 2-lobe beyond.
 
+## Polish round 5 (code review + QA-03-10 measurement) — 2026-09-08
+
+Composite: **`renders/qa_comparisons/env_r5_sheet.png`** — the QA-03-10 wing band and the QA-03-13 cam-05
+silhouette, before | after | ref 169, with the numbers on each panel. Renders:
+`renders/previews/environment/r5_master_hero.png` (the merged r4b master = before),
+`r5_env5b_hero.png` (the same build with ENV round 5), `r5_cam05_before/after.png` — all Cycles from a
+built master, not from an ENV preview, because QA-03-10 is a luminance test (`scripts/env_r5_hero.py`).
+
+### The four code-review findings
+
+| finding | what was wrong | fix |
+|---|---|---|
+| `shift_y` aspect | `env_trees._frame_box`, `env_sightlines.project` and `env_sightlines.coverage` applied cam 01's `shift_y` 0.06 as 0.06 of the frame **height**. Blender's shift is in units of the larger sensor dimension, so it is 0.06 x 16/9 = **0.107 of the height, 115 px of 1080** — every hero frame band sat ~50 px too low | aspect factor `half_w/half_h` in all three; `coverage(shift_aspect=False)` and `env_sightlines -- --coverage --both` reproduce the round-4 boxes for comparison |
+| `env_city.azimuth` | 0 deg = +X = south, increasing counter-clockwise: the opposite hand to the project's compass-clockwise-from-north (`env_lib.sun_vector`, `env_build`) | renamed **`city_az`**, handedness and the conversion (`compass = (270 - city_az) mod 360`) in the docstring. Behaviour unchanged |
+| `clear()` corners | only quad/segment centroids were tested, on 95 x 137 m blocks, 3 deg x 140 m wedges and 18.2 x 14 m road ribbons | `clear(x, y, *corners)`; blocks pass their four corners, wedges their four, road ribbons their four outer corners. Nothing can cross the lagoon / hall / colonnade keep-out if the pitch, phase or ring radii are retuned |
+| `build_all` | built the city only `if lagoon_field is not None`, so a missing argument silently dropped the whole Marina / Presidio far field | `lagoon_field` is a required positional argument |
+
+**Do the round-4 numbers still hold with the corrected boxes?** Yes, with one correction. Re-measured on the
+round-4 `assets/environment.blend` (so only the box changed): cam 01 left wing foliage **40.0 % -> 39.5 %**,
+architecture 60.0 % -> 53.5 %, and the corrected box now also sees **7.0 % sky** — the round-4 box was low
+enough to miss the bay openings, which is why it read as almost pure wing. cam 05 has `shift_y = 0`, so its
+box did not move at all; its silhouette foliage reads 6.5 % rather than round 4's 5.1 % purely because
+`assets/architecture.blend` changed under it (the 786966a socket re-frame).
+
+`FRAME_BANDS` gained **`x1_exit`**: QA-03-10 measures x 0.031-0.292 while the offence band stops at 0.205
+(round 4's call, kept — ref 169 and the user image both have a conifer group at x 0.19-0.29). Round 4 could
+therefore push an offender 4 m and park it *inside the box being measured*; a moved tree now has to clear
+0.292. On the shipped plan this changes no position — it is a latent-correctness fix.
+
+### QA-03-10 — the band, measured on a real master
+
+`scripts/env_measure.py` now carries **both** reference panels QA quotes: the round-02 aligned panel and the
+raw ref-169 file with QA's mapped box `269 465 651 557` (which reproduces QA's 109.5 exactly). Note the two
+panels disagree by 25 % *with each other*, so the acceptance window is lum 102.9-136.9.
+
+| hero band 60 480 560 600 | lum | vs raw 109.5 | vs aligned 137.2 |
+|---|---|---|---|
+| QA round 03 master | 87.0 | 0.79 | 0.63 |
+| merged r4b master (LIGHT r09, ENV r4) | 100.7 | 0.92 | 0.73 — **fails** |
+| ENV r5 on the same build | **104.0** | **0.95** | **0.76** — both inside 25 % |
+
+What moved. `env_sightlines -- --coverage --who` and `-- --boxmap` (new) price each instance: a per-pixel
+object map of the box, multiplied by the real render, gives the luminance each crown costs. That said the
+two user-image cypress spires and the peninsula bed were only worth 2.5 lum between them, and that the
+**band's ceiling with every crown removed was 110.5** (0.81 aligned) — so the band is set by the lit stone,
+not by ENV. What was genuinely wrong was the screen: the box carried **36.1 % of pixels below luminance 60
+against ref 169's own 27.8 %**, 25.0 of those 36.1 points foliage, and only 13.6 % sky-ish pixels through
+the bays against the photo's 16.5 %. So `redwood_screen`'s two front rows run shorter and gap wider
+(E1 run 15-27 -> 11-20 m, gap 7-13 -> 11-19 m; E2 run 18-33 -> 14-26 m, gap 7-12 -> 10-16 m). Nothing
+hand-placed moved: the user-image spires, the peninsula bed and the "A" mass right of the rotunda all stay.
+
+| cam 01 left-wing box (ray-cast) | ENV r4 | ENV r5 |
+|---|---|---|
+| foliage | 39.5 % | **31.7 %** |
+| architecture | 53.5 % | 57.5 % |
+| sky through the bays | 7.0 % | **10.8 %** |
+| trees in the plan | 143 | 136 |
+
+A widened offence band (x1 0.292) was built and rejected: it passes too, at 103-104 lum, but it costs the
+peninsula bed and one user-image spire (2 trees dropped, 6 moved 36-50 m). Composition beats 1 lum.
+
+**Residual, for lighting.** The band is still darker in *contrast* than the photo — 35.4 % of pixels below
+lum 60 against 27.8 %. The split is now **19.4 points foliage** (was 25.0, and below ref 169's own total)
+and **16.0 points architecture** (was 11.1): thinning the screen exposed more of the wing's own shaded
+stone, which reads mean lum 99.7 in that box against the photo's lit half at 163.4. That remainder is the
+light rig and the stone, not the planting.
+
+### MAT r5 pick-up
+
+`assets/materials.blend` now supplies every material ENV names: `env_build` logs **zero** "material not in
+library" warnings (round 4: 2). `MAT_backdrop_asphalt` and `MAT_backdrop_roof_tile` needed no code change —
+`env_city` already asked for those exact names through `common.load_material` and still writes its
+`instance_seed` property, so the carriageways, the theatre car park and the Presidio tile roofs are on the
+real library materials. `MAT_leaf_pine` also landed, so pines and redwoods (`mat_or`) are now on the darker
+blue-green needle material instead of falling back to cypress — which is why the *remaining* screen foliage
+reads darker (mean lum 82.4 -> 78.0) even after the thinning.
+
+### Performance
+
+| | round 4 | round 5 |
+|---|---|---|
+| ENV LOD0 | 13.98 M tris | **13.40 M** |
+| ENV LOD1 (viewport, cap 4.84 M) | 4.80 M | **4.60 M** |
+| ENV LOD2 | 0.65 M | 0.64 M |
+| objects in ENV | 5 101 | 5 080 |
+
+
 ## Previews and comparisons
 
 Fix round (2026-09-07): `renders/previews/environment/*_fix2_*.png` and `fix3_cam01_1920.png` / `fix3_cam05_1920.png`
@@ -542,31 +629,34 @@ el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
 
 ## Open issues / requests
 
-- **Materials agent (round 4, new)**: `env_city` names two materials the library does not have and falls back to
-  `env_lib` placeholders — **`MAT_backdrop_asphalt`** (carriageways; placeholder (0.052, 0.050, 0.049) rough 0.72,
-  wants coarse aggregate, tyre polish in the wheel tracks, a lighter crown and patched seams) and
-  **`MAT_backdrop_roof_tile`** (the Presidio's red clay tile; placeholder (0.185, 0.072, 0.042) rough 0.80, wants
-  a barrel-tile bump and per-object tone). Both are far-field only (r > 150 m) so they need no fine detail.
-- **Materials agent (round 4)**: `MAT_backdrop_forest` reads noticeably **bright and yellow-green in direct sun**
+- ~~**Materials agent (round 4)**: `MAT_backdrop_asphalt` / `MAT_backdrop_roof_tile` missing~~ — **closed by MAT r5
+  (round 5)**. Both resolve from the library now; `env_build` logs zero "material not in library" warnings.
+- **Materials agent (round 4, believed closed — needs a cam 06 re-check)**: MAT r5 darkened and cooled
+  `MAT_backdrop_forest` (albedo -55 %, B/G 0.43 -> 0.63). ENV has not re-rendered cam 06 since; the round-4
+  complaint was: `MAT_backdrop_forest` reads noticeably **bright and yellow-green in direct sun**
   on the new mid-distance canopy blobs at cam 06 (250-450 m). It was tuned for the 700 m+ ridge, where it is
   right. A darker, bluer lit response (or a stronger AO / clump darkening) would help the whole Presidio side.
 - **Lighting (QA-03-11 share)**: the rotunda / far-shore contrast is now **1.45 : 1** from ENV geometry alone
   (was 1.15 : 1); the last 0.05 is mist density, measured on `env_cam06_audit.py` boxes DOME and FAR_SHORE.
-- **Lead (QA-03-10)**: the left-wing band's *luminance* ratio cannot be measured in an ENV preview — the
-  placeholder sun is much dimmer than the shipped rig (right_wing reads 0.51 here and 0.80 in the round-03
-  master). Re-run `python3 scripts/env_measure.py <master hero 1920x1080>` after the merge. ENV's own lever,
-  foliage coverage of that box, is at 40 % against ref 169's ~28 % dark fraction, and the remainder is the
-  redwood screen seen through the bays, which QA-02-7 asked for.
+- ~~**Lead (QA-03-10)**: re-measure the band on the merged master~~ — **done in round 5**: 104.0 lum,
+  0.95 of the raw ref-169 box and 0.76 of the aligned panel, both inside 25 %. Use
+  `blender -b --python scripts/env_r5_hero.py` + `python3 scripts/env_measure.py <hero>` to re-check after any
+  lighting change. **Still open for lighting**: the band's dark fraction is 35.4 % against the photo's 27.8 %,
+  and 16.0 of those points are now the wing's own shaded stone (mean lum 99.7 in that box vs the photo's lit
+  half at 163.4), only 19.4 foliage. ENV's ceiling with every crown removed is 110.5 (0.81 aligned).
 
-- **Materials agent (blocking one QA item)**: the library has no separate pine/redwood needle material.
+- ~~**Materials agent**: no separate pine/redwood needle material~~ — **closed by MAT r5**: `MAT_leaf_pine` is in
+  the library and `env_trees` (`mat_or`) maps pine and redwood to it. Original request kept for the record:
+  the library has no separate pine/redwood needle material.
   `docs/materials_notes.md` says `assets/textures/foliage/needles_pine.png` is generated but unused; QA-01-7 asks for
   "conifer foliage darker (map pines/redwoods to the pine needle material, not cypress)". ENV maps pine, redwood,
   cypress and columnar cypress all to `MAT_leaf_cypress` because creating a local copy would violate the
   library-by-name rule. **Please add `MAT_leaf_pine`** (darker, blue-green, translucency ~0.2) and ENV will remap in
   one line (`env_trees.SPECIES[...]["leaf"]`). Mitigation meanwhile: pine and redwood carry 36–37 k cards per LOD0
   tree, ~55 % more than cypress, so the crowns self-shadow darker.
-- **Materials agent**: `MAT_shrub_light`, `MAT_shrub_dry`, `MAT_backdrop_roof`, `MAT_backdrop_skylight` and
-  `MAT_backdrop_door_green` are not in the library, so those five are still ENV placeholders (`env_lib.mat` recolours
+- ~~**Materials agent**: five ENV placeholders~~ — **closed by MAT r5** (`env_build` warns about none of them any
+  more). Original request: `MAT_shrub_light`, `MAT_shrub_dry`, `MAT_backdrop_roof`, `MAT_backdrop_skylight` and
+  `MAT_backdrop_door_green` were not in the library, so those five were ENV placeholders (`env_lib.mat` recoloured
   them). The shore now uses only library materials — `MAT_shrub` for the mounds and `MAT_reeds` for agapanthus, dry
   reeds and twig shrubs — but a second, lighter/greyer shrub material would let the mahonia read differently from the
   pittosporum. The hall's roof, glazing and green door are the other three.
@@ -575,7 +665,7 @@ el 7.4°, sun 4 W/m² at 3600 K, sky strength 0.35, exposure −0.8.
 - **Lead / build_master**: ENV's materials are appended one at a time by `common.load_material`, which duplicates the
   library's shared node groups; `env_build` now calls `mat_lib.dedupe_node_groups()` before saving, but if the lead
   re-appends ENV into master it should do the same (the materials notes give the one-call recipe).
-- **Performance**: LOD0 is 15.1 M tris (LOD1 5.9 M). Trees are ~97 % of it. If the Cycles hero gets too slow, the
+- **Performance**: LOD0 is 13.4 M tris (LOD1 4.60 M as of round 5). Trees are ~97 % of it. If the Cycles hero gets too slow, the
   cheapest lever is `env_trees.FAR_RADIUS` (130 m: no QA camera within this distance -> the tree uses the lighter
   mesh); 100 m saves roughly another 2 M.
 - The OSM extract has no paths/roads (`_osm.json` contains only buildings and the two water polygons), so QA-01-19's
