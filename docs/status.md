@@ -164,3 +164,7 @@ In flight: LIGHT r10, ENV r5. Next: review + merge both, lead_build.sh, QA round
 ## 2026-09-08 · ENV r5 reported (9c4b940), in review
 ENV r5: shift_y aspect fixed (0.06 = 0.107 of frame height), city_az rename, clear() corners, build_all arg; north-wing band on the merged master 0.92/0.73 -> 0.95/0.76 of ref (both panels inside 25 %) by thinning the redwood screen's front rows; cam05 silhouette foliage 4.0 %; backdrop asphalt/roof tile names already in use, zero library warnings; ENV LOD1 4.60 M. Hand-off to lighting: the wing's own shaded stone is 16 points of the band's dark fraction. Sheet renders/qa_comparisons/env_r5_sheet.png.
 In flight: ENV r5 review, LIGHT r10. Next: merge both, lead_build.sh, QA round 4.
+
+## 2026-09-08 · ENV r5 merged (8d2c7e0) after review + fixes
+Review: x1_exit did not move trees; the cam05 band under the corrected shift_y swept three hand-placed trees out of frame. Fix: hand-placed groups (peninsula bed, user-image spires) are pinned on both bands (never moved/dropped); band cleared by E1 screen crowns 18.5-23 -> 17-21 m: north-wing band 0.95 raw / 0.76 aligned, sky through bays 17.0 % (photo 16.5). Review file docs/reviews/env_r5_review.md.
+In flight: LIGHT r10 (rig shipped on branch, cff3af4: attic sat 0.549 / R-B 120.8 / lum 180.9, columns 1.29x, near-water sat 0.270, Eevee-only vault cutoff; 4K timing test running, 60-min cap). Next: review + merge lighting, lead_build.sh, QA round 4.
