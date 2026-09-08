@@ -249,10 +249,17 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         nt.links.new(vis_out, inv2.inputs[1])
         mixn = nt.nodes.new("ShaderNodeMix"); mixn.name = "sky_tint_diffuse"
         mixn.data_type = "RGBA"; mixn.blend_type = "MULTIPLY"; mixn.clamp_factor = True
-        nt.links.new(inv2.outputs[0], mixn.inputs[0])          # inputs[0] = the Float Factor (two are named "Factor")
-        nt.links.new(sky_color, mixn.inputs[6])                       # A
-        mixn.inputs[7].default_value = (diffuse_tint[0], diffuse_tint[1], diffuse_tint[2], 1.0)   # B
-        sky_color = mixn.outputs[2]
+        # ShaderNodeMix carries one socket per data type and several share a name, so pick them by name AND type
+        # rather than by index: the indices differ between Blender versions and a silent mis-link would render a
+        # whole sweep against the wrong graph.
+        fac = next(i for i in mixn.inputs if i.name == "Factor" and i.type == "VALUE")
+        a_in = next(i for i in mixn.inputs if i.name == "A" and i.type == "RGBA")
+        b_in = next(i for i in mixn.inputs if i.name == "B" and i.type == "RGBA")
+        res = next(o for o in mixn.outputs if o.type == "RGBA")
+        nt.links.new(inv2.outputs[0], fac)
+        nt.links.new(sky_color, a_in)
+        b_in.default_value = (diffuse_tint[0], diffuse_tint[1], diffuse_tint[2], 1.0)
+        sky_color = res
     nt.links.new(sky_color, bg.inputs["Color"])
     bg.inputs["Strength"].default_value = strength
     if gain_out is not None:
