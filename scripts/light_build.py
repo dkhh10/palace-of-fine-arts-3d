@@ -103,6 +103,10 @@ SKY_DIFFUSE_BOOST = 1.00           # ROUND 11 (QA-04-2), new socket, SHIPPED AT 
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
+SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue/Saturation "Hue" on the DIFFUSE
+                                   # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
+                                   # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
+                                   # why it exists and what it measured.
 SUN_BLUE_MULT = 0.75               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
                                    # own sun disc has been integrated (so the calibration itself stays physical and
                                    # reproducible). Round 09 lever for QA-02-14 / the sunlit-stone chroma: the lamp
@@ -450,7 +454,7 @@ def build_world(az, el, calib, moment):
     w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
                            camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION,
                            glossy_boost=SKY_GLOSSY_BOOST, glossy_saturation=SKY_GLOSSY_SATURATION,
-                           diffuse_saturation=SKY_DIFFUSE_SATURATION,
+                           diffuse_saturation=SKY_DIFFUSE_SATURATION, diffuse_hue=SKY_DIFFUSE_HUE,
                            diffuse_boost=SKY_DIFFUSE_BOOST)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings

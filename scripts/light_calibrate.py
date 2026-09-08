@@ -130,10 +130,18 @@ def _ortho_camera_looking_along(scene, direction, distance=5.0, ortho_scale=1.0)
     return cam
 
 
-def _sat_stage(nt, name, color_out, fac_out, saturation):
-    """One Hue/Saturation stage that applies `saturation` to the rays selected by fac_out and passes the rest through."""
+def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
+    """One Hue/Saturation stage that applies `saturation` (and, round 12, `hue`) to the rays selected by fac_out and
+    passes every other ray class through untouched.
+
+    Round 12 (QA-05-1): `hue` is Blender's Hue/Saturation Hue input, 0.5 = no shift, and one unit is a full turn of the
+    hue circle, so hue = 0.5 + d rotates the sky's colour by d*360 deg. It exists because the DIFFUSE socket needed a
+    lever that saturation alone cannot supply: at a 7.4 deg sun the sky that lands on shaded stone is horizon-weighted
+    and therefore WARM, so raising its saturation makes the shade more orange, not more blue (round 10 and round 11
+    both measured that). Rotating it toward blue first, then saturating, is what moves the shade's hue."""
     hs = nt.nodes.new("ShaderNodeHueSaturation"); hs.name = name
     hs.inputs["Saturation"].default_value = saturation
+    hs.inputs["Hue"].default_value = hue
     nt.links.new(color_out, hs.inputs["Color"])
     nt.links.new(fac_out, hs.inputs["Fac"])          # Fac blends between the input and the saturated colour
     return hs.outputs["Color"]
@@ -141,7 +149,7 @@ def _sat_stage(nt, name, color_out, fac_out, saturation):
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
-                   diffuse_boost=1.0):
+                   diffuse_boost=1.0, diffuse_hue=0.5):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -185,7 +193,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     cam_ray = gl_ray = None
     gain_out = None         # per-ray multiplier: camera_boost on camera rays, glossy_boost on glossy rays, else 1
     if (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
-            or glossy_saturation != 1.0 or diffuse_saturation != 1.0):
+            or glossy_saturation != 1.0 or diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9):
         lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
         vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
         nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0]); nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
@@ -208,12 +216,14 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     # GLOSSY (the sky the lagoon mirrors) can each carry their own sky chroma. camera/glossy were one knob before;
     # the water is a Fresnel mirror of the horizon at grazing angles, so the near-water chroma (QA-03-7) is set by
     # the glossy socket alone and could not be moved without dragging the visible sky with it.
-    if camera_saturation != 1.0 or glossy_saturation != 1.0 or diffuse_saturation != 1.0:
-        if diffuse_saturation != 1.0:
+    if (camera_saturation != 1.0 or glossy_saturation != 1.0 or diffuse_saturation != 1.0
+            or abs(diffuse_hue - 0.5) > 1e-9):
+        if diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9:
             inv = nt.nodes.new("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.name = "not_cam_or_glossy"
             inv.inputs[0].default_value = 1.0
             nt.links.new(vis_out, inv.inputs[1])
-            sky_color = _sat_stage(nt, "sky_saturation_diffuse", sky_color, inv.outputs[0], diffuse_saturation)
+            sky_color = _sat_stage(nt, "sky_saturation_diffuse", sky_color, inv.outputs[0], diffuse_saturation,
+                                   hue=diffuse_hue)
         if camera_saturation != 1.0:
             sky_color = _sat_stage(nt, "sky_saturation", sky_color, cam_ray, camera_saturation)
         if glossy_saturation != 1.0:
