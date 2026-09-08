@@ -78,6 +78,7 @@ def probe(scene, name, step=3, sun=True, top=14):
     tot = 0
     cat = {"foliage": 0, "building": 0, "ground": 0, "sky": 0}
     lit = {"foliage": 0, "building": 0, "ground": 0}
+    away = {}
     who = {}
     blockers = {}
     dists = []
@@ -103,8 +104,16 @@ def probe(scene, name, step=3, sun=True, top=14):
             key = f"{k}|{nm}|{mat}"
             who[key] = who.get(key, 0) + 1
             if sun:
-                o2 = hit + nrm.normalized() * 0.02 if nrm.length > 0 else hit
-                ok2, h2, n2, i2, o2b, _ = scene.ray_cast(dg, o2 + sv * 0.05, sv, distance=1200)
+                # pure occlusion: "can this point see the sun".  The normal offset takes the SUN's side of the
+                # surface (leaf cards are single-sided and Cycles flips their normal, so the geometric normal's
+                # own sign says nothing about whether the shader is lit); `away` records how much of the box is
+                # turned away from the sun for the record.
+                nn = nrm.normalized() if nrm.length > 0 else sv
+                if nn.dot(sv) < 0:
+                    away[k] = away.get(k, 0) + 1
+                    nn = -nn
+                o2 = hit + nn * 0.02 + sv * 0.05
+                ok2, h2, n2, i2, o2b, _ = scene.ray_cast(dg, o2, sv, distance=1200)
                 if ok2:
                     bn = o2b.name
                     blockers[bn] = blockers.get(bn, 0) + 1
@@ -114,7 +123,8 @@ def probe(scene, name, step=3, sun=True, top=14):
     for k in ("foliage", "building", "ground", "sky"):
         s = f"{k:9s} {100.0 * cat[k] / max(1, tot):5.1f} %"
         if k != "sky" and cat[k]:
-            s += f"   sunlit {100.0 * lit[k] / cat[k]:5.1f} % of it"
+            s += (f"   sunlit {100.0 * lit[k] / cat[k]:5.1f} % of it"
+                  f"   (normal turned from the sun {100.0 * away.get(k, 0) / cat[k]:5.1f} %)")
         print("   " + s)
     if dists:
         dists.sort()
