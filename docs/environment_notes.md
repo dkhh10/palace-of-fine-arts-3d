@@ -717,11 +717,11 @@ phrase the podium test as "visible over N % of its *length*", which is not an ar
 |---|---|---|
 | cam01_left_wing (60 480 560 600) | fol 30.5 / arch 57.8 / sky 11.6 | fol **29.1** / arch 58.3 / sky 12.5 |
 | cam01_right_wing (1360 480 1860 600) | fol **74.6** / arch 24.2 / sky 1.2 | fol **37.8** / arch 53.4 / sky 8.8 |
-| cam01_shore (700 640 1200 720) | fol 8.7 / arch 68.7 | fol **52.8** / arch 34.9 |
+| cam01_shore (700 640 1200 720) | fol 8.7 / arch 68.7 | fol **52.8** / arch 30.5 / ground 16.7 |
 | cam01_podium_base (620 648 1300 684) *new* | arch 78 % (base bare) | arch **22 %** -> **78 % hidden** |
 | cam05_body (301 27 998 520) *new* | fol 6.5 (whole silhouette) | fol **4.5** |
 | cam05_keyband (330 526 990 554) *new* | — | arch **58.9 % of area, 93.6 % of columns** |
-| cam02_foreground (0 634 1280 720) *new* | water only | fol 35.1 / stone 14.1 / water 50.8 |
+| cam02_foreground (0 634 1280 720) *new* | water only | fol 35.1 / stone 8.8 / water + bed 56.2 |
 
 ### QA-04-4 — the shoreline cap was a radius; it should always have been a sight line
 
@@ -844,7 +844,7 @@ and 30 % denser within 40 m of that camera, with the waterline row pushed furthe
 
 | test (QA-04-14) | round 04 | round 06 |
 |---|---|---|
-| strip ray-cast | water only | foliage **35.1 %**, rip-rap/stone **14.1 %**, water 50.8 % |
+| strip ray-cast | water only | foliage **35.1 %**, rip-rap/stone **8.8 %**, water + bed 56.2 % |
 | columns carrying a dark silhouette (lum < 30) | 48.0 % | **78.8 %** |
 | strip lum / std | 93.7 / 53.2 | 60.5 / 41.6 |
 
@@ -876,3 +876,31 @@ Ripple break-up in that strip is materials' half of the defect.
   `f x z = (f_y, -f_x)` = north. `docs/qa_round_04.md` (e) has the two labels the other way round.
 - `env_city.city_az`'s docstring said "compass = (270 - city_az) mod 360"; it is **(180 - city_az) mod 360**
   (city_az 0 = +X = south = compass 180). Fixed; no behaviour depended on it.
+
+### Round-6 review follow-up (`docs/reviews/env_r6_review.md`) — same day
+
+All five findings fixed; the build is byte-for-byte the same picture (shrubs 1 239 instances with the same source
+histogram, screen cap 28/57 crowns / 50 m, frame-band relief moved 8 / shortened 3 / dropped 3 / kept 3,
+LOD1 4 659 716 tris, and every foliage / architecture / sky number below identical except where finding 2 moves
+lagoon-bed samples out of the "architecture" bucket, which is the point of it).
+
+1. **Camera stations are read, not copied.** New `env_lib.qa_camera(key, fallback_loc, fallback_lens)` returns the
+   `(loc, lens)` of the QA camera whose name contains `key` straight from `scripts/qa_cameras.py`; it returns
+   `None` when qa_cameras is importable but has no such camera (the caller drops that eye) and the literal
+   fallback only when qa_cameras cannot be imported at all. `env_build.BAND_EYES` (and `CAM02_XY`, used by the
+   rip-rap boost and the cam-02 reed fringe) and `env_trees.screen_height_cap`'s hero station and lens all come
+   from it now. The lead re-stationed cam 02 in QA round 04; a snapshot would have kept capping the shore against
+   the old station without saying so.
+2. **`env_sightlines.coverage` counted the lagoon bed as architecture.** `ENV_lagoon_bed` / `MAT_lagoon_bed` are
+   ground: `cam01_shore` architecture 34.9 -> **30.5 %** (ground 12.3 -> 16.7), `cam02_foreground` "stone"
+   14.1 -> **8.8 %** (water + bed 50.8 -> 56.2). Foliage figures are unchanged everywhere, and the wing bands, the
+   keyband, the rotunda body and the podium base are bit-identical (they see no water).
+3. **The bed split carried the whole terrain's vertex array into both halves.** `compact()` renumbers each half
+   onto the vertices it actually uses: `ENV_lagoon_bed` goes from 25 867 verts (22 450 of them loose) and a
+   732 x 731 m bounding box to **3 417 verts, 6 377 polys, 241 x 137 m** - which is the lagoon.
+4. **`band_sightline_cap` no longer doubles as a global height rule.** It returns **None** where no camera's ray
+   to the band passes over the point, and `put` applies the blanket **`SHRUB_H_CEILING` = 4.00 m** (renamed from
+   `SHORE_H_MAX`) to every shrub in the build, sight line or not. Behaviour is identical; what is capping what is
+   now legible. `SHORE_H_MIN` 0.55 m still floors the sight-line cap itself.
+5. `env_sheet_r6.panel` draws a "missing" placeholder instead of raising when a round-04 QA render is absent
+   (they live in the main checkout only).

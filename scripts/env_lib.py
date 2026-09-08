@@ -117,6 +117,25 @@ def mat(name):
     return m
 
 
+def qa_camera(key, fallback_loc, fallback_lens=None):
+    """`(location, lens)` of the QA camera whose name contains `key`, read from `scripts/qa_cameras.py`.
+
+    The sight-line caps (`env_build.band_sightline_cap`, `env_trees.screen_height_cap`) are only correct if they
+    use the stations the QA renders actually use, and those move: the lead re-stationed cam 02 in QA round 04.
+    A hand-copied snapshot would keep capping against the old station without saying so.  Returns **None** if
+    qa_cameras is importable but has no such camera (the caller drops that eye); returns the literal fallback
+    only if qa_cameras cannot be imported at all, so an ENV build outside the repo still runs.
+    """
+    try:
+        import qa_cameras
+    except Exception:                                    # noqa: BLE001 - running without the repo on sys.path
+        return (tuple(fallback_loc), fallback_lens)
+    spec = next((c for c in qa_cameras.CAMERAS if key in c["name"]), None)
+    if spec is None:
+        return None
+    return (tuple(spec["loc"]), spec.get("lens", fallback_lens))
+
+
 def mat_or(preferred, fallback):
     """Library material `preferred` if it exists, otherwise `fallback`. Lets ENV name materials the materials agent
     is still building (MAT_leaf_pine, MAT_shrub_light, MAT_shrub_dry): the moment the name lands in the library the

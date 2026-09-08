@@ -500,8 +500,19 @@ SCREEN_OVER = 0.022           # fraction of cam 01's frame height a screen crown
 SCREEN_H_FLOOR = 11.0         # never cut a screen tree below this: it has to stay a screen
 
 
-def screen_height_cap(entries, colonnade_polys, cam=(-14.1, 100.0, 1.6), lens=20.0, ground=-0.45, verbose=True):
-    """Lower any screen tree that stands over the colonnade cornice by more than SCREEN_OVER of the frame."""
+def screen_height_cap(entries, colonnade_polys, cam=None, lens=None, ground=-0.45, verbose=True):
+    """Lower any screen tree that stands over the colonnade cornice by more than SCREEN_OVER of the frame.
+
+    The hero station and lens come from `scripts/qa_cameras.py` unless the caller passes them: a copy here would
+    keep capping against yesterday's camera after the next re-station without saying so.
+    """
+    if cam is None or lens is None:
+        spec = L.qa_camera("_qa_01_", (-14.1, 100.0, 1.6), 20.0)
+        if spec is not None:
+            cam = cam if cam is not None else spec[0]
+            lens = lens if lens is not None else spec[1]
+        cam = cam if cam is not None else (-14.1, 100.0, 1.6)
+        lens = lens if lens is not None else 20.0
     half_h = (0.5 * 36.0 / lens) * 9.0 / 16.0
     (cx, cy), R = COLONNADE_ARC
     out, cut, metres = [], 0, 0.0

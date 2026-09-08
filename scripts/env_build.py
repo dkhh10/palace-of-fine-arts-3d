@@ -60,10 +60,19 @@ TERRAIN_HALF = 360.0    # terrain covers +-360 m (720 x 720)
 PODIUM_BAND_Z0 = 3.8         # bottom of the Greek-key / rosette course (sheet: podium wall 0 -> 4.3, band h 0.5)
 PODIUM_BAND_R = 27.3         # arch_params.PODIUM_LOBE_R - the innermost (hardest to keep clear) band stone
 BAND_MARGIN = 0.30           # crown tops stop this far under the sight line
-SHORE_H_MAX = 4.00           # QA-04-4 acceptance window is 1.5-4 m
-SHORE_H_MIN = 0.55
-# eye points that must keep the band: cam 01 (hero), cam 05 (QA-03-13's own camera), cam 02 (the new SSE station)
-BAND_EYES = ((-14.1, 100.0, 1.6), (28.1, 111.8, 1.5), (70.5, 25.6, 1.1))
+# `band_sightline_cap` returns None where no camera's ray to the band passes over the point - there is nothing to
+# keep clear there, and it is not the sight line's business to say how tall a shrub may be.  The blanket ceiling
+# that applies to EVERY shrub in the build, sight line or not, is SHRUB_H_CEILING, applied in `put`.
+SHRUB_H_CEILING = 4.00       # QA-04-4's acceptance window tops out at 4 m; nothing scattered is ever taller
+SHORE_H_MIN = 0.55           # ... and the cap never shrinks a shrub below this, however low the sight line runs
+# Eye points that must keep the band: cam 01 (hero), cam 05 (QA-03-13's own camera), cam 02 (the SSE station the
+# lead re-stationed in QA round 04).  Read from scripts/qa_cameras.py by name, never copied: a snapshot would keep
+# capping the shore against a station the QA renders no longer use.  A camera that is not in the set drops out.
+CAM01 = L.qa_camera("_qa_01_", (-14.1, 100.0, 1.6), 20.0)
+CAM02 = L.qa_camera("_qa_02_", (70.5, 25.6, 1.1), 24.0)
+CAM05 = L.qa_camera("_qa_05_", (28.1, 111.8, 1.5), 35.0)
+BAND_EYES = tuple(c[0] for c in (CAM01, CAM05, CAM02) if c is not None)
+CAM02_XY = CAM02[0][:2] if CAM02 is not None else (70.5, 25.6)
 
 
 def _ray_circle_t(ox, oy, dx, dy, radius):
@@ -80,8 +89,12 @@ def _ray_circle_t(ox, oy, dx, dy, radius):
 
 
 def band_sightline_cap(x, y, z_ground):
-    """Tallest shrub at (x, y) that still leaves the podium's Greek-key band visible from every hero camera."""
-    cap = SHORE_H_MAX
+    """Tallest shrub at (x, y) that still leaves the podium's Greek-key band visible from every hero camera.
+
+    Returns None when no camera's ray to the band passes over this point - beside or behind the podium there is
+    no band stone to hide, so the sight line imposes nothing.  `put` applies SHRUB_H_CEILING either way.
+    """
+    cap = None
     for (ex, ey, ez) in BAND_EYES:
         dx, dy = x - ex, y - ey
         d = math.hypot(dx, dy)
@@ -91,8 +104,9 @@ def band_sightline_cap(x, y, z_ground):
         if D is None or d > D - 1.0:
             continue                       # beside or behind the podium: this shrub hides no band stone
         z_line = ez + (PODIUM_BAND_Z0 - ez) * d / D
-        cap = min(cap, z_line - BAND_MARGIN - z_ground)
-    return max(SHORE_H_MIN, min(SHORE_H_MAX, cap))
+        c = z_line - BAND_MARGIN - z_ground
+        cap = c if cap is None else min(cap, c)
+    return None if cap is None else max(SHORE_H_MIN, cap)
 
 
 # ----------------------------------------------------------------------------- height field
@@ -272,8 +286,22 @@ def build_terrain():
         else:
             land_tris.append(t)
             land_mat.append(mi)
-    obj = L.mesh_from_tris("ENV_terrain_ground", verts, land_tris, coll, mats, land_mat, smooth=True)
-    bed = L.mesh_from_tris("ENV_lagoon_bed", verts, bed_tris, coll, [m_bed], [0] * len(bed_tris), smooth=True)
+    def compact(tri_list):
+        """Renumber a triangle list onto only the vertices it uses - otherwise each half of the split carries the
+        whole terrain's vertex array (ENV_lagoon_bed came out with ~100 k loose verts and a 720 m bounding box,
+        which breaks any bound-box test and every viewport frame-selected)."""
+        remap, tris_out = {}, []
+        for t in tri_list:
+            tris_out.append(tuple(remap.setdefault(i, len(remap)) for i in t))
+        vs = [None] * len(remap)
+        for old_i, new_i in remap.items():
+            vs[new_i] = verts[old_i]
+        return vs, tris_out
+
+    land_v, land_t = compact(land_tris)
+    bed_v, bed_t = compact(bed_tris)
+    obj = L.mesh_from_tris("ENV_terrain_ground", land_v, land_t, coll, mats, land_mat, smooth=True)
+    bed = L.mesh_from_tris("ENV_lagoon_bed", bed_v, bed_t, coll, [m_bed], [0] * len(bed_t), smooth=True)
     log(f"terrain: mesh {L.tri_count(obj)} tris + ENV_lagoon_bed {L.tri_count(bed)} tris "
         f"({m_bed.name}{' PLACEHOLDER' if m_bed.get('placeholder') else ''})")
     # soil beds on the peninsula and the islet: handled by shrub scatter (soil material patches under shrubs)
@@ -386,7 +414,7 @@ def build_riprap():
         # QA-04-14: cam 02's foreground strip is the south embayment.  Its bank is 7.4 m from the lens, just under
         # the frame edge, so what has to read is the stone standing OUT in the shallows 9-26 m away: denser, and
         # scaled up (`big_stone`) so a 0.5 m cobble does not vanish at 24 mm.
-        d_cam02 = math.hypot(x - 70.5, y - 25.6)
+        d_cam02 = math.hypot(x - CAM02_XY[0], y - CAM02_XY[1])
         big_stone = 1.0
         if d_cam02 < 40.0:
             density += 0.30
@@ -705,6 +733,7 @@ def build_shrubs():
         h = REAL_H[key] * sc * Z_JITTER_MAX
         zg = terrain_height(x, y)
         cap = band_sightline_cap(x, y, zg)                    # QA-04-4 / QA-03-13, see the top of this file
+        cap = SHRUB_H_CEILING if cap is None else min(cap, SHRUB_H_CEILING)
         if h > cap:
             sc *= cap / h
         placed.append((key, (x, y, zg + dz), rnd.uniform(0, 6.283), sc))
@@ -809,10 +838,9 @@ def build_shrubs():
     #     7.4 m from the lens, just under the frame edge, so the foreground was a flat sheet of water with no edge
     #     at all.  A reed / agapanthus fringe standing IN the shallows (signed distance negative = in the water)
     #     plus the heavier rip-rap added in build_riprap gives that strip a readable shore.
-    CAM02 = (70.5, 25.6)
     n_emb = len(placed)
     for (x, y) in L.resample_polyline(L.offset_polygon(LAGOON, 0.4), 1.6, closed=True):
-        d_cam = math.hypot(x - CAM02[0], y - CAM02[1])
+        d_cam = math.hypot(x - CAM02_XY[0], y - CAM02_XY[1])
         if not (4.0 < d_cam < 42.0):
             continue
         gate = L.fnoise(x, y, 0.13, 96)

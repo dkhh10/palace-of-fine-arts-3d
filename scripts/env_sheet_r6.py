@@ -47,6 +47,14 @@ def ref_box(x0, y0, x1, y1):
 
 
 def panel(path, box, label, numbers, mark=None):
+    if not Path(path).exists():                 # the round-04 QA renders live in the main checkout only
+        out = Image.new("RGB", (W, 200 + LABEL_H), (30, 30, 34))
+        d = ImageDraw.Draw(out)
+        d.text((8, 8), label, font=F_L, fill=(255, 214, 120))
+        d.text((8, 40), f"missing: {path}", font=F_N, fill=(220, 120, 120))
+        for i, line in enumerate(numbers):
+            d.text((6, 204 + i * 19), line, font=F_N, fill=(226, 226, 226))
+        return out
     im = Image.open(path).convert("RGB").crop(box)
     h = max(1, int(round(W * im.height / im.width)))
     im = im.resize((W, h), Image.LANCZOS)
@@ -90,7 +98,7 @@ def main():
         panel(a_hero, box, "AFTER  round 06 (ENV r6 on the same master, 64 spp)",
               ["shrub p10 0.82 / median 1.57 / p90 2.83 m, tallest 3.59 m, spread 3.44:1",
                "podium base 78 % hidden (QA wants >= 60 %); spacing sd/mean 66 %",
-               "shore band ray-cast: foliage 52.8 %  architecture 34.9 %"], mark=(700, 640, 1200, 720)),
+               "shore band ray-cast: foliage 52.8 %  architecture 30.5 %  ground 16.7 %"], mark=(700, 640, 1200, 720)),
         panel(REF169, ref_box(*box), "REFERENCE  ref 169 (round-02 align transform)",
               ["2-4 m mounded shrubs, willow crowns, the base hidden between the piers",
                "shore band lum 107.2  std 51.0  dark<60 17.9 %  sat 0.635",
@@ -150,7 +158,7 @@ def main():
                "columns carrying a dark silhouette: 48.0 %",
                "strip lum 93.7  std 53.2"]),
         panel(PREV / "r6_cam02.png", box5, "AFTER  round 06",
-              ["ray-cast: foliage 35.1 %  rip-rap/stone 14.1 %  water 50.8 %",
+              ["ray-cast: foliage 35.1 %  rip-rap/stone 8.8 %  water + bed 56.2 %",
                "columns carrying a dark silhouette: 78.8 %",
                "strip lum 60.5  std 41.6 - emergent reeds + up-scaled rip-rap"]),
     ]))

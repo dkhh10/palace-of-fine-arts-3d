@@ -194,7 +194,10 @@ def coverage(move_back=(), step=2, shift_aspect=True):
                 if "leaf" in mat or "shrub" in mat or "reed" in mat or "forest" in mat or "canopy" in nm:
                     fol += 1
                     hist[nm] = hist.get(nm, 0) + 1
-                elif "terrain" in nm or "ground" in nm or "water" in nm or "lawn" in mat or "gravel" in mat:
+                elif ("terrain" in nm or "ground" in nm or "water" in nm or "bed" in nm
+                      or "lawn" in mat or "gravel" in mat or "bed" in mat):
+                    # "bed": ENV_lagoon_bed / MAT_lagoon_bed (round 6 split the lagoon floor out of the terrain
+                    # mesh).  Without this it counted as architecture and inflated every water-facing box.
                     gnd += 1
                 else:
                     bld += 1
