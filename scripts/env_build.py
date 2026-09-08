@@ -44,6 +44,10 @@ LAGOON_FIELD = L.PolyField(LAGOON, cell=8.0)
 ISLET_FIELDS = [L.PolyField(p, cell=6.0) for p in ISLETS]
 HALL_FIELD = L.PolyField(HALL, cell=10.0)
 COL_FIELDS = [L.PolyField(p, cell=8.0) for p in COLONNADE_ROOFS[:2]]      # QA-05-11: the walk is a level
+# ... with a bounding box in front of it: `terrain_height` is called ~10^5 times and PolyField.dist falls back to
+# a brute-force scan of all 95 segments (plus a point-in-poly) for any point outside its bucket grid's reach.
+COL_BOXES = [(min(q[0] for q in p) - 7.0, min(q[1] for q in p) - 7.0,
+              max(q[0] for q in p) + 7.0, max(q[1] for q in p) + 7.0) for p in COLONNADE_ROOFS[:2]]
 COLONNADE_WALK_Z = -0.60      # arch_params.COLONNADE_GROUND_Z - the level the column bases are modelled on
 
 APRON_R = 31.0          # inside this radius the ARCH platform covers the ground
@@ -139,7 +143,9 @@ def terrain_height(x, y):
     # cam 03, which looks straight down the walk, and the new paving would have added 3.5 cm more.  The walk is
     # pulled to -0.60 inside the wing footprint and blends back to lawn between the terrain's own two constraint
     # rings (offset 2.0 and 5.5), so the slope change lands on a mesh edge instead of being sampled.
-    for f in COL_FIELDS:
+    for bb, f in zip(COL_BOXES, COL_FIELDS):
+        if not (bb[0] <= x <= bb[2] and bb[1] <= y <= bb[3]):
+            continue
         d = f.signed(x, y)
         if d < 5.5:
             t = L.smoothstep(5.5, 2.0, d)
