@@ -26,7 +26,7 @@ NUM = ROOT / "renders/previews/environment/r7_numbers.json"
 OUT = ROOT / "renders/qa_comparisons/env_r7_sheet.png"
 
 W = 820
-PAD, LABEL_H, ROW_GAP = 10, 86, 18
+PAD, LABEL_H, ROW_GAP = 10, 150, 18
 
 
 def font(size):
