@@ -122,10 +122,12 @@ def main():
     rows.append(row("QA-05-10  hero shore shrub band, box 700 600 1200 740 marked", [
         panel(b_hero, box2, "BEFORE  QA round 05", [
             f"band lum {n('b_shore_lum', '71.7')}   (QA: 0.63 of the photo's 114)",
+            f"{n('b_shore_hue')}",
             f"ray-cast  {n('b_shore_cast')}",
             f"sun reach {n('b_shore_sun')}"], mark=(700, 600, 1200, 740)),
         panel(a_hero, box2, "AFTER  ENV r7", [
             f"band lum {n('a_shore_lum')}",
+            f"{n('a_shore_hue')}",
             f"ray-cast  {n('a_shore_cast')}",
             f"sun reach {n('a_shore_sun')}"], mark=(700, 600, 1200, 740)),
         panel(REF169, ref_box(*box2), "REFERENCE  ref 169", [

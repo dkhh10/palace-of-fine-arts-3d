@@ -16,6 +16,7 @@ Definitions are fixed here so BEFORE and AFTER are measured identically:
                      than 25 samples are one line.  Counted on both axes, reported as (vertical + horizontal).
 """
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -30,11 +31,24 @@ def lum(a):
     return 0.2126 * a[..., 0] + 0.7152 * a[..., 1] + 0.0722 * a[..., 2]
 
 
-def load(p, w=None):
+def load(p, w=None, rgb=False):
     im = Image.open(p).convert("RGB")
     if w and im.width != w:                       # QA sheets are 3-panel strips; take the first panel
         im = im.crop((0, 0, w, im.height))
-    return lum(np.asarray(im, dtype=float))
+    a = np.asarray(im, dtype=float)
+    return a if rgb else lum(a)
+
+
+def hue_sat(a):
+    """Mean HSV hue (deg) and saturation of an RGB block, hue averaged as a unit vector."""
+    mx = a.max(axis=2)
+    mn = a.min(axis=2)
+    d = np.maximum(mx - mn, 1e-6)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    h = np.where(mx == r, ((g - b) / d) % 6, np.where(mx == g, (b - r) / d + 2, (r - g) / d + 4)) * 60.0
+    sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0.0)
+    ang = np.radians(h)
+    return float(np.degrees(math.atan2(np.sin(ang).mean(), np.cos(ang).mean())) % 360), float(sat.mean())
 
 
 def box_stats(L, box):
@@ -86,6 +100,9 @@ def measure(tag, hero, cam03, cam06):
         out[f"{tag}_shore_lum"] = (f"{shore['mean']:.1f}  med {shore['med']:.1f}  std {shore['std']:.1f}  "
                                    f"dark<60 {shore['dark60']:.1f} %")
         out[f"{tag}_shore_mean"] = round(shore["mean"], 1)
+        A = load(hero, 1920, rgb=True)[600:740, 700:1200]
+        hh, ss = hue_sat(A)
+        out[f"{tag}_shore_hue"] = f"hue {hh:.1f} (QA window 40-60)   sat {ss:.3f} (ref 0.663)"
     if cam03 and Path(cam03).exists():
         L = load(cam03, 1280)
         g = L[480:720, 560:900]
