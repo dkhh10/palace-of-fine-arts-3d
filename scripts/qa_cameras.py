@@ -34,7 +34,7 @@ CAMERAS = [
     dict(name="CAM_qa_04_rotunda_ceiling", loc=(0.0, 3.0, 1.6), target=(0.0, 3.0, 40.0), lens=15.0,
          ref="canonical/cam_04_rotunda_ceiling.jpg",
          note="Ref 083: straight up; eight inner arches, eight winged figures, star coffering."),
-    dict(name="CAM_qa_05_south_lawn", loc=(28.1, 111.8, 1.5), target=(0.0, 0.0, 20.0), lens=35.0,
+    dict(name="CAM_qa_05_south_lawn", loc=(28.1, 111.8, 1.5), target=(0.0, 0.0, 21.5), lens=35.0,
          ref="canonical/cam_05_south_lawn.jpg",
          note="Ref 063: south-east, ground level across the water's edge; podium, urns, stair, pier groups."),
     dict(name="CAM_qa_06_aerial", loc=(-205.0, 143.0, 120.0), target=(0.0, 0.0, 15.0), lens=50.0,
