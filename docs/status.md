@@ -216,3 +216,19 @@ In flight: QA round 5 (Fable xhigh, docs/briefs/qa_round_05.md; lead does not co
 ## 2026-09-08 · QA round 5 in (6c109ef): gate NOT passed; hero 3.28 (third flat round), cam02 2.78, cam03 1.75 (-0.25), cam04 2.56, cam05 2.78, cam06 2.50
 Closed: shoreline, columns hue, cam05 apex, north wing, Eevee vault not black, attic std 0.66. Blockers: QA-05-1 shade crushed (cam03 0.063 of sunlit; light), -2 hero stone now a dark isotropic dirt decal (attic lum 166, sat 0.64-0.84, anisotropy 0.64 vs 4.07; mat), -3 Cycles coffer 0.21 (merge regression, light+mat). Majors: -4 water hue 209 / reflection sat 0.11, -5 south wing 0.63, -6 entablature cornice/dentil shadows (arch). Composite renders/qa_comparisons/round05_gate.png. QA's 4K 768-spp timing render in progress (pid 90755, log renders/logs/qa_round05_4k.log); QA appends the result and commits when it exits.
 Dispatched (waiting on the 4K pid before their first Blender run): LIGHT r12 (shade window first, sunlit budget relaxed, coffer combination), ARCH r4 (cornice/dentil projection), ENV r7 (south wing, shore shrubs sun reach, cam03 ground, cam06 streets, NE shoreline). MAT r7 follows after LIGHT r12 merges (decisions.md: sequential lighting -> materials). Next: reviews, merges, lead_build.sh, QA round 6.
+
+## 2026-09-08 · CHECKPOINT (user closing the machine) — part 1: state of record
+**Merged into main (all reviewed):** lighting r09-r11, architecture p4r2 + socket fixes + rib material, materials r4-r6 (+follow-ups), environment r4-r6 (+follow-ups), ornament r4. Lead items done: watchdog fix, cam02/cam05 stations, saved preset, lighting/materials review fixes. master.blend on disk = lead_build.sh after round 3 (9175 objects, LOD1 11.01 M, probes baked on the physical rig) = what QA round 5 scored.
+
+**Scores by round (average per camera; target >= 4 every row, hero >= 4.5):**
+| cam | r02 | r03 | r04 | r05 | trend |
+|---|---|---|---|---|---|
+| 01 hero | 2.94 | 3.28 | 3.28 | 3.28 | stuck three rounds |
+| 02 NE 3/4 | 2.11 | 2.33 | 2.67 | 2.78 | slow up |
+| 03 colonnade | 1.94 | 2.13 | 2.00 | 1.75 | declining (shade crushed) |
+| 04 ceiling | 2.31 | 2.13 | 2.44 | 2.56 | slow up |
+| 05 S lawn | 2.11 | 2.67 | 2.72 | 2.78 | flat |
+| 06 aerial | 2.17 | 2.17 | 2.39 | 2.50 | slow up |
+Round-05 report docs/qa_round_05.md (6c109ef), composite renders/qa_comparisons/round05_gate.png. Blockers: QA-05-1 shade crushed (lighting), QA-05-2 hero stone a dark isotropic dirt decal (materials overshoot), QA-05-3 Cycles coffer 0.21 (merge regression). Majors: -4 water hue/reflection, -5 south wing, -6 entablature cornice/dentil shadows.
+
+**Decision log (docs/decisions.md, 2026-09-08):** shade deficit is structural (diffuse sky x0.8 vs camera sky x2.1 / lagoon x5.25), lighting r12 fixes the shade window first with the sunlit-saturation budget withdrawn; lighting and materials run sequentially on the merged master (materials r7 after lighting r12); geometry owners in parallel; if the hero does not move at round 6, texture-projection from reference photos for the concrete. Also: no rotunda proportion change (ref 062 fit 92 m / 42 mm), cam02 on the SSE shore path, rosette socket contract, viewport RT off / light_threshold 0.01, watchdog centisecond rule.
