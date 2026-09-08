@@ -95,9 +95,31 @@ def prepare_scene(scene=None):
     return s
 
 
-def bake(scene=None, free_first=True):
-    """Bake every light probe in the CURRENT scene. Needs the real geometry -> run this on master.blend."""
+def bake(scene=None, free_first=True, physical_vault=True):
+    """Bake every light probe in the CURRENT scene. Needs the real geometry -> run this on master.blend.
+
+    ROUND 11 / QA-04-1. The bake is a function of the rig that is LIVE when it runs, and `build_master.py` now ends
+    with `light_presets.apply_viewport_eevee`, which applies the Eevee-only vault override (x8 energy, 13 m cutoff).
+    `lead_build.sh` then runs this script, so the irradiance volumes were being baked with the vault emitters CUT OFF
+    at 13 m - and the central coffered dome is 20.7 m from them. That starved the coffers in the baked indirect term
+    itself, not only in the direct one: QA measured the Eevee coffer field at 0.035 of the frame's own sky against
+    Cycles' 0.261, where round 10's probe (baked before the review fix, i.e. on an uncut rig) had read 0.255.
+    Measured on the lead's master, cam04, Eevee 1280x720, everything else identical:
+        bake taken with the EEVEE override (as shipped in round 10) -> coffer / own sky 0.035
+        bake taken with the PHYSICAL rig (this fix)                 -> see docs/lighting_notes.md section 20
+    A light probe volume is supposed to store the scene's real indirect light, so baking a render-time engine hack
+    into it was simply a bug. The override is restored afterwards, so the SAVED Eevee state is unchanged."""
     s = prepare_scene(scene)
+    restore = None
+    if physical_vault:
+        try:
+            import light_presets as lp
+            restore = "EEVEE" if s.render.engine.endswith("EEVEE") else None
+            lp.apply_vault_for_engine("CYCLES")
+            print("[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the "
+                  "scene's real indirect light, not the Eevee render-time override")
+        except Exception as e:
+            print("[light_probes] could not force the physical vault rig:", e)
     probes = [o for o in s.objects if o.type == "LIGHT_PROBE"]
     if not probes:
         print("[light_probes] no LIGHT_PROBE objects in the scene; nothing to bake")
@@ -116,8 +138,13 @@ def bake(scene=None, free_first=True):
     res = bpy.ops.object.lightprobe_cache_bake(subset="ALL")
     print(f"[light_probes] bake {res} in {time.time() - t:.1f}s for {[p.name for p in probes]}")
     for p in probes:
-        cache = getattr(p.data, "is_runtime_data", None)
         print(f"[light_probes]   {p.name}: baked (grid {p.data.resolution_x}x{p.data.resolution_y}x{p.data.resolution_z})")
+    if restore:                    # put the render-time Eevee override back so the SAVED state is unchanged
+        try:
+            import light_presets as lp
+            lp.apply_vault_for_engine(restore)
+        except Exception as e:
+            print("[light_probes] could not restore the Eevee vault override:", e)
     return probes
 
 

@@ -973,3 +973,54 @@ is 12x that sample count before adaptive sampling claws any of it back. **The br
 is not demonstrated, and `FINAL_SAMPLES = 768` should be treated as unvalidated at 4K until someone lands this
 test.** Recommendation to the lead: re-run it with the compositor off to isolate the cost, and if the compositor is
 the tail, either bake the haze into the world/volume or run the compositor as a separate pass on the saved EXR.
+
+## 20. Round 11 — the shade (QA-04-2), the Eevee vault (QA-04-1) and the coffer level (QA-04-7)
+
+Brief: the lead's round-11 dispatch. Every number below is measured with `scripts/light_r11_measure.py`, which
+reproduces QA's round-04 numbers on QA's own frames to the second decimal before anything is changed:
+
+| | QA round 04 | light_r11_measure on the same file |
+|---|---|---|
+| cam03 near shaft (0,150)-(420,720) | 7.3 | **7.25** |
+| cam03 ground (420,560)-(900,720) | 21.2 | **21.23** |
+| cam04 Eevee coffer / own sky | 0.035 | **0.034** |
+| cam04 Eevee soffit E / own sky | 0.14 | **0.142** |
+| cam04 Cycles soffit W / E, coffer | 0.29 / 0.52, 0.26 | **0.289 / 0.522, 0.261** |
+
+so the round is arguing with QA's arithmetic, not around it.
+
+### 20.1 QA-04-2 — where the shade actually went, and why the obvious lever is the wrong one
+
+**First: cam03 is not an Eevee defect.** The same frame in Cycles at the same resolution reads the near shaft at
+**4.62**, i.e. *darker* than Eevee's 7.23. Whatever is wrong is in the rig, not in Eevee's ambient term.
+
+**Second: the colonnade shade is sky-dominated, and the shaded attic is not.** Rendering the sun lamp and the sky
+separately on cam03 (Cycles 1280x720 / 64 spp, `--case "sm=0"` / `"wm=0"`):
+
+| cam03 | near shaft | ground |
+|---|---|---|
+| sky alone (sun lamp off) | 3.26 | 14.29 |
+| sun alone (world off) | 0.50 | 4.93 |
+| both (shipped) | 4.62 | 23.64 |
+
+Round 10 measured the *hero's shaded attic* and found >97 % of its light was warm interreflection; that finding does
+not transfer to the colonnade, where ~70 % of the shade is sky. So the sky IS the lever on cam03 — and it still
+cannot be used, because of what it costs on the hero.
+
+**`SKY_DIFFUSE_BOOST` — the new socket the brief asked for first, built, measured, and shipped at 1.00.**
+`light_calibrate.make_sky_world` now takes a fourth per-ray gain: `gain = diffuse_boost + is_camera*(cb - db) +
+is_glossy*(gb - db)`, so the sky can be raised for the light that lands on shaded stone while the visible sky and the
+lagoon's reflection are held exactly still by their own sockets. Cycles, the lead's merged master, cam03 at
+1280x720 and cam01 at 1920x1080 / 64 spp:
+
+| diffuse boost | cam03 shaft | cam03 ground | attic sat | attic R-B | attic lum | shade hue | columns |
+|---|---|---|---|---|---|---|---|
+| **1.0 (shipped)** | 4.6 | 23.6 | **0.554** | **122** | 180.4 | 43.1 | 1.27x |
+| 2.0 | 9.1 | 34.6 | 0.502 | 112.3 | 187.7 | **44.8** | 1.47x |
+| 4.0 | 17.9 | 53.8 | 0.423 | 96.9 | 198.8 | **47.4** | 1.58x |
+
+Two independent reasons to reject it, and the second one is the interesting one. (1) The brief's budget was 0.02
+saturation and 5 R-B; a boost of 2 costs **0.052 and 9.7** and pushes the columns from 1.27x to 1.47x of ref, i.e. it
+re-opens QA-04-5 as well. (2) It drives the shaded attic's hue the **wrong way** — 43.1 -> 44.8 -> 47.4 against a
+target of 29.5 — because most of the extra sky lands on the sunlit plaza and comes back as warm bounce. More sky
+makes the shade warmer. That is the same wall round 10 hit from the saturation side, measured from the level side.

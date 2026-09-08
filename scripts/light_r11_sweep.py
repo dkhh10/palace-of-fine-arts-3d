@@ -67,7 +67,10 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 bm=lb.SUN_BLUE_MULT, de=0.0,
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
-                fill=0.0)    # SHADE_FILL total irradiance in W/m2 across the three lamps (0 = off)
+                fill=0.0,    # SHADE_FILL total irradiance in W/m2 across the three lamps (0 = off)
+                f=1.0,       # LIGHT_rotunda_bounce (FILL) energy scale        -- QA-04-7
+                v=1.0)       # LIGHT_rotunda_vault_bounce (VAULT_FILL) scale, applied to the PHYSICAL energy_W so
+                             # light_presets.apply_vault_for_engine reproduces it in either engine
 
 
 def parse(case):
@@ -85,7 +88,7 @@ def parse(case):
 def case_tag(c):
     if c["tag"]:
         return c["tag"]
-    bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "bm", "de")
+    bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "bm", "de", "fill", "f", "v")
             if abs(c[k] - DEFAULTS[k]) > 1e-9]
     if c["look"]:
         bits.append(c["look"].replace(" ", "").replace("_", ""))
@@ -112,6 +115,11 @@ scene = bpy.context.scene
 common.setup_scene(scene)
 sun = bpy.data.objects.get("LIGHT_sun")
 base_look = scene.view_settings.look
+# the PHYSICAL interior-fill energies, captured once so `f` / `v` are always relative to the shipped rig
+_DISK = bpy.data.objects.get(lb.FILL["name"])
+_VAULT = sorted([o for o in bpy.data.objects if o.name.startswith(lb.VAULT_FILL["name"])], key=lambda o: o.name)
+_E_DISK0 = float(_DISK.get("energy_W", _DISK.data.energy)) if _DISK else 0.0
+_E_VAULT0 = float(_VAULT[0].get("energy_W", _VAULT[0].data.energy)) if _VAULT else 0.0
 print(f"[r11] master {MASTER}: exposure {scene.view_settings.exposure:.4f}, look {base_look!r}, "
       f"engine {scene.render.engine}, sun {sun.data.energy:.2f} W/m2", flush=True)
 
@@ -138,8 +146,16 @@ def apply_case(c):
     coll = bpy.data.collections.get(lb.COLLECTION) or scene.collection
     lb.SUN_REFERENCE_W = energy
     lb.build_shade_fill(coll, energy=c["fill"])
+    # interior fills (QA-04-7). Scale energy_W, not energy: apply_vault_for_engine rewrites energy from energy_W on
+    # every preset call, so a scale written to energy alone would be silently undone before the render.
+    if _DISK:
+        _DISK["energy_W"] = _E_DISK0 * c["f"]
+        _DISK.data.energy = _E_DISK0 * c["f"]
+    for o in _VAULT:
+        o["energy_W"] = _E_VAULT0 * c["v"]
     print(f"[r11] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} cb {c['cb']:g} gb {c['gb']:g} "
-          f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} "
+          f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} f {c['f']:g} ({_E_DISK0*c['f']:.0f} W) "
+          f"v {c['v']:g} ({_E_VAULT0*c['v']:.0f} W) "
           f"exposure {scene.view_settings.exposure:.3f} EV, sun {sun.data.energy:.2f} W/m2", flush=True)
 
 
@@ -154,7 +170,7 @@ def rebake(rig):
     The bake is a function of the rig that is live when it runs, and it is what lights the Eevee vault."""
     lp.apply_vault_for_engine(rig)
     t = time.time()
-    probes.bake(scene)
+    probes.bake(scene, physical_vault=(rig == "CYCLES"))
     print(f"[r11] rebake with the {rig} vault rig: {time.time()-t:.0f}s", flush=True)
 
 
