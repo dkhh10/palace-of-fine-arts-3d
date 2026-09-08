@@ -83,17 +83,25 @@ def apply_vault_for_engine(engine):
     this twice, or in either order, is idempotent."""
     n = 0
     for o in _vault_lights():
-        base = float(o.get("energy_W", o.data.energy))
+        base = o.get("energy_W")
+        if base is None:                     # review fix: seed once, so a repeat Eevee call can never compound the x8
+            base = o.data.energy
+            o["energy_W"] = base
+        base = float(base)
         try:
-            if engine == "EEVEE":
-                o.data.energy = base * EEVEE_VAULT["energy_scale"]
+            if "EEVEE" in engine:            # accepts "EEVEE" and Blender's "BLENDER_EEVEE"
                 o.data.use_custom_distance = True
                 o.data.cutoff_distance = EEVEE_VAULT["cutoff_distance"]
+                o.data.energy = base * EEVEE_VAULT["energy_scale"]
             else:
-                o.data.energy = base
                 o.data.use_custom_distance = False
-        except AttributeError as e:          # linked (read-only) light data: master appends LIGHT, but be safe
-            print(f"[light_presets] cannot retune {o.name} ({e}); leaving it as built")
+                o.data.energy = base
+        except Exception as e:               # linked (read-only) light data: master appends LIGHT, but be safe
+            print(f"[light_presets] cannot retune {o.name} ({e}); leaving it at the physical energy")
+            try:
+                o.data.energy = base
+            except Exception:
+                pass
             continue
         n += 1
     if n:
