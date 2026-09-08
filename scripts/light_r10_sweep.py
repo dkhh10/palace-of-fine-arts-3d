@@ -48,6 +48,7 @@ SAMPLES = int(arg("--samples", ["64"], n=1)[0])
 MASTER = arg("--master", [str(common.ROOT / "master.blend")], n=1)[0]
 OUT = Path(arg("--out", [str(common.RENDERS / "previews" / "lighting")], n=1)[0])
 PREFIX = arg("--prefix", ["r10"], n=1)[0]
+TIME_LIMIT = float(arg("--timelimit", ["0"], n=1)[0])   # seconds per frame, 0 = none (item 7, the 4K timing test)
 OUT.mkdir(parents=True, exist_ok=True)
 
 DEFAULTS = dict(f=1.0, v=1.0, sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BOOST,
@@ -190,7 +191,7 @@ for c in CASES:
         _disk0.data.energy = _e_disk0 * c["f"]
     for o in _vault0:
         o.data.energy = _e_vault0 * c["v"]
-    lp.apply_final_cycles(scene, samples=SAMPLES)
+    lp.apply_final_cycles(scene, samples=SAMPLES, time_limit=TIME_LIMIT)
     shoot(CAM01, OUT / f"{PREFIX}hero_{case_tag(c)}.png")
     if _disk0:
         _disk0.data.energy = _e_disk0

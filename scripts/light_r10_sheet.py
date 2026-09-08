@@ -26,7 +26,7 @@ REF169 = MAIN / "reference" / "photos" / "raw" / "ref_169_main_Palace_of_Fine_Ar
 BEFORE = P / "r10_base_01_hero_cycles.png"
 AFTER = P / "r10fhero_SHIP.png"
 E_BEFORE = P / "r10e04_fgi1_d60.png"
-E_AFTER = P / "r10qv_eevee_after.png"
+E_AFTER = P / "r10qv_f1_v1_sp45_E1_8_45_13_0_eevee.png"
 C_TARGET = P / "r10_base_04_ceiling_cycles.png"
 
 CELL_W = 620

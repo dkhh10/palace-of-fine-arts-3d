@@ -754,3 +754,199 @@ the coffer target (0.535 / 0.570 at the nearest energy tried).
   colour, not the veil).
 - Water: `water_centre` saturation 0.228 -> 0.314 and hue 27.9 -> 30.6 (ref 30.6) came free with the look; luminance
   96.6 -> 90.2 against ref 106.0, i.e. still ~0.2 EV dark. Not chased.
+
+## 19. Round 10 — the whole round is one number: the exposure was 0.5 EV hot
+
+Brief: `docs/briefs/lighting_r10.md`, items 1-7. Everything below is measured with **QA's own hero boxes**
+(`docs/qa_round_03.md` "Measurements", reproduced in `scripts/light_r10_measure.py`), not with lighting's old
+`REGIONS["hero"]` — QA showed in round 03 that lighting's `attic_sunlit_b` box sits on the drum in the render frame
+and on the attic in the photo frame, so the two agents were measuring different stone. The reference row is ref 169
+warped into the render frame by QA's align transform (`round03_cam01_aligned_vs_ref169.png` panel 1), which
+reproduces QA's published numbers to 0.5 units.
+
+### Baseline on the lead's merged master (arch p4r2, mat r4, env r4), cam01 Cycles 1920x1080 / 64 spp
+
+| | before | ref 169 | target |
+|---|---|---|---|
+| sunlit attic sRGB | 232,194,130 | 231,187,95 | |
+| attic saturation | 0.441 | 0.588 | >= 0.53 |
+| attic R-B | 102.3 | 136.1 | >= 120 |
+| attic luminance | **197.5** | 189.6 | 178.2-201.0 |
+| shaded attic hue / lum | 42.5 / 130.6 | 29.5 / 115.0 | hue 29.5 +- 6 |
+| columns (QA mask) | 152.0 | 95.8 | 1.0x |
+| near water sat / hue | 0.487 / 204.8 | 0.270 / 192.1 | 0.22-0.32, 185-200 |
+| sky_top / sky_left ratio | 168.5 / 0.922 | 165.7 / 1.170 | 149-182, 1.05-1.29 |
+
+**Read the attic row: R matches the photo to one unit and G to seven; the whole chroma deficit is 35 units of excess
+BLUE.** That is what round 08b and round 09 were chasing with sky strength, sun colour and the AgX look.
+
+### The finding: at 197.5 the sunlit stone is on the AgX shoulder, where chroma cannot exist
+
+Sixteen rigs were swept at 960x540 / 48 spp (r09 established the resolution offset is ~+1 R-B, and the r10 control
+reproduced it: 199.3 at 960x540 against 197.5 at 1920x1080). Every colour knob is nearly dead:
+
+| lever | attic R-B | note |
+|---|---|---|
+| control (bias 1.75, sky 0.80, sun blue 0.75, High Contrast) | 101.3 | |
+| sun blue 0.75 -> 0.35 (a 32 % cut of the blue *irradiance*) | 105.2 | display blue moved 3 units |
+| sky strength 0.80 -> 1.60 (visible sky held) | 103.3 | and the shade got 2 deg **warmer** |
+| aerosol 1.6 -> 8 | 98.1 | worse: the sky brightens faster than the sun |
+| aerosol 8 + ozone 0.6 | 103.2 | |
+| diffuse sky saturation x2 / x3 | 126.0 / 126.7 | at -0.5 EV; see the shade section |
+| **exposure bias 1.75 -> 1.25 (-0.5 EV)** | **123.0** | saturation 0.433 -> 0.554 |
+| exposure -1.0 EV | 150.2 | luminance 161.6, out of the window |
+| "AgX - Punchy" | 110.5 | luminance 159.1, still out of the window: rejected a third time |
+
+Materials measured that a 44 % albedo-blue cut moved display blue 3 %, and concluded "AgX's inset makes ~77 % of
+display blue leakage from R and G". Round 10 measures the same wall from the light side — a 32 % cut of blue
+irradiance moves display blue 3 units — and finds the way round it: **the leakage is a property of where the pixel
+sits on the AgX curve, so the lever is not the blue, it is the luminance.** Bringing the sunlit stone down half a
+stop takes it off the shoulder and the chroma comes back on its own.
+
+QA-03 closed QA-02-4 and told lighting not to move the exposure again. That reading was taken on a master still
+rendering at "AgX - Base Contrast" (the round-09 look bug) and before materials r4; on the rebuilt master the same
+box reads 197.5 against 189.6, i.e. 1.04x the photo and 19 units above QA's own floor. **The +0.9 EV bought in round
+08 was paying for albedo that materials has since supplied, and giving it back is the correct move, not a new art
+bias.** The visible sky and the lagoon's reflection are held still through the camera / glossy boosts, so this is a
+stone exposure change, not a global one.
+
+### Shipped (`scripts/light_build.py`, `assets/lighting.blend` rebuilt, exposure -4.083 + 1.25 = **-2.833 EV**)
+
+| constant | round 09 | round 10 | why |
+|---|---|---|---|
+| `EXPOSURE_BIAS` | 1.75 | **1.25** | the half stop above |
+| `SKY_CAMERA_BOOST` | 1.50 | **2.10** | 1.50 x 2^0.5: holds the visible sky at sky_top 168.8 (it was 168.5) |
+| `SKY_GLOSSY_BOOST` | 3.75 | **5.25** | same hold for the lagoon's reflection of the sky |
+| `SKY_GLOSSY_SATURATION` | (shared 1.20) | **0.90** | new socket, QA-03-7; see below |
+| `SKY_DIFFUSE_SATURATION` | — | 1.00 | new socket, left physical; swept and rejected |
+| `SKY_STRENGTH`, `SKY`, `SUN_BLUE_MULT`, `LOOK` | | unchanged | 0.80 / aerosol 1.6, ozone 2.0 / 0.75 / High Contrast |
+
+`light_calibrate.make_sky_world` now takes three independent saturations chained on the sky colour — DIFFUSE (the
+light that lands on shaded stone), CAMERA (the visible sky) and GLOSSY (the sky the lagoon mirrors) — each selected
+by its own Light Path socket. Camera and glossy shared one knob before.
+
+### Verified at delivery resolution (cam01, Cycles 1920x1080 / 64 spp, `r10fhero_SHIP.png`)
+
+| | before | **after** | ref 169 | verdict |
+|---|---|---|---|---|
+| sunlit attic sRGB | 232,194,130 | **220,178,99** | 231,187,95 | blue 130 -> 99 against 95 |
+| attic saturation | 0.441 | **0.549** | 0.588 | PASS (>= 0.53) |
+| attic R-B | 102.3 | **120.8** | 136.1 | PASS (>= 120) |
+| attic luminance | 197.5 | **180.9** | 189.6 | PASS (0.954x, window 178.2-201.0) |
+| attic hue | 37.7 | 38.8 | 40.3 | |
+| shaded attic lum | 130.6 | **113.0** | 115.0 | 0.98x |
+| shaded attic hue | 42.5 | 42.9 | 29.5 | **FAIL, and not lighting's — see below** |
+| columns (QA mask) | 152.0 | **123.9** | 95.8 | 1.59x -> **1.29x**, 51 % of the excess removed |
+| near water sat | 0.487 | **0.270** | 0.270 | PASS (window 0.22-0.32), exact |
+| near water hue | 204.8 | 208.7 | 192.1 | **FAIL, and not lighting's — see below** |
+| sky_top | 168.5 | **168.8** | 165.7 | PASS (window 149-182) |
+| sky_left/sky_top | 0.922 | 0.922 | 1.170 | **FAIL — see item 4** |
+| water reflection lum | 153.4 | 145.9 | 168.9 | still ~0.2 EV dark |
+
+**Items 1 and 2 of the brief are met on every number lighting owns; item 3's saturation is met exactly.**
+
+### QA-03-7 / item 3: the near-water saturation is the GLOSSY sky socket, and the hue is not the sky
+
+At grazing angles the lagoon is a Fresnel mirror of the horizon sky, so the near-water chroma is the sky's chroma on
+the glossy path — and materials had already measured that murk, tint and transmission do nothing there. Splitting the
+saturation socket makes it a one-knob fix. cam01, near-water box, ref 169 = 0.270:
+
+| `SKY_GLOSSY_SATURATION` | 1.20 (shared) | 0.90 | 0.85 | 0.70 | 0.45 |
+|---|---|---|---|---|---|
+| near-water saturation | 0.525 | **0.270** | 0.243 | 0.173 | 0.086 |
+
+The remaining 17 deg of **hue** (208.7 against ref 192.1) is **environment's, and the measurement proves it**: the
+visible sky's own hue in the render is **208.7 against ref 169's 208.2**, i.e. exact. In the photograph the water is
+16 deg greener than the sky it mirrors; in the render it is the same colour as the sky. That difference is the
+lagoon's own upwelling green, i.e. the water shader's diffuse/volume term, not the sky.
+
+### Item 1's other half: the shaded stone's hue is materials', with a number
+
+The shaded attic needs 36 more units of blue (39 against ref 169's 81) at an R and G that already match. Two lighting
+attacks, both measured, both null:
+
+* `SKY_DIFFUSE_SATURATION` 1.0 -> 2.0 -> 3.0 (the sky made bluer for diffuse rays only, at constant peak):
+  shaded attic 142,112,36 -> 136,107,35 -> 135,107,34. **One unit of blue out of the 36 needed.**
+* `SKY_STRENGTH` 0.80 -> 1.60 with the visible sky held: shade hue 42.9 -> 45.0, i.e. **warmer**, because more sky
+  also lights the sunlit plaza and comes back as warm bounce.
+
+So **more than 97 % of the light on the shaded stone is warm interreflection off the sunlit stone and ground, not
+sky, and no sky colour can reach it.** The photo drops 11 deg of hue from sun to shade (40.3 -> 29.5); we rise 4 deg
+(38.8 -> 42.9). Since the *sunlit* hue now matches the photo to 1.5 deg, the shade's 13 deg is the stone's blue
+reflectance in shadow — a materials/albedo job (it is the same albedo-chroma finding as QA-02-14). **Handed to
+materials with these numbers.**
+
+### Item 4: the horizon haze band — the sky model tops out at 0.965 and part of the gap is the boxes
+
+sky_left / sky_top, ref 169 = 1.170, render = 0.922. Every atmosphere in the sweep, at matched sky_top:
+
+| aerosol | ozone | air | sky_left/sky_top | cost |
+|---|---|---|---|---|
+| 1.6 (shipped) | 2.0 | 1.0 | 0.922 | — |
+| 4 | 2.0 | 1.0 | 0.943 | attic R-B -0.9, shade +3.8, columns +9.5 |
+| 8 | 2.0 | 1.0 | 0.965 | attic R-B -3.2, shade +13, lamp 67.3 -> 33.5 W/m2 |
+| 8 | 2.0 | 1.5 | 0.965 | shade +22 |
+| 10 | 0.6 | 1.5 | 0.964 | attic hue -6, shade +21 |
+
+**The ratio saturates at ~0.965 and cannot reach 1.05.** Two reasons, and the second one matters for how QA reads it:
+(1) raising aerosol brightens the *whole* sky, so the gradient hardly changes once the camera boost is pulled back to
+hold sky_top; (2) **the two boxes are not at the same elevation in the two framings.** The render's horizon sits at
+y ~0.63 of frame and the photo's at ~0.54, so `sky_left` (y 0.085-0.145) sits 0.82 of the way from horizon to frame
+top in the render and 0.67 in the photo — the photo's box is simply lower in the sky, where any clear sky is
+brighter. Some part of the 1.170 is framing, not haze. **Not shipped: the 0.02-0.04 of ratio that aerosol 4-8 buys
+costs the two numbers that were the round's blockers.** If the lead wants the band as an art bias, the cheapest
+honest route is a compositor sky gradient, which was not attempted.
+
+### Item 6: Eevee vs Cycles on the rotunda ceiling — it was never the 45 deg spread
+
+Round 09 concluded Eevee was ignoring the emitters' spread. It is not, and two measurements kill that story:
+
+* switching the eight vault emitters **off** and clamping them with a 13 m cutoff give the *same* Eevee coffer ratio,
+  so they are not what lights it;
+* **the identical file renders the Eevee coffer at 0.246 (960x540) and 1.075 (1280x720).** No real light does that.
+
+It is Eevee Next's screen-traced ambient term filling the closed vault volume in proportion to how much of the vault
+is on screen, and cam04 looks straight up into it. Turning Fast GI off, or dropping `fast_gi_distance` 60 -> 10 m,
+moves the coffer by less than 0.05 (1.075 -> 1.033 / 1.076), so it is the screen-space trace itself. Cycles has no
+such term, and no single rig satisfies both engines.
+
+The engine-conditional fix is `cutoff_distance` (Blender's "Custom Distance"), which **Eevee honours and Cycles
+ignores**: at 13 m each vault emitter still reaches its own soffit (4.5-11 m) but not the coffered dome 20.7 m away.
+cam04, 1280x720, Eevee (Cycles target: soffit 0.536, coffer 0.364; QA's window is +-0.15):
+
+| Eevee rig | soffit/own-sky | coffer/own-sky |
+|---|---|---|
+| as shipped in round 09 | 0.375 (-0.161) | **1.075 (+0.711)** |
+| cutoff 13 m | 0.145 | 0.246 |
+| cutoff 13 m, energy x2 | 0.201 | 0.247 |
+| cutoff 16 m, energy x5 | 0.348 | 0.255 |
+| **cutoff 13 m, energy x8** | **0.408 (-0.128)** | **0.255 (-0.109)** |
+
+**Shipped in `light_presets.apply_vault_for_engine`, called from `apply_final_cycles` ("CYCLES", restores the
+physical energy from the light object's new `energy_W` custom property) and from both Eevee presets ("EEVEE", x8 and
+a 13 m cutoff). Both ratios are now inside 0.15 of Cycles; the defect is closed in the engine QA previews with.**
+Cost on record: Eevee's soffit W/E balance is 0.562 / 0.253 where Cycles reads 0.395 / 0.678, i.e. the engines now
+lean opposite ways across the vault; and `scripts/lead_build.sh` bakes the Eevee irradiance volumes, so the bake
+should be taken after whichever preset the lead wants the baked term to match (the direct term is retuned at render
+time either way).
+
+### Item 5 (cam06 far-field contrast): measured, not touched
+
+The merged master reads dome / far-shore **1.22:1** (`env_cam06_audit.py`, Eevee, 1920x1080 downscaled), against
+environment's reported 1.45:1 and QA's 1.5:1 target. It was left alone deliberately: the compositor haze colour is
+(5.32, 3.74, 1.96) scene units against a far shore at ~127 display, i.e. **the haze is brighter than the thing it
+veils, so every increase in mist density lowers this contrast rather than raising it** — which is also what round 08
+measured when it turned the haze off entirely and the contrast moved 1.08 -> 1.08. The remaining lever is the haze
+COLOUR (a darker, cooler veil), which trades against the warm aerial perspective QA-02-8 asked for. Lighting has no
+knob here that does not undo an accepted defect; this is environment's far-field albedo/value range.
+
+### Open, and for whom
+
+* **shaded stone hue 42.9 vs 29.5 (13 deg) — materials.** Sky colour cannot reach it (1 unit of blue out of 36).
+* **near-water hue 208.7 vs 192.1 (17 deg) — environment.** The render's sky hue matches the photo's exactly
+  (208.7 vs 208.2); the photo's water is 16 deg greener than its own sky.
+* **sky_left/sky_top 0.922 vs 1.170 — open, partly a box-placement artifact.** The physical sky tops out at 0.965.
+* **columns 1.29x ref** (was 1.59x). The rest is albedo and self-shadowing contrast, not level: QA measured the
+  render's entablature luminance sd at 28 against the photo's 64.
+* **water reflection 145.9 vs 168.9** (~0.2 EV dark) — carried over from round 09, not chased.
+* cam06 far-field contrast 1.22:1 — environment (above).
