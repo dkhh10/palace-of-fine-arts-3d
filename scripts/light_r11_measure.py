@@ -110,6 +110,57 @@ def report_cam04(path, m, label=""):
     print(f"  >> coffer/sky  {m['r_coffer']:.3f}   (ref 083 0.437; QA-04-7 Cycles window 0.35-0.55)")
 
 
+# ------------------------------------------------------------------------------------- QA-04-6, the wing bands
+# QA measured the south wing at 0.63 of ref 169 and the north at 0.82 raw / 0.66 aligned, and asked lighting to check
+# the sun elevation / azimuth against the shadow edges BEFORE touching any fill. A shadow-geometry error and a level
+# error look identical in a mean: the mean is the same number whether the render's shadow boundary sits in the wrong
+# PLACE or the lit stone is simply too dark. So compare the SHAPES: take the horizontal luminance profile of the band
+# in the render and in ref 169 warped into the render frame, normalise both to zero mean / unit variance, and find the
+# pixel shift that maximises their correlation. A wrong sun azimuth moves every shadow boundary along the wing and
+# shows up as a large best shift and/or a poor correlation; a level error leaves the profile shape and position alone.
+WING_BANDS = {
+    "north_wing": (60, 480, 560, 600),
+    "south_wing": (1360, 480, 1860, 600),
+}
+WING_REF = {"north_wing": 137.2, "south_wing": 146.5}     # ref 169 through QA's aligned panel
+
+
+def _profile(a, box):
+    x0, y0, x1, y1 = box
+    return a[y0:y1, x0:x1].reshape(y1 - y0, x1 - x0, 3).mean(axis=2).mean(axis=0)
+
+
+def measure_wings(render_path, max_shift=60):
+    ren = np.asarray(Image.open(render_path).convert("RGB").resize((1920, 1080), Image.LANCZOS), dtype=np.float64)
+    ref = np.asarray(Image.open(m10.ALIGNED).convert("RGB"), dtype=np.float64)[:, 1 * 1920:2 * 1920]
+    out = {}
+    for name, box in WING_BANDS.items():
+        pr, pf = _profile(ren, box), _profile(ref, box)
+        zr = (pr - pr.mean()) / max(1e-9, pr.std())
+        zf = (pf - pf.mean()) / max(1e-9, pf.std())
+        best, bestc = 0, -2.0
+        for s in range(-max_shift, max_shift + 1):
+            a = zr[max(0, s):len(zr) + min(0, s)]
+            b = zf[max(0, -s):len(zf) + min(0, -s)]
+            c = float((a * b).mean())
+            if c > bestc:
+                bestc, best = c, s
+        out[name] = dict(render_lum=float(pr.mean()), ref_lum=float(pf.mean()),
+                         ratio=float(pr.mean() / max(1e-9, pf.mean())),
+                         best_shift_px=best, corr_at_best=bestc, corr_at_zero=float((zr * zf).mean()),
+                         render_std=float(pr.std()), ref_std=float(pf.std()))
+    return out
+
+
+def report_wings(path, m):
+    print(f"\n=== QA-04-6 wing bands {Path(path).name} (ref = ref 169 through QA's aligned panel) ===")
+    for k, v in m.items():
+        print(f"  {k:11s} render {v['render_lum']:6.1f} (sd {v['render_std']:5.1f})  ref {v['ref_lum']:6.1f} "
+              f"(sd {v['ref_std']:5.1f})  ratio {v['ratio']:.2f}  |  profile corr {v['corr_at_zero']:+.3f} at 0 px, "
+              f"best {v['corr_at_best']:+.3f} at {v['best_shift_px']:+d} px")
+    print("  >> a wrong sun azimuth moves the shadow boundaries: large best shift and/or weak correlation.")
+
+
 def gap(eevee, cycles):
     print(f"\n  >> QA-04-1 Eevee-Cycles gap: soffit W {eevee['r_soffit_w']-cycles['r_soffit_w']:+.3f} "
           f"E {eevee['r_soffit_e']-cycles['r_soffit_e']:+.3f} coffer {eevee['r_coffer']-cycles['r_coffer']:+.3f} "
@@ -121,6 +172,7 @@ if __name__ == "__main__":
     ap.add_argument("--hero", nargs="*", default=[])
     ap.add_argument("--cam03", nargs="*", default=[])
     ap.add_argument("--cam04", nargs="*", default=[])
+    ap.add_argument("--wings", nargs="*", default=[])
     ap.add_argument("--gap", nargs=2, default=None, metavar=("EEVEE", "CYCLES"))
     ap.add_argument("--ref", action="store_true")
     ap.add_argument("--json", default=None)
@@ -144,6 +196,10 @@ if __name__ == "__main__":
         r = measure_cam04(p)
         report_cam04(p, r)
         allm["cam04:" + Path(p).name] = r
+    for p in a.wings:
+        r = measure_wings(p)
+        report_wings(p, r)
+        allm["wings:" + Path(p).name] = r
     if a.gap:
         e, c = measure_cam04(a.gap[0]), measure_cam04(a.gap[1])
         report_cam04(a.gap[0], e, "EEVEE " + Path(a.gap[0]).name)
