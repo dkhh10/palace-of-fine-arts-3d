@@ -1206,3 +1206,17 @@ Eevee reads the opposite (0.23 / 0.47) at every cutoff that keeps the coffer hon
 brings Eevee's E up to 0.375-0.392 but takes the coffer to 0.611-1.145, i.e. it buys the split by re-opening the
 double-count. The soffit **mean** and the coffer field — the two numbers ref 083 is quoted on and the two QA
 tabulates a window for — are what round 11 lands.
+
+**Shipped Eevee override: `EEVEE_VAULT` x8 / 13 m -> `x6 / 21 m`.** Against the round-11 Cycles frame (soffit W
+0.316 / E 0.532 / mean 0.424, coffer 0.387), on QA's 0.15 box:
+
+| | round 04 (what QA measured) | **round 11** | Cycles | gap before -> after |
+|---|---|---|---|---|
+| coffer field / own sky | 0.034 | **0.325** | 0.387 | 0.227 -> **0.062** |
+| soffit E / own sky | 0.142 | **0.419** | 0.532 | 0.380 -> **0.113** |
+| soffit mean | 0.270 | **0.483** | 0.424 | 0.135 -> **0.059** |
+| soffit W / own sky | 0.399 | 0.546 | 0.316 | 0.110 -> **0.230 (COST)** |
+
+Both numbers QA flagged land inside the box, and so does the soffit mean. The soffit W is the price and it is
+stated as such: W and E move together in Eevee at every cutoff tried (x3/25 m gives 0.382 / 0.320, x6/21 m gives
+0.546 / 0.419) while Cycles wants them 0.22 apart in the other direction, so no single override lands all three.
