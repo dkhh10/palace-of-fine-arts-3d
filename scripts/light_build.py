@@ -263,6 +263,15 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
 # reflection and off the column highlights (QA-03-7 and QA-04-5 are both glossy-side defects).
 SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irradiance, so SHADE_FILL can
                                    # be quoted as a fraction of the real sun in the log and the notes
+# SHIPPED AT energy = 0.0, i.e. BUILT, MEASURED AND OFF. The full cost tables are in docs/lighting_notes.md 20.4:
+# at elevation 16 deg, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 (out of QA's 0.22-0.32 window, the one
+# number round 10 landed exactly) and the columns 1.29x -> 1.37x of ref (QA-04-5 is already a major); at elevation
+# 4 deg, 8 W/m2 still costs 0.194 and 1.35x, because the near-water box is a GRAZING reflection of the horizon and a
+# near-horizon fill sits exactly in the band it mirrors. In both configurations the shaded attic ends up WARMER
+# (43.1 -> 44.4 / 44.3) rather than cooler, and it did not need luminance in the first place (112.2 against ref
+# 169's 115.0, i.e. 0.98x). So the rig buys a number that was already passing, at the price of two that were not.
+# It stays in the file, wired and documented, so the lead can switch it on with one number if the art direction
+# changes; `energy` is that number and 6 W/m2 is the largest value with an acceptable sunlit cost.
 SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, angle_deg=55.0, specular=0.10,
                   color=(0.42, 0.62, 1.00),   # clear-sky blue, normalised to max 1; the cool half of the hemisphere
                   lamps=[dict(az=300.0, el=16.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
