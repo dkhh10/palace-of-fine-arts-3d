@@ -20,8 +20,15 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-MAIN_ROOT = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
-ALIGNED = MAIN_ROOT / "renders" / "qa_comparisons" / "round03_cam01_aligned_vs_ref169.png"
+# Worktree-safe (round-10 review nit): ROOT is this checkout exactly as common.ROOT computes it, and the reference
+# tree honours $PFA_REFERENCE_DIR the way common.REFERENCE_DIR does. renders/qa_comparisons is git-tracked, so the
+# aligned panel is present in every worktree that has merged main.
+import os
+ROOT = Path(__file__).resolve().parents[1]
+# reference PHOTOS are gitignored and live in the MAIN checkout only (CLAUDE.md); tracked renders live here.
+MAIN_ROOT = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
+REFERENCE_DIR = Path(os.environ.get("PFA_REFERENCE_DIR", str(MAIN_ROOT / "reference")))
+ALIGNED = ROOT / "renders" / "qa_comparisons" / "round03_cam01_aligned_vs_ref169.png"
 
 # (x0, y0, x1, y1) in the 1920x1080 hero frame
 BOXES = {

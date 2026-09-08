@@ -973,3 +973,358 @@ is 12x that sample count before adaptive sampling claws any of it back. **The br
 is not demonstrated, and `FINAL_SAMPLES = 768` should be treated as unvalidated at 4K until someone lands this
 test.** Recommendation to the lead: re-run it with the compositor off to isolate the cost, and if the compositor is
 the tail, either bake the haze into the world/volume or run the compositor as a separate pass on the saved EXR.
+
+## 20. Round 11 — the shade (QA-04-2), the Eevee vault (QA-04-1) and the coffer level (QA-04-7)
+
+Brief: the lead's round-11 dispatch. Every number below is measured with `scripts/light_r11_measure.py`, which
+reproduces QA's round-04 numbers on QA's own frames to the second decimal before anything is changed:
+
+| | QA round 04 | light_r11_measure on the same file |
+|---|---|---|
+| cam03 near shaft (0,150)-(420,720) | 7.3 | **7.25** |
+| cam03 ground (420,560)-(900,720) | 21.2 | **21.23** |
+| cam04 Eevee coffer / own sky | 0.035 | **0.034** |
+| cam04 Eevee soffit E / own sky | 0.14 | **0.142** |
+| cam04 Cycles soffit W / E, coffer | 0.29 / 0.52, 0.26 | **0.289 / 0.522, 0.261** |
+
+so the round is arguing with QA's arithmetic, not around it.
+
+### 20.1 QA-04-2 — where the shade actually went, and why the obvious lever is the wrong one
+
+**First: cam03 is not an Eevee defect.** The same frame in Cycles at the same resolution reads the near shaft at
+**4.62**, i.e. *darker* than Eevee's 7.23. Whatever is wrong is in the rig, not in Eevee's ambient term.
+
+**Second: the colonnade shade is sky-dominated, and the shaded attic is not.** Rendering the sun lamp and the sky
+separately on cam03 (Cycles 1280x720 / 64 spp, `--case "sm=0"` / `"wm=0"`):
+
+| cam03 | near shaft | ground |
+|---|---|---|
+| sky alone (sun lamp off) | 3.26 | 14.29 |
+| sun alone (world off) | 0.50 | 4.93 |
+| both (shipped) | 4.62 | 23.64 |
+
+Round 10 measured the *hero's shaded attic* and found >97 % of its light was warm interreflection; that finding does
+not transfer to the colonnade, where ~70 % of the shade is sky. So the sky IS the lever on cam03 — and it still
+cannot be used, because of what it costs on the hero.
+
+**`SKY_DIFFUSE_BOOST` — the new socket the brief asked for first, built, measured, and shipped at 1.00.**
+`light_calibrate.make_sky_world` now takes a fourth per-ray gain: `gain = diffuse_boost + is_camera*(cb - db) +
+is_glossy*(gb - db)`, so the sky can be raised for the light that lands on shaded stone while the visible sky and the
+lagoon's reflection are held exactly still by their own sockets. Cycles, the lead's merged master, cam03 at
+1280x720 and cam01 at 1920x1080 / 64 spp:
+
+| diffuse boost | cam03 shaft | cam03 ground | attic sat | attic R-B | attic lum | shade hue | columns |
+|---|---|---|---|---|---|---|---|
+| **1.0 (shipped)** | 4.6 | 23.6 | **0.554** | **122** | 180.4 | 43.1 | 1.27x |
+| 2.0 | 9.1 | 34.6 | 0.502 | 112.3 | 187.7 | **44.8** | 1.47x |
+| 4.0 | 17.9 | 53.8 | 0.423 | 96.9 | 198.8 | **47.4** | 1.58x |
+
+Two independent reasons to reject it, and the second one is the interesting one. (1) The brief's budget was 0.02
+saturation and 5 R-B; a boost of 2 costs **0.052 and 9.7** and pushes the columns from 1.27x to 1.47x of ref, i.e. it
+re-opens QA-04-5 as well. (2) It drives the shaded attic's hue the **wrong way** — 43.1 -> 44.8 -> 47.4 against a
+target of 29.5 — because most of the extra sky lands on the sunlit plaza and comes back as warm bounce. More sky
+makes the shade warmer. That is the same wall round 10 hit from the saturation side, measured from the level side.
+
+### 20.2 QA-04-6 — the sun angle is right; the wings are a LEVEL error, not a shadow-geometry error
+
+QA asked lighting to check the sun elevation / azimuth against the shadow edges in ref 169 **before** touching any
+fill, and it is a fair thing to ask: a mean cannot tell a shadow that is in the wrong place from stone that is simply
+too dark. `light_r11_measure.py --wings` separates them. Take the horizontal luminance profile of each wing band in
+the render and in ref 169 warped into the render frame (QA's own aligned panel), normalise both to zero mean and unit
+variance, and find the pixel shift that maximises their correlation. A wrong azimuth slides every shadow boundary
+along the wing, so it shows up as a large shift **in the same direction on both wings**.
+
+| band (1920x1080) | render | ref 169 aligned | ratio | corr at 0 px | best corr | best shift |
+|---|---|---|---|---|---|---|
+| north wing 60,480-560,600 | 82.6 (sd 18.1) | 107.3 (sd 29.2) | **0.77** | +0.319 | +0.337 | **-3 px** |
+| south wing 1360,480-1860,600 | 81.7 (sd 38.1) | 133.6 (sd 41.5) | **0.61** | +0.261 | +0.441 | **-25 px** |
+
+The north wing's shadow structure lands within **3 px out of a 500 px band** of the photo's, and the two wings
+disagree on the sign and size of their residual shift (-3 vs -25). A sun-azimuth error cannot do that: it would move
+both bands the same way by a similar amount. **The solar position (az 118.5, el 7.4, NOAA for 2026-11-10 07:30 PST)
+is confirmed against the photo's own shadows and is not touched this round.** The south wing also carries almost the
+photo's full amount of structure (sd 38.1 against 41.5) at 0.61 of its level, which is the signature of correct
+shadows on stone that is too dark — albedo and wing-shading trees, i.e. materials and environment, exactly as the
+lead split it. Lighting's only level knob here is the exposure, and the exposure is pinned by the sunlit attic
+(0.954x of ref 169, and QA-04-2 exists because round 10 already spent half a stop).
+
+### 20.3 QA-04-1 — the Eevee vault was black because `lead_build.sh` bakes the Eevee HACK into the light probes
+
+Round 10 shipped an engine-conditional vault rig: Eevee gets the eight vault emitters at x8 energy with a 13 m
+`cutoff_distance` (which Eevee honours and Cycles ignores), Cycles keeps the physical energy. Measured then, on
+cam04 at 1280x720, that gave Eevee soffit 0.408 / coffer 0.255 against Cycles 0.536 / 0.364 — both inside 0.15.
+QA round 04 measured the same override, on the same camera, at the same resolution, through the same
+`apply_preview_eevee`, and got soffit W 0.399 / E 0.142 and **coffer 0.034**. The log line even confirms the override
+ran. The soffit reproduced round 10's number and the coffer fell by a factor of 7.5.
+
+**What changed between the two measurements is not the rig, it is the BAKE.** The lead's review fix put
+`light_presets.apply_viewport_eevee` at the end of `build_master.py` so the saved Eevee state carries the vault
+override — correct in itself — and `scripts/lead_build.sh` then runs `light_probes.py --bake` on that saved state.
+So the two irradiance volumes were baked with the vault emitters **cut off at 13 m**, and the central coffered dome
+is 20.7 m from them. The coffers are therefore starved in the baked *indirect* term as well as in the direct one,
+and nothing is left to light them. Round 10's probe was taken before that review fix, i.e. on a bake made with the
+uncut rig, which is exactly why its coffer read 0.255 and why "switching the emitters off changes nothing" was true
+then: the bake was doing the work.
+
+This also retires round 10's story that Eevee's screen-traced ambient is what fills the vault. The screen trace has
+no light of its own; where a screen ray misses it falls back on the irradiance volume, so the resolution dependence
+round 10 measured (0.246 at 960x540, 1.075 at 1280x720) was the *bake* being sampled more or less, not an
+independent ambient source.
+
+**Fix, in `scripts/light_probes.py` (`bake(..., physical_vault=True)`): the bake now forces the PHYSICAL vault rig,
+bakes, and restores whatever override was live, so the saved Eevee state is unchanged.** A light probe volume is
+meant to hold the scene's real indirect light; baking a render-time engine hack into it was a bug, and the fix is
+one that cannot be undone by the order in which the lead runs his two commands.
+
+### 20.4 QA-04-2 — what CAN reach the shade: `SHADE_FILL`, and what cannot
+
+If the sky cannot be raised without paying for it on the sunlit stone, the fill has to be light that reaches the
+anti-sun faces and nothing else. `SHADE_FILL` (new in `light_build.py`) is three wide-angle SUN lamps on the
+anti-sun hemisphere — az 300 / 205 / 25 at elevation 16 / 16 / 20 deg, weights 1.0 / 1.0 / 0.7, colour (0.42, 0.62,
+1.00) i.e. clear-sky blue, `angle` 55 deg so the shadows are sky-soft, `specular_factor` 0.10 so it stays out of the
+lagoon's reflection and off the column highlights (QA-03-7 and QA-04-5 are both glossy-side defects), and
+`visible_camera = False` so a 55 deg disc never appears in the sky.
+
+A sun lamp is the right primitive here for three reasons: its energy IS an irradiance in W/m2, directly comparable
+with the calibrated 67.3 W/m2 of the real sun, so the fill can be quoted as a fraction of the sun rather than as a
+magic number; it is occluded by the building exactly the way the sky is, so it can never leak through a wall; and it
+costs almost nothing to sample. The lamps sit LOW on purpose: a low fill rakes vertical shaded faces, where the
+defect is, and lands on the horizontal plaza at cos(el) ~ 0.3, so it adds little of the warm ground bounce that made
+`SKY_DIFFUSE_BOOST` fail.
+
+**The one thing it cannot fix is cam03's near shaft, and the measurement says why.** Eevee, cam03, 1280x720, total
+fill irradiance swept:
+
+| SHADE_FILL total | near shaft | ground |
+|---|---|---|
+| 0 (round 10) | 7.23 | 18.5 |
+| 3 W/m2 | 7.69 | 18.8 |
+| 6 W/m2 | 8.29 | 23.2 |
+| 12 W/m2 (18 % of the sun) | 9.09 | 27.4 |
+
+The walkway floor responds (18.5 -> 27.4, +48 %) and the shaft does not (7.23 -> 9.09, +26 % for 4x the fill). QA's
+box (0,150)-(420,720) is the column standing 3 m from an 18 mm lens: it is occluded from the whole sky by the
+columns and entablature around it, which is also why the sky-only render put only 3.26 there. **No exterior light
+can reach it, in either engine, and that is a geometry fact, not a rig setting.**
+
+**And QA's target for it is a midday photograph.** ref 128 has a blown white sky, no cast shadows anywhere in frame
+and near-vertical light; its 69.7 is the shade level of a colonnade under a high sun. Our sun is 7.4 deg above the
+horizon by the lead's own decision, and the frame's whole point is the long raking light. 0.5 of ref 128 is not a
+golden-hour number. What round 11 does deliver on cam03 is the *ground* and the *hue*, and that is stated as a
+partial in the report rather than dressed up as a pass.
+
+**And the fill's cost, measured on the hero (Cycles 1920x1080 / 64 spp), is why it ships small.** The control row
+reproduces the lead's merged master to 0.5 R-B and 0.002 saturation, so the sweep and QA are measuring the same
+pixels:
+
+| SHADE_FILL (el 16 deg) | attic sat | attic R-B | **shaded attic hue** | shaded lum | columns | near-water sat |
+|---|---|---|---|---|---|---|
+| control (= master) | 0.556 | 122.4 | **43.1** | 112.2 | 1.29x | 0.274 |
+| 6 W/m2 | 0.544 | 119.9 | **44.4** | 120.8 | 1.37x | 0.207 |
+| 14 W/m2 | 0.528 | 116.7 | **45.9** | 130.8 | 1.40x | 0.165 |
+
+The sunlit stone holds up well (the budget was 0.02 sat / 5 R-B and 6 W/m2 costs 0.012 / 2.5, exactly as designed —
+the fill is behind the sunlit faces). Everything else says no:
+
+* **the shaded attic gets WARMER again**, 43.1 -> 44.4 -> 45.9, and this is the finding of the round. A blue light
+  on ochre stone does not make blue stone: at 6 W/m2 the shaded attic's blue rises 37 -> 44 (+7) but its green rises
+  111 -> 121 (+10), because the fill's own green is 0.62 of its blue AND because the fill lands on the plaza and
+  comes back warm. Hue is (G-B)/(R-B): green wins, so hue rises. **Three independent levers now say the same thing
+  — round 10's `SKY_DIFFUSE_SATURATION` (1 unit of blue out of 36), round 11's `SKY_DIFFUSE_BOOST` (+4.3 deg the
+  wrong way) and round 11's directional cool fill (+2.8 deg the wrong way). The shaded stone's hue is its albedo's
+  blue reflectance in shadow, it is materials', and lighting has now proved it from the level side, the saturation
+  side and the direction side.**
+* at elevation 16 deg the fill also lands on the water at sin(16) = 0.28 and takes the near-water saturation from
+  0.274 (dead centre of QA's 0.22-0.32 window, the one number round 10 hit exactly) to 0.207 at 6 W/m2, and it pushes
+  the columns from 1.29x to 1.37x of ref, i.e. it re-opens QA-03-7 and worsens QA-04-5 to buy shade luminance.
+
+### 20.5 QA-04-7 — the Cycles coffer level: the -0.5 EV of round 10 cost the interior fills a factor of 3
+
+Round 09 shipped `FILL 1140 W` / `VAULT_FILL 3960 W` and measured coffer / own sky 0.384 at the round-09 exposure.
+Round 10 took half a stop out of the whole frame and did not re-tune the interior, so the same rig now reads 0.261,
+i.e. the exposure move cost 0.12 of ratio and dropped the coffer field out of QA's 0.35-0.55 window while leaving the
+soffit mean at 0.405, exactly ref 083's. Cycles, cam04, 960x540 / 48 spp (r09 established that these ratios move
+< 0.01 with resolution):
+
+| FILL x | VAULT x | soffit W | soffit E | soffit mean | coffer / sky |
+|---|---|---|---|---|---|
+| 1.0 (round 10) | 1.0 | 0.289 | 0.522 | **0.405** | **0.261** |
+| 1.8 | 1.0 | 0.301 | 0.537 | 0.419 | 0.310 |
+| 2.6 | 1.0 | 0.319 | 0.553 | 0.436 | 0.360 |
+| 2.6 | 0.8 | 0.278 | 0.482 | 0.380 | 0.341 |
+
+Both knobs are linear over this range and they separate cleanly: +1.0 of FILL is worth +0.062 coffer and only
++0.019 soffit (the central disk is the emitter the coffers see best), while VAULT trades 0.28 of soffit for 0.095 of
+coffer per unit. Shipped **FILL 1140 -> 3648 W (x3.2) and VAULT_FILL 3960 -> 3564 W (x0.9)**, which puts the coffer
+in the middle of QA's window instead of on its edge and keeps the soffit mean within 4 % of ref 083. The x3.2 is not
+a new art bias: it is the factor round 10's exposure change removed and never gave back.
+
+### 20.6 QA-04-1 result — the bake fix on its own restores the coffers by a factor of 7
+
+Everything below is cam04 at **1280x720** (Eevee's vault reading is resolution-sensitive, so it is measured at QA's
+resolution, not at the sweep resolution), with the round-11 interior fills (FILL x3.2, VAULT x0.9) and the probe
+volumes re-baked **in memory on the physical rig** by `light_r11_sweep.py --rebake CYCLES`:
+
+| Eevee vault override | soffit W | soffit E | soffit mean | coffer / own sky |
+|---|---|---|---|---|
+| **round 10's x8 + 13 m, baked WITH the cutoff (what QA measured)** | 0.399 | **0.142** | 0.270 | **0.034** |
+| x8 + 13 m, baked on the physical rig | 0.428 | 0.194 | 0.311 | **0.240** |
+| x4 + 25 m | 0.459 | 0.375 | 0.417 | 0.611 |
+| x2 + 45 m | 0.443 | 0.392 | 0.418 | 1.145 |
+| x1, no cutoff (physical) | 0.293 | 0.276 | 0.284 | 0.839 |
+
+**Changing nothing but the bake takes the coffer field from 0.034 to 0.240 — a factor of 7 — with the identical
+render-time rig.** That is the proof of the diagnosis in 20.3: the coffers were dark because the light that should
+have been in the baked irradiance volume was never put there.
+
+It also shows the cutoff is doing far more than round 10 thought. Between 13 m and 25 m the coffer jumps 0.240 ->
+0.611, i.e. the emitters reach the central dome as soon as they are allowed to, and the Eevee soffit E follows the
+same knob (0.194 -> 0.375). The two numbers QA measures therefore move together and the tuning is one-dimensional.
+
+### 20.7 QA-04-7 CLOSED in Cycles, and what the Eevee vault can and cannot be made to match
+
+Verified at QA's own resolution (cam04, 1280x720, Cycles 64 spp, `r11j_SHIP_e8cut18_04c.png`), with the round-11
+interior fills:
+
+| | round 04 | **round 11** | ref 083 | QA's window |
+|---|---|---|---|---|
+| soffit W / own sky | 0.289 | **0.316** | 0.38 | — |
+| soffit E / own sky | 0.522 | **0.532** | 0.43 | — |
+| soffit mean | 0.405 | **0.424** | **0.405** | within 4 % |
+| coffer field / own sky | **0.261** | **0.387** | 0.437 | **0.35-0.55 PASS** |
+
+**The Eevee side is a double-count, and that is a better story than round 10's.** With the probe volumes baked on the
+physical rig, the baked irradiance already contains the vault emitters' light — and Eevee then adds their *direct*
+light on top of it, while Cycles path-traces the whole thing once. That is why Eevee with no cutoff and the plain
+physical energy (x1) puts the coffer at **0.839** where Cycles reads 0.387: it is counting the same emitters twice.
+The `cutoff_distance` override is therefore not a fudge for a missing ambient term (round 10's reading) but the
+removal of a duplicate: at 13-21 m each emitter still lights its own soffit (4.5-11 m) and stops double-counting into
+the coffered dome 20.7 m away, leaving the coffer to the bake alone at 0.24-0.25.
+
+What that leaves unreachable is the soffit **W/E split**. Cycles reads E much brighter than W (0.532 / 0.316) and
+Eevee reads the opposite (0.23 / 0.47) at every cutoff that keeps the coffer honest; opening the cutoff to 25-45 m
+brings Eevee's E up to 0.375-0.392 but takes the coffer to 0.611-1.145, i.e. it buys the split by re-opening the
+double-count. The soffit **mean** and the coffer field — the two numbers ref 083 is quoted on and the two QA
+tabulates a window for — are what round 11 lands.
+
+**Shipped Eevee override: `EEVEE_VAULT` x8 / 13 m -> `x6 / 21 m`.** Against the round-11 Cycles frame (soffit W
+0.316 / E 0.532 / mean 0.424, coffer 0.387), on QA's 0.15 box:
+
+| | round 04 (what QA measured) | **round 11** | Cycles | gap before -> after |
+|---|---|---|---|---|
+| coffer field / own sky | 0.034 | **0.325** | 0.387 | 0.227 -> **0.062** |
+| soffit E / own sky | 0.142 | **0.419** | 0.532 | 0.380 -> **0.113** |
+| soffit mean | 0.270 | **0.483** | 0.424 | 0.135 -> **0.059** |
+| soffit W / own sky | 0.399 | 0.546 | 0.316 | 0.110 -> **0.230 (COST)** |
+
+Both numbers QA flagged land inside the box, and so does the soffit mean. The soffit W is the price and it is
+stated as such: W and E move together in Eevee at every cutoff tried (x3/25 m gives 0.382 / 0.320, x6/21 m gives
+0.546 / 0.419) while Cycles wants them 0.22 apart in the other direction, so no single override lands all three.
+
+### 20.8 QA-04-12 — the decision, and the reason it is not the one the question implied
+
+QA asked whether the saved Eevee viewport state (taa 8/16, **raytracing off**) was intended, and the lead's brief
+asked lighting to decide whether the viewport preset should carry raytracing on, "since Eevee's screen-traced ambient
+is likely what lights the vault". **It is not.** Measured on cam04 at 1280x720 with the round-11 rig and a physical
+bake, turning raytracing ON in `apply_viewport_eevee` moved the coffer field **0.218 -> 0.218** and the soffit E
+0.084 -> 0.089. Nothing. Round 10's "screen-traced ambient" story does not survive a correct bake.
+
+The real difference between the two Eevee presets was **`light_threshold`**: 0.05 in the viewport preset against 0.01
+in the preview preset. At 0.05 Eevee culls the eight vault emitters wherever their estimated contribution is small,
+which is precisely the coffered dome. cam04, 1280x720:
+
+| viewport preset | soffit W | soffit E | coffer / own sky | frame |
+|---|---|---|---|---|
+| as saved (rt off, threshold 0.05) | 0.315 | 0.084 | **0.218** | 12.2 s |
+| rt on, threshold 0.05 | 0.315 | 0.089 | **0.218** | 11.2 s |
+| **rt on, threshold 0.01 (shipped)** | 0.345 | 0.132 | **0.320** | 24.2 s |
+| `apply_preview_eevee` for comparison | 0.546 | 0.419 | 0.325 | — |
+| Cycles ground truth | 0.316 | 0.532 | 0.387 | — |
+
+**Decision (for docs/decisions.md), CORRECTED after the round-11 code review: raytracing stays OFF in
+`apply_viewport_eevee`; the fix is `light_threshold` 0.05 -> 0.01.** The first version of this section turned
+raytracing on and credited it with the vault, which contradicts the measurement three lines above it; the reviewer
+caught the contradiction and the measurement wins. Raytracing buys the viewport nothing on the ceiling and this
+preset exists to be fast, so it goes back to off (`apply_preview_eevee` keeps it on — the QA previews need
+screen-space reflections in the lagoon). Verified on the saved file with the shipped preset:
+
+| viewport preset, cam04 1280x720 | soffit W | soffit E | coffer / own sky | frame |
+|---|---|---|---|---|
+| threshold 0.05, rt off (round 10) | 0.315 | 0.084 | **0.218** | 12.2 s |
+| threshold 0.05, rt on | 0.315 | 0.089 | **0.218** | 11.2 s |
+| **threshold 0.01, rt off (SHIPPED)** | 0.334 | 0.124 | **0.319** | **7.9 s** |
+| `apply_preview_eevee` for comparison | 0.546 | 0.419 | 0.325 | — |
+| Cycles ground truth | 0.316 | 0.532 | 0.387 | — |
+
+The viewport coffer lands within 0.068 of Cycles and level with the preview preset's 0.325, so the ceiling is
+readable when a viewport user flies under it, and the preset got *faster* rather than slower. taa 8 / 16 is kept.
+Also `shadow_pool_size` 256 -> 512 in the viewport preset and 512 -> 1024 in the preview preset: the QA previews
+were logging "Shadow buffer full (2118 / 2048)" on **every** frame, i.e. Eevee was silently dropping shadow pages.
+Each pool assignment now sits in its own try/except that prints (they shared one block, so a rejected enum would
+have silently skipped the irradiance-pool assignment too and left the baked volumes unused).
+
+### 20.8b Review fixes, and the bake save sequence proved on a copy of master
+
+`scripts/light_r11_verify.py` runs the real `lead_build.sh` sequence on a COPY of master.blend and prints the vault
+state at each step (never touching the lead's file). On the lead's current master:
+
+| step | engine | vault energy | `energy_W` | cutoff |
+|---|---|---|---|---|
+| as opened (what `build_master.py` leaves) | BLENDER_EEVEE | 31680 W | 3960 | on @ 13 m |
+| after `light_probes.bake()` | BLENDER_EEVEE | 23760 W | 3960 | on @ 21 m |
+| after save + reopen | BLENDER_EEVEE | 23760 W | 3960 | on @ 21 m |
+
+i.e. the engine comes back, the Eevee override is what gets saved, and the physical energy survives untouched in
+`energy_W` (3960 here because that master predates the round-11 lighting.blend; the script says so). The bake itself
+costs **3.5 s**, so re-running it is free. The other review fixes: the probe-less early-out now happens *before* the
+vault is switched and the restore is in a `finally`, so a master with no light probes can no longer be saved holding
+the physical rig; the engine to restore is captured before anything forces BLENDER_EEVEE; `build_shade_fill` returns
+early at 0 W/m2 so three shadow-casting suns no longer ship for no light; `light_r11_sweep` honours
+`$PFA_MAIN_ROOT` and rebuilds `SHADE_FILL` from a pristine copy each case; and the round's intermediate previews are
+down from 127 MB to 5.4 MB (the four sheet inputs, re-encoded 8-bit, plus the sheet).
+
+### 20.9 QA-04-5 and QA-04-9 — measured, and no knob without a bigger cost
+
+**QA-04-5, the columns.** The shipped round-11 hero measures the QA mask at **123.7** against a test of <= 120
+(ref 95.8), i.e. it misses by 3 %, and the round-04 render of the *same rig* measured 122.0: the defect is inside
+the run-to-run spread of its own threshold. Everything lighting can do to it makes something else worse — the shade
+fill pushed it to 1.35-1.40x, and the only remaining lever, `SKY_GLOSSY_BOOST`, is what holds the lagoon's
+reflection, which is already 0.86x of ref 169 (146.2 against 168.9). QA's own round-04 measurement of the render's
+entablature luminance sd (28 against the photo's 64) says what is left is surface contrast, not level. **Materials.**
+
+**QA-04-9, the horizon haze band.** sky_left / sky_top is **0.922** against a 1.05-1.29 window, unchanged, and
+round 10 established why with a five-row atmosphere sweep: the physical sky model saturates at 0.965 no matter what
+aerosol / ozone / air density does, and part of the remaining gap is that the two boxes sit at different heights
+above the horizon in the two framings (the render's horizon is at y ~0.63 of frame, the photo's at ~0.54). Nothing
+was re-swept this round because nothing has changed that would move it. The only honest route left is a compositor
+sky gradient, which is an art bias on a physical sky and is the lead's call, not lighting's.
+
+### 20.10 Round 11 scoreboard, and what the lead has to do
+
+Comparison sheet: `renders/previews/lighting/light_r11_sheet.png` (before / after / reference for the three items,
+numbers burned into every cell).
+
+| item | before (QA round 04) | after (round 11) | verdict |
+|---|---|---|---|
+| QA-04-1 Eevee coffer / own sky | 0.034 (gap 0.227 from Cycles) | **0.325** (gap 0.062) | **closed** |
+| QA-04-1 Eevee soffit E | 0.142 (gap 0.380) | **0.419** (gap 0.113) | **closed** |
+| QA-04-1 Eevee soffit W | 0.399 (gap 0.110) | 0.546 (gap 0.230) | **cost, on record** |
+| QA-04-7 Cycles coffer / own sky | 0.261 | **0.387** | **closed** (window 0.35-0.55) |
+| QA-04-12 viewport ceiling | coffer 0.218 | **0.319** | **closed**, decision in 20.8 (raytracing OFF; `light_threshold` was the fix) |
+| QA-04-2 cam03 near shaft | 7.25 | 7.23 | **open — occlusion + a midday reference; see 20.4** |
+| QA-04-2 shaded attic hue | 43.1 | 43.1 | **reassigned to materials, three ways; see 20.1 / 20.4** |
+| QA-04-6 sun angle | untested | shadow shift **-3 px** on the north wing | **confirmed correct; level is mat/env** |
+| QA-04-5 columns | 122.0 (1.27x) | 123.7 (1.29x) | open, 3 % from the test, materials |
+| QA-04-9 sky_left/sky_top | 0.922 | 0.922 | open, physical ceiling 0.965 |
+| hero sunlit attic sat / R-B / lum | 0.554 / 121.9 / 180.4 | **0.556 / 122.4 / 180.4** | held, as required |
+| near-water saturation | 0.272 | **0.275** | held inside 0.22-0.32 |
+
+**The lead has to re-run `scripts/lead_build.sh`, not just `build_master.py`.** The QA-04-1 fix is half in the rig
+(`EEVEE_VAULT` x6 / 21 m) and half in the bake (`light_probes.bake` now forces the physical vault rig), so
+master.blend needs both the new LIGHT collection and a fresh probe bake, in that order, which is exactly what
+`lead_build.sh` does. A `build_master.py` on its own would ship the new rig on top of the old, starved bake.
+
+Two things for `docs/decisions.md`: the QA-04-12 decision in 20.8 (raytracing stays OFF in the viewport preset;
+`light_threshold` 0.05 -> 0.01 is the fix; shadow pools 256 -> 512 / 512 -> 1024), and the fact that `SHADE_FILL` exists, is measured, and ships at 0 W/m2 with
+6 W/m2 as the largest value that has an acceptable sunlit cost, should the art direction ever want a cooler shade at
+the price of the near-water saturation.

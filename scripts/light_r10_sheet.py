@@ -19,9 +19,10 @@ import light_r10_measure as M
 
 ROOT = Path(__file__).resolve().parents[1]
 P = ROOT / "renders" / "previews" / "lighting"
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
-ALIGNED = MAIN / "renders" / "qa_comparisons" / "round03_cam01_aligned_vs_ref169.png"
-REF169 = MAIN / "reference" / "photos" / "raw" / "ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
+# Worktree-safe (round-10 review nit): the aligned panel is git-tracked so it lives in this checkout; only the
+# reference PHOTOS are main-checkout-only, and they come from the same env var common.REFERENCE_DIR uses.
+ALIGNED = M.ALIGNED
+REF169 = M.REFERENCE_DIR / "photos" / "raw" / "ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
 
 BEFORE = P / "r10_base_01_hero_cycles.png"
 AFTER = P / "r10fhero_SHIP.png"

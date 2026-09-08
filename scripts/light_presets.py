@@ -69,12 +69,42 @@ def _metal_gpu():
 # now lean opposite ways across the vault. The engines agree on the two numbers QA measures and not on their split.
 # The coffer lands inside +-0.15 of Cycles as soon as the cutoff is on, and the energy then buys the soffit back
 # without touching it. Cycles keeps the physical rig exactly as light_build writes it.
-EEVEE_VAULT = dict(energy_scale=8.0, cutoff_distance=13.0)
+# ROUND 11 REPLACES THE READING ABOVE. The Eevee vault was never short of an ambient term: with the probe volumes
+# baked on the physical rig (light_probes.bake, QA-04-1) the baked irradiance ALREADY contains the vault emitters,
+# and Eevee then adds their direct light on top, while Cycles path-traces the whole thing once. Eevee with no cutoff
+# at the plain physical energy puts the coffer field at 0.839 of the frame's own sky where Cycles reads 0.387: it is
+# counting the same eight emitters twice. `cutoff_distance` removes the duplicate rather than faking an ambient term
+# - at 21 m each emitter still lights its own soffit (4.5-11 m) and stops double-counting into the coffered dome
+# 20.7 m away. Measured on cam04 at 1280x720 against the round-11 Cycles frame (soffit W 0.316 / E 0.532 /
+# mean 0.424, coffer 0.387); QA's box is 0.15:
+#   x8  + 13 m, baked WITH the cutoff (what QA measured)  W 0.399  E 0.142  mean 0.270  coffer 0.034
+#   x8  + 13 m, physical bake                            W 0.428  E 0.194  mean 0.311  coffer 0.240
+#   x8  + 18 m                                           W 0.469  E 0.228  mean 0.349  coffer 0.246
+#   x6  + 21 m                                           W 0.546  E 0.419  mean 0.483  coffer 0.325   <- SHIPPED
+#   x5  + 24 m                                           W 0.517  E 0.413  mean 0.465  coffer 0.568
+#   x3  + 25 m                                           W 0.382  E 0.320  mean 0.351  coffer 0.530
+#   x4  + 25 m                                           W 0.459  E 0.375  mean 0.417  coffer 0.611
+#   x2  + 45 m                                           W 0.443  E 0.392  mean 0.418  coffer 1.145
+#   x1, no cutoff (physical)                             W 0.293  E 0.276  mean 0.284  coffer 0.839
+# Shipped x6 + 21 m: it puts BOTH numbers QA flagged inside 0.15 of Cycles - the coffer field 0.325 (gap 0.062,
+# against 0.227 before) and the soffit E 0.419 (gap 0.113, against 0.380 before) - and the soffit mean, which is how
+# ref 083 is quoted, at 0.483 against 0.424 (gap 0.059).
+# COST ON RECORD: the soffit W goes to 0.546 against Cycles' 0.316, i.e. 0.230 outside the box, and it was inside
+# before (0.399 vs 0.289). W and E move together in Eevee at every cutoff tried, while Cycles wants them 0.22 apart
+# in the other direction, so no single override lands all three. The two QA tabulates a window for are the two that
+# are landed; the split is an engine-level disagreement and is written up in docs/lighting_notes.md 20.7.
+EEVEE_VAULT = dict(energy_scale=6.0, cutoff_distance=21.0)
 
 
 def _vault_lights():
-    return [o for o in bpy.data.objects
-            if o.type == "LIGHT" and o.name.startswith("LIGHT_rotunda_vault_bounce")]
+    # round-10 review nit: the name lives in light_build.VAULT_FILL, not in a literal here. Imported lazily because
+    # light_build imports light_presets (for LOOK), so a module-level import would be circular.
+    try:
+        import light_build
+        prefix = light_build.VAULT_FILL["name"]
+    except Exception:
+        prefix = "LIGHT_rotunda_vault_bounce"
+    return [o for o in bpy.data.objects if o.type == "LIGHT" and o.name.startswith(prefix)]
 
 
 def apply_vault_for_engine(engine):
@@ -90,8 +120,10 @@ def apply_vault_for_engine(engine):
         base = float(base)
         try:
             if "EEVEE" in engine:            # accepts "EEVEE" and Blender's "BLENDER_EEVEE"
-                o.data.use_custom_distance = True
-                o.data.cutoff_distance = EEVEE_VAULT["cutoff_distance"]
+                cut = float(EEVEE_VAULT["cutoff_distance"])
+                o.data.use_custom_distance = cut > 0.0        # round 11: 0 means "no cutoff", not "zero reach"
+                if cut > 0.0:
+                    o.data.cutoff_distance = cut
                 o.data.energy = base * EEVEE_VAULT["energy_scale"]
             else:
                 o.data.use_custom_distance = False
@@ -173,18 +205,38 @@ def apply_viewport_eevee(scene=None):
     e.shadow_step_count = 2
     e.shadow_resolution_scale = 0.5
     e.use_shadow_jitter_viewport = False
-    e.use_raytracing = False             # screen-space GI/reflections off for speed
+    # QA-04-12, ROUND 11. The brief asked whether the viewport preset should carry raytracing on, because Eevee's
+    # screen-traced ambient was "likely what lights the vault". It is not, and the measurement is unambiguous: on
+    # cam04 at 1280x720 with the round-11 rig and a physical bake, turning raytracing ON in THIS preset moved the
+    # coffer field 0.218 -> 0.218 and the soffit E 0.084 -> 0.089. Nothing. So raytracing STAYS OFF here, which is
+    # what this preset is for (fast navigation); apply_preview_eevee keeps it on because the QA previews need
+    # screen-space reflections in the lagoon.
+    e.use_raytracing = False
     e.use_fast_gi = False
     e.use_volumetric_shadows = False
     e.volumetric_tile_size = "16"
     e.volumetric_samples = 16
     e.use_overscan = False
-    e.light_threshold = 0.05
+    # ROUND 11, and this is the actual QA-04-12 answer: 0.05 culls the eight vault emitters wherever their estimated
+    # contribution is small, which is exactly the coffered dome. Dropping the threshold to the preview preset's 0.01
+    # is what lets the viewport see the vault - not raytracing (see the note above). cam04, 1280x720, round-11 rig:
+    #   threshold 0.05, rt off  soffit W 0.315  E 0.084  coffer 0.218
+    #   threshold 0.05, rt on   soffit W 0.315  E 0.089  coffer 0.218   <- raytracing buys nothing
+    #   threshold 0.01, rt off  soffit W 0.334  E 0.124  coffer 0.319   <- SHIPPED (7.9 s/frame)
+    # against a Cycles ground truth of W 0.316 / E 0.532 / coffer 0.387: the coffer lands within 0.07 of Cycles and
+    # level with apply_preview_eevee's 0.325, so the ceiling is readable when a viewport user flies under it.
+    e.light_threshold = 0.01
+    # review fix 3: one try per assignment, and never a silent pass. Sharing a block meant that if "512"/"1024" were
+    # not valid enum items on this build, the irradiance pool assignment below it was skipped too and the baked
+    # LIGHTPROBE volumes went silently unused - exactly the failure this round spent a day diagnosing.
     try:
-        e.shadow_pool_size = "256"
+        e.shadow_pool_size = "512"      # round 11: 256 overflowed (see apply_preview_eevee)
+    except Exception as ex:
+        print("[light_presets] viewport shadow_pool_size:", ex)
+    try:
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
-    except Exception:
-        pass
+    except Exception as ex:
+        print("[light_presets] viewport gi_irradiance_pool_size:", ex)
     s.render.use_motion_blur = False
     apply_vault_for_engine("EEVEE")
     return s
@@ -225,11 +277,18 @@ def apply_preview_eevee(scene=None, samples=32):
     e.use_overscan = True
     e.overscan_size = 3.0
     e.light_threshold = 0.01
+    # ROUND 11: 512 -> 1024. At 512 the QA previews log "Shadow buffer full (2118 / 2048)" on every frame, i.e.
+    # Eevee is dropping shadow pages and the preview silently loses shadows it should be casting. The scene has
+    # ten shadow-casting lights (sun + disk + eight vault emitters) over 11 M triangles.
+    # review fix 3: separate try blocks, exceptions printed (see apply_viewport_eevee).
     try:
-        e.shadow_pool_size = "512"
+        e.shadow_pool_size = "1024"
+    except Exception as ex:
+        print("[light_presets] preview shadow_pool_size:", ex)
+    try:
         e.gi_irradiance_pool_size = IRRADIANCE_POOL   # must hold the baked LIGHTPROBE volumes (QA-01-9)
-    except Exception:
-        pass
+    except Exception as ex:
+        print("[light_presets] preview gi_irradiance_pool_size:", ex)
     s.render.use_motion_blur = False
     apply_vault_for_engine("EEVEE")
     return s
