@@ -1112,3 +1112,37 @@ their own +-70-sample background); it scores the round-05 render **0**.
   stated in that module's docstring; note that the far field only occupies the **top ~110 rows** of QA's 220-row
   horizon crop (below that the frame is the exhibition hall's roof and the near canopy), so a radial street is
   diluted 3.7x if the profile is taken over all 220. Both numbers are reported.
+
+### Round 7 checkpoint (machine stopped before any Blender run) — 2026-09-08
+
+The whole round was blocked behind QA's 4K timing render (pid 90755, still going at 1 h 32 m when the checkpoint
+came), so **no Blender ran**: `assets/environment.blend` on this branch is still the round-6 build, and the AFTER
+panels of `renders/qa_comparisons/env_r7_sheet.png` are placeholders. Everything below is committed and ready to
+run as one chain.
+
+**Measured this round (all from committed renders, reference photos and site data — no Blender needed):**
+* **QA-05-5 is lighting's.** The south wing's lagoon face bears 47.2 deg, so at the agreed sun (az 118.5, el 7.4)
+  it is raked at **cos 0.318** against the north wing's 0.991 — and 118.5 *is* ref 169's own sun (solar position
+  for 2020-02-01 at el 7 = 118.3). Fitting `lum = A + k cos` to both bands of one aligned image pair gives this
+  build **A 61.7 / k 76.5** and ref 169 **A 97.9 / k 48.4**: the sky/ambient term is **36 luminance short**. Same
+  root cause as QA-05-1. The one ENV option (open the bays to show the hall) was costed and rejected: the hall
+  wall behind that wing bears 28.5 deg, exactly 90 deg from the sun.
+* **QA-05-10 is not an occlusion.** Every decile of QA's crop is short by the same 1.5-1.9x; hue 45.2 is already
+  inside QA's 40-60 window and saturation is 16 % *high*. Warning recorded: closing the shore belt further over
+  the pale bank would make the number *worse*.
+* **The OSM NE shoreline is not short.** satellite_z18 agrees with `lagoon0` along the whole NE arm and the
+  ref-062 fitted station (-73, 55) is over open water on the tile too. Evidence:
+  `renders/qa_comparisons/env_r7_shoreline.png`. No polygon change.
+* BEFORE numbers reproduce QA's exactly (band 86.0, shore 71.7) and cam 06 scores **0** readable street lines.
+
+**Built but never executed:** `env_build.build_paving` -> `ENV_ground_colonnade_walk` (radial courses, real 5.5 cm
+joints, running bond, worn patches; a pure-Python dry run of the algorithm on the OSM wing polygons gives **869
+slabs / 1 738 tris**), the walk as a *level* at -0.60 (column bases were 15 cm buried), the walk-edge planting,
+`env_trees.shore_sun_samples` + `SHORE_TARGET` in `shadow_relief`, the south band widened to QA's measured edge
+with every hand-placed group pinned, and `env_city`'s `CANOPY_ROAD_PAD` 17 m + near-continuous Presidio verge rows.
+
+**Next, in this order (one Blender at a time):** `scratchpad/env7/chain.sh` (three probes: box breakdown + sun
+reach, the no-foliage ceiling, the no-screen variant) -> `chain2.sh` (`env_build.py` rebuild + probe after; check
+ENV LOD1 stays <= 4.84 M) -> `chain3.sh` (`build_master.py` + Cycles renders of cam 01 at 1920x1080 and cam 03/06
+at 1280x720, copied to `r7_hero.png` / `r7_cam03.png` / `r7_cam06.png`) -> `env_r7_measure.py --tag a` ->
+`env_sheet_r7.py`. Then fill the results table here.
