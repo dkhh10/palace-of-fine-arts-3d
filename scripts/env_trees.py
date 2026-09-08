@@ -757,8 +757,11 @@ FRAME_BANDS = [
     # the peninsula bed and the user-image cypress spires".  Since round 5 those are PINNED (`pin=("P","C")`), so
     # widening now touches nothing but the procedural screen - which is precisely the treatment that took the
     # north band from 0.63 to 1.00 of ref 169.  x1 therefore goes to the measured box edge.
+    # ... and because the widened span now reaches groups the round-4 band never touched, every HAND-PLACED group
+    # is pinned here, not just P and C: the lead's rule is that a band is cleared by thinning the procedural
+    # screen, never by sweeping a tree that stands where a reference photo puts it.  Only E1/E2/E3 can move.
     dict(cam="_qa_01_", x0=0.031, x1=0.292, x1_exit=0.292, y0=0.40, y1=0.60, behind="colonnade",
-         pin=("P", "C"), label="QA-05-5 hero south-wing band"),
+         pin=("P", "C", "A", "A2", "B", "D", "F", "G", "H"), label="QA-05-5 hero south-wing band"),
     # cam 05's guard stops at y 0.66: the rotunda's body ends there, and the 7-9 m willows and broadleaves of the
     # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
     dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=("P", "C"),
