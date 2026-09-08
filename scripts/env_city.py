@@ -74,7 +74,8 @@ def city_az(x, y):
     use degrees CLOCKWISE FROM NORTH, and north is -X).  It exists only because the sector bands below
     (`RESIDENTIAL_AZ` / `PRESIDIO_AZ` / `OPEN_AZ`) were measured straight off atan2(y, x) when the OSM
     footprints were binned; keeping the name distinct stops it being mistaken for a compass bearing.
-    Compass bearing = (270 - city_az) mod 360.
+    Compass bearing = (180 - city_az) mod 360.  (Round 5 wrote (270 - city_az); that is wrong - it maps
+    city_az 0 = +X = south onto 270 = west.  Check: city_az 0 -> 180 south, 90 -> 90 east, 334 -> 206.)
     """
     return math.degrees(math.atan2(y, x)) % 360.0
 
@@ -116,6 +117,13 @@ def road_lines():
     out.append(([(-40.0, -235.0), (60.0, -305.0), (170.0, -360.0), (300.0, -400.0), (430.0, -420.0), (560.0, -428.0)], 12.0, "boulevard"))
     out.append(([(300.0, -110.0), (330.0, -230.0), (350.0, -360.0), (355.0, -500.0)], 9.0, "boulevard"))
     out.append(([(-150.0, -300.0), (-40.0, -425.0), (90.0, -545.0), (230.0, -645.0)], 10.0, "boulevard"))
+    # QA-04-13: cam 06's horizon crop reads r 115-413 m at compass az 275-357 - the Presidio side - and round 4
+    # left it with two boulevards crossing it, which is not "paths readable".  Three more real Presidio ways
+    # through that band: the Letterman / Lombard Gate connector, the Main Post cross street and the cemetery loop.
+    out.append(([(150.0, -230.0), (245.0, -300.0), (330.0, -395.0), (395.0, -520.0)], 10.0, "boulevard"))
+    out.append(([(60.0, -170.0), (175.0, -195.0), (300.0, -250.0), (410.0, -330.0), (500.0, -430.0)], 9.0, "boulevard"))
+    out.append(([(230.0, -150.0), (300.0, -215.0), (330.0, -300.0), (300.0, -390.0), (215.0, -430.0),
+                 (140.0, -390.0), (120.0, -300.0), (165.0, -205.0), (230.0, -150.0)], 7.0, "drive"))
     out.append((list(palace_drive()) + [palace_drive()[0]], 9.0, "drive"))
     return out
 
@@ -416,15 +424,28 @@ def build_presidio_buildings(SUB, clear):
                 y = cy + tang.y * off_t + radial.y * off_r
                 if math.hypot(x, y) > CITY_R1 or not clear(x, y):
                     continue
+                # QA-04-13: round 4 gave every building in a cluster the same footprint and the whole cluster one
+                # roof material, so cam 06's horizon crop showed "one house model repeated with one roof colour".
+                # Three archetypes per cluster (the quarters, a wider barrack block, a long low stable/shed) and a
+                # per-BUILDING roof material, with the cluster's nominal kind only weighting the coin.
+                arch = rnd.random()
+                if arch < 0.46:
+                    fw, fd, fh, pitch = 1.0, 1.0, 1.0, rnd.uniform(0.30, 0.44)
+                elif arch < 0.78:
+                    fw, fd, fh, pitch = rnd.uniform(1.35, 1.75), rnd.uniform(1.05, 1.25), 1.18, rnd.uniform(0.22, 0.32)
+                else:
+                    fw, fd, fh, pitch = rnd.uniform(1.9, 2.6), rnd.uniform(0.72, 0.88), 0.74, rnd.uniform(0.14, 0.24)
                 bw, bh = bmesh.new(), bmesh.new()
-                ww = w * rnd.uniform(0.9, 1.1)
-                ze = _box_prism(bw, x, y, FAR_GROUND_Z - 0.3, ww, dpt, h * rnd.uniform(0.9, 1.15),
-                                rot + rnd.uniform(-0.04, 0.04))
-                _roof(bh, x, y, ze, ww, dpt, rot, rnd.uniform(0.26, 0.42), dpt * 0.35)
+                ww = w * fw * rnd.uniform(0.92, 1.08)
+                dd = dpt * fd * rnd.uniform(0.92, 1.08)
+                ze = _box_prism(bw, x, y, FAR_GROUND_Z - 0.3, ww, dd, h * fh * rnd.uniform(0.9, 1.15),
+                                rot + rnd.uniform(-0.06, 0.06))
+                _roof(bh, x, y, ze, ww, dd, rot, pitch, dd * rnd.choice((0.0, 0.35, 0.35, 0.5)))
                 s = rnd.random()
+                p_tile = 0.72 if roofkind == "tile" else 0.30
                 _emit(coll, f"ENV_backdrop_presidio_{name}_{ri}{j}", bw, m_wall, s)
                 _emit(coll, f"ENV_backdrop_presidioroof_{name}_{ri}{j}", bh,
-                      m_tile if roofkind == "tile" else m_roof, s)
+                      m_tile if rnd.random() < p_tile else m_roof, rnd.random())
                 n += 1
     print(f"[env_city] Presidio buildings: {n} in {len(PRESIDIO_CLUSTERS)} clusters")
     return n

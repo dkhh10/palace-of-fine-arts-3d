@@ -305,6 +305,13 @@ PLAN = [
     ("broadleaf", 26.0, 32.0, 7.0, "P peninsula bed, left of the rotunda (cam01 x 0.21-0.26)"),
     ("willow", 18.0, 40.0, 7.0, "P low willow at the water, left (cam01 x 0.24-0.30)"),
     ("broadleaf", 31.0, 18.0, 6.0, "P peninsula bed (cam01 x 0.24-0.27)"),
+    # QA-04-4: ref 169's hero shoreline is not a quay, it is a willow curtain.  Mapped through the round-02 align
+    # transform, its two big weeping crowns sit at cam 01 x 0.33-0.47 and x 0.56-0.73 - world X -4..14 / -24..-8 at
+    # Y 43-48 - and they hang from ~7 m down to the water, hiding the podium base between the pier groups.  Nine
+    # metres, not seven: in the photo they reach the top of the QA crop.  Group P, so they are pinned.
+    ("willow", 9.0, 45.5, 9.0, "P hero-shore willow, ref 169 frame x 0.33-0.42"),
+    ("willow", -1.5, 47.0, 8.5, "P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair)"),
+    ("willow", -12.0, 45.0, 9.0, "P hero-shore willow, ref 169 frame x 0.56-0.64"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both)
     ("cypress_column", -36.0, -18.0, 27.0, "A2 tall column right of the rotunda (user image x~1020)"),
     ("pine", -47.0, -13.0, 17.0, "A2 strip along the north wing (kept below the colonnade entablature)"),
@@ -638,6 +645,19 @@ FRAME_BANDS = [
     # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
     dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=("P", "C"),
          label="QA-03-13 cam05 rotunda silhouette"),
+    # QA-04-6 (round 6).  Round 5 measured and cleared the frame-LEFT band (60-560 px = x 0.031-0.292); nobody had
+    # ever measured the frame-RIGHT one, and it came back at 74.6 % foliage / 24.2 % architecture / 1.2 % sky
+    # against the left band's 30.5 / 57.8 / 11.6 - which is why its luminance regressed to 0.63 of ref 169 while
+    # the left band passed.  In the photo over that same box the colonnade is clear from about x 0.75 rightwards:
+    # trees only at the far left of it and glimpsed through the bays.  So the offence band starts at 0.775, which
+    # leaves the "A" mass right of the rotunda (it projects to x 0.71-0.76) exactly where the reference has it and
+    # only touches what stands over the wing itself.  `behind="colonnade"` exempts the screen rows planted behind
+    # the wing; what it does NOT exempt is a screen tree that `redwood_screen` put in FRONT of it, which is how
+    # cypress_02 (-73.7, -1.0) came to be 17.8 % of this box on its own - the screen is laid out in polar
+    # coordinates about (0, 52) but the wings are struck from (-11.2, 84.7), so "outside the wing in C-polar" is
+    # not "behind the wing from the hero" everywhere along the sweep.
+    dict(cam="_qa_01_", x0=0.775, x1=0.985, x0_exit=0.775, x1_exit=0.985, y0=0.40, y1=0.60,
+         behind="colonnade", pin=("P", "C"), label="QA-04-6 hero north-wing band"),
 ]
 CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
 

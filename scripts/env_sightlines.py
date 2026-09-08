@@ -114,6 +114,15 @@ COVERAGE_BOXES = {
     "cam05_rotunda": ("_qa_05_", (301, 27, 998, 713), (1280, 720)),          # QA-03-13, the rotunda silhouette
     "cam01_shore": ("_qa_01_", (700, 640, 1200, 720), (1920, 1080)),         # QA-03-14 shrub row
     "cam05_podium": ("_qa_05_", (320, 566, 1000, 624), (1280, 720)),        # QA-03-13 podium / Greek-key band
+    # Round 6.  QA-03-13's "podium / Greek-key band" box is not on the band: projected, the podium wall's top
+    # course (world z 3.8-4.3 at r 27.3-37.6) lands on rows 528-552 of cam 05's 720, while 566-624 is the lawn and
+    # shore strip in front of it.  The three boxes below measure what the two round-6 defects actually ask for:
+    #   cam05_keyband  - the Greek-key course itself must stay visible (QA-03-13, carried into QA-04-4)
+    #   cam05_body     - the rotunda ABOVE the shore, i.e. "no crown inside the silhouette"
+    #   cam01_podium_base - the podium's base courses (world z 0-1.5 at r 27.3) which ref 169 hides in foliage
+    "cam05_keyband": ("_qa_05_", (330, 526, 990, 554), (1280, 720)),
+    "cam05_body": ("_qa_05_", (301, 27, 998, 520), (1280, 720)),
+    "cam01_podium_base": ("_qa_01_", (620, 648, 1300, 684), (1920, 1080)),
 }
 
 

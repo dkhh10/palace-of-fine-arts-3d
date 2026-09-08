@@ -34,6 +34,11 @@ ENV_PLACEHOLDER_COLORS = {
     "MAT_shrub_dry": ((0.26, 0.15, 0.07, 1.0), 0.9),
     "MAT_reeds": ((0.32, 0.24, 0.10, 1.0), 0.85),
     "MAT_water_lagoon": ((0.04, 0.09, 0.08, 1.0), 0.08),
+    # QA-04-8: the near field reads blue (hue 209) instead of teal (190-192).  Lighting showed the sky hue is
+    # exact, so the missing green is the lagoon's own upwelling - the bed under the shallow shelf, which was on
+    # MAT_soil (brown).  ENV names MAT_lagoon_bed; until the library ships it this placeholder is the algae /
+    # silt olive the bed reads as through 0.3-0.9 m of water (refs 022, 169, 063).
+    "MAT_lagoon_bed": ((0.055, 0.085, 0.048, 1.0), 0.92),
     "MAT_backdrop_building": ((0.40, 0.31, 0.19, 1.0), 0.85),
     "MAT_backdrop_roof": ((0.17, 0.16, 0.145, 1.0), 0.85),
     # far-field only (QA-03-11): asphalt carriageways and the Presidio's red clay tile roofs. Not in the library
