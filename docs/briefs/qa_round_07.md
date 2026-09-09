@@ -19,3 +19,7 @@ Required beyond the standard renders / comparisons / scores / defect list:
    scripts/blender_run.sh; no 4K run this round.
 Commit only docs/qa_round_07.md, docs/quality_checklist.md, scripts/qa_*.py, renders/qa_comparisons/round07_*, renders/previews/qa/round07_*.
 Touch renders/previews/qa/round07_RENDERS_DONE when every render has exited. Final report under 60 lines, numbers not adjectives.
+Added after MAT r8: 5. Hero camera height. Materials measured the hero's mirror geometry: cam01 sits 2.90 m over the water (Fresnel 0.46 on
+the reflection box) while ref 169's reflection box is 0.88 of its own direct stone (a near-total mirror at 87-89 deg). Measure ref 169's
+camera height over the water from the reflection geometry (water-line to reflected-cornice distance vs direct cornice height, or the horizon
+row) and report it against 2.90 m. Do NOT move cam01 this round (every yardstick is aligned to it); state the number for the lead.

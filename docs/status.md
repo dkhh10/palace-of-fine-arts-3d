@@ -402,3 +402,7 @@ In flight: LIGHT review, ORN bake. Next: merge lighting, MAT r8 (water), lead_bu
 
 ## 2026-09-09 · LIGHT r14 merged (cac6ee1 + lead corrections); MAT r8 (water only) dispatched
 Carries to LIGHT r15: sweep defaults, commit measure stdout, docstrings, cam06 roofs / cam02 pier over-warm, cam03 outer row. In flight: MAT r8 (docs/briefs/materials_r8_projection.md RE-SCOPE section: water blocker + coffer albedo; re-measure the building/sky split itself). Next: MAT review + merge, lead_build.sh, QA round 7, gate report, stop.
+
+## 2026-09-09 · MAT r8 reported (6e7d799), in review
+MAT r8 (water only, 9681 objects): the mirror ray from the reflection box lands 25 % on a willow, 30 % on the backdrop through the arch, 12.5 % ARCH; fix = Bump Distance ramped by depth (WATER_BUMP_DIST 0.03 -> 0.17 over 14-24 m). Reflection box R-B +8 -> +37 (pass), hue 36.5 (pass), lum 105.6 (window 124-208 fail; frontier ~110 at R-B >= 30); near-water sat 0.301 pass, hue 228 (lighting's r14 sky moved it 214 -> 228); cam05 lagoon sat 0.47 pass; cam06 lagoon Cycles 132 (1.4x) pass; coffer sat 0.97 -> 0.50 pass. Two knobs withdrawn; 6 Cycles + 3 Eevee frames (over the 3+1 cap).
+Hand-offs: QA to check the hero camera height (2.90 m over water vs ref 169's near-total mirror at 87-89 deg incidence); environment (willow occludes the rotunda's mirror); lighting r15 (near-water hue / ripple R-B moved by the r14 sky). Next: review, merge, lead_build.sh, QA round 7.
