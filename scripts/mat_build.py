@@ -631,7 +631,7 @@ def build_concrete_family():
         # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.819. On the r12 rig the sunlit attic
         # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
         # AND chroma (lighting r12 hand-off 2 says the same); raising red hardest lifts both at once.
-        "Base Color": C(0.724, 0.572, 0.013), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.16,
+        "Base Color": C(0.748, 0.590, 0.105), "Grey Color": C(0.450, 0.385, 0.062), "Grey Drift": 0.16,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.30, "Block Size": 3.6, "Blotch Size": 0.9,
         "Drift Size": 12.0,
         "Detail Strength": 1.0, "Streaks": 1.0, "Streak Scale": 3.2, "Streak Length": 7.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
@@ -647,7 +647,7 @@ def build_concrete_family():
         specular=0.16)
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
-        "Base Color": C(0.530, 0.462, 0.038), "Grey Color": C(0.402, 0.372, 0.058), "Grey Drift": 0.38,
+        "Base Color": C(0.545, 0.474, 0.110), "Grey Color": C(0.402, 0.372, 0.080), "Grey Drift": 0.38,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.20, "Block Size": 2.4, "Blotch Size": 2.2,
         "Drift Size": 9.0,
         "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 3.0, "Streak Length": 6.5, "Ledge Distance": 2.0, "Ledge Weight": 0.52,
@@ -659,7 +659,7 @@ def build_concrete_family():
         specular=0.18)
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.730, 0.578, 0.013), "Grey Color": C(0.420, 0.372, 0.042), "Grey Drift": 0.10,
+        "Base Color": C(0.752, 0.594, 0.105), "Grey Color": C(0.420, 0.372, 0.064), "Grey Drift": 0.10,
         "Grey Below Z": 1.0, "Grey Above Z": 4.0, "Tone Variation": 0.24, "Block Size": 3.0, "Blotch Size": 2.2,
         "Drift Size": 10.0,
         "Detail Strength": 0.80, "Streaks": 0.9, "Streak Scale": 3.4, "Streak Length": 7.5, "Ledge Distance": 2.5, "Ledge Weight": 0.50,
@@ -685,7 +685,7 @@ def build_concrete_family():
     # Edge Radius stays small: a 0.12 m bevel would eat a 0.4 m capital volute. Instance Variation is now value +
     # weathering (see PFA_concrete `wvar`), not hue -- QA-02-2's yellow-vs-salmon capitals.
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.720, 0.569, 0.013), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.12,
+        "Base Color": C(0.744, 0.586, 0.100), "Grey Color": C(0.450, 0.385, 0.062), "Grey Drift": 0.12,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.20, "Block Size": 1.2, "Blotch Size": 0.8,
         "Drift Size": 3.5,
         "Detail Strength": 0.4, "Streaks": 0.55, "Streak Scale": 6.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.6,
@@ -934,7 +934,7 @@ def build_water():
     t.plug(_fr.inputs["IOR"], 1.333); t.plug(_fr.inputs["Normal"], normal)
     _fw = t.sub(1.0, _fr.outputs[0])
     murk_w = t.madd(t.mul(_fw, _fw), 0.85, 0.15)
-    murk = t.vscale(murk, t.mul(murk_w, t.value(0.55, "WATER_MURK_GAIN")))
+    murk = t.vscale(murk, t.mul(murk_w, t.value(0.15, "WATER_MURK_GAIN")))
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.18,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
