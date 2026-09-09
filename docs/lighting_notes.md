@@ -2360,3 +2360,10 @@ the near-pure-blue fill's *complement* — the fill at (0.03, 0.02, 1.00) delive
 it replaced the tint it removed green faster than red. The single knob is the fill colour's green; it was solved
 on the hero's shaded attic, and moving it will move that box. Lead's call whether the hero's 1.9 deg of margin is
 worth spending on cam06's roofs.
+
+### 24.8 Round-13 item 1 still holds on the round-14 rig
+
+The shade fill's colour and elevation changed under Eevee too, so the r13 acceptance was re-measured on the round-14
+acceptance pair (`light_r13_measure --herogap`, 1920x1080): Eevee shaded attic **109.2 / 32.6 / 0.414** against
+Cycles' **116.4 / 33.6 / 0.410** — d_lum **-6.2 %**, d_hue **-1.0**, d_sat **+0.004** against windows of 15 % /
+6 deg / 0.10. `sky_top` and `sky_left` are identical between the engines to 0.1 lum, as they must be. **PASS.**
