@@ -188,7 +188,8 @@ def main():
         panel(a_hero, box5, "AFTER  ENV r7c (all hand-placed groups pinned)", [
             f"band lum {n('a_nband_lum')}",
             f"ray-cast  {n('a_nband_cast', '-')}",
-            f"{n('nband_note', '')}"], mark=(1360, 480, 1860, 600)),
+            f"{n('nband_note', '')}",
+            f"{n('nband_note2', '')}"], mark=(1360, 480, 1860, 600)),
         panel(REF169, ref_box(*box5), "REFERENCE  ref 169", [
             "round-06 table: raw ref box 145.9, dark<60 16.2 %",
             "round 04 read 91.6 = 0.63 of it; round 06 146.0 = 1.00"]),
