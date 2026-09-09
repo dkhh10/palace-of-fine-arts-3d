@@ -2204,3 +2204,22 @@ The knobs are `MAT_water_lagoon`'s specular strength and roughness at 82.5 deg o
 scale (every degree of facet slope swings the mirror 2 deg, off the stone and onto the sky), and how much of the
 box the murk/bed term occupies. Lighting will not lower the glossy sky to fake it: that number is QA-05-4's
 near-water window and QA-03-7 spent two rounds calibrating it.
+
+### 24.2b Which window is right for the other four cameras — settled on the photographs
+
+The brief asks for the four non-hero cameras' shade in **hue 195-230 at sat <= 0.35** ("a neutral cool grey-blue");
+QA-06-2's own acceptance asks for the opposite — cam03's walk in **25-60** and cam06's roofs/ground/trees within
+15 deg of ref 105's warm neutrals. They cannot both be met, so they were measured on the photographs
+(coarse tiles, darkest quartile = the shaded surfaces):
+
+| photograph | shaded (darkest quartile) hue / sat / lum | tiles in hue 195-230 | tiles in hue 200-300 |
+|---|---|---|---|
+| ref 138, the colonnade | **25.3** / 0.342 / 70.7 | 7.9 % | 13.3 % |
+| ref 105, the aerial | **49.4** / 0.119 / 158.1 | **0.0 %** | 0.5 % |
+| ref 169, hero shaded attic (QA) | **29.5** / 0.425 / 115.0 | — | — |
+
+**Shaded Palace concrete photographs WARM, at hue 25-50 and low saturation, in every reference we have.** The
+neutral cool grey-blue of the brief is the ILLUMINANT, not the surface, and on this rig the illuminant already is
+one: the probe's neutral grey card reads **hue 215-219 at sat 0.46-0.50** (24.1). So round 14 ships against QA's
+windows for the surfaces and reports the illuminant's own hue/sat as the answer to the brief's 195-230 — they are
+the same requirement stated about two different things, and the confusion is what QA-06-2 is made of.
