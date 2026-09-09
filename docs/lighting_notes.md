@@ -2223,3 +2223,44 @@ neutral cool grey-blue of the brief is the ILLUMINANT, not the surface, and on t
 one: the probe's neutral grey card reads **hue 215-219 at sat 0.46-0.50** (24.1). So round 14 ships against QA's
 windows for the surfaces and reports the illuminant's own hue/sat as the answer to the brief's 195-230 — they are
 the same requirement stated about two different things, and the confusion is what QA-06-2 is made of.
+
+### 24.3b Wave 2-3 — the shade's blue comes back from a DIRECTIONAL rig, and the exponent keeps it off everything else
+
+Correction to wave 1's Eevee rows: the sweep's `fill` key defaults to 0, and `build_shade_fill` builds NO lamps at
+zero, so wave 1's Eevee frames were rendered **without** the r13 Eevee shade fill. Every Eevee row from wave 2 on
+carries `fill=55`, the shipped value, and the wave-2 `baseE` case is the correct "before".
+
+`SHADE_FILL` is switched on in CYCLES as well (`cfill`), at a low elevation and with the colour re-derived: round
+13's (0.14, 0.19, 1.00) was solved for EEVEE's deficit, and in Cycles it adds +9 red and +12 green for its +26
+blue, which moves the shade's hue the wrong way as fast as its blue moves it back. Solved again from the wave-2
+deltas: **(0.03, 0.02, 1.00)**. Hero Cycles 1280x720 / 64 spp, logs `light_r14_w2.log` / `w3.log`:
+
+| case (all on q3 p6 b40 unless noted) | hero shaded attic lum / hue / sat | sunlit sat / R-B | near water lum / sat | cam06 plaza / trees hue |
+|---|---|---|---|---|---|
+| `baseE` = r13 as shipped | **116.2 / 31.0 / 0.382** | 0.470 / 103.0 | 117.9 / 0.303 | 250.5 / 267.4 |
+| `Af0` no fill | 113.4 / **40.5** / **0.603** | **0.542 / 119.1** | 117.0 / 0.270 | 34.3 / 32.9 |
+| `Af35` fill 35 W, el 5, r13 colour | 121.8 / 39.3 / 0.500 | 0.507 / 111.6 | 148.1 / 0.235 | — |
+| `Af55` fill 55 W, el 5, r13 colour | 126.2 / 38.8 / 0.453 | 0.490 / 107.9 | 157.7 / 0.212 | — |
+| `F3` fill 55 W, el 5, blue colour | 117.6 / 34.6 / 0.434 | 0.496 / 108.9 | 142.9 / 0.319 | — |
+| **`F1` fill 55 W, el 2, blue colour** | **117.2 / 35.3 / 0.449** | **0.501 / 110.0** | 140.0 / 0.320 | — |
+| **`F2` fill 90 W, el 2, blue colour** | **119.6 / 31.6 / 0.375** | 0.478 / 104.9 | 149.0 / 0.293 | 25.4 / 23.2 |
+| `P3` q3 **p3** b34, no fill | 114.0 / 39.3 / 0.561 | 0.538 / 118.2 | 117.2 / 0.280 | 343.2 / 8.6 |
+| `P2` q3 **p2** b24, no fill | 113.7 / 39.6 / 0.577 | 0.539 / 118.4 | 117.3 / 0.281 | 320.9 / 0.7 |
+| window / ref 169 | 103-127 / 23.5-35.5 / <= 0.50 | >= 0.50 / >= 110 | — / 0.22-0.32 | 22-52 |
+
+**The intermediate exponent is not a way out.** `P2` and `P3` land the hero's shaded attic at hue 39.3-39.6 — no
+better than p6 — while cam06's roofs are still at 255-256 and the plaza has only rotated through magenta
+(321-343). Between p1 and p2 the hero's shade has already lost its blue and the aerial has not yet got its warmth
+back: there is no p that does both, which is 24.2's point restated as a measurement.
+
+**The directional fill is.** At elevation 2 deg a sun lamp gives a vertical wall cos(2) = 0.999 of its irradiance
+and a horizontal one sin(2) = 0.035 — a **29x** discrimination against the horizon exponent's 4.8x — and it is
+blind to the sun-facing side because those faces point away from it. `F1` and `F2` bracket the answer: at 55 W the
+hero's shade sits at hue 35.3 (0.2 deg inside the window) and **both sunlit windows pass for the first time in the
+project** (0.501 / 110.0, against the 0.470 / 103.0 that 22.3 declared lighting had no room to fix); at 90 W the
+shade returns to the r13 rig's own 31.6 / 0.375 with 3.9 deg of margin and the sunlit pair falls back to
+0.478 / 104.9, still better than the r13 rig it replaces.
+
+The fill's one real cost is the near-water box: 117.9 -> 140-149 of luminance and hue 213.9 -> 227-228, because
+the lagoon's murk takes 3.5 % of a 55-90 W/m2 blue lamp. Its SATURATION stays inside QA-05-4's window
+(0.293-0.320 against 0.22-0.32); its hue moves further from the 185-200 the same defect asks for.

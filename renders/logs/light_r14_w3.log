@@ -137,3 +137,12 @@ Info: No orphaned data-blocks to purge
 [light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
 [light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
 [r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+12:12.958  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_P2_06e.png'
+[r14] -> r14_P2_06e.png (48.3s, 1280x720)
+[r14] camera times: 01c 91.0s  06e 48.7s  01c 90.9s  06e 45.0s  01c 98.7s  06e 47.0s  01c 94.4s  06e 47.3s  01c 93.1s  06e 48.3s   TOTAL 704.6s over 10 frames
+[r14] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 38398 exited rc=0 after 733 s (max 3000)
