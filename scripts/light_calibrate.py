@@ -152,6 +152,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
                    diffuse_saturation=1.0,
                    diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0,
                    diffuse_tint_antisun_p=1.0, diffuse_tint_horizon_p=1.0,
+                   diffuse_tint_sunside=None, diffuse_tint_sunside_p=1.0,
                    split_rays=True):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
@@ -359,6 +360,61 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         nt.links.new(sky_color, a_in)
         b_in.default_value = (diffuse_tint[0], diffuse_tint[1], diffuse_tint[2], 1.0)
         sky_color = res
+    # ROUND 16 (QA-08-3, the hero's sunlit chroma). The MIRROR of the tint above, on the SUN half of the dome.
+    # The sun lamp already ships at (1.000, 0.607, 0.000) -- SUN_BLUE_MULT has been 0.00 since round 12 -- so on a
+    # sun-facing wall the direct term contributes NO blue at all and every blue unit the sunlit stone shows comes
+    # from the diffuse sky (round 09's calibration: 10.4 of 27.7 blue units at strength 1.0, and the diffuse socket
+    # has run at 0.80 x 2.50 = 2.0x physical since round 12). That is why materials could not close QA-08-3 from the
+    # albedo: the deficit is 26 display units of BLUE on a box whose red already matches the photograph (render
+    # 227/184/122, ref 231/186/96), i.e. it is a light-colour defect, not a reflectance one.
+    # The discriminator is the one round 12 built and round 14 sharpened, used in reverse: w_sun = 1 - w_antisun =
+    # clamp(0.5 - 0.5 * (Incoming . sun_direction)), so a SUN-facing wall (whose hemisphere is centred on a normal
+    # pointing at the sun) samples w_sun ~ 1 and a SHADED wall samples w_sun ~ 0. Multiplying the sky by
+    # (1, 1, kb) under that weight takes blue off the sunlit stone and leaves the hero's shaded attic -- the
+    # project's best-matched box -- where it is. Camera and glossy rays never traverse it (Fac = not_cam_or_glossy),
+    # so the visible sky and the lagoon's mirror of it are held exactly still, by construction.
+    if diffuse_tint_sunside is not None and tuple(diffuse_tint_sunside) != (1.0, 1.0, 1.0):
+        if vis_out is None:
+            lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
+            vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
+            nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0])
+            nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
+            clampn = nt.nodes.new("ShaderNodeMath"); clampn.operation = "MINIMUM"; clampn.inputs[1].default_value = 1.0
+            nt.links.new(vis.outputs[0], clampn.inputs[0])
+            vis_out = clampn.outputs[0]
+        inv3 = nt.nodes.new("ShaderNodeMath"); inv3.operation = "SUBTRACT"; inv3.name = "not_cam_or_glossy_sunside"
+        inv3.inputs[0].default_value = 1.0
+        nt.links.new(vis_out, inv3.inputs[1])
+        geo3 = nt.nodes.new("ShaderNodeNewGeometry"); geo3.name = "ray_direction_sunside"
+        dot3 = nt.nodes.new("ShaderNodeVectorMath"); dot3.operation = "DOT_PRODUCT"; dot3.name = "dot_sun_sunside"
+        sd3 = common.sun_direction(az_deg, el_deg)
+        dot3.inputs[1].default_value = (sd3.x, sd3.y, sd3.z)
+        nt.links.new(geo3.outputs["Incoming"], dot3.inputs[0])
+        # w_sun = 0.5 - 0.5 * (Incoming . sun_direction), clamped: 1 for a ray arriving FROM the sun's half of the
+        # dome, 0 for one arriving from the anti-sun half. (`sun_direction` is the direction the sunlight TRAVELS,
+        # so Incoming . sd = +1 is the anti-sun point -- the same sign convention as `antisun_weight` above.)
+        ws = nt.nodes.new("ShaderNodeMath"); ws.operation = "MULTIPLY_ADD"; ws.name = "sunside_weight"
+        ws.inputs[1].default_value = -0.5; ws.inputs[2].default_value = 0.5; ws.use_clamp = True
+        nt.links.new(dot3.outputs["Value"], ws.inputs[0])
+        ws_out = ws.outputs[0]
+        if abs(diffuse_tint_sunside_p - 1.0) > 1e-9:
+            wp = nt.nodes.new("ShaderNodeMath"); wp.operation = "POWER"; wp.name = "sunside_weight_p"
+            wp.inputs[1].default_value = diffuse_tint_sunside_p; wp.use_clamp = True
+            nt.links.new(ws_out, wp.inputs[0])
+            ws_out = wp.outputs[0]
+        msn = nt.nodes.new("ShaderNodeMath"); msn.operation = "MULTIPLY"; msn.name = "tint_fac_sunside"
+        nt.links.new(inv3.outputs[0], msn.inputs[0])
+        nt.links.new(ws_out, msn.inputs[1])
+        mixs = nt.nodes.new("ShaderNodeMix"); mixs.name = "sky_tint_sunside"
+        mixs.data_type = "RGBA"; mixs.blend_type = "MULTIPLY"; mixs.clamp_factor = True
+        fac_s = next(i for i in mixs.inputs if i.name == "Factor" and i.type == "VALUE")
+        a_s = next(i for i in mixs.inputs if i.name == "A" and i.type == "RGBA")
+        b_s = next(i for i in mixs.inputs if i.name == "B" and i.type == "RGBA")
+        res_s = next(o for o in mixs.outputs if o.type == "RGBA")
+        nt.links.new(msn.outputs[0], fac_s)
+        nt.links.new(sky_color, a_s)
+        b_s.default_value = (diffuse_tint_sunside[0], diffuse_tint_sunside[1], diffuse_tint_sunside[2], 1.0)
+        sky_color = res_s
     nt.links.new(sky_color, bg.inputs["Color"])
     bg.inputs["Strength"].default_value = strength
     if gain_out is not None:

@@ -1,0 +1,74 @@
+00:00.888  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.326  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:01.760  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.193  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:02.613  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:03.021  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:03.430  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:03.838  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:04.272  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:04.772  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r16] calibrate sky 0.8: lamp 67.31 W/m2 exposure -4.083 EV
+00:04.773  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r16] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9679 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: 1 cool sun lamps, Cycles 49.00 W/m2 (0.728 of the calibrated sun), Eevee 38.50 W/m2 (0.572 of the sun), hidden in render: False, at [(25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.2 m/texel, jitter False
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'R15_S0T55' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 55.0), antisun 1.00, horizon 1.00, exponents 3.0 / 6.0, sunside (1.0, 1.0, 0.0)^3.0)
+[light_probes] bake {'FINISHED'} in 4.3s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[light_probes] restored: engine BLENDER_EEVEE, world R15_S0T55, vault rig EEVEE override
+[r16] re-baked with the LIGHTING (r13) world in 4s
+[r16] case S0T55: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 | WORLD 'R15_S0T55' db 2.5 gb 4.2 gsat 0.9 ghue 0.5000 tint 1,0.65,55 ta 1^3 th 1^6 sunside 1,1,0^3 | shade cycles 49 eevee 38.5 W/m2 w [az25@1] | f 1 v 1 exposure -2.833 EV
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+01:18.689  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r16_S0T55_01c.png'
+[r16] -> r16_S0T55_01c.png (68.4s, 1920x1080)
+[light_build] LIGHT_shade_fill: 1 cool sun lamps, Cycles 49.00 W/m2 (0.728 of the calibrated sun), Eevee 38.50 W/m2 (0.572 of the sun), hidden in render: False, at [(25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.2 m/texel, jitter False
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'R15_S0T70' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 70.0), antisun 1.00, horizon 1.00, exponents 3.0 / 6.0, sunside (1.0, 1.0, 0.0)^3.0)
+[light_probes] bake {'FINISHED'} in 4.0s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[light_probes] restored: engine CYCLES, world R15_S0T70, vault rig physical
+[r16] re-baked with the LIGHTING (r13) world in 4s
+[r16] case S0T70: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 | WORLD 'R15_S0T70' db 2.5 gb 4.2 gsat 0.9 ghue 0.5000 tint 1,0.65,70 ta 1^3 th 1^6 sunside 1,1,0^3 | shade cycles 49 eevee 38.5 W/m2 w [az25@1] | f 1 v 1 exposure -2.833 EV
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+02:31.441  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r16_S0T70_01c.png'
+[r16] -> r16_S0T70_01c.png (68.5s, 1920x1080)
+[r16] camera times: 01c 68.4s  01c 68.5s   TOTAL 136.9s over 2 frames
+[r16] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 4, total unfreed memory 0.250336 MB
+blender_run.sh: pid 57416 exited rc=0 after 152 s (max 1800)

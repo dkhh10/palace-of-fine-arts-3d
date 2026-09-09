@@ -1,0 +1,17 @@
+00:00.319  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[common] set_lod viewport=LOD1 render=LOD0: 6448 objects, 6 collections
+[check] gating on /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend (9679 objects; ORN instanced onto its sockets)
+
+[probe] cast down from z=40.0, eye = surface + 1.75
+[probe]        x        y | surface                            z | eye_z  nearest  what
+[probe]     28.0    -24.0 | ENV_terrain_ground             -0.66 |  1.09     1.79  ENV_terrain_ground
+[probe]     27.2    -24.2 | ENV_terrain_ground             -0.63 |  1.12     1.78  ENV_terrain_ground
+[probe]     26.5    -22.5 | ENV_terrain_ground             -0.61 |  1.14     0.90  ENV_shrub_maho1_0946_LOD1
+[probe]     26.2    -23.8 | ENV_terrain_ground             -0.62 |  1.13     1.78  ENV_terrain_ground
+[probe]     25.6    -23.0 | ENV_terrain_ground             -0.60 |  1.15     1.69  ENV_shrub_maho1_0946_LOD1
+[probe]     25.0    -21.0 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     24.8    -22.2 | ENV_terrain_ground             -0.59 |  1.16     1.78  ENV_terrain_ground
+[probe]     24.2    -20.8 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     24.0    -19.5 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+blender_run.sh: pid 56852 exited rc=0 after 5 s (max 900)

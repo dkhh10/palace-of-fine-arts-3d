@@ -96,8 +96,17 @@ STATIONS = [
     ("walk_a",     ( 73.50,  38.00, 1.90), V_LAND,  "shore", None, "apron -0.69"),
     ("walk_b",     ( 73.00,  33.00, 1.25), V_LAND,  "shore", None, "apron -0.71"),
     ("walk_c",     ( 72.00,  29.00, 1.10), V_LAND,  "shore", None, "terrain -0.74"),
-    ("cam02",      qa_xy("CAM_qa_02_lagoon_ne_threequarter") + (1.06,), V_LAND,  "shore", None,
-                                                "CAM_qa_02 station (az 160 / 75 m); walk -0.69, agl 1.75"),
+    # ROUND 16 (QA-08-13). This station used to be read from qa_cameras by name, on prep review 1's rule that a
+    # re-stationing there must not silently desync the route. It desynced the route the other way instead: in
+    # round 08 the lead moved CAM_qa_02 from the SSE shore path (70.5, 25.6) to the NNE fit of ref 062 at
+    # (-79.8, 24.4), i.e. to the FAR SIDE of the building from every other station on this leg. The bezier then ran
+    # the camera across the courtyard and back, the route went 250 m -> ~530 m and the saved frame range 1-1224 ->
+    # 1-2616 (109 s at 24 fps) with nothing in any brief asking for it. The lead's round-16 decision is that the
+    # flythrough stays ~50 s, so the station is PINNED at the east-shore point the route was designed around and
+    # the QA camera is no longer on the route. Kept because it is a good station in its own right (the
+    # three-quarter over the courtyard) -- it is simply not CAM_qa_02 any more, and the name says so.
+    ("ne_apron",   ( 70.50,  25.60, 1.06), V_LAND,  "shore", None,
+                                                "east shore apron, the round-07 CAM_qa_02 station; walk -0.69, agl 1.75"),
     ("apron_a",    ( 70.20,  19.00, 1.15), V_LAND,  "shore", None, "courtyard apron, terrain -0.58"),
     ("apron_b",    ( 68.60,  13.50, 1.12), V_LAND,  "shore", None, "courtyard apron, terrain -0.63"),
     _arc("bay_line",  GAP_THETA,  108.00, 1.08, V_GALLERY, "gallery", "on the bay's radial line, 7 m short of the row", tangent=False),
@@ -114,9 +123,17 @@ STATIONS += [
          "past the last columns (theta -66.90): the wing's open rotunda end"),
     # The approach swings SOUTH of the ENV_shrub_pitto7_1159 / big2_0920 group at (27..29, -19..-22), which the
     # first two round-14 routes clipped at 0.60 and 1.39 m; every station below probes >= 1.77 m clear.
-    ("app_a",      ( 28.00, -24.00, 1.09), V_LAND, "approach", None, "terrain -0.66, clear 1.79"),
-    ("app_b",      ( 26.50, -22.50, 1.14), V_LAND, "approach", None, "terrain -0.61, clear 1.77"),
-    ("app_c",      ( 25.00, -21.00, 1.15), V_LAND, "approach", None, "terrain -0.60, clear 1.78"),
+    ("app_a",      ( 28.10, -24.60, 1.11), V_LAND, "approach", None, "colonnade-walk apron -0.64, clear 1.79 (r16)"),
+    ("app_a2",     ( 27.00, -24.60, 1.12), V_LAND, "approach", None, "terrain -0.63, clear 1.78 (r16: the bezier "
+                                                                     "between app_a and app_b bulged to 1.44 m of "
+                                                                     "ENV_shrub_maho1_0946 without this knot)"),
+    # ROUND 16: app_b and app_c moved SOUTH-WEST, 1.30 m and 1.20 m, because ENV has planted
+    # ENV_shrub_maho1_0946 at (27.26, -21.77) since the round-14 probe: the old app_b measured 0.90 m of
+    # clearance to it and the rendered path 0.54 m at frame 937 (`light_r16_check_master_step4.log`), the only
+    # gate failure of the round. Both new points probe 1.78 m (`light_r16_probe.log`).
+    ("app_b",      ( 26.10, -24.30, 1.13), V_LAND, "approach", None, "terrain -0.62, clear 1.78 (r16: was 26.50,-22.50, 0.90 to ENV_shrub_maho1_0946)"),
+    ("app_b2",     ( 25.40, -23.40, 1.15), V_LAND, "approach", None, "terrain -0.60, clear 1.78 (r16)"),
+    ("app_c",      ( 24.80, -22.20, 1.16), V_LAND, "approach", None, "terrain -0.59, clear 1.78 (r16: was 25.00,-21.00)"),
     ("app_d",      ( 24.00, -19.50, 1.15), V_LAND, "approach", None, "terrain -0.60, clear 1.78"),
     ("app_e",      ( 22.50, -17.80, 1.25), V_LAND, "approach", None, "terrain -0.60, on the az-218 face axis between "
                                                                      "the piers at az 194.5 and 239.5"),
@@ -136,7 +153,7 @@ TARGET_KEYS = [
     ("hero",       "end",   (0.0, 0.0, 14.0)),
     ("lagoon_c",   0.0,     (0.0, 0.0, 12.0)),
     ("shore_over", 0.0,     (14.0, 2.0, 16.0)),  # swing off the rotunda toward the south wing over the landfall
-    ("cam02",      0.0,     (0.0, 0.0, 21.1)),   # CAM_qa_02's own target
+    ("ne_apron",   0.0,     (0.0, 0.0, 21.1)),   # the round-07 CAM_qa_02 target: the rotunda over the courtyard
     ("gap_in",     0.0,     (0.0, 0.0, 12.0)),   # through the bay, still on the rotunda
     ("gal_04",     0.0,     (0.0, 0.0, 9.2)),    # CAM_qa_03's target: the rotunda seen through the columns
     ("gal_out",    0.0,     (0.0, 0.0, 12.0)),
@@ -252,8 +269,18 @@ def speed_profile(s_wp, caps, accel=ACCEL, ds=0.20):
     return grid, v, t
 
 
-def invert(t_grid, s_grid, tt):
-    """s at time tt by linear interpolation of the monotone t -> s table."""
+def invert(t_grid, s_grid, tt, v_grid=None):
+    """s at time tt from the monotone t -> s table.
+
+    ROUND 16 (flythrough plan finding 1). With `v_grid` this integrates the profile EXACTLY inside the grid
+    interval instead of interpolating s linearly across it. `speed_profile` grids arc length at ds = 0.20 m, so
+    the first interval out of a hold spans v 0 -> 0.5 m/s, i.e. ~0.8 s of wall time; interpolating s linearly
+    across it renders that whole interval at a constant 0.5 m/s and then steps, which sampled as 0.00 -> 0.50 m/s
+    in one frame at the hero boundary (frame 85) and 2.10 -> 0.50 -> 0.00 settling under the dome (frames
+    1105-1129): an effective 3.2 m/s^2 against the designed ACCEL 2.5, a visible jerk out of shot 1 and a snap
+    into shot 6. The profile is piecewise-constant-acceleration by construction (v[i+1]^2 = v[i]^2 + 2 a ds), so
+    s(tau) = s_i + v_i tau + a tau^2 / 2 is not an approximation: it is the curve the profile already describes,
+    and it makes the rendered speed continuous at both hold boundaries."""
     if tt <= 0:
         return s_grid[0]
     if tt >= t_grid[-1]:
@@ -265,8 +292,14 @@ def invert(t_grid, s_grid, tt):
             lo = mid
         else:
             hi = mid
+    ds = s_grid[hi] - s_grid[lo]
+    if v_grid is not None and ds > 1e-12:
+        v0, v1 = v_grid[lo], v_grid[hi]
+        a = (v1 * v1 - v0 * v0) / (2.0 * ds)
+        tau = tt - t_grid[lo]
+        return min(s_grid[hi], s_grid[lo] + v0 * tau + 0.5 * a * tau * tau)
     f = (tt - t_grid[lo]) / max(t_grid[hi] - t_grid[lo], 1e-12)
-    return s_grid[lo] + f * (s_grid[hi] - s_grid[lo])
+    return s_grid[lo] + f * ds
 
 
 def schedule(path_obj):
@@ -284,7 +317,7 @@ def schedule(path_obj):
         if f <= h1:
             s_of_frame.append(0.0)
         elif f <= h1 + move:
-            s_of_frame.append(invert(t, grid, (f - h1) / FPS))
+            s_of_frame.append(invert(t, grid, (f - h1) / FPS, v))
         else:
             s_of_frame.append(total)
     # station arrival frames
@@ -305,6 +338,9 @@ def schedule(path_obj):
             cur = dict(name=label, f0=f0, f1=f1, cap=st[2], water=label in WATER_LEGS)
             legs.append(cur)
     holds = dict(hero=[1, h1], dome=[h1 + move, frames])
+    if not 1150 <= frames <= 1350:                       # r16 review fix 2: the route's design window (~50 s at 24 fps);
+        raise RuntimeError(f"flythrough schedule is {frames} frames, outside the 1150-1350 design window "
+                           f"(QA-08-13: a moved QA camera station changed the route length silently)")
     return dict(fps=FPS, frames=frames, hold_hero_frames=h1, move_frames=move,
                 path_length_m=round(total, 2), t_move_s=round(t_move, 2), legs=legs, holds=holds,
                 arrive={k: int(v_) for k, v_ in arrive.items()},

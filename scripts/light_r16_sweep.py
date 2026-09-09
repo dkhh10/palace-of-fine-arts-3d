@@ -1,4 +1,18 @@
-"""Round-15 sweep (a copy of the round-14 sweep with the round-15 keys; the r14 script is left as the record of
+"""Round-16 sweep (a copy of the round-15 sweep with the round-16 keys; the r15 script is left as the record of
+round 15). Round-15 header follows.
+
+New keys:
+  * `tsr` / `tsg` / `tsb` / `tsp` -- SKY_DIFFUSE_TINT_SUNSIDE and its exponent (QA-08-3). The MIRROR of the
+    round-12 diffuse tint: a multiply on the sky that lands on SUN-FACING surfaces only, weighted by
+    (0.5 - 0.5 * Incoming.sun)^tsp. The sunlit stone's blue is entirely sky (SUN_BLUE_MULT has been 0.00 since
+    round 12), so this is the only socket that can take blue off the sunlit attic without touching the shaded one.
+  * `faz` -- the AZIMUTH of the SHADE_FILL lamps (QA-08-2). cam02's piers face straight down the NNE lamp's axis
+    at az 25 and read hue 263; the hero's shaded attic sees the same lamp obliquely. Rotating the lamp is the only
+    geometric discriminator between the two faces that does not need light linking.
+
+Round-15 header:
+
+Round-15 sweep (a copy of the round-14 sweep with the round-15 keys; the r14 script is left as the record of
 round 14). Round-14 header follows.
 
 New keys:
@@ -22,7 +36,7 @@ of round 13).
     (round-12 behaviour), 0 = do not re-bake, 3 = free the caches.
   * `ms` / `md` -- MIST start / depth.   `hz` / `hk` -- the compositor's haze cap and extinction.
 
-    scripts/blender_run.sh 1200 -- --background --python scripts/light_r15_sweep.py -- --cams 01e 01c
+    scripts/blender_run.sh 1200 -- --background --python scripts/light_r16_sweep.py -- --cams 01e 01c
 """
 import bpy, os, sys, time
 from pathlib import Path
@@ -58,7 +72,7 @@ SAMPLES = int(arg("--samples", ["64"], n=1)[0])
 EEVEE_SAMPLES = int(arg("--eevsamples", ["32"], n=1)[0])
 MASTER = arg("--master", [str(common.ROOT / "master.blend")], n=1)[0]   # THIS worktree's master, per the round-12 lesson
 OUT = Path(arg("--out", [str(common.RENDERS / "previews" / "lighting")], n=1)[0])
-PREFIX = arg("--prefix", ["r15"], n=1)[0]
+PREFIX = arg("--prefix", ["r16"], n=1)[0]
 # --border x0 y0 x1 y1 in HERO pixels (1920x1080): render only that rectangle and leave the rest black, WITHOUT
 # cropping, so every measurement box still lands on the same pixel coordinates. A carry that only needs the attic
 # and the water costs a quarter of a frame instead of a whole one.
@@ -93,12 +107,17 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 # ROUND 14
                 tap=lb.SKY_DIFFUSE_TINT_ANTISUN_P, thp=lb.SKY_DIFFUSE_TINT_HORIZON_P,
                 ghue=lb.SKY_GLOSSY_HUE,           # ROUND 15 (QA-07-1): hue of the sky the lagoon mirrors
+                # ROUND 16 (QA-08-3): the sun-side diffuse tint and its exponent
+                tsr=lb.SKY_DIFFUSE_TINT_SUNSIDE[0], tsg=lb.SKY_DIFFUSE_TINT_SUNSIDE[1],
+                tsb=lb.SKY_DIFFUSE_TINT_SUNSIDE[2], tsp=lb.SKY_DIFFUSE_TINT_SUNSIDE_P,
+                faz=-1.0,                         # ROUND 16 (QA-08-2): SHADE_FILL lamp azimuth (-1 = keep)
                 wwnw=-1.0, wssw=-1.0, wnne=-1.0,  # ROUND 15: per-lamp SHADE_FILL weights (-1 = keep)
                 sres=-1.0, sray=-1.0, srstep=-1.0, nfill=-1.0,
                 sfres=-1.0, sfjit=-1.0,
+                look=None,    # ROUND 16 (QA-08-3): the AgX look string, applied after the preset
                 cfill=-1.0)   # ROUND 14: the CYCLES energy of LIGHT_shade_fill (`fill` is the Eevee one)      # the shade lamps' own shadow resolution / jitter
 SKY_KEYS = ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "ghue", "tr", "tg", "tb", "ta", "th",
-            "tap", "thp", "bm", "de")
+            "tap", "thp", "bm", "de", "tsr", "tsg", "tsb", "tsp")
 
 
 def parse(case):
@@ -109,14 +128,18 @@ def parse(case):
             continue
         k, v = part.split("=", 1)
         k = k.strip()
-        c[k] = v if k == "tag" else float(v)
+        # ROUND 16: `look` is the AgX look STRING (light_presets.LOOK), e.g. "AgX - Very High Contrast". QA-08-3
+        # names scene.view_settings.look as one of the two remaining levers on the sunlit stone's chroma, and it
+        # is the only one that is not a light: it is applied AFTER the preset in shoot().
+        c[k] = v if k in ("tag", "look") else float(v)
     return c
 
 
 def case_tag(c):
     if c["tag"]:
         return c["tag"]
-    bits = [f"{k}{c[k]:g}" for k in DEFAULTS if abs(c[k] - DEFAULTS[k]) > 1e-9]
+    bits = [f"{k}{c[k]:g}" for k in DEFAULTS
+            if isinstance(c[k], float) and isinstance(DEFAULTS[k], float) and abs(c[k] - DEFAULTS[k]) > 1e-9]
     return "_".join(bits) or "base"
 
 
@@ -131,7 +154,7 @@ for c in CASES:
         e = cal.measure_exposure(AZ, EL, m["lamp_energy"], m["sun_color_normalised"], lb.SKY,
                                  samples=256, sky_strength=c["sky"])
         _calib[c["sky"]] = (m["lamp_energy"], list(m["sun_color_normalised"]), e["exposure_ev"])
-        print(f"[r15] calibrate sky {c['sky']:g}: lamp {m['lamp_energy']:.2f} W/m2 "
+        print(f"[r16] calibrate sky {c['sky']:g}: lamp {m['lamp_energy']:.2f} W/m2 "
               f"exposure {e['exposure_ev']:.3f} EV", flush=True)
 
 bpy.ops.wm.open_mainfile(filepath=MASTER, load_ui=False)
@@ -146,7 +169,7 @@ _E_DISK0 = float(_DISK.get("energy_W", _DISK.data.energy)) if _DISK else 0.0
 _E_VAULT0 = float(_VAULT[0].get("energy_W", _VAULT[0].data.energy)) if _VAULT else 0.0
 _SHADE_FILL0 = dict(lb.SHADE_FILL, lamps=[dict(l) for l in lb.SHADE_FILL["lamps"]])   # pristine copy (r11 fix 7)
 _N_OBJ = len(scene.objects)
-print(f"[r15] master {MASTER}: {_N_OBJ} objects, exposure {EXPOSURE0:.4f}, look {scene.view_settings.look!r}, "
+print(f"[r16] master {MASTER}: {_N_OBJ} objects, exposure {EXPOSURE0:.4f}, look {scene.view_settings.look!r}, "
       f"engine {scene.render.engine}, world {WORLD0.name!r}, sun {sun.data.energy:.2f} W/m2", flush=True)
 
 
@@ -174,14 +197,18 @@ def apply_case(c):
                                diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"],
                                diffuse_tint=(c["tr"], c["tg"], c["tb"]), diffuse_boost=c["db"],
                                diffuse_tint_antisun=c["ta"], diffuse_tint_horizon=c["th"],
-                               diffuse_tint_antisun_p=c["tap"], diffuse_tint_horizon_p=c["thp"])
+                               diffuse_tint_antisun_p=c["tap"], diffuse_tint_horizon_p=c["thp"],
+                               diffuse_tint_sunside=(c["tsr"], c["tsg"], c["tsb"]),
+                               diffuse_tint_sunside_p=c["tsp"])
         for k, v in (("sun_azimuth_deg", AZ), ("sun_elevation_deg", EL), ("sky_strength_lighting", c["sky"]),
                      ("sky_diffuse_boost", c["db"]), ("sky_diffuse_saturation", c["dsat"]),
                      ("sky_diffuse_hue", c["dhue"]), ("sky_diffuse_tint", [c["tr"], c["tg"], c["tb"]]),
                      ("sky_diffuse_tint_antisun", c["ta"]), ("sky_diffuse_tint_horizon", c["th"]),
                      ("sky_diffuse_tint_antisun_p", c["tap"]), ("sky_diffuse_tint_horizon_p", c["thp"]),
                      ("sky_glossy_boost", c["gb"]), ("sky_glossy_saturation", c["gsat"]),
-                     ("sky_glossy_hue", c["ghue"])):
+                     ("sky_glossy_hue", c["ghue"]),
+                     ("sky_diffuse_tint_sunside", [c["tsr"], c["tsg"], c["tsb"]]),
+                     ("sky_diffuse_tint_sunside_p", c["tsp"])):
             w[k] = v          # so light_probes.bake_world can rebuild the swept rig, not the shipped one
         for k, v in lb.SKY.items():
             w["sky_" + k] = v
@@ -227,6 +254,8 @@ def apply_case(c):
         lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=[
             dict(l, w=(l["w"] if _key(l) is None or _w[_key(l)] < 0.0 else _w[_key(l)]))
             for l in lb.SHADE_FILL["lamps"]])
+    if c["faz"] >= 0.0:                              # ROUND 16 (QA-08-2): rotate the whole fill rig
+        lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=[dict(l, az=c["faz"]) for l in lb.SHADE_FILL["lamps"]])
     if c["nfill"] >= 0.0:                            # ROUND 14 (QA-06-13): keep only the first n shade lamps
         lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=lb.SHADE_FILL["lamps"][:int(c["nfill"])])
     lb.build_shade_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection,
@@ -241,12 +270,12 @@ def apply_case(c):
     # --- the Eevee irradiance bake (item 1). This is what carries the shade in Eevee, so it is a case key.
     if c["bake"] > 2.5:
         probes.free(scene)          # bake=3: no irradiance volumes at all, i.e. Eevee's world SH alone
-        print("[r15] light-probe caches FREED: the frame is lit by the world SH and the lamps only", flush=True)
+        print("[r16] light-probe caches FREED: the frame is lit by the world SH and the lamps only", flush=True)
     elif c["bake"] > 0.5:
         lighting = c["bake"] < 1.5
         t = time.time()
         probes.bake(scene, lighting_world=lighting)
-        print(f"[r15] re-baked with the {'LIGHTING (r13)' if lighting else 'SCENE/CAMERA (r12)'} world "
+        print(f"[r16] re-baked with the {'LIGHTING (r13)' if lighting else 'SCENE/CAMERA (r12)'} world "
               f"in {time.time()-t:.0f}s", flush=True)
     # r14 review carry 1: print what the WORLD actually carries, not the case keys. A case that moves no sky key
     # reuses the master's own saved world, whose exponents / boosts are NOT the sweep defaults, and the old header
@@ -258,14 +287,16 @@ def apply_case(c):
         except Exception:
             return float(d)
     wt = W.get("sky_diffuse_tint", [c["tr"], c["tg"], c["tb"]])
-    lamps = ",".join(f"{l['w']:g}" for l in lb.SHADE_FILL["lamps"])
-    print(f"[r15] case {case_tag(c)}: bake {c['bake']:g} comp {c['comp']:g} mist start {c['ms']:g} depth {c['md']:g} "
+    lamps = ",".join(f"az{l['az']:g}@{l['w']:g}" for l in lb.SHADE_FILL["lamps"])
+    wts = W.get("sky_diffuse_tint_sunside", [c["tsr"], c["tsg"], c["tsb"]])
+    print(f"[r16] case {case_tag(c)}: bake {c['bake']:g} comp {c['comp']:g} mist start {c['ms']:g} depth {c['md']:g} "
           f"haze cap {c['hz']:g} k {c['hk']:g} | WORLD {W.name!r} db {wp('sky_diffuse_boost', c['db']):g} "
           f"gb {wp('sky_glossy_boost', c['gb']):g} gsat {wp('sky_glossy_saturation', c['gsat']):g} "
           f"ghue {wp('sky_glossy_hue', c['ghue']):.4f} "
           f"tint {','.join(f'{float(v):g}' for v in wt)} "
           f"ta {wp('sky_diffuse_tint_antisun', c['ta']):g}^{wp('sky_diffuse_tint_antisun_p', c['tap']):g} "
-          f"th {wp('sky_diffuse_tint_horizon', c['th']):g}^{wp('sky_diffuse_tint_horizon_p', c['thp']):g} | "
+          f"th {wp('sky_diffuse_tint_horizon', c['th']):g}^{wp('sky_diffuse_tint_horizon_p', c['thp']):g} "
+          f"sunside {','.join(f'{float(v):g}' for v in wts)}^{wp('sky_diffuse_tint_sunside_p', c['tsp']):g} | "
           f"shade cycles {(lb.SHADE_FILL.get('energy', 0.0) if c['cfill'] < 0.0 else c['cfill']):g} "
           f"eevee {c['fill']:g} W/m2 w [{lamps}] | f {c['f']:g} v {c['v']:g} "
           f"exposure {scene.view_settings.exposure:.3f} EV", flush=True)
@@ -312,15 +343,19 @@ def shoot(cam_id, tag):
             e.shadow_ray_count = int(CASE["sray"])
         if CASE["srstep"] >= 0.0:
             e.shadow_step_count = int(CASE["srstep"])
-        print(f"[r15] eevee: fast_gi {e.use_fast_gi} dist {getattr(e, 'fast_gi_distance', 0):.1f} rays "
+        print(f"[r16] eevee: fast_gi {e.use_fast_gi} dist {getattr(e, 'fast_gi_distance', 0):.1f} rays "
               f"{e.fast_gi_ray_count} raytracing {e.use_raytracing} threshold {e.light_threshold}", flush=True)
+    if CASE.get("look"):
+        scene.view_settings.look = CASE["look"]
+    print(f"[r16] view transform {scene.view_settings.view_transform!r} look {scene.view_settings.look!r} "
+          f"exposure {scene.view_settings.exposure:.3f} EV", flush=True)
     fp = OUT / f"{PREFIX}_{tag}_{num}{eng}.png"
     scene.render.filepath = str(fp)
     t = time.time()
     bpy.ops.render.render(write_still=True)
     dt = time.time() - t
     TIMES.append((cam_id, dt))
-    print(f"[r15] -> {fp.name} ({dt:.1f}s, {res[0]}x{res[1]})", flush=True)
+    print(f"[r16] -> {fp.name} ({dt:.1f}s, {res[0]}x{res[1]})", flush=True)
 
 
 TIMES = []
@@ -330,6 +365,6 @@ for c in CASES:
     apply_case(c)
     for cam in CAMS:
         shoot(cam, case_tag(c))
-print(f"[r15] camera times: " + "  ".join(f"{k} {v:.1f}s" for k, v in TIMES) +
+print(f"[r16] camera times: " + "  ".join(f"{k} {v:.1f}s" for k, v in TIMES) +
       f"   TOTAL {sum(v for _, v in TIMES):.1f}s over {len(TIMES)} frames", flush=True)
-print("[r15] done", flush=True)
+print("[r16] done", flush=True)

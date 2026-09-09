@@ -1,0 +1,64 @@
+
+-- r16_r16SHIP_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  127.7  hue   35.0  sat 0.447  R-B   +68.4  hue PASS[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  189.3  hue   37.0  sat 0.489  R-B  +111.4  sat FAIL[0.53-0.62] lum PASS[178-201]
+   entablature     lum  131.8  hue   38.9  sat 0.738  R-B  +127.8
+   columns         lum  125.4  hue   37.6  sat 0.634  R-B  +101.4  brief FAIL[20-28]
+   water_refl      lum  115.8  hue   40.7  sat 0.385  R-B   +50.5  hue PASS[25-45]
+   near_water_sky  lum  125.3  hue  207.8  sat 0.201  R-B   -28.2  hue FAIL[185-200] lum PASS[79.1-131.8]
+   sky_top         lum  168.0  hue  208.7  sat 0.434  R-B   -95.9
+   sky_left        lum  154.9  hue  208.6  sat 0.495  R-B  -105.7
+   south_wing      lum  100.1  hue   39.4  sat 0.313  R-B   +34.8
+   north_wing      lum  138.4  hue   42.3  sat 0.507  R-B   +81.9
+   shore_band      lum   88.3  hue   43.9  sat 0.717  R-B   +78.0
+   flank           lum  162.8  hue  209.6  sat 0.231  R-B   -43.2  hue PASS[0-210] lum PASS[114.3-190.5]
+
+-- r16_r16SHIP_01e.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  122.6  hue   37.8  sat 0.584  R-B   +89.1  hue FAIL[24-36] sat FAIL[0-0.5] lum PASS[103.5-126.5]
+   sunlit_attic    lum  183.8  hue   36.8  sat 0.505  R-B  +112.6  sat FAIL[0.53-0.62] lum PASS[178-201]
+   entablature     lum  106.3  hue   37.8  sat 0.750  R-B  +106.8
+   columns         lum  111.9  hue   37.0  sat 0.694  R-B  +102.1  brief FAIL[20-28]
+   water_refl      lum  129.1  hue  223.8  sat 0.165  R-B   -24.2  hue FAIL[25-45]
+   near_water_sky  lum  126.2  hue  217.4  sat 0.411  R-B   -71.2  hue FAIL[185-200] lum PASS[79.1-131.8]
+   sky_top         lum  167.9  hue  208.7  sat 0.432  R-B   -95.4
+   sky_left        lum  154.8  hue  208.6  sat 0.494  R-B  -105.2
+   south_wing      lum   94.8  hue   44.1  sat 0.385  R-B   +40.6
+   north_wing      lum  126.2  hue   41.2  sat 0.505  R-B   +75.0
+   shore_band      lum   72.1  hue   43.9  sat 0.586  R-B   +49.9
+   flank           lum  157.5  hue  213.9  sat 0.293  R-B   -56.2  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r16_r16SHIP_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   53.7  hue   28.1  sat 0.508  R-B   +35.5  ratio 0.325  QA PASS[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   80.1  hue  301.0  sat 0.128  R-B    +0.2  ratio 0.484  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_arch      lum   36.9  hue  260.8  sat 0.401  R-B   -14.7  ratio 0.223  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_frieze    lum   70.8  hue   28.8  sat 0.264  R-B   +21.2  ratio 0.428  QA PASS[25-60] sat PASS[0-0.35]
+   sunlit_pier     lum  165.5  hue   45.6  sat 0.384  R-B   +70.2
+   sky             lum  170.2  hue  210.3  sat 0.379  R-B   -82.4
+
+-- r16_r16SHIP_02c.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   57.7  hue  268.3  sat 0.322  R-B   -13.4  ratio 0.341  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_pier_r    lum   72.7  hue  234.6  sat 0.403  R-B   -44.9  ratio 0.429  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_arch      lum   58.8  hue  249.5  sat 0.390  R-B   -29.7  ratio 0.347  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_frieze    lum   77.9  hue  351.1  sat 0.128  R-B    +9.4  ratio 0.460  QA FAIL[25-60] sat PASS[0-0.35]
+   sunlit_pier     lum  169.3  hue   43.1  sat 0.346  R-B   +64.7
+   sky             lum  170.4  hue  210.2  sat 0.380  R-B   -82.8
+
+-- r16_r16SHIP_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   75.4  hue   89.0  sat 0.142  R-B    +5.7  ratio 0.760  QA FAIL[25-60] sat PASS[0-0.35]
+   shaft_flank     lum   50.4  hue   45.9  sat 0.902  R-B   +58.1  ratio 0.508
+   outer_row       lum   18.4  hue   57.0  sat 0.945  R-B   +19.4  ratio 0.186  QA PASS[25-60]
+   near_shaft      lum   26.3  hue   58.8  sat 0.566  R-B   +15.7  ratio 0.265
+   sunlit_rotunda  lum   99.2  hue   43.8  sat 0.631  R-B   +75.1
+   frame           lum   47.5  hue    0.0  sat 0.000  R-B    +0.0  dark 4.6%
+
+-- r16_r16SHIP_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  133.2  hue   39.0  sat 0.252  R-B   +36.6  sat PASS[0.24-1] lum FAIL[70-117]
+   attic_band      lum  165.7  hue   37.9  sat 0.579  R-B  +119.1
+
+-- r16_r16SHIP_06e.png   (cam 06, boxes at 1280x720)
+   roofs           lum  126.2  hue   27.3  sat 0.051  R-B    +6.6  QA PASS[22-52] brief FAIL[195-230] sat PASS[0-0.35]
+   plaza           lum  107.4  hue   46.4  sat 0.217  R-B   +24.6  QA PASS[22-52] brief FAIL[195-230] sat PASS[0-0.35]
+   trees           lum  123.2  hue   41.0  sat 0.251  R-B   +33.4  QA PASS[23-53] brief FAIL[195-230] sat PASS[0-0.35]
+   horizon         lum  116.5  hue   34.9  sat 0.196  R-B   +24.6
+
+[r16] wrote renders/logs/light_r16_acc.json

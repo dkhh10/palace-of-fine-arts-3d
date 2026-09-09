@@ -158,6 +158,11 @@ def bake_world(scene=None):
         diffuse_tint_horizon=float(prop("sky_diffuse_tint_horizon", lb.SKY_DIFFUSE_TINT_HORIZON)),
         diffuse_tint_antisun_p=float(prop("sky_diffuse_tint_antisun_p", lb.SKY_DIFFUSE_TINT_ANTISUN_P)),
         diffuse_tint_horizon_p=float(prop("sky_diffuse_tint_horizon_p", lb.SKY_DIFFUSE_TINT_HORIZON_P)),
+        # ROUND 16 (QA-08-3): the sun-side tint is a DIFFUSE socket, so the probe bake must carry it too, or the
+        # baked volumes would light Eevee's sunlit stone with the blue the render world has taken out.
+        diffuse_tint_sunside=tuple(float(c) for c in prop("sky_diffuse_tint_sunside",
+                                                          list(lb.SKY_DIFFUSE_TINT_SUNSIDE))),
+        diffuse_tint_sunside_p=float(prop("sky_diffuse_tint_sunside_p", lb.SKY_DIFFUSE_TINT_SUNSIDE_P)),
         split_rays=False)
     bw["baked_from_world"] = w.name
     bw["why"] = ("Eevee evaluates the light-probe capture as a camera ray; this is the same sky with the DIFFUSE "
@@ -169,7 +174,9 @@ def bake_world(scene=None):
           f"{float(prop('sky_diffuse_tint_antisun', lb.SKY_DIFFUSE_TINT_ANTISUN)):.2f}, horizon "
           f"{float(prop('sky_diffuse_tint_horizon', lb.SKY_DIFFUSE_TINT_HORIZON)):.2f}, exponents "
           f"{float(prop('sky_diffuse_tint_antisun_p', lb.SKY_DIFFUSE_TINT_ANTISUN_P)):.1f} / "
-          f"{float(prop('sky_diffuse_tint_horizon_p', lb.SKY_DIFFUSE_TINT_HORIZON_P)):.1f})")
+          f"{float(prop('sky_diffuse_tint_horizon_p', lb.SKY_DIFFUSE_TINT_HORIZON_P)):.1f}, sunside "
+          f"{tuple(round(float(c), 3) for c in prop('sky_diffuse_tint_sunside', list(lb.SKY_DIFFUSE_TINT_SUNSIDE)))}"
+          f"^{float(prop('sky_diffuse_tint_sunside_p', lb.SKY_DIFFUSE_TINT_SUNSIDE_P)):.1f})")
     return bw
 
 
