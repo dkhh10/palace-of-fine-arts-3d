@@ -327,3 +327,7 @@ In flight: ORN review, ARCH r5 review, LIGHT r14 prep. Next: merges; ARCH r6 (st
 
 ## 2026-09-09 · ARCH r5 merged after review (MERGE WITH FIXES); ARCH r6 dispatched (register the stack)
 Fix-now (arch_uvproj not called by the build) carried into ARCH r6 item 0. In flight: ARCH r6 (docs/briefs/architecture_r6.md, Cycles crops only), ORN r5 review, LIGHT r14 prep. Next: LIGHT r14 after prep merges; MAT r8 after LIGHT r14 + ARCH r6.
+
+## 2026-09-09 · LIGHT r14 prep reported (4fa11be), in review
+Flythrough rebuilt: cam01 hold -> lagoon crossing -> cam02 station -> one colonnade bay -> gallery centreline at z 1.15 -> arch -> ceiling look-up; 250.1 m, 1224 frames @ 24 fps (51 s; 720 impossible at walking pace); check script: clearance 1.70 m outside / 1.42 in the gallery (2.80 m clear width), speed 5.6 / 9.2, holds 3.5 / 4.2 s. r13 carries done except 8 (needs an Eevee frame). docs/tech_notes.md "Opening and rendering master.blend" written. Hand-offs: env shrub pitto1_1107 overhangs the walk; cam06 std gate to be restated as a ratio.
+In flight: LIGHT prep review, ORN r5 review, ARCH r6. Next: merge, LIGHT r14 (violet flood).
