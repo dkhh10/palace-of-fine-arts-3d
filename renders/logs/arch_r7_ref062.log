@@ -1,0 +1,67 @@
+# ref 062 fit  az 37.0 (face-on)  eye 1.55 m
+  D = 90.2 m   lens = 40.4 mm   pitch = +13.09 deg   chi2 = 4.30 (4 rows, 3 dof used)
+  station (x, y, z) = (-72.0, 54.3, 1.55),  target (0, 0, 22.5)
+  landmark                     z      obs     fit    d(px)   d(%H)
+  dome apex (cap top)         53.40    35.0    35.1     0.1    0.01
+  attic top (drum springs)    38.30    99.0    95.7    -3.3   -0.24
+  attic base (modillions)     29.18   330.0   351.3    21.3    1.56
+  outer arch springing        17.50   700.0   686.3   -13.7   -1.00
+  PREDICTED podium base row 1264 vs measured 1345 (-5.88 %H; base at 0.922 of frame vs photo 0.981)
+  PREDICTED podium width 1413 px (x 253..1667) vs measured 1667 px (x 233..1900)  -> -15.2 % (lower bound: the planter sweeps are not in the model's podium set)
+  PREDICTED attic-ring width 1203 px (x 359..1561) vs measured 1265 px (x 395..1660)  -> -4.9 %
+  photo's building centre is +68 px off frame centre -> camera yaw +1.8 deg, i.e. az 35.2 rather than the face normal 37
+  dome apex above the NEAR face attic cornice: +60.6 px (+4.3 % of the on-screen width)
+  dome apex above the HIGHEST attic point (near corner block): +21.2 px
+
+# the lens- and tilt-independent constraint (why no close station can reproduce ref 062)
+  ref 062 shows the dome cap ABOVE the near face's attic cornice. With the current stack (apex 53.4, attic 38.3 at r 22.2) that needs
+      D > 76.4 m  -- independent of lens, tilt, framing and azimuth.
+  to show it from D = 45 m instead you would need the apex at 74.2 m (now 53.4) OR the attic top at 27.8 m (now 38.3)
+  to show it from D = 50 m instead you would need the apex at 67.7 m (now 53.4) OR the attic top at 30.3 m (now 38.3)
+  The podium/rostra radius does not enter this inequality at all.
+
+# ref 062, az fitted as a 4th unknown (4 landmark rows + the attic-ring width, 5 obs / 4 unknowns)
+  az = 37.0 deg   D = 88.6 m   lens = 41.5 mm   pitch = +13.93 deg   chi2 = 7.69
+  station (x, y, z) = (-70.8, 53.3, 1.55),  target (0, 0, 23.5)
+  landmark                     z      obs     fit    d(px)   d(%H)    d(m)   (m at the landmark's own depth)
+  dome apex (cap top)         53.40    35.0    34.8    -0.2   -0.01   -0.01
+  attic top (drum springs)    38.30    99.0    91.6    -7.4   -0.54   -0.22
+  attic base (modillions)     29.18   330.0   357.5    27.5    2.00    0.83
+  outer arch springing        17.50   700.0   707.5     7.5    0.54    0.23
+  attic-ring width 1253 px vs measured 1265 (-1.0 %)
+  PREDICTED (not fitted) podium base row 1317 vs measured 1345 (-2.05 %H)
+  NOTE: the observables are SYMMETRIC about the face normal (the landmarks sit on the near face's
+  centre line and the attic octagon's projected width varies only 0.3 % over +-20 deg), so az is not
+  identifiable from them: the scan below is symmetric and its minimum is the face normal by symmetry.
+  az \ chi2 scan (D, lens, pitch re-fitted at each az):
+    az    D     lens  pitch   chi2   rows chi2  attic w  base row
+    17.0   83.4   39.8  14.82    7.80      7.04     1252      1335
+    22.0   85.2   40.7  14.64    9.65      8.56     1249      1340
+    27.0   87.0   41.1  14.27    8.68      7.81     1251      1328
+    32.0   88.2   41.4  14.04    8.15      7.38     1252      1322
+    37.0   88.6   41.5  13.93    7.69      7.02     1253      1317
+    42.0   88.2   41.4  14.04    8.15      7.38     1252      1322
+    47.0   87.0   41.1  14.27    8.68      7.81     1251      1328
+    52.0   85.2   40.7  14.64    9.65      8.56     1249      1340
+    57.0   83.4   39.8  14.82    7.80      7.04     1252      1335
+  what it costs to move the station onto land (az 37, lens + pitch re-fitted at each fixed D):
+       D   lens  pitch  rows chi2   worst row     attic w  base row
+    88.6   40.1  13.47       4.94  attic base (mo +20.0px     1214      1278
+    96.0   41.3  11.81      10.99  outer arch spr -25.0px     1162      1219
+   104.0   42.5  10.26      34.08  outer arch spr -41.5px     1109      1162
+   112.0   43.7   8.94      63.83  outer arch spr -57.4px     1063      1113
+
+# is the fitted station reachable? OSM lagoon rings, reference/plans/site_local.json
+  az \ D      45     60     75     92    105    120
+     15   water  water  LAND   LAND   water  LAND 
+     25   LAND   water  water  water  water  water
+     35   water  water  water  water  LAND   LAND 
+     45   water  water  water  water  LAND   water
+     60   water  water  water  water  water  LAND 
+
+# sensitivity to the assumed eye height
+  eye 1.30 -> D   90.6 m  lens  40.7 mm  pitch 13.21  chi2   4.29  base row   1264  width  1416 px
+  eye 1.45 -> D   90.4 m  lens  40.5 mm  pitch 13.14  chi2   4.29  base row   1264  width  1414 px
+  eye 1.55 -> D   90.2 m  lens  40.4 mm  pitch 13.09  chi2   4.30  base row   1264  width  1413 px
+  eye 1.70 -> D   89.9 m  lens  40.2 mm  pitch 13.02  chi2   4.30  base row   1265  width  1412 px
+  eye 1.85 -> D   89.7 m  lens  40.0 mm  pitch 12.95  chi2   4.30  base row   1265  width  1410 px

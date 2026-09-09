@@ -1179,3 +1179,63 @@ row, so nothing moves on this evidence; re-open it if a hero-distance crop shows
 **11 — the 6.4 MB `renders/qa_comparisons/arch_r6_aligned_vs_ref169.png` is dropped.** It was panel 1 of QA's own
 9.3 MB sheet plus this round's render; `arch_r6_sheet.py` regenerates it in one second from the two committed
 panels whenever `qa_stack_offset` has to be re-run, and its measurements are now in the committed logs.
+
+## Round 7 (2026-09-09) — no-render round: archivolt socket, cornice sub-courses, ref 062 station
+
+### Item 1 — `archivolt_run` socket (QA-06-6 second half, ORN r6 proposal §4)
+
+8 sockets, one per OUTER rotunda arch, on the archivolt's flat crown face. The inner (rotunda-side) archivolt gets
+none: the proposal asks for one full-arc panel per opening and is silent about the inner band. **No geometry
+changed** — `archivolt_profile()` is untouched and ARCH models no ornament there, so unlike the meander runs
+nothing has to be hidden before instancing. Full contract in `docs/sockets.md`; the numbers:
+
+| | value |
+|---|---|
+| origin | a springing, z 17.5, **21.800 m** from the axis along the face normal (wall 21.5 + the 0.30 m crown projection), **6.550 m** from the arch centre |
+| frame | +X = arc tangent = **world up** (a semicircular arch springs vertically), +Y = the outward face normal, +Z = +X x +Y = radially outward = the band's width direction |
+| arc | `arc_radius` 6.550, `arc_angle` 180 deg, `run_length` **20.577 m** (outer edge 21.268), `band_width` **0.220 m** |
+| check | `arch_socket_check --type archivolt_run` -> **8/8 OK**: origin **0.00 mm** from the mesh, socket plane 21.800 = the archivolt mesh's own extent along the face normal 21.800, all 13 arc samples 0.00 mm off the band, band mid-line faces +Y at all 11 interior samples |
+
+The check trusts nothing the builder stamped: the face normal is rebuilt from `arch_params`' octagon, the crown-face
+plane is measured on the archivolt MESH, and the stamped arc parametrisation is verified point by point with
+`closest_point_on_mesh` (the band mid-line against the *bevelled* evaluated mesh, so the 0.03 m arris bevel is in the
+test). `arch_lib.add_socket` gained `frame=(xdir, ydir)`; `archivolt_crown()` reads the crown face off
+`archivolt_profile()` itself, so the socket cannot drift from the sweep if the profile is retuned.
+
+### Item 3 — ref 062 station with `ATTIC_Z0` held at 29.18 (for QA's cam02 re-station)
+
+`scripts/arch_ref062_fit.py` (log `renders/logs/arch_r7_ref062.log`), extended this round with az as a real unknown
+(`fit4` / `cost4`, paid for by the attic-ring width as a 5th observation) and with a fixed-D table.
+
+| fit | az | D | lens | pitch | eye | rows chi2 | worst residual |
+|---|---|---|---|---|---|---|---|
+| 3-parameter (station on the face normal, rows only) | 37.0 (held) | **90.2 m** | **40.4 mm** | +13.09 | 1.55 | **4.30** | attic base +21.3 px (+1.56 %H) |
+| 4-parameter (az free, + attic-ring width) | **37.0** | **88.6 m** | **41.5 mm** | +13.93 | 1.55 | 7.02 | attic base +27.5 px (+2.00 %H, **0.83 m** at its own depth) |
+
+Residuals of the 4-parameter fit: dome apex -0.2 px, attic top -7.4 px (-0.22 m), **attic base +27.5 px (+0.83 m)**,
+arch springing +7.5 px (+0.23 m); attic-ring width 1253 vs 1265 px measured (-1.0 %), podium base row (never fitted)
+1317 vs 1345 (-2.05 %H, was -5.88 %H on the 3-parameter fit). Station (x, y, z) = (-70.8, 53.3, 1.55) looking at
+(0, 0, 23.5). Eye height is irrelevant: 1.30-1.85 m moves D by 0.9 m.
+
+**az is not identifiable from this photograph.** The four landmarks lie on the near face's centre line and the attic
+octagon's projected width changes only 0.3 % over +-20 deg of station azimuth, so the cost is symmetric about the
+face normal (scan: 17 deg 7.80, 27 deg 8.68, **37 deg 7.69**, 47 deg 8.68, 57 deg 7.80). Use az 37; the photo's
+building centre sits +68 px right of frame centre, which is 1.8 deg of camera YAW (framing), not station azimuth.
+
+**Two conflicts QA should know before re-stationing cam02:**
+1. **The attic base is the one landmark that will not fit.** With `ATTIC_Z0` pinned at 29.18 the best station puts it
+   0.83 m too low in the image while the other three land within 0.23 m. Holding the courses (the brief's
+   instruction) therefore costs ~2 %H on that one line; it is the same landmark the r6 refit moved 2.02 m.
+2. **The fitted station is in the lagoon.** At az 37, `reference/plans/site_local.json` says water out to D = 100 m
+   and land from D ~ 104 m; the fit wants 88.6-90.2 m. Re-fitting lens + pitch at a fixed D on land costs:
+
+   | D | lens | pitch | rows chi2 | worst row |
+   |---|---|---|---|---|
+   | 88.6 (fitted, water) | 40.1 | 13.47 | **4.94** | attic base +20.0 px |
+   | 96.0 (water) | 41.3 | 11.81 | 10.99 | arch springing -25.0 px |
+   | 104.0 (first land) | 42.5 | 10.26 | **34.08** | arch springing -41.5 px |
+   | 112.0 (land) | 43.7 | 8.94 | 63.83 | arch springing -57.4 px |
+
+   So ref 062 cannot be reproduced from a standable point on the current stack: 15 m of station shift costs a factor
+   7 in chi2 and 3 %H on the springing. Recommendation for cam02: keep the fitted station (az 37, D 88.6, 41.5 mm,
+   pitch +13.9, eye 1.55) as a *view*, not as a claim about where the photographer stood.
