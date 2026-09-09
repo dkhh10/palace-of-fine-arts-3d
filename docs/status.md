@@ -365,3 +365,7 @@ In flight: ENV fixes, LIGHT r14, ORN r6. Next: merges, MAT r8.
 ## 2026-09-09 · ORN r6 reported (90b183e), in review
 ORN r6: capitals 2.6 -> 3.0 m (hero px 34.7-35.5 -> 40.0-40.9 vs ref 38-44), rinceau band 0.81 (clearance 10-11.5 mm), attic panels 5.28 (relief p90 0.376 m; undercut is the limit, not depth); LOD1 budget for attic panels raised 24 k -> 36 k (+95 k tris in the master's LOD1); enforce_tri_budget on LOD1 and LOD2; normal-map bakes done (0 pending), AO missing on 32 LOD1s. Proposal: archivolt_run socket type + modillion/egg subtypes for the bed-mould (hand-off to ARCH). Gate exits 0 on the merged architecture.blend. No render sheet (GPU held).
 In flight: ORN review, LIGHT r14, ENV fixes. Next: merges, MAT r8; QA round 7 checks the capital luminance alternation on a render.
+
+## 2026-09-09 · ENV r9 merged (c61cc32) after fixes
+land_snap runs before the gates and never moves pinned trees (build fails naming a wet PLAN coordinate); 79 hand-placed trees at 0.000 m from PLAN; --verify and --land gates; c06 ratio computed 0.636; walk clearance 1.71 m, LOD1 4,705,602, 131 trees, wings 21.2 % shadow (QA confirms on a render).
+In flight: LIGHT r14, ORN r6 review, ARCH r7. Next: LIGHT review + merge, MAT r8, then lead_build.sh and QA round 7.
