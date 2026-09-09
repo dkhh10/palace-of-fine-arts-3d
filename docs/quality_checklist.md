@@ -289,3 +289,39 @@ floods four cameras blue-violet (lighting), QA-06-3 water fails at every distanc
 row std. Minors: -10 Eevee soffit W gap, -11 south wing aligned panel, -12 cam06 streets, -13 Eevee preview cost +81 %.
 Recommendation to the lead: one architecture round on the hero-facing stack **before** the photo-projection pass, and a
 hold-list of the other five cameras' boxes in every lighting / materials brief from round 07 on.
+
+## Round 07 (2026-09-09) — polish round 5 gate: ARCH r6+r7, ORN r6+r7, LIGHT r14, MAT r8, ENV r9
+
+Scores (r06 -> r07): hero **3.22 -> 3.44 (+0.22)**, cam02 2.72 -> **3.06**, cam03 2.12 -> **2.25**, cam04 2.75 -> **2.88**,
+cam05 2.78 -> **3.00**, cam06 2.28 -> **2.50**. First round in which every camera gained, and the first hero gain in five.
+
+Closed this round: **QA-06-1** stack (all eight courses within **5 rows / 0.37 m**, attic storey 100 vs 101 rows, capital
+35 vs 30 — was 0.70 / 0.65), **QA-06-4** weathering (anisotropy 0.41 -> **3.12**, photo 4.08; under-cornice run-off
+**19.2 % = the photo's 19.2 %**), **QA-06-8** vault (coffer sat 0.914 -> **0.467**, ref 0.427), **QA-06-9** entablature
+(row std 36.5 -> **44.0**, test 40), **QA-06-11** south wing (94.2 -> **104.2**, test 103), **QA-06-13** Eevee cost
+(218.6 -> **146.1 s**, test 150). Half closed: **QA-06-2** (cam06 plaza / trees hue 269 / 240 -> **33.3 / 32.6**, cam02
+water 265 -> 43.5; cam03 walk still 195.6), **QA-06-3** (reflection R-B +2.5 -> **+36.4** at hue 36.5, cam05 sat 0.244;
+lum 105.6 and the open lagoon fail), **QA-06-6** (capital alternation **20 maxima vs the photo's 17** at 0.95 of its
+contrast; archivolt still blank), **QA-06-7** (cam03 black 46.1 -> **28.0 %**, outer row 0.066 -> 0.097). Open / worse:
+**QA-06-5** sunlit chroma (sat 0.473 -> **0.437**, R-B 99 vs 133), **QA-06-10** soffit W gap +0.202, **QA-06-12** cam06
+lines 2 -> **0** composited (5 un-composited; the ratio gate passes at **0.631**).
+
+New tests this round: the cam06 gate is the ratio **std(composited) / std(un-composited) >= 0.60** on rows 0-220
+(`env_r7_measure.py --c06ratio`, QA renders the un-composited twin with `scripts/qa_r07_c06.py`). Wing shadow on a render
+= share below half the band's own p90: south **57.2 %** vs ref 169's 53.9 %, north **36.3 %** vs 39.0 % (ENV's ray probe
+21.2 % confirmed at the level the picture resolves). Camera height over water from the mirror row:
+**h = H (M - s) / (M - y_direct)** (`qa_r07_measure.py mirror | camheight`); ref 169 = **2.6 m** vs cam01's 2.90 m.
+
+Rejects (game asset / clean CAD): the hero's arch soffit / archivolt (a smooth untextured vault against the photo's moulded
+band; 8 sockets shipped, nothing instanced); the open lagoon (flank 189.5 / hue 224 vs 152.4 / 200); cam06's far field
+(0 composited street lines against 5 un-composited); the attic relief's soft edges with no cast shadow at 1:1.
+
+**Stack offset per course, round 07** (positive = the render sits higher; 13.42 px/m): crown +0.30, crown corona +0.07,
+panel frame top -0.07, panel frame bottom +0.37, cornice corona +0.07, dentil bottom -0.15, frieze top -0.30, architrave
+0.00, capital top -0.37. Spread **0.67 m** (round 06: 2.38 m). **The photo-projection pass is cleared to register.**
+
+Verdict: **gate not passed** (hero 3.44 vs the 4.5 target, no row at 4 on four of six cameras). Blockers: QA-07-1 the open
+lagoon (materials + lighting), QA-07-2 sunlit stone chroma 25 % short (materials). Majors: -3 mirror at 0.55 of the photo's
+0.88, -4 blank archivolt, -5 cam03 28 % black, -6 cam06 far field erased by mist, -7 hero shade level 134.0 over its window.
+Recommendation: run the photo-projection pass next (its precondition is met), keep the hold-list, and add the hero
+shaded-attic and lagoon-flank boxes to it.

@@ -93,7 +93,21 @@ R06 = {
     "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
     "Scale cues":            [3.5, 3, 2.5, 3, 3, 2.5],
 }
-SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06}
+R07 = {
+    # round 07 (2026-09-09, polish round 5: ARCH r6 stack registration + r7 archivolt sockets, ORN r6+r7 capitals 3.0 m /
+    # rinceau / attic panels, LIGHT r14 sky-tint discriminators, MAT r8 water + coffer albedo, ENV r9 gallery width).
+    # The photo-projection pass did NOT ship this round (MAT r8 was re-scoped to water; decisions.md budget plan).
+    "Silhouette match":      [4, 3.5, 2.5, 3.5, 3.5, 4],
+    "Proportion":            [4, 3.5, 3, 3.5, 3.5, 3.5],
+    "Ornament fidelity":     [4, 3.5, 2.5, 3, 3.5, 2.5],
+    "Material realism":      [3, 3, 2, 3.5, 3, 2.5],
+    "Edge wear":             [3, 2.5, 1, 1, 2, 0.5],
+    "Lighting mood":         [4, 3.5, 2.5, 3, 3.5, 2.5],
+    "Water reflection":      [2.5, 2.5, None, None, 2.5, 2],
+    "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
+    "Scale cues":            [3.5, 3, 2.5, 3, 3, 2.5],
+}
+SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06, "07": R07}
 VERDICT = {
     "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
@@ -108,6 +122,7 @@ VERDICT = {
           "the sunlit stone, ref 0.61), hero stone now a dark isotropic blotch (attic lum 0.88 of ref, streak anisotropy "
           "0.64 vs photo 4.07), Cycles coffers 0.21 with black floors (claimed 0.39), water reflection grey (sat 0.11).",
     "06": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. Hero 3.22 (3.28 holding Proportion at 4): no gain for a fourth round. Landed: hero shade colour (shaded attic 30.7 deg / sat 0.373 vs ref 29.5 / 0.425), Cycles coffers 0.21 -> 0.451 (ref 0.437), cornice/dentil shadow (row std 20.9 -> 36.5), cam03 shade 0.06 -> 0.15 old box / 0.38 on the sky-visible box, cam05 stone std 0.92 of ref. Blockers: the diffuse sky tint floods cam06 and the water blue-violet (roofs hue 37 -> 253, cam05 lagoon sat 0.31 -> 0.12), hero reflection sat 0.043 (ref 0.358), stone streak anisotropy 0.41 vs 4.07, and the hero stack does not register course by course (+0.07 m to +2.31 m).",
+    "07": "Gate: NOT passed (target >= 4 every row, hero average >= 4.5). Hero 3.44, +0.22 - the first hero gain in five rounds, and every camera gained. Landed: the hero stack registers course by course (all 8 courses within 5 rows / 0.37 m, attic storey 100 vs 101 rows, capital 35 vs 30), capitals read (alternation 20 maxima vs the photo's 17 at 0.95 of its contrast), attic run-off 19.2 % = the photo's 19.2 %, streak anisotropy 0.41 -> 3.12 (ref 4.08), entablature row std 44.0 (test 40), reflection R-B +2.5 -> +36.4 at hue 36.5, coffer sat 0.91 -> 0.47 (ref 0.43), the violet flood gone (cam06 plaza 269 -> 33, trees 240 -> 33), cam03 black 46.1 -> 28.0 %, Eevee pass 218.6 -> 146.1 s. Open blockers: sunlit stone chroma (attic sat 0.437 vs 0.581, R-B 99 vs 133), the open lagoon (flank 1.24x too bright at hue 224 vs 200, near water 228 vs 190), the hero mirror at 0.64 of the photo's luminance, and cam03 still 28 % black with the lagoon-side row at 0.097 of sunlit. The photo-projection pass did not ship this round; its precondition (a registered stack) is now met.",
 }
 
 
@@ -161,7 +176,8 @@ def build(rnd, out):
     top_h = max(hero_s.height, ref_s.height)
     strip_h = 180
     table_h = 60 + (len(ROWS) + 2) * 40 + 20 + 44 * (2 + 1)   # + the r02 -> rnd trend block
-    H = 44 + top_h + 30 + strip_h + 26 + table_h + 90
+    n_verdict = len(_wrap(VERDICT.get(rnd, "Gate: NOT passed."), 165))
+    H = 44 + top_h + 30 + strip_h + 26 + table_h + 30 * n_verdict + 30
 
     sheet = Image.new("RGB", (W, H), (18, 18, 20))
     d = ImageDraw.Draw(sheet)
