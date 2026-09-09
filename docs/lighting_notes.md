@@ -2067,3 +2067,46 @@ starts at 128 spp fixed rather than the saved 768 adaptive, and the flythrough t
   trees. The five brief beats (hero hold, water crossing, colonnade walk, arch approach, dome hold) fill the 51 s.
 - **5** (clearance re-run at `viewport=0`, i.e. against LOD0 foliage) stays with the Phase 5 render round, as the
   brief directs.
+
+### 24.1 QA-06-2 — what the tint actually did, measured on an illuminant probe instead of on the master
+
+The brief's premise is that `(1.0, 0.65, 17.0)` "cannot make a sky colour" because G < R. **Measured, it does.**
+`scripts/light_r14_skyprobe.py` puts four Lambertian cards in an empty scene — up-facing, a wall with its normal
+ANTI-sun, a wall facing the sun, and a wall under a 2 m soffit (the hero's shaded-attic geometry) — lights them
+with the world alone and renders them through the master's own AgX + `AgX - High Contrast` + the calibrated
+-2.833 EV, so a card's sRGB is directly comparable with a render box. A **neutral 0.18 grey card is the
+illuminant**. On the r13 rig it reads
+
+| grey card | sRGB | hue | sat |
+|---|---|---|---|
+| up-facing | (114, 162, 230) | **215.2** | 0.504 |
+| wall, anti-sun | (131, 170, 243) | **219.1** | 0.459 |
+| wall under a soffit | — | **218.7** | 0.476 |
+
+i.e. the diffuse sky IS a sky colour, hue 215-219, G between R and B, because the sky it multiplies is warm enough
+that a 0.65 green multiplier still leaves G/R above 1. **The defect is not the chromaticity of the light, it is how
+much of it lands on surfaces that face UP.** Round 12 built two discriminators (anti-sun by direction, horizon by
+ray elevation) and shipped both at **1.0, their maximum amount**, so round 12 had nothing left; and at that amount
+the horizon weight barely discriminates at all. A vertical wall samples the sky about a HORIZONTAL normal (mean
+|ray.z| ~0.42, mean 1-|z| ~0.58); an up-facing surface samples it about the ZENITH (E[z] = 2/3, mean 1-|z| ~0.33).
+The wall keeps only **1.8x** what a roof, a walk or the lagoon's murk keeps. Measured on the ochre card, the blue
+the r13 tint adds is +110.3 sRGB on the shaded wall and **+69.2 on the up-facing card** — the flood, exactly.
+
+**Round 14's lever is the SHARPNESS of those two weights, not their amount:** `(1 - |ray.z|)^p` and
+`(0.5 + 0.5 * Incoming.sun)^q`, new sockets `SKY_DIFFUSE_TINT_HORIZON_P` / `_ANTISUN_P`. It is also the more honest
+shape — the anti-sun horizon band at a 7 deg sun is a band a few degrees deep, not a linear ramp from the zenith.
+Blue added by the tint, ochre card, sRGB units above the untinted sky (probe logs `light_r14_probe1..3.log`):
+
+| rig | shaded wall (soffit) | up-facing | sun-facing | wall / up |
+|---|---|---|---|---|
+| untinted (base) | 0 (88.7) | 0 (115.1) | 0 (111.6) | — |
+| **r13 as shipped** (q1 p1, b 17) | **+110.3** | **+69.2** | **+36.0** | 1.6 |
+| q1 p4, b 17 | +81.4 | +28.1 | +20.1 | 2.9 |
+| q1 p8, b 17 | +59.8 | +12.3 | +12.4 | 4.9 |
+| q3 p6, b 40 | +98.7 | +24.8 | +2.4 | 4.0 |
+| q3 p8, b 55 | +102.7 | +22.9 | +2.5 | 4.5 |
+| **q3 p10, b 80** | **+110.9** | **+23.3** | **+3.0** | **4.8** |
+
+The last row is the one to test on the master: it delivers the shaded wall **exactly** the blue the r13 tint did
+(+110.9 against +110.3), gives up-facing surfaces **34 %** of what they were getting, and takes the sun-facing wall
+from +36.0 to +3.0 — which is the sunlit attic's R-B budget that 22.3 said lighting had already overspent.
