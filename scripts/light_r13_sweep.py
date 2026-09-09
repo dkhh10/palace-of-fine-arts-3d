@@ -76,7 +76,12 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 # their elevation, their specular factor and their colour. Round 13 uses it as an EEVEE-ONLY rig
                 # (Cycles already has the shade; see docs/lighting_notes.md 22), so the round-10 costs it was
                 # rejected for -- near-water saturation and the column highlights in CYCLES -- do not apply.
-                fill=0.0, fel=-1.0, spec=-1.0, fcr=-1.0, fcg=-1.0, fcb=-1.0)
+                fill=0.0, fel=-1.0, spec=-1.0, fcr=-1.0, fcg=-1.0, fcb=-1.0,
+                # EEVEE-ONLY preset overrides, applied AFTER light_presets.apply_preview_eevee. `fgi` is
+                # fast_gi_distance in metres (-1 = fast GI off), `rt` raytracing on/off, `fgir` the fast-GI ray
+                # count, `thr` light_threshold. Eevee's horizon scan is what decides how much of the world SH an
+                # occluded surface is allowed to see, so it -- not the world -- is the shaded stone's real knob.
+                fgi=-2.0, rt=-1.0, fgir=-1.0, thr=-1.0)
 SKY_KEYS = ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "tr", "tg", "tb", "ta", "th", "bm", "de")
 
 
@@ -224,6 +229,19 @@ def shoot(cam_id, tag):
         lp.apply_viewport_eevee(scene)
     else:
         lp.apply_preview_eevee(scene, samples=EEVEE_SAMPLES)
+        e = scene.eevee
+        if CASE["fgi"] > -1.5:
+            e.use_fast_gi = CASE["fgi"] >= 0.0
+            if CASE["fgi"] >= 0.0:
+                e.fast_gi_distance = CASE["fgi"]
+        if CASE["rt"] >= 0.0:
+            e.use_raytracing = CASE["rt"] > 0.5
+        if CASE["fgir"] >= 0.0:
+            e.fast_gi_ray_count = int(CASE["fgir"])
+        if CASE["thr"] >= 0.0:
+            e.light_threshold = CASE["thr"]
+        print(f"[r13] eevee: fast_gi {e.use_fast_gi} dist {getattr(e, 'fast_gi_distance', 0):.1f} rays "
+              f"{e.fast_gi_ray_count} raytracing {e.use_raytracing} threshold {e.light_threshold}", flush=True)
     fp = OUT / f"{PREFIX}_{tag}_{num}{eng}.png"
     scene.render.filepath = str(fp)
     t = time.time()
@@ -231,7 +249,9 @@ def shoot(cam_id, tag):
     print(f"[r13] -> {fp.name} ({time.time()-t:.1f}s, {res[0]}x{res[1]})", flush=True)
 
 
+CASE = CASES[0]
 for c in CASES:
+    CASE = c
     apply_case(c)
     for cam in CAMS:
         shoot(cam, case_tag(c))
