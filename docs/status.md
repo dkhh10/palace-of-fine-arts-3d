@@ -297,3 +297,7 @@ Next: env rebuild for MAT_paving_stone (lead, one command), LIGHT r13 (docs/brie
 
 ## 2026-09-09 · ENV rebuilt for paving (lead, one command) and merged; LIGHT r13 dispatched
 env_build.py on the merged library: walk 845 slabs on MAT_paving_stone / _worn (9 % worn), tree relief and LOD1 4,756,102 identical to r8. In flight: LIGHT r13 (Eevee shade term, cam06 mist, wings/shore, carries). Next: LIGHT review + merge, lead_build.sh, QA round 6 (Opus xhigh).
+
+## 2026-09-09 · LIGHT r13 reported (3991518), in review
+LIGHT r13: probe capture evaluated the diffuse branch as a camera ray (fixed) but the hero's Eevee shade is screen-traced GI, so an Eevee-only LIGHT_shade_fill (55 W/m2, el 5, blue derived from the stone's reflectance) ships on the EEVEE_VAULT pattern: Eevee shaded attic 93.3 / 38.2 / 0.650 -> 119.0 / 35.0 / 0.381 vs Cycles 114.3 / 30.9 / 0.374 (pass); Cycles hero bit-identical. cam06 mist cap 0.50 -> 0.25, extinction 5.0: crop std 33.8 -> 38.1, 2 lines composited. Sky-term headroom on the wings: zero (sunlit R-B 103 / sat 0.475 already under floors on the r7 master). 9709 objects.
+Hand-offs: materials +0.025 sat / +6.9 R-B on the sunlit attic; env shore 91.5 of 115.6. In flight: LIGHT review. Next: merge, lead_build.sh, QA round 6.
