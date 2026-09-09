@@ -775,7 +775,12 @@ def build_concrete_family():
     # tell them apart: the rib plate hangs 0.55 m below the field on the same sphere, so ribs and panels are
     # parallel down-facing planes with the same normal and the same AO openness).
     concrete_material("MAT_plaster_ceiling", "concrete_wall_008", 9.0, {
-        "Base Color": C(0.572, 0.470, 0.130), "Grey Color": C(0.402, 0.312, 0.104), "Grey Drift": 0.16,
+        # QA-06-8 (round 8): coffer field sat 0.914 Cycles / 0.966 Eevee against ref 083's 0.427 -- a saturated
+        # orange saucer, "lit right and coloured wrong".  Round 6's albedo was an ochre at HSV saturation 0.773
+        # (B only 0.23 of R); ref 083's plaster is a warm CREAM.  Both colours drop to HSV saturation 0.40 at the
+        # same hue (46.2 deg field / 41.9 deg grey) and are then scaled to hold their luminance (x0.90 / x0.89),
+        # so the coffer / sky luminance ratio QA asks to hold at 0.35-0.55 is untouched and only the chroma moves.
+        "Base Color": C(0.515, 0.467, 0.309), "Grey Color": C(0.358, 0.314, 0.214), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         # QA-04-7 "no dirt gradient inside any coffer": now that the ribs carry their own material, a LONG AO probe
@@ -793,7 +798,9 @@ def build_concrete_family():
     # guilloche / bead-and-reel mouldings that hold a century of dust. Base Color is 0.37-0.40 of the panel's with
     # red pulled down harder than green (cooler), plus heavy recess dirt and cavity so the mouldings separate.
     concrete_material("MAT_plaster_ceiling_rib", "concrete_wall_007", 19.0, {
-        "Base Color": C(0.212, 0.186, 0.070), "Grey Color": C(0.168, 0.150, 0.068), "Grey Drift": 0.30,
+        # QA-06-8: the rib band measured sat 0.782 Cycles / 0.922 Eevee against the same 0.427.  Same treatment as
+        # the panel field above -- HSV saturation 0.670 -> 0.40 at hue 49.0, luminance held (x0.943 / x0.955).
+        "Base Color": C(0.200, 0.185, 0.120), "Grey Color": C(0.160, 0.149, 0.096), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
@@ -874,8 +881,19 @@ def build_water():
     # calmer patches (wind shadow) so the reflection is glassy in places
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
     chop = t.value(1.6, "WATER_CHOP")      # swept by scripts/mat_r7_sweep.py; 1.0 -> 1.6 measured in the sweep
+    # ROUND 8 (QA-06-3, the blocker).  The Bump node's Strength only BLENDS between N and the bumped normal, so it
+    # saturates at 1.0 and the shipped chop already puts it at ~0.94; the ripple SLOPE is set by Distance, which is
+    # why four rounds of chop sweeps never moved the reflection.  `scripts/mat_r8_probe.py` casts the hero's mirror
+    # rays from the reflection box (23.4 m out, 82.7 deg incidence) and shows what the slope has to buy: on flat
+    # water the mirror ray leaves at +7.3 deg elevation and lands on a shore willow, on the backdrop hall seen
+    # THROUGH the rotunda arch, and on sky (SKY 25 % / ENV 62 % / ARCH 12 %, only 7.5 % of it sunlit).  The sunlit
+    # stone sits at +17 to +23 deg of ray elevation, i.e. behind a facet pitch of +5 to +8 deg (ARCH 97-100 %,
+    # sunlit 30 % then 75 %, mean hit height 21-23 m).  A ripple slope that reaches that far up returns bright warm
+    # streaks from the upper rotunda between dark troughs pointing at the trees -- which is ref 169's water exactly.
+    # `WATER_BUMP_DIST` is that slope, swept by scripts/mat_r8_sweep.py.
+    bumpdist = t.value(0.145, "WATER_BUMP_DIST")
     normal = t.bump(h, strength=t.mul(t.mul(t.mul(t.madd(near, 0.14, 0.45), calm), ripple_lod), chop),
-                    distance=0.03, normal=N)
+                    distance=bumpdist, normal=N)
     rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
     # green murk body. Transmission 0.55 (not 1.0) so the material reads the same on ENV's single water plane as it
     # does inside a closed lagoon volume: the opaque 45 % is a green murk lambertian that picks up sky and sun, the
