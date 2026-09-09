@@ -2157,3 +2157,22 @@ tool for delivering the shade's blue. The blue has to come from a rig with a DIR
 control's 0.281, columns 1.08x) and shipped in round 13 as an EEVEE-only rig for a reason that no longer holds.
 At elevation 5 deg a sun lamp gives a vertical wall cos(5) = 0.996 of its irradiance and an up-facing surface
 sin(5) = 0.087: an **11.4x** discrimination, against the horizon exponent's best measured 4.8x.
+
+### 24.3 Item 2 — the hero reflection's warmth: what lighting owns and what it does not
+
+QA-06-3's new test is `water_refl` 900 760 1020 840 on the Cycles hero: **R-B >= +35**, hue 25-45, lum 124-208.
+Round 06 measured +2.5 against ref 169's **+69.0**. Materials r7 reported the box is "100 % water at 22 m" and
+that no sheen weight fixes it; QA's own reading is that the box's std is 58.8, i.e. it IS the rotunda's reflection
+in bright streaks on dark water, and the streaks carry no stone chroma.
+
+The geometry says which term dominates. The hero stands 2.90 m over water at -1.30 and the box is ~22 m out, so
+the incidence angle is atan(22 / 2.90) = **82.5 deg from the normal**. Fresnel at 82.5 deg for IOR 1.33 is ~0.57,
+so the box is roughly 57 % MIRROR and 43 % the water's own diffuse (murk + bed). The mirror at that angle looks
+back up at only 7.5 deg above the horizontal, which is the horizon sky as much as it is the building — and the
+ripple normals scatter it: every degree of ripple slope swings the reflected ray 2 deg, so a 5 deg ripple facet
+puts the mirror on the sky instead of on the stone.
+
+**What lighting owns in that box is the sky the mirror sees**, i.e. `SKY_GLOSSY_BOOST` (5.25) and
+`SKY_GLOSSY_SATURATION` (0.90), which are invisible to camera and diffuse rays by construction. The isolation
+test is one frame with the glossy sky switched off (`gb = 0.02`): whatever R-B moves is lighting's share of the
+box, and whatever does not is the murk's and the roughness'.
