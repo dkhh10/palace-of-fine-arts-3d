@@ -1,0 +1,60 @@
+00:02.093  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:02.852  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:03.904  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:04.551  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:05.080  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:05.616  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:06.372  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:06.916  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:07.558  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:08.225  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[skyprobe] sun az 118.49 el 7.36 (sun_position.sun_calc (NOAA)); lamp 67.31 W/m2; exposure -2.833 EV; look 'AgX - High Contrast'
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/scripts/light_r14_skyprobe.py:105: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat.use_nodes = True
+
+[skyprobe] r13: db 2.5 tint (1, 0.65, 17) ta 1^1 th 1^1 sun off
+00:09.264  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_up_grey.png'
+00:10.615  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_up_ochre.png'
+00:11.429  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_wall_as_grey.png'
+00:12.128  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_wall_as_ochre.png'
+00:12.837  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_wall_sun_grey.png'
+00:13.526  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_wall_sun_ochre.png'
+00:14.183  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_wall_x_grey.png'
+00:14.827  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/r13_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (114.2, 162.0, 229.9)   156.8   215.2   0.504  -115.8
+  up/ochre         (110.4, 134.3, 184.3)   132.8   220.6   0.401   -73.9
+  wall_as/grey     (131.3, 170.1, 242.5)   167.0   219.1   0.459  -111.2
+  wall_as/ochre    (56.5, 127.1, 208.6)   118.0   212.2   0.729  -152.1
+  wall_sun/grey    (178.9, 178.5, 203.0)   180.3   241.1   0.121   -24.1
+  wall_sun/ochre   (177.9, 159.5, 147.6)   162.6    23.7   0.170   +30.3
+  wall_x/grey      (95.8, 152.0, 227.7)   145.5   214.4   0.579  -131.9
+  wall_x/ochre     (105.0, 121.8, 179.6)   122.4   226.5   0.415   -74.5
+[skyprobe] r13 done in 7s
+
+[skyprobe] summary (grey card = the illuminant itself)
+  tag                  up hue/sat    wall_as hue/sat     wall_x hue/sat      ochre wall_as         ochre up
+  r13               215.2/0.504      219.1/0.459      214.4/0.579      212.2/0.729    220.6/0.401
+[skyprobe] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 33965 exited rc=0 after 15 s (max 900)

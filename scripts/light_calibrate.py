@@ -150,6 +150,7 @@ def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
                    diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0,
+                   diffuse_tint_antisun_p=1.0, diffuse_tint_horizon_p=1.0,
                    split_rays=True):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
@@ -280,11 +281,17 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
             wt = nt.nodes.new("ShaderNodeMath"); wt.operation = "MULTIPLY_ADD"; wt.name = "antisun_weight"
             wt.inputs[1].default_value = 0.5; wt.inputs[2].default_value = 0.5; wt.use_clamp = True
             nt.links.new(dot.outputs["Value"], wt.inputs[0])   # NOT `w`: `w` is the world being built
+            wt_out = wt.outputs[0]
+            if abs(diffuse_tint_antisun_p - 1.0) > 1e-9:      # ROUND 14, see the horizon exponent below
+                pw = nt.nodes.new("ShaderNodeMath"); pw.operation = "POWER"; pw.name = "antisun_weight_p"
+                pw.inputs[1].default_value = diffuse_tint_antisun_p; pw.use_clamp = True
+                nt.links.new(wt_out, pw.inputs[0])
+                wt_out = pw.outputs[0]
             blend = nt.nodes.new("ShaderNodeMapRange"); blend.name = "antisun_blend"
             blend.inputs["From Min"].default_value = 0.0; blend.inputs["From Max"].default_value = 1.0
             blend.inputs["To Min"].default_value = 1.0 - diffuse_tint_antisun
             blend.inputs["To Max"].default_value = 1.0
-            nt.links.new(wt.outputs[0], blend.inputs["Value"])
+            nt.links.new(wt_out, blend.inputs["Value"])
             m = nt.nodes.new("ShaderNodeMath"); m.operation = "MULTIPLY"; m.name = "tint_fac_antisun"
             nt.links.new(inv2.outputs[0], m.inputs[0])
             nt.links.new(blend.outputs["Result"], m.inputs[1])
@@ -305,11 +312,25 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
             hz = nt.nodes.new("ShaderNodeMath"); hz.operation = "SUBTRACT"; hz.name = "horizon_weight"
             hz.inputs[0].default_value = 1.0; hz.use_clamp = True
             nt.links.new(ab.outputs[0], hz.inputs[1])
+            hz_out = hz.outputs[0]
+            # ROUND 14 (QA-06-2): the SHARPNESS of the elevation weight, not its amount, is the discriminator that
+            # separates a shaded WALL from anything that faces UP. A vertical wall samples the sky cosine-weighted
+            # about a HORIZONTAL normal, so its mean |ray.z| is ~0.42 and its mean (1-|z|) ~0.58; an up-facing
+            # surface samples it cosine-weighted about the ZENITH (E[z] = 2/3), mean (1-|z|) ~0.33. At p = 1 the
+            # wall keeps 1.8x what the roof / walk / water-murk keeps; at p = 3 it keeps ~4.7x. Round 12 spent the
+            # amount of this weight (it ships at 1.0, the maximum) and had no lever left; the exponent is a new one,
+            # and it is the MORE physical shape -- the anti-sun horizon band (the Earth-shadow / Belt of Venus band)
+            # really is a narrow band a few degrees deep, not a linear ramp from zenith to horizon.
+            if abs(diffuse_tint_horizon_p - 1.0) > 1e-9:
+                hp = nt.nodes.new("ShaderNodeMath"); hp.operation = "POWER"; hp.name = "horizon_weight_p"
+                hp.inputs[1].default_value = diffuse_tint_horizon_p; hp.use_clamp = True
+                nt.links.new(hz_out, hp.inputs[0])
+                hz_out = hp.outputs[0]
             hb = nt.nodes.new("ShaderNodeMapRange"); hb.name = "horizon_blend"
             hb.inputs["From Min"].default_value = 0.0; hb.inputs["From Max"].default_value = 1.0
             hb.inputs["To Min"].default_value = 1.0 - diffuse_tint_horizon
             hb.inputs["To Max"].default_value = 1.0
-            nt.links.new(hz.outputs[0], hb.inputs["Value"])
+            nt.links.new(hz_out, hb.inputs["Value"])
             mh = nt.nodes.new("ShaderNodeMath"); mh.operation = "MULTIPLY"; mh.name = "tint_fac_horizon"
             nt.links.new(fac_out, mh.inputs[0])
             nt.links.new(hb.outputs["Result"], mh.inputs[1])
