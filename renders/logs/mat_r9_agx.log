@@ -1,0 +1,26 @@
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/scripts/mat_r9_agx.py:41: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m.use_nodes = True
+00:00.626  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_agx_chart.png'
+[agx] view transform AgX look None exposure 0.0
+[agx] scene 1.30,0.80,0.300  ->  display  208.2, 185.4, 156.4  lum  188.1  sat 0.249  R-B  +51.7   scene B   +0.0 % -> display B   +0.0 %   transfer nan
+[agx] scene 1.30,0.80,0.270  ->  display  208.5, 185.1, 153.4  lum  187.8  sat 0.264  R-B  +55.0   scene B  -10.0 % -> display B   -1.9 %   transfer 0.191
+[agx] scene 1.30,0.80,0.240  ->  display  208.7, 184.8, 150.1  lum  187.4  sat 0.281  R-B  +58.6   scene B  -20.0 % -> display B   -4.0 %   transfer 0.202
+[agx] scene 1.30,0.80,0.210  ->  display  208.9, 184.5, 146.3  lum  186.9  sat 0.300  R-B  +62.6   scene B  -30.0 % -> display B   -6.5 %   transfer 0.216
+[agx] scene 1.30,0.80,0.180  ->  display  209.2, 184.1, 142.2  lum  186.4  sat 0.320  R-B  +67.0   scene B  -40.0 % -> display B   -9.1 %   transfer 0.228
+[agx] scene 1.30,0.80,0.150  ->  display  209.4, 183.8, 137.8  lum  185.9  sat 0.342  R-B  +71.7   scene B  -50.0 % -> display B  -11.9 %   transfer 0.238
+[agx] scene 0.75,0.46,0.170  ->  display  189.3, 162.1, 125.7  lum  165.2  sat 0.336  R-B  +63.6   scene B   +0.0 % -> display B   +0.0 %   transfer nan
+[agx] scene 0.75,0.46,0.153  ->  display  189.6, 161.8, 122.0  lum  164.8  sat 0.357  R-B  +67.7   scene B  -10.0 % -> display B   -2.9 %   transfer 0.295
+[agx] scene 0.75,0.46,0.136  ->  display  189.9, 161.6, 117.9  lum  164.4  sat 0.379  R-B  +72.1   scene B  -20.0 % -> display B   -6.2 %   transfer 0.311
+[agx] scene 0.75,0.46,0.119  ->  display  190.2, 161.2, 113.5  lum  163.9  sat 0.403  R-B  +76.7   scene B  -30.0 % -> display B   -9.7 %   transfer 0.323
+[agx] scene 0.75,0.46,0.102  ->  display  190.4, 160.8, 108.2  lum  163.3  sat 0.432  R-B  +82.2   scene B  -40.0 % -> display B  -13.9 %   transfer 0.348
+[agx] scene 0.75,0.46,0.085  ->  display  190.6, 160.3, 102.5  lum  162.5  sat 0.462  R-B  +88.1   scene B  -50.0 % -> display B  -18.5 %   transfer 0.369
+[agx] scene 0.42,0.26,0.100  ->  display  164.1, 134.2,  92.2  lum  137.5  sat 0.438  R-B  +71.9   scene B   +0.0 % -> display B   +0.0 %   transfer nan
+[agx] scene 0.42,0.26,0.090  ->  display  164.2, 133.8,  87.8  lum  137.0  sat 0.465  R-B  +76.4   scene B  -10.0 % -> display B   -4.7 %   transfer 0.474
+[agx] scene 0.42,0.26,0.080  ->  display  164.3, 133.5,  83.0  lum  136.4  sat 0.495  R-B  +81.3   scene B  -20.0 % -> display B   -9.9 %   transfer 0.497
+[agx] scene 0.42,0.26,0.070  ->  display  164.5, 133.2,  77.7  lum  135.9  sat 0.528  R-B  +86.9   scene B  -30.0 % -> display B  -15.7 %   transfer 0.525
+[agx] scene 0.42,0.26,0.060  ->  display  164.8, 132.9,  71.9  lum  135.3  sat 0.564  R-B  +92.9   scene B  -40.0 % -> display B  -22.0 %   transfer 0.551
+[agx] scene 0.42,0.26,0.050  ->  display  164.8, 132.7,  65.3  lum  134.6  sat 0.603  R-B  +99.4   scene B  -50.0 % -> display B  -29.2 %   transfer 0.583
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 52241 exited rc=0 after 1 s (max 300)

@@ -1,0 +1,19 @@
+00:00.313  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+04:03.476  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9a_cycles_01_lagoon_hero.png'
+06:21.126  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9a_cycles_04_rotunda_ceiling.png'
+06:41.521  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9a_cycles_05_south_lawn.png'
+[r9render] opened master in 0.7s, 9679 objects, jobs after
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r9render] cycles CAM_qa_01_lagoon_hero 1920x1080 64spp border=None 242.5s -> r9a_cycles_01_lagoon_hero.png
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r9render] cycles CAM_qa_04_rotunda_ceiling 1280x720 32spp border=None 137.5s -> r9a_cycles_04_rotunda_ceiling.png
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r9render] cycles CAM_qa_05_south_lawn 1280x720 32spp border=(600, 720) 20.3s -> r9a_cycles_05_south_lawn.png
+[r9render] done in 401.2s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 52024 exited rc=0 after 402 s (max 1500)

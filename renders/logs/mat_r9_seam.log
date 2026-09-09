@@ -1,0 +1,21 @@
+00:00.376  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+00:36.674  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_seam_02_off.png'
+01:11.428  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_seam_02_on.png'
+01:49.419  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_seam_05_off.png'
+02:27.249  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_seam_05_on.png'
+03:05.862  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_seam_01_off.png'
+03:44.299  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_seam_01_on.png'
+[seam] 35 band materials, 35 concrete group nodes, shipped Photo = 0.6000000238418579
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[seam] cam02 Photo=0.0 35.2s
+[seam] cam02 Photo=0.6000000238418579 34.7s
+[seam] cam05 Photo=0.0 38.0s
+[seam] cam05 Photo=0.6000000238418579 37.8s
+[seam] cam01 Photo=0.0 38.6s
+[seam] cam01 Photo=0.6000000238418579 38.4s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 52702 exited rc=0 after 225 s (max 900)

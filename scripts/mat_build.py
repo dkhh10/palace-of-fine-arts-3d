@@ -500,10 +500,13 @@ PROJ_LOC = (-14.1, 100.0, 1.6)
 PROJ_TARGET = (0.0, 0.0, 1.6)
 PROJ_LENS, PROJ_SENSOR, PROJ_SHIFT_Y = 20.0, 36.0, 0.06
 PROJ_RES = (1920, 1080)
-# facing ramp: full weight face-on to 45 deg, zero past 72 deg (a 3.2x texel stretch is the most that is allowed
-# to read).  The spec said 25-70; the shaded attic ressaut returns sit at 50-65 deg off the projector and QA-07-7
-# needs the ratio map to reach them, so the plateau was widened and the cut-off tightened by 2 deg.
-PROJ_FACE_LO, PROJ_FACE_HI = math.cos(math.radians(72.0)), math.cos(math.radians(45.0))
+# Facing ramp: full weight face-on to 58 deg, zero past 80 deg.  The spec said 25-70.  MEASURED why it moved: at
+# 45/72 the shaded attic ressaut returns (50-65 deg off the projector) got an effective weight of ~0.26 instead of
+# 0.6 and the box moved 136.4 -> 132.9 where the ratio map is worth 136.4 -> 124.5; QA-07-7's materials half is
+# exactly those oblique returns, so the plateau has to cover them.  80 deg is a 5.8x texel stretch, but it is only
+# ever reached where the weight is already ramping to zero, and every one of those faces is a 2-6 px return on the
+# hero.
+PROJ_FACE_LO, PROJ_FACE_HI = math.cos(math.radians(80.0)), math.cos(math.radians(58.0))
 PROJ_Z = (24.0, 26.0, 45.5, 47.5)      # world z ramp: the drum / attic / entablature band and nothing else
 PROJ_R = 34.0                          # world radius from the rotunda axis
 

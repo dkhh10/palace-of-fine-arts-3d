@@ -474,6 +474,20 @@ CAMERAS = [
 
 ---
 
+## Derived texture assets and their source licences (added by MAT round 9)
+
+`assets/textures/projection/PFA_photo_ratio.png` and `PFA_photo_mask.png` are DERIVED from **ref 169**
+(`reference/photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg`, Wikimedia Commons,
+<https://commons.wikimedia.org/wiki/File:Palace%20of%20Fine%20Arts%20%2816794p%29.jpg>, "Palace of Fine Arts
+(16794p)", 18-frame morning-golden-hour panorama, 10074x6252, dated 2020-02-01; index row 169 of
+`reference/photos/index_wikimedia.csv`). They are not the photograph: the ratio map is the photograph divided,
+pixel by pixel, by a render of this build from the same station, then reduced to a mean-1 reflectance correction
+by `scripts/mat_projection.py`, so the photograph's own light, exposure and detail below 0.22 m are removed and
+what remains is a derived weathering/photometry field. Attribution and share-alike terms of the Commons file
+apply to anything published from these two maps and to any render that uses them; keep this line with the
+delivery notes. The other texture sets in `assets/textures/` are CC0 (Poly Haven, ambientCG) and carry no
+attribution requirement.
+
 ## Disagreements with attempt 2 (summary for the lead)
 
 1. Dome: 36 m Ø × 11.5 m rise → **33 m Ø × 7.6 m rise** (cap of a 21.7 m sphere). This was the single biggest error.

@@ -65,7 +65,19 @@ print(f"[r9render] opened master in {time.time() - t0:.1f}s, {len(bpy.data.objec
 SETS = {
     "before": [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, "cycles", None),
                ("PROJ_CAM_r9", 1920, 1080, SPP, "cycles", PROJ_BORDER)],
-    "after":  [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, "cycles", None)],
+    # the acceptance pass: one full hero frame, one cam04 for the coffers (r8 review carry 7), and cam05's water
+    # band as a BORDER (rows 600-720 of 720 = the band mat_r8_measure scores) so the hold item "cam05 band lum
+    # 70-117, sat >= 0.24" is verified in Cycles for 1/6 of a frame instead of being estimated from the hero flank.
+    "after":  [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, "cycles", None),
+               ("CAM_qa_04_rotunda_ceiling", 1280, 720, 32, "cycles", None),
+               ("CAM_qa_05_south_lawn", 1280, 720, 32, "cycles", (600, 720))],
+    # the shipped state: the last Cycles hero frame plus the Eevee five-camera pass in ONE open master.
+    "final":  [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, "cycles", None),
+               ("CAM_qa_01_lagoon_hero", 1920, 1080, 32, "eevee", None),
+               ("CAM_qa_02_lagoon_ne_threequarter", 1280, 720, 32, "eevee", None),
+               ("CAM_qa_04_rotunda_ceiling", 1280, 720, 32, "eevee", None),
+               ("CAM_qa_05_south_lawn", 1280, 720, 32, "eevee", None),
+               ("CAM_qa_06_aerial", 1280, 720, 32, "eevee", None)],
     "proj":   [("PROJ_CAM_r9", 1920, 1080, SPP, "cycles", PROJ_BORDER)],
     "cam04":  [("CAM_qa_04_rotunda_ceiling", 1280, 720, 32, "cycles", None)],
     "eevee":  [("CAM_qa_01_lagoon_hero", 1920, 1080, 32, "eevee", None),

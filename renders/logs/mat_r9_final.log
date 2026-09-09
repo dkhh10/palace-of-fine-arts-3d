@@ -1,0 +1,32 @@
+00:00.315  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+04:03.876  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_cycles_01_lagoon_hero.png'
+04:51.729  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_eevee_01_lagoon_hero.png'
+05:26.640  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_eevee_02_lagoon_ne_threequarter.png'
+05:54.315  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_eevee_04_rotunda_ceiling.png'
+06:32.262  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_eevee_05_south_lawn.png'
+07:04.354  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_eevee_06_aerial.png'
+[r9render] opened master in 0.8s, 9679 objects, jobs final
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r9render] cycles CAM_qa_01_lagoon_hero 1920x1080 64spp border=None 242.8s -> r9b_cycles_01_lagoon_hero.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[r9render] eevee CAM_qa_01_lagoon_hero 1920x1080 32spp border=None 47.7s -> r9b_eevee_01_lagoon_hero.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[r9render] eevee CAM_qa_02_lagoon_ne_threequarter 1280x720 32spp border=None 34.9s -> r9b_eevee_02_lagoon_ne_threequarter.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[r9render] eevee CAM_qa_04_rotunda_ceiling 1280x720 32spp border=None 27.7s -> r9b_eevee_04_rotunda_ceiling.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[r9render] eevee CAM_qa_05_south_lawn 1280x720 32spp border=None 37.9s -> r9b_eevee_05_south_lawn.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[r9render] eevee CAM_qa_06_aerial 1280x720 32spp border=None 32.1s -> r9b_eevee_06_aerial.png
+[r9render] done in 424.1s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 52318 exited rc=0 after 425 s (max 1800)

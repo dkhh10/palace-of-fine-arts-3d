@@ -1,0 +1,17 @@
+00:00.317  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+/tmp/phtest.py:8: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mats = [m for m in bpy.data.materials if m.use_nodes and any(
+00:21.687  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_phtest_0.0.png'
+00:40.556  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_phtest_1.0.png'
+[ph] concrete groups: ['PFA_concrete.011']
+[ph] band materials: 35
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[ph] set Photo=0.0 on 35 group nodes
+[ph] rendered 20.637614727020264
+[ph] set Photo=1.0 on 35 group nodes
+[ph] rendered 18.86755394935608
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 52596 exited rc=0 after 41 s (max 600)
