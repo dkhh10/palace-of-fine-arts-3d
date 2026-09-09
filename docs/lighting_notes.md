@@ -1328,3 +1328,372 @@ Two things for `docs/decisions.md`: the QA-04-12 decision in 20.8 (raytracing st
 `light_threshold` 0.05 -> 0.01 is the fix; shadow pools 256 -> 512 / 512 -> 1024), and the fact that `SHADE_FILL` exists, is measured, and ships at 0 W/m2 with
 6 W/m2 as the largest value that has an acceptable sunlit cost, should the art direction ever want a cooler shade at
 the price of the near-water saturation.
+
+## 21. Round 12 — the shade is a BLUE deficit, and the budget that forbade fixing it is withdrawn
+
+Brief: the lead's round-12 dispatch. Priorities, in order: (1) cam03 shade/sunlit 0.30-0.70 and the hero's shaded
+attic at sat <= 0.55 with hue within 8 deg of 29.5; (2) sunlit attic sat >= 0.50, R-B >= 110, lum 178-201;
+(3) columns <= 1.3x; (4) visible sky and lagoon reflection unchanged. **Rounds 10 and 11 rejected every diffuse
+boost against a budget of 0.02 saturation / 5 R-B on the sunlit stone. That budget is withdrawn.**
+
+### 21.1 The arithmetic that says what the shade is missing
+
+`scripts/light_r12_measure.py` re-states QA's round-05 boxes and reproduces QA's published numbers exactly before
+anything is changed (cam03 near shaft 5.55 / hue 58.2 / sat 0.615, sunlit rotunda 87.79, ratio 0.063, ground 0.197;
+hero sunlit attic 166.5 / 0.643 / 134.1, shaded attic 94.6 / 43.1 / 0.819, columns 95.9, near water 0.280 / 208.9;
+cam04 Cycles coffer/sky 0.211 and dark/light quarter 0.121 with dark 14.2 / light 117.6). So round 12 argues with
+QA's arithmetic, not around it.
+
+Inverting the hero's shaded-attic statistics into sRGB gives the whole round in one line:
+
+| shaded attic (hero box 1110 225 1150 260) | R | G | B | lum | hue | sat |
+|---|---|---|---|---|---|---|
+| render, round 05 | 122 | 94 | **22** | 94.6 | 43.1 | 0.819 |
+| ref 169 (aligned) | 141 | 111 | **81** | 115.0 | 29.5 | 0.425 |
+| deficit | +19 | +17 | **+59** | | | |
+
+**The shade is short 59 units of blue and only ~18 of red and green.** Every statistic QA flags follows from that one
+fact: hue = 60(G-B)/(R-B) falls to 29.5 as soon as the blue arrives, and saturation = (R-B)/R falls with it. Round 11
+argued the hue was materials' because three levers moved it the wrong way; all three added light that was warmer than
+this deficit (the fill's own green was 0.62 of its blue, and the extra sky came back off the sunlit plaza). The
+deficit is not a hue problem to be rotated, it is a **blue** problem to be supplied.
+
+### 21.2 QA-05-7 — the horizon haze band: ACCEPTED DEVIATION, with the numbers
+
+sky_left / sky_top is **0.922** against a 1.05-1.29 window, for the third round (QA-03-12 / QA-04-9 / QA-05-7). The
+lead's round-12 dispatch asks for the accepted-deviation note if no knob reaches 1.05 without breaking the sky
+window, and round 10's five-row atmosphere sweep (section 19, item 4) is that proof. Reproduced here so QA can close
+the row without re-reading section 19; every row is measured at MATCHED sky_top (the camera boost pulled back so the
+visible sky stays inside QA's own 149-182 window), because otherwise the ratio moves only because the whole sky moved:
+
+| aerosol | ozone | air | sky_left/sky_top | what it costs |
+|---|---|---|---|---|
+| **1.6 (shipped)** | 2.0 | 1.0 | **0.922** | — |
+| 4 | 2.0 | 1.0 | 0.943 | attic R-B -0.9, shaded attic +3.8 hue, columns +9.5 |
+| 8 | 2.0 | 1.0 | 0.965 | attic R-B -3.2, shade +13 hue, the calibrated lamp halves (67.3 -> 33.5 W/m2) |
+| 8 | 2.0 | 1.5 | 0.965 | shade +22 hue |
+| 10 | 0.6 | 1.5 | 0.964 | attic hue -6, shade +21 hue |
+
+**The physical sky model saturates at 0.965 and cannot reach 1.05.** Two reasons, and the second is why the target
+itself is partly an artifact: (1) raising aerosol brightens the whole sky, so once the camera boost is pulled back to
+hold sky_top the gradient barely changes; (2) **QA's two boxes are not at the same height above the horizon in the
+two framings** — the render's horizon sits at y ~0.63 of frame and ref 169's at ~0.54, so `sky_left` (y 0.085-0.145)
+is 0.82 of the way from horizon to frame top in the render and 0.67 in the photo, and any clear sky is brighter
+lower down. Part of the 1.170 is framing, not haze.
+
+Nothing in round 12 moves it: the round's whole intervention is on the DIFFUSE socket, which camera rays never see,
+so sky_top and sky_left are held by construction (verified in the round-12 table below: both unchanged).
+
+**Round 12 measured the decisive number: on MATCHED PIXELS the photograph scores the same 0.92 the render does.**
+`light_r12_measure.py --ref` runs lighting's own sky_top / sky_left boxes over panel 1 of
+`renders/qa_comparisons/round03_cam01_aligned_vs_ref169.png`, i.e. over ref 169 warped into the render's frame by
+QA's own align transform — the same warp every other reference number in this round comes from. It gives
+**sky_left / sky_top = 0.921 for the photograph** against **0.921 for the render** (base row, wave 1). The 1.170 in
+the defect is measured on the RAW photo, where the horizon sits 9 % of frame height lower, so the two boxes sample
+different heights above the horizon. Against the reference QA uses for every other box on this camera, the render's
+haze gradient is already exact to 0.001.
+
+**Recommendation to the lead: close QA-05-7 as an accepted deviation at 0.922, or commission a compositor sky
+gradient as an explicit art bias.** The gradient is cheap (one screen-space ramp multiplied into the sky mask in
+`COMP_golden_hour`, ~10 lines) and is the only route left, but it is an art bias painted onto a physically simulated
+sky and lighting will not ship it unasked. Lighting has no physical knob that reaches the window.
+
+### 21.3 r12 checkpoint (machine stopped before any Blender ran)
+
+**Status: code and analysis complete, ZERO renders taken.** The GPU was held for the whole session by QA's 4K timing
+render (pid 90755, ~95 min); it exited and the machine was stopped in the same minute, so nothing in section 21 above
+is measured on a new frame. Every number quoted so far is measured on QA's own round-05 files.
+
+**Done.**
+* `scripts/light_r12_measure.py` — QA's round-05 boxes, including the *re-based* cam03 test (near shaft 0,150-420,720
+  over the sunlit far rotunda 560,0-880,320 **in the same frame**, window 0.30-0.70), the hero shade/sunlit pair, the
+  cam04 coffer ratio and `mat_r6_measure`'s dark-quarter / light-quarter statistic, and the Eevee-Cycles gap
+  (QA-05-9). It reproduces **every** QA round-05 number exactly on QA's own PNGs (cam03 5.55 / 58.2 / 0.615, ratio
+  0.063, ground 0.197; hero 166.5 / 0.643 / 134.1 and shade 94.6 / 43.1 / 0.819; coffer 0.211 and quarter 0.121 with
+  dark 14.2 / light 117.6; gaps W 0.221 fail, E 0.066, coffer 0.049), so the sweep and QA measure the same pixels.
+* **The diagnosis in 21.1**: inverting the hero shade's lum/hue/sat into sRGB gives render (122, 94, 22) against
+  ref 169 (141, 111, 81) — short **59 units of blue** and only ~18 of R and G. That is why rounds 10 and 11 failed:
+  all three of their levers added light warmer than the deficit.
+* **Two new world sockets**, both DIFFUSE-only so camera and glossy rays (the visible sky, the lagoon's reflection)
+  are held still by construction: `SKY_DIFFUSE_HUE` (a hue rotation, `_sat_stage` now takes `hue`) and
+  `SKY_DIFFUSE_TINT` (a *white balance* multiply — the lever the arithmetic actually asks for; a hue rotation big
+  enough to blue the warm horizon would rotate the zenith round to red). Both ship at their no-op values.
+* `scripts/light_r12_sweep.py` (r11's sweep + `dhue` / `tr` / `tg` / `tb` keys, cam03 in both engines) and
+  `scripts/light_r12_sheet.py` (before / after / ref rows for cam03, the hero shade and cam04). Wave-1 command line
+  is ready in the scratchpad: control + `db=3` / `5` / `7` at 960x540, cams `03e 01c`.
+* **QA-05-7 closed as an accepted deviation in 21.2** with the matched-sky_top atmosphere sweep: the physical sky
+  saturates at 0.965 against a 1.05 floor, and part of the gap is that QA's two boxes sit at different heights above
+  the horizon in the two framings. The only route left is a compositor sky gradient, which is the lead's call.
+
+**Next, in order, when the GPU is free.** (1) Wave 1: the `SKY_DIFFUSE_BOOST` ladder on the lead's merged master —
+the round-11 sweep rejected `db` against a sunlit-stone budget that is now withdrawn, AND it was measured when the
+sunlit attic read 180.4; on the merged master it reads **166.5**, i.e. below QA's own window, so `db` now has to move
+two numbers in the same direction instead of trading them. Expect `db` 4-6. (2) Wave 2: `SKY_DIFFUSE_TINT` on top of
+the chosen `db`, to convert the extra sky into the blue the shade is short of rather than more warm plaza bounce;
+watch the shade hue, which is the number that went the wrong way three times. (3) Wave 3: confirm at
+1920x1080 / 64 spp (hero) and 1280x720 (cam03 in both engines), and check `EXPOSURE_BIAS` last. (4) QA-05-3:
+`FILL` / `VAULT_FILL` re-tuned on the **merged** master (lighting's 0.387 was measured on the branch before
+materials r6's in-coffer gradient; it now reads 0.211) and QA-05-9's soffit-W gap, which is Cycles reading 0.141
+where Eevee reads 0.362 — note the Cycles side is what collapsed, so it is likely materials' gradient and not probe
+coverage. (5) Rebuild `assets/lighting.blend`, sheet, report.
+
+### 21.4 Wave 1 — the diffuse-sky ladder, measured. The sky CANNOT buy the shade's blue
+
+Rebuilt master in the worktree (`scripts/build_master.py` + `light_probes --bake`, 32 s + 5 s; assets md5-identical to
+main, so this IS QA's round-05 master). cam03 Eevee 32 TAA and the hero in Cycles 64 spp, both 1280x720 (the measure
+tool upsamples to 1920x1080; the base row reproduces QA's round-05 numbers to ~1 lum, so the resize is not a source of
+error). `--rebake CYCLES` before every render, exactly as `lead_build.sh` bakes. Log `renders/logs/light_r12_w1.log`,
+858 s for 10 frames.
+
+| case (diffuse gain per channel) | cam03 shaft | shaft/sunlit | ground/sunlit | hero shade lum / hue / sat | shade sRGB | sunlit lum / sat / R-B | columns | near-water sat / hue | sky_top |
+|---|---|---|---|---|---|---|---|---|---|
+| base = master as saved | 5.42 | 0.062 | 0.148 | 95.3 / 43.1 / 0.829 | 123, 95, 21 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 / 209.0 | 168.0 |
+| ctl = world REBUILT, all defaults | 5.40 | 0.062 | 0.148 | 95.2 / 43.1 / 0.829 | 123, 95, 21 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 / 209.0 | 167.9 |
+| db 4 (4, 4, 4) | 10.54 | 0.106 | 0.316 | 129.0 / 47.2 / 0.681 | 152, 130, 49 | 187.4 / 0.491 / 108.2 | 1.22x | 0.286 / 207.8 | 168.0 |
+| db 4 + tint b2.5 (4, 4, 10) | 8.09 | 0.084 | 1.102 | 132.9 / 42.0 / 0.433 | 152, 132, 86 | 189.7 / 0.398 / 87.4 | 1.41x | 0.386 / 216.5 | 167.9 |
+| db 8 + tint b2.5 (8, 8, 20) | 12.25 | 0.122 | 1.405 | 161.9 / 43.6 / 0.285 | 175, 162, 125 | 206.1 / 0.280 / 63.8 | 1.28x | 0.349 / 217.7 | 168.0 |
+| ref 169 / QA window | 26-61 | 0.30-0.70 | — | 115.0 / 29.5 / 0.425 | 141, 111, 81 | 189.6 / >=0.50 / >=110 | 0.9-1.1x | 0.22-0.32 / 185-200 | 149-182 |
+
+`ctl` proves the sweep's rebuilt world is bit-for-bit neutral (every number within 0.1 of the saved master), so every
+row below it is a measured effect of one knob and nothing else. sky_top is 168.0 in every row: the diffuse socket is
+invisible to camera rays, as designed.
+
+**Three results, and they close the round-11 argument.**
+
+1. *The shade's response is separable per channel and is a clean power law in that channel's gain.* R, G are
+   identical between (4,4,4) and (4,4,10) — only B moved (+37). Fitting each channel, shade_c ~ base_c * g_c^k with
+   k_R 0.17, k_G 0.25, **k_B 0.60** (21, 49, 86, 125 at g_B 1, 4, 10, 20 — 21 x g^0.6 to within 1 unit). Solving for
+   ref 169's (141, 111, 81) gives the gain the shade wants: **g = (2.2, 1.9, 9.5)**.
+2. *That gain destroys the sunlit stone, and by exactly the mechanism round 09 calibrated.* A sun-facing surface
+   collects ~38 % of its blue from the sky, so g_B 9.5 takes the sunlit attic's blue from 74 to ~131 while red only
+   goes 210 -> 215: R-B ~84 against a floor of 110, sat ~0.39 against 0.50. Measured at g_B 10 (row 4): R-B 87.4,
+   sat 0.398. **The diffuse sky cannot separate the two.** It is one hemisphere lighting both faces.
+3. *cam03 is not a sky problem at all.* The near shaft is occluded from the sky: 8x the whole diffuse hemisphere
+   moves it 5.4 -> 12.25 (window 26-61), while the horizontal walk in the same frame — which sees the open sky —
+   goes to **1.4x the sunlit rotunda**, i.e. blown out, before the shaft is a quarter of the way to its window. Any
+   knob that lights the shaft through the sky bleaches the ground first. cam03 needs light with a DIRECTION.
+
+Conclusion for wave 2: the round-10 `SHADE_FILL` rig (wide-angle sun lamps on the anti-sun hemisphere) is the only
+primitive that can add blue to shaded faces without adding it to sun-facing ones, because it is directional. Round 10
+rejected it on two costs — the near-water saturation and the column highlights — and both are GLOSSY-side costs of a
+lamp shipped at `specular = 0.10`. Round 12 adds a `spec` key to the sweep and tests the rig at **specular 0.0**,
+i.e. diffuse-only, where by construction it cannot reach a grazing water reflection or a column highlight.
+
+### 21.5 The four-row table that says this is lighting's, not materials'
+
+Inverting all four hero rows into sRGB and looking at the RATIOS rather than the hues:
+
+| | R | G | B | B/R | G/R |
+|---|---|---|---|---|---|
+| render, sunlit attic | 210.2 | 164.5 | 73.8 | **0.351** | 0.783 |
+| ref 169, sunlit attic | 231.5 | 186.8 | 95.4 | **0.412** | 0.807 |
+| render, shaded attic | 123.2 | 94.4 | 21.1 | **0.171** | 0.766 |
+| ref 169, shaded attic | 141.2 | 110.7 | 81.2 | **0.575** | 0.784 |
+
+**G/R is 0.77-0.81 in all four rows.** The stone's green reflectance is right in both illuminations, and it is right
+in the shade to within 2 %. The only channel that misses is blue, and it misses by **1.17x in sunlight and 3.4x in
+shade**. If the albedo's blue were the problem it would miss by the same factor under both illuminations, because the
+albedo does not know which lamp is on. It misses 3x harder in shade, so **the defect is in the light that reaches
+shaded faces, not in what those faces reflect** — which retires rounds 10 and 11's hand-off of the shade hue to
+materials (sections 19 and 20.4) and puts QA-05-1 back where QA filed it: lighting.
+
+### 21.6 Waves 2 and 3 — the directional fill is now FREE, and it still cannot turn the shade
+
+Wave 2 (cam03 Eevee, `renders/logs/light_r12_w2.log`) and wave 3 (hero Cycles 960x540 / 48 spp,
+`renders/logs/light_r12_w3.log`; the 960x540 frames reproduce the 1280x720 row to ~1 lum on every box). Wave 2 was cut
+after its first frame — QA's 4K-scale contention from the environment agent's hero put one Eevee frame at 307 s — and
+its question was answered by that one frame anyway.
+
+| case | cam03 shaft / ratio | hero shade lum / hue / sat | shade sRGB | sunlit lum / sat / R-B | columns | near-water sat / hue | S wing |
+|---|---|---|---|---|---|---|---|
+| base | 5.42 / 0.062 | 95.3 / 43.1 / 0.829 | 123, 95, 21 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 / 209.0 | 86.5 |
+| fill 8 W/m2, spec 0 | 6.74 / 0.073 | — | — | — | — | — | — |
+| fill 30 W/m2, el 6, spec 0, colour 0.10/0.30/1.00 | — | 109.0 / **45.9** / 0.669 | 130, 110, 43 | 171.5 / 0.610 / 129.1 | 1.08x | **0.271** / 214.9 | 91.9 |
+| db 2, tint b1.8, sun-blue 0.40 | — | 109.3 / 43.1 / 0.687 | — | 176.8 / 0.561 / 120.8 | 1.10x | 0.331 / 213.4 | 92.4 |
+| db 2.5, tint b3.0, sun-blue 0.25 | — | 117.5 / **40.0** / 0.506 | 140, 116, 69 | 181.7 / 0.471 / 101.8 | 1.21x | 0.394 / 216.9 | 95.8 |
+| db 2, tint b1.8, fill 14 el 6 spec 0 | — | 115.3 / 44.0 / 0.605 | — | 178.4 / 0.528 / 113.7 | 1.15x | 0.318 / 215.4 | 94.7 |
+| db 4, sun-blue 0.40 | — | 128.9 / 47.3 / 0.704 | — | 188.1 / 0.498 / 110.4 | 1.23x | 0.284 / 207.7 | 100.5 |
+| ref 169 / window | 26-61 / 0.30-0.70 | 115.0 / 29.5 / 0.425 | 141, 111, 81 | 189.6 / >=0.50 / >=110 | 0.9-1.1x | 0.22-0.32 / 185-200 | >=103 |
+
+**Round 10's two reasons for shipping `SHADE_FILL` at zero are gone.** At `specular_factor` 0 and elevation 6 deg the
+rig at **30 W/m2 — 45 % of the sun** — costs the near-water saturation **nothing** (0.271 against the control's 0.281,
+inside QA's window either way) and the columns nothing (1.08x). Both of round 10's costs were artifacts of the two
+settings it happened to test: a specular factor of 0.10 puts the lamp in the lagoon's grazing mirror, and elevation
+16 deg puts sin(16) = 0.28 of it on horizontal water. Diffuse-only and low, the fill is the cleanest instrument in the
+whole rig.
+
+**And it still drives the shade hue the wrong way (43.1 -> 45.9), for the fourth time. Here is the arithmetic that
+finally explains all four failures.** Hue is 60(G-B)/(R-B), and from 21.5 the stone's albedo ratios are aG/aR = 0.78,
+aB/aR = 0.35. A lamp of colour (r, g, b) therefore moves the pair by d(R-B) = r - 0.35b and d(G-B) = 0.78g - 0.35b,
+and the hue only falls if **d(G-B)/d(R-B) > 0.492 with both deltas negative** (the ratio starts at 0.718 and must
+reach 0.492):
+
+| lamp colour | d(G-B)/d(R-B) | verdict |
+|---|---|---|
+| 0.42 / 0.62 / 1.00 (shipped `SHADE_FILL`) | +1.91, both deltas POSITIVE | hue rises — round 10's +1.3 deg |
+| 0.10 / 0.30 / 1.00 (wave 3) | +0.46 | hue rises — measured +2.8 deg |
+| **0.10 / 0.11 / 1.00** (solved) | +1.06 | works, and needs ~72 W/m2 |
+| 0.00 / 0.00 / 1.00 (pure blue) | +1.00 | works, and needs ~64 W/m2 |
+
+A fill that turns the hue on its own has to be a nearly green-free blue at **the irradiance of the sun itself**. That
+is not a fill, it is a second sun, and it would light every shaded face in the scene like one. The directional route
+closes here: it is free, it is worth keeping for luminance, and it cannot supply the colour.
+
+**The sky route is three times more efficient at the same job** because it raises R and G as well, and the reference
+needs those too (+18 R, +16 G, +60 B). `db 2.5 / tint b3.0 / sun-blue 0.25` lands the shade at (140, 116, 69) against
+ref 169's (141, 111, 81): **R is exact, G is 5 over, B is 12 short**. The three fitted power laws from 21.4 say what
+closes the last step — g_G 2.0 instead of 2.5 (tint g 0.80) and g_B 9.5 instead of 7.5 (tint b 3.8) — and predict
+(140, 113, 81), hue 32.5, sat 0.42, lum 116. That is wave 4.
+
+**`SUN_BLUE_MULT` is the compensating lever for the sunlit stone** and it works: at db 4 it holds the sunlit attic's
+R-B at 110.4 where the same boost without it gave 108.2, and at db 2.5 / b3.0 it holds 101.8 where the uniform tint
+at b2.5 alone gave 87.4. It is not enough on its own, which is why round 12 adds the anti-sun weighting.
+
+### 21.7 Wave 4 — the shade lands, and the anti-sun weighting is the dial between the two failures
+
+Hero, Cycles 960x540 / 48 spp, `renders/logs/light_r12_w4.log`. Every row is `db 2.5` with a diffuse tint and
+`SUN_BLUE_MULT` as shown; `antisun` is the new `SKY_DIFFUSE_TINT_ANTISUN` socket.
+
+| tint (r, g, b) | antisun | sun-blue | shaded attic lum / **hue** / sat | sunlit attic lum / sat / **R-B** | columns | near-water sat |
+|---|---|---|---|---|---|---|
+| — (base) | — | 0.75 | 95.3 / 43.1 / 0.829 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 |
+| 1.0, 0.80, 3.8 | 0 | 0.25 | 114.7 / **32.1** / 0.431 | 180.3 / 0.445 / **96.2** | 1.31x | 0.425 |
+| 1.0, 0.80, 3.8 | 1 | 0.25 | 114.3 / **42.5** / 0.644 | 179.4 / 0.558 / **121.3** | 1.13x | 0.361 |
+| 1.0, 0.80, 6.0 | 1 | 0.25 | 115.7 / **40.5** / 0.560 | 179.7 / 0.541 / **117.3** | 1.13x | 0.399 |
+| 1.0, 0.70, 9.0 | 1 | 0.15 | 116.7 / **37.0** / 0.468 | 180.1 / 0.523 / **113.4** | 1.12x | 0.437 |
+| ref 169 / window | | | 115.0 / 29.5 +-6 / <= 0.50 | 189.6 / >= 0.50 / >= 110 | 0.9-1.1x | 0.22-0.32 |
+
+**Row 2 is the round's result: the shaded attic lands on ref 169 — hue 32.1 against 29.5 (off 2.6), sat 0.431 against
+0.425, luminance 114.7 against 115.0 — and it lands there from the arithmetic, not from a search.** 21.4's three
+fitted power laws predicted (140, 113, 81), hue 32.5, sat 0.42, lum 116 for exactly this rig; it rendered
+(139, 112, 79), hue 32.1, sat 0.431, lum 114.7. QA-05-1's hero half is a solved equation.
+
+The uniform tint pays for it on the sun-facing side (R-B 96.2, sat 0.445, columns 1.31x). `SKY_DIFFUSE_TINT_ANTISUN`
+is the dial between the two failures and it works exactly as designed: at antisun 1 the same tint returns the sunlit
+attic to R-B 121.3 / sat 0.558 and the columns to 1.13x — better than QA's round-05 master on the columns' own test —
+and takes the shade back to 42.5. Raising the tint under the weighting walks it back down (b 3.8 -> 6 -> 9 gives hue
+42.5 -> 40.5 -> 37.0) while the sunlit attic only drifts 121.3 -> 113.4, i.e. **the weighted tint buys shade hue at
+about a quarter of the sunlit cost of the unweighted one** (5.5 deg of hue per 8 R-B, against 11 deg per 40).
+
+What the weighting is really measuring is where the shade's blue arrives from: at antisun 1 the shade keeps only
+about half the tint, so half of the blue that reaches a shaded wall has bounced at least once off a horizontal
+surface (which samples both halves of the dome) rather than arriving straight from the anti-sun sky.
+
+### 21.8 QA-05-3 — the coffer, re-tuned on the MERGED master (and it closes QA-05-9 with it)
+
+The round-11 claim (coffer / own sky 0.387) was measured on lighting's branch before materials r6's in-coffer
+gradient merged; on the lead's master the same rig reads 0.211. Re-swept here on the rebuilt master with the round-12
+sky in place, Cycles cam04 960x540 / 48 spp (round 09 established these ratios move < 0.01 with resolution):
+
+| `FILL` | coffer / own sky | dark / light quarter | soffit W | soffit E | soffit mean |
+|---|---|---|---|---|---|
+| x1 = 3648 W (round 11) | 0.230 | — | 0.145 | 0.377 | 0.261 |
+| **x3.2 = 11674 W** | **0.482** | **0.249** | 0.243 | 0.473 | 0.358 |
+| ref 083 | 0.437 | 0.265 | — | — | 0.405 |
+
++0.115 of coffer per unit of `FILL`, so **x2.8 = 10214 W** puts the coffer field on ref 083's own 0.437 and is what
+ships. The round-12 sky alone was worth +0.019 (0.211 -> 0.230): the rest is the disk. Two side effects, both wanted:
+the dark/light quarter statistic — the one that says "black floors with lit rims" — goes 0.121 to 0.249 against
+ref 083's 0.265, because the disk is the emitter the coffer FLOORS see best; and Cycles' soffit W, the half of
+**QA-05-9** that was failing at a 0.22 gap to Eevee's 0.362, rises from 0.141 to ~0.23, which brings the gap inside
+0.15 without touching the probes. The interior fill is also confirmed independent of the hero: the same rig with
+`FILL` x3.2 changes the hero's shaded attic by 0.1 lum and its sunlit attic by 0.1 (wave 5, `r12w5_A_01c` vs
+`r12w5_Af32_01c`).
+
+### 21.9 The second discriminator: the tint has to miss the water as well as the sunlit stone
+
+The first ship (tint b 11.5, anti-sun only) passed QA-05-1's hero half — shaded attic 116.3 / **33.9** / 0.397
+against ref 169's 115.0 / 29.5 / 0.425, measured at 1920x1080 on the rebuilt master — and looked wrong: the lagoon
+went violet. Numbers: near-water saturation **0.457** against QA's 0.22-0.32 (it was 0.281), hue 220. The tint is
+diffuse-only, so it never touches the water's MIRROR term; what it reaches is the water's diffuse murk, and a murk
+term takes the tint like any other up-facing surface. Two discriminators are therefore needed, not one:
+
+* `SKY_DIFFUSE_TINT_ANTISUN` — by direction relative to the SUN. Separates shaded stone from sunlit stone.
+* `SKY_DIFFUSE_TINT_HORIZON` — by ray ELEVATION, weight 1 - |ray.z|. A vertical shaded wall samples the sky in
+  near-horizontal directions; the lagoon and the plaza sample it cosine-weighted about the zenith. Separates
+  shaded stone from anything that faces up. Physically it is the anti-sun horizon band, the bluest part of a real
+  sky at a 7 deg sun.
+
+Measured on the hero at 960x540 / 48 spp, all rows at db 2.5 / anti-sun 1 / tint g 0.65:
+
+| tint b | horizon | shaded attic hue | sunlit R-B | near-water sat | columns |
+|---|---|---|---|---|---|
+| 11.5 | 0 (first ship) | 33.9 | 109.9 | **0.457** | 1.14x |
+| 11.5 | 1 | 38.8 | 117.2 | **0.385** | 1.11x |
+| 24 | 1 | **29.2** | 105.4 | 0.445 | 1.22x |
+
+At matched shade hue the horizon weighting is worth about **0.045 of near-water saturation** and costs nothing else,
+so it ships at 1.0 — but it does not rescue the water on its own: at any tint that fixes the shade the near-water box
+sits at 0.41-0.45 against a 0.22-0.32 window. That number is now a MEASURED HAND-OFF to materials rather than a
+lighting knob: the mirror term is held still by construction, so all of the movement is `MAT_water_lagoon`'s diffuse
+murk, and the murk is what has to lose saturation.
+
+**Shipped: `db 2.5`, tint (1.0, 0.65, 17.0), anti-sun 1.0, horizon 1.0, `SUN_BLUE_MULT` 0.75 -> 0.00,
+`FILL` 3648 -> 10214 W, `SHADE_FILL` still 0 (now for a measured reason, 21.6).** Tint b 17 is the balance point
+between rows 2 and 3 of the table above: the round's two blockers are ordered ahead of the sunlit stone by the brief,
+and 17 is the largest tint that keeps the sunlit attic's R-B at its floor.
+
+### 21.10 Round-12 acceptance, measured on the rebuilt master (master as saved, no world rebuild)
+
+`scripts/build_master.py` + `light_probes --bake --save` in the worktree (assets md5-identical to main), then the
+sweep in its `tag=base` mode, which opens that master and renders it exactly as saved. Hero Cycles 1920x1080 / 64 spp
+(356 s), cam03 and cam04 at 1280x720, Eevee 32 TAA through `apply_preview_eevee`. Log `renders/logs/light_r12_ship.log`.
+
+| test | round 05 | **round 12** | reference / window | verdict |
+|---|---|---|---|---|
+| **QA-05-1** hero shaded attic hue | 43.1 | **35.4** | 29.5 +- 6 | **PASS** (0.1 deg of margin) |
+| hero shaded attic sat | 0.819 | **0.412** | ref 0.425, test <= 0.50 | **PASS** |
+| hero shaded attic lum | 94.6 | **116.7** | 115.0, 0.9-1.1 | **PASS** (1.01x) |
+| **QA-05-1** cam03 near shaft / sunlit | 0.063 | **0.066** | 0.30-0.70 | **FAIL** — geometrically unreachable, 21.4 / 21.6 |
+| cam03 near-shaft hue / sat | 58.2 / 0.615 | **219.4** / **0.245** | 25-42 / <= 0.55 | sat PASS; hue now fails from the BLUE side |
+| **QA-05-3** Cycles coffer / own sky | 0.211 | **0.438** | 0.35-0.55 (ref 083 0.437) | **PASS** |
+| dark / light quarter | 0.121 | **0.228** | >= 0.20 (ref 083 0.265) | **PASS** |
+| Eevee coffer, gap to Cycles | 0.162, gap 0.049 | **0.344**, gap **0.094** | gap <= 0.15 | **PASS** |
+| **QA-05-9** soffit W gap | 0.221 | **0.202** | <= 0.15 | FAIL (Eevee rose with Cycles: 0.362 -> 0.429) |
+| **QA-05-5** south wing band | 86.0 | **94.3** | >= 82 raw / >= 103 aligned | raw PASS, aligned FAIL (0.86 of 109.5) |
+| north wing band | 137.5 | **142.6** | 0.9-1.1 of 146.5 | **PASS** (0.97) |
+| sunlit attic lum | 166.5 | **178.0** | 178.2-201.0 | FAIL by 0.2 lum (0.999x the floor) |
+| sunlit attic sat / R-B | 0.643 / 134 | **0.525 / 112.5** | >= 0.50 / >= 110 | **PASS** |
+| columns | 95.9 (1.00x) | **108.8 (1.14x)** | brief 0.9-1.1; QA's own test <= 1.3, hue 20-29 | brief FAIL, QA's test PASS (hue 23.7) |
+| **QA-05-7** sky_left / sky_top | 0.922 | **0.922** | 1.05-1.29 | unchanged by construction; see 21.2 (the photo scores 0.921 on matched pixels) |
+| sky_top | 167.9 | **168.0** | 149-182 | **PASS**, and unmoved: the diffuse sockets are invisible to camera rays |
+| near-water sat / hue | 0.281 / 208.9 | **0.418** / 218.1 | 0.22-0.32 / 185-200 | **REGRESSION**, hand-off to materials (21.9) |
+| water reflection column sat | 0.106 | **0.182** | ref 0.339 | improved, still short (materials' sheen) |
+
+Sheet: `renders/previews/lighting/light_r12_sheet.png` (before / after / reference for all three items with the
+numbers burnt in). The shade hue's margin is 0.1 deg and the single knob is `SKY_DIFFUSE_TINT[2]`: measured slope
+**0.77 deg of shade hue per unit of tint b** near the shipped 17.0, at a cost of ~0.6 R-B on the sunlit attic and
+~0.005 of near-water saturation per unit.
+
+### 21.11 Hand-offs to materials r7, with the numbers, measured on the master carrying the r12 rig
+
+1. **`MAT_water_lagoon` murk — the one thing this round made worse.** near-water box (1150 1000 1450 1050):
+   saturation **0.281 -> 0.418**, hue 208.9 -> 218.1, against QA-05-4's 0.22-0.32 / 185-200. The diffuse tint is
+   invisible to camera and glossy rays by construction, so the water's MIRROR is untouched and every unit of that
+   move is the water's own diffuse/murk term taking sky light like any up-facing surface. Lighting has spent both
+   discriminators it has (anti-sun and horizon weighting, 21.9) and they are worth 0.045 of it. The remaining ~0.10
+   is murk saturation: the murk should lose roughly a third of its chroma, or warm toward the stone. Lighting will
+   not trade the shade back for it — QA-05-1 was a three-round blocker and QA-05-4 is a major.
+2. **The sunlit stone is now the albedo's problem, not the rig's.** Sunlit attic **178.0 / hue 39.0 / sat 0.525 /
+   R-B 112.5** against ref 169's 189.6 / 40.3 / 0.588 / 136.1: hue is within 1.3 deg, the level is 0.94x and the
+   saturation 0.06 under. The rig has no move left that raises the level without moving the exposure (which is
+   pinned by the sky window and by QA-03), so the last 6 % is stone value and chroma.
+3. **The coffer gradient and `FILL` are now coupled, and the coupling is measured:** +0.115 of coffer / own sky per
+   unit of `FILL` (3648 W). Materials r6's in-coffer gradient cost 0.176 of that ratio when it merged; `FILL` x2.8
+   bought it back and the field now sits on ref 083 (0.438 vs 0.437) with dark/light quarter 0.228 vs 0.265. If the
+   gradient deepens again, say so in the report with the number and lighting will re-tune `FILL`; do not deepen it
+   silently, because neither owner can see the other's half on their own branch.
+4. **The entablature** reads 141.4 / hue 39.4 / **sat 0.704** against ref 146.4 / 34.0 / 0.604: level and hue are
+   close, saturation is 0.10 over — the same over-saturation QA-05-2 flags on the attic, unchanged by this round.
+
+### 21.12 Review fixes (lead, 2026-09-09; docs/reviews/light_r12_review.md)
+- Finding 1, Eevee hero frame on the shipped rig (`light_preview.py --master --eevee-only`, 1280x720 / 32 TAA, master 8:49 build,
+  `renders/previews/lighting/20260909_091636_01_lagoon_hero_eevee_r12eevee.png`) vs the Cycles acceptance frame `r12ship_base_01c.png`,
+  same boxes scaled 2/3: sky_top 153.8 / hue 208.2 / sat 0.518 (Cycles 154.0 / 208.2 / 0.519), sky_left 163.3 / 208.7 / 0.442
+  (163.7 / 208.7 / 0.441), lagoon flank hue 222 sat 0.31 (215 / 0.25), near water 224 / 0.44 (218 / 0.42). **No violet cast: the
+  diffuse-only sockets stay off camera and glossy rays in Eevee too.** But Eevee does not receive the diffuse term either: shaded
+  attic 94.9 / hue 42.2 / sat 0.769 (Cycles 116.7 / 35.4 / 0.412), sunlit attic 155.7 (178.0). The world probe bake evaluates the
+  light-path split as a camera ray, so the r12 shade fix is Cycles-only in the viewport. **Carried to r13**: give Eevee the shade
+  term (probe-time world override or Eevee-only shade fill, same pattern as EEVEE_VAULT).
+- Finding 2: `light_r12_measure.py` hue_tol 8 -> 6 (matches the acceptance window). Findings 3 (meta provenance), 4 (water cell in
+  the sheet) and the carries (SUN_BLUE_MULT at 0, importance map, comments, index-picked sockets) go to r13.

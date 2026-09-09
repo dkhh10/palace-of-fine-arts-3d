@@ -1,0 +1,60 @@
+00:02.743  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:03.851  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:05.472  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:06.566  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:07.556  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:08.504  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:09.400  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:10.219  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:11.022  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:12.054  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r12] calibrate sky 0.8: lamp 67.31 W/m2 exposure -4.083 EV
+00:12.056  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r12] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r12] case A: db 2.5 dsat 1 dhue 0.5 tint 1,0.6,14 antisun 1 cb 2.1 gb 5.25 sm 1 wm 1 fill 0 spec -1 fcol -1,-1,-1 f 1 (3648 W) v 1 (3564 W) exposure -2.833 EV, sun 67.31 W/m2
+02:03.552  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w5_A_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r12] -> r12w5_A_01c.png (109.9s, 960x540)
+04:50.066  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w5_A_04c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r12] -> r12w5_A_04c.png (166.1s, 960x540)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r12] case B: db 2.5 dsat 1 dhue 0.5 tint 1,0.65,11 antisun 0.6 cb 2.1 gb 5.25 sm 1 wm 1 fill 0 spec -1 fcol -1,-1,-1 f 1 (3648 W) v 1 (3564 W) exposure -2.833 EV, sun 67.31 W/m2
+05:38.783  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w5_B_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r12] -> r12w5_B_01c.png (48.6s, 960x540)
+07:29.237  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w5_B_04c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r12] -> r12w5_B_04c.png (110.4s, 960x540)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r12] case Af32: db 2.5 dsat 1 dhue 0.5 tint 1,0.6,14 antisun 1 cb 2.1 gb 5.25 sm 1 wm 1 fill 0 spec -1 fcol -1,-1,-1 f 3.2 (11674 W) v 1 (3564 W) exposure -2.833 EV, sun 67.31 W/m2
+08:11.124  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w5_Af32_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r12] -> r12w5_Af32_01c.png (41.8s, 960x540)
+09:53.661  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w5_Af32_04c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r12] -> r12w5_Af32_04c.png (102.5s, 960x540)
+[r12] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 6011 exited rc=0 after 595 s (max 2400)

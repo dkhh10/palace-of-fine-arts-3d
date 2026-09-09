@@ -130,10 +130,18 @@ def _ortho_camera_looking_along(scene, direction, distance=5.0, ortho_scale=1.0)
     return cam
 
 
-def _sat_stage(nt, name, color_out, fac_out, saturation):
-    """One Hue/Saturation stage that applies `saturation` to the rays selected by fac_out and passes the rest through."""
+def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
+    """One Hue/Saturation stage that applies `saturation` (and, round 12, `hue`) to the rays selected by fac_out and
+    passes every other ray class through untouched.
+
+    Round 12 (QA-05-1): `hue` is Blender's Hue/Saturation Hue input, 0.5 = no shift, and one unit is a full turn of the
+    hue circle, so hue = 0.5 + d rotates the sky's colour by d*360 deg. It exists because the DIFFUSE socket needed a
+    lever that saturation alone cannot supply: at a 7.4 deg sun the sky that lands on shaded stone is horizon-weighted
+    and therefore WARM, so raising its saturation makes the shade more orange, not more blue (round 10 and round 11
+    both measured that). Rotating it toward blue first, then saturating, is what moves the shade's hue."""
     hs = nt.nodes.new("ShaderNodeHueSaturation"); hs.name = name
     hs.inputs["Saturation"].default_value = saturation
+    hs.inputs["Hue"].default_value = hue
     nt.links.new(color_out, hs.inputs["Color"])
     nt.links.new(fac_out, hs.inputs["Fac"])          # Fac blends between the input and the saturated colour
     return hs.outputs["Color"]
@@ -141,7 +149,7 @@ def _sat_stage(nt, name, color_out, fac_out, saturation):
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
-                   diffuse_boost=1.0):
+                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -185,7 +193,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     cam_ray = gl_ray = None
     gain_out = None         # per-ray multiplier: camera_boost on camera rays, glossy_boost on glossy rays, else 1
     if (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
-            or glossy_saturation != 1.0 or diffuse_saturation != 1.0):
+            or glossy_saturation != 1.0 or diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9):
         lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
         vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
         nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0]); nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
@@ -208,16 +216,103 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     # GLOSSY (the sky the lagoon mirrors) can each carry their own sky chroma. camera/glossy were one knob before;
     # the water is a Fresnel mirror of the horizon at grazing angles, so the near-water chroma (QA-03-7) is set by
     # the glossy socket alone and could not be moved without dragging the visible sky with it.
-    if camera_saturation != 1.0 or glossy_saturation != 1.0 or diffuse_saturation != 1.0:
-        if diffuse_saturation != 1.0:
+    if (camera_saturation != 1.0 or glossy_saturation != 1.0 or diffuse_saturation != 1.0
+            or abs(diffuse_hue - 0.5) > 1e-9):
+        if diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9:
             inv = nt.nodes.new("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.name = "not_cam_or_glossy"
             inv.inputs[0].default_value = 1.0
             nt.links.new(vis_out, inv.inputs[1])
-            sky_color = _sat_stage(nt, "sky_saturation_diffuse", sky_color, inv.outputs[0], diffuse_saturation)
+            sky_color = _sat_stage(nt, "sky_saturation_diffuse", sky_color, inv.outputs[0], diffuse_saturation,
+                                   hue=diffuse_hue)
         if camera_saturation != 1.0:
             sky_color = _sat_stage(nt, "sky_saturation", sky_color, cam_ray, camera_saturation)
         if glossy_saturation != 1.0:
             sky_color = _sat_stage(nt, "sky_saturation_glossy", sky_color, gl_ray, glossy_saturation)
+    # Round 12 (QA-05-1): a DIFFUSE-only colour tint, i.e. a white balance on the light that lands on shaded stone.
+    # It is the lever the shade actually needs and a hue rotation is not: the render's shaded attic is (122, 94, 22)
+    # against ref 169's (141, 111, 81), i.e. it is short 59 units of BLUE and only ~18 of R and G, and a hue rotation
+    # big enough to blue the warm horizon band (+0.47 of a turn) would rotate the zenith's blue round to red. A
+    # multiply by a blue-biased tint makes every sky direction bluer, horizon included, and leaves the ordering of
+    # the sky's own gradient intact. Camera and glossy rays never see it (Fac = not_cam_or_glossy), so the visible
+    # sky and the lagoon's reflection are held exactly still.
+    if diffuse_tint is not None and tuple(diffuse_tint) != (1.0, 1.0, 1.0):
+        if vis_out is None:
+            lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
+            vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
+            nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0])
+            nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
+            clampn = nt.nodes.new("ShaderNodeMath"); clampn.operation = "MINIMUM"; clampn.inputs[1].default_value = 1.0
+            nt.links.new(vis.outputs[0], clampn.inputs[0])
+            vis_out = clampn.outputs[0]
+        inv2 = nt.nodes.new("ShaderNodeMath"); inv2.operation = "SUBTRACT"; inv2.name = "not_cam_or_glossy_tint"
+        inv2.inputs[0].default_value = 1.0
+        nt.links.new(vis_out, inv2.inputs[1])
+        fac_out = inv2.outputs[0]
+        # ROUND 12 (QA-05-1): weight the tint by how far the ray points AWAY from the sun. A shaded face samples the
+        # anti-sun half of the dome (its hemisphere is centred on its own normal, which points away from the sun);
+        # a sunlit face samples the sun half; a horizontal surface samples both and gets about half. So an anti-sun
+        # weighted tint is the only sky lever that reaches shaded stone WITHOUT the same multiple landing on the
+        # sunlit stone next to it -- which is the whole reason rounds 10 and 11 could not use the diffuse sky.
+        # It is also the physically right shape: at a 7 deg sun the anti-sun sky IS the blue part of the dome.
+        # w = clamp(0.5 + 0.5 * (Incoming . sun)), and Incoming is -ray_direction, so w = 1 for a ray travelling
+        # straight away from the sun and 0 for one travelling into it. diffuse_tint_antisun blends w in:
+        # 0 = the uniform tint, 1 = fully anti-sun weighted.
+        if diffuse_tint_antisun > 0.0:
+            geo = nt.nodes.new("ShaderNodeNewGeometry"); geo.name = "ray_direction"
+            dot = nt.nodes.new("ShaderNodeVectorMath"); dot.operation = "DOT_PRODUCT"; dot.name = "dot_sun"
+            sd = common.sun_direction(az_deg, el_deg)
+            dot.inputs[1].default_value = (sd.x, sd.y, sd.z)
+            nt.links.new(geo.outputs["Incoming"], dot.inputs[0])
+            wt = nt.nodes.new("ShaderNodeMath"); wt.operation = "MULTIPLY_ADD"; wt.name = "antisun_weight"
+            wt.inputs[1].default_value = 0.5; wt.inputs[2].default_value = 0.5; wt.use_clamp = True
+            nt.links.new(dot.outputs["Value"], wt.inputs[0])   # NOT `w`: `w` is the world being built
+            blend = nt.nodes.new("ShaderNodeMapRange"); blend.name = "antisun_blend"
+            blend.inputs["From Min"].default_value = 0.0; blend.inputs["From Max"].default_value = 1.0
+            blend.inputs["To Min"].default_value = 1.0 - diffuse_tint_antisun
+            blend.inputs["To Max"].default_value = 1.0
+            nt.links.new(wt.outputs[0], blend.inputs["Value"])
+            m = nt.nodes.new("ShaderNodeMath"); m.operation = "MULTIPLY"; m.name = "tint_fac_antisun"
+            nt.links.new(inv2.outputs[0], m.inputs[0])
+            nt.links.new(blend.outputs["Result"], m.inputs[1])
+            fac_out = m.outputs[0]
+        # ROUND 12b: the second discriminator, by ray ELEVATION. A vertical shaded wall samples the sky in
+        # near-HORIZONTAL directions (its hemisphere is centred on a horizontal normal); a horizontal surface --
+        # the lagoon, the plaza -- samples it cosine-weighted about the ZENITH. So weighting the tint by
+        # 1 - |ray.z| puts it on shaded stone and keeps it off the water, which is what the first ship of this
+        # round got wrong: the lagoon's murk term went to saturation 0.457 (QA's window is 0.22-0.32) because a
+        # tint applied to the whole dome reaches anything that faces up. Physically this is the anti-sun horizon
+        # band, which at a 7 deg sun is the bluest part of a real sky (the Earth-shadow / Belt of Venus band).
+        if diffuse_tint_horizon > 0.0:
+            geo2 = nt.nodes.new("ShaderNodeNewGeometry"); geo2.name = "ray_direction_z"
+            sep = nt.nodes.new("ShaderNodeSeparateXYZ"); sep.name = "ray_z"
+            nt.links.new(geo2.outputs["Incoming"], sep.inputs[0])
+            ab = nt.nodes.new("ShaderNodeMath"); ab.operation = "ABSOLUTE"; ab.name = "abs_ray_z"
+            nt.links.new(sep.outputs["Z"], ab.inputs[0])
+            hz = nt.nodes.new("ShaderNodeMath"); hz.operation = "SUBTRACT"; hz.name = "horizon_weight"
+            hz.inputs[0].default_value = 1.0; hz.use_clamp = True
+            nt.links.new(ab.outputs[0], hz.inputs[1])
+            hb = nt.nodes.new("ShaderNodeMapRange"); hb.name = "horizon_blend"
+            hb.inputs["From Min"].default_value = 0.0; hb.inputs["From Max"].default_value = 1.0
+            hb.inputs["To Min"].default_value = 1.0 - diffuse_tint_horizon
+            hb.inputs["To Max"].default_value = 1.0
+            nt.links.new(hz.outputs[0], hb.inputs["Value"])
+            mh = nt.nodes.new("ShaderNodeMath"); mh.operation = "MULTIPLY"; mh.name = "tint_fac_horizon"
+            nt.links.new(fac_out, mh.inputs[0])
+            nt.links.new(hb.outputs["Result"], mh.inputs[1])
+            fac_out = mh.outputs[0]
+        mixn = nt.nodes.new("ShaderNodeMix"); mixn.name = "sky_tint_diffuse"
+        mixn.data_type = "RGBA"; mixn.blend_type = "MULTIPLY"; mixn.clamp_factor = True
+        # ShaderNodeMix carries one socket per data type and several share a name, so pick them by name AND type
+        # rather than by index: the indices differ between Blender versions and a silent mis-link would render a
+        # whole sweep against the wrong graph.
+        fac = next(i for i in mixn.inputs if i.name == "Factor" and i.type == "VALUE")
+        a_in = next(i for i in mixn.inputs if i.name == "A" and i.type == "RGBA")
+        b_in = next(i for i in mixn.inputs if i.name == "B" and i.type == "RGBA")
+        res = next(o for o in mixn.outputs if o.type == "RGBA")
+        nt.links.new(fac_out, fac)
+        nt.links.new(sky_color, a_in)
+        b_in.default_value = (diffuse_tint[0], diffuse_tint[1], diffuse_tint[2], 1.0)
+        sky_color = res
     nt.links.new(sky_color, bg.inputs["Color"])
     bg.inputs["Strength"].default_value = strength
     if gain_out is not None:

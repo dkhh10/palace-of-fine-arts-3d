@@ -1,0 +1,21 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+00:41.855  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/20260909_091636_01_lagoon_hero_eevee_r12eevee.png'
+01:30.120  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/20260909_091636_02_lagoon_ne_threequarter_eevee_r12eevee.png'
+02:32.832  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/20260909_091636_03_colonnade_walk_eevee_r12eevee.png'
+03:09.652  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/20260909_091636_04_rotunda_ceiling_eevee_r12eevee.png'
+03:55.942  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/20260909_091636_05_south_lawn_eevee_r12eevee.png'
+04:33.910  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/20260909_091636_06_aerial_eevee_r12eevee.png'
+[light_preview] opened master.blend: 9175 objects; probes: ['LIGHTPROBE_colonnade', 'LIGHTPROBE_rotunda']
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_preview] EEVEE 20260909_091636_01_lagoon_hero_eevee_r12eevee.png 40.5s
+[light_preview] EEVEE 20260909_091636_02_lagoon_ne_threequarter_eevee_r12eevee.png 48.3s
+[light_preview] EEVEE 20260909_091636_03_colonnade_walk_eevee_r12eevee.png 62.7s
+[light_preview] EEVEE 20260909_091636_04_rotunda_ceiling_eevee_r12eevee.png 36.8s
+[light_preview] EEVEE 20260909_091636_05_south_lawn_eevee_r12eevee.png 46.3s
+[light_preview] EEVEE 20260909_091636_06_aerial_eevee_r12eevee.png 38.0s
+[light_preview] done {'eevee': [('20260909_091636_01_lagoon_hero_eevee_r12eevee.png', 40.5), ('20260909_091636_02_lagoon_ne_threequarter_eevee_r12eevee.png', 48.3), ('20260909_091636_03_colonnade_walk_eevee_r12eevee.png', 62.7), ('20260909_091636_04_rotunda_ceiling_eevee_r12eevee.png', 36.8), ('20260909_091636_05_south_lawn_eevee_r12eevee.png', 46.3), ('20260909_091636_06_aerial_eevee_r12eevee.png', 38.0)]}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 9633 exited rc=0 after 275 s (max 900)
