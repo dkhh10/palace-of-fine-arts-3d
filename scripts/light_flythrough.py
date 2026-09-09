@@ -123,9 +123,17 @@ STATIONS += [
          "past the last columns (theta -66.90): the wing's open rotunda end"),
     # The approach swings SOUTH of the ENV_shrub_pitto7_1159 / big2_0920 group at (27..29, -19..-22), which the
     # first two round-14 routes clipped at 0.60 and 1.39 m; every station below probes >= 1.77 m clear.
-    ("app_a",      ( 28.00, -24.00, 1.09), V_LAND, "approach", None, "terrain -0.66, clear 1.79"),
-    ("app_b",      ( 26.50, -22.50, 1.14), V_LAND, "approach", None, "terrain -0.61, clear 1.77"),
-    ("app_c",      ( 25.00, -21.00, 1.15), V_LAND, "approach", None, "terrain -0.60, clear 1.78"),
+    ("app_a",      ( 28.10, -24.60, 1.11), V_LAND, "approach", None, "colonnade-walk apron -0.64, clear 1.79 (r16)"),
+    ("app_a2",     ( 27.00, -24.60, 1.12), V_LAND, "approach", None, "terrain -0.63, clear 1.78 (r16: the bezier "
+                                                                     "between app_a and app_b bulged to 1.44 m of "
+                                                                     "ENV_shrub_maho1_0946 without this knot)"),
+    # ROUND 16: app_b and app_c moved SOUTH-WEST, 1.30 m and 1.20 m, because ENV has planted
+    # ENV_shrub_maho1_0946 at (27.26, -21.77) since the round-14 probe: the old app_b measured 0.90 m of
+    # clearance to it and the rendered path 0.54 m at frame 937 (`light_r16_check_master_step4.log`), the only
+    # gate failure of the round. Both new points probe 1.78 m (`light_r16_probe.log`).
+    ("app_b",      ( 26.10, -24.30, 1.13), V_LAND, "approach", None, "terrain -0.62, clear 1.78 (r16: was 26.50,-22.50, 0.90 to ENV_shrub_maho1_0946)"),
+    ("app_b2",     ( 25.40, -23.40, 1.15), V_LAND, "approach", None, "terrain -0.60, clear 1.78 (r16)"),
+    ("app_c",      ( 24.80, -22.20, 1.16), V_LAND, "approach", None, "terrain -0.59, clear 1.78 (r16: was 25.00,-21.00)"),
     ("app_d",      ( 24.00, -19.50, 1.15), V_LAND, "approach", None, "terrain -0.60, clear 1.78"),
     ("app_e",      ( 22.50, -17.80, 1.25), V_LAND, "approach", None, "terrain -0.60, on the az-218 face axis between "
                                                                      "the piers at az 194.5 and 239.5"),
