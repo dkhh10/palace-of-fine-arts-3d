@@ -250,3 +250,7 @@ In flight: LIGHT r12 (docs/briefs/lighting_r12.md), ARCH r4 (architecture_r4.md)
 ## 2026-09-09 · ARCH r4 reported (78f0e81), in review
 ARCH r4: cornice/dentil profile rebuilt; QA box 900 262 1020 296 texture std 33.5 -> 47.6 (0.73 of ref, pass), row std 20.9 -> 32.4 (< 35; the model's cornice sits 1.04 m higher than ref 169's under QA's alignment, on the model's own band 43.1 pass); silhouette 0.000 % change, sockets 434 unchanged, ARCH tris -0.4 %. Hand-off ORN: 24 rotunda frieze_run sockets moved -0.25 m z / +0.10 m outward. Drum ring: -2.5 m radius needed for ref 062, reported only (no change). UV answer: all ARCH meshes carry one world-metre triplanar UVMap; a projection needs a second layer, object list in the report / docs/arch_notes.md round 4.
 In flight: ARCH review, LIGHT r12, ENV r7. Next: merge arch, then lighting; MAT r7.
+
+## 2026-09-09 · ARCH r4 merged after review (MERGE WITH FIXES; docs/reviews/arch_r4_review.md)
+Lead fixes: notes profile table corrected to r4b; 128 spp re-measure identical to the builder's crop (QA box row 32.5 / tex 47.6; model's own cornice box 43.3 / 54.7). Carried to ARCH r5: stale comment, silhouette artifact, hard-coded QA alignment, measure-script threshold text. Open lead question: the model's cornice sits 1.04 m higher than ref 169's under QA's alignment (stack question, no change made). ORN note: rotunda frieze band is now 0.90 m tall; sockets carry run_length only.
+In flight: LIGHT r12, ENV r7. Next: lighting review + merge, MAT r7 dispatch, then ENV merge, lead_build.sh, QA round 6.
