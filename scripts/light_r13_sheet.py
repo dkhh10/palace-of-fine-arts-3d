@@ -7,6 +7,7 @@ Rows
   3  item 3  hero wings and shore band       shipped sky term | the sky term raised | ref 169
   4  carry   near water (r12 review find. 4) r12 ship (sat 0.418) | this master | ref 169
 """
+import pathlib, tempfile
 import sys, argparse
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -102,7 +103,7 @@ def f_wings(p, panel=None):
     m = M13._hero(p) if panel is None else None
     if m is None:
         im = crop(p, panel=panel, panels=3)
-        tmp = P / "_r13_sheet_tmp.png"
+        tmp = pathlib.Path(tempfile.gettempdir()) / "_r13_sheet_tmp.png"   # r13 review carry 11: not P/ (tracked)
         im.save(tmp)
         m = M13._hero(str(tmp))
     w = m["wings"]
