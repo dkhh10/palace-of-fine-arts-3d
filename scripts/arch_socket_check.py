@@ -12,7 +12,8 @@ import common
 args = common.script_args()
 want = args[args.index("--type") + 1] if "--type" in args and args.index("--type") + 1 < len(args) else "rosette_ceiling"
 socks = sorted((o for o in bpy.data.objects if o.name.startswith(f"SOCKET_{want}_")), key=lambda o: o.name)
-print(f"[socket_check] {len(socks)} SOCKET_{want}_* sockets")
+if want != "props":                                  # "props" is a whole-file audit, not one socket type
+    print(f"[socket_check] {len(socks)} SOCKET_{want}_* sockets")
 from mathutils import Vector
 
 

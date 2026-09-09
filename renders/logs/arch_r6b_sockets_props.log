@@ -1,0 +1,18 @@
+00:00.453  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+type                    n  required properties (BASE + type)                          missing
+  attic_figure          8  orn_type+size_hint+variant_seed                          none  {}
+  attic_panel           8  orn_type+size_hint+variant_seed+panel_height+design      none  {'panel_height': 5.2699999999999925, 'design': 'A'}
+  capital_colonnade   114  orn_type+size_hint+variant_seed+capital_height+tall+wing none  {'capital_height': 1.8, 'tall': False, 'wing': 'north'}
+  capital_inner         8  orn_type+size_hint+variant_seed+capital_height           none  {'capital_height': 1.8}
+  capital_rotunda      16  orn_type+size_hint+variant_seed+capital_height           none  {'capital_height': 3.0}
+  drum_band             1  orn_type+size_hint+variant_seed+run_length+radius        none  {'run_length': 113.41149479459153, 'radius': 18.05}
+  finial                9  orn_type+size_hint+variant_seed+subtype                  none  {'subtype': 'volute_scroll'}
+  frieze_run          126  orn_type+size_hint+variant_seed+run_length+band_height+host+subtype none  {'run_length': 2.9994096859581427, 'band_height': 0.81, 'host': 'rotunda', 'subtype': 'rinceau'}
+  inner_figure          8  orn_type+size_hint+variant_seed                          none  {}
+  keystone             24  orn_type+size_hint+variant_seed+subtype                  none  {'subtype': 'crown'}
+  maiden               48  orn_type+size_hint+variant_seed+rim_height+box_corner_y  none  {'rim_height': 3.55, 'box_corner_y': -0.32}
+  rosette_ceiling      24  orn_type+size_hint+variant_seed                          none  {}
+  urn                  40  orn_type+size_hint+variant_seed                          none  {}
+[socket_check] 13 types, 434 sockets; ALL OK
+blender_run.sh: pid 35738 exited rc=0 after 1 s (max 300)
