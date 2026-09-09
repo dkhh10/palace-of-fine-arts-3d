@@ -239,7 +239,8 @@ for c in CASES:
     print(f"[skyprobe] {tag} done in {time.time() - t0:.0f}s", flush=True)
 
 print("\n[skyprobe] summary (grey card = the illuminant itself)")
-print(f"  {"tag":14s} {"ochre up":>16s} {"ochre wall_as":>16s} {"ochre wall_ov":>16s} {"ochre wall_sun":>16s} {"grey wall_ov":>16s}")
+print(f"  {'tag':14s} {'ochre up':>16s} {'ochre wall_as':>16s} {'ochre wall_ov':>16s} "
+      f"{'ochre wall_sun':>16s} {'grey wall_ov':>16s}")
 for c in CASES:
     tag = c["tag"] or "case"
     g = {(r["card"], r["albedo"]): r for r in ROWS if r["tag"] == tag}
