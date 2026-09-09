@@ -48,10 +48,10 @@ print(f"[phase5_hero] opened {BLEND.name} in {t_open:.1f}s")
 # Same preset every Cycles final in this build has used. Do not hand-roll Cycles settings here (see docs/tech_notes.md
 # "The two Eevee-only rigs" -- setting scene.render.engine = 'CYCLES' by hand and skipping this call renders the
 # Eevee-only vault override / shade fill into the frame).
+common.setup_scene(scene)                      # BEFORE the preset: setup_scene sets color_depth "8" (r2 review fix)
 lp.apply_final_cycles(scene, samples=SPP, time_limit=TIME_LIMIT)
 scene.cycles.use_adaptive_sampling = ADAPTIVE
 scene.cycles.use_denoising = DENOISE
-common.setup_scene(scene)
 
 # QA/lighting owns the camera stations; never trust a station baked into a stale master.blend (qa_render_round.py
 # does the same rebuild-in-memory before every round; nothing here is saved back to the file).
