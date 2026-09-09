@@ -1,0 +1,270 @@
+00:00.817  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.260  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:01.689  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.123  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:02.535  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:02.937  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:03.345  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:03.748  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:04.181  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:04.665  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[skyprobe] sun az 118.49 el 7.36 (sun_position.sun_calc (NOAA)); lamp 67.31 W/m2; exposure -2.833 EV; look 'AgX - High Contrast'
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/scripts/light_r14_skyprobe.py:105: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat.use_nodes = True
+
+[skyprobe] notint: db 2.5 tint (1, 1, 1) ta 1^1 th 1^1 sun off
+00:05.290  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_up_grey.png'
+00:05.956  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_up_ochre.png'
+00:06.611  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_wall_as_grey.png'
+00:07.278  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_wall_as_ochre.png'
+00:07.930  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_wall_sun_grey.png'
+00:08.599  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_wall_sun_ochre.png'
+00:09.177  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_wall_x_grey.png'
+00:09.779  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/notint_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (115.3, 144.4, 169.7)   140.0   208.0   0.321   -54.4
+  up/ochre         (118.5, 126.4, 115.1)   123.9   102.1   0.089    +3.4
+  wall_as/grey     (99.9, 126.5, 146.6)   122.3   205.8   0.318   -46.7
+  wall_as/ochre    (102.1, 110.0, 95.4)   107.3    92.5   0.133    +6.7
+  wall_sun/grey    (179.2, 174.9, 173.5)   175.7    14.3   0.032    +5.7
+  wall_sun/ochre   (177.7, 158.4, 111.6)   159.1    42.4   0.372   +66.2
+  wall_x/grey      (111.7, 129.0, 145.9)   126.6   209.6   0.235   -34.2
+  wall_x/ochre     (112.6, 112.9, 94.1)   111.4    61.0   0.166   +18.4
+[skyprobe] notint done in 5s
+
+[skyprobe] thp2: db 2.5 tint (1, 0.65, 17) ta 1^1 th 1^2 sun off
+00:10.471  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_up_grey.png'
+00:11.162  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_up_ochre.png'
+00:11.838  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_wall_as_grey.png'
+00:12.512  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_wall_as_ochre.png'
+00:13.241  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_wall_sun_grey.png'
+00:13.910  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_wall_sun_ochre.png'
+00:14.595  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_wall_x_grey.png'
+00:15.267  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp2_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (95.2, 155.2, 217.0)   146.9   210.4   0.561  -121.8
+  up/ochre         (115.0, 131.2, 164.3)   130.2   220.2   0.300   -49.3
+  wall_as/grey     (100.0, 159.3, 236.9)   152.3   214.0   0.578  -136.9
+  wall_as/ochre    (52.9, 123.3, 196.2)   113.6   210.5   0.730  -143.3
+  wall_sun/grey    (179.0, 177.5, 196.9)   179.2   244.8   0.099   -17.9
+  wall_sun/ochre   (177.8, 159.2, 140.2)   161.8    30.3   0.212   +37.7
+  wall_x/grey      (94.0, 146.4, 219.8)   140.6   215.0   0.572  -125.8
+  wall_x/ochre     (108.7, 119.7, 166.9)   120.8   228.6   0.349   -58.2
+[skyprobe] thp2 done in 5s
+
+[skyprobe] thp3: db 2.5 tint (1, 0.65, 17) ta 1^1 th 1^3 sun off
+00:15.962  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_up_grey.png'
+00:16.646  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_up_ochre.png'
+00:17.360  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_wall_as_grey.png'
+00:18.139  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_wall_as_ochre.png'
+00:18.958  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_wall_sun_grey.png'
+00:19.730  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_wall_sun_ochre.png'
+00:20.486  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_wall_x_grey.png'
+00:21.207  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp3_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (106.2, 151.6, 207.4)   146.0   213.1   0.488  -101.2
+  up/ochre         (116.8, 129.5, 151.7)   128.4   218.1   0.230   -35.0
+  wall_as/grey     (63.7, 153.2, 231.4)   139.8   208.0   0.725  -167.7
+  wall_as/ochre    (81.3, 120.5, 185.8)   116.9   217.5   0.563  -104.5
+  wall_sun/grey    (179.1, 176.9, 193.0)   178.5   248.2   0.083   -13.9
+  wall_sun/ochre   (177.8, 159.0, 135.3)   161.3    33.3   0.239   +42.5
+  wall_x/grey      (91.2, 143.2, 212.7)   137.1   214.3   0.571  -121.5
+  wall_x/ochre     (110.1, 118.3, 157.6)   119.4   229.6   0.301   -47.5
+[skyprobe] thp3 done in 6s
+
+[skyprobe] thp4: db 2.5 tint (1, 0.65, 17) ta 1^1 th 1^4 sun off
+00:21.881  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_up_grey.png'
+00:22.551  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_up_ochre.png'
+00:23.216  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_wall_as_grey.png'
+00:23.868  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_wall_as_ochre.png'
+00:24.527  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_wall_sun_grey.png'
+00:25.193  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_wall_sun_ochre.png'
+00:25.851  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_wall_x_grey.png'
+00:26.511  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp4_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (105.7, 149.5, 199.8)   143.8   212.1   0.471   -94.1
+  up/ochre         (117.5, 128.5, 143.2)   127.2   214.2   0.179   -25.7
+  wall_as/grey     (78.2, 149.9, 225.7)   140.1   210.9   0.653  -147.5
+  wall_as/ochre    (90.9, 118.7, 177.3)   117.1   220.7   0.487   -86.4
+  wall_sun/grey    (179.1, 176.5, 190.1)   178.0   251.4   0.072   -11.0
+  wall_sun/ochre   (177.8, 158.8, 131.7)   160.9    35.3   0.259   +46.1
+  wall_x/grey      (91.5, 141.3, 206.7)   135.4   214.1   0.557  -115.2
+  wall_x/ochre     (110.9, 117.3, 150.7)   118.4   230.3   0.264   -39.8
+[skyprobe] thp4 done in 5s
+
+[skyprobe] thp6: db 2.5 tint (1, 0.65, 17) ta 1^1 th 1^6 sun off
+00:27.174  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_up_grey.png'
+00:27.840  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_up_ochre.png'
+00:28.486  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_wall_as_grey.png'
+00:29.113  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_wall_as_ochre.png'
+00:29.731  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_wall_sun_grey.png'
+00:30.348  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_wall_sun_ochre.png'
+00:30.963  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_wall_x_grey.png'
+00:31.580  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/thp6_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (109.4, 147.4, 189.5)   142.3   211.6   0.422   -80.0
+  up/ochre         (118.2, 127.5, 133.2)   125.9   202.8   0.113   -15.0
+  wall_as/grey     (72.8, 143.3, 217.5)   133.7   210.7   0.665  -144.7
+  wall_as/ochre    (93.4, 116.5, 164.0)   115.0   220.4   0.430   -70.6
+  wall_sun/grey    (179.1, 176.0, 186.3)   177.4   258.0   0.055    -7.2
+  wall_sun/ochre   (177.8, 158.7, 126.9)   160.5    37.4   0.286   +50.9
+  wall_x/grey      (98.9, 138.1, 197.2)   134.0   216.1   0.499   -98.4
+  wall_x/ochre     (111.6, 116.0, 140.4)   116.8   230.7   0.206   -28.9
+[skyprobe] thp6 done in 5s
+
+[skyprobe] tap3: db 2.5 tint (1, 0.65, 17) ta 1^1 th 1^1 sun off
+00:32.206  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_up_grey.png'
+00:32.821  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_up_ochre.png'
+00:33.420  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_wall_as_grey.png'
+00:34.018  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_wall_as_ochre.png'
+00:34.617  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_wall_sun_grey.png'
+00:35.217  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_wall_sun_ochre.png'
+00:35.821  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_wall_x_grey.png'
+00:36.418  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (114.2, 162.0, 229.9)   156.8   215.2   0.504  -115.8
+  up/ochre         (110.4, 134.3, 184.3)   132.8   220.6   0.401   -73.9
+  wall_as/grey     (131.3, 170.1, 242.5)   167.0   219.1   0.459  -111.2
+  wall_as/ochre    (56.5, 127.1, 208.6)   118.0   212.2   0.729  -152.1
+  wall_sun/grey    (178.9, 178.5, 203.0)   180.3   241.1   0.121   -24.1
+  wall_sun/ochre   (177.9, 159.5, 147.6)   162.6    23.7   0.170   +30.3
+  wall_x/grey      (95.8, 152.0, 227.7)   145.5   214.4   0.579  -131.9
+  wall_x/ochre     (105.0, 121.8, 179.6)   122.4   226.5   0.415   -74.5
+[skyprobe] tap3 done in 5s
+
+[skyprobe] tap3thp3: db 2.5 tint (1, 0.65, 17) ta 1^3 th 1^3 sun off
+00:37.040  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_up_grey.png'
+00:37.670  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_up_ochre.png'
+00:38.292  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_wall_as_grey.png'
+00:38.947  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_wall_as_ochre.png'
+00:39.569  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_wall_sun_grey.png'
+00:40.184  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_wall_sun_ochre.png'
+00:40.802  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_wall_x_grey.png'
+00:41.424  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/tap3thp3_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (105.7, 148.7, 195.8)   142.9   211.4   0.460   -90.1
+  up/ochre         (118.0, 128.1, 139.3)   126.7   211.6   0.153   -21.3
+  wall_as/grey     (79.5, 149.5, 225.0)   140.1   211.1   0.647  -145.5
+  wall_as/ochre    (91.1, 118.6, 176.1)   116.9   220.6   0.483   -85.0
+  wall_sun/grey    (179.2, 175.0, 174.7)   175.9     3.5   0.025    +4.5
+  wall_sun/ochre   (177.7, 158.4, 113.2)   159.2    42.0   0.363   +64.5
+  wall_x/grey      (99.7, 136.4, 190.6)   132.5   215.8   0.477   -90.9
+  wall_x/ochre     (111.9, 115.6, 134.1)   116.1   230.0   0.165   -22.2
+[skyprobe] tap3thp3 done in 5s
+
+[skyprobe] cA: db 2.5 tint (0.8, 1, 9) ta 1^1 th 1^1 sun off
+00:42.038  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_up_grey.png'
+00:42.660  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_up_ochre.png'
+00:43.266  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_wall_as_grey.png'
+00:43.873  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_wall_as_ochre.png'
+00:44.488  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_wall_sun_grey.png'
+00:45.084  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_wall_sun_ochre.png'
+00:45.686  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_wall_x_grey.png'
+00:46.303  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cA_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (93.0, 155.1, 213.6)   146.1   209.1   0.565  -120.6
+  up/ochre         (113.9, 132.0, 159.8)   130.2   216.3   0.287   -45.9
+  wall_as/grey     (73.3, 153.2, 225.9)   141.5   208.6   0.675  -152.6
+  wall_as/ochre    (74.9, 123.2, 178.4)   116.9   212.0   0.581  -103.6
+  wall_sun/grey    (178.8, 177.0, 191.3)   178.4   247.6   0.075   -12.5
+  wall_sun/ochre   (177.6, 159.3, 133.2)   161.3    35.2   0.250   +44.3
+  wall_x/grey      (85.0, 143.7, 207.3)   135.8   211.2   0.590  -122.2
+  wall_x/ochre     (107.4, 119.8, 151.8)   119.5   223.2   0.292   -44.3
+[skyprobe] cA done in 5s
+
+[skyprobe] cB: db 2.5 tint (0.7, 1, 6) ta 1^1 th 1^3 sun off
+00:46.933  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_up_grey.png'
+00:47.552  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_up_ochre.png'
+00:48.169  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_wall_as_grey.png'
+00:48.802  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_wall_as_ochre.png'
+00:49.435  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_wall_sun_grey.png'
+00:50.070  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_wall_sun_ochre.png'
+00:50.667  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_wall_x_grey.png'
+00:51.307  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cB_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (110.3, 147.1, 185.6)   142.0   210.7   0.406   -75.3
+  up/ochre         (117.2, 127.6, 129.4)   125.5   188.9   0.094   -12.2
+  wall_as/grey     (57.1, 138.7, 196.7)   125.6   204.9   0.710  -139.7
+  wall_as/ochre    (91.7, 115.3, 140.9)   112.2   211.1   0.349   -49.2
+  wall_sun/grey    (178.9, 175.6, 180.7)   176.7   279.2   0.028    -1.7
+  wall_sun/ochre   (177.4, 158.7, 120.4)   159.9    40.3   0.322   +57.0
+  wall_x/grey      (98.9, 134.8, 178.5)   130.4   212.9   0.446   -79.6
+  wall_x/ochre     (109.6, 115.4, 123.3)   114.7   214.5   0.111   -13.7
+[skyprobe] cB done in 5s
+
+[skyprobe] cC: db 2.5 tint (0.6, 0.95, 5) ta 1^1 th 1^3 sun off
+00:51.941  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_up_grey.png'
+00:52.576  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_up_ochre.png'
+00:53.200  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_wall_as_grey.png'
+00:53.807  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_wall_as_ochre.png'
+00:54.426  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_wall_sun_grey.png'
+00:55.055  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_wall_sun_ochre.png'
+00:55.685  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_wall_x_grey.png'
+00:56.308  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cC_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (111.2, 146.4, 182.7)   141.6   210.4   0.391   -71.5
+  up/ochre         (116.8, 127.2, 127.0)   125.0   178.6   0.082   -10.1
+  wall_as/grey     (54.7, 135.6, 190.2)   122.3   204.2   0.712  -135.4
+  wall_as/ochre    (90.1, 113.5, 134.2)   110.0   208.1   0.329   -44.1
+  wall_sun/grey    (178.8, 175.4, 179.3)   176.4   292.3   0.022    -0.5
+  wall_sun/ochre   (177.3, 158.5, 118.9)   159.7    40.8   0.329   +58.4
+  wall_x/grey      (101.4, 133.4, 173.2)   129.5   213.3   0.414   -71.8
+  wall_x/ochre     (108.6, 114.5, 118.6)   113.5   204.7   0.084    -9.9
+[skyprobe] cC done in 5s
+
+[skyprobe] cD: db 2.5 tint (1, 1.5, 12) ta 1^1 th 1^3 sun off
+00:56.939  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_up_grey.png'
+00:57.572  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_up_ochre.png'
+00:58.192  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_wall_as_grey.png'
+00:58.819  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_wall_as_ochre.png'
+00:59.452  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_wall_sun_grey.png'
+01:00.071  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_wall_sun_ochre.png'
+01:00.700  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_wall_x_grey.png'
+01:01.331  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/skyprobe/cD_wall_x_ochre.png'
+  card                           sRGB     lum     hue     sat     R-B
+  up/grey          (105.7, 151.7, 199.3)   145.4   210.5   0.470   -93.6
+  up/ochre         (117.6, 131.0, 142.7)   129.0   207.9   0.176   -25.1
+  wall_as/grey     (67.9, 154.0, 221.3)   140.5   206.3   0.693  -153.5
+  wall_as/ochre    (89.8, 128.3, 170.3)   123.1   211.3   0.473   -80.5
+  wall_sun/grey    (179.2, 177.1, 187.9)   178.4   251.7   0.057    -8.7
+  wall_sun/ochre   (177.9, 159.7, 128.8)   161.3    37.7   0.276   +49.1
+  wall_x/grey      (96.8, 144.3, 201.5)   138.3   212.8   0.519  -104.6
+  wall_x/ochre     (111.5, 122.3, 144.9)   121.7   220.5   0.230   -33.3
+[skyprobe] cD done in 5s
+
+[skyprobe] summary (grey card = the illuminant itself)
+  tag                  up hue/sat    wall_as hue/sat     wall_x hue/sat      ochre wall_as         ochre up
+  notint            208.0/0.321      205.8/0.318      209.6/0.235       92.5/0.133    102.1/0.089
+  thp2              210.4/0.561      214.0/0.578      215.0/0.572      210.5/0.730    220.2/0.300
+  thp3              213.1/0.488      208.0/0.725      214.3/0.571      217.5/0.563    218.1/0.230
+  thp4              212.1/0.471      210.9/0.653      214.1/0.557      220.7/0.487    214.2/0.179
+  thp6              211.6/0.422      210.7/0.665      216.1/0.499      220.4/0.430    202.8/0.113
+  tap3              215.2/0.504      219.1/0.459      214.4/0.579      212.2/0.729    220.6/0.401
+  tap3thp3          211.4/0.460      211.1/0.647      215.8/0.477      220.6/0.483    211.6/0.153
+  cA                209.1/0.565      208.6/0.675      211.2/0.590      212.0/0.581    216.3/0.287
+  cB                210.7/0.406      204.9/0.710      212.9/0.446      211.1/0.349    188.9/0.094
+  cC                210.4/0.391      204.2/0.712      213.3/0.414      208.1/0.329    178.6/0.082
+  cD                210.5/0.470      206.3/0.693      212.8/0.519      211.3/0.473    207.9/0.176
+[skyprobe] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 34020 exited rc=0 after 62 s (max 1200)

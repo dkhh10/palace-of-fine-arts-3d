@@ -109,7 +109,10 @@ SKY_DIFFUSE_BOOST = 2.50           # ROUND 12 (QA-05-1): 1.00 -> 2.50. Round 11'
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
-SKY_DIFFUSE_TINT = (1.0, 0.65, 17.0)  # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
+SKY_DIFFUSE_TINT = (1.0, 0.65, 40.0)  # ROUND 14 (QA-06-2): b 17.0 -> 40.0, because the two weights below are now
+                                   # SHARP and a sharp weight passes much less of the tint: at q3 p6 the shaded wall
+                                   # needs b 40 to keep the blue b 17 gave it at q1 p1 (24.1). Round 12's text follows.
+                                   # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
                                    # shade only (camera and glossy rays never see it). The shaded attic measures
                                    # (122, 94, 22) against ref 169's (141, 111, 81) -- short 59 units of BLUE and
                                    # only ~18 of R and G -- so the shade needs blue-biased light, not more of the
@@ -130,6 +133,23 @@ SKY_DIFFUSE_TINT_ANTISUN = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 
                                    # half of the dome and a sunlit face the sun half, so this is the only sky lever
                                    # that can blue the shade without bluing the sunlit stone beside it -- see
                                    # docs/lighting_notes.md 21.6 for the measured separation.
+SKY_DIFFUSE_TINT_ANTISUN_P = 3.0   # ROUND 14 (QA-06-2), new socket. Exponent on the anti-sun weight
+                                   # w = (0.5 + 0.5 * Incoming.sun)^p. Round 12 shipped the anti-sun and horizon
+                                   # weights at 1.0 -- their maximum AMOUNT -- and then had no lever left when the
+                                   # same tint that fixed the hero's shaded attic flooded every up-facing surface in
+                                   # the build (QA-06-2: cam06 roofs hue 36.6 -> 253.4). The exponent is the
+                                   # SHARPNESS of the same discriminator and it is a different lever: measured on
+                                   # the sky probe (docs/lighting_notes.md 24.1), raising it from 1 to 3 takes the
+                                   # tint's blue on a SUN-FACING wall from +36 sRGB units to +2.4 while the shaded
+                                   # wall keeps its own.
+SKY_DIFFUSE_TINT_HORIZON_P = 6.0   # ROUND 14 (QA-06-2), new socket. Exponent on the horizon weight (1 - |ray.z|)^p.
+                                   # A vertical wall's hemisphere is centred on a HORIZONTAL normal (mean |ray.z|
+                                   # ~0.42); an up-facing surface's is centred on the ZENITH (mean z = 2/3). At p = 1
+                                   # the wall keeps 1.8x what a roof, a walk or the lagoon's murk keeps -- not enough
+                                   # to matter, which is why round 12's horizon weight was worth only 0.045 of
+                                   # near-water saturation. At p = 10 it keeps 4.8x. Physically it is also the more
+                                   # honest shape: the anti-sun horizon band (Earth shadow / Belt of Venus) at a
+                                   # 7 deg sun is a band a few degrees deep, not a linear ramp from the zenith.
 SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue/Saturation "Hue" on the DIFFUSE
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
@@ -371,11 +391,28 @@ SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irrad
 # The full round-10/11 cost tables for switching it on in CYCLES are in docs/lighting_notes.md 20.4 and still apply:
 # at el 16, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 and the columns 1.29x -> 1.37x of ref. That is why
 # `energy` (the Cycles number) stays 0.0 and this is an Eevee-only rig on the EEVEE_VAULT pattern.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
-                  color=(0.14, 0.19, 1.00),   # re-derived from the stone's own blue/red reflectance (see above)
-                  lamps=[dict(az=300.0, el=5.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
-                         dict(az=205.0, el=5.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
-                         dict(az=25.0, el=5.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=70.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
+                  # ROUND 14 (QA-06-2): the rig is no longer Eevee-only. `energy` 0.0 -> 70.0 W/m2 in CYCLES.
+                  # The round-12 diffuse tint delivered the shade's blue AND flooded every up-facing surface in the
+                  # build, because half of what reaches a shaded wall has bounced off a horizontal surface first
+                  # (21.7) -- so no sharpening of a SKY weight can separate them (24.2 measures p 2, 3, 6, 10 and
+                  # every one of them loses the hero's shade before the aerial gets its warmth back). A lamp at
+                  # 2 deg of elevation can: a vertical wall keeps cos(2) = 0.999 of it and a horizontal surface
+                  # sin(2) = 0.035, a 29x discrimination, and a sun-facing wall points away from it entirely.
+                  # 70 W/m2 puts the hero's shaded attic at 118.2 / 33.7 / 0.415 against ref 169's 115.0 / 29.5 /
+                  # 0.425 with the sky tint sharpened off everything else (24.3b).
+                  shadow_res=0.20, shadow_jitter=False,
+                  # ROUND 14 (QA-06-13): these three shipped on Blender's DEFAULTS -- 0.001 m/texel, finer than
+                  # LIGHT_sun's 0.002, with jitter on -- for three 55 deg soft suns carrying a diffuse blue. That
+                  # was the whole +81 % of the Eevee pass (24.5). At 0.20 m/texel with jitter off cam03 goes
+                  # 89.0 -> 53.6 s and cam06 46.1 -> 37.1 s, and the shade gets BETTER, not worse (24.6).
+                  color=(0.03, 0.02, 1.00),
+                  # ROUND 14: round 13's (0.14, 0.19, 1.00) was solved for EEVEE's deficit; in Cycles it adds
+                  # +9 red and +12 green for its +26 blue and moves the shade's hue the wrong way as fast as its
+                  # blue moves it back (24.3b, cases Af35 / Af55). Re-solved from those deltas.
+                  lamps=[dict(az=300.0, el=2.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
+                         dict(az=205.0, el=2.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
+                         dict(az=25.0, el=2.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
                   note="QA-05-1 Eevee shade fill on the anti-sun hemisphere: the blue the round-12 diffuse sky "
                        "puts on shaded stone in Cycles and that Eevee's screen-traced GI cannot deliver")
 
@@ -490,6 +527,15 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
             light.specular_factor = S["specular"]
         except Exception:
             pass
+        # ROUND 14 (QA-06-13). These three lamps shipped on Blender's DEFAULT shadow settings, i.e. a
+        # shadow_maximum_resolution of 0.001 m/texel -- FINER than LIGHT_sun's own 0.002 -- and shadow jitter on,
+        # for three 55 deg soft suns whose only job is to put a diffuse blue on shaded stone. That is what the
+        # Eevee six-camera pass paid 98 s for. Both are swept in 24.4.
+        try:
+            light.shadow_maximum_resolution = S.get("shadow_res", 0.001)
+            light.use_shadow_jitter = S.get("shadow_jitter", True)
+        except Exception:
+            pass
         obj = bpy.data.objects.new(name, light)
         obj.location = (0.0, 0.0, 80.0)
         common.aim_sun(obj, cfg["az"], cfg["el"])
@@ -505,7 +551,8 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
     print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, Cycles {e_total:.2f} W/m2 "
           f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun), Eevee {e_eevee:.2f} W/m2 "
           f"({e_eevee / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the sun), hidden in render: {e_total <= 0.0}, at "
-          f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}")
+          f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}, "
+          f"shadow res {S.get('shadow_res', 0.001)} m/texel, jitter {S.get('shadow_jitter', True)}")
     return made
 
 
@@ -553,7 +600,9 @@ def build_world(az, el, calib, moment):
                            diffuse_saturation=SKY_DIFFUSE_SATURATION, diffuse_hue=SKY_DIFFUSE_HUE,
                            diffuse_tint=SKY_DIFFUSE_TINT, diffuse_boost=SKY_DIFFUSE_BOOST,
                            diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,
-                           diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON)  # disc OFF: LIGHT_sun carries it
+                           diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,
+                           diffuse_tint_antisun_p=SKY_DIFFUSE_TINT_ANTISUN_P,
+                           diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -576,6 +625,8 @@ def build_world(az, el, calib, moment):
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)
     w["sky_diffuse_tint_antisun"] = SKY_DIFFUSE_TINT_ANTISUN
     w["sky_diffuse_tint_horizon"] = SKY_DIFFUSE_TINT_HORIZON
+    w["sky_diffuse_tint_antisun_p"] = SKY_DIFFUSE_TINT_ANTISUN_P
+    w["sky_diffuse_tint_horizon_p"] = SKY_DIFFUSE_TINT_HORIZON_P
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]
@@ -728,6 +779,8 @@ def build(moment="morning", calibrate=True, save=True):
                 sky_diffuse_tint=list(SKY_DIFFUSE_TINT),          # were on neither the sun's meta block nor (hue)
                 sky_diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,   # the world, so a rig read back from either
                 sky_diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,   # could not be reproduced
+                sky_diffuse_tint_antisun_p=SKY_DIFFUSE_TINT_ANTISUN_P,
+                sky_diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P,
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])

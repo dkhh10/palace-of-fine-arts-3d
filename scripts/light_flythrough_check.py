@@ -24,6 +24,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import light_flythrough as ft
+import arch_params as A
 
 CLEAR_MIN = 1.5        # m, brief: ">= 1.5 m clearance everywhere"
 CLEAR_MIN_GALLERY = 1.35   # inside the colonnade: the 2.80 m clear gallery caps the centreline at 1.40 m to a
@@ -101,7 +102,7 @@ def probe(scene, dg, points, eye=1.75, from_z=40.0):
         print(f"[probe] {x:8.1f} {y:8.1f} | {name:28s} {z:7.2f} | {ez:5.2f} {d:8.2f}  {what}")
 
 
-def columns(prefix, cx=-11.2, cy=84.7, tlo=-70.0, thi=-15.0):
+def columns(prefix, cx=A.COL_ARC_CENTER[0], cy=A.COL_ARC_CENTER[1], tlo=-70.0, thi=-15.0):
     """Every object whose name starts with `prefix`, in colonnade-arc polar coordinates about COL_ARC_CENTER.
     Used to place the gallery entry in a real bay instead of on top of a shaft."""
     rows = []
@@ -216,6 +217,10 @@ def check(scene, dg, step=12, rays=96):
             lvl.append(f"f{r['frame']} z {r['pos'][2]:.2f} over water")
     aglmin = min(r["agl"] for r in rows if r["agl"] is not None)
     zw = [r["pos"][2] for r in rows if r["over_water"]]
+    if not zw:
+        # The over-water gate keys on the literal name in WATER_NAMES; if ENV renames or LOD-suffixes the
+        # lagoon surface the gate would otherwise pass with ZERO samples (prep review 8).
+        lvl.append(f"0 samples over water: none of {WATER_NAMES} was hit -- the gate is vacuous, not passing")
     print(f"[gate] level     : min agl {aglmin:.2f} m (>= {AGL_MIN}); over water min z "
           f"{(min(zw) if zw else float('nan')):.2f} (>= {WATER_MIN_Z}, {len(zw)} samples over the lagoon) "
           f"{'PASS' if not lvl else 'FAIL: ' + '; '.join(lvl)}")

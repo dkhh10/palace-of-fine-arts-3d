@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import light_presets as lp
 import arch_params as A
+import qa_cameras
 
 FPS = 24
 ACCEL = 2.5              # m/s^2 tangential; 0 -> 9.2 m/s in 3.7 s / 17 m
@@ -41,7 +42,8 @@ OUT = common.RENDERS / "previews" / "lighting"
 # renders/logs/light_r14_cols.log): the two column rows of each wing sit at r 115.15 and 119.65 about
 # COL_ARC_CENTER, so the gallery centreline is r 117.40 and the gallery is COL_ROW_SPACING - COLONNADE_D =
 # 4.50 - 1.70 = 2.80 m of clear width.  ITS CENTRELINE THEREFORE CANNOT BE MORE THAN 1.40 m FROM A SHAFT --
-# the brief's 1.5 m is unreachable inside the colonnade and the check gates that leg at 1.30 m instead.
+# the brief's 1.5 m is unreachable inside the colonnade and the check gates that leg at 1.35 m instead
+# (`light_flythrough_check.CLEAR_MIN_GALLERY`).
 CX, CY = A.COL_ARC_CENTER
 R_WALK = A.COL_ARC_R                                   # 117.40 gallery centreline
 R_INNER = R_WALK - A.COL_ROW_SPACING / 2               # 115.15 inner column row
@@ -52,6 +54,17 @@ Z_WALK = A.COLONNADE_GROUND_Z + 1.75                   # 1.15 eye height over th
 GAP_THETA, TURN_THETA = -43.85, -44.94
 GAL_THETA_0, GAL_THETA_1, GAL_STEP = -47.14, -67.14, 2.2   # then the open end past the last columns (-66.90)
 GAL_EXIT_THETA = -69.30
+
+
+
+def qa_xy(cam_name):
+    """The (x, y) of a QA camera, read from `qa_cameras.CAMERAS` by name so a re-stationing there cannot
+    silently desync the flythrough (prep review 1; §23.1.2 records this desyncing once already).
+    z is NOT taken from qa_cameras: the flythrough's eye heights are probed against the surface below."""
+    for spec in qa_cameras.CAMERAS:
+        if spec["name"] == cam_name:
+            return tuple(round(c, 2) for c in spec["loc"][:2])
+    raise KeyError(f"{cam_name} is not in qa_cameras.CAMERAS")
 
 
 def arc_xy(theta_deg, r):
@@ -70,7 +83,8 @@ def _arc(name, theta, r, z, cap, leg, note, tangent=True):
 # Every z is eye height over the MEASURED surface below (probe logs renders/logs/light_r14_probe*.log):
 #   lagoon water -1.30 | shore terrain -0.48..-0.79 | colonnade walk paving -0.62..-0.75 | ARCH_site_platform 0.00
 STATIONS = [
-    ("hero",       (-14.10, 100.00, 1.60), V_WATER, "hero_hold", None, "CAM_qa_01 station; water below, agl 2.90"),
+    ("hero",       qa_xy("CAM_qa_01_lagoon_hero") + (1.60,), V_WATER, "hero_hold", None,
+                                                "CAM_qa_01 station; water below, agl 2.90"),
     ("lagoon_a",   (  6.00,  99.00, 2.20), V_WATER, "water", None, "over the lagoon and the low east islet (agl 2.4+)"),
     ("lagoon_b",   ( 24.00,  93.00, 2.80), V_WATER, "water", None, "water -1.30"),
     ("lagoon_c",   ( 40.00,  84.00, 3.20), V_WATER, "water", None, "water -1.30, apex of the crossing"),
@@ -82,7 +96,8 @@ STATIONS = [
     ("walk_a",     ( 73.50,  38.00, 1.90), V_LAND,  "shore", None, "apron -0.69"),
     ("walk_b",     ( 73.00,  33.00, 1.25), V_LAND,  "shore", None, "apron -0.71"),
     ("walk_c",     ( 72.00,  29.00, 1.10), V_LAND,  "shore", None, "terrain -0.74"),
-    ("cam02",      ( 70.50,  25.60, 1.06), V_LAND,  "shore", None, "CAM_qa_02 station (az 160 / 75 m); walk -0.69, agl 1.75"),
+    ("cam02",      qa_xy("CAM_qa_02_lagoon_ne_threequarter") + (1.06,), V_LAND,  "shore", None,
+                                                "CAM_qa_02 station (az 160 / 75 m); walk -0.69, agl 1.75"),
     ("apron_a",    ( 70.20,  19.00, 1.15), V_LAND,  "shore", None, "courtyard apron, terrain -0.58"),
     ("apron_b",    ( 68.60,  13.50, 1.12), V_LAND,  "shore", None, "courtyard apron, terrain -0.63"),
     _arc("bay_line",  GAP_THETA,  108.00, 1.08, V_GALLERY, "gallery", "on the bay's radial line, 7 m short of the row", tangent=False),
@@ -110,7 +125,8 @@ STATIONS += [
                                                                     "az-217 face (offset 0.45 m of a 12.5 m clear span)"),
     ("app_h",      ( 11.00,  -8.60, 1.75), V_LAND, "approach", None, "platform, inside the inner ring"),
     ("app_i",      (  6.30,  -4.90, 1.75), V_LAND, "approach", None, "platform"),
-    ("dome",       (  0.00,   3.00, 1.75), V_LAND, "approach", None, "CAM_qa_04 station; the ceiling look-up"),
+    ("dome",       qa_xy("CAM_qa_04_rotunda_ceiling") + (1.75,), V_LAND, "approach", None,
+                                                "CAM_qa_04 station; the ceiling look-up"),
 ]
 WATER_LEGS = {"water"}
 
@@ -292,7 +308,7 @@ def schedule(path_obj):
     return dict(fps=FPS, frames=frames, hold_hero_frames=h1, move_frames=move,
                 path_length_m=round(total, 2), t_move_s=round(t_move, 2), legs=legs, holds=holds,
                 arrive={k: int(v_) for k, v_ in arrive.items()},
-                stations=[dict(name=st[0], pos=list(st[1]), cap=st[2], leg=st[3], note=st[4]) for st in STATIONS],
+                stations=[dict(name=st[0], pos=list(st[1]), cap=st[2], leg=st[3], note=st[5]) for st in STATIONS],
                 s_station=[round(s, 2) for s in s_wp]), s_of_frame, total, s_wp, grid, v, t
 
 
@@ -395,7 +411,7 @@ def build(scene):
     print(f"[light_flythrough] stations:")
     for i, st in enumerate(STATIONS):
         print(f"    {st[0]:11s} f{sch['arrive'][st[0]]:5d}  t={(sch['arrive'][st[0]] - 1) / FPS:6.2f}s  "
-              f"s={s_wp[i]:7.1f} m  pos {st[1]}   {st[4]}")
+              f"s={s_wp[i]:7.1f} m  pos {st[1]}   {st[5]}")
     print(f"[light_flythrough] designed speed: max {max(v):.2f} m/s (water cap {V_WATER}, land {V_LAND}, "
           f"gallery {V_GALLERY})")
     return cam, path_obj, tgt, sch
