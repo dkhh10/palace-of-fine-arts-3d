@@ -75,3 +75,54 @@ Info: No orphaned data-blocks to purge
 [r14] -> r14_A_01c.png (90.1s, 1280x720)
 [light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
 [r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+07:04.953  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_A_02e.png'
+[r14] -> r14_A_02e.png (54.0s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+08:04.524  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_A_03e.png'
+[r14] -> r14_A_03e.png (59.6s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+08:45.296  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_A_05e.png'
+[r14] -> r14_A_05e.png (40.8s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+09:16.267  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_A_06e.png'
+[r14] -> r14_A_06e.png (31.0s, 1280x720)
+[light_build] LIGHT_shade_fill: 0 W/m2 in both engines, no lamps built (see the SHADE_FILL comment)
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'R14_H' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 80.0), antisun 1.00, horizon 1.00, exponents 3.0 / 10.0)
+[light_probes] bake {'FINISHED'} in 3.5s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_probes] restored: engine BLENDER_EEVEE, world R14_H, vault rig EEVEE override
+[r14] re-baked with the LIGHTING (r13) world in 4s
+[r14] case H: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 db 2.5 tint 1,0.65,80 ta 1^3 th 1^10 f 1 v 1 exposure -2.833 EV, world 'R14_H'
+10:50.265  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_H_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r14] -> r14_H_01c.png (90.3s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+11:45.120  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_H_02e.png'
+[r14] -> r14_H_02e.png (54.8s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+12:45.772  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_H_03e.png'
+[r14] -> r14_H_03e.png (60.7s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+13:28.699  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_H_05e.png'
+[r14] -> r14_H_05e.png (42.9s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+14:00.273  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_H_06e.png'
+[r14] -> r14_H_06e.png (31.6s, 1280x720)
+[r14] camera times: 01c 90.2s  02e 51.3s  03e 54.9s  05e 38.4s  06e 31.2s  01c 90.1s  02e 54.0s  03e 59.6s  05e 40.8s  06e 31.0s  01c 90.3s  02e 54.8s  03e 60.7s  05e 42.9s  06e 31.6s   TOTAL 821.7s over 15 frames
+[r14] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 34730 exited rc=0 after 840 s (max 2700)

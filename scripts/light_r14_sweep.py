@@ -97,7 +97,8 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 # ROUND 14
                 tap=1.0, thp=1.0,                 # exponents on the anti-sun / horizon tint weights
                 sres=-1.0, sray=-1.0, srstep=-1.0, nfill=-1.0,
-                sfres=-1.0, sfjit=-1.0)      # the shade lamps' own shadow resolution / jitter
+                sfres=-1.0, sfjit=-1.0,
+                cfill=-1.0)   # ROUND 14: the CYCLES energy of LIGHT_shade_fill (`fill` is the Eevee one)      # the shade lamps' own shadow resolution / jitter
 SKY_KEYS = ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "tr", "tg", "tb", "ta", "th",
             "tap", "thp", "bm", "de")
 
@@ -218,7 +219,8 @@ def apply_case(c):
     if c["nfill"] >= 0.0:                            # ROUND 14 (QA-06-13): keep only the first n shade lamps
         lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=lb.SHADE_FILL["lamps"][:int(c["nfill"])])
     lb.build_shade_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection,
-                        energy=lb.SHADE_FILL.get("energy", 0.0), energy_eevee=c["fill"])
+                        energy=(lb.SHADE_FILL.get("energy", 0.0) if c["cfill"] < 0.0 else c["cfill"]),
+                        energy_eevee=c["fill"])
     # --- interior fills
     if _DISK:
         _DISK["energy_W"] = _E_DISK0 * c["f"]
