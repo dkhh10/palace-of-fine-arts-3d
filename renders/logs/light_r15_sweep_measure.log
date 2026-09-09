@@ -1,0 +1,202 @@
+
+-- r15s_A_gb42_gh460_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  136.5  hue   32.6  sat 0.308  R-B   +47.9  hue PASS[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  189.5  hue   36.0  sat 0.445  R-B  +100.2  lum PASS[178-201]
+   entablature     lum  132.6  hue   38.6  sat 0.668  R-B  +113.4
+   columns         lum  125.6  hue   35.1  sat 0.549  R-B   +86.4
+   water_refl      lum  102.3  hue   37.3  sat 0.328  R-B   +37.9  hue PASS[25-45]
+   near_water_sky  lum  139.3  hue  228.3  sat 0.319  R-B   -59.3  hue FAIL[185-200] lum FAIL[79.1-131.8]
+   sky_top         lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   sky_left        lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   south_wing      lum   95.8  hue   37.2  sat 0.277  R-B   +29.3
+   north_wing      lum   23.2  hue   45.0  sat 0.518  R-B   +13.8
+   shore_band      lum   88.0  hue   41.6  sat 0.610  R-B   +65.2
+   flank           lum  180.8  hue  224.4  sat 0.303  R-B   -70.7  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15s_A_gb42_gh460_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   31.6  hue  260.3  sat 0.499  R-B   -18.2  ratio 0.707  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   47.3  hue  251.7  sat 0.472  R-B   -30.9  ratio 1.057  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_soffit    lum   43.6  hue  242.6  sat 0.538  R-B   -44.3  ratio 0.975
+   shade_frieze    lum   86.5  hue   24.7  sat 0.193  R-B   +18.4  ratio 1.935
+   sunlit_pier     lum   44.7  hue   30.0  sat 0.743  R-B   +48.8
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15s_A_gb42_gh460_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   56.1  hue  194.1  sat 0.156  R-B    -9.3  ratio 0.563  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   42.6  hue   47.6  sat 0.861  R-B   +45.2  ratio 0.428
+   outer_row       lum   11.3  hue   69.1  sat 0.916  R-B    +9.7  ratio 0.114  QA FAIL[25-60]
+   near_shaft      lum   18.2  hue   75.5  sat 0.399  R-B    +5.7  ratio 0.183
+   sunlit_rotunda  lum   99.6  hue   36.6  sat 0.418  R-B   +48.8
+   frame           lum   40.2  hue    0.0  sat 0.000  R-B    +0.0  dark 18.4%
+
+-- r15s_A_gb42_gh460_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  129.0  hue   34.2  sat 0.235  R-B   +33.3  sat FAIL[0.24-1] lum FAIL[70-117]
+   attic_band      lum  159.3  hue   37.4  sat 0.584  R-B  +116.2
+
+-- r15s_B_fill0_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  130.8  hue   40.8  sat 0.483  R-B   +73.9  hue FAIL[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  188.2  hue   37.4  sat 0.486  R-B  +109.7  lum PASS[178-201]
+   entablature     lum  131.6  hue   39.7  sat 0.716  R-B  +121.6
+   columns         lum  123.5  hue   37.9  sat 0.636  R-B   +99.8
+   water_refl      lum  107.1  hue   41.2  sat 0.334  R-B   +39.7  hue PASS[25-45]
+   near_water_sky  lum  118.6  hue  208.6  sat 0.244  R-B   -33.5  hue FAIL[185-200] lum PASS[79.1-131.8]
+   sky_top         lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   sky_left        lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   south_wing      lum   93.6  hue   43.6  sat 0.407  R-B   +42.7
+   north_wing      lum   23.1  hue   45.8  sat 0.557  R-B   +14.8
+   shore_band      lum   86.4  hue   44.7  sat 0.747  R-B   +79.7
+   flank           lum  159.1  hue  210.2  sat 0.252  R-B   -46.8  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15s_B_fill0_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   21.5  hue   25.8  sat 0.633  R-B   +19.6  ratio 0.496  QA PASS[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   39.9  hue  280.8  sat 0.273  R-B    -4.4  ratio 0.918  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_soffit    lum   28.0  hue   37.0  sat 0.828  R-B   +32.4  ratio 0.645
+   shade_frieze    lum   78.7  hue   45.7  sat 0.533  R-B   +48.2  ratio 1.813
+   sunlit_pier     lum   43.4  hue   33.8  sat 0.855  R-B   +55.2
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15s_B_fill0_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   56.5  hue  193.2  sat 0.151  R-B    -9.1  ratio 0.592  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   42.0  hue   47.7  sat 0.862  R-B   +44.7  ratio 0.441
+   outer_row       lum   11.3  hue   69.1  sat 0.916  R-B    +9.7  ratio 0.119  QA FAIL[25-60]
+   near_shaft      lum   18.2  hue   75.3  sat 0.407  R-B    +5.8  ratio 0.191
+   sunlit_rotunda  lum   95.4  hue   42.9  sat 0.604  R-B   +69.1
+   frame           lum   39.9  hue    0.0  sat 0.000  R-B    +0.0  dark 18.4%
+
+-- r15s_B_fill0_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  130.5  hue   34.2  sat 0.225  R-B   +32.1  sat FAIL[0.24-1] lum FAIL[70-117]
+   attic_band      lum  158.3  hue   38.5  sat 0.620  R-B  +123.2
+
+-- r15s_C_w50_200_10_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  131.9  hue   39.7  sat 0.449  R-B   +69.0  hue FAIL[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  188.4  hue   37.2  sat 0.479  R-B  +108.1  lum PASS[178-201]
+   entablature     lum  131.8  hue   39.4  sat 0.706  R-B  +119.9
+   columns         lum  124.2  hue   37.2  sat 0.609  R-B   +95.7
+   water_refl      lum  107.6  hue   39.8  sat 0.305  R-B   +36.3  hue PASS[25-45]
+   near_water_sky  lum  134.1  hue  225.4  sat 0.311  R-B   -54.5  hue FAIL[185-200] lum FAIL[79.1-131.8]
+   sky_top         lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   sky_left        lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   south_wing      lum   94.5  hue   41.9  sat 0.362  R-B   +38.2
+   north_wing      lum   23.2  hue   45.5  sat 0.537  R-B   +14.3
+   shore_band      lum   87.4  hue   43.6  sat 0.687  R-B   +73.6
+   flank           lum  200.9  hue  223.3  sat 0.220  R-B   -52.7  hue FAIL[0-210] lum FAIL[114.3-190.5]
+
+-- r15s_C_w50_200_10_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   23.0  hue  355.3  sat 0.330  R-B    +9.5  ratio 0.530  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_pier_r    lum   41.0  hue  267.6  sat 0.335  R-B   -10.3  ratio 0.945  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_soffit    lum   30.3  hue   13.0  sat 0.351  R-B   +13.7  ratio 0.699
+   shade_frieze    lum   80.0  hue   43.8  sat 0.462  R-B   +42.1  ratio 1.844
+   sunlit_pier     lum   43.4  hue   33.3  sat 0.832  R-B   +53.5
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15s_C_w50_200_10_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   56.5  hue  193.8  sat 0.153  R-B    -9.2  ratio 0.549  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   42.0  hue   47.7  sat 0.862  R-B   +44.6  ratio 0.408
+   outer_row       lum   11.3  hue   69.1  sat 0.916  R-B    +9.7  ratio 0.110  QA FAIL[25-60]
+   near_shaft      lum   18.2  hue   75.1  sat 0.404  R-B    +5.8  ratio 0.177
+   sunlit_rotunda  lum  103.0  hue   31.1  sat 0.306  R-B   +36.1
+   frame           lum   40.9  hue    0.0  sat 0.000  R-B    +0.0  dark 18.3%
+
+-- r15s_C_w50_200_10_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  130.6  hue   34.0  sat 0.224  R-B   +31.9  sat FAIL[0.24-1] lum FAIL[70-117]
+   attic_band      lum  158.7  hue   38.1  sat 0.606  R-B  +120.4
+
+-- r15s_E_wnwonly_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  130.9  hue   40.7  sat 0.481  R-B   +73.7  hue FAIL[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  188.2  hue   37.4  sat 0.486  R-B  +109.6  lum PASS[178-201]
+   entablature     lum  131.6  hue   39.6  sat 0.715  R-B  +121.4
+   columns         lum  123.6  hue   37.8  sat 0.632  R-B   +99.3
+   water_refl      lum  107.3  hue   40.7  sat 0.323  R-B   +38.4  hue PASS[25-45]
+   near_water_sky  lum  143.9  hue  227.8  sat 0.285  R-B   -52.8  hue FAIL[185-200] lum FAIL[79.1-131.8]
+   sky_top         lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   sky_left        lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   south_wing      lum   93.7  hue   43.4  sat 0.402  R-B   +42.2
+   north_wing      lum   23.1  hue   45.7  sat 0.548  R-B   +14.6
+   shore_band      lum   86.7  hue   44.4  sat 0.728  R-B   +77.8
+   flank           lum  159.2  hue  210.3  sat 0.252  R-B   -47.0  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15s_E_wnwonly_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   21.6  hue   23.2  sat 0.596  R-B   +18.5  ratio 0.506  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   39.8  hue  279.6  sat 0.278  R-B    -4.8  ratio 0.933  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_soffit    lum   28.0  hue   37.0  sat 0.827  R-B   +32.4  ratio 0.656
+   shade_frieze    lum   77.8  hue   46.2  sat 0.577  R-B   +52.0  ratio 1.824
+   sunlit_pier     lum   42.7  hue   34.2  sat 0.884  R-B   +56.7
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15s_E_wnwonly_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   55.4  hue  193.4  sat 0.158  R-B    -9.3  ratio 0.586  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   41.9  hue   47.7  sat 0.864  R-B   +44.7  ratio 0.444
+   outer_row       lum   11.3  hue   69.1  sat 0.916  R-B    +9.7  ratio 0.120  QA FAIL[25-60]
+   near_shaft      lum   18.2  hue   75.3  sat 0.407  R-B    +5.8  ratio 0.192
+   sunlit_rotunda  lum   94.5  hue   43.1  sat 0.618  R-B   +70.3
+   frame           lum   39.3  hue    0.0  sat 0.000  R-B    +0.0  dark 18.6%
+
+-- r15s_E_wnwonly_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  128.3  hue   35.7  sat 0.245  R-B   +34.4  sat PASS[0.24-1] lum FAIL[70-117]
+   attic_band      lum  157.6  hue   38.7  sat 0.633  R-B  +125.6
+
+-- r15s_F_wnwonly_db190_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  122.7  hue   40.3  sat 0.535  R-B   +78.5  hue FAIL[24-36] sat FAIL[0-0.5] lum PASS[103.5-126.5]
+   sunlit_attic    lum  184.0  hue   37.4  sat 0.518  R-B  +115.7  lum PASS[178-201]
+   entablature     lum  127.8  hue   39.6  sat 0.746  R-B  +124.7
+   columns         lum  119.1  hue   38.1  sat 0.674  R-B  +103.6
+   water_refl      lum  105.0  hue   40.4  sat 0.332  R-B   +38.8  hue PASS[25-45]
+   near_water_sky  lum  142.9  hue  227.9  sat 0.287  R-B   -52.9  hue FAIL[185-200] lum FAIL[79.1-131.8]
+   sky_top         lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   sky_left        lum    0.0  hue    0.0  sat 0.000  R-B    +0.0
+   south_wing      lum   90.3  hue   42.9  sat 0.422  R-B   +43.1
+   north_wing      lum   22.7  hue   45.3  sat 0.567  R-B   +15.0
+   shore_band      lum   83.3  hue   44.2  sat 0.772  R-B   +80.5
+   flank           lum  158.7  hue  210.3  sat 0.255  R-B   -47.3  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15s_F_wnwonly_db190_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   20.0  hue   23.5  sat 0.601  R-B   +17.3  ratio 0.477  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   33.2  hue  281.4  sat 0.292  R-B    -3.9  ratio 0.790  QA FAIL[25-60] sat PASS[0-0.35]
+   shade_soffit    lum   27.1  hue   37.1  sat 0.822  R-B   +31.0  ratio 0.644
+   shade_frieze    lum   74.7  hue   45.2  sat 0.599  R-B   +52.6  ratio 1.777
+   sunlit_pier     lum   42.0  hue   34.4  sat 0.888  R-B   +56.2
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15s_F_wnwonly_db190_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   49.1  hue  192.4  sat 0.121  R-B    -6.2  ratio 0.525  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   38.3  hue   46.1  sat 0.872  R-B   +42.1  ratio 0.409
+   outer_row       lum    8.4  hue   67.1  sat 0.941  R-B    +7.7  ratio 0.090  QA FAIL[25-60]
+   near_shaft      lum   15.1  hue   69.9  sat 0.409  R-B    +5.4  ratio 0.161
+   sunlit_rotunda  lum   93.6  hue   42.9  sat 0.622  R-B   +70.3
+   frame           lum   35.9  hue    0.0  sat 0.000  R-B    +0.0  dark 29.2%
+
+-- r15s_F_wnwonly_db190_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  125.9  hue   36.3  sat 0.274  R-B   +38.2  sat PASS[0.24-1] lum FAIL[70-117]
+   attic_band      lum  156.5  hue   38.6  sat 0.642  R-B  +127.1
+
+-- r15p_r15SHIPnofgi_01e.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  131.9  hue   36.4  sat 0.433  R-B   +67.4  hue FAIL[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  183.8  hue   36.5  sat 0.479  R-B  +106.0  lum PASS[178-201]
+   entablature     lum  107.2  hue   37.9  sat 0.702  R-B   +98.5
+   columns         lum  111.7  hue   36.7  sat 0.664  R-B   +96.6
+   water_refl      lum  131.3  hue  222.5  sat 0.152  R-B   -22.4  hue FAIL[25-45]
+   near_water_sky  lum  127.4  hue  216.1  sat 0.381  R-B   -64.4  hue FAIL[185-200] lum PASS[79.1-131.8]
+   sky_top         lum  167.9  hue  208.7  sat 0.432  R-B   -95.4
+   sky_left        lum  154.8  hue  208.6  sat 0.494  R-B  -105.2
+   south_wing      lum   95.2  hue   43.9  sat 0.373  R-B   +39.5
+   north_wing      lum  127.2  hue   41.2  sat 0.495  R-B   +73.9
+   shore_band      lum   74.7  hue   43.2  sat 0.532  R-B   +46.4
+   flank           lum  158.6  hue  213.1  sat 0.280  R-B   -53.6  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15p_r15SHIPnofgi_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   32.0  hue  259.2  sat 0.475  R-B   -17.5  ratio 0.719  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   49.4  hue  252.7  sat 0.445  R-B   -28.6  ratio 1.111  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_soffit    lum   42.9  hue  236.6  sat 0.575  R-B   -50.4  ratio 0.966
+   shade_frieze    lum  100.8  hue   37.0  sat 0.327  R-B   +37.2  ratio 2.269
+   sunlit_pier     lum   44.4  hue   33.2  sat 0.676  R-B   +40.8
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15p_r15SHIPnofgi_05c.png   (cam 05, boxes at 1280x720)
+   water_band      lum  108.4  hue   41.6  sat 0.706  R-B   +96.5  sat PASS[0.24-1] lum PASS[70-117]
+   attic_band      lum  172.8  hue   37.3  sat 0.529  R-B  +111.7
+
+-- r15p_r15SHIPnofgi_06e.png   (cam 06, boxes at 1280x720)
+   roofs           lum  129.7  hue   33.3  sat 0.069  R-B    +9.2  QA PASS[22-52] brief FAIL[195-230] sat PASS[0-0.35]
+   plaza           lum  110.5  hue   46.0  sat 0.199  R-B   +23.0  QA PASS[22-52] brief FAIL[195-230] sat PASS[0-0.35]
+   trees           lum  126.3  hue   41.4  sat 0.247  R-B   +33.7  QA PASS[23-53] brief FAIL[195-230] sat PASS[0-0.35]
+   horizon         lum  118.3  hue   36.8  sat 0.213  R-B   +27.3
