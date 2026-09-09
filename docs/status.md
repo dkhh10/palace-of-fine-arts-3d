@@ -305,3 +305,6 @@ Hand-offs: materials +0.025 sat / +6.9 R-B on the sunlit attic; env shore 91.5 o
 ## 2026-09-09 · LIGHT r13 merged after review (MERGE WITH FIXES; docs/reviews/light_r13_review.md); master rebuilding
 Lead fixes: common.configure_cycles hides the Eevee-only vault/shade rigs on every Cycles path (finding 1); measure HOLD = sky boxes; carries 2, 5-11 to r14. Polish round 4 fully merged: ARCH r4, LIGHT r12+r13, MAT r7, ENV r7+r8 (+paving rebuild). scripts/lead_build.sh now runs through blender_run.sh.
 In flight: scripts/lead_build.sh (log renders/logs/lead_build_r6.log). Next: QA round 6 (Opus xhigh, docs/briefs/qa_round_06.md), gate report to the user.
+
+## 2026-09-09 · master rebuilt (lead_build.sh, 9709 objects, LOD1 11.11 M, probes baked on the diffuse world); QA round 6 dispatched
+In flight: QA round 6 (Opus xhigh, docs/briefs/qa_round_06.md; commits only qa docs/scripts/renders; lead does not commit on main until it reports). Next: gate report with composite, score deltas, open defects; decide photo-projection pass vs Phase 5 per the definition of done.
