@@ -369,3 +369,7 @@ In flight: ORN review, LIGHT r14, ENV fixes. Next: merges, MAT r8; QA round 7 ch
 ## 2026-09-09 · ENV r9 merged (c61cc32) after fixes
 land_snap runs before the gates and never moves pinned trees (build fails naming a wet PLAN coordinate); 79 hand-placed trees at 0.000 m from PLAN; --verify and --land gates; c06 ratio computed 0.636; walk clearance 1.71 m, LOD1 4,705,602, 131 trees, wings 21.2 % shadow (QA confirms on a render).
 In flight: LIGHT r14, ORN r6 review, ARCH r7. Next: LIGHT review + merge, MAT r8, then lead_build.sh and QA round 7.
+
+## 2026-09-09 · ORN r6 merged (8342aa5) after review (MERGE WITH FIXES; lead fixed the gate's stamp-set fallback)
+Carries to ORN r7: capital scaled in Z only (acanthus tiers stretched), attic figures crowd 17 % laterally (X positions not scaled), rinceau normal map baked before the Z squash, hard-coded RES_X/SENSOR, 84 MB blend committed twice; QA-06-6's luminance half needs a render (QA round 7).
+In flight: LIGHT r14, ARCH r7. Next: LIGHT review + merge, MAT r8, lead_build.sh, QA round 7.
