@@ -46,7 +46,7 @@ pick_step5_settings() {
   local log=$LOGS/phase5_4.log
   local t128=""
   if [[ -f "$log" ]]; then
-    t128=$(grep -o 'wall_time_s=[0-9.]*' "$log" | tail -1 | cut -d= -f2)
+    t128=$(grep -o 'wall_time_s=[0-9.]*' "$log" | tail -1 | cut -d= -f2 || true)
   fi
   if [[ -z "$t128" ]]; then
     echo "[phase5_deliver] step 5: no step-4 wall_time_s found in $log; falling back to a conservative 2560x1440 @ 128 spp" >&2
@@ -102,8 +102,8 @@ step6() {
   echo "[phase5_deliver] step 6 (flythrough test frames) wall $(( SECONDS - t0 ))s -- log $log"
 
   local fps fstep
-  fps=$(grep -o 'fps=[0-9.]*' "$log" | tail -1 | cut -d= -f2)
-  fstep=$(grep -o 'frame_step=[0-9]*' "$log" | tail -1 | cut -d= -f2)
+  fps=$(grep -o 'fps=[0-9.]*' "$log" | tail -1 | cut -d= -f2 || true)
+  fstep=$(grep -o 'frame_step=[0-9]*' "$log" | tail -1 | cut -d= -f2 || true)
   fps=${fps:-24}; fstep=${fstep:-2}
   local outfps=$(( fps / fstep ))
   local t1=$SECONDS

@@ -60,9 +60,7 @@ scene.camera = cam
 
 scene.render.resolution_x, scene.render.resolution_y = RES
 scene.render.resolution_percentage = 100
-scene.render.image_settings.file_format = "PNG"
-scene.render.image_settings.color_depth = "8"
-scene.render.image_settings.color_mode = "RGB"
+scene.render.image_settings.file_format = "PNG"   # depth / mode stay as apply_final_cycles set them (16-bit; review fix 3)
 
 OUT = common.RENDERS / "final"
 OUT.mkdir(parents=True, exist_ok=True)
