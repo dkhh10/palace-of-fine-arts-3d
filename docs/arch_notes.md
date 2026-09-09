@@ -1011,8 +1011,8 @@ QA's mismatched anchors implied:
 - the **column shaft**: the photo's shaft runs row 357 to the same base row as the render's (the podium did not
   move), 195 rows against the render's 218, so the shaft is 16.3 * 195/218 = **14.58 m**. Built at 14.46 from the
   capital/entablature chain — a 0.12 m agreement between two measurements that share no landmark.
-- ref 062 (`arch_ref062_fit.py`) uses only ATTIC_Z1, DOME_APEX_Z and the podium, none of which moved, so its
-  QA-04-11 numbers are unchanged.
+- ref 062: **this sentence was wrong and is corrected in Round 6b below** — `arch_ref062_fit.py` fits `ATTIC_Z0`
+  as one of its four landmarks, and `ATTIC_Z0` moved 2.02 m, so its QA-04-11 numbers did move.
 
 ### Item 2 — what moved (arch_params)
 
@@ -1063,7 +1063,7 @@ rendered value.
 **Tri counts** LOD0 2,694,686 / LOD1 1,109,390 / LOD2 726,542, 2,281 objects — **+0.012 %** on round 5
 (+320 tris: the new attic cornice profile has five more points). Test was +5 %.
 
-**UVProj re-baked by the build** (see item 0): 23 meshes, 26,376 verts, **0 clamped**, worst round-trip 0.00 px,
+**UVProj re-baked by the build** (see item 0): 31 meshes, 26,376 verts, **0 clamped**, worst round-trip 0.00 px,
 `UVMap` still first / active / active_render, and the three named points 0.84 / 0.00 / 0.02 px. The corona-soffit
 point is now `P.ENTABLATURE_Z0 + P.CORNICE_CORONA_SOFFIT_DZ`, so it is a check of the profile, not a re-fit to it.
 
@@ -1110,3 +1110,72 @@ attribute remove/add), 6 (`p.x / r * r` -> `p.x`; the socket empties use `world_
 7 (`--courses` / `--sil` no longer emit the `--map` grid), and item 10's `active_render` is now echoed in the log.
 Still open: 2's independent-anchor sentence (the corona soffit's external anchor is round 4's *rendered* row 254
 against the model's 253.9) and 8 (`arch_params.MAIN_ROOT` duplicating `common.MAIN_ROOT`).
+
+## Round 6b (2026-09-09) — review fixes, no render (`docs/reviews/arch_r6_review.md`)
+
+Nothing geometric moved: rebuild is tris LOD0 2,694,686 / LOD1 1,109,390 / LOD2 726,542, 2,281 objects and 434
+sockets, i.e. `docs/arch_stats.json` byte-identical to round 6 (`renders/logs/arch_r6b_build.log`).
+
+**1 + 2 + 10 — the socket contract now carries the heights, and the check can fail.** `capital_height` is stamped
+on `capital_rotunda` (3.0), `capital_inner` (1.8) and `capital_colonnade` (1.8); `band_height` on the 24 rotunda
+`frieze_run` sockets (`FRIEZE_H` 0.81) and, for uniformity, on the 4 colonnade arc runs (0.50) with `host =
+"colonnade"`; `subtype = "crown"` on the 8 arch-crown keystones (the 16 impost masks already had one). New
+`arch_socket_check.py --type props` walks every `SOCKET_*` against a per-type required-property table and both
+checks now `raise SystemExit(1 if bad else 0)`: **13 types / 434 sockets ALL OK, exit 0**
+(`renders/logs/arch_r6b_sockets_props.log`), and deleting one `capital_height` makes it print `MISSING` and exit 1.
+`--type frieze_run` still 126/126 OK. Table published in `docs/sockets.md`.
+**Hand-off to ORN (unchanged from round 6, now machine-readable):** capital 2.6 -> **3.0**, rotunda frieze band
+0.90 -> **0.81**, attic panel field 4.50 -> **5.27**.
+
+**3 — ref 062 DID move, and it now disagrees with ref 169 by ~1.0 m of `ATTIC_Z0`.** `arch_ref062_fit.py` fits
+`("attic base (modillions)", P.ATTIC_Z0, ...)`, so round 6's 31.20 -> 29.18 re-fits the station
+(`renders/logs/arch_r6b_ref062_fit.log`, hard-coded `WALL_APOTHEM + 0.74` replaced by `P.ATTIC_CORNICE_D`):
+
+| `ATTIC_Z0` | D | lens | pitch | chi2 | attic-base fit vs obs 330 | podium base row (test <=3 %H) | attic width (test <=3 %) |
+|---|---|---|---|---|---|---|---|
+| 31.20 (round 5) | 91.7 m | 42.4 mm | 13.45 | 4.09 | 308.6 (-21.4 px) | 1306 (**-2.82 %H**) | 1241 px (**-1.87 %**) |
+| **29.18 (round 6)** | **90.2 m** | **40.4 mm** | **13.09** | **4.30** | **351.3 (+21.3 px)** | **1264 (-5.88 %H)** | **1203 px (-4.93 %)** |
+| 30.20 (ref 062's own best) | 90.8 m | 41.5 mm | 13.33 | 0.00 | 330.3 (+0.3 px) | 1289 (-4.11 %H) | 1225 px (-3.15 %) |
+
+So round 6 did not break the fit's *shape* (the lens/tilt-independent clearance argument, D > 76.4 m, is untouched
+and the dome apex still clears the near cornice), but **both of QA-04-11's independent predictions have left the
+3 % bar**: podium base row -2.82 -> -5.88 %H, attic-ring width -1.87 -> -4.93 %. The residual sign on the attic-base
+landmark flipped (-21.4 px -> +21.3 px), i.e. the 2.02 m drop overshot ref 062 by about half of it: ref 062 alone
+puts `ATTIC_Z0` at **30.20** (chi2 0.00) against ref 169's 29.18. **Hand-off to the lead / QA: the two photographs
+disagree by 1.02 m on the entablature crown, and this round chose ref 169.** Not resolved here — it is a re-fit,
+not a fix, and it would move `ENTABLATURE_Z1`, `ATTIC_H` and every socket above the architrave again.
+
+**4 — the registration claim now has its log.** `qa_stack_offset.py --sheet arch_r6_aligned_vs_ref169.png
+--x0 880 --x1 1040` -> `renders/logs/arch_r6b_stack_offset.log`; the same tool on QA's pre-r6 sheet ->
+`renders/logs/arch_r6b_stack_offset_before.log` (the two runs report the *identical* 31 ref edges, which is the
+check that both sheets carry the same ref-169 warp). Course by course, model row -> nearest render edge -> nearest
+strong ref edge: crown 161.2/161/160 **+1**, attic cornice soffit 181.6/181/182 **-1**, relief top 198.4/199/198
+**+1**, relief bottom 268.9/266/269 **-3**, entablature corona soffit 280.6/281/281 **0**, frieze top 302.0/301/296
+**+5**, architrave bottom 327.7/329/328 **+1**, capital top 322.9/321/320 **+1** — every course within 5 rows
+(0.37 m), as reported. The attic storey reads **101 render rows (165 -> 266) vs the photo's 100 (169 -> 269)**.
+The tool's own greedy top-down pairing (which walks 25 render edges against 31 ref edges and therefore pairs some
+weak edges across courses) gives mean +0.366 m, median +0.298 m, spread 2.459 m; the per-course numbers above are
+the strong-edge reading and both are in the log.
+
+**5 — the sheet's table is parsed, not typed.** `arch_r6_sheet.py` reads the model row of each course from
+`renders/logs/arch_r6_courses.log` and the render / ref rows from `arch_r6b_stack_offset.log` (pairing rule stated
+in its docstring: nearest render edge with |dL/dy| >= 2 within 6 rows, then nearest ref edge with |dL/dy| >= 6
+within 6 rows), so the sheet can disagree with this report. The first row is now the real crown (z 38.30, row
+161.2), not "attic crown, top lit edge 168".
+
+**6 + 7 — `arch_stats.json` is written after the save.** The uvproj post-step therefore compares the live counts
+against the *previous* build's file (it used to read the one the same build had just written, so it always printed
+SAME: `arch_r6_build.log:88-91`), and a raise inside uvproj can no longer leave a stats file describing a build that
+was never saved. This round's log prints `(previous build ...) SAME` on all four, which is now a real statement.
+
+**8 — cornice crown scaling, logged, no action.** Accepted as reviewed: the corona *soffit* is the photo anchor
+(row 281, hit to 0.4 row) and `ENTABLATURE_Z1` follows from the 1.37/1.75 = 0.783 scaling, leaving 0.25 m of corona
+fascia + drip + cyma over a 1.66 m oversail (was 0.32), with 0.13 m eggs at a 0.47 m pitch inside a 0.09 m nominal
+band and modillions 0.45 x 0.86 (1.9:1). Both edges the r4 "apparent height" arithmetic rests on land within half a
+row, so nothing moves on this evidence; re-open it if a hero-distance crop shows the fascia reading thin.
+
+**9 — 31 meshes, not 23** (`arch_r6_build.log:49`, 26,376 verts); corrected in Round 6 item 3 above.
+
+**11 — the 6.4 MB `renders/qa_comparisons/arch_r6_aligned_vs_ref169.png` is dropped.** It was panel 1 of QA's own
+9.3 MB sheet plus this round's render; `arch_r6_sheet.py` regenerates it in one second from the two committed
+panels whenever `qa_stack_offset` has to be re-run, and its measurements are now in the committed logs.
