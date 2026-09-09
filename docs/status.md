@@ -470,3 +470,7 @@ In flight: QA round 8 (Opus xhigh, docs/briefs/qa_round_08.md). Next: gate repor
 ## 2026-09-09 · phase5 r2 review in (MERGE WITH FIXES; the 16-bit ordering fixed on the branch by the lead); branch ready to merge at the gate
 Carries into Phase 5 (lead runs them by hand): step 5 side-by-side + measure numbers, step 6 LOD0 clearance check with ORN linked, cleanup exit code on a failed preset / 1.5 GB.
 In flight: QA round 8. Next: gate report, definition of done, Phase 5.
+
+## 2026-09-09 · QA round 8 in (2a755a3): gate NOT passed; hero 3.44 -> 3.67 (+0.22), cam02 3.06 -> 2.69 (-0.37, the 40 mm lens clipped the dome), cam03 2.25 -> 2.56, cam04 2.88 -> 2.81, cam05 3.00 -> 3.06, cam06 2.50 -> 2.67
+Projection registered with no seam (std ratio 0.673, aniso 5.02 / 8.23); shaded attic 127.8 with the photo's chroma; cam03 black 12.6 %, far-shore lines 3. Blockers: QA-08-1 cam02 lens (lead: 27 mm applied, 2f-commit above), QA-08-2 cam02 face indigo (lighting), QA-08-3 sunlit chroma sat 0.462 / R-B 105 (the sun, not the albedo). Majors: archivolt blank (not dispatched), mirror 0.61, cam05 band 133.6 (the gloss-mix trade, held for the hero), cam03 walk hue 92, coffer rim/field. Frame range 1-2616 (cam02's station moved the flythrough route: lighting r16 re-plans to ~50 s). Composite renders/qa_comparisons/round08_gate.png.
+Rule: hero < 4.0 after round 8 -> ONE more round (LIGHT r16 only: sun chroma, cam02 face, cam03 hue, flythrough), lead_build.sh, QA round 9, then Phase 5 regardless. In flight: LIGHT r16. Next: review + merge, rebuild, QA round 9.
