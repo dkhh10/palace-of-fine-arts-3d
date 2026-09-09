@@ -409,3 +409,6 @@ Hand-offs: QA to check the hero camera height (2.90 m over water vs ref 169's ne
 
 ## 2026-09-09 · MAT r8 merged (6e7d799 + lead corrections); polish round 5 fully merged; master rebuilding for QA round 7
 Merged this round: ARCH r6+r7, LIGHT r14 (+prep), MAT r8, ENV r9, ORN r6+r7 (+lead bake); ORN r8 held on branch. In flight: scripts/lead_build.sh (log renders/logs/lead_build_r7.log). Next: QA round 7 (docs/briefs/qa_round_07.md), gate report, STOP.
+
+## 2026-09-09 · master rebuilt (9681 objects, LOD1 11.38 M, 24 rinceau instanced, frame range 1-1224, probes baked); QA round 7 dispatched
+In flight: QA round 7 (Opus xhigh, docs/briefs/qa_round_07.md items 1-5). Next: gate report with composite; if hero < 3.6 -> MAT r9 photo-projection next session; STOP after the report (lead restart).
