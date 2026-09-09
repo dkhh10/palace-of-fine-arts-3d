@@ -149,7 +149,7 @@ def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
-                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None):
+                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -247,6 +247,34 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         inv2 = nt.nodes.new("ShaderNodeMath"); inv2.operation = "SUBTRACT"; inv2.name = "not_cam_or_glossy_tint"
         inv2.inputs[0].default_value = 1.0
         nt.links.new(vis_out, inv2.inputs[1])
+        fac_out = inv2.outputs[0]
+        # ROUND 12 (QA-05-1): weight the tint by how far the ray points AWAY from the sun. A shaded face samples the
+        # anti-sun half of the dome (its hemisphere is centred on its own normal, which points away from the sun);
+        # a sunlit face samples the sun half; a horizontal surface samples both and gets about half. So an anti-sun
+        # weighted tint is the only sky lever that reaches shaded stone WITHOUT the same multiple landing on the
+        # sunlit stone next to it -- which is the whole reason rounds 10 and 11 could not use the diffuse sky.
+        # It is also the physically right shape: at a 7 deg sun the anti-sun sky IS the blue part of the dome.
+        # w = clamp(0.5 + 0.5 * (Incoming . sun)), and Incoming is -ray_direction, so w = 1 for a ray travelling
+        # straight away from the sun and 0 for one travelling into it. diffuse_tint_antisun blends w in:
+        # 0 = the uniform tint, 1 = fully anti-sun weighted.
+        if diffuse_tint_antisun > 0.0:
+            geo = nt.nodes.new("ShaderNodeNewGeometry"); geo.name = "ray_direction"
+            dot = nt.nodes.new("ShaderNodeVectorMath"); dot.operation = "DOT_PRODUCT"; dot.name = "dot_sun"
+            sd = common.sun_direction(az_deg, el_deg)
+            dot.inputs[1].default_value = (sd.x, sd.y, sd.z)
+            nt.links.new(geo.outputs["Incoming"], dot.inputs[0])
+            w = nt.nodes.new("ShaderNodeMath"); w.operation = "MULTIPLY_ADD"; w.name = "antisun_weight"
+            w.inputs[1].default_value = 0.5; w.inputs[2].default_value = 0.5; w.use_clamp = True
+            nt.links.new(dot.outputs["Value"], w.inputs[0])
+            blend = nt.nodes.new("ShaderNodeMapRange"); blend.name = "antisun_blend"
+            blend.inputs["From Min"].default_value = 0.0; blend.inputs["From Max"].default_value = 1.0
+            blend.inputs["To Min"].default_value = 1.0 - diffuse_tint_antisun
+            blend.inputs["To Max"].default_value = 1.0
+            nt.links.new(w.outputs[0], blend.inputs["Value"])
+            m = nt.nodes.new("ShaderNodeMath"); m.operation = "MULTIPLY"; m.name = "tint_fac_antisun"
+            nt.links.new(inv2.outputs[0], m.inputs[0])
+            nt.links.new(blend.outputs["Result"], m.inputs[1])
+            fac_out = m.outputs[0]
         mixn = nt.nodes.new("ShaderNodeMix"); mixn.name = "sky_tint_diffuse"
         mixn.data_type = "RGBA"; mixn.blend_type = "MULTIPLY"; mixn.clamp_factor = True
         # ShaderNodeMix carries one socket per data type and several share a name, so pick them by name AND type
@@ -256,7 +284,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         a_in = next(i for i in mixn.inputs if i.name == "A" and i.type == "RGBA")
         b_in = next(i for i in mixn.inputs if i.name == "B" and i.type == "RGBA")
         res = next(o for o in mixn.outputs if o.type == "RGBA")
-        nt.links.new(inv2.outputs[0], fac)
+        nt.links.new(fac_out, fac)
         nt.links.new(sky_color, a_in)
         b_in.default_value = (diffuse_tint[0], diffuse_tint[1], diffuse_tint[2], 1.0)
         sky_color = res

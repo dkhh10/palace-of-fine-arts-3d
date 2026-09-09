@@ -84,6 +84,7 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 tr=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[0],   # diffuse tint, one key per channel so the
                 tg=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[1],   # existing "k=v;" case syntax still parses
                 tb=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[2],
+                ta=getattr(lb, "SKY_DIFFUSE_TINT_ANTISUN", 0.0),   # anti-sun weighting of the diffuse tint
                 bm=lb.SUN_BLUE_MULT, de=0.0,
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
@@ -99,6 +100,9 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                              # The fill's elevation decides WHAT it lights: at 16 deg it lands on the water and the
                              # plaza at sin(16) = 0.28 and drags the near-water saturation and the columns with it;
                              # near the horizon it rakes vertical shaded stone and leaves horizontal surfaces alone.
+                dif=-1.0,    # Cycles diffuse_bounces override (-1 = keep light_presets' 3). A colonnade walk is a
+                             # warm stone corridor and QA-01-9 only ever tested the bounce cap on the rotunda vault,
+                             # so round 12 tests whether cam03's near shaft is starved of BOUNCES rather than of light.
                 f=1.0,       # LIGHT_rotunda_bounce (FILL) energy scale        -- QA-04-7
                 v=1.0)       # LIGHT_rotunda_vault_bounce (VAULT_FILL) scale, applied to the PHYSICAL energy_W so
                              # light_presets.apply_vault_for_engine reproduces it in either engine
@@ -120,7 +124,7 @@ def case_tag(c):
     if c["tag"]:
         return c["tag"]
     bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "bm", "de",
-                                     "tr", "tg", "tb", "fill", "fel", "spec", "fcr", "fcg", "fcb", "f", "v")
+                                     "tr", "tg", "tb", "ta", "fill", "fel", "spec", "fcr", "fcg", "fcb", "dif", "f", "v")
             if abs(c[k] - DEFAULTS[k]) > 1e-9]
     if c["look"]:
         bits.append(c["look"].replace(" ", "").replace("_", ""))
@@ -166,7 +170,8 @@ def apply_case(c):
                            camera_boost=c["cb"], camera_saturation=c["csat"],
                            glossy_boost=c["gb"], glossy_saturation=c["gsat"],
                            diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"],
-                           diffuse_tint=(c["tr"], c["tg"], c["tb"]), diffuse_boost=c["db"])
+                           diffuse_tint=(c["tr"], c["tg"], c["tb"]), diffuse_boost=c["db"],
+                           diffuse_tint_antisun=c["ta"])
     ms = w.mist_settings
     ms.use_mist = True
     ms.start, ms.depth, ms.falloff = lb.MIST["start"], lb.MIST["depth"], lb.MIST["falloff"]
@@ -196,7 +201,7 @@ def apply_case(c):
     for o in _VAULT:
         o["energy_W"] = _E_VAULT0 * c["v"]
     print(f"[r12] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} dhue {c['dhue']:g} "
-          f"tint {c['tr']:g},{c['tg']:g},{c['tb']:g} cb {c['cb']:g} gb {c['gb']:g} "
+          f"tint {c['tr']:g},{c['tg']:g},{c['tb']:g} antisun {c['ta']:g} cb {c['cb']:g} gb {c['gb']:g} "
           f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} spec {c['spec']:g} "
           f"fcol {c['fcr']:g},{c['fcg']:g},{c['fcb']:g} f {c['f']:g} ({_E_DISK0*c['f']:.0f} W) "
           f"v {c['v']:g} ({_E_VAULT0*c['v']:.0f} W) "
@@ -218,6 +223,9 @@ def rebake(rig):
     print(f"[r12] rebake with the {rig} vault rig: {time.time()-t:.0f}s", flush=True)
 
 
+DIF = -1.0          # set per case in the loop below, read by shoot()
+
+
 def shoot(cam_id, tag):
     num, eng = cam_id[:2], cam_id[2:]
     scene.camera = bpy.data.objects.get(CAM_OBJ[num])
@@ -227,6 +235,11 @@ def shoot(cam_id, tag):
     scene.render.image_settings.color_depth = "8"
     if eng == "c":
         lp.apply_final_cycles(scene, samples=SAMPLES, time_limit=0.0)
+        if DIF >= 0:
+            scene.cycles.diffuse_bounces = int(DIF)
+            scene.cycles.max_bounces = max(scene.cycles.max_bounces, int(DIF))
+            print(f"[r12] cycles diffuse_bounces {scene.cycles.diffuse_bounces} "
+                  f"max_bounces {scene.cycles.max_bounces}", flush=True)
     elif eng == "v":                      # QA-04-12: the viewport preset (taa 8/16, raytracing off,
                                           # light_threshold 0.01 since round 11)
         lp.apply_viewport_eevee(scene)
@@ -241,6 +254,7 @@ def shoot(cam_id, tag):
 
 for c in CASES:
     apply_case(c)
+    DIF = c["dif"]
     if REBAKE != "NONE":      # AFTER the world change: the Eevee shade is lit by the BAKE, not by the live world
         rebake(REBAKE)
     tag = case_tag(c)
