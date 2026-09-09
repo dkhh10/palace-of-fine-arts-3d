@@ -136,3 +136,13 @@ Format: date · decision · why · consequences. Newest at the bottom.
 - **QA-04-2 shaded-stone hue is albedo, not lighting**: three independent lighting levers (diffuse sky boost, cool shade fill at
   two elevations) all warm the shaded attic further or break the sunlit/near-water numbers; assigned to materials. cam03's
   reference (ref 128) is a midday photo, so its 0.5-of-ref shade target is not a golden-hour number: QA to re-base that test.
+- **2026-09-08 · After QA round 5 (hero 3.28 for the third round): method change, not more of the same.** (1) The shade is starved
+  structurally: the rig lights shade with sky x0.8 while the camera sees that sky x2.1 and the lagoon x5.25, so the diffuse
+  sky is 2-5x weaker than the sky the photo shows and cam03's shade sits at 0.06 of sunlit vs the photo's 0.6. Lighting r12
+  is told to fix the shade window first and may spend sunlit saturation down to 0.50 / R-B 110 to do it (the r10/r11 budget
+  that forbade this is withdrawn). (2) Lighting and materials now run SEQUENTIALLY and measure on the merged master: the
+  QA-05-3 coffer regression came from merging materials' in-coffer gradient onto lighting's re-tuned fill with neither owner
+  measuring the combination. Geometry owners (architecture cornice/dentils, environment south wing / shore / cam03 ground /
+  cam06 streets / NE shoreline) run in parallel with lighting; materials r7 (macro amplitude and anisotropy down from the
+  r6 overshoot: attic lum 166 vs window 178-201, sat 0.64-0.84, streak anisotropy 0.64 vs photo 4.07) follows on the new rig.
+  (3) If the hero does not move at round 6, the concrete gets a texture-projection pass from the reference photos.
