@@ -79,6 +79,16 @@
     0.45,
     2.0
   ],
+  "soft_limit": {
+    "up": [
+      1.15,
+      1.55
+    ],
+    "down": [
+      1.6,
+      2.2
+    ]
+  },
   "conf": [
     0.4,
     0.85
@@ -105,11 +115,59 @@
   ],
   "px_in_band": 462720,
   "mean_conf_in_band": 1.0,
-  "clipped_frac": 0.0195,
+  "clipped_frac": 0.0399,
   "ratio_lum_p05_p50_p95": [
-    0.9034,
-    1.1956,
-    1.2633
+    0.7714,
+    1.4832,
+    1.5011
   ],
-  "render": "r9_cycles_projector.png"
+  "render": "r9_cycles_projector.png",
+  "space": "scene-linear albedo multiplier (LF band raised to 1/t_eff; MF band left in display space)",
+  "transfer": {
+    "file": "agx_transfer.json",
+    "look": "AgX - High Contrast",
+    "exposure": -2.8331,
+    "insitu": {
+      "box": "attic_shaded",
+      "display_lum": 132.9,
+      "t_eff": 0.394,
+      "source": "renders/logs/mat_r9_phtest.log: 135.6 -> 130.3 for a map asking -9.6 %"
+    },
+    "f_ref": 0.7139,
+    "pedestal": 0.08026,
+    "exp_calib": 4.015,
+    "exp_p05_p50_p95": [
+      2.624,
+      3.39,
+      4.612
+    ],
+    "target_display": 0.9955,
+    "target_linear": 0.9822
+  },
+  "display_ask_pct": {
+    "attic_sunlit": {
+      "display_pct_w1": -0.25,
+      "display_pct_w06": -0.07,
+      "photo_asks_pct": 0.5,
+      "linear_ratio": 0.994,
+      "exponent": 4.015,
+      "render_lum": 190.4
+    },
+    "attic_shaded": {
+      "display_pct_w1": -8.47,
+      "display_pct_w06": -4.49,
+      "photo_asks_pct": -7.91,
+      "linear_ratio": 0.8095,
+      "exponent": 2.707,
+      "render_lum": 133.9
+    },
+    "entablature": {
+      "display_pct_w1": -1.96,
+      "display_pct_w06": -1.02,
+      "photo_asks_pct": 0.23,
+      "linear_ratio": 0.9517,
+      "exponent": 2.722,
+      "render_lum": 142.4
+    }
+  }
 }
