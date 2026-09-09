@@ -2110,3 +2110,50 @@ Blue added by the tint, ochre card, sRGB units above the untinted sky (probe log
 The last row is the one to test on the master: it delivers the shaded wall **exactly** the blue the r13 tint did
 (+110.9 against +110.3), gives up-facing surfaces **34 %** of what they were getting, and takes the sun-facing wall
 from +36.0 to +3.0 — which is the sunlit attic's R-B budget that 22.3 said lighting had already overspent.
+
+### 24.2 Wave 1 on the master — the exponent works everywhere except where the shade's blue comes from
+
+Master rebuilt in the worktree (`scripts/lead_build.sh`): **9709 objects, 11.11 M tris at LOD1, 154 MB**, probes
+re-baked. Hero Cycles 1280x720 / 64 spp, cam02/03/05/06 Eevee 1280x720 / 32 TAA, `--rebake` per case.
+Log `renders/logs/light_r14_w1.log` (822 s, 15 frames). Cases: `base` = the master as saved; `A` = q3 p6 b40;
+`H` = q3 p10 b80.
+
+| box (camera) | base = r13 | **A (q3 p6 b40)** | H (q3 p10 b80) | window |
+|---|---|---|---|---|
+| hero shaded attic | **116.2 / 31.0 / 0.382** | 113.4 / **40.5** / **0.603** | 113.8 / 40.0 / 0.581 | 103-127 / 23.5-35.5 / <= 0.50 |
+| hero sunlit attic lum / sat / R-B | 182.4 / 0.470 / **102.9** | 180.8 / **0.542** / **119.1** | 180.8 / 0.540 / 118.6 | 178-201 / >= 0.50 / >= 110 |
+| hero water reflection R-B | +2.1 | **+10.0** | +10.3 | >= +35 (QA-06-3) |
+| hero near water sat / hue | 0.303 / 213.9 | 0.270 / 209.9 | 0.269 / 209.7 | 0.22-0.32 / 185-200 |
+| cam06 roofs hue / sat | **243.7** / 0.210 | **352.2** / 0.065 | — | 22-52 (ref 105 warm) |
+| cam06 plaza hue | **250.5** | **34.3 PASS** | — | 22-52 |
+| cam06 trees hue | **267.4** | **32.9 PASS** | — | 23-53 |
+| cam06 frame median hue / violet pixels | 230.5 / **48.7 %** | **40.7 / 27.8 %** | — | — |
+| cam03 walk hue / sat | 221.5 / 0.667 | 204.2 / **0.335** | — | 25-60 (QA) |
+| cam03 outer row / sunlit | 0.087 | **0.141** | — | >= 0.15 (QA-06-7) |
+| cam05 water band hue / sat | 356.7 / **0.106** | **39.3 / 0.428** | — | 40-80 / >= 0.24 |
+| cam02 water hue / sat | **237.8** / 0.357 | **24.4** / 0.131 | — | 185-200 |
+
+**Three readings, and the third is the round's real finding.**
+
+1. The exponent does what the probe said it would, on every camera except the hero: cam06's frame comes back from
+   a lavender relief map (median hue 230.5, 48.7 % of pixels in hue 200-300) to a warm one (40.7, 27.8 %), the
+   plaza and the trees land inside QA's own 15 deg window, cam05's water band recovers its chroma
+   (sat 0.106 -> 0.428) and cam02's water leaves the violet entirely.
+2. **It also closes 22.3's blocked hand-off for free.** The sunlit attic's saturation and R-B — the two numbers
+   that were already outside their windows before round 14 spent anything, and that blocked the wings — go
+   0.470 / 102.9 to **0.542 / 119.1**, both inside. That is the anti-sun exponent taking the tint off sun-facing
+   stone, exactly as the probe predicted (+36.0 sRGB of blue -> +3.0).
+3. **A and H are the same frame.** Doubling the tint (b 40 -> 80) and sharpening the weight further (p 6 -> 10)
+   moves the hero's shaded attic by 0.5 lum and 0.5 deg. On a free card in the probe those two rigs differ by
+   12 sRGB units of blue on the wall. They do not differ in the building, which says the hero's shaded attic does
+   NOT get its blue from near-horizontal sky rays at all: 21.7 already measured that about half of it arrives
+   **after a bounce off a horizontal surface**, and the horizon exponent starves horizontal surfaces by
+   construction. The tint cannot be sharpened onto the hero's shade, because the hero's shade is lit by the very
+   up-facing surfaces the sharpening is meant to protect.
+
+So the round splits in two: the diffuse tint is the right tool for the sunlit/up-facing SEPARATION and the wrong
+tool for delivering the shade's blue. The blue has to come from a rig with a DIRECTION — which is
+`SHADE_FILL`, built in round 11, measured free in Cycles in 21.6 (spec 0, el 6: near-water 0.271 against the
+control's 0.281, columns 1.08x) and shipped in round 13 as an EEVEE-only rig for a reason that no longer holds.
+At elevation 5 deg a sun lamp gives a vertical wall cos(5) = 0.996 of its irradiance and an up-facing surface
+sin(5) = 0.087: an **11.4x** discrimination, against the horizon exponent's best measured 4.8x.
