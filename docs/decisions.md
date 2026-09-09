@@ -205,3 +205,17 @@ Format: date · decision · why · consequences. Newest at the bottom.
   sunlit chroma QA-07-2) -> lead_build.sh -> QA round 8 (Opus xhigh). Then the definition of done applies. Entablature re-split stays
   deferred (row std 44.0 vs test 40 passes; not in the hero score). cam02 re-station to (-79.8, 24.4, 1.55) -> (0, 0, 23.5), 40 mm, at the
   start of round 8 (QA's fit; lead applies in qa_cameras.py before the next QA renders).
+- **2026-09-09 · Session after QA round 7 (user's plan, not re-derived): stations moved, LIGHT r15, MAT r9 = projection, QA round 8.**
+  cam01 is now 2.6 m over the water (z 1.3; QA round 07 item 5's measurement of ref 169) and cam02 stands at QA's fitted ref-062 NNE station
+  (-79.8, 24.4, 1.55) -> (0, 0, 23.5) at 40 mm; the old cam02 stood on the mirror-image face. The silhouette / stack registration was re-run on
+  the new hero height before any builder started (every course within 6 rows of ref 169; the widest is the attic panel bottom). The QA-07
+  hero boxes are kept; QA round 8 re-bases them if the aligned overlay says so.
+- **The lagoon flood was the shade fill, not the sky.** LIGHT r15 isolated the three blue shade lamps at el 2 and found WNW / SSW put 7.3 W/m2
+  flat on the water against the sun's 8.2: one lamp (NNE) survives, glossy boost 5.25 -> 4.20. Eevee fast GI was the cam03 black-frame lever
+  (18.5 -> 4.6 % under lum 10), not lamp reach. The hero's shaded attic stays at 136 with the fill nearly off, so QA-07-7 is re-owned by
+  materials as a shaded-albedo item (the shaded stone runs ~12 % hot relative to the sunlit stone on the same wall). cam02's shaded pier
+  (hue 260) stays a minor: no lamp weight lands both the hero attic and the pier.
+- **Budget (about 30 % of the weekly limit at the start of this session; Phase 5 needs ~10).** Spent on LIGHT r15 + two reviews + ORN r8 merge
+  and bake + Phase 5 prep. MAT r9 and QA round 8 come next; the ornament archivolt band (QA-07-4, 8 empty sockets) is NOT dispatched this
+  session: it needs a bake and a render round and is worth ~0.5 of one hero row. If the hero is under 4.0 after round 8, at most one more
+  round, then the definition of done applies regardless. Phase 5 tooling is on branch phase5, reviewed, held until the gate.
