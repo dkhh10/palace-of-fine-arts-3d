@@ -1718,3 +1718,156 @@ licence line).
 - **The projection is camera-locked to the hero station.** If ARCH or the lead moves geometry inside the drum /
   attic / entablature band, or moves cam01 again, re-run `mat_r9_render.py --jobs proj` and
   `mat_projection.py build`: it is two commands and ~1 minute of GPU. Nothing else in the library depends on it.
+
+## Round 9b (fix round on `docs/reviews/mat_r9_review.md`, 2026-09-09) — the projection in linear space
+
+Brief `docs/briefs/materials_r9b.md`, four items. Measured on the rebuilt master (`scripts/lead_build.sh`,
+**9679 objects**, LIGHT r15 + ORN r8 as merged), Cycles 1920x1080 / 64 spp from `CAM_qa_01_lagoon_hero`.
+BEFORE = the round-9 shipped frame on this same master (`r9b_cycles_01_lagoon_hero.png`).
+
+### Item 2 first, because everything else uses it: the transfer, at the SHIPPED look
+
+`scripts/mat_r9b_agx.py` replaces `mat_r9_agx.py`, which had two faults: it never set `look` (so it measured
+**Base Contrast** while the project renders at `light_presets.LOOK` = `AgX - High Contrast`), and its ortho camera
+used `sensor_fit` AUTO, which on a portrait chart puts the patch grid off the pixel grid — with 12 rows instead of
+10 the same chart returned *negative* transfers. Both fixed; 12 levels, per-channel and all-channel perturbations.
+
+| display lum | 104.7 | 123.5 | 140.7 | 158.2 | 174.6 | 189.3 | 202.6 |
+|---|---|---|---|---|---|---|---|
+| t_lum | 0.709 | 0.601 | 0.511 | 0.420 | 0.339 | **0.274** | 0.221 |
+| t_B | 1.627 | 1.159 | 0.836 | 0.586 | 0.421 | **0.306** | 0.218 |
+
+The hero's operating points read off it: **sunlit attic (189.8) t_lum 0.273**, **shaded attic (132.9) t_lum 0.552**.
+
+**The Look recommendation round 9 made was backwards.** Compared at a *matched display luminance* of 189.8 — which
+is the only fair comparison, because the sunlit window pins the level — the four looks give sat / R-B:
+Base 0.241 / +50.4, Medium High 0.288 / +61.5, **High Contrast (shipped) 0.316 / +68.4**, Punchy 0.261 / +54.0.
+Punchy looks more saturated only because it costs a stop (the same scene value lands at 165.6 instead of 189.8).
+This is the same answer `light_presets` already had from the hero. **Do not ask lighting for Punchy.**
+
+### Item 2, the answer: what actually blocks QA-07-2 is the SHADE, and it is now measured
+
+`scripts/mat_r9b_constraint.py` (committed, plain python) scans the `Albedo Tint` blue exponent p against the two
+**end-to-end** chroma transfers round 9 measured on this master (albedo blue x0.758 moved the sunlit box's display
+blue -2.2 % and the shaded box's -12.2 %, i.e. t_B 0.080 and 0.470 — both far below the view transform's own 0.31
+and ~0.98, because the terms that do not scale with this albedo, the haze and the mirrored sky, are themselves
+blue). p = 1 is what ships.
+
+| p | albedo blue | sunlit sat | sunlit R-B | shaded sat | shaded hue |
+|---|---|---|---|---|---|
+| 1.00 (shipped) | 0.758 | 0.461 | +104.7 | 0.394 | 33.6 |
+| **1.40** | 0.679 | 0.466 | +105.8 | 0.427 | **35.5 — the hue window binds** |
+| **2.47** | 0.504 | **0.478** | **+108.7** | **0.500 — the sat ceiling binds** | 39.3 |
+
+**The shaded attic's hue window binds first (p 1.40), its sat ceiling second (p 2.47), and at either the sunlit box
+reaches at most sat 0.478 / R-B +109 against windows 0.53-0.62 and >= 120.** So QA-07-2 is not reachable through
+this global albedo tint — for a measured reason, not round 9's "negative albedo", which was a chart patch's
+*absolute* saturation read as if it transferred. The shipped p = 1 spends 40 % of the sat margin. The tint is
+therefore **held at x0.758** and not linearised with the map: linearising it is exactly what these ceilings forbid.
+
+### Item 1: the ratio map is now a scene-linear albedo multiplier
+
+`mat_projection.build` changed in four places (option (a) of the brief — the reference frame is the same border
+render, the photo is raised into scene-linear through the measured inverse of the shipped pipeline):
+
+1. the LF band's **luminance** is raised to `1 / t_eff(L)` at the pixel's own blurred display luminance;
+2. only the luminance: the map's residual chroma stays at display strength (a per-channel exponent clipped the
+   blue channel over **89 %** of the band on the first cut, because LFd is neutral only over the calibration box);
+3. the **MF texture band is exempt**, because its half weight was chosen by a sweep of the *delivered* attic std
+   ratio (a hold item) and linearising it multiplies that delivered contrast by ~2.7;
+4. the hard clip became an **asymmetric soft roll-off** (`LIN_KNEE_UP` 1.15 / `LIN_LIMIT_UP` 1.55, down 1.60 /
+   2.20). Linearising made a limit visible that display space had hidden: `MAT_concrete_ochre`'s base albedo has
+   luminance 0.589, so x1.55 is 0.91 and x1.8 is over 1.0. A symmetric knee was tried first and cost the shaded
+   attic a third of its own correction; the physics is one-sided, so the roll-off is.
+
+`t_eff = f(L) * t_agx(L)`, with `f` the fraction of scene radiance that scales with this albedo. Round 9's
+Photo 0/1 pair implied `f = 0.394 / 0.552 = 0.714` at the shaded attic, and that was carried to other levels as an
+additive scene-radiance pedestal (`f = 1 - E_other / E(L)`, 0.884 at the sunlit attic).
+
+### Item 1's proof, and the one number that is still wrong
+
+`scripts/mat_r9_phtest.py` — the round-9 throwaway, committed (review finding 4), and now scored against the map's
+own metadata. Hero border rows 190-320, `Photo` forced to 0 and 1, 23 s each.
+
+| box | Photo 0 | Photo 1 | delivered | the map asks | delivered / asked |
+|---|---|---|---|---|---|
+| attic_sunlit | 189.5 | 189.3 | -0.10 % | -0.25 % | (both ~0: mean-1 here by construction) |
+| **attic_shaded** | **135.6** | **119.4** | **-11.96 %** | **-8.47 %** | **1.41** |
+| entablature | 133.1 | 131.3 | -1.28 % | -1.96 % | 0.65 (projector weight-confounded) |
+
+**Round 9 delivered 0.40 of its ask; round 9b delivers 1.41.** The space error is fixed — but the pedestal
+parameter is now measurably wrong in the other direction. Inverting the shaded row gives an in-situ
+`t_eff = ln(119.4/135.6) / ln(0.8095) = 0.603`, against the 0.394 the model assumed and the 0.552 the view
+transform gives alone. **There is no measurable dilution: f = 0.603 / 0.552 = 1.09.** The pedestal should be
+dropped (`f = 1`, one line: `F_MIN`/`exponent_field`), and that is the round-10 correction.
+
+It was **not** dropped inside this round because the budget was one hero frame and because the overshoot is
+currently the *useful* direction: at Photo 1 the shaded attic lands on **119.4 against ref 169's 120.2**, and at
+the shipped weight 0.6 it lands at 127.9 against a window ceiling of 126.5. With `f = 1` the same box would sit at
+~129.4, i.e. further from both. **The lead should treat `f` as a deliberate choice, not a bug** — but it must be
+either set to 1.0 or re-justified in round 10, because a constant fitted to a superseded statistic is not a
+measurement.
+
+### Round 9b acceptance, Cycles hero 1920x1080 / 64 spp, 9679 objects
+
+| box | r9 (before) | r9b (after) | window | verdict |
+|---|---|---|---|---|
+| attic_sunlit | 189.8 / 36.1 / 0.461 / +104.7 | **189.7 / 36.1 / 0.463 / +105.1** | lum 178-201, sat .53-.62, R-B >= 120 | lum **PASS** (held); sat/R-B **FAIL** — structural, see the constraint table |
+| attic_string | 179.8 / 35.9 / 0.460 | 180.6 / 35.8 / 0.460 | ref 185.3 / 0.585 | held |
+| entablature | 132.8 / 37.9 / 0.687 | **132.4 / 38.0 / 0.700** | sat <= 0.70 | **PASS, at the ceiling with no margin** |
+| attic_shaded | 132.9 / 33.6 / 0.394 | **127.9 / 34.5 / 0.434** | lum 103.5-126.5, hue 23.5-35.5, sat <= .50 | hue **PASS**, sat **PASS**; lum **FAIL by 1.4** (was 6.4) |
+| columns (mask) | 104.9 / 26.3 / 0.625 | **105.3 / 26.2 / 0.625** | hue 24.5+-4, sat .55-.65 | **PASS** (held) |
+| attic std ratio / aniso, QA box | 0.65 / 4.16 | **0.64 / 4.84** | >= 0.60 / >= 1.5 | **PASS** |
+| attic std ratio / aniso, narrow box | 0.60 / 6.11 | **0.59 / 7.93** | >= 0.60 / >= 2.0 | std ratio **FAIL by 0.01**, aniso **PASS** |
+| water_refl | 110.3 / 38.7 / 0.351 / +43.7 | **116.3 / 39.0 / 0.349 / +45.7** | lum 124-208, R-B >= +35, hue 25-45 | R-B/hue **PASS**; lum **FAIL** (0.58 -> **0.61** of the sunlit attic; photo 0.88) |
+| near_water | 118.3 / 208.5 / 0.234 | **125.3 / 208.0 / 0.200** | lum 79-131, hue 185-200, sat .22-.32 | lum **PASS**; sat **now FAIL** (the price of gloss 0.45, priced in the round-9 sweep); hue **FAIL** (unreachable) |
+| ripples | R-B -26.0 | **R-B -22.5** | -26 +- 10 (ref -16.4) | **PASS**, error smaller again |
+| lagoon_flank | 155.7 / 209.8 | **162.7 / 209.6** | lum 114-190, hue <= 210 | **PASS** |
+
+The reflection column landed on the sweep's prediction for 0.45 to the digit (116.3), which is a useful check that
+the round-9 sweep table is trustworthy for the rest of its columns.
+
+### Item 4: WATER_GLOSS_MIX 0.25 -> 0.45 (the lead's call), and what it cost
+
+Everything the sweep predicted: reflection 110.3 -> 116.3, near water 118.3 -> 125.3, flank 155.7 -> 162.7,
+ripples R-B -26.0 -> -22.5. The one item it broke is **near-water saturation 0.234 -> 0.200 against a 0.22 floor**,
+which the round-9 table priced at 0.200 for exactly this setting.
+
+**UNMEASURED AND A RISK — hand-off to the lead / QA:** the hold item "cam05 band lum 70-117" was 113.2 at gloss
+0.25 and there was no budget for a cam05 frame this round. The hero's lagoon flank rose by a factor 1.045 at this
+setting; applying the same factor puts the cam05 band at **~118**, i.e. just over its 117 ceiling. It needs one
+720p Cycles border (20 s) before this is called a pass.
+
+### Item 3: the review's bookkeeping
+
+`scripts/mat_r9_phtest.py` is committed (finding 4) and every table this round produced is teed into
+`renders/logs/mat_r9b_*.log`. `mat_build.py`'s round-9 `MAT_concrete_ochre` comment (finding 5) no longer states
+an albedo-space prediction as a rendered fact; it now carries the measured 0.461 / +104.7 and the reason the tint
+is not linearised.
+
+### Render budget actually spent
+
+1 Cycles hero 1920x1080 / 64 spp (250 s), 2 Cycles hero **borders** rows 190-320 (23 s each, together 0.19 of a
+frame), 1 emission chart rendered 5 times (288x384, ~1 s total), 1 library rebuild, 1 master rebuild. Under the
+brief's cap of one hero plus one bordered diagnostic.
+
+### Files
+
+`scripts/mat_projection.py` (linear space, the transfer table, the soft roll-off, the per-box asks in the meta),
+`scripts/mat_r9b_agx.py`, `scripts/mat_r9b_constraint.py`, `scripts/mat_r9_phtest.py`, `scripts/mat_r9_sheet.py`
+(frame/row overrides), `scripts/mat_build.py` (`WATER_GLOSS_MIX` 0.45, the corrected round-9 comment),
+`assets/textures/projection/{PFA_photo_ratio.png, projection_meta.json, agx_transfer.json}`,
+`assets/materials.blend`, `renders/qa_comparisons/mat_r9b_sheet.png`.
+
+### Open, and whose
+
+- **`f`, the albedo-coupled fraction — round 10's one line.** Measured 1.09; the shipped model says 0.714 at the
+  shaded attic. Set it to 1.0 or re-justify it; either way re-measure the phtest row.
+- **QA-07-2 sunlit chroma — lighting's / the lead's**, now with the shade-window constraint table as the proof
+  that materials cannot reach it. Not Punchy; a warmer sun or a lower sunlit level.
+- **cam05 band at gloss 0.45 — UNMEASURED**, ~118 estimated against a 117 ceiling. One 720p border.
+- **near-water saturation 0.200 against a 0.22 floor** — the cost of the lead's gloss call, on the record.
+- **narrow-box texture std ratio 0.59 against 0.60** — marginal, and the same map raised anisotropy 6.11 -> 7.93.
+- **The seam test was NOT re-run** on the new map (no Eevee budget). The map's spatial content is band-limited the
+  same way (same LF/MF sigmas, same masks, same ramps) and the roll-off is smooth by construction, but round 9's
+  3.27-3.74 lum/px figures do not carry over. QA should look at the band rows on cam02/cam05.
