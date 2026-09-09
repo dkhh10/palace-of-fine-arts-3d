@@ -466,3 +466,7 @@ Merged this round: stations (cam01 2.6 m, cam02 NNE), LIGHT r15, ORN r8 + capita
 
 ## 2026-09-09 · master rebuilt (9679 objects, LOD1 11.38 M, probes baked, 23:01); QA round 8 dispatched (gate round)
 In flight: QA round 8 (Opus xhigh, docs/briefs/qa_round_08.md). Next: gate report to the user with the composite; apply the definition of done (hero >= 4.0, or the budget rule: round 8 is the gate round unless the hero lands within reach of 4.0); then Phase 5 (branch phase5 second review + merge, docs/phase5_checklist.md).
+
+## 2026-09-09 · phase5 r2 review in (MERGE WITH FIXES; the 16-bit ordering fixed on the branch by the lead); branch ready to merge at the gate
+Carries into Phase 5 (lead runs them by hand): step 5 side-by-side + measure numbers, step 6 LOD0 clearance check with ORN linked, cleanup exit code on a failed preset / 1.5 GB.
+In flight: QA round 8. Next: gate report, definition of done, Phase 5.
