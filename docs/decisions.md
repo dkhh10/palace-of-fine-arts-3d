@@ -189,3 +189,10 @@ Format: date · decision · why · consequences. Newest at the bottom.
   and a 0.58 m Greek-key band we do not model; fitting them needs CORNICE_H 1.37 -> 1.79 with the frieze 0.81 -> 0.61 (ornament refits the
   rinceau). Not built this round: QA round 7 first scores the registered stack; if the entablature row std still fails (QA-06-9), option A
   goes into the next architecture round with the ornament refit in the same wave.
+- **2026-09-09 · Budget plan (user: ~32 % of the weekly limit left, Phase 5 needs ~10, gate must close within ~20).** Remaining rounds:
+  (1) polish round 5 closes with LIGHT r14 (running) + MAT r8 re-scoped to the water blocker QA-06-3 and the coffer albedo only; lead runs
+  the ornament LOD1 bake in the GPU window; lead_build.sh; QA round 7. (2) If the hero is under 3.6 after QA round 7, the next round is
+  the photo-projection pass (docs/briefs/materials_r8_projection.md, as MAT r9) with no other knob round; then QA round 8. (3) The
+  definition of done then applies (hero >= 4.0, or two rounds < +0.1 after the projection pass) and Phase 5 starts
+  (docs/phase5_checklist.md). The entablature re-split (option A) stays deferred unless QA shows it in the hero score. Reviews stay,
+  briefs stay short, one render set per agent.

@@ -39,3 +39,7 @@ B. The photo-projection pass as specified above (constraints 1-6), on the regist
    albedo fix on the vault panel material.
 C. Report the anisotropy on both boxes, the std ratio, the seam crops from cam02 / cam05, the Eevee crop, the water table, and the texture
    budget. Report < 30 lines.
+
+## RE-SCOPE (lead, 2026-09-09, budget): round 8 = item A (water) + QA-06-8 coffer albedo ONLY. Item B (the projection) is round 9,
+dispatched only if QA round 7 scores the hero under 3.6. Round 8 budget: at most three Cycles measurement renders (hero 64 spp, cam05
+and cam06 at 720p 32 spp) plus one Eevee cam06; report < 20 lines; no sweeps beyond four water cases.

@@ -388,3 +388,6 @@ Decision: option A deferred until QA round 7 scores the entablature on the regis
 
 ## 2026-09-09 · ARCH r7 merged (9d6f8ee + lead corrections)
 Archivolt sockets in (band along local +Z: ornament note), sub-course scale marked as assumed (N = 11), ref 062 reproducible from land at az 17 / D 83.4 (QA may re-station cam02 there). In flight: LIGHT r14, ORN r8. Next: LIGHT review + merge, ORN bake, MAT r8, lead_build.sh, QA round 7.
+
+## 2026-09-09 · BUDGET PLAN (user): ~32 % weekly limit left, Phase 5 needs ~10, gate within ~20
+Sequence: LIGHT r14 (running) -> review/merge -> lead runs the ORN bake (`orn_build.py --only attic_panel,capital_rotunda`, with bake) -> MAT r8 = water blocker + coffer albedo only (brief re-scoped) -> review/merge -> lead_build.sh -> QA round 7 -> gate report to the user with the composite -> STOP for a clean restart (lead context 384k). If hero < 3.6 after round 7: MAT r9 = photo-projection pass next, no other knob round. Entablature re-split deferred unless QA shows it in the hero. ORN r8 (verify tool, no render) merges if it lands in time, else stays on its branch.
