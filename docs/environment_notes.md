@@ -135,29 +135,29 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |
 |---|---|---|---|---|---|
-| 00 | pine | -37 | -43 | 21 | A cluster core, ref 169 mass x 0.638-0.705 (QA-01-6: clear of cam02's right 40%) |
-| 01 | redwood | -40 | -2 | 16 | A young redwood at the north arch (ref 070); r9 QA-02-13 ring, cam01 x 0.730 |
-| 02 | cypress | -44 | -41 | 26 | A dark mass right of the dome, ref 169 x 0.665-0.743 |
-| 03 | pine | -46 | -41 | 22 | A cluster, second crown, ref 169 x 0.680-0.746 |
+| 00 | pine | -37 | -43 | 21 | A cluster core, ships x 0.642-0.702 (ref 169 mass) (QA-01-6: clear of cam02's right 40%) |
+| 01 | redwood | -40 | 9 | 16 | A young redwood at the north arch (ref 070); r9r LAND+ring (-40.5,-2.2 was 4.9 m into the embayment), ships x 0.728-0.773 |
+| 02 | cypress | -44 | -41 | 26 | A dark mass right of the dome, ships x 0.668-0.740 (ref 169) |
+| 03 | pine | -46 | -41 | 22 | A cluster, second crown, ships x 0.680-0.746 (ref 169) |
 | 04 | willow | -40 | 16 | 9 | A pale weeping willow at the water in front of the cluster (ref 169); r8 10 -> 9 m, its crown reached frame x 0.79 where ref 169 is clear colonnade |
-| 05 | broadleaf | -49 | 13 | 9 | A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow |
-| 06 | cypress | -49 | -40 | 24 | A cluster depth, ref 169 x 0.689-0.757 (mass kept dense) |
-| 07 | pine | -40 | -42 | 21 | A cluster depth, ref 169 x 0.652-0.716 |
+| 05 | broadleaf | -41 | 13 | 9 | A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow; r9r LAND (-49,13 was 6.7 m into the water), ships x 0.736-0.787 |
+| 06 | cypress | -49 | -40 | 24 | A cluster depth, ships x 0.689-0.757 (ref 169) (mass kept dense) |
+| 07 | pine | -40 | -42 | 21 | A cluster depth, ships x 0.653-0.715 (ref 169) |
 | 08 | broadleaf | -30 | 30 | 8 | P peninsula bed, right of the rotunda (cam01 x 0.71-0.78) |
-| 09 | willow | -22 | 38 | 7 | P low willow at the water in front of the podium (cam01 x 0.64-0.71) |
+| 09 | willow | -22 | 37 | 7 | P low willow at the water in front of the podium; r9r LAND 38 -> 37, ships x 0.622-0.679 |
 | 10 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
 | 11 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
 | 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
-| 13 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.264); r9 QA-02-13 ring |
-| 14 | willow | 9 | 46 | 9 | P hero-shore willow, ref 169 frame x 0.33-0.42 |
-| 15 | willow | -2 | 47 | 7 | P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair) |
-| 16 | willow | -12 | 45 | 8 | P hero-shore willow, ref 169 frame x 0.56-0.64 |
-| 17 | cypress_column | -38 | -19 | 22 | A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, cam01 x 0.695 |
+| 13 | broadleaf | 35 | 20 | 6 | P peninsula bed, ships x 0.245-0.277; r9 QA-02-13 ring, r9r +0.5 m out so the ring is cleared, not touched |
+| 14 | willow | 7 | 43 | 9 | P hero-shore willow, ref 169 x 0.33-0.42; r9r LAND (9.0,45.5) -> here, ships x 0.340-0.417 |
+| 15 | willow | -3 | 46 | 7 | P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500 |
+| 16 | willow | -12 | 44 | 8 | P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598 |
+| 17 | cypress_column | -38 | -20 | 22 | A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, r9r LAND+ring, ships x 0.668-0.719 |
 | 18 | pine | -60 | -31 | 13 | A2 strip along the north wing, r+8 (ref 169: crown over the cornice, x 0.79) |
 | 19 | cypress_column | -66 | -28 | 17 | A2 second column, r+8 (ref 169: crown over the cornice, x 0.82) |
 | 20 | cypress | -77 | -22 | 16 | A2 at the wing's first box, r+8 (ref 169: crown over the cornice, x 0.89) |
 | 21 | eucalyptus | -85 | 16 | 20 | B big eucalyptus on the strip (ref 141); r9 QA-02-7, 12 m down-sun of the r8 plan coordinate (-79, 26) - the position shadow_relief used to sweep it to on every build |
-| 22 | pine | -90 | 22 | 20 | B |
+| 22 | pine | -90 | 22 | 16 | B |
 | 23 | willow | -100 | 37 | 9 | B willow at the water (refs 144/145) |
 | 24 | eucalyptus | -113 | 15 | 30 | B big eucalyptus behind the willows (ref 171); r9 pushed radially out of the north pylon's gallery keep-out (was -106, 20 = 2.6 m off the walk centreline) |
 | 25 | cypress | -118 | 8 | 22 | B beyond the north pylon |
@@ -170,7 +170,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 32 | broadleaf | 74 | -38 | 10 | C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera) |
 | 33 | cypress_column | 66 | 40 | 18 | D dense cypress behind the south pylon (ref 169 far left) |
 | 34 | eucalyptus | 70 | 36 | 20 | D south-wing strip; r9 QA-02-7, 12 m down-sun of the r8 plan coordinate (76, 46) - the position shadow_relief used to sweep it to on every build |
-| 35 | pine | 92 | 58 | 15 | D |
+| 35 | pine | 92 | 58 | 15 | D; r9r LAND |
 | 36 | willow | 78 | 50 | 9 | D willow at the south end of the lagoon |
 | 37 | eucalyptus | 108 | 51 | 30 | D south pylon; r9 pushed radially out of the gallery keep-out (was 104, 52 = 2.4 m off the walk centreline) |
 | 38 | cypress | 112 | 40 | 22 | D |
@@ -1491,9 +1491,9 @@ Numbers re-checked on the rebuilt ENV (`renders/logs/env_r9f_build.log`), all of
 | `shadow_relief` moves | lowered 27 (103 m), **moved 16**, dropped 3 | lowered 26 (100 m), **moved 0** (hand-placed 0), dropped 3 | 1 pinned podium refusal, all suggestions baked |
 | wing band in tree shadow, north / south | 12.5 / 17.5 % | **21.2 / 21.2 %** | target <= 22 %; the head-room the sweep used to buy is gone |
 | hero water / hero shore in shadow | 4.5 / 18.0 % | **4.5 / 22.0 %** | targets 25 / 25 |
-| trees placed | 137 | **131** | 3 dropped by the relief, and the gallery gate now drops 0 |
+| trees placed | 137 | **131** | **six fewer GENERATED screen redwoods** (see the r9r section below); no PLAN tree dropped, the gallery gate dropped 0 |
 | ENV tris at LOD1 | 4,756,102 | **4,705,602** | LOD0 13,599,868, LOD2 674,236 |
-| shrub candidates refused by the keep-out | — | 0 in `put` (`land_ok` rejects them first) | the belt reshapes, it does not thin |
+| shrub candidates refused by the keep-out | — | 0 in `put` (`land_ok` rejects them first) | the belt reshapes **and thins slightly**: 1414 -> 1378 instances, -36 (r8h:19 vs r9h:17) |
 
 Also fixed this round: `env_r8_fit.MASS_X` replaces the hard-coded 0.705-0.745 y-extent window (r8 carry 5) and
 `solve(y_hint)` is gone; over the corrected window 0.62-0.735 the mass's solid top is frame y **0.46** with
@@ -1553,3 +1553,114 @@ master.** A round that reports only the composited std is not comparable with an
   the probe measured cam 03's walk sun reach at 1.3 -> **1.4 %**, so the joint self-shadowing the rationale
   comment claimed is not what produced the std gain; that came from the ambient relief and the 288 edge shrubs.
   Size the ask accordingly: what the walk needs is a stone albedo and a joint normal, not a shadow trick.
+
+## Round 9r — the review fixes (`docs/reviews/env_r9_review.md`), 2026-09-09
+
+No render. Builds and probes only: `env_build.py` (`renders/logs/env_r9h_build.log`), `env_r9_walk.py`
+(`env_r9h_walk.log`), `env_r9_replan.py --shipped --verify --land` (`env_r9h_replan.log`),
+`env_r7_measure.py --c06ratio` (`env_r9_c06ratio.log`, pure python).
+
+### Finding 1 — the onto-land snap ran after every gate, so PLAN still was not the shipped plan
+
+The spiral snap lived in the placement loop, i.e. after `shadow_relief`'s podium ring and after the gallery
+gate, and it moved anything: **nine** entries, all of them hand-placed. That is why the A2 column shipped at
+(−38.7, −20.8) against PLAN (−37.9, −19.0), and why the A redwood ended at r 35.0 — back inside the 37 m ring
+its own bake had just cleared it of, because nothing re-checked the ring afterwards.
+
+`env_trees.land_snap` is now a plan pass. It runs **first**, before the podium ring and the gallery gate; it may
+move only a generated tree; and a hand-placed PLAN coordinate in the water **fails the build**, naming the tree
+and the nearest land point. It runs a second time after the relief passes and before the gallery gate, because
+`shadow_relief`'s 12 m down-sun push (generated trees only) is the one thing that can still put a crown in the
+lagoon. The nine coordinates were then corrected **by hand** to the nearest point that passes all three hard
+gates — dry land, the 4.1 m gallery keep-out, and QA-02-13's 37 m podium ring measured at the PLAN height —
+found with the new `env_r9_replan.py --land`:
+
+| group | species | PLAN before | why it failed | **PLAN now = shipped** | frame x |
+|---|---|---|---|---|---|
+| A | redwood | (−40.5, −2.2) | 4.9 m inside the north embayment | **(−40.5, 9.3)** | 0.730 -> 0.750 |
+| A | broadleaf | (−49.0, 13.0) | 6.7 m into the water | **(−41.0, 13.0)** | 0.819 -> 0.762 |
+| A2 | cypress_column | (−37.9, −19.0) | in the water **and** on the 37 m ring | **(−37.9, −20.5)** | 0.695 -> 0.693 |
+| P | willow | (−22.0, 38.0) | in the water | **(−22.0, 37.0)** | 0.652 -> 0.651 |
+| P | willow | (9.0, 45.5) | in the water | **(6.9, 43.4)** | 0.352 -> 0.379 |
+| P | willow | (−1.5, 47.0) | in the water | **(−2.6, 45.9)** | 0.448 -> 0.461 |
+| P | willow | (−12.0, 45.0) | in the water | **(−12.0, 44.0)** | 0.557 -> 0.557 |
+| P | broadleaf | (34.2, 19.8) | crown reached exactly r 37.0 | **(34.7, 19.8)** | 0.264 -> 0.261 |
+| D | pine | (92.0, 58.0) | in the water | **(92.2, 57.5)** | off-frame |
+
+`--land` now reports **0 of 83 PLAN entries fail a gate**, and the new `--shipped` mode opens the built .blend and
+matches every instance back to its plan entry: **79 built hand-placed trees stand 0.000 m from PLAN**, 3 F-group
+backdrop trees not built because `relief_policy` marks them droppable behind the hero camera (r8 dropped the same
+3). The build log reads `land snap (plan): 0 hand-placed moved`, `shadow relief: moved 0`,
+`frame-band relief: moved 0`, `gallery keep-out: 131 -> 131`.
+
+Re-checked on that rebuild: walk clearance **origin 4.21 m PASS / eye-band extent 1.71 m PASS**, 0 samples with
+geometry in the clear width; frame-band clearer **moved 0, shortened 3, dropped 0** (kept 12); LOD1
+**4,705,602** tris (LOD0 13,599,868, LOD2 674,236), 5922 objects; **131 trees**. Only the P broadleaf's 0.5 m
+nudge changes a shadow number: hero shore in shadow 22.0 -> **18.0 %** (r8's figure), wings 21.2 / 21.2 %,
+hero water 4.5 %, and `shadow_relief` now reports **0 podium refusals** instead of one every build.
+
+### Finding 2 — the `moved_pinned` counter proved nothing
+
+`changed["moved_pinned"] += 0 if movable else 1` sat inside a branch whose own condition is `movable`, so
+"hand-placed 0" was a tautology. Gone. The branch asserts `movable`, and the log now reports the two refusals
+that are real events: `pin_floor` (hand-placed blockers the pass gave up on at their height floor — 4 this
+build, each named) and `pin_refused` (hand-placed crowns left inside the podium ring — 0 this build).
+
+### Finding 3 — 137 -> 131 restated
+
+The six are **generated E-group screen redwoods that `redwood_screen` now refuses** at the gallery keep-out:
+screen crowns 57 -> 51 (`env_r8h_build.log:118` vs `env_r9h_build.log:116`), so the plan entering the relief is
+140 -> 134. The relief then drops the same 3 F backdrop trees it dropped in r8. **No PLAN tree was dropped and
+the gallery gate dropped 0.**
+
+### Finding 4 — the MASS_X comment
+
+`env_r8_fit.MASS_X` = 0.62-0.735 is not "dark fraction >= 0.35" throughout. The comment now carries the profile
+(0.61:0.16 | 0.62:0.36 0.63:0.44 0.64:0.33 0.65:0.19 0.66:0.25 0.67:0.28 0.68:0.23 0.69:0.39 0.70:0.35 0.71:0.58
+0.72:0.56 0.73:0.45 | 0.74:0.14): 0.62 and 0.73 are where the profile **crosses** 0.35, the window mean is 0.37,
+and 0.64-0.68 is a thin stretch — the gap between the near cluster and the dark crown right of the dome.
+
+### Finding 5 — the cam 06 ratio is now computed, not transcribed
+
+`env_r7_measure.py --c06ratio` run on lighting r13's two committed frames (`renders/logs/env_r9_c06ratio.log`):
+
+| pair | un-composited std | composited std | **ratio** |
+|---|---|---|---|
+| `r13SHIP_r13_06e.png` / `r13g_nocomp_06e.png` — **the shipped rig, THE GATE** | 59.8 | 38.1 | **0.636** |
+| `r13ship_base_06e.png` / `r13g_nocomp_06e.png` — the base rig before the mist change | 59.8 | 33.8 | 0.565 |
+
+So the number to quote for LIGHT r13 is **0.636**, not the 0.637 transcribed from `docs/lighting_notes.md:2010`
+(that was 38.1/59.8 computed from the two rounded stds). `c06_ratio_note` no longer hard-codes any constant: it
+quotes the two stds it measured and names both files it measured them on.
+
+### Carries done
+
+- **7** `env_r9_replan.py --verify` re-runs the two frozen solvers and exits non-zero on drift > 0.2 m: the eight
+  `env_r8_fit.solve` coordinates (five A at r+13, three A2 at r+8) reproduce to **0.02-0.05 m**, and no PLAN
+  crown is inside the podium ring. Run it after any change to `COL_ARC_CENTER` / `COL_ARC_R`, the cam-01 station
+  or the lens. `--shipped` (above) is the same idea against the built .blend.
+- **9** `env_r9_walk.py` gates the **eye-band extent** (>= 1.40 m) as well as the origin (>= 4.1 m) and prints
+  both gates with their margins; a joined run with a distant origin can no longer pass on the origin alone.
+- **6** the three stale re-solved spans are restated from `env_r9_replan`: A cluster core 0.638-0.705 ->
+  **0.642-0.702**, dark mass 0.665-0.743 -> **0.668-0.740**, cluster depth 0.652-0.716 -> **0.653-0.715**. The
+  nine corrected entries quote their shipped span too.
+- Housekeeping: `env_lib.water_polygons` is the single definition of the lagoon/islet polygons and their fields
+  (`env_build` and the probes share it), and `relief_policy` is hoisted to module level so a probe can ask the
+  relief pass its own question instead of copying the rule.
+
+### Carries logged, not done
+
+- **8 — the 21.2 / 21.2 % wing-shadow figure is a probe on the wrong geometry.** `env_lib.wing_samples` samples
+  the OSM roof polygons about `env_lib.ARC_CENTRE = (0, 52)`, not `arch_params.COL_ARC_CENTER` (−11.2, 84.7) /
+  R 117.4 — the same mismatch finding 1 of round 9 fixed for planting. It is also ~80 samples per wing, so one
+  sample is ~1.2 points and the 0.8-point margin under QA-02-7's 22 % cap is smaller than the quantum.
+  **QA must confirm the cap on a render; do not treat 21.2 % as met.** Fixing the probe is a round of its own:
+  it changes every wing-shadow number in this file, so it wants a render in the same round to re-anchor them.
+- **10** done as a note correction: the belt does thin, 1414 -> 1378 shrub instances (−36); the round-9 table row
+  is corrected above.
+- **11 — the podium bake sits on the boundary.** The P broadleaf reached exactly r 37.0, which is why a refusal
+  fired on every build; it is hand-corrected to (34.7, 19.8) here, so the build is clean, but
+  `shadow_relief`'s comparison still has **no epsilon** — the next coordinate that lands on the ring will do the
+  same thing. A 0.1 m epsilon in the podium loop and in `--land` is the general fix. Also: the C broadleaf's
+  14.5 m podium move (cam01 x 0.358 -> 0.258) has **not** been re-checked against the user image; its comment
+  still cites the feature it was moved away from. Both want the round that renders.
