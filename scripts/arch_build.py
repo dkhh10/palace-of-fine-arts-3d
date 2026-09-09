@@ -417,8 +417,8 @@ def build_rotunda():
                    z0=P.ATTIC_Z1 - P.ATTIC_TOP_CORNICE_H, origin=(0, 0, P.ATTIC_Z1))
     # Dentils and modillions along the cornice beds. QA-05-6: these blocks are what makes the band read, so they are
     # in BOTH LODs (one mesh, two objects) -- only the egg-and-dart stays LOD0. Their depth is set so each block's
-    # lateral shadow (0.74 m per metre of depth at this sun) covers the gap to the next: dentils 0.30 deep vs a
-    # 0.16 gap, modillions 0.58 deep vs a 0.64 gap, and the modillion bed is in any case hidden behind the corona.
+    # lateral shadow (0.74 m per metre of depth at this sun) covers the gap to the next: dentils 0.34 deep vs a
+    # 0.20 gap, modillions 0.86 deep vs a 0.56 gap, and the modillion bed is in any case hidden behind the corona.
     c = CORNICE
     for base, kw in (("dentils", dict(z=c["dentil_z"], h=c["dentil_h"], bed=c["dentil_bed"], size=c["dentil_size"],
                                       pitch=c["dentil_pitch"], depth=c["dentil_d"])),

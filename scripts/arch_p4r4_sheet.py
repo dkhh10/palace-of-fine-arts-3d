@@ -8,13 +8,16 @@ Three crops of the rotunda entablature at one on-screen scale -- round-05 hero (
 ref 169 mapped through the round-05 alignment (S 1.3108, dx -291.8, dy -124.6) -- each with its row-profile curve
 and QA's two numbers burnt in, over a text panel carrying the acceptance arithmetic and the cam01 silhouette check.
 """
-import argparse, json
+import argparse, json, os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 FONT = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 MONO = "/System/Library/Fonts/Menlo.ttc"
-XF = (1.3108, -291.8, -124.6)          # ref 169 px * S + D = render px (qa_silhouette align, round 05)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import arch_params as P
+
+XF = P.REF169_XF                       # ref 169 px * S + D = render px (qa_silhouette align, round 05)
 
 
 def lum(path):
