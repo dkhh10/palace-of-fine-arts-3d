@@ -9,5 +9,22 @@
  "b_c06_lum": "100.6  std 23.3",
  "b_c06_lines": "0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]",
  "b_c06_n": 0,
- "b_shore_hue": "hue 45.2 (QA window 40-60)   sat 0.769 (ref 0.663)"
+ "b_shore_hue": "hue 45.2 (QA window 40-60)   sat 0.769 (ref 0.663)",
+ "a_c03_std": "26.3  (full-width row band 19.6)",
+ "a_c03_stdn": 26.3,
+ "a_c03_ratio": "0.176  (ground 20.5 / sunlit 116.2)",
+ "a_c06_lum": "103.2  std 23.5",
+ "a_c06_lines": "0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]",
+ "a_c06_n": 0,
+ "a_band_lum": "86.2  med 52.0  std 64.0  dark<60 55.6 %",
+ "a_band_mean": 86.2,
+ "a_shore_lum": "71.7  med 62.0  std 41.0  dark<60 47.8 %",
+ "a_shore_mean": 71.7,
+ "a_shore_hue": "hue 45.2 (QA window 40-60)   sat 0.775 (ref 0.663)",
+ "nc_c06_lum": "41.2  std 42.4",
+ "nc_c06_lines": "1 in rows 0-110 [vert 1 (245-254 -17); horiz 0];  0 over the whole crop [vert 0; horiz 0]",
+ "nc_c06_n": 1,
+ "nc2_c06_lum": "45.0  std 44.0",
+ "nc2_c06_lines": "1 in rows 0-110 [vert 1 (243-259 -19); horiz 0];  0 over the whole crop [vert 0; horiz 0]",
+ "nc2_c06_n": 1
 }

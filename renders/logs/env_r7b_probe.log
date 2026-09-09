@@ -1,0 +1,65 @@
+00:00.909  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend"
+
+=== CAM_qa_02_lagoon_ne_threequarter  loc=(70.5, 25.6, 1.1) lens=24.0  clear zone x 0.60-0.88 within 60 m
+  #  5 broadleaf       (  31.1,  26.4) h   8  d=  32.3 m  x  0.70.. 0.84  y  0.60.. 0.88  zone cover   50%   C small dark tree left of the rotunda (u
+  # 43 cypress_column  (  29.7,  26.2) h  13  d=  34.1 m  x  0.70.. 0.82  y  0.44.. 0.87  zone cover   43%   C second column (user image x~330), sout
+  # 42 cypress_column  (  34.8,  20.2) h  16  d=  30.9 m  x  0.57.. 0.71  y  0.31.. 0.88  zone cover   38%   C cypress column left of the rotunda (us
+  #  4 broadleaf       (  34.2,  19.8) h   6  d=  32.2 m  x  0.58.. 0.69  y  0.66.. 0.88  zone cover   30%   P peninsula bed (cam01 x 0.24-0.27)
+  #  3 broadleaf       (  26.0,  32.0) h   7  d=  35.2 m  x  0.80.. 0.93  y  0.64.. 0.87  zone cover   28%   P peninsula bed, left of the rotunda (ca
+
+=== CAM_qa_03_colonnade_walk  loc=(81.0, 12.04, 1.7) lens=18.0  clear zone x 0.00-0.30 within 60 m
+  # 99 pine            (  66.1,  -8.4) h  20  d=  10.5 m  x -0.41.. 0.20  y -0.70.. 0.77  zone cover   67%   E1 screen behind the colonnade
+  # 28 cypress         (  46.7, -25.3) h  19  d=  32.6 m  x -0.00.. 0.18  y  0.14.. 0.64  zone cover   60%   E1 screen behind the colonnade
+  # 97 pine            (  34.9, -34.7) h  21  d=  44.7 m  x  0.05.. 0.20  y  0.23.. 0.63  zone cover   50%   E1 screen behind the colonnade
+  # 98 pine            (  63.4, -12.8) h  19  d=  14.1 m  x -0.31.. 0.15  y -0.36.. 0.72  zone cover   48%   E1 screen behind the colonnade
+  # 29 cypress         (  71.0,  -6.1) h  20  d=   5.7 m  x -1.04.. 0.13  y -1.51.. 0.93  zone cover   42%   E1 screen behind the colonnade
+  #107 redwood         (  44.3, -31.1) h  19  d=  38.2 m  x  0.00.. 0.12  y  0.21.. 0.63  zone cover   38%   E1 screen behind the colonnade
+  #112 redwood         (  34.6, -42.3) h  24  d=  48.3 m  x  0.01.. 0.12  y  0.20.. 0.62  zone cover   38%   E2 screen behind the colonnade
+  # 76 eucalyptus      (  40.3, -40.4) h  22  d=  40.3 m  x -0.08.. 0.11  y  0.17.. 0.63  zone cover   35%   E2 screen behind the colonnade
+  #106 redwood         (  38.7, -31.0) h  21  d=  43.3 m  x  0.07.. 0.17  y  0.22.. 0.63  zone cover   34%   E1 screen behind the colonnade
+  #108 redwood         (  60.1, -16.6) h  19  d=  20.3 m  x -0.14.. 0.10  y -0.12.. 0.68  zone cover   32%   E1 screen behind the colonnade
+  # 30 cypress         (  45.3, -36.7) h  21  d=  35.3 m  x -0.12.. 0.09  y  0.14.. 0.64  zone cover   29%   E2 screen behind the colonnade
+  # 77 eucalyptus      (  61.8, -24.4) h  21  d=  16.9 m  x -0.51.. 0.01  y -0.32.. 0.70  zone cover    5%   E2 screen behind the colonnade
+  # 52 eucalyptus      (  62.0, -30.0) h  30  d=  14.6 m  x -0.88.. 0.00  y -0.85.. 0.72  zone cover    1%   C broad eucalyptus behind the south wing
+
+=== cam06_horizon  box (0, 0, 1280, 220) of (1280, 720)  step 3  samples 31598
+   foliage    30.6 %   sunlit  30.0 % of it   (normal turned from the sun  38.1 %)
+   building   46.1 %   sunlit  47.9 % of it   (normal turned from the sun  33.7 %)
+   ground     23.4 %   sunlit  23.6 % of it   (normal turned from the sun   0.0 %)
+   sky         0.0 %
+   hit distance  p10  330.7  median  453.4  p90  551.9 m
+   SUN REACH over all surfaces:  36.7 %
+   fills the box:
+      10.86%  ground   ENV_backdrop_city_ground                     MAT_lawn                   (    0.0,    0.0)
+      10.09%  building ENV_backdrop_hall_roof                       MAT_backdrop_roof          (    0.0,    0.0)
+       8.33%  foliage  ENV_backdrop_canopy_2                        MAT_backdrop_forest        (    0.0,    0.0)
+       7.23%  foliage  ENV_backdrop_canopy_1                        MAT_backdrop_forest        (    0.0,    0.0)
+       6.51%  foliage  ENV_backdrop_canopy_0                        MAT_backdrop_forest        (    0.0,    0.0)
+       5.97%  building ARCH_rotunda_dome                            MAT_dome_membrane          (    0.0,    0.0)
+       4.90%  building ENV_backdrop_house_278                       MAT_backdrop_building      (    0.0,    0.0)
+       4.08%  ground   ENV_backdrop_city_ground                     MAT_backdrop_asphalt       (    0.0,    0.0)
+       3.31%  ground   ENV_backdrop_city_ground                     MAT_soil                   (    0.0,    0.0)
+       2.63%  ground   ENV_terrain_ground                           MAT_lawn                   (    0.0,    0.0)
+       2.58%  building ENV_backdrop_roof_272                        MAT_backdrop_roof          (    0.0,    0.0)
+       2.50%  building ENV_backdrop_presidio_letterman_02           MAT_backdrop_building      (    0.0,    0.0)
+       2.26%  building ENV_backdrop_roof_281                        MAT_backdrop_roof          (    0.0,    0.0)
+       1.84%  building ENV_backdrop_house_281                       MAT_backdrop_building      (    0.0,    0.0)
+   blocks the sun (samples shadowed):
+       8.44%  ENV_backdrop_canopy_2                       (    0.0,    0.0) h0 
+       7.99%  ENV_backdrop_canopy_0                       (    0.0,    0.0) h0 
+       7.74%  ENV_backdrop_canopy_1                       (    0.0,    0.0) h0 
+       4.50%  ENV_backdrop_house_278                      (    0.0,    0.0) h0 
+       3.76%  ENV_backdrop_presidio_letterman_02          (    0.0,    0.0) h0 
+       3.36%  ENV_backdrop_presidio_letterman_03          (    0.0,    0.0) h0 
+       2.55%  ENV_tree_eucalyptus_31_LOD1                 (  124.3,   49.6) h27 E3 screen behind the colon
+       2.41%  ARCH_rotunda_dome                           (    0.0,    0.0) h0 
+       2.10%  ENV_tree_eucalyptus_29_LOD1                 (  124.1,   35.6) h23 E3 screen behind the colon
+       1.72%  ENV_tree_eucalyptus_12_LOD1                 (  158.0,   28.0) h32 F
+       1.70%  ENV_tree_cypress_14_LOD1                    (  170.0, -102.0) h24 H
+       1.57%  ENV_backdrop_roof_272                       (    0.0,    0.0) h0 
+       1.31%  ENV_backdrop_house_277                      (    0.0,    0.0) h0 
+       1.03%  ENV_tree_eucalyptus_13_LOD1                 (  130.0,  -68.0) h28 F
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 5529 exited rc=0 after 96 s (max 900)

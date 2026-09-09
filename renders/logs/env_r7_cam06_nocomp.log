@@ -1,0 +1,12 @@
+00:00.533  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+00:27.209  render           | Saved: 'renders/previews/environment/r7_cam06_nocomp.png'
+[env_r5_hero] opening /Users/dk/Projects/3d render blender 3rd attempt building/master.blend
+[common] set_lod viewport=LOD1 render=LOD1: 5954 objects, 6 collections
+[env_r5_hero] compositing OFF (COMP_golden_hour mist bypassed)
+[env_r5_hero] BLENDER_EEVEE 96 spp 1280x720 -> renders/previews/environment/r7_cam06_nocomp.png
+[env_r5_hero] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 5144 exited rc=0 after 28 s (max 900)

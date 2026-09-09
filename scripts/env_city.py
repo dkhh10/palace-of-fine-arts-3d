@@ -520,7 +520,7 @@ def build_canopy(SUB, clear):
     # stands 120 m up and looks down at about 19 deg, so a 15 m crown hides 15/tan(19) = 43 m of ground behind it;
     # at `pad=4.0` the woods closed over every Presidio way within one tree of its verge and nothing of the
     # corridor was left to see.  The pad is now the depression-angle clearance, so each way keeps an open corridor
-    # and the (deliberately near-continuous, see 3) tree rows on its verges draw the dark line QA is asking for.
+    # and the (gapped, see 3) tree rows on its verges draw the dark line without walling the corridor off.
     CANOPY_ROAD_PAD = 17.0
     a = PRESIDIO_AZ[0]
     while a < PRESIDIO_AZ[1]:
@@ -549,7 +549,14 @@ def build_canopy(SUB, clear):
             n += 1
     # 3. street tree lines: Palace Drive, then every grid street and Presidio boulevard
     for pts, w, kind in ROADS:
-        line = L.resample_polyline(pts, 16.0 if kind == "street" else 10.0)
+        # QA-05-8 (round 7b).  Round 7a made the Presidio verges near-continuous (10 m / p 0.90) on the theory that
+        # the dark row IS the street line.  Measured on cam 06 that closed the corridors the 17 m canopy pad had just
+        # opened: the probe's ground share fell 13.8 -> 10.9 % and MAT_backdrop_asphalt dropped out of the box's top
+        # fills altogether, with the readable-line count still 0.  A crown of height h buries h/tan(19 deg) = 2.9 h
+        # metres of ground behind it, so a row whose crowns (8-22 m across) touch is a wall, not a line.  The verges
+        # are therefore GAPPED on the wide ways - spacing wider than a crown plus its own shadow - and their crowns
+        # are held to 8-12 m there so that shadow is 23-35 m and fits inside the gap.
+        line = L.resample_polyline(pts, 16.0 if kind == "street" else 26.0)
         for i in range(len(line) - 1):
             x, y = line[i]
             r = math.hypot(x, y)
@@ -566,13 +573,15 @@ def build_canopy(SUB, clear):
             for sgn in (-1, 1):
                 # QA-05-8: on the Presidio ways the verge rows are what actually draws the street line at 1280 px,
                 # so they are near-continuous there rather than a 55 % scatter.
-                keep = 0.90 if kind in ("boulevard", "drive") else 0.55
+                wide = kind in ("boulevard", "drive")
+                keep = 0.62 if wide else 0.55
                 if rnd.random() > keep:
                     continue
                 ox, oy = x + sgn * nv.x * off, y + sgn * nv.y * off
                 if not clear(ox, oy):
                     continue
-                add(ox, oy, rnd.uniform(8.0, 15.0), rnd.uniform(0.44, 0.72))
+                add(ox, oy, rnd.uniform(8.0, 12.0) if wide else rnd.uniform(8.0, 15.0),
+                    rnd.uniform(0.44, 0.72))
                 n += 1
     tris = 0
     nobj = 0

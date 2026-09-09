@@ -59,6 +59,9 @@ if engine == "CYCLES":
             d.use = True
     except Exception as e:                                    # noqa: BLE001 - CPU fallback is fine
         print(f"[env_r5_hero] GPU setup skipped: {e}")
+if "--nocomp" in ARGV:      # diagnostic: strip lighting's COMP_golden_hour mist to isolate the geometry's own contrast
+    scene.render.use_compositing = False
+    print("[env_r5_hero] compositing OFF (COMP_golden_hour mist bypassed)")
 scene.render.image_settings.file_format = "PNG"
 scene.render.filepath = str(out)
 out.parent.mkdir(parents=True, exist_ok=True)
