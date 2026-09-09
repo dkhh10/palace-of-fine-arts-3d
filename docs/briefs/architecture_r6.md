@@ -18,3 +18,6 @@ capital 0.65, frieze 1.00. The outer silhouette (apex, corner top, W_a) fits ref
 Deliverables: assets/architecture.blend, arch_params / arch_build changes, composite renders/qa_comparisons/arch_r6_sheet.png (overlay
 before / after / ref with the table burnt in), notes "Round 6", commits after every successful script, report < 25 lines with the
 socket z deltas for ornament and the last commit id.
+Added after the r5 review (docs/reviews/arch_r5_review.md): 0. FIRST, wire scripts/arch_uvproj.py into arch_build.py (or make lead_build /
+arch_build call it as a mandatory post-step) so a rebuild never drops UVProj / UVProj_valid; prove it by rebuilding once and checking the
+layer exists. Cheap carries 3, 4, 5, 7 while you are in the file; log the rest.

@@ -324,3 +324,6 @@ Polish round 5 (decisions.md): ARCH r6 closes the stack first (then re-runs UVPr
 ## 2026-09-09 · ORN r5 reported (70dc10d), in review
 ORN r5 (no render): 24 rotunda frieze_run sockets are host=rotunda subtype=rinceau (8 fronts 5.913 m, 16 returns 2.999 m); new ORN_frieze_rinceau / _return v1-3 with LODs inside budget, proud <= 125 mm under the 160 mm architrave-crown cap, sunk 15 mm; needs the ORN_COLL guard in build_master.py (lead) and a normal/AO bake (was --no-bake). Attic panel depth already 1.6x nominal; the deficit is undercut, not depth; deeper relief blows all three tier budgets (not built). All three attic panels' LOD2 brought to 2400 tris.
 In flight: ORN review, ARCH r5 review, LIGHT r14 prep. Next: merges; ARCH r6 (stack), LIGHT r14 (violet flood), MAT r8 (water + projection).
+
+## 2026-09-09 · ARCH r5 merged after review (MERGE WITH FIXES); ARCH r6 dispatched (register the stack)
+Fix-now (arch_uvproj not called by the build) carried into ARCH r6 item 0. In flight: ARCH r6 (docs/briefs/architecture_r6.md, Cycles crops only), ORN r5 review, LIGHT r14 prep. Next: LIGHT r14 after prep merges; MAT r8 after LIGHT r14 + ARCH r6.
