@@ -77,3 +77,30 @@ every rosette projected into the masonry and none appeared at cam04
 `renders/previews/ornament/orn4_cam04_rosette_fix2.png`).
 The ORN asset is unchanged and correct under either frame: back face at y = 0, projecting +Y, 0.20-0.22 m of relief
 on a 0.55-0.62 m rosette, which fits inside the 0.55 m saucer coffer and stands clear on the band face.
+
+**Contract additions 2026-09-09 (ARCH round 6b, review findings 1, 2 and 10 — the height a socket reserves).**
+A socket that hosts an element with a *known height* now stamps that height, so ORN's asset and ARCH's course
+never drift silently again (the r6 course move took `CAPITAL_H` 2.6 → 3.0 while `orn_build.py` still built 2.6,
+which is a 0.40 m void between abacus and architrave at the hero's most-read junction, and nothing machine-readable
+said so). The height is the space ARCH has reserved between the socket plane and the course above it; the socket
+still must not rescale the asset. Complete per-type property list — `arch_socket_check.py --type props` asserts it
+on the whole file and exits non-zero if any type is short (log: `renders/logs/arch_r6b_sockets_props.log`):
+
+| type | n | properties beyond `orn_type` + `size_hint` + `variant_seed` | value today |
+|---|---|---|---|
+| `capital_rotunda` | 16 | `capital_height` | **3.0** (was 2.6) |
+| `capital_inner` | 8 | `capital_height` | 1.8 |
+| `capital_colonnade` | 114 | `capital_height`, `tall`, `wing` | 1.8 |
+| `frieze_run` | 126 | `run_length`, `band_height`, `host`, `subtype` (+ `run_dir` on straight runs, `arc_center` / `arc_radius` on arcs) | rotunda/rinceau **0.81** (was 0.90), rostra 0.5, planter_box 0.42, colonnade/greek_fret 0.50 |
+| `attic_panel` | 8 | `panel_height`, `design` | **5.27** (was 4.50) |
+| `maiden` | 48 | `rim_height`, `box_corner_y` | 3.55 / -0.32 |
+| `keystone` | 24 | `subtype` (`crown` on the 8 arch crowns, `impost_mask` on the 16 springings) | — |
+| `finial` | 9 | `subtype` (`volute_scroll` / `dome_apex`) | — |
+| `drum_band` | 1 | `run_length`, `radius` | 113.41 / 18.05 |
+| `attic_figure`, `inner_figure`, `urn`, `rosette_ceiling` | 8 / 8 / 40 / 24 | none beyond the base three | — |
+
+**ORN must rebuild against these three numbers**: `capital_rotunda` 2.6 → 3.0, rotunda `frieze_run` band 0.90 → 0.81,
+`attic_panel` field 4.50 → 5.27. Known gap, not fixed here: the 4 colonnade arc `frieze_run` sockets sit at the
+entablature profile's base (`z_ent + 0.02`), 0.20 m below the Greek-fret band face they name (profile z 0.22-0.72),
+so their origin is not yet on the recessed band face the convention above requires. Moving them is a socket-position
+change and needs the lead's call.
