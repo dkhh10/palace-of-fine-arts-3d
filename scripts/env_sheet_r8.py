@@ -62,7 +62,7 @@ def panel(path, ref=False):
 def main():
     panels = [
         ("BEFORE  ENV r7c hero (Cycles 128 spp)", PREV / "r7c_hero.jpg", False),
-        ("AFTER  ENV r8 hero, this worktree's master", PREV / "r8_hero.png", False),
+        ("AFTER  ENV r8 hero, this worktree's master", PREV / "r8_hero.jpg", False),
         ("REFERENCE  ref 169, round-02 align transform", REF169, True),
     ]
     imgs = [(t, panel(p, r)) for t, p, r in panels]

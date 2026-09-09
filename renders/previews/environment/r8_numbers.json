@@ -1,19 +1,24 @@
 {
  "_lines": [
-  "measured on this worktree's rebuilt master (build_master + light_probes --bake; set_lod 6484 objects,",
-  "9706 total, ~11.11 M tris at LOD1) - ENV r8 + ARCH r4 + ORN + MAT r6 + LIGHT r11.  Hero Cycles 128 spp 1920x1080.",
+  "Measured on this worktree's rebuilt master (build_master + light_probes --bake; set_lod 6484 objects, 9706 total,",
+  "~11.11 M tris at LOD1) - ENV r8 + ARCH r4 + ORN + MAT r6 + LIGHT r11.  Hero Cycles 128 spp 1920x1080, cam 03/06",
+  "Eevee 96 spp 1280x720 at LOD1.  Ray-cast shares from env_sightlines --coverage on the ENV + ARCH assets.",
   "",
-  "                                         ENV r7c        ENV r8         ref 169",
-  "  north band luminance                    91.9          133.1           145.9      (0.63 -> 0.91 of ref)",
-  "  north band dark < 60                    35.2 %         21.8 %          16.2 %",
-  "  north band foliage / arch / sky    72.5/25.4/2.1   38.5/50.3/11.2      -         (ray cast, env_sightlines)",
-  "  ref 169 dark mass, frame x         0.76-0.985      0.71-0.76      0.61-0.735     (collapses to 0.14 dark at 0.74)",
-  "  ref 169 mass, frame y                    -          0.40-0.63      0.35-0.59     (solid top 0.45)",
-  "  frame-band relief                  moved 0 / dropped 0   moved 0 / dropped 0     (the pin rule holds)",
+  "                                              ENV r7c          ENV r8         ref 169",
+  "  north band luminance                          91.9           133.1           145.9      0.63 -> 0.91 of ref",
+  "  north band dark < 60                          35.2 %          21.8 %          16.2 %",
+  "  north band foliage / architecture / sky   72.5/25.4/2.1  38.5/50.3/11.2        -        (round 06: 37.8/53.4/8.8)",
+  "  dark mass right edge, frame x (dark<60         0.82            0.715           0.735    left edge 0.64 / 0.64 / 0.61",
+  "     >= 0.35 over the band's rows)",
   "",
-  "  south band luminance                    79.1           83.3          113.3 aligned   (+5.3 %, screen cap acts on both wings)",
-  "  hero shore band luminance               79.6           79.7          115.6 aligned   (+0.1 %)",
-  "  cam03 ground std (560 480 900 720)      27.4           26.0           QA floor >= 12  (-5.1 %)",
-  "  cam06 horizon lum / std             106.5 / 22.8   106.6 / 22.8        -             (street lines 0 -> 0)"
+  "  south band luminance (60 480 560 600)         79.1            83.4          113.3 aligned   +5.4 %: the screen cap",
+  "  south band foliage share                      43.8 %          37.0 %            -           acts on both wings",
+  "  hero shore band (700 600 1200 740)            79.6            79.7          115.6 aligned   +0.1 %",
+  "  hero shore saturation / hue              0.777 / 45.1    0.775 / 45.2    0.663 / 40.7",
+  "  cam03 ground std (560 480 900 720)            27.4            26.7           QA floor >= 12  -2.6 %",
+  "  cam06 horizon lum / std                   106.5 / 22.8    106.6 / 22.8         -           street lines 0 -> 0",
+  "  cam05 rotunda silhouette foliage               4.9 %           4.8 %           -",
+  "  cam05 Greek-key band architecture             59.7 %          59.6 %           -",
+  "  frame-band relief (the pin rule)          moved 0 / dropped 0   moved 0 / dropped 0"
  ]
 }
