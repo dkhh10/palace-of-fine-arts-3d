@@ -170,7 +170,7 @@ def apply_case(c):
             bpy.data.worlds.remove(old_w)          # r12 review carry 9: do not leak one world per case
         w = cal.make_sky_world(f"R15_{case_tag(c)}", AZ, EL, lb.SKY, sun_disc=False, strength=c["sky"],
                                camera_boost=c["cb"], camera_saturation=c["csat"],
-                               glossy_boost=c["gb"], glossy_saturation=c["gsat"],
+                               glossy_boost=c["gb"], glossy_saturation=c["gsat"], glossy_hue=c["ghue"],  # r15 review fix 1
                                diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"],
                                diffuse_tint=(c["tr"], c["tg"], c["tb"]), diffuse_boost=c["db"],
                                diffuse_tint_antisun=c["ta"], diffuse_tint_horizon=c["th"],
@@ -217,10 +217,14 @@ def apply_case(c):
     if c["sfjit"] >= 0.0:
         lb.SHADE_FILL = dict(lb.SHADE_FILL, shadow_jitter=c["sfjit"] > 0.5)
     if max(c["wwnw"], c["wssw"], c["wnne"]) >= 0.0:      # ROUND 15 (QA-07-5 / QA-07-7)
-        _w = [c["wwnw"], c["wssw"], c["wnne"]]
+        # r15 review fix 3: keyed by the lamp's azimuth, not by list position (the shipped list has one lamp)
+        _w = {"wnw": c["wwnw"], "ssw": c["wssw"], "nne": c["wnne"]}
+        def _key(l):
+            az = l.get("az", l.get("azimuth", -1))
+            return "nne" if 0 <= az < 90 else "ssw" if 180 <= az < 270 else "wnw" if 270 <= az < 360 else None
         lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=[
-            dict(l, w=(l["w"] if k >= len(_w) or _w[k] < 0.0 else _w[k]))
-            for k, l in enumerate(lb.SHADE_FILL["lamps"])])
+            dict(l, w=(l["w"] if _key(l) is None or _w[_key(l)] < 0.0 else _w[_key(l)]))
+            for l in lb.SHADE_FILL["lamps"]])
     if c["nfill"] >= 0.0:                            # ROUND 14 (QA-06-13): keep only the first n shade lamps
         lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=lb.SHADE_FILL["lamps"][:int(c["nfill"])])
     lb.build_shade_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection,

@@ -208,6 +208,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         zero.outputs[0].default_value = 0.0          # "is camera or glossy" == 0, so every Fac below is the diffuse one
         vis_out = zero.outputs[0]
         camera_saturation = glossy_saturation = 1.0  # their stages would have Fac 0; do not build them
+        glossy_hue = 0.5                             # r15 review fix 2: no glossy stage in the probe-bake world
     elif (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
             or glossy_saturation != 1.0 or diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9
             or abs(glossy_hue - 0.5) > 1e-9):
