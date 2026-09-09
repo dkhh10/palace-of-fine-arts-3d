@@ -357,3 +357,7 @@ In flight: ENV review, LIGHT r14, ARCH r6 fixes, ORN r6. Next: merges, MAT r8.
 
 ## 2026-09-09 · ARCH r6 merged (2b1c716) after fixes; ref 062 conflict logged (decisions.md)
 Socket props stamped and asserted (capital_height 3.0, band_height 0.81, panel_height 5.27; 434 sockets ALL OK); registration log committed (+1/-1/+1/-3/0/+5/+1/+1 rows); ref 062 wants ATTIC_Z0 30.20 vs 29.18 (hero wins; QA may re-fit cam02). In flight: LIGHT r14, ORN r6 (re-merges main for the socket props), ENV r9 review. Next: LIGHT r14 review + merge, then MAT r8 (water + projection on the registered stack).
+
+## 2026-09-09 · ENV r9 review: MERGE WITH FIXES (docs/reviews/env_r9_review.md); fix agent dispatched (no render)
+Fix now: the onto-land spiral snap runs after the gallery gate and moves 6 hand-placed trees up to 5.6 m (PLAN still not the shipped coordinate); pinned-moved counter is a tautology; 137 -> 131 is six refused screen redwoods, not dropped PLAN trees; MASS_X comment; cam06 0.637 must be computed by --c06ratio on lighting's frames. Carries: PLAN --verify mode, wing-shadow probe below its quantum (QA confirms on a render), eye-band gate.
+In flight: ENV fixes, LIGHT r14, ORN r6. Next: merges, MAT r8.
