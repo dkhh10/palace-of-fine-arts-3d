@@ -169,13 +169,16 @@ def report_hero(a, label=""):
     print(f"  >> item 2 shaded attic hue {s_['hue']:.1f} (29.5+-6, off {dh:.1f}) {ok(dh <= T['shaded_hue_tol'])}"
           f" | sat {s_['sat']:.3f} (<=0.55) {ok(s_['sat'] <= T['shaded_sat_max'])} | lum {s_['lum']:.1f} (ref 120.2)")
     print(f"  >> QA-05-4 reflection sat {w_['sat']:.3f} (>=0.25) {ok(w_['sat'] >= T['refl_sat_min'])}"
-          f" lum {w_['lum']:.1f} (ref 168.9) | near water sat {n_['sat']:.3f} {T['near_water_sat']} "
+          f" hue {w_['hue']:.1f} (ref {REF['water_refl']['hue']:.1f}) lum {w_['lum']:.1f} "
+          f"(ref {REF['water_refl']['lum']:.1f}) | near water sat {n_['sat']:.3f} {T['near_water_sat']} "
           f"{ok(T['near_water_sat'][0] <= n_['sat'] <= T['near_water_sat'][1])} hue {n_['hue']:.1f} (185-200) "
           f"{ok(T['near_water_hue'][0] <= n_['hue'] <= T['near_water_hue'][1])}"
-          f" | ripple R-B {m['ripples']['rb']:.1f} (ref -26 +-10) {ok(abs(m['ripples']['rb'] + 26.0) <= 10.0)}")
+          f" | ripple R-B {m['ripples']['rb']:.1f} (brief -26 +-10, ref {REF['ripples']['rb']:.1f}) "
+          f"{ok(abs(m['ripples']['rb'] + 26.0) <= 10.0)}")
     sb = m["shore_band"]
-    print(f"  >> QA-05-10 shore band lum {sb['lum']:.1f} (ref 115.6, +-25 %) {ok(abs(sb['lum'] - 115.6) <= 28.9)}"
-          f" sat {sb['sat']:.3f} (ref 0.663, must not rise) hue {sb['hue']:.1f}")
+    print(f"  >> QA-05-10 shore band lum {sb['lum']:.1f} (ref {REF['shore_band']['lum']:.1f}, +-25 %) "
+          f"{ok(abs(sb['lum'] - REF['shore_band']['lum']) <= 0.25 * REF['shore_band']['lum'])}"
+          f" sat {sb['sat']:.3f} (ref {REF['shore_band']['sat']:.3f}, must not rise from 0.487) hue {sb['hue']:.1f}")
     return m
 
 

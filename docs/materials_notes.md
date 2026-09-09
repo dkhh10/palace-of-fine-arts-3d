@@ -959,11 +959,41 @@ ref169  182 178 185 191 197 197 191 189 194 196 193 191 190 191 192 189 186 185 
 ```
 
 The photograph's box is a clean panel field for all 34 rows. The render's has the **cornice inside it** (the last
-five rows, 154 -> 75) and the panel's own frame line at row 17 (119). Those two features alone are ~2/3 of the
-render's row-mean std of 25.6 against the photo's 4.9, and no material can remove them: the attic panel's lower
-frame sits about **13 px = 0.65 m higher** in the render than in ref 169 at the hero framing. *Hand-off to
-architecture and the lead: either the attic band's vertical proportion moves, or QA re-boxes the anisotropy test on
-a plain field (e.g. 900 224 1020 248), because as boxed it measures ARCH's cornice, not materials' weathering.*
+five rows, 154 -> 75) and the panel's own frame line at row 17 (119).
+
+**Restated 2026-09-09 after the round-7 review, which re-measured this claim and found it overstated on both
+axes.** Both numbers below are measured with `mat_r7_measure.py` on the shipped hero, and reproduce the reviewer's:
+
+| box | render colsd | render rowsd | render ANISO | ref 169 colsd / rowsd / ANISO |
+|---|---|---|---|---|
+| QA's 900 222 1020 256 | 10.05 | 25.17 | **0.40** | 20.02 / 4.92 / **4.07** |
+| the plain field 900 224 1020 248 | 10.30 | 13.77 | **0.75** | 21.95 / 4.36 / **5.04** |
+
+Dropping the cornice rows takes the row-mean std 25.2 -> 13.8, i.e. the cornice is **45 %** of it, not "~2/3"; and
+on its own proposed plain box the test still reads 0.75 against 5.04, **6.7x short**. So re-boxing does NOT fix the
+test: with the box's geometry taken out, the render's column-to-column variation is 10.3 against the photo's 21.95
+(47 %) while its row-to-row variation is 13.8 against 4.36 (3.2x too much). **Most of QA-05-2's direction failure
+is materials', not the box.** The scale claim is corrected too: "13 px = 0.65 m" was asserted, never derived; the
+hero is 20 mm on a 36 mm sensor at 1920 px, so at the probe's own 84.9 m a pixel is 36 x 84.9 / (20 x 1920) =
+**7.96 cm** and 13 px = **1.03 m** (the 9.4 cm/px in item 5 below is the same arithmetic at 100 m).
+*Hand-off to architecture and the lead, corrected: the attic panel's lower frame sits ~1.03 m higher in the render
+than in ref 169 at the hero framing, and the cornice inside QA's box is worth 45 % of its row std. Re-boxing the
+anisotropy test on 900 224 1020 248 is worth doing because it stops the test measuring ARCH's cornice -- but it
+will not pass it, and materials is not handing the defect over.*
+
+**What materials would do next for the direction, if the camera-projection pass below is not chosen.** The lever
+is direction-aware maps authored on the attic panels themselves rather than another turn of the procedural macro.
+Concretely: `MAT_ornament_concrete` (50 % of QA's box, and the surface the run-off should be starting from) runs
+its macro at `Run Scale` 0.22 -- a 1.0 m tile whose features are 1-4 px at 84.9 m, which is why r7a's 1.7x run-off
+amplitude moved the column-mean spread by -0.3 lum. Replace that tri-planar noise on the panel material with a
+single authored streak map in the panel's own object coordinates, 0.15-0.5 m wide by 3-6 m long, its per-column
+amplitude driven by a random-per-panel seed so no two panels repeat, and anchored so every run STARTS at the
+panel's top ledge instead of floating: that is the difference between column variation that survives the row mean
+and noise that averages out. At the same time the panel material's remaining horizontal terms have to go to zero,
+not down -- its under-ledge band (0.45) and the pour lines are the whole of the 13.8 rowsd on the plain field, and
+the target is 4.36. Budget: colsd 10.3 -> ~22 and rowsd 13.8 -> ~5 is a 10x move in the ratio; it is reachable on
+those two numbers only if the streaks are authored at the panel's scale, which is why this is a map job and not a
+parameter job. One round, one new texture, measured on the plain box.
 
 What materials owns in that box was still spent: the run-off layer is now anisotropic and the horizontal signal
 materials contributed is gone. `pfa_macro_streak` is projected with its vertical axis stretched by a new
@@ -1008,9 +1038,13 @@ and it scores 0.106. *For QA: the reflection test needs a hue or R-B term, or it
 The shipped fix is not "turn the murk down", because the same lambertian is what stopped the lagoon reading black
 from above in round 2 (QA-02-6). It is the physical form of the same thing: real turbid water returns its
 sub-surface light through the surface twice, so the diffuse term falls off at grazing incidence much faster than
-Blender's single-sided Fresnel makes it. `MAT_water_lagoon` now weights the murk by **0.15 + 0.85 (1 - F)^2** with
-a 0.55 gain, which leaves ~0.20 of the murk on the hero's 75-85 deg water and ~0.42 at cam06's 30 deg; plus
-transmission 0.40 -> 0.18 (w1: +0.045 of reflection saturation) and the ripple amplitude at 1.6 (w4). The ripple
+Blender's single-sided Fresnel makes it. `MAT_water_lagoon` now weights the murk by **0.15 + 0.85 (1 - F)^2**,
+which on its own keeps ~0.36 of it on the hero's 75-85 deg water and ~0.76 at cam06's ~30 deg -- **and the shipped
+`WATER_MURK_GAIN` multiplying that weight is 0.15, not the 0.55 an earlier draft of this paragraph quoted**, so
+what actually reaches those two places is ~0.054 and ~0.114 of round 6's murk (corrected 2026-09-09 after the
+round-7 code review; the shipped value is `mat_build.py` `t.value(0.15, "WATER_MURK_GAIN")`). Shipped alongside it:
+Transmission **0.18** (w1: +0.045 of reflection saturation; an earlier draft of the code comment said 0.40) and the
+ripple amplitude at 1.6 (w4). What the 0.15 costs from above is measured in the review-fix section below. The ripple
 band itself was extended: round 6's LOD ramp took the ripple slope out of the normal from 30 m, which is why the
 40-90 m band that carries the building's reflection was glassy and came back as long vertical smears where ref 169
 is corrugated by 0.25-0.4 m ripples to the far shore; the ramp now starts at 55 m and `near` reaches 95 m.
@@ -1078,13 +1112,13 @@ BEFORE = round-6 library on the same master (`r7base_scene_hero.png`); AFTER = t
 | **4** near-water sat 1150 1000 1450 1050 | 0.432 | **0.324** | 0.22-0.32 (ref 0.246) | FAIL by 0.004 (was +0.11) |
 | **4** near-water hue | 218.0 | **213.6** | 185-200 (ref 189.8) | FAIL, -4.4 |
 | **4** ripples R-B 1100 960 1500 1060 | -78.7 | **-39.1** | ref -16.4 (brief -26 +- 10) | FAIL by 3.1, was 52.3 out |
-| **4** reflection column sat 900 760 1020 840 | 0.260 | **0.043** | >= 0.25 (ref 0.339) | FAIL -- but see below |
+| **4** reflection column sat 900 760 1020 840 | 0.260 | **0.043** | >= 0.25 (ref 0.370) | FAIL; sheen swept and abandoned, see below |
 | **4** reflection column hue / R-B | 224.0 / -39.1 | **88.2 / +2.4** | ref 33.7 / +71.1 | crossed to the photo's side |
 | — lagoon flank 100 900 400 960 | 173.0 | **147.6** | ref 155.2 | 0.95x (was 1.12x) |
 | **5** cam05 band 300 150 980 260, std | 43.87 | **43.13** | — | flat; see the cm/px note |
 | **5** cam05 band lum / colsd | 159.9 / 21.97 | **165.9 / 20.13** | — | |
-| **7** shore band 700 600 1200 740 lum | 91.1 | **91.7** | 115.6 +- 25 % | **PASS** (was already inside on the r12 rig) |
-| **7** shore band sat | 0.487 | **0.538** | ref 0.663, must not exceed it | **PASS** |
+| **7** shore band 700 600 1200 740 lum | 91.1 | **91.7** | 115.6 (brief: +43.9) | **NOT DELIVERED** (+0.6 of +43.9; see below) |
+| **7** shore band sat | 0.487 | **0.538** | must not rise (ref 0.631) | **NOT DELIVERED** (rose 0.051) |
 | — columns (mask) lum / hue / sat | 108.7 / 23.6 / 0.591 | **108.6 / 24.0 / 0.572** | 95.4 / 24.5 / 0.589 | 1.14x, hue and sat on the photo |
 
 **Item 5, cam05 at 115 m: no distance term was added, and the arithmetic says none is needed.** cam05 is a 35 mm
@@ -1140,8 +1174,9 @@ settings on one master, border-cropped), `mat_r7_probe.py` (which material is un
 1. **Lead / lighting** -- the last 0.056 of sunlit-stone saturation is the view transform or the sun's chroma.
    One-line test: `AgX - Punchy` instead of `AgX - High Contrast`, or a warmer sun, measured on the attic box.
 2. **Architecture / QA** -- QA's attic box contains the render's cornice (its bottom five rows fall from 154 to 75
-   where the photo's stay at 188) because the attic panel's lower frame sits ~0.65 m higher than in ref 169 at the
-   hero framing. Either the proportion moves or the anisotropy test is re-boxed on a plain field (900 224 1020 248).
+   where the photo's stay at 188) because the attic panel's lower frame sits ~**1.03 m** higher than in ref 169 at
+   the hero framing (derived, see the restatement above). The cornice is 45 % of the box's row std, and on the
+   plain field 900 224 1020 248 the test still reads 0.75 against 5.04 -- re-boxing is correct but does not pass it.
 3. **QA** -- the reflection-column test (`sat >= 0.25`) is passed by blue water and failed by warm water: the only
    sweep case that reached 0.317 did it at hue 225.7. It needs a hue or R-B term.
 4. **Lighting** -- near-water hue 213.6 against 185-200 after the murk is down to a Fresnel-weighted 0.15: at murk
@@ -1149,3 +1184,133 @@ settings on one master, border-cropped), `mat_r7_probe.py` (which material is un
 5. **Environment** -- assign `MAT_paving_stone` / `_worn` on the colonnade walk (QA-05-11).
 6. **Architecture** -- QA-05-6 unchanged: the entablature's std ratio is 0.80 of the photo's only because the box
    got brighter; its row-profile still has no hard cornice shadow band.
+
+## Round 7 review fixes (2026-09-09, `docs/reviews/mat_r7_review.md`, six "fix now" items)
+
+All numbers below are measured on a master rebuilt in this worktree **after `git merge main`**, i.e. carrying
+environment r8 as well as lighting r12: `build_master.py` (9706 objects, 11.11 M LOD1 triangles, 38 library
+materials appended, 0 placeholders) + `light_probes --bake --save`. The round-7 acceptance table reproduces on it
+to within the noise (`r7fix_scene_hero.png`, Cycles 1920x1080 / 64 spp, exposure -2.8331): attic 180.3 / sat 0.474
+/ std ratio 0.74 / aniso 0.40, entablature 0.704 / hue 37.8, shaded attic 30.8 / 0.373, shore 91.9 / 0.532. Two
+numbers moved, both in materials' favour and both environment r8's doing, not a library change: **near-water sat
+0.324 -> 0.303, which puts it inside QA's 0.22-0.32 window for the first time**, and **ripples R-B -39.1 -> -36.9**
+(brief -26 +- 10: now 0.9 outside, was 3.1).
+
+### Fix 1 -- the sheen was swept and is ABANDONED, with the table
+
+Brief item 4 said to ship the sheen at the weight that takes the reflection column box 900 760 1020 840 to
+`sat >= 0.25`. Round 7 never rendered a sheen case; the review was right to call that unexecuted. Six cases on one
+master, one session (`mat_r7_sweep.py --cases s0,s1,s2,s3,w6,s4`, Cycles 64 spp, border crop of the hero, ~46 s
+each). s0 is the shipped water (`WATER_MURK_GAIN` 0.15, Transmission 0.18, chop 1.6) and reproduces the full hero
+exactly (refl sat 0.042 vs 0.042).
+
+| case | murk gain | sheen weight / tint | **refl sat** | **refl hue** | refl R-B | refl lum | near-water sat | ripples R-B |
+|---|---|---|---|---|---|---|---|---|
+| **s0 shipped** | 0.15 | 0.00 teal | 0.042 | 88.1 | +2.3 | 103.1 | 0.303 | -36.9 |
+| s1 | 0.15 | 0.35 teal | **0.285** | 211.7 | -50.6 | 147.6 | 0.401 | -65.3 |
+| s2 | 0.15 | 0.70 teal | **0.284** | 212.9 | -58.2 | 169.8 | 0.450 | -84.0 |
+| s3 | 0.15 | 1.00 teal | **0.265** | 213.6 | -57.6 | 182.1 | 0.472 | -94.1 |
+| w6 | 0.70 | 0.35 teal | **0.290** | 213.1 | -52.9 | 150.0 | 0.422 | -76.1 |
+| s4 | 0.15 | 1.00 warm (0.85,0.55,0.30) | 0.101 | 285.8 | -4.8 | 184.9 | 0.342 | -60.7 |
+| ref 169 | | | 0.370 | **33.7** | **+71.1** | 164.6 | 0.246 | -16.4 |
+
+**Every sheen weight clears `sat >= 0.25`, and every one of them clears it by making the box blue.** The four
+passing cases sit at hue 211.7-213.6 with R-B -50 to -58, against the photograph's hue 33.7 and R-B +71.1: the
+saturation the test rewards is the reflected sky's, i.e. exactly the blue wash QA-05-4 exists to complain about.
+The lobe is grazing-weighted and near-white, so tinting it teal cannot stop it reflecting sky; tinting it warm
+(s4) kills the saturation instead (0.101) and sends the hue to 285.8. And each passing case breaks the other two
+QA-05-4 tests on the same frame: near-water saturation leaves the 0.22-0.32 window (0.303 -> 0.401-0.472) and the
+ripples' R-B leaves the -26 +- 10 window by a factor of three (-36.9 -> -65 to -94).
+
+**Declared: the sheen is abandoned, and ships at 0.** No weight in 0-1, at either murk gain, and at either tint
+reaches `sat >= 0.25` with a hue anywhere near 25-60. *For QA: QA-05-4's reflection test needs re-scoping. As
+written (`sat >= 0.25`, no hue term) it is passed only by the defect -- the two cases in this project that ever
+passed it are s1-s3/w6 above at hue ~213 and round 7's w9 at hue 225.7. A test that says what the round-7 sweep and
+this one both measured would read `R-B >= 0` (photo +71.1, shipped +2.3) or `hue in 25-60`, with the saturation
+floor kept as a second condition.* The gap that then remains is materials' and is real: the box is a 22 m mirror
+returning lum 103.2 against the photo's 164.6, i.e. the reflection is too dark and too neutral, not too blue.
+
+### Fix 6 -- what is actually inside the reflection box (the probe that was listed but never run)
+
+`mat_r7_probe.py --boxes water_refl`: **400 rays, 0 miss, 100.0 % `MAT_water_lagoon`, mean distance 22.1 m.**
+So the box is water, not shore, and round 7's "crossed to the photo's side" reading is on water pixels. It also
+corrects round 7's own geometry claim: the box is **22 m** of near water, not "the reflection column at 40-90 m",
+which is why it is inside the sheen's 22 -> 5 m ramp (the sheen did reach it, see above) and why it moves with the
+near-water crop rather than independently of it.
+
+### Fix 3 -- QA-02-6 from above at the SHIPPED gain, both engines
+
+`mat_r7fix_cam06.py`, `CAM_qa_06_aerial` at QA's own 1280x720, 32 spp, the shipped gain 0.15 and round 6's 1.00 on
+one open master. Open-water box 60 380 340 500 (a clean stretch of lagoon with no building reflection in it):
+
+| render | lagoon lum | hue | sat |
+|---|---|---|---|
+| QA round 05 aerial (Eevee, r11 rig + env r7) | 117.0 | 33.3 | 0.106 |
+| **Eevee, shipped gain 0.15** | **127.6** | 242.0 | 0.190 |
+| Eevee, gain 1.00 (round 6) | 127.6 | 242.0 | 0.190 |
+| **Cycles, shipped gain 0.15** | **94.3** | 313.3 | 0.061 |
+| Cycles, gain 1.00 (round 6) | 115.6 | 242.5 | 0.192 |
+
+**QA-02-6 does not regress in the pass QA renders.** The two Eevee frames are identical to the pixel (max absolute
+difference 1.0, i.e. PNG dither) because `MAT_water_lagoon` is a split shader: the Cycles branch is the
+Fresnel-weighted murk under the Principled, the Eevee branch is a separate Diffuse+Glossy pair fed by
+`WATER_MURK_EEVEE`, which `WATER_MURK_GAIN` does not touch. Eevee's aerial lagoon reads 127.6, **1.09x** QA's
+round-05 aerial. **In Cycles the cost is real and is stated rather than argued: 115.6 -> 94.3, i.e. 0.82x of the
+round-6 water and 0.81x of QA's round-05 reading.** That is a dimming, not a black mirror -- round 2's failure was
+34.9 against 134.5 (0.26x) -- and on the hero the lagoon flank is 147.6 against ref 169's 155.2 (0.95x), so the
+QA-02-6 luminance test as originally written still passes. Materials' position: 0.82x from above is what the hero's
+QA-05-4 windows cost, and if QA scores the aerial lagoon it should score it in Cycles, where the number is 94.3.
+*Separately, and NOT materials': the aerial lagoon has gone from warm (hue 33.3 at round 05) to blue (242) at the
+same murk. The water shader is bit-identical between the two Eevee frames, so that hue is the r12 sky reflected in
+it -- hand-off to lighting/environment, with the number.*
+
+### Fix 5 -- item 7, the shore band: NOT DELIVERED
+
+Correcting round 7's own verdict, which read PASS on a self-chosen +-25 % window. The brief asked for **+43.9 lum
+to reach ref 169's 115.6 WITHOUT raising saturation**. Delivered: **91.1 -> 91.7 (+0.6 of +43.9, 1.4 %)** and the
+saturation **rose 0.487 -> 0.538**, which is the one thing the brief ruled out. On the rebuilt env-r8 master the
+same box reads 91.9 / 0.532, so the shortfall is 23.7 lum, or 79.5 % of the photo's level. (The reference's own
+saturation is 0.631, not the 0.663 the brief quoted -- see the constants fix below -- so ours is still under it;
+the failure is the direction of travel, not the ceiling.)
+
+Why the leaf translucency/tint lift did not reach the box, with the composition it was measured on
+(`mat_r7_probe.py --boxes shore_band`, 2905 rays, 0 miss, mean 62.3 m): **23.4 % `MAT_concrete_podium`, 20.7 %
+`MAT_water_lagoon`, 14.1 % `MAT_leaf_broadleaf`, 12.8 % `MAT_shrub_light`, 8.2 % `MAT_shrub`, 5.1 %
+`MAT_shrub_dry`, 5.0 % `MAT_bark_cypress`, 2.2 % `MAT_lagoon_bed`.** Foliage is 45.2 % of the box, so closing 23.7
+lum on the foliage alone needs **+52.4 lum on the foliage share** -- roughly doubling the shore planting's
+brightness, which would not survive the leaf colour tests at cam03 or the hero's own tree line. *Hand-off to
+environment and lighting with the composition above: the box is a shaded 62 m shoreline whose level is set by how
+much light reaches the planting and by the podium and water either side of it, and materials cannot buy 23.7 lum
+inside it without breaking foliage albedo elsewhere.*
+
+### Fixes 2, 7, 8, 9 -- the corrections carried out in code
+
+- **Fix 2 (the shipped water build).** `mat_build.py`'s comment "Transmission 0.28 -> 0.40" now reads the shipped
+  0.18, and the Fresnel-weight comment now says that the 0.36 / 0.76 pair is the weight BEFORE the 0.15 gain, so
+  the murk actually reaching the hero and cam06 is ~0.054 and ~0.114 of round 6's, with the measured cam06 cost
+  written next to it. The notes paragraph that claimed a 0.55 gain is corrected in place (above).
+- **Carry 7 (stale reference constants).** `mat_r7_measure.py`'s `REF` is re-derived from the same aligned sheet:
+  `water_refl` 168.9 / 0.339 -> **164.6 / 0.370**, `shore_band` sat 0.663 -> **0.631**, ripples R-B -26.0 ->
+  **-16.4**, near-water 189.9 / 0.249 -> 189.8 / 0.246. The stone rows reproduced exactly and are unchanged. The
+  brief's acceptance windows are left where the lead set them, so the ripple test is still scored against -26 +- 10
+  while ref 169 itself measures -16.4 -- flagged, not silently moved. Three hard-coded reference numbers in the
+  print-out (168.9, -26, 0.663) now read from `REF`. `mat_r6_measure.py`'s coffer reference was resolved by running
+  its own function on ref_083 with its own default box: **ratio 0.265, std 31.2** (it printed 0.439 / 36.3, which
+  is where the round-6 note's "0.195 vs ref 083's 0.439" came from). *Hand-off to lighting: `light_measure.py:194`
+  still carries coffer/sky 0.39 where these notes use 0.437; it is lighting's file and was not edited.*
+- **Carry 8.** `mat_r7_sheet.py` no longer hard-codes the reference path (it resolves `$PFA_REFERENCE_DIR` with the
+  main-checkout default, the same rule as `common.REFERENCE_DIR`, re-stated rather than imported because the script
+  runs under plain python3 and `common` imports `bpy`), and `--after` defaults to the shipped `r7f` instead of the
+  superseded `r7c` whose previews were deleted, so a bare re-run works.
+- **Carry 9.** `mat_build.py:631`'s "G/R 0.832 -> 0.819" now reads the shipped 0.789.
+- **Carry 10** (`load()` bilinearly upsamples sub-scale renders, so `--scale` renders must never be quoted for
+  QA-05-2's std / colsd / anisotropy) is acknowledged; every number in this section is from a full-resolution
+  render, and no `--scale` render is quoted.
+
+### Files
+
+Composite: **`renders/qa_comparisons/mat_r7fix_sheet.png`** (row 1: the reflection box at 3x for s0-s4, w6 and ref
+169, labelled with sat / hue / R-B; row 2: the four cam06 frames plus QA's round-05 aerial with the open-water box
+marked). New script `mat_r7fix_cam06.py`, new sheet script `mat_r7fix_sheet.py`, six new sweep cases in
+`mat_r7_sweep.py` (s0-s4, and w6 finally rendered). Renders kept: `r7w_{s0,s1,s2,s3,s4,w6}_hero.png`,
+`r7fix_cam06_{eevee,cycles}_g{0.15,1.00}.png`, `r7fix_scene_hero.png`. Logs `renders/logs/mat_r7fix_*.log`.
