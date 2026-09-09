@@ -440,3 +440,7 @@ Decision: QA-07-7 goes to materials as a shaded-albedo item; QA-07-11 stays mino
 ## 2026-09-09 · LIGHT r15 merged (aec2d77 + lead corrections); MAT r9 dispatched
 Review caveat carried: the "sky rotation moves water hue 0.1 deg" claim was measured at the null hue (sweep bug, fixed); the 9.4 deg hand-off rests on the lamp isolation alone. Carries to a later lighting round: apply_shade_for_engine docstring, §25.3 AFTER column mixes fast-GI states, Eevee hero attic hue 36.5 vs window 35.5, light_r15_sheet.py hard-coded path.
 In flight: MAT r9 (docs/briefs/materials_r9.md, Opus xhigh). Next: MAT review + merge, lead_build.sh, QA round 8.
+
+## 2026-09-09 · Phase 5 prep agent 2 dispatched (user's instruction; branch phase5, Opus high, no renders)
+Scope: scripts/phase5_cleanup.py (orphan purge, optional texture pack, LOD defaults, JSON report, re-open under 60 s on a delivery copy), docs/flythrough_plan.md (shot list, clearance gate, test-animation timing), wired into phase5_deliver.sh as step 1b. Tests only on a scratchpad copy of master.blend, no render.
+In flight: MAT r9 (rendering), Phase 5 prep 2. Next: MAT review + merge, lead_build.sh, QA round 8.
