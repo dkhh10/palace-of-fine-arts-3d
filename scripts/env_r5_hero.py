@@ -22,7 +22,7 @@ def opt(name, default=None):
     return ARGV[ARGV.index(name) + 1] if name in ARGV else default
 
 
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+MAIN = common.MAIN_ROOT            # the main checkout (worktrees have no reference photos)
 blend = Path(opt("--blend", str(MAIN / "master.blend")))
 out = Path(opt("--out", str(common.ROOT / "renders/previews/environment/r5_master_hero.png")))
 samples = int(opt("--samples", "96"))

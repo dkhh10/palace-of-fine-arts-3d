@@ -571,8 +571,10 @@ def build_canopy(SUB, clear):
             nv = Vector((d.y, -d.x))
             off = w / 2 + WALK_W + 1.4
             for sgn in (-1, 1):
-                # QA-05-8: on the Presidio ways the verge rows are what actually draws the street line at 1280 px,
-                # so they are near-continuous there rather than a 55 % scatter.
+                # QA-05-8 / round 7b: the verge rows draw the street line at 1280 px, but a continuous row is a
+                # wall - a crown of height h buries 2.9 h m of ground behind it at cam 06's 19 deg depression.
+                # So the wide ways are gapped (26 m resample above, keep 0.62, crowns held to 8-12 m) rather than
+                # near-continuous; round 7a's 10 m / 0.90 row read ground 10.9 % against 7b's 23.4 %.
                 wide = kind in ("boulevard", "drive")
                 keep = 0.62 if wide else 0.55
                 if rnd.random() > keep:

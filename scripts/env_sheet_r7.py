@@ -16,11 +16,14 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+# `common` imports bpy, so this pure-Pillow script cannot import it: mirror common.MAIN_ROOT and
+# common.REFERENCE_DIR (which honours PFA_REFERENCE_DIR) rather than hard-coding the reference path twice.
+MAIN = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
+REFDIR = Path(os.environ.get("PFA_REFERENCE_DIR", str(MAIN / "reference")))
 PREV = ROOT / "renders/previews/environment"
 QA = MAIN / "renders/previews/qa"
-REF169 = MAIN / "reference/photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
-REF128 = MAIN / "reference/photos/raw/ref_128_main_Corinthian_columns_and_rotunda_Palace_of_Fine_Arts.jpg"
+REF169 = REFDIR / "photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
+REF128 = REFDIR / "photos/raw/ref_128_main_Corinthian_columns_and_rotunda_Palace_of_Fine_Arts.jpg"
 SHORE = ROOT / "renders/qa_comparisons/env_r7_shoreline.png"
 NUM = ROOT / "renders/previews/environment/r7_numbers.json"
 OUT = ROOT / "renders/qa_comparisons/env_r7_sheet.png"

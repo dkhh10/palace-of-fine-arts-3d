@@ -565,7 +565,10 @@ SHORE_BOX = (700 / 1920.0, 1200 / 1920.0, 600 / 1080.0, 740 / 1080.0)      # QA-
 SHORE_OFFSETS = (2.0, 7.0, 13.0)      # metres inland from the water line - the belt QA-04-4 planted
 SHORE_HEIGHTS = (1.0, 2.2)            # crown heights of that belt (band_sightline_cap allows 3.2-3.7 m)
 # `shadow_relief` re-measures every sample against every tree up to 140 times, so the sample count is kept in the
-# low hundreds: 3 offsets x 2 heights on a 5 m ring, clipped to QA's own crop, is ~150-250 points.
+# low hundreds: 3 offsets x 2 heights on a 5 m ring, clipped to QA's own crop.  MEASURED (env_r7b_build.log:119):
+# **50 shore points** of 276 band samples - the crop is narrow, so the ring contributes far fewer than the
+# ~150-250 first estimated.  50 points is a thin basis for SHORE_TARGET; round 7's null result (see the notes)
+# means the belt is a level, not a shadow, so the density is left alone rather than raised for its own sake.
 
 
 def shore_sun_samples(lagoon_field, terrain_height=None, step=5.0):
@@ -743,6 +746,13 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
 # a tree inside that radius stands in front of the wing and a tree outside it stands behind (the redwood screen).
 # Offenders are pushed along the camera's right axis - which moves them across the frame without changing their
 # distance much - to the nearer edge of the band, and only shortened if no clear spot exists.
+# Every HAND-PLACED PLAN group (see PLAN above).  E1/E2/E3 are the procedural `redwood_screen` rows and are the
+# only trees a band may sweep: the lead's rule after the round-5 review is that a band is cleared by thinning the
+# procedural screen, never by moving a tree that stands where a reference photo puts it.  All three bands share
+# this tuple - round 7 shipped it on the hero south band only, and the round-7 build log then showed the north
+# band moving 7 A/A2 trees 18-48 m and dropping 3 (incl. "A dark mass right of the dome").
+PIN_HAND_PLACED = ("A", "A2", "B", "C", "D", "F", "G", "H", "P")
+
 FRAME_BANDS = [
     # Offence band x 0.031-0.205: ref 169 and the user image both put a conifer group at x 0.19-0.29, so that is
     # composition, not a defect (round 4's call, kept - widening the offence band to QA's 0.292 costs the peninsula
@@ -758,13 +768,12 @@ FRAME_BANDS = [
     # widening now touches nothing but the procedural screen - which is precisely the treatment that took the
     # north band from 0.63 to 1.00 of ref 169.  x1 therefore goes to the measured box edge.
     # ... and because the widened span now reaches groups the round-4 band never touched, every HAND-PLACED group
-    # is pinned here, not just P and C: the lead's rule is that a band is cleared by thinning the procedural
-    # screen, never by sweeping a tree that stands where a reference photo puts it.  Only E1/E2/E3 can move.
+    # is pinned here, not just P and C (see PIN_HAND_PLACED).
     dict(cam="_qa_01_", x0=0.031, x1=0.292, x1_exit=0.292, y0=0.40, y1=0.60, behind="colonnade",
-         pin=("P", "C", "A", "A2", "B", "D", "F", "G", "H"), label="QA-05-5 hero south-wing band"),
+         pin=PIN_HAND_PLACED, label="QA-05-5 hero south-wing band"),
     # cam 05's guard stops at y 0.66: the rotunda's body ends there, and the 7-9 m willows and broadleaves of the
     # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
-    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=("P", "C"),
+    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=PIN_HAND_PLACED,
          label="QA-03-13 cam05 rotunda silhouette"),
     # QA-04-6 (round 6).  Round 5 measured and cleared the frame-LEFT band (60-560 px = x 0.031-0.292); nobody had
     # ever measured the frame-RIGHT one, and it came back at 74.6 % foliage / 24.2 % architecture / 1.2 % sky
@@ -778,7 +787,7 @@ FRAME_BANDS = [
     # coordinates about (0, 52) but the wings are struck from (-11.2, 84.7), so "outside the wing in C-polar" is
     # not "behind the wing from the hero" everywhere along the sweep.
     dict(cam="_qa_01_", x0=0.760, x1=0.985, x0_exit=0.760, x1_exit=0.985, y0=0.40, y1=0.60,
-         behind="colonnade", pin=("P", "C"), label="QA-04-6 hero north-wing band"),
+         behind="colonnade", pin=PIN_HAND_PLACED, label="QA-04-6 hero north-wing band"),
 ]
 CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
 

@@ -10,6 +10,7 @@ import bpy, bmesh, sys, os, math, random, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import env_lib as L
+import arch_params as AP        # read-only: ARCH owns these constants, ENV must track them, never copy them
 from mathutils import Vector
 
 ARGS = common.script_args()
@@ -48,7 +49,8 @@ COL_FIELDS = [L.PolyField(p, cell=8.0) for p in COLONNADE_ROOFS[:2]]      # QA-0
 # a brute-force scan of all 95 segments (plus a point-in-poly) for any point outside its bucket grid's reach.
 COL_BOXES = [(min(q[0] for q in p) - 7.0, min(q[1] for q in p) - 7.0,
               max(q[0] for q in p) + 7.0, max(q[1] for q in p) + 7.0) for p in COLONNADE_ROOFS[:2]]
-COLONNADE_WALK_Z = -0.60      # arch_params.COLONNADE_GROUND_Z - the level the column bases are modelled on
+COLONNADE_WALK_Z = AP.COLONNADE_GROUND_Z   # the level the column bases are modelled on (-0.60 today).  Imported,
+                                           # not copied: a hand-copy matches today and drifts silently tomorrow.
 
 APRON_R = 31.0          # inside this radius the ARCH platform covers the ground
 TERRAIN_HALF = 360.0    # terrain covers +-360 m (720 x 720)
@@ -338,7 +340,7 @@ def build_terrain():
 # phase (running bond).  Each slab is one quad lifted PAVE_LIFT over the terrain with a PAVE_JOINT gap all round,
 # so the joints are real geometry that self-shadows at a 7.4 deg sun, and each slab's four corners carry an
 # independent few-millimetre jitter so no two slabs return the sun identically.  ~2 tris per slab.
-PAVE_CENTRE = (-11.2, 84.7)   # arch_params COL_ARC_CENTER
+PAVE_CENTRE = tuple(AP.COL_ARC_CENTER)     # imported, not copied (see COLONNADE_WALK_Z)
 PAVE_SLAB = 1.55              # course depth and nominal slab width (m)
 PAVE_JOINT = 0.055            # joint width (m)
 PAVE_LIFT = 0.035             # slab top over the terrain (m) - the joint gap is this deep
