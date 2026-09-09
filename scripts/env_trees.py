@@ -522,9 +522,11 @@ COLONNADE_ARC = (AP.COL_ARC_CENTER, AP.COL_ARC_R)
 # Round 8: 0.022 -> 0.004.  With the A/A2 trees off the front of the wing (see PLAN), the whole of what was left in
 # QA-04-6's box at frame x 0.87-0.97 was screen crown standing over the cornice - 18 % of the box, against ref
 # 169's 0.01-0.19 dark fraction over those same columns.  This build's cornice sits ~0.02 of frame lower than the
-# photo's, so the 2.2 % allowance lands inside the measured band instead of above it; 0.4 % puts the screen tops
-# back on the cornice line.  Thinning the PROCEDURAL screen is the sanctioned way to clear a band (round-5 rule).
-SCREEN_OVER = 0.004           # fraction of cam 01's frame height a screen crown may stand over the cornice
+# photo's, so the 2.2 % allowance lands inside the measured band instead of above it: 0.4 % left the box at
+# 40.2 % foliage and 0.0 % - screen tops exactly on the cornice line - at 38.5 %.  The crowns ref 169 does show
+# over the cornice (frame x 0.79-0.83, 0.86-0.92) are the A2 trees, which are hand-placed and never capped.
+# Thinning the PROCEDURAL screen is the sanctioned way to clear a band (round-5 rule).
+SCREEN_OVER = 0.000           # fraction of cam 01's frame height a screen crown may stand over the cornice
 SCREEN_H_FLOOR = 11.0         # never cut a screen tree below this: it has to stay a screen
 
 
