@@ -16,12 +16,16 @@ COLLECTION = "QA_CAMERAS"
 
 # name, location (x, y, z), look-at target, focal length mm (36 mm sensor), reference photo, note
 CAMERAS = [
-    dict(name="CAM_qa_01_lagoon_hero", loc=(-14.1, 100.0, 1.6), target=(0.0, 0.0, 1.6), lens=20.0, shift_y=0.06,
+    dict(name="CAM_qa_01_lagoon_hero", loc=(-14.1, 100.0, 1.3), target=(0.0, 0.0, 1.3), lens=20.0, shift_y=0.06,
          ref="canonical/cam_01_lagoon_hero.png",
-         note="THE hero. On the lagoon-face normal (az 82 deg), east shore ~115 m, eye level; real-photo twin ref 169 (golden hour)."),
-    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(70.5, 25.6, 1.1), target=(0.0, 0.0, 21.1), lens=24.0,
+         note="THE hero. On the lagoon-face normal (az 82 deg), east shore ~115 m; real-photo twin ref 169 (golden hour). "
+              "Round 08 (lead, 2026-09-09): eye 2.6 m over the water (z 1.3 = WATER_Z + 2.6), QA round 07 item 5's measured "
+              "height of ref 169 (was 1.6 = 2.9 m). Silhouette / stack registration re-run on the new height (docs/qa_round_08.md)."),
+    dict(name="CAM_qa_02_lagoon_ne_threequarter", loc=(-79.8, 24.4, 1.55), target=(0.0, 0.0, 23.5), lens=40.0,
          ref="canonical/cam_02_ne_shore_threequarter.jpg",
-         note="Ref 062 twin, re-stationed by QA round 04 (scripts/qa_cam02_probe.py sweep, 30-90 m, 16-24 mm): SSE shore path "
+         note="Ref 062 twin. Round 08 (lead, 2026-09-09): re-stationed to ARCH r7's ref-062 fit, NNE ON LAND at az 17 / D 83.4 m, "
+              "eye 1.55 m, ~40 mm (QA round 07 section (i): rows chi2 7.80, worst residual 2.0 %H; the round-04 station stood SSE, the "
+              "mirror-image face). Lighting r15 re-bases the cam02 shade boxes. History: re-stationed by QA round 04 (scripts/qa_cam02_probe.py sweep, 30-90 m, 16-24 mm): SSE shore path "
               "ON LAND at az 160 / 75 m, eye 1.5 m, 12 deg off the SE face normal (photo 13 deg), 24 mm (photo ~26 mm). "
               "Letterboxed ref 062 targets: visible top 0.02 / apex 0.07 (dome peeks over the attic as in the photo) / podium "
               "base 0.86 (ref 0.85) / attic width 0.41 (ref 0.55); tree occlusion 7 %. Deviations: 75 m (brief said 30-70) "
