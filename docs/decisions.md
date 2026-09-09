@@ -219,3 +219,12 @@ Format: date · decision · why · consequences. Newest at the bottom.
   and bake + Phase 5 prep. MAT r9 and QA round 8 come next; the ornament archivolt band (QA-07-4, 8 empty sockets) is NOT dispatched this
   session: it needs a bake and a render round and is worth ~0.5 of one hero row. If the hero is under 4.0 after round 8, at most one more
   round, then the definition of done applies regardless. Phase 5 tooling is on branch phase5, reviewed, held until the gate.
+- **2026-09-10 · Final gate judgement (Fable, the one use of it for QA) and the move to Phase 5.** QA rounds 8 and 9 score the hero 3.67 / 3.67
+  (+0.22 then +0.00 after the projection pass); the user's rule (one round after round 8, then Phase 5 regardless) applies. Lead's judgement on
+  renders/qa_comparisons/round09_gate.png: the silhouette, course stack and ornament read as the building, the projected concrete has the
+  photograph's streak grain and the shade its colour; what still separates the frame from ref 169 is (1) the mirror at 0.61 of the sunlit stone,
+  blue where the photo's is warm, (2) the sky's flat pale blue against the photo's warm horizon haze, (3) the shoreline's tree masses (a hedge
+  where the photo has trunks and dark crowns), (4) the building block 1.10x the photo's saturation off the attic box. None is a lighting or
+  colour-management item that another knob round would close within budget; the AgX High Contrast cap on the sunlit attic (sat ~0.49) is
+  accepted. QA-09's known-issues list (docs/qa_round_09.md) is the delivery's open list. Phase 5 runs on the master built at a25b2ce
+  (9679 objects, frames 1-1224), through scripts/phase5_deliver.sh on a packed delivery copy.
