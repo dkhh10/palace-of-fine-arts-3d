@@ -715,12 +715,12 @@ Two derivations follow, neither of them eyeballed:
 |---|---|---|---|
 | fascia 1 / 2 / 3 | 0.00-0.42 / 0.42-0.82 / 0.82-1.02 | 0.14 / 0.24 / 0.34 | 0.10 m steps (0.08 before) |
 | bead-and-reel astragal | 1.06-1.11 | 0.42 | sheet row 13 |
-| architrave crown | 1.14-1.15 | 0.50 | overhangs the frieze by 0.30 |
-| frieze | 1.15-2.05 | 0.20 | `frieze_run` sockets moved with it (0.24 → 0.20) |
+| architrave crown | 1.14-1.15 | 0.50 | overhangs the frieze by 0.16 (r4b: frieze_d 0.20 -> 0.34) |
+| frieze | 1.15-2.05 | 0.34 | `frieze_run` sockets moved with it (z 28.80 → 28.55, +0.10 m outward; r4b) |
 | cyma reversa foot | 2.05-2.17 | 0.24-0.40 | |
 | **dentils** | 2.17-2.57 | bed 0.40, **0.34 deep**, 0.18 wide, **0.38 pitch** | lateral shadow 0.25 > the 0.20 gap → every gap black |
 | ovolo | 2.57-2.71 | 0.46-0.52 | |
-| **modillions** | 2.71-3.29 | bed 0.52, **0.68 deep**, 0.50 wide, **1.06 pitch** | lateral shadow 0.50 vs a 0.56 gap; the bed is in any case hidden behind the corona for 0.38 m |
+| **modillions** | 2.71-3.29 | bed 0.52, **0.86 deep** (r4b, was 0.68), 0.50 wide, **1.06 pitch** | lateral shadow 0.64 > the 0.56 gap; the bed is in any case hidden behind the corona for 0.38 m |
 | egg-and-dart ovolo | 3.29-3.43 | 0.52-0.80, eggs at 0.47 pitch | LOD0 only |
 | **corona soffit** | 3.48 | **0.80 → 1.66 (0.86 m deep)** | downward-facing: never sunlit |
 | corona fascia / drip / cyma recta | 3.48-3.80 | 1.66-1.70 → 1.36 | |
@@ -866,3 +866,11 @@ against the arbitrated round-1 fit — and is now the only thing between the mod
 defect. (2) In the sheet's ref panel the band above the cornice is a **deep figural relief**; the model's
 `ARCH_rotunda_attic_panel_00` is a plain sunk plate, which is a large part of the residual texture std and belongs to
 ORN/materials, not to ARCH geometry.
+
+### Review fixes (lead, 2026-09-09; docs/reviews/arch_r4_review.md)
+- Profile table corrected to the r4b values (frieze_d 0.34, modillion_d 0.86, socket move z 28.80 -> 28.55 / +0.10 m outward).
+- Sample-count check (finding 3): the r4b crop re-rendered at **128 spp** (`arch_entab_probe --render --border 840 180 1140 360
+  --spp 128`, `renders/previews/architecture/arch_r4b_entab_after_128spp.png`): QA box 900 262 1020 296 row std **32.5** / texture
+  **47.6** (48 spp: 32.4 / 47.6); model box 900 238 1020 272 row std **43.3** / texture **54.7** (48 spp: 43.1 / 54.5). The numbers
+  do not depend on spp. Carried findings 1, 4, 7, 8 (comment, silhouette artifact, hard-coded alignment, measure script's threshold
+  text) to the next architecture round.
