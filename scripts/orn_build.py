@@ -1565,7 +1565,7 @@ def build_frieze_rinceau(kind, variant, coll, bake=True):
             boss = patera_boss(f"rin_bs{k}", work, diameter=bd, proud=0.085)
             boss.data.transform(Matrix.Translation((cx, 0.012, eye_z)))
             parts.append(boss)
-            # two acanthus leaves at the springing, running along the stem away from the scroll
+            # three acanthus leaves at the springing (two full + one short), running along the stem away from the scroll
             for sgn, ang, fl in ((-1.0, -102.0, 1.00), (+1.0, 102.0, 1.00), (-1.0, -150.0, 0.62)):
                 lx = cx + sgn * (0.13 + rng.uniform(0.0, 0.03))
                 parts.append(_rin_leaf(f"rin_lf{k}_{int(sgn)}_{int(fl*100)}", work, lx, stem_z(lx),
