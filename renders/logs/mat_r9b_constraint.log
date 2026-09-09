@@ -1,0 +1,18 @@
+[con] r9c_cycles_01_lagoon_hero.png
+[con]   attic_sunlit   RGB  227.2  185.4  122.1  sat 0.463  R-B +105.1  hue  36.1  (t_B 0.0803)
+[con]   attic_shaded   RGB  152.8  124.6   86.6  sat 0.434  R-B  +66.2  hue  34.5  (t_B 0.4695)
+[con]     p  albedo B |  sunlit B    sat     R-B |  shaded B    sat    hue | verdict
+[con]  0.00    1.0000 |     124.9  0.450  +102.4 |      98.6  0.355   28.8 | shade ok  sunlit short
+[con]  0.50    0.8707 |     123.5  0.457  +103.7 |      92.4  0.395   32.0 | shade ok  sunlit short
+[con]  1.00    0.7582 |     122.1  0.463  +105.1 |      86.6  0.434   34.5 | shade ok  sunlit short
+[con]  1.25    0.7075 |     121.4  0.466  +105.8 |      83.8  0.452   35.5 | shade OVER  sunlit short
+[con]  1.50    0.6602 |     120.8  0.469  +106.5 |      81.1  0.469   36.4 | shade OVER  sunlit short
+[con]  1.75    0.6161 |     120.1  0.471  +107.1 |      78.5  0.486   37.2 | shade OVER  sunlit short
+[con]  2.00    0.5749 |     119.4  0.474  +107.8 |      76.0  0.503   38.0 | shade OVER  sunlit short
+[con]  2.50    0.5006 |     118.1  0.480  +109.1 |      71.2  0.534   39.3 | shade OVER  sunlit short
+[con]  3.00    0.4359 |     116.8  0.486  +110.4 |      66.7  0.563   40.4 | shade OVER  sunlit short
+[con]  4.00    0.3305 |     114.2  0.497  +113.0 |      58.6  0.616   42.1 | shade OVER  sunlit short
+[con] the shaded sat 0.50 ceiling binds at exponent p 1.961, i.e. albedo blue x0.5812 (-41.9 %)
+[con] at that ceiling the SUNLIT box reaches sat 0.474 and R-B +107.7, against the windows 0.53-0.62 and >= 120 -- STILL SHORT
+[con] shipped p 1.00 spends 51 % of that margin
+[con] the shaded HUE window (<= 35.5 deg) binds FIRST, at p 1.248 (albedo blue x0.7078); there the sunlit box is sat 0.466 R-B +105.8

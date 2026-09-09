@@ -53,7 +53,6 @@ def main(path):
               f"R-B {c[0] - c[2]:+6.1f}  hue {hue(c):5.1f}  (t_B {T_B[k]:.4f})")
     print(f"[con] {'p':>5s} {'albedo B':>9s} | {'sunlit B':>9s} {'sat':>6s} {'R-B':>7s} | "
           f"{'shaded B':>9s} {'sat':>6s} {'hue':>6s} | verdict")
-    binding = None
     for p in [0.0, 0.5, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0]:
         ab = TINT_B ** p
         row = {}
@@ -65,10 +64,6 @@ def main(path):
         su, sh = row["attic_sunlit"], row["attic_shaded"]
         ok_sh = sh[1] <= WIN["shaded_sat"] and WIN["shaded_hue"][0] <= sh[3] <= WIN["shaded_hue"][1]
         ok_su = WIN["sunlit_sat"][0] <= su[1] <= WIN["sunlit_sat"][1] and su[2] >= WIN["sunlit_rb"]
-        if ok_sh and binding is None and p >= 1.0:
-            binding = (p, su, sh)
-        elif not ok_sh and binding is not None and binding[0] < p:
-            pass
         print(f"[con] {p:5.2f} {ab:9.4f} | {su[0]:9.1f} {su[1]:6.3f} {su[2]:+7.1f} | "
               f"{sh[0]:9.1f} {sh[1]:6.3f} {sh[3]:6.1f} | "
               f"shade {'ok' if ok_sh else 'OVER'}  sunlit {'ok' if ok_su else 'short'}")
