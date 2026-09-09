@@ -1697,3 +1697,92 @@ numbers burnt in). The shade hue's margin is 0.1 deg and the single knob is `SKY
   term (probe-time world override or Eevee-only shade fill, same pattern as EEVEE_VAULT).
 - Finding 2: `light_r12_measure.py` hue_tol 8 -> 6 (matches the acceptance window). Findings 3 (meta provenance), 4 (water cell in
   the sheet) and the carries (SUN_BLUE_MULT at 0, importance map, comments, index-picked sockets) go to r13.
+
+## 22. Round 13 — the round-12 shade in EEVEE, and it was never the light probes
+
+Master for every number below: this worktree's `master.blend` rebuilt from main after materials r7 / environment r8 /
+architecture r4, **9706 objects before the round's own change, 9709 after** (the three shade lamps), 11.11 M viewport
+triangles at LOD1. Hero frames are 1920x1080 in BOTH engines so the QA boxes need no rescaling; Cycles 64 spp,
+Eevee `apply_preview_eevee` at 32 TAA. Logs `renders/logs/light_r13_*.log`.
+
+### 22.1 Item 1 — three hypotheses, two of them wrong, and the measurement that separates them
+
+The r12 review's diagnosis was that "the world probe bake evaluates the light-path split as a camera ray". Half of
+that is true and it is not the half that matters.
+
+**The one-sphere test (`scripts/light_r13_probe.py`, linear EXR, no lamps, no view transform, 12 s).** One pure
+diffuse sphere lit by the world alone, measured at the pixel whose normal points straight away from the sun:
+
+| setup | centre R / G / B (linear) |
+|---|---|
+| Cycles, shipped world (ground truth) | 0.783 / 0.965 / 19.83 |
+| Eevee, world SH, shipped world | 3.435 / 3.443 / 28.641 |
+| Eevee, world SH, `camera_boost = 1.0` | 3.435 / 3.443 / 28.641 |
+| Eevee, world SH, `split_rays = False` | 3.435 / 3.443 / 28.641 |
+| Eevee, world SH, `diffuse_boost = 1.0` | 1.036 / 1.001 / 10.253 |
+| Eevee, BAKED irradiance volume, bake = shipped world | 4.084 / 4.355 / 28.032 |
+| Eevee, BAKED irradiance volume, bake = `split_rays = False` | 3.412 / 3.365 / 28.069 |
+
+So **Eevee's world spherical harmonics already evaluate the DIFFUSE branch** — changing `camera_boost` moves them by
+0.0000 and an unconditional world is bit-identical — but **the light-probe capture evaluates the world as a CAMERA
+ray**: the bake taken with the shipped world is 19 % redder and 26 % greener than the one taken with the diffuse
+branch. That bug is real and it is fixed (`light_probes.bake_world` + `make_sky_world(split_rays=False)`, rebuilt
+from the scene world's own custom properties so a master bakes its own rig).
+
+**It is worth nothing on the hero.** Eevee hero, shaded attic box (1110,225)-(1150,260), against the Cycles frame of
+the same rig (114.6 / hue 30.9 / sat 0.375):
+
+| Eevee bake | shaded attic lum / hue / sat |
+|---|---|
+| round-12 behaviour (capture as a camera ray) | 95.1 / 38.8 / 0.652 |
+| round-13 fix (capture on the diffuse branch) | 93.3 / 38.2 / 0.650 |
+| **light-probe caches FREED entirely** | 93.3 / 38.0 / 0.632 |
+
+Deleting both irradiance volumes changes that box by 1.8 lum. The hero's shaded stone is not probe-lit at all, so no
+bake world could have fixed it. The fix stays in because the volumes DO light the rotunda interior and it is simply
+correct, but it is not this round's answer.
+
+**Nor is it the world.** `SKY_DIFFUSE_BOOST` 2.5 -> 3.5 -> 5.0 -> 7.0 moves the shaded attic 93.3 -> 94.8 -> 95.6 ->
+96.0 (2.7 lum for x2.8 of the entire diffuse sky) while it moves the near-water box from +19.6 % to **+70.2 %** over
+Cycles. In Eevee that box is lit by the screen-traced horizon scan, not by the sky: `use_fast_gi = False` moves it
+93.3 -> 114.6 in one step (and to hue 44.6 / sat 0.740, i.e. it unblocks probe leakage from the sunlit stone, which
+is warm). `fast_gi_distance` 60 -> 8 -> 2 m moves it by 0.6 lum; `use_raytracing = False` moves it to 97.2.
+
+### 22.2 Item 1 shipped — LIGHT_shade_fill becomes an EEVEE-ONLY rig, and the colour is derived, not chosen
+
+Only a directional lamp reaches the box, so round 11's `SHADE_FILL` is switched on **for Eevee only**
+(`energy_eevee`, `light_presets.apply_shade_for_engine`, the EEVEE_VAULT pattern). Cycles keeps `energy = 0.0` AND
+`hide_render = True`, so it never traverses the lamps: the Cycles hero is bit-identical before and after
+(sunlit attic 180.5 / 0.475 / R-B 103.1, shaded attic 114.6, south wing 94.7, north wing 140.7, shore 91.8,
+columns 108.4, near water 0.304, sky_top 168.0, sky_left/top 0.922 — every one of them unmoved).
+
+The colour had to be re-derived. Round 11's (0.42, 0.62, 1.00) at 16 W/m2 delivers display deltas of +16 red,
++21 green, **+19 blue** where the gap needs +17, +20, **+43**: the shaded stone's blue reflectance is 0.13 of its red
+(the same lamp returns 0.0578 of linear red and 0.0184 of linear blue), so a lamp that looks blue is not one. Solving
+per channel gives (0.14, 0.19, 1.00) and 55 W/m2. Elevation 16 -> 5 deg is what makes it cheap: a vertical shaded
+face keeps cos(5)/cos(16) = 1.04 of it, the lagoon and the plaza keep sin(5)/sin(16) = 0.25.
+
+| Eevee lever (hero, 1920x1080) | shaded attic lum / hue / sat | near water vs Cycles |
+|---|---|---|
+| nothing (round 12 as shipped) | 93.3 / 38.2 / 0.650 | +19.6 % |
+| fill 16 W/m2, colour (0.42,0.62,1.00), el 16 | 112.9 / 41.2 / 0.554 | +29.9 % |
+| fill 20 / 35 / 55 W/m2, colour (0.14,0.19,1.00), el 16 | 103.3 / 109.4 / 116.1 lum, hue 36.6 / 35.9 / 35.2 | +25.1 / +28.9 / +33.6 % |
+| **fill 55 W/m2, colour (0.14,0.19,1.00), el 5 — SHIPPED** | **119.3 / 35.0 / 0.381** | **+20.2 %** |
+| fill 75 W/m2, colour (0.14,0.19,1.00), el 5 | 125.5 / 34.4 / 0.334 | +20.4 % |
+
+**Item 1 acceptance (brief: within 6 deg hue, 0.10 sat, 15 % lum of Cycles):**
+
+| box | before (Eevee) | after (Eevee) | Cycles | verdict |
+|---|---|---|---|---|
+| shaded attic | 93.3 / 38.2 / 0.650 (-18.6 %, +7.3, +0.275) | **119.3 / 35.0 / 0.381** (+4.1 %, +4.1, +0.006) | 114.6 / 30.8 / 0.375 | **PASS** |
+| sunlit attic | 154.7 (-14.3 %) | **161.1 (-10.8 %)** | 180.5 | PASS |
+| entablature | 107.1 (-14.9 %) | **112.2 (-10.9 %)** | 125.9 | PASS |
+| sky_top | 167.9 / 208.7 / 0.432 | 167.9 / 208.7 / 0.432 | 168.0 / 208.6 / 0.434 | **identical** |
+| sky_left | 154.8 / 208.6 / 0.494 | 154.8 / 208.6 / 0.494 | 154.9 / 208.6 / 0.495 | **identical** |
+| near water | 140.2 / 225.1 / 0.448 (+19.6 %) | 140.9 / 225.1 / 0.444 (+20.2 %) | 117.2 / 213.8 / 0.304 | unchanged by the fill |
+| lagoon flank | 165.7 / 222.0 / 0.325 | 166.0 / 222.1 / 0.324 | 156.7 / 211.2 / 0.273 | unchanged by the fill |
+| columns (masked box) | 51.5 (-52.5 %) | 84.2 (-22.3 %) | 108.4 | improved, still short |
+
+The lamps are invisible to camera rays (`visible_camera = False`) and `specular = 0.00`, so the visible sky is
+bit-identical and the lagoon's Eevee/Cycles gap (+20 % lum, +11 deg of hue) is the one Eevee already had before this
+round: it is Eevee's screen-traced reflection against Cycles' path-traced one, not something the fill caused.
