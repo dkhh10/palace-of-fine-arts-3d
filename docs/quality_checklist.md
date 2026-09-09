@@ -229,3 +229,63 @@ materials, integration). Majors: -4 water hue 209 / grey reflection (materials +
 dark (0.63 of photo), -11 cam03 ground bare, -12 cam05 flat stone at 110 m.
 Recommendation to the lead: change approach for the hero-facing concrete (photo-projected albedo from the aligned refs); measure every
 owner's acceptance number on the lead's post-build master, not the owner's branch.
+
+### Round 06 — 2026-09-09 (Phase 4 polish round 4; ARCH r4, LIGHT r12 + r13, MAT r7, ENV r7 + r8 + paving rebuild; master 9709 objects, LOD1 11.11 M)
+
+Full report: `docs/qa_round_06.md`. Gate composite: `renders/qa_comparisons/round06_gate.png`.
+
+| row | 01 hero | 02 NE 3/4 | 03 colonnade | 04 ceiling | 05 S lawn | 06 aerial |
+|---|---|---|---|---|---|---|
+| Silhouette match | 4 | 3.5 | 2.5 | 3.5 | 3.5 | 4 |
+| Proportion | 3.5 | 3.5 | 3 | 3.5 | 3 | 3.5 |
+| Ornament fidelity | 3.5 | 3 | 2.5 | 3 | 3 | 2.5 |
+| Material realism | 3 | 2.5 | 1.5 | 2.5 | 3 | 1.5 |
+| Edge wear | 2.5 | 2 | 1 | 1 | 2 | 0.5 |
+| Lighting mood | 4 | 3 | 2 | 3 | 3.5 | 2 |
+| Water reflection | 2 | 1.5 | n/a | n/a | 1.5 | 1.5 |
+| Repetition visibility | 3 | 2.5 | 2 | 2.5 | 2.5 | 2.5 |
+| Scale cues | 3.5 | 3 | 2.5 | 3 | 3 | 2.5 |
+| average (delta vs round 05) | 3.22 (-0.06) | 2.72 (-0.06) | 2.12 (+0.38) | 2.75 (+0.19) | 2.78 (0.00) | 2.28 (-0.22) |
+
+Trend r02 -> r06: cam01 2.94 / 3.28 / 3.28 / 3.28 / **3.22** (stuck four rounds; hero Proportion re-scored 4 -> 3.5 on the
+first per-course stack measurement, so 3.28 flat on the round-05 basis); cam02 2.11 / 2.33 / 2.67 / 2.78 / **2.72**;
+cam03 1.94 / 2.13 / 2.00 / 1.75 / **2.12** (first gain in three rounds); cam04 2.31 / 2.13 / 2.44 / 2.56 / **2.75** (best);
+cam05 2.11 / 2.67 / 2.72 / 2.78 / **2.78**; cam06 2.17 / 2.17 / 2.39 / 2.50 / **2.28** (blue flood).
+
+**Viewport performance**: open **0.72 s** (pass); LOD1 **11.11 M tris** (pass); Eevee six-camera pass **218.6 s**, 22.7-49.7 s
+per camera — pass but **+81 %** on round 05 (LIGHT r13's Eevee-only rigs); Cycles hero 128 spp 381.4 s; cam04 64 spp 219.9 s.
+**Deliverables**: GPU / 768 adaptive / OIDN / AgX High Contrast / exposure -2.8331, flythrough camera + path + target,
+2 light probes, Eevee taa 8/16 RT off, 0 placeholder materials. 4K 768-spp timing not run this round (QA-03-16 still open).
+
+Closed this round: QA-05-3 coffers (Cycles 0.211 -> **0.451**, ref 0.437; dark/light quarter 0.121 -> **0.234**, ref 0.265),
+QA-05-7 haze (0.922 vs the aligned ref's 0.921 — measured-equal), QA-05-10 shore band (71.7 -> **91.6**, ref 115.3),
+QA-05-11 cam03 walk, QA-05-12 cam05 stone (band std **0.92** of ref 063). Half closed: QA-05-1 (hero shaded attic
+**114.7 / 30.7 / 0.373** vs ref 115.0 / 29.5 / 0.425 — exact; cam03 re-based box 480 150 560 600 gives **0.384** of the
+sunlit rotunda, in the 0.30-0.70 window, but at sat 0.737), QA-05-2 (attic lum **180.4** in window, std ratio 0.73;
+sat 0.473 and anisotropy **0.41** vs 4.07 still fail), QA-05-5 (south wing 86.0 -> **94.2**: raw pass, aligned fail),
+QA-05-6 (entablature texture std **0.81** pass, row std 36.5 vs the photo's 54.0 fail). Regressed: QA-05-4 water
+(reflection sat 0.106 -> **0.043**, R-B **+2.5** vs +69.0).
+
+cam03 test re-based a second time (brief item 4 / decisions.md): the box moves to a sky-visible shaft face,
+**480 150 560 600**, window 0.30-0.70 anchored on ref 169's 0.607; the old box 150 150 420 720 (now 0.151) is retired and
+the outer lagoon-side row 880 120 1200 600 (0.066) is reported for the record. Wing labels confirmed: frame-left = SOUTH.
+Reflection test re-stated (brief item 8): saturation is dropped, **R-B >= +35 and hue 25-45 and lum 124-208** on
+900 760 1020 840 — blue water passed the old sat >= 0.25 test.
+
+Rejects (game asset / clean CAD): the hero's capitals and the ornamented band above them (24 px vs the photo's 37, blank
+bed-mould, frieze and archivolt); cam06 as a lavender relief map (roofs / ground / trees at hue 253 / 269 / 240 against
+ref 105's 2.7 / 51.2); the cam05 lagoon (lum 120.3 / hue 5.9 / sat 0.123 vs 93.4 / 64.9 / 0.306); the attic's weathering
+still organised in rows, not runs (anisotropy 0.41 vs 4.07).
+
+**Stack offset per course (new, item 7)**: attic crown +0.07 m, crown corona +0.30, attic panel frame top +1.27, frame
+bottom +2.31, cornice corona +2.01, frieze top +1.34, frieze bottom +1.34, capital top +1.12 (positive = the render sits
+higher; 13.42 px/m). Attic storey render / ref **0.70**, capital **0.65**, frieze **1.00**. **Not a rigid shift, so the
+photo-projection pass cannot register until architecture closes the stack (QA-06-1).**
+
+Verdict: **gate not passed.** Hero **3.22** (3.28 on the round-05 basis) — no gain for a fourth round: Lighting +0.5 and
+Edge wear +0.5 paid for by Water -1.0. Blockers: QA-06-1 stack does not register (architecture), QA-06-2 diffuse sky tint
+floods four cameras blue-violet (lighting), QA-06-3 water fails at every distance (materials). Majors: -4 streak direction,
+-5 sunlit chroma, -6 capitals / ornament band, -7 cam03 still 46 % black, -8 vault saturation 0.91 vs 0.43, -9 entablature
+row std. Minors: -10 Eevee soffit W gap, -11 south wing aligned panel, -12 cam06 streets, -13 Eevee preview cost +81 %.
+Recommendation to the lead: one architecture round on the hero-facing stack **before** the photo-projection pass, and a
+hold-list of the other five cameras' boxes in every lighting / materials brief from round 07 on.
