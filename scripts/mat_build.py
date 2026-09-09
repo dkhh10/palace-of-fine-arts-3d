@@ -759,11 +759,18 @@ def build_concrete_family():
     #  - Algae on every material that can reach z = WATER_Z; the mask is height-gated so high geometry is untouched.
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
-        # ROUND 9 (QA-07-2, the blocker).  The chroma deficit is not a guess any more: ref 169 aligned into the
-        # projector frame and divided by this build's own render over QA's attic box gives an RGB correction of
-        # (1.026, 1.001, 0.749); its luminance-neutral part is PHOTO_TINT, and it lands the box at sat 0.59 /
-        # R-B 138 (windows 0.53-0.62 and >= 120) with lum held at 190.  It multiplies the FINISHED albedo, so it
-        # reaches every camera and every surface of this material and cannot make a seam at the projection's edge.
+        # ROUND 9 (QA-07-2, the blocker).  The chroma deficit is not a guess: ref 169 aligned into the projector
+        # frame and divided by this build's own render over QA's attic box gives an RGB correction of
+        # (1.026, 1.001, 0.749), whose luminance-neutral part is PHOTO_TINT.  It multiplies the FINISHED albedo,
+        # so it reaches every camera and every surface of this material and cannot make a seam at the projection's
+        # edge.  ROUND 9b (review finding 5): the round-9 text here claimed this "lands the box at sat 0.59 /
+        # R-B 138", which was an ALBEDO-space prediction stated as a rendered fact.  MEASURED on the hero it lands
+        # the box at sat 0.461 / R-B +104.7 with lum 189.8 -- that number was the ASK, not the result, because the
+        # tint multiplies a scene-linear albedo while the ask was read in AgX display space.  The measured in-situ
+        # chroma transfers (albedo blue x0.758 moves the sunlit box's display blue -2.2 % and the shaded box's
+        # -12.2 %, i.e. t_B 0.080 and 0.470) are also why the tint is NOT linearised the way the ratio map now is:
+        # the shaded attic's sat <= 0.50 ceiling binds at albedo blue x0.666, and at that ceiling the sunlit box
+        # only reaches sat 0.478 / R-B +109, still outside 0.53-0.62 / >= 120.  docs/materials_notes.md round 9b.
         "Albedo Tint": PHOTO_TINT, "Photo": PHOTO_WEIGHT,
         # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.789. On the r12 rig the sunlit attic
         # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
@@ -1180,7 +1187,12 @@ def build_water():
     # largest setting at which nothing that passes today stops passing: near sat ~0.24, near lum ~118, flank ~155
     # against ref 152.4, cam05's band inside its 117 ceiling, and the reflection column 102.1 -> ~110 with the
     # ripples' R-B error halved.  Raising it to 0.75 CLOSES QA-07-3 (refl 124.3) and is one number away.
-    gloss_mix = t.value(0.25, "WATER_GLOSS_MIX")
+    # ROUND 9b: the lead took the middle of that sweep -- 0.25 -> 0.45.  It is the lead's call on the mirror, made
+    # against the swept table above: reflection lum 116.3 (still under the 124 window, but 0.61 of the sunlit attic
+    # against the photograph's 0.88, where 0.25 gave 0.58), near water 125.2 / sat 0.200 (the sat window 0.22-0.32
+    # is the one thing this costs, and the near-water hue is already reported unreachable from this material), and
+    # cam05's band still under its 117 ceiling.  Measured on the round-9b acceptance frame, not re-swept.
+    gloss_mix = t.value(0.45, "WATER_GLOSS_MIX")
     gl2 = t.new("ShaderNodeBsdfGlossy")
     t.plug(gl2.inputs["Color"], gloss_tint); t.plug(gl2.inputs["Roughness"], rough)
     t.plug(gl2.inputs["Normal"], normal)
