@@ -98,7 +98,14 @@ def crop(im, box, w=PANEL_W):
     return c.resize((w, max(1, round(c.height * w / c.width))), Image.LANCZOS)
 
 
-def full(im, w=PANEL_W):
+def full(im, aspect=None, w=PANEL_W):
+    """The raw canonical photos are not frame-aligned; centre-crop them to the render panel's aspect so the row
+    reads as three comparable strips instead of one tall photo beside two letterboxes."""
+    if aspect:
+        h = min(im.height, int(im.width / aspect))
+        ww = min(im.width, int(h * aspect))
+        x0, y0 = (im.width - ww) // 2, (im.height - h) // 2
+        im = im.crop((x0, y0, x0 + ww, y0 + h))
     return crop(im, (0, 0, im.width, im.height), w)
 
 
@@ -132,7 +139,8 @@ def main():
         cands = [rp] if rp.exists() else sorted(REFDIR.glob("raw/ref_%s_*" % refphoto.split("_")[1]))
         if cands:
             r = Image.open(cands[0]).convert("RGB")
-            cells.append((full(r), "REF " + cands[0].name[:28] + " (not frame-aligned)"))
+            asp = (box[2] - box[0]) / float(box[3] - box[1])
+            cells.append((full(r, asp), "REF " + cands[0].name[:28] + " (not frame-aligned)"))
         rows.append((title, cells))
 
     f_title, f_lab = font(15), font(12)

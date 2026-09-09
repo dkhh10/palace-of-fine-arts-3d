@@ -1054,3 +1054,98 @@ Answer in the order the work would happen, with what each step costs and what it
    measurement. Materials can do all of it inside one round. The two decisions that are not materials' are whether
    ARCH freezes the hero-facing geometry and whether the lead accepts a per-camera bias in a deliverable that ends
    in a flythrough.
+
+### Round-7 acceptance, measured on the rebuilt master (9706 objects, lighting r12 as merged, Cycles 1920x1080 / 64 spp)
+
+BEFORE = round-6 library on the same master (`r7base_scene_hero.png`); AFTER = the shipped round-7 library
+(`r7f_scene_hero.png`); REF = ref 169 warped into the render frame. Sheet: `renders/qa_comparisons/mat_r7_sheet.png`.
+
+| test (brief item) | BEFORE | **AFTER** | reference / window | verdict |
+|---|---|---|---|---|
+| **1** attic lum 900 222 1020 256 | 173.8 | **180.3** | 178.0-201.0 | **PASS** |
+| **1** attic sat | 0.530 | **0.474** | 0.53-0.62 (ref 0.582) | FAIL, see the AgX note |
+| **1** attic luminance std ratio | 0.75 | **0.74** | >= 0.60 (ref std 44.5) | **PASS** |
+| **1** attic streak anisotropy | 0.35 | **0.40** | >= 2.0 (ref 4.07) | FAIL; 2/3 of it is the cornice inside the box |
+| — attic column-mean spread | 8.98 | **10.05** | ref 20.02 | +12 % |
+| — under-cornice run-off, attic columns <= -15 lum | 8.3 % | **12.5 %** | photo 18.3 % | +50 % |
+| **1** entablature sat | 0.725 | **0.704** | <= 0.70 (ref 0.585) | FAIL by 0.004 |
+| **1** entablature hue | 39.3 | **37.8** | 30-40 (ref 33.8) | **PASS** |
+| — entablature std ratio | 0.76 | **0.80** | ref 64.5 | +5 % |
+| **2** shaded attic hue 1110 225 1150 260 | 35.7 | **30.9** | 29.5 +- 6 (ref 30.7) | **PASS** (1.4 off, was 6.2) |
+| **2** shaded attic sat | 0.409 | **0.373** | <= 0.55 (ref 0.457) | **PASS** |
+| **3** Cycles coffer / own sky (cam04) | 0.443 | **0.450** | 0.35-0.55 (ref 083 0.437) | **PASS**, gradient untouched |
+| **3** dark quarter / light quarter | 0.231 | **0.233** | >= 0.20 (ref 083 0.265) | **PASS** |
+| **4** near-water sat 1150 1000 1450 1050 | 0.432 | **0.324** | 0.22-0.32 (ref 0.246) | FAIL by 0.004 (was +0.11) |
+| **4** near-water hue | 218.0 | **213.6** | 185-200 (ref 189.8) | FAIL, -4.4 |
+| **4** ripples R-B 1100 960 1500 1060 | -78.7 | **-39.1** | ref -16.4 (brief -26 +- 10) | FAIL by 3.1, was 52.3 out |
+| **4** reflection column sat 900 760 1020 840 | 0.260 | **0.043** | >= 0.25 (ref 0.339) | FAIL -- but see below |
+| **4** reflection column hue / R-B | 224.0 / -39.1 | **88.2 / +2.4** | ref 33.7 / +71.1 | crossed to the photo's side |
+| — lagoon flank 100 900 400 960 | 173.0 | **147.6** | ref 155.2 | 0.95x (was 1.12x) |
+| **5** cam05 band 300 150 980 260, std | 43.87 | **43.13** | — | flat; see the cm/px note |
+| **5** cam05 band lum / colsd | 159.9 / 21.97 | **165.9 / 20.13** | — | |
+| **7** shore band 700 600 1200 740 lum | 91.1 | **91.7** | 115.6 +- 25 % | **PASS** (was already inside on the r12 rig) |
+| **7** shore band sat | 0.487 | **0.538** | ref 0.663, must not exceed it | **PASS** |
+| — columns (mask) lum / hue / sat | 108.7 / 23.6 / 0.591 | **108.6 / 24.0 / 0.572** | 95.4 / 24.5 / 0.589 | 1.14x, hue and sat on the photo |
+
+**Item 5, cam05 at 115 m: no distance term was added, and the arithmetic says none is needed.** cam05 is a 35 mm
+lens at 1280 px on a subject 115 m away = **9.2 cm/px**; the hero is 20 mm at 1920 px on the same subject at 100 m =
+**9.5 cm/px**. The two frames sample the stone at the same scale, so "the macro maps vanish at cam05" is not a
+distance-LOD problem -- cam05 shows the same stone the hero shows. The amplitudes used are the shipped ones
+(`Macro` 0.45, `Macro Streak` 2.40 on `MAT_concrete_ochre`), and the band's measured luminance std moved 43.87 ->
+43.13 with the mean up 6 lum, i.e. the round bought level, not variance, at that camera.
+
+**Item 6, ENV's paving:** `MAT_paving_stone` and `MAT_paving_stone_worn` are in the library with `use_fake_user`
+(41 materials, 0 placeholders on the rebuilt master). Pale grey-buff slabs (0.560, 0.535, 0.375) and a darker worn
+variant, 1.20 m / 0.95 m slab grids with open joints (`Grid Joints` 0.90 / 1.00), heavy damp darkening at the water
+(`Damp Band` 1.30 / 1.45) and the repair-patch field at 0.20 / 0.38. They are NOT yet visible on cam03: the walk is
+still ENV's gravel/soil fallback and the frame is crushed to lum 16.9 by QA-05-1 anyway. **Hand-off to environment:
+assign them and re-measure QA-05-11's ground std on a frame where the shade is not crushed.**
+
+**Item 8** is answered by the sweep above: the murk's chroma was not the problem, its presence was, and the fix is
+the Fresnel weighting rather than a chroma cut. **Items 9, 10, 11** are confirmed, not re-tuned: 9 is the AgX
+finding above; 10 is measured at coffer/sky 0.443 -> 0.450 inside 0.35-0.55, so the gradient was left alone as
+instructed; 11 (cam03's re-based shade box) was not tuned for.
+
+### The choice this round had to make, and why it went the way it did
+
+The sunlit attic's saturation and the shaded attic's hue are the **same albedo parameter with opposite signs**.
+Measured on three libraries that differ only in the concrete's blue channel (all other changes held):
+
+| albedo blue (sRGB) | sunlit attic lum / sat | shaded attic hue / sat | entablature sat |
+|---|---|---|---|
+| 0.013 (r7c) | 178.4 / **0.547** | **38.3** / 0.530 | 0.777 |
+| 0.041 (r7e) | 178.7 / **0.537** | **37.4** / 0.523 | 0.771 |
+| 0.105 (r7d, no spec cut) | 182.1 / 0.453 | **28.8** / 0.326 | 0.678 |
+| **0.105 + spec 0.09 (r7f, shipped)** | 180.3 / **0.474** | **30.9** / 0.373 | 0.704 |
+
+Ref 169's B/R ratio is 0.418 in the sun and 0.543 in the shade -- a 1.30 shade/sun ratio. Ours is 1.04 at
+B = 0.013 and 1.23 at B = 0.105: no albedo value reproduces the photograph's ratio, because the render's shade has
+less blue LIGHT relative to its sun than the photograph's does. Shipping the low-blue version would have bought
+0.07 of sunlit saturation by pushing the shaded attic to hue 37-38, i.e. **regressing lighting r12's just-closed
+QA-05-1 window (29.5 +- 6)**. Round 7 does not trade another owner's closed blocker for its own number. The
+remaining 0.056 of sunlit saturation is handed to the lead / lighting with the measurement that says it is not
+albedo's: at R = 217 on the AgX High Contrast shoulder a 3.6 % albedo chroma change is worth 0.002 of display
+saturation, and the value axis trades 0.0046 of saturation per lum in the wrong direction.
+
+### Files
+
+`assets/materials.blend` (41 materials, +`MAT_paving_stone`, +`MAT_paving_stone_worn`). New scripts:
+`mat_r7_measure.py` (QA's boxes + the anisotropy / run statistics + the reference row), `mat_r7_sweep.py` (N water
+settings on one master, border-cropped), `mat_r7_probe.py` (which material is under a QA box), `mat_r7_sheet.py`.
+`mat_scene_check.py` gained cam03 / cam05 jobs and `--scale`. Renders kept: `r7base_scene_*` (before) and
+`r7f_scene_*` (after) for hero / ceiling / cam03 / cam05; sheet `renders/qa_comparisons/mat_r7_sheet.png`.
+
+### Open, and whose
+
+1. **Lead / lighting** -- the last 0.056 of sunlit-stone saturation is the view transform or the sun's chroma.
+   One-line test: `AgX - Punchy` instead of `AgX - High Contrast`, or a warmer sun, measured on the attic box.
+2. **Architecture / QA** -- QA's attic box contains the render's cornice (its bottom five rows fall from 154 to 75
+   where the photo's stay at 188) because the attic panel's lower frame sits ~0.65 m higher than in ref 169 at the
+   hero framing. Either the proportion moves or the anisotropy test is re-boxed on a plain field (900 224 1020 248).
+3. **QA** -- the reflection-column test (`sat >= 0.25`) is passed by blue water and failed by warm water: the only
+   sweep case that reached 0.317 did it at hue 225.7. It needs a hue or R-B term.
+4. **Lighting** -- near-water hue 213.6 against 185-200 after the murk is down to a Fresnel-weighted 0.15: at murk
+   gain 0 the crop reads 209.6, i.e. **the floor set by the reflected sky is ~210** and materials cannot reach 200.
+5. **Environment** -- assign `MAT_paving_stone` / `_worn` on the colonnade walk (QA-05-11).
+6. **Architecture** -- QA-05-6 unchanged: the entablature's std ratio is 0.80 of the photo's only because the box
+   got brighter; its row-profile still has no hard cornice shadow band.
