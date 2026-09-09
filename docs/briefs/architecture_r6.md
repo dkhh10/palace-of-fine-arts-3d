@@ -7,7 +7,7 @@ panel frame bottom +2.31, cornice corona +2.01, frieze top +1.34, frieze bottom 
 capital 0.65, frieze 1.00. The outer silhouette (apex, corner top, W_a) fits ref 169/085/063 within 1 % and must keep doing so.
 1. Re-measure the course heights on ref 169 (and ref 085 / 062 as cross-checks) with QA's alignment: attic storey (attic crown to cornice
    corona), attic panel frame, entablature position, capital height / column shaft split. Report each as metres with the two-photo agreement.
-2. Move the courses inside the fixed envelope so every row in QA's table lands within +-0.15 m (2 px): the attic storey grows toward the
+2. Move the courses inside the fixed envelope so every row in QA's table lands within QA's test (+-8 rows = 0.6 m, attic storey within 10 % of the photo's 100 rows; qa_stack_offset.py --x0 880 --x1 1040), aiming for +-0.15 m: the attic storey grows toward the
    photo's (0.70 -> ~1.0), the entablature corona drops ~2 m, the capital top ~1.1 m, columns shorten accordingly (the round-1 dome fit
    stays: dome, drum ring and attic crown do not move; state which arch_params change and by how much). Ornament sockets follow the
    courses (capitals, frieze_run at the new frieze, attic panels / figures / corner scrolls): arch_socket_check must pass and you report
