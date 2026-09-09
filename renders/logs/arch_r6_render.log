@@ -1,0 +1,10 @@
+00:00.318  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/master.blend"
+00:31.950  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/renders/previews/architecture/arch_r6_cam01_stack.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 0.0 W/m2, hidden in render: True
+[arch_r6_render] cycles 64 spp, 1920x1080, border cols (660, 1270) rows (100, 380) -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/renders/previews/architecture/arch_r6_cam01_stack.png
+[arch_r6_render] done in 30.9s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 33748 exited rc=0 after 33 s (max 1200)
