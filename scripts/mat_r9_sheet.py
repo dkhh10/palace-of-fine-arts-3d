@@ -23,8 +23,15 @@ from mat_r7_measure import load, stats
 P = ROOT / "renders" / "previews" / "materials"
 OUT = Path(sys.argv[sys.argv.index("--out") + 1]) if "--out" in sys.argv else \
     ROOT / "renders" / "qa_comparisons" / "mat_r9_sheet.png"
-BEFORE, AFTER = P / "r9_cycles_01_lagoon_hero.png", P / "r9b_cycles_01_lagoon_hero.png"
-EEVEE = P / "r9b_eevee_01_lagoon_hero.png"
+# ROUND 9b: the frame pair and the row set are overridable, so the same sheet builder serves a fix round whose
+# BEFORE is the previous round's shipped frame.  `--rows` selects by index (1 attic, 2 entablature, 3 reflection,
+# 4 near water, 5 seams, 6 engines); rows whose inputs belong to a superseded round are simply left out.
+_arg = lambda k, d: sys.argv[sys.argv.index(k) + 1] if k in sys.argv else d
+BEFORE = P / _arg("--before", "r9_cycles_01_lagoon_hero.png")
+AFTER = P / _arg("--after", "r9b_cycles_01_lagoon_hero.png")
+EEVEE = P / _arg("--eevee", "r9b_eevee_01_lagoon_hero.png")
+AFTER_LABEL = _arg("--after-label", "AFTER (tint + projection)")
+ROWS = [int(x) for x in _arg("--rows", "1,2,3,4,5,6").split(",")]
 PANEL_W = 470
 try:
     F = ImageFont.truetype("/System/Library/Fonts/Supplemental/Andale Mono.ttf", 13)
@@ -58,31 +65,35 @@ def band(images, titles, notes, width=PANEL_W):
 
 
 a0, a1 = load(BEFORE), load(AFTER)
-ae = load(EEVEE)
+ae = load(EEVEE) if 6 in ROWS else None
 pho, _ = MP.warp_ref169()
 
 rows = []
-for name, bx, zoom in (("attic 900 222 1020 256", (900, 222, 1020, 256), 4),
-                       ("entablature 900 262 1020 296", (900, 262, 1020, 296), 4)):
+for idx, (name, bx, zoom) in ((1, ("attic 900 222 1020 256", (900, 222, 1020, 256), 4)),
+                              (2, ("entablature 900 262 1020 296", (900, 262, 1020, 296), 4))):
+    if idx not in ROWS:
+        continue
     ims = [crop(a0, bx, zoom), crop(a1, bx, zoom), crop(pho, bx, zoom)]
-    rows.append(band(ims, [f"BEFORE  {name}", "AFTER (tint + projection)", "ref 169, registered"],
+    rows.append(band(ims, [f"BEFORE  {name}", AFTER_LABEL, "ref 169, registered"],
                      [label(a0[bx[1]:bx[3], bx[0]:bx[2]]), label(a1[bx[1]:bx[3], bx[0]:bx[2]]),
                       label(pho[bx[1]:bx[3], bx[0]:bx[2]])]))
 
 wb = (900, 760, 1020, 840)
 nb = (1150, 1000, 1450, 1050)
-rows.append(band([crop(a0, wb, 3), crop(a1, wb, 3), crop(pho, wb, 3)],
-                 ["BEFORE  reflection 900 760 1020 840", "AFTER  WATER_GLOSS_MIX 0.25", "ref 169"],
+if 3 in ROWS:
+  rows.append(band([crop(a0, wb, 3), crop(a1, wb, 3), crop(pho, wb, 3)],
+                 ["BEFORE  reflection 900 760 1020 840", AFTER_LABEL, "ref 169"],
                  [label(a0[wb[1]:wb[3], wb[0]:wb[2]]), label(a1[wb[1]:wb[3], wb[0]:wb[2]]),
                   label(pho[wb[1]:wb[3], wb[0]:wb[2]])]))
-rows.append(band([crop(a0, nb, 2), crop(a1, nb, 2), crop(pho, nb, 2)],
-                 ["BEFORE  near water 1150 1000 1450 1050", "AFTER", "ref 169"],
+if 4 in ROWS:
+  rows.append(band([crop(a0, nb, 2), crop(a1, nb, 2), crop(pho, nb, 2)],
+                 ["BEFORE  near water 1150 1000 1450 1050", AFTER_LABEL, "ref 169"],
                  [label(a0[nb[1]:nb[3], nb[0]:nb[2]]), label(a1[nb[1]:nb[3], nb[0]:nb[2]]),
                   label(pho[nb[1]:nb[3], nb[0]:nb[2]])]))
 
 # --- seams: the shipped frame and the projection's own difference, x8 around mid grey
 seam_ims, seam_t, seam_n = [], [], []
-for cam, bx in (("02", (300, 40, 760, 300)), ("05", (400, 60, 860, 320))):
+for cam, bx in ([] if 5 not in ROWS else [("02", (300, 40, 760, 300)), ("05", (400, 60, 860, 320))]):
     off = np.asarray(Image.open(P / f"r9_seam_{cam}_off.png").convert("RGB")).astype(np.float64)
     on = np.asarray(Image.open(P / f"r9_seam_{cam}_on.png").convert("RGB")).astype(np.float64)
     d = (on - off) * 8.0 + 128.0
@@ -91,10 +102,12 @@ for cam, bx in (("02", (300, 40, 760, 300)), ("05", (400, 60, 860, 320))):
     seam_t += [f"cam{cam} shipped (Eevee)", f"cam{cam} projection difference x8"]
     seam_n += [f"crop {bx}", f"peak {np.abs(g).max():.1f} lum, blurred max step "
                               f"{max(np.abs(np.diff(g, axis=0)).max(), np.abs(np.diff(g, axis=1)).max()):.1f} raw"]
-rows.append(band(seam_ims, seam_t, seam_n, width=PANEL_W))
+if seam_ims:
+    rows.append(band(seam_ims, seam_t, seam_n, width=PANEL_W))
 
 cb = (760, 180, 1180, 420)
-rows.append(band([crop(a1, cb), crop(ae, cb), crop(pho, cb)],
+if 6 in ROWS:
+  rows.append(band([crop(a1, cb), crop(ae, cb), crop(pho, cb)],
                  ["AFTER Cycles 64 spp", "AFTER Eevee 32 TAA (carry 6)", "ref 169"],
                  [label(a1[cb[1]:cb[3], cb[0]:cb[2]]), label(ae[cb[1]:cb[3], cb[0]:cb[2]]),
                   label(pho[cb[1]:cb[3], cb[0]:cb[2]])]))
