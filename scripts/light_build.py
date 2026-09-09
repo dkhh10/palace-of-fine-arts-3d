@@ -95,7 +95,13 @@ SKY_DIFFUSE_SATURATION = 1.00      # saturation of the sky for DIFFUSE rays, i.e
                                    # by 1 sRGB unit out of 36 needed (142,112,36 -> 135,107,34): >97 % of the light
                                    # on the shaded stone is warm interreflection off the sunlit stone and ground, not
                                    # sky, so no sky colour can reach it. Handed to materials (see docs/lighting_notes 19).
-SKY_DIFFUSE_BOOST = 1.00           # ROUND 11 (QA-04-2), new socket, SHIPPED AT THE PHYSICAL 1.00. Scales the sky on
+SKY_DIFFUSE_BOOST = 2.50           # ROUND 12 (QA-05-1): 1.00 -> 2.50. Round 11's note below is kept because its
+                                   # measurements stand; what changed is that the lead WITHDREW the sunlit-stone
+                                   # budget those measurements were rejected against, and that on the merged master
+                                   # the sunlit attic reads 167.6 (QA's own window is 178-201), so the boost now moves
+                                   # two numbers the same way instead of trading them: at 2.5 the sunlit attic is 180
+                                   # and the shaded attic 115. Round 11's text follows.
+                                   # ROUND 11 (QA-04-2), new socket, SHIPPED AT THE PHYSICAL 1.00. Scales the sky on
                                    # every ray that is neither camera nor glossy, i.e. the light that lands on shaded
                                    # stone, without touching the visible sky or the lagoon's reflection of it. It is
                                    # the socket the round-11 brief asked for first and it is NOT the fix: the full
@@ -103,12 +109,17 @@ SKY_DIFFUSE_BOOST = 1.00           # ROUND 11 (QA-04-2), new socket, SHIPPED AT 
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
-SKY_DIFFUSE_TINT = (1.0, 1.0, 1.0)  # ROUND 12 (QA-05-1), new socket: a white balance on the sky that lights the
+SKY_DIFFUSE_TINT = (1.0, 0.65, 11.5)  # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
                                    # shade only (camera and glossy rays never see it). The shaded attic measures
                                    # (122, 94, 22) against ref 169's (141, 111, 81) -- short 59 units of BLUE and
                                    # only ~18 of R and G -- so the shade needs blue-biased light, not more of the
-                                   # same warm light. Swept in round 12; see docs/lighting_notes.md section 21.
-SKY_DIFFUSE_TINT_ANTISUN = 0.0     # ROUND 12 (QA-05-1), new socket. 0 = SKY_DIFFUSE_TINT is applied to the whole
+                                   # same warm light. The three channel gains are the solution of the three power laws
+                                   # fitted in docs/lighting_notes.md 21.4 (shade_c ~ base_c * g_c^k, k = 0.17 / 0.25 /
+                                   # 0.60): the shade wants g = (2.2, 1.9, 9.5), i.e. green pulled BELOW the boost and
+                                   # blue far above it. Under the anti-sun weighting below the effective gain on a
+                                   # shaded wall is about half the nominal, so b is 11.5 rather than 3.8. Swept in
+                                   # round 12; see docs/lighting_notes.md section 21.
+SKY_DIFFUSE_TINT_ANTISUN = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 1.0 (fully anti-sun weighted). 0 = SKY_DIFFUSE_TINT is applied to the whole
                                    # dome; 1 = it is applied in proportion to how far the ray points AWAY from the sun
                                    # (weight 0.5 + 0.5 * Incoming.sun_direction). A shaded face samples the anti-sun
                                    # half of the dome and a sunlit face the sun half, so this is the only sky lever
@@ -118,7 +129,15 @@ SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
                                    # why it exists and what it measured.
-SUN_BLUE_MULT = 0.75               # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
+SUN_BLUE_MULT = 0.08               # ROUND 12 (QA-05-1): 0.75 -> 0.08. It is the counterweight to the diffuse tint
+                                   # above. That tint puts blue on every diffusely lit surface, the sun-facing ones
+                                   # included (a sun-facing surface takes ~38 % of its blue from the sky, round 09's
+                                   # calibration), which costs the sunlit attic its R-B. Taking the SUN's own blue out
+                                   # gives it back on exactly the faces the sky over-blued and nowhere else, because the
+                                   # sun only lights the faces that face it: measured +14.4 R-B and +0.03 saturation on
+                                   # the sunlit attic between 0.75 and 0.08, with the shaded attic moving 0.6 deg of hue.
+                                   # Round 09's note follows.
+                                   # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
                                    # own sun disc has been integrated (so the calibration itself stays physical and
                                    # reproducible). Round 09 lever for QA-02-14 / the sunlit-stone chroma: the lamp
                                    # colour is (1.000, 0.607, 0.258) and on a sun-facing surface the sky still
@@ -200,7 +219,13 @@ COMP = dict(haze_strength=0.50,          # now the CAP: the maximum airlight fra
 # up into the vault. FILL models exactly that and nothing else - an up-facing area light under the vault, so it lights
 # the soffits and the coffers and adds almost nothing to what cam01 sees through the arch. It is an art bias, sized by
 # measurement; ENERGY is the one number to change if QA wants it dialled back.
-FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=3648.0,
+FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, energy=10214.0,
+            # ROUND 12 (QA-05-3): 3648 -> 10214 (x2.8). Round 11's 3648 was measured on lighting's own branch and
+            # read coffer / own sky 0.387; on the LEAD'S MERGED master, with materials r6's in-coffer gradient in
+            # place, the same rig reads 0.211. The gradient darkened the coffer floors, so the knob that lights the
+            # floors best had to come up to match. Measured on the rebuilt master (docs/lighting_notes.md 21.8):
+            # x1 -> coffer 0.230, soffit mean 0.261; x3.2 -> coffer 0.482, quarter 0.249, soffit mean 0.358. The
+            # slope is 0.115 of coffer per unit, so x2.8 puts the coffer field on ref 083's own 0.437.
             # ROUND 11 (QA-04-7): 1140 -> 3648 (x3.2). Round 10 took half a stop out of the whole frame
             # and never re-tuned the interior, so the round-09 rig fell from coffer/sky 0.384 to 0.261,
             # out of QA's 0.35-0.55 window, while the soffit mean stayed on ref 083's 0.405. The sweep
