@@ -24,3 +24,7 @@ Deliverables: assets/materials.blend, mat_lib/mat_build changes, composite rende
 entablature crops before / after / ref 169 with the numbers; near-water crop), Round 7 section in docs/materials_notes.md, commits after
 every successful script, final report < 30 lines. Answer for the lead: if the hero stays flat, what would a camera-projected albedo
 from ref 169 / ref 085 onto the hero-facing attic / entablature / drum need from you (UV layer, projection script, blend mask)?
+Added 2026-09-09 from ENV r7's report (docs/status.md "ENV r7 reported"): 6. `MAT_paving_stone` and `MAT_paving_stone_worn` are
+missing from the library; ENV's colonnade walk (16.7 % of cam03's lower frame) falls back to gravel/soil. Ship both (ref 128 /
+ref 169 paving: pale grey-buff slabs, joint lines, damp darkening near the water). 7. Shore band (QA-05-10): needs +43.9 lum to
+reach ref 169's 115.6 WITHOUT raising saturation (already 0.775 vs 0.663): shore foliage albedo/translucency, not planting.
