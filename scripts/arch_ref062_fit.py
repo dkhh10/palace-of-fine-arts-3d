@@ -40,7 +40,7 @@ NEAR_FACE_AZ = 37.0        # the octagon face the camera looks at (faces at FACE
 # 20 px ruler (scratchpad ref062_center / ref062_arch); sigma is the width of the moulding the line sits on.
 LANDMARKS = [
     ("dome apex (cap top)",      P.DOME_APEX_Z + 0.6, 0.0,                  35.0,  4.0),
-    ("attic top (drum springs)", P.ATTIC_Z1,          P.WALL_APOTHEM + 0.74, 99.0,  6.0),
+    ("attic top (drum springs)", P.ATTIC_Z1,          P.WALL_APOTHEM + P.ATTIC_CORNICE_D, 99.0,  6.0),
     ("attic base (modillions)",  P.ATTIC_Z0,          P.WALL_APOTHEM,       330.0, 12.0),
     ("outer arch springing",     P.ARCH_SPRING_Z,     P.WALL_APOTHEM,       700.0, 15.0),
 ]
@@ -128,7 +128,7 @@ def predictions(D, lens, pitch, h):
     x_lo, x_hi = float(pod[:, 0].min()), float(pod[:, 0].max())
     # dome clearance over the NEAR face's attic cornice and over the whole attic ring (QA's stricter test)
     n = np.array(P.az_dir(NEAR_FACE_AZ))
-    near_att = cam.project(np.array([[n[0] * (P.WALL_APOTHEM + 0.74), n[1] * (P.WALL_APOTHEM + 0.74), P.ATTIC_Z1]]))[0, 1]
+    near_att = cam.project(np.array([[n[0] * (P.WALL_APOTHEM + P.ATTIC_CORNICE_D), n[1] * (P.WALL_APOTHEM + P.ATTIC_CORNICE_D), P.ATTIC_Z1]]))[0, 1]
     apex = cam.project(np.array([[0.0, 0.0, P.DOME_APEX_Z + 0.6]]))[0, 1]
     ring = DC.top_profile(cam, DC.attic_top_ring(), cam.rx)
     ring_top = float(np.nanmin(ring[np.isfinite(ring)]))
@@ -149,7 +149,7 @@ def clearance_threshold(h=1.55):
 
     and, inverted, it says what the stack would have to be for a CLOSE station to show the same thing."""
     apex = P.DOME_APEX_Z + 0.6
-    r_att = P.WALL_APOTHEM + 0.74
+    r_att = P.WALL_APOTHEM + P.ATTIC_CORNICE_D
     d_min = r_att * (apex - h) / (apex - P.ATTIC_Z1)
     out = dict(d_min=d_min)
     for D in (45.0, 50.0):
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     ct = clearance_threshold(a.eye)
     print("\n# the lens- and tilt-independent constraint (why no close station can reproduce ref 062)")
     print(f"  ref 062 shows the dome cap ABOVE the near face's attic cornice. With the current stack "
-          f"(apex {P.DOME_APEX_Z + 0.6:.1f}, attic {P.ATTIC_Z1:.1f} at r {P.WALL_APOTHEM + 0.74:.1f}) that needs")
+          f"(apex {P.DOME_APEX_Z + 0.6:.1f}, attic {P.ATTIC_Z1:.1f} at r {P.WALL_APOTHEM + P.ATTIC_CORNICE_D:.1f}) that needs")
     print(f"      D > {ct['d_min']:.1f} m  -- independent of lens, tilt, framing and azimuth.")
     for D in (45.0, 50.0):
         print(f"  to show it from D = {D:.0f} m instead you would need the apex at "

@@ -248,7 +248,8 @@ def build_rotunda():
             for j, so in enumerate(base_src):
                 L.instance(f"ARCH_rotunda_colbase_{i:02d}_{j}", so, loc, math.atan2(u[1], u[0]) if j == 0 else 0.0, C)
         # capital socket at the shaft top, +Y outward (face normal); astragal bead just below it
-        SOCK.add("capital_rotunda", (ax[0], ax[1], P.COL_SHAFT_Z1), n, P.COL_D_TOP)
+        SOCK.add("capital_rotunda", (ax[0], ax[1], P.COL_SHAFT_Z1), n, P.COL_D_TOP,
+                 extra={"capital_height": P.CAPITAL_H})
         astragal(f"ARCH_rotunda_astragal_{i:02d}", ax, P.COL_SHAFT_Z1, r_t, C, M_ROSE)
         # pedestal
         L.box(f"ARCH_rotunda_pedestal_{i:02d}", ax, (P.PEDESTAL_SIZE, P.PEDESTAL_SIZE), P.PODIUM_TOP_Z - SINK,
@@ -345,7 +346,7 @@ def build_rotunda():
             SOCK.add("frieze_run", (a[0] + out[0] * fd, a[1] + out[1] * fd, P.ENTABLATURE_Z0 + P.ARCHITRAVE_H), out,
                      math.dist(a, b), size=0.4,
                      extra={"run_length": math.dist(a, b), "run_dir": (d[0], d[1], 0.0),
-                            "host": "rotunda", "subtype": "rinceau"})
+                            "band_height": P.FRIEZE_H, "host": "rotunda", "subtype": "rinceau"})
 
     # ---- faces: spandrel + attic plate with the arch notch and the sunk relief panel; vault; inner spandrel
     n_arc = 28
@@ -389,7 +390,8 @@ def build_rotunda():
         L.sweep_open(f"ARCH_rotunda_archivolt_{k:02d}", path, nrm, bnr, archivolt_profile(), C, mat=M_OCHRE, part_type="wall",
                      origin=(Cw[0], Cw[1], P.ARCH_SPRING_Z), bevel=False)
         # keystone at the extrados crown + two impost masks at the springing
-        SOCK.add("keystone", (Cw[0] + n[0] * 0.30, Cw[1] + n[1] * 0.30, P.ARCH_CROWN_Z + 0.55), n, 0.8)
+        SOCK.add("keystone", (Cw[0] + n[0] * 0.30, Cw[1] + n[1] * 0.30, P.ARCH_CROWN_Z + 0.55), n, 0.8,
+                 extra={"subtype": "crown"})
         for sgn in (-1, 1):
             SOCK.add("keystone", (Cw[0] + X.x * sgn * (half + 0.55) + n[0] * 0.30, Cw[1] + X.y * sgn * (half + 0.55) + n[1] * 0.30,
                                   P.ARCH_SPRING_Z - 0.25), n, 0.5, extra={"subtype": "impost_mask"}, size=0.4)
@@ -528,7 +530,8 @@ def build_rotunda():
         else:
             for j, so in enumerate(srcs["base"]):
                 L.instance(f"ARCH_rotunda_inner_colbase_{k:02d}_{j}", so, (ax[0], ax[1], -SINK), rz if j == 0 else 0.0, C)
-        SOCK.add("capital_inner", (ax[0], ax[1], P.INNER_COL_SHAFT_Z1), fr.v, ri * 2 * 0.86)
+        SOCK.add("capital_inner", (ax[0], ax[1], P.INNER_COL_SHAFT_Z1), fr.v, ri * 2 * 0.86,
+                 extra={"capital_height": P.INNER_CAPITAL_H})
         astragal(f"ARCH_rotunda_inner_astragal_{k:02d}", ax, P.INNER_COL_SHAFT_Z1, ri * 0.86, C, M_TAN)
         L.placeholder_capital(f"PH_capital_inner_{k:02d}", ri * 0.86, P.INNER_CAPITAL_H, C_PH, mat=M_TAN,
                               origin=(ax[0], ax[1], P.INNER_COL_SHAFT_Z1))
@@ -1158,7 +1161,8 @@ def build_wing(name, coll):
             for j, so in enumerate(base_src):
                 L.instance(f"ARCH_colonnade_{name}_colbase_{idx:03d}_{j}", so, (xy[0], xy[1], g - SINK), 0.0, coll)
         ztop = g + P.COLONNADE_BASE_H + h
-        SOCK.add("capital_colonnade", (xy[0], xy[1], ztop), inward, P.COLONNADE_D_TOP, extra={"tall": bool(tall), "wing": name})
+        SOCK.add("capital_colonnade", (xy[0], xy[1], ztop), inward, P.COLONNADE_D_TOP,
+                 extra={"tall": bool(tall), "wing": name, "capital_height": P.COLONNADE_CAPITAL_H})
         astragal(f"ARCH_colonnade_{name}_astragal_{idx:03d}", xy, ztop, r_t, coll, M_COLON)
         L.placeholder_capital(f"PH_capital_colonnade_{name}_{idx:03d}", r_t, P.COLONNADE_CAPITAL_H, C_PH, mat=M_COLON,
                               origin=(xy[0], xy[1], ztop))
@@ -1200,7 +1204,8 @@ def build_wing(name, coll):
                           pitch=1.125, depth=0.26, closed=False, mat=M_COLON, outward_sign=sgn if W.sgn > 0 else -sgn,
                           part_type="colonnade_entablature")
         SOCK.add("frieze_run", (path2[0][0], path2[0][1], z_ent + 0.02), (rad[0], rad[1]), s_b - s_a,
-                 extra={"run_length": s_b - s_a, "arc_center": (W.C[0], W.C[1], 0.0), "arc_radius": r, "subtype": "greek_fret"}, size=0.5)
+                 extra={"run_length": s_b - s_a, "arc_center": (W.C[0], W.C[1], 0.0), "arc_radius": r,
+                        "band_height": 0.50, "host": "colonnade", "subtype": "greek_fret"}, size=0.5)
     # pergola cross beams, one per bay, spanning the two rows
     seen = set()
     for (s, kind) in pos:
@@ -1333,7 +1338,6 @@ stats["tris_placeholders"] = L.tri_count([o for o in C_PH.objects])
 stats["objects"] = len(ARCH.all_objects)
 stats["build_seconds"] = round(time.time() - T0, 1)
 print("[arch] stats:", json.dumps(stats, indent=1))
-(common.DOCS / "arch_stats.json").write_text(json.dumps(stats, indent=1))
 
 # MANDATORY post-step (docs/reviews/arch_r5_review.md finding 1): the camera-space UV layer for the photo-projection
 # pass. It used to be a separate script nobody called, so any rebuild silently dropped `UVProj` / `UVProj_valid` and
@@ -1345,6 +1349,12 @@ exec(compile(_UVPROJ.read_text(), str(_UVPROJ), "exec"),
 
 if SAVE:
     common.save_blend(common.ASSETS / "architecture.blend")
+
+# r6 review findings 6 and 7: arch_stats.json is written AFTER the save, so (6) uvproj's tri-count guard above
+# compares the live counts against the PREVIOUS build's file instead of the one this build just wrote (it was
+# always "SAME"), and (7) a raise inside the uvproj post-step leaves the stats describing the last SAVED build
+# rather than a build that never reached the disk.
+(common.DOCS / "arch_stats.json").write_text(json.dumps(stats, indent=1))
 
 # ============================================================================= preview rig (not saved)
 if PREVIEW:

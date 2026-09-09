@@ -235,9 +235,11 @@ for lod in (0, 1, 2):
            and not o.name.startswith("PH_")]
     stats[f"tris_LOD{lod}"] = L.tri_count(sel)
 stats["objects"] = len(ARCH.all_objects)
+# arch_build writes arch_stats.json AFTER its save (r6 review finding 6), so as the build's post-step this reads
+# the PREVIOUS build's counts and the comparison is a real regression guard, not a read-back of this run's own file.
 old = json.loads((common.DOCS / "arch_stats.json").read_text())
 for k, v in stats.items():
-    print(f"[uvproj] {k}: {v} (arch_stats.json {old.get(k)}) {'SAME' if old.get(k) == v else 'CHANGED'}")
+    print(f"[uvproj] {k}: {v} (previous build {old.get(k)}) {'SAME' if old.get(k) == v else 'CHANGED'}")
     fails += old.get(k) != v
 
 if SAVE and not fails:

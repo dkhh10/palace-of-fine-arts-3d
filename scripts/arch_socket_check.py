@@ -23,6 +23,40 @@ def world_matrix(o):
         return o.matrix_world
     return o.matrix_basis
 
+# ----------------------------------------------------------------------------- documented-property contract
+# docs/sockets.md: every socket carries orn_type / size_hint / variant_seed; these are the EXTRA properties each
+# type must carry.  `--type props` walks every SOCKET_* in the file and reports any type missing any of them.
+BASE_PROPS = ("orn_type", "size_hint", "variant_seed")
+REQUIRED_PROPS = {
+    "capital_rotunda":   ("capital_height",),
+    "capital_inner":     ("capital_height",),
+    "capital_colonnade": ("capital_height", "tall", "wing"),
+    "frieze_run":        ("run_length", "band_height", "host", "subtype"),
+    "attic_panel":       ("panel_height", "design"),
+    "maiden":            ("rim_height", "box_corner_y"),
+    "keystone":          ("subtype",),
+    "finial":            ("subtype",),
+    "drum_band":         ("run_length", "radius"),
+}
+if want == "props":
+    types = {}
+    for o in bpy.data.objects:
+        if o.name.startswith("SOCKET_"):
+            types.setdefault(o.get("orn_type", o.name[7:-4]), []).append(o)
+    bad = 0
+    print(f"{'type':20s} {'n':>4s}  required properties (BASE + type)                          missing")
+    for t, v in sorted(types.items()):
+        need = BASE_PROPS + REQUIRED_PROPS.get(t, ())
+        miss = {k: sum(1 for o in v if o.get(k) is None) for k in need}
+        miss = {k: c for k, c in miss.items() if c}
+        bad += bool(miss)
+        sample = {k: v[0].get(k) for k in REQUIRED_PROPS.get(t, ())}
+        print(f"  {t:18s} {len(v):4d}  {'+'.join(need):56s} "
+              f"{'none  ' + str(sample) if not miss else 'MISSING ' + str(miss)}")
+    print(f"[socket_check] {len(types)} types, {sum(len(v) for v in types.values())} sockets; "
+          f"{'ALL OK' if not bad else str(bad) + ' TYPES INCOMPLETE'}")
+    raise SystemExit(1 if bad else 0)
+
 # ----------------------------------------------------------------------------- frieze_run frame contract
 # (orn r5 review findings 1 and 2, added in architecture round 6.) A frieze_run socket is a RUN, not a point:
 #   origin = the run START,  local +X = run_dir,  local +Y = the outward face normal (away from the host block),
@@ -78,7 +112,7 @@ if want == "frieze_run":
     print("[socket_check] rotunda contract: origin at the run START, +X = run_dir (dot > 0.99), +Y away from the "
           "ressaut block centre (> 0), +Z world up, host + subtype present")
     print(f"[socket_check] {'ALL OK' if not bad else str(bad) + ' WRONG'}")
-    raise SystemExit(0)
+    raise SystemExit(1 if bad else 0)
 
 bad, perps = 0, []
 for o in socks:
@@ -112,3 +146,4 @@ if perps:
     if spread > 1e-3:
         bad += 1
 print(f"[socket_check] {'ALL OK' if not bad else str(bad) + ' WRONG'}")
+raise SystemExit(1 if bad else 0)
