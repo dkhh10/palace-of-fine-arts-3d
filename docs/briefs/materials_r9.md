@@ -24,7 +24,8 @@ C. QA-07-1, materials' half: whatever lighting r15 reports as the frontier on th
 D. QA-07-9 minor: coffer rim sat 0.38-0.50 with the field held; one Cycles cam04 (carry 7).
 F. Added after LIGHT r15 (docs/status.md "LIGHT r15 reported"): (i) the lagoon's residual is 9.4 deg of hue on the near-water box (107.7 / hue 209.4
    vs ref 105.4 / 190): ref 169's water is ~18 deg greener than the sky it mirrors, so the body colour of MAT_water_lagoon is the knob, not the
-   level; (ii) QA-07-7: the hero shaded attic sits at 136.4 (window 103.5-126.5) with the fill nearly off; lighting measured the shaded
+   level (caveat from docs/reviews/light_r15_review.md: lighting's sky-rotation test ran at the null hue, so the sky's hue authority on the
+   water is unmeasured; if the body colour cannot land hue 185-200 without breaking the reflection box, report it, do not force it); (ii) QA-07-7: the hero shaded attic sits at 136.4 (window 103.5-126.5) with the fill nearly off; lighting measured the shaded
    albedo ~12 % hot relative to the sunlit stone on the same wall (shaded went +17.5 % under a rig that moved sunlit +5 %). The projection's
    ratio map must not add to it: land the shaded attic 1110 225 1150 260 in 103.5-126.5 at hue 23.5-35.5 / sat <= 0.50 through the albedo.
 E. One Eevee hero crop (carry 6): the projected albedo and the water in Eevee, side by side with Cycles.
