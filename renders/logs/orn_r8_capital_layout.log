@@ -1,0 +1,53 @@
+============================================================================================================
+ORN r7 item 1 - capital_rotunda proportion re-lay   H = 3.00 m, R = 1.05 m
+============================================================================================================
+state                  row     base/H  len(m)  ext(m)   ext/H   top/H proj(m)   width   w/ext
+as laid out at H 2.6   lower    0.060   1.144   0.917   0.353   0.413   0.396   1.040    1.13
+as laid out at H 2.6   upper    0.440   0.962   0.740   0.284   0.724   0.604   0.942    1.27
+r6 (Z-stretch to 3.0)  lower    0.060   1.320   1.063   0.354   0.414   0.454   1.040    0.98
+r6 (Z-stretch to 3.0)  upper    0.440   1.110   0.863   0.288   0.728   0.654   0.942    1.09
+
+-- solved r7 lay-out against the ref_002 reading ----------------------------------------------------------
+r7 re-lay              lower    0.030   1.116   0.900   0.300   0.330   0.355   0.918    1.02  r_tip 1.426 = 1.358 R
+r7 re-lay              upper    0.300   1.131   0.900   0.300   0.600   0.589   0.972    1.08  r_tip 1.467 = 1.397 R
+
+reference (ref_002)    lower  base 0.030  ext/H 0.300  top/H 0.330   width/ext 1.02   r_tip 1.30-1.40 R
+                       upper  base 0.300  ext/H 0.300  top/H 0.600   width/ext 1.08   r_tip 1.30-1.40 R
+                       volutes+caulicoli in the top 0.35 H (0.650-1.000); abacus 0.100 H (0.900-1.000)
+-- orn_build.py as committed, every CAPITAL_STYLE variant -------------------------------------------------
+   ARCH_R6 read from the builder: {'capital_rotunda_H': 3.0, 'frieze_band_H': 0.81, 'attic_panel_H': 5.27}
+preset              v  row     base/H  len(m)  ext(m)   ext/H   top/H proj(m)  w/ext  r_tip/R
+capital_rotunda     1  lower    0.030   1.116   0.900   0.300   0.330   0.355   1.02    1.358
+capital_rotunda     1  upper    0.300   1.131   0.900   0.300   0.600   0.590   1.08    1.397
+capital_rotunda     1  abacus 0.900-1.000 H = 0.100 H   volute spiral 0.650-0.874 H   helix 0.690-0.800 H
+capital_rotunda     2  lower    0.030   1.116   0.885   0.295   0.325   0.390   1.10    1.392
+capital_rotunda     2  upper    0.300   1.074   0.873   0.291   0.591   0.538   1.11    1.348
+capital_rotunda     2  abacus 0.900-1.000 H = 0.100 H   volute spiral 0.633-0.891 H   helix 0.690-0.800 H
+capital_rotunda     3  lower    0.030   1.116   0.919   0.306   0.336   0.324   0.94    1.329
+capital_rotunda     3  upper    0.300   1.165   0.924   0.308   0.608   0.580   1.05    1.389
+capital_rotunda     3  abacus 0.900-1.000 H = 0.100 H   volute spiral 0.663-0.861 H   helix 0.679-0.811 H
+capital_inner       1  lower    0.060   0.792   0.634   0.352   0.412   0.276   1.25    1.310
+capital_inner       1  upper    0.440   0.666   0.508   0.282   0.722   0.437   1.41    1.395
+capital_inner       1  abacus 0.890-1.000 H = 0.110 H   volute spiral 0.690-0.920 H   helix 0.717-0.833 H
+   carried (not re-laid) capital_inner v1 volute top 0.920 H above the abacus seat 0.890 H
+capital_inner       2  lower    0.060   0.792   0.624   0.347   0.407   0.297   1.35    1.337
+capital_inner       2  upper    0.440   0.633   0.488   0.271   0.711   0.402   1.47    1.351
+capital_inner       2  abacus 0.890-1.000 H = 0.110 H   volute spiral 0.673-0.937 H   helix 0.717-0.833 H
+   carried (not re-laid) capital_inner v2 volute top 0.937 H above the abacus seat 0.890 H
+capital_inner       3  lower    0.060   0.792   0.646   0.359   0.419   0.258   1.15    1.288
+capital_inner       3  upper    0.440   0.686   0.523   0.290   0.730   0.431   1.37    1.387
+capital_inner       3  abacus 0.890-1.000 H = 0.110 H   volute spiral 0.704-0.906 H   helix 0.705-0.845 H
+   carried (not re-laid) capital_inner v3 volute top 0.906 H above the abacus seat 0.890 H
+capital_colonnade   1  lower    0.058   0.648   0.522   0.290   0.348   0.214   1.54    1.223
+capital_colonnade   1  upper    0.420   0.720   0.540   0.300   0.720   0.478   1.45    1.408
+capital_colonnade   1  abacus 0.890-1.000 H = 0.110 H   volute spiral 0.678-0.922 H   helix 0.712-0.828 H
+   carried (not re-laid) capital_colonnade v1 volute top 0.922 H above the abacus seat 0.890 H
+capital_colonnade   2  lower    0.058   0.648   0.513   0.285   0.343   0.237   1.66    1.250
+capital_colonnade   2  upper    0.420   0.684   0.518   0.288   0.708   0.440   1.51    1.363
+capital_colonnade   2  abacus 0.890-1.000 H = 0.110 H   volute spiral 0.660-0.940 H   helix 0.712-0.828 H
+   carried (not re-laid) capital_colonnade v2 volute top 0.940 H above the abacus seat 0.890 H
+capital_colonnade   3  lower    0.058   0.648   0.533   0.296   0.354   0.195   1.42    1.200
+capital_colonnade   3  upper    0.420   0.742   0.555   0.308   0.728   0.470   1.41    1.398
+capital_colonnade   3  abacus 0.890-1.000 H = 0.110 H   volute spiral 0.693-0.907 H   helix 0.700-0.840 H
+   carried (not re-laid) capital_colonnade v3 volute top 0.907 H above the abacus seat 0.890 H
+VERIFY OK
