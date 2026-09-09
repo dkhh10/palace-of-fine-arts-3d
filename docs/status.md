@@ -463,3 +463,6 @@ In flight: mat_r9b review. Next: merge, lead_build.sh, QA round 8 (gate round).
 
 ## 2026-09-09 · MAT r9 + r9b merged (eb3d40b); polish round 6 fully merged; master rebuilding for QA round 8
 Merged this round: stations (cam01 2.6 m, cam02 NNE), LIGHT r15, ORN r8 + capital bake, MAT r9 + r9b. Carries: MAT r10 albedo clamp per channel (drum red can exceed 1.0 at +55 %), 4 % hard clip at 2.0, Eevee water gloss as tint only; LIGHT carries in light_r15_review. In flight: scripts/lead_build.sh (log renders/logs/lead_build_r8.log). Next: QA round 8 (docs/briefs/qa_round_08.md), gate report.
+
+## 2026-09-09 · master rebuilt (9679 objects, LOD1 11.38 M, probes baked, 23:01); QA round 8 dispatched (gate round)
+In flight: QA round 8 (Opus xhigh, docs/briefs/qa_round_08.md). Next: gate report to the user with the composite; apply the definition of done (hero >= 4.0, or the budget rule: round 8 is the gate round unless the hero lands within reach of 4.0); then Phase 5 (branch phase5 second review + merge, docs/phase5_checklist.md).
