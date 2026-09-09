@@ -444,3 +444,7 @@ In flight: MAT r9 (docs/briefs/materials_r9.md, Opus xhigh). Next: MAT review + 
 ## 2026-09-09 · Phase 5 prep agent 2 dispatched (user's instruction; branch phase5, Opus high, no renders)
 Scope: scripts/phase5_cleanup.py (orphan purge, optional texture pack, LOD defaults, JSON report, re-open under 60 s on a delivery copy), docs/flythrough_plan.md (shot list, clearance gate, test-animation timing), wired into phase5_deliver.sh as step 1b. Tests only on a scratchpad copy of master.blend, no render.
 In flight: MAT r9 (rendering), Phase 5 prep 2. Next: MAT review + merge, lead_build.sh, QA round 8.
+
+## 2026-09-09 · Phase 5 prep 2 reported (branch phase5, 82bb218); held on branch, review pending at the gate
+phase5_cleanup.py tested on a scratchpad copy: 0 orphans, 9681 objects, LOD1 visible / LOD0+LOD2 hidden, stations unchanged, 160.9 MB, re-open 0.78 s; pack not run (87 external images, 116 MB, would give 277 MB). Deliver driver step 1b works on master_delivery.blend (gitignored). Flythrough findings (path unchanged): speed step at the hold boundaries (frames 85, 1105-1129, ~3.2 m/s2 vs ACCEL 2.5), the clearance check links ARCH+ENV only (ORN never tested; gallery 1.42 m is 0.02 over the bound), frames 398-408 in no leg; peak pan 14 deg/s, no station inside geometry.
+In flight: MAT r9. Next: MAT review + merge, lead_build.sh, QA round 8; phase5 r2 review before its merge in Phase 5.
