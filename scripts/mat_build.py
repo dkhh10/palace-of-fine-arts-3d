@@ -184,6 +184,15 @@ CONCRETE_INPUTS = [
     ("Grid Joints", "FACTOR", 0.0, 0, 1), ("Grid Size", "FLOAT", 1.5, 0.1, 20),
     ("Bird Droppings", "FACTOR", 0.0, 0, 1),
     ("Instance Variation", "FACTOR", 1.0, 0, 2),
+    # round 9 (QA-07-2 / the photo-projection pass, docs/briefs/materials_r8_projection.md).
+    # `Albedo Tint` is a straight multiply on the finished albedo: the LUMINANCE-NEUTRAL half of the ref-169
+    #   correction (`mat_projection.py` prints it as M_chroma) lives here rather than in the projected texture, so
+    #   the chroma fix works from every camera, on every surface of the material, and can never make a seam.
+    # `Photo` is the weight of the projected ratio map (constraint 2: <= 0.6, and 0 on every material that is not
+    #   in the hero band).  The map itself is mean-1 on QA's sunlit attic box, so at any weight the sunlit
+    #   luminance window is held by construction and only spatial structure is imported.
+    ("Albedo Tint", "COLOR", (1.0, 1.0, 1.0, 1.0)),
+    ("Photo", "FACTOR", 0.0, 0, 1),
     ("Seed", "FLOAT", 0.0),
     ("Normal", "VECTOR", (0, 0, 1)),
 ]
@@ -442,6 +451,14 @@ def build_group_concrete():
     h = t.add(h, t.mul(pm, 0.08))
     normal = t.bump(h, strength=I["Bump"], distance=0.015, normal=N)
 
+    # 14. round 9: the global chroma correction, then the projected ref-169 ratio (both multiply the finished
+    # albedo, so nothing upstream -- streaks, algae, patches, macro -- has to be re-tuned).  `Photo` is 0 on every
+    # material that is not in the hero band, and the projector group's own weight is 0 off the band, off-frame,
+    # behind the camera and at grazing incidence, so this is a no-op everywhere else in both engines.
+    c = t.vmul(c, I["Albedo Tint"])
+    ph = t.group(G["photo"])
+    c = t.mixv(t.mul(ph.outputs["Weight"], I["Photo"]), c, t.vmul(c, ph.outputs["Ratio"]))
+
     t.link(c, go.inputs["Color"])
     t.link(rough, go.inputs["Roughness"])
     t.link(normal, go.inputs["Normal"])
@@ -451,6 +468,101 @@ def build_group_concrete():
     t.link(ledge_all, go.inputs["Ledge Mask"])
     t.link(tone, go.inputs["Tone"])
     t.link(band, go.inputs["Algae Mask"])
+    ML.auto_layout(ng)
+    return ng
+
+
+# ------------------------------------------------------------------ the ref-169 projector (round 9)
+# The camera scripts/arch_uvproj.py baked `UVProj` from -- cam01 as it stood before the round-08 station move.
+# architecture.blend has not been rebuilt since, so this IS the frame the baked layer is in, and it is also the
+# frame arch_params.REF169_XF aligns ref 169 into.  The projection is computed from the world position here
+# instead of read from `UVProj` for one measured reason: `UVProj` exists on the 33 ARCH meshes only, and QA's
+# attic box is covered by ORN's attic-panel assets (MAT_ornament_concrete), which have no such layer -- a
+# UVProj-only projection would land on the ARCH field and stop at every ornament edge, which is a seam generator.
+# scripts/mat_r9_uvcheck.py measures this projection against the baked layer vertex by vertex; they agree to
+# < 0.05 px, so this is the same projection, computed rather than baked (and immune to an ARCH rebuild).
+PROJ_LOC = (-14.1, 100.0, 1.6)
+PROJ_TARGET = (0.0, 0.0, 1.6)
+PROJ_LENS, PROJ_SENSOR, PROJ_SHIFT_Y = 20.0, 36.0, 0.06
+PROJ_RES = (1920, 1080)
+# facing ramp: full weight face-on to 45 deg, zero past 72 deg (a 3.2x texel stretch is the most that is allowed
+# to read).  The spec said 25-70; the shaded attic ressaut returns sit at 50-65 deg off the projector and QA-07-7
+# needs the ratio map to reach them, so the plateau was widened and the cut-off tightened by 2 deg.
+PROJ_FACE_LO, PROJ_FACE_HI = math.cos(math.radians(72.0)), math.cos(math.radians(45.0))
+PROJ_Z = (24.0, 26.0, 45.5, 47.5)      # world z ramp: the drum / attic / entablature band and nothing else
+PROJ_R = 34.0                          # world radius from the rotunda axis
+
+
+def projector_basis():
+    """(right, up, forward, u_scale, u_off, v_scale, v_off) for PROJ_*, matching Blender's own camera maths.
+
+    Blender: with sensor_fit HORIZONTAL the view plane at unit distance spans +-sensor/(2*lens) in x and that
+    times res_y/res_x in y, and shift_y displaces it by shift_y * sensor / lens (BKE_camera_params_compute_viewplane
+    with viewfac = res_x).  So for a camera-space point, X = xc/depth, Y = yc/depth:
+        u = (X + hx) / (2 hx)                       hx = sensor / (2 lens)
+        v = (Y - shift_y * sensor / lens + hy) / (2 hy)      hy = hx * res_y / res_x
+    v = 0 at the BOTTOM, which is both Blender's image convention and arch_uvproj's `UVProj` convention.
+    """
+    from mathutils import Euler, Matrix
+    rot = common.lookat_rotation(PROJ_LOC, PROJ_TARGET)
+    M = Euler(rot).to_matrix()
+    right, up, back = M.col[0], M.col[1], M.col[2]
+    forward = -back
+    hx = PROJ_SENSOR / (2.0 * PROJ_LENS)
+    hy = hx * PROJ_RES[1] / PROJ_RES[0]
+    dy = PROJ_SHIFT_Y * PROJ_SENSOR / PROJ_LENS
+    return (tuple(right), tuple(up), tuple(forward),
+            1.0 / (2.0 * hx), 0.5,
+            1.0 / (2.0 * hy), (hy - dy) / (2.0 * hy))
+
+
+def build_group_photo():
+    """ref 169 as a mean-1 albedo ratio, projected from the hero station. Outputs Ratio (COLOR) and Weight (FLOAT)."""
+    ng, t, gi, go = new_group("PFA_photo", [("Normal", "VECTOR", (0, 0, 1))],
+                              [("Ratio", "COLOR", None), ("Weight", "FLOAT", 0.0)])
+    right, up, fwd, us, uo, vs, vo = projector_basis()
+    geo = t.geometry()
+    pos = geo.outputs["Position"]
+    d = t.vmath("SUBTRACT", pos, PROJ_LOC)
+    xc = t.dot(d, right)
+    yc = t.dot(d, up)
+    depth = t.dot(d, fwd)
+    inv = t.div(1.0, t.maximum(depth, 1.0))
+    u = t.madd(t.mul(xc, inv), us, uo)
+    v = t.madd(t.mul(yc, inv), vs, vo)
+    uv = t.combxyz(u, v, 0.0)
+
+    ratio_img = ML.projection_image("PFA_photo_ratio")
+    mask_img = ML.projection_image("PFA_photo_mask")
+    if ratio_img is None or mask_img is None:
+        t.link(t.rgb((1.0, 1.0, 1.0, 1.0)), go.inputs["Ratio"])
+        t.link(t.value(0.0), go.inputs["Weight"])
+        ML.auto_layout(ng)
+        return ng
+    rn = t.new("ShaderNodeTexImage", interpolation="Linear")
+    rn.image = ratio_img; rn.extension = "CLIP"; rn.label = "PFA_photo_ratio"
+    t.plug(rn.inputs["Vector"], uv)
+    mn = t.new("ShaderNodeTexImage", interpolation="Linear")
+    mn.image = mask_img; mn.extension = "CLIP"; mn.label = "PFA_photo_mask"
+    t.plug(mn.inputs["Vector"], uv)
+    conf, band, cov = t.sepxyz(mn.outputs["Color"])
+
+    # facing: the angle between the shading point's TRUE normal and the direction back to the projector.
+    to_cam = t.vmath("NORMALIZE", t.vmath("SUBTRACT", PROJ_LOC, pos))
+    ndot = t.dot(to_cam, geo.outputs["True Normal"])
+    facing = t.maprange(ndot, PROJ_FACE_LO, PROJ_FACE_HI, 0.0, 1.0, interp="SMOOTHSTEP")
+
+    # world gates: only the rotunda's drum / attic / entablature band, and only in front of the projector.
+    z = t.sepxyz(pos)[2]
+    zgate = t.mul(t.maprange(z, PROJ_Z[0], PROJ_Z[1], 0.0, 1.0),
+                  t.maprange(z, PROJ_Z[2], PROJ_Z[3], 1.0, 0.0))
+    rad = t.vmath("LENGTH", t.vmul(pos, (1.0, 1.0, 0.0)))
+    rgate = t.maprange(rad, PROJ_R, PROJ_R + 3.0, 1.0, 0.0)
+    front = t.maprange(depth, 5.0, 15.0, 0.0, 1.0)
+
+    w = t.mul(t.mul(t.mul(conf, band), cov), t.mul(facing, t.mul(zgate, t.mul(rgate, front))))
+    t.link(t.vscale(rn.outputs["Color"], 2.0), go.inputs["Ratio"])     # stored as ratio / 2
+    t.link(w, go.inputs["Weight"])
     ML.auto_layout(ng)
     return ng
 
@@ -565,6 +677,7 @@ G["instance"] = build_group_instance()
 G["edge"] = build_group_edge()
 G["streaks"] = build_group_streaks()
 G["algae"] = build_group_algae()
+G["photo"] = build_group_photo()
 G["concrete"] = build_group_concrete()
 G["column"] = build_group_column()
 G["dome"] = build_group_dome()

@@ -1,0 +1,115 @@
+{
+  "ratio": "PFA_photo_ratio.png",
+  "mask": "PFA_photo_mask.png",
+  "res": [
+    1920,
+    1080
+  ],
+  "projector": {
+    "loc": [
+      -14.1,
+      100.0,
+      1.6
+    ],
+    "target": [
+      0.0,
+      0.0,
+      1.6
+    ],
+    "lens": 20.0,
+    "shift_y": 0.06,
+    "note": "the station scripts/arch_uvproj.py baked UVProj from"
+  },
+  "ref169_xf": [
+    1.3108,
+    -291.8,
+    -124.6
+  ],
+  "stack": [
+    [
+      165,
+      -4
+    ],
+    [
+      181,
+      -1
+    ],
+    [
+      199,
+      1
+    ],
+    [
+      265,
+      -5
+    ],
+    [
+      281,
+      -1
+    ],
+    [
+      294,
+      2
+    ],
+    [
+      301,
+      4
+    ],
+    [
+      321,
+      0
+    ],
+    [
+      333,
+      5
+    ]
+  ],
+  "band": [
+    86,
+    100,
+    312,
+    328
+  ],
+  "calib": [
+    900,
+    222,
+    1020,
+    256
+  ],
+  "clip": [
+    0.45,
+    2.0
+  ],
+  "conf": [
+    0.4,
+    0.85
+  ],
+  "blur_sigma": 1.1,
+  "bands": {
+    "lf": 10.0,
+    "mf": 3.0,
+    "hf": 1.1,
+    "mf_k": 0.5,
+    "hf_k": 0.0
+  },
+  "M_rgb": [
+    1.0264,
+    1.0013,
+    0.7494
+  ],
+  "M_lum": 0.9885,
+  "calib_lum_target": 0.9955,
+  "M_chroma": [
+    1.0383,
+    1.013,
+    0.7582
+  ],
+  "px_in_band": 462720,
+  "mean_conf_in_band": 1.0,
+  "clipped_frac": 0.0195,
+  "ratio_lum_p05_p50_p95": [
+    0.9034,
+    1.1956,
+    1.2633
+  ],
+  "render": "r9_cycles_projector.png"
+}

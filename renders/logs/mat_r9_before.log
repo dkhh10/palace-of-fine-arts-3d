@@ -1,0 +1,15 @@
+00:00.349  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+03:59.854  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_cycles_01_lagoon_hero.png'
+04:43.103  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9_cycles_projector.png'
+[r9render] opened master in 0.8s, 9679 objects, jobs before
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r9render] cycles CAM_qa_01_lagoon_hero 1920x1080 64spp border=None 238.8s -> r9_cycles_01_lagoon_hero.png
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[r9render] cycles PROJ_CAM_r9 1920x1080 64spp border=(40, 400) 42.9s -> r9_cycles_projector.png
+[r9render] done in 282.8s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 50856 exited rc=0 after 284 s (max 1500)
