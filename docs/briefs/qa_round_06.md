@@ -16,3 +16,7 @@ Commit only docs/qa_round_06.md, docs/quality_checklist.md, scripts/qa_*.py, ren
 renders/previews/qa/round06_* (explicit paths). Touch renders/previews/qa/round06_RENDERS_DONE when every render has exited.
 Final report under 60 lines: score table with deltas, trend line per camera, pass/fail lines, top 10 defects (id, owner, one line),
 composite path. Numbers, not adjectives.
+Added 2026-09-09: 4. cam03 shade test is re-based (docs/decisions.md 2026-09-09): lighting proved the near-shaft box 150 150 420 720 is occluded from the
+sky and the anti-sun hemisphere. Measure shade-vs-sunlit on a sky-visible shaded shaft face in the cam03 frame (state the box, same 0.30-0.70 window,
+anchored on ref 169's shade/sunlit 0.607) and report both the old box and the new one once. 5. Wing bands: report raw and aligned panels for both
+wings with the labels frame-left = SOUTH, frame-right = NORTH. 6. Note which master you scored (object count, build time from renders/logs/lead_build_r6.log).
