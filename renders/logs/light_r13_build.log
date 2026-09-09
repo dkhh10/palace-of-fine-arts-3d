@@ -1,0 +1,98 @@
+00:00.640  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_lamp_convention.exr'
+00:01.164  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.680  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:02.194  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.692  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:03.141  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:03.589  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:04.038  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:04.487  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:04.978  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:05.512  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+[light_build] moment=morning PST -> azimuth 118.49 deg, elevation 7.36 deg (sun_position.sun_calc (NOAA))
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[light_build] LIGHT_rotunda_bounce: disk r 18.0 m at z 7.5, 10214.0 W, up-facing (radiance 3.194 sky units)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[light_build] LIGHT_rotunda_vault_bounce: 8 x 12.5x4.0 m up-facing rectangles at r 17.5 z 13.0, 3564.0 W each (radiance 22.689 sky units)
+[light_probes] LIGHTPROBE_rotunda: (20, 20, 14) = 5600 samples, spacing 2.8 x 2.8 x 2.6 m
+[light_probes] LIGHTPROBE_colonnade: (48, 20, 6) = 5760 samples, spacing 4.8 x 4.8 x 3.2 m
+[light_build] glare sockets: {'Type': 'Bloom', 'Quality': 'High', 'Threshold': 1.0, 'Smoothness': 0.2, 'Maximum': 10.0, 'Strength': 1.0, 'Saturation': 0.9, 'Size': 0.5, 'Streaks': 4, 'Streaks Angle': 0.0, 'Iterations': 3, 'Fade': 0.9, 'Color Modulation': 0.25, 'Jitter': 0.0, 'Kernel Data Type': 'Float', 'Kernel': 0.0}
+[light_build] LIGHT_sun energy 67.32 W/m2 colour (1.000, 0.607, 0.000) angle 0.0093 rad
+[light_build] exposure -4.08 EV (18 % card) + bias +1.25 = -2.83 EV, look AgX - High Contrast
+[light_build] haze colour (scene units) (5.321, 3.739, 1.96); bloom threshold 6.4 scene units
+[light_flythrough] path 278.1 m, 720 frames @ 24 fps = 30 s, mean 9.3 m/s
+[light_flythrough] timing table:
+   frame    1  t= 0.00s  hero_start         arc 0.000  pos (-16.0, 113.9, 1.0)
+   frame   37  t= 1.50s  hero_start         arc 0.000  pos (-16.0, 113.9, 1.0)
+   frame  200  t= 8.29s  shore_se           arc 0.270  pos (58.0, 112.0, 3.0)
+   frame  330  t=13.71s  colonnade_end      arc 0.506  pos (79.0, 54.0, 6.0)
+   frame  580  t=24.12s  colonnade_out      arc 0.839  pos (37.0, -22.5, 5.5)
+   frame  700  t=29.12s  rotunda_centre     arc 1.000  pos (0.0, 1.0, 2.5)
+   frame  720  t=29.96s  rotunda_centre     arc 1.000  pos (0.0, 1.0, 2.5)
+Info: Saved as "lighting.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend
+[light_build] done in 5.2s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 21867 exited rc=0 after 6 s (max 900)
+=== BUILD_MASTER ===
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/scripts/build_master.py:118: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if base is None or base.get("placeholder") or not base.use_nodes or "normal_map" not in src_obj.keys():
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[build_master] 434 sockets, 0 at the origin (should be 0)
+[build_master] ornament instanced: {'attic_figure': 8, 'attic_panel': 8, 'capital_colonnade': 114, 'capital_inner': 8, 'capital_rotunda': 16, 'drum_band': 105, 'finial': 9, 'inner_figure': 8, 'keystone': 24, 'maiden': 48, 'rosette_ceiling': 24, 'urn': 40} skipped: {'frieze_run': 126}
+[build_master] instances at the origin: 0 (should be 0) []
+[build_master] materials: 38 library materials appended, 38 placeholders remapped
+[common] set_lod viewport=LOD1 render=LOD0: 6484 objects, 6 collections
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[build_master] viewport (LOD1) triangles ~11.11 M; objects 9706
+Info: Saved as "master.blend"
+[build_master] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend (154 MB); assets: ['ARCH', 'ENV', 'LIGHT', 'ORN']
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 21876 exited rc=0 after 25 s (max 1800)
+=== BAKE ===
+00:00.325  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'WORLD_golden_hour' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 17.0), antisun 1.00, horizon 1.00)
+[light_probes] bake {'FINISHED'} in 4.5s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_probes] restored: engine BLENDER_EEVEE, world WORLD_golden_hour, vault rig EEVEE override
+Info: Saved as "master.blend"
+[light_probes] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 2, total unfreed memory 0.125168 MB
+blender_run.sh: pid 21890 exited rc=0 after 7 s (max 1800)

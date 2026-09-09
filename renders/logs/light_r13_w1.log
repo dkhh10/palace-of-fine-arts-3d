@@ -1,0 +1,15 @@
+00:00.331  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r13] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9706 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[r13] case r13bake: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+00:40.231  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13a_r13bake_01e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] -> r13a_r13bake_01e.png (39.2s, 1920x1080)
+03:50.682  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13a_r13bake_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[r13] -> r13a_r13bake_01c.png (190.4s, 1920x1080)
+[r13] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 21979 exited rc=0 after 231 s (max 1800)

@@ -1,0 +1,24 @@
+00:00.321  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r13] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9709 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, Cycles 0.00 W/m2 (0.000 of the calibrated sun), Eevee 55.00 W/m2 (0.817 of the sun), hidden in render: True, at [(300.0, 5.0), (205.0, 5.0), (25.0, 5.0)], angle 55.0 deg, colour (0.14, 0.19, 1.0)
+[r13] case base: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r13] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+01:19.636  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13ship_base_01e.png'
+[r13] -> r13ship_base_01e.png (78.6s, 1920x1080)
+04:31.150  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13ship_base_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 0.0 W/m2, hidden in render: True
+[r13] -> r13ship_base_01c.png (191.5s, 1920x1080)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r13] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+05:14.464  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13ship_base_06e.png'
+[r13] -> r13ship_base_06e.png (43.1s, 1280x720)
+[r13] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 22965 exited rc=0 after 315 s (max 1200)
