@@ -239,8 +239,15 @@ JOBS = [("waterline", "CAM_mat_scene_waterline", (1600, 900)),
         ("hero", "CAM_qa_01_lagoon_hero", (1920, 1080)),
         ("ceiling", "CAM_qa_04_rotunda_ceiling", (1280, 720)),
         ("capital", "CAM_mat_scene_capital", (768, 768)),
+        # round 7: cam03 carries ENV's colonnade walk (MAT_paving_stone, QA-05-11) and cam05 the 115 m distance
+        # test for the macro amplitude (QA-05-12). Both are rendered at QA's own preview resolution.
+        ("cam03", "CAM_qa_03_colonnade_walk", (1280, 720)),
+        ("cam05", "CAM_qa_05_south_lawn", (1280, 720)),
         ("cam06", "CAM_qa_06_aerial", (960, 540))]
 WANT = str(arg("--cams", "waterline,stone,hero")).split(",")
+# --scale renders the same framing at a fraction of the resolution: the measure tools upsample back to the QA frame,
+# which lighting r12 verified reproduces the 1920x1080 numbers to ~1 lum, so iteration costs (2/3)^2 of a full hero.
+SCALE = float(arg("--scale", 1.0))
 
 for short, name, res in JOBS:
     if short not in WANT:
@@ -250,7 +257,9 @@ for short, name, res in JOBS:
         print(f"[mat_scene] camera {name} missing, skipped")
         continue
     scene.camera = ob
-    scene.render.resolution_x, scene.render.resolution_y = res
+    scene.render.resolution_x = int(round(res[0] * SCALE / 2)) * 2
+    scene.render.resolution_y = int(round(res[1] * SCALE / 2)) * 2
+    res = (scene.render.resolution_x, scene.render.resolution_y)
     fp = OUT / f"{TAG}_scene_{short}.png"
     scene.render.filepath = str(fp)
     t = time.time()
