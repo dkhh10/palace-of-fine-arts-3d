@@ -1475,6 +1475,150 @@ def build_drum_band(variant, coll, bake=True):
 
 
 # =============================================================================== registry / main
+# --------------------------------------------------------------------------- rotunda frieze rinceau (round 5)
+# Reference: sheet s4 #13 ("frieze 1.2, rinceau on ressauts, plain between"; "Rinceau = scrolling acanthus with
+# rosette bosses") and sheet line 183-184 (DPR: "angled impost blocks with a rinceau pattern protruding from a plain
+# frieze. The blocks serve to 'turn' the rotunda") -> the ornament belongs ONLY on the 24 ressaut faces, which are
+# exactly ARCH's SOCKET_frieze_run_000..023 (8 fronts of 5.913 m + 16 returns of 2.999 m, all at z 28.55).
+# Band: 0.90 m tall (arch r4b frieze z 28.55-29.45, face at d 0.34). The architrave crown below and the cyma reversa
+# above sit at d 0.50 / 0.40, so nothing on this band may project more than 0.16 m; the design caps at 0.12 m.
+# The two lengths get their own asset (one instance per socket) because build_master.py places ONE object per socket.
+RIN_BAND_H = 0.90
+RIN_MAX_PROUD = 0.125      # hard cap: the architrave crown plane is 0.16 m in front of the frieze face
+RIN_FIELD_H = 0.75         # the carved field inside the 0.90 m band (0.075 m plain margin top and bottom)
+RIN_EMBED = 0.015          # the ornament is sunk 1.5 cm into the frieze face so nothing floats off the wall
+RIN_RUNS = {"frieze_rinceau": 5.9128, "frieze_rinceau_return": 2.9994}
+RIN_REPEATS = {"frieze_rinceau": 6, "frieze_rinceau_return": 3}
+# per-variant character: (stem amplitude, scroll radius, boss diameter, leaf length, phase). amp + 1.78*R is the
+# half-height of the design; all three land near RIN_FIELD_H/2 = 0.375 so the Z normalisation below stays under 5 %.
+RIN_VARIANTS = {1: (0.125, 0.140, 0.150, 0.235, 0.00),
+                2: (0.110, 0.150, 0.175, 0.260, 0.35),
+                3: (0.140, 0.132, 0.140, 0.220, 0.50)}
+
+
+def _rin_spiral(name, coll, cx, cz, R, sign, start_ang, y0=0.030, r0=0.034, r1=0.015, turns=1.35, steps=34):
+    """One scroll of the rinceau: a tapering tube spiralling in the band's XZ face plane, y = out of the wall."""
+    pts = []
+    for i in range(steps + 1):
+        t = i / steps
+        th = start_ang + sign * turns * TAU * t
+        rr = R * (1.0 - 0.85 * t) ** 1.1
+        pts.append((cx + rr * math.cos(th), y0 + 0.010 * t, cz + rr * math.sin(th)))
+    return L.tube(name, pts, lambda v: r0 + (r1 - r0) * v, coll=coll, segments=10)
+
+
+def _rin_leaf(name, coll, x, z, ang_deg, length, seed, y=0.020, width=0.135):
+    """An acanthus leaf lying in the band face: grown along +Z then turned about Y so it runs in the XZ plane and
+    still bends toward +Y (out of the wall)."""
+    lf = L.acanthus_leaf(name, length=length, width=width, curl=0.45, droop=0.30, ribs=5, rib_amp=0.018,
+                         bulge=0.034, thickness=0.026, lobes=3, lobe_depth=0.055, nu=10, nv=14, coll=coll,
+                         seed=seed, base_width=0.45)
+    lf.data.transform(Matrix.Translation((x, y, z)) @ Euler((0, math.radians(ang_deg), 0), "XYZ").to_matrix().to_4x4())
+    return lf
+
+
+def build_frieze_rinceau(kind, variant, coll, bake=True):
+    run, nrep = RIN_RUNS[kind], RIN_REPEATS[kind]
+    U = run / nrep
+    amp, R, boss_d, leaf_l, phase = RIN_VARIANTS[variant]
+    rng = random.Random(9100 + variant * 31 + (7 if kind.endswith("return") else 0))
+    work = L.work_collection()
+    parts = []
+    zc = RIN_BAND_H * 0.5
+    y_stem, r_stem = 0.030, 0.042
+
+    # continuous stem: everything else touches it, so the asset stays ONE shell and decimates cleanly to LOD2
+    steps = 26 * nrep
+    path = []
+    for i in range(steps + 1):
+        x = run * i / steps
+        path.append((x, y_stem, zc + amp * math.sin(TAU * (x / U) + phase * TAU)))
+    parts.append(L.tube("rin_stem", path, lambda v: r_stem * (0.72 + 0.28 * math.sin(math.pi * v)),
+                        coll=work, segments=12))
+
+    def stem_z(x):
+        return zc + amp * math.sin(TAU * (x / U) + phase * TAU)
+
+    k = 0
+    for i in range(nrep):
+        for frac, s in ((0.25, +1.0), (0.75, -1.0)):
+            k += 1
+            cx = (i + frac) * U - phase * U
+            if cx < 0.22 or cx > run - 0.22:
+                continue
+            jr = 1.0 + rng.uniform(-0.07, 0.07)
+            Rk = R * jr
+            crest_z = stem_z(cx)
+            eye_z = crest_z + s * Rk * 0.78
+            # the spiral starts on the stem (angle pointing back at the crest) and curls into the eye
+            parts.append(_rin_spiral(f"rin_sc{k}", work, cx, eye_z, Rk, sign=s,
+                                     start_ang=(-math.pi / 2 if s > 0 else math.pi / 2),
+                                     r0=0.034 * jr, turns=1.35 + rng.uniform(-0.08, 0.08)))
+            # rosette boss in the eye of the scroll
+            bd = boss_d * (1.0 + rng.uniform(-0.05, 0.05))
+            boss = patera_boss(f"rin_bs{k}", work, diameter=bd, proud=0.085)
+            boss.data.transform(Matrix.Translation((cx, 0.012, eye_z)))
+            parts.append(boss)
+            # two acanthus leaves at the springing, running along the stem away from the scroll
+            for sgn, ang, fl in ((-1.0, -102.0, 1.00), (+1.0, 102.0, 1.00), (-1.0, -150.0, 0.62)):
+                lx = cx + sgn * (0.13 + rng.uniform(0.0, 0.03))
+                parts.append(_rin_leaf(f"rin_lf{k}_{int(sgn)}_{int(fl*100)}", work, lx, stem_z(lx),
+                                       ang * (1.0 if s > 0 else 0.86) + rng.uniform(-8, 8),
+                                       fl * leaf_l * (1.0 + rng.uniform(-0.09, 0.09)), seed=k * 13 + int(sgn)))
+            # a berry cluster in the hollow of the scroll and a counter-tendril curling the other way
+            parts.append(L.sphere(f"rin_bd{k}", 0.030 * jr, work,
+                                  location=(cx + s * 0.10, 0.030, crest_z - s * 0.055), scale=(1.0, 0.8, 1.0)))
+            tx = cx + 0.5 * U * (1.0 if s > 0 else -1.0) * 0.55
+            if 0.16 < tx < run - 0.16:
+                parts.append(_rin_spiral(f"rin_tn{k}", work, tx, stem_z(tx) - s * 0.085, 0.075 * jr, sign=-s,
+                                         start_ang=(math.pi / 2 if s > 0 else -math.pi / 2),
+                                         r0=0.024, r1=0.011, turns=1.05, steps=22))
+
+    # terminals: a short palmette fan closing each end of the run
+    for ex, adir in ((0.0, +1.0), (run, -1.0)):
+        for j in range(3):
+            a = adir * (62.0 + 34.0 * j)
+            parts.append(_rin_leaf(f"rin_tm{int(ex)}_{j}", work, ex + adir * 0.10, stem_z(ex),
+                                   a, leaf_l * 0.60, seed=900 + j))
+
+    hi = L.union_blob(parts, f"{kind}_v{variant}", voxel=(0.014 if FAST else 0.011), smooth=1, coll=work)
+    L.displace_noise(hi, strength=0.0022, size=0.05, seed=9100 + variant * 7, depth=1)
+    lods = L.finalize_asset(hi, kind, variant, coll, bake=bake, bake_size=1024, y_mode="back",
+                            budgets=L.BUDGETS[kind],
+                            extra_props={"unit_length": run, "run_length": run, "band_height": RIN_BAND_H,
+                                         "repeats": nrep, "max_proud": RIN_MAX_PROUD, "field_height": RIN_FIELD_H,
+                                         "origin_note": "RUN START: local x=0 is the socket, geometry runs to x=run_length"},
+                            size_note=(f"full-run rinceau panel for one rotunda ressaut face: {run:.3f} m long, "
+                                       f"{RIN_BAND_H:.2f} m band (carved field z {0.5*(RIN_BAND_H-RIN_FIELD_H):.3f}"
+                                       f"-{0.5*(RIN_BAND_H+RIN_FIELD_H):.3f}), projects <= {RIN_MAX_PROUD:.3f} m toward +Y; "
+                                       f"origin = RUN START (x=0), back face y=0, band bottom z=0; place directly "
+                                       f"on SOCKET_frieze_run_### (no array helper needed)"))
+    # deviation from the bottom-CENTRE convention: this panel spans the whole run, so its origin is the run START,
+    # exactly where ARCH's frieze_run socket sits. Shift the mesh so bbox min x = 0.
+    for o in lods:
+        (x0, _, _), _ = L.bbox(o)
+        o.data.transform(Matrix.Translation((-x0, -RIN_EMBED, 0)))
+        # exact length: the terminal palmettes may overhang the run by ~25 mm; squeeze along X so the panel is
+        # exactly `run` long and ends flush with ARCH's socket run (mismatch 0.0 mm).
+        (_, ymin, _), (xw, ymax, zh) = L.bbox(o)
+        if xw > 1e-6:
+            o.data.transform(Matrix.Diagonal((run / xw, 1.0, 1.0, 1.0)))
+        # hard cap on the relief so the clearance to the architrave crown plane is guaranteed, not hoped for
+        if ymax > RIN_MAX_PROUD:
+            f = (RIN_MAX_PROUD - ymin) / (ymax - ymin)
+            o.data.transform(Matrix.Translation((0, ymin, 0)) @ Matrix.Diagonal((1.0, f, 1.0, 1.0))
+                             @ Matrix.Translation((0, -ymin, 0)))
+        # the carved field is centred in the 0.90 m band with a plain margin top and bottom (finalize_asset put
+        # the bbox bottom at z = 0; the socket is at the BOTTOM of the band, so the margin has to be re-added)
+        if zh > 1e-6:
+            o.data.transform(Matrix.Diagonal((1.0, 1.0, RIN_FIELD_H / zh, 1.0)))
+            o.data.transform(Matrix.Translation((0, 0, 0.5 * (RIN_BAND_H - RIN_FIELD_H))))
+        (a0, b0, c0), (a1, b1, c1) = L.bbox(o)
+        o["size"] = f"{a1 - a0:.2f} x {b1 - b0:.2f} x {c1 - c0:.2f} m (x y z)"
+        o["origin_x"] = "run start"
+    return lods
+
+
 def build_type(typ, variants, bake):
     coll = L.rebuild_type(typ)
     t = time.time()
@@ -1496,6 +1640,8 @@ BUILDERS = {
     "urn_niche": build_urn_niche, "urn_tub": build_urn_tub, "keystone": build_keystone, "finial": build_finial,
     "rosette_ceiling": build_rosette, "attic_panel": build_attic_panel, "drum_band": build_drum_band,
     "corner_scroll": build_corner_scroll,
+    "frieze_rinceau": lambda v, c, bake=True: build_frieze_rinceau("frieze_rinceau", v, c, bake),
+    "frieze_rinceau_return": lambda v, c, bake=True: build_frieze_rinceau("frieze_rinceau_return", v, c, bake),
     "dentil": lambda v, c, bake=True: build_moulding("dentil", v, c, bake),
     "egg_and_dart": lambda v, c, bake=True: build_moulding("egg_and_dart", v, c, bake),
     "greek_key": lambda v, c, bake=True: build_moulding("greek_key", v, c, bake),
@@ -1505,11 +1651,12 @@ BUILDERS = {
 }
 ALL_TYPES = ["capital_rotunda", "maiden", "capital_colonnade", "capital_inner", "attic_figure", "urn", "urn_niche",
              "urn_tub", "attic_panel", "keystone", "winged_figure", "finial", "corner_scroll", "drum_band", "rosette_ceiling",
-             "dentil", "egg_and_dart", "greek_key", "rosette_band", "modillion", "anthemion"]
+             "dentil", "egg_and_dart", "greek_key", "rosette_band", "modillion", "anthemion",
+             "frieze_rinceau", "frieze_rinceau_return"]
 VARIANTS = {"capital_rotunda": 3, "capital_inner": 2, "capital_colonnade": 3, "maiden": 3, "attic_figure": 2,
             "urn": 3, "urn_niche": 2, "urn_tub": 1, "keystone": 3, "winged_figure": 2, "finial": 1, "rosette_ceiling": 3,
             "attic_panel": 3, "drum_band": 1, "dentil": 1, "egg_and_dart": 1, "greek_key": 1, "rosette_band": 1,
-            "modillion": 1, "anthemion": 1, "corner_scroll": 2}
+            "modillion": 1, "anthemion": 1, "corner_scroll": 2, "frieze_rinceau": 3, "frieze_rinceau_return": 3}
 
 
 def main():

@@ -42,6 +42,10 @@ BUDGETS = {
     "rosette_ceiling": (26000, 5000, 500),   # round 4: modelled petals instead of a lathe wobble
     "moulding": (30000, 6000, 600),
     "corner_scroll": (40000, 8000, 800),
+    # round 5: full-run rinceau panels for the 24 rotunda ressaut frieze faces. 1523 tris/m at LOD1 (the greek_key
+    # moulding runs 6000 tris/m, but that band is at eye level on the rostra; this one is 12.5 px tall on the hero).
+    "frieze_rinceau": (48000, 9000, 900),
+    "frieze_rinceau_return": (24000, 4500, 450),
 }
 
 
