@@ -377,3 +377,7 @@ In flight: LIGHT r14, ARCH r7. Next: LIGHT review + merge, MAT r8, lead_build.sh
 ## 2026-09-09 · ORN r7 reported (676897d), in review
 Capital re-laid for H 3.0 (tiers 0.03-0.33 / 0.30-0.60 H, volutes 0.66-0.89 H, abacus 0.10 H vs ref_002; verified by a Blender-free layout solver), attic figure x scaled by PANEL_K, course error 26 -> <= 4.2 mm, rinceau normal normalised, constants from qa_cameras; gate exit 0. Pending: LOD1 bakes for capital_rotunda + attic_panel (rebuilt --no-bake under the GPU rule) — the lead runs `orn_build.py -- --bake-pending` in the next GPU window before the master rebuild; inner/colonnade capitals 17-25 mm over their course (one rebuild).
 In flight: ORN review, LIGHT r14, ARCH r7. Next: LIGHT review + merge, ORN bake, MAT r8.
+
+## 2026-09-09 · ORN r7 merged (676897d) after review (MERGE WITH FIXES)
+Carried to ORN r8: --verify must parse ARCH_R6 and the two formulas from orn_build.py and loop over CAPITAL_STYLE (v2 volute top 0.904 H above the 0.900 abacus seat; v3 upper extent 0.310 H / r_tip 1.51 R outside the ref window), ref_002 measurement not reproducible, back-row integer cliff, bake_pending exit code. BLOCKER before the next master build: capital_rotunda v1-3 and attic_panel v1-3 LOD1 maps are empty (rebuilt --no-bake); the lead runs `orn_build.py --only attic_panel,capital_rotunda` (with bake) in the next GPU window.
+In flight: LIGHT r14, ARCH r7. Next: LIGHT review + merge, ORN bake, MAT r8, lead_build.sh, QA round 7.
