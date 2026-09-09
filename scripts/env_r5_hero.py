@@ -7,6 +7,7 @@ that carries LIGHT.  This opens a master .blend read-only, points the scene at t
 
     blender -b --python scripts/env_r5_hero.py -- --out renders/previews/environment/r5_master_hero.png
     blender -b --python scripts/env_r5_hero.py -- --blend /path/to/master.blend --samples 96
+    blender -b --python scripts/env_r5_hero.py -- --cam CAM_qa_03_colonnade_walk --engine BLENDER_EEVEE --res 1280x720 --lod 1
 """
 import bpy, sys, os
 from pathlib import Path
@@ -38,6 +39,9 @@ if cam is None:
     cands = [o.name for o in bpy.data.objects if o.type == "CAMERA"]
     sys.exit(f"[env_r5_hero] no camera {cam_name}; have {cands}")
 scene.camera = cam
+lod = opt("--lod")
+if lod is not None:                       # match QA's Eevee pass, which renders LOD1 for both viewport and render
+    common.set_lod(viewport=int(lod), render=int(lod))
 scene.render.resolution_x, scene.render.resolution_y = RES
 scene.render.resolution_percentage = 100
 scene.render.engine = engine
