@@ -1599,3 +1599,36 @@ ref 083's 0.265, because the disk is the emitter the coffer FLOORS see best; and
 0.15 without touching the probes. The interior fill is also confirmed independent of the hero: the same rig with
 `FILL` x3.2 changes the hero's shaded attic by 0.1 lum and its sunlit attic by 0.1 (wave 5, `r12w5_A_01c` vs
 `r12w5_Af32_01c`).
+
+### 21.9 The second discriminator: the tint has to miss the water as well as the sunlit stone
+
+The first ship (tint b 11.5, anti-sun only) passed QA-05-1's hero half — shaded attic 116.3 / **33.9** / 0.397
+against ref 169's 115.0 / 29.5 / 0.425, measured at 1920x1080 on the rebuilt master — and looked wrong: the lagoon
+went violet. Numbers: near-water saturation **0.457** against QA's 0.22-0.32 (it was 0.281), hue 220. The tint is
+diffuse-only, so it never touches the water's MIRROR term; what it reaches is the water's diffuse murk, and a murk
+term takes the tint like any other up-facing surface. Two discriminators are therefore needed, not one:
+
+* `SKY_DIFFUSE_TINT_ANTISUN` — by direction relative to the SUN. Separates shaded stone from sunlit stone.
+* `SKY_DIFFUSE_TINT_HORIZON` — by ray ELEVATION, weight 1 - |ray.z|. A vertical shaded wall samples the sky in
+  near-horizontal directions; the lagoon and the plaza sample it cosine-weighted about the zenith. Separates
+  shaded stone from anything that faces up. Physically it is the anti-sun horizon band, the bluest part of a real
+  sky at a 7 deg sun.
+
+Measured on the hero at 960x540 / 48 spp, all rows at db 2.5 / anti-sun 1 / tint g 0.65:
+
+| tint b | horizon | shaded attic hue | sunlit R-B | near-water sat | columns |
+|---|---|---|---|---|---|
+| 11.5 | 0 (first ship) | 33.9 | 109.9 | **0.457** | 1.14x |
+| 11.5 | 1 | 38.8 | 117.2 | **0.385** | 1.11x |
+| 24 | 1 | **29.2** | 105.4 | 0.445 | 1.22x |
+
+At matched shade hue the horizon weighting is worth about **0.045 of near-water saturation** and costs nothing else,
+so it ships at 1.0 — but it does not rescue the water on its own: at any tint that fixes the shade the near-water box
+sits at 0.41-0.45 against a 0.22-0.32 window. That number is now a MEASURED HAND-OFF to materials rather than a
+lighting knob: the mirror term is held still by construction, so all of the movement is `MAT_water_lagoon`'s diffuse
+murk, and the murk is what has to lose saturation.
+
+**Shipped: `db 2.5`, tint (1.0, 0.65, 17.0), anti-sun 1.0, horizon 1.0, `SUN_BLUE_MULT` 0.75 -> 0.00,
+`FILL` 3648 -> 10214 W, `SHADE_FILL` still 0 (now for a measured reason, 21.6).** Tint b 17 is the balance point
+between rows 2 and 3 of the table above: the round's two blockers are ordered ahead of the sunlit stone by the brief,
+and 17 is the largest tint that keeps the sunlit attic's R-B at its floor.
