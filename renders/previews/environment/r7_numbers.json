@@ -26,5 +26,20 @@
  "nc_c06_n": 1,
  "nc2_c06_lum": "45.0  std 44.0",
  "nc2_c06_lines": "1 in rows 0-110 [vert 1 (243-259 -19); horiz 0];  0 over the whole crop [vert 0; horiz 0]",
- "nc2_c06_n": 1
+ "nc2_c06_n": 1,
+ "b_band_cast": "foliage 29.1 / arch 58.3 / sky 12.5 % (round 6, unchanged)",
+ "a_band_cast": "unchanged - no south-wing planting this round (see below)",
+ "b_band_sun": "south face cos(incidence) 0.318 vs the north wing's 0.991",
+ "a_band_sun": "identical: no planting change can move a face bearing",
+ "b_shore_cast": "foliage 52.5 / building 30.3 / ground 17.2 %",
+ "a_shore_cast": "foliage 55.6 / building 27.4 / ground 17.0 %",
+ "b_shore_sun": "47.4 % of the box reaches the sun (of its foliage, 34.4 %)",
+ "a_shore_sun": "59.5 % (of its foliage, 44.6 %)   +12.1 pp",
+ "shore_note": "MEASURED THIS ROUND: +12.1 pp of sun reach moved the rendered band by 0.0 lum (71.7 -> 71.7). Proof it is a level, not an occlusion.",
+ "b_c03_cast": "ground 38.5 % (flat terrain: gravel 22.2 + soil 15.8), foliage 2.5 %",
+ "a_c03_cast": "ENV_ground_colonnade_walk fills 16.7 % of the box; ground 36.7 %, foliage 3.1 %",
+ "c03_note": "845 slabs / 1,690 tris (5.5 cm joints, running bond, 9 % worn) + 288 walk-edge shrubs",
+ "b_c06_cast": "foliage 42.6 / building 43.6 / ground 13.8 % (asphalt 2.47 %)",
+ "a_c06_cast": "foliage 30.6 / building 46.1 / ground 23.4 % (asphalt 4.08 %)  canopy 2453 -> 1747 crowns",
+ "c06_note": "lines still 0: lighting's COMP_golden_hour mist puts +58 lum on this crop and halves its contrast (un-composited 45.0 lum / std 44.0 vs 103.2 / 23.5). Un-composited the count is 1 and the line widens 9 -> 16 px, deepens -17 -> -19. HAND-OFF to lighting."
 }
