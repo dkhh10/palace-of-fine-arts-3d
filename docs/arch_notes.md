@@ -1179,3 +1179,131 @@ row, so nothing moves on this evidence; re-open it if a hero-distance crop shows
 **11 — the 6.4 MB `renders/qa_comparisons/arch_r6_aligned_vs_ref169.png` is dropped.** It was panel 1 of QA's own
 9.3 MB sheet plus this round's render; `arch_r6_sheet.py` regenerates it in one second from the two committed
 panels whenever `qa_stack_offset` has to be re-run, and its measurements are now in the committed logs.
+
+## Round 7 (2026-09-09) — no-render round: archivolt socket, cornice sub-courses, ref 062 station
+
+### Item 1 — `archivolt_run` socket (QA-06-6 second half, ORN r6 proposal §4)
+
+8 sockets, one per OUTER rotunda arch, on the archivolt's flat crown face. The inner (rotunda-side) archivolt gets
+none: the proposal asks for one full-arc panel per opening and is silent about the inner band. **No geometry
+changed** — `archivolt_profile()` is untouched and ARCH models no ornament there, so unlike the meander runs
+nothing has to be hidden before instancing. Full contract in `docs/sockets.md`; the numbers:
+
+| | value |
+|---|---|
+| origin | a springing, z 17.5, **21.800 m** from the axis along the face normal (wall 21.5 + the 0.30 m crown projection), **6.550 m** from the arch centre |
+| frame | +X = arc tangent = **world up** (a semicircular arch springs vertically), +Y = the outward face normal, +Z = +X x +Y = radially outward = the band's width direction |
+| arc | `arc_radius` 6.550, `arc_angle` 180 deg, `run_length` **20.577 m** (outer edge 21.268), `band_width` **0.220 m** |
+| check | `arch_socket_check --type archivolt_run` -> **8/8 OK**: origin **0.00 mm** from the mesh, socket plane 21.800 = the archivolt mesh's own extent along the face normal 21.800, all 13 arc samples 0.00 mm off the band, band mid-line faces +Y at all 11 interior samples |
+
+The check trusts nothing the builder stamped: the face normal is rebuilt from `arch_params`' octagon, the crown-face
+plane is measured on the archivolt MESH, and the stamped arc parametrisation is verified point by point with
+`closest_point_on_mesh` (the band mid-line against the *bevelled* evaluated mesh, so the 0.03 m arris bevel is in the
+test). `arch_lib.add_socket` gained `frame=(xdir, ydir)`; `archivolt_crown()` reads the crown face off
+`archivolt_profile()` itself, so the socket cannot drift from the sweep if the profile is retuned.
+
+### Item 3 — ref 062 station with `ATTIC_Z0` held at 29.18 (for QA's cam02 re-station)
+
+`scripts/arch_ref062_fit.py` (log `renders/logs/arch_r7_ref062.log`), extended this round with az as a real unknown
+(`fit4` / `cost4`, paid for by the attic-ring width as a 5th observation) and with a fixed-D table.
+
+| fit | az | D | lens | pitch | eye | rows chi2 | worst residual |
+|---|---|---|---|---|---|---|---|
+| 3-parameter (station on the face normal, rows only) | 37.0 (held) | **90.2 m** | **40.4 mm** | +13.09 | 1.55 | **4.30** | attic base +21.3 px (+1.56 %H) |
+| 4-parameter (az free, + attic-ring width) | **37.0** | **88.6 m** | **41.5 mm** | +13.93 | 1.55 | 7.02 | attic base +27.5 px (+2.00 %H, **0.83 m** at its own depth) |
+
+Residuals of the 4-parameter fit: dome apex -0.2 px, attic top -7.4 px (-0.22 m), **attic base +27.5 px (+0.83 m)**,
+arch springing +7.5 px (+0.23 m); attic-ring width 1253 vs 1265 px measured (-1.0 %), podium base row (never fitted)
+1317 vs 1345 (-2.05 %H, was -5.88 %H on the 3-parameter fit). Station (x, y, z) = (-70.8, 53.3, 1.55) looking at
+(0, 0, 23.5). Eye height is irrelevant: 1.30-1.85 m moves D by 0.9 m.
+
+**az is not identifiable from this photograph.** The four landmarks lie on the near face's centre line and the attic
+octagon's projected width changes only 0.3 % over +-20 deg of station azimuth, so the cost is symmetric about the
+face normal (scan: 17 deg 7.80, 27 deg 8.68, **37 deg 7.69**, 47 deg 8.68, 57 deg 7.80). Use az 37; the photo's
+building centre sits +68 px right of frame centre, which is 1.8 deg of camera YAW (framing), not station azimuth.
+
+**Two conflicts QA should know before re-stationing cam02:**
+1. **The attic base is the one landmark that will not fit.** With `ATTIC_Z0` pinned at 29.18 the best station puts it
+   0.83 m too low in the image while the other three land within 0.23 m. Holding the courses (the brief's
+   instruction) therefore costs ~2 %H on that one line; it is the same landmark the r6 refit moved 2.02 m.
+2. **The fitted station is in the lagoon.** At az 37, `reference/plans/site_local.json` says water out to D = 100 m
+   and land from D ~ 104 m; the fit wants 88.6-90.2 m. Re-fitting lens + pitch at a fixed D on land costs:
+
+   | D | lens | pitch | rows chi2 | worst row |
+   |---|---|---|---|---|
+   | 88.6 (fitted, water) | 40.1 | 13.47 | **4.94** | attic base +20.0 px |
+   | 96.0 (water) | 41.3 | 11.81 | 10.99 | arch springing -25.0 px |
+   | 104.0 (first land) | 42.5 | 10.26 | **34.08** | arch springing -41.5 px |
+   | 112.0 (land) | 43.7 | 8.94 | 63.83 | arch springing -57.4 px |
+
+   So ref 062 cannot be reproduced from a standable point on the current stack: 15 m of station shift costs a factor
+   7 in chi2 and 3 %H on the springing. Recommendation for cam02: keep the fitted station (az 37, D 88.6, 41.5 mm,
+   pitch +13.9, eye 1.55) as a *view*, not as a claim about where the photographer stood.
+
+### Item 2 — the entablature sub-courses, measured on ref 085 (r6 review carry 8)
+
+`scripts/arch_r7_cornice.py` (log `renders/logs/arch_r7_cornice.log`, annotated crop
+`renders/qa_comparisons/arch_r7_cornice_085.png`). No Blender, no camera fit, and no number the r6 refit
+produced. Ref 085 (1920x1280 — the whole photo corpus is capped at 1920) shows both faces of the near vertex,
+so the scale comes out of the photograph itself:
+
+- each band is **de-slanted** (slope from cross-correlating the window's left third against its right third)
+  before anything is measured, then high-passed and autocorrelated;
+- the **modillion period** is 35 px on the left face and 30 px on the right. Adjacent octagon faces differ by
+  45 deg, so `cos t / cos(45 - t) = 35/30` gives the left face's obliquity **12.0 deg** (right 33.0);
+- the pitch in METRES needs no photo geometry: the plan puts `FACE_LENGTH - 2*RESSAUT_ALONG` = **11.41 m** of
+  straight cornice between a face's two ressauts, and the left face's run holds **11** periods.
+  -> modillion pitch **1.037 m**, projected scale 33.7 px/m, **vertical scale 34.5 px/m**.
+  (N = 12 instead of 11 would give 0.951 m and 37.6 px/m; every conclusion below survives either.)
+
+| sub-course (left face) | rows | px | photo | model | delta | period photo / model |
+|---|---|---|---|---|---|---|
+| corona (crown -> drip edge) | 838-846 | 8 | **0.232 m** | 0.226 m apparent | **+2.6 %** | — |
+| egg-and-dart band | 846-857 | 11 | **0.319 m** | 0.260 m | +22.7 % | **0.474 / 0.470 m  +0.9 %** |
+| **Greek-key band** | 857-877 | 20 | **0.580 m** | **not modelled** | — | meander unit 1.43-1.48 m (weak, ac 0.10-0.28) |
+| modillion band | 877-899 | 22 | **0.638 m** | 0.450 m | **+41.7 %** | **1.037 / 1.060 m  -2.1 %** |
+| crown -> modillion bottom | 838-899 | 61 | **1.769 m** | 0.848 m apparent | **+108 %** | — |
+
+"model apparent" is the model's own edge pair projected the same way the photograph projects it,
+`s * (dz - tan(elev) * dd)` with tan(elev) = 0.08 (ref 085 is a low, distant view; the correction is <= 0.03 m
+on every row here, unlike ref 169's 0.329). +-1 px of edge reading is +-0.029 m.
+
+**Verdict on the three: two confirmed, one not, and a whole course is missing.**
+1. **Corona 0.25 m over the 1.66 m oversail: CONFIRMED** (+2.6 %, inside 10 %).
+2. **Eggs at 0.47 m pitch: CONFIRMED** (0.474 m, +0.9 %). Their band is 0.32 m tall against the modelled
+   0.26 m (2 x the 0.13 m semi-axis), +23 % — outside 10 %, but it is a 1 px call.
+3. **Modillions 1.06 m pitch: CONFIRMED** (-2.1 %). **Modillion height 0.45 m: NOT confirmed — the photo reads
+   0.638 m, +42 %.** The 0.86 m depth cannot be measured in this view at all: the modillion's projection is
+   inside the corona's shadow at 34 px/m.
+4. **The cornice carries a 0.58 m Greek-key band between the corona soffit and the modillions that the model
+   does not have** (`arch_build` puts a plain 0.15 m ovolo there). This is the band `docs/reference_sheet.md`
+   line 255 already noted from 085 and 017 — "modillion cornice with a Greek-key band". Ref 017 shows the same
+   four courses in the same order (corona / leaf / fret / blocks), 57 px from drip to modillion bottom against
+   085's 53 px, so the reading is not a one-photograph artefact.
+
+**Consequence for the 1.37 m cornice — and why NOTHING was built.** The brief's condition was "no build unless
+all three stay inside 1.37 and the row registration holds". They do not: corona 0.25 + eggs 0.32 + fret 0.58 +
+modillions 0.64 = **1.79 m** from the crown to the modillion bottom (the photo measures 1.77), *before* any
+dentil course. The r6 cornice is 1.37 m, so the sub-courses overflow it by **0.42 m** with the dentils dropped
+and by **0.73 m** if the 0.31 m dentil band is kept (085 cannot see under the modillions: rows 899-925 are flat
+deep shadow, lum 23-35, sd 6). Three ways out, for the lead — all of them move something r6 anchored:
+
+| option | what moves | cost, in ref 169 rows at 13.42 px/m |
+|---|---|---|
+| A. hold the entablature total 3.22 and both r6 anchors | `CORNICE_H` 1.37 -> 1.79, so `ARCHITRAVE_H + FRIEZE_H` 1.85 -> 1.43 (e.g. 0.82 / 0.61) | 0 rows, but **FRIEZE_H 0.81 -> 0.61 forces ORN to refit the rinceau a third time** (it refit to 0.81 in r6) |
+| B. hold `ATTIC_Z0` 29.18 and the frieze | `CORNICE_H` -> 1.79, `ENTABLATURE_Z0` 25.96 -> 25.54, capital top down 0.42 | architrave bottom breaks by **5.6 rows** (r6 fitted it to 0.3) |
+| C. hold `ENTABLATURE_Z0` 25.96 and the frieze | `CORNICE_H` -> 1.79, `ATTIC_Z0` 29.18 -> 29.60, `ATTIC_H` 9.12 -> 8.70 | corona soffit breaks by **5.6 rows**; the archivolt socket, the attic sockets and ORN's 5.27 m panel field all move |
+
+My recommendation is **A**: it is the only one that keeps every landmark r6 fitted on ref 169, and the cornice
+is where the photograph disagrees. The price is one ORN rebuild of the rinceau (a one-constant change in
+`orn_build`, which is already parameterised on `arch_params.FRIEZE_H`) and a check that a 0.61 m frieze still
+reads at the hero. Not my call: `CORNICE_H` moves ORN's band, so it goes to the lead.
+
+### Round 7 review corrections (lead, 2026-09-09; docs/reviews/arch_r7_review.md)
+- Sub-course scale: N = 11 modillion periods over the 11.41 m ressaut run is an ASSUMPTION, not a measurement (`arch_r7_cornice.py`
+  derives the scale from it, so the pitch check is circular); at N = 12 the modillion pitch is -10.3 % (outside the 10 % band) while the
+  fit-in-1.37 verdict still fails (1.62 m). The de-slant slopes were hand-entered (`slope_of()` is unused).
+- Ref 062 station: az is unidentifiable; az 17 at D 83.4 (chi2 7.80 vs 7.69) is on LAND per the script's own land_check, so the station IS
+  reproducible from land; only the az-37 solution is in the water. The attic-base +0.83 m residual stands either way.
+- Archivolt frame: +Y = wall normal, +Z = radial (band-width direction); ornament's proposal said +Y radial. Ornament must build the panel
+  with the band along local +Z (docs/sockets.md is the contract). Carries 2, 5, 7, 8, 9 to round 8.

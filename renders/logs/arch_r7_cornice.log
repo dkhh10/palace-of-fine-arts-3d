@@ -1,0 +1,27 @@
+# ref 085 (1920x1280), rotunda entablature cornice, both faces of the near vertex.
+# 1. horizontal periods (de-slanted band, high-passed, autocorrelated)
+  face L corona     rows 838-846:  26 px (ac +0.10)   32 px (ac +0.05)   42 px (ac +0.03)
+  face L egg        rows 846-857:  16 px (ac +0.41)
+  face L fret       rows 857-877:  48 px (ac +0.10)   45 px (ac +0.09)   43 px (ac +0.07)
+  face L modillion  rows 877-899:  35 px (ac +0.88)
+  face R corona     rows 832-841:  37 px (ac +0.06)   58 px (ac +0.02)   47 px (ac +0.00)
+  face R egg        rows 844-855:  14 px (ac +0.22)   21 px (ac -0.04)
+  face R fret       rows 855-874:  50 px (ac +0.28)   30 px (ac -0.01)   37 px (ac -0.13)
+  face R modillion  rows 874-896:  30 px (ac +0.81)
+
+# 2. scale, with no camera fit
+  modillion period 35 px (left face) / 30 px (right) -> ratio 1.167 = cos t / cos(45 - t)
+     -> left face obliquity 12.0 deg, right 33.0 deg
+  the plan puts 11.41 m of straight cornice between a face's two ressauts; the left face's run holds 11.0 periods at the scale below, i.e. N = 11 gaps
+     N = 11 -> modillion pitch 1.037 m, projected scale 33.7 px/m, vertical scale 34.5 px/m
+     N = 12 -> modillion pitch 0.951 m, projected scale 36.8 px/m, vertical scale 37.6 px/m
+
+# 3. sub-courses (left face; heights / s_vert = 34.5, periods / s_proj = 33.7 px/m)
+  course            rows   px   photo m   model m    delta   period photo / model
+  corona      838-846      8     0.232     0.226    +2.6 %
+  egg         846-857     11     0.319     0.260   +22.7 %   0.474 / 0.470 m  +0.9 %
+  fret        857-877     20     0.580        -- NOT MODELLED
+  modillion   877-899     22     0.638     0.450   +41.7 %   1.037 / 1.060 m  -2.1 %
+  TOTAL       838-899     61     1.769     0.848  +108.5 %   (crown to modillion bottom; CORNICE_H is 1.37 m)
+
+wrote renders/qa_comparisons/arch_r7_cornice_085.png

@@ -38,6 +38,7 @@ REQUIRED_PROPS = {
     "keystone":          ("subtype",),
     "finial":            ("subtype",),
     "drum_band":         ("run_length", "radius"),
+    "archivolt_run":     ("run_length", "band_width", "arc_center", "arc_radius", "arc_angle", "host", "subtype"),
 }
 if want == "props":
     types = {}
@@ -56,6 +57,89 @@ if want == "props":
               f"{'none  ' + str(sample) if not miss else 'MISSING ' + str(miss)}")
     print(f"[socket_check] {len(types)} types, {sum(len(v) for v in types.values())} sockets; "
           f"{'ALL OK' if not bad else str(bad) + ' TYPES INCOMPLETE'}")
+    raise SystemExit(1 if bad else 0)
+
+# ----------------------------------------------------------------------------- archivolt_run frame contract
+# (architecture round 7, ORN r6 proposal section 4.) An `archivolt_run` socket is a run bent into the vertical
+# plane of one rotunda arch:  origin at a springing ON the archivolt's flat crown face, +X = the arc tangent
+# there (vertical, a semicircular arch springs straight up), +Y = the wall's outward face normal, +Z = +X x +Y =
+# radially outward from the arc centre (the band's width direction, the analogue of "up" on a frieze_run).
+# Nothing here trusts the builder: the face normal is rebuilt from arch_params' octagon, the crown-face plane
+# from the ARCHIVOLT MESH's own extent along that normal, and every point of the stamped arc parametrisation is
+# tested against the mesh surface with closest_point_on_mesh.
+if want == "archivolt_run":
+    import arch_params as P
+    bad = 0
+    dg = bpy.context.evaluated_depsgraph_get()
+    print(f"{'socket':24s} {'face':>4s} {'+Y.n':>6s} {'+X.z':>6s} {'+Z.rad':>7s} {'orig-mesh':>10s} "
+          f"{'plane d':>8s} {'mesh d':>7s} {'R':>6s} {'arc len':>8s} {'arc worst':>10s} {'mid worst':>10s} {'nout':>5s} result")
+    for o in socks:
+        M = world_matrix(o)
+        p = M.translation
+        x = (M.to_3x3() @ Vector((1.0, 0.0, 0.0))).normalized()
+        y = (M.to_3x3() @ Vector((0.0, 1.0, 0.0))).normalized()
+        z = (M.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+        # which of the 8 octagon faces is this, from arch_params alone
+        az = math.degrees(math.atan2(p.y, -p.x)) % 360.0
+        k = min(range(8), key=lambda i: abs((az - (P.FACE_AZ0 + 45.0 * i) + 180.0) % 360.0 - 180.0))
+        nf = P.az_dir(P.FACE_AZ0 + 45.0 * k)
+        nf = Vector((nf[0], nf[1], 0.0))
+        obj = bpy.data.objects.get(f"ARCH_rotunda_archivolt_{k:02d}")
+        if obj is None:
+            print(f"  {o.name:22s}  no ARCH_rotunda_archivolt_{k:02d} mesh")
+            bad += 1
+            continue
+        Wm, Wi = obj.matrix_world, obj.matrix_world.inverted()
+        # the crown-face plane, measured on the mesh: the farthest the archivolt reaches along the face normal
+        mesh_d = max((Wm @ v.co).dot(nf) for v in obj.data.vertices)
+        plane_d = p.dot(nf)                                    # where the socket origin sits along that normal
+        ev = obj.evaluated_get(dg)                             # with the 0.03 m arris bevel, for the mid-band test
+
+        def surf(pt, o_=obj, bevelled=False):
+            """distance in mm from a world point to the archivolt surface (nominal swept mesh, or bevelled)."""
+            t = ev if bevelled else o_
+            ok, loc, nrm, _ = t.closest_point_on_mesh(Wi @ Vector(pt))
+            return (1000.0 * ((Wm @ loc) - Vector(pt)).length if ok else float("inf"),
+                    (Wm.to_3x3() @ nrm).normalized())
+        d_orig, _ = surf(p)
+        R = float(o.get("arc_radius", 0.0))
+        ac = o.get("arc_center", None)
+        ac = Vector(tuple(ac)) if ac is not None else Vector((0.0, 0.0, 0.0))
+        ang = float(o.get("arc_angle", 0.0))
+        bw = float(o.get("band_width", 0.0))
+        # every point of the stamped parametrisation must be ON the band: P(phi) = C + R*(cos phi * +Z + sin phi * +X)
+        worst_arc, worst_mid, faces_out = 0.0, 0.0, 0
+        for i in range(13):
+            phi = math.radians(ang * i / 12.0)
+            rad = z * math.cos(phi) + x * math.sin(phi)
+            worst_arc = max(worst_arc, surf(ac + rad * R)[0])
+            dm, nm = surf(ac + rad * (R + bw / 2.0), bevelled=True)
+            worst_mid = max(worst_mid, dm)
+            # The band's MID-line is the face the ornament will sit on, and it must look along +Y for the whole
+            # run. The two ENDPOINTS (i = 0, 12) sit exactly on the sweep's end caps, where closest_point_on_mesh
+            # may return the cap's normal (+-tangent) instead of the band's, so only the 11 interior samples vote.
+            faces_out += (0 < i < 12 and nm.dot(y) > 0.99)
+        checks = {"+Y=face normal": y.dot(nf) > 0.999, "+X=tangent up": x.z > 0.999,
+                  "+Z=radial out": z.dot(Vector((0.0, 0.0, 1.0)).cross(nf)) > 0.999,
+                  "origin on mesh": d_orig < 5.0, "band faces +Y": faces_out == 11,
+                  "origin on crown plane": abs(plane_d - mesh_d) < 0.005,
+                  "arc centre at springing": abs(ac.z - P.ARCH_SPRING_Z) < 1e-4,
+                  "arc angle 180": abs(ang - 180.0) < 1e-6,
+                  "run_length = pi R": abs(float(o.get("run_length", 0.0)) - math.pi * R) < 1e-4,
+                  "arc on band": worst_arc < 5.0, "mid-line on band": worst_mid < 5.0}
+        ok = all(checks.values())
+        bad += not ok
+        if not ok:
+            print(f"    FAILED: {', '.join(k for k, v in checks.items() if not v)}")
+        print(f"  {o.name:22s} {k:4d} {y.dot(nf):6.3f} {x.z:6.3f} "
+              f"{z.dot(Vector((0.0, 0.0, 1.0)).cross(nf)):7.3f} {d_orig:8.2f}mm {plane_d:8.3f} {mesh_d:7.3f} "
+              f"{R:6.3f} {math.pi * R:8.3f} {worst_arc:8.2f}mm {worst_mid:8.2f}mm {faces_out:5d}  {'OK' if ok else 'WRONG'}")
+    print("[socket_check] archivolt_run contract: origin at a springing on the archivolt crown face (< 5 mm from "
+          "the mesh, on an outward-facing face), +Y = the octagon face normal rebuilt from arch_params, +X = the "
+          "arc tangent (world up), +Z = +X x +Y = radially outward; the crown-face plane distance matches the "
+          "mesh's own extent along +Y to 5 mm; the 13 sampled points of the stamped arc (and of the band's "
+          "mid-line, against the bevelled evaluated mesh) all lie on the band.")
+    print(f"[socket_check] {'ALL OK' if not bad else str(bad) + ' WRONG'}")
     raise SystemExit(1 if bad else 0)
 
 # ----------------------------------------------------------------------------- frieze_run frame contract

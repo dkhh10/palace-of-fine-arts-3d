@@ -56,17 +56,20 @@ PHOTO_WIDTH_PX = (233.0, 1900.0)   # outermost podium/planter masonry, left and 
 PHOTO_ATTIC_PX = (395.0, 1660.0)   # outermost attic corner-block masonry against the sky
 
 
-def rows(D, lens, pitch_deg, h):
-    """Predicted rows for LANDMARKS at a station D metres from the axis on the near face's normal."""
-    cam = station(D, lens, pitch_deg, h)
+def rows(D, lens, pitch_deg, h, az=None):
+    """Predicted rows for LANDMARKS at a station D metres from the axis, at ground azimuth `az`
+    (default: on the near face's normal). The landmarks themselves never move: they sit on the near
+    FACE's centre line, so only the camera's azimuth is free."""
+    cam = station(D, lens, pitch_deg, h, az=az)
     n = np.array(P.az_dir(NEAR_FACE_AZ))
     pts = np.array([[n[0] * r, n[1] * r, z] for _, z, r, _, _ in LANDMARKS])
     return cam.project(pts)[:, 1]
 
 
-def station(D, lens, pitch_deg, h, res=RES):
-    """arch_domecheck.Cam for the fitted station (camera on the near face's normal, looking at the axis)."""
-    x, y = P.az_to_xy(NEAR_FACE_AZ, D)
+def station(D, lens, pitch_deg, h, res=RES, az=None):
+    """arch_domecheck.Cam for the fitted station (camera at ground azimuth `az`, default the near face's
+    normal, looking at the rotunda axis)."""
+    x, y = P.az_to_xy(NEAR_FACE_AZ if az is None else az, D)
     tz = h + D * math.tan(math.radians(pitch_deg))
     return DC.Cam(dict(loc=(x, y, h), target=(0.0, 0.0, tz), lens=lens, shift_y=0.0, res=res))
 
@@ -99,6 +102,61 @@ def fit(h=1.55, start=(70.0, 26.0, 12.0)):
     return q, cost(q, h)
 
 
+# ---------------------------------------------------------------- 4-parameter fit: az as a real unknown
+# (Architecture round 7, for QA's cam02 re-station on the r6 stack.) The 3-parameter fit above pins the camera
+# on the near face's normal and reads the azimuth off the frame-centre offset afterwards, which mixes the
+# STATION (where the photographer stood) with the FRAMING (where the camera pointed). Here az is fitted, with
+# one extra observable to pay for it: the on-screen width of the attic ring, which is framing-invariant and is
+# the only measurement that changes with azimuth alone (the ring is an octagon, so its projected width runs
+# between 2*apothem and 2*circumradius, ~8 %, as the station swings from face-on to vertex-on).
+# 5 observations (4 landmark rows + the attic width), 4 unknowns -> 1 degree of freedom.
+ATTIC_WIDTH_SIGMA = 15.0        # px; the corner-block masonry edge against the sky is ~1 block of 2 blurry
+_ATTIC_RING = None
+
+
+def attic_width(D, lens, pitch, h, az):
+    """On-screen width of the attic ring only -- the one term of `predictions` the fit needs, without
+    projecting the podium point cloud (which made the 4-parameter search minutes instead of seconds)."""
+    global _ATTIC_RING
+    if _ATTIC_RING is None:
+        _ATTIC_RING = DC.attic_top_ring()
+    at = station(D, lens, pitch, h, az=az).project(_ATTIC_RING)
+    at = at[np.isfinite(at[:, 0])]
+    return float(at[:, 0].max() - at[:, 0].min()) if len(at) else float("nan")
+
+
+def cost4(q, h):
+    D, lens, pitch, az = q
+    if not (25 < D < 400 and 8 < lens < 200 and -5 < pitch < 45 and NEAR_FACE_AZ - 22.5 < az < NEAR_FACE_AZ + 22.5):
+        return 1e9
+    r = rows(D, lens, pitch, h, az)
+    if not np.isfinite(r).all():
+        return 1e9
+    obs = np.array([m[3] for m in LANDMARKS])
+    sig = np.array([m[4] for m in LANDMARKS])
+    c = float(np.sum(((r - obs) / sig) ** 2))
+    w = attic_width(D, lens, pitch, h, az)      # NOT predictions(): that projects the whole podium cloud
+    if not np.isfinite(w):
+        return 1e9
+    return c + ((w - (PHOTO_ATTIC_PX[1] - PHOTO_ATTIC_PX[0])) / ATTIC_WIDTH_SIGMA) ** 2
+
+
+def fit4(h=1.55, start=(90.0, 40.0, 13.0, NEAR_FACE_AZ)):
+    q = list(start)
+    steps = [20.0, 8.0, 6.0, 8.0]
+    while max(steps) > 1e-4:
+        moved = False
+        for i in range(4):
+            for s_ in (steps[i], -steps[i]):
+                t = list(q)
+                t[i] += s_
+                if cost4(t, h) < cost4(q, h) - 1e-9:
+                    q, moved = t, True
+        if not moved:
+            steps = [s_ * 0.5 for s_ in steps]
+    return q, cost4(q, h)
+
+
 # ---------------------------------------------------------------- podium (for the base row and the width)
 def podium_points(nseg=60):
     """Outer face of the 8 rostra lobes (r = PODIUM_LOBE_R, +-PODIUM_LOBE_HALF_ANGLE about each pier azimuth),
@@ -119,8 +177,8 @@ def podium_points(nseg=60):
     return np.array(pts)
 
 
-def predictions(D, lens, pitch, h):
-    cam = station(D, lens, pitch, h)
+def predictions(D, lens, pitch, h, az=None):
+    cam = station(D, lens, pitch, h, az=az)
     pod = cam.project(podium_points())
     ok = np.isfinite(pod[:, 0])
     pod = pod[ok]
@@ -314,6 +372,77 @@ if __name__ == "__main__":
               f"{ct[f'apex_needed_at_{D:.0f}']:.1f} m (now {P.DOME_APEX_Z + 0.6:.1f}) OR the attic top at "
               f"{ct[f'attic_needed_at_{D:.0f}']:.1f} m (now {P.ATTIC_Z1:.1f})")
     print("  The podium/rostra radius does not enter this inequality at all.")
+
+    # ---- round 7: az as a real unknown (see cost4), reported for QA's cam02 re-station
+    q4, c4 = fit4(a.eye)
+    D4, lens4, pitch4, az4 = q4
+    p4 = predictions(D4, lens4, pitch4, a.eye, az4)
+    x4, y4 = P.az_to_xy(az4, D4)
+    print(f"\n# ref 062, az fitted as a 4th unknown (4 landmark rows + the attic-ring width, 5 obs / 4 unknowns)")
+    print(f"  az = {az4:.1f} deg   D = {D4:.1f} m   lens = {lens4:.1f} mm   pitch = +{pitch4:.2f} deg   "
+          f"chi2 = {c4:.2f}")
+    print(f"  station (x, y, z) = ({x4:.1f}, {y4:.1f}, {a.eye:.2f}),  target (0, 0, "
+          f"{a.eye + D4 * math.tan(math.radians(pitch4)):.1f})")
+    pr4 = rows(D4, lens4, pitch4, a.eye, az4)
+    f_px = RES[0] * lens4 / 36.0
+    print("  landmark                     z      obs     fit    d(px)   d(%H)    d(m)   (m at the landmark's own depth)")
+    for (lab, z, r, obs, sig), py in zip(LANDMARKS, pr4):
+        print(f"  {lab:26s} {z:6.2f} {obs:7.1f} {py:7.1f} {py - obs:7.1f} {100*(py-obs)/RES[1]:7.2f} "
+              f"{(py - obs) * (D4 - r) / f_px:7.2f}")
+    print(f"  attic-ring width {p4['attic_width']:.0f} px vs measured {PHOTO_ATTIC_PX[1]-PHOTO_ATTIC_PX[0]:.0f} "
+          f"({100*(p4['attic_width']-(PHOTO_ATTIC_PX[1]-PHOTO_ATTIC_PX[0]))/(PHOTO_ATTIC_PX[1]-PHOTO_ATTIC_PX[0]):+.1f} %)")
+    print(f"  PREDICTED (not fitted) podium base row {p4['base_row']:.0f} vs measured {PODIUM_BASE_ROW:.0f} "
+          f"({(p4['base_row']-PODIUM_BASE_ROW)/RES[1]*100:+.2f} %H)")
+    print("  NOTE: the observables are SYMMETRIC about the face normal (the landmarks sit on the near face's")
+    print("  centre line and the attic octagon's projected width varies only 0.3 % over +-20 deg), so az is not")
+    print("  identifiable from them: the scan below is symmetric and its minimum is the face normal by symmetry.")
+    print("  az \\ chi2 scan (D, lens, pitch re-fitted at each az):")
+    print("    az    D     lens  pitch   chi2   rows chi2  attic w  base row")
+    for az in np.arange(NEAR_FACE_AZ - 20.0, NEAR_FACE_AZ + 20.1, 5.0):
+        qq = list(fit4(a.eye, start=(D4, lens4, pitch4, float(az))))[0]
+        qq[3] = float(az)
+        # re-fit the other three at this fixed az
+        best, bc = [qq[0], qq[1], qq[2]], 1e18
+        steps = [8.0, 4.0, 3.0]
+        while max(steps) > 1e-4:
+            moved = False
+            for i in range(3):
+                for s_ in (steps[i], -steps[i]):
+                    t = list(best); t[i] += s_
+                    if cost4(t + [float(az)], a.eye) < cost4(best + [float(az)], a.eye) - 1e-9:
+                        best, moved = t, True
+            if not moved:
+                steps = [s_ * 0.5 for s_ in steps]
+        cc = cost4(best + [float(az)], a.eye)
+        rr = rows(best[0], best[1], best[2], a.eye, float(az))
+        obs = np.array([m[3] for m in LANDMARKS]); sig = np.array([m[4] for m in LANDMARKS])
+        crow = float(np.sum(((rr - obs) / sig) ** 2))
+        pp = predictions(best[0], best[1], best[2], a.eye, float(az))
+        print(f"  {az:6.1f} {best[0]:6.1f} {best[1]:6.1f} {best[2]:6.2f} {cc:7.2f} {crow:9.2f} "
+              f"{pp['attic_width']:8.0f} {pp['base_row']:9.0f}")
+
+    # The fitted D lands in the lagoon (see the land table below), so QA has to know what the photo costs
+    # at the nearest station a photographer can actually stand on. Re-fit lens + pitch at fixed D, az 37.
+    print("  what it costs to move the station onto land (az 37, lens + pitch re-fitted at each fixed D):")
+    print("       D   lens  pitch  rows chi2   worst row     attic w  base row")
+    obsv = np.array([m[3] for m in LANDMARKS]); sigv = np.array([m[4] for m in LANDMARKS])
+    for Dfix in (88.6, 96.0, 104.0, 112.0):
+        best, steps = [lens4, pitch4], [4.0, 3.0]
+        rc = lambda t: float(np.sum(((rows(Dfix, t[0], t[1], a.eye, NEAR_FACE_AZ) - obsv) / sigv) ** 2))
+        while max(steps) > 1e-4:
+            moved = False
+            for i in range(2):
+                for s_ in (steps[i], -steps[i]):
+                    t = list(best); t[i] += s_
+                    if rc(t) < rc(best) - 1e-9:
+                        best, moved = t, True
+            if not moved:
+                steps = [s_ * 0.5 for s_ in steps]
+        rr = rows(Dfix, best[0], best[1], a.eye, NEAR_FACE_AZ)
+        pp = predictions(Dfix, best[0], best[1], a.eye, NEAR_FACE_AZ)
+        w = np.argmax(np.abs(rr - obsv))
+        print(f"  {Dfix:6.1f} {best[0]:6.1f} {best[1]:6.2f} {rc(best):10.2f}  {LANDMARKS[w][0][:14]:14s}"
+              f"{rr[w]-obsv[w]:+6.1f}px {pp['attic_width']:8.0f} {pp['base_row']:9.0f}")
 
     lc = land_check()
     if lc:
