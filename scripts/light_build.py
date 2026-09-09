@@ -318,22 +318,44 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
 # reflection and off the column highlights (QA-03-7 and QA-04-5 are both glossy-side defects).
 SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irradiance, so SHADE_FILL can
                                    # be quoted as a fraction of the real sun in the log and the notes
-# SHIPPED AT energy = 0.0, i.e. BUILT, MEASURED AND OFF. The full cost tables are in docs/lighting_notes.md 20.4:
-# at elevation 16 deg, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 (out of QA's 0.22-0.32 window, the one
-# number round 10 landed exactly) and the columns 1.29x -> 1.37x of ref (QA-04-5 is already a major); at elevation
-# 4 deg, 8 W/m2 still costs 0.194 and 1.35x, because the near-water box is a GRAZING reflection of the horizon and a
-# near-horizon fill sits exactly in the band it mirrors. In both configurations the shaded attic ends up WARMER
-# (43.1 -> 44.4 / 44.3) rather than cooler, and it did not need luminance in the first place (112.2 against ref
-# 169's 115.0, i.e. 0.98x). So the rig buys a number that was already passing, at the price of two that were not.
-# It stays in the file, wired and documented, so the lead can switch it on with one number if the art direction
-# changes; `energy` is that number and 6 W/m2 is the largest value with an acceptable sunlit cost.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, angle_deg=55.0, specular=0.10,
-                  color=(0.42, 0.62, 1.00),   # clear-sky blue, normalised to max 1; the cool half of the hemisphere
-                  lamps=[dict(az=300.0, el=16.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
-                         dict(az=205.0, el=16.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
-                         dict(az=25.0, el=20.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
-                  note="QA-04-2 sky fill on the anti-sun hemisphere: the cool share of the sky dome that a "
-                       "0.80-strength sky under a 7.4 deg sun cannot put on shaded stone")
+# ROUND 13 (QA-05-1, the EEVEE half). The rig stays OFF in Cycles -- `energy` is still 0.0 and the lamps are
+# `hide_render` there, so Cycles is untouched by construction and every round-10/11 cost table below still stands.
+# It is switched ON for EEVEE ONLY, through `energy_eevee`, because Eevee cannot reproduce the round-12 shade any
+# other way. Measured on the round-13 master (9706 objects), hero 1920x1080, Eevee `apply_preview_eevee` against
+# the CYCLES frame of the same rig (shaded attic 114.6 / hue 30.9 / sat 0.375):
+#
+#   Eevee lever                                   shaded attic lum / hue / sat   near water lum vs Cycles
+#   nothing (round 12 as shipped)                      93.3 / 38.2 / 0.650            +19.6 %
+#   light-probe bake taken with the diffuse world      93.3 / 38.2 / 0.650            +19.6 %
+#   probe caches FREED entirely                        93.3 / 38.0 / 0.632            +19.8 %
+#   SKY_DIFFUSE_BOOST 2.5 -> 7.0 (x2.8)                96.0 / 37.7 / 0.606            +70.2 %
+#   fast GI off                                       114.6 / 44.6 / 0.740            +31.1 %
+#   fill 16 W/m2, the round-11 colour, el 16           112.9 / 41.2 / 0.554            +29.9 %
+#   fill 55 W/m2, colour (0.14,0.19,1.00), el 16      116.1 / 35.2 / 0.401            +33.6 %
+#   fill 55 W/m2, colour (0.14,0.19,1.00), el 5       119.3 / 35.0 / 0.381            +20.2 %   <- SHIPPED
+#
+# Two things are being fixed and they need two different properties of the lamp:
+#  1. LEVEL. In Eevee the box is lit by the screen-traced horizon scan, not by the world: 2.8x the whole diffuse
+#     sky moves it 2.7 lum while it moves the lagoon 50 points, and freeing the baked volumes moves it 1.8 lum.
+#     Only a directional lamp reaches it.
+#  2. COLOUR. The shaded stone's blue reflectance is ~0.13 of its red (measured from the 16 W/m2 case: the same
+#     lamp radiance returns 0.0578 of linear red and 0.0184 of linear blue), so the round-11 colour (0.42,0.62,1.00)
+#     lands 16 display units of red and 19 of blue where the gap needs 17 and 43. The colour is therefore
+#     re-derived per channel from that reflectance, which is why it is nearly a pure blue.
+# ELEVATION 16 -> 5 deg is what makes it cheap: a vertical shaded face keeps cos(5)/cos(16) = 1.04 of the fill
+# while the lagoon and the plaza keep sin(5)/sin(16) = 0.25, and the measured cost on the near-water box falls from
+# +33.6 % to +20.2 %, which is the +19.6 % Eevee already had before any fill. `specular` 0.10 -> 0.00 keeps a
+# 55 deg disc out of the water's reflection and off the column highlights.
+# The full round-10/11 cost tables for switching it on in CYCLES are in docs/lighting_notes.md 20.4 and still apply:
+# at el 16, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 and the columns 1.29x -> 1.37x of ref. That is why
+# `energy` (the Cycles number) stays 0.0 and this is an Eevee-only rig on the EEVEE_VAULT pattern.
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
+                  color=(0.14, 0.19, 1.00),   # re-derived from the stone's own blue/red reflectance (see above)
+                  lamps=[dict(az=300.0, el=5.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
+                         dict(az=205.0, el=5.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
+                         dict(az=25.0, el=5.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
+                  note="QA-05-1 Eevee shade fill on the anti-sun hemisphere: the blue the round-12 diffuse sky "
+                       "puts on shaded stone in Cycles and that Eevee's screen-traced GI cannot deliver")
 
 COLLECTION = "LIGHT"
 WORLD_NAME = "WORLD_golden_hour"
@@ -412,21 +434,27 @@ def build_fill(coll):
     return obj
 
 
-def build_shade_fill(coll, energy=None):
-    """QA-04-2: wide-angle cool sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
-    Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory."""
+def build_shade_fill(coll, energy=None, energy_eevee=None):
+    """QA-04-2 / QA-05-1: wide-angle sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
+    Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory.
+
+    `energy` is the CYCLES irradiance (0.0 as shipped) and `energy_eevee` the EEVEE one. The lamps carry both on
+    `energy_W` / `energy_W_eevee` and `light_presets.apply_shade_for_engine` switches between them, exactly the way
+    `apply_vault_for_engine` switches the vault emitters. With the Cycles energy at 0 the lamps ship `hide_render`,
+    so Cycles never traverses them."""
     S = SHADE_FILL
     e_total = S["energy"] if energy is None else energy
+    e_eevee = S.get("energy_eevee", 0.0) if energy_eevee is None else energy_eevee
     for o in [o for o in bpy.data.objects if o.name.startswith(S["name"])]:
         d = o.data
         bpy.data.objects.remove(o, do_unlink=True)
         if d is not None and d.users == 0:
             bpy.data.lights.remove(d)
-    if e_total <= 0.0:
-        # review fix 4: SHIPPED AT 0. Three SUN lamps at zero energy still cost three shadow maps in Eevee (the QA
-        # previews were already overflowing the shadow pool) and three lights in every Cycles light-tree traversal,
-        # for exactly no light. Build nothing; `energy` alone switches the whole rig on.
-        print(f"[light_build] {S['name']}: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)")
+    if max(e_total, e_eevee) <= 0.0:
+        # r11 review fix 4: at zero in BOTH engines the three SUN lamps still cost three shadow maps in Eevee (the
+        # QA previews were already overflowing the shadow pool) and three lights in every Cycles light-tree
+        # traversal, for exactly no light. Build nothing; either energy switches the rig on.
+        print(f"[light_build] {S['name']}: 0 W/m2 in both engines, no lamps built (see the SHADE_FILL comment)")
         return []
     made = []
     for k, cfg in enumerate(S["lamps"]):
@@ -445,13 +473,16 @@ def build_shade_fill(coll, energy=None):
         common.aim_sun(obj, cfg["az"], cfg["el"])
         obj.visible_camera = False        # a 55 deg sun disc must never be visible in the sky
         obj["azimuth_deg"], obj["elevation_deg"] = cfg["az"], cfg["el"]
-        obj["energy_W"] = light.energy    # the shipped irradiance; the r11 sweep scales from this
+        obj["energy_W"] = light.energy            # the CYCLES irradiance; the r11 sweep scales from this
+        obj["energy_W_eevee"] = e_eevee * cfg["w"]   # round 13: the EEVEE-only irradiance
+        obj.hide_render = e_total <= 0.0          # Cycles must not traverse a lamp it is not allowed to see
         obj["note"] = cfg["note"]
         obj["rig_note"] = S["note"]
         coll.objects.link(obj)
         made.append(obj)
-    print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, {e_total:.2f} W/m2 total "
-          f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun) at "
+    print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, Cycles {e_total:.2f} W/m2 "
+          f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun), Eevee {e_eevee:.2f} W/m2 "
+          f"({e_eevee / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the sun), hidden in render: {e_total <= 0.0}, at "
           f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}")
     return made
 

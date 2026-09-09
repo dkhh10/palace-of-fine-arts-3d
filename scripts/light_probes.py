@@ -203,6 +203,7 @@ def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
         try:
             import light_presets as lp
             lp.apply_vault_for_engine("CYCLES")
+            lp.apply_shade_for_engine("CYCLES")   # round 13: the Eevee shade fill is an engine hack, not real light
             switched = True
             print("[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the "
                   "scene's real indirect light, not the Eevee render-time override")
@@ -236,7 +237,9 @@ def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
         if switched:
             try:
                 import light_presets as lp
-                lp.apply_vault_for_engine("EEVEE" if eng0.endswith("EEVEE") else "CYCLES")
+                rig = "EEVEE" if eng0.endswith("EEVEE") else "CYCLES"
+                lp.apply_vault_for_engine(rig)
+                lp.apply_shade_for_engine(rig)
             except Exception as e:
                 print("[light_probes] could not restore the vault rig:", e)
         print(f"[light_probes] restored: engine {eng0}, world {world0.name if world0 else None}, vault rig "
