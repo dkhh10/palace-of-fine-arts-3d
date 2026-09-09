@@ -299,17 +299,19 @@ PLAN = [
     #   The photo's mass is not on that shore: at 0.61-0.735 with a solid top at y 0.45 it is 120-135 m out - the
     #   grove on the far side of the north embayment, past the north arch - which is 34 m of open water and lawn
     #   nearer the rotunda than QA-02-13's ring.  The five conifers below are solved for their ref frame x at that
-    #   distance (crown half-width 0.033-0.036 of frame, so the union spans 0.640-0.758), with heights raised to
-    #   21-26 m so the mass keeps the photo's apparent height (top y 0.40-0.43).  The three near trees stay on the
+    #   distance (crown half-width 0.038-0.045 of frame, so the union spans 0.628-0.758), with heights raised to
+    #   24-30 m so the mass keeps the photo's apparent height: at 125-135 m a 21-26 m crown topped out at frame
+    #   y 0.41-0.43 against ref 169's 0.385, and 24-30 m puts it back at 0.39-0.40.  The extra height costs the
+    #   band nothing - it is all above the box's top edge (y 0.444).  The three near trees stay on the
     #   peninsula: they are the pale willow and the shore broadleaf ref 169 puts at the water in front of the mass.
-    ("pine", -38.0, -32.0, 21.0, "A cluster core, ref 169 mass x 0.651-0.717 (QA-01-6: clear of cam02's right 40%)"),
+    ("pine", -38.0, -32.0, 28.0, "A cluster core, ref 169 mass x 0.640-0.729 (QA-01-6: clear of cam02's right 40%)"),
     ("redwood", -37.0, -2.0, 16.0, "A young redwood at the north arch (ref 070)"),
-    ("cypress", -42.0, -30.0, 26.0, "A dark mass right of the dome, ref 169 x 0.668-0.740"),
-    ("pine", -45.0, -34.0, 22.0, "A cluster, second crown, ref 169 x 0.679-0.747"),
+    ("cypress", -42.0, -30.0, 30.0, "A dark mass right of the dome, ref 169 x 0.659-0.749"),
+    ("pine", -45.0, -34.0, 24.0, "A cluster, second crown, ref 169 x 0.675-0.751"),
     ("willow", -40.0, 16.0, 9.0, "A pale weeping willow at the water in front of the cluster (ref 169); r8 10 -> 9 m, its crown reached frame x 0.79 where ref 169 is clear colonnade"),
     ("broadleaf", -49.0, 13.0, 9.0, "A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow"),
     ("cypress", -46.0, -29.0, 24.0, "A cluster depth, ref 169 x 0.688-0.758 (mass kept dense)"),
-    ("pine", -35.0, -30.0, 21.0, "A cluster depth, ref 169 x 0.640-0.704"),
+    ("pine", -35.0, -30.0, 28.0, "A cluster depth, ref 169 x 0.628-0.717"),
     # P. peninsula planting band in front of the podium (hero foreground; sheet s6 "low mounded shrubs ... small
     #    trees in the podium planter zone"). Kept off the central bay: all six project to cam01 x 0.21-0.30 or
     #    0.64-0.80 with their crowns below y 0.52, so the rotunda's body and arch stay clear.
