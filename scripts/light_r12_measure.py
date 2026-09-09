@@ -43,6 +43,38 @@ HERO_SHADE_TARGET = dict(hue=29.5, hue_tol=8.0, sat_max=0.55, lum=115.0, lum_tol
 HERO_SUNLIT_TARGET = dict(sat_min=0.50, rb_min=110.0, lum=(178.2, 201.0))
 
 
+# QA-05-5 / QA-04-6 wing bands on the 1920x1080 hero (QA round-05 section (e); labels as QA corrected them:
+# frame-left = SOUTH, frame-right = NORTH). Reference luminances are QA's raw-ref mapping.
+WING_BOXES = {"south_wing": (60, 480, 560, 600), "north_wing": (1360, 480, 1860, 600)}
+WING_REF = {"south_wing": 109.5, "north_wing": 146.5}
+
+
+def measure_wings(path):
+    """The two wing bands, on the same 1920x1080 grid as the hero boxes."""
+    im = Image.open(path).convert("RGB")
+    a = np.asarray(im, dtype=np.float64)
+    if a.shape[1] != 1920 or a.shape[0] != 1080:
+        a = np.asarray(Image.fromarray(a.astype(np.uint8)).resize((1920, 1080), Image.LANCZOS), dtype=np.float64)
+    out = {}
+    for k, (x0, y0, x1, y1) in WING_BOXES.items():
+        out[k] = m10.stats(a[y0:y1, x0:x1])
+    return out
+
+
+def report_wings(m):
+    """QA-05-5's acceptance has TWO panels: >= 82 against the raw-ref mapping (109.5) and >= 103 against the
+    aligned panel (137.2). The north wing must stay inside 0.9-1.1 of 146.5 (QA-04-6's closed half)."""
+    print("  -- QA-05-5 wings (south: >= 82 raw AND >= 103 aligned; north: 0.9-1.1 of 146.5)")
+    for k in WING_BOXES:
+        v, r = m[k], WING_REF[k]
+        if k == "south_wing":
+            ok = f"raw {'PASS' if v['lum'] >= 82.0 else 'FAIL'} / aligned {'PASS' if v['lum'] >= 103.0 else 'FAIL'}"
+        else:
+            ok = "PASS" if 0.9 <= v["lum"] / r <= 1.1 else "FAIL"
+        print(f"     {k:11s} lum {v['lum']:6.1f} hue {v['hue']:5.1f} sat {v['sat']:.3f}"
+              f"   ref {r:5.1f}   ratio {v['lum']/r:.2f}  {ok}")
+
+
 def measure_cam03(path):
     im = Image.open(path).convert("RGB")
     if im.size != CAM03_RES:
@@ -158,7 +190,9 @@ if __name__ == "__main__":
     for p in a.hero:
         m = m10.measure(p)
         report_hero(p, m)
-        allm["hero:" + Path(p).name] = m
+        w = measure_wings(p)
+        report_wings(w)
+        allm["hero:" + Path(p).name] = dict(m, wings=w)
     for p in a.cam04:
         m = m11.measure_cam04(p)
         q = quarter_ratio(p)
