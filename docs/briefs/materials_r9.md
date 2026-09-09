@@ -22,6 +22,11 @@ C. QA-07-1, materials' half: whatever lighting r15 reports as the frontier on th
    cam05 band lum 70-117 with sat >= 0.24 held; the review's carry 4 (camera-depth ramps hit cam05/cam06 at full slope) is the likely cause of
    cam05's 1.38x. Carry 5 (ramps pump on the flythrough) — a world-space term if it costs one knob, else document it for Phase 5.
 D. QA-07-9 minor: coffer rim sat 0.38-0.50 with the field held; one Cycles cam04 (carry 7).
+F. Added after LIGHT r15 (docs/status.md "LIGHT r15 reported"): (i) the lagoon's residual is 9.4 deg of hue on the near-water box (107.7 / hue 209.4
+   vs ref 105.4 / 190): ref 169's water is ~18 deg greener than the sky it mirrors, so the body colour of MAT_water_lagoon is the knob, not the
+   level; (ii) QA-07-7: the hero shaded attic sits at 136.4 (window 103.5-126.5) with the fill nearly off; lighting measured the shaded
+   albedo ~12 % hot relative to the sunlit stone on the same wall (shaded went +17.5 % under a rig that moved sunlit +5 %). The projection's
+   ratio map must not add to it: land the shaded attic 1110 225 1150 260 in 103.5-126.5 at hue 23.5-35.5 / sat <= 0.50 through the albedo.
 E. One Eevee hero crop (carry 6): the projected albedo and the water in Eevee, side by side with Cycles.
 Hold list (before / after, nothing leaves its window): every box in A, the shaded attic, cam05 lagoon sat, cam06 lagoon Cycles level.
 Deliverables: scripts/mat_projection.py + assets/textures/projection/ (one 4K ratio map + one 4K mask pack, licence line in docs/reference_sheet.md),

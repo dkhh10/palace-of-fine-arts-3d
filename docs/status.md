@@ -432,3 +432,7 @@ In flight: LIGHT r15, Phase 5 prep (branch phase5). Next: LIGHT review + merge, 
 ## 2026-09-09 · Phase 5 prep reported (branch phase5, c9afc7f), in review
 scripts/phase5_deliver.sh (checklist steps 2-6 through blender_run.sh, step 5 picks spp/res from step 4's wall time), phase5_hero.py, phase5_flythrough.py, tech_notes "Opening and rendering (Phase 5)". Held on branch until the gate; review docs/reviews/phase5_r1_review.md.
 In flight: LIGHT r15, phase5 review. Next: LIGHT review + merge, ORN capital bake, MAT r9.
+
+## 2026-09-09 · LIGHT r15 reported (aec2d77), in review; ORN capital bake running (lead)
+LIGHT r15: the lagoon flood was LIGHT_shade_fill (3 blue lamps at el 2), not the sky: 3 lamps -> 1 (NNE) + SKY_GLOSSY_BOOST 5.25 -> 4.20; near water 144.7/h228 -> 107.7/h209.4 (level pass, hue 9.4 deg out = materials' body colour), flank 188 -> 145.2/h210 pass, reflection R-B +39.9 pass, sky boxes identical, cam05 band Cycles 108.4 pass; Eevee fast GI OFF: cam03 under-lum-10 18.5 -> 4.6 %, outer row 0.189 pass, cam06 roofs hue 33, Eevee pass 196.4 s. Unresolved: hero shaded attic 136.4 (130.8 with the fill off; the shaded albedo is ~12 % hot vs sunlit -> MAT r9), cam02 pier hue 260 (lead: hero holds, minor). cam02 water box retired (no water at the NNE station).
+Decision: QA-07-7 goes to materials as a shaded-albedo item; QA-07-11 stays minor. Next: LIGHT review + merge, MAT r9 dispatch (brief updated with the hand-offs), lead_build.sh, QA round 8.
