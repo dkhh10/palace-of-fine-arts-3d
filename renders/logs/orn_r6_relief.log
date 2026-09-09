@@ -1,0 +1,32 @@
+00:00.350  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
+[chk] ORN_attic_panel_v1_LOD0: bbox 10.52 x 0.63 x 5.28 m, tris 113414, hits 31200 miss 0
+      depth above back plane: p10 0.027  p50 0.349  p90 0.536  max 0.625
+      frac >=    6 cm proud:  87.1 %
+      frac >=   15 cm proud:  83.1 %
+      frac >=   25 cm proud:  64.0 %
+      frac >=   40 cm proud:  39.4 %
+      frac >=   55 cm proud:   7.9 %
+      N.L (sun 118.5/7.4 on a +Y face): mean 0.764 sd 0.234 rel-sd 0.306 frac dark(<35% of max) 8.1 %
+      occlusion over 4458 samples: sun-blocked   5.4 %   mean sky-openness 0.762  (lower openness = darker recesses in Cycles)
+[chk] ORN_attic_panel_v2_LOD0: bbox 10.51 x 0.56 x 5.29 m, tris 133187, hits 31200 miss 0
+      depth above back plane: p10 0.033  p50 0.314  p90 0.521  max 0.560
+      frac >=    6 cm proud:  87.5 %
+      frac >=   15 cm proud:  79.2 %
+      frac >=   25 cm proud:  58.5 %
+      frac >=   40 cm proud:  26.1 %
+      frac >=   55 cm proud:   0.6 %
+      N.L (sun 118.5/7.4 on a +Y face): mean 0.773 sd 0.226 rel-sd 0.292 frac dark(<35% of max) 7.5 %
+      occlusion over 4458 samples: sun-blocked   4.6 %   mean sky-openness 0.771  (lower openness = darker recesses in Cycles)
+[chk] ORN_attic_panel_v1_LOD1: bbox 10.51 x 0.62 x 5.28 m, tris 24000, hits 27662 miss 3538
+      depth above back plane: p10 0.157  p50 0.358  p90 0.537  max 0.623
+      frac >=    6 cm proud:  98.5 %
+      frac >=   15 cm proud:  91.4 %
+      frac >=   25 cm proud:  71.7 %
+      frac >=   40 cm proud:  43.7 %
+      frac >=   55 cm proud:   8.5 %
+      N.L (sun 118.5/7.4 on a +Y face): mean 0.772 sd 0.208 rel-sd 0.270 frac dark(<35% of max) 6.5 %
+      occlusion over 3949 samples: sun-blocked   2.6 %   mean sky-openness 0.835  (lower openness = darker recesses in Cycles)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 36624 exited rc=0 after 29 s (max 900)
