@@ -482,9 +482,276 @@ convex blobs and its eye/mouth dents (0.03 / 0.09 m) were wiped by `smooth=2` on
 - `scripts/orn_r4_sheet.py` — assembles `orn4_sheet.png` (pure PIL, no Blender).
 - `orn_lib.vertex_cavity()`, `orn_lib.acanthus_leaf(spine=, mid_dip=)`, `finalize_asset(cavity=)`.
 
+## Round 5 (2026-09-09) — rotunda frieze rinceau, attic-panel relief audit, LOD2 budget fix
+
+No renders this round (QA held the GPU). Everything below is measured on meshes and socket empties with
+`scripts/orn_r5_stats.py` (socket census / frieze-run fit / band metrics / LOD tri table / per-instance variation),
+`scripts/orn_r5_reliefcost.py` (deeper-relief cost) and `scripts/orn_relief_check.py`.
+
+### 1. The 24 rotunda frieze sockets, and what belongs on them
+
+`scripts/orn_r5_sockets.py` on `assets/architecture.blend`: the 126 `frieze_run` sockets split cleanly.
+**Read the `host` / `subtype` columns of the next table as LABELS, not as measurements**: on main today ARCH stamps
+neither prop on the 24 rotunda sockets, and `orn_r5_stats.py` substituted `rotunda` / `rinceau` for the missing
+values (ORN r5 review finding 1). The split itself is real — it is the run length and the z that separate the
+groups — but the props arrive with ARCH round 6. See round 5b.
+
+| host | subtype | run_length | n | z | who owns it |
+|---|---|---|---|---|---|
+| rotunda | `rinceau` | **5.913** | 8 | 28.55 | ORN — the ressaut FRONT faces |
+| rotunda | `rinceau` | **2.999** | 16 | 28.55 | ORN — the two ressaut RETURN faces |
+| rotunda | `greek_fret` | 94.3 / 97.3 | 4 | 13.42 | ARCH (colonnade architrave meander) |
+| rostra | `greek_key` | 1.42-6.18 | 50 | 3.70 | ARCH geometry (`ARCH_site_rostra_meander_*`) |
+| planter_box | `greek_key` | 5.18 | 48 | 16.65 | ARCH geometry (`ARCH_colonnade_*_box_*_meander`) |
+
+So the 24 are exactly the ressaut faces, and that is exactly where the reference puts ornament: sheet line 183-184
+(DPR) "angled impost blocks with a rinceau pattern protruding from a **plain frieze**", sheet #13 "frieze … rinceau
+on ressauts, plain between", "Rinceau = scrolling acanthus with rosette bosses". The plain field between the
+ressauts stays plain — which is also what ARCH's r4b measurement of ref 169 requires ("frieze + architrave read as
+ONE plain surface").
+Geometry of one ressaut, derived from the three sockets (`orn_r5_sockets.py`): the returns run 3.00 m from the wall
+at r 22.16 out to r 25.14, the front face is 5.913 m; every run is inset **0.337 m** from the corner arris (solved
+from the two run lines), so each panel has a plain 0.34 m margin at the corners — a real frieze panel, not a wrap.
+
+**The colonnade `frieze_run` asset does NOT fit.** `ORN_greek_key` is a 0.60 m unit on a **0.52 m** band with a
+4.5 cm incised fret; the rotunda band is **0.90 m**. Stretching it 1.73x would give a fret bar 9 cm wide and a band
+that reads as a meander, not a rinceau — wrong ornament for this course. Hence a new asset.
+
+### 2. `ORN_frieze_rinceau` / `ORN_frieze_rinceau_return` (new)
+
+One full-run panel per socket rather than a repeating unit, because `build_master.py` places ONE object per socket
+and has no array step; the two run lengths therefore get their own type. **Deviation from docs/sockets.md logged
+here**: the origin is the **RUN START** (local x = 0 = the socket, geometry to x = run_length), not the footprint
+bottom-centre, because the socket sits at the start of the run. Back face y = 0 = the frieze face, band bottom z = 0.
+
+| asset | length | mismatch vs socket | band | carved field | tris LOD0/1/2 | budget |
+|---|---|---|---|---|---|---|
+| `ORN_frieze_rinceau` v1-v3 | 5.913 m | **0.2 mm** | 0.90 | 0.75 (0.075 margins) | 48000 / 9000 / 900 | 48000/9000/900 |
+| `ORN_frieze_rinceau_return` v1-v3 | 2.999 m | **0.4 mm** | 0.90 | 0.75 | 24000 / 4500 / 450 | 24000/4500/450 |
+
+Band metrics (`orn_r5_stats.py`, ray-cast grid 520 x 100 on LOD1). **SUPERSEDED by round 5b below** — the clearance
+column in this table is wrong (it was computed against a 0.16 m budget that does not exist); the panels were rebuilt:
+
+| variant | coverage of the 0.90 m band | proud above the frieze face p50 / p90 / max | clearance to the architrave crown | lateral shadow at max proud |
+|---|---|---|---|---|
+| rinceau v1 / v2 / v3 | 29.5 / 29.7 / 27.0 % | 69 / 89 / 120 mm · 65 / 88 / 123 · 69 / 86 / 114 | 39.8 / 36.8 / 46.4 mm | 88.9 / 91.2 / 84.1 mm |
+| return v1 / v2 / v3 | 29.1 / 28.3 / 25.6 % | 69 / 89 / 118 · 66 / 89 / 124 · 68 / 86 / 110 mm | 42.1 / 35.7 / 50.4 mm | 87.2 / 92.0 / 81.1 mm |
+
+Why those numbers (**the first sentence is WRONG — corrected in round 5b**): the frieze face is at d 0.34 and the
+architrave crown at ~~d 0.50~~ **d 0.44** (`arch_build.py:156`), so nothing on this band may project more than
+~~0.160~~ **0.100** m; the builder capped at 0.125 m and the measured max was 0.110-0.124 m, i.e. **-10 to -24 mm** of
+clearance, not the +34 to +50 mm claimed here. Fixed in round 5b. At the hero sun (az 118.5 / el
+7.4, face normal az 82, so 36.5 deg off the face) an element standing p metres proud throws `p * tan 36.5 = 0.74 p`
+of **lateral** shadow, so the p90 relief writes an 66 mm shadow line beside every scroll: that, not a cast shadow
+from above (0.16 p vertically), is what makes the band read. The ornament is sunk **15 mm into the frieze face**
+(`RIN_EMBED`) so nothing floats off the wall.
+
+Design: a continuous undulating stem (that is deliberate — one connected shell decimates to LOD2 cleanly, which is
+what the attic panels failed at), two alternating scrolls per repeat, a petalled patera boss in each scroll eye,
+three acanthus leaves per springing, a berry cluster and a counter-tendril, and a palmette terminal at each end of
+the run. 6 repeats on the front, 3 on the return. Variants differ in stem amplitude, scroll radius, boss diameter,
+leaf length and phase (`RIN_VARIANTS` in `scripts/orn_build.py`); per-repeat jitter (+-7 % radius, +-9 % leaf length,
++-8 deg leaf angle) means no two scrolls in a run are identical.
+Built with `--no-bake`: a Cycles normal bake is GPU work and QA held the GPU. **LOD1 carries the relief
+geometrically** (1523 tris/m front, 1500 tris/m return); the normal-map bake is an open item for round 6.
+
+### What the lead must add to `scripts/build_master.py` (ORN does not edit that file)
+
+`ORN_COLL` entry:
+
+```python
+    "frieze_run": "ORN_frieze_rinceau",   # rotunda ressaut faces only; the guard below picks front vs return
+```
+
+and, in the socket loop beside the existing `urn` / `finial` / `drum_band` special cases (before the
+`if coll_name is None:` skip):
+
+```python
+        if t == "frieze_run":
+            # only the 24 rotunda ressaut faces carry ornament; the other 102 frieze_run sockets are ARCH's own
+            # greek-key / greek-fret band geometry (docs/sockets.md, docs/arch_notes.md)
+            coll_name = None if sk.get("subtype") != "rinceau" else (
+                "ORN_frieze_rinceau" if float(sk.get("run_length", 0.0)) > 4.0 else "ORN_frieze_rinceau_return")
+```
+
+LOD object names: `ORN_frieze_rinceau_v{1,2,3}_LOD{0,1,2}` and `ORN_frieze_rinceau_return_v{1,2,3}_LOD{0,1,2}`.
+No `ROT_Z_FIX` entry: the socket +Y is the face normal and the asset projects +Y. Nothing to hide — ARCH models no
+geometry on the rotunda frieze band. Expected result: 24 instances, 8 x 9000 + 16 x 4500 = **144 k tris at LOD1**,
+8 x 48000 + 16 x 24000 = **768 k at LOD0**.
+
+### 3. Attic panels: relief depth is not the deficit (measured)
+
+`orn_relief_check.py` on `ORN_attic_panel_v2_LOD0` (ray-cast 260 x 120 from +Y):
+depth above the back plane p50 **0.306** / p90 **0.517** / max **0.558** m on a 0.16 m slab, i.e. relief above the
+slab face p50 **0.146** / p90 **0.216** / max **0.398** m; 84.7 % of the field stands >= 6 cm proud, 54.7 % >= 25 cm.
+The reference sheet's nominal Zimm relief depth is **0.25 m** — the panel is already at 1.6x that at its deepest.
+LOD1 tracks LOD0 to within 2 mm at every percentile (p50 0.304 vs 0.306), so the LOD1 the master uses is not the
+problem either.
+
+Cost of going deeper anyway (`orn_r5_reliefcost.py`, relief scaled about the slab face; tris scale with the true
+outward-facing surface area, 91.86 m2 today):
+
+| deepening | max proud | front area | tris at constant density LOD0 / LOD1 / LOD2 | vs budget 150000 / 24000 / 2400 |
+|---|---|---|---|---|
+| x1.00 | 0.398 m | 91.86 m2 | 142897 / 24000 / 2400 | ok |
+| x1.25 | 0.497 m | 98.23 (+6.9 %) | 152813 / 25665 / 2567 | **over on all three** |
+| x1.50 | 0.597 m | 104.90 (+14.2 %) | 163182 / 27407 / 2741 | over |
+| x2.00 | 0.796 m | 118.84 (+29.4 %) | 184878 / 31051 / 3105 | over |
+
+So a deeper relief is cheap (7 % of tris for +25 %) but it is **not built**: it would double the reference depth and
+it does not fix what is actually missing. What is missing is measured in the same report: at the hero sun only
+**5.3 %** of lit samples are shadowed by the relief itself and mean sky-openness is **0.743** — because the sun is
+36.5 deg off the face normal and 7.4 deg up, a proud block sheds 0.74 m of shadow per metre of depth *sideways* and
+0.16 m *downward*. The panel has plenty of proud depth and almost no **undercut** (surfaces turned away from the
+sun). Recommendation for a render round: undercut the figures (arms, drapery edges, the horse) rather than raise
+them; N.L rel-sd is 0.337 today and undercuts move it without touching the tri budget.
+Framing, for whoever chases "the panel is half of QA's hero attic box": ARCH's attic band is 7.10 m tall (base 0.90
+at z 31.20, frame 5.40, cornice 0.80 to z 38.30) and the ORN panel field is 4.51 m — **63.5 % of the band, 83.5 % of
+the 5.40 m frame opening**. The rest of that box is plain ARCH masonry and cornice, not panel.
+
+Per-instance variation actually available (`orn_r5_stats.py` section 5): 8 `attic_panel` sockets carry **8 distinct
+`variant_seed` values** and a `design` A/B/C property, against 3 ORN designs; `build_master.py` copies the seed to
+`ob["instance_seed"]`, which `MAT_ornament_concrete` reads (`scripts/mat_build.py` line 36-42) to decorrelate the
+weathering. The 24 rinceau sockets likewise have 24 distinct seeds against 3 variants. Geometry repeats 2-3 times
+per design; the weathering does not repeat at all.
+
+### 4. LOD2 budget fix (open issue closed)
+
+The open issue understated it: **all three** attic panels were over the 2400 tri LOD2 budget, not just v2 —
+v1 **15343**, v2 **5231**, v3 **6495** tris (collapse decimation stalls at ~4 faces per shell and the clamped relief
+leaves thousands of shells). `scripts/orn_r5_lod2fix.py` voxel-remeshes LOD1 at 0.10 m to weld the shells, then
+collapses: v1 15343 -> 24584 -> **2400**, v2 5231 -> 23676 -> **2400**, v3 6495 -> 23680 -> **2400**. Only the mesh
+data is replaced, so the object name, material, custom properties and viewport state are untouched and
+`build_master.py` sees no change. Silhouette kept: bbox depth 0.63 -> 0.62 / 0.56 -> 0.56 / 0.58 -> 0.58 m and max
+vertex y within 5 mm of LOD1. Every ORN asset is now inside its tier budget (`orn_r5_stats.py` section 4).
+
+## Round 5b (2026-09-09) — ORN r5 review fixes 3-6 (no render, no GPU)
+
+`docs/reviews/orn_r5_review.md`. Findings 1 and 2 (the `build_master.py` guard can never fire; the socket frame of
+the 24 rotunda sockets is not "run start, +X along the run") are ARCH's and the lead routed them to architecture
+round 6. Findings 3-6 are below, each with the measured number.
+
+### What ORN assumes about the ARCH round-6 socket contract
+
+The rinceau panels are built to this contract and nothing in them changes when ARCH lands it:
+
+- the 24 rotunda ressaut sockets are stamped **`host="rotunda"`, `subtype="rinceau"`** (they carry neither prop
+  today), so `build_master.py` can select them positively instead of by exclusion;
+- socket **origin = the RUN START** (not the midpoint of the run), which is where the panel's local x = 0 sits;
+- socket **local +X = `run_dir`** (`dot(+X, run_dir) > 0.99`), so the panel runs from x = 0 to x = run_length along
+  the face and does not shoot off the ressaut into the next bay;
+- socket **local +Y points AWAY from the block** (`dot(+Y, p - block_centroid) > 0`), i.e. the outward face normal,
+  because the panel's relief projects toward +Y and its back face is at y = 0;
+- `run_length` stays **5.913 m** (front) / **2.999 m** (return) and `band_height` 0.90 m.
+
+`orn_r5_stats.py` now works either way: it selects the rotunda sockets by excluding ARCH's own bands
+(`subtype in ("greek_key", "greek_fret")`), which is the same 24 sockets before and after the stamp, and it prints
+which reading it used (`ARCH socket props: 0/24 rotunda sockets carry subtype="rinceau"` today). It does **not**
+default the labels any more.
+
+### 3. The crown clearance is 0.10 m, not 0.16 m — panels rebuilt (`RIN_MAX_PROUD` 0.125 -> 0.09)
+
+`scripts/arch_build.py:156` puts the architrave crown at **d 0.44** over a frieze at **d 0.34** ("architrave crown,
+oversailing the flush frieze by 0.10"); the d 0.50 the round-5 notes used is the superseded row at
+`docs/arch_notes.md:718`. So the budget is **0.100 m** and the round-5 panels, at 110-124 mm of max proud, fouled
+the crown by 10-24 mm. `RIN_MAX_PROUD` is now **0.09** (new constant `RIN_CROWN_CLEAR = 0.10` records where the
+budget comes from) and both assets were rebuilt (`--only frieze_rinceau,frieze_rinceau_return --no-bake`).
+
+Measured on LOD1, `orn_r5_stats.py` §3, ray-cast grid 520 x 100 (before = round 5, after = now):
+
+| variant | max proud before / after | clearance before / after | p50 / p90 proud after | band coverage before / after |
+|---|---|---|---|---|
+| rinceau v1 | 120 -> **89.5** mm | -20.5 -> **+10.5** mm | 50.0 / 65.7 mm | 29.5 -> 29.5 % |
+| rinceau v2 | 123 -> **88.6** mm | -23.4 -> **+11.4** mm | 45.3 / 61.9 mm | 29.7 -> 29.7 % |
+| rinceau v3 | 114 -> **86.7** mm | -14.4 -> **+13.3** mm | 51.0 / 64.5 mm | 27.0 -> 27.0 % |
+| return v1 | 118 -> **88.2** mm | -18.4 -> **+11.8** mm | 50.3 / 66.0 mm | 29.1 -> 29.1 % |
+| return v2 | 124 -> **89.5** mm | -24.4 -> **+10.5** mm | 45.5 / 62.6 mm | 28.3 -> 28.3 % |
+| return v3 | 110 -> **89.3** mm | -10.4 -> **+10.7** mm | 54.5 / 69.4 mm | 25.6 -> 25.6 % |
+
+The clamp is a Y-only scale about the back face, so **areal coverage of the band is unchanged** (25.6-29.7 %) and
+the run lengths are unchanged (mismatch 0.2 mm front / 0.4 mm return). What is lost is depth, and with it shadow:
+at the hero sun (36.5 deg off the face normal) the lateral shadow thrown at max proud falls from **81-92 mm to
+64-67 mm**, and p50 proud falls from 65-69 mm to 45-55 mm. Honest scale note: the 0.90 m band subtends ~12.5 px on
+the hero, i.e. ~72 mm/px, so that shadow line is **sub-pixel on the hero either way** (1.2 px before, 0.9 px now) —
+the band reads as tone at hero distance and as drawing only at cam02 / cam04 range, which is where it still has to
+be checked. Tri counts are untouched: LOD0/1/2 = 48000/9000/900 (front) and 24000/4500/450 (return), all exactly at
+budget.
+
+### 4. `orn_r5_stats.py` is now a gate, not a report
+
+`RIN_RUNS` is still hard-coded in the builder, so the script now **exits 1** on any of:
+
+- **run length**: for every rotunda socket group it applies `build_master.py`'s own guard (`run_length > 4.0` ->
+  `frieze_rinceau`, else `_return`), then compares the socket's `run_length` against the X extent of **every variant
+  at every LOD** of that asset; > `RUN_TOL` = **5 mm** is a hard failure naming the object, both lengths and the fix;
+- **crown clearance**: max proud leaving < `MIN_CLEAR` = **10 mm** under `CROWN_CLEAR` = 0.10 m;
+- **tri budget**: any LOD over its `BUDGETS` tier.
+
+The verdict block at the end lists every failure. Verified both ways on the current library: it exits **0** as
+shipped, and with `RUN_TOL` temporarily set to 0.1 mm it exits **1** with 18 named failures (the real 0.2 / 0.4 mm
+mismatches), so the gate is not vacuous. `CROWN_CLEAR` was corrected 0.16 -> 0.10 in the same pass.
+
+### 5. The LOD2 voxel weld is folded into the build path
+
+New `orn_lib.enforce_lod2_budget(lod2, src, budget, voxel=0.10)`, called from `finalize_asset` on both LOD2 paths
+(the `lod2_obj` override and the decimate-from-LOD1 default). It is a no-op when LOD2 is already inside budget, so
+no other asset changes; when collapse has stalled it welds the shells with a voxel remesh and re-collapses,
+replacing only the mesh DATA (name, material slots, custom props, viewport state survive; `build_master.py` sees no
+change). `scripts/orn_r5_lod2fix.py` now calls the same function and is kept only as an in-place repair for a .blend
+built before this change.
+
+Proof — a full `orn_build.py --only attic_panel` through the normal build path (written to a scratch .blend so the
+shipped asset keeps its round-4 normal maps), then the stats gate on that file:
+
+| asset | LOD2 after collapse | after voxel weld | final | budget |
+|---|---|---|---|---|
+| `ORN_attic_panel_v1_LOD2` | 15343 | 24584 | **2400** | 2400 |
+| `ORN_attic_panel_v2_LOD2` | 5231 | 23676 | **2400** | 2400 |
+| `ORN_attic_panel_v3_LOD2` | 6495 | 23680 | **2400** | 2400 |
+
+Identical to the round-5 one-off, and the gate on the rebuilt file exits 0 (LOD0 134647/142897/136212, LOD1
+23751/23898/23872, all inside 150000/24000/2400). A rebuild can no longer restore an over-budget LOD2.
+
+### 6. Bake still pending — `orn_build.py --bake-pending`
+
+No GPU this round, so `ORN_frieze_rinceau` v1-v3 and `ORN_frieze_rinceau_return` v1-v3 are **still `--no-bake`**:
+their LOD1 `normal_map` and `ao_map` are empty, and `build_master.orn_material_for` will make per-variant material
+copies with no image in ORN_NORMAL / ORN_AO. The master gets geometric relief only (1523 tris/m at LOD1), which is
+acceptable at the 12.5 px hero scale but is not what the other assets get.
+
+The pending state is now queryable instead of buried in prose:
+
+```
+scripts/blender_run.sh 300 -- --background --python scripts/orn_build.py -- --bake-pending
+```
+
+reads `assets/ornament.blend` and prints, per type, which LOD1s have no normal map, which have a normal map but no
+AO map, and which have both, then prints the exact command to run in a GPU round. As of this commit:
+
+- **normal map PENDING: 6 LOD1 objects, 2 types** — `frieze_rinceau` v1,2,3 and `frieze_rinceau_return` v1,2,3.
+  Fix: `scripts/blender_run.sh 3600 -- --background --python scripts/orn_build.py -- --only frieze_rinceau,frieze_rinceau_return`
+  (no `--no-bake`), then re-run `orn_r5_stats.py` and expect exit 0.
+- normal map but no AO: 26 LOD1 objects in 16 types (maidens, attic panels/figures, urns, mouldings, corner scrolls,
+  winged figures) — the standing AO open issue, needs `finalize_asset(..., ao=True)`.
+- normal + AO baked: 14 LOD1 objects in 5 types (capitals x3, keystone, rosette_ceiling).
+
+**A rinceau bake must not be run with `--no-bake`, and an `attic_panel` rebuild must not be run with `--no-bake`
+either** — that would drop the round-4 normal maps those panels already carry. This is why the round-5b LOD2 proof
+was written to a scratch .blend and not to `assets/ornament.blend`.
+
 ## Open issues (ORN)
-- `ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget (the mesh has too many disjoint shells
-  after the field clamp for the collapse to go further). LOD2 is only used beyond ~200 m, so I left it.
+- ~~`ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget~~ **fixed in round 5**, and in
+  **round 5b** the fix moved into the build path (`orn_lib.enforce_lod2_budget`, called by `finalize_asset`), so a
+  rebuild can no longer undo it. It was all three panels, v1 at 15343.
+- **PENDING BAKE (round 5b, unchanged)**: `ORN_frieze_rinceau` / `_return` v1-v3 were built `--no-bake` (QA held the
+  GPU in round 5, no GPU in 5b): LOD1 has no normal map and no AO map. Re-run
+  `orn_build.py --only frieze_rinceau,frieze_rinceau_return` WITHOUT `--no-bake` in a round that may use the GPU.
+  `orn_build.py --bake-pending` prints this list and the command; it is the authoritative source, not this bullet.
+- The rinceau band has not been seen in a render yet. Its numbers (coverage 25.6-29.7 % of the band, max proud
+  **86.7-89.5 mm, 10.1-13.3 mm of clearance** under the architrave crown after the round-5b reclamp) are ray-cast
+  measurements on the asset, not a photo comparison; it needs a cam02/cam04 pass and a crop against
+  entablature_1-3 (047, 054, 017). It is also not instanced yet: `build_master.py`'s guard cannot fire until ARCH
+  round 6 stamps the sockets (r5 review findings 1-2).
 - `corner_scroll` is 1.78 m over the volute rolls, not the 1.50 m the defect quotes; 1.50 is the nominal block width
   (`unit_length`) and the rolls overhang it, as they do in ref 085.
 - The rostra band units are modelled as a slab standing 8 cm off the wall. If ARCH's podium top course already has a
