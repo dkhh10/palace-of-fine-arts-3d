@@ -312,3 +312,7 @@ In flight: QA round 6 (Opus xhigh, docs/briefs/qa_round_06.md; commits only qa d
 ## 2026-09-09 · no-idling rule added to CLAUDE.md; QA round 6 rendering; three no-render slot agents dispatched
 Four agents running: QA round 6 (GPU), ARCH r5 (UVProj layer for the projection pass, course-row table, r4 carries), LIGHT r14 prep (flythrough path rebuilt + ray-cast clearance table, r13 carries, docs/tech_notes.md delivery section), ORN r5 (rotunda frieze band asset for the 24 sockets + ORN_COLL entry, attic relief report, LOD2 budget). None renders or writes master.
 Next: QA gate report to the user; reviews + merges of the three slot branches; go/no-go on docs/briefs/materials_r8_projection.md.
+
+## 2026-09-09 · ARCH r5 reported (db35484), in review
+ARCH r5 (no render): UVProj layer on 33 hero-facing objects (cam01 frame position, round-trip 0.00 px, named-point checks 0.78 / 0.00 / 0.02 px, UVProj_valid attribute, tris and sockets unchanged); course-row table for cam01 (attic top 158, frame 173-246, corona 251-254, dentil bed 276, frieze 280-292, architrave bottom 308); r4 carries done, silhouette re-measured without a render (within 1 px). 5.2 gotchas: matrix_world stale for hidden objects, use matrix_basis; BVHTree instead of Object.ray_cast.
+In flight: ARCH r5 review, QA round 6, LIGHT r14 prep, ORN r5. Next: merge arch r5 after review; QA gate.
