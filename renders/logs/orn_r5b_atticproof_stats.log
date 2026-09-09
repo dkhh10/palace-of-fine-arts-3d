@@ -1,0 +1,137 @@
+00:00.381  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
+00:00.532  blend            | Read blend: "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/1e741676-2c03-408f-ad81-3c89163dc6dc/scratchpad/orn_lod2proof.blend"
+
+=== 1. socket census vs ORN assets (build_master.py ORN_COLL coverage) ===
+  attic_figure     n=   8  ORN asset: attic_figure           PRESENT
+  attic_panel      n=   8  ORN asset: attic_panel            PRESENT
+  capital_colonnade n= 114  ORN asset: capital_colonnade      PRESENT
+  capital_inner    n=   8  ORN asset: capital_inner          PRESENT
+  capital_rotunda  n=  16  ORN asset: capital_rotunda        PRESENT
+  drum_band        n=   1  ORN asset: drum_band              PRESENT
+  finial           n=   9  ORN asset: finial                 PRESENT
+  frieze_run       n= 126  ORN asset: frieze_rinceau         PRESENT
+  inner_figure     n=   8  ORN asset: winged_figure          PRESENT
+  keystone         n=  24  ORN asset: keystone               PRESENT
+  maiden           n=  48  ORN asset: maiden                 PRESENT
+  rosette_ceiling  n=  24  ORN asset: rosette_ceiling        PRESENT
+  urn              n=  40  ORN asset: urn                    PRESENT
+
+=== 2. frieze_run fit (hard check: run_length read from architecture.blend, tol 5 mm) ===
+  ARCH socket props: 0/24 rotunda sockets carry subtype="rinceau" (selected by exclusion of ('greek_key', 'greek_fret'))
+  host=rotunda      sub=(unstamped)  run= 2.999 n= 16 z= 28.55  -> frieze_rinceau_return    asset 2.9994-2.9994 m over 9 LODs, worst mismatch   0.40 mm  ok
+  host=rotunda      sub=(unstamped)  run= 5.913 n=  8 z= 28.55  -> frieze_rinceau           asset 5.9128-5.9128 m over 9 LODs, worst mismatch   0.20 mm  ok
+  host=?            sub=greek_fret   run=94.347 n=  2 z= 13.42  -> ARCH's own band geometry
+  host=?            sub=greek_fret   run=97.312 n=  2 z= 13.42  -> ARCH's own band geometry
+  host=planter_box  sub=greek_key    run= 5.180 n= 48 z= 16.65  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.421 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.435 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.471 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.556 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.705 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.721 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.752 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.771 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.810 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.858 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.874 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.889 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.004 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.024 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.238 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.259 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.312 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.328 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.574 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.596 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 3.307 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 3.362 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 4.541 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 4.673 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 5.798 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 5.835 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 6.180 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 6.181 n= 14 z=  3.70  -> ARCH's own band geometry
+
+=== 3. rinceau band metrics ===
+  ORN_frieze_rinceau_v1_LOD0           5.913 x 0.750 m field in a 0.90 m band, coverage  29.4 % of the band (35.3 % of the field)  proud above the frieze face: p50  50.9  p90  66.5  max  89.9 mm  clearance to the architrave crown  10.1 mm  lateral shadow at max proud  66.6 mm  ok
+  ORN_frieze_rinceau_v1_LOD1           5.913 x 0.751 m field in a 0.90 m band, coverage  29.5 % of the band (35.4 % of the field)  proud above the frieze face: p50  50.0  p90  65.7  max  89.5 mm  clearance to the architrave crown  10.5 mm  lateral shadow at max proud  66.2 mm  ok
+  ORN_frieze_rinceau_v2_LOD0           5.913 x 0.750 m field in a 0.90 m band, coverage  29.5 % of the band (35.4 % of the field)  proud above the frieze face: p50  46.1  p90  62.6  max  89.7 mm  clearance to the architrave crown  10.3 mm  lateral shadow at max proud  66.4 mm  ok
+  ORN_frieze_rinceau_v2_LOD1           5.913 x 0.750 m field in a 0.90 m band, coverage  29.7 % of the band (35.6 % of the field)  proud above the frieze face: p50  45.3  p90  61.9  max  88.6 mm  clearance to the architrave crown  11.4 mm  lateral shadow at max proud  65.6 mm  ok
+  ORN_frieze_rinceau_v3_LOD0           5.913 x 0.750 m field in a 0.90 m band, coverage  27.0 % of the band (32.4 % of the field)  proud above the frieze face: p50  51.0  p90  64.4  max  87.6 mm  clearance to the architrave crown  12.4 mm  lateral shadow at max proud  64.9 mm  ok
+  ORN_frieze_rinceau_v3_LOD1           5.913 x 0.750 m field in a 0.90 m band, coverage  27.0 % of the band (32.5 % of the field)  proud above the frieze face: p50  51.0  p90  64.5  max  86.7 mm  clearance to the architrave crown  13.3 mm  lateral shadow at max proud  64.2 mm  ok
+  ORN_frieze_rinceau_return_v1_LOD0    2.999 x 0.750 m field in a 0.90 m band, coverage  29.0 % of the band (34.8 % of the field)  proud above the frieze face: p50  51.2  p90  66.8  max  89.5 mm  clearance to the architrave crown  10.5 mm  lateral shadow at max proud  66.2 mm  ok
+  ORN_frieze_rinceau_return_v1_LOD1    2.999 x 0.751 m field in a 0.90 m band, coverage  29.1 % of the band (34.9 % of the field)  proud above the frieze face: p50  50.3  p90  66.0  max  88.2 mm  clearance to the architrave crown  11.8 mm  lateral shadow at max proud  65.3 mm  ok
+  ORN_frieze_rinceau_return_v2_LOD0    2.999 x 0.750 m field in a 0.90 m band, coverage  28.2 % of the band (33.9 % of the field)  proud above the frieze face: p50  45.8  p90  62.5  max  89.8 mm  clearance to the architrave crown  10.2 mm  lateral shadow at max proud  66.4 mm  ok
+  ORN_frieze_rinceau_return_v2_LOD1    2.999 x 0.750 m field in a 0.90 m band, coverage  28.3 % of the band (34.0 % of the field)  proud above the frieze face: p50  45.5  p90  62.6  max  89.5 mm  clearance to the architrave crown  10.5 mm  lateral shadow at max proud  66.2 mm  ok
+  ORN_frieze_rinceau_return_v3_LOD0    2.999 x 0.750 m field in a 0.90 m band, coverage  25.5 % of the band (30.6 % of the field)  proud above the frieze face: p50  54.4  p90  69.3  max  89.4 mm  clearance to the architrave crown  10.6 mm  lateral shadow at max proud  66.2 mm  ok
+  ORN_frieze_rinceau_return_v3_LOD1    2.999 x 0.752 m field in a 0.90 m band, coverage  25.6 % of the band (30.6 % of the field)  proud above the frieze face: p50  54.5  p90  69.4  max  89.3 mm  clearance to the architrave crown  10.7 mm  lateral shadow at max proud  66.1 mm  ok
+
+=== 4. LOD tri table ===
+  ORN_anthemion_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_attic_figure_v1                      LOD0  120000 / LOD1   20000 / LOD2    2000   budget 120000/20000/2000  ok
+  ORN_attic_figure_v2                      LOD0  120000 / LOD1   20000 / LOD2    2000   budget 120000/20000/2000  ok
+  ORN_attic_panel_v1                       LOD0  134647 / LOD1   23751 / LOD2    2400   budget 150000/24000/2400  ok
+  ORN_attic_panel_v2                       LOD0  142897 / LOD1   23898 / LOD2    2400   budget 150000/24000/2400  ok
+  ORN_attic_panel_v3                       LOD0  136212 / LOD1   23872 / LOD2    2400   budget 150000/24000/2400  ok
+  ORN_capital_colonnade_v1                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_colonnade_v2                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_colonnade_v3                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_inner_v1                     LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_inner_v2                     LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_rotunda_v1                   LOD0   64000 / LOD1   16000 / LOD2     344   budget 64000/16000/2000  ok
+  ORN_capital_rotunda_v2                   LOD0   64000 / LOD1   16000 / LOD2     344   budget 64000/16000/2000  ok
+  ORN_capital_rotunda_v3                   LOD0   64000 / LOD1   16000 / LOD2     344   budget 64000/16000/2000  ok
+  ORN_corner_scroll_v1                     LOD0   40000 / LOD1    8000 / LOD2     800   budget 40000/8000/800  ok
+  ORN_corner_scroll_v2                     LOD0   40000 / LOD1    8000 / LOD2     800   budget 40000/8000/800  ok
+  ORN_dentil_v1                            LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_drum_band_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_egg_and_dart_v1                      LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_finial_v1                            LOD0   20000 / LOD1    4000 / LOD2     400   budget 20000/4000/400  ok
+  ORN_frieze_rinceau_v1                    LOD0   48000 / LOD1    9000 / LOD2     900   budget 48000/9000/900  ok
+  ORN_frieze_rinceau_v2                    LOD0   48000 / LOD1    9000 / LOD2     900   budget 48000/9000/900  ok
+  ORN_frieze_rinceau_v3                    LOD0   48000 / LOD1    9000 / LOD2     900   budget 48000/9000/900  ok
+  ORN_frieze_rinceau_return_v1             LOD0   24000 / LOD1    4500 / LOD2     450   budget 24000/4500/450  ok
+  ORN_frieze_rinceau_return_v2             LOD0   24000 / LOD1    4500 / LOD2     450   budget 24000/4500/450  ok
+  ORN_frieze_rinceau_return_v3             LOD0   24000 / LOD1    4500 / LOD2     450   budget 24000/4500/450  ok
+  ORN_greek_key_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_keystone_v1                          LOD0   50000 / LOD1    8000 / LOD2     800   budget 50000/8000/800  ok
+  ORN_keystone_v2                          LOD0   50000 / LOD1    8000 / LOD2     800   budget 50000/8000/800  ok
+  ORN_keystone_v3                          LOD0   50000 / LOD1    8000 / LOD2     800   budget 50000/8000/800  ok
+  ORN_maiden_v1                            LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_maiden_v2                            LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_maiden_v3                            LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_modillion_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_rosette_band_v1                      LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_rosette_ceiling_v1                   LOD0   26000 / LOD1    5000 / LOD2     500   budget 26000/5000/500  ok
+  ORN_rosette_ceiling_v2                   LOD0   26000 / LOD1    5000 / LOD2     500   budget 26000/5000/500  ok
+  ORN_rosette_ceiling_v3                   LOD0   26000 / LOD1    5000 / LOD2     500   budget 26000/5000/500  ok
+  ORN_urn_v1                               LOD0   60000 / LOD1   12000 / LOD2    1200   budget 60000/12000/1200  ok
+  ORN_urn_v2                               LOD0   60000 / LOD1   12000 / LOD2    1200   budget 60000/12000/1200  ok
+  ORN_urn_v3                               LOD0   60000 / LOD1   12000 / LOD2    1200   budget 60000/12000/1200  ok
+  ORN_urn_niche_v1                         LOD0   60000 / LOD1   12000 / LOD2    1200   budget 80000/18000/1800  ok
+  ORN_urn_niche_v2                         LOD0   60000 / LOD1   12000 / LOD2    1200   budget 80000/18000/1800  ok
+  ORN_urn_tub_v1                           LOD0   60000 / LOD1   12000 / LOD2    1200   budget 80000/18000/1800  ok
+  ORN_winged_figure_v1                     LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_winged_figure_v2                     LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+
+=== 5. per-instance variation available to the lead ===
+  attic_figure     sockets    8  distinct variant_seed    8  designs -  ORN variants 2
+  attic_panel      sockets    8  distinct variant_seed    8  designs ['A', 'B', 'C']  ORN variants 3
+  capital_colonnade sockets  114  distinct variant_seed  114  designs -  ORN variants 3
+  capital_inner    sockets    8  distinct variant_seed    8  designs -  ORN variants 2
+  capital_rotunda  sockets   16  distinct variant_seed   16  designs -  ORN variants 3
+  drum_band        sockets    1  distinct variant_seed    1  designs -  ORN variants 1
+  finial           sockets    9  distinct variant_seed    9  designs -  ORN variants 1
+  frieze_run       sockets  126  distinct variant_seed  126  designs -  ORN variants 3
+  inner_figure     sockets    8  distinct variant_seed    8  designs -  ORN variants 2
+  keystone         sockets   24  distinct variant_seed   24  designs -  ORN variants 3
+  maiden           sockets   48  distinct variant_seed   48  designs -  ORN variants 3
+  rosette_ceiling  sockets   24  distinct variant_seed   24  designs -  ORN variants 3
+  urn              sockets   40  distinct variant_seed   40  designs -  ORN variants 3
+
+=== verdict ===
+  all hard checks passed (run lengths within 5 mm, crown clearance >= 10 mm, every LOD inside its tier budget)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 33213 exited rc=0 after 2 s (max 900)
