@@ -179,3 +179,9 @@ Format: date · decision · why · consequences. Newest at the bottom.
   registered stack. The definition-of-done clock (two rounds < +0.1 on the hero) starts at the first QA round after materials r8.
 - **Water is now the hero's largest visible defect**: reflection R-B +2.5 vs +69 in the photo, sat 0.04 vs 0.36; the lagoon reads as a flat
   blue plane. Materials owns the mirror/murk balance; lighting owns the horizon sky it mirrors; QA's reflection test gains an R-B term.
+- **2026-09-09 · Stack registered on ref 169; ref 062 disagrees by 1.02 m and loses.** ARCH r6 moved the rotunda courses (entablature
+  25.96-29.18, capital 3.0, shaft 14.46, attic 9.12 with a real crown corona) so every course on the hero lands within 5 rows of ref 169
+  with the silhouette fit held within 0.6 %. Ref 062 (cam02's photo) fits best with the entablature crown 1.02 m higher; its podium-base
+  and attic-width residuals are now 5-6 % (bar 3 %, QA-04-11). The hero photo is the target of record; cam02's station may be re-fitted
+  by QA on the new stack, the courses are not moved back. Socket contract now carries heights (capital_height, band_height, panel_height)
+  and arch_socket_check --type props asserts them (docs/sockets.md).

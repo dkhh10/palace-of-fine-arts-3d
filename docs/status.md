@@ -354,3 +354,6 @@ In flight: ARCH r6 fixes, LIGHT r14, ENV r9. Next: merge arch, ORN r6 refit, MAT
 ## 2026-09-09 · ENV r9 reported (e0b383f), in review
 ENV r9 (no render): walk clearance 0.03 -> 1.71 m to geometry, 0 samples inside the 2.80 m clear width (the OSM roof polygon fell inside the modelled arc; new env_lib.gallery_clear from arch_params, enforced everywhere); shadow_relief no longer relocates pinned trees (corrections baked into PLAN); trees 131, LOD1 4.71 M, band clearer moved 0 / dropped 0; wing shadow 21.2 % vs the 22 % cap (margin 0.8 pt, needs a render check); cam06 gate = std composited / un-composited >= 0.60 (lighting r13 ships 0.637).
 In flight: ENV review, LIGHT r14, ARCH r6 fixes, ORN r6. Next: merges, MAT r8.
+
+## 2026-09-09 · ARCH r6 merged (2b1c716) after fixes; ref 062 conflict logged (decisions.md)
+Socket props stamped and asserted (capital_height 3.0, band_height 0.81, panel_height 5.27; 434 sockets ALL OK); registration log committed (+1/-1/+1/-3/0/+5/+1/+1 rows); ref 062 wants ATTIC_Z0 30.20 vs 29.18 (hero wins; QA may re-fit cam02). In flight: LIGHT r14, ORN r6 (re-merges main for the socket props), ENV r9 review. Next: LIGHT r14 review + merge, then MAT r8 (water + projection on the registered stack).
