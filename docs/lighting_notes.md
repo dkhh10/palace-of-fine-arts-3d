@@ -2176,3 +2176,31 @@ puts the mirror on the sky instead of on the stone.
 `SKY_GLOSSY_SATURATION` (0.90), which are invisible to camera and diffuse rays by construction. The isolation
 test is one frame with the glossy sky switched off (`gb = 0.02`): whatever R-B moves is lighting's share of the
 box, and whatever does not is the murk's and the roughness'.
+
+**The isolation test, measured** (hero Cycles 1280x720 / 64 spp, `renders/logs/light_r14_w2.log`, box 900 760 1020 840):
+
+| rig | box lum | box hue | box sat | box **R-B** | near water lum |
+|---|---|---|---|---|---|
+| shipped (`gb` 5.25) | 103.8 | 91.1 | 0.041 | **+2.1** | 117.9 |
+| **glossy sky OFF (`gb` 0.02)** | **52.1** | **42.2** | 0.773 | **+51.6** | 9.3 |
+| ref 169, aligned | 166.1 | 33.7 | 0.358 | **+69.0** | — |
+
+So the box is a two-term sum and both terms are now measured: the reflected **building + murk** is
+**52.1 lum at R-B +51.6** (warm, correctly coloured stone), and the reflected **sky** adds **+51.7 lum at
+R-B -49.5**, which is what drags the sum to +2.1. QA's reading is right and materials r7's is not: the streaks do
+carry stone colour, they are simply outnumbered.
+
+**Neither end of lighting's knob passes both halves of QA-06-3's test.** At `gb` 0.02 the R-B passes (+51.6 >= +35)
+and the luminance fails by a factor of 2.4 (52.1 against the 124-208 window); at the shipped 5.25 the luminance is
+still only 103.8 and the R-B fails. The glossy saturation cannot buy it either: round 10 measured `gsat` at
+~0.65 of near-water saturation per unit, so the ~0.55 of `gsat` that would grey the reflected sky enough takes
+QA-05-4's near-water box from 0.303 to about 0.05 against its 0.22-0.32 window.
+
+**Hand-off to materials r8, with the arithmetic.** Hold the sky term where it is and make the water's mirror of
+the BUILDING 2.3x brighter — 52.1 -> ~120 lum at the same R-B +51.6 — and the box lands on the photograph:
+lum 120 + 51.7 = **171.7** (window 124-208) and R-B 51.6 x (120/52.1) - 49.5 = **+69.3** against ref 169's
+**+69.0**. (Display-space linearity is an approximation at these levels; the direction and the factor are not.)
+The knobs are `MAT_water_lagoon`'s specular strength and roughness at 82.5 deg of incidence, its ripple normal
+scale (every degree of facet slope swings the mirror 2 deg, off the stone and onto the sky), and how much of the
+box the murk/bed term occupies. Lighting will not lower the glossy sky to fake it: that number is QA-05-4's
+near-water window and QA-03-7 spent two rounds calibrating it.
