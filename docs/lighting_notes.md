@@ -1496,3 +1496,55 @@ shade**. If the albedo's blue were the problem it would miss by the same factor 
 albedo does not know which lamp is on. It misses 3x harder in shade, so **the defect is in the light that reaches
 shaded faces, not in what those faces reflect** — which retires rounds 10 and 11's hand-off of the shade hue to
 materials (sections 19 and 20.4) and puts QA-05-1 back where QA filed it: lighting.
+
+### 21.6 Waves 2 and 3 — the directional fill is now FREE, and it still cannot turn the shade
+
+Wave 2 (cam03 Eevee, `renders/logs/light_r12_w2.log`) and wave 3 (hero Cycles 960x540 / 48 spp,
+`renders/logs/light_r12_w3.log`; the 960x540 frames reproduce the 1280x720 row to ~1 lum on every box). Wave 2 was cut
+after its first frame — QA's 4K-scale contention from the environment agent's hero put one Eevee frame at 307 s — and
+its question was answered by that one frame anyway.
+
+| case | cam03 shaft / ratio | hero shade lum / hue / sat | shade sRGB | sunlit lum / sat / R-B | columns | near-water sat / hue | S wing |
+|---|---|---|---|---|---|---|---|
+| base | 5.42 / 0.062 | 95.3 / 43.1 / 0.829 | 123, 95, 21 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 / 209.0 | 86.5 |
+| fill 8 W/m2, spec 0 | 6.74 / 0.073 | — | — | — | — | — | — |
+| fill 30 W/m2, el 6, spec 0, colour 0.10/0.30/1.00 | — | 109.0 / **45.9** / 0.669 | 130, 110, 43 | 171.5 / 0.610 / 129.1 | 1.08x | **0.271** / 214.9 | 91.9 |
+| db 2, tint b1.8, sun-blue 0.40 | — | 109.3 / 43.1 / 0.687 | — | 176.8 / 0.561 / 120.8 | 1.10x | 0.331 / 213.4 | 92.4 |
+| db 2.5, tint b3.0, sun-blue 0.25 | — | 117.5 / **40.0** / 0.506 | 140, 116, 69 | 181.7 / 0.471 / 101.8 | 1.21x | 0.394 / 216.9 | 95.8 |
+| db 2, tint b1.8, fill 14 el 6 spec 0 | — | 115.3 / 44.0 / 0.605 | — | 178.4 / 0.528 / 113.7 | 1.15x | 0.318 / 215.4 | 94.7 |
+| db 4, sun-blue 0.40 | — | 128.9 / 47.3 / 0.704 | — | 188.1 / 0.498 / 110.4 | 1.23x | 0.284 / 207.7 | 100.5 |
+| ref 169 / window | 26-61 / 0.30-0.70 | 115.0 / 29.5 / 0.425 | 141, 111, 81 | 189.6 / >=0.50 / >=110 | 0.9-1.1x | 0.22-0.32 / 185-200 | >=103 |
+
+**Round 10's two reasons for shipping `SHADE_FILL` at zero are gone.** At `specular_factor` 0 and elevation 6 deg the
+rig at **30 W/m2 — 45 % of the sun** — costs the near-water saturation **nothing** (0.271 against the control's 0.281,
+inside QA's window either way) and the columns nothing (1.08x). Both of round 10's costs were artifacts of the two
+settings it happened to test: a specular factor of 0.10 puts the lamp in the lagoon's grazing mirror, and elevation
+16 deg puts sin(16) = 0.28 of it on horizontal water. Diffuse-only and low, the fill is the cleanest instrument in the
+whole rig.
+
+**And it still drives the shade hue the wrong way (43.1 -> 45.9), for the fourth time. Here is the arithmetic that
+finally explains all four failures.** Hue is 60(G-B)/(R-B), and from 21.5 the stone's albedo ratios are aG/aR = 0.78,
+aB/aR = 0.35. A lamp of colour (r, g, b) therefore moves the pair by d(R-B) = r - 0.35b and d(G-B) = 0.78g - 0.35b,
+and the hue only falls if **d(G-B)/d(R-B) > 0.492 with both deltas negative** (the ratio starts at 0.718 and must
+reach 0.492):
+
+| lamp colour | d(G-B)/d(R-B) | verdict |
+|---|---|---|
+| 0.42 / 0.62 / 1.00 (shipped `SHADE_FILL`) | +1.91, both deltas POSITIVE | hue rises — round 10's +1.3 deg |
+| 0.10 / 0.30 / 1.00 (wave 3) | +0.46 | hue rises — measured +2.8 deg |
+| **0.10 / 0.11 / 1.00** (solved) | +1.06 | works, and needs ~72 W/m2 |
+| 0.00 / 0.00 / 1.00 (pure blue) | +1.00 | works, and needs ~64 W/m2 |
+
+A fill that turns the hue on its own has to be a nearly green-free blue at **the irradiance of the sun itself**. That
+is not a fill, it is a second sun, and it would light every shaded face in the scene like one. The directional route
+closes here: it is free, it is worth keeping for luminance, and it cannot supply the colour.
+
+**The sky route is three times more efficient at the same job** because it raises R and G as well, and the reference
+needs those too (+18 R, +16 G, +60 B). `db 2.5 / tint b3.0 / sun-blue 0.25` lands the shade at (140, 116, 69) against
+ref 169's (141, 111, 81): **R is exact, G is 5 over, B is 12 short**. The three fitted power laws from 21.4 say what
+closes the last step — g_G 2.0 instead of 2.5 (tint g 0.80) and g_B 9.5 instead of 7.5 (tint b 3.8) — and predict
+(140, 113, 81), hue 32.5, sat 0.42, lum 116. That is wave 4.
+
+**`SUN_BLUE_MULT` is the compensating lever for the sunlit stone** and it works: at db 4 it holds the sunlit attic's
+R-B at 110.4 where the same boost without it gave 108.2, and at db 2.5 / b3.0 it holds 101.8 where the uniform tint
+at b2.5 alone gave 87.4. It is not enough on its own, which is why round 12 adds the anti-sun weighting.
