@@ -22,3 +22,20 @@ via a library override or a MAT-owned node group applied to MAT_concrete_* — d
 ARCH meshes is unavoidable, stop and report: the lead will route it through architecture), assets/materials.blend, composite
 renders/qa_comparisons/mat_r8_sheet.png (1:1 attic + entablature crops before / after / ref 169 with the numbers; cam02 and cam05
 seam crops), Round 8 section in docs/materials_notes.md, commits after every successful script, report < 30 lines.
+
+## Round 8 scope update (lead, 2026-09-09, after QA round 6 and architecture r6)
+Go: the stack is registered (docs/status.md "ARCH r6 merged": every course within 5 rows of ref 169; UVProj is rebuilt by arch_build on 31
+meshes with a UVProj_valid attribute; architecture's hand-off: sample the ratio map with UVProj directly, weight by UVProj_valid AND a facing
+mask because full-ring sweeps wrap near-side UVs onto the far side). Runs after lighting r14 merges (never concurrent with lighting).
+Order of work, all measured on your rebuilt master with lighting r14's rig:
+A. QA-06-3 (blocker) water at every distance: hero reflection column 900 760 1020 840 must carry the building's warm colour (R-B >= +30, ref +69;
+   QA's test now has an R-B term), near-water sat 0.22-0.32 and hue toward 185-200, cam05 lagoon sat >= 0.25 (ref 0.306), cam06 lagoon not
+   black (Cycles >= 0.7x of round 5). Lighting r14 hands you the split between the sky's glossy term (theirs) and murk / roughness / ripple
+   normal scale (yours); the r7 sweep showed the murk gain is what kills the mirror, so start from murk gain -> 0 at the hero's grazing
+   angles and put the murk back only where the photo shows it (aerial). Ripple normal scale: the photo's reflection is broken into streaks,
+   not blurred.
+B. The photo-projection pass as specified above (constraints 1-6), on the registered stack. Also QA-06-5 sunlit chroma (attic sat 0.53-0.62,
+   R-B >= 120 at lum 178-201) is expected to come with the ratio map's chroma; QA-06-8 coffer sat 0.914 -> <= 0.55 (ref 0.427) is a plain
+   albedo fix on the vault panel material.
+C. Report the anisotropy on both boxes, the std ratio, the seam crops from cam02 / cam05, the Eevee crop, the water table, and the texture
+   budget. Report < 30 lines.
