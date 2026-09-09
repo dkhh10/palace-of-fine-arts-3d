@@ -1464,6 +1464,14 @@ Measured on the rebuilt master (`scripts/lead_build.sh`, **9679 objects**, LIGHT
 
 ### The finding that governs the whole round: the view transform, not the albedo
 
+> **CORRECTED IN ROUND 9b (`docs/reviews/mat_r9_review.md` finding 1): the table below was measured at the WRONG
+> LOOK and is superseded by the round-9b table.** `scripts/mat_r9_agx.py` builds an empty file and calls
+> `common.setup_scene()`, which sets `view_transform` but never `look`, so it measured **Base Contrast** while the
+> project renders at `light_presets.LOOK` = `AgX - High Contrast`; its ortho camera also used `sensor_fit` AUTO on
+> a portrait chart, which put the patch grid off the pixel grid. The DIRECTION survives -- the view transform is
+> why five rounds of albedo barely moved the hero -- but every number below is wrong and every conclusion drawn
+> from it is restated in the round-9b section.
+
 Five rounds have moved concrete albedo and watched the hero barely respond. `scripts/mat_r9_agx.py` renders an
 emission chart through this project's own colour management and measures the transfer directly. At the hero's
 operating levels AgX compresses **both** luminance and chroma by roughly **4x**:
@@ -1478,11 +1486,19 @@ Two independent confirmations on the hero itself: (1) the shipped albedo tint ta
 24.2 % and moves the sunlit attic box's display blue by **2.2 %** and the shaded attic's by **12.2 %**; (2) the
 projection forced to `Photo` 0 vs 1 (`renders/logs/mat_r9_phtest.log`, hero border rows 190-320) moves the shaded
 attic **135.6 -> 130.3** where the ratio map asks for -9.6 %, and the entablature 133.1 -> 132.2 where it asks for
--5.9 %.
+-5.9 %. **[CORRECTED IN ROUND 9b, review finding 3: observation (2) is not evidence about AgX. The round-9 map is
+a quotient of two AgX display-space PNGs handed to a scene-linear albedo input, so it under-delivers ~3x by
+construction -- a bug in `mat_projection.build`, fixed in 9b, not a law of the view transform. The test itself now
+lives in `scripts/mat_r9_phtest.py` instead of `/tmp` (finding 4).]**
 
 Consequences, and they are the round's two open blockers:
 
-- **QA-07-2 is not reachable from materials.** ref 169's sunlit attic is sat 0.582 at lum 188.5 in a camera JPEG.
+- **QA-07-2 is not reachable from materials.** **[CORRECTED IN ROUND 9b, review finding 2: the arithmetic below
+  does not hold and the Look recommendation is backwards -- only the transfer's SLOPE carries from a chart patch to
+  the hero, so the cut needed is large but finite, and what actually blocks it is the SHADED attic's `sat <= 0.50`
+  ceiling, which round 9 never measured. See the round-9b section for the measured constraint. At a matched display
+  luminance `AgX - Punchy` carries LESS chroma than the shipped `AgX - High Contrast` (sat 0.261 against 0.316).]**
+  ref 169's sunlit attic is sat 0.582 at lum 188.5 in a camera JPEG.
   Under AgX at display lum 188, an emission patch driven to **-50 % scene blue** only reaches sat 0.342. Closing
   0.461 -> 0.53 on the hero would need a scene-blue cut of order -120 %, i.e. a negative albedo. The levers that
   remain are all outside this file: the view transform's **Look** (`AgX - Punchy` raises chroma), the sun's colour
@@ -1690,8 +1706,10 @@ licence line).
 
 ### Open, and whose
 
-- **QA-07-2 sunlit chroma — the lead's / lighting's**, with the AgX chart as the evidence. Ask for `AgX - Punchy`
-  (or a warmer sun) and re-measure; materials has spent its authority.
+- **QA-07-2 sunlit chroma — the lead's / lighting's**, with the AgX chart as the evidence. **Do NOT ask for
+  `AgX - Punchy`** (round 9b: at a matched display level it carries less chroma than the shipped look). Ask for a
+  warmer sun or a sunlit level nearer the bottom of the 178-201 window, and re-measure; materials has spent its
+  authority.
 - **QA-07-7 shaded attic level — lighting's**, unchanged: the photograph's reflectance there is only 10 % below
   the build's, worth 3 lum.
 - **QA-07-1 near-water hue — lighting's**, with the three-lever sweep as the impossibility proof.
