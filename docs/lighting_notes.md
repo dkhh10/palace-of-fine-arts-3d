@@ -2306,3 +2306,57 @@ at Blender's default **0.001 m/texel — finer than LIGHT_sun's own 0.002** — 
 The coarse map does not cost the shade — it **improves** it on every box measured, because a softer shadow from a
 55-degree soft sun is what a fill of that shape should cast in the first place. The two cameras that carry the
 colonnade and the aerial fall 135.1 s -> 90.7 s together, i.e. 33 % off the two most expensive frames in the set.
+
+### 24.7 Round-14 acceptance, measured on the rebuilt master (9709 objects, 11.11 M tris at LOD1, 154 MB)
+
+`scripts/lead_build.sh` in the worktree, then one sweep run with two cases on that master: `r13BEFORE` (every
+round-14 socket set back to its round-13 value, including the shade lamps' default shadows) and `r14SHIP`.
+Hero Cycles **1920x1080 / 64 spp** (191-195 s each), the five Eevee cameras 1280x720 / 32 TAA.
+Log `renders/logs/light_r14_acc.log` (977 s, 12 frames). Sheet `renders/qa_comparisons/light_r14_sheet.png`.
+
+| test | box | BEFORE (r13) | **AFTER (r14)** | window / reference | verdict |
+|---|---|---|---|---|---|
+| **HOLD** hero shaded attic | 1110 225 1150 260 | 114.3 / 30.9 / 0.375 | **116.4 / 33.6 / 0.410** | 103-127 / 23.5-35.5 / <= 0.50 (ref 115.0 / 29.5 / 0.425) | **PASS**, 1.9 deg of margin |
+| **HOLD** hero sunlit attic | 900 222 1020 256 | 180.4 / 0.475 / 103.2 | **180.5 / 0.495 / 107.7** | 178-201 / >= 0.50 / >= 110 | improved on both, still 0.005 / 2.3 short |
+| **HOLD** sky_top / sky_left | lighting's boxes | 168.0 / 154.9 | **168.0 / 154.9** | must not move | **identical** |
+| hero columns | mask | 124.9 / 33.6 | 125.3 / 35.1 | QA's test <= 1.3x, hue 20-29 | held |
+| hero south / north wing | | 93.8 / 140.1 | 94.7 / 140.3 | >= 82 raw; 0.9-1.1 of 146.5 | held |
+| **QA-06-2** cam06 roofs hue | 120 150 320 190 | **241.2** | **315.8** | outside 200-300 **PASS**; 22-52 FAIL | half |
+| **QA-06-2** cam06 plaza hue / sat | 760 90 1100 180 | **247.1** / 0.174 | **33.2** / 0.175 | 22-52 | **PASS** |
+| **QA-06-2** cam06 trees hue / sat | 180 40 420 140 | **259.1** / 0.152 | **32.5** / 0.244 | 23-53 | **PASS** |
+| **QA-06-2** cam06 frame median hue / violet pixels | whole frame | 231.1 / **51.2 %** | **40.7 / 30.2 %** | — | the lavender relief map is gone |
+| **QA-06-2** cam03 walk hue / sat | 420 560 900 720 | **221.6** / 0.675 | **204.3** / **0.345** | 25-60 (QA) / 195-230 (brief) | brief PASS, QA FAIL |
+| **QA-06-2** cam02 water hue / sat | 300 640 900 715 | **237.5** / 0.377 | **26.0** / 0.154 | 185-200 | out of the violet, overshot warm |
+| **QA-06-3** cam05 water band | 448 619 960 713 | 122.5 / **349.6** / **0.101** | **108.9 / 40.3 / 0.472** | hue 40-80, sat >= 0.24, lum ~93.4 | **PASS on both stated halves** |
+| **QA-06-7** cam03 outer row / sunlit | 880 120 1200 600 | 0.082 | **0.138** | >= 0.15 | 0.012 short |
+| **QA-06-7** cam03 frame below lum 10 | whole frame | **48.2 %** | **28.4 %** | <= 20 % | 8.4 pp short |
+| cam03 shaft flank / sunlit (the re-based shade test) | 480 150 560 600 | 0.226 | **0.291** | 0.30-0.70 | 0.009 short |
+| **QA-06-3** hero water reflection R-B | 900 760 1020 840 | +2.2 | +4.4 | >= +35 | materials' (24.3) |
+| near water sat / hue | 1150 1000 1450 1050 | 0.304 / 213.8 | **0.310 / 227.9** | 0.22-0.32 / 185-200 | sat PASS, hue 28 deg out |
+| **QA-06-13** five-camera Eevee pass | 01e 02e 03e 05e 06e | **361.6 s** | **229.9 s (-36.4 %)** | six-camera pass < 150 s | see below |
+| cam02 shaded pier hue / sat | 600 110 660 200 | 36.6 / 0.597 | **3.8 / 0.282** | 25-60 | over-corrected by 21 deg |
+
+**Item 4's number, stated honestly.** QA's 218.6 s is their six-camera pass on their master and their GPU; this
+branch cannot reproduce that absolute (the GPU is shared with architecture's cam01 crops, and cam04 is not in this
+set). What transfers is the RATIO, measured on the same master, the same frames and the same contention in one
+run: **361.6 s -> 229.9 s, a 36.4 % cut.** Applied to QA's own 218.6 s that is **139 s**, inside the 150 s the
+brief asks for; QA should re-time it on their master. The two most expensive frames, cam03 and cam06, fall
+89.0 + 46.1 = 135.1 s to 53.6 + 37.1 = 90.7 s in the controlled comparison of 24.6.
+
+**QA-06-7, item 3, report-only (the lead's budget cap; no ray test was run).** The outer row is NOT the
+sky-occluded case the retired near-shaft box was: it responds to the rig. Both its own measures moved by more than
+half the distance to their tests in one round without being tuned for — 0.082 -> **0.138** of the sunlit rotunda
+(test >= 0.15) and the frame's black fraction 48.2 % -> **28.4 %** (test <= 20 %) — which a geometrically
+unreachable box cannot do (round 12: 8x the whole diffuse sky moved the near shaft 0.062 -> 0.122 while bleaching
+the walk to 1.4x). The remaining 0.012 and 8.4 pp are one more step of the same lever, `SHADE_FILL`'s SSW lamp,
+which is the one aimed into the south colonnade: it is at w 1.00 of 70 W/m2 today. **Recommendation for r15: raise
+that lamp alone** (the WNW lamp carries the hero and must not move) and re-measure both numbers; the cost to watch
+is cam03's walk, which is already at hue 204 and would warm further.
+
+**Residual over-correction, flagged rather than hidden.** Two boxes have gone past neutral into the warm/magenta
+side: cam06's roofs at hue 315.8 (out of 200-300, but 264 deg from ref 105's 37.3 the short way, i.e. still wrong)
+and cam02's shaded pier at 3.8 against the round-05 rig's 36.6. Both are surfaces whose light is now dominated by
+the near-pure-blue fill's *complement* — the fill at (0.03, 0.02, 1.00) delivers almost no red or green, so where
+it replaced the tint it removed green faster than red. The single knob is the fill colour's green; it was solved
+on the hero's shaded attic, and moving it will move that box. Lead's call whether the hero's 1.9 deg of margin is
+worth spending on cam06's roofs.

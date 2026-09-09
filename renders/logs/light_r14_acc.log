@@ -91,3 +91,32 @@ Info: No orphaned data-blocks to purge
 [light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
 [light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
 [r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+11:42.736  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14acc_r13BEFORE_01e.png'
+[r14] -> r14acc_r13BEFORE_01e.png (73.3s, 1920x1080)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+13:11.322  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14acc_r13BEFORE_02e.png'
+[r14] -> r14acc_r13BEFORE_02e.png (88.6s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+14:36.773  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14acc_r13BEFORE_03e.png'
+[r14] -> r14acc_r13BEFORE_03e.png (85.5s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+15:46.239  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14acc_r13BEFORE_05e.png'
+[r14] -> r14acc_r13BEFORE_05e.png (69.4s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+16:31.061  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14acc_r13BEFORE_06e.png'
+[r14] -> r14acc_r13BEFORE_06e.png (44.8s, 1280x720)
+[r14] camera times: 01c 194.6s  01e 50.2s  02e 49.4s  03e 52.5s  05e 40.7s  06e 37.1s  01c 190.9s  01e 73.3s  02e 88.6s  03e 85.5s  05e 69.4s  06e 44.8s   TOTAL 977.0s over 12 frames
+[r14] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 39899 exited rc=0 after 992 s (max 3600)
