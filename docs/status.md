@@ -270,3 +270,7 @@ Regression handed to materials: near-water sat 0.28 -> 0.42 (murk chroma -1/3). 
 ## 2026-09-09 · ENV r7 merged (f426672) after review fixes; ENV r8 (short) dispatched
 Fixes: pin tuple on all bands (moved 0 / dropped 0), arch_params imported, one box per claim, paths via common, 24 MB previews dropped; r7 panels had been rendered on main's stale master, re-rendered on the worktree master with parity proven (0.3 lum). Shore band 71.7 -> 79.6 (not null; 36 short). LOD1 4.76 M.
 Regression: pinning restores the A/A2 cluster in the north band (137.5 -> 91.9, 0.63 of ref). Decision: pin stays, cluster re-derived from ref 169 (docs/briefs/environment_r8.md). In flight: LIGHT r12 review, ENV r8. Next: merge lighting, MAT r7.
+
+## 2026-09-09 · LIGHT r12 merged after review (MERGE WITH FIXES; docs/reviews/light_r12_review.md); MAT r7 dispatched
+Lead fixes: Eevee hero frame on the r12 rig: sky/lagoon identical to Cycles (208.2 / 0.52), no cast; Eevee misses the diffuse shade term (shaded attic 42.2 / 0.77 vs Cycles 35.4 / 0.41): carried to LIGHT r13 with meta provenance, water sheet cell, SUN_BLUE_MULT 0 and importance-map notes. hue_tol 8 -> 6.
+In flight: MAT r7 (docs/briefs/materials_r7.md, Opus xhigh, on the merged master with the r12 rig), ENV r8. Next: reviews, merges, lead_build.sh, QA round 6.
