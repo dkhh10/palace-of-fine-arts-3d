@@ -1817,3 +1817,83 @@ master; the albedo changed, the rig did not — LIGHT_sun is 67.32 W/m2 at (1.00
 `SKY_DIFFUSE_BOOST` stays at 2.50. **Hand-off to materials: the sunlit attic needs +0.025 of saturation and +6.9 of
 R-B from the albedo before lighting has any room on the wings at all.** Hand-off to environment: at db 4.0 the shore
 band still only reaches 101.3 of 115.6, so more than half of that gap is not lighting's either.
+
+### 22.4 Item 2 — the mist, and the shape of the knob matters more than its size
+
+Environment's hand-off (ENV r7): COMP_golden_hour adds +58 lum to cam06's horizon crop and cuts its std 44.0 -> 23.5.
+Measured here on environment's own crop and statistic (`env_r7_measure`, rows 0-220 of the 1280-wide frame; the
+far-shore line count is their `count_lines` on rows 0-110), cam06 Eevee 1280x720 on this master:
+
+| compositor | mean | std | far-shore lines |
+|---|---|---|---|
+| OFF (environment's geometry un-composited) | 89.4 | **59.8** | **8** |
+| as shipped (cap 0.50, k 2.5) | 129.7 | 33.8 | 2 |
+| **cap 0.25, k 5.0 — SHIPPED** | **122.2** | **38.1** | 2 |
+| cap 0.30, k 2.5 | 117.2 | 42.4 | 3 |
+| cap 0.20, k 2.5 | 109.0 | 47.4 | 4 |
+| MIST depth 2000 -> 6000 (L 800 -> 2400 m) | 108.9 | 47.4 | 4 |
+| cap 0.25, k 2.5, depth 4000 | 103.9 | 50.5 | 6 |
+
+The test (std >= 35 with the compositor on) is passed by all of them; the question is what each costs the hero, and
+that is where the shape matters. The airlight is `cap * (1 - exp(-k * mist))`, so while the argument is small it is
+`cap * k * mist`: holding **cap x k = 1.25** leaves the near and mid field exactly where it was and takes the veil
+only off the saturating far field. Hero cost, Cycles 1920x1080 / 64 spp:
+
+| | shipped | cap 0.25 / k 5.0 | depth 6000 |
+|---|---|---|---|
+| south wing band | 94.7 | **93.6** (-1.1) | 83.9 (-10.8) |
+| north wing band | 140.7 | 140.1 | 134.9 |
+| shore band | 91.8 | 91.5 | 87.9 |
+| shaded attic | 114.6 | 114.3 | 109.6 |
+| sunlit attic lum / sat / R-B | 180.5 / 0.475 / 103.1 | 180.5 / 0.475 / 103.2 | 179.8 / 0.484 / 104.9 |
+| columns | 1.13x | 1.13x | 1.07x |
+
+`depth 6000` reaches a higher std but spends 10.8 lum of the south wing, which is the exact number QA-05-5 is short
+of and which 22.3 has just shown lighting cannot buy back. Rejected for that reason. Shipped: `COMP["haze_strength"]`
+0.50 -> **0.25**, `COMP["haze_extinction"]` 2.5 -> **5.0**; `MIST` untouched.
+**Hand-off to environment: composited 2 far-shore lines against 8 un-composited, and the crop's std 38.1 against
+59.8. The remaining 21.7 of std is the compositor's last 0.25 of cap; it costs 1 lum of the south wing per 0.05.**
+
+### 22.5 Review carries, measured
+
+* **SUN_BLUE_MULT (carry 5).** 0.00 -> 0.05 -> 0.10, Cycles hero: sunlit attic R-B **103.2 -> 102.8 -> 102.2**,
+  saturation 0.475 -> 0.474 -> 0.471, shaded attic hue 30.9 -> 30.8 -> **30.7**. So 0.05-0.10 does NOT cost the shade
+  window — it gains 0.2 deg of margin — but it spends 1.0 of a sunlit R-B that is already 6.8 under its floor, so it
+  stays at **0.00**. The glint crop settles the other half of the carry: the brightest 0.2 % of the lagoon reads
+  **lum 207.1, R-B -16.7, hue 211.7** and does not move at all with SUN_BLUE_MULT (207.1 / 207.1 / 207.2). It is a
+  reflection of the SKY, not of the sun: at a 7.4 deg sun behind the camera's left shoulder the specular lobe is out
+  of frame, so the blue-free sun has no visible specular in the hero at all. It will matter in a flythrough that
+  swings toward the sun; the number to watch is that crop's R-B.
+* **The Cycles world importance map (carry 6).** The attic box rendered at **128 spp** reads mean 110.4 with a
+  residual std of **45.67** after removing its own linear ramp; the round-11 rig (db 1.0, no tint, bm 0.75) reads
+  79.1 / 40.01, i.e. the r13 rig's RELATIVE residual is 0.414 against r11's 0.506. And the same box on the shipped
+  64 spp frame reads 45.52 against 128 spp's 45.67 — 0.3 % apart. Doubling the samples changes it by nothing, so the
+  residual in that box is ORNAMENT TEXTURE, not sampling noise: the 42.5x of diffuse-only sky in under-sampled
+  directions does not show. `sample_map_resolution` stays at 4096 and no indirect clamp is needed.
+* **Provenance (finding 3).** `sky_diffuse_hue` is now written on the world, and `sky_diffuse_hue`,
+  `sky_diffuse_tint`, `sky_diffuse_tint_antisun`, `sky_diffuse_tint_horizon` are on the sun's `meta` block.
+* **Index-picked Mix sockets (finding 8).** `build_compositor_group` now picks the aerial-haze and vignette
+  `ShaderNodeMix` sockets by name AND type (`_mix_in` / `_mix_out`), the same rule `make_sky_world` uses.
+* **The near-water cell (finding 4)** is row 4 of `renders/qa_comparisons/light_r13_sheet.png`. The round-12
+  regression is CLOSED by materials r7, not by lighting: near-water saturation **0.418 -> 0.304** against QA-05-4's
+  0.22-0.32 (ref 169 0.270), hue 218.1 -> 213.8 against 185-200.
+* Carries 7 and 9 (the misleading FILL comment in the r12 sweep, the hard-coded 95.8 column reference, and one
+  leaked world datablock per swept case) are fixed in the scripts.
+
+### 22.6 Round-13 scoreboard, measured on the rebuilt master (9709 objects, 11.11 M tris at LOD1)
+
+| test | before | after | window | verdict |
+|---|---|---|---|---|
+| **item 1** Eevee shaded attic vs Cycles | 93.3 / 38.2 / 0.650 (-18.6 %, +7.3, +0.275) | **119.0 / 35.0 / 0.381** (+4.1 %, +4.2, +0.007) | 15 % / 6 deg / 0.10 | **PASS** |
+| item 1 Eevee sky_top vs Cycles | 167.9 vs 168.0, hue 208.7 vs 208.6 | unchanged | identical | **PASS** |
+| item 1 Eevee near water vs Cycles | +19.6 %, +11.2 hue | +20.2 %, +11.3 hue | "must hold" | pre-existing engine gap, +0.6 pp from this round |
+| **item 2** cam06 crop std, compositor on | 33.8 | **38.1** | >= 35 | **PASS** |
+| item 2 cost: south wing band | 94.7 | 93.6 | >= 82 raw | PASS (raw), FAIL (aligned) |
+| **item 3** south wing aligned | 94.7 | 93.6 | >= 103 | **FAIL, no rig headroom (22.3)** |
+| item 3 shore band | 91.8 | 91.5 | 115.6 | FAIL, ~half of it not lighting's |
+| Cycles hero, everything else | — | bit-identical to the pre-fill frame | — | the Eevee rig is invisible to Cycles |
+
+Open, and for whom: the sunlit attic's saturation (0.475 vs 0.50) and R-B (103.2 vs 110) are **materials'** and they
+are what blocks item 3; the shore band's remaining ~24 lum is **environment's**; the Eevee/Cycles lagoon gap
+(+20 % lum, +11 deg of hue) is a screen-trace-vs-path-trace difference that no rig knob addresses and that QA scores
+in Cycles anyway.
