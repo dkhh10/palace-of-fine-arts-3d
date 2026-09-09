@@ -342,3 +342,7 @@ In flight: ARCH r6, LIGHT r14 (docs/briefs/lighting_r14.md), ORN r5 fixes, ENV r
 ## 2026-09-09 · ORN r5 merged (5703665) after fixes
 RIN_MAX_PROUD 0.09: clearance +10.5 to +13.3 mm on all six variants, tris unchanged; orn_r5_stats is a gate (run mismatch, clearance, budgets); LOD2 budget enforced in orn_lib.enforce_lod2_budget; `orn_build.py -- --bake-pending` lists 6 LOD1 normal-map bakes for a GPU round. Instancing waits for ARCH r6's socket stamp/frame.
 In flight: ARCH r6, LIGHT r14, ENV r9. Next: reviews + merges, ORN bake (GPU round), MAT r8.
+
+## 2026-09-09 · ARCH r6 reported (2361006), in review
+Stack registered on ref 169: every course within 5 rows (0.37 m; was up to 31), attic storey 101 vs 100 rows; ENTABLATURE_Z0 27.40 -> 25.96 (3.22 m entablature), CAPITAL_H 2.6 -> 3.0, COL_SHAFT_H 16.3 -> 14.46, ATTIC_H 7.1 -> 9.12 with a real crown corona soffit; silhouette 0.6 / 0.0 / 0.0 / 0.35 %; tris +0.012 %; UVProj now a mandatory post-step of arch_build (re-checked 0.84 / 0.00 / 0.02 px); rotunda frieze_run sockets stamped host/subtype and re-framed (arch_socket_check ALL OK on 126). Socket deltas for ornament: capital_rotunda -1.84 m and 3.0 m tall, frieze_run -1.55 m and band 0.81 m, attic_panel -2.07 m and panel_height 5.27, attic_figure -2.02 m.
+In flight: ARCH r6 review, LIGHT r14, ENV r9. Next: merge arch; ORN r6 refit (capitals 3.0 m, rinceau 0.81 band, attic panels 5.27 m; no render) then the ORN bake; MAT r8.
