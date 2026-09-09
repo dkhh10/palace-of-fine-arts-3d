@@ -381,3 +381,46 @@ Verdict: **gate not passed** (hero 3.67 vs the 4.5 target). Blockers: **QA-08-1*
 (lighting/lead: sun colour or look). Majors: -4 blank archivolt, -5 mirror level, -6 cam05 lagoon band, -7 cam03 walk
 now green, -8 coffer saucer over-corrected both ways. Recommendation: fix the two cam02 items (cheap, worth ~+0.4 on
 that camera), then spend the owed round on QA-08-5 + QA-08-4, which are the hero's two largest named gaps.
+
+---
+
+## Round 09 (2026-09-10) — the LAST polish round. Hero **3.67 -> 3.67 (+0.00)**; averages
+01 **3.67** (+0.00) · 02 **2.94** (+0.25) · 03 **2.56** (+0.00) · 04 **2.81** (+0.00) · 05 **3.06** (+0.00) ·
+06 **2.67** (+0.00). Full report `docs/qa_round_09.md`; composite `renders/qa_comparisons/round09_gate.png`.
+
+Merged this round and nothing else: cam02's lens 40 -> **27 mm** and **LIGHT r16** (sun-side diffuse tint b 40 -> 70,
+a cam03 knob, the flythrough back to 1224 frames). No materials / ornament / environment round.
+
+**New rule adopted this round: a score may not move unless the frame moved.** The round-08 -> round-09 whole-frame
+mean |d| in 8-bit luminance is the gate on scoring at all: cam01 **1.24** (Cycles; R 0.53 / G 0.47 / B 2.73 — the tint
+is a blue-removal on lit stone and is **Cycles-only**, the Eevee hero's sunlit attic did not move at all),
+cam02 **52.1** (a different frame), cam03 **0.18**, cam04 **0.09**, cam05 **0.20**, cam06 **2.34**. Four frames below
+a quarter of a luminance level cannot carry a score change, and inventing one corrupts the definition-of-done clock.
+
+**New test this round: the whole-building chroma control.** The QA-07-2 / QA-08-3 window (sunlit attic sat 0.53-0.62)
+is defined on ONE box. Measured against the block 700 160 1240 480 the render went **0.528 -> 0.571** against ref 169's
+**0.521** — from 1.01x the photograph to **1.10x** — while the attic box is still 0.043 under its floor; the column
+population went 0.632 -> **0.694** (ref 0.595) and the entablature 0.700 -> **0.735** (ref 0.588). **Any future chroma
+claim must show the block control next to the box**, or it is measuring the box and not the picture.
+
+**New test this round: cam02 framing by top-band sky.** Sky fraction in x 400-900, rows 0-60: **0.2 % -> 91.8 %**
+against ref 062's 91 % in its own rows 0-27; dome apex at **0.047** of frame height (acceptance 0.05 +- 0.02).
+QA-08-1 closes. The podium-base half of the test is not measurable at this station (near planting occludes it).
+
+**New standing caveat: measure lighting on the delivery engine.** cam02's shaded boxes read hue 28.1 / 301.7 / 260.8 /
+28.7 in Eevee and **268.4 / 234.6 / 249.5 / 351.2 in Cycles** — all four violet, all four at negative R-B. Lighting
+r16 was tuned on Eevee frames and its cam02 pass does not survive the engine the deliverable renders in.
+
+Rejects (game asset / clean CAD): cam02's whole camera-facing face in Cycles violet; the hero's blank archivolt over
+8 empty sockets; the hero mirror at 0.614 of its own sunlit stone (photo 0.872); the shoreline as a dark hedge
+(88.4 vs 115.2, no trunks / shed / figures); cam04's grey saucer fields (0.341) between orange ribs (0.634).
+
+Held from round 08 with no drift: alignment scale 1.3108 / dx -291.8 / dy -126.6 (bit-identical), attic std ratio
+0.675, anisotropy 5.01 / 8.23, shade 127.6 / 34.8 / 0.443, flank 162.7 / 209.6, ripples -22.4, near water 125.3,
+cam03 black 12.8 %, cam06 ratio 0.636 with 3 far-shore lines, weathering 20.0 % / 48.2 %.
+Closed this round: **QA-08-1** (cam02 lens) and **QA-08-13** (frame range now 1-1224 = 51.0 s).
+
+**Definition of done.** Gate passes at hero >= 4.0: **3.67, not passed, 0.33 short.** The two-round flat clock reads
+**1 of 2** (round 08 +0.22, round 09 +0.00). Under the user's round-08 instruction — one more round after round 08,
+then Phase 5 regardless — round 09 is that round and Phase 5 starts now. The round-09 defect list is written as the
+Phase 5 known-issues list, ordered by hero visibility, in `docs/qa_round_09.md`.

@@ -122,8 +122,24 @@ R08 = {
     "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
     "Scale cues":            [3.5, 2.5, 2.5, 3, 3, 3],
 }
-SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06, "07": R07, "08": R08}
+R09 = {
+    # round 09 (2026-09-10, the LAST polish round): cam02 lens 40 -> 27 mm (QA-08-1) and LIGHT r16 (sun-side diffuse
+    # tint b 40 -> 70, cam03 knob, flythrough back to 1224 frames).  Nothing from materials / ornament / environment.
+    # cam01 geometry is bit-identical to round 08 (same edge rows); its only change is chroma, mean |d| 1.24 lum
+    # concentrated in blue (2.73).  cam03 / 04 / 05 moved by 0.09-0.20 lum mean = below the scoring resolution.
+    "Silhouette match":      [4, 3.5, 2.5, 3.5, 3.5, 4],
+    "Proportion":            [4, 3.5, 3, 3.5, 3.5, 3.5],
+    "Ornament fidelity":     [4, 4, 3, 3, 3.5, 2.5],
+    "Material realism":      [3.5, 2, 2.5, 3, 3.5, 2.5],
+    "Edge wear":             [3.5, 2.5, 1.5, 1, 2, 0.5],
+    "Lighting mood":         [4.5, 2.5, 3.5, 3, 3.5, 3],
+    "Water reflection":      [3, None, None, None, 2.5, 2.5],
+    "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
+    "Scale cues":            [3.5, 3, 2.5, 3, 3, 3],
+}
+SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06, "07": R07, "08": R08, "09": R09}
 VERDICT = {
+    "09": "Gate: NOT passed. Hero 3.67 -> 3.67 (+0.00): the sun-side tint moved the sunlit attic box sat 0.462 -> 0.487 (window 0.53-0.62) but took the whole building from 1.01x to 1.10x the photograph's saturation. cam02 +0.25: the 27 mm lens closes QA-08-1 (top-band sky 0.2 % -> 91.8 %, ref 91 %); its face is still violet in CYCLES on all four boxes (hue 234-268). cam03/04/05/06 flat within 0.2 lum. First flat round of the definition-of-done clock: 1 of 2.",
     "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
     "03": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
@@ -191,7 +207,7 @@ def build(rnd, out):
     hero_s, ref_s = fit(hero, 950), fit(ref, 950)
     top_h = max(hero_s.height, ref_s.height)
     strip_h = 180
-    table_h = 60 + (len(ROWS) + 2) * 40 + 20 + 44 * (2 + 1)   # + the r02 -> rnd trend block
+    table_h = 60 + (len(ROWS) + 2) * 40 + 20 + 44 + 34 * (len(CAMS) + 1)   # + the r02 -> rnd trend block, one camera per row
     n_verdict = len(_wrap(VERDICT.get(rnd, "Gate: NOT passed."), 165))
     H = 44 + top_h + 30 + strip_h + 26 + table_h + 30 * n_verdict + 30
 
@@ -250,9 +266,9 @@ def build(rnd, out):
         txt = "  ".join(f"{v:.2f}" for v in vals)
         dv = vals[-1] - vals[0]
         col = (140, 235, 140) if dv > 0.3 else ((255, 140, 140) if dv < 0 else (215, 215, 215))
-        d.text((col0 + (i % 3) * 620, y + (i // 3) * 34), f"cam {c:13s} {txt}   ({dv:+.2f} since r02)",
-               font=f_cell, fill=col)
-    y += 34 * 2 + 12
+        # one camera per row: with 8 scored rounds the 3-per-row layout overprinted itself (round 09).
+        d.text((col0, y + i * 34), f"cam {c:13s} {txt}   ({dv:+.2f} since r02)", font=f_cell, fill=col)
+    y += 34 * len(CAMS) + 12
     for line in _wrap(VERDICT.get(rnd, "Gate: NOT passed."), 165):
         d.text((col0, y), line, font=f_cell, fill=(255, 180, 120))
         y += 30
