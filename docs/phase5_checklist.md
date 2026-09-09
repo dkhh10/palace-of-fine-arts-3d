@@ -3,6 +3,8 @@
 Gate: hero (cam01) >= 4.0, OR two consecutive QA rounds after materials r8 (the photo-projection pass) improving the hero by < 0.1.
 Then, in this order, one Blender at a time, every run through scripts/blender_run.sh:
 1. Final master: scripts/lead_build.sh (build + probe bake) on the merged main; ornament bake first if `orn_build.py -- --bake-pending` lists any.
+1b. Delivery copy + cleanup: `scripts/phase5_deliver.sh 1b` -> master_delivery.blend (purge, LOD1/render-LOD0, saved Eevee preset,
+   renders/logs/phase5_cleanup.json, re-open gate). master.blend is not modified; steps 2-6 then render the copy.
 2. Open time: `blender_run.sh 300 -- --background master.blend --python-expr "import time"` with timing in the log; must be < 60 s (round 6: 0.72 s).
 3. Eevee navigability: the saved viewport state (light_presets.apply_viewport_eevee, LOD1 default, light_threshold 0.01, RT off) opens and the
    six QA cameras render in Eevee under 150 s total (QA-06-13 target); record the pass time.

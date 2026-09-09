@@ -63,11 +63,15 @@ if SAVE_AS.name == "master.blend" and not ALLOW_MASTER:
 
 
 # ------------------------------------------------------------------ inventory helpers
+# `bpy.data.all_ids` is a meta-collection holding every ID in the file; counting it doubles every total.
+SKIP_COLLECTIONS = {"all_ids"}
+
+
 def id_collections():
     """(name, collection) for every bpy.data collection that holds data-blocks."""
     out = []
     for prop in bpy.data.bl_rna.properties:
-        if prop.type != "COLLECTION":
+        if prop.type != "COLLECTION" or prop.identifier in SKIP_COLLECTIONS:
             continue
         coll = getattr(bpy.data, prop.identifier, None)
         if coll is None:
