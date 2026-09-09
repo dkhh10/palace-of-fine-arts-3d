@@ -1,0 +1,49 @@
+00:00.316  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+[probe] master: 9681 objects; cam at (-14.1, 100.0, 1.6)
+[probe] sun toward (0.473, 0.872, 0.128) (elevation 7.4 deg)
+
+[probe] === water_refl (900, 760, 1020, 840) : 40 water samples, mean 23.4 m, mean incidence 82.7 deg from normal ===
+[probe]  pitch  roll   SKY%  ARCH%   ORN%   ENV%  sunlit%   meanZ  rayEl
+[probe]  -12.0   0.0    0.0    0.0    0.0  100.0      0.0     nan  -16.7
+[probe]   -8.0   0.0    0.0    0.0    0.0  100.0      0.0     nan   -8.7
+[probe]   -5.0   0.0    0.0    0.0    0.0  100.0      0.0     nan   -2.7
+[probe]   -3.0   0.0    0.0   20.0    0.0   80.0     15.0   -1.16    1.3
+[probe]   -1.5   0.0    0.0   10.0    0.0   90.0      5.0    4.89    4.3
+[probe]   names p+0: ENV_tree_willow_04_LOD1=10, SKY=10, ENV_backdrop_hall_pavilion=7, ENV_backdrop_hall_detail=5, ARCH_rotunda_pier_core_05=4, ENV_shrub_big2_0050_LOD1=3
+[probe]    0.0   0.0   25.0   12.5    0.0   62.5      7.5   10.01    7.3
+[probe]    1.5   0.0   25.0   45.0    0.0   30.0      2.5   17.82   10.3
+[probe]   names p+3: ARCH_rotunda_vault_coffers_04=10, ARCH_rotunda_ceiling_ribs=7, ARCH_rotunda_inner_wall_04=6, ENV_tree_willow_04_LOD1=4, SKY=4, ARCH_rotunda_inner_archivolt_04=3
+[probe]    3.0   0.0   10.0   72.5    0.0   10.0      0.0   21.20   13.3
+[probe]   names p+5: ARCH_rotunda_vault_coffers_00=24, ARCH_rotunda_ceiling_ribs=7, ARCH_rotunda_inner_wall_04=6, ARCH_rotunda_pier_core_04=1, ARCH_rotunda_inner_archivolt_04=1, ARCH_rotunda_inner_block_01=1
+[probe]    5.0   0.0    0.0  100.0    0.0    0.0     30.0   20.86   17.3
+[probe]   names p+8: ARCH_rotunda_vault_coffers_00=15, ARCH_rotunda_wall_00=14, ARCH_rotunda_entablature=8, ARCH_rotunda_archivolt_00=2, INST_keystone_000_LOD1=1
+[probe]    8.0   0.0    0.0   97.5    0.0    0.0     75.0   23.41   23.3
+[probe]   12.0   0.0    0.0   75.0    0.0    0.0     72.5   33.15   31.3
+[probe]  -12.0   3.0    0.0    0.0    0.0  100.0      0.0     nan  -16.7
+[probe]   -8.0   3.0    0.0    0.0    0.0  100.0      0.0     nan   -8.7
+[probe]   -5.0   3.0    0.0    0.0    0.0  100.0      0.0     nan   -2.7
+[probe]   -3.0   3.0    0.0   20.0    0.0   80.0     15.0   -0.48    1.3
+[probe]   -1.5   3.0    0.0    7.5    0.0   92.5      5.0    4.12    4.3
+[probe]    0.0   3.0   10.0   10.0    0.0   80.0      7.5   10.05    7.3
+[probe]    1.5   3.0   25.0   42.5    0.0   32.5      5.0   17.60   10.3
+[probe]    3.0   3.0   12.5   82.5    0.0    5.0      5.0   20.91   13.3
+[probe]    5.0   3.0    0.0   97.5    0.0    2.5     40.0   20.73   17.3
+[probe]    8.0   3.0    0.0  100.0    0.0    0.0     85.0   23.37   23.3
+[probe]   12.0   3.0    0.0   82.5    0.0    0.0     77.5   32.66   31.2
+[probe]  -12.0   8.0    0.0    0.0    0.0  100.0      0.0     nan  -16.7
+[probe]   -8.0   8.0    0.0    0.0    0.0  100.0      0.0     nan   -8.8
+[probe]   -5.0   8.0    0.0    0.0    0.0  100.0      0.0     nan   -2.9
+[probe]   -3.0   8.0    0.0   35.0    0.0   65.0     32.5   -0.56    1.1
+[probe]   -1.5   8.0    0.0    7.5    0.0   92.5      2.5    5.17    4.1
+[probe]    0.0   8.0   12.5   15.0    0.0   72.5     10.0    8.74    7.0
+[probe]    1.5   8.0   22.5   37.5    0.0   37.5      5.0   16.75   10.0
+[probe]    3.0   8.0    7.5   72.5    0.0   15.0     12.5   19.34   13.0
+[probe]    5.0   8.0    0.0   97.5    0.0    2.5     52.5   19.37   16.9
+[probe]    8.0   8.0    0.0   87.5    0.0    0.0     75.0   22.39   22.9
+[probe]   12.0   8.0    0.0   75.0    0.0    0.0     57.5   31.63   30.7
+[probe] transmitted ray (IOR 1.333): {'ENV': 40}
+[probe] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 41853 exited rc=0 after 3 s (max 900)
