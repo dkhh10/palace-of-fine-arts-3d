@@ -1012,6 +1012,93 @@ untouched; `size_hint` 10.511 vs measured width 10.500-10.501.
 clearance ≥ 10 mm, every LOD inside its tier budget, every capital and relief field filling its ARCH course.
 
 
+## Round 8 (2026-09-09) — r7 review findings 1, 2, 3, 5, 8, 9 (no render, no bake)
+
+No renders and no bakes this round by instruction (the lead runs them); lighting held the GPU again
+(`light_r14_sweep.py` running throughout). Two Blender runs only: the `capital_rotunda` rebuild the preset
+change forced, and the stats gate. Logs: `renders/logs/orn_r8_{capital_layout,capital,gate}.log`.
+
+### 1. `--verify` now checks the file that builds the mesh, for every variant (findings 1 and 2)
+
+`scripts/orn_r7_capital_layout.py` has **no hand copies left**. `ARCH_R6`, `BELL_PROFILE`, `CAPITAL_PRESETS`,
+`CAPITAL_STYLE`, and the bodies of `bell_radius`, `leaf_spine` and the new `apply_capital_style` are parsed out
+of `scripts/orn_build.py` and exec'd (`source_ns()`, bracket-matched slices plus a top-level-`def` slice). The
+seeded `ARCH_R6 = {"capital_rotunda_H": 3.0, ...}` that made verify pass against a stale course is gone, and the
+`proud_unit="R"` branch with it. The per-variant style block moved out of `build_capital` into
+`orn_build.apply_capital_style(P, variant)` — same arithmetic, so the mesh is unchanged by the refactor — and
+`verify()` loops it over every `CAPITAL_STYLE` variant of all three presets.
+
+Checks per rotunda variant: tier extent (v1 to the solver's 0.004 H, v2/v3 to a stated 0.015 H = 45 mm, since
+the styles exist to differ), leaf-tip radius inside the ref window 1.30-1.40 R, volute spiral top at least
+0.005 H (15 mm) below the abacus seat, spiral bottom inside the top-0.35 H band, upper leaf top clear of the
+spiral, abacus 0.100 ± 0.002 H. The 1.8 m capitals print `carried (not re-laid)` instead of failing, as before.
+
+| capital_rotunda | lower ext / H | lower r_tip | upper ext / H | upper r_tip | volute spiral | verdict |
+|---|---|---|---|---|---|---|
+| v1 r7 → **r8** | 0.300 → **0.300** | 1.358 → **1.358 R** | 0.300 → **0.300** | 1.408 → **1.397 R** | 0.663-0.887 → **0.650-0.874 H** | was outside the r_tip window |
+| v2 r7 → **r8** | 0.295 → **0.295** | 1.392 → **1.392 R** | 0.291 → **0.291** | 1.348 → **1.348 R** | 0.646-**0.904** → **0.633-0.891 H** | spiral top was 4 mm/H inside the abacus |
+| v3 r7 → **r8** | 0.300 → **0.306** | 1.389 → **1.329 R** | 0.310 → **0.308** | **1.507** → **1.389 R** | 0.676-0.874 → **0.663-0.861 H** | tips were 0.11 R past the window |
+
+Three preset edits did it, all in `orn_build.py`: upper `proud` 0.052 → **0.049 H** (with `upper_len`
+0.378 → 0.377 re-solved, `upper_w` unchanged) so v1's tips stop at 1.397 R; `volute_z` 0.775 → **0.762 H**, which
+centres the spiral band in the 0.630-0.895 H window that v2's 1.15x `volute_r` leaves and moves it toward the
+photo (see 3 below); and `CAPITAL_STYLE[3]` `upper_len` 1.07 → **1.03**, `proud_mul` (0.85, 1.25) → **(0.85,
+0.85)**, `tilt_add` 4.0 **dropped** — v3's lean was what pushed its tips out, and 2 deg of extra lean on the
+upper row is worth 0.03 R at the tip. v3 still reads differently: a 3 % longer upper leaf, both rows held 15 %
+closer to the bell where v2 stands 20 % prouder, small volutes, big caulicoli helix.
+
+`--verify` exits 0. Rebuild (`--only capital_rotunda --no-bake`, 16 s) + gate (exit 0, no FAIL):
+
+| measured on the rebuilt asset | r7 | r8 |
+|---|---|---|
+| course fill, worst of 9 LODs | 1.3-1.5 mm in 3.000 m | **1.3-1.5 mm** |
+| LOD0 plan extent vs the 3.00 m abacus | 2.98-**3.14** m | **2.98-2.98 m** |
+| silhouette alternations >= 2 % of r_max | 7-10 | **7-10** |
+| max radius (volute_er, untouched) | 1.697-1.714 m | **1.697-1.698 m** |
+
+**`CAPITAL_STYLE[3]` is shared with `capital_inner` and `capital_colonnade`, which were NOT rebuilt** (brief:
+rebuild `capital_rotunda` only). Their v3 meshes on disk are still the r7 style; the next rebuild of those two
+picks up the new one. `--verify` already measures them against the new style and they stay inside their own
+carried tolerances.
+
+### 2. Back-row count off the integer cliff, `--bake-pending` exit code, the gate's "abacus" label (5, 9, 8)
+
+- `n_back = int((W - 1.6) / back_pitch) + 1` gave 4.9998 → 5, i.e. 0.02 % from flipping to 6. It is now a stated
+  half-span: `BACK_HALF_SPAN = 4.00` m from the panel centre to an end back-row figure, `n_back = 2 *
+  int(BACK_HALF_SPAN / back_pitch) + 1` (odd, symmetric). Still **5 at 1.780 m pitch, achieved half-span
+  3.560 m**, and the positions are the same expression, so **the mesh is byte-identical** — attic_panel is
+  deliberately not rebuilt. The pitch now has to move +12.4 % / -25.1 % to change the count, against 0.02 %.
+  The print line carries the achieved half-span against the allowed one.
+- `bake_pending()` returned `0 if not nrm else 0`. It returns **1** when any LOD1 normal map is pending and
+  `main()` raises `SystemExit` with it, so `--bake-pending` can gate a master build.
+- Gate section 6's last line was labelled `abacus` but printed `x_extent()` over the whole LOD0. It now reads
+  `LOD0 plan extent (leaf tips + volutes) ... ; abacus N m across corners`, both against the socket `size_hint`.
+  With the r8 presets the two are 2.98 and 3.00 m, so the r7 sentence ("leaves reach the abacus corners and
+  stop") is true for the first time; in r7 it was 3.14 against 3.00.
+
+### 3. The ref_002 column is a canon plus a hand reading, and now re-measurable (finding 3)
+
+`scripts/orn_r8_ref002_crop.py` regenerates the exact 940-px view the pixel frame refers to, straight from the
+raw photo in the main checkout, plus an annotated copy carrying both readings. Committed:
+`reference/photos/ornament_crops/orn_r8_ref002_capital_940.jpg` (940x1254) and `..._940_measured.jpg`.
+
+Re-measured at the face centre on that view: **y 385 lands in the entablature's egg-and-dart**, above the
+capital; the abacus top edge crosses the centre at **y 427** and its underside at **y 472** (the central figure's
+head occludes the centre, so both are read immediately either side of it). So **H = 358 px = 119.3 px/m**, not
+400 px. On that scale:
+
+| ref_002, r8 re-reading | raw | as laid out |
+|---|---|---|
+| abacus | 0.126 H | 0.100 H (canon; the abacus is the nearest, most magnified thing in a view this steep) |
+| volute eye (y 508) | **0.774 H** | **0.762 H** (`volute_z`, moved this round for an unrelated reason) |
+| upper acanthus tier | 0.280 H | 0.300 H (Vignola) |
+| lower acanthus tier | 0.237 H | 0.300 H (Vignola) |
+
+So the tier column of the r7 table is **canon, not measurement**, as the review said, and the abacus is too; the
+one number the photo confirms independently is the volute band, and it confirms the r8 value rather than the r7
+one. The docstring in `orn_r7_capital_layout.py` names the crop file, and the crop script prints the same
+caveat, so the next round can re-measure instead of re-reading a 940-px view that existed only in a transcript.
+
 ## Open issues (ORN)
 - ~~`ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget~~ **fixed in round 5**, and in
   **round 5b** the fix moved into the build path (`orn_lib.enforce_lod2_budget`, called by `finalize_asset`), so a
@@ -1021,10 +1108,14 @@ clearance ≥ 10 mm, every LOD inside its tier budget, every capital and relief 
   the same place: **no AO map on 32 LOD1 objects in 18 types** (everything except capitals, keystone and
   rosette_ceiling) — `finalize_asset(..., ao=True)` is not passed by those builders. `--bake-pending` is the
   authoritative list, not this bullet.
-- **PENDING BAKE (round 7)**: `capital_rotunda` and `attic_panel` were rebuilt `--no-bake` (lighting held the GPU
-  all round), so their LOD1 normal maps — and the capitals' AO maps — are gone until
+- **PENDING BAKE (rounds 7 and 8)**: `attic_panel` (r7) and `capital_rotunda` (r7, rebuilt again in r8) were
+  built `--no-bake`, so their LOD1 normal maps — and the capitals' AO maps — are gone until
   `orn_build.py --only attic_panel,capital_rotunda` runs in a round that may use the GPU. `--bake-pending` prints
-  the command; re-run the gate after it.
+  the command and now **exits 1** while anything is pending; re-run the gate after the bake. Round 8 was a
+  no-bake round by instruction: the lead bakes.
+- `CAPITAL_STYLE[3]` changed in round 8 (see Round 8 section 1) and is shared by all three capital presets, but
+  only `capital_rotunda` was rebuilt. `capital_inner` / `capital_colonnade` v3 on disk are still the r7 style;
+  the rebuild that re-lays and re-bakes those two (next bullet) picks it up.
 - `capital_inner` / `capital_colonnade` were not re-laid to the round-7 Corinthian proportions and were not
   rebuilt with `clamp_z`, so they still overshoot their 1.8 m course by 16.9 / 25.2 mm and their tiers still run
   0.35 / 0.28 H against the rotunda's 0.30 / 0.30. One rebuild in a GPU window closes both (it re-bakes them too),
