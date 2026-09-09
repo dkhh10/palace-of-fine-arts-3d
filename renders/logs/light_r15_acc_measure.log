@@ -1,0 +1,40 @@
+
+-- r15a_r15SHIP_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  136.4  hue   32.7  sat 0.308  R-B   +47.9  hue PASS[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  189.5  hue   36.0  sat 0.445  R-B  +100.4  lum PASS[178-201]
+   entablature     lum  132.7  hue   38.6  sat 0.669  R-B  +113.7
+   columns         lum  125.4  hue   35.4  sat 0.557  R-B   +87.8
+   water_refl      lum  102.0  hue   38.3  sat 0.346  R-B   +39.9  hue PASS[25-45]
+   near_water_sky  lum  107.7  hue  209.4  sat 0.293  R-B   -37.8  hue FAIL[185-200] lum PASS[79.1-131.8]
+   sky_top         lum  168.0  hue  208.7  sat 0.434  R-B   -95.9
+   sky_left        lum  154.9  hue  208.6  sat 0.495  R-B  -105.7
+   south_wing      lum  100.3  hue   37.6  sat 0.279  R-B   +31.0
+   north_wing      lum  139.0  hue   41.3  sat 0.471  R-B   +76.0
+   shore_band      lum   87.3  hue   42.3  sat 0.640  R-B   +68.3
+   flank           lum  145.2  hue  210.2  sat 0.291  R-B   -50.7  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15a_r15SHIP_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   31.0  hue  261.8  sat 0.495  R-B   -16.9  ratio 0.701  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   46.9  hue  252.0  sat 0.471  R-B   -30.3  ratio 1.063  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_soffit    lum   43.6  hue  242.6  sat 0.537  R-B   -44.2  ratio 0.987
+   shade_frieze    lum   86.0  hue   26.2  sat 0.208  R-B   +19.8  ratio 1.947
+   sunlit_pier     lum   44.2  hue   30.4  sat 0.764  R-B   +50.0
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15a_r15SHIP_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   55.4  hue  193.3  sat 0.158  R-B    -9.3  ratio 0.586  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   41.9  hue   47.7  sat 0.864  R-B   +44.7  ratio 0.444
+   outer_row       lum   11.3  hue   69.1  sat 0.916  R-B    +9.7  ratio 0.120  QA FAIL[25-60]
+   near_shaft      lum   18.2  hue   75.6  sat 0.400  R-B    +5.7  ratio 0.193
+   sunlit_rotunda  lum   94.5  hue   43.1  sat 0.617  R-B   +70.2
+   frame           lum   39.3  hue    0.0  sat 0.000  R-B    +0.0  dark 18.5%
+
+-- r15a_r15SHIP_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  127.4  hue   35.3  sat 0.250  R-B   +35.0  sat PASS[0.24-1] lum FAIL[70-117]
+   attic_band      lum  158.7  hue   37.7  sat 0.597  R-B  +118.8
+
+-- r15a_r15SHIP_06e.png   (cam 06, boxes at 1280x720)
+   roofs           lum  115.7  hue  334.5  sat 0.066  R-B    +4.6  QA FAIL[22-52] brief FAIL[195-230] sat PASS[0-0.35]
+   plaza           lum  101.0  hue   33.9  sat 0.182  R-B   +19.8  QA PASS[22-52] brief FAIL[195-230] sat PASS[0-0.35]
+   trees           lum  114.5  hue   32.8  sat 0.247  R-B   +31.3  QA PASS[23-53] brief FAIL[195-230] sat PASS[0-0.35]
+   horizon         lum  109.1  hue   27.3  sat 0.199  R-B   +24.0

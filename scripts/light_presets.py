@@ -310,7 +310,8 @@ def apply_viewport_eevee(scene=None):
 
 
 def apply_preview_eevee(scene=None, samples=32):
-    """Eevee for the 1280x720 QA previews: raytraced reflections (water!), soft sun shadows, fast GI."""
+    """Eevee for the 1280x720 QA previews: raytraced reflections (water!), soft sun shadows, fast GI OFF
+    since round 15 (QA-07-5; see the comment on `use_fast_gi` below)."""
     s = scene or bpy.context.scene
     s.render.engine = "BLENDER_EEVEE"
     e = s.eevee
@@ -334,7 +335,18 @@ def apply_preview_eevee(scene=None, samples=32):
         rt.trace_max_roughness = 0.5
     except Exception as ex:
         print("[light_presets] raytracing options:", ex)
-    e.use_fast_gi = True
+    # ROUND 15 (QA-07-5), SHIPPED OFF. Fast GI is Eevee's screen-traced horizon scan: it decides how much of the
+    # world's SH an occluded surface is allowed to see, and inside a 12 m colonnade it decides that the answer is
+    # almost none. It -- not the light rig -- is what made cam03 "a black frame". Measured on the round-15 master,
+    # same rig, same 32 TAA, same frame (docs/lighting_notes.md 25.4):
+    #     fast GI on (60 m)   outer row 0.120 of the sunlit rotunda, frame under lum 10 = 18.5 %, walk hue 193.3
+    #     fast GI OFF         outer row 0.189                      , frame under lum 10 =  4.5 %, walk hue  89.1
+    # QA-07-5's two tests are >= 0.15 and <= 20 %; the shade fill provably cannot reach that box (raising the SSW
+    # lamp 1.0 -> 2.0 moved it 0.115 -> 0.110, and switching the whole rig off moved it 0.115 -> 0.119). It also
+    # closes the r14 carry on cam06's roofs (hue 334.5 -> 33.3, QA's window 22-52) and improves the Eevee/Cycles
+    # hero agreement (shaded attic -10.6 % -> -3.3 % of the Cycles frame). It costs 11 % of the five-camera pass
+    # (197 -> 218 s) and 0.025 of the Eevee-vs-Cycles saturation delta (0.097 -> 0.125 against a 0.10 window).
+    e.use_fast_gi = False
     e.fast_gi_method = "GLOBAL_ILLUMINATION"
     e.fast_gi_ray_count = 2
     e.fast_gi_step_count = 8
