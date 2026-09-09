@@ -1,0 +1,19 @@
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/scripts/build_master.py:118: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if base is None or base.get("placeholder") or not base.use_nodes or "normal_map" not in src_obj.keys():
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[build_master] 434 sockets, 0 at the origin (should be 0)
+[build_master] ornament instanced: {'attic_figure': 8, 'attic_panel': 8, 'capital_colonnade': 114, 'capital_inner': 8, 'capital_rotunda': 16, 'drum_band': 105, 'finial': 9, 'inner_figure': 8, 'keystone': 24, 'maiden': 48, 'rosette_ceiling': 24, 'urn': 40} skipped: {'frieze_run': 126}
+[build_master] instances at the origin: 0 (should be 0) []
+[build_master] materials: 38 library materials appended, 38 placeholders remapped
+[common] set_lod viewport=LOD1 render=LOD0: 5954 objects, 6 collections
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[build_master] viewport (LOD1) triangles ~11.01 M; objects 9175
+Info: Saved as "master.blend"
+[build_master] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend (155 MB); assets: ['ARCH', 'ENV', 'LIGHT', 'ORN']
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 2711 exited rc=0 after 32 s (max 2400)

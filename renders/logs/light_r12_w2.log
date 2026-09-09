@@ -1,0 +1,45 @@
+00:02.494  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:03.574  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:04.748  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:05.689  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:06.479  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:07.255  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:08.026  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:08.770  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:09.539  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:10.316  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r12] calibrate sky 0.8: lamp 67.31 W/m2 exposure -4.083 EV
+00:10.319  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r12] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, 8.00 W/m2 total (0.119 of the calibrated sun) at [(300.0, 16.0), (205.0, 16.0), (25.0, 20.0)], angle 55.0 deg, colour (0.42, 0.62, 1.0)
+[r12] case fill8_spec0: db 1 dsat 1 dhue 0.5 tint 1,1,1 cb 2.1 gb 5.25 sm 1 wm 1 fill 8 spec 0 f 1 (3648 W) v 1 (3564 W) exposure -2.833 EV, sun 67.31 W/m2
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake {'FINISHED'} in 7.9s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_probes] restored: engine BLENDER_EEVEE, vault rig EEVEE override
+[r12] rebake with the CYCLES vault rig: 8s
+05:26.687  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r12w2_fill8_spec0_03e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r12] -> r12w2_fill8_spec0_03e.png (306.9s, 1280x720)
