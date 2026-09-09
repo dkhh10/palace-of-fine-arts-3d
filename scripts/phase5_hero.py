@@ -6,6 +6,7 @@ final sample count (checklist step 5). Nothing is saved back to master.blend.
 
     scripts/blender_run.sh 7200 -- --background --python scripts/phase5_hero.py -- --spp 128 --res 3840 2160 --adaptive off
     scripts/blender_run.sh 7200 -- --background --python scripts/phase5_hero.py -- --spp 768 --res 3840 2160 --adaptive off --denoise on
+    ... --blend master_delivery.blend      # the cleaned delivery copy (phase5_deliver.sh step 1b); default master.blend
 
 Writes renders/final/hero_cam01_<W>x<H>_<spp>spp.png and prints one machine-parseable summary line:
     [phase5_hero] wall_time_s=<render seconds> open_s=<open seconds> total_s=<...> peak_rss_mb=<...> spp=<...> ...
@@ -35,12 +36,14 @@ RES = [int(v) for v in arg("--res", ["3840", "2160"], n=2)]
 ADAPTIVE = arg("--adaptive", "off").lower() == "on"
 DENOISE = arg("--denoise", "on").lower() != "off"
 TIME_LIMIT = float(arg("--time-limit", 0.0))   # 0 = none (checklist step 4: "time_limit 0")
+# The file to render. Default master.blend; phase5_deliver.sh step 1b passes the cleaned master_delivery.blend.
+BLEND = Path(arg("--blend", str(common.ROOT / "master.blend")))
 
 t0 = time.time()
-bpy.ops.wm.open_mainfile(filepath=str(common.ROOT / "master.blend"), load_ui=False)
+bpy.ops.wm.open_mainfile(filepath=str(BLEND), load_ui=False)
 t_open = time.time() - t0
 scene = bpy.context.scene
-print(f"[phase5_hero] opened master.blend in {t_open:.1f}s")
+print(f"[phase5_hero] opened {BLEND.name} in {t_open:.1f}s")
 
 # Same preset every Cycles final in this build has used. Do not hand-roll Cycles settings here (see docs/tech_notes.md
 # "The two Eevee-only rigs" -- setting scene.render.engine = 'CYCLES' by hand and skipping this call renders the

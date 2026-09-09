@@ -1,33 +1,62 @@
 #!/bin/zsh
-# Phase 5 delivery driver (docs/phase5_checklist.md steps 2-6). One Blender at a time, every run through
+# Phase 5 delivery driver (docs/phase5_checklist.md steps 1b-6). One Blender at a time, every run through
 # scripts/blender_run.sh with a registered max duration (CLAUDE.md watchdog categories: Eevee preview 600 s,
 # 4K timing 7200 s). Stops on the first non-zero exit. Logs to renders/logs/phase5_<step>.log. Each step is
 # individually runnable.
 #
-#   scripts/phase5_deliver.sh                                        # steps 2..6 in order
+#   scripts/phase5_deliver.sh                                        # steps 1b..6 in order
+#   scripts/phase5_deliver.sh 1b                                     # just the delivery-copy cleanup
 #   scripts/phase5_deliver.sh 4                                      # just the 4K hero timing probe
 #   scripts/phase5_deliver.sh 5                                      # final hero, sample count/res auto-picked
 #                                                                     # from step 4's logged wall_time_s
 #   scripts/phase5_deliver.sh 5 --final-spp 768 --res 3840 2160      # override the auto pick
 #
+# WHICH FILE THE STEPS RENDER (checklist step 1b, added 2026-09-09):
+# step 1b copies master.blend to master_delivery.blend and runs scripts/phase5_cleanup.py on the COPY, so the lead's
+# master.blend is never modified by this script. In an `all` run every later step then renders that copy. Running a
+# step on its own defaults to master.blend; point it at the copy with
+#   PFA_DELIVERY_BLEND=master_delivery.blend scripts/phase5_deliver.sh 5
 set -e -o pipefail
 cd "$(dirname "$0")/.."
 LOGS=renders/logs
 mkdir -p "$LOGS" renders/final renders/anim
 
+SOURCE_BLEND=${PFA_SOURCE_BLEND:-master.blend}          # never written by this script
+DELIVERY_BLEND=${PFA_DELIVERY_BLEND_OUT:-master_delivery.blend}   # what step 1b produces
+BLEND=${PFA_DELIVERY_BLEND:-$SOURCE_BLEND}              # what steps 2-6 render; step1b repoints it in an `all` run
+
+step1b() {
+  local log=$LOGS/phase5_1b.log
+  local t0=$SECONDS
+  # checklist step 1b: cleanup runs on a COPY, so master.blend keeps whatever scripts/lead_build.sh left in it.
+  # --pack is deliberately NOT passed by default: master.blend is ~160 MB and the texture library is in the repo
+  # next to it, so packing buys nothing here and phase5_cleanup refuses past 1.5 GB anyway. Add PFA_PACK=1 to pack
+  # (e.g. when handing the .blend to someone without the repo).
+  cp "$SOURCE_BLEND" "$DELIVERY_BLEND"
+  local packflag=()
+  [[ -n "${PFA_PACK:-}" ]] && packflag=(--pack)
+  scripts/blender_run.sh 600 -- --background --python scripts/phase5_cleanup.py -- \
+      --blend "$DELIVERY_BLEND" --save-as "$DELIVERY_BLEND" \
+      --report "$LOGS/phase5_cleanup.json" "${packflag[@]}" 2>&1 | tee "$log"
+  BLEND=$DELIVERY_BLEND
+  echo "[phase5_deliver] step 1b (cleanup -> $DELIVERY_BLEND; steps 2-6 now render it) wall $(( SECONDS - t0 ))s -- log $log"
+}
+
 step2() {
   local log=$LOGS/phase5_2.log
   local t0=$SECONDS
   # checklist step 2, verbatim: master.blend open time must be < 60 s (round 6 measured 0.72 s).
-  scripts/blender_run.sh 300 -- --background master.blend --python-expr "import time" 2>&1 | tee "$log"
-  echo "[phase5_deliver] step 2 (master.blend open time) wall $(( SECONDS - t0 ))s -- log $log"
+  scripts/blender_run.sh 300 -- --background "$BLEND" --python-expr "import time" 2>&1 | tee "$log"
+  echo "[phase5_deliver] step 2 ($BLEND open time; \$SECONDS includes wrapper + Blender startup, so it is pessimistic \
+against the < 60 s gate -- phase5_cleanup.json's reopen_s is the in-process number) wall $(( SECONDS - t0 ))s -- log $log"
 }
 
 step3() {
   local log=$LOGS/phase5_3.log
   local t0=$SECONDS
   # checklist step 3: the saved Eevee viewport preset, six QA cameras, target < 150 s total.
-  scripts/blender_run.sh 600 -- --background --python scripts/qa_render_round.py -- --round final --eevee 2>&1 | tee "$log"
+  scripts/blender_run.sh 600 -- --background --python scripts/qa_render_round.py -- --round final --eevee \
+      --blend "$BLEND" 2>&1 | tee "$log"
   echo "[phase5_deliver] step 3 (eevee six-camera pass) wall $(( SECONDS - t0 ))s -- log $log"
 }
 
@@ -36,7 +65,7 @@ step4() {
   local t0=$SECONDS
   # checklist step 4: 128 spp FIXED, adaptive OFF, time_limit 0, 3840x2160, cam01, final preset. max 7200 s.
   scripts/blender_run.sh 7200 -- --background --python scripts/phase5_hero.py -- \
-      --spp 128 --res 3840 2160 --adaptive off --time-limit 0 2>&1 | tee "$log"
+      --blend "$BLEND" --spp 128 --res 3840 2160 --adaptive off --time-limit 0 2>&1 | tee "$log"
   echo "[phase5_deliver] step 4 (4K hero timing probe, 128 spp fixed) wall $(( SECONDS - t0 ))s -- log $log"
 }
 
@@ -78,7 +107,7 @@ step5() {
   local log=$LOGS/phase5_5.log
   local t0=$SECONDS
   scripts/blender_run.sh 7200 -- --background --python scripts/phase5_hero.py -- \
-      --spp "$spp" --res "$resw" "$resh" --adaptive off --denoise on --time-limit 0 2>&1 | tee "$log"
+      --blend "$BLEND" --spp "$spp" --res "$resw" "$resh" --adaptive off --denoise on --time-limit 0 2>&1 | tee "$log"
   echo "[phase5_deliver] step 5 (final hero ${resw}x${resh} @ ${spp} spp) wall $(( SECONDS - t0 ))s -- log $log"
 
   local native="renders/final/hero_cam01_${resw}x${resh}_${spp}spp.png"
@@ -98,7 +127,7 @@ step6() {
   local t0=$SECONDS
   # checklist step 6: 640x360, 16 TAA, every 2nd frame. tech_notes.md: "give blender_run.sh an honest max (7200)".
   scripts/blender_run.sh 7200 -- --background --python scripts/phase5_flythrough.py -- \
-      --res 640 360 --samples 16 --frame-step 2 2>&1 | tee "$log"
+      --blend "$BLEND" --res 640 360 --samples 16 --frame-step 2 2>&1 | tee "$log"
   echo "[phase5_deliver] step 6 (flythrough test frames) wall $(( SECONDS - t0 ))s -- log $log"
 
   local fps fstep
@@ -117,12 +146,14 @@ target="${1:-all}"
 [[ $# -gt 0 ]] && shift
 
 case "$target" in
+  1b|1) step1b ;;
   2) step2 ;;
   3) step3 ;;
   4) step4 ;;
   5) step5 "$@" ;;
   6) step6 ;;
   all)
+    step1b
     step2
     step3
     step4
@@ -130,7 +161,7 @@ case "$target" in
     step6
     ;;
   *)
-    echo "usage: $0 [2|3|4|5|6|all] [step-5 only: --final-spp N --res W H]" >&2
+    echo "usage: $0 [1b|2|3|4|5|6|all] [step-5 only: --final-spp N --res W H]" >&2
     exit 2
     ;;
 esac

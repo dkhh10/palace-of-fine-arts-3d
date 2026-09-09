@@ -5,6 +5,7 @@ that actually exists, and validated by ray-cast"). This script only renders fram
 encodes them with ffmpeg afterwards. Nothing is saved back to master.blend.
 
     scripts/blender_run.sh 7200 -- --background --python scripts/phase5_flythrough.py -- --res 640 360 --samples 16 --frame-step 2
+    ... --blend master_delivery.blend      # the cleaned delivery copy (phase5_deliver.sh step 1b); default master.blend
 
 Writes renders/anim/flythrough_test/frame_####.png (directory is cleared first: idempotent, no stale frames from a
 previous partial run) and prints one machine-parseable summary line:
@@ -36,15 +37,17 @@ RES = [int(v) for v in arg("--res", ["640", "360"], n=2)]
 SAMPLES = int(arg("--samples", 16))
 FRAME_STEP = int(arg("--frame-step", 2))
 OUT_DIR = common.RENDERS / "anim" / "flythrough_test"
+# The file to render. Default master.blend; phase5_deliver.sh step 1b passes the cleaned master_delivery.blend.
+BLEND = Path(arg("--blend", str(common.ROOT / "master.blend")))
 
 t0 = time.time()
-bpy.ops.wm.open_mainfile(filepath=str(common.ROOT / "master.blend"), load_ui=False)
-print(f"[phase5_flythrough] opened master.blend in {time.time() - t0:.1f}s")
+bpy.ops.wm.open_mainfile(filepath=str(BLEND), load_ui=False)
+print(f"[phase5_flythrough] opened {BLEND.name} in {time.time() - t0:.1f}s")
 scene = bpy.context.scene
 
 cam = bpy.data.objects.get("CAM_flythrough")
 if cam is None:
-    sys.exit("[phase5_flythrough] CAM_flythrough not found in master.blend -- run scripts/light_flythrough.py first")
+    sys.exit(f"[phase5_flythrough] CAM_flythrough not found in {BLEND.name} -- run scripts/light_flythrough.py first")
 scene.camera = cam
 
 sch = ft.load_schedule()
