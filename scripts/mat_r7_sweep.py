@@ -43,6 +43,18 @@ CASES = {
     "w7":  dict(gain=0.00, trans=0.18, vol=0.12, chop=1.00, sheen=0.00),
     "w8":  dict(gain=1.00, trans=0.40, vol=0.70, chop=2.60, sheen=0.00),
     "w9":  dict(gain=2.20, trans=0.18, vol=0.12, chop=1.60, sheen=0.00),
+    # Round-7 review fix 1 (docs/reviews/mat_r7_review.md): brief item 4 asked for the sheen to SHIP at the level
+    # that takes the reflection box 900 760 1020 840 to sat >= 0.25.  Round 7 never rendered a sheen case, so the
+    # claim that the sheen cannot do it was untested.  s0 is the SHIPPED water (WATER_MURK_GAIN 0.15, Transmission
+    # 0.18, chop 1.6) as the control; s1-s3 are the shipped water with the sheen weight swept; s4 additionally
+    # swaps the sheen's teal tint (the r6 choice, picked for the near-water HUE) for a warm one, because the test
+    # wants warm chroma in the box and a teal lobe can only add green.  Probed 2026-09-09: the box is 100 %
+    # MAT_water_lagoon at a mean 22.1 m, i.e. inside the sheen's 22 -> 5 m ramp, so the lobe does reach it.
+    "s0":  dict(gain=0.15, trans=0.18, vol=0.70, chop=1.60, sheen=0.00),
+    "s1":  dict(gain=0.15, trans=0.18, vol=0.70, chop=1.60, sheen=0.35),
+    "s2":  dict(gain=0.15, trans=0.18, vol=0.70, chop=1.60, sheen=0.70),
+    "s3":  dict(gain=0.15, trans=0.18, vol=0.70, chop=1.60, sheen=1.00),
+    "s4":  dict(gain=0.15, trans=0.18, vol=0.70, chop=1.60, sheen=1.00, tint=(0.85, 0.55, 0.30)),
 }
 BORDER = (780 / 1920.0, 1560 / 1920.0, 1.0 - 1080 / 1080.0, 1.0 - 700 / 1080.0)   # min_x, max_x, min_y, max_y
 
@@ -86,6 +98,8 @@ for name in WANT:
         chop.outputs[0].default_value = c["chop"]
     prin.inputs["Transmission Weight"].default_value = c["trans"]
     prin.inputs["Sheen Weight"].default_value = c["sheen"]
+    if "tint" in c:
+        prin.inputs["Sheen Tint"].default_value = (*c["tint"], 1.0)
     if vol:
         vol.inputs["Density"].default_value = c["vol"]
     full = name in FULL

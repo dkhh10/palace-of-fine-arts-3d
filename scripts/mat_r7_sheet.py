@@ -1,6 +1,6 @@
 """Round-7 materials comparison sheet (QA-05-2 blocker, QA-05-4 water, QA-05-10 shore, ENV's paving).
 
-    python3 scripts/mat_r7_sheet.py [--after r7c]
+    python3 scripts/mat_r7_sheet.py [--after r7f]
 
 Four rows, BEFORE (the round-6 library as merged, on the same master and the same lighting r12 rig) / AFTER (the
 round-7 library) / REFERENCE, all three at the same pixel scale:
@@ -16,18 +16,22 @@ for read, not for pixel comparison.
 
 Writes renders/qa_comparisons/mat_r7_sheet.png.
 """
-import sys
+import sys, os
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-REFDIR = Path("/Users/dk/Projects/3d render blender 3rd attempt building/reference/photos")
+# Same resolution as common.REFERENCE_DIR (common.py:14-16), re-stated instead of imported because this script runs
+# under plain python3 and common.py imports bpy at module level.  The 175 MB of photos live only in the MAIN
+# checkout; a worktree has none, so the path is absolute by design and $PFA_REFERENCE_DIR overrides it.
+MAIN_ROOT = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+REFDIR = Path(os.environ.get("PFA_REFERENCE_DIR", str(MAIN_ROOT / "reference"))) / "photos"
 PREV = ROOT / "renders/previews/materials"
 ALIGNED = ROOT / "renders/qa_comparisons/round05_cam01_aligned_vs_ref169.png"
 OUT = ROOT / "renders/qa_comparisons/mat_r7_sheet.png"
 
-AFTER = sys.argv[sys.argv.index("--after") + 1] if "--after" in sys.argv else "r7c"
+AFTER = sys.argv[sys.argv.index("--after") + 1] if "--after" in sys.argv else "r7f"   # r7f = the shipped library
 PANEL_W = 620
 PAD, LABEL_H, BG, FG, DIM = 8, 34, (20, 20, 22), (238, 238, 232), (155, 155, 150)
 

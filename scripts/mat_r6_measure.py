@@ -15,7 +15,11 @@ three tests QA-04 wrote in prose and no script measured yet:
             found per column from its own hue (170-240 deg), then the 12 px above it are compared with the 22 px
             above that.  At the shore's ~60-90 m the hero runs 3-4 cm/px, so 12 px is ~0.4 m.
   coffer    ref 083's robust statistic: mean of the darkest quarter over mean of the lightest quarter across the
-            saucer (ref 0.439), plus the coffer-field std-dev QA-04-7 wants at >= 60 % of ref 083's 36.3.
+            saucer, plus the coffer-field std-dev QA-04-7 wants at >= 60 % of ref 083's.  Re-measured 2026-09-09
+            by running this function on ref_083 itself with its own default box: ratio 0.265, std 31.2 (the
+            0.439 / 36.3 pair printed through round 6 came from a different crop and is what made the round-6
+            note read "0.195 vs ref 083's 0.439").  light_measure.py:194's coffer/sky 0.39 is lighting's file and
+            is still unreconciled with the notes' 0.437 -- hand-off, not edited here.
 """
 import sys
 import numpy as np
@@ -115,7 +119,7 @@ def coffer(a, box=None):
     q1, q3 = np.percentile(v, 25), np.percentile(v, 75)
     dark, light = v[v <= q1].mean(), v[v >= q3].mean()
     print(f"  QA-04-7   coffer field: dark quarter {dark:6.1f}  light quarter {light:6.1f}  ratio {dark / light:.3f}"
-          f"  (ref 083 0.439)   std {v.std():5.1f}  (ref 36.3, test >= 21.8)   mean {v.mean():6.1f}")
+          f"  (ref 083 0.265)   std {v.std():5.1f}  (ref 31.2, test >= 18.7)   mean {v.mean():6.1f}")
 
 
 def main():

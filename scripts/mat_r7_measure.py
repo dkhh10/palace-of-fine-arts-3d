@@ -45,10 +45,15 @@ REF = {
     "attic_sunlit":   dict(lum=188.5, hue=40.5, sat=0.582, rb=133.2, std=44.50, aniso=4.07),
     "entablature":    dict(lum=146.3, hue=33.8, sat=0.585, rb=110.5, std=64.50, aniso=0.24),
     "attic_shaded":   dict(lum=120.2, hue=30.7, sat=0.457, rb=68.0),
-    "water_refl":     dict(lum=168.9, hue=33.7, sat=0.339),
-    "near_water_sky": dict(hue=189.9, sat=0.249),
-    "ripples":        dict(rb=-26.0),
-    "shore_band":     dict(lum=115.6, sat=0.663),
+    # Re-derived 2026-09-09 from the same aligned sheet (`mat_r7_measure.py ref`) after the round-7 review found
+    # three of these were carried over from an older crop: water_refl was 168.9 / 0.339, shore_band sat 0.663 and
+    # the ripples' R-B -26.0.  The stone rows reproduce exactly.  The brief's own acceptance WINDOWS (TESTS below)
+    # are left where the lead set them, so a target and its reference can now differ: ripples are scored against
+    # the brief's -26 +- 10 while ref 169 itself measures -16.4.
+    "water_refl":     dict(lum=164.6, hue=33.7, sat=0.370),
+    "near_water_sky": dict(hue=189.8, sat=0.246),
+    "ripples":        dict(rb=-16.4),
+    "shore_band":     dict(lum=115.6, sat=0.631),
 }
 TESTS = {   # QA-05-2 / -4 / -10 acceptance windows as re-stated in the round-7 brief
     "attic_lum": (178.0, 201.0), "attic_sat": (0.53, 0.62), "attic_aniso": 2.0, "attic_std_ratio": 0.60,

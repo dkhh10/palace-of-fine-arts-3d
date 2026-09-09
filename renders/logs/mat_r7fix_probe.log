@@ -1,0 +1,18 @@
+00:00.326  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+
+[probe] water_refl (900, 760, 1020, 840)  400 rays, 0 miss, mean distance 22.1 m
+[probe]   100.0 %  MAT_water_lagoon
+
+[probe] shore_band (700, 600, 1200, 740)  2905 rays, 0 miss, mean distance 62.3 m
+[probe]    23.4 %  MAT_concrete_podium
+[probe]    20.7 %  MAT_water_lagoon
+[probe]    14.1 %  MAT_leaf_broadleaf
+[probe]    12.8 %  MAT_shrub_light
+[probe]     8.2 %  MAT_shrub
+[probe]     5.1 %  MAT_shrub_dry
+[probe]     5.0 %  MAT_bark_cypress
+[probe]     2.2 %  MAT_lagoon_bed
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 20754 exited rc=0 after 5 s (max 600)

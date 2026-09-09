@@ -628,7 +628,7 @@ def build_concrete_family():
     #  - Algae on every material that can reach z = WATER_Z; the mask is height-gated so high geometry is untouched.
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
-        # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.819. On the r12 rig the sunlit attic
+        # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.789. On the r12 rig the sunlit attic
         # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
         # AND chroma (lighting r12 hand-off 2 says the same); raising red hardest lifts both at once.
         "Base Color": C(0.748, 0.590, 0.105), "Grey Color": C(0.450, 0.385, 0.062), "Grey Drift": 0.16,
@@ -913,9 +913,10 @@ def build_water():
     # 0.22-0.32) and hue 208.9 -> 218.1 is this diffuse murk taking sky light like any up-facing surface. The murk
     # therefore loses a third of its chroma, warms (blue down hardest, so its product with a blue sky lands nearer
     # teal than periwinkle) and drops 12 % of its value -- which the lagoon flank can afford, measured at 174.1
-    # against ref 169's 155.2. Transmission 0.28 -> 0.40 moves the same share of the surface off the diffuse lobe,
-    # which is what lets the building's reflection (QA-05-4, R-B -39 where the photo is +71) carry the stone's
-    # colour again instead of a blue-grey wash over it.
+    # against ref 169's 155.2. Transmission ships at 0.18 (sweep case w1: 0.40 -> 0.18 bought +0.045 of reflection
+    # saturation), which moves that share of the surface off the diffuse lobe and is what lets the building's
+    # reflection (QA-05-4, R-B -39 where the photo is +71) carry the stone's colour again instead of a blue-grey
+    # wash over it.
     murk = t.mix(murk_far, C(0.128, 0.139, 0.111), C(0.145, 0.152, 0.125))
     murk.node.name = murk.node.label = "WATER_MURK"        # addressed by scripts/mat_r7_sweep.py
     # ROUND 7, and this is the measured answer to lighting r12's hand-off 1 (which asked for a third of the murk's
@@ -927,9 +928,13 @@ def build_water():
     # It cannot simply be turned down, because the same lambertian is what keeps the lagoon from reading black from
     # above (QA-02-6, round 2). The physical form of the fix is a Fresnel weight: real turbid water returns its
     # sub-surface light through the surface twice, so the diffuse term falls off at grazing incidence far faster
-    # than Blender's single-sided Fresnel makes it. `0.15 + 0.85 (1 - F)^2` leaves ~0.36 of the murk at the hero's
-    # 75-85 deg grazing water and ~0.76 at cam06's 30 deg, i.e. it takes the wash off exactly the crop QA measures
-    # and leaves the aerial lagoon alone.
+    # than Blender's single-sided Fresnel makes it. The Fresnel weight `0.15 + 0.85 (1 - F)^2` alone keeps ~0.36 of
+    # the murk at the hero's 75-85 deg grazing water and ~0.76 at cam06's ~30 deg; the SHIPPED gain multiplying it
+    # is 0.15, so the murk actually reaching those two places is ~0.054 and ~0.114 of round 6's -- the wash comes
+    # off the crop QA measures and the aerial lagoon is dimmed, not left alone.  Measured 2026-09-09 on cam06 at
+    # 1280x720 (scripts/mat_r7fix_cam06.py): Cycles open-water box (60 380 340 500) lum 115.6 at gain 1.00 ->
+    # **94.3** at the shipped 0.15 (0.82x); Eevee is bit-identical between the two gains because the Eevee branch
+    # below is fed by WATER_MURK_EEVEE, which this gain does not touch.
     _fr = t.new("ShaderNodeFresnel")
     t.plug(_fr.inputs["IOR"], 1.333); t.plug(_fr.inputs["Normal"], normal)
     _fw = t.sub(1.0, _fr.outputs[0])

@@ -1,0 +1,19 @@
+00:00.383  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+00:34.288  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7fix_cam06_eevee_g0.15.png'
+01:04.741  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7fix_cam06_eevee_g1.00.png'
+02:11.511  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7fix_cam06_cycles_g0.15.png'
+03:15.758  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7fix_cam06_cycles_g1.00.png'
+[cam06] opened master in 1.0s, 9706 objects
+[cam06] shipped WATER_MURK_GAIN = 0.150
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[cam06] eevee gain 0.15 1280x720 32 spp in 32.9s -> r7fix_cam06_eevee_g0.15.png
+[cam06] eevee gain 1.00 1280x720 32 spp in 30.4s -> r7fix_cam06_eevee_g1.00.png
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[cam06] cycles gain 0.15 1280x720 32 spp in 66.8s -> r7fix_cam06_cycles_g0.15.png
+[cam06] cycles gain 1.00 1280x720 32 spp in 64.2s -> r7fix_cam06_cycles_g1.00.png
+[cam06] done in 195.4s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 20940 exited rc=0 after 196 s (max 2700)
