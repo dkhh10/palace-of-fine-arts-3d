@@ -332,6 +332,14 @@ def configure_eevee(scene=None, samples=16):
 def configure_cycles(scene=None, samples=256, denoise=True, device="GPU"):
     s = scene or bpy.context.scene
     s.render.engine = "CYCLES"
+    # 2026-09-09 (lighting r13 review finding 1): the saved master carries two EEVEE-ONLY rigs (the vault override and
+    # LIGHT_shade_fill) visible to render; every Cycles path must hide them, not only light_presets.apply_final_cycles.
+    try:
+        import light_presets
+        light_presets.apply_vault_for_engine("CYCLES")
+        light_presets.apply_shade_for_engine("CYCLES")
+    except Exception as e:      # placeholder scenes without the rig
+        print(f"[common.configure_cycles] engine-conditional rig not applied: {e}")
     c = s.cycles
     c.samples = samples
     c.device = device

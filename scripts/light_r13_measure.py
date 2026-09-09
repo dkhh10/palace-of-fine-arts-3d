@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GAP = dict(hue=6.0, sat=0.10, lum=0.15)
 GAP_KEYS = ("attic_shaded", "attic_sunlit", "entablature", "columns",
             "sky_top", "sky_left", "near_water_sky", "lagoon_flank", "water_refl")
-HOLD = ("sky_top", "sky_left", "near_water_sky", "lagoon_flank")     # must stay identical to Cycles
+HOLD = ("sky_top", "sky_left")     # must stay identical to Cycles (the lagoon boxes are screen-trace vs path-trace: reported, not gated; r13 review 3)
 
 # item 3: the shore band is ENVIRONMENT'S box (env_r7_measure.measure, hero (700, 600, 1200, 740)); ref 115.6
 SHORE_BOX = (700, 600, 1200, 740)

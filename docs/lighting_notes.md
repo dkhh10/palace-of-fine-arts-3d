@@ -1897,3 +1897,12 @@ Open, and for whom: the sunlit attic's saturation (0.475 vs 0.50) and R-B (103.2
 are what blocks item 3; the shore band's remaining ~24 lum is **environment's**; the Eevee/Cycles lagoon gap
 (+20 % lum, +11 deg of hue) is a screen-trace-vs-path-trace difference that no rig knob addresses and that QA scores
 in Cycles anyway.
+
+### 22.x Review fixes (lead, 2026-09-09; docs/reviews/light_r13_review.md)
+- Finding 1: `common.configure_cycles` now calls `light_presets.apply_vault_for_engine("CYCLES")` and `apply_shade_for_engine("CYCLES")`
+  (guarded), so `common.render_previews(engine="CYCLES")`, env_r5_hero, mat_lineup and any other Cycles path hide the two Eevee-only
+  rigs. UI F12 from the saved file remains Eevee (the saved engine) and is correct; a user switching to Cycles in the UI must run
+  the final preset (documented in docs/tech_notes.md at delivery).
+- Finding 3: `light_r13_measure.HOLD` gates only the two sky boxes; the lagoon boxes are reported (screen-trace vs path-trace).
+- Finding 4: the "bit-identical" claim is by construction (`hide_render` under `apply_final_cycles`); no frame pair committed.
+  Carries to r14: sweep's dead `energy_eevee` key (2), stale COMP comment (5), findings 6-11.
