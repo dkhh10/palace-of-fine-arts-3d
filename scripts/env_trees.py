@@ -12,6 +12,7 @@ import bpy, bmesh, sys, os, math, random, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import env_lib as L
+import arch_params as AP
 from mathutils import Vector
 
 # ----------------------------------------------------------------------------- Sapling presets
@@ -288,14 +289,27 @@ def generate_library(quick=False, species=None):
 # positions from satellite_z20/z18 crowns and the hero-view geometry (docs/environment_notes.md explains each group).
 PLAN = [
     # A. peninsula north lobe (land X -40..-16, Y 0..26): the dense dark cluster right of the rotunda (user image, 169)
-    ("pine", -44.0, 4.0, 21.0, "A cluster core; QA-01-6: pulled west so cam02's right 40% is clear (42 m, x 0.82-1.10)"),
+    #   ROUND 8, re-derived from ref 169 through the cam-01 projection.  Measured on the photo (env_r8_fit --ref):
+    #   the dark mass runs frame x 0.61-0.735 (dark<60 0.35-0.58) and COLLAPSES to 0.14 at x 0.74; its solid top is
+    #   frame y 0.45 with sparse tips to 0.35.  The tall conifers used to stand on the peninsula's north-west shore
+    #   at 85-95 m, where they resolved to x 0.67-0.79 - 35 % of QA-04-6's box on their own, the whole left half of
+    #   the north-wing band.  They could not be swung left there: QA-02-13's podium clearance (shadow_relief,
+    #   PODIUM_R + CLEAR + crown radius = 44-46 m) throws anything nearer than that radially out into the lagoon
+    #   and the land snap drops it straight back on the same shore line at X ~ -38, so X in the plan does nothing.
+    #   The photo's mass is not on that shore: at 0.61-0.735 with a solid top at y 0.45 it is 120-135 m out - the
+    #   grove on the far side of the north embayment, past the north arch - which is 34 m of open water and lawn
+    #   nearer the rotunda than QA-02-13's ring.  The five conifers below are solved for their ref frame x at that
+    #   distance (crown half-width 0.033-0.036 of frame, so the union spans 0.640-0.758), with heights raised to
+    #   21-26 m so the mass keeps the photo's apparent height (top y 0.40-0.43).  The three near trees stay on the
+    #   peninsula: they are the pale willow and the shore broadleaf ref 169 puts at the water in front of the mass.
+    ("pine", -38.0, -32.0, 21.0, "A cluster core, ref 169 mass x 0.651-0.717 (QA-01-6: clear of cam02's right 40%)"),
     ("redwood", -37.0, -2.0, 16.0, "A young redwood at the north arch (ref 070)"),
-    ("cypress", -41.0, -1.0, 24.0, "A dark mass right of the dome"),
-    ("pine", -46.0, 8.0, 22.0, "A cluster, second crown"),
-    ("willow", -40.0, 16.0, 10.0, "A pale weeping willow at the water in front of the cluster (ref 169)"),
-    ("broadleaf", -49.0, 13.0, 11.0, "A shore broadleaf at cam02's right edge"),
-    ("cypress", -48.0, 0.0, 23.0, "A cluster depth (QA-01-6: mass kept dense after the move west)"),
-    ("pine", -52.0, 6.0, 20.0, "A cluster depth"),
+    ("cypress", -42.0, -30.0, 26.0, "A dark mass right of the dome, ref 169 x 0.668-0.740"),
+    ("pine", -45.0, -34.0, 22.0, "A cluster, second crown, ref 169 x 0.679-0.747"),
+    ("willow", -40.0, 16.0, 9.0, "A pale weeping willow at the water in front of the cluster (ref 169); r8 10 -> 9 m, its crown reached frame x 0.79 where ref 169 is clear colonnade"),
+    ("broadleaf", -49.0, 13.0, 9.0, "A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow"),
+    ("cypress", -46.0, -29.0, 24.0, "A cluster depth, ref 169 x 0.688-0.758 (mass kept dense)"),
+    ("pine", -35.0, -30.0, 21.0, "A cluster depth, ref 169 x 0.640-0.704"),
     # P. peninsula planting band in front of the podium (hero foreground; sheet s6 "low mounded shrubs ... small
     #    trees in the podium planter zone"). Kept off the central bay: all six project to cam01 x 0.21-0.30 or
     #    0.64-0.80 with their crowns below y 0.52, so the rotunda's body and arch stay clear.
@@ -312,11 +326,18 @@ PLAN = [
     ("willow", 9.0, 45.5, 9.0, "P hero-shore willow, ref 169 frame x 0.33-0.42"),
     ("willow", -1.5, 47.0, 8.5, "P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair)"),
     ("willow", -12.0, 45.0, 9.0, "P hero-shore willow, ref 169 frame x 0.56-0.64"),
-    # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both)
+    # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both).
+    #   ROUND 8, re-derived from ref 169 through the cam-01 projection (scripts/env_r8_fit.py --solve).  The three
+    #   trees below used to stand at arc radius 94-108, i.e. INSIDE the wing's arc (arch_params.COL_ARC_CENTER /
+    #   COL_ARC_R = 117.4) - the courtyard side, not the OSM strip - so from the hero they stood in FRONT of the
+    #   colonnade and hid its shafts: they were 23.1 % of QA-04-6's box (16.5 of it the "first box" cypress at
+    #   frame x 0.90-0.99).  Ref 169 has no trunk in front of a shaft anywhere in x 0.76-0.99; what it has is
+    #   crowns clearing the entablature at frame x 0.79-0.83 and 0.86-0.92.  Each is now solved for its ref frame x
+    #   at r = COL_ARC_R + 8 m, which is the middle of the 3-13 m strip and behind the wing from cam 01.
     ("cypress_column", -36.0, -18.0, 27.0, "A2 tall column right of the rotunda (user image x~1020)"),
-    ("pine", -47.0, -13.0, 17.0, "A2 strip along the north wing (kept below the colonnade entablature)"),
-    ("cypress_column", -58.0, -12.5, 27.0, "A2 second column (user image x~1220)"),
-    ("cypress", -68.0, 9.5, 24.0, "A2 at the wing's first box"),
+    ("pine", -60.5, -30.6, 13.0, "A2 strip along the north wing, r+8 (ref 169: crown over the cornice, x 0.79)"),
+    ("cypress_column", -65.7, -28.2, 17.0, "A2 second column, r+8 (ref 169: crown over the cornice, x 0.82)"),
+    ("cypress", -76.6, -22.3, 16.0, "A2 at the wing's first box, r+8 (ref 169: crown over the cornice, x 0.89)"),
     # B. north wing strip further out and the north shore
     ("eucalyptus", -79.0, 26.0, 28.0, "B big eucalyptus on the strip (ref 141)"),
     ("pine", -90.0, 22.5, 20.0, "B"),
@@ -494,9 +515,16 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
 # because that IS where the screen belongs - so the discipline has to be a height cap, and the honest one is the
 # same sight line the shore shrubs use: the crown may stand SCREEN_OVER of the frame height over the cornice.
 # Only trees that really are behind a wing from the hero (the exact `_crosses` test) are capped.
-COLONNADE_TOP_Z = 16.0        # arch_params COLONNADE_ABACUS 14.0 + COLONNADE_ENTABLATURE_H 2.4, on the -0.45 lawn
-COLONNADE_ARC = ((-11.2, 84.7), 117.4)      # arch_params COL_ARC_CENTER / COL_ARC_R
-SCREEN_OVER = 0.022           # fraction of cam 01's frame height a screen crown may stand over the cornice
+# Read from arch_params, never copied: the r7 review's finding 2 (env_build) applies here too - the numbers match
+# today and drift silently tomorrow.
+COLONNADE_TOP_Z = AP.COLONNADE_ABACUS + AP.COLONNADE_ENTABLATURE_H   # cornice, on the -0.45 lawn
+COLONNADE_ARC = (AP.COL_ARC_CENTER, AP.COL_ARC_R)
+# Round 8: 0.022 -> 0.004.  With the A/A2 trees off the front of the wing (see PLAN), the whole of what was left in
+# QA-04-6's box at frame x 0.87-0.97 was screen crown standing over the cornice - 18 % of the box, against ref
+# 169's 0.01-0.19 dark fraction over those same columns.  This build's cornice sits ~0.02 of frame lower than the
+# photo's, so the 2.2 % allowance lands inside the measured band instead of above it; 0.4 % puts the screen tops
+# back on the cornice line.  Thinning the PROCEDURAL screen is the sanctioned way to clear a band (round-5 rule).
+SCREEN_OVER = 0.004           # fraction of cam 01's frame height a screen crown may stand over the cornice
 SCREEN_H_FLOOR = 11.0         # never cut a screen tree below this: it has to stay a screen
 
 
