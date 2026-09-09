@@ -1,0 +1,15 @@
+00:00.326  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+07:28.591  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7d_scene_hero.png'
+13:02.497  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7d_scene_cam05.png'
+[mat_scene] opened master.blend in 0.7s; 9706 objects
+[mat_scene] ARCH_site bbox from 130 objects: [-48.6, -29.3, -1.8] .. [52.1, 47.6, 5.2]
+[mat_scene] capital camera on INST_capital_rotunda_000_LOD0 at [-10.1, 21.6, 26.1], 82.2 m from the hero station
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[mat_scene] view exposure -2.8331 +0.00 EV -> -2.8331
+[mat_scene] hero 1920x1080 64 spp in 447.5s -> r7d_scene_hero.png
+[mat_scene] cam05 1280x720 64 spp in 333.9s -> r7d_scene_cam05.png
+[mat_scene] done in 782.2s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 14285 exited rc=0 after 784 s (max 2400)
