@@ -2444,6 +2444,15 @@ plus `SKY_GLOSSY_BOOST` 5.25 -> **4.20**, which is what puts the reflection hold
 
 ### 25.3 The frontier that is left, and whose it is
 
+**Provenance of the AFTER column (r15 review carry 5, added in round 16).** It mixes two runs, and the reader has
+to know which: the hero / Cycles rows come from `r15a_r15SHIP` (fast GI ON, three lamp objects at w 0, 0, 0.70)
+and the cam03 / 05 / 06 Eevee rows from `r15f_SHIPPED` (fast GI OFF, one lamp). The two are equivalent in CYCLES
+by construction -- fast GI is an Eevee setting and the two deleted lamps carried w = 0 -- but they are not the
+same Eevee frame. And the row "hero shaded attic hue / sat 32.7 / 0.308 PASS" is the CYCLES frame: the same box
+in the shipped **EEVEE** preview reads **hue 36.5 / lum 131.6** (`light_r15_final_measure.log`), i.e. OUTSIDE the
+23.5-35.5 window the table records as passing. QA scores previews, so both numbers belong on the table.
+
+
 | box | BEFORE | **AFTER (r15)** | window / reference | verdict |
 |---|---|---|---|---|
 | **QA-07-1** near water | 144.7 / 228.2 / 0.292 | **107.7 / 209.4 / 0.293** | 79.1-131.8 (ref 105.4), hue 185-200 | **lum PASS (2.2 % off the photo)**, hue 9.4 deg out |
@@ -2523,3 +2532,193 @@ lamp's own `w`. 8 one horizon-exponent table, E[(1-|z|)^p] per hemisphere, in `l
 `light_calibrate.py`: 1.73x at p 1, 3.07x at p 3, **5.02x at the shipped p 6** (the old "4.8x at p 10" and "4.7x at
 p 3" were both wrong and disagreed with each other). 9 the round-14 acceptance panels are deleted; 10 (cam06 roofs)
 is closed by 25.4 and cam02's pier is 25.5.
+
+## 26. Round 16
+
+Master: `scripts/lead_build.sh` in this worktree, **9679 objects, 11.38 M tris at LOD1, 160 MB** (build log
+`light_r16_master4.log`; the flythrough rebuilds took three earlier masters, `light_r16_master{,2,3}.log`).
+Cycles 1920x1080 / 64 spp, Eevee 1280x720 / 32 TAA (the hero also 1920x1080 in Eevee). Logs:
+`light_r16_sweep{1,2,3,4,5}.log`, `light_r16_acc.log`, `light_r16_flythrough{,2,3}.log`,
+`light_r16_check_master{,2,3}_step4.log`, `light_r16_probe{,2}.log`, `light_r16_ornprobe.log`,
+`light_r16_lightingblend.log`; every measurement stdout is committed (`light_r16_acc_measure.log`,
+`light_r16_acc.json`).
+
+Render cost of the round, stated because the brief capped it: **six BORDERED Cycles hero frames** (four at the
+560x618 box border = 0.32 of the frame, 66-68 s each; two at 1010x818 = 0.40, 102 s each) **plus ONE full Cycles
+hero** (188.8 s) and one Cycles cam02 at 1280x720 (103.5 s) = **1131 s of Cycles**, i.e. 6.0 full-hero-equivalents
+of wall time by the frame count but **3.4** by actual GPU seconds. One Eevee five-camera pass (204.4 s).
+
+### 26.1 Item 0 — cam02's boxes, re-based AGAIN, and QA-08-2's headline number is an artefact of the old ones
+
+The lead changed cam02's lens 40 -> 27 mm after QA round 08 (QA-08-1). The round-15 box set was picked on the
+40 mm frame; on the 27 mm frame it lands on other things. Overlaid on `r16_r16BEFORE_02e.png`: `sunlit_pier`
+(273 340 350 500) falls on **foreground planting**, `shade_frieze` (250 40 420 110) on **open sky**, and the two
+pier boxes on the arch openings rather than on the shafts. The new set (`scripts/light_r16_measure.py`, all NEW):
+
+| box | pixels (1280x720) | what it is |
+|---|---|---|
+| `shade_pier` | 405 265 465 395 | the left fluted shaft cluster of the camera-facing (NNE) rotunda face |
+| `shade_pier_r` | 875 255 930 385 | its twin on the right |
+| `shade_arch` | 580 275 690 355 | the coffered vault soffit seen through the left arch: the deepest shade in frame |
+| `shade_frieze` | 500 150 700 200 | the entablature band across the front of the rotunda |
+| `sunlit_pier` | 950 465 1090 510 | the SUNLIT north-colonnade wall right of the rotunda (165.5 / hue 45.6 / sat 0.384) |
+| `sky` | 60 40 200 140 | clear sky, a HOLD |
+
+**QA-08-2's `shade_pier_r / sunlit_pier = 1.046` -- "no directional light on that face" -- does not survive the
+re-basing.** Its denominator was a box that is half sky at 27 mm (lum 185.0 at **hue 159.3, sat 0.055**: that is
+not stone). Against the sunlit wall the four ratios on the shipped rig are **0.325 / 0.484 / 0.223 / 0.428**, all
+inside QA's <= 0.80, and the face does show a sunlit / shaded split. What IS real on the re-based boxes:
+`shade_pier` **hue 28.1** and `shade_frieze` **28.8** both PASS the 25-60 window, while `shade_pier_r` (301.0) and
+the arch soffit (260.8) fail it. So QA-08-2 is not "the camera-facing side is indigo"; it is **the vault soffit
+seen through the arches, and the right-hand shaft cluster**, on a face whose lit stone reads warm.
+
+It is also NOT an Eevee artefact, which is what the Cycles cam02 frame was spent on: in CYCLES the same four
+boxes read **268.3 / 234.6 / 249.5 / 351.1** -- worse than Eevee, not better. The light really is violet there.
+
+### 26.2 Item 1 (QA-08-3, blocker) — the sun cannot do it, the look cannot do it, and here is the frontier
+
+Measured on the round-16 master, Cycles hero 64 spp, bordered on the box rectangle so every measurement keeps its
+pixel coordinates. BEFORE reproduces QA-08-3 to 0.002 of saturation (QA: 0.462 / 104.9; here 0.464 / 105.7).
+
+| case | sunlit attic sat / R-B / lum | shaded attic hue / sat / lum | columns hue | water_refl R-B |
+|---|---|---|---|---|
+| BEFORE (r15 rig) | 0.464 / 105.7 / 189.9 | 34.6 / 0.439 / 127.6 | 35.7 | +46.0 |
+| sun-side sky blue x0.55 | 0.477 / 108.7 / 189.5 | 35.6 / 0.463 / 127.1 | 36.7 | +48.7 |
+| sun-side x0.30 | 0.484 / 110.3 / 189.3 | 36.2 / 0.478 / 126.9 | 37.3 | +50.3 |
+| **sun-side x0.00 (the floor)** | **0.492 / 112.2 / 189.1** | 36.8 / 0.496 / 126.5 | 38.0 | +52.1 |
+| x0.00 + anti-sun tint b 55 | 0.491 / 111.9 / 189.2 | 36.0 / 0.473 / 127.0 | 37.8 | +51.4 |
+| **x0.00 + anti-sun tint b 70 (SHIPPED)** | **0.489 / 111.5 / 189.2** | **35.1 / 0.451 / 127.4** | 37.6 | +50.6 |
+| look = Very High Contrast (at x0.30) | 0.455 / 106.2 / 195.6 | 36.0 / 0.486 / 127.9 | 37.0 | +52.5 |
+| look = Punchy (at x0.30, no exposure change) | **0.617** / 115.7 / **150.2** | 37.1 / 0.522 / 97.6 | 38.5 | +36.0 |
+| look = Punchy, +0.6 EV | 0.498 / 101.5 / 169.3 | 36.1 / 0.427 / 118.3 | 37.2 | +39.4 |
+| look = Punchy, +1.0 EV | 0.433 / 92.2 / 180.8 | 35.5 / 0.370 / 132.2 | 36.3 | +40.4 |
+| target / reference (ref 169) | **0.53-0.62 / >= 120 / 178-201** | 23.5-35.5 / <= 0.50 / 103.5-126.5 | 24.5 +- 4 | >= +35 |
+
+1. **The sun has no blue left to take.** `SUN_BLUE_MULT` has been 0.00 since round 12: the lamp ships at
+   (1.000, 0.607, 0.000), so the direct term contributes **zero** blue to the sunlit stone and a temperature or
+   tint change on it can only move R against G -- and the sunlit attic's hue (37.0) is already 3 deg SHORT of the
+   photograph's 40.1, so a warmer sun moves it the wrong way. The brief's first lever is empty by construction.
+2. **The sun-side sky is the whole of the remaining lever, and it is small.** The new socket
+   `SKY_DIFFUSE_TINT_SUNSIDE` (light_calibrate.make_sky_world, the mirror of round 12's anti-sun tint) takes the
+   sky's blue off sun-facing surfaces only. Driven to its floor -- **every** blue photon of sky removed from the
+   sun half of the dome -- it is worth **+0.028 of saturation and +6.5 R-B**: 24 % of the saturation gap and 27 %
+   of the R-B gap. Whatever is left of the sunlit attic's blue is not sky and not sun.
+3. **It is not the look either, and Punchy's apparent win is a level illusion.** Punchy reaches sat 0.617 -- inside
+   QA's window -- at 150.2 lum, 28 lum under the floor of the luminance window. Exposed back up it collapses:
+   +0.6 EV gives 0.498, +1.0 EV gives 0.433, i.e. **worse than the shipped High Contrast**. Punchy's saturation
+   lives in the low midtones, and the sunlit attic is not a low midtone. Very High Contrast is worse at every
+   level. Materials' finding stands, now with the exposure-compensated numbers behind it.
+4. **The frontier, stated as a number.** With the sun carrying no blue and the sky's sun-side blue at zero, the
+   sunlit attic still reads B/R = 115.8/228.0 = **0.508** where ref 169 reads 96.4/230.6 = **0.418**. The residual
+   is the view transform: AgX's inset mixes channels, and the only points in this whole round that got below
+   0.418 (Punchy at -28 lum) bought it with 28 lum of level. **At the reference's luminance the shipped transform
+   caps this box at about 0.49 of saturation.** That is a colour-management decision, not a lighting one, and it
+   is the lead's: the alternatives are a different view transform for the whole film, or a per-look grade in the
+   compositor, both of which invalidate eight rounds of material judgements made under AgX High Contrast.
+
+**Shipped:** `SKY_DIFFUSE_TINT_SUNSIDE = (1.0, 1.0, 0.0)` at exponent 3.0, and `SKY_DIFFUSE_TINT` b **40 -> 70**.
+The second is the counterweight the first needs: the ~9 % of the shaded attic's light that has bounced off sunlit
+stone loses its blue with the sunlit stone, and that alone pushed the hero's shaded attic hue 34.6 -> 36.8, past
+QA's 35.5. b 70 puts it back at **35.1 (PASS)** and costs the SUNLIT attic 0.003 of saturation -- the anti-sun /
+horizon discriminator doing exactly what round 12 built it for.
+
+### 26.3 Item 2 (QA-08-2) — what is left after the re-basing, and why the rig cannot separate it
+
+Nothing shipped. Two things were measured on cam02 with the shipped sky:
+
+* **Halving the fill (49.0 -> 24.5 W/m2 Cycles, 38.5 -> 19.25 Eevee) with the anti-sun tint raised to b 110 to hold
+  the hero.** The arch soffit went hue 264.7 -> **274.6** (worse) at sat 0.378 -> 0.320, and `shade_pier_r`
+  354.9 -> 272.1. Taking blue OUT of the fill does not warm those boxes; it darkens them until what is left --
+  the sky's own anti-sun horizon band, which is blue by construction -- is a larger share of what they get.
+* **The direction of the conflict is unchanged from 25.5 and now has no slack at all.** The hero's shaded attic
+  ships at hue **35.1** against a 35.5 ceiling. Every knob that would warm cam02's shafts (green in the fill
+  colour, less fill, a fill azimuth off the NNE axis) raises that number, and there is 0.4 deg of room.
+
+Hand-off, with the numbers: what remains of QA-08-2 is **the vault soffit through the arches (hue 260.8 Eevee /
+249.5 Cycles, sat 0.40) and the right shaft cluster (301.0 / 234.6)**, on a face whose lit stone reads hue 28.1
+and 28.8 and whose shaded/sunlit ratios are all inside QA's 0.80. The soffit is lit by `LIGHT_rotunda_bounce` and
+`LIGHT_rotunda_vault_bounce` (both warm, (1.0, 0.86, 0.68)) plus the raking blue fill; raising the two warm
+interior fills is the one untried lever and it is **cam04's** hold (QA-02-12 / QA-04-7), so it needs a cam04
+baseline in the same round. Not attempted here on a round-16 budget.
+
+### 26.4 Item 3 (QA-08-7) — one knob, and it moves the walk by a tenth of a degree
+
+cam03's walk was 92.1 in QA round 08 and reads **88.9** on this master. Two lighting knobs were moved together --
+the shade fill halved and the anti-sun tint's blue raised 40 -> 110, a 2.75x -- and the walk went **88.9 -> 89.0**,
+sat 0.142 -> 0.142, ratio 0.761 -> 0.760. Every other cam03 number is identical to three decimals. The walk is
+lit by bounce off environment's grass and by the sunlit rotunda (hue 43.8) opposite; no world socket and no lamp
+in this rig reaches it, because the horizon exponent p = 6 that keeps the tint off up-facing surfaces keeps it off
+the walk too, and r15 already measured that no shade-fill lamp reaches that box. **Hand-off to environment: the
+colonnade walk's hue is its own albedo plus the lawn's bounce, not the light.** Holds kept: outer row 0.188 ->
+0.186 (>= 0.15), frame black 4.5 % -> 4.6 % (<= 20 %), outer row hue 57.0 (25-60).
+
+### 26.5 Item 4 (QA-08-13 + Phase 5) — the flythrough, back to 51 s, and the first honest clearance table
+
+`light_flythrough.py` took its `cam02` station from `qa_cameras` by name (prep review 1's anti-desync rule). In
+round 08 the lead moved CAM_qa_02 to the NNE fit of ref 062 at (-79.8, 24.4) -- the far side of the building from
+every other station on that leg -- so the bezier ran across the courtyard and back and the saved range went
+1-1224 -> **1-2616**. The station is now PINNED at the east-shore point the route was designed around and renamed
+`ne_apron`; CAM_qa_02 is no longer on the route. **1224 frames @ 24 fps = 51.0 s, 251.0 m, mean 4.92 m/s**, one
+24 mm lens throughout.
+
+* **Plan finding 1 (the hold-boundary speed step) is closed.** `invert()` now integrates the profile exactly
+  inside a grid interval (s = s0 + v0 t + a t^2 / 2; the profile is piecewise-constant-acceleration by
+  construction) instead of interpolating arc length linearly across it. Sampled every 4 frames out of the hero
+  hold: 0.00, **0.05, 0.47, 0.89, 1.30, 1.72, 2.14** m/s = 2.52 m/s^2, against the designed ACCEL 2.5 and the old
+  0.00 -> 0.50 step (3.2 m/s^2). Settling under the dome, the same: 3.71, 3.29, 2.88, 2.46, 2.04, 1.63, 1.21,
+  0.79, 0.
+* **Plan finding 2 (ORN) is closed, and it was not a clearance problem but a linking one.** `link_site()` now
+  links ORN -- and linking it made the check FAIL at thirteen frames against `ORN_capital_rotunda_*` and
+  `ORN_attic_panel_*` at 0.08-1.37 m. Those are **prototypes**: `build_master` instances the ORN assets onto the
+  ARCH sockets and then excludes the whole "ORN" source collection from the view layer, so the collection this
+  script can link holds 138 ORN meshes whose object origin IS the world origin, all `hide_render`
+  (`light_r16_ornq.log`). The check therefore grew a **`--master`** mode that opens master.blend read-only and
+  gates against the real instances.
+* **The one real failure the round found is ENV's, and it is fixed.** On master, `ENV_shrub_maho1_0946` at
+  (27.26, -21.77) -- planted since the round-14 probe -- sat 0.54 m from the path at frame 937. The approach leg
+  was re-routed south-west (app_a, app_b moved; app_a2 and app_b2 added, all four probed at 1.78-1.79 m) and the
+  bezier bulge that still left 1.44 m closed with it.
+* **Acceptance, on master.blend at `--step 4` (307 samples, 96 rays), ALL FOUR GATES PASS:** clearance **1.57 m**
+  outside the gallery (>= 1.50) and **1.43 m** in the gallery (>= 1.35, geometric bound 1.40); level min agl
+  **1.56 m** (>= 1.50), min z over water **1.60** (88 samples); speed land **5.60** / water **9.20** (<= 6 / 10);
+  holds **3.50 s** and **4.00 s** (>= 3). Log `light_r16_check_master3_step4.log`.
+* **Plan finding 3 (the 398-408 window):** there was never a gap. The legs are contiguous by construction --
+  `water 1-404, shore 404-571, gallery 571-917, approach 917-1129` -- and "397 then 409" was the round-14 check
+  sampling every 12th frame. The gate now prints the leg table and calls the crossing **one** window, frames
+  1-404, with the first land frame (405) named beside it.
+
+### 26.6 Round-16 acceptance, measured on the rebuilt master (9679 objects, 11.38 M tris)
+
+| box | BEFORE (r15 rig) | **AFTER (r16)** | window / reference | verdict |
+|---|---|---|---|---|
+| **QA-08-3** hero sunlit attic sat | 0.464 | **0.489** | 0.53-0.62 (ref 0.582) | FAIL, +21 % of the gap |
+| **QA-08-3** hero sunlit attic R-B | 105.7 | **111.4** | >= 120 (ref 134.2) | FAIL, +20 % of the gap |
+| **HOLD** hero sunlit attic lum | 189.9 | **189.3** | 178-201 | PASS |
+| **HOLD** hero shaded attic hue / sat | 34.6 / 0.439 | **35.0 / 0.447** | 23.5-35.5 / <= 0.50 | **PASS** |
+| hero shaded attic lum | 127.6 | **127.7** | 103.5-126.5 (ref 118.8) | FAIL by 1.2 (was 1.1) |
+| **HOLD** hero reflection R-B / hue | +46.0 / 39.1 | **+50.5 / 40.7** | >= +35, hue 25-45 | **PASS, improved** |
+| **HOLD** hero sky_top / sky_left | 168.0 / 154.9 | **168.0 / 154.9** | must not move | **identical** |
+| hero columns hue | 35.7 | **37.6** | 24.5 +- 4 | FAIL before and after |
+| hero near water / flank (Cycles) | — | 125.3 / 207.8, 162.8 / 209.6 | 79.1-131.8, 114.3-190.5 | PASS on level |
+| **QA-08-2** cam02 shade_pier hue (Eevee) | 28.1 | **28.1** | 25-60 | **PASS** (re-based box) |
+| **QA-08-2** cam02 shade_frieze hue | 31.1 | **28.8** | 25-60 | **PASS** |
+| **QA-08-2** cam02 shade_pier_r / arch hue | 354.9 / 264.7 | **301.0 / 260.8** | 25-60 | FAIL, see 26.3 |
+| **QA-08-2** cam02 shaded / sunlit ratios | — | **0.325 / 0.484 / 0.223 / 0.428** | <= 0.80 | **PASS** |
+| **QA-08-7** cam03 walk hue | 88.9 | **89.0** | 25-60 | FAIL, no lighting lever (26.4) |
+| **HOLD** cam03 outer row / frame black | 0.188 / 4.5 % | **0.186 / 4.6 %** | >= 0.15 / <= 20 % | PASS |
+| **HOLD** cam06 roofs / plaza / trees hue | — | **27.3 / 46.4 / 41.0** | 22-52 / 22-52 / 23-53 | PASS |
+| cam05 water band, EEVEE | 134.0 (r15) | **133.2** | 70-117 | FAIL (r15: the CYCLES frame reads 108.4) |
+| **QA-08-13** saved frame range | 1-2616 | **1-1224** | 1200-1300 | **PASS** |
+| Eevee five-camera pass | 196.4 s (r15) | **204.4 s** | — | +4 % |
+
+**r15 review carry 5, stated in both engines.** The hero's shaded attic in the **EEVEE** preview reads
+**hue 37.8 / sat 0.584 / lum 122.6**, against the CYCLES frame's 35.0 / 0.447 / 127.7 -- outside the same window
+the Cycles frame passes, as it was in round 15 (36.5 then, 37.8 now). QA scores previews; both numbers are on the
+table so neither can be quoted alone.
+
+### 26.7 Round-15 review carries
+
+4 `apply_shade_for_engine`'s docstring rewritten (the rig has not been Eevee-only since round 14) and the same
+stale sentence in `light_r15_sweep.py` corrected. 5 the §25.3 AFTER column's provenance and the Eevee hero attic
+hue are stated above and in 25.3. 6 `light_r16_sheet.py` reads `$PFA_REFERENCE_DIR` instead of a hard-coded path.
+7 the round-15 acceptance panels are deleted. 1/2/3 were closed inside round 15 itself.
