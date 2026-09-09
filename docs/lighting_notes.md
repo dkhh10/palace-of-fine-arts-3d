@@ -1478,3 +1478,21 @@ primitive that can add blue to shaded faces without adding it to sun-facing ones
 rejected it on two costs — the near-water saturation and the column highlights — and both are GLOSSY-side costs of a
 lamp shipped at `specular = 0.10`. Round 12 adds a `spec` key to the sweep and tests the rig at **specular 0.0**,
 i.e. diffuse-only, where by construction it cannot reach a grazing water reflection or a column highlight.
+
+### 21.5 The four-row table that says this is lighting's, not materials'
+
+Inverting all four hero rows into sRGB and looking at the RATIOS rather than the hues:
+
+| | R | G | B | B/R | G/R |
+|---|---|---|---|---|---|
+| render, sunlit attic | 210.2 | 164.5 | 73.8 | **0.351** | 0.783 |
+| ref 169, sunlit attic | 231.5 | 186.8 | 95.4 | **0.412** | 0.807 |
+| render, shaded attic | 123.2 | 94.4 | 21.1 | **0.171** | 0.766 |
+| ref 169, shaded attic | 141.2 | 110.7 | 81.2 | **0.575** | 0.784 |
+
+**G/R is 0.77-0.81 in all four rows.** The stone's green reflectance is right in both illuminations, and it is right
+in the shade to within 2 %. The only channel that misses is blue, and it misses by **1.17x in sunlight and 3.4x in
+shade**. If the albedo's blue were the problem it would miss by the same factor under both illuminations, because the
+albedo does not know which lamp is on. It misses 3x harder in shade, so **the defect is in the light that reaches
+shaded faces, not in what those faces reflect** — which retires rounds 10 and 11's hand-off of the shade hue to
+materials (sections 19 and 20.4) and puts QA-05-1 back where QA filed it: lighting.
