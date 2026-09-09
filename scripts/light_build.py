@@ -122,7 +122,16 @@ SKY_DIFFUSE_BOOST = 2.50           # ROUND 12 (QA-05-1): 1.00 -> 2.50. Round 11'
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
-SKY_DIFFUSE_TINT = (1.0, 0.65, 40.0)  # ROUND 14 (QA-06-2): b 17.0 -> 40.0, because the two weights below are now
+SKY_DIFFUSE_TINT = (1.0, 0.65, 70.0)  # ROUND 16 (QA-08-3): b 40.0 -> 70.0. Not a new idea, a COUNTERWEIGHT: the
+                                   # sun-side socket below takes the sky's blue off the sunlit stone, and the
+                                   # ~9 % of the shaded attic's light that has bounced off sunlit stone first
+                                   # loses its blue with it, which drove the hero's shaded attic hue 34.6 -> 36.8,
+                                   # past QA's 35.5. Measured on the round-16 master, Cycles hero 64 spp, sun-side
+                                   # at its floor: b 40 -> 36.8 / sat 0.496, b 55 -> 36.0 / 0.473, b 70 -> 35.1 /
+                                   # 0.451 (PASS), with the SUNLIT attic moving 0.492 -> 0.489 of saturation and
+                                   # 112.2 -> 111.5 of R-B, i.e. the anti-sun discriminator returns the blue to
+                                   # the shaded box and nowhere else. Round 14's text follows.
+                                   # ROUND 14 (QA-06-2): b 17.0 -> 40.0, because the two weights below are now
                                    # SHARP and a sharp weight passes much less of the tint: at q3 p6 the shaded wall
                                    # needs b 40 to keep the blue b 17 gave it at q1 p1 (24.1). Round 12's text follows.
                                    # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
@@ -173,7 +182,7 @@ SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
                                    # why it exists and what it measured.
-SKY_DIFFUSE_TINT_SUNSIDE = (1.0, 1.0, 1.0)   # ROUND 16 (QA-08-3), new socket. The MIRROR of SKY_DIFFUSE_TINT: a
+SKY_DIFFUSE_TINT_SUNSIDE = (1.0, 1.0, 0.0)   # ROUND 16 (QA-08-3), new socket, SHIPPED AT ITS FLOOR. The MIRROR of SKY_DIFFUSE_TINT: a
                                    # multiply on the sky that lands on SUN-FACING surfaces only, weighted by
                                    # w_sun = clamp(0.5 - 0.5 * (Incoming . sun_direction))^p, i.e. by how far the
                                    # sampled sky direction lies on the SUN half of the dome. It exists because
