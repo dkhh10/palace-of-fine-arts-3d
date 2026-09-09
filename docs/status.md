@@ -481,3 +481,6 @@ Decision (lead): QA-08-3 closes as "capped by the shipped view transform"; no lo
 
 ## 2026-09-10 · LIGHT r16 merged (a25b2ce + lead corrections); master rebuilt (9679 objects, frames 1-1224, probes baked); QA round 9 dispatched (final polish round); phase5 branch merged
 In flight: QA round 9 (Opus xhigh, docs/briefs/qa_round_09.md). Next: gate report with the composite, then Phase 5 regardless (docs/phase5_checklist.md via scripts/phase5_deliver.sh; Fable final gate judgement once).
+
+## 2026-09-10 · QA round 9 in (9d3f28d): hero 3.67 -> 3.67 (+0.00, clock 1 of 2), cam02 2.69 -> 2.94; gate NOT passed; PHASE 5 STARTS (user's rule)
+Known-issues list for delivery: docs/qa_round_09.md (QA-09-1..13 + QA-03-16). Lead's final gate judgement in docs/decisions.md. In flight: scripts/phase5_deliver.sh (all steps, packed delivery copy; log renders/logs/phase5_driver.log and phase5_<step>.log). Next: deliverables list, tech notes, final status entry.
