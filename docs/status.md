@@ -373,3 +373,7 @@ In flight: LIGHT r14, ORN r6 review, ARCH r7. Next: LIGHT review + merge, MAT r8
 ## 2026-09-09 · ORN r6 merged (8342aa5) after review (MERGE WITH FIXES; lead fixed the gate's stamp-set fallback)
 Carries to ORN r7: capital scaled in Z only (acanthus tiers stretched), attic figures crowd 17 % laterally (X positions not scaled), rinceau normal map baked before the Z squash, hard-coded RES_X/SENSOR, 84 MB blend committed twice; QA-06-6's luminance half needs a render (QA round 7).
 In flight: LIGHT r14, ARCH r7. Next: LIGHT review + merge, MAT r8, lead_build.sh, QA round 7.
+
+## 2026-09-09 · ORN r7 reported (676897d), in review
+Capital re-laid for H 3.0 (tiers 0.03-0.33 / 0.30-0.60 H, volutes 0.66-0.89 H, abacus 0.10 H vs ref_002; verified by a Blender-free layout solver), attic figure x scaled by PANEL_K, course error 26 -> <= 4.2 mm, rinceau normal normalised, constants from qa_cameras; gate exit 0. Pending: LOD1 bakes for capital_rotunda + attic_panel (rebuilt --no-bake under the GPU rule) — the lead runs `orn_build.py -- --bake-pending` in the next GPU window before the master rebuild; inner/colonnade capitals 17-25 mm over their course (one rebuild).
+In flight: ORN review, LIGHT r14, ARCH r7. Next: LIGHT review + merge, ORN bake, MAT r8.
