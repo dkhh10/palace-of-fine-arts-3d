@@ -631,7 +631,7 @@ def build_concrete_family():
         # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.819. On the r12 rig the sunlit attic
         # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
         # AND chroma (lighting r12 hand-off 2 says the same); raising red hardest lifts both at once.
-        "Base Color": C(0.748, 0.590, 0.105), "Grey Color": C(0.450, 0.385, 0.062), "Grey Drift": 0.16,
+        "Base Color": C(0.748, 0.590, 0.041), "Grey Color": C(0.450, 0.385, 0.047), "Grey Drift": 0.16,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.30, "Block Size": 3.6, "Blotch Size": 0.9,
         "Drift Size": 12.0,
         "Detail Strength": 1.0, "Streaks": 1.0, "Streak Scale": 3.2, "Streak Length": 7.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
@@ -642,12 +642,12 @@ def build_concrete_family():
         # the ROW-mean spread that is the denominator of the anisotropy statistic.
         "Macro": 0.45, "Macro Scale": 1.0, "Macro Streak": 2.40, "Macro Rough": 0.60, "Ledge Band": 1.35,
         "Streak Aspect": 6.0, "Run Coverage": 0.32,
-        "Patches": 0.30, "Edge Wear": 0.48, "Edge Radius": 0.12, "Recess Dirt": 0.72, "Recess Distance": 0.7, "Cavity": 0.70,
+        "Patches": 0.30, "Edge Wear": 0.34, "Edge Radius": 0.12, "Recess Dirt": 0.72, "Recess Distance": 0.7, "Cavity": 0.70,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.10, "Pour Spacing": 1.4},
-        specular=0.16)
+        specular=0.09)
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
-        "Base Color": C(0.545, 0.474, 0.110), "Grey Color": C(0.402, 0.372, 0.080), "Grey Drift": 0.38,
+        "Base Color": C(0.545, 0.474, 0.060), "Grey Color": C(0.402, 0.372, 0.066), "Grey Drift": 0.38,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.20, "Block Size": 2.4, "Blotch Size": 2.2,
         "Drift Size": 9.0,
         "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 3.0, "Streak Length": 6.5, "Ledge Distance": 2.0, "Ledge Weight": 0.52,
@@ -659,7 +659,7 @@ def build_concrete_family():
         specular=0.18)
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.752, 0.594, 0.105), "Grey Color": C(0.420, 0.372, 0.064), "Grey Drift": 0.10,
+        "Base Color": C(0.752, 0.594, 0.041), "Grey Color": C(0.420, 0.372, 0.049), "Grey Drift": 0.10,
         "Grey Below Z": 1.0, "Grey Above Z": 4.0, "Tone Variation": 0.24, "Block Size": 3.0, "Blotch Size": 2.2,
         "Drift Size": 10.0,
         "Detail Strength": 0.80, "Streaks": 0.9, "Streak Scale": 3.4, "Streak Length": 7.5, "Ledge Distance": 2.5, "Ledge Weight": 0.50,
@@ -667,9 +667,9 @@ def build_concrete_family():
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.80, "Damp Band": 1.0,
         "Macro": 0.45, "Macro Scale": 0.9, "Macro Streak": 2.45, "Macro Rough": 0.60, "Ledge Band": 1.30,
         "Streak Aspect": 6.0, "Run Coverage": 0.32,
-        "Patches": 0.22, "Edge Wear": 0.48, "Edge Radius": 0.12, "Recess Dirt": 0.6, "Recess Distance": 0.7, "Cavity": 0.65,
+        "Patches": 0.22, "Edge Wear": 0.34, "Edge Radius": 0.12, "Recess Dirt": 0.6, "Recess Distance": 0.7, "Cavity": 0.65,
         "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.08, "Pour Spacing": 1.3},
-        specular=0.16)
+        specular=0.09)
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
         "Base Color": C(0.475, 0.358, 0.034), "Grey Color": C(0.382, 0.318, 0.058), "Grey Drift": 0.34,
@@ -685,7 +685,7 @@ def build_concrete_family():
     # Edge Radius stays small: a 0.12 m bevel would eat a 0.4 m capital volute. Instance Variation is now value +
     # weathering (see PFA_concrete `wvar`), not hue -- QA-02-2's yellow-vs-salmon capitals.
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.744, 0.586, 0.100), "Grey Color": C(0.450, 0.385, 0.062), "Grey Drift": 0.12,
+        "Base Color": C(0.744, 0.586, 0.039), "Grey Color": C(0.450, 0.385, 0.047), "Grey Drift": 0.12,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.20, "Block Size": 1.2, "Blotch Size": 0.8,
         "Drift Size": 3.5,
         "Detail Strength": 0.4, "Streaks": 0.55, "Streak Scale": 6.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.6,
@@ -698,10 +698,10 @@ def build_concrete_family():
         # i.e. it feeds the denominator of the anisotropy statistic. The run-off amplitude takes its place.
         "Macro": 0.45, "Macro Scale": 0.22, "Macro Streak": 2.20, "Macro Rough": 0.40, "Ledge Band": 0.45,
         "Streak Aspect": 6.0, "Run Coverage": 0.32, "Run Scale": 3.6,
-        "Patches": 0.0, "Edge Wear": 0.62, "Edge Radius": 0.055, "Recess Dirt": 0.88, "Recess Distance": 0.52, "Cavity": 1.0,
+        "Patches": 0.0, "Edge Wear": 0.45, "Edge Radius": 0.055, "Recess Dirt": 0.88, "Recess Distance": 0.52, "Cavity": 1.0,
         "Vertex Cavity": 0.85, "Vertex Dust": 0.55,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
-        "Instance Variation": 1.7}, specular=0.16, baked=True)
+        "Instance Variation": 1.7}, specular=0.09, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
     # QA-04-5: the hero column mask measured hue 31.2 (test 20-29), saturation 0.753 (ref 0.588) and lum 122
     # (test <= 120). Round 4 cut 37 % of the albedo and bought 3 % of display value, so this round moves CHROMA,
