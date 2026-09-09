@@ -109,7 +109,10 @@ SKY_DIFFUSE_BOOST = 2.50           # ROUND 12 (QA-05-1): 1.00 -> 2.50. Round 11'
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
-SKY_DIFFUSE_TINT = (1.0, 0.65, 17.0)  # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
+SKY_DIFFUSE_TINT = (1.0, 0.65, 40.0)  # ROUND 14 (QA-06-2): b 17.0 -> 40.0, because the two weights below are now
+                                   # SHARP and a sharp weight passes much less of the tint: at q3 p6 the shaded wall
+                                   # needs b 40 to keep the blue b 17 gave it at q1 p1 (24.1). Round 12's text follows.
+                                   # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
                                    # shade only (camera and glossy rays never see it). The shaded attic measures
                                    # (122, 94, 22) against ref 169's (141, 111, 81) -- short 59 units of BLUE and
                                    # only ~18 of R and G -- so the shade needs blue-biased light, not more of the
@@ -130,7 +133,7 @@ SKY_DIFFUSE_TINT_ANTISUN = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 
                                    # half of the dome and a sunlit face the sun half, so this is the only sky lever
                                    # that can blue the shade without bluing the sunlit stone beside it -- see
                                    # docs/lighting_notes.md 21.6 for the measured separation.
-SKY_DIFFUSE_TINT_ANTISUN_P = 1.0   # ROUND 14 (QA-06-2), new socket. Exponent on the anti-sun weight
+SKY_DIFFUSE_TINT_ANTISUN_P = 3.0   # ROUND 14 (QA-06-2), new socket. Exponent on the anti-sun weight
                                    # w = (0.5 + 0.5 * Incoming.sun)^p. Round 12 shipped the anti-sun and horizon
                                    # weights at 1.0 -- their maximum AMOUNT -- and then had no lever left when the
                                    # same tint that fixed the hero's shaded attic flooded every up-facing surface in
@@ -139,7 +142,7 @@ SKY_DIFFUSE_TINT_ANTISUN_P = 1.0   # ROUND 14 (QA-06-2), new socket. Exponent on
                                    # the sky probe (docs/lighting_notes.md 24.1), raising it from 1 to 3 takes the
                                    # tint's blue on a SUN-FACING wall from +36 sRGB units to +2.4 while the shaded
                                    # wall keeps its own.
-SKY_DIFFUSE_TINT_HORIZON_P = 1.0   # ROUND 14 (QA-06-2), new socket. Exponent on the horizon weight (1 - |ray.z|)^p.
+SKY_DIFFUSE_TINT_HORIZON_P = 6.0   # ROUND 14 (QA-06-2), new socket. Exponent on the horizon weight (1 - |ray.z|)^p.
                                    # A vertical wall's hemisphere is centred on a HORIZONTAL normal (mean |ray.z|
                                    # ~0.42); an up-facing surface's is centred on the ZENITH (mean z = 2/3). At p = 1
                                    # the wall keeps 1.8x what a roof, a walk or the lagoon's murk keeps -- not enough
@@ -388,12 +391,28 @@ SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irrad
 # The full round-10/11 cost tables for switching it on in CYCLES are in docs/lighting_notes.md 20.4 and still apply:
 # at el 16, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 and the columns 1.29x -> 1.37x of ref. That is why
 # `energy` (the Cycles number) stays 0.0 and this is an Eevee-only rig on the EEVEE_VAULT pattern.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
-                  shadow_res=0.001, shadow_jitter=True,   # ROUND 14 (QA-06-13): swept below; see 24.4
-                  color=(0.14, 0.19, 1.00),   # re-derived from the stone's own blue/red reflectance (see above)
-                  lamps=[dict(az=300.0, el=5.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
-                         dict(az=205.0, el=5.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
-                         dict(az=25.0, el=5.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=70.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
+                  # ROUND 14 (QA-06-2): the rig is no longer Eevee-only. `energy` 0.0 -> 70.0 W/m2 in CYCLES.
+                  # The round-12 diffuse tint delivered the shade's blue AND flooded every up-facing surface in the
+                  # build, because half of what reaches a shaded wall has bounced off a horizontal surface first
+                  # (21.7) -- so no sharpening of a SKY weight can separate them (24.2 measures p 2, 3, 6, 10 and
+                  # every one of them loses the hero's shade before the aerial gets its warmth back). A lamp at
+                  # 2 deg of elevation can: a vertical wall keeps cos(2) = 0.999 of it and a horizontal surface
+                  # sin(2) = 0.035, a 29x discrimination, and a sun-facing wall points away from it entirely.
+                  # 70 W/m2 puts the hero's shaded attic at 118.2 / 33.7 / 0.415 against ref 169's 115.0 / 29.5 /
+                  # 0.425 with the sky tint sharpened off everything else (24.3b).
+                  shadow_res=0.20, shadow_jitter=False,
+                  # ROUND 14 (QA-06-13): these three shipped on Blender's DEFAULTS -- 0.001 m/texel, finer than
+                  # LIGHT_sun's 0.002, with jitter on -- for three 55 deg soft suns carrying a diffuse blue. That
+                  # was the whole +81 % of the Eevee pass (24.5). At 0.20 m/texel with jitter off cam03 goes
+                  # 89.0 -> 53.6 s and cam06 46.1 -> 37.1 s, and the shade gets BETTER, not worse (24.6).
+                  color=(0.03, 0.02, 1.00),
+                  # ROUND 14: round 13's (0.14, 0.19, 1.00) was solved for EEVEE's deficit; in Cycles it adds
+                  # +9 red and +12 green for its +26 blue and moves the shade's hue the wrong way as fast as its
+                  # blue moves it back (24.3b, cases Af35 / Af55). Re-solved from those deltas.
+                  lamps=[dict(az=300.0, el=2.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
+                         dict(az=205.0, el=2.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
+                         dict(az=25.0, el=2.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
                   note="QA-05-1 Eevee shade fill on the anti-sun hemisphere: the blue the round-12 diffuse sky "
                        "puts on shaded stone in Cycles and that Eevee's screen-traced GI cannot deliver")
 
