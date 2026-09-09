@@ -1768,6 +1768,10 @@ face keeps cos(5)/cos(16) = 1.04 of it, the lagoon and the plaza keep sin(5)/sin
 | fill 16 W/m2, colour (0.42,0.62,1.00), el 16 | 112.9 / 41.2 / 0.554 | +29.9 % |
 | fill 20 / 35 / 55 W/m2, colour (0.14,0.19,1.00), el 16 | 103.3 / 109.4 / 116.1 lum, hue 36.6 / 35.9 / 35.2 | +25.1 / +28.9 / +33.6 % |
 | **fill 55 W/m2, colour (0.14,0.19,1.00), el 5 — SHIPPED** | **119.3 / 35.0 / 0.381** | **+20.2 %** |
+
+*(r13 review carry 10: every row of this section's tables is measured on the **cap-0.50 / k-2.5**
+Eevee frame pair `r13a_r13bake_01e` vs `r13ship_base_01c` — the mist change of 22.4 landed after them, which is why
+the Cycles reference reads 114.6 / hue 30.8 here and 114.3 / 30.9 in 22.6.)*
 | fill 75 W/m2, colour (0.14,0.19,1.00), el 5 | 125.5 / 34.4 / 0.334 | +20.4 % |
 
 **Item 1 acceptance (brief: within 6 deg hue, 0.10 sat, 15 % lum of Cycles):**
@@ -1885,6 +1889,9 @@ of and which 22.3 has just shown lighting cannot buy back. Rejected for that rea
 | test | before | after | window | verdict |
 |---|---|---|---|---|
 | **item 1** Eevee shaded attic vs Cycles | 93.3 / 38.2 / 0.650 (-18.6 %, +7.3, +0.275) | **119.0 / 35.0 / 0.381** (+4.1 %, +4.2, +0.007) | 15 % / 6 deg / 0.10 | **PASS** |
+
+*(r13 review carry 10: this scoreboard is measured on the **shipped cap-0.25 / k-5.0** pair
+`r13SHIP_r13_01c` / `_01e`, i.e. the frames the round-13 sheet burns in. 22.2's tables are the cap-0.50 pair.)*
 | item 1 Eevee sky_top vs Cycles | 167.9 vs 168.0, hue 208.7 vs 208.6 | unchanged | identical | **PASS** |
 | item 1 Eevee near water vs Cycles | +19.6 %, +11.2 hue | +20.2 %, +11.3 hue | "must hold" | pre-existing engine gap, +0.6 pp from this round |
 | **item 2** cam06 crop std, compositor on | 33.8 | **38.1** | >= 35 | **PASS** |
@@ -1906,3 +1913,117 @@ in Cycles anyway.
 - Finding 3: `light_r13_measure.HOLD` gates only the two sky boxes; the lagoon boxes are reported (screen-trace vs path-trace).
 - Finding 4: the "bit-identical" claim is by construction (`hide_render` under `apply_final_cycles`); no frame pair committed.
   Carries to r14: sweep's dead `energy_eevee` key (2), stale COMP comment (5), findings 6-11.
+
+# Round 14 — Phase 5 prep (NO RENDER: QA round 6 held the GPU)
+
+## 23. The flythrough path, rebuilt on the site that actually exists, and validated by ray-cast
+
+### 23.1 What was wrong with the old path
+`scripts/light_flythrough.py` was written in round 02 against the placeholder blockout and had not been touched since.
+Three things in it are no longer true of this site:
+
+1. **It flew the colonnade at z = 6.0 m.** The colonnade walk is at `arch_params.COLONNADE_GROUND_Z = -0.60`
+   (`env_build.build_colonnade_paving` measures -0.62 to -0.75), so 6.0 is 6.7 m above the walk — a third of the way up
+   the shafts, looking at capitals instead of down the gallery. Eye height on the walk is **1.15**.
+2. **Its stations were eyeballed.** `hero_start` was "= CAM_qa_01 position" at (-16.0, 113.9), which is 14 m from
+   where cam01 has stood since QA round 02 (-14.1, 100.0); cam02 was not in the route at all (it was re-stationed to
+   the SSE shore path at az 160 / 75 m by QA round 04); `colonnade_end` (79, 54) and `colonnade_in` (75.8, 34) are not
+   on the wing's arc, whose centre and radius are `COL_ARC_CENTER (-11.2, 84.7)` / `COL_ARC_R 117.4`.
+3. **Its timing was a hand-written frame list.** `KEYS = [(1,0),(37,0),(200,2),(330,4),(580,10),(700,12),(720,12)]`
+   with EASE_IN_OUT on every key: the speed was whatever that produced. Between frames 330 and 580 it covered
+   ~120 m in 10.4 s, i.e. a mean of 11.5 m/s with a bezier peak near 17 m/s — inside the colonnade.
+
+### 23.2 The route now, every station measured
+Sited from `scripts/light_flythrough_check.py --probe` (logs `renders/logs/light_r14_probe{,2,3,4,5}.log`), which
+down-casts to whatever surface is under a point and then casts a 64-direction Fibonacci sphere from eye height:
+
+| leg | cap | what it does |
+|---|---|---|
+| hero hold | — | 3.50 s stationary at the **CAM_qa_01 station (-14.1, 100.0, 1.60)**, target (0, 0, 14) at 24 mm |
+| water | 9.2 m/s | SE across the lagoon, climbing 1.6 -> 6.2 m to clear the `ENV_shrub_big1_1047/1051` shore thicket |
+| shore | 5.6 m/s | landfall on the colonnade-walk apron (72.5, 43.5), down to the **CAM_qa_02 station (70.5, 25.6, 1.06)** |
+| gallery | 4.6 m/s | radial entry through ONE bay, then the centreline walk at **z 1.15** to the wing's rotunda end |
+| approach | 5.6 m/s | south of the `ENV_shrub_pitto7_1159` group, up the steps, in through the az-217 arch |
+| dome hold | — | 4.17 s stationary at the **CAM_qa_04 station (0, 3, 1.75)**, target rising to (0, 4.5, 45) |
+
+**The gallery entry is the one piece of real geometry in the route.** `--columns` on the built file says the two rows
+of each wing sit at r 115.15 and 119.65 about the arc centre, with columns every 2.20 deg (4.5 m bays) except the
+1.46 deg cluster pairs. So the gallery is `COL_ROW_SPACING - COLONNADE_D = 4.50 - 1.70 = 2.80 m` of clear width, and
+**its centreline cannot be more than 1.40 m from a shaft axis** — the brief's 1.5 m is geometrically unreachable
+inside a colonnade. Crossing the row anywhere but a bay centre is worse: a straight diagonal from the bay centre at
+r 115.15 to the centreline at the next column's theta passes 1.57 m from that column's axis, i.e. **0.72 m of
+clearance**, which is what the first two attempts measured (0.21 and 1.26 m). The shipped entry goes **radially** out
+through the centre of the bay between the columns at theta -44.94 and -42.75, reaches the centreline still on that
+radial line, and only then turns along the arc; and the gallery stations carry **arc-tangent bezier handles** of the
+exact circular-arc length `(4/3) R tan(dtheta/4)` instead of AUTO ones, which is what removed the 0.89 m bulge into
+the outer row at the wing's end.
+
+The timing is no longer hand-written either. `speed_profile()` builds a trapezoidal velocity profile: a per-leg speed
+cap, `ACCEL = 2.5 m/s^2`, v = 0 at both ends, a forward and a backward pass, then t(s) integrated and inverted; the
+Follow Path `offset_factor` is keyed at **every one of the 1224 frames with LINEAR interpolation**, so the speed the
+constraint produces is the speed that was designed (no bezier overshoot). **248.9 -> 250.1 m, 1224 frames at 24 fps
+= 51.0 s.** 720 frames is not possible for this route: 250 m with 145 m of it capped at walking pace is 43.3 s of
+motion before the two 3.5 s holds, and cutting it to 30 s would need 8.3 m/s inside the colonnade.
+
+### 23.3 The clearance table (`scripts/light_flythrough_check.py`, log `light_r14_check_final.log`)
+Camera sampled every 12 frames (60 + 44 samples), 96 ray directions each, against **ARCH + ENV linked into the
+lighting file** — master.blend is never opened or written. Per-frame speed is sampled at every frame, not every 12th.
+
+| leg | frames | t (s) | samples | min nearest-hit (what) | min agl | max speed |
+|---|---|---|---|---|---|---|
+| water | 1-397 | 0.0-16.5 | 34 | **2.46** (ENV_terrain_ground) | 2.44 | 9.20 |
+| shore | 409-565 | 17.0-23.5 | 14 | **1.72** (ENV_terrain_ground) | 1.71 | 5.60 |
+| gallery | 577-913 | 24.0-38.0 | 29 | **1.42** (ARCH_colonnade_south_column_006_LOD1) | 1.69 | 4.60 |
+| approach | 925-1224 | 38.5-51.0 | 26 | **1.70** (ARCH_site_platform) | 1.68 | 5.60 |
+
+| gate | requirement | measured | |
+|---|---|---|---|
+| clearance | >= 1.50 m | **1.70 m** outside the gallery | PASS |
+| clearance (gallery) | >= 1.35 m (1.40 is the geometric bound; the flutes give 0.02 back) | **1.42 m** | PASS |
+| level | agl >= 1.50 m; z >= WATER_Z + 0.5 = -0.80 over water | **1.68 m**; min z over water **1.60** (30 samples) | PASS |
+| speed | <= 6 m/s except the water crossing <= 10 | land **5.60**, water (frames 1-404) **9.20** | PASS |
+| holds | >= 3 s at the hero and under the dome | hero **3.50 s**, dome **4.17 s** | PASS |
+
+Re-run at `--step 4` (306 samples, 41 s) to confirm the every-12 sampling was not hiding a spike: the same four gates
+pass, min clearance **1.42 m** (frame 829, `column_006`), min agl **1.56 m**, the tightest ENV object is
+`ENV_shrub_pitto1_1107` at **1.45 m** — a pittosporum that overhangs the colonnade walk at theta -50.8, world
+~(63.5, -5.9). **Hand-off to environment:** that shrub is the only ENV object inside the gallery's clear width; if it
+is meant to be off the walk it wants ~0.5 m more setback. Nothing is blocked by it — the path clears it.
+
+### 23.4 Round-13 review carries (docs/reviews/light_r13_review.md)
+- **2** `light_r13_sweep.py` now passes `energy_eevee=c["fill"]` (and keeps the Cycles energy at the shipped 0.0).
+  The `fill=` key really was dead: `apply_preview_eevee` overwrites `data.energy` from `energy_W_eevee`, so `fill=0`
+  rendered the full 55 W/m2. The round-13 ladder in 22.2 was measured before `apply_shade_for_engine` existed and is
+  not reproducible with the old script; anyone re-running it should re-measure, not compare to those rows.
+- **5** the stale paragraph above `MIST` in `light_build.py` argued for "L = 800 m ... not the 400 m of round 07's
+  ramp". k = 5.0 on a 2000 m ramp **is** L = 400 m, and it is what the cam06 table below it selects. Withdrawn in
+  place, with the reason: the 800 m was an atmospheric-plausibility argument, the 400 m is a measurement.
+- **6** `apply_shade_for_engine` seeds a missing `energy_W` from `light_build.SHADE_FILL["energy"]` (0.0), not from
+  `data.energy` (the Eevee 55). Verified on the saved rig: with the property deleted, the CYCLES branch now sets
+  0.0 W/m2 and `hide_render True` on all three lamps (was 55.0 / False).
+- **7** `light_probes.bake` builds and assigns the bake world **inside** the `try`, so a raise in `make_sky_world`
+  can no longer leave the rig switched to CYCLES.
+- **8 NOT DONE — carried to the first round that may render.** It asks for one `--cams 01v` frame through
+  `apply_viewport_eevee` to show the navigable master still fits its 512 shadow pool with three more sun lamps.
+  Round 14 is a no-render round; this is the one carry that needs the GPU. It is cheap (one Eevee frame).
+- **9** cam06's ">= 35" std threshold was set on ENV's measurement of that crop (44.0 un-composited / 23.5
+  composited); lighting measures the same crop at 59.8 / 33.8, so **38.1 is 0.64 of lighting's un-composited std, not
+  the 0.86 that ">= 35" implies on env's numbers**. The two sides are not measuring the same statistic.
+  **Hand-off to the lead and environment:** restate that gate as a *ratio* of the un-composited std of the same
+  frame (lighting ships 38.1 / 59.8 = 0.64) rather than an absolute number, or agree one crop tool.
+- **10** which frame each round-13 table is measured on is now stated in 22.2 and 22.6.
+- **11** housekeeping: `light_r12_sweep` worlds renamed `R12_` and no longer leaked one per case;
+  `light_r13_sheet` writes its scratch frame to the system temp dir instead of the tracked previews dir;
+  `calibration_report.json` values rounded to 6 significant figures (they churned by ~1e-7 on every run);
+  and the **root cause** of the 10 MB tracked panels is fixed — `apply_final_cycles` wrote 16-bit **RGBA** at
+  compression 15 while `film_transparent` was False, so a quarter of every file was a constant alpha plane and the
+  rest was barely deflated. It now writes RGB at compression 90, which is lossless (the RGB planes are unchanged).
+  The three existing 10 MB frames are left as they are: they are the panels 22.2/22.6 cite, and re-encoding them
+  losslessly needs a 16-bit PNG writer that is not on this machine (no ImageMagick, and PIL down-converts 16-bit
+  RGBA on read).
+
+### 23.5 Delivery doc
+`docs/tech_notes.md` gains "Opening and rendering master.blend": the saved Eevee viewport state row by row, the two
+Eevee-only rigs and the rule that every Cycles path goes through `apply_final_cycles` or `common.configure_cycles`
+(never a bare engine switch + F12), the measured Cycles/Eevee wall times from QA rounds 04-05, why the 4K final
+starts at 128 spp fixed rather than the saved 768 adaptive, and the flythrough test-animation recipe.

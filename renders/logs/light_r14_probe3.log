@@ -1,0 +1,44 @@
+00:00.332  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[check] linked ARCH: ok
+[check] linked ENV: ok
+[common] set_lod viewport=LOD1 render=LOD0: 5128 objects, 6 collections
+
+[probe] cast down from z=3.0, eye = surface + 1.75
+[probe]        x        y | surface                            z | eye_z  nearest  what
+[probe]     64.0     52.0 | ENV_lagoon_water               -1.30 |  0.45     1.78  ENV_lagoon_water
+[probe]     66.0     48.0 | ENV_shrub_big1_1047_LOD1        1.94 |  3.69     1.73  ENV_shrub_big1_1047_LOD1
+[probe]     68.0     44.0 | ENV_terrain_ground             -0.64 |  1.11     1.23  ENV_shrub_big1_1042_LOD1
+[probe]     70.0     41.0 | ENV_terrain_ground             -0.72 |  1.03     1.78  ENV_ground_colonnade_walk
+[probe]     71.0     38.0 | ENV_terrain_ground             -0.75 |  1.00     1.77  ENV_terrain_ground
+[probe]     72.0     35.0 | ENV_ground_colonnade_walk      -0.69 |  1.06     1.82  ENV_terrain_ground
+[probe]     72.0     31.0 | ENV_terrain_ground             -0.71 |  1.04     1.76  ENV_ground_colonnade_walk
+[probe]     71.5     28.0 | ENV_terrain_ground             -0.79 |  0.96     1.76  ENV_ground_colonnade_walk
+[probe]     70.0     48.0 | ENV_shrub_big0_1051_LOD1        1.05 |  2.80     1.21  ENV_shrub_big0_1051_LOD1
+[probe]     72.0     44.0 | ENV_ground_colonnade_walk      -0.71 |  1.04     1.78  ENV_ground_colonnade_walk
+[probe]     73.0     40.0 | ENV_ground_colonnade_walk      -0.67 |  1.08     1.78  ENV_ground_colonnade_walk
+[probe]     74.0     36.0 | ENV_ground_colonnade_walk      -0.69 |  1.06     1.78  ENV_ground_colonnade_walk
+[probe]     74.0     32.0 | ENV_terrain_ground             -0.71 |  1.04     1.78  ENV_ground_colonnade_walk
+[probe]     73.0     29.0 | ENV_terrain_ground             -0.74 |  1.01     1.77  ENV_terrain_ground
+[probe]     67.4      9.2 | ENV_terrain_ground             -0.67 |  1.08     1.78  ENV_ground_colonnade_walk
+[probe]     68.5     12.5 | ENV_terrain_ground             -0.63 |  1.12     1.79  ENV_terrain_ground
+[probe]     69.5     15.5 | ENV_terrain_ground             -0.62 |  1.13     1.79  ENV_terrain_ground
+[probe]     70.2     19.0 | ENV_terrain_ground             -0.58 |  1.17     1.79  ENV_terrain_ground
+[probe]     71.8      4.9 | ENV_ground_colonnade_walk      -0.72 |  1.03     1.40  ARCH_colonnade_south_column_022_LOD1
+[probe]     73.5      3.4 | ENV_terrain_ground             -0.64 |  1.11     1.74  ENV_terrain_ground
+[probe]     31.8    -24.5 | ENV_terrain_ground             -0.73 |  1.02     1.79  ENV_terrain_ground
+[probe]     28.5    -23.0 | ENV_terrain_ground             -0.64 |  1.11     1.78  ENV_terrain_ground
+[probe]     26.0    -20.5 | ENV_terrain_ground             -0.60 |  1.15     1.77  ENV_shrub_pitto7_1159_LOD1
+[probe]     23.6    -18.5 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     20.5    -16.0 | ARCH_site_step_1               -0.20 |  1.55     1.68  ARCH_site_platform
+[probe]     17.3    -13.6 | ARCH_site_platform              0.00 |  1.75     1.78  ARCH_site_platform
+[probe]     14.2    -11.1 | ARCH_site_platform              0.00 |  1.75     1.78  ARCH_site_platform
+[probe]     11.0     -8.6 | ARCH_site_platform             -0.00 |  1.75     1.78  ARCH_site_platform
+[probe]      6.3     -4.9 | ARCH_site_platform              0.00 |  1.75     1.78  ARCH_site_platform
+[probe]      2.0     -1.5 | ARCH_site_platform             -0.00 |  1.75     1.78  ARCH_site_platform
+[probe]     24.0    -15.0 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     21.0    -13.0 | ARCH_site_platform              0.00 |  1.75     1.22  ARCH_site_rostra_03_course_05
+[probe]     18.0    -11.0 | ARCH_site_platform              0.00 |  1.75     0.93  ARCH_site_rostra_03_course_04
+[probe]     27.0    -21.0 | ENV_terrain_ground             -0.60 |  1.15     0.94  ENV_shrub_pitto7_1159_LOD1
+[probe]     29.0    -22.0 | ENV_terrain_ground             -0.63 |  1.12     0.98  ENV_shrub_pitto7_1159_LOD1
+blender_run.sh: pid 27136 exited rc=0 after 4 s (max 1200)

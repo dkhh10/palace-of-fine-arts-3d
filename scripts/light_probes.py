@@ -209,10 +209,13 @@ def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
                   "scene's real indirect light, not the Eevee render-time override")
         except Exception as e:
             print("[light_probes] could not force the physical vault rig:", e)
-    bw = bake_world(s) if lighting_world else None
-    if bw is not None:
-        s.world = bw
+    bw = None
     try:
+        # r13 review carry 7: INSIDE the try. The rig has already been switched to CYCLES above, so a raise in
+        # make_sky_world used to leave it switched -- the finally below is the only thing that puts it back.
+        bw = bake_world(s) if lighting_world else None
+        if bw is not None:
+            s.world = bw
         if s.render.engine != "BLENDER_EEVEE":
             s.render.engine = "BLENDER_EEVEE"   # the bake operator only exists for Eevee
         for p in probes:                        # probes must be visible to be baked

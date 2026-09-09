@@ -165,7 +165,13 @@ def apply_shade_for_engine(engine):
     for o in _shade_lights():
         base = o.get("energy_W")
         if base is None:
-            base = o.data.energy
+            # r13 review carry 6: NOT o.data.energy -- in the saved state that is the EEVEE 55 W/m2, so a lamp
+            # arriving without the custom property would seed the CYCLES energy at the Eevee override's value.
+            try:
+                import light_build
+                base = float(light_build.SHADE_FILL["energy"])
+            except Exception:
+                base = 0.0
             o["energy_W"] = base
         eev = float(o.get("energy_W_eevee", 0.0))
         try:
@@ -232,7 +238,11 @@ def apply_final_cycles(scene=None, samples=None, time_limit=None):
     s.render.use_motion_blur = False
     s.render.image_settings.file_format = "PNG"
     s.render.image_settings.color_depth = "16"
-    s.render.image_settings.compression = 15
+    # r13 review carry 11 (root cause of the 10 MB tracked panels): film_transparent is False two lines up, so the
+    # alpha plane was 25 % of every file at a constant 1.0, and compression 15 left the rest barely deflated.
+    # Both changes are LOSSLESS -- the RGB planes are bit-identical, only the file gets smaller.
+    s.render.image_settings.color_mode = "RGB"
+    s.render.image_settings.compression = 90
     apply_vault_for_engine("CYCLES")
     apply_shade_for_engine("CYCLES")
     return s

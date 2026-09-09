@@ -1,0 +1,26 @@
+00:00.316  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[check] linked ARCH: ok
+[check] linked ENV: ok
+[common] set_lod viewport=LOD1 render=LOD0: 5128 objects, 6 collections
+
+[probe] cast down from z=3.0, eye = surface + 1.75
+[probe]        x        y | surface                            z | eye_z  nearest  what
+[probe]     30.0    -24.5 | ENV_ground_colonnade_walk      -0.70 |  1.05     1.77  ENV_ground_colonnade_walk
+[probe]     29.0    -24.5 | ENV_ground_colonnade_walk      -0.67 |  1.08     1.78  ENV_ground_colonnade_walk
+[probe]     28.0    -24.0 | ENV_terrain_ground             -0.66 |  1.09     1.79  ENV_terrain_ground
+[probe]     27.5    -23.0 | ENV_terrain_ground             -0.63 |  1.12     1.77  ENV_terrain_ground
+[probe]     26.5    -22.5 | ENV_terrain_ground             -0.61 |  1.14     1.77  ENV_terrain_ground
+[probe]     25.8    -22.0 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     25.0    -21.0 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     24.5    -20.5 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     24.0    -19.5 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     23.0    -18.0 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     22.0    -17.5 | ENV_terrain_ground             -0.60 |  1.15     1.78  ENV_terrain_ground
+[probe]     21.5    -16.8 | ENV_terrain_ground             -0.60 |  1.15     1.76  ARCH_site_step_1
+[probe]     63.5     -5.9 | ENV_terrain_ground             -0.68 |  1.07     1.42  ENV_shrub_pitto1_1107_LOD1
+[probe]     64.0     -6.5 | ENV_shrub_pitto1_1107_LOD1      0.13 |  1.88     0.80  ARCH_colonnade_south_column_017_LOD1
+[probe]     63.0     -5.0 | ENV_ground_colonnade_walk      -0.68 |  1.07     0.65  ARCH_colonnade_south_column_016_LOD1
+[probe]     62.0     -4.5 | ARCH_colonnade_south_column_016_LOD1    0.40 |  2.15     0.36  ARCH_colonnade_south_column_016_LOD1
+[probe]     65.0     -6.8 | ENV_shrub_pitto1_1107_LOD1     -0.54 |  1.21     0.54  ARCH_colonnade_south_column_017_LOD1
+blender_run.sh: pid 27717 exited rc=0 after 2 s (max 1200)
