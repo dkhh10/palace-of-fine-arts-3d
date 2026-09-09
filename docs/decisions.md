@@ -185,3 +185,7 @@ Format: date · decision · why · consequences. Newest at the bottom.
   and attic-width residuals are now 5-6 % (bar 3 %, QA-04-11). The hero photo is the target of record; cam02's station may be re-fitted
   by QA on the new stack, the courses are not moved back. Socket contract now carries heights (capital_height, band_height, panel_height)
   and arch_socket_check --type props asserts them (docs/sockets.md).
+- **2026-09-09 · Entablature sub-courses (ref 085): deferred, not rejected.** Architecture r7 measured the modillions 42 % taller than built
+  and a 0.58 m Greek-key band we do not model; fitting them needs CORNICE_H 1.37 -> 1.79 with the frieze 0.81 -> 0.61 (ornament refits the
+  rinceau). Not built this round: QA round 7 first scores the registered stack; if the entablature row std still fails (QA-06-9), option A
+  goes into the next architecture round with the ornament refit in the same wave.
