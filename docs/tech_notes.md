@@ -175,3 +175,50 @@ Cost estimate, **scaled from the measured 1280x720 numbers, not measured**: 640x
 the QA preview, so 3-6 s per frame -> **60-100 min for all 1224 frames**, or 30-50 min at `frame_step = 2` with the
 output at 12 fps. Give `blender_run.sh` an honest max (7200). Then:
 `ffmpeg -framerate 24 -i renders/previews/lighting/flythrough/f_%04d.png -c:v libx264 -crf 18 -pix_fmt yuv420p out.mp4`.
+
+## Opening and rendering (Phase 5)
+
+Everything above is still true; this is the delivery wrapper around it (`docs/phase5_checklist.md`).
+
+**Opening:** `master.blend` opens straight into the saved Eevee viewport preset (LOD1, `light_threshold` 0.01,
+raytracing off, measured 0.72 s) -- see "What is in the saved file" above. No script needs to run just to fly around.
+
+**Rendering the hero:** `scripts/phase5_hero.py` opens `master.blend`, calls `light_presets.apply_final_cycles`
+(the same preset every Cycles final has used -- denoiser, light tree, the vault-override / shade-fill switches),
+rebuilds the QA camera stations in memory (`qa_cameras.ensure`, never trusts a stale station in the file) and sets
+`CAM_qa_01_lagoon_hero`. Nothing is saved back to the file.
+
+```sh
+scripts/blender_run.sh 7200 -- --background --python scripts/phase5_hero.py -- \
+    --spp 128 --res 3840 2160 --adaptive off --time-limit 0        # timing probe first (checklist step 4)
+scripts/blender_run.sh 7200 -- --background --python scripts/phase5_hero.py -- \
+    --spp 768 --res 3840 2160 --adaptive off --denoise on          # final, once the probe's wall time allows it
+```
+Writes `renders/final/hero_cam01_<W>x<H>_<spp>spp.png` and prints `wall_time_s=` / `peak_rss_mb=`.
+
+**Rendering the flythrough test:** `scripts/phase5_flythrough.py` opens `master.blend`, sets `CAM_flythrough`, reads
+the frame count/fps from `light_flythrough.load_schedule()` (1224 @ 24, sec 23), applies `apply_preview_eevee`
+(16 TAA) and renders 640x360 frames to `renders/anim/flythrough_test/frame_####.png` (directory cleared first).
+
+**Cleaning the delivery file (step 1b):** `scripts/phase5_deliver.sh 1b` copies `master.blend` to
+`master_delivery.blend` and runs `scripts/phase5_cleanup.py` on the **copy** -- master.blend is never modified by the
+driver (the script itself refuses to write a file named `master.blend` without `--allow-master`). It purges local
+orphans recursively (linked ids are reported, never purged or edited), re-applies `common.set_lod(viewport=1,
+render=0)` and `light_presets.apply_viewport_eevee`, hashes every camera matrix+lens before/after so a station can
+never move, writes `renders/logs/phase5_cleanup.json` (data-blocks per type, libraries, images external vs packed,
+file size, LOD counts) and times an in-process re-open, failing the run if it is not under 60 s. Measured on the
+round-7 master: 12 616 data-blocks, **0 orphans to purge**, 9 681 objects, 160.9 MB, **re-open 0.78 s**, 7 camera
+stations unchanged. `--pack` (or `PFA_PACK=1` on the driver) packs the 87 external images (116.0 MB -> a 277 MB
+file); it is off by default because the texture library ships in the repo, and the script refuses to pack past 1.5 GB.
+In an `all` run steps 2-6 then render the cleaned copy; run alone they default to `master.blend`, and
+`PFA_DELIVERY_BLEND=master_delivery.blend` (or `--blend` on the scripts themselves) points them at it.
+
+**Driving both, plus the ffmpeg encode:** `scripts/phase5_deliver.sh [1b|2|3|4|5|6|all]` runs checklist steps 1b-6 in
+order through `blender_run.sh`, one Blender at a time, stopping at the first failure; step 5 auto-picks the final
+sample count/resolution from step 4's logged wall time (override with `--final-spp N --res W H`); step 6 encodes
+`renders/anim/flythrough_test/` to `renders/final/flythrough_test_640.mp4` at `fps / frame_step`. Each step is
+independently runnable (`scripts/phase5_deliver.sh 4`) and logs to `renders/logs/phase5_<step>.log`.
+
+**LOD convention (unchanged, applies to every render above):** `_LOD0` hi / `_LOD1` mid (viewport + Eevee QA default)
+/ `_LOD2` low, via `common.set_lod(viewport, render)`; the 4K/flythrough Cycles finals render at LOD0
+(`set_lod(viewport=1, render=0)`, the default `render_previews`/`qa_render_round.py --final` already leave in place).
