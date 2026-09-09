@@ -1298,3 +1298,12 @@ My recommendation is **A**: it is the only one that keeps every landmark r6 fitt
 is where the photograph disagrees. The price is one ORN rebuild of the rinceau (a one-constant change in
 `orn_build`, which is already parameterised on `arch_params.FRIEZE_H`) and a check that a 0.61 m frieze still
 reads at the hero. Not my call: `CORNICE_H` moves ORN's band, so it goes to the lead.
+
+### Round 7 review corrections (lead, 2026-09-09; docs/reviews/arch_r7_review.md)
+- Sub-course scale: N = 11 modillion periods over the 11.41 m ressaut run is an ASSUMPTION, not a measurement (`arch_r7_cornice.py`
+  derives the scale from it, so the pitch check is circular); at N = 12 the modillion pitch is -10.3 % (outside the 10 % band) while the
+  fit-in-1.37 verdict still fails (1.62 m). The de-slant slopes were hand-entered (`slope_of()` is unused).
+- Ref 062 station: az is unidentifiable; az 17 at D 83.4 (chi2 7.80 vs 7.69) is on LAND per the script's own land_check, so the station IS
+  reproducible from land; only the az-37 solution is in the water. The attic-base +0.83 m residual stands either way.
+- Archivolt frame: +Y = wall normal, +Z = radial (band-width direction); ornament's proposal said +Y radial. Ornament must build the panel
+  with the band along local +Z (docs/sockets.md is the contract). Carries 2, 5, 7, 8, 9 to round 8.
