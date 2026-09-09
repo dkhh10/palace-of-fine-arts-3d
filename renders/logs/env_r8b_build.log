@@ -1,0 +1,169 @@
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[env_build    0.0s] terrain: grid + constraints
+[env_build    2.2s] terrain: 22026 grid points, 421 constraint polygons
+[env_build    2.3s] terrain: CDT 25408 verts 50793 tris; heights
+[env_build   37.2s] terrain: mesh 44416 tris + ENV_lagoon_bed 6377 tris (MAT_lagoon_bed)
+[env_build   37.2s] paving: colonnade walk
+[common] WARNING material MAT_paving_stone not in library, using placeholder
+[common] WARNING material MAT_paving_stone_worn not in library, using placeholder
+[env_build   37.8s] paving: 845 slabs, 1,690 tris, 9 % worn (MAT_gravel_path / MAT_soil)
+[env_build   37.8s] water (closed volume)
+[env_build   39.4s] water: 17364 tris, 8208 surface tris, 474 wall quads, open edges 0, depth 0.12-1.45 m
+[env_build   39.4s] rip-rap
+[env_build   39.6s] rip-rap: 1372 boulders, 61280 tris
+[env_build   39.6s] shrubs + grasses + reeds
+[env_build   40.5s] shrubs: south-embayment cam02 fringe 139 clumps
+[env_build   40.8s] shrubs: colonnade walk edge + bed 288 instances
+[env_build   41.3s] shrubs: 1414 instances (182 in the peninsula band, 32 % warm dry) of 25 sources x 3 LODs; tris LOD0 2,092,768 LOD1 477,714 LOD2 138,318; largest leaf card 20 cm; {'pitto2': 57, 'pitto1': 98, 'pitto6': 4, 'pitto3': 65, 'agap2': 78, 'agap0': 86, 'agap1': 100, 'pitto5': 90, 'big1': 16, 'big2': 13, 'reed0': 86, 'reed2': 84, 'reed1': 72, 'twig0': 61, 'twig2': 81, 'maho2': 47, 'pitto8': 76, 'pitto7': 13, 'twig1': 71, 'maho1': 44, 'pitto0': 75, 'maho0': 74, 'pitto4': 7, 'big0': 9, 'big3': 7}
+[env_build   41.3s] birds
+[env_build   41.3s] birds: 65 sitting/floating, 6 flying
+Tree creation in 0.7s
+[env_trees] cypress    seed   3 LOD0: h  25.3 m  r 10.3 m  leaves  35033  tris 101,482  (1s)
+Tree creation in 0.3s
+[env_trees] cypress    seed   3 LOD1: h  25.5 m  r 10.4 m  leaves  14799  tris  40,070  (2s)
+Tree creation in 0.0s
+[env_trees] cypress    seed   3 LOD2: h  23.4 m  r  9.0 m  leaves      0  tris   1,332  (2s)
+Tree creation in 0.7s
+[env_trees] cypress    seed  17 LOD0: h  26.7 m  r 10.1 m  leaves  35503  tris 102,038  (3s)
+Tree creation in 0.3s
+[env_trees] cypress    seed  17 LOD1: h  26.7 m  r 10.2 m  leaves  15001  tris  40,346  (3s)
+Tree creation in 0.0s
+[env_trees] cypress    seed  17 LOD2: h  24.9 m  r  8.7 m  leaves      0  tris   1,316  (3s)
+Tree creation in 0.7s
+[env_trees] cypress    seed  41 LOD0: h  26.6 m  r  9.7 m  leaves  34451  tris  99,286  (5s)
+Tree creation in 0.3s
+[env_trees] cypress    seed  41 LOD1: h  26.8 m  r  9.7 m  leaves  14570  tris  39,268  (5s)
+Tree creation in 0.0s
+[env_trees] cypress    seed  41 LOD2: h  24.3 m  r  8.2 m  leaves      0  tris   1,188  (5s)
+Tree creation in 0.6s
+[env_trees] cypress_column seed   2 LOD0: h  29.4 m  r  3.1 m  leaves  30402  tris  98,580  (6s)
+Tree creation in 0.3s
+[env_trees] cypress_column seed   2 LOD1: h  29.5 m  r  3.3 m  leaves  12847  tris  38,286  (7s)
+Tree creation in 0.0s
+[env_trees] cypress_column seed   2 LOD2: h  28.3 m  r  2.4 m  leaves      0  tris   1,972  (7s)
+Tree creation in 0.7s
+[env_trees] cypress_column seed  31 LOD0: h  25.5 m  r  2.8 m  leaves  31816  tris 102,272  (8s)
+Tree creation in 0.3s
+[env_trees] cypress_column seed  31 LOD1: h  25.7 m  r  2.9 m  leaves  13430  tris  39,740  (8s)
+Tree creation in 0.0s
+[env_trees] cypress_column seed  31 LOD2: h  24.4 m  r  2.2 m  leaves      0  tris   2,036  (8s)
+Tree creation in 0.7s
+[env_trees] eucalyptus seed   5 LOD0: h  35.0 m  r 18.6 m  leaves  32913  tris  90,450  (10s)
+Tree creation in 0.3s
+[env_trees] eucalyptus seed   5 LOD1: h  35.0 m  r 18.6 m  leaves  13831  tris  35,870  (10s)
+Tree creation in 0.0s
+[env_trees] eucalyptus seed   5 LOD2: h  33.7 m  r 17.4 m  leaves      0  tris   1,564  (10s)
+Tree creation in 0.7s
+[env_trees] eucalyptus seed  23 LOD0: h  37.4 m  r 21.7 m  leaves  33642  tris  91,332  (11s)
+Tree creation in 0.3s
+[env_trees] eucalyptus seed  23 LOD1: h  37.5 m  r 21.8 m  leaves  14128  tris  36,272  (12s)
+Tree creation in 0.0s
+[env_trees] eucalyptus seed  23 LOD2: h  36.1 m  r 20.6 m  leaves      0  tris   1,532  (12s)
+Tree creation in 0.6s
+[env_trees] eucalyptus seed  61 LOD0: h  34.8 m  r 17.3 m  leaves  32908  tris  89,336  (13s)
+Tree creation in 0.3s
+[env_trees] eucalyptus seed  61 LOD1: h  34.8 m  r 17.4 m  leaves  13824  tris  35,488  (13s)
+Tree creation in 0.0s
+[env_trees] eucalyptus seed  61 LOD2: h  33.8 m  r 15.6 m  leaves      0  tris   1,548  (13s)
+Tree creation in 0.8s
+[env_trees] pine       seed   7 LOD0: h  24.9 m  r 15.0 m  leaves  36414  tris 107,580  (15s)
+Tree creation in 0.3s
+[env_trees] pine       seed   7 LOD1: h  24.9 m  r 15.2 m  leaves  15370  tris  42,324  (15s)
+Tree creation in 0.0s
+[env_trees] pine       seed   7 LOD2: h  23.3 m  r 13.3 m  leaves      0  tris   1,788  (15s)
+Tree creation in 0.8s
+[env_trees] pine       seed  29 LOD0: h  26.5 m  r 16.1 m  leaves  38469  tris 112,530  (16s)
+Tree creation in 0.3s
+[env_trees] pine       seed  29 LOD1: h  26.5 m  r 16.1 m  leaves  16220  tris  44,304  (17s)
+Tree creation in 0.0s
+[env_trees] pine       seed  29 LOD2: h  25.1 m  r 14.7 m  leaves      0  tris   1,820  (17s)
+Tree creation in 0.4s
+[env_trees] willow     seed  11 LOD0: h  11.3 m  r  5.9 m  leaves  23176  tris  82,196  (18s)
+Tree creation in 0.2s
+[env_trees] willow     seed  11 LOD1: h  11.3 m  r  5.9 m  leaves   9907  tris  43,710  (18s)
+Tree creation in 0.0s
+[env_trees] willow     seed  11 LOD2: h   9.8 m  r  4.9 m  leaves      0  tris   3,284  (18s)
+Tree creation in 0.5s
+[env_trees] willow     seed  37 LOD0: h  11.7 m  r  5.3 m  leaves  24543  tris  85,494  (19s)
+Tree creation in 0.2s
+[env_trees] willow     seed  37 LOD1: h  11.7 m  r  5.5 m  leaves  10461  tris  45,194  (20s)
+Tree creation in 0.0s
+[env_trees] willow     seed  37 LOD2: h  10.4 m  r  3.8 m  leaves      0  tris   3,812  (20s)
+Tree creation in 0.7s
+[env_trees] redwood    seed  13 LOD0: h  29.5 m  r  8.6 m  leaves  37137  tris  96,234  (21s)
+Tree creation in 0.3s
+[env_trees] redwood    seed  13 LOD1: h  29.6 m  r  8.7 m  leaves  15633  tris  38,586  (22s)
+Tree creation in 0.0s
+[env_trees] redwood    seed  13 LOD2: h  28.9 m  r  6.7 m  leaves      0  tris   1,596  (22s)
+Tree creation in 0.7s
+[env_trees] redwood    seed  43 LOD0: h  28.1 m  r  8.5 m  leaves  36802  tris  95,564  (23s)
+Tree creation in 0.3s
+[env_trees] redwood    seed  43 LOD1: h  28.3 m  r  8.6 m  leaves  15487  tris  38,294  (23s)
+Tree creation in 0.0s
+[env_trees] redwood    seed  43 LOD2: h  27.5 m  r  6.4 m  leaves      0  tris   1,596  (23s)
+Tree creation in 0.5s
+[env_trees] broadleaf  seed  19 LOD0: h  14.3 m  r 10.8 m  leaves  23459  tris  64,414  (24s)
+Tree creation in 0.2s
+[env_trees] broadleaf  seed  19 LOD1: h  14.4 m  r 11.0 m  leaves   9886  tris  25,604  (25s)
+Tree creation in 0.0s
+[env_trees] broadleaf  seed  19 LOD2: h  13.1 m  r  9.1 m  leaves      0  tris   1,548  (25s)
+Tree creation in 0.5s
+[env_trees] broadleaf  seed  53 LOD0: h  15.9 m  r 10.9 m  leaves  25561  tris  70,778  (25s)
+Tree creation in 0.2s
+[env_trees] broadleaf  seed  53 LOD1: h  16.1 m  r 11.0 m  leaves  10775  tris  28,102  (26s)
+Tree creation in 0.0s
+[env_trees] broadleaf  seed  53 LOD2: h  14.0 m  r  9.2 m  leaves      0  tris   1,828  (26s)
+[env_trees] screen height cap: lowered 28 of 57 screen crowns (50 m total, cornice + 2.2 % of frame at cam 01)
+[env_trees] shadow relief: lowered 29 crowns (112 m total), moved 19, dropped 3; in shadow -> north wing 16.2 % south wing 18.8 % hero water 4.5 % hero shore 18.0 % (was 77.5/57.5/33.3/90.0) over 276 samples (50 shore); 140 -> 137 trees
+[env_trees] frame-band relief: moved 0, shortened 3, dropped 0, kept (hand-placed) 15 (137 -> 137 trees)
+    kept broadleaf        (  26.0,  32.0) h7   hand-placed   P peninsula bed, left of the rotun
+    kept willow           (  18.0,  40.0) h7   hand-placed   P low willow at the water, left (c
+    kept broadleaf        (  34.2,  19.8) h6   hand-placed   P peninsula bed (cam01 x 0.24-0.27
+    kept cypress_column   (  34.8,  20.2) h16   hand-placed   C cypress column left of the rotun
+    kept cypress_column   (  29.7,  26.2) h13   hand-placed   C second column (user image x~330)
+    kept broadleaf        (  31.1,  26.4) h9   hand-placed   C small dark tree left of the rotu
+    kept eucalyptus       (  59.0,  14.6) h20   hand-placed   D
+    kept willow           (   9.0,  45.5) h9   hand-placed   P hero-shore willow, ref 169 frame
+    shortened willow      (  -7.9,  40.1) 8 -> 7 m   P hero-shore willow, ref 169 frame
+    shortened willow      ( -12.0,  45.0) 9 -> 8 m   P hero-shore willow, ref 169 frame
+    kept cypress_column   (  29.7,  26.2) h13   hand-placed   C second column (user image x~330)
+    shortened broadleaf   (  31.1,  26.4) 9 -> 8 m   C small dark tree left of the rotu
+    kept pine             ( -46.0,  -4.0) h18   hand-placed   A cluster, second crown
+    kept willow           ( -41.3,   4.1) h10   hand-placed   A pale weeping willow at the water
+    kept broadleaf        ( -49.0,   1.0) h11   hand-placed   A shore broadleaf at cam02's right
+    kept cypress          ( -48.0, -12.0) h19   hand-placed   A cluster depth (QA-01-6: mass kep
+    kept pine             ( -52.0,  -6.0) h20   hand-placed   A cluster depth
+    kept broadleaf        ( -36.0,  20.0) h7   hand-placed   P peninsula bed (cam01 x 0.75-0.80
+[env_trees] moved redwood (-38,-14) -> (-34.4,-17.9) onto land (A young redwood at the north a)
+[env_trees] moved pine (-46,-4) -> (-34.9,0.6) onto land (A cluster, second crown)
+[env_trees] moved willow (-41,4) -> (-38.5,5.3) onto land (A pale weeping willow at the w)
+[env_trees] moved broadleaf (-49,1) -> (-37.9,5.6) onto land (A shore broadleaf at cam02's r)
+[env_trees] moved cypress (-48,-12) -> (-52.9,-16.9) onto land (A cluster depth (QA-01-6: mass)
+[env_trees] moved pine (-52,-6) -> (-59.1,-13.1) onto land (A cluster depth)
+[env_trees] moved willow (-22,38) -> (-22.0,37.0) onto land (P low willow at the water in f)
+[env_trees] moved willow (9,46) -> (6.9,43.4) onto land (P hero-shore willow, ref 169 f)
+[env_trees] moved willow (-12,45) -> (-12.0,44.0) onto land (P hero-shore willow, ref 169 f)
+[env_trees] moved eucalyptus (59,15) -> (62.5,11.1) onto land (D)
+[env_trees] moved pine (92,58) -> (93.0,58.0) onto land (D)
+[env_trees] placed 137 trees {'pine': 16, 'redwood': 31, 'cypress': 29, 'willow': 10, 'broadleaf': 10, 'cypress_column': 6, 'eucalyptus': 35} in 27s
+[env_build   67.9s] planting plan table written into docs/environment_notes.md
+[env_backdrop] hall: 27 pilasters, 102 glazed bays, cornice + string course + plinth, curved roof (eave 15.5 + rise 4.5), pavilion + green door at (7.4, -52.5)
+[env_backdrop] houses: 288 buildings within 460 m, separate objects with pitched roofs
+[env_backdrop] landscape: far ground, bay, presidio ridge, hills
+[env_city] ground: 52 blocks, 1273 road segments, 2876 faces
+[env_city] fill houses: 913 lots in 252 run objects (r 320-620 m)
+[env_city] Presidio buildings: 97 in 6 clusters
+[env_city] far canopy: 1747 crowns in 4 objects, 98,200 tris
+[mat_lib] deduplicated 24 node groups / images
+[env_build   78.3s] ENV tri count at LOD0: 13,876,194
+[env_build   79.0s] ENV tri count at LOD1: 4,756,102
+[env_build   79.2s] ENV tri count at LOD2: 685,812
+[env_build   79.2s] objects in ENV: 6048
+Info: Saved as "environment.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 10394 exited rc=0 after 81 s (max 900)

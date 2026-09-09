@@ -74,5 +74,18 @@
  "a_nband_cast": "foliage 72.5 / arch 25.4 / sky 2.1 %   (round 06 build: 37.8 / 53.4 / 8.8)",
  "b_nband_cast": "round 04 defect 74.6 / 24.2 / 1.2;  round 06 fix 37.8 / 53.4 / 8.8",
  "nband_note": "REGRESSION, measured: pinning every hand-placed group (round-7 review finding 1)",
- "nband_note2": "puts the A/A2 cluster back in this box -> 137.5 -> 91.9 = 0.63 of ref. LEAD DECISION."
+ "nband_note2": "puts the A/A2 cluster back in this box -> 137.5 -> 91.9 = 0.63 of ref. LEAD DECISION.",
+ "r8_nband_lum": "133.1  med 152.1  std 65.8  dark<60 21.8 %  (ref 169 raw box 145.9 / 16.2 %)",
+ "r8_nband_mean": 133.1,
+ "r8_band_lum": "83.4  med 51.2  std 62.8  dark<60 57.6 %",
+ "r8_band_mean": 83.4,
+ "r8_shore_lum": "79.7  med 69.7  std 43.7  dark<60 39.6 %",
+ "r8_shore_mean": 79.7,
+ "r8_shore_hue": "hue 45.2 (QA window 40-60)   sat 0.775 (ref 0.663)",
+ "r8_c03_std": "26.7  (full-width row band 21.3)",
+ "r8_c03_stdn": 26.7,
+ "r8_c03_ratio": "0.297  (ground 34.3 / sunlit 115.3)",
+ "r8_c06_lum": "106.6  std 22.8",
+ "r8_c06_lines": "0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]",
+ "r8_c06_n": 0
 }

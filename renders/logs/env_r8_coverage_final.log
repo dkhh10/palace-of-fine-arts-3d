@@ -1,0 +1,17 @@
+00:00.396  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend"
+
+[coverage] shift_y aspect factor ON (correct)
+box                 foliage  building   ground    sky  arch cols
+cam01_left_wing       37.0%     48.2%     0.0%  14.8%     100.0%
+cam01_right_wing      38.5%     50.3%     0.0%  11.2%     100.0%
+cam05_rotunda         11.8%     55.8%    13.2%  19.2%     100.0%
+cam01_shore           56.6%     26.8%    16.6%   0.0%     100.0%
+cam05_podium          63.2%     31.4%     5.4%   0.0%     100.0%
+cam05_keyband         40.4%     59.6%     0.0%   0.0%      95.8%
+cam05_body             4.8%     68.5%     0.0%  26.6%      99.1%
+cam01_podium_base     83.4%     16.6%     0.0%   0.0%      62.4%
+cam02_foreground      51.3%      6.4%    42.4%   0.0%      62.7%
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 12996 exited rc=0 after 375 s (max 1500)
