@@ -1159,19 +1159,19 @@ paving adds slabs). `build_paving` produced **845 slabs / 1,690 tris**, 9 % worn
 
 | defect | metric | before (QA r05) | after (ENV r7) | reference |
 |---|---|---|---|---|
-| QA-05-11 | cam 03 ground std (box 560 480 900 720) | 14.1 | **26.3** | QA floor >= 12 |
-| QA-05-11 | cam 03 full-width row band std | 12.9 | **19.6** | — |
-| QA-05-11 | cam 03 ground / sunlit-decile ratio | 0.146 | **0.176** | — |
+| QA-05-11 | cam 03 ground std (box 560 480 900 720) | 14.1 | **27.8** | QA floor >= 12 |
+| QA-05-11 | cam 03 full-width row band std | 12.9 | **21.0** | — |
+| QA-05-11 | cam 03 ground / sunlit-decile ratio | 0.146 | **0.218** | — |
 | QA-05-11 | `ENV_ground_colonnade_walk` share of the box | 0 % | **16.7 %** | — |
 | QA-05-10 | hero shore band lum | 71.7 | **71.7** | ref 169 **115.6** |
 | QA-05-10 | shore box sun reach (ray-cast) | 47.4 % | **59.5 %** | — |
-| QA-05-5 | hero south wing band lum | 86.0 | **86.2** | ref 169 **113.3** |
+| QA-05-5 | hero south wing band lum | 86.0 | **86.3** | ref 169 **113.3** |
 | QA-05-8 | cam 06 horizon ground share (ray-cast) | 13.8 % | **23.4 %** | — |
 | QA-05-8 | …of which `MAT_backdrop_asphalt` | 2.47 % | **4.08 %** | — |
 | QA-05-8 | cam 06 horizon foliage share | 42.6 % | **30.6 %** | — |
 | QA-05-8 | cam 06 readable street lines | 0 | **0** (1 un-composited) | QA asks >= 3 |
 
-**QA-05-11 is fixed and is ENV's half of it.** The walk's own structure nearly doubles the shade's std, 14.1 -> 26.3
+**QA-05-11 is fixed and is ENV's half of it.** The walk's own structure nearly doubles the shade's std, 14.1 -> 27.8
 against QA's floor of 12, and the ray-cast confirms the object QA asked for now fills a sixth of the box. The
 *level* half stays where the checkpoint left it: cam 03's sun reach is 1.3 -> 1.4 %, i.e. the walk stands in the
 wing's own shade exactly as ref 128 does, and what lifts it is the ambient term, not geometry.
@@ -1199,7 +1199,7 @@ Un-composited the detector finds a line, and 7b's gapping widens it from 9 to 16
 against its background — so the geometry did move, and then the compositor flattens it back. Hand-off below.
 
 **QA-05-5 and the shoreline are unchanged, as briefed:** no south-wing planting was added (the band moved 86.0 ->
-86.2, i.e. not at all, which is the expected null), and the lagoon polygon keeps its OSM extent.
+86.3, i.e. not at all, which is the expected null), and the lagoon polygon keeps its OSM extent.
 
 ### Round-7 hand-offs (final)
 
@@ -1216,6 +1216,6 @@ against its background — so the geometry did move, and then the compositor fla
   high at 0.775 against the photo's 0.663). **Do not** close the shore belt further over the pale bank.
 - **Materials — `MAT_paving_stone` / `MAT_paving_stone_worn`** are still missing and
   `ENV_ground_colonnade_walk` runs on the `MAT_gravel_path` / `MAT_soil` fallbacks. The walk is 16.7 % of cam 03's
-  lower frame and reaches std 26.3 on those placeholders; its own surface would be worth more.
+  lower frame and reaches std 27.8 on those placeholders; its own surface would be worth more.
 - **Architecture / lead.** `env_build.COLONNADE_WALK_Z` = -0.60 tracks `arch_params.COLONNADE_GROUND_Z`. If ARCH
   moves that constant, this must move with it.

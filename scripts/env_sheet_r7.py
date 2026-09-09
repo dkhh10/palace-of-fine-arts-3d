@@ -104,7 +104,7 @@ def main():
             "band lum 86.0  med 52.0  std 63.9  dark<60 55.9 %",
             f"ray-cast  {n('b_band_cast')}",
             f"sun reach {n('b_band_sun')}"], mark=(60, 480, 560, 600)),
-        panel(a_hero, box, "AFTER  ENV r7 (master built in the worktree, Cycles 64 spp)", [
+        panel(a_hero, box, "AFTER  ENV r7 (master built in the worktree, Cycles 128 spp)", [
             f"band lum {n('a_band_lum')}",
             f"ray-cast  {n('a_band_cast')}",
             f"sun reach {n('a_band_sun')}"], mark=(60, 480, 560, 600)),
@@ -137,7 +137,8 @@ def main():
             "hue already in QA's 40-60 window, saturation 16 % high.  MATERIALS +",
             "LIGHTING (same ambient/direct split as QA-05-5).  Note: closing the belt",
             "further over the pale bank would make this number WORSE, not better.",
-            f"{n('shore_note', '')}"]),
+            f"{n('shore_note', '')}",
+            f"{n('shore_note2', '')}"]),
     ]))
 
     # ---- 3. QA-05-11 cam 03 ground
@@ -167,7 +168,9 @@ def main():
         panel(PREV / "r7_cam06.png", box4, "AFTER  ENV r7", [
             f"crop lum {n('a_c06_lum')}   dark street lines found {n('a_c06_lines')}",
             f"ray-cast  {n('a_c06_cast')}",
-            f"{n('c06_note', '')}"]),
+            f"{n('c06_note', '')}",
+            f"{n('c06_note2', '')}",
+            f"{n('c06_note3', '')}"]),
     ]))
 
     # ---- 5. shoreline check
