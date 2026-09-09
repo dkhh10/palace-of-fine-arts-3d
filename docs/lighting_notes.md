@@ -1685,3 +1685,15 @@ numbers burnt in). The shade hue's margin is 0.1 deg and the single knob is `SKY
    silently, because neither owner can see the other's half on their own branch.
 4. **The entablature** reads 141.4 / hue 39.4 / **sat 0.704** against ref 146.4 / 34.0 / 0.604: level and hue are
    close, saturation is 0.10 over — the same over-saturation QA-05-2 flags on the attic, unchanged by this round.
+
+### 21.12 Review fixes (lead, 2026-09-09; docs/reviews/light_r12_review.md)
+- Finding 1, Eevee hero frame on the shipped rig (`light_preview.py --master --eevee-only`, 1280x720 / 32 TAA, master 8:49 build,
+  `renders/previews/lighting/20260909_091636_01_lagoon_hero_eevee_r12eevee.png`) vs the Cycles acceptance frame `r12ship_base_01c.png`,
+  same boxes scaled 2/3: sky_top 153.8 / hue 208.2 / sat 0.518 (Cycles 154.0 / 208.2 / 0.519), sky_left 163.3 / 208.7 / 0.442
+  (163.7 / 208.7 / 0.441), lagoon flank hue 222 sat 0.31 (215 / 0.25), near water 224 / 0.44 (218 / 0.42). **No violet cast: the
+  diffuse-only sockets stay off camera and glossy rays in Eevee too.** But Eevee does not receive the diffuse term either: shaded
+  attic 94.9 / hue 42.2 / sat 0.769 (Cycles 116.7 / 35.4 / 0.412), sunlit attic 155.7 (178.0). The world probe bake evaluates the
+  light-path split as a camera ray, so the r12 shade fix is Cycles-only in the viewport. **Carried to r13**: give Eevee the shade
+  term (probe-time world override or Eevee-only shade fill, same pattern as EEVEE_VAULT).
+- Finding 2: `light_r12_measure.py` hue_tol 8 -> 6 (matches the acceptance window). Findings 3 (meta provenance), 4 (water cell in
+  the sheet) and the carries (SUN_BLUE_MULT at 0, importance map, comments, index-picked sockets) go to r13.

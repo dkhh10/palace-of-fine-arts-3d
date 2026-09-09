@@ -38,7 +38,7 @@ CAM03_ANCHOR = 0.607
 CAM03_WINDOW = (0.30, 0.70)
 
 # hero shade, QA-05-1 second half
-HERO_SHADE_TARGET = dict(hue=29.5, hue_tol=8.0, sat_max=0.55, lum=115.0, lum_tol=0.15)
+HERO_SHADE_TARGET = dict(hue=29.5, hue_tol=6.0, sat_max=0.55, lum=115.0, lum_tol=0.15)
 # hero sunlit attic, priority 2 of the round-12 dispatch (relaxed from round 10's 0.55 / 121)
 HERO_SUNLIT_TARGET = dict(sat_min=0.50, rb_min=110.0, lum=(178.2, 201.0))
 
