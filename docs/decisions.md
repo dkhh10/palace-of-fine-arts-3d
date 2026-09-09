@@ -196,3 +196,12 @@ Format: date · decision · why · consequences. Newest at the bottom.
   definition of done then applies (hero >= 4.0, or two rounds < +0.1 after the projection pass) and Phase 5 starts
   (docs/phase5_checklist.md). The entablature re-split (option A) stays deferred unless QA shows it in the hero score. Reviews stay,
   briefs stay short, one render set per agent.
+- **2026-09-09 · After QA round 7 (hero 3.44, +0.22, every view up): projection pass next, preceded by one short lighting round.**
+  The 3.6 rule (user, budget plan) puts the photo-projection pass (MAT r9, docs/briefs/materials_r8_projection.md item B) next with no
+  other knob round for the stone. Two of the three blockers are the lagoon: QA-07-1 open lagoon 1.24x bright / hue 224-228 (the r14 sky
+  moved it 214 -> 228 with the water untouched: lighting's horizon term first, then materials), QA-07-3 mirror 0.55 of direct stone vs
+  0.88 (materials, with the camera height confirmed at 2.6 m photo vs 2.90 m built: not moved). Order next session: LIGHT r15 (lagoon
+  horizon hue/level, hero shade level 134 -> 103-127, cam03 lagoon-side row; short, one sweep) -> MAT r9 (projection + mirror level +
+  sunlit chroma QA-07-2) -> lead_build.sh -> QA round 8 (Opus xhigh). Then the definition of done applies. Entablature re-split stays
+  deferred (row std 44.0 vs test 40 passes; not in the hero score). cam02 re-station to (-79.8, 24.4, 1.55) -> (0, 0, 23.5), 40 mm, at the
+  start of round 8 (QA's fit; lead applies in qa_cameras.py before the next QA renders).
