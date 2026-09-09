@@ -2367,3 +2367,10 @@ The shade fill's colour and elevation changed under Eevee too, so the r13 accept
 acceptance pair (`light_r13_measure --herogap`, 1920x1080): Eevee shaded attic **109.2 / 32.6 / 0.414** against
 Cycles' **116.4 / 33.6 / 0.410** — d_lum **-6.2 %**, d_hue **-1.0**, d_sat **+0.004** against windows of 15 % /
 6 deg / 0.10. `sky_top` and `sky_left` are identical between the engines to 0.1 lum, as they must be. **PASS.**
+
+### 24.9 Review corrections (lead, 2026-09-09; docs/reviews/light_r14_review.md)
+- §24.3's water isolation pair ran on tint b 17 at p 1/1 (the r13 sky), not the shipped r14 world: the "2.3x brighter mirror of the
+  building" hand-off is indicative; materials r8 re-measures the building / sky split of box 900 760 1020 840 on its own rebuilt master.
+- No measure stdout is committed for §24.6-24.7; the tables stand as reported by the agent, unverified by log (carry: commit
+  light_r14_measure output in r15). Sweep defaults (tap/thp 1.0, fill 0.0) are stale vs the shipped rig (carry, r15). cam06 roofs hue
+  315.8 and cam02 pier 3.8 are over-corrected past neutral (lead accepts for QA round 7; r15 item if scored).
