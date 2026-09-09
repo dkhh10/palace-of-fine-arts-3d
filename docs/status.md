@@ -290,3 +290,7 @@ Photo-projection answer: window-coordinate lookup or UVProject, photo as a mean-
 ## 2026-09-09 · MAT r7 review: MERGE WITH FIXES (docs/reviews/mat_r7_review.md); fix agent dispatched
 Numbers reproduce. Fix now: sheen case never rendered (Sheen Weight still 0; reflection 0.26 -> 0.04), notes describe a superseded water build (gain 0.55 vs shipped 0.15), aerial lagoon untested at the shipped gain (one cam06), ARCH hand-off overstated (cornice explains 45 % of the row std, not 2/3; 13 px = 1.03 m not 0.65), shore item reported pass on a self-chosen window (not delivered), reflection box never probed.
 In flight: MAT r7 fixes (fresh agent). Next: merge materials, env rebuild for paving, LIGHT r13, lead_build.sh, QA round 6.
+
+## 2026-09-09 · MAT r7 merged (59f44a2) after review fixes
+Fixes: sheen swept 6 cases and abandoned (every weight passing sat 0.25 does so at hue 213 = blue; QA's reflection test needs an R-B >= 0 term); water notes match the shipped gain 0.15 / transmission 0.18; cam06 lagoon Eevee 1.09x of round 5, Cycles 0.82x (dim, not black); ARCH hand-off restated (cornice 45 % of row std, 13 px = 1.03 m; direction failure mostly materials': authored per-panel streak maps proposed); shore not delivered (+0.6 of +43.9, sat rose); reflection box is 100 % water at 22 m. Near-water sat 0.303 (in window).
+Next: env rebuild for MAT_paving_stone (lead, one command), LIGHT r13 (docs/briefs/lighting_r13.md), lead_build.sh, QA round 6.
