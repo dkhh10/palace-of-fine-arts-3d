@@ -20,3 +20,10 @@ Added 2026-09-09: 4. cam03 shade test is re-based (docs/decisions.md 2026-09-09)
 sky and the anti-sun hemisphere. Measure shade-vs-sunlit on a sky-visible shaded shaft face in the cam03 frame (state the box, same 0.30-0.70 window,
 anchored on ref 169's shade/sunlit 0.607) and report both the old box and the new one once. 5. Wing bands: report raw and aligned panels for both
 wings with the labels frame-left = SOUTH, frame-right = NORTH. 6. Note which master you scored (object count, build time from renders/logs/lead_build_r6.log).
+Added 2026-09-09 after MAT r7: 7. Stack offset on the hero. Architecture measured the cornice 1.04 m (14 rows) higher in frame than ref 169's under
+the round-05 alignment; materials measured the attic panel frame ~0.65 m high (QA's attic box 900 222 1020 256 catches the render's cornice
+in its bottom five rows). Measure the row of each course on the hero vs ref 169 (attic top, attic panel frame top/bottom, cornice corona,
+frieze top/bottom, architrave bottom, capital top) with the aligned overlay, and report the offset per course in metres (13.42 px/m at the
+wall plane). This decides whether the photo-projection pass (decisions.md) may start; the lead needs it more than any score this round.
+8. The reflection test needs a hue / R-B term (blue water passes sat >= 0.25); state the new test. Anisotropy box: materials proposes
+900 224 1020 248 (attic panel only); report both boxes once.
