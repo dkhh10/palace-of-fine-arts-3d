@@ -168,6 +168,10 @@ CONCRETE_INPUTS = [
     # round 6 (QA-04-3): photographic macro weathering, 0.3-3 m features, see scripts/mat_make_grunge.py
     ("Macro", "FACTOR", 0.0, 0, 3), ("Macro Scale", "FLOAT", 1.0, 0.02, 20),
     ("Macro Streak", "FACTOR", 0.0, 0, 3), ("Macro Rough", "FACTOR", 0.5, 0, 3),
+    # round 7 (QA-05-2): the run-off layer is projected with its vertical axis stretched by `Streak Aspect`, so its
+    # features are 0.15-0.9 m wide and 1-4 m long (rain runs), and it is gated to `Run Coverage` of the columns so
+    # the under-ledge darkening varies ACROSS the wall instead of being a uniform horizontal stripe.
+    ("Streak Aspect", "FLOAT", 4.5, 1.0, 24), ("Run Coverage", "FACTOR", 0.40, 0.02, 1),
     ("Ledge Band", "FACTOR", 0.62, 0, 3), ("Damp Band", "FACTOR", 0.0, 0, 2),
     ("Roughness", "FLOAT", 0.78, 0, 1), ("Roughness Variation", "FLOAT", 0.12, 0, 1),
     ("Bump", "FLOAT", 0.35, 0, 3),
@@ -240,7 +244,18 @@ def build_group_concrete():
         _img = ML.macro_image(_nm)
         if _img is None:
             continue
-        _v = t.vscale(Wm, t.div(1.0, t.mul(_info["tile"], MSC)))
+        _s = t.div(1.0, t.mul(_info["tile"], MSC))
+        if _nm == "pfa_macro_streak":
+            # ROUND 7, QA-05-2. Round 6 put the same isotropic field on every layer and QA measured the result
+            # exactly: streak anisotropy (std of column means / std of row means) 0.64 against the photograph's
+            # 4.07 -- "rain runs down, it does not blotch". The run-off map is therefore projected with its
+            # VERTICAL axis stretched by `Streak Aspect`: at tile 4.5 m and aspect 4.5 its own 0.05-0.20-of-tile
+            # features become 0.2-0.9 m wide and 1-4 m long, which is what a run-off streak is. The stretch is in
+            # the projection and not in the map (round 6 pre-stretched the pixels 3.2x, which cost horizontal
+            # detail and could not be re-tuned without rebuilding the PNG).
+            _v = t.vmul(Wm, t.combxyz(_s, _s, t.div(_s, I["Streak Aspect"])))
+        else:
+            _v = t.vscale(Wm, _s)
         # 128 = ratio 1.0 in an 8-bit Non-Color map, so the linear value is half the ratio
         macro[_nm] = t.mul(t.sepxyz(t.image(_img, _v).outputs["Color"])[0], 2.0)
     d_stain = t.sub(macro.get("pfa_macro_stain", 1.0), 1.0) if macro else 0.0
@@ -248,7 +263,9 @@ def build_group_concrete():
     d_streak = t.sub(macro.get("pfa_macro_streak", 1.0), 1.0) if macro else 0.0
     # two decorrelating layers at different tiles, so nothing beats against the 9 m repeat
     d_all = t.add(d_stain, t.mul(d_blotch, 0.75))
-    d_all = t.sub(d_all, t.mul(t.math("MAXIMUM", d_all, 0.0), 0.35))
+    # round 6 biased the macro 35 % toward its dark half to beat AgX's compression; QA measured the cost
+    # (attic 180.4 -> 166.5, below its own luminance window) and round 7 gives most of it back: 0.35 -> 0.22.
+    d_all = t.sub(d_all, t.mul(t.math("MAXIMUM", d_all, 0.0), 0.22))
     m_tone = t.math("MAXIMUM", t.madd(d_all, I["Macro"], 1.0), 0.30)
     # vertical run-off: keep the map's dark half at full strength and halve its light half (run-off darkens), gate
     # it to near-vertical faces, and let it fade in under shelter. `ledge_all` is built below, so this is finished
@@ -306,12 +323,22 @@ def build_group_concrete():
     ledge_all = t.maximum(st.outputs["Ledge"], overhang)
     # the band must not be a clean painted stripe: the macro streak map breaks it up along the cornice and gives it
     # the irregular lower edge run-off actually has.
-    lb_break = t.maprange(t.add(d_streak, 1.0), 0.80, 1.15, 1.35, 0.45) if macro else 1.0
+    # ROUND 7: `run_gate` is 1 in the columns the (now vertical) streak field marks dark and 0 in the rest, so the
+    # band is a set of runs coming off the cornice, not a painted stripe. Its column-to-column contrast is what QA's
+    # anisotropy numerator measures; its lower MEAN is what takes the row-mean spread (the denominator) down.
+    if macro:
+        _k = t.mul(t.sub(I["Run Coverage"], 0.35), 0.55)
+        run_gate = t.maprange(d_streak, _k, t.sub(_k, 0.20), 0.0, 1.0)
+        lb_break = t.madd(run_gate, 1.30, 0.18)
+    else:
+        run_gate, lb_break = 0.5, 1.0
     lband = t.clamp01(t.mul(t.mul(t.mul(ledge_all, t.mul(I["Streaks"], I["Ledge Band"])), wvar),
                             t.mul(lb_break, vertness)))
     c = t.mix(lband, c, t.vmul(c, (0.50, 0.455, 0.375)))
     # 9a-2. the macro run-off layer itself, strongest under the same shelter
-    m_run = t.madd(t.mul(t.mul(dark_biased, vertness), t.madd(ledge_all, 0.65, 0.35)), I["Macro Streak"], 1.0)
+    # the run-off layer itself is now present over the whole vertical face (0.55 floor, was 0.35) and doubles under
+    # shelter: rain runs the length of a wall, it does not stop 2 m below the cornice.
+    m_run = t.madd(t.mul(t.mul(dark_biased, vertness), t.madd(ledge_all, 0.45, 0.55)), I["Macro Streak"], 1.0)
     m_run = t.math("MAXIMUM", m_run, 0.30)
     c = t.vscale(c, m_run)
     # QA-02-2: the v2 streak tint (0.36, 0.37, 0.31) had G > R -- a green multiplier over a broad low-contrast mask,
@@ -595,35 +622,45 @@ def build_concrete_family():
     #  - Algae on every material that can reach z = WATER_Z; the mask is height-gated so high geometry is untouched.
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
-        "Base Color": C(0.655, 0.545, 0.018), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.24,
+        # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.819. On the r12 rig the sunlit attic
+        # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
+        # AND chroma (lighting r12 hand-off 2 says the same); raising red hardest lifts both at once.
+        "Base Color": C(0.710, 0.582, 0.016), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.24,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.30, "Block Size": 3.6, "Blotch Size": 0.9,
         "Drift Size": 12.0,
         "Detail Strength": 1.0, "Streaks": 1.0, "Streak Scale": 3.2, "Streak Length": 7.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.75, "Damp Band": 1.0,
-        "Macro": 1.95, "Macro Scale": 1.0, "Macro Streak": 1.55, "Macro Rough": 0.60, "Ledge Band": 1.20,
+        # QA-05-2: the isotropic half of the macro comes down 2.6x and the vertical half goes up; the horizontal
+        # pour lines (0.6 m spacing = 12 px on the hero, i.e. three of them inside QA's 34 px attic box) come down
+        # 3.5x and their spacing more than doubles, because they were the largest materials-owned contribution to
+        # the ROW-mean spread that is the denominator of the anisotropy statistic.
+        "Macro": 0.75, "Macro Scale": 1.0, "Macro Streak": 1.70, "Macro Rough": 0.60, "Ledge Band": 1.35,
+        "Streak Aspect": 5.0, "Run Coverage": 0.40,
         "Patches": 0.30, "Edge Wear": 0.70, "Edge Radius": 0.20, "Recess Dirt": 0.72, "Recess Distance": 0.7, "Cavity": 0.70,
-        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.35, "Pour Spacing": 0.6})
+        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.10, "Pour Spacing": 1.4})
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
-        "Base Color": C(0.500, 0.440, 0.040), "Grey Color": C(0.402, 0.372, 0.058), "Grey Drift": 0.38,
+        "Base Color": C(0.530, 0.462, 0.038), "Grey Color": C(0.402, 0.372, 0.058), "Grey Drift": 0.38,
         "Grey Below Z": 0.5, "Grey Above Z": 5.0, "Tone Variation": 0.20, "Block Size": 2.4, "Blotch Size": 2.2,
         "Drift Size": 9.0,
         "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 3.0, "Streak Length": 6.5, "Ledge Distance": 2.0, "Ledge Weight": 0.52,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.85, "Efflorescence": 1.15, "Damp Band": 1.25,
-        "Macro": 1.85, "Macro Scale": 0.85, "Macro Streak": 1.50, "Macro Rough": 0.65, "Ledge Band": 1.10,
+        "Macro": 0.80, "Macro Scale": 0.85, "Macro Streak": 1.60, "Macro Rough": 0.65, "Ledge Band": 1.22,
+        "Streak Aspect": 4.5, "Run Coverage": 0.42,
         "Patches": 0.32, "Edge Wear": 0.65, "Edge Radius": 0.18, "Recess Dirt": 0.68, "Recess Distance": 0.6, "Cavity": 0.35,
-        "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.15, "Pour Spacing": 0.9})
+        "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.06, "Pour Spacing": 1.6})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.665, 0.552, 0.018), "Grey Color": C(0.420, 0.372, 0.042), "Grey Drift": 0.14,
+        "Base Color": C(0.716, 0.588, 0.016), "Grey Color": C(0.420, 0.372, 0.042), "Grey Drift": 0.14,
         "Grey Below Z": 1.0, "Grey Above Z": 4.0, "Tone Variation": 0.24, "Block Size": 3.0, "Blotch Size": 2.2,
         "Drift Size": 10.0,
         "Detail Strength": 0.80, "Streaks": 0.9, "Streak Scale": 3.4, "Streak Length": 7.5, "Ledge Distance": 2.5, "Ledge Weight": 0.50,
         "Streak Shade Bias": 0.6,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.80, "Damp Band": 1.0,
-        "Macro": 1.85, "Macro Scale": 0.9, "Macro Streak": 1.65, "Macro Rough": 0.60, "Ledge Band": 1.15,
+        "Macro": 0.75, "Macro Scale": 0.9, "Macro Streak": 1.75, "Macro Rough": 0.60, "Ledge Band": 1.30,
+        "Streak Aspect": 5.0, "Run Coverage": 0.40,
         "Patches": 0.22, "Edge Wear": 0.65, "Edge Radius": 0.18, "Recess Dirt": 0.6, "Recess Distance": 0.7, "Cavity": 0.65,
-        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.25, "Pour Spacing": 0.6})
+        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.08, "Pour Spacing": 1.3})
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
         "Base Color": C(0.475, 0.358, 0.034), "Grey Color": C(0.382, 0.318, 0.058), "Grey Drift": 0.34,
@@ -631,20 +668,25 @@ def build_concrete_family():
         "Drift Size": 10.0,
         "Detail Strength": 0.6, "Streaks": 0.45, "Streak Scale": 3.0, "Streak Length": 6.0, "Ledge Distance": 2.0, "Ledge Weight": 0.55,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.55, "Damp Band": 0.8,
-        "Macro": 1.15, "Macro Scale": 0.8, "Macro Streak": 0.80, "Macro Rough": 0.45, "Ledge Band": 0.95,
+        "Macro": 0.65, "Macro Scale": 0.8, "Macro Streak": 0.95, "Macro Rough": 0.45, "Ledge Band": 0.95,
+        "Streak Aspect": 4.0, "Run Coverage": 0.45,
         "Patches": 0.12, "Edge Wear": 0.60, "Edge Radius": 0.15, "Recess Dirt": 0.7, "Recess Distance": 0.7, "Cavity": 0.50, "Underside Dirt": 0.6,
-        "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.35, "Pour Lines": 0.4, "Pour Spacing": 0.6})
+        "Roughness": 0.85, "Roughness Variation": 0.1, "Bump": 0.35, "Pour Lines": 0.16, "Pour Spacing": 1.2})
     # ornament: capitals, maidens, urns, panels -- dust in the hollows, worn arrises, per-instance variation, baked-map hooks
     # Edge Radius stays small: a 0.12 m bevel would eat a 0.4 m capital volute. Instance Variation is now value +
     # weathering (see PFA_concrete `wvar`), not hue -- QA-02-2's yellow-vs-salmon capitals.
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.655, 0.545, 0.018), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.18,
+        "Base Color": C(0.706, 0.580, 0.016), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.18,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.20, "Block Size": 1.2, "Blotch Size": 0.8,
         "Drift Size": 3.5,
         "Detail Strength": 0.4, "Streaks": 0.55, "Streak Scale": 6.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.6,
         "Algae": 0.0,
-        "Macro": 0.95, "Macro Scale": 0.22, "Macro Streak": 0.70, "Macro Rough": 0.40, "Ledge Band": 0.90,
-        "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.055, "Recess Dirt": 0.85, "Recess Distance": 0.42, "Cavity": 1.0,
+        # QA-05-2 "the attic relief gone soft under it": the attic panels are ORN meshes on this material, so the
+        # blotch was competing with the relief. Half the isotropic macro, and a longer recess probe (0.42 -> 0.52 m,
+        # the depth of an attic panel's figure ground) so the relief's own verticals darken instead.
+        "Macro": 0.55, "Macro Scale": 0.22, "Macro Streak": 0.85, "Macro Rough": 0.40, "Ledge Band": 0.90,
+        "Streak Aspect": 4.0, "Run Coverage": 0.45,
+        "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.055, "Recess Dirt": 0.88, "Recess Distance": 0.52, "Cavity": 1.0,
         "Vertex Cavity": 0.85, "Vertex Dust": 0.55,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
         "Instance Variation": 1.7}, baked=True)
@@ -661,7 +703,8 @@ def build_concrete_family():
         "Drift Size": 4.5,
         "Detail Strength": 0.70, "Streaks": 0.50, "Streak Scale": 4.0, "Streak Length": 8.0, "Ledge Distance": 1.5, "Ledge Weight": 0.4,
         "Algae": 0.0,
-        "Macro": 1.00, "Macro Scale": 0.45, "Macro Streak": 0.70, "Macro Rough": 0.45, "Ledge Band": 0.80,
+        "Macro": 0.70, "Macro Scale": 0.45, "Macro Streak": 0.90, "Macro Rough": 0.45, "Ledge Band": 0.80,
+        "Streak Aspect": 6.0, "Run Coverage": 0.40,
         "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.045,
         "Recess Dirt": 0.65, "Recess Distance": 0.30, "Cavity": 0.95, "Roughness": 0.72, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         specular=0.20,
@@ -673,7 +716,8 @@ def build_concrete_family():
         "Drift Size": 6.0,
         "Detail Strength": 0.6, "Streaks": 0.3, "Streak Scale": 5.0, "Streak Length": 8.0, "Ledge Distance": 1.5, "Ledge Weight": 0.4,
         "Algae": 0.0,
-        "Macro": 0.75, "Macro Scale": 0.45, "Macro Streak": 0.45, "Macro Rough": 0.40, "Ledge Band": 0.75,
+        "Macro": 0.55, "Macro Scale": 0.45, "Macro Streak": 0.60, "Macro Rough": 0.40, "Ledge Band": 0.75,
+        "Streak Aspect": 6.0, "Run Coverage": 0.40,
         "Patches": 0.0, "Edge Wear": 0.80, "Edge Radius": 0.045,
         "Recess Dirt": 0.6, "Recess Distance": 0.30, "Cavity": 0.90, "Roughness": 0.78, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         column={"Wash Color": C(0.420, 0.320, 0.150), "Wash": 0.38, "Drum Height": 3.0, "Drum Variation": 0.09, "Top Z": 11.0, "Top Darkening": 0.3})
@@ -687,6 +731,33 @@ def build_concrete_family():
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.60, "Damp Band": 1.15,
         "Recess Dirt": 0.5, "Recess Distance": 0.45, "Cavity": 0.30, "Roughness": 0.7, "Roughness Variation": 0.12, "Bump": 0.3, "Pour Lines": 0.0,
         "Grid Joints": 0.8, "Grid Size": 1.5}, specular=0.34)
+    # ENVIRONMENT hand-off (round 7, docs/status.md "ENV r7 reported"): the colonnade walk is 16.7 % of cam03's
+    # lower frame and was falling back to gravel/soil because these two names did not exist in the library.
+    # ref 128 / ref 169: the walk is laid in large pale grey-buff slabs, ~1.2 m, with open dark joints, a cooler and
+    # much less yellow stone than the building, and it darkens where it runs down to the water (QA-05-11 also wants
+    # ground std >= 12, which is what the joints plus the slab-to-slab tone step give).
+    concrete_material("MAT_paving_stone", "concrete_wall_007", 20.0, {
+        "Base Color": C(0.560, 0.535, 0.375), "Grey Color": C(0.415, 0.400, 0.310), "Grey Drift": 0.30,
+        "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.2, "Blotch Size": 3.0,
+        "Drift Size": 7.0,
+        "Detail Strength": 0.55, "Streaks": 0.0, "Patches": 0.20, "Edge Wear": 0.45, "Edge Radius": 0.05,
+        "Macro": 0.70, "Macro Scale": 0.7, "Macro Rough": 0.50,
+        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.55, "Damp Band": 1.30,
+        "Recess Dirt": 0.55, "Recess Distance": 0.40, "Cavity": 0.30,
+        "Roughness": 0.74, "Roughness Variation": 0.13, "Bump": 0.35, "Pour Lines": 0.0,
+        "Grid Joints": 0.90, "Grid Size": 1.20}, specular=0.32)
+    # the worn / patched half of the same walk: darker, greyer, more repair patches and a heavier damp zone, so ENV
+    # can break the walk up instead of tiling one slab tone over 16 % of the frame.
+    concrete_material("MAT_paving_stone_worn", "concrete_wall_008", 21.0, {
+        "Base Color": C(0.468, 0.448, 0.322), "Grey Color": C(0.360, 0.348, 0.280), "Grey Drift": 0.42,
+        "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.26, "Block Size": 0.9, "Blotch Size": 2.0,
+        "Drift Size": 5.0,
+        "Detail Strength": 0.65, "Streaks": 0.0, "Patches": 0.38, "Edge Wear": 0.55, "Edge Radius": 0.06,
+        "Macro": 0.95, "Macro Scale": 0.55, "Macro Rough": 0.60,
+        "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.70, "Damp Band": 1.45, "Efflorescence": 0.9,
+        "Recess Dirt": 0.68, "Recess Distance": 0.40, "Cavity": 0.40,
+        "Roughness": 0.80, "Roughness Variation": 0.14, "Bump": 0.42, "Pour Lines": 0.0,
+        "Grid Joints": 1.00, "Grid Size": 0.95}, specular=0.28)
     # coffered plaster saucer -- the PANEL FIELDS only. ARCH assigns MAT_plaster_ceiling_rib to the rib plate from
     # round 6, so the two are separable at last (round 5 measured that nothing inside a single shared material can
     # tell them apart: the rib plate hangs 0.55 m below the field on the same sphere, so ribs and panels are
@@ -723,7 +794,7 @@ def build_concrete_family():
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.15, "Block Size": 1.0, "Blotch Size": 1.0,
         "Drift Size": 2.5, "Algae": 0.0,
         "Detail Strength": 0.4, "Streaks": 0.35, "Streak Scale": 10.0, "Streak Length": 3.0, "Ledge Weight": 0.5,
-        "Macro": 0.60, "Macro Scale": 0.30, "Macro Streak": 0.45, "Macro Rough": 0.35,
+        "Macro": 0.45, "Macro Scale": 0.30, "Macro Streak": 0.55, "Macro Rough": 0.35, "Streak Aspect": 4.0,
         "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.03, "Recess Dirt": 0.7, "Recess Distance": 0.25, "Cavity": 0.60,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0})
     # exhibition hall / distant massing: buff stucco, coarse
@@ -733,7 +804,8 @@ def build_concrete_family():
         "Drift Size": 11.0, "Algae": 0.0,
         "Detail Strength": 0.7, "Streaks": 0.8, "Streak Scale": 5.0, "Streak Length": 8.0,
         "Ledge Distance": 3.5, "Ledge Weight": 0.55,
-        "Macro": 1.25, "Macro Scale": 1.3, "Macro Streak": 1.05, "Macro Rough": 0.50, "Ledge Band": 0.95,
+        "Macro": 0.85, "Macro Scale": 1.3, "Macro Streak": 1.15, "Macro Rough": 0.50, "Ledge Band": 0.95,
+        "Streak Aspect": 4.0, "Run Coverage": 0.45,
         "Patches": 0.22, "Edge Wear": 0.3, "Edge Radius": 0.08, "Recess Dirt": 0.65, "Recess Distance": 0.9,
         "Roughness": 0.85, "Roughness Variation": 0.12, "Bump": 0.5, "Pour Lines": 0.0})
 
@@ -742,7 +814,7 @@ def build_dome():
     m = ML.new_material("MAT_dome_membrane")
     t = Tree(m.node_tree)
     N = t.geometry().outputs["Normal"]
-    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.905, 0.960, 0.320), "Streak Color": C(0.64, 0.575, 0.300), "Moss Color": C(0.34, 0.42, 0.28),
+    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.952, 0.995, 0.352), "Streak Color": C(0.64, 0.575, 0.300), "Moss Color": C(0.34, 0.42, 0.28),
                                         "Grime Color": C(0.20, 0.13, 0.06), "Seams": 48.0, "Seam Width": 0.05, "Streaks": 0.8, "Moss": 0.3,
                                         "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.42, "Bump": 0.3, "Seed": 12.0})
     bsdf = t.principled(**{"Base Color": g.outputs["Color"], "Roughness": g.outputs["Roughness"], "Normal": g.outputs["Normal"],
@@ -817,8 +889,16 @@ def build_water():
     # over a 70 m ramp it took the reflection to hue 134, green. It is left wired, at 0, as the record of the
     # third measured lever: see the QA-04-8 table in docs/materials_notes.md. What is kept from round 6 is the
     # near-neutral murk (the r6a green murk greyed the reflection) and the 62 m chop band.
-    murk = t.mix(murk_far, C(0.132, 0.172, 0.144), C(0.152, 0.176, 0.152))
-    bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.28,
+    # ROUND 7. Lighting r12 hand-off 1: its diffuse-sky boost is invisible to camera and glossy rays by
+    # construction, so the water's MIRROR is untouched and the whole of near-water sat 0.281 -> 0.418 (window
+    # 0.22-0.32) and hue 208.9 -> 218.1 is this diffuse murk taking sky light like any up-facing surface. The murk
+    # therefore loses a third of its chroma, warms (blue down hardest, so its product with a blue sky lands nearer
+    # teal than periwinkle) and drops 12 % of its value -- which the lagoon flank can afford, measured at 174.1
+    # against ref 169's 155.2. Transmission 0.28 -> 0.40 moves the same share of the surface off the diffuse lobe,
+    # which is what lets the building's reflection (QA-05-4, R-B -39 where the photo is +71) carry the stone's
+    # colour again instead of a blue-grey wash over it.
+    murk = t.mix(murk_far, C(0.128, 0.139, 0.111), C(0.145, 0.152, 0.125))
+    bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.40,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
                            "Sheen Tint": C(0.22, 0.62, 0.46)})
@@ -834,7 +914,7 @@ def build_water():
     # refraction), so Eevee gets an opaque dark-murk surface with the same ripples: reflections come from raytracing/probes.
     # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
     #  tree against its 64-closure budget, two Principled BSDFs blew it to 76.)
-    murk_e = t.mix(murk_far, C(0.146, 0.184, 0.158), C(0.164, 0.188, 0.164))
+    murk_e = t.mix(murk_far, C(0.140, 0.152, 0.124), C(0.156, 0.163, 0.136))
     dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk_e); t.plug(dif.inputs["Normal"], normal)
     glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
     fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
@@ -1247,16 +1327,19 @@ def build_all_materials():
                   translucency=0.18, spec=0.35, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5)
     leaf_material("MAT_leaf_eucalyptus", "leaves_eucalyptus", (0.8, 1.0, 0.5), rough=0.42, hue_var=0.06, val_var=0.3, seed=21.0, spec=0.4, translucency=0.3)
     leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.4), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35)
-    leaf_material("MAT_shrub", "leaves_shrub", (0.8, 1.1, 0.5), rough=0.5, hue_var=0.08, val_var=0.4, seed=23.0,
-                  translucency=0.2, spec=0.4, tint=(1.42, 1.44, 1.34))
+    # QA-05-10 / ENV r7 hand-off: the hero shore band measured lum 91.1 against ref 169's 115.6 at sat 0.487
+    # against the photo's 0.663 -- so this round can spend BOTH, and the cheapest lum with the least saturation
+    # cost is translucency: a backlit leaf is lighter and less chromatic than the same leaf lit from the front.
+    leaf_material("MAT_shrub", "leaves_shrub", (0.85, 1.15, 0.60), rough=0.5, hue_var=0.08, val_var=0.4, seed=23.0,
+                  translucency=0.34, spec=0.4, tint=(1.86, 1.88, 1.80))
     # shore planting mix (ENV): a paler grey-green (pittosporum / agapanthus) and a straw-dry one, so a 1400-bush belt
     # is not one flat green. Same card texture, different tint / value spread.
-    leaf_material("MAT_shrub_light", "leaves_shrub", (0.85, 1.05, 0.6), rough=0.45, hue_var=0.06, val_var=0.45, seed=24.0,
-                  translucency=0.28, spec=0.45, tint=(1.78, 1.85, 1.50), sheen=0.2)
+    leaf_material("MAT_shrub_light", "leaves_shrub", (0.90, 1.10, 0.70), rough=0.45, hue_var=0.06, val_var=0.45, seed=24.0,
+                  translucency=0.40, spec=0.45, tint=(2.30, 2.36, 2.10), sheen=0.2)
     leaf_material("MAT_shrub_dry", "leaves_shrub", (1.05, 0.95, 0.5), rough=0.62, hue_var=0.05, val_var=0.5, seed=25.0,
                   translucency=0.22, spec=0.25, tint=(6.30, 1.62, 0.98), sheen=0.1, cluster_var=0.3)
-    leaf_material("MAT_reeds", "reeds", (0.9, 1.0, 0.5), rough=0.6, hue_var=0.06, val_var=0.4, seed=26.0,
-                  translucency=0.35, cluster_var=0.35, tint=(1.40, 1.42, 1.30))
+    leaf_material("MAT_reeds", "reeds", (0.95, 1.05, 0.60), rough=0.6, hue_var=0.06, val_var=0.4, seed=26.0,
+                  translucency=0.45, cluster_var=0.35, tint=(1.82, 1.85, 1.74))
     build_extra_env()
     build_lagoon_bed()
     build_backdrop_details()
