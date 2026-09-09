@@ -110,6 +110,30 @@ def report_hero(paths):
     return out
 
 
+LAGOON = (0, 700, 1920, 1080)      # everything below the shoreline in the hero frame
+
+
+def report_glint(paths):
+    """Review carry 5: SUN_BLUE_MULT is 0.00, i.e. LIGHT_sun is a literally blue-free illuminant, which shows on any
+    pure-sun specular. The glint statistic is the mean of the brightest 0.2 % of the lagoon (y 700-1080), which is
+    where the sun's own specular lives, reported with its R-B so a blue-free highlight is visible as a number."""
+    print(f"\n=== carry 5: sun glint on the lagoon (brightest 0.2 % of y 700-1080) ===")
+    print(f"  {'frame':40s} {'glint lum':>10s} {'R-B':>8s} {'hue':>7s} | shaded attic hue / sunlit R-B / sat")
+    for p in paths:
+        a = np.asarray(Image.open(p).convert("RGB"), dtype=np.float64)
+        if a.shape[1] != 1920:
+            a = np.asarray(Image.fromarray(a.astype(np.uint8)).resize((1920, 1080), Image.LANCZOS), dtype=np.float64)
+        x0, y0, x1, y1 = LAGOON
+        sub = a[y0:y1, x0:x1].reshape(-1, 3)
+        g = 0.2126 * sub[:, 0] + 0.7152 * sub[:, 1] + 0.0722 * sub[:, 2]
+        thr = np.percentile(g, 99.8)
+        st = m10.stats(sub[g >= thr])
+        m = m10.measure(p)
+        print(f"  {Path(p).name[:40]:40s} {st['lum']:10.1f} {st['rb']:8.1f} {st['hue']:7.1f} | "
+              f"{m['attic_shaded']['hue']:.1f} (29.5+-6) / {m['attic_sunlit']['rb']:.1f} (>=110) / "
+              f"{m['attic_sunlit']['sat']:.3f} (>=0.50)")
+
+
 def report_noise(paths, box=("attic_shaded",)):
     """Review carry 6: the Cycles world importance map cannot see the diffuse-only multipliers, so the shade may be
     under-sampled. Noise is measured as the standard deviation of the box AFTER removing its own linear gradient,
@@ -137,6 +161,7 @@ if __name__ == "__main__":
     ap.add_argument("--cam06", nargs="*", default=[])
     ap.add_argument("--hero", nargs="*", default=[])
     ap.add_argument("--noise", nargs="*", default=[])
+    ap.add_argument("--glint", nargs="*", default=[])
     ap.add_argument("--json", default=None)
     a = ap.parse_args()
     allm = {}
@@ -148,5 +173,7 @@ if __name__ == "__main__":
         allm["hero"] = report_hero(a.hero)
     if a.noise:
         report_noise(a.noise)
+    if a.glint:
+        report_glint(a.glint)
     if a.json:
         Path(a.json).write_text(json.dumps(allm, indent=1, default=float))
