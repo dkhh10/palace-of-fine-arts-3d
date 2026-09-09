@@ -14,6 +14,7 @@ from mathutils.geometry import normal as face_normal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
+from pathlib import Path
 import arch_params as P
 import arch_lib as L
 from arch_lib import add2, mul2, norm2, dot2, rot2, SINK
@@ -139,40 +140,59 @@ def entablature_plan(along=P.RESSAUT_ALONG, r_ch=P.CHAMFER_CIRCUMRADIUS, inset=0
 # it is flush with the third fascia (0.34) and the crown oversails it by 0.10, a fillet line, not a channel. The
 # 0.20 recess put the frieze in an AO channel and cost it 20 lum. Modillions go 0.68 -> 0.86 deep so their lateral
 # shadow (0.86*0.74 = 0.64 m) finally exceeds the 0.56 m gap between brackets: every soffit coffer goes black.
+# Round 6 (QA-06-1): the cornice keeps every PROJECTION (the depths are what make the bands read -- round 4's
+# shadow arithmetic above is unchanged) and only its z's compress, by 1.37 / 1.75 = 0.783, because the photograph
+# puts the whole entablature at 47 rows where the render had 54.7. Frieze + architrave keep their measured
+# 2.02 m plain band (1.85 m of wall now that the corona projects the same 1.66 into a shorter course).
 CORNICE = dict(
-    frieze_d=0.34, frieze_z0=P.ARCHITRAVE_H, frieze_z1=P.ARCHITRAVE_H + P.FRIEZE_H,     # 1.15 -> 2.05
-    dentil_z=2.17, dentil_h=0.40, dentil_bed=0.40, dentil_size=0.18, dentil_pitch=0.38, dentil_d=0.34,
-    modillion_z=2.71, modillion_h=0.58, modillion_bed=0.52, modillion_w=0.50, modillion_d=0.86, modillion_pitch=1.06,
-    egg_z=3.33, egg_h=0.12, egg_bed=0.70, egg_pitch=0.47,
-    corona_d=1.66, corona_soffit_z=3.48, corona_z1=P.ARCHITRAVE_H + P.FRIEZE_H + P.CORNICE_H)   # 3.80
+    frieze_d=0.34, frieze_z0=P.ARCHITRAVE_H, frieze_z1=P.ARCHITRAVE_H + P.FRIEZE_H,     # 1.04 -> 1.85
+    dentil_z=1.94, dentil_h=0.31, dentil_bed=0.40, dentil_size=0.18, dentil_pitch=0.38, dentil_d=0.34,
+    modillion_z=2.37, modillion_h=0.45, modillion_bed=0.52, modillion_w=0.50, modillion_d=0.86, modillion_pitch=1.06,
+    egg_z=2.85, egg_h=0.09, egg_bed=0.70, egg_pitch=0.47,
+    corona_d=P.CORNICE_CORONA_D, corona_soffit_z=P.CORNICE_CORONA_SOFFIT_DZ,
+    corona_z1=P.ARCHITRAVE_H + P.FRIEZE_H + P.CORNICE_H)   # 3.22
 
 
 def rotunda_entablature_profile():
     """d = outward from the wall plane, z relative to ENTABLATURE_Z0. The swept band carries no LOD suffix, so this
     one profile -- every projection in it -- is what both the viewport (LOD1) and the render (LOD0) show."""
     c = CORNICE
-    arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.42), (0.24, 0.42), (0.24, 0.82), (0.34, 0.82), (0.34, 1.02),
-            (0.42, 1.06), (0.42, 1.11),             # bead-and-reel astragal over the third fascia (sheet row 13)
-            (0.44, 1.14), (0.44, c["frieze_z0"])]   # architrave crown, oversailing the flush frieze by 0.10
+    arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.38), (0.24, 0.38), (0.24, 0.74), (0.34, 0.74), (0.34, 0.92),
+            (0.42, 0.96), (0.42, 1.00),             # bead-and-reel astragal over the third fascia (sheet row 13)
+            (0.44, 1.03), (0.44, c["frieze_z0"])]   # architrave crown, oversailing the flush frieze by 0.10
     frieze = [(c["frieze_d"], c["frieze_z0"] + 0.04), (c["frieze_d"], c["frieze_z1"])]
     cornice = [
         (0.30, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
         (c["dentil_bed"], c["dentil_z"] + c["dentil_h"]),                          # dentil band bed (back face)
-        (0.46, 2.63), (c["modillion_bed"], c["modillion_z"]),                      # ovolo under the modillions
+        (0.46, 2.30), (c["modillion_bed"], c["modillion_z"]),                      # ovolo under the modillions
         (c["modillion_bed"], c["modillion_z"] + c["modillion_h"]),                 # modillion band bed (back face)
-        (0.70, 3.35), (0.80, 3.43), (0.80, c["corona_soffit_z"]),                  # egg-and-dart ovolo + fascia
+        (0.70, 2.87), (0.80, 2.93), (0.80, c["corona_soffit_z"]),                  # egg-and-dart ovolo + fascia
         (c["corona_d"], c["corona_soffit_z"]),                                     # CORONA SOFFIT: 0.86 m, never sunlit
-        (c["corona_d"], 3.64), (c["corona_d"] + 0.04, 3.68),                       # corona fascia + drip
-        (1.58, 3.75), (1.36, c["corona_z1"]), (0.0, c["corona_z1"])]               # cyma recta
+        (c["corona_d"], 3.10), (c["corona_d"] + 0.04, 3.13),                       # corona fascia + drip
+        (1.58, 3.18), (1.36, c["corona_z1"]), (0.0, c["corona_z1"])]               # cyma recta
     return arch + frieze + cornice
 
 
 def attic_base_profile():
-    return [(0.0, 0.0), (0.55, 0.0), (0.55, 0.40), (0.48, 0.48), (0.48, 0.70), (0.34, 0.80), (0.34, 0.86), (0.0, 0.90)]
+    """h = ATTIC_BASE_MOULDING_H (0.90 -> 0.85 in round 6; the same profile scaled in z)."""
+    return [(0.0, 0.0), (0.55, 0.0), (0.55, 0.38), (0.48, 0.45), (0.48, 0.66), (0.34, 0.76), (0.34, 0.81), (0.0, 0.85)]
 
 
 def attic_top_profile():
-    return [(0.0, 0.0), (0.20, 0.05), (0.20, 0.30), (0.40, 0.36), (0.62, 0.50), (0.62, 0.72), (0.74, 0.80), (0.0, 0.80)]
+    """h = ATTIC_TOP_CORNICE_H (0.80 -> 2.10 in round 6).
+
+    Round 6: the old profile expanded monotonically to the crown, so it had NO downward-facing face and could not
+    throw the strongest dark line in the whole hero band -- ref 169 reads -49.1 lum/row at row 182, where the render
+    read -1.7. This one carries a real corona: bed mouldings to d 0.26, then a 0.36 m soffit step out to d 0.62 at
+    z = ATTIC_CORNICE_SOFFIT_DZ (0.42 above the cornice base = model row 181.8 against the photo's 182), a corona
+    fascia, and a cyma recta back to the crown. Max projection stays ATTIC_CORNICE_D = 0.74 and stays AT THE CROWN,
+    so the attic's outer profile -- the silhouette's corner_top and W_a -- is the same solid as before."""
+    d, h = P.ATTIC_CORNICE_D, P.ATTIC_TOP_CORNICE_H
+    zs = P.ATTIC_CORNICE_SOFFIT_DZ
+    return [(0.0, 0.0), (0.14, 0.05), (0.14, 0.30), (0.26, 0.36), (0.26, zs),
+            (0.62, zs),                                              # CORONA SOFFIT, never sunlit
+            (0.62, h - 0.86), (0.66, h - 0.80), (0.66, h - 0.64),    # corona fascia + drip fillet
+            (0.58, h - 0.40), (0.70, h - 0.14), (d, h - 0.06), (0.0, h)]   # cyma recta up to the crown
 
 
 def podium_cap_profile():
@@ -228,7 +248,8 @@ def build_rotunda():
             for j, so in enumerate(base_src):
                 L.instance(f"ARCH_rotunda_colbase_{i:02d}_{j}", so, loc, math.atan2(u[1], u[0]) if j == 0 else 0.0, C)
         # capital socket at the shaft top, +Y outward (face normal); astragal bead just below it
-        SOCK.add("capital_rotunda", (ax[0], ax[1], P.COL_SHAFT_Z1), n, P.COL_D_TOP)
+        SOCK.add("capital_rotunda", (ax[0], ax[1], P.COL_SHAFT_Z1), n, P.COL_D_TOP,
+                 extra={"capital_height": P.CAPITAL_H})
         astragal(f"ARCH_rotunda_astragal_{i:02d}", ax, P.COL_SHAFT_Z1, r_t, C, M_ROSE)
         # pedestal
         L.box(f"ARCH_rotunda_pedestal_{i:02d}", ax, (P.PEDESTAL_SIZE, P.PEDESTAL_SIZE), P.PODIUM_TOP_Z - SINK,
@@ -306,16 +327,26 @@ def build_rotunda():
                     [(0, top), (0.45, top), (0.45, top + 0.15), (0.25, top + 0.3), (0.5, top + 0.8), (0.42, top + 1.3),
                      (0.2, top + 1.45), (0.1, top + 1.6), (0, top + 1.6)], C_PH, segments=16, mat=M_OCHRE,
                     part_type="attic", center=p, origin=(p[0], p[1], top), bevel=False)
-        # frieze sockets on the three ressaut faces
+        # Frieze sockets on the three ressaut faces (front + two radial returns). Round 6, orn r5 review findings
+        # 1 and 2: the contract for a frieze_run socket is origin AT THE RUN START, local +X = run_dir, local +Y
+        # away from the block, +Z up -- and `add_socket` builds +X as (out.y, -out.x), so the facing that yields
+        # +X = d is out = (-d.y, d.x), not the (d.y, -d.x) this loop used (anti-parallel on the ressaut front).
+        # The old flip test used fr.v, the ressaut's outward VERTEX direction, which is ~67 deg off the returns'
+        # own normals and let a 19 mm inset decide their sign; the block centroid decides it unambiguously.
+        # They also carry host / subtype now so build_master's guard can tell them from the Greek-key band runs.
+        cx = sum(pt[0] for pt in cb) / len(cb), sum(pt[1] for pt in cb) / len(cb)
+        fd = CORNICE["frieze_d"]   # the socket plane IS the frieze face: it moved with the round-4 profile
         for (a, b) in ((cb[0], cb[1]), (cb[1], cb[2]), (cb[2], cb[3])):
             d = norm2(sub2(b, a))
-            out = (d[1], -d[0])
-            if dot2(out, fr.v) < 0:
-                out = (-out[0], -out[1])
+            out = (-d[1], d[0])
             m = mul2(add2(a, b), 0.5)
-            fd = CORNICE["frieze_d"]   # the socket plane IS the frieze face: it moved with the round-4 profile
+            if dot2(out, sub2(m, cx)) < 0:      # +Y must face away from the block: run the segment the other way
+                a, b = b, a
+                d, out = (-d[0], -d[1]), (-out[0], -out[1])
             SOCK.add("frieze_run", (a[0] + out[0] * fd, a[1] + out[1] * fd, P.ENTABLATURE_Z0 + P.ARCHITRAVE_H), out,
-                     math.dist(a, b), extra={"run_length": math.dist(a, b), "run_dir": (d[0], d[1], 0.0)}, size=0.4)
+                     math.dist(a, b), size=0.4,
+                     extra={"run_length": math.dist(a, b), "run_dir": (d[0], d[1], 0.0),
+                            "band_height": P.FRIEZE_H, "host": "rotunda", "subtype": "rinceau"})
 
     # ---- faces: spandrel + attic plate with the arch notch and the sunk relief panel; vault; inner spandrel
     n_arc = 28
@@ -359,7 +390,8 @@ def build_rotunda():
         L.sweep_open(f"ARCH_rotunda_archivolt_{k:02d}", path, nrm, bnr, archivolt_profile(), C, mat=M_OCHRE, part_type="wall",
                      origin=(Cw[0], Cw[1], P.ARCH_SPRING_Z), bevel=False)
         # keystone at the extrados crown + two impost masks at the springing
-        SOCK.add("keystone", (Cw[0] + n[0] * 0.30, Cw[1] + n[1] * 0.30, P.ARCH_CROWN_Z + 0.55), n, 0.8)
+        SOCK.add("keystone", (Cw[0] + n[0] * 0.30, Cw[1] + n[1] * 0.30, P.ARCH_CROWN_Z + 0.55), n, 0.8,
+                 extra={"subtype": "crown"})
         for sgn in (-1, 1):
             SOCK.add("keystone", (Cw[0] + X.x * sgn * (half + 0.55) + n[0] * 0.30, Cw[1] + X.y * sgn * (half + 0.55) + n[1] * 0.30,
                                   P.ARCH_SPRING_Z - 0.25), n, 0.5, extra={"subtype": "impost_mask"}, size=0.4)
@@ -498,7 +530,8 @@ def build_rotunda():
         else:
             for j, so in enumerate(srcs["base"]):
                 L.instance(f"ARCH_rotunda_inner_colbase_{k:02d}_{j}", so, (ax[0], ax[1], -SINK), rz if j == 0 else 0.0, C)
-        SOCK.add("capital_inner", (ax[0], ax[1], P.INNER_COL_SHAFT_Z1), fr.v, ri * 2 * 0.86)
+        SOCK.add("capital_inner", (ax[0], ax[1], P.INNER_COL_SHAFT_Z1), fr.v, ri * 2 * 0.86,
+                 extra={"capital_height": P.INNER_CAPITAL_H})
         astragal(f"ARCH_rotunda_inner_astragal_{k:02d}", ax, P.INNER_COL_SHAFT_Z1, ri * 0.86, C, M_TAN)
         L.placeholder_capital(f"PH_capital_inner_{k:02d}", ri * 0.86, P.INNER_CAPITAL_H, C_PH, mat=M_TAN,
                               origin=(ax[0], ax[1], P.INNER_COL_SHAFT_Z1))
@@ -1128,7 +1161,8 @@ def build_wing(name, coll):
             for j, so in enumerate(base_src):
                 L.instance(f"ARCH_colonnade_{name}_colbase_{idx:03d}_{j}", so, (xy[0], xy[1], g - SINK), 0.0, coll)
         ztop = g + P.COLONNADE_BASE_H + h
-        SOCK.add("capital_colonnade", (xy[0], xy[1], ztop), inward, P.COLONNADE_D_TOP, extra={"tall": bool(tall), "wing": name})
+        SOCK.add("capital_colonnade", (xy[0], xy[1], ztop), inward, P.COLONNADE_D_TOP,
+                 extra={"tall": bool(tall), "wing": name, "capital_height": P.COLONNADE_CAPITAL_H})
         astragal(f"ARCH_colonnade_{name}_astragal_{idx:03d}", xy, ztop, r_t, coll, M_COLON)
         L.placeholder_capital(f"PH_capital_colonnade_{name}_{idx:03d}", r_t, P.COLONNADE_CAPITAL_H, C_PH, mat=M_COLON,
                               origin=(xy[0], xy[1], ztop))
@@ -1170,7 +1204,8 @@ def build_wing(name, coll):
                           pitch=1.125, depth=0.26, closed=False, mat=M_COLON, outward_sign=sgn if W.sgn > 0 else -sgn,
                           part_type="colonnade_entablature")
         SOCK.add("frieze_run", (path2[0][0], path2[0][1], z_ent + 0.02), (rad[0], rad[1]), s_b - s_a,
-                 extra={"run_length": s_b - s_a, "arc_center": (W.C[0], W.C[1], 0.0), "arc_radius": r, "subtype": "greek_fret"}, size=0.5)
+                 extra={"run_length": s_b - s_a, "arc_center": (W.C[0], W.C[1], 0.0), "arc_radius": r,
+                        "band_height": 0.50, "host": "colonnade", "subtype": "greek_fret"}, size=0.5)
     # pergola cross beams, one per bay, spanning the two rows
     seen = set()
     for (s, kind) in pos:
@@ -1303,10 +1338,23 @@ stats["tris_placeholders"] = L.tri_count([o for o in C_PH.objects])
 stats["objects"] = len(ARCH.all_objects)
 stats["build_seconds"] = round(time.time() - T0, 1)
 print("[arch] stats:", json.dumps(stats, indent=1))
-(common.DOCS / "arch_stats.json").write_text(json.dumps(stats, indent=1))
+
+# MANDATORY post-step (docs/reviews/arch_r5_review.md finding 1): the camera-space UV layer for the photo-projection
+# pass. It used to be a separate script nobody called, so any rebuild silently dropped `UVProj` / `UVProj_valid` and
+# a projection shader fell back to the triplanar world-metre `UVMap`. It runs BEFORE the save, in its own namespace;
+# it reads no argv flag of ours (`--save` is not passed, so it does not save on its own).
+_UVPROJ = Path(__file__).resolve().parent / "arch_uvproj.py"
+exec(compile(_UVPROJ.read_text(), str(_UVPROJ), "exec"),
+     {"__name__": "arch_uvproj", "__file__": str(_UVPROJ), "__builtins__": __builtins__})
 
 if SAVE:
     common.save_blend(common.ASSETS / "architecture.blend")
+
+# r6 review findings 6 and 7: arch_stats.json is written AFTER the save, so (6) uvproj's tri-count guard above
+# compares the live counts against the PREVIOUS build's file instead of the one this build just wrote (it was
+# always "SAME"), and (7) a raise inside the uvproj post-step leaves the stats describing the last SAVED build
+# rather than a build that never reached the disk.
+(common.DOCS / "arch_stats.json").write_text(json.dumps(stats, indent=1))
 
 # ============================================================================= preview rig (not saved)
 if PREVIEW:

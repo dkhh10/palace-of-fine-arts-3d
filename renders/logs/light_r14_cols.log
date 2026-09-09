@@ -1,0 +1,66 @@
+00:00.321  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[check] linked ARCH: ok
+[check] linked ENV: ok
+[common] set_lod viewport=LOD1 render=LOD0: 5128 objects, 6 collections
+
+[cols] 58 objects matching 'ARCH_colonnade_south_column_0' in theta -70.0..-15.0
+[cols] theta  -66.90  r  119.65  (  35.74,  -25.36)  ARCH_colonnade_south_column_001_LOD1
+[cols] theta  -66.90  r  115.15  (  33.97,  -21.22)  ARCH_colonnade_south_column_000_LOD1
+[cols] theta  -65.44  r  119.65  (  38.53,  -24.12)  ARCH_colonnade_south_column_003_LOD1
+[cols] theta  -65.44  r  115.15  (  36.66,  -20.03)  ARCH_colonnade_south_column_002_LOD1
+[cols] theta  -63.24  r  115.15  (  40.64,  -18.12)  ARCH_colonnade_south_column_004_LOD1
+[cols] theta  -63.24  r  119.65  (  42.67,  -22.14)  ARCH_colonnade_south_column_005_LOD1
+[cols] theta  -61.05  r  119.65  (  46.72,  -20.00)  ARCH_colonnade_south_column_007_LOD1
+[cols] theta  -61.05  r  115.15  (  44.54,  -16.06)  ARCH_colonnade_south_column_006_LOD1
+[cols] theta  -58.85  r  119.65  (  50.69,  -17.70)  ARCH_colonnade_south_column_009_LOD1
+[cols] theta  -58.85  r  115.15  (  48.36,  -13.85)  ARCH_colonnade_south_column_008_LOD1
+[cols] theta  -56.65  r  119.65  (  54.57,  -15.25)  ARCH_colonnade_south_column_011_LOD1
+[cols] theta  -56.65  r  115.15  (  52.10,  -11.49)  ARCH_colonnade_south_column_010_LOD1
+[cols] theta  -55.19  r  115.15  (  54.53,   -9.84)  ARCH_colonnade_south_column_012_LOD1
+[cols] theta  -55.19  r  119.65  (  57.10,  -13.54)  ARCH_colonnade_south_column_013_LOD1
+[cols] theta  -52.99  r  119.65  (  60.82,  -10.85)  ARCH_colonnade_south_column_015_LOD1
+[cols] theta  -52.99  r  115.15  (  58.11,   -7.26)  ARCH_colonnade_south_column_014_LOD1
+[cols] theta  -50.80  r  115.15  (  61.58,   -4.53)  ARCH_colonnade_south_column_016_LOD1
+[cols] theta  -50.80  r  119.65  (  64.43,   -8.02)  ARCH_colonnade_south_column_017_LOD1
+[cols] theta  -48.60  r  115.15  (  64.95,   -1.68)  ARCH_colonnade_south_column_018_LOD1
+[cols] theta  -48.60  r  119.65  (  67.92,   -5.05)  ARCH_colonnade_south_column_019_LOD1
+[cols] theta  -46.41  r  115.15  (  68.20,    1.30)  ARCH_colonnade_south_column_020_LOD1
+[cols] theta  -46.41  r  119.65  (  71.30,   -1.96)  ARCH_colonnade_south_column_021_LOD1
+[cols] theta  -44.94  r  115.15  (  70.31,    3.36)  ARCH_colonnade_south_column_022_LOD1
+[cols] theta  -44.94  r  119.65  (  73.49,    0.18)  ARCH_colonnade_south_column_023_LOD1
+[cols] theta  -42.75  r  119.65  (  76.67,    3.49)  ARCH_colonnade_south_column_025_LOD1
+[cols] theta  -42.75  r  115.15  (  73.36,    6.54)  ARCH_colonnade_south_column_024_LOD1
+[cols] theta  -40.55  r  119.65  (  79.72,    6.91)  ARCH_colonnade_south_column_027_LOD1
+[cols] theta  -40.55  r  115.15  (  76.30,    9.84)  ARCH_colonnade_south_column_026_LOD1
+[cols] theta  -38.35  r  115.15  (  79.10,   13.25)  ARCH_colonnade_south_column_028_LOD1
+[cols] theta  -38.35  r  119.65  (  82.63,   10.46)  ARCH_colonnade_south_column_029_LOD1
+[cols] theta  -36.16  r  115.15  (  81.77,   16.76)  ARCH_colonnade_south_column_030_LOD1
+[cols] theta  -36.16  r  119.65  (  85.41,   14.11)  ARCH_colonnade_south_column_031_LOD1
+[cols] theta  -34.69  r  115.15  (  83.48,   19.16)  ARCH_colonnade_south_column_032_LOD1
+[cols] theta  -34.69  r  119.65  (  87.18,   16.60)  ARCH_colonnade_south_column_033_LOD1
+[cols] theta  -32.52  r  115.15  (  85.90,   22.80)  ARCH_colonnade_south_column_034_LOD1
+[cols] theta  -32.52  r  119.65  (  89.69,   20.38)  ARCH_colonnade_south_column_035_LOD1
+[cols] theta  -30.34  r  119.65  (  92.06,   24.26)  ARCH_colonnade_south_column_037_LOD1
+[cols] theta  -30.34  r  115.15  (  88.18,   26.53)  ARCH_colonnade_south_column_036_LOD1
+[cols] theta  -28.16  r  119.65  (  94.28,   28.22)  ARCH_colonnade_south_column_039_LOD1
+[cols] theta  -28.16  r  115.15  (  90.32,   30.35)  ARCH_colonnade_south_column_038_LOD1
+[cols] theta  -27.02  r  121.87  (  97.37,   29.34)  ARCH_colonnade_south_column_054_LOD1
+[cols] theta  -26.75  r  126.33  ( 101.61,   27.84)  ARCH_colonnade_south_column_055_LOD1
+[cols] theta  -25.99  r  119.65  (  96.35,   32.27)  ARCH_colonnade_south_column_041_LOD1
+[cols] theta  -25.99  r  115.15  (  92.31,   34.24)  ARCH_colonnade_south_column_040_LOD1
+[cols] theta  -25.64  r  121.48  (  98.32,   32.12)  ARCH_colonnade_south_column_056_LOD1
+[cols] theta  -25.37  r  125.94  ( 102.60,   30.73)  ARCH_colonnade_south_column_057_LOD1
+[cols] theta  -24.41  r  123.89  ( 101.61,   33.51)  ARCH_colonnade_south_column_051_LOD1
+[cols] theta  -23.81  r  115.15  (  94.15,   38.21)  ARCH_colonnade_south_column_042_LOD1
+[cols] theta  -23.81  r  119.65  (  98.26,   36.39)  ARCH_colonnade_south_column_043_LOD1
+[cols] theta  -23.00  r  123.62  ( 102.60,   36.40)  ARCH_colonnade_south_column_053_LOD1
+[cols] theta  -21.98  r  121.66  ( 101.61,   39.17)  ARCH_colonnade_south_column_050_LOD1
+[cols] theta  -21.64  r  119.65  ( 100.02,   40.58)  ARCH_colonnade_south_column_045_LOD1
+[cols] theta  -21.64  r  115.15  (  95.84,   42.24)  ARCH_colonnade_south_column_044_LOD1
+[cols] theta  -20.54  r  121.52  ( 102.60,   42.07)  ARCH_colonnade_south_column_052_LOD1
+[cols] theta  -19.46  r  115.15  (  97.37,   46.34)  ARCH_colonnade_south_column_046_LOD1
+[cols] theta  -19.46  r  119.65  ( 101.61,   44.84)  ARCH_colonnade_south_column_047_LOD1
+[cols] theta  -18.00  r  119.65  ( 102.60,   47.73)  ARCH_colonnade_south_column_049_LOD1
+[cols] theta  -18.00  r  115.15  (  98.32,   49.12)  ARCH_colonnade_south_column_048_LOD1
+blender_run.sh: pid 27051 exited rc=0 after 2 s (max 900)

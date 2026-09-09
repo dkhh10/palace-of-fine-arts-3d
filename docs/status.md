@@ -335,3 +335,29 @@ In flight: LIGHT prep review, ORN r5 review, ARCH r6. Next: merge, LIGHT r14 (vi
 ## 2026-09-09 · ORN r5 review: MERGE WITH FIXES (docs/reviews/orn_r5_review.md); fixes split by owner
 Blockers routed to ARCH r6 (message sent): the 24 rotunda frieze_run sockets carry no host/subtype (the lead's build_master guard never fires) and their frame is wrong (+X anti-parallel to run_dir on fronts, +Y into the block on returns). ORN fix agent: cap is 100 mm (architrave crown d 0.44), RIN_MAX_PROUD 0.09, stats fail loudly on run mismatch, lod2fix into orn_build; the normal/AO bake waits for a GPU round. ENV r9 (no render) dispatched: walk clearance shrub, r7/r8 carries, cam06 gate definition.
 In flight: ARCH r6, LIGHT prep review, ORN r5 fix, ENV r9. Next: merges; LIGHT r14.
+
+## 2026-09-09 · LIGHT r14 prep merged (MERGE WITH FIXES; fix-nows carried into LIGHT r14 item 0); build_master sets the flythrough frame range; LIGHT r14 dispatched
+In flight: ARCH r6, LIGHT r14 (docs/briefs/lighting_r14.md), ORN r5 fixes, ENV r9. Next: reviews, merges, MAT r8 (water + projection) after LIGHT r14 and ARCH r6.
+
+## 2026-09-09 · ORN r5 merged (5703665) after fixes
+RIN_MAX_PROUD 0.09: clearance +10.5 to +13.3 mm on all six variants, tris unchanged; orn_r5_stats is a gate (run mismatch, clearance, budgets); LOD2 budget enforced in orn_lib.enforce_lod2_budget; `orn_build.py -- --bake-pending` lists 6 LOD1 normal-map bakes for a GPU round. Instancing waits for ARCH r6's socket stamp/frame.
+In flight: ARCH r6, LIGHT r14, ENV r9. Next: reviews + merges, ORN bake (GPU round), MAT r8.
+
+## 2026-09-09 · ARCH r6 reported (2361006), in review
+Stack registered on ref 169: every course within 5 rows (0.37 m; was up to 31), attic storey 101 vs 100 rows; ENTABLATURE_Z0 27.40 -> 25.96 (3.22 m entablature), CAPITAL_H 2.6 -> 3.0, COL_SHAFT_H 16.3 -> 14.46, ATTIC_H 7.1 -> 9.12 with a real crown corona soffit; silhouette 0.6 / 0.0 / 0.0 / 0.35 %; tris +0.012 %; UVProj now a mandatory post-step of arch_build (re-checked 0.84 / 0.00 / 0.02 px); rotunda frieze_run sockets stamped host/subtype and re-framed (arch_socket_check ALL OK on 126). Socket deltas for ornament: capital_rotunda -1.84 m and 3.0 m tall, frieze_run -1.55 m and band 0.81 m, attic_panel -2.07 m and panel_height 5.27, attic_figure -2.02 m.
+In flight: ARCH r6 review, LIGHT r14, ENV r9. Next: merge arch; ORN r6 refit (capitals 3.0 m, rinceau 0.81 band, attic panels 5.27 m; no render) then the ORN bake; MAT r8.
+
+## 2026-09-09 · ARCH r6 review: MERGE WITH FIXES (docs/reviews/arch_r6_review.md); fix agent dispatched (no render)
+Fix now: stamp capital_height on capital_rotunda sockets (0.40 m void under the architrave until ornament rebuilds), band_height on the rotunda frieze_run sockets, re-run the ref 062 fit (it reads ATTIC_Z0, which moved), commit the qa_stack_offset log, sheet table from data. Carries: uvproj tri guard dead in-build, SystemExit ordering, entablature sub-courses scaled not photo-anchored, socket check exit code, 6.4 MB intermediate.
+In flight: ARCH r6 fixes, LIGHT r14, ENV r9. Next: merge arch, ORN r6 refit, MAT r8.
+
+## 2026-09-09 · ENV r9 reported (e0b383f), in review
+ENV r9 (no render): walk clearance 0.03 -> 1.71 m to geometry, 0 samples inside the 2.80 m clear width (the OSM roof polygon fell inside the modelled arc; new env_lib.gallery_clear from arch_params, enforced everywhere); shadow_relief no longer relocates pinned trees (corrections baked into PLAN); trees 131, LOD1 4.71 M, band clearer moved 0 / dropped 0; wing shadow 21.2 % vs the 22 % cap (margin 0.8 pt, needs a render check); cam06 gate = std composited / un-composited >= 0.60 (lighting r13 ships 0.637).
+In flight: ENV review, LIGHT r14, ARCH r6 fixes, ORN r6. Next: merges, MAT r8.
+
+## 2026-09-09 · ARCH r6 merged (2b1c716) after fixes; ref 062 conflict logged (decisions.md)
+Socket props stamped and asserted (capital_height 3.0, band_height 0.81, panel_height 5.27; 434 sockets ALL OK); registration log committed (+1/-1/+1/-3/0/+5/+1/+1 rows); ref 062 wants ATTIC_Z0 30.20 vs 29.18 (hero wins; QA may re-fit cam02). In flight: LIGHT r14, ORN r6 (re-merges main for the socket props), ENV r9 review. Next: LIGHT r14 review + merge, then MAT r8 (water + projection on the registered stack).
+
+## 2026-09-09 · ENV r9 review: MERGE WITH FIXES (docs/reviews/env_r9_review.md); fix agent dispatched (no render)
+Fix now: the onto-land spiral snap runs after the gallery gate and moves 6 hand-placed trees up to 5.6 m (PLAN still not the shipped coordinate); pinned-moved counter is a tautology; 137 -> 131 is six refused screen redwoods, not dropped PLAN trees; MASS_X comment; cam06 0.637 must be computed by --c06ratio on lighting's frames. Carries: PLAN --verify mode, wing-shadow probe below its quantum (QA confirms on a render), eye-band gate.
+In flight: ENV fixes, LIGHT r14, ORN r6. Next: merges, MAT r8.

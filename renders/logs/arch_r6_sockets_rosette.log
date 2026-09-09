@@ -1,0 +1,32 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend"
+[socket_check] 24 SOCKET_rosette_ceiling_* sockets
+  SOCKET_rosette_ceiling_000  r= 14.46 z= 23.186  +Y=(+0.139,-0.990,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_001  r= 14.46 z= 23.186  +Y=(+0.139,-0.990,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_002  r=  5.20 z= 28.914  +Y=(+0.000,-0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_003  r= 14.46 z= 23.186  +Y=(-0.602,-0.799,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_004  r= 14.46 z= 23.186  +Y=(-0.602,-0.799,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_005  r=  5.20 z= 28.914  +Y=(-0.000,-0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_006  r= 14.46 z= 23.186  +Y=(-0.990,-0.139,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_007  r= 14.46 z= 23.186  +Y=(-0.990,-0.139,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_008  r=  5.20 z= 28.914  +Y=(-0.000,-0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_009  r= 14.46 z= 23.186  +Y=(-0.799,+0.602,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_010  r= 14.46 z= 23.186  +Y=(-0.799,+0.602,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_011  r=  5.20 z= 28.914  +Y=(-0.000,+0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_012  r= 14.46 z= 23.186  +Y=(-0.139,+0.990,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_013  r= 14.46 z= 23.186  +Y=(-0.139,+0.990,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_014  r=  5.20 z= 28.914  +Y=(-0.000,+0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_015  r= 14.46 z= 23.186  +Y=(+0.602,+0.799,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_016  r= 14.46 z= 23.186  +Y=(+0.602,+0.799,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_017  r=  5.20 z= 28.914  +Y=(+0.000,+0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_018  r= 14.46 z= 23.186  +Y=(+0.990,+0.139,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_019  r= 14.46 z= 23.186  +Y=(+0.990,+0.139,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_020  r=  5.20 z= 28.914  +Y=(+0.000,+0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+  SOCKET_rosette_ceiling_021  r= 14.46 z= 23.186  +Y=(+0.799,-0.602,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_022  r= 14.46 z= 23.186  +Y=(+0.799,-0.602,+0.000) +Z.z=+1.000  dot(+Y,radial)=-0.981  +Y.z=+0.000  band         apothem 14.182, leans 11.25 deg OK
+  SOCKET_rosette_ceiling_023  r=  5.20 z= 28.914  +Y=(+0.000,-0.000,-1.000) +Z.z=-0.000  dot(+Y,radial)=-0.000  +Y.z=-1.000  coffer-floor +Y down                      OK
+[socket_check] band sockets: 16 on face planes 14.182-14.182 m from the axis (spread 0.0 mm)
+[socket_check] ALL OK
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 33568 exited rc=0 after 0 s (max 600)

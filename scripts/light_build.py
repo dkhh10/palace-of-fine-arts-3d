@@ -209,8 +209,13 @@ LOOK = lp.LOOK                     # ALIAS, not a copy. Round 08b set this strin
 # contrast of 1.08:1. So the grey-olive is the scene's own colour and the flatness is the scene's own flatness; the
 # round-07 haze made both worse but did not cause them, and no haze setting can reach QA's saturation 0.20 / contrast
 # 1.5:1. Heavier haze buys warmth only by veiling more, which is the global desaturation this fix is supposed to
-# avoid, so the settings below are the physically defensible middle: L = 800 m (a clear-morning extinction length,
-# not the 400 m of round 07's ramp) at a 0.50 cap, with the warmth carried by the haze COLOUR instead of its amount.
+# avoid, so the settings below carry the warmth in the haze COLOUR instead of its amount.
+# ROUND 13 REVIEW CARRY 5 (2026-09-09): the sentence that used to end this paragraph -- "L = 800 m (a clear-morning
+# extinction length, not the 400 m of round 07's ramp) at a 0.50 cap" -- is no longer what ships and is withdrawn.
+# The round-13 cam06 fix below sets k = 5.0 on a 2000 m ramp, i.e. exactly the L = 2000/5 = 400 m that sentence
+# argued against, at a 0.25 cap. The two are the same airlight near the camera (cap x k held at 1.25) and the
+# 400 m version is the one that passes environment's far-shore std test; the "clear-morning 800 m" was an
+# atmospheric-plausibility argument, not a measurement, and the measurement in the table below overrides it.
 MIST = dict(start=20.0, depth=2000.0, falloff="LINEAR")   # mist pass = (d - 20) / 2000, clamped; SHAPED in the compositor
 # ROUND 13 (QA-05-8, environment's cam06 hand-off): cap 0.50 -> 0.25 and k 2.5 -> 5.0, i.e. cap * k held at 1.25.
 # ENV r7 reported that the compositor added +58 lum to cam06's horizon crop and cut its std 44.0 -> 23.5, flattening

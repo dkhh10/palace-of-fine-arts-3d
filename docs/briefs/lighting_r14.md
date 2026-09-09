@@ -18,3 +18,7 @@ QA-06-13 and section (a); docs/decisions.md 2026-09-09 "After QA round 6"; docs/
    lamp count / probe resolution) while the Eevee shade windows from r13 hold.
 Deliverables: as usual (values, assets/lighting.blend, light_r14_sheet.png with the four cameras' shade boxes before / after / ref, §24 in
 the notes, commits after every successful script, report < 30 lines with the materials hand-off for the water).
+Added after the prep review (docs/reviews/light_r14prep_review.md): 0. FIRST, the prep fix-nows in light_flythrough.py: stations from
+qa_cameras by name (1), st[5] for the note (2), the 1.30/1.35 comment (3), re-run light_flythrough_check at --step 4 with the shipped 1.35
+gate and quote that number in §23.3 (4); cheap carries 8, 9, 10 and say why the north grove is not on the route (7). Carry 5 (LOD0 check)
+belongs to the Phase 5 render round. The lead fixed 6 in build_master.py.
