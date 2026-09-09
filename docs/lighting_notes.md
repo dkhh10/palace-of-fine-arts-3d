@@ -1548,3 +1548,33 @@ closes the last step — g_G 2.0 instead of 2.5 (tint g 0.80) and g_B 9.5 instea
 **`SUN_BLUE_MULT` is the compensating lever for the sunlit stone** and it works: at db 4 it holds the sunlit attic's
 R-B at 110.4 where the same boost without it gave 108.2, and at db 2.5 / b3.0 it holds 101.8 where the uniform tint
 at b2.5 alone gave 87.4. It is not enough on its own, which is why round 12 adds the anti-sun weighting.
+
+### 21.7 Wave 4 — the shade lands, and the anti-sun weighting is the dial between the two failures
+
+Hero, Cycles 960x540 / 48 spp, `renders/logs/light_r12_w4.log`. Every row is `db 2.5` with a diffuse tint and
+`SUN_BLUE_MULT` as shown; `antisun` is the new `SKY_DIFFUSE_TINT_ANTISUN` socket.
+
+| tint (r, g, b) | antisun | sun-blue | shaded attic lum / **hue** / sat | sunlit attic lum / sat / **R-B** | columns | near-water sat |
+|---|---|---|---|---|---|---|
+| — (base) | — | 0.75 | 95.3 / 43.1 / 0.829 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 |
+| 1.0, 0.80, 3.8 | 0 | 0.25 | 114.7 / **32.1** / 0.431 | 180.3 / 0.445 / **96.2** | 1.31x | 0.425 |
+| 1.0, 0.80, 3.8 | 1 | 0.25 | 114.3 / **42.5** / 0.644 | 179.4 / 0.558 / **121.3** | 1.13x | 0.361 |
+| 1.0, 0.80, 6.0 | 1 | 0.25 | 115.7 / **40.5** / 0.560 | 179.7 / 0.541 / **117.3** | 1.13x | 0.399 |
+| 1.0, 0.70, 9.0 | 1 | 0.15 | 116.7 / **37.0** / 0.468 | 180.1 / 0.523 / **113.4** | 1.12x | 0.437 |
+| ref 169 / window | | | 115.0 / 29.5 +-6 / <= 0.50 | 189.6 / >= 0.50 / >= 110 | 0.9-1.1x | 0.22-0.32 |
+
+**Row 2 is the round's result: the shaded attic lands on ref 169 — hue 32.1 against 29.5 (off 2.6), sat 0.431 against
+0.425, luminance 114.7 against 115.0 — and it lands there from the arithmetic, not from a search.** 21.4's three
+fitted power laws predicted (140, 113, 81), hue 32.5, sat 0.42, lum 116 for exactly this rig; it rendered
+(139, 112, 79), hue 32.1, sat 0.431, lum 114.7. QA-05-1's hero half is a solved equation.
+
+The uniform tint pays for it on the sun-facing side (R-B 96.2, sat 0.445, columns 1.31x). `SKY_DIFFUSE_TINT_ANTISUN`
+is the dial between the two failures and it works exactly as designed: at antisun 1 the same tint returns the sunlit
+attic to R-B 121.3 / sat 0.558 and the columns to 1.13x — better than QA's round-05 master on the columns' own test —
+and takes the shade back to 42.5. Raising the tint under the weighting walks it back down (b 3.8 -> 6 -> 9 gives hue
+42.5 -> 40.5 -> 37.0) while the sunlit attic only drifts 121.3 -> 113.4, i.e. **the weighted tint buys shade hue at
+about a quarter of the sunlit cost of the unweighted one** (5.5 deg of hue per 8 R-B, against 11 deg per 40).
+
+What the weighting is really measuring is where the shade's blue arrives from: at antisun 1 the shade keeps only
+about half the tint, so half of the blue that reaches a shaded wall has bounced at least once off a horizontal
+surface (which samples both halves of the dome) rather than arriving straight from the anti-sun sky.
