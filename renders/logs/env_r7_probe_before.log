@@ -1,0 +1,141 @@
+00:01.149  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend"
+
+=== CAM_qa_02_lagoon_ne_threequarter  loc=(70.5, 25.6, 1.1) lens=24.0  clear zone x 0.60-0.88 within 60 m
+  #  5 broadleaf       (  31.1,  26.4) h   8  d=  32.3 m  x  0.70.. 0.84  y  0.60.. 0.88  zone cover   50%   C small dark tree left of the rotunda (u
+  # 43 cypress_column  (  29.7,  26.2) h  13  d=  34.1 m  x  0.70.. 0.82  y  0.44.. 0.87  zone cover   43%   C second column (user image x~330), sout
+  # 42 cypress_column  (  34.8,  20.2) h  16  d=  30.9 m  x  0.57.. 0.71  y  0.31.. 0.88  zone cover   38%   C cypress column left of the rotunda (us
+  #  4 broadleaf       (  34.2,  19.8) h   6  d=  32.2 m  x  0.58.. 0.69  y  0.66.. 0.88  zone cover   30%   P peninsula bed (cam01 x 0.24-0.27)
+  #  3 broadleaf       (  26.0,  32.0) h   7  d=  35.2 m  x  0.80.. 0.93  y  0.64.. 0.87  zone cover   28%   P peninsula bed, left of the rotunda (ca
+
+=== CAM_qa_03_colonnade_walk  loc=(81.0, 12.04, 1.7) lens=18.0  clear zone x 0.00-0.30 within 60 m
+  #101 pine            (  66.1,  -8.4) h  20  d=  10.5 m  x -0.41.. 0.20  y -0.70.. 0.77  zone cover   67%   E1 screen behind the colonnade
+  # 28 cypress         (  46.7, -25.3) h  19  d=  32.6 m  x -0.00.. 0.18  y  0.14.. 0.64  zone cover   60%   E1 screen behind the colonnade
+  # 99 pine            (  34.9, -34.7) h  21  d=  44.7 m  x  0.05.. 0.20  y  0.23.. 0.63  zone cover   50%   E1 screen behind the colonnade
+  #100 pine            (  63.4, -12.8) h  19  d=  14.1 m  x -0.31.. 0.15  y -0.36.. 0.72  zone cover   48%   E1 screen behind the colonnade
+  # 29 cypress         (  71.0,  -6.1) h  20  d=   5.7 m  x -1.04.. 0.13  y -1.51.. 0.93  zone cover   42%   E1 screen behind the colonnade
+  #109 redwood         (  44.3, -31.1) h  19  d=  38.2 m  x  0.00.. 0.12  y  0.21.. 0.63  zone cover   38%   E1 screen behind the colonnade
+  #114 redwood         (  34.6, -42.3) h  24  d=  48.3 m  x  0.01.. 0.12  y  0.20.. 0.62  zone cover   38%   E2 screen behind the colonnade
+  # 78 eucalyptus      (  40.3, -40.4) h  22  d=  40.3 m  x -0.08.. 0.11  y  0.17.. 0.63  zone cover   35%   E2 screen behind the colonnade
+  #108 redwood         (  38.7, -31.0) h  21  d=  43.3 m  x  0.07.. 0.17  y  0.22.. 0.63  zone cover   34%   E1 screen behind the colonnade
+  #110 redwood         (  60.1, -16.6) h  19  d=  20.3 m  x -0.14.. 0.10  y -0.12.. 0.68  zone cover   32%   E1 screen behind the colonnade
+  # 30 cypress         (  45.3, -36.7) h  21  d=  35.3 m  x -0.12.. 0.09  y  0.14.. 0.64  zone cover   29%   E2 screen behind the colonnade
+  # 79 eucalyptus      (  61.8, -24.4) h  21  d=  16.9 m  x -0.51.. 0.01  y -0.32.. 0.70  zone cover    5%   E2 screen behind the colonnade
+  # 52 eucalyptus      (  62.0, -30.0) h  30  d=  14.6 m  x -0.88.. 0.00  y -0.85.. 0.72  zone cover    1%   C broad eucalyptus behind the south wing
+
+=== cam01_shore  box (700, 640, 1200, 720) of (1920, 1080)  step 3  samples 4509
+   foliage    52.5 %   sunlit  34.4 % of it   (normal turned from the sun  46.9 %)
+   building   30.3 %   sunlit  49.8 % of it   (normal turned from the sun   6.1 %)
+   ground     17.2 %   sunlit  82.8 % of it   (normal turned from the sun   0.1 %)
+   sky         0.0 %
+   hit distance  p10   53.2  median   56.6  p90   71.8 m
+   SUN REACH over all surfaces:  47.4 %
+   fills the box:
+       9.98%  building ARCH_site_lagoon_kerb_0                      MAT_concrete_podium        (   51.9,   -1.0)
+       9.27%  ground   ENV_lagoon_water                             MAT_water_lagoon           (    0.0,    0.0)
+       6.32%  foliage  ENV_shrub_big2_0050_LOD1                     MAT_shrub                  (   -7.1,   44.3)
+       4.68%  ground   ENV_lagoon_bed                               MAT_lagoon_bed             (    0.0,    0.0)
+       4.37%  foliage  ENV_tree_willow_04_LOD1                      MAT_leaf_broadleaf         (   -2.9,   45.6)
+       3.64%  foliage  ENV_shrub_pitto5_0047_LOD1                   MAT_shrub_light            (  -10.1,   42.7)
+       3.33%  foliage  ENV_shrub_pitto8_0587_LOD1                   MAT_shrub_dry              (  -14.6,   42.8)
+       2.97%  foliage  ENV_shrub_big2_0863_LOD1                     MAT_shrub                  (    4.2,   36.1)
+       2.95%  foliage  ENV_tree_willow_05_LOD1                      MAT_leaf_broadleaf         (  -12.0,   44.0)
+       2.66%  foliage  ENV_shrub_big1_0794_LOD1                     MAT_shrub_light            (  -19.0,   31.8)
+       2.28%  building ENV_tree_willow_03_LOD1                      MAT_bark_cypress           (    6.9,   43.4)
+       2.24%  foliage  ENV_shrub_pitto3_0584_LOD1                   MAT_shrub_dry              (  -16.0,   40.9)
+       2.20%  foliage  ENV_shrub_pitto5_0591_LOD1                   MAT_shrub_light            (   -3.8,   44.9)
+       1.97%  building ENV_tree_willow_04_LOD1                      MAT_bark_cypress           (   -2.9,   45.6)
+   blocks the sun (samples shadowed):
+       8.58%  ENV_tree_eucalyptus_09_LOD1                 (   34.0,  126.0) h28 F east shore row
+       6.08%  ENV_tree_willow_05_LOD1                     (  -12.0,   44.0) h8 P hero-shore willow, ref 1
+       5.17%  ENV_tree_willow_04_LOD1                     (   -2.9,   45.6) h7 P hero-shore willow, ref 1
+       4.75%  ENV_tree_willow_03_LOD1                     (    6.9,   43.4) h9 P hero-shore willow, ref 1
+       4.55%  ENV_tree_eucalyptus_10_LOD1                 (   54.0,  124.0) h30 F east shore row
+       2.42%  ENV_shrub_big2_0050_LOD1                    (   -7.1,   44.3) h0 
+       1.77%  ENV_shrub_big2_0863_LOD1                    (    4.2,   36.1) h0 
+       1.60%  ENV_shrub_pitto8_0587_LOD1                  (  -14.6,   42.8) h0 
+       1.33%  ENV_shrub_pitto5_0047_LOD1                  (  -10.1,   42.7) h0 
+       1.24%  ENV_shrub_pitto5_0591_LOD1                  (   -3.8,   44.9) h0 
+       1.09%  ENV_shrub_pitto3_0584_LOD1                  (  -16.0,   40.9) h0 
+       0.84%  ENV_backdrop_hall_pavilion                  (    0.0,    0.0) h0 
+       0.82%  ENV_shrub_pitto2_0600_LOD1                  (    4.7,   42.4) h0 
+       0.78%  ENV_shrub_pitto8_0599_LOD1                  (    5.3,   44.3) h0 
+
+=== cam03_ground  box (0, 470, 1280, 720) of (1280, 720)  step 3  samples 35868
+   foliage     2.5 %   sunlit   2.4 % of it   (normal turned from the sun  41.8 %)
+   building   59.0 %   sunlit   0.1 % of it   (normal turned from the sun  32.3 %)
+   ground     38.5 %   sunlit   3.2 % of it   (normal turned from the sun   0.0 %)
+   sky         0.0 %
+   hit distance  p10    1.5  median    5.0  p90   14.0 m
+   SUN REACH over all surfaces:   1.3 %
+   fills the box:
+      32.52%  building ARCH_colonnade_south_column_028_LOD1         MAT_concrete_colonnade     (   79.1,   13.2)
+      22.23%  ground   ENV_terrain_ground                           MAT_gravel_path            (    0.0,    0.0)
+      15.78%  ground   ENV_terrain_ground                           MAT_soil                   (    0.0,    0.0)
+      11.41%  building ARCH_colonnade_south_column_026_LOD1         MAT_concrete_colonnade     (   76.3,    9.8)
+       7.61%  building ARCH_colonnade_south_colbase_026_1           MAT_concrete_colonnade     (   76.3,    9.8)
+       2.17%  building ARCH_colonnade_south_colbase_024_1           MAT_concrete_colonnade     (   73.4,    6.5)
+       1.88%  building ARCH_colonnade_south_column_024_LOD1         MAT_concrete_colonnade     (   73.4,    6.5)
+       0.85%  foliage  ENV_shrub_pitto0_0634_LOD1                   MAT_shrub                  (   63.9,   12.8)
+       0.63%  foliage  ENV_shrub_pitto5_0630_LOD1                   MAT_shrub_light            (   61.6,    9.0)
+       0.49%  ground   ENV_lagoon_water                             MAT_water_lagoon           (    0.0,    0.0)
+       0.49%  building ARCH_colonnade_south_colbase_019_1           MAT_concrete_colonnade     (   67.9,   -5.1)
+       0.47%  building ARCH_colonnade_south_colbase_024_0           MAT_concrete_colonnade     (   73.4,    6.5)
+       0.43%  building ARCH_colonnade_south_colbase_026_0           MAT_concrete_colonnade     (   76.3,    9.8)
+       0.41%  building ARCH_colonnade_south_colbase_022_1           MAT_concrete_colonnade     (   70.3,    3.4)
+   blocks the sun (samples shadowed):
+      47.87%  ARCH_colonnade_south_column_028_LOD1        (   79.1,   13.2) h0 
+      10.96%  ENV_tree_redwood_04_LOD1                    (   87.8,   38.7) h18 E1 screen behind the colon
+       7.80%  ARCH_colonnade_south_colbase_026_1          (   76.3,    9.8) h0 
+       7.33%  ENV_tree_redwood_11_LOD1                    (   93.2,   38.7) h19 E2 screen behind the colon
+       6.05%  ARCH_colonnade_south_column_026_LOD1        (   76.3,    9.8) h0 
+       4.72%  ENV_tree_pine_05_LOD1                       (   93.0,   58.0) h15 D
+       4.48%  ARCH_colonnade_south_colbase_028_1          (   79.1,   13.2) h0 
+       1.99%  ARCH_colonnade_south_colbase_024_1          (   73.4,    6.5) h0 
+       1.81%  ARCH_colonnade_south_column_024_LOD1        (   73.4,    6.5) h0 
+       0.94%  ARCH_colonnade_south_column_030_LOD1        (   81.8,   16.8) h0 
+       0.74%  ENV_shrub_pitto0_0634_LOD1                  (   63.9,   12.8) h0 
+       0.62%  ARCH_colonnade_south_colbase_022_1          (   70.3,    3.4) h0 
+       0.46%  ARCH_colonnade_south_colbase_020_1          (   68.2,    1.3) h0 
+       0.38%  ARCH_colonnade_south_column_022_LOD1        (   70.3,    3.4) h0 
+
+=== cam06_horizon  box (0, 0, 1280, 220) of (1280, 720)  step 3  samples 31598
+   foliage    42.6 %   sunlit  31.6 % of it   (normal turned from the sun  35.7 %)
+   building   43.6 %   sunlit  48.3 % of it   (normal turned from the sun  33.3 %)
+   ground     13.8 %   sunlit  16.9 % of it   (normal turned from the sun   0.0 %)
+   sky         0.0 %
+   hit distance  p10  331.1  median  439.9  p90  549.8 m
+   SUN REACH over all surfaces:  36.9 %
+   fills the box:
+      14.07%  foliage  ENV_backdrop_canopy_2                        MAT_backdrop_forest        (    0.0,    0.0)
+      11.03%  foliage  ENV_backdrop_canopy_0                        MAT_backdrop_forest        (    0.0,    0.0)
+      10.24%  building ENV_backdrop_hall_roof                       MAT_backdrop_roof          (    0.0,    0.0)
+      10.18%  foliage  ENV_backdrop_canopy_1                        MAT_backdrop_forest        (    0.0,    0.0)
+       5.97%  building ARCH_rotunda_dome                            MAT_dome_membrane          (    0.0,    0.0)
+       5.53%  ground   ENV_backdrop_city_ground                     MAT_lawn                   (    0.0,    0.0)
+       4.67%  building ENV_backdrop_house_278                       MAT_backdrop_building      (    0.0,    0.0)
+       2.50%  building ENV_backdrop_presidio_letterman_02           MAT_backdrop_building      (    0.0,    0.0)
+       2.47%  ground   ENV_backdrop_city_ground                     MAT_backdrop_asphalt       (    0.0,    0.0)
+       1.97%  building ENV_backdrop_roof_272                        MAT_backdrop_roof          (    0.0,    0.0)
+       1.85%  ground   ENV_backdrop_city_ground                     MAT_backdrop_hill          (    0.0,    0.0)
+       1.81%  building ENV_backdrop_roof_281                        MAT_backdrop_roof          (    0.0,    0.0)
+       1.80%  ground   ENV_terrain_ground                           MAT_lawn                   (    0.0,    0.0)
+       1.78%  building ENV_backdrop_presidio_letterman_03           MAT_backdrop_building      (    0.0,    0.0)
+   blocks the sun (samples shadowed):
+      10.76%  ENV_backdrop_canopy_2                       (    0.0,    0.0) h0 
+       9.92%  ENV_backdrop_canopy_0                       (    0.0,    0.0) h0 
+       9.37%  ENV_backdrop_canopy_1                       (    0.0,    0.0) h0 
+       3.76%  ENV_backdrop_presidio_letterman_02          (    0.0,    0.0) h0 
+       3.52%  ENV_backdrop_house_278                      (    0.0,    0.0) h0 
+       3.38%  ENV_backdrop_presidio_letterman_03          (    0.0,    0.0) h0 
+       2.41%  ARCH_rotunda_dome                           (    0.0,    0.0) h0 
+       1.41%  ENV_tree_cypress_14_LOD1                    (  170.0, -102.0) h24 H
+       1.38%  ENV_tree_eucalyptus_31_LOD1                 (  124.1,   35.6) h23 E3 screen behind the colon
+       1.20%  ENV_tree_eucalyptus_33_LOD1                 (  124.3,   49.6) h27 E3 screen behind the colon
+       1.03%  ENV_backdrop_roof_272                       (    0.0,    0.0) h0 
+       0.98%  ENV_tree_eucalyptus_04_LOD1                 (  104.0,   52.0) h30 D south pylon
+       0.96%  ENV_tree_eucalyptus_30_LOD1                 (  117.2,   41.4) h22 E2 screen behind the colon
+       0.87%  ENV_backdrop_presidio_letterman_01          (    0.0,    0.0) h0 
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 2616 exited rc=0 after 149 s (max 1500)

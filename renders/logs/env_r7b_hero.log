@@ -1,0 +1,9 @@
+00:00.324  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+12:16.295  render           | Saved: 'renders/previews/environment/r7_hero.png'
+[env_r5_hero] opening /Users/dk/Projects/3d render blender 3rd attempt building/master.blend
+[env_r5_hero] CYCLES 128 spp 1920x1080 -> renders/previews/environment/r7_hero.png
+[env_r5_hero] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 5801 exited rc=0 after 737 s (max 1500)

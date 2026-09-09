@@ -515,6 +515,13 @@ def build_canopy(SUB, clear):
         groups[k].append(((x, y, FAR_GROUND_Z + h * 0.52), rnd.uniform(0, 6.283), (w, w, h * 0.52)))
 
     # 1. the woods
+    # QA-05-8 (round 7).  The far field "reads as one beige plane: no road grid, no block structure at 1280 px",
+    # and the reason is not the roads - round 6 put 780 asphalt samples on the ground - but this canopy.  cam 06
+    # stands 120 m up and looks down at about 19 deg, so a 15 m crown hides 15/tan(19) = 43 m of ground behind it;
+    # at `pad=4.0` the woods closed over every Presidio way within one tree of its verge and nothing of the
+    # corridor was left to see.  The pad is now the depression-angle clearance, so each way keeps an open corridor
+    # and the (gapped, see 3) tree rows on its verges draw the dark line without walling the corridor off.
+    CANOPY_ROAD_PAD = 17.0
     a = PRESIDIO_AZ[0]
     while a < PRESIDIO_AZ[1]:
         r = 138.0
@@ -527,7 +534,7 @@ def build_canopy(SUB, clear):
                 aa = a + rnd.uniform(-1.0, 1.0)
                 rr = r + rnd.uniform(-5.0, 5.0)
                 x, y = rr * math.cos(math.radians(aa)), rr * math.sin(math.radians(aa))
-                if clear(x, y) and not rf.on_road(x, y) and not in_clearing(x, y):
+                if clear(x, y) and not rf.on_road(x, y, CANOPY_ROAD_PAD) and not in_clearing(x, y):
                     add(x, y, rnd.uniform(9.0, 20.0), rnd.uniform(0.42, 0.72))
                     n += 1
             r += 8.0
@@ -542,7 +549,14 @@ def build_canopy(SUB, clear):
             n += 1
     # 3. street tree lines: Palace Drive, then every grid street and Presidio boulevard
     for pts, w, kind in ROADS:
-        line = L.resample_polyline(pts, 16.0)
+        # QA-05-8 (round 7b).  Round 7a made the Presidio verges near-continuous (10 m / p 0.90) on the theory that
+        # the dark row IS the street line.  Measured on cam 06 that closed the corridors the 17 m canopy pad had just
+        # opened: the probe's ground share fell 13.8 -> 10.9 % and MAT_backdrop_asphalt dropped out of the box's top
+        # fills altogether, with the readable-line count still 0.  A crown of height h buries h/tan(19 deg) = 2.9 h
+        # metres of ground behind it, so a row whose crowns (8-22 m across) touch is a wall, not a line.  The verges
+        # are therefore GAPPED on the wide ways - spacing wider than a crown plus its own shadow - and their crowns
+        # are held to 8-12 m there so that shadow is 23-35 m and fits inside the gap.
+        line = L.resample_polyline(pts, 16.0 if kind == "street" else 26.0)
         for i in range(len(line) - 1):
             x, y = line[i]
             r = math.hypot(x, y)
@@ -557,12 +571,19 @@ def build_canopy(SUB, clear):
             nv = Vector((d.y, -d.x))
             off = w / 2 + WALK_W + 1.4
             for sgn in (-1, 1):
-                if rnd.random() > (0.72 if kind == "drive" else 0.55):
+                # QA-05-8 / round 7b: the verge rows draw the street line at 1280 px, but a continuous row is a
+                # wall - a crown of height h buries 2.9 h m of ground behind it at cam 06's 19 deg depression.
+                # So the wide ways are gapped (26 m resample above, keep 0.62, crowns held to 8-12 m) rather than
+                # near-continuous; round 7a's 10 m / 0.90 row read ground 10.9 % against 7b's 23.4 %.
+                wide = kind in ("boulevard", "drive")
+                keep = 0.62 if wide else 0.55
+                if rnd.random() > keep:
                     continue
                 ox, oy = x + sgn * nv.x * off, y + sgn * nv.y * off
                 if not clear(ox, oy):
                     continue
-                add(ox, oy, rnd.uniform(8.0, 15.0), rnd.uniform(0.44, 0.72))
+                add(ox, oy, rnd.uniform(8.0, 12.0) if wide else rnd.uniform(8.0, 15.0),
+                    rnd.uniform(0.44, 0.72))
                 n += 1
     tris = 0
     nobj = 0

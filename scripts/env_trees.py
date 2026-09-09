@@ -553,7 +553,61 @@ def screen_height_cap(entries, colonnade_polys, cam=None, lens=None, ground=-0.4
 # rotunda in ref 169.
 SHADOW_TARGET = 0.22          # <= this fraction of the readable wing band (z >= 12 m) may be in tree shadow
 WATER_TARGET = 0.25           # ... and of the lagoon the hero camera actually sees (QA-02-6)
+SHORE_TARGET = 0.25           # ... and of the hero's shore-shrub crop (QA-05-10)
 SHADOW_BANDS = (12.0, 17.0)
+
+# QA-05-10 (round 7).  The shore belt QA-04-4 built came back at lum 71.7 against ref 169's 114 over the crop
+# 700 600 1200 740, "black-green where the photo's are sunlit soft green".  Materials had already raised the leaf
+# tints x1.4, so round 7 measured the geometry side: at sun elevation 7.4 deg a 12 m crown standing 90 m up-sun
+# throws its shadow straight across that belt, and `shadow_relief` protected the wing faces and the hero's water
+# but never the shore.  These samples put the crop itself in the relief loop.
+SHORE_BOX = (700 / 1920.0, 1200 / 1920.0, 600 / 1080.0, 740 / 1080.0)      # QA-05-10's crop, in frame coords
+SHORE_OFFSETS = (2.0, 7.0, 13.0)      # metres inland from the water line - the belt QA-04-4 planted
+SHORE_HEIGHTS = (1.0, 2.2)            # crown heights of that belt (band_sightline_cap allows 3.2-3.7 m)
+# `shadow_relief` re-measures every sample against every tree up to 140 times, so the sample count is kept in the
+# low hundreds: 3 offsets x 2 heights on a 5 m ring, clipped to QA's own crop.  MEASURED (env_r7b_build.log:119):
+# **50 shore points** of 276 band samples - the crop is narrow, so the ring contributes far fewer than the
+# ~150-250 first estimated.  50 points is a thin basis for SHORE_TARGET; round 7's null result (see the notes)
+# means the belt is a level, not a shadow, so the density is left alone rather than raised for its own sake.
+
+
+def shore_sun_samples(lagoon_field, terrain_height=None, step=5.0):
+    """Points on the hero's shore-shrub belt that land inside QA-05-10's crop, as (3, x, y, z) samples."""
+    cam = L.qa_camera("_qa_01_", (-14.1, 100.0, 1.6), 20.0)
+    if cam is None or lagoon_field is None:
+        return []
+    (loc, lens) = cam
+    try:
+        import qa_cameras
+        spec = next(c for c in qa_cameras.CAMERAS if "_qa_01_" in c["name"])
+        target, shift_y = spec["target"], spec.get("shift_y", 0.0)
+    except Exception:
+        target, shift_y = (0.0, 0.0, 1.6), 0.06
+    f, r, u = _cam_basis(dict(loc=loc, target=target))
+    hw = 0.5 * 36.0 / lens
+    hh = hw * 9.0 / 16.0
+    x0, x1, y0, y1 = SHORE_BOX
+    out = []
+    for off in SHORE_OFFSETS:
+        try:
+            ring = L.resample_polyline(L.offset_polygon(lagoon_field.poly, off), step, closed=True) \
+                if hasattr(lagoon_field, "poly") else []
+        except Exception:
+            ring = []
+        for (x, y) in ring:
+            if not (28.0 < math.hypot(x, y) < 62.0):        # the peninsula shore in front of the podium
+                continue
+            zg = terrain_height(x, y) if terrain_height else -0.45
+            for h in SHORE_HEIGHTS:
+                d = Vector((x, y, zg + h)) - Vector(loc)
+                z = d.dot(f)
+                if z <= 1.0:
+                    continue
+                fx = 0.5 + 0.5 * (d.dot(r) / z) / hw
+                fy = 0.5 - 0.5 * (d.dot(u) / z) / hh + shift_y * (hw / hh)
+                if x0 <= fx <= x1 and y0 <= fy <= y1:
+                    out.append((3, x, y, zg + h))
+    return out
 
 
 def hero_water_samples(lagoon_field, step=6.0):
@@ -588,13 +642,14 @@ def hero_water_samples(lagoon_field, step=6.0):
     return out
 
 
-def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
+def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrain_height=None):
     samples = L.wing_samples(colonnade_polys, heights=(6.0,) + SHADOW_BANDS)
     band = [s for s in samples if s[3] >= min(SHADOW_BANDS)]
     water = hero_water_samples(lagoon_field) if lagoon_field is not None else []
-    band = band + water
+    shore = shore_sun_samples(lagoon_field, terrain_height) if lagoon_field is not None else []
+    band = band + water + shore
     trees = [list(t) for t in plan]
-    targets = {0: SHADOW_TARGET, 1: SHADOW_TARGET, 2: WATER_TARGET}
+    targets = {0: SHADOW_TARGET, 1: SHADOW_TARGET, 2: WATER_TARGET, 3: SHORE_TARGET}
 
     def measure():
         per, blockers = L.shadowed_fraction(band, trees)
@@ -613,6 +668,8 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
             return 0.45, True                       # east shore / backdrop, behind the hero camera
         if n.startswith("A"):
             return 0.80, False                      # the dark cluster right of the rotunda in ref 169: keep it
+        if n.startswith("P"):
+            return 0.90, False                      # QA-04-4's peninsula bed / ref-169 willows: composition, pinned
         return 0.72, False
 
     before, blockers = measure()
@@ -667,8 +724,10 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
         print(f"[env_trees] shadow relief: lowered {changed['lowered']} crowns ({changed['metres']:.0f} m total), "
               f"moved {changed['moved']}, dropped {changed['dropped']}; in shadow -> north wing "
               f"{100 * after.get(0, 0):.1f} % south wing {100 * after.get(1, 0):.1f} % hero water "
-              f"{100 * after.get(2, 0):.1f} % (was {100 * start.get(0, 0):.1f}/{100 * start.get(1, 0):.1f}/"
-              f"{100 * start.get(2, 0):.1f}); {len(plan)} -> {len(out)} trees")
+              f"{100 * after.get(2, 0):.1f} % hero shore {100 * after.get(3, 0):.1f} % "
+              f"(was {100 * start.get(0, 0):.1f}/{100 * start.get(1, 0):.1f}/"
+              f"{100 * start.get(2, 0):.1f}/{100 * start.get(3, 0):.1f}) over "
+              f"{len(band)} samples ({len(shore)} shore); {len(plan)} -> {len(out)} trees")
     return out
 
 
@@ -687,6 +746,13 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True):
 # a tree inside that radius stands in front of the wing and a tree outside it stands behind (the redwood screen).
 # Offenders are pushed along the camera's right axis - which moves them across the frame without changing their
 # distance much - to the nearer edge of the band, and only shortened if no clear spot exists.
+# Every HAND-PLACED PLAN group (see PLAN above).  E1/E2/E3 are the procedural `redwood_screen` rows and are the
+# only trees a band may sweep: the lead's rule after the round-5 review is that a band is cleared by thinning the
+# procedural screen, never by moving a tree that stands where a reference photo puts it.  All three bands share
+# this tuple - round 7 shipped it on the hero south band only, and the round-7 build log then showed the north
+# band moving 7 A/A2 trees 18-48 m and dropping 3 (incl. "A dark mass right of the dome").
+PIN_HAND_PLACED = ("A", "A2", "B", "C", "D", "F", "G", "H", "P")
+
 FRAME_BANDS = [
     # Offence band x 0.031-0.205: ref 169 and the user image both put a conifer group at x 0.19-0.29, so that is
     # composition, not a defect (round 4's call, kept - widening the offence band to QA's 0.292 costs the peninsula
@@ -697,11 +763,17 @@ FRAME_BANDS = [
     # band: P is the peninsula bed and C the user-image group (the two cypress spires at user-image x~330/410).
     # Lead decision after the round-5 review: the band is cleared by thinning the PROCEDURAL screen
     # (`redwood_screen`), never by sweeping a hand-placed tree 36-48 m across the site.
-    dict(cam="_qa_01_", x0=0.031, x1=0.205, x1_exit=0.292, y0=0.40, y1=0.60, behind="colonnade",
-         pin=("P", "C"), label="QA-03-10 hero south-wing band"),
+    # QA-05-5 (round 7).  Round 4 stopped the offence band at 0.205 because widening it to QA's own 0.292 "costs
+    # the peninsula bed and the user-image cypress spires".  Since round 5 those are PINNED (`pin=("P","C")`), so
+    # widening now touches nothing but the procedural screen - which is precisely the treatment that took the
+    # north band from 0.63 to 1.00 of ref 169.  x1 therefore goes to the measured box edge.
+    # ... and because the widened span now reaches groups the round-4 band never touched, every HAND-PLACED group
+    # is pinned here, not just P and C (see PIN_HAND_PLACED).
+    dict(cam="_qa_01_", x0=0.031, x1=0.292, x1_exit=0.292, y0=0.40, y1=0.60, behind="colonnade",
+         pin=PIN_HAND_PLACED, label="QA-05-5 hero south-wing band"),
     # cam 05's guard stops at y 0.66: the rotunda's body ends there, and the 7-9 m willows and broadleaves of the
     # peninsula bed (tops at y 0.67-0.69) are the user image's own foreground - they belong in the picture.
-    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=("P", "C"),
+    dict(cam="_qa_05_", x0=0.235, x1=0.780, y0=0.02, y1=0.66, near=112.0, pin=PIN_HAND_PLACED,
          label="QA-03-13 cam05 rotunda silhouette"),
     # QA-04-6 (round 6).  Round 5 measured and cleared the frame-LEFT band (60-560 px = x 0.031-0.292); nobody had
     # ever measured the frame-RIGHT one, and it came back at 74.6 % foliage / 24.2 % architecture / 1.2 % sky
@@ -715,7 +787,7 @@ FRAME_BANDS = [
     # coordinates about (0, 52) but the wings are struck from (-11.2, 84.7), so "outside the wing in C-polar" is
     # not "behind the wing from the hero" everywhere along the sweep.
     dict(cam="_qa_01_", x0=0.760, x1=0.985, x0_exit=0.760, x1_exit=0.985, y0=0.40, y1=0.60,
-         behind="colonnade", pin=("P", "C"), label="QA-04-6 hero north-wing band"),
+         behind="colonnade", pin=PIN_HAND_PLACED, label="QA-04-6 hero north-wing band"),
 ]
 CROWN_SAFETY = 1.30      # the Sapling crowns spread wider than CROWN_R x height
 
@@ -897,8 +969,8 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
     plan = list(PLAN)
     if colonnade_polys and hall_poly:
         plan += screen_height_cap(redwood_screen(colonnade_polys, hall_poly, hall_field), colonnade_polys)
-        # QA-02-7: keep the low sun off the colonnade faces (see shadow_relief)
-        plan = shadow_relief(plan, colonnade_polys, lagoon_field)
+        # QA-02-7: keep the low sun off the colonnade faces (see shadow_relief); QA-05-10 adds the shore belt
+        plan = shadow_relief(plan, colonnade_polys, lagoon_field, terrain_height=terrain_height)
 
         # QA-03-10 / QA-03-13: clear the guarded frame bands last, so the sun relief cannot push a crown back in
         def _land(px, py):

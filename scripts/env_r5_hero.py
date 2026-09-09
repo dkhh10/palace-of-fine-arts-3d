@@ -7,6 +7,7 @@ that carries LIGHT.  This opens a master .blend read-only, points the scene at t
 
     blender -b --python scripts/env_r5_hero.py -- --out renders/previews/environment/r5_master_hero.png
     blender -b --python scripts/env_r5_hero.py -- --blend /path/to/master.blend --samples 96
+    blender -b --python scripts/env_r5_hero.py -- --cam CAM_qa_03_colonnade_walk --engine BLENDER_EEVEE --res 1280x720 --lod 1
 """
 import bpy, sys, os
 from pathlib import Path
@@ -21,8 +22,10 @@ def opt(name, default=None):
     return ARGV[ARGV.index(name) + 1] if name in ARGV else default
 
 
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
-blend = Path(opt("--blend", str(MAIN / "master.blend")))
+# BUG, found in the round-7 review follow-up: this defaulted to `<main checkout>/master.blend`, so every round-7
+# render read the MAIN master (ENV r6, 5954 objects) while the numbers were reported against the master this
+# worktree had just built (6484 objects).  The default is now THIS checkout's master; pass --blend for any other.
+blend = Path(opt("--blend", str(common.ROOT / "master.blend")))
 out = Path(opt("--out", str(common.ROOT / "renders/previews/environment/r5_master_hero.png")))
 samples = int(opt("--samples", "96"))
 engine = opt("--engine", "CYCLES").upper()
@@ -38,6 +41,9 @@ if cam is None:
     cands = [o.name for o in bpy.data.objects if o.type == "CAMERA"]
     sys.exit(f"[env_r5_hero] no camera {cam_name}; have {cands}")
 scene.camera = cam
+lod = opt("--lod")
+if lod is not None:                       # match QA's Eevee pass, which renders LOD1 for both viewport and render
+    common.set_lod(viewport=int(lod), render=int(lod))
 scene.render.resolution_x, scene.render.resolution_y = RES
 scene.render.resolution_percentage = 100
 scene.render.engine = engine
@@ -55,6 +61,9 @@ if engine == "CYCLES":
             d.use = True
     except Exception as e:                                    # noqa: BLE001 - CPU fallback is fine
         print(f"[env_r5_hero] GPU setup skipped: {e}")
+if "--nocomp" in ARGV:      # diagnostic: strip lighting's COMP_golden_hour mist to isolate the geometry's own contrast
+    scene.render.use_compositing = False
+    print("[env_r5_hero] compositing OFF (COMP_golden_hour mist bypassed)")
 scene.render.image_settings.file_format = "PNG"
 scene.render.filepath = str(out)
 out.parent.mkdir(parents=True, exist_ok=True)
