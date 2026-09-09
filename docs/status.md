@@ -258,3 +258,7 @@ In flight: LIGHT r12, ENV r7. Next: lighting review + merge, MAT r7 dispatch, th
 ## 2026-09-09 · ENV r7 reported (99c544c), in review
 ENV r7: LOD1 4.62 M; cam03 ground std 14.1 -> 27.8 (walk 16.7 % of box); shore band null (+12 pp sun reach, band 71.7 -> 71.7: needs +43.9 lum from sky/materials, not planting); cam06 ground 13.8 -> 23.4 %, asphalt 2.47 -> 4.08 %; south wing untouched as briefed. Sheet renders/qa_comparisons/env_r7_sheet.png.
 Hand-offs: lighting (cam06 mist +58 lum flattens the horizon, wing sky term 36 lum short, shore +43.9 lum), materials (MAT_paving_stone / _worn missing; shore level without saturation), arch (COLONNADE_WALK_Z tracks COLONNADE_GROUND_Z). In flight: ENV review, LIGHT r12. Next: merge lighting, MAT r7.
+
+## 2026-09-09 · ENV r7 review: MERGE WITH FIXES (docs/reviews/env_r7_review.md); fix agent dispatched
+Fix now: north/cam05 bands pin only P/C so 7 hand-placed trees were swept and 3 dropped (round-5 lesson again); COLONNADE_WALK_Z / PAVE_CENTRE hand-copied instead of imported from arch_params; two claims quote one box for two boxes; stale verge comment. Carry: paving fallback rationale, sample-count comment, absolute MAIN path, 3 previews > 5 MB, mixed baselines.
+In flight: ENV r7 fixes (fresh agent, branch environment), LIGHT r12. Next: merge lighting, MAT r7, merge env, lead_build.sh, QA round 6.
