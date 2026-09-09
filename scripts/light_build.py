@@ -519,6 +519,7 @@ def build_world(az, el, calib, moment):
     w["sky_camera_saturation"] = SKY_CAMERA_SATURATION
     w["sky_glossy_saturation"] = SKY_GLOSSY_SATURATION
     w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
+    w["sky_diffuse_hue"] = SKY_DIFFUSE_HUE          # r12 review finding 3: the world carried every other socket but not this one
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)
     w["sky_diffuse_tint_antisun"] = SKY_DIFFUSE_TINT_ANTISUN
     w["sky_diffuse_tint_horizon"] = SKY_DIFFUSE_TINT_HORIZON
@@ -534,6 +535,15 @@ def _new(nt, idname, name=None, loc=(0, 0)):
     if name:
         n.name = n.label = name
     return n
+
+
+def _mix_in(node, name):
+    """A ShaderNodeMix input picked by name AND type (r12 review finding 8; same rule as make_sky_world)."""
+    return next(i for i in node.inputs if i.name == name and i.type == "RGBA")
+
+
+def _mix_out(node):
+    return next(o for o in node.outputs if o.type == "RGBA")
 
 
 def _set_menu(sock, value):
@@ -583,11 +593,14 @@ def build_compositor_group(haze_color, exposure):
     g.links.new(f_mist.outputs[0], f_haze.inputs[0]); g.links.new(is_geo.outputs[0], f_haze.inputs[1])
     haze = _new(g, "ShaderNodeMix", "aerial_haze", (0, 100)); haze.data_type = "RGBA"; haze.blend_type = "MIX"; haze.clamp_factor = True
     g.links.new(f_haze.outputs[0], haze.inputs["Factor"])
-    g.links.new(gi.outputs["Image"], haze.inputs[6]); g.links.new(gi.outputs["Haze Color"], haze.inputs[7])
+    # r12 review finding 8: ShaderNodeMix carries one socket per data type and several share a name, so pick them by
+    # name AND type (as make_sky_world does) -- the indices differ between Blender versions and a silent mis-link
+    # would composite the haze colour into the wrong input with no error.
+    g.links.new(gi.outputs["Image"], _mix_in(haze, "A")); g.links.new(gi.outputs["Haze Color"], _mix_in(haze, "B"))
     # --- bloom on sun-lit highlights
     glare = _new(g, "CompositorNodeGlare", "bloom", (250, 100))
     _set_menu(glare.inputs["Type"], "Bloom"); _set_menu(glare.inputs["Quality"], "High")
-    g.links.new(haze.outputs[2], glare.inputs["Image"])
+    g.links.new(_mix_out(haze), glare.inputs["Image"])
     g.links.new(gi.outputs["Bloom Threshold"], glare.inputs["Threshold"])
     g.links.new(gi.outputs["Bloom Strength"], glare.inputs["Strength"])
     g.links.new(gi.outputs["Bloom Size"], glare.inputs["Size"])
@@ -609,8 +622,8 @@ def build_compositor_group(haze_color, exposure):
     g.links.new(vs.outputs[0], fac.inputs[1])
     vig = _new(g, "ShaderNodeMix", "apply_vignette", (650, 0)); vig.data_type = "RGBA"; vig.blend_type = "MULTIPLY"
     vig.inputs["Factor"].default_value = 1.0
-    g.links.new(glare.outputs["Image"], vig.inputs[6]); g.links.new(fac.outputs[0], vig.inputs[7])
-    g.links.new(vig.outputs[2], go.inputs["Image"])
+    g.links.new(glare.outputs["Image"], _mix_in(vig, "A")); g.links.new(fac.outputs[0], _mix_in(vig, "B"))
+    g.links.new(_mix_out(vig), go.inputs["Image"])
 
     print("[light_build] glare sockets:", {i.name: (round(i.default_value, 3) if i.type == "VALUE" else i.default_value) for i in glare.inputs if i.type in ("VALUE", "MENU", "INT")})
     return g
@@ -658,6 +671,10 @@ def build(moment="morning", calibrate=True, save=True):
                 sky_camera_saturation=SKY_CAMERA_SATURATION,      # round-10 review nit: the three saturations were
                 sky_glossy_saturation=SKY_GLOSSY_SATURATION,      # on the world but not on the sun's meta block,
                 sky_diffuse_saturation=SKY_DIFFUSE_SATURATION,    # so a rig read back from the sun was incomplete
+                sky_diffuse_hue=SKY_DIFFUSE_HUE,                  # r12 review finding 3: the four round-12 sockets
+                sky_diffuse_tint=list(SKY_DIFFUSE_TINT),          # were on neither the sun's meta block nor (hue)
+                sky_diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,   # the world, so a rig read back from either
+                sky_diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,   # could not be reproduced
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])

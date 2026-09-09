@@ -149,7 +149,8 @@ def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
-                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0):
+                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0,
+                   split_rays=True):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -189,10 +190,23 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     sky_color = node.outputs[0]
     glossy_boost = camera_boost if glossy_boost is None else glossy_boost
     glossy_saturation = camera_saturation if glossy_saturation is None else glossy_saturation
+    # ROUND 13 (Eevee shade, QA-05-1). `split_rays=False` builds the SAME world with the DIFFUSE branch applied to
+    # every ray: no Light Path node, boost = diffuse_boost, the camera and glossy saturation stages dropped, and the
+    # diffuse tint (with its anti-sun and horizon weights) multiplied in unconditionally. It is not a look; it is the
+    # world that `light_probes.bake` swaps in while it bakes the Eevee irradiance volumes, because Eevee evaluates
+    # the world's Light Path node as a CAMERA ray in that capture and therefore bakes the camera branch (measured:
+    # shaded attic 94.9 Eevee vs 116.7 Cycles, ratio 0.813 = camera_boost / diffuse_boost). Applying the diffuse
+    # branch to every ray makes the capture correct whatever ray class Eevee claims it is.
     vis_out = None          # 1 for camera OR glossy rays (used by the saturation blend)
     cam_ray = gl_ray = None
     gain_out = None         # per-ray multiplier: camera_boost on camera rays, glossy_boost on glossy rays, else 1
-    if (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
+    if not split_rays:
+        strength = strength * diffuse_boost          # the gain every ray gets; no Light Path node is built
+        zero = nt.nodes.new("ShaderNodeValue"); zero.name = "no_camera_or_glossy"
+        zero.outputs[0].default_value = 0.0          # "is camera or glossy" == 0, so every Fac below is the diffuse one
+        vis_out = zero.outputs[0]
+        camera_saturation = glossy_saturation = 1.0  # their stages would have Fac 0; do not build them
+    elif (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
             or glossy_saturation != 1.0 or diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9):
         lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
         vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"

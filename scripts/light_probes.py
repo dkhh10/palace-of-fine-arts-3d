@@ -95,7 +95,81 @@ def prepare_scene(scene=None):
     return s
 
 
-def bake(scene=None, free_first=True, physical_vault=True):
+BAKE_WORLD_NAME = "WORLD_bake_lighting_only"
+
+
+def bake_world(scene=None):
+    """ROUND 13 (QA-05-1, Eevee half). Build the world the BAKE must see, or return None if there is nothing to fix.
+
+    Round 12 put the shade fix on DIFFUSE-only world sockets (boost 2.50, a blue tint weighted anti-sun and toward
+    the horizon) gated by `Fac = 1 - min(is_camera + is_glossy, 1)`. Measured on a one-sphere scene with no lamps
+    (`scripts/light_r13_probe.py`, linear EXR, so every number is a physical ratio):
+
+        Eevee, world spherical harmonics, no probe   ship 3.435/3.443/28.641   camera_boost=1 3.435/3.443/28.641
+                                                     split_rays=False 3.435/3.443/28.641
+        Eevee, BAKED irradiance volume, bake=ship         4.084/4.355/28.032   <- warmer: R +19 %, G +26 %
+        Eevee, BAKED irradiance volume, bake=split_rays=False  3.412/3.365/28.069
+
+    So Eevee's WORLD SH already evaluates the diffuse branch (changing camera_boost moves it by nothing, and the
+    unconditional world is bit-identical to it), but the LIGHT PROBE CAPTURE evaluates the world as a CAMERA ray:
+    with the shipped world the baked grid holds camera_boost 2.10 and camera_saturation 1.20 and none of the tint.
+    Everything inside LIGHTPROBE_rotunda / LIGHTPROBE_colonnade - which is where the hero's shaded stone is - is lit
+    from that grid, so the round-12 shade fix was Cycles-only in Eevee.
+
+    The fix is to bake with the SAME sky built `split_rays=False`, i.e. the diffuse branch applied to every ray. It
+    is not a look and not a fudge: it makes the capture agree with what Cycles' diffuse rays get, whatever ray class
+    Eevee decides the capture is. The parameters are read from the world's own custom properties (written by
+    `light_build.build_world`), so a master built from any rig bakes its own rig, and only fall back to
+    `light_build`'s constants if a property is missing."""
+    s = scene or bpy.context.scene
+    w = s.world
+    if w is None:
+        return None
+    try:
+        import light_build as lb
+        import light_calibrate as cal
+    except Exception as e:
+        print("[light_probes] cannot import the lighting rig, baking with the scene world as-is:", e)
+        return None
+
+    def prop(key, default):
+        v = w.get(key)
+        return default if v is None else v
+
+    az = prop("sun_azimuth_deg", None)
+    el = prop("sun_elevation_deg", None)
+    if az is None or el is None:
+        print(f"[light_probes] world {w.name!r} carries no sun_azimuth_deg/sun_elevation_deg; "
+              f"baking with the scene world as-is")
+        return None
+    sky = {k: float(prop("sky_" + k, v)) for k, v in lb.SKY.items()}
+    tint = prop("sky_diffuse_tint", list(lb.SKY_DIFFUSE_TINT))
+    old = bpy.data.worlds.get(BAKE_WORLD_NAME)
+    if old:
+        bpy.data.worlds.remove(old)
+    bw = cal.make_sky_world(
+        BAKE_WORLD_NAME, float(az), float(el), sky, sun_disc=False,
+        strength=float(prop("sky_strength_lighting", lb.SKY_STRENGTH)),
+        diffuse_boost=float(prop("sky_diffuse_boost", lb.SKY_DIFFUSE_BOOST)),
+        diffuse_saturation=float(prop("sky_diffuse_saturation", lb.SKY_DIFFUSE_SATURATION)),
+        diffuse_hue=float(prop("sky_diffuse_hue", lb.SKY_DIFFUSE_HUE)),
+        diffuse_tint=tuple(float(c) for c in tint),
+        diffuse_tint_antisun=float(prop("sky_diffuse_tint_antisun", lb.SKY_DIFFUSE_TINT_ANTISUN)),
+        diffuse_tint_horizon=float(prop("sky_diffuse_tint_horizon", lb.SKY_DIFFUSE_TINT_HORIZON)),
+        split_rays=False)
+    bw["baked_from_world"] = w.name
+    bw["why"] = ("Eevee evaluates the light-probe capture as a camera ray; this is the same sky with the DIFFUSE "
+                 "branch applied to every ray (light_probes.bake_world, round 13)")
+    print(f"[light_probes] bake world {BAKE_WORLD_NAME}: diffuse branch of {w.name!r} on every ray "
+          f"(strength {float(prop('sky_strength_lighting', lb.SKY_STRENGTH)):.3f} x boost "
+          f"{float(prop('sky_diffuse_boost', lb.SKY_DIFFUSE_BOOST)):.2f}, tint "
+          f"{tuple(round(float(c), 2) for c in tint)}, antisun "
+          f"{float(prop('sky_diffuse_tint_antisun', lb.SKY_DIFFUSE_TINT_ANTISUN)):.2f}, horizon "
+          f"{float(prop('sky_diffuse_tint_horizon', lb.SKY_DIFFUSE_TINT_HORIZON)):.2f})")
+    return bw
+
+
+def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
     """Bake every light probe in the CURRENT scene. Needs the real geometry -> run this on master.blend.
 
     ROUND 11 / QA-04-1. The bake is a function of the rig that is LIVE when it runs, and `build_master.py` now ends
@@ -124,6 +198,7 @@ def bake(scene=None, free_first=True, physical_vault=True):
         print("[light_probes] no LIGHT_PROBE objects in the scene; nothing to bake")
         return []
     switched = False
+    world0 = s.world                            # round 13: restored in the same finally as the engine and the vault
     if physical_vault:
         try:
             import light_presets as lp
@@ -133,6 +208,9 @@ def bake(scene=None, free_first=True, physical_vault=True):
                   "scene's real indirect light, not the Eevee render-time override")
         except Exception as e:
             print("[light_probes] could not force the physical vault rig:", e)
+    bw = bake_world(s) if lighting_world else None
+    if bw is not None:
+        s.world = bw
     try:
         if s.render.engine != "BLENDER_EEVEE":
             s.render.engine = "BLENDER_EEVEE"   # the bake operator only exists for Eevee
@@ -152,13 +230,16 @@ def bake(scene=None, free_first=True, physical_vault=True):
                   f"(grid {p.data.resolution_x}x{p.data.resolution_y}x{p.data.resolution_z})")
     finally:
         s.render.engine = eng0
+        s.world = world0                        # round 13: the bake-only world never survives into the saved file
+        if bw is not None and bw.users == 0:
+            bpy.data.worlds.remove(bw)
         if switched:
             try:
                 import light_presets as lp
                 lp.apply_vault_for_engine("EEVEE" if eng0.endswith("EEVEE") else "CYCLES")
             except Exception as e:
                 print("[light_probes] could not restore the vault rig:", e)
-        print(f"[light_probes] restored: engine {eng0}, vault rig "
+        print(f"[light_probes] restored: engine {eng0}, world {world0.name if world0 else None}, vault rig "
               f"{'EEVEE override' if eng0.endswith('EEVEE') else 'physical'}")
     return probes
 
@@ -187,7 +268,7 @@ if __name__ == "__main__":
     if "--free" in args:
         free(scene)
     if "--bake" in args:
-        bake(scene)
+        bake(scene, lighting_world="--camera-bake" not in args)   # --camera-bake reproduces the round-12 bake
     if "--save" in args:
         path = bpy.data.filepath or str(common.ROOT / "master.blend")
         bpy.ops.wm.save_as_mainfile(filepath=path, compress=True)
