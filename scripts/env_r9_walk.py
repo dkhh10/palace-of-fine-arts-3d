@@ -19,7 +19,10 @@ Definitions, fixed here so BEFORE and AFTER are the same measurement:
                  vertices inside the eye band z = walk floor - 0.5 .. + 2.5 m.  A bounding sphere is useless here
                  (a merged rip-rap run or a 15 m eucalyptus crown swallows the walk without a leaf near the
                  floor); the z window is what makes "clearance" mean what the flythrough camera sees.
-Exit code 1 if any sample has origin d < GALLERY_KEEPOUT, so the run fails loudly in a chain.
+Exit code 1 if any sample has origin d < GALLERY_KEEPOUT **or** extent d < HALF_CLEAR (1.40 m), so the run fails
+loudly in a chain.  Round-9 review, carry 9: only the origin statistic was gated, and the origin is the weaker of
+the two - a joined run (the rip-rap, the path verges, a merged shrub belt) has one origin far from the walk and
+geometry all over it, so an eye-band intrusion could pass while the printed number showed it.
 """
 import bpy, sys, os, math
 from mathutils import Vector
@@ -38,6 +41,7 @@ def arg(name, default):
 BLEND = arg("--blend", "assets/environment.blend")
 STEP = float(arg("--step", "2.0"))
 SKIP_COLL = ("ENV_terrain", "ENV_water", "ENV_trees")
+HALF_CLEAR = 1.40                # half of COL_ROW_SPACING - COLONNADE_D = 2.80 m, the flythrough's clear width
 NEAR = 12.0          # bbox pre-filter: only objects whose box comes within this of a walk sample are opened
 
 
@@ -111,20 +115,28 @@ def main():
               f"{be[1][:26]:26s} {be[0]:6.2f}")
 
     bad = [r for r in rows if r[4][0] < L.GALLERY_KEEPOUT]
-    inside = [r for r in rows if r[4][0] < 1.40]
+    bad_ext = [r for r in rows if r[5][0] < HALF_CLEAR]           # carry 9: the eye band is gated too
+    inside = [r for r in rows if r[4][0] < HALF_CLEAR]
     worst_o = min(r[4][0] for r in rows)
     worst_e = min(r[5][0] for r in rows)
     print(f"\n[env_r9_walk] SUMMARY  samples {len(rows)}  min origin distance {worst_o:.2f} m  "
           f"min extent distance {worst_e:.2f} m")
-    print(f"[env_r9_walk] samples with an ENV object inside the 2.80 m clear width (< 1.40 m): {len(inside)}")
+    print(f"[env_r9_walk] samples with an ENV object ORIGIN inside the 2.80 m clear width (< {HALF_CLEAR} m): "
+          f"{len(inside)}")
+    print(f"[env_r9_walk] samples with ENV GEOMETRY in the eye band inside the clear width "
+          f"(< {HALF_CLEAR} m): {len(bad_ext)}")
     print(f"[env_r9_walk] samples inside the {L.GALLERY_KEEPOUT} m planting keep-out: {len(bad)}")
     for wing, _c, _R, _t, _s, _a in wings:
         w = [r for r in rows if r[0] == wing]
         if w:
             print(f"[env_r9_walk]   wing {wing:6s}: min origin {min(r[4][0] for r in w):6.2f} m, "
                   f"min extent {min(r[5][0] for r in w):6.2f} m over {len(w)} samples")
-    print("[env_r9_walk] PASS" if not bad else "[env_r9_walk] FAIL")
-    if bad:
+    ok = not bad and not bad_ext
+    print(f"[env_r9_walk] gates: origin >= {L.GALLERY_KEEPOUT} m ({worst_o:.2f}, "
+          f"{'PASS' if not bad else 'FAIL'}), eye-band extent >= {HALF_CLEAR} m ({worst_e:.2f}, "
+          f"{'PASS' if not bad_ext else 'FAIL'})")
+    print("[env_r9_walk] PASS" if ok else "[env_r9_walk] FAIL")
+    if not ok:
         sys.exit(1)
 
 

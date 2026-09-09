@@ -35,14 +35,10 @@ for name in ("ENV_terrain", "ENV_water", "ENV_trees", "ENV_tree_instances", "ENV
     SUB[name] = common.get_collection(name, parent=ENV)
 
 SITE = common.load_site_local()
-LAGOON_OSM = L.ensure_ccw(L.dedupe_poly(SITE["lagoon0"][0]))
-LAGOON = L.jitter_polygon(LAGOON_OSM, step=2.0, amp=0.5, seed=3)     # irregular stone edge (refs 169, 022)
-ISLETS = [L.ensure_ccw(L.dedupe_poly(SITE["lagoon1"][0])), L.ensure_ccw(L.dedupe_poly(SITE["lagoon2"][0]))]
+LAGOON_OSM, LAGOON, ISLETS, LAGOON_FIELD, ISLET_FIELDS = L.water_polygons(SITE)   # one definition, shared with the probes
 COLONNADE_ROOFS = [L.ensure_ccw(L.dedupe_poly(p)) for k in ("roof306 h20", "roof310 h19", "roof313 h21", "roof314 h21") for p in SITE[k]]
 HALL = L.ensure_ccw(L.dedupe_poly(SITE["b302 h20m"][0]))
 
-LAGOON_FIELD = L.PolyField(LAGOON, cell=8.0)
-ISLET_FIELDS = [L.PolyField(p, cell=6.0) for p in ISLETS]
 HALL_FIELD = L.PolyField(HALL, cell=10.0)
 COL_FIELDS = [L.PolyField(p, cell=8.0) for p in COLONNADE_ROOFS[:2]]      # QA-05-11: the walk is a level
 # ... with a bounding box in front of it: `terrain_height` is called ~10^5 times and PolyField.dist falls back to

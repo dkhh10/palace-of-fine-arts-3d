@@ -273,6 +273,20 @@ class PolyField:
         return -d if (self.closed and point_in_poly(x, y, self.poly)) else d
 
 
+def water_polygons(site):
+    """`(lagoon_osm, lagoon, islets, lagoon_field, islet_fields)` for a `site_local` dict.
+
+    One definition of "where the water is", so a probe cannot drift from the build (r9 review: the same class of
+    mistake as ENV's colonnade exclusion, which tested a copy of the arc instead of the arc).  `env_build` calls
+    this at import time; `env_r9_replan --land` calls it to test PLAN coordinates against the same fields.
+    """
+    lagoon_osm = ensure_ccw(dedupe_poly(site["lagoon0"][0]))
+    lagoon = jitter_polygon(lagoon_osm, step=2.0, amp=0.5, seed=3)      # irregular stone edge (refs 169, 022)
+    islets = [ensure_ccw(dedupe_poly(site["lagoon1"][0])), ensure_ccw(dedupe_poly(site["lagoon2"][0]))]
+    return (lagoon_osm, lagoon, islets,
+            PolyField(lagoon, cell=8.0), [PolyField(p, cell=6.0) for p in islets])
+
+
 def offset_polygon(poly, dist):
     """Simple vertex-normal offset (positive = outward for a CCW polygon). Good enough for smooth shorelines."""
     poly = ensure_ccw(poly)

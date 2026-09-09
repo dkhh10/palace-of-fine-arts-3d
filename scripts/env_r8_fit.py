@@ -23,8 +23,13 @@ REF169 = "reference/photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
 
 # r8 review, finding 5: the mass's vertical extent used to be measured over a hard-coded frame-x window
 # 0.705-0.745, i.e. over what the same run then called the mass's RIGHT HALF.  It is a parameter now, and the
-# default is the span the widened column profile actually measured: dark fraction >= 0.35 over 0.62-0.735
-# (renders/logs/env_r8_ref_profile.log).
+# default is the span the widened column profile measured (renders/logs/env_r9_ref_profile.log).
+# r9 review, finding 4: that span is NOT "dark fraction >= 0.35 throughout".  The profile is
+#   0.61:0.16 | 0.62:0.36  0.63:0.44  0.64:0.33  0.65:0.19  0.66:0.25  0.67:0.28  0.68:0.23  0.69:0.39
+#   0.70:0.35  0.71:0.58  0.72:0.56  0.73:0.45 | 0.74:0.14
+# so 0.62 and 0.73 are the buckets where the profile CROSSES 0.35 (0.16 to its left, 0.14 to its right, i.e. the
+# mass's own edges), the window mean is 0.37, and the middle 0.64-0.68 is a thin stretch of 0.19-0.33 - the gap
+# between the near cluster and the dark crown right of the dome, not a solid wall of foliage.
 MASS_X = (0.62, 0.735)
 
 

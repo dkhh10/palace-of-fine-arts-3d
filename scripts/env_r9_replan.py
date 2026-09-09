@@ -1,6 +1,6 @@
 """Round 9: where every hand-placed PLAN tree stands relative to cam 01 and to the colonnade gallery.
 
-    blender -b --python scripts/env_r9_replan.py -- [--solve 0.684 0.704 ...] [--roff 13.0]
+    blender -b --python scripts/env_r9_replan.py -- [--solve 0.684 0.704 ...] [--roff 13.0] [--land] [--verify]
 
 No Blender data is touched (it runs headless only because `qa_cameras` imports bpy/mathutils).  For each PLAN
 entry it prints the closed-form cam-01 frame x of the trunk, the crown's frame-x span, the distance along the
@@ -8,6 +8,17 @@ view axis and `env_lib.gallery_offset` - the radial distance from the colonnade 
 number round 9 found four A-group entries failing.  `--solve` re-derives a world position for a target frame x at
 `--roff` metres outside the arc (that is `env_r8_fit.solve`, the round-8 tool, so the A group can be re-placed the
 way A2 was instead of being swept there by `shadow_relief`).
+
+`--land` tests every PLAN coordinate against the three hard gates a hand-placed tree has to satisfy on its own,
+now that no build pass will move it (r9 review, finding 1): dry land (`env_lib.water_polygons`, the very fields
+`env_build` passes to `env_trees`), the 4.1 m gallery keep-out, and QA-02-13's 37 m podium ring measured with the
+PLAN height.  For a failing entry it spiral-searches the nearest coordinate that passes ALL THREE, so the plan can
+be corrected by hand instead of by a snap that runs after the gates.
+
+`--verify` re-runs the two solvers whose output is frozen in PLAN - `env_r8_fit.solve` for the A and A2 conifers,
+and the QA-02-13 radial push for the podium-ring bake - and fails if any baked coordinate has drifted more than
+0.2 m from what the code now computes (r9 review, carry 7: PLAN was a literal snapshot with nothing asserting it,
+so a change to COL_ARC_CENTER / COL_ARC_R, the cam-01 station or the lens would silently make all of it stale).
 """
 import sys, os, math
 
@@ -49,6 +60,96 @@ def span(sp, x, y, h):
     return c - half, c + half
 
 
+PODIUM_R, CLEAR = 31.0, 6.0            # QA-02-13, as in env_trees.shadow_relief
+
+
+def gates(sp, x, y, h, lagoon_field, islet_fields):
+    """`(dry, gallery_ok, podium_ok)` for one candidate coordinate - the three gates a hand-placed PLAN entry has
+    to satisfy by itself.  Same predicates as `env_trees.land_snap`, `env_lib.gallery_clear` and the podium loop
+    in `env_trees.shadow_relief`."""
+    dry = not (lagoon_field.signed(x, y) < 1.0 and not any(f.signed(x, y) < 0 for f in islet_fields))
+    g = L.gallery_offset(x, y)
+    rad = L.CROWN_R.get(sp, 0.35) * h
+    d = math.hypot(x, y)
+    return dry, (g is None or g >= L.GALLERY_KEEPOUT), (d - rad >= PODIUM_R + CLEAR)
+
+
+def land_report():
+    site = common.load_site_local()
+    _osm, _lag, _isl, lagoon_field, islet_fields = L.water_polygons(site)
+    print(f"\n[env_r9_replan] PLAN vs the three hard gates: dry land, {L.GALLERY_KEEPOUT} m gallery keep-out, "
+          f"{PODIUM_R + CLEAR:.0f} m podium ring (PLAN height)")
+    bad = 0
+    for (sp, x, y, h, note) in env_trees.PLAN:
+        dry, gok, pok = gates(sp, x, y, h, lagoon_field, islet_fields)
+        if dry and gok and pok:
+            continue
+        bad += 1
+        why = " ".join(w for w, ok in (("IN-WATER", dry), ("GALLERY", gok), ("PODIUM", pok)) if not ok)
+        d = math.hypot(x, y)
+        rad = L.CROWN_R.get(sp, 0.35) * h
+        print(f"  {str(note).split(' ')[0]:5s} {sp:14s} ({x:6.1f},{y:6.1f}) h{h:4.0f}  {why:22s} "
+              f"lagoon {lagoon_field.signed(x, y):6.2f}  r-crown {d - rad:5.1f}  frame x {frame_x(x, y):.3f}")
+        # nearest coordinate that passes all three: 0.5 m spiral steps, 32 bearings, out to 20 m
+        best = None
+        for i in range(1, 41):
+            r = 0.5 * i
+            for k in range(32):
+                a = 2 * math.pi * k / 32
+                xx, yy = x + r * math.cos(a), y + r * math.sin(a)
+                if all(gates(sp, xx, yy, h, lagoon_field, islet_fields)):
+                    best = (xx, yy, r)
+                    break
+            if best:
+                break
+        if best:
+            print(f"        nearest coordinate passing all three: ({best[0]:6.2f},{best[1]:6.2f})  {best[2]:.1f} m "
+                  f"away  frame x {frame_x(x, y):.3f} -> {frame_x(best[0], best[1]):.3f}  "
+                  f"d_axis {axis_dist(best[0], best[1]):6.1f}")
+        else:
+            print("        NO coordinate within 20 m passes all three")
+    print(f"[env_r9_replan] {bad} of {len(env_trees.PLAN)} PLAN entries fail a gate")
+    return bad
+
+
+# --- carry 7: the coordinates in PLAN that are a formula's output, and the formula that produced them ----------
+# `--verify` recomputes each and fails if PLAN has drifted more than TOL metres from it.
+TOL = 0.2
+SOLVED = [   # (frame-x target, radial offset outside the arc, PLAN coordinate, label)
+    (0.672, 13.0, (-37.2, -43.1), "A cluster core"),
+    (0.684, 13.0, (-40.0, -42.5), "A cluster depth"),
+    (0.704, 13.0, (-44.5, -41.4), "A dark mass right of the dome"),
+    (0.713, 13.0, (-46.5, -40.8), "A cluster second crown"),
+    (0.723, 13.0, (-48.6, -40.2), "A cluster depth"),
+    (0.790, 8.0, (-60.5, -30.6), "A2 strip pine"),
+    (0.820, 8.0, (-65.7, -28.2), "A2 second column"),
+    (0.890, 8.0, (-76.6, -22.3), "A2 first box"),
+]
+
+
+def verify():
+    print(f"\n[env_r9_replan] --verify: PLAN vs the solvers, tolerance {TOL} m")
+    fails = 0
+    for (t, roff, (px, py), label) in SOLVED:
+        X, Y = FIT.solve(t, roff)
+        d = math.hypot(X - px, Y - py)
+        ok = d <= TOL
+        fails += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FAIL'} solve({t:.3f}, {roff:+.1f}) -> ({X:7.2f},{Y:7.2f})  PLAN "
+              f"({px:7.2f},{py:7.2f})  d {d:5.2f} m   {label}")
+    for (sp, x, y, h, note) in env_trees.PLAN:
+        d = math.hypot(x, y)
+        rad = L.CROWN_R.get(sp, 0.35) * h
+        if d - rad >= PODIUM_R + CLEAR or d < 1e-3:
+            continue
+        fails += 1
+        print(f"  FAIL {sp:14s} ({x:6.1f},{y:6.1f}) h{h:4.0f} crown {rad:4.1f} reaches r {d - rad:5.1f} - inside "
+              f"the {PODIUM_R + CLEAR:.0f} m podium ring   [{str(note)[:40]}]")
+    print(f"[env_r9_replan] --verify: {fails} failure(s)")
+    if fails:
+        sys.exit(1)
+
+
 def main():
     print(f"[env_r9_replan] cam 01 {SPEC['loc']} lens {SPEC['lens']} mm; gallery keep-out {L.GALLERY_KEEPOUT} m")
     print("  group species     (   X,     Y)   h   frame x span     centre   d_axis  gallery_off")
@@ -76,6 +177,10 @@ def main():
             print(f"    {sp:14s} ({x:6.1f},{y:6.1f}) h{h:4.0f} crown {rad:4.1f} reaches r {d - rad:5.1f}"
                   f"  ->  ({nx:6.2f},{ny:6.2f})  frame x {frame_x(x, y):.3f} -> {frame_x(nx, ny):.3f}"
                   f"   [{str(note)[:34]}]")
+    if "--land" in ARGS:
+        land_report()
+    if "--verify" in ARGS:
+        verify()
     if "--solve" in ARGS:
         i = ARGS.index("--solve")
         targets = []

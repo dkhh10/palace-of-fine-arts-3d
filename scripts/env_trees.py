@@ -294,6 +294,12 @@ def generate_library(quick=False, species=None):
 # corrections are baked in at the coordinate the push itself produced, computed with the PLAN height so the clearance
 # holds however far the relief later lowers the crown (`env_r9_replan.py --podium`, renders/logs/env_r9_podium.log).
 # The scene geometry is unchanged by that bake - the push was deterministic and idempotent - only the plan is honest.
+# ROUND 9 REVIEW (finding 1): and the onto-land snap was still moving nine of them at placement time, after every
+# gate.  It runs first now and refuses to move a pinned tree (`land_snap`), so the nine coordinates below were
+# corrected by hand to the nearest point that passes ALL THREE hard gates - dry land, the 4.1 m gallery keep-out
+# and the 37 m podium ring at the PLAN height - found with `env_r9_replan.py --land` and tagged `r9r LAND`.
+# `env_r9_replan.py --verify` re-runs the two solvers that produced the rest (`env_r8_fit.solve` and the podium
+# push) and fails if PLAN has drifted more than 0.2 m from them.
 PLAN = [
     # A. peninsula north lobe (land X -40..-16, Y 0..26): the dense dark cluster right of the rotunda (user image, 169)
     #   ROUND 8, re-derived from ref 169 through the cam-01 projection.  Measured on the photo (env_r8_fit --ref):
@@ -324,30 +330,31 @@ PLAN = [
     #   which is the A2 construction with A2's +8 replaced by the shipped +13.  Frame-x centres are unchanged
     #   (0.672 / 0.684 / 0.704 / 0.713 / 0.723); the crowns read 0.003-0.004 of frame narrower because the axis
     #   distance goes 123-128 -> 134-138 m, and the spans in the notes below are the re-measured ones.
-    ("pine", -37.2, -43.1, 21.0, "A cluster core, ref 169 mass x 0.638-0.705 (QA-01-6: clear of cam02's right 40%)"),
-    ("redwood", -40.5, -2.2, 16.0, "A young redwood at the north arch (ref 070); r9 QA-02-13 ring, cam01 x 0.730"),
-    ("cypress", -44.5, -41.4, 26.0, "A dark mass right of the dome, ref 169 x 0.665-0.743"),
-    ("pine", -46.5, -40.8, 22.0, "A cluster, second crown, ref 169 x 0.680-0.746"),
+    ("pine", -37.2, -43.1, 21.0, "A cluster core, ships x 0.642-0.702 (ref 169 mass) (QA-01-6: clear of cam02's right 40%)"),
+    ("redwood", -40.5, 9.3, 16.0, "A young redwood at the north arch (ref 070); r9r LAND+ring (-40.5,-2.2 was 4.9 m into the embayment), ships x 0.728-0.773"),
+    ("cypress", -44.5, -41.4, 26.0, "A dark mass right of the dome, ships x 0.668-0.740 (ref 169)"),
+    ("pine", -46.5, -40.8, 22.0, "A cluster, second crown, ships x 0.680-0.746 (ref 169)"),
     ("willow", -40.0, 16.0, 9.0, "A pale weeping willow at the water in front of the cluster (ref 169); r8 10 -> 9 m, its crown reached frame x 0.79 where ref 169 is clear colonnade"),
-    ("broadleaf", -49.0, 13.0, 9.0, "A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow"),
-    ("cypress", -48.6, -40.2, 24.0, "A cluster depth, ref 169 x 0.689-0.757 (mass kept dense)"),
-    ("pine", -40.0, -42.5, 21.0, "A cluster depth, ref 169 x 0.652-0.716"),
+    ("broadleaf", -41.0, 13.0, 9.0, "A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow; r9r LAND (-49,13 was 6.7 m into the water), ships x 0.736-0.787"),
+    ("cypress", -48.6, -40.2, 24.0, "A cluster depth, ships x 0.689-0.757 (ref 169) (mass kept dense)"),
+    ("pine", -40.0, -42.5, 21.0, "A cluster depth, ships x 0.653-0.715 (ref 169)"),
     # P. peninsula planting band in front of the podium (hero foreground; sheet s6 "low mounded shrubs ... small
     #    trees in the podium planter zone"). Kept off the central bay: all six project to cam01 x 0.21-0.30 or
-    #    0.64-0.80 with their crowns below y 0.52, so the rotunda's body and arch stay clear.
+    #    0.62-0.80 with their crowns below y 0.52, so the rotunda's body and arch stay clear (spans re-measured on
+#    the r9r plan by `env_r9_replan`; the three hero-shore willows moved 1-3 m onto land, see below).
     ("broadleaf", -30.0, 30.0, 8.0, "P peninsula bed, right of the rotunda (cam01 x 0.71-0.78)"),
-    ("willow", -22.0, 38.0, 7.0, "P low willow at the water in front of the podium (cam01 x 0.64-0.71)"),
+    ("willow", -22.0, 37.0, 7.0, "P low willow at the water in front of the podium; r9r LAND 38 -> 37, ships x 0.622-0.679"),
     ("broadleaf", -36.0, 20.0, 7.0, "P peninsula bed (cam01 x 0.75-0.80)"),
     ("broadleaf", 26.0, 32.0, 7.0, "P peninsula bed, left of the rotunda (cam01 x 0.21-0.26)"),
     ("willow", 18.0, 40.0, 7.0, "P low willow at the water, left (cam01 x 0.24-0.30)"),
-    ("broadleaf", 34.2, 19.8, 6.0, "P peninsula bed (cam01 x 0.264); r9 QA-02-13 ring"),
+    ("broadleaf", 34.7, 19.8, 6.0, "P peninsula bed, ships x 0.245-0.277; r9 QA-02-13 ring, r9r +0.5 m out so the ring is cleared, not touched"),
     # QA-04-4: ref 169's hero shoreline is not a quay, it is a willow curtain.  Mapped through the round-02 align
     # transform, its two big weeping crowns sit at cam 01 x 0.33-0.47 and x 0.56-0.73 - world X -4..14 / -24..-8 at
     # Y 43-48 - and they hang from ~7 m down to the water, hiding the podium base between the pier groups.  Nine
     # metres, not seven: in the photo they reach the top of the QA crop.  Group P, so they are pinned.
-    ("willow", 9.0, 45.5, 9.0, "P hero-shore willow, ref 169 frame x 0.33-0.42"),
-    ("willow", -1.5, 47.0, 8.5, "P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair)"),
-    ("willow", -12.0, 45.0, 9.0, "P hero-shore willow, ref 169 frame x 0.56-0.64"),
+    ("willow", 6.9, 43.4, 9.0, "P hero-shore willow, ref 169 x 0.33-0.42; r9r LAND (9.0,45.5) -> here, ships x 0.340-0.417"),
+    ("willow", -2.6, 45.9, 8.5, "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500"),
+    ("willow", -12.0, 44.0, 9.0, "P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both).
     #   ROUND 8, re-derived from ref 169 through the cam-01 projection (scripts/env_r8_fit.py --solve).  The three
     #   trees below used to stand at arc radius 94-108, i.e. INSIDE the wing's arc (arch_params.COL_ARC_CENTER /
@@ -356,7 +363,7 @@ PLAN = [
     #   frame x 0.90-0.99).  Ref 169 has no trunk in front of a shaft anywhere in x 0.76-0.99; what it has is
     #   crowns clearing the entablature at frame x 0.79-0.83 and 0.86-0.92.  Each is now solved for its ref frame x
     #   at r = COL_ARC_R + 8 m, which is the middle of the 3-13 m strip and behind the wing from cam 01.
-    ("cypress_column", -37.9, -19.0, 27.0, "A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, cam01 x 0.695"),
+    ("cypress_column", -37.9, -20.5, 27.0, "A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, r9r LAND+ring, ships x 0.668-0.719"),
     ("pine", -60.5, -30.6, 13.0, "A2 strip along the north wing, r+8 (ref 169: crown over the cornice, x 0.79)"),
     ("cypress_column", -65.7, -28.2, 17.0, "A2 second column, r+8 (ref 169: crown over the cornice, x 0.82)"),
     ("cypress", -76.6, -22.3, 16.0, "A2 at the wing's first box, r+8 (ref 169: crown over the cornice, x 0.89)"),
@@ -377,7 +384,7 @@ PLAN = [
     # D. south shore near the south wing and pylon
     ("cypress_column", 66.0, 40.0, 22.0, "D dense cypress behind the south pylon (ref 169 far left)"),
     ("eucalyptus", 70.3, 35.5, 28.0, "D south-wing strip; r9 QA-02-7, 12 m down-sun of the r8 plan coordinate (76, 46) - the position shadow_relief used to sweep it to on every build"),
-    ("pine", 92.0, 58.0, 18.0, "D"),
+    ("pine", 92.2, 57.5, 18.0, "D; r9r LAND"),
     ("willow", 78.0, 50.0, 9.0, "D willow at the south end of the lagoon"),
     ("eucalyptus", 107.5, 51.0, 30.0, "D south pylon; r9 pushed radially out of the gallery keep-out (was 104, 52 = 2.4 m off the walk centreline)"),
     ("cypress", 112.0, 40.0, 22.0, "D"),
@@ -742,7 +749,12 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
     before, blockers = measure()
     start = dict(before)
     iters = 0
-    changed = {"lowered": 0, "dropped": 0, "moved": 0, "moved_pinned": 0, "pin_refused": 0, "metres": 0.0}
+    # r9 review, finding 2: there used to be a `moved_pinned` counter here, incremented inside the branch whose
+    # own condition is `movable`, so the log's "hand-placed 0" was a tautology that proved nothing.  What proves
+    # the claim is `moved` (every move below is a generated tree, and the branch asserts it) together with the two
+    # refusal counters: `pin_floor` = hand-placed blockers the pass gave up on at their height floor, and
+    # `pin_refused` = hand-placed crowns left inside the podium ring.  Both are printed with the trees named.
+    changed = {"lowered": 0, "dropped": 0, "moved": 0, "pin_floor": 0, "pin_refused": 0, "metres": 0.0}
     pushes = {}
     orig_h = {i: t[3] for i, t in enumerate(trees)}
     suggested = set()
@@ -764,12 +776,12 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
             trees[i][3] = 0.0
             changed["dropped"] += 1
         elif movable and pushes.get(i, 0) < 3:
+            assert movable, "shadow_relief may never move a hand-placed tree"
             sx, sy, _ = L.sun_vector()               # push 12 m down-sun so the shadow clears the target
             trees[i][1] -= 12.0 * sx
             trees[i][2] -= 12.0 * sy
             pushes[i] = pushes.get(i, 0) + 1
             changed["moved"] += 1
-            changed["moved_pinned"] += 0 if movable else 1
         else:
             if not movable and i not in suggested:
                 # Round 9: a hand-placed tree is never swept, but the pass still knows where it WOULD have gone.
@@ -781,6 +793,7 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
                 print(f"[env_trees] shadow relief: hand-placed {sp} ({x:.1f},{y:.1f}) h{h:.1f} still blocks "
                       f"{blockers.get(i, 0)} band samples at its height floor - NOT moved.  Down-sun: {cands}")
                 suggested.add(i)
+                changed["pin_floor"] += 1
             blockers.pop(i, None)                    # give up on this one, move to the next worst
             if not blockers:
                 break
@@ -820,8 +833,8 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
             print(f"    {n:4d} samples  {t[0]:14s} ({t[1]:6.1f},{t[2]:6.1f}) h{t[3]:5.1f} "
                   f"(plan h{orig_h[i]:.0f})  [{str(t[4])[:44]}]")
         print(f"[env_trees] shadow relief: lowered {changed['lowered']} crowns ({changed['metres']:.0f} m total), "
-              f"moved {changed['moved']} (hand-placed {changed['moved_pinned']}, "
-              f"{changed['pin_refused']} pinned refused at the podium ring), "
+              f"moved {changed['moved']} (all generated; {changed['pin_floor']} hand-placed left at their "
+              f"height floor, {changed['pin_refused']} refused at the podium ring), "
               f"dropped {changed['dropped']}; in shadow -> north wing "
               f"{100 * after.get(0, 0):.1f} % south wing {100 * after.get(1, 0):.1f} % hero water "
               f"{100 * after.get(2, 0):.1f} % hero shore {100 * after.get(3, 0):.1f} % "
@@ -1045,6 +1058,76 @@ def plan_markdown(plan):
     return "\n".join(lines)
 
 
+# ----------------------------------------------------------------------------- onto-land snap
+def land_snap(plan, lagoon_field, islet_fields, stage="", verbose=True):
+    """Put a tree that stands in the OSM water on the nearest land - GENERATED trees only.
+
+    Round 9 review, finding 1.  This snap used to sit in the placement loop, i.e. AFTER `shadow_relief`'s podium
+    ring and AFTER the gallery keep-out gate, and it moved anything it liked: six hand-placed PLAN entries were
+    shifted up to 5.6 m at the last moment (env_r9f_build.log:141-148), which is why "PLAN holds the shipped
+    coordinate" was still not true.  The A2 column shipped at (-38.7,-20.8) against PLAN (-37.9,-19.0), and the A
+    redwood was snapped to r 35.0 - back inside the very 37 m podium ring its bake had just cleared it of, because
+    nothing re-checked the ring afterwards.
+
+    So the snap runs FIRST, before every gate, and it may not move a hand-placed tree.  A PLAN coordinate in the
+    water is a plan bug: it FAILS THE BUILD, naming the tree and the nearest land point, and the coordinate is
+    corrected by hand.  Every gate below then sees the position that ships, and the plan is the shipped plan.
+
+    It is called twice - before `shadow_relief` and again after the relief passes, before the gallery gate - so a
+    generated tree that a 12 m down-sun push dropped in the lagoon is still caught, and the gallery gate stays
+    last.  The second call can only ever move a generated tree: the passes between them do not move pinned ones.
+    """
+    if lagoon_field is None:
+        return list(plan)
+    tag = f" ({stage})" if stage else ""
+
+    def in_water(px, py):
+        return lagoon_field.signed(px, py) < 1.0 and not any(f.signed(px, py) < 0 for f in islet_fields)
+
+    def nearest_land(px, py):
+        for r in range(1, 16):                       # 1 m spiral steps out to 15 m, 16 bearings
+            for k in range(16):
+                a = 2 * math.pi * k / 16
+                xx, yy = px + r * math.cos(a), py + r * math.sin(a)
+                if lagoon_field.signed(xx, yy) >= 1.0 or any(f.signed(xx, yy) < -0.5 for f in islet_fields):
+                    return xx, yy
+        return None
+
+    out, bad, moved, stranded = [], [], 0, 0
+    for (sp, x, y, h, note) in plan:
+        if not in_water(x, y):
+            out.append((sp, x, y, h, note))
+            continue
+        best = nearest_land(x, y)
+        if str(note).split(" ")[0] in PIN_HAND_PLACED:
+            bad.append((sp, x, y, note, best))
+            out.append((sp, x, y, h, note))
+            continue
+        if best is None:
+            stranded += 1
+            print(f"[env_trees] land snap{tag}: WARNING {sp} at ({x:.0f},{y:.0f}) is in the water and there is no "
+                  f"land within 15 m ({str(note)[:40]})")
+            out.append((sp, x, y, h, note))
+            continue
+        moved += 1
+        print(f"[env_trees] land snap{tag}: moved {sp} ({x:.1f},{y:.1f}) -> ({best[0]:.1f},{best[1]:.1f}) onto "
+              f"land ({str(note)[:40]})")
+        out.append((sp, best[0], best[1], h, note))
+    if bad:
+        for (sp, x, y, note, best) in bad:
+            where = "no land within 15 m" if best is None else f"nearest land ({best[0]:.1f},{best[1]:.1f})"
+            print(f"[env_trees] PLAN ERROR: hand-placed {sp} ({x:.1f},{y:.1f}) stands in the water - {where}  "
+                  f"[{str(note)[:60]}]")
+        raise RuntimeError(
+            f"[env_trees] land snap{tag}: {len(bad)} hand-placed PLAN coordinate(s) in the water: "
+            + ", ".join(f"{sp} ({x:.1f},{y:.1f})" for (sp, x, y, _n, _b) in bad)
+            + " - fix env_trees.PLAN by hand; this pass may not move a pinned tree (r9 review, finding 1)")
+    if verbose:
+        print(f"[env_trees] land snap{tag}: {len(out)} trees, {moved} generated moved onto land, "
+              f"{stranded} stranded, 0 hand-placed moved (a hand-placed tree in the water fails the build)")
+    return out
+
+
 # ----------------------------------------------------------------------------- placement
 def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colonnade_polys=None, hall_poly=None, hall_field=None):
     t0 = time.time()
@@ -1069,6 +1152,10 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
     plan = list(PLAN)
     if colonnade_polys and hall_poly:
         plan += screen_height_cap(redwood_screen(colonnade_polys, hall_poly, hall_field), colonnade_polys)
+    # Round 9 review, finding 1: the onto-land snap is the FIRST pass, before the podium ring and the gallery
+    # gate, and it never moves a hand-placed tree - see `land_snap`.
+    plan = land_snap(plan, lagoon_field, islet_fields, stage="plan")
+    if colonnade_polys and hall_poly:
         # QA-02-7: keep the low sun off the colonnade faces (see shadow_relief); QA-05-10 adds the shore belt
         plan = shadow_relief(plan, colonnade_polys, lagoon_field, terrain_height=terrain_height)
 
@@ -1085,6 +1172,12 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
             return all(not L.point_in_poly(px, py, L.offset_polygon(p, 2.0)) for p in colonnade_polys)
 
         plan = frame_band_relief(plan, land_ok=_land, occluders=colonnade_polys)
+
+        # Only `shadow_relief`'s 12 m down-sun push can put a tree in the water after the plan pass above (the
+        # frame-band clearer tests `_land` before it moves anything), and that push only ever moves a generated
+        # tree, so this second snap cannot touch a hand-placed one.  It runs BEFORE the gallery gate so the gate
+        # still has the last word.
+        plan = land_snap(plan, lagoon_field, islet_fields, stage="after relief")
 
         # Round 9, LAST gate: nothing stands on the colonnade gallery walk.  The relief passes above move trees,
         # so the check has to run after them.  A tree is DROPPED here, never nudged: a nudge would put it back in
@@ -1111,25 +1204,10 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
         lods = lib[(sp, seed)]
         gen_h = lods[0]["gen_height"]
         scale = h / max(1e-3, gen_h)
-        # ground: trees stand on land; if a coordinate falls in the OSM water (shore trace vs photo), move it to the
-        # nearest land within 15 m (spiral search) and report
-        x0, y0 = x, y
-        if lagoon_field.signed(x, y) < 1.0 and not any(f.signed(x, y) < 0 for f in islet_fields):
-            best = None
-            for r in range(1, 16):
-                for k in range(16):
-                    a = 2 * math.pi * k / 16
-                    xx, yy = x0 + r * math.cos(a), y0 + r * math.sin(a)
-                    if lagoon_field.signed(xx, yy) >= 1.0 or any(f.signed(xx, yy) < -0.5 for f in islet_fields):
-                        best = (xx, yy)
-                        break
-                if best:
-                    break
-            if best:
-                x, y = best
-                print(f"[env_trees] moved {sp} ({x0:.0f},{y0:.0f}) -> ({x:.1f},{y:.1f}) onto land ({note[:30]})")
-            else:
-                print(f"[env_trees] WARNING {sp} at ({x0:.0f},{y0:.0f}) is in the water and no land within 15 m ({note[:30]})")
+        # Ground.  The onto-land snap is NOT here any more (r9 review, finding 1): it ran after every gate, so a
+        # coordinate it moved was never re-checked against the podium ring or the gallery walk, and it moved
+        # hand-placed trees.  It is `land_snap`, above, and by this point the plan is the shipped plan - the loop
+        # only reads it.
         z = terrain_height(x, y) - 0.15
         # LOD0 budget: a tree uses the LOD1 mesh for LOD0 when no QA camera is within FAR_RADIUS of it, and the
         # E2/E3 back screen rows always do (they stand 100-140 m behind the wings and are half occluded by row E1).
