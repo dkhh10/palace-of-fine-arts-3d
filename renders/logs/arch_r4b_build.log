@@ -1,0 +1,54 @@
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[arch] building rotunda ...
+[arch_lib] plate 'ARCH_rotunda_ceiling_ribs': reveal registers clamped x0.97 (widen 0.100 -> 0.097 m) to keep 20 mm between holes
+[arch] rotunda done 2.7s; building site ...
+[arch] site done 3.4s; building colonnades ...
+[arch] colonnades done 5.3s
+[arch] bevels added to 249 objects (width 0.03 m, 2 segments)
+[common] set_lod viewport=LOD1 render=LOD0: 427 objects, 0 collections
+[arch] stats: {
+ "sockets": {
+  "capital_rotunda": 16,
+  "attic_figure": 8,
+  "urn": 40,
+  "finial": 9,
+  "frieze_run": 126,
+  "attic_panel": 8,
+  "keystone": 24,
+  "drum_band": 1,
+  "capital_inner": 8,
+  "inner_figure": 8,
+  "rosette_ceiling": 24,
+  "capital_colonnade": 114,
+  "maiden": 48
+ },
+ "wings": {
+  "north": {
+   "columns": 56,
+   "clusters": 4,
+   "arc_length": 99.24728552091514,
+   "pylons": 2
+  },
+  "south": {
+   "columns": 58,
+   "clusters": 4,
+   "arc_length": 102.2123518435804,
+   "pylons": 2
+  }
+ },
+ "tris_LOD0": 2694366,
+ "tris_LOD1": 1109070,
+ "tris_LOD2": 726222,
+ "tris_placeholders": 75608,
+ "objects": 2281,
+ "build_seconds": 6.7
+}
+Info: Saved as "architecture.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend
+[arch] total 7.1s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 4182 exited rc=0 after 9 s (max 900)

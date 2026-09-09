@@ -1,0 +1,17 @@
+00:00.444  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend"
+
+[perf] ARCH triangles (base = saved mesh, ev = evaluated with modifiers on the VIEWPORT depsgraph:
+       a modifier with show_viewport=False is not counted here even though the render still has it)
+group    objs    base tris    eval tris   bevel adds  bevel objs
+LOD0      149    2,048,712    2,048,712            0           0
+LOD1      138      436,632      436,632            0           0
+LOD2      138       61,272       61,272            0           0
+none     1032      664,694      677,558       12,864         685
+PH        388       75,608       75,608            0         146
+TOTAL    1845    3,286,918    3,299,782       12,864         831
+[perf] ARCH render set  (LOD0 + un-LODed): 2,726,270 evaluated tris
+[perf] ARCH viewport set (LOD1 + un-LODed): 1,114,190 evaluated tris
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 2695 exited rc=0 after 2 s (max 600)

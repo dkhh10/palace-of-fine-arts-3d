@@ -246,3 +246,19 @@ Addendum from ENV r7's checkpoint report (19b4514): QA-05-5 south wing is LIGHTI
 ## 2026-09-09 · RESUME (new session): worktrees clean, no Blender running; rules updated; polish round 4 dispatched
 User rules recorded in CLAUDE.md: QA critic Opus xhigh every round (Fable once, final gate), definition of done (hero >= 4.0 or two rounds < +0.1 after photo-projection -> Phase 5), lighting/materials never concurrent, watchdog by registered max duration (scripts/blender_run.sh + rewritten scripts/blender_watchdog.sh), briefs in docs/briefs/process.md + <agent>_r<N>.md.
 In flight: LIGHT r12 (docs/briefs/lighting_r12.md), ARCH r4 (architecture_r4.md), ENV r7 (environment_r7.md), all fresh Opus agents on their branches. Next: code review each, merge lighting first, MAT r7 on the rebuilt master, lead_build.sh, QA round 6 (Opus xhigh); photo-projection pass for the concrete if the hero is still ~3.28.
+
+## 2026-09-09 · ARCH r4 reported (78f0e81), in review
+ARCH r4: cornice/dentil profile rebuilt; QA box 900 262 1020 296 texture std 33.5 -> 47.6 (0.73 of ref, pass), row std 20.9 -> 32.4 (< 35; the model's cornice sits 1.04 m higher than ref 169's under QA's alignment, on the model's own band 43.1 pass); silhouette 0.000 % change, sockets 434 unchanged, ARCH tris -0.4 %. Hand-off ORN: 24 rotunda frieze_run sockets moved -0.25 m z / +0.10 m outward. Drum ring: -2.5 m radius needed for ref 062, reported only (no change). UV answer: all ARCH meshes carry one world-metre triplanar UVMap; a projection needs a second layer, object list in the report / docs/arch_notes.md round 4.
+In flight: ARCH review, LIGHT r12, ENV r7. Next: merge arch, then lighting; MAT r7.
+
+## 2026-09-09 · ARCH r4 merged after review (MERGE WITH FIXES; docs/reviews/arch_r4_review.md)
+Lead fixes: notes profile table corrected to r4b; 128 spp re-measure identical to the builder's crop (QA box row 32.5 / tex 47.6; model's own cornice box 43.3 / 54.7). Carried to ARCH r5: stale comment, silhouette artifact, hard-coded QA alignment, measure-script threshold text. Open lead question: the model's cornice sits 1.04 m higher than ref 169's under QA's alignment (stack question, no change made). ORN note: rotunda frieze band is now 0.90 m tall; sockets carry run_length only.
+In flight: LIGHT r12, ENV r7. Next: lighting review + merge, MAT r7 dispatch, then ENV merge, lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV r7 reported (99c544c), in review
+ENV r7: LOD1 4.62 M; cam03 ground std 14.1 -> 27.8 (walk 16.7 % of box); shore band null (+12 pp sun reach, band 71.7 -> 71.7: needs +43.9 lum from sky/materials, not planting); cam06 ground 13.8 -> 23.4 %, asphalt 2.47 -> 4.08 %; south wing untouched as briefed. Sheet renders/qa_comparisons/env_r7_sheet.png.
+Hand-offs: lighting (cam06 mist +58 lum flattens the horizon, wing sky term 36 lum short, shore +43.9 lum), materials (MAT_paving_stone / _worn missing; shore level without saturation), arch (COLONNADE_WALK_Z tracks COLONNADE_GROUND_Z). In flight: ENV review, LIGHT r12. Next: merge lighting, MAT r7.
+
+## 2026-09-09 · ENV r7 review: MERGE WITH FIXES (docs/reviews/env_r7_review.md); fix agent dispatched
+Fix now: north/cam05 bands pin only P/C so 7 hand-placed trees were swept and 3 dropped (round-5 lesson again); COLONNADE_WALK_Z / PAVE_CENTRE hand-copied instead of imported from arch_params; two claims quote one box for two boxes; stale verge comment. Carry: paving fallback rationale, sample-count comment, absolute MAIN path, 3 previews > 5 MB, mixed baselines.
+In flight: ENV r7 fixes (fresh agent, branch environment), LIGHT r12. Next: merge lighting, MAT r7, merge env, lead_build.sh, QA round 6.

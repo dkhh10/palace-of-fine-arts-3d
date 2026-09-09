@@ -112,20 +112,59 @@ def entablature_plan(along=P.RESSAUT_ALONG, r_ch=P.CHAMFER_CIRCUMRADIUS, inset=0
 
 
 # ============================================================================= profiles (d outward, z relative)
-# Corinthian cornice sequence (bottom -> top): cyma reversa, dentil band, ovolo (egg-and-dart), modillion band, corona,
-# cyma recta. Dentils / eggs / modillions are separate LOD0 geometry placed at the beds below.
-CORNICE = dict(dentil_z=2.70, dentil_h=0.20, dentil_bed=0.36, dentil_size=0.15,
-               egg_z=2.92, egg_h=0.16, egg_bed=0.44,
-               modillion_z=3.08, modillion_h=0.24, modillion_bed=0.62, modillion_w=0.45, modillion_d=0.40, modillion_pitch=0.90)
+# ---------------------------------------------------------------------------------------------------------------
+# QA-05-6 / polish round 4: the rotunda cornice rebuilt so it throws the photograph's shadow bands.
+#
+# Why the old profile could not: the golden-hour sun is az 118.5 / el 7.4 and the hero (lagoon) face normal is
+# az 82, so the sun is Delta = 36.5 deg off the face and only 7.4 deg above the horizon. A horizontal ledge then
+# drops a shadow of only tan(7.4)/cos(36.5) = 0.16 m per metre of projection -- a 1 m cornice shades 16 cm of the
+# frieze. NONE of the photograph's dark bands is a drop shadow. They are:
+#   (a) downward-facing soffits, which never see the sun at all and read at 20-25 % of the sunlit wall, and
+#   (b) vertical faces hidden BEHIND a projecting course: from cam01 the up-look is ~20 deg, so a projection of
+#       p metres lifts a point p * tan(20) = 0.365 m up the frame and hides that much wall behind it, and
+#   (c) vertical faces laterally shadowed by the block in front of them: tan(36.5) = 0.74 m of shadow per metre
+#       of block depth, which blacks out the gaps between blocks when depth >= gap / 0.74.
+# All three are geometry, which is why two rounds of shading work could not supply the band (materials' finding).
+#
+# Measured on ref 169 at hero scale (14.06 px/m in the 1920x1080 frame, 10.7 px/m in the raw photo; derivations in
+# docs/arch_notes.md "Polish round 4"): apparent band heights top-down are bright crown fillet 0.19 m, egg course
+# 0.43 m, fascia 0.38 m, modillion band 0.86 m; along the run the egg course repeats at 0.47 m and the modillion
+# blocks at 1.07 m. The modillion band's 0.86 m of apparent height fixes the corona projection, since
+#   apparent = modillion height + (corona projection - modillion bed) * tan(20 deg).
+# Sequence bottom -> top: cyma reversa, dentil band, ovolo, modillion band, egg-and-dart ovolo, corona, cyma recta.
+# (The photograph puts the fine 0.47 m course ABOVE the brackets, not below them: the old build had the egg course
+# between the dentils and the modillions.)  Dentils / eggs / modillions are block geometry on the beds below.
+# Round 4b, measured on the same render: ref 169 reads the frieze and the architrave as ONE plain surface
+# (the 22 px / 2.02 m band of the measurement table), so the frieze cannot sit 0.30 m behind the architrave crown --
+# it is flush with the third fascia (0.34) and the crown oversails it by 0.10, a fillet line, not a channel. The
+# 0.20 recess put the frieze in an AO channel and cost it 20 lum. Modillions go 0.68 -> 0.86 deep so their lateral
+# shadow (0.86*0.74 = 0.64 m) finally exceeds the 0.56 m gap between brackets: every soffit coffer goes black.
+CORNICE = dict(
+    frieze_d=0.34, frieze_z0=P.ARCHITRAVE_H, frieze_z1=P.ARCHITRAVE_H + P.FRIEZE_H,     # 1.15 -> 2.05
+    dentil_z=2.17, dentil_h=0.40, dentil_bed=0.40, dentil_size=0.18, dentil_pitch=0.38, dentil_d=0.34,
+    modillion_z=2.71, modillion_h=0.58, modillion_bed=0.52, modillion_w=0.50, modillion_d=0.86, modillion_pitch=1.06,
+    egg_z=3.33, egg_h=0.12, egg_bed=0.70, egg_pitch=0.47,
+    corona_d=1.66, corona_soffit_z=3.48, corona_z1=P.ARCHITRAVE_H + P.FRIEZE_H + P.CORNICE_H)   # 3.80
 
 
 def rotunda_entablature_profile():
+    """d = outward from the wall plane, z relative to ENTABLATURE_Z0. The swept band carries no LOD suffix, so this
+    one profile -- every projection in it -- is what both the viewport (LOD1) and the render (LOD0) show."""
     c = CORNICE
-    return [(0.0, 0.0), (0.12, 0.0), (0.12, 0.42), (0.20, 0.42), (0.20, 0.86), (0.28, 0.86), (0.28, 1.22),
-            (0.36, 1.30), (0.40, 1.40), (0.24, 1.40), (0.24, 2.60), (0.36, 2.70),
-            (c["dentil_bed"], c["dentil_z"]), (c["dentil_bed"], c["dentil_z"] + c["dentil_h"]), (0.40, 2.92),
-            (0.44, 2.92), (0.56, 3.00), (0.62, 3.08), (c["modillion_bed"], c["modillion_z"] + c["modillion_h"]),
-            (1.05, 3.32), (1.05, 3.60), (1.10, 3.62), (1.18, 3.76), (1.18, 3.80), (0.0, 3.80)]
+    arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.42), (0.24, 0.42), (0.24, 0.82), (0.34, 0.82), (0.34, 1.02),
+            (0.42, 1.06), (0.42, 1.11),             # bead-and-reel astragal over the third fascia (sheet row 13)
+            (0.44, 1.14), (0.44, c["frieze_z0"])]   # architrave crown, oversailing the flush frieze by 0.10
+    frieze = [(c["frieze_d"], c["frieze_z0"] + 0.04), (c["frieze_d"], c["frieze_z1"])]
+    cornice = [
+        (0.30, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
+        (c["dentil_bed"], c["dentil_z"] + c["dentil_h"]),                          # dentil band bed (back face)
+        (0.46, 2.63), (c["modillion_bed"], c["modillion_z"]),                      # ovolo under the modillions
+        (c["modillion_bed"], c["modillion_z"] + c["modillion_h"]),                 # modillion band bed (back face)
+        (0.70, 3.35), (0.80, 3.43), (0.80, c["corona_soffit_z"]),                  # egg-and-dart ovolo + fascia
+        (c["corona_d"], c["corona_soffit_z"]),                                     # CORONA SOFFIT: 0.86 m, never sunlit
+        (c["corona_d"], 3.64), (c["corona_d"] + 0.04, 3.68),                       # corona fascia + drip
+        (1.58, 3.75), (1.36, c["corona_z1"]), (0.0, c["corona_z1"])]               # cyma recta
+    return arch + frieze + cornice
 
 
 def attic_base_profile():
@@ -274,7 +313,8 @@ def build_rotunda():
             if dot2(out, fr.v) < 0:
                 out = (-out[0], -out[1])
             m = mul2(add2(a, b), 0.5)
-            SOCK.add("frieze_run", (a[0] + out[0] * 0.24, a[1] + out[1] * 0.24, P.ENTABLATURE_Z0 + P.ARCHITRAVE_H), out,
+            fd = CORNICE["frieze_d"]   # the socket plane IS the frieze face: it moved with the round-4 profile
+            SOCK.add("frieze_run", (a[0] + out[0] * fd, a[1] + out[1] * fd, P.ENTABLATURE_Z0 + P.ARCHITRAVE_H), out,
                      math.dist(a, b), extra={"run_length": math.dist(a, b), "run_dir": (d[0], d[1], 0.0)}, size=0.4)
 
     # ---- faces: spandrel + attic plate with the arch notch and the sunk relief panel; vault; inner spandrel
@@ -375,14 +415,24 @@ def build_rotunda():
                    z0=P.ATTIC_Z0, origin=(0, 0, P.ATTIC_Z0))
     L.sweep_closed("ARCH_rotunda_attic_cornice", plan, attic_top_profile(), C, mat=M_OCHRE, part_type="attic",
                    z0=P.ATTIC_Z1 - P.ATTIC_TOP_CORNICE_H, origin=(0, 0, P.ATTIC_Z1))
-    # dentils, egg-and-dart eggs and modillions as LOD0 geometry along the cornice beds
+    # Dentils and modillions along the cornice beds. QA-05-6: these blocks are what makes the band read, so they are
+    # in BOTH LODs (one mesh, two objects) -- only the egg-and-dart stays LOD0. Their depth is set so each block's
+    # lateral shadow (0.74 m per metre of depth at this sun) covers the gap to the next: dentils 0.30 deep vs a
+    # 0.16 gap, modillions 0.58 deep vs a 0.64 gap, and the modillion bed is in any case hidden behind the corona.
     c = CORNICE
-    build_dentils("ARCH_rotunda_dentils_LOD0", plan, P.ENTABLATURE_Z0 + c["dentil_z"], c["dentil_h"], c["dentil_bed"],
-                  c["dentil_size"], C)
-    build_dentils("ARCH_rotunda_modillions_LOD0", plan, P.ENTABLATURE_Z0 + c["modillion_z"], c["modillion_h"], c["modillion_bed"],
-                  c["modillion_w"], C, pitch=c["modillion_pitch"], depth=c["modillion_d"])
+    for base, kw in (("dentils", dict(z=c["dentil_z"], h=c["dentil_h"], bed=c["dentil_bed"], size=c["dentil_size"],
+                                      pitch=c["dentil_pitch"], depth=c["dentil_d"])),
+                     ("modillions", dict(z=c["modillion_z"], h=c["modillion_h"], bed=c["modillion_bed"],
+                                         size=c["modillion_w"], pitch=c["modillion_pitch"], depth=c["modillion_d"]))):
+        ob = build_dentils(f"ARCH_rotunda_{base}_LOD0", plan, P.ENTABLATURE_Z0 + kw["z"], kw["h"], kw["bed"],
+                           kw["size"], C, pitch=kw["pitch"], depth=kw["depth"])
+        lod1 = bpy.data.objects.new(f"ARCH_rotunda_{base}_LOD1", ob.data)
+        lod1.location = ob.location
+        lod1["part_type"] = "entablature"
+        lod1["instance_seed"] = ob["instance_seed"]
+        C.objects.link(lod1)
     build_eggs("ARCH_rotunda_eggs_LOD0", plan, P.ENTABLATURE_Z0 + c["egg_z"] + c["egg_h"] / 2, c["egg_bed"] + 0.02, C,
-               size=(0.11, 0.09, 0.09), pitch=0.30)
+               size=(0.17, 0.13, 0.13), pitch=c["egg_pitch"])
     # impost mouldings at the arch springing (both jambs of every face) and astragals at the shaft tops
     build_imposts(C)
     # attic roof slab (octagon minus the drum) seen from above
