@@ -263,14 +263,14 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
             sd = common.sun_direction(az_deg, el_deg)
             dot.inputs[1].default_value = (sd.x, sd.y, sd.z)
             nt.links.new(geo.outputs["Incoming"], dot.inputs[0])
-            w = nt.nodes.new("ShaderNodeMath"); w.operation = "MULTIPLY_ADD"; w.name = "antisun_weight"
-            w.inputs[1].default_value = 0.5; w.inputs[2].default_value = 0.5; w.use_clamp = True
-            nt.links.new(dot.outputs["Value"], w.inputs[0])
+            wt = nt.nodes.new("ShaderNodeMath"); wt.operation = "MULTIPLY_ADD"; wt.name = "antisun_weight"
+            wt.inputs[1].default_value = 0.5; wt.inputs[2].default_value = 0.5; wt.use_clamp = True
+            nt.links.new(dot.outputs["Value"], wt.inputs[0])   # NOT `w`: `w` is the world being built
             blend = nt.nodes.new("ShaderNodeMapRange"); blend.name = "antisun_blend"
             blend.inputs["From Min"].default_value = 0.0; blend.inputs["From Max"].default_value = 1.0
             blend.inputs["To Min"].default_value = 1.0 - diffuse_tint_antisun
             blend.inputs["To Max"].default_value = 1.0
-            nt.links.new(w.outputs[0], blend.inputs["Value"])
+            nt.links.new(wt.outputs[0], blend.inputs["Value"])
             m = nt.nodes.new("ShaderNodeMath"); m.operation = "MULTIPLY"; m.name = "tint_fac_antisun"
             nt.links.new(inv2.outputs[0], m.inputs[0])
             nt.links.new(blend.outputs["Result"], m.inputs[1])
