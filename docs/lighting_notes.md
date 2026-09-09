@@ -1632,3 +1632,35 @@ murk, and the murk is what has to lose saturation.
 `FILL` 3648 -> 10214 W, `SHADE_FILL` still 0 (now for a measured reason, 21.6).** Tint b 17 is the balance point
 between rows 2 and 3 of the table above: the round's two blockers are ordered ahead of the sunlit stone by the brief,
 and 17 is the largest tint that keeps the sunlit attic's R-B at its floor.
+
+### 21.10 Round-12 acceptance, measured on the rebuilt master (master as saved, no world rebuild)
+
+`scripts/build_master.py` + `light_probes --bake --save` in the worktree (assets md5-identical to main), then the
+sweep in its `tag=base` mode, which opens that master and renders it exactly as saved. Hero Cycles 1920x1080 / 64 spp
+(356 s), cam03 and cam04 at 1280x720, Eevee 32 TAA through `apply_preview_eevee`. Log `renders/logs/light_r12_ship.log`.
+
+| test | round 05 | **round 12** | reference / window | verdict |
+|---|---|---|---|---|
+| **QA-05-1** hero shaded attic hue | 43.1 | **35.4** | 29.5 +- 6 | **PASS** (0.1 deg of margin) |
+| hero shaded attic sat | 0.819 | **0.412** | ref 0.425, test <= 0.50 | **PASS** |
+| hero shaded attic lum | 94.6 | **116.7** | 115.0, 0.9-1.1 | **PASS** (1.01x) |
+| **QA-05-1** cam03 near shaft / sunlit | 0.063 | **0.066** | 0.30-0.70 | **FAIL** — geometrically unreachable, 21.4 / 21.6 |
+| cam03 near-shaft hue / sat | 58.2 / 0.615 | **219.4** / **0.245** | 25-42 / <= 0.55 | sat PASS; hue now fails from the BLUE side |
+| **QA-05-3** Cycles coffer / own sky | 0.211 | **0.438** | 0.35-0.55 (ref 083 0.437) | **PASS** |
+| dark / light quarter | 0.121 | **0.228** | >= 0.20 (ref 083 0.265) | **PASS** |
+| Eevee coffer, gap to Cycles | 0.162, gap 0.049 | **0.344**, gap **0.094** | gap <= 0.15 | **PASS** |
+| **QA-05-9** soffit W gap | 0.221 | **0.202** | <= 0.15 | FAIL (Eevee rose with Cycles: 0.362 -> 0.429) |
+| **QA-05-5** south wing band | 86.0 | **94.3** | >= 82 raw / >= 103 aligned | raw PASS, aligned FAIL (0.86 of 109.5) |
+| north wing band | 137.5 | **142.6** | 0.9-1.1 of 146.5 | **PASS** (0.97) |
+| sunlit attic lum | 166.5 | **178.0** | 178.2-201.0 | FAIL by 0.2 lum (0.999x the floor) |
+| sunlit attic sat / R-B | 0.643 / 134 | **0.525 / 112.5** | >= 0.50 / >= 110 | **PASS** |
+| columns | 95.9 (1.00x) | **108.8 (1.14x)** | brief 0.9-1.1; QA's own test <= 1.3, hue 20-29 | brief FAIL, QA's test PASS (hue 23.7) |
+| **QA-05-7** sky_left / sky_top | 0.922 | **0.922** | 1.05-1.29 | unchanged by construction; see 21.2 (the photo scores 0.921 on matched pixels) |
+| sky_top | 167.9 | **168.0** | 149-182 | **PASS**, and unmoved: the diffuse sockets are invisible to camera rays |
+| near-water sat / hue | 0.281 / 208.9 | **0.418** / 218.1 | 0.22-0.32 / 185-200 | **REGRESSION**, hand-off to materials (21.9) |
+| water reflection column sat | 0.106 | **0.182** | ref 0.339 | improved, still short (materials' sheen) |
+
+Sheet: `renders/previews/lighting/light_r12_sheet.png` (before / after / reference for all three items with the
+numbers burnt in). The shade hue's margin is 0.1 deg and the single knob is `SKY_DIFFUSE_TINT[2]`: measured slope
+**0.77 deg of shade hue per unit of tint b** near the shipped 17.0, at a cost of ~0.6 R-B on the sunlit attic and
+~0.005 of near-water saturation per unit.
