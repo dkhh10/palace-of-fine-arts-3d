@@ -1,0 +1,31 @@
+00:00.406  blend            | Read blend: "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/1e741676-2c03-408f-ad81-3c89163dc6dc/scratchpad/env_r8_merged.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[env_r9_walk] /private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/1e741676-2c03-408f-ad81-3c89163dc6dc/scratchpad/env_r8_merged.blend
+[env_r9_walk] wing south  arc  102.2 m at R 117.4
+[env_r9_walk] wing north  arc   99.2 m at R 117.4
+[env_r9_walk] 102 walk samples, step 2.0 m; keep-out 4.1 m (clear width 2.80 m = +-1.40 m)
+[env_r9_walk] eye band z -1.10 .. 1.90 (colonnade floor -0.60)
+[env_r9_walk] 2566 candidate ENV objects beside the wings
+[env_r9_walk] 608 of them put geometry in the eye band within 12.0 m of the walk
+
+  wing     s      x       y     nearest origin        d_orig   nearest extent        d_ext
+  north     74   -88.7    -3.5   ENV_shrub_maho0_1235_LOD1    0.26   ENV_shrub_maho0_1235_LOD1    0.03
+  north     60   -77.6   -12.1   ENV_shrub_pitto1_1240_LOD1   0.32   ENV_shrub_pitto1_1240_LOD1   0.03
+  north     72   -87.2    -4.8   ENV_shrub_twig0_1319_LOD1    0.68   ENV_shrub_twig0_1319_LOD1    0.18
+  south     94    97.1    39.3   ENV_shrub_agap0_1116_LOD1    0.81   ENV_tree_redwood_11_LOD1     0.32
+  south     96    97.8    41.2   ENV_shrub_agap0_1115_LOD1    0.83   ENV_shrub_agap0_1115_LOD1    0.45
+  north     66   -82.5    -8.6   ENV_tree_redwood_16_LOD1     1.13   ENV_shrub_pitto7_1321_LOD1   0.47
+  south     36    62.6    -6.6   ENV_shrub_agap2_1106_LOD1    1.29   ENV_shrub_agap2_1106_LOD1    0.84
+  north     68   -84.1    -7.4   ENV_shrub_maho0_1238_LOD1    1.30   ENV_shrub_maho0_1238_LOD1    0.38
+  north     78   -91.6    -0.8   ENV_shrub_pitto1_1317_LOD1   1.42   ENV_shrub_pitto1_1317_LOD1   0.84
+  north     54   -72.6   -15.4   ENV_shrub_pitto1_1242_LOD1   1.46   ENV_shrub_pitto1_1242_LOD1   0.73
+  south     38    64.2    -5.3   ENV_shrub_agap2_1106_LOD1    1.50   ENV_shrub_pitto1_1107_LOD1   0.66
+  north     58   -76.0   -13.2   ENV_shrub_twig2_1322_LOD1    1.51   ENV_shrub_twig2_1322_LOD1    0.96
+
+[env_r9_walk] SUMMARY  samples 102  min origin distance 0.26 m  min extent distance 0.03 m
+[env_r9_walk] samples with an ENV object inside the 2.80 m clear width (< 1.40 m): 8
+[env_r9_walk] samples inside the 4.1 m planting keep-out: 58
+[env_r9_walk]   wing south : min origin   0.81 m, min extent   0.32 m over 52 samples
+[env_r9_walk]   wing north : min origin   0.26 m, min extent   0.03 m over 50 samples
+[env_r9_walk] FAIL
+blender_run.sh: pid 35118 exited rc=1 after 6 s (max 900)
