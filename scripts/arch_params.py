@@ -5,6 +5,8 @@ written in docs/arch_notes.md. World frame: origin = rotunda floor centre, z=0 =
 Compass azimuth az (deg clockwise from north) maps to world (X, Y) = (-r*cos(az), r*sin(az)).
 """
 import math
+import os
+from pathlib import Path
 
 # ----------------------------------------------------------------------------- site levels
 FLOOR_Z = 0.0            # rotunda floor slab
@@ -201,3 +203,26 @@ def az_to_xy(az_deg, r):
 def az_dir(az_deg):
     a = math.radians(az_deg)
     return (-math.cos(a), math.sin(a))
+
+
+# ----------------------------------------------------------------------------- QA round-05 hero alignment
+# THE single source of these three numbers (docs/reviews/arch_r4_review.md item 7): qa_silhouette's round-05 fit of
+# ref 169 onto the 1920x1080 cam01 hero, photo px * S + (DX, DY) = render px. Both the measure tool and the sheet
+# import them from here, so a QA re-alignment is a one-line change.
+REF169_XF = (1.3108, -291.8, -124.6)
+REF169_REL = "photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
+MAIN_ROOT = Path("/Users/dk/Projects/3d render blender 3rd attempt building")   # the checkout that has reference/
+
+
+def reference_dir():
+    """common.REFERENCE_DIR, reachable from the python3-only tools too (common imports bpy)."""
+    try:
+        import common
+        return Path(common.REFERENCE_DIR)
+    except Exception:
+        return Path(os.environ.get("PFA_REFERENCE_DIR", str(MAIN_ROOT / "reference")))
+
+
+def ref169_path():
+    """Absolute path to ref 169. Worktrees have no reference/ of their own, so it resolves into the main checkout."""
+    return reference_dir() / REF169_REL
