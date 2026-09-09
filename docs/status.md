@@ -361,3 +361,7 @@ Socket props stamped and asserted (capital_height 3.0, band_height 0.81, panel_h
 ## 2026-09-09 · ENV r9 review: MERGE WITH FIXES (docs/reviews/env_r9_review.md); fix agent dispatched (no render)
 Fix now: the onto-land spiral snap runs after the gallery gate and moves 6 hand-placed trees up to 5.6 m (PLAN still not the shipped coordinate); pinned-moved counter is a tautology; 137 -> 131 is six refused screen redwoods, not dropped PLAN trees; MASS_X comment; cam06 0.637 must be computed by --c06ratio on lighting's frames. Carries: PLAN --verify mode, wing-shadow probe below its quantum (QA confirms on a render), eye-band gate.
 In flight: ENV fixes, LIGHT r14, ORN r6. Next: merges, MAT r8.
+
+## 2026-09-09 · ORN r6 reported (90b183e), in review
+ORN r6: capitals 2.6 -> 3.0 m (hero px 34.7-35.5 -> 40.0-40.9 vs ref 38-44), rinceau band 0.81 (clearance 10-11.5 mm), attic panels 5.28 (relief p90 0.376 m; undercut is the limit, not depth); LOD1 budget for attic panels raised 24 k -> 36 k (+95 k tris in the master's LOD1); enforce_tri_budget on LOD1 and LOD2; normal-map bakes done (0 pending), AO missing on 32 LOD1s. Proposal: archivolt_run socket type + modillion/egg subtypes for the bed-mould (hand-off to ARCH). Gate exits 0 on the merged architecture.blend. No render sheet (GPU held).
+In flight: ORN review, LIGHT r14, ENV fixes. Next: merges, MAT r8; QA round 7 checks the capital luminance alternation on a render.
