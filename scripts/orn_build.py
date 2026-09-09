@@ -49,7 +49,7 @@ def place(obj, rot_z_deg=0.0, loc=(0, 0, 0), tilt_x_deg=0.0, scale=1.0):
 # then curls its tip outward AND DOWN through a 105-120 deg arc, so each tip has a genuine sky-lit-only undercut.
 BELL_PROFILE = [(1.00, 0.000), (1.06, 0.020), (1.055, 0.040), (0.995, 0.062), (0.925, 0.090), (0.885, 0.140),
                 (0.868, 0.230), (0.865, 0.340), (0.880, 0.450), (0.912, 0.560), (0.960, 0.660), (1.040, 0.750),
-                (1.100, 0.820), (1.145, 0.870), (1.155, 0.890)]
+                (1.100, 0.820), (1.145, 0.870), (1.155, 0.890), (1.158, 0.900)]
 
 # Where the bell is scalloped: radius dips between the leaves of each row so the slot between two neighbouring
 # leaves bottoms out in a real groove instead of on a smooth cylinder.
@@ -65,27 +65,38 @@ CAPITAL_PRESETS = {
     # rotunda: h 3.0 (r6 course; was 2.6), shaft top D 2.1, abacus ~3.0 across corners; figured centre.
     # 3.0 / 2.1 = 1.43 is the classical Corinthian ratio (capital = 7/6 of the LOWER diameter, top = 5/6 of it);
     # at 2.6 the capital was 1.24 of the top diameter, i.e. a short capital, which is half of QA-06-6's 24 px.
-    # Every other entry here is a fraction of H or R, so the whole design scales with the course.
-    "capital_rotunda": dict(H=ARCH_R6["capital_rotunda_H"], R=1.05, abacus_across=3.0, figure=True, lower_len=0.44, upper_len=0.37,
-                            lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.112, helix_r=0.055,
-                            lower_z=0.060, upper_z=0.440, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
-                            proud=(0.140, 0.130), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
-                            scallop=0.078, thickness=0.062, volute_z=0.805, volute_er=1.380, helix_er=1.245,
-                            helix_z=0.775),
+    #
+    # ROUND 7 (r6 review finding 2). The 3.0 m capital used to be the 2.6 m design stretched in Z: only the
+    # H-keyed entries grew, so the tiers ran 0.354 / 0.288 H (leaf 1.32 / 1.11 m long) at unchanged R-keyed width
+    # and projection. The lay-out below is solved by scripts/orn_r7_capital_layout.py against ref_002
+    # (the frontal pier capital): both acanthus tiers 0.300 H of VERTICAL EXTENT, the upper row springing 0.03 H
+    # behind the lower row's tips, the caulicoli + volutes filling the top 0.35 H (spirals 0.663-0.887 H) and the
+    # abacus 0.100 H. `proud` is now a fraction of H (0.20 / 0.17 of the row's own extent), and lower_w / upper_w
+    # are re-derived so leaf width / extent = 1.02 / 1.08 as measured on ref_002 - none of the three is inherited
+    # from the 2.6 m capital any more.
+    "capital_rotunda": dict(H=ARCH_R6["capital_rotunda_H"], R=1.05, abacus_across=3.0, figure=True, lower_len=0.372, upper_len=0.378,
+                            lower_w=1.053, upper_w=1.361, ribs=7, curl=0.32, droop=0.18, volute_r=0.112, helix_r=0.055,
+                            lower_z=0.030, upper_z=0.300, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
+                            proud=(0.060, 0.052), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                            scallop=0.078, thickness=0.062, volute_z=0.775, volute_er=1.380, helix_er=1.245,
+                            helix_z=0.745, abacus_z0=0.900, fig_t=0.545),
     # inner tan columns: h 1.8 on a ~1.6 m shaft, same design, fleuron centre
+    # inner / colonnade: NOT re-laid this round (they were never Z-stretched - they have stood at H 1.8 since
+    # round 4, and 122 instances are the wrong thing to change in a round with no GPU to look at them). `proud` is
+    # restated in H so the units match the rotunda: 0.140 x R 0.80 / 1.8 = 0.0622 H etc., i.e. the same metres.
     "capital_inner": dict(H=1.8, R=0.80, abacus_across=2.15, figure=False, lower_len=0.44, upper_len=0.37,
                           lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.115, helix_r=0.058,
                           lower_z=0.060, upper_z=0.440, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
-                          proud=(0.140, 0.130), arc_deg=(99.0, 89.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                          proud=(0.06222, 0.05778), arc_deg=(99.0, 89.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
                           scallop=0.078, thickness=0.064, volute_z=0.805, volute_er=1.380, helix_er=1.245,
-                          helix_z=0.775),
+                          helix_z=0.775, abacus_z0=0.890, fig_t=0.600),
     # colonnade: h 1.8 on a 1.7 m shaft: squatter, big shell leaves + big scrolls, small lower leaves, fleuron
     "capital_colonnade": dict(H=1.8, R=0.85, abacus_across=2.3, figure=False, lower_len=0.36, upper_len=0.40,
                               lower_w=1.20, upper_w=1.34, ribs=7, curl=0.30, droop=0.16, volute_r=0.122, helix_r=0.058,
                               lower_z=0.058, upper_z=0.420, rows=2, voxel=0.009, leaf_tilt=(3.0, 4.0),
-                              proud=(0.135, 0.135), arc_deg=(98.0, 94.0), arc_frac=(0.28, 0.27), mid_dip=0.075,
+                              proud=(0.06375, 0.06375), arc_deg=(98.0, 94.0), arc_frac=(0.28, 0.27), mid_dip=0.075,
                               scallop=0.076, thickness=0.066, volute_z=0.800, volute_er=1.390, helix_er=1.250,
-                              helix_z=0.770),
+                              helix_z=0.770, abacus_z0=0.890, fig_t=0.638),
 }
 
 
@@ -132,6 +143,19 @@ def leaf_spine(P, base_z, length, proud, arc_deg, arc_frac, lean=0.060, n=30):
     return pts
 
 
+def row_extent_H(P, row):
+    """Vertical extent of one acanthus row, in units of H: the highest point of the tilted leaf spine above the
+    row's own base. This is the number the round-7 lay-out targets (0.300 H for both rows of capital_rotunda);
+    `lower_len` / `upper_len` are spine lengths, which run ~24 % longer because the tip curls outward and down.
+    Kept in sync with scripts/orn_r7_capital_layout.py, which solves the lengths offline."""
+    key = ("lower", "upper")[row]
+    H = P["H"]
+    sp = leaf_spine(P, P[key + "_z"] * H, P[key + "_len"] * H, proud=P["proud"][row] * H,
+                    arc_deg=P["arc_deg"][row], arc_frac=P["arc_frac"][row])
+    a = math.radians(-P["leaf_tilt"][row])
+    return max(y * math.sin(a) + z * math.cos(a) for (y, z) in sp) / H
+
+
 def abacus_outline(R, across, sag=0.16, chamfer=0.12, per_side=14):
     """Concave-sided square abacus plan with chamfered corners. Returns a list of Vector (counter-clockwise)."""
     half_diag = 0.5 * across          # corner tip radius
@@ -154,11 +178,22 @@ def abacus_outline(R, across, sag=0.16, chamfer=0.12, per_side=14):
     return pts
 
 
+def abacus_z(P, u):
+    """Height (in H) of a point u = 0..1 through the abacus moulding. The abacus seat `abacus_z0` is a preset
+    number so the rotunda can carry the reference's 0.100 H abacus without moving the inner / colonnade ones."""
+    z0 = P.get("abacus_z0", 0.890)
+    return z0 + u * (1.0 - z0)
+
+
+# profile through the abacus moulding: (scale, u) from the bottom fillet (u = 0) to the top face (u = 1)
+ABACUS_PROFILE = [(0.86, 0.0), (0.88, 0.13636), (0.90, 0.27273), (0.955, 0.59091), (0.985, 0.77273),
+                  (1.0, 0.86364), (1.0, 1.0)]
+
+
 def build_abacus(name, P, coll):
     R, H = P["R"], P["H"]
     outline = abacus_outline(R, P["abacus_across"])
-    # moulding profile: (scale, z) from bottom fillet to top
-    prof = [(0.86, 0.89), (0.88, 0.905), (0.90, 0.92), (0.955, 0.955), (0.985, 0.975), (1.0, 0.985), (1.0, 1.0)]
+    prof = [(s, abacus_z(P, u)) for s, u in ABACUS_PROFILE]
     rings = []
     for s, z in prof:
         rings.append([Vector((p.x * s, p.y * s, z * H)) for p in outline])
@@ -177,8 +212,10 @@ def build_leaf_ring(P, count, offset_deg, base_zH, length_H, width_scale, rng, c
     for k in range(count):
         phi = offset_deg + k * (360.0 / count) + rng.uniform(-1.6, 1.6)
         ln = length_H * H * rng.uniform(0.96, 1.04)
+        # `proud` is a fraction of H (round 7): the leaf body's stand-off from the kalathos has to grow with the
+        # course, or a taller capital gets longer, flatter leaves - which is exactly what the r6 stretch produced.
         sp = leaf_spine(P, base_z, ln,
-                        proud=P["proud"][row] * R * rng.uniform(0.88, 1.12),
+                        proud=P["proud"][row] * H * rng.uniform(0.88, 1.12),
                         arc_deg=P["arc_deg"][row] * rng.uniform(0.94, 1.07),
                         arc_frac=P["arc_frac"][row])
         leaf = L.acanthus_leaf(f"leaf_{tag}_{k}", length=ln, width=width * rng.uniform(0.96, 1.04), spine=sp,
@@ -197,24 +234,30 @@ def build_capital_figure(P, phi_deg, rng, coll):
     head under the abacus, arms spread down to the inner helices."""
     R, H = P["R"], P["H"]
     r_fig = 1.24 * R
-    F = 1.35
+    # Round 7 (r6 review finding 2): the joint HEIGHTS are fractions of H but every transverse half-width used to
+    # be a fraction of R, so raising the course 2.6 -> 3.0 produced a 15 % vertically stretched human. `fig_t` is
+    # the same coefficient expressed per metre of capital: 0.545 = R 1.05 x the old F 1.35 / the 2.6 m design
+    # height, so at H = 2.6 the figure is identical and at H = 3.0 it is a uniform 15.4 % larger.
+    # Heights against ref_002 (H = 400 px, base y 785): hip y 619 = 0.415 H, waist 577 = 0.520, chest 529 = 0.640,
+    # shoulders 505 = 0.700, neck 491 = 0.735, head centre 457 = 0.820, bun top 443 = 0.855.
+    T = P.get("fig_t", 0.545) * H
     j = {
-        "hip": (Vector((0, -0.06 * R, 0.40 * H)), (0.16 * R * F, 0.11 * R * F)),
-        "waist": (Vector((0, -0.01 * R, 0.51 * H)), (0.13 * R * F, 0.09 * R * F)),
-        "chest": (Vector((0, 0.04 * R, 0.635 * H)), (0.17 * R * F, 0.115 * R * F)),
-        "neck": (Vector((0, 0.06 * R, 0.735 * H)), (0.06 * R * F, 0.06 * R * F)),
-        "head": (Vector((0, 0.07 * R, 0.805 * H)), (0.11 * R * F, 0.12 * R * F)),
-        "shl": (Vector((0.24 * R, 0.01 * R, 0.705 * H)), (0.07 * R * F, 0.07 * R * F)),
-        "shr": (Vector((-0.24 * R, 0.01 * R, 0.705 * H)), (0.07 * R * F, 0.07 * R * F)),
-        "ell": (Vector((0.42 * R, 0.07 * R, 0.62 * H)), (0.055 * R * F, 0.055 * R * F)),
-        "elr": (Vector((-0.42 * R, 0.07 * R, 0.62 * H)), (0.055 * R * F, 0.055 * R * F)),
-        "hal": (Vector((0.52 * R, 0.13 * R, 0.56 * H)), (0.05 * R * F, 0.045 * R * F)),
-        "har": (Vector((-0.52 * R, 0.13 * R, 0.56 * H)), (0.05 * R * F, 0.045 * R * F)),
+        "hip": (Vector((0, -0.06 * R, 0.415 * H)), (0.16 * T, 0.11 * T)),
+        "waist": (Vector((0, -0.01 * R, 0.520 * H)), (0.13 * T, 0.09 * T)),
+        "chest": (Vector((0, 0.04 * R, 0.640 * H)), (0.17 * T, 0.115 * T)),
+        "neck": (Vector((0, 0.06 * R, 0.735 * H)), (0.06 * T, 0.06 * T)),
+        "head": (Vector((0, 0.07 * R, 0.820 * H)), (0.11 * T, 0.12 * T)),
+        "shl": (Vector((0.24 * T, 0.01 * R, 0.700 * H)), (0.07 * T, 0.07 * T)),
+        "shr": (Vector((-0.24 * T, 0.01 * R, 0.700 * H)), (0.07 * T, 0.07 * T)),
+        "ell": (Vector((0.42 * T, 0.07 * R, 0.620 * H)), (0.055 * T, 0.055 * T)),
+        "elr": (Vector((-0.42 * T, 0.07 * R, 0.620 * H)), (0.055 * T, 0.055 * T)),
+        "hal": (Vector((0.52 * T, 0.13 * R, 0.560 * H)), (0.05 * T, 0.045 * T)),
+        "har": (Vector((-0.52 * T, 0.13 * R, 0.560 * H)), (0.05 * T, 0.045 * T)),
     }
     bones = [("hip", "waist"), ("waist", "chest"), ("chest", "neck"), ("neck", "head"), ("chest", "shl"), ("chest", "shr"),
              ("shl", "ell"), ("shr", "elr"), ("ell", "hal"), ("elr", "har")]
     fig = L.skin_figure(f"capfig_{int(phi_deg)}", j, bones, coll, subdiv=2)
-    bun = L.sphere(f"capfig_bun_{int(phi_deg)}", 0.10 * R, coll, location=(0, -0.08 * R, 0.84 * H))
+    bun = L.sphere(f"capfig_bun_{int(phi_deg)}", 0.10 * T, coll, location=(0, -0.08 * R, 0.855 * H))
     parts = [fig, bun]
     for p in parts:
         place(p, rot_z_deg=phi_deg - 90.0, loc=(r_fig * math.cos(math.radians(phi_deg)), r_fig * math.sin(math.radians(phi_deg)), 0))
@@ -232,7 +275,8 @@ def build_fleuron(P, phi_deg, coll):
     # lying on the abacus face: axis -> +Y (outward) then rotate to phi
     ros.data.transform(Euler((math.radians(-90), 0, 0), "XYZ").to_matrix().to_4x4())
     r_face = 0.5 * P["abacus_across"] / math.sqrt(2) * 0.93 - 0.14 * R
-    place(ros, rot_z_deg=phi_deg - 90.0, loc=(r_face * math.cos(math.radians(phi_deg)), r_face * math.sin(math.radians(phi_deg)), 0.935 * H))
+    place(ros, rot_z_deg=phi_deg - 90.0, loc=(r_face * math.cos(math.radians(phi_deg)),
+                                              r_face * math.sin(math.radians(phi_deg)), abacus_z(P, 0.409) * H))
     return ros
 
 
@@ -285,7 +329,11 @@ def build_capital(typ, variant, coll, bake=True):
                 v.co.z = z0 + 0.65 * (z1 - z0) + 0.15 * (v.co.z - z0 - 0.65 * (z1 - z0))
     parts += lower
     parts += build_leaf_ring(P, 8, 22.5, P["upper_z"], P["upper_len"], P["upper_w"], rng, work, "up", 1)
-    # volutes: two per corner (one facing each side), stems rising from the gaps between the upper leaves
+    # volutes: two per corner (one facing each side), stems rising from the gaps between the upper leaves.
+    # The caulis has to start just BEHIND the top of the upper acanthus row, not at a fixed 0.26 H below the eye:
+    # round 7 moved that row's top from 0.728 H to 0.600 H, which would have left the stem hanging in the open.
+    up_top = P["upper_z"] + row_extent_H(P, 1)
+    CAUL_DROP = (max(0.10, P["volute_z"] - up_top + 0.015), max(0.09, P["helix_z"] - up_top + 0.015))
     eye_r = P["volute_er"] * R
     eye_z = P["volute_z"] * H
     for face in (0, 90, 180, 270):
@@ -296,8 +344,9 @@ def build_capital(typ, variant, coll, bake=True):
             eye -= Vector((math.cos(math.radians(phi_c)), math.sin(math.radians(phi_c)), 0)) * 0.03 * R
             # local frame: X = radial at n_dir, Y = tangential (increasing phi)
             v = L.volute(f"vol_{face}_{sign}", eye=(0, 0, 0), radius=P["volute_r"] * H, turns=2.25,
-                         band=(0.24 * R, 0.105 * R), stem_base=(-0.24 * R, -sign * 0.20 * R, -0.26 * H),
-                         stem_ctrl=(-0.13 * R, -sign * 0.09 * R, -0.10 * H), coll=work, direction=sign, taper=0.55)
+                         band=(0.24 * R, 0.105 * R), stem_base=(-0.24 * R, -sign * 0.20 * R, -CAUL_DROP[0] * H),
+                         stem_ctrl=(-0.13 * R, -sign * 0.09 * R, -0.40 * CAUL_DROP[0] * H), coll=work,
+                         direction=sign, taper=0.55)
             place(v, rot_z_deg=n_dir, loc=eye)
             parts.append(v)
             # eye button: closes the spiral so the volute reads as a rolled scroll, not a length of pipe
@@ -310,8 +359,9 @@ def build_capital(typ, variant, coll, bake=True):
             eye = Vector((P["helix_er"] * R * math.cos(math.radians(phi_h)),
                           P["helix_er"] * R * math.sin(math.radians(phi_h)), P["helix_z"] * H))
             v = L.volute(f"hel_{face}_{sign}", eye=(0, 0, 0), radius=P["helix_r"] * H, turns=1.9,
-                         band=(0.15 * R, 0.075 * R), stem_base=(-0.20 * R, sign * 0.16 * R, -0.24 * H),
-                         stem_ctrl=(-0.10 * R, sign * 0.06 * R, -0.09 * H), coll=work, direction=-sign, taper=0.5)
+                         band=(0.15 * R, 0.075 * R), stem_base=(-0.20 * R, sign * 0.16 * R, -CAUL_DROP[1] * H),
+                         stem_ctrl=(-0.10 * R, sign * 0.06 * R, -0.38 * CAUL_DROP[1] * H), coll=work,
+                         direction=-sign, taper=0.5)
             place(v, rot_z_deg=face + sign * 8.0, loc=eye)
             parts.append(v)
         if P["figure"]:
