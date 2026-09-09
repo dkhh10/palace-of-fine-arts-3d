@@ -22,8 +22,10 @@ def opt(name, default=None):
     return ARGV[ARGV.index(name) + 1] if name in ARGV else default
 
 
-MAIN = common.MAIN_ROOT            # the main checkout (worktrees have no reference photos)
-blend = Path(opt("--blend", str(MAIN / "master.blend")))
+# BUG, found in the round-7 review follow-up: this defaulted to `<main checkout>/master.blend`, so every round-7
+# render read the MAIN master (ENV r6, 5954 objects) while the numbers were reported against the master this
+# worktree had just built (6484 objects).  The default is now THIS checkout's master; pass --blend for any other.
+blend = Path(opt("--blend", str(common.ROOT / "master.blend")))
 out = Path(opt("--out", str(common.ROOT / "renders/previews/environment/r5_master_hero.png")))
 samples = int(opt("--samples", "96"))
 engine = opt("--engine", "CYCLES").upper()
