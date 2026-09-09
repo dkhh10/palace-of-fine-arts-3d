@@ -266,3 +266,7 @@ In flight: ENV r7 fixes (fresh agent, branch environment), LIGHT r12. Next: merg
 ## 2026-09-09 · LIGHT r12 reported (d5e6850), in review
 LIGHT r12: diffuse sky x2.5 with an anti-sun/horizon blue tint, sun blue 0, FILL 10214 W. Hero shaded attic hue 43.1 -> 35.4 / sat 0.82 -> 0.41 / lum 117 (all pass); Cycles coffer 0.21 -> 0.438 (ref 0.437), Eevee gap 0.094; south wing 86 -> 94 (0.86 raw); north 0.97; sunlit attic lum 178.0 / sat 0.525 / R-B 112.5; columns 1.14x. cam03 shaft/sunlit 0.066: proven unreachable (box occluded from sky and anti-sun hemisphere; lead to re-base). QA-05-7 sky ratio 0.921 vs 0.922 on matched pixels (close as measured-equal).
 Regression handed to materials: near-water sat 0.28 -> 0.42 (murk chroma -1/3). In flight: LIGHT review, ENV fixes. Next: merge lighting, MAT r7 on the rebuilt master.
+
+## 2026-09-09 · ENV r7 merged (f426672) after review fixes; ENV r8 (short) dispatched
+Fixes: pin tuple on all bands (moved 0 / dropped 0), arch_params imported, one box per claim, paths via common, 24 MB previews dropped; r7 panels had been rendered on main's stale master, re-rendered on the worktree master with parity proven (0.3 lum). Shore band 71.7 -> 79.6 (not null; 36 short). LOD1 4.76 M.
+Regression: pinning restores the A/A2 cluster in the north band (137.5 -> 91.9, 0.63 of ref). Decision: pin stays, cluster re-derived from ref 169 (docs/briefs/environment_r8.md). In flight: LIGHT r12 review, ENV r8. Next: merge lighting, MAT r7.

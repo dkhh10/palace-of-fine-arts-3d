@@ -161,3 +161,11 @@ Format: date · decision · why · consequences. Newest at the bottom.
   re-opened this round. Drum ring: ref 062 would need -2.5 m radius; not changed for the same reason.
 - **Near-water saturation is now materials' number.** Lighting's diffuse-only sky sockets do not touch camera or glossy rays, so the
   r12 rise 0.281 -> 0.418 is MAT_water_lagoon's murk under a brighter diffuse term; materials r7 cuts murk chroma by about a third.
+- **Pin rule beats the band clearer; the cluster moves by measurement, not by sweep.** ENV r7's review fix pinned every hand-placed
+  tree on all three frame bands (the r5 lesson) and the north-wing band fell 137.5 -> 91.9 (0.63 of ref, QA-04-6 again) because
+  the hand-placed A/A2 cluster sits at x 0.76-0.985 of the hero frame while ref 169's dark mass is at x 0.71-0.76. Sweeping trees
+  out of the band hid a placement error. Environment r8 (before QA round 6) re-derives the cluster's plan positions from ref 169 so
+  the mass lands at 0.71-0.76 and the band clears with 0 trees moved or dropped by the clearer.
+- **ENV r7's first panels were rendered on the main checkout's master** (env_r5_hero.py defaulted to the main root). Fixed to the
+  worktree root; rule for every owner: the measure/sheet scripts default to `common.ROOT/master.blend` and the notes state which
+  master (object count) a number came from.
