@@ -2027,3 +2027,43 @@ is meant to be off the walk it wants ~0.5 m more setback. Nothing is blocked by 
 Eevee-only rigs and the rule that every Cycles path goes through `apply_final_cycles` or `common.configure_cycles`
 (never a bare engine switch + F12), the measured Cycles/Eevee wall times from QA rounds 04-05, why the 4K final
 starts at 128 spp fixed rather than the saved 768 adaptive, and the flythrough test-animation recipe.
+
+# Round 14 — the violet flood (QA-06-2), the reflection, cam03's outer row and the Eevee pass time
+
+## 24. Round 14
+
+### 24.0 Prep-review fix-nows and carries (docs/reviews/light_r14prep_review.md)
+
+- **1** `light_flythrough.qa_xy(name)` looks the cam01 / cam02 / cam04 stations up in `qa_cameras.CAMERAS` by name.
+  Only (x, y) is taken: the flythrough's z is an eye height over a **probed** surface, not the QA camera's z
+  (cam02 stands at 1.10 in `qa_cameras`, the route at 1.06 over a walk measured at -0.69). Rebuilt: the three
+  stations print (-14.1, 100.0), (70.5, 25.6), (0.0, 3.0) — unchanged, which is the point of the fix.
+- **2** the station table and `cam["schedule"]["stations"][i]["note"]` read `st[5]`, not the arc theta `st[4]`;
+  every note is now populated (0 lines reading `None` in `renders/logs/light_r14_fly_rebuild.log`).
+- **3** the stale "gates that leg at 1.30 m" comment now says 1.35 and names `CLEAR_MIN_GALLERY`.
+- **4** `--step 4` re-run with the **shipped** 1.35 gate (`renders/logs/light_r14_check_step4_shipped.log`),
+  which had never been done — the committed step-4 log was measured with the older 1.25 gate:
+
+  | gate | requirement | step 12 | **step 4, shipped gates** | |
+  |---|---|---|---|---|
+  | clearance, gallery | >= 1.35 m | 1.42 | **1.42** (frame 829, `column_006`) | PASS |
+  | clearance, outside | >= 1.50 m | 1.70 | **1.57** (0.07 m of margin) | PASS |
+  | level | agl >= 1.50; z >= -0.80 over water | 1.68 / 1.60 (30 smp) | **1.56** / 1.60 (**88** smp) | PASS |
+  | speed | land <= 6, water <= 10 | 5.60 / 9.20 | **5.60 / 9.20** | PASS |
+  | holds | >= 3 s each | 3.50 / 4.17 | **3.50 / 4.17** | PASS |
+
+  The step-4 minima are the ones to quote from here on: 1.42 m in the gallery and **1.57 m outside it**, not 1.70.
+- **8** the over-water gate FAILS loudly on zero samples instead of passing vacuously (`WATER_NAMES` is matched by
+  literal name, so an ENV rename would otherwise have silenced it). **9** `columns()` takes
+  `arch_params.COL_ARC_CENTER`. **10** the dome hold is stationary in POSITION only and deliberately so: the
+  `TARGET_KEYS` empty travels (0, 2, 26) -> (0, 4.5, 45) across the hold, which is the ceiling look-up itself; the
+  holds gate measures camera translation, which is what "hold" means for a hold.
+- **7, the north grove.** It is not on the route because it is not near the route. Environment r8's re-solved
+  conifers sit at world x -40..-61, y -29..-45 (behind the NORTH wing, 133-148 m from the hero station); the
+  route's four legs are all on the south and east sides, and the closest any station comes is **56.0 m**
+  (`ENV_tree_cypress_01`), with the nearest tree of any kind north of x = -40 at 42.2 m. The grove is a
+  BACKGROUND mass for the hero frame — that is the job environment r8 solved it for, against ref 169's dark mass
+  at frame x 0.71-0.76 — and reaching it would add ~120 m to a 250 m route, through the north wing, to look at
+  trees. The five brief beats (hero hold, water crossing, colonnade walk, arch approach, dome hold) fill the 51 s.
+- **5** (clearance re-run at `viewport=0`, i.e. against LOD0 foliage) stays with the Phase 5 render round, as the
+  brief directs.
