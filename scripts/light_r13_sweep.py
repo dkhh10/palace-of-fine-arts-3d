@@ -149,6 +149,9 @@ def apply_case(c):
     # --- world (only rebuilt if a sky key moved; otherwise the master's own world is used exactly as saved)
     if any(abs(c[k] - DEFAULTS[k]) > 1e-9 for k in SKY_KEYS):
         energy, colour, exp_ev = _calib[c["sky"]]
+        old_w = bpy.data.worlds.get(f"R13_{case_tag(c)}")
+        if old_w:
+            bpy.data.worlds.remove(old_w)          # r12 review carry 9: do not leak one world per case
         w = cal.make_sky_world(f"R13_{case_tag(c)}", AZ, EL, lb.SKY, sun_disc=False, strength=c["sky"],
                                camera_boost=c["cb"], camera_saturation=c["csat"],
                                glossy_boost=c["gb"], glossy_saturation=c["gsat"],

@@ -194,8 +194,11 @@ def apply_case(c):
     if min(c["fcr"], c["fcg"], c["fcb"]) >= 0.0:
         lb.SHADE_FILL = dict(lb.SHADE_FILL, color=(c["fcr"], c["fcg"], c["fcb"]))
     lb.build_shade_fill(coll, energy=c["fill"])
-    # interior fills (QA-04-7). Scale energy_W, not energy: apply_vault_for_engine rewrites energy from energy_W on
-    # every preset call, so a scale written to energy alone would be silently undone before the render.
+    # interior fills (QA-04-7). Scale energy_W AND energy: `apply_vault_for_engine` rewrites the VAULT emitters'
+    # energy from their `energy_W` on every preset call, so a scale written to the vault's energy alone would be
+    # silently undone before the render. (r12 review carry 7: the previous comment claimed the same of the FILL
+    # disk. It is not true -- apply_vault_for_engine only touches LIGHT_rotunda_vault_bounce -- and the disk is set
+    # both ways below only so that `energy_W` stays the record of what was rendered.)
     if _DISK:
         _DISK["energy_W"] = _E_DISK0 * c["f"]
         _DISK.data.energy = _E_DISK0 * c["f"]

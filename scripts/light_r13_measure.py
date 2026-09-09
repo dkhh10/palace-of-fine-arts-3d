@@ -103,7 +103,7 @@ def report_hero(paths):
         print(f"     north wing    lum {w['north_wing']['lum']:6.1f}  (0.9-1.1 of 146.5 -> "
               f"{w['north_wing']['lum']/146.5:.2f}x)")
         print(f"     shore band    lum {m['shore_band']['lum']:6.1f}  (ref {SHORE_REF})")
-        print(f"     columns {m['columns']['lum']:6.1f} ({m['columns']['lum']/95.8:.2f}x)   "
+        print(f"     columns {m['columns']['lum']:6.1f} ({m['columns']['lum']/m10.REF['columns']['lum']:.2f}x)   "
               f"near water sat {m['near_water_sky']['sat']:.3f} (0.22-0.32)   "
               f"sky_top {m['sky_top']['lum']:.1f} (149-182)  sky_left/top {m['sky_ratio']:.3f}")
         out[Path(p).name] = m
