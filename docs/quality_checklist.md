@@ -325,3 +325,59 @@ lagoon (materials + lighting), QA-07-2 sunlit stone chroma 25 % short (materials
 0.88, -4 blank archivolt, -5 cam03 28 % black, -6 cam06 far field erased by mist, -7 hero shade level 134.0 over its window.
 Recommendation: run the photo-projection pass next (its precondition is met), keep the hold-list, and add the hero
 shaded-attic and lagoon-flank boxes to it.
+
+## Round 08 (Phase 4 polish round 6, 2026-09-09) — the first round after the photo-projection pass
+
+Scores (avg per camera) r07 -> r08: **3.44 -> 3.67 / 3.06 -> 2.69 / 2.25 -> 2.56 / 2.88 -> 2.81 / 3.00 -> 3.06 /
+2.50 -> 2.67**. **Hero +0.22** (second consecutive gain; +0.45 over rounds 07-08). Full report `docs/qa_round_08.md`,
+composite `renders/qa_comparisons/round08_gate.png`.
+
+**Definition of done applied:** gate passes at hero >= 4.0 -> **3.67, not passed**. The two-round "< +0.1 after the
+projection pass" clock is **armed with 0 of 2 rounds used**, because round 08 (the first round after the projection)
+moved the hero +0.22. One more polish round is owed before the rule can end the loop.
+
+**Re-basing after a station move (new method, binding for later rounds).** When cam01 moves, do NOT shift the round-03
+boxes. `qa_silhouette.py align` re-registers the photograph onto the render, so the alignment's `dy` follows the
+render's own shift (this round: render courses moved up **4.0 rows** for the commanded 0.30 m at 13.36 px/m; alignment
+dy moved **-3.6**; residual **0.4 rows = 3 cm**). The proof is that the cached reference row reproduces at unchanged box
+coordinates within 2.3 % on every box except the dome cap (-5.2 %, 25 rows from the apex). Only *round-over-round render*
+statistics that depend on which course is inside the box need a control at box-4; print both (entablature row std 37.6
+fixed / **40.5** control; attic anisotropy 5.02 fixed / 3.76 control).
+
+**Projection seam test without a projection-off twin** (`scripts/qa_r08_seams.py`): crop the band edge and the
+facing-mask ramp on the cameras that are NOT the projector, blur horizontally, take the largest coherent step of the row
+profile. A mask edge would make the non-projector frames step *more* than the projector's. Measured: cam02 4.46-9.34,
+cam05 8.24-13.55, **cam01 (the projector) 22.44** — every step coincides with a real moulding. **No seam, no doubled
+feature, no sun baked into the shade** (the shaded attic *lost* luminance, 134.0 -> 127.8, while gaining the
+photograph's chroma, sat 0.310 -> 0.432 vs ref 0.454).
+
+Closed this round: **QA-07-5** (cam03 black 28.0 -> **12.6 %**, outer row 0.097 -> **0.166** at hue 58.9 — both halves),
+**QA-07-6** (cam06 far-shore lines 0 -> **3** composited, ratio 0.633), **QA-07-1** on the flank (162.8 / hue 209.6 vs
+154.0 / 200.5) and the ripples (R-B -47.6 -> -22.5 vs -17.0). Half closed: **QA-07-7** (shade 134.0 -> **127.8**, 1.3
+over its window, hue and sat inside), **QA-07-3** (reflection 105.6 -> **116.3**, mirror ratio 0.55 -> **0.614** vs the
+photo's 0.872). Open: **QA-07-2** sunlit chroma (sat 0.437 -> **0.462** of a 0.53-0.62 window; R-B 99 -> **105** of 120)
+— the projection carried 28 % of it and albedo cannot carry the rest without breaking the now-passing shaded window.
+Worse: cam05 water band 128.6 -> **133.6** (window 70-117), coffer rim sat 0.541 -> **0.626** with the field down to
+0.339 (window 0.38-0.50), soffit W gap 0.202 -> **0.222**.
+
+New tests this round: **mirror ratio** = hero reflection box / own sunlit attic (photo **0.872**; render 0.614).
+**Camera height at a new station** is checked geometrically, not by row correlation (which is unusable on the render,
+best corr 0.63 at a physically impossible M): the stack's rise in rows x px/m must equal the commanded drop (4.0 rows =
+0.299 m vs 0.30 m), and the waterline edge's larger k (20.0 px/m vs 13.36) must match the shore's smaller distance.
+**cam02 framing** is checked as sky fraction in the top-centre band: ref 062 has 91 % sky in rows 0-27, the render has
+**0 %** — the dome is clipped (QA-08-1; the fix is ~27 mm, not 40).
+
+Rejects (game asset / clean CAD): the hero's arch soffit / archivolt (unchanged, and four times larger in frame at the
+new cam02); **cam02's whole camera-facing side in indigo shade** (pier hue 263 at sat 0.464, soffit 239 at 0.524, with
+one shaded box brighter than the sunlit denominator); the shoreline as a uniform dark hedge (89.2 vs the photo's 115.2,
+no trunks, no shed, no figures); the hero mirror as a dim smear where the photo has hard gold-and-blue streaks.
+
+**Stack offset per course, round 08** (positive = the render sits higher; 13.42 px/m): crown +0.07, crown corona +0.15,
+panel frame top 0.00, panel frame bottom +0.37, cornice corona +0.15, dentil bottom -0.07, frieze top -0.22, architrave
+0.00, capital top -0.30. Spread **0.67 m**, unchanged through the station move; attic storey 97 vs 101 rows = 0.96.
+
+Verdict: **gate not passed** (hero 3.67 vs the 4.5 target). Blockers: **QA-08-1** cam02 clips the dome (lead, lens
+40 -> ~27 mm), **QA-08-2** cam02's face is violet (lighting), **QA-08-3** sunlit stone chroma — no longer an albedo item
+(lighting/lead: sun colour or look). Majors: -4 blank archivolt, -5 mirror level, -6 cam05 lagoon band, -7 cam03 walk
+now green, -8 coffer saucer over-corrected both ways. Recommendation: fix the two cam02 items (cheap, worth ~+0.4 on
+that camera), then spend the owed round on QA-08-5 + QA-08-4, which are the hero's two largest named gaps.

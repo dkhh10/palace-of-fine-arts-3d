@@ -107,7 +107,22 @@ R07 = {
     "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
     "Scale cues":            [3.5, 3, 2.5, 3, 3, 2.5],
 }
-SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06, "07": R07}
+R08 = {
+    # round 08 (2026-09-09, polish round 6: the PHOTO-PROJECTION pass MAT r9 + r9b, LIGHT r15 lagoon horizon /
+    # shade fill, ORN r8 capital presets + bake, and the lead's new stations: cam01 down 0.30 m to z 1.3 (2.6 m
+    # over the water) and cam02 re-stationed to the ref-062 NNE fit at 40 mm.  cam02's drop is the new station
+    # (the dome is clipped out of frame and the near face is in violet shade), not a loss in the model.
+    "Silhouette match":      [4, 2.5, 2.5, 3.5, 3.5, 4],
+    "Proportion":            [4, 3.5, 3, 3.5, 3.5, 3.5],
+    "Ornament fidelity":     [4, 4, 3, 3, 3.5, 2.5],
+    "Material realism":      [3.5, 2, 2.5, 3, 3.5, 2.5],
+    "Edge wear":             [3.5, 2.5, 1.5, 1, 2, 0.5],
+    "Lighting mood":         [4.5, 2, 3.5, 3, 3.5, 3],
+    "Water reflection":      [3, None, None, None, 2.5, 2.5],
+    "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
+    "Scale cues":            [3.5, 2.5, 2.5, 3, 3, 3],
+}
+SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06, "07": R07, "08": R08}
 VERDICT = {
     "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
@@ -123,6 +138,7 @@ VERDICT = {
           "0.64 vs photo 4.07), Cycles coffers 0.21 with black floors (claimed 0.39), water reflection grey (sat 0.11).",
     "06": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. Hero 3.22 (3.28 holding Proportion at 4): no gain for a fourth round. Landed: hero shade colour (shaded attic 30.7 deg / sat 0.373 vs ref 29.5 / 0.425), Cycles coffers 0.21 -> 0.451 (ref 0.437), cornice/dentil shadow (row std 20.9 -> 36.5), cam03 shade 0.06 -> 0.15 old box / 0.38 on the sky-visible box, cam05 stone std 0.92 of ref. Blockers: the diffuse sky tint floods cam06 and the water blue-violet (roofs hue 37 -> 253, cam05 lagoon sat 0.31 -> 0.12), hero reflection sat 0.043 (ref 0.358), stone streak anisotropy 0.41 vs 4.07, and the hero stack does not register course by course (+0.07 m to +2.31 m).",
     "07": "Gate: NOT passed (target >= 4 every row, hero average >= 4.5). Hero 3.44, +0.22 - the first hero gain in five rounds, and every camera gained. Landed: the hero stack registers course by course (all 8 courses within 5 rows / 0.37 m, attic storey 100 vs 101 rows, capital 35 vs 30), capitals read (alternation 20 maxima vs the photo's 17 at 0.95 of its contrast), attic run-off 19.2 % = the photo's 19.2 %, streak anisotropy 0.41 -> 3.12 (ref 4.08), entablature row std 44.0 (test 40), reflection R-B +2.5 -> +36.4 at hue 36.5, coffer sat 0.91 -> 0.47 (ref 0.43), the violet flood gone (cam06 plaza 269 -> 33, trees 240 -> 33), cam03 black 46.1 -> 28.0 %, Eevee pass 218.6 -> 146.1 s. Open blockers: sunlit stone chroma (attic sat 0.437 vs 0.581, R-B 99 vs 133), the open lagoon (flank 1.24x too bright at hue 224 vs 200, near water 228 vs 190), the hero mirror at 0.64 of the photo's luminance, and cam03 still 28 % black with the lagoon-side row at 0.097 of sunlit. The photo-projection pass did not ship this round; its precondition (a registered stack) is now met.",
+    "08": "Gate: NOT passed (target >= 4 every row, hero average >= 4.5). Hero 3.44 -> 3.67, +0.22 - a second consecutive hero gain, and the first round after the photo-projection pass, so the two-round <+0.1 clock is armed with 0 flat rounds on it. Landed: the projection registers with NO resolvable seam on cam02/cam05 (largest coherent step 4.5-13.6 lum/row against the projector frame's own 22.4, i.e. every step is a real moulding), sunlit attic sat 0.437 -> 0.462 and R-B 99 -> 105, shaded attic 134.0 -> 127.8 (window top 126.5) with its chroma now on the photo (sat 0.432 vs 0.454), the open lagoon closed (flank 189.5 -> 162.8 at hue 224 -> 210 vs the photo's 154.0 / 200.5; ripples R-B -47.6 -> -22.5 vs -17.0), reflection 105.6 -> 116.3, cam03 black 28.0 -> 12.6 % with the lagoon-side row 0.097 -> 0.166 (test 0.15), cam06 far-shore lines 0 -> 3 (test 3) at ratio 0.633, capital alternation 25 maxima vs the photo's 22 at 0.97 of its contrast. Open blockers: cam02's new station clips the dome out of frame (0 % sky at top-centre against ref 062's 91 %) and shows a violet shaded face (pier hue 255-263 at sat 0.43-0.46); sunlit stone chroma still 0.07 sat and 29 R-B short of the photograph; the hero mirror at 0.61 of its own sunlit stone against the photo's 0.87.",
 }
 
 
