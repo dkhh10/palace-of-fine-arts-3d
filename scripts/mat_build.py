@@ -778,9 +778,12 @@ def build_concrete_family():
         # QA-06-8 (round 8): coffer field sat 0.914 Cycles / 0.966 Eevee against ref 083's 0.427 -- a saturated
         # orange saucer, "lit right and coloured wrong".  Round 6's albedo was an ochre at HSV saturation 0.773
         # (B only 0.23 of R); ref 083's plaster is a warm CREAM.  Both colours drop to HSV saturation 0.40 at the
-        # same hue (46.2 deg field / 41.9 deg grey) and are then scaled to hold their luminance (x0.90 / x0.89),
-        # so the coffer / sky luminance ratio QA asks to hold at 0.35-0.55 is untouched and only the chroma moves.
-        "Base Color": C(0.515, 0.467, 0.309), "Grey Color": C(0.358, 0.314, 0.214), "Grey Drift": 0.16,
+        # same hue (46.2 deg field / 41.9 deg grey) and are then scaled to hold their luminance, so the coffer /
+        # sky luminance ratio QA asks to hold at 0.35-0.55 is untouched and only the chroma moves.  MEASURED at
+        # albedo saturation 0.40: rendered coffer sat 0.966 -> 0.614 (Eevee cam04), i.e. 0.94 rendered points per
+        # albedo point, not the 1.28 the two round-6 materials suggested -- so the albedo goes to 0.25 to land the
+        # rendered field near ref 083's 0.427.  Ratio held at 0.355 against round 6's 0.346.
+        "Base Color": C(0.495, 0.467, 0.371), "Grey Color": C(0.341, 0.315, 0.256), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         # QA-04-7 "no dirt gradient inside any coffer": now that the ribs carry their own material, a LONG AO probe
@@ -799,8 +802,8 @@ def build_concrete_family():
     # red pulled down harder than green (cooler), plus heavy recess dirt and cavity so the mouldings separate.
     concrete_material("MAT_plaster_ceiling_rib", "concrete_wall_007", 19.0, {
         # QA-06-8: the rib band measured sat 0.782 Cycles / 0.922 Eevee against the same 0.427.  Same treatment as
-        # the panel field above -- HSV saturation 0.670 -> 0.40 at hue 49.0, luminance held (x0.943 / x0.955).
-        "Base Color": C(0.200, 0.185, 0.120), "Grey Color": C(0.160, 0.149, 0.096), "Grey Drift": 0.30,
+        # the panel field above -- HSV saturation 0.670 -> 0.25 at hue 49.0, luminance held.
+        "Base Color": C(0.193, 0.184, 0.145), "Grey Color": C(0.155, 0.148, 0.116), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
@@ -879,12 +882,13 @@ def build_water():
     h4 = t.noise(Pa, 24.0, detail=2, rough=0.5, w=t.mul(time, 2.4))          # 0.04 m near-field chop
     h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
     # calmer patches (wind shadow) so the reflection is glassy in places
-    # ROUND 8: the calm floor drops 0.45 -> 0.20.  The slope sweep flattened the water's spatial contrast as it
-    # warmed it (box std 52.0 -> 25.5 -> 18.4 from dist 0.03 to 0.22), and ref 169's reflection is bright streaks
-    # on dark water, not an even corrugation.  A deeper wind-shadow floor keeps ~a third of the surface near-glassy,
-    # which both restores the streak contrast and returns the flat mirror's luminance (131 lum in the box) beside
-    # the choppy patches' warmth (99 lum at R-B +50).
-    calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.20, 1.0)
+    # ROUND 8 tried dropping the calm floor 0.45 -> 0.20, on the argument that the slope sweep flattened the
+    # water's spatial contrast as it warmed it (box std 52.0 -> 25.5 -> 18.4 from dist 0.03 to 0.22) while ref
+    # 169's reflection is bright streaks on dark water.  MEASURED on the acceptance frame, a deeper wind-shadow
+    # floor leaves ~half the box near-glassy and each glassy patch returns the FLAT mirror, which points at the
+    # willow and the arch: R-B +38.7 -> +22.9 for +7 of luminance.  Same bad trade as the murk, same reason, so
+    # the floor stays at round 7's 0.45.  The streak contrast has to come from the slope's own distribution.
+    calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
     chop = t.value(1.6, "WATER_CHOP")      # swept by scripts/mat_r7_sweep.py; 1.0 -> 1.6 measured in the sweep
     # ROUND 8 (QA-06-3, the blocker).  The Bump node's Strength only BLENDS between N and the bumped normal, so it
     # saturates at 1.0 and the shipped chop already puts it at ~0.94; the ripple SLOPE is set by Distance, which is
@@ -982,9 +986,14 @@ def build_water():
     # applied to the whole lagoon, which is what left the reflection column's substrate at an effective albedo of
     # 0.0125 (black) and cost cam06's open water 115.6 -> 94.3 lum.  The angular part of that suppression is
     # already carried physically by the Fresnel weight above, so the gain only has to protect the near crop: it is
-    # now ramped by depth, 0.15 unchanged inside 14 m and 1.00 past 24 m.  This is what puts luminance back into
-    # the reflection box and into cam05 / cam06's lagoon without touching the two windows round 7 bought.
-    murk = t.vscale(murk, t.mul(murk_w, t.maprange(depth, 14.0, 24.0, 0.15, 1.00, name="WATER_MURK_GAIN")))
+    # now ramped by depth instead.  MEASURED, and this is why the ramp is where it is: a first shipped attempt put
+    # it at 14 -> 24 m, which set the gain to 0.95 inside the hero's reflection box (mean 23.4 m) and cost the box
+    # 23.9 of R-B (+38.7 in the sweep -> +14.8 on the acceptance frame) to buy 12.5 of luminance -- 1.9 points of
+    # warmth per point of light, because the murk is a lambertian under lighting's blue sky and returns blue.  The
+    # box therefore keeps round 7's 0.15 exactly, and the ramp is pushed out to the 30-90 m band that only cam05's
+    # lagoon and cam06's aerial see, where the water is far from grazing, no reflection test is scored on it, and
+    # the murk is the whole reason QA-02-6's lagoon does not read black.
+    murk = t.vscale(murk, t.mul(murk_w, t.maprange(depth, 30.0, 90.0, 0.15, 1.00, name="WATER_MURK_GAIN")))
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.18,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
