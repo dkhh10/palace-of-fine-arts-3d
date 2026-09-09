@@ -2413,7 +2413,7 @@ one variable at a time, Cycles hero 64 spp (border 90 215 1460 1060, so every bo
 | case | near water 1150 1000 1450 1050 | flank 100 900 400 960 | water_refl R-B | hero shaded attic |
 |---|---|---|---|---|
 | BEFORE (round-07 rig) | 144.7 / hue 228.2 / sat 0.292 | 188.1 / hue 224.2 | +31.9 | 136.8 / hue 32.6 |
-| **A** glossy boost 5.25 -> 4.20 **and glossy hue -14.4 deg** | 139.3 / **hue 228.3** / 0.319 | 180.8 / hue 224.4 | **+37.9** | 136.5 / 32.6 |
+| **A** glossy boost 5.25 -> 4.20 **and glossy hue -14.4 deg [r15 review: NOT applied, ghue never reached make_sky_world; the row measures gb alone]** | 139.3 / **hue 228.3** / 0.319 | 180.8 / hue 224.4 | **+37.9** | 136.5 / 32.6 |
 | **B** the whole shade fill OFF (70/55 -> 0/0) | **118.6 / hue 208.6 / 0.244** | **159.1 / hue 210.2** | +39.7 | 130.8 / **hue 40.8** |
 | **C** WNW 0.5 / SSW 2.0 / NNE 0.1 | 134.1 / 225.4 | 200.9 / 223.3 | +36.3 | 131.9 / 39.7 |
 | **E** WNW 1.0 / SSW 0 / NNE 0 | 143.9 / 227.8 | **159.2 / 210.3** | +38.4 | **130.9 / 40.7** |

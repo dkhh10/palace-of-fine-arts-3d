@@ -338,6 +338,9 @@ def schedule(path_obj):
             cur = dict(name=label, f0=f0, f1=f1, cap=st[2], water=label in WATER_LEGS)
             legs.append(cur)
     holds = dict(hero=[1, h1], dome=[h1 + move, frames])
+    if not 1150 <= frames <= 1350:                       # r16 review fix 2: the route's design window (~50 s at 24 fps);
+        raise RuntimeError(f"flythrough schedule is {frames} frames, outside the 1150-1350 design window "
+                           f"(QA-08-13: a moved QA camera station changed the route length silently)")
     return dict(fps=FPS, frames=frames, hold_hero_frames=h1, move_frames=move,
                 path_length_m=round(total, 2), t_move_s=round(t_move, 2), legs=legs, holds=holds,
                 arrive={k: int(v_) for k, v_ in arrive.items()},
