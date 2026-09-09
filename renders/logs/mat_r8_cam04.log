@@ -1,0 +1,12 @@
+00:00.316  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+00:30.841  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8_eevee_04_rotunda_ceiling.png'
+[r8render] opened master in 0.8s, 9681 objects, engine cam04
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r8render] eevee CAM_qa_04_rotunda_ceiling 1280x720 32spp 29.8s -> r8_eevee_04_rotunda_ceiling.png
+[r8render] done in 30.6s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 43063 exited rc=0 after 32 s (max 900)

@@ -1,0 +1,17 @@
+00:00.315  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+00:53.358  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8w_w0_hero.png'
+01:44.926  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8w_w1_hero.png'
+02:36.312  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8w_w2_hero.png'
+03:26.644  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8w_w3_hero.png'
+[r8sweep] opened master in 0.8s, 9681 objects
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[r8sweep] w0 dist=0.03 52.3s -> r8w_w0_hero.png
+[r8sweep] w1 dist=0.07 51.5s -> r8w_w1_hero.png
+[r8sweep] w2 dist=0.13 51.4s -> r8w_w2_hero.png
+[r8sweep] w3 dist=0.22 50.3s -> r8w_w3_hero.png
+[r8sweep] done in 206.3s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 42012 exited rc=0 after 207 s (max 1500)

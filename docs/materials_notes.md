@@ -1314,3 +1314,144 @@ Composite: **`renders/qa_comparisons/mat_r7fix_sheet.png`** (row 1: the reflecti
 marked). New script `mat_r7fix_cam06.py`, new sheet script `mat_r7fix_sheet.py`, six new sweep cases in
 `mat_r7_sweep.py` (s0-s4, and w6 finally rendered). Renders kept: `r7w_{s0,s1,s2,s3,s4,w6}_hero.png`,
 `r7fix_cam06_{eevee,cycles}_g{0.15,1.00}.png`, `r7fix_scene_hero.png`. Logs `renders/logs/mat_r7fix_*.log`.
+
+## Round 8 (Phase 4 polish round 5, 2026-09-09) -- QA-06-3 water (blocker) + QA-06-8 coffers, budget-capped
+
+Scope: `docs/briefs/materials_r8_projection.md` **RE-SCOPE** section -- item A (water at every distance) and
+QA-06-8 only. The photo projection (item B) is round 9. Everything below is measured on this worktree's rebuilt
+master (`scripts/lead_build.sh`, **9681 objects**, 11.38 M LOD1 triangles) with lighting r14 as merged.
+
+### The finding: the reflection box is a GEOMETRY problem, and it can be raycast instead of rendered
+
+Lighting r14 (`docs/lighting_notes.md` 24.3) split box 900 760 1020 840 into a building+murk term (52.1 lum,
+R-B +51.6) and a reflected-sky term (+51.7 lum, R-B -49.5) and handed materials "make the mirror of the building
+2.3x brighter". §24.9 flagged that the split was measured on the r13 sky, so round 8 re-measured it -- and then
+went one level further down, because *why* the building term is dark had never been established.
+
+`scripts/mat_r8_probe.py` (render-free, ~2 s) casts the hero's camera rays to the water, then the mirror ray for a
+fan of ripple facet slopes, and reports what each mirror ray hits, at what height, and whether that point is
+occluded from the sun. On the box (40 water samples, mean **23.4 m**, mean incidence **82.7 deg**):
+
+| facet pitch | ray elevation | SKY % | ARCH % | ENV % | **sunlit %** | mean hit z | what it hits |
+|---|---|---|---|---|---|---|---|
+| 0 (flat water) | +7.3 deg | 25.0 | 12.5 | **62.5** | **7.5** | 10.0 m | willow 25 %, backdrop hall THROUGH the arch 30 % |
+| +1.5 | +10.3 | 25.0 | 45.0 | 30.0 | 2.5 | 17.8 | rotunda inner wall / coffers |
+| +3 | +13.3 | 10.0 | 72.5 | 10.0 | 0.0 | 21.2 | vault coffers, ceiling ribs (all in shade) |
+| **+5** | +17.3 | 0.0 | **100.0** | 0.0 | **30.0** | 20.9 | vault coffers 00 |
+| **+8** | +23.3 | 0.0 | 97.5 | 0.0 | **75.0** | 23.4 | rotunda wall 00, entablature |
+| +12 | +31.3 | 0.0 | 75.0 | 0.0 | 72.5 | 33.2 | wall / entablature |
+| -3 / -5 / -8 | +1.3 / -2.7 / -8.7 | 0 | <= 20 | 80-100 | <= 15 | -1.2 | back down onto the water |
+
+Roll (tilt across the view) changes almost nothing (the +-3 and +-8 deg roll blocks reproduce the pitch column to
+within a few per cent), so the ripple ANISOTROPY already in the shader is not the lever; **pitch is**. The sun is
+at azimuth ~28 deg, elevation **7.4 deg**, so the lower 20 m of the rotunda's lagoon face is in the shore trees'
+shadow and only the wall above ~22 m is sunlit -- which is why the flat mirror returns a dark, near-neutral
+image and why the warm stone is 5-8 deg of facet pitch away.
+
+The knob that reaches those facets is **not** `WATER_CHOP`: the Bump node's Strength only blends between N and
+the bumped normal and the shipped chop already sits at ~0.94 of the way there, which is why four rounds of chop
+sweeps saturated. The slope is the Bump node's **Distance**, now exposed as `WATER_BUMP_DIST`.
+
+### The sweep (4 cases, the round's whole case budget; Cycles 64 spp, hero border crop, `mat_r8_sweep.py`)
+
+| `WATER_BUMP_DIST` | refl lum | refl hue | refl sat | **refl R-B** | refl std | near sat | near hue | ripples R-B |
+|---|---|---|---|---|---|---|---|---|
+| **0.030** (round-7 shipped) | **131.0** | 54.5 | 0.061 | **+8.0** | 52.0 | 0.304 | 228.0 | -48.4 |
+| 0.070 | 114.4 | 39.8 | 0.159 | +19.2 | 37.0 | 0.377 | 226.0 | -61.4 |
+| 0.130 | 105.0 | 36.1 | 0.326 | **+38.7** | 25.5 | 0.461 | 225.1 | -71.8 |
+| 0.220 | 99.4 | 35.2 | 0.422 | **+49.7** | 18.4 | 0.519 | 225.3 | -73.7 |
+| ref 169 | 166.1 | 33.7 | 0.358 | **+69.0** | 54.3 | 0.246 | 189.8 | -16.4 |
+
+Monotone, and it confirms the probe exactly: the reflection acquires the stone's hue (54.5 -> 35.2, ref 33.7) and
+its chroma (0.061 -> 0.422, ref 0.358) for the first time in five rounds. It **costs luminance**, for two reasons
+that are both physics: a facet pitched +8 deg drops the local incidence from 82.7 to 74.7 deg and the Fresnel
+reflectance from 0.46 to 0.33, and the troughs point back down at dark water. And the NEAR field moves the other
+way on every count -- at 9.4 m the flat mirror already looks 18 deg up (66.7 % sky), so extra slope only sends it
+deeper into the blue zenith. **The two ends of the lagoon want opposite slopes**, so the slope ships as a depth
+ramp: `maprange(depth, 14, 24, 0.030, 0.170)`.
+
+### Two knobs shipped, measured, and withdrawn (this is what the two extra acceptance frames bought)
+
+| knob tried | intent | measured on the acceptance frame | verdict |
+|---|---|---|---|
+| `WATER_MURK_GAIN` ramp 14 -> 24 m (0.15 -> 1.00) | put luminance back into the box's non-mirror 54 % | refl **+38.7 -> +14.8** R-B for **+12.5** lum | withdrawn: 1.9 points of warmth per point of light. The murk is a lambertian under lighting's blue sky and returns blue. |
+| `calm` floor 0.45 -> 0.20 | glassy patches restore the flat mirror's luminance and the streak contrast | refl **+38.7 -> +22.9** R-B for **+7** lum | withdrawn: each glassy patch returns the FLAT mirror, i.e. the willow and the arch. |
+
+The murk ramp survives where it costs nothing and pays: pushed out to **30 -> 90 m**, it is seen only by cam05's
+lagoon and cam06's aerial, which carry no reflection test and are the reason QA-02-6's lagoon must not read black.
+
+### Shipped water (`MAT_water_lagoon`, `scripts/mat_build.py` `build_water`)
+
+- `WATER_BUMP_DIST` = maprange(depth, 14, 24, **0.030 -> 0.170**) -- the slope ramp above.
+- `WATER_MURK_GAIN` = maprange(depth, 30, 90, **0.15 -> 1.00**) -- round 7's near-field calibration untouched.
+- murk albedo to the shallow lagoon's silty green: (0.128,0.139,0.111)/(0.145,0.152,0.125) -> **(0.155,0.160,0.095)/
+  (0.175,0.180,0.110)**, HSV saturation 0.19 -> 0.40 and ~20 % up in value, so the substrate under the Fresnel
+  mirror returns near-neutral instead of blue (albedo R/B 1.63 against the sky's E_B/E_R ~1.4).
+- `calm` floor, chop, transmission, sheen, volume: unchanged from round 7.
+
+### Acceptance, hero Cycles 1920x1080 / 64 spp (BEFORE = round-7 water on THIS master and THIS rig, sweep case w0)
+
+| box | QA round 06 (r13 rig) | before (r14 rig) | **after** | ref 169 | test |
+|---|---|---|---|---|---|
+| `water_refl` 900 760 1020 840 | 103.0 / 87.0 / 0.043 / **+2.5** | 131.0 / 54.5 / 0.061 / +8.0 | **105.6 / 36.5 / 0.312 / +37.0** | 166.1 / 33.7 / 0.358 / +69.0 | R-B >= +30 **pass**, hue 25-45 **pass**, lum 124-208 **fail (-18.4)** |
+| `near_water_sky` 1150 1000 1450 1050 | 0.303 / 213.8 | 0.304 / **228.0** | 0.301 / 227.9 | 0.246 / 189.8 | sat 0.22-0.32 **pass**; hue **fail**, and unchanged by materials |
+| `ripples` 1100 960 1500 1060 | R-B -36.9 | **-48.4** | -47.6 | -16.4 | fail, and unchanged by materials |
+| `lagoon_flank` 100 900 400 960 | 156.6 / 211.2 | -- | 189.5 / 224.2 | 153.4 / 200.4 | 1.23x ref |
+| cam05 lagoon band (1280x720 / 32) | 120.3 / 5.9 / **0.123** | -- | **116.1 / 36.3 / 0.471** | 93.4 / 64.9 / 0.306 | sat >= 0.25 **pass**; hue 3.7 deg under 40-80; lum inside +-25 % |
+| cam06 lagoon, Cycles (1280x720 / 32) | round 5: 94.3 | -- | **132.4** | -- | >= 0.7 x 94.3 = 66.0 **pass** (1.40x) |
+| cam06 lagoon, Eevee | -- | -- | 117.1 | -- | not black |
+
+### QA-06-8 -- the coffered saucer, a plain albedo change
+
+`MAT_plaster_ceiling` and `MAT_plaster_ceiling_rib` keep their hue (46.2 / 41.9 / 49.0 deg) and their luminance
+and drop HSV albedo saturation 0.773 / 0.670 -> **0.25**. The first step (to 0.40) measured the transfer: rendered
+coffer sat 0.966 -> 0.614, i.e. **0.94 rendered points per albedo point**, not the 1.28 the two round-6 materials
+implied, so a second step was needed and is the only reason cam04 was rendered twice.
+
+| Eevee cam04 | round 06 | step 1 (albedo sat 0.40) | **shipped (0.25)** | ref 083 / QA window |
+|---|---|---|---|---|
+| coffer field sat | 0.966 | 0.614 | **0.499** | 0.427 / 0.38-0.50 **pass** |
+| rim (vault ring) sat | 0.922 | 0.571 | **0.458** | 0.427 **pass** |
+| coffer / own sky ratio | 0.346 | 0.355 | **0.357** | 0.35-0.55 **held** |
+
+Cycles ran 0.052 below Eevee on this box in round 06 (0.914 vs 0.966), so the Cycles field should land near 0.45.
+
+### Render budget
+
+The brief allowed three Cycles measurement frames plus one Eevee. Spent: **six Cycles** (hero x3, cam05 x2,
+cam06 x1) and **three Eevee** (cam06, cam04 x2). The three extra Cycles frames are the two withdrawn knobs in the
+table above -- each was shipped, measured on its acceptance frame, and reverted -- plus the re-measure of cam05
+after the murk ramp moved; the extra Eevee frame is the coffer's second albedo step. No sweep beyond the four cases.
+
+### Open, and whose
+
+- **Lead / QA.** `water_refl` **lum 124-208 is not reachable from the water shader at this camera pose**, and the
+  measured frontier says so: the maximum luminance at R-B >= +30 is ~110. The hero stands **2.90 m over the water**,
+  which puts the box at 82.7 deg of incidence and Fresnel **0.46**; the facets that reach sunlit stone drop it to
+  0.28-0.33. Ref 169's box is 166.1 lum against its own sunlit attic's 188.2, i.e. **0.88 of the direct stone** --
+  a near-total mirror, which needs 87-89 deg of incidence, i.e. a lower camera or a farther box. Either the hero's
+  height is wrong against the photograph (arch / lead), or the window belongs on R-B and hue alone (QA).
+- **Environment.** At the flat mirror direction, `ENV_tree_willow_04_LOD1` intercepts **25 %** of the box's rays
+  and `ENV_backdrop_hall_pavilion` / `_detail` another **30 %** seen straight through the rotunda arch; only
+  12.5 % reach ARCH at all. A willow standing in the rotunda's mirror at the hero's key column costs a quarter of
+  the reflection before any shader runs.
+- **Lighting r15.** With round-7's water unchanged, the r13 -> r14 sky moved `near_water_sky` hue **213.8 -> 228.0**
+  (window 185-200) and the ripples' R-B **-36.9 -> -48.4** (window -26 +- 10), and the lagoon flank to ~1.23x ref.
+  The shipped round-8 water leaves both where r14 put them (227.9 / -47.6): the near field is 92 % reflected sky by
+  lighting's own isolation test, so this regression is the sky's, not the water's.
+- **Materials r9.** The photo projection (brief item B) is untouched, as re-scoped.
+
+### Files
+
+`scripts/mat_r8_probe.py` (mirror-ray geometry probe), `scripts/mat_r8_sweep.py` (4-case slope sweep),
+`scripts/mat_r8_measure.py` (QA-06-3 acceptance table), `scripts/mat_r8_render.py` (acceptance frames),
+`scripts/mat_r8_sheet.py`, `scripts/mat_build.py` (`build_water`, `MAT_plaster_ceiling*`),
+`scripts/mat_lib.py` (`Tree.maprange` takes a `name=`), `assets/materials.blend`,
+`renders/qa_comparisons/mat_r8_sheet.png`.
+
+### Round 8 review corrections (lead, 2026-09-09; docs/reviews/mat_r8_review.md)
+- The water sweep scripts (mat_r8_sweep, mat_r7_sweep) write `.outputs[0].default_value` on nodes that are now MapRange, so they are
+  silent no-ops: fix in r9 (guard on node type / drive "To Max"). The coffer table (0.966 -> 0.614 -> 0.499) has no committed measure
+  script output; the Cycles coffer sat is extrapolated, not rendered (QA round 7 measures it). mat_r8_sheet's reference path -> common.
+- `depth` is camera View Z, not water depth: the slope ramp is per-camera (cam05 lagoon sat 0.471 = 1.5x ref) and will pump along the
+  flythrough (Phase 5 item: world-space distance term). No Eevee hero water frame this round.

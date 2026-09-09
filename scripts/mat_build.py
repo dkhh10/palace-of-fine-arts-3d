@@ -775,7 +775,15 @@ def build_concrete_family():
     # tell them apart: the rib plate hangs 0.55 m below the field on the same sphere, so ribs and panels are
     # parallel down-facing planes with the same normal and the same AO openness).
     concrete_material("MAT_plaster_ceiling", "concrete_wall_008", 9.0, {
-        "Base Color": C(0.572, 0.470, 0.130), "Grey Color": C(0.402, 0.312, 0.104), "Grey Drift": 0.16,
+        # QA-06-8 (round 8): coffer field sat 0.914 Cycles / 0.966 Eevee against ref 083's 0.427 -- a saturated
+        # orange saucer, "lit right and coloured wrong".  Round 6's albedo was an ochre at HSV saturation 0.773
+        # (B only 0.23 of R); ref 083's plaster is a warm CREAM.  Both colours drop to HSV saturation 0.40 at the
+        # same hue (46.2 deg field / 41.9 deg grey) and are then scaled to hold their luminance, so the coffer /
+        # sky luminance ratio QA asks to hold at 0.35-0.55 is untouched and only the chroma moves.  MEASURED at
+        # albedo saturation 0.40: rendered coffer sat 0.966 -> 0.614 (Eevee cam04), i.e. 0.94 rendered points per
+        # albedo point, not the 1.28 the two round-6 materials suggested -- so the albedo goes to 0.25 to land the
+        # rendered field near ref 083's 0.427.  Ratio held at 0.355 against round 6's 0.346.
+        "Base Color": C(0.495, 0.467, 0.371), "Grey Color": C(0.341, 0.315, 0.256), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         # QA-04-7 "no dirt gradient inside any coffer": now that the ribs carry their own material, a LONG AO probe
@@ -793,7 +801,9 @@ def build_concrete_family():
     # guilloche / bead-and-reel mouldings that hold a century of dust. Base Color is 0.37-0.40 of the panel's with
     # red pulled down harder than green (cooler), plus heavy recess dirt and cavity so the mouldings separate.
     concrete_material("MAT_plaster_ceiling_rib", "concrete_wall_007", 19.0, {
-        "Base Color": C(0.212, 0.186, 0.070), "Grey Color": C(0.168, 0.150, 0.068), "Grey Drift": 0.30,
+        # QA-06-8: the rib band measured sat 0.782 Cycles / 0.922 Eevee against the same 0.427.  Same treatment as
+        # the panel field above -- HSV saturation 0.670 -> 0.25 at hue 49.0, luminance held.
+        "Base Color": C(0.193, 0.184, 0.145), "Grey Color": C(0.155, 0.148, 0.116), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
@@ -872,10 +882,38 @@ def build_water():
     h4 = t.noise(Pa, 24.0, detail=2, rough=0.5, w=t.mul(time, 2.4))          # 0.04 m near-field chop
     h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
     # calmer patches (wind shadow) so the reflection is glassy in places
+    # ROUND 8 tried dropping the calm floor 0.45 -> 0.20, on the argument that the slope sweep flattened the
+    # water's spatial contrast as it warmed it (box std 52.0 -> 25.5 -> 18.4 from dist 0.03 to 0.22) while ref
+    # 169's reflection is bright streaks on dark water.  MEASURED on the acceptance frame, a deeper wind-shadow
+    # floor leaves ~half the box near-glassy and each glassy patch returns the FLAT mirror, which points at the
+    # willow and the arch: R-B +38.7 -> +22.9 for +7 of luminance.  Same bad trade as the murk, same reason, so
+    # the floor stays at round 7's 0.45.  The streak contrast has to come from the slope's own distribution.
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
     chop = t.value(1.6, "WATER_CHOP")      # swept by scripts/mat_r7_sweep.py; 1.0 -> 1.6 measured in the sweep
+    # ROUND 8 (QA-06-3, the blocker).  The Bump node's Strength only BLENDS between N and the bumped normal, so it
+    # saturates at 1.0 and the shipped chop already puts it at ~0.94; the ripple SLOPE is set by Distance, which is
+    # why four rounds of chop sweeps never moved the reflection.  `scripts/mat_r8_probe.py` casts the hero's mirror
+    # rays from the reflection box (23.4 m out, 82.7 deg incidence) and shows what the slope has to buy: on flat
+    # water the mirror ray leaves at +7.3 deg elevation and lands on a shore willow, on the backdrop hall seen
+    # THROUGH the rotunda arch, and on sky (SKY 25 % / ENV 62 % / ARCH 12 %, only 7.5 % of it sunlit).  The sunlit
+    # stone sits at +17 to +23 deg of ray elevation, i.e. behind a facet pitch of +5 to +8 deg (ARCH 97-100 %,
+    # sunlit 30 % then 75 %, mean hit height 21-23 m).  A ripple slope that reaches that far up returns bright warm
+    # streaks from the upper rotunda between dark troughs pointing at the trees -- which is ref 169's water exactly.
+    # `WATER_BUMP_DIST` is that slope, swept by scripts/mat_r8_sweep.py.
+    # The sweep (mat_r8_sweep.py, 4 cases, Cycles 64 spp, box 900 760 1020 840) is monotone in the slope and
+    # confirms the probe exactly -- dist 0.030 / 0.070 / 0.130 / 0.220 gives R-B +8.0 / +19.2 / +38.7 / +49.7 and
+    # hue 54.5 / 39.8 / 36.1 / 35.2 against ref 169's +69.0 / 33.7, i.e. the reflection acquires the stone's colour
+    # for the first time in five rounds.  It costs luminance (131.0 -> 114.4 -> 105.0 -> 99.4 against the 124-208
+    # window), because a facet pitched +8 deg drops the local incidence from 82.7 to 74.7 deg and with it the
+    # Fresnel from 0.46 to 0.33, and because the troughs then point down at dark water.  The same sweep makes the
+    # NEAR field worse on every count (sat 0.304 -> 0.519 against the 0.22-0.32 window, ripples R-B -48 -> -74),
+    # because at 9.4 m the flat mirror already looks 18 deg up and extra slope only sends it deeper into the blue
+    # zenith.  The two ends of the lagoon therefore want opposite slopes, so the slope is RAMPED BY DEPTH: the
+    # near field keeps round 7's calibration untouched and the 24 m+ band that carries the reflection gets the
+    # slope that aims it at the stone.
+    bumpdist = t.maprange(depth, 14.0, 24.0, 0.030, 0.170, name="WATER_BUMP_DIST")
     normal = t.bump(h, strength=t.mul(t.mul(t.mul(t.madd(near, 0.14, 0.45), calm), ripple_lod), chop),
-                    distance=0.03, normal=N)
+                    distance=bumpdist, normal=N)
     rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
     # green murk body. Transmission 0.55 (not 1.0) so the material reads the same on ENV's single water plane as it
     # does inside a closed lagoon volume: the opaque 45 % is a green murk lambertian that picks up sky and sun, the
@@ -917,7 +955,12 @@ def build_water():
     # saturation), which moves that share of the surface off the diffuse lobe and is what lets the building's
     # reflection (QA-05-4, R-B -39 where the photo is +71) carry the stone's colour again instead of a blue-grey
     # wash over it.
-    murk = t.mix(murk_far, C(0.128, 0.139, 0.111), C(0.145, 0.152, 0.125))
+    # ROUND 8: the murk goes from a near-neutral green-grey (HSV saturation 0.19) to the shallow lagoon's actual
+    # silty green (0.40), and up ~20 % in value.  It is the substrate under the Fresnel mirror, so its colour is
+    # what the 54 % of the reflection box that is NOT mirror returns; a neutral murk under lighting's blue sky
+    # returns blue and fights the warm streaks, a green-ochre one returns near-neutral (albedo R/B 1.63 against
+    # the sky's E_B/E_R ~1.4) and adds luminance without taking R-B back.
+    murk = t.mix(murk_far, C(0.155, 0.160, 0.095), C(0.175, 0.180, 0.110))
     murk.node.name = murk.node.label = "WATER_MURK"        # addressed by scripts/mat_r7_sweep.py
     # ROUND 7, and this is the measured answer to lighting r12's hand-off 1 (which asked for a third of the murk's
     # CHROMA). The round-7 sweep (mat_r7_sweep.py, 9 cases on one master, docs/materials_notes.md) scaled the murk
@@ -939,7 +982,18 @@ def build_water():
     t.plug(_fr.inputs["IOR"], 1.333); t.plug(_fr.inputs["Normal"], normal)
     _fw = t.sub(1.0, _fr.outputs[0])
     murk_w = t.madd(t.mul(_fw, _fw), 0.85, 0.15)
-    murk = t.vscale(murk, t.mul(murk_w, t.value(0.15, "WATER_MURK_GAIN")))
+    # ROUND 8.  Round 7's flat 0.15 was calibrated on ONE crop -- QA-05-4's near-water box at 9 m -- and then
+    # applied to the whole lagoon, which is what left the reflection column's substrate at an effective albedo of
+    # 0.0125 (black) and cost cam06's open water 115.6 -> 94.3 lum.  The angular part of that suppression is
+    # already carried physically by the Fresnel weight above, so the gain only has to protect the near crop: it is
+    # now ramped by depth instead.  MEASURED, and this is why the ramp is where it is: a first shipped attempt put
+    # it at 14 -> 24 m, which set the gain to 0.95 inside the hero's reflection box (mean 23.4 m) and cost the box
+    # 23.9 of R-B (+38.7 in the sweep -> +14.8 on the acceptance frame) to buy 12.5 of luminance -- 1.9 points of
+    # warmth per point of light, because the murk is a lambertian under lighting's blue sky and returns blue.  The
+    # box therefore keeps round 7's 0.15 exactly, and the ramp is pushed out to the 30-90 m band that only cam05's
+    # lagoon and cam06's aerial see, where the water is far from grazing, no reflection test is scored on it, and
+    # the murk is the whole reason QA-02-6's lagoon does not read black.
+    murk = t.vscale(murk, t.mul(murk_w, t.maprange(depth, 30.0, 90.0, 0.15, 1.00, name="WATER_MURK_GAIN")))
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.18,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,

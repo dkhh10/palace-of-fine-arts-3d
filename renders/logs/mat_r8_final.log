@@ -1,0 +1,24 @@
+00:00.381  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+01:16.642  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8_cycles_05_south_lawn.png'
+02:25.499  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8_cycles_06_aerial.png'
+03:03.844  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8_eevee_06_aerial.png'
+03:33.468  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r8_eevee_04_rotunda_ceiling.png'
+[r8render] opened master in 1.0s, 9681 objects, engine final
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[r8render] cycles CAM_qa_05_south_lawn 1280x720 32spp 75.2s -> r8_cycles_05_south_lawn.png
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[r8render] cycles CAM_qa_06_aerial 1280x720 32spp 68.8s -> r8_cycles_06_aerial.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r8render] eevee CAM_qa_06_aerial 1280x720 32spp 38.3s -> r8_eevee_06_aerial.png
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r8render] eevee CAM_qa_04_rotunda_ceiling 1280x720 32spp 29.6s -> r8_eevee_04_rotunda_ceiling.png
+[r8render] done in 213.1s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 42827 exited rc=0 after 214 s (max 2400)

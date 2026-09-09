@@ -189,8 +189,10 @@ class Tree:
     def smoothstep(self, v, lo, hi):
         return self.maprange(v, lo, hi, 0.0, 1.0, interp="SMOOTHSTEP")
 
-    def maprange(self, v, fmin, fmax, tmin, tmax, clamp=True, interp="LINEAR"):
+    def maprange(self, v, fmin, fmax, tmin, tmax, clamp=True, interp="LINEAR", name=None):
         n = self.new("ShaderNodeMapRange", clamp=clamp, interpolation_type=interp)
+        if name:
+            n.name = n.label = name
         self.plug(n.inputs["Value"], v)
         self.plug(n.inputs["From Min"], fmin)
         self.plug(n.inputs["From Max"], fmax)
