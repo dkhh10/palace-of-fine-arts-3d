@@ -1,0 +1,171 @@
+00:00.766  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
+00:01.063  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
+
+=== 1. socket census vs ORN assets (build_master.py ORN_COLL coverage) ===
+  attic_figure     n=   8  ORN asset: attic_figure           PRESENT
+  attic_panel      n=   8  ORN asset: attic_panel            PRESENT
+  capital_colonnade n= 114  ORN asset: capital_colonnade      PRESENT
+  capital_inner    n=   8  ORN asset: capital_inner          PRESENT
+  capital_rotunda  n=  16  ORN asset: capital_rotunda        PRESENT
+  drum_band        n=   1  ORN asset: drum_band              PRESENT
+  finial           n=   9  ORN asset: finial                 PRESENT
+  frieze_run       n= 126  ORN asset: frieze_rinceau         PRESENT
+  inner_figure     n=   8  ORN asset: winged_figure          PRESENT
+  keystone         n=  24  ORN asset: keystone               PRESENT
+  maiden           n=  48  ORN asset: maiden                 PRESENT
+  rosette_ceiling  n=  24  ORN asset: rosette_ceiling        PRESENT
+  urn              n=  40  ORN asset: urn                    PRESENT
+
+=== 2. frieze_run fit (hard check: run_length read from architecture.blend, tol 5 mm) ===
+  ARCH socket props: 24/24 rotunda sockets carry subtype="rinceau" (ARCH r6 contract in place)
+  host=rotunda      sub=rinceau      run= 2.999 n= 16 z= 27.00  -> frieze_rinceau_return    asset 2.9994-2.9994 m over 9 LODs, worst mismatch   0.40 mm  ok
+  host=rotunda      sub=rinceau      run= 5.913 n=  8 z= 27.00  -> frieze_rinceau           asset 5.9128-5.9128 m over 9 LODs, worst mismatch   0.20 mm  ok
+  host=colonnade    sub=greek_fret   run=94.347 n=  2 z= 13.42  -> ARCH's own band geometry
+  host=colonnade    sub=greek_fret   run=97.312 n=  2 z= 13.42  -> ARCH's own band geometry
+  host=planter_box  sub=greek_key    run= 5.180 n= 48 z= 16.65  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.421 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.435 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.471 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.556 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.705 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.721 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.752 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.771 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.810 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.858 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.874 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 1.889 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.004 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.024 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.238 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.259 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.312 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.328 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.574 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 2.596 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 3.307 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 3.362 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 4.541 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 4.673 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 5.798 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 5.835 n=  1 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 6.180 n=  2 z=  3.70  -> ARCH's own band geometry
+  host=rostra       sub=greek_key    run= 6.181 n= 14 z=  3.70  -> ARCH's own band geometry
+
+=== 3. rinceau band metrics ===
+  socket band_height on the rotunda ressaut runs: 0.810 m; ORN builds to orn_build.RIN_BAND_H = 0.810 m
+  ORN_frieze_rinceau_v1_LOD0           5.913 x 0.675 m field in a 0.81 m band, coverage  29.4 % of the band (35.3 % of the field)  proud above the frieze face: p50  50.8  p90  66.5  max  89.8 mm  clearance to the architrave crown  10.2 mm  lateral shadow at max proud  66.5 mm  ok
+  ORN_frieze_rinceau_v1_LOD1           5.913 x 0.676 m field in a 0.81 m band, coverage  29.6 % of the band (35.4 % of the field)  proud above the frieze face: p50  49.8  p90  65.4  max  89.2 mm  clearance to the architrave crown  10.8 mm  lateral shadow at max proud  66.0 mm  ok
+  ORN_frieze_rinceau_v2_LOD0           5.913 x 0.675 m field in a 0.81 m band, coverage  29.5 % of the band (35.4 % of the field)  proud above the frieze face: p50  46.1  p90  62.7  max  89.8 mm  clearance to the architrave crown  10.2 mm  lateral shadow at max proud  66.4 mm  ok
+  ORN_frieze_rinceau_v2_LOD1           5.913 x 0.674 m field in a 0.81 m band, coverage  29.6 % of the band (35.6 % of the field)  proud above the frieze face: p50  45.5  p90  62.2  max  89.5 mm  clearance to the architrave crown  10.5 mm  lateral shadow at max proud  66.2 mm  ok
+  ORN_frieze_rinceau_v3_LOD0           5.913 x 0.675 m field in a 0.81 m band, coverage  27.0 % of the band (32.4 % of the field)  proud above the frieze face: p50  51.1  p90  64.5  max  88.5 mm  clearance to the architrave crown  11.5 mm  lateral shadow at max proud  65.5 mm  ok
+  ORN_frieze_rinceau_v3_LOD1           5.913 x 0.675 m field in a 0.81 m band, coverage  27.1 % of the band (32.5 % of the field)  proud above the frieze face: p50  51.2  p90  64.7  max  87.9 mm  clearance to the architrave crown  12.1 mm  lateral shadow at max proud  65.0 mm  ok
+  ORN_frieze_rinceau_return_v1_LOD0    2.999 x 0.675 m field in a 0.81 m band, coverage  29.0 % of the band (34.8 % of the field)  proud above the frieze face: p50  51.2  p90  66.8  max  89.9 mm  clearance to the architrave crown  10.1 mm  lateral shadow at max proud  66.5 mm  ok
+  ORN_frieze_rinceau_return_v1_LOD1    2.999 x 0.675 m field in a 0.81 m band, coverage  29.3 % of the band (35.1 % of the field)  proud above the frieze face: p50  50.3  p90  66.1  max  88.1 mm  clearance to the architrave crown  11.9 mm  lateral shadow at max proud  65.2 mm  ok
+  ORN_frieze_rinceau_return_v2_LOD0    2.999 x 0.675 m field in a 0.81 m band, coverage  28.0 % of the band (33.7 % of the field)  proud above the frieze face: p50  45.8  p90  62.6  max  89.7 mm  clearance to the architrave crown  10.3 mm  lateral shadow at max proud  66.4 mm  ok
+  ORN_frieze_rinceau_return_v2_LOD1    2.999 x 0.674 m field in a 0.81 m band, coverage  28.2 % of the band (33.9 % of the field)  proud above the frieze face: p50  45.2  p90  62.1  max  89.1 mm  clearance to the architrave crown  10.9 mm  lateral shadow at max proud  65.9 mm  ok
+  ORN_frieze_rinceau_return_v3_LOD0    2.999 x 0.675 m field in a 0.81 m band, coverage  25.5 % of the band (30.5 % of the field)  proud above the frieze face: p50  54.9  p90  69.9  max  89.8 mm  clearance to the architrave crown  10.2 mm  lateral shadow at max proud  66.4 mm  ok
+  ORN_frieze_rinceau_return_v3_LOD1    2.999 x 0.676 m field in a 0.81 m band, coverage  25.6 % of the band (30.6 % of the field)  proud above the frieze face: p50  54.8  p90  69.6  max  89.4 mm  clearance to the architrave crown  10.6 mm  lateral shadow at max proud  66.2 mm  ok
+
+=== 4. LOD tri table ===
+  ORN_anthemion_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_attic_figure_v1                      LOD0  120000 / LOD1   20000 / LOD2    2000   budget 120000/20000/2000  ok
+  ORN_attic_figure_v2                      LOD0  120000 / LOD1   20000 / LOD2    2000   budget 120000/20000/2000  ok
+  ORN_attic_panel_v1                       LOD0  118698 / LOD1   35912 / LOD2    2399   budget 150000/36000/2400  ok
+  ORN_attic_panel_v2                       LOD0  134335 / LOD1   35651 / LOD2    2399   budget 150000/36000/2400  ok
+  ORN_attic_panel_v3                       LOD0  117351 / LOD1   35823 / LOD2    2398   budget 150000/36000/2400  ok
+  ORN_capital_colonnade_v1                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_colonnade_v2                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_colonnade_v3                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_inner_v1                     LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_inner_v2                     LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
+  ORN_capital_rotunda_v1                   LOD0   64000 / LOD1   16000 / LOD2     344   budget 64000/16000/2000  ok
+  ORN_capital_rotunda_v2                   LOD0   64000 / LOD1   16000 / LOD2     344   budget 64000/16000/2000  ok
+  ORN_capital_rotunda_v3                   LOD0   63998 / LOD1   16000 / LOD2     344   budget 64000/16000/2000  ok
+  ORN_corner_scroll_v1                     LOD0   40000 / LOD1    8000 / LOD2     800   budget 40000/8000/800  ok
+  ORN_corner_scroll_v2                     LOD0   40000 / LOD1    8000 / LOD2     800   budget 40000/8000/800  ok
+  ORN_dentil_v1                            LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_drum_band_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_egg_and_dart_v1                      LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_finial_v1                            LOD0   20000 / LOD1    4000 / LOD2     400   budget 20000/4000/400  ok
+  ORN_frieze_rinceau_v1                    LOD0   48000 / LOD1    9000 / LOD2     900   budget 48000/9000/900  ok
+  ORN_frieze_rinceau_v2                    LOD0   48000 / LOD1    9000 / LOD2     900   budget 48000/9000/900  ok
+  ORN_frieze_rinceau_v3                    LOD0   48000 / LOD1    9000 / LOD2     900   budget 48000/9000/900  ok
+  ORN_frieze_rinceau_return_v1             LOD0   24000 / LOD1    4500 / LOD2     450   budget 24000/4500/450  ok
+  ORN_frieze_rinceau_return_v2             LOD0   24000 / LOD1    4500 / LOD2     450   budget 24000/4500/450  ok
+  ORN_frieze_rinceau_return_v3             LOD0   24000 / LOD1    4500 / LOD2     450   budget 24000/4500/450  ok
+  ORN_greek_key_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_keystone_v1                          LOD0   50000 / LOD1    8000 / LOD2     800   budget 50000/8000/800  ok
+  ORN_keystone_v2                          LOD0   50000 / LOD1    8000 / LOD2     800   budget 50000/8000/800  ok
+  ORN_keystone_v3                          LOD0   50000 / LOD1    8000 / LOD2     800   budget 50000/8000/800  ok
+  ORN_maiden_v1                            LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_maiden_v2                            LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_maiden_v3                            LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_modillion_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_rosette_band_v1                      LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
+  ORN_rosette_ceiling_v1                   LOD0   26000 / LOD1    5000 / LOD2     500   budget 26000/5000/500  ok
+  ORN_rosette_ceiling_v2                   LOD0   26000 / LOD1    5000 / LOD2     500   budget 26000/5000/500  ok
+  ORN_rosette_ceiling_v3                   LOD0   26000 / LOD1    5000 / LOD2     500   budget 26000/5000/500  ok
+  ORN_urn_v1                               LOD0   60000 / LOD1   12000 / LOD2    1200   budget 60000/12000/1200  ok
+  ORN_urn_v2                               LOD0   60000 / LOD1   12000 / LOD2    1200   budget 60000/12000/1200  ok
+  ORN_urn_v3                               LOD0   60000 / LOD1   12000 / LOD2    1200   budget 60000/12000/1200  ok
+  ORN_urn_niche_v1                         LOD0   60000 / LOD1   12000 / LOD2    1200   budget 80000/18000/1800  ok
+  ORN_urn_niche_v2                         LOD0   60000 / LOD1   12000 / LOD2    1200   budget 80000/18000/1800  ok
+  ORN_urn_tub_v1                           LOD0   60000 / LOD1   12000 / LOD2    1200   budget 80000/18000/1800  ok
+  ORN_winged_figure_v1                     LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+  ORN_winged_figure_v2                     LOD0  100000 / LOD1   20000 / LOD2    2000   budget 100000/20000/2000  ok
+
+=== 5. per-instance variation available to the lead ===
+  attic_figure     sockets    8  distinct variant_seed    8  designs -  ORN variants 2
+  attic_panel      sockets    8  distinct variant_seed    8  designs ['A', 'B', 'C']  ORN variants 3
+  capital_colonnade sockets  114  distinct variant_seed  114  designs -  ORN variants 3
+  capital_inner    sockets    8  distinct variant_seed    8  designs -  ORN variants 2
+  capital_rotunda  sockets   16  distinct variant_seed   16  designs -  ORN variants 3
+  drum_band        sockets    1  distinct variant_seed    1  designs -  ORN variants 1
+  finial           sockets    9  distinct variant_seed    9  designs -  ORN variants 1
+  frieze_run       sockets  126  distinct variant_seed  126  designs -  ORN variants 3
+  inner_figure     sockets    8  distinct variant_seed    8  designs -  ORN variants 2
+  keystone         sockets   24  distinct variant_seed   24  designs -  ORN variants 3
+  maiden           sockets   48  distinct variant_seed   48  designs -  ORN variants 3
+  rosette_ceiling  sockets   24  distinct variant_seed   24  designs -  ORN variants 3
+  urn              sockets   40  distinct variant_seed   40  designs -  ORN variants 3
+
+=== 6. capitals fill their course (QA-06-6; ARCH r6 capital_rotunda 2.6 -> 3.0 m) ===
+  capital_rotunda      course: socket caph 3.000 m; orn_build builds to 3.000 m
+    ORN_capital_rotunda_v1  height LOD0 3.000 / LOD1 2.999 / LOD2 3.000  vs 3.000 m, worst    1.4 mm  ok
+    ORN_capital_rotunda_v2  height LOD0 3.000 / LOD1 2.999 / LOD2 3.000  vs 3.000 m, worst    1.3 mm  ok
+    ORN_capital_rotunda_v3  height LOD0 3.000 / LOD1 2.998 / LOD2 3.000  vs 3.000 m, worst    1.5 mm  ok
+  capital_inner        course: socket caph 1.800 m; orn_build builds to 1.800 m
+    ORN_capital_inner_v1  height LOD0 1.817 / LOD1 1.816 / LOD2 1.800  vs 1.800 m, worst   16.9 mm  ok
+    ORN_capital_inner_v2  height LOD0 1.816 / LOD1 1.815 / LOD2 1.800  vs 1.800 m, worst   16.5 mm  ok
+  capital_colonnade    course: socket caph 1.800 m; orn_build builds to 1.800 m
+    ORN_capital_colonnade_v1  height LOD0 1.825 / LOD1 1.824 / LOD2 1.800  vs 1.800 m, worst   25.2 mm  ok
+    ORN_capital_colonnade_v2  height LOD0 1.824 / LOD1 1.822 / LOD2 1.800  vs 1.800 m, worst   24.1 mm  ok
+    ORN_capital_colonnade_v3  height LOD0 1.824 / LOD1 1.824 / LOD2 1.800  vs 1.800 m, worst   24.3 mm  ok
+  capital_rotunda      LOD0 plan extent (leaf tips + volutes) 2.98-2.98 m across x; abacus 3.00 m across corners; socket size_hint (shaft top D) [2.1] -> plan 1.42x / abacus 1.43x the shaft
+  capital_inner        LOD0 plan extent (leaf tips + volutes) 2.15-2.20 m across x; abacus 2.15 m across corners; socket size_hint (shaft top D) [1.462] -> plan 1.47x / abacus 1.47x the shaft
+  capital_colonnade    LOD0 plan extent (leaf tips + volutes) 2.31-2.53 m across x; abacus 2.30 m across corners; socket size_hint (shaft top D) [1.45] -> plan 1.59x / abacus 1.59x the shaft
+
+=== 7. attic panels fill their field (ARCH r6 panel_height 4.50 -> 5.27 m) ===
+  attic_panel          course: socket panelh 5.270 m; orn_build builds to 5.270 m
+    ORN_attic_panel_v1  height LOD0 5.270 / LOD1 5.270 / LOD2 5.266  vs 5.270 m, worst    4.2 mm  ok
+    ORN_attic_panel_v2  height LOD0 5.270 / LOD1 5.270 / LOD2 5.270  vs 5.270 m, worst    0.0 mm  ok
+    ORN_attic_panel_v3  height LOD0 5.270 / LOD1 5.270 / LOD2 5.266  vs 5.270 m, worst    3.9 mm  ok
+    ORN_attic_panel_v1 width 10.500 m vs socket size_hint (panel width) [10.511]
+    ORN_attic_panel_v2 width 10.500 m vs socket size_hint (panel width) [10.511]
+    ORN_attic_panel_v3 width 10.501 m vs socket size_hint (panel width) [10.511]
+
+=== 8. capital tier profile (geometric proxy for QA-06-6's readable acanthus rows) ===
+  ORN_capital_rotunda_v1_LOD0: h 3.000 m, max radius 1.697 m, 7 silhouette alternations >= 2 % of r_max, deepest pinch 395 mm
+  ORN_capital_rotunda_v1_LOD1: h 2.999 m, max radius 1.698 m, 9 silhouette alternations >= 2 % of r_max, deepest pinch 824 mm
+  ORN_capital_rotunda_v2_LOD0: h 3.000 m, max radius 1.698 m, 9 silhouette alternations >= 2 % of r_max, deepest pinch 428 mm
+  ORN_capital_rotunda_v2_LOD1: h 2.999 m, max radius 1.698 m, 10 silhouette alternations >= 2 % of r_max, deepest pinch 843 mm
+  ORN_capital_rotunda_v3_LOD0: h 3.000 m, max radius 1.697 m, 8 silhouette alternations >= 2 % of r_max, deepest pinch 374 mm
+  ORN_capital_rotunda_v3_LOD1: h 2.998 m, max radius 1.698 m, 9 silhouette alternations >= 2 % of r_max, deepest pinch 383 mm
+
+=== verdict ===
+  all hard checks passed (run lengths within 5 mm, crown clearance >= 10 mm, every LOD inside its tier budget, every capital and relief field filling its ARCH course to 30 mm)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 40886 exited rc=0 after 5 s (max 900)
