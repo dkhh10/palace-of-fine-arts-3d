@@ -1,0 +1,17 @@
+00:00.312  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+IMG TEX_PFA_photo_mask //assets/textures/projection/PFA_photo_mask.png size (1920, 1080) has_data True cs Non-Color
+IMG TEX_PFA_photo_ratio //assets/textures/projection/PFA_photo_ratio.png size (1920, 1080) has_data True cs Non-Color
+GROUP PFA_instance.012
+GROUP PFA_concrete.011
+    Albedo Tint = <bpy_float[4], NodeSocketColor.default_value> (1.0383000373840332, 1.0130000114440918, 0.7581999897956848, 1.0)
+    Photo = 0.6000000238418579 
+PFA_photo present: True
+   tex PFA_photo_ratio TEX_PFA_photo_ratio size (1920, 1080) hasdata True ext CLIP
+   tex PFA_photo_mask TEX_PFA_photo_mask size (1920, 1080) hasdata True ext CLIP
+   out Ratio linked True
+   out Weight linked True
+   out  linked False
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 52575 exited rc=0 after 2 s (max 300)

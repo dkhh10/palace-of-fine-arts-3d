@@ -79,6 +79,27 @@ def macro_image(name):
     return img
 
 
+# The round-9 photo-projection maps (scripts/mat_projection.py): a mean-1 albedo ratio derived from ref 169 and
+# the mask pack that gates it.  Both live in the frame of the camera arch_uvproj.py baked `UVProj` from, and both
+# are Non-Color: the ratio is stored as ratio/2 (decoded x2 in the shader), the mask carries confidence / band /
+# coverage in R / G / B.  Missing files return None and the shader falls back to no projection at all.
+PROJECTION_MAPS = ("PFA_photo_ratio", "PFA_photo_mask")
+
+
+def projection_image(name):
+    p = TEX_DIR / "projection" / f"{name}.png"
+    key = f"TEX_{name}"
+    img = bpy.data.images.get(key)
+    if img is None:
+        if not p.exists():
+            print(f"[mat_lib] WARNING missing projection map {p} -- run scripts/mat_projection.py build")
+            return None
+        img = bpy.data.images.load(str(p), check_existing=True)
+        img.name = key
+    img.colorspace_settings.name = "Non-Color"
+    return img
+
+
 def neutral_image(name, color, size=4):
     """A tiny generated Non-Color image used as the *neutral* default of a swappable map socket.
 

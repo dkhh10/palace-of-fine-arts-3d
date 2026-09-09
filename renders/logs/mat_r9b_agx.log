@@ -1,0 +1,31 @@
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/scripts/mat_r9b_agx.py:87: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat.use_nodes = True
+00:00.643  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_agx_shipped.png'
+00:00.680  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_agx_base_contrast.png'
+00:00.717  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_agx_medium_high_contrast.png'
+00:00.752  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_agx_high_contrast.png'
+00:00.791  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r9b_agx_punchy.png'
+[agx] view_transform AgX  look 'AgX - High Contrast'  exposure -2.8331  (round 9 measured this table at look None = Base Contrast)
+[agx]            display RGB    lum    sat     R-B |  t_lum    t_R    t_G    t_B
+[agx]   74.1,  50.4,  12.9   52.7  0.826   +61.2 |  0.854  0.696  0.805  3.482
+[agx]   95.4,  65.8,  20.2   68.8  0.788   +75.2 |  0.827  0.677  0.766  2.591
+[agx]  117.1,  82.3,  28.4   85.8  0.758   +88.7 |  0.770  0.633  0.732  2.098
+[agx]  139.7, 100.8,  40.7  104.7  0.709   +99.0 |  0.709  0.553  0.675  1.627
+[agx]  160.0, 119.3,  57.6  123.5  0.640  +102.4 |  0.601  0.458  0.590  1.159
+[agx]  176.5, 136.4,  77.6  140.7  0.560   +98.9 |  0.511  0.384  0.499  0.836
+[agx]  191.7, 154.0, 101.6  158.2  0.470   +90.1 |  0.420  0.318  0.409  0.586
+[agx]  204.8, 170.7, 125.3  174.6  0.388   +79.4 |  0.339  0.260  0.324  0.421
+[agx]  216.0, 185.6, 147.2  189.3  0.319   +68.8 |  0.274  0.217  0.259  0.306
+[agx]  226.1, 199.2, 167.0  202.6  0.261   +59.1 |  0.221  0.186  0.207  0.218
+[agx]  234.8, 211.4, 184.1  214.4  0.216   +50.7 |  0.178  0.152  0.169  0.168
+[agx]  242.2, 222.1, 198.8  224.7  0.179   +43.3 |  0.147  0.125  0.138  0.139
+[agx] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/assets/textures/projection/agx_transfer.json
+[agx] the four looks compared at MATCHED display luminance 189.8 (not at matched scene value):
+[agx]   AgX - Base Contrast          at lum 189.8: sat 0.241  R-B  +50.4  t_lum 0.197  t_B 0.191   (same scene value as the shipped look -> lum 187.5)
+[agx]   AgX - Medium High Contrast   at lum 189.8: sat 0.288  R-B  +61.5  t_lum 0.235  t_B 0.245   (same scene value as the shipped look -> lum 197.5)
+[agx]   AgX - High Contrast          at lum 189.8: sat 0.316  R-B  +68.4  t_lum 0.271  t_B 0.302   (same scene value as the shipped look -> lum 206.5)
+[agx]   AgX - Punchy                 at lum 189.8: sat 0.261  R-B  +54.0  t_lum 0.212  t_B 0.204   (same scene value as the shipped look -> lum 165.6)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 53757 exited rc=0 after 1 s (max 900)

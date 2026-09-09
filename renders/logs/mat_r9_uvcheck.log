@@ -1,0 +1,8 @@
+00:00.313  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/assets/architecture.blend"
+[uvcheck] 33 meshes carry UVProj, 6242 sampled loops
+[uvcheck] worst |world_to_camera_view - shader closed form| = 0.0002 px
+[uvcheck] worst |shader closed form - baked UVProj|        = 0.0002 px  (ARCH_rotunda_attic_cornice)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 51645 exited rc=0 after 1 s (max 600)

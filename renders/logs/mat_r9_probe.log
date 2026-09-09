@@ -1,0 +1,10 @@
+00:00.348  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+[probe] box [1110, 225, 1150, 260] 144 rays, facing ramp 58-80 deg
+  ARCH_rotunda_attic_niche_00                  MAT_concrete_ochre           72 rays  angle  36.7 deg  facing 1.000  z  31.5  rad  25.7  zgate 1.000  rgate 1.000  mask 1.000  -> weight 1.000
+  INST_attic_panel_007_LOD1                    MAT_ornament_concrete        51 rays  angle  44.6 deg  facing 0.972  z  34.2  rad  21.6  zgate 1.000  rgate 1.000  mask 1.000  -> weight 0.972
+  ARCH_rotunda_attic_panel_07                  MAT_concrete_ochre           20 rays  angle  57.0 deg  facing 1.000  z  34.2  rad  21.3  zgate 1.000  rgate 1.000  mask 1.000  -> weight 1.000
+  ARCH_rotunda_attic_frame_07                  MAT_concrete_ochre            1 rays  angle  68.6 deg  facing 0.557  z  35.8  rad  21.5  zgate 1.000  rgate 1.000  mask 1.000  -> weight 0.557
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 52530 exited rc=0 after 3 s (max 600)

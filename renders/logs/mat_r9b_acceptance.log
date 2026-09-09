@@ -1,0 +1,22 @@
+box                                  before                      after   window
+  attic_sunlit     189.8/ 36.1/0.461/+104.7   189.7/ 36.1/0.463/+105.1   lum 178-201, sat .53-.62, R-B >= 120
+  attic_string     179.8/ 35.9/0.460/ +99.2   180.6/ 35.8/0.460/ +99.6   (ref 185.3/39.3/0.585)
+  entablature      132.8/ 37.9/0.687/+118.5   132.4/ 38.0/0.700/+121.0   sat <= 0.70
+  attic_shaded     132.9/ 33.6/0.394/ +61.9   127.9/ 34.5/0.434/ +66.2   lum 103.5-126.5, hue 23.5-35.5, sat <= .50
+  columns          104.9/ 26.3/0.625/ +93.3   105.3/ 26.2/0.625/ +93.6   hue 24.5+-4, sat .55-.65
+  water_refl       110.3/ 38.7/0.351/ +43.7   116.3/ 39.0/0.349/ +45.7   lum 124-208, R-B >= +35, hue 25-45
+  near_water_sky   118.3/208.5/0.234/ -31.8   125.3/208.0/0.200/ -28.2   lum 79-131, hue 185-200, sat .22-.32
+  ripples          115.4/209.3/0.200/ -26.0   121.9/208.9/0.167/ -22.5   R-B -26 +- 10
+  lagoon_flank     155.7/209.8/0.253/ -46.0   162.7/209.6/0.230/ -43.1   lum 114-190, hue <= 210
+
+  texture / direction on 900 222 1020 256 and the narrow box 900 224 1020 248
+    QA box  before std  29.0 (ratio 0.65, test >= 0.60)  aniso  4.16 (test >= 1.5)
+    QA box  after  std  28.3 (ratio 0.64, test >= 0.60)  aniso  4.84 (test >= 1.5)
+    narrow  before std  26.5 (ratio 0.60, test >= 0.60)  aniso  6.11 (test >= 2.0)
+    narrow  after  std  26.0 (ratio 0.59, test >= 0.60)  aniso  7.93 (test >= 2.0)
+
+  >> A  attic sat 0.463 (.53-.62) FAIL | R-B +105.1 (>=120) FAIL | lum 189.7 (178-201) PASS
+  >> A  shaded hue 34.5 (29.5+-6) PASS | sat 0.434 (<=.50) PASS | columns hue 26.2 (24.5+-4) PASS sat 0.625 (.55-.65) PASS
+  >> F  shaded lum 127.9 (103.5-126.5) FAIL   [before 132.9]
+  >> B  reflection lum 116.3 (124-208) FAIL | R-B +45.7 (>=35) PASS | hue 39.0 (25-45) PASS | refl/attic 0.61 (photo 0.88)
+  >> C  near water lum 125.3 (79-131) PASS | hue 208.0 (185-200) FAIL | sat 0.200 (.22-.32) FAIL

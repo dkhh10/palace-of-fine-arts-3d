@@ -85,8 +85,11 @@ r2 = [fit(im.crop(WATER)) for im in (before, after, ref)]
 CF = (0.400, 0.400, 0.200, 0.200)
 c4box = lambda im: (int(CF[0] * im.width), int(CF[1] * im.height),
                     int((CF[0] + CF[2]) * im.width), int((CF[1] + CF[3]) * im.height))
-REF083 = Path("/Users/dk/Projects/3d render blender 3rd attempt building"
-              "/reference/photos/raw/ref_083_rotunda_San_Francisco_40326830584.jpg")
+# r8 review finding 3: the reference tree is gitignored and lives in the MAIN checkout, so it is resolved through
+# arch_params.reference_dir() (common.REFERENCE_DIR / $PFA_REFERENCE_DIR), never a literal path in a worktree.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import arch_params as _P
+REF083 = _P.reference_dir() / "photos/raw/ref_083_rotunda_San_Francisco_40326830584.jpg"
 ref083 = Image.open(REF083).convert("RGB")
 _h = min(ref083.height, int(ref083.width * c4_after.height / c4_after.width))
 ref083 = ref083.crop(((ref083.width - int(_h * c4_after.width / c4_after.height)) // 2,
