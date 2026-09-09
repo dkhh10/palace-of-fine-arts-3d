@@ -142,6 +142,15 @@ def apply_vault_for_engine(engine):
     return n
 
 
+def _lamp_weight(light_build, o):
+    """The per-lamp weight `w` of SHADE_FILL["lamps"] for a lamp named LIGHT_shade_fill_NN (1.0 if unknown)."""
+    try:
+        k = int(o.name.rsplit("_", 1)[1])
+        return float(light_build.SHADE_FILL["lamps"][k].get("w", 1.0))
+    except Exception:
+        return 1.0
+
+
 def _shade_lights():
     try:
         import light_build
@@ -169,7 +178,9 @@ def apply_shade_for_engine(engine):
             # arriving without the custom property would seed the CYCLES energy at the Eevee override's value.
             try:
                 import light_build
-                base = float(light_build.SHADE_FILL["energy"])
+                # r14 review carry 7: the per-lamp WEIGHT has to be applied too. `SHADE_FILL["energy"]` is the
+                # rig total; a lamp whose w is 0.70 must come back at 0.70 x 70, not at 70.
+                base = float(light_build.SHADE_FILL["energy"]) * _lamp_weight(light_build, o)
             except Exception:
                 base = 0.0
             o["energy_W"] = base

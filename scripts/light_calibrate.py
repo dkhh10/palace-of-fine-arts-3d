@@ -148,7 +148,8 @@ def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
 
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
-                   camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
+                   camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, glossy_hue=0.5,
+                   diffuse_saturation=1.0,
                    diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0,
                    diffuse_tint_antisun_p=1.0, diffuse_tint_horizon_p=1.0,
                    split_rays=True):
@@ -208,7 +209,8 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
         vis_out = zero.outputs[0]
         camera_saturation = glossy_saturation = 1.0  # their stages would have Fac 0; do not build them
     elif (camera_boost != 1.0 or glossy_boost != 1.0 or diffuse_boost != 1.0 or camera_saturation != 1.0
-            or glossy_saturation != 1.0 or diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9):
+            or glossy_saturation != 1.0 or diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9
+            or abs(glossy_hue - 0.5) > 1e-9):
         lpn = nt.nodes.new("ShaderNodeLightPath"); lpn.name = "LIGHT_PATH"
         vis = nt.nodes.new("ShaderNodeMath"); vis.operation = "ADD"; vis.name = "cam_or_glossy"
         nt.links.new(lpn.outputs["Is Camera Ray"], vis.inputs[0]); nt.links.new(lpn.outputs["Is Glossy Ray"], vis.inputs[1])
@@ -232,7 +234,7 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
     # the water is a Fresnel mirror of the horizon at grazing angles, so the near-water chroma (QA-03-7) is set by
     # the glossy socket alone and could not be moved without dragging the visible sky with it.
     if (camera_saturation != 1.0 or glossy_saturation != 1.0 or diffuse_saturation != 1.0
-            or abs(diffuse_hue - 0.5) > 1e-9):
+            or abs(diffuse_hue - 0.5) > 1e-9 or abs(glossy_hue - 0.5) > 1e-9):
         if diffuse_saturation != 1.0 or abs(diffuse_hue - 0.5) > 1e-9:
             inv = nt.nodes.new("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.name = "not_cam_or_glossy"
             inv.inputs[0].default_value = 1.0
@@ -241,8 +243,15 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
                                    hue=diffuse_hue)
         if camera_saturation != 1.0:
             sky_color = _sat_stage(nt, "sky_saturation", sky_color, cam_ray, camera_saturation)
-        if glossy_saturation != 1.0:
-            sky_color = _sat_stage(nt, "sky_saturation_glossy", sky_color, gl_ray, glossy_saturation)
+        if glossy_saturation != 1.0 or abs(glossy_hue - 0.5) > 1e-9:
+            # ROUND 15 (QA-07-1): `glossy_hue` is the GLOSSY twin of `diffuse_hue`. At 87-89 deg incidence the open
+            # lagoon is a Fresnel mirror of the horizon band, so what the near-water and flank boxes read as "the
+            # water's colour" IS the sky's colour on this socket. Rounds 10-14 could only change its LEVEL
+            # (glossy_boost) and its CHROMA (glossy_saturation); neither can move a hue, and the measured defect is
+            # a HUE one (rendered 227.9 against ref 169's 190.0). Camera rays never traverse this stage, so the
+            # visible sky's own hue -- which already matches ref 169 to 0.5 deg -- is held exactly still.
+            sky_color = _sat_stage(nt, "sky_saturation_glossy", sky_color, gl_ray, glossy_saturation,
+                                   hue=glossy_hue)
     # Round 12 (QA-05-1): a DIFFUSE-only colour tint, i.e. a white balance on the light that lands on shaded stone.
     # It is the lever the shade actually needs and a hue rotation is not: the render's shaded attic is (122, 94, 22)
     # against ref 169's (141, 111, 81), i.e. it is short 59 units of BLUE and only ~18 of R and G, and a hue rotation
@@ -316,8 +325,9 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
             # ROUND 14 (QA-06-2): the SHARPNESS of the elevation weight, not its amount, is the discriminator that
             # separates a shaded WALL from anything that faces UP. A vertical wall samples the sky cosine-weighted
             # about a HORIZONTAL normal, so its mean |ray.z| is ~0.42 and its mean (1-|z|) ~0.58; an up-facing
-            # surface samples it cosine-weighted about the ZENITH (E[z] = 2/3), mean (1-|z|) ~0.33. At p = 1 the
-            # wall keeps 1.8x what the roof / walk / water-murk keeps; at p = 3 it keeps ~4.7x. Round 12 spent the
+            # surface samples it cosine-weighted about the ZENITH (E[z] = 2/3), mean (1-|z|) ~0.33. The
+            # discrimination is E[(1-|z|)^p] per hemisphere; the single table lives in light_build.py next to
+            # SKY_DIFFUSE_TINT_HORIZON_P: 1.73x at p = 1, 3.07x at p = 3, 5.02x at the SHIPPED p = 6. Round 12 spent the
             # amount of this weight (it ships at 1.0, the maximum) and had no lever left; the exponent is a new one,
             # and it is the MORE physical shape -- the anti-sun horizon band (the Earth-shadow / Belt of Venus band)
             # really is a narrow band a few degrees deep, not a linear ramp from zenith to horizon.

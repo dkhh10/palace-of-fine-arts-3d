@@ -89,6 +89,13 @@ SKY_GLOSSY_SATURATION = 0.90       # ROUND 10 (QA-03-7). Split out of SKY_CAMERA
                                    # visible sky's own hue is 208.7 against ref 169's 208.2, i.e. exact. In the photo
                                    # the water is 16 deg greener than the sky it mirrors, which is the lagoon's own
                                    # upwelling green - environment's water shader, not lighting's.
+SKY_GLOSSY_HUE = 0.500             # ROUND 15 (QA-07-1), new socket. Blender Hue/Saturation "Hue" on the GLOSSY
+                                   # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
+                                   # the LAGOON MIRRORS by d*360 deg while the visible sky (camera rays) and the
+                                   # light on shaded stone (diffuse rays) are held exactly still. It exists because
+                                   # QA-07-1 is a HUE defect and rounds 10-14 only ever had a level knob
+                                   # (SKY_GLOSSY_BOOST) and a chroma knob (SKY_GLOSSY_SATURATION) on that socket.
+                                   # Swept in docs/lighting_notes.md 25.2.
 SKY_DIFFUSE_SATURATION = 1.00      # saturation of the sky for DIFFUSE rays, i.e. the light that lands on the shaded
                                    # stone. Kept physical. Round 10 swept it to 2.0 and 3.0 hunting the shaded
                                    # attic's hue (43.0 against ref 169's 29.5) and it moved the shade's BLUE channel
@@ -144,12 +151,18 @@ SKY_DIFFUSE_TINT_ANTISUN_P = 3.0   # ROUND 14 (QA-06-2), new socket. Exponent on
                                    # wall keeps its own.
 SKY_DIFFUSE_TINT_HORIZON_P = 6.0   # ROUND 14 (QA-06-2), new socket. Exponent on the horizon weight (1 - |ray.z|)^p.
                                    # A vertical wall's hemisphere is centred on a HORIZONTAL normal (mean |ray.z|
-                                   # ~0.42); an up-facing surface's is centred on the ZENITH (mean z = 2/3). At p = 1
-                                   # the wall keeps 1.8x what a roof, a walk or the lagoon's murk keeps -- not enough
-                                   # to matter, which is why round 12's horizon weight was worth only 0.045 of
-                                   # near-water saturation. At p = 10 it keeps 4.8x. Physically it is also the more
-                                   # honest shape: the anti-sun horizon band (Earth shadow / Belt of Venus) at a
-                                   # 7 deg sun is a band a few degrees deep, not a linear ramp from the zenith.
+                                   # ~0.42). ONE table, computed once for both files (r14 review carry 8), as the
+                                   # cosine-weighted expectation E[(1-|z|)^p] over each surface's own hemisphere --
+                                   # NOT (E[1-|z|])^p, which is what the two older comments disagreed about:
+                                   #     p     1      2      3      6*     10
+                                   #     wall  0.576  0.401  0.307  0.179  0.115
+                                   #     roof  0.333  0.167  0.100  0.036  0.015
+                                   #     x     1.73   2.41   3.07   5.02   7.59      (* = SHIPPED)
+                                   # At p = 1 the wall keeps only 1.73x what a roof, a walk or the lagoon's murk
+                                   # keeps -- which is why round 12's horizon weight was worth only 0.045 of
+                                   # near-water saturation. At the shipped p = 6 it keeps 5.0x. Physically it is
+                                   # also the more honest shape: the anti-sun horizon band (Earth shadow / Belt of
+                                   # Venus) at a 7 deg sun is a band a few degrees deep, not a linear ramp.
 SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue/Saturation "Hue" on the DIFFUSE
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
@@ -497,10 +510,12 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
     """QA-04-2 / QA-05-1: wide-angle sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
     Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory.
 
-    `energy` is the CYCLES irradiance (0.0 as shipped) and `energy_eevee` the EEVEE one. The lamps carry both on
-    `energy_W` / `energy_W_eevee` and `light_presets.apply_shade_for_engine` switches between them, exactly the way
-    `apply_vault_for_engine` switches the vault emitters. With the Cycles energy at 0 the lamps ship `hide_render`,
-    so Cycles never traverses them."""
+    `energy` is the CYCLES irradiance and `energy_eevee` the EEVEE one; as of ROUND 14 BOTH are non-zero
+    (SHADE_FILL: 70.0 W/m2 Cycles, 55.0 W/m2 Eevee), i.e. this is real light in both engines and no longer the
+    Eevee-only rig of round 13 (r14 review carry 6). The lamps carry both on `energy_W` / `energy_W_eevee` and
+    `light_presets.apply_shade_for_engine` switches between them, exactly the way `apply_vault_for_engine`
+    switches the vault emitters. `hide_render` is set per engine from whichever of the two is zero; with both
+    non-zero the lamps are visible to both renderers."""
     S = SHADE_FILL
     e_total = S["energy"] if energy is None else energy
     e_eevee = S.get("energy_eevee", 0.0) if energy_eevee is None else energy_eevee
@@ -597,6 +612,7 @@ def build_world(az, el, calib, moment):
     w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
                            camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION,
                            glossy_boost=SKY_GLOSSY_BOOST, glossy_saturation=SKY_GLOSSY_SATURATION,
+                           glossy_hue=SKY_GLOSSY_HUE,
                            diffuse_saturation=SKY_DIFFUSE_SATURATION, diffuse_hue=SKY_DIFFUSE_HUE,
                            diffuse_tint=SKY_DIFFUSE_TINT, diffuse_boost=SKY_DIFFUSE_BOOST,
                            diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,
@@ -620,6 +636,7 @@ def build_world(az, el, calib, moment):
     w["sky_diffuse_boost"] = SKY_DIFFUSE_BOOST
     w["sky_camera_saturation"] = SKY_CAMERA_SATURATION
     w["sky_glossy_saturation"] = SKY_GLOSSY_SATURATION
+    w["sky_glossy_hue"] = SKY_GLOSSY_HUE
     w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
     w["sky_diffuse_hue"] = SKY_DIFFUSE_HUE          # r12 review finding 3: the world carried every other socket but not this one
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)
