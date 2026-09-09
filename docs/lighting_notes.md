@@ -1786,3 +1786,34 @@ face keeps cos(5)/cos(16) = 1.04 of it, the lagoon and the plaza keep sin(5)/sin
 The lamps are invisible to camera rays (`visible_camera = False`) and `specular = 0.00`, so the visible sky is
 bit-identical and the lagoon's Eevee/Cycles gap (+20 % lum, +11 deg of hue) is the one Eevee already had before this
 round: it is Eevee's screen-traced reflection against Cycles' path-traced one, not something the fill caused.
+
+### 22.3 Item 3 — what the sky term can add: nothing, and the reason is not the sky
+
+QA-05-5's south wing band and environment's shore band both want LEVEL on shaded stone facing the camera, and the
+only rig knob that adds it without touching the visible sky is `SKY_DIFFUSE_BOOST`. Measured on this master, Cycles
+1920x1080 / 64 spp, hero frame:
+
+| | shipped db 2.50 | db 4.00 (x1.6) | window / reference |
+|---|---|---|---|
+| south wing band | 94.7 | **102.5** | >= 82 raw, >= 103 aligned (ref 109.5) |
+| north wing band | 140.7 (0.96x) | 146.0 (1.00x) | 0.9-1.1 of 146.5 |
+| shore band (env's box) | 91.8 | **101.3** | ref 115.6 |
+| shaded attic lum / hue / sat | 114.6 / 30.8 / 0.375 | 129.8 / 28.2 / 0.268 | 115.0 / 29.5 +- 6 / <= 0.55 |
+| **sunlit attic lum** | 180.5 | 189.5 | 178.2-201.0 |
+| **sunlit attic sat** | **0.475** | **0.392** | **>= 0.50** |
+| **sunlit attic R-B** | **103.1** | **86.6** | **>= 110** |
+| columns | 108.4 (1.13x) | 124.0 (1.29x) | QA's test <= 1.3x |
+| near water sat | 0.304 | 0.314 | 0.22-0.32 |
+
+Slopes per unit of `SKY_DIFFUSE_BOOST`: south wing **+5.2**, shore **+6.3**, north wing +3.5, sunlit R-B **-11.0**,
+sunlit saturation **-0.055**, columns +0.11x. The south wing reaches 103 at db ~= 4.1 and the shore band would need
+db ~= 6.3 to reach 115.6, at which point the sunlit attic would read R-B ~= 61 and saturation ~= 0.27.
+
+**The answer to the brief's question is zero, and it is zero before the first unit is spent**: on the materials-r7
+master the sunlit attic is ALREADY outside two of its three windows at the shipped db 2.50 — saturation 0.475
+against a floor of 0.50 and R-B 103.1 against a floor of 110 (round 12 shipped 0.525 / 112.5 on the materials-r6
+master; the albedo changed, the rig did not — LIGHT_sun is 67.32 W/m2 at (1.000, 0.607, 0.000) and the exposure
+-2.833 EV in both rounds). So the sky term cannot be raised at all without moving numbers that are already out, and
+`SKY_DIFFUSE_BOOST` stays at 2.50. **Hand-off to materials: the sunlit attic needs +0.025 of saturation and +6.9 of
+R-B from the albedo before lighting has any room on the wings at all.** Hand-off to environment: at db 4.0 the shore
+band still only reaches 101.3 of 115.6, so more than half of that gap is not lighting's either.
