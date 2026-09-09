@@ -134,10 +134,15 @@ def entablature_plan(along=P.RESSAUT_ALONG, r_ch=P.CHAMFER_CIRCUMRADIUS, inset=0
 # Sequence bottom -> top: cyma reversa, dentil band, ovolo, modillion band, egg-and-dart ovolo, corona, cyma recta.
 # (The photograph puts the fine 0.47 m course ABOVE the brackets, not below them: the old build had the egg course
 # between the dentils and the modillions.)  Dentils / eggs / modillions are block geometry on the beds below.
+# Round 4b, measured on the same render: ref 169 reads the frieze and the architrave as ONE plain surface
+# (the 22 px / 2.02 m band of the measurement table), so the frieze cannot sit 0.30 m behind the architrave crown --
+# it is flush with the third fascia (0.34) and the crown oversails it by 0.10, a fillet line, not a channel. The
+# 0.20 recess put the frieze in an AO channel and cost it 20 lum. Modillions go 0.68 -> 0.86 deep so their lateral
+# shadow (0.86*0.74 = 0.64 m) finally exceeds the 0.56 m gap between brackets: every soffit coffer goes black.
 CORNICE = dict(
-    frieze_d=0.20, frieze_z0=P.ARCHITRAVE_H, frieze_z1=P.ARCHITRAVE_H + P.FRIEZE_H,     # 1.15 -> 2.05
+    frieze_d=0.34, frieze_z0=P.ARCHITRAVE_H, frieze_z1=P.ARCHITRAVE_H + P.FRIEZE_H,     # 1.15 -> 2.05
     dentil_z=2.17, dentil_h=0.40, dentil_bed=0.40, dentil_size=0.18, dentil_pitch=0.38, dentil_d=0.34,
-    modillion_z=2.71, modillion_h=0.58, modillion_bed=0.52, modillion_w=0.50, modillion_d=0.68, modillion_pitch=1.06,
+    modillion_z=2.71, modillion_h=0.58, modillion_bed=0.52, modillion_w=0.50, modillion_d=0.86, modillion_pitch=1.06,
     egg_z=3.33, egg_h=0.12, egg_bed=0.70, egg_pitch=0.47,
     corona_d=1.66, corona_soffit_z=3.48, corona_z1=P.ARCHITRAVE_H + P.FRIEZE_H + P.CORNICE_H)   # 3.80
 
@@ -148,10 +153,10 @@ def rotunda_entablature_profile():
     c = CORNICE
     arch = [(0.0, 0.0), (0.14, 0.0), (0.14, 0.42), (0.24, 0.42), (0.24, 0.82), (0.34, 0.82), (0.34, 1.02),
             (0.42, 1.06), (0.42, 1.11),             # bead-and-reel astragal over the third fascia (sheet row 13)
-            (0.50, 1.14), (0.50, c["frieze_z0"])]   # architrave crown, projecting 0.50 over a 0.20 frieze
+            (0.44, 1.14), (0.44, c["frieze_z0"])]   # architrave crown, oversailing the flush frieze by 0.10
     frieze = [(c["frieze_d"], c["frieze_z0"] + 0.04), (c["frieze_d"], c["frieze_z1"])]
     cornice = [
-        (0.24, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
+        (0.30, c["frieze_z1"] + 0.02), (c["dentil_bed"], c["dentil_z"]),           # cyma reversa foot
         (c["dentil_bed"], c["dentil_z"] + c["dentil_h"]),                          # dentil band bed (back face)
         (0.46, 2.63), (c["modillion_bed"], c["modillion_z"]),                      # ovolo under the modillions
         (c["modillion_bed"], c["modillion_z"] + c["modillion_h"]),                 # modillion band bed (back face)

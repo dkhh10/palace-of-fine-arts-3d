@@ -34,7 +34,7 @@ def measure(L, box):
     return float(rows.std()), float(sub.std()), rows
 
 
-def panel(path, box, wide, label, colour, width=620):
+def panel(path, box, wide, label, colour, width=620, box2=None):
     """one crop panel: the wide crop drawn at `width` px with the QA box outlined, its row-profile curve beside it"""
     L = lum(path)
     row_std, tex_std, _ = measure(L, box)
@@ -53,6 +53,9 @@ def panel(path, box, wide, label, colour, width=620):
     sy = h / (wide[3] - wide[1])
     d.rectangle([(box[0] - wide[0]) * sx, 54 + (box[1] - wide[1]) * sy,
                  (box[2] - wide[0]) * sx, 54 + (box[3] - wide[1]) * sy], outline=(0, 255, 0), width=2)
+    if box2:
+        d.rectangle([(box2[0] - wide[0]) * sx, 54 + (box2[1] - wide[1]) * sy,
+                     (box2[2] - wide[0]) * sx, 54 + (box2[3] - wide[1]) * sy], outline=(255, 220, 0), width=2)
     pts = [(width + 6 + rows[min(int(i / sy), len(rows) - 1)] * 200 / 255.0, 54 + i) for i in range(h)]
     d.line(pts, fill=(120, 230, 255), width=2)
     d.text((width + 6, 30), "row mean lum 0..255", font=ImageFont.truetype(FONT, 13), fill=(120, 230, 255))
@@ -65,12 +68,17 @@ def main():
     ap.add_argument("--ref", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--box", type=int, nargs=4, default=[900, 262, 1020, 296])
     ap.add_argument("--wide", type=int, nargs=4, default=[860, 200, 1060, 330])
+    ap.add_argument("--model-box", dest="model_box", type=int, nargs=4, default=None,
+                    help="the same 34-row window placed on the MODEL's own cornice (yellow); measured on before+after")
+    ap.add_argument("--shift", type=float, default=None, help="model-vs-photo vertical displacement, render rows")
+    ap.add_argument("--pxm", type=float, default=None, help="render px per metre at the wall plane (arch_entab_probe --map)")
     ap.add_argument("--sil", default=None, help="JSON: {'before': {...}, 'after': {...}} from arch_silhouette measure")
     a = ap.parse_args()
     box, wide = tuple(a.box), tuple(a.wide)
     rbox, rwide = map_box(box), map_box(wide)
-    p_bef, r_bef, t_bef = panel(a.before, box, wide, "BEFORE  round-05 Cycles hero", (255, 170, 120))
-    p_aft, r_aft, t_aft = panel(a.after, box, wide, "AFTER  round-04 cornice rebuild", (150, 255, 150))
+    mb = tuple(a.model_box) if a.model_box else None
+    p_bef, r_bef, t_bef = panel(a.before, box, wide, "BEFORE  round-05 Cycles hero", (255, 170, 120), box2=mb)
+    p_aft, r_aft, t_aft = panel(a.after, box, wide, "AFTER  round-04 cornice rebuild", (150, 255, 150), box2=mb)
     p_ref, r_ref, t_ref = panel(a.ref, rbox, rwide, "REF 169  (round-05 alignment)", (150, 210, 255))
     panels = [p_bef, p_aft, p_ref]
 
@@ -83,6 +91,21 @@ def main():
         f"   -> {r_aft / r_ref:.2f} / {t_aft / t_ref:.2f} of the photo"
         f"   [{'PASS' if r_aft >= 0.75 * r_ref else 'FAIL'} on row std]",
     ]
+    if mb:
+        rb_b, tb_b, _ = measure(lum(a.before), mb)
+        rb_a, tb_a, _ = measure(lum(a.after), mb)
+        _, _, rr = measure(lum(a.ref), map_box(box))
+        lines.append("")
+        lines.append(f"The QA box is drawn on the PHOTOGRAPH's cornice. The model's own cornice sits "
+                     f"{a.shift:.0f} render rows ({a.shift / a.pxm:.2f} m at {a.pxm:.2f} px/m) higher in the frame,"
+                     if a.shift and a.pxm else "Same 34-row window on the model's own cornice (yellow):")
+        if a.shift and a.pxm:
+            lines.append(f"so the same 34-row window on the MODEL's own cornice (yellow box {list(mb)}) is the honest test:")
+        lines.append(f"  before    row std {rb_b:5.1f}   texture std {tb_b:5.1f}"
+                     f"   -> {rb_b / r_ref:.2f} / {tb_b / t_ref:.2f} of the photo")
+        lines.append(f"  after     row std {rb_a:5.1f}   texture std {tb_a:5.1f}"
+                     f"   -> {rb_a / r_ref:.2f} / {tb_a / t_ref:.2f} of the photo"
+                     f"   [{'PASS' if rb_a >= 35 else 'FAIL'} on the brief's row std >= 35]")
     if a.sil:
         s = json.load(open(a.sil))
         b, f2 = s.get("before", {}), s.get("after", {})
