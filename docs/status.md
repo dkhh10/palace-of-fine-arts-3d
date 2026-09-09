@@ -294,3 +294,6 @@ In flight: MAT r7 fixes (fresh agent). Next: merge materials, env rebuild for pa
 ## 2026-09-09 · MAT r7 merged (59f44a2) after review fixes
 Fixes: sheen swept 6 cases and abandoned (every weight passing sat 0.25 does so at hue 213 = blue; QA's reflection test needs an R-B >= 0 term); water notes match the shipped gain 0.15 / transmission 0.18; cam06 lagoon Eevee 1.09x of round 5, Cycles 0.82x (dim, not black); ARCH hand-off restated (cornice 45 % of row std, 13 px = 1.03 m; direction failure mostly materials': authored per-panel streak maps proposed); shore not delivered (+0.6 of +43.9, sat rose); reflection box is 100 % water at 22 m. Near-water sat 0.303 (in window).
 Next: env rebuild for MAT_paving_stone (lead, one command), LIGHT r13 (docs/briefs/lighting_r13.md), lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV rebuilt for paving (lead, one command) and merged; LIGHT r13 dispatched
+env_build.py on the merged library: walk 845 slabs on MAT_paving_stone / _worn (9 % worn), tree relief and LOD1 4,756,102 identical to r8. In flight: LIGHT r13 (Eevee shade term, cam06 mist, wings/shore, carries). Next: LIGHT review + merge, lead_build.sh, QA round 6 (Opus xhigh).
