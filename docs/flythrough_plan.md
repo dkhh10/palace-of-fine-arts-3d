@@ -1,10 +1,7 @@
 # Flythrough timing plan (Phase 5, checklist step 6)
 
 `CAM_flythrough` / `_path` / `_target` are built by `scripts/light_flythrough.py` into `assets/lighting.blend` and
-appended into master.blend. **1224 frames @ 24 fps = 51.0 s, 250.1 m of path, mean 4.90 m/s.** One camera, one lens
-throughout: **24 mm** on a 36 mm horizontal sensor, clip 0.1–5000, DOF off; Follow Path (`offset_factor` keyed LINEAR
-at every frame, so the designed trapezoidal speed is the speed rendered) + Track To an eased empty. Nothing below
-changes the path — this is the shot list, the gate numbers and the render budget.
+appended into master.blend. **1224 frames @ 24 fps = 51.0 s, 250.1 m, mean 4.90 m/s.** One lens throughout: **24 mm** on a 36 mm horizontal sensor, clip 0.1–5000, DOF off; Follow Path (`offset_factor` keyed LINEAR at every frame, so the designed trapezoidal speed is the speed rendered) + Track To an eased empty. The path is not changed here.
 
 ## Shot list (stations/frames from the schedule in `light_flythrough.py`, checked against `renders/logs/light_r14_check_final.log`)
 
@@ -26,38 +23,20 @@ changes the path — this is the shot list, the gate numbers and the render budg
 | speed | ≤ 6 m/s, water crossing (frames 1–404) ≤ 10 | land **5.60**, water **9.20** | PASS |
 | holds | ≥ 3 s at the hero and under the dome | **3.50 s** / **4.17 s** | PASS |
 
-`--step 4` re-run (`light_r14_check_step4_shipped.log`, 306 samples): same four gates, min clearance **1.42 m**, min
-agl **1.56 m**, tightest ENV object `ENV_shrub_pitto1_1107` at **1.45 m**.
+`--step 4` re-run (`light_r14_check_step4_shipped.log`, 306 samples): same four gates, min clearance **1.42 m**, min agl **1.56 m**, tightest ENV object `ENV_shrub_pitto1_1107` at **1.45 m**.
 
 ## Findings (schedule only; the path is not changed)
 
-1. **Velocity step at both hold boundaries.** `speed_profile()` grids arc length at `ds = 0.20 m` and `invert()`
-   interpolates t→s *linearly*, so the last grid interval (v 1.0→0) spans ~0.4 s of constant 0.5 m/s. Sampled speed
-   goes 0.00 → **0.50** at frame 85 (leaving the hero hold) and 2.10 → 0.50 → 0.00 at frames 1105 → 1117 → 1129
-   (settling under the dome): an effective **3.2 m/s²** against the designed `ACCEL = 2.5`. A small jerk out of shot
-   1 and a snap into shot 6. Cosmetic — no gate covers acceleration.
-2. **The clearance table never saw ORN, or LOD0.** `light_flythrough_check.link_site()` links **ARCH + ENV only**, at
-   `set_lod(viewport=1)`. The gallery margin is 0.02 m over its geometric bound, so the LOD0 re-run prep review 5
-   already asks for is the one that can fail — run it with ORN linked as well, not just at LOD0.
-3. **Frames 398–408 belong to no leg.** The leg table ends `water` at 397 and starts `shore` at 409 while the speed
-   gate calls frames 1–404 the water crossing. Frame 397 is 6.35 m/s, above the 6 m/s land cap, and passes only on
-   that padding. It is genuinely still over the lagoon (agl 7.46), so the padding is honest; state one window, not two.
-4. **Checked and clear:** peak pan **14.0 °/s** (frames 1033–1081, turning onto the rotunda axis), far under 30 °/s;
-   no station inside geometry (min nearest-hit 1.42 m); every leg-to-leg speed transition is inside 2.5 m/s² but 1.
+1. **Velocity step at both hold boundaries.** `speed_profile()` grids arc length at `ds = 0.20 m` and `invert()` interpolates t→s *linearly*, so the last grid interval (v 1.0→0) spans ~0.4 s of constant 0.5 m/s. Sampled speed goes 0.00 → **0.50** at frame 85 (leaving the hero hold) and 2.10 → 0.50 → 0.00 at frames 1105 → 1117 → 1129 (settling under the dome): an effective **3.2 m/s²** against the designed `ACCEL = 2.5`. A small jerk out of shot 1 and a snap into shot 6; cosmetic, no gate covers acceleration.
+2. **The clearance table never saw ORN, or LOD0.** `light_flythrough_check.link_site()` links **ARCH + ENV only**, at `set_lod(viewport=1)`. The gallery margin is 0.02 m over its geometric bound, so the LOD0 re-run prep review 5 already asks for is the one that can fail — run it with ORN linked as well, not just at LOD0.
+3. **Frames 398–408 belong to no leg.** The leg table ends `water` at 397 and starts `shore` at 409 while the speed gate calls frames 1–404 the water crossing; frame 397 is 6.35 m/s, above the 6 m/s land cap, and passes only on that padding. It really is still over the lagoon (agl 7.46), so the padding is honest — state one window, not two.
+4. **Checked and clear:** peak pan **14.0 °/s** (frames 1033–1081, turning onto the rotunda axis), far under 30 °/s; no station inside geometry (min nearest-hit 1.42 m); every leg-to-leg speed transition is inside 2.5 m/s² but finding 1.
 
 ## Test animation — checklist step 6, `scripts/phase5_deliver.sh 6`
 
-640×360, `apply_preview_eevee(samples=16)`, `frame_step = 2` → frames 1, 3 … 1223 = **612 frames**, ffmpeg-encoded at
-`fps / frame_step = 12` fps to `renders/final/flythrough_test_640.mp4` (51.0 s, real time).
+640×360, `apply_preview_eevee(samples=16)`, `frame_step = 2` → frames 1, 3 … 1223 = **612 frames**, ffmpeg-encoded at `fps / frame_step = 12` fps to `renders/final/flythrough_test_640.mp4` (51.0 s, real time).
 
-Anchor: the shipped r15 rig renders **196.4 s for the five-camera Eevee pass at 1280×720 / 32 TAA** (`docs/status.md`,
-"LIGHT r15 reported") = **39.3 s/frame**; QA round 07's six-camera log is 145.8 s → 24.3 s/frame on the pre-r15 rig,
-with open + setup only ~3 s, so these are per-frame costs and not startup. 640×360 is 0.25 of the pixels and 16 TAA
-0.5 of the samples, but the per-frame fixed cost (depsgraph over 9 681 objects, shadow maps, probe upload) does not
-scale: **5–10 s/frame, best estimate 7 → 612 frames ≈ 71 min (range 51–102 min)**. This revises `docs/tech_notes.md`'s
-3–6 s/frame upward; that estimate predates the r15 rig. Give `blender_run.sh` 7200 s (the driver does). **If the first
-20 frames average over 12 s, drop to `--frame-step 4`** (306 frames, 6 fps out) or swap `apply_preview_eevee` for
-`apply_viewport_eevee` (raytracing off, ~1/3 the cost, no lagoon reflection).
+Anchor: the shipped r15 rig renders **196.4 s for the five-camera Eevee pass at 1280×720 / 32 TAA** (`docs/status.md`, "LIGHT r15 reported") = **39.3 s/frame**; QA round 07's six-camera log is 145.8 s → 24.3 s/frame on the pre-r15 rig, open + setup only ~3 s, so these are per-frame costs, not startup. 640×360 is 0.25 of the pixels and 16 TAA 0.5 of the samples, but the per-frame fixed cost (depsgraph over 9 681 objects, shadow maps, probe upload) does not scale: **5–10 s/frame, best estimate 7 → 612 frames ≈ 71 min (range 51–102)**. That revises `docs/tech_notes.md`'s 3–6 s/frame upward (it predates the r15 rig). Give `blender_run.sh` 7200 s, as the driver does. **If the first 20 frames average over 12 s, drop to `--frame-step 4`** (306 frames, 6 fps out) or use `apply_viewport_eevee` (raytracing off, ~1/3 the cost, no lagoon reflection).
 
 ## Final-animation options, same anchor
 
@@ -68,4 +47,4 @@ scale: **5–10 s/frame, best estimate 7 → 612 frames ≈ 71 min (range 51–1
 | C 1920×1080 / 32 TAA / step 1 | 1224 | ~30 h | 2.25× the anchor's pixels at full samples ≈ 88 s/frame, ~15 chunked runs. Out of budget |
 | D Cycles 1920×1080 / 128 spp | 1224 | ~121 h | the measured hero frame is 355.8 s (`docs/tech_notes.md`). Ruled out |
 
-Ship **A**, and record its measured per-frame time in `docs/status.md` so B/C stop being estimates.
+Ship **A**; record its measured per-frame time in `docs/status.md` so B/C stop being estimates.
