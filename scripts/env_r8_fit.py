@@ -39,7 +39,7 @@ def ref_profile(dark=60):
     print(f"[ref] band box (raw px) {x0} {y0} {x1} {y1}   lum {band.mean():.1f}   dark<{dark} {100 * (band < dark).mean():.1f} %")
     prof = (im[y0:y1, :] < dark).mean(axis=0)
     out = []
-    for i in range(68, 100):
+    for i in range(55, 100):          # r8 review: start left of the box so the mass's left bound is measured
         fx = i / 100.0
         a, b = int(fx * RES[0] * sx + dx), int((fx + 0.01) * RES[0] * sx + dx)
         out.append((fx, float(prof[a:b].mean())))
@@ -146,12 +146,14 @@ def solve(target_x, r_off, y_hint=-15.0):
     import arch_params as AP
     cx, cy = AP.COL_ARC_CENTER
     R = AP.COL_ARC_R + r_off
-    lx, ly = -14.1, 100.0
-    fx, fy = (0.0 - lx), (0.0 - ly)
+    import qa_cameras                     # r8 review: station and lens from the QA camera set, not hand-copied
+    spec = next(c for c in qa_cameras.CAMERAS if "_qa_01_" in c["name"])
+    lx, ly = spec["loc"][0], spec["loc"][1]
+    fx, fy = (spec["target"][0] - lx), (spec["target"][1] - ly)
     n = math.hypot(fx, fy)
     fx, fy = fx / n, fy / n
     rx, ry = fy, -fx                      # f x (0,0,1)
-    k = 0.5 * 36.0 / 20.0                 # tan(half hfov)
+    k = 0.5 * 36.0 / spec["lens"]       # tan(half hfov)
 
     def frame_x(X, Y):
         dx, dy = X - lx, Y - ly

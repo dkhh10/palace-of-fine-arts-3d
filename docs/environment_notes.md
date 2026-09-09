@@ -1375,7 +1375,7 @@ reproduces the round-6 table's 145.9 / 16.2 % — the measurement pipeline is th
    photo's, so a 2.2 % allowance lands *inside* the measured band; 0.0 % puts the screen tops on the cornice line.
    Thinning the procedural screen is the sanctioned way to clear a band. 16.1 -> ~10 %.
 
-Also: `COLONNADE_TOP_Z` / `COLONNADE_ARC` now read from `arch_params` instead of being copied (r7 review item 2,
+Also: `COLONNADE_TOP_Z` / `COLONNADE_ARC` now read from `arch_params` instead of being copied (r7 review item 2; note that the value rose 16.0 -> 16.4 m in the process, i.e. the screen cap is 0.4 m higher in the same build as the SCREEN_OVER drop — lead's review fix,
 which only fixed `env_build`).
 
 **Results.** Master rebuilt in this worktree (`build_master.py` + `light_probes.py --bake`): **`set_lod` 6484
@@ -1417,3 +1417,11 @@ is an improvement — the screen cap is a cam-01 sight line and both wings' scre
 - **The band's foliage is now mostly seen through the bays**, at 0.46-0.57 in the bay columns and 0.00-0.18 on the
   shafts — which is the structure ref 169 has ("trees behind AND between the columns"); it is dark<60 21.8 %
   against the photo's 16.2 % because the leaf shader is darker, not because there is more of it.
+
+### Round 8 review fixes (lead, 2026-09-09; docs/reviews/env_r8_review.md)
+- Finding 1: `env_r8_fit.py --ref` profile widened to frame x 0.55-1.00 (`renders/logs/env_r8_ref_profile.log`): dark fraction >= 0.35
+  at 0.62-0.64 (0.36 / 0.44 / 0.33), 0.19-0.28 over 0.65-0.68, 0.39-0.58 over 0.69-0.73, 0.14 at 0.74. So ref 169's mass spans
+  **0.62-0.735** with a thin stretch in the middle; the r8 solve (conifers at 0.640-0.758, right edge 0.715) sits inside that span.
+  Lead decision: accepted as delivered (the hero box starts at 0.708; the band metric 0.91 and the right edge are what it sees).
+- Finding 2: COLONNADE_TOP_Z 16.0 -> 16.4 m noted above. Finding 4: `solve()` reads station and lens from qa_cameras. Carries 3, 5, 6, 7
+  (shadow_relief relocation of hand-placed trees and stale frame-x comments, y-window, cam03 std 26.0 vs 26.7, A-group share 8.5 %) to round 9.
