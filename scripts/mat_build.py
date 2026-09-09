@@ -640,10 +640,11 @@ def build_concrete_family():
         # pour lines (0.6 m spacing = 12 px on the hero, i.e. three of them inside QA's 34 px attic box) come down
         # 3.5x and their spacing more than doubles, because they were the largest materials-owned contribution to
         # the ROW-mean spread that is the denominator of the anisotropy statistic.
-        "Macro": 0.75, "Macro Scale": 1.0, "Macro Streak": 1.70, "Macro Rough": 0.60, "Ledge Band": 1.35,
-        "Streak Aspect": 5.0, "Run Coverage": 0.40,
-        "Patches": 0.30, "Edge Wear": 0.70, "Edge Radius": 0.20, "Recess Dirt": 0.72, "Recess Distance": 0.7, "Cavity": 0.70,
-        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.10, "Pour Spacing": 1.4})
+        "Macro": 0.45, "Macro Scale": 1.0, "Macro Streak": 2.40, "Macro Rough": 0.60, "Ledge Band": 1.35,
+        "Streak Aspect": 6.0, "Run Coverage": 0.32,
+        "Patches": 0.30, "Edge Wear": 0.48, "Edge Radius": 0.12, "Recess Dirt": 0.72, "Recess Distance": 0.7, "Cavity": 0.70,
+        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.10, "Pour Spacing": 1.4},
+        specular=0.16)
     # podium, pedestals, rostra, platform: greyer, damper, algae band at the water line
     concrete_material("MAT_concrete_podium", "concrete_wall_007", 2.0, {
         "Base Color": C(0.530, 0.462, 0.038), "Grey Color": C(0.402, 0.372, 0.058), "Grey Drift": 0.38,
@@ -651,10 +652,11 @@ def build_concrete_family():
         "Drift Size": 9.0,
         "Detail Strength": 0.6, "Streaks": 0.75, "Streak Scale": 3.0, "Streak Length": 6.5, "Ledge Distance": 2.0, "Ledge Weight": 0.52,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.85, "Efflorescence": 1.15, "Damp Band": 1.25,
-        "Macro": 0.80, "Macro Scale": 0.85, "Macro Streak": 1.60, "Macro Rough": 0.65, "Ledge Band": 1.22,
-        "Streak Aspect": 4.5, "Run Coverage": 0.42,
+        "Macro": 0.55, "Macro Scale": 0.85, "Macro Streak": 2.10, "Macro Rough": 0.65, "Ledge Band": 1.22,
+        "Streak Aspect": 5.5, "Run Coverage": 0.36,
         "Patches": 0.32, "Edge Wear": 0.65, "Edge Radius": 0.18, "Recess Dirt": 0.68, "Recess Distance": 0.6, "Cavity": 0.35,
-        "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.06, "Pour Spacing": 1.6})
+        "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.06, "Pour Spacing": 1.6},
+        specular=0.18)
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
         "Base Color": C(0.730, 0.578, 0.013), "Grey Color": C(0.420, 0.372, 0.042), "Grey Drift": 0.10,
@@ -663,10 +665,11 @@ def build_concrete_family():
         "Detail Strength": 0.80, "Streaks": 0.9, "Streak Scale": 3.4, "Streak Length": 7.5, "Ledge Distance": 2.5, "Ledge Weight": 0.50,
         "Streak Shade Bias": 0.6,
         "Algae": 1.0, "Algae Z": WATER_Z, "Algae Height": 0.80, "Damp Band": 1.0,
-        "Macro": 0.75, "Macro Scale": 0.9, "Macro Streak": 1.75, "Macro Rough": 0.60, "Ledge Band": 1.30,
-        "Streak Aspect": 5.0, "Run Coverage": 0.40,
-        "Patches": 0.22, "Edge Wear": 0.65, "Edge Radius": 0.18, "Recess Dirt": 0.6, "Recess Distance": 0.7, "Cavity": 0.65,
-        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.08, "Pour Spacing": 1.3})
+        "Macro": 0.45, "Macro Scale": 0.9, "Macro Streak": 2.45, "Macro Rough": 0.60, "Ledge Band": 1.30,
+        "Streak Aspect": 6.0, "Run Coverage": 0.32,
+        "Patches": 0.22, "Edge Wear": 0.48, "Edge Radius": 0.12, "Recess Dirt": 0.6, "Recess Distance": 0.7, "Cavity": 0.65,
+        "Roughness": 0.78, "Roughness Variation": 0.12, "Bump": 0.35, "Pour Lines": 0.08, "Pour Spacing": 1.3},
+        specular=0.16)
     # vault soffits, inner arch rings: greyer, dustier, soot on the undersides
     concrete_material("MAT_concrete_inner", "concrete_wall_008", 4.0, {
         "Base Color": C(0.475, 0.358, 0.034), "Grey Color": C(0.382, 0.318, 0.058), "Grey Drift": 0.34,
@@ -690,12 +693,15 @@ def build_concrete_family():
         # QA-05-2 "the attic relief gone soft under it": the attic panels are ORN meshes on this material, so the
         # blotch was competing with the relief. Half the isotropic macro, and a longer recess probe (0.42 -> 0.52 m,
         # the depth of an attic panel's figure ground) so the relief's own verticals darken instead.
-        "Macro": 0.55, "Macro Scale": 0.22, "Macro Streak": 1.55, "Macro Rough": 0.40, "Ledge Band": 0.90,
-        "Streak Aspect": 5.0, "Run Coverage": 0.40, "Run Scale": 3.6,
-        "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.055, "Recess Dirt": 0.88, "Recess Distance": 0.52, "Cavity": 1.0,
+        # `Ledge Band` 0.90 -> 0.45: on the attic panels this material's under-ledge band is a HORIZONTAL line
+        # inside QA's attic box (measured: the box's row-mean profile has a 60-lum step at its own panel frame),
+        # i.e. it feeds the denominator of the anisotropy statistic. The run-off amplitude takes its place.
+        "Macro": 0.45, "Macro Scale": 0.22, "Macro Streak": 2.20, "Macro Rough": 0.40, "Ledge Band": 0.45,
+        "Streak Aspect": 6.0, "Run Coverage": 0.32, "Run Scale": 3.6,
+        "Patches": 0.0, "Edge Wear": 0.62, "Edge Radius": 0.055, "Recess Dirt": 0.88, "Recess Distance": 0.52, "Cavity": 1.0,
         "Vertex Cavity": 0.85, "Vertex Dust": 0.55,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
-        "Instance Variation": 1.7}, baked=True)
+        "Instance Variation": 1.7}, specular=0.16, baked=True)
     # the 16 fluted pink shafts: dusty terracotta rose, integral pigment washing out to mauve-grey
     # QA-04-5: the hero column mask measured hue 31.2 (test 20-29), saturation 0.753 (ref 0.588) and lum 122
     # (test <= 120). Round 4 cut 37 % of the albedo and bought 3 % of display value, so this round moves CHROMA,
@@ -867,7 +873,7 @@ def build_water():
     h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
     # calmer patches (wind shadow) so the reflection is glassy in places
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
-    chop = t.value(1.0, "WATER_CHOP")      # swept by scripts/mat_r7_sweep.py
+    chop = t.value(1.6, "WATER_CHOP")      # swept by scripts/mat_r7_sweep.py; 1.0 -> 1.6 measured in the sweep
     normal = t.bump(h, strength=t.mul(t.mul(t.mul(t.madd(near, 0.14, 0.45), calm), ripple_lod), chop),
                     distance=0.03, normal=N)
     rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
@@ -912,8 +918,24 @@ def build_water():
     # colour again instead of a blue-grey wash over it.
     murk = t.mix(murk_far, C(0.128, 0.139, 0.111), C(0.145, 0.152, 0.125))
     murk.node.name = murk.node.label = "WATER_MURK"        # addressed by scripts/mat_r7_sweep.py
-    murk = t.vscale(murk, t.value(1.0, "WATER_MURK_GAIN"))
-    bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.40,
+    # ROUND 7, and this is the measured answer to lighting r12's hand-off 1 (which asked for a third of the murk's
+    # CHROMA). The round-7 sweep (mat_r7_sweep.py, 9 cases on one master, docs/materials_notes.md) scaled the murk
+    # albedo instead: at gain 1.00 near-water sat 0.390 / hue 218.6 and the ripples' R-B -64; at gain 0.00 (a pure
+    # Fresnel mirror) 0.276 / 209.6 and -29.7, against QA's 0.22-0.32 / 185-200 and ref 169's -16 to -26. So the
+    # whole of the defect is the murk's PRESENCE under a boosted diffuse sky, not its hue -- and it is linear in the
+    # gain, which is what lets it be set rather than guessed.
+    # It cannot simply be turned down, because the same lambertian is what keeps the lagoon from reading black from
+    # above (QA-02-6, round 2). The physical form of the fix is a Fresnel weight: real turbid water returns its
+    # sub-surface light through the surface twice, so the diffuse term falls off at grazing incidence far faster
+    # than Blender's single-sided Fresnel makes it. `0.15 + 0.85 (1 - F)^2` leaves ~0.36 of the murk at the hero's
+    # 75-85 deg grazing water and ~0.76 at cam06's 30 deg, i.e. it takes the wash off exactly the crop QA measures
+    # and leaves the aerial lagoon alone.
+    _fr = t.new("ShaderNodeFresnel")
+    t.plug(_fr.inputs["IOR"], 1.333); t.plug(_fr.inputs["Normal"], normal)
+    _fw = t.sub(1.0, _fr.outputs[0])
+    murk_w = t.madd(t.mul(_fw, _fw), 0.85, 0.15)
+    murk = t.vscale(murk, t.mul(murk_w, t.value(0.55, "WATER_MURK_GAIN")))
+    bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.18,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
                            "Sheen Tint": C(0.22, 0.62, 0.46)})
