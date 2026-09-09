@@ -53,9 +53,20 @@ BELL_PROFILE = [(1.00, 0.000), (1.06, 0.020), (1.055, 0.040), (0.995, 0.062), (0
 
 # Where the bell is scalloped: radius dips between the leaves of each row so the slot between two neighbouring
 # leaves bottoms out in a real groove instead of on a smooth cylinder.
+# ------------------------------------------------------------------ ARCH round-6 course heights (see ORN round 6)
+# The three numbers ORN builds to. They come from the registered stack (arch_params r6, ref 169) and are re-checked
+# against the socket properties by scripts/orn_r5_stats.py sections 6/7, which FAILS if ARCH and ORN disagree:
+#   CAPITAL_H 2.6 -> 3.0   (COL_SHAFT_Z1 22.96 + 3.0 = ENTABLATURE_Z0 25.96, so the capital fills the course exactly)
+#   FRIEZE_H  0.90 -> 0.81 (ARCHITRAVE_H 1.04 / FRIEZE_H 0.81 / CORNICE_H 1.37 = the 3.22 m entablature)
+#   panel_height 4.50 -> 5.27 (ATTIC_Z1 38.30 - 2.10 - 0.45 minus ATTIC_Z0 29.18 + 0.85 + 0.45)
+ARCH_R6 = dict(capital_rotunda_H=3.0, frieze_band_H=0.81, attic_panel_H=5.27)
+
 CAPITAL_PRESETS = {
-    # rotunda: h 2.6, shaft top D 2.1, abacus ~3.0 across corners; figured centre
-    "capital_rotunda": dict(H=2.6, R=1.05, abacus_across=3.0, figure=True, lower_len=0.44, upper_len=0.37,
+    # rotunda: h 3.0 (r6 course; was 2.6), shaft top D 2.1, abacus ~3.0 across corners; figured centre.
+    # 3.0 / 2.1 = 1.43 is the classical Corinthian ratio (capital = 7/6 of the LOWER diameter, top = 5/6 of it);
+    # at 2.6 the capital was 1.24 of the top diameter, i.e. a short capital, which is half of QA-06-6's 24 px.
+    # Every other entry here is a fraction of H or R, so the whole design scales with the course.
+    "capital_rotunda": dict(H=ARCH_R6["capital_rotunda_H"], R=1.05, abacus_across=3.0, figure=True, lower_len=0.44, upper_len=0.37,
                             lower_w=1.26, upper_w=1.30, ribs=7, curl=0.32, droop=0.18, volute_r=0.112, helix_r=0.055,
                             lower_z=0.060, upper_z=0.440, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
                             proud=(0.140, 0.130), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
@@ -1094,8 +1105,19 @@ def relief_horse(name, x, face_y, coll, S=1.85, mirror=False, proud=0.22, z=0.25
 
 
 PANEL_GROUND_Y = 0.015    # QA-02-9: the field ground, sunk behind the 0.16 m frame plane
+PANEL_W = 10.5            # FACE_LENGTH 17.81 - 2*RESSAUT_ALONG 3.2 - 2*ATTIC_PANEL_FRAME 0.45 = 10.51 (unchanged in r6)
+PANEL_H = ARCH_R6["attic_panel_H"]        # r6: 4.50 -> 5.27
+PANEL_K = round(PANEL_H / 4.50, 4)        # 1.1711: the figures scale WITH the field, so the reference ratio holds.
+# Why a similarity scale and not a taller plinth: measured on ref 069 (the frontal left panel, field 450 px tall at
+# 85 px/m), the central standing figure runs head 160 px to feet 555 px = 395 px = 0.88 of the field, and the group
+# heads sit at 0.75-0.85 of it. The round-4 panel put a 3.5 m figure in a 4.5 m field = 0.78. Holding that ratio in
+# the 5.27 m field means 4.10 m figures. Everything in X and Z scales by PANEL_K; nothing in Y does, because the
+# depth budget (ARCH's 0.28 m recess, ATTIC_PANEL_DEPTH 0.25) did not move -- so every `flatten` is divided by
+# PANEL_K to cancel the Y growth that the figure scale S would otherwise cause.
 
-# Panel layouts (QA-01-10): >= 8 figures ~3.5 m tall per 10.5 m field, three distinct designs.
+# Panel layouts (QA-01-10): >= 8 figures per 10.5 m field, three distinct designs. The x / scan-height numbers
+# below are the round-4 layout for a 4.5 m field; build_attic_panel multiplies every height by PANEL_K so the same
+# composition fits the r6 5.27 m field (figures 3.5 -> 4.10 m, ratio to the field held at 0.78).
 # ("scan", key, x, height, mirror) | ("fig", pose, x, mirror, rot) | ("horse", x, mirror)
 PANEL_LAYOUTS = {
     1: [("scan", "soldiers", -4.05, 4.15, True), ("fig", "kneel", -2.60, True, 0), ("fig", "arms_up", -1.80, False, 5),
@@ -1113,13 +1135,14 @@ PANEL_LAYOUTS = {
 
 
 def build_attic_panel(variant, coll, bake=True):
-    """One of the three Zimm 'Struggle for the Beautiful' relief designs, field 10.5 x 4.5 m, relief ~0.25 m,
+    """One of the three Zimm 'Struggle for the Beautiful' relief designs, field PANEL_W x PANEL_H (r6: 10.5 x 5.27 m),
+    relief ~0.25 m,
     composed from the public-domain relief scans (cut, scaled, mirrored, embedded, decimated, weathered - lead
     decision: scans only as reworked raw material for these panels). Design 1 = combat with centaur (centre),
     2 = procession (draped spectators), 3 = kneeling/standing group. Origin: back-face bottom-centre; +Y = face."""
     rng = random.Random(6000 + variant)
     work = L.work_collection()
-    W, Hh, T = 10.5, 4.5, 0.16
+    W, Hh, T, K = PANEL_W, PANEL_H, 0.16, PANEL_K
     face_y = T                     # the frame / border plane ARCH's moulding meets
     GROUND = PANEL_GROUND_Y        # the sunk field ground behind the figures
     RIM = 0.115                    # width of the border left standing at the frame plane
@@ -1142,23 +1165,24 @@ def build_attic_panel(variant, coll, bake=True):
     for item in PANEL_LAYOUTS[design]:
         if item[0] == "scan":
             _, key, x, h, mirror = item
-            parts.append(place_scan(key, x, h, depth, face_y, mirror=mirror, z=0.2, bg_y=GROUND + 0.01,
+            parts.append(place_scan(key, x, h * K, depth, face_y, mirror=mirror, z=0.2 * K, bg_y=GROUND + 0.01,
                                     front_y=FRONT_HI - 0.02))
             fig_count += {"soldiers": 3, "dacians": 3, "centaur": 2}[key]
         elif item[0] == "fig":
             _, pose, x, mirror, rot = item
-            parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * rng.uniform(0.95, 1.05), mirror=mirror,
-                                   rot_deg=rot + rng.uniform(-3, 3),
+            parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * K * rng.uniform(0.95, 1.05),
+                                   mirror=mirror, z=0.25 * K, rot_deg=rot + rng.uniform(-3, 3),
                                    # depth layering: alternate figures sit ~0.17 m further back so the overlaps
                                    # themselves make dark edges (ref 063 is a two-deep crowd, not a single plane)
                                    proud=(rng.uniform(FRONT_HI - 0.04, FRONT_HI + 0.02) if fig_count % 2 == 0
                                           else rng.uniform(FRONT_MID - 0.03, FRONT_MID + 0.03)) - face_y, rng=rng,
                                    bulk=rng.uniform(1.02, 1.18), seed=6000 + variant * 40 + fig_count,
-                                   flatten=rng.uniform(0.42, 0.54))
+                                   flatten=rng.uniform(0.42, 0.54) / K)
             fig_count += 1
         elif item[0] == "horse":
             _, x, mirror = item
-            parts += relief_horse("rf_horse", x, face_y, work, S=2.15, mirror=mirror, proud=0.62 - face_y, flatten=0.46)
+            parts += relief_horse("rf_horse", x, face_y, work, S=2.15 * K, mirror=mirror, proud=0.62 - face_y,
+                                  z=0.25 * K, flatten=0.46 / K)
             fig_count += 1
     # QA-02-9: a BACK ROW between the front figures. Zimm's panels are a two-deep crowd (ref 063 / zimm_panel_1):
     # what reads as "carving" at 100 m is the ladder of dark slots between a front body and the half-hidden one
@@ -1167,11 +1191,11 @@ def build_attic_panel(variant, coll, bake=True):
     back_poses = ["stride", "arms_up", "arms_out", "kneel", "stride", "arms_out", "arms_up"]
     for i in range(7):
         bx = -4.55 + i * 1.52 + rng.uniform(-0.15, 0.15)
-        parts += relief_figure(f"rb_{i}", back_poses[i], bx, face_y, work, S=2.05 * rng.uniform(0.94, 1.04),
-                               mirror=(i % 2 == 0), rot_deg=rng.uniform(-6, 6),
+        parts += relief_figure(f"rb_{i}", back_poses[i], bx, face_y, work, S=2.05 * K * rng.uniform(0.94, 1.04),
+                               mirror=(i % 2 == 0), z=0.25 * K, rot_deg=rng.uniform(-6, 6),
                                proud=rng.uniform(FRONT_LO - 0.03, FRONT_LO + 0.04) - face_y, rng=rng,
                                bulk=rng.uniform(1.00, 1.12), seed=6500 + variant * 40 + i,
-                               flatten=rng.uniform(0.30, 0.40), drape=(i % 3 != 0))
+                               flatten=rng.uniform(0.30, 0.40) / K, drape=(i % 3 != 0))
         fig_count += 1
     print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures")
     parts = [p for p in parts if p is not None]
@@ -1179,14 +1203,15 @@ def build_attic_panel(variant, coll, bake=True):
     if design != 2:
         for i in range(2):
             x = rng.uniform(-4.9, 4.9)
-            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45), work, location=(x, 0.20, rng.uniform(0.9, 3.4)), scale=(1.0, 0.42, 1.0)))
+            parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45) * K, work,
+                                  location=(x, 0.20, rng.uniform(0.9, 3.4) * K), scale=(1.0, 0.42 / K, 1.0)))
     # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field); it now stands
     # 0.36 m proud of the sunk ground so the bottom of the field carries a hard ledge line as it does in ref 063
-    parts.append(L.box("panel_plinth", (W - 0.30, 0.34 - GROUND, 0.44), work,
-                       location=(0, 0.5 * (GROUND + 0.34), 0.25), bevel=0.03))
+    parts.append(L.box("panel_plinth", (W - 0.30, 0.34 - GROUND, 0.44 * K), work,
+                       location=(0, 0.5 * (GROUND + 0.34), 0.25 * K), bevel=0.03))
     t = time.time()
     hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.024), smooth=1, smooth_factor=0.18, coll=work)
-    # clamp anything that overhangs the framed field: the frame crops the relief (QA-01-10 field is 10.5 x 4.5 m)
+    # clamp anything that overhangs the framed field: the frame crops the relief (field W x Hh, r6 10.5 x 5.27 m)
     for v in hi.data.vertices:
         v.co.x = max(-W / 2, min(W / 2, v.co.x))
         v.co.z = max(0.0, min(Hh, v.co.z))
@@ -1197,7 +1222,7 @@ def build_attic_panel(variant, coll, bake=True):
     L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
     return L.finalize_asset(hi, "attic_panel", variant, coll, bake=bake, bake_size=4096 if not FAST else 2048, y_mode="back",
                             budgets=L.BUDGETS["attic_panel"],
-                            size_note=f"Zimm panel design {design}: field 10.5 x 4.5 m, ground sunk to y={GROUND:.2f}, border at "
+                            size_note=f"Zimm panel design {design}: field {W:.2f} x {Hh:.2f} m, ground sunk to y={GROUND:.2f}, border at "
                                       f"y={T:.2f}, relief fronts to y ~0.60 (>= 0.45 m above the ground), {fig_count} figures; "
                                       f"origin back-face bottom-centre")
 
@@ -1488,15 +1513,18 @@ def build_drum_band(variant, coll, bake=True):
 # the r4b row at arch_notes.md:793. So the clearance budget on this band is 0.100 m, NOT 0.160 m (ORN r5 review
 # finding 3), and the design caps at 0.090 m -> 10 mm of guaranteed clearance under the crown.
 # The two lengths get their own asset (one instance per socket) because build_master.py places ONE object per socket.
-RIN_BAND_H = 0.90
-RIN_CROWN_CLEAR = 0.10     # architrave crown d 0.44 minus frieze face d 0.34 (arch_build.py:156)
+RIN_BAND_H = ARCH_R6["frieze_band_H"]   # r6: 0.90 -> 0.81 (arch_params.FRIEZE_H; sockets carry band_height)
+RIN_CROWN_CLEAR = 0.10     # architrave crown d 0.44 minus frieze face d 0.34 (arch_build.py:156, unchanged in r6)
 RIN_MAX_PROUD = 0.09       # hard cap on the relief; RIN_CROWN_CLEAR - RIN_MAX_PROUD = 10 mm of clearance
-RIN_FIELD_H = 0.75         # the carved field inside the 0.90 m band (0.075 m plain margin top and bottom)
+RIN_MARGIN = 0.075 / 0.90  # plain margin top and bottom as a fraction of the band, held across the r6 refit
+RIN_FIELD_H = round(RIN_BAND_H * (1.0 - 2 * RIN_MARGIN), 4)   # carved field: 0.675 m inside the 0.81 m band
 RIN_EMBED = 0.015          # the ornament is sunk 1.5 cm into the frieze face so nothing floats off the wall
 RIN_RUNS = {"frieze_rinceau": 5.9128, "frieze_rinceau_return": 2.9994}
 RIN_REPEATS = {"frieze_rinceau": 6, "frieze_rinceau_return": 3}
 # per-variant character: (stem amplitude, scroll radius, boss diameter, leaf length, phase). amp + 1.78*R is the
-# half-height of the design; all three land near RIN_FIELD_H/2 = 0.375 so the Z normalisation below stays under 5 %.
+# half-height of the design; all three land near 0.375, and the Z normalisation at the end of build_frieze_rinceau
+# then squeezes the design onto RIN_FIELD_H/2 = 0.3375 (a 10 % vertical squash for the r6 band, x untouched, so the
+# scroll pitch along the run and the relief depth in Y are exactly what round 5b measured).
 RIN_VARIANTS = {1: (0.125, 0.140, 0.150, 0.235, 0.00),
                 2: (0.110, 0.150, 0.175, 0.260, 0.35),
                 3: (0.140, 0.132, 0.140, 0.220, 0.50)}
