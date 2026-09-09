@@ -92,17 +92,36 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
 
 ## Operating rules (added 2026-09-07 by the user; binding for the lead and every subagent)
 
-### Model casting
+### Model casting (updated 2026-09-09 by the user)
 - The lead / art director runs on Fable 5.1 at high effort: coordination, reviewing previews against reference, merging,
   decisions. The lead does not write build scripts unless a fix is under 20 lines.
-- Every builder and fix agent (architecture, ornament, materials, environment, lighting) runs on **Opus 5**
-  (`model: opus`, set explicitly when spawning).
+- Every builder and fix agent runs on **Opus 5** (`model: opus`, set explicitly when spawning): ornament and materials
+  at xhigh effort, architecture / environment / lighting at high.
 - Mechanical tasks (texture fetching, image cropping/resizing, file inventory, log filtering) run on Sonnet or Haiku.
-- The QA critic runs on Opus 5 for round 2; if its scoring is lenient vs the lead's own read it moves to Fable.
+- **The QA critic runs on Opus 5 at xhigh for every round.** Fable is used for QA exactly once: the final gate judgement
+  before Phase 5.
+- A code reviewer (Opus, no Blender, read-only) checks every branch before the lead merges it; findings go to
+  `docs/reviews/<branch>_<round>_review.md`.
+- Dispatch fresh agents every session; never resume an agent from a previous session. Briefs point at files
+  (`docs/briefs/<agent>_r<N>.md`, the QA report, the notes' checkpoint section), never pasted content.
+
+### Definition of done (set by the user 2026-09-09; binding)
+- The polish gate passes when the hero (cam01) scores **4.0 or higher**, OR when two consecutive rounds after the
+  concrete photo-projection pass improve the hero by **less than 0.1**. Either way, stop polishing and move to Phase 5.
+- Phase 5 delivery: master.blend opens in under a minute; viewport navigable in Eevee; 4K Cycles hero from the lagoon
+  viewpoint (first time a 128 spp fixed, adaptive-off render, then choose the final sample count from that wall time);
+  flythrough camera path plus a short low-res Eevee test animation. Do not keep polishing past the rule.
+- Round-5 decision stands (docs/decisions.md 2026-09-08, not to be re-litigated): the shade deficit is structural;
+  lighting fixes the shade window first with the sunlit budget withdrawn; lighting and materials run sequentially on the
+  merged master; the concrete gets a photo-projection pass if the hero is still flat after round 6.
 
 ### Concurrency
-- At most **four** builder or fix agents run at the same time (raised from two by the user on 2026-09-07). Their files
-  must not overlap. Keep render sample counts low on every agent: they share one GPU.
+- Hard cap of **four** builder / fix agents at the same time. Their files must not overlap. Keep render sample counts
+  low on every agent: they share one GPU.
+- **Lighting and materials never run concurrently** (they measure on the merged master, sequentially).
+- No agent waits on the GPU while another renders: give it a non-render task or do not dispatch it yet.
+- Before the master rebuild (`scripts/lead_build.sh`), wait until no builder is mid-render.
+- Builders wait for their own renders with ONE blocking shell command (`scripts/blender_run.sh`), never polling turns.
 - Do not spawn an agent for anything one shell command can do.
 
 ### Blender process hygiene (added 2026-09-07; the machine swapped with three idle Blender instances holding 13 GB)
@@ -110,9 +129,11 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
   waiting on stdin, a modal operator, or an interactive prompt; never launch Blender without `--background`;
   do not start a new Blender while your previous one is still running (`pgrep -fl "MacOS/Blender"` first).
 - If a run wedges, kill it (`pkill -f "MacOS/Blender --background"` for your own runs) before starting another.
-- "Idle" means CPU time not increasing for more than 5 minutes, never "no log output": a bake or a Cycles render
-  can be silent for minutes while working. Never kill a Blender process that is using CPU. Such idle processes get killed. `scripts/blender_watchdog.sh` does this
-  (one pass, or `--loop`); the lead keeps the loop running during agent waves. Do not depend on it: exit cleanly.
+- **Watchdog (rewritten 2026-09-09):** every Blender run is launched through `scripts/blender_run.sh <max_seconds> -- <blender args>`,
+  which registers the pid with a maximum duration and blocks until Blender exits. `scripts/blender_watchdog.sh --loop`
+  kills ONLY pids whose registered max duration has passed. Idleness is never inferred from CPU (a Metal GPU render uses
+  almost none) and never from log silence. Unregistered Blender pids are only reported, never killed. Choose the max
+  duration honestly (Eevee preview pass 600 s, Cycles 1080p hero 1200 s, probe bake 1800 s, 4K timing 7200 s).
 - Keep memory in mind: one full-scene render per agent at a time, low samples, and `bpy.ops.wm.quit_blender()` /
   natural script end, never `input()` or `time.sleep` loops inside Blender.
 
