@@ -172,6 +172,11 @@ CONCRETE_INPUTS = [
     # features are 0.15-0.9 m wide and 1-4 m long (rain runs), and it is gated to `Run Coverage` of the columns so
     # the under-ledge darkening varies ACROSS the wall instead of being a uniform horizontal stripe.
     ("Streak Aspect", "FLOAT", 4.5, 1.0, 24), ("Run Coverage", "FACTOR", 0.40, 0.02, 1),
+    # `Run Scale` multiplies the run-off tile ON TOP of `Macro Scale`. Measured r7a: the ornament material carries
+    # the attic panels and runs its macro at `Macro Scale` 0.22, i.e. a 1.0 m streak tile whose own features are
+    # 5-20 cm = 1-4 px on the hero, so they averaged out and the attic box's column-mean spread did not move
+    # (8.98 -> 8.34 against the photo's 20.0). Ornament needs fine dust AND architectural-scale run-off.
+    ("Run Scale", "FLOAT", 1.0, 0.05, 30),
     ("Ledge Band", "FACTOR", 0.62, 0, 3), ("Damp Band", "FACTOR", 0.0, 0, 2),
     ("Roughness", "FLOAT", 0.78, 0, 1), ("Roughness Variation", "FLOAT", 0.12, 0, 1),
     ("Bump", "FLOAT", 0.35, 0, 3),
@@ -253,7 +258,8 @@ def build_group_concrete():
             # features become 0.2-0.9 m wide and 1-4 m long, which is what a run-off streak is. The stretch is in
             # the projection and not in the map (round 6 pre-stretched the pixels 3.2x, which cost horizontal
             # detail and could not be re-tuned without rebuilding the PNG).
-            _v = t.vmul(Wm, t.combxyz(_s, _s, t.div(_s, I["Streak Aspect"])))
+            _sr = t.div(_s, I["Run Scale"])
+            _v = t.vmul(Wm, t.combxyz(_sr, _sr, t.div(_sr, I["Streak Aspect"])))
         else:
             _v = t.vscale(Wm, _s)
         # 128 = ratio 1.0 in an 8-bit Non-Color map, so the linear value is half the ratio
@@ -625,7 +631,7 @@ def build_concrete_family():
         # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.819. On the r12 rig the sunlit attic
         # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
         # AND chroma (lighting r12 hand-off 2 says the same); raising red hardest lifts both at once.
-        "Base Color": C(0.710, 0.582, 0.016), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.24,
+        "Base Color": C(0.724, 0.572, 0.013), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.16,
         "Grey Below Z": 3.0, "Grey Above Z": 10.0, "Tone Variation": 0.30, "Block Size": 3.6, "Blotch Size": 0.9,
         "Drift Size": 12.0,
         "Detail Strength": 1.0, "Streaks": 1.0, "Streak Scale": 3.2, "Streak Length": 7.0, "Ledge Distance": 3.0, "Ledge Weight": 0.55,
@@ -651,7 +657,7 @@ def build_concrete_family():
         "Roughness": 0.8, "Roughness Variation": 0.12, "Bump": 0.4, "Pour Lines": 0.06, "Pour Spacing": 1.6})
     # colonnade concrete: same ochre, the strongest black-green streaking, worse on the shade (north) side
     concrete_material("MAT_concrete_colonnade", "concrete_wall_007", 3.0, {
-        "Base Color": C(0.716, 0.588, 0.016), "Grey Color": C(0.420, 0.372, 0.042), "Grey Drift": 0.14,
+        "Base Color": C(0.730, 0.578, 0.013), "Grey Color": C(0.420, 0.372, 0.042), "Grey Drift": 0.10,
         "Grey Below Z": 1.0, "Grey Above Z": 4.0, "Tone Variation": 0.24, "Block Size": 3.0, "Blotch Size": 2.2,
         "Drift Size": 10.0,
         "Detail Strength": 0.80, "Streaks": 0.9, "Streak Scale": 3.4, "Streak Length": 7.5, "Ledge Distance": 2.5, "Ledge Weight": 0.50,
@@ -676,7 +682,7 @@ def build_concrete_family():
     # Edge Radius stays small: a 0.12 m bevel would eat a 0.4 m capital volute. Instance Variation is now value +
     # weathering (see PFA_concrete `wvar`), not hue -- QA-02-2's yellow-vs-salmon capitals.
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
-        "Base Color": C(0.706, 0.580, 0.016), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.18,
+        "Base Color": C(0.720, 0.569, 0.013), "Grey Color": C(0.450, 0.385, 0.040), "Grey Drift": 0.12,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.20, "Block Size": 1.2, "Blotch Size": 0.8,
         "Drift Size": 3.5,
         "Detail Strength": 0.4, "Streaks": 0.55, "Streak Scale": 6.0, "Streak Length": 4.0, "Ledge Distance": 1.0, "Ledge Weight": 0.6,
@@ -684,8 +690,8 @@ def build_concrete_family():
         # QA-05-2 "the attic relief gone soft under it": the attic panels are ORN meshes on this material, so the
         # blotch was competing with the relief. Half the isotropic macro, and a longer recess probe (0.42 -> 0.52 m,
         # the depth of an attic panel's figure ground) so the relief's own verticals darken instead.
-        "Macro": 0.55, "Macro Scale": 0.22, "Macro Streak": 0.85, "Macro Rough": 0.40, "Ledge Band": 0.90,
-        "Streak Aspect": 4.0, "Run Coverage": 0.45,
+        "Macro": 0.55, "Macro Scale": 0.22, "Macro Streak": 1.55, "Macro Rough": 0.40, "Ledge Band": 0.90,
+        "Streak Aspect": 5.0, "Run Coverage": 0.40, "Run Scale": 3.6,
         "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.055, "Recess Dirt": 0.88, "Recess Distance": 0.52, "Cavity": 1.0,
         "Vertex Cavity": 0.85, "Vertex Dust": 0.55,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0, "Bird Droppings": 0.12,
@@ -835,7 +841,12 @@ def build_water():
     # from the sunlit building and the lagoon reads brown-black (QA-01-3).
     cam = t.new("ShaderNodeCameraData")
     depth = cam.outputs["View Z Depth"]
-    ripple_lod = t.maprange(depth, 30.0, 180.0, 1.0, 0.13)
+    # ROUND 7 (QA-05-4 "a flat blue-grey plane with uniform fine ripple noise"): the round-6 LOD ramp took the
+    # ripple slope out of the normal from 30 m, so the whole 40-90 m band that carries the building's reflection
+    # was glassy and the reflection came back as long vertical smears. ref 169's crop at the same distance is
+    # corrugated by 0.25-0.4 m ripples right up to the far shore, and it is that corrugation that chops the ochre
+    # into the warm horizontal flecks QA measures with R-B. The ramp starts at 55 m instead.
+    ripple_lod = t.maprange(depth, 55.0, 240.0, 1.0, 0.18)
     far_rough = t.maprange(depth, 45.0, 200.0, 0.0, 0.030)
     # QA-03-7: within ~40 m of the camera the reflection held together in streaks tens of px long where the photo
     # breaks up at ~10-15. `near` drives the capillary detail, the bump strength and a little extra roughness in
@@ -844,7 +855,7 @@ def build_water():
     # because at 20-45 m the chop was smearing the ochre column together with the sky above it until the two
     # averaged out. The near band is pulled in from 70 m to 45 m (and its chop layer weakened), so the mid-distance
     # reflection holds its colour while the last 20 m in front of the camera keep the break-up QA-03-7 bought.
-    near = t.maprange(depth, 62.0, 9.0, 0.0, 1.0)
+    near = t.maprange(depth, 95.0, 9.0, 0.0, 1.0)
     # anisotropy: crests run longer along X (across the hero view), so the reflection breaks into vertical streaks.
     # v3 used 0.33 (3x elongation), which is what made the near-field runs so long; 0.5 keeps the character.
     Pa = t.combxyz(t.mul(wx, 0.36), wy, 0.0)
@@ -856,7 +867,9 @@ def build_water():
     h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
     # calmer patches (wind shadow) so the reflection is glassy in places
     calm = t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.04, detail=2), 0.35, 0.65, 0.45, 1.0)
-    normal = t.bump(h, strength=t.mul(t.mul(t.madd(near, 0.14, 0.45), calm), ripple_lod), distance=0.03, normal=N)
+    chop = t.value(1.0, "WATER_CHOP")      # swept by scripts/mat_r7_sweep.py
+    normal = t.bump(h, strength=t.mul(t.mul(t.mul(t.madd(near, 0.14, 0.45), calm), ripple_lod), chop),
+                    distance=0.03, normal=N)
     rough = t.add(t.maprange(t.noise(t.combxyz(wx, wy, 0.0), 0.12, detail=2), 0.3, 0.7, 0.02, 0.055), far_rough)
     # green murk body. Transmission 0.55 (not 1.0) so the material reads the same on ENV's single water plane as it
     # does inside a closed lagoon volume: the opaque 45 % is a green murk lambertian that picks up sky and sun, the
@@ -898,6 +911,8 @@ def build_water():
     # which is what lets the building's reflection (QA-05-4, R-B -39 where the photo is +71) carry the stone's
     # colour again instead of a blue-grey wash over it.
     murk = t.mix(murk_far, C(0.128, 0.139, 0.111), C(0.145, 0.152, 0.125))
+    murk.node.name = murk.node.label = "WATER_MURK"        # addressed by scripts/mat_r7_sweep.py
+    murk = t.vscale(murk, t.value(1.0, "WATER_MURK_GAIN"))
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.40,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
@@ -907,6 +922,7 @@ def build_water():
     # scatter (0.117, 0.234, 0.144)/m, absorption (0.36, 0.135, 0.36)/m -> single-scatter albedo 0.25/0.63/0.29, i.e. a
     # LIT green murk (the v1 numbers gave albedo 0.07-0.15, which made a closed lagoon volume read black).
     vol = t.new("ShaderNodeVolumePrincipled")
+    vol.name = vol.label = "WATER_VOLUME"
     t.plug(vol.inputs["Color"], C(0.205, 0.250, 0.195)); t.plug(vol.inputs["Density"], 0.7)
     t.plug(vol.inputs["Absorption Color"], C(0.70, 0.80, 0.68)); t.plug(vol.inputs["Anisotropy"], 0.3)
     t.output(surface=bsdf.outputs[0], volume=vol.outputs[0], target="CYCLES")
@@ -915,6 +931,7 @@ def build_water():
     # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
     #  tree against its 64-closure budget, two Principled BSDFs blew it to 76.)
     murk_e = t.mix(murk_far, C(0.140, 0.152, 0.124), C(0.156, 0.163, 0.136))
+    murk_e.node.name = murk_e.node.label = "WATER_MURK_EEVEE"
     dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk_e); t.plug(dif.inputs["Normal"], normal)
     glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
     fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
