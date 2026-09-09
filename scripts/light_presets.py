@@ -161,12 +161,15 @@ def _shade_lights():
 
 
 def apply_shade_for_engine(engine):
-    """ROUND 13 (QA-05-1, the Eevee half). LIGHT_shade_fill is an EEVEE-ONLY rig, on the same pattern as the vault
-    override above: the round-12 shade fix is three DIFFUSE-only world sockets, and Eevee's shaded stone is lit by
-    its screen-traced horizon scan rather than by the world, so those sockets never reach it (measured: 2.8x the
-    whole diffuse sky moves the hero's shaded attic 93.3 -> 96.0 while it moves the near-water box +19.6 % ->
-    +70.2 %; freeing the baked irradiance volumes moves it 1.8 lum). Cycles keeps the physical rig -- `energy_W` is
-    0.0 as shipped and the lamps are hidden from the render -- so nothing in the Cycles acceptance frame changes.
+    """ROUND 13 (QA-05-1, the Eevee half), AMENDED IN ROUND 14 -- read this paragraph, not the round-13 one that
+    used to stand here (r15 review carry 4). LIGHT_shade_fill is NOT an Eevee-only rig any more: since round 14 it
+    carries a DIFFERENT irradiance per engine, both non-zero (SHADE_FILL 49.0 W/m2 in Cycles, 38.5 in Eevee as
+    shipped in round 15), and this function is the switch between them, on the same pattern as the vault override
+    above. `hide_render` is therefore False in BOTH engines as shipped; it is set only for whichever energy is 0.
+    The round-13 reason the rig exists still stands: Eevee's shaded stone is lit by its screen-traced horizon scan
+    rather than by the world, so the round-12 DIFFUSE-only world sockets never reach it (measured: 2.8x the whole
+    diffuse sky moves the hero's shaded attic 93.3 -> 96.0 while it moves the near-water box +19.6 % -> +70.2 %;
+    freeing the baked irradiance volumes moves it 1.8 lum), and only a directional lamp does.
 
     Both energies are read from the objects' own custom properties (written by light_build.build_shade_fill), so
     calling this twice, or in either order, is idempotent."""

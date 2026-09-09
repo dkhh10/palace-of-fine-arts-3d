@@ -173,6 +173,20 @@ SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
                                    # why it exists and what it measured.
+SKY_DIFFUSE_TINT_SUNSIDE = (1.0, 1.0, 1.0)   # ROUND 16 (QA-08-3), new socket. The MIRROR of SKY_DIFFUSE_TINT: a
+                                   # multiply on the sky that lands on SUN-FACING surfaces only, weighted by
+                                   # w_sun = clamp(0.5 - 0.5 * (Incoming . sun_direction))^p, i.e. by how far the
+                                   # sampled sky direction lies on the SUN half of the dome. It exists because
+                                   # QA-08-3 is a blue EXCESS on the sunlit stone and there was no socket that could
+                                   # reach it: SUN_BLUE_MULT has been 0.00 since round 12, so the direct term already
+                                   # contributes no blue at all, and every blue unit on the sunlit attic comes from
+                                   # the diffuse sky -- which runs at 0.80 x 2.50 = 2.0x physical because
+                                   # SKY_DIFFUSE_BOOST is what holds cam03's colonnade open. Measured deficit
+                                   # (QA round 08, Cycles hero): attic 227/184/122 against ref 169's 231/186/96 --
+                                   # the red matches to 2 %, the blue is 27 % hot. Swept in docs/lighting_notes 26.2.
+SKY_DIFFUSE_TINT_SUNSIDE_P = 3.0   # ROUND 16, the SHARPNESS of that weight, on the round-14 pattern (see
+                                   # SKY_DIFFUSE_TINT_ANTISUN_P): p = 1 is a broad half-dome and leaks onto shaded
+                                   # stone through bounce, p = 3 keeps it on faces that actually see the sun.
 SUN_BLUE_MULT = 0.00               # ROUND 12 (QA-05-1): 0.75 -> 0.00. It is the counterweight to the diffuse tint
                                    # above. That tint puts blue on every diffusely lit surface, the sun-facing ones
                                    # included (a sun-facing surface takes ~38 % of its blue from the sky, round 09's
@@ -648,7 +662,9 @@ def build_world(az, el, calib, moment):
                            diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,
                            diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,
                            diffuse_tint_antisun_p=SKY_DIFFUSE_TINT_ANTISUN_P,
-                           diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P)  # disc OFF: LIGHT_sun carries it
+                           diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P,
+                           diffuse_tint_sunside=SKY_DIFFUSE_TINT_SUNSIDE,
+                           diffuse_tint_sunside_p=SKY_DIFFUSE_TINT_SUNSIDE_P)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -674,6 +690,8 @@ def build_world(az, el, calib, moment):
     w["sky_diffuse_tint_horizon"] = SKY_DIFFUSE_TINT_HORIZON
     w["sky_diffuse_tint_antisun_p"] = SKY_DIFFUSE_TINT_ANTISUN_P
     w["sky_diffuse_tint_horizon_p"] = SKY_DIFFUSE_TINT_HORIZON_P
+    w["sky_diffuse_tint_sunside"] = list(SKY_DIFFUSE_TINT_SUNSIDE)
+    w["sky_diffuse_tint_sunside_p"] = SKY_DIFFUSE_TINT_SUNSIDE_P
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]
@@ -828,6 +846,8 @@ def build(moment="morning", calibrate=True, save=True):
                 sky_diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,   # could not be reproduced
                 sky_diffuse_tint_antisun_p=SKY_DIFFUSE_TINT_ANTISUN_P,
                 sky_diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P,
+                sky_diffuse_tint_sunside=list(SKY_DIFFUSE_TINT_SUNSIDE),      # ROUND 16 (QA-08-3)
+                sky_diffuse_tint_sunside_p=SKY_DIFFUSE_TINT_SUNSIDE_P,
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
