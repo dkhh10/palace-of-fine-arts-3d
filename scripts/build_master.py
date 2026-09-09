@@ -250,6 +250,13 @@ else:
 # ----------------------------------------------------------------------------- 4. LODs, cameras, look, save
 common.set_lod(viewport=1, render=RENDER_LOD)
 qa_cameras.ensure(scene)
+# 2026-09-09 (lighting r14 prep review 6): the flythrough's frame range lives on the linked camera's action; linking does
+# not carry it, so set it here (Render Animation on master.blend otherwise stops at frame 250 of 1224).
+fly = bpy.data.objects.get("CAM_flythrough")
+if fly is not None and fly.animation_data and fly.animation_data.action:
+    f0, f1 = fly.animation_data.action.frame_range
+    scene.frame_start, scene.frame_end, scene.render.fps = int(f0), int(f1), 24
+    print(f"[build_master] flythrough frame range {int(f0)}-{int(f1)} @ 24 fps (scene camera stays the hero)")
 common.configure_eevee(scene, samples=32)
 scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
 if "LIGHT" in linked:
