@@ -14,6 +14,26 @@ Definitions are fixed here so BEFORE and AFTER are measured identically:
                      profile that sits >= 15 luminance under the local background (the median of the profile
                      within +-70 samples, i.e. the roofs around it) and is at least 4 samples wide; minima closer
                      than 25 samples are one line.  Counted on both axes, reported as (vertical + horizontal).
+
+CAM 06 FAR-SHORE GATE - ONE DEFINITION (round 9, agreed with lighting; env r7 read 44.0/23.5 on the same
+statistic where LIGHT r13 read 59.8/33.8, and the disagreement was never the statistic):
+
+  frame      cam 06 (`CAM_qa_06_*`), EEVEE, **1280 x 720**, LOD1, as QA renders it.  If the PNG is wider it is a
+             QA 3-panel strip and only the FIRST 1280 columns are used (`load(..., 1280)`).
+  crop       rows 0-220, columns 0-1280 - `L[0:220, 0:1280]`, the whole top of the frame.  The far-shore LINE
+             count uses the narrower `L[0:110, 0:1280]`; the std is always the 220-row crop.
+  luminance  Rec. 709 on the 8-bit sRGB values as stored, 0-255, NOT linearised: 0.2126 R + 0.7152 G + 0.0722 B.
+  statistic  `numpy.std` (population) of that crop; the mean is reported beside it.
+  the pair   the SAME render twice: once with the compositor as shipped, once with `COMP_golden_hour` bypassed.
+             Exposure, samples, resolution and geometry must be identical - only the compositor differs.
+  THE GATE   **ratio = std(composited) / std(un-composited)**, and it is the ratio, not either absolute number,
+             that is compared between rounds.  The absolutes move with the light rig and the geometry (ENV r7 +
+             LIGHT r11 gave 44.0 / 23.5 = 0.534; ARCH r5 + ENV r8 + LIGHT r13 gives 59.8 and the shipped 38.1,
+             i.e. **0.637**); the ratio is what says how much of the geometry's contrast the mist is eating.
+             LIGHT r13 ships 0.64.  `--c06ratio <composited.png> <uncomposited.png>` computes it.
+  file       measure the PNG the renderer wrote, not a JPEG re-encode.  Measured: the r7 pair reads std
+             44.0 un-composited as PNG and 42.6 as the committed JPEG, i.e. ratio 0.534 vs 0.536.  The ratio is
+             stable to 0.002 under JPEG, the absolutes are not - one more reason the gate is the ratio.
 """
 import json
 import math
@@ -131,6 +151,21 @@ def measure(tag, hero, cam03, cam06):
     return out
 
 
+def c06_ratio(comp, nocomp):
+    """The agreed cam-06 far-shore gate: std(composited) / std(un-composited) over rows 0-220 of the 1280 frame."""
+    out = {}
+    Lc, Ln = load(comp, 1280), load(nocomp, 1280)
+    for tag, a in (("comp", Lc), ("nocomp", Ln)):
+        c = a[0:220, 0:1280]
+        k, _det = count_lines(a[0:110, 0:1280])
+        out[f"c06_{tag}"] = f"mean {c.mean():.1f}  std {c.std():.1f}  far-shore lines {k}"
+    r = float(Lc[0:220].std() / max(1e-6, Ln[0:220].std()))
+    out["c06_ratio"] = round(r, 3)
+    out["c06_ratio_note"] = (f"std composited / un-composited = {r:.3f} over rows 0-220 of the 1280-wide cam 06 "
+                             f"frame (Rec.709 on 8-bit sRGB, population std); LIGHT r13 ships 0.637")
+    return out
+
+
 def main():
     args = sys.argv[1:]
     tag = "b"
@@ -146,7 +181,11 @@ def main():
         else:
             i += 1
     data = json.loads(OUT.read_text()) if OUT.exists() else {}
-    data.update(measure(tag, files.get("hero"), files.get("cam03"), files.get("cam06")))
+    if "--c06ratio" in args:
+        i = args.index("--c06ratio")
+        data.update(c06_ratio(args[i + 1], args[i + 2]))
+    else:
+        data.update(measure(tag, files.get("hero"), files.get("cam03"), files.get("cam06")))
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, indent=1))
     for k, v in sorted(data.items()):
