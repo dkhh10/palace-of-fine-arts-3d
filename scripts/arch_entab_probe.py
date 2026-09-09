@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import arch_params as P
 from bpy_extras.object_utils import world_to_camera_view
+from mathutils import Vector
 
 args = common.script_args()
 
@@ -35,6 +36,11 @@ BORDER = opt("--border", 4, int, None)
 
 scene = bpy.context.scene
 cam = bpy.data.objects.get(CAM)
+if cam is None:                       # asset file: bring the fixed QA set in (nothing is saved)
+    import qa_cameras
+    qa_cameras.ensure(scene := bpy.context.scene)
+    bpy.context.view_layer.update()
+    cam = bpy.data.objects.get(CAM)
 if cam is None:
     raise SystemExit(f"camera {CAM} not found: {[o.name for o in bpy.data.objects if o.type == 'CAMERA']}")
 scene.camera = cam
@@ -48,7 +54,7 @@ nx, ny = P.az_dir(P.FACE_AZ0)
 def pix(d, z):
     """(projection d outward from the wall plane, world height z) on the near face centre -> (col, row)"""
     r = P.WALL_APOTHEM + d
-    co = world_to_camera_view(scene, cam, (nx * r, ny * r, z))
+    co = world_to_camera_view(scene, cam, Vector((nx * r, ny * r, z)))
     return co.x * RES[0], (1.0 - co.y) * RES[1]
 
 
