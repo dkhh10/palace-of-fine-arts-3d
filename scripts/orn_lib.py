@@ -870,8 +870,16 @@ def asset_name(typ, variant=None, lod=None):
     return n
 
 
-def enforce_lod2_budget(lod2, src, budget, voxel=0.10):
-    """Make LOD2 reach its tier budget even when collapse decimation stalls.
+def enforce_lod2_budget(lod2, src, budget, voxel=None):
+    """LOD2 wrapper around enforce_tri_budget; see there. Kept as a name because scripts/orn_r5_lod2fix.py calls it.
+    `voxel` now defaults to the adaptive size (longest dimension / 240) rather than a flat 0.10 m: on the r6 attic
+    panel a 0.10 m weld rounded 48-51 mm off the top and bottom of the 5.27 m field, i.e. LOD2 no longer filled the
+    course it is placed in. 0.10 m is still what orn_r5_lod2fix.py passes explicitly."""
+    return enforce_tri_budget(lod2, src, budget, voxel=voxel, tier=2)
+
+
+def enforce_tri_budget(obj, src, budget, voxel=None, tier=2):
+    """Make a LOD reach its tier budget even when collapse decimation stalls.
 
     Collapse decimation cannot go below ~4 faces per shell, so a LOD2 built from thousands of DISJOINT shells (the
     attic-panel relief after the field clamp: v1 stalled at 15343 tris against a 2400 budget) never reaches budget.
@@ -880,27 +888,33 @@ def enforce_lod2_budget(lod2, src, budget, voxel=0.10):
     viewport state survive and build_master.py sees no change.
 
     Folded in from the round-5 one-off scripts/orn_r5_lod2fix.py (ORN r5 review finding 5) so that a rebuild of an
-    asset cannot silently restore an over-budget LOD2.
+    asset cannot silently restore an over-budget LOD2. Round 6: it applies to **LOD1** too. The r6 attic panel
+    (figures scaled x1.1711 onto the 5.27 m field) made design 1 a denser shell soup and its LOD1 stalled at 34652
+    tris against the 24000 budget -- the same stall, one tier up, and LOD1 is the tier the viewport and every Eevee
+    preview use. `voxel` defaults to the object's longest dimension / 240 (0.044 m on a 10.5 m panel), fine enough
+    that the weld only closes the gaps between shells.
     """
-    before = tri_count(lod2)
+    before = tri_count(obj)
     if before <= budget:
-        return lod2
-    coll = lod2.users_collection[0] if lod2.users_collection else bpy.context.scene.collection
-    tmp = duplicate(src, f"{lod2.name}__weld", coll)
+        return obj
+    if voxel is None:
+        voxel = max(0.008, max(obj.dimensions) / 240.0)
+    coll = obj.users_collection[0] if obj.users_collection else bpy.context.scene.collection
+    tmp = duplicate(src, f"{obj.name}__weld", coll)
     remesh_voxel(tmp, voxel=voxel)
     mid = tri_count(tmp)
     decimate(tmp, target=budget)
     shade_smooth(tmp)
-    old = lod2.data
-    lod2.data = tmp.data
-    lod2.data.name = lod2.name
+    old = obj.data
+    obj.data = tmp.data
+    obj.data.name = obj.name
     bpy.data.objects.remove(tmp, do_unlink=True)
     if old.users == 0:
         bpy.data.meshes.remove(old)
-    after = tri_count(lod2)
-    lod2["lod2_note"] = f"voxel-welded at {voxel:.2f} m then collapsed: {before} -> {after} tris (budget {budget})"
-    print(f"[orn] LOD2 budget: {lod2.name} {before} -> remesh {mid} -> {after} tris (budget {budget})")
-    return lod2
+    after = tri_count(obj)
+    obj[f"lod{tier}_note"] = f"voxel-welded at {voxel:.3f} m then collapsed: {before} -> {after} tris (budget {budget})"
+    print(f"[orn] LOD{tier} budget: {obj.name} {before} -> remesh {mid} -> {after} tris (budget {budget})")
+    return obj
 
 
 def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_size=2048, ao=False,
@@ -920,6 +934,8 @@ def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_
     lod1 = duplicate(lod0, asset_name(typ, variant, 1), coll)
     decimate(lod1, target=budgets[1])
     shade_smooth(lod1)
+    # collapse stalls at ~4 faces per shell on shell-soup reliefs at LOD1 as well as LOD2 (r6 attic panel v1)
+    enforce_tri_budget(lod1, lod0, budgets[1], tier=1)
     if lod2_obj is not None:
         lod2 = lod2_obj
         lod2.name = asset_name(typ, variant, 2)
