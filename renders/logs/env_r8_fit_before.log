@@ -1,0 +1,31 @@
+00:00.353  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend"
+
+[band] 1360 480 1860 600  foliage 72.5 %  building 25.4 %  ground 0.0 %  sky 2.1 %
+[band] foliage fraction by frame x: 0.71:0.95  0.72:0.97  0.73:0.97  0.74:0.97  0.75:0.96  0.76:0.95  0.77:0.97  0.78:0.94  0.79:0.89  0.80:0.78  0.81:0.97  0.82:0.82  0.83:0.24  0.84:0.14  0.85:0.15  0.86:0.29  0.87:0.69  0.88:0.23  0.89:0.55  0.90:0.65  0.91:0.44  0.92:0.94  0.93:0.93  0.94:0.86  0.95:0.90  0.96:0.93  0.97:0.34
+[band] instances filling the box (share of the whole box):
+   16.51%  ENV_tree_cypress_02_LOD1                     (  -73.7,   -1.0)  A2 at the wing's first box
+    9.74%  ENV_tree_pine_02_LOD1                        (  -39.0,    6.0)  A cluster depth
+    7.71%  ENV_tree_eucalyptus_32_LOD1                  (  -79.4,  -23.3)  E2 screen behind the colonnade
+    6.40%  ENV_tree_pine_01_LOD1                        (  -40.0,    8.0)  A cluster, second crown
+    6.27%  ENV_tree_cypress_column_01_LOD1              (  -58.4,  -13.4)  A2 second column (user image x~1220)
+    5.31%  ENV_tree_broadleaf_01_LOD1                   (  -30.0,   30.0)  P peninsula bed, right of the rotunda (cam01
+    4.37%  ENV_tree_broadleaf_00_LOD1                   (  -41.0,   13.0)  A shore broadleaf at cam02's right edge
+    2.67%  ENV_tree_cypress_01_LOD1                     (  -37.8,    4.2)  A cluster depth (QA-01-6: mass kept dense af
+    2.39%  ENV_tree_pine_13_LOD1                        (  -61.0,  -29.5)  E1 screen behind the colonnade
+    2.06%  ENV_tree_willow_00_LOD1                      (  -40.0,   16.0)  A pale weeping willow at the water in front 
+    1.65%  ENV_tree_redwood_18_LOD1                     (  -77.2,  -16.9)  E1 screen behind the colonnade
+    1.20%  ENV_tree_cypress_00_LOD1                     (  -38.0,    4.6)  A dark mass right of the dome
+    1.10%  ENV_tree_redwood_24_LOD1                     (  -84.5,  -19.9)  E2 screen behind the colonnade
+    1.03%  ENV_tree_redwood_17_LOD1                     (  -79.8,  -12.5)  E1 screen behind the colonnade
+    0.99%  ENV_tree_pine_00_LOD1                        (  -38.0,    4.0)  A cluster core; QA-01-6: pulled west so cam0
+    0.94%  ENV_tree_cypress_26_LOD1                     (  -71.2,  -32.1)  E2 screen behind the colonnade
+    0.83%  ENV_tree_redwood_16_LOD1                     (  -83.5,   -9.0)  E1 screen behind the colonnade
+    0.46%  ENV_tree_broadleaf_02_LOD1                   (  -36.0,   20.0)  P peninsula bed (cam01 x 0.75-0.80)
+    0.46%  ENV_tree_redwood_25_LOD1                     (  -75.6,  -28.0)  E2 screen behind the colonnade
+    0.28%  ENV_tree_pine_03_LOD1                        (  -51.9,  -17.9)  A2 strip along the north wing (kept below th
+    0.14%  ENV_tree_eucalyptus_17_LOD1                  (  -80.0, -111.0)  H
+    0.01%  ENV_tree_cypress_23_LOD1                     (  -52.4,  -34.6)  E1 screen behind the colonnade
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 9693 exited rc=0 after 27 s (max 900)

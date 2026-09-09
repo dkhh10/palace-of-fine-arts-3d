@@ -274,3 +274,19 @@ Regression: pinning restores the A/A2 cluster in the north band (137.5 -> 91.9, 
 ## 2026-09-09 · LIGHT r12 merged after review (MERGE WITH FIXES; docs/reviews/light_r12_review.md); MAT r7 dispatched
 Lead fixes: Eevee hero frame on the r12 rig: sky/lagoon identical to Cycles (208.2 / 0.52), no cast; Eevee misses the diffuse shade term (shaded attic 42.2 / 0.77 vs Cycles 35.4 / 0.41): carried to LIGHT r13 with meta provenance, water sheet cell, SUN_BLUE_MULT 0 and importance-map notes. hue_tol 8 -> 6.
 In flight: MAT r7 (docs/briefs/materials_r7.md, Opus xhigh, on the merged master with the r12 rig), ENV r8. Next: reviews, merges, lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV r8 reported (fa04322), in review
+ENV r8: A2 trees were inside the wing's arc (courtyard side) and the A conifers on the peninsula shore; re-solved to COL_ARC_R + 8 m and the grove past the north arch at 120-135 m. North band 91.9 -> 133.1 (0.91 of ref 145.9), foliage 72.5 -> 38.5 %, mass right edge x 0.715 (ref 0.735), clearer moved 0 / dropped 0; south band +5.4 %, shore / cam03 / cam05 / cam06 within 3 %. Measured on its master (9706 objects, LIGHT r11 rig; geometry numbers). Carry: mass 0.025 of frame short in height (shadow_relief ordering, round 9 if wanted). Sheet renders/qa_comparisons/env_r8_sheet.png.
+In flight: ENV r8 review, MAT r7. Next: merge env, MAT review + merge, LIGHT r13 (docs/briefs/lighting_r13.md), lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV r8 merged after review (MERGE WITH FIXES; docs/reviews/env_r8_review.md)
+Lead fixes: ref profile widened (mass 0.62-0.735 confirmed, solve accepted as delivered), station from qa_cameras, top-z note. Carries to ENV r9: shadow_relief relocates hand-placed trees (moved 16), mass 0.025 short in height, stale comments.
+In flight: MAT r7. Next: MAT review + merge, LIGHT r13, lead_build.sh, QA round 6.
+
+## 2026-09-09 · MAT r7 reported (02b60a8), in review
+MAT r7 (on the r12 rig, 9706 objects, Cycles 64 spp): attic lum 180.3 pass, sat 0.474 (window 0.53-0.62, fail: the albedo blue that would fix it regresses the shade hue), std ratio 0.74 pass, anisotropy 0.35 -> 0.40 (target 2.0: 2/3 of the miss is QA's box catching the render's cornice because the attic frame sits ~0.65 m high vs ref 169); shaded attic 30.9 / 0.373 pass; coffer 0.450 pass; near-water sat 0.324 / hue 213.6 (murk is gain-linear; hue floor 209.6 from the water); reflection sat 0.043 (regressed, needs a hue term in QA's test); paving materials shipped (env must assign); shore band 91.7.
+Photo-projection answer: window-coordinate lookup or UVProject, photo as a mean-1 ratio, 3 masks, ~120 lines; precondition: architecture freezes the hero-facing stack (attic frame 0.65 m / cornice 1.04 m offsets agree). In flight: MAT review. Next: merge, LIGHT r13, lead_build.sh, QA round 6 (add: stack offset per course).
+
+## 2026-09-09 · MAT r7 review: MERGE WITH FIXES (docs/reviews/mat_r7_review.md); fix agent dispatched
+Numbers reproduce. Fix now: sheen case never rendered (Sheen Weight still 0; reflection 0.26 -> 0.04), notes describe a superseded water build (gain 0.55 vs shipped 0.15), aerial lagoon untested at the shipped gain (one cam06), ARCH hand-off overstated (cornice explains 45 % of the row std, not 2/3; 13 px = 1.03 m not 0.65), shore item reported pass on a self-chosen window (not delivered), reflection box never probed.
+In flight: MAT r7 fixes (fresh agent). Next: merge materials, env rebuild for paving, LIGHT r13, lead_build.sh, QA round 6.
