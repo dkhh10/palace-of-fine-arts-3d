@@ -1427,3 +1427,45 @@ watch the shade hue, which is the number that went the wrong way three times. (3
 materials r6's in-coffer gradient; it now reads 0.211) and QA-05-9's soffit-W gap, which is Cycles reading 0.141
 where Eevee reads 0.362 — note the Cycles side is what collapsed, so it is likely materials' gradient and not probe
 coverage. (5) Rebuild `assets/lighting.blend`, sheet, report.
+
+### 21.4 Wave 1 — the diffuse-sky ladder, measured. The sky CANNOT buy the shade's blue
+
+Rebuilt master in the worktree (`scripts/build_master.py` + `light_probes --bake`, 32 s + 5 s; assets md5-identical to
+main, so this IS QA's round-05 master). cam03 Eevee 32 TAA and the hero in Cycles 64 spp, both 1280x720 (the measure
+tool upsamples to 1920x1080; the base row reproduces QA's round-05 numbers to ~1 lum, so the resize is not a source of
+error). `--rebake CYCLES` before every render, exactly as `lead_build.sh` bakes. Log `renders/logs/light_r12_w1.log`,
+858 s for 10 frames.
+
+| case (diffuse gain per channel) | cam03 shaft | shaft/sunlit | ground/sunlit | hero shade lum / hue / sat | shade sRGB | sunlit lum / sat / R-B | columns | near-water sat / hue | sky_top |
+|---|---|---|---|---|---|---|---|---|---|
+| base = master as saved | 5.42 | 0.062 | 0.148 | 95.3 / 43.1 / 0.829 | 123, 95, 21 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 / 209.0 | 168.0 |
+| ctl = world REBUILT, all defaults | 5.40 | 0.062 | 0.148 | 95.2 / 43.1 / 0.829 | 123, 95, 21 | 167.6 / 0.649 / 136.4 | 1.00x | 0.281 / 209.0 | 167.9 |
+| db 4 (4, 4, 4) | 10.54 | 0.106 | 0.316 | 129.0 / 47.2 / 0.681 | 152, 130, 49 | 187.4 / 0.491 / 108.2 | 1.22x | 0.286 / 207.8 | 168.0 |
+| db 4 + tint b2.5 (4, 4, 10) | 8.09 | 0.084 | 1.102 | 132.9 / 42.0 / 0.433 | 152, 132, 86 | 189.7 / 0.398 / 87.4 | 1.41x | 0.386 / 216.5 | 167.9 |
+| db 8 + tint b2.5 (8, 8, 20) | 12.25 | 0.122 | 1.405 | 161.9 / 43.6 / 0.285 | 175, 162, 125 | 206.1 / 0.280 / 63.8 | 1.28x | 0.349 / 217.7 | 168.0 |
+| ref 169 / QA window | 26-61 | 0.30-0.70 | — | 115.0 / 29.5 / 0.425 | 141, 111, 81 | 189.6 / >=0.50 / >=110 | 0.9-1.1x | 0.22-0.32 / 185-200 | 149-182 |
+
+`ctl` proves the sweep's rebuilt world is bit-for-bit neutral (every number within 0.1 of the saved master), so every
+row below it is a measured effect of one knob and nothing else. sky_top is 168.0 in every row: the diffuse socket is
+invisible to camera rays, as designed.
+
+**Three results, and they close the round-11 argument.**
+
+1. *The shade's response is separable per channel and is a clean power law in that channel's gain.* R, G are
+   identical between (4,4,4) and (4,4,10) — only B moved (+37). Fitting each channel, shade_c ~ base_c * g_c^k with
+   k_R 0.17, k_G 0.25, **k_B 0.60** (21, 49, 86, 125 at g_B 1, 4, 10, 20 — 21 x g^0.6 to within 1 unit). Solving for
+   ref 169's (141, 111, 81) gives the gain the shade wants: **g = (2.2, 1.9, 9.5)**.
+2. *That gain destroys the sunlit stone, and by exactly the mechanism round 09 calibrated.* A sun-facing surface
+   collects ~38 % of its blue from the sky, so g_B 9.5 takes the sunlit attic's blue from 74 to ~131 while red only
+   goes 210 -> 215: R-B ~84 against a floor of 110, sat ~0.39 against 0.50. Measured at g_B 10 (row 4): R-B 87.4,
+   sat 0.398. **The diffuse sky cannot separate the two.** It is one hemisphere lighting both faces.
+3. *cam03 is not a sky problem at all.* The near shaft is occluded from the sky: 8x the whole diffuse hemisphere
+   moves it 5.4 -> 12.25 (window 26-61), while the horizontal walk in the same frame — which sees the open sky —
+   goes to **1.4x the sunlit rotunda**, i.e. blown out, before the shaft is a quarter of the way to its window. Any
+   knob that lights the shaft through the sky bleaches the ground first. cam03 needs light with a DIRECTION.
+
+Conclusion for wave 2: the round-10 `SHADE_FILL` rig (wide-angle sun lamps on the anti-sun hemisphere) is the only
+primitive that can add blue to shaded faces without adding it to sun-facing ones, because it is directional. Round 10
+rejected it on two costs — the near-water saturation and the column highlights — and both are GLOSSY-side costs of a
+lamp shipped at `specular = 0.10`. Round 12 adds a `spec` key to the sweep and tests the rig at **specular 0.0**,
+i.e. diffuse-only, where by construction it cannot reach a grazing water reflection or a column highlight.
