@@ -1753,16 +1753,19 @@ blue -2.2 % and the shaded box's -12.2 %, i.e. t_B 0.080 and 0.470 — both far 
 and ~0.98, because the terms that do not scale with this albedo, the haze and the mirrored sky, are themselves
 blue). p = 1 is what ships.
 
+Scanned on the **shipped** round-9b frame (`renders/logs/mat_r9b_constraint.log`; on the round-9 frame the two
+binding points sit at p 1.40 and p 2.47 instead, because the linear map moved the shaded box):
+
 | p | albedo blue | sunlit sat | sunlit R-B | shaded sat | shaded hue |
 |---|---|---|---|---|---|
-| 1.00 (shipped) | 0.758 | 0.461 | +104.7 | 0.394 | 33.6 |
-| **1.40** | 0.679 | 0.466 | +105.8 | 0.427 | **35.5 — the hue window binds** |
-| **2.47** | 0.504 | **0.478** | **+108.7** | **0.500 — the sat ceiling binds** | 39.3 |
+| 1.00 (shipped) | 0.758 | 0.463 | +105.1 | 0.434 | 34.5 |
+| **1.25** | 0.708 | 0.466 | +105.8 | 0.452 | **35.5 — the hue window binds** |
+| **1.96** | 0.581 | **0.474** | **+107.7** | **0.500 — the sat ceiling binds** | 38.0 |
 
-**The shaded attic's hue window binds first (p 1.40), its sat ceiling second (p 2.47), and at either the sunlit box
-reaches at most sat 0.478 / R-B +109 against windows 0.53-0.62 and >= 120.** So QA-07-2 is not reachable through
+**The shaded attic's hue window binds first (p 1.25), its sat ceiling second (p 1.96), and at either the sunlit box
+reaches at most sat 0.474 / R-B +108 against windows 0.53-0.62 and >= 120.** So QA-07-2 is not reachable through
 this global albedo tint — for a measured reason, not round 9's "negative albedo", which was a chart patch's
-*absolute* saturation read as if it transferred. The shipped p = 1 spends 40 % of the sat margin. The tint is
+*absolute* saturation read as if it transferred. The shipped p = 1 spends 51 % of the sat margin. The tint is
 therefore **held at x0.758** and not linearised with the map: linearising it is exactly what these ceilings forbid.
 
 ### Item 1: the ratio map is now a scene-linear albedo multiplier
