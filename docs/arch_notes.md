@@ -1239,3 +1239,62 @@ building centre sits +68 px right of frame centre, which is 1.8 deg of camera YA
    So ref 062 cannot be reproduced from a standable point on the current stack: 15 m of station shift costs a factor
    7 in chi2 and 3 %H on the springing. Recommendation for cam02: keep the fitted station (az 37, D 88.6, 41.5 mm,
    pitch +13.9, eye 1.55) as a *view*, not as a claim about where the photographer stood.
+
+### Item 2 — the entablature sub-courses, measured on ref 085 (r6 review carry 8)
+
+`scripts/arch_r7_cornice.py` (log `renders/logs/arch_r7_cornice.log`, annotated crop
+`renders/qa_comparisons/arch_r7_cornice_085.png`). No Blender, no camera fit, and no number the r6 refit
+produced. Ref 085 (1920x1280 — the whole photo corpus is capped at 1920) shows both faces of the near vertex,
+so the scale comes out of the photograph itself:
+
+- each band is **de-slanted** (slope from cross-correlating the window's left third against its right third)
+  before anything is measured, then high-passed and autocorrelated;
+- the **modillion period** is 35 px on the left face and 30 px on the right. Adjacent octagon faces differ by
+  45 deg, so `cos t / cos(45 - t) = 35/30` gives the left face's obliquity **12.0 deg** (right 33.0);
+- the pitch in METRES needs no photo geometry: the plan puts `FACE_LENGTH - 2*RESSAUT_ALONG` = **11.41 m** of
+  straight cornice between a face's two ressauts, and the left face's run holds **11** periods.
+  -> modillion pitch **1.037 m**, projected scale 33.7 px/m, **vertical scale 34.5 px/m**.
+  (N = 12 instead of 11 would give 0.951 m and 37.6 px/m; every conclusion below survives either.)
+
+| sub-course (left face) | rows | px | photo | model | delta | period photo / model |
+|---|---|---|---|---|---|---|
+| corona (crown -> drip edge) | 838-846 | 8 | **0.232 m** | 0.226 m apparent | **+2.6 %** | — |
+| egg-and-dart band | 846-857 | 11 | **0.319 m** | 0.260 m | +22.7 % | **0.474 / 0.470 m  +0.9 %** |
+| **Greek-key band** | 857-877 | 20 | **0.580 m** | **not modelled** | — | meander unit 1.43-1.48 m (weak, ac 0.10-0.28) |
+| modillion band | 877-899 | 22 | **0.638 m** | 0.450 m | **+41.7 %** | **1.037 / 1.060 m  -2.1 %** |
+| crown -> modillion bottom | 838-899 | 61 | **1.769 m** | 0.848 m apparent | **+108 %** | — |
+
+"model apparent" is the model's own edge pair projected the same way the photograph projects it,
+`s * (dz - tan(elev) * dd)` with tan(elev) = 0.08 (ref 085 is a low, distant view; the correction is <= 0.03 m
+on every row here, unlike ref 169's 0.329). +-1 px of edge reading is +-0.029 m.
+
+**Verdict on the three: two confirmed, one not, and a whole course is missing.**
+1. **Corona 0.25 m over the 1.66 m oversail: CONFIRMED** (+2.6 %, inside 10 %).
+2. **Eggs at 0.47 m pitch: CONFIRMED** (0.474 m, +0.9 %). Their band is 0.32 m tall against the modelled
+   0.26 m (2 x the 0.13 m semi-axis), +23 % — outside 10 %, but it is a 1 px call.
+3. **Modillions 1.06 m pitch: CONFIRMED** (-2.1 %). **Modillion height 0.45 m: NOT confirmed — the photo reads
+   0.638 m, +42 %.** The 0.86 m depth cannot be measured in this view at all: the modillion's projection is
+   inside the corona's shadow at 34 px/m.
+4. **The cornice carries a 0.58 m Greek-key band between the corona soffit and the modillions that the model
+   does not have** (`arch_build` puts a plain 0.15 m ovolo there). This is the band `docs/reference_sheet.md`
+   line 255 already noted from 085 and 017 — "modillion cornice with a Greek-key band". Ref 017 shows the same
+   four courses in the same order (corona / leaf / fret / blocks), 57 px from drip to modillion bottom against
+   085's 53 px, so the reading is not a one-photograph artefact.
+
+**Consequence for the 1.37 m cornice — and why NOTHING was built.** The brief's condition was "no build unless
+all three stay inside 1.37 and the row registration holds". They do not: corona 0.25 + eggs 0.32 + fret 0.58 +
+modillions 0.64 = **1.79 m** from the crown to the modillion bottom (the photo measures 1.77), *before* any
+dentil course. The r6 cornice is 1.37 m, so the sub-courses overflow it by **0.42 m** with the dentils dropped
+and by **0.73 m** if the 0.31 m dentil band is kept (085 cannot see under the modillions: rows 899-925 are flat
+deep shadow, lum 23-35, sd 6). Three ways out, for the lead — all of them move something r6 anchored:
+
+| option | what moves | cost, in ref 169 rows at 13.42 px/m |
+|---|---|---|
+| A. hold the entablature total 3.22 and both r6 anchors | `CORNICE_H` 1.37 -> 1.79, so `ARCHITRAVE_H + FRIEZE_H` 1.85 -> 1.43 (e.g. 0.82 / 0.61) | 0 rows, but **FRIEZE_H 0.81 -> 0.61 forces ORN to refit the rinceau a third time** (it refit to 0.81 in r6) |
+| B. hold `ATTIC_Z0` 29.18 and the frieze | `CORNICE_H` -> 1.79, `ENTABLATURE_Z0` 25.96 -> 25.54, capital top down 0.42 | architrave bottom breaks by **5.6 rows** (r6 fitted it to 0.3) |
+| C. hold `ENTABLATURE_Z0` 25.96 and the frieze | `CORNICE_H` -> 1.79, `ATTIC_Z0` 29.18 -> 29.60, `ATTIC_H` 9.12 -> 8.70 | corona soffit breaks by **5.6 rows**; the archivolt socket, the attic sockets and ORN's 5.27 m panel field all move |
+
+My recommendation is **A**: it is the only one that keeps every landmark r6 fitted on ref 169, and the cornice
+is where the photograph disagrees. The price is one ORN rebuild of the rinceau (a one-constant change in
+`orn_build`, which is already parameterised on `arch_params.FRIEZE_H`) and a check that a 0.61 m frieze still
+reads at the hero. Not my call: `CORNICE_H` moves ORN's band, so it goes to the lead.
