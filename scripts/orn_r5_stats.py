@@ -177,6 +177,9 @@ lat = math.tan(math.radians(SUN_AZ - FACE_AZ)) if abs(SUN_AZ - FACE_AZ) < 89 els
 rot_socket_bands = {round(s_["band"], 4) for s_ in socket_types.get("frieze_run", [])
                     if s_["subtype"] not in ARCH_OWN_SUBTYPES and s_["band"] > 0}
 socket_band = min(rot_socket_bands) if len(rot_socket_bands) == 1 else None
+if len(rot_socket_bands) != 1:          # r6 review finding 1
+    FAILURES.append(f"section 3: rotunda frieze_run sockets carry {len(rot_socket_bands)} distinct band_height values "
+                    f"{sorted(rot_socket_bands)}; expected exactly one.")
 print(f"  socket band_height on the rotunda ressaut runs: "
       f"{('%.3f m' % socket_band) if socket_band else 'not stamped by this architecture.blend'}; "
       f"ORN builds to orn_build.RIN_BAND_H = {B.RIN_BAND_H:.3f} m")
@@ -254,6 +257,9 @@ def course_check(section, typ, sock_type, sock_key, orn_target, what):
     stamped = {round(s_[sock_key], 4) for s_ in socks if s_[sock_key] > 0}
     course = min(stamped) if len(stamped) == 1 else None
     src = f"socket {sock_key} {course:.3f} m" if course else f"NOT stamped on {len(socks)} {sock_type} sockets"
+    if socks and len(stamped) != 1:      # r6 review finding 1: an empty or inconsistent stamp set is a failure, not a fallback
+        FAILURES.append(f"section {section}: {sock_type} sockets carry {len(stamped)} distinct {sock_key} values "
+                        f"{sorted(stamped)}; expected exactly one (ARCH contract, docs/sockets.md).")
     print(f"  {typ:20s} course: {src}; orn_build builds to {orn_target:.3f} m")
     if course and abs(course - orn_target) > COURSE_TOL:
         FAILURES.append(f"section {section}: ARCH's {sock_type} sockets carry {sock_key} {course:.3f} m but ORN "
