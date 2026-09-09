@@ -1,0 +1,26 @@
+00:00.319  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r13] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9706 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, 20.00 W/m2 total (0.297 of the calibrated sun) at [(300.0, 16.0), (205.0, 16.0), (25.0, 20.0)], angle 55.0 deg, colour (0.14, 0.19, 1.0)
+[r13] case b20: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+01:04.222  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13e_b20_01e.png'
+[r13] -> r13e_b20_01e.png (63.2s, 1920x1080)
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, 35.00 W/m2 total (0.520 of the calibrated sun) at [(300.0, 16.0), (205.0, 16.0), (25.0, 20.0)], angle 55.0 deg, colour (0.14, 0.19, 1.0)
+[r13] case b35: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+02:06.733  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13e_b35_01e.png'
+[r13] -> r13e_b35_01e.png (62.5s, 1920x1080)
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, 55.00 W/m2 total (0.817 of the calibrated sun) at [(300.0, 16.0), (205.0, 16.0), (25.0, 20.0)], angle 55.0 deg, colour (0.14, 0.19, 1.0)
+[r13] case b55: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+03:09.289  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13e_b55_01e.png'
+[r13] -> r13e_b55_01e.png (62.5s, 1920x1080)
+[r13] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 22649 exited rc=0 after 190 s (max 1200)

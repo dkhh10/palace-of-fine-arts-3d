@@ -1,0 +1,52 @@
+00:00.823  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.263  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:01.706  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.150  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:02.582  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:02.993  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:03.400  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:03.815  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:04.259  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:04.757  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[r13] calibrate sky 0.8: lamp 67.31 W/m2 exposure -4.083 EV
+00:04.759  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r13] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9706 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case db35: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 3.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'R13_db35'
+00:51.214  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13c_db35_01e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] -> r13c_db35_01e.png (45.8s, 1920x1080)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case db50: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'R13_db50'
+01:36.043  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13c_db50_01e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] -> r13c_db50_01e.png (44.8s, 1920x1080)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case db70: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 7 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'R13_db70'
+02:21.026  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13c_db70_01e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] -> r13c_db70_01e.png (45.0s, 1920x1080)
+[r13] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 22383 exited rc=0 after 142 s (max 1200)

@@ -1,0 +1,26 @@
+00:00.405  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r13] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9706 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake {'FINISHED'} in 4.0s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_probes] restored: engine BLENDER_EEVEE, world WORLD_golden_hour, vault rig EEVEE override
+[r13] re-baked with the SCENE/CAMERA (r12) world in 4s
+[r13] case r12bake: bake 2 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+00:43.754  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13a_r12bake_01e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] -> r13a_r12bake_01e.png (38.2s, 1920x1080)
+[light_probes] caches freed
+[r13] light-probe caches FREED: the frame is lit by the world SH and the lamps only
+[r13] case nobake: bake 3 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+01:22.223  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13a_nobake_01e.png'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] -> r13a_nobake_01e.png (38.3s, 1920x1080)
+[r13] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 22114 exited rc=0 after 83 s (max 900)

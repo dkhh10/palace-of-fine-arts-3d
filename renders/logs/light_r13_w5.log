@@ -1,0 +1,32 @@
+00:00.320  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r13] master /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend: 9706 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case fgi8: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi True dist 8.0 rays 2 raytracing True threshold 0.009999999776482582
+00:46.573  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13d_fgi8_01e.png'
+[r13] -> r13d_fgi8_01e.png (45.6s, 1920x1080)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case fgi2: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi True dist 2.0 rays 2 raytracing True threshold 0.009999999776482582
+01:31.455  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13d_fgi2_01e.png'
+[r13] -> r13d_fgi2_01e.png (44.9s, 1920x1080)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case fgioff: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi False dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+02:16.609  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13d_fgioff_01e.png'
+[r13] -> r13d_fgioff_01e.png (45.1s, 1920x1080)
+[light_build] LIGHT_shade_fill: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)
+[r13] case rtoff: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.5 k 2.5 db 2.5 tint 1,0.65,17 ta 1 th 1 f 1 v 1 exposure -2.833 EV, world 'WORLD_golden_hour'
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[r13] eevee: fast_gi True dist 60.0 rays 2 raytracing False threshold 0.009999999776482582
+03:01.363  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r13d_rtoff_01e.png'
+[r13] -> r13d_rtoff_01e.png (44.8s, 1920x1080)
+[r13] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 22525 exited rc=0 after 182 s (max 1200)

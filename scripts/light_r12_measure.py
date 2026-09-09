@@ -127,8 +127,8 @@ def report_hero(path, m, label=""):
     print(f"  >> p1 shaded attic hue {s['hue']:.1f} (29.5+-{u['hue_tol']:.0f}, off by {dh:.1f}) "
           f"sat {s['sat']:.3f} (<={u['sat_max']}) lum {s['lum']:.1f} (115+-15%) "
           f"{'PASS' if dh <= u['hue_tol'] and s['sat'] <= u['sat_max'] else 'FAIL'}")
-    print(f"  >> p3 columns {m['columns']['lum']:.1f} = {m['columns']['lum']/95.8:.2f}x ref (<=1.3x) "
-          f"{'PASS' if m['columns']['lum'] <= 1.3 * 95.8 else 'FAIL'}")
+    print(f"  >> p3 columns {m['columns']['lum']:.1f} = {m['columns']['lum']/m10.REF['columns']['lum']:.2f}x ref (<=1.3x) "
+          f"{'PASS' if m['columns']['lum'] <= 1.3 * m10.REF['columns']['lum'] else 'FAIL'}")
     print(f"  >> p4 sky_top {m['sky_top']['lum']:.1f} (149-182) sky_left/top {m['sky_ratio']:.3f} (1.05-1.29); "
           f"near water sat {m['near_water_sky']['sat']:.3f} (0.22-0.32); water_refl {m['water_refl']['lum']:.1f}")
     print(f"  >> shade/sunlit on the hero {s['lum']/max(1e-6, a['lum']):.3f} (ref 169 {CAM03_ANCHOR})")

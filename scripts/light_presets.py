@@ -142,6 +142,50 @@ def apply_vault_for_engine(engine):
     return n
 
 
+def _shade_lights():
+    try:
+        import light_build
+        prefix = light_build.SHADE_FILL["name"]
+    except Exception:
+        prefix = "LIGHT_shade_fill"
+    return [o for o in bpy.data.objects if o.type == "LIGHT" and o.name.startswith(prefix)]
+
+
+def apply_shade_for_engine(engine):
+    """ROUND 13 (QA-05-1, the Eevee half). LIGHT_shade_fill is an EEVEE-ONLY rig, on the same pattern as the vault
+    override above: the round-12 shade fix is three DIFFUSE-only world sockets, and Eevee's shaded stone is lit by
+    its screen-traced horizon scan rather than by the world, so those sockets never reach it (measured: 2.8x the
+    whole diffuse sky moves the hero's shaded attic 93.3 -> 96.0 while it moves the near-water box +19.6 % ->
+    +70.2 %; freeing the baked irradiance volumes moves it 1.8 lum). Cycles keeps the physical rig -- `energy_W` is
+    0.0 as shipped and the lamps are hidden from the render -- so nothing in the Cycles acceptance frame changes.
+
+    Both energies are read from the objects' own custom properties (written by light_build.build_shade_fill), so
+    calling this twice, or in either order, is idempotent."""
+    n = 0
+    for o in _shade_lights():
+        base = o.get("energy_W")
+        if base is None:
+            base = o.data.energy
+            o["energy_W"] = base
+        eev = float(o.get("energy_W_eevee", 0.0))
+        try:
+            if "EEVEE" in engine:
+                o.data.energy = eev
+                o.hide_render = eev <= 0.0
+            else:
+                o.data.energy = float(base)
+                o.hide_render = float(base) <= 0.0
+        except Exception as e:
+            print(f"[light_presets] cannot retune {o.name} ({e}); leaving it as it is")
+            continue
+        n += 1
+    if n:
+        e0 = _shade_lights()[0]
+        print(f"[light_presets] shade fill for {engine}: {n} lamps at {e0.data.energy:.1f} W/m2, "
+              f"hidden in render: {e0.hide_render}")
+    return n
+
+
 def apply_final_cycles(scene=None, samples=None, time_limit=None):
     """Cycles settings for the 3840x2160 hero and the flythrough finals."""
     s = scene or bpy.context.scene
@@ -190,6 +234,7 @@ def apply_final_cycles(scene=None, samples=None, time_limit=None):
     s.render.image_settings.color_depth = "16"
     s.render.image_settings.compression = 15
     apply_vault_for_engine("CYCLES")
+    apply_shade_for_engine("CYCLES")
     return s
 
 
@@ -239,6 +284,7 @@ def apply_viewport_eevee(scene=None):
         print("[light_presets] viewport gi_irradiance_pool_size:", ex)
     s.render.use_motion_blur = False
     apply_vault_for_engine("EEVEE")
+    apply_shade_for_engine("EEVEE")
     return s
 
 
@@ -291,6 +337,7 @@ def apply_preview_eevee(scene=None, samples=32):
         print("[light_presets] preview gi_irradiance_pool_size:", ex)
     s.render.use_motion_blur = False
     apply_vault_for_engine("EEVEE")
+    apply_shade_for_engine("EEVEE")
     return s
 
 

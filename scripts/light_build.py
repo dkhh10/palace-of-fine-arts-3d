@@ -212,8 +212,25 @@ LOOK = lp.LOOK                     # ALIAS, not a copy. Round 08b set this strin
 # avoid, so the settings below are the physically defensible middle: L = 800 m (a clear-morning extinction length,
 # not the 400 m of round 07's ramp) at a 0.50 cap, with the warmth carried by the haze COLOUR instead of its amount.
 MIST = dict(start=20.0, depth=2000.0, falloff="LINEAR")   # mist pass = (d - 20) / 2000, clamped; SHAPED in the compositor
-COMP = dict(haze_strength=0.50,          # now the CAP: the maximum airlight fraction at infinite distance, not a scale
-            haze_extinction=2.5,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 800 m
+# ROUND 13 (QA-05-8, environment's cam06 hand-off): cap 0.50 -> 0.25 and k 2.5 -> 5.0, i.e. cap * k held at 1.25.
+# ENV r7 reported that the compositor added +58 lum to cam06's horizon crop and cut its std 44.0 -> 23.5, flattening
+# the far-shore line their geometry produces un-composited. Measured on this master (cam06 Eevee 1280x720, crop and
+# statistic from env_r7_measure: rows 0-220, and count_lines on rows 0-110):
+#   compositor OFF                     mean  89.4  std 59.8   8 far-shore lines
+#   as shipped (cap 0.50, k 2.5)       mean 129.7  std 33.8   2      <- fails the std >= 35 test by 1.2
+#   cap 0.25, k 5.0 (SHIPPED)          mean 122.2  std 38.1   2      <- passes with 3.1 of margin
+#   cap 0.30, k 2.5                    mean 117.2  std 42.4   3
+#   cap 0.20, k 2.5 / depth 6000       mean 109.0  std 47.4   4
+#   cap 0.25, k 2.5, depth 4000        mean 103.9  std 50.5   6
+# Holding cap * k fixed is what makes it nearly free: the airlight is cap*(1-exp(-k*mist)) ~= cap*k*mist while the
+# argument is small, so the NEAR and MID field (the wings at ~250 m are at mist 0.115) keep the slope they had and
+# only the saturating far field loses veil. The cost on the hero, Cycles 1920x1080 / 64 spp, is the whole difference
+# between this and simply lowering the cap: south wing band 94.7 -> 93.6, shore band 91.8 -> 91.5, shaded attic
+# 114.6 -> 114.3, sunlit attic 180.5 -> 180.5 / sat 0.475 / R-B 103.1 -> 103.2, columns 1.13x -> 1.13x.
+# For comparison, MIST["depth"] 2000 -> 6000 reaches std 47.4 but costs the south wing 94.7 -> 83.9 and the north
+# wing 140.7 -> 134.9, i.e. it spends the exact number QA-05-5 is short of. Rejected for that reason.
+COMP = dict(haze_strength=0.25,          # the CAP: the maximum airlight fraction at infinite distance, not a scale
+            haze_extinction=5.0,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 400 m
             haze_warmth=(1.70, 1.00, 0.48),   # haze colour = measured west-horizon radiance x warmth
             bloom_threshold_display=0.9,   # scene-linear threshold = this / 2^exposure, i.e. only near-white pixels bloom
             bloom_strength=0.05, bloom_size=0.6, vignette=0.08)
@@ -318,22 +335,44 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
 # reflection and off the column highlights (QA-03-7 and QA-04-5 are both glossy-side defects).
 SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irradiance, so SHADE_FILL can
                                    # be quoted as a fraction of the real sun in the log and the notes
-# SHIPPED AT energy = 0.0, i.e. BUILT, MEASURED AND OFF. The full cost tables are in docs/lighting_notes.md 20.4:
-# at elevation 16 deg, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 (out of QA's 0.22-0.32 window, the one
-# number round 10 landed exactly) and the columns 1.29x -> 1.37x of ref (QA-04-5 is already a major); at elevation
-# 4 deg, 8 W/m2 still costs 0.194 and 1.35x, because the near-water box is a GRAZING reflection of the horizon and a
-# near-horizon fill sits exactly in the band it mirrors. In both configurations the shaded attic ends up WARMER
-# (43.1 -> 44.4 / 44.3) rather than cooler, and it did not need luminance in the first place (112.2 against ref
-# 169's 115.0, i.e. 0.98x). So the rig buys a number that was already passing, at the price of two that were not.
-# It stays in the file, wired and documented, so the lead can switch it on with one number if the art direction
-# changes; `energy` is that number and 6 W/m2 is the largest value with an acceptable sunlit cost.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, angle_deg=55.0, specular=0.10,
-                  color=(0.42, 0.62, 1.00),   # clear-sky blue, normalised to max 1; the cool half of the hemisphere
-                  lamps=[dict(az=300.0, el=16.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
-                         dict(az=205.0, el=16.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
-                         dict(az=25.0, el=20.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
-                  note="QA-04-2 sky fill on the anti-sun hemisphere: the cool share of the sky dome that a "
-                       "0.80-strength sky under a 7.4 deg sun cannot put on shaded stone")
+# ROUND 13 (QA-05-1, the EEVEE half). The rig stays OFF in Cycles -- `energy` is still 0.0 and the lamps are
+# `hide_render` there, so Cycles is untouched by construction and every round-10/11 cost table below still stands.
+# It is switched ON for EEVEE ONLY, through `energy_eevee`, because Eevee cannot reproduce the round-12 shade any
+# other way. Measured on the round-13 master (9706 objects), hero 1920x1080, Eevee `apply_preview_eevee` against
+# the CYCLES frame of the same rig (shaded attic 114.6 / hue 30.9 / sat 0.375):
+#
+#   Eevee lever                                   shaded attic lum / hue / sat   near water lum vs Cycles
+#   nothing (round 12 as shipped)                      93.3 / 38.2 / 0.650            +19.6 %
+#   light-probe bake taken with the diffuse world      93.3 / 38.2 / 0.650            +19.6 %
+#   probe caches FREED entirely                        93.3 / 38.0 / 0.632            +19.8 %
+#   SKY_DIFFUSE_BOOST 2.5 -> 7.0 (x2.8)                96.0 / 37.7 / 0.606            +70.2 %
+#   fast GI off                                       114.6 / 44.6 / 0.740            +31.1 %
+#   fill 16 W/m2, the round-11 colour, el 16           112.9 / 41.2 / 0.554            +29.9 %
+#   fill 55 W/m2, colour (0.14,0.19,1.00), el 16      116.1 / 35.2 / 0.401            +33.6 %
+#   fill 55 W/m2, colour (0.14,0.19,1.00), el 5       119.3 / 35.0 / 0.381            +20.2 %   <- SHIPPED
+#
+# Two things are being fixed and they need two different properties of the lamp:
+#  1. LEVEL. In Eevee the box is lit by the screen-traced horizon scan, not by the world: 2.8x the whole diffuse
+#     sky moves it 2.7 lum while it moves the lagoon 50 points, and freeing the baked volumes moves it 1.8 lum.
+#     Only a directional lamp reaches it.
+#  2. COLOUR. The shaded stone's blue reflectance is ~0.13 of its red (measured from the 16 W/m2 case: the same
+#     lamp radiance returns 0.0578 of linear red and 0.0184 of linear blue), so the round-11 colour (0.42,0.62,1.00)
+#     lands 16 display units of red and 19 of blue where the gap needs 17 and 43. The colour is therefore
+#     re-derived per channel from that reflectance, which is why it is nearly a pure blue.
+# ELEVATION 16 -> 5 deg is what makes it cheap: a vertical shaded face keeps cos(5)/cos(16) = 1.04 of the fill
+# while the lagoon and the plaza keep sin(5)/sin(16) = 0.25, and the measured cost on the near-water box falls from
+# +33.6 % to +20.2 %, which is the +19.6 % Eevee already had before any fill. `specular` 0.10 -> 0.00 keeps a
+# 55 deg disc out of the water's reflection and off the column highlights.
+# The full round-10/11 cost tables for switching it on in CYCLES are in docs/lighting_notes.md 20.4 and still apply:
+# at el 16, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 and the columns 1.29x -> 1.37x of ref. That is why
+# `energy` (the Cycles number) stays 0.0 and this is an Eevee-only rig on the EEVEE_VAULT pattern.
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
+                  color=(0.14, 0.19, 1.00),   # re-derived from the stone's own blue/red reflectance (see above)
+                  lamps=[dict(az=300.0, el=5.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
+                         dict(az=205.0, el=5.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
+                         dict(az=25.0, el=5.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
+                  note="QA-05-1 Eevee shade fill on the anti-sun hemisphere: the blue the round-12 diffuse sky "
+                       "puts on shaded stone in Cycles and that Eevee's screen-traced GI cannot deliver")
 
 COLLECTION = "LIGHT"
 WORLD_NAME = "WORLD_golden_hour"
@@ -412,21 +451,27 @@ def build_fill(coll):
     return obj
 
 
-def build_shade_fill(coll, energy=None):
-    """QA-04-2: wide-angle cool sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
-    Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory."""
+def build_shade_fill(coll, energy=None, energy_eevee=None):
+    """QA-04-2 / QA-05-1: wide-angle sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
+    Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory.
+
+    `energy` is the CYCLES irradiance (0.0 as shipped) and `energy_eevee` the EEVEE one. The lamps carry both on
+    `energy_W` / `energy_W_eevee` and `light_presets.apply_shade_for_engine` switches between them, exactly the way
+    `apply_vault_for_engine` switches the vault emitters. With the Cycles energy at 0 the lamps ship `hide_render`,
+    so Cycles never traverses them."""
     S = SHADE_FILL
     e_total = S["energy"] if energy is None else energy
+    e_eevee = S.get("energy_eevee", 0.0) if energy_eevee is None else energy_eevee
     for o in [o for o in bpy.data.objects if o.name.startswith(S["name"])]:
         d = o.data
         bpy.data.objects.remove(o, do_unlink=True)
         if d is not None and d.users == 0:
             bpy.data.lights.remove(d)
-    if e_total <= 0.0:
-        # review fix 4: SHIPPED AT 0. Three SUN lamps at zero energy still cost three shadow maps in Eevee (the QA
-        # previews were already overflowing the shadow pool) and three lights in every Cycles light-tree traversal,
-        # for exactly no light. Build nothing; `energy` alone switches the whole rig on.
-        print(f"[light_build] {S['name']}: energy 0 W/m2, no lamps built (QA-04-2, see the SHADE_FILL comment)")
+    if max(e_total, e_eevee) <= 0.0:
+        # r11 review fix 4: at zero in BOTH engines the three SUN lamps still cost three shadow maps in Eevee (the
+        # QA previews were already overflowing the shadow pool) and three lights in every Cycles light-tree
+        # traversal, for exactly no light. Build nothing; either energy switches the rig on.
+        print(f"[light_build] {S['name']}: 0 W/m2 in both engines, no lamps built (see the SHADE_FILL comment)")
         return []
     made = []
     for k, cfg in enumerate(S["lamps"]):
@@ -445,13 +490,16 @@ def build_shade_fill(coll, energy=None):
         common.aim_sun(obj, cfg["az"], cfg["el"])
         obj.visible_camera = False        # a 55 deg sun disc must never be visible in the sky
         obj["azimuth_deg"], obj["elevation_deg"] = cfg["az"], cfg["el"]
-        obj["energy_W"] = light.energy    # the shipped irradiance; the r11 sweep scales from this
+        obj["energy_W"] = light.energy            # the CYCLES irradiance; the r11 sweep scales from this
+        obj["energy_W_eevee"] = e_eevee * cfg["w"]   # round 13: the EEVEE-only irradiance
+        obj.hide_render = e_total <= 0.0          # Cycles must not traverse a lamp it is not allowed to see
         obj["note"] = cfg["note"]
         obj["rig_note"] = S["note"]
         coll.objects.link(obj)
         made.append(obj)
-    print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, {e_total:.2f} W/m2 total "
-          f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun) at "
+    print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, Cycles {e_total:.2f} W/m2 "
+          f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun), Eevee {e_eevee:.2f} W/m2 "
+          f"({e_eevee / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the sun), hidden in render: {e_total <= 0.0}, at "
           f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}")
     return made
 
@@ -519,6 +567,7 @@ def build_world(az, el, calib, moment):
     w["sky_camera_saturation"] = SKY_CAMERA_SATURATION
     w["sky_glossy_saturation"] = SKY_GLOSSY_SATURATION
     w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
+    w["sky_diffuse_hue"] = SKY_DIFFUSE_HUE          # r12 review finding 3: the world carried every other socket but not this one
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)
     w["sky_diffuse_tint_antisun"] = SKY_DIFFUSE_TINT_ANTISUN
     w["sky_diffuse_tint_horizon"] = SKY_DIFFUSE_TINT_HORIZON
@@ -534,6 +583,15 @@ def _new(nt, idname, name=None, loc=(0, 0)):
     if name:
         n.name = n.label = name
     return n
+
+
+def _mix_in(node, name):
+    """A ShaderNodeMix input picked by name AND type (r12 review finding 8; same rule as make_sky_world)."""
+    return next(i for i in node.inputs if i.name == name and i.type == "RGBA")
+
+
+def _mix_out(node):
+    return next(o for o in node.outputs if o.type == "RGBA")
 
 
 def _set_menu(sock, value):
@@ -583,11 +641,14 @@ def build_compositor_group(haze_color, exposure):
     g.links.new(f_mist.outputs[0], f_haze.inputs[0]); g.links.new(is_geo.outputs[0], f_haze.inputs[1])
     haze = _new(g, "ShaderNodeMix", "aerial_haze", (0, 100)); haze.data_type = "RGBA"; haze.blend_type = "MIX"; haze.clamp_factor = True
     g.links.new(f_haze.outputs[0], haze.inputs["Factor"])
-    g.links.new(gi.outputs["Image"], haze.inputs[6]); g.links.new(gi.outputs["Haze Color"], haze.inputs[7])
+    # r12 review finding 8: ShaderNodeMix carries one socket per data type and several share a name, so pick them by
+    # name AND type (as make_sky_world does) -- the indices differ between Blender versions and a silent mis-link
+    # would composite the haze colour into the wrong input with no error.
+    g.links.new(gi.outputs["Image"], _mix_in(haze, "A")); g.links.new(gi.outputs["Haze Color"], _mix_in(haze, "B"))
     # --- bloom on sun-lit highlights
     glare = _new(g, "CompositorNodeGlare", "bloom", (250, 100))
     _set_menu(glare.inputs["Type"], "Bloom"); _set_menu(glare.inputs["Quality"], "High")
-    g.links.new(haze.outputs[2], glare.inputs["Image"])
+    g.links.new(_mix_out(haze), glare.inputs["Image"])
     g.links.new(gi.outputs["Bloom Threshold"], glare.inputs["Threshold"])
     g.links.new(gi.outputs["Bloom Strength"], glare.inputs["Strength"])
     g.links.new(gi.outputs["Bloom Size"], glare.inputs["Size"])
@@ -609,8 +670,8 @@ def build_compositor_group(haze_color, exposure):
     g.links.new(vs.outputs[0], fac.inputs[1])
     vig = _new(g, "ShaderNodeMix", "apply_vignette", (650, 0)); vig.data_type = "RGBA"; vig.blend_type = "MULTIPLY"
     vig.inputs["Factor"].default_value = 1.0
-    g.links.new(glare.outputs["Image"], vig.inputs[6]); g.links.new(fac.outputs[0], vig.inputs[7])
-    g.links.new(vig.outputs[2], go.inputs["Image"])
+    g.links.new(glare.outputs["Image"], _mix_in(vig, "A")); g.links.new(fac.outputs[0], _mix_in(vig, "B"))
+    g.links.new(_mix_out(vig), go.inputs["Image"])
 
     print("[light_build] glare sockets:", {i.name: (round(i.default_value, 3) if i.type == "VALUE" else i.default_value) for i in glare.inputs if i.type in ("VALUE", "MENU", "INT")})
     return g
@@ -658,6 +719,10 @@ def build(moment="morning", calibrate=True, save=True):
                 sky_camera_saturation=SKY_CAMERA_SATURATION,      # round-10 review nit: the three saturations were
                 sky_glossy_saturation=SKY_GLOSSY_SATURATION,      # on the world but not on the sun's meta block,
                 sky_diffuse_saturation=SKY_DIFFUSE_SATURATION,    # so a rig read back from the sun was incomplete
+                sky_diffuse_hue=SKY_DIFFUSE_HUE,                  # r12 review finding 3: the four round-12 sockets
+                sky_diffuse_tint=list(SKY_DIFFUSE_TINT),          # were on neither the sun's meta block nor (hue)
+                sky_diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,   # the world, so a rig read back from either
+                sky_diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,   # could not be reproduced
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
