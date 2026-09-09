@@ -338,3 +338,7 @@ In flight: ARCH r6, LIGHT prep review, ORN r5 fix, ENV r9. Next: merges; LIGHT r
 
 ## 2026-09-09 · LIGHT r14 prep merged (MERGE WITH FIXES; fix-nows carried into LIGHT r14 item 0); build_master sets the flythrough frame range; LIGHT r14 dispatched
 In flight: ARCH r6, LIGHT r14 (docs/briefs/lighting_r14.md), ORN r5 fixes, ENV r9. Next: reviews, merges, MAT r8 (water + projection) after LIGHT r14 and ARCH r6.
+
+## 2026-09-09 · ORN r5 merged (5703665) after fixes
+RIN_MAX_PROUD 0.09: clearance +10.5 to +13.3 mm on all six variants, tris unchanged; orn_r5_stats is a gate (run mismatch, clearance, budgets); LOD2 budget enforced in orn_lib.enforce_lod2_budget; `orn_build.py -- --bake-pending` lists 6 LOD1 normal-map bakes for a GPU round. Instancing waits for ARCH r6's socket stamp/frame.
+In flight: ARCH r6, LIGHT r14, ENV r9. Next: reviews + merges, ORN bake (GPU round), MAT r8.
