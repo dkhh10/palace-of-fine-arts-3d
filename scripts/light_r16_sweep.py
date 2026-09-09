@@ -114,6 +114,7 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 wwnw=-1.0, wssw=-1.0, wnne=-1.0,  # ROUND 15: per-lamp SHADE_FILL weights (-1 = keep)
                 sres=-1.0, sray=-1.0, srstep=-1.0, nfill=-1.0,
                 sfres=-1.0, sfjit=-1.0,
+                look=None,    # ROUND 16 (QA-08-3): the AgX look string, applied after the preset
                 cfill=-1.0)   # ROUND 14: the CYCLES energy of LIGHT_shade_fill (`fill` is the Eevee one)      # the shade lamps' own shadow resolution / jitter
 SKY_KEYS = ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "ghue", "tr", "tg", "tb", "ta", "th",
             "tap", "thp", "bm", "de", "tsr", "tsg", "tsb", "tsp")
@@ -127,14 +128,18 @@ def parse(case):
             continue
         k, v = part.split("=", 1)
         k = k.strip()
-        c[k] = v if k == "tag" else float(v)
+        # ROUND 16: `look` is the AgX look STRING (light_presets.LOOK), e.g. "AgX - Very High Contrast". QA-08-3
+        # names scene.view_settings.look as one of the two remaining levers on the sunlit stone's chroma, and it
+        # is the only one that is not a light: it is applied AFTER the preset in shoot().
+        c[k] = v if k in ("tag", "look") else float(v)
     return c
 
 
 def case_tag(c):
     if c["tag"]:
         return c["tag"]
-    bits = [f"{k}{c[k]:g}" for k in DEFAULTS if abs(c[k] - DEFAULTS[k]) > 1e-9]
+    bits = [f"{k}{c[k]:g}" for k in DEFAULTS
+            if isinstance(c[k], float) and isinstance(DEFAULTS[k], float) and abs(c[k] - DEFAULTS[k]) > 1e-9]
     return "_".join(bits) or "base"
 
 
@@ -340,6 +345,10 @@ def shoot(cam_id, tag):
             e.shadow_step_count = int(CASE["srstep"])
         print(f"[r16] eevee: fast_gi {e.use_fast_gi} dist {getattr(e, 'fast_gi_distance', 0):.1f} rays "
               f"{e.fast_gi_ray_count} raytracing {e.use_raytracing} threshold {e.light_threshold}", flush=True)
+    if CASE.get("look"):
+        scene.view_settings.look = CASE["look"]
+    print(f"[r16] view transform {scene.view_settings.view_transform!r} look {scene.view_settings.look!r} "
+          f"exposure {scene.view_settings.exposure:.3f} EV", flush=True)
     fp = OUT / f"{PREFIX}_{tag}_{num}{eng}.png"
     scene.render.filepath = str(fp)
     t = time.time()
