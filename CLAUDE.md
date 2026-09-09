@@ -123,6 +123,10 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
 - Before the master rebuild (`scripts/lead_build.sh`), wait until no builder is mid-render.
 - Builders wait for their own renders with ONE blocking shell command (`scripts/blender_run.sh`), never polling turns.
 - Do not spawn an agent for anything one shell command can do.
+- **No idling on serial steps (added 2026-09-09 by the user).** When the lead is blocked on a review, a master rebuild or a QA
+  render, fill the slot with backlog work that needs no render and no write to master, each item on its own branch (Phase 5
+  prep counts: flythrough path, delivery docs, projection UV layers, carried review findings). The GPU rule and the
+  four-agent cap still apply.
 
 ### Blender process hygiene (added 2026-09-07; the machine swapped with three idle Blender instances holding 13 GB)
 - Every `blender --background --python` run must exit when its script finishes. Never leave a Blender process
