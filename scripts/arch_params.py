@@ -42,7 +42,12 @@ COL_D_BOTTOM = 2.5
 COL_D_TOP = 2.1
 CAPITAL_H = 2.6
 ENTABLATURE_Z0 = COL_SHAFT_Z1 + CAPITAL_H       # 27.4
-ARCHITRAVE_H, FRIEZE_H, CORNICE_H = 1.4, 1.2, 1.2
+# Polish round 4 (QA-05-6): the 3.8 m TOTAL is unchanged (it carries the silhouette), but the split is re-measured
+# on ref 169 at hero scale instead of the sheet's 1.4 / 1.2 / 1.2. In the photograph the entablature reads as a
+# 1.5-1.7 m band of cornice mouldings over a ~2.1 m plain face, and its whole on-screen height (4.35 m of apparent
+# height for 3.8 m of wall) is itself the measurement of the corona's projection: apparent = h + 0.365 * projection
+# at cam01's 20 deg up-look gives 1.65 m. Derivation in docs/arch_notes.md "Polish round 4".
+ARCHITRAVE_H, FRIEZE_H, CORNICE_H = 1.15, 0.90, 1.75
 ENTABLATURE_Z1 = ENTABLATURE_Z0 + ARCHITRAVE_H + FRIEZE_H + CORNICE_H   # 31.2
 ATTIC_Z0 = ENTABLATURE_Z1
 ATTIC_H = 7.1

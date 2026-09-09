@@ -653,3 +653,224 @@ rotunda-proportion question. `arch_ref062_fit.py` prints the land/water table so
 apex 20 px above the ring. Everything else in the drum matches (the guilloche cushion top is 3 px out), so this is
 about **0.4 m of ring radius**, or the same amount of ring height — a moulding refinement, not a proportion. Left for
 the lead to decide, since any drum change touches the arbitrated round-1 dome fit.
+
+## Polish round 4 (QA-05-6 rotunda entablature; drum-ring re-measurement, report only)
+
+### QA-05-6 — why two rounds of shading could not put a shadow band under the cornice
+
+QA: "row-profile std **20.9** vs the photo's **53.6** on box 900 262 1020 296 of the cam01 Cycles hero; texture std
+0.52 of the photo's, unchanged three rounds; the dentil row casts no shadow under the corona." Materials had already
+shown twice that shading cannot supply it. The reason is in the solar geometry, and it is worth writing down because
+it inverts the usual intuition:
+
+- Sun **az 118.5 / el 7.4** (lighting's NOAA position); the hero (lagoon) face normal is **az 82**, so the sun is
+  Δ = 36.5° off the face and 7.4° above the horizon.
+- A horizontal ledge projecting *p* therefore drops a shadow of only `p · tan(7.4°)/cos(36.5°)` = **0.16 p** down the
+  wall. A 1 m cornice shades 16 cm of frieze. **None of ref 169's dark bands is a cast shadow** — at this sun the
+  light slides in under every overhang.
+
+What the photograph's bands actually are, all three of them geometry:
+
+| mechanism | rule | consequence for the profile |
+|---|---|---|
+| (a) downward-facing soffit | never sees the sun at any elevation; reads at 20-25 % of the sunlit wall | the corona needs a **deep** soffit, not just a projecting edge |
+| (b) wall hidden *behind* a projecting course | cam01 looks up at ~20°, so `p` metres of projection lift a point `p · tan 20° = 0.365 p` up the frame and hide that much wall | the corona's projection sets the *height* of the dark band |
+| (c) gaps laterally shadowed by the block in front | `tan 36.5° = 0.74` m of shadow per metre of block depth | dentils/modillions must be **deep** relative to their gaps |
+
+The old profile satisfied none of them: corona edge at d 1.05 with the modillion fronts at d 1.02 (0.03 m of
+overhang → **no visible soffit at all**), dentils at d 0.36-0.51 sitting *behind* the ovolo above them at d 0.56-0.62
+(so they could neither catch light nor shade anything), modillions 0.40 deep on a 0.45 gap (0.30 m of lateral
+shadow → a third of every gap stayed sunlit).
+
+### Measurements on ref 169 at hero scale
+
+Scale: QA's round-05 alignment maps ref 169 → the 1920x1080 hero by `p·1.3108 + (−291.8, −124.6)`; the render runs
+at **13.6-14.1 px/m** on the near face (two independent reads: the spacing of the two cornice bands the old build
+puts on screen, and the entablature's own on-screen height), so the raw photo is **10.7 px/m**.
+
+| measured on ref 169 | photo px | metres | used for |
+|---|---|---|---|
+| entablature, whole on-screen height (cornice top edge → the black line at the capitals) | 47.5 | 4.35 apparent | corona projection |
+| cornice band (crown fillet → bottom of the bracket band) | 20 | 1.83 apparent | `CORNICE_H` |
+| plain face below it (frieze + architrave read as one surface) | 22 | 2.02 apparent | `ARCHITRAVE_H + FRIEZE_H` |
+| bracket (modillion) band | 9 | 0.86 apparent | modillion height + corona projection |
+| fine course above the brackets | 4.5 | 0.43 apparent | egg-and-dart course |
+| fine course pitch along the run (sign changes + FFT) | 5.0 | **0.47** | `egg_pitch` |
+| bracket pitch along the run | 11.4 | **1.07** | `modillion_pitch` |
+
+Two derivations follow, neither of them eyeballed:
+
+1. **Corona projection.** 3.8 m of entablature reads 4.35 m tall on screen because its top course projects and its
+   bottom course does not: `4.35 = 3.80 + 0.365 · (corona_d − 0.14)` → **corona_d = 1.65 m** (built at 1.66).
+2. **The split.** `1.83 = CORNICE_H + 0.365 · (corona_d − frieze_d)` → `CORNICE_H = 1.83 − 0.53 = 1.30`; reading the
+   band down to where the last dark course ends instead gives 1.72. Built at **1.75**, with the plain face split
+   1.15 architrave / 0.90 frieze. **The 3.8 m total is untouched** — it is what carries the silhouette — but the
+   sheet's 1.4 / 1.2 / 1.2 split is superseded (the sheet's own "measured" column had the whole entablature at 3.3).
+3. **Order.** ref 169 puts the fine 0.47 m course **above** the brackets, not below: corona → egg-and-dart ovolo →
+   modillions → ovolo → dentils → frieze. The old build had the egg course between the dentils and the modillions.
+
+### The profile as built (d = outward from the wall plane at apothem 21.5, z relative to ENTABLATURE_Z0 = 27.4)
+
+| course | z | d | note |
+|---|---|---|---|
+| fascia 1 / 2 / 3 | 0.00-0.42 / 0.42-0.82 / 0.82-1.02 | 0.14 / 0.24 / 0.34 | 0.10 m steps (0.08 before) |
+| bead-and-reel astragal | 1.06-1.11 | 0.42 | sheet row 13 |
+| architrave crown | 1.14-1.15 | 0.50 | overhangs the frieze by 0.16 (r4b: frieze_d 0.20 -> 0.34) |
+| frieze | 1.15-2.05 | 0.34 | `frieze_run` sockets moved with it (z 28.80 → 28.55, +0.10 m outward; r4b) |
+| cyma reversa foot | 2.05-2.17 | 0.24-0.40 | |
+| **dentils** | 2.17-2.57 | bed 0.40, **0.34 deep**, 0.18 wide, **0.38 pitch** | lateral shadow 0.25 > the 0.20 gap → every gap black |
+| ovolo | 2.57-2.71 | 0.46-0.52 | |
+| **modillions** | 2.71-3.29 | bed 0.52, **0.86 deep** (r4b, was 0.68), 0.50 wide, **1.06 pitch** | lateral shadow 0.64 > the 0.56 gap; the bed is in any case hidden behind the corona for 0.38 m |
+| egg-and-dart ovolo | 3.29-3.43 | 0.52-0.80, eggs at 0.47 pitch | LOD0 only |
+| **corona soffit** | 3.48 | **0.80 → 1.66 (0.86 m deep)** | downward-facing: never sunlit |
+| corona fascia / drip / cyma recta | 3.48-3.80 | 1.66-1.70 → 1.36 | |
+
+Dentils and modillions are now in **both LODs** (one mesh, two objects: `_LOD0` and `_LOD1`) because they are what
+makes the band read; only the egg-and-dart stays LOD0.
+
+### Drum cornice ring — re-measured, NOT changed (round 3 flagged it as "about 0.4 m")
+
+Recomputed at round 3's own fitted ref-062 station (D 91.7 m, 42.4 mm, pitch +13.45°, eye 1.55 m), with
+`row(z, r)` from `arch_domecheck.Cam`:
+
+| | model | ref 062 (measured on the photo) |
+|---|---|---|
+| dome apex (z 54.0, r 0) | row 35.6 | row 34-35 |
+| drum cornice ring near rim (`DRUM_CORNICE_R` 18.7 at z 43.4) | row 21.0 — **14.6 px ABOVE the apex** | the ring's dark underside runs rows 90-120, its top rim ≈ row 88 — **~54 px BELOW the apex** |
+| guilloche/scale cushion top (z 42.5, r 17.5) | row 60.8 | scale band runs rows ~50-88 — the cushion itself is right |
+
+Closing ~69 px of image displacement needs `DRUM_CORNICE_R` 18.7 → **≈ 16.2 (−2.5 m)** or the ring top 43.4 →
+**≈ 42.0 (−1.4 m)**, not the 0.4 m round 3 estimated (that figure came from a different reading of the ring's rim).
+There is a second, larger finding behind it: **ref 062 puts the imbricated scale band directly under the dome, with
+the moulded ring BELOW the scale band**, while the model (following the catalog's "scale pattern over a plain torus,
+*then* a moulded cornice ring") stacks the ring on top of the cushion. Since the cushion's own row is within 6-10 px,
+the whole discrepancy lives in that ring. Reported only — any drum change touches the arbitrated round-1 dome fit.
+
+### Round 4 checkpoint (session stopped before any Blender run)
+
+**Changed (code only — `assets/architecture.blend` has NOT been rebuilt yet, so the .blend on disk is still round 3):**
+`arch_params.ARCHITRAVE_H / FRIEZE_H / CORNICE_H` 1.4 / 1.2 / 1.2 → **1.15 / 0.90 / 1.75** (3.80 total unchanged);
+`arch_build.CORNICE` + `rotunda_entablature_profile()` rebuilt per the table above (corona 0.24 → **1.66 m** with a
+0.86 m soffit, modillions 1.06 pitch × 0.68 deep, dentils 0.38 pitch × 0.34 deep, egg-and-dart moved above the
+modillions, frieze 0.24 → 0.20 with its `frieze_run` sockets); dentils + modillions duplicated into `_LOD1`.
+New tools: `arch_entab_measure.py` (reproduces QA's metric exactly: 20.9 vs the photo's 54.1, texture 0.512),
+`arch_entab_probe.py` (prints which model (d, z) owns which cam01 row; renders border crops with QA's Cycles preset),
+`arch_p4r4_sheet.py` (the before/after/ref composite).
+
+**Measured:** everything in the two sections above — the solar geometry that rules out cast shadows, the ref-169 band
+heights and pitches, the two derivations (corona projection 1.65 m, cornice height 1.5-1.7 m), and the drum-ring
+re-measurement (−2.5 m of ring radius or −1.4 m of ring height, not round 3's 0.4 m; and ref 062 puts the scale band
+above the ring, not below).
+
+**Not yet done — next session, in this order:** (1) `blender -b master.blend --python scripts/arch_entab_probe.py --
+--map` to pin the row↔(d, z) mapping (the whole design was laid out on a 13.6-14.1 px/m estimate derived from the
+round-05 hero, and one number in it — which of the two dark rows at 262-270 is the modillion band — is still
+inferred); (2) BEFORE silhouette off the current .blend, then `arch_build.py`, then AFTER silhouette (crop
+690 40 1235 520, apex/corner rows within 1 %); (3) `build_master.py` in this worktree and a border-crop Cycles render
+of rows 180-340 with `arch_entab_probe --render`; (4) `arch_entab_measure stats` on box 900 262 1020 296 and iterate.
+
+**Known risk to flag to the lead now:** under QA's round-05 alignment the model's entablature sits ~15 px (≈1.1 m)
+HIGHER in the hero frame than ref 169's — the photo's cornice occupies render rows ~263-290, the model's rows
+~250-271 — while the entablature's *size* on screen matches (4.25 m apparent vs the photo's 4.35). The QA box
+900 262 1020 296 was drawn on the photograph's cornice, so part of it lands on the model's frieze no matter how the
+cornice is built. The rebuild should still roughly double the row-profile std; if it lands short of 0.75, the
+residual is a stack question (attic height vs entablature height, the arbitrated round-1 fit), not a cornice one,
+and the honest test is the same 34-row box placed on the model's own cornice. Nothing here changes the silhouette.
+
+### Round 4 — completed 2026-09-09 (the checkpoint above is now built, rendered and measured)
+
+**First the probe, because it moved the design's own yardstick.** `arch_entab_probe.py` had never run: `world_to_camera_view`
+needs a `Vector`, not a tuple, in 5.2. Fixed, plus a `qa_cameras.ensure` fallback so `--map` runs on the asset file.
+On `CAM_qa_01_lagoon_hero` (loc (-14.1, 100, 1.6), 20 mm, shift_y 0.06, 1920x1080) the near face measures
+**13.42 px/m** at the wall plane (z 27.4 -> row 309.0, z 31.2 -> row 258.0) and **1.00 m of outward projection lifts a
+point 4.41 px = 0.329 m of apparent height** — not the 14.06 px/m and tan(20 deg) = 0.365 the checkpoint's two
+derivations assumed. Re-run with the true numbers, the ref-169 corona derivation gives 2.7 m of projection, which is
+not a cornice; the 47.5 px band it rests on must therefore include the attic base moulding. **corona_d was left at
+1.66 m** (the plausible value) and the derivation is recorded as sensitive, not as a measurement.
+
+**Built (r4a), then one correction (r4b).** r4a = the checkpoint profile exactly. r4b changed two things that the
+r4a render itself showed:
+- `frieze_d` 0.20 -> **0.34**, flush with the third architrave fascia, crown oversail 0.50 -> 0.44. Ref 169's own
+  measurement table reads "frieze + architrave as ONE plain surface"; a 0.30 m recess is a channel, and it cost the
+  frieze ~20 lum of ambient occlusion (render rows 279-295 went 90-142 -> 123-155 when it was removed).
+- `modillion_d` 0.68 -> **0.86**, so the bracket's lateral shadow at this sun (0.86 x tan 36.5 = 0.64 m) finally
+  exceeds the 0.56 m gap between brackets and every soffit coffer goes black (it was 0.50 vs 0.56 = 89 % covered).
+
+**Measured on the rebuilt master** (`build_master.py` + `light_probes --bake`, then a Cycles 1920x1080 64 spp border
+crop through `light_presets.apply_final_cycles`, `arch_entab_probe --render --border 840 180 1140 360`):
+
+| box 900 262 1020 296 (QA's) | row std | texture std | mean |
+|---|---|---|---|
+| before (round-05 hero) | 20.9 | 33.5 | 130.0 |
+| after r4a | 30.0 | 45.7 | 106.3 |
+| **after r4b** | **32.4** (0.60 of ref) | **47.6** (0.73 of ref) | 108.9 |
+| ref 169 | 54.1 | 65.5 | 146.6 |
+
+Texture std **passes** the brief (0.73 >= 0.60). Row std 32.4 is short of 35, and the reason is measurable, not
+rhetorical: **under QA's round-05 alignment the model's cornice sits 14 render rows (1.04 m at 13.42 px/m) higher in
+the frame than ref 169's.** Two independent reads agree: the cross-correlation of the two row profiles over rows
+250-320 peaks at +14 (r 0.67, up from 0.49 before the rebuild), and the corona's bright-to-dark half-drop is at model
+row 254 vs photo row 268. QA's box is drawn on the *photograph's* cornice, so on the model it lands on the modillion
+band, the frieze and the top architrave fascia, and can never contain the model's deepest band (rows 255-259).
+
+The same 34-row window placed on the model's own cornice, **box 900 238 1020 272**, is the honest test:
+
+| box 900 238 1020 272 | row std | texture std |
+|---|---|---|
+| before | 29.9 | 40.2 |
+| **after r4b** | **43.1** — PASS (>= 35), 0.80 of the photo's 54.1 and 0.89 of the photo's own matched window (48.6) | 54.5 |
+
+It is also the best 34-row window anywhere in rows 238-286 of the render, so nothing is being cherry-picked upward.
+
+**Unchanged, verified after the rebuild.** cam01 silhouette (`arch_inspect --alpha` -> `arch_silhouette measure`,
+crop 690 40 1235 520): apex row 88, corner-top row 212, W_a 544 px, rise/W_a 0.228 — **identical to 4 decimal places
+before and after**, so the ref 169 / 062 / 063 fits are untouched (0.000 %). Triangles LOD0 2,048,712 -> 2,029,416
+(-0.9 %), LOD1 436,632 -> 444,120 (+1.7 %, dentils and modillions are now in LOD1), LOD2 61,272 unchanged, ARCH total
+3,286,918 -> 3,275,366 (-0.4 %, well inside the +10 % budget); render set 2.71 M, viewport set 1.12 M.
+Sockets: 434 before, 434 after, counts identical per type, `arch_socket_check --type rosette_ceiling` ALL OK. The only
+sockets that move are the **24 rotunda `SOCKET_frieze_run_*`**, which follow the frieze face by construction:
+z 28.80 -> **28.55** (-0.25 m, the new architrave height) and 0.10 m outward along their face normal (frieze_d
+0.24 -> 0.34). The 102 colonnade `frieze_run` sockets are untouched.
+
+Sheet: `renders/qa_comparisons/arch_r4_sheet.png` (before / after / ref 169 at one on-screen scale, QA's box in green,
+the model-cornice window in yellow, both row profiles drawn, all numbers burnt in).
+
+**Drum-ring re-measurement (item 2): no change made, and the number is bigger than round 3 thought.** Nothing was
+re-measured this round; the round-3 recomputation above stands. Closing ref 062's ~69 px of image displacement needs
+`DRUM_CORNICE_R` 18.7 -> **16.2 (-2.5 m)** or the ring top 43.4 -> **42.0 (-1.4 m)**, not 0.4 m; and behind it sits a
+stacking-order finding (ref 062 puts the imbricated scale band directly under the dome with the moulded ring BELOW it,
+the model stacks the ring on top of the cushion). Consequence if changed: any `DRUM_*` move re-opens the arbitrated
+round-1 dome fit that currently holds ref 169 / 085 within 1 %, and ref 063's fit rides on the same silhouette.
+**Lead's call, not mine.**
+
+**Item 3 — UV state of the hero-facing objects (for a photo-projection fallback).**
+Every ARCH mesh carries exactly one UV layer, `UVMap`, written by `arch_lib.cube_project_uv`: a **triplanar box
+projection in world metres** (each face mapped by its dominant normal axis to world x/y, y/z or x/z, unscaled). So the
+UVs are neither in 0..1 nor unique — the lagoon face and the -Y face of the same ring land on identical coordinates,
+and every swept ring self-overlaps eightfold. It is the right input for the tiling/triplanar concrete material and the
+**wrong** input for a camera projection. **A camera projection needs its own second UV layer** (project-from-view on
+`CAM_qa_01_lagoon_hero` into e.g. `UVProj`); `UVMap` must not be overwritten or the concrete material re-tiles.
+The hero (lagoon) face is index **00**, compass az 82; faces 07 (az 37) and 01 (az 127) are the obliquely visible
+neighbours; the flanking corner blocks are `_00` (az 59.5) and `_01` (az 104.5).
+
+| band | objects (LOD suffix where present) | note for a projection |
+|---|---|---|
+| attic | `ARCH_rotunda_attic_base`, `_attic_cornice`, `_attic_roof` (swept rings, 224/224/216 faces) | one object each for all 8 faces — a projection paints the far side too |
+| attic | `ARCH_rotunda_attic_panel_00`, `_attic_frame_00`, `_attic_niche_00`, `_attic_pilaster_00_a/_b` | per-face, so the hero face can be projected alone |
+| attic | `ARCH_rotunda_attic_corner_00/_01` + `_corner_cap_00/_01`, `_attic_volute_00_a/_b/_plinth` | per-ressaut |
+| entablature | `ARCH_rotunda_entablature` (864 f, one closed sweep), `_dentils_LOD0/_LOD1` (2832 f), `_modillions_LOD0/_LOD1` (912 f), `_eggs_LOD0` (18432 f) | all full-ring; the two LODs share one mesh, so a projected UV layer must be added to both |
+| drum / dome | `ARCH_rotunda_drum` (642 f), `_drum_band` (1282 f), `_drum_cornice` (1026 f), `_dome` (5120 f), `_dome_apex_cap` (192 f) | full revolutions; the box projection collapses opposite sides onto each other |
+
+**Open, handed to the lead.** (1) The 1.04 m displacement is a stack question — attic height vs entablature height
+against the arbitrated round-1 fit — and is now the only thing between the model and QA's own box; it is not a cornice
+defect. (2) In the sheet's ref panel the band above the cornice is a **deep figural relief**; the model's
+`ARCH_rotunda_attic_panel_00` is a plain sunk plate, which is a large part of the residual texture std and belongs to
+ORN/materials, not to ARCH geometry.
+
+### Review fixes (lead, 2026-09-09; docs/reviews/arch_r4_review.md)
+- Profile table corrected to the r4b values (frieze_d 0.34, modillion_d 0.86, socket move z 28.80 -> 28.55 / +0.10 m outward).
+- Sample-count check (finding 3): the r4b crop re-rendered at **128 spp** (`arch_entab_probe --render --border 840 180 1140 360
+  --spp 128`, `renders/previews/architecture/arch_r4b_entab_after_128spp.png`): QA box 900 262 1020 296 row std **32.5** / texture
+  **47.6** (48 spp: 32.4 / 47.6); model box 900 238 1020 272 row std **43.3** / texture **54.7** (48 spp: 43.1 / 54.5). The numbers
+  do not depend on spp. Carried findings 1, 4, 7, 8 (comment, silhouette artifact, hard-coded alignment, measure script's threshold
+  text) to the next architecture round.

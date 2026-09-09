@@ -1,0 +1,9 @@
+00:00.838  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/master.blend"
+01:37.685  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/renders/previews/architecture/arch_r4b_entab_after.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[probe] border [840, 180, 1140, 360]
+[probe] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/renders/previews/architecture/arch_r4b_entab_after.png
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 4240 exited rc=0 after 100 s (max 1800)
