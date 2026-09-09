@@ -2264,3 +2264,20 @@ shade returns to the r13 rig's own 31.6 / 0.375 with 3.9 deg of margin and the s
 The fill's one real cost is the near-water box: 117.9 -> 140-149 of luminance and hue 213.9 -> 227-228, because
 the lagoon's murk takes 3.5 % of a 55-90 W/m2 blue lamp. Its SATURATION stays inside QA-05-4's window
 (0.293-0.320 against 0.22-0.32); its hue moves further from the 185-200 the same defect asks for.
+
+### 24.5 QA-06-13 — where the Eevee pass time went (measured, not guessed)
+
+The sweep prints a per-camera wall time. Waves 1 and 2 are the same master, the same cameras and the same 32 TAA;
+the only difference is that wave 1 built **no** `LIGHT_shade_fill` lamps (the sweep's `fill` key defaults to 0 and
+`build_shade_fill` builds nothing at zero) and wave 2 built the shipped three at 55 W/m2:
+
+| camera, Eevee 1280x720 / 32 TAA | wave 1, no shade lamps | wave 2, the shipped three | cost of the three lamps |
+|---|---|---|---|
+| cam03 colonnade walk | 54.9 s | **92.8 s** | **+69 %** |
+| cam06 aerial | 31.2 s | **48.6 s** | **+56 %** |
+
+That is QA-06-13's +81 %, isolated to its cause: **three lamps, not the world and not the probes.** And the cause
+inside the cause is a default. `build_shade_fill` never set `shadow_maximum_resolution` or `use_shadow_jitter`, so
+three 55-degree soft suns whose entire job is to lay a diffuse blue on shaded stone were each rendering shadow maps
+at Blender's default **0.001 m/texel — finer than LIGHT_sun's own 0.002** — with jitter on. Both are now rig keys
+(`SHADE_FILL["shadow_res"]`, `["shadow_jitter"]`) and are swept in 24.6.

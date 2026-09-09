@@ -42,3 +42,78 @@ Info: No orphaned data-blocks to purge
 [light_probes] restored: engine BLENDER_EEVEE, world R14_S1, vault rig EEVEE override
 [r14] re-baked with the LIGHTING (r13) world in 5s
 [r14] case S1: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 db 2.5 tint 1,0.65,40 ta 1^3 th 1^6 f 1 v 1 exposure -2.833 EV, world 'R14_S1'
+01:42.130  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_S1_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[r14] -> r14_S1_01c.png (91.5s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+03:11.223  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_S1_03e.png'
+[r14] -> r14_S1_03e.png (89.0s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+03:57.307  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_S1_06e.png'
+[r14] -> r14_S1_06e.png (46.1s, 1280x720)
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, Cycles 70.00 W/m2 (1.040 of the calibrated sun), Eevee 55.00 W/m2 (0.817 of the sun), hidden in render: False, at [(300.0, 2.0), (205.0, 2.0), (25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.001 m/texel, jitter True
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'R14_S2' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 40.0), antisun 1.00, horizon 1.00, exponents 3.0 / 5.0)
+[light_probes] bake {'FINISHED'} in 3.9s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[light_probes] restored: engine BLENDER_EEVEE, world R14_S2, vault rig EEVEE override
+[r14] re-baked with the LIGHTING (r13) world in 4s
+[r14] case S2: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 db 2.5 tint 1,0.65,40 ta 1^3 th 1^5 f 1 v 1 exposure -2.833 EV, world 'R14_S2'
+05:32.458  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_S2_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[r14] -> r14_S2_01c.png (91.1s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+07:05.106  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_S2_03e.png'
+[r14] -> r14_S2_03e.png (92.6s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+07:50.534  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_S2_06e.png'
+[r14] -> r14_S2_06e.png (45.4s, 1280x720)
+[light_build] LIGHT_shade_fill: 3 cool sun lamps, Cycles 70.00 W/m2 (1.040 of the calibrated sun), Eevee 55.00 W/m2 (0.817 of the sun), hidden in render: False, at [(300.0, 2.0), (205.0, 2.0), (25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.2 m/texel, jitter False
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'R14_Q1' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 40.0), antisun 1.00, horizon 1.00, exponents 3.0 / 6.0)
+[light_probes] bake {'FINISHED'} in 4.3s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[light_probes] restored: engine BLENDER_EEVEE, world R14_Q1, vault rig EEVEE override
+[r14] re-baked with the LIGHTING (r13) world in 4s
+[r14] case Q1: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 db 2.5 tint 1,0.65,40 ta 1^3 th 1^6 f 1 v 1 exposure -2.833 EV, world 'R14_Q1'
+09:26.522  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_Q1_01c.png'
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 3 lamps at 70.0 W/m2, hidden in render: False
+[r14] -> r14_Q1_01c.png (91.5s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+10:20.224  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_Q1_03e.png'
+[r14] -> r14_Q1_03e.png (53.6s, 1280x720)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 3 lamps at 55.0 W/m2, hidden in render: False
+[r14] eevee: fast_gi True dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+10:57.325  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r14_Q1_06e.png'
+[r14] -> r14_Q1_06e.png (37.1s, 1280x720)
+[r14] camera times: 01c 91.5s  03e 89.0s  06e 46.1s  01c 91.1s  03e 92.6s  06e 45.4s  01c 91.5s  03e 53.6s  06e 37.1s   TOTAL 637.9s over 9 frames
+[r14] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 39053 exited rc=0 after 658 s (max 3000)
