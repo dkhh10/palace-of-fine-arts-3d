@@ -96,8 +96,17 @@ STATIONS = [
     ("walk_a",     ( 73.50,  38.00, 1.90), V_LAND,  "shore", None, "apron -0.69"),
     ("walk_b",     ( 73.00,  33.00, 1.25), V_LAND,  "shore", None, "apron -0.71"),
     ("walk_c",     ( 72.00,  29.00, 1.10), V_LAND,  "shore", None, "terrain -0.74"),
-    ("cam02",      qa_xy("CAM_qa_02_lagoon_ne_threequarter") + (1.06,), V_LAND,  "shore", None,
-                                                "CAM_qa_02 station (az 160 / 75 m); walk -0.69, agl 1.75"),
+    # ROUND 16 (QA-08-13). This station used to be read from qa_cameras by name, on prep review 1's rule that a
+    # re-stationing there must not silently desync the route. It desynced the route the other way instead: in
+    # round 08 the lead moved CAM_qa_02 from the SSE shore path (70.5, 25.6) to the NNE fit of ref 062 at
+    # (-79.8, 24.4), i.e. to the FAR SIDE of the building from every other station on this leg. The bezier then ran
+    # the camera across the courtyard and back, the route went 250 m -> ~530 m and the saved frame range 1-1224 ->
+    # 1-2616 (109 s at 24 fps) with nothing in any brief asking for it. The lead's round-16 decision is that the
+    # flythrough stays ~50 s, so the station is PINNED at the east-shore point the route was designed around and
+    # the QA camera is no longer on the route. Kept because it is a good station in its own right (the
+    # three-quarter over the courtyard) -- it is simply not CAM_qa_02 any more, and the name says so.
+    ("ne_apron",   ( 70.50,  25.60, 1.06), V_LAND,  "shore", None,
+                                                "east shore apron, the round-07 CAM_qa_02 station; walk -0.69, agl 1.75"),
     ("apron_a",    ( 70.20,  19.00, 1.15), V_LAND,  "shore", None, "courtyard apron, terrain -0.58"),
     ("apron_b",    ( 68.60,  13.50, 1.12), V_LAND,  "shore", None, "courtyard apron, terrain -0.63"),
     _arc("bay_line",  GAP_THETA,  108.00, 1.08, V_GALLERY, "gallery", "on the bay's radial line, 7 m short of the row", tangent=False),
@@ -136,7 +145,7 @@ TARGET_KEYS = [
     ("hero",       "end",   (0.0, 0.0, 14.0)),
     ("lagoon_c",   0.0,     (0.0, 0.0, 12.0)),
     ("shore_over", 0.0,     (14.0, 2.0, 16.0)),  # swing off the rotunda toward the south wing over the landfall
-    ("cam02",      0.0,     (0.0, 0.0, 21.1)),   # CAM_qa_02's own target
+    ("ne_apron",   0.0,     (0.0, 0.0, 21.1)),   # the round-07 CAM_qa_02 target: the rotunda over the courtyard
     ("gap_in",     0.0,     (0.0, 0.0, 12.0)),   # through the bay, still on the rotunda
     ("gal_04",     0.0,     (0.0, 0.0, 9.2)),    # CAM_qa_03's target: the rotunda seen through the columns
     ("gal_out",    0.0,     (0.0, 0.0, 12.0)),
@@ -252,8 +261,18 @@ def speed_profile(s_wp, caps, accel=ACCEL, ds=0.20):
     return grid, v, t
 
 
-def invert(t_grid, s_grid, tt):
-    """s at time tt by linear interpolation of the monotone t -> s table."""
+def invert(t_grid, s_grid, tt, v_grid=None):
+    """s at time tt from the monotone t -> s table.
+
+    ROUND 16 (flythrough plan finding 1). With `v_grid` this integrates the profile EXACTLY inside the grid
+    interval instead of interpolating s linearly across it. `speed_profile` grids arc length at ds = 0.20 m, so
+    the first interval out of a hold spans v 0 -> 0.5 m/s, i.e. ~0.8 s of wall time; interpolating s linearly
+    across it renders that whole interval at a constant 0.5 m/s and then steps, which sampled as 0.00 -> 0.50 m/s
+    in one frame at the hero boundary (frame 85) and 2.10 -> 0.50 -> 0.00 settling under the dome (frames
+    1105-1129): an effective 3.2 m/s^2 against the designed ACCEL 2.5, a visible jerk out of shot 1 and a snap
+    into shot 6. The profile is piecewise-constant-acceleration by construction (v[i+1]^2 = v[i]^2 + 2 a ds), so
+    s(tau) = s_i + v_i tau + a tau^2 / 2 is not an approximation: it is the curve the profile already describes,
+    and it makes the rendered speed continuous at both hold boundaries."""
     if tt <= 0:
         return s_grid[0]
     if tt >= t_grid[-1]:
@@ -265,8 +284,14 @@ def invert(t_grid, s_grid, tt):
             lo = mid
         else:
             hi = mid
+    ds = s_grid[hi] - s_grid[lo]
+    if v_grid is not None and ds > 1e-12:
+        v0, v1 = v_grid[lo], v_grid[hi]
+        a = (v1 * v1 - v0 * v0) / (2.0 * ds)
+        tau = tt - t_grid[lo]
+        return min(s_grid[hi], s_grid[lo] + v0 * tau + 0.5 * a * tau * tau)
     f = (tt - t_grid[lo]) / max(t_grid[hi] - t_grid[lo], 1e-12)
-    return s_grid[lo] + f * (s_grid[hi] - s_grid[lo])
+    return s_grid[lo] + f * ds
 
 
 def schedule(path_obj):
@@ -284,7 +309,7 @@ def schedule(path_obj):
         if f <= h1:
             s_of_frame.append(0.0)
         elif f <= h1 + move:
-            s_of_frame.append(invert(t, grid, (f - h1) / FPS))
+            s_of_frame.append(invert(t, grid, (f - h1) / FPS, v))
         else:
             s_of_frame.append(total)
     # station arrival frames

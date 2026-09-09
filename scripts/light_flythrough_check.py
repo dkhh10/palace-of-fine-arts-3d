@@ -43,8 +43,13 @@ WATER_NAMES = ("ENV_lagoon_water",)
 
 
 def link_site():
-    """ARCH + ENV linked into this scene, at the viewport LOD the master ships (LOD1)."""
-    for key, coll in (("ARCH", "ARCH"), ("ENV", "ENV")):
+    """ARCH + ENV + ORN linked into this scene, at the viewport LOD the master ships (LOD1).
+
+    ROUND 16 (flythrough plan finding 2): ORN was missing, and ORN is what hangs off the ARCH surfaces the route
+    passes closest to -- the capitals and the frieze of the gallery the camera walks down at 1.42 m from a shaft
+    axis, 0.02 m over that gallery's own geometric bound. A clearance table taken without it was not a clearance
+    table."""
+    for key, coll in (("ARCH", "ARCH"), ("ENV", "ENV"), ("ORN", "ORN")):
         c = common.link_collection(common.ASSET_FILES[key], coll, link=True)
         print(f"[check] linked {coll}: {'ok' if c else 'MISSING'}")
     common.set_lod(viewport=1, render=0)
@@ -236,8 +241,16 @@ def check(scene, dg, step=12, rays=96):
     wat = [f for f in range(1, frames + 1) if leg_at(sch, f)["water"]]
     vmax_land = max(spd[f - 1] for f in range(1, frames + 1) if f not in set(wat))
     vmax_water = max([spd[f - 1] for f in wat] or [0.0])
-    print(f"[gate] speed     : land max {vmax_land:.2f} m/s (<= {SPEED_MAX}); water crossing frames "
-          f"{min(wat)}-{max(wat)} max {vmax_water:.2f} m/s (<= {SPEED_MAX_WATER}) "
+    fmax_land = max(range(1, frames + 1), key=lambda f: -1.0 if f in set(wat) else spd[f - 1])
+    # ROUND 16 (flythrough plan finding 3): ONE window, printed from the schedule's own leg table over EVERY frame,
+    # not from the sampled frames. The round-14 report read "water crossing frames 1-404" beside a leg table that
+    # ended `water` at 397 and began `shore` at 409 only because the check sampled every 12th frame (397, then
+    # 409); the legs themselves are contiguous by construction. The boundary frame is printed so the two numbers
+    # can never be quoted as two different windows again.
+    print(f"[gate] legs      : " + "  ".join(f"{lg['name']} {lg['f0']}-{lg['f1']}@{lg['cap']:g}" for lg in sch["legs"]))
+    print(f"[gate] speed     : land max {vmax_land:.2f} m/s at f{fmax_land} (<= {SPEED_MAX}); water crossing is the "
+          f"ONE window frames {min(wat)}-{max(wat)} (boundary: first land frame {max(wat) + 1}), max "
+          f"{vmax_water:.2f} m/s (<= {SPEED_MAX_WATER}) "
           f"{'PASS' if not over else 'FAIL at %d frames, worst %.2f' % (len(over), max(o[1] for o in over))}")
     if over:
         fails.append("speed")
@@ -258,10 +271,26 @@ def check(scene, dg, step=12, rays=96):
 
 if __name__ == "__main__":
     args = common.script_args()
-    blend = common.ASSET_FILES["LIGHT"]
+    # ROUND 16 (flythrough plan finding 2). `--master` opens master.blend READ-ONLY (never saved) instead of
+    # assets/lighting.blend + link_site(). It is the only way to gate clearance against the ORNAMENT the film
+    # actually shows: `build_master` INSTANCES the ORN assets onto the ARCH sockets and then EXCLUDES the whole
+    # "ORN" source collection from the view layer (build_master.py, "sources out of the view layer"), so the ORN
+    # collection this script can link holds nothing but the prototypes -- 138 ORN meshes whose object origin is
+    # the world origin, all hide_render. Linking it, as round 16 first did, produced thirteen "failures" between
+    # frames 1077 and 1113 against ORN_capital_rotunda / ORN_attic_panel prototypes parked at (0,0,0), i.e.
+    # against geometry that is not in the film. On master the same frames are gated against the real instances.
+    use_master = "--master" in args
+    blend = (common.ROOT / "master.blend") if use_master else common.ASSET_FILES["LIGHT"]
     bpy.ops.wm.open_mainfile(filepath=str(blend))
     scene = bpy.context.scene
-    dg = link_site()
+    if use_master:
+        common.set_lod(viewport=1, render=0)
+        bpy.context.view_layer.update()
+        dg = bpy.context.evaluated_depsgraph_get()
+        dg.update()
+        print(f"[check] gating on {blend} ({len(scene.objects)} objects; ORN instanced onto its sockets)")
+    else:
+        dg = link_site()
     if "--columns" in args:
         pre = args[args.index("--columns") + 1]
         columns(pre)

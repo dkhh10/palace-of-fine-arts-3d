@@ -1,0 +1,17 @@
+00:00.314  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend"
+[check] linked ARCH: ok
+[check] linked ENV: ok
+[check] linked ORN: ok
+[common] set_lod viewport=LOD1 render=LOD0: 5140 objects, 6 collections
+[q] ORN_attic_panel_v1_LOD1: loc (0.0, 0.0, 0.0) hide_render True hide_viewport False in_view_layer True vis True users_coll ['ORN_attic_panel']
+[q] ORN_attic_panel_v2_LOD1: loc (0.0, 0.0, 0.0) hide_render True hide_viewport False in_view_layer True vis True users_coll ['ORN_attic_panel']
+[q] ORN_capital_rotunda_v1_LOD1: loc (0.0, 0.0, 0.0) hide_render True hide_viewport False in_view_layer True vis True users_coll ['ORN_capital_rotunda']
+[q] ORN_capital_rotunda_v2_LOD1: loc (0.0, 0.0, 0.0) hide_render True hide_viewport False in_view_layer True vis True users_coll ['ORN_capital_rotunda']
+[q] ORN_capital_rotunda_v3_LOD1: loc (0.0, 0.0, 0.0) hide_render True hide_viewport False in_view_layer True vis True users_coll ['ORN_capital_rotunda']
+[q] ENV_shrub_maho1_0946_LOD1: loc (27.26, -21.77, -0.66) hide_render True hide_viewport False in_view_layer True vis True users_coll ['ENV_shrubs_LOD1']
+[q] ORN mesh objects with origin within 6 m of (0,0,0): 138
+[q] first 12: ['ORN_anthemion_v1_LOD0', 'ORN_anthemion_v1_LOD1', 'ORN_anthemion_v1_LOD2', 'ORN_attic_figure_v1_LOD0', 'ORN_attic_figure_v1_LOD1', 'ORN_attic_figure_v1_LOD2', 'ORN_attic_figure_v2_LOD0', 'ORN_attic_figure_v2_LOD1', 'ORN_attic_figure_v2_LOD2', 'ORN_attic_panel_v1_LOD0', 'ORN_attic_panel_v1_LOD1', 'ORN_attic_panel_v1_LOD2']
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 56726 exited rc=0 after 3 s (max 900)
