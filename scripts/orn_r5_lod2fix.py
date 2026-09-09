@@ -1,6 +1,11 @@
-"""ORN round 5 fix: rebuild every LOD2 that is over its tier budget (docs/ornament_notes.md "Open issues").
+"""ORN round 5 repair tool: rebuild every LOD2 in assets/ornament.blend that is over its tier budget.
 
     scripts/blender_run.sh 1800 -- --background --python scripts/orn_r5_lod2fix.py -- [--voxel 0.10] [--dry]
+
+SUPERSEDED for new builds (ORN r5 review finding 5): the voxel-weld path now lives in
+`orn_lib.enforce_lod2_budget` and runs inside `finalize_asset`, so ANY rebuild of an asset already lands its LOD2
+inside budget. This script stays only as an in-place repair for a .blend built before that change; on a current
+file it prints "nothing to do" and writes nothing.
 
 Collapse decimation cannot go below ~4 faces per shell, so a LOD2 made of thousands of disjoint shells (the attic
 panels after the field clamp) stalls far above budget. A voxel remesh welds the shells into one surface first, and
@@ -33,29 +38,18 @@ for lod2 in sorted([o for o in bpy.data.objects if pat.match(o.name) and o.type 
     print(f"[fix] {lod2.name}: {before} tris > budget {budget}; rebuilding from {src.name} at voxel {VOXEL}")
     if DRY:
         continue
-    coll = lod2.users_collection[0] if lod2.users_collection else bpy.context.scene.collection
-    tmp = L.duplicate(src, f"{lod2.name}__tmp", coll)
-    L.remesh_voxel(tmp, voxel=VOXEL)
-    mid = L.tri_count(tmp)
-    L.decimate(tmp, target=budget)
-    L.shade_smooth(tmp)
-    old = lod2.data
-    lod2.data = tmp.data
-    lod2.data.name = lod2.name
-    bpy.data.objects.remove(tmp, do_unlink=True)
-    if old.users == 0:
-        bpy.data.meshes.remove(old)
+    # single implementation, shared with the build path (orn_lib.finalize_asset)
+    L.enforce_lod2_budget(lod2, src, budget, voxel=VOXEL)
     after = L.tri_count(lod2)
     (x0, y0, z0), (x1, y1, z1) = L.bbox(lod2)
     lod2["tris"] = after
     lod2["size"] = f"{x1 - x0:.2f} x {y1 - y0:.2f} x {z1 - z0:.2f} m (x y z)"
-    lod2["lod2_note"] = f"voxel-remeshed at {VOXEL} m then collapsed (round 5): {before} -> {after} tris"
     lod2.hide_viewport = True
-    fixed.append((lod2.name, before, mid, after, budget))
+    fixed.append((lod2.name, before, after, budget))
 
 print("\n[fix] LOD2 rebuilds")
-for n, b, mid, a, bud in fixed:
-    print(f"  {n:34s} {b:7d} -> remesh {mid:7d} -> {a:6d} tris (budget {bud})")
+for n, b, a, bud in fixed:
+    print(f"  {n:34s} {b:7d} -> {a:6d} tris (budget {bud})")
 if fixed and not DRY:
     common.set_lod_visibility(1)
     bpy.ops.wm.save_as_mainfile(filepath=str(common.ASSET_FILES["ORN"]), relative_remap=True, compress=True)

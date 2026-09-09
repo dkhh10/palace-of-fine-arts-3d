@@ -2,6 +2,8 @@
 
     blender --background --python scripts/orn_build.py -- [--only capital_rotunda,maiden] [--no-bake] [--fast]
                                                           [--variants N] [--fresh] [--out other.blend]
+    blender --background --python scripts/orn_build.py -- --bake-pending     # list assets whose LOD1 has no
+                                                                            # normal map + the command to bake them
 
 Without --only every asset type is rebuilt from an empty file. With --only the existing ornament.blend is opened and
 just those sub-collections (ORN_<type>) are wiped and rebuilt, so heavy assets can be iterated one at a time.
@@ -1480,11 +1482,15 @@ def build_drum_band(variant, coll, bake=True):
 # rosette bosses") and sheet line 183-184 (DPR: "angled impost blocks with a rinceau pattern protruding from a plain
 # frieze. The blocks serve to 'turn' the rotunda") -> the ornament belongs ONLY on the 24 ressaut faces, which are
 # exactly ARCH's SOCKET_frieze_run_000..023 (8 fronts of 5.913 m + 16 returns of 2.999 m, all at z 28.55).
-# Band: 0.90 m tall (arch r4b frieze z 28.55-29.45, face at d 0.34). The architrave crown below and the cyma reversa
-# above sit at d 0.50 / 0.40, so nothing on this band may project more than 0.16 m; the design caps at 0.12 m.
+# Band: 0.90 m tall (arch r4b frieze z 28.55-29.45, face at d 0.34). The architrave crown BELOW the band is the
+# binding obstruction: scripts/arch_build.py:156 puts it at d 0.44, i.e. it oversails the flush frieze by 0.10 m
+# ("architrave crown, oversailing the flush frieze by 0.10"). The 0.50 in docs/arch_notes.md:718 is superseded by
+# the r4b row at arch_notes.md:793. So the clearance budget on this band is 0.100 m, NOT 0.160 m (ORN r5 review
+# finding 3), and the design caps at 0.090 m -> 10 mm of guaranteed clearance under the crown.
 # The two lengths get their own asset (one instance per socket) because build_master.py places ONE object per socket.
 RIN_BAND_H = 0.90
-RIN_MAX_PROUD = 0.125      # hard cap: the architrave crown plane is 0.16 m in front of the frieze face
+RIN_CROWN_CLEAR = 0.10     # architrave crown d 0.44 minus frieze face d 0.34 (arch_build.py:156)
+RIN_MAX_PROUD = 0.09       # hard cap on the relief; RIN_CROWN_CLEAR - RIN_MAX_PROUD = 10 mm of clearance
 RIN_FIELD_H = 0.75         # the carved field inside the 0.90 m band (0.075 m plain margin top and bottom)
 RIN_EMBED = 0.015          # the ornament is sunk 1.5 cm into the frieze face so nothing floats off the wall
 RIN_RUNS = {"frieze_rinceau": 5.9128, "frieze_rinceau_return": 2.9994}
@@ -1587,10 +1593,12 @@ def build_frieze_rinceau(kind, variant, coll, bake=True):
                             budgets=L.BUDGETS[kind],
                             extra_props={"unit_length": run, "run_length": run, "band_height": RIN_BAND_H,
                                          "repeats": nrep, "max_proud": RIN_MAX_PROUD, "field_height": RIN_FIELD_H,
+                                         "crown_clearance_budget": RIN_CROWN_CLEAR,
                                          "origin_note": "RUN START: local x=0 is the socket, geometry runs to x=run_length"},
                             size_note=(f"full-run rinceau panel for one rotunda ressaut face: {run:.3f} m long, "
                                        f"{RIN_BAND_H:.2f} m band (carved field z {0.5*(RIN_BAND_H-RIN_FIELD_H):.3f}"
-                                       f"-{0.5*(RIN_BAND_H+RIN_FIELD_H):.3f}), projects <= {RIN_MAX_PROUD:.3f} m toward +Y; "
+                                       f"-{0.5*(RIN_BAND_H+RIN_FIELD_H):.3f}), projects <= {RIN_MAX_PROUD:.3f} m toward +Y "
+                                       f"({RIN_CROWN_CLEAR:.3f} m architrave-crown budget); "
                                        f"origin = RUN START (x=0), back face y=0, band bottom z=0; place directly "
                                        f"on SOCKET_frieze_run_### (no array helper needed)"))
     # deviation from the bottom-CENTRE convention: this panel spans the whole run, so its origin is the run START,
@@ -1603,7 +1611,8 @@ def build_frieze_rinceau(kind, variant, coll, bake=True):
         (_, ymin, _), (xw, ymax, zh) = L.bbox(o)
         if xw > 1e-6:
             o.data.transform(Matrix.Diagonal((run / xw, 1.0, 1.0, 1.0)))
-        # hard cap on the relief so the clearance to the architrave crown plane is guaranteed, not hoped for
+        # hard cap on the relief so the clearance to the architrave crown plane (d 0.44 vs frieze d 0.34 =
+        # RIN_CROWN_CLEAR) is guaranteed, not hoped for
         if ymax > RIN_MAX_PROUD:
             f = (RIN_MAX_PROUD - ymin) / (ymax - ymin)
             o.data.transform(Matrix.Translation((0, ymin, 0)) @ Matrix.Diagonal((1.0, f, 1.0, 1.0))
@@ -1659,7 +1668,48 @@ VARIANTS = {"capital_rotunda": 3, "capital_inner": 2, "capital_colonnade": 3, "m
             "modillion": 1, "anthemion": 1, "corner_scroll": 2, "frieze_rinceau": 3, "frieze_rinceau_return": 3}
 
 
+def bake_pending():
+    """`--bake-pending`: list every asset whose LOD1 carries no baked normal map, and print the exact command that
+    bakes them. Nothing is built or written. A Cycles bake is GPU work, so no-GPU rounds build with `--no-bake`
+    and this list is how the pending state is handed to a round that may use the GPU (ORN r5 review finding 6)."""
+    import re as _re
+    src = common.ASSET_FILES["ORN"]
+    bpy.ops.wm.open_mainfile(filepath=str(src), load_ui=False)
+    pat = _re.compile(r"^ORN_(.+?)_v(\d+)_LOD1$")
+    nrm, ao_only, done = {}, {}, {}
+    for o in sorted(bpy.data.objects, key=lambda o: o.name):
+        m = pat.match(o.name)
+        if not m or o.type != "MESH":
+            continue
+        typ, var = m.group(1), int(m.group(2))
+        if not (o.get("normal_map") or ""):
+            nrm.setdefault(typ, []).append(var)
+        elif not (o.get("ao_map") or ""):
+            ao_only.setdefault(typ, []).append(var)
+        else:
+            done.setdefault(typ, []).append(var)
+    print(f"\n[orn] bake state of {src}")
+    print(f"  normal map PENDING : {sum(len(v) for v in nrm.values()):3d} LOD1 objects in {len(nrm)} types")
+    print(f"  normal only, no AO : {sum(len(v) for v in ao_only.values()):3d} LOD1 objects in {len(ao_only)} types")
+    print(f"  normal + AO baked  : {sum(len(v) for v in done.values()):3d} LOD1 objects in {len(done)} types")
+    for label, d in (("PENDING normal map", nrm), ("no AO map", ao_only), ("baked", done)):
+        for t in sorted(d):
+            print(f"    {label:20s} {t:26s} v{','.join(str(v) for v in sorted(d[t]))}")
+    if nrm:
+        types = ",".join(sorted(nrm))
+        print("\n[orn] run this in a round that may use the GPU (rebuilds + bakes only these types, idempotent):")
+        print(f"  scripts/blender_run.sh 3600 -- --background --python scripts/orn_build.py -- --only {types}")
+        print("[orn] then re-run the stats gate:")
+        print("  scripts/blender_run.sh 900 -- --background --python scripts/orn_r5_stats.py")
+    else:
+        print("\n[orn] nothing pending: every LOD1 has a normal map.")
+    return 0 if not nrm else 0
+
+
 def main():
+    if "--bake-pending" in ARGS:
+        bake_pending()
+        return
     only = None
     if "--only" in ARGS:
         only = [s.strip() for s in ARGS[ARGS.index("--only") + 1].split(",") if s.strip()]

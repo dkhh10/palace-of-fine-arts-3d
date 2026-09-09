@@ -870,6 +870,39 @@ def asset_name(typ, variant=None, lod=None):
     return n
 
 
+def enforce_lod2_budget(lod2, src, budget, voxel=0.10):
+    """Make LOD2 reach its tier budget even when collapse decimation stalls.
+
+    Collapse decimation cannot go below ~4 faces per shell, so a LOD2 built from thousands of DISJOINT shells (the
+    attic-panel relief after the field clamp: v1 stalled at 15343 tris against a 2400 budget) never reaches budget.
+    A voxel remesh welds the shells into one surface first; the collapse then gets there. Silhouette only -- LOD2 is
+    used beyond ~200 m. Only lod2's MESH DATA is replaced, so the object name, material slots, custom properties and
+    viewport state survive and build_master.py sees no change.
+
+    Folded in from the round-5 one-off scripts/orn_r5_lod2fix.py (ORN r5 review finding 5) so that a rebuild of an
+    asset cannot silently restore an over-budget LOD2.
+    """
+    before = tri_count(lod2)
+    if before <= budget:
+        return lod2
+    coll = lod2.users_collection[0] if lod2.users_collection else bpy.context.scene.collection
+    tmp = duplicate(src, f"{lod2.name}__weld", coll)
+    remesh_voxel(tmp, voxel=voxel)
+    mid = tri_count(tmp)
+    decimate(tmp, target=budget)
+    shade_smooth(tmp)
+    old = lod2.data
+    lod2.data = tmp.data
+    lod2.data.name = lod2.name
+    bpy.data.objects.remove(tmp, do_unlink=True)
+    if old.users == 0:
+        bpy.data.meshes.remove(old)
+    after = tri_count(lod2)
+    lod2["lod2_note"] = f"voxel-welded at {voxel:.2f} m then collapsed: {before} -> {after} tris (budget {budget})"
+    print(f"[orn] LOD2 budget: {lod2.name} {before} -> remesh {mid} -> {after} tris (budget {budget})")
+    return lod2
+
+
 def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_size=2048, ao=False,
                    lod2_obj=None, y_mode="centre", size_note="", extra_props=None, sharp_angle=None, cavity=False):
     """Turn a hi-res work mesh into ORN_<typ>_v<n>_LOD0/1/2 in ORN_<typ>: origin, material, decimation, bakes, props.
@@ -893,10 +926,13 @@ def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_
         lod2.data.name = lod2.name
         common.link_object(lod2, coll)
         shade_smooth(lod2)
+        enforce_lod2_budget(lod2, lod2, budgets[2])
     else:
         lod2 = duplicate(lod1, asset_name(typ, variant, 2), coll)
         decimate(lod2, target=budgets[2])
         shade_smooth(lod2)
+        # collapse stalls at ~4 faces per shell on shell-soup reliefs; weld and re-collapse if still over budget
+        enforce_lod2_budget(lod2, lod1, budgets[2])
     for o in (lod0, lod1, lod2):
         common.assign_material(o, mat)
         o["orn_type"] = typ
