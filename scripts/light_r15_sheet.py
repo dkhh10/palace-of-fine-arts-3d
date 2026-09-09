@@ -1,4 +1,5 @@
-"""Round-15 comparison sheet: four rows (hero cam01 Cycles, cam02, cam03, cam05), three columns
+"""Round-15 comparison sheet (the three Cycles panels are the JPEG re-encodes of the frames the numbers
+were measured on; the PNGs were dropped at 8 MB each, the measure stdout is in renders/logs/): four rows (hero cam01 Cycles, cam02, cam03, cam05), three columns
 (BEFORE = the merged master as QA round 07 scored it, AFTER = the round-15 rig, REFERENCE photo),
 each panel labelled with the boxes the round is judged on. Plain python3 + PIL, no Blender.
 
@@ -17,7 +18,7 @@ OUT = ROOT / "renders" / "qa_comparisons" / "light_r15_sheet.png"
 W = 640                       # panel width; rows are 16:9
 ROWS = [
     ("cam01 hero (Cycles 64 spp)  near water 144.7/228 -> 107.7/209  flank 188.1/224 -> 145.2/210",
-     PREV / "r15b_r14BEFORE_01c.png", PREV / "r15a_r15SHIP_01c.png",
+     PREV / "r15b_r14BEFORE_01c.jpg", PREV / "r15a_r15SHIP_01c.jpg",
      REF / "cam_01b_lagoon_hero_goldenhour_ref169.jpg"),
     ("cam02 NNE (Eevee, round-08 station)  shade pier hue 261 -> 260, UNRESOLVED (QA-07-11)",
      PREV / "r15b_r14BEFORE_02e.png", PREV / "r15f_SHIPPED_02e.png",
@@ -26,7 +27,7 @@ ROWS = [
      PREV / "r15b_r14BEFORE_03e.png", PREV / "r15f_SHIPPED_03e.png",
      REF / "cam_03_colonnade_walk.jpg"),
     ("cam05 south lawn  water band Eevee 128.5 -> 134.0 (FAIL), the same band in CYCLES 108.4 (PASS 70-117)",
-     PREV / "r15b_r14BEFORE_05e.png", PREV / "r15p_r15SHIP_05c.png",
+     PREV / "r15b_r14BEFORE_05e.png", PREV / "r15p_r15SHIP_05c.jpg",
      REF / "cam_05_south_lawn.jpg"),
 ]
 COLS = ("BEFORE (round-07 rig)", "AFTER (round-15 rig)", "REFERENCE photo")
