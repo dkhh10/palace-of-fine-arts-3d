@@ -212,8 +212,25 @@ LOOK = lp.LOOK                     # ALIAS, not a copy. Round 08b set this strin
 # avoid, so the settings below are the physically defensible middle: L = 800 m (a clear-morning extinction length,
 # not the 400 m of round 07's ramp) at a 0.50 cap, with the warmth carried by the haze COLOUR instead of its amount.
 MIST = dict(start=20.0, depth=2000.0, falloff="LINEAR")   # mist pass = (d - 20) / 2000, clamped; SHAPED in the compositor
-COMP = dict(haze_strength=0.50,          # now the CAP: the maximum airlight fraction at infinite distance, not a scale
-            haze_extinction=2.5,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 800 m
+# ROUND 13 (QA-05-8, environment's cam06 hand-off): cap 0.50 -> 0.25 and k 2.5 -> 5.0, i.e. cap * k held at 1.25.
+# ENV r7 reported that the compositor added +58 lum to cam06's horizon crop and cut its std 44.0 -> 23.5, flattening
+# the far-shore line their geometry produces un-composited. Measured on this master (cam06 Eevee 1280x720, crop and
+# statistic from env_r7_measure: rows 0-220, and count_lines on rows 0-110):
+#   compositor OFF                     mean  89.4  std 59.8   8 far-shore lines
+#   as shipped (cap 0.50, k 2.5)       mean 129.7  std 33.8   2      <- fails the std >= 35 test by 1.2
+#   cap 0.25, k 5.0 (SHIPPED)          mean 122.2  std 38.1   2      <- passes with 3.1 of margin
+#   cap 0.30, k 2.5                    mean 117.2  std 42.4   3
+#   cap 0.20, k 2.5 / depth 6000       mean 109.0  std 47.4   4
+#   cap 0.25, k 2.5, depth 4000        mean 103.9  std 50.5   6
+# Holding cap * k fixed is what makes it nearly free: the airlight is cap*(1-exp(-k*mist)) ~= cap*k*mist while the
+# argument is small, so the NEAR and MID field (the wings at ~250 m are at mist 0.115) keep the slope they had and
+# only the saturating far field loses veil. The cost on the hero, Cycles 1920x1080 / 64 spp, is the whole difference
+# between this and simply lowering the cap: south wing band 94.7 -> 93.6, shore band 91.8 -> 91.5, shaded attic
+# 114.6 -> 114.3, sunlit attic 180.5 -> 180.5 / sat 0.475 / R-B 103.1 -> 103.2, columns 1.13x -> 1.13x.
+# For comparison, MIST["depth"] 2000 -> 6000 reaches std 47.4 but costs the south wing 94.7 -> 83.9 and the north
+# wing 140.7 -> 134.9, i.e. it spends the exact number QA-05-5 is short of. Rejected for that reason.
+COMP = dict(haze_strength=0.25,          # the CAP: the maximum airlight fraction at infinite distance, not a scale
+            haze_extinction=5.0,         # k in cap * (1 - exp(-k * mist)); L = MIST["depth"] / k = 400 m
             haze_warmth=(1.70, 1.00, 0.48),   # haze colour = measured west-horizon radiance x warmth
             bloom_threshold_display=0.9,   # scene-linear threshold = this / 2^exposure, i.e. only near-white pixels bloom
             bloom_strength=0.05, bloom_size=0.6, vignette=0.08)
