@@ -97,7 +97,9 @@ def row(title, panels):
 
 def main():
     b_hero = QA / "round05_01_lagoon_hero_cycles.png"
-    a_hero = PREV / "r7_hero.png"
+    # r7c: re-rendered on THIS worktree's master after the round-7 review.  Round 7's own r7_*.png came from the
+    # MAIN checkout's master (env_r5_hero's old default), i.e. ENV r6, and have been deleted.
+    a_hero = PREV / "r7c_hero.jpg"
     rows = []
 
     # ---- 1. QA-05-5 south wing band
@@ -107,7 +109,7 @@ def main():
             "band lum 86.0  med 52.0  std 63.9  dark<60 55.9 %",
             f"ray-cast  {n('b_band_cast')}",
             f"sun reach {n('b_band_sun')}"], mark=(60, 480, 560, 600)),
-        panel(a_hero, box, "AFTER  ENV r7 (master built in the worktree, Cycles 128 spp)", [
+        panel(a_hero, box, "AFTER  ENV r7c (this worktree's master, Cycles 128 spp)", [
             f"band lum {n('a_band_lum')}",
             f"ray-cast  {n('a_band_cast')}",
             f"sun reach {n('a_band_sun')}"], mark=(60, 480, 560, 600)),
@@ -128,7 +130,7 @@ def main():
             f"{n('b_shore_hue')}",
             f"ray-cast  {n('b_shore_cast')}",
             f"sun reach {n('b_shore_sun')}"], mark=(700, 600, 1200, 740)),
-        panel(a_hero, box2, "AFTER  ENV r7", [
+        panel(a_hero, box2, "AFTER  ENV r7c", [
             f"band lum {n('a_shore_lum')}",
             f"{n('a_shore_hue')}",
             f"ray-cast  {n('a_shore_cast')}",
@@ -151,7 +153,7 @@ def main():
             f"ground std {n('b_c03_std', '15.7')}   ground/sunlit {n('b_c03_ratio', '0.197')}",
             f"ray-cast  {n('b_c03_cast')}",
             "one flat gravel plane: no joints, no planting edge"]),
-        panel(PREV / "r7_cam03.png", box3, "AFTER  ENV r7", [
+        panel(PREV / "r7c_cam03.jpg", box3, "AFTER  ENV r7c", [
             f"ground std {n('a_c03_std')}   ground/sunlit {n('a_c03_ratio')}",
             f"ray-cast  {n('a_c03_cast')}",
             f"{n('c03_note', '')}"]),
@@ -168,7 +170,7 @@ def main():
             f"crop lum {n('b_c06_lum')}   dark street lines found {n('b_c06_lines', '0')}",
             f"ray-cast  {n('b_c06_cast')}",
             "no road grid, no block structure: one beige plane"]),
-        panel(PREV / "r7_cam06.png", box4, "AFTER  ENV r7", [
+        panel(PREV / "r7c_cam06.jpg", box4, "AFTER  ENV r7c", [
             f"crop lum {n('a_c06_lum')}   dark street lines found {n('a_c06_lines')}",
             f"ray-cast  {n('a_c06_cast')}",
             f"{n('c06_note', '')}",
@@ -176,7 +178,23 @@ def main():
             f"{n('c06_note3', '')}"]),
     ]))
 
-    # ---- 5. shoreline check
+    # ---- 5. QA-04-6 north wing band - the box the round-7 review's pin finding is about
+    box5 = (1300, 430, 1920, 660)
+    rows.append(row("QA-04-6  hero NORTH (frame-right) wing band, box 1360 480 1860 600 marked "
+                    "(the band whose relief was sweeping hand-placed trees)", [
+        panel(b_hero, box5, "BEFORE  QA round 05", [
+            f"band lum {n('b_nband_lum')}",
+            f"ray-cast  {n('b_nband_cast', '-')}"], mark=(1360, 480, 1860, 600)),
+        panel(a_hero, box5, "AFTER  ENV r7c (all hand-placed groups pinned)", [
+            f"band lum {n('a_nband_lum')}",
+            f"ray-cast  {n('a_nband_cast', '-')}",
+            f"{n('nband_note', '')}"], mark=(1360, 480, 1860, 600)),
+        panel(REF169, ref_box(*box5), "REFERENCE  ref 169", [
+            "round-06 table: raw ref box 145.9, dark<60 16.2 %",
+            "round 04 read 91.6 = 0.63 of it; round 06 146.0 = 1.00"]),
+    ]))
+
+    # ---- 6. shoreline check
     rows.append(row("Site check (decisions.md QA-04-11 flag): is the OSM NE shoreline short?", [
         panel(SHORE, None, "satellite_z18 vs site_local.json lagoon0", [
             "the polygon follows the visible water edge along the whole NE arm",

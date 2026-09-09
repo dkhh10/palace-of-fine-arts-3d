@@ -93,7 +93,13 @@ def measure(tag, hero, cam03, cam06):
     if hero and Path(hero).exists():
         L = load(hero, 1920)
         band = box_stats(L, (60, 480, 560, 600))
+        # QA-04-6's frame-RIGHT (north) wing band, ref 169 raw box 145.9 / dark<60 16.2 % (round-6 table).
+        # Added in the round-7 review follow-up: the pin fix changes what stands in this box, so it is measured.
+        nband = box_stats(L, (1360, 480, 1860, 600))
         shore = box_stats(L, (700, 600, 1200, 740))
+        out[f"{tag}_nband_lum"] = (f"{nband['mean']:.1f}  med {nband['med']:.1f}  std {nband['std']:.1f}  "
+                                   f"dark<60 {nband['dark60']:.1f} %  (ref 169 raw box 145.9 / 16.2 %)")
+        out[f"{tag}_nband_mean"] = round(nband["mean"], 1)
         out[f"{tag}_band_lum"] = (f"{band['mean']:.1f}  med {band['med']:.1f}  std {band['std']:.1f}  "
                                   f"dark<60 {band['dark60']:.1f} %")
         out[f"{tag}_band_mean"] = round(band["mean"], 1)
