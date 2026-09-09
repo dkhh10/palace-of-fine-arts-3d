@@ -906,6 +906,13 @@ def enforce_tri_budget(obj, src, budget, voxel=None, tier=2):
         return obj
     if voxel is None:
         voxel = max(0.008, max(obj.dimensions) / 240.0)
+    # r6 review finding 5: this runs unconditionally on every asset type. It has only ever fired on the 10.5 m
+    # attic panel, where a 44 mm weld voxel is harmless; on a 1 m moulding unit the floor voxel is 8 mm and would
+    # round the carving off with no trace in the log. Say so loudly rather than doing it quietly.
+    if max(obj.dimensions) < 2.0:
+        print(f"[orn] WARNING enforce_tri_budget welding a SMALL asset {obj.name} "
+              f"(max dim {max(obj.dimensions):.2f} m, voxel {voxel * 1000:.0f} mm, LOD{tier} {before} > {budget}) - "
+              f"check the carving survived, or raise BUDGETS['{obj.get('orn_type', '?')}'][{tier}] instead")
     coll = obj.users_collection[0] if obj.users_collection else bpy.context.scene.collection
     tmp = duplicate(src, f"{obj.name}__weld", coll)
     remesh_voxel(tmp, voxel=voxel)
@@ -925,8 +932,15 @@ def enforce_tri_budget(obj, src, budget, voxel=None, tier=2):
 
 
 def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_size=2048, ao=False,
-                   lod2_obj=None, y_mode="centre", size_note="", extra_props=None, sharp_angle=None, cavity=False):
+                   lod2_obj=None, y_mode="centre", size_note="", extra_props=None, sharp_angle=None, cavity=False,
+                   clamp_z=None):
     """Turn a hi-res work mesh into ORN_<typ>_v<n>_LOD0/1/2 in ORN_<typ>: origin, material, decimation, bakes, props.
+
+    `clamp_z=(z0, z1)`: clamp every LOD into its ARCH course AFTER decimation and the voxel weld (r6 review
+    finding 3). A builder that clamps its own hi-res mesh is not enough - the displace noise, the collapse and the
+    weld all move vertices, and the r6 gate measured capital_colonnade at 1.824 m in a 1.800 m course and
+    attic_panel_v1 LOD1 at 5.296 m in a 5.270 m field, 83-87 % of the 30 mm COURSE_TOL, eating into ARCH's frame.
+
     Returns (lod0, lod1, lod2)."""
     coll = coll or orn_collection(typ)
     budgets = budgets or BUDGETS.get(typ, BUDGETS["default"])
@@ -956,6 +970,16 @@ def finalize_asset(hi, typ, variant=1, coll=None, budgets=None, bake=True, bake_
         shade_smooth(lod2)
         # collapse stalls at ~4 faces per shell on shell-soup reliefs; weld and re-collapse if still over budget
         enforce_lod2_budget(lod2, lod1, budgets[2])
+    if clamp_z is not None:
+        z0, z1 = clamp_z
+        for o in (lod0, lod1, lod2):
+            (_, _, a), (_, _, b) = bbox(o)
+            if a < z0 - 1e-6 or b > z1 + 1e-6:
+                for v in o.data.vertices:
+                    v.co.z = max(z0, min(z1, v.co.z))
+                o.data.update()
+                print(f"[orn] clamp_z {o.name}: {a:.4f}..{b:.4f} -> {z0:.4f}..{z1:.4f} "
+                      f"(over by {max(0.0, b - z1) * 1000:.1f} mm top, {max(0.0, z0 - a) * 1000:.1f} mm bottom)")
     for o in (lod0, lod1, lod2):
         common.assign_material(o, mat)
         o["orn_type"] = typ

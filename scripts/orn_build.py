@@ -382,6 +382,7 @@ def build_capital(typ, variant, coll, bake=True):
                                 for s, z in ((0.87, 0.89), (1.0, 0.985), (1.0, 1.0))], work)
     lod2 = L.join([bell2, ab2], f"{typ}_v{variant}_lod2", work)
     return L.finalize_asset(hi, typ, variant, coll, bake=bake, bake_size=2048, lod2_obj=lod2, ao=True, cavity=True,
+                            clamp_z=(0.0, H),
                             size_note=f"h {H} m, shaft top r {R} m, abacus {P['abacus_across']} m across corners")
 
 
@@ -1166,8 +1167,14 @@ PANEL_K = round(PANEL_H / 4.50, 4)        # 1.1711: the figures scale WITH the f
 # PANEL_K to cancel the Y growth that the figure scale S would otherwise cause.
 
 # Panel layouts (QA-01-10): >= 8 figures per 10.5 m field, three distinct designs. The x / scan-height numbers
-# below are the round-4 layout for a 4.5 m field; build_attic_panel multiplies every height by PANEL_K so the same
-# composition fits the r6 5.27 m field (figures 3.5 -> 4.10 m, ratio to the field held at 0.78).
+# below are the round-4 layout for a 4.5 m field; build_attic_panel multiplies every height AND every x by PANEL_K.
+#
+# ROUND 7 (r6 review finding 8). r6 scaled the figures by PANEL_K but left the x positions alone, so the group
+# crowded laterally: the centre-to-centre pitch stayed at the round-4 value while every body grew 17.1 %, i.e. the
+# gap between two neighbours shrank by 17.1 % of a figure width. The field did not get wider (10.5 m in both
+# rounds), so a similarity scale of the composition necessarily runs off the ends -- which is the correct
+# behaviour and what the frame is for: `panel_x` scales x by K and drops the few elements whose CENTRE lands
+# outside the field, rather than squeezing 17 % more figures into the same 10.5 m.
 # ("scan", key, x, height, mirror) | ("fig", pose, x, mirror, rot) | ("horse", x, mirror)
 PANEL_LAYOUTS = {
     1: [("scan", "soldiers", -4.05, 4.15, True), ("fig", "kneel", -2.60, True, 0), ("fig", "arms_up", -1.80, False, 5),
@@ -1212,15 +1219,31 @@ def build_attic_panel(variant, coll, bake=True):
              L.box("panel_rim_r", (RIM, T, Hh), work, location=(W / 2 - RIM / 2, T / 2, Hh / 2))]
     depth = 0.80                   # (overridden per scan by front_y/bg_y below)
     fig_count = 0
+    dropped = []
+
+    def panel_x(x):
+        """Round-4 x (a 4.5 m field) -> r7 x. The composition is a similarity, so x scales with PANEL_K like every
+        height does; None means the element's centre now falls outside the 10.5 m field and it is not built."""
+        xs = x * K
+        return None if abs(xs) > W / 2 else xs
+
     for item in PANEL_LAYOUTS[design]:
         if item[0] == "scan":
             _, key, x, h, mirror = item
-            parts.append(place_scan(key, x, h * K, depth, face_y, mirror=mirror, z=0.2 * K, bg_y=GROUND + 0.01,
+            xs = panel_x(x)
+            if xs is None:
+                dropped.append(f"scan:{key}@{x}")
+                continue
+            parts.append(place_scan(key, xs, h * K, depth, face_y, mirror=mirror, z=0.2 * K, bg_y=GROUND + 0.01,
                                     front_y=FRONT_HI - 0.02))
             fig_count += {"soldiers": 3, "dacians": 3, "centaur": 2}[key]
         elif item[0] == "fig":
             _, pose, x, mirror, rot = item
-            parts += relief_figure(f"rf_{fig_count}", pose, x, face_y, work, S=2.20 * K * rng.uniform(0.95, 1.05),
+            xs = panel_x(x)
+            if xs is None:
+                dropped.append(f"fig:{pose}@{x}")
+                continue
+            parts += relief_figure(f"rf_{fig_count}", pose, xs, face_y, work, S=2.20 * K * rng.uniform(0.95, 1.05),
                                    mirror=mirror, z=0.25 * K, rot_deg=rot + rng.uniform(-3, 3),
                                    # depth layering: alternate figures sit ~0.17 m further back so the overlaps
                                    # themselves make dark edges (ref 063 is a two-deep crowd, not a single plane)
@@ -1231,28 +1254,40 @@ def build_attic_panel(variant, coll, bake=True):
             fig_count += 1
         elif item[0] == "horse":
             _, x, mirror = item
-            parts += relief_horse("rf_horse", x, face_y, work, S=2.15 * K, mirror=mirror, proud=0.62 - face_y,
+            xs = panel_x(x)
+            if xs is None:
+                dropped.append(f"horse@{x}")
+                continue
+            parts += relief_horse("rf_horse", xs, face_y, work, S=2.15 * K, mirror=mirror, proud=0.62 - face_y,
                                   z=0.25 * K, flatten=0.46 / K)
             fig_count += 1
     # QA-02-9: a BACK ROW between the front figures. Zimm's panels are a two-deep crowd (ref 063 / zimm_panel_1):
     # what reads as "carving" at 100 m is the ladder of dark slots between a front body and the half-hidden one
     # behind it, not cast shadow - at az 118.5 / el 7.4 the sun is within 11 deg of this panel's normal and casts
     # essentially none. Front row stands 0.50-0.62 m proud of the sunk ground, the back row 0.19-0.27 m.
+    # The back row is generated, not hand-placed, so it is re-spaced rather than scaled-and-cropped: the pitch
+    # grows with the figures (1.52 -> 1.52 K = 1.78 m) and the count is whatever fits the 10.5 m field at that
+    # pitch, centred. r6 kept 7 at 1.52 m with 17 % bigger bodies, which is where most of the crowding was.
     back_poses = ["stride", "arms_up", "arms_out", "kneel", "stride", "arms_out", "arms_up"]
-    for i in range(7):
-        bx = -4.55 + i * 1.52 + rng.uniform(-0.15, 0.15)
-        parts += relief_figure(f"rb_{i}", back_poses[i], bx, face_y, work, S=2.05 * K * rng.uniform(0.94, 1.04),
+    back_pitch = 1.52 * K
+    n_back = int((W - 1.6) / back_pitch) + 1
+    for i in range(n_back):
+        bx = (i - (n_back - 1) / 2.0) * back_pitch + rng.uniform(-0.15, 0.15)
+        parts += relief_figure(f"rb_{i}", back_poses[i % len(back_poses)], bx, face_y, work,
+                               S=2.05 * K * rng.uniform(0.94, 1.04),
                                mirror=(i % 2 == 0), z=0.25 * K, rot_deg=rng.uniform(-6, 6),
                                proud=rng.uniform(FRONT_LO - 0.03, FRONT_LO + 0.04) - face_y, rng=rng,
                                bulk=rng.uniform(1.00, 1.12), seed=6500 + variant * 40 + i,
                                flatten=rng.uniform(0.30, 0.40) / K, drape=(i % 3 != 0))
         fig_count += 1
-    print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures")
+    print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures, back row {n_back} at "
+          f"{back_pitch:.3f} m pitch, dropped off the field: {dropped or 'none'}")
     parts = [p for p in parts if p is not None]
     # shields / discs in the remaining gaps (design 1 and 3 are combats)
     if design != 2:
         for i in range(2):
-            x = rng.uniform(-4.9, 4.9)
+            x = rng.uniform(-4.9, 4.9) * K
+            x = max(-W / 2 + 0.6, min(W / 2 - 0.6, x))
             parts.append(L.sphere(f"shield{i}", rng.uniform(0.3, 0.45) * K, work,
                                   location=(x, 0.20, rng.uniform(0.9, 3.4) * K), scale=(1.0, 0.42 / K, 1.0)))
     # low plinth / rock band the figures stand on (refs 169/022/063 fill the bottom of the field); it now stands
@@ -1261,17 +1296,19 @@ def build_attic_panel(variant, coll, bake=True):
                        location=(0, 0.5 * (GROUND + 0.34), 0.25 * K), bevel=0.03))
     t = time.time()
     hi = L.union_blob(parts, f"attic_panel_v{variant}", voxel=(0.05 if FAST else 0.024), smooth=1, smooth_factor=0.18, coll=work)
-    # clamp anything that overhangs the framed field: the frame crops the relief (field W x Hh, r6 10.5 x 5.27 m)
+    print(f"[orn] attic_panel v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
+    L.displace_noise(hi, strength=0.02, size=0.6, seed=1400 + variant, depth=2)
+    L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
+    # r6 review finding 3: this clamp used to run BEFORE the two displaces, so the 20 mm noise put the panel back
+    # over its course (5.296 in a 5.270 field, 87 % of the 30 mm gate). The frame crops the relief (field W x Hh),
+    # so clamp last - and `clamp_z` below re-clamps after the LOD1/LOD2 decimate + weld, which moves vertices too.
     for v in hi.data.vertices:
         v.co.x = max(-W / 2, min(W / 2, v.co.x))
         v.co.z = max(0.0, min(Hh, v.co.z))
         v.co.y = max(0.0, v.co.y)          # nothing behind the slab's back plane (it is buried in the attic wall)
     hi.data.update()
-    print(f"[orn] attic_panel v{variant}: remesh {L.tri_count(hi)} tris in {time.time() - t:.1f}s")
-    L.displace_noise(hi, strength=0.02, size=0.6, seed=1400 + variant, depth=2)
-    L.displace_noise(hi, strength=0.006, size=0.08, seed=1500 + variant, depth=1)
     return L.finalize_asset(hi, "attic_panel", variant, coll, bake=bake, bake_size=4096 if not FAST else 2048, y_mode="back",
-                            budgets=L.BUDGETS["attic_panel"],
+                            budgets=L.BUDGETS["attic_panel"], clamp_z=(0.0, Hh),
                             size_note=f"Zimm panel design {design}: field {W:.2f} x {Hh:.2f} m, ground sunk to y={GROUND:.2f}, border at "
                                       f"y={T:.2f}, relief fronts to y ~0.60 (>= 0.45 m above the ground), {fig_count} figures; "
                                       f"origin back-face bottom-centre")
@@ -1601,6 +1638,27 @@ def _rin_leaf(name, coll, x, z, ang_deg, length, seed, y=0.020, width=0.135):
     return lf
 
 
+def rin_normalise(o, run):
+    """Map one rinceau mesh exactly onto its socket box and keep it there. IDEMPOTENT, so it can be applied to the
+    hi-res mesh before the bake (r6 review finding 4) and again to each LOD afterwards to soak up decimation drift:
+
+        x  ->  [0, run]                        run start at the socket, ends flush with ARCH's run (0.0 mm)
+        y  ->  [-RIN_EMBED, RIN_MAX_PROUD]     sunk 15 mm into the frieze face, capped at the crown budget
+        z  ->  the RIN_FIELD_H carved field, centred in the RIN_BAND_H band (the socket is at the band BOTTOM)
+
+    Only the Y map is conditional: a panel that already sits inside the relief cap is not stretched out to it."""
+    (x0, y0, z0), (x1, y1, z1) = L.bbox(o)
+    xw, yw, zh = x1 - x0, y1 - y0, z1 - z0
+    sx = run / xw if xw > 1e-6 else 1.0
+    y_box = RIN_MAX_PROUD + RIN_EMBED
+    sy = y_box / yw if (yw > 1e-6 and yw > y_box) else 1.0
+    sz = RIN_FIELD_H / zh if zh > 1e-6 else 1.0
+    zoff = 0.5 * (RIN_BAND_H - RIN_FIELD_H)
+    o.data.transform(Matrix.Translation((-x0 * sx, -y0 * sy - RIN_EMBED, -z0 * sz + zoff))
+                     @ Matrix.Diagonal((sx, sy, sz, 1.0)))
+    o.data.update()
+
+
 def build_frieze_rinceau(kind, variant, coll, bake=True):
     run, nrep = RIN_RUNS[kind], RIN_REPEATS[kind]
     U = run / nrep
@@ -1667,6 +1725,12 @@ def build_frieze_rinceau(kind, variant, coll, bake=True):
 
     hi = L.union_blob(parts, f"{kind}_v{variant}", voxel=(0.014 if FAST else 0.011), smooth=1, coll=work)
     L.displace_noise(hi, strength=0.0022, size=0.05, seed=9100 + variant * 7, depth=1)
+    # r6 review finding 4: normalise BEFORE finalize_asset. The run squeeze, the relief cap and the 10 % vertical
+    # squash onto RIN_FIELD_H used to run AFTER the bake, so LOD1's tangent-space normals were baked from a shape
+    # that no longer existed (an anisotropic Z scale rotates every stored normal by a few degrees). The per-LOD
+    # pass after finalize is now residual only - decimation moves the bbox by a fraction of a millimetre - and
+    # rin_normalise is idempotent, so running it twice is a no-op.
+    rin_normalise(hi, run)
     lods = L.finalize_asset(hi, kind, variant, coll, bake=bake, bake_size=1024, y_mode="back",
                             budgets=L.BUDGETS[kind],
                             extra_props={"unit_length": run, "run_length": run, "band_height": RIN_BAND_H,
@@ -1680,26 +1744,9 @@ def build_frieze_rinceau(kind, variant, coll, bake=True):
                                        f"origin = RUN START (x=0), back face y=0, band bottom z=0; place directly "
                                        f"on SOCKET_frieze_run_### (no array helper needed)"))
     # deviation from the bottom-CENTRE convention: this panel spans the whole run, so its origin is the run START,
-    # exactly where ARCH's frieze_run socket sits. Shift the mesh so bbox min x = 0.
+    # exactly where ARCH's frieze_run socket sits (finalize_asset re-centres, so the shift is re-applied here).
     for o in lods:
-        (x0, _, _), _ = L.bbox(o)
-        o.data.transform(Matrix.Translation((-x0, -RIN_EMBED, 0)))
-        # exact length: the terminal palmettes may overhang the run by ~25 mm; squeeze along X so the panel is
-        # exactly `run` long and ends flush with ARCH's socket run (mismatch 0.0 mm).
-        (_, ymin, _), (xw, ymax, zh) = L.bbox(o)
-        if xw > 1e-6:
-            o.data.transform(Matrix.Diagonal((run / xw, 1.0, 1.0, 1.0)))
-        # hard cap on the relief so the clearance to the architrave crown plane (d 0.44 vs frieze d 0.34 =
-        # RIN_CROWN_CLEAR) is guaranteed, not hoped for
-        if ymax > RIN_MAX_PROUD:
-            f = (RIN_MAX_PROUD - ymin) / (ymax - ymin)
-            o.data.transform(Matrix.Translation((0, ymin, 0)) @ Matrix.Diagonal((1.0, f, 1.0, 1.0))
-                             @ Matrix.Translation((0, -ymin, 0)))
-        # the carved field is centred in the 0.90 m band with a plain margin top and bottom (finalize_asset put
-        # the bbox bottom at z = 0; the socket is at the BOTTOM of the band, so the margin has to be re-added)
-        if zh > 1e-6:
-            o.data.transform(Matrix.Diagonal((1.0, 1.0, RIN_FIELD_H / zh, 1.0)))
-            o.data.transform(Matrix.Translation((0, 0, 0.5 * (RIN_BAND_H - RIN_FIELD_H))))
+        rin_normalise(o, run)
         (a0, b0, c0), (a1, b1, c1) = L.bbox(o)
         o["size"] = f"{a1 - a0:.2f} x {b1 - b0:.2f} x {c1 - c0:.2f} m (x y z)"
         o["origin_x"] = "run start"
