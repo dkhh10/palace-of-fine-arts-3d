@@ -385,3 +385,6 @@ In flight: LIGHT r14, ARCH r7. Next: LIGHT review + merge, ORN bake, MAT r8, lea
 ## 2026-09-09 · ARCH r7 reported (9d6f8ee), in review
 8 archivolt_run sockets (outer arches; origin at the springing, +X up along the arc tangent, +Y outward; arc 6.55 m, run 20.58 m, band 0.22; check 8/8 OK), docs/sockets.md updated. Sub-courses on ref 085: corona / egg pitch / modillion pitch within 3 %; modillion height 0.638 vs 0.45 (+42 %) and an unmodelled 0.58 m Greek-key band: they do not fit in CORNICE_H 1.37; option A (cornice 1.79, frieze 0.61 -> rinceau refit) costed, not built. Ref 062 on the new stack: az 37 / D 88.6 / 41.5 mm, attic base +0.83 m unfittable, station in the lagoon (hand-off to QA for cam02).
 Decision: option A deferred until QA round 7 scores the entablature on the registered stack. In flight: ARCH r7 review, LIGHT r14, ORN r8. Next: merges, LIGHT review, ORN bake, MAT r8.
+
+## 2026-09-09 · ARCH r7 merged (9d6f8ee + lead corrections)
+Archivolt sockets in (band along local +Z: ornament note), sub-course scale marked as assumed (N = 11), ref 062 reproducible from land at az 17 / D 83.4 (QA may re-station cam02 there). In flight: LIGHT r14, ORN r8. Next: LIGHT review + merge, ORN bake, MAT r8, lead_build.sh, QA round 7.
