@@ -28,3 +28,10 @@ Added 2026-09-09 from ENV r7's report (docs/status.md "ENV r7 reported"): 6. `MA
 missing from the library; ENV's colonnade walk (16.7 % of cam03's lower frame) falls back to gravel/soil. Ship both (ref 128 /
 ref 169 paving: pale grey-buff slabs, joint lines, damp darkening near the water). 7. Shore band (QA-05-10): needs +43.9 lum to
 reach ref 169's 115.6 WITHOUT raising saturation (already 0.775 vs 0.663): shore foliage albedo/translucency, not planting.
+Added 2026-09-09 from LIGHT r12's report (docs/status.md "LIGHT r12 reported", docs/lighting_notes.md §21.4-21.11): 8. Near-water
+sat rose 0.281 -> 0.418 (window 0.22-0.32) under the r12 diffuse sky; the mirror term is untouched by construction, so cut
+MAT_water_lagoon's murk chroma by about a third and re-measure on the r12 rig. 9. Sunlit stone after r12 is 0.94x the ref's level and
+0.06 under in saturation: that is albedo now, not rig (attic lum 178.0 vs window 178-201, sat 0.525 vs 0.588): item 1's targets stand.
+10. The in-coffer gradient and lighting's FILL are coupled (+0.115 coffer per unit FILL); Cycles coffer/sky is 0.438 on the r12 rig
+with your r6 gradient in place: do not re-tune the gradient unless the number leaves 0.35-0.55. 11. cam03's shade box is re-based by
+QA (decisions.md 2026-09-09); do not tune for the old box.

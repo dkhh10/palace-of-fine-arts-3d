@@ -146,3 +146,18 @@ Format: date · decision · why · consequences. Newest at the bottom.
   cam06 streets / NE shoreline) run in parallel with lighting; materials r7 (macro amplitude and anisotropy down from the
   r6 overshoot: attic lum 166 vs window 178-201, sat 0.64-0.84, streak anisotropy 0.64 vs photo 4.07) follows on the new rig.
   (3) If the hero does not move at round 6, the concrete gets a texture-projection pass from the reference photos.
+
+## 2026-09-09 · Polish round 4 (lead)
+- **QA-05-1 cam03 test re-based, not chased.** Lighting r12 proved the near-shaft box (150 150 420 720) is occluded from the sky and
+  from the anti-sun hemisphere: 8x the whole diffuse sky moves it to 0.122 of sunlit while the walk in the same frame goes to 1.4x;
+  a directional fill reaches 0.073. The hero's shaded attic, the same physics one bounce away, now measures 35.4 / 0.412 / 116.7 vs
+  ref 115.0 / 29.5 / 0.425, so the rig is right and the box is wrong. QA round 6 measures cam03 shade on a sky-visible shaded shaft
+  face (outer colonnade, the face toward the lagoon) with the same 0.30-0.70 window, and states the box. No owner tunes for the old box.
+- **QA-05-7 sky_left / sky_top closed as measured-equal**: ref 169 warped into the render frame scores 0.921 vs the render's 0.922; the
+  1.17 came from the raw-ref mapping's framing. Lighting's atmosphere stays.
+- **Entablature (QA-05-6) accepted on the model's own cornice window**: texture std 0.73 of ref on QA's box (pass), row std 32.4 on QA's
+  box / 43.1 on the model's cornice window because the model's cornice sits 1.04 m higher in frame than ref 169's under the round-05
+  alignment. That is an attic-vs-entablature stack question against the arbitrated round-1 dome fit (ref 169/085 within 1 %); not
+  re-opened this round. Drum ring: ref 062 would need -2.5 m radius; not changed for the same reason.
+- **Near-water saturation is now materials' number.** Lighting's diffuse-only sky sockets do not touch camera or glossy rays, so the
+  r12 rise 0.281 -> 0.418 is MAT_water_lagoon's murk under a brighter diffuse term; materials r7 cuts murk chroma by about a third.
