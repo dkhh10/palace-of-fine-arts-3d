@@ -274,3 +274,7 @@ Regression: pinning restores the A/A2 cluster in the north band (137.5 -> 91.9, 
 ## 2026-09-09 · LIGHT r12 merged after review (MERGE WITH FIXES; docs/reviews/light_r12_review.md); MAT r7 dispatched
 Lead fixes: Eevee hero frame on the r12 rig: sky/lagoon identical to Cycles (208.2 / 0.52), no cast; Eevee misses the diffuse shade term (shaded attic 42.2 / 0.77 vs Cycles 35.4 / 0.41): carried to LIGHT r13 with meta provenance, water sheet cell, SUN_BLUE_MULT 0 and importance-map notes. hue_tol 8 -> 6.
 In flight: MAT r7 (docs/briefs/materials_r7.md, Opus xhigh, on the merged master with the r12 rig), ENV r8. Next: reviews, merges, lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV r8 reported (fa04322), in review
+ENV r8: A2 trees were inside the wing's arc (courtyard side) and the A conifers on the peninsula shore; re-solved to COL_ARC_R + 8 m and the grove past the north arch at 120-135 m. North band 91.9 -> 133.1 (0.91 of ref 145.9), foliage 72.5 -> 38.5 %, mass right edge x 0.715 (ref 0.735), clearer moved 0 / dropped 0; south band +5.4 %, shore / cam03 / cam05 / cam06 within 3 %. Measured on its master (9706 objects, LIGHT r11 rig; geometry numbers). Carry: mass 0.025 of frame short in height (shadow_relief ordering, round 9 if wanted). Sheet renders/qa_comparisons/env_r8_sheet.png.
+In flight: ENV r8 review, MAT r7. Next: merge env, MAT review + merge, LIGHT r13 (docs/briefs/lighting_r13.md), lead_build.sh, QA round 6.
