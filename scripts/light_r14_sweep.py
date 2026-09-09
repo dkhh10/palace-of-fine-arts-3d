@@ -96,7 +96,8 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 fgi=-2.0, rt=-1.0, fgir=-1.0, thr=-1.0,
                 # ROUND 14
                 tap=1.0, thp=1.0,                 # exponents on the anti-sun / horizon tint weights
-                sres=-1.0, sray=-1.0, srstep=-1.0, nfill=-1.0)
+                sres=-1.0, sray=-1.0, srstep=-1.0, nfill=-1.0,
+                sfres=-1.0, sfjit=-1.0)      # the shade lamps' own shadow resolution / jitter
 SKY_KEYS = ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "tr", "tg", "tb", "ta", "th",
             "tap", "thp", "bm", "de")
 
@@ -210,6 +211,10 @@ def apply_case(c):
     # r13 review carry 2: `energy=` sets the CYCLES energy only, and apply_preview_eevee then overwrites data.energy
     # from `energy_W_eevee` -- so the `fill=` key was dead in Eevee and fill=0 still rendered the full 55 W/m2.
     # This sweep is an EEVEE sweep, so `fill` is the EEVEE energy; the Cycles energy stays at the shipped 0.0.
+    if c["sfres"] >= 0.0:
+        lb.SHADE_FILL = dict(lb.SHADE_FILL, shadow_res=c["sfres"])
+    if c["sfjit"] >= 0.0:
+        lb.SHADE_FILL = dict(lb.SHADE_FILL, shadow_jitter=c["sfjit"] > 0.5)
     if c["nfill"] >= 0.0:                            # ROUND 14 (QA-06-13): keep only the first n shade lamps
         lb.SHADE_FILL = dict(lb.SHADE_FILL, lamps=lb.SHADE_FILL["lamps"][:int(c["nfill"])])
     lb.build_shade_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection,

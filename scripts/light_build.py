@@ -389,6 +389,7 @@ SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irrad
 # at el 16, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 and the columns 1.29x -> 1.37x of ref. That is why
 # `energy` (the Cycles number) stays 0.0 and this is an Eevee-only rig on the EEVEE_VAULT pattern.
 SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
+                  shadow_res=0.001, shadow_jitter=True,   # ROUND 14 (QA-06-13): swept below; see 24.4
                   color=(0.14, 0.19, 1.00),   # re-derived from the stone's own blue/red reflectance (see above)
                   lamps=[dict(az=300.0, el=5.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
                          dict(az=205.0, el=5.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
@@ -507,6 +508,15 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
             light.specular_factor = S["specular"]
         except Exception:
             pass
+        # ROUND 14 (QA-06-13). These three lamps shipped on Blender's DEFAULT shadow settings, i.e. a
+        # shadow_maximum_resolution of 0.001 m/texel -- FINER than LIGHT_sun's own 0.002 -- and shadow jitter on,
+        # for three 55 deg soft suns whose only job is to put a diffuse blue on shaded stone. That is what the
+        # Eevee six-camera pass paid 98 s for. Both are swept in 24.4.
+        try:
+            light.shadow_maximum_resolution = S.get("shadow_res", 0.001)
+            light.use_shadow_jitter = S.get("shadow_jitter", True)
+        except Exception:
+            pass
         obj = bpy.data.objects.new(name, light)
         obj.location = (0.0, 0.0, 80.0)
         common.aim_sun(obj, cfg["az"], cfg["el"])
@@ -522,7 +532,8 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
     print(f"[light_build] {S['name']}: {len(made)} cool sun lamps, Cycles {e_total:.2f} W/m2 "
           f"({e_total / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the calibrated sun), Eevee {e_eevee:.2f} W/m2 "
           f"({e_eevee / max(1e-9, SUN_REFERENCE_W or 1):.3f} of the sun), hidden in render: {e_total <= 0.0}, at "
-          f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}")
+          f"{[ (c['az'], c['el']) for c in S['lamps'] ]}, angle {S['angle_deg']} deg, colour {S['color']}, "
+          f"shadow res {S.get('shadow_res', 0.001)} m/texel, jitter {S.get('shadow_jitter', True)}")
     return made
 
 
