@@ -130,6 +130,23 @@ SKY_DIFFUSE_TINT_ANTISUN = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 
                                    # half of the dome and a sunlit face the sun half, so this is the only sky lever
                                    # that can blue the shade without bluing the sunlit stone beside it -- see
                                    # docs/lighting_notes.md 21.6 for the measured separation.
+SKY_DIFFUSE_TINT_ANTISUN_P = 1.0   # ROUND 14 (QA-06-2), new socket. Exponent on the anti-sun weight
+                                   # w = (0.5 + 0.5 * Incoming.sun)^p. Round 12 shipped the anti-sun and horizon
+                                   # weights at 1.0 -- their maximum AMOUNT -- and then had no lever left when the
+                                   # same tint that fixed the hero's shaded attic flooded every up-facing surface in
+                                   # the build (QA-06-2: cam06 roofs hue 36.6 -> 253.4). The exponent is the
+                                   # SHARPNESS of the same discriminator and it is a different lever: measured on
+                                   # the sky probe (docs/lighting_notes.md 24.1), raising it from 1 to 3 takes the
+                                   # tint's blue on a SUN-FACING wall from +36 sRGB units to +2.4 while the shaded
+                                   # wall keeps its own.
+SKY_DIFFUSE_TINT_HORIZON_P = 1.0   # ROUND 14 (QA-06-2), new socket. Exponent on the horizon weight (1 - |ray.z|)^p.
+                                   # A vertical wall's hemisphere is centred on a HORIZONTAL normal (mean |ray.z|
+                                   # ~0.42); an up-facing surface's is centred on the ZENITH (mean z = 2/3). At p = 1
+                                   # the wall keeps 1.8x what a roof, a walk or the lagoon's murk keeps -- not enough
+                                   # to matter, which is why round 12's horizon weight was worth only 0.045 of
+                                   # near-water saturation. At p = 10 it keeps 4.8x. Physically it is also the more
+                                   # honest shape: the anti-sun horizon band (Earth shadow / Belt of Venus) at a
+                                   # 7 deg sun is a band a few degrees deep, not a linear ramp from the zenith.
 SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue/Saturation "Hue" on the DIFFUSE
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
@@ -553,7 +570,9 @@ def build_world(az, el, calib, moment):
                            diffuse_saturation=SKY_DIFFUSE_SATURATION, diffuse_hue=SKY_DIFFUSE_HUE,
                            diffuse_tint=SKY_DIFFUSE_TINT, diffuse_boost=SKY_DIFFUSE_BOOST,
                            diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,
-                           diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON)  # disc OFF: LIGHT_sun carries it
+                           diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,
+                           diffuse_tint_antisun_p=SKY_DIFFUSE_TINT_ANTISUN_P,
+                           diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -576,6 +595,8 @@ def build_world(az, el, calib, moment):
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)
     w["sky_diffuse_tint_antisun"] = SKY_DIFFUSE_TINT_ANTISUN
     w["sky_diffuse_tint_horizon"] = SKY_DIFFUSE_TINT_HORIZON
+    w["sky_diffuse_tint_antisun_p"] = SKY_DIFFUSE_TINT_ANTISUN_P
+    w["sky_diffuse_tint_horizon_p"] = SKY_DIFFUSE_TINT_HORIZON_P
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]
@@ -728,6 +749,8 @@ def build(moment="morning", calibrate=True, save=True):
                 sky_diffuse_tint=list(SKY_DIFFUSE_TINT),          # were on neither the sun's meta block nor (hue)
                 sky_diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,   # the world, so a rig read back from either
                 sky_diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON,   # could not be reproduced
+                sky_diffuse_tint_antisun_p=SKY_DIFFUSE_TINT_ANTISUN_P,
+                sky_diffuse_tint_horizon_p=SKY_DIFFUSE_TINT_HORIZON_P,
                 exposure_ev=exposure, look=LOOK, sun_angle_rad=SUN_ANGLE, sun_blue_mult=SUN_BLUE_MULT,
                 E_sun_rgb_sky_units=calib["sky"]["E_sun_rgb"], E_sky_horizontal_rgb=calib["sky"]["E_horizontal_disc_off"],
                 grey_card_display_srgb=calib["exposure"]["grey_card_display_srgb_agx_base"])
