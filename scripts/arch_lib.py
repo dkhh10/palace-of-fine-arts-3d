@@ -734,13 +734,17 @@ def placeholder_capital(name, r_top, height, coll, mat=None, origin=(0.0, 0.0, 0
 
 # ============================================================================= sockets
 def add_socket(name, location, outward, coll, orn_type, size_hint, variant_seed=0, extra=None, size=0.6,
-               pitch_deg=0.0):
+               pitch_deg=0.0, frame=None):
     """Empty whose local +Y is the FACING direction -- the way the ornament's front looks (the socket contract:
     ARCH socket +Y = facing, ORN asset +Y = back) -- with local +Z up.
 
     `outward` gives the horizontal component of that facing. `pitch_deg` tilts it out of the horizontal about the
     socket's own X: -90 points +Y straight DOWN (a soffit or coffer-floor socket, e.g. a rosette on a ceiling),
-    +90 straight up. At |pitch| = 90 the facing is vertical and `outward` only sets the ornament's in-plane roll."""
+    +90 straight up. At |pitch| = 90 the facing is vertical and `outward` only sets the ornament's in-plane roll.
+
+    `frame=(xdir, ydir)` sets the whole basis explicitly instead (local +X = xdir, +Y = ydir orthonormalised
+    against it, +Z = +X x +Y) and ignores `outward` / `pitch_deg`. Needed by run sockets whose run direction is
+    not horizontal -- `archivolt_run`, whose +X is the arc tangent at the springing, i.e. straight up."""
     dx, dy = norm2((outward[0], outward[1]))
     yaw = math.atan2(-dx, dy)
     e = bpy.data.objects.new(name, None)
@@ -748,6 +752,11 @@ def add_socket(name, location, outward, coll, orn_type, size_hint, variant_seed=
     e.empty_display_size = size
     e.location = location
     e.rotation_euler = (math.radians(pitch_deg), 0.0, yaw)
+    if frame is not None:
+        X = Vector(frame[0]).normalized()
+        Y = Vector(frame[1])
+        Y = (Y - X * Y.dot(X)).normalized()
+        e.rotation_euler = Matrix((X, Y, X.cross(Y))).transposed().to_euler()
     e["orn_type"] = orn_type
     e["size_hint"] = float(size_hint)
     e["variant_seed"] = int(variant_seed)
@@ -763,8 +772,8 @@ class SocketCounter:
         self.coll = coll
         self.counts = {}
 
-    def add(self, orn_type, location, outward, size_hint, extra=None, size=0.6, pitch_deg=0.0):
+    def add(self, orn_type, location, outward, size_hint, extra=None, size=0.6, pitch_deg=0.0, frame=None):
         i = self.counts.get(orn_type, 0)
         self.counts[orn_type] = i + 1
         return add_socket(f"SOCKET_{orn_type}_{i:03d}", location, outward, self.coll, orn_type, size_hint,
-                          variant_seed=i * 7919 % 1000, extra=extra, size=size, pitch_deg=pitch_deg)
+                          variant_seed=i * 7919 % 1000, extra=extra, size=size, pitch_deg=pitch_deg, frame=frame)

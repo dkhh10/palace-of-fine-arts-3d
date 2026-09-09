@@ -104,3 +104,50 @@ on the whole file and exits non-zero if any type is short (log: `renders/logs/ar
 entablature profile's base (`z_ent + 0.02`), 0.20 m below the Greek-fret band face they name (profile z 0.22-0.72),
 so their origin is not yet on the recessed band face the convention above requires. Moving them is a socket-position
 change and needs the lead's call.
+
+---
+
+**`archivolt_run` — new socket type (architecture round 7, 2026-09-09; ORN r6 proposal §4, QA-06-6 second half).**
+The leaf-and-dart course on the flat crown face of the eight OUTER rotunda archivolts. **8 sockets, outer face only**
+— the proposal asks for one full-arc panel per opening and says nothing about the inner (rotunda-side) archivolt,
+which stays a plain 0.40 m band. No geometry changed: `arch_build.archivolt_profile()` is untouched, and ARCH does
+NOT model this course, so nothing has to be hidden before instancing (unlike the `_meander_*` runs above).
+
+| type | where | count | size_hint |
+|---|---|---|---|
+| `archivolt_run` | one per outer rotunda arch, on the archivolt's flat crown face | 8 | arc length at the socket radius (20.577 m) |
+
+Frame — the `frieze_run` contract bent into the arch's vertical plane. It is a RUN, not a point:
+- **origin** at ONE springing (z = `ARCH_SPRING_Z` 17.5), on the crown face, on the band's INNER edge — exactly as a
+  `frieze_run` origin sits at the run start on the band's bottom edge. 21.800 m from the rotunda axis measured along
+  the face normal (wall face 21.5 + the archivolt's 0.30 m projection), 6.550 m from the arch centre.
+- **local +X** = the arc tangent at the origin. A semicircular arch springs vertically, so **+X = world up** — this is
+  the one socket type whose +X is not horizontal (`arch_lib.add_socket(frame=...)`).
+- **local +Y** = the wall's outward face normal, constant along the whole arc (the sweep's binormal is the face
+  normal everywhere), = the direction the ornament's front faces, per the global contract.
+- **local +Z** = +X × +Y = radially OUTWARD from the arc centre, in the plane of the arch = the band's width
+  direction. (For a horizontal frieze run that direction is world up; here it rotates with the arc.)
+- The run: `P(phi) = arc_center + arc_radius * (cos(phi) * localZ + sin(phi) * localX)`, phi from `arc_start` 0 to
+  `arc_end` = `arc_angle` = 180 deg, springing to springing over the crown. The band occupies
+  `arc_radius` .. `arc_radius + band_width` radially, all of it at the same projection from the wall.
+
+Properties (beyond `orn_type` / `size_hint` / `variant_seed`; the eight seeds are distinct, per the vary-every-instance rule):
+
+| property | value | meaning |
+|---|---|---|
+| `run_length` | 20.577 | arc length at `arc_radius` (= pi * R, the band's inner edge) |
+| `run_length_outer` | 21.268 | arc length at the band's outer edge — a wrapped panel is a trapezoid, not a rectangle |
+| `band_width` (= `band_height`) | **0.220** | the crown face, radially. Both names carry the same number so frieze-style ORN code reads it |
+| `arc_center` | (x, y, 17.5) world | on the crown-face plane, i.e. 21.800 m from the axis along +Y, NOT on the wall face |
+| `arc_radius` | 6.550 | to the socket origin = the band's inner edge (arch clear span 12.5 / 2 = 6.25, + 0.30 to the crown face's inner edge) |
+| `arc_angle` / `arc_start` / `arc_end` | 180.0 / 0.0 / 180.0 | degrees, springing to springing |
+| `crown_projection` | 0.300 | how far the crown face stands proud of the wall (21.5); the ornament stands proud of THAT |
+| `archivolt_width` | 0.800 | the whole archivolt band radially; only the middle 0.22 is the flat crown face |
+| `crown_gap_deg` | 3.494 | informative: half-angle subtended by the 0.8 m keystone at the crown (phi = 90 deg). ORN may interrupt the run over +-that, or run through and let the keystone overlap |
+| `host` / `face` / `subtype` | `rotunda` / `outer` / `leaf_and_dart` | |
+
+Check: `blender -b assets/architecture.blend --python scripts/arch_socket_check.py -- --type archivolt_run`
+(exit 0 = pass). It trusts nothing the builder stamped: the face normal is rebuilt from `arch_params`' octagon, the
+crown-face plane from the archivolt MESH's own extent along that normal, and 13 sampled points of the stamped arc
+(plus the band mid-line against the bevelled evaluated mesh) are tested with `closest_point_on_mesh`. Round 7 result:
+8/8 OK, origin 0.00 mm off the mesh, plane 21.800 = mesh 21.800, worst arc sample 0.00 mm.

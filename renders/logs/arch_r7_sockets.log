@@ -1,0 +1,15 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[socket_check] 8 SOCKET_archivolt_run_* sockets
+socket                   face   +Y.n   +X.z  +Z.rad  orig-mesh  plane d  mesh d      R  arc len  arc worst  mid worst  nout result
+  SOCKET_archivolt_run_000    0  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_001    1  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_002    2  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_003    3  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_004    4  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_005    5  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_006    6  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+  SOCKET_archivolt_run_007    7  1.000  1.000   1.000     0.00mm   21.800  21.800  6.550   20.577     0.00mm     0.00mm    11  OK
+[socket_check] archivolt_run contract: origin at a springing on the archivolt crown face (< 5 mm from the mesh, on an outward-facing face), +Y = the octagon face normal rebuilt from arch_params, +X = the arc tangent (world up), +Z = +X x +Y = radially outward; the crown-face plane distance matches the mesh's own extent along +Y to 5 mm; the 13 sampled points of the stamped arc (and of the band's mid-line, against the bevelled evaluated mesh) all lie on the band.
+[socket_check] ALL OK
+blender_run.sh: pid 38338 exited rc=0 after 1 s (max 300)

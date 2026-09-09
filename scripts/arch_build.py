@@ -204,6 +204,17 @@ def archivolt_profile():
     return [(0.0, 0.0), (0.0, 0.18), (0.22, 0.22), (0.30, 0.30), (0.52, 0.30), (0.60, 0.22), (0.80, 0.18), (0.80, 0.0)]
 
 
+def archivolt_crown(profile=None):
+    """(r0, r1, projection) of the FLAT CROWN FACE of the archivolt: the outermost run of the profile, read off
+    `archivolt_profile()` itself so the `archivolt_run` socket and its check cannot drift from the swept geometry
+    (r5 review finding 2: checks follow the profile, they are not re-fitted to it).
+    r0 / r1 are radial distances from the intrados edge; today (0.30, 0.52, 0.30) -> a 0.22 m band 0.30 m proud."""
+    prof = archivolt_profile() if profile is None else profile
+    proj = max(y for _, y in prof)
+    xs = [x for x, y in prof if abs(y - proj) < 1e-9]
+    return min(xs), max(xs), proj
+
+
 def colonnade_entablature_profile():
     # architrave with the Greek-fret band recessed 0.04 (z 0.22-0.72), plain frieze, mutule cornice (mutules are geometry)
     right = [(0.80, 0.0), (0.86, 0.02), (0.86, 0.22), (0.82, 0.22), (0.82, 0.72), (0.86, 0.72), (0.86, 0.88), (0.95, 0.94),
@@ -389,6 +400,27 @@ def build_rotunda():
             bnr.append((n[0], n[1], 0.0))
         L.sweep_open(f"ARCH_rotunda_archivolt_{k:02d}", path, nrm, bnr, archivolt_profile(), C, mat=M_OCHRE, part_type="wall",
                      origin=(Cw[0], Cw[1], P.ARCH_SPRING_Z), bevel=False)
+        # ---- archivolt_run socket (round 7, ORN r6 proposal section 4): the leaf-and-dart course on the flat
+        # crown face of the outer archivolt. One socket per opening = one full-arc ORN panel, no geometry change.
+        # Frame (docs/sockets.md): origin at ONE springing on that crown face, local +X = the arc tangent there
+        # (a semicircular arch springs vertically, so +X = world up), local +Y = the wall's outward face normal
+        # (constant along the whole arc: the sweep's binormal is n everywhere), local +Z = +X x +Y = radially
+        # OUTWARD from the arc centre, i.e. the band's width direction. For a horizontal frieze_run that width
+        # direction is world up, so this is the exact analogue of the frieze_run contract, bent into a vertical
+        # plane; the origin sits on the band's INNER edge exactly as a frieze_run origin sits on its band's bottom.
+        cr0, cr1, cproj = archivolt_crown()
+        Zloc = Vector((0.0, 0.0, 1.0)).cross(Vector((n[0], n[1], 0.0))).normalized()
+        arc_c = Vector((Cw[0] + n[0] * cproj, Cw[1] + n[1] * cproj, P.ARCH_SPRING_Z))
+        R_in = half + cr0
+        SOCK.add("archivolt_run", tuple(arc_c + Zloc * R_in), n, math.pi * R_in, size=0.5,
+                 frame=((0.0, 0.0, 1.0), (n[0], n[1], 0.0)),
+                 extra={"run_length": math.pi * R_in, "run_length_outer": math.pi * (R_in + cr1 - cr0),
+                        "band_width": cr1 - cr0, "band_height": cr1 - cr0,
+                        "arc_center": tuple(arc_c), "arc_radius": R_in, "arc_angle": 180.0,
+                        "arc_start": 0.0, "arc_end": 180.0,
+                        "crown_projection": cproj, "archivolt_width": archivolt_profile()[-1][0],
+                        "crown_gap_deg": math.degrees(math.atan2(0.40, R_in)),
+                        "host": "rotunda", "face": "outer", "subtype": "leaf_and_dart"})
         # keystone at the extrados crown + two impost masks at the springing
         SOCK.add("keystone", (Cw[0] + n[0] * 0.30, Cw[1] + n[1] * 0.30, P.ARCH_CROWN_Z + 0.55), n, 0.8,
                  extra={"subtype": "crown"})

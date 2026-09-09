@@ -6,6 +6,7 @@
   "finial": 9,
   "frieze_run": 126,
   "attic_panel": 8,
+  "archivolt_run": 8,
   "keystone": 24,
   "drum_band": 1,
   "capital_inner": 8,
@@ -32,6 +33,6 @@
  "tris_LOD1": 1109390,
  "tris_LOD2": 726542,
  "tris_placeholders": 75608,
- "objects": 2281,
+ "objects": 2289,
  "build_seconds": 2.8
 }
