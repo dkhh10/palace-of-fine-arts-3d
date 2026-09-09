@@ -2295,3 +2295,14 @@ at Blender's default **0.001 m/texel — finer than LIGHT_sun's own 0.002** — 
 | `SHADE_FILL["shadow_res"]` | (default 0.001 m/texel) | **0.20 m/texel** | QA-06-13; 0.001 is finer than LIGHT_sun's own 0.002, for a soft fill |
 | `SHADE_FILL["shadow_jitter"]` | (default True) | **False** | same |
 | `SKY_DIFFUSE_BOOST`, `SKY_STRENGTH`, `SKY_CAMERA_*`, `SKY_GLOSSY_*`, `FILL`, `VAULT_FILL`, `MIST`, `COMP`, exposure | | **unchanged** | the visible sky, the lagoon's mirror and the interior fills are held still by construction |
+
+### 24.6 QA-06-13 — the fix, measured
+
+| case (same master, same 32 TAA, 1280x720) | cam03 | cam06 | shade quality |
+|---|---|---|---|
+| shade lamps at Blender's default shadows | 89.0 s | 46.1 s | cam03 walk sat 0.401; cam06 trees hue 23.2 sat 0.171 |
+| **0.20 m/texel, jitter off** | **53.6 s (-40 %)** | **37.1 s (-20 %)** | cam03 walk sat **0.345**; cam06 trees hue **32.5** sat **0.244** |
+
+The coarse map does not cost the shade — it **improves** it on every box measured, because a softer shadow from a
+55-degree soft sun is what a fill of that shape should cast in the first place. The two cameras that carry the
+colonnade and the aerial fall 135.1 s -> 90.7 s together, i.e. 33 % off the two most expensive frames in the set.
