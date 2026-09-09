@@ -109,7 +109,7 @@ SKY_DIFFUSE_BOOST = 2.50           # ROUND 12 (QA-05-1): 1.00 -> 2.50. Round 11'
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
-SKY_DIFFUSE_TINT = (1.0, 0.65, 11.5)  # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
+SKY_DIFFUSE_TINT = (1.0, 0.65, 17.0)  # ROUND 12 (QA-05-1), SHIPPED: a white balance on the sky that lights the
                                    # shade only (camera and glossy rays never see it). The shaded attic measures
                                    # (122, 94, 22) against ref 169's (141, 111, 81) -- short 59 units of BLUE and
                                    # only ~18 of R and G -- so the shade needs blue-biased light, not more of the
@@ -134,13 +134,15 @@ SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
                                    # why it exists and what it measured.
-SUN_BLUE_MULT = 0.08               # ROUND 12 (QA-05-1): 0.75 -> 0.08. It is the counterweight to the diffuse tint
+SUN_BLUE_MULT = 0.00               # ROUND 12 (QA-05-1): 0.75 -> 0.00. It is the counterweight to the diffuse tint
                                    # above. That tint puts blue on every diffusely lit surface, the sun-facing ones
                                    # included (a sun-facing surface takes ~38 % of its blue from the sky, round 09's
                                    # calibration), which costs the sunlit attic its R-B. Taking the SUN's own blue out
                                    # gives it back on exactly the faces the sky over-blued and nowhere else, because the
                                    # sun only lights the faces that face it: measured +14.4 R-B and +0.03 saturation on
-                                   # the sunlit attic between 0.75 and 0.08, with the shaded attic moving 0.6 deg of hue.
+                                   # the sunlit attic between 0.75 and 0.00, with the shaded attic moving 0.6 deg of hue.
+                                   # At 0.00 the lamp is the calibrated (1.000, 0.607, 0.000): the sun's blue
+                                   # is fully spent buying back what the diffuse tint costs the sunlit stone.
                                    # Round 09's note follows.
                                    # multiplier on the CALIBRATED lamp colour's blue channel, applied after the sky's
                                    # own sun disc has been integrated (so the calibration itself stays physical and
