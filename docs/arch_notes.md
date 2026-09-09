@@ -776,3 +776,93 @@ HIGHER in the hero frame than ref 169's — the photo's cornice occupies render 
 cornice is built. The rebuild should still roughly double the row-profile std; if it lands short of 0.75, the
 residual is a stack question (attic height vs entablature height, the arbitrated round-1 fit), not a cornice one,
 and the honest test is the same 34-row box placed on the model's own cornice. Nothing here changes the silhouette.
+
+### Round 4 — completed 2026-09-09 (the checkpoint above is now built, rendered and measured)
+
+**First the probe, because it moved the design's own yardstick.** `arch_entab_probe.py` had never run: `world_to_camera_view`
+needs a `Vector`, not a tuple, in 5.2. Fixed, plus a `qa_cameras.ensure` fallback so `--map` runs on the asset file.
+On `CAM_qa_01_lagoon_hero` (loc (-14.1, 100, 1.6), 20 mm, shift_y 0.06, 1920x1080) the near face measures
+**13.42 px/m** at the wall plane (z 27.4 -> row 309.0, z 31.2 -> row 258.0) and **1.00 m of outward projection lifts a
+point 4.41 px = 0.329 m of apparent height** — not the 14.06 px/m and tan(20 deg) = 0.365 the checkpoint's two
+derivations assumed. Re-run with the true numbers, the ref-169 corona derivation gives 2.7 m of projection, which is
+not a cornice; the 47.5 px band it rests on must therefore include the attic base moulding. **corona_d was left at
+1.66 m** (the plausible value) and the derivation is recorded as sensitive, not as a measurement.
+
+**Built (r4a), then one correction (r4b).** r4a = the checkpoint profile exactly. r4b changed two things that the
+r4a render itself showed:
+- `frieze_d` 0.20 -> **0.34**, flush with the third architrave fascia, crown oversail 0.50 -> 0.44. Ref 169's own
+  measurement table reads "frieze + architrave as ONE plain surface"; a 0.30 m recess is a channel, and it cost the
+  frieze ~20 lum of ambient occlusion (render rows 279-295 went 90-142 -> 123-155 when it was removed).
+- `modillion_d` 0.68 -> **0.86**, so the bracket's lateral shadow at this sun (0.86 x tan 36.5 = 0.64 m) finally
+  exceeds the 0.56 m gap between brackets and every soffit coffer goes black (it was 0.50 vs 0.56 = 89 % covered).
+
+**Measured on the rebuilt master** (`build_master.py` + `light_probes --bake`, then a Cycles 1920x1080 64 spp border
+crop through `light_presets.apply_final_cycles`, `arch_entab_probe --render --border 840 180 1140 360`):
+
+| box 900 262 1020 296 (QA's) | row std | texture std | mean |
+|---|---|---|---|
+| before (round-05 hero) | 20.9 | 33.5 | 130.0 |
+| after r4a | 30.0 | 45.7 | 106.3 |
+| **after r4b** | **32.4** (0.60 of ref) | **47.6** (0.73 of ref) | 108.9 |
+| ref 169 | 54.1 | 65.5 | 146.6 |
+
+Texture std **passes** the brief (0.73 >= 0.60). Row std 32.4 is short of 35, and the reason is measurable, not
+rhetorical: **under QA's round-05 alignment the model's cornice sits 14 render rows (1.04 m at 13.42 px/m) higher in
+the frame than ref 169's.** Two independent reads agree: the cross-correlation of the two row profiles over rows
+250-320 peaks at +14 (r 0.67, up from 0.49 before the rebuild), and the corona's bright-to-dark half-drop is at model
+row 254 vs photo row 268. QA's box is drawn on the *photograph's* cornice, so on the model it lands on the modillion
+band, the frieze and the top architrave fascia, and can never contain the model's deepest band (rows 255-259).
+
+The same 34-row window placed on the model's own cornice, **box 900 238 1020 272**, is the honest test:
+
+| box 900 238 1020 272 | row std | texture std |
+|---|---|---|
+| before | 29.9 | 40.2 |
+| **after r4b** | **43.1** — PASS (>= 35), 0.80 of the photo's 54.1 and 0.89 of the photo's own matched window (48.6) | 54.5 |
+
+It is also the best 34-row window anywhere in rows 238-286 of the render, so nothing is being cherry-picked upward.
+
+**Unchanged, verified after the rebuild.** cam01 silhouette (`arch_inspect --alpha` -> `arch_silhouette measure`,
+crop 690 40 1235 520): apex row 88, corner-top row 212, W_a 544 px, rise/W_a 0.228 — **identical to 4 decimal places
+before and after**, so the ref 169 / 062 / 063 fits are untouched (0.000 %). Triangles LOD0 2,048,712 -> 2,029,416
+(-0.9 %), LOD1 436,632 -> 444,120 (+1.7 %, dentils and modillions are now in LOD1), LOD2 61,272 unchanged, ARCH total
+3,286,918 -> 3,275,366 (-0.4 %, well inside the +10 % budget); render set 2.71 M, viewport set 1.12 M.
+Sockets: 434 before, 434 after, counts identical per type, `arch_socket_check --type rosette_ceiling` ALL OK. The only
+sockets that move are the **24 rotunda `SOCKET_frieze_run_*`**, which follow the frieze face by construction:
+z 28.80 -> **28.55** (-0.25 m, the new architrave height) and 0.10 m outward along their face normal (frieze_d
+0.24 -> 0.34). The 102 colonnade `frieze_run` sockets are untouched.
+
+Sheet: `renders/qa_comparisons/arch_r4_sheet.png` (before / after / ref 169 at one on-screen scale, QA's box in green,
+the model-cornice window in yellow, both row profiles drawn, all numbers burnt in).
+
+**Drum-ring re-measurement (item 2): no change made, and the number is bigger than round 3 thought.** Nothing was
+re-measured this round; the round-3 recomputation above stands. Closing ref 062's ~69 px of image displacement needs
+`DRUM_CORNICE_R` 18.7 -> **16.2 (-2.5 m)** or the ring top 43.4 -> **42.0 (-1.4 m)**, not 0.4 m; and behind it sits a
+stacking-order finding (ref 062 puts the imbricated scale band directly under the dome with the moulded ring BELOW it,
+the model stacks the ring on top of the cushion). Consequence if changed: any `DRUM_*` move re-opens the arbitrated
+round-1 dome fit that currently holds ref 169 / 085 within 1 %, and ref 063's fit rides on the same silhouette.
+**Lead's call, not mine.**
+
+**Item 3 — UV state of the hero-facing objects (for a photo-projection fallback).**
+Every ARCH mesh carries exactly one UV layer, `UVMap`, written by `arch_lib.cube_project_uv`: a **triplanar box
+projection in world metres** (each face mapped by its dominant normal axis to world x/y, y/z or x/z, unscaled). So the
+UVs are neither in 0..1 nor unique — the lagoon face and the -Y face of the same ring land on identical coordinates,
+and every swept ring self-overlaps eightfold. It is the right input for the tiling/triplanar concrete material and the
+**wrong** input for a camera projection. **A camera projection needs its own second UV layer** (project-from-view on
+`CAM_qa_01_lagoon_hero` into e.g. `UVProj`); `UVMap` must not be overwritten or the concrete material re-tiles.
+The hero (lagoon) face is index **00**, compass az 82; faces 07 (az 37) and 01 (az 127) are the obliquely visible
+neighbours; the flanking corner blocks are `_00` (az 59.5) and `_01` (az 104.5).
+
+| band | objects (LOD suffix where present) | note for a projection |
+|---|---|---|
+| attic | `ARCH_rotunda_attic_base`, `_attic_cornice`, `_attic_roof` (swept rings, 224/224/216 faces) | one object each for all 8 faces — a projection paints the far side too |
+| attic | `ARCH_rotunda_attic_panel_00`, `_attic_frame_00`, `_attic_niche_00`, `_attic_pilaster_00_a/_b` | per-face, so the hero face can be projected alone |
+| attic | `ARCH_rotunda_attic_corner_00/_01` + `_corner_cap_00/_01`, `_attic_volute_00_a/_b/_plinth` | per-ressaut |
+| entablature | `ARCH_rotunda_entablature` (864 f, one closed sweep), `_dentils_LOD0/_LOD1` (2832 f), `_modillions_LOD0/_LOD1` (912 f), `_eggs_LOD0` (18432 f) | all full-ring; the two LODs share one mesh, so a projected UV layer must be added to both |
+| drum / dome | `ARCH_rotunda_drum` (642 f), `_drum_band` (1282 f), `_drum_cornice` (1026 f), `_dome` (5120 f), `_dome_apex_cap` (192 f) | full revolutions; the box projection collapses opposite sides onto each other |
+
+**Open, handed to the lead.** (1) The 1.04 m displacement is a stack question — attic height vs entablature height
+against the arbitrated round-1 fit — and is now the only thing between the model and QA's own box; it is not a cornice
+defect. (2) In the sheet's ref panel the band above the cornice is a **deep figural relief**; the model's
+`ARCH_rotunda_attic_panel_00` is a plain sunk plate, which is a large part of the residual texture std and belongs to
+ORN/materials, not to ARCH geometry.

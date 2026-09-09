@@ -117,7 +117,7 @@ def main():
                 lines.append(f"    {k:14s} before {bv:9.2f}   after {fv:9.2f}   {dp:+.3f} %")
     fm = ImageFont.truetype(MONO, 17)
     th = 16 + 24 * len(lines)
-    W = max(p.width for p in panels)
+    W = max(max(p.width for p in panels), max(int(fm.getlength(t)) for t in lines) + 16)
     sheet = Image.new("RGB", (W, sum(p.height + 8 for p in panels) + th), (16, 16, 18))
     y = 0
     for p in panels:
