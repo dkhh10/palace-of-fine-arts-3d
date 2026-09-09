@@ -28,9 +28,13 @@ statistic where LIGHT r13 read 59.8/33.8, and the disagreement was never the sta
              Exposure, samples, resolution and geometry must be identical - only the compositor differs.
   THE GATE   **ratio = std(composited) / std(un-composited)**, and it is the ratio, not either absolute number,
              that is compared between rounds.  The absolutes move with the light rig and the geometry (ENV r7 +
-             LIGHT r11 gave 44.0 / 23.5 = 0.534; ARCH r5 + ENV r8 + LIGHT r13 gives 59.8 and the shipped 38.1,
-             i.e. **0.637**); the ratio is what says how much of the geometry's contrast the mist is eating.
-             LIGHT r13 ships 0.64.  `--c06ratio <composited.png> <uncomposited.png>` computes it.
+             LIGHT r11 gave 44.0 / 23.5 = 0.534; ARCH r5 + ENV r8 + LIGHT r13 measures 38.1 / 59.8 =
+             **0.636**, computed by `--c06ratio` on the two committed r13 frames, not transcribed); the ratio is
+             what says how much of the geometry's contrast the mist is eating.
+             `--c06ratio <composited.png> <uncomposited.png>` computes it and is the ONLY place a ratio for
+             this project may come from - a number transcribed from another agent's notes is a stale constant
+             the next round cannot check (env r9 review, finding 5).  Runs already made are in
+             renders/logs/env_r9_c06ratio.log.
   file       measure the PNG the renderer wrote, not a JPEG re-encode.  Measured: the r7 pair reads std
              44.0 un-composited as PNG and 42.6 as the committed JPEG, i.e. ratio 0.534 vs 0.536.  The ratio is
              stable to 0.002 under JPEG, the absolutes are not - one more reason the gate is the ratio.
@@ -159,10 +163,15 @@ def c06_ratio(comp, nocomp):
         c = a[0:220, 0:1280]
         k, _det = count_lines(a[0:110, 0:1280])
         out[f"c06_{tag}"] = f"mean {c.mean():.1f}  std {c.std():.1f}  far-shore lines {k}"
-    r = float(Lc[0:220].std() / max(1e-6, Ln[0:220].std()))
+    sc, sn = float(Lc[0:220].std()), float(Ln[0:220].std())
+    r = sc / max(1e-6, sn)
     out["c06_ratio"] = round(r, 3)
-    out["c06_ratio_note"] = (f"std composited / un-composited = {r:.3f} over rows 0-220 of the 1280-wide cam 06 "
-                             f"frame (Rec.709 on 8-bit sRGB, population std); LIGHT r13 ships 0.637")
+    # Round 9 review, finding 5: this note used to end "LIGHT r13 ships 0.637" whatever it measured - a constant
+    # transcribed from docs/lighting_notes.md that would have survived any change to either frame.  It now quotes
+    # only what this run measured, and names the two files it measured, so the number can be reproduced.
+    out["c06_ratio_note"] = (f"std composited {sc:.1f} / un-composited {sn:.1f} = {r:.3f} over rows 0-220 of the "
+                             f"1280-wide cam 06 frame (Rec.709 on 8-bit sRGB, population std); measured from "
+                             f"{Path(comp).name} and {Path(nocomp).name}")
     return out
 
 
