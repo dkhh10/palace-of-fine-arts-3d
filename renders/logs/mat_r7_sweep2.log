@@ -1,0 +1,15 @@
+00:00.845  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+02:36.954  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w7_hero.png'
+03:53.380  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w8_hero.png'
+04:40.330  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w9_hero.png'
+[sweep] opened master in 1.7s, 9706 objects
+[sweep] water nodes: principled=Principled BSDF volume=WATER_VOLUME gain=WATER_MURK_GAIN chop=WATER_CHOP
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[sweep] w7 {'gain': 0.0, 'trans': 0.18, 'vol': 0.12, 'chop': 1.0, 'sheen': 0.0} border 154.5s -> r7w_w7_hero.png
+[sweep] w8 {'gain': 1.0, 'trans': 0.4, 'vol': 0.7, 'chop': 2.6, 'sheen': 0.0} border 76.4s -> r7w_w8_hero.png
+[sweep] w9 {'gain': 2.2, 'trans': 0.18, 'vol': 0.12, 'chop': 1.6, 'sheen': 0.0} border 46.9s -> r7w_w9_hero.png
+[sweep] done in 279.5s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 12748 exited rc=0 after 281 s (max 900)

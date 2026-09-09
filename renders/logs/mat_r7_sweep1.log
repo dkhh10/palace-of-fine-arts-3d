@@ -1,0 +1,19 @@
+00:00.834  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+06:49.463  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_ctl_hero.png'
+07:34.172  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w1_hero.png'
+08:44.731  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w2_hero.png'
+10:57.611  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w3_hero.png'
+13:22.046  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r7w_w4_hero.png'
+[sweep] opened master in 1.7s, 9706 objects
+[sweep] water nodes: principled=Principled BSDF volume=WATER_VOLUME gain=WATER_MURK_GAIN chop=WATER_CHOP
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[sweep] ctl {'gain': 1.0, 'trans': 0.4, 'vol': 0.7, 'chop': 1.0, 'sheen': 0.0} FULL 407.0s -> r7w_ctl_hero.png
+[sweep] w1 {'gain': 1.0, 'trans': 0.18, 'vol': 0.7, 'chop': 1.0, 'sheen': 0.0} border 44.7s -> r7w_w1_hero.png
+[sweep] w2 {'gain': 1.0, 'trans': 0.4, 'vol': 0.12, 'chop': 1.0, 'sheen': 0.0} border 70.6s -> r7w_w2_hero.png
+[sweep] w3 {'gain': 0.7, 'trans': 0.18, 'vol': 0.12, 'chop': 1.0, 'sheen': 0.0} border 132.8s -> r7w_w3_hero.png
+[sweep] w4 {'gain': 0.7, 'trans': 0.18, 'vol': 0.12, 'chop': 1.6, 'sheen': 0.0} border 144.5s -> r7w_w4_hero.png
+[sweep] done in 801.3s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 11937 exited rc=0 after 803 s (max 2400)
