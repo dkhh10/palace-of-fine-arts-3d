@@ -1,0 +1,25 @@
+00:00.331  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
+cam CAM_qa_01_lagoon_hero: eye (-14.1, 100.0, 1.6), lens 20.0 mm on a 36.0 mm sensor, 1920 x 1080 px (from qa_cameras.ensure + qa_render_round's --res default)
+socket                          range    depth    2.6 m    3.0 m  stamped
+SOCKET_capital_rotunda_000       81.8     78.2     35.5     40.9     3.00
+SOCKET_capital_rotunda_003       81.8     78.2     35.5     40.9     3.00
+SOCKET_capital_rotunda_001       83.9     79.9     34.7     40.0     3.00
+SOCKET_capital_rotunda_002       83.9     79.9     34.7     40.0     3.00
+SOCKET_capital_rotunda_014       95.0     89.8     30.9     35.6     3.00
+SOCKET_capital_rotunda_005       95.1     89.8     30.9     35.6     3.00
+SOCKET_capital_rotunda_015       99.4     94.0     29.5     34.1     3.00
+SOCKET_capital_rotunda_004       99.4     94.0     29.5     34.0     3.00
+SOCKET_capital_rotunda_012      112.7    108.0     25.7     29.6     3.00
+SOCKET_capital_rotunda_007      112.7    108.0     25.7     29.6     3.00
+SOCKET_capital_rotunda_013      116.4    112.1     24.7     28.5     3.00
+SOCKET_capital_rotunda_006      116.4    112.2     24.7     28.5     3.00
+SOCKET_capital_rotunda_010      124.7    122.1     22.7     26.2     3.00
+SOCKET_capital_rotunda_009      124.7    122.1     22.7     26.2     3.00
+SOCKET_capital_rotunda_011      126.1    123.8     22.4     25.9     3.00
+SOCKET_capital_rotunda_008      126.1    123.8     22.4     25.8     3.00
+
+the eight capitals nearest the hero camera: depth 78.2-94.0 m -> a 2.6 m course is 29.5-35.5 px, a 3.0 m course 34.0-40.9 px (ref 169: 38-44 px, QA-06-6 target 37)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 39277 exited rc=0 after 1 s (max 300)

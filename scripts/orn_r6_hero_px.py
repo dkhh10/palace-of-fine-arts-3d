@@ -10,19 +10,39 @@ For every SOCKET_capital_rotunda_* it prints the distance to the camera and the 
 segment of the OLD course (2.6 m) and the NEW one (3.0 m) at that distance, for the capitals that are actually in
 frame (the eight on the lagoon side).
 """
-import bpy, sys, os, math
+import bpy, sys, os, math, re
+from pathlib import Path
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import qa_cameras
 
+# r6 review finding 7: this used to hard-code RES_X = 1920 and SENSOR = 36.0. Both are read now - the sensor off
+# the camera qa_cameras actually builds, the resolution off qa_render_round.py's own `--res` default - so a change
+# in either file shows up here instead of silently invalidating the pixel numbers below.
 SPEC = next(s for s in qa_cameras.CAMERAS if s["name"] == "CAM_qa_01_lagoon_hero")
-RES_X, RES_Y = 1920, 1080
-SENSOR = 36.0
+qa_cameras.ensure(bpy.context.scene)
+CAM = bpy.data.objects[SPEC["name"]]
+SENSOR = CAM.data.sensor_width
+LENS = CAM.data.lens
+
+
+def qa_default_res_x():
+    """The width QA renders at: the default of `--res` in scripts/qa_render_round.py, read from its source."""
+    src = (Path(__file__).resolve().parent / "qa_render_round.py").read_text()
+    m = re.search(r'arg\("--res",\s*\[\s*"(\d+)"\s*,\s*"(\d+)"\s*\]', src)
+    if not m:
+        raise SystemExit("[orn] FAIL cannot read the --res default out of qa_render_round.py")
+    return int(m.group(1)), int(m.group(2))
+
+
+RES_X, RES_Y = qa_default_res_x()
+if "--res-x" in common.script_args():
+    RES_X = int(common.script_args()[common.script_args().index("--res-x") + 1])
 eye = Vector(SPEC["loc"])
 fwd = (Vector(SPEC["target"]) - eye).normalized()
-px_per_rad_x = RES_X * SPEC["lens"] / SENSOR      # small-angle: px = size / dist * lens / sensor * RES_X
+px_per_rad_x = RES_X * LENS / SENSOR      # px = size / axial depth * lens / sensor * RES_X (exact, not small-angle)
 
 bpy.ops.wm.open_mainfile(filepath=str(common.ASSET_FILES["ARCH"]), load_ui=False)
 rows = []
@@ -34,7 +54,8 @@ for o in bpy.data.objects:
         depth = (p - eye).dot(fwd)       # distance along the view axis: what the perspective divide uses
         rows.append((o.name, d, depth, o.get("capital_height")))
 rows.sort(key=lambda r: r[2])
-print(f"cam {SPEC['name']}: eye {tuple(SPEC['loc'])}, lens {SPEC['lens']} mm on a {SENSOR} mm sensor, {RES_X} px wide")
+print(f"cam {SPEC['name']}: eye {tuple(SPEC['loc'])}, lens {LENS} mm on a {SENSOR} mm sensor, "
+      f"{RES_X} x {RES_Y} px (from qa_cameras.ensure + qa_render_round's --res default)")
 print(f"{'socket':28s} {'range':>8s} {'depth':>8s} {'2.6 m':>8s} {'3.0 m':>8s} {'stamped':>8s}")
 for name, d, depth, caph in rows:
     if depth <= 0:

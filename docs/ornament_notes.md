@@ -901,6 +901,117 @@ capital_rotunda normal + AO at 2048, frieze_rinceau / _return normal at 1024, at
 `assets/architecture.blend`: **exit 0** — run lengths within 5 mm, crown clearance >= 10 mm, every LOD inside its
 tier budget, and every capital and relief field filling its ARCH course to 30 mm.
 
+## Round 7 (2026-09-09) — capital proportion re-lay, panel lateral crowding, r6 review findings 3/4/5/7/9/10
+
+No renders (lighting held the GPU for the whole round: `pgrep` showed `light_r14_sweep.py` running at every
+check), so both rebuilds ran `--no-bake` and the normal/AO maps for `capital_rotunda` and `attic_panel` are
+**pending** again — `--bake-pending` names them and prints the exact command. Everything below is measured by
+`scripts/orn_r7_capital_layout.py` (pure Python, no bpy) and by the gate `scripts/orn_r5_stats.py` on the merged
+r6 `assets/architecture.blend`. Logs: `renders/logs/orn_r7_{capital,attic,gate,hero_px,bake_pending}.log`.
+
+### 1. The 3.0 m capital is re-laid, not stretched (r6 review finding 2)
+
+The r6 capital was the 2.6 m design with `H` changed: only H-keyed quantities grew, so the acanthus tiers ran
+15.4 % longer at unchanged width and unchanged radial projection. `scripts/orn_r7_capital_layout.py` re-implements
+`bell_radius` / `leaf_spine` outside Blender, so a row's **vertical extent** (not its spine length — the tip curls
+outward and down through a 90-100° arc, so the spine runs ~24 % longer than the tier is tall) can be solved for a
+target instead of measured after a build. `--verify` reads `CAPITAL_PRESETS` and `BELL_PROFILE` back out of
+`orn_build.py` and fails if the file drifts from the lay-out; it exits 0.
+
+Reference is `ref_002_rotunda_Corinthian_Order_Capital.jpg` (the frontal pier capital, face centre x ≈ 490 of 940,
+astragal top y 785, abacus top y 385, so H = 400 px = 133 px/m). The up-view compresses the top of the capital
+more than the bottom, so the two leaf rows — read at 0.25 and 0.21 H raw — are taken as equal at the Vignola
+canon's 0.30 H each; the abacus and the volute band, measured across a short depth, are taken at face value.
+
+| capital_rotunda, H 3.0 m | as laid out at H 2.6 | r6 (Z-stretch to 3.0) | **r7 re-lay** | ref_002 |
+|---|---|---|---|---|
+| lower row base | 0.060 H | 0.060 H | **0.030 H** | ~0.03 H (just above the base fillet) |
+| lower row vertical extent | 0.353 H (0.917 m) | 0.354 H (1.063 m) | **0.300 H (0.900 m)** | 0.30 H (0.21 H raw, foreshortened) |
+| lower row top | 0.413 H | 0.414 H | **0.330 H** | ~0.33 H |
+| upper row base | 0.440 H | 0.440 H | **0.300 H** | ~0.30 H (springs behind the lower tips) |
+| upper row vertical extent | 0.284 H (0.740 m) | 0.288 H (0.863 m) | **0.300 H (0.900 m)** | 0.30 H (0.25 H raw) |
+| upper row top | 0.724 H | 0.728 H | **0.600 H** | ~0.60 H |
+| leaf width / its own extent, lower | 1.13 | 0.98 | **1.02** | 1.02 |
+| leaf width / its own extent, upper | 1.27 | 1.09 | **1.08** | 1.08 (front leaf 130 px wide, 0.33 H) |
+| body projection `proud`, lower | 0.0565 H (×R) | 0.049 H (×R) | **0.060 H (×H)** | ~0.20 of the row's extent |
+| body projection `proud`, upper | 0.0525 H (×R) | 0.0455 H (×R) | **0.052 H (×H)** | ~0.19 of the row's extent |
+| leaf tip radius, lower / upper | 1.34 / 1.34 R | 1.40 / 1.42 R | **1.36 / 1.41 R** | past the abacus side face (1.01 R), inside the corner (1.43 R) |
+| volute spiral band | 0.693-0.917 H | 0.693-0.917 H | **0.663-0.887 H** | 0.56-0.81 H (eyes 0.71 H); volutes+caulicoli = the top 0.35 H |
+| abacus | 0.110 H | 0.110 H | **0.100 H** | 0.113 H |
+| figure transverse scale | ×R (design) | ×R (15 % stretched human) | **×H (`fig_t`)** | head 0.82 H, shoulders 0.70 H, hip 0.42 H |
+
+Mechanically: `proud` is now a fraction of H everywhere (`capital_inner` 0.06222/0.05778, `capital_colonnade`
+0.06375 — the same millimetres as before, restated), the abacus seat is a per-preset `abacus_z0` so the 1.8 m
+capitals keep 0.890, `BELL_PROFILE` reaches 0.900, the caulis stem base is derived from the upper row's top
+(`CAUL_DROP`) instead of a fixed −0.26 H, and `row_extent_H()` in `orn_build.py` is the same solver the offline
+script uses. **`capital_inner` and `capital_colonnade` are NOT re-laid**: they were never Z-stretched, they are
+122 instances, and there was no GPU this round to look at the result. Their lay-out (tiers 0.35/0.28 H, abacus
+0.11 H) therefore still differs from the rotunda's — open item.
+
+Course fill after the rebuild (gate section 6): worst **1.3-1.5 mm** against the socket's `capital_height` 3.000
+(r6: 3.2-3.4 mm). Abacus 2.98-3.12 m across corners = **1.42×** the socket's `size_hint` (shaft top D 2.1), and
+the whole capital's plan extent is now 2.98-3.14 m, i.e. the leaves and volutes reach the abacus corners and stop.
+Section 8's silhouette proxy: **7-10 alternations ≥ 2 % of r_max** (r6: 8-10), deepest pinch 394-849 mm. The
+hero-pixel projection is unchanged by the re-lay (the course is still 3.0 m): nearest four capitals **40.0-40.9 px**
+on cam01, all eight lagoon-side 34.0-40.9 px, against ref 169's 38-44 px and QA-06-6's 37 — now in
+`renders/logs/orn_r7_hero_px.log`, which the r6 review asked for.
+
+### 2. Attic panels: the composition scales laterally too (r6 review finding 8)
+
+r6 multiplied every figure scale and height by `PANEL_K` = 1.1711 but left the `PANEL_LAYOUTS` x positions alone,
+so the centre-to-centre pitch stayed at its round-4 value while every body grew 17.1 % — the group crowded by
+17 % of a figure width. `panel_x()` now scales x by K like everything else. The field did not get wider (10.5 m
+in both rounds), so a similarity scale runs off the ends: elements whose **centre** leaves the field are dropped
+rather than squeezed back in (one only, design 2's `kneel@4.9` → 5.74 m). The generated back row is re-spaced
+instead of scaled-and-cropped: pitch 1.52 → 1.52 K = **1.780 m**, count from the field width, so 7 → **5**.
+
+| | v1 (design 1) | v2 (design 2) | v3 (design 3) |
+|---|---|---|---|
+| figures r6 → r7 | 20 → **20** | 20 → **17** | 20 → **18** |
+| back row | 7 at 1.520 m → **5 at 1.780 m** | same | same |
+| dropped off the field | none | `fig:kneel@4.9` | none |
+| tris LOD0/LOD1/LOD2 | 118698 / 35912 / 2399 | 134335 / 35651 / 2399 | 117351 / 35823 / 2398 |
+
+Y depth, the socket origin (back-face bottom-centre, +Y = face), the per-instance seeds and the 0.16 m slab are
+untouched; `size_hint` 10.511 vs measured width 10.500-10.501.
+
+### 3. r6 review findings 3, 4, 5, 7, 9, 10
+
+- **Finding 3/10 — assets overshot their ARCH course by up to 26 mm inside a 30 mm gate.** Two causes, both fixed.
+  `build_attic_panel` clamped the field *before* its two `displace_noise` calls, so the 20 mm noise put it back
+  over; the clamp now runs last. And decimation and the LOD1/LOD2 voxel weld move vertices after any builder-side
+  clamp, so `orn_lib.finalize_asset` takes `clamp_z=(z0, z1)` and clamps **every LOD after the weld**, logging
+  what it took off. Measured (gate sections 6/7):
+
+  | | r6 | r7 |
+  |---|---|---|
+  | `attic_panel` worst height error | 26.0 mm (5.296 in a 5.270 field) | **0.0-4.2 mm** |
+  | `capital_rotunda` worst height error | 3.2-3.4 mm | **1.3-1.5 mm** |
+  | what `clamp_z` removed | — | capitals 3.2-3.6 mm top; panels 0.4-0.8 mm top, LOD2 3.1-6.3 mm bottom |
+
+  `COURSE_TOL` stays at 0.030 for now: `capital_colonnade` (25.2 mm) and `capital_inner` (16.9 mm) were not
+  rebuilt this round, so tightening it to 0.015 as the review suggests has to wait for the GPU window that
+  re-bakes them.
+- **Finding 4 — the rinceau normal map was baked before a 10 % anisotropic Z squash.** The run squeeze, the relief
+  cap and the field squash are now one idempotent `rin_normalise(o, run)` applied to the hi-res mesh **before**
+  `finalize_asset`, so the bake sees the final shape; the per-LOD pass afterwards only soaks up decimation drift
+  (sub-millimetre) and, being idempotent, changes nothing else. **Not rebuilt this round**: the geometry is
+  identical, and a `--no-bake` rebuild would only destroy the r6 normal maps. The fix lands at the next bake.
+- **Finding 5 — the LOD1/LOD2 weld is silent.** `enforce_tri_budget` prints a WARNING naming the object, its max
+  dimension and the weld voxel when it fires on an asset under 2 m (where the 8 mm floor voxel would round the
+  carving off). It fired on nothing but `attic_panel` this round, as in r6.
+- **Finding 7 — `orn_r6_hero_px.py` copied `RES_X` and `SENSOR`.** It now calls `qa_cameras.ensure()` and reads
+  `sensor_width` and `lens` off the camera that builds, and parses the `--res` default out of
+  `qa_render_round.py`; `--res-x N` overrides. Numbers unchanged, and the run is committed.
+- **Finding 9 — stale "centred in the 0.90 m band" comment.** Gone with the block it was in.
+
+### Gate
+
+`scripts/blender_run.sh 900 -- --background --python scripts/orn_r5_stats.py` against the merged r6
+`assets/architecture.blend`: **exit 0** (`renders/logs/orn_r7_gate.log`) — run lengths within 5 mm, crown
+clearance ≥ 10 mm, every LOD inside its tier budget, every capital and relief field filling its ARCH course.
+
+
 ## Open issues (ORN)
 - ~~`ORN_attic_panel_v2_LOD2` decimates to 5598 tris instead of the 2400 budget~~ **fixed in round 5**, and in
   **round 5b** the fix moved into the build path (`orn_lib.enforce_lod2_budget`, called by `finalize_asset`), so a
@@ -910,7 +1021,15 @@ tier budget, and every capital and relief field filling its ARCH course to 30 mm
   the same place: **no AO map on 32 LOD1 objects in 18 types** (everything except capitals, keystone and
   rosette_ceiling) — `finalize_asset(..., ao=True)` is not passed by those builders. `--bake-pending` is the
   authoritative list, not this bullet.
-- The rinceau band has still not been seen in a render (no GPU window in round 5, 5b or 6). Its numbers after the
+- **PENDING BAKE (round 7)**: `capital_rotunda` and `attic_panel` were rebuilt `--no-bake` (lighting held the GPU
+  all round), so their LOD1 normal maps — and the capitals' AO maps — are gone until
+  `orn_build.py --only attic_panel,capital_rotunda` runs in a round that may use the GPU. `--bake-pending` prints
+  the command; re-run the gate after it.
+- `capital_inner` / `capital_colonnade` were not re-laid to the round-7 Corinthian proportions and were not
+  rebuilt with `clamp_z`, so they still overshoot their 1.8 m course by 16.9 / 25.2 mm and their tiers still run
+  0.35 / 0.28 H against the rotunda's 0.30 / 0.30. One rebuild in a GPU window closes both (it re-bakes them too),
+  after which `orn_r5_stats.COURSE_TOL` can drop 0.030 -> 0.015.
+- The rinceau band has still not been seen in a render (no GPU window in round 5, 5b, 6 or 7). Its numbers after the
   r6 refit to the 0.81 m band (coverage 25.5-29.5 % of the band, max proud **88.5-89.9 mm, 10.1-11.5 mm of
   clearance** under the architrave crown) are ray-cast measurements on the asset, not a photo comparison; it needs
   a cam02/cam04 pass and a crop against entablature_1-3 (047, 054, 017). It IS instanceable now: ARCH r6 stamps

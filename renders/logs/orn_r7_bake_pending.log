@@ -1,0 +1,38 @@
+00:00.380  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
+
+[orn] bake state of /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend
+  normal map PENDING :   6 LOD1 objects in 2 types
+  normal only, no AO :  29 LOD1 objects in 17 types
+  normal + AO baked  :  11 LOD1 objects in 4 types
+    PENDING normal map   attic_panel                v1,2,3
+    PENDING normal map   capital_rotunda            v1,2,3
+    no AO map            anthemion                  v1
+    no AO map            attic_figure               v1,2
+    no AO map            corner_scroll              v1,2
+    no AO map            dentil                     v1
+    no AO map            drum_band                  v1
+    no AO map            egg_and_dart               v1
+    no AO map            finial                     v1
+    no AO map            frieze_rinceau             v1,2,3
+    no AO map            frieze_rinceau_return      v1,2,3
+    no AO map            greek_key                  v1
+    no AO map            maiden                     v1,2,3
+    no AO map            modillion                  v1
+    no AO map            rosette_band               v1
+    no AO map            urn                        v1,2,3
+    no AO map            urn_niche                  v1,2
+    no AO map            urn_tub                    v1
+    no AO map            winged_figure              v1,2
+    baked                capital_colonnade          v1,2,3
+    baked                capital_inner              v1,2
+    baked                keystone                   v1,2,3
+    baked                rosette_ceiling            v1,2,3
+
+[orn] run this in a round that may use the GPU (rebuilds + bakes only these types, idempotent):
+  scripts/blender_run.sh 3600 -- --background --python scripts/orn_build.py -- --only attic_panel,capital_rotunda
+[orn] then re-run the stats gate:
+  scripts/blender_run.sh 900 -- --background --python scripts/orn_r5_stats.py
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 39292 exited rc=0 after 2 s (max 300)
