@@ -301,3 +301,7 @@ env_build.py on the merged library: walk 845 slabs on MAT_paving_stone / _worn (
 ## 2026-09-09 · LIGHT r13 reported (3991518), in review
 LIGHT r13: probe capture evaluated the diffuse branch as a camera ray (fixed) but the hero's Eevee shade is screen-traced GI, so an Eevee-only LIGHT_shade_fill (55 W/m2, el 5, blue derived from the stone's reflectance) ships on the EEVEE_VAULT pattern: Eevee shaded attic 93.3 / 38.2 / 0.650 -> 119.0 / 35.0 / 0.381 vs Cycles 114.3 / 30.9 / 0.374 (pass); Cycles hero bit-identical. cam06 mist cap 0.50 -> 0.25, extinction 5.0: crop std 33.8 -> 38.1, 2 lines composited. Sky-term headroom on the wings: zero (sunlit R-B 103 / sat 0.475 already under floors on the r7 master). 9709 objects.
 Hand-offs: materials +0.025 sat / +6.9 R-B on the sunlit attic; env shore 91.5 of 115.6. In flight: LIGHT review. Next: merge, lead_build.sh, QA round 6.
+
+## 2026-09-09 · LIGHT r13 merged after review (MERGE WITH FIXES; docs/reviews/light_r13_review.md); master rebuilding
+Lead fixes: common.configure_cycles hides the Eevee-only vault/shade rigs on every Cycles path (finding 1); measure HOLD = sky boxes; carries 2, 5-11 to r14. Polish round 4 fully merged: ARCH r4, LIGHT r12+r13, MAT r7, ENV r7+r8 (+paving rebuild). scripts/lead_build.sh now runs through blender_run.sh.
+In flight: scripts/lead_build.sh (log renders/logs/lead_build_r6.log). Next: QA round 6 (Opus xhigh, docs/briefs/qa_round_06.md), gate report to the user.
