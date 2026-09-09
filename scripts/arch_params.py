@@ -38,24 +38,43 @@ PEDESTAL_TOP_Z = 7.5
 PEDESTAL_SIZE = 3.4
 COL_BASE_H = 1.0                   # plinth + torus-scotia-torus
 COL_SHAFT_Z0 = PEDESTAL_TOP_Z + COL_BASE_H      # 8.5
-COL_SHAFT_H = 16.3
-COL_SHAFT_Z1 = COL_SHAFT_Z0 + COL_SHAFT_H       # 24.8 (shaft top = capital socket)
+COL_SHAFT_H = 14.46                # r6: 16.3 -> 14.46, see the round-6 note below
+COL_SHAFT_Z1 = COL_SHAFT_Z0 + COL_SHAFT_H       # 22.96 (shaft top = capital socket)
 COL_D_BOTTOM = 2.5
 COL_D_TOP = 2.1
-CAPITAL_H = 2.6
-ENTABLATURE_Z0 = COL_SHAFT_Z1 + CAPITAL_H       # 27.4
-# Polish round 4 (QA-05-6): the 3.8 m TOTAL is unchanged (it carries the silhouette), but the split is re-measured
-# on ref 169 at hero scale instead of the sheet's 1.4 / 1.2 / 1.2. In the photograph the entablature reads as a
-# 1.5-1.7 m band of cornice mouldings over a ~2.1 m plain face, and its whole on-screen height (4.35 m of apparent
-# height for 3.8 m of wall) is itself the measurement of the corona's projection: apparent = h + 0.365 * projection
-# at cam01's 20 deg up-look gives 1.65 m. Derivation in docs/arch_notes.md "Polish round 4".
-ARCHITRAVE_H, FRIEZE_H, CORNICE_H = 1.15, 0.90, 1.75
-ENTABLATURE_Z1 = ENTABLATURE_Z0 + ARCHITRAVE_H + FRIEZE_H + CORNICE_H   # 31.2
+CAPITAL_H = 3.0                    # r6: 2.6 -> 3.0 (ref 169 capital 39 rows vs the render's 33 at 13.84 px/m)
+ENTABLATURE_Z0 = COL_SHAFT_Z1 + CAPITAL_H       # 25.96
+# ---------------------------------------------------------------------------------------------------------------
+# ROUND 6 (QA-06-1): the courses inside the fixed envelope, registered against ref 169 on QA's round-05 alignment.
+# The envelope does NOT move: ATTIC_Z1 38.30, the drum, the dome and the attic crown cornice's 0.74 m projection are
+# all unchanged, so the silhouette fit (apex / corner_top / W_a) that rides on refs 169 / 085 / 063 is untouched.
+# What moved, and the measurement behind each (rows are 1920x1080 cam01 rows in QA's aligned overlay,
+# renders/qa_comparisons/round06_cam01_aligned_vs_ref169.png; the model's row(z, d) map is
+# row = 678.81 - 13.486*z - 5.157*d, fitted on the round-5 course table to +-0.34 row):
+#   entablature corona soffit   render row 254 -> ref 281  (-2.00 m)  => ENTABLATURE_Z1 31.20 -> 29.18
+#   architrave bottom           render row 309 -> ref 328  (-1.44 m)  => ENTABLATURE_Z0 27.40 -> 25.96
+#   attic relief field bottom   render row 241 -> ref 269  (-2.06 m)  => panel_z0 32.55 -> 30.48
+#   attic relief field top      render row 180 -> ref 198  (-1.30 m)  => panel_z1 37.05 -> 35.75
+#   attic cornice corona soffit render (none)  -> ref 182            => the attic crown cornice grows 0.80 -> 2.10
+#                                                                       and gains a real soffit at +0.42 (it had none)
+#   capital top / shaft top     render 302/334 -> ref 318/357 (13.84 px/m at the column: -1.16 / -1.71 m)
+# The APPARENT heights that round 4 measured on the same photograph are preserved: the plain frieze+architrave band
+# reads 28 rows in the render and 26-28 in the photo (round 4: "one plain surface, 2.02 m"), so ARCHITRAVE_H+FRIEZE_H
+# only shrinks 2.05 -> 1.85; the whole entablature reads 54.7 rows against the photo's 47, hence 3.80 -> 3.22.
+# QA's own table read the render's architrave fascia (row 302) as its "frieze bottom" and the drum edge (row 168) as
+# the attic crown, which is why it reported the attic storey at 0.70 and the frieze at 1.00; the anchors above are
+# the same physical feature in both images. Derivation and the zoomed panels in docs/arch_notes.md "Round 6".
+ARCHITRAVE_H, FRIEZE_H, CORNICE_H = 1.04, 0.81, 1.37     # was 1.15 / 0.90 / 1.75 (3.80 total)
+ENTABLATURE_Z1 = ENTABLATURE_Z0 + ARCHITRAVE_H + FRIEZE_H + CORNICE_H   # 29.18
+CORNICE_CORONA_D = 1.66            # corona projection past the wall plane (round 4, unchanged)
+CORNICE_CORONA_SOFFIT_DZ = 2.97    # corona soffit above ENTABLATURE_Z0 (was 3.48); the checks import it from here
 ATTIC_Z0 = ENTABLATURE_Z1
-ATTIC_H = 7.1
-ATTIC_Z1 = ATTIC_Z0 + ATTIC_H                   # 38.3
-ATTIC_BASE_MOULDING_H = 0.9    # DERIVED (085): modillion course + Greek key band forming the attic base over the ressauts
-ATTIC_TOP_CORNICE_H = 0.8      # DERIVED (085)
+ATTIC_H = 9.12                     # was 7.1; ATTIC_Z1 is held at 38.30
+ATTIC_Z1 = ATTIC_Z0 + ATTIC_H                   # 38.30
+ATTIC_BASE_MOULDING_H = 0.85   # DERIVED (085 + ref 169 r6): modillion course + Greek key band over the ressauts
+ATTIC_TOP_CORNICE_H = 2.10     # DERIVED (ref 169 r6): crown cornice, soffit 1.68 m below the crown
+ATTIC_CORNICE_D = 0.74         # max projection of the attic crown cornice -- HOLDS the silhouette W_a, do not raise
+ATTIC_CORNICE_SOFFIT_DZ = 0.42 # corona soffit above the attic cornice base (ref 169 row 182)
 ATTIC_PANEL_FRAME = 0.45       # Greek-key band around the relief panels (catalog #6)
 ATTIC_PANEL_DEPTH = 0.25
 DRUM_Z0 = ATTIC_Z1
