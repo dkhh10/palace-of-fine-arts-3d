@@ -2281,3 +2281,17 @@ inside the cause is a default. `build_shade_fill` never set `shadow_maximum_reso
 three 55-degree soft suns whose entire job is to lay a diffuse blue on shaded stone were each rendering shadow maps
 at Blender's default **0.001 m/texel — finer than LIGHT_sun's own 0.002** — with jitter on. Both are now rig keys
 (`SHADE_FILL["shadow_res"]`, `["shadow_jitter"]`) and are swept in 24.6.
+
+### 24.4 What round 14 ships
+
+| socket | round 13 | **round 14** | why |
+|---|---|---|---|
+| `SKY_DIFFUSE_TINT` | (1.0, 0.65, 17.0) | **(1.0, 0.65, 40.0)** | a sharp weight passes less tint; b 40 restores the shaded wall's blue at q3 p6 |
+| `SKY_DIFFUSE_TINT_ANTISUN_P` | — (implicitly 1) | **3.0** | takes the tint off SUN-facing stone (probe: +36.0 -> +3.0 sRGB of blue) |
+| `SKY_DIFFUSE_TINT_HORIZON_P` | — (implicitly 1) | **6.0** | takes it off UP-facing surfaces: the roofs, the walk, the lagoon's murk |
+| `SHADE_FILL["energy"]` (CYCLES) | 0.0 | **70.0 W/m2** | the shade's blue now arrives from a rig with a DIRECTION |
+| `SHADE_FILL["color"]` | (0.14, 0.19, 1.00) | **(0.03, 0.02, 1.00)** | the r13 colour was solved for Eevee's deficit; in Cycles it added +9 R / +12 G per +26 B |
+| `SHADE_FILL` lamp elevation | 5.0 deg | **2.0 deg** | 29x discrimination between a vertical wall and a horizontal surface |
+| `SHADE_FILL["shadow_res"]` | (default 0.001 m/texel) | **0.20 m/texel** | QA-06-13; 0.001 is finer than LIGHT_sun's own 0.002, for a soft fill |
+| `SHADE_FILL["shadow_jitter"]` | (default True) | **False** | same |
+| `SKY_DIFFUSE_BOOST`, `SKY_STRENGTH`, `SKY_CAMERA_*`, `SKY_GLOSSY_*`, `FILL`, `VAULT_FILL`, `MIST`, `COMP`, exposure | | **unchanged** | the visible sky, the lagoon's mirror and the interior fills are held still by construction |
