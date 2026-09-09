@@ -428,3 +428,7 @@ In flight: LIGHT r15 (docs/briefs/lighting_r15.md, Opus high), ORN r8 code revie
 ## 2026-09-09 · ORN r8 merged after review (MERGE WITH FIXES; main's baked ornament.blend kept, notes' pending-bake bullet corrected)
 Pending before the next master build: `orn_build.py --only capital_rotunda` WITH bake in the GPU gap after LIGHT r15 (attic_panel is baked on main). Carries for a later ornament round: two ref_002 pixel scales in the notes, source_ns() brace counter, --verify skips the two 1.8 m capitals.
 In flight: LIGHT r15, Phase 5 prep (branch phase5). Next: LIGHT review + merge, ORN bake, MAT r9.
+
+## 2026-09-09 · Phase 5 prep reported (branch phase5, c9afc7f), in review
+scripts/phase5_deliver.sh (checklist steps 2-6 through blender_run.sh, step 5 picks spp/res from step 4's wall time), phase5_hero.py, phase5_flythrough.py, tech_notes "Opening and rendering (Phase 5)". Held on branch until the gate; review docs/reviews/phase5_r1_review.md.
+In flight: LIGHT r15, phase5 review. Next: LIGHT review + merge, ORN capital bake, MAT r9.
