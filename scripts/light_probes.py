@@ -207,7 +207,14 @@ def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
         try:
             import light_presets as lp
             lp.apply_vault_for_engine("CYCLES")
-            lp.apply_shade_for_engine("CYCLES")   # round 13: the Eevee shade fill is an engine hack, not real light
+            # ROUND 14 (r14 review carry 5): LIGHT_shade_fill is NO LONGER an Eevee hack -- it is real light in
+            # Cycles too (SHADE_FILL["energy"] = 70 W/m2 against energy_W_eevee = 55 W direct). The bake therefore
+            # runs it at the CYCLES energy, which is INTENDED: the irradiance volumes must hold the scene's real
+            # indirect light, and 70 W/m2 is the rig Cycles renders. Eevee then renders the direct term at 55 W on
+            # top of volumes baked at 70 -- deliberate, because Eevee's screen-traced GI double-counts part of the
+            # near-field bounce; the resulting shaded attic is measured against Cycles in docs/lighting_notes 24.8
+            # (Eevee 109.2 vs Cycles 116.4, -6.2 % against a 15 % window).
+            lp.apply_shade_for_engine("CYCLES")
             switched = True
             print("[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the "
                   "scene's real indirect light, not the Eevee render-time override")

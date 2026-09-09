@@ -1,0 +1,100 @@
+00:00.689  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_lamp_convention.exr'
+00:01.238  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_on.exr'
+00:01.739  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_sunfacing_disc_off.exr'
+00:02.241  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_on.exr'
+00:02.738  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_horizontal_disc_off.exr'
+00:03.187  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_zenith.exr'
+00:03.633  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_west.exr'
+00:04.154  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_horizon_sunward.exr'
+00:04.603  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_sky_radiance_sky_30deg_south.exr'
+00:05.092  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_linear.exr'
+00:05.639  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/calibration/cal_grey_card_agx.png'
+[light_build] moment=morning PST -> azimuth 118.49 deg, elevation 7.36 deg (sun_position.sun_calc (NOAA))
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[light_build] LIGHT_rotunda_bounce: disk r 18.0 m at z 7.5, 10214.0 W, up-facing (radiance 3.194 sky units)
+[light_build] LIGHT_shade_fill: 1 cool sun lamps, Cycles 49.00 W/m2 (0.728 of the calibrated sun), Eevee 38.50 W/m2 (0.572 of the sun), hidden in render: False, at [(25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.2 m/texel, jitter False
+[light_build] LIGHT_rotunda_vault_bounce: 8 x 12.5x4.0 m up-facing rectangles at r 17.5 z 13.0, 3564.0 W each (radiance 22.689 sky units)
+[light_probes] LIGHTPROBE_rotunda: (20, 20, 14) = 5600 samples, spacing 2.8 x 2.8 x 2.6 m
+[light_probes] LIGHTPROBE_colonnade: (48, 20, 6) = 5760 samples, spacing 4.8 x 4.8 x 3.2 m
+[light_build] glare sockets: {'Type': 'Bloom', 'Quality': 'High', 'Threshold': 1.0, 'Smoothness': 0.2, 'Maximum': 10.0, 'Strength': 1.0, 'Saturation': 0.9, 'Size': 0.5, 'Streaks': 4, 'Streaks Angle': 0.0, 'Iterations': 3, 'Fade': 0.9, 'Color Modulation': 0.25, 'Jitter': 0.0, 'Kernel Data Type': 'Float', 'Kernel': 0.0}
+[light_build] LIGHT_sun energy 67.32 W/m2 colour (1.000, 0.607, 0.000) angle 0.0093 rad
+[light_build] exposure -4.08 EV (18 % card) + bias +1.25 = -2.83 EV, look AgX - High Contrast
+[light_build] haze colour (scene units) (5.321, 3.739, 1.96); bloom threshold 6.4 scene units
+
+[light_flythrough] path 575.6 m; 2616 frames @ 24 fps = 109.0 s (hero hold 3.50s + move 101.46s + dome hold 4.04s), mean 5.28 m/s
+[light_flythrough] legs:
+    water      frames     1-  404  cap 9.2 m/s  (WATER CROSSING)
+    shore      frames   404- 1966  cap 5.6 m/s
+    gallery    frames  1966- 2312  cap 4.6 m/s
+    approach   frames  2312- 2519  cap 5.6 m/s
+[light_flythrough] stations:
+    hero        f    1  t=  0.00s  s=    0.0 m  pos (-14.1, 100.0, 1.6)   CAM_qa_01 station; water below, agl 2.90
+    lagoon_a    f  181  t=  7.50s  s=   20.2 m  pos (6.0, 99.0, 2.2)   over the lagoon and the low east islet (agl 2.4+)
+    lagoon_b    f  231  t=  9.58s  s=   39.2 m  pos (24.0, 93.0, 2.8)   water -1.30
+    lagoon_c    f  279  t= 11.58s  s=   57.6 m  pos (40.0, 84.0, 3.2)   water -1.30, apex of the crossing
+    lagoon_d    f  335  t= 13.92s  s=   79.0 m  pos (54.0, 68.0, 3.2)   water -1.30
+    lagoon_e    f  372  t= 15.46s  s=   93.4 m  pos (62.0, 56.0, 4.0)   water -1.30; climbing for the shore thicket
+    shore_over  f  404  t= 16.79s  s=  103.0 m  pos (68.0, 49.0, 6.2)   over the ENV_shrub_big1_1047/1051 shore thicket (crowns to ~2.6 m); end of the water crossing
+    landfall    f  437  t= 18.17s  s=  110.6 m  pos (72.5, 43.5, 3.6)   colonnade-walk apron -0.71, the first clear ground
+    walk_a      f  462  t= 19.21s  s=  116.5 m  pos (73.5, 38.0, 1.9)   apron -0.69
+    walk_b      f  484  t= 20.12s  s=  121.6 m  pos (73.0, 33.0, 1.25)   apron -0.71
+    walk_c      f  502  t= 20.88s  s=  125.9 m  pos (72.0, 29.0, 1.1)   terrain -0.74
+    cam02       f 1225  t= 51.00s  s=  294.7 m  pos (-79.8, 24.4, 1.06)   CAM_qa_02 station (az 160 / 75 m); walk -0.69, agl 1.75
+    apron_a     f 1939  t= 80.75s  s=  461.2 m  pos (70.2, 19.0, 1.15)   courtyard apron, terrain -0.58
+    apron_b     f 1966  t= 81.88s  s=  467.3 m  pos (68.6, 13.5, 1.12)   courtyard apron, terrain -0.63
+    bay_line    f 1988  t= 82.79s  s=  471.5 m  pos (66.68, 9.88, 1.08)   on the bay's radial line, 7 m short of the row
+    gap_in      f 2027  t= 84.42s  s=  478.9 m  pos (71.84, 4.93, 1.05)   through the centre of the 4.5 m bay (inner row)
+    gap_out     f 2039  t= 84.92s  s=  481.3 m  pos (73.46, 3.37, 1.15)   still on the bay's radial line, now on the centreline: the turn happens INSIDE the bay, not across the next column
+    gal_turn    f 2051  t= 85.42s  s=  483.6 m  pos (71.9, 1.77, 1.15)   on the centreline at the next column's theta
+    gal_00      f 2075  t= 86.42s  s=  488.1 m  pos (68.66, -1.36, 1.15)   gallery centreline
+    gal_01      f 2098  t= 87.38s  s=  492.6 m  pos (65.29, -4.36, 1.15)   gallery centreline
+    gal_02      f 2122  t= 88.38s  s=  497.1 m  pos (61.82, -7.23, 1.15)   gallery centreline
+    gal_03      f 2145  t= 89.33s  s=  501.6 m  pos (58.24, -9.96, 1.15)   gallery centreline
+    gal_04      f 2169  t= 90.33s  s=  506.2 m  pos (54.55, -12.56, 1.15)   gallery centreline
+    gal_05      f 2192  t= 91.29s  s=  510.7 m  pos (50.77, -15.01, 1.15)   gallery centreline
+    gal_06      f 2216  t= 92.29s  s=  515.2 m  pos (46.9, -17.32, 1.15)   gallery centreline
+    gal_07      f 2239  t= 93.25s  s=  519.7 m  pos (42.94, -19.47, 1.15)   gallery centreline
+    gal_08      f 2263  t= 94.25s  s=  524.2 m  pos (38.9, -21.47, 1.15)   gallery centreline
+    gal_09      f 2287  t= 95.25s  s=  528.7 m  pos (34.78, -23.32, 1.15)   gallery centreline
+    gal_out     f 2312  t= 96.29s  s=  533.5 m  pos (30.3, -25.12, 1.1)   past the last columns (theta -66.90): the wing's open rotunda end
+    app_a       f 2325  t= 96.83s  s=  536.4 m  pos (28.0, -24.0, 1.09)   terrain -0.66, clear 1.79
+    app_b       f 2334  t= 97.21s  s=  538.5 m  pos (26.5, -22.5, 1.14)   terrain -0.61, clear 1.77
+    app_c       f 2343  t= 97.58s  s=  540.6 m  pos (25.0, -21.0, 1.15)   terrain -0.60, clear 1.78
+    app_d       f 2351  t= 97.92s  s=  542.4 m  pos (24.0, -19.5, 1.15)   terrain -0.60, clear 1.78
+    app_e       f 2360  t= 98.29s  s=  544.7 m  pos (22.5, -17.8, 1.25)   terrain -0.60, on the az-218 face axis between the piers at az 194.5 and 239.5
+    app_f       f 2372  t= 98.79s  s=  547.4 m  pos (20.5, -16.0, 1.55)   ARCH_site_step_1 at -0.20
+    app_g       f 2389  t= 99.50s  s=  551.4 m  pos (17.3, -13.6, 1.75)   ARCH_site_platform 0.00; through the arch on the az-217 face (offset 0.45 m of a 12.5 m clear span)
+    app_h       f 2424  t=100.96s  s=  559.5 m  pos (11.0, -8.6, 1.75)   platform, inside the inner ring
+    app_i       f 2449  t=102.00s  s=  565.4 m  pos (6.3, -4.9, 1.75)   platform
+    dome        f 2519  t=104.92s  s=  575.6 m  pos (0.0, 3.0, 1.75)   CAM_qa_04 station; the ceiling look-up
+[light_flythrough] designed speed: max 9.20 m/s (water cap 9.2, land 5.6, gallery 4.6)
+Info: Saved as "lighting.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend
+[light_build] done in 5.5s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 49351 exited rc=0 after 6 s (max 900)

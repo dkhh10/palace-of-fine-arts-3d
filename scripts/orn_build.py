@@ -74,11 +74,11 @@ CAPITAL_PRESETS = {
     # abacus 0.100 H. `proud` is now a fraction of H (0.20 / 0.17 of the row's own extent), and lower_w / upper_w
     # are re-derived so leaf width / extent = 1.02 / 1.08 as measured on ref_002 - none of the three is inherited
     # from the 2.6 m capital any more.
-    "capital_rotunda": dict(H=ARCH_R6["capital_rotunda_H"], R=1.05, abacus_across=3.0, figure=True, lower_len=0.372, upper_len=0.378,
+    "capital_rotunda": dict(H=ARCH_R6["capital_rotunda_H"], R=1.05, abacus_across=3.0, figure=True, lower_len=0.372, upper_len=0.377,
                             lower_w=1.053, upper_w=1.361, ribs=7, curl=0.32, droop=0.18, volute_r=0.112, helix_r=0.055,
                             lower_z=0.030, upper_z=0.300, rows=2, voxel=0.011, leaf_tilt=(3.0, 4.0),
-                            proud=(0.060, 0.052), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
-                            scallop=0.078, thickness=0.062, volute_z=0.775, volute_er=1.380, helix_er=1.245,
+                            proud=(0.060, 0.049), arc_deg=(100.0, 90.0), arc_frac=(0.28, 0.26), mid_dip=0.078,
+                            scallop=0.078, thickness=0.062, volute_z=0.762, volute_er=1.380, helix_er=1.245,
                             helix_z=0.745, abacus_z0=0.900, fig_t=0.545),
     # inner tan columns: h 1.8 on a ~1.6 m shaft, same design, fleuron centre
     # inner / colonnade: NOT re-laid this round (they were never Z-stretched - they have stood at H 1.8 since
@@ -285,13 +285,22 @@ CAPITAL_STYLE = {
     1: {},
     2: {"lower_w": 1.06, "volute_r": 1.15, "upper_len": 0.95, "clip_leaf": 3,
         "arc_mul": (1.08, 0.92), "proud_mul": (1.20, 0.85)},
-    3: {"upper_len": 1.07, "volute_r": 0.88, "lower_w": 0.94, "tilt_add": 4.0, "helix_r": 1.2,
-        "arc_mul": (0.90, 1.10), "proud_mul": (0.85, 1.25)},
+    # Round 8: v3 used to add 4 deg of outward lean on top of a 7 % longer, 25 % prouder upper leaf, which put its
+    # tips at 1.51 R - past the ref_002 window 1.30-1.40 R and nearly at the abacus corner (1.43 R). Its silhouette
+    # identity is now length + curl + volute size, not lean: upper leaf 3 % longer than v1's, both rows held 15 %
+    # closer to the bell (v2 stands 20 % prouder, so the two still read differently at hero distance), small
+    # volutes, big caulicoli helix. Tips 1.329 / 1.389 R.
+    3: {"upper_len": 1.03, "volute_r": 0.88, "lower_w": 0.94, "helix_r": 1.2,
+        "arc_mul": (0.90, 1.10), "proud_mul": (0.85, 0.85)},
 }
 
 
-def build_capital(typ, variant, coll, bake=True):
-    P = dict(CAPITAL_PRESETS[typ])
+def apply_capital_style(P, variant):
+    """CAPITAL_PRESETS[typ] with CAPITAL_STYLE[variant] applied — the preset the mesh is actually built from.
+    Round 8: this used to be inline in build_capital, so the offline lay-out check could only ever see variant 1
+    (r7 review finding 2). scripts/orn_r7_capital_layout.py --verify parses THIS function out of this file and
+    loops it over CAPITAL_STYLE, so every built variant is checked against the ref_002 window."""
+    P = dict(P)
     style = CAPITAL_STYLE.get(variant, {})
     for k, v in style.items():
         if k in P and isinstance(P[k], (int, float)):
@@ -302,6 +311,11 @@ def build_capital(typ, variant, coll, bake=True):
     if "tilt_add" in style:
         P["leaf_tilt"] = (P["leaf_tilt"][0] + style["tilt_add"], P["leaf_tilt"][1] + style["tilt_add"] * 0.5)
     P["clip_leaf"] = style.get("clip_leaf", -1)
+    return P
+
+
+def build_capital(typ, variant, coll, bake=True):
+    P = apply_capital_style(CAPITAL_PRESETS[typ], variant)
     R, H = P["R"], P["H"]
     rng = random.Random(7919 * variant + len(typ))
     work = L.work_collection()
@@ -1268,9 +1282,16 @@ def build_attic_panel(variant, coll, bake=True):
     # The back row is generated, not hand-placed, so it is re-spaced rather than scaled-and-cropped: the pitch
     # grows with the figures (1.52 -> 1.52 K = 1.78 m) and the count is whatever fits the 10.5 m field at that
     # pitch, centred. r6 kept 7 at 1.52 m with 17 % bigger bodies, which is where most of the crowding was.
+    # Round 8 (r7 review finding 5): the count used to be int((W - 1.6) / back_pitch) + 1, and
+    # (10.5 - 1.6) / 1.780072 = 4.9998 -> 5, i.e. it sat 0.02 % from flipping to 6 and re-crowding the row.
+    # It is now a stated half-span: back-row centres stay within BACK_HALF_SPAN of the panel centre, and the row
+    # is symmetric (odd count). The end scan groups sit at +-4.74 m and are already clipped by the field edge, so
+    # the back row deliberately stops well inside them. The pitch would have to change by more than +12 % / -25 %
+    # to change the count, against 0.02 % before.
     back_poses = ["stride", "arms_up", "arms_out", "kneel", "stride", "arms_out", "arms_up"]
     back_pitch = 1.52 * K
-    n_back = int((W - 1.6) / back_pitch) + 1
+    BACK_HALF_SPAN = 4.00                       # m, panel centre to the centre of an end back-row figure
+    n_back = 2 * int(BACK_HALF_SPAN / back_pitch) + 1
     for i in range(n_back):
         bx = (i - (n_back - 1) / 2.0) * back_pitch + rng.uniform(-0.15, 0.15)
         parts += relief_figure(f"rb_{i}", back_poses[i % len(back_poses)], bx, face_y, work,
@@ -1281,7 +1302,8 @@ def build_attic_panel(variant, coll, bake=True):
                                flatten=rng.uniform(0.30, 0.40) / K, drape=(i % 3 != 0))
         fig_count += 1
     print(f"[orn] attic_panel v{variant}: design {design}, {fig_count} figures, back row {n_back} at "
-          f"{back_pitch:.3f} m pitch, dropped off the field: {dropped or 'none'}")
+          f"{back_pitch:.3f} m pitch (half-span {(n_back - 1) / 2.0 * back_pitch:.3f} m of "
+          f"{BACK_HALF_SPAN:.2f} m allowed), dropped off the field: {dropped or 'none'}")
     parts = [p for p in parts if p is not None]
     # shields / discs in the remaining gaps (design 1 and 3 are combats)
     if design != 2:
@@ -1828,13 +1850,14 @@ def bake_pending():
         print("  scripts/blender_run.sh 900 -- --background --python scripts/orn_r5_stats.py")
     else:
         print("\n[orn] nothing pending: every LOD1 has a normal map.")
-    return 0 if not nrm else 0
+    # Round 8 (r7 review finding 9): this returned 0 either way, so the lead could not gate a master build on it.
+    # Exit 1 = at least one LOD1 is missing its baked normal map; exit 0 = nothing pending.
+    return 1 if nrm else 0
 
 
 def main():
     if "--bake-pending" in ARGS:
-        bake_pending()
-        return
+        raise SystemExit(bake_pending())      # exit 1 if any LOD1 normal map is pending, so the lead can gate on it
     only = None
     if "--only" in ARGS:
         only = [s.strip() for s in ARGS[ARGS.index("--only") + 1].split(",") if s.strip()]

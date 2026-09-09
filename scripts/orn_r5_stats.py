@@ -286,9 +286,15 @@ for t in ("capital_rotunda", "capital_inner", "capital_colonnade"):
     hints = {round(s_["hint"], 3) for s_ in socket_types.get(t, [])}
     lod0 = [assets[t][v][0] for v in sorted(assets.get(t, {})) if 0 in assets[t][v]]
     if lod0 and hints:
+        # Round 8 (r7 review finding 8): this line used to be labelled "abacus", but x_extent() is the WHOLE
+        # LOD0's plan width - leaf tips and corner volutes included - so it is 0.3-0.4 m wider than the abacus and
+        # was quoted as if the leaves stopped at the abacus edge. The abacus itself is a preset number, printed
+        # beside it: `abacus_across` is the across-the-corners width the abacus outline is built to.
         ab = [x_extent(o) for o in lod0]
-        print(f"  {t:20s} abacus {min(ab):.2f}-{max(ab):.2f} m across vs socket size_hint (shaft top D) "
-              f"{sorted(hints)} -> {min(ab)/max(hints):.2f}x the shaft")
+        across = B.CAPITAL_PRESETS[t]["abacus_across"]
+        print(f"  {t:20s} LOD0 plan extent (leaf tips + volutes) {min(ab):.2f}-{max(ab):.2f} m across x; "
+              f"abacus {across:.2f} m across corners; socket size_hint (shaft top D) {sorted(hints)} "
+              f"-> plan {min(ab)/max(hints):.2f}x / abacus {across/max(hints):.2f}x the shaft")
 
 print("\n=== 7. attic panels fill their field (ARCH r6 panel_height 4.50 -> 5.27 m) ===")
 course_check(7, "attic_panel", "attic_panel", "panelh", B.PANEL_H, "a relief field")

@@ -64,7 +64,13 @@ SKY_CAMERA_BOOST = 2.10            # ROUND 10: 1.50 -> 2.10. This knob does NOT 
                                    # ref 169's sky-top luminance of 165.7: 213.6 / 204.3 / 195.7 / 179.9 / 165.7 /
                                    # 153.2. 1.20 lands on the reference exactly. (The sky is deep on the AgX shoulder,
                                    # which is why it takes a 2.5x cut in scene radiance to move it 23 %.)
-SKY_GLOSSY_BOOST = 5.25            # ROUND 10: 3.75 -> 5.25, the same 2^0.5 exposure hold as SKY_CAMERA_BOOST, so
+SKY_GLOSSY_BOOST = 4.20            # ROUND 15 (QA-07-1): 5.25 -> 4.20. Measured on the round-15 master, Cycles hero
+                                   # 64 spp, with nothing else moved: near water 144.7 -> 139.3, open-lagoon flank
+                                   # 188.1 -> 180.8, and the hero's REFLECTION box 900 760 1020 840 back inside its
+                                   # hold at R-B +31.9 -> +37.9 (test >= +35), because taking sky out of the water
+                                   # is what lets the building's warm mirror read. sky_top / sky_left are identical
+                                   # to 0.1 lum by construction (camera rays never traverse this socket).
+                                   # Round 10's text follows. ROUND 10: 3.75 -> 5.25, the same 2^0.5 exposure hold as SKY_CAMERA_BOOST, so
                                    # the lagoon keeps the sky brightness it reflected before the exposure move
                                    # (water_refl 132.2 at 3.75 after -0.5 EV, 142.1 at 5.25, 153.4 before).
                                    # what GLOSSY (reflection) rays see: 0.80 x 3.75 = 3.00, again unchanged from
@@ -89,6 +95,13 @@ SKY_GLOSSY_SATURATION = 0.90       # ROUND 10 (QA-03-7). Split out of SKY_CAMERA
                                    # visible sky's own hue is 208.7 against ref 169's 208.2, i.e. exact. In the photo
                                    # the water is 16 deg greener than the sky it mirrors, which is the lagoon's own
                                    # upwelling green - environment's water shader, not lighting's.
+SKY_GLOSSY_HUE = 0.500             # ROUND 15 (QA-07-1), new socket. Blender Hue/Saturation "Hue" on the GLOSSY
+                                   # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
+                                   # the LAGOON MIRRORS by d*360 deg while the visible sky (camera rays) and the
+                                   # light on shaded stone (diffuse rays) are held exactly still. It exists because
+                                   # QA-07-1 is a HUE defect and rounds 10-14 only ever had a level knob
+                                   # (SKY_GLOSSY_BOOST) and a chroma knob (SKY_GLOSSY_SATURATION) on that socket.
+                                   # Swept in docs/lighting_notes.md 25.2.
 SKY_DIFFUSE_SATURATION = 1.00      # saturation of the sky for DIFFUSE rays, i.e. the light that lands on the shaded
                                    # stone. Kept physical. Round 10 swept it to 2.0 and 3.0 hunting the shaded
                                    # attic's hue (43.0 against ref 169's 29.5) and it moved the shade's BLUE channel
@@ -144,12 +157,18 @@ SKY_DIFFUSE_TINT_ANTISUN_P = 3.0   # ROUND 14 (QA-06-2), new socket. Exponent on
                                    # wall keeps its own.
 SKY_DIFFUSE_TINT_HORIZON_P = 6.0   # ROUND 14 (QA-06-2), new socket. Exponent on the horizon weight (1 - |ray.z|)^p.
                                    # A vertical wall's hemisphere is centred on a HORIZONTAL normal (mean |ray.z|
-                                   # ~0.42); an up-facing surface's is centred on the ZENITH (mean z = 2/3). At p = 1
-                                   # the wall keeps 1.8x what a roof, a walk or the lagoon's murk keeps -- not enough
-                                   # to matter, which is why round 12's horizon weight was worth only 0.045 of
-                                   # near-water saturation. At p = 10 it keeps 4.8x. Physically it is also the more
-                                   # honest shape: the anti-sun horizon band (Earth shadow / Belt of Venus) at a
-                                   # 7 deg sun is a band a few degrees deep, not a linear ramp from the zenith.
+                                   # ~0.42). ONE table, computed once for both files (r14 review carry 8), as the
+                                   # cosine-weighted expectation E[(1-|z|)^p] over each surface's own hemisphere --
+                                   # NOT (E[1-|z|])^p, which is what the two older comments disagreed about:
+                                   #     p     1      2      3      6*     10
+                                   #     wall  0.576  0.401  0.307  0.179  0.115
+                                   #     roof  0.333  0.167  0.100  0.036  0.015
+                                   #     x     1.73   2.41   3.07   5.02   7.59      (* = SHIPPED)
+                                   # At p = 1 the wall keeps only 1.73x what a roof, a walk or the lagoon's murk
+                                   # keeps -- which is why round 12's horizon weight was worth only 0.045 of
+                                   # near-water saturation. At the shipped p = 6 it keeps 5.0x. Physically it is
+                                   # also the more honest shape: the anti-sun horizon band (Earth shadow / Belt of
+                                   # Venus) at a 7 deg sun is a band a few degrees deep, not a linear ramp.
 SKY_DIFFUSE_HUE = 0.5              # ROUND 12 (QA-05-1), new socket. Blender Hue/Saturation "Hue" on the DIFFUSE
                                    # stage only: 0.5 = no shift, one unit = a full turn, so 0.5 + d rotates the sky
                                    # that lands on shaded stone by d*360 deg. See the SKY_DIFFUSE_BOOST comment for
@@ -391,7 +410,25 @@ SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irrad
 # The full round-10/11 cost tables for switching it on in CYCLES are in docs/lighting_notes.md 20.4 and still apply:
 # at el 16, 6 W/m2 costs the near-water saturation 0.274 -> 0.207 and the columns 1.29x -> 1.37x of ref. That is why
 # `energy` (the Cycles number) stays 0.0 and this is an Eevee-only rig on the EEVEE_VAULT pattern.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=70.0, energy_eevee=55.0, angle_deg=55.0, specular=0.00,
+# ROUND 15 (QA-07-1, the blocker). The rig goes from THREE lamps to ONE, and its energy from 70 to 49 W/m2, which
+# is the same 0.70 x 70 the surviving lamp always had. Nothing about the light on the hero's shaded attic changes;
+# what changes is that the other two lamps stop lighting the LAGOON. Isolated on the round-15 master, Cycles hero
+# 64 spp, one lamp moved at a time (docs/lighting_notes.md 25.2):
+#
+#   lamp (az, w)          hero shaded attic          near water 1150 1000 1450 1050     flank 100 900 400 960
+#   all three off         130.8 / hue 40.8           118.6 / hue 208.6                  159.1 / hue 210.2
+#   WNW 300 at 1.00       130.9 / hue 40.7  (+0.1)   143.9 / hue 227.8  (+25.3, +19)    159.2 / hue 210.3  (+0.1)
+#   SSW 205 at 1.00       (not measurable)           +0.8 with NNE                      188.1 / hue 224.2  (+29, +14)
+#   NNE  25 at 0.70       136.8 / hue 32.6  (+6.0)   +0.8 with SSW                      +1.4
+#
+# The hero's shaded attic is a NORTH-facing surface, so the only lamp that colours it is the NNE one. The WNW lamp
+# sits at az 300 el 2, i.e. it shines toward az 120 -- straight down the hero camera's axis -- and at 2 degrees over
+# a water plane that is a near-specular glint: it buys the hero's shade 0.1 lum and costs the lagoon 25.3 lum and
+# 19 degrees of hue. The SSW lamp does the same to the south half of the lagoon (the flank box) and, measured, does
+# nothing at all for the colonnade it was aimed into (cam03's outer row 0.115 -> 0.110 when it was DOUBLED, and
+# 0.115 -> 0.119 with the whole rig off): what actually opens that box is Eevee's fast GI, see light_presets.
+# So both are deleted rather than dimmed. Round 14's text follows.
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=49.0, energy_eevee=38.5, angle_deg=55.0, specular=0.00,
                   # ROUND 14 (QA-06-2): the rig is no longer Eevee-only. `energy` 0.0 -> 70.0 W/m2 in CYCLES.
                   # The round-12 diffuse tint delivered the shade's blue AND flooded every up-facing surface in the
                   # build, because half of what reaches a shaded wall has bounced off a horizontal surface first
@@ -410,9 +447,15 @@ SHADE_FILL = dict(name="LIGHT_shade_fill", energy=70.0, energy_eevee=55.0, angle
                   # ROUND 14: round 13's (0.14, 0.19, 1.00) was solved for EEVEE's deficit; in Cycles it adds
                   # +9 red and +12 green for its +26 blue and moves the shade's hue the wrong way as fast as its
                   # blue moves it back (24.3b, cases Af35 / Af55). Re-solved from those deltas.
-                  lamps=[dict(az=300.0, el=2.0, w=1.00, note="WNW: the shaded north/west faces, the hero's shaded attic"),
-                         dict(az=205.0, el=2.0, w=1.00, note="SSW: into the south colonnade, cam03's near shafts"),
-                         dict(az=25.0, el=2.0, w=0.70, note="NNE: the north wing's inner face and the north colonnade")],
+                  lamps=[dict(az=25.0, el=2.0, w=1.00,
+                              note="NNE: the ONLY lamp of the rig since round 15. It carries the hero's shaded "
+                                   "attic (hue 40.8 without it, 32.6 with it, window 23.5-35.5) and the north "
+                                   "wing's inner face. The WNW 300 and SSW 205 lamps were deleted in round 15: "
+                                   "measured, they were worth 0.1 lum to the shade and 25.3 lum + 19 deg of blue "
+                                   "to the lagoon (QA-07-1). Its own cost is cam02's shaded pier, which it drives "
+                                   "to hue 262 against QA-07-11's 25-60 window -- the same lamp, the same axis, "
+                                   "and no value of w lands both (0.70 -> attic 32.6 / pier 262; 0.10 -> attic "
+                                   "39.7 / pier 355; 0.00 -> attic 40.7 / pier 23). See docs/lighting_notes 25.3.")],
                   note="QA-05-1 Eevee shade fill on the anti-sun hemisphere: the blue the round-12 diffuse sky "
                        "puts on shaded stone in Cycles and that Eevee's screen-traced GI cannot deliver")
 
@@ -497,10 +540,12 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
     """QA-04-2 / QA-05-1: wide-angle sun lamps on the anti-sun hemisphere (see the SHADE_FILL comment above).
     Idempotent: any existing lamps with this prefix are removed first, so a sweep can rebuild them in memory.
 
-    `energy` is the CYCLES irradiance (0.0 as shipped) and `energy_eevee` the EEVEE one. The lamps carry both on
-    `energy_W` / `energy_W_eevee` and `light_presets.apply_shade_for_engine` switches between them, exactly the way
-    `apply_vault_for_engine` switches the vault emitters. With the Cycles energy at 0 the lamps ship `hide_render`,
-    so Cycles never traverses them."""
+    `energy` is the CYCLES irradiance and `energy_eevee` the EEVEE one; as of ROUND 14 BOTH are non-zero
+    (SHADE_FILL: 70.0 W/m2 Cycles, 55.0 W/m2 Eevee), i.e. this is real light in both engines and no longer the
+    Eevee-only rig of round 13 (r14 review carry 6). The lamps carry both on `energy_W` / `energy_W_eevee` and
+    `light_presets.apply_shade_for_engine` switches between them, exactly the way `apply_vault_for_engine`
+    switches the vault emitters. `hide_render` is set per engine from whichever of the two is zero; with both
+    non-zero the lamps are visible to both renderers."""
     S = SHADE_FILL
     e_total = S["energy"] if energy is None else energy
     e_eevee = S.get("energy_eevee", 0.0) if energy_eevee is None else energy_eevee
@@ -597,6 +642,7 @@ def build_world(az, el, calib, moment):
     w = cal.make_sky_world(WORLD_NAME, az, el, SKY, sun_disc=False, strength=SKY_STRENGTH,
                            camera_boost=SKY_CAMERA_BOOST, camera_saturation=SKY_CAMERA_SATURATION,
                            glossy_boost=SKY_GLOSSY_BOOST, glossy_saturation=SKY_GLOSSY_SATURATION,
+                           glossy_hue=SKY_GLOSSY_HUE,
                            diffuse_saturation=SKY_DIFFUSE_SATURATION, diffuse_hue=SKY_DIFFUSE_HUE,
                            diffuse_tint=SKY_DIFFUSE_TINT, diffuse_boost=SKY_DIFFUSE_BOOST,
                            diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,
@@ -620,6 +666,7 @@ def build_world(az, el, calib, moment):
     w["sky_diffuse_boost"] = SKY_DIFFUSE_BOOST
     w["sky_camera_saturation"] = SKY_CAMERA_SATURATION
     w["sky_glossy_saturation"] = SKY_GLOSSY_SATURATION
+    w["sky_glossy_hue"] = SKY_GLOSSY_HUE
     w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
     w["sky_diffuse_hue"] = SKY_DIFFUSE_HUE          # r12 review finding 3: the world carried every other socket but not this one
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)

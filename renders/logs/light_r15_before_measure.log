@@ -1,0 +1,34 @@
+
+-- r15b_r14BEFORE_01c.png   (cam 01, boxes at 1920x1080)
+   shaded_attic    lum  136.8  hue   32.6  sat 0.306  R-B   +47.7  hue PASS[24-36] sat PASS[0-0.5] lum FAIL[103.5-126.5]
+   sunlit_attic    lum  189.6  hue   35.9  sat 0.444  R-B  +100.1  lum PASS[178-201]
+   entablature     lum  132.9  hue   38.6  sat 0.667  R-B  +113.4
+   columns         lum  125.9  hue   35.1  sat 0.546  R-B   +86.1
+   water_refl      lum  108.4  hue   37.4  sat 0.267  R-B   +31.9  hue PASS[25-45]
+   near_water_sky  lum  144.7  hue  228.2  sat 0.292  R-B   -54.8  hue FAIL[185-200] lum FAIL[79.1-131.8]
+   sky_top         lum  168.0  hue  208.7  sat 0.434  R-B   -95.9
+   sky_left        lum  154.9  hue  208.6  sat 0.495  R-B  -105.7
+   south_wing      lum  101.0  hue   36.6  sat 0.264  R-B   +29.3
+   north_wing      lum  139.9  hue   40.7  sat 0.449  R-B   +72.7
+   shore_band      lum   88.8  hue   41.6  sat 0.597  R-B   +64.2
+   flank           lum  188.1  hue  224.2  sat 0.276  R-B   -65.1  hue FAIL[0-210] lum PASS[114.3-190.5]
+
+-- r15b_r14BEFORE_02e.png   (cam 02, boxes at 1280x720)
+   shade_pier      lum   31.3  hue  260.9  sat 0.502  R-B   -17.9  ratio 0.709  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_pier_r    lum   47.1  hue  251.7  sat 0.473  R-B   -30.8  ratio 1.067  QA FAIL[25-60] sat FAIL[0-0.35]
+   shade_soffit    lum   43.6  hue  242.6  sat 0.538  R-B   -44.3  ratio 0.987
+   shade_frieze    lum   86.0  hue   26.0  sat 0.207  R-B   +19.7  ratio 1.947
+   sunlit_pier     lum   44.2  hue   30.4  sat 0.764  R-B   +50.0
+   sky             lum  168.4  hue  209.9  sat 0.395  R-B   -85.8
+
+-- r15b_r14BEFORE_03e.png   (cam 03, boxes at 1280x720)
+   walk            lum   55.5  hue  193.7  sat 0.159  R-B    -9.4  ratio 0.560  QA FAIL[25-60] brief FAIL[195-230] sat PASS[0-0.35]
+   shaft_flank     lum   41.9  hue   47.7  sat 0.863  R-B   +44.7  ratio 0.424
+   outer_row       lum   11.3  hue   69.1  sat 0.916  R-B    +9.7  ratio 0.115  QA FAIL[25-60]
+   near_shaft      lum   18.2  hue   75.6  sat 0.399  R-B    +5.7  ratio 0.184
+   sunlit_rotunda  lum   99.0  hue   36.8  sat 0.427  R-B   +49.7
+   frame           lum   39.9  hue    0.0  sat 0.000  R-B    +0.0  dark 18.5%
+
+-- r15b_r14BEFORE_05e.png   (cam 05, boxes at 1280x720)
+   water_band      lum  128.5  hue   35.3  sat 0.242  R-B   +34.1  sat PASS[0.24-1] lum FAIL[70-117]
+   attic_band      lum  158.9  hue   37.5  sat 0.592  R-B  +117.8

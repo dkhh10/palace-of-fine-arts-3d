@@ -424,3 +424,19 @@ Closed: QA-06-1 stack (all courses within 5 rows, spread 0.67 m), QA-06-2 violet
 ## 2026-09-09 · Session restart (lead): stations moved, silhouette re-registered, LIGHT r15 + ORN r8 review dispatched
 cam01 z 1.6 -> 1.3 (2.6 m over the water, QA round 07 item 5); cam02 to the ref-062 NNE fit (-79.8, 24.4, 1.55) -> (0, 0, 23.5) 40 mm (65ef92c). Registration on one Eevee hero frame upscaled to 1920: align scale 1.3108, apex delta 0.53 %H; stack band 880-1040: crown 164 vs ref 168, panel bottom 255 vs 265 (widest, 6 rows), corona 280 vs 278, architrave 319 vs 324, abacus 333 vs 333 — all inside the +-8 row acceptance; the tool's auto-walk (median +0.52 m) mis-pairs edges on the Eevee frame, the panel round08pre_stack_offset.png is the evidence.
 In flight: LIGHT r15 (docs/briefs/lighting_r15.md, Opus high), ORN r8 code review (no Blender), Phase 5 prep on branch phase5 (no render). Next: LIGHT review + merge, MAT r9 projection (Opus xhigh), ORN r8 merge + capital bake, lead_build.sh, QA round 8.
+
+## 2026-09-09 · ORN r8 merged after review (MERGE WITH FIXES; main's baked ornament.blend kept, notes' pending-bake bullet corrected)
+Pending before the next master build: `orn_build.py --only capital_rotunda` WITH bake in the GPU gap after LIGHT r15 (attic_panel is baked on main). Carries for a later ornament round: two ref_002 pixel scales in the notes, source_ns() brace counter, --verify skips the two 1.8 m capitals.
+In flight: LIGHT r15, Phase 5 prep (branch phase5). Next: LIGHT review + merge, ORN bake, MAT r9.
+
+## 2026-09-09 · Phase 5 prep reported (branch phase5, c9afc7f), in review
+scripts/phase5_deliver.sh (checklist steps 2-6 through blender_run.sh, step 5 picks spp/res from step 4's wall time), phase5_hero.py, phase5_flythrough.py, tech_notes "Opening and rendering (Phase 5)". Held on branch until the gate; review docs/reviews/phase5_r1_review.md.
+In flight: LIGHT r15, phase5 review. Next: LIGHT review + merge, ORN capital bake, MAT r9.
+
+## 2026-09-09 · LIGHT r15 reported (aec2d77), in review; ORN capital bake running (lead)
+LIGHT r15: the lagoon flood was LIGHT_shade_fill (3 blue lamps at el 2), not the sky: 3 lamps -> 1 (NNE) + SKY_GLOSSY_BOOST 5.25 -> 4.20; near water 144.7/h228 -> 107.7/h209.4 (level pass, hue 9.4 deg out = materials' body colour), flank 188 -> 145.2/h210 pass, reflection R-B +39.9 pass, sky boxes identical, cam05 band Cycles 108.4 pass; Eevee fast GI OFF: cam03 under-lum-10 18.5 -> 4.6 %, outer row 0.189 pass, cam06 roofs hue 33, Eevee pass 196.4 s. Unresolved: hero shaded attic 136.4 (130.8 with the fill off; the shaded albedo is ~12 % hot vs sunlit -> MAT r9), cam02 pier hue 260 (lead: hero holds, minor). cam02 water box retired (no water at the NNE station).
+Decision: QA-07-7 goes to materials as a shaded-albedo item; QA-07-11 stays minor. Next: LIGHT review + merge, MAT r9 dispatch (brief updated with the hand-offs), lead_build.sh, QA round 8.
+
+## 2026-09-09 · LIGHT r15 merged (aec2d77 + lead corrections); MAT r9 dispatched
+Review caveat carried: the "sky rotation moves water hue 0.1 deg" claim was measured at the null hue (sweep bug, fixed); the 9.4 deg hand-off rests on the lamp isolation alone. Carries to a later lighting round: apply_shade_for_engine docstring, §25.3 AFTER column mixes fast-GI states, Eevee hero attic hue 36.5 vs window 35.5, light_r15_sheet.py hard-coded path.
+In flight: MAT r9 (docs/briefs/materials_r9.md, Opus xhigh). Next: MAT review + merge, lead_build.sh, QA round 8.

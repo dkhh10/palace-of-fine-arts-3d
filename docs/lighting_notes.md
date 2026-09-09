@@ -2374,3 +2374,152 @@ Cycles' **116.4 / 33.6 / 0.410** — d_lum **-6.2 %**, d_hue **-1.0**, d_sat **+
 - No measure stdout is committed for §24.6-24.7; the tables stand as reported by the agent, unverified by log (carry: commit
   light_r14_measure output in r15). Sweep defaults (tap/thp 1.0, fill 0.0) are stale vs the shipped rig (carry, r15). cam06 roofs hue
   315.8 and cam02 pier 3.8 are over-corrected past neutral (lead accepts for QA round 7; r15 item if scored).
+
+# Round 15 — the lagoon's blue is a LAMP, not the sky (QA-07-1), and cam03's black frame is fast GI (QA-07-5)
+
+## 25. Round 15
+
+Master: `scripts/lead_build.sh` in this worktree, **9679 objects, 11.38 M tris at LOD1** (9681 before the two shade
+lamps were deleted). Cycles hero 1920x1080 / 64 spp, the Eevee cameras 1280x720 / 32 TAA (the hero also at
+1920x1080 in Eevee). Logs: `light_r15_before.log`, `light_r15_sweep{1,2,3}.log`, `light_r15_acc.log`,
+`light_r15_probe{,2}.log`, `light_r15_final.log`; every measurement stdout is committed
+(`light_r15_before_measure.log`, `light_r15_sweep_measure.log`, `light_r15_acc_measure.log`,
+`light_r15_final_measure.log`) — the r14 review's carry 4.
+
+### 25.1 Item 0 — cam02's boxes, re-based on the round-08 station
+
+The lead re-stationed cam02 from the SSE shore path (75 m, 24 mm) to the ref-062 NNE fit at (-79.8, 24.4, 1.55),
+40 mm. That is not a nudge: it is a close three-quarter of the rotunda from below, and **there is no water in the
+frame at all**. Every round-14 cam02 box therefore lands on unrelated pixels. The new set (in
+`scripts/light_r15_measure.py`, picked on `r15b_r14BEFORE_02e.png`, all **new**):
+
+| box | pixels (1280x720) | what it is |
+|---|---|---|
+| `shade_pier` | 573 227 653 387 | the near-left shaded fluted column shaft — QA-07-11's "shade pier" on this station |
+| `shade_pier_r` | 700 240 760 380 | its twin on the right of the near arch |
+| `shade_soffit` | 400 280 520 355 | the left arch's coffered soffit |
+| `shade_frieze` | 250 40 420 110 | the shaded relief frieze of the attic zone |
+| `sunlit_pier` | 273 340 350 500 | the sunlit pier base at the left edge: the warm denominator |
+| `sky` | 60 40 200 140 | clear sky, upper left — a HOLD (camera rays; no round-15 socket touches it) |
+
+**RETIRED: the cam02 `water` box (300 640 900 715).** There is nothing to measure it on. QA-06-2's cam02 water
+number cannot be carried forward on this station and should be dropped from the rubric.
+
+### 25.2 Item 1 (QA-07-1, blocker) — the answer is not in the sky
+
+The brief asked what the r14 sky's horizon band gives a glossy ray at 87-89 deg. Measured, on the merged master,
+one variable at a time, Cycles hero 64 spp (border 90 215 1460 1060, so every box keeps its pixel coordinates):
+
+| case | near water 1150 1000 1450 1050 | flank 100 900 400 960 | water_refl R-B | hero shaded attic |
+|---|---|---|---|---|
+| BEFORE (round-07 rig) | 144.7 / hue 228.2 / sat 0.292 | 188.1 / hue 224.2 | +31.9 | 136.8 / hue 32.6 |
+| **A** glossy boost 5.25 -> 4.20 **and glossy hue -14.4 deg** | 139.3 / **hue 228.3** / 0.319 | 180.8 / hue 224.4 | **+37.9** | 136.5 / 32.6 |
+| **B** the whole shade fill OFF (70/55 -> 0/0) | **118.6 / hue 208.6 / 0.244** | **159.1 / hue 210.2** | +39.7 | 130.8 / **hue 40.8** |
+| **C** WNW 0.5 / SSW 2.0 / NNE 0.1 | 134.1 / 225.4 | 200.9 / 223.3 | +36.3 | 131.9 / 39.7 |
+| **E** WNW 1.0 / SSW 0 / NNE 0 | 143.9 / 227.8 | **159.2 / 210.3** | +38.4 | **130.9 / 40.7** |
+| reference (ref 169, QA-07-1) | 105.4 / 190.0 / 0.248 | 152.4 / 200.3 | — | 118.8 |
+
+Three things fall out of that table and none of them was the expected answer.
+
+1. **The sky's glossy socket has no hue authority over the open lagoon.** Case A rotates the sky that glossy rays
+   see by 14.4 degrees and the water's hue moves by **0.1 degree**. The reason is geometric: the hero eye is 2.6 m
+   over the water and the `near_water` box sits 24 deg below the horizon, i.e. **66 deg of incidence, not 88**, where
+   Fresnel returns ~0.10. Nine tenths of what that box shows is the water BODY lit diffusely, not a mirror. The
+   `glossy_hue` socket built this round (`light_calibrate.make_sky_world(glossy_hue=)`, `SKY_GLOSSY_HUE`) is
+   therefore **shipped at its null value 0.500**, kept because the measurement is worth more than the knob.
+2. **`LIGHT_shade_fill` is the lagoon's blue.** Switching it off moves the near-water box 144.7 -> 118.6 and its hue
+   228.2 -> 208.6, and the flank 188.1 -> 159.1 / 224.2 -> 210.2 — i.e. essentially the whole defect. Three sun lamps
+   of colour (0.03, 0.02, 1.00) at el 2 deliver sin(2 deg) x 3 x 70 = 7.3 W/m2 of nearly pure blue onto a horizontal
+   surface, against the 8.2 W/m2 the real sun delivers there at el 7. It was designed to rake vertical walls and it
+   does; what nobody measured is what the 3.5 % that lands flat does to 4 000 m2 of water.
+3. **Each lamp owns a different box.** The WNW lamp (az 300, shining toward az 120 — straight down the hero's axis)
+   is worth **+0.1 lum** to the hero's shaded attic and **+25.3 lum / +19 deg** to the near water. The SSW lamp owns
+   the flank (+29 lum / +14 deg) and, measured, does **nothing** for the colonnade it was aimed into. The NNE lamp is
+   the only one that reaches the hero's shaded attic, which is a north-facing surface: it is worth +6.0 lum and
+   -8.2 deg of hue there.
+
+**Shipped:** the rig goes from three lamps to **one** (NNE, az 25, el 2) at **49.0 W/m2 Cycles / 38.5 W/m2 Eevee**,
+which is exactly the 0.70 x 70 that lamp always had — the light on the hero's shade is unchanged by construction —
+plus `SKY_GLOSSY_BOOST` 5.25 -> **4.20**, which is what puts the reflection hold back inside its window.
+
+### 25.3 The frontier that is left, and whose it is
+
+| box | BEFORE | **AFTER (r15)** | window / reference | verdict |
+|---|---|---|---|---|
+| **QA-07-1** near water | 144.7 / 228.2 / 0.292 | **107.7 / 209.4 / 0.293** | 79.1-131.8 (ref 105.4), hue 185-200 | **lum PASS (2.2 % off the photo)**, hue 9.4 deg out |
+| **QA-07-1** flank | 188.1 / 224.2 | **145.2 / 210.2** | 114.3-190.5 (ref 152.4), hue <= 210 | **lum PASS (4.7 % off)**, hue 0.2 deg out |
+| **QA-07-1** cam05 band, EEVEE | 128.5 / 0.242 | 134.0 / 0.229 | 70-117, sat >= 0.24 | FAIL |
+| **QA-07-1** cam05 band, **CYCLES** | — | **108.4 / hue 41.6 / sat 0.706** | 70-117, sat >= 0.24 (ref 93.4) | **PASS on both** |
+| **HOLD** water_refl R-B / hue | +31.9 (FAIL) / 37.4 | **+39.9 / 38.3** | >= +35, hue 25-45 | **recovered** |
+| **HOLD** sky_top / sky_left | 168.0 / 154.9 | **168.0 / 154.9** | must not move | **identical** |
+| **HOLD** sunlit attic | 189.6 | **189.5** | 178-201 | PASS |
+| **HOLD** hero shaded attic hue / sat | 32.6 / 0.306 | **32.7 / 0.308** | 23.5-35.5 / <= 0.50 | PASS |
+| **QA-07-7** hero shaded attic lum | 136.8 | **136.4** | 103.5-126.5 (ref 118.8) | FAIL, see below |
+| **QA-07-5** cam03 outer row / sunlit | 0.120 | **0.189** at hue 57.1 | >= 0.15, hue 25-60 | **PASS** |
+| **QA-07-5** cam03 frame under lum 10 | 18.5 % | **4.6 %** | <= 20 % | **PASS** |
+| cam03 shaft flank / sunlit | 0.444 | **0.510** | 0.30-0.70 | PASS |
+| **QA-07-11** cam02 shade pier hue / sat | 261.8 / 0.495 | **259.8 / 0.478** | 25-60 / <= 0.35 | FAIL, see 25.5 |
+| **r14 carry** cam06 roofs hue | 334.5 | **33.3** at sat 0.070 | 22-52 | **PASS**, carry closed |
+| **r14 carry** cam06 plaza / trees hue | 33.9 / 32.8 | **46.1 / 41.4** | 22-52 / 23-53 | PASS |
+| **QA-06-13** five-camera Eevee pass | 217.0 s | **196.4 s (-9.5 %)** | six-camera pass < 150 s | improved again |
+
+**Hand-off to materials r9, with the number.** Lighting has taken the lagoon's sky component as far as it goes:
+with the whole fill removed the near-water box floors at **hue 208.6** and the flank at **210.2**, and a 14.4 deg
+rotation of the sky the water mirrors moves it by 0.1 deg. The remaining **9.4 deg** (209.4 against the 185-200
+window; ref 169's water is 190.0 while the sky above it is 208.2, i.e. **the photograph's water is 18 deg greener
+than the sky it mirrors**) is the water's own body colour — `MAT_water_lagoon`'s murk / absorption tint, not the
+light. Levels are already inside: 107.7 against the photo's 105.4 and 145.2 against 152.4.
+
+**QA-07-7, the frontier, with the number.** The hero's shaded attic is 136.4 against a 126.5 ceiling. With
+`LIGHT_shade_fill` switched off entirely it is still **130.8** — the fill is worth 6 lum of the 18 that are over —
+and the only lighting lever that reaches the rest is `SKY_DIFFUSE_BOOST`: at 2.5 -> 1.9 the attic lands at 122.7
+(PASS) but cam03's black fraction goes **18.6 % -> 29.2 %** and its outer row 0.120 -> 0.090, i.e. it buys a minor
+defect by re-opening a major one. It is also not lighting's number: under an unchanged rig this box went
+**116.4 (the r14 master) -> 136.8 (+17.5 %)** while the sunlit attic next to it went 180.5 -> 189.6 (+5.0 %). The
+shaded stone got 3.5x more of the materials r8 albedo change than the sunlit stone did. **Hand-off to materials r9:
+the shaded-stone albedo is 12 % hot relative to the sunlit stone on the same wall.**
+
+### 25.4 Item 3 (QA-07-5) — it was never the shade fill
+
+r14 recommended raising the SSW lamp. Measured on the merged master, that is wrong: **SSW 1.0 -> 2.0 moves the outer
+row 0.115 -> 0.110**, and switching the entire rig off moves it 0.115 -> 0.119. No lamp reaches that box.
+
+What does is **Eevee's fast GI**, the screen-traced horizon scan that decides how much of the world SH an occluded
+surface may see; inside a 12 m colonnade it decides "almost none". Same master, same rig, same 32 TAA:
+
+| | outer row / sunlit | frame under lum 10 | walk hue | shaft flank / sunlit | 03e time |
+|---|---|---|---|---|---|
+| fast GI on, 60 m (r14) | 0.120 | 18.5 % | 193.3 | 0.444 | 46.6 s |
+| **fast GI OFF (shipped)** | **0.189** | **4.6 %** | **89.1** | **0.510** | 46.1 s |
+
+Both QA-07-5 tests pass with margin, at no time cost, and it also closes the r14 review's item 10 on cam06's roofs
+(hue 334.5 -> 33.3, back inside QA's 22-52) and improves the Eevee/Cycles hero agreement (shaded attic **-10.6 % ->
+-3.3 %** of the Cycles frame, hue +1.0 -> +3.7 deg). The two costs, stated: the Eevee-vs-Cycles saturation delta
+goes 0.097 -> 0.125 against a 0.10 window (r13 item 1's third test, now 0.025 out), and cam05's EEVEE water band
+goes 128.5 -> 134.0 — which the Cycles frame (108.4) says is an Eevee artefact, not a lighting level.
+
+### 25.5 What is NOT solved, honestly
+
+* **QA-07-11 (cam02's shaded pier), UNRESOLVED and unresolvable with this rig.** The surviving NNE lamp is the same
+  lamp that holds the hero's shaded attic inside its hue window, and cam02's piers face exactly down its axis at
+  80 m. No weight lands both: w 0.70 -> attic hue 32.6 / pier 261.8; w 0.10 -> attic 39.7 / pier 355.3;
+  w 0.00 -> attic 40.7 / pier 23.2. The hue never passes through 25-60 on the way. Separating them needs either a
+  fill colour with green in it (which moves the hero's attic, the project's best-matched box) or Cycles light
+  linking (Cycles-only, so the Eevee previews would disagree). **Lead's call**; lighting recommends leaving the
+  hero's box alone, since QA-07-11 is minor and the hero is the gate.
+* **cam03's walk hue is 89.1** against QA's 25-60. It was 193.3 (violet-blue) and is now green-warm: 29 deg out
+  instead of 133. Environment's grass reads through the opened colonnade.
+* **The visible sky is untouched**, by construction and by measurement: `sky_top` 168.0 and `sky_left` 154.9 are
+  identical before and after to 0.1 lum, because every socket this round moved is behind a Light Path split that
+  camera rays never traverse.
+
+### 25.6 Round-14 review carries, all closed
+
+1/2 sweep defaults now read from `lb.` (`tap`, `thp`, `fill`) and the case header prints the WORLD's own properties,
+not the case keys. 4 every measure stdout is committed (four logs, listed at the top of 25). 5 `light_probes`' "Eevee
+hack" comment is corrected: the fill is real light in both engines and 70-in-the-bake / 55-at-render was intended
+(49 / 38.5 now). 6 `build_shade_fill`'s docstring. 7 `apply_shade_for_engine`'s `energy_W` fallback multiplies by the
+lamp's own `w`. 8 one horizon-exponent table, E[(1-|z|)^p] per hemisphere, in `light_build.py` and referenced from
+`light_calibrate.py`: 1.73x at p 1, 3.07x at p 3, **5.02x at the shipped p 6** (the old "4.8x at p 10" and "4.7x at
+p 3" were both wrong and disagreed with each other). 9 the round-14 acceptance panels are deleted; 10 (cam06 roofs)
+is closed by 25.4 and cam02's pier is 25.5.
