@@ -254,3 +254,7 @@ In flight: ARCH review, LIGHT r12, ENV r7. Next: merge arch, then lighting; MAT 
 ## 2026-09-09 · ARCH r4 merged after review (MERGE WITH FIXES; docs/reviews/arch_r4_review.md)
 Lead fixes: notes profile table corrected to r4b; 128 spp re-measure identical to the builder's crop (QA box row 32.5 / tex 47.6; model's own cornice box 43.3 / 54.7). Carried to ARCH r5: stale comment, silhouette artifact, hard-coded QA alignment, measure-script threshold text. Open lead question: the model's cornice sits 1.04 m higher than ref 169's under QA's alignment (stack question, no change made). ORN note: rotunda frieze band is now 0.90 m tall; sockets carry run_length only.
 In flight: LIGHT r12, ENV r7. Next: lighting review + merge, MAT r7 dispatch, then ENV merge, lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV r7 reported (99c544c), in review
+ENV r7: LOD1 4.62 M; cam03 ground std 14.1 -> 27.8 (walk 16.7 % of box); shore band null (+12 pp sun reach, band 71.7 -> 71.7: needs +43.9 lum from sky/materials, not planting); cam06 ground 13.8 -> 23.4 %, asphalt 2.47 -> 4.08 %; south wing untouched as briefed. Sheet renders/qa_comparisons/env_r7_sheet.png.
+Hand-offs: lighting (cam06 mist +58 lum flattens the horizon, wing sky term 36 lum short, shore +43.9 lum), materials (MAT_paving_stone / _worn missing; shore level without saturation), arch (COLONNADE_WALK_Z tracks COLONNADE_GROUND_Z). In flight: ENV review, LIGHT r12. Next: merge lighting, MAT r7.
