@@ -1,5 +1,5 @@
-00:00.374  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
-00:00.621  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
+00:00.488  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
+00:00.677  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
 
 === 1. socket census vs ORN assets (build_master.py ORN_COLL coverage) ===
   attic_figure     n=   8  ORN asset: attic_figure           PRESENT
@@ -168,4 +168,4 @@
 Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
 
 Blender quit
-blender_run.sh: pid 36816 exited rc=0 after 4 s (max 900)
+blender_run.sh: pid 37211 exited rc=0 after 5 s (max 900)
