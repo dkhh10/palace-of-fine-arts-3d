@@ -149,7 +149,7 @@ def _sat_stage(nt, name, color_out, fac_out, saturation, hue=0.5):
 
 def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0, camera_boost=1.0,
                    camera_saturation=1.0, glossy_boost=None, glossy_saturation=None, diffuse_saturation=1.0,
-                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0):
+                   diffuse_boost=1.0, diffuse_hue=0.5, diffuse_tint=None, diffuse_tint_antisun=0.0, diffuse_tint_horizon=0.0):
     """World with a MULTIPLE_SCATTERING sky. sun_rotation = azimuth (clockwise from north), verified in check_convention().
     strength scales the whole sky (lighting AND visible sky); camera_boost additionally scales what camera rays see and
     glossy_boost what glossy (reflection) rays see, leaving diffuse lighting untouched (Light Path node);
@@ -275,6 +275,31 @@ def make_sky_world(name, az_deg, el_deg, sky=None, sun_disc=False, strength=1.0,
             nt.links.new(inv2.outputs[0], m.inputs[0])
             nt.links.new(blend.outputs["Result"], m.inputs[1])
             fac_out = m.outputs[0]
+        # ROUND 12b: the second discriminator, by ray ELEVATION. A vertical shaded wall samples the sky in
+        # near-HORIZONTAL directions (its hemisphere is centred on a horizontal normal); a horizontal surface --
+        # the lagoon, the plaza -- samples it cosine-weighted about the ZENITH. So weighting the tint by
+        # 1 - |ray.z| puts it on shaded stone and keeps it off the water, which is what the first ship of this
+        # round got wrong: the lagoon's murk term went to saturation 0.457 (QA's window is 0.22-0.32) because a
+        # tint applied to the whole dome reaches anything that faces up. Physically this is the anti-sun horizon
+        # band, which at a 7 deg sun is the bluest part of a real sky (the Earth-shadow / Belt of Venus band).
+        if diffuse_tint_horizon > 0.0:
+            geo2 = nt.nodes.new("ShaderNodeNewGeometry"); geo2.name = "ray_direction_z"
+            sep = nt.nodes.new("ShaderNodeSeparateXYZ"); sep.name = "ray_z"
+            nt.links.new(geo2.outputs["Incoming"], sep.inputs[0])
+            ab = nt.nodes.new("ShaderNodeMath"); ab.operation = "ABSOLUTE"; ab.name = "abs_ray_z"
+            nt.links.new(sep.outputs["Z"], ab.inputs[0])
+            hz = nt.nodes.new("ShaderNodeMath"); hz.operation = "SUBTRACT"; hz.name = "horizon_weight"
+            hz.inputs[0].default_value = 1.0; hz.use_clamp = True
+            nt.links.new(ab.outputs[0], hz.inputs[1])
+            hb = nt.nodes.new("ShaderNodeMapRange"); hb.name = "horizon_blend"
+            hb.inputs["From Min"].default_value = 0.0; hb.inputs["From Max"].default_value = 1.0
+            hb.inputs["To Min"].default_value = 1.0 - diffuse_tint_horizon
+            hb.inputs["To Max"].default_value = 1.0
+            nt.links.new(hz.outputs[0], hb.inputs["Value"])
+            mh = nt.nodes.new("ShaderNodeMath"); mh.operation = "MULTIPLY"; mh.name = "tint_fac_horizon"
+            nt.links.new(fac_out, mh.inputs[0])
+            nt.links.new(hb.outputs["Result"], mh.inputs[1])
+            fac_out = mh.outputs[0]
         mixn = nt.nodes.new("ShaderNodeMix"); mixn.name = "sky_tint_diffuse"
         mixn.data_type = "RGBA"; mixn.blend_type = "MULTIPLY"; mixn.clamp_factor = True
         # ShaderNodeMix carries one socket per data type and several share a name, so pick them by name AND type

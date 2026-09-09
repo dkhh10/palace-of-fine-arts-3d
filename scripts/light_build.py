@@ -119,6 +119,11 @@ SKY_DIFFUSE_TINT = (1.0, 0.65, 11.5)  # ROUND 12 (QA-05-1), SHIPPED: a white bal
                                    # blue far above it. Under the anti-sun weighting below the effective gain on a
                                    # shaded wall is about half the nominal, so b is 11.5 rather than 3.8. Swept in
                                    # round 12; see docs/lighting_notes.md section 21.
+SKY_DIFFUSE_TINT_HORIZON = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 1.0. Weights the diffuse tint by
+                                   # 1 - |ray.z|, i.e. onto the horizon band a vertical shaded wall samples and off
+                                   # the zenith an up-facing surface samples. Without it the lagoon's diffuse (murk)
+                                   # term takes the whole tint and the near-water box goes to saturation 0.457
+                                   # against QA's 0.22-0.32 window. See docs/lighting_notes.md 21.9.
 SKY_DIFFUSE_TINT_ANTISUN = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 1.0 (fully anti-sun weighted). 0 = SKY_DIFFUSE_TINT is applied to the whole
                                    # dome; 1 = it is applied in proportion to how far the ray points AWAY from the sun
                                    # (weight 0.5 + 0.5 * Incoming.sun_direction). A shaded face samples the anti-sun
@@ -492,7 +497,8 @@ def build_world(az, el, calib, moment):
                            glossy_boost=SKY_GLOSSY_BOOST, glossy_saturation=SKY_GLOSSY_SATURATION,
                            diffuse_saturation=SKY_DIFFUSE_SATURATION, diffuse_hue=SKY_DIFFUSE_HUE,
                            diffuse_tint=SKY_DIFFUSE_TINT, diffuse_boost=SKY_DIFFUSE_BOOST,
-                           diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN)  # disc OFF: LIGHT_sun carries it
+                           diffuse_tint_antisun=SKY_DIFFUSE_TINT_ANTISUN,
+                           diffuse_tint_horizon=SKY_DIFFUSE_TINT_HORIZON)  # disc OFF: LIGHT_sun carries it
     w.node_tree.nodes["SKY"].label = "MULTIPLE_SCATTERING sky, disc off (LIGHT_sun provides the sun)"
     ms = w.mist_settings
     ms.use_mist = True
@@ -513,6 +519,7 @@ def build_world(az, el, calib, moment):
     w["sky_diffuse_saturation"] = SKY_DIFFUSE_SATURATION
     w["sky_diffuse_tint"] = list(SKY_DIFFUSE_TINT)
     w["sky_diffuse_tint_antisun"] = SKY_DIFFUSE_TINT_ANTISUN
+    w["sky_diffuse_tint_horizon"] = SKY_DIFFUSE_TINT_HORIZON
     w["sky_units_E_sun_rgb"] = calib["sky"]["E_sun_rgb"]
     w["sky_units_L_horizon_west"] = calib["sky"]["L_horizon_west"]
     w["sky_units_L_zenith"] = calib["sky"]["L_zenith"]

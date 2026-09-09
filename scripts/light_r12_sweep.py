@@ -85,6 +85,7 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 tg=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[1],   # existing "k=v;" case syntax still parses
                 tb=getattr(lb, "SKY_DIFFUSE_TINT", (1., 1., 1.))[2],
                 ta=getattr(lb, "SKY_DIFFUSE_TINT_ANTISUN", 0.0),   # anti-sun weighting of the diffuse tint
+                th=getattr(lb, "SKY_DIFFUSE_TINT_HORIZON", 0.0),   # horizon-band weighting of the diffuse tint
                 bm=lb.SUN_BLUE_MULT, de=0.0,
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
@@ -124,7 +125,7 @@ def case_tag(c):
     if c["tag"]:
         return c["tag"]
     bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "bm", "de",
-                                     "tr", "tg", "tb", "ta", "fill", "fel", "spec", "fcr", "fcg", "fcb", "dif", "f", "v")
+                                     "tr", "tg", "tb", "ta", "th", "fill", "fel", "spec", "fcr", "fcg", "fcb", "dif", "f", "v")
             if abs(c[k] - DEFAULTS[k]) > 1e-9]
     if c["look"]:
         bits.append(c["look"].replace(" ", "").replace("_", ""))
@@ -171,7 +172,7 @@ def apply_case(c):
                            glossy_boost=c["gb"], glossy_saturation=c["gsat"],
                            diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"],
                            diffuse_tint=(c["tr"], c["tg"], c["tb"]), diffuse_boost=c["db"],
-                           diffuse_tint_antisun=c["ta"])
+                           diffuse_tint_antisun=c["ta"], diffuse_tint_horizon=c["th"])
     ms = w.mist_settings
     ms.use_mist = True
     ms.start, ms.depth, ms.falloff = lb.MIST["start"], lb.MIST["depth"], lb.MIST["falloff"]
@@ -201,7 +202,7 @@ def apply_case(c):
     for o in _VAULT:
         o["energy_W"] = _E_VAULT0 * c["v"]
     print(f"[r12] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} dhue {c['dhue']:g} "
-          f"tint {c['tr']:g},{c['tg']:g},{c['tb']:g} antisun {c['ta']:g} cb {c['cb']:g} gb {c['gb']:g} "
+          f"tint {c['tr']:g},{c['tg']:g},{c['tb']:g} antisun {c['ta']:g} horizon {c['th']:g} cb {c['cb']:g} gb {c['gb']:g} "
           f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} spec {c['spec']:g} "
           f"fcol {c['fcr']:g},{c['fcg']:g},{c['fcb']:g} f {c['f']:g} ({_E_DISK0*c['f']:.0f} W) "
           f"v {c['v']:g} ({_E_VAULT0*c['v']:.0f} W) "
