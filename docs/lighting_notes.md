@@ -1384,6 +1384,15 @@ lower down. Part of the 1.170 is framing, not haze.
 Nothing in round 12 moves it: the round's whole intervention is on the DIFFUSE socket, which camera rays never see,
 so sky_top and sky_left are held by construction (verified in the round-12 table below: both unchanged).
 
+**Round 12 measured the decisive number: on MATCHED PIXELS the photograph scores the same 0.92 the render does.**
+`light_r12_measure.py --ref` runs lighting's own sky_top / sky_left boxes over panel 1 of
+`renders/qa_comparisons/round03_cam01_aligned_vs_ref169.png`, i.e. over ref 169 warped into the render's frame by
+QA's own align transform — the same warp every other reference number in this round comes from. It gives
+**sky_left / sky_top = 0.921 for the photograph** against **0.921 for the render** (base row, wave 1). The 1.170 in
+the defect is measured on the RAW photo, where the horizon sits 9 % of frame height lower, so the two boxes sample
+different heights above the horizon. Against the reference QA uses for every other box on this camera, the render's
+haze gradient is already exact to 0.001.
+
 **Recommendation to the lead: close QA-05-7 as an accepted deviation at 0.922, or commission a compositor sky
 gradient as an explicit art bias.** The gradient is cheap (one screen-space ramp multiplied into the sky mask in
 `COMP_golden_hour`, ~10 lines) and is the only route left, but it is an art bias painted onto a physically simulated

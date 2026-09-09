@@ -88,6 +88,10 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 sm=1.0,      # sun-lamp energy multiplier: sm=0 renders the SKY's contribution alone
                 wm=1.0,      # world strength multiplier on top of `sky`: wm=0 renders the SUN's contribution alone
                 fill=0.0,    # SHADE_FILL total irradiance in W/m2 across the three lamps (0 = off)
+                fcr=-1.0, fcg=-1.0, fcb=-1.0,   # SHADE_FILL colour override, one key per channel (-1 = keep
+                             # light_build's clear-sky blue 0.42/0.62/1.00). Round 10 measured that the fill makes the
+                             # shaded attic WARMER partly because its own green is 0.62 of its blue: hue is
+                             # (G-B)/(R-B), so a lamp whose green is high cannot lower it however blue it looks.
                 spec=-1.0,   # SHADE_FILL specular_factor override (-1 = keep light_build's 0.10). ROUND 12: at 0.0
                              # the fill is DIFFUSE-ONLY, so it cannot reach the lagoon's grazing reflection or the
                              # column highlights -- the two costs that made round 10 reject the rig.
@@ -116,7 +120,7 @@ def case_tag(c):
     if c["tag"]:
         return c["tag"]
     bits = [f"{k}{c[k]:g}" for k in ("sky", "cb", "gb", "db", "csat", "gsat", "dsat", "dhue", "bm", "de",
-                                     "tr", "tg", "tb", "fill", "fel", "spec", "f", "v")
+                                     "tr", "tg", "tb", "fill", "fel", "spec", "fcr", "fcg", "fcb", "f", "v")
             if abs(c[k] - DEFAULTS[k]) > 1e-9]
     if c["look"]:
         bits.append(c["look"].replace(" ", "").replace("_", ""))
@@ -181,6 +185,8 @@ def apply_case(c):
         _SHADE_FILL0, lamps=[dict(l, el=c["fel"]) for l in _SHADE_FILL0["lamps"]])
     if c["spec"] >= 0.0:
         lb.SHADE_FILL = dict(lb.SHADE_FILL, specular=c["spec"])
+    if min(c["fcr"], c["fcg"], c["fcb"]) >= 0.0:
+        lb.SHADE_FILL = dict(lb.SHADE_FILL, color=(c["fcr"], c["fcg"], c["fcb"]))
     lb.build_shade_fill(coll, energy=c["fill"])
     # interior fills (QA-04-7). Scale energy_W, not energy: apply_vault_for_engine rewrites energy from energy_W on
     # every preset call, so a scale written to energy alone would be silently undone before the render.
@@ -191,7 +197,8 @@ def apply_case(c):
         o["energy_W"] = _E_VAULT0 * c["v"]
     print(f"[r12] case {case_tag(c)}: db {c['db']:g} dsat {c['dsat']:g} dhue {c['dhue']:g} "
           f"tint {c['tr']:g},{c['tg']:g},{c['tb']:g} cb {c['cb']:g} gb {c['gb']:g} "
-          f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} spec {c['spec']:g} f {c['f']:g} ({_E_DISK0*c['f']:.0f} W) "
+          f"sm {c['sm']:g} wm {c['wm']:g} fill {c['fill']:g} spec {c['spec']:g} "
+          f"fcol {c['fcr']:g},{c['fcg']:g},{c['fcb']:g} f {c['f']:g} ({_E_DISK0*c['f']:.0f} W) "
           f"v {c['v']:g} ({_E_VAULT0*c['v']:.0f} W) "
           f"exposure {scene.view_settings.exposure:.3f} EV, sun {sun.data.energy:.2f} W/m2", flush=True)
 
