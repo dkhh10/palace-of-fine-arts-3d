@@ -35,7 +35,14 @@ BUDGETS = {
     "maiden": (100000, 20000, 2000),
     "attic_figure": (120000, 20000, 2000),
     "winged_figure": (100000, 20000, 2000),
-    "attic_panel": (150000, 24000, 2400),
+    # round 6: LOD1 24000 -> 36000. ARCH's r6 field is 5.27 m, not 4.50, so the same areal tri density needs 17 %
+    # more, and design A (22 figures) stalled collapse at 34652. The alternative -- letting enforce_tri_budget weld
+    # it -- costs the panel exactly what it is for: a 0.044 m voxel weld eats the 15 mm sunk ground plate and fills
+    # the slots between figures (measured on v1 LOD1: p10 proud 0.027 -> 0.157 m, sun-blocked 5.4 -> 2.6 %,
+    # sky-openness 0.762 -> 0.835). The decimate target IS the budget, so all three designs land at ~35.8 k:
+    # 8 sockets x 11.9 k = +95 k in the master's LOD1, 7 % of what the 114 colonnade capitals already cost there,
+    # and the two designs that never stalled gain the same relief at LOD1. LOD0 (the Cycles final) and LOD2 unchanged.
+    "attic_panel": (150000, 36000, 2400),
     "urn": (60000, 12000, 1200),
     "keystone": (50000, 8000, 800),
     "finial": (20000, 4000, 400),

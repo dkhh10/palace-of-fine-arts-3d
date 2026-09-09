@@ -1,0 +1,173 @@
+00:00.351  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
+[orn] scan soldiers: 119995 tris, 0.88 x 0.12 x 1.25 m, background at 0.53 of depth, in 8.6s
+[orn] scan dacians: 120000 tris, 0.93 x 0.16 x 1.30 m, background at 0.63 of depth, in 7.8s
+[orn] attic_panel v1: design 1, 22 figures
+[orn] attic_panel v1: remesh 1007316 tris in 2.7s
+[orn] LOD2 budget: ORN_attic_panel_v1_LOD2 32697 -> remesh 173992 -> 2400 tris (budget 2400)
+Info: Baking map saved to internal image, save it externally or pack it
+[orn] baked NORMAL 4096px for ORN_attic_panel_v1 in 7.4s -> ORN_attic_panel_v1_nrm.png
+[orn] ORN_attic_panel_v1: LOD0 124328 / LOD1 35490 / LOD2 2400 tris
+[orn] attic_panel v2: design 2, 20 figures
+[orn] attic_panel v2: remesh 966312 tris in 2.7s
+[orn] LOD2 budget: ORN_attic_panel_v2_LOD2 10051 -> remesh 174484 -> 2400 tris (budget 2400)
+Info: Baking map saved to internal image, save it externally or pack it
+[orn] baked NORMAL 4096px for ORN_attic_panel_v2 in 4.6s -> ORN_attic_panel_v2_nrm.png
+[orn] ORN_attic_panel_v2: LOD0 136795 / LOD1 35832 / LOD2 2400 tris
+[orn] scan centaur: 119995 tris, 1.27 x 0.32 x 1.30 m, background at 0.36 of depth, in 17.5s
+[orn] attic_panel v3: design 3, 20 figures
+[orn] attic_panel v3: remesh 946552 tris in 2.7s
+[orn] LOD2 budget: ORN_attic_panel_v3_LOD2 10010 -> remesh 171048 -> 2400 tris (budget 2400)
+Info: Baking map saved to internal image, save it externally or pack it
+[orn] baked NORMAL 4096px for ORN_attic_panel_v3 in 3.8s -> ORN_attic_panel_v3_nrm.png
+[orn] ORN_attic_panel_v3: LOD0 124480 / LOD1 35816 / LOD2 2400 tris
+[orn] built attic_panel x3 in 85s
+[common] set_lod viewport=LOD1 render=LOD0: 138 objects, 0 collections
+Info: Saved as "ornament.blend"
+[common] set_lod viewport=LOD1 render=LOD0: 138 objects, 0 collections
+Info: Saved as "ornament.blend"
+[orn] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend
+ORN_anthemion_v1_LOD0: 30000 tris, 1.02 x 0.08 x 0.22 m (x y z), nrm=-
+ORN_anthemion_v1_LOD1: 6000 tris, 1.02 x 0.08 x 0.22 m (x y z), nrm=//textures/orn/ORN_anthemion_v1_nrm.png
+ORN_anthemion_v1_LOD2: 600 tris, 1.02 x 0.08 x 0.22 m (x y z), nrm=-
+ORN_attic_figure_v1_LOD0: 120000 tris, 3.71 x 1.46 x 6.78 m (x y z), nrm=-
+ORN_attic_figure_v1_LOD1: 20000 tris, 3.71 x 1.46 x 6.78 m (x y z), nrm=//textures/orn/ORN_attic_figure_v1_nrm.png
+ORN_attic_figure_v1_LOD2: 2000 tris, 3.72 x 1.46 x 6.80 m (x y z), nrm=-
+ORN_attic_figure_v2_LOD0: 120000 tris, 3.48 x 1.40 x 6.82 m (x y z), nrm=-
+ORN_attic_figure_v2_LOD1: 20000 tris, 3.48 x 1.40 x 6.82 m (x y z), nrm=//textures/orn/ORN_attic_figure_v2_nrm.png
+ORN_attic_figure_v2_LOD2: 2000 tris, 3.49 x 1.41 x 6.84 m (x y z), nrm=-
+ORN_attic_panel_v1_LOD0: 124328 tris, 10.52 x 0.63 x 5.28 m (x y z), nrm=-
+ORN_attic_panel_v1_LOD1: 35490 tris, 10.51 x 0.64 x 5.30 m (x y z), nrm=//textures/orn/ORN_attic_panel_v1_nrm.png
+ORN_attic_panel_v1_LOD2: 2400 tris, 10.51 x 0.63 x 5.28 m (x y z), nrm=-
+ORN_attic_panel_v2_LOD0: 136795 tris, 10.51 x 0.56 x 5.29 m (x y z), nrm=-
+ORN_attic_panel_v2_LOD1: 35832 tris, 10.51 x 0.56 x 5.28 m (x y z), nrm=//textures/orn/ORN_attic_panel_v2_nrm.png
+ORN_attic_panel_v2_LOD2: 2400 tris, 10.52 x 0.55 x 5.28 m (x y z), nrm=-
+ORN_attic_panel_v3_LOD0: 124480 tris, 10.51 x 0.59 x 5.29 m (x y z), nrm=-
+ORN_attic_panel_v3_LOD1: 35816 tris, 10.51 x 0.59 x 5.28 m (x y z), nrm=//textures/orn/ORN_attic_panel_v3_nrm.png
+ORN_attic_panel_v3_LOD2: 2400 tris, 10.50 x 0.59 x 5.28 m (x y z), nrm=-
+ORN_capital_colonnade_v1_LOD0: 48000 tris, 2.37 x 2.40 x 1.83 m (x y z), nrm=-
+ORN_capital_colonnade_v1_LOD1: 12000 tris, 2.38 x 2.40 x 1.82 m (x y z), nrm=//textures/orn/ORN_capital_colonnade_v1_nrm.png
+ORN_capital_colonnade_v1_LOD2: 344 tris, 1.96 x 1.96 x 1.80 m (x y z), nrm=-
+ORN_capital_colonnade_v2_LOD0: 48000 tris, 2.31 x 2.26 x 1.82 m (x y z), nrm=-
+ORN_capital_colonnade_v2_LOD1: 12000 tris, 2.31 x 2.26 x 1.82 m (x y z), nrm=//textures/orn/ORN_capital_colonnade_v2_nrm.png
+ORN_capital_colonnade_v2_LOD2: 344 tris, 1.96 x 1.96 x 1.80 m (x y z), nrm=-
+ORN_capital_colonnade_v3_LOD0: 48000 tris, 2.53 x 2.51 x 1.82 m (x y z), nrm=-
+ORN_capital_colonnade_v3_LOD1: 12000 tris, 2.53 x 2.52 x 1.82 m (x y z), nrm=//textures/orn/ORN_capital_colonnade_v3_nrm.png
+ORN_capital_colonnade_v3_LOD2: 344 tris, 1.96 x 1.96 x 1.80 m (x y z), nrm=-
+ORN_capital_inner_v1_LOD0: 48000 tris, 2.20 x 2.23 x 1.82 m (x y z), nrm=-
+ORN_capital_inner_v1_LOD1: 12000 tris, 2.20 x 2.23 x 1.82 m (x y z), nrm=//textures/orn/ORN_capital_inner_v1_nrm.png
+ORN_capital_inner_v1_LOD2: 344 tris, 1.85 x 1.85 x 1.80 m (x y z), nrm=-
+ORN_capital_inner_v2_LOD0: 48000 tris, 2.15 x 2.16 x 1.82 m (x y z), nrm=-
+ORN_capital_inner_v2_LOD1: 12000 tris, 2.15 x 2.15 x 1.82 m (x y z), nrm=//textures/orn/ORN_capital_inner_v2_nrm.png
+ORN_capital_inner_v2_LOD2: 344 tris, 1.85 x 1.85 x 1.80 m (x y z), nrm=-
+ORN_capital_rotunda_v1_LOD0: 64000 tris, 3.01 x 3.05 x 3.00 m (x y z), nrm=-
+ORN_capital_rotunda_v1_LOD1: 16000 tris, 3.01 x 3.04 x 3.00 m (x y z), nrm=//textures/orn/ORN_capital_rotunda_v1_nrm.png
+ORN_capital_rotunda_v1_LOD2: 344 tris, 2.43 x 2.43 x 3.00 m (x y z), nrm=-
+ORN_capital_rotunda_v2_LOD0: 64000 tris, 2.97 x 3.05 x 3.00 m (x y z), nrm=-
+ORN_capital_rotunda_v2_LOD1: 16000 tris, 2.98 x 3.05 x 3.00 m (x y z), nrm=//textures/orn/ORN_capital_rotunda_v2_nrm.png
+ORN_capital_rotunda_v2_LOD2: 344 tris, 2.43 x 2.43 x 3.00 m (x y z), nrm=-
+ORN_capital_rotunda_v3_LOD0: 64000 tris, 3.24 x 3.25 x 3.00 m (x y z), nrm=-
+ORN_capital_rotunda_v3_LOD1: 16000 tris, 3.24 x 3.25 x 3.00 m (x y z), nrm=//textures/orn/ORN_capital_rotunda_v3_nrm.png
+ORN_capital_rotunda_v3_LOD2: 344 tris, 2.43 x 2.43 x 3.00 m (x y z), nrm=-
+ORN_corner_scroll_v1_LOD0: 40000 tris, 2.44 x 0.89 x 1.60 m (x y z), nrm=-
+ORN_corner_scroll_v1_LOD1: 8000 tris, 2.44 x 0.90 x 1.60 m (x y z), nrm=//textures/orn/ORN_corner_scroll_v1_nrm.png
+ORN_corner_scroll_v1_LOD2: 800 tris, 2.44 x 0.90 x 1.60 m (x y z), nrm=-
+ORN_corner_scroll_v2_LOD0: 40000 tris, 2.44 x 0.89 x 1.60 m (x y z), nrm=-
+ORN_corner_scroll_v2_LOD1: 8000 tris, 2.44 x 0.89 x 1.60 m (x y z), nrm=//textures/orn/ORN_corner_scroll_v2_nrm.png
+ORN_corner_scroll_v2_LOD2: 800 tris, 2.43 x 0.90 x 1.60 m (x y z), nrm=-
+ORN_dentil_v1_LOD0: 30000 tris, 1.00 x 0.16 x 0.22 m (x y z), nrm=-
+ORN_dentil_v1_LOD1: 6000 tris, 1.00 x 0.16 x 0.22 m (x y z), nrm=//textures/orn/ORN_dentil_v1_nrm.png
+ORN_dentil_v1_LOD2: 600 tris, 1.00 x 0.16 x 0.22 m (x y z), nrm=-
+ORN_drum_band_v1_LOD0: 30000 tris, 1.08 x 0.42 x 1.63 m (x y z), nrm=-
+ORN_drum_band_v1_LOD1: 6000 tris, 1.08 x 0.42 x 1.63 m (x y z), nrm=//textures/orn/ORN_drum_band_v1_nrm.png
+ORN_drum_band_v1_LOD2: 600 tris, 1.07 x 0.42 x 1.62 m (x y z), nrm=-
+ORN_egg_and_dart_v1_LOD0: 30000 tris, 1.01 x 0.13 x 0.20 m (x y z), nrm=-
+ORN_egg_and_dart_v1_LOD1: 6000 tris, 1.01 x 0.13 x 0.20 m (x y z), nrm=//textures/orn/ORN_egg_and_dart_v1_nrm.png
+ORN_egg_and_dart_v1_LOD2: 600 tris, 1.01 x 0.14 x 0.20 m (x y z), nrm=-
+ORN_finial_v1_LOD0: 20000 tris, 0.80 x 0.80 x 0.60 m (x y z), nrm=-
+ORN_finial_v1_LOD1: 4000 tris, 0.80 x 0.80 x 0.60 m (x y z), nrm=//textures/orn/ORN_finial_v1_nrm.png
+ORN_finial_v1_LOD2: 400 tris, 0.80 x 0.79 x 0.60 m (x y z), nrm=-
+ORN_frieze_rinceau_return_v1_LOD0: 24000 tris, 3.00 x 0.11 x 0.68 m (x y z), nrm=-
+ORN_frieze_rinceau_return_v1_LOD1: 4500 tris, 3.00 x 0.11 x 0.67 m (x y z), nrm=//textures/orn/ORN_frieze_rinceau_return_v1_nrm.png
+ORN_frieze_rinceau_return_v1_LOD2: 450 tris, 3.00 x 0.11 x 0.66 m (x y z), nrm=-
+ORN_frieze_rinceau_return_v2_LOD0: 24000 tris, 3.00 x 0.11 x 0.68 m (x y z), nrm=-
+ORN_frieze_rinceau_return_v2_LOD1: 4500 tris, 3.00 x 0.11 x 0.67 m (x y z), nrm=//textures/orn/ORN_frieze_rinceau_return_v2_nrm.png
+ORN_frieze_rinceau_return_v2_LOD2: 450 tris, 3.00 x 0.11 x 0.67 m (x y z), nrm=-
+ORN_frieze_rinceau_return_v3_LOD0: 24000 tris, 3.00 x 0.11 x 0.68 m (x y z), nrm=-
+ORN_frieze_rinceau_return_v3_LOD1: 4500 tris, 3.00 x 0.10 x 0.68 m (x y z), nrm=//textures/orn/ORN_frieze_rinceau_return_v3_nrm.png
+ORN_frieze_rinceau_return_v3_LOD2: 450 tris, 3.00 x 0.10 x 0.67 m (x y z), nrm=-
+ORN_frieze_rinceau_v1_LOD0: 48000 tris, 5.91 x 0.11 x 0.68 m (x y z), nrm=-
+ORN_frieze_rinceau_v1_LOD1: 9000 tris, 5.91 x 0.11 x 0.68 m (x y z), nrm=//textures/orn/ORN_frieze_rinceau_v1_nrm.png
+ORN_frieze_rinceau_v1_LOD2: 900 tris, 5.91 x 0.11 x 0.67 m (x y z), nrm=-
+ORN_frieze_rinceau_v2_LOD0: 48000 tris, 5.91 x 0.11 x 0.68 m (x y z), nrm=-
+ORN_frieze_rinceau_v2_LOD1: 9000 tris, 5.91 x 0.11 x 0.67 m (x y z), nrm=//textures/orn/ORN_frieze_rinceau_v2_nrm.png
+ORN_frieze_rinceau_v2_LOD2: 900 tris, 5.91 x 0.11 x 0.67 m (x y z), nrm=-
+ORN_frieze_rinceau_v3_LOD0: 48000 tris, 5.91 x 0.11 x 0.68 m (x y z), nrm=-
+ORN_frieze_rinceau_v3_LOD1: 9000 tris, 5.91 x 0.11 x 0.68 m (x y z), nrm=//textures/orn/ORN_frieze_rinceau_v3_nrm.png
+ORN_frieze_rinceau_v3_LOD2: 900 tris, 5.91 x 0.11 x 0.67 m (x y z), nrm=-
+ORN_greek_key_v1_LOD0: 30000 tris, 0.60 x 0.08 x 0.52 m (x y z), nrm=-
+ORN_greek_key_v1_LOD1: 6000 tris, 0.60 x 0.08 x 0.52 m (x y z), nrm=//textures/orn/ORN_greek_key_v1_nrm.png
+ORN_greek_key_v1_LOD2: 600 tris, 0.60 x 0.08 x 0.52 m (x y z), nrm=-
+ORN_keystone_v1_LOD0: 50000 tris, 0.67 x 0.63 x 0.68 m (x y z), nrm=-
+ORN_keystone_v1_LOD1: 8000 tris, 0.67 x 0.63 x 0.68 m (x y z), nrm=//textures/orn/ORN_keystone_v1_nrm.png
+ORN_keystone_v1_LOD2: 800 tris, 0.67 x 0.64 x 0.68 m (x y z), nrm=-
+ORN_keystone_v2_LOD0: 50000 tris, 0.72 x 0.65 x 0.72 m (x y z), nrm=-
+ORN_keystone_v2_LOD1: 8000 tris, 0.73 x 0.65 x 0.72 m (x y z), nrm=//textures/orn/ORN_keystone_v2_nrm.png
+ORN_keystone_v2_LOD2: 800 tris, 0.73 x 0.65 x 0.72 m (x y z), nrm=-
+ORN_keystone_v3_LOD0: 50000 tris, 0.75 x 0.68 x 0.77 m (x y z), nrm=-
+ORN_keystone_v3_LOD1: 8000 tris, 0.75 x 0.68 x 0.77 m (x y z), nrm=//textures/orn/ORN_keystone_v3_nrm.png
+ORN_keystone_v3_LOD2: 800 tris, 0.74 x 0.68 x 0.77 m (x y z), nrm=-
+ORN_maiden_v1_LOD0: 100000 tris, 1.39 x 1.46 x 3.84 m (x y z), nrm=-
+ORN_maiden_v1_LOD1: 20000 tris, 1.39 x 1.46 x 3.84 m (x y z), nrm=//textures/orn/ORN_maiden_v1_nrm.png
+ORN_maiden_v1_LOD2: 2000 tris, 1.39 x 1.47 x 3.84 m (x y z), nrm=-
+ORN_maiden_v2_LOD0: 100000 tris, 1.52 x 1.67 x 3.77 m (x y z), nrm=-
+ORN_maiden_v2_LOD1: 20000 tris, 1.52 x 1.67 x 3.77 m (x y z), nrm=//textures/orn/ORN_maiden_v2_nrm.png
+ORN_maiden_v2_LOD2: 2000 tris, 1.53 x 1.67 x 3.77 m (x y z), nrm=-
+ORN_maiden_v3_LOD0: 100000 tris, 1.32 x 1.38 x 3.88 m (x y z), nrm=-
+ORN_maiden_v3_LOD1: 20000 tris, 1.32 x 1.38 x 3.89 m (x y z), nrm=//textures/orn/ORN_maiden_v3_nrm.png
+ORN_maiden_v3_LOD2: 2000 tris, 1.33 x 1.39 x 3.88 m (x y z), nrm=-
+ORN_modillion_v1_LOD0: 30000 tris, 1.00 x 0.40 x 0.30 m (x y z), nrm=-
+ORN_modillion_v1_LOD1: 6000 tris, 1.00 x 0.41 x 0.30 m (x y z), nrm=//textures/orn/ORN_modillion_v1_nrm.png
+ORN_modillion_v1_LOD2: 600 tris, 1.00 x 0.41 x 0.30 m (x y z), nrm=-
+ORN_rosette_band_v1_LOD0: 30000 tris, 1.20 x 0.13 x 0.52 m (x y z), nrm=-
+ORN_rosette_band_v1_LOD1: 6000 tris, 1.20 x 0.13 x 0.52 m (x y z), nrm=//textures/orn/ORN_rosette_band_v1_nrm.png
+ORN_rosette_band_v1_LOD2: 600 tris, 1.20 x 0.13 x 0.52 m (x y z), nrm=-
+ORN_rosette_ceiling_v1_LOD0: 26000 tris, 0.59 x 0.21 x 0.59 m (x y z), nrm=-
+ORN_rosette_ceiling_v1_LOD1: 5000 tris, 0.59 x 0.21 x 0.59 m (x y z), nrm=//textures/orn/ORN_rosette_ceiling_v1_nrm.png
+ORN_rosette_ceiling_v1_LOD2: 500 tris, 0.60 x 0.21 x 0.59 m (x y z), nrm=-
+ORN_rosette_ceiling_v2_LOD0: 26000 tris, 0.55 x 0.20 x 0.55 m (x y z), nrm=-
+ORN_rosette_ceiling_v2_LOD1: 5000 tris, 0.55 x 0.20 x 0.55 m (x y z), nrm=//textures/orn/ORN_rosette_ceiling_v2_nrm.png
+ORN_rosette_ceiling_v2_LOD2: 500 tris, 0.54 x 0.20 x 0.55 m (x y z), nrm=-
+ORN_rosette_ceiling_v3_LOD0: 26000 tris, 0.61 x 0.22 x 0.61 m (x y z), nrm=-
+ORN_rosette_ceiling_v3_LOD1: 5000 tris, 0.61 x 0.23 x 0.61 m (x y z), nrm=//textures/orn/ORN_rosette_ceiling_v3_nrm.png
+ORN_rosette_ceiling_v3_LOD2: 500 tris, 0.62 x 0.22 x 0.61 m (x y z), nrm=-
+ORN_urn_niche_v1_LOD0: 60000 tris, 1.50 x 1.24 x 1.60 m (x y z), nrm=-
+ORN_urn_niche_v1_LOD1: 12000 tris, 1.50 x 1.24 x 1.60 m (x y z), nrm=//textures/orn/ORN_urn_niche_v1_nrm.png
+ORN_urn_niche_v1_LOD2: 1200 tris, 1.50 x 1.25 x 1.60 m (x y z), nrm=-
+ORN_urn_niche_v2_LOD0: 60000 tris, 1.46 x 1.21 x 1.60 m (x y z), nrm=-
+ORN_urn_niche_v2_LOD1: 12000 tris, 1.46 x 1.21 x 1.60 m (x y z), nrm=//textures/orn/ORN_urn_niche_v2_nrm.png
+ORN_urn_niche_v2_LOD2: 1200 tris, 1.46 x 1.22 x 1.60 m (x y z), nrm=-
+ORN_urn_tub_v1_LOD0: 60000 tris, 1.60 x 1.60 x 1.00 m (x y z), nrm=-
+ORN_urn_tub_v1_LOD1: 12000 tris, 1.60 x 1.60 x 1.00 m (x y z), nrm=//textures/orn/ORN_urn_tub_v1_nrm.png
+ORN_urn_tub_v1_LOD2: 1200 tris, 1.60 x 1.60 x 1.00 m (x y z), nrm=-
+ORN_urn_v1_LOD0: 60000 tris, 1.76 x 1.54 x 3.00 m (x y z), nrm=-
+ORN_urn_v1_LOD1: 12000 tris, 1.76 x 1.54 x 3.00 m (x y z), nrm=//textures/orn/ORN_urn_v1_nrm.png
+ORN_urn_v1_LOD2: 1200 tris, 1.75 x 1.54 x 3.00 m (x y z), nrm=-
+ORN_urn_v2_LOD0: 60000 tris, 1.76 x 1.54 x 3.00 m (x y z), nrm=-
+ORN_urn_v2_LOD1: 12000 tris, 1.77 x 1.54 x 3.00 m (x y z), nrm=//textures/orn/ORN_urn_v2_nrm.png
+ORN_urn_v2_LOD2: 1200 tris, 1.77 x 1.55 x 3.02 m (x y z), nrm=-
+ORN_urn_v3_LOD0: 60000 tris, 1.72 x 1.49 x 3.00 m (x y z), nrm=-
+ORN_urn_v3_LOD1: 12000 tris, 1.72 x 1.49 x 3.00 m (x y z), nrm=//textures/orn/ORN_urn_v3_nrm.png
+ORN_urn_v3_LOD2: 1200 tris, 1.72 x 1.50 x 3.01 m (x y z), nrm=-
+ORN_winged_figure_v1_LOD0: 100000 tris, 2.29 x 1.45 x 4.93 m (x y z), nrm=-
+ORN_winged_figure_v1_LOD1: 20000 tris, 2.29 x 1.45 x 4.93 m (x y z), nrm=//textures/orn/ORN_winged_figure_v1_nrm.png
+ORN_winged_figure_v1_LOD2: 2000 tris, 2.28 x 1.45 x 4.93 m (x y z), nrm=-
+ORN_winged_figure_v2_LOD0: 100000 tris, 2.29 x 1.45 x 4.93 m (x y z), nrm=-
+ORN_winged_figure_v2_LOD1: 20000 tris, 2.29 x 1.45 x 4.93 m (x y z), nrm=//textures/orn/ORN_winged_figure_v2_nrm.png
+ORN_winged_figure_v2_LOD2: 2000 tris, 2.29 x 1.45 x 4.94 m (x y z), nrm=-
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+Timer 'STL Import' took 305.73 ms
+Timer 'STL Import' took 249.68 ms
+Timer 'STL Import' took 637.44 ms
+
+Blender quit
+blender_run.sh: pid 36735 exited rc=0 after 86 s (max 2400)

@@ -1,5 +1,5 @@
-00:00.489  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
-00:00.737  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
+00:00.374  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/architecture.blend"
+00:00.621  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/ornament/assets/ornament.blend"
 
 === 1. socket census vs ORN assets (build_master.py ORN_COLL coverage) ===
   attic_figure     n=   8  ORN asset: attic_figure           PRESENT
@@ -71,9 +71,9 @@
   ORN_anthemion_v1                         LOD0   30000 / LOD1    6000 / LOD2     600   budget 30000/6000/600  ok
   ORN_attic_figure_v1                      LOD0  120000 / LOD1   20000 / LOD2    2000   budget 120000/20000/2000  ok
   ORN_attic_figure_v2                      LOD0  120000 / LOD1   20000 / LOD2    2000   budget 120000/20000/2000  ok
-  ORN_attic_panel_v1                       LOD0  124328 / LOD1   24000 / LOD2    2400   budget 150000/24000/2400  ok
-  ORN_attic_panel_v2                       LOD0  136795 / LOD1   23834 / LOD2    2400   budget 150000/24000/2400  ok
-  ORN_attic_panel_v3                       LOD0  124480 / LOD1   23813 / LOD2    2400   budget 150000/24000/2400  ok
+  ORN_attic_panel_v1                       LOD0  124328 / LOD1   35490 / LOD2    2400   budget 150000/36000/2400  ok
+  ORN_attic_panel_v2                       LOD0  136795 / LOD1   35832 / LOD2    2400   budget 150000/36000/2400  ok
+  ORN_attic_panel_v3                       LOD0  124480 / LOD1   35816 / LOD2    2400   budget 150000/36000/2400  ok
   ORN_capital_colonnade_v1                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
   ORN_capital_colonnade_v2                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
   ORN_capital_colonnade_v3                 LOD0   48000 / LOD1   12000 / LOD2     344   budget 48000/12000/1500  ok
@@ -148,9 +148,9 @@
 
 === 7. attic panels fill their field (ARCH r6 panel_height 4.50 -> 5.27 m) ===
   attic_panel          course: socket panelh 5.270 m; orn_build builds to 5.270 m
-    ORN_attic_panel_v1  height LOD0 5.285 / LOD1 5.281 / LOD2 5.281  vs 5.270 m, worst   14.6 mm  ok
-    ORN_attic_panel_v2  height LOD0 5.285 / LOD1 5.278 / LOD2 5.275  vs 5.270 m, worst   15.2 mm  ok
-    ORN_attic_panel_v3  height LOD0 5.285 / LOD1 5.277 / LOD2 5.268  vs 5.270 m, worst   15.3 mm  ok
+    ORN_attic_panel_v1  height LOD0 5.285 / LOD1 5.296 / LOD2 5.277  vs 5.270 m, worst   26.1 mm  ok
+    ORN_attic_panel_v2  height LOD0 5.285 / LOD1 5.282 / LOD2 5.278  vs 5.270 m, worst   15.2 mm  ok
+    ORN_attic_panel_v3  height LOD0 5.285 / LOD1 5.282 / LOD2 5.278  vs 5.270 m, worst   15.3 mm  ok
     ORN_attic_panel_v1 width 10.515 m vs socket size_hint (panel width) [10.511]
     ORN_attic_panel_v2 width 10.514 m vs socket size_hint (panel width) [10.511]
     ORN_attic_panel_v3 width 10.511 m vs socket size_hint (panel width) [10.511]
@@ -168,4 +168,4 @@
 Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
 
 Blender quit
-blender_run.sh: pid 36575 exited rc=0 after 5 s (max 900)
+blender_run.sh: pid 36816 exited rc=0 after 4 s (max 900)
