@@ -1664,3 +1664,24 @@ Sheet: `renders/previews/lighting/light_r12_sheet.png` (before / after / referen
 numbers burnt in). The shade hue's margin is 0.1 deg and the single knob is `SKY_DIFFUSE_TINT[2]`: measured slope
 **0.77 deg of shade hue per unit of tint b** near the shipped 17.0, at a cost of ~0.6 R-B on the sunlit attic and
 ~0.005 of near-water saturation per unit.
+
+### 21.11 Hand-offs to materials r7, with the numbers, measured on the master carrying the r12 rig
+
+1. **`MAT_water_lagoon` murk — the one thing this round made worse.** near-water box (1150 1000 1450 1050):
+   saturation **0.281 -> 0.418**, hue 208.9 -> 218.1, against QA-05-4's 0.22-0.32 / 185-200. The diffuse tint is
+   invisible to camera and glossy rays by construction, so the water's MIRROR is untouched and every unit of that
+   move is the water's own diffuse/murk term taking sky light like any up-facing surface. Lighting has spent both
+   discriminators it has (anti-sun and horizon weighting, 21.9) and they are worth 0.045 of it. The remaining ~0.10
+   is murk saturation: the murk should lose roughly a third of its chroma, or warm toward the stone. Lighting will
+   not trade the shade back for it — QA-05-1 was a three-round blocker and QA-05-4 is a major.
+2. **The sunlit stone is now the albedo's problem, not the rig's.** Sunlit attic **178.0 / hue 39.0 / sat 0.525 /
+   R-B 112.5** against ref 169's 189.6 / 40.3 / 0.588 / 136.1: hue is within 1.3 deg, the level is 0.94x and the
+   saturation 0.06 under. The rig has no move left that raises the level without moving the exposure (which is
+   pinned by the sky window and by QA-03), so the last 6 % is stone value and chroma.
+3. **The coffer gradient and `FILL` are now coupled, and the coupling is measured:** +0.115 of coffer / own sky per
+   unit of `FILL` (3648 W). Materials r6's in-coffer gradient cost 0.176 of that ratio when it merged; `FILL` x2.8
+   bought it back and the field now sits on ref 083 (0.438 vs 0.437) with dark/light quarter 0.228 vs 0.265. If the
+   gradient deepens again, say so in the report with the number and lighting will re-tune `FILL`; do not deepen it
+   silently, because neither owner can see the other's half on their own branch.
+4. **The entablature** reads 141.4 / hue 39.4 / **sat 0.704** against ref 146.4 / 34.0 / 0.604: level and hue are
+   close, saturation is 0.10 over — the same over-saturation QA-05-2 flags on the attic, unchanged by this round.
