@@ -1,0 +1,34 @@
+00:00.330  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/assets/lighting.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[check] linked ARCH: ok
+[check] linked ENV: ok
+[common] set_lod viewport=LOD1 render=LOD0: 5128 objects, 6 collections
+
+[probe]        x        y | surface                            z | eye_z  nearest  what
+[probe]    -14.1    100.0 | ENV_lagoon_water               -1.30 |  0.45     1.78  ENV_lagoon_water
+[probe]      0.0    104.0 | ENV_terrain_ground             -0.47 |  1.28     1.78  ENV_terrain_ground
+[probe]     16.0    104.0 | ENV_terrain_ground             -1.16 |  0.59     1.60  ENV_terrain_ground
+[probe]     32.0    100.0 | ENV_lagoon_water               -1.30 |  0.45     1.78  ENV_lagoon_water
+[probe]     46.0     92.0 | ENV_lagoon_water               -1.30 |  0.45     1.78  ENV_lagoon_water
+[probe]     56.0     78.0 | ENV_lagoon_water               -1.30 |  0.45     1.78  ENV_lagoon_water
+[probe]     63.0     62.0 | ENV_lagoon_water               -1.30 |  0.45     1.78  ENV_lagoon_water
+[probe]     68.0     45.0 | ENV_terrain_ground             -0.62 |  1.13     1.05  ENV_shrub_big1_1042_LOD1
+[probe]     70.5     25.6 | ENV_ground_colonnade_walk      -0.69 |  1.06     1.78  ENV_ground_colonnade_walk
+[probe]     80.0     30.0 | ENV_ground_colonnade_walk      -0.63 |  1.12     1.80  ENV_terrain_ground
+[probe]     88.0     34.0 | ENV_terrain_ground             -0.48 |  1.27     1.78  ENV_terrain_ground
+[probe]     95.0     40.0 | ARCH_colonnade_south_entablature_inner   15.80 | 17.55     1.78  ARCH_colonnade_south_entablature_inner
+[probe]     99.1     44.5 | ENV_tree_eucalyptus_04_LOD1    25.37 | 27.12     0.60  ENV_tree_eucalyptus_04_LOD1
+[probe]     90.5     26.0 | ENV_terrain_ground             -0.49 |  1.26     1.56  ARCH_colonnade_south_column_037_LOD1
+[probe]     81.0     12.0 | ARCH_colonnade_south_beam_0062.0   15.78 | 17.53     1.95  ARCH_colonnade_south_entablature_outer
+[probe]     78.7      9.2 | ENV_terrain_ground             -0.47 |  1.28     1.71  ARCH_colonnade_south_column_027_LOD1
+[probe]     64.3     -5.2 | ENV_tree_pine_12_LOD1          10.73 | 12.48     0.98  ENV_tree_pine_12_LOD1
+[probe]     47.5    -17.0 | ENV_ground_colonnade_walk      -0.75 |  1.00     1.78  ENV_ground_colonnade_walk
+[probe]     36.5    -22.5 | ARCH_colonnade_south_box_005.0_lid   19.40 | 21.15     1.78  ARCH_colonnade_south_box_005.0_lid
+[probe]     28.0    -18.0 | ENV_shrub_big3_0921_LOD1        2.05 |  3.80     1.71  ENV_shrub_big2_0920_LOD1
+[probe]     18.0    -10.0 | ARCH_rotunda_wall_03           38.30 | 40.05     1.78  ARCH_rotunda_wall_03
+[probe]      8.0     -3.0 | ARCH_rotunda_drum              37.90 | 39.65     1.34  ARCH_rotunda_drum_band
+[probe]      0.0      0.0 | ARCH_rotunda_drum              37.90 | 39.65     1.34  ARCH_rotunda_drum_band
+[probe]      0.0      3.0 | ARCH_rotunda_drum              37.90 | 39.65     1.34  ARCH_rotunda_drum_band
+[probe]    -38.0    -32.0 | ARCH_colonnade_north_entablature_outer   15.80 | 17.55     1.34  ENV_tree_pine_01_LOD1
+[probe]    -42.0    -30.0 | ARCH_colonnade_north_entablature_outer   15.80 | 17.55     0.68  ENV_tree_pine_01_LOD1
+blender_run.sh: pid 26413 exited rc=0 after 3 s (max 1500)

@@ -584,7 +584,17 @@ def calibrate(az_deg, el_deg, sky=None, verbose=True, sky_strength=1.0):
     out["seconds"] = time.time() - t0
     for f in OUT_DIR.glob("cal_*.exr"):
         f.unlink()           # tiny intermediates; the numbers live in calibration_report.json
-    (OUT_DIR / "calibration_report.json").write_text(json.dumps(out, indent=1, default=str))
+    # r13 review carry 11: round before writing. Re-measuring the same rig moved the file by ~1e-7 per value and
+    # produced a diff on every run; 6 significant figures is far finer than any number the notes quote.
+    def _round(v):
+        if isinstance(v, float):
+            return float(f"{v:.6g}")
+        if isinstance(v, dict):
+            return {k: _round(x) for k, x in v.items()}
+        if isinstance(v, (list, tuple)):
+            return [_round(x) for x in v]
+        return v
+    (OUT_DIR / "calibration_report.json").write_text(json.dumps(_round(out), indent=1, default=str))
     if verbose:
         print("[light_calibrate] " + json.dumps(out, indent=1, default=str))
     return out

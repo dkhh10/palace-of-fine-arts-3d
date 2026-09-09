@@ -81,3 +81,97 @@ world sky MULTIPLE_SCATTERING (aerosol 1.0, ozone 2.0, altitude 5 m, disc OFF) s
 exposure -3.90 EV (18% card facing the sun = middle grey at -4.40, +0.5 bias), look 'AgX - Base Contrast'; compositor
 `COMP_golden_hour` (mist haze 3% at 120 m, bloom, 2-3% vignette). Apply to any scene with `light_presets.apply_look(scene)`.
 Cycles 768 spp 1280x720 = 65 s on the placeholder -> 4K estimate ~10 min; real scene expected 5-10x heavier.
+
+## Opening and rendering master.blend (lighting, 2026-09-09; Phase 5 delivery)
+
+### What is in the saved file
+`master.blend` is saved **in the Eevee viewport state**, which is what makes it navigable, and everything below is
+already set — no script needs to run to fly around in it.
+
+| saved setting | value | why |
+|---|---|---|
+| engine | `BLENDER_EEVEE` (Eevee Next) | opens navigable; a bare F12 from the UI is a correct Eevee frame |
+| Eevee TAA | 8 viewport / 16 render (`apply_viewport_eevee`) | the QA preview preset is 32; 8/16 is for flying |
+| shadows | on, ray count 1, step 2, resolution scale 0.5, `shadow_pool_size` 512 | |
+| raytracing / fast GI | **off** | measured (QA-04-12, notes 20.8): raytracing moves the vault coffer 0.218 -> 0.218 |
+| `light_threshold` | **0.01** (not the 0.05 default) | 0.05 culls the eight vault emitters, which is exactly the dome |
+| `gi_irradiance_pool_size` | 64 MB | the default 16 cannot hold the two baked LIGHTPROBE volumes (QA-01-9) |
+| light probes | 2 baked irradiance volumes, baked on the PHYSICAL rig | `light_probes.bake(physical_vault=True)` in `lead_build.sh` |
+| view transform / look | AgX, `AgX - High Contrast`, exposure **-2.833 EV** | notes 19 (round 10) |
+| compositor | `COMP_scene_golden_hour` (mist airlight cap 0.25 / k 5.0, bloom, vignette) | notes 22.4 |
+| world | `WORLD_golden_hour`, sky MULTIPLE_SCATTERING, az 118.49 / el 7.36 | |
+| measured (QA round 05) | open **0.72 s** headless, 9175 objects, LOD1 **11.01 M tris**, 154.6 MB | budget was 60 s |
+
+### The two Eevee-only rigs — read this before rendering Cycles
+Two rigs in `LIGHT` exist **only** to make Eevee agree with Cycles, and they must be switched off for any Cycles frame:
+
+- **the vault override** — the eight interior emitters at `energy_scale 6.0`, `cutoff_distance 21.0`
+  (`light_presets.EEVEE_VAULT`). Eevee's probe volumes cannot carry the rotunda vault's bounce; Cycles path-traces it.
+- **`LIGHT_shade_fill`** — three wide-angle anti-sun lamps, **55 / 55 / 38.5 W/m2 in Eevee, 0.0 W/m2 in Cycles**
+  (and `hide_render` there). The round-12 shade fix is three diffuse-only world sockets, and Eevee's shaded stone is
+  lit by its screen-traced horizon scan rather than by the world, so those sockets never reach it (notes 22.1-22.2).
+
+Both are engine-conditional, both are idempotent, and both read their energies from the objects' own custom
+properties (`energy_W`, `energy_W_eevee`). **Every** Cycles path must call the switch:
+
+```python
+import light_presets as lp, common
+lp.apply_final_cycles(scene)                 # 4K hero / flythrough finals: also sets samples, denoiser, film
+common.configure_cycles(scene, samples=128)  # measurement renders: calls the same two switches since r13
+```
+`common.configure_cycles` applies `apply_vault_for_engine("CYCLES")` / `apply_shade_for_engine("CYCLES")` itself, so
+`common.render_previews(engine="CYCLES")` and the other agents' Cycles scripts are safe. What is **not** safe is
+setting `scene.render.engine = "CYCLES"` by hand (in a script or in the UI) and pressing F12: that renders three
+55 W/m2 blue suns and a 6x vault into the frame.
+
+### Cycles sample counts and the measured wall times (M2 10-core Metal, GPU, OIDN)
+
+| what | settings | measured |
+|---|---|---|
+| hero cam01 1920x1080 | 128 spp adaptive (thr 0.01, min 64), uncapped | **335.4 s** (QA r04), **355.8 s** (QA r05) |
+| cam04 1280x720 | 64 spp adaptive | **210.9 s** (r04), **219.1 s** (r05) |
+| hero 3840x2160 | 16 spp, compositor on / off | **175.3 s / 177.1 s** (QA r04) — the compositor is not the cost |
+| hero 3840x2160 | 768 spp adaptive (the saved `FINAL_SAMPLES`) | **no frame in 90+ min in three attempts**; killed at 95.1 min |
+| Eevee QA previews 1280x720 | 32 TAA, `apply_preview_eevee` | 12.7-23.6 s per camera, 120.6 s for all six (r05) |
+
+The 4K final is therefore **not** to be attempted at 768 spp first. QA's recommendation, which lighting agrees with:
+render 4K at **128 spp fixed with adaptive OFF and `time_limit = 0`**, under an outer wall-clock guard
+(`scripts/blender_run.sh 7200 -- ...`), to get the first finished 4K frame and its wall time, then choose the final
+sample count from that number. Scaling 1080p 128 spp (355.8 s) by the 4x pixel count puts it near 24 min plus the
+OIDN pass on a 4K buffer.
+
+### The flythrough camera and the low-res test animation
+`scripts/light_flythrough.py` builds `CAM_flythrough` (24 mm), `CAM_flythrough_path` and `CAM_flythrough_target`
+in `assets/lighting.blend`. Route, validated by ray-cast in `scripts/light_flythrough_check.py` (notes 23):
+cam01 hero hold 3.50 s -> lagoon crossing at up to 9.2 m/s -> the cam02 SSE station -> a radial entry through one
+4.5 m colonnade bay -> the gallery centreline at eye height over the walk -> out at the wing's rotunda end -> in
+through the az-217 arch -> under the dome, ceiling look-up held 4.17 s. **250.1 m, 1224 frames at 24 fps = 51.0 s.**
+`cam["schedule"]` carries the leg and hold frame ranges as JSON; `light_flythrough.load_schedule()` reads it back.
+
+```sh
+# rebuild the path (writes assets/lighting.blend only)
+scripts/blender_run.sh  600 -- --background --python scripts/light_flythrough.py
+# re-validate it against ARCH + ENV without rendering (exit 0 only if all four gates pass)
+scripts/blender_run.sh 2400 -- --background --python scripts/light_flythrough_check.py --
+```
+
+To render the test animation from `master.blend`, set the scene camera and frame range from the schedule, apply the
+Eevee preset, and render 640x360:
+
+```python
+import light_flythrough as ft, light_presets as lp
+sch = ft.load_schedule()
+scene.camera = bpy.data.objects["CAM_flythrough"]
+scene.frame_start, scene.frame_end = 1, sch["frames"]      # 1..1224
+scene.render.fps = sch["fps"]                              # 24
+scene.frame_step = 1                                       # 2 halves the cost; render at fps 12 to keep the timing
+lp.apply_preview_eevee(scene, samples=16)                  # or apply_viewport_eevee(scene) for the cheapest pass
+scene.render.resolution_x, scene.render.resolution_y = 640, 360
+scene.render.image_settings.file_format = "PNG"            # frames, then ffmpeg; not Blender's encoder
+scene.render.filepath = "renders/previews/lighting/flythrough/f_"
+bpy.ops.render.render(animation=True)
+```
+Cost estimate, **scaled from the measured 1280x720 numbers, not measured**: 640x360 is a quarter of the pixels of
+the QA preview, so 3-6 s per frame -> **60-100 min for all 1224 frames**, or 30-50 min at `frame_step = 2` with the
+output at 12 fps. Give `blender_run.sh` an honest max (7200). Then:
+`ffmpeg -framerate 24 -i renders/previews/lighting/flythrough/f_%04d.png -c:v libx264 -crf 18 -pix_fmt yuv420p out.mp4`.

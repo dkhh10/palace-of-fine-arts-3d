@@ -167,7 +167,11 @@ def apply_case(c):
         print("[r12] case base: master left exactly as saved (no world rebuild, no shade fill)", flush=True)
         return
     energy, colour, exp_ev = _calib[c["sky"]]
-    w = cal.make_sky_world(f"R11_{case_tag(c)}", AZ, EL, lb.SKY, sun_disc=False, strength=c["sky"] * c["wm"],
+    # r13 review carry 11: named R11_ (a copy-paste from the round-11 sweep) and one world leaked per case.
+    old_w = bpy.data.worlds.get(f"R12_{case_tag(c)}")
+    if old_w:
+        bpy.data.worlds.remove(old_w)
+    w = cal.make_sky_world(f"R12_{case_tag(c)}", AZ, EL, lb.SKY, sun_disc=False, strength=c["sky"] * c["wm"],
                            camera_boost=c["cb"], camera_saturation=c["csat"],
                            glossy_boost=c["gb"], glossy_saturation=c["gsat"],
                            diffuse_saturation=c["dsat"], diffuse_hue=c["dhue"],

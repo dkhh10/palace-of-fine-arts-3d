@@ -189,7 +189,11 @@ def apply_case(c):
         lb.SHADE_FILL = dict(lb.SHADE_FILL, specular=c["spec"])
     if min(c["fcr"], c["fcg"], c["fcb"]) >= 0.0:
         lb.SHADE_FILL = dict(lb.SHADE_FILL, color=(c["fcr"], c["fcg"], c["fcb"]))
-    lb.build_shade_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection, energy=c["fill"])
+    # r13 review carry 2: `energy=` sets the CYCLES energy only, and apply_preview_eevee then overwrites data.energy
+    # from `energy_W_eevee` -- so the `fill=` key was dead in Eevee and fill=0 still rendered the full 55 W/m2.
+    # This sweep is an EEVEE sweep, so `fill` is the EEVEE energy; the Cycles energy stays at the shipped 0.0.
+    lb.build_shade_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection,
+                        energy=lb.SHADE_FILL.get("energy", 0.0), energy_eevee=c["fill"])
     # --- interior fills
     if _DISK:
         _DISK["energy_W"] = _E_DISK0 * c["f"]
