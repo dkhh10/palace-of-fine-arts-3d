@@ -272,9 +272,13 @@ def shoot(cam_id, tag):
     scene.render.resolution_x, scene.render.resolution_y = res
     scene.render.resolution_percentage = 100
     scene.render.image_settings.color_depth = "8"
-    scene.render.use_border = bool(BORDER)
+    # ROUND 15: the border is stated in HERO pixels, so it may only be applied to the hero. Applying the same
+    # fractions to a 1280x720 camera would crop cam02 / 03 / 05 / 06 to an unrelated rectangle (r14 applied it to
+    # every camera, which is only safe because r14 never mixed a bordered hero with the other cameras in one run).
+    use_border = bool(BORDER) and num == "01"
+    scene.render.use_border = use_border
     scene.render.use_crop_to_border = False
-    if BORDER:
+    if use_border:
         x0, y0, x1, y1 = BORDER
         W, H = res
         scene.render.border_min_x, scene.render.border_max_x = x0 / 1920.0, x1 / 1920.0
