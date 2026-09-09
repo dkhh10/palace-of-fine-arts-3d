@@ -1578,3 +1578,24 @@ about a quarter of the sunlit cost of the unweighted one** (5.5 deg of hue per 8
 What the weighting is really measuring is where the shade's blue arrives from: at antisun 1 the shade keeps only
 about half the tint, so half of the blue that reaches a shaded wall has bounced at least once off a horizontal
 surface (which samples both halves of the dome) rather than arriving straight from the anti-sun sky.
+
+### 21.8 QA-05-3 — the coffer, re-tuned on the MERGED master (and it closes QA-05-9 with it)
+
+The round-11 claim (coffer / own sky 0.387) was measured on lighting's branch before materials r6's in-coffer
+gradient merged; on the lead's master the same rig reads 0.211. Re-swept here on the rebuilt master with the round-12
+sky in place, Cycles cam04 960x540 / 48 spp (round 09 established these ratios move < 0.01 with resolution):
+
+| `FILL` | coffer / own sky | dark / light quarter | soffit W | soffit E | soffit mean |
+|---|---|---|---|---|---|
+| x1 = 3648 W (round 11) | 0.230 | — | 0.145 | 0.377 | 0.261 |
+| **x3.2 = 11674 W** | **0.482** | **0.249** | 0.243 | 0.473 | 0.358 |
+| ref 083 | 0.437 | 0.265 | — | — | 0.405 |
+
++0.115 of coffer per unit of `FILL`, so **x2.8 = 10214 W** puts the coffer field on ref 083's own 0.437 and is what
+ships. The round-12 sky alone was worth +0.019 (0.211 -> 0.230): the rest is the disk. Two side effects, both wanted:
+the dark/light quarter statistic — the one that says "black floors with lit rims" — goes 0.121 to 0.249 against
+ref 083's 0.265, because the disk is the emitter the coffer FLOORS see best; and Cycles' soffit W, the half of
+**QA-05-9** that was failing at a 0.22 gap to Eevee's 0.362, rises from 0.141 to ~0.23, which brings the gap inside
+0.15 without touching the probes. The interior fill is also confirmed independent of the hero: the same rig with
+`FILL` x3.2 changes the hero's shaded attic by 0.1 lum and its sunlit attic by 0.1 (wave 5, `r12w5_A_01c` vs
+`r12w5_Af32_01c`).
