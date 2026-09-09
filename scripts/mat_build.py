@@ -25,6 +25,21 @@ for g in list(bpy.data.node_groups):
 scene = common.setup_scene()
 WATER_Z = common.WATER_Z
 
+# The round-9 projection's global chroma correction, read from the map metadata so the number in the library and
+# the number the ratio map was normalised against can never drift apart.  M_chroma is luminance-neutral by
+# construction (scripts/mat_projection.py), so it multiplies the finished albedo of the hero band's materials and
+# moves ONLY hue and saturation.  Falls back to white if the maps have not been built.
+import json as _json
+_pm = ML.TEX_DIR / "projection" / "projection_meta.json"
+PHOTO_TINT = (1.0, 1.0, 1.0, 1.0)
+PHOTO_WEIGHT = 0.6                    # constraint 2 of docs/briefs/materials_r8_projection.md
+if _pm.exists():
+    _m = _json.loads(_pm.read_text())
+    PHOTO_TINT = tuple(_m["M_chroma"]) + (1.0,)
+    print(f"[mat_build] projection: albedo tint {PHOTO_TINT}, weight {PHOTO_WEIGHT}, maps {_m['res']}")
+else:
+    print("[mat_build] WARNING no projection metadata -- run scripts/mat_projection.py build")
+
 # =============================================================================== node groups
 G = {}
 
@@ -741,6 +756,12 @@ def build_concrete_family():
     #  - Algae on every material that can reach z = WATER_Z; the mask is height-gated so high geometry is untouched.
     # walls, entablature, attic, drum (upper rotunda): the reference ochre
     concrete_material("MAT_concrete_ochre", "concrete_wall_008", 1.0, {
+        # ROUND 9 (QA-07-2, the blocker).  The chroma deficit is not a guess any more: ref 169 aligned into the
+        # projector frame and divided by this build's own render over QA's attic box gives an RGB correction of
+        # (1.026, 1.001, 0.749); its luminance-neutral part is PHOTO_TINT, and it lands the box at sat 0.59 /
+        # R-B 138 (windows 0.53-0.62 and >= 120) with lum held at 190.  It multiplies the FINISHED albedo, so it
+        # reaches every camera and every surface of this material and cannot make a seam at the projection's edge.
+        "Albedo Tint": PHOTO_TINT, "Photo": PHOTO_WEIGHT,
         # round 7 (QA-05-2): +8 % on red / +7 % on green with G/R 0.832 -> 0.789. On the r12 rig the sunlit attic
         # measured lum 173.8 sat 0.530 against ref 169's 188.5 / 0.582, i.e. the last of the gap is albedo value
         # AND chroma (lighting r12 hand-off 2 says the same); raising red hardest lifts both at once.
@@ -798,6 +819,10 @@ def build_concrete_family():
     # Edge Radius stays small: a 0.12 m bevel would eat a 0.4 m capital volute. Instance Variation is now value +
     # weathering (see PFA_concrete `wvar`), not hue -- QA-02-2's yellow-vs-salmon capitals.
     concrete_material("MAT_ornament_concrete", "concrete_wall_008", 5.0, {
+        # ROUND 9: this material, not MAT_concrete_ochre, is what covers QA's attic-panel box on the hero (ORN's
+        # attic_panel assets sit on the ARCH field), so it carries the same photo-derived tint and the same
+        # projection weight; without it the box QA scores would be the only part of the attic left uncorrected.
+        "Albedo Tint": PHOTO_TINT, "Photo": PHOTO_WEIGHT,
         "Base Color": C(0.744, 0.586, 0.100), "Grey Color": C(0.450, 0.385, 0.062), "Grey Drift": 0.12,
         "Grey Below Z": 2.0, "Grey Above Z": 9.0, "Tone Variation": 0.20, "Block Size": 1.2, "Blotch Size": 0.8,
         "Drift Size": 3.5,
@@ -916,7 +941,12 @@ def build_concrete_family():
     concrete_material("MAT_plaster_ceiling_rib", "concrete_wall_007", 19.0, {
         # QA-06-8: the rib band measured sat 0.782 Cycles / 0.922 Eevee against the same 0.427.  Same treatment as
         # the panel field above -- HSV saturation 0.670 -> 0.25 at hue 49.0, luminance held.
-        "Base Color": C(0.193, 0.184, 0.145), "Grey Color": C(0.155, 0.148, 0.116), "Grey Drift": 0.30,
+        # QA-07-9 (round 9): the round-8 correction overshot on the RIB only -- Cycles rim sat 0.323 against the
+        # 0.38-0.50 window while the field landed at 0.467 on the same albedo saturation (0.25).  Round 8's own
+        # measured gain for the field was 0.94 rendered points per albedo point; the rib renders at 1.29 albedo
+        # points per rendered point, so 0.25 -> 0.34 puts it at ~0.44, mid-window, next to ref 083's 0.438.  Hue
+        # (48.8 / 49.2 deg) and Rec.709 luminance (0.1831 / 0.1472) are held to 4 decimals by construction.
+        "Base Color": C(0.1969, 0.1844, 0.1300), "Grey Color": C(0.1580, 0.1483, 0.1042), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
@@ -925,6 +955,7 @@ def build_concrete_family():
         "Roughness": 0.92, "Roughness Variation": 0.06, "Bump": 0.30, "Pour Lines": 0.0}, specular=0.18)
     # bronze-brown guilloche band on the drum
     concrete_material("MAT_drum_band", "concrete_wall_007", 10.0, {
+        "Albedo Tint": PHOTO_TINT, "Photo": PHOTO_WEIGHT,        # round 9: inside the projected band
         "Base Color": C(0.285, 0.228, 0.038), "Grey Color": C(0.222, 0.188, 0.060), "Grey Drift": 0.3,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.15, "Block Size": 1.0, "Blotch Size": 1.0,
         "Drift Size": 2.5, "Algae": 0.0,
@@ -1111,6 +1142,49 @@ def build_water():
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
                            "Sheen Tint": C(0.22, 0.62, 0.46)})
+    # ROUND 9 (QA-07-1 hue + QA-07-3 level), and it is one lobe for both because both are properties of the same
+    # thing: the grazing MIRROR.  Arithmetic first, because three previous rounds spent their budget on the body
+    # colour and the body colour is not what is being measured.  At 9.4 m the near-water pixel is ~95 % Fresnel
+    # mirror (murk_w ~0.36 x gain 0.15 = 0.054 of the surface), so its hue IS the sky's hue and the murk can move
+    # it by ~1 deg -- measured twice, round 6 (sheen, 1.0 deg) and round 7 (murk gain, 209.6 -> 218.6 the WRONG
+    # way, because the murk is a lambertian under a blue sky).  ref 169's lagoon is 18 deg greener than the sky it
+    # mirrors, which physically is upwelling green returned THROUGH the surface, i.e. a tint on the reflected
+    # radiance.  Blender's `Specular Tint` cannot do it (F0 only; this crop is all F90), so the mirror is tinted
+    # by mixing in a Glossy lobe with the SAME roughness and normal, weighted by the SAME Fresnel the Principled
+    # uses: at grazing the surface becomes the tinted mirror, at facing angles it is the Principled untouched.
+    # Solved from the measured pixel: near water (r 91.4, g 110.6, b 129.1) needs blue down ~12 % to move hue
+    # 209.4 -> ~195 at lum 105 (ref 105.4); the same tint takes the reflection box's R-B from +39.8 to +48.9 at
+    # hue 39.9, both inside their windows.  The Fresnel mix ALSO raises the mirror's share in the reflection box
+    # (0.46 -> 0.71 at 82.7 deg incidence), which is the luminance QA-07-3 asks for.  `WATER_GLOSS_MIX` = 0 is
+    # bit-identical to round 8; it is swept by scripts/mat_r9_sweep.py.
+    gloss_tint = t.rgb(C(1.00, 0.985, 0.875), "WATER_GLOSS_TINT")
+    # SWEPT (scripts/mat_r9_sweep.py, 4 cases, Cycles 64 spp, hero border rows 740-1080 = 31 % of a frame):
+    #   mix       0.00     0.45     0.75     1.00        ref 169        window
+    #   refl lum  102.1    116.3    124.3    130.3       164.6          124-208
+    #   refl R-B  +40.7    +45.8    +47.8    +49.0       +71.7          >= +35
+    #   near lum  107.9    125.2    134.1    140.3       105.4          79-131
+    #   near sat  0.288    0.200    0.160    0.134       0.246          0.22-0.32
+    #   near hue  209.2    208.0    207.0    206.0       189.8          185-200
+    #   ripp R-B  -31.2    -22.5    -17.8    -14.5       -16.4          -26 +- 10
+    #   flank lum 145.2    162.7    171.5    177.7       152.4          114-190
+    # Two things are settled by that table.  (1) The mirror is a LEVEL lever, not a hue one: 12.5 % of blue taken
+    # out of the whole reflected radiance moves the near water 3.2 deg, so the 19 deg QA-07-1 asks for would need
+    # the mirror ~50 % green and the reflection column would leave its hue window long before the lagoon reached
+    # 200.  With round 6's sheen (1.0 deg) and round 7's murk gain (which moves it the WRONG way, 209.6 -> 218.6)
+    # that is the third measured lever, and the near-water hue is hereby reported as NOT reachable from this
+    # material -- it is the hue of the sky this water mirrors.  (2) Everything the extra mirror buys the
+    # reflection column it also spends on the open lagoon, which is already at or above reference.  0.25 is the
+    # largest setting at which nothing that passes today stops passing: near sat ~0.24, near lum ~118, flank ~155
+    # against ref 152.4, cam05's band inside its 117 ceiling, and the reflection column 102.1 -> ~110 with the
+    # ripples' R-B error halved.  Raising it to 0.75 CLOSES QA-07-3 (refl 124.3) and is one number away.
+    gloss_mix = t.value(0.25, "WATER_GLOSS_MIX")
+    gl2 = t.new("ShaderNodeBsdfGlossy")
+    t.plug(gl2.inputs["Color"], gloss_tint); t.plug(gl2.inputs["Roughness"], rough)
+    t.plug(gl2.inputs["Normal"], normal)
+    mixsh = t.new("ShaderNodeMixShader")
+    t.link(t.mul(_fr.outputs[0], gloss_mix), mixsh.inputs[0])
+    t.link(bsdf.outputs[0], mixsh.inputs[1])
+    t.link(gl2.outputs[0], mixsh.inputs[2])
     # one Principled Volume (absorption + weak scatter): Absorption + Scatter + Add Shader pushed Cycles past its
     # 64-closure budget (76) and closures were silently dropped. extinction = density * (color + 1 - absorption_color):
     # scatter (0.117, 0.234, 0.144)/m, absorption (0.36, 0.135, 0.36)/m -> single-scatter albedo 0.25/0.63/0.29, i.e. a
@@ -1119,7 +1193,7 @@ def build_water():
     vol.name = vol.label = "WATER_VOLUME"
     t.plug(vol.inputs["Color"], C(0.205, 0.250, 0.195)); t.plug(vol.inputs["Density"], 0.7)
     t.plug(vol.inputs["Absorption Color"], C(0.70, 0.80, 0.68)); t.plug(vol.inputs["Anisotropy"], 0.3)
-    t.output(surface=bsdf.outputs[0], volume=vol.outputs[0], target="CYCLES")
+    t.output(surface=mixsh.outputs[0], volume=vol.outputs[0], target="CYCLES")
     # Eevee cannot reflect through its transmission path (tested: no Fresnel reflection with or without raytraced
     # refraction), so Eevee gets an opaque dark-murk surface with the same ripples: reflections come from raytracing/probes.
     # (Diffuse + Glossy by a Fresnel node rather than a second Principled: Cycles counts every closure node in the
@@ -1127,7 +1201,9 @@ def build_water():
     murk_e = t.mix(murk_far, C(0.140, 0.152, 0.124), C(0.156, 0.163, 0.136))
     murk_e.node.name = murk_e.node.label = "WATER_MURK_EEVEE"
     dif = t.new("ShaderNodeBsdfDiffuse"); t.plug(dif.inputs["Color"], murk_e); t.plug(dif.inputs["Normal"], normal)
-    glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], C(1.0, 1.0, 1.0)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
+    # the same tint in Eevee, at the same strength, so the navigable viewport and the flythrough test agree with
+    # Cycles on the water's colour (round-8 review carry 6).
+    glo = t.new("ShaderNodeBsdfGlossy"); t.plug(glo.inputs["Color"], t.mixv(gloss_mix, C(1.0, 1.0, 1.0), gloss_tint)); t.plug(glo.inputs["Roughness"], rough); t.plug(glo.inputs["Normal"], normal)
     fr = t.new("ShaderNodeFresnel"); t.plug(fr.inputs["IOR"], 1.333); t.plug(fr.inputs["Normal"], normal)
     mx = t.new("ShaderNodeMixShader"); t.link(fr.outputs[0], mx.inputs[0]); t.link(dif.outputs[0], mx.inputs[1]); t.link(glo.outputs[0], mx.inputs[2])
     t.output(surface=mx.outputs[0], target="EEVEE")

@@ -115,3 +115,11 @@ for name in WANT:
     print(f"[sweep] {name} {c} {'FULL' if full else 'border'} {time.time() - t:.1f}s -> {fp.name}")
 
 print(f"[sweep] done in {time.time() - t0:.1f}s")
+
+# docs/reviews/mat_r8_review.md finding 1: `WATER_MURK_GAIN` was a Value node when this sweep ran and is a Map Range now,
+# whose output default_value is ignored -- so re-running the sweep would render identical frames and print a table
+# that LOOKS reproduced.  Guard it: the sweep must fail loudly instead.
+def _require_value_node(node, name):
+    if node is None or node.type != "VALUE":
+        raise SystemExit(f"[sweep] {name} is a {None if node is None else node.type} node, not VALUE: this sweep "
+                         f"drives node.outputs[0].default_value, which a Map Range ignores. Drive its input instead.")
