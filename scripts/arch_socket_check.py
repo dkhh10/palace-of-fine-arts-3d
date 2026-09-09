@@ -12,8 +12,108 @@ import common
 args = common.script_args()
 want = args[args.index("--type") + 1] if "--type" in args and args.index("--type") + 1 < len(args) else "rosette_ceiling"
 socks = sorted((o for o in bpy.data.objects if o.name.startswith(f"SOCKET_{want}_")), key=lambda o: o.name)
-print(f"[socket_check] {len(socks)} SOCKET_{want}_* sockets")
+if want != "props":                                  # "props" is a whole-file audit, not one socket type
+    print(f"[socket_check] {len(socks)} SOCKET_{want}_* sockets")
 from mathutils import Vector
+
+
+def world_matrix(o):
+    """matrix_world is stale (identity) for objects hidden in the view layer; socket empties are not hidden, but
+    use the same accessor the probes use so the two never disagree."""
+    if o.parent is not None:
+        return o.matrix_world
+    return o.matrix_basis
+
+# ----------------------------------------------------------------------------- documented-property contract
+# docs/sockets.md: every socket carries orn_type / size_hint / variant_seed; these are the EXTRA properties each
+# type must carry.  `--type props` walks every SOCKET_* in the file and reports any type missing any of them.
+BASE_PROPS = ("orn_type", "size_hint", "variant_seed")
+REQUIRED_PROPS = {
+    "capital_rotunda":   ("capital_height",),
+    "capital_inner":     ("capital_height",),
+    "capital_colonnade": ("capital_height", "tall", "wing"),
+    "frieze_run":        ("run_length", "band_height", "host", "subtype"),
+    "attic_panel":       ("panel_height", "design"),
+    "maiden":            ("rim_height", "box_corner_y"),
+    "keystone":          ("subtype",),
+    "finial":            ("subtype",),
+    "drum_band":         ("run_length", "radius"),
+}
+if want == "props":
+    types = {}
+    for o in bpy.data.objects:
+        if o.name.startswith("SOCKET_"):
+            types.setdefault(o.get("orn_type", o.name[7:-4]), []).append(o)
+    bad = 0
+    print(f"{'type':20s} {'n':>4s}  required properties (BASE + type)                          missing")
+    for t, v in sorted(types.items()):
+        need = BASE_PROPS + REQUIRED_PROPS.get(t, ())
+        miss = {k: sum(1 for o in v if o.get(k) is None) for k in need}
+        miss = {k: c for k, c in miss.items() if c}
+        bad += bool(miss)
+        sample = {k: v[0].get(k) for k in REQUIRED_PROPS.get(t, ())}
+        print(f"  {t:18s} {len(v):4d}  {'+'.join(need):56s} "
+              f"{'none  ' + str(sample) if not miss else 'MISSING ' + str(miss)}")
+    print(f"[socket_check] {len(types)} types, {sum(len(v) for v in types.values())} sockets; "
+          f"{'ALL OK' if not bad else str(bad) + ' TYPES INCOMPLETE'}")
+    raise SystemExit(1 if bad else 0)
+
+# ----------------------------------------------------------------------------- frieze_run frame contract
+# (orn r5 review findings 1 and 2, added in architecture round 6.) A frieze_run socket is a RUN, not a point:
+#   origin = the run START,  local +X = run_dir,  local +Y = the outward face normal (away from the host block),
+#   local +Z = world up.
+# +Y is checked against a block centre derived here, not against anything the builder stamped: the 24 rotunda runs
+# come in threes on each of the 8 ressaut corner blocks, so grouping them by nearest ressaut azimuth
+# (VERTEX_AZ0 + 45k) and averaging that group's run midpoints reconstructs the block centre independently.
+if want == "frieze_run":
+    import arch_params as P
+    bad = 0
+    # The 24 rotunda runs come in threes on each of the 8 ressaut corner blocks, so grouping them by nearest ressaut
+    # azimuth (VERTEX_AZ0 + 45k) and averaging that group's run midpoints reconstructs the block centre here,
+    # independently of anything the builder stamped. Other hosts get the frame checks that apply to them: the
+    # colonnade runs are ARCS (arc_center / arc_radius, no run_dir), the rostra / planter_box runs are straight but
+    # sit on free-standing bands with no reconstructible block centre, so only their +X / +Y / +Z frame is asserted.
+    groups = {}
+    for o in socks:
+        p = world_matrix(o).translation
+        az = math.degrees(math.atan2(p.y, -p.x)) % 360.0
+        k = min(range(8), key=lambda i: abs((az - (P.VERTEX_AZ0 + 45.0 * i) + 180.0) % 360.0 - 180.0))
+        rd, rl = o.get("run_dir", None), float(o.get("run_length", 0.0))
+        mid = (p.x + (rd[0] if rd else 0.0) * rl / 2.0, p.y + (rd[1] if rd else 0.0) * rl / 2.0)
+        groups.setdefault((o.get("host", None), k if o.get("host", None) == "rotunda" else -1), []).append((o, mid))
+    print(f"{'socket':26s} {'host':13s} {'subtype':11s} {'len':>6s} {'+X.run_dir':>11s} {'+Y.out':>8s} {'+Z.z':>6s}"
+          f"  result")
+    for g, v in sorted(groups.items(), key=lambda t: str(t[0])):
+        cx = sum(m[0] for _, m in v) / len(v), sum(m[1] for _, m in v) / len(v)
+        for o, mid in v:
+            M = world_matrix(o)
+            x = (M.to_3x3() @ Vector((1.0, 0.0, 0.0))).normalized()
+            y = (M.to_3x3() @ Vector((0.0, 1.0, 0.0))).normalized()
+            z = (M.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+            rd, host, sub = o.get("run_dir", None), o.get("host", None), o.get("subtype", None)
+            ac = o.get("arc_center", None)
+            dx = (x.x * rd[0] + x.y * rd[1] + x.z * rd[2]) if rd else float("nan")
+            frame_ok = abs(y.z) < 1e-3 and z.z > 0.999
+            if host == "rotunda":                       # the full contract (orn r5 review findings 1 and 2)
+                ry = (mid[0] - cx[0], mid[1] - cx[1])
+                n = math.hypot(*ry)
+                dy = (y.x * ry[0] + y.y * ry[1]) / n if n > 1e-6 else float("nan")
+                ok = rd is not None and dx > 0.99 and dy > 0.0 and frame_ok and sub is not None
+            elif ac is not None:                        # arc run: +Y must point outward from the arc centre
+                ry = (o.location.x - ac[0], o.location.y - ac[1])
+                n = math.hypot(*ry)
+                dy = (y.x * ry[0] + y.y * ry[1]) / n if n > 1e-6 else float("nan")
+                ok = frame_ok and dy > 0.9 and sub is not None
+            else:                                       # straight run on a free-standing band
+                dy = float("nan")
+                ok = rd is not None and dx > 0.99 and frame_ok and sub is not None
+            bad += not ok
+            print(f"  {o.name:24s} {str(host):13s} {str(sub):11s} {float(o.get('run_length', 0)):6.2f} "
+                  f"{dx:11.3f} {dy:8.3f} {z.z:6.3f}  {'OK' if ok else 'WRONG'}")
+    print("[socket_check] rotunda contract: origin at the run START, +X = run_dir (dot > 0.99), +Y away from the "
+          "ressaut block centre (> 0), +Z world up, host + subtype present")
+    print(f"[socket_check] {'ALL OK' if not bad else str(bad) + ' WRONG'}")
+    raise SystemExit(1 if bad else 0)
 
 bad, perps = 0, []
 for o in socks:
@@ -47,3 +147,4 @@ if perps:
     if spread > 1e-3:
         bad += 1
 print(f"[socket_check] {'ALL OK' if not bad else str(bad) + ' WRONG'}")
+raise SystemExit(1 if bad else 0)

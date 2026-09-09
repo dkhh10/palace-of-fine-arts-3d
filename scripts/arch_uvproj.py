@@ -76,9 +76,14 @@ def frame_px(world):
 
 def world_matrix(o):
     """matrix_world is STALE for objects hidden in the view layer (LOD0 is hide_viewport in the saved file), so it
-    reports identity for them. matrix_basis is derived from loc/rot/scale on access and is always current."""
-    if o.parent is not None:
-        return o.matrix_world
+    reports identity for them. matrix_basis is derived from loc/rot/scale on access and is always current.
+
+    r5 review finding 3: matrix_basis is only the world matrix for an UNPARENTED object with no delta transform.
+    A parented hidden object has a stale matrix_world too, so there is no correct answer here -- refuse instead of
+    silently baking a wrong projection. Nothing in arch_build/arch_lib parents an ARCH object today."""
+    if o.parent is not None or tuple(o.delta_location) != (0.0, 0.0, 0.0) or tuple(o.delta_scale) != (1.0, 1.0, 1.0):
+        raise SystemExit(f"[uvproj] {o.name} is parented or has a delta transform: matrix_world may be stale for a "
+                         f"hidden object and matrix_basis is not its world matrix. Walk the parent chain first.")
     return o.matrix_basis
 
 
@@ -97,12 +102,16 @@ by_mesh = {}
 for o in objs:
     by_mesh.setdefault(o.data.name, []).append(o)
 print(f"[uvproj] {len(objs)} objects / {len(by_mesh)} meshes; missing: {missing if missing else 'none'}")
+pre_fails = 0        # r5 review finding 4: the shared-mesh agreement is now ENFORCED, not just printed
 for mname, group in sorted(by_mesh.items()):
     if len(group) > 1:      # LOD siblings sharing a mesh: one camera UV can only be right if their transforms agree
         m0 = world_matrix(group[0])
         for o in group[1:]:
             d = max(abs(a - b) for ra, rb in zip(m0, world_matrix(o)) for a, b in zip(ra, rb))
-            print(f"[uvproj] shared mesh {mname}: {group[0].name} / {o.name} matrix_world max delta {d:.2e}")
+            bad = d > 1e-6
+            pre_fails += bad
+            print(f"[uvproj] shared mesh {mname}: {group[0].name} / {o.name} matrix_world max delta {d:.2e} "
+                  f"{'FAIL (one mesh cannot carry two camera UVs)' if bad else 'OK'}")
 
 if DRY:
     for o in sorted(objs, key=lambda o: o.name):
@@ -122,6 +131,7 @@ for mname, group in sorted(by_mesh.items()):
     if FLAG in me.attributes:
         me.attributes.remove(me.attributes[FLAG])
     flag = me.attributes.new(name=FLAG, type="FLOAT", domain="POINT")
+    uv = me.uv_layers[UV_NAME]   # r5 review finding 5: CustomData may reallocate on the attribute remove/add
     vuv, vflag = [], []
     for v in me.vertices:
         co = world_to_camera_view(scene, cam, mw @ v.co)
@@ -151,7 +161,8 @@ for mname, group in sorted(by_mesh.items()):
     worst = max(worst, err)
     print(f"[uvproj] {mname:40s} objs {len(group)} verts {len(vflag):6d} clamped {n_clamp:6d} "
           f"({100.0 * n_clamp / max(1, len(vflag)):5.1f} %) layers {[u.name for u in me.uv_layers]} "
-          f"active {me.uv_layers.active.name} round-trip {err:.2e} px")
+          f"active {me.uv_layers.active.name} active_render "
+          f"{[u.name for u in me.uv_layers if u.active_render]} round-trip {err:.2e} px")
 print(f"[uvproj] TOTAL verts {tot_v} clamped {tot_clamped} ({100.0 * tot_clamped / max(1, tot_v):.1f} %) "
       f"worst round-trip {worst:.2e} px")
 
@@ -185,16 +196,18 @@ def uv_at(o, world_pt):
     ua, ub, uc = (Vector((*uvl[li].uv, 0.0)) for li in t.loops)
     uvw = barycentric_transform(loc, a, b, c, ua, ub, uc)
     return uvw.x * RES[0], (1.0 - uvw.y) * RES[1], (mw @ loc - Vector(world_pt)).length
+# The three offsets used to be hand-entered (0.74 / 1.66 / 3.48 / -0.15). Round 6 takes the first three from
+# arch_params, so the checks follow the profile instead of being re-fitted to it (r5 review finding 2).
 CHECKS = [
     ("attic corner   (attic cornice crown, ressaut az 59.5)", "ARCH_rotunda_attic_cornice",
-     P.VERTEX_AZ0, P.CHAMFER_CIRCUMRADIUS + 0.74, P.ATTIC_Z1),
+     P.VERTEX_AZ0, P.CHAMFER_CIRCUMRADIUS + P.ATTIC_CORNICE_D, P.ATTIC_Z1 - 0.06),
     ("cornice corona (face 00 centre, soffit lip)", "ARCH_rotunda_entablature",
-     P.FACE_AZ0, P.WALL_APOTHEM + 1.66, P.ENTABLATURE_Z0 + 3.48),
+     P.FACE_AZ0, P.WALL_APOTHEM + P.CORNICE_CORONA_D, P.ENTABLATURE_Z0 + P.CORNICE_CORONA_SOFFIT_DZ),
     ("drum ring      (cornice ring rim, near side)", "ARCH_rotunda_drum_cornice",
      P.FACE_AZ0, P.DRUM_CORNICE_R, P.DRUM_Z1 - 0.15),
 ]
 print(f"{'check':52s} {'pred col,row':>17s} {'uv col,row':>17s} {'d px':>7s} {'surf dist m':>11s}")
-fails = 0
+fails = pre_fails
 for label, oname, az, r, z in CHECKS:
     o = bpy.data.objects.get(oname)
     if o is None:
@@ -222,9 +235,11 @@ for lod in (0, 1, 2):
            and not o.name.startswith("PH_")]
     stats[f"tris_LOD{lod}"] = L.tri_count(sel)
 stats["objects"] = len(ARCH.all_objects)
+# arch_build writes arch_stats.json AFTER its save (r6 review finding 6), so as the build's post-step this reads
+# the PREVIOUS build's counts and the comparison is a real regression guard, not a read-back of this run's own file.
 old = json.loads((common.DOCS / "arch_stats.json").read_text())
 for k, v in stats.items():
-    print(f"[uvproj] {k}: {v} (arch_stats.json {old.get(k)}) {'SAME' if old.get(k) == v else 'CHANGED'}")
+    print(f"[uvproj] {k}: {v} (previous build {old.get(k)}) {'SAME' if old.get(k) == v else 'CHANGED'}")
     fails += old.get(k) != v
 
 if SAVE and not fails:

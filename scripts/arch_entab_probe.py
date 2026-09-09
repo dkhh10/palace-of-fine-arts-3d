@@ -140,10 +140,17 @@ if "--courses" in args:
     scan = [(P.ENTABLATURE_Z0 + i * 0.01, face_d(ENT, P.ENTABLATURE_Z0 + i * 0.01)) for i in range(381)]
     dmax = max(d for _, d in scan if d is not None)
     soffit_z = min(z for z, d in scan if d is not None and d >= dmax - 0.05)
+    # names=None means "d is the literal value in the 4th slot" (the sunk relief field is behind the wall plane, so
+    # an inward ray measures the wall, not the field).
     COURSES = [
         ("attic top (cornice crown)", bbz("ARCH_rotunda_attic_cornice"), ["ARCH_rotunda_attic_cornice"], -0.02),
+        ("attic cornice corona soffit", P.ATTIC_Z1 - P.ATTIC_TOP_CORNICE_H + P.ATTIC_CORNICE_SOFFIT_DZ,
+         ["ARCH_rotunda_attic_cornice"], 0.02),
+        ("attic relief field top", P.ATTIC_Z1 - P.ATTIC_TOP_CORNICE_H - P.ATTIC_PANEL_FRAME, None, -P.ATTIC_PANEL_DEPTH),
         ("attic panel frame top", bbz("ARCH_rotunda_attic_frame_00"), ["ARCH_rotunda_attic_frame_00"], -0.02),
         ("attic panel frame bottom", bbz("ARCH_rotunda_attic_frame_00", False), ["ARCH_rotunda_attic_frame_00"], 0.02),
+        ("attic relief field bottom", P.ATTIC_Z0 + P.ATTIC_BASE_MOULDING_H + P.ATTIC_PANEL_FRAME, None,
+         -P.ATTIC_PANEL_DEPTH),
         ("cornice corona top", P.ENTABLATURE_Z1, ENT, -0.02),
         ("cornice corona bottom (soffit lip)", soffit_z, ENT, 0.02),
         ("dentil bed (block bottom)", bbz("ARCH_rotunda_dentils_LOD0", False), ["ARCH_rotunda_dentils_LOD0"], 0.02),
@@ -159,7 +166,7 @@ if "--courses" in args:
     print(f"{'course':38s} {'z m':>7s} {'d m':>7s} {'row':>8s} {'col':>8s}  {'drop from the course above':>28s}")
     prev = None
     for label, z, names, dz in COURSES:
-        d = face_d(names, z, dz)
+        d = dz if names is None else face_d(names, z, dz)
         d = 0.0 if d is None else d
         col, row = pix(d, z)
         print(f"{label:38s} {z:7.2f} {d:7.2f} {row:8.1f} {col:8.1f}  "
@@ -169,13 +176,13 @@ if "--courses" in args:
     socks = [o for o in bpy.data.objects if o.name.startswith("SOCKET_capital_rotunda")]
     if socks:
         def azof(o):
-            p = o.matrix_world.translation
+            p = world_matrix(o).translation
             return math.degrees(math.atan2(p.y, -p.x)) % 360.0
         s = min(socks, key=lambda o: abs((azof(o) - P.FACE_AZ0 + 180.0) % 360.0 - 180.0))
-        p = s.matrix_world.translation
+        p = world_matrix(s).translation      # r5 review finding 6: use the same accessor as everything else
         r = math.hypot(p.x, p.y)
         ztop = p.z + P.CAPITAL_H
-        co = world_to_camera_view(scene, cam, Vector((p.x / r * r, p.y / r * r, ztop)))
+        co = world_to_camera_view(scene, cam, Vector((p.x, p.y, ztop)))   # r5 review finding 6: p.x / r * r was a no-op
         print(f"{'capital top (pier, az ' + format(azof(s), '.1f') + ')':38s} {ztop:7.2f} {r - P.WALL_APOTHEM:7.2f} "
               f"{(1.0 - co.y) * RES[1]:8.1f} {co.x * RES[0]:8.1f}   socket {s.name}, abacus projection is ORN's")
 
@@ -256,7 +263,7 @@ if "--sil" in args:
     print(f"[sil] round-4 alpha render (arch_r4b, docs/arch_notes.md): apex_y 88  corner_top_y 212  wa 544  "
           f"rise/W_a 0.228")
 
-if "--map" in args or OUT is None:
+if "--map" in args or (OUT is None and "--courses" not in args and "--sil" not in args):   # r5 review finding 7
     print(f"[probe] {CAM} loc {tuple(round(v, 2) for v in cam.location)} lens {cam.data.lens} "
           f"shift {cam.data.shift_x:.3f},{cam.data.shift_y:.3f} res {RES}")
     c0, r0 = pix(0.0, P.ENTABLATURE_Z0)

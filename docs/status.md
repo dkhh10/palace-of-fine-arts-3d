@@ -350,3 +350,14 @@ In flight: ARCH r6 review, LIGHT r14, ENV r9. Next: merge arch; ORN r6 refit (ca
 ## 2026-09-09 · ARCH r6 review: MERGE WITH FIXES (docs/reviews/arch_r6_review.md); fix agent dispatched (no render)
 Fix now: stamp capital_height on capital_rotunda sockets (0.40 m void under the architrave until ornament rebuilds), band_height on the rotunda frieze_run sockets, re-run the ref 062 fit (it reads ATTIC_Z0, which moved), commit the qa_stack_offset log, sheet table from data. Carries: uvproj tri guard dead in-build, SystemExit ordering, entablature sub-courses scaled not photo-anchored, socket check exit code, 6.4 MB intermediate.
 In flight: ARCH r6 fixes, LIGHT r14, ENV r9. Next: merge arch, ORN r6 refit, MAT r8.
+
+## 2026-09-09 · ENV r9 reported (e0b383f), in review
+ENV r9 (no render): walk clearance 0.03 -> 1.71 m to geometry, 0 samples inside the 2.80 m clear width (the OSM roof polygon fell inside the modelled arc; new env_lib.gallery_clear from arch_params, enforced everywhere); shadow_relief no longer relocates pinned trees (corrections baked into PLAN); trees 131, LOD1 4.71 M, band clearer moved 0 / dropped 0; wing shadow 21.2 % vs the 22 % cap (margin 0.8 pt, needs a render check); cam06 gate = std composited / un-composited >= 0.60 (lighting r13 ships 0.637).
+In flight: ENV review, LIGHT r14, ARCH r6 fixes, ORN r6. Next: merges, MAT r8.
+
+## 2026-09-09 · ARCH r6 merged (2b1c716) after fixes; ref 062 conflict logged (decisions.md)
+Socket props stamped and asserted (capital_height 3.0, band_height 0.81, panel_height 5.27; 434 sockets ALL OK); registration log committed (+1/-1/+1/-3/0/+5/+1/+1 rows); ref 062 wants ATTIC_Z0 30.20 vs 29.18 (hero wins; QA may re-fit cam02). In flight: LIGHT r14, ORN r6 (re-merges main for the socket props), ENV r9 review. Next: LIGHT r14 review + merge, then MAT r8 (water + projection on the registered stack).
+
+## 2026-09-09 · ENV r9 review: MERGE WITH FIXES (docs/reviews/env_r9_review.md); fix agent dispatched (no render)
+Fix now: the onto-land spiral snap runs after the gallery gate and moves 6 hand-placed trees up to 5.6 m (PLAN still not the shipped coordinate); pinned-moved counter is a tautology; 137 -> 131 is six refused screen redwoods, not dropped PLAN trees; MASS_X comment; cam06 0.637 must be computed by --c06ratio on lighting's frames. Carries: PLAN --verify mode, wing-shadow probe below its quantum (QA confirms on a render), eye-band gate.
+In flight: ENV fixes, LIGHT r14, ORN r6. Next: merges, MAT r8.
