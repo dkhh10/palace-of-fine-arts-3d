@@ -874,3 +874,101 @@ ORN/materials, not to ARCH geometry.
   **47.6** (48 spp: 32.4 / 47.6); model box 900 238 1020 272 row std **43.3** / texture **54.7** (48 spp: 43.1 / 54.5). The numbers
   do not depend on spp. Carried findings 1, 4, 7, 8 (comment, silhouette artifact, hard-coded alignment, measure script's threshold
   text) to the next architecture round.
+
+## Round 5 (2026-09-09) — no render: the projection UV layer, the course-row table, review carries
+
+### Item 1 — `UVProj`, a second UV layer in cam01 frame coordinates (`scripts/arch_uvproj.py`)
+
+Round 4 item 3 established that the single `UVMap` on every ARCH mesh is a triplanar world-metre box projection —
+overlapping, not in 0..1 — and that a photo projection therefore needs its own layer. It now exists.
+
+- **Convention.** `u` = x of `bpy_extras.object_utils.world_to_camera_view` on `CAM_qa_01_lagoon_hero` at
+  1920x1080, `v` = its y: u,v in 0..1 over the frame with **v = 0 at the BOTTOM** (Blender's image convention).
+  Pixel column = `u * 1920`, pixel row from the top = `(1 - v) * 1080`. `UVMap` stays layer 0, active and
+  `active_render`; nothing about the concrete material's tiling changes.
+- **Flag.** POINT float attribute **`UVProj_valid`** (1.0 = in front of the camera and inside the frame, 0.0 =
+  clamped). On this object set 0 of 26,216 vertices are clamped, but the sweeps are full rings: the far side of the
+  attic/entablature/drum receives the *near* side's UVs mirrored back, so a projection shader must still mask by
+  facing (materials' 25-70 deg mask) — `UVProj_valid` only catches off-frame, not back-facing.
+- **Coverage.** 33 objects / 31 meshes: `attic_base`, `attic_cornice`, `attic_roof`; per-face **00 / 07 / 01**
+  `attic_panel`, `attic_frame`, `attic_niche`, `attic_pilaster_*_a/_b`, `attic_corner`, `attic_corner_cap`;
+  `entablature`, `dentils_LOD0/_LOD1`, `modillions_LOD0/_LOD1`, `eggs_LOD0`; `drum`, `drum_band`, `drum_cornice`.
+  The dentil and modillion LOD pairs **share one mesh** and their transforms are identical (matrix delta 0.00), so
+  one layer written on the mesh serves both objects — which is what round 4's review asked to check.
+- **Numbers.** Round-trip over every loop of every in-frame vertex: **0.00 px**. Three points predicted from
+  `arch_params` alone and read back off the layer (tolerance 2 px, UV interpolated across the triangle because a
+  swept ring has vertices only at its plan corners):
+
+  | named point | predicted col,row | UVProj col,row | delta |
+  |---|---|---|---|
+  | attic corner (attic cornice crown, ressaut az 59.5, z 38.30) | 1095.9, 148.1 | 1095.2, 148.0 | **0.78 px** |
+  | cornice corona (face 00 centre, soffit lip, z 30.88) | 959.9, 253.9 | 959.9, 253.9 | **0.00 px** |
+  | drum ring (cornice ring rim, near side, z 43.25) | 959.9, 115.3 | 959.9, 115.3 | **0.02 px** |
+
+- **Unchanged.** tris_LOD0 2,694,366 / LOD1 1,109,070 / LOD2 726,222 and 2,281 objects, all identical to
+  `docs/arch_stats.json`; `arch_socket_check --type rosette_ceiling` **ALL OK**. Only mesh layers were added.
+- **5.2 gotcha worth keeping.** `matrix_world` is **stale (identity)** for an object hidden in the view layer —
+  which is every `_LOD0` in the saved asset — so the first run put the dentil LODs 29.6 m apart. `matrix_basis` is
+  derived from loc/rot/scale on access and is correct; `arch_uvproj` and `arch_entab_probe` both use it. Likewise
+  `Object.ray_cast` refuses a hidden object ("has no evaluated mesh data"); the probe builds a `BVHTree` from the
+  mesh data instead.
+
+### Item 2 — course-row table on cam01 (`arch_entab_probe --courses`)
+
+Method: z comes from `arch_params` where the vertical stack defines it and from the object's own bounding box where
+the mesh does; **d is measured**, by firing horizontal rays inward at that height over the flat part of face 00
+(±4.01 m of its centre — the ressaut starts at 5.70 m and projects to the chamfer plane, so a wider window reads the
+corner block as if it were a course). Wall plane scale **13.42 px/m**; 1.00 m of projection lifts a point 4.41 px.
+
+| course | z (m) | d (m) | cam01 row | drop from the course above |
+|---|---|---|---|---|
+| attic top (cornice crown) | 38.30 | 0.71 | 158.3 | — |
+| attic panel frame top | 37.50 | 0.04 | 173.2 | +15.0 |
+| attic panel frame bottom | 32.10 | 0.04 | 245.7 | +72.5 |
+| cornice corona top | 31.20 | 1.45 | 250.6 | +4.9 |
+| cornice corona bottom (soffit lip) | 30.88 | 1.66 | 253.9 | +3.3 |
+| dentil bed (block bottom) | 29.57 | 0.74 | 276.3 | +22.4 |
+| frieze top | 29.45 | 0.34 | 279.9 | +3.5 |
+| frieze bottom | 28.55 | 0.39 | 291.8 | +11.9 |
+| architrave bottom | 27.40 | 0.14 | 308.4 | +16.6 |
+| capital top (pier, az 64.9, col 1055.4) | 27.40 | 2.35 | 303.2 | — (off the face centre; the abacus is ORN's) |
+
+**Per-course offset vs ref 169: not available yet** — `docs/qa_round_06*` does not exist at the time of writing, so
+the only measured displacement is round 4's single figure: under QA's round-05 alignment the model's cornice sits
+**+14 rows = 1.04 m** higher in the frame than the photograph's (row cross-correlation over rows 250-320, peak +14,
+r 0.67; corona half-drop model row 254 vs photo row 268). Whoever has QA's per-course rows can subtract this table
+from them directly: divide the row difference by 13.42 px/m to get metres, and remember that a course's row carries
+its own projection (a course that projects 1 m more sits 4.41 px higher at the same z).
+
+### Carried review findings (docs/reviews/arch_r4_review.md)
+
+- **1** `arch_build.py` cornice comment restated to the r4b values (dentils 0.34 deep vs a 0.20 gap, modillions 0.86
+  vs 0.56).
+- **4** post-r4b silhouette artifact, produced **without a render** (`arch_entab_probe --sil`): the render set is
+  projected and its **edges** rasterised into a top profile (a vertex-only profile leaves most columns empty on a
+  swept ring and reads its lower edge), then `qa_silhouette.measure`'s own arithmetic is applied. Crop
+  690 40 1235 520, LOD1 + PH placeholders:
+
+  | | geometric (round 5) | round-4 alpha render |
+  |---|---|---|
+  | apex_y | 87.5 | 88 |
+  | corner_top_y | 211.0 | 212 |
+  | W_a | 544 px | 544 px |
+  | rise / W_a | 0.2270 | 0.228 |
+
+  Within 1 px on every metric, so the silhouette that the ref 169 / 062 / 063 fits ride on is unchanged after r4b
+  and after this round, and the check is now reproducible with no GPU (`renders/logs/arch_r5_silhouette.log`).
+- **7** `arch_params.REF169_XF` + `arch_params.ref169_path()` are now the single home of the QA round-05 alignment
+  and of the photo path (`common.REFERENCE_DIR` when bpy is available, the main checkout otherwise — the old
+  relative path could not resolve inside a worktree). `arch_entab_measure` and `arch_p4r4_sheet` import them.
+- **8** `arch_entab_measure` prints the brief's own tests — `row std >= 35` absolute and `tex ratio >= 0.60` — with
+  the raw ratios kept alongside. Re-measured, unchanged: QA box 900 262 1020 296 row std 32.5 FAIL / tex 0.73 PASS;
+  model box 900 238 1020 272 row std 43.3 PASS / tex 54.7.
+
+### Hand-off to materials (projection pass, docs/briefs/materials_r8_projection.md)
+
+`UVProj` and `UVProj_valid` are in `assets/architecture.blend` on the 33 objects listed above. Sample the ratio map
+with `UVProj` directly (no UVProject modifier, no window coordinates); multiply the projection weight by
+`UVProj_valid` **and** by the facing mask, because the layer wraps the far side of every full-ring sweep. If the
+projector camera ever moves, ask ARCH to re-run `scripts/arch_uvproj.py` — the layer is baked to
+`CAM_qa_01_lagoon_hero` as it stands today (loc (-14.1, 100.0, 1.6), 20 mm, shift_y 0.06).

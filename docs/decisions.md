@@ -169,3 +169,13 @@ Format: date · decision · why · consequences. Newest at the bottom.
 - **ENV r7's first panels were rendered on the main checkout's master** (env_r5_hero.py defaulted to the main root). Fixed to the
   worktree root; rule for every owner: the measure/sheet scripts default to `common.ROOT/master.blend` and the notes state which
   master (object count) a number came from.
+- **2026-09-09 · After QA round 6 (hero 3.22 / 3.28 held, fourth flat round): the projection pass is triggered, but it needs a registered stack.**
+  QA's per-course table (aligned overlay, 13.42 px/m) shows the render's attic storey at 0.70 and the capital at 0.65 of ref 169's,
+  offsets +0.07 to +2.31 m and not rigid, while the outer silhouette fits within 1 %. That is a course-height error inside a correct
+  envelope, and a projected photo cannot register on it. Order for polish round 5: (1) architecture r6 closes the attic storey, panel
+  frame and capital rows against QA's table with the envelope held (the round-1 dome fit stays; the courses inside it move) and re-runs
+  UVProj; (2) lighting r14 removes the r12 tint's violet flood on the non-hero cameras (hue 253 in shade on cam06 roofs; the shade
+  window on the hero stays) and restores the reflection's warmth; (3) materials r8 = water blocker + the photo-projection pass on the
+  registered stack. The definition-of-done clock (two rounds < +0.1 on the hero) starts at the first QA round after materials r8.
+- **Water is now the hero's largest visible defect**: reflection R-B +2.5 vs +69 in the photo, sat 0.04 vs 0.36; the lagoon reads as a flat
+  blue plane. Materials owns the mirror/murk balance; lighting owns the horizon sky it mirrors; QA's reflection test gains an R-B term.

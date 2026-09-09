@@ -78,7 +78,22 @@ R05 = {
     "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
     "Scale cues":            [3.5, 3, 2, 3, 3, 2.5],
 }
-SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05}
+R06 = {
+    # round 06 (2026-09-09, polish round 4: ARCH r4 cornice/dentils, LIGHT r12+r13 diffuse sky + Eevee shade fill,
+    # MAT r7, ENV r7+r8 + paving). Hero Proportion is RE-SCORED 4 -> 3.5 on the first per-course stack measurement
+    # (docs/qa_round_06.md section (g)); the geometry did not change this round. Hero average holding Proportion at
+    # 4 would be 3.28 (flat), with the re-score 3.22.
+    "Silhouette match":      [4, 3.5, 2.5, 3.5, 3.5, 4],
+    "Proportion":            [3.5, 3.5, 3, 3.5, 3, 3.5],
+    "Ornament fidelity":     [3.5, 3, 2.5, 3, 3, 2.5],
+    "Material realism":      [3, 2.5, 1.5, 2.5, 3, 1.5],
+    "Edge wear":             [2.5, 2, 1, 1, 2, 0.5],
+    "Lighting mood":         [4, 3, 2, 3, 3.5, 2],
+    "Water reflection":      [2, 1.5, None, None, 1.5, 1.5],
+    "Repetition visibility": [3, 2.5, 2, 2.5, 2.5, 2.5],
+    "Scale cues":            [3.5, 3, 2.5, 3, 3, 2.5],
+}
+SCORES = {"01": R01, "02": R02, "03": R03, "04": R04, "05": R05, "06": R06}
 VERDICT = {
     "02": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. "
           "Blockers: dome reads absent from cam05, edge wear absent, camera 03 framing, haze.",
@@ -92,6 +107,7 @@ VERDICT = {
           "Shoreline, columns, cam05 apex, Eevee vault (0.04 -> 0.16) landed; blockers: cam03 shade crushed (shaft 0.06 of "
           "the sunlit stone, ref 0.61), hero stone now a dark isotropic blotch (attic lum 0.88 of ref, streak anisotropy "
           "0.64 vs photo 4.07), Cycles coffers 0.21 with black floors (claimed 0.39), water reflection grey (sat 0.11).",
+    "06": "Gate: NOT passed. Target is >= 4 on every row, hero average >= 4.5. Hero 3.22 (3.28 holding Proportion at 4): no gain for a fourth round. Landed: hero shade colour (shaded attic 30.7 deg / sat 0.373 vs ref 29.5 / 0.425), Cycles coffers 0.21 -> 0.451 (ref 0.437), cornice/dentil shadow (row std 20.9 -> 36.5), cam03 shade 0.06 -> 0.15 old box / 0.38 on the sky-visible box, cam05 stone std 0.92 of ref. Blockers: the diffuse sky tint floods cam06 and the water blue-violet (roofs hue 37 -> 253, cam05 lagoon sat 0.31 -> 0.12), hero reflection sat 0.043 (ref 0.358), stone streak anisotropy 0.41 vs 4.07, and the hero stack does not register course by course (+0.07 m to +2.31 m).",
 }
 
 
@@ -119,6 +135,18 @@ def averages(tbl):
     return out
 
 
+def _wrap(text, n):
+    out, line = [], ""
+    for w in text.split():
+        if len(line) + len(w) + 1 > n:
+            out.append(line); line = w
+        else:
+            line = (line + " " + w).strip()
+    if line:
+        out.append(line)
+    return out
+
+
 def build(rnd, out):
     prev_rnd = f"{int(rnd) - 1:02d}"
     W = 1920
@@ -132,8 +160,8 @@ def build(rnd, out):
     hero_s, ref_s = fit(hero, 950), fit(ref, 950)
     top_h = max(hero_s.height, ref_s.height)
     strip_h = 180
-    table_h = 60 + (len(ROWS) + 2) * 40 + 20
-    H = 44 + top_h + 30 + strip_h + 26 + table_h
+    table_h = 60 + (len(ROWS) + 2) * 40 + 20 + 44 * (2 + 1)   # + the r02 -> rnd trend block
+    H = 44 + top_h + 30 + strip_h + 26 + table_h + 90
 
     sheet = Image.new("RGB", (W, H), (18, 18, 20))
     d = ImageDraw.Draw(sheet)
@@ -181,7 +209,21 @@ def build(rnd, out):
         col = (140, 235, 140) if dv > 0 else (255, 140, 140)
         d.text((col0 + colw + i * 265, y), f"{a1[i]:.2f} -> {a2[i]:.2f}  {dv:+.2f}", font=f_cell, fill=col)
     y += 44
-    d.text((col0, y), VERDICT.get(rnd, "Gate: NOT passed."), font=f_cell, fill=(255, 180, 120))
+    # ---- trend block: the average per camera for every round scored so far (brief item 2) ----
+    seq = [r for r in sorted(SCORES) if int(r) <= int(rnd) and r != "01"]
+    d.text((col0, y), "trend  " + "  ".join(f"r{r}" for r in seq), font=f_cell, fill=(200, 200, 200))
+    y += 34
+    for i, c in enumerate(CAMS):
+        vals = [averages(SCORES[r])[i] for r in seq]
+        txt = "  ".join(f"{v:.2f}" for v in vals)
+        dv = vals[-1] - vals[0]
+        col = (140, 235, 140) if dv > 0.3 else ((255, 140, 140) if dv < 0 else (215, 215, 215))
+        d.text((col0 + (i % 3) * 620, y + (i // 3) * 34), f"cam {c:13s} {txt}   ({dv:+.2f} since r02)",
+               font=f_cell, fill=col)
+    y += 34 * 2 + 12
+    for line in _wrap(VERDICT.get(rnd, "Gate: NOT passed."), 165):
+        d.text((col0, y), line, font=f_cell, fill=(255, 180, 120))
+        y += 30
 
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     sheet.save(out)

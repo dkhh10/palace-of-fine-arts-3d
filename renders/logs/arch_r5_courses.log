@@ -1,0 +1,52 @@
+00:00.318  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend"
+[courses] CAM_qa_01_lagoon_hero 1920x1080, wall plane 13.42 px/m; d measured by ray on the flat part of face 00 (+-4.01 m of its centre)
+course                                     z m     d m      row      col    drop from the course above
+attic top (cornice crown)                38.30    0.71    158.3    959.9                             -
+attic panel frame top                    37.50    0.04    173.2    959.9                         +15.0
+attic panel frame bottom                 32.10    0.04    245.7    959.9                         +72.5
+cornice corona top                       31.20    1.45    250.6    959.9                          +4.9
+cornice corona bottom (soffit lip)       30.88    1.66    253.9    959.9                          +3.3
+dentil bed (block bottom)                29.57    0.74    276.3    959.9                         +22.4
+frieze top                               29.45    0.34    279.9    959.9                          +3.5
+frieze bottom                            28.55    0.39    291.8    959.9                         +11.9
+architrave bottom                        27.40    0.14    308.4    959.9                         +16.6
+capital top (pier, az 64.9)              27.40    2.35    303.2   1055.4   socket SOCKET_capital_rotunda_000, abacus projection is ORN's
+[sil] LOD1 +PH crop [690, 40, 1235, 520] objects 361/1560 verts 89839
+[sil] apex_y 87.5  corner_top_y 211.0  wa_row 239  wa 690..1234 = 544 px  rise 123.5 px  rise/W_a 0.2270
+[sil] round-4 alpha render (arch_r4b, docs/arch_notes.md): apex_y 88  corner_top_y 212  wa 544  rise/W_a 0.228
+[probe] CAM_qa_01_lagoon_hero loc (-14.1, 100.0, 1.6) lens 20.0 shift 0.000,0.060 res [1920, 1080]
+[probe] wall plane: entablature z 27.400000000000002 -> row 309.0, z 31.2 -> row 258.0; scale 13.42 px/m   col at d=0: 959.9
+[probe] 1.00 m of outward projection lifts a point by 4.41 px (= 0.329 m of apparent height)
+      z      d      row      col
+  27.40   0.00    309.0    959.9
+  27.40   0.50    306.8    959.9
+  27.40   1.00    304.6    959.9
+  27.40   1.70    301.4    959.9
+  28.80   0.00    290.2    959.9
+  28.80   0.50    287.9    959.9
+  28.80   1.00    285.6    959.9
+  28.80   1.70    282.2    959.9
+  30.00   0.00    274.1    959.9
+  30.00   0.50    271.7    959.9
+  30.00   1.00    269.2    959.9
+  30.00   1.70    265.8    959.9
+  30.60   0.00    266.0    959.9
+  30.60   0.50    263.6    959.9
+  30.60   1.00    261.1    959.9
+  30.60   1.70    257.5    959.9
+  31.20   0.00    258.0    959.9
+  31.20   0.50    255.5    959.9
+  31.20   1.00    252.9    959.9
+  31.20   1.70    249.3    959.9
+  32.10   0.00    245.9    959.9
+  32.10   0.50    243.3    959.9
+  32.10   1.00    240.7    959.9
+  32.10   1.70    237.0    959.9
+  38.30   0.00    162.7    959.9
+  38.30   0.50    159.6    959.9
+  38.30   1.00    156.4    959.9
+  38.30   1.70    152.0    959.9
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 27268 exited rc=0 after 1 s (max 900)

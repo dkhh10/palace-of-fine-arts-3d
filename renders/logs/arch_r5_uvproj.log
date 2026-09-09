@@ -1,0 +1,53 @@
+00:00.319  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend"
+[uvproj] CAM_qa_01_lagoon_hero loc (-14.1, 100.0, 1.6) lens 20.0 shift 0.000,0.060 res 1920x1080
+[uvproj] 33 objects / 31 meshes; missing: none
+[uvproj] shared mesh ARCH_rotunda_dentils_LOD0: ARCH_rotunda_dentils_LOD0 / ARCH_rotunda_dentils_LOD1 matrix_world max delta 0.00e+00
+[uvproj] shared mesh ARCH_rotunda_modillions_LOD0: ARCH_rotunda_modillions_LOD0 / ARCH_rotunda_modillions_LOD1 matrix_world max delta 0.00e+00
+[uvproj] ARCH_rotunda_attic_base                  objs 1 verts    256 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_corner_00             objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_corner_01             objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_corner_07             objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_corner_cap_00         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_corner_cap_01         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_corner_cap_07         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_cornice               objs 1 verts    256 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_frame_00              objs 1 verts     16 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_frame_01              objs 1 verts     16 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_frame_07              objs 1 verts     16 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_niche_00              objs 1 verts     16 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_niche_01              objs 1 verts     16 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_niche_07              objs 1 verts     16 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_panel_00              objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_panel_01              objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_panel_07              objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_pilaster_00_a         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_pilaster_00_b         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_pilaster_01_a         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_pilaster_01_b         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_pilaster_07_a         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_pilaster_07_b         objs 1 verts      8 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_attic_roof                  objs 1 verts    144 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_dentils_LOD0                objs 2 verts   3776 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_drum                        objs 1 verts    768 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_drum_band                   objs 1 verts   1408 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_drum_cornice                objs 1 verts   1152 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_eggs_LOD0                   objs 1 verts  16128 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_entablature                 objs 1 verts    896 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] ARCH_rotunda_modillions_LOD0             objs 2 verts   1216 clamped      0 (  0.0 %) layers ['UVMap', 'UVProj'] active UVMap round-trip 0.00e+00 px
+[uvproj] TOTAL verts 26216 clamped 0 (0.0 %) worst round-trip 0.00e+00 px
+check                                                     pred col,row        uv col,row    d px surf dist m
+attic corner   (attic cornice crown, ressaut az 59.5)   1095.9,  148.1   1095.2,  148.0    0.78       0.000  ARCH_rotunda_attic_cornice  OK
+cornice corona (face 00 centre, soffit lip)             959.9,  253.9    959.9,  253.9    0.00       0.000  ARCH_rotunda_entablature  OK
+drum ring      (cornice ring rim, near side)            959.9,  115.3    959.9,  115.3    0.02       0.003  ARCH_rotunda_drum_cornice  OK
+[uvproj] tris_LOD0: 2694366 (arch_stats.json 2694366) SAME
+[uvproj] tris_LOD1: 1109070 (arch_stats.json 1109070) SAME
+[uvproj] tris_LOD2: 726222 (arch_stats.json 726222) SAME
+[uvproj] objects: 2281 (arch_stats.json 2281) SAME
+Info: Saved as "architecture.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/assets/architecture.blend
+[uvproj] saved assets/architecture.blend
+[uvproj] done, 0 failure(s)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 26630 exited rc=0 after 2 s (max 900)

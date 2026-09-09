@@ -308,3 +308,30 @@ In flight: scripts/lead_build.sh (log renders/logs/lead_build_r6.log). Next: QA 
 
 ## 2026-09-09 · master rebuilt (lead_build.sh, 9709 objects, LOD1 11.11 M, probes baked on the diffuse world); QA round 6 dispatched
 In flight: QA round 6 (Opus xhigh, docs/briefs/qa_round_06.md; commits only qa docs/scripts/renders; lead does not commit on main until it reports). Next: gate report with composite, score deltas, open defects; decide photo-projection pass vs Phase 5 per the definition of done.
+
+## 2026-09-09 · no-idling rule added to CLAUDE.md; QA round 6 rendering; three no-render slot agents dispatched
+Four agents running: QA round 6 (GPU), ARCH r5 (UVProj layer for the projection pass, course-row table, r4 carries), LIGHT r14 prep (flythrough path rebuilt + ray-cast clearance table, r13 carries, docs/tech_notes.md delivery section), ORN r5 (rotunda frieze band asset for the 24 sockets + ORN_COLL entry, attic relief report, LOD2 budget). None renders or writes master.
+Next: QA gate report to the user; reviews + merges of the three slot branches; go/no-go on docs/briefs/materials_r8_projection.md.
+
+## 2026-09-09 · ARCH r5 reported (db35484), in review
+ARCH r5 (no render): UVProj layer on 33 hero-facing objects (cam01 frame position, round-trip 0.00 px, named-point checks 0.78 / 0.00 / 0.02 px, UVProj_valid attribute, tris and sockets unchanged); course-row table for cam01 (attic top 158, frame 173-246, corona 251-254, dentil bed 276, frieze 280-292, architrave bottom 308); r4 carries done, silhouette re-measured without a render (within 1 px). 5.2 gotchas: matrix_world stale for hidden objects, use matrix_basis; BVHTree instead of Object.ray_cast.
+In flight: ARCH r5 review, QA round 6, LIGHT r14 prep, ORN r5. Next: merge arch r5 after review; QA gate.
+
+## 2026-09-09 · QA round 6 in (6343ccd): gate NOT passed; hero 3.22 (-0.06; 3.28 with proportion held = fourth flat round), cam02 2.72, cam03 2.12 (+0.38), cam04 2.75 (+0.19), cam05 2.78, cam06 2.28 (-0.22)
+Closed: hero shade colour, Cycles coffers, cornice/dentil texture std, cam03 shade on the re-based box (0.384), cam05 stone std, north wing. Blockers: QA-06-1 hero stack does not register (+0.07 to +2.31 m by course; attic storey 0.70 and capital 0.65 of ref: architecture, and the projection pass cannot register until it is closed), QA-06-2 the r12 diffuse tint floods cam02/03/05/06 shade blue-violet (roofs hue 37 -> 253: lighting), QA-06-3 water fails everywhere (reflection R-B +2.5 vs +69, cam05 lagoon sat 0.12: materials). Majors: -4 anisotropy 0.41, -5 sunlit chroma (sat 0.473, R-B 103), -6 capitals 24 px vs 37 (ornament), -7 cam03 lagoon-side row, -8 coffer sat 0.91, -9 entablature row std 36.5, -13 Eevee pass +81 %. Composite renders/qa_comparisons/round06_gate.png.
+Polish round 5 (decisions.md): ARCH r6 closes the stack first (then re-runs UVProj), LIGHT r14 fixes the violet flood + reflection warmth, then MAT r8 = water blocker + photo-projection on the registered stack. Definition of done clock starts at the round after MAT r8.
+
+## 2026-09-09 · ORN r5 reported (70dc10d), in review
+ORN r5 (no render): 24 rotunda frieze_run sockets are host=rotunda subtype=rinceau (8 fronts 5.913 m, 16 returns 2.999 m); new ORN_frieze_rinceau / _return v1-3 with LODs inside budget, proud <= 125 mm under the 160 mm architrave-crown cap, sunk 15 mm; needs the ORN_COLL guard in build_master.py (lead) and a normal/AO bake (was --no-bake). Attic panel depth already 1.6x nominal; the deficit is undercut, not depth; deeper relief blows all three tier budgets (not built). All three attic panels' LOD2 brought to 2400 tris.
+In flight: ORN review, ARCH r5 review, LIGHT r14 prep. Next: merges; ARCH r6 (stack), LIGHT r14 (violet flood), MAT r8 (water + projection).
+
+## 2026-09-09 · ARCH r5 merged after review (MERGE WITH FIXES); ARCH r6 dispatched (register the stack)
+Fix-now (arch_uvproj not called by the build) carried into ARCH r6 item 0. In flight: ARCH r6 (docs/briefs/architecture_r6.md, Cycles crops only), ORN r5 review, LIGHT r14 prep. Next: LIGHT r14 after prep merges; MAT r8 after LIGHT r14 + ARCH r6.
+
+## 2026-09-09 · LIGHT r14 prep reported (4fa11be), in review
+Flythrough rebuilt: cam01 hold -> lagoon crossing -> cam02 station -> one colonnade bay -> gallery centreline at z 1.15 -> arch -> ceiling look-up; 250.1 m, 1224 frames @ 24 fps (51 s; 720 impossible at walking pace); check script: clearance 1.70 m outside / 1.42 in the gallery (2.80 m clear width), speed 5.6 / 9.2, holds 3.5 / 4.2 s. r13 carries done except 8 (needs an Eevee frame). docs/tech_notes.md "Opening and rendering master.blend" written. Hand-offs: env shrub pitto1_1107 overhangs the walk; cam06 std gate to be restated as a ratio.
+In flight: LIGHT prep review, ORN r5 review, ARCH r6. Next: merge, LIGHT r14 (violet flood).
+
+## 2026-09-09 · ORN r5 review: MERGE WITH FIXES (docs/reviews/orn_r5_review.md); fixes split by owner
+Blockers routed to ARCH r6 (message sent): the 24 rotunda frieze_run sockets carry no host/subtype (the lead's build_master guard never fires) and their frame is wrong (+X anti-parallel to run_dir on fronts, +Y into the block on returns). ORN fix agent: cap is 100 mm (architrave crown d 0.44), RIN_MAX_PROUD 0.09, stats fail loudly on run mismatch, lod2fix into orn_build; the normal/AO bake waits for a GPU round. ENV r9 (no render) dispatched: walk clearance shrub, r7/r8 carries, cam06 gate definition.
+In flight: ARCH r6, LIGHT prep review, ORN r5 fix, ENV r9. Next: merges; LIGHT r14.

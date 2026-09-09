@@ -3,8 +3,9 @@
 
 The QA metric: over a box on the 1920x1080 hero, `row std` = std-dev over rows of the per-row mean luminance
 (hard horizontal shadow bands make it large), and `texture std` = std-dev of every pixel luminance in the box.
-QA round 05: render 20.9 / photo (ref 169, raw, mapped with S=1.3108 dx=-291.8 dy=-124.6) 53.6 on box
-900 262 1020 296.  Acceptance for QA-05-6: row std >= 0.75 * photo = 40.2.
+QA round 05: render 20.9 / photo (ref 169, raw, mapped with arch_params.REF169_XF) 53.6 on box 900 262 1020 296.
+Acceptance printed here is the brief's, not a ratio of its own: row std >= 35 ABSOLUTE and texture std >= 0.60 of
+the photo's (docs/briefs/architecture_r4.md; docs/reviews/arch_r4_review.md item 8).
 
   python3 scripts/arch_entab_measure.py stats IMG [--box x0 y0 x1 y1] [--ref PHOTO] [--transform S DX DY]
   python3 scripts/arch_entab_measure.py profile IMG --box ... [--ref ...] [--transform ...]
@@ -12,15 +13,18 @@ QA round 05: render 20.9 / photo (ref 169, raw, mapped with S=1.3108 dx=-291.8 d
   python3 scripts/arch_entab_measure.py strip --out OUT.png --panel LABEL IMG x0 y0 x1 y1 [--panel ...] [--zoom N]
         magnified crops stacked vertically with the row profile drawn as a curve and the two stds burnt in
 """
-import argparse
+import argparse, os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 FONT = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 HERO_BOX = (900, 262, 1020, 296)
-REF169 = "reference/photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
-# qa_silhouette align, round 05: photo px * S + D = render px
-REF169_XF = (1.3108, -291.8, -124.6)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import arch_params as P
+
+REF169 = str(P.ref169_path())        # main checkout; worktrees carry no reference/
+REF169_XF = P.REF169_XF              # qa_silhouette align, round 05: photo px * S + D = render px
+ROW_STD_MIN, TEX_RATIO_MIN = 35.0, 0.60      # the brief's two tests
 
 
 def lum(path):
@@ -61,8 +65,11 @@ def cmd_stats(a):
         print(f"PHOTO  {a.ref}")
         print(f"  box {rb} {p['n']}  mean {p['mean']:.1f}  row std {p['row_std']:.1f}  "
               f"col std {p['col_std']:.1f}  tex std {p['tex_std']:.1f}")
-        print(f"RATIO  row std {r['row_std'] / p['row_std']:.3f} (need >= 0.75)   "
-              f"tex std {r['tex_std'] / p['tex_std']:.3f} (need >= 0.60)")
+        print(f"RATIO  row std {r['row_std'] / p['row_std']:.3f} of the photo   "
+              f"tex std {r['tex_std'] / p['tex_std']:.3f} of the photo")
+        print(f"BRIEF  row std {r['row_std']:.1f} >= {ROW_STD_MIN:.0f} {'PASS' if r['row_std'] >= ROW_STD_MIN else 'FAIL'}"
+              f"   tex ratio {r['tex_std'] / p['tex_std']:.2f} >= {TEX_RATIO_MIN:.2f} "
+              f"{'PASS' if r['tex_std'] / p['tex_std'] >= TEX_RATIO_MIN else 'FAIL'}")
     return r
 
 
@@ -120,7 +127,7 @@ def main():
         s = sub.add_parser(name)
         s.add_argument("img")
         s.add_argument("--box", type=int, nargs=4)
-        s.add_argument("--ref", default=None)
+        s.add_argument("--ref", default=None, nargs="?", const=REF169)   # bare --ref = ref 169 in the main checkout
         s.add_argument("--transform", type=float, nargs=3, default=None)
     s = sub.add_parser("strip")
     s.add_argument("--out", required=True)
