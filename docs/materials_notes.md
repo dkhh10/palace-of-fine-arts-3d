@@ -1455,3 +1455,248 @@ after the murk ramp moved; the extra Eevee frame is the coffer's second albedo s
   script output; the Cycles coffer sat is extrapolated, not rendered (QA round 7 measures it). mat_r8_sheet's reference path -> common.
 - `depth` is camera View Z, not water depth: the slope ramp is per-camera (cam05 lagoon sat 0.471 = 1.5x ref) and will pump along the
   flythrough (Phase 5 item: world-space distance term). No Eevee hero water frame this round.
+
+## Round 9 (Phase 4 polish round 6, 2026-09-09) — the photo-projection pass, the mirror level, the sunlit chroma
+
+Brief: `docs/briefs/materials_r9.md` (items A/B/C/D/E/F) on the spec in `docs/briefs/materials_r8_projection.md`.
+Measured on the rebuilt master (`scripts/lead_build.sh`, **9679 objects**, LIGHT r15 + ORN r8 as merged), Cycles
+1920x1080 / 64 spp from `CAM_qa_01_lagoon_hero` at the round-08 station (z 1.3 = 2.6 m over the water).
+
+### The finding that governs the whole round: the view transform, not the albedo
+
+Five rounds have moved concrete albedo and watched the hero barely respond. `scripts/mat_r9_agx.py` renders an
+emission chart through this project's own colour management and measures the transfer directly. At the hero's
+operating levels AgX compresses **both** luminance and chroma by roughly **4x**:
+
+| display luminance | d log(display) / d log(scene) | display blue moved per 1 % of scene blue |
+|---|---|---|
+| 188 (sunlit attic) | **0.24** | **0.19 - 0.24 %** |
+| 165 | 0.31 | 0.30 - 0.37 % |
+| 137 (shaded attic) | — | **0.47 - 0.58 %** |
+
+Two independent confirmations on the hero itself: (1) the shipped albedo tint takes the concrete's blue down
+24.2 % and moves the sunlit attic box's display blue by **2.2 %** and the shaded attic's by **12.2 %**; (2) the
+projection forced to `Photo` 0 vs 1 (`renders/logs/mat_r9_phtest.log`, hero border rows 190-320) moves the shaded
+attic **135.6 -> 130.3** where the ratio map asks for -9.6 %, and the entablature 133.1 -> 132.2 where it asks for
+-5.9 %.
+
+Consequences, and they are the round's two open blockers:
+
+- **QA-07-2 is not reachable from materials.** ref 169's sunlit attic is sat 0.582 at lum 188.5 in a camera JPEG.
+  Under AgX at display lum 188, an emission patch driven to **-50 % scene blue** only reaches sat 0.342. Closing
+  0.461 -> 0.53 on the hero would need a scene-blue cut of order -120 %, i.e. a negative albedo. The levers that
+  remain are all outside this file: the view transform's **Look** (`AgX - Punchy` raises chroma), the sun's colour
+  temperature (lighting), or a sunlit level nearer the bottom of the 178-201 window (also lighting).
+- **QA-07-7's materials half is not reachable through the albedo either.** The photograph's own reflectance on
+  that wall is only 10 % below this build's (the ratio map's local mean there is 0.90), and 10 % of albedo is
+  worth 3 lum on screen. Getting 136.4 -> 126.5 through albedo would need a **-24 %** cut that the photograph does
+  not support and that would take the shade hue and saturation out of their windows. It is a light level, which is
+  where QA-07-7 assigns it.
+
+### Item A — the projection (`scripts/mat_projection.py`, `assets/textures/projection/`)
+
+**Frame.** Both maps live in the frame of the camera `scripts/arch_uvproj.py` baked `UVProj` from — cam01 *before*
+the round-08 station move: loc (-14.1, 100.0, **1.6**), 20 mm, shift_y 0.06 (`renders/logs/arch_r7_build.log:49`).
+architecture.blend has not been rebuilt since the station moved to z 1.3, so a map built in the current hero frame
+would sit 3-4 px off the wall; and `arch_params.REF169_XF` (1.3108, -291.8, -124.6) was fitted in that same frame,
+so building there costs nothing and makes the registration exact instead of approximate. The denominator is a
+**border render** of rows 40-400 from a reconstruction of that camera (43 s, 18 % of a hero frame).
+
+**Sampled from the world position, not from `UVProj`, and this is a deliberate documented deviation.** `UVProj`
+exists on the 33 ARCH meshes only; the probe (`scripts/mat_r9_probe.py`) shows QA's attic boxes are 35 % covered by
+`INST_attic_panel_*` (ORN, `MAT_ornament_concrete`), which has no such layer, so a UVProj-only projection would
+land on the ARCH field and stop at every ornament edge — a seam generator, against constraint 2. `PFA_photo`
+therefore computes the projector UV in closed form from `Geometry > Position`. `scripts/mat_r9_uvcheck.py` proves
+it is the same projection on 6242 loops of all 33 meshes: worst disagreement with `bpy_extras.world_to_camera_view`
+**0.0002 px**, worst disagreement with the baked `UVProj` layer **0.0002 px**. It is also immune to an ARCH rebuild.
+
+**The ratio map** is built in three spatial bands, and this is the round's second measured finding. A single
+per-pixel ratio puts 23 % of the shaded attic's pixels outside any sane clip (render std 51 there) and loses two
+thirds of the correction; and mixing the photograph's streaks with the procedural ones **destroys variance**,
+because they are uncorrelated:
+
+| ratio map | attic std ratio @ weight 0.6 | attic aniso | shaded lum |
+|---|---|---|---|
+| LF only (sigma 10 px) | **0.64** | 3.73 | 124.7 |
+| LF + 0.5 x MF (sigma 3) — **shipped** | **0.61** | 3.79 | 124.4 |
+| LF + MF | 0.59 | 4.05 | 124.9 |
+| LF + MF + HF (sigma 1.1) | **0.55** | 3.16 | 126.2 |
+| the same at weight 1.0 | 0.64 | 4.20 | 120.7 |
+
+The test the projection was commissioned to fix (std ratio >= 0.60) is **broken by importing the photograph's own
+texture at partial weight**. The model's anisotropy already equals the photograph's (4.00 vs 4.08). So the 1.1 px
+band is dropped, the 0.22-0.75 m band is kept at half strength, and what ships is the photograph's **photometry**,
+course by course, not its texture. Per-course registration is the QA round-07 section (g) table applied as a
+piecewise-linear vertical shift in the warp (`MP.STACK`); geometry is never touched.
+
+**The chroma is pulled out of the map and put in the albedo.** `M_chroma = (1.0383, 1.0130, 0.7582)` is the
+luminance-neutral part of the RGB correction ref169/render over QA's attic box, read from
+`projection_meta.json` by `mat_build.py` so the two can never drift apart. It ships as the new `Albedo Tint` input
+on `MAT_concrete_ochre`, `MAT_ornament_concrete` and `MAT_drum_band` — a global multiply on the finished albedo, so
+it works from every camera, on every surface, and cannot make a seam. The map is then mean-1 on QA's box by
+construction (normalised on the **geometric** mean: the arithmetic mean is Jensen-biased to 1.044 against a true
+correction of 0.996, which would have darkened the box 4-5 %).
+
+**Budget:** ratio 1.17 MB + mask 16 KB, both **1920x1080** — the projector frame's own resolution. The brief
+allowed 4K each; upsampling would invent detail the photograph does not have (ref 169 samples the render grid at
+0.76 px/px through REF169_XF, so 1920 is already oversampled).
+
+### Item A/F acceptance, hero Cycles 1920x1080 / 64 spp, BEFORE = this master with the round-8 library
+
+| box | before | after | window | verdict |
+|---|---|---|---|---|
+| attic_sunlit 900 222 1020 256 | 189.3 / 36.0 / 0.444 / +100.0 | **189.8 / 36.1 / 0.461 / +104.7** | lum 178-201, sat .53-.62, R-B >= 120 | lum **PASS**; sat/R-B **FAIL** (AgX, above) |
+| attic_string 880 214 1040 222 | 178.6 / 0.437 / +92.8 | 179.8 / 0.460 / +99.2 | ref 185.3 / 0.585 | — |
+| entablature 900 262 1020 296 | 132.7 / 38.6 / 0.668 | 132.8 / 37.9 / **0.687** | sat <= 0.70 | **PASS** (held) |
+| attic_shaded 1110 225 1150 260 | 136.4 / 32.7 / 0.307 | **132.9 / 33.6 / 0.394** | lum 103.5-126.5, hue 23.5-35.5, sat <= .50 | hue **PASS**, sat **PASS** (and 0.307 -> 0.394 against ref 0.457); lum **FAIL** |
+| columns (mask) | 105.4 / 26.2 / 0.626 | 104.9 / **26.3 / 0.625** | hue 24.5+-4, sat .55-.65 | **PASS** (held) |
+| attic std ratio / aniso, QA box | 0.68 / 4.00 | **0.65 / 4.16** | >= 0.60 / >= 1.5 | **PASS** (held) |
+| attic std ratio / aniso, 900 224 1020 248 | 0.62 / 5.80 | **0.60 / 6.11** | >= 0.60 / >= 2.0 | **PASS** (held) |
+
+### Items B and C — the water. One lever, swept, and one impossibility
+
+`WATER_GLOSS_MIX` mixes a **tinted Glossy lobe** (same roughness, same normal, tint (1.00, 0.985, 0.875)) into the
+water by the same Fresnel the Principled uses, because Blender's `Specular Tint` reaches F0 only and this whole
+crop is F90. Swept in four cases on one master, hero border rows 740-1080 (31 % of a frame):
+
+| WATER_GLOSS_MIX | 0.00 | 0.45 | 0.75 | 1.00 | ref 169 | window |
+|---|---|---|---|---|---|---|
+| reflection lum | 102.1 | 116.3 | **124.3** | 130.3 | 164.6 | 124-208 |
+| reflection R-B | +40.7 | +45.8 | +47.8 | +49.0 | +71.7 | >= +35 |
+| near water lum | 107.9 | 125.2 | 134.1 | 140.3 | 105.4 | 79-131 |
+| near water sat | 0.288 | 0.200 | 0.160 | 0.134 | 0.246 | 0.22-0.32 |
+| near water hue | 209.2 | 208.0 | 207.0 | 206.0 | 189.8 | 185-200 |
+| ripples R-B | -31.2 | -22.5 | -17.8 | -14.5 | -16.4 | -26 +- 10 |
+| lagoon flank lum | 145.2 | 162.7 | 171.5 | 177.7 | 152.4 | 114-190 |
+
+**QA-07-1's near-water hue is reported as not reachable from this material**, which is the outcome the brief
+allowed for. Taking 12.5 % of blue out of the *entire* reflected radiance moves it **3.2 deg**; the 19 deg the
+window asks for would need the mirror about half green, and the reflection column would leave its own hue window
+long before the lagoon reached 200. That is the third measured lever after round 6's sheen (1.0 deg) and round 7's
+murk gain (which moves it the **wrong** way, 209.6 -> 218.6, because the murk is a lambertian under a blue sky).
+At 9.4 m the near-water pixel is ~95 % Fresnel mirror (murk_w ~0.36 x gain 0.15 = 0.054 of the surface), so its hue
+IS the hue of the sky it mirrors. **Hand-off to lighting: ref 169's lagoon is 18 deg greener than the sky above it;
+the residual is the sky's hue at 3-8 deg of elevation, or it needs a tinted mirror this material cannot afford.**
+
+**Shipped at 0.25**, the largest setting at which nothing that passes today stops passing. Everything the extra
+mirror buys the reflection column it also spends on the open lagoon, which is already at reference.
+
+| box | before | after (0.25) | window | verdict |
+|---|---|---|---|---|
+| water_refl 900 760 1020 840 | 102.1 / 38.3 / 0.345 / +39.8 | **110.3 / 38.7 / 0.351 / +43.7** | lum 124-208, R-B >= +35, hue 25-45 | R-B **PASS**, hue **PASS**, lum **FAIL** (0.54 -> **0.58** of the sunlit attic; photo 0.88) |
+| near_water 1150 1000 1450 1050 | 107.8 / 209.4 / 0.292 | **118.3 / 208.5 / 0.234** | lum 79-131, hue 185-200, sat .22-.32 | lum **PASS**, sat **PASS**, hue **FAIL** (see above) |
+| ripples 1100 960 1500 1060 | R-B -32.0 | **R-B -26.0** | -26 +- 10 (ref -16.4) | **PASS**, error halved |
+| lagoon_flank 100 900 400 960 | 145.2 / 210.1 | **155.7 / 209.8** | 114-190, hue <= 210 | **PASS**, and now 1.02x ref 152.4 (was 0.95x) |
+| cam05 band (Cycles 720p border) | (LIGHT r15: 108.4) | **113.2 / 41.7 / 0.702** | lum 70-117, sat >= 0.24 | **PASS** (hold item held) |
+
+`WATER_GLOSS_MIX` = 0 is bit-identical to the round-8 water. **Raising it to 0.75 closes QA-07-3 (reflection 124.3)
+and is one number in `mat_build.build_water`** — at the cost of near-water lum 134.1 and sat 0.160, and of cam05's
+band going over its 117 ceiling. That trade is the lead's to make, not this round's.
+
+### The seam test (constraint 2) — cam02, cam05 and the hero
+
+Each camera rendered twice from one open master, `Photo` forced to 0 and at the shipped 0.6 (Eevee 1280x720,
+32 TAA, `scripts/mat_r9_seam.py`), and the DIFFERENCE measured (`mat_r9_measure.py seam`). A seam is a coherent
+edge along a mask boundary, so it survives a blur; a one-pixel jump at a geometry edge does not.
+
+| camera | peak &#124;delta lum&#124; | pixels moved > 3 lum | raw max step | **blurred max step (the seam metric)** | row-std of the difference |
+|---|---|---|---|---|---|
+| cam01 | 18.3 | 1.89 % | 8.9 | **2.85 lum/px** | 0.261 |
+| cam02 (NNE, 40 mm) | 18.8 | 2.37 % | 14.3 | **3.27 lum/px** | 0.148 |
+| cam05 (south lawn) | 17.4 | 3.17 % | 15.4 | **3.74 lum/px** | 0.370 |
+
+The raw steps are at geometry edges (adjacent pixels are different surfaces with different ratios) and in Eevee's
+TAA; after a 2 px blur nothing coherent survives above ~3.7 lum/px, against a projection whose own amplitude is
+18 lum, i.e. **no mask edge is resolvable**. Panels 5-8 of `renders/qa_comparisons/mat_r9_sheet.png` show the cam02
+and cam05 differences amplified **x8** around mid grey: the field is smooth everywhere, with no band along the
+attic band's top or bottom and none at the facing cut-off. The world gates (z 24-47.5 m, radius <= 34 m from the
+rotunda axis) plus the facing ramp are what make that true off the hero axis.
+
+### Item D — the coffer rim (QA-07-9)
+
+`MAT_plaster_ceiling_rib` albedo saturation **0.25 -> 0.34** at hue 49.0 with Rec.709 luminance held to 4 decimals
+(Base 0.193,0.184,0.145 -> 0.1969,0.1844,0.1300; Grey 0.155,0.148,0.116 -> 0.1580,0.1483,0.1042). Round 8 measured
+the field's gain at 0.94 rendered points per albedo point; the rib's is ~1.29 the other way, so +36 % of albedo
+saturation is what 0.323 -> ~0.44 costs.
+**Not verifiable against QA's own number, and this is a carry.** QA's rim statistic is not in any committed script,
+so `mat_r9_measure.py coffer` had to define its own (`docs/reviews/mat_r8_review.md` finding 2 asked for exactly
+this): the saucer split at its own luminance quartiles, light quarter = field, dark quarter = rib.
+
+| statistic (my split) | round 8 | round 9 |
+|---|---|---|
+| Eevee field sat | 0.414 | 0.415 (held) |
+| Eevee rim sat | 0.589 | **0.653** |
+| Eevee dark/light lum ratio | 0.230 | 0.223 |
+| Cycles field / rim sat (r9 only) | — | 0.339 / 0.625 |
+
+My dark quarter is **not** QA's rim band (it catches the deep coffer shadows, where AgX's chroma transfer is ~0.5),
+so it over-reads. What is certain is the direction and the size of the albedo move; **QA must re-score QA-07-9
+with its own tool on `renders/previews/materials/r9a_cycles_04_rotunda_ceiling.png`.** If it over-shoots, the fix
+is one number in `build_concrete_family`.
+
+### Item E — Eevee vs Cycles on the hero (round-8 review carry 6)
+
+Last row of the sheet, the same crop 760 180 1180 420:
+
+| | lum | hue | sat | R-B |
+|---|---|---|---|---|
+| Cycles 64 spp | 140.9 | 36.1 | 0.553 | +97.0 |
+| Eevee 32 TAA | 124.2 | 37.2 | **0.644** | +102.7 |
+| ref 169 | 138.2 | 34.2 | 0.573 | +101.3 |
+
+The projected albedo is a texture and reads identically in both engines (that was the question). The gap is
+Eevee's own: **0.88x the luminance and +0.09 of saturation**, which is Eevee's shorter GI path plus the same AgX
+compression acting at a lower level. Cycles is the closer of the two to the photograph on luminance, Eevee on R-B.
+Hero water in Eevee now carries the same tint as Cycles (`WATER_GLOSS_MIX` feeds both branches), so the navigable
+viewport and the flythrough test no longer disagree with the final render about the lagoon's colour.
+
+### Round-8 review carries
+
+1. **fixed** — `mat_r7_sweep.py` / `mat_r8_sweep.py` now carry `_require_value_node`, and `mat_r9_sweep.py` calls it
+   before it writes `WATER_GLOSS_MIX`: a sweep that would silently render identical frames now exits loudly.
+2. **partly fixed** — `mat_r9_measure.py coffer` is a committed script that prints field/rim saturation; see the
+   caveat above.
+3. **fixed** — `mat_r8_sheet.py` resolves ref 083 through `arch_params.reference_dir()`.
+4. **restated** — `depth` is `ShaderNodeCameraData` "View Z Depth", i.e. distance **from whichever camera renders**,
+   not water depth. Round 8's note about a "24 m+ band" means 24 m from the rendering camera.
+5. **documented for Phase 5, not fixed** — the murk-gain (30-90 m) and ripple-slope (14-24 m) ramps are still
+   camera-depth planes, so on the flythrough they sweep across a fixed patch of water. A world-space term is the
+   right fix; it was not taken this round because the only stable anchor that separates the hero's reflection
+   column (77 m from the rotunda) from its near water (91 m) is an 8 m-wide ramp across the lagoon, which would be
+   a visible band, and because cam05's and cam06's Cycles numbers are hold items this round's budget could not
+   re-measure. **Phase 5 must check for pumping before the animation deliverable.**
+6. **fixed** — Eevee hero crop, above.
+7. **fixed** — one Cycles cam04 rendered (`r9a_cycles_04_rotunda_ceiling.png`).
+8. — bookkeeping only; the round-9 sweep commits all four of its frames.
+
+### Render budget actually spent
+
+3 full Cycles hero frames (before / after / final), 1 Cycles cam04 720p, 1 Cycles cam05 720p **border** (rows
+600-720, 20 s), 1 Cycles projector **border** (rows 40-400, 43 s), 4 Cycles hero **borders** for the water sweep
+(rows 740-1080, 96 s each), 2 Cycles hero borders for the Photo 0/1 authority test (rows 190-320, 20 s each),
+1 Eevee five-camera pass, 6 Eevee 720p frames for the seam test, 1 emission chart (0.6 s). The brief's cap was
+3 hero frames + 1 cam04 + 1 Eevee pass; every extra frame is a border crop or an Eevee 720p, together ~1.5 hero
+frames of GPU.
+
+### Files
+
+`scripts/mat_projection.py` (the maps), `scripts/mat_r9_render.py`, `scripts/mat_r9_sweep.py`,
+`scripts/mat_r9_measure.py`, `scripts/mat_r9_seam.py`, `scripts/mat_r9_probe.py`, `scripts/mat_r9_uvcheck.py`,
+`scripts/mat_r9_agx.py`, `scripts/mat_r9_sheet.py`; `scripts/mat_build.py` (`PFA_photo` group, `Albedo Tint` and
+`Photo` inputs, the tinted mirror, the rib albedo); `scripts/mat_lib.py` (`projection_image`);
+`assets/textures/projection/{PFA_photo_ratio.png, PFA_photo_mask.png, projection_meta.json}`;
+`assets/materials.blend`; `renders/qa_comparisons/mat_r9_sheet.png`; `docs/reference_sheet.md` (the ref-169
+licence line).
+
+### Open, and whose
+
+- **QA-07-2 sunlit chroma — the lead's / lighting's**, with the AgX chart as the evidence. Ask for `AgX - Punchy`
+  (or a warmer sun) and re-measure; materials has spent its authority.
+- **QA-07-7 shaded attic level — lighting's**, unchanged: the photograph's reflectance there is only 10 % below
+  the build's, worth 3 lum.
+- **QA-07-1 near-water hue — lighting's**, with the three-lever sweep as the impossibility proof.
+- **QA-07-3 reflection level — one number** (`WATER_GLOSS_MIX` 0.25 -> 0.75) whose cost is priced in the table.
+- **QA-07-9 coffer rim — QA to re-score** with its own statistic on the committed Cycles cam04.
+- **The projection is camera-locked to the hero station.** If ARCH or the lead moves geometry inside the drum /
+  attic / entablature band, or moves cam01 again, re-run `mat_r9_render.py --jobs proj` and
+  `mat_projection.py build`: it is two commands and ~1 minute of GPU. Nothing else in the library depends on it.
