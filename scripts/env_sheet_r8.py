@@ -25,7 +25,7 @@ OUT = ROOT / "renders/qa_comparisons/env_r8_sheet.png"
 S, DX, SY, DY = 0.7640, 223.2, 0.7667, 97.0
 FX0, FX1, FY0, FY1 = 0.55, 1.00, 0.28, 0.72
 W, H = 1920, 1080
-PW = 900                                    # panel width
+PW = 1180                                   # panel width
 TICKS = (0.60, 0.65, 0.708, 0.740, 0.80, 0.85, 0.90, 0.95)
 RED = (0.708, 0.740)                        # QA-04-6's box edge and ref 169's mass right edge
 
@@ -74,13 +74,13 @@ def main():
     d = ImageDraw.Draw(out)
     for i, (title, im) in enumerate(imgs):
         y = i * (ph + 40)
-        d.text((8, 8 + y), title, font=F_T, fill=(255, 214, 120))
         out.paste(im, (0, y + 38))
         for fx in TICKS:
             px = int((fx - FX0) / (FX1 - FX0) * PW)
             col = (255, 80, 80) if fx in RED else (110, 190, 255)
             d.line([(px, y + 38), (px, y + 38 + im.height)], fill=col, width=2)
-            d.text((px + 3, y + 12), f"{fx:.3f}", font=F_N, fill=col)
+            d.text((px + 4, y + 42 + im.height - 24), f"{fx:.3f}", font=F_N, fill=col)
+        d.text((8, 8 + y), title, font=F_T, fill=(255, 214, 120))
     y = len(imgs) * (ph + 40)
     d.text((8, y + 4), "QA-04-6 north-wing band, cam 01 1360 480 1860 600 (frame x 0.708-0.969)",
            font=F_T, fill=(255, 214, 120))

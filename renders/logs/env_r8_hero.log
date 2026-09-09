@@ -1,9 +1,9 @@
-00:00.323  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/master.blend"
-08:08.932  render           | Saved: 'renders/previews/environment/r8_hero.png'
+00:00.381  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/master.blend"
+09:58.237  render           | Saved: 'renders/previews/environment/r8_hero.png'
 [env_r5_hero] opening /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/master.blend
 [env_r5_hero] CYCLES 128 spp 1920x1080 -> renders/previews/environment/r8_hero.png
 [env_r5_hero] done
 Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
 
 Blender quit
-blender_run.sh: pid 11800 exited rc=0 after 490 s (max 1800)
+blender_run.sh: pid 12209 exited rc=0 after 599 s (max 1800)

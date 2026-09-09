@@ -16,4 +16,4 @@ Info: Saved as "master.blend"
 Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
 
 Blender quit
-blender_run.sh: pid 11741 exited rc=0 after 26 s (max 900)
+blender_run.sh: pid 12157 exited rc=0 after 30 s (max 900)
