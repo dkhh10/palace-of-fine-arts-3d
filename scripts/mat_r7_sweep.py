@@ -38,6 +38,11 @@ CASES = {
     "w4":  dict(gain=0.70, trans=0.18, vol=0.12, chop=1.60, sheen=0.00),
     "w5":  dict(gain=0.45, trans=0.18, vol=0.12, chop=1.60, sheen=0.00),
     "w6":  dict(gain=0.70, trans=0.18, vol=0.12, chop=1.60, sheen=0.35),
+    # the decisive one: murk albedo zero = a pure Fresnel mirror.  If the near-water hue / saturation barely move,
+    # the water shader has no authority over them at QA's grazing crop and the numbers are the reflected sky's.
+    "w7":  dict(gain=0.00, trans=0.18, vol=0.12, chop=1.00, sheen=0.00),
+    "w8":  dict(gain=1.00, trans=0.40, vol=0.70, chop=2.60, sheen=0.00),
+    "w9":  dict(gain=2.20, trans=0.18, vol=0.12, chop=1.60, sheen=0.00),
 }
 BORDER = (780 / 1920.0, 1560 / 1920.0, 1.0 - 1080 / 1080.0, 1.0 - 700 / 1080.0)   # min_x, max_x, min_y, max_y
 
