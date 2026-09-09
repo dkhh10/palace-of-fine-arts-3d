@@ -308,3 +308,7 @@ In flight: scripts/lead_build.sh (log renders/logs/lead_build_r6.log). Next: QA 
 
 ## 2026-09-09 · master rebuilt (lead_build.sh, 9709 objects, LOD1 11.11 M, probes baked on the diffuse world); QA round 6 dispatched
 In flight: QA round 6 (Opus xhigh, docs/briefs/qa_round_06.md; commits only qa docs/scripts/renders; lead does not commit on main until it reports). Next: gate report with composite, score deltas, open defects; decide photo-projection pass vs Phase 5 per the definition of done.
+
+## 2026-09-09 · no-idling rule added to CLAUDE.md; QA round 6 rendering; three no-render slot agents dispatched
+Four agents running: QA round 6 (GPU), ARCH r5 (UVProj layer for the projection pass, course-row table, r4 carries), LIGHT r14 prep (flythrough path rebuilt + ray-cast clearance table, r13 carries, docs/tech_notes.md delivery section), ORN r5 (rotunda frieze band asset for the 24 sockets + ORN_COLL entry, attic relief report, LOD2 budget). None renders or writes master.
+Next: QA gate report to the user; reviews + merges of the three slot branches; go/no-go on docs/briefs/materials_r8_projection.md.
