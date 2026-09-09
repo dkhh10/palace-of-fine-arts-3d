@@ -424,3 +424,7 @@ Closed: QA-06-1 stack (all courses within 5 rows, spread 0.67 m), QA-06-2 violet
 ## 2026-09-09 · Session restart (lead): stations moved, silhouette re-registered, LIGHT r15 + ORN r8 review dispatched
 cam01 z 1.6 -> 1.3 (2.6 m over the water, QA round 07 item 5); cam02 to the ref-062 NNE fit (-79.8, 24.4, 1.55) -> (0, 0, 23.5) 40 mm (65ef92c). Registration on one Eevee hero frame upscaled to 1920: align scale 1.3108, apex delta 0.53 %H; stack band 880-1040: crown 164 vs ref 168, panel bottom 255 vs 265 (widest, 6 rows), corona 280 vs 278, architrave 319 vs 324, abacus 333 vs 333 — all inside the +-8 row acceptance; the tool's auto-walk (median +0.52 m) mis-pairs edges on the Eevee frame, the panel round08pre_stack_offset.png is the evidence.
 In flight: LIGHT r15 (docs/briefs/lighting_r15.md, Opus high), ORN r8 code review (no Blender), Phase 5 prep on branch phase5 (no render). Next: LIGHT review + merge, MAT r9 projection (Opus xhigh), ORN r8 merge + capital bake, lead_build.sh, QA round 8.
+
+## 2026-09-09 · ORN r8 merged after review (MERGE WITH FIXES; main's baked ornament.blend kept, notes' pending-bake bullet corrected)
+Pending before the next master build: `orn_build.py --only capital_rotunda` WITH bake in the GPU gap after LIGHT r15 (attic_panel is baked on main). Carries for a later ornament round: two ref_002 pixel scales in the notes, source_ns() brace counter, --verify skips the two 1.8 m capitals.
+In flight: LIGHT r15, Phase 5 prep (branch phase5). Next: LIGHT review + merge, ORN bake, MAT r9.
