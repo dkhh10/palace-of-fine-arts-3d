@@ -135,44 +135,44 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 <!-- PLAN_TABLE_START -->
 | # | species | X (S+) | Y (E+) | height m | note |
 |---|---|---|---|---|---|
-| 00 | pine | -44 | -42 | 17 | A cluster core, ref 169 mass x 0.651-0.717 (QA-01-6: clear of cam02's right 40%) |
-| 01 | redwood | -40 | -2 | 16 | A young redwood at the north arch (ref 070) |
-| 02 | cypress | -48 | -40 | 21 | A dark mass right of the dome, ref 169 x 0.668-0.740 |
-| 03 | pine | -45 | -34 | 22 | A cluster, second crown, ref 169 x 0.679-0.747 |
+| 00 | pine | -37 | -43 | 21 | A cluster core, ref 169 mass x 0.638-0.705 (QA-01-6: clear of cam02's right 40%) |
+| 01 | redwood | -40 | -2 | 16 | A young redwood at the north arch (ref 070); r9 QA-02-13 ring, cam01 x 0.730 |
+| 02 | cypress | -44 | -41 | 26 | A dark mass right of the dome, ref 169 x 0.665-0.743 |
+| 03 | pine | -46 | -41 | 22 | A cluster, second crown, ref 169 x 0.680-0.746 |
 | 04 | willow | -40 | 16 | 9 | A pale weeping willow at the water in front of the cluster (ref 169); r8 10 -> 9 m, its crown reached frame x 0.79 where ref 169 is clear colonnade |
 | 05 | broadleaf | -49 | 13 | 9 | A shore broadleaf at cam02's right edge; r8 11 -> 9 m, same reason as the willow |
-| 06 | cypress | -46 | -29 | 24 | A cluster depth, ref 169 x 0.688-0.758 (mass kept dense) |
-| 07 | pine | -41 | -40 | 17 | A cluster depth, ref 169 x 0.640-0.704 |
+| 06 | cypress | -49 | -40 | 24 | A cluster depth, ref 169 x 0.689-0.757 (mass kept dense) |
+| 07 | pine | -40 | -42 | 21 | A cluster depth, ref 169 x 0.652-0.716 |
 | 08 | broadleaf | -30 | 30 | 8 | P peninsula bed, right of the rotunda (cam01 x 0.71-0.78) |
 | 09 | willow | -22 | 38 | 7 | P low willow at the water in front of the podium (cam01 x 0.64-0.71) |
 | 10 | broadleaf | -36 | 20 | 7 | P peninsula bed (cam01 x 0.75-0.80) |
 | 11 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
 | 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
-| 13 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.24-0.27) |
+| 13 | broadleaf | 34 | 20 | 6 | P peninsula bed (cam01 x 0.264); r9 QA-02-13 ring |
 | 14 | willow | 9 | 46 | 9 | P hero-shore willow, ref 169 frame x 0.33-0.42 |
-| 15 | willow | -8 | 40 | 7 | P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair) |
+| 15 | willow | -2 | 47 | 7 | P hero-shore willow, ref 169 frame x 0.44-0.52 (right of the stair) |
 | 16 | willow | -12 | 45 | 8 | P hero-shore willow, ref 169 frame x 0.56-0.64 |
-| 17 | cypress_column | -38 | -19 | 27 | A2 tall column right of the rotunda (user image x~1020) |
+| 17 | cypress_column | -38 | -19 | 22 | A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, cam01 x 0.695 |
 | 18 | pine | -60 | -31 | 13 | A2 strip along the north wing, r+8 (ref 169: crown over the cornice, x 0.79) |
 | 19 | cypress_column | -66 | -28 | 17 | A2 second column, r+8 (ref 169: crown over the cornice, x 0.82) |
 | 20 | cypress | -77 | -22 | 16 | A2 at the wing's first box, r+8 (ref 169: crown over the cornice, x 0.89) |
-| 21 | eucalyptus | -90 | 5 | 20 | B big eucalyptus on the strip (ref 141) |
+| 21 | eucalyptus | -85 | 16 | 20 | B big eucalyptus on the strip (ref 141); r9 QA-02-7, 12 m down-sun of the r8 plan coordinate (-79, 26) - the position shadow_relief used to sweep it to on every build |
 | 22 | pine | -90 | 22 | 20 | B |
 | 23 | willow | -100 | 37 | 9 | B willow at the water (refs 144/145) |
-| 24 | eucalyptus | -106 | 20 | 30 | B big eucalyptus behind the willows (ref 171) |
+| 24 | eucalyptus | -113 | 15 | 30 | B big eucalyptus behind the willows (ref 171); r9 pushed radially out of the north pylon's gallery keep-out (was -106, 20 = 2.6 m off the walk centreline) |
 | 25 | cypress | -118 | 8 | 22 | B beyond the north pylon |
 | 26 | cypress_column | -112 | 40 | 24 | B tall column beyond the north pylon (ref 169 right) |
-| 27 | cypress_column | 35 | 20 | 16 | C cypress column left of the rotunda (user image x~290): QA-03-10/-13 26 -> 16 m, the user image spire tops out at the colonnade cornice |
-| 28 | cypress_column | 30 | 26 | 13 | C second column (user image x~330), south lobe; QA-03-13 24 -> 13 m |
-| 29 | broadleaf | 31 | 26 | 8 | C small dark tree left of the rotunda (user image x~410); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05 |
+| 27 | cypress_column | 35 | 20 | 16 | C cypress column left of the rotunda (user image x~290, cam01 x 0.259): QA-03-10/-13 26 -> 16 m, the user image spire tops out at the colonnade cornice; r9 QA-02-13 ring |
+| 28 | cypress_column | 30 | 26 | 13 | C second column (user image x~330, cam01 x 0.268), south lobe; QA-03-13 24 -> 13 m; r9 QA-02-13 ring |
+| 29 | broadleaf | 31 | 26 | 8 | C small dark tree left of the rotunda (user image x~410, cam01 x 0.258); QA-03-13 13 -> 9 m, clear of the rotunda silhouette at cam05; r9 QA-02-13 ring, 14.5 m out |
 | 30 | eucalyptus | 62 | -30 | 30 | C broad eucalyptus behind the south wing (ref 169 left) |
 | 31 | pine | 62 | -46 | 18 | C QA-01-6: moved out of cam03 (was 24,-22 = 7 m in front of the camera) |
 | 32 | broadleaf | 74 | -38 | 10 | C QA-01-6: moved out of cam03 (was 33,-20 = 5 m in front of the camera) |
 | 33 | cypress_column | 66 | 40 | 18 | D dense cypress behind the south pylon (ref 169 far left) |
-| 34 | eucalyptus | 59 | 15 | 20 | D |
+| 34 | eucalyptus | 70 | 36 | 20 | D south-wing strip; r9 QA-02-7, 12 m down-sun of the r8 plan coordinate (76, 46) - the position shadow_relief used to sweep it to on every build |
 | 35 | pine | 92 | 58 | 15 | D |
 | 36 | willow | 78 | 50 | 9 | D willow at the south end of the lagoon |
-| 37 | eucalyptus | 104 | 52 | 30 | D south pylon |
+| 37 | eucalyptus | 108 | 51 | 30 | D south pylon; r9 pushed radially out of the gallery keep-out (was 104, 52 = 2.4 m off the walk centreline) |
 | 38 | cypress | 112 | 40 | 22 | D |
 | 39 | eucalyptus | -110 | 124 | 30 | F east shore row |
 | 40 | eucalyptus | -90 | 126 | 28 | F east shore row |
@@ -180,7 +180,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 42 | eucalyptus | -48 | 127 | 30 | F east shore row |
 | 43 | broadleaf | 24 | 130 | 8 | F east lawn |
 | 44 | eucalyptus | 73 | 120 | 30 | F |
-| 45 | eucalyptus | 95 | 118 | 22 | F |
+| 45 | eucalyptus | 95 | 118 | 18 | F |
 | 46 | eucalyptus | 126 | 127 | 23 | F |
 | 47 | cypress | 168 | 114 | 22 | F |
 | 48 | eucalyptus | 158 | 28 | 32 | F |
@@ -221,11 +221,11 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 83 | cypress | 47 | -25 | 18 | E1 screen behind the colonnade |
 | 84 | redwood | 60 | -17 | 18 | E1 screen behind the colonnade |
 | 85 | pine | 63 | -13 | 17 | E1 screen behind the colonnade |
-| 86 | pine | 66 | -8 | 17 | E1 screen behind the colonnade |
-| 87 | cypress | 71 | -6 | 17 | E1 screen behind the colonnade |
-| 88 | redwood | 88 | 39 | 16 | E1 screen behind the colonnade |
-| 89 | redwood | 112 | 41 | 18 | E1 screen behind the colonnade |
-| 90 | redwood | 112 | 46 | 18 | E1 screen behind the colonnade |
+| 86 | redwood | 71 | -6 | 17 | E1 screen behind the colonnade |
+| 87 | redwood | 87 | 37 | 16 | E1 screen behind the colonnade |
+| 88 | cypress | 109 | 39 | 17 | E1 screen behind the colonnade |
+| 89 | redwood | 112 | 44 | 18 | E1 screen behind the colonnade |
+| 90 | cypress | 110 | 49 | 18 | E1 screen behind the colonnade |
 | 91 | redwood | 35 | -42 | 24 | E2 screen behind the colonnade |
 | 92 | eucalyptus | 40 | -40 | 19 | E2 screen behind the colonnade |
 | 93 | cypress | 45 | -37 | 19 | E2 screen behind the colonnade |
@@ -233,45 +233,39 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 95 | redwood | 67 | -21 | 18 | E2 screen behind the colonnade |
 | 96 | redwood | 70 | -16 | 18 | E2 screen behind the colonnade |
 | 97 | redwood | 75 | -12 | 18 | E2 screen behind the colonnade |
-| 98 | redwood | 93 | 39 | 16 | E2 screen behind the colonnade |
-| 99 | eucalyptus | 117 | 41 | 19 | E2 screen behind the colonnade |
-| 100 | redwood | 119 | 47 | 22 | E2 screen behind the colonnade |
-| 101 | redwood | 117 | 53 | 22 | E2 screen behind the colonnade |
-| 102 | cypress | 96 | 33 | 17 | E3 screen behind the colonnade |
-| 103 | eucalyptus | 124 | 36 | 20 | E3 screen behind the colonnade |
-| 104 | eucalyptus | 126 | 42 | 24 | E3 screen behind the colonnade |
-| 105 | eucalyptus | 124 | 50 | 27 | E3 screen behind the colonnade |
-| 106 | cypress | -118 | 10 | 18 | E1 screen behind the colonnade |
-| 107 | redwood | -118 | 5 | 19 | E1 screen behind the colonnade |
-| 108 | cypress | -116 | -0 | 17 | E1 screen behind the colonnade |
-| 109 | redwood | -90 | 7 | 16 | E1 screen behind the colonnade |
-| 110 | redwood | -84 | -9 | 17 | E1 screen behind the colonnade |
-| 111 | redwood | -80 | -12 | 17 | E1 screen behind the colonnade |
-| 112 | redwood | -77 | -17 | 17 | E1 screen behind the colonnade |
-| 113 | pine | -61 | -30 | 18 | E1 screen behind the colonnade |
-| 114 | redwood | -57 | -33 | 18 | E1 screen behind the colonnade |
-| 115 | cypress | -52 | -35 | 18 | E1 screen behind the colonnade |
-| 116 | pine | -31 | -42 | 18 | E1 screen behind the colonnade |
-| 117 | pine | -26 | -43 | 18 | E1 screen behind the colonnade |
-| 118 | cypress | -21 | -43 | 18 | E1 screen behind the colonnade |
-| 119 | redwood | -125 | 7 | 21 | E2 screen behind the colonnade |
-| 120 | redwood | -125 | 1 | 20 | E2 screen behind the colonnade |
-| 121 | cypress | -122 | -4 | 20 | E2 screen behind the colonnade |
-| 122 | redwood | -97 | 1 | 17 | E2 screen behind the colonnade |
-| 123 | redwood | -98 | -6 | 18 | E2 screen behind the colonnade |
-| 124 | redwood | -85 | -20 | 18 | E2 screen behind the colonnade |
-| 125 | eucalyptus | -79 | -23 | 18 | E2 screen behind the colonnade |
-| 126 | redwood | -76 | -28 | 18 | E2 screen behind the colonnade |
-| 127 | cypress | -71 | -32 | 18 | E2 screen behind the colonnade |
-| 128 | redwood | -54 | -42 | 19 | E2 screen behind the colonnade |
-| 129 | redwood | -48 | -44 | 19 | E2 screen behind the colonnade |
-| 130 | redwood | -41 | -44 | 18 | E2 screen behind the colonnade |
-| 131 | eucalyptus | -37 | -48 | 19 | E2 screen behind the colonnade |
-| 132 | eucalyptus | -21 | -51 | 19 | E2 screen behind the colonnade |
-| 133 | redwood | -132 | 6 | 26 | E3 screen behind the colonnade |
-| 134 | cypress | -132 | -1 | 20 | E3 screen behind the colonnade |
-| 135 | cypress | -127 | -7 | 20 | E3 screen behind the colonnade |
-| 136 | redwood | -103 | -11 | 19 | E3 screen behind the colonnade |
+| 98 | redwood | 118 | 41 | 19 | E2 screen behind the colonnade |
+| 99 | eucalyptus | 119 | 47 | 25 | E2 screen behind the colonnade |
+| 100 | cypress | 117 | 53 | 22 | E2 screen behind the colonnade |
+| 101 | eucalyptus | 101 | 23 | 18 | E3 screen behind the colonnade |
+| 102 | eucalyptus | 102 | 37 | 18 | E3 screen behind the colonnade |
+| 103 | redwood | 125 | 53 | 26 | E3 screen behind the colonnade |
+| 104 | cypress | -120 | 8 | 18 | E1 screen behind the colonnade |
+| 105 | cypress | -118 | 3 | 19 | E1 screen behind the colonnade |
+| 106 | cypress | -115 | -1 | 19 | E1 screen behind the colonnade |
+| 107 | cypress | -91 | 5 | 16 | E1 screen behind the colonnade |
+| 108 | redwood | -65 | -28 | 18 | E1 screen behind the colonnade |
+| 109 | redwood | -60 | -31 | 18 | E1 screen behind the colonnade |
+| 110 | redwood | -56 | -33 | 18 | E1 screen behind the colonnade |
+| 111 | pine | -51 | -35 | 18 | E1 screen behind the colonnade |
+| 112 | pine | -36 | -40 | 18 | E1 screen behind the colonnade |
+| 113 | cypress | -31 | -43 | 18 | E1 screen behind the colonnade |
+| 114 | cypress | -26 | -44 | 18 | E1 screen behind the colonnade |
+| 115 | cypress | -22 | -46 | 18 | E1 screen behind the colonnade |
+| 116 | redwood | -126 | 10 | 23 | E2 screen behind the colonnade |
+| 117 | redwood | -126 | 4 | 20 | E2 screen behind the colonnade |
+| 118 | redwood | -122 | -1 | 19 | E2 screen behind the colonnade |
+| 119 | eucalyptus | -88 | -14 | 18 | E2 screen behind the colonnade |
+| 120 | redwood | -84 | -19 | 18 | E2 screen behind the colonnade |
+| 121 | redwood | -80 | -23 | 18 | E2 screen behind the colonnade |
+| 122 | redwood | -63 | -35 | 18 | E2 screen behind the colonnade |
+| 123 | cypress | -58 | -39 | 18 | E2 screen behind the colonnade |
+| 124 | cypress | -53 | -42 | 19 | E2 screen behind the colonnade |
+| 125 | redwood | -33 | -48 | 19 | E2 screen behind the colonnade |
+| 126 | redwood | -27 | -48 | 19 | E2 screen behind the colonnade |
+| 127 | cypress | -22 | -51 | 19 | E2 screen behind the colonnade |
+| 128 | cypress | -133 | 3 | 24 | E3 screen behind the colonnade |
+| 129 | redwood | -131 | -4 | 21 | E3 screen behind the colonnade |
+| 130 | redwood | -128 | -10 | 21 | E3 screen behind the colonnade |
 <!-- PLAN_TABLE_END -->
 
 ## Polish round 1 (QA round 02 defects) — 2026-09-07
@@ -1193,7 +1187,7 @@ the same depression-angle argument that motivated the pad applies to the verge i
 wall. 7a's probe read ground **10.9 %** (down from round 6's 13.8) with `MAT_backdrop_asphalt` gone from the box's
 top fills altogether. 7b gaps them instead — resample **26 m**, keep **0.62**, and crowns held to **8-12 m** on the
 wide ways so each crown's own shadow (23-35 m) fits inside the gap — and the far field opens: ground **23.4 %**,
-asphalt **4.08 %** (1.65x round 6), foliage **30.6 %** (from 42.6), far canopy 2453 -> 1747 crowns.
+asphalt **4.08 %** (1.65x round 6), foliage **30.6 %** (round 6's 42.6), far canopy **2453 (round 7a) -> 1747**. Two baselines in one sentence, labelled here after r7 review carry 10.
 
 *The rendered line count is still 0, and the reason is measurable and is not ENV's.* Rendering cam 06 with
 lighting's `COMP_golden_hour` compositor bypassed (`env_r5_hero.py --nocomp`): crop luminance **103.2 -> 45.0** and
@@ -1369,7 +1363,10 @@ reproduces the round-6 table's 145.9 / 16.2 % — the measurement pipeline is th
    **120-135 m out**, the grove past the north arch. Five conifers re-solved there, x 0.640-0.758, heights 21-26 m.
    The near willow, shore broadleaf and redwood stay on the peninsula — they are the pale willow ref 169 puts at
    the water in front of the mass — with the willow 10 -> 9 m and the broadleaf 11 -> 9 m (their crowns reached
-   x 0.79). 35.3 -> ~11 %.
+   x 0.79). 35.3 -> **8.5 %** for the five A conifers alone (5.61 + 1.39 + 0.91 + 0.54 + 0.05 + 0.01 in
+   env_r8f_band.log; two of the five contribute 0 %, occluded by the wing), **14.3 %** counting the P bed.
+   The report's "~11 %" was wrong (r8 review carry 7): the box's left columns are held mostly by the near
+   P broadleaf at (-30, 30), frame x 0.711, not by the grove.
 3. **`SCREEN_OVER` 0.022 -> 0.000.** With the hand-placed trees out of 0.76-0.99, everything left in those columns
    was procedural screen standing over the cornice. This build's cornice sits ~0.02 of frame lower than the
    photo's, so a 2.2 % allowance lands *inside* the measured band; 0.0 % puts the screen tops on the cornice line.
@@ -1425,3 +1422,134 @@ is an improvement — the screen cap is a cam-01 sight line and both wings' scre
   Lead decision: accepted as delivered (the hero box starts at 0.708; the band metric 0.91 and the right edge are what it sees).
 - Finding 2: COLONNADE_TOP_Z 16.0 -> 16.4 m noted above. Finding 4: `solve()` reads station and lens from qa_cameras. Carries 3, 5, 6, 7
   (shadow_relief relocation of hand-placed trees and stale frame-x comments, y-window, cam03 std 26.0 vs 26.7, A-group share 8.5 %) to round 9.
+
+## Round 9 — the colonnade walk, and every relief pass stops moving the plan (brief `docs/briefs/environment_r9.md`), 2026-09-09
+
+**No render this round** (ARCH r6 held the GPU). Everything below is a build or a probe: `env_build.py`,
+`scripts/env_r9_walk.py`, `scripts/env_r9_replan.py`, `env_r8_fit.py --ref`, `env_r7_measure.py --c06ratio`.
+
+### Item 1 — LIGHT r14's flythrough was walking through a shrub, and it was not one shrub
+
+Lighting reported `ENV_shrub_pitto1_1107` 1.45 m from the gallery centreline, "the only ENV object inside the
+2.80 m clear width". It was not. `scripts/env_r9_walk.py` samples the gallery centreline every 2 m over both
+wings (102 samples) and measures, for every ENV object except the terrain and the water surface, the plan
+distance to its origin and — separately — to its nearest mesh vertex inside the eye band z −1.10 … +1.90 m:
+
+| walk clearance (102 samples, 2 m) | before (r8 as merged) | after | gate |
+|---|---|---|---|
+| min distance to an object ORIGIN | **0.26 m** | **4.21 m** | >= 4.1 m (keep-out) |
+| min distance to GEOMETRY in the eye band | **0.03 m** | **1.71 m** | >= 1.40 m (half the clear width) |
+| samples with an object inside the 2.80 m clear width | **8** | **0** | 0 |
+| samples inside the 4.1 m planting keep-out | **58** | **0** | 0 |
+| south wing min origin / extent | 0.81 / 0.32 | 4.40 / 1.71 | — |
+| north wing min origin / extent | 0.26 / 0.03 | 4.21 / 2.59 | — |
+
+**The cause is that ENV's colonnade exclusion was never the colonnade.** Every planting rule tested the OSM roof
+polygons (`COLONNADE_ROOFS`, `roof306` / `roof310`) offset 2.0-2.5 m. Those polygons run from r 90 to r 124 about
+`arch_params.COL_ARC_CENTER`, and over the middle of both wings their outer edge falls **inside** the modelled
+arc R = 117.4: the walk centreline at theta −54 … −22 is *outside* the OSM footprint entirely. So "plant 2.8 m
+and 4.5 m outside the footprint" (`build_shrubs` section 3) and "row E1 at outer radius + 6 m"
+(`redwood_screen`) put shrubs and a screen redwood on the gallery floor.
+
+The rule is now the arc, read from `arch_params` and never copied: `env_lib.colonnade_wings()` re-derives each
+wing span exactly the way `arch_build.Wing` does, `colonnade_walk_points()` samples the centreline and
+`gallery_clear(x, y)` refuses anything within **`GALLERY_KEEPOUT` = 4.1 m** = the structure
+(`COL_ROW_SPACING`/2 + `COLONNADE_D`/2 = 3.10 m) plus 1.0 m. It is enforced in `env_build.land_ok`, in
+`env_build.put` (the embayment fringe and the islet call `put` directly), in `build_lamp_posts`, in
+`redwood_screen`, in `env_trees._land`, and as a final gate on the tree plan after both relief passes.
+
+### Item 2 — `shadow_relief` no longer relocates a hand-placed tree, and PLAN now holds the shipped coordinate
+
+r8 review carry 3 asked for the stale frame-x comments; the cause was bigger than the comments.
+`shadow_relief` ran **before** `frame_band_relief` and moved pinned trees by two mechanisms: a 12 m down-sun push
+for a stubborn shadow blocker, and a radial push out of QA-02-13's 37 m podium ring. Six PLAN entries were being
+relocated on every build, so the plan described positions no render ever used (the r8 review's cypress at frame x
+0.719 against a commented 0.668-0.740). Both are gone: `policy()` returns a `movable` flag, `PIN_HAND_PLACED`
+trees may only be **lowered**, and the podium loop **reports** a hand-placed violation instead of swinging it out.
+The log line now reads `moved 0 (hand-placed 0, N pinned refused at the podium ring)`, and a pinned blocker that
+is at its height floor prints the down-sun coordinate the pass *would* have used — which is what makes the
+correction bakeable.
+
+Everything those pushes used to do is now in the plan, measured, not swept:
+
+| PLAN correction | from | to | why |
+|---|---|---|---|
+| 6 podium-ring entries (A redwood, A2 column, P broadleaf, 2 C columns, C broadleaf) | see log | `env_r9_replan.py --podium` | QA-02-13; computed with the PLAN height so the clearance holds however far the relief later lowers the crown. **Geometry unchanged** — the push was deterministic and idempotent |
+| 5 A conifers | on the arc, gallery offset 0.26 / 1.36 / 1.51 / 2.34 / 6.02 m | `env_r8_fit.solve(centre_x, r_off = +13.0)` | +13 m is the radial offset the r8 build actually shipped them at (after its 12 m down-sun push). Frame-x centres 0.672 / 0.684 / 0.704 / 0.713 / 0.723 **unchanged**; axis distance 123-128 -> 134-138 m, so the crowns read 0.003-0.004 of frame narrower |
+| B eucalyptus (ref 141), D eucalyptus | (−79, 26), (76, 46) | (−84.7, 15.5), (70.3, 35.5) | QA-02-7: 12 m down-sun, the position `shadow_relief` swept them to on every build |
+
+**A side effect worth having:** because the A conifers are now placed clear of the wings instead of being pushed
+there, the relief no longer has to lower them. r8 shipped the cluster core at h 17 (plan 21) and the dark-mass
+cypress at h 21 (plan 26); r9 ships them at their plan heights 21 and 26. That is a direct, free part of the
+"the mass is 0.025 of frame short" carry, though it is **unmeasured in frame terms this round** (no render).
+
+Numbers re-checked on the rebuilt ENV (`renders/logs/env_r9f_build.log`), all of them no-render:
+
+| | r8 | r9 | note |
+|---|---|---|---|
+| frame-band clearer | moved 0, shortened 3, dropped 0, kept 12 | **moved 0, shortened 3, dropped 0, kept 11** | the rule holds |
+| `shadow_relief` moves | lowered 27 (103 m), **moved 16**, dropped 3 | lowered 26 (100 m), **moved 0** (hand-placed 0), dropped 3 | 1 pinned podium refusal, all suggestions baked |
+| wing band in tree shadow, north / south | 12.5 / 17.5 % | **21.2 / 21.2 %** | target <= 22 %; the head-room the sweep used to buy is gone |
+| hero water / hero shore in shadow | 4.5 / 18.0 % | **4.5 / 22.0 %** | targets 25 / 25 |
+| trees placed | 137 | **131** | 3 dropped by the relief, and the gallery gate now drops 0 |
+| ENV tris at LOD1 | 4,756,102 | **4,705,602** | LOD0 13,599,868, LOD2 674,236 |
+| shrub candidates refused by the keep-out | — | 0 in `put` (`land_ok` rejects them first) | the belt reshapes, it does not thin |
+
+Also fixed this round: `env_r8_fit.MASS_X` replaces the hard-coded 0.705-0.745 y-extent window (r8 carry 5) and
+`solve(y_hint)` is gone; over the corrected window 0.62-0.735 the mass's solid top is frame y **0.46** with
+sparse tips from 0.35, against 0.45 over the old right-half window, so the r8 conclusion stands
+(`renders/logs/env_r9_ref_profile.log`). cam 03's std for the reverted height experiment is **26.7 -> 21.4**
+everywhere now, code and notes (r8 carry 6). The A-group share is **8.5 %**, 14.3 % with the P bed, not "~11 %"
+(r8 carry 7, corrected in the round-8 section above). The round-7a labels are on the far-canopy sentence
+(r7 carry 10).
+
+### Item 3 — the cam 06 far-shore gate: one definition, and it is a ratio
+
+Environment read 44.0 / 23.5 where lighting read 59.8 / 33.8 on what both called "the same crop". The statistic
+was never the disagreement — both used `env_r7_measure`'s rows 0-220 of the 1280-wide cam 06 frame. The
+**absolutes** differ because they were measured on different masters (ENV r7 + LIGHT r11 vs ARCH r5 + ENV r8 +
+LIGHT r13), and an absolute std moves with the light rig and the geometry. The written definition now lives in
+`scripts/env_r7_measure.py`'s docstring:
+
+* frame: cam 06, EEVEE, **1280 x 720**, LOD1; if the file is wider it is a QA 3-panel strip and only the first
+  1280 columns are used.
+* crop: `L[0:220, 0:1280]` for the std and the mean; `L[0:110, 0:1280]` for the far-shore **line count**.
+* luminance: Rec. 709 on the 8-bit sRGB values as stored (0-255), **not** linearised.
+* statistic: `numpy.std`, population.
+* the pair: the **same** render twice — compositor as shipped, and `COMP_golden_hour` bypassed. Same exposure,
+  samples, resolution and geometry; only the compositor differs.
+* measure the PNG the renderer wrote, not a JPEG re-encode: the r7 pair reads std 44.0 as PNG and 42.6 as the
+  committed JPEG.
+
+**THE GATE: `std(composited) / std(un-composited)` over that crop.** `env_r7_measure.py --c06ratio <comp.png>
+<nocomp.png>` computes it and writes `c06_ratio` into `r7_numbers.json`.
+
+| master | un-composited std | composited std | **ratio** |
+|---|---|---|---|
+| ENV r7 + LIGHT r11 (env's hand-off) | 44.0 | 23.5 | **0.534** |
+| the same pair as committed JPEGs | 42.6 | 22.8 | 0.536 |
+| ARCH r5 + ENV r8 + LIGHT r13 as shipped | 59.8 | 38.1 | **0.637** |
+
+So the ratio is stable to 0.002 under a JPEG re-encode while the absolutes move by 15 luminance units, which is
+the argument for stating the gate as the ratio. **For QA: LIGHT r13 ships 0.637; the gate is `ratio >= 0.60`,
+with the far-shore line count (rows 0-110) reported beside it — 8 un-composited against 2 composited on the r13
+master.** A round that reports only the composited std is not comparable with any other round.
+
+### Round-9 hand-offs
+
+- **Lighting.** The walk is clear: nearest ENV geometry in the flythrough's eye band is **1.71 m** from the
+  centreline (south wing) and **2.59 m** (north), against the 1.40 m half clear width; nearest object origin
+  4.21 m. `scripts/env_r9_walk.py` re-runs the check in ~6 s on `assets/environment.blend`, no render.
+- **Lighting / QA.** The cam 06 gate is the composited / un-composited std ratio, defined in
+  `env_r7_measure.py` and tabulated above. Please quote the ratio, not the absolute std.
+- **QA (needs a render, next round).** The wing band in tree shadow is 21.2 / 21.2 % against r8's 12.5 / 17.5 %.
+  Both are inside QA-02-7's 22 % target, but the margin is now 0.8 points, and it is the price of the rule that
+  the plan owns every hand-placed position. If a later round wants the r8 margin back, the lever is the two 28 m
+  eucalyptus (B ref 141, D south strip): they are the worst remaining casters at 15 and 8 band samples each,
+  standing at their 0.72 height floor of 20.2 m.
+- **Materials (restated, r7 carry 5).** `MAT_paving_stone` / `MAT_paving_stone_worn` are still missing, so
+  `build_paving` runs on `MAT_gravel_path` / `MAT_soil` — the very materials the terrain already lays on that
+  strip. The fallback is **not silent** (`common.load_material` warns and `env_build` logs the names used), and
+  the probe measured cam 03's walk sun reach at 1.3 -> **1.4 %**, so the joint self-shadowing the rationale
+  comment claimed is not what produced the std gain; that came from the ambient relief and the 288 edge shrubs.
+  Size the ask accordingly: what the walk needs is a stone albedo and a joint normal, not a shadow trick.
