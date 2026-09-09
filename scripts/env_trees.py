@@ -706,6 +706,30 @@ def hero_water_samples(lagoon_field, step=6.0):
     return out
 
 
+def relief_policy(note, x, y):
+    """`(height floor as a fraction of the original, may it be dropped?, may it be MOVED?)`
+
+    Round 9 (env r8 review, finding 3).  This pass used to push any stubborn blocker 12 m down-sun, pinned or
+    not, and it ran BEFORE `frame_band_relief`, whose pin tuple is therefore applied to positions this pass
+    had already changed: the A cypress went from PLAN (-42, -30) to (-47.7, -40.5) and the A2 column from
+    (-36, -18) to (-38.7, -20.8).  That is the 36-48 m sweep the round-5 rule forbids, in a smaller dose, and
+    it is why every frame-x comment in PLAN described a position the build did not ship.  A hand-placed tree
+    (any group in `PIN_HAND_PLACED`) may now only be LOWERED here; when it is at its floor the loop gives up
+    on it and moves to the next worst blocker.
+    """
+    n = str(note)
+    movable = n.split(" ")[0] not in PIN_HAND_PLACED
+    if n.startswith(("E1", "E2", "E3")):
+        return 0.55, True, movable              # generated screen: expendable
+    if n.startswith(("F", "H")) and y > 105.0:
+        return 0.45, True, movable              # east shore / backdrop, behind the hero camera
+    if n.startswith("A"):
+        return 0.80, False, movable             # the dark cluster right of the rotunda in ref 169: keep it
+    if n.startswith("P"):
+        return 0.90, False, movable             # QA-04-4's peninsula bed / ref-169 willows: composition, pinned
+    return 0.72, False, movable
+
+
 def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrain_height=None):
     samples = L.wing_samples(colonnade_polys, heights=(6.0,) + SHADOW_BANDS)
     band = [s for s in samples if s[3] >= min(SHADOW_BANDS)]
@@ -722,29 +746,6 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
             t, x = frac.get(wi, (0, 0))
             frac[wi] = (t + tot, x + sh)
         return {wi: v[1] / max(1, v[0]) for wi, v in frac.items()}, blockers
-
-    def policy(note, x, y):
-        """`(height floor as a fraction of the original, may it be dropped?, may it be MOVED?)`
-
-        Round 9 (env r8 review, finding 3).  This pass used to push any stubborn blocker 12 m down-sun, pinned or
-        not, and it ran BEFORE `frame_band_relief`, whose pin tuple is therefore applied to positions this pass
-        had already changed: the A cypress went from PLAN (-42, -30) to (-47.7, -40.5) and the A2 column from
-        (-36, -18) to (-38.7, -20.8).  That is the 36-48 m sweep the round-5 rule forbids, in a smaller dose, and
-        it is why every frame-x comment in PLAN described a position the build did not ship.  A hand-placed tree
-        (any group in `PIN_HAND_PLACED`) may now only be LOWERED here; when it is at its floor the loop gives up
-        on it and moves to the next worst blocker.
-        """
-        n = str(note)
-        movable = n.split(" ")[0] not in PIN_HAND_PLACED
-        if n.startswith(("E1", "E2", "E3")):
-            return 0.55, True, movable              # generated screen: expendable
-        if n.startswith(("F", "H")) and y > 105.0:
-            return 0.45, True, movable              # east shore / backdrop, behind the hero camera
-        if n.startswith("A"):
-            return 0.80, False, movable             # the dark cluster right of the rotunda in ref 169: keep it
-        if n.startswith("P"):
-            return 0.90, False, movable             # QA-04-4's peninsula bed / ref-169 willows: composition, pinned
-        return 0.72, False, movable
 
     before, blockers = measure()
     start = dict(before)
@@ -765,7 +766,7 @@ def shadow_relief(plan, colonnade_polys, lagoon_field=None, verbose=True, terrai
             break
         i = max(blockers, key=lambda k: blockers[k])
         sp, x, y, h, note = trees[i]
-        frac, droppable, movable = policy(note, x, y)
+        frac, droppable, movable = relief_policy(note, x, y)
         floor = max(frac * orig_h[i], 8.0)
         if h > floor + 0.5:
             new_h = max(floor, h * 0.82)

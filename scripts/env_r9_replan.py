@@ -150,6 +150,53 @@ def verify():
         sys.exit(1)
 
 
+def shipped_report(blend="assets/environment.blend"):
+    """Every hand-placed PLAN entry, PLAN coordinate vs the coordinate that is IN THE BLEND.
+
+    The round's headline claim - "PLAN holds the shipped coordinate" - is only worth what a reader can check, and
+    r8 and r9 both shipped it untrue (env r9 review, finding 1).  This opens the built .blend and matches each
+    instance back to its plan entry by species + note, so the table can be pasted into the notes.  Non-zero exit
+    if any hand-placed tree stands more than 0.01 m from its PLAN coordinate.
+    """
+    import bpy
+    path = blend if os.path.isabs(blend) else str(common.ROOT / blend)
+    bpy.ops.wm.open_mainfile(filepath=path)
+    built = {}
+    for o in bpy.data.objects:
+        if not o.name.startswith("ENV_tree_") or not o.name.endswith("_LOD1"):
+            continue
+        key = (o.get("species"), str(o.get("note", "")))
+        built.setdefault(key, []).append((o.location.x, o.location.y, o.name))
+    print(f"\n[env_r9_replan] --shipped {path}")
+    print("  group species        PLAN (   X,     Y)   shipped (   X,     Y)   d      object")
+    worst, n, dropped = 0.0, 0, 0
+    for (sp, x, y, h, note) in env_trees.PLAN:
+        if str(note).split(" ")[0] not in env_trees.PIN_HAND_PLACED:
+            continue
+        n += 1
+        cands = built.get((sp, str(note)), [])
+        if not cands:
+            # `shadow_relief` may DROP an F/H backdrop tree behind the hero camera (env_trees.relief_policy
+            # returns droppable there); that is not a move and does not fail this check.  Anything else missing is.
+            droppable = env_trees.relief_policy(note, x, y)[1]
+            print(f"  {str(note).split(' ')[0]:5s} {sp:14s} ({x:6.1f},{y:6.1f})   not built "
+                  f"({'dropped by shadow_relief, droppable here' if droppable else 'UNEXPECTED'})")
+            dropped += 1
+            worst = max(worst, 0.0 if droppable else 1e9)
+            continue
+        # several entries can share a note ("F east shore row"), so a matched instance is consumed
+        bx, by, nm = min(cands, key=lambda c: math.hypot(c[0] - x, c[1] - y))
+        cands.remove((bx, by, nm))
+        d = math.hypot(bx - x, by - y)
+        worst = max(worst, d)
+        print(f"  {str(note).split(' ')[0]:5s} {sp:14s} ({x:6.1f},{y:6.1f})   ({bx:6.1f},{by:6.1f})   "
+              f"{d:5.3f}  {nm}")
+    print(f"[env_r9_replan] --shipped: {n} hand-placed entries, {n - dropped} built, {dropped} dropped as "
+          f"droppable, worst PLAN-to-shipped distance {min(worst, 999.999):.3f} m")
+    if worst > 0.01:
+        sys.exit(1)
+
+
 def main():
     print(f"[env_r9_replan] cam 01 {SPEC['loc']} lens {SPEC['lens']} mm; gallery keep-out {L.GALLERY_KEEPOUT} m")
     print("  group species     (   X,     Y)   h   frame x span     centre   d_axis  gallery_off")
@@ -177,6 +224,8 @@ def main():
             print(f"    {sp:14s} ({x:6.1f},{y:6.1f}) h{h:4.0f} crown {rad:4.1f} reaches r {d - rad:5.1f}"
                   f"  ->  ({nx:6.2f},{ny:6.2f})  frame x {frame_x(x, y):.3f} -> {frame_x(nx, ny):.3f}"
                   f"   [{str(note)[:34]}]")
+    if "--shipped" in ARGS:
+        shipped_report()
     if "--land" in ARGS:
         land_report()
     if "--verify" in ARGS:
