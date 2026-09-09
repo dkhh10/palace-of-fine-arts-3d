@@ -1448,3 +1448,10 @@ after the murk ramp moved; the extra Eevee frame is the coffer's second albedo s
 `scripts/mat_r8_sheet.py`, `scripts/mat_build.py` (`build_water`, `MAT_plaster_ceiling*`),
 `scripts/mat_lib.py` (`Tree.maprange` takes a `name=`), `assets/materials.blend`,
 `renders/qa_comparisons/mat_r8_sheet.png`.
+
+### Round 8 review corrections (lead, 2026-09-09; docs/reviews/mat_r8_review.md)
+- The water sweep scripts (mat_r8_sweep, mat_r7_sweep) write `.outputs[0].default_value` on nodes that are now MapRange, so they are
+  silent no-ops: fix in r9 (guard on node type / drive "To Max"). The coffer table (0.966 -> 0.614 -> 0.499) has no committed measure
+  script output; the Cycles coffer sat is extrapolated, not rendered (QA round 7 measures it). mat_r8_sheet's reference path -> common.
+- `depth` is camera View Z, not water depth: the slope ramp is per-camera (cam05 lagoon sat 0.471 = 1.5x ref) and will pump along the
+  flythrough (Phase 5 item: world-space distance term). No Eevee hero water frame this round.
