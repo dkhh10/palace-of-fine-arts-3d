@@ -278,3 +278,7 @@ In flight: MAT r7 (docs/briefs/materials_r7.md, Opus xhigh, on the merged master
 ## 2026-09-09 · ENV r8 reported (fa04322), in review
 ENV r8: A2 trees were inside the wing's arc (courtyard side) and the A conifers on the peninsula shore; re-solved to COL_ARC_R + 8 m and the grove past the north arch at 120-135 m. North band 91.9 -> 133.1 (0.91 of ref 145.9), foliage 72.5 -> 38.5 %, mass right edge x 0.715 (ref 0.735), clearer moved 0 / dropped 0; south band +5.4 %, shore / cam03 / cam05 / cam06 within 3 %. Measured on its master (9706 objects, LIGHT r11 rig; geometry numbers). Carry: mass 0.025 of frame short in height (shadow_relief ordering, round 9 if wanted). Sheet renders/qa_comparisons/env_r8_sheet.png.
 In flight: ENV r8 review, MAT r7. Next: merge env, MAT review + merge, LIGHT r13 (docs/briefs/lighting_r13.md), lead_build.sh, QA round 6.
+
+## 2026-09-09 · ENV r8 merged after review (MERGE WITH FIXES; docs/reviews/env_r8_review.md)
+Lead fixes: ref profile widened (mass 0.62-0.735 confirmed, solve accepted as delivered), station from qa_cameras, top-z note. Carries to ENV r9: shadow_relief relocates hand-placed trees (moved 16), mass 0.025 short in height, stale comments.
+In flight: MAT r7. Next: MAT review + merge, LIGHT r13, lead_build.sh, QA round 6.
