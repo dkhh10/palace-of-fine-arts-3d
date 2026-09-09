@@ -1,0 +1,191 @@
+=== base composited (r13ship_base_06e) vs un-composited (r13g_nocomp_06e) ===
+  a_band_cast      unchanged - no south-wing planting this round (see below)
+  a_band_lum       79.1  med 49.0  std 60.2  dark<60 60.3 %
+  a_band_mean      79.1
+  a_band_sun       identical: no planting change can move a face bearing
+  a_c03_cast       ENV_ground_colonnade_walk fills 16.7 % of the box; ground 36.7 %, foliage 3.1 %
+  a_c03_ratio      0.327  (ground 36.7 / sunlit 112.4)
+  a_c03_std        27.4  (full-width row band 20.5)
+  a_c03_stdn       27.4
+  a_c06_cast       foliage 30.6 / building 46.1 / ground 23.4 % (asphalt 4.08 %)  canopy 2453 -> 1747 crowns
+  a_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  a_c06_lum        106.5  std 22.8
+  a_c06_n          0
+  a_nband_cast     foliage 72.5 / arch 25.4 / sky 2.1 %   (round 06 build: 37.8 / 53.4 / 8.8)
+  a_nband_lum      91.9  med 72.8  std 56.9  dark<60 35.2 %  (ref 169 raw box 145.9 / 16.2 %)
+  a_nband_mean     91.9
+  a_shore_cast     foliage 55.6 / building 27.4 / ground 17.0 %
+  a_shore_hue      hue 45.1 (QA window 40-60)   sat 0.777 (ref 0.663)
+  a_shore_lum      79.6  med 69.7  std 43.8  dark<60 39.6 %
+  a_shore_mean     79.6
+  a_shore_sun      59.5 % (of its foliage, 44.6 %)   +12.1 pp
+  b_band_cast      foliage 29.1 / arch 58.3 / sky 12.5 % (round 6, unchanged)
+  b_band_lum       86.0  med 52.0  std 63.9  dark<60 55.9 %
+  b_band_mean      86.0
+  b_band_sun       south face cos(incidence) 0.318 vs the north wing's 0.991
+  b_c03_cast       ground 38.5 % (flat terrain: gravel 22.2 + soil 15.8), foliage 2.5 %
+  b_c03_ratio      0.146  (ground 16.2 / sunlit 111.3)
+  b_c03_std        14.1  (full-width row band 12.9)
+  b_c03_stdn       14.1
+  b_c06_cast       foliage 42.6 / building 43.6 / ground 13.8 % (asphalt 2.47 %)
+  b_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  b_c06_lum        100.6  std 23.3
+  b_c06_n          0
+  b_nband_cast     round 04 defect 74.6 / 24.2 / 1.2;  round 06 fix 37.8 / 53.4 / 8.8
+  b_nband_lum      137.5  med 156.1  std 64.5  dark<60 20.3 %  (ref 169 raw box 145.9 / 16.2 %)
+  b_nband_mean     137.5
+  b_shore_cast     foliage 52.5 / building 30.3 / ground 17.2 %
+  b_shore_hue      hue 45.2 (QA window 40-60)   sat 0.769 (ref 0.663)
+  b_shore_lum      71.7  med 62.1  std 40.9  dark<60 47.7 %
+  b_shore_mean     71.7
+  b_shore_sun      47.4 % of the box reaches the sun (of its foliage, 34.4 %)
+  c03_note         walk vs no walk on the SAME master: ground 26.1 -> 36.7, ratio 0.218 -> 0.327, std 27.8 -> 27.4
+  c06_comp         mean 129.7  std 33.8  far-shore lines 2
+  c06_nocomp       mean 89.4  std 59.8  far-shore lines 8
+  c06_note         ENV r6 -> r7c on the same master: crop lum 103.2 -> 106.5, std 23.5 -> 22.8
+  c06_note2        halves its contrast (un-composited 45.0 lum / std 44.0 vs 103.2 / 23.5).
+  c06_note3        Un-composited the count is 1 and the line widens 9 -> 16 px.  LIGHTING.
+  c06_ratio        0.565
+  c06_ratio_note   std composited 33.8 / un-composited 59.8 = 0.565 over rows 0-220 of the 1280-wide cam 06 frame (Rec.709 on 8-bit sRGB, population std); measured from r13ship_base_06e.png and r13g_nocomp_06e.png
+  c_c03_ratio      0.327  (ground 36.7 / sunlit 112.4)
+  c_c03_std        27.4  (full-width row band 20.5)
+  c_c03_stdn       27.4
+  c_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  c_c06_lum        106.5  std 22.8
+  c_c06_n          0
+  m_band_lum       86.3  med 52.2  std 64.0  dark<60 55.6 %
+  m_band_mean      86.3
+  m_c03_ratio      0.218  (ground 26.1 / sunlit 119.8)
+  m_c03_std        27.8  (full-width row band 21.0)
+  m_c03_stdn       27.8
+  m_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  m_c06_lum        103.2  std 23.5
+  m_c06_n          0
+  m_nband_lum      137.5  med 157.8  std 64.4  dark<60 20.4 %  (ref 169 raw box 145.9 / 16.2 %)
+  m_nband_mean     137.5
+  m_shore_hue      hue 45.2 (QA window 40-60)   sat 0.775 (ref 0.663)
+  m_shore_lum      71.7  med 62.0  std 41.0  dark<60 47.8 %
+  m_shore_mean     71.7
+  nband_note       REGRESSION, measured: pinning every hand-placed group (round-7 review finding 1)
+  nband_note2      puts the A/A2 cluster back in this box -> 137.5 -> 91.9 = 0.63 of ref. LEAD DECISION.
+  nc2_c06_lines    1 in rows 0-110 [vert 1 (243-259 -19); horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  nc2_c06_lum      45.0  std 44.0
+  nc2_c06_n        1
+  nc3_c06_lines    1 in rows 0-110 [vert 1 (752-763 -18); horiz 0];  2 over the whole crop [vert 1 (927-941 -18); horiz 1 (52-68 -18)]
+  nc3_c06_lum      51.3  std 42.7
+  nc3_c06_n        1
+  nc_c06_lines     1 in rows 0-110 [vert 1 (245-254 -17); horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  nc_c06_lum       41.2  std 42.4
+  nc_c06_n         1
+  r8_band_lum      83.4  med 51.2  std 62.8  dark<60 57.6 %
+  r8_band_mean     83.4
+  r8_c03_ratio     0.297  (ground 34.3 / sunlit 115.3)
+  r8_c03_std       26.7  (full-width row band 21.3)
+  r8_c03_stdn      26.7
+  r8_c06_lines     0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  r8_c06_lum       106.6  std 22.8
+  r8_c06_n         0
+  r8_nband_lum     133.1  med 152.1  std 65.8  dark<60 21.8 %  (ref 169 raw box 145.9 / 16.2 %)
+  r8_nband_mean    133.1
+  r8_shore_hue     hue 45.2 (QA window 40-60)   sat 0.775 (ref 0.663)
+  r8_shore_lum     79.7  med 69.7  std 43.7  dark<60 39.6 %
+  r8_shore_mean    79.7
+  shore_note       MEASURED THIS ROUND: +12.1 pp of sun reach moved the band by 0.0 lum
+  shore_note2      (71.7 -> 71.7).  Proof it is a level, not an occlusion.
+[env_r7_measure] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/renders/previews/environment/r7_numbers.json
+
+=== SHIPPED composited (r13SHIP_r13_06e) vs un-composited (r13g_nocomp_06e)  <-- THE GATE ===
+  a_band_cast      unchanged - no south-wing planting this round (see below)
+  a_band_lum       79.1  med 49.0  std 60.2  dark<60 60.3 %
+  a_band_mean      79.1
+  a_band_sun       identical: no planting change can move a face bearing
+  a_c03_cast       ENV_ground_colonnade_walk fills 16.7 % of the box; ground 36.7 %, foliage 3.1 %
+  a_c03_ratio      0.327  (ground 36.7 / sunlit 112.4)
+  a_c03_std        27.4  (full-width row band 20.5)
+  a_c03_stdn       27.4
+  a_c06_cast       foliage 30.6 / building 46.1 / ground 23.4 % (asphalt 4.08 %)  canopy 2453 -> 1747 crowns
+  a_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  a_c06_lum        106.5  std 22.8
+  a_c06_n          0
+  a_nband_cast     foliage 72.5 / arch 25.4 / sky 2.1 %   (round 06 build: 37.8 / 53.4 / 8.8)
+  a_nband_lum      91.9  med 72.8  std 56.9  dark<60 35.2 %  (ref 169 raw box 145.9 / 16.2 %)
+  a_nband_mean     91.9
+  a_shore_cast     foliage 55.6 / building 27.4 / ground 17.0 %
+  a_shore_hue      hue 45.1 (QA window 40-60)   sat 0.777 (ref 0.663)
+  a_shore_lum      79.6  med 69.7  std 43.8  dark<60 39.6 %
+  a_shore_mean     79.6
+  a_shore_sun      59.5 % (of its foliage, 44.6 %)   +12.1 pp
+  b_band_cast      foliage 29.1 / arch 58.3 / sky 12.5 % (round 6, unchanged)
+  b_band_lum       86.0  med 52.0  std 63.9  dark<60 55.9 %
+  b_band_mean      86.0
+  b_band_sun       south face cos(incidence) 0.318 vs the north wing's 0.991
+  b_c03_cast       ground 38.5 % (flat terrain: gravel 22.2 + soil 15.8), foliage 2.5 %
+  b_c03_ratio      0.146  (ground 16.2 / sunlit 111.3)
+  b_c03_std        14.1  (full-width row band 12.9)
+  b_c03_stdn       14.1
+  b_c06_cast       foliage 42.6 / building 43.6 / ground 13.8 % (asphalt 2.47 %)
+  b_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  b_c06_lum        100.6  std 23.3
+  b_c06_n          0
+  b_nband_cast     round 04 defect 74.6 / 24.2 / 1.2;  round 06 fix 37.8 / 53.4 / 8.8
+  b_nband_lum      137.5  med 156.1  std 64.5  dark<60 20.3 %  (ref 169 raw box 145.9 / 16.2 %)
+  b_nband_mean     137.5
+  b_shore_cast     foliage 52.5 / building 30.3 / ground 17.2 %
+  b_shore_hue      hue 45.2 (QA window 40-60)   sat 0.769 (ref 0.663)
+  b_shore_lum      71.7  med 62.1  std 40.9  dark<60 47.7 %
+  b_shore_mean     71.7
+  b_shore_sun      47.4 % of the box reaches the sun (of its foliage, 34.4 %)
+  c03_note         walk vs no walk on the SAME master: ground 26.1 -> 36.7, ratio 0.218 -> 0.327, std 27.8 -> 27.4
+  c06_comp         mean 122.2  std 38.1  far-shore lines 2
+  c06_nocomp       mean 89.4  std 59.8  far-shore lines 8
+  c06_note         ENV r6 -> r7c on the same master: crop lum 103.2 -> 106.5, std 23.5 -> 22.8
+  c06_note2        halves its contrast (un-composited 45.0 lum / std 44.0 vs 103.2 / 23.5).
+  c06_note3        Un-composited the count is 1 and the line widens 9 -> 16 px.  LIGHTING.
+  c06_ratio        0.636
+  c06_ratio_note   std composited 38.1 / un-composited 59.8 = 0.636 over rows 0-220 of the 1280-wide cam 06 frame (Rec.709 on 8-bit sRGB, population std); measured from r13SHIP_r13_06e.png and r13g_nocomp_06e.png
+  c_c03_ratio      0.327  (ground 36.7 / sunlit 112.4)
+  c_c03_std        27.4  (full-width row band 20.5)
+  c_c03_stdn       27.4
+  c_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  c_c06_lum        106.5  std 22.8
+  c_c06_n          0
+  m_band_lum       86.3  med 52.2  std 64.0  dark<60 55.6 %
+  m_band_mean      86.3
+  m_c03_ratio      0.218  (ground 26.1 / sunlit 119.8)
+  m_c03_std        27.8  (full-width row band 21.0)
+  m_c03_stdn       27.8
+  m_c06_lines      0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  m_c06_lum        103.2  std 23.5
+  m_c06_n          0
+  m_nband_lum      137.5  med 157.8  std 64.4  dark<60 20.4 %  (ref 169 raw box 145.9 / 16.2 %)
+  m_nband_mean     137.5
+  m_shore_hue      hue 45.2 (QA window 40-60)   sat 0.775 (ref 0.663)
+  m_shore_lum      71.7  med 62.0  std 41.0  dark<60 47.8 %
+  m_shore_mean     71.7
+  nband_note       REGRESSION, measured: pinning every hand-placed group (round-7 review finding 1)
+  nband_note2      puts the A/A2 cluster back in this box -> 137.5 -> 91.9 = 0.63 of ref. LEAD DECISION.
+  nc2_c06_lines    1 in rows 0-110 [vert 1 (243-259 -19); horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  nc2_c06_lum      45.0  std 44.0
+  nc2_c06_n        1
+  nc3_c06_lines    1 in rows 0-110 [vert 1 (752-763 -18); horiz 0];  2 over the whole crop [vert 1 (927-941 -18); horiz 1 (52-68 -18)]
+  nc3_c06_lum      51.3  std 42.7
+  nc3_c06_n        1
+  nc_c06_lines     1 in rows 0-110 [vert 1 (245-254 -17); horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  nc_c06_lum       41.2  std 42.4
+  nc_c06_n         1
+  r8_band_lum      83.4  med 51.2  std 62.8  dark<60 57.6 %
+  r8_band_mean     83.4
+  r8_c03_ratio     0.297  (ground 34.3 / sunlit 115.3)
+  r8_c03_std       26.7  (full-width row band 21.3)
+  r8_c03_stdn      26.7
+  r8_c06_lines     0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]
+  r8_c06_lum       106.6  std 22.8
+  r8_c06_n         0
+  r8_nband_lum     133.1  med 152.1  std 65.8  dark<60 21.8 %  (ref 169 raw box 145.9 / 16.2 %)
+  r8_nband_mean    133.1
+  r8_shore_hue     hue 45.2 (QA window 40-60)   sat 0.775 (ref 0.663)
+  r8_shore_lum     79.7  med 69.7  std 43.7  dark<60 39.6 %
+  r8_shore_mean    79.7
+  shore_note       MEASURED THIS ROUND: +12.1 pp of sun reach moved the band by 0.0 lum
+  shore_note2      (71.7 -> 71.7).  Proof it is a level, not an occlusion.
+[env_r7_measure] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/renders/previews/environment/r7_numbers.json

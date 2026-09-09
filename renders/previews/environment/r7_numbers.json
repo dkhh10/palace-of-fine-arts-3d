@@ -87,5 +87,9 @@
  "r8_c03_ratio": "0.297  (ground 34.3 / sunlit 115.3)",
  "r8_c06_lum": "106.6  std 22.8",
  "r8_c06_lines": "0 in rows 0-110 [vert 0; horiz 0];  0 over the whole crop [vert 0; horiz 0]",
- "r8_c06_n": 0
+ "r8_c06_n": 0,
+ "c06_comp": "mean 122.2  std 38.1  far-shore lines 2",
+ "c06_nocomp": "mean 89.4  std 59.8  far-shore lines 8",
+ "c06_ratio": 0.636,
+ "c06_ratio_note": "std composited 38.1 / un-composited 59.8 = 0.636 over rows 0-220 of the 1280-wide cam 06 frame (Rec.709 on 8-bit sRGB, population std); measured from r13SHIP_r13_06e.png and r13g_nocomp_06e.png"
 }

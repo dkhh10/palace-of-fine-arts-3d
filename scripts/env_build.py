@@ -35,14 +35,10 @@ for name in ("ENV_terrain", "ENV_water", "ENV_trees", "ENV_tree_instances", "ENV
     SUB[name] = common.get_collection(name, parent=ENV)
 
 SITE = common.load_site_local()
-LAGOON_OSM = L.ensure_ccw(L.dedupe_poly(SITE["lagoon0"][0]))
-LAGOON = L.jitter_polygon(LAGOON_OSM, step=2.0, amp=0.5, seed=3)     # irregular stone edge (refs 169, 022)
-ISLETS = [L.ensure_ccw(L.dedupe_poly(SITE["lagoon1"][0])), L.ensure_ccw(L.dedupe_poly(SITE["lagoon2"][0]))]
+LAGOON_OSM, LAGOON, ISLETS, LAGOON_FIELD, ISLET_FIELDS = L.water_polygons(SITE)   # one definition, shared with the probes
 COLONNADE_ROOFS = [L.ensure_ccw(L.dedupe_poly(p)) for k in ("roof306 h20", "roof310 h19", "roof313 h21", "roof314 h21") for p in SITE[k]]
 HALL = L.ensure_ccw(L.dedupe_poly(SITE["b302 h20m"][0]))
 
-LAGOON_FIELD = L.PolyField(LAGOON, cell=8.0)
-ISLET_FIELDS = [L.PolyField(p, cell=6.0) for p in ISLETS]
 HALL_FIELD = L.PolyField(HALL, cell=10.0)
 COL_FIELDS = [L.PolyField(p, cell=8.0) for p in COLONNADE_ROOFS[:2]]      # QA-05-11: the walk is a level
 # ... with a bounding box in front of it: `terrain_height` is called ~10^5 times and PolyField.dist falls back to
@@ -812,6 +808,7 @@ def build_shrubs():
             me.materials.append(mats[k])
 
     placed = []            # (key, (x, y, z), rot, scale)
+    walk_dropped = [0]     # round 9: candidates refused by the colonnade-gallery keep-out
 
     def land_ok(x, y, min_shore=0.0, max_shore=1e9):
         d = LAGOON_FIELD.signed(x, y)
@@ -825,11 +822,21 @@ def build_shrubs():
             return False
         if any(L.point_in_poly(x, y, L.offset_polygon(p, 2.5)) for p in COLONNADE_ROOFS):
             return False
+        if not L.gallery_clear(x, y):                  # round 9, see GALLERY_KEEPOUT in env_lib
+            return False
         if HALL_FIELD.signed(x, y) < 1.0:
             return False
         return True
 
     def put(key, x, y, dz=-0.06, s=(0.58, 1.80)):
+        # Round 9 (LIGHT r14's flythrough clearance): the OSM roof polygon above is NOT the modelled colonnade -
+        # over the middle of both wings its outer edge falls INSIDE the arc ARCH strikes the column rows about, so
+        # "plant 2.8 / 4.5 m outside the footprint" put shrubs on the gallery floor (the walk probe measured a
+        # nearest origin of 0.26 m against a 2.80 m clear width).  The keep-out is the arc, read from arch_params.
+        # It is enforced HERE, not only in `land_ok`, because the embayment fringe and the islet call `put` direct.
+        if not L.gallery_clear(x, y):
+            walk_dropped[0] += 1
+            return
         sc = rnd.uniform(*s) * rnd.uniform(0.85, 1.18)        # QA-03-14: 3.1:1 nominal size spread
         h = REAL_H[key] * sc * Z_JITTER_MAX
         zg = terrain_height(x, y)
@@ -978,7 +985,8 @@ def build_shrubs():
         for (x, y) in L.resample_polyline(L.offset_polygon(p, 4.5), 4.2, closed=True):
             if land_ok(x, y, 1.0) and rnd.random() < 0.58:
                 clump(x, y, rnd.randint(1, 3), 2.0, PALE + TWIGS, min_shore=1.0, max_shore=1e9)
-    log(f"shrubs: colonnade walk edge + bed {len(placed) - n_walk} instances")
+    log(f"shrubs: colonnade walk edge + bed {len(placed) - n_walk} instances, "
+        f"{walk_dropped[0]} candidates refused by the {L.GALLERY_KEEPOUT} m gallery keep-out")
     # 4. the wooded islet: dense dark mounds under the willows
     for _ in range(80):
         p = ISLETS[0]
@@ -1105,6 +1113,8 @@ def build_lamp_posts(paths):
     tr = []
     for p in paths[:2]:
         for (x, y) in L.resample_polyline(p, 28.0):
+            if not L.gallery_clear(x, y):        # round 9: never a lamp post on the colonnade walk
+                continue
             tr.append(((x + 2.0 * rnd.uniform(-0.2, 0.2), y, terrain_height(x, y)), 0.0, 1.0))
     if tr:
         L.join_instances("ENV_lamp_posts", me, tr, coll, m)

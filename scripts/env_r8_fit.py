@@ -21,8 +21,21 @@ REF_XF = (0.7640, 223.2, 0.7667, 97.0)
 REF169 = "reference/photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg"
 
 
-def ref_profile(dark=60):
-    """Column profile of ref 169's dark fraction over the band's rows, in frame-x buckets of 0.01."""
+# r8 review, finding 5: the mass's vertical extent used to be measured over a hard-coded frame-x window
+# 0.705-0.745, i.e. over what the same run then called the mass's RIGHT HALF.  It is a parameter now, and the
+# default is the span the widened column profile measured (renders/logs/env_r9_ref_profile.log).
+# r9 review, finding 4: that span is NOT "dark fraction >= 0.35 throughout".  The profile is
+#   0.61:0.16 | 0.62:0.36  0.63:0.44  0.64:0.33  0.65:0.19  0.66:0.25  0.67:0.28  0.68:0.23  0.69:0.39
+#   0.70:0.35  0.71:0.58  0.72:0.56  0.73:0.45 | 0.74:0.14
+# so 0.62 and 0.73 are the buckets where the profile CROSSES 0.35 (0.16 to its left, 0.14 to its right, i.e. the
+# mass's own edges), the window mean is 0.37, and the middle 0.64-0.68 is a thin stretch of 0.19-0.33 - the gap
+# between the near cluster and the dark crown right of the dome, not a solid wall of foliage.
+MASS_X = (0.62, 0.735)
+
+
+def ref_profile(dark=60, mass_x=MASS_X):
+    """Column profile of ref 169's dark fraction over the band's rows, in frame-x buckets of 0.01, and the mass's
+    dark fraction by frame y over the column window `mass_x`."""
     import numpy as np
     from PIL import Image
     try:
@@ -45,14 +58,14 @@ def ref_profile(dark=60):
         out.append((fx, float(prof[a:b].mean())))
     print("[ref] dark fraction by frame x: " + "  ".join(f"{fx:.2f}:{v:.2f}" for fx, v in out))
     # vertical extent of the mass, over its own columns
-    a, b = int(0.705 * RES[0] * sx + dx), int(0.745 * RES[0] * sx + dx)
+    a, b = int(mass_x[0] * RES[0] * sx + dx), int(mass_x[1] * RES[0] * sx + dx)
     col = (im[:, a:b] < dark).mean(axis=1)
     rows = []
     for i in range(28, 70):
         fy = i / 100.0
         c, d = int(fy * RES[1] * sy + dy), int((fy + 0.01) * RES[1] * sy + dy)
         rows.append((fy, float(col[c:d].mean())))
-    print("[ref] mass dark fraction by frame y (x 0.705-0.745): "
+    print(f"[ref] mass dark fraction by frame y (x {mass_x[0]:.3f}-{mass_x[1]:.3f}): "
           + "  ".join(f"{fy:.2f}:{v:.2f}" for fy, v in rows))
     return out
 
@@ -132,7 +145,7 @@ def _isnum(v):
 
 
 # ----------------------------------------------------------------------------- placement solver
-def solve(target_x, r_off, y_hint=-15.0):
+def solve(target_x, r_off):
     """World (X, Y) that projects to `target_x` in cam 01 and stands `r_off` m outside the colonnade arc.
 
     cam 01 is on the lagoon-face normal, so its frame-x is a closed form in (X, Y):
@@ -179,7 +192,9 @@ def solve(target_x, r_off, y_hint=-15.0):
 if __name__ == "__main__":
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     if "--ref" in argv:
-        ref_profile()
+        i = argv.index("--ref")
+        w = [float(v) for v in argv[i + 1:i + 3] if _isnum(v)]
+        ref_profile(mass_x=(w[0], w[1]) if len(w) == 2 else MASS_X)
     if "--solve" in argv:
         i = argv.index("--solve")
         for tx in ([float(v) for v in argv[i + 1:] if _isnum(v)] or [0.79, 0.82, 0.89]):

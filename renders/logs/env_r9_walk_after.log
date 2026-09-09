@@ -1,0 +1,33 @@
+00:00.326  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend"
+[env_r9_walk] /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/environment/assets/environment.blend
+[env_r9_walk] wing south  arc  102.2 m at R 117.4
+[env_r9_walk] wing north  arc   99.2 m at R 117.4
+[env_r9_walk] 102 walk samples, step 2.0 m; keep-out 4.1 m (clear width 2.80 m = +-1.40 m)
+[env_r9_walk] eye band z -1.10 .. 1.90 (colonnade floor -0.60)
+[env_r9_walk] 2520 candidate ENV objects beside the wings
+[env_r9_walk] 554 of them put geometry in the eye band within 12.0 m of the walk
+
+  wing     s      x       y     nearest origin        d_orig   nearest extent        d_ext
+  north     80   -93.1     0.6   ENV_shrub_pitto5_1282_LOD1   4.21   ENV_shrub_pitto5_1282_LOD1   2.83
+  north     84   -95.9     3.4   ENV_shrub_maho1_1281_LOD1    4.21   ENV_shrub_maho1_1281_LOD1    3.03
+  north     46   -65.6   -19.3   ENV_shrub_agap2_1220_LOD1    4.27   ENV_shrub_agap2_1220_LOD1    3.65
+  north     44   -63.9   -20.2   ENV_shrub_agap2_1220_LOD1    4.32   ENV_shrub_agap2_1220_LOD1    3.64
+  north     82   -94.5     2.0   ENV_shrub_maho0_1280_LOD1    4.39   ENV_shrub_pitto5_1282_LOD1   3.46
+  south     12    42.5   -19.7   ENV_shrub_maho0_0947_LOD1    4.40   ENV_shrub_maho0_0947_LOD1    3.40
+  north     78   -91.6    -0.8   ENV_shrub_pitto5_1282_LOD1   4.43   ENV_shrub_pitto5_1282_LOD1   2.86
+  south     14    44.3   -18.7   ENV_shrub_pitto3_0924_LOD1   4.43   ENV_shrub_pitto3_0924_LOD1   3.31
+  north     34   -54.7   -24.3   ENV_shrub_pitto0_1238_LOD1   4.43   ENV_shrub_pitto0_1238_LOD1   3.60
+  north      4   -25.8   -31.8   ENV_shrub_agap1_0896_LOD1    4.50   ENV_shrub_big1_0897_LOD1     2.66
+  north     18   -39.5   -29.2   ENV_shrub_pitto1_1305_LOD1   4.52   ENV_shrub_pitto1_1305_LOD1   3.90
+  north      8   -29.7   -31.2   ENV_shrub_big0_0851_LOD1     4.53   ENV_shrub_big0_0851_LOD1     2.89
+
+[env_r9_walk] SUMMARY  samples 102  min origin distance 4.21 m  min extent distance 1.71 m
+[env_r9_walk] samples with an ENV object inside the 2.80 m clear width (< 1.40 m): 0
+[env_r9_walk] samples inside the 4.1 m planting keep-out: 0
+[env_r9_walk]   wing south : min origin   4.40 m, min extent   1.71 m over 52 samples
+[env_r9_walk]   wing north : min origin   4.21 m, min extent   2.59 m over 50 samples
+[env_r9_walk] PASS
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 34633 exited rc=0 after 6 s (max 900)

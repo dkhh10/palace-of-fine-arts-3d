@@ -273,6 +273,20 @@ class PolyField:
         return -d if (self.closed and point_in_poly(x, y, self.poly)) else d
 
 
+def water_polygons(site):
+    """`(lagoon_osm, lagoon, islets, lagoon_field, islet_fields)` for a `site_local` dict.
+
+    One definition of "where the water is", so a probe cannot drift from the build (r9 review: the same class of
+    mistake as ENV's colonnade exclusion, which tested a copy of the arc instead of the arc).  `env_build` calls
+    this at import time; `env_r9_replan --land` calls it to test PLAN coordinates against the same fields.
+    """
+    lagoon_osm = ensure_ccw(dedupe_poly(site["lagoon0"][0]))
+    lagoon = jitter_polygon(lagoon_osm, step=2.0, amp=0.5, seed=3)      # irregular stone edge (refs 169, 022)
+    islets = [ensure_ccw(dedupe_poly(site["lagoon1"][0])), ensure_ccw(dedupe_poly(site["lagoon2"][0]))]
+    return (lagoon_osm, lagoon, islets,
+            PolyField(lagoon, cell=8.0), [PolyField(p, cell=6.0) for p in islets])
+
+
 def offset_polygon(poly, dist):
     """Simple vertex-normal offset (positive = outward for a CCW polygon). Good enough for smooth shorelines."""
     poly = ensure_ccw(poly)
@@ -584,3 +598,81 @@ def shadowed_fraction(samples, trees, az=SUN_AZ, el=SUN_EL, base_z=-0.5):
         if hit is not None:
             blockers[hit] = blockers.get(hit, 0) + 1
     return per, blockers
+
+
+# ----------------------------------------------------------------------------- the colonnade gallery walk
+# LIGHT r14's flythrough walks the colonnade on the arc ARCH strikes its two column rows about
+# (`arch_params.COL_ARC_CENTER` / `COL_ARC_R`), at eye z = COLONNADE_GROUND_Z + 1.15.  Geometry, all of it from
+# arch_params so it cannot drift:
+#     rows            R +- COL_ROW_SPACING / 2          (117.4 +- 2.25)
+#     shaft diameter  COLONNADE_D                       (1.7 at the base)
+#     clear width     COL_ROW_SPACING - COLONNADE_D     = 2.80 m, i.e. +-1.40 m about the centreline
+#     structure       |r - R| <= (COL_ROW_SPACING + COLONNADE_D) / 2 = 3.10 m
+# GALLERY_KEEPOUT is the radial band no ENV object may be planted in: the structure plus 1.0 m, so a crown of any
+# size still leaves the outer column face clear and the walk's 2.80 m is never entered.  Until round 9 the
+# colonnade exclusion was the OSM roof polygon (`COLONNADE_ROOFS`), which is NOT the modelled arc: over the middle
+# of the south wing the polygon's outer edge falls INSIDE R, so "plant 2.8 m outside the footprint" put shrubs on
+# the gallery floor (LIGHT r14: ENV_shrub_pitto1_1107 at 1.45 m from the centreline).
+GALLERY_KEEPOUT = 4.1        # m from the gallery centreline; = 3.10 structure + 1.0 margin (rounded)
+
+
+def colonnade_wings():
+    """`[(name, (cx, cy), R, th0, sgn, arc_length_m)]` - `arch_build.Wing`'s own arithmetic, re-derived here from
+    `arch_params` (never a copy of the angles: ARCH moves the pylons and the wing spans move with them)."""
+    try:
+        import arch_params as AP
+    except Exception:                                    # noqa: BLE001
+        return []
+    cx, cy = AP.COL_ARC_CENTER
+    R = AP.COL_ARC_R
+    out = []
+    for name, spec in AP.WINGS.items():
+        s0, s1 = spec["start"], spec["pylon"]
+        th0 = math.atan2(s0[1] - cy, s0[0] - cx)
+        th1 = math.atan2(s1[1] - cy, s1[0] - cx)
+        d = th1 - th0
+        while d > math.pi:
+            d -= 2 * math.pi
+        while d < -math.pi:
+            d += 2 * math.pi
+        out.append((name, (cx, cy), R, th0, 1 if d > 0 else -1, abs(d) * R))
+    return out
+
+
+def colonnade_walk_points(step=2.0, pad=0.0):
+    """Points on the gallery centreline every `step` m: `(x, y, wing_name, s)`.  `pad` extends the span past both
+    ends of the wing (the pylon cluster sits at s = L + COL_CLUSTER_PAIR / 2)."""
+    out = []
+    for name, (cx, cy), R, th0, sgn, arc in colonnade_wings():
+        s = -pad
+        while s <= arc + pad + 1e-6:
+            th = th0 + sgn * s / R
+            out.append((cx + R * math.cos(th), cy + R * math.sin(th), name, s))
+            s += step
+    return out
+
+
+def gallery_offset(x, y, pad=6.0):
+    """Radial distance |r - R| of (x, y) from the gallery centreline of the nearest wing it stands beside, or
+    `None` when the point is past either end of both wings (+- `pad` m of arc)."""
+    best = None
+    for _name, (cx, cy), R, th0, sgn, arc in colonnade_wings():
+        r = math.hypot(x - cx, y - cy)
+        if r < 1e-6:
+            continue
+        d = (math.atan2(y - cy, x - cx) - th0) * sgn
+        while d > math.pi:
+            d -= 2 * math.pi
+        while d < -math.pi:
+            d += 2 * math.pi
+        s = d * R
+        if -pad <= s <= arc + pad:
+            off = abs(r - R)
+            best = off if best is None else min(best, off)
+    return best
+
+
+def gallery_clear(x, y, keep=GALLERY_KEEPOUT, pad=6.0):
+    """True when (x, y) may be planted: it is not inside `keep` m of a colonnade gallery centreline."""
+    off = gallery_offset(x, y, pad=pad)
+    return off is None or off >= keep
