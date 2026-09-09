@@ -1014,3 +1014,43 @@ transmission 0.40 -> 0.18 (w1: +0.045 of reflection saturation) and the ripple a
 band itself was extended: round 6's LOD ramp took the ripple slope out of the normal from 30 m, which is why the
 40-90 m band that carries the building's reflection was glassy and came back as long vertical smears where ref 169
 is corrugated by 0.25-0.4 m ripples to the far shore; the ramp now starts at 55 m and `near` reaches 95 m.
+
+### The lead's question: what a camera-projected albedo from ref 169 / ref 085 would need from materials
+
+Answer in the order the work would happen, with what each step costs and what it forbids.
+
+1. **No UV layer is needed, and no alignment maths.** QA already produces the projector image: panel 1 of
+   `renders/qa_comparisons/round05_cam01_aligned_vs_ref169.png` is ref 169 warped into the hero frame by QA's own
+   fit (scale 1.3108, dx -291.8, dy -124.6), i.e. it is already in exact pixel correspondence with a 1920x1080
+   render from `CAM_qa_01_lagoon_hero`. The projection is then a `Window`-coordinate lookup in the shader from that
+   camera (a Texture Coordinate node's Window output while `CAM_qa_01_lagoon_hero` is the scene camera), or, if it
+   has to survive a moving camera, one `UVProject` modifier bound to a copy of that camera writing a `UV_photo`
+   layer. Materials would ship the shader half; ARCH would have to accept a modifier on the hero-facing meshes if
+   the baked-UV route is chosen. The window route is 20 lines and needs nothing from anyone.
+2. **The photo has to be converted to an albedo RATIO, not used as an albedo.** ref 169 carries its own sun,
+   its own shadows and its own exposure; pasted on as base colour it would double the lighting and would fight the
+   rig the moment the sun moves for the flythrough. The conversion is the one `mat_make_grunge.py` already does and
+   which is calibrated: luminance divided by a heavy blur of itself gives a mean-1.0 reflectance ratio, so it
+   multiplies the existing calibrated chroma instead of replacing it. The better version divides the photo by a
+   render of the same frame with the concrete family's albedo forced flat white, which removes the photo's actual
+   shading rather than a blur of it; that costs one extra 1920x1080 render. Either way the result plugs into the
+   same place in `PFA_concrete` as the macro layer (`m_tone`), so nothing downstream changes.
+3. **Three masks, all of which materials builds.** (a) A facing mask, `dot(N, camera forward)` ramped 25-70 deg, so
+   grazing faces fall back to the procedural instead of taking a smeared 10:1 stretch. (b) An occlusion mask: any
+   surface the hero camera cannot see gets the colour of whatever was in front of it, so the projection has to be
+   weighted by a shadow-map-style visibility test from the projector (in practice: bake one camera-space depth pass
+   and compare, ~40 lines). (c) A band mask limiting it to the attic / entablature / drum, which is where the
+   defect is and where the photo has clean data -- everywhere else the photo contains sculpture, foliage or sky.
+   Plus a global `Photo` weight, which should ship at **<= 0.6**: at 1.0 the projection also carries the
+   photograph's noise and JPEG blocks at 5 cm/px.
+4. **What it forbids.** The projection is only valid while the geometry it lands on does not move. This round
+   measured that the attic panel's lower frame sits ~0.65 m higher in the render than in ref 169 at the hero
+   framing (see above), so a projection taken today would smear the panel frame across the cornice. **Architecture
+   would have to freeze the hero-facing attic / entablature / drum first, or the projection has to be re-derived
+   after every proportion change.** It is also camera-locked: cam02, cam05 and cam06 see the same surfaces at a
+   different angle and would show the stretch, so it is a cam01 art bias, not a material.
+5. **Cost:** one new script (`scripts/mat_project.py`, ~120 lines: projector camera from QA's fit, ratio map,
+   node group, masks), one flat-white render to build the ratio, two hero renders to verify, and one round of
+   measurement. Materials can do all of it inside one round. The two decisions that are not materials' are whether
+   ARCH freezes the hero-facing geometry and whether the lead accepts a per-camera bias in a deliverable that ends
+   in a flythrough.
