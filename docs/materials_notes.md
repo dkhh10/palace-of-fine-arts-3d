@@ -917,3 +917,100 @@ Composite **`renders/qa_comparisons/mat_r6_sheet.png`**; PFA-photo macro candida
    hue from round 4 are unchanged and still open.
 4. **QA** -- the attic std ratio is 0.598 against a 0.60 bar. It is at the bar, not past it; the remaining lever on
    the materials side is more macro amplitude, which starts to read as blotch rather than surface.
+
+## Round 7 (Phase 4 polish round 4, 2026-09-09) -- QA-05-2 (blocker) / -05-3 / -05-4 / -05-10 / -05-12 + ENV's paving
+
+Method: every number below is measured on a master rebuilt in this worktree (`build_master.py` + `light_probes
+--bake --save`, **9706 objects**, 11.11 M LOD1 triangles) carrying **lighting r12 as merged**, rendered through
+`mat_scene_check.py` at Cycles 1920x1080 / 64 spp with the master's own saved exposure (-2.8331, `--ev 0.0`).
+"BEFORE" is the round-6 library on that same master (`r7base_scene_*`), so before/after differ by the library and
+by nothing else. Tool: `scripts/mat_r7_measure.py`, which reproduces **every** QA round-05 hero number exactly on
+QA's own panels before anything moved (attic 166.5 / 39.8 / 0.643, anisotropy 0.64, entablature 0.836, reflection
+0.106, near water 0.280 / 208.9, shore band 71.7) -- so the round-7 numbers and QA's are the same statistic.
+
+### The two structural findings, both measured, both of which the lead needs before round 8
+
+**1. The sunlit attic sits on AgX's shoulder, where albedo has almost no authority over saturation.** Three
+libraries on one rig:
+
+| library | attic lum | attic sat | R-B | what changed |
+|---|---|---|---|---|
+| r6 (as merged) | 173.8 | 0.530 | 111.0 | -- |
+| r7a | 181.1 | 0.495 | 107.0 | albedo value +7 %, macro darkening down |
+| r7b | 181.8 | 0.493 | 107.4 | + albedo G/R 0.832 -> 0.790 (a 3.6 % chroma move) |
+
+The value axis trades **-0.0046 of saturation per lum**; QA's window (lum >= 178 AND sat >= 0.53) is off that line
+by 0.03. And the chroma axis is dead: a 3.6 % change in the albedo's G/R moved display saturation by **0.002** and
+display hue by 0.8 deg, because R = 217 is far enough up the AgX High Contrast shoulder that a linear chroma change
+compresses to nothing. Round 7 therefore spends the two levers that are NOT albedo -- the white specular veil
+(`Specular IOR Level` 0.30 -> 0.16 on the four wall concretes; a rough concrete's spec lobe is a broad white wash
+that costs chroma) and `Edge Wear` (0.70 -> 0.48 at radius 0.20 -> 0.12 m; the wear term mixes toward sat 0.85 /
+val 1.22, i.e. it desaturates and brightens exactly the relief that fills QA's box). Result in the table below.
+**Hand-off: the last 0.03-0.06 of sunlit-stone saturation is on the view transform or the sun's chroma, not on the
+albedo.** It is a one-line test for lighting/the lead (`AgX - Punchy`, or a warmer sun) and materials cannot reach it.
+
+**2. QA's attic box is not the same surface in the render as in the photograph, and most of its anisotropy failure
+is geometry.** Ray-casting the hero camera through the box (`scripts/mat_r7_probe.py`) gives 50 % of it on
+`ORN_attic_panel_v1_LOD1` and 50 % on `MAT_concrete_ochre` at 84.9 m. Its row-mean profile (rows 222-255):
+
+```
+render  186 187 186 187 187 190 192 192 192 189 189 190 168 169 184 193 181 119 180 183 181 182 184 187 184 179 176 183 172 154 145 150 113  75
+ref169  182 178 185 191 197 197 191 189 194 196 193 191 190 191 192 189 186 185 184 180 184 187 191 194 196 190 183 183 187 187 190 188 179 191
+```
+
+The photograph's box is a clean panel field for all 34 rows. The render's has the **cornice inside it** (the last
+five rows, 154 -> 75) and the panel's own frame line at row 17 (119). Those two features alone are ~2/3 of the
+render's row-mean std of 25.6 against the photo's 4.9, and no material can remove them: the attic panel's lower
+frame sits about **13 px = 0.65 m higher** in the render than in ref 169 at the hero framing. *Hand-off to
+architecture and the lead: either the attic band's vertical proportion moves, or QA re-boxes the anisotropy test on
+a plain field (e.g. 900 224 1020 248), because as boxed it measures ARCH's cornice, not materials' weathering.*
+
+What materials owns in that box was still spent: the run-off layer is now anisotropic and the horizontal signal
+materials contributed is gone. `pfa_macro_streak` is projected with its vertical axis stretched by a new
+`Streak Aspect` (5-6x on top of the map's own pre-stretch), so its features are 0.2-0.9 m wide and 1-4 m long;
+`Run Scale` decouples the run-off tile from `Macro Scale` (the ornament material runs its macro at 0.22, i.e. a
+1.0 m tile whose features are 1-4 px on the hero and average out -- that is why r7a's 1.7x run-off amplitude moved
+the column-mean spread by -0.3); `Run Coverage` gates the under-ledge darkening to ~35 % of the columns so it is a
+set of runs and not a painted stripe; the isotropic half of the macro comes down 2.6x (`Macro` 1.95 -> 0.45) and
+its dark bias 0.35 -> 0.22, which is where the luminance QA asked for came from; the horizontal pour lines drop
+3.5x with their spacing more than doubled (0.6 m = 12 px is three of them inside a 34 px box); and the ornament
+material's own under-ledge band, which draws a horizontal line at the panel frame, goes 0.90 -> 0.45.
+
+### QA-05-4 / lighting r12 hand-off 1 -- the water, measured with a 9-case sweep instead of a guess
+
+`scripts/mat_r7_sweep.py` renders N settings of `MAT_water_lagoon` on ONE master in ONE Blender session, as a
+border crop of the hero (x 780-1560, y 700-1080 -- every box QA-05-4 measures is inside it) at the hero's own
+resolution, so a case costs ~70 s instead of ~240 s. Cycles 64 spp, all on the r12 rig.
+
+| case | murk gain | transm. | volume | chop | near-water sat / hue | ripples R-B | reflection lum / hue / sat |
+|---|---|---|---|---|---|---|---|
+| ctl | 1.00 | 0.40 | 0.70 | 1.0 | 0.390 / 218.6 | -64.0 | 118.0 / 224.5 / 0.187 |
+| w1 | 1.00 | **0.18** | 0.70 | 1.0 | 0.406 / 219.2 | -71.8 | 122.5 / 225.0 / 0.232 |
+| w2 | 1.00 | 0.40 | **0.12** | 1.0 | 0.390 / 218.5 | -64.0 | 117.9 / 224.5 / 0.187 |
+| w3 | 0.70 | 0.18 | 0.12 | 1.0 | 0.388 / 218.5 | -63.1 | 117.4 / 224.3 / 0.180 |
+| w4 | 0.70 | 0.18 | 0.12 | **1.6** | 0.401 / 218.3 | -64.7 | 115.5 / 224.4 / 0.196 |
+| **w7** | **0.00** | 0.18 | 0.12 | 1.0 | **0.276 / 209.6** | **-29.7** | 103.4 / **65.1** / 0.106 |
+| w8 | 1.00 | 0.40 | 0.70 | **2.6** | 0.429 / 218.1 | -69.3 | 112.8 / 230.5 / 0.172 |
+| w9 | **2.20** | 0.18 | 0.12 | 1.6 | 0.414 / 220.4 | -86.9 | 138.5 / 225.7 / 0.317 |
+| target | | | | | 0.22-0.32 / 185-200 | -26 +-10 | ref 168.9 / 33.7 / 0.339 |
+
+Three results the round turns on. (a) **The volume does nothing**: density 0.70 -> 0.12 changes every number by
+<= 0.1 (w2 = ctl). ENV's water is an open plane, so there is no volume to see; the closure is dead weight.
+(b) **Everything QA-05-4 measures is linear in the murk's GAIN, not in its chroma.** Lighting r12's hand-off asked
+for a third of the murk's chroma; the sweep shows the whole defect is the murk's *presence* under the boosted
+diffuse sky -- at gain 0 the near-water crop lands inside QA's saturation window (0.276), its hue drops 9 deg and
+the ripples' R-B goes from -64 to -29.7, i.e. onto ref 169's -16..-26. Slopes: near-water sat +0.16 per unit gain,
+ripple R-B -47.7 per unit gain. (c) **The `sat >= 0.25` test on the reflection column rewards blue water**: the
+only case that passes it is w9 (0.317) and its hue is 225.7, i.e. it passes by being *more* of the blue wash QA is
+complaining about; the case that puts the box on the photograph's side of neutral is w7, hue 65.1 and R-B +10.1,
+and it scores 0.106. *For QA: the reflection test needs a hue or R-B term, or it is a test for the defect.*
+
+The shipped fix is not "turn the murk down", because the same lambertian is what stopped the lagoon reading black
+from above in round 2 (QA-02-6). It is the physical form of the same thing: real turbid water returns its
+sub-surface light through the surface twice, so the diffuse term falls off at grazing incidence much faster than
+Blender's single-sided Fresnel makes it. `MAT_water_lagoon` now weights the murk by **0.15 + 0.85 (1 - F)^2** with
+a 0.55 gain, which leaves ~0.20 of the murk on the hero's 75-85 deg water and ~0.42 at cam06's 30 deg; plus
+transmission 0.40 -> 0.18 (w1: +0.045 of reflection saturation) and the ripple amplitude at 1.6 (w4). The ripple
+band itself was extended: round 6's LOD ramp took the ripple slope out of the normal from 30 m, which is why the
+40-90 m band that carries the building's reflection was glassy and came back as long vertical smears where ref 169
+is corrugated by 0.25-0.4 m ripples to the far shore; the ramp now starts at 55 m and `near` reaches 95 m.
