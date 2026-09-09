@@ -391,3 +391,7 @@ Archivolt sockets in (band along local +Z: ornament note), sub-course scale mark
 
 ## 2026-09-09 · BUDGET PLAN (user): ~32 % weekly limit left, Phase 5 needs ~10, gate within ~20
 Sequence: LIGHT r14 (running) -> review/merge -> lead runs the ORN bake (`orn_build.py --only attic_panel,capital_rotunda`, with bake) -> MAT r8 = water blocker + coffer albedo only (brief re-scoped) -> review/merge -> lead_build.sh -> QA round 7 -> gate report to the user with the composite -> STOP for a clean restart (lead context 384k). If hero < 3.6 after round 7: MAT r9 = photo-projection pass next, no other knob round. Entablature re-split deferred unless QA shows it in the hero. ORN r8 (verify tool, no render) merges if it lands in time, else stays on its branch.
+
+## 2026-09-09 · ORN r8 reported (2410e95) — held on branch `ornament`, not merged this session (budget)
+Verify tool parses all presets/styles from orn_build.py, v2/v3 presets fixed (volute top 0.891 H, v3 r_tip 1.389 R), capital_rotunda rebuilt --no-bake, ref_002 crop committed (H 358 px). Held because merging before the bake would drop the capital maps again; next session: review (docs/briefs/review.md), merge, then `orn_build.py --only capital_rotunda` with bake, then a master rebuild. capital_inner / capital_colonnade v3 still carry the r7 style.
+In flight: LIGHT r14. Next: LIGHT review + merge, ORN bake on main's r7 asset, MAT r8 (water), lead_build.sh, QA round 7.
