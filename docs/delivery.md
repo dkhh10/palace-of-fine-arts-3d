@@ -5,7 +5,7 @@
 |---|---|---|
 | Scene, self-contained | `master_delivery.blend` (277.7 MB, 89 images packed) | opens in 0.86 s; LOD1 in the viewport, LOD0 at render; Eevee viewport preset saved; gitignored (rebuild: `scripts/lead_build.sh` then `PFA_PACK=1 scripts/phase5_deliver.sh 1b`) |
 | Scene, linked | `master.blend` (160.9 MB) + `assets/*.blend` | what QA rounds 8-9 scored; links `assets/architecture / ornament / materials / environment / lighting.blend` by relative path |
-| 4K Cycles hero | `renders/final/hero_cam01_3840x2160.png` | native 3840x2160, 384 spp fixed, adaptive off, OIDN, AgX High Contrast, exposure -2.833 (see the final status entry for wall time) |
+| 4K Cycles hero | `renders/final/hero_cam01_3840x2160.png` | native 3840x2160, 384 spp fixed, adaptive off, OIDN, AgX High Contrast, exposure -2.833; 4186.5 s wall (69.8 min), peak RSS 6.1 GB; identical to the 384 spp file |
 | 4K timing probe | `renders/final/hero_cam01_3840x2160_128spp.png` | 128 spp fixed: 1432.6 s wall, peak RSS 6.2 GB (QA-03-16 closed) |
 | Side-by-side | `renders/qa_comparisons/final_hero_vs_ref169.png` | render / ref 169 aligned (scale 1.3108) / blend; `qa_silhouette.py align` |
 | Flythrough path | `CAM_flythrough` in the scene, frames 1-1224 @ 24 fps (51 s, 251 m) | `scripts/light_flythrough.py`; clearance 1.57 m outside / 1.43 m gallery with ornament linked (`light_flythrough_check.py --master`) |
