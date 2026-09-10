@@ -528,3 +528,7 @@ In flight: v2 chain (renders/logs/v2_chain.log): packed delivery copy -> 4K 384 
 
 ## 2026-09-10 · v2 4K hero done (renders/final/v2/hero_cam01_3840x2160.png, 384 spp, 4207.8 s); side-by-sides + delivery notes committed
 Lead's six-tile pass: arch open (coffered barrel, far arch, sky); no blocker; known issues as docs/delivery.md. In flight: flythrough --fresh (612 frames) then ffmpeg to renders/final/v2/flythrough_test_640.mp4 (renders/logs/v2_chain.log). Next: commit the mp4, final status entry, report to the user with renders/final/v2/v1_v2_ref169.png.
+
+## 2026-09-10 · PHASE 5 v2 DELIVERED (final status entry of this session)
+Deliverables (docs/delivery.md): master.blend (a765b9d build, 9695 objects, LOD1 11.52 M, opens 0.75 s) + assets/*.blend; master_delivery.blend (packed, 277 MB, gitignored; `PFA_PACK=1 scripts/phase5_deliver.sh 1b` rebuilds it); renders/final/v2/hero_cam01_3840x2160.png (384 spp, 4207.8 s); renders/final/v2/final_hero_vs_ref169.png and v1_v2_ref169.png; renders/final/v2/flythrough_test_640.mp4 (612 frames, 51 s, 6970 s wall at 11.4 s/frame Eevee 640x360); v1 kept under renders/final/v1. QA: round 10b PASS (hero 3.61), known issues in docs/qa_round_10b.md + docs/delivery.md. Gate checks in CLAUDE.md. All worktrees clean; no Blender running; watchdog loop still running (pid in renders/logs/watchdog.log).
+Next session, if any: QA-10b-1 neutral shade fill (lighting), coffer depth + archivolt band (architecture + ornament), shoreline (environment); every gate with the name sweep + six-tile review + ray test.
