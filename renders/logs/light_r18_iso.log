@@ -1,0 +1,31 @@
+00:00.321  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r17] master master.blend: 9695 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: 1 cool sun lamps, Cycles 49.00 W/m2 (0.728 of the calibrated sun), Eevee 38.50 W/m2 (0.572 of the sun), hidden in render: False, at [(25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.2 m/texel, jitter False
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'WORLD_golden_hour' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.65, 70.0), antisun 1.00, horizon 1.00, exponents 3.0 / 6.0, sunside (1.0, 1.0, 0.0)^3.0)
+[light_probes] bake {'FINISHED'} in 4.7s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 8 lights, x6.0 + 21 m cutoff
+[light_presets] shade fill for EEVEE: 1 lamps at 38.5 W/m2, hidden in render: False
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[light_probes] restored: engine BLENDER_EEVEE, world WORLD_golden_hour, vault rig EEVEE override
+[r17] re-baked with the LIGHTING (r13) world in 5s
+[r17] case base: bake 1 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 | WORLD 'WORLD_golden_hour' db 2.5 gb 4.2 gsat 0.9 ghue 0.5000 tint 1,0.65,70 ta 1^3 th 1^6 sunside 1,1,0^3 | shade cycles 49 eevee 38.5 W/m2 w [az25@1] | f 1 v 1 gal 1 (16 strips at 0 W) ifcol 1.00,0.95,0.88 | exposure -2.833 EV
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[r17] cycles clamp direct 0 indirect 10 adaptive True thr 0.01
+[r17] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+00:40.597  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/renders/previews/lighting/r18a_base_01c.png'
+[r17] -> r18a_base_01c.png (34.4s, 1920x1080)
+[r17] camera times: 01c 34.4s   TOTAL 34.4s over 1 frames
+[r17] done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 2, total unfreed memory 0.125168 MB
+blender_run.sh: pid 72766 exited rc=0 after 42 s (max 1800)
