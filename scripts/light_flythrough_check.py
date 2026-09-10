@@ -1,7 +1,8 @@
 """Ray-cast validation of the Phase 5 flythrough path. NOTHING IS RENDERED (round 14 is a no-render round).
 
-Opens assets/lighting.blend, LINKS ARCH + ENV into the same scene (master.blend is never touched or written) and
-casts rays from the flythrough camera. Two modes:
+Opens **assets/lighting.blend** and LINKS ARCH + ENV into the same scene, or -- with **`--master`** -- opens
+**master.blend READ-ONLY** (it is never saved) and gates against the ORNAMENT instances the film actually shows;
+see the comment on `use_master` below for why the two differ. Casts rays from the flythrough camera. Two modes:
 
     scripts/blender_run.sh 900 -- --background --python scripts/light_flythrough_check.py -- --probe 70.5,25.6 40,90
         For each (x, y): the surface directly below (cast down from +12 m), its object and z, plus the nearest
@@ -247,7 +248,10 @@ def check(scene, dg, step=12, rays=96):
     # ended `water` at 397 and began `shore` at 409 only because the check sampled every 12th frame (397, then
     # 409); the legs themselves are contiguous by construction. The boundary frame is printed so the two numbers
     # can never be quoted as two different windows again.
-    print(f"[gate] legs      : " + "  ".join(f"{lg['name']} {lg['f0']}-{lg['f1']}@{lg['cap']:g}" for lg in sch["legs"]))
+    # r16 review carry 3 (cosmetic): the legs are contiguous, so leg n's f1 IS leg n+1's f0 and printing both
+    # read as an overlap ("water 1-404  shore 404-571"). Every leg after the first now prints f0 + 1.
+    print(f"[gate] legs      : " + "  ".join(
+        f"{lg['name']} {lg['f0'] + (1 if i else 0)}-{lg['f1']}@{lg['cap']:g}" for i, lg in enumerate(sch["legs"])))
     print(f"[gate] speed     : land max {vmax_land:.2f} m/s at f{fmax_land} (<= {SPEED_MAX}); water crossing is the "
           f"ONE window frames {min(wat)}-{max(wat)} (boundary: first land frame {max(wat) + 1}), max "
           f"{vmax_water:.2f} m/s (<= {SPEED_MAX_WATER}) "
@@ -288,7 +292,19 @@ if __name__ == "__main__":
         bpy.context.view_layer.update()
         dg = bpy.context.evaluated_depsgraph_get()
         dg.update()
+        # r16 review carry 3: print the ROUTE fingerprint in this mode too. `--master` gates the geometry of
+        # master.blend against the schedule this script computes from `light_flythrough`, so a master built from
+        # a STALE assets/lighting.blend would otherwise pass every gate silently while carrying a different
+        # camera path. Length + station count + frame range are enough to tell the two apart at a glance.
         print(f"[check] gating on {blend} ({len(scene.objects)} objects; ORN instanced onto its sockets)")
+        _sch = ft.load_schedule()
+        if _sch is None:
+            print("[check] route fingerprint: master.blend carries NO schedule on CAM_flythrough")
+        else:
+            print(f"[check] route fingerprint (read off THIS file's CAM_flythrough): "
+                  f"{_sch['path_length_m']:.1f} m, {len(_sch.get('stations', ft.STATIONS))} stations, "
+                  f"frames 1-{_sch['frames']} @ {_sch['fps']} fps, legs " +
+                  " ".join(f"{lg['name']}:{lg['f0']}-{lg['f1']}" for lg in _sch["legs"]))
     else:
         dg = link_site()
     if "--columns" in args:

@@ -320,6 +320,15 @@ def schedule(path_obj):
             s_of_frame.append(invert(t, grid, (f - h1) / FPS, v))
         else:
             s_of_frame.append(total)
+    # r16 review fix 2 (QA-08-13 through another camera): the route's stations are read from `qa_cameras` by
+    # name, so a re-stationing there can silently double the saved frame range again -- which is exactly what
+    # moving CAM_qa_02 to the NNE fit did in round 08 (1224 -> 2616). The design window is 1150-1350 frames at
+    # 24 fps, i.e. 48-56 s; outside it the route is no longer the one that was validated and the script stops
+    # instead of writing a range nobody planned.
+    if not 1150 <= frames <= 1350:
+        raise SystemExit(f"[light_flythrough] schedule() produced {frames} frames "
+                         f"({frames / FPS:.1f} s), outside the designed 1150-1350 (47.9-56.3 s). A station has "
+                         f"moved; re-check the stations before re-saving the range.")
     # station arrival frames
     arrive = {}
     for i, st in enumerate(STATIONS):

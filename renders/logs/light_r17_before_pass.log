@@ -1,0 +1,22 @@
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_02e.png (36.9s, 1280x720)
+[r16] eevee: fast_gi False dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_03e.png (47.3s, 1280x720)
+[r16] eevee: fast_gi False dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_04e.png (29.3s, 1280x720)
+[r16] eevee: fast_gi False dist 60.0 rays 2 raytracing True threshold 0.009999999776482582
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_06e.png (32.4s, 1280x720)
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_02c.png (111.1s, 1280x720)
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_03c.png (188.9s, 1280x720)
+[r16] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
+[r16] -> r17BEFORE_BEFORE_01c.png (190.1s, 1920x1080)
+[r16] camera times: 01e 48.4s  02e 36.9s  03e 47.3s  04e 29.3s  06e 32.4s  02c 111.1s  03c 188.9s  01c 190.1s   TOTAL 684.2s over 8 frames
+[r16] done
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+
+[exited with code 0]
