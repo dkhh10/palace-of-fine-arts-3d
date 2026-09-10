@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PFA attempt 3 — project timeline</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1e1e1e;--mute:#6b6b6b;--grid:#e3e0d8;--sess:#d8cfbf;--qa:#b3552a;--gate:#2b6a8f;--stop:#8c8c8c;--kill:#c0392b;--cost:#4a8a5c}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--fg:#ecebe6;--mute:#a0a0a0;--grid:#2c2c29;--sess:#3a3730;--qa:#e8865c;--gate:#6fb0d8;--stop:#8c8c8c;--kill:#e06060;--cost:#7ec98f}}
+body{margin:0;padding:24px 16px;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,Helvetica,Arial,sans-serif}
+h1{font-size:20px;margin:0 0 4px}p{margin:4px 0 12px;color:var(--mute);max-width:1100px}
+.wrap{overflow-x:auto}svg{display:block;min-width:900px;max-width:1400px;width:100%}
+.lbl{font-size:11px;fill:var(--mute)}.ax{stroke:var(--grid)}.ev text{font-size:10.5px;fill:var(--fg)}
+table{border-collapse:collapse;margin-top:16px;font-size:12.5px}td,th{border-bottom:1px solid var(--grid);padding:3px 10px;text-align:left}
+.leg span{display:inline-block;margin-right:16px}.leg i{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:5px;border-radius:2px}
+</style></head><body>
+<h1>Palace of Fine Arts, attempt 3 — sessions, gates, QA rounds, hero score, cumulative cost</h1>
+<p>Local time (+02:00), 2026-09-06 to 2026-09-10. Hero score from docs/qa_round_*.md; cumulative nominal API cost from docs/usage/sessions.json (list rates, this project only; total $1,475). Sessions are the six Claude Code transcripts; grey bands are the gaps between them.</p>
+<div class="leg"><span><i style="background:var(--sess)"></i>lead session</span><span><i style="background:var(--qa)"></i>QA round (hero score)</span><span><i style="background:var(--gate)"></i>phase gate / delivery</span><span><i style="background:var(--stop)"></i>stop, restart, checkpoint</span><span><i style="background:var(--kill)"></i>kill / defect</span><span><i style="background:var(--cost)"></i>cumulative cost, $</span></div>
+<div class="wrap"><svg id="tl" viewBox="0 0 1400 640" xmlns="http://www.w3.org/2000/svg"></svg></div>
+<table id="tbl"><thead><tr><th>#</th><th>session</th><th>start</th><th>end</th><th>wall h</th><th>cost</th></tr></thead><tbody></tbody></table>
+<script>
+const D={"sessions": [{"n": 1, "a": "2026-09-06 12:40", "b": "2026-09-07 14:47", "x0": 103.1, "x1": 425.7, "cost": 214.35}, {"n": 2, "a": "2026-09-07 15:04", "b": "2026-09-07 19:32", "x0": 429.2, "x1": 484.3, "cost": 281.72}, {"n": 3, "a": "2026-09-07 20:11", "b": "2026-09-08 09:56", "x0": 492.4, "x1": 662.2, "cost": 463.05}, {"n": 4, "a": "2026-09-09 07:42", "b": "2026-09-09 19:38", "x0": 931.1, "x1": 1078.4, "cost": 302.7}, {"n": 5, "a": "2026-09-09 19:38", "b": "2026-09-10 14:10", "x0": 1078.6, "x1": 1307.4, "cost": 205.23}, {"n": 6, "a": "2026-09-10 14:11", "b": "2026-09-10 14:23", "x0": 1307.6, "x1": 1310.1, "cost": 7.55}], "events": [{"t": "2026-09-06 13:35", "x": 114.3, "label": "Phase 0", "score": null, "kind": "gate"}, {"t": "2026-09-06 14:30", "x": 125.6, "label": "API limit", "score": null, "kind": "stop"}, {"t": "2026-09-06 20:43", "x": 202.4, "label": "Phase 1 gate", "score": null, "kind": "gate"}, {"t": "2026-09-07 08:22", "x": 346.3, "label": "QA r1 / Phase 2 gate", "score": 2.17, "kind": "qa"}, {"t": "2026-09-07 14:47", "x": 425.6, "label": "restart 1", "score": null, "kind": "stop"}, {"t": "2026-09-07 17:17", "x": 456.4, "label": "QA r2 / Phase 3 gate", "score": 2.94, "kind": "qa"}, {"t": "2026-09-07 19:32", "x": 484.2, "label": "restart 2", "score": null, "kind": "stop"}, {"t": "2026-09-07 20:23", "x": 494.7, "label": "watchdog kills 3 renders", "score": null, "kind": "kill"}, {"t": "2026-09-07 20:49", "x": 500.1, "label": "QA r3", "score": 3.28, "kind": "qa"}, {"t": "2026-09-07 22:40", "x": 522.9, "label": "checkpoint (machine closed)", "score": null, "kind": "stop"}, {"t": "2026-09-08 04:50", "x": 599.1, "label": "QA r4", "score": 3.28, "kind": "qa"}, {"t": "2026-09-08 08:20", "x": 642.4, "label": "QA r5", "score": 3.28, "kind": "qa"}, {"t": "2026-09-08 09:56", "x": 662.1, "label": "restart 3 (4K killed at 94 min)", "score": null, "kind": "stop"}, {"t": "2026-09-09 14:19", "x": 1012.7, "label": "QA r6", "score": 3.22, "kind": "qa"}, {"t": "2026-09-09 17:54", "x": 1057.0, "label": "QA r7", "score": 3.44, "kind": "qa"}, {"t": "2026-09-09 19:38", "x": 1078.4, "label": "restart 4 (context 384k)", "score": null, "kind": "stop"}, {"t": "2026-09-09 23:33", "x": 1126.8, "label": "QA r8 (projection)", "score": 3.67, "kind": "qa"}, {"t": "2026-09-10 01:10", "x": 1146.8, "label": "QA r9 / Phase 5", "score": 3.67, "kind": "qa"}, {"t": "2026-09-10 04:00", "x": 1181.8, "label": "flythrough cut, resume wiped frames", "score": null, "kind": "kill"}, {"t": "2026-09-10 05:12", "x": 1196.6, "label": "v1 4K hero", "score": null, "kind": "gate"}, {"t": "2026-09-10 06:32", "x": 1213.1, "label": "user finds the arch block", "score": null, "kind": "kill"}, {"t": "2026-09-10 09:10", "x": 1245.6, "label": "QA r10 FAIL", "score": 3.56, "kind": "qa"}, {"t": "2026-09-10 10:31", "x": 1262.3, "label": "QA r10b PASS", "score": 3.61, "kind": "qa"}, {"t": "2026-09-10 13:39", "x": 1301.0, "label": "v2 delivered", "score": null, "kind": "gate"}], "cost": [{"t": "2026-09-06 12:00", "x": 94.7, "c": 3.79}, {"t": "2026-09-06 13:00", "x": 107.1, "c": 16.7}, {"t": "2026-09-06 14:00", "x": 119.4, "c": 35.95}, {"t": "2026-09-06 20:00", "x": 193.5, "c": 53.65}, {"t": "2026-09-06 21:00", "x": 205.9, "c": 57.75}, {"t": "2026-09-07 06:00", "x": 317.1, "c": 79.62}, {"t": "2026-09-07 07:00", "x": 329.4, "c": 139.31}, {"t": "2026-09-07 08:00", "x": 341.8, "c": 214.35}, {"t": "2026-09-07 09:00", "x": 354.1, "c": 214.35}, {"t": "2026-09-07 15:00", "x": 428.2, "c": 291.47}, {"t": "2026-09-07 16:00", "x": 440.6, "c": 394.25}, {"t": "2026-09-07 17:00", "x": 452.9, "c": 436.14}, {"t": "2026-09-07 18:00", "x": 465.3, "c": 486.5}, {"t": "2026-09-07 19:00", "x": 477.6, "c": 496.07}, {"t": "2026-09-07 20:00", "x": 490.0, "c": 513.67}, {"t": "2026-09-07 21:00", "x": 502.4, "c": 522.61}, {"t": "2026-09-07 22:00", "x": 514.7, "c": 549.06}, {"t": "2026-09-07 23:00", "x": 527.1, "c": 592.74}, {"t": "2026-09-08 00:00", "x": 539.4, "c": 633.42}, {"t": "2026-09-08 01:00", "x": 551.8, "c": 660.31}, {"t": "2026-09-08 02:00", "x": 564.1, "c": 689.97}, {"t": "2026-09-08 03:00", "x": 576.5, "c": 708.66}, {"t": "2026-09-08 04:00", "x": 588.8, "c": 732.2}, {"t": "2026-09-08 05:00", "x": 601.2, "c": 785.48}, {"t": "2026-09-08 06:00", "x": 613.5, "c": 825.52}, {"t": "2026-09-08 07:00", "x": 625.9, "c": 871.07}, {"t": "2026-09-08 08:00", "x": 638.2, "c": 902.04}, {"t": "2026-09-08 09:00", "x": 650.6, "c": 959.12}, {"t": "2026-09-09 07:00", "x": 922.4, "c": 967.96}, {"t": "2026-09-09 08:00", "x": 934.7, "c": 999.35}, {"t": "2026-09-09 09:00", "x": 947.1, "c": 1029.4}, {"t": "2026-09-09 10:00", "x": 959.4, "c": 1049.75}, {"t": "2026-09-09 11:00", "x": 971.8, "c": 1070.88}, {"t": "2026-09-09 12:00", "x": 984.1, "c": 1083.24}, {"t": "2026-09-09 13:00", "x": 996.5, "c": 1102.12}, {"t": "2026-09-09 14:00", "x": 1008.8, "c": 1168.21}, {"t": "2026-09-09 15:00", "x": 1021.2, "c": 1217.63}, {"t": "2026-09-09 16:00", "x": 1033.5, "c": 1245.49}, {"t": "2026-09-09 17:00", "x": 1045.9, "c": 1261.82}, {"t": "2026-09-09 19:00", "x": 1070.6, "c": 1272.89}, {"t": "2026-09-09 20:00", "x": 1082.9, "c": 1285.35}, {"t": "2026-09-09 21:00", "x": 1095.3, "c": 1306.17}, {"t": "2026-09-09 22:00", "x": 1107.6, "c": 1328.07}, {"t": "2026-09-09 23:00", "x": 1120.0, "c": 1344.97}, {"t": "2026-09-10 00:00", "x": 1132.4, "c": 1357.12}, {"t": "2026-09-10 01:00", "x": 1144.7, "c": 1360.89}, {"t": "2026-09-10 03:00", "x": 1169.4, "c": 1366.28}, {"t": "2026-09-10 04:00", "x": 1181.8, "c": 1367.01}, {"t": "2026-09-10 05:00", "x": 1194.1, "c": 1371.93}, {"t": "2026-09-10 06:00", "x": 1206.5, "c": 1386.82}, {"t": "2026-09-10 07:00", "x": 1218.8, "c": 1400.68}, {"t": "2026-09-10 08:00", "x": 1231.2, "c": 1422.54}, {"t": "2026-09-10 09:00", "x": 1243.5, "c": 1441.55}, {"t": "2026-09-10 10:00", "x": 1255.9, "c": 1451.18}, {"t": "2026-09-10 11:00", "x": 1268.2, "c": 1459.34}, {"t": "2026-09-10 13:00", "x": 1292.9, "c": 1467.05}, {"t": "2026-09-10 14:00", "x": 1305.3, "c": 1474.6}], "daily": [["2026-09-06", 57.75], ["2026-09-07", 602.56], ["2026-09-08", 298.82], ["2026-09-09", 401.76], ["2026-09-10", 113.71]], "days": [{"x": -53.5, "label": "Sep 6"}, {"x": 242.9, "label": "Sep 7"}, {"x": 539.4, "label": "Sep 8"}, {"x": 835.9, "label": "Sep 9"}, {"x": 1132.4, "label": "Sep 10"}], "W": 1400, "H": 640, "L": 70, "R": 70, "T": 40, "B": 60, "total": 1474.6};
+const svg=document.getElementById('tl');const NS='http://www.w3.org/2000/svg';
+function el(n,a,txt){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+const W=D.W,H=D.H,L=D.L,R=D.R,T=D.T,B=D.B;
+const sessY=T+10,sessH=22;            // session lane
+const sT=T+60,sB=H-B-140;             // score lane (y range 2..4)
+const cT=sT,cB=sB;                    // cost lane shares vertical space, right axis
+const evY=H-B-120;                    // event lane
+const scoreY=s=>sB-(s-2)/(4-2)*(sB-sT);
+const maxC=Math.ceil(D.total/250)*250;const costY=c=>cB-c/maxC*(cB-cT);
+// day grid
+for(const d of D.days){el('line',{x1:d.x,x2:d.x,y1:T,y2:H-B,class:'ax','stroke-dasharray':'3 3'});el('text',{x:d.x+4,y:T-8,class:'lbl'},d.label);}
+// gaps between sessions
+for(let i=0;i<D.sessions.length-1;i++){const a=D.sessions[i],b=D.sessions[i+1];if(b.x0-a.x1>2)el('rect',{x:a.x1,y:sessY,width:b.x0-a.x1,height:sessH,fill:'var(--grid)',opacity:.5});}
+// sessions
+for(const s of D.sessions){el('rect',{x:s.x0,y:sessY,width:Math.max(2,s.x1-s.x0),height:sessH,fill:'var(--sess)',rx:3});el('text',{x:s.x0+4,y:sessY+15,class:'lbl'},'S'+s.n+' $'+Math.round(s.cost));}
+el('text',{x:L,y:sessY-4,class:'lbl'},'lead sessions');
+// score axis
+for(const s of [2,2.5,3,3.5,4]){el('line',{x1:L,x2:W-R,y1:scoreY(s),y2:scoreY(s),class:'ax'});el('text',{x:L-8,y:scoreY(s)+4,class:'lbl','text-anchor':'end'},s.toFixed(1));}
+el('text',{x:L-8,y:sT-10,class:'lbl','text-anchor':'end'},'hero /5');
+el('line',{x1:L,x2:W-R,y1:scoreY(4),y2:scoreY(4),stroke:'var(--qa)','stroke-dasharray':'6 4',opacity:.6});
+el('text',{x:W-R-4,y:scoreY(4)-4,class:'lbl','text-anchor':'end'},'definition of done 4.0');
+// cost axis (right)
+for(let c=0;c<=maxC;c+=250){el('text',{x:W-R+8,y:costY(c)+4,class:'lbl'},'$'+c);}
+el('text',{x:W-R+8,y:cT-10,class:'lbl'},'cost, cumulative');
+// cost line
+let p='';for(const q of D.cost){p+=(p?'L':'M')+q.x+' '+costY(q.c)+' ';}
+el('path',{d:p,fill:'none',stroke:'var(--cost)','stroke-width':2});
+// score line
+const qa=D.events.filter(e=>e.score!=null);let sp='';for(const e of qa){sp+=(sp?'L':'M')+e.x+' '+scoreY(e.score)+' ';}
+el('path',{d:sp,fill:'none',stroke:'var(--qa)','stroke-width':2.5});
+for(const e of qa){el('circle',{cx:e.x,cy:scoreY(e.score),r:4.5,fill:'var(--qa)'});el('text',{x:e.x,y:scoreY(e.score)-9,class:'lbl','text-anchor':'middle',fill:'var(--fg)'},e.score.toFixed(2));}
+// events lane with staggered labels
+const col={qa:'var(--qa)',gate:'var(--gate)',stop:'var(--stop)',kill:'var(--kill)'};
+let lastX=-1e9,row=0;
+D.events.forEach((e,i)=>{row=(e.x-lastX<70)?(row+1)%5:0;lastX=e.x;const y=evY+row*20;
+ el('line',{x1:e.x,x2:e.x,y1:T+sessH+14,y2:y+6,stroke:col[e.kind],opacity:.35});
+ el('circle',{cx:e.x,cy:y+6,r:4,fill:col[e.kind]});
+ const g=el('g',{class:'ev'});const t=document.createElementNS(NS,'text');t.setAttribute('x',e.x+7);t.setAttribute('y',y+10);t.textContent=e.label+' · '+e.t.slice(5,16);g.appendChild(t);
+});
+// table
+const tb=document.querySelector('#tbl tbody');
+for(const s of D.sessions){const a=new Date(s.a.replace(' ','T')),b=new Date(s.b.replace(' ','T'));const h=((b-a)/36e5).toFixed(1);const tr=document.createElement('tr');tr.innerHTML='<td>'+s.n+'</td><td>lead session</td><td>'+s.a+'</td><td>'+s.b+'</td><td>'+h+'</td><td>$'+s.cost.toFixed(0)+'</td>';tb.appendChild(tr);}
+const dr=document.createElement('tr');dr.innerHTML='<td></td><td>daily cost (UTC days)</td><td colspan="4">'+D.daily.map(x=>x[0].slice(5)+' $'+x[1].toFixed(0)).join(' · ')+'</td>';tb.appendChild(dr);
+</script>
+</body></html>

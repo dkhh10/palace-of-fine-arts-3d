@@ -1,0 +1,3458 @@
+{
+ "generated": "2026-09-10T12:23:27.851852+00:00",
+ "source": "/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building",
+ "rates_usd_per_mtok": {
+  "claude-fable-5-1": {
+   "input": 10.0,
+   "output": 50.0,
+   "cache_write_5m": 12.5,
+   "cache_write_1h": 20.0,
+   "cache_read": 0.25
+  },
+  "claude-opus-5": {
+   "input": 5.0,
+   "output": 25.0,
+   "cache_write_5m": 6.25,
+   "cache_write_1h": 10.0,
+   "cache_read": 0.5
+  },
+  "claude-sonnet-5": {
+   "input": 2.0,
+   "output": 10.0,
+   "cache_write_5m": 2.5,
+   "cache_write_1h": 4.0,
+   "cache_read": 0.2
+  },
+  "claude-haiku-4-5-20251001": {
+   "input": 1.0,
+   "output": 5.0,
+   "cache_write_5m": 1.25,
+   "cache_write_1h": 2.0,
+   "cache_read": 0.1
+  },
+  "claude-haiku-4-5": {
+   "input": 1.0,
+   "output": 5.0,
+   "cache_write_5m": 1.25,
+   "cache_write_1h": 2.0,
+   "cache_read": 0.1
+  }
+ },
+ "sessions": [
+  {
+   "session_id": "db75376f-0874-434f-b644-8a5e35d22392",
+   "first": "2026-09-06T10:40:55.646Z",
+   "last": "2026-09-07T12:47:55.288Z",
+   "main_user_turns": 184,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 1980,
+     "output": 181981,
+     "cw5m": 0,
+     "cw1h": 942194,
+     "cread": 19506370,
+     "thinking": 67925,
+     "requests": 82
+    },
+    "<synthetic>": {
+     "input": 0,
+     "output": 0,
+     "cw5m": 0,
+     "cw1h": 0,
+     "cread": 0,
+     "thinking": 0,
+     "requests": 14
+    }
+   },
+   "subagents": [
+    {
+     "agent": "a01d2f26b2d47b761",
+     "agentType": "general-purpose",
+     "description": "Web research PFA dimensions",
+     "spawnDepth": 2,
+     "first": "2026-09-06T11:52:10.876Z",
+     "last": "2026-09-06T12:06:13.100Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 228,
+       "output": 10195,
+       "cw5m": 121906,
+       "cw1h": 0,
+       "cread": 579750,
+       "thinking": 3458,
+       "requests": 9
+      }
+     },
+     "cost_usd": 2.18,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a0211b52a7fe27f03",
+     "agentType": "general-purpose",
+     "description": "Sample PFA material colours",
+     "spawnDepth": 2,
+     "first": "2026-09-06T11:52:34.250Z",
+     "last": "2026-09-06T12:06:13.089Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 484,
+       "output": 16496,
+       "cw5m": 158843,
+       "cw1h": 0,
+       "cread": 1106943,
+       "thinking": 7975,
+       "requests": 17
+      }
+     },
+     "cost_usd": 3.09,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a1cfa498e69e294be",
+     "agentType": "general-purpose",
+     "description": "Lighting and rendering (Phase 2)",
+     "spawnDepth": 1,
+     "first": "2026-09-06T18:54:22.614Z",
+     "last": "2026-09-07T06:49:30.016Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 1518,
+       "output": 50019,
+       "cw5m": 1026176,
+       "cw1h": 0,
+       "cread": 8736279,
+       "thinking": 25238,
+       "requests": 53
+      },
+      "<synthetic>": {
+       "input": 0,
+       "output": 0,
+       "cw5m": 0,
+       "cw1h": 0,
+       "cread": 0,
+       "thinking": 0,
+       "requests": 1
+      }
+     },
+     "cost_usd": 17.53,
+     "models": [
+      "<synthetic>",
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a4ade400668f27b0f",
+     "agentType": "general-purpose",
+     "description": "Phase 1 reference research",
+     "spawnDepth": 1,
+     "first": "2026-09-06T11:35:33.241Z",
+     "last": "2026-09-06T12:27:54.725Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 746,
+       "output": 44787,
+       "cw5m": 643677,
+       "cw1h": 0,
+       "cread": 4954723,
+       "thinking": 14204,
+       "requests": 28
+      },
+      "<synthetic>": {
+       "input": 0,
+       "output": 0,
+       "cw5m": 0,
+       "cw1h": 0,
+       "cread": 0,
+       "thinking": 0,
+       "requests": 1
+      }
+     },
+     "cost_usd": 11.53,
+     "models": [
+      "<synthetic>",
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a7342dfe6bb1897c6",
+     "agentType": "general-purpose",
+     "description": "Ornament crops and catalog",
+     "spawnDepth": 2,
+     "first": "2026-09-06T11:53:30.976Z",
+     "last": "2026-09-06T12:06:13.089Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 586,
+       "output": 14665,
+       "cw5m": 507035,
+       "cw1h": 0,
+       "cread": 1768059,
+       "thinking": 8808,
+       "requests": 23
+      }
+     },
+     "cost_usd": 7.52,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a7608bfcba72552c2",
+     "agentType": "general-purpose",
+     "description": "Architecture modeler (Phase 2)",
+     "spawnDepth": 1,
+     "first": "2026-09-06T18:53:18.902Z",
+     "last": "2026-09-07T06:49:02.429Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 2096,
+       "output": 104048,
+       "cw5m": 1282366,
+       "cw1h": 0,
+       "cread": 24515104,
+       "thinking": 62746,
+       "requests": 72
+      },
+      "<synthetic>": {
+       "input": 0,
+       "output": 0,
+       "cw5m": 0,
+       "cw1h": 0,
+       "cread": 0,
+       "thinking": 0,
+       "requests": 2
+      }
+     },
+     "cost_usd": 27.38,
+     "models": [
+      "<synthetic>",
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "ab19eb1f331e642bc",
+     "agentType": "general-purpose",
+     "description": "Environment builder (Phase 2)",
+     "spawnDepth": 1,
+     "first": "2026-09-06T18:54:07.675Z",
+     "last": "2026-09-07T06:49:02.438Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 1612,
+       "output": 99669,
+       "cw5m": 1038142,
+       "cw1h": 0,
+       "cread": 14728885,
+       "thinking": 39058,
+       "requests": 55
+      },
+      "<synthetic>": {
+       "input": 0,
+       "output": 0,
+       "cw5m": 0,
+       "cw1h": 0,
+       "cread": 0,
+       "thinking": 0,
+       "requests": 2
+      }
+     },
+     "cost_usd": 21.66,
+     "models": [
+      "<synthetic>",
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "ab82b0f51191f457d",
+     "agentType": "general-purpose",
+     "description": "Materials specialist (Phase 2)",
+     "spawnDepth": 1,
+     "first": "2026-09-06T18:53:48.822Z",
+     "last": "2026-09-07T06:49:31.267Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 2064,
+       "output": 74683,
+       "cw5m": 2814963,
+       "cw1h": 0,
+       "cread": 20713375,
+       "thinking": 39789,
+       "requests": 72
+      },
+      "<synthetic>": {
+       "input": 0,
+       "output": 0,
+       "cw5m": 0,
+       "cw1h": 0,
+       "cread": 0,
+       "thinking": 0,
+       "requests": 3
+      }
+     },
+     "cost_usd": 44.12,
+     "models": [
+      "<synthetic>",
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "af73045d9403ccf80",
+     "agentType": "general-purpose",
+     "description": "QA critic round 1 (Phase 2 gate)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T05:58:20.886Z",
+     "last": "2026-09-07T06:22:59.036Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 614,
+       "output": 37665,
+       "cw5m": 246984,
+       "cw1h": 0,
+       "cread": 3419781,
+       "thinking": 18653,
+       "requests": 22
+      }
+     },
+     "cost_usd": 5.83,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "afe4bd7e60ffa51d9",
+     "agentType": "general-purpose",
+     "description": "Ornament modeler (Phase 2)",
+     "spawnDepth": 1,
+     "first": "2026-09-06T18:53:32.742Z",
+     "last": "2026-09-07T06:48:49.883Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 2018,
+       "output": 80630,
+       "cw5m": 2466891,
+       "cw1h": 0,
+       "cread": 23136396,
+       "thinking": 34964,
+       "requests": 76
+      },
+      "<synthetic>": {
+       "input": 0,
+       "output": 0,
+       "cw5m": 0,
+       "cw1h": 0,
+       "cread": 0,
+       "thinking": 0,
+       "requests": 2
+      }
+     },
+     "cost_usd": 40.67,
+     "models": [
+      "<synthetic>",
+      "claude-fable-5-1"
+     ]
+    }
+   ],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 13946,
+     "output": 714838,
+     "cw5m": 10306983,
+     "cw1h": 942194,
+     "cread": 123165665,
+     "thinking": 322818,
+     "requests": 509
+    },
+    "<synthetic>": {
+     "input": 0,
+     "output": 0,
+     "cw5m": 0,
+     "cw1h": 0,
+     "cread": 0,
+     "thinking": 0,
+     "requests": 25
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 214.35,
+    "<synthetic>": 0
+   },
+   "cost_usd": 214.35,
+   "wall_hours": 26.12,
+   "claude_code_cost_state_usd": 43.1,
+   "claude_code_api_hours": 1.05,
+   "claude_code_tool_hours": 0.16,
+   "claude_code_lines": [
+    23,
+    0
+   ]
+  },
+  {
+   "session_id": "747b5259-4cdc-4348-91ec-d5118dafc070",
+   "first": "2026-09-07T13:04:46.354Z",
+   "last": "2026-09-07T17:32:20.968Z",
+   "main_user_turns": 143,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 3574,
+     "output": 91913,
+     "cw5m": 0,
+     "cw1h": 271065,
+     "cread": 25372823,
+     "thinking": 23264,
+     "requests": 135
+    }
+   },
+   "subagents": [
+    {
+     "agent": "a0e28da831eb668ea",
+     "agentType": "general-purpose",
+     "description": "ENV polish round 1 (QA-02)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T15:21:12.946Z",
+     "last": "2026-09-07T16:28:20.357Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 204,
+       "output": 20757,
+       "cw5m": 507213,
+       "cw1h": 0,
+       "cread": 14100665,
+       "thinking": 8097,
+       "requests": 102
+      }
+     },
+     "cost_usd": 10.74,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a2ede30f3de85741e",
+     "agentType": "general-purpose",
+     "description": "ARCH fix agent, QA round 1",
+     "spawnDepth": 1,
+     "first": "2026-09-07T13:07:47.120Z",
+     "last": "2026-09-07T13:30:29.600Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 190,
+       "output": 38453,
+       "cw5m": 211762,
+       "cw1h": 0,
+       "cread": 13405106,
+       "thinking": 15667,
+       "requests": 95
+      }
+     },
+     "cost_usd": 8.99,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a327f7c6c67421e52",
+     "agentType": "general-purpose",
+     "description": "LIGHT polish round 1 (QA-02)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T15:20:33.639Z",
+     "last": "2026-09-07T17:30:40.754Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 386,
+       "output": 57524,
+       "cw5m": 1272826,
+       "cw1h": 0,
+       "cread": 35818824,
+       "thinking": 23398,
+       "requests": 193
+      }
+     },
+     "cost_usd": 27.3,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a336431db0032779b",
+     "agentType": "general-purpose",
+     "description": "ORN fix agent, QA round 1",
+     "spawnDepth": 1,
+     "first": "2026-09-07T13:24:55.449Z",
+     "last": "2026-09-07T14:16:13.490Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 262,
+       "output": 47438,
+       "cw5m": 277752,
+       "cw1h": 0,
+       "cread": 24493433,
+       "thinking": 18570,
+       "requests": 131
+      }
+     },
+     "cost_usd": 15.17,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a35d4719319c33d89",
+     "agentType": "general-purpose",
+     "description": "QA round 2 critic",
+     "spawnDepth": 1,
+     "first": "2026-09-07T14:43:12.599Z",
+     "last": "2026-09-07T16:10:32.621Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 188,
+       "output": 42324,
+       "cw5m": 1053788,
+       "cw1h": 0,
+       "cread": 12251732,
+       "thinking": 22702,
+       "requests": 94
+      }
+     },
+     "cost_usd": 13.77,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a501659990b75fa79",
+     "agentType": "general-purpose",
+     "description": "MAT fix agent, QA round 1",
+     "spawnDepth": 1,
+     "first": "2026-09-07T13:25:31.319Z",
+     "last": "2026-09-07T14:41:36.892Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 208,
+       "output": 50124,
+       "cw5m": 326651,
+       "cw1h": 0,
+       "cread": 14553141,
+       "thinking": 19085,
+       "requests": 104
+      }
+     },
+     "cost_usd": 10.57,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a8595907dd73f6422",
+     "agentType": "general-purpose",
+     "description": "ENV fix agent, QA round 1",
+     "spawnDepth": 1,
+     "first": "2026-09-07T13:08:11.132Z",
+     "last": "2026-09-07T14:32:19.352Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 1204,
+       "output": 98378,
+       "cw5m": 761799,
+       "cw1h": 0,
+       "cread": 191154437,
+       "thinking": 39178,
+       "requests": 602
+      }
+     },
+     "cost_usd": 102.8,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a8b77e258d80de954",
+     "agentType": "general-purpose",
+     "description": "ARCH polish round 1 (QA-02)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T15:20:53.098Z",
+     "last": "2026-09-07T15:47:42.364Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 128,
+       "output": 23555,
+       "cw5m": 173428,
+       "cw1h": 0,
+       "cread": 8391680,
+       "thinking": 11542,
+       "requests": 64
+      }
+     },
+     "cost_usd": 5.87,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ab45d35627e376bb3",
+     "agentType": "general-purpose",
+     "description": "LIGHT fix agent, QA round 1",
+     "spawnDepth": 1,
+     "first": "2026-09-07T13:31:31.514Z",
+     "last": "2026-09-07T14:26:29.942Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 496,
+       "output": 76459,
+       "cw5m": 274414,
+       "cw1h": 0,
+       "cread": 53808938,
+       "thinking": 22284,
+       "requests": 248
+      }
+     },
+     "cost_usd": 30.53,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "acf583f2eb2f3eff7",
+     "agentType": "general-purpose",
+     "description": "ORN polish round 1 (QA-02)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T15:49:22.938Z",
+     "last": "2026-09-07T16:46:44.163Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 280,
+       "output": 48152,
+       "cw5m": 463329,
+       "cw1h": 0,
+       "cread": 26581194,
+       "thinking": 27905,
+       "requests": 140
+      }
+     },
+     "cost_usd": 17.39,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "adf99a1d4b8ffa2b9",
+     "agentType": "general-purpose",
+     "description": "MAT polish round 1 (QA-02)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T15:20:14.743Z",
+     "last": "2026-09-07T17:01:27.351Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 304,
+       "output": 31458,
+       "cw5m": 1556954,
+       "cw1h": 0,
+       "cread": 23315879,
+       "thinking": 13964,
+       "requests": 152
+      }
+     },
+     "cost_usd": 22.18,
+     "models": [
+      "claude-opus-5"
+     ]
+    }
+   ],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 3574,
+     "output": 91913,
+     "cw5m": 0,
+     "cw1h": 271065,
+     "cread": 25372823,
+     "thinking": 23264,
+     "requests": 135
+    },
+    "claude-opus-5": {
+     "input": 3850,
+     "output": 534622,
+     "cw5m": 6879916,
+     "cw1h": 0,
+     "cread": 417875029,
+     "thinking": 222392,
+     "requests": 1925
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 16.4,
+    "claude-opus-5": 265.32
+   },
+   "cost_usd": 281.72,
+   "wall_hours": 4.46,
+   "claude_code_cost_state_usd": 381.55,
+   "claude_code_api_hours": 6.68,
+   "claude_code_tool_hours": 6.44,
+   "claude_code_lines": [
+    1949,
+    153
+   ]
+  },
+  {
+   "session_id": "f6551679-3526-4133-8d7f-26b25592ac0c",
+   "first": "2026-09-07T18:11:49.910Z",
+   "last": "2026-09-08T07:56:28.517Z",
+   "main_user_turns": 197,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 4712,
+     "output": 148323,
+     "cw5m": 0,
+     "cw1h": 1479974,
+     "cread": 43603619,
+     "thinking": 35993,
+     "requests": 190
+    },
+    "<synthetic>": {
+     "input": 0,
+     "output": 0,
+     "cw5m": 0,
+     "cw1h": 0,
+     "cread": 0,
+     "thinking": 0,
+     "requests": 1
+    }
+   },
+   "subagents": [
+    {
+     "agent": "a13969ad11ecabedf",
+     "agentType": "general-purpose",
+     "description": "Environment round 5 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T22:52:12.029Z",
+     "last": "2026-09-08T02:01:08.576Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 218,
+       "output": 100165,
+       "cw5m": 2520048,
+       "cw1h": 0,
+       "cread": 13642288,
+       "thinking": 50440,
+       "requests": 109
+      }
+     },
+     "cost_usd": 25.08,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a1ce8866f864d0b11",
+     "agentType": "general-purpose",
+     "description": "Architecture polish round 2 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T20:43:54.880Z",
+     "last": "2026-09-07T22:38:50.635Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 258,
+       "output": 117287,
+       "cw5m": 683019,
+       "cw1h": 0,
+       "cread": 21171884,
+       "thinking": 53872,
+       "requests": 129
+      }
+     },
+     "cost_usd": 17.79,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a290812d7720c9712",
+     "agentType": "general-purpose",
+     "description": "Code review architecture branch (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T21:28:55.805Z",
+     "last": "2026-09-07T21:36:47.700Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 30,
+       "output": 29706,
+       "cw5m": 78115,
+       "cw1h": 0,
+       "cread": 1005513,
+       "thinking": 19377,
+       "requests": 15
+      }
+     },
+     "cost_usd": 1.73,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a2cc9361453a1a2a3",
+     "agentType": "general-purpose",
+     "description": "Materials polish round 2 (Opus xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T20:43:33.162Z",
+     "last": "2026-09-07T22:10:58.511Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 114,
+       "output": 80956,
+       "cw5m": 989723,
+       "cw1h": 0,
+       "cread": 6883854,
+       "thinking": 41942,
+       "requests": 57
+      }
+     },
+     "cost_usd": 11.65,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a3617fb821ec03d47",
+     "agentType": "general-purpose",
+     "description": "Lighting polish round 2 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T18:14:20.110Z",
+     "last": "2026-09-07T20:17:13.302Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 188,
+       "output": 52259,
+       "cw5m": 2030998,
+       "cw1h": 0,
+       "cread": 11091521,
+       "thinking": 27605,
+       "requests": 94
+      }
+     },
+     "cost_usd": 19.55,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a36825b22d76f2d30",
+     "agentType": "general-purpose",
+     "description": "Code review environment r6 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T05:02:18.501Z",
+     "last": "2026-09-08T05:06:55.637Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 30,
+       "output": 11452,
+       "cw5m": 84296,
+       "cw1h": 0,
+       "cread": 1076240,
+       "thinking": 6406,
+       "requests": 15
+      }
+     },
+     "cost_usd": 1.35,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a4b1011f33a7b4f6a",
+     "agentType": "general-purpose",
+     "description": "Code review lighting r11 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T05:34:24.519Z",
+     "last": "2026-09-08T05:37:21.793Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 18,
+       "output": 11355,
+       "cw5m": 64145,
+       "cw1h": 0,
+       "cread": 529049,
+       "thinking": 6864,
+       "requests": 9
+      }
+     },
+     "cost_usd": 0.95,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a4cdb6b73ca94637d",
+     "agentType": "general-purpose",
+     "description": "Code review lighting r10 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T02:04:45.269Z",
+     "last": "2026-09-08T02:08:40.677Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 26,
+       "output": 12745,
+       "cw5m": 69860,
+       "cw1h": 0,
+       "cread": 854221,
+       "thinking": 7812,
+       "requests": 13
+      }
+     },
+     "cost_usd": 1.18,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a51334cdb315d58ed",
+     "agentType": "general-purpose",
+     "description": "Environment round 6 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T03:02:32.348Z",
+     "last": "2026-09-08T05:19:06.610Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 264,
+       "output": 115677,
+       "cw5m": 2029795,
+       "cw1h": 0,
+       "cread": 24315047,
+       "thinking": 59383,
+       "requests": 132
+      }
+     },
+     "cost_usd": 27.74,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a58e296252c1e4e5a",
+     "agentType": "general-purpose",
+     "description": "QA round 4 critic (Fable, xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T02:10:31.199Z",
+     "last": "2026-09-08T02:58:49.075Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 1730,
+       "output": 95604,
+       "cw5m": 495530,
+       "cw1h": 0,
+       "cread": 7881907,
+       "thinking": 43051,
+       "requests": 55
+      }
+     },
+     "cost_usd": 12.96,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a5cd2082e9bc90ddb",
+     "agentType": "general-purpose",
+     "description": "Materials round 6 (Opus xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T03:02:02.351Z",
+     "last": "2026-09-08T05:41:05.605Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 416,
+       "output": 142582,
+       "cw5m": 3087896,
+       "cw1h": 0,
+       "cread": 44521973,
+       "thinking": 53920,
+       "requests": 208
+      }
+     },
+     "cost_usd": 45.13,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a5d54c0c37a8e7669",
+     "agentType": "general-purpose",
+     "description": "Lighting round 11 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T03:01:23.550Z",
+     "last": "2026-09-08T05:46:49.365Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 370,
+       "output": 131110,
+       "cw5m": 2805665,
+       "cw1h": 0,
+       "cread": 40108447,
+       "thinking": 57580,
+       "requests": 185
+      }
+     },
+     "cost_usd": 40.87,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a5ed98c937124dd93",
+     "agentType": "general-purpose",
+     "description": "Code review environment r5 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T00:43:44.996Z",
+     "last": "2026-09-08T00:48:37.722Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 32,
+       "output": 9443,
+       "cw5m": 76004,
+       "cw1h": 0,
+       "cread": 1051184,
+       "thinking": 7091,
+       "requests": 16
+      }
+     },
+     "cost_usd": 1.24,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a626ed6662516f9a0",
+     "agentType": "general-purpose",
+     "description": "Lighting round 10 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T22:20:39.679Z",
+     "last": "2026-09-08T02:04:12.382Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 220,
+       "output": 115328,
+       "cw5m": 4277265,
+       "cw1h": 0,
+       "cread": 16431400,
+       "thinking": 51478,
+       "requests": 110
+      }
+     },
+     "cost_usd": 37.83,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a6a9959c599cb5e21",
+     "agentType": "general-purpose",
+     "description": "QA round 5 critic (Fable, xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T05:48:44.066Z",
+     "last": "2026-09-08T07:56:07.734Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 906,
+       "output": 37739,
+       "cw5m": 406560,
+       "cw1h": 0,
+       "cread": 2949689,
+       "thinking": 18539,
+       "requests": 31
+      }
+     },
+     "cost_usd": 7.72,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "a6b3a75a32ce869e5",
+     "agentType": "general-purpose",
+     "description": "Materials round 5 (Opus xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T22:51:46.863Z",
+     "last": "2026-09-08T00:07:57.099Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 254,
+       "output": 106382,
+       "cw5m": 479208,
+       "cw1h": 0,
+       "cread": 22073431,
+       "thinking": 58176,
+       "requests": 127
+      }
+     },
+     "cost_usd": 16.69,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a738f1851580ef5a5",
+     "agentType": "general-purpose",
+     "description": "Architecture mini-round (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T03:02:59.524Z",
+     "last": "2026-09-08T03:31:41.943Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 148,
+       "output": 61405,
+       "cw5m": 167733,
+       "cw1h": 0,
+       "cread": 8830352,
+       "thinking": 39922,
+       "requests": 74
+      }
+     },
+     "cost_usd": 7.0,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a7ea511388c9cc097",
+     "agentType": "general-purpose",
+     "description": "Lighting round 12 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T06:23:36.974Z",
+     "last": "2026-09-08T07:56:28.517Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 118,
+       "output": 40617,
+       "cw5m": 1196205,
+       "cw1h": 0,
+       "cread": 5956532,
+       "thinking": 14333,
+       "requests": 59
+      }
+     },
+     "cost_usd": 11.47,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a8a97640c0d34a5af",
+     "agentType": "general-purpose",
+     "description": "Code review lighting branch (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T20:41:39.137Z",
+     "last": "2026-09-07T20:44:26.730Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 22,
+       "output": 11476,
+       "cw5m": 71943,
+       "cw1h": 0,
+       "cread": 546203,
+       "thinking": 6891,
+       "requests": 11
+      }
+     },
+     "cost_usd": 1.01,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aa0cbbc4ed90d2f1b",
+     "agentType": "general-purpose",
+     "description": "Code review materials r5 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T00:08:33.906Z",
+     "last": "2026-09-08T00:14:26.969Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 28,
+       "output": 20726,
+       "cw5m": 69193,
+       "cw1h": 0,
+       "cread": 902041,
+       "thinking": 14993,
+       "requests": 14
+      }
+     },
+     "cost_usd": 1.4,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aa1487ff317edbc2d",
+     "agentType": "general-purpose",
+     "description": "Code review environment branch (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T22:11:08.183Z",
+     "last": "2026-09-07T22:19:17.765Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 38,
+       "output": 22547,
+       "cw5m": 88649,
+       "cw1h": 0,
+       "cread": 1336281,
+       "thinking": 14503,
+       "requests": 19
+      }
+     },
+     "cost_usd": 1.79,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aaf012c96dd66f55b",
+     "agentType": "general-purpose",
+     "description": "Code review architecture mini-round (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T03:32:19.873Z",
+     "last": "2026-09-08T03:35:05.216Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 24,
+       "output": 8074,
+       "cw5m": 47045,
+       "cw1h": 0,
+       "cread": 599045,
+       "thinking": 3708,
+       "requests": 12
+      }
+     },
+     "cost_usd": 0.8,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ab3c66e352123f0c3",
+     "agentType": "general-purpose",
+     "description": "Code review materials r6 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T05:33:33.690Z",
+     "last": "2026-09-08T05:38:25.486Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 36,
+       "output": 12969,
+       "cw5m": 75110,
+       "cw1h": 0,
+       "cread": 1132201,
+       "thinking": 6757,
+       "requests": 18
+      }
+     },
+     "cost_usd": 1.36,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ab779a51bacdf9c92",
+     "agentType": "general-purpose",
+     "description": "Environment round 7 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T06:24:39.646Z",
+     "last": "2026-09-08T07:55:45.111Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 496,
+       "output": 143133,
+       "cw5m": 742956,
+       "cw1h": 0,
+       "cread": 66667868,
+       "thinking": 68114,
+       "requests": 248
+      }
+     },
+     "cost_usd": 41.56,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ab8728bd7d1216333",
+     "agentType": "general-purpose",
+     "description": "Ornament polish round 2 (Opus xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T20:44:41.198Z",
+     "last": "2026-09-07T22:50:29.254Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 336,
+       "output": 123982,
+       "cw5m": 1229834,
+       "cw1h": 0,
+       "cread": 36430693,
+       "thinking": 48644,
+       "requests": 168
+      }
+     },
+     "cost_usd": 29.0,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ad1f5eecc3abae96e",
+     "agentType": "general-purpose",
+     "description": "Environment polish round 2 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T20:44:17.580Z",
+     "last": "2026-09-07T22:10:33.952Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 260,
+       "output": 159152,
+       "cw5m": 314710,
+       "cw1h": 0,
+       "cread": 27160504,
+       "thinking": 80060,
+       "requests": 130
+      }
+     },
+     "cost_usd": 19.53,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ae5d6317aa058a166",
+     "agentType": "general-purpose",
+     "description": "Code review ornament branch (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T22:28:57.762Z",
+     "last": "2026-09-07T22:36:53.548Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 54,
+       "output": 21075,
+       "cw5m": 100117,
+       "cw1h": 0,
+       "cread": 2389367,
+       "thinking": 14685,
+       "requests": 27
+      }
+     },
+     "cost_usd": 2.35,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ae7e8d18f69f539d8",
+     "agentType": "general-purpose",
+     "description": "QA round 3 critic (Fable, xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T18:13:57.890Z",
+     "last": "2026-09-07T18:49:29.174Z",
+     "usage": {
+      "claude-fable-5-1": {
+       "input": 1904,
+       "output": 30428,
+       "cw5m": 404269,
+       "cw1h": 0,
+       "cread": 8898175,
+       "thinking": 15814,
+       "requests": 65
+      }
+     },
+     "cost_usd": 8.82,
+     "models": [
+      "claude-fable-5-1"
+     ]
+    },
+    {
+     "agent": "afc16bdca46895c3b",
+     "agentType": "general-purpose",
+     "description": "Code review materials branch (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-07T22:11:40.068Z",
+     "last": "2026-09-07T22:15:51.840Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 22,
+       "output": 11583,
+       "cw5m": 61606,
+       "cw1h": 0,
+       "cread": 644682,
+       "thinking": 6619,
+       "requests": 11
+      }
+     },
+     "cost_usd": 1.0,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aff2fc3b4e70b8829",
+     "agentType": "general-purpose",
+     "description": "Architecture round 4 (Opus)",
+     "spawnDepth": 1,
+     "first": "2026-09-08T06:24:07.896Z",
+     "last": "2026-09-08T07:56:17.593Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 206,
+       "output": 116099,
+       "cw5m": 1255794,
+       "cw1h": 0,
+       "cread": 15619753,
+       "thinking": 72388,
+       "requests": 103
+      }
+     },
+     "cost_usd": 18.56,
+     "models": [
+      "claude-opus-5"
+     ]
+    }
+   ],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 9252,
+     "output": 312094,
+     "cw5m": 1306359,
+     "cw1h": 1479974,
+     "cread": 63333390,
+     "thinking": 113397,
+     "requests": 341
+    },
+    "<synthetic>": {
+     "input": 0,
+     "output": 0,
+     "cw5m": 0,
+     "cw1h": 0,
+     "cread": 0,
+     "thinking": 0,
+     "requests": 1
+    },
+    "claude-opus-5": {
+     "input": 4226,
+     "output": 1789285,
+     "cw5m": 24696932,
+     "cw1h": 0,
+     "cread": 372971574,
+     "thinking": 893563,
+     "requests": 2113
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 77.46,
+    "<synthetic>": 0,
+    "claude-opus-5": 385.59
+   },
+   "cost_usd": 463.05,
+   "wall_hours": 13.74,
+   "claude_code_cost_state_usd": 641.83,
+   "claude_code_api_hours": 17.67,
+   "claude_code_tool_hours": 16.18,
+   "claude_code_lines": [
+    7335,
+    762
+   ]
+  },
+  {
+   "session_id": "1e741676-2c03-408f-ad81-3c89163dc6dc",
+   "first": "2026-09-09T05:42:19.536Z",
+   "last": "2026-09-09T17:38:03.043Z",
+   "main_user_turns": 202,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 5126,
+     "output": 166235,
+     "cw5m": 0,
+     "cw1h": 768497,
+     "cread": 51892505,
+     "thinking": 34362,
+     "requests": 200
+    }
+   },
+   "subagents": [
+    {
+     "agent": "a004f12e145e68e16",
+     "agentType": "general-purpose",
+     "description": "Review lighting r14 prep branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:29:09.135Z",
+     "last": "2026-09-09T12:34:59.962Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 48,
+       "output": 12589,
+       "cw5m": 94583,
+       "cw1h": 0,
+       "cread": 1866791,
+       "thinking": 7938,
+       "requests": 24
+      }
+     },
+     "cost_usd": 1.84,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a02a3a6b7c2d35646",
+     "agentType": "general-purpose",
+     "description": "Review architecture r4 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T06:09:29.174Z",
+     "last": "2026-09-09T06:14:50.210Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 56,
+       "output": 10280,
+       "cw5m": 86336,
+       "cw1h": 0,
+       "cread": 2035274,
+       "thinking": 5715,
+       "requests": 28
+      }
+     },
+     "cost_usd": 1.81,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a0ac5285531ae875b",
+     "agentType": "general-purpose",
+     "description": "LIGHT r14 prep flythrough, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T11:59:53.898Z",
+     "last": "2026-09-09T12:28:36.911Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 118,
+       "output": 73098,
+       "cw5m": 206488,
+       "cw1h": 0,
+       "cread": 9409629,
+       "thinking": 47842,
+       "requests": 59
+      }
+     },
+     "cost_usd": 7.82,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a0c03a96c3feb9529",
+     "agentType": "general-purpose",
+     "description": "ENV r7 review fixes",
+     "spawnDepth": 1,
+     "first": "2026-09-09T06:40:33.881Z",
+     "last": "2026-09-09T07:13:22.098Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 184,
+       "output": 23582,
+       "cw5m": 352923,
+       "cw1h": 0,
+       "cread": 9164152,
+       "thinking": 7854,
+       "requests": 92
+      }
+     },
+     "cost_usd": 7.38,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a16a3d7e4ecce30f1",
+     "agentType": "general-purpose",
+     "description": "MAT r7 review fixes",
+     "spawnDepth": 1,
+     "first": "2026-09-09T09:40:11.978Z",
+     "last": "2026-09-09T10:05:19.842Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 116,
+       "output": 37740,
+       "cw5m": 123801,
+       "cw1h": 0,
+       "cread": 5524108,
+       "thinking": 15161,
+       "requests": 58
+      }
+     },
+     "cost_usd": 4.48,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a184c8d5667f95caf",
+     "agentType": "general-purpose",
+     "description": "Review ornament r7 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T13:56:59.113Z",
+     "last": "2026-09-09T14:04:01.629Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 68,
+       "output": 16880,
+       "cw5m": 123395,
+       "cw1h": 0,
+       "cread": 3351948,
+       "thinking": 10268,
+       "requests": 34
+      }
+     },
+     "cost_usd": 2.87,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a1926d2f0865b891a",
+     "agentType": "general-purpose",
+     "description": "Review materials r8 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T15:21:41.181Z",
+     "last": "2026-09-09T15:26:38.137Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 46,
+       "output": 11005,
+       "cw5m": 76221,
+       "cw1h": 0,
+       "cread": 1605569,
+       "thinking": 6360,
+       "requests": 23
+      }
+     },
+     "cost_usd": 1.55,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a19799835e333aa4f",
+     "agentType": "general-purpose",
+     "description": "QA round 7 gate",
+     "spawnDepth": 1,
+     "first": "2026-09-09T15:28:00.436Z",
+     "last": "2026-09-09T15:54:46.254Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 198,
+       "output": 59587,
+       "cw5m": 223463,
+       "cw1h": 0,
+       "cread": 13964638,
+       "thinking": 24725,
+       "requests": 99
+      }
+     },
+     "cost_usd": 9.87,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a1eb4bc3d247c4ec3",
+     "agentType": "general-purpose",
+     "description": "ORN r5 frieze band, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:00:03.102Z",
+     "last": "2026-09-09T12:20:24.487Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 98,
+       "output": 47483,
+       "cw5m": 172328,
+       "cw1h": 0,
+       "cread": 5783069,
+       "thinking": 30552,
+       "requests": 49
+      }
+     },
+     "cost_usd": 5.16,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a22519a1adcc1ebb2",
+     "agentType": "general-purpose",
+     "description": "ARCH r6 register the stack",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:23:18.991Z",
+     "last": "2026-09-09T12:49:32.355Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 140,
+       "output": 43078,
+       "cw5m": 196859,
+       "cw1h": 0,
+       "cread": 10184787,
+       "thinking": 21444,
+       "requests": 70
+      }
+     },
+     "cost_usd": 7.4,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a294b696037d91e42",
+     "agentType": "general-purpose",
+     "description": "ARCH r5 UVProj, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T11:59:45.418Z",
+     "last": "2026-09-09T12:17:52.972Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 126,
+       "output": 40580,
+       "cw5m": 166687,
+       "cw1h": 0,
+       "cread": 7736437,
+       "thinking": 20840,
+       "requests": 63
+      }
+     },
+     "cost_usd": 5.93,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a3e7eb67d344542a9",
+     "agentType": "general-purpose",
+     "description": "Review architecture r5 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:18:24.651Z",
+     "last": "2026-09-09T12:22:43.088Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 28,
+       "output": 8811,
+       "cw5m": 74284,
+       "cw1h": 0,
+       "cread": 885534,
+       "thinking": 6864,
+       "requests": 14
+      }
+     },
+     "cost_usd": 1.13,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a46594a3c35851426",
+     "agentType": "general-purpose",
+     "description": "Review architecture r6 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:50:21.038Z",
+     "last": "2026-09-09T12:57:14.503Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 48,
+       "output": 20328,
+       "cw5m": 97560,
+       "cw1h": 0,
+       "cread": 1990106,
+       "thinking": 12167,
+       "requests": 24
+      }
+     },
+     "cost_usd": 2.11,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a5200bed5a141af4f",
+     "agentType": "general-purpose",
+     "description": "ARCH r7 archivolt sockets, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T13:27:30.291Z",
+     "last": "2026-09-09T14:08:38.568Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 180,
+       "output": 40691,
+       "cw5m": 269128,
+       "cw1h": 0,
+       "cread": 14215733,
+       "thinking": 22873,
+       "requests": 90
+      }
+     },
+     "cost_usd": 9.81,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a54f4f5538249f3ad",
+     "agentType": "general-purpose",
+     "description": "ORN r7 capital re-lay, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T13:35:28.764Z",
+     "last": "2026-09-09T13:56:15.802Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 102,
+       "output": 37572,
+       "cw5m": 163423,
+       "cw1h": 0,
+       "cread": 5882972,
+       "thinking": 25169,
+       "requests": 51
+      }
+     },
+     "cost_usd": 4.9,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a5c6602a595d83c6a",
+     "agentType": "general-purpose",
+     "description": "Review ornament r6 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T13:26:53.328Z",
+     "last": "2026-09-09T13:33:51.650Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 56,
+       "output": 8227,
+       "cw5m": 109667,
+       "cw1h": 0,
+       "cread": 2446981,
+       "thinking": 5227,
+       "requests": 28
+      }
+     },
+     "cost_usd": 2.11,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a6034ee3371e22171",
+     "agentType": "general-purpose",
+     "description": "Review architecture r7 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T14:09:17.955Z",
+     "last": "2026-09-09T14:15:10.716Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 38,
+       "output": 6970,
+       "cw5m": 85076,
+       "cw1h": 0,
+       "cread": 1368192,
+       "thinking": 4162,
+       "requests": 19
+      }
+     },
+     "cost_usd": 1.39,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a61f989bd6d96106d",
+     "agentType": "general-purpose",
+     "description": "ENV r9 review fixes, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T13:11:30.254Z",
+     "last": "2026-09-09T13:28:23.892Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 114,
+       "output": 30892,
+       "cw5m": 138012,
+       "cw1h": 0,
+       "cread": 6171340,
+       "thinking": 13200,
+       "requests": 57
+      }
+     },
+     "cost_usd": 4.72,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a6e9711e3e1272a44",
+     "agentType": "general-purpose",
+     "description": "Review lighting r13 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T11:27:42.807Z",
+     "last": "2026-09-09T11:34:28.873Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 62,
+       "output": 11526,
+       "cw5m": 122869,
+       "cw1h": 0,
+       "cread": 2962463,
+       "thinking": 8299,
+       "requests": 31
+      }
+     },
+     "cost_usd": 2.54,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a70df1610ceb7b7ca",
+     "agentType": "general-purpose",
+     "description": "ARCH r4 cornice/dentils",
+     "spawnDepth": 1,
+     "first": "2026-09-09T05:47:02.078Z",
+     "last": "2026-09-09T06:08:56.059Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 140,
+       "output": 12089,
+       "cw5m": 145540,
+       "cw1h": 0,
+       "cread": 7327147,
+       "thinking": 6647,
+       "requests": 70
+      }
+     },
+     "cost_usd": 4.88,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a72987a73d103050f",
+     "agentType": "general-purpose",
+     "description": "Review lighting r12 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T07:09:50.552Z",
+     "last": "2026-09-09T07:15:56.743Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 56,
+       "output": 20037,
+       "cw5m": 107712,
+       "cw1h": 0,
+       "cread": 2348206,
+       "thinking": 14317,
+       "requests": 28
+      }
+     },
+     "cost_usd": 2.35,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a73265472183afa24",
+     "agentType": "general-purpose",
+     "description": "Review materials r7 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T09:32:37.100Z",
+     "last": "2026-09-09T09:39:40.755Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 70,
+       "output": 22338,
+       "cw5m": 107615,
+       "cw1h": 0,
+       "cread": 3130098,
+       "thinking": 13407,
+       "requests": 35
+      }
+     },
+     "cost_usd": 2.8,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a8d813c1961ed8bc6",
+     "agentType": "general-purpose",
+     "description": "Review environment r9 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T13:02:17.899Z",
+     "last": "2026-09-09T13:10:51.009Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 64,
+       "output": 24150,
+       "cw5m": 111450,
+       "cw1h": 0,
+       "cread": 2849783,
+       "thinking": 15250,
+       "requests": 32
+      }
+     },
+     "cost_usd": 2.73,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a8deb1091a6c948be",
+     "agentType": "general-purpose",
+     "description": "ARCH r6 review fixes, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:57:48.101Z",
+     "last": "2026-09-09T13:09:46.296Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 118,
+       "output": 22666,
+       "cw5m": 115739,
+       "cw1h": 0,
+       "cread": 5463954,
+       "thinking": 6770,
+       "requests": 59
+      }
+     },
+     "cost_usd": 4.02,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a98691460e981922f",
+     "agentType": "general-purpose",
+     "description": "ENV r9 walk clearance, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:30:37.593Z",
+     "last": "2026-09-09T13:01:47.716Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 202,
+       "output": 41517,
+       "cw5m": 214346,
+       "cw1h": 0,
+       "cread": 14147916,
+       "thinking": 23034,
+       "requests": 101
+      }
+     },
+     "cost_usd": 9.45,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aa9949ee9414dc48e",
+     "agentType": "general-purpose",
+     "description": "ORN r5 review fixes, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:30:29.037Z",
+     "last": "2026-09-09T12:39:57.404Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 74,
+       "output": 19498,
+       "cw5m": 97873,
+       "cw1h": 0,
+       "cread": 2971058,
+       "thinking": 8242,
+       "requests": 37
+      }
+     },
+     "cost_usd": 2.59,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aacaefe7e02763396",
+     "agentType": "general-purpose",
+     "description": "MAT r7 stone, water, paving",
+     "spawnDepth": 1,
+     "first": "2026-09-09T07:22:35.766Z",
+     "last": "2026-09-09T09:31:52.697Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 220,
+       "output": 69023,
+       "cw5m": 2070285,
+       "cw1h": 0,
+       "cread": 19270597,
+       "thinking": 35221,
+       "requests": 110
+      }
+     },
+     "cost_usd": 24.3,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aadd6a654827fffed",
+     "agentType": "general-purpose",
+     "description": "Review ornament r5 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:21:46.207Z",
+     "last": "2026-09-09T12:29:14.972Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 52,
+       "output": 19620,
+       "cw5m": 100020,
+       "cw1h": 0,
+       "cread": 2040863,
+       "thinking": 14180,
+       "requests": 26
+      }
+     },
+     "cost_usd": 2.14,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aaf3d52db74513a30",
+     "agentType": "general-purpose",
+     "description": "Review environment r8 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T09:04:09.448Z",
+     "last": "2026-09-09T09:10:11.314Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 48,
+       "output": 6333,
+       "cw5m": 85558,
+       "cw1h": 0,
+       "cread": 1824688,
+       "thinking": 4580,
+       "requests": 24
+      }
+     },
+     "cost_usd": 1.61,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aaf7914d551346541",
+     "agentType": "general-purpose",
+     "description": "Review environment r7 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T06:33:42.447Z",
+     "last": "2026-09-09T06:40:02.686Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 60,
+       "output": 17074,
+       "cw5m": 105322,
+       "cw1h": 0,
+       "cread": 2659011,
+       "thinking": 10049,
+       "requests": 30
+      }
+     },
+     "cost_usd": 2.41,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ab40c83dd11aa5edf",
+     "agentType": "general-purpose",
+     "description": "ENV r7 build and render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T05:47:09.635Z",
+     "last": "2026-09-09T07:01:01.810Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 186,
+       "output": 21646,
+       "cw5m": 428523,
+       "cw1h": 0,
+       "cread": 9950277,
+       "thinking": 5944,
+       "requests": 93
+      }
+     },
+     "cost_usd": 8.2,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "abc4cd70bcec6db7f",
+     "agentType": "general-purpose",
+     "description": "LIGHT r12 shade window",
+     "spawnDepth": 1,
+     "first": "2026-09-09T05:46:54.081Z",
+     "last": "2026-09-09T07:20:23.137Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 294,
+       "output": 62359,
+       "cw5m": 603087,
+       "cw1h": 0,
+       "cread": 27038463,
+       "thinking": 35843,
+       "requests": 147
+      }
+     },
+     "cost_usd": 18.85,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ac52dfbd9f97707e7",
+     "agentType": "general-purpose",
+     "description": "MAT r8 water blocker",
+     "spawnDepth": 1,
+     "first": "2026-09-09T14:30:15.803Z",
+     "last": "2026-09-09T15:20:52.978Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 126,
+       "output": 75069,
+       "cw5m": 303389,
+       "cw1h": 0,
+       "cread": 7672276,
+       "thinking": 46369,
+       "requests": 63
+      }
+     },
+     "cost_usd": 7.61,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ad1161fe1bbb2b3ee",
+     "agentType": "general-purpose",
+     "description": "LIGHT r14 violet flood",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:35:50.802Z",
+     "last": "2026-09-09T14:23:49.470Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 272,
+       "output": 62302,
+       "cw5m": 2022701,
+       "cw1h": 0,
+       "cread": 23982030,
+       "thinking": 31686,
+       "requests": 136
+      }
+     },
+     "cost_usd": 26.19,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ad9506f5f8b164086",
+     "agentType": "general-purpose",
+     "description": "ORN r6 refit to new stack",
+     "spawnDepth": 1,
+     "first": "2026-09-09T12:58:06.314Z",
+     "last": "2026-09-09T13:26:14.805Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 150,
+       "output": 27575,
+       "cw5m": 195177,
+       "cw1h": 0,
+       "cread": 10480391,
+       "thinking": 12851,
+       "requests": 75
+      }
+     },
+     "cost_usd": 7.15,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aeef51ec8a87ebd30",
+     "agentType": "general-purpose",
+     "description": "QA round 6 gate",
+     "spawnDepth": 1,
+     "first": "2026-09-09T11:36:25.139Z",
+     "last": "2026-09-09T12:19:38.452Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 214,
+       "output": 47433,
+       "cw5m": 314999,
+       "cw1h": 0,
+       "cread": 16415688,
+       "thinking": 26628,
+       "requests": 107
+      }
+     },
+     "cost_usd": 11.36,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "af07303deae53ef08",
+     "agentType": "general-purpose",
+     "description": "ORN r8 verify fixes, no render",
+     "spawnDepth": 1,
+     "first": "2026-09-09T14:04:51.904Z",
+     "last": "2026-09-09T14:20:18.752Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 114,
+       "output": 6864,
+       "cw5m": 147199,
+       "cw1h": 0,
+       "cread": 6147961,
+       "thinking": 1441,
+       "requests": 57
+      }
+     },
+     "cost_usd": 4.17,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "af1b0769ac70a130b",
+     "agentType": "general-purpose",
+     "description": "LIGHT r13 Eevee shade, mist",
+     "spawnDepth": 1,
+     "first": "2026-09-09T10:05:53.990Z",
+     "last": "2026-09-09T11:27:02.315Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 240,
+       "output": 94859,
+       "cw5m": 269219,
+       "cw1h": 0,
+       "cread": 24185730,
+       "thinking": 47094,
+       "requests": 120
+      }
+     },
+     "cost_usd": 16.15,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "afaa1fcc86c48e197",
+     "agentType": "general-purpose",
+     "description": "Review lighting r14 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T14:24:18.676Z",
+     "last": "2026-09-09T14:29:28.799Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 48,
+       "output": 13645,
+       "cw5m": 89189,
+       "cw1h": 0,
+       "cread": 1764460,
+       "thinking": 8909,
+       "requests": 24
+      }
+     },
+     "cost_usd": 1.78,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "afdc3048712d7a11d",
+     "agentType": "general-purpose",
+     "description": "ENV r8 cluster re-derive",
+     "spawnDepth": 1,
+     "first": "2026-09-09T07:14:17.790Z",
+     "last": "2026-09-09T09:03:38.856Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 230,
+       "output": 74329,
+       "cw5m": 1538108,
+       "cw1h": 0,
+       "cread": 17941188,
+       "thinking": 45842,
+       "requests": 115
+      }
+     },
+     "cost_usd": 20.44,
+     "models": [
+      "claude-opus-5"
+     ]
+    }
+   ],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 5126,
+     "output": 166235,
+     "cw5m": 0,
+     "cw1h": 768497,
+     "cread": 51892505,
+     "thinking": 34362,
+     "requests": 200
+    },
+    "claude-opus-5": {
+     "input": 4804,
+     "output": 1301345,
+     "cw5m": 12056154,
+     "cw1h": 0,
+     "cread": 316161508,
+     "thinking": 710964,
+     "requests": 2402
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 36.71,
+    "claude-opus-5": 265.99
+   },
+   "cost_usd": 302.7,
+   "wall_hours": 11.93,
+   "claude_code_cost_state_usd": 437.94,
+   "claude_code_api_hours": 11.19,
+   "claude_code_tool_hours": 8.43,
+   "claude_code_lines": [
+    4830,
+    328
+   ]
+  },
+  {
+   "session_id": "c1c6cc77-a14f-41d8-8244-bb28bec7b13a",
+   "first": "2026-09-09T17:38:55.228Z",
+   "last": "2026-09-10T12:10:15.253Z",
+   "main_user_turns": 201,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 5440,
+     "output": 166034,
+     "cw5m": 0,
+     "cw1h": 2052666,
+     "cread": 43785325,
+     "thinking": 44224,
+     "requests": 201
+    }
+   },
+   "subagents": [
+    {
+     "agent": "a0566941a7b2c1c24",
+     "agentType": "general-purpose",
+     "description": "Lighting round 16 builder",
+     "spawnDepth": 1,
+     "first": "2026-09-09T21:35:33.302Z",
+     "last": "2026-09-09T22:33:10.210Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 178,
+       "output": 87163,
+       "cw5m": 476121,
+       "cw1h": 0,
+       "cread": 14511731,
+       "thinking": 48443,
+       "requests": 89
+      }
+     },
+     "cost_usd": 12.41,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a0beab0c5da806cbb",
+     "agentType": "general-purpose",
+     "description": "Code review lighting r15 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T18:56:29.688Z",
+     "last": "2026-09-09T19:01:53.097Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 56,
+       "output": 18404,
+       "cw5m": 101821,
+       "cw1h": 0,
+       "cread": 2560908,
+       "thinking": 8784,
+       "requests": 28
+      }
+     },
+     "cost_usd": 2.38,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a0fa32648d22d0e20",
+     "agentType": "general-purpose",
+     "description": "Materials round 9b fix",
+     "spawnDepth": 1,
+     "first": "2026-09-09T20:26:24.562Z",
+     "last": "2026-09-09T20:54:51.913Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 154,
+       "output": 83371,
+       "cw5m": 220811,
+       "cw1h": 0,
+       "cread": 12157804,
+       "thinking": 44984,
+       "requests": 77
+      }
+     },
+     "cost_usd": 9.54,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a133676dd06b2fcfc",
+     "agentType": "general-purpose",
+     "description": "Architecture round 8 vault fix",
+     "spawnDepth": 1,
+     "first": "2026-09-10T04:40:10.128Z",
+     "last": "2026-09-10T05:05:24.545Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 182,
+       "output": 55095,
+       "cw5m": 193207,
+       "cw1h": 0,
+       "cread": 11790273,
+       "thinking": 31598,
+       "requests": 91
+      }
+     },
+     "cost_usd": 8.48,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a19938ebc26f28cca",
+     "agentType": "general-purpose",
+     "description": "Code review materials r9 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T20:19:29.130Z",
+     "last": "2026-09-09T20:25:24.399Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 48,
+       "output": 18889,
+       "cw5m": 106758,
+       "cw1h": 0,
+       "cread": 2086842,
+       "thinking": 11696,
+       "requests": 24
+      }
+     },
+     "cost_usd": 2.18,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a21ed947093926bc1",
+     "agentType": "general-purpose",
+     "description": "Code review lighting r17",
+     "spawnDepth": 1,
+     "first": "2026-09-10T06:38:57.829Z",
+     "last": "2026-09-10T06:44:59.217Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 50,
+       "output": 21659,
+       "cw5m": 96125,
+       "cw1h": 0,
+       "cread": 2056966,
+       "thinking": 12225,
+       "requests": 25
+      }
+     },
+     "cost_usd": 2.17,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a3a0a1dbdabef7eaa",
+     "agentType": "general-purpose",
+     "description": "Lighting round 15 builder",
+     "spawnDepth": 1,
+     "first": "2026-09-09T17:44:04.688Z",
+     "last": "2026-09-09T18:55:56.888Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 136,
+       "output": 81890,
+       "cw5m": 915246,
+       "cw1h": 0,
+       "cread": 8093373,
+       "thinking": 42329,
+       "requests": 68
+      }
+     },
+     "cost_usd": 11.81,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a3a4e0439f20e1207",
+     "agentType": "general-purpose",
+     "description": "Materials round 9 builder",
+     "spawnDepth": 1,
+     "first": "2026-09-09T19:03:11.108Z",
+     "last": "2026-09-09T20:18:35.719Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 210,
+       "output": 150711,
+       "cw5m": 1087624,
+       "cw1h": 0,
+       "cread": 20177606,
+       "thinking": 87178,
+       "requests": 105
+      }
+     },
+     "cost_usd": 20.66,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a4801c7336fec0328",
+     "agentType": "general-purpose",
+     "description": "Code review phase5 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T17:50:41.276Z",
+     "last": "2026-09-09T17:53:56.482Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 22,
+       "output": 1205,
+       "cw5m": 53200,
+       "cw1h": 0,
+       "cread": 559882,
+       "thinking": 264,
+       "requests": 11
+      }
+     },
+     "cost_usd": 0.64,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a5a3d1925febcdd41",
+     "agentType": "general-purpose",
+     "description": "Code review lighting r16 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T22:33:47.797Z",
+     "last": "2026-09-09T22:37:59.517Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 44,
+       "output": 15984,
+       "cw5m": 87468,
+       "cw1h": 0,
+       "cread": 1676862,
+       "thinking": 7946,
+       "requests": 22
+      }
+     },
+     "cost_usd": 1.78,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a6658d1c175e56a10",
+     "agentType": "general-purpose",
+     "description": "Code review lighting r18",
+     "spawnDepth": 1,
+     "first": "2026-09-10T08:09:21.178Z",
+     "last": "2026-09-10T08:12:13.100Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 26,
+       "output": 11675,
+       "cw5m": 70158,
+       "cw1h": 0,
+       "cread": 863772,
+       "thinking": 4594,
+       "requests": 13
+      }
+     },
+     "cost_usd": 1.16,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a7e68bea5990152ec",
+     "agentType": "general-purpose",
+     "description": "Phase 5 cleanup + flythrough plan",
+     "spawnDepth": 1,
+     "first": "2026-09-09T19:06:12.577Z",
+     "last": "2026-09-09T19:22:06.433Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 98,
+       "output": 57883,
+       "cw5m": 161003,
+       "cw1h": 0,
+       "cread": 6060432,
+       "thinking": 24970,
+       "requests": 49
+      }
+     },
+     "cost_usd": 5.48,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a83df7f1ccc00e1f8",
+     "agentType": "general-purpose",
+     "description": "QA round 09 critic",
+     "spawnDepth": 1,
+     "first": "2026-09-09T22:39:17.580Z",
+     "last": "2026-09-09T23:10:29.835Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 158,
+       "output": 49119,
+       "cw5m": 213127,
+       "cw1h": 0,
+       "cread": 7920939,
+       "thinking": 13464,
+       "requests": 79
+      }
+     },
+     "cost_usd": 6.52,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aabeb619c64f71641",
+     "agentType": "general-purpose",
+     "description": "QA round 10 hero tiles",
+     "spawnDepth": 1,
+     "first": "2026-09-10T06:46:48.669Z",
+     "last": "2026-09-10T07:11:21.884Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 126,
+       "output": 44894,
+       "cw5m": 206753,
+       "cw1h": 0,
+       "cread": 6045002,
+       "thinking": 15324,
+       "requests": 63
+      }
+     },
+     "cost_usd": 5.44,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ac2c30d417406ba26",
+     "agentType": "general-purpose",
+     "description": "Code review ORN r8 branch",
+     "spawnDepth": 1,
+     "first": "2026-09-09T17:41:12.439Z",
+     "last": "2026-09-09T17:45:38.587Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 34,
+       "output": 13740,
+       "cw5m": 91268,
+       "cw1h": 0,
+       "cread": 1083524,
+       "thinking": 8484,
+       "requests": 17
+      }
+     },
+     "cost_usd": 1.46,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ac72faa56660501b3",
+     "agentType": "general-purpose",
+     "description": "Code review architecture r8",
+     "spawnDepth": 1,
+     "first": "2026-09-10T05:05:53.135Z",
+     "last": "2026-09-10T05:11:54.482Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 62,
+       "output": 20621,
+       "cw5m": 85722,
+       "cw1h": 0,
+       "cread": 2241493,
+       "thinking": 12900,
+       "requests": 31
+      }
+     },
+     "cost_usd": 2.17,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ad220de4d7b075774",
+     "agentType": "general-purpose",
+     "description": "Review MAT r9b diff",
+     "spawnDepth": 1,
+     "first": "2026-09-09T20:55:21.648Z",
+     "last": "2026-09-09T21:00:47.872Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 32,
+       "output": 16208,
+       "cw5m": 82369,
+       "cw1h": 0,
+       "cread": 1173214,
+       "thinking": 8982,
+       "requests": 16
+      }
+     },
+     "cost_usd": 1.51,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ad52d6ce57c0defa2",
+     "agentType": "general-purpose",
+     "description": "Review phase5 branch round 2",
+     "spawnDepth": 1,
+     "first": "2026-09-09T21:02:36.763Z",
+     "last": "2026-09-09T21:05:54.774Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 24,
+       "output": 4827,
+       "cw5m": 72533,
+       "cw1h": 0,
+       "cread": 831123,
+       "thinking": 2064,
+       "requests": 12
+      }
+     },
+     "cost_usd": 0.99,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ad77e40f0ffc0cc4e",
+     "agentType": "general-purpose",
+     "description": "QA round 08 critic",
+     "spawnDepth": 1,
+     "first": "2026-09-09T21:02:08.920Z",
+     "last": "2026-09-09T21:33:40.208Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 138,
+       "output": 62073,
+       "cw5m": 250891,
+       "cw1h": 0,
+       "cread": 8325587,
+       "thinking": 23970,
+       "requests": 69
+      }
+     },
+     "cost_usd": 7.28,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ae3be2b5b4a65b9a5",
+     "agentType": "general-purpose",
+     "description": "Phase 5 delivery prep scripts",
+     "spawnDepth": 1,
+     "first": "2026-09-09T17:44:27.410Z",
+     "last": "2026-09-09T17:50:22.220Z",
+     "usage": {
+      "claude-sonnet-5": {
+       "input": 50,
+       "output": 24925,
+       "cw5m": 107373,
+       "cw1h": 0,
+       "cread": 1903225,
+       "thinking": 14986,
+       "requests": 25
+      }
+     },
+     "cost_usd": 0.9,
+     "models": [
+      "claude-sonnet-5"
+     ]
+    },
+    {
+     "agent": "ae9b7d57fda152e68",
+     "agentType": "general-purpose",
+     "description": "Lighting round 17 builder",
+     "spawnDepth": 1,
+     "first": "2026-09-10T05:12:33.613Z",
+     "last": "2026-09-10T06:38:21.742Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 228,
+       "output": 108604,
+       "cw5m": 1034518,
+       "cw1h": 0,
+       "cread": 20565159,
+       "thinking": 53377,
+       "requests": 114
+      }
+     },
+     "cost_usd": 19.46,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "aed5d7347e114b483",
+     "agentType": "general-purpose",
+     "description": "Lighting round 18 fill fix",
+     "spawnDepth": 1,
+     "first": "2026-09-10T07:12:54.195Z",
+     "last": "2026-09-10T08:07:36.509Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 290,
+       "output": 78119,
+       "cw5m": 247283,
+       "cw1h": 0,
+       "cread": 26117996,
+       "thinking": 49155,
+       "requests": 145
+      }
+     },
+     "cost_usd": 16.56,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "af9e78734b3e0dab5",
+     "agentType": "general-purpose",
+     "description": "QA round 10b hero re-check",
+     "spawnDepth": 1,
+     "first": "2026-09-10T08:13:25.717Z",
+     "last": "2026-09-10T08:31:31.465Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 92,
+       "output": 30915,
+       "cw5m": 181049,
+       "cw1h": 0,
+       "cread": 3925423,
+       "thinking": 9378,
+       "requests": 46
+      }
+     },
+     "cost_usd": 3.87,
+     "models": [
+      "claude-opus-5"
+     ]
+    }
+   ],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 5440,
+     "output": 166034,
+     "cw5m": 0,
+     "cw1h": 2052666,
+     "cread": 43785325,
+     "thinking": 44224,
+     "requests": 201
+    },
+    "claude-opus-5": {
+     "input": 2388,
+     "output": 1033049,
+     "cw5m": 6035055,
+     "cw1h": 0,
+     "cread": 160825911,
+     "thinking": 522109,
+     "requests": 1194
+    },
+    "claude-sonnet-5": {
+     "input": 50,
+     "output": 24925,
+     "cw5m": 107373,
+     "cw1h": 0,
+     "cread": 1903225,
+     "thinking": 14986,
+     "requests": 25
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 60.36,
+    "claude-opus-5": 143.97,
+    "claude-sonnet-5": 0.9
+   },
+   "cost_usd": 205.23,
+   "wall_hours": 18.52,
+   "claude_code_cost_state_usd": 261.44,
+   "claude_code_api_hours": 6.25,
+   "claude_code_tool_hours": 3.97,
+   "claude_code_lines": [
+    5131,
+    120
+   ]
+  },
+  {
+   "session_id": "797d734e-5b99-4e23-9ac7-980cef04e419",
+   "first": "2026-09-10T12:11:15.314Z",
+   "last": "2026-09-10T12:23:09.696Z",
+   "main_user_turns": 33,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 514,
+     "output": 56199,
+     "cw5m": 0,
+     "cw1h": 210661,
+     "cread": 2084814,
+     "thinking": 18504,
+     "requests": 17
+    }
+   },
+   "subagents": [],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 514,
+     "output": 56199,
+     "cw5m": 0,
+     "cw1h": 210661,
+     "cread": 2084814,
+     "thinking": 18504,
+     "requests": 17
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 7.55
+   },
+   "cost_usd": 7.55,
+   "wall_hours": 0.2
+  }
+ ],
+ "grand_total_by_model": {
+  "claude-fable-5-1": {
+   "input": 37852,
+   "output": 1507313,
+   "cw5m": 11613342,
+   "cw1h": 5725057,
+   "cread": 309634522,
+   "thinking": 556569,
+   "requests": 1403
+  },
+  "claude-opus-5": {
+   "input": 15268,
+   "output": 4658301,
+   "cw5m": 49668057,
+   "cw1h": 0,
+   "cread": 1267834022,
+   "thinking": 2349028,
+   "requests": 7634
+  },
+  "claude-sonnet-5": {
+   "input": 50,
+   "output": 24925,
+   "cw5m": 107373,
+   "cw1h": 0,
+   "cread": 1903225,
+   "thinking": 14986,
+   "requests": 25
+  },
+  "<synthetic>": {
+   "input": 0,
+   "output": 0,
+   "cw5m": 0,
+   "cw1h": 0,
+   "cread": 0,
+   "thinking": 0,
+   "requests": 26
+  }
+ },
+ "grand_cost_by_model_usd": {
+  "claude-fable-5-1": 412.82,
+  "claude-opus-5": 1060.88,
+  "claude-sonnet-5": 0.9,
+  "<synthetic>": 0
+ },
+ "grand_cost_usd": 1474.6,
+ "daily": {
+  "2026-09-06": {
+   "cost_usd": 57.75,
+   "by_model": {
+    "claude-fable-5-1": {
+     "input": 5110,
+     "output": 290803,
+     "cw5m": 2162453,
+     "cw1h": 560363,
+     "cread": 19674753,
+     "thinking": 120727,
+     "requests": 184
+    },
+    "<synthetic>": {
+     "input": 0,
+     "output": 0,
+     "cw5m": 0,
+     "cw1h": 0,
+     "cread": 0,
+     "thinking": 0,
+     "requests": 13
+    }
+   }
+  },
+  "2026-09-07": {
+   "cost_usd": 602.56,
+   "by_model": {
+    "claude-fable-5-1": {
+     "input": 16688,
+     "output": 620044,
+     "cw5m": 8548799,
+     "cw1h": 924117,
+     "cread": 152558768,
+     "thinking": 263396,
+     "requests": 618
+    },
+    "claude-opus-5": {
+     "input": 5646,
+     "output": 1403288,
+     "cw5m": 14910941,
+     "cw1h": 0,
+     "cread": 559215080,
+     "thinking": 667427,
+     "requests": 2823
+    },
+    "<synthetic>": {
+     "input": 0,
+     "output": 0,
+     "cw5m": 0,
+     "cw1h": 0,
+     "cread": 0,
+     "thinking": 0,
+     "requests": 13
+    }
+   }
+  },
+  "2026-09-08": {
+   "cost_usd": 298.82,
+   "by_model": {
+    "claude-fable-5-1": {
+     "input": 4974,
+     "output": 207998,
+     "cw5m": 902090,
+     "cw1h": 1208753,
+     "cread": 39638357,
+     "thinking": 75356,
+     "requests": 183
+    },
+    "claude-opus-5": {
+     "input": 2430,
+     "output": 920619,
+     "cw5m": 16665907,
+     "cw1h": 0,
+     "cread": 231631523,
+     "thinking": 448528,
+     "requests": 1215
+    }
+   }
+  },
+  "2026-09-09": {
+   "cost_usd": 401.76,
+   "by_model": {
+    "claude-fable-5-1": {
+     "input": 7844,
+     "output": 243984,
+     "cw5m": 0,
+     "cw1h": 1065042,
+     "cread": 66563591,
+     "thinking": 52521,
+     "requests": 300
+    },
+    "claude-opus-5": {
+     "input": 6136,
+     "output": 1962812,
+     "cw5m": 15976394,
+     "cw1h": 0,
+     "cread": 403381335,
+     "thinking": 1044522,
+     "requests": 3068
+    },
+    "claude-sonnet-5": {
+     "input": 50,
+     "output": 24925,
+     "cw5m": 107373,
+     "cw1h": 0,
+     "cread": 1903225,
+     "thinking": 14986,
+     "requests": 25
+    }
+   }
+  },
+  "2026-09-10": {
+   "cost_usd": 113.71,
+   "by_model": {
+    "claude-fable-5-1": {
+     "input": 3236,
+     "output": 144484,
+     "cw5m": 0,
+     "cw1h": 1966782,
+     "cread": 31199053,
+     "thinking": 44569,
+     "requests": 118
+    },
+    "claude-opus-5": {
+     "input": 1056,
+     "output": 371582,
+     "cw5m": 2114815,
+     "cw1h": 0,
+     "cread": 73606084,
+     "thinking": 188551,
+     "requests": 528
+    }
+   }
+  }
+ },
+ "hourly_cost_usd": {
+  "2026-09-06T10": 3.79,
+  "2026-09-06T11": 12.91,
+  "2026-09-06T12": 19.25,
+  "2026-09-06T18": 17.7,
+  "2026-09-06T19": 4.1,
+  "2026-09-07T04": 21.87,
+  "2026-09-07T05": 59.69,
+  "2026-09-07T06": 75.04,
+  "2026-09-07T07": 0,
+  "2026-09-07T13": 77.12,
+  "2026-09-07T14": 102.78,
+  "2026-09-07T15": 41.89,
+  "2026-09-07T16": 50.36,
+  "2026-09-07T17": 9.57,
+  "2026-09-07T18": 17.6,
+  "2026-09-07T19": 8.94,
+  "2026-09-07T20": 26.45,
+  "2026-09-07T21": 43.68,
+  "2026-09-07T22": 40.68,
+  "2026-09-07T23": 26.89,
+  "2026-09-08T00": 29.66,
+  "2026-09-08T01": 18.69,
+  "2026-09-08T02": 23.54,
+  "2026-09-08T03": 53.28,
+  "2026-09-08T04": 40.04,
+  "2026-09-08T05": 45.55,
+  "2026-09-08T06": 30.97,
+  "2026-09-08T07": 57.08,
+  "2026-09-09T05": 8.84,
+  "2026-09-09T06": 31.39,
+  "2026-09-09T07": 30.05,
+  "2026-09-09T08": 20.35,
+  "2026-09-09T09": 21.13,
+  "2026-09-09T10": 12.36,
+  "2026-09-09T11": 18.88,
+  "2026-09-09T12": 66.09,
+  "2026-09-09T13": 49.42,
+  "2026-09-09T14": 27.86,
+  "2026-09-09T15": 16.33,
+  "2026-09-09T17": 11.07,
+  "2026-09-09T18": 12.46,
+  "2026-09-09T19": 20.82,
+  "2026-09-09T20": 21.9,
+  "2026-09-09T21": 16.9,
+  "2026-09-09T22": 12.15,
+  "2026-09-09T23": 3.77,
+  "2026-09-10T01": 5.39,
+  "2026-09-10T02": 0.73,
+  "2026-09-10T03": 4.92,
+  "2026-09-10T04": 14.89,
+  "2026-09-10T05": 13.86,
+  "2026-09-10T06": 21.86,
+  "2026-09-10T07": 19.01,
+  "2026-09-10T08": 9.63,
+  "2026-09-10T09": 8.16,
+  "2026-09-10T11": 7.71,
+  "2026-09-10T12": 7.55
+ },
+ "claude_code_cost_state": {
+  "db75376f-0874-434f-b644-8a5e35d22392": {
+   "totalCostUSD": 43.10399974999999,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 570815,
+     "outputTokens": 14783,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 31,
+     "costUSD": 0.95473
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 774196,
+     "outputTokens": 238026,
+     "thinkingTokens": 106370,
+     "cacheReadInputTokens": 14495829,
+     "cacheCreationInputTokens": 1416768,
+     "webSearchRequests": 0,
+     "costUSD": 42.14926975000001
+    }
+   }
+  },
+  "747b5259-4cdc-4348-91ec-d5118dafc070": {
+   "totalCostUSD": 381.55059775000024,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 3464,
+     "outputTokens": 34,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 0,
+     "costUSD": 0.003634
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 3574,
+     "outputTokens": 91913,
+     "thinkingTokens": 23264,
+     "cacheReadInputTokens": 25372823,
+     "cacheCreationInputTokens": 271065,
+     "webSearchRequests": 0,
+     "costUSD": 16.39589575
+    },
+    "claude-opus-5[1m]": {
+     "inputTokens": 766574,
+     "outputTokens": 1405681,
+     "thinkingTokens": 568764,
+     "cacheReadInputTokens": 562948896,
+     "cacheCreationInputTokens": 7152276,
+     "webSearchRequests": 0,
+     "costUSD": 365.15106800000035
+    }
+   }
+  },
+  "f6551679-3526-4133-8d7f-26b25592ac0c": {
+   "totalCostUSD": 641.827055499999,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 3068,
+     "outputTokens": 28,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 0,
+     "costUSD": 0.003208
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 241051,
+     "outputTokens": 454813,
+     "thinkingTokens": 172205,
+     "cacheReadInputTokens": 81058425,
+     "cacheCreationInputTokens": 2842947,
+     "webSearchRequests": 0,
+     "costUSD": 92.05240875
+    },
+    "claude-opus-5[1m]": {
+     "inputTokens": 1500235,
+     "outputTokens": 2297870,
+     "thinkingTokens": 1135207,
+     "cacheReadInputTokens": 638242290,
+     "cacheCreationInputTokens": 26512379,
+     "webSearchRequests": 0,
+     "costUSD": 549.7714387499994
+    }
+   }
+  },
+  "1e741676-2c03-408f-ad81-3c89163dc6dc": {
+   "totalCostUSD": 437.9382449999996,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 3364,
+     "outputTokens": 29,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 0,
+     "costUSD": 0.003509
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 5126,
+     "outputTokens": 166235,
+     "thinkingTokens": 34362,
+     "cacheReadInputTokens": 51892505,
+     "cacheCreationInputTokens": 768497,
+     "webSearchRequests": 0,
+     "costUSD": 36.706076249999995
+    },
+    "claude-opus-5[1m]": {
+     "inputTokens": 1613742,
+     "outputTokens": 2565377,
+     "thinkingTokens": 1298771,
+     "cacheReadInputTokens": 494997487,
+     "cacheCreationInputTokens": 13044285,
+     "webSearchRequests": 0,
+     "costUSD": 401.2286597499995
+    }
+   }
+  },
+  "c1c6cc77-a14f-41d8-8244-bb28bec7b13a": {
+   "totalCostUSD": 261.44232160000007,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 3898,
+     "outputTokens": 28,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 0,
+     "costUSD": 0.004038
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 5440,
+     "outputTokens": 166034,
+     "thinkingTokens": 44224,
+     "cacheReadInputTokens": 43785325,
+     "cacheCreationInputTokens": 2052666,
+     "webSearchRequests": 0,
+     "costUSD": 60.35575124999998
+    },
+    "claude-opus-5[1m]": {
+     "inputTokens": 799464,
+     "outputTokens": 1289739,
+     "thinkingTokens": 618495,
+     "cacheReadInputTokens": 250873553,
+     "cacheCreationInputTokens": 6132603,
+     "webSearchRequests": 0,
+     "costUSD": 200.00634025000016
+    },
+    "claude-sonnet-5": {
+     "inputTokens": 12793,
+     "outputTokens": 28877,
+     "thinkingTokens": 15348,
+     "cacheReadInputTokens": 2467018,
+     "cacheCreationInputTokens": 107373,
+     "webSearchRequests": 0,
+     "costUSD": 1.0761921
+    }
+   }
+  }
+ }
+}
