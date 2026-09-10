@@ -22,12 +22,13 @@ ALIGNED = ROOT / "renders" / "final" / "v2" / "round10_cam01_aligned_vs_ref169.p
 OUT = QAC / "light_r18_sheet.png"
 
 ARCH = (770, 290, 1200, 590)        # 430 x 300, 1:1 in the 1920x1080 hero frame
-LADDER = (830, 330, 1150, 570)      # 320 x 240
+LADDER = (830, 330, 1110, 570)      # 280 x 240, inside the r18a border (780 260 1120 620)
 BOXES = {"vault field": ((900, 380, 1010, 430), (120, 255, 120)),
          "jamb": ((872, 400, 892, 480), (255, 120, 255))}
 
-BEFORE = PREV / "r18a_base_01c.png"           # the r17 rig, bordered on the arch (the band is fully rendered)
-AFTER = PREV / "r18AFTER_ship_01c.png"        # the r18 rig, full frame
+# BEFORE is QA's own round-10 Cycles hero -- the r17 rig, full frame, the frame QA-10-2 was scored on.
+BEFORE = ROOT / "renders" / "final" / "v2" / "qa_round10_cam01_cycles.png"
+AFTER = PREV / "r18SHIP_ship_01c.png"         # the r18 rig as shipped (bay_weights), full frame
 
 
 def stats(a, box):
@@ -66,21 +67,21 @@ def build(rows):
     d.text((10, 6), "LIGHT round 18 -- QA-10-2, the rotunda interior fill on the hero (Cycles 1920x1080 / 64 spp, "
                     "1:1 crops of the great arch)", fill=(235, 235, 235))
     y = head
-    d.text((10, y + 6), "BEFORE  r17 rig (FILL 10214 W + 8 x VAULT_FILL 3564 W)      |      AFTER  r18 rig "
-                        "(FILL 10214 W, VAULT_FILL 0 W)      |      ref 169, aligned by QA", fill=(255, 210, 120))
+    d.text((10, y + 6), "BEFORE  QA round-10 hero, r17 rig (8 bay emitters at 3564 W)   |   AFTER  r18 rig "
+                        "(the lagoon-facing bay at 0 W, the other seven unchanged)   |   ref 169, aligned by QA", fill=(255, 210, 120))
     y += cap
     sheet.paste(draw_boxes(frame(BEFORE, ARCH), ARCH), (0, y))
     sheet.paste(draw_boxes(frame(AFTER, ARCH), ARCH), (W, y))
     sheet.paste(draw_boxes(frame(ALIGNED, ARCH, ref_panel=True), ARCH), (2 * W, y))
     y += H
-    d.text((10, y + 6), "the ladder that set the level -- vault field box lum:  f1 v1 102.9  |  f1 v0.35 79.3  |  "
-                        "f1 v0 60.7 (SHIPPED)  |  f0 v0 43.9  |  ref 169 44.9", fill=(255, 210, 120))
+    d.text((10, y + 6), "the isolation ladder that set the level (bordered frames) -- vault field lum:  all bays "
+                        "102.9  |  x0.35 79.3  |  all bays off 60.7  |  no interior fill at all 43.9  |  ref 169 44.9", fill=(255, 210, 120))
     y += cap
     for i, p in enumerate([PREV / "r18a_base_01c.png", PREV / "r18b_mid_01c.png",
                            PREV / "r18a_v0_01c.png", PREV / "r18a_fv0_01c.png"]):
         sheet.paste(frame(p, LADDER), (i * LW, y))
     y += LH
-    d.text((10, y + 6), "ROUND-18 ACCEPTANCE AND HOLDS, measured on the round-18 master (9687 objects)",
+    d.text((10, y + 6), "ROUND-18 ACCEPTANCE AND HOLDS, measured on the round-18 master (9694 objects, 11.52 M tris)",
            fill=(255, 210, 120))
     y += cap
     for line in rows:
@@ -111,7 +112,7 @@ if __name__ == "__main__":
             import light_r10_measure as m10
             for k in ("attic_sunlit", "attic_shaded", "sky_top", "sky_left", "water_refl"):
                 sb, sa = stats(before, m10.BOXES[k]), stats(after, m10.BOXES[k])
-                note = "" if before[m10.BOXES[k][1], m10.BOXES[k][0]].sum() > 0 else "(BEFORE outside the border)"
+                note = ""
                 rows.append(f"{k:16s} {sb['lum']:6.1f} {sb['hue']:6.1f} {sb['sat']:.3f} {sb['rb']:+7.1f}       "
                             f"{sa['lum']:6.1f} {sa['hue']:6.1f} {sa['sat']:.3f} {sa['rb']:+7.1f}       {note}")
         except Exception as e:

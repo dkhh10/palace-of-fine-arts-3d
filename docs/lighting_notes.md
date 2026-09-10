@@ -2987,3 +2987,32 @@ falls -- and the hero's shaded attic hue runs 34.8 -> 38.3 -> 40.8 across the sa
 hero holds.** Colour cannot separate them either: both faces see the same lamp, so any channel change scales both
 deposits by the same factor (the arithmetic is in 27.3; the green needed on the jamb is +13 display units and the
 attic's whole hue budget is 0.7 of a degree, i.e. +0.8 units). Nothing about the jamb shipped in round 18.
+
+### 28.3 What the two boxes actually are, by ray-cast (this is the round's real finding)
+
+Before choosing a level, every box was resolved to an OBJECT with `scene.ray_cast` from the camera station through
+the box centre (no render; the CLAUDE.md gate-check procedure, run on the round-18 master):
+
+| box | camera px | first hit | at |
+|---|---|---|---|
+| hero `vault_field` | cam01 (955, 405) | **`ARCH_rotunda_ceiling_field`** | (1.88, -9.59, **27.28**) |
+| hero `jamb` | cam01 (882, 440) | `ARCH_rotunda_vault_coffers_00` | (3.18, 20.14, 17.74) |
+| cam02 `soffit_l` | cam02 (535, 323) | `ARCH_rotunda_vault_07` | (-12.08, 11.87, 22.40) |
+| cam02 `soffit_r` | cam02 (778, 326) | `ARCH_rotunda_vault_coffers_06` | (-17.38, -5.42, 22.16) |
+
+**The hero's vault field is not a vault soffit. It is the rotunda's CENTRAL COFFERED CEILING at z 27.3, seen
+through the great arch -- the same surface cam04's `coffer_field` measures.** So QA-10-2's 45-65 lum and
+`light_measure`'s cam04 hold of 0.35-0.55 of the frame's own sky are two targets on ONE surface, taken from two
+photographs at two exposures (ref 169 exposed for sunlit stone, ref 083 exposed for the ceiling). No emitter
+geometry separates them, because there is nothing to separate: it is one patch of concrete. That is the whole of
+28.1's "structural", now proved rather than argued.
+
+It also explains the bay ladder. Every bay emitter lights the central ceiling, so the hero's box does not care
+which bay is switched: all eight on 102.9, seven on (bay 0 off) **78.9**, none on 60.7. The disk carries 16.8 of
+the 60.7 and the sky and the building's own bounce carry 43.9.
+
+cam02's two soffits are bays **07** and **06**, and cam04's `coffer_field` / `vault_soffit_e` / `vault_soffit_w`
+did not move at all when bay 00 was removed (0.386 -> 0.376, 1.213 -> 1.212, 1.249 -> 1.249, EEVEE 64 spp), so the
+bays those three cameras depend on are 06, 07 and the west half -- none of them bay 00. The hero's jamb is bay
+00's own coffered barrel at the springing, which is why removing bay 00 costs the jamb 4 degrees of hue
+(337.7 -> 333.4) as well as helping the ceiling.

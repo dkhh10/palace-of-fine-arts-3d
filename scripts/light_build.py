@@ -414,7 +414,7 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   # lands at 60.7 and cam02's soffits collapse to lum 36.9 / hue 332.9 (r17: 100.8 / 36.3), i.e. a
                   # global cut trades the blocker for a worse defect on a listed hold. `bay_weights` keeps the seven
                   # land-facing bays at the round-17 level and takes the lagoon-facing one to zero.
-                  bay_weights=[0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                  bay_weights=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0],
                   size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.95, 0.88), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 

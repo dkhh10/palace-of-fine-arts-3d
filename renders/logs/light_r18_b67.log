@@ -1,0 +1,9 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/lighting/master.blend"
+[r17] master master.blend: 9689 objects, exposure -2.8331, look 'AgX - High Contrast', engine BLENDER_EEVEE, world 'WORLD_golden_hour', sun 67.32 W/m2
+[light_build] LIGHT_shade_fill: 1 cool sun lamps, Cycles 49.00 W/m2 (0.728 of the calibrated sun), Eevee 38.50 W/m2 (0.572 of the sun), hidden in render: False, at [(25.0, 2.0)], angle 55.0 deg, colour (0.03, 0.02, 1.0), shadow res 0.2 m/texel, jitter False
+[r17] case b67: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 | WORLD 'WORLD_golden_hour' db 2.5 gb 4.2 gsat 0.9 ghue 0.5000 tint 1,0.65,70 ta 1^3 th 1^6 sunside 1,1,0^3 | shade cycles 49 eevee 38.5 W/m2 w [az25@1] | f 1 v 1 gal 1 (16 strips at 1200 W) ifcol 1.00,0.95,0.88 | exposure -2.833 EV
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[r17] cycles clamp direct 0 indirect 10 adaptive True thr 0.01
+[r17] view transform 'AgX' look 'AgX - High Contrast' exposure -2.833 EV
