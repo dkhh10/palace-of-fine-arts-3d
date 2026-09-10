@@ -20,6 +20,15 @@ Also reported every round (not scored 0-5, pass/fail against the brief's Phase 5
 (Cycles final config, Eevee viewport config, flythrough bezier path `CAM_flythrough_path`; at Phase 5 also the 3840x2160 Cycles
 hero and the low-res Eevee test animation).
 
+
+## Gate checks added 2026-09-10 (binding from round 10)
+- Name sweep (`scripts/qa_name_sweep.py`): exceptions on record — `ARCH_rotunda_inner_block_NN` / `_cap_NN` (the real inner piers,
+  arch_params INNER_BLOCK), `ENV_backdrop_fill_NNN` / `_fillroof_NNN` (city backdrop blocks, env_city.py). Anything else is a blocker.
+- Six-tile 100 % hero review before scoring; every visible defect is a defect. The v1 hero (round 09, 3.67) shipped with the main arch's upper
+  half filled by 67 chord triangles of `ARCH_rotunda_vault_coffers_00` (7-11 m2 each, normals along the bay axis) that no metric caught
+  and the 960 px composite hid: that is the case this rule exists for.
+- Ray-cast opening test on every arch in view (CLAUDE.md).
+
 ## Round log
 (QA appends a dated section per round: scores table per camera, defects with camera id and measurable fix.)
 

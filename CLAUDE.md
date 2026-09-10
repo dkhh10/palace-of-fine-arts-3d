@@ -141,6 +141,20 @@ renders/qa_comparisons/. Keep the file viewable (LODs, mid LOD default). Log eve
 - Keep memory in mind: one full-scene render per agent at a time, low samples, and `bpy.ops.wm.quit_blender()` /
   natural script end, never `input()` or `time.sleep` loops inside Blender.
 
+
+### Gate checks added 2026-09-10 (user; after the v1 hero shipped with the main arch filled by chord triangles)
+- **Object-name sweep before every gate.** QA runs `scripts/qa_name_sweep.py` on master.blend before scoring: every render-visible
+  object whose name matches placeholder / proxy / blocker / fill / occluder / block / dummy / temp / card is listed with its collection
+  and owner; each hit is either a named, justified exception in docs/quality_checklist.md (e.g. ARCH_rotunda_inner_block_* are the real
+  inner piers; ENV_backdrop_fill_* are the city blocks) or a blocker. No metric may be satisfied by an object that is not the building.
+- **Full-resolution tile review of the hero before scoring.** The critic cuts the Cycles hero into six 100 % tiles (3 x 2 at the delivery
+  resolution, 1920x1080 minimum) and views each tile, not the 960 px downscale, and reports every visible geometry or material defect
+  (filled openings, flat untextured surfaces, missing ornament, plain cylinders, z-fighting, seams) as a defect regardless of the numeric
+  metrics. The numeric boxes never override what the tiles show. The lead does the same tile pass on any final render before delivery.
+- **Ray-cast test for openings.** Every arch / opening the hero or a QA camera looks through gets a ray test (`scene.ray_cast` from the
+  camera station through the opening centre): the first hit must be the far side of the opening or the vault soffit at its modelled radius,
+  never a face of the near vault, rib plate or archivolt inside the opening.
+
 ### Durability
 - Every agent commits after every script that runs successfully, or every 15 minutes, whichever comes first.
   No agent may run 30 minutes without a commit.
