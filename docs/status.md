@@ -521,3 +521,7 @@ In flight: LIGHT r18 review. Next: merge, lead_build.sh, QA round 10b (hero tile
 
 ## 2026-09-10 · LIGHT r18 + shade-fill-off merged (a765b9d); master rebuilt (probes re-baked); QA round 10b dispatched
 In flight: QA round 10b (hero tiles re-check, docs/briefs/qa_round_10b.md). Next: on PASS the v2 chain (delivery copy, 4K 384 spp to renders/final/v2, flythrough --fresh, ffmpeg), then the v1 | v2 | ref 169 composite (scripts/qa_v1v2_sheet.py) and the report; on FAIL fix the named tile defect first.
+
+## 2026-09-10 · QA round 10b in (88498ab): tile review PASS; hero 3.56 -> 3.61; sweep 0 hits, rays 14/14
+QA-10-2 boxes: vault field 60.6 (45-65), jamb hue 25.0 / R-B +36 PASS. Moved holds (shade fill off): shaded attic 122.1 / hue 41.2 / sat 0.628 (hue + sat FAIL), sunlit attic sat 0.518 (toward ref), reflection 128.6 / +34.4, entablature 0.83x ref, building sat 1.22x ref (QA-10b-1 major: shade reads mustard; the one cheap lever left = a low-energy NEUTRAL shade fill or a shade-side saturation pull on the concrete), cam03 near column 0.192 of sunlit (was 0.305; QA-10-17 worse), cam02 pier warm (44.9) with one shaft cluster still magenta.
+In flight: v2 chain (renders/logs/v2_chain.log): packed delivery copy -> 4K 384 spp -> flythrough --fresh -> ffmpeg. Next: v1 | v2 | ref composite (scripts/qa_v1v2_sheet.py), side-by-side vs ref 169, delivery notes v2, report.
