@@ -68,7 +68,7 @@ scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_depth = "8"
 scene.render.image_settings.color_mode = "RGB"
 
-if OUT_DIR.exists():
+if OUT_DIR.exists() and FRAME_START == 1:       # a resumed run (--frame-start > 1) keeps the frames already rendered
     shutil.rmtree(OUT_DIR)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 scene.render.filepath = str(OUT_DIR / "frame_####")
