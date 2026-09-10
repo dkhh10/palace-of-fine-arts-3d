@@ -327,7 +327,18 @@ FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, en
             # against ref 083's 0.39, i.e. a ceiling as bright as the sky seen past it. The central disk is the
             # emitter the COFFERS see best, so it is the one that came down hardest; it still carries the last
             # 0.07 of coffer ratio that the (now narrow) vault emitters no longer throw at the dome.
-            color=(1.0, 0.86, 0.68), spread_deg=150.0,
+            # ROUND 17 (brief item 1 / QA-09-6): colour (1.0, 0.86, 0.68) -> (1.0, 0.95, 0.88). The two warm
+            # interior fills are the ONLY light on the coffered arch soffits -- ARCH r8 turned those from a flat
+            # chord plate into real barrels, and on the round-16 rig they measure hue 34.7 / 32.3 (inside QA's
+            # 25-60) at saturation 0.413 / 0.378 against a 0.35 ceiling, i.e. warm enough and too CHROMATIC. The
+            # fills' own colour is the whole of that saturation and nothing else in the rig reaches the soffit.
+            # Measured on the round-17 master, Cycles cam02 64 spp, soffit_l / soffit_r saturation:
+            # (1.0, 0.86, 0.68) -> 0.413 / 0.378; (1.0, 0.93, 0.84) -> 0.354 / 0.328; shipped (1.0, 0.95, 0.88).
+            # Hue moves 34.7 -> 35.8 and 32.2 -> 33.4 (both stay inside 25-60) and the coffer rib / field contrast
+            # is unmoved at 111-116 lum, so the coffers do not flatten. cam04's coffer ratio RISES with it
+            # (the fill is slightly more luminous at the same watts), which is the safe direction: it ships at
+            # 0.356 against a 0.35 floor.
+            color=(1.0, 0.95, 0.88), spread_deg=150.0,
             note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
 
 # QA-02-12. The probes + the central disk fixed the coffered ceiling (cam04 coffer field / own sky 0.50 vs ref 083's
@@ -368,7 +379,9 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   # ROUND 11 (QA-04-7): 3960 -> 3564 (x0.9), the counterweight to FILL x3.2 above.
                   # This knob trades 0.28 of soffit for 0.095 of coffer per unit, so a small cut here
                   # keeps the soffit mean within 4 % of ref 083 while the disk lifts the coffer field.
-                  size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.86, 0.68), spread_deg=45.0,
+                  # ROUND 17: colour with FILL above, (1.0, 0.86, 0.68) -> (1.0, 0.95, 0.88); the two fills light
+                  # the same soffits and a split colour would put a chroma seam across the barrel.
+                  size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.95, 0.88), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
 # ----------------------------------------------------------------------------- ROUND 17: the colonnade gallery
@@ -399,7 +412,19 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
 # sixteen shadow-mapped area lights would re-open QA-06-13, the Eevee six-camera pass time that round 14 spent a
 # whole item bringing back down. This is the round-13 SHADE_FILL pattern with the engines the other way round.
 GALLERY_FILL = dict(name="LIGHT_gallery_fill", n=8, center=(-11.2, 84.7), radius=117.40, z=-0.20,
-                    size=13.0, size_y=4.4, energy=1000.0, energy_eevee=0.0,
+                    # energy swept on the round-17 master (Cycles cam03 64 spp, bordered), against the brief's
+                    # acceptance (near column p95 >= 25 lum, flute ridge - floor >= 8) and QA-06's own holds
+                    # (shaft_flank 0.30-0.70 of the sunlit rotunda, outer_row >= 0.15):
+                    #   W/strip  near col lum / p95 / ridge-floor   outer_row   shaft_flank   walk hue
+                    #        0        3.3 /  20 / 12.0                 0.030       0.510        249.7
+                    #      400       14.6 /  47 / 20.9                 0.123       0.553        280.0
+                    #     1000       30.2 /  79 / 30.3                 0.251       0.613          6.1
+                    #     2500       61.0 / 139 / 47.6                 0.499       0.736         32.1
+                    # 2500 puts the shaded shaft at the luminance of a SUNLIT one (ARCH r8: sunlit colonnade
+                    # shafts p95 131.9) and pushes shaft_flank out of QA-06's window; 400 leaves outer_row under
+                    # its floor. 2000 is the interpolated point that clears every test with shaft_flank inside
+                    # 0.70, and it also carries QA-09-5's walk hue out of the violet.
+                    size=13.0, size_y=4.4, energy=2000.0, energy_eevee=0.0,
                     color=(1.0, 0.86, 0.68), spread_deg=150.0,
                     # arcs measured on the master (degrees about `center`, atan2 of the column origins)
                     wings={"south": (-66.9, -18.0), "north": (-144.3, -96.9)},
