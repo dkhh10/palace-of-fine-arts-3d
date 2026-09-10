@@ -420,11 +420,14 @@ GALLERY_FILL = dict(name="LIGHT_gallery_fill", n=8, center=(-11.2, 84.7), radius
                     #      400       14.6 /  47 / 20.9                 0.123       0.553        280.0
                     #     1000       30.2 /  79 / 30.3                 0.251       0.613          6.1
                     #     2500       61.0 / 139 / 47.6                 0.499       0.736         32.1
-                    # 2500 puts the shaded shaft at the luminance of a SUNLIT one (ARCH r8: sunlit colonnade
-                    # shafts p95 131.9) and pushes shaft_flank out of QA-06's window; 400 leaves outer_row under
-                    # its floor. 2000 is the interpolated point that clears every test with shaft_flank inside
-                    # 0.70, and it also carries QA-09-5's walk hue out of the violet.
-                    size=13.0, size_y=4.4, energy=2000.0, energy_eevee=0.0,
+                    # THE LEVEL IS SET BY THE PHOTOGRAPH, not by the windows. On ref 128 (the cam03 reference,
+                    # scripts/light_r17_measure header) the nearest SHADED column reads **0.292** of the sunlit
+                    # rotunda behind it, the second, lit column 0.661 and the walk 0.307. 2500 W puts the shaded
+                    # shaft at 0.525 and 2000 W at 0.447 -- 1.5x the photograph -- while 400 W leaves outer_row
+                    # under its 0.15 floor. **1200 W** interpolates to 0.29-0.30, i.e. the reference ratio, and
+                    # still clears every test in the round-17 brief (p95 >= 25, ridge - floor >= 8) with the
+                    # frame's black share and outer_row well inside their holds.
+                    size=13.0, size_y=4.4, energy=1200.0, energy_eevee=0.0,
                     color=(1.0, 0.86, 0.68), spread_deg=150.0,
                     # arcs measured on the master (degrees about `center`, atan2 of the column origins)
                     wings={"south": (-66.9, -18.0), "north": (-144.3, -96.9)},

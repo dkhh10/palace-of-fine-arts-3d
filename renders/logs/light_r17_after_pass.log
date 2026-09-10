@@ -1,0 +1,12 @@
+[r17] case AFTER: bake 0 comp 1 mist start 20 depth 2000 haze cap 0.25 k 5 | WORLD 'WORLD_golden_hour' db 2.5 gb 4.2 gsat 0.9 ghue 0.5000 tint 1,0.65,70 ta 1^3 th 1^6 sunside 1,1,0^3 | shade cycles 49 eevee 38.5 W/m2 w [az25@1] | f 1 v 1 gal 1 (16 strips at 2000 W) ifcol 1.00,0.95,0.88 | exposure -2.833 EV
+[r17] -> r17AFTER_AFTER_01e.png (55.1s, 1920x1080)
+[r17] -> r17AFTER_AFTER_02e.png (42.8s, 1280x720)
+[r17] -> r17AFTER_AFTER_03e.png (59.1s, 1280x720)
+[r17] -> r17AFTER_AFTER_04e.png (34.7s, 1280x720)
+[r17] -> r17AFTER_AFTER_06e.png (35.4s, 1280x720)
+[r17] -> r17AFTER_AFTER_02c.png (112.5s, 1280x720)
+[r17] -> r17AFTER_AFTER_03c.png (193.1s, 1280x720)
+[r17] -> r17AFTER_AFTER_01c.png (191.4s, 1920x1080)
+[r17] camera times: 01e 55.1s  02e 42.8s  03e 59.1s  04e 34.7s  06e 35.4s  02c 112.5s  03c 193.1s  01c 191.4s   TOTAL 724.0s over 8 frames
+
+[exited with code 0]
