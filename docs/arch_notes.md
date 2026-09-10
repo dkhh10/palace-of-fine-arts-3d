@@ -1402,3 +1402,40 @@ archivolt is a swept profile on the true arc. Nothing was added or removed for t
 `matrix_world`. The saved master has `viewport = LOD1`, so every `_LOD0` object reads `matrix_world = identity` and
 appears to sit at the world origin until `common.set_lod(viewport=0)` + `bpy.context.view_layer.update()`. Use
 `obj.location`, or update the view layer with the render LOD visible, before trusting any world-space measurement.
+
+### Renders and the 100 % tile pass (round 8)
+Three Cycles frames on the rebuilt worktree master, 64 spp, all through `scripts/blender_run.sh`:
+`renders/previews/arch/r8_cam01.png` (1920x1080, 197 s), `r8_cam02.png` (1280x720, 110 s), `r8_cam03.png`
+(1280x720, 195 s). Cut into 100 % tiles by `scripts/arch_r8_tiles.py` (cam01 3x2 = 640x540 each, cam02/cam03 2x2 =
+640x360 each) and read at 100 %, never downscaled. Composite: `renders/qa_comparisons/arch_r8_vault_fix.png`.
+
+**Fixed and confirmed in the tiles.** cam01 tile01: the main arch reads as a real coffered barrel — two rings of
+octagonal coffers with the diamonds between them curving over the opening, the inner arch complete behind it and sky
+through it, and the far rostra below. The flat plate is gone. cam02 tile01: bay 07's soffit is a coffered arch, not
+the flat "blue soffit" QA saw in rounds 5-7. cam03 tiles 00/10: the colonnade shafts carry visible fluting and Attic
+bases.
+
+**ARCH defects still visible (mine, not fixed this round).** None found in the tiles beyond the item-1 fix — the
+openings, archivolts, entablature courses, attic panels, urns and colonnade all read as modelled. The far 0.6 m of the
+barrel between the second coffer row and the inner wall face is a plain rib band; it is correct per the ref-062 layout
+but at cam01 it reads as one flat grey wedge, so if a future round wants more depth there it is a third register, not
+a bug (open item, not a defect).
+
+**Defects visible in the tiles that belong to other owners** (reported, not touched):
+- LIGHT: cam03's near column `ARCH_colonnade_south_column_028` measures mean luminance 3.7 / 255 over x 900-1270
+  (p95 12.1, max 30.9) against sunlit paving at mean 13.6 / p95 43.3 and sunlit colonnade shafts at p95 131.9. Its
+  flute modulation IS present in the pixels (the horizontal profile at y = 400 oscillates 0-14 across the shaft) but
+  the whole shaft sits under 5 % of the sunlit level, which is why it reads as a plain black slab. Colonnade shade
+  needs fill, not geometry.
+- MAT / LIGHT: every shaded column shaft in cam01 tiles 10/11 and cam02 tiles 00/01/11 carries a strong violet-blue
+  cast; the sunlit shafts in cam01 tile12 are speckled with hard high-frequency noise.
+- ENV: the leaf cards in cam02 tile10 render as large flat translucent green shards and the shrubs in tile11 as orange
+  spikes; the birds in cam01 tiles 11/12 are faceted white blobs; the black clumped foliage on the colonnade in cam03
+  tile00 reads as noise.
+- ENV / MAT: the colonnade paving in cam03 tile11 is a hard checkerboard with black joint lines.
+- MAT: the dome cap in cam01 tile01 is a smooth, near-white, untextured hemisphere against a fully weathered attic.
+
+### Hand-offs
+- to LIGHT: cam03 colonnade shade, numbers above (near column at 3.7/255 mean, 27 % of the sunlit paving mean).
+- to LIGHT/MAT: the violet cast on every shaded shaft.
+- to ENV: leaf cards, shrubs, birds (cam02 tile10/11, cam01 tile11/12).
