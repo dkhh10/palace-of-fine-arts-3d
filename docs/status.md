@@ -484,3 +484,7 @@ In flight: QA round 9 (Opus xhigh, docs/briefs/qa_round_09.md). Next: gate repor
 
 ## 2026-09-10 · QA round 9 in (9d3f28d): hero 3.67 -> 3.67 (+0.00, clock 1 of 2), cam02 2.69 -> 2.94; gate NOT passed; PHASE 5 STARTS (user's rule)
 Known-issues list for delivery: docs/qa_round_09.md (QA-09-1..13 + QA-03-16). Lead's final gate judgement in docs/decisions.md. In flight: scripts/phase5_deliver.sh (all steps, packed delivery copy; log renders/logs/phase5_driver.log and phase5_<step>.log). Next: deliverables list, tech notes, final status entry.
+
+## 2026-09-10 · Phase 5 driver run 1: steps 1b-5 done, step 6 cut by the watchdog at 7200 s (511 / 612 frames); chain relaunched detached
+Delivery copy master_delivery.blend: packed (89 images, 117 MB), 277.7 MB, reopen 0.86 s, 0 orphans, 9679 objects. Eevee six-camera pass 159 s. 4K hero 128 spp fixed adaptive-off: 1432.6 s wall, peak RSS 6.2 GB (renders/final/hero_cam01_3840x2160_128spp.png). Driver auto-picked 2560x1440 @ 128 (648.5 s) + upscale; lead overrides: native 3840x2160 at 384 spp (~72 min est.) as the final. Flythrough test: 14 s/frame at 640x360 (Eevee, LOD1), resumed at frame 1023 with --frame-start, then ffmpeg at 12 fps.
+In flight (detached, log renders/logs/phase5_chain.log): flythrough remainder -> ffmpeg -> 384 spp final. Next: side-by-side + measures on the 384 spp frame, deliverables list, tech notes, final status entry.
