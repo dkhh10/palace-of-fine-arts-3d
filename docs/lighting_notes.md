@@ -2413,7 +2413,7 @@ one variable at a time, Cycles hero 64 spp (border 90 215 1460 1060, so every bo
 | case | near water 1150 1000 1450 1050 | flank 100 900 400 960 | water_refl R-B | hero shaded attic |
 |---|---|---|---|---|
 | BEFORE (round-07 rig) | 144.7 / hue 228.2 / sat 0.292 | 188.1 / hue 224.2 | +31.9 | 136.8 / hue 32.6 |
-| **A** glossy boost 5.25 -> 4.20 **and glossy hue -14.4 deg [r15 review: NOT applied, ghue never reached make_sky_world; the row measures gb alone]** | 139.3 / **hue 228.3** / 0.319 | 180.8 / hue 224.4 | **+37.9** | 136.5 / 32.6 |
+| **A** glossy boost 5.25 -> 4.20 (the row measures `gb` ALONE; the case string also carried `ghue`, but `ghue` never reached `make_sky_world` in round 15, so no hue shift was ever applied -- metadata, not a measurement. The code path is fixed at `light_r16_sweep.py:196`.) | 139.3 / **hue 228.3** / 0.319 | 180.8 / hue 224.4 | **+37.9** | 136.5 / 32.6 |
 | **B** the whole shade fill OFF (70/55 -> 0/0) | **118.6 / hue 208.6 / 0.244** | **159.1 / hue 210.2** | +39.7 | 130.8 / **hue 40.8** |
 | **C** WNW 0.5 / SSW 2.0 / NNE 0.1 | 134.1 / 225.4 | 200.9 / 223.3 | +36.3 | 131.9 / 39.7 |
 | **E** WNW 1.0 / SSW 0 / NNE 0 | 143.9 / 227.8 | **159.2 / 210.3** | +38.4 | **130.9 / 40.7** |
@@ -2616,6 +2616,8 @@ pixel coordinates. BEFORE reproduces QA-08-3 to 0.002 of saturation (QA: 0.462 /
    is the lead's: the alternatives are a different view transform for the whole film, or a per-look grade in the
    compositor, both of which invalidate eight rounds of material judgements made under AgX High Contrast.
 
+**The two shaded-attic numbers in this section and in 26.6 are different frames, not a discrepancy** (r16 review carry 4): 26.2's SHIPPED row (35.1 / 0.451 / 127.4, R-B 111.5) is the BORDERED sweep frame that the case table was measured on, and 26.6's AFTER row (35.0 / 0.447 / 127.7, 111.4) is the full acceptance frame rendered afterwards on the rebuilt master.
+
 **Shipped:** `SKY_DIFFUSE_TINT_SUNSIDE = (1.0, 1.0, 0.0)` at exponent 3.0, and `SKY_DIFFUSE_TINT` b **40 -> 70**.
 The second is the counterweight the first needs: the ~9 % of the shaded attic's light that has bounced off sunlit
 stone loses its blue with the sunlit stone, and that alone pushed the hero's shaded attic hue 34.6 -> 36.8, past
@@ -2721,4 +2723,205 @@ table so neither can be quoted alone.
 4 `apply_shade_for_engine`'s docstring rewritten (the rig has not been Eevee-only since round 14) and the same
 stale sentence in `light_r15_sweep.py` corrected. 5 the §25.3 AFTER column's provenance and the Eevee hero attic
 hue are stated above and in 25.3. 6 `light_r16_sheet.py` reads `$PFA_REFERENCE_DIR` instead of a hard-coded path.
-7 the round-15 acceptance panels are deleted. 1/2/3 were closed inside round 15 itself.
+7 the round-15 acceptance panels are deleted. 2 and 3 were closed inside round 15 itself; **1 was not** -- the glossy-hue clause survived in 25.2 as metadata until round 17 struck it (27.7).
+
+## 27. Round 17 — the arch soffits were geometry, the gallery was a hole in the rig, and the violet shafts are one lamp
+
+Master: `scripts/build_master.py` + `scripts/light_probes.py --bake` in this worktree on ARCH r8,
+**9695 objects, 11.52 M tris at LOD1, 163 MB** (16 of the 16 new objects are the gallery fill; ARCH r8 added
+0.14 M tris). Logs `light_r17_master.log`, `light_r17_before_pass.log`, `light_r17_after_pass.log`,
+`light_r17_gallery.log`, measurements `light_r17_before_measure.log` / `light_r17_after_measure.log` and
+`light_r17_{before,after}.json`.
+
+Render cost, stated because the brief capped it: **two full Cycles heroes** (BEFORE and AFTER, 190.1 + 190.5 s),
+**two full Cycles cam02** and **three full Cycles cam03** (the third because the shipped gallery level changed
+after ref 128 was measured), plus **twelve BORDERED Cycles frames** (five cam02 at 0.36 of the frame ~60 s, two
+cam01 at 0.40 ~102 s, three cam03 at 0.70 ~132 s) = 2306 s of Cycles, i.e. 12.1 frames by count but **6.4
+full-hero-equivalents** by GPU seconds. Two Eevee five-camera passes (01/02/03/04/06), 195.5 and 197.0 s.
+
+### 27.1 Item 0 — what ARCH r8's geometry alone moved, on the round-16 rig, in CYCLES
+
+The rig is byte-identical to what round 16 shipped (`assets/lighting.blend` untouched until 27.2); only the
+architecture and the master changed. Same boxes, same station, same 27 mm lens, same 64 spp:
+
+| box | r16 (26.6) | r17 BEFORE (ARCH r8, same rig) | what happened |
+|---|---|---|---|
+| cam02 `shade_pier` hue, CYCLES | 268.3 | **269.5** | nothing; not a geometry box |
+| cam02 `shade_pier_r` hue, CYCLES | 234.6 | **234.6** | nothing |
+| cam02 `shade_arch` hue, CYCLES | 249.5 | **259.9** | the box no longer measures what its name says -- see below |
+| cam02 `shade_frieze` hue, CYCLES | 351.1 | **351.3** | nothing |
+| hero `shaded_attic` | 127.7 / 35.0 / 0.447 | **127.7 / 35.0 / 0.447** | identical |
+| hero `sunlit_attic` | 189.3 / 36.9 / 0.489 | **189.3 / 36.9 / 0.489** | identical |
+| hero `water_refl` R-B / hue | +50.5 / 40.7 | **+32.2 / 41.7** | **ARCH r8 cost the reflection its hold** |
+
+Two things have to be said plainly.
+
+**`shade_arch` was never a soffit box on this geometry, and it is not one now.** Drawn on the frame
+(`renders/qa_comparisons/light_r17_sheet.png` row 1-2, and the overlay that produced the rectangles), the r16
+rectangle 580 275 690 355 sits on the **central fluted shaft cluster between the two near arches**. When the
+opening was filled by the rib plate's chord triangles the whole zone read as one flat violet field, so the box
+appeared to be measuring "the vault soffit seen through the left arch"; with the chords gone the shafts and the
+barrel behind them are different surfaces at different hues, and the rectangle is on the shafts. It is kept
+unmoved and reported (269.5 -> 269.8 across the round) so this table stays comparable, and the round-17 boxes
+`soffit_l` (495 295 575 352) and `soffit_r` (735 297 822 356) are on the coffered barrels themselves.
+
+**The hero's lagoon reflection lost 18 R-B units to the geometry change** (+50.5 -> +32.2, hold >= +35), with
+nothing in the lighting rig moved. The open arches let the lagoon mirror sky and shadowed interior where it used
+to mirror a flat lit plate. It is not lighting's to fix with a light -- `SKY_GLOSSY_BOOST` is the water's own
+socket and QA-09-2 already wants the mirror *stronger*, not differently coloured. Reported to the lead as
+round-17 finding 1.
+
+### 27.2 Item 1 (QA-09-6 / the user's "the arch soffits render flat blue") — geometry fixed it, the fills' colour finished it
+
+On ARCH r8 the soffits are coffered barrels lit by the two warm interior fills, and correctly boxed they were
+**already inside QA's hue window before this round touched anything**: `soffit_l` hue 34.7, `soffit_r` 32.3, and
+the coffers read at a rib / field contrast of 112 / 116 lum, i.e. the "flat" is gone with the chords. What was
+left was chroma: saturation 0.413 / 0.378 against the brief's 0.35 ceiling.
+
+Nothing but `FILL` and `VAULT_FILL` reaches those surfaces, so their COLOUR is the whole lever, and round 17 is
+the first round to move it. Measured on the round-17 master, Cycles cam02 64 spp, bordered on the face:
+
+| interior fill colour | soffit_l lum / hue / sat | soffit_r lum / hue / sat | rib-field l / r | cam04 coffer / own sky |
+|---|---|---|---|---|
+| (1.0, 0.86, 0.68) r16 | 96.7 / 34.7 / 0.413 | 89.8 / 32.2 / 0.378 | 112.4 / 115.8 | 0.356 |
+| (1.0, 0.93, 0.84) | 99.9 / 35.8 / 0.354 | 92.6 / 33.4 / 0.328 | 111.5 / 115.1 | — |
+| **(1.0, 0.95, 0.88) SHIPPED** | **100.8 / 36.3 / 0.340** | **93.3 / 33.9 / 0.317** | **111.3 / 114.6** | **0.386** |
+| brief / window | hue 25-60, sat <= 0.35, rib-field >= 15 | | | 0.35-0.55 (ref 083 0.437) |
+
+Both soffits now pass all three tests. cam04's hold moves the SAFE way: the coffer field was sitting on its 0.35
+floor and goes to 0.386, the west field 0.624 -> 0.670, the vault ring 0.474 -> 0.511, both vault soffits +3.5 %
+(the fill is slightly more luminous at the same watts), and every cam04 saturation drops, which is what a
+plaster ceiling should do. cam06's three up-facing holds are unmoved to 0.5 deg (roofs 27.3 -> 27.7, plaza
+46.4 -> 46.3, trees 41.0 -> 40.9).
+
+### 27.3 The violet camera-facing face — what it is, measured, and why it is not one knob
+
+The face is NOT uniformly violet: in the same Cycles tile the coffered soffits read hue 34-36 and the shaded
+wall and cornice read warm grey, while the **fluted shafts** are electric indigo. Four hypotheses were rendered
+(bordered Cycles cam02, 64 spp, one case each) and three of them are now closed:
+
+| case | shade_pier hue / sat | shade_pier_r | shade_arch (= the shafts) | shade_frieze | verdict |
+|---|---|---|---|---|---|
+| BASE (shipped) | 270.2 / 0.317 | 234.9 / 0.397 | 260.1 / 0.304 | 351.9 / 0.129 | — |
+| `gb` 4.20 -> 1.00 (sky on GLOSSY rays) | 269.6 / 0.325 | 235.0 / 0.405 | 259.5 / 0.312 | 349.8 / 0.130 | **not specular.** A 4.2x sky in the mirror term is worth 0.6 deg |
+| `wnne` 1 -> 0 (the fill lamp off) | 316.5 / 0.214 | 233.8 / 0.364 | 324.3 / 0.157 | **38.2** / 0.374 | the lamp carries most of the chroma, and what is left is the sky tint |
+| fill colour (0.03,0.02,1.0) -> (0.45,0.52,1.0), `cfill` 49 -> 25 | 345.5 / 0.202 | 243.6 / 0.189 | 359.8 / 0.158 | **42.6** / 0.420 | cam02 nearly neutral -- **and the hero breaks** |
+| + `faz` 25 -> 330 instead | 280.8 / 0.264 | 234.9 / 0.383 | 280.9 / 0.190 | **32.9** / 0.296 | **and the hero breaks** |
+
+**It is `LIGHT_shade_fill`.** One 55 deg sun lamp at azimuth 25, elevation 2, colour **(0.03, 0.02, 1.00)** --
+a nearly monochromatic blue with red above green, which is the definition of violet. cam02's station is at
+azimuth 17.0 deg from the origin, so the face it photographs is the rotunda's az-37 face and it stares straight
+down that lamp's axis. A cylinder in that light has no channel but blue; the flat wall beside it keeps enough
+warm interreflection to survive. Round 15 already wrote the trade in its own note (`w` 0.70 -> attic 32.6 /
+pier 262; 0.10 -> 39.7 / 355; 0.00 -> 40.7 / 23) and round 17 measured the two remaining discriminators:
+
+* **colour.** A physical skylight colour at 51 % of the energy warms every cam02 box (the frieze into the
+  window at 42.6, the shafts to sat 0.16-0.20) and drives the hero's shaded attic to **hue 41.4 / sat 0.558 /
+  lum 142.4** against windows of 23.5-35.5 / <= 0.50 / 103.5-126.5. Three holds broken to fix one box.
+* **azimuth.** Rotating the rig to 330 deg -- off cam02's face, onto the hero's -- gives the hero **40.4 /
+  0.600 / 123.3** and does not warm cam02's shafts either (280.8 / 280.9): they simply fall back to the sky
+  tint's own violet, which is `SKY_DIFFUSE_TINT = (1.0, 0.65, 70.0)`, a magenta-biased blue by construction.
+
+So the frontier is unchanged from 25.5 / 26.3 and now has both discriminators measured rather than argued:
+**the hero's shaded attic and cam02's camera-facing shafts are lit by the same lamp on the same axis, and the
+lamp's colour is the price of the hero's shade window.** Nothing shipped. Hand-off, with the number: if the lead
+will spend 6 deg of the hero's shaded-attic hue (35.0 -> ~41) the whole NNE face comes back to neutral; if not,
+cam02's shafts stay violet and the honest fix is a warmer, physically-shaped skylight for the WHOLE rig, which
+is a round-18 re-balance of rounds 12-16, not a knob.
+
+### 27.4 Item 2 (ARCH r8 / QA-09-5) — the colonnade gallery, and the first fill that is sized on a photograph
+
+`scripts/light_r17_gallery.py` (no render) measured the cause before anything was built. The camera-facing side
+of `ARCH_colonnade_south_column_028` -- 33 % of cam03's width -- sees **5.5 %** of the sky, cosine-weighted
+(blockers: the next column 22 %, the ground 17 %, ENV's exhibition-hall backdrop 21 %); the walk under it sees
+14.6 %, and straight up from the walk the first hit is the colonnade's own mutule soffit at z 15.20. The gallery
+is a roofed 4.5 m slot and nothing in the round-16 rig is inside it: `LIGHT_shade_fill` is a 2 deg sun lamp that
+the colonnade shadows, and round 15 measured that no value of its weight reaches the box. In CYCLES the shaft
+rendered at **3.3 / 255** and **39.9 %** of the frame was under 10 lum. (In EEVEE the same shaft is 16.9 and the
+frame's black share 4.6 %: the baked irradiance volume carries the gallery and the path tracer does not. Both
+numbers are on the table so neither can be quoted alone.)
+
+`LIGHT_gallery_fill` (light_build.GALLERY_FILL, `build_gallery_fill`): sixteen up-facing 13.0 x 4.4 m strips,
+eight per wing, on the walk centreline r 117.40 about (-11.2, 84.7) -- fitted to the column origins on the
+master, not to arch_params -- at z -0.20, warm (1.0, 0.86, 0.68), spread 150 deg, invisible to CAMERA and
+GLOSSY rays, **1200 W each in Cycles and 0 W in Eevee** (`light_presets.apply_gallery_for_engine`, chained from
+`apply_shade_for_engine` so `common.configure_cycles` -- which is not lighting's file -- switches it too).
+Up-facing, so it adds nothing to the walk directly: the walk comes up through the soffit bounce.
+
+The energy is set by **ref 128**, not by a window. On the photograph the nearest SHADED column is **0.292** of
+the sunlit rotunda behind it, the second (lit) column 0.661, the walk 0.307:
+
+| W / strip | near column lum / p95 / ridge-floor | ratio to sunlit | outer_row | shaft_flank | walk hue / sat |
+|---|---|---|---|---|---|
+| 0 (r16) | 3.3 / 20 / 12.0 | 0.029 | 0.030 | 0.510 | 249.7 / 0.081 |
+| 400 | 14.6 / 47 / 20.9 | 0.129 | 0.123 | 0.553 | 280.0 / 0.043 |
+| 1000 | 30.2 / 79 / 30.3 | 0.265 | 0.251 | 0.613 | 6.1 / 0.050 |
+| **1200 SHIPPED** | **34.9 / 89 / 33.2** | **0.305** | **0.289** | **0.631** | 16.5 / 0.068 |
+| 2000 | 51.7 / 122 / 42.9 | 0.447 | 0.425 | 0.698 | 29.6 / 0.124 |
+| 2500 | 61.0 / 139 / 47.6 | 0.525 | 0.499 | 0.736 | 32.1 / 0.148 |
+| brief / window / reference | p95 >= 25, ridge-floor >= 8 | **ref 128: 0.292** | >= 0.15 | QA-06: 0.30-0.70 | QA-09-5: 25-60 |
+
+2000 and 2500 clear every window and are 1.5x and 1.8x the photograph -- 2500 puts a SHADED shaft at the
+luminance of a sunlit one (ARCH r8: sunlit colonnade shafts p95 131.9). 1200 lands on the reference ratio and
+still clears every test in the brief. The frame's black share goes **39.9 % -> 6.6 %** (hold <= 20 %).
+
+QA-09-5's walk is *improved but not closed and not lighting's*: hue 249.7 -> 16.5 at saturation **0.068**, i.e.
+the box is now grey rather than violet, and its luminance ratio is 0.672 against ref 128's 0.307. A box at
+saturation 0.068 has no meaningful hue; the walk's colour is its albedo and the lawn's bounce (26.4 still
+stands), and it is now 2.2x too bright for the photograph. **Hand-off to environment / materials: the colonnade
+walk's albedo is too light by roughly a factor of two against ref 128.**
+
+### 27.5 ARCH r8's two other hand-offs, answered
+
+* **"the violet cast on every shaded shaft"** -- 27.3: `LIGHT_shade_fill`'s colour (0.03, 0.02, 1.00) on the
+  az-25 el-2 axis, plus `SKY_DIFFUSE_TINT`'s (1.0, 0.65, 70.0) underneath it. Not the probe grid (this is
+  CYCLES), not a clamp, not the glossy sky (measured, 0.6 deg). Not fixed: it is the hero's shade window.
+* **"the sunlit shafts are speckled with hard high-frequency noise"** -- **not lighting's and not a render
+  setting.** ARCH's tiles came through `common.configure_cycles`, which leaves `sample_clamp_indirect` at
+  Blender's default 0.0 (OFF) where the shipped `light_presets.apply_final_cycles` clamps at 10.0 and sets
+  `RGB_ALBEDO_NORMAL` / `ACCURATE` on the denoiser -- so the obvious hypothesis was the render path. It is
+  wrong: over the sunlit colonnade band (1300 545 1900 700) ARCH's frame and the shipped-preset frame have the
+  same high-frequency statistics to two decimals (residual after a 3x3 median: std **9.19 vs 9.22**, |residual|
+  p99.5 **47.0 vs 47.0**) and the two whole frames differ by a mean of **0.35 / 255**. The pattern is also
+  spatially locked to the surface -- it flows round the shaft and stops at the joint lines -- which sampling
+  noise does not do. **Hand-off to materials: it is a texture-frequency artefact in the shaft albedo, not
+  render noise.**
+
+### 27.6 Round-17 acceptance, measured on the rebuilt master (9695 objects, 11.52 M tris)
+
+| box | BEFORE (r16 rig, ARCH r8) | **AFTER (r17)** | window / reference | verdict |
+|---|---|---|---|---|
+| **item 1** cam02 soffit_l hue / sat, CYCLES | 34.7 / 0.413 | **36.3 / 0.340** | 25-60 / <= 0.35 | **PASS** |
+| **item 1** cam02 soffit_r hue / sat, CYCLES | 32.3 / 0.378 | **33.9 / 0.317** | 25-60 / <= 0.35 | **PASS** |
+| **item 1** cam02 soffit rib-field l / r | 112.4 / 115.8 | **111.3 / 114.6** | >= 15 lum | **PASS** |
+| **item 2** cam03 near column p95, CYCLES | 20.0 | **89.0** | >= 25 | **PASS** |
+| **item 2** cam03 flute ridge - floor | 12.0 | **33.2** | >= 8 | **PASS** |
+| **item 2** cam03 frame under 10 lum | 39.9 % | **6.6 %** | <= 20 % | **PASS** |
+| **item 2** cam03 outer row / sunlit | 0.030 | **0.289** | >= 0.15 | **PASS** |
+| cam03 near column / sunlit | 0.029 | **0.305** | ref 128: 0.292 | **PASS, on the photograph** |
+| cam03 shaft_flank / sunlit | 0.510 | **0.631** | QA-06: 0.30-0.70 | PASS |
+| QA-09-5 cam03 walk hue / sat, CYCLES | 249.7 / 0.081 | 16.5 / 0.068 | 25-60 | improved, still out; grey, see 27.4 |
+| **HOLD** cam04 coffer field / own sky | 0.356 | **0.386** | 0.35-0.55 (ref 083 0.437) | **PASS, improved** |
+| **HOLD** cam04 vault soffit w / e | 1.208 / 1.165 | 1.249 / 1.213 | — | +3.5 %, reported |
+| **HOLD** cam06 roofs / plaza / trees hue | 27.3 / 46.4 / 41.0 | **27.7 / 46.3 / 40.9** | 22-52 / 22-52 / 23-53 | **PASS** |
+| **HOLD** hero sunlit attic lum / sat / R-B | 189.3 / 0.489 / 111.4 | **189.3 / 0.489 / 111.4** | 178-201 / 0.53-0.62 / >= 120 | **identical** (sat capped, 26.2) |
+| **HOLD** hero shaded attic hue / sat / lum | 35.0 / 0.447 / 127.7 | **35.0 / 0.447 / 127.8** | 23.5-35.5 / <= 0.50 / 103.5-126.5 | **identical**, lum 1.3 over as in r16 |
+| **HOLD** hero water_refl R-B / hue | +32.2 / 41.7 | **+31.8 / 41.9** | >= +35, hue 25-45 | held by lighting; the -18 is ARCH r8's (27.1) |
+| **HOLD** hero sky_top / sky_left | 168.0 / 154.9 | **168.0 / 154.9** | must not move | **identical** |
+| hero columns hue / sat | 37.5 / 0.642 | 37.7 / 0.632 | 24.5 +- 4 | FAIL before and after, unmoved |
+| hero south / north wing lum | 100.1 / 138.4 | 101.4 / 139.2 | — | the gallery fill's only hero effect, +1.3 / +0.8 |
+| **QA-09-6** cam02 shade_pier / pier_r hue, CYCLES | 269.5 / 234.6 | 269.8 / 235.3 | 25-60 | **FAIL, not fixed** -- 27.3 |
+| Eevee five-camera pass | 195.5 s | **197.0 s** | — | +0.8 %; the gallery rig is hidden in Eevee |
+
+The hero south / north wing rows were measured with the gallery fill at 2000 W (the level before ref 128 was
+measured); at the shipped 1200 W the effect is ~0.6 of that, i.e. +0.8 and +0.5 lum. Every other hero box moved
+by <= 0.2 lum and 0.2 deg between the two levels, so the hero table stands as printed.
+
+### 27.7 Round-16 review carries
+
+1 **done** -- §25.2's case-A row now reads "glossy boost 5.25 -> 4.20"; the hue clause is struck and §26.7's
+"1/2/3 were closed inside round 15" corrected. 2 **done** -- `light_flythrough.schedule()` raises if the saved
+frame count leaves 1150-1350. 3 **done** -- `light_flythrough_check` documents `--master`, prints the route
+fingerprint (path length + station count) in that mode, and the leg table prints `f0 + 1` for the second leg.
+4 **done** -- §26.2 / §26.6 now say the SHIPPED row is the bordered sweep frame and the AFTER row the full
+acceptance frame. 5 accepted as it was.
