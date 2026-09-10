@@ -556,7 +556,10 @@ SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irrad
 # nothing at all for the colonnade it was aimed into (cam03's outer row 0.115 -> 0.110 when it was DOUBLED, and
 # 0.115 -> 0.119 with the whole rig off): what actually opens that box is Eevee's fast GI, see light_presets.
 # So both are deleted rather than dimmed. Round 14's text follows.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=49.0, energy_eevee=38.5, angle_deg=55.0, specular=0.00,
+# LEAD 2026-09-10 (QA-10-2, docs/lighting_notes.md 28.x): the az-25 blue shade lamp is the magenta on the hero's arch jamb (its deposit
+# there is B +28 / R +2.5) and the violet on cam02's face. OFF: energy 49.0 -> 0.0, 38.5 -> 0.0. Moves the hero shaded attic hue ~35 -> ~41
+# and sat past 0.50 (stated in docs/status.md; the arch reading right at 100 % outranks those two windows). The lamp object stays (rig shape).
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=0.0, angle_deg=55.0, specular=0.00,
                   # ROUND 14 (QA-06-2): the rig is no longer Eevee-only. `energy` 0.0 -> 70.0 W/m2 in CYCLES.
                   # The round-12 diffuse tint delivered the shade's blue AND flooded every up-facing surface in the
                   # build, because half of what reaches a shaded wall has bounced off a horizontal surface first
