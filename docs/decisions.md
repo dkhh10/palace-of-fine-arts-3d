@@ -228,3 +228,13 @@ Format: date · decision · why · consequences. Newest at the bottom.
   colour-management item that another knob round would close within budget; the AgX High Contrast cap on the sunlit attic (sat ~0.49) is
   accepted. QA-09's known-issues list (docs/qa_round_09.md) is the delivery's open list. Phase 5 runs on the master built at a25b2ce
   (9679 objects, frames 1-1224), through scripts/phase5_deliver.sh on a packed delivery copy.
+- **2026-09-10 · v2 after the user's arch finding.** The v1 hero's main arch was closed by chord triangles of the vault rib plate (a round-1
+  tessellation bug: the flat plate with holes was triangulated, then its vertices bent onto the barrel; 67 faces of 7-11 m2 across every bay).
+  No metric caught it and the 960 px composite hid it; three gate checks now exist (name sweep, six-tile 100 % hero review, ray-cast opening
+  test). ARCH r8 grids the plate before the mapping. Consequences accepted: the open arch mirrors sky and vault, so the hero reflection's R-B
+  fell +50 -> +32 and the reflection lum rose past its floor; the hero entablature reads 0.83x the photo. **The blue shade-fill lamp is off**
+  (it was the magenta on the arch jamb and the violet on cam02's face): the hero's shaded attic now sits at hue ~41 / sat ~0.63 against its
+  23.5-35.5 / <= 0.50 window and the building block reads 1.22x the photo's saturation (QA-10b-1). The arch reading right at 100 % outranks
+  those windows; the next lighting round, if any, replaces the blue lamp with a low-energy NEUTRAL shade fill. The rotunda interior fill runs
+  on bays 06 + 07 only (the hero's "vault field" is the central ceiling seen through the arch, the same surface as cam04's coffers).
+  Floating gulls removed (icospheres 7.5 m from the hero camera). v1 kept under renders/final/v1; v2 renders under renders/final/v2.
