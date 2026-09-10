@@ -135,6 +135,11 @@ COFFER_REGISTERS = ((-0.05, 0.05), (0.10, 0.13))
 # Vault: the in-row diamonds were opened up (arch_build build_vault_coffers) so 0.18 m of rib survives between
 # every pair of openings; L.plate clamps these against L.polygon_clearance anyway and prints when it does.
 VAULT_COFFER_REGISTERS = ((-0.030, 0.04), (0.055, 0.10))
+# ARCH r8: grid the rib plates BEFORE they are bent onto the barrel / the saucer (arch_lib.bisect_grid).
+# Chord error at step s on radius r is s^2/(8r): 1.1 mm on the 6.25 m barrel, 5 mm on the 25 m saucer.
+VAULT_COFFER_ARC_STEP = 0.22      # in the arc PARAMETER (arc length at r_mean); 0.246 m at the wall end
+VAULT_COFFER_DEPTH_STEP = 0.90    # across the barrel (no curvature there; caps the face area at 0.22 m2)
+CEILING_RIB_STEP = 1.00           # saucer rib plate, both plan axes
 CEILING_FIELD_LIFT = 0.02     # the field saucer sits this far above the ceiling sphere (build_ceiling)
 # Sheet line 258: "Base ring with rosette band above the inner arches." That band is the VERTICAL inner face of
 # the inner ring wall (radius INNER_WALL_APOTHEM - INNER_WALL_THICKNESS = 14.18), in the zone between the crown of
