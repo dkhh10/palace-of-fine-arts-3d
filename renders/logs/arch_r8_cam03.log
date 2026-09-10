@@ -1,0 +1,28 @@
+00:00.309  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+[common] set_lod viewport=LOD0 render=LOD0: 6448 objects, 6 collections
+cam03 at (81.0, 12.04, 1.7) lens 18.0 mm, 1280x720
+
+dist  | object                                        | vis | verts |  r_min  r_max  flute mm | px w x h | px x-range
+ 2.60 | ARCH_colonnade_south_column_028_LOD0          | Y   |  7200 |  0.749  0.835       86 |  2939 x  7508 |     689..3628
+ 2.62 | ARCH_colonnade_south_column_029_LOD0          | Y   |  7200 |  0.749  0.835       86 |     0 x     0 |    -776..-776
+ 4.96 | ARCH_colonnade_south_column_030_LOD0          | Y   |  7200 |  0.749  0.835       86 |     0 x     0 |    4684..4684
+ 5.04 | ARCH_colonnade_south_column_031_LOD0          | Y   |  7200 |  0.749  0.835       86 |   (behind camera)
+ 5.35 | ARCH_colonnade_south_column_026_LOD0          | Y   |  7200 |  0.749  0.835       86 |   334 x  1619 |     282..616
+ 5.44 | ARCH_colonnade_south_column_027_LOD0          | Y   |  7200 |  0.749  0.835       86 |  4305 x  5173 |   -4397..-93
+ 7.65 | ARCH_colonnade_south_column_032_LOD0          | Y   |  7200 |  0.749  0.835       86 |   (behind camera)
+ 7.79 | ARCH_colonnade_south_column_033_LOD0          | Y   |  7200 |  0.749  0.835       86 |   (behind camera)
+ 9.50 | ARCH_colonnade_south_column_024_LOD0          | Y   |  7200 |  0.749  0.835       86 |   213 x   919 |     212..425
+ 9.67 | ARCH_colonnade_south_column_025_LOD0          | Y   |  7200 |  0.749  0.835       86 |   591 x  1435 |    -591..-0
+11.89 | ARCH_colonnade_south_column_034_LOD0          | Y   |  7200 |  0.749  0.835       86 |   (behind camera)
+12.12 | ARCH_colonnade_south_column_035_LOD0          | Y   |  7200 |  0.749  0.835       86 |   (behind camera)
+
+nearest render-visible shaft: ARCH_colonnade_south_column_028_LOD0 at (79.1, 13.25, 0.4), shaft top z 11.60, mesh 'ARCH_colonnade_south_column_000_LOD0' (6962 faces)
+objects within 3.0 m of that shaft top (capital / astragal / ORN instance):
+    0.00 m  ARCH_colonnade_south_astragal_028                type MESH   render=Y coll ['ARCH_colonnade_south']
+    0.00 m  INST_capital_colonnade_084_LOD0                  type MESH   render=Y coll ['INST_capital_colonnade']
+    0.00 m  INST_capital_colonnade_084_LOD1                  type MESH   render=. coll ['INST_capital_colonnade']
+    0.00 m  SOCKET_capital_colonnade_084                     type EMPTY  render=Y coll ['ARCH_sockets']
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 67969 exited rc=0 after 4 s (max 600)
