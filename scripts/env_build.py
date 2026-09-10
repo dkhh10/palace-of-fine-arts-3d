@@ -1080,8 +1080,9 @@ def build_birds():
         r = math.hypot(x, y)
         if 33 < r < 49 and y > -5 and rnd.random() < 0.28:
             sit_tr.append(((x + rnd.uniform(-0.4, 0.4), y + rnd.uniform(-0.4, 0.4), L.SHORE_Z + 0.02), rnd.uniform(0, 6.283), rnd.uniform(0.9, 1.1)))
-    # floating gulls on the water in front of the rotunda
-    for _ in range(20):
+    # floating gulls on the water in front of the rotunda -- REMOVED (lead, 2026-09-10, QA-10-1 / QA-10-6): the low-poly
+    # icosphere gull sat 7.5 m from the hero camera and five of them mirrored as white posts; shore + flying gulls stay.
+    for _ in range(0):
         x, y = rnd.uniform(-45, 45), rnd.uniform(50, 100)
         if LAGOON_FIELD.signed(x, y) < -3:
             sit_tr.append(((x, y, L.WATER_Z - 0.06), rnd.uniform(0, 6.283), rnd.uniform(0.9, 1.1)))
