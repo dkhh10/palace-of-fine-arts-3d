@@ -384,9 +384,9 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   # keeps the soffit mean within 4 % of ref 083 while the disk lifts the coffer field.
                   # ROUND 17: colour with FILL above, (1.0, 0.86, 0.68) -> (1.0, 0.95, 0.88); the two fills light
                   # the same soffits and a split colour would put a chroma seam across the barrel.
-                  # ROUND 18 (QA-10-2, the blocker): 3564 -> 0. The eight bay emitters are the term that made the
-                  # HERO's vault field 2.30x the photograph, and they are the only term that can come off, because
-                  # the disk is what carries cam04's coffer. Isolated on the round-18 master (Cycles hero 64 spp,
+                  # ROUND 18 (QA-10-2, the blocker): the bay emitters are the term that made the HERO's vault field
+                  # 2.30x the photograph, and they are the only term that can come off, because the disk is what
+                  # carries cam04's coffer. Isolated on the round-18 master (Cycles hero 64 spp,
                   # bordered on the arch, box 900 380 1010 430; ref 169 aligned reads 44.9 lum / hue 4.5 / sat 0.318):
                   #   f 1 v 1 (r17 SHIPPED)  102.9 lum   hue 39.7 sat 0.449     2.29x the photograph
                   #   f 1 v 0.35              79.3       hue 40.4 sat 0.591     1.77x
@@ -403,10 +403,19 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   # exposed for the sunlit stone. Round 08's own table shows no spread / height / radius that
                   # escapes it: the best soffit/coffer trade on record (spread 45 -> 90 at 0.65 of the energy,
                   # the (0.00, 0.65, 90) row above) keeps 0.59 of the soffit, which puts the hero's box at ~86,
-                  # still 1.9x the photograph. So the bay emitters go to zero, cam04's coffer falls out of its
-                  # window by the measured amount below, and the lead gets the number rather than a compromise
-                  # that fails both. See docs/lighting_notes.md 28.
-                  size=12.5, size_y=4.0, energy=0.0, color=(1.0, 0.95, 0.88), spread_deg=45.0,
+                  # still 1.9x the photograph. What DOES escape it is the bay index -- see `bay_weights` below.
+                  # See docs/lighting_notes.md 28.
+                  # ROUND 18b: the cut is PER BAY, not global, and the split is physical. These emitters stand in
+                  # for "the plaza light the eight bays get through their own openings" -- and the eight openings do
+                  # not look at the same thing. Bay 0 (az 82) opens onto the LAGOON: water at grazing incidence,
+                  # which returns almost nothing diffuse. The other seven open onto the sunlit plaza, the lawn and
+                  # the colonnade walk. The hero photographs bay 0's barrel (box 900 380 1010 430); cam02, station
+                  # az 17.0, photographs bay 7's (az 37). Measured with ALL eight off (the ladder above), the hero
+                  # lands at 60.7 and cam02's soffits collapse to lum 36.9 / hue 332.9 (r17: 100.8 / 36.3), i.e. a
+                  # global cut trades the blocker for a worse defect on a listed hold. `bay_weights` keeps the seven
+                  # land-facing bays at the round-17 level and takes the lagoon-facing one to zero.
+                  bay_weights=[0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                  size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.95, 0.88), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
 # ----------------------------------------------------------------------------- ROUND 17: the colonnade gallery
@@ -715,22 +724,30 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
 def build_vault_fill(coll):
     """QA-02-12: eight up-facing rectangles, one under each rotunda vault bay (see the VAULT_FILL comment above).
 
-    ROUND 18: at `energy` <= 0 no lamps are built at all, rather than eight 0 W area lights that both engines
-    would still put in the light list (the GALLERY_FILL pattern). The rig is restored by putting a positive
-    `energy` back in VAULT_FILL -- nothing else in the build depends on the objects existing."""
+    ROUND 18: `energy` <= 0, or a per-bay weight of 0 in `bay_weights`, builds NO lamp for that bay, rather than a
+    0 W area light both engines would still put in the light list (the GALLERY_FILL pattern). The rig is restored
+    by putting the weights back to 1.0 -- nothing else in the build depends on the objects existing, and
+    `light_presets.apply_vault_for_engine` reads each lamp's own `energy_W`, so a partial rig switches correctly."""
     V = VAULT_FILL
     made = []
-    if V["energy"] <= 0.0:
+    weights = V.get("bay_weights") or [1.0] * V["n"]
+    if V["energy"] <= 0.0 or max(weights) <= 0.0:
         print(f"[light_build] {V['name']}: 0 W (round 18, QA-10-2), no lamps built")
         return made
     for k in range(V["n"]):
+        # ROUND 18b: a bay whose weight is 0 gets no lamp at all, rather than a 0 W area light both engines
+        # would still carry in the light list (the GALLERY_FILL / round-18 pattern).
+        e_k = V["energy"] * float(weights[k % len(weights)])
+        if e_k <= 0.0:
+            print(f"[light_build] {V['name']}_{k:02d}: bay az {V['az0'] + 360.0 / V['n'] * k:.0f} weight 0, skipped")
+            continue
         a = math.radians(V["az0"] + 360.0 / V["n"] * k)
         nx, ny = -math.cos(a), math.sin(a)          # arch_params.az_dir: azimuth clockwise from north, north = -X
         name = f"{V['name']}_{k:02d}"
         light = bpy.data.lights.new(name, "AREA")
         light.shape = "RECTANGLE"
         light.size, light.size_y = V["size"], V["size_y"]
-        light.energy = V["energy"]
+        light.energy = e_k
         light.color = V["color"]
         light.use_shadow = True
         try:
@@ -743,13 +760,14 @@ def build_vault_fill(coll):
         obj.rotation_euler = (math.pi, 0.0, math.atan2(ny, nx))
         obj["note"] = V["note"]
         obj["bay_azimuth_deg"] = V["az0"] + 360.0 / V["n"] * k
-        obj["energy_W"] = V["energy"]        # the PHYSICAL (Cycles) energy; light_presets.apply_vault_for_engine
+        obj["energy_W"] = e_k                # the PHYSICAL (Cycles) energy; light_presets.apply_vault_for_engine
                                              # reads it back when it swaps the Eevee-only override in and out
         coll.objects.link(obj)
         made.append(obj)
     area = V["size"] * V["size_y"]
-    print(f"[light_build] {V['name']}: {V['n']} x {V['size']}x{V['size_y']} m up-facing rectangles at r {V['radius']} "
-          f"z {V['z']}, {V['energy']} W each (radiance {V['energy'] / (math.pi * area):.3f} sky units)")
+    print(f"[light_build] {V['name']}: {len(made)} of {V['n']} x {V['size']}x{V['size_y']} m up-facing rectangles "
+          f"at r {V['radius']} z {V['z']}, {V['energy']} W x bay weights {weights} "
+          f"(radiance {V['energy'] / (math.pi * area):.3f} sky units at weight 1)")
     return made
 
 

@@ -2934,3 +2934,56 @@ frame count leaves 1150-1350. 3 **done** -- `light_flythrough_check` documents `
 fingerprint (path length + station count) in that mode, and the leg table prints `f0 + 1` for the second leg.
 4 **done** -- §26.2 / §26.6 now say the SHIPPED row is the bordered sweep frame and the AFTER row the full
 acceptance frame. 5 accepted as it was.
+
+## 28. Round 18 -- QA-10-2, the rotunda interior fill on the hero
+
+Brief: `docs/briefs/lighting_r18.md`. Two acceptances on the hero, both in the 1920x1080 grid ref 169 is aligned
+into (scale 1.3108, dx -291.8, dy -126.6): the **vault field** `900 380 1010 430` at 45-65 lum (the photograph
+reads 44.9) and the **jamb** `872 400 892 480` at hue 25-60 with a positive R-B (the photograph 22.2 / +58.9).
+Everything below is measured on this worktree's own master, rebuilt with `scripts/lead_build.sh`
+(**9687 objects**, 11.52 M tris -- 9695 before, the eight vault emitters are the difference), Cycles 64 spp.
+
+### 28.1 The vault field: which term, measured by isolation
+
+Four bordered Cycles hero frames (border 780 260 1120 620 = 6 % of the frame, so each costs a quarter of a frame),
+one term switched per frame, `scripts/light_r17_sweep.py --prefix r18a`, log `renders/logs/light_r18_iso*.log`:
+
+| case | vault field lum / hue / sat | jamb lum / hue / R-B | reading |
+|---|---|---|---|
+| BASE (r17 rig) | **102.9** / 39.7 / 0.449 | 61.2 / 337.7 / +12.9 | 2.29x the photograph |
+| `f=0 v=0` both warm fills off | **43.9** / 37.9 / 0.759 | 56.8 / 325.3 / +8.0 | 0.98x -- the model's own sky and bounce ALONE already reproduce ref 169's shade |
+| `v=0` the eight bay emitters off | **60.7** / 38.8 / 0.648 | 59.4 / 332.3 / +10.6 | inside 45-65 |
+| `v=0.35` | 79.3 / 40.4 / 0.591 | 57.6 / 5.8 / +23.0 | (with `cfill=24.5`, see 28.2) |
+| ref 169, aligned | **44.9** / 4.5 / 0.318 | 95.7 / 22.2 / +58.9 | |
+
+Two numbers decide the round. The **eight bay emitters carry 42.2 of the box's 102.9** and the central disk only
+16.8, so the bays are the term. And the whole 45-65 window lies between "no interior fill at all" (43.9) and "the
+disk alone" (60.7): `v` 0.05 already reads ~63 and `v` 0.10 ~66, so for the hero the bay emitters have to go to
+zero whatever the disk does. The disk stays at 10214 W because it is worth 16.8 lum here and it is cam04's coffer
+knob (27.4: 0.115 of coffer per unit against the bays' 0.095).
+
+Note what the second row means: **ref 169's deepest shade is what this model renders with no interior fill**. The
+fills were sized in rounds 8-12 against ref 083, which is exposed FOR the ceiling; the hero is exposed for sunlit
+stone. That is the round-08 soffit/coffer lock seen from the other side, and no spread / height / radius escapes
+it -- the best trade on record (spread 45 -> 90 at 0.65 of the energy, 27.4's `(0.00, 0.65, 90)` row) keeps 0.59
+of the soffit, which still leaves the hero's box at ~86.
+
+### 28.2 The jamb's magenta: it is `LIGHT_shade_fill_00`, and it is the hero's shade window
+
+The jamb box is not a reveal: it is the rotunda octagon's **az-37 face** (FACE_AZ0 82, faces at 82 + 45k), the same
+face cam02 photographs and 27.3 measured as electric indigo. Isolated in one frame (`cfill=0`, the Cycles energy
+of `LIGHT_shade_fill` only, everything else shipped):
+
+| case | jamb R, G, B | jamb hue / R-B | hero shaded attic hue / sat |
+|---|---|---|---|
+| shipped, `cfill` 49 W/m2 | 76.8, 56.3, 63.9 | **337.7** / +12.9 | 35.0 / 0.448 |
+| `cfill` 24.5 | -- | **5.8** / +23.0 | 38.3 / 0.533 |
+| `cfill` 0 | 74.3, 52.5, 35.9 | **25.9** / +38.4 | ~40.8 (25.2) |
+
+So the lamp's whole deposit on that face is **R +2.5, G +3.8, B +28.0**: 44 % of the box's blue and almost none of
+its red. Turning it off lands the acceptance exactly (25.9, R-B +38.4) and `cfill` ~8-12 W/m2 is where hue 25
+falls -- and the hero's shaded attic hue runs 34.8 -> 38.3 -> 40.8 across the same three points against a
+23.5-35.5 window, with its saturation going 0.443 -> 0.533 against a 0.50 ceiling. **Landing the jamb costs three
+hero holds.** Colour cannot separate them either: both faces see the same lamp, so any channel change scales both
+deposits by the same factor (the arithmetic is in 27.3; the green needed on the jamb is +13 display units and the
+attic's whole hue budget is 0.7 of a degree, i.e. +0.8 units). Nothing about the jamb shipped in round 18.
