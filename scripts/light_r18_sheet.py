@@ -28,7 +28,7 @@ BOXES = {"vault field": ((900, 380, 1010, 430), (120, 255, 120)),
 
 # BEFORE is QA's own round-10 Cycles hero -- the r17 rig, full frame, the frame QA-10-2 was scored on.
 BEFORE = ROOT / "renders" / "final" / "v2" / "qa_round10_cam01_cycles.png"
-AFTER = PREV / "r18SHIP_ship_01c.png"         # the r18 rig as shipped (bay_weights), full frame
+AFTER = PREV / "r18FINAL_ship_01c.png"        # the r18 rig as shipped (bays 06 + 07 only), full frame
 
 
 def stats(a, box):
@@ -68,7 +68,7 @@ def build(rows):
                     "1:1 crops of the great arch)", fill=(235, 235, 235))
     y = head
     d.text((10, y + 6), "BEFORE  QA round-10 hero, r17 rig (8 bay emitters at 3564 W)   |   AFTER  r18 rig "
-                        "(the lagoon-facing bay at 0 W, the other seven unchanged)   |   ref 169, aligned by QA", fill=(255, 210, 120))
+                        "(only bays 06 + 07 kept, the six the hero sees at 0 W)   |   ref 169, aligned by QA", fill=(255, 210, 120))
     y += cap
     sheet.paste(draw_boxes(frame(BEFORE, ARCH), ARCH), (0, y))
     sheet.paste(draw_boxes(frame(AFTER, ARCH), ARCH), (W, y))
@@ -81,7 +81,7 @@ def build(rows):
                            PREV / "r18a_v0_01c.png", PREV / "r18a_fv0_01c.png"]):
         sheet.paste(frame(p, LADDER), (i * LW, y))
     y += LH
-    d.text((10, y + 6), "ROUND-18 ACCEPTANCE AND HOLDS, measured on the round-18 master (9694 objects, 11.52 M tris)",
+    d.text((10, y + 6), "ROUND-18 ACCEPTANCE AND HOLDS, measured on the round-18 master (9689 objects, 11.52 M tris)",
            fill=(255, 210, 120))
     y += cap
     for line in rows:

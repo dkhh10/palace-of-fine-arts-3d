@@ -3016,3 +3016,54 @@ did not move at all when bay 00 was removed (0.386 -> 0.376, 1.213 -> 1.212, 1.2
 bays those three cameras depend on are 06, 07 and the west half -- none of them bay 00. The hero's jamb is bay
 00's own coffered barrel at the springing, which is why removing bay 00 costs the jamb 4 degrees of hue
 (337.7 -> 333.4) as well as helping the ceiling.
+
+### 28.4 Round-18 acceptance, measured on the rebuilt master (9689 objects, 11.52 M tris)
+
+SHIPPED: `VAULT_FILL["bay_weights"] = [0,0,0,0,0,0,1,1]` -- the six bays the hero's ceiling patch sees are off,
+bays 06 and 07 (cam02's two soffits, and the west half of cam04's) stay at the round-17 3564 W. `FILL` is
+unmoved at 10214 W. Nothing else in the rig changed: the sun, the sky world, the water, `SHADE_FILL` and
+`GALLERY_FILL` are byte-for-byte the round-17 values.
+
+| box | BEFORE (r17 rig, QA's round-10 hero) | **AFTER (r18)** | window / reference | verdict |
+|---|---|---|---|---|
+| **QA-10-2** hero vault field, CYCLES | 103.1 lum | **61.1** | 45-65 (ref 169 44.9) | **PASS** |
+| **QA-10-2** hero jamb hue / R-B | 338.5 / +13.1 | **333.0 / +10.9** | 25-60, R-B > 0 (ref 22.2 / +58.9) | **FAIL, not shipped -- 28.2** |
+| **HOLD** hero sunlit attic lum / sat / R-B | 188.7 / 0.487 / +110.6 | **189.3 / 0.489 / +111.4** | 178-201 / 0.53-0.62 / >= 120 | unchanged (sat capped, 26.2) |
+| **HOLD** hero shaded attic hue / sat / lum | 34.8 / 0.443 / 127.6 | **35.0 / 0.448 / 127.8** | 23.5-35.5 / <= 0.50 / 103.5-126.5 | unchanged, lum 1.3 over as in r16/r17 |
+| **HOLD** hero sky_top / sky_left lum | 167.9 / 154.8 | **168.0 / 154.9** | must not move | unchanged |
+| **HOLD** hero water_refl lum / hue | 131.5 / 41.9 | **130.0 / 42.1** | R-B >= +35, hue 25-45 | -1.5 lum, hue held |
+| hero entablature lum | 132.9 | **120.9** | ref 169 146.4 | **-12.0, the round's one exterior cost** |
+| **HOLD** cam02 soffit_l hue / sat, CYCLES | 36.3 / 0.340 | **36.2 / 0.342** | 25-60 / <= 0.35 | **PASS** |
+| **HOLD** cam02 soffit_r hue / sat, CYCLES | 33.9 / 0.317 | **33.9 / 0.329** | 25-60 / <= 0.35 | **PASS** |
+| **HOLD** cam02 soffit rib-field l / r | 111.3 / 114.6 | **117.9 / 112.4** | >= 15 lum | **PASS** |
+| **QA-10-13** cam02 coffer FIELD hue l / r | 13.1 / 5.9 | **26.5 / 12.9** | 25-60 | l **PASS**, r FAIL (improved 7 deg) |
+| **HOLD** cam04 coffer field / own sky, EEVEE | 0.386 | **0.347** | 0.35-0.55 (ref 083 0.437) | **0.003 under the floor** -- 28.3 |
+| **HOLD** cam04 vault soffit w / e, EEVEE | 1.249 / 1.213 | **1.244 / 0.190** | reported | the east bay is the one that was switched off |
+| **HOLD** cam03 near column p95, CYCLES | 89.0 | **89.0** | >= 25 | **PASS**, bit-identical |
+| **HOLD** cam03 flute ridge - floor | 33.2 | **33.2** | >= 8 | **PASS**, bit-identical |
+| **HOLD** cam03 frame under 10 lum | 6.6 % | **6.6 %** | <= 20 % | **PASS**, bit-identical |
+| QA-10-17 cam03 near column lum / hue | 34.9 / 40.9 | **34.9 / 40.9** | -- | the rotunda emitters cannot reach the colonnade; nothing moved |
+
+Two rows need their engine stated. **cam04 is EEVEE on both sides** (27.6's row was, and a Cycles cam04 is a
+different measurement: on the all-bays-off master it reads 0.467). **cam03's AFTER is the all-bays-off frame**
+(`r18AFTER_ship_03c.png`), which is a lower bound for the shipped rig -- the two bays that were put back are
+inside the rotunda drum and the colonnade walk has no line of sight to them; every cam03 number above is
+identical to the round-17 frame to the last decimal, which is the evidence for that claim.
+
+**cam04's coffer is the honest cost and it is the same surface as the blocker** (28.3). 0.347 against a 0.35
+floor is 0.9 % under, and it can be bought back by raising `FILL` about 10 % -- which costs the hero's ceiling
+about 1.7 lum of its 3.9 of margin. Not spent: the blocker's margin is worth more than 0.003 of a
+lighting-internal ratio taken from a photograph exposed for the ceiling.
+
+### 28.5 Round-17 review carries
+
+1 **done** -- `light_probes.bake` puts `LIGHT_gallery_fill` in its EEVEE state (0 W, `hide_render`) for the
+irradiance bake; `apply_shade_for_engine` had been chaining the CYCLES 1200 W into the volumes since round 17.
+2 **superseded** -- every AFTER frame in this round is a fresh render on the shipped 1200 W rig, and the log
+header prints the strip energy per case (`renders/logs/light_r18_*.log`). 3 **done** -- `light_r18_iso.log`,
+`light_r18_iso2.log`, `light_r18_mid.log`, `light_r18_b67.log`, `light_r18_ship.log`, `light_r18_final.log`,
+`light_r18_build*.log` and `light_r18_master*.log` are committed, and every number in 28.1-28.4 is in one of
+them. 4 **done** -- the r17 interior-fill comment now quotes the shipped row (36.3 / 33.9, cam04 0.386).
+5 **done** -- the dead second frame-count check in `light_flythrough.schedule` is removed. 6 carried (tracked
+binaries: this round deletes its superseded frames before committing and keeps nine). 7 **done** --
+`light_r17_sweep` refuses `gal<0` unless it is the last case. 8 carried, the lead's file.
