@@ -24,6 +24,9 @@ hero and the low-res Eevee test animation).
 ## Gate checks added 2026-09-10 (binding from round 10)
 - Name sweep (`scripts/qa_name_sweep.py`): exceptions on record — `ARCH_rotunda_inner_block_NN` / `_cap_NN` (the real inner piers,
   arch_params INNER_BLOCK), `ENV_backdrop_fill_NNN` / `_fillroof_NNN` (city backdrop blocks, env_city.py). Anything else is a blocker.
+- Exception added round 10: **`LIGHT_shade_fill_00`** — a LIGHT, not geometry: the az-25 el-2 blue sun lamp that has stood in for
+  sky-shade since round 14 (`light_build.SHADE_FILL`, 49.0 W Cycles / 38.5 Eevee). The exception covers the *name*; the lamp is the
+  measured source of the hero's magenta arch jamb (QA-10-2, hue 338.5), which stays open as a defect.
 - Six-tile 100 % hero review before scoring; every visible defect is a defect. The v1 hero (round 09, 3.67) shipped with the main arch's upper
   half filled by 67 chord triangles of `ARCH_rotunda_vault_coffers_00` (7-11 m2 each, normals along the bay axis) that no metric caught
   and the 960 px composite hid: that is the case this rule exists for.
@@ -433,3 +436,28 @@ Closed this round: **QA-08-1** (cam02 lens) and **QA-08-13** (frame range now 1-
 **1 of 2** (round 08 +0.22, round 09 +0.00). Under the user's round-08 instruction — one more round after round 08,
 then Phase 5 regardless — round 09 is that round and Phase 5 starts now. The round-09 defect list is written as the
 Phase 5 known-issues list, ordered by hero visibility, in `docs/qa_round_09.md`.
+
+
+## Round 10 (2026-09-10) — the first round under the new gate checks; tile review FAIL
+
+Name sweep 520 exempt / 1 hit (exempted above). Ray-cast opening test **14 / 14 PASS** (cam01 bay 00, cam02 bay 07,
+z 16-22, `scripts/qa_r10_rays.py`) and the hero's own arch-centre pixel (960, 500) returns **SKY**: the v1 chord fill is
+gone by three independent tests, and the sky measured inside the opening is 214.4 against the photograph's 233.3 (0.92x).
+
+**The tile review is what the round is for, and it failed.** Fourteen defects the metrics never saw, in a frame whose
+chroma and texture boxes are all within 0.1 of round 09. The two blockers: `ENV_gulls_sitting` is two flat-shaded
+icospheres 7.5 m from the hero camera (five more mirror as white posts mid-lagoon), and the rotunda interior fill leaves
+the arch's barrel field at **103.1 lum against the photograph's 44.9 (2.30x)** with a **magenta (hue 338.5)** jamb — so
+the arch the user complained about still does not read even though it is now open.
+
+Rejects (game asset / clean CAD), round 10: the foreground waterfowl; the arch coffers as round holes in a flat plate;
+the two side-bay soffits as 112-face olive plates; cam03's black-and-white chequer paving; cam03's near column as a flat
+olive slab filling 34 % of the frame; cam02's untextured stepped backdrop boxes at 116 m; the near-white untextured dome cap.
+
+Held from rounds 08/09 with no drift: alignment 1.3108 / -291.8 / -126.6 (bit-identical, fourth round), attic std 28.9,
+aniso 5.03, shaded attic 127.6 / 34.8 / 0.443, flank 162.8, ripples -21.2, near water 125.4, run-off 20.0 %.
+Moved: **water reflection column 115.8 -> 131.5 lum** (clears the 124 floor for the first time) but **sat 0.383 -> 0.227**
+and **R-B +50.2 -> +31.9** — ARCH r8's open arch now mirrors sky instead of a lit plate.
+
+Hero **3.67 -> 3.56 (-0.11)**; like-for-like, scoring only what the round changed (Proportion +0.5, Lighting -0.5),
+**3.67, +0.00**. Full report and the defect table: `docs/qa_round_10.md`; composite `renders/final/v2/round10_gate.png`.
