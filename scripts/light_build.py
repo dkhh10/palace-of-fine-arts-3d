@@ -334,10 +334,13 @@ FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, en
             # fills' own colour is the whole of that saturation and nothing else in the rig reaches the soffit.
             # Measured on the round-17 master, Cycles cam02 64 spp, soffit_l / soffit_r saturation:
             # (1.0, 0.86, 0.68) -> 0.413 / 0.378; (1.0, 0.93, 0.84) -> 0.354 / 0.328; shipped (1.0, 0.95, 0.88).
-            # Hue moves 34.7 -> 35.8 and 32.2 -> 33.4 (both stay inside 25-60) and the coffer rib / field contrast
-            # is unmoved at 111-116 lum, so the coffers do not flatten. cam04's coffer ratio RISES with it
-            # (the fill is slightly more luminous at the same watts), which is the safe direction: it ships at
-            # 0.356 against a 0.35 floor.
+            # (r17 review finding 4: THIS row is the shipped one, measured on the round-17 master -- the
+            # "34.7 -> 35.8 / 32.2 -> 33.4" and "ships at 0.356" that used to stand here were the intermediate
+            # (1.0, 0.93, 0.84) case and the round-16 cam04 value.) SHIPPED, docs/lighting_notes.md 27.6:
+            # cam02 soffit_l hue 34.7 -> 36.3, soffit_r 32.3 -> 33.9, saturation 0.413 -> 0.340 / 0.378 -> 0.317,
+            # coffer rib / field contrast unmoved at 111.3 / 114.6 lum, so the coffers do not flatten. cam04's
+            # coffer ratio RISES with it (the fill is slightly more luminous at the same watts), which is the safe
+            # direction: it shipped at 0.386 against a 0.35 floor. ROUND 18 moved that -- see VAULT_FILL below.
             color=(1.0, 0.95, 0.88), spread_deg=150.0,
             note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
 
