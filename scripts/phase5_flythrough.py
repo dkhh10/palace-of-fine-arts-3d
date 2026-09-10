@@ -54,9 +54,10 @@ sch = ft.load_schedule()
 frames = sch["frames"] if sch else scene.frame_end
 fps = sch["fps"] if sch else 24
 scene.render.fps = fps
-scene.frame_start, scene.frame_end = 1, frames
+FRAME_START = int(arg("--frame-start", 1))      # lead, Phase 5: resume a run the watchdog cut (keeps the step-2 grid)
+scene.frame_start, scene.frame_end = FRAME_START, frames
 scene.frame_step = FRAME_STEP
-n_expected = len(range(1, frames + 1, FRAME_STEP))
+n_expected = len(range(FRAME_START, frames + 1, FRAME_STEP))
 print(f"[phase5_flythrough] {frames} frames @ {fps} fps, step {FRAME_STEP} -> {n_expected} frames to render")
 
 lp.apply_preview_eevee(scene, samples=SAMPLES)   # 16 TAA per docs/tech_notes.md's flythrough test-animation recipe
