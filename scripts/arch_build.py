@@ -733,6 +733,14 @@ def build_vault_coffers(name, k, X, n, coll):
     obj = L.plate(name, outline, holes, P.VAULT_COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), coll, mat=M_PLASTER_RIB,
                   part_type="wall", bevel=False, smooth=False, registers=P.VAULT_COFFER_REGISTERS)
     obj["surface"] = "coffer_rib"      # QA-04-7: rib network only; the panel behind is ARCH_rotunda_vault_NN
+    # ARCH r8 ROOT CAUSE: the plate's cap triangles come out of tessellate_polygon spanning the whole 17.6 x 4.1 m
+    # outline (single faces of 11 m2). The vertex mapping below bends only the VERTICES onto the barrel, so any face
+    # whose vertices sit at different arc angles became a CHORD across the opening -- 79 faces over 1 m2 per bay,
+    # the worst of them right through the barrel axis (6.25 m below the soffit). From cam01 the upper half of the
+    # main arch was that flat plate, 2 m behind the arch face (renders/logs/lead_raycast3.log, v1 4K hero).
+    # Cutting the plate on a grid FIRST makes every face follow the arc: at step s the chord error is s^2/(8r),
+    # i.e. 1.1 mm at r = 6.25 m. 0.22 m in the arc parameter = 0.246 m of real arc at the wall end (r0 / r_mean).
+    L.bisect_grid(obj, sx=P.VAULT_COFFER_ARC_STEP, sy=P.VAULT_COFFER_DEPTH_STEP)
     me = obj.data
     for v in me.vertices:
         s = v.co.x / r_mean            # angle 0..pi
@@ -957,6 +965,9 @@ def build_ceiling(C):
     # QA-03-8: 0.30 -> 0.55 deep (depth / width 0.20, measured off ref 083) with COFFER_REGISTERS at the room face.
     ribs = L.plate("ARCH_rotunda_ceiling_ribs", octo, holes, P.COFFER_DEPTH, (0, 0, 0), (1, 0, 0), (0, 1, 0), C,
                    mat=M_PLASTER_RIB, part_type="ceiling", bevel=False, registers=P.COFFER_REGISTERS)
+    # ARCH r8: same defect as the barrel vaults -- the rib plate's cap triangles reached 14.5 m2 and the mapping
+    # below moves only the vertices onto the saucer sphere, so the widest of them hung 2.21 m off the sphere.
+    L.bisect_grid(ribs, sx=P.CEILING_RIB_STEP, sy=P.CEILING_RIB_STEP)
     me = ribs.data
     for vtx in me.vertices:
         vtx.co.z += sz(vtx.co.x, vtx.co.y)

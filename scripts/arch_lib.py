@@ -398,6 +398,43 @@ def plate(name, outline, holes, thickness, origin3d, xaxis, yaxis, coll, mat=Non
     return _finish(name, bm, coll, mat, part_type, origin=tuple(O), **kw)
 
 
+def bisect_grid(obj, sx=None, sy=None, sz=None, eps=0.013, dist=0.002):
+    """Cut obj's mesh with a grid of axis planes in LOCAL coordinates, so no face spans more than one step.
+
+    ARCH r8 root cause: `plate` tessellates its caps with mathutils.geometry.tessellate_polygon, which emits
+    triangles spanning the whole outline (the vault rib plate is 17.6 x 4.1 m, so single triangles reached 11 m2).
+    build_vault_coffers / build_ceiling then map the VERTICES onto the barrel / the saucer sphere, so every such
+    triangle becomes a CHORD cutting straight through the space under the vault -- in the v1 4K hero the upper
+    half of the main arch was one flat plate 2 m behind the arch face. Call this BEFORE the mapping: with a step
+    of s the chord error is only s^2 / (8 r).
+
+    `eps` offsets the whole grid so the planes do not land exactly on the hole vertices; `dist` snaps vertices
+    that fall within it onto the plane instead of leaving slivers.
+    """
+    me = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    for axis, step in ((0, sx), (1, sy), (2, sz)):
+        if not step or step <= 0:
+            continue
+        lo = min(v.co[axis] for v in bm.verts)
+        hi = max(v.co[axis] for v in bm.verts)
+        no = Vector((0.0, 0.0, 0.0))
+        no[axis] = 1.0
+        for i in range(1, int((hi - lo) / step) + 2):
+            x = lo + i * step + eps
+            if x >= hi - 1e-4:
+                break
+            co = Vector((0.0, 0.0, 0.0))
+            co[axis] = x
+            bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], dist=dist,
+                                   plane_co=co, plane_no=no, clear_inner=False, clear_outer=False)
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+    return obj
+
+
 def grid_frame(name, xs, ys, thickness, coll, mat=None, part_type=None, hole=None, **kw):
     """All-quad rib network: a flat slab in the XY plane (front at z=0, back at z=-thickness) divided by the breakpoints
     xs/ys into cells; cell (i, j) is a through-hole when hole(i, j) is True (default: odd i and odd j)."""

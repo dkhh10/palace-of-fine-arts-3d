@@ -1,0 +1,38 @@
+00:00.332  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+bay | object                     | faces |  worst dev |  n>0.45 | worst area | n>1.0 | worst centre
+ 00 | ARCH_rotunda_vault_coffers_00 |  1232 |      6.250 |      86 |     11.023 |    79 | (-2.7, 19.3, 17.5) FAIL
+ 00 | ARCH_rotunda_vault_00      |   112 |      0.010 |       0 |      0.738 |     0 | (-8.2, 18.0, 19.8) ok
+ 01 | ARCH_rotunda_vault_coffers_01 |  1232 |      6.250 |      86 |     11.023 |    79 | (11.7, 15.6, 17.5) FAIL
+ 01 | ARCH_rotunda_vault_01      |   112 |      0.010 |       0 |      0.738 |     0 | (15.9, 11.8, 19.8) ok
+ 02 | ARCH_rotunda_vault_coffers_02 |  1232 |      6.250 |      86 |     11.023 |    79 | (19.3, 2.7, 17.5) FAIL
+ 02 | ARCH_rotunda_vault_02      |   112 |      0.010 |       0 |      0.738 |     0 | (18.0, 8.2, 19.8) ok
+ 03 | ARCH_rotunda_vault_coffers_03 |  1232 |      6.250 |      86 |     11.023 |    79 | (15.6, -11.7, 17.5) FAIL
+ 03 | ARCH_rotunda_vault_03      |   112 |      0.010 |       0 |      0.738 |     0 | (11.8, -15.9, 19.8) ok
+ 04 | ARCH_rotunda_vault_coffers_04 |  1232 |      6.250 |      86 |     11.023 |    79 | (2.7, -19.3, 17.5) FAIL
+ 04 | ARCH_rotunda_vault_04      |   112 |      0.010 |       0 |      0.738 |     0 | (8.2, -18.0, 19.8) ok
+ 05 | ARCH_rotunda_vault_coffers_05 |  1232 |      6.250 |      86 |     11.023 |    79 | (-11.7, -15.6, 17.5) FAIL
+ 05 | ARCH_rotunda_vault_05      |   112 |      0.010 |       0 |      0.738 |     0 | (-15.9, -11.8, 19.8) ok
+ 06 | ARCH_rotunda_vault_coffers_06 |  1232 |      6.250 |      86 |     11.023 |    79 | (-19.3, -2.7, 17.5) FAIL
+ 06 | ARCH_rotunda_vault_06      |   112 |      0.010 |       0 |      0.738 |     0 | (-18.0, -8.2, 19.8) ok
+ 07 | ARCH_rotunda_vault_coffers_07 |  1232 |      6.250 |      86 |     11.023 |    79 | (-15.6, 11.7, 17.5) FAIL
+ 07 | ARCH_rotunda_vault_07      |   112 |      0.010 |       0 |      0.738 |     0 | (-11.8, 15.9, 19.8) ok
+    ceiling_ribs: 2568 faces, largest areas [14.53, 14.53, 14.53, 14.53, 14.53], max |dz| centre-to-vertex 2.207 m
+--- axis rays, bay 00 (cam01 hero, lagoon face) : start at apothem 30 m, direction -n
+  z=  16: clear
+  z=  17: clear
+  z=  18: ARCH_rotunda_vault_coffers_00@10.6m(ap +19.4) | ARCH_rotunda_vault_coffers_00@14.5m(ap +15.5) | ARCH_rotunda_vault_coffers_04@45.5m(ap -15.5) | ARCH_rotunda_vault_coffers_04@49.4m(ap -19.4) | ENV_backdrop_hall_roof@89.2m(ap -59.2)
+  z=  19: ARCH_rotunda_vault_coffers_00@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_00@12.6m(ap +17.4) | ARCH_rotunda_vault_coffers_00@14.4m(ap +15.6) | ARCH_rotunda_vault_coffers_04@45.5m(ap -15.5) | ARCH_rotunda_vault_coffers_04@47.4m(ap -17.4) | ARCH_rotunda_vault_coffers_04@49.3m(ap -19.3) | ENV_backdrop_hall_roof@95.0m(ap -65.0) | ENV_backdrop_hall_roof@121.9m(ap -91.9)
+  z=  20: ARCH_rotunda_vault_coffers_00@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_00@12.5m(ap +17.5) | ARCH_rotunda_vault_coffers_00@12.6m(ap +17.4) | ARCH_rotunda_vault_coffers_00@14.4m(ap +15.6) | ARCH_rotunda_vault_coffers_04@45.6m(ap -15.6) | ARCH_rotunda_vault_coffers_04@47.4m(ap -17.4) | ARCH_rotunda_vault_coffers_04@47.5m(ap -17.5) | ARCH_rotunda_vault_coffers_04@49.3m(ap -19.3)
+  z=  21: ARCH_rotunda_vault_coffers_00@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_00@12.5m(ap +17.5) | ARCH_rotunda_vault_coffers_00@12.6m(ap +17.4) | ARCH_rotunda_vault_coffers_00@14.4m(ap +15.6) | ARCH_rotunda_vault_coffers_04@45.6m(ap -15.6) | ARCH_rotunda_vault_coffers_04@47.4m(ap -17.4) | ARCH_rotunda_vault_coffers_04@47.5m(ap -17.5) | ARCH_rotunda_vault_coffers_04@49.3m(ap -19.3)
+  z=  22: ARCH_rotunda_vault_coffers_00@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_00@12.5m(ap +17.5) | ARCH_rotunda_vault_coffers_00@12.7m(ap +17.3) | ARCH_rotunda_vault_coffers_00@14.3m(ap +15.7) | ARCH_rotunda_vault_coffers_04@45.7m(ap -15.7) | ARCH_rotunda_vault_coffers_04@47.3m(ap -17.3) | ARCH_rotunda_vault_coffers_04@47.5m(ap -17.5) | ARCH_rotunda_vault_coffers_04@49.2m(ap -19.2)
+--- axis rays, bay 07 (cam02 three-quarter) : start at apothem 30 m, direction -n
+  z=  16: clear
+  z=  17: clear
+  z=  18: ARCH_rotunda_vault_coffers_07@10.6m(ap +19.4) | ARCH_rotunda_vault_coffers_07@14.5m(ap +15.5) | ARCH_rotunda_vault_coffers_03@45.5m(ap -15.5) | ARCH_rotunda_vault_coffers_03@49.4m(ap -19.4) | ENV_backdrop_hall_roof@101.4m(ap -71.4)
+  z=  19: ARCH_rotunda_vault_coffers_07@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_07@12.6m(ap +17.4) | ARCH_rotunda_vault_coffers_07@14.4m(ap +15.6) | ARCH_rotunda_vault_coffers_03@45.5m(ap -15.5) | ARCH_rotunda_vault_coffers_03@47.4m(ap -17.4) | ARCH_rotunda_vault_coffers_03@49.3m(ap -19.3) | ENV_backdrop_hall_roof@107.9m(ap -77.9) | ENV_backdrop_hall_roof@136.1m(ap -106.1)
+  z=  20: ARCH_rotunda_vault_coffers_07@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_07@12.5m(ap +17.5) | ARCH_rotunda_vault_coffers_07@12.6m(ap +17.4) | ARCH_rotunda_vault_coffers_07@14.4m(ap +15.6) | ARCH_rotunda_vault_coffers_03@45.6m(ap -15.6) | ARCH_rotunda_vault_coffers_03@47.4m(ap -17.4) | ARCH_rotunda_vault_coffers_03@47.5m(ap -17.5) | ARCH_rotunda_vault_coffers_03@49.3m(ap -19.3)
+  z=  21: ARCH_rotunda_vault_coffers_07@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_07@12.5m(ap +17.5) | ARCH_rotunda_vault_coffers_07@12.6m(ap +17.4) | ARCH_rotunda_vault_coffers_07@14.4m(ap +15.6) | ARCH_rotunda_vault_coffers_03@45.6m(ap -15.6) | ARCH_rotunda_vault_coffers_03@47.4m(ap -17.4) | ARCH_rotunda_vault_coffers_03@47.5m(ap -17.5) | ARCH_rotunda_vault_coffers_03@49.3m(ap -19.3)
+  z=  22: ARCH_rotunda_vault_coffers_07@10.7m(ap +19.3) | ARCH_rotunda_vault_coffers_07@12.5m(ap +17.5) | ARCH_rotunda_vault_coffers_07@12.7m(ap +17.3) | ARCH_rotunda_vault_coffers_07@14.3m(ap +15.7) | ARCH_rotunda_vault_coffers_03@45.7m(ap -15.7) | ARCH_rotunda_vault_coffers_03@47.3m(ap -17.3) | ARCH_rotunda_vault_coffers_03@47.5m(ap -17.5) | ARCH_rotunda_vault_coffers_03@49.2m(ap -19.2)
+FACECHECK FAILED: ['ARCH_rotunda_vault_coffers_00', 'ARCH_rotunda_vault_coffers_01', 'ARCH_rotunda_vault_coffers_02', 'ARCH_rotunda_vault_coffers_03', 'ARCH_rotunda_vault_coffers_04', 'ARCH_rotunda_vault_coffers_05', 'ARCH_rotunda_vault_coffers_06', 'ARCH_rotunda_vault_coffers_07']
+blender_run.sh: pid 67703 exited rc=1 after 1 s (max 600)

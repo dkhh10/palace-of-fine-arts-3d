@@ -1307,3 +1307,135 @@ reads at the hero. Not my call: `CORNICE_H` moves ORN's band, so it goes to the 
   reproducible from land; only the az-37 solution is in the water. The attic-base +0.83 m residual stands either way.
 - Archivolt frame: +Y = wall normal, +Z = radial (band-width direction); ornament's proposal said +Y radial. Ornament must build the panel
   with the band along local +Z (docs/sockets.md is the contract). Carries 2, 5, 7, 8, 9 to round 8.
+
+## Round 8 (2026-09-10) — the barrel vaults were closed by chord triangles (user-found defect in the v1 4K hero)
+
+### Root cause
+`arch_lib.plate` builds its two cap faces with `mathutils.geometry.tessellate_polygon`, which triangulates the
+outline-with-holes without any size limit: on the vault rib plate (a flat 17.55 x 4.12 m rectangle, arc length
+`pi * r_mean` by barrel depth `INNER_APOTHEM - INNER_WALL_APOTHEM`) single cap triangles came out at up to 11.02 m2.
+`build_vault_coffers` then maps only the **vertices** onto the barrel, so every triangle whose three vertices sat at
+different arc angles became a **chord** through the open space under the vault. Nothing about it was a placeholder or a
+metric fill — it is a tessellation bug that has been in the file since round 1, and it is why the upper half of the
+main arch in `renders/final/v1/hero_cam01_3840x2160.png` is a smooth flat plate 2 m behind the arch face.
+
+`build_ceiling` has the identical shape of bug (flat rib plate, vertices pushed onto the saucer sphere): its worst cap
+face was 14.53 m2. `ARCH_rotunda_vault_NN` (a loft), the archivolts and the inner archivolts (swept profiles) and
+`ARCH_rotunda_attic_roof` (a plate that is never bent) are not affected — they were the only other candidates
+(`grep -n '\.vertices:' scripts/arch_build.py` finds exactly the two mapping loops).
+
+### Fix
+New helper `arch_lib.bisect_grid(obj, sx, sy, sz)`: cuts the mesh with a grid of axis planes in LOCAL coordinates
+**before** the mapping, so no face spans more than one step. Chord error at step s on radius r is s^2 / (8 r).
+Parameters (`arch_params.py`): `VAULT_COFFER_ARC_STEP = 0.22` in the arc parameter (measured at `r_mean`, so 0.246 m of
+real arc at the wall end where r = r0), `VAULT_COFFER_DEPTH_STEP = 0.90` across the barrel (no curvature there; it is
+only what caps the face area), `CEILING_RIB_STEP = 1.00` on both plan axes of the saucer. The octagon / diamond coffer
+layout, `VAULT_COFFER_DEPTH = 0.38`, the `VAULT_COFFER_REGISTERS` reveal registers, the taper r0 -> r1 and every
+material are untouched; only the tessellation changed. Cost: `tris_LOD0` 2,694,686 -> 2,834,970 (+5.2 %),
+vault coffer faces 1,232 -> 9,055 per bay, ceiling rib faces 2,568 -> 10,238. Object count unchanged (2,289).
+
+### Acceptance: face check per bay (`scripts/arch_vault_facecheck.py`, run on the rebuilt worktree master.blend)
+Deviation = local soffit radius r(t) minus the face centre's own radius from the springing axis, i.e. how far the face
+hangs into the opening. Legal maximum 0.45 m (the rib plate itself stands `VAULT_COFFER_DEPTH` = 0.38 proud).
+
+| bay | object | faces before/after | worst dev before | worst dev after | faces > 0.45 m before/after | worst face area before/after (m2) | faces > 1.0 m2 before/after |
+|-----|--------|--------------------|------------------|-----------------|------------------------------|------------------------------------|------------------------------|
+| 00 | ARCH_rotunda_vault_coffers_00 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 01 | ARCH_rotunda_vault_coffers_01 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 02 | ARCH_rotunda_vault_coffers_02 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 03 | ARCH_rotunda_vault_coffers_03 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 04 | ARCH_rotunda_vault_coffers_04 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 05 | ARCH_rotunda_vault_coffers_05 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 06 | ARCH_rotunda_vault_coffers_06 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 07 | ARCH_rotunda_vault_coffers_07 | 1232 / 9055 | 6.250 | **0.381** | 86 / 0 | 11.023 / **0.347** | 79 / 0 |
+| 00-07 | ARCH_rotunda_vault_NN (panel) | 112 / 112 | 0.010 | 0.010 | 0 / 0 | 0.738 / 0.738 | 0 / 0 |
+
+0.381 m after = exactly `VAULT_COFFER_DEPTH`: the deepest face is now the rib's own room face, which is what it should
+be. 6.250 m before = `ARCH_SPAN / 2`, i.e. a chord passing straight through the barrel axis. The eight bays are
+identical because they share one construction (they are not instances — each is built from the same code).
+Ceiling ribs (report only): largest cap face 14.53 -> 1.26 m2; max face-centre drop below the saucer sphere 0.568 m
+against a legal `COFFER_DEPTH` of 0.55, i.e. 18 mm of tessellation error.
+
+### Acceptance: bay-axis ray tests (same script, `--rays`; on the rebuilt master)
+Cast horizontally inward along the bay axis from apothem 30 m, every hit listed to the far side.
+
+| z (m) | bay 00 (cam01 hero) before | bay 00 after | bay 07 (cam02) before | bay 07 after |
+|-------|----------------------------|--------------|------------------------|--------------|
+| 16 | clear | clear | clear | clear |
+| 17 | clear | clear | clear | clear |
+| 18 | coffers_00 @ ap +19.4, +15.5; coffers_04 @ ap -15.5, -19.4 | **clear** | coffers_07 @ ap +19.4, +15.5; coffers_03 @ ap -15.5, -19.4 | **clear** |
+| 19 | coffers_00 x3, coffers_04 x3 | **clear** | coffers_07 x3, coffers_03 x3 | **clear** |
+| 20 | coffers_00 x4, coffers_04 x4 | **clear** | coffers_07 x4, coffers_03 x4 | **clear** |
+| 21 | coffers_00 x4, coffers_04 x4 | **clear** | coffers_07 x4, coffers_03 x4 | **clear** |
+| 22 | coffers_00 x4, coffers_04 x4 | **clear** | coffers_07 x4, coffers_03 x4 | **clear** |
+
+"clear" is the correct answer, not a missing soffit: the barrel's axis is the horizontal line at `ARCH_SPRING_Z`, so a
+ray on that axis at z <= 22 is at most 4.5 m from it and the soffit radius never falls below `INNER_ARCH_SPAN / 2` =
+4.925 (4.545 at the rib room face). The ray leaves through the opposite bay. Before the fix the first hit on bay 00 was
+2 m past the arch face at ap +19.4 while the soffit there is at ap 19.5 with r 6.25 — the chord plate.
+
+### Item 2: the "slab across the opening" is the same defect, not a separate object
+The v1 tile shows a straight horizontal edge cutting the opening at about the springing height with sky below it, and
+the arch behind it reading as a flat lintel. The ray table above identifies it: the axis is clear at z 16 and 17 and
+blocked from z 18 up, so the horizontal edge at ~z 17.5-18 is the **lower edge of the far bay's chord plate**
+(`ARCH_rotunda_vault_coffers_04` for cam01, `..._03` for cam02) seen through the rotunda, and the "flat lintel" is
+where it cuts across the near bay's inner arch. No slab exists: `ARCH_rotunda_inner_block_cap_NN` (z 17.15-17.50) sits
+on the inner column axes at the octagon vertices, +-22.5 deg off the bay axis, and never crosses it; the inner
+archivolt is a swept profile on the true arc. Nothing was added or removed for this item — it is closed by item 1.
+
+### Item 3: cam03's near column (`scripts/arch_r8_cam03.py`)
+`ARCH_colonnade_south_column_028` at (79.10, 13.25, 0.40) is the nearest column to `CAM_qa_03_colonnade_walk`
+(81.00, 12.04, 1.70): 2.60 m axis to camera, 1.75 m to the shaft surface. Measured on the rebuilt master:
+
+- the render-visible object is `ARCH_colonnade_south_column_028_LOD0` (`hide_render` False; `common.set_lod` renders
+  LOD0), sharing mesh `ARCH_colonnade_south_column_000_LOD0`, 7,200 verts / 6,962 faces;
+- it **is** fluted: 24 flutes, shaft radius 0.749-0.835 m round the section at mid height, i.e. a flute 86 mm deep and
+  178 mm wide (`FLUTE_ARC_HALF_DEG = 90`, `FILLET_FRACTION = 0.25`);
+- its capital **is** instanced: `INST_capital_colonnade_084_LOD0` on `SOCKET_capital_colonnade_084`, render-visible,
+  at the shaft top z 11.60. The capital is simply out of frame — at 2.25 m from the camera the abacus is 9.9 m above
+  eye level, i.e. 77 deg up, against a half vertical field of 33.7 deg (18 mm lens);
+- projected width at 1280x720: the shaft axis is 40.9 deg right of the optical axis and subtends +-22.3 deg, so the
+  silhouette runs from x = 857 px to x = 1905 px, i.e. it enters the frame at 857 px and runs off the right edge —
+  **423 px of visible width, 33 % of the frame**, and the visible part is the shaded far side of the shaft.
+
+**Gotcha worth keeping** (it cost one diagnostic run): in a background file a hidden object keeps a *stale*
+`matrix_world`. The saved master has `viewport = LOD1`, so every `_LOD0` object reads `matrix_world = identity` and
+appears to sit at the world origin until `common.set_lod(viewport=0)` + `bpy.context.view_layer.update()`. Use
+`obj.location`, or update the view layer with the render LOD visible, before trusting any world-space measurement.
+
+### Renders and the 100 % tile pass (round 8)
+Three Cycles frames on the rebuilt worktree master, 64 spp, all through `scripts/blender_run.sh`:
+`renders/previews/arch/r8_cam01.png` (1920x1080, 197 s), `r8_cam02.png` (1280x720, 110 s), `r8_cam03.png`
+(1280x720, 195 s). Cut into 100 % tiles by `scripts/arch_r8_tiles.py` (cam01 3x2 = 640x540 each, cam02/cam03 2x2 =
+640x360 each) and read at 100 %, never downscaled. Composite: `renders/qa_comparisons/arch_r8_vault_fix.png`.
+
+**Fixed and confirmed in the tiles.** cam01 tile01: the main arch reads as a real coffered barrel — two rings of
+octagonal coffers with the diamonds between them curving over the opening, the inner arch complete behind it and sky
+through it, and the far rostra below. The flat plate is gone. cam02 tile01: bay 07's soffit is a coffered arch, not
+the flat "blue soffit" QA saw in rounds 5-7. cam03 tiles 00/10: the colonnade shafts carry visible fluting and Attic
+bases.
+
+**ARCH defects still visible (mine, not fixed this round).** None found in the tiles beyond the item-1 fix — the
+openings, archivolts, entablature courses, attic panels, urns and colonnade all read as modelled. The far 0.6 m of the
+barrel between the second coffer row and the inner wall face is a plain rib band; it is correct per the ref-062 layout
+but at cam01 it reads as one flat grey wedge, so if a future round wants more depth there it is a third register, not
+a bug (open item, not a defect).
+
+**Defects visible in the tiles that belong to other owners** (reported, not touched):
+- LIGHT: cam03's near column `ARCH_colonnade_south_column_028` measures mean luminance 3.7 / 255 over x 900-1270
+  (p95 12.1, max 30.9) against sunlit paving at mean 13.6 / p95 43.3 and sunlit colonnade shafts at p95 131.9. Its
+  flute modulation IS present in the pixels (the horizontal profile at y = 400 oscillates 0-14 across the shaft) but
+  the whole shaft sits under 5 % of the sunlit level, which is why it reads as a plain black slab. Colonnade shade
+  needs fill, not geometry.
+- MAT / LIGHT: every shaded column shaft in cam01 tiles 10/11 and cam02 tiles 00/01/11 carries a strong violet-blue
+  cast; the sunlit shafts in cam01 tile12 are speckled with hard high-frequency noise.
+- ENV: the leaf cards in cam02 tile10 render as large flat translucent green shards and the shrubs in tile11 as orange
+  spikes; the birds in cam01 tiles 11/12 are faceted white blobs; the black clumped foliage on the colonnade in cam03
+  tile00 reads as noise.
+- ENV / MAT: the colonnade paving in cam03 tile11 is a hard checkerboard with black joint lines.
+- MAT: the dome cap in cam01 tile01 is a smooth, near-white, untextured hemisphere against a fully weathered attic.
+
+### Hand-offs
+- to LIGHT: cam03 colonnade shade, numbers above (near column at 3.7/255 mean, 27 % of the sunlit paving mean).
+- to LIGHT/MAT: the violet cast on every shaded shaft.
+- to ENV: leaf cards, shrubs, birds (cam02 tile10/11, cam01 tile11/12).
