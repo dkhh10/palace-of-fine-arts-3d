@@ -170,7 +170,7 @@ def _gallery_lights():
 
 
 def apply_gallery_for_engine(engine):
-    """ROUND 17: LIGHT_gallery_fill is a CYCLES-ONLY rig (light_build.GALLERY_FILL: 1000 W a strip in Cycles,
+    """ROUND 17: LIGHT_gallery_fill is a CYCLES-ONLY rig (light_build.GALLERY_FILL: 1200 W a strip in Cycles (shipped; review fix),
     0 W in Eevee), the round-13 shade-fill pattern with the engines the other way round. Eevee's baked irradiance
     volume already carries the colonnade gallery at 5x the Cycles level (cam03 near column 16.9 vs 3.3 lum), and
     sixteen shadow-mapped area lights in the Eevee preview would re-open QA-06-13. Idempotent, and safe on a
@@ -246,7 +246,7 @@ def apply_shade_for_engine(engine):
     # ROUND 17: the gallery rig is switched HERE rather than at every call site. `common.configure_cycles` is the
     # entry point every non-lighting script renders Cycles through and it is not lighting's file to edit, so
     # chaining the two per-engine switches is what guarantees LIGHT_gallery_fill is never left at its Eevee 0 W
-    # in a Cycles render (or at 1000 W in an Eevee one). Both are idempotent, so a caller that also calls
+    # in a Cycles render (or at the Cycles 1200 W in an Eevee one). Both are idempotent, so a caller that also calls
     # apply_gallery_for_engine explicitly is still correct.
     apply_gallery_for_engine(engine)
     return n
