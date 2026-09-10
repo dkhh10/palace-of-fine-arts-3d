@@ -461,3 +461,24 @@ and **R-B +50.2 -> +31.9** — ARCH r8's open arch now mirrors sky instead of a 
 
 Hero **3.67 -> 3.56 (-0.11)**; like-for-like, scoring only what the round changed (Proportion +0.5, Lighting -0.5),
 **3.67, +0.00**. Full report and the defect table: `docs/qa_round_10.md`; composite `renders/final/v2/round10_gate.png`.
+
+
+## Round 10b (2026-09-10) — the blocker re-check; tile review PASS
+
+Name sweep **520 exempt / 0 hits** (`LIGHT_shade_fill_00` is out of the rig with the lead's shade-fill-off, so the
+round-10 exception is moot; kept on record above for the history). Ray-cast opening test **14 / 14 PASS** again.
+
+**Both round-10 blockers closed.** QA-10-1 / QA-10-6: no waterfowl on the open water, nearest gull a shore bird ~100 m
+out (`env_build.py` b058e45). QA-10-2: vault field `900 380 1010 430` **103.1 -> 60.6 lum** (window 45-65, ref 44.9) and
+jamb `872 400 892 480` **hue 338.5 -> 25.0 with R-B +36.2** (window 25-60, positive). **No placeholder-grade object
+remains anywhere in the hero frame** — the first round that is true.
+
+New rejects, round 10b: the shaded stone reading **mustard-olive** rather than warm neutral grey-tan (QA-10b-1, whole
+building sat 0.636 vs ref 0.521 = 1.22x, shaded attic hue 41.2 / sat 0.628 vs 30.6 / 0.454); cam03's near column as a
+**near-black slab** (0.192 of the sunlit rotunda vs the photograph's 0.292 — QA-10-17 got worse, not better).
+
+Held: alignment 1.3108 / -291.8 / -126.6 (bit-identical, fifth round), attic std 29.5, aniso 5.15, shaded attic lum
+122.1, reflection 128.6 (still clears the 124 floor), water sat 0.250 / R-B +34.4 (still failing).
+
+Hero **3.56 -> 3.61 (+0.05)**; Lighting mood 4 -> 4.5 and Material realism 3.5 -> 3 are the two halves of the same
+lamp. Full report and the re-stated defect table: `docs/qa_round_10b.md`; composite `renders/final/v2/round10b_gate.png`.
