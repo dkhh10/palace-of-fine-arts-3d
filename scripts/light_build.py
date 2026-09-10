@@ -405,15 +405,23 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   # the (0.00, 0.65, 90) row above) keeps 0.59 of the soffit, which puts the hero's box at ~86,
                   # still 1.9x the photograph. What DOES escape it is the bay index -- see `bay_weights` below.
                   # See docs/lighting_notes.md 28.
-                  # ROUND 18b: the cut is PER BAY, not global, and the split is physical. These emitters stand in
-                  # for "the plaza light the eight bays get through their own openings" -- and the eight openings do
-                  # not look at the same thing. Bay 0 (az 82) opens onto the LAGOON: water at grazing incidence,
-                  # which returns almost nothing diffuse. The other seven open onto the sunlit plaza, the lawn and
-                  # the colonnade walk. The hero photographs bay 0's barrel (box 900 380 1010 430); cam02, station
-                  # az 17.0, photographs bay 7's (az 37). Measured with ALL eight off (the ladder above), the hero
-                  # lands at 60.7 and cam02's soffits collapse to lum 36.9 / hue 332.9 (r17: 100.8 / 36.3), i.e. a
-                  # global cut trades the blocker for a worse defect on a listed hold. `bay_weights` keeps the seven
-                  # land-facing bays at the round-17 level and takes the lagoon-facing one to zero.
+                  # ROUND 18b: the cut is PER BAY, and the two bays that are kept are the two the OTHER cameras
+                  # depend on -- which is not a compromise, it is what the ray-cast in docs/lighting_notes.md 28.3
+                  # showed. The hero's QA-10-2 box is NOT a bay soffit: it is `ARCH_rotunda_ceiling_field`, the
+                  # central coffered ceiling at z 27.3 seen through the great arch, and EVERY bay emitter lights it
+                  # (all eight on 102.9 lum, bay 00 alone removed 78.9, all eight off 60.7). cam02's two soffit
+                  # boxes are bays 07 and 06 (`ARCH_rotunda_vault_07` / `ARCH_rotunda_vault_coffers_06`), and those
+                  # two bays are far enough round the drum that they put 0.2 lum on the hero's patch of ceiling.
+                  # Measured on the round-18 master, Cycles 64 spp (bordered hero + full cam02):
+                  #   bays kept          hero ceiling   cam02 soffit_l lum / hue / sat   soffit_r
+                  #   all eight (r17)       102.9        100.8 / 36.3 / 0.413            93.3 / 33.9 / 0.317
+                  #   1-7 (bay 00 off)       78.9        100.9 / 36.2 / 0.338            93.2 / 33.9 / 0.316
+                  #   06 + 07 (SHIPPED)      60.9         98.1 / 36.2 / 0.342            89.6 / 33.9 / 0.329
+                  #   06 + 07 at 0.6         60.8         80.5 / 34.8 / 0.367            74.4 / 31.6 / 0.332
+                  #   none                   60.9         36.9 / 332.9 / 0.190           39.3 / 305.9 / 0.173
+                  # So 06 + 07 at full weight lands QA-10-2 (45-65) AND holds cam02's soffits inside hue 25-60 /
+                  # sat <= 0.35 / rib-field >= 15; dropping them to 0.6 buys the hero 0.1 lum and costs cam02 18 lum.
+                  # The price is cam04, whose `coffer_field` is the SAME surface as the hero's box: see 28.4.
                   bay_weights=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0],
                   size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.95, 0.88), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
