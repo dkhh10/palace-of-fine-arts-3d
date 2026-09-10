@@ -9,7 +9,7 @@ import os
 from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MAIN = "/Users/dk/Projects/3d render blender 3rd attempt building"
+MAIN = os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building")  # r8 review fix
 W = 960
 panels = []
 
