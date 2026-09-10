@@ -2737,7 +2737,7 @@ Render cost, stated because the brief capped it: **two full Cycles heroes** (BEF
 **two full Cycles cam02** and **three full Cycles cam03** (the third because the shipped gallery level changed
 after ref 128 was measured), plus **twelve BORDERED Cycles frames** (five cam02 at 0.36 of the frame ~60 s, two
 cam01 at 0.40 ~102 s, three cam03 at 0.70 ~132 s) = 2306 s of Cycles, i.e. 12.1 frames by count but **6.4
-full-hero-equivalents** by GPU seconds. Two Eevee five-camera passes (01/02/03/04/06), 195.5 and 197.0 s.
+full-hero-equivalents** by GPU seconds. Two Eevee five-camera passes (01/02/03/04/06), 194.3 and 227.1 s, plus 7 Eevee timing frames (27.6).
 
 ### 27.1 Item 0 — what ARCH r8's geometry alone moved, on the round-16 rig, in CYCLES
 
@@ -2911,7 +2911,16 @@ walk's albedo is too light by roughly a factor of two against ref 128.**
 | hero columns hue / sat | 37.5 / 0.642 | 37.7 / 0.632 | 24.5 +- 4 | FAIL before and after, unmoved |
 | hero south / north wing lum | 100.1 / 138.4 | 101.4 / 139.2 | — | the gallery fill's only hero effect, +1.3 / +0.8 |
 | **QA-09-6** cam02 shade_pier / pier_r hue, CYCLES | 269.5 / 234.6 | 269.8 / 235.3 | 25-60 | **FAIL, not fixed** -- 27.3 |
-| Eevee five-camera pass | 195.5 s | **197.0 s** | — | +0.8 %; the gallery rig is hidden in Eevee |
+| Eevee five-camera pass | 194.3 s | 227.1 s | — | +17 %, and **NOT the gallery rig** -- see below |
+
+**The Eevee pass time is not a regression, and this was A/B'd rather than assumed.** The 16 gallery strips are
+`hide_render` in Eevee, so the +17 % looked like the light list paying for them anyway (QA-06-13's exact failure
+mode, and every camera slowed by 9-18 % including cam04, which sees no colonnade). Measured in ONE session with
+`light_r17_sweep --case gal=-1`, which deletes the strips from the file instead of zeroing them: cam04 **35.4 s
+with them deleted** against **35.1 / 35.5 s** with them present-and-hidden, cam01 **54.8** against **54.7 /
+55.0**. The rig costs Eevee **nothing**; the 194.3 -> 227.1 is machine state between two passes an hour and
+eight Cycles frames apart (the Cycles frames drifted the same way, +1 to +2 %). `hide_viewport` was also tried
+on the hidden strips and returned 0.4 s, so it is not set.
 
 The hero south / north wing rows were measured with the gallery fill at 2000 W (the level before ref 128 was
 measured); at the shipped 1200 W the effect is ~0.6 of that, i.e. +0.8 and +0.5 lum. Every other hero box moved

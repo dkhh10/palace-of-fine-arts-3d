@@ -296,6 +296,12 @@ def apply_case(c):
     for o in _VAULT:
         o["energy_W"] = _E_VAULT0 * c["v"]
     # ROUND 17: gallery fill energy, and the interior fills' COLOUR (the soffit's saturation lever, item 1)
+    if c["gal"] < 0.0:
+        # gal < 0 REMOVES the strips from the file instead of zeroing them: the only way to measure what their
+        # mere presence costs a render (round 17 asked that of the Eevee pass, where they are hidden anyway).
+        lb.build_gallery_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection, energy=0.0,
+                              energy_eevee=0.0)
+        _GALLERY.clear()
     for o in _GALLERY:
         o["energy_W"] = float(o["energy_W_ship"]) * c["gal"]
         o.data.energy = float(o["energy_W_ship"]) * c["gal"]

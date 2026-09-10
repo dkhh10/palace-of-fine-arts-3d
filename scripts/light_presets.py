@@ -183,6 +183,13 @@ def apply_gallery_for_engine(engine):
         try:
             o.data.energy = e
             o.hide_render = e <= 0.0
+            # ROUND 17: `hide_render` alone, and that is enough -- MEASURED, because the round-17 Eevee pass
+            # came in 17 % slower than the round-16 one and the 16 new strips were the obvious suspect. A/B in
+            # one session (light_r17_sweep `gal=-1` removes them from the file): cam04 35.4 s with the strips
+            # deleted against 35.1-35.5 s with them present-and-hidden, cam01 54.8 against 54.7-55.0. The rig
+            # costs Eevee nothing; the 17 % is machine state between two passes an hour apart. `hide_viewport`
+            # was tried and gave back exactly 0.4 s, so it is NOT set: these stay visible in the viewport where
+            # a human can select them. (QA-06-13 is the item that bought that pass time in round 14.)
         except Exception as err:
             print(f"[light_presets] cannot retune {o.name} ({err}); leaving it as it is")
             continue
