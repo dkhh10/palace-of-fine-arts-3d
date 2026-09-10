@@ -334,10 +334,13 @@ FILL = dict(name="LIGHT_rotunda_bounce", location=(0.0, 0.0, 7.5), size=36.0, en
             # fills' own colour is the whole of that saturation and nothing else in the rig reaches the soffit.
             # Measured on the round-17 master, Cycles cam02 64 spp, soffit_l / soffit_r saturation:
             # (1.0, 0.86, 0.68) -> 0.413 / 0.378; (1.0, 0.93, 0.84) -> 0.354 / 0.328; shipped (1.0, 0.95, 0.88).
-            # Hue moves 34.7 -> 35.8 and 32.2 -> 33.4 (both stay inside 25-60) and the coffer rib / field contrast
-            # is unmoved at 111-116 lum, so the coffers do not flatten. cam04's coffer ratio RISES with it
-            # (the fill is slightly more luminous at the same watts), which is the safe direction: it ships at
-            # 0.356 against a 0.35 floor.
+            # (r17 review finding 4: THIS row is the shipped one, measured on the round-17 master -- the
+            # "34.7 -> 35.8 / 32.2 -> 33.4" and "ships at 0.356" that used to stand here were the intermediate
+            # (1.0, 0.93, 0.84) case and the round-16 cam04 value.) SHIPPED, docs/lighting_notes.md 27.6:
+            # cam02 soffit_l hue 34.7 -> 36.3, soffit_r 32.3 -> 33.9, saturation 0.413 -> 0.340 / 0.378 -> 0.317,
+            # coffer rib / field contrast unmoved at 111.3 / 114.6 lum, so the coffers do not flatten. cam04's
+            # coffer ratio RISES with it (the fill is slightly more luminous at the same watts), which is the safe
+            # direction: it shipped at 0.386 against a 0.35 floor. ROUND 18 moved that -- see VAULT_FILL below.
             color=(1.0, 0.95, 0.88), spread_deg=150.0,
             note="QA-01-9 interior bounce fill: the plaza/lagoon bounce the model has no geometry for")
 
@@ -381,6 +384,45 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   # keeps the soffit mean within 4 % of ref 083 while the disk lifts the coffer field.
                   # ROUND 17: colour with FILL above, (1.0, 0.86, 0.68) -> (1.0, 0.95, 0.88); the two fills light
                   # the same soffits and a split colour would put a chroma seam across the barrel.
+                  # ROUND 18 (QA-10-2, the blocker): the bay emitters are the term that made the HERO's vault field
+                  # 2.30x the photograph, and they are the only term that can come off, because the disk is what
+                  # carries cam04's coffer. Isolated on the round-18 master (Cycles hero 64 spp,
+                  # bordered on the arch, box 900 380 1010 430; ref 169 aligned reads 44.9 lum / hue 4.5 / sat 0.318):
+                  #   f 1 v 1 (r17 SHIPPED)  102.9 lum   hue 39.7 sat 0.449     2.29x the photograph
+                  #   f 1 v 0.35              79.3       hue 40.4 sat 0.591     1.77x
+                  #   f 1 v 0   (SHIPPED)     60.7       hue 38.8 sat 0.648     1.35x, inside QA's 45-65
+                  #   f 0 v 0                 43.9       hue 37.9 sat 0.759     0.98x -- the model's own sky and
+                  #                                                             bounce ALONE already reproduce
+                  #                                                             ref 169's shade, with no fill at all
+                  # The whole 45-65 window is spanned between "no interior fill" and "the disk alone", so v must be
+                  # ~0 whatever f does: v 0.05 already reads 63 and v 0.10 reads 66. The disk stays at f 1.0 because
+                  # it is worth only 16.8 of the hero's 60.7 and it is the coffer's knob (27.4: 0.115 of coffer per
+                  # unit against the bay emitters' 0.095).
+                  # THE COST IS cam04 AND IT IS STRUCTURAL, not a tuning miss. ref 083 -- the source of the
+                  # 0.35-0.55 coffer window and of the soffit ratio -- is exposed FOR THE CEILING; ref 169 is
+                  # exposed for the sunlit stone. Round 08's own table shows no spread / height / radius that
+                  # escapes it: the best soffit/coffer trade on record (spread 45 -> 90 at 0.65 of the energy,
+                  # the (0.00, 0.65, 90) row above) keeps 0.59 of the soffit, which puts the hero's box at ~86,
+                  # still 1.9x the photograph. What DOES escape it is the bay index -- see `bay_weights` below.
+                  # See docs/lighting_notes.md 28.
+                  # ROUND 18b: the cut is PER BAY, and the two bays that are kept are the two the OTHER cameras
+                  # depend on -- which is not a compromise, it is what the ray-cast in docs/lighting_notes.md 28.3
+                  # showed. The hero's QA-10-2 box is NOT a bay soffit: it is `ARCH_rotunda_ceiling_field`, the
+                  # central coffered ceiling at z 27.3 seen through the great arch, and EVERY bay emitter lights it
+                  # (all eight on 102.9 lum, bay 00 alone removed 78.9, all eight off 60.7). cam02's two soffit
+                  # boxes are bays 07 and 06 (`ARCH_rotunda_vault_07` / `ARCH_rotunda_vault_coffers_06`), and those
+                  # two bays are far enough round the drum that they put 0.2 lum on the hero's patch of ceiling.
+                  # Measured on the round-18 master, Cycles 64 spp (bordered hero + full cam02):
+                  #   bays kept          hero ceiling   cam02 soffit_l lum / hue / sat   soffit_r
+                  #   all eight (r17)       102.9        100.8 / 36.3 / 0.413            93.3 / 33.9 / 0.317
+                  #   1-7 (bay 00 off)       78.9        100.9 / 36.2 / 0.338            93.2 / 33.9 / 0.316
+                  #   06 + 07 (SHIPPED)      60.9         98.1 / 36.2 / 0.342            89.6 / 33.9 / 0.329
+                  #   06 + 07 at 0.6         60.8         80.5 / 34.8 / 0.367            74.4 / 31.6 / 0.332
+                  #   none                   60.9         36.9 / 332.9 / 0.190           39.3 / 305.9 / 0.173
+                  # So 06 + 07 at full weight lands QA-10-2 (45-65) AND holds cam02's soffits inside hue 25-60 /
+                  # sat <= 0.35 / rib-field >= 15; dropping them to 0.6 buys the hero 0.1 lum and costs cam02 18 lum.
+                  # The price is cam04, whose `coffer_field` is the SAME surface as the hero's box: see 28.4.
+                  bay_weights=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0],
                   size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.95, 0.88), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
@@ -514,7 +556,10 @@ SUN_REFERENCE_W = 0.0              # set by build() to the calibrated lamp irrad
 # nothing at all for the colonnade it was aimed into (cam03's outer row 0.115 -> 0.110 when it was DOUBLED, and
 # 0.115 -> 0.119 with the whole rig off): what actually opens that box is Eevee's fast GI, see light_presets.
 # So both are deleted rather than dimmed. Round 14's text follows.
-SHADE_FILL = dict(name="LIGHT_shade_fill", energy=49.0, energy_eevee=38.5, angle_deg=55.0, specular=0.00,
+# LEAD 2026-09-10 (QA-10-2, docs/lighting_notes.md 28.x): the az-25 blue shade lamp is the magenta on the hero's arch jamb (its deposit
+# there is B +28 / R +2.5) and the violet on cam02's face. OFF: energy 49.0 -> 0.0, 38.5 -> 0.0. Moves the hero shaded attic hue ~35 -> ~41
+# and sat past 0.50 (stated in docs/status.md; the arch reading right at 100 % outranks those two windows). The lamp object stays (rig shape).
+SHADE_FILL = dict(name="LIGHT_shade_fill", energy=0.0, energy_eevee=0.0, angle_deg=55.0, specular=0.00,
                   # ROUND 14 (QA-06-2): the rig is no longer Eevee-only. `energy` 0.0 -> 70.0 W/m2 in CYCLES.
                   # The round-12 diffuse tint delivered the shade's blue AND flooded every up-facing surface in the
                   # build, because half of what reaches a shaded wall has bounced off a horizontal surface first
@@ -688,17 +733,32 @@ def build_shade_fill(coll, energy=None, energy_eevee=None):
 
 
 def build_vault_fill(coll):
-    """QA-02-12: eight up-facing rectangles, one under each rotunda vault bay (see the VAULT_FILL comment above)."""
+    """QA-02-12: eight up-facing rectangles, one under each rotunda vault bay (see the VAULT_FILL comment above).
+
+    ROUND 18: `energy` <= 0, or a per-bay weight of 0 in `bay_weights`, builds NO lamp for that bay, rather than a
+    0 W area light both engines would still put in the light list (the GALLERY_FILL pattern). The rig is restored
+    by putting the weights back to 1.0 -- nothing else in the build depends on the objects existing, and
+    `light_presets.apply_vault_for_engine` reads each lamp's own `energy_W`, so a partial rig switches correctly."""
     V = VAULT_FILL
     made = []
+    weights = V.get("bay_weights") or [1.0] * V["n"]
+    if V["energy"] <= 0.0 or max(weights) <= 0.0:
+        print(f"[light_build] {V['name']}: 0 W (round 18, QA-10-2), no lamps built")
+        return made
     for k in range(V["n"]):
+        # ROUND 18b: a bay whose weight is 0 gets no lamp at all, rather than a 0 W area light both engines
+        # would still carry in the light list (the GALLERY_FILL / round-18 pattern).
+        e_k = V["energy"] * float(weights[k % len(weights)])
+        if e_k <= 0.0:
+            print(f"[light_build] {V['name']}_{k:02d}: bay az {V['az0'] + 360.0 / V['n'] * k:.0f} weight 0, skipped")
+            continue
         a = math.radians(V["az0"] + 360.0 / V["n"] * k)
         nx, ny = -math.cos(a), math.sin(a)          # arch_params.az_dir: azimuth clockwise from north, north = -X
         name = f"{V['name']}_{k:02d}"
         light = bpy.data.lights.new(name, "AREA")
         light.shape = "RECTANGLE"
         light.size, light.size_y = V["size"], V["size_y"]
-        light.energy = V["energy"]
+        light.energy = e_k
         light.color = V["color"]
         light.use_shadow = True
         try:
@@ -711,13 +771,14 @@ def build_vault_fill(coll):
         obj.rotation_euler = (math.pi, 0.0, math.atan2(ny, nx))
         obj["note"] = V["note"]
         obj["bay_azimuth_deg"] = V["az0"] + 360.0 / V["n"] * k
-        obj["energy_W"] = V["energy"]        # the PHYSICAL (Cycles) energy; light_presets.apply_vault_for_engine
+        obj["energy_W"] = e_k                # the PHYSICAL (Cycles) energy; light_presets.apply_vault_for_engine
                                              # reads it back when it swaps the Eevee-only override in and out
         coll.objects.link(obj)
         made.append(obj)
     area = V["size"] * V["size_y"]
-    print(f"[light_build] {V['name']}: {V['n']} x {V['size']}x{V['size_y']} m up-facing rectangles at r {V['radius']} "
-          f"z {V['z']}, {V['energy']} W each (radiance {V['energy'] / (math.pi * area):.3f} sky units)")
+    print(f"[light_build] {V['name']}: {len(made)} of {V['n']} x {V['size']}x{V['size_y']} m up-facing rectangles "
+          f"at r {V['radius']} z {V['z']}, {V['energy']} W x bay weights {weights} "
+          f"(radiance {V['energy'] / (math.pi * area):.3f} sky units at weight 1)")
     return made
 
 

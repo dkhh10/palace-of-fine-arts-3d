@@ -222,6 +222,14 @@ def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
             # near-field bounce; the resulting shaded attic is measured against Cycles in docs/lighting_notes 24.8
             # (Eevee 109.2 vs Cycles 116.4, -6.2 % against a 15 % window).
             lp.apply_shade_for_engine("CYCLES")
+            # ROUND 18 (r17 review finding 1). `apply_shade_for_engine` chains `apply_gallery_for_engine` since
+            # round 17, so the line above silently put the sixteen colonnade strips at their CYCLES 1200 W -- and
+            # this is an EEVEE irradiance bake, where the whole point of GALLERY_FILL["energy_eevee"] = 0 is that
+            # Eevee's baked volumes ALREADY carry the gallery at 5x the Cycles level (cam03 near column 16.9 vs
+            # 3.3 lum, light_build's GALLERY_FILL comment). Baking the rig in would double-count it. The vault and
+            # shade rigs stay at their Cycles values on purpose (the paragraph above); the gallery is put back to
+            # its Eevee state here, and the `finally` restores whatever the caller's engine wants.
+            lp.apply_gallery_for_engine("EEVEE")
             switched = True
             print("[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the "
                   "scene's real indirect light, not the Eevee render-time override")
@@ -260,7 +268,8 @@ def bake(scene=None, free_first=True, physical_vault=True, lighting_world=True):
                 import light_presets as lp
                 rig = "EEVEE" if eng0.endswith("EEVEE") else "CYCLES"
                 lp.apply_vault_for_engine(rig)
-                lp.apply_shade_for_engine(rig)
+                lp.apply_shade_for_engine(rig)      # chains apply_gallery_for_engine(rig), r18: undoes the
+                                                    # bake-time EEVEE gallery state above in either direction
             except Exception as e:
                 print("[light_probes] could not restore the vault rig:", e)
         print(f"[light_probes] restored: engine {eng0}, world {world0.name if world0 else None}, vault rig "

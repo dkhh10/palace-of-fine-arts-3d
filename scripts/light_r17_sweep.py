@@ -299,6 +299,11 @@ def apply_case(c):
     if c["gal"] < 0.0:
         # gal < 0 REMOVES the strips from the file instead of zeroing them: the only way to measure what their
         # mere presence costs a render (round 17 asked that of the Eevee pass, where they are hidden anyway).
+        # r17 review finding 7: it is DESTRUCTIVE and irreversible inside one session -- `_GALLERY` is cleared, so
+        # every later case in the same run silently has no gallery at all. It must therefore be the last case.
+        if c is not CASES[-1]:
+            raise SystemExit("[r17] gal<0 deletes the gallery strips for the rest of the session; put that case "
+                             f"last (it is case {CASES.index(c) + 1} of {len(CASES)})")
         lb.build_gallery_fill(bpy.data.collections.get(lb.COLLECTION) or scene.collection, energy=0.0,
                               energy_eevee=0.0)
         _GALLERY.clear()
