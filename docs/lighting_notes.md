@@ -2735,8 +2735,8 @@ Master: `scripts/build_master.py` + `scripts/light_probes.py --bake` in this wor
 
 Render cost, stated because the brief capped it: **two full Cycles heroes** (BEFORE and AFTER, 190.1 + 190.5 s),
 **two full Cycles cam02** and **three full Cycles cam03** (the third because the shipped gallery level changed
-after ref 128 was measured), plus **twelve BORDERED Cycles frames** (five cam02 at 0.36 of the frame ~60 s, two
-cam01 at 0.40 ~102 s, three cam03 at 0.70 ~132 s) = 2306 s of Cycles, i.e. 12.1 frames by count but **6.4
+after ref 128 was measured), plus **twelve BORDERED Cycles frames** (seven cam02 at 0.36 of the frame ~60 s, two
+cam01 at 0.40 ~102 s, three cam03 at 0.70 ~132 s) = 2306 s of Cycles, i.e. 12.1 full frames by count but **6.4
 full-hero-equivalents** by GPU seconds. Two Eevee five-camera passes (01/02/03/04/06), 194.3 and 227.1 s, plus 7 Eevee timing frames (27.6).
 
 ### 27.1 Item 0 — what ARCH r8's geometry alone moved, on the round-16 rig, in CYCLES
