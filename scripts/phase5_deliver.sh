@@ -127,7 +127,7 @@ step6() {
   local t0=$SECONDS
   # checklist step 6: 640x360, 16 TAA, every 2nd frame. tech_notes.md: "give blender_run.sh an honest max (7200)".
   scripts/blender_run.sh 7200 -- --background --python scripts/phase5_flythrough.py -- \
-      --blend "$BLEND" --res 640 360 --samples 16 --frame-step 2 2>&1 | tee "$log"
+      --blend "$BLEND" --res 640 360 --samples 16 --frame-step 2 --fresh 2>&1 | tee "$log"
   echo "[phase5_deliver] step 6 (flythrough test frames) wall $(( SECONDS - t0 ))s -- log $log"
 
   local fps fstep

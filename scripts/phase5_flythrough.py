@@ -55,9 +55,10 @@ frames = sch["frames"] if sch else scene.frame_end
 fps = sch["fps"] if sch else 24
 scene.render.fps = fps
 FRAME_START = int(arg("--frame-start", 1))      # lead, Phase 5: resume a run the watchdog cut (keeps the step-2 grid)
-scene.frame_start, scene.frame_end = FRAME_START, frames
+FRAME_END = int(arg("--frame-end", frames))     # lead, Phase 5: render a partial range (resume the other half)
+scene.frame_start, scene.frame_end = FRAME_START, FRAME_END
 scene.frame_step = FRAME_STEP
-n_expected = len(range(FRAME_START, frames + 1, FRAME_STEP))
+n_expected = len(range(FRAME_START, FRAME_END + 1, FRAME_STEP))
 print(f"[phase5_flythrough] {frames} frames @ {fps} fps, step {FRAME_STEP} -> {n_expected} frames to render")
 
 lp.apply_preview_eevee(scene, samples=SAMPLES)   # 16 TAA per docs/tech_notes.md's flythrough test-animation recipe
@@ -68,7 +69,7 @@ scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_depth = "8"
 scene.render.image_settings.color_mode = "RGB"
 
-if OUT_DIR.exists() and FRAME_START == 1:       # a resumed run (--frame-start > 1) keeps the frames already rendered
+if OUT_DIR.exists() and "--fresh" in args:      # only --fresh wipes; a resumed / partial run keeps the frames already rendered
     shutil.rmtree(OUT_DIR)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 scene.render.filepath = str(OUT_DIR / "frame_####")
