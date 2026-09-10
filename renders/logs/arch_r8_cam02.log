@@ -1,0 +1,11 @@
+00:00.394  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/master.blend"
+01:49.169  render           | Saved: 'renders/previews/arch/r8_cam02.png'
+[common] set_lod viewport=LOD1 render=LOD0: 6448 objects, 6 collections
+[light_presets] vault emitters for CYCLES: 8 lights, physical energy, no cutoff
+[light_presets] shade fill for CYCLES: 1 lamps at 49.0 W/m2, hidden in render: False
+[arch_r8_render] CAM_qa_02_lagoon_ne_threequarter cycles 64 spp 1280x720 -> renders/previews/arch/r8_cam02.png
+[arch_r8_render] done in 105.5s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 68192 exited rc=0 after 110 s (max 900)

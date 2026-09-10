@@ -1,0 +1,40 @@
+00:00.318  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/architecture/master.blend"
+bay | object                     | faces |  worst dev |  n>0.45 | worst area | n>1.0 | worst centre
+ 00 | ARCH_rotunda_vault_coffers_00 |  9055 |      0.381 |       0 |      0.347 |     0 | (-8.5, 18.5, 17.8) ok
+ 00 | ARCH_rotunda_vault_00      |   112 |      0.010 |       0 |      0.738 |     0 | (-8.2, 18.0, 19.8) ok
+ 01 | ARCH_rotunda_vault_coffers_01 |  9055 |      0.381 |       0 |      0.347 |     0 | (7.1, 19.1, 17.8) ok
+ 01 | ARCH_rotunda_vault_01      |   112 |      0.010 |       0 |      0.738 |     0 | (15.9, 11.8, 19.8) ok
+ 02 | ARCH_rotunda_vault_coffers_02 |  9055 |      0.381 |       0 |      0.347 |     0 | (18.5, 8.5, 17.8) ok
+ 02 | ARCH_rotunda_vault_02      |   112 |      0.010 |       0 |      0.738 |     0 | (18.0, 8.2, 19.8) ok
+ 03 | ARCH_rotunda_vault_coffers_03 |  9055 |      0.381 |       0 |      0.347 |     0 | (19.1, -7.1, 17.8) ok
+ 03 | ARCH_rotunda_vault_03      |   112 |      0.010 |       0 |      0.738 |     0 | (11.8, -15.9, 19.8) ok
+ 04 | ARCH_rotunda_vault_coffers_04 |  9055 |      0.381 |       0 |      0.347 |     0 | (8.5, -18.5, 17.8) ok
+ 04 | ARCH_rotunda_vault_04      |   112 |      0.010 |       0 |      0.738 |     0 | (8.2, -18.0, 19.8) ok
+ 05 | ARCH_rotunda_vault_coffers_05 |  9055 |      0.381 |       0 |      0.347 |     0 | (-7.1, -19.1, 17.8) ok
+ 05 | ARCH_rotunda_vault_05      |   112 |      0.010 |       0 |      0.738 |     0 | (-15.9, -11.8, 19.8) ok
+ 06 | ARCH_rotunda_vault_coffers_06 |  9055 |      0.381 |       0 |      0.347 |     0 | (-18.5, -8.5, 17.8) ok
+ 06 | ARCH_rotunda_vault_06      |   112 |      0.010 |       0 |      0.738 |     0 | (-18.0, -8.2, 19.8) ok
+ 07 | ARCH_rotunda_vault_coffers_07 |  9055 |      0.381 |       0 |      0.347 |     0 | (-19.1, 7.1, 17.8) ok
+ 07 | ARCH_rotunda_vault_07      |   112 |      0.010 |       0 |      0.738 |     0 | (-11.8, 15.9, 19.8) ok
+    ceiling_ribs: 10238 faces, largest areas [1.26, 1.26, 1.25, 1.24, 1.22], max face-centre drop below the saucer sphere 0.568 m (legal <= COFFER_DEPTH 0.55 + tessellation)
+--- axis rays, bay 00 (cam01 hero, lagoon face) : start at apothem 30 m, direction -n
+  z=  16: clear
+  z=  17: clear
+  z=  18: clear
+  z=  19: clear
+  z=  20: clear
+  z=  21: clear
+  z=  22: clear
+--- axis rays, bay 07 (cam02 three-quarter) : start at apothem 30 m, direction -n
+  z=  16: clear
+  z=  17: clear
+  z=  18: clear
+  z=  19: clear
+  z=  20: clear
+  z=  21: clear
+  z=  22: clear
+FACECHECK PASSED: all 8 bays within 0.45 m of the soffit, no face over 1.0 m2
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 68039 exited rc=0 after 2 s (max 600)
