@@ -1,5 +1,22 @@
-"""Round-16 sweep (a copy of the round-15 sweep with the round-16 keys; the r15 script is left as the record of
-round 15). Round-15 header follows.
+"""Round-17 sweep (a copy of the round-16 sweep with the round-17 keys; the r16 script is left as the record of
+round 16). Round-16 header follows.
+
+New in round 17:
+  * `--bordercams` / `--bordergrid` -- the render border may now be applied to a NON-hero camera. Round 15 pinned
+    it to cam01 because the rectangle was stated in hero pixels and applying the same FRACTIONS to a 1280x720
+    camera cropped it to an unrelated rectangle. The rectangle is now stated in the pixels of an explicit grid
+    (`--bordergrid`, default 1920 1080) and applied only to the cameras in `--bordercams` (default 01), so a cam02
+    or cam03 sweep costs a third of a frame instead of a whole one. Every round-16 command line still means what
+    it meant then.
+  * `gal` -- LIGHT_gallery_fill energy scale (ARCH r8 / QA-09-5). 1.0 = as shipped, 0.0 = the round-16 rig.
+  * `ifr` / `ifg` / `ifb` -- the COLOUR of the two warm interior fills (FILL + VAULT_FILL), which round 17 is the
+    first round to move: they ship at (1.0, 0.86, 0.68) and they are what the coffered arch soffits are lit by,
+    so they set the soffit's SATURATION (brief item 1 wants <= 0.35 at hue 25-60). -1 = keep.
+  * `ci` -- `cycles.sample_clamp_indirect`. ARCH r8's "speckle on the sunlit shafts" was seen in tiles rendered
+    through `common.configure_cycles`, which leaves the clamp at Blender's default 0.0 = OFF, where the shipped
+    `light_presets.apply_final_cycles` clamps at 10.0. The key exists so that is measured, not argued.
+
+Round-16 header follows.
 
 New keys:
   * `tsr` / `tsg` / `tsb` / `tsp` -- SKY_DIFFUSE_TINT_SUNSIDE and its exponent (QA-08-3). The MIRROR of the
@@ -36,7 +53,7 @@ of round 13).
     (round-12 behaviour), 0 = do not re-bake, 3 = free the caches.
   * `ms` / `md` -- MIST start / depth.   `hz` / `hk` -- the compositor's haze cap and extinction.
 
-    scripts/blender_run.sh 1200 -- --background --python scripts/light_r16_sweep.py -- --cams 01e 01c
+    scripts/blender_run.sh 1200 -- --background --python scripts/light_r17_sweep.py -- --cams 01e 01c
 """
 import bpy, os, sys, time
 from pathlib import Path
@@ -72,11 +89,13 @@ SAMPLES = int(arg("--samples", ["64"], n=1)[0])
 EEVEE_SAMPLES = int(arg("--eevsamples", ["32"], n=1)[0])
 MASTER = arg("--master", [str(common.ROOT / "master.blend")], n=1)[0]   # THIS worktree's master, per the round-12 lesson
 OUT = Path(arg("--out", [str(common.RENDERS / "previews" / "lighting")], n=1)[0])
-PREFIX = arg("--prefix", ["r16"], n=1)[0]
+PREFIX = arg("--prefix", ["r17"], n=1)[0]
 # --border x0 y0 x1 y1 in HERO pixels (1920x1080): render only that rectangle and leave the rest black, WITHOUT
 # cropping, so every measurement box still lands on the same pixel coordinates. A carry that only needs the attic
 # and the water costs a quarter of a frame instead of a whole one.
 BORDER = [int(v) for v in arg("--border", [], n=4)]
+BORDER_GRID = [int(v) for v in arg("--bordergrid", ["1920", "1080"], n=2)]
+BORDER_CAMS = arg("--bordercams", ["01"])
 OUT.mkdir(parents=True, exist_ok=True)
 
 CAM_OBJ = {"01": "CAM_qa_01_lagoon_hero", "02": "CAM_qa_02_lagoon_ne_threequarter",
@@ -111,6 +130,9 @@ DEFAULTS = dict(sky=lb.SKY_STRENGTH, cb=lb.SKY_CAMERA_BOOST, gb=lb.SKY_GLOSSY_BO
                 tsr=lb.SKY_DIFFUSE_TINT_SUNSIDE[0], tsg=lb.SKY_DIFFUSE_TINT_SUNSIDE[1],
                 tsb=lb.SKY_DIFFUSE_TINT_SUNSIDE[2], tsp=lb.SKY_DIFFUSE_TINT_SUNSIDE_P,
                 faz=-1.0,                         # ROUND 16 (QA-08-2): SHADE_FILL lamp azimuth (-1 = keep)
+                gal=1.0,                          # ROUND 17: GALLERY_FILL energy scale (0 = the round-16 rig)
+                ifr=-1.0, ifg=-1.0, ifb=-1.0,     # ROUND 17: interior-fill colour (FILL + VAULT_FILL), -1 = keep
+                ci=-1.0,                          # ROUND 17: cycles.sample_clamp_indirect (-1 = the preset's 10)
                 wwnw=-1.0, wssw=-1.0, wnne=-1.0,  # ROUND 15: per-lamp SHADE_FILL weights (-1 = keep)
                 sres=-1.0, sray=-1.0, srstep=-1.0, nfill=-1.0,
                 sfres=-1.0, sfjit=-1.0,
@@ -154,7 +176,7 @@ for c in CASES:
         e = cal.measure_exposure(AZ, EL, m["lamp_energy"], m["sun_color_normalised"], lb.SKY,
                                  samples=256, sky_strength=c["sky"])
         _calib[c["sky"]] = (m["lamp_energy"], list(m["sun_color_normalised"]), e["exposure_ev"])
-        print(f"[r16] calibrate sky {c['sky']:g}: lamp {m['lamp_energy']:.2f} W/m2 "
+        print(f"[r17] calibrate sky {c['sky']:g}: lamp {m['lamp_energy']:.2f} W/m2 "
               f"exposure {e['exposure_ev']:.3f} EV", flush=True)
 
 bpy.ops.wm.open_mainfile(filepath=MASTER, load_ui=False)
@@ -167,9 +189,15 @@ _DISK = bpy.data.objects.get(lb.FILL["name"])
 _VAULT = sorted([o for o in bpy.data.objects if o.name.startswith(lb.VAULT_FILL["name"])], key=lambda o: o.name)
 _E_DISK0 = float(_DISK.get("energy_W", _DISK.data.energy)) if _DISK else 0.0
 _E_VAULT0 = float(_VAULT[0].get("energy_W", _VAULT[0].data.energy)) if _VAULT else 0.0
+# ROUND 17: the gallery fill. A master built from a round-16 assets/lighting.blend has none, in which case `gal`
+# is a no-op and the sweep still runs (the round-12 lesson: measure on the master, do not assume the asset).
+_GALLERY = sorted([o for o in bpy.data.objects if o.name.startswith(lb.GALLERY_FILL["name"])], key=lambda o: o.name)
+for _o in _GALLERY:
+    _o["energy_W_ship"] = float(_o.get("energy_W", _o.data.energy))
+_IF_COLOR0 = tuple(_DISK.data.color) if _DISK else (1.0, 1.0, 1.0)
 _SHADE_FILL0 = dict(lb.SHADE_FILL, lamps=[dict(l) for l in lb.SHADE_FILL["lamps"]])   # pristine copy (r11 fix 7)
 _N_OBJ = len(scene.objects)
-print(f"[r16] master {MASTER}: {_N_OBJ} objects, exposure {EXPOSURE0:.4f}, look {scene.view_settings.look!r}, "
+print(f"[r17] master {MASTER}: {_N_OBJ} objects, exposure {EXPOSURE0:.4f}, look {scene.view_settings.look!r}, "
       f"engine {scene.render.engine}, world {WORLD0.name!r}, sun {sun.data.energy:.2f} W/m2", flush=True)
 
 
@@ -267,15 +295,22 @@ def apply_case(c):
         _DISK.data.energy = _E_DISK0 * c["f"]
     for o in _VAULT:
         o["energy_W"] = _E_VAULT0 * c["v"]
+    # ROUND 17: gallery fill energy, and the interior fills' COLOUR (the soffit's saturation lever, item 1)
+    for o in _GALLERY:
+        o["energy_W"] = float(o["energy_W_ship"]) * c["gal"]
+        o.data.energy = float(o["energy_W_ship"]) * c["gal"]
+    if min(c["ifr"], c["ifg"], c["ifb"]) >= 0.0:
+        for o in ([_DISK] if _DISK else []) + _VAULT:
+            o.data.color = (c["ifr"], c["ifg"], c["ifb"])
     # --- the Eevee irradiance bake (item 1). This is what carries the shade in Eevee, so it is a case key.
     if c["bake"] > 2.5:
         probes.free(scene)          # bake=3: no irradiance volumes at all, i.e. Eevee's world SH alone
-        print("[r16] light-probe caches FREED: the frame is lit by the world SH and the lamps only", flush=True)
+        print("[r17] light-probe caches FREED: the frame is lit by the world SH and the lamps only", flush=True)
     elif c["bake"] > 0.5:
         lighting = c["bake"] < 1.5
         t = time.time()
         probes.bake(scene, lighting_world=lighting)
-        print(f"[r16] re-baked with the {'LIGHTING (r13)' if lighting else 'SCENE/CAMERA (r12)'} world "
+        print(f"[r17] re-baked with the {'LIGHTING (r13)' if lighting else 'SCENE/CAMERA (r12)'} world "
               f"in {time.time()-t:.0f}s", flush=True)
     # r14 review carry 1: print what the WORLD actually carries, not the case keys. A case that moves no sky key
     # reuses the master's own saved world, whose exponents / boosts are NOT the sweep defaults, and the old header
@@ -289,7 +324,7 @@ def apply_case(c):
     wt = W.get("sky_diffuse_tint", [c["tr"], c["tg"], c["tb"]])
     lamps = ",".join(f"az{l['az']:g}@{l['w']:g}" for l in lb.SHADE_FILL["lamps"])
     wts = W.get("sky_diffuse_tint_sunside", [c["tsr"], c["tsg"], c["tsb"]])
-    print(f"[r16] case {case_tag(c)}: bake {c['bake']:g} comp {c['comp']:g} mist start {c['ms']:g} depth {c['md']:g} "
+    print(f"[r17] case {case_tag(c)}: bake {c['bake']:g} comp {c['comp']:g} mist start {c['ms']:g} depth {c['md']:g} "
           f"haze cap {c['hz']:g} k {c['hk']:g} | WORLD {W.name!r} db {wp('sky_diffuse_boost', c['db']):g} "
           f"gb {wp('sky_glossy_boost', c['gb']):g} gsat {wp('sky_glossy_saturation', c['gsat']):g} "
           f"ghue {wp('sky_glossy_hue', c['ghue']):.4f} "
@@ -298,7 +333,9 @@ def apply_case(c):
           f"th {wp('sky_diffuse_tint_horizon', c['th']):g}^{wp('sky_diffuse_tint_horizon_p', c['thp']):g} "
           f"sunside {','.join(f'{float(v):g}' for v in wts)}^{wp('sky_diffuse_tint_sunside_p', c['tsp']):g} | "
           f"shade cycles {(lb.SHADE_FILL.get('energy', 0.0) if c['cfill'] < 0.0 else c['cfill']):g} "
-          f"eevee {c['fill']:g} W/m2 w [{lamps}] | f {c['f']:g} v {c['v']:g} "
+          f"eevee {c['fill']:g} W/m2 w [{lamps}] | f {c['f']:g} v {c['v']:g} gal {c['gal']:g} "
+          f"({len(_GALLERY)} strips at {(_GALLERY[0].data.energy if _GALLERY else 0.0):.0f} W) "
+          f"ifcol {','.join(f'{v:.2f}' for v in (_DISK.data.color if _DISK else (0, 0, 0)))} | "
           f"exposure {scene.view_settings.exposure:.3f} EV", flush=True)
 
 
@@ -312,16 +349,21 @@ def shoot(cam_id, tag):
     # ROUND 15: the border is stated in HERO pixels, so it may only be applied to the hero. Applying the same
     # fractions to a 1280x720 camera would crop cam02 / 03 / 05 / 06 to an unrelated rectangle (r14 applied it to
     # every camera, which is only safe because r14 never mixed a bordered hero with the other cameras in one run).
-    use_border = bool(BORDER) and num == "01"
+    use_border = bool(BORDER) and num in BORDER_CAMS
     scene.render.use_border = use_border
     scene.render.use_crop_to_border = False
     if use_border:
         x0, y0, x1, y1 = BORDER
-        W, H = res
-        scene.render.border_min_x, scene.render.border_max_x = x0 / 1920.0, x1 / 1920.0
-        scene.render.border_min_y, scene.render.border_max_y = 1.0 - y1 / 1080.0, 1.0 - y0 / 1080.0
+        GW, GH = BORDER_GRID
+        scene.render.border_min_x, scene.render.border_max_x = x0 / float(GW), x1 / float(GW)
+        scene.render.border_min_y, scene.render.border_max_y = 1.0 - y1 / float(GH), 1.0 - y0 / float(GH)
     if eng == "c":
         lp.apply_final_cycles(scene, samples=SAMPLES, time_limit=0.0)
+        if CASE["ci"] >= 0.0:
+            scene.cycles.sample_clamp_indirect = CASE["ci"]
+        print(f"[r17] cycles clamp direct {scene.cycles.sample_clamp_direct:g} indirect "
+              f"{scene.cycles.sample_clamp_indirect:g} adaptive {scene.cycles.use_adaptive_sampling} "
+              f"thr {scene.cycles.adaptive_threshold:g}", flush=True)
     elif eng == "v":
         lp.apply_viewport_eevee(scene)
     else:
@@ -343,11 +385,11 @@ def shoot(cam_id, tag):
             e.shadow_ray_count = int(CASE["sray"])
         if CASE["srstep"] >= 0.0:
             e.shadow_step_count = int(CASE["srstep"])
-        print(f"[r16] eevee: fast_gi {e.use_fast_gi} dist {getattr(e, 'fast_gi_distance', 0):.1f} rays "
+        print(f"[r17] eevee: fast_gi {e.use_fast_gi} dist {getattr(e, 'fast_gi_distance', 0):.1f} rays "
               f"{e.fast_gi_ray_count} raytracing {e.use_raytracing} threshold {e.light_threshold}", flush=True)
     if CASE.get("look"):
         scene.view_settings.look = CASE["look"]
-    print(f"[r16] view transform {scene.view_settings.view_transform!r} look {scene.view_settings.look!r} "
+    print(f"[r17] view transform {scene.view_settings.view_transform!r} look {scene.view_settings.look!r} "
           f"exposure {scene.view_settings.exposure:.3f} EV", flush=True)
     fp = OUT / f"{PREFIX}_{tag}_{num}{eng}.png"
     scene.render.filepath = str(fp)
@@ -355,7 +397,7 @@ def shoot(cam_id, tag):
     bpy.ops.render.render(write_still=True)
     dt = time.time() - t
     TIMES.append((cam_id, dt))
-    print(f"[r16] -> {fp.name} ({dt:.1f}s, {res[0]}x{res[1]})", flush=True)
+    print(f"[r17] -> {fp.name} ({dt:.1f}s, {res[0]}x{res[1]})", flush=True)
 
 
 TIMES = []
@@ -365,6 +407,6 @@ for c in CASES:
     apply_case(c)
     for cam in CAMS:
         shoot(cam, case_tag(c))
-print(f"[r16] camera times: " + "  ".join(f"{k} {v:.1f}s" for k, v in TIMES) +
+print(f"[r17] camera times: " + "  ".join(f"{k} {v:.1f}s" for k, v in TIMES) +
       f"   TOTAL {sum(v for _, v in TIMES):.1f}s over {len(TIMES)} frames", flush=True)
-print("[r16] done", flush=True)
+print("[r17] done", flush=True)

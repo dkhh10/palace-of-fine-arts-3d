@@ -1,13 +1,13 @@
 """Round-17 lighting measurement (QA-09-6 cam02 soffit, QA-09-5 / ARCH-r8 cam03 near column, the hero holds).
 
-It is `light_r16_measure` with three additions, and ONE deliberate non-change:
+It is `light_r16_measure` with three additions:
 
-  * **cam02's boxes are NOT re-based in pixels.** Round-16 picked them on the 27 mm frame of the round-08 NNE
-    station and the station and lens have not moved; what moved is the GEOMETRY behind `shade_arch` (ARCH r8
-    replaced the chord-triangle plate inside the arch with the real coffered barrel). Round-17 brief item 0 asks
-    for the before / after of the SAME box on the SAME rig, so the pixel rectangles are held fixed on purpose and
-    the r16 row in docs/lighting_notes.md 26.6 is directly comparable. (`shade_arch` is renamed nowhere; it now
-    lands on the coffered soffit instead of on a flat plate 2 m in front of it.)
+  * **cam02 gains two soffit boxes and keeps the r16 one unmoved** (round-17 brief item 0). The station and lens
+    have not moved since round 16, so every r16 rectangle still lands where it landed -- but the GEOMETRY behind
+    `shade_arch` has changed: ARCH r8 deleted the rib plate's chord triangles that filled the opening, and drawn
+    on the new frame that rectangle is the CENTRAL FLUTED SHAFT CLUSTER between the two near arches, not a soffit.
+    It is kept, unmoved and reported, so the r16 row in docs/lighting_notes.md 26.6 stays directly comparable, and
+    `soffit_l` / `soffit_r` are added on the coffered barrels themselves.
   * **cam03 grows the near-column boxes** (ARCH r8 hand-off: `ARCH_colonnade_south_column_028` enters the frame at
     x 857 and runs off the right edge, 423 px = 33 % of the width, mean luminance 3.7 / p95 12.1 / max 30.9).
     `near_column` is that shaft; `flute` reports the modulation ACROSS it, which is the brief's acceptance:
@@ -37,6 +37,16 @@ BOXES = {k: dict(size=v["size"], boxes=dict(v["boxes"])) for k, v in m16.BOXES.i
 # ---- cam03: the near column ARCH r8 handed over, plus the flute-modulation band inside it.
 # The shaft's visible silhouette is x 857 -> 1280 (it runs off the right edge). 900-1270 is ARCH's own window, kept
 # so their 3.7 / 12.1 / 30.9 and this script's numbers are the same measurement.
+# ---- cam02: the arch soffit box is RE-BASED, and this is round-17 brief item 0.
+# The r16 box `shade_arch` (580 275 690 355) was picked when the opening was filled by the rib plate's chord
+# triangles; on ARCH r8's geometry the same rectangle lands on the CENTRAL FLUTED SHAFT CLUSTER between the two
+# near arches (verified by drawing it on r17BEFORE_BEFORE_02c.png), which is why it still reads violet. It is kept,
+# unmoved and reported, so the r16 row in docs/lighting_notes.md 26.6 stays comparable -- and renamed in the report
+# for what it is. The two NEW boxes below are the coffered barrels themselves, one per near arch, clear of the
+# archivolt, of the blue shafts and (on the right) of ENV's foliage.
+BOXES["02"]["boxes"]["soffit_l"] = (495, 295, 575, 352)
+BOXES["02"]["boxes"]["soffit_r"] = (735, 297, 822, 356)
+
 BOXES["03"]["boxes"]["near_column"] = (900, 150, 1270, 700)
 # the band the flute profile is taken across: mid-shaft, clear of the base (z 0.4 + 0.9 m plinth) and of the
 # foliage clumps ENV parks at the top of the frame.
@@ -49,16 +59,27 @@ BOXES["04"] = dict(size=(1280, 720), boxes=dict(CEIL))
 
 WIN = dict(m16.WIN)
 WIN[("03", "near_column")] = dict(ref="ARCH r8: mean 3.7 / p95 12.1 / max 30.9; brief p95 >= 25")
-WIN[("02", "shade_arch")] = dict(hue_qa=(25.0, 60.0), sat=(0.0, 0.35), ref="QA-09-6 Cycles 249.5; brief hue 25-60")
+WIN[("02", "shade_arch")] = dict(hue_qa=(25.0, 60.0), sat=(0.0, 0.35), ref="QA-09-6 Cycles 249.5 -- the r16 box, now on the shaft cluster")
+for k in ("soffit_l", "soffit_r"):
+    WIN[("02", k)] = dict(hue_qa=(25.0, 60.0), sat=(0.0, 0.35), ref="brief r17 item 1: shaded warm plaster")
 
 # brief item 1 / 2 acceptance, checked in code so the verdict cannot drift from the text
 TESTS = {
     ("03", "near_column", "p95"): (25.0, 1e9, "brief: flute modulation visible"),
     ("03", "flute_band", "ridge_floor"): (8.0, 1e9, "brief: flute ridge - flute floor >= 8 lum"),
-    ("02", "shade_arch", "rib_field"): (15.0, 1e9, "brief: coffer rib / field contrast >= 15 lum"),
+    ("02", "soffit_l", "rib_field"): (15.0, 1e9, "brief: coffer rib / field contrast >= 15 lum"),
+    ("02", "soffit_r", "rib_field"): (15.0, 1e9, "brief: coffer rib / field contrast >= 15 lum"),
 }
 
-cam_of = m16.cam_of
+def cam_of(name):
+    """m15.cam_of resolves a camera id against m15.BOXES, which has no cam04; resolve against OUR box set."""
+    tail = Path(name).stem.split("_")[-1]
+    if len(tail) >= 2 and tail[:2] in BOXES:
+        return tail[:2]
+    for k in BOXES:
+        if f"_{k}" in Path(name).stem:
+            return k
+    return None
 
 
 def profile_stats(a):
@@ -99,15 +120,16 @@ def measure(path):
                             dark=float((a.max(2) < 10.0).mean()), p95=0.0, max=0.0)
     if cam == "02":
         den = max(1e-6, out["sunlit_pier"]["lum"])
-        for k in ("shade_pier", "shade_pier_r", "shade_arch", "shade_frieze"):
+        for k in ("shade_pier", "shade_pier_r", "shade_arch", "shade_frieze", "soffit_l", "soffit_r"):
             out[k]["ratio"] = out[k]["lum"] / den
         # coffer readability inside the arch: the rib / field split of the soffit box, taken as the bright and dark
         # quarters of its own luminance histogram (the ribs are the bright lattice, the coffer fields the dark
         # panels between them). Flat plate -> ~0; a lit coffered barrel -> tens of lum.
-        x0, y0, x1, y1 = spec["boxes"]["shade_arch"]
-        lum = np.sort(a[y0:y1, x0:x1].max(2).ravel())
-        n = max(1, lum.size // 4)
-        out["shade_arch"]["rib_field"] = float(lum[-n:].mean() - lum[:n].mean())
+        for k in ("shade_arch", "soffit_l", "soffit_r"):
+            x0, y0, x1, y1 = spec["boxes"][k]
+            lum = np.sort(a[y0:y1, x0:x1].max(2).ravel())
+            n = max(1, lum.size // 4)
+            out[k]["rib_field"] = float(lum[-n:].mean() - lum[:n].mean())
     if cam == "04":
         den = max(1e-6, out["own_sky"]["lum"])
         for k in out:
@@ -116,7 +138,7 @@ def measure(path):
 
 
 def _verdict(cam, k, s):
-    out = m16._verdict(cam, k, s)
+    out = m16._verdict(cam, k, s, win=WIN)
     for (c, box, key), (lo, hi, why) in TESTS.items():
         if (c, box) == (cam, k) and key in s:
             out += f"  {key} {'PASS' if lo <= s[key] <= hi else 'FAIL'}[>={lo:g}]"

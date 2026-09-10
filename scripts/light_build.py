@@ -371,6 +371,41 @@ VAULT_FILL = dict(name="LIGHT_rotunda_vault_bounce", n=8, az0=82.0, radius=17.5,
                   size=12.5, size_y=4.0, energy=3564.0, color=(1.0, 0.86, 0.68), spread_deg=45.0,
                   note="QA-02-12 vault-soffit bounce: the plaza light the eight bays get through their own openings")
 
+# ----------------------------------------------------------------------------- ROUND 17: the colonnade gallery
+# ARCH r8's hand-off, re-measured here (scripts/light_r17_gallery.py, log light_r17_gallery.log): the camera-facing
+# side of `ARCH_colonnade_south_column_028` -- 33 % of cam03's width -- sees **5.5 %** of the sky, cosine-weighted,
+# and the walk under it 14.6 %. Straight up from the walk the first hit is the colonnade's own mutule soffit at
+# z 15.20, i.e. the gallery is a roofed 4.5 m slot 15 m deep, closed on one long side by ENV's exhibition-hall
+# backdrop (21 % of that shaft's hemisphere). Nothing in the round-16 rig reaches it: `LIGHT_shade_fill` is a
+# 2 deg sun lamp and the colonnade shadows it, and r15 measured that no value of its weight moves the box. In
+# CYCLES the shaft therefore renders at mean luminance **3.3 / 255**, 3 % of the sunlit rotunda opposite, and
+# 39.9 % of the whole cam03 frame is under 10 lum.
+#
+# This is the same class of hole as QA-01-9 and QA-02-12 and it gets the same primitive: an emitter standing in
+# for a bounce the model does not carry -- here the gravel walk and the sunlit ground outside the colonnade, both
+# of which the render's own paving reads at 13.6 lum, i.e. already too dark to bounce anything. The strips are
+# UP-FACING, so they add nothing to the walk directly (an area light emits from one side only) and light the
+# shafts, the soffit and the entablature above; the walk comes up through the soffit bounce, which is the right
+# order for a covered gallery.
+#
+# Placement is fitted to the geometry, not to arch_params: both wings' main rows sit on a mean radius of 117.40 m
+# about (-11.2, 84.7) -- two rows 4.5 m apart, so the WALK centreline is exactly that mean -- over arcs of 100.9 m
+# (south, 58 columns) and 98.3 m (north, 56). Eight strips per wing at 12.6 m spacing with a 13.0 m strip length
+# is continuous coverage.
+#
+# EEVEE gets NONE of it (`energy_eevee` 0.0, so `light_presets.apply_gallery_for_engine` sets hide_render). Two
+# reasons, both measured: Eevee's baked irradiance volume already carries the gallery at 5x the Cycles level
+# (cam03 near column 16.9 vs 3.3 lum, p95 30 vs 20, frame black 4.6 % vs 39.9 %), so it needs no fill; and
+# sixteen shadow-mapped area lights would re-open QA-06-13, the Eevee six-camera pass time that round 14 spent a
+# whole item bringing back down. This is the round-13 SHADE_FILL pattern with the engines the other way round.
+GALLERY_FILL = dict(name="LIGHT_gallery_fill", n=8, center=(-11.2, 84.7), radius=117.40, z=-0.20,
+                    size=13.0, size_y=4.4, energy=1000.0, energy_eevee=0.0,
+                    color=(1.0, 0.86, 0.68), spread_deg=150.0,
+                    # arcs measured on the master (degrees about `center`, atan2 of the column origins)
+                    wings={"south": (-66.9, -18.0), "north": (-144.3, -96.9)},
+                    note="ROUND 17: the gravel-walk and outside-ground bounce the colonnade gallery has no "
+                         "geometry for; CYCLES only, see the comment above")
+
 # ----------------------------------------------------------------------------- QA-04-2: the shade fill
 # ROUND 11. QA measured the shade collapsed: cam03's near shaft 7.3 against ref 128's 69.7, the cam03 ground 21.2,
 # and the hero's shaded north attic at hue 43.1 / saturation 0.736 against ref 169's 29.5 / 0.425 - i.e. the shade is
@@ -658,6 +693,67 @@ def build_vault_fill(coll):
     return made
 
 
+def build_gallery_fill(coll, energy=None, energy_eevee=None):
+    """ROUND 17 (ARCH r8 / QA-09-5): up-facing warm strips along both colonnade walks. See the GALLERY_FILL
+    comment. Idempotent: any existing lamp with this prefix is removed first, so a sweep can rebuild the rig in
+    memory the way `build_shade_fill` does.
+
+    Both energies are written to custom properties (`energy_W`, `energy_W_eevee`) and
+    `light_presets.apply_gallery_for_engine` switches `data.energy` / `hide_render` between them, exactly as for
+    the shade fill and the vault emitters. The lamps are invisible to CAMERA and GLOSSY rays: they stand in for a
+    diffuse bounce, so a camera at eye level must not photograph them (the walk floor is 0.4 m below them and
+    cam03's station is 1.9 m above them) and they must not put a specular streak down a polished shaft -- the same
+    reasoning as SHADE_FILL's `specular = 0.00`."""
+    G = GALLERY_FILL
+    e = G["energy"] if energy is None else energy
+    e_eev = G.get("energy_eevee", 0.0) if energy_eevee is None else energy_eevee
+    for o in [o for o in bpy.data.objects if o.name.startswith(G["name"])]:
+        d = o.data
+        bpy.data.objects.remove(o, do_unlink=True)
+        if d is not None and d.users == 0:
+            bpy.data.lights.remove(d)
+    if max(e, e_eev) <= 0.0:
+        print(f"[light_build] {G['name']}: 0 W in both engines, no lamps built")
+        return []
+    cx, cy = G["center"]
+    out = []
+    for wing, (a0, a1) in sorted(G["wings"].items()):
+        for i in range(G["n"]):
+            # strip centres at the midpoints of n equal arc slices, so the run is covered end to end
+            a = math.radians(a0 + (a1 - a0) * (i + 0.5) / G["n"])
+            x, y = cx + G["radius"] * math.cos(a), cy + G["radius"] * math.sin(a)
+            name = f"{G['name']}_{wing}_{i:02d}"
+            light = bpy.data.lights.new(name, "AREA")
+            light.shape = "RECTANGLE"
+            light.size, light.size_y = G["size"], G["size_y"]
+            light.energy = e
+            light.color = G["color"]
+            light.use_shadow = True
+            try:
+                light.spread = math.radians(G["spread_deg"])
+            except Exception:
+                pass
+            obj = bpy.data.objects.new(name, light)
+            obj.location = (x, y, G["z"])
+            # emit UP, with the strip's long axis along the walk (tangent to the arc)
+            obj.rotation_euler = (math.pi, 0.0, a + math.pi / 2.0)
+            obj["energy_W"] = e
+            obj["energy_W_eevee"] = e_eev
+            obj["note"] = G["note"]
+            for attr in ("visible_camera", "visible_glossy"):
+                try:
+                    setattr(obj, attr, False)
+                except Exception:
+                    pass
+            coll.objects.link(obj)
+            out.append(obj)
+    area = G["size"] * G["size_y"]
+    print(f"[light_build] {G['name']}: {len(out)} strips of {G['size']}x{G['size_y']} m on r {G['radius']} at "
+          f"z {G['z']}, {e:.0f} W each (radiance {e / (math.pi * area):.2f} sky units), "
+          f"eevee {e_eev:.0f} W; camera- and glossy-invisible")
+    return out
+
+
 def build_world(az, el, calib, moment):
     old = bpy.data.worlds.get(WORLD_NAME)
     if old:
@@ -865,6 +961,7 @@ def build(moment="morning", calibrate=True, save=True):
     fill = build_fill(coll)
     shade = build_shade_fill(coll)
     vault_fill = build_vault_fill(coll)     # QA-02-12
+    gallery_fill = build_gallery_fill(coll)  # ROUND 17: the colonnade gallery bounce
     probes.ensure_probes(scene, coll)      # QA-01-9: unbaked here (no geometry); the lead bakes them on master
     world = build_world(az, el, calib, moment)
     scene.world = world

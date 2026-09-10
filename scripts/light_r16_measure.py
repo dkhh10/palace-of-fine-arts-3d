@@ -77,8 +77,10 @@ def measure(path):
 verdict = m15.verdict
 
 
-def _verdict(cam, k, s):
-    w = WIN.get((cam, k))
+def _verdict(cam, k, s, win=None):
+    # r17: a later round subclasses this module and adds boxes; without `win` the verdict would silently be read
+    # from round 16's own table and every new box would print no verdict at all.
+    w = (win if win is not None else WIN).get((cam, k))
     if not w:
         return ""
     bits = []
