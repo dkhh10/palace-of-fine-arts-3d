@@ -31,6 +31,25 @@ def accessor_count(doc, idx):
     return doc["accessors"][idx]["count"] if idx is not None else 0
 
 
+def mesh_centre(doc, mesh_idx):
+    """Centre of a mesh's own bounding box, from the POSITION accessors' min/max (no codec needed)."""
+    lo = [1e30] * 3
+    hi = [-1e30] * 3
+    seen = False
+    for pr in doc["meshes"][mesh_idx].get("primitives", []):
+        ai = (pr.get("attributes") or {}).get("POSITION")
+        if ai is None:
+            continue
+        acc = doc["accessors"][ai]
+        if "min" not in acc or "max" not in acc:
+            continue
+        seen = True
+        for i in range(3):
+            lo[i] = min(lo[i], acc["min"][i])
+            hi[i] = max(hi[i], acc["max"][i])
+    return [(lo[i] + hi[i]) / 2.0 for i in range(3)] if seen else None
+
+
 def main(out_dir):
     out = Path(out_dir)
     setjson = json.loads((out / "export_set.json").read_text())
@@ -85,13 +104,22 @@ def main(out_dir):
             else:
                 plain += 1
                 tris += mt
-                t = nd.get("translation")
-                if nd.get("matrix") is None and (t is None or sum(v * v for v in t) ** 0.5 < 1.0):
-                    origin_inst += 1
+                # A missing node translation does NOT mean the geometry is at the origin: with -vpf gltfpack
+                # writes float positions and drops the translation entirely, and the merged backdrop / ground
+                # groups carry their world position inside the vertices. Use the POSITION accessor's own
+                # min/max (gltfpack always writes them) plus whatever transform the node has.
+                t = nd.get("translation") or [0.0, 0.0, 0.0]
+                if nd.get("matrix"):
+                    t = nd["matrix"][12:15]
+                ctr = mesh_centre(doc, nd["mesh"])
+                if ctr is not None:
+                    w = [t[i] + ctr[i] for i in range(3)]
+                    if sum(v * v for v in w) ** 0.5 < 1.0:
+                        origin_inst += 1
         rows[cls] = dict(tris_drawn=tris, tris_expected=want_tris.get(cls, 0),
                          placements_in_glb=plain + inst, objects_in_set=len(per_cls.get(cls, [])),
                          plain_nodes=plain, instanced_nodes=inst_nodes, instanced_placements=inst,
-                         plain_nodes_at_origin=origin_inst, expected_at_origin=near_expected.get(cls, 0))
+                         plain_nodes_with_geometry_at_origin=origin_inst, expected_at_origin=near_expected.get(cls, 0))
         # gltfpack drops degenerate triangles while it optimises, so the match is within a tolerance, not
         # exact: measured 0.19 % on arch and 0.16 % on orn, 0.00 % on env and ground. A DROPPED PLACEMENT is
         # orders of magnitude bigger than that (one stacked shrub group is 8.8 % of ENV).
@@ -102,8 +130,8 @@ def main(out_dir):
             bad.append(f"{cls}: {tris} triangles drawn by the glb, {want} placed in export_set.json "
                        f"({100.0 * (tris - want) / want:+.2f} %, tolerance 1 %)")
         if origin_inst > max(1, near_expected.get(cls, 0)):
-            bad.append(f"{cls}: {origin_inst} un-instanced mesh nodes sit within 1 m of the world origin "
-                       f"({near_expected.get(cls, 0)} expected)")
+            bad.append(f"{cls}: {origin_inst} un-instanced mesh nodes have their GEOMETRY within 1 m of "
+                       f"the world origin ({near_expected.get(cls, 0)} expected)")
     print("[verify_glb] " + json.dumps(rows))
     (out / "verify_glb.json").write_text(json.dumps(dict(classes=rows, failures=bad), indent=1) + "\n")
     if bad:
