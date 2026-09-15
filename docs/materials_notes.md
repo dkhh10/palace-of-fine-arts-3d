@@ -1874,3 +1874,50 @@ brief's cap of one hero plus one bordered diagnostic.
 - **The seam test was NOT re-run** on the new map (no Eevee budget). The map's spatial content is band-limited the
   same way (same LF/MF sigmas, same masks, same ramps) and the roll-off is smooth by construction, but round 9's
   3.27-3.74 lum/px figures do not carry over. QA should look at the band rows on cam02/cam05.
+
+## Round 10 (one bounded round before Phase 6 Gate 2, 2026-09-15) — the dome cap and the coffer saucer
+
+Brief `docs/briefs/materials_r10.md`, two items: (A) QA-10-8 the dome cap, (B) QA-09-8 the coffer saucer.
+Lighting frozen. Measured on the master rebuilt in this worktree (`scripts/build_master.py`, **9691 objects**,
+main as merged 2026-09-15), Cycles 64 spp from `CAM_qa_01_lagoon_hero` and `CAM_qa_04_rotunda_ceiling`.
+
+### What the dome-cap box actually contains (`scripts/mat_r10_probe.py`, new, no render)
+
+Before touching the shader: 400 rays from the hero station through the QA box `920 95 1000 120`.
+
+| | |
+|---|---|
+| hits | **267 `ARCH_rotunda_dome`, 133 `ARCH_rotunda_drum_cornice`** — the split lands on row 112 |
+| the dome's share of the box | object-space r **13.08-15.49 m**, z 1.52-4.25 m, world normal z **0.586-0.740** |
+| `ARCH_rotunda_dome` | world bbox z 43.45-52.80, origin on the axis, local mesh r 0-16.50, z 0.05-9.40, 5121 verts |
+| the cap as a sphere | fits R = **19.23 m** (predicted normal z at r 15.49 is 0.593 against the ray-cast 0.586) |
+| so the rim's normal z is | **0.514**, not the 0.66 the shader's `Base Normal Z` assumed |
+
+Two consequences the numbers turn on. First, **a third of this box is not the dome membrane**: the drum
+cornice is `MAT_concrete_ochre`, the hold-listed stone. Second, in ref 169 four of those eight cornice rows are
+still dome — the modelled cap's rim sits about four rows higher than the photograph's — so part of the box's
+gap to the reference is a registration difference, not a material.
+
+### Item A — the three measured faults in `PFA_dome`
+
+1. **The grime ring sat in the middle of the visible cap.** `Base Normal Z` 0.66 against the true rim 0.514 put
+   the ring and the lower-flank darkening at r 12-14 m instead of at the foot. Row by row on the round-10b
+   hero, the rows the ring did **not** reach read **228 lum / hue 43.8 / sat 0.208** while the rows it did read
+   190 / 38.7 / 0.40; ref 169 reads 226-249 / 42-56 / 0.17-0.32 over the whole span with no ring at all. So the
+   albedo was never the fault — its placement was. `Base Normal Z` 0.66 -> **0.52**, `Grime` 0.8 -> 0.55, the
+   lower-flank mix 0.30 -> 0.10, `Moss` 0.3 -> 0.12 (dome_2.jpg is the pre-recoat dome and is green on the north
+   flank; ref 169, the target, has none).
+2. **Nothing in the cap was resolvable at the hero.** The dome is 33 m across in ~190 px = 0.17 m/px and the old
+   seams were 0.05 m (0.3 px) wide on a 48-fold division: they averaged out, which is the column-sd of 5.34.
+   Rebuilt as **28 meridional panels** (the count is what is countable in
+   `reference/photos/material_crops/dome_2.jpg` and `dome_3.jpg`, ~10-14 lines across the visible half), each
+   with its own tone and a **0.30 m ridge** carrying the lap shadow, a lit sliver and real bump. At r = 14 m
+   that is 3.14 m = 18 px per panel.
+3. **The rain streaks were 0.34 m (2 px) wide** and disappeared for the same reason. They are now keyed to
+   `Streak Width` (1.4 m = 8 px at the box) along the parallel, stretched 10:1 down the meridian.
+
+A fourth fault was found while sweeping and is worth recording because it is easy to repeat: the per-panel tone
+hash was first built from a Perlin `noise` node. **Perlin output clusters within about ±0.1 of 0.5**, so three
+neighbouring panels drew three nearly identical tones and `Panel Tone` 0.22 delivered a column-sd of 3.75
+instead of the ~9 it should. The hash is now `ShaderNodeTexWhiteNoise` (1D, uniform on 0..1) on the panel index,
+times a second white noise on groups of four for the soiling families.
