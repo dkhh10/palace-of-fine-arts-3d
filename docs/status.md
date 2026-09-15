@@ -628,3 +628,6 @@ Next: QA 12b -> Gate 3 dispatch (docs/briefs/phase6_gate3_bake.md) -> burn -> st
 
 ## 2026-09-15 · Viewer detail layer merged (5eb698e); BLOCKER found by its empty-map guard: all 15 shipped detail maps are all-zero PNGs/KTX2 -> bake engineer re-exporting with on-disk verification + mean_linear per map. Synthetic-noise proof of the layer: cam05 pier std 22.9 -> 25.7 (Phase 5 38.3), cam01 wall hp9 6.0 -> 8.7, attic unmoved
 Resident 1 400 MB at 1440p (textures 920 after the 19 normals; detail adds 20 MB as KTX2). Next: real maps -> viewer re-capture + boxes -> QA 12b -> Gate 3.
+
+## 2026-09-15 · Detail layer live (viewer f8b1986 merged): works, but the shipped maps' contrast is 3-6 % and mips filter it -> QA-12-1 boxes move ~1 % (cam05 pier std 22.9 vs Phase 5 38.3; gain 6-10 would reach it, refused as a knob). Bake engineer re-deriving the detail normals at the Bump's real slope (Distance 0.015 m at 2-3 mm/texel) and tagging the albedo KTX2 sRGB
+Resident 1 338 MB at 1440p (tex 987 incl. 67 MB of detail PNGs; KTX2 saves 47). Next: viewer re-measure -> QA 12b (with lighting attribution: the Phase 5 box std includes shade) -> Gate 3.
