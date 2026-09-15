@@ -1,0 +1,18 @@
+00:00.323  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+00:34.762  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r10_dome_a.png'
+01:05.803  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r10_dome_b.png'
+01:35.580  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r10_dome_c.png'
+02:07.499  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r10_dome_d.png'
+[r10render] opened master in 0.8s, 9691 objects, jobs sweep
+[r10render] dome material MAT_dome_membrane (library=None) on 2 object(s)
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[r10render] variant a {'Panel Tone': 0.25, 'Ridge Dark': 0.45, 'Streaks': 0.6, 'Seed': 5.0} 33.6s -> r10_dome_a.png
+[r10render] variant b {'Panel Tone': 0.35, 'Ridge Dark': 0.45, 'Streaks': 0.6, 'Seed': 5.0} 31.1s -> r10_dome_b.png
+[r10render] variant c {'Panel Tone': 0.3, 'Ridge Dark': 0.55, 'Streaks': 0.6, 'Seed': 41.0} 29.8s -> r10_dome_c.png
+[r10render] variant d {'Panel Tone': 0.35, 'Ridge Dark': 0.45, 'Streaks': 0.35, 'Seed': 5.0} 31.9s -> r10_dome_d.png
+[r10render] done in 127.2s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 55487 exited rc=0 after 128 s (max 900)

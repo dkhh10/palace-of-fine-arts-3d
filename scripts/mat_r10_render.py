@@ -27,10 +27,13 @@ DOME_WINDOW = (890, 80, 1030, 135)          # x0, y0, x1, y1 in the 1920x1080 he
 
 # the sweep: structure strength, bracketing the column-sd the QA box asks for (>= 8, ref 169's own box 6.61)
 VARIANTS = [
-    ("a", {"Panel Tone": 0.30, "Ridge Dark": 0.35, "Streaks": 0.75}),
-    ("b", {"Panel Tone": 0.40, "Ridge Dark": 0.45, "Streaks": 0.85}),
-    ("c", {"Panel Tone": 0.50, "Ridge Dark": 0.55, "Streaks": 0.95}),
-    ("d", {"Panel Tone": 0.40, "Ridge Dark": 0.45, "Streaks": 0.00}),   # isolates the streaks' own contribution
+    # sweep 8: the bump.  Every albedo route to more structure costs mean level, and the box has ~2 lum of slack
+    # over its 205 floor.  A lap seam is a real raised ridge, so letting it SHADE itself buys variance at
+    # roughly no mean cost: the lit side gains what the shaded side loses.
+    ("a", {"Panel Tone": 0.35, "Ridge Dark": 0.45, "Streaks": 0.35, "Seed": 5.0, "Bump": 0.35}),
+    ("b", {"Panel Tone": 0.35, "Ridge Dark": 0.45, "Streaks": 0.35, "Seed": 5.0, "Bump": 1.20}),
+    ("c", {"Panel Tone": 0.35, "Ridge Dark": 0.45, "Streaks": 0.35, "Seed": 5.0, "Bump": 2.40}),
+    ("d", {"Panel Tone": 0.35, "Ridge Dark": 0.35, "Ridge Width": 0.42, "Streaks": 0.35, "Seed": 5.0, "Bump": 2.40}),
 ]
 
 
