@@ -37,3 +37,4 @@ renders/web/**/tiles/
 *.glb
 *.ktx2
 *.hdr
+renders/web/gate1_pair_cam0*.png
