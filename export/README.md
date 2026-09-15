@@ -126,6 +126,80 @@ for the lower half, so the top row really is the zenith and no vertical flip is 
 `v = 0.4993` from the top (the horizon glow, the sun disc being off) and at `u = 0.57922`, which is the sun's
 azimuth to within 0.026°.
 
+## Running Gate 1 (the frozen export set, branch `phase6-export`)
+
+```sh
+scripts/blender_run.sh 2400 -- --background <MAIN>/master_delivery.blend \
+    --python export/export_set.py -- --gate1      # the set + the slim bake file + the job manifest
+export/bake_queue.sh start                        # detached: 33 ORN normal+AO jobs, one Blender each
+python3 export/name_sweep.py                      # the CLAUDE.md name sweep, on the export set
+scripts/blender_run.sh 900 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
+export/gltf_pack.sh --gate1                       # KTX2 + arch/orn/env/ground .glb
+python3 export/manifest_v2.py                     # carry Gate 0's colour blocks, derive the instancing groups
+python3 export/budget_doc.py                      # rewrite docs/briefs/phase6_budget.md from the JSON
+export/sync_main.sh                               # copy out/ to the MAIN checkout the viewer reads
+```
+
+| file | what it writes |
+|---|---|
+| `export/gate1_common.py` | the Gate 1 constants: selection rule, per-asset decimation targets, tree rule, atlas slot size |
+| `export/gate1_probe.py` | `out/gate1/probe.json` - read-only measurements (walkable surface per material, tree distances, PBR groups) |
+| `export/gate1_set.py` | `out/gate1/gate1_set.blend` (the set), `gate1_bake.blend` (the 33 ORN lo/hi pairs only), `export_set.json`, `bake_jobs.json`, `manifest.json` |
+| `export/bake_orn.py` | one prototype's `tex/orn_<proto>_normal.png` + `_ao.png` and `out/gate1/bake/<id>.json` |
+| `export/bake_queue.sh` | `out/bake_queue/status.json` `{state,current,done,total,started,updated,jobs[]}`, resume, the GPU rule |
+| `export/gltf_gate1.py` | `out/gate1/{arch,orn,env,ground}.gltf` + `tex_gltf/`, and the cam01 frustum batch count |
+| `export/gltf_pack.sh --gate1` | `out/gate1/tex_ktx2/*.ktx2` and `{arch,orn,env,ground}.glb` (`gltfpack -cc -mi`) |
+
+### What the set contains and why
+
+* **Selection** - `ARCH_` at LOD0 + unsuffixed, `INST_` at LOD0, `ENV_` at LOD1 + unsuffixed, shrubs at LOD2.
+  `ORN_` prototypes, `PH_`, `SOCKET_`, `ENV_lagoon_water` and `ENV_backdrop_bay` are never exported (the water
+  is a viewer plane at `WATER_Z`).
+* **Shared meshes stay shared.** One decimated datablock per (source mesh, modifier signature); the 138 fluted
+  columns, the 138 base tori, the 138 astragals and the 33 ORN prototypes are one mesh each with N placements,
+  which is what `EXT_mesh_gpu_instancing` draws in one call.
+* **Single-use ARCH is merged** per (zone, material) - 1 032 + 149 source objects become 12 merged meshes, so
+  the colonnade is 1 draw call instead of 300. Same for the ENV backdrop, merged per source material.
+* **Decimation** is iterative: weld at 1e-5, then up to four COLLAPSE passes at `target/current`. Three ORN
+  attic panels are ~40 000 separate relief islands and COLLAPSE stalls at 38-78 k against an 8 k target; those
+  are voxel-remeshed first (the relief goes into the hi->lo normal map anyway) and then collapsed.
+* **Trees** - near = a real-LOD1 tree whose base is within 25 m of the walkable surface (the paved
+  `ENV_ground_colonnade_walk` plus the `MAT_gravel_path` faces of `ENV_terrain_ground`; `MAT_lawn` is excluded
+  because it covers 489 424 m2 out to +-365 m and would make every tree near). Near trees keep LOD1 with leaf
+  cards deleted until the mesh is half its triangle count - branch geometry untouched, so the crown gets
+  sparser, not smaller. Far trees are 2-triangle billboard quads tagged with prototype, height and trunk base
+  for the Gate 3 octahedral impostor bake. 46 of the 147 `_LOD1` tree objects already carry a `_LOD2` blob mesh
+  (inherited from Phase 5) and go straight to the impostor list.
+* **UV1** is the Gate 2 material atlas: one multi-object smart project per (zone, material) group for ARCH and
+  ENV ground, one per prototype for ORN. **UV2** is the Gate 3 lightmap: a `[0,1]` unwrap per unique mesh.
+  A mesh with one placement gets its own 2K map; an instanced mesh gets a per-instance 256 px slot on a 4K
+  atlas (the user's ORN option (c)), and `manifest.assets[<name>].lightmap` carries `{atlas, slot, uv2_offset,
+  uv2_scale}`.
+* **Materials at Gate 1** are neutral greys, one per atlas group, plus the ORN normal map and the AO map in
+  glTF's `occlusionTexture` (written through a node group named `glTF Material Output`). Foliage keeps its
+  original bark/leaf materials so the silhouette check has the leaf alpha. PBR lands at Gate 2.
+
+## manifest.json v2 - the contract with the viewer
+
+`export/out/gate1/manifest.json`, `schema` = `"pfa-phase6/2"`. Everything documented for Gate 0 above still
+holds for `units`, `water`, `view`, `sun`, `stations`, `lut`, `sky`, `compositor`, `reference` and the colour /
+lightmap rules; those blocks are copied verbatim from the Gate 0 manifest by `export/manifest_v2.py` with their
+paths rewritten to `../gate0/<file>`, after asserting that the exposure and the look still match.
+
+| key | meaning |
+|---|---|
+| `schema` `pfa-phase6/2`, `gate` `gate1`, `generator`, `source_blend` | provenance |
+| `assets` | every exported object: `cls`, `mesh`, `tris`, `material`, `instanced`, `kind` (ground / backdrop / tree_near / tree_board / shrub), `merged_from`, and `lightmap` = `{mode: "asset"\|"slot"\|"none", ...}`. For a billboard also `prototype`, `source_tree`, `height_m`, `width_m`, `trunk_base`, `walk_dist_m` |
+| `meshes` | every unique mesh: `cls`, `src_mesh`, `src_tris`, `target`, `tris`, `placements`, `material`, `instanced`, `kind`, and for ORN `dims_m` / `max_dim_m` |
+| `instancing` | mesh -> `{count, cls, tris, material, placed_tris, objects[]}`. **`gltfpack -mi` drops node names, so this is the only place the placement identity survives.** |
+| `totals` | `placed_tris` / `unique_tris` / `objects` per class, `unique_meshes`, `draw_call_batches`, and the budgets they are measured against |
+| `orn_slots` | `{orn: [...], arch_inst: [...]}` - the per-instance 256 px lightmap-atlas slot assignment (atlas index + slot index), the user's option (c) |
+| `tree_rule`, `tree_near`, `tree_far` | the rule as applied with its counts, the near list, and the far list with prototype / height / trunk base for the Gate 3 impostor bake |
+| `glb` | `per_class` = `{arch, orn, env, ground}` with bytes, placed tris, objects, meshes; `total_bytes`; the gltfpack flags |
+| `textures` | the KTX2 directory, the file list, total bytes and the encoder line |
+| `colour_source` | which Gate 0 manifest the colour blocks came from and which keys were carried |
+| `water`, `sun`, `stations`, `hero_camera`, `view`, `lut`, `sky`, `compositor`, `reference`, `lightmap_scale` | unchanged from Gate 0 (`lightmap_scale` = pi is the contract) |
+
 ## Carries (code-review findings 6-10, `docs/reviews/phase6_bake_gate0_review.md`, not fixed at Gate 0)
 
 6. `export/bake_lut.py` reports `u_error_deg` and `horizon_row_v` but never asserts them, and the
