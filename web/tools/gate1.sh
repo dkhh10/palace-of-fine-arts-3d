@@ -11,6 +11,8 @@ set -e
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 export PFA_MAIN_ROOT="$MAIN"
 MANIFEST=${1:-/assets/gate1/manifest.json}
+# PFA_QUERY="k=v" adds one extra query parameter to both captures (QA round 11: PFA_QUERY=billboards=0 hides the far-tree placeholder quads).
+EXTRAQ=(); [[ -n "${PFA_QUERY:-}" ]] && EXTRAQ=(--query "$PFA_QUERY")
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT"
 
@@ -29,13 +31,13 @@ python3 web/tools/dump_stations.py
 guard "1920x1080 capture"
 scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--stations 1-6 --size 1920x1080 --frames 0 --warmup 12 \
-	--query "manifest=$MANIFEST" --query t=0 \
+	--query "manifest=$MANIFEST" --query t=0 "${EXTRAQ[@]}" \
 	--out renders/web/gate1.png --json renders/web/gate1_cam.json
 
 guard "1440p performance pass"
 scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--stations 1-6 --size 2560x1440 --frames 120 --warmup 24 --shots 0 \
-	--query "manifest=$MANIFEST" --query t=0 \
+	--query "manifest=$MANIFEST" --query t=0 "${EXTRAQ[@]}" \
 	--out renders/web/gate1_perf1440.png --json renders/web/gate1_perf_shot.json \
 	--perf renders/web/gate1_perf.json
 
