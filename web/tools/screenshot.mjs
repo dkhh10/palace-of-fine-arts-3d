@@ -211,13 +211,26 @@ try {
 			generated: new Date().toISOString(),
 			url, size: [ W, H ], frames, warmup,
 			gl: info.gl, schema: info.schema, lighting_mode: info.lightingMode,
+			materials_mode: info.materialsMode ?? null,
+			// the PBR report without its per-material order list (that lives in the shot sidecar)
+			materials: info.pbr ? { ...info.pbr, order: undefined, order_count: info.pbr.order.length,
+				nearest_first: info.pbr.order.slice().sort( ( a, b ) => a.rank - b.rank ).slice( 0, 8 )
+					.map( r => ( { rank: r.rank, material: r.material, distance_m: r.distance_m, maps: r.maps } ) ) } : null,
+			chunking: info.chunking ? { ...info.chunking, batches: info.chunking.batches.length } : null,
 			bytes: info.bytes, load_s: info.load_s, glbs: info.glbs, billboards: info.billboards,
 			stations: perStation,
 		}, null, 1 ) );
 		console.log( `[shot] wrote ${perfOut}` );
 	}
 	written.forEach( w => console.log( `[shot] wrote ${w.file} (${( fs.statSync( w.file ).size / 1024 ).toFixed( 0 )} kB) station ${w.station} draws ${w.draws} tris ${w.tris}` ) );
-	console.log( `[shot] ${info.schema || '(no schema)'} lighting ${info.lightingMode} lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );
+	console.log( `[shot] ${info.schema || '(no schema)'} lighting ${info.lightingMode} materials ${info.materialsMode || '?'} `
+		+ `lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}`
+		+ ( info.pbr ? `, pbr ${info.pbr.matched}/${info.pbr.materials_in_scene} materials, ${info.pbr.unique_files} files, `
+			+ `${( info.pbr.bytes / 1e6 ).toFixed( 1 )} MB, ${info.pbr.unmatched.length} unmatched` : '' ) );
+	if ( info.resident ) console.log( `[shot] resident ${( info.resident.total_bytes / 1e6 ).toFixed( 1 )} MB `
+		+ `(tex ${( info.resident.texture_bytes / 1e6 ).toFixed( 1 )}, rt ${( info.resident.render_target_bytes / 1e6 ).toFixed( 1 )}, `
+		+ `geo ${( ( info.resident.geometry_bytes + info.resident.instance_matrix_bytes ) / 1e6 ).toFixed( 1 )}) `
+		+ JSON.stringify( info.resident.texture_formats || {} ) );
 	if ( info.bytes && info.load_s )
 		console.log( `[shot] loaded ${( info.bytes.loaded / 1e6 ).toFixed( 1 )} MB of ${( info.bytes.planned / 1e6 ).toFixed( 1 )} MB planned in ${info.load_s.total_s.toFixed( 2 )} s `
 			+ `(sky ${info.load_s.sky_s.toFixed( 2 )}, lut ${info.load_s.lut_s.toFixed( 2 )}, glb ${info.load_s.glb_s.toFixed( 2 )})` );
