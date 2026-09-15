@@ -12,6 +12,7 @@
 //   --timeout MS      ready timeout (default 120000)
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
 //   --pixels x,y;...  read back display pixels (after the screenshot) and print them
+//   --probe A,B       project objects whose name contains A / B and read their centre pixel
 //
 // The browser is closed in a finally block and the process calls process.exit, so no Chrome is left
 // behind (a raw `--headless=new --screenshot` lingers 60-90 s on Chrome 152; puppeteer with an
@@ -124,6 +125,17 @@ try {
 	fs.mkdirSync( path.dirname( out ), { recursive: true } );
 	await page.screenshot( { path: out, captureBeyondViewport: false } );
 
+	let probes = null;
+	if ( o.probe ) {
+		probes = await page.evaluate( ( names ) => names.split( ',' ).filter( Boolean ).map( ( n ) => {
+			const hit = window.__pfaProject( n )[ 0 ];
+			if ( ! hit ) return { name: n, error: 'not found' };
+			const cx = Math.round( ( hit.bbox[ 0 ] + hit.bbox[ 2 ] ) / 2 ), cy = Math.round( ( hit.bbox[ 1 ] + hit.bbox[ 3 ] ) / 2 );
+			return { name: hit.name, centre: [ cx, cy ], bbox: hit.bbox.map( v => Math.round( v * 10 ) / 10 ), rgba: window.__pfaPixel( cx, cy ) };
+		} ), o.probe );
+		probes.forEach( p => console.log( `[shot] probe ${p.name} centre ${p.centre} rgba ${p.rgba} bbox ${p.bbox}` ) );
+	}
+
 	let pixels = null;
 	if ( o.pixels ) {
 		pixels = await page.evaluate( ( spec ) => spec.split( ';' ).filter( Boolean ).map( ( s ) => {
@@ -132,7 +144,7 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, pixels, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, probes, pixels, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	console.log( `[shot] wrote ${out} (${( fs.statSync( out ).size / 1024 ).toFixed( 0 )} kB) and ${path.basename( jsonOut )}` );
 	console.log( `[shot] station ${info.station?.index} ${info.station?.name}  draws ${info.render.calls}  tris ${info.render.triangles}  lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );

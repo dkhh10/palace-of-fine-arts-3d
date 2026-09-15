@@ -7,6 +7,7 @@
 // the LUT: that is the number checked in tools/lut_check.mjs.
 import * as THREE from 'three';
 import { b2t } from './blenderCamera.js';
+import { patchBakedMaterial } from './materials.js';
 
 export const GREY_CARD_NAME = 'TEST_grey_card_018';
 
@@ -48,6 +49,19 @@ export function buildTestScene( scene, { groundZ = - 0.4 } = {} ) {
 		post.position.copy( b2t( - 4, - i * 10, groundZ + 1 ) );
 		post.name = `TEST_post_${i * 10}m`;
 		g.add( post );
+	}
+	// Double-lighting probes: two identical rough cards facing the camera at 30 m, both lit only by
+	// the DirectionalLight.  TEST_probe_patched uses the specular-only patch, so a rough surface must
+	// come out black (all of its diffuse is supposed to come from a lightmap); TEST_probe_unpatched is
+	// stock three and must come out bright.  The screenshot tool reads both pixels.
+	for ( const [ name, patched ] of [ [ 'TEST_probe_patched', true ], [ 'TEST_probe_unpatched', false ] ] ) {
+		const m = new THREE.MeshStandardMaterial( { color: 0xffffff, roughness: 1.0, metalness: 0.0 } );
+		if ( patched ) patchBakedMaterial( m, {} );
+		const card = new THREE.Mesh( new THREE.PlaneGeometry( 3, 3 ), m );
+		card.position.copy( b2t( patched ? - 12.0 : - 9.0, 78, 4 ) );
+		card.lookAt( b2t( - 14.1, 100, 4 ) );
+		card.name = name;
+		g.add( card );
 	}
 	scene.add( g );
 	return g;

@@ -37,6 +37,7 @@ const CFG = {
 	exposureOverride: qs.has( 'exposure' ) ? parseFloat( qs.get( 'exposure' ) ) : null,
 	skyRotationDeg: qs.has( 'skyrot' ) ? parseFloat( qs.get( 'skyrot' ) ) : null,
 	size: qs.get( 'size' ),                             // "1280x720" forces the canvas size
+	sun: qs.has( 'sun' ) ? parseFloat( qs.get( 'sun' ) ) : null,   // override the sun irradiance (probes)
 };
 
 function glInfo() {
@@ -103,6 +104,7 @@ async function boot() {
 	stations = manifest.stations;
 	if ( CFG.skyRotationDeg !== null ) manifest.sky.rotationDeg = CFG.skyRotationDeg;
 	if ( CFG.exposureOverride !== null ) manifest.exposure = CFG.exposureOverride;
+	if ( CFG.sun !== null ) { manifest.sun.irradiance = CFG.sun; manifest.sun.color = [ 1, 1, 1 ]; note( `sun irradiance overridden to ${CFG.sun}` ); }
 
 	// sky --------------------------------------------------------------------------------------
 	await loadSky();
