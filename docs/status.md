@@ -598,3 +598,6 @@ In flight: QA 11c. Next: on PASS dispatch Gate 2 bake (phase6_gate2_bake.md) the
 
 ## 2026-09-15 · QA 11c (9ef4fd7): boards proven out (0 % coverage), QA-11-9 FIXED, arch ray test PASS, budget/perf PASS — GATE 1 FAIL on QA-11c-1: 1379 ENV_shrub_*_LOD2 nodes exported with no transform (drawn at the origin; site planting absent, Scale cues -1.0 at five stations)
 Lead: viewer reads lightmap_encoding.rgbm_range (QA-11c-3). Export engineer fixing the ENV node transforms with writer assertions (env.glb only). Next: re-capture -> QA 11d -> Gate 2.
+
+## 2026-09-15 · Export a9b2d3d merged (77eafe8): shrubs placed from their LOD1 siblings (the delivery file keeps LOD0/LOD2 ENV stubs at the origin — tech_notes), writer assertions + verify_glb; capture 5 taken; QA 11d dispatched
+Next: on PASS dispatch Gate 2 bake + viewer rounds; burn; stop.

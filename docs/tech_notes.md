@@ -255,3 +255,7 @@ the viewer applies +90 deg about three.js Y (`sky.rotation_deg` in the manifest 
 **Headless Chrome:** a raw `--headless=new --screenshot` on Chrome 152 lingers 60-90 s per frame; `web/tools/screenshot.mjs`
 (puppeteer-core, waits for `window.__pfaReady`, closes in `finally`) through `scripts/chrome_run.sh` returns in seconds and leaves
 no process. Never overlap Chrome with a bake: check `export/out/bake_queue/status.json` in a SEPARATE command before launching.
+- (QA 11c, export a9b2d3d) In `master_delivery.blend` only the `_LOD1` ENV objects carry a placement; every `_LOD0` and `_LOD2` sibling sits at the
+  origin as an unplaced stub (1379/1379 shrubs measured). Any export or bake that selects a LOD0/LOD2 ENV *object* must take the transform from
+  its LOD1 sibling (`placement_from` in export_set.json). The glTF writer now asserts 0 objects within 1 m of the origin per class and
+  `export/verify_glb.py` checks drawn triangles vs export_set within 1 %.
