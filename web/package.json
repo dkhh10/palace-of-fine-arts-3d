@@ -9,7 +9,8 @@
     "preview": "vite preview --port 5174 --strictPort",
     "shot": "../scripts/chrome_run.sh 600 -- node tools/screenshot.mjs",
     "stations": "python3 tools/dump_stations.py",
-    "stations:check": "python3 tools/dump_stations.py --check"
+    "stations:check": "python3 tools/dump_stations.py --check",
+    "test": "node test/camera_test.mjs"
   },
   "dependencies": {
     "three": "0.186.0"
