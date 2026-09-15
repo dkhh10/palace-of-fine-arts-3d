@@ -653,6 +653,7 @@ def build_group_dome():
                               [("Base Color", "COLOR", (0.70, 0.66, 0.58, 1.0)), ("Streak Color", "COLOR", (0.50, 0.52, 0.52, 1.0)),
                                ("Moss Color", "COLOR", (0.42, 0.47, 0.40, 1.0)), ("Grime Color", "COLOR", (0.20, 0.13, 0.06, 1.0)),
                                ("Panels", "FLOAT", 28.0, 4, 400), ("Ridge Width", "FLOAT", 0.30, 0.02, 2.0),
+                               ("Ridge Arc Limit", "FLOAT", 0.11, 0.0, 1000.0),
                                ("Ridge Dark", "FACTOR", 0.30, 0, 1), ("Panel Tone", "FACTOR", 0.22, 0, 1),
                                ("Ring Spacing", "FLOAT", 2.6, 0.2, 20.0), ("Ring", "FACTOR", 0.10, 0, 1),
                                ("Streaks", "FACTOR", 0.7, 0, 1), ("Streak Width", "FLOAT", 1.4, 0.05, 10.0),
@@ -690,8 +691,20 @@ def build_group_dome():
     t.plug(wf.inputs["W"], t.madd(t.math("FLOOR", t.mul(pidx, 0.25)), 1.0, t.mul(I["Seed"], 0.91)))
     tone_p = t.mul(t.maprange(ph, 0.0, 1.0, t.sub(1.0, I["Panel Tone"]), t.add(1.0, I["Panel Tone"])),
                    t.maprange(wf.outputs["Value"], 0.0, 1.0, 0.94, 1.06))
-    ridge_line = t.maprange(ed, t.mul(I["Ridge Width"], 0.22), t.mul(I["Ridge Width"], 0.75), 1.0, 0.0)
-    ridge_lit = t.mul(t.maprange(ed, t.mul(I["Ridge Width"], 0.75), t.mul(I["Ridge Width"], 2.20), 1.0, 0.0),
+    # `Ridge Width` is an absolute width in metres, tuned for the cap at r = 14 m.  MAT_dome_membrane is also on
+    # ARCH_rotunda_dome_apex_cap (r = 0.55 m), whose panel arc at 28 panels is 0.123 m -- below the 0.30 m ridge,
+    # so ed <= 0.06 < 0.22*0.30 and the WHOLE finial rendered as one ridge: ~45 % dark, roughness +0.10 and full
+    # bump, ~6 px on the hero's crown silhouette (mat_r10_review.md finding 1).  Clamp the ridge to a fraction of
+    # the local panel arc so it degrades to a proportional joint wherever the radius is small.
+    # The fraction is 0.11, not the review's suggested 0.35: `ridge_line` reaches zero at ed = 0.75*rw and ed
+    # runs to arc/2, so the fraction of a panel that carries ridge is 1.5*rw/arc -- 0.143 on the cap at r = 14 m,
+    # but 0.525 at 0.35*arc, which measured 215.6 -> 212.8 lum on the finial, i.e. no improvement.  1.5*0.11 =
+    # 0.165 reproduces the cap's own proportion.  It also leaves the hero UNCHANGED: 0.11*arc >= 0.30 m for
+    # r >= 12.15 m and the QA box sees r 13.08-15.49 m, so rw is still exactly `Ridge Width` everywhere in it.
+    # It is an input so the guard can be switched off (a large limit) to render the before/after pair.
+    rw = t.minimum(I["Ridge Width"], t.mul(arc, I["Ridge Arc Limit"]))
+    ridge_line = t.maprange(ed, t.mul(rw, 0.22), t.mul(rw, 0.75), 1.0, 0.0)
+    ridge_lit = t.mul(t.maprange(ed, t.mul(rw, 0.75), t.mul(rw, 2.20), 1.0, 0.0),
                       t.sub(1.0, ridge_line))
     # horizontal lap courses: faint, in object height, so they are circles on the cap
     rz = t.fract(t.div(pz, I["Ring Spacing"]))
@@ -735,7 +748,7 @@ def build_group_dome():
     rough = t.add(rough, t.mul(t.sub(t.noise(P, 3.0, detail=2), 0.5), 0.08))
     coat = t.mul(t.sub(1.0, t.clamp01(t.add(t.add(smask, moss), grime))), 0.4)
     # bump: the ridge is a real lap, plus a fine membrane grain
-    h = t.add(t.mul(t.maprange(ed, 0.0, I["Ridge Width"], 1.0, 0.0), 0.55), t.mul(t.noise(P, 18.0, detail=3), 0.12))
+    h = t.add(t.mul(t.maprange(ed, 0.0, rw, 1.0, 0.0), 0.55), t.mul(t.noise(P, 18.0, detail=3), 0.12))
     normal = t.bump(h, strength=I["Bump"], distance=0.02, normal=N)
     t.link(c, go.inputs["Color"]); t.link(t.math("ADD", rough, 0.0, clamp=True), go.inputs["Roughness"])
     t.link(normal, go.inputs["Normal"]); t.link(coat, go.inputs["Coat"])

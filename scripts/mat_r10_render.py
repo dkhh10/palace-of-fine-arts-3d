@@ -58,11 +58,28 @@ def dome_group_node():
     return node
 
 
-def set_border(scene, win, rx, ry):
+def set_border(scene, win, rx, ry, crop=False):
     scene.render.use_border = True
-    scene.render.use_crop_to_border = False
+    scene.render.use_crop_to_border = crop
     scene.render.border_min_x, scene.render.border_max_x = win[0] / rx, win[2] / rx
     scene.render.border_min_y, scene.render.border_max_y = 1.0 - win[3] / ry, 1.0 - win[1] / ry
+
+
+def object_pixel_box(scene, cam, name, rx, ry, margin):
+    """Pixel bounding box of an object's world bound_box in the hero frame, padded by `margin` px."""
+    from bpy_extras.object_utils import world_to_camera_view
+    from mathutils import Vector
+    o = bpy.data.objects[name]
+    xs, ys = [], []
+    for c in o.bound_box:
+        co = world_to_camera_view(scene, cam, o.matrix_world @ Vector(c))
+        xs.append(co.x * rx)
+        ys.append((1.0 - co.y) * ry)
+    win = (max(0, int(min(xs)) - margin), max(0, int(min(ys)) - margin),
+           min(rx, int(max(xs)) + margin), min(ry, int(max(ys)) + margin))
+    print(f"[r10render] {name} projects to pixels x {win[0]}-{win[2]}, y {win[1]}-{win[3]} "
+          f"({win[2] - win[0]}x{win[3] - win[1]} px)")
+    return win
 
 
 t0 = time.time()
@@ -91,6 +108,56 @@ if JOBS == "sweep":
         t = time.time()
         bpy.ops.render.render(write_still=True)
         print(f"[r10render] variant {tag} {params} {time.time() - t:.1f}s -> {fp.name}")
+elif JOBS == "apex":
+    # mat_r10_review.md finding 1: verify the ridge guard on ARCH_rotunda_dome_apex_cap.  One bordered, CROPPED
+    # Cycles frame at hero resolution, so the finial is measured at the pixels the hero actually delivers while
+    # the output image stays a few hundred pixels.  No new hero.
+    # Which camera actually SEES it?  Projecting the bound box is not enough: from the hero station the finial
+    # is beyond the dome's own limb (the camera is 50 m below the crown and 100 m out, so the silhouette top is
+    # the tangent point on the near flank and the apex is behind it).  Ray-cast the projected centre and take
+    # the first camera whose first hit is the cap itself.
+    from mathutils import Vector
+    scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
+    target = bpy.data.objects["ARCH_rotunda_dome_apex_cap"]
+    cam = None
+    for c in [o for o in bpy.data.objects if o.type == "CAMERA" and o.name.startswith("CAM_qa_")]:
+        scene.camera = c
+        bpy.context.view_layer.update()
+        w = object_pixel_box(scene, c, target.name, 1920, 1080, 0)
+        if w[2] <= w[0] or w[3] <= w[1]:
+            continue
+        dg = bpy.context.evaluated_depsgraph_get()
+        o = c.matrix_world.translation
+        hit, loc, nrm, idx, obj, mx = scene.ray_cast(
+            dg, o, (target.matrix_world.translation - o).normalized(), distance=5000.0)
+        print(f"[r10render]   {c.name}: first hit {obj.name if hit else '<none>'}")
+        if hit and obj.name == target.name:
+            cam = c
+            break
+    if cam is None:
+        raise SystemExit("[r10render] no QA camera has line of sight to ARCH_rotunda_dome_apex_cap")
+    light_presets.apply_final_cycles(scene, samples=SPP)
+    for k, v in (("use_guiding", False), ("use_auto_tile", True), ("tile_size", 256)):
+        if hasattr(scene.cycles, k):
+            setattr(scene.cycles, k, v)
+    common.setup_scene(scene)
+    scene.render.image_settings.color_depth = "8"
+    scene.camera = cam
+    scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
+    win = object_pixel_box(scene, cam, target.name, 1920, 1080, 22)
+    print(f"[r10render] APEX_CAM {cam.name}")
+    node = dome_group_node()
+    set_border(scene, win, 1920, 1080, crop=True)
+    # one job, the pair: the guard off (a limit so large that min() always picks `Ridge Width`, which is the
+    # shipped-at-e1a4964 behaviour) and the guard on at its default.
+    for tag, limit in (("off", 1000.0), ("on", 0.11)):
+        node.inputs["Ridge Arc Limit"].default_value = limit
+        fp = OUT / f"r10{TAG}_apexcap_{tag}.png"
+        scene.render.filepath = str(fp)
+        t = time.time()
+        bpy.ops.render.render(write_still=True)
+        print(f"[r10render] apex cap guard {tag} (limit {limit}) {win} {SPP}spp {time.time() - t:.1f}s -> {fp.name}")
+    print(f"[r10render] APEX_WIN {win[0]} {win[1]} {win[2]} {win[3]}")
 else:
     SETS = {
         "cam04": [("CAM_qa_04_rotunda_ceiling", 1280, 720, SPP, None)],

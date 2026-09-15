@@ -1934,7 +1934,8 @@ times a second white noise on groups of four for the soiling families.
 | — the drum cornice rows 112-119 | 154.1 / 12.48 | 156.3 / 12.61 | 197.9 / 10.52 | — | `MAT_concrete_ochre`, hold-listed |
 
 **Why saturation and column-sd cannot both be met, with the numbers.** A clean control was rendered for exactly
-this (sweep 4 variant a, all structure off): the box's luminance **ceiling is 207.1** and its column-sd **floor is
+this -- the structure-off control is variant **a** of `renders/logs/mat_r10_sweep5.log`
+(`Panels 44, Panel Tone 0.0, Ridge Width 0.1, Ridge Dark 0.0, Ring 0.0, Streaks 0.0`): the box's luminance **ceiling is 207.1** and its column-sd **floor is
 4.64**, both set by the cornice holding 8 of the 25 rows at 156 lum against the photograph's 198. So the whole
 structure budget between the ceiling and the window's 205 floor is **2.1 lum**, and column-sd 8 costs about
 **5.7**. The two acceptance numbers are jointly unreachable in this box, and ref 169's own column-sd here is
@@ -1958,6 +1959,10 @@ cap carries panel and ridge structure for the first time (dome-row column-sd 2.5
 photograph's 5.44), and the box's saturation error against ref 169 fell from **1.70x to 1.29x**.
 
 Eight sweeps (32 bordered variants, `renders/logs/mat_r10_sweep{2..9}.log`, 0.37 % of a frame each) established
+-- **note the off-by-one**: the first sweep's log is `mat_r10_sweep.log` with no number, so narrative "sweep N"
+in this section and in `mat_build.py`'s comments is log file `mat_r10_sweep{N+1}.log`. `mat_r10_review.md`
+finding 2 is right that "sweep 4 variant a" was the wrong citation and right about the control's parameters,
+but the control is in sweep**5**.log; sweep9 variant a is the shipped point at Bump 0.35. This
 the response surface, and three of them are worth keeping as facts about this box:
 1. **Narrow structure does not survive.** The meridians fan toward the crown, so a 2 px joint line does not stay
    in one column over the box's 17 rows and the column mean averages it away. Ridge Width 0.08-0.13 m bought
@@ -2028,6 +2033,39 @@ be satisfied without waiting ~2 h, so after checking headroom (24 GB, the bake B
 were taken **concurrently with one bake job at a time**, never two of mine at once. The queue's jobs are
 registered at 900 s and were taking 250 s, so no job was pushed near its deadline.
 
+### Review fixes applied at merge (`docs/reviews/mat_r10_review.md`)
+
+* **Finding 1 (fix-now).** `MAT_dome_membrane` is on two objects, and the second is
+  `ARCH_rotunda_dome_apex_cap` at r = 0.55 m, whose panel arc at 28 panels is 0.123 m -- under the 0.30 m
+  `Ridge Width`, so `ed <= 0.06 < 0.22 * 0.30` held `ridge_line` at 1 over the whole finial and it shipped
+  ~45 % dark with roughness +0.10 and full bump, ~6 px on the hero's crown silhouette. `Ridge Width` is an
+  absolute width in metres tuned at r = 14 m; it is now clamped to `min(Ridge Width, 0.35 * arc)` in
+  `ridge_line`, `ridge_lit` and the bump height, so it degrades to a proportional joint at any radius.
+
+  Two corrections to the finding, both measured. **(a) The fraction is 0.11, not 0.35.** `ridge_line` reaches
+  zero at `ed = 0.75 * rw` and `ed` runs to `arc/2`, so the share of a panel carrying ridge is `1.5 * rw / arc`
+  -- 0.143 on the dome at r = 14 m, but **0.525** at `0.35 * arc`, which is still most of the finial: measured
+  on the finial, `0.35 * arc` moved it 215.6 -> 212.8 lum, i.e. nothing. `1.5 * 0.11 = 0.165` reproduces the
+  dome's own proportion. The guard is exposed as the group input `Ridge Arc Limit` so the pair below can be
+  rendered without rebuilding an old library. **(b) The apex cap is not visible from the hero.** The review
+  expected ~6 px on the crown silhouette; `mat_r10_probe.py` ray-casts that box as 322 rays
+  `ARCH_rotunda_dome` and 207 `ARCH_rotunda_drum_cornice` and none on the cap. The hero camera is 50 m below
+  the crown and 100 m out, so the silhouette top is the tangent point on the near flank and the finial lies
+  beyond it. Of the six QA stations **only `CAM_qa_06_aerial` has line of sight** (first hit = the cap;
+  cam01/02/03/04/05 hit the drum cornice, attic cornice, drum band, ceiling field and the dome itself).
+
+| finial, `CAM_qa_06_aerial`, bordered 59x55 crop at 1920x1080, Cycles 32 spp | lum | min | max | px-sd |
+|---|---|---|---|---|
+| guard off (the state shipped at e1a4964) | 173.7 | 90.0 | 215.1 | 26.86 |
+| **guard on, `0.11 * arc`** | **187.6** | 89.2 | 229.8 | 28.22 |
+
+  +13.9 lum (+8.0 %) on the finial, and the hero is provably untouched: `0.11 * arc >= 0.30 m` for
+  `r >= 12.15 m` and the QA box sees r 13.08-15.49 m, so `rw` is still exactly `Ridge Width` everywhere in it.
+  Crop: `renders/qa_comparisons/mat_r10_apexcap_guard.png`.
+* **Finding 2 (fix-now).** Citation corrected above -- and the reviewer's own correction was off by one:
+  the control is `mat_r10_sweep5.log` variant a. The 207.1 / 4.64 bounds are unchanged.
+* Findings 3-8 are carried unchanged and listed under "Open, and whose".
+
 ### Files
 
 `scripts/mat_build.py` (`PFA_dome` rebuilt: panels, ridges, rings, hero-scale streaks, white-noise hash, albedo
@@ -2044,3 +2082,10 @@ clamp, `Base Normal Z` 0.52, dielectric specular; `MAT_plaster_ceiling` and `...
 - **The dome albedo is a 0.957 Rec.709 white with a per-channel clamp.** There is no headroom left there; any
   further level has to come from the sky or from the specular sheen.
 - **The jamb hue is 23.8 against QA-10-2's window floor of 25** (hold 24.0 +- 2, so inside the brief's tolerance).
+- **Review carries 3-6.** (3) the per-channel albedo clamp on a base whose green is 1.000 clips the bright half
+  of `Panel Tone` -- dropping the base ~10 % would give two-sided headroom and leave the level deficit with the
+  sky; (4) `u` reaches 1.0 on the -X meridian, so `FLOOR(u * Panels)` yields a 29th one-sample panel (hairline
+  seam, outside the hero box) -- wrap with a MODULO before the white-noise `W`; (5) `mat_r10_render.py`'s
+  `VARIANTS` was overwritten per sweep, so the committed script reproduces none of them -- keep them as
+  `SWEEPS = {...}` selected by `--sweep`; (6) `mat_r10_measure.py`'s `REF083` hard-codes the main-checkout path
+  -- use `common.REFERENCE_DIR`.

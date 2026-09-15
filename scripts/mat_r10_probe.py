@@ -16,7 +16,8 @@ from mathutils import Vector
 CAM = "CAM_qa_01_lagoon_hero"
 RES = (1920, 1080)
 BOXES = {"dome_cap": (920, 95, 1000, 120), "dome_wide": (860, 80, 1070, 150),
-         "vault_field": (900, 380, 1010, 430), "jamb": (872, 400, 892, 480)}
+         "vault_field": (900, 380, 1010, 430), "jamb": (872, 400, 892, 480),
+         "apex_cap": (948, 97, 971, 120)}
 
 
 def ray(scene, depsgraph, cam, px, py):

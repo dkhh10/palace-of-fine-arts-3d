@@ -1,0 +1,26 @@
+00:00.345  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+00:17.055  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r10h_apexcap.png'
+[r10render] opened master in 0.8s, 9691 objects, jobs apex
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 953-966, y 102-115 (13x13 px)
+[r10render]   CAM_qa_01_lagoon_hero: first hit ARCH_rotunda_drum_cornice
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 949-970, y 91-111 (21x20 px)
+[r10render]   CAM_qa_02_lagoon_ne_threequarter: first hit ARCH_rotunda_attic_cornice
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 953-966, y 46-61 (13x15 px)
+[r10render]   CAM_qa_03_colonnade_walk: first hit ARCH_rotunda_drum_band
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 951-968, y 484-502 (17x18 px)
+[r10render]   CAM_qa_04_rotunda_ceiling: first hit ARCH_rotunda_ceiling_field
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 949-970, y 57-74 (21x17 px)
+[r10render]   CAM_qa_05_south_lawn: first hit ARCH_rotunda_dome
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 952-967, y 169-180 (15x11 px)
+[r10render]   CAM_qa_06_aerial: first hit ARCH_rotunda_dome_apex_cap
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[r10render] ARCH_rotunda_dome_apex_cap projects to pixels x 930-989, y 147-202 (59x55 px)
+[r10render] APEX_CAM CAM_qa_06_aerial
+[r10render] apex cap (930, 147, 989, 202) 32spp 15.2s -> r10h_apexcap.png
+[r10render] APEX_WIN 930 147 989 202
+[r10render] done in 16.7s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 59457 exited rc=0 after 18 s (max 600)
