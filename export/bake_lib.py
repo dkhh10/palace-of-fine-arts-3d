@@ -379,3 +379,72 @@ def height_to_normal(h_img, out_name, distance_m, m_per_texel, sentinel=SENTINEL
                      height_min=round(float(H[cov].min()) if cov.any() else 0.0, 6),
                      height_max=round(float(H[cov].max()) if cov.any() else 0.0, 6),
                      covered=round(float(cov.mean()), 5), inner=round(float(inner.mean()), 5))
+
+
+# ---------------------------------------------------------------- PNG IO that does not go through Blender
+# `Image.save()` on a generated float image whose pixels were written with foreach_set wrote a correctly sized
+# but ALL-ZERO file (measured: every detail map 1024x1024 16-bit RGB, 27 749 B, extrema 0/0). The buffer never
+# reached the encoder. These two functions take Blender out of the path: numpy in, bytes out, and a reader that
+# checks the file that was actually written rather than the array that was meant to be in it.
+def write_png_rgb8(path, arr):
+    """arr: (h, w, 3) uint8 -> 8-bit RGB PNG, filter 0. Returns the byte count."""
+    import struct
+    import zlib
+    import numpy as np
+    a = np.ascontiguousarray(arr, dtype=np.uint8)
+    h, w = a.shape[0], a.shape[1]
+    rows = np.hstack([np.zeros((h, 1), dtype=np.uint8), a.reshape(h, w * 3)])
+    comp = zlib.compress(rows.tobytes(), 6)
+
+    def chunk(typ, data):
+        return (struct.pack(">I", len(data)) + typ + data
+                + struct.pack(">I", zlib.crc32(typ + data) & 0xFFFFFFFF))
+
+    png = (b"\x89PNG\r\n\x1a\n"
+           + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+           + chunk(b"IDAT", comp) + chunk(b"IEND", b""))
+    path = str(path)
+    with open(path, "wb") as f:
+        f.write(png)
+    return len(png)
+
+
+def read_png_rgb8(path):
+    """Read back an 8-bit RGB PNG written by write_png_rgb8 -> (h, w, 3) uint8. Verification, not a general reader."""
+    import struct
+    import zlib
+    import numpy as np
+    d = open(str(path), "rb").read()
+    assert d[:8] == b"\x89PNG\r\n\x1a\n", f"{path}: not a PNG"
+    i, idat, w, h, bd, ct = 8, b"", 0, 0, 0, 0
+    while i < len(d):
+        ln = struct.unpack(">I", d[i:i + 4])[0]
+        typ = d[i + 4:i + 8]
+        if typ == b"IHDR":
+            w, h, bd, ct = struct.unpack(">IIBB", d[i + 8:i + 18])
+        elif typ == b"IDAT":
+            idat += d[i + 8:i + 8 + ln]
+        i += 12 + ln
+    assert bd == 8 and ct == 2, f"{path}: expected 8-bit RGB, got bitdepth {bd} colortype {ct}"
+    raw = np.frombuffer(zlib.decompress(idat), dtype=np.uint8).reshape(h, w * 3 + 1)
+    assert not raw[:, 0].any(), f"{path}: unexpected PNG row filters"
+    return raw[:, 1:].reshape(h, w, 3)
+
+
+def linear_to_srgb(a):
+    import numpy as np
+    a = np.clip(a, 0.0, 1.0)
+    return np.where(a <= 0.0031308, a * 12.92, 1.055 * np.power(a, 1.0 / 2.4) - 0.055)
+
+
+def image_array(img):
+    """A Blender image's pixels as (h, w, 4) float32, bottom-up as Blender stores them."""
+    import numpy as np
+    w, h = img.size
+    return np.asarray(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+
+
+def box_reduce(a, factor):
+    import numpy as np
+    h, w = a.shape[0], a.shape[1]
+    return a.reshape(h // factor, factor, w // factor, factor, a.shape[2]).mean(axis=(1, 3))

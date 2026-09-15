@@ -68,7 +68,14 @@ def detail_of(mat):
     return imgs, scale, coord
 
 
+import bake_lib as bl  # noqa: E402
+import numpy as np  # noqa: E402
+
+SHIP_PX = 1024
+BUMP_DISTANCE_M = 0.015          # the Bump node's Distance inside PFA_concrete, measured
+
 sets, per_material, saved = {}, {}, {}
+raw = {}                          # set key -> {role: (h, w, 4) float32 linear, bottom-up}
 for name in want:
     mat = bpy.data.materials.get(name)
     if mat is None:
@@ -78,90 +85,91 @@ for name in want:
         per_material[name] = None
         continue
     imgs, scale, coord = d
-    # the set key must keep the variant number: concrete_wall_007 (colonnade) and _008 (rotunda) are
-    # different textures and an earlier rsplit collapsed them into one.
     nm = sorted(imgs.values(), key=lambda i: i.name)[0].name
     key = re.sub(r"^TEX_", "", re.sub(r"_(diff|rough|disp)(\.\d+)?$", "", nm))
     rec = sets.setdefault(key, dict(maps={}, px=None))
     for role, im in imgs.items():
-        if role in rec["maps"]:
+        if role in raw.setdefault(key, {}):
             continue
-        out = DET / f"detail_{key}_{role}.png"
-        prev = (im.filepath_raw, im.file_format)
-        s = bpy.context.scene.render.image_settings
-        pf = (s.file_format, s.color_depth, s.color_mode)
-        s.file_format, s.color_depth = "PNG", "8"
-        s.color_mode = "RGB"
-        im.filepath_raw = str(out)
-        im.file_format = "PNG"
-        im.save()
-        im.filepath_raw, im.file_format = prev
-        s.file_format, s.color_depth, s.color_mode = pf
-        rec["maps"][role] = dict(path=f"detail/{out.name}", px=im.size[0],
-                                 colorspace=("srgb" if role == "albedo" else "linear"),
-                                 source_image=im.name, bytes=os.path.getsize(out))
+        raw[key][role] = bl.image_array(im)          # linear floats, whatever the file's colorspace was
         rec["px"] = im.size[0]
-        saved[out.name] = os.path.getsize(out)
+        rec.setdefault("source_images", {})[role] = im.name
     per_material[name] = dict(set=key, object_scale=scale,
                               tile_m=(round(1.0 / scale, 4) if scale else None),
                               mm_per_texel=(round(1000.0 / scale / rec["px"], 4) if scale and rec["px"] else None),
                               coord_space=coord)
 
-# a tangent normal per set, derived from its own height at the tile's real scale, and everything shipped at
-# 1K: 1K over a 2.16 m tile is 2.1 mm per texel, still 18-56x finer than the atlas texel it sits on top of,
-# and 5 sets x 3 maps at 1K is 20.0 MB resident against 80.0 MB at 2K.
-import bake_lib as bl  # noqa: E402
-
-SHIP_PX = 1024
-BUMP_DISTANCE_M = 0.015          # the Bump node's Distance inside PFA_concrete, measured
+# Everything below is numpy -> bytes -> read back from the file. Blender's Image.save() is not in this path:
+# it wrote 1024x1024 all-zero 16-bit PNGs for every one of these maps (27 749 B each, extrema 0/0), because a
+# generated float image's foreach_set buffer never reached the encoder.
 for key, rec in sets.items():
     tiles = [v["tile_m"] for v in per_material.values() if v and v["set"] == key and v["tile_m"]]
     tile_m = round(sum(tiles) / len(tiles), 4) if tiles else 2.5
     rec["tile_m_used_for_normal"] = tile_m
-    h = rec["maps"].get("height")
-    if h:
-        src = bpy.data.images.load(str(g2.OUT / h["path"]), check_existing=False)
-        src.colorspace_settings.name = "Non-Color"
-        nimg, info = bl.height_to_normal(src, f"detail_{key}_normal", BUMP_DISTANCE_M,
-                                         tile_m / float(h["px"]), sentinel=-1e9)
-        out = DET / f"detail_{key}_normal.png"
-        bl.save_png(nimg, out, depth=8)
-        rec["maps"]["normal"] = dict(path=f"detail/{out.name}", px=h["px"], colorspace="linear",
-                                     source_image=f"derived from {h['source_image']}",
-                                     bytes=os.path.getsize(out), derived=info)
-        saved[out.name] = os.path.getsize(out)
-        st = bl.masked_stats(nimg, "detail_normal", sentinel=-1e9)
-        rec["maps"]["normal"]["stats"] = st
-        print(f"[gate2] detail normal {key}: tile {tile_m} m, k {info['k_slope_per_unit_height']}, "
-              f"std {[round(v, 4) for v in st['std']]}")
-        bpy.data.images.remove(src)
-    for role, mrec in list(rec["maps"].items()):
-        if role == "height":
+    src_px = rec["px"]
+    f = max(src_px // SHIP_PX, 1)
+
+    # the tangent normal, from this set's own height at the tile's real scale, computed at the SHIPPED size
+    hgt = raw[key].get("height")
+    if hgt is not None:
+        H = bl.box_reduce(hgt, f)[..., 0] if f > 1 else hgt[..., 0]
+        m_per_texel = tile_m / float(SHIP_PX)
+        k = BUMP_DISTANCE_M / m_per_texel
+        gx = (np.roll(H, -1, 1) - np.roll(H, 1, 1)) * 0.5
+        gy = (np.roll(H, -1, 0) - np.roll(H, 1, 0)) * 0.5
+        nx, ny = -gx * k, -gy * k
+        nz = np.ones_like(nx)
+        ln = np.sqrt(nx * nx + ny * ny + nz * nz)
+        n = np.stack([nx / ln, ny / ln, nz / ln], axis=-1) * 0.5 + 0.5
+        rec["maps"]["normal"] = dict(array=n, colorspace="linear", encode="data",
+                                     source_image=f"derived from {rec['source_images']['height']}",
+                                     k_slope_per_unit_height=round(float(k), 4),
+                                     height_std=round(float(H.std()), 6))
+    for role in ("albedo", "roughness"):
+        a = raw[key].get(role)
+        if a is None:
             continue
-        img = bpy.data.images.load(str(g2.OUT / mrec["path"]), check_existing=False)
-        img.colorspace_settings.name = "sRGB" if mrec["colorspace"] == "srgb" else "Non-Color"
-        if img.size[0] > SHIP_PX:
-            small, rms = bl.resize_copy(img, f"detail_{key}_{role}_{SHIP_PX}", SHIP_PX)
-            small.colorspace_settings.name = img.colorspace_settings.name
-            bl.save_png(small, g2.OUT / mrec["path"], depth=8)
-            mrec.update(px=SHIP_PX, bytes=os.path.getsize(g2.OUT / mrec["path"]), downsample_rms=rms)
-        bpy.data.images.remove(img)
-    hrec = rec["maps"].pop("height", None)   # the height ships as the normal, not as itself
-    if hrec:
-        (g2.OUT / hrec["path"]).unlink(missing_ok=True)
-        saved.pop(os.path.basename(hrec["path"]), None)
+        a = bl.box_reduce(a, f)[..., :3] if f > 1 else a[..., :3]
+        rec["maps"][role] = dict(array=a, colorspace=("srgb" if role == "albedo" else "linear"),
+                                 encode=("srgb" if role == "albedo" else "data"),
+                                 source_image=rec["source_images"][role])
+
+    for role, m in rec["maps"].items():
+        a = np.clip(m.pop("array"), 0.0, 1.0)
+        # `mean_linear` is what the viewer divides by: a compressed texture has no readable pixels, so the
+        # ratio denominator has to travel in the manifest. It is measured on the LINEAR array, before any
+        # sRGB encode, and re-measured from the file below.
+        m["mean_linear"] = [round(float(v), 6) for v in a.reshape(-1, 3).mean(axis=0)]
+        m["std_linear"] = [round(float(v), 6) for v in a.reshape(-1, 3).std(axis=0)]
+        enc = bl.linear_to_srgb(a) if m["encode"] == "srgb" else a
+        u8 = np.rint(enc[::-1] * 255.0).astype(np.uint8)          # flip to top-down for the file
+        out = DET / f"detail_{key}_{role}.png"
+        nbytes = bl.write_png_rgb8(out, u8)
+        back = bl.read_png_rgb8(out).astype(np.float32) / 255.0   # VERIFY from the file, not the array
+        m.update(path=f"detail/{out.name}", px=SHIP_PX, bytes=nbytes,
+                 file_mean=[round(float(v), 6) for v in back.reshape(-1, 3).mean(axis=0)],
+                 file_std=[round(float(v), 6) for v in back.reshape(-1, 3).std(axis=0)],
+                 file_min=int(back.min() * 255), file_max=int(back.max() * 255))
+        if m["file_std"][0] < 1e-4 and m["file_std"][1] < 1e-4:
+            raise SystemExit(f"[gate2] {out.name} read back FLAT from disk: {m}")
+        saved[out.name] = nbytes
+        print(f"[gate2] {out.name:44s} {nbytes:8d} B  file mean {m['file_mean']}  std {m['file_std']}  "
+              f"range {m['file_min']}-{m['file_max']}  linear mean {m['mean_linear']}")
+    rec["maps"].pop("height", None)
+    (DET / f"detail_{key}_height.png").unlink(missing_ok=True)
+    rec.pop("source_images", None)
     rec["ship_px"] = SHIP_PX
 
 report = dict(generator="export/gate2_detail.py", source=str(g2.SRC_BLEND), sets=sets,
               per_material=per_material, files=saved, ship_px=SHIP_PX,
               bump_distance_m=BUMP_DISTANCE_M,
               note="tile the set in OBJECT space at `object_scale` (uv = object_position.xy * object_scale); "
-                   "multiply the baked albedo by detail albedo / its own mean, and blend the detail normal "
-                   "over the baked one. This is what Phase 5 does - the grain is 1.05-1.32 mm per texel there "
-                   "against 38-118 mm for a unique atlas texel, which is why no atlas bake can carry it.")
+                   "multiply the baked albedo by detail_albedo / detail.mean_linear, take roughness from the "
+                   "detail map, and blend the detail normal over the baked one. `mean_linear` is the ratio "
+                   "denominator and is in the manifest because a compressed texture has no readable pixels. "
+                   "This is what Phase 5 does - the grain is 1.05-1.32 mm per texel there against 38-118 mm "
+                   "for a unique atlas texel, which is why no atlas bake can carry it.")
 (g2.OUT / "detail.json").write_text(json.dumps(report, indent=1) + "\n")
-for k, v in sets.items():
-    print(f"[gate2] detail set {k}: {sorted(v['maps'])} at {v['px']} px")
 for m, v in sorted(per_material.items()):
     if v:
         print(f"[gate2]   {m:26s} -> {v['set']:20s} scale {v['object_scale']} "

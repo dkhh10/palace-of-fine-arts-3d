@@ -733,8 +733,15 @@ how many atlases exist, because the sets are shared. The height map itself is no
 | map | red mean / std | blue mean / std | red range |
 |---|---|---|---|
 | atlas normal, 2K at 3.8 cm/texel (before) | 0.50003 / **0.00205** | 1.00000 / **0.00015** | 0.4504 – 0.6033 |
-| detail normal, 1K over a 2.16 m tile = 2.11 mm/texel (after) | 0.49997 / **0.02363** | 0.99956 / **0.00916** | **0.0210 – 0.9779** |
-| ratio | **11.5x** | **61.1x** | flat band -> full relief |
+| detail normal, 1K over a 2.16 m tile = 2.11 mm/texel (after) | 0.50002 / **0.01649** | 0.99957 / **0.00580** | **0.067 – 1.000** |
+| ratio | **8.0x** | **38.7x** | flat band -> full relief |
+
+Those detail-normal figures are read back **from the saved PNG**, not from the array that produced it. The first
+export of this set wrote fifteen 1024x1024 all-zero 16-bit PNGs (27 749 B each, extrema 0/0): `Image.save()` on a
+generated float image whose pixels were written with `foreach_set` never got the buffer to the encoder, and the
+numbers quoted in the first report were the in-memory arrays. The detail path no longer uses Blender image IO at
+all - `bake_lib.write_png_rgb8` / `read_png_rgb8` write the file from numpy and read it back, every map's mean and
+std are measured from the file, and a map that reads back flat aborts the run.
 
 `manifest.materials.detail` carries the sets, the per-material object scale and the apply rule; the viewer
 multiplies the baked albedo by the detail albedo over its own mean and blends the detail normal over the baked one.
