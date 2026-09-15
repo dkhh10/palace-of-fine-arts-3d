@@ -1,0 +1,21 @@
+00:00.388  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+00:06.105  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe/gate3_probe_hero_px.exr'
+00:10.389  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe/gate3_probe_hero_nx.exr'
+00:14.184  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe/gate3_probe_hero_py.exr'
+00:18.296  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe/gate3_probe_hero_ny.exr'
+00:22.330  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe/gate3_probe_hero_pz.exr'
+00:26.564  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe/gate3_probe_hero_nz.exr'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] probe px: 5.5s mean=0.0456 max=263.192
+[gate3] probe nx: 4.0s mean=0.0164 max=13.642
+[gate3] probe py: 3.6s mean=0.0003 max=0.001
+[gate3] probe ny: 3.8s mean=0.0003 max=0.031
+[gate3] probe pz: 3.8s mean=0.0221 max=23.793
+[gate3] probe nz: 4.0s mean=0.1744 max=609.160
+[gate3] job probe_hero done in 26.2 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 98124 exited rc=0 after 27 s (max 900)

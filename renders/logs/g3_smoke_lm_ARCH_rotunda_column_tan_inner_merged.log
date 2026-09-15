@@ -1,0 +1,11 @@
+00:00.316  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+Info: Baking map saved to internal image, save it externally or pack it
+[gate3] lm_ARCH_rotunda_column_tan_inner_merged: 84.4s max=64.691 mean=1.142 range=128.0
+[gate3] job lm_ARCH_rotunda_column_tan_inner_merged done in 85.9 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 98022 exited rc=0 after 87 s (max 900)
