@@ -332,3 +332,11 @@ guess): colonnade N/S 0.040/0.039, rotunda ochre 0.056 (the hero's stone), plast
 were the single-object ORN prototypes. Decision: each merged mass goes onto its own 2K atlas (new material + set), the instanced meshes keep theirs
 (~0.40); +~50 MB resident accepted against the impostor lever; the affected groups are re-baked (albedo/roughness/normal) and every ARCH/ground set
 gets a bump-derived tangent normal (7 of 12 shipped none). Texel density where the hero looks is the reason; coverage numbers alone were not.
+
+## 2026-09-15 · QA-12-1 resolution: the concrete grain ships as a tiling detail layer, not in the atlas normals
+Measured by the bake engineer: a Cycles NORMAL bake of the stone bump on a 2K atlas has std 0.0017 (0.0027 at 4K) because the Bump distance is
+0.015 m against 4-12 cm atlas texels — the grain is under the bake's Nyquist; Cycles renders it per camera pixel. So every ARCH/ground set now ships
+a real (low-frequency) normal, and the grain comes from `materials.detail`: five shared 1K object-space tiling sets (albedo, roughness, normal from
+the source height at the true tile scale), 20 MB resident, applied in the viewer shader (albedo x detail / mean, normal blend). Resident projection
+1 248 MB with Gate 3 reservations; the impostor 2K -> 1K lever (-200 MB) covers it. Process rule added: the export sync writes export_set.json LAST
+(the bake engineer caught a blend/JSON mismatch mid-run).

@@ -622,3 +622,6 @@ Dispatched: export re-lays the two colonnade UV1 atlases (>= 0.40), bake bakes b
 
 ## 2026-09-15 · Atlas split merged (2aed50f): 52 UV1 groups, hero stone coverage 0.056 -> 0.191, colonnade 0.040 -> 0.28 (instanced) + 0.11 (merged mass, geometric cap), +2 atlases; bake engineer re-baking the eleven groups + bump-derived normals for every ARCH/ground set
 In flight: bake queue (QA-12-1). Next: lead re-captures (gate2.sh), QA 12b, Gate 3 dispatch.
+
+## 2026-09-15 · Bake QA-12-1 pass merged (8a3d06a): 19/19 ARCH/ground re-baked on the split atlases (2 229 s), normals on every set, colonnade texel 9.4 -> 1.07 cm; grain moved to materials.detail (5 tiling sets, 20 MB) — viewer r3 wiring it now, then the Gate 2 re-capture and its own measurement of the QA-12-1 boxes
+Next: QA 12b -> Gate 3 dispatch (docs/briefs/phase6_gate3_bake.md) -> burn -> stop.
