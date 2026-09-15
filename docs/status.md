@@ -567,3 +567,7 @@ In flight: export engineer (queue + glbs), MAT r10 (rendering), viewer r2 code r
 
 ## 2026-09-15 · Viewer r2 merged (d08dd9a, review fixes incl. the per_class blocker and the double-render perf bug); capture waits for the glbs
 In flight: export engineer (ORN queue + four glbs), MAT r10. Next: glbs + idle -> lead runs `web/tools/gate1.sh` -> QA critic Gate 1; MAT r10 review/merge -> regenerate master_delivery.blend.
+
+## 2026-09-15 · MAT r10 reported (materials e1a4964), in review; lead viewed both crops
+Dome cap: lum 187.6 -> 205.4 (pass), hue pass, sat 0.352 / col-sd 5.4 fail — the box is 1/3 drum cornice (sat 0.92 = QA-10b-1, lighting) and a control render bounds the box at 207 lum; the membrane now shows 28 panels + ridges + wide streaks (crop: reads as the photo's cap, cornice still yellow). Coffer: field sat 0.422 / rim 0.454 (both in window, ratio = ref). Holds within tolerance; jamb hue 23.8 (QA-10-2 floor 25, flagged). Deviations: 2 heroes + 3 cam04; ran concurrent with the ORN queue (one job at a time).
+In flight: mat_r10 review, export engineer (queue 4/33 at 12:56). Next: merge MAT r10 -> lead_build.sh + regenerate master_delivery.blend (after the queue is idle: the queue reads the delivery file) -> gate1.sh capture -> QA critic Gate 1.
