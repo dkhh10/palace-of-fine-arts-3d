@@ -639,3 +639,44 @@ than 0.5 under Phase 5; Scale cues recover 0.5-1.0 at every station and stay 0.5
 canopy is missing. Name sweep PASS (2540 objects, 127 exempt, 0 to explain). Budget and perf unchanged: 2 841 396
 placed tris of 3.0 M, 154 batches, 1440p GPU 0.6-1.5 ms median (hero 6.8 % of a 45 fps frame), resident 1.019 GB,
 load 2.57 s / 206.5 MB. Full report `docs/qa_round_11d.md`; composite `renders/web/round11d_gate.png`.
+
+## Round 12 — Phase 6 **Gate 2** (the baked PBR set alone), 2026-09-15. **GATE 2: FAIL** (one row)
+
+Capture 19:09: `materials=pbr`, `lighting=direct` (sun + PMREM, **no lightmaps, no shadows, no compositor**), both
+placeholder sets hidden, six stations 1920x1080, manifest `pfa-phase6/3`, 60 sets. Gate 2 had no cam01 tiles; QA cut
+them (`scripts/qa_r12_probe.py tiles` -> `renders/web/tiles/gate2/`) and viewed all six at 100 %, plus two 100 % crops
+per station 02-06. Only Material realism / Edge wear / Repetition are scored. **Luminance is not a material metric at
+this gate** (no shade term) and is reported, never scored.
+
+1. **Sunlit stone is right.** Sunlit attic hue +1.9 deg, sat **0.97x** of the round-10b Cycles hero; whole building sat
+   **0.532 = 0.84x** of that render and **1.02x of photograph 169** — QA-10b-1's 1.22x frame chroma is closed by the
+   bake. The round-9 attic photo projection survives registered (mid-band 0.67-1.29x, no seam). ORN relief is real at
+   all 33 prototypes. **QA-11c-2 closed on both halves**: all ten backdrop sets attach (cam06 ratio 2.837 -> 1.548),
+   attic pedestals textured (std 50.5 / hp9 27.6 vs Phase 5 32.2 / 15.9). 64/74 materials textured, 0 failures, the
+   only 10 unmatched are foliage (rule 7). cam02 beats its own reference (viewer hue 47.1 vs the round-09 frame's 262.1).
+2. **QA-12-1, BLOCKER, owner bake — ARCH stone carries no surface at walking distance.** cam05 pier face mid(5-21 px)
+   **2.68 vs Phase 5's 10.11 (0.27x)**, std 12.3 vs 38.3; attic wall 2.87 vs 9.79; cam03's near column at 5.5 m has no
+   grain; cam01's south-colonnade back wall hp9 **0.6-0.8** against **13-19** on the rotunda attic in the same frame.
+   Cause, from the manifest: the albedo is a **DIFFUSE colour-only** bake and **7 of 12 ARCH/ground sets ship
+   `normal.texture: null`**, so the material's bump is in neither map; the two colonnade atlases also pack only
+   **0.16 UV coverage** (every other ARCH group 0.40-0.69). Filtering is not the cause (`pbr.js` sets anisotropy 8).
+   Fix: bake each ARCH/ground material's own bump to a normal for all twelve groups and re-pack the colonnade UV1.
+   Acceptance: cam05 `1180 560 1280 680` mid(5-21) >= 7.0 and std >= 25; cam01 `1600 590 1670 635` hp9 >= 4.0; the
+   sunlit-attic hue/sat must not move.
+3. **Not blocking.** QA-12-2 dome cap sat **0.64x** of Phase 5, a smooth near-white lid (QA-10-8 carried; albedo mean
+   0.911/0.919/0.671 is faithful, roughness 0.43 takes a sky specular with no shadow). QA-12-3 colonnade atlas coverage
+   0.16 (folded into QA-12-1). QA-12-4 per-instance variation is absent **by construction** — one texture per shared
+   mesh (export/README Gate 2 finding 3); colonnade shaft-to-shaft CV 0.028 / 0.089 vs Phase 5's 0.072 / 0.319, which
+   costs every Repetition row 0.5 and is Gate 3's per-instance lightmap slot, not a re-bake.
+4. **Named exception standing at this gate:** the 10 foliage materials (`MAT_bark_*`, `MAT_leaf_*`, `MAT_shrub*`,
+   `MAT_reeds`) have no Gate 2 set by design (manifest rule 7) and keep their Gate 1 card textures; under sky-only
+   irradiance with no shadow they read as pale chips at 100 %. Gate 3/4, not a Gate 2 defect.
+
+**Scores (round 09 -> round 12).** Material realism 01 3.5->**3.5**, 02 2->**2.5**, 03 2.5->**2**, 04 3->**2.5**,
+05 3.5->**2.5**, 06 2.5->**2.5**. Edge wear 3.5->**3**, 2.5->**2**, 1.5->**1**, 1->**1**, 2->**1.5**, 0.5->**0.5**.
+Repetition 3->**2.5**, 2.5->**2**, 2->**1.5**, 2.5->**2**, 2.5->**2**, 2.5->**2**. **Parity fails on exactly one row —
+cam05 Material realism, -1.0 against a 0.5 window** (cam03/cam05 references are Eevee, not luminance parity targets;
+the texture measurement is still valid and the root cause is a manifest fact). Budget PASS: resident 1 333.8 MB at
+1440p (textures 855.6 + RT 437.5 + geo 40.6), PBR set 566.2 MB of the 1 200 MB texture budget, hero **267 draws of
+400**, GPU **1.7 ms**, load 483.2 MB in 4.17 s. Full report `docs/qa_round_12.md`; composite
+`renders/web/round12_gate.png`.
