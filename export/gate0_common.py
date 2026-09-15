@@ -49,7 +49,7 @@ EXPOSURE_EV = -2.8331398963928223
 SHAPER_MIN_EV = -12.47393
 SHAPER_MAX_EV = 4.026069
 SHAPER_PIVOT = 0.18
-LUT_SIZE = 33
+LUT_SIZE = 65        # 33 left a 1.79/255 trilinear-interpolation error on mid grey; 65 brings it under 1/255
 
 
 def log_shaper(v):

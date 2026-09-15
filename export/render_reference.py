@@ -55,8 +55,9 @@ bl.restore_hidden(prev)
 
 # the compositor's numbers, so the viewer can match bloom / vignette / mist instead of guessing
 comp = {}
-if scene.use_nodes and scene.node_tree:
-    for n in scene.node_tree.nodes:
+ctree = getattr(scene, "compositing_node_group", None)
+if scene.use_nodes and ctree:
+    for n in ctree.nodes:
         entry = dict(type=n.bl_idname, label=n.label)
         for i in n.inputs:
             if hasattr(i, "default_value") and not i.links:
