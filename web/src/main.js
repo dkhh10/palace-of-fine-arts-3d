@@ -784,7 +784,10 @@ function residentBytes() {
 		}
 	} );
 	if ( scene.background && scene.background.isTexture ) addTex( scene.background );
-	if ( scene.environment ) addTex( scene.environment );
+	// scene.environment IS pmremTarget.texture and has an image, so addTex would bill the cubeUV
+	// here AND addRT would bill the identical bytes below (review finding 1): count it once, as a
+	// render target.
+	if ( scene.environment && ! ( pmremTarget && scene.environment === pmremTarget.texture ) ) addTex( scene.environment );
 	// Render targets dominate the GPU-memory figure at 1440p and carry no `image`, so addTex() sees
 	// nothing: count them explicitly.  A HalfFloat RGBA target is 8 B/px, and three allocates an extra
 	// multisampled renderbuffer of samples x that size when `samples` > 0.

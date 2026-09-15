@@ -141,11 +141,15 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 			// The ORN hi->lo normal and the AO baked into the glb stay unless the manifest replaces them.
 			if ( slot === 'aoMap' && m.aoMap ) { report.kept_glb_ao ++; continue; }
 			try {
+				// Claimed before the await: at concurrency > 1 two workers would otherwise both find
+				// the url unclaimed and the last write would win silently (review finding 8).
+				const claimed = csOf.has( entry.url );
+				if ( ! claimed ) csOf.set( entry.url, entry.srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace );
 				const t = await get( entry.url );
 				const want = entry.srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-				if ( csOf.has( entry.url ) && csOf.get( entry.url ) !== want )
+				if ( claimed && csOf.get( entry.url ) !== want )
 					report.colourspace_conflicts.push( { url: entry.url, first: csOf.get( entry.url ), then: want } );
-				else if ( ! csOf.has( entry.url ) ) { csOf.set( entry.url, want ); t.colorSpace = want; }
+				if ( ! claimed ) t.colorSpace = want;
 				t.channel = 0;                            // UV1 = glTF TEXCOORD_0
 				if ( set.wrap === 'repeat' ) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
 				t.anisotropy = Math.max( t.anisotropy || 1, 8 );
@@ -204,7 +208,7 @@ export function applyFactors( m, set ) {
 	if ( Array.isArray( f.map ) && f.map.length >= 3 ) { m.color.setRGB( f.map[ 0 ], f.map[ 1 ], f.map[ 2 ], THREE.LinearSRGBColorSpace ); n ++; }
 	if ( typeof f.roughnessMap === 'number' ) { m.roughness = f.roughnessMap; n ++; }
 	if ( typeof f.metalnessMap === 'number' ) { m.metalness = f.metalnessMap; n ++; }
-	if ( typeof set.normalScale === 'number' && m.normalScale && ( set.maps.normalMap || m.normalMap ) ) {
+	if ( typeof set.normalScale === 'number' && m.normalScale && set.maps.normalMap ) {
 		m.normalScale.set( set.normalScale, set.normalScale ); n ++;
 	}
 	// A CONSTANT normal factor is the flat normal [0.5, 0.5, 1]: it means "this bake found no relief",
@@ -240,16 +244,23 @@ export function texBytes( t ) {
 	return 0;
 }
 
-const MAT_SLOTS = [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ];
+const MAT_SLOTS = [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap',
+	'alphaMap', 'envMap', 'bumpMap', 'displacementMap', 'specularMap', 'clearcoatMap', 'clearcoatNormalMap',
+	'clearcoatRoughnessMap', 'sheenColorMap', 'sheenRoughnessMap', 'transmissionMap', 'thicknessMap',
+	'iridescenceMap', 'iridescenceThicknessMap', 'anisotropyMap', 'specularIntensityMap', 'specularColorMap' ];
 
 /** Every texture reachable from a mesh material in the scene. */
 export function collectTextures( scene ) {
-	const out = new Set();
+	const out = new Map();                       // texture -> the slots it was found in
 	scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
 		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
 			if ( ! m ) continue;
-			for ( const k of MAT_SLOTS ) if ( m[ k ] ) out.add( m[ k ] );
+			for ( const k of MAT_SLOTS ) {
+				if ( ! m[ k ] ) continue;
+				const at = out.get( m[ k ] );
+				if ( at ) at.add( k ); else out.set( m[ k ], new Set( [ k ] ) );
+			}
 		}
 	} );
 	return out;
@@ -260,14 +271,15 @@ export function collectTextures( scene ) {
  *  material.  Dispose exactly those: in `before` and not reachable now. */
 export function disposeOrphans( scene, before ) {
 	const live = collectTextures( scene );
-	let freed = 0; const names = [];
-	for ( const t of before ) {
+	let freed = 0; const names = [], bySlot = {};
+	for ( const [ t, slots ] of before ) {
 		if ( live.has( t ) ) continue;
 		freed += texBytes( t );
+		for ( const k of slots ) bySlot[ k ] = ( bySlot[ k ] || 0 ) + 1;
 		names.push( t.name || t.userData?.url || t.uuid.slice( 0, 8 ) );
 		t.dispose();
 	}
-	return { disposed: names.length, freed_bytes: freed, names: names.slice( 0, 12 ) };
+	return { disposed: names.length, freed_bytes: freed, by_slot: bySlot, names: names.slice( 0, 12 ) };
 }
 
 /** Every texture file the PBR sets reference, for the byte plan (deduplicated). */

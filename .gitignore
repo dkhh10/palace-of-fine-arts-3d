@@ -38,3 +38,7 @@ renders/web/**/tiles/
 *.ktx2
 *.hdr
 renders/web/gate1_pair_cam0*.png
+# every gate's pair sheets: 3.5 MB each, regenerable from the committed station PNGs with
+# web/tools/gate1_sheets.py --viewer-glob 'renders/web/<tag>_cam%02d.png' --prefix <tag>
+renders/web/gate2_pair_cam0*.png
+renders/web/gate*_pair_cam0*.png

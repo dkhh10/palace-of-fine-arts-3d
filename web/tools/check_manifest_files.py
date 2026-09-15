@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Does every file this manifest references exist on disk?  Run before a capture.
 
-    python3 web/tools/check_manifest_files.py [export/out/gate2/manifest.json]
+    python3 web/tools/check_manifest_files.py [manifest.json]      # default:
+                                                   #   $PFA_MAIN_ROOT/export/out/gate2/manifest.json
 
 Resolves the glbs, the sky, the LUT and every `materials.sets[*].<map>.texture` key (through
 textures.gate2.files + ktx2_dir, then the Gate 1 textures.files list) against the manifest's own
@@ -14,9 +15,14 @@ from pathlib import Path
 MAPS = ("albedo", "roughness", "normal", "metallic", "occlusion")
 
 
+def default_manifest():
+    """$PFA_MAIN_ROOT/export/out/gate2/manifest.json, else the repo this file lives in."""
+    root = os.environ.get("PFA_MAIN_ROOT") or Path(__file__).resolve().parents[2]
+    return Path(root) / "export/out/gate2/manifest.json"
+
+
 def main(argv):
-    mp = Path(argv[1] if len(argv) > 1 else
-              "/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate2/manifest.json")
+    mp = Path(argv[1]) if len(argv) > 1 else default_manifest()
     m = json.loads(mp.read_text())
     base = mp.parent
     want, missing, total = [], [], 0

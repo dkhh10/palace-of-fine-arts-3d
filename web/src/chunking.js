@@ -9,8 +9,8 @@
 // Fix: split such a batch into at most `maxChunks` regional InstancedMeshes by repeated median cuts
 // on the widest axis of the instance translations (a 2-level KD split), each with its own bounding
 // sphere.  A cut is kept only when it actually tightens the bounds (`gain`), so a genuinely local
-// batch is never split, and a global `maxChunks` budget keeps the hero station inside its 400-draw
-// budget.  Geometry and material are SHARED by the chunks: no extra memory beyond the instance
+// batch is never split, and the global `budget` (added draw calls) keeps the hero station inside
+// its 400-draw budget.  Geometry and material are SHARED by the chunks: no extra memory beyond the instance
 // matrices, which are moved, not copied.
 import * as THREE from 'three';
 
@@ -68,6 +68,8 @@ function makeChunk( src, idx, tag ) {
 	m.renderOrder = src.renderOrder;
 	m.position.copy( src.position ); m.quaternion.copy( src.quaternion ); m.scale.copy( src.scale );
 	m.matrixAutoUpdate = src.matrixAutoUpdate;
+	m.matrix.copy( src.matrix );                 // a source with matrixAutoUpdate false keeps its place
+	m.matrixWorld.copy( src.matrixWorld );
 	m.userData = { ...src.userData, pfaChunk: { of: src.name, instances: idx.length, tag } };
 	const dst = m.instanceMatrix.array, srcArr = src.instanceMatrix.array;
 	idx.forEach( ( from, to ) => { for ( let k = 0; k < 16; k ++ ) dst[ to * 16 + k ] = srcArr[ from * 16 + k ]; } );
@@ -88,7 +90,7 @@ function makeChunk( src, idx, tag ) {
 export function chunkInstancedMeshes( root, options = {} ) {
 	const opts = { ...DEFAULTS, ...options };
 	const stats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
-	if ( opts.maxChunks === 0 || opts.budget <= 0 ) return stats;
+	if ( opts.budget <= 0 ) return stats;
 	const candidates = [];
 	root.traverse( ( o ) => {
 		if ( ! o.isInstancedMesh || o.count < opts.minCount ) return;

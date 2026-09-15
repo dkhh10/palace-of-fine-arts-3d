@@ -11,7 +11,8 @@
 #     to the PBR one:  PFA_TAG=gate2grey PFA_QUERY="materials=grey" web/tools/gate2.sh
 #
 # 1. refuses to start while a Blender bake or the export queue owns the GPU (re-checked before EVERY
-#    Chrome session: the build and the first session take minutes);
+#    Chrome session: the build and the first session take minutes), and refuses to capture a manifest
+#    whose textures are not all on disk (check_manifest_files.py, exit 4);
 # 2. regenerates web/src/stations_blender.json from scripts/ and builds web/dist;
 # 3. ONE headless-Chrome session, stations 1-6 at 1920x1080 -> renders/web/<tag>_cam0N.png;
 # 4. ONE more session at 2560x1440, measure only -> renders/web/<tag>_perf.json;
@@ -36,6 +37,11 @@ guard() {
 	if pgrep -f "MacOS/Blender" >/dev/null; then echo "gate2.sh: a Blender process is alive, refusing to use the GPU ($1)" >&2; exit 3; fi
 }
 guard start
+
+# Refuse to capture a half-baked set: every texture the manifest names must be on disk.  The path
+# is the MAIN checkout's, which is what the page's /assets/* is served from.
+python3 web/tools/check_manifest_files.py "$MAIN/export/out/gate2/manifest.json" \
+	|| { echo "gate2.sh: the manifest references files that are not on disk, refusing to capture" >&2; exit 4; }
 
 python3 web/tools/dump_stations.py
 ( cd web && npm run build >/dev/null ) && echo "gate2.sh: web/dist $(du -sh web/dist | cut -f1)"

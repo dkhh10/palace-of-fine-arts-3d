@@ -9,7 +9,8 @@
 //   --size WxH        window / canvas size (default 1280x720)
 //   --url URL         page to open; default: serve web/dist on a free port (built by `npm run build`)
 //   --dev             serve with `vite dev` instead of the built dist
-//   --query k=v       extra query parameters, repeatable (e.g. --query test=1 --query testlut=gamma22)
+//   --query k=v       extra query parameters, repeatable (e.g. --query test=1 --query testlut=gamma22);
+//                     last one wins; `station` and `size` are reserved for --station(s) / --size
 //   --frames N        measure N frames with window.__pfaFrameStats (0 = skip, default 120)
 //   --timeout MS      ready timeout (default 120000)
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
@@ -19,11 +20,13 @@
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
+// It refuses to launch while the bake queue is running or any Blender process is alive
+// (PFA_ALLOW_GPU=1 overrides), so a bare `node tools/screenshot.mjs` cannot take the GPU either.
 // The browser is closed in a finally block and the process calls process.exit, so no Chrome is left
 // behind (a raw `--headless=new --screenshot` lingers 60-90 s on Chrome 152; puppeteer with an
 // explicit close does not).
 import puppeteer from 'puppeteer-core';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,9 +108,25 @@ function serveDev() {
 	} );
 }
 
+/** The GPU rule, enforced where Chrome is actually launched and not only in gate2.sh: headless
+ *  Chrome must never share the GPU with a Blender bake.  `PFA_ALLOW_GPU=1` overrides it for a
+ *  deliberate run; the check itself never throws on a missing file. */
+function gpuGuard() {
+	if ( process.env.PFA_ALLOW_GPU === '1' ) return;
+	const st = path.join( ASSETS, 'bake_queue/status.json' );
+	try {
+		if ( fs.existsSync( st ) && /"running"/.test( fs.readFileSync( st, 'utf8' ) ) )
+			throw new Error( `the bake queue is running (${st}): refusing to use the GPU` );
+	} catch ( e ) { if ( /bake queue is running/.test( e.message ) ) throw e; }
+	let blender = '';
+	try { blender = execFileSync( 'pgrep', [ '-f', 'MacOS/Blender' ], { encoding: 'utf8' } ).trim(); } catch { /* none */ }
+	if ( blender ) throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
+}
+
 let browser = null, server = null, viteProc = null;
 const t0 = Date.now();
 try {
+	gpuGuard();
 	let base = o.url;
 	if ( ! base ) {
 		if ( o.dev ) { const s = await serveDev(); viteProc = s.proc; base = `http://127.0.0.1:${s.port}/`; }
@@ -116,7 +135,13 @@ try {
 	// Last --query wins: URLSearchParams.get() returns the FIRST value of a repeated key, so the
 	// pairs are deduplicated here (gate2.sh passes its defaults first and PFA_QUERY after).
 	const qmap = new Map( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], [ 'hud', '0' ] ] );
-	for ( const s of o.query ) { const [ k, v = '' ] = s.split( /=(.*)/ ); if ( k ) qmap.set( k, v ); }
+	const RESERVED = new Set( [ 'station', 'size' ] );   // owned by --station(s) / --size
+	for ( const s of o.query ) {
+		const [ k, v = '' ] = s.split( /=(.*)/ );
+		if ( ! k ) continue;
+		if ( RESERVED.has( k ) ) { console.error( `[shot] ignoring --query ${k}=${v}: --station(s) / --size own it` ); continue; }
+		qmap.set( k, v );
+	}
 	const q = new URLSearchParams( [ ...qmap ] );
 	const url = `${base}${base.includes( '?' ) ? '&' : '?'}${q}`;
 

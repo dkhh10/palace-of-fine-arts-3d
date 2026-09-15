@@ -74,10 +74,12 @@ manifest carries a set, so a grey capture can never be reported as a PBR one.
 textured from 51 of 60 sets, 153 attachments, 143 unique files, **531.3 MB** resident, every one
 `RGBA_ASTC_4x4`; factors applied to all 55 before any download; 33 Gate 1 ORN normals replaced and
 **83 superseded Gate 1 textures disposed, 155.2 MB freed**; 0 failures, 0 colour-space conflicts.
-Unmatched, by design: the 10 foliage bark/leaf/shrub materials (rule 7). Unused, a hand-off: 9 of
-the 10 `MAT_EXP_ENVBD__*` sets, because `env.glb` carries exactly one backdrop material
-(`MAT_EXP_ENVBD__MAT_backdrop_building`, `uv1_in_glb: false`, factors only) — the other nine are
-merged away in the pack, so their bakes reach nothing until the backdrop is re-exported.
+Unmatched, by design: the 10 foliage bark/leaf/shrub materials (rule 7). Unused, **hand-off to export/bake (review finding 5)**: 9 of
+the 10 `MAT_EXP_ENVBD__*` sets, because the first `env.glb` pack carried exactly one backdrop
+material (`MAT_EXP_ENVBD__MAT_backdrop_building`, `uv1_in_glb: false`, factors only) — the other
+nine were merged away, so the city backdrop took no Gate 2 data at all and the two metalness maps
+(`backdrop_door_green` 0.019, `lamp_post` 0.150) reached nothing. The `-km` re-pack keeps the ten
+materials distinct; re-measured below.
 
 | station | 01 | 02 | 03 | 04 | 05 | 06 |
 |---|---|---|---|---|---|---|
@@ -89,12 +91,17 @@ merged away in the pack, so their bakes reach nothing until the backdrop is re-e
 | the same ratio in grey (Gate 1) | 1.187 | 1.461 | 8.373* | 2.259 | 1.454 | 2.837 |
 
 *cam03 and cam05 are scored against Eevee frames, not Cycles: not parity targets.
-Load 469.8 MB in 4.82 s (sky 0.53, lut 0.09, glb 1.64, textures 2.34). Resident **1 395.0 MB** at
-1440p = textures 921.4 + render targets 437.5 + geometry 36.2, and **1 266.0 MB** at 1080p (the
+Load 469.8 MB in 4.82 s (sky 0.53, lut 0.09, glb 1.64, textures 2.34). Resident **1 294.4 MB** at
+1440p = textures 820.7 + render targets 437.5 + geometry 36.2, and **1 165.3 MB** at 1080p (the
 render targets are 308.5 MB there). The render targets are two 2560x1440 HalfFloat `samples: 4`
-composer buffers (147.5 MB each), the 1024^2 water reflector (41.9) and the PMREM cubeUV (100.7).
-Texture memory alone is 921.4 MB against the manifest's 1 200 MB budget; the manifest's own
-projection is 1 166 MB including the Gate 3 lightmaps and impostors that do not exist yet.
+composer buffers (147.5 MB each), the 1024^2 water reflector (41.9) and the PMREM cubeUV (100.7);
+the PMREM is counted there and NOT again as a texture (`scene.environment` is that target's own
+texture — review finding 1, fixed).
+Like for like against the manifest's budget: the Gate 2 PBR set measures **531.3 MB** against its
+539.4 MB line, and the three budget lines whose assets exist today (gate2_pbr 539.4 + orn_ao_gate1
+147.9 + foliage_cards 20.0 = 707.3 MB) measure 698.6 MB here. The remaining texture bytes are the
+two sky equirects (~90 MB), which the budget does not count; the 1 166 MB projection and the
+1 200 MB budget include the Gate 3 lightmaps and impostors that do not exist yet.
 
 ## Instance chunking (QA-11d-1)
 The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
