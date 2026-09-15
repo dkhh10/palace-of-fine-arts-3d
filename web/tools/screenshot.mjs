@@ -242,6 +242,7 @@ try {
 				nearest_first: info.pbr.order.slice().sort( ( a, b ) => a.rank - b.rank ).slice( 0, 8 )
 					.map( r => ( { rank: r.rank, material: r.material, distance_m: r.distance_m, maps: r.maps } ) ) } : null,
 			chunking: info.chunking ? { ...info.chunking, batches: info.chunking.batches.length } : null,
+			detail: info.detail ? { ...info.detail, applied: info.detail.applied.length } : null,
 			bytes: info.bytes, load_s: info.load_s, glbs: info.glbs, billboards: info.billboards,
 			stations: perStation,
 		}, null, 1 ) );
@@ -252,6 +253,8 @@ try {
 		+ `lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}`
 		+ ( info.pbr ? `, pbr ${info.pbr.matched}/${info.pbr.materials_in_scene} materials, ${info.pbr.unique_files} files, `
 			+ `${( info.pbr.bytes / 1e6 ).toFixed( 1 )} MB, ${info.pbr.unmatched.length} unmatched` : '' ) );
+	if ( info.detail ) console.log( `[shot] detail ${info.detail.materials} materials, ${info.detail.sets_loaded} sets, `
+		+ `${info.detail.textures} textures, ${( info.detail.bytes / 1e6 ).toFixed( 1 )} MB, projection ${info.detail.projection}, strength ${info.detail.strength}` );
 	if ( info.resident ) console.log( `[shot] resident ${( info.resident.total_bytes / 1e6 ).toFixed( 1 )} MB `
 		+ `(tex ${( info.resident.texture_bytes / 1e6 ).toFixed( 1 )}, rt ${( info.resident.render_target_bytes / 1e6 ).toFixed( 1 )}, `
 		+ `geo ${( ( info.resident.geometry_bytes + info.resident.instance_matrix_bytes ) / 1e6 ).toFixed( 1 )}) `

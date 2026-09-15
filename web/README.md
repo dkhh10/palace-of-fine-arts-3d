@@ -102,6 +102,25 @@ budget lines whose assets exist today (gate2_pbr + orn_ao_gate1 + foliage_cards)
 here. The remaining texture bytes are the two sky equirects (~90 MB), which the budget does not
 count; the 1 200 MB budget also covers the Gate 3 lightmaps and impostors that do not exist yet.
 
+## The detail layer (QA-12-1)
+`materials.detail` in manifest v3 ships the five tiling sets Phase 5 itself uses (`concrete_wall_007/008`,
+`gravelly_sand`, `rock_boulder_dry`, `forest_ground_04`, 1K over a 1.18-3.15 m tile). `src/detail.js` puts them
+back on top of the baked maps with `onBeforeCompile`: albedo x (detail albedo / its own LINEAR mean),
+roughness x (detail roughness / its mean), and the detail normal's tangent-space xy added to the baked normal
+through a tangent frame built from the detail UV. Dividing by the map's own mean is what keeps the baked colour
+and brightness; the mean is measured on the CPU from the decoded image (a mip-chain average is taken in the
+stored non-linear space and biases the ratio, and a compressed texture has no readable pixels at all — which is
+why the PNG set is used and the 4x cheaper KTX2 set becomes usable the moment the manifest declares
+`mean_linear` per map).
+Projection: the manifest's rule is `object_position.xy * object_scale`, but per-instance object space is not
+recoverable in the viewer (gltfpack folds the dequantisation of quantised positions into the instance matrix),
+so the layer is tiled in WORLD space at the same tile size, Blender xy = three (x, -z). `?detailproj=dominant`
+projects on the axis plane most facing the surface instead. `?detail=0` is the control, `?detail=<0..1>` the
+albedo/roughness strength, `?detailnormal=<s>` the normal scale (default 0.5), `?detailtest=noise` substitutes a
+synthetic value-noise set of the same tile size for diagnosis.
+A map whose measured mean or std is below 1/255 is DROPPED with a note: an empty map as a ratio denominator
+turns the surface black.
+
 ## Instance chunking (QA-11d-1)
 The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
 batch scattered over the site has a site-spanning bounding sphere and passes the frustum test at every
