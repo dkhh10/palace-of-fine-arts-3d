@@ -276,3 +276,13 @@ Format: date · decision · why · consequences. Newest at the bottom.
   no colour management; `scene.use_nodes = False` does not disable the compositor (`scene.compositing_node_group = None` does, and the
   compositor moved 0.18 grey from 0.0821 to 0.0750); LOD0 objects are `hide_viewport` in the delivery file and absent from the depsgraph
   (matrix_world reads identity, ray casts miss) until un-hidden and `view_layer.update()`.
+
+## 2026-09-15 · Gate 0 verdict (lead): PASS on the vertical slice, pending the user's sign-off before scale-up
+Merged: phase6-bake (f8871f2) and phase6-viewer (cdca62f), both reviewed (docs/reviews/phase6_*_gate0_review.md) with every fix-now item
+applied; carries listed in export/README.md and web/README.md. Evidence: renders/web/gate0_pair.png (viewer vs the no-compositor Cycles
+frame, column bbox delta 0 px, sky 1.011, lit column sunlit 0.922 / shaded 0.985 at lightmap_scale = pi; 0.78 / 0.88 at 1 -> pi is the
+contract). Against the composited Phase 5 frame the same column is 0.897 / 0.952: the remainder is the compositor (haze, bloom, vignette),
+a Gate 4 item with the numbers now carried in the manifest. Pipeline per slice asset: decimate + UV 19 s, normal+AO 146-238 s,
+PBR 48-65 s, lightmap 2K 128 spp 221-306 s, pack 30 s. Gate 3 projection for ~40 lightmapped assets: 5.9 h of GPU in per-asset jobs.
+Still owed by the user before Gate 1: the ORN_ option (a/b/c above; lead recommends c) and the trees option (plan §4b; lead recommends
+impostors beyond 25 m plus thinned LOD1 near the walk); and whether one bounded material round on dome and stone runs before Gate 2.
