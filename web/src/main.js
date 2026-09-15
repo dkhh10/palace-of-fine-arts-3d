@@ -357,6 +357,38 @@ window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	};
 	requestAnimationFrame( step );
 } );
+/** Pixel bounding box of every object whose name contains `needle`, projected with the live camera.
+ *  Used to put the pair-sheet's measurement boxes on the right geometry in BOTH frames. */
+window.__pfaProject = ( needle ) => {
+	const W = renderer.domElement.width, H = renderer.domElement.height;
+	const v = new THREE.Vector3();
+	const out = [];
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh || ! o.name.includes( needle ) ) return;
+		o.geometry.computeBoundingBox();
+		const bb = o.geometry.boundingBox;
+		const mats = o.isInstancedMesh
+			? Array.from( { length: o.count }, ( _, i ) => o.matrixWorld.clone().multiply( new THREE.Matrix4().fromArray( o.instanceMatrix.array, i * 16 ) ) )
+			: [ o.matrixWorld ];
+		mats.forEach( ( m, i ) => {
+			let x0 = Infinity, y0 = Infinity, x1 = - Infinity, y1 = - Infinity, zmin = Infinity, behind = false;
+			for ( let c = 0; c < 8; c ++ ) {
+				v.set( c & 1 ? bb.max.x : bb.min.x, c & 2 ? bb.max.y : bb.min.y, c & 4 ? bb.max.z : bb.min.z );
+				v.applyMatrix4( m );
+				const dist = v.distanceTo( camera.position );
+				v.project( camera );
+				if ( v.z > 1 ) behind = true;
+				x0 = Math.min( x0, ( v.x * 0.5 + 0.5 ) * W ); x1 = Math.max( x1, ( v.x * 0.5 + 0.5 ) * W );
+				y0 = Math.min( y0, ( 0.5 - v.y * 0.5 ) * H ); y1 = Math.max( y1, ( 0.5 - v.y * 0.5 ) * H );
+				zmin = Math.min( zmin, dist );
+			}
+			out.push( { name: o.name + ( o.isInstancedMesh ? `#${i}` : '' ), bbox: [ x0, y0, x1, y1 ], distance: zmin, behind } );
+		} );
+	} );
+	out.sort( ( a, b ) => a.distance - b.distance );
+	return out;
+};
+
 /** Read back the linear pixel at the centre of a named object (LUT / luminance probes). */
 window.__pfaPixel = ( x, y ) => {
 	const gl = renderer.getContext();
