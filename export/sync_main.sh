@@ -6,7 +6,8 @@ HERE=${0:A:h}
 ROOT=${HERE:h}
 MAIN="/Users/dk/Projects/3d render blender 3rd attempt building"
 mkdir -p "$MAIN/export/out/gate0" "$MAIN/renders/web"
-rsync -a --delete --exclude 'gate0_set.blend*' "$ROOT/export/out/gate0/" "$MAIN/export/out/gate0/"
+# review finding 9: no --delete. $MAIN/export/out/gate0/ is shared with the export and viewer agents.
+rsync -a --exclude 'gate0_set.blend*' "$ROOT/export/out/gate0/" "$MAIN/export/out/gate0/"
 mkdir -p "$MAIN/export/out/bake_queue"
 cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 for f in "$ROOT"/renders/web/gate0_*.png(N); do cp -f "$f" "$MAIN/renders/web/"; done

@@ -28,7 +28,11 @@ import bake_lib as bl  # noqa: E402
 
 argv = g0.script_argv()
 SAMPLES = int(argv[argv.index("--spp") + 1]) if "--spp" in argv else 128
-ENCODE_ONLY = "--encode-only" in argv      # re-run the RGBM8 encoding from the existing EXRs, no GPU
+# --rebake a,b,c  bakes only those jobs and re-encodes the rest from their existing EXRs (no GPU for those).
+# --encode-only    bakes nothing. Default: bake everything.
+REBAKE = (argv[argv.index("--rebake") + 1].split(",") if "--rebake" in argv else None)
+if "--encode-only" in argv:
+    REBAKE = []
 g0.ensure_dirs()
 g0.queue_state("running")
 scene = bpy.context.scene
@@ -93,7 +97,9 @@ if has_bake_denoise:
 JOBS = [
     ("column", f"{g0.LO_COLUMN}_00", g0.COLUMN_HI, g0.TEX_SIZE, SAMPLES),
     ("capital", g0.LO_CAPITAL, g0.CAPITAL_HI, g0.TEX_SIZE, SAMPLES),
-    ("ground", "GATE0_ground", None, g0.TEX_SIZE, SAMPLES),
+    # review finding 2: the ground's coincident hi twin must be passed so hide_all_but drops it. With hi_name=None
+    # it stayed ray-visible and self-shadowed the bake (12 tris took 461 s, the slowest job in the slice).
+    ("ground", "GATE0_ground", g0.GROUND_NAME_FILE.read_text().strip(), g0.TEX_SIZE, SAMPLES),
     # ORN option (c) from the addendum: a 256 px slot in a per-instance lightmap atlas. Same bake, 1/64 the texels.
     ("capital_atlas256", g0.LO_CAPITAL, g0.CAPITAL_HI, 256, SAMPLES),
 ]
@@ -103,7 +109,8 @@ s = scene.render.image_settings
 for key, lo_name, hi_name, size, spp in JOBS:
     step = g0.Step(f"bake_lightmap:{key}@{size}")
     exr_path = tex / f"gate0_{key}_lightmap.exr"
-    if ENCODE_ONLY:
+    do_bake = (REBAKE is None) or (key in REBAKE)
+    if not do_bake:
         img = bpy.data.images.load(str(exr_path))
         img.colorspace_settings.name = "Non-Color"
         dt = 0.0
@@ -119,6 +126,9 @@ for key, lo_name, hi_name, size, spp in JOBS:
         s.file_format, s.color_depth, s.exr_codec = keepfmt
 
     rng = float(max(2.0 ** np.ceil(np.log2(max(rgb.max(), 1e-3))), 1.0))
+    # review finding 4: the clipped count has to be taken on the SOURCE values against the encoding's ceiling.
+    # Counting it on the decoded buffer is tautological - rgbm_encode clamps to rng by construction.
+    clipped_src = int((rgb.max(axis=-1) > rng).sum())
     enc, m = rgbm_encode(rgb, rng)
     dec = rgbm_decode(enc, m, rng)
     err = np.abs(dec - rgb)
@@ -147,19 +157,30 @@ for key, lo_name, hi_name, size, spp in JOBS:
     maps[key] = dict(
         size=size, samples=spp, bake_s=round(dt, 1),
         exr=dict(path=str(exr_path), bytes=exr_path.stat().st_size, half_float=True,
-                 stats=px_stats(rgb, ceiling=65504.0)),
+                 stats=px_stats(rgb, ceiling=rng),
+                 clipped_px_vs_rgbm_range=clipped_src,
+                 clipped_pct_vs_rgbm_range=round(100.0 * clipped_src / float(size * size), 5)),
         rgbm8=dict(path=str(png_path), bytes=png_path.stat().st_size, range=rng,
-                   note="decode: rgb = tex.rgb * tex.a * range (linear, no sRGB)",
-                   stats=px_stats(dec, ceiling=rng),
+                   note="decode: rgb = tex.rgb * tex.a * range (linear, no sRGB). `clipped` lives on the exr entry: "
+                        "the encoder clamps to range by construction, so counting it here would be tautological.",
+                   stats=px_stats(dec),
                    roundtrip_abs_max=round(float(err.max()), 6),
                    roundtrip_rel_p99=round(float(np.percentile(rel[rgb > 0.01], 99)) if (rgb > 0.01).any() else 0.0, 6),
                    file_decode_abs_max=round(float(np.abs(dec_file - rgb).max()), 6)),
     )
-    step.done(exr_path, png_path, bake_s=round(dt, 1), rng=rng,
+    step.done(exr_path, png_path, bake_s=round(dt, 1), rng=rng, baked=do_bake,
               exr_max=maps[key]["exr"]["stats"]["max"], exr_mean=maps[key]["exr"]["stats"]["mean"],
-              clipped=maps[key]["rgbm8"]["stats"]["clipped_px"])
+              clipped_src=clipped_src)
 
+prev = {}
+try:
+    prev = json.loads((g0.OUT / "bake_lightmap.json").read_text()).get("maps", {})
+except Exception:
+    pass
+prev.update(maps)
+maps = prev
 report["maps"] = maps
+report["rebaked"] = sorted(k for k, _, _, _, _ in JOBS if REBAKE is None or k in REBAKE)
 report["column_other_15"] = (
     "Only ARCH_rotunda_column_00_LOD0's placement is baked at Gate 0. The other 15 share one mesh but not one "
     "lighting environment (the ring is not rotationally symmetric under a single sun), so at Gate 3 each placement "

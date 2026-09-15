@@ -28,6 +28,9 @@ from mathutils import Vector  # noqa: E402
 argv = g0.script_argv()
 assert "--gate0" in argv, "export_set.py: pass -- --gate0"
 g0.ensure_dirs()
+# review finding 5: manifest_merge .update()s dicts, so a rerun after a rename would leave ghost entries in
+# the viewer contract. export_set.py is the head of the chain, so it starts the manifest from nothing.
+(g0.OUT / "manifest.json").unlink(missing_ok=True)
 step = g0.Step("export_set")
 scene = bpy.context.scene
 report = {}

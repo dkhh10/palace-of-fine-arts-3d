@@ -142,10 +142,15 @@ report["gltf"] = dict(path=str(gltf), bytes=gltf.stat().st_size,
 assert "TEXCOORD_1" in report["gltf"]["texcoord_sets"], \
     f"UV2 did not reach the glTF: {report['gltf']['texcoord_sets']}"
 (g0.OUT / "gltf_export.json").write_text(json.dumps(dict(assets=assets, **report), indent=1) + "\n")
-g0.manifest_merge(assets=assets, gltf=report["gltf"] | dict(
+g0.manifest_merge(assets=assets, lightmap_scale=3.14159265358979, gltf=report["gltf"] | dict(
     lightmap_slot="emissiveTexture (texCoord 1)",
-    viewer_action="set material.emissive = 0x000000, material.lightMap = material.emissiveMap "
-                  "(channel 1), decode RGBM8 with the range in textures.<key>.rgbm_range, "
-                  "lightMapIntensity 1.0, and make the sun DirectionalLight specular-only"))
+    viewer_action="per material: (a) set emissiveMap's texture.colorSpace = NoColorSpace BEFORE anything else - "
+                  "glTF declares emissiveTexture as sRGB and GLTFLoader would sRGB-decode the RGBM texels; "
+                  "(b) material.lightMap = material.emissiveMap (keep channel = 1), material.emissiveMap = null, "
+                  "material.emissive = 0x000000; (c) decode RGBM8 as rgb = texel.rgb * texel.a * "
+                  "textures.<key>.rgbm_range; (d) set material.lightMapIntensity = manifest.lightmap_scale "
+                  "(= PI): the bake is Cycles' diffuse-colour-off pass, i.e. irradiance/PI, and three.js' lightMap "
+                  "path multiplies by BRDF_Lambert = albedo/PI, so intensity 1.0 renders PI times too dark; "
+                  "(e) make the sun DirectionalLight specular-only - its diffuse is already in the lightmap"))
 step.done(gltf, tris=report["gltf"]["total_tris"])
 print("[gate0] gltf_export done:", report["gltf"]["texcoord_sets"], report["gltf"]["materials"])

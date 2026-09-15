@@ -64,10 +64,19 @@ pushed through the LUT — they must agree within 1/255.
 
 ### The lightmap
 
-glTF has no lightmap slot, so the map rides in `emissiveTexture` on `TEXCOORD_1`. The viewer must, per material:
-set `emissive` to black, move `emissiveMap` to `lightMap` (keeping `channel = 1`), set `lightMapIntensity = 1`, and
-decode RGBM8 as `rgb = texel.rgb * texel.a * rgbm_range` in linear space. The map is Cycles' **diffuse pass with
-colour off** (irradiance/π), so the viewer multiplies it by the base colour and adds no diffuse sun of its own.
+glTF has no lightmap slot, so the map rides in `emissiveTexture` on `TEXCOORD_1`. Per material, in this order:
+
+1. **`texture.colorSpace = NoColorSpace` first.** glTF declares `emissiveTexture` as sRGB, so GLTFLoader would
+   sRGB-decode the RGBM texels and every later step would be wrong.
+2. `material.lightMap = material.emissiveMap` (keep `channel = 1`), then `material.emissiveMap = null` and
+   `material.emissive = 0x000000`.
+3. Decode RGBM8 as `rgb = texel.rgb * texel.a * textures.<key>.rgbm_range` (range 64 on every Gate 0 map), linear,
+   no sRGB anywhere.
+4. **`material.lightMapIntensity = manifest.lightmap_scale` = π (3.14159265).** The bake is Cycles' diffuse pass
+   with **colour off**, i.e. irradiance/π, and three.js' `lightMap` path multiplies by `BRDF_Lambert` = albedo/π —
+   so `lightMapIntensity = 1` renders π times too dark. The maps are deliberately *not* re-baked ×π; the constant
+   lives in the manifest so there is one place to change it.
+5. The sun `DirectionalLight` is **specular-only**: its diffuse is already inside the lightmap.
 
 ## Two Blender 5.2 findings this pipeline depends on (both measured here, both worth a docs/tech_notes.md entry)
 
@@ -89,3 +98,18 @@ A third, cheaper trap: `master_delivery.blend` is saved with `common.set_lod(vie
 `hide_viewport=True`, is **not in the depsgraph**, and therefore reads back `matrix_world` as the identity and is
 invisible to `scene.ray_cast`. `export/export_set.py` un-hides the slice and calls `view_layer.update()` before it
 reads any transform, and asserts every placement afterwards (`placement_max_error_m` 0.0).
+
+## Carries (code-review findings 6-10, `docs/reviews/phase6_bake_gate0_review.md`, not fixed at Gate 0)
+
+6. `export/bake_lut.py` reports `u_error_deg` and `horizon_row_v` but never asserts them, and the
+   "brightest pixel sits on the horizon" reading assumes `sky.sun_disc` is off. Add `assert abs(u_error_deg) < 0.5`
+   and log `sun_disc` at Gate 1.
+7. All five LUT proof patches are neutral, so only the grey diagonal of the LUT is proven; AgX's hue path is
+   untested. Add two saturated patches at Gate 1.
+8. `MAIN_ROOT` is re-hard-coded in `gate0_common.py`, `gate0.sh`, `sync_main.sh` and `gltf_pack.sh` instead of
+   `os.environ.get("PFA_MAIN_ROOT", str(common.MAIN_ROOT))`, and `HERO_CAM` duplicates
+   `qa_cameras.CAMERAS[0]["name"]`.
+9. **Done at Gate 0** — `sync_main.sh` no longer passes `--delete`, so it cannot erase what the export or viewer
+   agent writes into the shared `$MAIN/export/out/gate0/`.
+10. `gltf_export.py` never clears `tex_gltf/`, so a stale PNG from an earlier run would still be fed to toktx
+    (wasteful, not wrong), and `gate0_common.guard_no_master_write` is dead code — call it or delete it.
