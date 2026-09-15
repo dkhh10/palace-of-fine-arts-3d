@@ -60,9 +60,10 @@ function serveDist() {
 		throw new Error( `web/dist missing - run "npm run build" first (${root})` );
 	const srv = createServer( ( req, res ) => {
 		const url = decodeURIComponent( req.url.split( '?' )[ 0 ] );
-		let file = url.startsWith( '/assets/' ) && ! fs.existsSync( path.join( root, url.slice( 1 ) ) )
-			? path.join( ASSETS, url.slice( '/assets/'.length ) )
-			: path.join( root, url === '/' ? 'index.html' : url.slice( 1 ) );
+		let file;
+		if ( url.startsWith( '/assets/' ) && ! fs.existsSync( path.join( root, url.slice( 1 ) ) ) ) file = path.join( ASSETS, url.slice( '/assets/'.length ) );
+		else if ( url.startsWith( '/test/' ) ) file = path.join( WEB, 'testdata', url.slice( '/test/'.length ) );
+		else file = path.join( root, url === '/' ? 'index.html' : url.slice( 1 ) );
 		if ( ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) { res.statusCode = 404; res.end( 'not found' ); return; }
 		res.setHeader( 'Content-Type', MIME[ path.extname( file ) ] || 'application/octet-stream' );
 		res.setHeader( 'Content-Length', fs.statSync( file ).size );

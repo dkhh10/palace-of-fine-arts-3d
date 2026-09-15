@@ -12,12 +12,16 @@ const MIME = { '.json': 'application/json', '.glb': 'model/gltf-binary', '.ktx2'
 	'.hdr': 'image/vnd.radiance', '.exr': 'image/x-exr', '.png': 'image/png', '.jpg': 'image/jpeg',
 	'.cube': 'text/plain', '.bin': 'application/octet-stream', '.gltf': 'model/gltf+json' };
 
+export const TESTDATA_DIR = path.resolve( import.meta.dirname, 'testdata' );
+
 export function assetsMiddleware() {
 	return ( req, res, next ) => {
-		if ( ! req.url.startsWith( '/assets/' ) ) return next();
-		const rel = decodeURIComponent( req.url.split( '?' )[ 0 ].slice( '/assets/'.length ) );
-		const file = path.join( ASSETS_DIR, rel );
-		if ( ! file.startsWith( ASSETS_DIR ) || ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) {
+		const isAssets = req.url.startsWith( '/assets/' ), isTest = req.url.startsWith( '/test/' );
+		if ( ! isAssets && ! isTest ) return next();
+		const root = isAssets ? ASSETS_DIR : TESTDATA_DIR;
+		const rel = decodeURIComponent( req.url.split( '?' )[ 0 ].slice( isAssets ? '/assets/'.length : '/test/'.length ) );
+		const file = path.join( root, rel );
+		if ( ! file.startsWith( root ) || ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) {
 			res.statusCode = 404; res.end( 'not found' ); return;
 		}
 		res.setHeader( 'Content-Type', MIME[ path.extname( file ) ] || 'application/octet-stream' );
