@@ -77,7 +77,12 @@ if "--gate2" in g0.script_argv():
     albedo_via_emit = bool(job.get("metallic"))
     # QA-12-1: for ARCH / ground the tangent normal is derived from a BAKED HEIGHT map rather than from a
     # Cycles NORMAL bake - see bake_lib.emit_bump_height for the measurement that forced it.
-    normal_via_height = job["cls"] in (g2.CLS_ARCH, g2.CLS_GROUND) and not sta
+    # Opt-in only. Measured on ARCH_site__concrete_podium: the height-derived normal (no bake differentials
+    # in it) is FLATTER than the plain Cycles NORMAL bake, because the Cycles bake also carries PFA_edge's
+    # edge rounding and PFA_streaks' normal term, not just the Bump height. Both are negligible against the
+    # detail set (11.5x the red std, 61x the blue) - the Cycles bake is simply the better of the two.
+    normal_via_height = ("--normal-from-height" in argv) and job["cls"] in (g2.CLS_ARCH, g2.CLS_GROUND) \
+        and not sta
     BAKE = dict(albedo=(("EMIT" if albedo_via_emit else "DIFFUSE"), g2.SAMPLES_ALBEDO, "sRGB", (0.5, 0.5, 0.5)),
                 roughness=("ROUGHNESS", g2.SAMPLES_ROUGHNESS, "Non-Color", (0.5, 0.5, 0.5)),
                 normal=("NORMAL", g2.SAMPLES_NORMAL, "Non-Color", (0.5, 0.5, 1.0)))

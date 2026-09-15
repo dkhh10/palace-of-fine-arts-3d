@@ -1,0 +1,16 @@
+00:00.332  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate2_probe.py:62: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  d = dict(name=m.name, use_nodes=bool(m.use_nodes), blend_method=getattr(m, "surface_render_method", None))
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate2_probe.py:63: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if not m.use_nodes or m.node_tree is None:
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate2_probe.py:130: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if dm and dm.use_nodes:
+00:01.135  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/out/gate1/gate1_set.blend"
+[gate2] opened master_delivery.blend: 72 materials, 9691 objects
+[gate2] opened gate1_set.blend: 2600 objects, 176 meshes
+[gate0] STEP gate2_probe wall_s=1.8 probe.json=209846B groups=62 materials=30
+[gate2] probe done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 87342 exited rc=0 after 2 s (max 900)

@@ -80,7 +80,11 @@ def backdrop_uv_matches(gltf_have):
     project already rides. Both hypotheses are measured and the better one is reported.
     """
     import numpy as np
-    npz = OUT / "backdrop_uv1.npz"
+    # compare against the layout env.glb actually SHIPS. gate2_set.py regenerates backdrop_uv1.npz on every
+    # run, so comparing the current one would be new-against-new and would pass however much it drifted.
+    npz = OUT / "backdrop_uv1_shipped.npz"
+    if not npz.exists():
+        npz = OUT / "backdrop_uv1.npz"
     gp = GATE1 / "env.gltf"
     if not (npz.exists() and gp.exists()):
         return None
