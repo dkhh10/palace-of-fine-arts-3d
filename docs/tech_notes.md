@@ -222,3 +222,36 @@ independently runnable (`scripts/phase5_deliver.sh 4`) and logs to `renders/logs
 **LOD convention (unchanged, applies to every render above):** `_LOD0` hi / `_LOD1` mid (viewport + Eevee QA default)
 / `_LOD2` low, via `common.set_lod(viewport, render)`; the 4K/flythrough Cycles finals render at LOD0
 (`set_lod(viewport=1, render=0)`, the default `render_previews`/`qa_render_round.py --final` already leave in place).
+
+## Phase 6 — web export and bake pipeline (lead, 2026-09-15, from the Gate 0 bake engineer's measurements; full detail in export/README.md)
+
+**Blender 5.2 findings the pipeline depends on (all measured, not assumed):**
+- `Image.save_render()` applies NO colour management: 0.18 and 0.02526 came back as 0.180 / 0.02525 with the scene at AgX High Contrast
+  -2.833 EV. Anything that must pass through the view transform is rendered through the compositor instead (an Image node into a
+  `NodeGroupOutput` on `scene.compositing_node_group`, render size = the lattice, one sample). That is how the 65^3 AgX LUT is baked.
+- `scene.use_nodes = False` does NOT disable the compositor in 5.2 (deprecated property); only `scene.compositing_node_group = None`
+  does. Measured on a 0.18 emission plane: 0.075029 with `COMP_scene_golden_hour` attached, 0.082078 without (7.5 % linear).
+  In 5.2 the compositor lives on `scene.compositing_node_group` and ends in `NodeGroupOutput`, not on `scene.node_tree`.
+- `master_delivery.blend` is saved at LOD1 in the viewport, so every `_LOD0` object is `hide_viewport=True`, absent from the depsgraph:
+  `matrix_world` reads identity and `scene.ray_cast` misses it. Un-hide, `view_layer.update()`, then read transforms.
+- gltfpack 1.2: `-mi` (EXT_mesh_gpu_instancing) and `-kn` (keep node names) are mutually exclusive. The lead chose `-cc -mi`.
+
+**Colour contract (viewer, tone mapping off):** `graded = LUT3D(clamp((log2(max(linear * 2^-2.8331, 1e-10) / 0.18) - (-12.47393))
+/ (4.026069 - (-12.47393)), 0, 1))`, LUT 65^3 (a 33^3 lattice left 1.7/255 on mid grey), proven on five Cycles grey patches at worst
+0.072/255. The exposure is applied by the viewer before the shaper and the LUT was baked at that exposure: applying it twice or not at
+all is wrong in both directions.
+
+**Lightmap contract:** Cycles Diffuse direct+indirect, colour OFF = irradiance/pi; three.js' lightMap path multiplies by
+BRDF_Lambert = albedo/pi, so `lightMapIntensity = manifest.lightmap_scale = pi`. The map rides in the glTF `emissiveTexture` on
+TEXCOORD_1 as RGBM8 (range 64, PNG at Gate 0): set `colorSpace = NoColorSpace` FIRST (glTF declares emissive as sRGB), move it to
+`lightMap` channel 1, zero the emissive, decode `rgb = texel.rgb * texel.a * range`. The sun DirectionalLight is specular-only
+(its diffuse is in the map). Gate 0 wall times, 2K, 128 spp + OIDN, M2: column 306 s, capital 221 s, 12-tri ground 300 s once its
+own hi twin was hidden from the rays (461 s before). Any coincident hi-poly twin must be excluded from the bake rays.
+
+**Sky:** two 4096x2048 equirects (camera branch = background, glossy branch = PMREM) with the Light Path links cut in memory and the
+branch constants written into the inputs; `u_img = 0.5 + atan2(x_B, y_B)/360`, top row = zenith. After the exporter's Y-up swap
+the viewer applies +90 deg about three.js Y (`sky.rotation_deg` in the manifest = `equirectUv(d).u + 0.25`), sun azimuth check 0.026 deg.
+
+**Headless Chrome:** a raw `--headless=new --screenshot` on Chrome 152 lingers 60-90 s per frame; `web/tools/screenshot.mjs`
+(puppeteer-core, waits for `window.__pfaReady`, closes in `finally`) through `scripts/chrome_run.sh` returns in seconds and leaves
+no process. Never overlap Chrome with a bake: check `export/out/bake_queue/status.json` in a SEPARATE command before launching.
