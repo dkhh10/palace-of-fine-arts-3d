@@ -184,6 +184,28 @@ for cls, objs in sets.items():
                                   texcoord_sets=sorted({k for m in doc.get("meshes", [])
                                                         for p in m["primitives"] for k in p["attributes"]
                                                         if k.startswith("TEXCOORD")}))
+    # QA round 11b: the 127 ENV_treeboard_* quads shipped OPAQUE, so a viewer that did not know the material
+    # name drew 16-26 % of every frame as grey slabs. Make the file honest on its own: MASK with cutoff 1.0
+    # cuts every texel until the Gate 3 impostor atlas supplies an alpha. The material name stays
+    # MAT_EXP_treeboard so the viewer's existing name test keeps working.
+    patched = []
+    for m in doc.get("materials", []):
+        if m.get("name", "").startswith("MAT_EXP_treeboard"):
+            m["alphaMode"] = "MASK"
+            m["alphaCutoff"] = 1.0
+            # the base-colour alpha has to BE 0, not just be declared cut: with an alpha of 1 gltfpack reasons
+            # "MASK over an always-opaque material == OPAQUE" and drops alphaMode again (measured at cutoff
+            # 1.0, 0.99 and 0.5). alpha 0 < cutoff 1.0 discards every fragment, which is the Gate 1 contract
+            # until the Gate 3 impostor atlas supplies a real alpha.
+            pbr = m.setdefault("pbrMetallicRoughness", {})
+            bcf = list(pbr.get("baseColorFactor", [1.0, 1.0, 1.0, 1.0]))[:3] + [0.0]
+            pbr["baseColorFactor"] = bcf
+            patched.append(m["name"])
+    if patched:
+        path.write_text(json.dumps(doc))
+        doc = json.loads(path.read_text())
+        report["classes"].setdefault(cls, {})
+    report.setdefault("treeboard_alpha_mask", []).extend(patched)
     bad = []
     for mi, m in enumerate(doc.get("materials", [])):
         for slot in ("baseColorTexture", "metallicRoughnessTexture"):
@@ -198,6 +220,9 @@ for cls, objs in sets.items():
     assert not bad, (f"{cls}.gltf has materials whose texture texCoord is negative (three.js compiles that "
                      f"into an undeclared uv attribute and the whole program fails to link): {bad}")
     step.done(path, objects=len(objs), tris=tris, meshes=len(doc.get("meshes", [])))
+
+assert report.get("treeboard_alpha_mask"), \
+    "MAT_EXP_treeboard never reached a glTF: the far-tree boards would ship opaque again"
 
 # ---------------------------------------------------------------- UV1 atlas check
 # The UV1 atlas was packed by one multi-object smart project per group. If that had failed, every mesh in the

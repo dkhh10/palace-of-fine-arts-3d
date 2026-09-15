@@ -43,8 +43,12 @@ ARCH_TARGETS = [
     (r"^ARCH_(rotunda|colonnade_north|colonnade_south)(_inner)?_column_\d+_LOD0$", 3500, "fluted shaft, flutes -> normal map"),
     (r"^ARCH_.*_colbase_\d+_torus$", 600, "column base torus"),
     (r"^ARCH_rotunda_eggs_LOD0$", 8000, "egg-and-dart band"),
-    (r"^ARCH_rotunda_vault_coffers_\d+$", 6000, "coffered vault sector"),
-    (r"^ARCH_rotunda_ceiling_ribs$", 8000, "rib cage"),
+    # QA-11-9: decimating these two left 174 sliver triangles (thinness > 50, worst 610) in the merged
+    # ceiling mesh, and cam04 looks straight at them - a long thin wedge across the coffers with a loose
+    # shard beside it. They are 57.6 % of the defect box by ray cast and there is budget for the real
+    # geometry, so both export as modelled: +104,828 placed tris, ARCH still 150,618 under its budget.
+    (r"^ARCH_rotunda_vault_coffers_\d+$", None, "coffered vault sector - as modelled, cam04 looks at it"),
+    (r"^ARCH_rotunda_ceiling_ribs$", None, "rib cage - as modelled, cam04 looks at it"),
     (r"^ARCH_site_rostra_meander_\d+$", 3000, "meander frieze band"),
     (r"^ARCH_.*_astragal_\d+$", 400, "astragal ring"),
     (r"^ARCH_rotunda_dome$", 6000, "dome shell"),
