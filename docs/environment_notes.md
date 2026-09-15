@@ -253,12 +253,12 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 115 | cypress | -22 | -46 | 18 | E1 screen behind the colonnade |
 | 116 | redwood | -126 | 10 | 23 | E2 screen behind the colonnade |
 | 117 | redwood | -126 | 4 | 20 | E2 screen behind the colonnade |
-| 118 | redwood | -122 | -1 | 19 | E2 screen behind the colonnade |
+| 118 | redwood | -122 | -1 | 20 | E2 screen behind the colonnade |
 | 119 | eucalyptus | -88 | -14 | 18 | E2 screen behind the colonnade |
 | 120 | redwood | -84 | -19 | 18 | E2 screen behind the colonnade |
 | 121 | redwood | -80 | -23 | 18 | E2 screen behind the colonnade |
 | 122 | redwood | -63 | -35 | 18 | E2 screen behind the colonnade |
-| 123 | cypress | -58 | -39 | 18 | E2 screen behind the colonnade |
+| 123 | cypress | -58 | -39 | 19 | E2 screen behind the colonnade |
 | 124 | cypress | -53 | -42 | 19 | E2 screen behind the colonnade |
 | 125 | redwood | -33 | -48 | 19 | E2 screen behind the colonnade |
 | 126 | redwood | -27 | -48 | 19 | E2 screen behind the colonnade |

@@ -286,3 +286,14 @@ a Gate 4 item with the numbers now carried in the manifest. Pipeline per slice a
 PBR 48-65 s, lightmap 2K 128 spp 221-306 s, pack 30 s. Gate 3 projection for ~40 lightmapped assets: 5.9 h of GPU in per-asset jobs.
 Still owed by the user before Gate 1: the ORN_ option (a/b/c above; lead recommends c) and the trees option (plan §4b; lead recommends
 impostors beyond 25 m plus thinned LOD1 near the walk); and whether one bounded material round on dome and stone runs before Gate 2.
+
+## 2026-09-15 · User's three decisions ("go"): ORN option (c), trees = impostors + thinned near set, one bounded material round
+- ORN_: instancing with a 256 px per-instance lightmap-atlas slot and a custom material (option c; 3.3 h bakes, 451 MB desktop);
+  mobile fallback = option (b) at 1K. Trees: Cycles-baked octahedral impostors for every tree beyond 25 m of the walkable area,
+  thinned LOD1 (50 %) for the ~20 reachable trees; mobile = impostors everywhere. Impostor atlases are baked in the Gate 3 queue;
+  Gate 1 fixes the near/far tree lists and exports far trees as tagged billboard quads.
+- One bounded material round (MAT r10) before Gate 2: dome cap texture (QA-10-8) and the coffer saucer (QA-09-8) only, measured on one
+  Cycles hero + one cam04 frame, lighting untouched, hold list = the round-10b hero boxes. master_delivery.blend is regenerated after it
+  merges and before any Gate 2 PBR bake. The lagoon mirror and the compositor are viewer-side levers (Gate 4), not materials.
+- GPU sharing rule for Phase 6 (lead): a bake queue job or a builder's Cycles frame starts only when the watchdog state dir
+  (~/.cache/pfa_blender_watchdog) holds no live registered Blender pid other than its own; the detached queue waits, agents do not.
