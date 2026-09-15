@@ -117,6 +117,17 @@ def slot_uv(index):
            (row * ORN_ATLAS_SLOT_PX + half) / float(ORN_ATLAS_PX)]
     return atlas, s, off, scale
 
+# QA-12-1: the UV1 shelf packer scaled the tiles by a fixed 1/sqrt(1.6) inefficiency guess, which left the
+# two colonnade atlases at 0.16 coverage - a quarter of the texel density of the groups that happened to pack
+# well. The packer now BISECTS for the largest tile scale that still fits, which is strictly better; these
+# three groups keep the old layout only because their Gate 2 bakes have already shipped against it. Delete a
+# name here when its bake is redone.
+UV1_LEGACY_PACK = {
+    "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+    "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+    "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+}
+
 CLASS_BUDGET = {"ARCH": 1_100_000, "ORN": 1_100_000, "ENV": 800_000}
 TOTAL_BUDGET = 3_000_000
 

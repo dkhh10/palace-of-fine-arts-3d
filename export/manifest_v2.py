@@ -160,6 +160,15 @@ def main():
     print(f"[manifest_v2] uv1_in_glb true on {n_true}/{len(man.get('meshes', {}))} meshes "
           f"({len(from_gate2)} from the Gate 2 npz)")
 
+    # UV1 atlas quality, so QA and the bake engineer read the same number the export measured
+    sj = json.loads((OUT / "export_set.json").read_text())
+    if "uv1_coverage" in sj:
+        man["uv1_atlas"] = dict(coverage=sj["uv1_coverage"], tiles=sj.get("uv1_atlas_tiles", {}),
+                                coverage_min=sj.get("uv1_coverage_min"),
+                                method="per-mesh smart project (island margin 0.001 when the mesh is tiled), "
+                                       "area-weighted square tiles, tile scale bisected for the largest that "
+                                       "fits; coverage is the fraction of the UV square rasterised at 512^2")
+
     man["schema"] = "pfa-phase6/2"
     mp.write_text(json.dumps(man, indent=1) + "\n")
     print(f"[manifest_v2] {mp} {mp.stat().st_size} B; carried {carried}; "

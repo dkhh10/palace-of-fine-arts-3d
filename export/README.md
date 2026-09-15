@@ -316,6 +316,33 @@ from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
     orn 33/33/33/0, env **21/21/21/0** (enforced), ground 4/4/4/0. The flags each class was packed with are
     written to `export/out/gate1/gltfpack_flags.txt` and read back by the verifier.
 
+15. **QA-12-1, the two colonnade UV1 atlases.** Three real causes, measured, not guessed:
+    * the group was unwrapped with a **multi-object** smart project, which packs ONE shared layout across the
+      selection, so every mesh kept only its own sparse share of the square and the tiling step then scaled
+      that sparseness into a tile — now each mesh is unwrapped on its own;
+    * the island margin was `TILE_MARGIN` (0.004) **of the unwrap square**, which becomes 0.004 x tile side at
+      the atlas: on the merged colonnade mesh 0.004 gives 0.036 self-coverage, 0.001 gives 0.114, 0.0003 gives
+      0.146. `ISLAND_MARGIN_TILED` = 0.001 (~1.8 px at 2K on the big tile) is the safe end;
+    * the tile scale was a fixed `1/sqrt(1.6)` guess; `pack_tiles` now **bisects** for the largest scale that
+      fits — tile area 0.35 -> 0.788.
+    Result, `MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade` **0.0403 -> 0.0996** and
+    `MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade` **0.0394 -> 0.0939** (2.5x and 2.4x). Every other
+    UV1 group is byte-identical (50 groups, 2 changed, asserted against the previous `uv1_atlas` boxes); the
+    three rotunda multi-mesh groups keep the old layout through `g1.UV1_LEGACY_PACK` because their Gate 2
+    bakes already shipped.
+
+    **The 0.40 target is not reachable while these two atlases stay as one group, and the reason is
+    structural, not a packing bug.** The merged 130-object colonnade mass holds 76 % of the group's surface
+    area, so area weighting gives it 76 % of the atlas, and its own island packing tops out at 0.146 even with
+    Blender's concave `pack_islands` (measured: smart project 0.146, pack_islands CONVEX 0.108, CONCAVE
+    0.144). 0.76 x 0.15 caps the group near 0.13 whatever the other five meshes do. Raising the number by
+    giving the merged mass a smaller tile would LOWER the density where the texels are actually needed.
+    **The fix that works is to split the merged mass onto its own atlas**: it then gets a whole 2K instead of
+    76 % of one (1.3x density) and the five instanced meshes reach ~0.40 on theirs. Cost: one extra material
+    and one extra texture set per colonnade side (+4 x 2K maps, ~32 MB ASTC), and the bake engineer bakes four
+    groups instead of two. **Lead's call — not taken here, because it changes the material set and the Gate 2
+    bake plan.**
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the
