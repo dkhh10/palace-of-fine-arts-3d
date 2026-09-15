@@ -7,7 +7,10 @@
 //
 // Domain: a .cube may declare DOMAIN_MIN/DOMAIN_MAX; anything outside is clamped.  If the bake uses a
 // log shaper (scene-linear values above 1.0 folded into 0..1), set shaper:'log2' with shaperMin/Max in
-// stops, and the pass applies  t = (log2(max(c,eps)) - min) / (max - min)  before the lookup.
+// stops and shaperPivot (AgX: 0.18), and the pass applies
+//     t = (log2(c / pivot) - min_ev) / (max_ev - min_ev)
+// to the POST-exposure linear value before the lookup.  Gate 0's LUT is AgX High Contrast at
+// min_ev -12.47393, max_ev 4.026069, pivot 0.18, 65^3, with the -2.833 EV exposure applied here.
 import * as THREE from 'three';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
@@ -23,7 +26,13 @@ export const LUTDisplayShader = {
 		useShaper: { value: 0 },
 		shaperMin: { value: - 10.0 },
 		shaperMax: { value: 6.0 },
+		shaperPivot: { value: 0.18 },
 		lutEnabled: { value: 1 },
+		// Diagnostic only (Gate 4 implements the real depth-dependent mist): a constant airlight mix
+		// standing in for COMP_golden_hour's haze, applied to the SCENE-LINEAR value before exposure,
+		// exactly where Blender's compositor sits relative to the view transform.
+		hazeColor: { value: new THREE.Vector3( 5.320881, 3.739, 1.960339 ) },
+		hazeStrength: { value: 0.0 },
 	},
 	vertexShader: /* glsl */`
 		varying vec2 vUv;
@@ -32,17 +41,21 @@ export const LUTDisplayShader = {
 	fragmentShader: /* glsl */`
 		uniform sampler2D tDiffuse;
 		uniform sampler3D lut;
-		uniform float lutSize, exposure, shaperMin, shaperMax;
+		uniform float lutSize, exposure, shaperMin, shaperMax, shaperPivot;
 		uniform vec3 domainMin, domainMax;
 		uniform int useShaper, lutEnabled;
+		uniform vec3 hazeColor;
+		uniform float hazeStrength;
 		varying vec2 vUv;
 		void main() {
 			vec4 src = texture2D( tDiffuse, vUv );
-			vec3 c = max( src.rgb * exposure, vec3( 0.0 ) );
+			vec3 lin = max( src.rgb, vec3( 0.0 ) );
+			if ( hazeStrength > 0.0 ) lin = mix( lin, hazeColor, hazeStrength );
+			vec3 c = lin * exposure;
 			if ( lutEnabled == 0 ) { gl_FragColor = vec4( pow( c, vec3( 1.0 / 2.2 ) ), src.a ); return; }
 			vec3 t;
 			if ( useShaper == 1 ) {
-				vec3 l = log2( max( c, vec3( 1e-6 ) ) );
+				vec3 l = log2( max( c, vec3( 1e-9 ) ) / shaperPivot );   // AgX: EV relative to mid grey
 				t = ( l - vec3( shaperMin ) ) / vec3( shaperMax - shaperMin );
 			} else {
 				t = ( c - domainMin ) / ( domainMax - domainMin );
@@ -74,6 +87,7 @@ export class LUTDisplayPass extends ShaderPass {
 		this.uniforms.useShaper.value = lut.shaper === 'log2' ? 1 : 0;
 		if ( lut.shaperMin !== undefined ) this.uniforms.shaperMin.value = lut.shaperMin;
 		if ( lut.shaperMax !== undefined ) this.uniforms.shaperMax.value = lut.shaperMax;
+		if ( lut.shaperPivot !== undefined ) this.uniforms.shaperPivot.value = lut.shaperPivot;
 	}
 	set exposure( v ) { this.uniforms.exposure.value = v; }
 	get exposure() { return this.uniforms.exposure.value; }

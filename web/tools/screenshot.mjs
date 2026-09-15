@@ -90,7 +90,7 @@ try {
 		if ( o.dev ) { const s = await serveDev(); viteProc = s.proc; base = `http://127.0.0.1:${s.port}/`; }
 		else { const s = await serveDist(); server = s.srv; base = `http://127.0.0.1:${s.port}/`; }
 	}
-	const q = new URLSearchParams( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], ...o.query.map( s => s.split( /=(.*)/ ).slice( 0, 2 ) ) ] );
+	const q = new URLSearchParams( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], [ 'hud', '0' ], ...o.query.map( s => s.split( /=(.*)/ ).slice( 0, 2 ) ) ] );
 	const url = `${base}${base.includes( '?' ) ? '&' : '?'}${q}`;
 
 	browser = await puppeteer.launch( {
@@ -141,6 +141,8 @@ try {
 		const i = await page.evaluate( () => window.__pfaInfo() );
 		written.push( { station: st, file, draws: i.render.calls, tris: i.render.triangles } );
 	}
+
+	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
 	let probes = null;
 	if ( o.probe ) {

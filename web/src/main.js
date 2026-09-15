@@ -38,6 +38,9 @@ const CFG = {
 	skyRotationDeg: qs.has( 'skyrot' ) ? parseFloat( qs.get( 'skyrot' ) ) : null,
 	size: qs.get( 'size' ),                             // "1280x720" forces the canvas size
 	sun: qs.has( 'sun' ) ? parseFloat( qs.get( 'sun' ) ) : null,   // override the sun irradiance (probes)
+	unlit: qs.get( 'unlit' ) || 'share',                // share | stock | black: materials with no lightmap
+	haze: qs.has( 'haze' ) ? parseFloat( qs.get( 'haze' ) ) : 0,   // diagnostic constant airlight
+	hud: qs.get( 'hud' ) !== '0',                       // ?hud=0 for clean screenshots
 };
 
 function glInfo() {
@@ -90,6 +93,7 @@ manager.onProgress = ( url, done, total ) => {
 let composer, lutPass, water, manifest, stations, sunLight;
 let patchedMaterials = 0, lightmapsApplied = 0;
 const unpatchedMaterials = new Set();
+const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
 
 async function boot() {
@@ -140,8 +144,10 @@ async function boot() {
 	lutPass.renderToScreen = true;
 	composer.addPass( lutPass );
 	await loadLUT();
+	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
+	if ( ! CFG.hud ) document.getElementById( 'hud' ).classList.add( 'hidden' );
 	applyStation( CFG.station );
 	resize();
 	window.addEventListener( 'resize', resize );
@@ -205,19 +211,63 @@ async function loadGlb( url ) {
 		const mats = Array.isArray( o.material ) ? o.material : [ o.material ];
 		for ( const m of mats ) {
 			if ( ! m || ! m.isMeshStandardMaterial ) continue;
-			const lm = matchLightmap( o, m );
-			// Only a LIGHTMAPPED material may lose its diffuse light: one without a lightmap (the 15
-			// instanced columns at Gate 0) would otherwise render black, so it keeps stock three
-			// lighting (sun diffuse + env diffuse) and is counted separately.
+			if ( seenMats.has( m ) ) continue;
+			seenMats.add( m );
+			// schema pfa-phase6-gate0/1 ships the lightmap INSIDE the glb as the emissiveTexture on
+			// TEXCOORD_1 (RGBM8).  Move it to lightMap channel 1, kill the emissive, and decode RGBM.
+			let lm = matchLightmap( o, m );
+			if ( ! lm && m.emissiveMap ) {
+				lm = { encoding: 'rgbm', rgbmMaxRange: manifest.rgbmRange, intensity: 1.0, fromEmissive: true };
+				m.lightMap = m.emissiveMap;
+				// GLTFLoader tags an emissiveTexture as sRGB (glTF requires it), but the RGBM8 lightmap
+				// is LINEAR data: leaving it as sRGB would put a decode curve on the baked irradiance.
+				m.lightMap.colorSpace = THREE.NoColorSpace;
+				m.lightMap.needsUpdate = true;
+				m.lightMap.channel = 1;
+				m.lightMapIntensity = 1.0;
+				m.emissiveMap = null;
+				m.emissive = new THREE.Color( 0, 0, 0 );
+				m.emissiveIntensity = 0;
+				lightmapsApplied ++;
+			}
 			if ( lm ) {
 				patchBakedMaterial( m, { lightMapEncoding: lm.encoding, rgbmMaxRange: lm.rgbmMaxRange } );
 				patchedMaterials ++;
-				applyLightmap( m, lm );
+				lightmapMaterials.push( m );
+				if ( ! lm.fromEmissive ) applyLightmap( m, lm );
 			} else {
 				unpatchedMaterials.add( m.name || '(unnamed)' );
+				noLightmapMaterials.push( m );
 			}
 		}
 	} );
+
+	// Gate 0 bakes a lightmap for ONE of the 16 columns; the other 15 share the mesh with a
+	// lightmap-free material.  Under a specular-only sun they would be black, under stock lighting
+	// they blow out (sun 67.3 W/m2, no tone mapping), so by default they borrow the lit column's
+	// lightmap (same mesh, same UV2, baked at column 00's position): an explicit Gate 0 stand-in.
+	if ( noLightmapMaterials.length && lightmapMaterials.length ) {
+		// Pick the donor by name similarity: GATE0_column must borrow GATE0_column_lit's lightmap,
+		// never the capital's (a different UV2 layout would sample near-black texels).
+		const similarity = ( a, b ) => { let i = 0; while ( i < a.length && i < b.length && a[ i ] === b[ i ] ) i ++; return i; };
+		const donorFor = ( m ) => lightmapMaterials.filter( d => d.lightMap )
+			.sort( ( x, y ) => similarity( y.name || '', m.name || '' ) - similarity( x.name || '', m.name || '' ) )[ 0 ];
+		const donor = donorFor( noLightmapMaterials[ 0 ] );
+		if ( CFG.unlit === 'share' && donor ) {
+			for ( const m of noLightmapMaterials ) {
+				const d = donorFor( m ) || donor;
+				m.lightMap = d.lightMap; m.lightMapIntensity = d.lightMapIntensity;
+				patchBakedMaterial( m, { lightMapEncoding: 'rgbm', rgbmMaxRange: manifest.rgbmRange } );
+				m.needsUpdate = true;
+			}
+			note( `${noLightmapMaterials.length} lightmap-free material(s) borrow the nearest-named lightmap (${noLightmapMaterials.map( m => `${m.name} <- ${( donorFor( m ) || donor ).name}` ).join( ', ' )}; Gate 0 stand-in, Gate 3 bakes their own)` );
+		} else if ( CFG.unlit === 'black' ) {
+			for ( const m of noLightmapMaterials ) patchBakedMaterial( m, {} );
+			note( `${noLightmapMaterials.length} lightmap-free material(s) left specular-only (they render black)` );
+		} else {
+			note( `${noLightmapMaterials.length} lightmap-free material(s) left on stock three lighting` );
+		}
+	}
 	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} lightmapped materials patched (specular-only sun), ${unpatchedMaterials.size} without a lightmap left on stock lighting: ${[ ...unpatchedMaterials ].join( ', ' ) || 'none'}` );
 }
 
@@ -395,7 +445,8 @@ window.__pfaProject = ( needle ) => {
 	const v = new THREE.Vector3();
 	const out = [];
 	scene.traverse( ( o ) => {
-		if ( ! o.isMesh || ! o.name.includes( needle ) ) return;
+		const matName = Array.isArray( o.material ) ? o.material.map( m => m?.name ).join( ',' ) : ( o.material?.name || '' );
+		if ( ! o.isMesh || ! ( o.name.includes( needle ) || matName.includes( needle ) ) ) return;
 		o.geometry.computeBoundingBox();
 		const bb = o.geometry.boundingBox;
 		const mats = o.isInstancedMesh
@@ -417,6 +468,18 @@ window.__pfaProject = ( needle ) => {
 		} );
 	} );
 	out.sort( ( a, b ) => a.distance - b.distance );
+	return out;
+};
+
+/** Every render-visible mesh with its material and triangle count (probe/ROI naming). */
+window.__pfaNames = () => {
+	const out = [];
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		const g = o.geometry, n = g.index ? g.index.count : g.attributes.position.count;
+		out.push( { name: o.name, material: Array.isArray( o.material ) ? o.material.map( m => m.name ) : o.material?.name,
+			tris: n / 3, instances: o.isInstancedMesh ? o.count : 1, lightMap: !! ( o.material && o.material.lightMap ) } );
+	} );
 	return out;
 };
 

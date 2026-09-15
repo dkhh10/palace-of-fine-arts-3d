@@ -32,8 +32,8 @@ export function normaliseManifest( raw, baseUrl ) {
 	raw = raw || {};
 
 	// --- geometry ------------------------------------------------------------------------------
-	const glbRaw = pick( raw, 'glb', 'files.glb', 'assets.glb', 'model', 'gltf' );
-	const glb = resolveUrl( baseUrl, typeof glbRaw === 'string' ? glbRaw : glbRaw?.url );
+	const glbRaw = pick( raw, 'glb', 'files.glb', 'model' );
+	const glb = resolveUrl( baseUrl, typeof glbRaw === 'string' ? glbRaw : ( glbRaw?.path || glbRaw?.url ) );
 
 	// --- stations ------------------------------------------------------------------------------
 	// schema pfa-phase6-gate0/1 keys stations by camera name with lens_mm / rotation_euler_xyz;
@@ -72,12 +72,16 @@ export function normaliseManifest( raw, baseUrl ) {
 
 	// --- colour --------------------------------------------------------------------------------
 	const lutRaw = pick( raw, 'lut', 'colour.lut', 'color.lut' );
+	const sh = ( typeof lutRaw === 'object' && lutRaw && typeof lutRaw.shaper === 'object' ) ? lutRaw.shaper : null;
 	const lut = lutRaw ? {
 		url: resolveUrl( baseUrl, typeof lutRaw === 'string' ? lutRaw : ( lutRaw.url || lutRaw.path || lutRaw.file ) ),
 		size: ( typeof lutRaw === 'object' && ( lutRaw.size ?? lutRaw.lut_size ) ) || null,
-		shaper: ( typeof lutRaw === 'object' && lutRaw.shaper ) || null,
-		shaperMin: ( typeof lutRaw === 'object' && ( lutRaw.shaper_min ?? lutRaw.shaperMin ) ) ?? undefined,
-		shaperMax: ( typeof lutRaw === 'object' && ( lutRaw.shaper_max ?? lutRaw.shaperMax ) ) ?? undefined,
+		// schema pfa-phase6-gate0/1: lut.shaper = { min_ev, max_ev, pivot } means an AgX log2 shaper
+		shaper: sh ? 'log2' : ( ( typeof lutRaw === 'object' && typeof lutRaw.shaper === 'string' ) ? lutRaw.shaper : null ),
+		shaperMin: sh ? sh.min_ev : ( ( typeof lutRaw === 'object' && ( lutRaw.shaper_min ?? lutRaw.shaperMin ) ) ?? undefined ),
+		shaperMax: sh ? sh.max_ev : ( ( typeof lutRaw === 'object' && ( lutRaw.shaper_max ?? lutRaw.shaperMax ) ) ?? undefined ),
+		shaperPivot: sh ? ( sh.pivot ?? 0.18 ) : undefined,
+		exposureOwner: ( typeof lutRaw === 'object' && lutRaw.exposure_applied_by ) || null,
 	} : null;
 	if ( ! lut ) notes.push( 'no LUT in the manifest: the display pass falls back to gamma 2.2 (NOT the Phase 5 look)' );
 
@@ -88,7 +92,10 @@ export function normaliseManifest( raw, baseUrl ) {
 	const ev = pick( raw, 'exposure_ev', 'view.exposure_ev', 'exposure', 'view.exposure', 'colour.exposure' );
 	const lutHasExposure = pick( raw, 'lut.includes_exposure', 'view.lut.includes_exposure', 'colour.lut.includes_exposure' );
 	if ( exposure === undefined ) {
-		if ( lutHasExposure === false && ev !== undefined ) { exposure = Math.pow( 2, ev ); notes.push( `exposure: LUT declares includes_exposure false, multiplier 2^${ev} = ${Math.pow( 2, ev ).toFixed( 5 )}` ); }
+		if ( lut && /viewer/i.test( lut.exposureOwner || '' ) && ev !== undefined ) {
+			exposure = Math.pow( 2, ev );
+			notes.push( `exposure: the LUT says exposure_applied_by "${lut.exposureOwner}", multiplier 2^${ev.toFixed( 4 )} = ${Math.pow( 2, ev ).toFixed( 5 )}` );
+		} else if ( lutHasExposure === false && ev !== undefined ) { exposure = Math.pow( 2, ev ); notes.push( `exposure: LUT declares includes_exposure false, multiplier 2^${ev} = ${Math.pow( 2, ev ).toFixed( 5 )}` ); }
 		else if ( lut ) { exposure = 1.0; notes.push( `exposure: multiplier 1.0 (the LUT carries the ${ev !== undefined ? ev.toFixed( 3 ) : '-2.833'} EV exposure)` ); }
 		else if ( ev !== undefined ) { exposure = Math.pow( 2, ev ); notes.push( `exposure: no LUT, gamma fallback gets 2^${ev.toFixed( 3 )} = ${Math.pow( 2, ev ).toFixed( 5 )}` ); }
 		else { exposure = 1.0; notes.push( 'exposure: absent, multiplier = 1' ); }
@@ -96,10 +103,18 @@ export function normaliseManifest( raw, baseUrl ) {
 
 	// --- sky -----------------------------------------------------------------------------------
 	const sky = pick( raw, 'sky', 'world', 'environment' ) || {};
-	const skyCamera = resolveUrl( baseUrl, pick( sky, 'camera', 'background', 'camera_hdr', 'camera_exr' ) );
-	const skyGlossy = resolveUrl( baseUrl, pick( sky, 'glossy', 'specular', 'glossy_hdr', 'glossy_exr' ) );
-	const skyRotationDeg = def( pick( sky, 'rotation_deg', 'rotation' ), 180,
-		'sky.rotation_deg (Blender equirect u=0.5 faces -X, three faces +X)' );
+	// schema pfa-phase6-gate0/1: sky.camera / sky.glossy are objects { exr, hdr }.  The .hdr (RGBE) is
+	// used: 3.6 MB vs 32 MB and enough range for a background and a PMREM source.
+	const skyFile = ( v ) => ( typeof v === 'string' ? v : ( v && ( v.hdr || v.exr ) ) );
+	const skyCamera = resolveUrl( baseUrl, skyFile( pick( sky, 'camera', 'background', 'camera_hdr', 'camera_exr' ) ) );
+	const skyGlossy = resolveUrl( baseUrl, skyFile( pick( sky, 'glossy', 'specular', 'glossy_hdr', 'glossy_exr' ) ) );
+	// Blender/manifest mapping: u = 0.5 + atan2(bx, by)/360.  With three (X,Y,Z) = blender (x, z, -y)
+	// that is three's atan2(Z,X) + 90 deg, so the manifest's u is three's u + 0.25 and the environment
+	// needs a quarter turn about Y.  three's backgroundRotation applies the INVERSE sense, so the value
+	// is +90, measured: a sweep of 0 / 90 / 180 / -90 against the Cycles reference frame gives
+	// mean |delta| over five sky boxes of 33.1 / 1.5 / 19.0 / 21.4 of 255.
+	const skyRotationDeg = def( pick( sky, 'rotation_deg', 'rotation' ), 90,
+		'sky.rotation_deg (+90 about Y; measured against the Cycles frame, 1.5/255)' );
 
 	// --- sun (specular only; the diffuse is in the lightmaps) ----------------------------------
 	// The manifest's `direction_blender` / `direction_gltf` is the direction the light TRAVELS, so the
@@ -157,8 +172,14 @@ export function normaliseManifest( raw, baseUrl ) {
 		} );
 	}
 
+	// RGBM range used by every lightmap in the schema (textures.*.rgbm_range)
+	let rgbmRange = 7.0;
+	for ( const [ k, v ] of Object.entries( pick( raw, 'textures' ) || {} ) ) {
+		if ( k.includes( 'lightmap' ) && v && v.rgbm_range ) { rgbmRange = v.rgbm_range; break; }
+	}
+
 	const out = {
-		raw, baseUrl, glb, stations, lut, exposure, sun, lightmaps, notes,
+		raw, baseUrl, glb, stations, lut, exposure, sun, lightmaps, notes, rgbmRange,
 		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
 		sky: { camera: skyCamera, glossy: skyGlossy, rotationDeg: skyRotationDeg },
 		frameSize: pick( raw, 'frame', 'render.frame' ) || { width: 1280, height: 720 },
