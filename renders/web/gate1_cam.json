@@ -1,12 +1,12 @@
 {
  "out": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1.png",
- "url": "http://127.0.0.1:64471/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate1%2Fmanifest.json&t=0&billboards=0&treeboards=0",
+ "url": "http://127.0.0.1:64589/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate1%2Fmanifest.json&t=0&billboards=0&treeboards=0",
  "station": 1,
  "size": [
   1920,
   1080
  ],
- "wall_s": 5.934,
+ "wall_s": 5.933,
  "info": {
   "station": {
    "index": 1,
@@ -57,15 +57,15 @@
    1080
   ],
   "render": {
-   "frame": 85,
-   "calls": 195,
+   "frame": 67,
+   "calls": 199,
    "triangles": 5444871,
    "points": 0,
    "lines": 0,
    "programs": 12
   },
   "memory": {
-   "geometries": 99,
+   "geometries": 101,
    "textures": 147
   },
   "gl": {
@@ -140,7 +140,7 @@
    "MAT_EXP_ENV__ENV_terrain_ground"
   ],
   "lightmapScale": 3.14159265358979,
-  "rgbmRange": 7,
+  "rgbmRange": 64,
   "shaperPivot": 0.18,
   "skyRotationDeg": 90,
   "exposure": 0.14032656980172378,
@@ -150,8 +150,8 @@
   "lightingMode": "direct",
   "schema": "pfa-phase6/2",
   "bytes": {
-   "loaded": 206435338,
-   "planned": 206435338,
+   "loaded": 206458694,
+   "planned": 206458694,
    "unknownSize": [],
    "files": [
     {
@@ -186,7 +186,7 @@
     },
     {
      "kind": "glb:env",
-     "bytes": 33546276,
+     "bytes": 33569632,
      "sizeFrom": "HEAD",
      "name": "env.glb"
     },
@@ -199,17 +199,17 @@
    ]
   },
   "load_s": {
-   "plan_s": 0.08709999996423722,
-   "sky_s": 0.5183000000119209,
-   "lut_s": 0.06319999998807907,
-   "glb_s": 1.5935,
-   "total_s": 2.336699999988079
+   "plan_s": 0.08980000001192093,
+   "sky_s": 0.521,
+   "lut_s": 0.0645,
+   "glb_s": 1.6798000000119209,
+   "total_s": 2.4308000000119208
   },
   "glbs": [
    {
     "name": "arch.glb",
     "cls": "arch",
-    "url": "http://127.0.0.1:64471/assets/gate1/arch.glb",
+    "url": "http://127.0.0.1:64589/assets/gate1/arch.glb",
     "meshes": 27,
     "instancedMeshes": 15,
     "instances": 438,
@@ -217,12 +217,12 @@
     "materials": 17,
     "hiddenBoards": 0,
     "bytes": 2981252,
-    "wall_s": 0.095
+    "wall_s": 0.09419999998807907
    },
    {
     "name": "orn.glb",
     "cls": "orn",
-    "url": "http://127.0.0.1:64471/assets/gate1/orn.glb",
+    "url": "http://127.0.0.1:64589/assets/gate1/orn.glb",
     "meshes": 33,
     "instancedMeshes": 32,
     "instances": 435,
@@ -230,25 +230,25 @@
     "materials": 33,
     "hiddenBoards": 0,
     "bytes": 154065360,
-    "wall_s": 1.0298999999761582
+    "wall_s": 1.1031000000238418
    },
    {
     "name": "env.glb",
     "cls": "env",
-    "url": "http://127.0.0.1:64471/assets/gate1/env.glb",
-    "meshes": 39,
-    "instancedMeshes": 32,
-    "instances": 1458,
+    "url": "http://127.0.0.1:64589/assets/gate1/env.glb",
+    "meshes": 41,
+    "instancedMeshes": 34,
+    "instances": 1526,
     "tris": 679779,
     "materials": 12,
     "hiddenBoards": 127,
-    "bytes": 33546276,
-    "wall_s": 0.24339999997615813
+    "bytes": 33569632,
+    "wall_s": 0.2535
    },
    {
     "name": "ground.glb",
     "cls": "ground",
-    "url": "http://127.0.0.1:64471/assets/gate1/ground.glb",
+    "url": "http://127.0.0.1:64589/assets/gate1/ground.glb",
     "meshes": 4,
     "instancedMeshes": 0,
     "instances": 0,
@@ -256,14 +256,14 @@
     "materials": 4,
     "hiddenBoards": 0,
     "bytes": 1175488,
-    "wall_s": 0.009900000035762788
+    "wall_s": 0.00980000001192093
    }
   ],
   "resident": {
    "geometry_bytes": 36003376,
-   "instance_matrix_bytes": 149184,
+   "instance_matrix_bytes": 153536,
    "texture_bytes": 545267632,
-   "geometries": 104,
+   "geometries": 106,
    "textures": 143,
    "render_target_bytes": 308494336,
    "render_targets": [
@@ -304,7 +304,7 @@
      "bytes": 100663296
     }
    ],
-   "total_bytes": 889914528,
+   "total_bytes": 889918880,
    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
   },
   "billboards": null,
@@ -313,11 +313,10 @@
    "stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough",
    "exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
    "sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
-   "defaulted lightmap rgbm_range (no textures.*lightmap*.rgbm_range in the manifest) = 7",
    "lightmap reservations for the Gate 3 bake, no texture yet: 988 mode \"slot\", 16 mode \"asset\", 1536 mode \"none\"",
-   "manifest pfa-phase6/2 at http://127.0.0.1:64471/assets/gate1/manifest.json",
+   "manifest pfa-phase6/2 at http://127.0.0.1:64589/assets/gate1/manifest.json",
    "lighting mode: direct — no lightmaps in the manifest: full DirectionalLight + PMREM irradiance, no shadow maps",
-   "load plan: 7 files, 206.4 MB (sky.camera 3.6, sky.glossy 3.7, lut 7.4, glb:arch 3.0, glb:orn 154.1, glb:env 33.5, glb:ground 1.2)",
+   "load plan: 7 files, 206.5 MB (sky.camera 3.6, sky.glossy 3.7, lut 7.4, glb:arch 3.0, glb:orn 154.1, glb:env 33.6, glb:ground 1.2)",
    "sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
    "PMREM environment from sky_glossy_4096x2048.hdr (specular only)",
    "sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, diffuse + specular (no shadow map)",
@@ -326,14 +325,14 @@
    "LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
    "display: tone mapping OFF, exposure x0.14033, LUT on",
    "lightMapIntensity = lightmap_scale 3.14159",
-   "glb arch.glb (arch) 3.0 MB in 0.10 s: 27 meshes, 15 instanced (438 instances), 947622 placed tris, 17 materials",
-   "glb orn.glb (orn) 154.1 MB in 1.03 s: 33 meshes, 32 instanced (435 instances), 1097468 placed tris, 33 materials",
-   "glb env.glb (env) 33.5 MB in 0.24 s: 39 meshes, 32 instanced (1458 instances), 679779 placed tris, 12 materials",
+   "glb arch.glb (arch) 3.0 MB in 0.09 s: 27 meshes, 15 instanced (438 instances), 947622 placed tris, 17 materials",
+   "glb orn.glb (orn) 154.1 MB in 1.10 s: 33 meshes, 32 instanced (435 instances), 1097468 placed tris, 33 materials",
+   "glb env.glb (env) 33.6 MB in 0.25 s: 41 meshes, 34 instanced (1526 instances), 679779 placed tris, 12 materials",
    "127 ENV_treeboard_* stand-ins hidden (?treeboards=0)",
    "glb ground.glb (ground) 1.2 MB in 0.01 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
    "66 material(s) on three's own lighting (Gate 1 has no lightmap bake); 0 on the baked path",
    "127 far-tree quads suppressed (?billboards=0)",
-   "ready in 2.34 s: 206.4 MB loaded of 206.4 MB planned (plan 0.09 s, sky 0.52 s, lut 0.06 s, glb 1.59 s)"
+   "ready in 2.43 s: 206.5 MB loaded of 206.5 MB planned (plan 0.09 s, sky 0.52 s, lut 0.06 s, glb 1.68 s)"
   ]
  },
  "stats": null,
@@ -351,18 +350,18 @@
    "fps_presented": null,
    "gpu_cost_ms": null,
    "fps_uncapped": null,
-   "draw_calls": 195,
+   "draw_calls": 199,
    "triangles": 5444871,
    "programs": 12,
    "info_memory": {
-    "geometries": 99,
+    "geometries": 101,
     "textures": 147
    },
    "resident": {
     "geometry_bytes": 36003376,
-    "instance_matrix_bytes": 149184,
+    "instance_matrix_bytes": 153536,
     "texture_bytes": 545267632,
-    "geometries": 104,
+    "geometries": 106,
     "textures": 143,
     "render_target_bytes": 308494336,
     "render_targets": [
@@ -403,7 +402,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 889914528,
+    "total_bytes": 889918880,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -419,18 +418,18 @@
    "fps_presented": null,
    "gpu_cost_ms": null,
    "fps_uncapped": null,
-   "draw_calls": 189,
+   "draw_calls": 193,
    "triangles": 5318915,
    "programs": 12,
    "info_memory": {
-    "geometries": 100,
+    "geometries": 102,
     "textures": 147
    },
    "resident": {
     "geometry_bytes": 36003376,
-    "instance_matrix_bytes": 149184,
+    "instance_matrix_bytes": 153536,
     "texture_bytes": 545267632,
-    "geometries": 104,
+    "geometries": 106,
     "textures": 143,
     "render_target_bytes": 308494336,
     "render_targets": [
@@ -471,7 +470,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 889914528,
+    "total_bytes": 889918880,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -487,18 +486,18 @@
    "fps_presented": null,
    "gpu_cost_ms": null,
    "fps_uncapped": null,
-   "draw_calls": 199,
+   "draw_calls": 203,
    "triangles": 5567495,
    "programs": 12,
    "info_memory": {
-    "geometries": 103,
+    "geometries": 105,
     "textures": 147
    },
    "resident": {
     "geometry_bytes": 36003376,
-    "instance_matrix_bytes": 149184,
+    "instance_matrix_bytes": 153536,
     "texture_bytes": 545267632,
-    "geometries": 104,
+    "geometries": 106,
     "textures": 143,
     "render_target_bytes": 308494336,
     "render_targets": [
@@ -539,7 +538,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 889914528,
+    "total_bytes": 889918880,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -555,18 +554,18 @@
    "fps_presented": null,
    "gpu_cost_ms": null,
    "fps_uncapped": null,
-   "draw_calls": 77,
-   "triangles": 2675346,
+   "draw_calls": 99,
+   "triangles": 2796470,
    "programs": 12,
    "info_memory": {
-    "geometries": 103,
+    "geometries": 105,
     "textures": 147
    },
    "resident": {
     "geometry_bytes": 36003376,
-    "instance_matrix_bytes": 149184,
+    "instance_matrix_bytes": 153536,
     "texture_bytes": 545267632,
-    "geometries": 104,
+    "geometries": 106,
     "textures": 143,
     "render_target_bytes": 308494336,
     "render_targets": [
@@ -607,7 +606,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 889914528,
+    "total_bytes": 889918880,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -623,18 +622,18 @@
    "fps_presented": null,
    "gpu_cost_ms": null,
    "fps_uncapped": null,
-   "draw_calls": 185,
+   "draw_calls": 189,
    "triangles": 5208973,
    "programs": 12,
    "info_memory": {
-    "geometries": 103,
+    "geometries": 105,
     "textures": 147
    },
    "resident": {
     "geometry_bytes": 36003376,
-    "instance_matrix_bytes": 149184,
+    "instance_matrix_bytes": 153536,
     "texture_bytes": 545267632,
-    "geometries": 104,
+    "geometries": 106,
     "textures": 143,
     "render_target_bytes": 308494336,
     "render_targets": [
@@ -675,7 +674,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 889914528,
+    "total_bytes": 889918880,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -691,18 +690,18 @@
    "fps_presented": null,
    "gpu_cost_ms": null,
    "fps_uncapped": null,
-   "draw_calls": 201,
+   "draw_calls": 205,
    "triangles": 5597243,
    "programs": 12,
    "info_memory": {
-    "geometries": 103,
+    "geometries": 105,
     "textures": 147
    },
    "resident": {
     "geometry_bytes": 36003376,
-    "instance_matrix_bytes": 149184,
+    "instance_matrix_bytes": 153536,
     "texture_bytes": 545267632,
-    "geometries": 104,
+    "geometries": 106,
     "textures": 143,
     "render_target_bytes": 308494336,
     "render_targets": [
@@ -743,7 +742,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 889914528,
+    "total_bytes": 889918880,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   }
@@ -755,42 +754,42 @@
    "station": 1,
    "name": "CAM_qa_01_lagoon_hero",
    "file": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1_cam01.png",
-   "draws": 195,
+   "draws": 199,
    "tris": 5444871
   },
   {
    "station": 2,
    "name": "CAM_qa_02_lagoon_ne_threequarter",
    "file": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1_cam02.png",
-   "draws": 189,
+   "draws": 193,
    "tris": 5318915
   },
   {
    "station": 3,
    "name": "CAM_qa_03_colonnade_walk",
    "file": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1_cam03.png",
-   "draws": 199,
+   "draws": 203,
    "tris": 5567495
   },
   {
    "station": 4,
    "name": "CAM_qa_04_rotunda_ceiling",
    "file": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1_cam04.png",
-   "draws": 77,
-   "tris": 2675346
+   "draws": 99,
+   "tris": 2796470
   },
   {
    "station": 5,
    "name": "CAM_qa_05_south_lawn",
    "file": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1_cam05.png",
-   "draws": 185,
+   "draws": 189,
    "tris": 5208973
   },
   {
    "station": 6,
    "name": "CAM_qa_06_aerial",
    "file": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/web/gate1_cam06.png",
-   "draws": 201,
+   "draws": 205,
    "tris": 5597243
   }
  ],
@@ -800,19 +799,18 @@
   "log: [pfa] stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough",
   "log: [pfa] exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
   "log: [pfa] sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
-  "log: [pfa] defaulted lightmap rgbm_range (no textures.*lightmap*.rgbm_range in the manifest) = 7",
   "log: [pfa] lightmap reservations for the Gate 3 bake, no texture yet: 988 mode \"slot\", 16 mode \"asset\", 1536 mode \"none\"",
-  "log: [pfa] manifest pfa-phase6/2 at http://127.0.0.1:64471/assets/gate1/manifest.json",
+  "log: [pfa] manifest pfa-phase6/2 at http://127.0.0.1:64589/assets/gate1/manifest.json",
   "log: [pfa] lighting mode: direct — no lightmaps in the manifest: full DirectionalLight + PMREM irradiance, no shadow maps",
-  "requestfailed: http://127.0.0.1:64471/assets/gate0/sky_camera_4096x2048.hdr net::ERR_ABORTED",
-  "requestfailed: http://127.0.0.1:64471/assets/gate1/arch.glb net::ERR_ABORTED",
-  "requestfailed: http://127.0.0.1:64471/assets/gate0/sky_glossy_4096x2048.hdr net::ERR_ABORTED",
-  "requestfailed: http://127.0.0.1:64471/assets/gate1/ground.glb net::ERR_ABORTED",
-  "requestfailed: http://127.0.0.1:64471/assets/gate0/lut_agx_high_contrast_65.cube net::ERR_ABORTED",
-  "requestfailed: http://127.0.0.1:64471/assets/gate1/env.glb net::ERR_ABORTED",
-  "log: [pfa] load plan: 7 files, 206.4 MB (sky.camera 3.6, sky.glossy 3.7, lut 7.4, glb:arch 3.0, glb:orn 154.1, glb:env 33.5, glb:ground 1.2)",
+  "requestfailed: http://127.0.0.1:64589/assets/gate1/arch.glb net::ERR_ABORTED",
+  "requestfailed: http://127.0.0.1:64589/assets/gate0/sky_camera_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: http://127.0.0.1:64589/assets/gate0/sky_glossy_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: http://127.0.0.1:64589/assets/gate1/ground.glb net::ERR_ABORTED",
+  "requestfailed: http://127.0.0.1:64589/assets/gate0/lut_agx_high_contrast_65.cube net::ERR_ABORTED",
+  "requestfailed: http://127.0.0.1:64589/assets/gate1/env.glb net::ERR_ABORTED",
+  "log: [pfa] load plan: 7 files, 206.5 MB (sky.camera 3.6, sky.glossy 3.7, lut 7.4, glb:arch 3.0, glb:orn 154.1, glb:env 33.6, glb:ground 1.2)",
   "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
-  "requestfailed: http://127.0.0.1:64471/assets/gate1/orn.glb net::ERR_ABORTED",
+  "requestfailed: http://127.0.0.1:64589/assets/gate1/orn.glb net::ERR_ABORTED",
   "log: [pfa] sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
   "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
   "log: [pfa] PMREM environment from sky_glossy_4096x2048.hdr (specular only)",
@@ -823,14 +821,14 @@
   "log: [pfa] display: tone mapping OFF, exposure x0.14033, LUT on",
   "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
   "log: [pfa] lightMapIntensity = lightmap_scale 3.14159",
-  "log: [pfa] glb arch.glb (arch) 3.0 MB in 0.10 s: 27 meshes, 15 instanced (438 instances), 947622 placed tris, 17 materials",
-  "log: [pfa] glb orn.glb (orn) 154.1 MB in 1.03 s: 33 meshes, 32 instanced (435 instances), 1097468 placed tris, 33 materials",
-  "log: [pfa] glb env.glb (env) 33.5 MB in 0.24 s: 39 meshes, 32 instanced (1458 instances), 679779 placed tris, 12 materials",
+  "log: [pfa] glb arch.glb (arch) 3.0 MB in 0.09 s: 27 meshes, 15 instanced (438 instances), 947622 placed tris, 17 materials",
+  "log: [pfa] glb orn.glb (orn) 154.1 MB in 1.10 s: 33 meshes, 32 instanced (435 instances), 1097468 placed tris, 33 materials",
+  "log: [pfa] glb env.glb (env) 33.6 MB in 0.25 s: 41 meshes, 34 instanced (1526 instances), 679779 placed tris, 12 materials",
   "log: [pfa] 127 ENV_treeboard_* stand-ins hidden (?treeboards=0)",
   "log: [pfa] glb ground.glb (ground) 1.2 MB in 0.01 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
   "log: [pfa] 66 material(s) on three's own lighting (Gate 1 has no lightmap bake); 0 on the baked path",
   "log: [pfa] 127 far-tree quads suppressed (?billboards=0)",
-  "log: [pfa] ready in 2.34 s: 206.4 MB loaded of 206.4 MB planned (plan 0.09 s, sky 0.52 s, lut 0.06 s, glb 1.59 s)",
+  "log: [pfa] ready in 2.43 s: 206.5 MB loaded of 206.5 MB planned (plan 0.09 s, sky 0.52 s, lut 0.06 s, glb 1.68 s)",
   "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
   "log: [pfa] station 2 CAM_qa_02_lagoon_ne_threequarter\n  source           rotation_euler  (look-at cross-check max element diff 2.16e-7)\n  world matrix     [-0.29240, 0.00000, 0.95630, 0.00000, -0.24327, 0.96710, -0.07438, 0.00000, -0.92484, -0.25439, -0.28278, 0.00000, -79.80000, 1.55000, -24.40000, 1.00000]\n  projection       [1.50000, 0.00000, 0.00000, 0.00000, 0.00000, 2.66667, 0.00000, 0.00000, 0.00000, 0.00000, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 41.112 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
   "log: [pfa] station 3 CAM_qa_03_colonnade_walk\n  source           rotation_euler  (look-at cross-check max element diff 2.18e-7)\n  world matrix     [-0.14703, 0.00000, -0.98913, 0.00000, 0.09021, 0.99583, -0.01341, 0.00000, 0.98501, -0.09120, -0.14641, 0.00000, 81.00000, 1.70000, -12.04000, 1.00000]\n  projection       [1.00000, 0.00000, 0.00000, 0.00000, 0.00000, 1.77778, 0.00000, 0.00000, 0.00000, 0.00000, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 58.716 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
