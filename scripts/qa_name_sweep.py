@@ -4,8 +4,8 @@ name matches the placeholder pattern, with collection and world position, and th
     scripts/blender_run.sh 300 -- --background master.blend --python scripts/qa_name_sweep.py
 """
 import bpy, re, sys
-PAT = re.compile(r"placeholder|proxy|blocker|fill|occlud|block|dummy|temp|card", re.I)
-EXEMPT = re.compile(r"^(ARCH_rotunda_inner_block(_cap)?_\d+|ENV_backdrop_fill(roof)?_\d+)$")
+PAT = re.compile(r"placeholder|proxy|blocker|fill|occlud|block|dummy|temp|card|board|impostor|billboard", re.I)
+EXEMPT = re.compile(r"^(ARCH_rotunda_inner_block(_cap)?_\d+|ENV_backdrop_fill(roof)?_\d+|ENV_treeboard_\d+)$")  # ENV_treeboard_*: Gate 3 impostor carriers, hidden in every QA capture until the impostor bake (QA 11b)
 hits, exempt = [], []
 for ob in bpy.context.scene.objects:
     if ob.hide_render or not PAT.search(ob.name):
