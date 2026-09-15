@@ -601,3 +601,6 @@ Lead: viewer reads lightmap_encoding.rgbm_range (QA-11c-3). Export engineer fixi
 
 ## 2026-09-15 · Export a9b2d3d merged (77eafe8): shrubs placed from their LOD1 siblings (the delivery file keeps LOD0/LOD2 ENV stubs at the origin — tech_notes), writer assertions + verify_glb; capture 5 taken; QA 11d dispatched
 Next: on PASS dispatch Gate 2 bake + viewer rounds; burn; stop.
+
+## 2026-09-15 · GATE 1 PASSED (QA 11d, 57addb8; decisions.md). Gate 2 dispatched: bake engineer r2 (PBR bakes, docs/briefs/phase6_gate2_bake.md) + viewer r3 (docs/briefs/phase6_gate2_viewer.md)
+Session burn so far (usage_from_transcripts, nominal):  253.40   opus-5 223, fable-5-1 30 . In flight: Gate 2 bake (GPU queue), viewer r3 (waits for manifest v3). Next: reviews, merges, Gate 2 capture + QA round 12 (PBR alone, direct lighting), then Gate 3 brief.

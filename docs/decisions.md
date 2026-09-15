@@ -304,3 +304,13 @@ QA box is one-third drum cornice (sat 0.92, QA-10b-1 lighting) and a structure-o
 chased (the user's rule: one round). QA re-scores QA-10-8 on rows 95-111. Jamb hue 23.8 (QA-10-2 floor 25) accepted as a rib-albedo side effect.
 Next: lead_build.sh + `PFA_PACK=1 scripts/phase5_deliver.sh 1b` regenerate master.blend / master_delivery.blend AFTER the Gate 1 ORN queue is
 idle (GPU rule); Gate 2 PBR bakes read the regenerated delivery file. Gate 1 geometry is unaffected (materials only).
+
+## 2026-09-15 · Gate 1 PASSED (QA round 11d, 57addb8) — geometry frozen
+Export set at a9b2d3d: 2 841 396 placed tris (ARCH 949 382 / ORN 1 099 192 / ENV 679 779 + ground 113 043), 140 unique meshes, 2 540 placements,
+154 batches; every geometry row within 0.5 of the Phase 5 round-9 rows (station averages 3.60 / 3.20 / 2.50 / 3.10 / 3.10 / 3.00); silhouette vs the
+Cycles hero scale 1.0000, apex delta 0.00 %H; arch-opening test PASS; name sweep 2 540 / 127 exempt boards / 0 hits; 1440p GPU 1.5 ms median at the hero.
+Four QA rounds were needed (11, 11b, 11c, 11d): backdrop texCoord -1, torn voxel-remeshed attic panels, opaque exported tree boards, and ENV LOD2 stubs
+exported without placements. Lessons carried into the writer: assert texCoord >= 0, mesh nodes == objects, 0 objects near the origin, drawn tris vs
+export_set within 1 % (export/verify_glb.py); placeholders are hidden in every QA capture and listed as exempt, never silent. Carried to Gate 2: QA-11c-2
+untextured backdrop / pedestals (PBR bake), QA-11d-2 gltfpack -vp 16 on env.glb; Gate 3: the 127 impostor carriers (QA-11-1/-3); Gate 4: mirror water
+(QA-11-5), shrub InstancedMesh bounds spanning the site (QA-11d-1, split per region).
