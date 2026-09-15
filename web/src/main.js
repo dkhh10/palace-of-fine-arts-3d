@@ -26,6 +26,8 @@ import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
+import { chunkInstancedMeshes } from './chunking.js';
+import { applyPbrSets, pbrPlan } from './pbr.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -49,6 +51,8 @@ const CFG = {
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
+	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
+	chunk: qs.has( 'chunk' ) ? parseFloat( qs.get( 'chunk' ) ) : null,  // 0 disables the QA-11d-1 instance chunking
 };
 
 function glInfo() {
@@ -159,8 +163,11 @@ const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
 let lightingMode = 'baked';
-const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, total_s: 0 };
+const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, tex_s: 0, total_s: 0 };
 const glbReport = [];
+const glbRoots = [];
+let chunkStats = null;
+let materialsMode = 'grey', pbrReport = null;
 
 /** baked  = the Gate 0/3 path: lightmaps carry the diffuse, so the sun and the environment are
  *           stripped to their specular terms (materials.js).
@@ -175,6 +182,23 @@ function pickLightingMode() {
 		|| Object.keys( tex ).some( k => k.toLowerCase().includes( 'lightmap' ) )
 		|| !! ( manifest.raw.gltf && manifest.raw.gltf.lightmap_slot );
 	return baked ? 'baked' : 'direct';
+}
+
+/** grey = the Gate 1 neutral-grey export (ORN normal + AO only), the frames QA scored at Gate 1;
+ *  pbr  = manifest v3's per-material albedo / roughness / normal KTX2 sets on top of the same
+ *         geometry and the same `direct` lighting.  `auto` takes pbr whenever the manifest carries
+ *         a texture set, so a grey capture can never be reported as a PBR one by accident. */
+function pickMaterialsMode() {
+	const has = manifest.materials && manifest.materials.count > 0;
+	if ( CFG.materials === 'grey' ) return 'grey';
+	if ( CFG.materials === 'pbr' ) {
+		if ( has ) return 'pbr';
+		note( '?materials=pbr but the manifest carries no texture set: falling back to grey' );
+		return 'grey';
+	}
+	const declared = ( manifest.materials && manifest.materials.mode ) || null;
+	if ( declared === 'grey' || declared === 'neutral' ) return 'grey';
+	return has ? 'pbr' : 'grey';
 }
 
 async function boot() {
@@ -221,6 +245,13 @@ async function boot() {
 		+ ( lightingMode === 'baked' ? 'lightmaps carry the diffuse, sun and env are specular-only'
 			: 'no lightmaps in the manifest: full DirectionalLight + PMREM irradiance, no shadow maps' ) );
 
+	materialsMode = pickMaterialsMode();
+	note( `materials mode: ${materialsMode}${CFG.materials !== 'auto' ? ' (?materials override)' : ''} — `
+		+ ( materialsMode === 'pbr'
+			? `${manifest.materials.count} manifest texture set(s), ${manifest.materials.maps} maps`
+			: 'neutral grey as exported (Gate 1 frames)' )
+		+ ( manifest.materials && manifest.materials.mode ? `; manifest declares "${manifest.materials.mode}"` : '' ) );
+
 	// byte budget before anything downloads ------------------------------------------------------
 	const tp = performance.now();
 	const plan = [];
@@ -228,6 +259,8 @@ async function boot() {
 	if ( manifest.sky.glossy ) plan.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
 	if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) plan.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
 	if ( ! CFG.testScene ) for ( const g of manifest.glbs ) plan.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
+	// The PBR set is part of the payload, so it is in the byte plan from the first frame of the bar.
+	if ( materialsMode === 'pbr' && ! CFG.testScene ) plan.push( ...pbrPlan( manifest.materials.sets ) );
 	await measurePlan( plan );
 	loadTimes.plan_s = ( performance.now() - tp ) / 1000;
 
@@ -291,6 +324,28 @@ async function boot() {
 		}
 	}
 	loadTimes.glb_s = ( performance.now() - tg ) / 1000;
+
+	// materials: the Gate 2 PBR texture sets, nearest material to THIS station first ---------------
+	if ( materialsMode === 'pbr' && glbRoots.length ) {
+		const tt = performance.now();
+		let drawn = 0;
+		pbrReport = await applyPbrSets( {
+			scene, camera, sets: manifest.materials.sets, note,
+			loadTexture: ( url ) => {
+				progress.label = url.split( '/' ).pop();
+				return /\.ktx2$/i.test( url )
+					? getKTX2().loadAsync( url, onProgressFor( url ) )
+					: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+			},
+			// progressive: the near materials are visible while the far ones are still downloading
+			onLoaded: ( m, applied, done, total ) => {
+				progress.label = `materials ${done}/${total}`;
+				if ( done - drawn >= 16 || done === total ) { drawn = done; renderFrame(); }
+			},
+		} );
+		loadTimes.tex_s = ( performance.now() - tt ) / 1000;
+		note( `pbr textures in ${loadTimes.tex_s.toFixed( 2 )} s` );
+	}
 
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
 	if ( CFG.billboards && manifest.treesFar.length ) {
@@ -368,6 +423,7 @@ async function loadGlbs() {
 			const gltf = await loader.parseAsync( buf, base );
 			gltf.scene.name = `WEB_glb_${g.cls}`;
 			scene.add( gltf.scene );
+			glbRoots.push( gltf.scene );
 			const r = processGltf( gltf, g );
 			r.bytes = buf.byteLength; r.wall_s = ( performance.now() - t ) / 1000;
 			glbReport.push( r );
@@ -384,6 +440,21 @@ async function loadGlbs() {
 		renderFrame();
 		await new Promise( ( r ) => requestAnimationFrame( r ) );
 	}
+	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those
+	// batches into regional ones so a station that sees little of the site draws little of it.
+	chunkStats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
+	if ( CFG.chunk !== 0 ) {
+		const opts = CFG.chunk ? { minRadius: CFG.chunk } : {};
+		for ( const root of glbRoots ) {
+			const s = chunkInstancedMeshes( root, opts );
+			chunkStats.candidates += s.candidates; chunkStats.split += s.split;
+			chunkStats.chunks += s.chunks; chunkStats.added += s.added;
+			chunkStats.batches.push( ...s.batches );
+		}
+		note( `instance chunking (QA-11d-1): ${chunkStats.split} of ${chunkStats.candidates} site-spanning batches `
+			+ `(bounding radius >= ${CFG.chunk || 30} m) split into ${chunkStats.chunks} regional batches, `
+			+ `+${chunkStats.added} draw calls when every chunk is in frame` );
+	} else { note( 'instance chunking disabled (?chunk=0)' ); }
 	finishMaterials();
 }
 
@@ -647,6 +718,9 @@ window.__pfaInfo = () => ( {
 	glbs: glbReport.slice(),
 	resident: residentBytes(),
 	billboards: billboards ? { ...billboards.userData } : null,
+	chunking: chunkStats,
+	materialsMode,
+	pbr: pbrReport,
 	notes: log.slice(),
 } );
 

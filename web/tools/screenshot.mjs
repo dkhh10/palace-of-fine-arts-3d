@@ -83,8 +83,10 @@ function serveDist() {
 		if ( url.startsWith( '/assets/' ) && ! fs.existsSync( path.join( root, url.slice( 1 ) ) ) ) file = path.join( ASSETS, url.slice( '/assets/'.length ) );
 		else if ( url.startsWith( '/test/' ) ) file = path.join( WEB, 'testdata', url.slice( '/test/'.length ) );
 		else file = path.join( root, url === '/' ? 'index.html' : url.slice( 1 ) );
-		const allowed = [ root, ASSETS, path.join( WEB, 'testdata' ) ];
-		if ( ! allowed.some( a => path.resolve( file ).startsWith( path.resolve( a ) ) )
+		// Containment on a PATH BOUNDARY: `startsWith` alone lets /export/out2 pass as /export/out.
+		const allowed = [ root, ASSETS, path.join( WEB, 'testdata' ) ].map( a => path.resolve( a ) );
+		const real = path.resolve( file );
+		if ( ! allowed.some( a => real === a || real.startsWith( a + path.sep ) )
 			|| ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) { res.statusCode = 404; res.end( 'not found' ); return; }
 		res.setHeader( 'Content-Type', MIME[ path.extname( file ) ] || 'application/octet-stream' );
 		res.setHeader( 'Content-Length', fs.statSync( file ).size );
