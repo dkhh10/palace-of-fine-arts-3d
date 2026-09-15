@@ -253,3 +253,11 @@ Each further near tree costs ~13 400 placed triangles. The ARCH class is 255,446
 | env | 1,536 | 679,779 | 246,193 | 28,148,564 |
 | ground | 4 | 113,043 | 7,802 | 1,175,488 |
 
+
+## Known items and hand-offs
+
+1. **The 3 ORN attic panels are voxel-remeshed lo-polys.** COLLAPSE stalls on ~40 000 relief islands, so the 8 k lo is a voxel shell: lo->hi deviation mean 44-54 mm, max 367 mm, cage 0.3174-0.4588 m, and the normal map's blue mean is 0.79-0.81 against 0.97 on a clean pair. The relief is all in the map. A 10.5 x 5.3 m panel sits at z = 30.5 m and is small at every station; re-check it in the Gate 1 tile review and retopologise by hand only if it reads flat.
+2. **`orn.glb` is 148 MB**, almost all of it the 66 UASTC normal/AO maps (2K UASTC q2 + zstd 18 is ~2.6 MB per map). Fine for 6a on this Mac; for the 6b 50 MB initial payload the levers are ETC1S for the AO maps (smooth grey, compresses ~5x better), 1K for every prototype under 2 m, and streaming `orn.glb` after `arch.glb` + `ground.glb` (3.7 MB together).
+3. **UV2 (TEXCOORD_1) ships in arch/orn/ground but carries no texture yet** — the lightmaps arrive at Gate 3, where the per-instance slot offsets in `manifest.orn_slots` become the atlas lookup. `env.glb` has no UV2: foliage and the backdrop are vertex-AO / flat-colour by plan.
+4. **Materials are neutral grey** (one per atlas group, plus an 8x8 grey base-colour probe so TEXCOORD_0 reaches every glb) except the foliage, which keeps its original bark/leaf materials so the silhouette check has the leaf alpha. PBR lands at Gate 2 on UV1.
+5. `ENV_backdropgroup_backdrop_forest` is 99 640 triangles of backdrop canopy, 12.6 % of the whole ENV budget, and it is never closer than the far shore — the cheapest remaining ENV saving if the lead wants more near trees.

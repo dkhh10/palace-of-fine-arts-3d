@@ -228,6 +228,34 @@ def main():
               f"{gb:,} |" if gb else
               f"| {c} | {v['objects']:,} | {v['placed_tris']:,} | {v['bytes']:,} | - |")
         a("")
+    # ---------------------------------------------------------------- known items
+    a("")
+    a("## Known items and hand-offs")
+    a("")
+    deep = [b for b in bakes.values() if b["cage_extrusion_m"] > 0.1]
+    if deep:
+        a(f"1. **The {len(deep)} ORN attic panels are voxel-remeshed lo-polys.** COLLAPSE stalls on ~40 000 "
+          f"relief islands, so the 8 k lo is a voxel shell: lo->hi deviation mean 44-54 mm, max "
+          f"{max(b['deviation_m']['max'] for b in deep) * 1000:.0f} mm, cage "
+          f"{min(b['cage_extrusion_m'] for b in deep)}-{max(b['cage_extrusion_m'] for b in deep)} m, and the "
+          f"normal map's blue mean is 0.79-0.81 against 0.97 on a clean pair. The relief is all in the map. "
+          f"A 10.5 x 5.3 m panel sits at z = 30.5 m and is small at every station; re-check it in the Gate 1 "
+          f"tile review and retopologise by hand only if it reads flat.")
+    orn_glb = ((load("manifest.json") or {}).get("glb") or {}).get("per_class", {}).get("orn", {})
+    if orn_glb:
+        a(f"2. **`orn.glb` is {mb(orn_glb['bytes']):.0f} MB**, almost all of it the 66 UASTC normal/AO maps "
+          f"(2K UASTC q2 + zstd 18 is ~2.6 MB per map). Fine for 6a on this Mac; for the 6b 50 MB initial "
+          f"payload the levers are ETC1S for the AO maps (smooth grey, compresses ~5x better), 1K for every "
+          f"prototype under 2 m, and streaming `orn.glb` after `arch.glb` + `ground.glb` (3.7 MB together).")
+    a("3. **UV2 (TEXCOORD_1) ships in arch/orn/ground but carries no texture yet** — the lightmaps arrive at "
+      "Gate 3, where the per-instance slot offsets in `manifest.orn_slots` become the atlas lookup. `env.glb` "
+      "has no UV2: foliage and the backdrop are vertex-AO / flat-colour by plan.")
+    a("4. **Materials are neutral grey** (one per atlas group, plus an 8x8 grey base-colour probe so "
+      "TEXCOORD_0 reaches every glb) except the foliage, which keeps its original bark/leaf materials so the "
+      "silhouette check has the leaf alpha. PBR lands at Gate 2 on UV1.")
+    a("5. `ENV_backdropgroup_backdrop_forest` is 99 640 triangles of backdrop canopy, 12.6 % of the whole ENV "
+      "budget, and it is never closer than the far shore — the cheapest remaining ENV saving if the lead "
+      "wants more near trees.")
     DOC.parent.mkdir(parents=True, exist_ok=True)
     DOC.write_text("\n".join(L) + "\n")
     print(f"[budget_doc] wrote {DOC} ({os.path.getsize(DOC)} B, {len(L)} lines)")
