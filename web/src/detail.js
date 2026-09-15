@@ -44,6 +44,19 @@ uniform float pfaDetailStrength;
 uniform float pfaDetailNormalScale;
 uniform vec3 pfaDetailAlbedoMean;  // the map's own LINEAR mean, measured on the CPU
 uniform float pfaDetailRoughMean;
+uniform float pfaDetailLodBias;    // mip footprint shrink, as a power of two (-2 = quarter footprint)
+uniform float pfaDetailGain;       // contrast gain on the ratio: 1 = the bake's own contrast
+// An explicit-gradient fetch, because a LOD BIAS argument is silently ignored on this stack: the
+// grain is 3-6 texels per pixel at QA distance, so the hardware picks a mip where the detail is
+// already averaged away.  Shrinking the footprint by 2^bias samples a sharper mip and keeps it.
+vec4 pfaDetailFetch( sampler2D tex, vec2 uv ) {
+	float k = exp2( pfaDetailLodBias );
+	return textureGrad( tex, uv, dFdx( uv ) * k, dFdy( uv ) * k );
+}
+// The world position comes from the vertex patch's varying.  It must NOT be reconstructed here from
+// three's vViewPosition: this block is prepended to the TOP of the fragment shader, above three's own
+// declaration of that varying, so referencing it fails to compile and every patched material stops
+// drawing (that is how the ARCH stone once vanished from a capture).
 vec2 pfaDetailUv() {
 	vec3 p = vPfaWorld * pfaDetailScale;
 	#if PFA_DETAIL_PROJ == 1
@@ -79,19 +92,36 @@ const VERT = /* glsl */`
 	vPfaWorld = ( modelMatrix * pfaW ).xyz;
 `;
 
+const FRAG_DEBUG = /* glsl */`
+	{   // ?detaildebug=world|uv|albedo: paint the quantity instead of the surface
+		vec2 dUv = pfaDetailUv();
+		vec3 dAlb = pfaDetailFetch( pfaDetailAlbedo, dUv ).rgb;
+		#if PFA_DETAIL_DEBUG == 1
+			diffuseColor.rgb = fract( vPfaWorld * 0.1 );
+		#elif PFA_DETAIL_DEBUG == 2
+			diffuseColor.rgb = vec3( fract( dUv ), 0.0 );
+		#else
+			diffuseColor.rgb = dAlb;
+		#endif
+	}
+`;
+
 const FRAG_ALBEDO = /* glsl */`
 	{
 		vec2 dUv = pfaDetailUv();
-		vec3 dAlb = texture2D( pfaDetailAlbedo, dUv ).rgb;
-		diffuseColor.rgb *= mix( vec3( 1.0 ), dAlb / max( pfaDetailAlbedoMean, vec3( 1e-4 ) ), pfaDetailStrength );
+		vec3 dAlb = pfaDetailFetch( pfaDetailAlbedo, dUv ).rgb;
+		// ratio^gain keeps the mean at 1.0 to first order and scales the CONTRAST: the shipped maps
+		// carry std/mean of 3-6 %, which is 5-10x under what the Phase 5 frame shows at 15-25 m.
+		vec3 ratio = pow( max( dAlb / max( pfaDetailAlbedoMean, vec3( 1e-4 ) ), vec3( 1e-3 ) ), vec3( pfaDetailGain ) );
+		diffuseColor.rgb *= mix( vec3( 1.0 ), ratio, pfaDetailStrength );
 	}
 `;
 
 const FRAG_ROUGH = /* glsl */`
 	{
 		vec2 dUv = pfaDetailUv();
-		float dR = texture2D( pfaDetailRough, dUv ).g;
-		roughnessFactor *= mix( 1.0, dR / max( pfaDetailRoughMean, 1e-4 ), pfaDetailStrength );
+		float dR = pfaDetailFetch( pfaDetailRough, dUv ).g;
+		roughnessFactor *= mix( 1.0, pow( max( dR / max( pfaDetailRoughMean, 1e-4 ), 1e-3 ), pfaDetailGain ), pfaDetailStrength );
 		roughnessFactor = clamp( roughnessFactor, 0.03, 1.0 );
 	}
 `;
@@ -99,9 +129,22 @@ const FRAG_ROUGH = /* glsl */`
 const FRAG_NORMAL = /* glsl */`
 	{
 		vec2 dUv = pfaDetailUv();
-		vec3 dN = texture2D( pfaDetailNormal, dUv ).xyz * 2.0 - 1.0;
-		mat3 dTBN = pfaTangentFrame( - vViewPosition, normal, dUv );
-		normal = normalize( normal + dTBN * vec3( dN.xy * pfaDetailNormalScale * pfaDetailStrength, 0.0 ) );
+		vec3 dN = pfaDetailFetch( pfaDetailNormal, dUv ).xyz * 2.0 - 1.0;
+		// The projection's tangent frame is ANALYTIC, not derived from screen-space derivatives:
+		// uv = (world.x, -world.z) * s, so dP/du = +X and dP/dv = -Z in world space (and the
+		// dominant-axis variant picks the matching pair).  A derivative-built frame degenerates
+		// wherever the detail UV is nearly constant across a pixel, which is most of the frame at
+		// QA distance, and then the perturbation silently vanishes.
+		vec3 tW = vec3( 1.0, 0.0, 0.0 ), bW = vec3( 0.0, 0.0, - 1.0 );
+		#if PFA_DETAIL_PROJ == 1
+			vec3 gn = abs( normalize( cross( dFdx( vPfaWorld ), dFdy( vPfaWorld ) ) ) );
+			if ( gn.y >= gn.x && gn.y >= gn.z ) { tW = vec3( 1.0, 0.0, 0.0 ); bW = vec3( 0.0, 0.0, - 1.0 ); }
+			else if ( gn.x >= gn.z ) { tW = vec3( 0.0, 0.0, - 1.0 ); bW = vec3( 0.0, 1.0, 0.0 ); }
+			else { tW = vec3( 1.0, 0.0, 0.0 ); bW = vec3( 0.0, 1.0, 0.0 ); }
+		#endif
+		vec3 tV = normalize( ( viewMatrix * vec4( tW, 0.0 ) ).xyz );
+		vec3 bV = normalize( ( viewMatrix * vec4( bW, 0.0 ) ).xyz );
+		normal = normalize( normal + ( tV * dN.x + bV * dN.y ) * pfaDetailNormalScale );
 	}
 `;
 
@@ -209,6 +252,7 @@ export function makeNoiseSet( px = 1024, mmPerTexel = 1.05, bumpDistanceM = 0.01
 export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
 	if ( mat.userData.pfaDetail ) return false;
 	const proj = opts.projection === 'dominant' ? 1 : 0;
+	const dbg = opts.debug | 0;
 	const uniforms = {
 		pfaDetailAlbedo: { value: tex.map || null },
 		pfaDetailRough: { value: tex.roughnessMap || null },
@@ -216,14 +260,18 @@ export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
 		pfaDetailScale: { value: rule.scale },
 		pfaDetailStrength: { value: opts.strength ?? 1.0 },
 		pfaDetailNormalScale: { value: opts.normalScale ?? 1.0 },
+		pfaDetailLodBias: { value: opts.lodBias ?? 0.0 },
+		pfaDetailGain: { value: opts.gain ?? 1.0 },
 		pfaDetailAlbedoMean: { value: ( tex.map && tex.map.userData.pfaLinearMean )
 			? new THREE.Vector3().fromArray( tex.map.userData.pfaLinearMean ) : new THREE.Vector3( 0.5, 0.5, 0.5 ) },
 		pfaDetailRoughMean: { value: ( tex.roughnessMap && tex.roughnessMap.userData.pfaLinearMean )
 			? tex.roughnessMap.userData.pfaLinearMean[ 1 ] : 0.5 },
 	};
+	mat.userData.pfaDetailTextures = Object.values( tex );
 	mat.userData.pfaDetail = { set: rule.set, scale: rule.scale, tile_m: rule.tileM,
 		projection: proj ? 'dominant' : 'objxy', strength: uniforms.pfaDetailStrength.value,
 		normal_scale: uniforms.pfaDetailNormalScale.value,
+		lod_bias: uniforms.pfaDetailLodBias.value, gain: uniforms.pfaDetailGain.value,
 		albedo_mean: uniforms.pfaDetailAlbedoMean.value.toArray().map( v => Math.round( v * 1e4 ) / 1e4 ),
 		rough_mean: Math.round( uniforms.pfaDetailRoughMean.value * 1e4 ) / 1e4,
 		maps: Object.keys( tex ) };
@@ -233,9 +281,9 @@ export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
 		Object.assign( shader.uniforms, uniforms );
 		shader.vertexShader = `varying vec3 vPfaWorld;\n` + once( shader.vertexShader,
 			'#include <project_vertex>', `#include <project_vertex>\n${VERT}`, 'world position' );
-		shader.fragmentShader = `#define PFA_DETAIL_PROJ ${proj}\n${PARS}\n` + shader.fragmentShader;
+		shader.fragmentShader = `#define PFA_DETAIL_PROJ ${proj}\n#define PFA_DETAIL_DEBUG ${dbg}\n${PARS}\n` + shader.fragmentShader;
 		shader.fragmentShader = once( shader.fragmentShader, '#include <map_fragment>',
-			`#include <map_fragment>\n${tex.map ? FRAG_ALBEDO : ''}`, 'detail albedo' );
+			`#include <map_fragment>\n${dbg ? FRAG_DEBUG : ( tex.map ? FRAG_ALBEDO : '' )}`, 'detail albedo' );
 		shader.fragmentShader = once( shader.fragmentShader, '#include <roughnessmap_fragment>',
 			`#include <roughnessmap_fragment>\n${tex.roughnessMap ? FRAG_ROUGH : ''}`, 'detail roughness' );
 		shader.fragmentShader = once( shader.fragmentShader, '#include <normal_fragment_maps>',
@@ -244,7 +292,7 @@ export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
 	};
 	const prevKey = mat.customProgramCacheKey;
 	mat.customProgramCacheKey = function () {
-		return `${prevKey ? prevKey.call( this ) : ''}|pfadetail:${proj}:${tex.map ? 1 : 0}${tex.roughnessMap ? 1 : 0}${tex.normalMap ? 1 : 0}`;
+		return `${prevKey ? prevKey.call( this ) : ''}|pfadetail:${proj}:${dbg}:${tex.map ? 1 : 0}${tex.roughnessMap ? 1 : 0}${tex.normalMap ? 1 : 0}`;
 	};
 	mat.needsUpdate = true;
 	return true;
@@ -254,7 +302,7 @@ export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
  * Attach the detail layer to every material the manifest names.
  * @returns {Promise<object>} report
  */
-export async function applyDetail( { scene, detail, loadTexture, note, projection = 'objxy', strength = 1.0, normalScale = 1.0, synthetic = false } ) {
+export async function applyDetail( { scene, detail, loadTexture, note, projection = 'objxy', strength = 1.0, normalScale = 1.0, lodBias = 0.0, gain = 1.0, debug = 0, synthetic = false } ) {
 	const report = { projection, strength, normal_scale: normalScale, sets_loaded: 0, materials: 0, textures: 0, bytes: 0,
 		means: {},
 		by_set: {}, unmatched_rules: [], applied: [], failed: [], empty: [], fallbacks: [], stats: {} };
@@ -318,7 +366,12 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 				t.minFilter = THREE.LinearMipmapLinearFilter;
 				t.needsUpdate = true;
 				let m = measureLinearMean( t, entry.srgb );
-				if ( ! m && entry.meanLinear ) m = { mean: entry.meanLinear, mean8: 255, std8: 255, samples: 0 };
+				if ( ! m && entry.meanLinear ) {
+					// A compressed texture has no readable pixels: the manifest's own measurements
+					// stand in, including the flatness check (std_linear, 0-1) the CPU path makes.
+					const mn = entry.meanLinear[ 1 ], sd = entry.stdLinear ? entry.stdLinear[ 1 ] : null;
+					m = { mean: entry.meanLinear, mean8: mn * 255, std8: sd === null ? 255 : sd * 255, samples: 0, from: 'manifest' };
+				}
 				if ( ! m ) {
 					// A compressed texture has no readable pixels, so its own mean cannot be measured
 					// here: the manifest has to declare `mean_linear` for the KTX2 set to be usable.
@@ -336,7 +389,7 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 				t.userData.pfaLinearMean = m.mean;
 				tex[ slot ] = t;
 				report.textures ++;
-				report.stats[ entry.url.split( '/' ).pop() ] = { mean8: Math.round( m.mean8 * 10 ) / 10, std8: Math.round( m.std8 * 10 ) / 10 };
+				report.stats[ entry.url.split( '/' ).pop() ] = { mean8: Math.round( m.mean8 * 10 ) / 10, std8: Math.round( m.std8 * 10 ) / 10, from: m.from || 'cpu' };
 				report.bytes += ( t.image && t.image.width ) ? t.image.width * t.image.height * 4 * 4 / 3 : 0;
 			} catch ( e ) { report.failed.push( { url: entry.url, error: e.message } ); }
 		}
@@ -349,7 +402,7 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 	for ( const { mat, rule } of work ) {
 		const tex = loaded[ rule.set ];
 		if ( ! tex || ! Object.keys( tex ).length ) continue;
-		if ( patchDetailMaterial( mat, tex, rule, { projection, strength, normalScale } ) ) {
+		if ( patchDetailMaterial( mat, tex, rule, { projection, strength, normalScale, lodBias, gain, debug } ) ) {
 			report.materials ++;
 			report.by_set[ rule.set ] = ( report.by_set[ rule.set ] || 0 ) + 1;
 			report.applied.push( { material: mat.name, set: rule.set, tile_m: rule.tileM, src: rule.src } );
@@ -359,7 +412,7 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 		note( `detail (QA-12-1): ${report.materials} material(s) on ${report.sets_loaded} tiling set(s) `
 			+ `(${Object.entries( report.by_set ).map( ( [ k, v ] ) => `${k} x${v}` ).join( ', ' )}), `
 			+ `${report.textures} textures, ${( report.bytes / 1e6 ).toFixed( 1 )} MB, `
-			+ `projection ${projection} (world space, Blender xy = three x,-z), strength ${strength}, normal scale ${normalScale}`
+			+ `projection ${projection} (world space, Blender xy = three x,-z), strength ${strength}, normal scale ${normalScale}, lod bias ${lodBias}, gain ${gain}`
 			+ ( synthetic ? ' — SYNTHETIC NOISE SET (?detailtest=noise), not the bake\'s maps' : '' ) );
 		if ( report.unmatched_rules.length )
 			note( `detail: ${report.unmatched_rules.length} manifest rule(s) match no scene material: ${report.unmatched_rules.join( ', ' )}` );
