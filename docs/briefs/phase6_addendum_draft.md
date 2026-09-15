@@ -1,7 +1,6 @@
-# Phase 6 addendum to CLAUDE.md — DRAFT for the user's approval (lead, 2026-09-15)
+# Phase 6 — Three.js walkthrough (added 2026-09-15; approved by the user with four changes, applied)
 
-Once approved this block is appended verbatim to CLAUDE.md under the heading "Phase 6 — Three.js walkthrough (added
-2026-09-15)". Nothing below changes Phases 0-5; the Phase 5 look (materials, lighting, AgX High Contrast, exposure -2.833)
+Nothing below changes Phases 0-5; the Phase 5 look (materials, lighting, AgX High Contrast, exposure -2.833)
 is frozen and inherited, known defects included (docs/delivery.md). Any change to assets/*.blend materials or lighting
 needs a docs/decisions.md entry and the user's approval before work starts.
 
@@ -17,6 +16,15 @@ needs a docs/decisions.md entry and the user's approval before work starts.
 - Colour: the viewer reproduces `AgX - High Contrast` at exposure -2.833 EV as read from master_delivery.blend, by a
   3D LUT baked from Blender's own OCIO (export/bake_lut.py), not by three.js' built-in AgX (which has no looks).
 - Hero camera `CAM_qa_01_lagoon_hero`; the six `scripts/qa_cameras.py` stations are the QA fixtures (keys 1-6).
+- **ORN_ export is the user's decision.** Before the Gate 1 budget is written the lead logs in docs/decisions.md the three
+  options — (a) unique mesh per instance, (b) true instancing with shared PBR and no ornament lightmap, (c) instancing with
+  a per-instance lightmap-atlas offset and a custom material — each with its triangle count, texture memory and
+  hero-visible cost, measured on the Gate 0 slice. The user chooses.
+- **The LUT.** Blender does not expose OCIO to Python: `export/bake_lut.py` pushes an identity Hald image through Blender's
+  own view transform at -2.833 EV and reads it back; anything else is documented in docs/tech_notes.md after Gate 0 with
+  its verification against a Cycles render. A wrong LUT makes every parity score wrong.
+- **Lightmap encoding.** The EXR -> three.js conversion must survive the linear value range implied by -2.833 EV; Gate 0
+  reports min, max and clipped-pixel count for the slice assets, and every later bake round reports the same per asset.
 
 ## Layout
 ```
@@ -63,11 +71,11 @@ point at files. Branches: `phase6-bake`, `phase6-export`, `phase6-viewer`, one w
   Phase 5 score and none is below 2.5; water reflects the rotunda at the hero station; walk controls with ground clamp,
   no walking into the lagoon; loading screen with progress.
 - **6b (web):** initial payload <= 50 MB, progressive loading, meshopt + KTX2; Safari and Chrome on macOS; a mobile
-  fallback (LOD1 geometry, halved textures) that loads and walks; staging URL with one QA round against it.
+  fallback (LOD1 geometry, halved textures) that loads and walks, tested in iOS Safari on the iPhone the user names at Gate 5; staging URL with one QA round against it.
 - 6a stops at parity or after two flat QA rounds following Gate 4. 6b stops at deployment plus one clean QA round.
   Polish beyond that is a new phase. Gaussian splats only if the user asks, off the critical path.
 - Gates 0-5 as docs/briefs/phase6_plan.md; every gate carries the name sweep (`scripts/qa_name_sweep.py` on the export
-  set) and the six-station full-resolution tile review; Gate 0 must pass before any scale-up.
+  set) and the six-station full-resolution tile review; Gate 0 (one ARCH_ asset, one INST_ ornament instance, ground, sky) must pass before any scale-up.
 
 ## Budget
 Claude Max 20x; Phase 6 target <= 40 weekly points. Burn logged in docs/status.md at the end of every session
