@@ -299,3 +299,128 @@ bucket; `hide_render` never read; the near-tree allowance estimates shrubs from 
    agent writes into the shared `$MAIN/export/out/gate0/`.
 10. `gltf_export.py` never clears `tex_gltf/`, so a stale PNG from an earlier run would still be fed to toktx
     (wasteful, not wrong), and `gate0_common.guard_no_master_write` is dead code — call it or delete it.
+
+## Running Gate 2 (the PBR bake, branch `phase6-bake`)
+
+```sh
+scripts/blender_run.sh 1800 -- --background --python export/gate2_probe.py     # read-only inventory -> out/gate2/probe.json
+scripts/blender_run.sh 1800 -- --background --python export/gate2_set.py       # the two bake blends + bake_jobs.json
+export/bake_queue.sh --gate2 start                                             # detached: one Blender per job, 900 s each
+export/gltf_pack.sh --gate2                                                    # KTX2 UASTC desktop (+ ETC1S sample)
+python3 export/manifest_v3.py                                                  # manifest v3, schema pfa-phase6/3
+scripts/blender_run.sh 1200 -- --background --python export/gate2_verify.py    # baked vs procedural, Gate 0 station
+export/sync_main.sh                                                            # copy out/ to the MAIN checkout (no --delete)
+```
+
+| file | what it writes |
+|---|---|
+| `export/gate2_common.py` | Gate 2 constants: the four bake classes, sizes, sample counts, the backdrop UV1 helper |
+| `export/gate2_probe.py` | `out/gate2/probe.json` - read-only: every source material's node inventory (metallic, roughness, bump, images), the per-group surface area, UV1 presence, and the distance of every placement to the six QA stations |
+| `export/gate2_set.py` | `out/gate2/gate2_bake.blend` (ARCH + ground + backdrop, from `gate1_set.blend`), `gate2_orn_bake.blend` (the 33 ORN lo/hi pairs, from `gate1_bake.blend`), `bake_jobs.json`, `backdrop_uv1.npz` |
+| `export/bake_pbr.py --gate2 --job <id>` | one job's `tex/gate2_<job>_{albedo,roughness,normal}.png` and `out/gate2/bake/<job>.json` |
+| `export/bake_queue.sh --gate2` | the same detached queue as Gate 1 (`out/bake_queue/status.json`, resume, the GPU rule) over `out/gate2/bake_jobs.json` |
+| `export/gltf_pack.sh --gate2` | `out/gate2/tex_ktx2/*.ktx2` (UASTC + zstd + mips) and `tex_ktx2_etc1s/` for the timing sample |
+| `export/manifest_v3.py` | `out/gate2/manifest.json`, schema `pfa-phase6/3` |
+| `export/gate2_verify.py` | `out/gate2/verify.json` + two 1280x720 Cycles frames: the slice with the baked textures on flat Principled materials vs the procedural originals |
+
+## manifest.json v3 — the contract with the viewer at Gate 2
+
+`export/out/gate2/manifest.json`, `schema` = `"pfa-phase6/3"`, `gate` = `"gate2"`. **Everything in v2 still holds**:
+`units`, `water`, `view`, `sun`, `stations`, `hero_camera`, `lut`, `sky`, `compositor`, `reference`,
+`lightmap_scale`, `assets`, `meshes`, `instancing`, `totals`, `orn_slots`, `tree_rule` / `tree_near` / `tree_far`,
+`glb`, `colour_source` are carried from the Gate 1 manifest by `export/manifest_v3.py` with their paths rewritten
+to `../gate1/<file>` (and, for the colour blocks Gate 1 itself carried, `../gate0/<file>`).
+**`lightmap_encoding` and `textures.schema` are copied verbatim and are not renegotiated at Gate 2** — `rgbm_range`
+is still required on every lightmap texture entry, `lightmap_scale` is still π.
+
+Two keys are new, and one is extended.
+
+### `materials` — new
+
+```jsonc
+"materials": {
+  "mode": "pbr",                       // "grey" at Gate 1; the viewer switches on this string
+  "uv": "TEXCOORD_0",                  // every PBR map rides UV1; the lightmap keeps TEXCOORD_1
+  "colorspace": { "albedo": "srgb", "roughness": "linear", "normal": "linear", "occlusion": "linear" },
+  "sets": {
+    "<glb material name>": {           // exactly the material name in the glb, e.g. MAT_EXP_ARCH_rotunda__MAT_column_rose
+      "job": "arch_rotunda__MAT_column_rose",
+      "cls": "arch" | "ground" | "backdrop" | "orn",
+      "src_material": "MAT_column_rose",      // the Phase 5 material it was baked from (null for ground/ORN groups)
+      "size": 2048,
+      "albedo":    { "texture": "gate2_<job>_albedo",    "factor": [r, g, b] },
+      "roughness": { "texture": "gate2_<job>_roughness", "factor": 0.83 },
+      "normal":    { "texture": "gate2_<job>_normal",    "scale": 1.0 },
+      "occlusion": { "texture": "orn_<proto>_ao" },      // ORN only, carried unchanged from Gate 1
+      "metallic":  { "texture": null, "constant": true, "factor": 0.0 },
+      "uv1_in_glb": true               // false for the ten backdrop groups: see "The backdrop" below
+    }
+  }
+}
+```
+
+Rules the viewer can rely on:
+
+1. **`texture` is a key into `textures.gate2.files`, never a path.** Resolve it there and join with `textures.gate2.ktx2_dir`.
+2. **`texture: null` with `constant: true` is not an error — it is the map.** A map whose baked standard deviation is
+   below `materials.constant_threshold` ships as a factor only (no file, no GPU memory). Apply `factor` as
+   `material.color` / `material.roughness` / `material.metalness` and leave the map unset.
+3. **`factor` is present even when `texture` is not null.** It is the baked map's mean (albedo: linear RGB;
+   roughness / metallic: scalar) and is the correct value to use before the texture has streamed in, and the
+   correct multiplier to leave at 1.0/white once it has. Never multiply the texture by the factor.
+4. **Albedo is sRGB-encoded** in the file and the KTX2 carries `sRGB` transfer, so three.js `SRGBColorSpace`;
+   roughness, normal and occlusion are linear data (`NoColorSpace`). The bake buffer itself is scene-linear —
+   the encode happens on save, once.
+5. **Roughness rides the green channel** of a glTF metallicRoughness texture when one is used; here it is shipped as
+   its own single-purpose map, so assign it to `material.roughnessMap` and set `material.metalness` from
+   `metallic.factor` (0.0 on 28 of the 30 source materials; the two exceptions are named in the report).
+6. **Normal maps are tangent-space, +X +Y +Z (OpenGL convention)**, baked on the exported low-poly's UV1. For ORN they
+   already carry the Gate 1 hi→lo relief *and* the material's own bump, baked in one pass — the Gate 2 ORN normal
+   **replaces** `orn_<proto>_normal` from Gate 1; do not multiply or blend the two.
+7. A material name that is not in `materials.sets` keeps whatever the glb gave it (the foliage bark/leaf materials,
+   `MAT_EXP_treeboard`, and `MAT_water_lagoon`, which is the viewer's own plane).
+
+### `textures.gate2` — the extension
+
+`textures` keeps every v2 key (`schema`, `ktx2_dir`, `files`, `bytes`, `encoding`, `uv`) unchanged, describing the
+Gate 1 set, and gains:
+
+```jsonc
+"textures": {
+  "schema": "...unchanged, rgbm_range still required on every lightmap entry...",
+  "gate2": {
+    "ktx2_dir": "../gate2/tex_ktx2",
+    "etc1s_dir": "../gate2/tex_ktx2_etc1s",    // only the mobile timing sample exists at Gate 2
+    "encoder": "toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf <srgb|linear>",
+    "files": {
+      "gate2_<job>_albedo": {
+        "path": "gate2_<job>_albedo.ktx2", "w": 2048, "h": 2048, "map": "albedo",
+        "colorspace": "srgb", "cls": "arch", "job": "<job>",
+        "bytes": 1234567,            // on disk, KTX2
+        "resident_mb": 5.33,         // ASTC 4x4 on the Apple GPU = 1 byte/texel, x4/3 for the mip chain
+        "stats": { "mean": [...], "std": [...], "min": [...], "max": [...] }   // the baked float buffer, linear
+      }
+    },
+    "bytes": 0, "resident_mb": 0.0
+  }
+}
+```
+
+### `budget` — new
+
+```jsonc
+"budget": { "resident_mb": { "<set name>": 0.0, "total": 0.0 }, "budget_mb": 1200,
+            "levers_applied": ["..."], "note": "..." }
+```
+
+### The backdrop, and the one thing the viewer cannot do alone
+
+The ten `MAT_EXP_ENVBD__*` groups left Gate 1 **with no UV1 at all** (`export_set.json.uv_missing.uv1`), which is why
+QA-11c-2 sees them untextured. Gate 2 therefore does two things for them:
+
+* every backdrop group gets a `factor` for every map, measured from its own bake — those work **today**, with no
+  re-export, because a factor needs no UV;
+* the UV1 the bake used is written to `out/gate2/backdrop_uv1.npz` (one float32 array of loop UVs per mesh, keyed by
+  the Gate 1 mesh name) so the export engineer can apply the **identical** layout and re-export `env.glb`; the
+  textures are already baked against it. Until that re-export the viewer must honour `uv1_in_glb: false` and use the
+  factors only.
