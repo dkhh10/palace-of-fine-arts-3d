@@ -71,7 +71,13 @@ def detail_of(mat):
 import bake_lib as bl  # noqa: E402
 import numpy as np  # noqa: E402
 
-SHIP_PX = 1024
+# The two concrete sets sit on the building the walker stands next to, so they ship at the source resolution:
+# the normal's slope and the albedo's ratio both lose amplitude to any pre-smoothing, and a box reduce to 1024
+# costs 30 % of the encoded normal std (0.0235 -> 0.0166 on concrete_wall_007, measured). The ground sets stay
+# at 1024. Roughness is low-frequency everywhere and stays at 1024.
+SHIP_PX = {"concrete_wall_007": 2048, "concrete_wall_008": 2048}
+SHIP_PX_DEFAULT = 1024
+ROUGHNESS_PX = 1024
 BUMP_DISTANCE_M = 0.015          # the Bump node's Distance inside PFA_concrete, measured
 
 sets, per_material, saved = {}, {}, {}
@@ -93,6 +99,9 @@ for name in want:
             continue
         raw[key][role] = bl.image_array(im)          # linear floats, whatever the file's colorspace was
         rec["px"] = im.size[0]
+        if role == "height":
+            rec["height_depth"] = im.depth
+            rec["height_file"] = (im.filepath_raw or im.filepath or "(packed)").split("/")[-1]
         rec.setdefault("source_images", {})[role] = im.name
     per_material[name] = dict(set=key, object_scale=scale,
                               tile_m=(round(1.0 / scale, 4) if scale else None),
@@ -107,31 +116,44 @@ for key, rec in sets.items():
     tile_m = round(sum(tiles) / len(tiles), 4) if tiles else 2.5
     rec["tile_m_used_for_normal"] = tile_m
     src_px = rec["px"]
-    f = max(src_px // SHIP_PX, 1)
+    ship_px = min(SHIP_PX.get(key, SHIP_PX_DEFAULT), src_px)
+    f = max(src_px // ship_px, 1)
 
-    # the tangent normal, from this set's own height at the tile's real scale, computed at the SHIPPED size
+    # the tangent normal at the slope Cycles shades with: h(x) = Distance * H(x) metres, so the surface slope
+    # is dh/dx = Distance * (dH/dtexel) / m_per_texel and n = normalize(-dh/dx, -dh/dy, 1). Differentiate at
+    # the SOURCE resolution and reduce the normal afterwards - reducing the height first smooths the slope away.
     hgt = raw[key].get("height")
     if hgt is not None:
-        H = bl.box_reduce(hgt, f)[..., 0] if f > 1 else hgt[..., 0]
-        m_per_texel = tile_m / float(SHIP_PX)
+        H = hgt[..., 0]
+        m_per_texel = tile_m / float(src_px)
         k = BUMP_DISTANCE_M / m_per_texel
         gx = (np.roll(H, -1, 1) - np.roll(H, 1, 1)) * 0.5
         gy = (np.roll(H, -1, 0) - np.roll(H, 1, 0)) * 0.5
         nx, ny = -gx * k, -gy * k
         nz = np.ones_like(nx)
         ln = np.sqrt(nx * nx + ny * ny + nz * nz)
-        n = np.stack([nx / ln, ny / ln, nz / ln], axis=-1) * 0.5 + 0.5
-        rec["maps"]["normal"] = dict(array=n, colorspace="linear", encode="data",
+        n = np.stack([nx / ln, ny / ln, nz / ln], axis=-1)
+        if f > 1:
+            n = bl.box_reduce(n, f)
+            n /= np.maximum(np.linalg.norm(n, axis=-1, keepdims=True), 1e-9)
+        n = n * 0.5 + 0.5
+        rec["maps"]["normal"] = dict(array=n, colorspace="linear", encode="data", px=ship_px,
                                      source_image=f"derived from {rec['source_images']['height']}",
+                                     source_bit_depth=rec.get("height_depth"),
                                      k_slope_per_unit_height=round(float(k), 4),
-                                     height_std=round(float(H.std()), 6))
+                                     m_per_texel_m=round(float(m_per_texel), 6),
+                                     height_std=round(float(H.std()), 6),
+                                     height_grad_mean_per_texel=round(float(np.abs(gx).mean()), 6))
     for role in ("albedo", "roughness"):
         a = raw[key].get(role)
         if a is None:
             continue
-        a = bl.box_reduce(a, f)[..., :3] if f > 1 else a[..., :3]
+        # the albedo IS the ratio map: any smoothing here is contrast the viewer can never get back.
+        px = ROUGHNESS_PX if role == "roughness" else ship_px
+        rf = max(src_px // px, 1)
+        a = bl.box_reduce(a, rf)[..., :3] if rf > 1 else a[..., :3]
         rec["maps"][role] = dict(array=a, colorspace=("srgb" if role == "albedo" else "linear"),
-                                 encode=("srgb" if role == "albedo" else "data"),
+                                 encode=("srgb" if role == "albedo" else "data"), px=px,
                                  source_image=rec["source_images"][role])
 
     for role, m in rec["maps"].items():
@@ -146,7 +168,7 @@ for key, rec in sets.items():
         out = DET / f"detail_{key}_{role}.png"
         nbytes = bl.write_png_rgb8(out, u8)
         back = bl.read_png_rgb8(out).astype(np.float32) / 255.0   # VERIFY from the file, not the array
-        m.update(path=f"detail/{out.name}", px=SHIP_PX, bytes=nbytes,
+        m.update(path=f"detail/{out.name}", bytes=nbytes,
                  file_mean=[round(float(v), 6) for v in back.reshape(-1, 3).mean(axis=0)],
                  file_std=[round(float(v), 6) for v in back.reshape(-1, 3).std(axis=0)],
                  file_min=int(back.min() * 255), file_max=int(back.max() * 255))
@@ -158,10 +180,11 @@ for key, rec in sets.items():
     rec["maps"].pop("height", None)
     (DET / f"detail_{key}_height.png").unlink(missing_ok=True)
     rec.pop("source_images", None)
-    rec["ship_px"] = SHIP_PX
+    rec["ship_px"] = ship_px
 
 report = dict(generator="export/gate2_detail.py", source=str(g2.SRC_BLEND), sets=sets,
-              per_material=per_material, files=saved, ship_px=SHIP_PX,
+              per_material=per_material, files=saved,
+              ship_px={k: v["ship_px"] for k, v in sets.items()},
               bump_distance_m=BUMP_DISTANCE_M,
               note="tile the set in OBJECT space at `object_scale` (uv = object_position.xy * object_scale); "
                    "multiply the baked albedo by detail_albedo / detail.mean_linear, take roughness from the "
