@@ -225,7 +225,13 @@ def main():
         detail = dict(
             mode="object_space_tiled", ship_px=d["ship_px"], bump_distance_m=d["bump_distance_m"],
             sets={k: dict(maps={r: dict(texture=f"detail_{k}_{r}", px=v["px"],
-                                        colorspace=v["colorspace"]) for r, v in rec["maps"].items()},
+                                        colorspace=v["colorspace"],
+                                        # the viewer divides by mean_linear; a compressed texture has no
+                                        # readable pixels, so the denominator has to travel here.
+                                        mean_linear=v.get("mean_linear"), std_linear=v.get("std_linear"),
+                                        file_mean=v.get("file_mean"), file_std=v.get("file_std"),
+                                        png_bytes=v.get("bytes"))
+                                for r, v in rec["maps"].items()},
                           tile_m=rec.get("tile_m_used_for_normal"))
                   for k, rec in d["sets"].items()},
             per_material={m: v for m, v in d["per_material"].items() if v},
