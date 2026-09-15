@@ -775,3 +775,44 @@ std, as the measurements above say they must be — the surface itself rides `ma
 Resident after this round: **1 247.57 MB** (PBR 600.73 + ORN AO 147.89 + detail 19.95 + foliage 20 + the Gate 3
 reservations 459). That is 47.57 MB over the 1 200 MB line, which the lead accepted for the new atlases; the
 impostor lever (2K -> 1K, -200 MB) is still unspent and brings it to **1 047.57 MB** whenever Gate 3 wants it.
+
+### The detail normal at the slope Cycles shades with, and the ceiling the sources impose
+
+Re-derived: `h(x) = Distance * H(x)` metres, `n = normalize(-dh/dx, -dh/dy, 1)`, differentiated at the **source**
+2048 px and the normal reduced afterwards (reducing the height first smooths the slope away — it cost 30 % of the
+encoded std). `Distance` is the Bump node's own 0.015 m. The two concrete sets now ship at 2048, the ground sets at
+1024, roughness at 1024 everywhere.
+
+| set | ship px | tile m | mm/texel | k | height std | mean abs dH per texel | normal std R | std G | albedo contrast |
+|---|---|---|---|---|---|---|---|---|---|
+| `concrete_wall_008` | 2048 | 2.71 | 1.32 | 11.3 | 0.0098 | 0.00134 | **0.0189** | **0.0161** | 3.2 % |
+| `concrete_wall_007` | 2048 | 2.16 | 1.05 | 14.2 | 0.0176 | 0.00173 | **0.0239** | **0.0268** | 3.3 % |
+| `gravelly_sand` | 1024 | 2.48 | 1.21 | 12.4 | 0.0236 | 0.00351 | **0.0268** | **0.0265** | 5.0 % |
+| `rock_boulder_dry` | 1024 | 1.18 | 0.57 | 26.1 | 0.1440 | 0.00178 | **0.0309** | **0.0315** | 6.2 % |
+| `forest_ground_04` | 1024 | 3.15 | 1.54 | 9.8 | 0.0410 | 0.00117 | **0.0079** | **0.0077** | 9.3 % |
+
+That is **+45 % on the concrete_wall_007 normal** (0.0165 → 0.0239) and +69 % on concrete_wall_008
+(0.0112 → 0.0189), with the albedo ratio now unsmoothed (+35 % contrast, 0.0182 → 0.0246 std).
+
+**It will not go an order of magnitude further, and the reason is in the source files.** Every `*_disp` map is an
+**8-bit JPEG**: `concrete_wall_007_disp_2k.jpg` spans 0.0235–0.7255 but has a standard deviation of only **0.0176**
+across 178 distinct levels, and its mean absolute texel-to-texel gradient is **0.00173** — *below* the 1/255 = 0.0039
+quantisation step. `concrete_wall_008` is half that again (std 0.0098, gradient 0.00134). These are low-frequency
+displacement maps for large-scale relief, not grain maps. With `Distance` = 15 mm and a 1.05 mm texel the honest
+encoded slope is what the table shows; a gain of 6–10 on top would not be a stronger derivation, it would be
+invented relief. If the Phase 5 amplitude has to be matched exactly, the lever is a higher-contrast source height
+(a 16-bit or procedurally generated grain map), not a multiplier in the viewer.
+
+**Where the rest of the cam05 amplitude actually is.** The metre-scale part of `PFA_concrete` — blotches at 2.2–3.0 m,
+blocks at 1.2–3.0 m — is in the baked *albedo* and is resolvable by the atlas, but its *shading* is not: at 10 cm per
+texel on `concrete_ochre`, `k = Distance / m_per_texel` = 0.15, so even a full-range height step across one texel is
+an 8.5° tilt and a metre-scale one is under a degree. That is physically what Cycles does too. The remainder of the
+gap at this gate is occlusion, which Gate 2 excludes by construction (QA round 12 scores the PBR set with no
+lightmaps and no shadows).
+
+**Colour space, checked on disk rather than assumed.** Every `detail_*_albedo.ktx2` carries DFD transfer **2 (sRGB)**
+and every normal/roughness carries **1 (linear)** — `gltf_pack.sh --gate2` has tagged them that way since the detail
+set was added. So the GPU returns linear after its sRGB decode and `mean_linear` is in that same sampled space:
+`ratio = albedo_sampled / mean_linear` is correct as published, with no 45 % term. `mean_linear` and `std_linear`
+are measured on the linear array before the sRGB encode, and `file_mean` / `file_std` are read back from the
+written file.

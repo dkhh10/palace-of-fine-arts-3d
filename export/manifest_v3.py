@@ -133,7 +133,12 @@ def main():
     etc = OUT / "tex_ktx2_etc1s"
     ktx_bytes = {f.stem: f.stat().st_size for f in sorted(ktx.glob("*.ktx2"))} if ktx.is_dir() else {}
     detail_files = {k: v for k, v in ktx_bytes.items() if k.startswith("detail_")}
-    detail_px = json.loads((OUT / "detail.json").read_text())["ship_px"] if (OUT / "detail.json").exists() else 1024
+    detail_px = {}
+    if (OUT / "detail.json").exists():
+        _d = json.loads((OUT / "detail.json").read_text())
+        for _k, _rec in _d["sets"].items():
+            for _r, _v in _rec["maps"].items():
+                detail_px[f"detail_{_k}_{_r}"] = _v.get("px", 1024)
     etc_bytes = {f.stem: f.stat().st_size for f in sorted(etc.glob("*.ktx2"))} if etc.is_dir() else {}
 
     files, sets = {}, {}
@@ -224,6 +229,11 @@ def main():
                     by_src.setdefault(job["group"], {})[sm] = d["per_material"][sm]
         detail = dict(
             mode="object_space_tiled", ship_px=d["ship_px"], bump_distance_m=d["bump_distance_m"],
+            normal_derivation="n = normalize(-dh/dx, -dh/dy, 1) with h = Distance * H metres, differentiated "
+                              "at the SOURCE resolution and the normal reduced afterwards; k = Distance / "
+                              "m_per_texel is recorded per set",
+            albedo_ratio="albedo_sampled / mean_linear, no smoothing; the KTX2 is tagged sRGB (DFD transfer 2, "
+                         "verified on disk) so the GPU returns linear and mean_linear is in that same space",
             sets={k: dict(maps={r: dict(texture=f"detail_{k}_{r}", px=v["px"],
                                         colorspace=v["colorspace"],
                                         # the viewer divides by mean_linear; a compressed texture has no
@@ -252,7 +262,8 @@ def main():
         ktx2_dir="tex_ktx2", etc1s_dir="tex_ktx2_etc1s",
         encoder="toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf <srgb|linear>",
         etc1s_encoder="toktx --t2 --encode etc1s --clevel 2 --qlevel 128 --genmipmap (mobile timing sample only)",
-        files=files, detail_files={k: dict(bytes=v, resident_mb=resident_mb(detail_px))
+        files=files, detail_files={k: dict(bytes=v, px=detail_px.get(k, 1024),
+                                           resident_mb=resident_mb(detail_px.get(k, 1024)))
                                    for k, v in detail_files.items()},
         bytes=sum(v["bytes"] or 0 for v in files.values()) + sum(detail_files.values()),
         etc1s_bytes=sum(v["etc1s_bytes"] or 0 for v in files.values()),
@@ -266,9 +277,8 @@ def main():
     for jid, job in jobs.items():
         if job["cls"] == g2.CLS_ORN:
             orn_ao += resident_mb(int(job["size"]))
-    n_detail = len(detail_files)
     carried = dict(orn_ao_gate1=round(orn_ao, 2), foliage_cards=20.0,
-                   detail_set=round(n_detail * resident_mb(detail_px), 2))
+                   detail_set=round(sum(resident_mb(detail_px.get(k, 1024)) for k in detail_files), 2))
     gate3 = dict(lightmaps_own_map=85.0, lightmap_slot_atlases=107.0, tree_impostor_atlases=267.0)
     gate2_total = tex["gate2"]["resident_mb"]
     total = round(gate2_total + sum(carried.values()) + sum(gate3.values()), 2)
