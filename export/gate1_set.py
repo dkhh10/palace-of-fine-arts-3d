@@ -112,6 +112,32 @@ def shelf_fit(sides, margin):
     return tiles
 
 
+def guillotine_fit(sides, margin):
+    """Pack squares into the unit square with a best-area-fit guillotine packer. Shelves waste the whole
+    row height under a big tile (measured: 0.545 of the atlas on the 5-mesh colonnade group); this fills the
+    strip beside and under it. Returns {name: (x, y, side)} or None."""
+    free = [(margin, margin, 1.0 - 2 * margin, 1.0 - 2 * margin)]
+    placed = {}
+    for name, sd in sides:
+        best = None
+        for i, (fx, fy, fw, fh) in enumerate(free):
+            if fw >= sd and fh >= sd:
+                waste = fw * fh - sd * sd
+                if best is None or waste < best[0]:
+                    best = (waste, i)
+        if best is None:
+            return None
+        i = best[1]
+        fx, fy, fw, fh = free.pop(i)
+        placed[name] = (fx, fy, sd)
+        step_ = sd + margin
+        if fw - step_ > 1e-6:
+            free.append((fx + step_, fy, fw - step_, sd))
+        if fh - step_ > 1e-6:
+            free.append((fx, fy + step_, fw, fh - step_))
+    return placed
+
+
 def pack_tiles(areas, margin, bisect=True):
     """Area-weighted square tiles packed into [0,1]^2. `areas` is [(name, surface_area)].
 
@@ -144,12 +170,12 @@ def pack_tiles(areas, margin, bisect=True):
     best = None
     for _ in range(40):
         mid = 0.5 * (lo + hi)
-        t = shelf_fit([(n, sd * mid) for n, sd in base], margin)
+        t = guillotine_fit([(n, sd * mid) for n, sd in base], margin)
         if t is None:
             hi = mid
         else:
             best, lo = (t, mid), mid
-    tiles, k = best if best else (shelf_fit([(n, sd * lo) for n, sd in base], margin), lo)
+    tiles, k = best if best else (guillotine_fit([(n, sd * lo) for n, sd in base], margin), lo)
     frac = sum(v[2] * v[2] for v in tiles.values()) if tiles else 0.0
     return tiles, k, round(frac, 4)
 
@@ -425,7 +451,9 @@ def build():
         merged = bpy.context.view_layer.objects.active
         merged.name = f"{zone}_{smat.replace('MAT_', '')}_merged"
         merged.data.name = f"EXPM_{merged.name}"
-        mat = grey(f"MAT_EXP_{zone}__{smat}")
+        group_mat = f"MAT_EXP_{zone}__{smat}"
+        # the merged mass gets its own atlas when the group is on the split list (QA-12-1 follow-up)
+        mat = grey(f"{group_mat}__merged" if group_mat in g1.UV1_SPLIT_MERGED else group_mat)
         merged.data.materials.clear()
         merged.data.materials.append(mat)
         tmp.objects.unlink(merged)
@@ -795,6 +823,9 @@ def build():
         if not objs:
             continue
         legacy = mat_name in g1.UV1_LEGACY_PACK
+        # a mass alone on its atlas still wants the fine island margin; 0.004 of its own square is a
+        # full-atlas gutter around every one of its thousands of islands
+        fine = mat_name.endswith("__merged") or mat_name in g1.UV1_FINE_MARGIN_GROUPS
         if len(objs) > 1 and not legacy:
             # QA-12-1, the real cause of 0.16 coverage: a MULTI-OBJECT smart project packs one shared layout
             # across the whole selection, so each object keeps only its own sparse share of the square and the
@@ -803,7 +834,7 @@ def build():
             for o in objs:
                 smart_project([o], g1.UV1, ISLAND_MARGIN_TILED)
         else:
-            smart_project(objs, g1.UV1, TILE_MARGIN)
+            smart_project(objs, g1.UV1, ISLAND_MARGIN_TILED if fine else TILE_MARGIN)
         # smart_project packs EACH object into the full [0,1] even in multi-object edit mode (measured: the
         # five multi-mesh ARCH groups came back 100 % overlapped). Pack them here instead: a square tile per
         # mesh with side proportional to sqrt(its surface area), shelf-packed into the unit square, so texel

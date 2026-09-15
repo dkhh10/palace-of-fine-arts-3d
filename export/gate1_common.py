@@ -117,16 +117,32 @@ def slot_uv(index):
            (row * ORN_ATLAS_SLOT_PX + half) / float(ORN_ATLAS_PX)]
     return atlas, s, off, scale
 
-# QA-12-1: the UV1 shelf packer scaled the tiles by a fixed 1/sqrt(1.6) inefficiency guess, which left the
-# two colonnade atlases at 0.16 coverage - a quarter of the texel density of the groups that happened to pack
-# well. The packer now BISECTS for the largest tile scale that still fits, which is strictly better; these
-# three groups keep the old layout only because their Gate 2 bakes have already shipped against it. Delete a
-# name here when its bake is redone.
-UV1_LEGACY_PACK = {
-    "MAT_EXP_ARCH_rotunda__MAT_column_rose",
-    "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
-    "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+# QA-12-1 / round 12 follow-up (lead, 2026-09-15). Two levers on the UV1 atlases:
+#
+# 1. UV1_SPLIT_MERGED - a group whose merged single-use mass dominates its atlas gives that mass its OWN
+#    material and therefore its own 2K. Measured cause: the merged 130-object colonnade mass holds 76 % of
+#    its group's surface area, so area weighting handed it 76 % of the atlas while its own island packing
+#    tops out at 0.146 (smart project 0.146, pack_islands CONVEX 0.108, CONCAVE 0.144) - 0.76 x 0.15 capped
+#    the group near 0.13 whatever the other meshes did. Split, the mass gets a whole square (1.3x density)
+#    and the instanced meshes reach ~0.40 on theirs.
+# 2. UV1_FINE_MARGIN_GROUPS - a merged mass that is ALREADY alone on its atlas only needs the finer island
+#    margin (0.001 instead of 0.004): on the merged colonnade mesh that is 0.036 -> 0.114 self-coverage.
+#
+# Only the groups named here change; every other UV1 layer stays byte-identical, and the bake engineer
+# re-bakes exactly these.
+UV1_SPLIT_MERGED = {
+    "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+    "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
 }
+UV1_FINE_MARGIN_GROUPS = {
+    "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+    "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+    "MAT_EXP_ARCH_site__MAT_concrete_podium",
+    "MAT_EXP_ENV__riprap",
+}
+# The three rotunda multi-mesh groups were pinned to the old layout while their Gate 2 bakes stood; the lead
+# lifted the pin (2026-09-15) because they are being re-baked with the split.
+UV1_LEGACY_PACK = set()
 
 CLASS_BUDGET = {"ARCH": 1_100_000, "ORN": 1_100_000, "ENV": 800_000}
 TOTAL_BUDGET = 3_000_000

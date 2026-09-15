@@ -343,6 +343,35 @@ from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
     groups instead of two. **Lead's call — not taken here, because it changes the material set and the Gate 2
     bake plan.**
 
+16. **UV1 atlas split (lead's go, 2026-09-15).** The merged single-use mass of the two colonnade groups now
+    has its own material and its own 2K (`g1.UV1_SPLIT_MERGED`); four masses that were already alone on their
+    atlas just take the fine island margin (`g1.UV1_FINE_MARGIN_GROUPS`); the `UV1_LEGACY_PACK` pin on the
+    three rotunda groups is lifted; and the tile packer is a best-area-fit guillotine instead of shelves.
+    Coverage before -> after (512² raster of the UV square):
+
+    | group | before | after | target |
+    |---|---|---|---|
+    | `ARCH_colonnade_north__MAT_concrete_colonnade` (instanced) | 0.0403 | **0.2768** | 0.35 |
+    | `ARCH_colonnade_north__MAT_concrete_colonnade__merged` (new) | - | **0.1143** | 0.13 |
+    | `ARCH_colonnade_south__MAT_concrete_colonnade` (instanced) | 0.0394 | **0.2807** | 0.35 |
+    | `ARCH_colonnade_south__MAT_concrete_colonnade__merged` (new) | - | **0.1099** | 0.13 |
+    | `ARCH_rotunda__MAT_concrete_ochre` (the hero's stone) | 0.0560 | **0.1908** | 0.13 |
+    | `ARCH_rotunda__MAT_plaster_ceiling_rib` | 0.0647 | **0.2002** | 0.13 |
+    | `ARCH_site__MAT_concrete_podium` | 0.0827 | **0.3126** | 0.13 |
+    | `ENV__riprap` | 0.0130 | **0.0876** | 0.13 |
+    | `ARCH_rotunda__MAT_column_rose` (pin lifted) | 0.2282 | **0.3977** | 0.35 |
+    | `ARCH_rotunda__MAT_column_tan_inner` (pin lifted) | 0.2241 | **0.4471** | 0.35 |
+    | `ARCH_rotunda__MAT_concrete_podium` (pin lifted) | 0.3042 | **0.5075** | 0.35 |
+
+    Eight of eleven meet their target. **The three that do not are capped by geometry, not by the packer.**
+    The two instanced colonnade atlases hold two nearly equal column meshes, and two equal squares cannot
+    exceed side 0.496 each in a unit square, so the tile area is capped near 0.545 (measured 0.5453 / 0.5421,
+    and a guillotine packer returns exactly the same layout as the shelf packer — the bound is geometric).
+    At the columns' own 0.545 self-coverage that gives 0.28. The two split masses reach 0.114 / 0.110 at the
+    0.001 margin; 0.0003 would give 0.146 but leaves a 0.6 px gutter against a 16 px bake margin, so I did
+    not take it. `ENV__riprap` is 49 joined rock objects and reaches 0.088. Raising any of the three further
+    means 4K for those atlases or a finer margin — both the lead's call, with the numbers above.
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the
