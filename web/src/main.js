@@ -400,6 +400,11 @@ function processGltf( gltf, g ) {
 			if ( ! m || ! m.isMeshStandardMaterial ) continue;
 			if ( seenMats.has( m ) ) continue;
 			seenMats.add( m ); materials ++;
+			// QA round 11 belt-and-braces: a glTF texCoord of -1 (UV-less mesh) reaches three.js as channel -1
+			// and kills the program.  Clamp every map's channel to 0 and say so once per material.
+			for ( const k of [ 'map', 'roughnessMap', 'metalnessMap', 'normalMap', 'aoMap', 'emissiveMap' ] ) {
+				if ( m[ k ] && m[ k ].channel < 0 ) { m[ k ].channel = 0; note( `${m.name}: ${k} texCoord < 0 clamped to 0 (export defect)` ); }
+			}
 			// schema pfa-phase6-gate0/1 and /2 ship any lightmap INSIDE the glb as the emissiveTexture
 			// on TEXCOORD_1 (RGBM8).  Move it to lightMap channel 1, kill the emissive, decode RGBM.
 			// An in-glb emissive lightmap always wins: it must never be left live as emissive.
