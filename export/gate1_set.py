@@ -88,9 +88,11 @@ def smart_project(objs, uv_name, margin):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def thin_leaf_cards(me, keep_fraction):
-    """Delete a deterministic fraction of the loose leaf cards. Branch geometry (the big connected component)
-    is never touched, so the tree gets sparser, not smaller (plan section 4b, option C)."""
+def thin_leaf_cards(me, target_fraction):
+    """Delete leaf cards until the mesh is `target_fraction` of its triangle count. Branch geometry (the large
+    connected components) is never touched, so the tree gets sparser, not smaller (plan section 4b, option C).
+    The card keep-fraction is derived from the target, not assumed: a tree is ~23 % branches, so dropping half
+    the cards only reaches 62-66 % of the triangles."""
     bm = bmesh.new()
     bm.from_mesh(me)
     bm.faces.ensure_lookup_table()
@@ -113,17 +115,23 @@ def thin_leaf_cards(me, keep_fraction):
         comps.append(comp)
     cards = [c for c in comps if len(c) <= 2]
     branches = len(comps) - len(cards)
-    drop = []
+    total = sum(len(f.verts) - 2 for c in comps for f in c)
+    card_tris = sum(len(f.verts) - 2 for c in cards for f in c)
+    want_drop = total - target_fraction * total
+    keep_fraction = 1.0 if card_tris <= 0 else max(0.0, min(1.0, 1.0 - want_drop / card_tris))
+    keep_pct = int(round(keep_fraction * 1000))
+    drop, dropped = [], 0
     for i, c in enumerate(cards):
-        if (i % 100) >= int(round(keep_fraction * 100)):
+        if (i % 1000) >= keep_pct:
             drop.extend(c)
+            dropped += 1
     bmesh.ops.delete(bm, geom=drop, context="FACES")
     bm.to_mesh(me)
     bm.free()
     me.update()
     return dict(components=len(comps), cards=len(cards), branch_components=branches,
-                cards_dropped=len({f for f in drop}) and sum(1 for i, c in enumerate(cards)
-                                                             if (i % 100) >= int(round(keep_fraction * 100))))
+                branch_tris=total - card_tris, card_tris=card_tris,
+                card_keep_fraction=round(keep_fraction, 4), cards_dropped=dropped)
 
 
 # ---------------------------------------------------------------------------- the build
@@ -187,19 +195,58 @@ def build():
         me.name = name
         src_t = tris_of(me)
         if target_tris and src_t > target_tris:
+            # COLLAPSE stalls on meshes that are thousands of separate islands (the three ORN attic panels
+            # stopped at 83 k of a 8 k target): weld the coincident vertices first, then iterate the ratio.
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+            bm.to_mesh(me)
+            bm.free()
+            me.update()
             tob = bpy.data.objects.new("EXP_TMP_dec", me)
             tmp.objects.link(tob)
             bpy.context.view_layer.objects.active = tob
-            m = tob.modifiers.new("decimate", "DECIMATE")
-            m.decimate_type = "COLLAPSE"
-            m.ratio = max(1e-4, float(target_tris) / float(src_t))
-            m.use_collapse_triangulate = True
-            bpy.ops.object.modifier_apply(modifier=m.name)
+            for _ in range(4):
+                cur = tris_of(me)
+                if cur <= target_tris * 1.05:
+                    break
+                m = tob.modifiers.new("decimate", "DECIMATE")
+                m.decimate_type = "COLLAPSE"
+                m.ratio = max(1e-4, float(target_tris) / float(cur))
+                m.use_collapse_triangulate = True
+                bpy.ops.object.modifier_apply(modifier=m.name)
+                if tris_of(me) >= cur:
+                    break
+            # Three ORN attic panels are ~40 000 separate islands of relief: COLLAPSE has no edge to collapse
+            # across them and stalls at 38-78 k against an 8 k target. Voxel-remesh them into one shell first
+            # (the relief is going into the hi->lo normal map anyway), then collapse.
+            if tris_of(me) > target_tris * 1.5:
+                bpy.context.view_layer.objects.active = tob
+                dx, dy, dz = (max(1e-3, v) for v in tob.dimensions)
+                area = 2.0 * (dx * dy + dy * dz + dx * dz)
+                me.remesh_voxel_size = max(0.01, math.sqrt(area / (4.0 * target_tris)))
+                me.remesh_voxel_adaptivity = 0.0
+                bpy.ops.object.voxel_remesh()
+                me = tob.data
+                me.name = name
+                for _ in range(3):
+                    cur = tris_of(me)
+                    if cur <= target_tris * 1.05:
+                        break
+                    m = tob.modifiers.new("decimate", "DECIMATE")
+                    m.decimate_type = "COLLAPSE"
+                    m.ratio = max(1e-4, float(target_tris) / float(cur))
+                    m.use_collapse_triangulate = True
+                    bpy.ops.object.modifier_apply(modifier=m.name)
+                    if tris_of(me) >= cur:
+                        break
+                remeshed.add(name)
             tmp.objects.unlink(tob)
             bpy.data.objects.remove(tob, do_unlink=True)
         return me, src_t, tris_of(me)
 
     grey_cache = {}
+    remeshed = set()
 
     def grey(name):
         m = grey_cache.get(name)
@@ -331,7 +378,8 @@ def build():
             env_ground.append(no)
             placements.append((no, ob))
             meshes[me.name] = dict(cls="ENV", src_mesh=ob.data.name, src_tris=s_t, tris=l_t, target=None,
-                                   placements=1, material=mat.name, instanced=False, src_material=None)
+                                   placements=1, material=mat.name, instanced=False, src_material=None,
+                                   kind="ground")
             assets[no.name] = dict(cls="ENV", mesh=me.name, tris=l_t, material=mat.name, instanced=False,
                                    kind="ground")
     if riprap:
@@ -349,7 +397,8 @@ def build():
         t = tris_of(m.data)
         env_ground.append(m)
         meshes[m.data.name] = dict(cls="ENV", src_mesh=None, src_tris=t, tris=t, target=None, placements=1,
-                                   material=mat.name, instanced=False, merged_from=len(riprap), src_material=None)
+                                   material=mat.name, instanced=False, merged_from=len(riprap), src_material=None,
+                                   kind="ground")
         assets[m.name] = dict(cls="ENV", mesh=m.data.name, tris=t, material=mat.name, instanced=False,
                               kind="ground", merged_from=len(riprap))
     # backdrop: merge per source material, no bake
@@ -424,9 +473,21 @@ def build():
     for mname, obs in shrub_by_mesh.items():
         shrub_est += tris_of(obs[0].data) * len(obs)
     tree_allow = max(0, g1.CLASS_BUDGET["ENV"] - env_so_far - shrub_est - 2 * len(tree_rows))
+    # thin every prototype the within-radius set uses, then spend the allowance on real numbers
+    thin_cache, thin_report = {}, {}
+    for t in within:
+        if t["mesh"] in thin_cache:
+            continue
+        me = bpy.data.meshes.new_from_object(t["ob"].evaluated_get(dg))
+        me.name = f"EXPM_{t['mesh']}_thin"
+        before = tris_of(me)
+        info = thin_leaf_cards(me, g1.TREE_NEAR_THIN)
+        after = tris_of(me)
+        thin_cache[t["mesh"]] = me
+        thin_report[t["mesh"]] = dict(before=before, after=after, ratio=round(after / max(before, 1), 3), **info)
     near, used = [], 0
     for t in within:
-        cost = int(t["lod1_tris"] * g1.TREE_NEAR_THIN)
+        cost = tris_of(thin_cache[t["mesh"]])
         if used + cost > tree_allow:
             continue
         near.append(t)
@@ -445,15 +506,10 @@ def build():
     near_by_mesh = {}
     for t in near:
         near_by_mesh.setdefault(t["mesh"], []).append(t)
-    thin_report = {}
     for mname, rows in sorted(near_by_mesh.items()):
-        ob = rows[0]["ob"]
-        me = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
-        me.name = f"EXPM_{mname}_thin"
-        before = tris_of(me)
-        info = thin_leaf_cards(me, g1.TREE_NEAR_THIN)
-        after = tris_of(me)
-        thin_report[mname] = dict(before=before, after=after, **{k: v for k, v in info.items()})
+        me = thin_cache[mname]
+        before = thin_report[mname]["before"]
+        after = thin_report[mname]["after"]
         meshes[me.name] = dict(cls="ENV", src_mesh=mname, src_tris=before, tris=after, target=None,
                                placements=len(rows), material=(me.materials[0].name if me.materials else None),
                                instanced=True, src_material=None, kind="tree_near")
@@ -464,7 +520,7 @@ def build():
             assets[no.name] = dict(cls="ENV", mesh=me.name, tris=after,
                                    material=(me.materials[0].name if me.materials else None),
                                    instanced=True, kind="tree_near")
-    rep["tree_thin"] = thin_report
+    rep["tree_thin"] = {k: v for k, v in thin_report.items() if k in near_by_mesh}
     # far trees: one 2-triangle billboard mesh per prototype, instanced per placement
     board_mat = grey("MAT_EXP_treeboard")
     board_mesh = {}
@@ -642,6 +698,7 @@ def build():
                          objects=cls_objs, unique_meshes=len(meshes),
                          budget=g1.CLASS_BUDGET, budget_total=g1.TOTAL_BUDGET,
                          draw_call_batches=draw_calls)
+    rep["voxel_remeshed"] = sorted(remeshed)
     rep["assets"] = assets
     rep["meshes"] = meshes
     rep["wall_s"] = round(time.time() - t_all, 1)
