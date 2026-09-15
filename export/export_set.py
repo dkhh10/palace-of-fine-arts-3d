@@ -1,4 +1,6 @@
-"""Gate 0 step 1: build the export set from master_delivery.blend and write export/out/gate0/gate0_set.blend.
+"""Build the export set from master_delivery.blend.
+
+    Gate 0 (the vertical slice) -> export/out/gate0/gate0_set.blend; Gate 1 (the frozen set) -> export/gate1_set.py.
 
     scripts/blender_run.sh 900 -- --background <master_delivery.blend> --python export/export_set.py -- --gate0
 
@@ -26,7 +28,12 @@ import qa_cameras  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 argv = g0.script_argv()
-assert "--gate0" in argv, "export_set.py: pass -- --gate0"
+assert ("--gate0" in argv) or ("--gate1" in argv), "export_set.py: pass -- --gate0 or -- --gate1"
+if "--gate1" in argv:
+    # Gate 1 (the frozen export SET) is the same entry point, a different selection: export/gate1_set.py.
+    import gate1_set  # noqa: E402
+    gate1_set.build()
+    raise SystemExit(0)
 g0.ensure_dirs()
 # review finding 5: manifest_merge .update()s dicts, so a rerun after a rename would leave ghost entries in
 # the viewer contract. export_set.py is the head of the chain, so it starts the manifest from nothing.

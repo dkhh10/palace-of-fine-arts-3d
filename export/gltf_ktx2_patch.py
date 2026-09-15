@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Point a glTF's colour/roughness/normal textures at the .ktx2 files toktx just produced.
+"""Point a glTF's colour/roughness/normal textures at the .ktx2 files toktx just produced (.png and .jpg).
 
     python3 export/gltf_ktx2_patch.py <in.gltf> <out.gltf> <ktx2_dir_relative_to_out>
 
@@ -23,7 +23,7 @@ for t in doc.get("textures", []):
         continue
     uri = images[si].get("uri", "")
     name = os.path.basename(uri)
-    if not name.lower().endswith(".png") or "lightmap" in name.lower():
+    if not name.lower().endswith((".png", ".jpg", ".jpeg")) or "lightmap" in name.lower():
         skipped.append(name)
         continue
     ktx = os.path.join(ktxdir, os.path.splitext(name)[0] + ".ktx2")
