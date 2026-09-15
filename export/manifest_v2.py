@@ -139,6 +139,27 @@ def main():
           f"{g1c.ORN_ATLAS_GUTTER_PX} px, uv2_scale "
           f"{man['lightmap_encoding']['slot_atlas']['uv2_scale']:.6f}")
 
+    # uv1_in_glb: the ten merged backdrop meshes had no UV layer at Gate 1; the Gate 2 bake generated one and
+    # export/gltf_gate1.py now writes it back as TEXCOORD_0 from export/out/gate2/backdrop_uv1.npz, so the flag
+    # is true for every exported mesh. (The same flag in the bake engineer's export/out/gate2/manifest.json is
+    # theirs to write - the ten names are in gltf_gate1.json's `backdrop_uv1`.)
+    gl = json.loads((OUT / "gltf_gate1.json").read_text()) if (OUT / "gltf_gate1.json").exists() else {}
+    from_gate2 = set((gl.get("backdrop_uv1") or {}).get("meshes", {}))
+    missing_uv1 = set(((json.loads((OUT / "export_set.json").read_text()).get("uv_missing") or {})
+                       .get("uv1") or []))
+    n_true = 0
+    for mn, m in man.get("meshes", {}).items():
+        has = (mn not in missing_uv1) or (mn in from_gate2)
+        m["uv1_in_glb"] = bool(has)
+        m["uv1_source"] = "gate2 backdrop_uv1.npz" if mn in from_gate2 else "gate1 smart project"
+        n_true += int(has)
+    man["uv1_in_glb"] = dict(meshes_true=n_true, meshes_total=len(man.get("meshes", {})),
+                             from_gate2=sorted(from_gate2),
+                             note="the ten backdrop meshes carry the Gate 2 bake's own UV1 loop layer, read "
+                                  "back from export/out/gate2/backdrop_uv1.npz with the loop count asserted")
+    print(f"[manifest_v2] uv1_in_glb true on {n_true}/{len(man.get('meshes', {}))} meshes "
+          f"({len(from_gate2)} from the Gate 2 npz)")
+
     man["schema"] = "pfa-phase6/2"
     mp.write_text(json.dumps(man, indent=1) + "\n")
     print(f"[manifest_v2] {mp} {mp.stat().st_size} B; carried {carried}; "

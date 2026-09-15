@@ -99,6 +99,39 @@ if not probe_path.exists():
     pim.filepath_raw = str(probe_path)
     pim.file_format = "PNG"
     pim.save()
+# ---------------------------------------------------------------- Gate 2 hand-off: the backdrop UV1 layer
+# The ten merged backdrop meshes shipped Gate 1 with no UV layer at all (they are flat-colour city blocks and
+# were never baked). The Gate 2 bake generated one and wrote the exact loop UVs to
+# export/out/gate2/backdrop_uv1.npz (float32 [loops, 2] per Gate 1 mesh name, branch phase6-bake a9794e8).
+# Read it back here so env.glb carries the SAME layer as TEXCOORD_0 and the Gate 2 textures land where the
+# bake put them. Loop counts are asserted per mesh: a mismatch means the two gates are looking at different
+# geometry and nothing may ship.
+step = g0.Step("gltf_gate1:backdrop_uv1")
+import numpy as np  # noqa: E402
+npz_path = g1.MAIN_ROOT / "export" / "out" / "gate2" / "backdrop_uv1.npz"
+backdrop_uv = {}
+if npz_path.exists():
+    z = np.load(str(npz_path))
+    for mn in z.files:
+        me = bpy.data.meshes.get(mn)
+        assert me is not None, f"{npz_path.name} names {mn}, which is not in the Gate 1 export set"
+        arr = np.asarray(z[mn], dtype=np.float32)
+        assert arr.shape == (len(me.loops), 2), \
+            f"{mn}: Gate 2 wrote {arr.shape[0]} loop UVs, the Gate 1 mesh has {len(me.loops)} loops"
+        lay = me.uv_layers.get(g1.UV1) or me.uv_layers.new(name=g1.UV1)
+        try:
+            lay.uv.foreach_set("vector", arr.reshape(-1))
+        except (AttributeError, TypeError):
+            lay.data.foreach_set("uv", arr.reshape(-1))
+        lay.active_render = True
+        me.uv_layers.active = lay
+        me.update()
+        backdrop_uv[mn] = dict(loops=int(arr.shape[0]),
+                               u=[round(float(arr[:, 0].min()), 5), round(float(arr[:, 0].max()), 5)],
+                               v=[round(float(arr[:, 1].min()), 5), round(float(arr[:, 1].max()), 5)])
+report["backdrop_uv1"] = dict(source=str(npz_path), meshes=backdrop_uv, count=len(backdrop_uv))
+step.done(meshes=len(backdrop_uv), source=npz_path.name if npz_path.exists() else "MISSING")
+
 probe = load_img(probe_path, "sRGB")
 # QA round 11 blocker 1: ten backdrop meshes have NO UV layer (they are merged flat-colour city blocks and are
 # never baked), and attaching the probe to their material made the exporter write

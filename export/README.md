@@ -280,6 +280,30 @@ from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
       gltfpack dropping degenerate triangles, and a single dropped placement group would be orders of magnitude
       larger (the stacked shrubs were 8.8 % of ENV).
 
+### Gate 2 hand-offs (backdrop UV1) and QA-11d-2 (position quantisation)
+
+12. **The ten backdrop meshes now carry the Gate 2 bake's own UV1.** They shipped Gate 1 with no UV layer;
+    the Gate 2 bake generated one and wrote the exact loop UVs to `export/out/gate2/backdrop_uv1.npz`
+    (float32 `[loops, 2]` per Gate 1 mesh name, `phase6-bake` a9794e8). `export/gltf_gate1.py` reads it back
+    and writes it as `TEXCOORD_0` for those ten meshes, **asserting the loop count per mesh** (75 478, 24,
+    297 480, 1 760, 14 293, 3 220, 2 472, 6 780, 1 836, 11 764 — all matched). With a UV layer they also take
+    the grey probe like every other material, so `uv1_probe` is now 61 materials with **0 skipped**, and the
+    Gate 1 manifest carries `uv1_in_glb` **true on 143/143 meshes** with `uv1_source` naming the gate that
+    produced each layer. The same flag in the bake engineer's `export/out/gate2/manifest.json`
+    (`pfa-phase6/3`) does not exist yet and is theirs to write.
+13. **QA-11d-2, the ENV position error.** Measured on `env_ktx2.gltf` with `gltfpack -cc -mi`, the error as
+    gltfpack reports it: default **37 %** / 34 397 340 B; `-vp 16` **9 %** / 34 845 316 B; `-vp 18` and
+    `-vp 20` byte-identical to `-vp 16` (**16 is gltfpack's maximum**, so more bits buy nothing); `-vpf`
+    **no warning** / 35 797 240 B. `-vp 16` as briefed still leaves 9 %, so env takes **`-vpf`**: +952 KB over
+    `-vp 16`, 2.7 % of env.glb, and `gltfpack.log` is now empty for all four classes. One flag reverts it.
+    The structural fix is to split the 1.4 km backdrop into its own glb so the box stops covering the site —
+    a Gate 2/3 option, not done here. `arch/orn/ground` keep the default and are byte-identical.
+
+    `export/verify_glb.py` needed a correction for this: with `-vpf` gltfpack writes float positions and drops
+    the node translation, so "no translation" no longer implies "at the origin" and the check reported five
+    false positives. It now takes each plain node's centre from its POSITION accessor `min`/`max` plus the
+    node transform. All four classes report 0 nodes with geometry at the origin.
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the

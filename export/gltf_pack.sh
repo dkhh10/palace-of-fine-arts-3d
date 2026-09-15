@@ -45,11 +45,21 @@ if [ "$1" = "--gate1" ]; then
     t2=$(date +%s)
     # gltfpack 1.2 refuses -mi together with -kn; the lead's call (docs/decisions.md 2026-09-15) is
     # "-cc -mi": EXT_mesh_gpu_instancing, node names dropped, identity carried by the manifest.
-    if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi 2>>"$OUT/gltfpack.log"; then
+    # QA-11d-2: the ENV class spans the whole 1.4 km backdrop in one bounding box, so integer position
+    # quantisation is metres per step. Measured on env_ktx2.gltf (gltfpack -cc -mi, error as gltfpack reports
+    # it): default 37 % / 34,397,340 B; -vp 16 9 % / 34,845,316 B; -vp 18 and -vp 20 identical to -vp 16
+    # (16 is gltfpack's maximum, so more bits buy nothing); -vpf no warning / 35,797,240 B. -vp 16 as briefed
+    # leaves 9 %, so env takes -vpf: the warning clears for +952 KB (2.7 % of env.glb, 0.5 % of the payload).
+    # Revert to (-vp 16) here if that size matters more than the residual error. Splitting the backdrop into
+    # its own glb would shrink the box and is the structural fix, a Gate 2/3 option.
+    # arch / orn / ground keep the default and stay byte-identical.
+    EXTRA=()
+    [ "$cls" = env ] && EXTRA=(-vpf)
+    if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else
       echo "[gate1] gltfpack refused the KTX2 $cls.gltf; falling back to the PNG glTF" >&2
-      gltfpack -i "$G" -o "$OUT/$cls.glb" -cc -mi 2>>"$OUT/gltfpack.log"
+      gltfpack -i "$G" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"
       SRC=png
     fi
     echo "[gate1] STEP gltfpack:$cls wall_s=$(( $(date +%s)-t2 )) source=$SRC $cls.glb=$(stat -f%z "$OUT/$cls.glb")B"
