@@ -31,6 +31,11 @@ if "--gate2" in g0.script_argv():
     job_id = argv[argv.index("--job") + 1]
     jobs = g2.read_jobs()
     job = next(j for j in jobs["jobs"] if j["id"] == job_id)
+    # --maps lets a later round re-bake one channel without redoing the others (QA-12-1 re-baked only the
+    # normals of ten groups); --bake-px overrides the bake resolution for a measurement.
+    want_maps = (argv[argv.index("--maps") + 1].split(",") if "--maps" in argv else list(g2.MAPS))
+    px_override = int(argv[argv.index("--bake-px") + 1]) if "--bake-px" in argv else None
+    tag = argv[argv.index("--tag") + 1] if "--tag" in argv else ""
     g2.ensure_dirs()
     opened = os.path.basename(bpy.data.filepath)
     if opened != job["blend"]:
@@ -70,6 +75,9 @@ if "--gate2" in g0.script_argv():
     # second time. For those materials the albedo is read through the same Emission rewire the metallic map
     # uses, which returns the Base Color itself.
     albedo_via_emit = bool(job.get("metallic"))
+    # QA-12-1: for ARCH / ground the tangent normal is derived from a BAKED HEIGHT map rather than from a
+    # Cycles NORMAL bake - see bake_lib.emit_bump_height for the measurement that forced it.
+    normal_via_height = job["cls"] in (g2.CLS_ARCH, g2.CLS_GROUND) and not sta
     BAKE = dict(albedo=(("EMIT" if albedo_via_emit else "DIFFUSE"), g2.SAMPLES_ALBEDO, "sRGB", (0.5, 0.5, 0.5)),
                 roughness=("ROUGHNESS", g2.SAMPLES_ROUGHNESS, "Non-Color", (0.5, 0.5, 0.5)),
                 normal=("NORMAL", g2.SAMPLES_NORMAL, "Non-Color", (0.5, 0.5, 1.0)))
@@ -77,9 +85,14 @@ if "--gate2" in g0.script_argv():
     rec["margin_px"] = margin
     rec["maps"] = {}
     for kind in g2.MAPS:
+        if kind not in want_maps:
+            continue
         btype, samples, cspace, neutral = BAKE[kind]
-        bake_px = int(job["size"])
-        ship_px = int(job["sizes"][kind])
+        bake_px = px_override or int(job["normal_px"] if kind == "normal" and job.get("normal_px")
+                                     else job["size"])
+        ship_px = bake_px if px_override else int(job["sizes"].get(kind, job["size"]))
+        if kind == "normal" and job.get("normal_px") and not px_override:
+            ship_px = int(job["normal_px"])
         img = bl.bake_image(f"{job_id}_{kind}", size=bake_px, colorspace=cspace, float_buffer=True)
         bl.fill_sentinel(img)
         for ob in targets:
@@ -87,6 +100,12 @@ if "--gate2" in g0.script_argv():
         bl.select_only(targets[0], *(targets[1:] + extra))
         kw = dict(samples=samples, selected_to_active=sta, cage=cage, max_ray=cage, margin=margin)
         emit_states = []
+        if kind == "normal" and normal_via_height:
+            btype, samples = "EMIT", 4
+            hstates = [bl.emit_bump_height(bpy.data.materials[n]) for n in job["src_materials"]]
+            hstates = [h for h in hstates if h]
+            if not hstates:
+                normal_via_height = False
         if kind == "albedo":
             if albedo_via_emit:
                 emit_states = [bl.emit_bsdf_input(bpy.data.materials[n], "Base Color")
@@ -98,13 +117,27 @@ if "--gate2" in g0.script_argv():
         finally:
             for es in emit_states:
                 bl.restore_emit(es)
+            if kind == "normal" and normal_via_height:
+                for hs in hstates:
+                    bl.restore_bump_height(hs)
         st = bl.masked_stats(img, kind)
+        height_info = None
+        if kind == "normal" and normal_via_height:
+            area = float(job.get("area_m2") or 0.0)
+            cov = max(float(st.get("coverage") or 0.0), 1e-4)
+            m_per_texel = (area / (cov * bake_px * bake_px)) ** 0.5 if area > 0 else 0.01
+            dist = hstates[0][7]
+            img, height_info = bl.height_to_normal(img, f"{job_id}_normal_from_height", dist, m_per_texel)
+            st = bl.masked_stats(img, kind)
+            st["from_height"] = True
+            print(f"[gate2] {job_id} normal<-height: m/texel {m_per_texel:.4f} distance {dist} "
+                  f"k {height_info['k_slope_per_unit_height']} height std {height_info['height_std']}")
         mean = st["mean"] or list(neutral)
         n_flood = bl.flood_sentinel(img, mean if kind != "normal" else neutral)
         out_img, rms = (img, 0.0)
         if ship_px != bake_px:
             out_img, rms = bl.resize_copy(img, f"{job_id}_{kind}_{ship_px}", ship_px)
-        path = g2.TEX / g2.tex_name(job_id, kind)
+        path = g2.TEX / g2.tex_name(job_id + tag, kind)
         bl.save_png(out_img, path, depth=16)
         rec["maps"][kind] = dict(path=str(path), bytes=os.path.getsize(path), bake_s=round(wall, 1),
                                  bake_px=bake_px, ship_px=ship_px, downsample_rms=rms,
@@ -112,13 +145,13 @@ if "--gate2" in g0.script_argv():
                                                     if (kind == "albedo" and albedo_via_emit)
                                                     else "/color-only" if kind == "albedo" else ""),
                                  selected_to_active=sta, samples=samples, colorspace=cspace,
-                                 flooded_px=n_flood, stats=st)
+                                 flooded_px=n_flood, stats=st, height=height_info)
         print(f"[gate2] {job_id} {kind}: {wall:.1f} s {bake_px}->{ship_px} "
               f"coverage={st['coverage']} mean={st['mean']} bytes={os.path.getsize(path)}")
         bl.detach_targets()
 
     # metallic, only where a source material actually drives it (Cycles has no METALLIC bake type)
-    if job.get("metallic"):
+    if job.get("metallic") and "metallic" in want_maps + (["metallic"] if not tag else []):
         states = [bl.emit_bsdf_input(bpy.data.materials[n], "Metallic") for n in job["metallic"]]
         img = bl.bake_image(f"{job_id}_metallic", size=1024, colorspace="Non-Color", float_buffer=True)
         bl.fill_sentinel(img)
@@ -144,8 +177,15 @@ if "--gate2" in g0.script_argv():
         bl.restore_hidden(prev_hidden)
     rec["finished"] = time.strftime("%Y-%m-%dT%H:%M:%S")
     rec["wall_s"] = round(sum(m["bake_s"] for m in rec["maps"].values()), 1)
-    (g2.OUT / "bake" / f"{job_id}.json").write_text(json.dumps(rec, indent=1) + "\n")
-    step.done(*[m["path"] for m in rec["maps"].values()], wall=rec["wall_s"])
+    recp = g2.OUT / "bake" / f"{job_id}{tag}.json"
+    if want_maps != list(g2.MAPS) and not tag and recp.exists():
+        old = json.loads(recp.read_text())          # a partial re-bake keeps the maps it did not touch
+        old["maps"].update(rec["maps"])
+        old.update({k: v for k, v in rec.items() if k != "maps"})
+        rec = old
+        rec["wall_s"] = round(sum(m["bake_s"] for m in rec["maps"].values()), 1)
+    recp.write_text(json.dumps(rec, indent=1) + "\n")
+    step.done(*[m["path"] for m in rec["maps"].values() if os.path.exists(m["path"])], wall=rec["wall_s"])
     print(f"[gate2] bake_pbr {job_id} done")
 
 else:

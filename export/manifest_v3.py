@@ -128,6 +128,8 @@ def main():
     ktx = OUT / "tex_ktx2"
     etc = OUT / "tex_ktx2_etc1s"
     ktx_bytes = {f.stem: f.stat().st_size for f in sorted(ktx.glob("*.ktx2"))} if ktx.is_dir() else {}
+    detail_files = {k: v for k, v in ktx_bytes.items() if k.startswith("detail_")}
+    detail_px = json.loads((OUT / "detail.json").read_text())["ship_px"] if (OUT / "detail.json").exists() else 1024
     etc_bytes = {f.stem: f.stat().st_size for f in sorted(etc.glob("*.ktx2"))} if etc.is_dir() else {}
 
     files, sets = {}, {}
@@ -148,6 +150,11 @@ def main():
             # a normal map whose X and Y never leave the flat value carries nothing: the surface uses its
             # geometry normal and the texture is pure resident memory (measured on 6 of the 10 backdrop groups).
             constant = (max(std[:2]) if kind == "normal" else max(std)) < CONSTANT_STD
+            # QA-12-1: an ARCH / ground set always ships a normal map, however small its amplitude, so the
+            # viewer never falls back to a flat geometry normal on stone. The amplitude is what the atlas
+            # texel can carry (std 0.0017-0.0234); the grain itself rides materials.detail, not this map.
+            if kind == "normal" and cls in (g2.CLS_ARCH, g2.CLS_GROUND):
+                constant = False
             if not constant:
                 files[key] = dict(path=f"{key}.ktx2", w=m["ship_px"], h=m["ship_px"], map=kind,
                                   colorspace=("srgb" if kind == "albedo" else "linear"),
@@ -201,13 +208,43 @@ def main():
              "is not here keeps what the glb gave it (foliage, MAT_EXP_treeboard, MAT_water_lagoon).",
         sets=sets)
 
+    # ---------------------------------------------------------------- the shared detail set (QA-12-1)
+    detail = None
+    dp = OUT / "detail.json"
+    if dp.exists():
+        d = json.loads(dp.read_text())
+        by_src = {}
+        for jid, job in jobs.items():
+            for sm in job["src_materials"]:
+                if d["per_material"].get(sm):
+                    by_src.setdefault(job["group"], {})[sm] = d["per_material"][sm]
+        detail = dict(
+            mode="object_space_tiled", ship_px=d["ship_px"], bump_distance_m=d["bump_distance_m"],
+            sets={k: dict(maps={r: dict(texture=f"detail_{k}_{r}", px=v["px"],
+                                        colorspace=v["colorspace"]) for r, v in rec["maps"].items()},
+                          tile_m=rec.get("tile_m_used_for_normal"))
+                  for k, rec in d["sets"].items()},
+            per_material={m: v for m, v in d["per_material"].items() if v},
+            per_group=by_src,
+            apply="uv_detail = object_position.xy * per_material.object_scale (the Blender graph's own "
+                  "Texture Coordinate > Object, scaled); multiply the baked albedo by detail albedo / its "
+                  "mean, take roughness from the detail map, and blend the detail normal over the baked one.",
+            why="measured three ways, no map baked into a unique atlas can carry this grain: the Cycles NORMAL "
+                "bake of the bump gives std 0.00167 at 2K and 0.00272 at 4K on ARCH_site__concrete_podium (it "
+                "scales with the texel footprint), the same bump baked as a height and converted at the map's "
+                "own resolution is flat too, and the arithmetic says why - the Bump node's Distance is 0.015 m "
+                "against an atlas texel of 0.038-0.118 m. The detail images are 1.05-1.32 mm per texel in "
+                "Blender, 36-110x finer, and that is where the Phase 5 surface comes from.")
+        man.setdefault("materials", {})["detail"] = detail
+
     tex = man.setdefault("textures", {})
     tex["gate2"] = dict(
         ktx2_dir="tex_ktx2", etc1s_dir="tex_ktx2_etc1s",
         encoder="toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf <srgb|linear>",
         etc1s_encoder="toktx --t2 --encode etc1s --clevel 2 --qlevel 128 --genmipmap (mobile timing sample only)",
-        files=files,
-        bytes=sum(v["bytes"] or 0 for v in files.values()),
+        files=files, detail_files={k: dict(bytes=v, resident_mb=resident_mb(detail_px))
+                                   for k, v in detail_files.items()},
+        bytes=sum(v["bytes"] or 0 for v in files.values()) + sum(detail_files.values()),
         etc1s_bytes=sum(v["etc1s_bytes"] or 0 for v in files.values()),
         resident_mb=round(sum(v["resident_mb"] for v in files.values()), 2),
         per_class=per_cls,
@@ -219,7 +256,9 @@ def main():
     for jid, job in jobs.items():
         if job["cls"] == g2.CLS_ORN:
             orn_ao += resident_mb(int(job["size"]))
-    carried = dict(orn_ao_gate1=round(orn_ao, 2), foliage_cards=20.0)
+    n_detail = len(detail_files)
+    carried = dict(orn_ao_gate1=round(orn_ao, 2), foliage_cards=20.0,
+                   detail_set=round(n_detail * resident_mb(detail_px), 2))
     gate3 = dict(lightmaps_own_map=85.0, lightmap_slot_atlases=107.0, tree_impostor_atlases=267.0)
     gate2_total = tex["gate2"]["resident_mb"]
     total = round(gate2_total + sum(carried.values()) + sum(gate3.values()), 2)

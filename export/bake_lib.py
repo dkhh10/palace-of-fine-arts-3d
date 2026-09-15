@@ -278,3 +278,104 @@ def restore_emit(state):
     nt, emis, out, prev = state
     nt.links.new(prev, out.inputs["Surface"])
     nt.nodes.remove(emis)
+
+
+def emit_bump_height(mat):
+    """Route the Bump node's Height input (which lives inside the PFA_concrete node group) to an Emission
+    shader so a plain EMIT bake reads the height field back.
+
+    Why: Cycles' NORMAL bake evaluates the Bump node with the BAKE's differentials, i.e. over one texel of the
+    target atlas. At 2-8 cm per texel the grain is differentiated away and the map comes back flat (measured:
+    std 0.0017 on ARCH_site__concrete_podium at 2K, 0.0027 at 4K - it scales with the footprint, 1.63x for 2x
+    the resolution, and never reaches a usable amplitude). Baking the height as a VALUE has no derivative in
+    it, so the map carries everything down to its own Nyquist; the tangent normal is then derived from it at
+    the map's resolution by height_to_normal().
+
+    The node group is shared by every concrete material, so it is copied single-user before being touched.
+    """
+    nt = mat.node_tree
+    bsdf = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"), None)
+    out = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeOutputMaterial"), None)
+    if bsdf is None or out is None or not out.inputs["Surface"].links:
+        return None
+    grp = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeGroup" and n.node_tree
+                and any(x.bl_idname == "ShaderNodeBump" for x in n.node_tree.nodes)), None)
+    if grp is None:
+        return None
+    original_tree = grp.node_tree
+    grp.node_tree = original_tree.copy()
+    gt = grp.node_tree
+    bump = next(n for n in gt.nodes if n.bl_idname == "ShaderNodeBump")
+    src = bump.inputs["Height"]
+    if not src.links:
+        grp.node_tree = original_tree
+        bpy.data.node_groups.remove(gt)
+        return None
+    gt.interface.new_socket("BAKE_HEIGHT", in_out="OUTPUT", socket_type="NodeSocketFloat")
+    gout = next(n for n in gt.nodes if n.bl_idname == "NodeGroupOutput")
+    gt.links.new(src.links[0].from_socket, gout.inputs["BAKE_HEIGHT"])
+    emis = nt.nodes.new("ShaderNodeEmission")
+    emis.name = "BAKE_HEIGHT_PROBE"
+    nt.links.new(grp.outputs["BAKE_HEIGHT"], emis.inputs["Color"])
+    prev = out.inputs["Surface"].links[0].from_socket
+    nt.links.new(emis.outputs["Emission"], out.inputs["Surface"])
+    return (nt, emis, out, prev, grp, original_tree, gt, float(bump.inputs["Distance"].default_value),
+            (float(bump.inputs["Strength"].default_value) if not bump.inputs["Strength"].links else None))
+
+
+def restore_bump_height(state):
+    if not state:
+        return
+    nt, emis, out, prev, grp, original_tree, gt, _d, _s = state
+    nt.links.new(prev, out.inputs["Surface"])
+    nt.nodes.remove(emis)
+    grp.node_tree = original_tree
+    bpy.data.node_groups.remove(gt)
+
+
+def height_to_normal(h_img, out_name, distance_m, m_per_texel, sentinel=SENTINEL, clamp_slope=4.0):
+    """Tangent-space normal map from a baked height map, at the height map's own resolution.
+
+    slope = distance_m * dH/d(texel) / m_per_texel, by Sobel; OpenGL convention (+X right, +Y up, +Z out).
+    Texels the islands never covered, and any texel whose 3x3 neighbourhood is not fully covered, stay flat -
+    otherwise the island borders differentiate into a bright rim.
+    """
+    import bpy
+    import numpy as np
+    w, hgt = h_img.size
+    px = np.asarray(h_img.pixels[:], dtype=np.float32).reshape(hgt, w, 4)
+    H = px[..., 0].astype(np.float32)
+    cov = px[..., :3].min(axis=2) > -1e-4
+    Hf = np.where(cov, H, 0.0)
+    inner = cov.copy()
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            inner &= np.roll(np.roll(cov, dy, 0), dx, 1)
+    gx = (np.roll(Hf, -1, 1) - np.roll(Hf, 1, 1)) * 0.5
+    gy = (np.roll(Hf, -1, 0) - np.roll(Hf, 1, 0)) * 0.5
+    k = float(distance_m) / max(float(m_per_texel), 1e-9)
+    nx = np.clip(-gx * k, -clamp_slope, clamp_slope)
+    ny = np.clip(-gy * k, -clamp_slope, clamp_slope)
+    nz = np.ones_like(nx)
+    ln = np.sqrt(nx * nx + ny * ny + nz * nz)
+    nx, ny, nz = nx / ln, ny / ln, nz / ln
+    nx = np.where(inner, nx, 0.0)
+    ny = np.where(inner, ny, 0.0)
+    nz = np.where(inner, nz, 1.0)
+    outp = np.empty((hgt, w, 4), dtype=np.float32)
+    outp[..., 0] = nx * 0.5 + 0.5
+    outp[..., 1] = ny * 0.5 + 0.5
+    outp[..., 2] = nz * 0.5 + 0.5
+    outp[..., 3] = 1.0
+    img = bpy.data.images.get(out_name)
+    if img:
+        bpy.data.images.remove(img)
+    img = bpy.data.images.new(out_name, w, hgt, alpha=False, float_buffer=True, is_data=True)
+    img.colorspace_settings.name = "Non-Color"
+    img.pixels.foreach_set(outp.reshape(-1))
+    return img, dict(k_slope_per_unit_height=round(k, 4), distance_m=distance_m,
+                     m_per_texel=round(float(m_per_texel), 5),
+                     height_std=round(float(H[cov].std()) if cov.any() else 0.0, 6),
+                     height_min=round(float(H[cov].min()) if cov.any() else 0.0, 6),
+                     height_max=round(float(H[cov].max()) if cov.any() else 0.0, 6),
+                     covered=round(float(cov.mean()), 5), inner=round(float(inner.mean()), 5))
