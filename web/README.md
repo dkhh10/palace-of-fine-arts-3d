@@ -46,7 +46,8 @@ pixels). The fallback is safe for parity scoring; the float path stays the defau
 normal linear, KTX2); the viewer attaches them to the materials the frozen Gate 1 glbs already carry,
 matching `MAT_EXP_<zone>__<source material>` on either half of the name, and loads them **nearest
 material to the station camera first** (KTX2 is a whole-file load, so request order is the only lever
-on what is textured first). Lighting is unchanged (`direct`: full sun + PMREM irradiance, no
+on what is textured first; the order is computed once, for the station the page loads with, so a
+six-station capture — one page load — uses station 1's). Lighting is unchanged (`direct`: full sun + PMREM irradiance, no
 lightmaps). `?materials=grey|pbr` overrides the automatic choice; `auto` takes `pbr` whenever the
 manifest carries a set, so a grey capture can never be reported as a PBR one.
 
