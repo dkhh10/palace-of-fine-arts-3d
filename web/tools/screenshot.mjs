@@ -3,6 +3,7 @@
 // and only while the bake queue is idle (export/out/bake_queue/status.json).
 //
 //   --station N       station preset (default 1)
+//   --stations 1,2,6  capture several stations in one browser session (out gets _camNN)
 //   --out PATH        PNG path (default renders/web/gate0_viewer_cam01.png)
 //   --size WxH        window / canvas size (default 1280x720)
 //   --url URL         page to open; default: serve web/dist on a free port (built by `npm run build`)
@@ -114,6 +115,8 @@ try {
 	const err = await page.evaluate( () => window.__pfaError || null );
 	if ( err ) throw new Error( `viewer boot failed:\n${err}` );
 
+	const extra = ( o.stations || '' ).split( ',' ).map( v => parseInt( v, 10 ) ).filter( n => n >= 1 && n <= 6 );
+	const shotList = extra.length ? extra : [ station ];
 	const info = await page.evaluate( () => window.__pfaInfo() );
 	let stats = null;
 	let cost = null;
@@ -123,7 +126,20 @@ try {
 	}
 
 	fs.mkdirSync( path.dirname( out ), { recursive: true } );
-	await page.screenshot( { path: out, captureBeyondViewport: false } );
+	const written = [];
+	for ( const st of shotList ) {
+		let file = out;
+		if ( shotList.length > 1 ) file = out.replace( /(\.png)$/, `_cam${String( st ).padStart( 2, '0' )}$1` );
+		if ( st !== station || shotList.length > 1 ) {
+			const name = await page.evaluate( ( n ) => window.__pfaStation( n ), st );
+			await new Promise( r => setTimeout( r, 150 ) );
+			await page.evaluate( () => window.__pfaStation( window.__pfaInfo().station.index ) );
+			console.log( `[shot] station ${st} = ${name}` );
+		}
+		await page.screenshot( { path: file, captureBeyondViewport: false } );
+		const i = await page.evaluate( () => window.__pfaInfo() );
+		written.push( { station: st, file, draws: i.render.calls, tris: i.render.triangles } );
+	}
 
 	let probes = null;
 	if ( o.probe ) {
@@ -144,9 +160,9 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, probes, pixels, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, probes, pixels, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
-	console.log( `[shot] wrote ${out} (${( fs.statSync( out ).size / 1024 ).toFixed( 0 )} kB) and ${path.basename( jsonOut )}` );
+	written.forEach( w => console.log( `[shot] wrote ${w.file} (${( fs.statSync( w.file ).size / 1024 ).toFixed( 0 )} kB) station ${w.station} draws ${w.draws} tris ${w.tris}` ) );
 	console.log( `[shot] station ${info.station?.index} ${info.station?.name}  draws ${info.render.calls}  tris ${info.render.triangles}  lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );
 	if ( stats ) console.log( `[shot] frame time at ${W}x${H}: median ${stats.median.toFixed( 2 )} ms (${( 1000 / stats.median ).toFixed( 1 )} fps presented, vsync-capped at 16.7), mean ${stats.mean.toFixed( 2 )}, p95 ${stats.p95.toFixed( 2 )}, n=${stats.frames}` );
 	if ( cost ) console.log( `[shot] render cost (gl.finish, no vsync): median ${cost.median.toFixed( 2 )} ms (${( 1000 / cost.median ).toFixed( 1 )} fps), p95 ${cost.p95.toFixed( 2 )}, n=${cost.frames}` );
