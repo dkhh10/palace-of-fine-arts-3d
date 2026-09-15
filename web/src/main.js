@@ -47,6 +47,7 @@ const CFG = {
 	glbOverride: qs.get( 'glb' ),                       // comma-separated URLs, overrides the manifest's list
 	lighting: qs.get( 'lighting' ) || 'auto',           // auto | baked | direct  (see pickLightingMode)
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
+	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 };
 
@@ -372,6 +373,7 @@ async function loadGlbs() {
 			glbReport.push( r );
 			note( `glb ${g.name} (${g.cls}) ${MB( r.bytes )} MB in ${r.wall_s.toFixed( 2 )} s: ${r.meshes} meshes, `
 				+ `${r.instancedMeshes} instanced (${r.instances} instances), ${Math.round( r.tris )} placed tris, ${r.materials} materials` );
+			if ( r.hiddenBoards ) note( `${r.hiddenBoards} ENV_treeboard_* stand-ins hidden (?treeboards=0)` );
 		} catch ( e ) {
 			glbReport.push( { name: g.name, cls: g.cls, error: e.message } );
 			note( `glb ${g.name} FAILED: ${e.message}` );
@@ -388,8 +390,11 @@ async function loadGlbs() {
 /** Walk one loaded glb: count it, and put every MeshStandardMaterial on the right lighting path. */
 function processGltf( gltf, g ) {
 	let tris = 0, meshes = 0, instancedMeshes = 0, instances = 0, materials = 0;
+	let hiddenBoards = 0;
 	gltf.scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
+		// QA round 11b: the export ships opaque ENV_treeboard_* stand-ins for the Gate 3 impostors; ?treeboards=0 hides them
+		if ( ! CFG.treeboards && ( /^ENV_treeboard_/.test( o.name ) || ( o.parent && /^ENV_treeboard_/.test( o.parent.name ) ) ) ) { o.visible = false; hiddenBoards ++; }
 		meshes ++;
 		const geo = o.geometry;
 		const n = ( geo.index ? geo.index.count : geo.attributes.position.count ) / 3;
@@ -435,7 +440,7 @@ function processGltf( gltf, g ) {
 			}
 		}
 	} );
-	return { name: g.name, cls: g.cls, url: g.url, meshes, instancedMeshes, instances, tris, materials };
+	return { name: g.name, cls: g.cls, url: g.url, meshes, instancedMeshes, instances, tris, materials, hiddenBoards };
 }
 
 /** What to do with materials that have no lightmap, once every glb is in. */

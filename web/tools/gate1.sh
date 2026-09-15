@@ -12,7 +12,7 @@ MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 export PFA_MAIN_ROOT="$MAIN"
 MANIFEST=${1:-/assets/gate1/manifest.json}
 # PFA_QUERY="k=v" adds one extra query parameter to both captures (QA round 11: PFA_QUERY=billboards=0 hides the far-tree placeholder quads).
-EXTRAQ=(); [[ -n "${PFA_QUERY:-}" ]] && EXTRAQ=(--query "$PFA_QUERY")
+EXTRAQ=(); for kv in ${=PFA_QUERY}; do EXTRAQ+=(--query "$kv"); done   # space-separated k=v list
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT"
 
