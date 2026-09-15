@@ -578,3 +578,6 @@ In flight: export engineer (queue). Next: queue idle -> lead_build.sh -> PFA_PAC
 ## 2026-09-15 · Gate 1 export reported (phase6-export e88da10): 2 736 570 placed tris (ARCH 0.84 / ORN 1.10 / ENV 0.79 M), 140 batches in the hero frustum, name sweep 0 hits, ORN queue 33/33 in 5 766 s; four glbs 187 MB (orn.glb 155 MB); texture projection 1 343 MB vs 1 200 budget (levers named)
 Lead ran web/tools/gate1.sh: six stations captured, 1440p GPU cost 2.1 ms median (60 fps vsync-capped), 201.8 MB loaded in 2.6 s. Hero pair sheet viewed at 960 px: silhouette registered, far-tree billboards as flat quads by design, grey materials.
 In flight: QA round 11 (Opus xhigh, docs/briefs/qa_round_11.md), phase6-export code review, master rebuild + delivery regeneration with MAT r10 (renders/logs/lead_build_r11.log, phase5_r11_1b.log). Next: merge export on review, Gate 1 verdict, Gate 2 brief (PBR bakes on the regenerated delivery file), burn, stop.
+
+## 2026-09-15 · master.blend rebuilt with MAT r10 (9691 objects, probes 5.4 s) and master_delivery.blend regenerated (280.3 MB, reopen 0.83 s, 89 packed); Gate 2 bake brief drafted (docs/briefs/phase6_gate2_bake.md)
+In flight: QA round 11, phase6-export review. Next: export merge, Gate 1 verdict, dispatch Gate 2 (bake engineer r2) + a viewer Gate 2 round, burn, stop.
