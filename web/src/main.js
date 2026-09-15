@@ -25,6 +25,7 @@ import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
 import { buildTestScene } from './testScene.js';
+import { makeTreeBillboards, aimBillboards } from './billboards.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -43,6 +44,9 @@ const CFG = {
 	hud: qs.get( 'hud' ) !== '0',                       // ?hud=0 for clean screenshots
 	lmScale: qs.has( 'lmscale' ) ? parseFloat( qs.get( 'lmscale' ) ) : null,  // override lightmap_scale
 	time: qs.has( 't' ) ? parseFloat( qs.get( 't' ) ) : null,      // freeze the water phase (captures)
+	glbOverride: qs.get( 'glb' ),                       // comma-separated URLs, overrides the manifest's list
+	lighting: qs.get( 'lighting' ) || 'auto',           // auto | baked | direct  (see pickLightingMode)
+	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
 };
 
 function glInfo() {
@@ -81,22 +85,95 @@ function canvasSize() {
 }
 
 // ---------------------------------------------------------------------------- loading screen
+// Progress is measured in BYTES, not in files: every asset's size is taken from a HEAD request (the
+// manifest's declared `bytes` is the fallback) before anything is fetched, so the bar is linear in
+// download and the viewer can report exactly how many bytes the walkthrough costs.
 const ui = document.getElementById( 'loading' );
 const bar = document.getElementById( 'bar' );
 const uiText = document.getElementById( 'loading-text' );
 const manager = new THREE.LoadingManager();
-manager.onProgress = ( url, done, total ) => {
-	const pct = total ? Math.round( 100 * done / total ) : 0;
-	bar.style.width = `${pct}%`;
-	uiText.textContent = `loading ${done}/${total} — ${url.split( '/' ).pop()}`;
+
+const progress = {
+	total: 0, loaded: 0, label: '',
+	files: [],                       // { url, kind, bytes, loaded, sizeFrom, ms }
+	perFile: new Map(),              // url -> bytes counted so far (three loaders report cumulative)
+	unknown: [],
 };
+const MB = ( b ) => ( b / 1e6 ).toFixed( 1 );
+function drawProgress() {
+	const pct = progress.total ? Math.min( 100, 100 * progress.loaded / progress.total ) : 0;
+	bar.style.width = `${pct.toFixed( 1 )}%`;
+	uiText.textContent = `${MB( progress.loaded )} / ${MB( progress.total )} MB` + ( progress.label ? ` — ${progress.label}` : '' );
+}
+function addBytes( url, delta ) { progress.loaded += delta; drawProgress(); }
+/** three's Loader.loadAsync onProgress reports the file's CUMULATIVE bytes: turn it into a delta. */
+function onProgressFor( url ) {
+	return ( e ) => {
+		const prev = progress.perFile.get( url ) || 0;
+		const now = e && e.loaded ? e.loaded : prev;
+		progress.perFile.set( url, now );
+		addBytes( url, now - prev );
+	};
+}
+/** HEAD every planned file so `total` is real before the first byte is fetched. */
+async function measurePlan( files ) {
+	progress.files = files;
+	await Promise.all( files.map( async ( f ) => {
+		try {
+			const r = await fetch( f.url, { method: 'HEAD', cache: 'no-cache' } );
+			const n = Number( r.headers.get( 'content-length' ) ) || 0;
+			if ( r.ok && n ) { f.bytes = n; f.sizeFrom = 'HEAD'; return; }
+		} catch ( e ) { /* fall through to the manifest's number */ }
+		if ( f.bytes ) { f.sizeFrom = 'manifest'; return; }
+		f.bytes = 0; f.sizeFrom = 'unknown'; progress.unknown.push( f.url );
+	} ) );
+	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+	note( `load plan: ${files.length} files, ${MB( progress.total )} MB (${files.map( f => `${f.kind} ${MB( f.bytes )}` ).join( ', ' )})`
+		+ ( progress.unknown.length ? ` — ${progress.unknown.length} of unknown size` : '' ) );
+	drawProgress();
+}
+/** Streamed fetch: exact byte progress and the buffer, for the glbs the viewer parses itself. */
+async function fetchBuffer( url ) {
+	const r = await fetch( url, { cache: 'no-cache' } );
+	if ( ! r.ok ) throw new Error( `${r.status} ${r.statusText} for ${url}` );
+	if ( ! r.body ) { const b = await r.arrayBuffer(); addBytes( url, b.byteLength ); return b; }
+	const reader = r.body.getReader();
+	const chunks = []; let got = 0;
+	for ( ; ; ) {
+		const { done, value } = await reader.read();
+		if ( done ) break;
+		chunks.push( value ); got += value.byteLength; addBytes( url, value.byteLength );
+	}
+	const out = new Uint8Array( got );
+	let off = 0;
+	for ( const c of chunks ) { out.set( c, off ); off += c.byteLength; }
+	return out.buffer;
+}
 
 // ---------------------------------------------------------------------------- main
-let composer, lutPass, water, manifest, stations, sunLight;
+let composer, lutPass, water, manifest, stations, sunLight, billboards = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
+let lightingMode = 'baked';
+const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, total_s: 0 };
+const glbReport = [];
+
+/** baked  = the Gate 0/3 path: lightmaps carry the diffuse, so the sun and the environment are
+ *           stripped to their specular terms (materials.js).
+ *  direct = the Gate 1 path: the export has NO lightmaps yet (neutral grey + ORN normal/AO only),
+ *           so three's own lighting does the work — full DirectionalLight + PMREM irradiance, same
+ *           sun irradiance and the same LUT/exposure, no shadow maps.  Chosen from the manifest, so
+ *           it is known before a single material is touched. */
+function pickLightingMode() {
+	if ( CFG.lighting === 'baked' || CFG.lighting === 'direct' ) return CFG.lighting;
+	const tex = manifest.raw.textures || {};
+	const baked = manifest.lightmaps.length > 0
+		|| Object.keys( tex ).some( k => k.toLowerCase().includes( 'lightmap' ) )
+		|| !! ( manifest.raw.gltf && manifest.raw.gltf.lightmap_slot );
+	return baked ? 'baked' : 'direct';
+}
 
 async function boot() {
 	const t0 = performance.now();
@@ -109,25 +186,43 @@ async function boot() {
 	manifest = normaliseManifest( raw, manifestUrl );
 	manifest.notes.forEach( note );
 	stations = manifest.stations;
+	note( `manifest ${manifest.schema || '(no schema)'} at ${manifestUrl}` );
 	if ( CFG.skyRotationDeg !== null ) manifest.sky.rotationDeg = CFG.skyRotationDeg;
 	if ( CFG.exposureOverride !== null ) manifest.exposure = CFG.exposureOverride;
 	if ( CFG.sun !== null ) { manifest.sun.irradiance = CFG.sun; manifest.sun.color = [ 1, 1, 1 ]; note( `sun irradiance overridden to ${CFG.sun}` ); }
+	if ( CFG.glbOverride ) {
+		manifest.glbs = CFG.glbOverride.split( ',' ).filter( Boolean ).map( ( u, i ) => ( {
+			url: new URL( u, manifestUrl ).href, name: u.split( '/' ).pop(), cls: `override_${i}`, bytes: null, order: i } ) );
+		note( `?glb override: ${manifest.glbs.map( g => g.name ).join( ', ' )}` );
+	}
+	lightingMode = pickLightingMode();
+	note( `lighting mode: ${lightingMode}${CFG.lighting !== 'auto' ? ' (?lighting override)' : ''} — `
+		+ ( lightingMode === 'baked' ? 'lightmaps carry the diffuse, sun and env are specular-only'
+			: 'no lightmaps in the manifest: full DirectionalLight + PMREM irradiance, no shadow maps' ) );
+
+	// byte budget before anything downloads ------------------------------------------------------
+	const tp = performance.now();
+	const plan = [];
+	if ( manifest.sky.camera ) plan.push( { url: manifest.sky.camera, kind: 'sky.camera', bytes: manifest.raw.sky?.camera?.bytes_hdr || 0 } );
+	if ( manifest.sky.glossy ) plan.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
+	if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) plan.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
+	if ( ! CFG.testScene ) for ( const g of manifest.glbs ) plan.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
+	await measurePlan( plan );
+	loadTimes.plan_s = ( performance.now() - tp ) / 1000;
 
 	// sky --------------------------------------------------------------------------------------
+	const ts = performance.now();
 	await loadSky();
+	loadTimes.sky_s = ( performance.now() - ts ) / 1000;
 
-	// sun: SPECULAR ONLY (materials.js strips its diffuse term; the lightmap has the diffuse) -----
+	// sun --------------------------------------------------------------------------------------
 	const d = manifest.sun.toSunBlender;                           // direction TOWARD the sun, Blender axes
 	sunLight = new THREE.DirectionalLight( new THREE.Color().setRGB( ...manifest.sun.color, THREE.LinearSRGBColorSpace ), manifest.sun.irradiance );
 	sunLight.position.copy( b2t( d[ 0 ], d[ 1 ], d[ 2 ] ).multiplyScalar( 1000 ) );   // the light sits toward the sun, aiming at the origin
 	sunLight.target.position.set( 0, 0, 0 );
-	sunLight.castShadow = false;                                   // shadows are in the lightmap
+	sunLight.castShadow = false;                                   // baked: shadows are in the lightmap; direct: carry 8 / Gate 2
 	scene.add( sunLight, sunLight.target );
-	note( `sun: three direction ${sunLight.position.clone().normalize().toArray().map( v => v.toFixed( 3 ) )}, irradiance ${manifest.sun.irradiance}, specular only` );
-
-	// geometry ----------------------------------------------------------------------------------
-	if ( manifest.glb && ! CFG.testScene ) await loadGlb( manifest.glb );
-	else { buildTestScene( scene ); note( 'test scene (no glb)' ); }
+	note( `sun: three direction ${sunLight.position.clone().normalize().toArray().map( v => v.toFixed( 3 ) )}, irradiance ${manifest.sun.irradiance}, ${lightingMode === 'baked' ? 'specular only' : 'diffuse + specular (no shadow map)'}` );
 
 	// water -------------------------------------------------------------------------------------
 	if ( CFG.water ) {
@@ -145,7 +240,9 @@ async function boot() {
 	lutPass = new LUTDisplayPass( { exposure: manifest.exposure } );
 	lutPass.renderToScreen = true;
 	composer.addPass( lutPass );
+	const tl = performance.now();
 	await loadLUT();
+	loadTimes.lut_s = ( performance.now() - tl ) / 1000;
 	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
@@ -155,22 +252,41 @@ async function boot() {
 	window.addEventListener( 'resize', resize );
 	installControls();
 
+	// geometry: the glbs in the manifest's order, each one drawn as soon as it lands --------------
+	const tg = performance.now();
+	if ( manifest.glbs.length && ! CFG.testScene ) await loadGlbs();
+	else { buildTestScene( scene ); note( 'test scene (no glb)' ); }
+	loadTimes.glb_s = ( performance.now() - tg ) / 1000;
+
+	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
+	if ( CFG.billboards && manifest.treesFar.length ) {
+		billboards = makeTreeBillboards( manifest.treesFar );
+		scene.add( billboards );
+		aimBillboards( billboards, camera );
+		note( `${manifest.treesFar.length} far-tree placeholder quads in ${billboards.children.length} prototype group(s), tagged pfaPlaceholder=gate3_tree_impostor` );
+	} else if ( manifest.treesFar.length ) {
+		note( `${manifest.treesFar.length} far-tree quads suppressed (?billboards=0)` );
+	}
+
 	// first frame -------------------------------------------------------------------------------
 	renderFrame();
 	requestAnimationFrame( () => {
 		renderFrame();
 		ui.style.display = 'none';
 		window.__pfaReady = true;
-		note( `ready in ${( ( performance.now() - t0 ) / 1000 ).toFixed( 2 )} s` );
+		loadTimes.total_s = ( performance.now() - t0 ) / 1000;
+		note( `ready in ${loadTimes.total_s.toFixed( 2 )} s: ${MB( progress.loaded )} MB loaded of ${MB( progress.total )} MB planned `
+			+ `(plan ${loadTimes.plan_s.toFixed( 2 )} s, sky ${loadTimes.sky_s.toFixed( 2 )} s, lut ${loadTimes.lut_s.toFixed( 2 )} s, glb ${loadTimes.glb_s.toFixed( 2 )} s)` );
 		animate();
 	} );
 }
 
 async function loadSky() {
-	const load = ( url ) => new Promise( ( res, rej ) => {
+	const load = ( url ) => {
 		const L = url.endsWith( '.exr' ) ? new EXRLoader( manager ) : new RGBELoader( manager );
-		L.load( url, res, undefined, rej );
-	} );
+		progress.label = url.split( '/' ).pop();
+		return L.loadAsync( url, onProgressFor( url ) );
+	};
 	const rotY = THREE.MathUtils.degToRad( manifest.sky.rotationDeg );
 	try {
 		if ( manifest.sky.camera ) {
@@ -203,29 +319,59 @@ function getKTX2() {
  *  BRDF_Lambert, so the manifest's lightmap_scale (pi) is applied as lightMapIntensity. */
 let lightmapScale = 1.0;
 
-async function loadGlb( url ) {
+async function loadGlbs() {
 	lightmapScale = CFG.lmScale !== null ? CFG.lmScale : manifest.lightmapScale;
 	note( `lightMapIntensity = lightmap_scale ${lightmapScale.toFixed( 5 )}${CFG.lmScale !== null ? ' (?lmscale override)' : ''}` );
 	const loader = new GLTFLoader( manager ).setKTX2Loader( getKTX2() ).setMeshoptDecoder( MeshoptDecoder );
-	const t = performance.now();
-	const gltf = await loader.loadAsync( url );
-	scene.add( gltf.scene );
-	let tris = 0, meshes = 0;
+	let first = true;
+	for ( const g of manifest.glbs ) {
+		const t = performance.now();
+		progress.label = g.name;
+		try {
+			const buf = await fetchBuffer( g.url );
+			const base = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
+			const gltf = await loader.parseAsync( buf, base );
+			gltf.scene.name = `WEB_glb_${g.cls}`;
+			scene.add( gltf.scene );
+			const r = processGltf( gltf, g );
+			r.bytes = buf.byteLength; r.wall_s = ( performance.now() - t ) / 1000;
+			glbReport.push( r );
+			note( `glb ${g.name} (${g.cls}) ${MB( r.bytes )} MB in ${r.wall_s.toFixed( 2 )} s: ${r.meshes} meshes, `
+				+ `${r.instancedMeshes} instanced (${r.instances} instances), ${Math.round( r.tris )} placed tris, ${r.materials} materials` );
+		} catch ( e ) {
+			glbReport.push( { name: g.name, cls: g.cls, error: e.message } );
+			note( `glb ${g.name} FAILED: ${e.message}` );
+			continue;
+		}
+		// progressive: draw what has arrived, and let the loading panel go translucent over it
+		if ( first ) { ui.style.background = 'rgba(11, 13, 16, 0.55)'; first = false; }
+		renderFrame();
+		await new Promise( ( r ) => requestAnimationFrame( r ) );
+	}
+	finishMaterials();
+}
+
+/** Walk one loaded glb: count it, and put every MeshStandardMaterial on the right lighting path. */
+function processGltf( gltf, g ) {
+	let tris = 0, meshes = 0, instancedMeshes = 0, instances = 0, materials = 0;
 	gltf.scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
 		meshes ++;
-		const g = o.geometry;
-		tris += ( g.index ? g.index.count : g.attributes.position.count ) / 3 * ( o.isInstancedMesh ? o.count : 1 );
+		const geo = o.geometry;
+		const n = ( geo.index ? geo.index.count : geo.attributes.position.count ) / 3;
+		if ( o.isInstancedMesh ) { instancedMeshes ++; instances += o.count; }
+		tris += n * ( o.isInstancedMesh ? o.count : 1 );
 		const mats = Array.isArray( o.material ) ? o.material : [ o.material ];
 		for ( const m of mats ) {
 			if ( ! m || ! m.isMeshStandardMaterial ) continue;
 			if ( seenMats.has( m ) ) continue;
-			seenMats.add( m );
-			// schema pfa-phase6-gate0/1 ships the lightmap INSIDE the glb as the emissiveTexture on
-			// TEXCOORD_1 (RGBM8).  Move it to lightMap channel 1, kill the emissive, and decode RGBM.
-			// The in-glb emissive lightmap wins: it must never be left live as emissive.
+			seenMats.add( m ); materials ++;
+			// schema pfa-phase6-gate0/1 and /2 ship any lightmap INSIDE the glb as the emissiveTexture
+			// on TEXCOORD_1 (RGBM8).  Move it to lightMap channel 1, kill the emissive, decode RGBM.
+			// An in-glb emissive lightmap always wins: it must never be left live as emissive.
 			let lm = m.emissiveMap ? null : matchLightmap( o, m );
 			if ( m.emissiveMap ) {
+				if ( lightingMode === 'direct' ) note( `material ${m.name}: emissiveTexture found although the manifest declares no lightmap — treated as a lightmap` );
 				lm = { encoding: 'rgbm', rgbmMaxRange: manifest.rgbmRange, intensity: lightmapScale, fromEmissive: true };
 				m.lightMap = m.emissiveMap;
 				// GLTFLoader tags an emissiveTexture as sRGB (glTF requires it), but the RGBM8 lightmap
@@ -250,7 +396,16 @@ async function loadGlb( url ) {
 			}
 		}
 	} );
+	return { name: g.name, cls: g.cls, url: g.url, meshes, instancedMeshes, instances, tris, materials };
+}
 
+/** What to do with materials that have no lightmap, once every glb is in. */
+function finishMaterials() {
+	if ( lightingMode === 'direct' ) {
+		note( `${noLightmapMaterials.length} material(s) on three's own lighting (Gate 1 has no lightmap bake); `
+			+ `${patchedMaterials} on the baked path` );
+		return;
+	}
 	// Gate 0 bakes a lightmap for ONE of the 16 columns; the other 15 share the mesh with a
 	// lightmap-free material.  Under a specular-only sun they would be black, under stock lighting
 	// they blow out (sun 67.3 W/m2, no tone mapping), so by default they borrow the lit column's
@@ -279,7 +434,7 @@ async function loadGlb( url ) {
 		}
 	}
 	const stillStock = noLightmapMaterials.filter( m => ! m.lightMap ).map( m => m.name || '(unnamed)' );
-	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} materials patched (specular-only sun), ${stillStock.length} left on stock lighting: ${stillStock.join( ', ' ) || 'none'}` );
+	note( `${patchedMaterials} materials patched (specular-only sun), ${stillStock.length} left on stock lighting: ${stillStock.join( ', ' ) || 'none'}` );
 }
 
 function matchLightmap( obj, mat ) {
@@ -323,9 +478,18 @@ async function loadLUT() {
 	if ( ! manifest.lut || ! manifest.lut.url ) { lutPass.setLUT( null ); return; }
 	try {
 		const url = manifest.lut.url;
+		progress.label = url.split( '/' ).pop();
+		// Carry 11a: LUTCubeLoader defaults to UnsignedByteType, which quantizes a 65^3 LUT behind a
+		// log2 shaper at the shadow end (1/255 of the shaper range is ~0.065 EV down there).  Float
+		// texels need OES_texture_float_linear for the trilinear fetch; WebGL2 has no linear float
+		// filtering without it, so fall back to 8-bit rather than render a nearest-sampled LUT.
+		const floatLinear = !! renderer.getContext().getExtension( 'OES_texture_float_linear' );
+		const cubeLoader = new LUTCubeLoader( manager );
+		if ( floatLinear ) cubeLoader.setType( THREE.FloatType );
+		note( `LUT texel type ${floatLinear ? 'FloatType (OES_texture_float_linear)' : 'UnsignedByte (no OES_texture_float_linear)'}` );
 		const lut = url.endsWith( '.cube' )
-			? await new LUTCubeLoader( manager ).loadAsync( url )
-			: await new LUTImageLoader( manager ).loadAsync( url );
+			? await cubeLoader.loadAsync( url, onProgressFor( url ) )
+			: await new LUTImageLoader( manager ).loadAsync( url, onProgressFor( url ) );
 		const res = lut.texture3D ? lut : { texture3D: lut.texture3D || lut, size: lut.size };
 		res.shaper = manifest.lut.shaper; res.shaperMin = manifest.lut.shaperMin; res.shaperMax = manifest.lut.shaperMax;
 		res.shaperPivot = manifest.lut.shaperPivot;
@@ -385,7 +549,12 @@ function resize() {
 	if ( composer ) composer.setSize( w, h );
 }
 
+const _lastCamPos = new THREE.Vector3( Infinity, Infinity, Infinity );
 function renderFrame() {
+	if ( billboards && camera.position.distanceToSquared( _lastCamPos ) > 1e-6 ) {
+		aimBillboards( billboards, camera );
+		_lastCamPos.copy( camera.position );
+	}
 	if ( water ) water.userData.tick( CFG.time !== null ? CFG.time : elapsed() );
 	renderer.info.autoReset = false;          // otherwise info shows only the last composer pass
 	renderer.info.reset();
@@ -417,8 +586,54 @@ window.__pfaInfo = () => ( {
 	lutEnabled: lutPass ? !! lutPass.uniforms.lutEnabled.value : false,
 	lutSize: lutPass ? lutPass.uniforms.lutSize.value : 0,
 	waterZ: manifest ? manifest.waterZ : null,
+	lightingMode,
+	schema: manifest ? manifest.schema : null,
+	bytes: { loaded: progress.loaded, planned: progress.total, unknownSize: progress.unknown.slice(),
+		files: progress.files.map( f => ( { kind: f.kind, bytes: f.bytes, sizeFrom: f.sizeFrom, name: f.url.split( '/' ).pop() } ) ) },
+	load_s: { ...loadTimes },
+	glbs: glbReport.slice(),
+	resident: residentBytes(),
+	billboards: billboards ? { ...billboards.userData } : null,
 	notes: log.slice(),
 } );
+
+/** Resident GPU-side bytes we can account for: unique geometries and unique textures in the scene.
+ *  renderer.info.memory only counts objects, so this is the viewer's own sum, stated as an estimate:
+ *  compressed textures are summed from their mip data, uncompressed ones as w*h*4*(4/3 with mips). */
+function residentBytes() {
+	const geos = new Set(), texs = new Set();
+	let geometry = 0, texture = 0, instanceMatrices = 0;
+	const addTex = ( t ) => {
+		if ( ! t || texs.has( t ) ) return;
+		texs.add( t );
+		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
+			for ( const m of t.mipmaps ) texture += m.data.byteLength;       // compressed (KTX2)
+		} else if ( t.image && t.image.width ) {
+			const bpp = ( t.type === THREE.FloatType ) ? 16 : ( t.type === THREE.HalfFloatType ? 8 : 4 );
+			texture += t.image.width * t.image.height * bpp * ( t.generateMipmaps ? 4 / 3 : 1 );
+		}
+	};
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		if ( ! geos.has( o.geometry ) ) {
+			geos.add( o.geometry );
+			for ( const a of Object.values( o.geometry.attributes ) ) geometry += a.array.byteLength;
+			if ( o.geometry.index ) geometry += o.geometry.index.array.byteLength;
+		}
+		if ( o.isInstancedMesh ) instanceMatrices += o.instanceMatrix.array.byteLength;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m ) continue;
+			for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) addTex( m[ k ] );
+		}
+	} );
+	if ( scene.background && scene.background.isTexture ) addTex( scene.background );
+	if ( scene.environment ) addTex( scene.environment );
+	return {
+		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
+		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
+		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps)',
+	};
+}
 window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	const t = [];
 	let last = performance.now();

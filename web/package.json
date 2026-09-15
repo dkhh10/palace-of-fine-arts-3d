@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 5174 --strictPort",
-    "shot": "node tools/screenshot.mjs"
+    "shot": "../scripts/chrome_run.sh 600 -- node tools/screenshot.mjs",
+    "stations": "python3 tools/dump_stations.py",
+    "stations:check": "python3 tools/dump_stations.py --check"
   },
   "dependencies": {
     "three": "0.186.0"

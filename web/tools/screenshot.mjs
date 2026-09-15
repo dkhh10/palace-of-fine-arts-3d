@@ -3,7 +3,8 @@
 // and only while the bake queue is idle (export/out/bake_queue/status.json).
 //
 //   --station N       station preset (default 1)
-//   --stations 1,2,6  capture several stations in one browser session (out gets _camNN)
+//   --stations 1-6    capture several stations in ONE browser session (out gets _camNN); ranges,
+//                     commas and mixes ("1-3,6") are all accepted
 //   --out PATH        PNG path (default renders/web/gate0_viewer_cam01.png)
 //   --size WxH        window / canvas size (default 1280x720)
 //   --url URL         page to open; default: serve web/dist on a free port (built by `npm run build`)
@@ -14,6 +15,9 @@
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
 //   --pixels x,y;...  read back display pixels (after the screenshot) and print them
 //   --probe A,B       project objects whose name contains A / B and read their centre pixel
+//   --shots 0         measure only, write no PNGs (the performance pass)
+//   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
+//   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
 // The browser is closed in a finally block and the process calls process.exit, so no Chrome is left
 // behind (a raw `--headless=new --screenshot` lingers 60-90 s on Chrome 152; puppeteer with an
@@ -42,11 +46,25 @@ function args() {
 	return o;
 }
 const o = args();
+
+/** "1-6" / "1,3,5" / "1-3,6" -> [1,2,3,6]; out of range and duplicates are dropped. */
+function parseStations( spec ) {
+	const out = [];
+	for ( const part of String( spec || '' ).split( ',' ) ) {
+		const m = part.trim().match( /^(\d+)\s*-\s*(\d+)$/ );
+		if ( m ) { for ( let i = + m[ 1 ]; i <= + m[ 2 ]; i ++ ) out.push( i ); }
+		else if ( part.trim() ) out.push( parseInt( part, 10 ) );
+	}
+	return [ ...new Set( out ) ].filter( n => n >= 1 && n <= 6 );
+}
 const station = parseInt( o.station || '1', 10 );
 const [ W, H ] = ( o.size || '1280x720' ).split( 'x' ).map( Number );
 const out = path.resolve( REPO, o.out || 'renders/web/gate0_viewer_cam01.png' );
 const jsonOut = o.json ? path.resolve( REPO, o.json ) : out.replace( /\.png$/, '.json' );
 const frames = parseInt( o.frames ?? '120', 10 );
+const warmup = parseInt( o.warmup ?? '20', 10 );
+const takeShots = ( o.shots ?? '1' ) !== '0';
+const perfOut = o.perf ? path.resolve( REPO, o.perf ) : null;
 const timeout = parseInt( o.timeout || '120000', 10 );
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css',
@@ -119,31 +137,44 @@ try {
 	const err = await page.evaluate( () => window.__pfaError || null );
 	if ( err ) throw new Error( `viewer boot failed:\n${err}` );
 
-	const extra = ( o.stations || '' ).split( ',' ).map( v => parseInt( v, 10 ) ).filter( n => n >= 1 && n <= 6 );
+	const extra = parseStations( o.stations );
 	const shotList = extra.length ? extra : [ station ];
 	const info = await page.evaluate( () => window.__pfaInfo() );
-	let stats = null;
-	let cost = null;
-	if ( frames > 0 ) {
-		stats = await page.evaluate( ( n ) => window.__pfaFrameStats( n ), frames );
-		cost = await page.evaluate( ( n ) => window.__pfaRenderCost( n ), Math.min( frames, 60 ) );
-	}
 
 	fs.mkdirSync( path.dirname( out ), { recursive: true } );
-	const written = [];
+	const written = [], perStation = [];
 	for ( const st of shotList ) {
 		let file = out;
 		if ( shotList.length > 1 ) file = out.replace( /(\.png)$/, `_cam${String( st ).padStart( 2, '0' )}$1` );
-		if ( st !== station || shotList.length > 1 ) {
-			const name = await page.evaluate( ( n ) => window.__pfaStation( n ), st );
-			await new Promise( r => setTimeout( r, 150 ) );
-			await page.evaluate( () => window.__pfaStation( window.__pfaInfo().station.index ) );
-			console.log( `[shot] station ${st} = ${name}` );
+		const name = await page.evaluate( ( n ) => window.__pfaStation( n ), st );
+		// warm up: the first frames after a station switch pay for shader compiles and texture uploads
+		if ( warmup > 0 ) await page.evaluate( ( n ) => window.__pfaRenderCost( n ), warmup );
+		if ( takeShots ) {
+			await page.screenshot( { path: file, captureBeyondViewport: false } );
+			written.push( { station: st, name, file } );
 		}
-		await page.screenshot( { path: file, captureBeyondViewport: false } );
+		let stats = null, cost = null;
+		if ( frames > 0 ) {
+			stats = await page.evaluate( ( n ) => window.__pfaFrameStats( n ), frames );
+			cost = await page.evaluate( ( n ) => window.__pfaRenderCost( n ), Math.min( frames, 60 ) );
+		}
 		const i = await page.evaluate( () => window.__pfaInfo() );
-		written.push( { station: st, file, draws: i.render.calls, tris: i.render.triangles } );
+		const row = {
+			station: st, name, size: [ W, H ], file: takeShots ? file : null,
+			frame_ms: stats && { median: stats.median, mean: stats.mean, p95: stats.p95, min: stats.min, max: stats.max, frames: stats.frames },
+			fps_presented: stats ? 1000 / stats.median : null,
+			gpu_cost_ms: cost && { median: cost.median, mean: cost.mean, p95: cost.p95, frames: cost.frames },
+			fps_uncapped: cost ? 1000 / cost.median : null,
+			draw_calls: i.render.calls, triangles: i.render.triangles, programs: i.render.programs ?? null,
+			info_memory: i.memory, resident: i.resident,
+		};
+		perStation.push( row );
+		if ( takeShots ) written[ written.length - 1 ] = { ...written[ written.length - 1 ], draws: row.draw_calls, tris: row.triangles };
+		console.log( `[shot] station ${st} ${name}: frame ${stats ? stats.median.toFixed( 2 ) : '-'} ms, gpu ${cost ? cost.median.toFixed( 2 ) : '-'} ms, `
+			+ `draws ${row.draw_calls}, tris ${row.triangles}` );
 	}
+	const stats = perStation.length ? { ...perStation[ 0 ].frame_ms } : null;
+	const cost = perStation.length ? { ...perStation[ 0 ].gpu_cost_ms } : null;
 
 	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
@@ -166,10 +197,23 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, probes, pixels, written, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
+	if ( perfOut ) {
+		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
+		fs.writeFileSync( perfOut, JSON.stringify( {
+			generated: new Date().toISOString(),
+			url, size: [ W, H ], frames, warmup,
+			gl: info.gl, schema: info.schema, lighting_mode: info.lightingMode,
+			bytes: info.bytes, load_s: info.load_s, glbs: info.glbs, billboards: info.billboards,
+			stations: perStation,
+		}, null, 1 ) );
+		console.log( `[shot] wrote ${perfOut}` );
+	}
 	written.forEach( w => console.log( `[shot] wrote ${w.file} (${( fs.statSync( w.file ).size / 1024 ).toFixed( 0 )} kB) station ${w.station} draws ${w.draws} tris ${w.tris}` ) );
-	console.log( `[shot] station ${info.station?.index} ${info.station?.name}  draws ${info.render.calls}  tris ${info.render.triangles}  lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );
+	console.log( `[shot] ${info.schema || '(no schema)'} lighting ${info.lightingMode} lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );
+	console.log( `[shot] loaded ${( info.bytes.loaded / 1e6 ).toFixed( 1 )} MB of ${( info.bytes.planned / 1e6 ).toFixed( 1 )} MB planned in ${info.load_s.total_s.toFixed( 2 )} s `
+		+ `(sky ${info.load_s.sky_s.toFixed( 2 )}, lut ${info.load_s.lut_s.toFixed( 2 )}, glb ${info.load_s.glb_s.toFixed( 2 )})` );
 	if ( stats ) console.log( `[shot] frame time at ${W}x${H}: median ${stats.median.toFixed( 2 )} ms (${( 1000 / stats.median ).toFixed( 1 )} fps presented, vsync-capped at 16.7), mean ${stats.mean.toFixed( 2 )}, p95 ${stats.p95.toFixed( 2 )}, n=${stats.frames}` );
 	if ( cost ) console.log( `[shot] render cost (gl.finish, no vsync): median ${cost.median.toFixed( 2 )} ms (${( 1000 / cost.median ).toFixed( 1 )} fps), p95 ${cost.p95.toFixed( 2 )}, n=${cost.frames}` );
 	if ( pixels ) pixels.forEach( p => console.log( `[shot] pixel (${p.x}, ${p.y}) = ${p.rgba}` ) );
