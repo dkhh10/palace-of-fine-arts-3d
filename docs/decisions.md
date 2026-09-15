@@ -238,3 +238,20 @@ Format: date · decision · why · consequences. Newest at the bottom.
   those windows; the next lighting round, if any, replaces the blue lamp with a low-energy NEUTRAL shade fill. The rotunda interior fill runs
   on bays 06 + 07 only (the hero's "vault field" is the central ceiling seen through the arch, the same surface as cam04's coffers).
   Floating gulls removed (icospheres 7.5 m from the hero camera). v1 kept under renders/final/v1; v2 renders under renders/final/v2.
+
+## 2026-09-15 · Phase 6 start (lead): Three.js walkthrough, Gate 0 prepared
+- Inventory (export/inventory.py on master_delivery.blend): the export set as the user stated it (ARCH_+ORN_ LOD0, ENV_ LOD1) is 30.5 M
+  placed tris (ORN instances 22.9 M, ENV LOD1 4.8 M, ARCH 2.85 M) against the 3 M budget. Decision: Gate 1 is a decimation gate with
+  per-class budgets ARCH 1.1 / ORN 1.1 / ENV 0.8 M (docs/briefs/phase6_plan.md §2); ENV trees outside the station band go to LOD2.
+  The user's note "ENV assets exist only as _LOD1" is not what the file holds (ENV has LOD0/1/2 for 1526 objects) — flagged.
+- Colour: the shipped look is `AgX - High Contrast` at exposure -2.833 (read from the file). three.js AgX has no looks, so the viewer
+  applies a 3D LUT baked through Blender's OCIO with tone mapping off. Verified at Gate 0 on a grey plane (1/255 tolerance).
+- Lighting transfer: lightmap = Cycles diffuse direct+indirect (sun included) -> the viewer's sun is specular-only; sky exported twice
+  (camera branch = background, glossy branch = PMREM); ORN instances get prototype normal+AO and a per-instance vertex-colour
+  irradiance bake (decided finally at Gate 3 from Gate 0 timings).
+- Toolchain: gltfpack 1.2 native and KTX-Software 4.4.2 (toktx) are not in Homebrew; installed from GitHub releases into tools/
+  (gitignored, tools/install.sh re-fetches). Chrome 152 headless has WebGL2 on ANGLE Metal, but a raw `--screenshot` lingers
+  60-90 s per frame: screenshots go through puppeteer-core inside scripts/chrome_run.sh (registered deadline, leftover kill).
+- Gate 0 runs as two agents (bake engineer xhigh, viewer engineer high) on a manifest contract (docs/briefs/phase6_gate0.md);
+  the slice is the 16 rotunda columns (one shared mesh, decimated 14.4 k -> 3.5 k) + the ground under them + the world sky.
+- Dispatch of any builder waits for the user's approval of docs/briefs/phase6_addendum_draft.md (user's rule).

@@ -24,3 +24,16 @@ master_delivery.blend
 # Local-only: exported chat transcript and LOD0 walkthrough copy (build products, not sources)
 session.txt
 master_walkthrough.blend
+# Phase 6 (regenerable web/bake products and fetched tools)
+tools/bin/
+tools/lib/
+tools/dl/
+export/out/
+export/inventory.json
+web/node_modules/
+web/dist/
+web/public/assets/
+renders/web/**/tiles/
+*.glb
+*.ktx2
+*.hdr

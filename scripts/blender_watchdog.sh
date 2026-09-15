@@ -15,8 +15,9 @@ pass() {
     local deadline start owner cmd
     read deadline start owner cmd < "$f"
     if [ "$now" -gt "$deadline" ]; then
-      echo "$(date '+%H:%M:%S') watchdog: killing Blender pid $p ($owner), registered max $(( deadline - start )) s exceeded by $(( now - deadline )) s: ${cmd[1,140]}"
+      echo "$(date '+%H:%M:%S') watchdog: killing registered pid $p ($owner), registered max $(( deadline - start )) s exceeded by $(( now - deadline )) s: ${cmd[1,140]}"
       kill $p; sleep 10; kill -9 $p 2>/dev/null; rm -f "$f"
+      [[ "$owner" == *-chrome ]] && pkill -f "Google Chrome.*--headless" 2>/dev/null && echo "$(date '+%H:%M:%S') watchdog: killed leftover headless Chrome of $owner"
     fi
   done
   local pids=$(pgrep -f "^/Applications/Blender.app/Contents/MacOS/Blender --background" || true)
