@@ -577,3 +577,38 @@ scale 1.0000, dx 0.0, dy 0.0, apex delta 0.00 %H (apex row 84, corner-top row 20
 every line: 2,736,568 placed tris of 3.0 M, 154 batches (140 at cam01), 1440p GPU 0.5-1.5 ms median — the hero is 6.8 %
 of the 22.2 ms a 45 fps frame allows — resident 1.016 GB of 1.2 GB. Full report `docs/qa_round_11b.md`; composite
 `renders/web/round11b_gate.png`.
+
+## QA round 11c — Phase 6 Gate 1, third check (2026-09-15). **GATE 1: FAIL.**
+
+Capture `2c1c7fe`, six stations 1920x1080 with **both** placeholder sets off (`?billboards=0&treeboards=0`).
+
+1. **A placeholder switch must be proven in pixels, not in the mask.** The geometric board mask still projects
+   16-26 % of five frames; the **measured** coverage is **0 % at all six stations**. Three proofs are on record:
+   `MAT_EXP_treeboard` ships `alphaMode MASK` / `alphaCutoff 1.0` / `baseColorFactor` alpha 0 in the packed
+   `env.glb` (every fragment discarded); the viewer hides the 127 by material name (`hiddenBoards: 127`); and the
+   three largest board quads per station went from flat grey (std 0.28-0.65) to structured content (std 21-51,
+   79-99 % of pixels changed) against the last capture in which they drew. **Name sweep PASS**: 2540 objects,
+   127 exempt `ENV_treeboard_\d+`, 0 to explain, and `scripts/qa_name_sweep.py` carries the same pattern.
+2. **A placeholder can hide a second defect — always re-score the rows it covered.** With the boards cut,
+   **QA-11c-1 (BLOCKER, export)**: every `ENV_shrub_*_LOD2` node (1379 objects, 25 meshes, 135 880 placed tris)
+   is written to `env.gltf` with **no transform** — ARCH writes one on 562/564 mesh nodes, ORN on 436/436, ENV on
+   only 147/1536 — so the whole shrub layer draws stacked at the world origin on the rotunda floor. The site
+   planting is missing at all six stations and a foliage pile sits inside the rotunda, visible through the cam01
+   main arch (the origin projects to (960,655)) and across the cam04 ceiling. Rounds 11 and 11b read the same
+   frames as "boards hide the planting".
+3. **Fixed and confirmed at 100 %:** QA-11-4 / -6 / -8 (boards cut: shore, quay, riprap, stylobate and the
+   main-arch opening all draw), QA-11-9 (the cam04 shard is gone; the rib group exports as modelled at 160 828
+   tris), QA-11-2 / -10 (attic relief), QA-11-11 (backdrop). **Arch-opening ray test at cam01: PASS** — sky above
+   the springline, the far interior wall below it, no near-vault face, rib plate or archivolt in the opening.
+4. **Carries:** QA-11-1 / -3 (colonnade canopies) -> Gate 3; QA-11-5 (ripple-free mirror water) -> Gate 4;
+   QA-11c-2 untextured backdrop and flat colonnade pedestals (geometry is undecimated, 36 456 -> 36 456) -> Gate 2;
+   **QA-11c-3** the viewer logs `defaulted lightmap rgbm_range … = 7` although the manifest carries
+   `lightmap_encoding.rgbm_range = 64` — it reads the wrong key; harmless now, a 9.1x error at the Gate 3 bake.
+
+**Scores (geometry rows, Phase 5 round 09 -> Gate 1 round 11c):** 01 **3.50** (-0.20), 02 **3.10** (-0.20), 03
+**2.50** (-0.10), 04 **2.90** (-0.20), 05 **3.00** (-0.20), 06 **2.90** (-0.20). **Parity FAILS**: the Scale-cues
+row is **1.0 below Phase 5 at five stations** (01, 02, 04, 05, 06) once scored on frames with no placeholder under
+them, twice the 0.5 limit; cam03 is exactly at -0.5. cam04 Ornament recovers +0.5 on the shard fix. Budget and perf
+pass on every line: 2 841 396 placed tris of 3.0 M, 154 batches, 1440p GPU 0.5-1.6 ms median (hero 6.8 % of the
+22.2 ms a 45 fps frame allows), resident 1.019 GB of 1.2 GB, load 2.31 s / 206.4 MB. Full report
+`docs/qa_round_11c.md`; composite `renders/web/round11c_gate.png`.
