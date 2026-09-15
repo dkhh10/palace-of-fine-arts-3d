@@ -436,8 +436,9 @@ asks for 4K on "the 6 assets inside the hero frame within 30 m of cam01". `CAM_q
 lamp post at **36.2 m** (then riprap 51.2 m, the lagoon bed 51.3 m); no group is within 30 m. The walkthrough's own
 stations do come close — 8 ARCH groups are within 30 m of one of the six QA stations, the nearest being the rotunda
 podium at 5.2 m and the south colonnade at 5.5 m — and that set is what `export/gate2_sample.py` returns and what the
-ETC1S timing sample uses. It is **not** baked at 4K: a 4K (albedo + normal + 1K roughness) set costs 48 MB resident
-per group against 12 MB at 2K, so 8 groups would be +288 MB on a budget that Gate 1 already projected 143 MB over.
+ETC1S timing sample uses. It is **not** baked at 4K: a 4K set (4K albedo + 4K normal + 1K roughness) is 44.0 MB
+resident per group against 12.0 MB at 2K, so +32.0 MB each and **+256 MB for the eight** — 1 422 MB against a
+1 200 MB budget, on top of a Gate 1 projection that was already 143 MB over.
 The size is one line in `gate2_common.size_for` if the lead wants to spend the impostor lever on it instead.
 
 **2. Texel density is the honest limit on the ARCH atlases, and 4K would not fix it.** The rotunda podium group is
@@ -484,3 +485,68 @@ the 1 200 MB number and is not counted as one of the levers that does.
 and `gate1_common.ARCH_TARGETS` says "flutes → normal map", but **no ARCH hi→lo normal bake exists**: the brief scopes
 the ARCH normal to the material's own bump, and there is no hi twin for ARCH in the Gate 1 set. Adding it means
 appending the `_LOD0` source objects to the bake blend and one selected-to-active pass per shaft mesh.
+
+### The numbers (60/60 jobs, 2026-09-15)
+
+`python3 export/gate2_report.py` prints all of this from the records; nothing below is typed by hand.
+
+| class | jobs | maps baked | shipped | constant | bake s | KTX2 bytes | resident MB |
+|---|---|---|---|---|---|---|---|
+| arch | 13 | 39 | 32 | 7 | 1 305.7 | 41 660 407 | 118.56 |
+| ground | 4 | 12 | 12 | 0 | 186.5 | 21 755 684 | 47.96 |
+| backdrop | 10 | 32 | 25 | 7 | 112.4 | 11 120 898 | 33.25 |
+| orn | 33 | 99 | 99 | 0 | 1 640.7 | 199 963 172 | 339.67 |
+| **total** | **60** | **182** | **168** | **14** | **3 245.3** | **274 500 161** | **539.44** |
+
+Queue wall time 3 573 s over 60 jobs (mean 59.6 s), zero failures, zero retries. The 14 constants are 7 ARCH and
+7 backdrop maps whose covered texels varied by less than 0.005 — 13 flat normal maps and one flat roughness — and
+they ship as factors with no file and no GPU memory.
+
+**Resident against the 1 200 MB budget** (ASTC 4x4 = 1 byte/texel, x4/3 for mips):
+
+| set | MB | gate |
+|---|---|---|
+| Gate 2 PBR (albedo + roughness + normal + 2 metallic) | 539.44 | 2 |
+| ORN AO, carried unchanged from Gate 1 | 147.89 | 1 |
+| foliage cards as shipped | 20.00 | - |
+| lightmaps, own map | 85.00 | 3 |
+| lightmap slot atlases | 107.00 | 3 |
+| tree impostor atlases | 267.00 | 3 |
+| **total** | **1 166.33** | **33.67 MB under the 1 200 MB budget** |
+
+The Gate 1 projection was 1 343 MB. The 177 MB came from the ORN class, measured rather than assumed: ORN albedo
+at 2K for the 24 prototypes over 2 m and 1K for the 9 under it (the budget doc's named lever), and ORN roughness
+at 1K for all 33 — a colonnade capital is 2.9 mm per texel at 2K against a 1.4 cm pixel at its nearest station, so
+1K roughness is still finer than the screen. The impostor lever (2K -> 1K, -200 MB) is **not** spent and stays
+available to Gate 3. Measured cost of the 1K roughness: over the 43 groups baked at 2K and shipped at 1K, the
+reduction's RMS error is **0.0283 mean, 0.0521 worst**, against maps whose own standard deviation averages 0.0775.
+
+**Metallic: 2 of 30 source materials drive it**, both in the backdrop — `MAT_lamp_post` (mean 0.150) and
+`MAT_backdrop_door_green` (mean 0.019, std 0.108, i.e. metal fittings on a non-metal door). Both are baked through
+an Emission rewire and shipped; every other material is `metallic.factor = 0.0` with no map. The brief expected
+none; these two are the exception and they cost 2.67 MB.
+
+### Verification, Blender side only (`export/out/gate2/verify.json`)
+
+Gate 0 slice, `CAM_qa_01_lagoon_hero`, 1280x720, 64 spp, compositor detached, 32-bit linear EXR. Masks come from a
+blurred A, not from A's own per-pixel luminance — splitting on the noisy image selects its noise into the two halves
+and produced a 16-54 % "noise floor" between two renders of the *same* scene. With the blur the floor is 0.6-5.2 %.
+
+| box | reference | procedural | baked | delta | noise floor | px |
+|---|---|---|---|---|---|---|
+| column sunlit | low-poly | 2.016187 | 1.988218 | **−1.39 %** | −1.04 % | 739 |
+| column shaded | low-poly | 1.399913 | 1.405444 | **+0.40 %** | −0.63 % | 740 |
+| capital sunlit | hi-poly | 4.012901 | 4.075629 | **+1.56 %** | −2.35 % | 218 |
+| capital shaded | hi-poly | 2.511865 | 2.442141 | **−2.78 %** | −5.23 % | 219 |
+| whole frame | low-poly | 2.577324 | 2.576476 | **−0.03 %** | — | 921 600 |
+
+Worst box **2.78 %**, inside the 3 % the brief asks for.
+
+**Why the capital is measured against the hi-poly and the column is not.** The column's normal map carries only
+`MAT_column_rose`'s own bump, so the low-poly with the procedural material is the right reference. The capital's maps
+are baked **selected-to-active from a 64 000-triangle hi-poly**, so they carry every term `MAT_ornament_concrete`
+evaluates on the hi surface — `Geometry ▸ Normal`, `PFA_concrete`'s edge and ledge weights, the dirt in the recesses
+— which the 6 000-triangle low-poly cannot reproduce. Against the low-poly the baked capital reads −17.5 %; against
+the hi-poly it replaces, +1.6 %. The gap is the low-poly itself: **the procedural low-poly is +23.1 % brighter than
+the hi-poly**, and the bake removes that error rather than introducing one. Reporting only the first number would
+have called a working bake a failure.

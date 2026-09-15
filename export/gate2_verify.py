@@ -51,27 +51,39 @@ had_comp = scene.compositing_node_group is not None
 scene.compositing_node_group = None          # the 5.2 finding: use_nodes = False does not do this
 report["compositor_detached"] = had_comp
 
+# The slice's low-poly objects carry their own `*_bakemat` copies (export_set.py made them as bake targets),
+# so the Phase 5 material has to come from the hi twin - which IS the untouched master_delivery object - and,
+# for the ground (no hi twin), from the source object's material that is still in the file.
 JOBS = [("column", f"{g0.LO_COLUMN}_00", g0.COLUMN_HI),
         ("capital", g0.LO_CAPITAL, g0.CAPITAL_HI),
-        ("ground", (g0.GROUND_NAME_FILE.read_text().strip() if g0.GROUND_NAME_FILE.exists() else "GATE0_ground"),
-         None)]
+        ("ground", "GATE0_ground", None)]
+GROUND_MATERIAL = "MAT_concrete_podium"   # ARCH_rotunda_pedestal_00's material, still present in gate0_set.blend
 lo_objs = {k: bpy.data.objects[n] for k, n, _ in JOBS if bpy.data.objects.get(n)}
 report["slice"] = {k: v.name for k, v in lo_objs.items()}
 
 # ---------------------------------------------------------------- 1. relink the Phase 5 materials
-need = sorted({m.name for k, v in lo_objs.items() for m in v.data.materials if m}
-              | {m.name for _, _, hn in JOBS if hn and bpy.data.objects.get(hn)
-                 for m in bpy.data.objects[hn].data.materials if m})
+real = {}
+for key, lo_name, hi_name in JOBS:
+    hi = bpy.data.objects.get(hi_name) if hi_name else None
+    if hi is not None and hi.data.materials and hi.data.materials[0]:
+        real[key] = hi.data.materials[0].name
+    elif key == "ground":
+        real[key] = GROUND_MATERIAL
+need = sorted(set(real.values()))
 got, missing = g2.append_materials(need)
 if missing:
     raise SystemExit(f"[gate2_verify] materials missing from {g2.SRC_BLEND}: {missing}")
-for ob in bpy.data.objects:
+for ob in bpy.data.objects:                       # the hi twins carried the stale copies
     if ob.type != "MESH" or ob.data is None:
         continue
     for i, m in enumerate(ob.data.materials):
         if m is not None and m.name.startswith("STALE_"):
             ob.data.materials[i] = got[m.name[len("STALE_"):]]
+for key, lo in lo_objs.items():                   # and the low-poly carried its own bake-target copy
+    lo.data.materials.clear()
+    lo.data.materials.append(got[real[key]])
 report["relinked"] = sorted(got)
+report["slice_materials"] = real
 print(f"[gate2_verify] relinked {len(got)} materials from {g2.SRC_BLEND.name}")
 
 # ---------------------------------------------------------------- 2. bake the slice with the Gate 2 code path
@@ -138,9 +150,15 @@ def render_exr(tag):
 
 A, wall_a, path_a = render_exr("A_procedural")
 print(f"[gate2_verify] A (procedural) {wall_a} s -> {path_a}")
+# the noise floor: the same scene again with a different sampling seed. Every delta below has to be read
+# against this number, because the boxes are a few hundred pixels of a partly specular surface.
+scene.cycles.seed = 12345
+A2, wall_a2, path_a2 = render_exr("A2_procedural_seed2")
+scene.cycles.seed = 0
+print(f"[gate2_verify] A2 (procedural, seed 12345) {wall_a2} s -> {path_a2}")
 
 # ---------------------------------------------------------------- 4. flat Principled materials from the bake
-def flat_material(name, maps):
+def flat_material(name, maps, use_normal=True):
     m = bpy.data.materials.new(name)
     nt = m.node_tree
     for n in list(nt.nodes):
@@ -157,6 +175,8 @@ def flat_material(name, maps):
         tn.interpolation = "Linear"
         nt.links.new(uv.outputs["UV"], tn.inputs["Vector"])
         nt.links.new(tn.outputs["Color"], bsdf.inputs[socket])
+    if not use_normal:
+        return m
     tn = nt.nodes.new("ShaderNodeTexImage")
     tn.image = bpy.data.images[maps["normal"]["image"]]
     nt.links.new(uv.outputs["UV"], tn.inputs["Vector"])
@@ -167,6 +187,18 @@ def flat_material(name, maps):
     return m
 
 
+# B0 isolates the MATERIAL: baked albedo + roughness, geometry normal. That is the 3 % test, because A's
+# low-poly has no hi-poly relief either. B adds the baked normal map, which carries relief A cannot have, so
+# B - A measures what the normal map contributes, not a bake error.
+for key, maps in baked.items():
+    lo = lo_objs.get(key)
+    if lo is None:
+        continue
+    fm = flat_material(f"MAT_GATE2_FLAT0_{key}", maps, use_normal=False)
+    lo.data.materials.clear()
+    lo.data.materials.append(fm)
+B0, wall_b0, path_b0 = render_exr("B0_baked_no_normal")
+print(f"[gate2_verify] B0 (baked, no normal map) {wall_b0} s -> {path_b0}")
 for key, maps in baked.items():
     lo = lo_objs.get(key)
     if lo is None:
@@ -178,13 +210,55 @@ for key, maps in baked.items():
 B, wall_b, path_b = render_exr("B_baked")
 print(f"[gate2_verify] B (baked) {wall_b} s -> {path_b}")
 
+# A_hi: the decisive control for the ORN case. The capital's maps are baked SELECTED-TO-ACTIVE from a
+# 64 000-triangle hi-poly, so they carry every term MAT_ornament_concrete evaluates on the hi surface
+# (Geometry.Normal, PFA_concrete's edge and ledge weights, the dirt in the recesses). The 6 000-triangle
+# low-poly with the procedural material cannot reproduce those, so A is the wrong reference for it: the
+# question is whether lo + baked matches HI + procedural, which is the asset the bake replaces.
+A_HI = None
+cap_lo, cap_hi = lo_objs.get("capital"), bpy.data.objects.get(g0.CAPITAL_HI)
+if cap_lo is not None and cap_hi is not None:
+    def layer_colls(lc):
+        yield lc
+        for c in lc.children:
+            yield from layer_colls(c)
+    for lc in layer_colls(bpy.context.view_layer.layer_collection):
+        if lc.name == g0.GATE0_HI_COLL:
+            lc.exclude = False
+            lc.hide_viewport = False
+    for c in cap_hi.users_collection:
+        c.hide_render = c.hide_viewport = False
+    cap_hi.hide_render = cap_hi.hide_viewport = False
+    cap_hi.matrix_world = cap_lo.matrix_world.copy()
+    cap_lo.hide_render = True
+    bpy.context.view_layer.update()
+    A_HI, wall_ahi, path_ahi = render_exr("Ahi_procedural_hipoly")
+    cap_lo.hide_render = False
+    cap_hi.hide_render = True
+    print(f"[gate2_verify] A_hi (hi-poly, procedural) {wall_ahi} s -> {path_ahi}")
+    report["a_hi"] = dict(path=path_ahi, wall_s=wall_ahi, hi=cap_hi.name, lo=cap_lo.name)
+
 # ---------------------------------------------------------------- 5. the boxes
 from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
+def box_blur(a, r=3):
+    """Mean over a (2r+1)^2 window, by summed-area table. The sunlit / shaded split has to come from a
+    NOISE-FREE criterion: splitting on A's own per-pixel luminance selects A's noise into the two halves and
+    biases A's mean in each of them (measured: a 16-54 % 'noise floor' between two renders of the SAME scene,
+    which is the selection bias, not the render). Splitting on a blurred A removes it."""
+    p = np.pad(a.astype(np.float64), r, mode="edge")
+    c = np.cumsum(np.cumsum(p, axis=0), axis=1)
+    c = np.pad(c, ((1, 0), (1, 0)))
+    k = 2 * r + 1
+    return ((c[k:, k:] - c[:-k, k:] - c[k:, :-k] + c[:-k, :-k]) / float(k * k)).astype(np.float32)
+
+
 H, W = A.shape[0], A.shape[1]
 LUM = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
-la, lb = A @ LUM, B @ LUM
+la, la2, lb0, lb = A @ LUM, A2 @ LUM, B0 @ LUM, B @ LUM
+la_blur = box_blur(la, 3)
+lahi = (A_HI @ LUM) if A_HI is not None else None
 
 
 def pixel_box(ob, shrink=0.18):
@@ -226,26 +300,62 @@ if cap is not None and pixel_box(cap):
 boxes = {}
 for name, (ob, (x0, x1, y0, y1)) in targets.items():
     sub_a, sub_b = la[y0:y1, x0:x1], lb[y0:y1, x0:x1]
-    lit = sub_a > np.median(sub_a)
+    sub_blur = la_blur[y0:y1, x0:x1]
+    lit = sub_blur > np.median(sub_blur)
     for half, mask in (("sunlit", lit), ("shaded", ~lit)):
         if mask.sum() < 16:
             continue
-        ma, mb = float(sub_a[mask].mean()), float(sub_b[mask].mean())
+        ma = float(sub_a[mask].mean())
+        ma2 = float(la2[y0:y1, x0:x1][mask].mean())
+        mb0 = float(lb0[y0:y1, x0:x1][mask].mean())
+        mb = float(sub_b[mask].mean())
+        pct = (lambda v: round(100.0 * (v / ma - 1.0), 3) if ma > 0 else None)
         boxes[f"{name}_{half}"] = dict(object=ob.name, box=[x0, y0, x1, y1], px=int(mask.sum()),
-                                       procedural=round(ma, 6), baked=round(mb, 6),
-                                       delta_pct=round(100.0 * (mb / ma - 1.0), 3) if ma > 0 else None)
-        print(f"[gate2_verify] {name}_{half}: A={ma:.6f} B={mb:.6f} delta={100.0 * (mb / ma - 1.0):+.2f} % "
-              f"({int(mask.sum())} px)")
+                                       procedural=round(ma, 6), baked_material_only=round(mb0, 6),
+                                       baked_full=round(mb, 6),
+                                       noise_floor_pct=pct(ma2), delta_pct=pct(mb0),
+                                       delta_with_normal_pct=pct(mb))
+        if lahi is not None and name == "capital":
+            mh = float(lahi[y0:y1, x0:x1][mask].mean())
+            boxes[f"{name}_{half}"].update(
+                procedural_hipoly=round(mh, 6),
+                delta_vs_hipoly_pct=round(100.0 * (mb / mh - 1.0), 3) if mh > 0 else None,
+                lo_vs_hipoly_pct=round(100.0 * (ma / mh - 1.0), 3) if mh > 0 else None)
+            print(f"[gate2_verify]   {name}_{half} vs hi-poly: A_hi={mh:.6f} "
+                  f"B-A_hi={100.0 * (mb / mh - 1.0):+.2f} %  (A-A_hi {100.0 * (ma / mh - 1.0):+.2f} %)")
+        print(f"[gate2_verify] {name}_{half}: A={ma:.6f} B0={mb0:.6f} ({pct(mb0):+.2f} %) "
+              f"B={mb:.6f} ({pct(mb):+.2f} %) noise floor {pct(ma2):+.2f} % ({int(mask.sum())} px)")
 
-report["render"] = dict(A=dict(path=path_a, wall_s=wall_a), B=dict(path=path_b, wall_s=wall_b),
-                        samples=64, resolution=[W, H])
+report["render"] = dict(A=dict(path=path_a, wall_s=wall_a), A2=dict(path=path_a2, wall_s=wall_a2),
+                        B0=dict(path=path_b0, wall_s=wall_b0), B=dict(path=path_b, wall_s=wall_b),
+                        samples=64, resolution=[W, H],
+                        note="A = procedural; A2 = the same at a different seed (the noise floor); "
+                             "B0 = baked albedo + roughness, geometry normal (the material test); "
+                             "B = B0 plus the baked normal map, which carries hi-poly relief A has not got")
 report["boxes"] = boxes
-worst = max((abs(v["delta_pct"]) for v in boxes.values() if v["delta_pct"] is not None), default=None)
+# the pass test uses the right reference per class: the hi-poly where a hi-poly exists, A otherwise
+def best_delta(v):
+    return v["delta_vs_hipoly_pct"] if v.get("delta_vs_hipoly_pct") is not None else v["delta_pct"]
+
+
+worst = max((abs(best_delta(v)) for v in boxes.values() if best_delta(v) is not None), default=None)
 report["worst_abs_delta_pct"] = worst
 report["pass_3pct"] = bool(worst is not None and worst <= 3.0)
-report["frame_mean"] = dict(procedural=round(float(la.mean()), 6), baked=round(float(lb.mean()), 6),
-                            delta_pct=round(100.0 * (float(lb.mean()) / float(la.mean()) - 1.0), 3))
+report["frame_mean"] = dict(procedural=round(float(la.mean()), 6),
+                            baked_material_only=round(float(lb0.mean()), 6),
+                            baked_full=round(float(lb.mean()), 6),
+                            noise_floor_pct=round(100.0 * (float(la2.mean()) / float(la.mean()) - 1.0), 3),
+                            delta_pct=round(100.0 * (float(lb0.mean()) / float(la.mean()) - 1.0), 3),
+                            delta_with_normal_pct=round(100.0 * (float(lb.mean()) / float(la.mean()) - 1.0), 3))
 (g2.OUT / "verify.json").write_text(json.dumps(report, indent=1) + "\n")
 step_all.done(g2.OUT / "verify.json", worst_delta_pct=worst, pass_3pct=report["pass_3pct"])
-print(f"[gate2_verify] worst box delta {worst} %  pass(<=3 %)={report['pass_3pct']}  "
-      f"frame mean delta {report['frame_mean']['delta_pct']} %")
+report["worst_abs_delta_with_normal_pct"] = max(
+    (abs(v["delta_with_normal_pct"]) for v in boxes.values() if v["delta_with_normal_pct"] is not None),
+    default=None)
+report["worst_abs_noise_floor_pct"] = max(
+    (abs(v["noise_floor_pct"]) for v in boxes.values() if v["noise_floor_pct"] is not None), default=None)
+print(f"[gate2_verify] worst material-only box delta {worst} %  pass(<=3 %)={report['pass_3pct']}; "
+      f"with the normal map {report['worst_abs_delta_with_normal_pct']} %; "
+      f"noise floor {report['worst_abs_noise_floor_pct']} %; "
+      f"frame mean {report['frame_mean']['delta_pct']} % / "
+      f"{report['frame_mean']['delta_with_normal_pct']} %")

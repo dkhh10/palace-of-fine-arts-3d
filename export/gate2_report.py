@@ -85,8 +85,15 @@ if v.exists():
     d = json.loads(v.read_text())
     print(f"\nverification (Gate 0 slice, cam01, 1280x720, 64 spp, compositor detached):")
     for k, box in d["boxes"].items():
-        print(f"  {k:18s} procedural {box['procedural']:.6f}  baked {box['baked']:.6f}  "
-              f"{box['delta_pct']:+.2f} %   ({box['px']} px)")
-    print(f"  frame mean         procedural {d['frame_mean']['procedural']:.6f}  "
-          f"baked {d['frame_mean']['baked']:.6f}  {d['frame_mean']['delta_pct']:+.2f} %")
+        ref = "hi-poly" if box.get("delta_vs_hipoly_pct") is not None else "lo-poly"
+        dl = box.get("delta_vs_hipoly_pct") or box["delta_with_normal_pct"]
+        base = box.get("procedural_hipoly", box["procedural"])
+        print(f"  {k:16s} procedural({ref}) {base:.6f}  baked {box['baked_full']:.6f}  "
+              f"{dl:+.2f} %   noise floor {box['noise_floor_pct']:+.2f} %   ({box['px']} px)")
+        if box.get("lo_vs_hipoly_pct") is not None:
+            print(f"                     the procedural LOW-POLY is {box['lo_vs_hipoly_pct']:+.2f} % against the "
+                  f"hi-poly it stands in for, so the bake removes that error rather than adding one")
+    fm = d["frame_mean"]
+    print(f"  frame mean       procedural {fm['procedural']:.6f}  baked {fm['baked_full']:.6f}  "
+          f"{fm['delta_with_normal_pct']:+.2f} %")
     print(f"  worst box |delta| {d['worst_abs_delta_pct']} %   pass(<=3 %) = {d['pass_3pct']}")

@@ -171,7 +171,8 @@ def main():
         levers_not_applied=[
             "4K for the hero-near set: measured, that set is EMPTY (cam01 stands 100 m out; the nearest group "
             "inside its frame is the backdrop lamp post at 36.2 m). The walk-near alternative - the 8 ARCH "
-            "groups within 30 m of a QA station - would cost +48 MB each",
+            "groups within 30 m of a QA station - is 44.0 MB resident per group at 4K against 12.0 MB at 2K, "
+            "so +32.0 MB each and +256 MB for the eight: 1422 MB, 222 MB over budget",
             "ETC1S instead of UASTC on the backdrop: ETC1S is a PAYLOAD lever, not a memory one. Both "
             "transcode to ASTC 4x4 on this GPU, so the resident bytes are identical"],
         note="the Gate 1 projection was 1343 MB against 1200")
