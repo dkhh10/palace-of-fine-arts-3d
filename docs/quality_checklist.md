@@ -680,3 +680,36 @@ the texture measurement is still valid and the root cause is a manifest fact). B
 1440p (textures 855.6 + RT 437.5 + geo 40.6), PBR set 566.2 MB of the 1 200 MB texture budget, hero **267 draws of
 400**, GPU **1.7 ms**, load 483.2 MB in 4.17 s. Full report `docs/qa_round_12.md`; composite
 `renders/web/round12_gate.png`.
+
+### Round 12b — Phase 6 **Gate 2 re-check**, 2026-09-15 (`docs/qa_round_12b.md`). **GATE 2: PASS**
+1. **QA-12-1 CLOSED on its material share.** cam05 pier `787 373 853 453` @1280x720 mid(5-21) **2.68 -> 7.05** (target
+   >= 7.0), hp9 **8.14**, std **22.87** (target 25); cam01 S-colonnade wall `1600 590 1670 635` hp9 **0.6-0.8 -> 5.83**
+   (target >= 4.0); grain visible at 100 % on the pier and on the cam03 near column at 5.5 m. The control that decides
+   it: where the sun reaches the surface in BOTH frames the material amplitude is **at or above parity** (sunlit attic
+   mid 1.10x / std 1.17x, attic pedestals 1.33x / 1.49x, dome cap 0.99x), and only where the reference has shade that
+   `direct` mode cannot have is it 0.35-0.81x (cam05 pier 0.47x, colonnade pedestal 0.44x). The export measured the
+   baked albedo's own ceiling at mid 5.5 on this pier and the viewer delivers 7.05, i.e. **more than the albedo holds**;
+   the 8-bit source `*_disp` maps (texel gradient 0.00134-0.00173, below 1/255) cap it there. The cam05 std residual is
+   shade/occlusion -> Gate 3, **not** a re-bake.
+2. **New at this gate, both LIGHTING, neither a Gate 2 defect.** **QA-12b-1**: sun-less stone reads olive-green — cam02
+   RGB 107/125/107, hue 119.4, sat 0.143; **16.0 %** of cam02's and **21.9 %** of cam06's building pixels have G > R
+   against **0.1 %** in the Phase 5 hero and **0.0 %** of the baked albedo itself (maiden + concrete_ochre albedos are
+   R > G > B on 100 % of their pixels), so it is the sky-only irradiance with no bounce, not the asset. **QA-12b-2**:
+   the S-colonnade back wall blows out at mean 201-221 and its recessed panels read as a pasted checker (panel hue 36.7
+   / sat 0.217 vs wall 40.4 / 0.362).
+3. **Carried.** QA-12-2 dome cap sat **0.69x** (was 0.64x; amplitude now at parity, mid 0.99x) — accepted under MAT
+   r10's one-round rule. QA-12-3 closed numerically (back wall 9.4 -> 5.28 cm/texel, columns 1.07 cm); its remaining
+   flatness is the blow-out. QA-12-4 per-instance variation stays Gate 3 by construction: world-space detail tiling
+   breaks grain-scale identity but cam01 shaft CV is only 0.041 S / 0.133 N. **No seams, no visible detail-tile repeat,
+   no colour-space error** in the six cam01 tiles or the ten station crops; 19/19 ARCH/ground sets ship a real normal.
+4. **Named exception standing:** the 10 foliage materials (manifest rule 7) still have no Gate 2 set and read as pale
+   chips under sky-only light. Gate 3/4.
+
+**Scores (round 09 -> round 12 -> round 12b).** Material realism 01 3.5->3.5->**3.5**, 02 2->2.5->**2.5**,
+03 2.5->2->**2.5**, 04 3->2.5->**2.5**, 05 3.5->2.5->**3**, 06 2.5->2.5->**2.5**. Edge wear 3.5->3->**3**,
+2.5->2->**2**, 1.5->1->**1.5**, 1->1->**1**, 2->1.5->**2**, 0.5->0.5->**0.5**. Repetition 3->2.5->**3**,
+2.5->2->**2**, 2->1.5->**2**, 2.5->2->**2**, 2.5->2->**2.5**, 2.5->2->**2**. **All eighteen rows are 0.0 or -0.5
+against round 09 — inside the parity window — and no row's residual is a material gap**, so GATE 2 PASSES. Budget PASS:
+resident **1 433.6 MB** at 1440p (textures 953.5 + RT 437.5 + geo 42.6), textures 246.5 MB under the 1 200 MB budget
+with the impostor lever (-200 MB) unspent, detail layer 33.6 MB, hero **267 draws of 400**, GPU **1.8 ms** median,
+load 537.4 MB in 4.78 s, 62/62 sets used, 0 failures. Composite `renders/web/round12b_gate.png`.
