@@ -101,7 +101,7 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 		sets_unused: Object.keys( sets ).filter( n => ! matchedKeys.has( n ) ),
 		order: [], textures: 0, unique_files: 0, bytes: 0, kept_glb_normal: 0, replaced_glb_normal: 0, kept_glb_ao: 0,
 		colourspace_conflicts: [], formats: {}, failed: [],
-		factored, constant_only: constantOnly,
+		factored, constant_only: constantOnly, flat_normal_constant: [],
 		without_uv1: work.filter( j => j.set.uv1InGlb === false ).map( j => j.material.name ),
 	};
 	// One GPU upload per file: a texture used by several materials is SHARED, never cloned (a clone
@@ -149,7 +149,10 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 					}
 			} catch ( e ) { report.failed.push( { url: entry.url, error: e.message } ); }
 		}
-		if ( m.normalMap && ! set.maps.normalMap ) report.kept_glb_normal ++;    // ORN hi->lo normal kept
+		if ( m.normalMap && ! set.maps.normalMap ) {
+			report.kept_glb_normal ++;                                          // ORN hi->lo normal kept
+			if ( set.flatNormalConstant ) report.flat_normal_constant.push( m.name );
+		}
 		if ( applied.length ) { m.needsUpdate = true; }
 		report.order.push( { rank: job.rank, material: m.name, set: set.name, matched_on: job.matchedOn,
 			distance_m: Math.round( job.distance * 10 ) / 10, maps: applied } );
@@ -182,7 +185,12 @@ export function applyFactors( m, set ) {
 	if ( Array.isArray( f.map ) && f.map.length >= 3 ) { m.color.setRGB( f.map[ 0 ], f.map[ 1 ], f.map[ 2 ], THREE.LinearSRGBColorSpace ); n ++; }
 	if ( typeof f.roughnessMap === 'number' ) { m.roughness = f.roughnessMap; n ++; }
 	if ( typeof f.metalnessMap === 'number' ) { m.metalness = f.metalnessMap; n ++; }
-	if ( typeof set.normalScale === 'number' && m.normalScale ) { m.normalScale.set( set.normalScale, set.normalScale ); n ++; }
+	if ( typeof set.normalScale === 'number' && m.normalScale && ( set.maps.normalMap || m.normalMap ) ) {
+		m.normalScale.set( set.normalScale, set.normalScale ); n ++;
+	}
+	// A CONSTANT normal factor is the flat normal [0.5, 0.5, 1]: it means "this bake found no relief",
+	// not "throw the relief away".  The glb's own normal map (the Gate 1 ORN hi->lo bake) is kept.
+	if ( Array.isArray( f.normalMap ) && ! set.maps.normalMap ) set.flatNormalConstant = true;
 	if ( n ) m.needsUpdate = true;
 	return n;
 }
