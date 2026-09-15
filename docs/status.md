@@ -564,3 +564,6 @@ Next: reports -> reviews -> merge MAT r10 -> regenerate master_delivery.blend (P
 ## 2026-09-15 · Viewer r2 reported (phase6-viewer 02ccbf3): multi-glb + instancing + progressive loading done; six-station capture blocked on the glbs (ORN bake queue 2/33 at 12:45, ~250 s per job)
 Manifest v2 read cleanly: 2 743 570 placed tris (ARCH 0.84 M / ORN 1.10 M / ENV 0.79 M), 154 batches, 127 far trees, 7 stations. FloatType LUT cut the ground-band error 17.1 -> 3.1 of 255. Hand-off to export: rgbm_range missing in v2's texture schema (sent).
 In flight: export engineer (queue + glbs), MAT r10 (rendering), viewer r2 code review. Next: when glbs + idle -> lead runs web/tools/gate1.sh (one command) -> Gate 1 QA critic; MAT r10 review + merge -> regenerate master_delivery.blend.
+
+## 2026-09-15 · Viewer r2 merged (d08dd9a, review fixes incl. the per_class blocker and the double-render perf bug); capture waits for the glbs
+In flight: export engineer (ORN queue + four glbs), MAT r10. Next: glbs + idle -> lead runs `web/tools/gate1.sh` -> QA critic Gate 1; MAT r10 review/merge -> regenerate master_delivery.blend.
