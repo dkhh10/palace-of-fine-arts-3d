@@ -19,7 +19,7 @@ const DEFAULTS = {
 	minCount: 24,       // instances: below this the draw call is not worth splitting
 	maxDepth: 2,        // 2 median cuts -> at most 4 chunks per batch
 	gain: 0.8,          // keep a cut only if the widest child extent is < gain x the parent's
-	budget: 160,        // hard cap on ADDED draw calls over the whole scene
+	budget: 32,         // hard cap on ADDED draw calls over the whole scene (spent biggest-radius first)
 };
 
 /** Per-instance world-space translation of an InstancedMesh, in the mesh's own parent space. */

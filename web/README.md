@@ -70,56 +70,58 @@ manifest carries a set, so a grey capture can never be reported as a PBR one.
   ANGLE Metal) KTX2 UASTC transcodes to `RGBA_ASTC_4x4`, 1 byte/texel, so a 2K map is **5.59 MB**
   resident and a 4K one 22.4 MB — the figure to compare with `budget.resident_mb`.
 
-### Gate 2 capture, measured (`web/tools/gate2.sh`, 2026-09-15, manifest `pfa-phase6/3`)
-60 sets / 143 textures / 105 constant maps / 33 `in_glb` occlusion maps; 55 of 65 scene materials
-textured from 51 of 60 sets, 153 attachments, 143 unique files, **531.3 MB** resident, every one
-`RGBA_ASTC_4x4`; factors applied to all 55 before any download; 33 Gate 1 ORN normals replaced and
-**83 superseded Gate 1 textures disposed, 155.2 MB freed**; 0 failures, 0 colour-space conflicts.
-Unmatched, by design: the 10 foliage bark/leaf/shrub materials (rule 7). Unused, **hand-off to export/bake (review finding 5)**: 9 of
-the 10 `MAT_EXP_ENVBD__*` sets, because the first `env.glb` pack carried exactly one backdrop
-material (`MAT_EXP_ENVBD__MAT_backdrop_building`, `uv1_in_glb: false`, factors only) — the other
-nine were merged away, so the city backdrop took no Gate 2 data at all and the two metalness maps
-(`backdrop_door_green` 0.019, `lamp_post` 0.150) reached nothing. The `-km` re-pack keeps the ten
-materials distinct; re-measured below.
+### Gate 2 capture, measured (`web/tools/gate2.sh`, 2026-09-15 19:10, manifest `pfa-phase6/3`
+### after the export engineer's `-km` env re-pack)
+60 sets / 168 textures / 105 constant maps / 33 `in_glb` occlusion maps; **64 of 74 scene materials
+textured from 60 of 60 sets** (0 unused), 178 attachments, 168 unique files, **566.2 MB** resident,
+every one `RGBA_ASTC_4x4`; factors applied to all 64 before any download; 33 Gate 1 ORN normals
+replaced and **93 superseded Gate 1 textures disposed (60 `map`, 33 `normalMap`), 155.2 MB freed**;
+0 failures, 0 colour-space conflicts. Unmatched, by design: the 10 foliage bark/leaf/shrub
+materials (rule 7). **All ten `MAT_EXP_ENVBD__*` backdrop sets now attach** (the `-km` re-pack keeps
+them distinct and the manifest flipped them to `uv1_in_glb: true`), including the two metalness maps
+(`lamp_post`, `backdrop_door_green`) — review finding 5 closed; cam06's linear ratio 2.716 -> 1.548.
 
 | station | 01 | 02 | 03 | 04 | 05 | 06 |
 |---|---|---|---|---|---|---|
-| presented ms (1440p) | 16.50 | 16.60 | 16.70 | 16.70 | 16.70 | 16.60 |
-| GPU ms median / p95 | 1.40 / 1.70 | 1.30 / 1.50 | 1.40 / 2.00 | 0.30 / 0.40 | 1.60 / 1.90 | 1.90 / 2.10 |
-| draw calls | 231 | 217 | 234 | 99 | 210 | 241 |
-| triangles (M) | 5.41 | 5.08 | 5.48 | 2.36 | 4.86 | 5.60 |
-| pair-sheet linear ratio | **1.141** | 1.352 | 7.942* | 1.710 | 1.381 | 2.716 |
+| presented ms (1440p) | 16.90 | 16.70 | 18.10 | 16.70 | 16.60 | 19.10 |
+| GPU ms median / p95 | 1.70 / 2.70 | 1.50 / 2.10 | 1.70 / 2.30 | 0.60 / 0.90 | 1.60 / 2.80 | 1.90 / 3.10 |
+| draw calls | 267 | 255 | 278 | 114 | 246 | 287 |
+| triangles (M) | 5.39 | 5.06 | 5.48 | 2.20 | 4.84 | 5.60 |
+| pair-sheet linear ratio | **1.090** | 1.280 | 7.937* | 1.710 | 1.351 | 1.548 |
 | the same ratio in grey (Gate 1) | 1.187 | 1.461 | 8.373* | 2.259 | 1.454 | 2.837 |
 
 *cam03 and cam05 are scored against Eevee frames, not Cycles: not parity targets.
-Load 469.8 MB in 4.82 s (sky 0.53, lut 0.09, glb 1.64, textures 2.34). Resident **1 294.4 MB** at
-1440p = textures 820.7 + render targets 437.5 + geometry 36.2, and **1 165.3 MB** at 1080p (the
+Load 483.2 MB in 4.17 s (sky 0.51, lut 0.06, glb 1.63, textures 1.75). Resident **1 333.8 MB** at
+1440p = textures 855.6 + render targets 437.5 + geometry 40.6, and **1 204.8 MB** at 1080p (the
 render targets are 308.5 MB there). The render targets are two 2560x1440 HalfFloat `samples: 4`
 composer buffers (147.5 MB each), the 1024^2 water reflector (41.9) and the PMREM cubeUV (100.7);
 the PMREM is counted there and NOT again as a texture (`scene.environment` is that target's own
 texture — review finding 1, fixed).
-Like for like against the manifest's budget: the Gate 2 PBR set measures **531.3 MB** against its
-539.4 MB line, and the three budget lines whose assets exist today (gate2_pbr 539.4 + orn_ao_gate1
-147.9 + foliage_cards 20.0 = 707.3 MB) measure 698.6 MB here. The remaining texture bytes are the
-two sky equirects (~90 MB), which the budget does not count; the 1 166 MB projection and the
-1 200 MB budget include the Gate 3 lightmaps and impostors that do not exist yet.
+Like for like against the manifest's budget: the Gate 2 PBR set measures **566.2 MB**, and the
+budget lines whose assets exist today (gate2_pbr + orn_ao_gate1 + foliage_cards) measure 733.5 MB
+here. The remaining texture bytes are the two sky equirects (~90 MB), which the budget does not
+count; the 1 200 MB budget also covers the Gate 3 lightmaps and impostors that do not exist yet.
 
 ## Instance chunking (QA-11d-1)
 The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
 batch scattered over the site has a site-spanning bounding sphere and passes the frustum test at every
 station. `src/chunking.js` splits such a batch (bounding radius >= 30 m) by median cuts into at most 4
-regional batches, keeping a cut only when it tightens the bounds to <= 0.8x, with a global cap of +160
-draw calls. Measured on the Gate 1 export, 1280x720, both placeholder sets hidden (`?chunk=0` is the
-control): 9 of 27 candidate batches split into 30, and
+regional batches, keeping a cut only when it tightens the bounds to <= 0.8x, with a cap of +32 ADDED
+draw calls over the WHOLE scene (spent across the glbs, not per glb). Measured on the Gate 2 export (the `-km` re-pack), 2560x1440, both placeholder sets hidden
+(`?chunk=0` is the control), with the default `minRadius 30 m, maxDepth 2, gain 0.8, budget 32`
+ADDED draw calls over the whole scene (spent biggest-radius batch first): 16 of 27 candidates split
+into 48.
 
 | station | 01 | 02 | 03 | 04 | 05 | 06 |
 |---|---|---|---|---|---|---|
-| draws off -> on | 199 -> 231 | 193 -> 217 | 203 -> 234 | **99 -> 99** | 189 -> 210 | 205 -> 241 |
-| tris (M) off -> on | 5.44 -> 5.41 | 5.32 -> 5.08 | 5.57 -> 5.48 | **2.80 -> 2.36** | 5.21 -> 4.86 | 5.60 -> 5.60 |
+| draws off -> on | 217 -> 267 | 211 -> 255 | 221 -> 278 | **108 -> 114** | 207 -> 246 | 223 -> 287 |
+| tris (M) off -> on | 5.44 -> 5.39 | 5.32 -> 5.06 | 5.57 -> 5.48 | **2.65 -> 2.20** | 5.21 -> 4.84 | 5.60 -> 5.60 |
 
-At 2560x1440 the hero's `gl.finish` GPU cost is 1.5 ms either way and cam04 goes 0.6 -> 0.5 ms; the
-hero stays at 231 draws of the 400-draw budget. Splitting every candidate (`?chunk=30,2,1.0`) costs
-+50 more draws at the hero and saves no further triangles anywhere, so the 0.8 gain test stands.
+cam04, the station that sees least of the site, drops **16.9 % of its triangles for 6 draw calls**;
+the hero pays 50 draws of its 400-draw budget and its GPU cost is 1.7 ms. The budget setting is the
+lever: `?chunk=30,2,0.8,160` splits 26 batches (hero 303 draws, cam04 -17.4 %), `?chunk=30,2,0.6,48`
+splits 6 (hero 235, cam04 -9.6 %), `?chunk=30,2,1.0` splits everything and saves no more triangles
+anywhere.
 
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)

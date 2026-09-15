@@ -53,7 +53,7 @@ const CFG = {
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
 	// QA-11d-1 instance chunking: "0" disables it, "minRadius[,maxDepth[,gain]]" tunes it
-	chunk: qs.get( 'chunk' ),
+	chunk: qs.get( 'chunk' ),                           // "minRadius[,maxDepth[,gain[,budget]]]" 
 	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
 };
 
@@ -468,9 +468,14 @@ async function loadGlbs() {
 		if ( chunkArgs.length && isFinite( chunkArgs[ 0 ] ) && chunkArgs[ 0 ] > 0 ) opts.minRadius = chunkArgs[ 0 ];
 		if ( isFinite( chunkArgs[ 1 ] ) ) opts.maxDepth = chunkArgs[ 1 ];
 		if ( isFinite( chunkArgs[ 2 ] ) ) opts.gain = chunkArgs[ 2 ];
+		if ( isFinite( chunkArgs[ 3 ] ) ) opts.budget = chunkArgs[ 3 ];
 		chunkStats.opts = opts;
+		// The budget is the ADDED draw calls over the WHOLE scene, so it has to be spent across the
+		// glbs, not per glb (each root would otherwise get the full allowance).
+		let left = opts.budget !== undefined ? opts.budget : 32;
 		for ( const root of glbRoots ) {
-			const s = chunkInstancedMeshes( root, opts );
+			const s = chunkInstancedMeshes( root, { ...opts, budget: left } );
+			left -= s.added;
 			chunkStats.candidates += s.candidates; chunkStats.split += s.split;
 			chunkStats.chunks += s.chunks; chunkStats.added += s.added;
 			chunkStats.batches.push( ...s.batches );
