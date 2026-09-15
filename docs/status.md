@@ -619,3 +619,6 @@ Next: Gate 2 verdict -> Gate 3 bake (docs/briefs/phase6_gate3_bake.md) + Gate 4 
 
 ## 2026-09-15 · QA round 12 (1a8a2ab): GATE 2 FAIL on one row (cam05 Material realism -1.0): QA-12-1 — 7 of 12 ARCH/ground sets ship no normal map (the material bump is in neither map; pier-face grain 0.27x of Phase 5) and the two colonnade UV1 atlases have 0.16 coverage. Right: whole-building sat 1.02x of the photo (QA-10b-1 closed by the bake), backdrop + pedestals textured (QA-11c-2 closed), ORN relief real on all 33
 Dispatched: export re-lays the two colonnade UV1 atlases (>= 0.40), bake bakes bump -> tangent normals for all twelve ARCH/ground groups + re-bakes the two re-laid groups. Carry: QA-12-4 one texture per shared mesh (Repetition -0.5 everywhere) goes to Gate 3's per-instance slot; the report's 921 MB vs the capture's 855.6 MB texture figure to reconcile. Next: re-capture, QA 12b, Gate 3.
+
+## 2026-09-15 · Atlas split merged (2aed50f): 52 UV1 groups, hero stone coverage 0.056 -> 0.191, colonnade 0.040 -> 0.28 (instanced) + 0.11 (merged mass, geometric cap), +2 atlases; bake engineer re-baking the eleven groups + bump-derived normals for every ARCH/ground set
+In flight: bake queue (QA-12-1). Next: lead re-captures (gate2.sh), QA 12b, Gate 3 dispatch.
