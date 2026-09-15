@@ -89,6 +89,7 @@ manager.onProgress = ( url, done, total ) => {
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight;
 let patchedMaterials = 0, lightmapsApplied = 0;
+const unpatchedMaterials = new Set();
 let userControlled = false, currentStation = null;
 
 async function boot() {
@@ -205,12 +206,19 @@ async function loadGlb( url ) {
 		for ( const m of mats ) {
 			if ( ! m || ! m.isMeshStandardMaterial ) continue;
 			const lm = matchLightmap( o, m );
-			patchBakedMaterial( m, { lightMapEncoding: lm ? lm.encoding : 'linear', rgbmMaxRange: lm ? lm.rgbmMaxRange : 7 } );
-			patchedMaterials ++;
-			if ( lm ) applyLightmap( m, lm );
+			// Only a LIGHTMAPPED material may lose its diffuse light: one without a lightmap (the 15
+			// instanced columns at Gate 0) would otherwise render black, so it keeps stock three
+			// lighting (sun diffuse + env diffuse) and is counted separately.
+			if ( lm ) {
+				patchBakedMaterial( m, { lightMapEncoding: lm.encoding, rgbmMaxRange: lm.rgbmMaxRange } );
+				patchedMaterials ++;
+				applyLightmap( m, lm );
+			} else {
+				unpatchedMaterials.add( m.name || '(unnamed)' );
+			}
 		}
 	} );
-	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} materials patched` );
+	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} lightmapped materials patched (specular-only sun), ${unpatchedMaterials.size} without a lightmap left on stock lighting: ${[ ...unpatchedMaterials ].join( ', ' ) || 'none'}` );
 }
 
 function matchLightmap( obj, mat ) {
@@ -336,7 +344,7 @@ window.__pfaInfo = () => ( {
 	size: [ renderer.domElement.width, renderer.domElement.height ],
 	render: { ...renderer.info.render }, memory: { ...renderer.info.memory },
 	gl: glInfo(),
-	patchedMaterials, lightmapsApplied,
+	patchedMaterials, lightmapsApplied, unpatchedMaterials: [ ...unpatchedMaterials ],
 	exposure: lutPass ? lutPass.uniforms.exposure.value : null,
 	lutEnabled: lutPass ? !! lutPass.uniforms.lutEnabled.value : false,
 	lutSize: lutPass ? lutPass.uniforms.lutSize.value : 0,
