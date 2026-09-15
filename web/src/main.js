@@ -183,9 +183,15 @@ async function loadSky() {
 	} catch ( e ) { note( `sky load failed: ${e.message}` ); }
 }
 
+let ktx2Loader = null;
+function getKTX2() {
+	// One instance, kept alive: it owns a worker pool and also transcodes any .ktx2 lightmap.
+	if ( ! ktx2Loader ) ktx2Loader = new KTX2Loader( manager ).setTranscoderPath( '/basis/' ).detectSupport( renderer );
+	return ktx2Loader;
+}
+
 async function loadGlb( url ) {
-	const ktx2 = new KTX2Loader( manager ).setTranscoderPath( '/basis/' ).detectSupport( renderer );
-	const loader = new GLTFLoader( manager ).setKTX2Loader( ktx2 ).setMeshoptDecoder( MeshoptDecoder );
+	const loader = new GLTFLoader( manager ).setKTX2Loader( getKTX2() ).setMeshoptDecoder( MeshoptDecoder );
 	const t = performance.now();
 	const gltf = await loader.loadAsync( url );
 	scene.add( gltf.scene );
@@ -205,7 +211,6 @@ async function loadGlb( url ) {
 		}
 	} );
 	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} materials patched` );
-	ktx2.dispose();
 }
 
 function matchLightmap( obj, mat ) {
@@ -224,6 +229,7 @@ function applyLightmap( mat, lm ) {
 		let p;
 		if ( lm.url.endsWith( '.hdr' ) ) p = new RGBELoader( manager ).loadAsync( lm.url );
 		else if ( lm.url.endsWith( '.exr' ) ) p = new EXRLoader( manager ).loadAsync( lm.url );
+		else if ( lm.url.endsWith( '.ktx2' ) ) p = getKTX2().loadAsync( lm.url );
 		else p = new THREE.TextureLoader( manager ).loadAsync( lm.url );
 		lightmapCache.set( lm.url, p );
 		return p;
