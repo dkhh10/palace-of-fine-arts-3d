@@ -108,9 +108,14 @@ case "$cmd" in
       write_status running "$id" "$done_n" "$total" "baking"
       t0=$(date +%s)
       set +e
-      "$ROOT/scripts/blender_run.sh" $MAXS -- --background "$SRC" --python "$HERE/bake_orn.py" -- --job "$id"
+      # --python-exit-code 1: Blender exits 0 even when the script raises, so without it a failed bake
+      # would be recorded as done. The record file is checked as well (measured: a job whose save_png threw
+      # still gave rc=0).
+      "$ROOT/scripts/blender_run.sh" $MAXS -- --background "$SRC" --python-exit-code 1 \
+          --python "$HERE/bake_orn.py" -- --job "$id"
       rc=$?
       set -e
+      [ -f "$rec" ] || rc=$(( rc == 0 ? 90 : rc ))    # rc 90: Blender exited clean but wrote no record
       dt=$(( $(date +%s) - t0 ))
       record_job "$id" "$dt" "$rc"
       if [ $rc -eq 0 ]; then done_n=$((done_n+1)); else echo "[bake_queue] job $id FAILED rc=$rc" >&2; fi
