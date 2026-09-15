@@ -316,6 +316,62 @@ from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
     orn 33/33/33/0, env **21/21/21/0** (enforced), ground 4/4/4/0. The flags each class was packed with are
     written to `export/out/gate1/gltfpack_flags.txt` and read back by the verifier.
 
+15. **QA-12-1, the two colonnade UV1 atlases.** Three real causes, measured, not guessed:
+    * the group was unwrapped with a **multi-object** smart project, which packs ONE shared layout across the
+      selection, so every mesh kept only its own sparse share of the square and the tiling step then scaled
+      that sparseness into a tile — now each mesh is unwrapped on its own;
+    * the island margin was `TILE_MARGIN` (0.004) **of the unwrap square**, which becomes 0.004 x tile side at
+      the atlas: on the merged colonnade mesh 0.004 gives 0.036 self-coverage, 0.001 gives 0.114, 0.0003 gives
+      0.146. `ISLAND_MARGIN_TILED` = 0.001 (~1.8 px at 2K on the big tile) is the safe end;
+    * the tile scale was a fixed `1/sqrt(1.6)` guess; `pack_tiles` now **bisects** for the largest scale that
+      fits — tile area 0.35 -> 0.788.
+    Result, `MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade` **0.0403 -> 0.0996** and
+    `MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade` **0.0394 -> 0.0939** (2.5x and 2.4x). Every other
+    UV1 group is byte-identical (50 groups, 2 changed, asserted against the previous `uv1_atlas` boxes); the
+    three rotunda multi-mesh groups keep the old layout through `g1.UV1_LEGACY_PACK` because their Gate 2
+    bakes already shipped.
+
+    **The 0.40 target is not reachable while these two atlases stay as one group, and the reason is
+    structural, not a packing bug.** The merged 130-object colonnade mass holds 76 % of the group's surface
+    area, so area weighting gives it 76 % of the atlas, and its own island packing tops out at 0.146 even with
+    Blender's concave `pack_islands` (measured: smart project 0.146, pack_islands CONVEX 0.108, CONCAVE
+    0.144). 0.76 x 0.15 caps the group near 0.13 whatever the other five meshes do. Raising the number by
+    giving the merged mass a smaller tile would LOWER the density where the texels are actually needed.
+    **The fix that works is to split the merged mass onto its own atlas**: it then gets a whole 2K instead of
+    76 % of one (1.3x density) and the five instanced meshes reach ~0.40 on theirs. Cost: one extra material
+    and one extra texture set per colonnade side (+4 x 2K maps, ~32 MB ASTC), and the bake engineer bakes four
+    groups instead of two. **Lead's call — not taken here, because it changes the material set and the Gate 2
+    bake plan.**
+
+16. **UV1 atlas split (lead's go, 2026-09-15).** The merged single-use mass of the two colonnade groups now
+    has its own material and its own 2K (`g1.UV1_SPLIT_MERGED`); four masses that were already alone on their
+    atlas just take the fine island margin (`g1.UV1_FINE_MARGIN_GROUPS`); the `UV1_LEGACY_PACK` pin on the
+    three rotunda groups is lifted; and the tile packer is a best-area-fit guillotine instead of shelves.
+    Coverage before -> after (512² raster of the UV square):
+
+    | group | before | after | target |
+    |---|---|---|---|
+    | `ARCH_colonnade_north__MAT_concrete_colonnade` (instanced) | 0.0403 | **0.2768** | 0.35 |
+    | `ARCH_colonnade_north__MAT_concrete_colonnade__merged` (new) | - | **0.1143** | 0.13 |
+    | `ARCH_colonnade_south__MAT_concrete_colonnade` (instanced) | 0.0394 | **0.2807** | 0.35 |
+    | `ARCH_colonnade_south__MAT_concrete_colonnade__merged` (new) | - | **0.1099** | 0.13 |
+    | `ARCH_rotunda__MAT_concrete_ochre` (the hero's stone) | 0.0560 | **0.1908** | 0.13 |
+    | `ARCH_rotunda__MAT_plaster_ceiling_rib` | 0.0647 | **0.2002** | 0.13 |
+    | `ARCH_site__MAT_concrete_podium` | 0.0827 | **0.3126** | 0.13 |
+    | `ENV__riprap` | 0.0130 | **0.0876** | 0.13 |
+    | `ARCH_rotunda__MAT_column_rose` (pin lifted) | 0.2282 | **0.3977** | 0.35 |
+    | `ARCH_rotunda__MAT_column_tan_inner` (pin lifted) | 0.2241 | **0.4471** | 0.35 |
+    | `ARCH_rotunda__MAT_concrete_podium` (pin lifted) | 0.3042 | **0.5075** | 0.35 |
+
+    Eight of eleven meet their target. **The three that do not are capped by geometry, not by the packer.**
+    The two instanced colonnade atlases hold two nearly equal column meshes, and two equal squares cannot
+    exceed side 0.496 each in a unit square, so the tile area is capped near 0.545 (measured 0.5453 / 0.5421,
+    and a guillotine packer returns exactly the same layout as the shelf packer — the bound is geometric).
+    At the columns' own 0.545 self-coverage that gives 0.28. The two split masses reach 0.114 / 0.110 at the
+    0.001 margin; 0.0003 would give 0.146 but leaves a 0.6 px gutter against a 16 px bake margin, so I did
+    not take it. `ENV__riprap` is 49 joined rock objects and reaches 0.088. Raising any of the three further
+    means 4K for those atlases or a finer margin — both the lead's call, with the numbers above.
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the

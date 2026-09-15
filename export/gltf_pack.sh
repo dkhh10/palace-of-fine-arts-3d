@@ -100,6 +100,7 @@ if [ "$1" = "--gate1" ]; then
     # byte-identical this round, and verify_glb reports - without failing - any names they lose.
     EXTRA=()
     [ "$cls" = env ] && EXTRA=(-vpf -km)
+    [ "$cls" = arch ] && EXTRA=(-vpf -km)   # QA-12-1 re-pack: same flags as env, named materials kept
     if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else

@@ -45,7 +45,12 @@ import qa_cameras  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 INSTANCE_MIN = 4            # >= this many placements of one mesh -> keep it shared, never merge it
-TILE_MARGIN = 0.004         # smart-project island margin for the UV1 atlases
+TILE_MARGIN = 0.004         # gap between the tiles of one UV1 atlas
+# Island margin for a mesh that will be SCALED INTO A TILE. 0.004 of the unwrap square becomes 0.004 x tile
+# side x 2048 texels in the atlas - 0.7 px on a 0.87-side tile - so the old value was paying a full-atlas
+# margin inside every tile and cost the merged colonnade mesh 0.036 coverage where 0.001 gives 0.114 and
+# 0.0003 gives 0.146 (measured). 0.001 is the safe end: ~1.8 px at 2K on the big tile, ~1 px on the small ones.
+ISLAND_MARGIN_TILED = 0.001
 UV2_MARGIN = 0.010          # lightmap islands need a wider gutter at 2K
 
 
@@ -86,6 +91,126 @@ def smart_project(objs, uv_name, margin):
     bpy.ops.uv.smart_project(angle_limit=math.radians(66.0), island_margin=margin,
                              correct_aspect=True, scale_to_bounds=False)
     bpy.ops.object.mode_set(mode="OBJECT")
+
+
+def shelf_fit(sides, margin):
+    """Place squares of the given sides into the unit square, biggest first, in shelves.
+    Returns {name: (x, y, side)} or None when they do not fit."""
+    x = y = margin
+    row_h = 0.0
+    tiles = {}
+    for name, sd in sides:
+        if x + sd > 1.0 - margin:
+            x = margin
+            y += row_h + margin
+            row_h = 0.0
+        if y + sd > 1.0 - margin:
+            return None
+        tiles[name] = (x, y, sd)
+        x += sd + margin
+        row_h = max(row_h, sd)
+    return tiles
+
+
+def guillotine_fit(sides, margin):
+    """Pack squares into the unit square with a best-area-fit guillotine packer. Shelves waste the whole
+    row height under a big tile (measured: 0.545 of the atlas on the 5-mesh colonnade group); this fills the
+    strip beside and under it. Returns {name: (x, y, side)} or None."""
+    free = [(margin, margin, 1.0 - 2 * margin, 1.0 - 2 * margin)]
+    placed = {}
+    for name, sd in sides:
+        best = None
+        for i, (fx, fy, fw, fh) in enumerate(free):
+            if fw >= sd and fh >= sd:
+                waste = fw * fh - sd * sd
+                if best is None or waste < best[0]:
+                    best = (waste, i)
+        if best is None:
+            return None
+        i = best[1]
+        fx, fy, fw, fh = free.pop(i)
+        placed[name] = (fx, fy, sd)
+        step_ = sd + margin
+        if fw - step_ > 1e-6:
+            free.append((fx + step_, fy, fw - step_, sd))
+        if fh - step_ > 1e-6:
+            free.append((fx, fy + step_, fw, fh - step_))
+    return placed
+
+
+def pack_tiles(areas, margin, bisect=True):
+    """Area-weighted square tiles packed into [0,1]^2. `areas` is [(name, surface_area)].
+
+    The tile side is proportional to sqrt(area) - equal texel density per unit of surface - and the common
+    scale is BISECTED for the largest value that still fits (QA-12-1: a fixed 1/sqrt(1.6) guess left the two
+    colonnade atlases at 0.16 coverage). Returns (tiles, scale, tile_area_fraction)."""
+    order = sorted(areas, key=lambda t: -t[1])
+    tot = sum(a for _, a in order) or 1.0
+    base = [(n, math.sqrt(a / tot)) for n, a in order]
+    if not bisect:
+        # the original layout, reproduced exactly (including the "shrink the overflow into the last row"
+        # fallback) so the three groups whose Gate 2 bake already shipped keep byte-identical UVs
+        k = (1.0 - 2 * margin) / math.sqrt(sum(sd * sd for _, sd in base) * 1.6)
+        x = y = margin
+        row_h = 0.0
+        tiles = {}
+        for n, sd0 in base:
+            sd = sd0 * k
+            if x + sd > 1.0 - margin:
+                x = margin
+                y += row_h + margin
+                row_h = 0.0
+            if y + sd > 1.0 - margin:
+                sd = max(1e-3, 1.0 - margin - y)
+            tiles[n] = (x, y, sd)
+            x += sd + margin
+            row_h = max(row_h, sd)
+        return tiles, k, round(sum(v[2] * v[2] for v in tiles.values()), 4)
+    lo, hi = 0.01, 2.0
+    best = None
+    for _ in range(40):
+        mid = 0.5 * (lo + hi)
+        t = guillotine_fit([(n, sd * mid) for n, sd in base], margin)
+        if t is None:
+            hi = mid
+        else:
+            best, lo = (t, mid), mid
+    tiles, k = best if best else (guillotine_fit([(n, sd * lo) for n, sd in base], margin), lo)
+    frac = sum(v[2] * v[2] for v in tiles.values()) if tiles else 0.0
+    return tiles, k, round(frac, 4)
+
+
+def uv_coverage(meshes_, uv_name, grid=512):
+    """Fraction of the UV square covered by the group's UV triangles (the texel density the bake gets)."""
+    import numpy as np
+    hits = np.zeros((grid, grid), dtype=bool)
+    for me in meshes_:
+        lay = me.uv_layers.get(uv_name)
+        if lay is None:
+            continue
+        uvs = lay.uv
+        for poly in me.polygons:
+            pts = [uvs[li].vector for li in poly.loop_indices]
+            for i in range(1, len(pts) - 1):
+                tri = [pts[0], pts[i], pts[i + 1]]
+                xs = [t[0] for t in tri]
+                ys = [t[1] for t in tri]
+                x0 = max(0, int(min(xs) * grid)); x1 = min(grid - 1, int(max(xs) * grid))
+                y0 = max(0, int(min(ys) * grid)); y1 = min(grid - 1, int(max(ys) * grid))
+                if x1 < x0 or y1 < y0:
+                    continue
+                ax, ay = tri[0]; bx, by = tri[1]; cx, cy = tri[2]
+                den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+                if abs(den) < 1e-12:
+                    continue
+                yy, xx = np.mgrid[y0:y1 + 1, x0:x1 + 1]
+                px = (xx + 0.5) / grid
+                py = (yy + 0.5) / grid
+                l1 = ((by - cy) * (px - cx) + (cx - bx) * (py - cy)) / den
+                l2 = ((cy - ay) * (px - cx) + (ax - cx) * (py - cy)) / den
+                l3 = 1.0 - l1 - l2
+                hits[y0:y1 + 1, x0:x1 + 1] |= (l1 >= 0) & (l2 >= 0) & (l3 >= 0)
+    return round(float(hits.mean()), 4)
 
 
 def thin_leaf_cards(me, target_fraction):
@@ -326,7 +451,9 @@ def build():
         merged = bpy.context.view_layer.objects.active
         merged.name = f"{zone}_{smat.replace('MAT_', '')}_merged"
         merged.data.name = f"EXPM_{merged.name}"
-        mat = grey(f"MAT_EXP_{zone}__{smat}")
+        group_mat = f"MAT_EXP_{zone}__{smat}"
+        # the merged mass gets its own atlas when the group is on the split list (QA-12-1 follow-up)
+        mat = grey(f"{group_mat}__merged" if group_mat in g1.UV1_SPLIT_MERGED else group_mat)
         merged.data.materials.clear()
         merged.data.materials.append(mat)
         tmp.objects.unlink(merged)
@@ -695,41 +822,46 @@ def build():
             objs.append(o)
         if not objs:
             continue
-        smart_project(objs, g1.UV1, TILE_MARGIN)
+        legacy = mat_name in g1.UV1_LEGACY_PACK
+        # a mass alone on its atlas still wants the fine island margin; 0.004 of its own square is a
+        # full-atlas gutter around every one of its thousands of islands
+        fine = mat_name.endswith("__merged") or mat_name in g1.UV1_FINE_MARGIN_GROUPS
+        if len(objs) > 1 and not legacy:
+            # QA-12-1, the real cause of 0.16 coverage: a MULTI-OBJECT smart project packs one shared layout
+            # across the whole selection, so each object keeps only its own sparse share of the square and the
+            # tiling step then scales that sparse square into a tile - tiles at 0.79 of the atlas but only
+            # 0.025 of it actually covered. Unwrap each mesh on its own so it fills its own square, then tile.
+            for o in objs:
+                smart_project([o], g1.UV1, ISLAND_MARGIN_TILED)
+        else:
+            smart_project(objs, g1.UV1, ISLAND_MARGIN_TILED if fine else TILE_MARGIN)
         # smart_project packs EACH object into the full [0,1] even in multi-object edit mode (measured: the
         # five multi-mesh ARCH groups came back 100 % overlapped). Pack them here instead: a square tile per
         # mesh with side proportional to sqrt(its surface area), shelf-packed into the unit square, so texel
         # density follows the asset and the Gate 2 bake of one atlas cannot overwrite itself.
         if len(objs) > 1:
-            areas = [(o, max(1e-9, sum(p.area for p in o.data.polygons))) for o in objs]
-            areas.sort(key=lambda t: -t[1])
-            tot_a = sum(a for _, a in areas)
-            sides = [(o, math.sqrt(a / tot_a)) for o, a in areas]
-            k = (1.0 - 2 * TILE_MARGIN) / math.sqrt(sum(sd * sd for _, sd in sides) * 1.6)
-            sides = [(o, sd * k) for o, sd in sides]
-            x = y = TILE_MARGIN
-            row_h = 0.0
-            tiles = {}
-            for o, sd in sides:
-                if x + sd > 1.0 - TILE_MARGIN:
-                    x = TILE_MARGIN
-                    y += row_h + TILE_MARGIN
-                    row_h = 0.0
-                if y + sd > 1.0 - TILE_MARGIN:          # ran out of room: shrink the rest into the last row
-                    sd = max(1e-3, 1.0 - TILE_MARGIN - y)
-                tiles[o.data.name] = (x, y, sd)
-                uvs = o.data.uv_layers[g1.UV1].uv
+            by_name = {o.data.name: o for o in objs}
+            areas = [(o.data.name, max(1e-9, sum(p.area for p in o.data.polygons))) for o in objs]
+            tiles, k, frac = pack_tiles(areas, TILE_MARGIN, bisect=not legacy)
+            for mn2, (x, y, sd) in tiles.items():
+                uvs = by_name[mn2].data.uv_layers[g1.UV1].uv
                 for i in range(len(uvs)):
                     u, v = uvs[i].vector
                     uvs[i].vector = (x + u * sd, y + v * sd)
-                x += sd + TILE_MARGIN
-                row_h = max(row_h, sd)
-            atlas_tiles[mat_name] = {k2: [round(t, 5) for t in v2] for k2, v2 in tiles.items()}
+            atlas_tiles[mat_name] = dict(tiles={k2: [round(t, 5) for t in v2] for k2, v2 in tiles.items()},
+                                         scale=round(k, 5), tile_area_fraction=frac, legacy_pack=legacy)
         for o in objs:
             tmp.objects.unlink(o)
             bpy.data.objects.remove(o, do_unlink=True)
     rep["uv1_groups"] = len(uv_groups)
     rep["uv1_atlas_tiles"] = atlas_tiles
+    # the number QA scores: how much of each 2K atlas the bake can actually write to
+    cov = {}
+    for mat_name, mesh_names in sorted(uv_groups.items()):
+        ms = [bpy.data.meshes[mn] for mn in sorted(mesh_names) if mn in bpy.data.meshes]
+        cov[mat_name] = uv_coverage(ms, g1.UV1)
+    rep["uv1_coverage"] = cov
+    rep["uv1_coverage_min"] = min(cov.values()) if cov else None
     # UV2: a [0,1] lightmap unwrap per unique bakeable mesh
     uv2_meshes = [mn for mn, m in meshes.items()
                   if m["cls"] in ("ARCH", "ORN") or (m["cls"] == "ENV" and m.get("kind") == "ground")]
