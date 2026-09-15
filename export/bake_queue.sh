@@ -19,15 +19,26 @@ set -e
 HERE=${0:A:h}
 ROOT=${HERE:h}
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
+GATE=gate1
+if [ "$1" = "--gate2" ]; then GATE=gate2; shift; fi
 SRC="$ROOT/export/out/gate1/gate1_bake.blend"
 JOBS="$ROOT/export/out/gate1/bake_jobs.json"
+RECDIR="$ROOT/export/out/gate1/bake"
+SCRIPT="$HERE/bake_orn.py"
+SCRIPT_ARGS=(--job)
+if [ "$GATE" = gate2 ]; then
+  JOBS="$ROOT/export/out/gate2/bake_jobs.json"
+  RECDIR="$ROOT/export/out/gate2/bake"
+  SCRIPT="$HERE/bake_pbr.py"
+  SCRIPT_ARGS=(--gate2 --job)
+fi
 QDIR="$ROOT/export/out/bake_queue"
 STATUS="$QDIR/status.json"
 LOG="$QDIR/bake_queue.log"
 STOP="$QDIR/STOP"
 STATE=${BLENDER_WATCHDOG_STATE:-$HOME/.cache/pfa_blender_watchdog}
 MAXS=900
-mkdir -p "$QDIR" "$ROOT/export/out/gate1/bake"
+mkdir -p "$QDIR" "$RECDIR"
 
 write_status () {  # state current done total extra
   python3 - "$STATUS" "$1" "$2" "$3" "$4" "$5" <<'PY'
@@ -40,7 +51,7 @@ if os.path.exists(path):
     except Exception:
         old = {}
 old.update(dict(state=state, current=current or None, done=int(done), total=int(total),
-                owner="phase6-export/bake_queue", updated=time.strftime("%Y-%m-%dT%H:%M:%S%z")))
+                owner=os.environ.get("PFA_QUEUE_OWNER", "phase6-export/bake_queue"), updated=time.strftime("%Y-%m-%dT%H:%M:%S%z")))
 old.setdefault("started", time.strftime("%Y-%m-%dT%H:%M:%S%z"))
 if extra:
     old["note"] = extra
@@ -73,7 +84,7 @@ gpu_free () {
     local pid=${f:t}
     [[ "$pid" == <-> ]] || continue
     kill -0 "$pid" 2>/dev/null || continue          # stale registration, ignore
-    if grep -q "bake_orn.py" "$f" 2>/dev/null; then continue; fi   # our own job
+    if grep -q "bake_orn.py\|bake_pbr.py" "$f" 2>/dev/null; then continue; fi   # our own job
     busy=1
   done
   return $busy
@@ -86,17 +97,21 @@ case "$cmd" in
   start)
     [ -f "$JOBS" ] || { echo "bake_queue: $JOBS missing - run export_set.py -- --gate1 first" >&2; exit 2; }
     rm -f "$STOP"
-    nohup "$0" run >>"$LOG" 2>&1 &
+    if [ "$GATE" = gate2 ]; then nohup "$0" --gate2 run >>"$LOG" 2>&1 &
+    else nohup "$0" run >>"$LOG" 2>&1 & fi
     echo "[bake_queue] detached pid $! - status: $STATUS, log: $LOG"
     ;;
   run)
-    [ -f "$SRC" ] || { echo "bake_queue: $SRC missing" >&2; exit 2; }
+    [ "$GATE" = gate2 ] || [ -f "$SRC" ] || { echo "bake_queue: $SRC missing" >&2; exit 2; }
     total=$(python3 -c "import json,sys;print(len(json.load(open('$JOBS'))['jobs']))")
     ids=(${(f)"$(python3 -c "import json;print('\n'.join(j['id'] for j in json.load(open('$JOBS'))['jobs']))")"})
     done_n=0
     write_status waiting "" 0 "$total" "queued"
     for id in $ids; do
-      rec="$ROOT/export/out/gate1/bake/$id.json"
+      rec="$RECDIR/$id.json"
+      if [ "$GATE" = gate2 ]; then
+        SRC="$ROOT/export/out/gate2/$(python3 -c "import json;print(next(j['blend'] for j in json.load(open('$JOBS'))['jobs'] if j['id']=='$id'))")"
+      fi
       if [ -f "$rec" ]; then
         done_n=$((done_n+1))
         echo "[bake_queue] skip $id (already done)"
@@ -119,7 +134,7 @@ case "$cmd" in
       # would be recorded as done. The record file is checked as well (measured: a job whose save_png threw
       # still gave rc=0).
       "$ROOT/scripts/blender_run.sh" $MAXS -- --background "$SRC" --python-exit-code 1 \
-          --python "$HERE/bake_orn.py" -- --job "$id"
+          --python "$SCRIPT" -- "${SCRIPT_ARGS[@]}" "$id"
       rc=$?
       set -e
       [ -f "$rec" ] || rc=$(( rc == 0 ? 90 : rc ))    # rc 90: Blender exited clean but wrote no record
@@ -132,5 +147,5 @@ case "$cmd" in
     write_status idle "" "$done_n" "$total" "finished"
     echo "[bake_queue] finished $done_n/$total"
     ;;
-  *) echo "usage: bake_queue.sh {start|run|status|stop}" >&2; exit 2 ;;
+  *) echo "usage: bake_queue.sh [--gate2] {start|run|status|stop}" >&2; exit 2 ;;
 esac
