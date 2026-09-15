@@ -131,7 +131,7 @@ def main():
             continue
         box = tuple(int(v) for v in r)
         crops += [a.crop(box), b.crop(box)]
-        crop_labels += [f"{name} 100 % Cycles", f"{name} 100 % viewer"]
+        crop_labels += [f"{name[:3]} cyc", f"{name[:3]} view"]
     sheet = top
     if crops:
         ch = max(c.height for c in crops) + label + pad
@@ -141,7 +141,7 @@ def main():
         for c, t in zip(crops, crop_labels):
             row.paste(c, (x, label))
             ImageDraw.Draw(row).text((x + 2, 4), t, fill=(230, 226, 216))
-            x += c.width + pad
+            x += max(c.width, 60) + pad
         sheet = Image.new("RGB", (max(top.width, row.width), top.height + row.height), (18, 18, 20))
         sheet.paste(top, (0, 0)); sheet.paste(row, (0, top.height))
 
