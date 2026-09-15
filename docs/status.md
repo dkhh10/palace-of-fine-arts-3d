@@ -631,3 +631,6 @@ Resident 1 400 MB at 1440p (textures 920 after the 19 normals; detail adds 20 MB
 
 ## 2026-09-15 · Detail layer live (viewer f8b1986 merged): works, but the shipped maps' contrast is 3-6 % and mips filter it -> QA-12-1 boxes move ~1 % (cam05 pier std 22.9 vs Phase 5 38.3; gain 6-10 would reach it, refused as a knob). Bake engineer re-deriving the detail normals at the Bump's real slope (Distance 0.015 m at 2-3 mm/texel) and tagging the albedo KTX2 sRGB
 Resident 1 338 MB at 1440p (tex 987 incl. 67 MB of detail PNGs; KTX2 saves 47). Next: viewer re-measure -> QA 12b (with lighting attribution: the Phase 5 box std includes shade) -> Gate 3.
+
+## 2026-09-15 · Detail re-derivation merged (4c763c9): honest slope from 8-bit height sources (normal std 0.024 / 0.019), albedo contrast +35 %, colour spaces verified on disk; decision: the remaining cam05 amplitude is shading/occlusion (Gate 3). Viewer taking the final Gate 2 capture with the KTX2 detail set; QA 12b brief written (docs/briefs/qa_round_12b.md)
+Next: QA 12b -> Gate 3 dispatch -> burn -> stop.
