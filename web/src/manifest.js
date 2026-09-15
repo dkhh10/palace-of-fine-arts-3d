@@ -39,9 +39,10 @@ export function normaliseManifest( raw, baseUrl ) {
 	// { url, name, cls, bytes }.  `glb` stays as the first entry for anything that still reads it.
 	const glbRaw = pick( raw, 'glb', 'files.glb', 'model' );
 	const glbUrlOf = ( v ) => resolveUrl( baseUrl, typeof v === 'string' ? v : ( v?.path || v?.url || v?.file ) );
+	const isGlbUrl = ( u ) => !! u && /\.(glb|gltf)(\?.*)?$/i.test( u );
 	const glbEntry = ( v, key, i ) => {
 		const url = glbUrlOf( v );
-		if ( ! url ) return null;
+		if ( ! isGlbUrl( url ) ) return null;          // 'texture_source: ktx2' and prose notes are not files
 		const o = ( typeof v === 'object' && v ) || {};
 		return {
 			url,
@@ -54,7 +55,12 @@ export function normaliseManifest( raw, baseUrl ) {
 	const listOf = ( v ) => {
 		if ( ! v ) return [];
 		if ( Array.isArray( v ) ) return v.map( ( e, i ) => glbEntry( e, null, i ) );
-		if ( typeof v === 'object' ) return Object.entries( v ).map( ( [ k, e ], i ) => glbEntry( e, k, i ) );
+		if ( typeof v === 'object' ) {
+			// A single glb object ({path, bytes, instanced_variant, ...}) is ONE file, not a map of
+			// files: its sibling keys are metadata (gate0's `texture_source`, `instanced_variant`).
+			if ( v.path || v.url || v.file ) return [ glbEntry( v, v.class ?? v.cls ?? null, 0 ) ];
+			return Object.entries( v ).map( ( [ k, e ], i ) => glbEntry( e, k, i ) );
+		}
 		return [ glbEntry( v, null, 0 ) ];
 	};
 	let glbs = listOf( pick( raw, 'glbs', 'glb.parts', 'glb.files', 'glb.classes', 'files.glbs' ) ).filter( Boolean );
@@ -70,7 +76,7 @@ export function normaliseManifest( raw, baseUrl ) {
 	// taken from scripts/qa_cameras.py (stations_blender.json) by name purely as a cross-check.
 	let rawStations = pick( raw, 'stations', 'cameras' );
 	let stationList;
-	if ( rawStations && ! Array.isArray( rawStations ) ) {
+	if ( rawStations && ! Array.isArray( rawStations ) && Object.keys( rawStations ).length ) {
 		stationList = Object.entries( rawStations ).map( ( [ name, s ], i ) => ( { name, index: s.index ?? i + 1, ...s } ) );
 	} else if ( rawStations && rawStations.length ) {
 		stationList = rawStations.map( ( s, i ) => ( { index: s.index ?? i + 1, ...s } ) );

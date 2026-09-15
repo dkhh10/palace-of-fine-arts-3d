@@ -173,8 +173,8 @@ try {
 		console.log( `[shot] station ${st} ${name}: frame ${stats ? stats.median.toFixed( 2 ) : '-'} ms, gpu ${cost ? cost.median.toFixed( 2 ) : '-'} ms, `
 			+ `draws ${row.draw_calls}, tris ${row.triangles}` );
 	}
-	const stats = perStation.length ? { ...perStation[ 0 ].frame_ms } : null;
-	const cost = perStation.length ? { ...perStation[ 0 ].gpu_cost_ms } : null;
+	const stats = perStation.length ? perStation[ 0 ].frame_ms : null;      // back-compat: the sidecar's
+	const cost = perStation.length ? perStation[ 0 ].gpu_cost_ms : null;    // top-level pair is station 1's
 
 	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
