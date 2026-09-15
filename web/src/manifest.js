@@ -256,6 +256,132 @@ export function normaliseManifest( raw, baseUrl ) {
 		notes.push( `lightmap reservations for the Gate 3 bake, no texture yet: `
 			+ Object.entries( reservations ).map( ( [ m, n ] ) => `${n} mode "${m}"` ).join( ', ' ) );
 
+	// --- materials: the Gate 2 PBR texture sets (manifest v3 `pfa-phase6/3`) --------------------
+	// The contract is export/README.md "manifest.json v3 — the contract with the viewer at Gate 2":
+	//   materials.mode                "pbr" | "grey"            (the viewer switches on this string)
+	//   materials.uv                  "TEXCOORD_0" — every PBR map rides UV1
+	//   materials.colorspace          { albedo: "srgb", roughness|normal|occlusion: "linear" }
+	//   materials.sets[<glb material name>] = {
+	//       job, cls, src_material, size, uv1_in_glb,
+	//       albedo:    { texture: <key into textures.gate2.files> | null, factor: [r,g,b] },
+	//       roughness: { texture, factor }, normal: { texture, scale },
+	//       metallic:  { texture: null, constant: true, factor }, occlusion: { texture } }
+	// Rules honoured here: `texture` is a KEY, never a path (rule 1); `texture: null` with a factor
+	// IS the map (rule 2); `factor` is the map's mean, used before the texture streams in and left at
+	// 1.0/white afterwards, never multiplied into the texture (rule 3); albedo sRGB, the rest linear
+	// (rule 4); `uv1_in_glb: false` (the ten backdrop groups) means factors only until env.glb is
+	// re-exported with the UV1 the bake used.  Older/looser shapes (a bare path, {path}, per_material)
+	// still parse, so the Gate 0/1 fixtures and the smoke manifest keep working.
+	const MAP_KEYS = {
+		map: [ 'albedo', 'base_color', 'basecolor', 'base_colour', 'diffuse', 'colour', 'color', 'map' ],
+		roughnessMap: [ 'roughness', 'rough', 'roughness_map' ],
+		normalMap: [ 'normal', 'normal_map', 'nrm', 'tangent_normal' ],
+		metalnessMap: [ 'metallic', 'metalness', 'metal' ],
+		aoMap: [ 'occlusion', 'ao', 'ambient_occlusion' ],
+	};
+	const SRGB_SLOT = { map: 'albedo', roughnessMap: 'roughness', normalMap: 'normal', metalnessMap: 'metallic', aoMap: 'occlusion' };
+	const SRGB_DEFAULT = { map: true, roughnessMap: false, normalMap: false, metalnessMap: false, aoMap: false };
+	const matRoot = pick( raw, 'materials', 'material_textures', 'pbr' ) || {};
+	const materialsMode = ( typeof matRoot === 'object' && ( matRoot.mode || matRoot.materials_mode ) ) || null;
+	const csDeclared = ( typeof matRoot === 'object' && matRoot.colorspace ) || {};
+	const setsRaw = ( typeof matRoot === 'object'
+		&& ( pick( matRoot, 'sets', 'per_material', 'materials', 'entries' )
+			|| ( ! matRoot.mode && Object.keys( matRoot ).length ? matRoot : null ) ) )
+		|| pick( raw, 'textures.per_material', 'textures.materials' ) || {};
+	// Texture KEYS resolve through textures.gate2.files (Gate 2) and then through the Gate 1 list,
+	// because an ORN occlusion map is carried unchanged from Gate 1 (`orn_<proto>_ao`).
+	const texG2 = pick( raw, 'textures.gate2' ) || {};
+	const filesG2 = ( texG2.files && typeof texG2.files === 'object' && ! Array.isArray( texG2.files ) ) ? texG2.files : {};
+	const dirG2 = texG2.ktx2_dir || '';
+	const filesG1 = pick( raw, 'textures.files' );
+	const dirG1 = pick( raw, 'textures.ktx2_dir' ) || '';
+	const joinDir = ( dir, p ) => resolveUrl( baseUrl, ( dir && ! p.startsWith( '/' ) ) ? `${String( dir ).replace( /\/$/, '' )}/${p}` : p );
+	const unresolvedKeys = [];
+	/** A texture reference: a KEY into textures.gate2.files (v3) or a path (older shapes). */
+	const resolveTexture = ( ref ) => {
+		if ( ! ref || typeof ref !== 'string' ) return null;
+		const g2 = filesG2[ ref ];
+		if ( g2 ) return { url: joinDir( dirG2, g2.path || `${ref}.ktx2` ), meta: g2 };
+		if ( Array.isArray( filesG1 ) ) {
+			const hit = filesG1.find( n => n === ref || n === `${ref}.ktx2` || ( typeof n === 'string' && n.startsWith( `${ref}.` ) ) );
+			if ( hit ) return { url: joinDir( dirG1, hit ), meta: null };
+		}
+		if ( /\.(ktx2|png|jpg|jpeg|webp|exr|hdr)(\?.*)?$/i.test( ref ) ) return { url: joinDir( dirG2 || dirG1 || pick( raw, 'textures.ktx2_dir' ) || '', ref ), meta: filesG2[ ref.replace( /\.[^.]+$/, '' ) ] || null };
+		unresolvedKeys.push( ref );
+		return null;
+	};
+	const materialSets = {};
+	const csFallbacks = [];
+	let mapCount = 0, setBytes = 0, constantMaps = 0, noUv1 = 0, inGlbMaps = 0;
+	for ( const [ name, entry ] of Object.entries( typeof setsRaw === 'object' && setsRaw ? setsRaw : {} ) ) {
+		if ( ! entry || typeof entry !== 'object' ) continue;
+		const src = entry.maps && typeof entry.maps === 'object' ? entry.maps : entry;
+		const uv1 = entry.uv1_in_glb !== false;
+		if ( ! uv1 ) noUv1 ++;
+		const set = {
+			name, maps: {}, factors: {}, uv1InGlb: uv1,
+			job: entry.job ?? null, cls: entry.cls ?? null, srcMaterial: entry.src_material ?? null,
+			size: entry.size ?? null, uv: matRoot.uv ?? entry.uv ?? src.uv ?? 'TEXCOORD_0',
+			wrap: entry.wrap ?? src.wrap ?? null,
+		};
+		for ( const [ slot, aliases ] of Object.entries( MAP_KEYS ) ) {
+			let v;
+			for ( const a of aliases ) { if ( src[ a ] !== undefined && src[ a ] !== null ) { v = src[ a ]; break; } }
+			if ( v === undefined ) continue;
+			const o = ( typeof v === 'object' && v ) ? v : { path: v };
+			// v3: `factor` is the baked mean — the value to use before (and instead of) the texture.
+			if ( o.factor !== undefined && o.factor !== null ) set.factors[ slot ] = o.factor;
+			if ( slot === 'normalMap' && o.scale !== undefined && o.scale !== null ) set.normalScale = o.scale;
+			const hasTextureKey = Object.prototype.hasOwnProperty.call( o, 'texture' );
+			const ref = hasTextureKey ? o.texture : ( o.path || o.url || o.file || o.ktx2 );
+			// rule 2: a constant IS the map.  `in_glb: true` (the ORN occlusion) means the glb already
+			// carries it and the viewer must load nothing.
+			if ( ! ref ) { if ( o.in_glb === true ) inGlbMaps ++; else if ( hasTextureKey ) constantMaps ++; continue; }
+			if ( ! uv1 ) continue;                                                   // rule: factors only, no UV1 in the glb
+			const res = resolveTexture( ref );
+			if ( ! res ) continue;
+			const declared = ( o.colorspace ?? o.color_space ?? o.colour_space ?? o.encoding
+				?? ( res.meta && res.meta.colorspace ) ?? csDeclared[ SRGB_SLOT[ slot ] ] ?? null );
+			let srgb;
+			if ( declared === null || declared === undefined ) { srgb = SRGB_DEFAULT[ slot ]; csFallbacks.push( `${name}.${slot}=${srgb ? 'sRGB' : 'linear'}` ); }
+			else srgb = /srgb|s-rgb|colou?r$/i.test( String( declared ) ) && ! /non-?colou?r|linear|data|raw/i.test( String( declared ) );
+			const bytes = o.bytes ?? o.size_bytes ?? ( res.meta && res.meta.bytes ) ?? null;
+			set.maps[ slot ] = { url: res.url, srgb, declared, bytes,
+				key: hasTextureKey ? ref : null, w: res.meta && res.meta.w, h: res.meta && res.meta.h,
+				residentMb: res.meta && res.meta.resident_mb };
+			mapCount ++; setBytes += bytes || 0;
+		}
+		const aliasRaw = entry.materials ?? entry.applies_to ?? entry.material_names ?? entry.material ?? entry.group_materials;
+		set.aliases = ( Array.isArray( aliasRaw ) ? aliasRaw : ( typeof aliasRaw === 'string' ? [ aliasRaw ] : [] ) ).filter( x => typeof x === 'string' );
+		if ( Object.keys( set.maps ).length || Object.keys( set.factors ).length ) materialSets[ name ] = set;
+	}
+	const materials = {
+		mode: materialsMode,
+		sets: materialSets,
+		count: Object.keys( materialSets ).length,
+		maps: mapCount,
+		constantMaps,
+		inGlbMaps,
+		withoutUv1: noUv1,
+		declaredBytes: setBytes,
+		budget: pick( raw, 'budget' ) || null,
+		gate2Textures: { dir: dirG2, files: Object.keys( filesG2 ).length,
+			bytes: texG2.bytes ?? null, residentMb: texG2.resident_mb ?? null },
+	};
+	if ( materials.count ) {
+		notes.push( `materials: ${materials.count} set(s), ${mapCount} textures`
+			+ ( constantMaps ? `, ${constantMaps} constant map(s) shipped as a factor` : '' )
+			+ ( inGlbMaps ? `, ${inGlbMaps} map(s) already in the glb (in_glb, nothing loaded)` : '' )
+			+ ( noUv1 ? `, ${noUv1} set(s) with uv1_in_glb false (factors only)` : '' )
+			+ ( setBytes ? `, ${( setBytes / 1e6 ).toFixed( 1 )} MB declared` : ', no declared bytes (HEAD)' )
+			+ `, mode "${materialsMode || '(unstated)'}"` );
+		if ( csFallbacks.length ) notes.push( `colour space defaulted on ${csFallbacks.length} map(s) (manifest states none): ${csFallbacks.slice( 0, 6 ).join( ', ' )}${csFallbacks.length > 6 ? ' …' : ''}` );
+		if ( unresolvedKeys.length ) notes.push( `${unresolvedKeys.length} texture key(s) not in textures.gate2.files or the Gate 1 list, skipped: ${[ ...new Set( unresolvedKeys ) ].slice( 0, 6 ).join( ', ' )}` );
+	} else if ( materialsMode ) {
+		notes.push( `materials.mode "${materialsMode}" but no per-material texture set was recognised` );
+	}
+
+
 	// --- Gate 1 extras: far-tree billboard quads, ORN atlas slots ------------------------------
 	// `trees.far` is the Gate 3 impostor list: each entry is a prototype id, a height and a trunk base.
 	// Until that bake exists the viewer draws one flat, explicitly tagged quad per entry.
@@ -282,7 +408,7 @@ export function normaliseManifest( raw, baseUrl ) {
 		: ornSlotsRaw;
 
 	const out = {
-		raw, baseUrl, glb, glbs, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale,
+		raw, baseUrl, glb, glbs, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale, materials,
 		treesFar, treesNearCount: Array.isArray( nearRaw ) ? nearRaw.length : 0, ornSlots,
 		schema: pick( raw, 'schema' ) || null,
 		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),

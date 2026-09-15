@@ -9,7 +9,8 @@
 //   --size WxH        window / canvas size (default 1280x720)
 //   --url URL         page to open; default: serve web/dist on a free port (built by `npm run build`)
 //   --dev             serve with `vite dev` instead of the built dist
-//   --query k=v       extra query parameters, repeatable (e.g. --query test=1 --query testlut=gamma22)
+//   --query k=v       extra query parameters, repeatable (e.g. --query test=1 --query testlut=gamma22);
+//                     last one wins; `station` and `size` are reserved for --station(s) / --size
 //   --frames N        measure N frames with window.__pfaFrameStats (0 = skip, default 120)
 //   --timeout MS      ready timeout (default 120000)
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
@@ -19,11 +20,13 @@
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
+// It refuses to launch while the bake queue is running or any Blender process is alive
+// (PFA_ALLOW_GPU=1 overrides), so a bare `node tools/screenshot.mjs` cannot take the GPU either.
 // The browser is closed in a finally block and the process calls process.exit, so no Chrome is left
 // behind (a raw `--headless=new --screenshot` lingers 60-90 s on Chrome 152; puppeteer with an
 // explicit close does not).
 import puppeteer from 'puppeteer-core';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -83,8 +86,10 @@ function serveDist() {
 		if ( url.startsWith( '/assets/' ) && ! fs.existsSync( path.join( root, url.slice( 1 ) ) ) ) file = path.join( ASSETS, url.slice( '/assets/'.length ) );
 		else if ( url.startsWith( '/test/' ) ) file = path.join( WEB, 'testdata', url.slice( '/test/'.length ) );
 		else file = path.join( root, url === '/' ? 'index.html' : url.slice( 1 ) );
-		const allowed = [ root, ASSETS, path.join( WEB, 'testdata' ) ];
-		if ( ! allowed.some( a => path.resolve( file ).startsWith( path.resolve( a ) ) )
+		// Containment on a PATH BOUNDARY: `startsWith` alone lets /export/out2 pass as /export/out.
+		const allowed = [ root, ASSETS, path.join( WEB, 'testdata' ) ].map( a => path.resolve( a ) );
+		const real = path.resolve( file );
+		if ( ! allowed.some( a => real === a || real.startsWith( a + path.sep ) )
 			|| ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) { res.statusCode = 404; res.end( 'not found' ); return; }
 		res.setHeader( 'Content-Type', MIME[ path.extname( file ) ] || 'application/octet-stream' );
 		res.setHeader( 'Content-Length', fs.statSync( file ).size );
@@ -103,15 +108,41 @@ function serveDev() {
 	} );
 }
 
+/** The GPU rule, enforced where Chrome is actually launched and not only in gate2.sh: headless
+ *  Chrome must never share the GPU with a Blender bake.  `PFA_ALLOW_GPU=1` overrides it for a
+ *  deliberate run; the check itself never throws on a missing file. */
+function gpuGuard() {
+	if ( process.env.PFA_ALLOW_GPU === '1' ) return;
+	const st = path.join( ASSETS, 'bake_queue/status.json' );
+	try {
+		if ( fs.existsSync( st ) && /"running"/.test( fs.readFileSync( st, 'utf8' ) ) )
+			throw new Error( `the bake queue is running (${st}): refusing to use the GPU` );
+	} catch ( e ) { if ( /bake queue is running/.test( e.message ) ) throw e; }
+	let blender = '';
+	try { blender = execFileSync( 'pgrep', [ '-f', 'MacOS/Blender' ], { encoding: 'utf8' } ).trim(); } catch { /* none */ }
+	if ( blender ) throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
+}
+
 let browser = null, server = null, viteProc = null;
 const t0 = Date.now();
 try {
+	gpuGuard();
 	let base = o.url;
 	if ( ! base ) {
 		if ( o.dev ) { const s = await serveDev(); viteProc = s.proc; base = `http://127.0.0.1:${s.port}/`; }
 		else { const s = await serveDist(); server = s.srv; base = `http://127.0.0.1:${s.port}/`; }
 	}
-	const q = new URLSearchParams( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], [ 'hud', '0' ], ...o.query.map( s => s.split( /=(.*)/ ).slice( 0, 2 ) ) ] );
+	// Last --query wins: URLSearchParams.get() returns the FIRST value of a repeated key, so the
+	// pairs are deduplicated here (gate2.sh passes its defaults first and PFA_QUERY after).
+	const qmap = new Map( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], [ 'hud', '0' ] ] );
+	const RESERVED = new Set( [ 'station', 'size' ] );   // owned by --station(s) / --size
+	for ( const s of o.query ) {
+		const [ k, v = '' ] = s.split( /=(.*)/ );
+		if ( ! k ) continue;
+		if ( RESERVED.has( k ) ) { console.error( `[shot] ignoring --query ${k}=${v}: --station(s) / --size own it` ); continue; }
+		qmap.set( k, v );
+	}
+	const q = new URLSearchParams( [ ...qmap ] );
 	const url = `${base}${base.includes( '?' ) ? '&' : '?'}${q}`;
 
 	browser = await puppeteer.launch( {
@@ -205,13 +236,26 @@ try {
 			generated: new Date().toISOString(),
 			url, size: [ W, H ], frames, warmup,
 			gl: info.gl, schema: info.schema, lighting_mode: info.lightingMode,
+			materials_mode: info.materialsMode ?? null,
+			// the PBR report without its per-material order list (that lives in the shot sidecar)
+			materials: info.pbr ? { ...info.pbr, order: undefined, order_count: info.pbr.order.length,
+				nearest_first: info.pbr.order.slice().sort( ( a, b ) => a.rank - b.rank ).slice( 0, 8 )
+					.map( r => ( { rank: r.rank, material: r.material, distance_m: r.distance_m, maps: r.maps } ) ) } : null,
+			chunking: info.chunking ? { ...info.chunking, batches: info.chunking.batches.length } : null,
 			bytes: info.bytes, load_s: info.load_s, glbs: info.glbs, billboards: info.billboards,
 			stations: perStation,
 		}, null, 1 ) );
 		console.log( `[shot] wrote ${perfOut}` );
 	}
 	written.forEach( w => console.log( `[shot] wrote ${w.file} (${( fs.statSync( w.file ).size / 1024 ).toFixed( 0 )} kB) station ${w.station} draws ${w.draws} tris ${w.tris}` ) );
-	console.log( `[shot] ${info.schema || '(no schema)'} lighting ${info.lightingMode} lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );
+	console.log( `[shot] ${info.schema || '(no schema)'} lighting ${info.lightingMode} materials ${info.materialsMode || '?'} `
+		+ `lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}`
+		+ ( info.pbr ? `, pbr ${info.pbr.matched}/${info.pbr.materials_in_scene} materials, ${info.pbr.unique_files} files, `
+			+ `${( info.pbr.bytes / 1e6 ).toFixed( 1 )} MB, ${info.pbr.unmatched.length} unmatched` : '' ) );
+	if ( info.resident ) console.log( `[shot] resident ${( info.resident.total_bytes / 1e6 ).toFixed( 1 )} MB `
+		+ `(tex ${( info.resident.texture_bytes / 1e6 ).toFixed( 1 )}, rt ${( info.resident.render_target_bytes / 1e6 ).toFixed( 1 )}, `
+		+ `geo ${( ( info.resident.geometry_bytes + info.resident.instance_matrix_bytes ) / 1e6 ).toFixed( 1 )}) `
+		+ JSON.stringify( info.resident.texture_formats || {} ) );
 	if ( info.bytes && info.load_s )
 		console.log( `[shot] loaded ${( info.bytes.loaded / 1e6 ).toFixed( 1 )} MB of ${( info.bytes.planned / 1e6 ).toFixed( 1 )} MB planned in ${info.load_s.total_s.toFixed( 2 )} s `
 			+ `(sky ${info.load_s.sky_s.toFixed( 2 )}, lut ${info.load_s.lut_s.toFixed( 2 )}, glb ${info.load_s.glb_s.toFixed( 2 )})` );

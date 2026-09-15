@@ -1,0 +1,1816 @@
+{
+ "generated": "2026-09-15T17:07:41.209Z",
+ "url": "http://127.0.0.1:65492/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate2%2Fmanifest.json&t=0&billboards=0&treeboards=0",
+ "size": [
+  2560,
+  1440
+ ],
+ "frames": 120,
+ "warmup": 24,
+ "gl": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+  "vendor": "Google Inc. (Apple)",
+  "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+ },
+ "schema": "pfa-phase6/3",
+ "lighting_mode": "direct",
+ "materials_mode": "pbr",
+ "materials": {
+  "materials_in_scene": 74,
+  "matched": 64,
+  "unmatched": [
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 0
+   },
+   {
+    "material": "MAT_leaf_cypress",
+    "distance_m": 0
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 32
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 33
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 65
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 70
+   },
+   {
+    "material": "MAT_leaf_pine",
+    "distance_m": 96
+   },
+   {
+    "material": "MAT_leaf_broadleaf",
+    "distance_m": 154
+   }
+  ],
+  "sets_in_manifest": 60,
+  "sets_used": 60,
+  "sets_unused": [],
+  "textures": 178,
+  "unique_files": 168,
+  "bytes": 566235520,
+  "kept_glb_normal": 0,
+  "replaced_glb_normal": 33,
+  "kept_glb_ao": 0,
+  "colourspace_conflicts": [],
+  "formats": {
+   "RGBA_ASTC_4x4_Format": 168
+  },
+  "failed": [],
+  "factored": 64,
+  "constant_only": 0,
+  "flat_normal_constant": [],
+  "without_uv1": [],
+  "disposed": {
+   "disposed": 93,
+   "freed_bytes": 155196848,
+   "by_slot": {
+    "map": 60,
+    "normalMap": 33
+   },
+   "names": [
+    "212a5456",
+    "b3913240",
+    "37c1c760",
+    "3d2ae483",
+    "8d03cc97",
+    "f30b890d",
+    "19db8c99",
+    "7bef3726",
+    "a4178054",
+    "3d204e36",
+    "23d11c43",
+    "46843fa3"
+   ]
+  },
+  "order_count": 64,
+  "nearest_first": [
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_building",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_forest",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 3,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_hill",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 4,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 5,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 6,
+    "material": "MAT_EXP_ENVBD__MAT_bird_white",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 7,
+    "material": "MAT_EXP_ENVBD__MAT_lamp_post",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "metalnessMap"
+    ]
+   },
+   {
+    "rank": 8,
+    "material": "MAT_EXP_ENVBD__MAT_lawn",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   }
+  ]
+ },
+ "chunking": {
+  "candidates": 27,
+  "split": 16,
+  "chunks": 48,
+  "added": 32,
+  "batches": 16,
+  "opts": {}
+ },
+ "bytes": {
+  "loaded": 483172983,
+  "planned": 483172983,
+  "unknownSize": [],
+  "files": [
+   {
+    "kind": "sky.camera",
+    "bytes": 3590278,
+    "sizeFrom": "HEAD",
+    "name": "sky_camera_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.glossy",
+    "bytes": 3661319,
+    "sizeFrom": "HEAD",
+    "name": "sky_glossy_4096x2048.hdr"
+   },
+   {
+    "kind": "lut",
+    "bytes": 7415365,
+    "sizeFrom": "HEAD",
+    "name": "lut_agx_high_contrast_65.cube"
+   },
+   {
+    "kind": "glb:arch",
+    "bytes": 2981252,
+    "sizeFrom": "HEAD",
+    "name": "arch.glb"
+   },
+   {
+    "kind": "glb:orn",
+    "bytes": 154065360,
+    "sizeFrom": "HEAD",
+    "name": "orn.glb"
+   },
+   {
+    "kind": "glb:env",
+    "bytes": 35797240,
+    "sizeFrom": "HEAD",
+    "name": "env.glb"
+   },
+   {
+    "kind": "glb:ground",
+    "bytes": 1175488,
+    "sizeFrom": "HEAD",
+    "name": "ground.glb"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1037606,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 299985,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1013501,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 293214,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1936684,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 444815,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1409051,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1529583,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 337428,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1035121,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3339356,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 748096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2428342,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 631266,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 841333,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2079283,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_podium_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 481988,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_podium_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1485683,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_podium_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1485590,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 400486,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2008204,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 449841,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1420029,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3328808,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 737571,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2501441,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2796638,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 740144,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2096088,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 559002,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1422419,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__paving_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 341811,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__paving_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 836814,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_building_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 590732,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_building_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 639008,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 751756,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 587808,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_normal.ktx2"
+   },
+   {
+    "kind": "tex:metalness",
+    "bytes": 11478,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_metallic.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 134591,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_forest_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 95306,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_forest_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 131960,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_forest_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 580865,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_hill_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 35979,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_hill_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 800525,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 307126,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 848817,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_tile_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 475143,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_tile_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 733854,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_tile_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 873148,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_skylight_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 951403,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_skylight_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 121134,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__bird_white_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 34890,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__bird_white_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 34332,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lamp_post_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 22972,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lamp_post_roughness.ktx2"
+   },
+   {
+    "kind": "tex:metalness",
+    "bytes": 20679,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lamp_post_metallic.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 904757,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lawn_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 582341,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lawn_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3578129,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 909288,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2672743,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1147561,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 38096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 826019,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3691499,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 69786,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3031376,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3302210,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 844727,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1644250,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 4102834,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 891240,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3433027,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3689363,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 818390,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3473043,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3780167,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 841020,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3645781,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3801317,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 836955,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3655636,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3446980,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 823785,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3597453,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3439939,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 820599,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3550107,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3363276,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 810096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3529490,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3609292,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 851243,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3709017,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3583051,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 858018,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3493003,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3622554,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 866468,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3496026,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3644352,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 871701,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3568710,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3892387,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 848652,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3684105,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3532835,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 814140,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3590574,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 710685,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 571346,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 692006,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1555731,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 388416,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1731607,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1463192,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 325918,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1485218,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1392920,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 329114,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1458607,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1579603,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 374368,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1604848,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1428728,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 370358,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1576258,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1138152,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 884698,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1118952,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1136419,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 883057,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1114388,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1130599,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 880059,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1125880,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3407335,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 733203,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2939431,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3339817,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 748321,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2938913,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3355421,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 743270,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2996085,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1070807,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 840112,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1080497,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1067158,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 861525,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1105805,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1044248,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 846913,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1075358,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3740793,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 825585,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3591841,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3248473,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 737473,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3182602,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3413614,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 752683,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3201705,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3371758,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 755853,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3206096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3081116,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 687573,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2634035,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2"
+   }
+  ]
+ },
+ "load_s": {
+  "plan_s": 0.16080000001192093,
+  "sky_s": 0.5091999999880791,
+  "lut_s": 0.05859999996423721,
+  "glb_s": 1.628800000011921,
+  "tex_s": 1.7456999999880791,
+  "total_s": 4.168599999964237
+ },
+ "glbs": [
+  {
+   "name": "arch.glb",
+   "cls": "arch",
+   "url": "http://127.0.0.1:65492/assets/gate1/arch.glb",
+   "meshes": 27,
+   "instancedMeshes": 15,
+   "instances": 438,
+   "tris": 947622,
+   "materials": 17,
+   "hiddenBoards": 0,
+   "bytes": 2981252,
+   "wall_s": 0.08780000001192093
+  },
+  {
+   "name": "orn.glb",
+   "cls": "orn",
+   "url": "http://127.0.0.1:65492/assets/gate1/orn.glb",
+   "meshes": 33,
+   "instancedMeshes": 32,
+   "instances": 435,
+   "tris": 1097468,
+   "materials": 33,
+   "hiddenBoards": 0,
+   "bytes": 154065360,
+   "wall_s": 1.039300000011921
+  },
+  {
+   "name": "env.glb",
+   "cls": "env",
+   "url": "http://127.0.0.1:65492/assets/gate1/env.glb",
+   "meshes": 50,
+   "instancedMeshes": 34,
+   "instances": 1526,
+   "tris": 679779,
+   "materials": 21,
+   "hiddenBoards": 127,
+   "bytes": 35797240,
+   "wall_s": 0.2716000000238419
+  },
+  {
+   "name": "ground.glb",
+   "cls": "ground",
+   "url": "http://127.0.0.1:65492/assets/gate1/ground.glb",
+   "meshes": 4,
+   "instancedMeshes": 0,
+   "instances": 0,
+   "tris": 113043,
+   "materials": 4,
+   "hiddenBoards": 0,
+   "bytes": 1175488,
+   "wall_s": 0.010600000023841857
+  }
+ ],
+ "billboards": null,
+ "stations": [
+  {
+   "station": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 16.899999976158142,
+    "mean": 19.77142857102787,
+    "p95": 18.69999998807907,
+    "min": 14.200000047683716,
+    "max": 208.5999999642372,
+    "frames": 119
+   },
+   "fps_presented": 59.171597716613064,
+   "gpu_cost_ms": {
+    "median": 1.699999988079071,
+    "mean": 1.8616666674613953,
+    "p95": 2.699999988079071,
+    "frames": 60
+   },
+   "fps_uncapped": 588.235298242536,
+   "draw_calls": 267,
+   "triangles": 5387275,
+   "programs": 19,
+   "info_memory": {
+    "geometries": 110,
+    "textures": 232
+   },
+   "resident": {
+    "geometry_bytes": 40479158,
+    "instance_matrix_bytes": 153536,
+    "texture_bytes": 855644128,
+    "geometries": 115,
+    "textures": 227,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 226,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 437518336,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     }
+    ],
+    "total_bytes": 1333795158,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 16.69999998807907,
+    "mean": 19.576470588435647,
+    "p95": 18.5,
+    "min": 7.099999964237213,
+    "max": 214.5,
+    "frames": 119
+   },
+   "fps_presented": 59.88023956370228,
+   "gpu_cost_ms": {
+    "median": 1.5,
+    "mean": 1.65,
+    "p95": 2.099999964237213,
+    "frames": 60
+   },
+   "fps_uncapped": 666.6666666666666,
+   "draw_calls": 255,
+   "triangles": 5057583,
+   "programs": 19,
+   "info_memory": {
+    "geometries": 111,
+    "textures": 232
+   },
+   "resident": {
+    "geometry_bytes": 40479158,
+    "instance_matrix_bytes": 153536,
+    "texture_bytes": 855644128,
+    "geometries": 115,
+    "textures": 227,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 226,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 437518336,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     }
+    ],
+    "total_bytes": 1333795158,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 3,
+   "name": "CAM_qa_03_colonnade_walk",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 18.099999964237213,
+    "mean": 21.884033613345203,
+    "p95": 20.80000001192093,
+    "min": 5.899999976158142,
+    "max": 259.2999999523163,
+    "frames": 119
+   },
+   "fps_presented": 55.24861889369307,
+   "gpu_cost_ms": {
+    "median": 1.699999988079071,
+    "mean": 1.9016666660706203,
+    "p95": 2.300000011920929,
+    "frames": 60
+   },
+   "fps_uncapped": 588.235298242536,
+   "draw_calls": 278,
+   "triangles": 5478659,
+   "programs": 19,
+   "info_memory": {
+    "geometries": 114,
+    "textures": 232
+   },
+   "resident": {
+    "geometry_bytes": 40479158,
+    "instance_matrix_bytes": 153536,
+    "texture_bytes": 855644128,
+    "geometries": 115,
+    "textures": 227,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 226,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 437518336,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     }
+    ],
+    "total_bytes": 1333795158,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 4,
+   "name": "CAM_qa_04_rotunda_ceiling",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 16.69999998807907,
+    "mean": 20.331092436774437,
+    "p95": 19.19999998807907,
+    "min": 13.199999988079071,
+    "max": 187.5,
+    "frames": 119
+   },
+   "fps_presented": 59.88023956370228,
+   "gpu_cost_ms": {
+    "median": 0.6000000238418579,
+    "mean": 0.6050000001986822,
+    "p95": 0.8999999761581421,
+    "frames": 60
+   },
+   "fps_uncapped": 1666.6666004392862,
+   "draw_calls": 114,
+   "triangles": 2201797,
+   "programs": 19,
+   "info_memory": {
+    "geometries": 114,
+    "textures": 232
+   },
+   "resident": {
+    "geometry_bytes": 40479158,
+    "instance_matrix_bytes": 153536,
+    "texture_bytes": 855644128,
+    "geometries": 115,
+    "textures": 227,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 226,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 437518336,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     }
+    ],
+    "total_bytes": 1333795158,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 5,
+   "name": "CAM_qa_05_south_lawn",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 16.600000023841858,
+    "mean": 19.29075630272136,
+    "p95": 18.19999998807907,
+    "min": 9.100000023841858,
+    "max": 185.5,
+    "frames": 119
+   },
+   "fps_presented": 60.24096376890021,
+   "gpu_cost_ms": {
+    "median": 1.600000023841858,
+    "mean": 1.7916666666666667,
+    "p95": 2.800000011920929,
+    "frames": 60
+   },
+   "fps_uncapped": 624.9999906867744,
+   "draw_calls": 246,
+   "triangles": 4842201,
+   "programs": 19,
+   "info_memory": {
+    "geometries": 114,
+    "textures": 232
+   },
+   "resident": {
+    "geometry_bytes": 40479158,
+    "instance_matrix_bytes": 153536,
+    "texture_bytes": 855644128,
+    "geometries": 115,
+    "textures": 227,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 226,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 437518336,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     }
+    ],
+    "total_bytes": 1333795158,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 6,
+   "name": "CAM_qa_06_aerial",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 19.100000023841858,
+    "mean": 23.051260504402034,
+    "p95": 23,
+    "min": 3.100000023841858,
+    "max": 273.4000000357628,
+    "frames": 119
+   },
+   "fps_presented": 52.3560208770542,
+   "gpu_cost_ms": {
+    "median": 1.899999976158142,
+    "mean": 2.1116666664679844,
+    "p95": 3.100000023841858,
+    "frames": 60
+   },
+   "fps_uncapped": 526.315796078077,
+   "draw_calls": 287,
+   "triangles": 5597243,
+   "programs": 19,
+   "info_memory": {
+    "geometries": 114,
+    "textures": 232
+   },
+   "resident": {
+    "geometry_bytes": 40479158,
+    "instance_matrix_bytes": 153536,
+    "texture_bytes": 855644128,
+    "geometries": 115,
+    "textures": 227,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 226,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 437518336,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     }
+    ],
+    "total_bytes": 1333795158,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  }
+ ]
+}

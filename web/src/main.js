@@ -26,6 +26,8 @@ import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
+import { chunkInstancedMeshes } from './chunking.js';
+import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -49,6 +51,10 @@ const CFG = {
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
+	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
+	// QA-11d-1 instance chunking: "0" disables it, "minRadius[,maxDepth[,gain]]" tunes it
+	chunk: qs.get( 'chunk' ),                           // "minRadius[,maxDepth[,gain[,budget]]]" 
+	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
 };
 
 function glInfo() {
@@ -120,7 +126,9 @@ function onProgressFor( url ) {
 /** HEAD every planned file so `total` is real before the first byte is fetched. */
 async function measurePlan( files ) {
 	progress.files = files;
-	await Promise.all( files.map( async ( f ) => {
+	// A Gate 2 plan is a few hundred files: HEAD them 16 at a time rather than all at once, or the
+	// browser's own connection limit turns the byte plan into the slowest part of the load.
+	const one = async ( f ) => {
 		try {
 			const r = await fetch( f.url, { method: 'HEAD', cache: 'no-cache' } );
 			const n = Number( r.headers.get( 'content-length' ) ) || 0;
@@ -128,7 +136,10 @@ async function measurePlan( files ) {
 		} catch ( e ) { /* fall through to the manifest's number */ }
 		if ( f.bytes ) { f.sizeFrom = 'manifest'; return; }
 		f.bytes = 0; f.sizeFrom = 'unknown'; progress.unknown.push( f.url );
-	} ) );
+	};
+	let next = 0;
+	await Promise.all( Array.from( { length: Math.min( 16, files.length ) },
+		async () => { while ( next < files.length ) await one( files[ next ++ ] ); } ) );
 	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
 	note( `load plan: ${files.length} files, ${MB( progress.total )} MB (${files.map( f => `${f.kind} ${MB( f.bytes )}` ).join( ', ' )})`
 		+ ( progress.unknown.length ? ` — ${progress.unknown.length} of unknown size` : '' ) );
@@ -159,8 +170,11 @@ const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
 let lightingMode = 'baked';
-const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, total_s: 0 };
+const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, tex_s: 0, total_s: 0 };
 const glbReport = [];
+const glbRoots = [];
+let chunkStats = null;
+let materialsMode = 'grey', pbrReport = null;
 
 /** baked  = the Gate 0/3 path: lightmaps carry the diffuse, so the sun and the environment are
  *           stripped to their specular terms (materials.js).
@@ -175,6 +189,23 @@ function pickLightingMode() {
 		|| Object.keys( tex ).some( k => k.toLowerCase().includes( 'lightmap' ) )
 		|| !! ( manifest.raw.gltf && manifest.raw.gltf.lightmap_slot );
 	return baked ? 'baked' : 'direct';
+}
+
+/** grey = the Gate 1 neutral-grey export (ORN normal + AO only), the frames QA scored at Gate 1;
+ *  pbr  = manifest v3's per-material albedo / roughness / normal KTX2 sets on top of the same
+ *         geometry and the same `direct` lighting.  `auto` takes pbr whenever the manifest carries
+ *         a texture set, so a grey capture can never be reported as a PBR one by accident. */
+function pickMaterialsMode() {
+	const has = manifest.materials && manifest.materials.count > 0;
+	if ( CFG.materials === 'grey' ) return 'grey';
+	if ( CFG.materials === 'pbr' ) {
+		if ( has ) return 'pbr';
+		note( '?materials=pbr but the manifest carries no texture set: falling back to grey' );
+		return 'grey';
+	}
+	const declared = ( manifest.materials && manifest.materials.mode ) || null;
+	if ( declared === 'grey' || declared === 'neutral' ) return 'grey';
+	return has ? 'pbr' : 'grey';
 }
 
 async function boot() {
@@ -221,6 +252,13 @@ async function boot() {
 		+ ( lightingMode === 'baked' ? 'lightmaps carry the diffuse, sun and env are specular-only'
 			: 'no lightmaps in the manifest: full DirectionalLight + PMREM irradiance, no shadow maps' ) );
 
+	materialsMode = pickMaterialsMode();
+	note( `materials mode: ${materialsMode}${CFG.materials !== 'auto' ? ' (?materials override)' : ''} — `
+		+ ( materialsMode === 'pbr'
+			? `${manifest.materials.count} manifest texture set(s), ${manifest.materials.maps} maps`
+			: 'neutral grey as exported (Gate 1 frames)' )
+		+ ( manifest.materials && manifest.materials.mode ? `; manifest declares "${manifest.materials.mode}"` : '' ) );
+
 	// byte budget before anything downloads ------------------------------------------------------
 	const tp = performance.now();
 	const plan = [];
@@ -228,6 +266,8 @@ async function boot() {
 	if ( manifest.sky.glossy ) plan.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
 	if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) plan.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
 	if ( ! CFG.testScene ) for ( const g of manifest.glbs ) plan.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
+	// The PBR set is part of the payload, so it is in the byte plan from the first frame of the bar.
+	if ( materialsMode === 'pbr' && ! CFG.testScene ) plan.push( ...pbrPlan( manifest.materials.sets ) );
 	await measurePlan( plan );
 	loadTimes.plan_s = ( performance.now() - tp ) / 1000;
 
@@ -292,9 +332,43 @@ async function boot() {
 	}
 	loadTimes.glb_s = ( performance.now() - tg ) / 1000;
 
+	// materials: the Gate 2 PBR texture sets, nearest material to THIS station first ---------------
+	if ( materialsMode === 'pbr' && glbRoots.length ) {
+		const tt = performance.now();
+		let drawn = 0;
+		const texturesBeforePbr = collectTextures( scene );
+		pbrReport = await applyPbrSets( {
+			scene, camera, sets: manifest.materials.sets, note,
+			loadTexture: ( url ) => {
+				progress.label = url.split( '/' ).pop();
+				return /\.ktx2$/i.test( url )
+					? getKTX2().loadAsync( url, onProgressFor( url ) )
+					: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+			},
+			// progressive: the near materials are visible while the far ones are still downloading
+			onLoaded: ( m, applied, done, total ) => {
+				progress.label = `materials ${done}/${total}`;
+				if ( done - drawn >= 16 || done === total ) { drawn = done; renderFrame(); }
+			},
+		} );
+		// A replaced Gate 1 map (the ORN normals) is unreachable but still on the GPU: free it.
+		const freed = disposeOrphans( scene, texturesBeforePbr );
+		pbrReport.disposed = freed;
+		loadTimes.tex_s = ( performance.now() - tt ) / 1000;
+		note( `pbr textures in ${loadTimes.tex_s.toFixed( 2 )} s; `
+			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
+	}
+
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
 	if ( CFG.billboards && manifest.treesFar.length ) {
 		billboards = makeTreeBillboards( manifest.treesFar );
+		// G1-5: under `baked` lighting every other material is specular-only, so an unpatched
+		// placeholder quad would take the full 67.3 W/m2 sun diffuse and read as a white card.
+		if ( lightingMode === 'baked' ) {
+			let n = 0;
+			for ( const m of billboards.children ) if ( m.material ) { patchBakedMaterial( m.material, {} ); n ++; }
+			note( `${n} billboard placeholder material(s) put on the specular-only path (G1-5)` );
+		}
 		scene.add( billboards );
 		aimBillboards( billboards, camera );
 		note( `${manifest.treesFar.length} far-tree placeholder quads in ${billboards.children.length} prototype group(s), tagged pfaPlaceholder=gate3_tree_impostor` );
@@ -368,6 +442,7 @@ async function loadGlbs() {
 			const gltf = await loader.parseAsync( buf, base );
 			gltf.scene.name = `WEB_glb_${g.cls}`;
 			scene.add( gltf.scene );
+			glbRoots.push( gltf.scene );
 			const r = processGltf( gltf, g );
 			r.bytes = buf.byteLength; r.wall_s = ( performance.now() - t ) / 1000;
 			glbReport.push( r );
@@ -384,6 +459,32 @@ async function loadGlbs() {
 		renderFrame();
 		await new Promise( ( r ) => requestAnimationFrame( r ) );
 	}
+	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those
+	// batches into regional ones so a station that sees little of the site draws little of it.
+	chunkStats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
+	const chunkArgs = ( CFG.chunk || '' ).split( ',' ).map( Number );
+	if ( CFG.chunk !== '0' ) {
+		const opts = {};
+		if ( chunkArgs.length && isFinite( chunkArgs[ 0 ] ) && chunkArgs[ 0 ] > 0 ) opts.minRadius = chunkArgs[ 0 ];
+		if ( isFinite( chunkArgs[ 1 ] ) ) opts.maxDepth = chunkArgs[ 1 ];
+		if ( isFinite( chunkArgs[ 2 ] ) ) opts.gain = chunkArgs[ 2 ];
+		if ( isFinite( chunkArgs[ 3 ] ) ) opts.budget = chunkArgs[ 3 ];
+		chunkStats.opts = opts;
+		// The budget is the ADDED draw calls over the WHOLE scene, so it has to be spent across the
+		// glbs, not per glb (each root would otherwise get the full allowance).
+		let left = opts.budget !== undefined ? opts.budget : 32;
+		for ( const root of glbRoots ) {
+			const s = chunkInstancedMeshes( root, { ...opts, budget: left } );
+			left -= s.added;
+			chunkStats.candidates += s.candidates; chunkStats.split += s.split;
+			chunkStats.chunks += s.chunks; chunkStats.added += s.added;
+			chunkStats.batches.push( ...s.batches );
+		}
+		note( `instance chunking (QA-11d-1): ${chunkStats.split} of ${chunkStats.candidates} site-spanning batches `
+			+ `(bounding radius >= ${opts.minRadius || 30} m, depth ${opts.maxDepth || 2}, gain ${opts.gain ?? 0.8}) `
+			+ `split into ${chunkStats.chunks} regional batches, `
+			+ `+${chunkStats.added} draw calls when every chunk is in frame` );
+	} else { note( 'instance chunking disabled (?chunk=0)' ); }
 	finishMaterials();
 }
 
@@ -531,10 +632,12 @@ async function loadLUT() {
 		// log2 shaper at the shadow end (1/255 of the shaper range is ~0.065 EV down there).  Float
 		// texels need OES_texture_float_linear for the trilinear fetch; WebGL2 has no linear float
 		// filtering without it, so fall back to 8-bit rather than render a nearest-sampled LUT.
-		const floatLinear = !! renderer.getContext().getExtension( 'OES_texture_float_linear' );
+		const hasExt = !! renderer.getContext().getExtension( 'OES_texture_float_linear' );
+		const floatLinear = hasExt && CFG.lutFloat;
 		const cubeLoader = new LUTCubeLoader( manager );
 		if ( floatLinear ) cubeLoader.setType( THREE.FloatType );
-		note( `LUT texel type ${floatLinear ? 'FloatType (OES_texture_float_linear)' : 'UnsignedByte (no OES_texture_float_linear)'}` );
+		note( `LUT texel type ${floatLinear ? 'FloatType (OES_texture_float_linear)' : 'UnsignedByte'}`
+			+ ` — extension ${hasExt ? 'present' : 'ABSENT'}${! CFG.lutFloat ? ', forced 8-bit by ?lutfloat=0' : ''}` );
 		const lut = url.endsWith( '.cube' )
 			? await cubeLoader.loadAsync( url, onProgressFor( url ) )
 			: await new LUTImageLoader( manager ).loadAsync( url, onProgressFor( url ) );
@@ -647,6 +750,9 @@ window.__pfaInfo = () => ( {
 	glbs: glbReport.slice(),
 	resident: residentBytes(),
 	billboards: billboards ? { ...billboards.userData } : null,
+	chunking: chunkStats,
+	materialsMode,
+	pbr: pbrReport,
 	notes: log.slice(),
 } );
 
@@ -656,9 +762,12 @@ window.__pfaInfo = () => ( {
 function residentBytes() {
 	const geos = new Set(), texs = new Set();
 	let geometry = 0, texture = 0, instanceMatrices = 0;
+	const formats = {};
 	const addTex = ( t ) => {
 		if ( ! t || texs.has( t ) ) return;
 		texs.add( t );
+		const f = formatName( t );
+		formats[ f ] = ( formats[ f ] || 0 ) + 1;
 		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
 			for ( const m of t.mipmaps ) texture += m.data.byteLength;       // compressed (KTX2)
 		} else if ( t.image && t.image.width ) {
@@ -680,7 +789,10 @@ function residentBytes() {
 		}
 	} );
 	if ( scene.background && scene.background.isTexture ) addTex( scene.background );
-	if ( scene.environment ) addTex( scene.environment );
+	// scene.environment IS pmremTarget.texture and has an image, so addTex would bill the cubeUV
+	// here AND addRT would bill the identical bytes below (review finding 1): count it once, as a
+	// render target.
+	if ( scene.environment && ! ( pmremTarget && scene.environment === pmremTarget.texture ) ) addTex( scene.environment );
 	// Render targets dominate the GPU-memory figure at 1440p and carry no `image`, so addTex() sees
 	// nothing: count them explicitly.  A HalfFloat RGBA target is 8 B/px, and three allocates an extra
 	// multisampled renderbuffer of samples x that size when `samples` > 0.
@@ -698,7 +810,7 @@ function residentBytes() {
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
-		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
+		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size, texture_formats: formats,
 		render_target_bytes: rtBytes, render_targets: rts,
 		total_bytes: Math.round( geometry + instanceMatrices + texture ) + rtBytes,
 		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '

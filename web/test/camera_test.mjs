@@ -70,5 +70,13 @@ check( ndc.y < 0 && ndc.y > - 0.35, `st1 origin sits slightly below the vertical
 console.log( `      st1 hfov ${( 2 * Math.atan( 36 / 40 ) * 180 / Math.PI ).toFixed( 2 )} deg, vfov ${( vfov * 180 / Math.PI ).toFixed( 2 )} deg at 16:9` );
 console.log( `      st1 camera world matrix (three, column-major): [${cam1.matrixWorld.elements.map( v => v.toFixed( 5 ) ).join( ', ' )}]` );
 console.log( `      st1 projection matrix     (column-major): [${cam1.projectionMatrix.elements.map( v => v.toFixed( 5 ) ).join( ', ' )}]` );
+// G1-8: without a manifest every orientation cross-check skips and the run used to exit 0, so a
+// broken conversion looked like a pass.  All-skipped is a FAILURE: point PFA_MAIN_ROOT at a checkout
+// whose export/out carries a manifest with rotation_euler_xyz.
+if ( skipped >= data.stations.length ) {
+	fails ++;
+	console.log( `FAIL  every station orientation cross-check skipped (${skipped}/${data.stations.length}): `
+		+ `no Blender manifest reachable${process.env.PFA_MAIN_ROOT ? ` under PFA_MAIN_ROOT=${process.env.PFA_MAIN_ROOT}` : ' (set PFA_MAIN_ROOT)'}` );
+}
 console.log( fails ? `${fails} FAILURES` : `all checks passed${skipped ? `, ${skipped} station orientation check(s) skipped` : ''}` );
 process.exit( fails ? 1 : 0 );
