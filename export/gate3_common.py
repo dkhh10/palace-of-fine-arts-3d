@@ -370,3 +370,26 @@ def read_exr_channels(path):
             off += n
         i += nb
     return {k: v[::-1] for k, v in out.items()}
+
+
+def encode_and_write_arr(key, rgb, out_dir=None, exr=True):
+    """The same encode/write/read-back as export/bake_lm.encode_and_write, importable without bpy."""
+    out_dir = out_dir or TEX
+    out_dir.mkdir(parents=True, exist_ok=True)
+    rng = pick_range(rgb)
+    d = dict(range=rng, size=[int(rgb.shape[1]), int(rgb.shape[0])], stats=px_stats(rgb, ceiling=rng))
+    if exr:
+        p = out_dir / f"{key}.exr"
+        write_exr32(p, rgb)
+        back = read_exr32(p)
+        assert back.shape == rgb.shape
+        d["exr"] = dict(path=p.name, bytes=p.stat().st_size,
+                        read_back_abs_max=round(float(np.abs(back - rgb).max()), 8))
+    for enc, fn, dec in (("rgbm8", rgbm_encode, rgbm_decode_u8), ("gamma2", gamma2_encode, gamma2_decode_u8)):
+        a = fn(rgb, rng)
+        p = out_dir / f"{key}_{enc}.png"
+        nb = (write_png_rgba8 if a.shape[-1] == 4 else write_png_rgb8)(p, a)
+        rb = read_png(p)
+        assert rb.shape == a.shape and np.array_equal(rb, a), f"{p}: did not read back identical"
+        d[enc] = dict(path=p.name, bytes=nb, roundtrip=roundtrip(rgb, dec(rb, rng)))
+    return d
