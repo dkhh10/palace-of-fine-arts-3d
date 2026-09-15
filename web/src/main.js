@@ -41,6 +41,8 @@ const CFG = {
 	unlit: qs.get( 'unlit' ) || 'share',                // share | stock | black: materials with no lightmap
 	haze: qs.has( 'haze' ) ? parseFloat( qs.get( 'haze' ) ) : 0,   // diagnostic constant airlight
 	hud: qs.get( 'hud' ) !== '0',                       // ?hud=0 for clean screenshots
+	lmScale: qs.has( 'lmscale' ) ? parseFloat( qs.get( 'lmscale' ) ) : null,  // override lightmap_scale
+	time: qs.has( 't' ) ? parseFloat( qs.get( 't' ) ) : null,      // freeze the water phase (captures)
 };
 
 function glInfo() {
@@ -197,7 +199,13 @@ function getKTX2() {
 	return ktx2Loader;
 }
 
+/** Cycles' colour-off diffuse pass is irradiance/pi and three's lightMap path divides by pi again in
+ *  BRDF_Lambert, so the manifest's lightmap_scale (pi) is applied as lightMapIntensity. */
+let lightmapScale = 1.0;
+
 async function loadGlb( url ) {
+	lightmapScale = CFG.lmScale !== null ? CFG.lmScale : manifest.lightmapScale;
+	note( `lightMapIntensity = lightmap_scale ${lightmapScale.toFixed( 5 )}${CFG.lmScale !== null ? ' (?lmscale override)' : ''}` );
 	const loader = new GLTFLoader( manager ).setKTX2Loader( getKTX2() ).setMeshoptDecoder( MeshoptDecoder );
 	const t = performance.now();
 	const gltf = await loader.loadAsync( url );
@@ -215,16 +223,17 @@ async function loadGlb( url ) {
 			seenMats.add( m );
 			// schema pfa-phase6-gate0/1 ships the lightmap INSIDE the glb as the emissiveTexture on
 			// TEXCOORD_1 (RGBM8).  Move it to lightMap channel 1, kill the emissive, and decode RGBM.
-			let lm = matchLightmap( o, m );
-			if ( ! lm && m.emissiveMap ) {
-				lm = { encoding: 'rgbm', rgbmMaxRange: manifest.rgbmRange, intensity: 1.0, fromEmissive: true };
+			// The in-glb emissive lightmap wins: it must never be left live as emissive.
+			let lm = m.emissiveMap ? null : matchLightmap( o, m );
+			if ( m.emissiveMap ) {
+				lm = { encoding: 'rgbm', rgbmMaxRange: manifest.rgbmRange, intensity: lightmapScale, fromEmissive: true };
 				m.lightMap = m.emissiveMap;
 				// GLTFLoader tags an emissiveTexture as sRGB (glTF requires it), but the RGBM8 lightmap
 				// is LINEAR data: leaving it as sRGB would put a decode curve on the baked irradiance.
 				m.lightMap.colorSpace = THREE.NoColorSpace;
 				m.lightMap.needsUpdate = true;
 				m.lightMap.channel = 1;
-				m.lightMapIntensity = 1.0;
+				m.lightMapIntensity = lightmapScale;
 				m.emissiveMap = null;
 				m.emissive = new THREE.Color( 0, 0, 0 );
 				m.emissiveIntensity = 0;
@@ -257,6 +266,7 @@ async function loadGlb( url ) {
 			for ( const m of noLightmapMaterials ) {
 				const d = donorFor( m ) || donor;
 				m.lightMap = d.lightMap; m.lightMapIntensity = d.lightMapIntensity;
+				patchedMaterials ++;
 				patchBakedMaterial( m, { lightMapEncoding: 'rgbm', rgbmMaxRange: manifest.rgbmRange } );
 				m.needsUpdate = true;
 			}
@@ -268,14 +278,18 @@ async function loadGlb( url ) {
 			note( `${noLightmapMaterials.length} lightmap-free material(s) left on stock three lighting` );
 		}
 	}
-	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} lightmapped materials patched (specular-only sun), ${unpatchedMaterials.size} without a lightmap left on stock lighting: ${[ ...unpatchedMaterials ].join( ', ' ) || 'none'}` );
+	const stillStock = noLightmapMaterials.filter( m => ! m.lightMap ).map( m => m.name || '(unnamed)' );
+	note( `glb ${url.split( '/' ).pop()} in ${( ( performance.now() - t ) / 1000 ).toFixed( 2 )} s: ${meshes} meshes, ${Math.round( tris )} placed tris, ${patchedMaterials} materials patched (specular-only sun), ${stillStock.length} left on stock lighting: ${stillStock.join( ', ' ) || 'none'}` );
 }
 
 function matchLightmap( obj, mat ) {
+	// gltfpack puts each mesh on an unnamed child node, so the manifest's object name is usually on
+	// the PARENT; material name and both node names are all accepted.
+	const names = [ mat.name, obj.name, obj.parent?.name, obj.parent?.parent?.name ].filter( Boolean );
 	for ( const lm of manifest.lightmaps ) {
 		if ( ! lm.match ) continue;
-		const name = lm.matchKind === 'material' ? mat.name : obj.name;
-		if ( name === lm.match || name.startsWith( lm.match ) ) return lm;
+		const want = lm.matchKind === 'material' ? [ mat.name ].filter( Boolean ) : names;
+		if ( want.some( n => n === lm.match || n.startsWith( lm.match ) ) ) return lm;
 	}
 	return null;
 }
@@ -314,8 +328,9 @@ async function loadLUT() {
 			: await new LUTImageLoader( manager ).loadAsync( url );
 		const res = lut.texture3D ? lut : { texture3D: lut.texture3D || lut, size: lut.size };
 		res.shaper = manifest.lut.shaper; res.shaperMin = manifest.lut.shaperMin; res.shaperMax = manifest.lut.shaperMax;
+		res.shaperPivot = manifest.lut.shaperPivot;
 		lutPass.setLUT( res );
-		note( `LUT ${url.split( '/' ).pop()} size ${lutPass.uniforms.lutSize.value}${res.shaper ? ` shaper ${res.shaper} [${res.shaperMin}, ${res.shaperMax}]` : ` domain [${lutPass.uniforms.domainMin.value.toArray()}, ${lutPass.uniforms.domainMax.value.toArray()}]`}` );
+		note( `LUT ${url.split( '/' ).pop()} size ${lutPass.uniforms.lutSize.value}${res.shaper ? ` shaper ${res.shaper} [${res.shaperMin}, ${res.shaperMax}] pivot ${lutPass.uniforms.shaperPivot.value}` : ` domain [${lutPass.uniforms.domainMin.value.toArray()}, ${lutPass.uniforms.domainMax.value.toArray()}]`}` );
 	} catch ( e ) { note( `LUT load failed (${e.message}); gamma 2.2 fallback` ); lutPass.setLUT( null ); }
 }
 
@@ -371,7 +386,7 @@ function resize() {
 }
 
 function renderFrame() {
-	if ( water ) water.userData.tick( elapsed() );
+	if ( water ) water.userData.tick( CFG.time !== null ? CFG.time : elapsed() );
 	renderer.info.autoReset = false;          // otherwise info shows only the last composer pass
 	renderer.info.reset();
 	if ( composer ) composer.render(); else renderer.render( scene, camera );
@@ -395,6 +410,9 @@ window.__pfaInfo = () => ( {
 	render: { ...renderer.info.render }, memory: { ...renderer.info.memory },
 	gl: glInfo(),
 	patchedMaterials, lightmapsApplied, unpatchedMaterials: [ ...unpatchedMaterials ],
+	lightmapScale, rgbmRange: manifest ? manifest.rgbmRange : null,
+	shaperPivot: lutPass ? lutPass.uniforms.shaperPivot.value : null,
+	skyRotationDeg: manifest ? manifest.sky.rotationDeg : null,
 	exposure: lutPass ? lutPass.uniforms.exposure.value : null,
 	lutEnabled: lutPass ? !! lutPass.uniforms.lutEnabled.value : false,
 	lutSize: lutPass ? lutPass.uniforms.lutSize.value : 0,

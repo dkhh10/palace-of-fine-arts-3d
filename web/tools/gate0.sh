@@ -8,7 +8,8 @@
 #    column and capital (the ROIs the measurements use, identical in both frames);
 # 4. builds renders/web/gate0_pair.png and prints the measurements.
 set -e
-MAIN="/Users/dk/Projects/3d render blender 3rd attempt building"
+MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
+export PFA_MAIN_ROOT="$MAIN"
 COL=${1:-column}
 CAP=${2:-capital}
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)

@@ -5,8 +5,11 @@ import { defineConfig } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
+// PFA_ASSETS wins; otherwise $PFA_MAIN_ROOT/export/out (the main checkout holds the bake output),
+// otherwise this checkout's own export/out.  No absolute path is hard-coded.
 export const ASSETS_DIR = process.env.PFA_ASSETS
-	|| '/Users/dk/Projects/3d render blender 3rd attempt building/export/out';
+	|| ( process.env.PFA_MAIN_ROOT ? path.join( process.env.PFA_MAIN_ROOT, 'export/out' )
+		: path.resolve( import.meta.dirname, '..', 'export/out' ) );
 
 const MIME = { '.json': 'application/json', '.glb': 'model/gltf-binary', '.ktx2': 'image/ktx2',
 	'.hdr': 'image/vnd.radiance', '.exr': 'image/x-exr', '.png': 'image/png', '.jpg': 'image/jpeg',

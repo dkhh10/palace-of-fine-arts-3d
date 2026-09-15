@@ -143,6 +143,20 @@ export function normaliseManifest( raw, baseUrl ) {
 	};
 
 	// --- lightmaps -----------------------------------------------------------------------------
+	// ONE RGBM range for every lightmap path (schema: textures.<key>.rgbm_range, 64 at Gate 0).
+	// A missing value is reported, because silently using another number is a brightness error.
+	const textures = pick( raw, 'textures' ) || {};
+	let rgbmFound;
+	for ( const [ k, v ] of Object.entries( textures ) ) {
+		if ( k.includes( 'lightmap' ) && v && v.rgbm_range ) { rgbmFound = v.rgbm_range; break; }
+	}
+	const rgbmRange = def( rgbmFound, 7.0, 'lightmap rgbm_range (no textures.*lightmap*.rgbm_range in the manifest)' );
+
+	// lightmap_scale: the Cycles colour-off diffuse pass is irradiance/pi and three's lightMap path
+	// divides by pi again in BRDF_Lambert, so the manifest carries the compensating factor (pi).
+	const lightmapScale = def( pick( raw, 'lightmap_scale', 'lightmaps.scale', 'view.lightmap_scale', 'textures.lightmap_scale' ),
+		1.0, 'lightmap_scale (absent: the decoded lightmap is used as-is)' );
+
 	// Accepted shapes: {lightmaps:[{match|object|mesh|material, url, encoding, intensity}]}
 	//                  {assets:[{name, lightmap:{url, encoding}}]}
 	const lightmaps = [];
@@ -153,7 +167,7 @@ export function normaliseManifest( raw, baseUrl ) {
 			url: resolveUrl( baseUrl, lm.url || lm.path || lm.file ),
 			encoding: lm.encoding || 'linear',
 			intensity: lm.intensity ?? 1.0,
-			rgbmMaxRange: lm.rgbm_max_range ?? lm.max_range ?? 7.0,
+			rgbmMaxRange: lm.rgbm_max_range ?? lm.max_range ?? rgbmRange,
 		} );
 	}
 	const assetsRaw = pick( raw, 'assets' ) || [];
@@ -162,24 +176,25 @@ export function normaliseManifest( raw, baseUrl ) {
 	for ( const a of assetList ) {
 		const lm = a.lightmap;
 		if ( ! lm ) continue;
+		// schema pfa-phase6-gate0/1: assets[].lightmap is a KEY into `textures`, not a URL.  Resolving
+		// it as a URL would 404 and, worse, skip the in-glb emissive path and leave the lightmap
+		// rendering as full-bright emissive.  A texture entry carries path, encoding and rgbm_range.
+		const tex = ( typeof lm === 'string' ) ? textures[ lm ] : lm;
+		if ( typeof lm === 'string' && ! tex ) { notes.push( `asset ${a.name}: lightmap key "${lm}" is not in textures, ignored` ); continue; }
+		const url = resolveUrl( baseUrl, tex.path || tex.url || tex.file );
+		if ( ! url ) { notes.push( `asset ${a.name}: lightmap "${lm}" has no path, ignored` ); continue; }
 		lightmaps.push( {
 			match: a.name ?? a.object,
 			matchKind: 'object',
-			url: resolveUrl( baseUrl, typeof lm === 'string' ? lm : ( lm.url || lm.path || lm.file ) ),
-			encoding: ( typeof lm === 'object' && lm.encoding ) || 'linear',
-			intensity: ( typeof lm === 'object' && lm.intensity ) ?? 1.0,
-			rgbmMaxRange: ( typeof lm === 'object' && ( lm.rgbm_max_range ?? lm.max_range ) ) ?? 7.0,
+			url,
+			encoding: /rgbm/i.test( tex.encoding || '' ) ? 'rgbm' : ( tex.encoding === 'sRGB' ? 'srgb' : 'linear' ),
+			intensity: tex.intensity ?? 1.0,
+			rgbmMaxRange: tex.rgbm_range ?? tex.rgbm_max_range ?? rgbmRange,
 		} );
 	}
 
-	// RGBM range used by every lightmap in the schema (textures.*.rgbm_range)
-	let rgbmRange = 7.0;
-	for ( const [ k, v ] of Object.entries( pick( raw, 'textures' ) || {} ) ) {
-		if ( k.includes( 'lightmap' ) && v && v.rgbm_range ) { rgbmRange = v.rgbm_range; break; }
-	}
-
 	const out = {
-		raw, baseUrl, glb, stations, lut, exposure, sun, lightmaps, notes, rgbmRange,
+		raw, baseUrl, glb, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale,
 		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
 		sky: { camera: skyCamera, glossy: skyGlossy, rotationDeg: skyRotationDeg },
 		frameSize: pick( raw, 'frame', 'render.frame' ) || { width: 1280, height: 720 },

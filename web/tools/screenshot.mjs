@@ -28,7 +28,8 @@ import { fileURLToPath } from 'node:url';
 const WEB = path.resolve( fileURLToPath( new URL( '..', import.meta.url ) ) );
 const REPO = path.resolve( WEB, '..' );
 const CHROME = process.env.PFA_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const ASSETS = process.env.PFA_ASSETS || '/Users/dk/Projects/3d render blender 3rd attempt building/export/out';
+const ASSETS = process.env.PFA_ASSETS
+	|| ( process.env.PFA_MAIN_ROOT ? path.join( process.env.PFA_MAIN_ROOT, 'export/out' ) : path.join( REPO, 'export/out' ) );
 
 function args() {
 	const a = process.argv.slice( 2 ), o = { query: [] };
@@ -64,7 +65,9 @@ function serveDist() {
 		if ( url.startsWith( '/assets/' ) && ! fs.existsSync( path.join( root, url.slice( 1 ) ) ) ) file = path.join( ASSETS, url.slice( '/assets/'.length ) );
 		else if ( url.startsWith( '/test/' ) ) file = path.join( WEB, 'testdata', url.slice( '/test/'.length ) );
 		else file = path.join( root, url === '/' ? 'index.html' : url.slice( 1 ) );
-		if ( ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) { res.statusCode = 404; res.end( 'not found' ); return; }
+		const allowed = [ root, ASSETS, path.join( WEB, 'testdata' ) ];
+		if ( ! allowed.some( a => path.resolve( file ).startsWith( path.resolve( a ) ) )
+			|| ! fs.existsSync( file ) || fs.statSync( file ).isDirectory() ) { res.statusCode = 404; res.end( 'not found' ); return; }
 		res.setHeader( 'Content-Type', MIME[ path.extname( file ) ] || 'application/octet-stream' );
 		res.setHeader( 'Content-Length', fs.statSync( file ).size );
 		fs.createReadStream( file ).pipe( res );
