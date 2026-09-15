@@ -595,3 +595,6 @@ In flight: QA 11c (re-check on the clean capture), export fixes. Next: Gate 1 ve
 
 ## 2026-09-15 · Export 2c1c7fe merged (4190b62; boards cut, cam04 rib group as modelled at 160 828 tris, scene 2 841 396); sweep pattern updated; capture 4 taken; QA 11c dispatched; Gate 2 viewer brief written
 In flight: QA 11c. Next: on PASS dispatch Gate 2 bake (phase6_gate2_bake.md) then the viewer Gate 2 round (phase6_gate2_viewer.md) once manifest v3 exists; burn; stop.
+
+## 2026-09-15 · QA 11c (9ef4fd7): boards proven out (0 % coverage), QA-11-9 FIXED, arch ray test PASS, budget/perf PASS — GATE 1 FAIL on QA-11c-1: 1379 ENV_shrub_*_LOD2 nodes exported with no transform (drawn at the origin; site planting absent, Scale cues -1.0 at five stations)
+Lead: viewer reads lightmap_encoding.rgbm_range (QA-11c-3). Export engineer fixing the ENV node transforms with writer assertions (env.glb only). Next: re-capture -> QA 11d -> Gate 2.
