@@ -77,7 +77,9 @@ def main():
             mean = st.get("mean") or [0.0, 0.0, 0.0]
             std = st.get("std") or [0.0, 0.0, 0.0]
             key = f"gate2_{jid}_{kind}"
-            constant = (kind != "normal") and (max(std) < CONSTANT_STD)
+            # a normal map whose X and Y never leave the flat value carries nothing: the surface uses its
+            # geometry normal and the texture is pure resident memory (measured on 6 of the 10 backdrop groups).
+            constant = (max(std[:2]) if kind == "normal" else max(std)) < CONSTANT_STD
             if not constant:
                 files[key] = dict(path=f"{key}.ktx2", w=m["ship_px"], h=m["ship_px"], map=kind,
                                   colorspace=("srgb" if kind == "albedo" else "linear"),
@@ -98,7 +100,7 @@ def main():
                 slot["factor"] = [round(v, 6) for v in mean]
             elif kind == "normal":
                 slot["scale"] = 1.0
-                slot["factor"] = None
+                slot["factor"] = [0.5, 0.5, 1.0] if constant else None
             else:
                 slot["factor"] = round(mean[0], 6)
             entry["occlusion" if kind == "ao" else kind] = slot
