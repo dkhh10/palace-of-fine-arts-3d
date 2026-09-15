@@ -612,3 +612,30 @@ them, twice the 0.5 limit; cam03 is exactly at -0.5. cam04 Ornament recovers +0.
 pass on every line: 2 841 396 placed tris of 3.0 M, 154 batches, 1440p GPU 0.5-1.6 ms median (hero 6.8 % of the
 22.2 ms a 45 fps frame allows), resident 1.019 GB of 1.2 GB, load 2.31 s / 206.4 MB. Full report
 `docs/qa_round_11c.md`; composite `renders/web/round11c_gate.png`.
+
+## Round 11d — Phase 6 Gate 1, fourth check (2026-09-15, QA). **GATE 1 PASS**
+
+1. **A placement bug is proven on the file, not on one pixel.** QA-11c-1 is **FIXED**: `env.gltf` now writes a
+   transform on **1526 of 1536** mesh nodes (the 10 without are the merged world-space `ENV_backdropgroup_*`,
+   identity by design), **0** shrub nodes sit within 1 m of the world origin, and the 1379 shrubs spread over
+   250 x 166 m of site at ground level. `export/verify_glb.py`, re-run by QA, passes on every class (drawn vs
+   `export_set`: env **0.000 %**, arch -0.185 %, orn -0.157 %, ground 0.000 %), and the writer's `near_origin`
+   assertion record is empty. The frames come from the new pack (41 env meshes / 1526 instances vs 39 / 1458).
+2. **The origin-pixel test alone cannot decide this class of defect** — at cam01 / 02 / 05 the world origin
+   projects onto ground the reference shows planted, and at cam05 the 11c pile was occluded by a column. The
+   discriminator is whether the foliage is an **island**: planted 50-px columns of the reference planting band
+   went cam01 1 -> 21 of 29, cam02 0 -> 15 of 31, cam03 0 -> 5 of 39, cam05 0 -> 29 of 33, cam06 0 -> 1 of 33.
+   At cam04 a green-excess metric is invalid (the gold ceiling reads as green); that station is judged on the
+   100 % crop — the leaf cards are gone, coffers and ribs draw.
+3. **Carries:** QA-11-1 / -3 (colonnade canopies, the 127 suppressed impostor carriers) -> Gate 3; QA-11-5
+   (ripple-free mirror water) -> Gate 4; QA-11c-2 and the untextured backdrop -> Gate 2. **QA-11c-3 FIXED** (the
+   `defaulted lightmap rgbm_range = 7` line is gone; the manifest's 64 is read). **New:** QA-11d-1 (Gate 4) the
+   shrub instanced bounds span the whole site, so every env batch draws at every station (cam04 77 -> 99 draws);
+   QA-11d-2 (Gate 2) `gltfpack` warns 37 % position error on the re-packed `env.glb` — re-pack with `-vp 16`.
+
+**Scores (geometry rows, Phase 5 round 09 -> Gate 1 round 11d):** 01 **3.60** (-0.10), 02 **3.20** (-0.10), 03
+**2.50** (-0.10), 04 **3.10** (0.00), 05 **3.10** (-0.10), 06 **3.00** (-0.10). **Parity PASSES** — no row more
+than 0.5 under Phase 5; Scale cues recover 0.5-1.0 at every station and stay 0.5 under only where the far-tree
+canopy is missing. Name sweep PASS (2540 objects, 127 exempt, 0 to explain). Budget and perf unchanged: 2 841 396
+placed tris of 3.0 M, 154 batches, 1440p GPU 0.6-1.5 ms median (hero 6.8 % of a 45 fps frame), resident 1.019 GB,
+load 2.57 s / 206.5 MB. Full report `docs/qa_round_11d.md`; composite `renders/web/round11d_gate.png`.
