@@ -594,3 +594,56 @@ prototype's slot order onto the Gate 1 lo/hi meshes without asserting the existi
 the same order; `bake_lib.py` `is_data=img.is_float and True` is always True (line 246 reassigns the colorspace, so it
 is cosmetic), `manifest_v3.py`'s `if kind == "ao"` is dead, and its `etc1s_encoder` string omits `--assign_oetf`; the
 five `renders/logs/gate2_*.log` sit outside the brief's `export/*`.
+
+## QA-12-1 — why the stone read flat, and what actually fixes it
+
+QA round 12 failed Gate 2 on one row: at cam05 the pier face, attic wall and spandrel are smooth pale ochre at
+15-25 m, mid-band amplitude **2.68 against the Phase 5 reference's 10.11**, std 12.3 against 38.3. The report's
+root cause was that 7 of the ARCH/ground sets shipped `normal.texture: null`, and the prescribed fix was to bake
+each material's bump to a tangent normal map for every group.
+
+**The seven nulls were real and are fixed** — an ARCH or ground set now always ships a normal map
+(`manifest_v3.py`, the `CONSTANT_STD` rule no longer applies to them), so the viewer can never fall back to a flat
+geometry normal on stone. **But the normal map is not where the grain lives, and measurement says it cannot be.**
+
+| what was measured | result |
+|---|---|
+| Cycles NORMAL bake of the bump, `ARCH_site__concrete_podium` at 2K | X/Y std **0.00167** |
+| the same bake at 4K | X/Y std **0.00272** — 1.63x for 2x the resolution, i.e. it scales with the texel footprint |
+| the same bump baked as a HEIGHT map and converted to a normal at the map's own resolution (`bake_lib.height_to_normal`, no bake differentials in it) | flatter still |
+| the arithmetic | Bump `Distance` **0.015 m** against an atlas texel of **0.038-0.118 m**; the height field varies by only **0.041** (std, full range) from texel to texel |
+
+Extrapolated, the Cycles bake would need roughly **50x** the resolution to reach a usable amplitude. The grain is
+not missing from the bake; it is finer than the bake's Nyquist. Phase 5 does not have this problem because Cycles
+evaluates the same Bump per **camera pixel** — about 2 cm at the cam05 station — and because the detail images
+underneath it are 2048 px across a 2.16-2.71 m tile, i.e. **1.05-1.32 mm per texel**, 36-110x finer than any unique
+atlas this project can afford.
+
+### The fix: a shared object-space detail set (`materials.detail`)
+
+`export/gate2_detail.py` exports what Phase 5 itself uses — five shared texture sets, tiled in object space, on top
+of the baked albedo/roughness:
+
+| set | used by | object scale | tile | mm/texel in Blender |
+|---|---|---|---|---|
+| `concrete_wall_007` | colonnade, rotunda podium, drum band, ceiling ribs, paving stone | 0.462963 | 2.16 m | 1.05 |
+| `concrete_wall_008` | column rose, tan inner, concrete inner/ochre, plaster ceiling, paving | 0.369004 | 2.71 m | 1.32 |
+| `gravelly_sand` | gravel path | 0.403226 | 2.48 m | 1.21 |
+| `rock_boulder_dry` | riprap | 0.85 | 1.18 m | 0.57 |
+| `forest_ground_04` | soil | 0.31746 | 3.15 m | 1.54 |
+
+Each set ships albedo, roughness and a tangent normal derived from its own height at the tile's real scale
+(`k = Distance / m_per_texel`, 9.8-26.1), all at **1K = 19.95 MB resident for the whole scene** — independent of
+how many atlases exist, because the sets are shared. The height map itself is not shipped.
+
+**The proof QA asked for, on one group** (`ARCH_colonnade_south`, whose detail set is `concrete_wall_007`):
+
+| map | red mean / std | blue mean / std | red range |
+|---|---|---|---|
+| atlas normal, 2K at 3.8 cm/texel (before) | 0.50003 / **0.00205** | 1.00000 / **0.00015** | 0.4504 – 0.6033 |
+| detail normal, 1K over a 2.16 m tile = 2.11 mm/texel (after) | 0.49997 / **0.02363** | 0.99956 / **0.00916** | **0.0210 – 0.9779** |
+| ratio | **11.5x** | **61.1x** | flat band -> full relief |
+
+`manifest.materials.detail` carries the sets, the per-material object scale and the apply rule; the viewer
+multiplies the baked albedo by the detail albedo over its own mean and blends the detail normal over the baked one.
+Without that layer the atlas normal alone cannot move the cam05 numbers, whatever resolution it is baked at.
