@@ -5,24 +5,45 @@
 // horizontal centre and 2*shift_y*aspect + a small target offset below the vertical centre,
 // (c) every station's target projects to the shifted centre.
 import * as THREE from 'three';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { stationMatrix, makeStationCamera, matrixMaxDiff, b2t, vFovDeg } from '../src/blenderCamera.js';
 
+// src/stations_blender.json is GENERATED from scripts/qa_cameras.py (web/tools/dump_stations.py) and
+// carries only what Blender is not asked for: the look-at target.  Blender's own orientation comes
+// from the export manifest (rotation_euler_xyz, written by export_set.py out of the camera objects),
+// so comparing the two is a cross-check between two independent sources rather than a formula
+// against itself.  Without a manifest the orientation checks are SKIPPED, never silently passed.
 const data = JSON.parse( readFileSync( new URL( '../src/stations_blender.json', import.meta.url ) ) );
+const WEB = path.resolve( fileURLToPath( new URL( '..', import.meta.url ) ) );
+const MAIN = process.env.PFA_MAIN_ROOT || path.resolve( WEB, '..' );
+const manifestPath = [ 'export/out/gate1/manifest.json', 'export/out/gate0/manifest.json' ]
+	.map( p => path.join( MAIN, p ) ).find( existsSync ) || null;
+const blenderStations = manifestPath ? ( JSON.parse( readFileSync( manifestPath ) ).stations || {} ) : {};
+console.log( manifestPath ? `      Blender orientations from ${manifestPath}`
+	: '      NO manifest reachable (PFA_MAIN_ROOT): orientation cross-checks SKIPPED' );
+
 const ASPECT = 1280 / 720;
-let fails = 0;
+let fails = 0, skipped = 0;
 const check = ( ok, msg ) => { if ( ! ok ) fails ++; console.log( `${ok ? 'PASS' : 'FAIL'}  ${msg}` ); };
 
 for ( const st of data.stations ) {
-	const { matrix, source, lookAtMatrix } = stationMatrix( st );
-	const eulerOnly = stationMatrix( { ...st, matrix_world: null } );
-	const dEuler = matrixMaxDiff( matrix, eulerOnly.matrix );
-	check( dEuler < 1e-5, `st${st.index} matrix_world vs euler XYZ: max element diff ${dEuler.toExponential( 2 )}` );
-	if ( lookAtMatrix ) {
-		const dLook = matrixMaxDiff( matrix, lookAtMatrix );
-		check( dLook < 1e-5, `st${st.index} matrix_world vs look-at:    max element diff ${dLook.toExponential( 2 )}` );
+	const b = blenderStations[ st.name ];
+	if ( ! b || ! b.rotation_euler_xyz ) {
+		skipped ++;
+		console.log( `      st${st.index} ${st.name}: no Blender rotation in the manifest, orientation check skipped` );
 	} else {
-		console.log( `      st${st.index} look-at degenerate (straight up), ${source} used` );
+		// Blender's euler for this camera, against the look-at the viewer derives from the target.
+		const fromBlender = stationMatrix( { ...st, rotation_euler: b.rotation_euler_xyz, location: b.location ?? st.location } );
+		const { lookAtMatrix } = stationMatrix( st );
+		check( fromBlender.source === 'rotation_euler', `st${st.index} orientation source is Blender's euler` );
+		if ( lookAtMatrix ) {
+			const dLook = matrixMaxDiff( fromBlender.matrix, lookAtMatrix );
+			check( dLook < 1e-5, `st${st.index} Blender euler vs viewer look-at: max element diff ${dLook.toExponential( 2 )}` );
+		} else {
+			console.log( `      st${st.index} look-at degenerate (straight up), Blender euler used` );
+		}
 	}
 
 	const cam = makeStationCamera( st, ASPECT );
@@ -49,5 +70,5 @@ check( ndc.y < 0 && ndc.y > - 0.35, `st1 origin sits slightly below the vertical
 console.log( `      st1 hfov ${( 2 * Math.atan( 36 / 40 ) * 180 / Math.PI ).toFixed( 2 )} deg, vfov ${( vfov * 180 / Math.PI ).toFixed( 2 )} deg at 16:9` );
 console.log( `      st1 camera world matrix (three, column-major): [${cam1.matrixWorld.elements.map( v => v.toFixed( 5 ) ).join( ', ' )}]` );
 console.log( `      st1 projection matrix     (column-major): [${cam1.projectionMatrix.elements.map( v => v.toFixed( 5 ) ).join( ', ' )}]` );
-console.log( fails ? `${fails} FAILURES` : 'all checks passed' );
+console.log( fails ? `${fails} FAILURES` : `all checks passed${skipped ? `, ${skipped} station orientation check(s) skipped` : ''}` );
 process.exit( fails ? 1 : 0 );

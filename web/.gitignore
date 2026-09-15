@@ -2,3 +2,4 @@ node_modules/
 dist/
 public/assets
 testdata/
+!testdata/v2shape/
