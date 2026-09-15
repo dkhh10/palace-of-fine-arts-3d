@@ -1,0 +1,1355 @@
+{
+ "sheets": [
+  {
+   "station": 1,
+   "station_name": "cam01 lagoon hero",
+   "viewer": {
+    "path": "renders/web/gate2_cam01.png",
+    "size": [
+     1920,
+     1080
+    ]
+   },
+   "reference": {
+    "path": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/previews/qa/round10b_01_lagoon_hero_cycles.png",
+    "size": [
+     1920,
+     1080
+    ],
+    "label": "Cycles round-10b hero"
+   },
+   "panel_size": [
+    1280,
+    720
+   ],
+   "frame": {
+    "reference_luma": 139.98,
+    "viewer_luma": 151.1,
+    "delta_luma": 11.12,
+    "ratio_linear": 1.1407,
+    "mean_abs_diff_255": 41.37,
+    "rms_diff_255": 64.91
+   },
+   "cells_3x4": [
+    {
+     "cell": [
+      0,
+      0
+     ],
+     "box": [
+      0,
+      0,
+      320,
+      240
+     ],
+     "reference_luma": 161.55,
+     "viewer_luma": 162.28,
+     "delta_luma": 0.73,
+     "ratio_linear": 1.0087
+    },
+    {
+     "cell": [
+      0,
+      1
+     ],
+     "box": [
+      320,
+      0,
+      640,
+      240
+     ],
+     "reference_luma": 157.4,
+     "viewer_luma": 158.52,
+     "delta_luma": 1.13,
+     "ratio_linear": 1.0089
+    },
+    {
+     "cell": [
+      0,
+      2
+     ],
+     "box": [
+      640,
+      0,
+      960,
+      240
+     ],
+     "reference_luma": 160.15,
+     "viewer_luma": 165.19,
+     "delta_luma": 5.04,
+     "ratio_linear": 1.0504
+    },
+    {
+     "cell": [
+      0,
+      3
+     ],
+     "box": [
+      960,
+      0,
+      1280,
+      240
+     ],
+     "reference_luma": 186.49,
+     "viewer_luma": 186.34,
+     "delta_luma": -0.14,
+     "ratio_linear": 0.9983
+    },
+    {
+     "cell": [
+      1,
+      0
+     ],
+     "box": [
+      0,
+      240,
+      320,
+      480
+     ],
+     "reference_luma": 113.98,
+     "viewer_luma": 167.22,
+     "delta_luma": 53.24,
+     "ratio_linear": 1.6726
+    },
+    {
+     "cell": [
+      1,
+      1
+     ],
+     "box": [
+      320,
+      240,
+      640,
+      480
+     ],
+     "reference_luma": 110.3,
+     "viewer_luma": 163.72,
+     "delta_luma": 53.42,
+     "ratio_linear": 1.7958
+    },
+    {
+     "cell": [
+      1,
+      2
+     ],
+     "box": [
+      640,
+      240,
+      960,
+      480
+     ],
+     "reference_luma": 110.55,
+     "viewer_luma": 178.34,
+     "delta_luma": 67.78,
+     "ratio_linear": 2.0642
+    },
+    {
+     "cell": [
+      1,
+      3
+     ],
+     "box": [
+      960,
+      240,
+      1280,
+      480
+     ],
+     "reference_luma": 155.17,
+     "viewer_luma": 199.89,
+     "delta_luma": 44.72,
+     "ratio_linear": 1.4766
+    },
+    {
+     "cell": [
+      2,
+      0
+     ],
+     "box": [
+      0,
+      480,
+      320,
+      720
+     ],
+     "reference_luma": 139.52,
+     "viewer_luma": 102.04,
+     "delta_luma": -37.48,
+     "ratio_linear": 0.6001
+    },
+    {
+     "cell": [
+      2,
+      1
+     ],
+     "box": [
+      320,
+      480,
+      640,
+      720
+     ],
+     "reference_luma": 105.23,
+     "viewer_luma": 87.75,
+     "delta_luma": -17.48,
+     "ratio_linear": 0.7745
+    },
+    {
+     "cell": [
+      2,
+      2
+     ],
+     "box": [
+      640,
+      480,
+      960,
+      720
+     ],
+     "reference_luma": 104.98,
+     "viewer_luma": 102.09,
+     "delta_luma": -2.89,
+     "ratio_linear": 0.9693
+    },
+    {
+     "cell": [
+      2,
+      3
+     ],
+     "box": [
+      960,
+      480,
+      1280,
+      720
+     ],
+     "reference_luma": 174.48,
+     "viewer_luma": 139.86,
+     "delta_luma": -34.62,
+     "ratio_linear": 0.7184
+    }
+   ]
+  },
+  {
+   "station": 2,
+   "station_name": "cam02 lagoon NE three-quarter",
+   "viewer": {
+    "path": "renders/web/gate2_cam02.png",
+    "size": [
+     1920,
+     1080
+    ]
+   },
+   "reference": {
+    "path": "renders/previews/qa/round09_02_lagoon_ne_threequarter_cycles.png",
+    "size": [
+     1280,
+     720
+    ],
+    "label": "Cycles round-09"
+   },
+   "panel_size": [
+    1280,
+    720
+   ],
+   "frame": {
+    "reference_luma": 102.08,
+    "viewer_luma": 129.63,
+    "delta_luma": 27.55,
+    "ratio_linear": 1.3523,
+    "mean_abs_diff_255": 40.05,
+    "rms_diff_255": 64.95
+   },
+   "cells_3x4": [
+    {
+     "cell": [
+      0,
+      0
+     ],
+     "box": [
+      0,
+      0,
+      320,
+      240
+     ],
+     "reference_luma": 171.65,
+     "viewer_luma": 172.27,
+     "delta_luma": 0.61,
+     "ratio_linear": 1.0078
+    },
+    {
+     "cell": [
+      0,
+      1
+     ],
+     "box": [
+      320,
+      0,
+      640,
+      240
+     ],
+     "reference_luma": 111.98,
+     "viewer_luma": 118.94,
+     "delta_luma": 6.96,
+     "ratio_linear": 1.124
+    },
+    {
+     "cell": [
+      0,
+      2
+     ],
+     "box": [
+      640,
+      0,
+      960,
+      240
+     ],
+     "reference_luma": 99.42,
+     "viewer_luma": 106.89,
+     "delta_luma": 7.47,
+     "ratio_linear": 1.1908
+    },
+    {
+     "cell": [
+      0,
+      3
+     ],
+     "box": [
+      960,
+      0,
+      1280,
+      240
+     ],
+     "reference_luma": 145.05,
+     "viewer_luma": 146.03,
+     "delta_luma": 0.99,
+     "ratio_linear": 1.0134
+    },
+    {
+     "cell": [
+      1,
+      0
+     ],
+     "box": [
+      0,
+      240,
+      320,
+      480
+     ],
+     "reference_luma": 198.59,
+     "viewer_luma": 182.61,
+     "delta_luma": -15.98,
+     "ratio_linear": 0.881
+    },
+    {
+     "cell": [
+      1,
+      1
+     ],
+     "box": [
+      320,
+      240,
+      640,
+      480
+     ],
+     "reference_luma": 79.77,
+     "viewer_luma": 98.63,
+     "delta_luma": 18.85,
+     "ratio_linear": 1.4348
+    },
+    {
+     "cell": [
+      1,
+      2
+     ],
+     "box": [
+      640,
+      240,
+      960,
+      480
+     ],
+     "reference_luma": 70.7,
+     "viewer_luma": 105.76,
+     "delta_luma": 35.06,
+     "ratio_linear": 1.968
+    },
+    {
+     "cell": [
+      1,
+      3
+     ],
+     "box": [
+      960,
+      240,
+      1280,
+      480
+     ],
+     "reference_luma": 135.13,
+     "viewer_luma": 171.35,
+     "delta_luma": 36.22,
+     "ratio_linear": 1.3583
+    },
+    {
+     "cell": [
+      2,
+      0
+     ],
+     "box": [
+      0,
+      480,
+      320,
+      720
+     ],
+     "reference_luma": 62.92,
+     "viewer_luma": 87.57,
+     "delta_luma": 24.66,
+     "ratio_linear": 1.526
+    },
+    {
+     "cell": [
+      2,
+      1
+     ],
+     "box": [
+      320,
+      480,
+      640,
+      720
+     ],
+     "reference_luma": 39.42,
+     "viewer_luma": 107.07,
+     "delta_luma": 67.65,
+     "ratio_linear": 5.2185
+    },
+    {
+     "cell": [
+      2,
+      2
+     ],
+     "box": [
+      640,
+      480,
+      960,
+      720
+     ],
+     "reference_luma": 47.59,
+     "viewer_luma": 115.31,
+     "delta_luma": 67.72,
+     "ratio_linear": 3.8306
+    },
+    {
+     "cell": [
+      2,
+      3
+     ],
+     "box": [
+      960,
+      480,
+      1280,
+      720
+     ],
+     "reference_luma": 62.75,
+     "viewer_luma": 143.11,
+     "delta_luma": 80.35,
+     "ratio_linear": 3.7539
+    }
+   ]
+  },
+  {
+   "station": 3,
+   "station_name": "cam03 colonnade walk",
+   "viewer": {
+    "path": "renders/web/gate2_cam03.png",
+    "size": [
+     1920,
+     1080
+    ]
+   },
+   "reference": {
+    "path": "renders/previews/qa/round09_03_colonnade_walk.png",
+    "size": [
+     1280,
+     720
+    ],
+    "label": "Eevee round-09 (no Cycles frame)"
+   },
+   "panel_size": [
+    1280,
+    720
+   ],
+   "frame": {
+    "reference_luma": 39.34,
+    "viewer_luma": 154.86,
+    "delta_luma": 115.52,
+    "ratio_linear": 7.9423,
+    "mean_abs_diff_255": 111.34,
+    "rms_diff_255": 124.73
+   },
+   "cells_3x4": [
+    {
+     "cell": [
+      0,
+      0
+     ],
+     "box": [
+      0,
+      0,
+      320,
+      240
+     ],
+     "reference_luma": 28.65,
+     "viewer_luma": 174.51,
+     "delta_luma": 145.85,
+     "ratio_linear": 21.6033
+    },
+    {
+     "cell": [
+      0,
+      1
+     ],
+     "box": [
+      320,
+      0,
+      640,
+      240
+     ],
+     "reference_luma": 62.64,
+     "viewer_luma": 176.17,
+     "delta_luma": 113.53,
+     "ratio_linear": 4.9049
+    },
+    {
+     "cell": [
+      0,
+      2
+     ],
+     "box": [
+      640,
+      0,
+      960,
+      240
+     ],
+     "reference_luma": 76.51,
+     "viewer_luma": 136.51,
+     "delta_luma": 60.0,
+     "ratio_linear": 2.0094
+    },
+    {
+     "cell": [
+      0,
+      3
+     ],
+     "box": [
+      960,
+      0,
+      1280,
+      240
+     ],
+     "reference_luma": 15.11,
+     "viewer_luma": 129.42,
+     "delta_luma": 114.31,
+     "ratio_linear": 44.2089
+    },
+    {
+     "cell": [
+      1,
+      0
+     ],
+     "box": [
+      0,
+      240,
+      320,
+      480
+     ],
+     "reference_luma": 19.97,
+     "viewer_luma": 195.13,
+     "delta_luma": 175.17,
+     "ratio_linear": 66.4846
+    },
+    {
+     "cell": [
+      1,
+      1
+     ],
+     "box": [
+      320,
+      240,
+      640,
+      480
+     ],
+     "reference_luma": 50.44,
+     "viewer_luma": 181.95,
+     "delta_luma": 131.51,
+     "ratio_linear": 7.132
+    },
+    {
+     "cell": [
+      1,
+      2
+     ],
+     "box": [
+      640,
+      240,
+      960,
+      480
+     ],
+     "reference_luma": 40.9,
+     "viewer_luma": 134.99,
+     "delta_luma": 94.09,
+     "ratio_linear": 5.0791
+    },
+    {
+     "cell": [
+      1,
+      3
+     ],
+     "box": [
+      960,
+      240,
+      1280,
+      480
+     ],
+     "reference_luma": 15.42,
+     "viewer_luma": 130.31,
+     "delta_luma": 114.88,
+     "ratio_linear": 45.3101
+    },
+    {
+     "cell": [
+      2,
+      0
+     ],
+     "box": [
+      0,
+      480,
+      320,
+      720
+     ],
+     "reference_luma": 35.64,
+     "viewer_luma": 146.61,
+     "delta_luma": 110.97,
+     "ratio_linear": 12.9943
+    },
+    {
+     "cell": [
+      2,
+      1
+     ],
+     "box": [
+      320,
+      480,
+      640,
+      720
+     ],
+     "reference_luma": 53.47,
+     "viewer_luma": 177.48,
+     "delta_luma": 124.01,
+     "ratio_linear": 8.0221
+    },
+    {
+     "cell": [
+      2,
+      2
+     ],
+     "box": [
+      640,
+      480,
+      960,
+      720
+     ],
+     "reference_luma": 56.73,
+     "viewer_luma": 142.93,
+     "delta_luma": 86.2,
+     "ratio_linear": 4.8952
+    },
+    {
+     "cell": [
+      2,
+      3
+     ],
+     "box": [
+      960,
+      480,
+      1280,
+      720
+     ],
+     "reference_luma": 16.55,
+     "viewer_luma": 132.29,
+     "delta_luma": 115.74,
+     "ratio_linear": 43.5862
+    }
+   ]
+  },
+  {
+   "station": 4,
+   "station_name": "cam04 rotunda ceiling",
+   "viewer": {
+    "path": "renders/web/gate2_cam04.png",
+    "size": [
+     1920,
+     1080
+    ]
+   },
+   "reference": {
+    "path": "renders/previews/qa/round09_04_rotunda_ceiling_cycles.png",
+    "size": [
+     1280,
+     720
+    ],
+    "label": "Cycles round-09"
+   },
+   "panel_size": [
+    1280,
+    720
+   ],
+   "frame": {
+    "reference_luma": 57.33,
+    "viewer_luma": 76.02,
+    "delta_luma": 18.69,
+    "ratio_linear": 1.7101,
+    "mean_abs_diff_255": 56.23,
+    "rms_diff_255": 76.3
+   },
+   "cells_3x4": [
+    {
+     "cell": [
+      0,
+      0
+     ],
+     "box": [
+      0,
+      0,
+      320,
+      240
+     ],
+     "reference_luma": 37.86,
+     "viewer_luma": 117.27,
+     "delta_luma": 79.41,
+     "ratio_linear": 6.7154
+    },
+    {
+     "cell": [
+      0,
+      1
+     ],
+     "box": [
+      320,
+      0,
+      640,
+      240
+     ],
+     "reference_luma": 74.25,
+     "viewer_luma": 99.87,
+     "delta_luma": 25.62,
+     "ratio_linear": 1.7588
+    },
+    {
+     "cell": [
+      0,
+      2
+     ],
+     "box": [
+      640,
+      0,
+      960,
+      240
+     ],
+     "reference_luma": 82.41,
+     "viewer_luma": 60.25,
+     "delta_luma": -22.16,
+     "ratio_linear": 0.6113
+    },
+    {
+     "cell": [
+      0,
+      3
+     ],
+     "box": [
+      960,
+      0,
+      1280,
+      240
+     ],
+     "reference_luma": 32.72,
+     "viewer_luma": 86.8,
+     "delta_luma": 54.09,
+     "ratio_linear": 5.6751
+    },
+    {
+     "cell": [
+      1,
+      0
+     ],
+     "box": [
+      0,
+      240,
+      320,
+      480
+     ],
+     "reference_luma": 37.4,
+     "viewer_luma": 96.71,
+     "delta_luma": 59.31,
+     "ratio_linear": 5.2611
+    },
+    {
+     "cell": [
+      1,
+      1
+     ],
+     "box": [
+      320,
+      240,
+      640,
+      480
+     ],
+     "reference_luma": 74.45,
+     "viewer_luma": 46.04,
+     "delta_luma": -28.41,
+     "ratio_linear": 0.4495
+    },
+    {
+     "cell": [
+      1,
+      2
+     ],
+     "box": [
+      640,
+      240,
+      960,
+      480
+     ],
+     "reference_luma": 69.72,
+     "viewer_luma": 27.7,
+     "delta_luma": -42.02,
+     "ratio_linear": 0.1795
+    },
+    {
+     "cell": [
+      1,
+      3
+     ],
+     "box": [
+      960,
+      240,
+      1280,
+      480
+     ],
+     "reference_luma": 48.5,
+     "viewer_luma": 80.47,
+     "delta_luma": 31.97,
+     "ratio_linear": 2.3584
+    },
+    {
+     "cell": [
+      2,
+      0
+     ],
+     "box": [
+      0,
+      480,
+      320,
+      720
+     ],
+     "reference_luma": 52.39,
+     "viewer_luma": 97.82,
+     "delta_luma": 45.43,
+     "ratio_linear": 2.6811
+    },
+    {
+     "cell": [
+      2,
+      1
+     ],
+     "box": [
+      320,
+      480,
+      640,
+      720
+     ],
+     "reference_luma": 72.19,
+     "viewer_luma": 53.79,
+     "delta_luma": -18.4,
+     "ratio_linear": 0.5708
+    },
+    {
+     "cell": [
+      2,
+      2
+     ],
+     "box": [
+      640,
+      480,
+      960,
+      720
+     ],
+     "reference_luma": 66.09,
+     "viewer_luma": 45.94,
+     "delta_luma": -20.15,
+     "ratio_linear": 0.4882
+    },
+    {
+     "cell": [
+      2,
+      3
+     ],
+     "box": [
+      960,
+      480,
+      1280,
+      720
+     ],
+     "reference_luma": 40.01,
+     "viewer_luma": 99.58,
+     "delta_luma": 59.56,
+     "ratio_linear": 3.9702
+    }
+   ]
+  },
+  {
+   "station": 5,
+   "station_name": "cam05 south lawn",
+   "viewer": {
+    "path": "renders/web/gate2_cam05.png",
+    "size": [
+     1920,
+     1080
+    ]
+   },
+   "reference": {
+    "path": "renders/previews/qa/round09_05_south_lawn.png",
+    "size": [
+     1280,
+     720
+    ],
+    "label": "Eevee round-09 (no Cycles frame)"
+   },
+   "panel_size": [
+    1280,
+    720
+   ],
+   "frame": {
+    "reference_luma": 145.2,
+    "viewer_luma": 180.03,
+    "delta_luma": 34.83,
+    "ratio_linear": 1.3811,
+    "mean_abs_diff_255": 44.27,
+    "rms_diff_255": 71.52
+   },
+   "cells_3x4": [
+    {
+     "cell": [
+      0,
+      0
+     ],
+     "box": [
+      0,
+      0,
+      320,
+      240
+     ],
+     "reference_luma": 180.25,
+     "viewer_luma": 180.43,
+     "delta_luma": 0.18,
+     "ratio_linear": 1.0019
+    },
+    {
+     "cell": [
+      0,
+      1
+     ],
+     "box": [
+      320,
+      0,
+      640,
+      240
+     ],
+     "reference_luma": 169.86,
+     "viewer_luma": 172.96,
+     "delta_luma": 3.09,
+     "ratio_linear": 1.0433
+    },
+    {
+     "cell": [
+      0,
+      2
+     ],
+     "box": [
+      640,
+      0,
+      960,
+      240
+     ],
+     "reference_luma": 165.55,
+     "viewer_luma": 176.13,
+     "delta_luma": 10.58,
+     "ratio_linear": 1.1285
+    },
+    {
+     "cell": [
+      0,
+      3
+     ],
+     "box": [
+      960,
+      0,
+      1280,
+      240
+     ],
+     "reference_luma": 188.33,
+     "viewer_luma": 188.18,
+     "delta_luma": -0.14,
+     "ratio_linear": 0.9984
+    },
+    {
+     "cell": [
+      1,
+      0
+     ],
+     "box": [
+      0,
+      240,
+      320,
+      480
+     ],
+     "reference_luma": 171.08,
+     "viewer_luma": 192.17,
+     "delta_luma": 21.09,
+     "ratio_linear": 1.1649
+    },
+    {
+     "cell": [
+      1,
+      1
+     ],
+     "box": [
+      320,
+      240,
+      640,
+      480
+     ],
+     "reference_luma": 134.29,
+     "viewer_luma": 167.68,
+     "delta_luma": 33.39,
+     "ratio_linear": 1.4062
+    },
+    {
+     "cell": [
+      1,
+      2
+     ],
+     "box": [
+      640,
+      240,
+      960,
+      480
+     ],
+     "reference_luma": 135.98,
+     "viewer_luma": 169.03,
+     "delta_luma": 33.05,
+     "ratio_linear": 1.3992
+    },
+    {
+     "cell": [
+      1,
+      3
+     ],
+     "box": [
+      960,
+      240,
+      1280,
+      480
+     ],
+     "reference_luma": 202.04,
+     "viewer_luma": 207.03,
+     "delta_luma": 4.99,
+     "ratio_linear": 1.037
+    },
+    {
+     "cell": [
+      2,
+      0
+     ],
+     "box": [
+      0,
+      480,
+      320,
+      720
+     ],
+     "reference_luma": 94.59,
+     "viewer_luma": 171.69,
+     "delta_luma": 77.09,
+     "ratio_linear": 2.7784
+    },
+    {
+     "cell": [
+      2,
+      1
+     ],
+     "box": [
+      320,
+      480,
+      640,
+      720
+     ],
+     "reference_luma": 92.07,
+     "viewer_luma": 172.75,
+     "delta_luma": 80.68,
+     "ratio_linear": 2.9408
+    },
+    {
+     "cell": [
+      2,
+      2
+     ],
+     "box": [
+      640,
+      480,
+      960,
+      720
+     ],
+     "reference_luma": 102.63,
+     "viewer_luma": 172.72,
+     "delta_luma": 70.09,
+     "ratio_linear": 2.466
+    },
+    {
+     "cell": [
+      2,
+      3
+     ],
+     "box": [
+      960,
+      480,
+      1280,
+      720
+     ],
+     "reference_luma": 105.73,
+     "viewer_luma": 189.6,
+     "delta_luma": 83.87,
+     "ratio_linear": 2.7758
+    }
+   ]
+  },
+  {
+   "station": 6,
+   "station_name": "cam06 aerial",
+   "viewer": {
+    "path": "renders/web/gate2_cam06.png",
+    "size": [
+     1920,
+     1080
+    ]
+   },
+   "reference": {
+    "path": "renders/previews/qa/round09_06_aerial_nocomp.png",
+    "size": [
+     1280,
+     720
+    ],
+    "label": "Cycles round-09, no compositor"
+   },
+   "panel_size": [
+    1280,
+    720
+   ],
+   "frame": {
+    "reference_luma": 76.19,
+    "viewer_luma": 126.3,
+    "delta_luma": 50.11,
+    "ratio_linear": 2.716,
+    "mean_abs_diff_255": 89.38,
+    "rms_diff_255": 103.4
+   },
+   "cells_3x4": [
+    {
+     "cell": [
+      0,
+      0
+     ],
+     "box": [
+      0,
+      0,
+      320,
+      240
+     ],
+     "reference_luma": 86.34,
+     "viewer_luma": 158.11,
+     "delta_luma": 71.77,
+     "ratio_linear": 3.0991
+    },
+    {
+     "cell": [
+      0,
+      1
+     ],
+     "box": [
+      320,
+      0,
+      640,
+      240
+     ],
+     "reference_luma": 106.99,
+     "viewer_luma": 180.49,
+     "delta_luma": 73.51,
+     "ratio_linear": 2.4078
+    },
+    {
+     "cell": [
+      0,
+      2
+     ],
+     "box": [
+      640,
+      0,
+      960,
+      240
+     ],
+     "reference_luma": 79.22,
+     "viewer_luma": 166.46,
+     "delta_luma": 87.24,
+     "ratio_linear": 3.0594
+    },
+    {
+     "cell": [
+      0,
+      3
+     ],
+     "box": [
+      960,
+      0,
+      1280,
+      240
+     ],
+     "reference_luma": 46.69,
+     "viewer_luma": 174.91,
+     "delta_luma": 128.22,
+     "ratio_linear": 10.0256
+    },
+    {
+     "cell": [
+      1,
+      0
+     ],
+     "box": [
+      0,
+      240,
+      320,
+      480
+     ],
+     "reference_luma": 71.87,
+     "viewer_luma": 79.24,
+     "delta_luma": 7.37,
+     "ratio_linear": 1.4755
+    },
+    {
+     "cell": [
+      1,
+      1
+     ],
+     "box": [
+      320,
+      240,
+      640,
+      480
+     ],
+     "reference_luma": 59.57,
+     "viewer_luma": 114.25,
+     "delta_luma": 54.68,
+     "ratio_linear": 2.4584
+    },
+    {
+     "cell": [
+      1,
+      2
+     ],
+     "box": [
+      640,
+      240,
+      960,
+      480
+     ],
+     "reference_luma": 67.76,
+     "viewer_luma": 147.57,
+     "delta_luma": 79.81,
+     "ratio_linear": 3.3181
+    },
+    {
+     "cell": [
+      1,
+      3
+     ],
+     "box": [
+      960,
+      240,
+      1280,
+      480
+     ],
+     "reference_luma": 75.1,
+     "viewer_luma": 193.81,
+     "delta_luma": 118.71,
+     "ratio_linear": 5.4154
+    },
+    {
+     "cell": [
+      2,
+      0
+     ],
+     "box": [
+      0,
+      480,
+      320,
+      720
+     ],
+     "reference_luma": 110.78,
+     "viewer_luma": 14.82,
+     "delta_luma": -95.97,
+     "ratio_linear": 0.0389
+    },
+    {
+     "cell": [
+      2,
+      1
+     ],
+     "box": [
+      320,
+      480,
+      640,
+      720
+     ],
+     "reference_luma": 69.64,
+     "viewer_luma": 56.25,
+     "delta_luma": -13.39,
+     "ratio_linear": 1.1652
+    },
+    {
+     "cell": [
+      2,
+      2
+     ],
+     "box": [
+      640,
+      480,
+      960,
+      720
+     ],
+     "reference_luma": 57.03,
+     "viewer_luma": 63.78,
+     "delta_luma": 6.75,
+     "ratio_linear": 1.8756
+    },
+    {
+     "cell": [
+      2,
+      3
+     ],
+     "box": [
+      960,
+      480,
+      1280,
+      720
+     ],
+     "reference_luma": 83.24,
+     "viewer_luma": 165.9,
+     "delta_luma": 82.66,
+     "ratio_linear": 3.0504
+    }
+   ]
+  }
+ ],
+ "missing": []
+}

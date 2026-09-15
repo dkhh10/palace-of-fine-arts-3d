@@ -312,7 +312,7 @@ export function normaliseManifest( raw, baseUrl ) {
 	};
 	const materialSets = {};
 	const csFallbacks = [];
-	let mapCount = 0, setBytes = 0, constantMaps = 0, noUv1 = 0;
+	let mapCount = 0, setBytes = 0, constantMaps = 0, noUv1 = 0, inGlbMaps = 0;
 	for ( const [ name, entry ] of Object.entries( typeof setsRaw === 'object' && setsRaw ? setsRaw : {} ) ) {
 		if ( ! entry || typeof entry !== 'object' ) continue;
 		const src = entry.maps && typeof entry.maps === 'object' ? entry.maps : entry;
@@ -334,7 +334,9 @@ export function normaliseManifest( raw, baseUrl ) {
 			if ( slot === 'normalMap' && o.scale !== undefined && o.scale !== null ) set.normalScale = o.scale;
 			const hasTextureKey = Object.prototype.hasOwnProperty.call( o, 'texture' );
 			const ref = hasTextureKey ? o.texture : ( o.path || o.url || o.file || o.ktx2 );
-			if ( ! ref ) { if ( hasTextureKey ) constantMaps ++; continue; }        // rule 2: a constant IS the map
+			// rule 2: a constant IS the map.  `in_glb: true` (the ORN occlusion) means the glb already
+			// carries it and the viewer must load nothing.
+			if ( ! ref ) { if ( o.in_glb === true ) inGlbMaps ++; else if ( hasTextureKey ) constantMaps ++; continue; }
 			if ( ! uv1 ) continue;                                                   // rule: factors only, no UV1 in the glb
 			const res = resolveTexture( ref );
 			if ( ! res ) continue;
@@ -359,6 +361,7 @@ export function normaliseManifest( raw, baseUrl ) {
 		count: Object.keys( materialSets ).length,
 		maps: mapCount,
 		constantMaps,
+		inGlbMaps,
 		withoutUv1: noUv1,
 		declaredBytes: setBytes,
 		budget: pick( raw, 'budget' ) || null,
@@ -368,6 +371,7 @@ export function normaliseManifest( raw, baseUrl ) {
 	if ( materials.count ) {
 		notes.push( `materials: ${materials.count} set(s), ${mapCount} textures`
 			+ ( constantMaps ? `, ${constantMaps} constant map(s) shipped as a factor` : '' )
+			+ ( inGlbMaps ? `, ${inGlbMaps} map(s) already in the glb (in_glb, nothing loaded)` : '' )
 			+ ( noUv1 ? `, ${noUv1} set(s) with uv1_in_glb false (factors only)` : '' )
 			+ ( setBytes ? `, ${( setBytes / 1e6 ).toFixed( 1 )} MB declared` : ', no declared bytes (HEAD)' )
 			+ `, mode "${materialsMode || '(unstated)'}"` );

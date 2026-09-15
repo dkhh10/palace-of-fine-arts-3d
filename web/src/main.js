@@ -27,7 +27,7 @@ import { makeWater } from './water.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { chunkInstancedMeshes } from './chunking.js';
-import { applyPbrSets, pbrPlan, formatName } from './pbr.js';
+import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -336,6 +336,7 @@ async function boot() {
 	if ( materialsMode === 'pbr' && glbRoots.length ) {
 		const tt = performance.now();
 		let drawn = 0;
+		const texturesBeforePbr = collectTextures( scene );
 		pbrReport = await applyPbrSets( {
 			scene, camera, sets: manifest.materials.sets, note,
 			loadTexture: ( url ) => {
@@ -350,8 +351,12 @@ async function boot() {
 				if ( done - drawn >= 16 || done === total ) { drawn = done; renderFrame(); }
 			},
 		} );
+		// A replaced Gate 1 map (the ORN normals) is unreachable but still on the GPU: free it.
+		const freed = disposeOrphans( scene, texturesBeforePbr );
+		pbrReport.disposed = freed;
 		loadTimes.tex_s = ( performance.now() - tt ) / 1000;
-		note( `pbr textures in ${loadTimes.tex_s.toFixed( 2 )} s` );
+		note( `pbr textures in ${loadTimes.tex_s.toFixed( 2 )} s; `
+			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
 	}
 
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------

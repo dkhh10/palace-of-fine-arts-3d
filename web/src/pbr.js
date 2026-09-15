@@ -37,7 +37,27 @@ function indexSets( sets ) {
 	return byKey;
 }
 
-const _sphere = new THREE.Sphere(), _v = new THREE.Vector3();
+const _sphere = new THREE.Sphere(), _v = new THREE.Vector3(), _m4 = new THREE.Matrix4(), _c = new THREE.Vector3();
+
+/** Nearest surface distance from `eye` to any INSTANCE of an InstancedMesh.  The whole-batch
+ *  bounding sphere is useless here: a batch that spans the site contains the camera, so its
+ *  distance is 0 and the load order collapses.  Per instance it is the real distance. */
+function instanceDistance( o, eye ) {
+	const gs = o.geometry.boundingSphere;
+	if ( ! gs ) return 0;
+	const arr = o.instanceMatrix.array;
+	const step = o.count > 4096 ? Math.ceil( o.count / 4096 ) : 1;   // sample very large batches
+	let best = Infinity;
+	for ( let i = 0; i < o.count; i += step ) {
+		_m4.fromArray( arr, i * 16 ).premultiply( o.matrixWorld );
+		_c.copy( gs.center ).applyMatrix4( _m4 );
+		const e = _m4.elements;
+		const sx = Math.hypot( e[ 0 ], e[ 1 ], e[ 2 ] ), sy = Math.hypot( e[ 4 ], e[ 5 ], e[ 6 ] ), sz = Math.hypot( e[ 8 ], e[ 9 ], e[ 10 ] );
+		const d = eye.distanceTo( _c ) - gs.radius * Math.max( sx, sy, sz );
+		if ( d < best ) best = d;
+	}
+	return Math.max( 0, best );
+}
 
 /**
  * Every MeshStandardMaterial in the scene with the distance from `camera` to the nearest mesh that
@@ -52,12 +72,11 @@ export function materialsByDistance( scene, camera ) {
 		if ( ! o.geometry.boundingSphere ) o.geometry.computeBoundingSphere();
 		let d;
 		if ( o.isInstancedMesh ) {
-			if ( ! o.boundingSphere ) o.computeBoundingSphere();
-			_sphere.copy( o.boundingSphere ).applyMatrix4( o.matrixWorld );
+			d = instanceDistance( o, eye );
 		} else {
 			_sphere.copy( o.geometry.boundingSphere ).applyMatrix4( o.matrixWorld );
+			d = Math.max( 0, eye.distanceTo( _sphere.center ) - _sphere.radius );
 		}
-		d = Math.max( 0, eye.distanceTo( _sphere.center ) - _sphere.radius );
 		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
 			if ( ! m || ! m.isMeshStandardMaterial ) continue;
 			const row = rows.get( m );
@@ -219,6 +238,36 @@ export function texBytes( t ) {
 	}
 	if ( t.image && t.image.width ) return t.image.width * t.image.height * 4 * ( t.generateMipmaps ? 4 / 3 : 1 );
 	return 0;
+}
+
+const MAT_SLOTS = [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ];
+
+/** Every texture reachable from a mesh material in the scene. */
+export function collectTextures( scene ) {
+	const out = new Set();
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m ) continue;
+			for ( const k of MAT_SLOTS ) if ( m[ k ] ) out.add( m[ k ] );
+		}
+	} );
+	return out;
+}
+
+/** A Gate 2 map REPLACES the Gate 1 one it supersedes (the ORN hi->lo normals), and the replaced
+ *  texture stays on the GPU until something disposes it — it is simply no longer reachable from any
+ *  material.  Dispose exactly those: in `before` and not reachable now. */
+export function disposeOrphans( scene, before ) {
+	const live = collectTextures( scene );
+	let freed = 0; const names = [];
+	for ( const t of before ) {
+		if ( live.has( t ) ) continue;
+		freed += texBytes( t );
+		names.push( t.name || t.userData?.url || t.uuid.slice( 0, 8 ) );
+		t.dispose();
+	}
+	return { disposed: names.length, freed_bytes: freed, names: names.slice( 0, 12 ) };
 }
 
 /** Every texture file the PBR sets reference, for the byte plan (deduplicated). */
