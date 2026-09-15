@@ -73,6 +73,34 @@ Filled in from Gate 0 (docs/briefs/phase6_gate0.md report). Prior from Phase 5 w
 128 spp + OIDN, 40 assets = 4-8 h queue, run detached in per-asset jobs under 1800 s each. Normal/AO bakes from the
 LOD0 prototypes are cheap (< 1 min each). PBR bakes (emit-style) 1-2 min per 2K atlas.
 
+## 4b. Decisions the user takes before Gate 1
+
+### Trees (ENV_ trees are real-time in the viewer and the weakest element at every station)
+What the file holds: 131 trees (cypress 33, eucalyptus 32, redwood 26, pine 14, willow 10, broadleaf 10, cypress_column 6)
+from ~25 Sapling prototypes; leaf cards on five species' 1K diff / normal / translucency textures (15 x 1K, ~20 MB resident
+as ASTC). Placed tris: LOD0 ~10 M, LOD1 3.33 M, LOD2 ~0.30 M (blob-grade). The Phase 5 look was rendered at LOD0 in Cycles
+with leaf translucency; the viewer has none of that for free.
+
+| option | tris (placed) | textures (resident, ASTC 8 bpp + mips) | build cost | what the viewer shows |
+|---|---|---|---|---|
+| A. Cycles-baked octahedral impostors per prototype (e.g. 12 x 12 views on a 2K atlas: albedo+alpha, normal+depth) | 131 x 2-8 = < 1.1 k | 25 prototypes x 2 x 5.3 MB = 265 MB (4K atlases: 1.06 GB, not affordable) | Cycles 144 views x 25 prototypes at low spp, ~1-2 h GPU, one bake script + a custom impostor material in three.js (view-dependent frame pick, ~2 days of viewer work) | the Phase 5 tree exactly as Cycles lit it (sun and translucency baked, lighting is frozen anyway) at 20 m and beyond; parallax swim and a flat look inside ~15 m; no self-shadow change when walking. Cheapest frame by far. |
+| B. Current leaf cards, alpha test (as shipped, LOD1) | 3.33 M (over the whole 3 M budget by itself; LOD2 everywhere = 0.30 M but blobs at every station) | 20 MB | none beyond export | branching + cards as in the Eevee previews; alpha-test overdraw is the main GPU cost at 1440p (cards fill the hero's left and right thirds); no translucency; lit by the sky PMREM + a vertex AO bake only, so the crowns read flat and dark versus Cycles (the shoreline hedge defect gets worse, not better). |
+| C. Thinned near trees: LOD1 decimated 50 % inside 80 m of any station or the hero frustum (~40 trees), LOD2 for the rest | ~0.5 M + 0.25 M = 0.75 M | 20 MB | one decimation pass, no bake | near trees as B at half the leaves (cards get sparser, not smaller), far trees as blobs in exactly the band the hero looks at (shoreline willows, colonnade screens). Cheapest to build, weakest at distance. |
+
+Lead's recommendation: A for every tree beyond 25 m of the walkable area plus C-style LOD1 geometry (decimated 50 %) for
+the ~20 trees the walker can reach, budget 0.4 M tris + ~300 MB textures; the impostor bake is queued behind the lightmaps.
+Hero-visible cost of each: A keeps the Cycles crowns (Silhouette and Lighting rows hold), B/C lose translucency and crown
+lighting (expect -0.5 on Lighting mood at cam01/cam05 and the hedge at 0.77 of the photo's luminance staying). The user
+decides; the export engineer writes the per-tree table into docs/briefs/phase6_budget.md after the decision.
+
+### The parity ceiling (stated plainly)
+The 6a target is parity with the Phase 5 Cycles renders: hero 3.61 (round 10b), cam02 2.94, cam03 2.56, cam04 2.81,
+cam05 3.06, cam06 2.67. A viewer cannot score above the render it is baked from; every known defect in docs/delivery.md
+(mirror at 0.61, blank archivolt, hedge shoreline, cam02 violet, coffer saucer) is inherited and will be visible at every
+station. If the user wants a higher ceiling, the user approves ONE bounded material round on the dome and the stone
+(scope, boxes and acceptance written by the lead in a brief, run before Gate 2 so the bakes carry it, materials only,
+lighting untouched). Decision is the user's; nothing else in the assets reopens.
+
 ## 5. Gates
 0 vertical slice (docs/briefs/phase6_gate0.md) -> 1 geometry freeze (export set, decimation, ORN normal bakes, name sweep,
 silhouette + normal check at the six stations at full-resolution tiles) -> 2 material bake (per asset albedo/rough/normal,
