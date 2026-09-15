@@ -155,27 +155,37 @@ def tri_count(obj):
     return n
 
 
-def apply_final_cycles_checked(scene=None):
-    """light_presets.apply_final_cycles + the assertions the brief demands (Eevee-only rigs OFF)."""
+def apply_final_cycles_checked(scene=None, samples=None):
+    """light_presets.apply_final_cycles + the assertion the brief demands: the two Eevee-only rigs are OFF.
+
+    What "off" means (scripts/light_presets.py, docs/tech_notes.md "The two Eevee-only rigs"):
+      * every LIGHT_rotunda_vault_bounce_* is back at its own `energy_W` custom property with use_custom_distance
+        False (the Eevee override is x6.0 energy + a 21 m cutoff),
+      * every LIGHT_shade_fill* is at its `energy_W` (the Cycles value), never at `energy_W_eevee`.
+    Raises if any light is still carrying its Eevee value. Returns the per-light state it checked.
+    """
     import bpy
     import light_presets as lp
     s = scene or bpy.context.scene
-    lp.apply_final_cycles(s)
-    bad = []
+    lp.apply_final_cycles(s, samples=samples)
+    state, bad = [], []
     for o in bpy.data.objects:
         if o.type != "LIGHT":
             continue
-        if o.name.startswith("LIGHT_shade_fill"):
-            if not o.hide_render or o.data.energy > 0.0:
-                bad.append((o.name, o.hide_render, o.data.energy))
-        if o.name.startswith("LIGHT_vault"):
-            pass
-    vault = [o for o in bpy.data.objects if o.type == "LIGHT" and "vault" in o.name.lower()]
-    for o in vault:
-        if getattr(o.data, "energy", 0.0) and o.data.cutoff_distance if hasattr(o.data, "cutoff_distance") else False:
-            pass
+        base = o.get("energy_W")
+        eev = o.get("energy_W_eevee")
+        row = dict(name=o.name, energy=round(o.data.energy, 3), hide_render=o.hide_render,
+                   energy_W=base, energy_W_eevee=eev,
+                   custom_distance=bool(getattr(o.data, "use_custom_distance", False)))
+        state.append(row)
+        if base is not None and abs(o.data.energy - float(base)) > 1e-3:
+            bad.append(row)
+        if o.name.startswith("LIGHT_rotunda_vault_bounce") and row["custom_distance"]:
+            bad.append(row)
     if bad:
-        raise SystemExit(f"[gate0] Eevee-only shade rig still active in Cycles: {bad}")
-    print(f"[gate0] apply_final_cycles ok: engine={s.render.engine} shade_fill_lights={sum(1 for o in bpy.data.objects if o.name.startswith('LIGHT_shade_fill'))} all hidden/0W; "
-          f"vault lights={len(vault)}")
-    return s
+        raise SystemExit(f"[gate0] Eevee-only rig still active in Cycles: {bad}")
+    n_shade = sum(1 for r in state if r["name"].startswith("LIGHT_shade_fill"))
+    n_vault = sum(1 for r in state if r["name"].startswith("LIGHT_rotunda_vault_bounce"))
+    print(f"[gate0] apply_final_cycles ok: engine={s.render.engine} lights={len(state)} "
+          f"shade_fill={n_shade} vault_bounce={n_vault} (all at energy_W, no custom distance)")
+    return state

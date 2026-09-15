@@ -37,6 +37,14 @@ col_hi = bpy.data.objects[g0.COLUMN_HI]
 cap_hi = bpy.data.objects[g0.CAPITAL_HI]
 placements = [bpy.data.objects[n] for n in g0.COLUMN_PLACEMENTS]
 
+# master_delivery.blend is saved with common.set_lod(viewport=1): every _LOD0 object is hide_viewport=True and is
+# therefore NOT in the depsgraph, so its matrix_world reads back as the identity and it is invisible to ray casts.
+# Un-hide the slice first, evaluate once, then snapshot the transforms (derived data, valid only after evaluation).
+for o in placements + [cap_hi]:
+    o.hide_viewport = False
+    o.hide_render = False
+bpy.context.view_layer.update()
+
 # ground: downward ray cast from just above the column's base, first hit that is not a rotunda column
 base_z = min((col_hi.matrix_world @ Vector(c)).z for c in col_hi.bound_box)
 origin = Vector((col_hi.location.x, col_hi.location.y, base_z + 0.60))
@@ -44,15 +52,16 @@ dg = bpy.context.evaluated_depsgraph_get()
 ground = None
 ray_trace = []
 o = origin.copy()
-for _ in range(10):
+for _ in range(24):
     ok, loc, nor, idx, hit, mtx = scene.ray_cast(dg, o, Vector((0, 0, -1)))
     if not ok:
         break
     ray_trace.append(dict(obj=hit.name, z=round(loc.z, 3)))
-    if not hit.name.startswith("ARCH_rotunda_column"):
+    # skip the column assembly itself (shaft ARCH_rotunda_column_*, base mouldings ARCH_rotunda_colbase_*)
+    if not hit.name.startswith("ARCH_rotunda_col"):
         ground = hit
         break
-    o = loc + Vector((0, 0, -0.005))
+    o = loc + Vector((0, 0, -0.01))
 assert ground is not None, f"no ground under the column; trace={ray_trace}"
 g0.GROUND_NAME_FILE.write_text(ground.name + "\n")
 report["ground"] = dict(name=ground.name, ray_origin=[round(v, 3) for v in origin], trace=ray_trace,
@@ -60,6 +69,10 @@ report["ground"] = dict(name=ground.name, ray_origin=[round(v, 3) for v in origi
                         mats=[m.name if m else None for m in ground.data.materials],
                         top_z=round(max((ground.matrix_world @ Vector(c)).z for c in ground.bound_box), 3))
 print(f"[gate0] ground = {ground.name} ({report['ground']['tris']} tris, top z={report['ground']['top_z']})")
+
+bpy.context.view_layer.update()
+MW = {o.name: o.matrix_world.copy() for o in placements + [cap_hi, ground]}
+assert (MW[g0.COLUMN_HI].translation - bpy.data.objects[g0.COLUMN_HI].location).length < 1e-4, "stale matrix_world"
 
 # ---------------------------------------------------------------- 2. collections
 for name in (g0.GATE0_COLL, "GATE0_REF"):
@@ -239,6 +252,25 @@ for ob in [o for o in bpy.data.objects if o.type == "LIGHT"]:
         for c in list(ob.users_collection):
             c.objects.unlink(ob)
         lightc.objects.link(ob)
+# matrix_world set on a freshly created, not-yet-evaluated object does not always stick (it did not for the two
+# decimated meshes in the first run: both ended up at the world origin, 25.3 m / 33.1 m from their hi-poly twin).
+# Re-apply every placement transform here, after every operator has run, and assert it.
+pairs = [(instances[i], placements[i]) for i in range(len(instances))] + [(lo_cap, cap_hi), (ground_lo, ground)]
+for ob, src in pairs:
+    loc, rot, scl = MW[src.name].decompose()
+    ob.rotation_mode = "QUATERNION"
+    ob.location = loc
+    ob.rotation_quaternion = rot
+    ob.scale = scl
+bpy.context.view_layer.update()
+worst = 0.0
+for ob, src in pairs:
+    d = max((ob.matrix_world.translation - MW[src.name].translation).length,
+            (src.matrix_world.translation - MW[src.name].translation).length)
+    worst = max(worst, d)
+    assert d < 1e-4, f"{ob.name} is {d:.4f} m from {src.name}"
+report["placement_max_error_m"] = round(worst, 8)
+
 qa_cameras.ensure(scene)
 scene.camera = bpy.data.objects[g0.HERO_CAM]
 common.purge_orphans()
