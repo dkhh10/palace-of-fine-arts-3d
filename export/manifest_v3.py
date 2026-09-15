@@ -108,9 +108,10 @@ def main():
             entry["metallic"] = dict(texture=None, constant=True, factor=0.0)
         if cls == g2.CLS_ORN:
             # the Gate 1 AO map rides on, in glTF's occlusionTexture; the Gate 1 NORMAL is superseded here
-            entry["occlusion"] = dict(texture=None, constant=False,
+            entry["occlusion"] = dict(texture=None, constant=False, in_glb=True,
                                       gate1_texture=Path(job["gate1_ao"]).stem, factor=None,
-                                      note="Gate 1 map, unchanged, already in orn.glb occlusionTexture")
+                                      note="Gate 1 map, unchanged, already in orn.glb occlusionTexture - "
+                                           "the viewer loads nothing for it")
             entry["normal"]["replaces_gate1"] = Path(job["gate1_normal"]).stem
         sets[job["group"]] = entry
 

@@ -350,8 +350,8 @@ Two keys are new, and one is extended.
       "size": 2048,
       "albedo":    { "texture": "gate2_<job>_albedo",    "factor": [r, g, b] },
       "roughness": { "texture": "gate2_<job>_roughness", "factor": 0.83 },
-      "normal":    { "texture": "gate2_<job>_normal",    "scale": 1.0 },
-      "occlusion": { "texture": "orn_<proto>_ao" },      // ORN only, carried unchanged from Gate 1
+      "normal":    { "texture": "gate2_<job>_normal",    "scale": 1.0, "constant": false },
+      "occlusion": { "texture": null, "in_glb": true, "gate1_texture": "orn_<proto>_ao" },   // ORN only
       "metallic":  { "texture": null, "constant": true, "factor": 0.0 },
       "uv1_in_glb": true               // false for the ten backdrop groups: see "The backdrop" below
     }
@@ -365,19 +365,22 @@ Rules the viewer can rely on:
 2. **`texture: null` with `constant: true` is not an error — it is the map.** A map whose baked standard deviation is
    below `materials.constant_threshold` ships as a factor only (no file, no GPU memory). Apply `factor` as
    `material.color` / `material.roughness` / `material.metalness` and leave the map unset.
-3. **`factor` is present even when `texture` is not null.** It is the baked map's mean (albedo: linear RGB;
+3. **A `normal` entry can be constant too**, with `factor [0.5, 0.5, 1.0]`: the baked map never left the flat
+   value (measured on 6 of the 10 backdrop groups), so the surface uses its geometry normal and no map is loaded.
+   An `occlusion` entry with `in_glb: true` is already inside `orn.glb`'s `occlusionTexture` — load nothing for it.
+4. **`factor` is present even when `texture` is not null.** It is the baked map's mean (albedo: linear RGB;
    roughness / metallic: scalar) and is the correct value to use before the texture has streamed in, and the
    correct multiplier to leave at 1.0/white once it has. Never multiply the texture by the factor.
-4. **Albedo is sRGB-encoded** in the file and the KTX2 carries `sRGB` transfer, so three.js `SRGBColorSpace`;
+5. **Albedo is sRGB-encoded** in the file and the KTX2 carries `sRGB` transfer, so three.js `SRGBColorSpace`;
    roughness, normal and occlusion are linear data (`NoColorSpace`). The bake buffer itself is scene-linear —
    the encode happens on save, once.
-5. **Roughness rides the green channel** of a glTF metallicRoughness texture when one is used; here it is shipped as
+6. **Roughness rides the green channel** of a glTF metallicRoughness texture when one is used; here it is shipped as
    its own single-purpose map, so assign it to `material.roughnessMap` and set `material.metalness` from
    `metallic.factor` (0.0 on 28 of the 30 source materials; the two exceptions are named in the report).
-6. **Normal maps are tangent-space, +X +Y +Z (OpenGL convention)**, baked on the exported low-poly's UV1. For ORN they
+7. **Normal maps are tangent-space, +X +Y +Z (OpenGL convention)**, baked on the exported low-poly's UV1. For ORN they
    already carry the Gate 1 hi→lo relief *and* the material's own bump, baked in one pass — the Gate 2 ORN normal
    **replaces** `orn_<proto>_normal` from Gate 1; do not multiply or blend the two.
-7. A material name that is not in `materials.sets` keeps whatever the glb gave it (the foliage bark/leaf materials,
+8. A material name that is not in `materials.sets` keeps whatever the glb gave it (the foliage bark/leaf materials,
    `MAT_EXP_treeboard`, and `MAT_water_lagoon`, which is the viewer's own plane).
 
 ### `textures.gate2` — the extension
