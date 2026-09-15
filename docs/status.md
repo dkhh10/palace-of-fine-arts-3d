@@ -625,3 +625,6 @@ In flight: bake queue (QA-12-1). Next: lead re-captures (gate2.sh), QA 12b, Gate
 
 ## 2026-09-15 · Bake QA-12-1 pass merged (8a3d06a): 19/19 ARCH/ground re-baked on the split atlases (2 229 s), normals on every set, colonnade texel 9.4 -> 1.07 cm; grain moved to materials.detail (5 tiling sets, 20 MB) — viewer r3 wiring it now, then the Gate 2 re-capture and its own measurement of the QA-12-1 boxes
 Next: QA 12b -> Gate 3 dispatch (docs/briefs/phase6_gate3_bake.md) -> burn -> stop.
+
+## 2026-09-15 · Viewer detail layer merged (5eb698e); BLOCKER found by its empty-map guard: all 15 shipped detail maps are all-zero PNGs/KTX2 -> bake engineer re-exporting with on-disk verification + mean_linear per map. Synthetic-noise proof of the layer: cam05 pier std 22.9 -> 25.7 (Phase 5 38.3), cam01 wall hp9 6.0 -> 8.7, attic unmoved
+Resident 1 400 MB at 1440p (textures 920 after the 19 normals; detail adds 20 MB as KTX2). Next: real maps -> viewer re-capture + boxes -> QA 12b -> Gate 3.
