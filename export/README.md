@@ -41,9 +41,10 @@ renamed or removed, while that string stands.
 | `assets` | per exported object: `mesh`, `tris`, `material`, `uv` (UV1 = material, UV2 = lightmap), `location_blender`, `lightmap` (the `textures` key that belongs to it, or `null`) |
 | `textures` | per map: `path` (relative to this file), `uv`, `colorspace`, `encoding`; lightmaps also carry `rgbm_range`, `decode` and the `exr` source |
 | `lut` | `.cube` path (`lut_agx_high_contrast_65.cube`), `size` 65, the shaper, `exposure_ev`, `exposure_applied_by`, `method`, and the five-patch grey `proof` |
-| `sky` | the two equirects (`camera` = background sphere, `glossy` = PMREM source), the mapping, how the Light Path branch was isolated, and the sun's measured position in the image |
+| `sky` | the two equirects (`camera` = background sphere, `glossy` = PMREM source), the mapping, `rotation_deg` / `u_offset` (see below), how the Light Path branch was isolated, and the sun's measured position in the image |
 | `gltf`, `glb` | what the exporter and gltfpack produced, including `lightmap_slot` and `viewer_action` |
-| `reference_frame` | the Cycles frame the viewer is scored against |
+| `reference_frame` | the composited Cycles frame (kept for compatibility; same file as `reference.with_compositor`) |
+| `reference` | **both** Cycles frames at 1280x720 / 64 spp from `CAM_qa_01_lagoon_hero`: `with_compositor` (the Phase 5 look) and `no_compositor` (`scene.compositing_node_group = None`, nothing else changed). Score against `no_compositor` first — a gap that survives there is the colour/lighting pipeline (exposure, the LUT, the lightmap π); a gap that only appears against `with_compositor` is the missing haze / bloom / vignette in `compositor` |
 | `compositor` | every node of `COMP_scene_golden_hour` with its unconnected input values (mist / bloom / vignette) |
 
 ### Colour, exactly
@@ -98,6 +99,32 @@ A third, cheaper trap: `master_delivery.blend` is saved with `common.set_lod(vie
 `hide_viewport=True`, is **not in the depsgraph**, and therefore reads back `matrix_world` as the identity and is
 invisible to `scene.ray_cast`. `export/export_set.py` un-hides the slice and calls `view_layer.update()` before it
 reads any transform, and asserts every placement afterwards (`placement_max_error_m` 0.0).
+
+### Where the sky sits after the Y-up swap — `sky.rotation_deg = 90.0`, derived not fitted
+
+The equirects are written with
+
+```
+u_img = 0.5 + atan2(x_B, y_B) / 360        # u = 0.5 is Blender +Y (the lagoon side), u grows toward +X
+v_img = 0.5 - elevation / 180              # measured from the FILE'S TOP row; the top row is the zenith
+```
+
+The exporter's Y-up swap is `(x, y, z)_Blender -> (x, z, -y)_three`, so a three.js direction `d` corresponds to
+`x_B = d.x` and `y_B = -d.z`, and the texel the viewer wants is at
+
+```
+u_img = 0.5 + atan2(d.x, -d.z) / 360
+      = 0.5 + (atan2(d.z, d.x) + 90) / 360
+      = equirectUv(d).u + 0.25            # equirectUv is three.js' own built-in equirect lookup
+```
+
+So three.js' native lookup is a quarter of the width short: apply **+90° about the three.js Y axis** to the
+background and to the PMREM environment (`scene.backgroundRotation` / `scene.environmentRotation`), or offset `u`
+by **+0.25**. This is the same +90° the viewer had fitted by eye, now with a derivation behind it. Checked against
+the image itself (`sky.orientation_check`): the file's upper half has mean luminance **3.393** against **0.030**
+for the lower half, so the top row really is the zenith and no vertical flip is needed; the brightest pixel sits at
+`v = 0.4993` from the top (the horizon glow, the sun disc being off) and at `u = 0.57922`, which is the sun's
+azimuth to within 0.026°.
 
 ## Carries (code-review findings 6-10, `docs/reviews/phase6_bake_gate0_review.md`, not fixed at Gate 0)
 
