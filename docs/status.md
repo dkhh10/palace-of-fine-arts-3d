@@ -604,3 +604,6 @@ Next: on PASS dispatch Gate 2 bake + viewer rounds; burn; stop.
 
 ## 2026-09-15 · GATE 1 PASSED (QA 11d, 57addb8; decisions.md). Gate 2 dispatched: bake engineer r2 (PBR bakes, docs/briefs/phase6_gate2_bake.md) + viewer r3 (docs/briefs/phase6_gate2_viewer.md)
 Session burn so far (usage_from_transcripts, nominal):  253.40   opus-5 223, fable-5-1 30 . In flight: Gate 2 bake (GPU queue), viewer r3 (waits for manifest v3). Next: reviews, merges, Gate 2 capture + QA round 12 (PBR alone, direct lighting), then Gate 3 brief.
+
+## 2026-09-15 · Gate 2 bake done (a9794e8): 60 jobs / 182 maps / 3 245 s of bakes, KTX2 274.5 MB, resident projection 1 166 MB of 1 200; verification on the Gate 0 slice worst 2.78 % (inside 3 %); manifest v3 synced
+In flight: phase6-bake Gate 2 code review; export engineer (backdrop UV1 into env.glb, -vp 16); viewer r3 (PBR wiring + capture, GPU free). Next: review + merges, Gate 2 capture, QA round 12 (PBR alone, direct lighting), Gate 3 brief (lightmaps + impostors + probe), burn, stop.

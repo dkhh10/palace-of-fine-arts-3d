@@ -314,3 +314,14 @@ exported without placements. Lessons carried into the writer: assert texCoord >=
 export_set within 1 % (export/verify_glb.py); placeholders are hidden in every QA capture and listed as exempt, never silent. Carried to Gate 2: QA-11c-2
 untextured backdrop / pedestals (PBR bake), QA-11d-2 gltfpack -vp 16 on env.glb; Gate 3: the 127 impostor carriers (QA-11-1/-3); Gate 4: mirror water
 (QA-11-5), shrub InstancedMesh bounds spanning the site (QA-11d-1, split per region).
+
+## 2026-09-15 · Gate 2 bake in (phase6-bake a9794e8), lead's calls
+- 4K hero-near set: the rule ("inside the cam01 frame within 30 m") selects nothing — cam01 stands 100 m out and the nearest in-frame group is 36 m
+  away. No 4K textures at 6a; the walk-near alternative (+256 MB) would break the 1 200 MB budget. Texel density at close range (podium 1.7 cm/texel
+  from 5 m) is a Gate 4 item: a tiling detail texture, not resolution.
+- Resident projection 1 166 MB of 1 200 after ORN roughness at 1K and albedo 1K under 2 m (measured against the nearest station's pixel size);
+  the impostor lever (-200 MB) stays unspent for Gate 3.
+- ARCH hi->lo normals were never in scope (the columns' flutes went 14 396 -> 3 500 tris with material bump only): carried to Gate 4 as a
+  polish item if the fluted shafts read flat at cam03; per-instance weathering variation survives only through the Gate 3 lightmap slot.
+- Hand-offs: export re-exports env.glb with the generated backdrop UV1 (backdrop_uv1.npz) and -vp 16; the viewer uses the Gate 2 ORN normal
+  in place of the Gate 1 one and honours uv1_in_glb: false meanwhile.
