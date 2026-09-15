@@ -482,3 +482,49 @@ Held: alignment 1.3108 / -291.8 / -126.6 (bit-identical, fifth round), attic std
 
 Hero **3.56 -> 3.61 (+0.05)**; Lighting mood 4 -> 4.5 and Material realism 3.5 -> 3 are the two halves of the same
 lamp. Full report and the re-stated defect table: `docs/qa_round_10b.md`; composite `renders/final/v2/round10b_gate.png`.
+
+---
+
+## Round 11 — Phase 6 **Gate 1** (geometry freeze in the viewer), 2026-09-15. **GATE 1: FAIL.**
+
+First round scored on the **exported** geometry as the three.js viewer draws it, not on a Blender render: geometry rows
+only (Silhouette, Proportion, Ornament fidelity, Repetition visibility, Scale cues), each station against the Phase 5
+render of that station. Materials and lighting are out of scope by design (neutral grey, `direct`), and the Gate 1 glbs
+were written with **linear instead of sRGB** albedo/probe textures, so every luma figure in `gate1_pairs.json` is
+unusable and no tonal row was scored.
+
+**Name-sweep exemption added, Gate 1:** the viewer's **127 `WEB_far_tree_billboard_<prototype>` quads** (25 prototypes,
+`userData.pfaPlaceholder = 'gate3_tree_impostor'`, web/README.md "Far-tree billboards", user's decision in
+phase6_plan §4b). Legitimate until the Gate 3 impostor bake — but they are **opaque and camera-facing**, and they cover
+16.1 % of cam01, 32.2 % of cam02, 33.9 % of cam03, 25.9 % of cam05 and 28.0 % of cam06 (`scripts/qa_r11_billboards.py`,
+validated against the viewer's own logged matrices to 0.03 % of frame area). **Binding from now on: any gate capture
+that scores geometry must include a `?billboards=0` frame for every station where the coverage is non-zero** — a
+placeholder may never be the thing a metric is satisfied by, and at Gate 1 they hid 37.4 % of the hero's main-arch
+opening, the whole shoreline and the podium base.
+
+**Blocker (export).** `env.gltf` / `env_ktx2.gltf` give all ten `MAT_EXP_ENVBD__*` materials
+`baseColorTexture.texCoord = -1`; three generates `uv18446744073709552000`, the vertex shader fails
+(`VALIDATE_STATUS false`) and 256 `useProgram: program not valid` follow. **151,737 placed triangles — 19.1 % of the ENV
+budget, the entire backdrop group (city blocks, far forest, hill, roofs, lawn, birds, lamp posts) — draw at no station.**
+Cause: the grey UV1 probe texture was attached to the ten meshes that `export_set.json.uv_missing.uv1` already flags as
+having no UV0. New rule: **a shader-compile error or a `PFA_*` console error in a gate capture is a blocker by itself**;
+the viewer must also clamp `map.channel < 0 -> 0` so an invalid manifest can never silently drop geometry.
+
+**Blocker 2 (export / ORN).** The three voxel-remeshed `ORN_attic_panel_v*_LOD0` shells (pre-flagged in
+`phase6_budget.md` hand-off 1: deviation max 367 mm, normal-map blue mean 0.79-0.81 vs 0.97) do **not** read flat — they
+read **torn**: at cam02 and cam05 the figure relief breaks into disconnected speckled fragments with hard black voids;
+at the hero it is legible but pocked. The budget doc's own acceptance ("retopologise by hand only if it reads flat")
+is hereby restated as **"if it does not read as continuous relief at 100 % at every station where it is > 100 px"**.
+
+**What passed, and passed well.** Name sweep 2540 exported objects / 0 hits. Budget ARCH 844,554 / ORN 1,099,194 /
+ENV 792,822 = **2,736,570 of 3.0 M**, 154 batches (140 at cam01, budget 400), resident 1.083 GB of 1.2 GB. 1440p GPU cost
+**0.6-2.1 ms median**, presented 16.6-16.8 ms = 60 fps vsync-capped, uncapped 476-1667 fps — ~8x the 45 fps target.
+**Silhouette: scale 1.0000, dx 0.0, dy 0.0, apex delta 0.00 %H, per-column profile mean |d| 0.81 px = 0.075 %H** against
+the Phase 5 Cycles hero. The LOD0 decimation is silhouette-neutral, the column flutes survive as geometry, and the
+rotunda coffer field matches 1:1. The ray-cast opening test holds on its own terms — no near-vault face intrudes — but
+is only **PARTIAL** because a placeholder covers the far side.
+
+Station averages (geometry rows, Phase 5 -> Gate 1): 01 **3.50** (-0.20), 02 **3.00** (-0.30), 03 **2.60** (0.00),
+04 **3.00** (-0.10), 05 **2.90** (-0.30), 06 **2.80** (-0.30). Station averages are all within 0.5; **three rows are
+not** — cam06 Silhouette -1.0 (backdrop gone), cam02 and cam05 Ornament -1.0 (attic panels) — and the parity rule is per
+row. Full report `docs/qa_round_11.md`; composite `renders/web/round11_gate.png`.
