@@ -355,8 +355,83 @@ export function normaliseManifest( raw, baseUrl ) {
 		set.aliases = ( Array.isArray( aliasRaw ) ? aliasRaw : ( typeof aliasRaw === 'string' ? [ aliasRaw ] : [] ) ).filter( x => typeof x === 'string' );
 		if ( Object.keys( set.maps ).length || Object.keys( set.factors ).length ) materialSets[ name ] = set;
 	}
+	// --- materials.detail: the shared object-space tiling sets (QA-12-1) -----------------------
+	// The Phase 5 concrete grain comes from a Bump with Distance 0.015 m, which no unique atlas can
+	// carry (its texels are 3.8-11.8 cm), so the bake ships the five tiling sets Phase 5 itself uses
+	// and the viewer re-creates the layer: albedo x (detail albedo / its own mean), roughness
+	// likewise, the detail normal blended over the baked one.  `texture` here is a key too; the
+	// files are PNGs under `detail/` next to the manifest (textures.gate2.detail_files has the
+	// bytes but no path, detail.json has the paths).
+	const detailRaw = ( typeof matRoot === 'object' && matRoot.detail ) || null;
+	let detail = null;
+	if ( detailRaw && detailRaw.sets ) {
+		const dDir = detailRaw.dir || detailRaw.detail_dir || 'detail';
+		// The set ships twice: a PNG under detail/ and a KTX2 next to the PBR atlases (1.33 MB
+		// resident each, what textures.gate2.detail_files counts).  The PNG is used FIRST because
+		// the layer divides by the map's own linear mean and only a decodable image can be measured
+		// on the CPU; a compressed texture has no readable pixels.  The KTX2 (4x cheaper) becomes
+		// the primary as soon as the manifest carries `mean_linear` per map — then nothing has to
+		// be measured at run time.
+		const detailFiles = ( texG2 && texG2.detail_files ) || {};
+		const detailUrl = ( key, entry ) => {
+			const given = entry && ( entry.path || entry.url );
+			if ( given ) return { url: resolveUrl( baseUrl, given ), fallback: null };
+			const png = resolveUrl( baseUrl, `${String( dDir ).replace( /\/$/, '' )}/${key}.png` );
+			const ktx2 = ( detailFiles[ key ] && dirG2 ) ? joinDir( dirG2, `${key}.ktx2` ) : null;
+			const mean = entry && ( entry.mean_linear || entry.mean );
+			if ( ktx2 && Array.isArray( mean ) ) return { url: ktx2, fallback: png };
+			return { url: png, fallback: ktx2 };
+		};
+		const dSets = {};
+		let dMaps = 0;
+		for ( const [ name, set ] of Object.entries( detailRaw.sets ) ) {
+			const maps = {};
+			for ( const [ slot, key ] of [ [ 'map', 'albedo' ], [ 'roughnessMap', 'roughness' ], [ 'normalMap', 'normal' ] ] ) {
+				const e = ( set.maps || set )[ key ];
+				if ( ! e ) continue;
+				const ref = typeof e === 'string' ? e : e.texture;
+				if ( ! ref ) continue;
+				const cs = ( typeof e === 'object' && e.colorspace ) || ( key === 'albedo' ? 'srgb' : 'linear' );
+				const u = detailUrl( ref, typeof e === 'object' ? e : null );
+				const declaredMean = ( typeof e === 'object' && ( e.mean_linear || e.mean ) ) || null;
+				maps[ slot ] = { url: u.url, fallback: u.fallback, key: ref, meanLinear: Array.isArray( declaredMean ) ? declaredMean : null,
+					srgb: /srgb/i.test( cs ), px: ( typeof e === 'object' && e.px ) || detailRaw.ship_px || 1024,
+					bytes: detailFiles[ ref ] ? detailFiles[ ref ].bytes : null,
+					residentMb: detailFiles[ ref ] ? detailFiles[ ref ].resident_mb : null };
+				dMaps ++;
+			}
+			dSets[ name ] = { name, maps, tileM: set.tile_m ?? null };
+		}
+		// per_group is keyed by the GLB material name (authoritative); per_material by the Phase 5
+		// source material name, matched through the same candidate keys as the PBR sets.
+		const rule = ( r ) => ( ! r ? null : { set: r.set, scale: r.object_scale, tileM: r.tile_m,
+			mmPerTexel: r.mm_per_texel, coordSpace: r.coord_space || 'object' } );
+		const perGroup = {}, groupExtras = [];
+		for ( const [ mat, entry ] of Object.entries( detailRaw.per_group || {} ) ) {
+			const rules = Object.entries( entry ).map( ( [ src, r ] ) => ( { src, ...rule( r ) } ) ).filter( r => r.set && dSets[ r.set ] );
+			if ( ! rules.length ) continue;
+			// A merged group lists several source materials with different sets; one material can
+			// carry one, so the FIRST is used and the others are reported.
+			perGroup[ mat ] = rules[ 0 ];
+			if ( rules.length > 1 ) groupExtras.push( `${mat}: ${rules.map( r => r.src ).join( ' + ' )} -> ${rules[ 0 ].set}` );
+		}
+		const perMaterial = {};
+		for ( const [ src, r ] of Object.entries( detailRaw.per_material || {} ) ) {
+			const v = rule( r );
+			if ( v && dSets[ v.set ] ) perMaterial[ src ] = { src, ...v };
+		}
+		detail = { mode: detailRaw.mode || null, shipPx: detailRaw.ship_px || 1024,
+			bumpDistanceM: detailRaw.bump_distance_m ?? null, apply: detailRaw.apply || null,
+			sets: dSets, perGroup, perMaterial, maps: dMaps };
+		notes.push( `materials.detail: ${Object.keys( dSets ).length} tiling set(s), ${dMaps} maps, `
+			+ `${Object.keys( perGroup ).length} glb material rule(s) + ${Object.keys( perMaterial ).length} source-material rule(s), `
+			+ `mode "${detail.mode}", bump distance ${detail.bumpDistanceM} m` );
+		if ( groupExtras.length ) notes.push( `detail: ${groupExtras.length} merged group(s) list more than one source material, the first is used: ${groupExtras.join( '; ' )}` );
+	}
+
 	const materials = {
 		mode: materialsMode,
+		detail,
 		sets: materialSets,
 		count: Object.keys( materialSets ).length,
 		maps: mapCount,

@@ -28,6 +28,7 @@ import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
+import { applyDetail } from './detail.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -55,6 +56,10 @@ const CFG = {
 	// QA-11d-1 instance chunking: "0" disables it, "minRadius[,maxDepth[,gain]]" tunes it
 	chunk: qs.get( 'chunk' ),                           // "minRadius[,maxDepth[,gain[,budget]]]" 
 	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
+	detail: qs.has( 'detail' ) ? parseFloat( qs.get( 'detail' ) ) : 1.0,   // QA-12-1 detail layer strength, 0 = off
+	detailProj: qs.get( 'detailproj' ) || 'objxy',      // objxy (the manifest's plane) | dominant
+	detailNormal: qs.has( 'detailnormal' ) ? parseFloat( qs.get( 'detailnormal' ) ) : 0.5,  // detail normal scale
+	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 };
 
 function glInfo() {
@@ -174,7 +179,7 @@ const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, tex_s: 0, total_s: 
 const glbReport = [];
 const glbRoots = [];
 let chunkStats = null;
-let materialsMode = 'grey', pbrReport = null;
+let materialsMode = 'grey', pbrReport = null, detailReport = null;
 
 /** baked  = the Gate 0/3 path: lightmaps carry the diffuse, so the sun and the environment are
  *           stripped to their specular terms (materials.js).
@@ -351,6 +356,25 @@ async function boot() {
 				if ( done - drawn >= 16 || done === total ) { drawn = done; renderFrame(); }
 			},
 		} );
+		// QA-12-1: the tiling grain layer on top of the baked maps, before the orphan sweep so a
+		// detail texture is never mistaken for an orphan.
+		if ( CFG.detail > 0 && manifest.materials.detail ) {
+			detailReport = await applyDetail( {
+				scene, detail: manifest.materials.detail, note,
+				projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
+				synthetic: CFG.detailTest === 'noise',
+				loadTexture: ( url ) => {
+					progress.label = url.split( '/' ).pop();
+					return /\.ktx2$/i.test( url )
+						? getKTX2().loadAsync( url, onProgressFor( url ) )
+						: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+				},
+			} );
+			renderFrame();
+		} else if ( manifest.materials.detail ) {
+			note( `detail layer OFF (?detail=${CFG.detail}); the manifest carries ${Object.keys( manifest.materials.detail.sets ).length} tiling set(s)` );
+		}
+
 		// A replaced Gate 1 map (the ORN normals) is unreachable but still on the GPU: free it.
 		const freed = disposeOrphans( scene, texturesBeforePbr );
 		pbrReport.disposed = freed;
@@ -753,6 +777,7 @@ window.__pfaInfo = () => ( {
 	chunking: chunkStats,
 	materialsMode,
 	pbr: pbrReport,
+	detail: detailReport,
 	notes: log.slice(),
 } );
 

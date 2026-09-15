@@ -1,6 +1,6 @@
 {
- "generated": "2026-09-15T17:07:41.209Z",
- "url": "http://127.0.0.1:65492/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate2%2Fmanifest.json&t=0&billboards=0&treeboards=0",
+ "generated": "2026-09-15T19:06:44.241Z",
+ "url": "http://127.0.0.1:49720/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate2%2Fmanifest.json&t=0&billboards=0&treeboards=0",
  "size": [
   2560,
   1440
@@ -60,18 +60,18 @@
     "distance_m": 154
    }
   ],
-  "sets_in_manifest": 60,
-  "sets_used": 60,
+  "sets_in_manifest": 62,
+  "sets_used": 62,
   "sets_unused": [],
-  "textures": 178,
-  "unique_files": 168,
-  "bytes": 566235520,
+  "textures": 187,
+  "unique_files": 181,
+  "bytes": 630548528,
   "kept_glb_normal": 0,
   "replaced_glb_normal": 33,
   "kept_glb_ao": 0,
   "colourspace_conflicts": [],
   "formats": {
-   "RGBA_ASTC_4x4_Format": 168
+   "RGBA_ASTC_4x4_Format": 181
   },
   "failed": [],
   "factored": 64,
@@ -79,25 +79,25 @@
   "flat_normal_constant": [],
   "without_uv1": [],
   "disposed": {
-   "disposed": 93,
-   "freed_bytes": 155196848,
+   "disposed": 95,
+   "freed_bytes": 155197072,
    "by_slot": {
-    "map": 60,
+    "map": 62,
     "normalMap": 33
    },
    "names": [
-    "212a5456",
-    "b3913240",
-    "37c1c760",
-    "3d2ae483",
-    "8d03cc97",
-    "f30b890d",
-    "19db8c99",
-    "7bef3726",
-    "a4178054",
-    "3d204e36",
-    "23d11c43",
-    "46843fa3"
+    "c27a619e",
+    "93adbe04",
+    "a7a3918c",
+    "7395ef29",
+    "bfe003ee",
+    "8123d86b",
+    "d33bc704",
+    "6e0391f5",
+    "2f38be2e",
+    "904a137d",
+    "9d481194",
+    "2eec0d41"
    ]
   },
   "order_count": 64,
@@ -187,9 +187,93 @@
   "batches": 16,
   "opts": {}
  },
+ "detail": {
+  "projection": "objxy",
+  "strength": 1,
+  "normal_scale": 0.5,
+  "sets_loaded": 4,
+  "materials": 0,
+  "textures": 0,
+  "bytes": 0,
+  "means": {
+   "concrete_wall_007": {},
+   "concrete_wall_008": {},
+   "gravelly_sand": {},
+   "rock_boulder_dry": {}
+  },
+  "by_set": {},
+  "unmatched_rules": [],
+  "applied": 0,
+  "failed": [],
+  "empty": [
+   {
+    "url": "detail_concrete_wall_007_albedo.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_concrete_wall_007_roughness.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_concrete_wall_007_normal.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_concrete_wall_008_albedo.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_concrete_wall_008_roughness.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_concrete_wall_008_normal.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_gravelly_sand_albedo.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_gravelly_sand_roughness.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_gravelly_sand_normal.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_rock_boulder_dry_albedo.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_rock_boulder_dry_roughness.png",
+    "mean8": 0,
+    "std8": 0
+   },
+   {
+    "url": "detail_rock_boulder_dry_normal.png",
+    "mean8": 0,
+    "std8": 0
+   }
+  ],
+  "fallbacks": [],
+  "stats": {},
+  "sets_empty": 4
+ },
  "bytes": {
-  "loaded": 483172983,
-  "planned": 483172983,
+  "loaded": 517161299,
+  "planned": 517161299,
   "unknownSize": [],
   "files": [
    {
@@ -212,7 +296,7 @@
    },
    {
     "kind": "glb:arch",
-    "bytes": 2981252,
+    "bytes": 3589032,
     "sizeFrom": "HEAD",
     "name": "arch.glb"
    },
@@ -230,73 +314,121 @@
    },
    {
     "kind": "glb:ground",
-    "bytes": 1175488,
+    "bytes": 1238288,
     "sizeFrom": "HEAD",
     "name": "ground.glb"
    },
    {
     "kind": "tex:map",
-    "bytes": 1037606,
+    "bytes": 2242896,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 299985,
+    "bytes": 491922,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2"
    },
    {
+    "kind": "tex:normal",
+    "bytes": 1643267,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2"
+   },
+   {
     "kind": "tex:map",
-    "bytes": 1013501,
+    "bytes": 2449540,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 605650,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1125700,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2260821,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 293214,
+    "bytes": 497583,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2"
    },
    {
+    "kind": "tex:normal",
+    "bytes": 1658982,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2"
+   },
+   {
     "kind": "tex:map",
-    "bytes": 1936684,
+    "bytes": 2392867,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 591251,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1102371,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2851413,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__column_rose_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 444815,
+    "bytes": 646953,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__column_rose_roughness.ktx2"
    },
    {
     "kind": "tex:normal",
-    "bytes": 1409051,
+    "bytes": 2129353,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__column_rose_normal.ktx2"
    },
    {
     "kind": "tex:map",
-    "bytes": 1529583,
+    "bytes": 2490664,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 337428,
+    "bytes": 530795,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2"
    },
    {
     "kind": "tex:normal",
-    "bytes": 1035121,
+    "bytes": 1793469,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__column_tan_inner_normal.ktx2"
    },
    {
     "kind": "tex:map",
-    "bytes": 3339356,
+    "bytes": 3339365,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_inner_albedo.ktx2"
    },
@@ -307,44 +439,50 @@
     "name": "gate2_ARCH_rotunda__concrete_inner_roughness.ktx2"
    },
    {
+    "kind": "tex:normal",
+    "bytes": 2079134,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_normal.ktx2"
+   },
+   {
     "kind": "tex:map",
-    "bytes": 2428342,
+    "bytes": 3095533,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 631266,
+    "bytes": 702428,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2"
    },
    {
     "kind": "tex:normal",
-    "bytes": 841333,
+    "bytes": 1396902,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_ochre_normal.ktx2"
    },
    {
     "kind": "tex:map",
-    "bytes": 2079283,
+    "bytes": 2804485,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_podium_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 481988,
+    "bytes": 636212,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_podium_roughness.ktx2"
    },
    {
     "kind": "tex:normal",
-    "bytes": 1485683,
+    "bytes": 2108776,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__concrete_podium_normal.ktx2"
    },
    {
     "kind": "tex:map",
-    "bytes": 1485590,
+    "bytes": 1485557,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__dome_membrane_albedo.ktx2"
    },
@@ -355,8 +493,14 @@
     "name": "gate2_ARCH_rotunda__dome_membrane_roughness.ktx2"
    },
    {
+    "kind": "tex:normal",
+    "bytes": 1280655,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_normal.ktx2"
+   },
+   {
     "kind": "tex:map",
-    "bytes": 2008204,
+    "bytes": 2008203,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__drum_band_albedo.ktx2"
    },
@@ -392,27 +536,39 @@
    },
    {
     "kind": "tex:map",
-    "bytes": 2796638,
+    "bytes": 3488792,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 740144,
+    "bytes": 827408,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2"
    },
    {
+    "kind": "tex:normal",
+    "bytes": 1837186,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2"
+   },
+   {
     "kind": "tex:map",
-    "bytes": 2096088,
+    "bytes": 3367725,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_site__concrete_podium_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 559002,
+    "bytes": 800429,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_site__concrete_podium_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1618615,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_normal.ktx2"
    },
    {
     "kind": "tex:map",
@@ -425,6 +581,12 @@
     "bytes": 341811,
     "sizeFrom": "HEAD",
     "name": "gate2_ARCH_site__paving_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 928575,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__paving_normal.ktx2"
    },
    {
     "kind": "tex:map",
@@ -578,7 +740,7 @@
    },
    {
     "kind": "tex:map",
-    "bytes": 3578129,
+    "bytes": 3578131,
     "sizeFrom": "HEAD",
     "name": "gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2"
    },
@@ -614,7 +776,7 @@
    },
    {
     "kind": "tex:map",
-    "bytes": 3691499,
+    "bytes": 3691494,
     "sizeFrom": "HEAD",
     "name": "gate2_ENV__ENV_terrain_ground_albedo.ktx2"
    },
@@ -632,19 +794,19 @@
    },
    {
     "kind": "tex:map",
-    "bytes": 3302210,
+    "bytes": 4401833,
     "sizeFrom": "HEAD",
     "name": "gate2_ENV__riprap_albedo.ktx2"
    },
    {
     "kind": "tex:roughness",
-    "bytes": 844727,
+    "bytes": 1007179,
     "sizeFrom": "HEAD",
     "name": "gate2_ENV__riprap_roughness.ktx2"
    },
    {
     "kind": "tex:normal",
-    "bytes": 1644250,
+    "bytes": 2698342,
     "sizeFrom": "HEAD",
     "name": "gate2_ENV__riprap_normal.ktx2"
    },
@@ -1245,31 +1407,31 @@
   ]
  },
  "load_s": {
-  "plan_s": 0.16080000001192093,
-  "sky_s": 0.5091999999880791,
-  "lut_s": 0.05859999996423721,
-  "glb_s": 1.628800000011921,
-  "tex_s": 1.7456999999880791,
-  "total_s": 4.168599999964237
+  "plan_s": 0.169,
+  "sky_s": 0.5083999999761581,
+  "lut_s": 0.06039999997615814,
+  "glb_s": 1.6013000000119209,
+  "tex_s": 2.017899999976158,
+  "total_s": 4.422399999976158
  },
  "glbs": [
   {
    "name": "arch.glb",
    "cls": "arch",
-   "url": "http://127.0.0.1:65492/assets/gate1/arch.glb",
+   "url": "http://127.0.0.1:49720/assets/gate1/arch.glb",
    "meshes": 27,
    "instancedMeshes": 15,
    "instances": 438,
    "tris": 947622,
    "materials": 17,
    "hiddenBoards": 0,
-   "bytes": 2981252,
-   "wall_s": 0.08780000001192093
+   "bytes": 3589032,
+   "wall_s": 0.09029999995231629
   },
   {
    "name": "orn.glb",
    "cls": "orn",
-   "url": "http://127.0.0.1:65492/assets/gate1/orn.glb",
+   "url": "http://127.0.0.1:49720/assets/gate1/orn.glb",
    "meshes": 33,
    "instancedMeshes": 32,
    "instances": 435,
@@ -1277,12 +1439,12 @@
    "materials": 33,
    "hiddenBoards": 0,
    "bytes": 154065360,
-   "wall_s": 1.039300000011921
+   "wall_s": 1.030300000011921
   },
   {
    "name": "env.glb",
    "cls": "env",
-   "url": "http://127.0.0.1:65492/assets/gate1/env.glb",
+   "url": "http://127.0.0.1:49720/assets/gate1/env.glb",
    "meshes": 50,
    "instancedMeshes": 34,
    "instances": 1526,
@@ -1290,20 +1452,20 @@
    "materials": 21,
    "hiddenBoards": 127,
    "bytes": 35797240,
-   "wall_s": 0.2716000000238419
+   "wall_s": 0.2586999999880791
   },
   {
    "name": "ground.glb",
    "cls": "ground",
-   "url": "http://127.0.0.1:65492/assets/gate1/ground.glb",
+   "url": "http://127.0.0.1:49720/assets/gate1/ground.glb",
    "meshes": 4,
    "instancedMeshes": 0,
    "instances": 0,
    "tris": 113043,
    "materials": 4,
    "hiddenBoards": 0,
-   "bytes": 1175488,
-   "wall_s": 0.010600000023841857
+   "bytes": 1238288,
+   "wall_s": 0.010099999964237213
   }
  ],
  "billboards": null,
@@ -1317,36 +1479,36 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.899999976158142,
-    "mean": 19.77142857102787,
-    "p95": 18.69999998807907,
-    "min": 14.200000047683716,
-    "max": 208.5999999642372,
+    "median": 16.69999998807907,
+    "mean": 19.40000000020035,
+    "p95": 18.19999998807907,
+    "min": 6.600000023841858,
+    "max": 194.39999997615814,
     "frames": 119
    },
-   "fps_presented": 59.171597716613064,
+   "fps_presented": 59.88023956370228,
    "gpu_cost_ms": {
     "median": 1.699999988079071,
-    "mean": 1.8616666674613953,
-    "p95": 2.699999988079071,
+    "mean": 1.8833333333333333,
+    "p95": 2.800000011920929,
     "frames": 60
    },
    "fps_uncapped": 588.235298242536,
    "draw_calls": 267,
-   "triangles": 5387275,
-   "programs": 19,
+   "triangles": 5237627,
+   "programs": 18,
    "info_memory": {
     "geometries": 110,
-    "textures": 232
+    "textures": 245
    },
    "resident": {
-    "geometry_bytes": 40479158,
+    "geometry_bytes": 42450410,
     "instance_matrix_bytes": 153536,
-    "texture_bytes": 855644128,
+    "texture_bytes": 919957136,
     "geometries": 115,
-    "textures": 227,
+    "textures": 240,
     "texture_formats": {
-     "RGBA_ASTC_4x4_Format": 226,
+     "RGBA_ASTC_4x4_Format": 239,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 437518336,
@@ -1388,7 +1550,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 1333795158,
+    "total_bytes": 1400079418,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -1401,36 +1563,36 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.69999998807907,
-    "mean": 19.576470588435647,
-    "p95": 18.5,
-    "min": 7.099999964237213,
-    "max": 214.5,
+    "median": 16.600000023841858,
+    "mean": 19.74873949549779,
+    "p95": 18.69999998807907,
+    "min": 14.599999964237213,
+    "max": 217.69999998807907,
     "frames": 119
    },
-   "fps_presented": 59.88023956370228,
+   "fps_presented": 60.24096376890021,
    "gpu_cost_ms": {
-    "median": 1.5,
-    "mean": 1.65,
-    "p95": 2.099999964237213,
+    "median": 1.7999999523162842,
+    "mean": 1.8716666668653488,
+    "p95": 2.699999988079071,
     "frames": 60
    },
-   "fps_uncapped": 666.6666666666666,
-   "draw_calls": 255,
-   "triangles": 5057583,
-   "programs": 19,
+   "fps_uncapped": 555.5555702727522,
+   "draw_calls": 259,
+   "triangles": 5058799,
+   "programs": 18,
    "info_memory": {
     "geometries": 111,
-    "textures": 232
+    "textures": 245
    },
    "resident": {
-    "geometry_bytes": 40479158,
+    "geometry_bytes": 42450410,
     "instance_matrix_bytes": 153536,
-    "texture_bytes": 855644128,
+    "texture_bytes": 919957136,
     "geometries": 115,
-    "textures": 227,
+    "textures": 240,
     "texture_formats": {
-     "RGBA_ASTC_4x4_Format": 226,
+     "RGBA_ASTC_4x4_Format": 239,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 437518336,
@@ -1472,7 +1634,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 1333795158,
+    "total_bytes": 1400079418,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -1485,36 +1647,36 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 18.099999964237213,
-    "mean": 21.884033613345203,
-    "p95": 20.80000001192093,
-    "min": 5.899999976158142,
-    "max": 259.2999999523163,
+    "median": 17.69999998807907,
+    "mean": 21.231932773309595,
+    "p95": 18.899999976158142,
+    "min": 4.600000023841858,
+    "max": 255.10000002384186,
     "frames": 119
    },
-   "fps_presented": 55.24861889369307,
+   "fps_presented": 56.49717517929372,
    "gpu_cost_ms": {
     "median": 1.699999988079071,
-    "mean": 1.9016666660706203,
-    "p95": 2.300000011920929,
+    "mean": 1.968333332737287,
+    "p95": 2.199999988079071,
     "frames": 60
    },
    "fps_uncapped": 588.235298242536,
-   "draw_calls": 278,
-   "triangles": 5478659,
-   "programs": 19,
+   "draw_calls": 277,
+   "triangles": 5440159,
+   "programs": 18,
    "info_memory": {
     "geometries": 114,
-    "textures": 232
+    "textures": 245
    },
    "resident": {
-    "geometry_bytes": 40479158,
+    "geometry_bytes": 42450410,
     "instance_matrix_bytes": 153536,
-    "texture_bytes": 855644128,
+    "texture_bytes": 919957136,
     "geometries": 115,
-    "textures": 227,
+    "textures": 240,
     "texture_formats": {
-     "RGBA_ASTC_4x4_Format": 226,
+     "RGBA_ASTC_4x4_Format": 239,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 437518336,
@@ -1556,7 +1718,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 1333795158,
+    "total_bytes": 1400079418,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -1569,36 +1731,36 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.69999998807907,
-    "mean": 20.331092436774437,
-    "p95": 19.19999998807907,
-    "min": 13.199999988079071,
-    "max": 187.5,
+    "median": 16.5,
+    "mean": 20.037815126050422,
+    "p95": 19.69999998807907,
+    "min": 11.199999988079071,
+    "max": 178.19999998807907,
     "frames": 119
    },
-   "fps_presented": 59.88023956370228,
+   "fps_presented": 60.60606060606061,
    "gpu_cost_ms": {
     "median": 0.6000000238418579,
-    "mean": 0.6050000001986822,
-    "p95": 0.8999999761581421,
+    "mean": 0.7,
+    "p95": 1.300000011920929,
     "frames": 60
    },
    "fps_uncapped": 1666.6666004392862,
-   "draw_calls": 114,
-   "triangles": 2201797,
-   "programs": 19,
+   "draw_calls": 116,
+   "triangles": 2202405,
+   "programs": 18,
    "info_memory": {
     "geometries": 114,
-    "textures": 232
+    "textures": 245
    },
    "resident": {
-    "geometry_bytes": 40479158,
+    "geometry_bytes": 42450410,
     "instance_matrix_bytes": 153536,
-    "texture_bytes": 855644128,
+    "texture_bytes": 919957136,
     "geometries": 115,
-    "textures": 227,
+    "textures": 240,
     "texture_formats": {
-     "RGBA_ASTC_4x4_Format": 226,
+     "RGBA_ASTC_4x4_Format": 239,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 437518336,
@@ -1640,7 +1802,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 1333795158,
+    "total_bytes": 1400079418,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -1654,35 +1816,35 @@
    "file": null,
    "frame_ms": {
     "median": 16.600000023841858,
-    "mean": 19.29075630272136,
-    "p95": 18.19999998807907,
-    "min": 9.100000023841858,
-    "max": 185.5,
+    "mean": 19.067226890756302,
+    "p95": 18.899999976158142,
+    "min": 13.200000047683716,
+    "max": 182.79999995231628,
     "frames": 119
    },
    "fps_presented": 60.24096376890021,
    "gpu_cost_ms": {
     "median": 1.600000023841858,
-    "mean": 1.7916666666666667,
-    "p95": 2.800000011920929,
+    "mean": 1.7783333331346511,
+    "p95": 2.899999976158142,
     "frames": 60
    },
    "fps_uncapped": 624.9999906867744,
-   "draw_calls": 246,
-   "triangles": 4842201,
-   "programs": 19,
+   "draw_calls": 250,
+   "triangles": 4860553,
+   "programs": 18,
    "info_memory": {
     "geometries": 114,
-    "textures": 232
+    "textures": 245
    },
    "resident": {
-    "geometry_bytes": 40479158,
+    "geometry_bytes": 42450410,
     "instance_matrix_bytes": 153536,
-    "texture_bytes": 855644128,
+    "texture_bytes": 919957136,
     "geometries": 115,
-    "textures": 227,
+    "textures": 240,
     "texture_formats": {
-     "RGBA_ASTC_4x4_Format": 226,
+     "RGBA_ASTC_4x4_Format": 239,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 437518336,
@@ -1724,7 +1886,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 1333795158,
+    "total_bytes": 1400079418,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   },
@@ -1737,36 +1899,36 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 19.100000023841858,
-    "mean": 23.051260504402034,
-    "p95": 23,
-    "min": 3.100000023841858,
-    "max": 273.4000000357628,
+    "median": 17.799999952316284,
+    "mean": 21.50420168067227,
+    "p95": 19.400000035762787,
+    "min": 10,
+    "max": 250.30000001192093,
     "frames": 119
    },
-   "fps_presented": 52.3560208770542,
+   "fps_presented": 56.179775431396656,
    "gpu_cost_ms": {
-    "median": 1.899999976158142,
-    "mean": 2.1116666664679844,
-    "p95": 3.100000023841858,
+    "median": 1.7000000476837158,
+    "mean": 1.925,
+    "p95": 3.099999964237213,
     "frames": 60
    },
-   "fps_uncapped": 526.315796078077,
+   "fps_uncapped": 588.2352776180919,
    "draw_calls": 287,
    "triangles": 5597243,
-   "programs": 19,
+   "programs": 18,
    "info_memory": {
     "geometries": 114,
-    "textures": 232
+    "textures": 245
    },
    "resident": {
-    "geometry_bytes": 40479158,
+    "geometry_bytes": 42450410,
     "instance_matrix_bytes": 153536,
-    "texture_bytes": 855644128,
+    "texture_bytes": 919957136,
     "geometries": 115,
-    "textures": 227,
+    "textures": 240,
     "texture_formats": {
-     "RGBA_ASTC_4x4_Format": 226,
+     "RGBA_ASTC_4x4_Format": 239,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 437518336,
@@ -1808,7 +1970,7 @@
       "bytes": 100663296
      }
     ],
-    "total_bytes": 1333795158,
+    "total_bytes": 1400079418,
     "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   }
