@@ -613,3 +613,6 @@ Hand-offs: nine of ten backdrop material bakes reach nothing until env.glb is re
 
 ## 2026-09-15 · Gate 2 reviews in: bake MERGE WITH FIXES (queue own-pid exemption, metallic albedos via emission, ORN size rule), viewer r3 MERGE WITH FIXES (PMREM double-counted in resident memory: real 1 294 MB at 1440p; check_manifest_files unwired; pair sheets gitignore); export hand-offs merged (4f85205: backdrop UV1 in env.glb, -vpf)
 Found by the viewer review: gltfpack merged the ten backdrop materials into one, so nine Gate 2 backdrop sets attach to nothing -> export re-packs env.glb with -km; bake flips uv1_in_glb for the ten. In flight: bake fixes, export -km, viewer fixes then the Gate 2 re-capture. Next: merges, QA round 12.
+
+## 2026-09-15 · Gate 2 fully merged (bake c1bdb5a, export 9712f80, viewer dfe8609): all 60 material sets attach incl. the ten backdrop groups; hero pair ratio 1.090 in direct mode, 267 draws, GPU 1.7 ms, resident 1 334 MB at 1440p (textures 921 of 1 200); QA round 12 dispatched (docs/briefs/qa_round_12.md)
+Next: Gate 2 verdict -> Gate 3 bake (docs/briefs/phase6_gate3_bake.md) + Gate 4 viewer brief; burn; stop.
