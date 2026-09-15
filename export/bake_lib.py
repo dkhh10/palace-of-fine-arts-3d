@@ -107,11 +107,12 @@ def deviation(lo, hi):
 
 
 def run_bake(bake_type, samples, selected_to_active=False, cage=0.0, max_ray=0.0, margin=16,
-             use_pass_direct=False, use_pass_indirect=False, use_pass_color=True, normal_space="TANGENT"):
+             use_pass_direct=False, use_pass_indirect=False, use_pass_color=True, normal_space="TANGENT",
+             denoise=False):
     scene = bpy.context.scene
     scene.cycles.samples = samples
     scene.cycles.use_adaptive_sampling = False
-    scene.cycles.use_denoising = False
+    scene.cycles.use_denoising = denoise
     b = scene.render.bake
     b.use_selected_to_active = selected_to_active
     b.cage_extrusion = cage
