@@ -626,14 +626,38 @@ def build_group_column():
 
 
 def build_group_dome():
-    """Urethane roof membrane: meridional lap seams, radial rain streaks, moss on the north flank, grime ring at the base.
-    Object space: origin on the dome axis (any z); world normal for orientation."""
+    """Rotunda dome cap.  Round 10 (QA-10-8): the old group read as a near-white plastic lid in the hero box
+    920 95 1000 120 (lum 187.6 / hue 40.0 / sat 0.463 / column-sd 5.34 against ref 169's 224.3 / 44.1 / 0.272 /
+    6.61).  Three measured faults, all fixed here.
+
+    1. `Base Normal Z` was 0.66.  The dome is a spherical cap of radius 19.23 m (local mesh r 0..16.50, z
+       0.05..9.40, so the rim's world normal z is 0.514, not 0.66) -- the grime ring and the lower-flank
+       darkening were therefore sitting in the MIDDLE of the visible cap, not at its foot.  Measured row by row
+       on the round-10b hero: the ungrimed rows 95-99 read 228 lum / sat 0.21, the grimed rows 103-115 read
+       190 / 0.40, and ref 169 reads 226-249 / 0.17-0.32 over the whole span with no ring at all.  The default
+       is now 0.52 and the lower-flank mix drops 0.30 -> 0.10, which is what recovers the level and the chroma.
+    2. There was no structure the hero can resolve.  The dome is 33 m across in ~190 px, i.e. 0.17 m/px, and the
+       old seams were 0.05 m wide (0.3 px) on a 48-fold division -- they averaged out to nothing, which is the
+       column-sd 5.34.  The cap is now built as 28 meridional PANELS (ref: the panel lines countable in
+       reference/photos/material_crops/dome_2.jpg and dome_3.jpg, ~10-14 across the visible half), each with its
+       own tone drawn from a per-panel hash and a slower per-family drift, separated by a RIDGE 0.30 m wide that
+       carries the lap shadow, a lit sliver beside it and real bump.  At r = 14 m that is 3.14 m = 18 px per
+       panel, so the hero resolves the rhythm.
+    3. The rain streaks were noise at 0.34 m (2 px) and disappeared for the same reason.  They are now keyed to
+       `Streak Width` (1.4 m = 8 px at the box) along the parallel and stretched 10:1 down the meridian, which
+       is the proportion in dome_2.jpg.
+
+    Moss stays but is nearly off by default: dome_2.jpg (pre-recoat) is green on the north flank, ref 169 (2020,
+    the target) has none.  Object space: origin on the dome axis; world normal for orientation."""
     ng, t, gi, go = new_group("PFA_dome",
                               [("Base Color", "COLOR", (0.70, 0.66, 0.58, 1.0)), ("Streak Color", "COLOR", (0.50, 0.52, 0.52, 1.0)),
                                ("Moss Color", "COLOR", (0.42, 0.47, 0.40, 1.0)), ("Grime Color", "COLOR", (0.20, 0.13, 0.06, 1.0)),
-                               ("Seams", "FLOAT", 48.0, 4, 400), ("Seam Width", "FLOAT", 0.05, 0.005, 0.5),
-                               ("Streaks", "FACTOR", 0.7, 0, 1), ("Moss", "FACTOR", 0.6, 0, 1), ("Grime", "FACTOR", 0.8, 0, 1),
-                               ("Base Normal Z", "FLOAT", 0.66), ("Roughness", "FLOAT", 0.35, 0, 1), ("Bump", "FLOAT", 0.3, 0, 3),
+                               ("Panels", "FLOAT", 28.0, 4, 400), ("Ridge Width", "FLOAT", 0.30, 0.02, 2.0),
+                               ("Ridge Dark", "FACTOR", 0.30, 0, 1), ("Panel Tone", "FACTOR", 0.22, 0, 1),
+                               ("Ring Spacing", "FLOAT", 2.6, 0.2, 20.0), ("Ring", "FACTOR", 0.10, 0, 1),
+                               ("Streaks", "FACTOR", 0.7, 0, 1), ("Streak Width", "FLOAT", 1.4, 0.05, 10.0),
+                               ("Moss", "FACTOR", 0.6, 0, 1), ("Grime", "FACTOR", 0.8, 0, 1),
+                               ("Base Normal Z", "FLOAT", 0.52), ("Roughness", "FLOAT", 0.35, 0, 1), ("Bump", "FLOAT", 0.3, 0, 3),
                                ("Seed", "FLOAT", 0.0), ("Normal", "VECTOR", (0, 0, 1))],
                               [("Color", "COLOR", None), ("Roughness", "FLOAT", 0.0), ("Normal", "VECTOR", (0, 0, 1)), ("Coat", "FLOAT", 0.0)])
     I = gi.outputs
@@ -643,36 +667,55 @@ def build_group_dome():
     px, py, pz = t.sepxyz(P)
     N = I["Normal"]
     nx, ny, nz = t.sepxyz(N)
-    ang = t.math("ARCTAN2", py, px)                                   # -pi..pi
+    ang = t.math("ARCTAN2", py, px)                                   # -pi..pi, constant along a meridian
     r = t.math("SQRT", t.add(t.mul(px, px), t.mul(py, py)))
-    # seams: nearest meridian, distance in metres along the parallel
-    s = t.fract(t.madd(t.div(ang, 2 * math.pi), I["Seams"], 0.5))
-    seam_d = t.mul(t.mul(t.minimum(s, t.sub(1.0, s)), t.div(2 * math.pi, I["Seams"])), r)
-    seam = t.maprange(seam_d, t.mul(I["Seam Width"], 0.5), I["Seam Width"], 1.0, 0.0)
-    seam_lap = t.maprange(seam_d, 0.0, I["Seam Width"], 1.0, 0.0)
-    # radial streaks: polar coords, stretched along the meridian; stronger where the surface is steeper
-    u = t.mul(ang, 16.0)                                               # ~ metres around at the base
-    sv = t.vadd(t.combxyz(t.mul(u, 2.6), t.mul(pz, 0.05), 0.0), t.vscale(off, 0.01))
-    n1 = t.noise(sv, 1.0, detail=3, rough=0.65)
-    n2 = t.noise(t.vscale(sv, 2.6), 1.0, detail=2, rough=0.6)
-    fade = t.maprange(t.noise(t.combxyz(t.mul(u, 1.6), t.mul(pz, 0.5), 0.0), 1.0, detail=2), 0.35, 0.65, 0.3, 1.0)
-    smask = t.mul(t.clamp01(t.madd(t.smoothstep(n2, 0.58, 0.7), 0.6, t.smoothstep(n1, 0.54, 0.66))), fade)
     steep = t.maprange(nz, 0.97, t.add(I["Base Normal Z"], 0.04), 0.15, 1.0)
+
+    # ---- meridional panels and their ridges -------------------------------------------------------------
+    u = t.madd(t.div(ang, 2 * math.pi), 1.0, 0.5)                     # 0..1 around the axis
+    up = t.mul(u, I["Panels"])
+    pidx = t.math("FLOOR", up)
+    pf = t.fract(up)
+    arc = t.div(t.mul(2 * math.pi, r), I["Panels"])                   # metres of parallel per panel at this r
+    ed = t.mul(t.minimum(pf, t.sub(1.0, pf)), arc)                    # metres to the nearest ridge
+    # per-panel tone: a hash (decorrelated neighbours) times a slower family drift, so the panels come in
+    # groups of three or four as they do in dome_2.jpg rather than as a per-panel dither.
+    ph = t.noise(t.combxyz(t.madd(pidx, 2.37, t.mul(I["Seed"], 0.113)), 11.3, 0.0), 1.0, detail=0.0)
+    pfam = t.noise(t.combxyz(t.madd(pidx, 0.42, t.mul(I["Seed"], 0.071)), 4.7, 0.0), 1.0, detail=2.0)
+    tone_p = t.mul(t.maprange(ph, 0.12, 0.88, t.sub(1.0, I["Panel Tone"]), t.add(1.0, I["Panel Tone"])),
+                   t.maprange(pfam, 0.20, 0.80, 0.94, 1.06))
+    ridge_line = t.maprange(ed, t.mul(I["Ridge Width"], 0.22), t.mul(I["Ridge Width"], 0.75), 1.0, 0.0)
+    ridge_lit = t.mul(t.maprange(ed, t.mul(I["Ridge Width"], 0.75), t.mul(I["Ridge Width"], 2.20), 1.0, 0.0),
+                      t.sub(1.0, ridge_line))
+    # horizontal lap courses: faint, in object height, so they are circles on the cap
+    rz = t.fract(t.div(pz, I["Ring Spacing"]))
+    ring = t.mul(t.maprange(t.mul(t.minimum(rz, t.sub(1.0, rz)), I["Ring Spacing"]), 0.0, 0.10, 1.0, 0.0), I["Ring"])
+
+    # ---- radial rain streaks ----------------------------------------------------------------------------
+    # `ang` (not arc length) keeps a streak on its meridian; the scale is set so one noise unit is
+    # `Streak Width` metres at r = 14 m, the radius the hero's dome-cap box actually sees (measured by
+    # scripts/mat_r10_probe.py: r 13.08-15.49 m, world nz 0.586-0.740).
+    sv = t.vadd(t.combxyz(t.mul(ang, t.div(14.0, I["Streak Width"])), t.mul(pz, 0.10), 0.0), t.vscale(off, 0.01))
+    n1 = t.noise(sv, 1.0, detail=3, rough=0.62)
+    n2 = t.noise(t.vscale(sv, 2.7), 1.0, detail=2, rough=0.55)
+    fade = t.maprange(t.noise(t.combxyz(t.mul(ang, 3.2), t.mul(pz, 0.45), 0.0), 1.0, detail=2), 0.35, 0.68, 0.25, 1.0)
+    smask = t.mul(t.clamp01(t.add(t.smoothstep(n1, 0.44, 0.66), t.mul(0.45, t.smoothstep(n2, 0.52, 0.72)))), fade)
     smask = t.mul(t.mul(smask, steep), I["Streaks"])
-    # seams collect dirt too
-    smask = t.clamp01(t.add(smask, t.mul(seam, t.mul(0.35, I["Streaks"]))))
-    # moss: north flank (-X), patchy
+    smask = t.clamp01(t.add(smask, t.mul(ridge_line, t.mul(0.30, I["Streaks"]))))   # the joints hold dirt too
+
+    # ---- moss, grime ring, tone -------------------------------------------------------------------------
     north = t.maprange(nx, -0.15, -0.6, 0.0, 1.0)
     mp = t.smoothstep(t.noise(t.vadd(P, off), 1.8, detail=3, rough=0.6), 0.56, 0.68)
     moss = t.mul(t.mul(t.mul(north, mp), steep), I["Moss"])
-    # grime ring at the base + gentle darkening of the lower flank
     ring_n = t.maprange(t.noise(t.vadd(P, off), 4.0, detail=2), 0.35, 0.65, -0.006, 0.006)
     grime = t.mul(t.maprange(nz, t.add(t.add(I["Base Normal Z"], 0.02), ring_n), t.add(I["Base Normal Z"], 0.004), 0.0, 1.0), I["Grime"])
-    lower = t.mul(t.maprange(nz, 0.9, t.add(I["Base Normal Z"], 0.03), 0.0, 0.3), I["Grime"])
-    # tone variation
+    lower = t.mul(t.maprange(nz, 0.9, t.add(I["Base Normal Z"], 0.03), 0.0, 0.10), I["Grime"])
     tv = t.maprange(t.noise(t.vadd(P, off), 0.25, detail=2), 0.35, 0.65, 0.94, 1.06)
-    c = t.vscale(I["Base Color"], tv)
-    c = t.mix(smask, c, t.vscale(I["Streak Color"], tv))
+    # panel tone, ridge shadow / lit sliver and the lap ring all act on the albedo as one multiplier
+    fac = t.mul(t.mul(tone_p, tv),
+                t.add(t.sub(1.0, t.add(t.mul(ridge_line, I["Ridge Dark"]), ring)), t.mul(ridge_lit, 0.07)))
+    c = t.vscale(I["Base Color"], fac)
+    c = t.mix(smask, c, t.vscale(I["Streak Color"], t.mul(tone_p, tv)))
     c = t.mix(moss, c, I["Moss Color"])
     c = t.mix(lower, c, t.vmul(c, (0.75, 0.72, 0.68)))
     c = t.mix(grime, c, I["Grime Color"])
@@ -680,11 +723,12 @@ def build_group_dome():
     rough = t.add(rough, t.mul(smask, 0.22))
     rough = t.mixf(moss, rough, 0.75)
     rough = t.mixf(grime, rough, 0.6)
+    rough = t.add(rough, t.mul(ridge_line, 0.10))
     rough = t.add(rough, t.mul(t.sub(t.noise(P, 3.0, detail=2), 0.5), 0.08))
     coat = t.mul(t.sub(1.0, t.clamp01(t.add(t.add(smask, moss), grime))), 0.4)
-    # bump: seam lap ridge + fine membrane texture + streak grime
-    h = t.add(t.mul(seam_lap, 0.6), t.mul(t.noise(P, 25.0, detail=3), 0.15))
-    normal = t.bump(h, strength=I["Bump"], distance=0.01, normal=N)
+    # bump: the ridge is a real lap, plus a fine membrane grain
+    h = t.add(t.mul(t.maprange(ed, 0.0, I["Ridge Width"], 1.0, 0.0), 0.55), t.mul(t.noise(P, 18.0, detail=3), 0.12))
+    normal = t.bump(h, strength=I["Bump"], distance=0.02, normal=N)
     t.link(c, go.inputs["Color"]); t.link(t.math("ADD", rough, 0.0, clamp=True), go.inputs["Roughness"])
     t.link(normal, go.inputs["Normal"]); t.link(coat, go.inputs["Coat"])
     ML.auto_layout(ng)
@@ -931,7 +975,13 @@ def build_concrete_family():
         # albedo saturation 0.40: rendered coffer sat 0.966 -> 0.614 (Eevee cam04), i.e. 0.94 rendered points per
         # albedo point, not the 1.28 the two round-6 materials suggested -- so the albedo goes to 0.25 to land the
         # rendered field near ref 083's 0.427.  Ratio held at 0.355 against round 6's 0.346.
-        "Base Color": C(0.495, 0.467, 0.371), "Grey Color": C(0.341, 0.315, 0.256), "Grey Drift": 0.16,
+        # QA-09-8 (round 10): Cycles field sat 0.341 against the 0.38-0.50 window (ref 083 0.427).  The local
+        # gain around this operating point, read off the two committed measurements (albedo 0.40 -> Eevee 0.614,
+        # albedo 0.25 -> Eevee 0.415, and Cycles/Eevee 0.822 at albedo 0.25), is ~1.09 rendered points per albedo
+        # point in Cycles, so albedo saturation 0.250 -> 0.332 buys ~+0.089 and lands ~0.43.  HUE (46.45 / 41.65
+        # deg) and Rec.709 luminance (0.46606 / 0.316268) are held to 5 decimals, which is what holds the cam04
+        # coffer/sky luminance ratio the lighting round measured at 0.347.
+        "Base Color": C(0.50524, 0.46736, 0.33750), "Grey Color": C(0.350086, 0.314533, 0.233857), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         # QA-04-7 "no dirt gradient inside any coffer": now that the ribs carry their own material, a LONG AO probe
@@ -956,7 +1006,12 @@ def build_concrete_family():
         # measured gain for the field was 0.94 rendered points per albedo point; the rib renders at 1.29 albedo
         # points per rendered point, so 0.25 -> 0.34 puts it at ~0.44, mid-window, next to ref 083's 0.438.  Hue
         # (48.8 / 49.2 deg) and Rec.709 luminance (0.1831 / 0.1472) are held to 4 decimals by construction.
-        "Base Color": C(0.1969, 0.1844, 0.1300), "Grey Color": C(0.1580, 0.1483, 0.1042), "Grey Drift": 0.30,
+        # QA-09-8 (round 10): the round-9 move overshot -- Cycles rim sat 0.634 against the same 0.38-0.50 window.
+        # Round 9 measured the rim's own gain directly (albedo 0.25 -> 0.34 moved Cycles rim 0.323 -> 0.625, i.e.
+        # 3.36 rendered points per albedo point, steep because the dark quarter sits where AgX's chroma transfer
+        # is steepest), so albedo saturation 0.340 -> 0.285 is -0.185 and lands ~0.45.  Hue (48.79 / 49.18 deg)
+        # and Rec.709 luminance (0.183130 / 0.147178) held to 6 decimals.
+        "Base Color": C(0.194545, 0.184190, 0.139100), "Grey Color": C(0.156131, 0.148107, 0.111634), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
@@ -990,9 +1045,18 @@ def build_dome():
     m = ML.new_material("MAT_dome_membrane")
     t = Tree(m.node_tree)
     N = t.geometry().outputs["Normal"]
-    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.952, 0.995, 0.352), "Streak Color": C(0.64, 0.575, 0.300), "Moss Color": C(0.34, 0.42, 0.28),
-                                        "Grime Color": C(0.20, 0.13, 0.06), "Seams": 48.0, "Seam Width": 0.05, "Streaks": 0.8, "Moss": 0.3,
-                                        "Grime": 0.8, "Base Normal Z": 0.66, "Roughness": 0.42, "Bump": 0.3, "Seed": 12.0})
+    # Round 10 / QA-10-8.  Base Color is unchanged: measured on the round-10b hero, the rows of the cap the old
+    # grime ring did NOT reach already rendered at 228 lum / hue 43.8 / sat 0.208 against ref 169's 226-241 /
+    # 42-50 / 0.22-0.30 on the same rows -- the albedo was never the fault, its placement was.  What changes is
+    # `Base Normal Z` 0.66 -> 0.52 (the cap's true rim normal), `Grime` 0.8 -> 0.55, `Moss` 0.3 -> 0.12 (ref 169
+    # is the post-recoat dome and has none), the 28-panel ridge structure, and a streak width the hero resolves.
+    # The streak colour is lightened and desaturated to 0.712 of the base's Rec.709 luminance at HSV saturation
+    # 0.40 (was 0.606 at 0.531): the streaks in reference/photos/material_crops/dome_2.jpg are a grey-green wash,
+    # not a brown one, and they have to pull the box's saturation DOWN toward ref 169's 0.272.
+    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.952, 0.995, 0.352), "Streak Color": C(0.700, 0.685, 0.420), "Moss Color": C(0.34, 0.42, 0.28),
+                                        "Grime Color": C(0.20, 0.13, 0.06), "Panels": 28.0, "Ridge Width": 0.30, "Ridge Dark": 0.30,
+                                        "Panel Tone": 0.22, "Ring Spacing": 2.6, "Ring": 0.08, "Streaks": 0.75, "Streak Width": 1.4,
+                                        "Moss": 0.12, "Grime": 0.55, "Base Normal Z": 0.52, "Roughness": 0.42, "Bump": 0.35, "Seed": 12.0})
     bsdf = t.principled(**{"Base Color": g.outputs["Color"], "Roughness": g.outputs["Roughness"], "Normal": g.outputs["Normal"],
                            "Specular IOR Level": 0.26, "Coat Weight": t.mul(g.outputs["Coat"], 0.18), "Coat Roughness": 0.30, "Coat Normal": g.outputs["Normal"]})
     t.output(surface=bsdf.outputs[0])
