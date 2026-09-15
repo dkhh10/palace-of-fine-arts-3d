@@ -63,7 +63,9 @@ export function normaliseManifest( raw, baseUrl ) {
 		}
 		return [ glbEntry( v, null, 0 ) ];
 	};
-	let glbs = listOf( pick( raw, 'glbs', 'glb.parts', 'glb.files', 'glb.classes', 'files.glbs' ) ).filter( Boolean );
+	// 'glb.per_class' is what export/gltf_pack.sh --gate1 actually writes:
+	// glb.per_class = { arch:{path,bytes,…}, orn, env, ground } in load order.
+	let glbs = listOf( pick( raw, 'glbs', 'glb.per_class', 'glb.parts', 'glb.files', 'glb.classes', 'files.glbs' ) ).filter( Boolean );
 	if ( ! glbs.length ) glbs = listOf( glbRaw ).filter( Boolean );
 	glbs.sort( ( a, b ) => a.order - b.order );
 	glbs.forEach( ( g, i ) => { g.order = i; } );

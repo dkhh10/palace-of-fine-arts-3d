@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { stationMatrix, makeStationCamera, matrixMaxDiff, b2t, vFovDeg } from '../src/blenderCamera.js';
 
 // src/stations_blender.json is GENERATED from scripts/qa_cameras.py (web/tools/dump_stations.py) and
@@ -15,7 +16,7 @@ import { stationMatrix, makeStationCamera, matrixMaxDiff, b2t, vFovDeg } from '.
 // so comparing the two is a cross-check between two independent sources rather than a formula
 // against itself.  Without a manifest the orientation checks are SKIPPED, never silently passed.
 const data = JSON.parse( readFileSync( new URL( '../src/stations_blender.json', import.meta.url ) ) );
-const WEB = path.resolve( new URL( '..', import.meta.url ).pathname );
+const WEB = path.resolve( fileURLToPath( new URL( '..', import.meta.url ) ) );
 const MAIN = process.env.PFA_MAIN_ROOT || path.resolve( WEB, '..' );
 const manifestPath = [ 'export/out/gate1/manifest.json', 'export/out/gate0/manifest.json' ]
 	.map( p => path.join( MAIN, p ) ).find( existsSync ) || null;

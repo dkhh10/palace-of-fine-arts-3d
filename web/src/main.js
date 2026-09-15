@@ -152,7 +152,7 @@ async function fetchBuffer( url ) {
 }
 
 // ---------------------------------------------------------------------------- main
-let composer, lutPass, water, manifest, stations, sunLight, billboards = null;
+let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
@@ -275,7 +275,20 @@ async function boot() {
 	// geometry: the glbs in the manifest's order, each one drawn as soon as it lands --------------
 	const tg = performance.now();
 	if ( manifest.glbs.length && ! CFG.testScene ) await loadGlbs();
-	else { buildTestScene( scene ); note( 'test scene (no glb)' ); }
+	else {
+		buildTestScene( scene );
+		if ( CFG.testScene ) note( 'test scene (?test=1)' );
+		else {
+			// A capture of the test scene must never be mistaken for a capture of the building.
+			const msg = `PFA_NO_GEOMETRY: the manifest at ${manifestUrl} yielded 0 glbs `
+				+ `(looked at glbs, glb.per_class, glb.parts, glb.files, glb.classes, files.glbs, glb); `
+				+ `rendering the TEST SCENE, not the model`;
+			note( msg );
+			console.error( `[pfa] ${msg}` );
+			window.__pfaNoGeometry = msg;
+			uiText.textContent = 'no geometry in the manifest';
+		}
+	}
 	loadTimes.glb_s = ( performance.now() - tg ) / 1000;
 
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
@@ -320,7 +333,8 @@ async function loadSky() {
 			const tex = await load( manifest.sky.glossy );
 			const pmrem = new THREE.PMREMGenerator( renderer );
 			pmrem.compileEquirectangularShader();
-			scene.environment = pmrem.fromEquirectangular( tex ).texture;
+			pmremTarget = pmrem.fromEquirectangular( tex );
+			scene.environment = pmremTarget.texture;
 			scene.environmentRotation = new THREE.Euler( 0, rotY, 0 );
 			tex.dispose(); pmrem.dispose();
 			note( `PMREM environment from ${manifest.sky.glossy.split( '/' ).pop()} (specular only)` );
@@ -581,8 +595,12 @@ function renderFrame() {
 	if ( composer ) composer.render(); else renderer.render( scene, camera );
 }
 
+/** True while __pfaFrameStats owns the frame loop: animate() must not render a SECOND time per
+ *  tick, or the reported median presented frame time is up to 2x the real one. */
+let measuring = false;
 function animate() {
 	requestAnimationFrame( animate );
+	if ( measuring ) return;
 	if ( userControlled && controls ) controls.update();
 	renderFrame();
 }
@@ -596,7 +614,8 @@ window.__pfaInfo = () => ( {
 	projectionMatrix: camera.projectionMatrix.elements.slice(),
 	fovVertical: camera.fov, aspect: camera.aspect,
 	size: [ renderer.domElement.width, renderer.domElement.height ],
-	render: { ...renderer.info.render }, memory: { ...renderer.info.memory },
+	render: { ...renderer.info.render, programs: renderer.info.programs ? renderer.info.programs.length : null },
+	memory: { ...renderer.info.memory },
 	gl: glInfo(),
 	patchedMaterials, lightmapsApplied, unpatchedMaterials: [ ...unpatchedMaterials ],
 	lightmapScale, rgbmRange: manifest ? manifest.rgbmRange : null,
@@ -648,21 +667,41 @@ function residentBytes() {
 	} );
 	if ( scene.background && scene.background.isTexture ) addTex( scene.background );
 	if ( scene.environment ) addTex( scene.environment );
+	// Render targets dominate the GPU-memory figure at 1440p and carry no `image`, so addTex() sees
+	// nothing: count them explicitly.  A HalfFloat RGBA target is 8 B/px, and three allocates an extra
+	// multisampled renderbuffer of samples x that size when `samples` > 0.
+	const rts = [];
+	const addRT = ( rt, what ) => {
+		if ( ! rt ) return;
+		const w = rt.width, h = rt.height, n = rt.samples || 0;
+		const bpp = rt.texture && rt.texture.type === THREE.FloatType ? 16
+			: ( rt.texture && rt.texture.type === THREE.HalfFloatType ? 8 : 4 );
+		rts.push( { what, size: [ w, h ], samples: n, bytes: Math.round( w * h * bpp * ( 1 + n ) ) } );
+	};
+	if ( composer ) { addRT( composer.renderTarget1, 'composer.renderTarget1' ); addRT( composer.renderTarget2, 'composer.renderTarget2' ); }
+	if ( water && water.getRenderTarget ) addRT( water.getRenderTarget(), 'water.Reflector' );
+	if ( pmremTarget ) addRT( pmremTarget, 'PMREM cubeUV' );
+	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
 		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
-		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps)',
+		render_target_bytes: rtBytes, render_targets: rts,
+		total_bytes: Math.round( geometry + instanceMatrices + texture ) + rtBytes,
+		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
+			+ 'mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer',
 	};
 }
 window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	const t = [];
 	let last = performance.now();
+	measuring = true;                     // animate() stands down for the duration
 	const step = () => {
 		renderFrame();
 		const now = performance.now();
 		t.push( now - last ); last = now;
 		if ( t.length < n ) requestAnimationFrame( step );
 		else {
+			measuring = false;
 			const s = t.slice( 1 ).sort( ( a, b ) => a - b );   // drop the first (includes the call gap)
 			resolve( {
 				frames: s.length,

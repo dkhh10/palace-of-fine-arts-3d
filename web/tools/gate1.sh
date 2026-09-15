@@ -14,18 +14,25 @@ MANIFEST=${1:-/assets/gate1/manifest.json}
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT"
 
-ST=$(cat "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || echo '{"state":"absent"}')
-if echo "$ST" | grep -q '"running"'; then echo "gate1.sh: bake queue is running, refusing to use the GPU" >&2; exit 3; fi
-if pgrep -f "MacOS/Blender" >/dev/null; then echo "gate1.sh: a Blender process is alive, refusing to use the GPU" >&2; exit 3; fi
+# The GPU guard is re-run immediately before EVERY Chrome session: the build and the first session
+# take minutes, and the bake queue can claim the GPU in between.
+guard() {
+	ST=$(cat "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || echo '{"state":"absent"}')
+	if echo "$ST" | grep -q '"running"'; then echo "gate1.sh: bake queue is running, refusing to use the GPU ($1)" >&2; exit 3; fi
+	if pgrep -f "MacOS/Blender" >/dev/null; then echo "gate1.sh: a Blender process is alive, refusing to use the GPU ($1)" >&2; exit 3; fi
+}
+guard start
 
 python3 web/tools/dump_stations.py
 ( cd web && npm run build >/dev/null ) && echo "gate1.sh: web/dist $(du -sh web/dist | cut -f1)"
 
+guard "1920x1080 capture"
 scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--stations 1-6 --size 1920x1080 --frames 0 --warmup 12 \
 	--query "manifest=$MANIFEST" --query t=0 \
 	--out renders/web/gate1.png --json renders/web/gate1_cam.json
 
+guard "1440p performance pass"
 scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--stations 1-6 --size 2560x1440 --frames 120 --warmup 24 --shots 0 \
 	--query "manifest=$MANIFEST" --query t=0 \

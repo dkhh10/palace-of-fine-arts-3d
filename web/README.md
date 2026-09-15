@@ -17,6 +17,14 @@ tone mapping OFF, a 3D LUT baked from Blender's OCIO.
 - **11a** done — the `.cube` LUT loads as `FloatType` where `OES_texture_float_linear` exists. Measured on the
   Gate 0 hero against the Cycles frame: ground band mean luma error 17.1 -> 3.1 of 255, sky 1.9 -> 0.6.
 - **11b** open — `public/basis/*` (585 kB) duplicates `three/examples/jsm/libs/basis` (copy at build time).
+
+## Carries from the Gate 1 code review (docs/reviews/phase6_viewer_gate1_review.md)
+- **G1-5** (Gate 3) `billboards.js` placeholder quads never go through `patchBakedMaterial`, so under
+  `baked` lighting they take the full unshadowed sun diffuse while everything round them is specular-only.
+- **G1-7** In `direct` mode the diffuse irradiance is PMREM'd from the GLOSSY-branch equirect (the bake
+  isolates camera vs glossy only), so a diffuse-branch difference in the Phase 5 world would go unnoticed.
+- **G1-8** `test/camera_test.mjs` skips every orientation cross-check without `PFA_MAIN_ROOT` and still
+  exits 0; it should fail when all stations skip.
 - **11c** done — `npm run shot` now goes through `scripts/chrome_run.sh 600`.
 
 ## Run
@@ -42,13 +50,16 @@ frame time over 120 frames, the `gl.finish` GPU cost, draw calls, triangles, `re
 viewer's own resident byte sum; the sheets carry a per-frame and per-cell luma/linear comparison.
 
 ## Manifest fields
-`schema` `pfa-phase6-gate0/1` (one `glb`) or `pfa-phase6/2` (`glbs`, one per class, loaded in `order` with a
-byte progress bar). Common: `stations.<name>` (location, rotation_euler_xyz, lens_mm, sensor_width_mm,
+`schema` `pfa-phase6-gate0/1` (one `glb`) or `pfa-phase6/2` (`glb.per_class = {arch, orn, env, ground}`,
+one glb per class, loaded in that order behind a byte progress bar; a top-level `glbs` array is accepted
+too). If a manifest yields no glb the viewer logs `PFA_NO_GEOMETRY`, sets `window.__pfaNoGeometry` and
+says so on the loading panel — a test-scene capture can never pass as a capture of the model. Common: `stations.<name>` (location, rotation_euler_xyz, lens_mm, sensor_width_mm,
 sensor_fit, shift_x/y, clip_start/end); `water.viewer_y`; `view.exposure_ev`; `lut` (path, size,
 shaper.min_ev/max_ev/pivot, exposure_applied_by); `sky.camera.hdr`, `sky.glossy.hdr`, `sky.rotation_deg`;
 `sun` (direction_blender = direction of travel, energy_w_m2, color); `textures.*.rgbm_range`;
-`lightmap_scale`; `assets[].lightmap` (a KEY into `textures`). v2 adds `trees.far[]`
-(prototype, height, trunk_base) and `orn_slots`.
+`lightmap_scale`. v2 adds top-level `tree_far[]` (prototype, height_m, width_m, trunk_base),
+`tree_near[]` and `orn_slots` (per pool: entries and atlas count); in v2 `assets[].lightmap` is a Gate 3
+reservation (`mode` slot / asset / none), not a texture, and is only counted.
 
 The lightmap ships inside the glb as `emissiveTexture` on TEXCOORD_1: the viewer moves it to `lightMap`
 channel 1, forces linear colour space, decodes RGBM8, zeroes the emissive and applies `lightmap_scale` (pi).
