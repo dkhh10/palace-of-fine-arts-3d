@@ -408,6 +408,24 @@ elif job["kind"] in ("probe", "sky"):
         st = man2["stations"][man2["hero_camera"]]
         wz = float(man2["water"]["water_z"])
         pos = Vector((st["location"][0], st["location"][1], 2.0 * wz - st["location"][2]))
+        # A mirror probe is the world seen from the mirrored station with everything BELOW the water plane
+        # culled - that geometry is not in a reflection. Measured why this is not optional: with the water
+        # surface and the lagoon bed left in, the +Y (up) face came back at mean 0.0003 / max 0.002, i.e.
+        # black, because the camera sits 2.6 m under the water it is reflecting.
+        culled = []
+        for o in bpy.data.objects:
+            if o.type != "MESH" or o.hide_render:
+                continue
+            if o.name in ("ENV_lagoon_water", "ENV_backdrop_bay", "ENV_lagoon_bed"):
+                o.hide_render = True
+                culled.append(o.name)
+                continue
+            zs = [(o.matrix_world @ Vector(c)).z for c in o.bound_box]
+            if max(zs) <= wz + 1e-4:
+                o.hide_render = True
+                culled.append(o.name)
+        rec["culled_below_water"] = dict(n=len(culled), names=sorted(culled)[:20], water_z=wz)
+        print(f"[gate3] probe: {len(culled)} objects culled at or below z={wz}")
         cd = bpy.data.cameras.new("GATE3_probe")
         pc = bpy.data.objects.new("GATE3_probe", cd)
         scene.collection.objects.link(pc)
