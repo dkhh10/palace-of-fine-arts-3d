@@ -115,7 +115,11 @@ try {
 
 	const info = await page.evaluate( () => window.__pfaInfo() );
 	let stats = null;
-	if ( frames > 0 ) stats = await page.evaluate( ( n ) => window.__pfaFrameStats( n ), frames );
+	let cost = null;
+	if ( frames > 0 ) {
+		stats = await page.evaluate( ( n ) => window.__pfaFrameStats( n ), frames );
+		cost = await page.evaluate( ( n ) => window.__pfaRenderCost( n ), Math.min( frames, 60 ) );
+	}
 
 	fs.mkdirSync( path.dirname( out ), { recursive: true } );
 	await page.screenshot( { path: out, captureBeyondViewport: false } );
@@ -128,11 +132,12 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, pixels, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, pixels, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	console.log( `[shot] wrote ${out} (${( fs.statSync( out ).size / 1024 ).toFixed( 0 )} kB) and ${path.basename( jsonOut )}` );
 	console.log( `[shot] station ${info.station?.index} ${info.station?.name}  draws ${info.render.calls}  tris ${info.render.triangles}  lightmaps ${info.lightmapsApplied}/${info.patchedMaterials}` );
-	if ( stats ) console.log( `[shot] frame time at ${W}x${H}: median ${stats.median.toFixed( 2 )} ms (${( 1000 / stats.median ).toFixed( 1 )} fps), mean ${stats.mean.toFixed( 2 )}, p95 ${stats.p95.toFixed( 2 )}, n=${stats.frames}` );
+	if ( stats ) console.log( `[shot] frame time at ${W}x${H}: median ${stats.median.toFixed( 2 )} ms (${( 1000 / stats.median ).toFixed( 1 )} fps presented, vsync-capped at 16.7), mean ${stats.mean.toFixed( 2 )}, p95 ${stats.p95.toFixed( 2 )}, n=${stats.frames}` );
+	if ( cost ) console.log( `[shot] render cost (gl.finish, no vsync): median ${cost.median.toFixed( 2 )} ms (${( 1000 / cost.median ).toFixed( 1 )} fps), p95 ${cost.p95.toFixed( 2 )}, n=${cost.frames}` );
 	if ( pixels ) pixels.forEach( p => console.log( `[shot] pixel (${p.x}, ${p.y}) = ${p.rgba}` ) );
 } catch ( e ) {
 	console.error( `[shot] FAILED: ${e.message}` );

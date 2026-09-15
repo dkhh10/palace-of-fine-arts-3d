@@ -81,8 +81,10 @@ const WaterShader = {
  */
 export function makeWater( waterY, o = {} ) {
 	const size = o.size ?? 1200;
+	// The plane is rotated on the OBJECT, not baked into the geometry: Reflector derives the mirror
+	// normal from the object's world rotation (normal = +Z rotated by matrixWorld), so a geometry-baked
+	// rotation leaves it reflecting about a vertical plane.
 	const geo = new THREE.PlaneGeometry( size, size );
-	geo.rotateX( - Math.PI / 2 );
 	const reflector = new Reflector( geo, {
 		textureWidth: o.resolution ?? 1024,
 		textureHeight: o.resolution ?? 1024,
@@ -90,6 +92,7 @@ export function makeWater( waterY, o = {} ) {
 		shader: WaterShader,
 		clipBias: 0.003,
 	} );
+	reflector.rotation.x = - Math.PI / 2;
 	reflector.position.y = waterY;
 	reflector.name = 'WATER_lagoon';
 	const u = reflector.material.uniforms;

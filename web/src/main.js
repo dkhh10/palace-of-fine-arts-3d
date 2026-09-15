@@ -357,6 +357,21 @@ window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	};
 	requestAnimationFrame( step );
 } );
+/** Frame cost without the vsync cap: n renders back to back, each followed by gl.finish().
+ *  __pfaFrameStats is the presented frame time (60 Hz cap); this is the render cost. */
+window.__pfaRenderCost = ( n = 60 ) => {
+	const gl = renderer.getContext();
+	renderFrame(); gl.finish();
+	const t = [];
+	for ( let i = 0; i < n; i ++ ) {
+		const a = performance.now();
+		renderFrame(); gl.finish();
+		t.push( performance.now() - a );
+	}
+	t.sort( ( x, y ) => x - y );
+	return { frames: n, median: t[ Math.floor( n / 2 ) ], mean: t.reduce( ( x, y ) => x + y, 0 ) / n, p95: t[ Math.floor( n * 0.95 ) ], min: t[ 0 ], max: t[ n - 1 ] };
+};
+
 /** Pixel bounding box of every object whose name contains `needle`, projected with the live camera.
  *  Used to put the pair-sheet's measurement boxes on the right geometry in BOTH frames. */
 window.__pfaProject = ( needle ) => {

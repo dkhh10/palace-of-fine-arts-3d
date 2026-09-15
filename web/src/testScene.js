@@ -21,11 +21,13 @@ export function buildTestScene( scene, { groundZ = - 0.4 } = {} ) {
 	col.name = 'TEST_column_proxy';
 	g.add( col );
 
+	// The ground sits BEHIND the origin only, so the lagoon water plane fills the foreground the way
+	// it does at the hero station (the camera stands at Blender +Y 100 m over the water).
 	const ground = new THREE.Mesh(
-		new THREE.PlaneGeometry( 400, 400 ),
+		new THREE.PlaneGeometry( 300, 300 ),
 		new THREE.MeshStandardMaterial( { color: 0x6b6f50, roughness: 1 } ) );
-	ground.geometry.rotateX( - Math.PI / 2 );
-	ground.position.copy( b2t( 0, 0, groundZ ) );
+	ground.rotation.x = - Math.PI / 2;
+	ground.position.copy( b2t( 0, - 130, groundZ ) );
 	ground.name = 'TEST_ground';
 	g.add( ground );
 
@@ -34,8 +36,8 @@ export function buildTestScene( scene, { groundZ = - 0.4 } = {} ) {
 		new THREE.PlaneGeometry( 6, 4 ),
 		new THREE.MeshBasicMaterial( { color: new THREE.Color( 0.18, 0.18, 0.18 ), toneMapped: false } ) );
 	card.material.color.setRGB( 0.18, 0.18, 0.18, THREE.LinearSRGBColorSpace );
-	card.position.copy( b2t( - 11.2, 80, 3 ) );
-	card.lookAt( b2t( - 14.1, 100, 3 ) );
+	card.position.copy( b2t( - 6.0, 78, 4 ) );        // off the camera axis so it never hides the column
+	card.lookAt( b2t( - 14.1, 100, 4 ) );
 	card.name = GREY_CARD_NAME;
 	g.add( card );
 
@@ -43,7 +45,7 @@ export function buildTestScene( scene, { groundZ = - 0.4 } = {} ) {
 		const post = new THREE.Mesh(
 			new THREE.BoxGeometry( 0.3, 2, 0.3 ),
 			new THREE.MeshStandardMaterial( { color: i % 2 ? 0xdddddd : 0x333333, roughness: 0.9 } ) );
-		post.position.copy( b2t( - 4, i * 10, groundZ + 1 ) );
+		post.position.copy( b2t( - 4, - i * 10, groundZ + 1 ) );
 		post.name = `TEST_post_${i * 10}m`;
 		g.add( post );
 	}
