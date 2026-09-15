@@ -677,6 +677,23 @@ def build():
         if c.name.startswith("EXP_") or len(c.objects):
             continue
         bpy.data.collections.remove(c)
+    # Blender gave every exported object a ".001" suffix while its source of the same name was still loaded.
+    # The source objects are gone now, so take the real names back - they are the manifest's keys and what the
+    # name sweep reads.
+    renames = {}
+    for ob in bpy.data.objects:
+        m = re.match(r"^(.*)\.\d{3}$", ob.name)
+        if m and m.group(1) not in bpy.data.objects:
+            renames[ob.name] = m.group(1)
+            ob.name = m.group(1)
+    if renames:
+        assets = {renames.get(k, k): v for k, v in assets.items()}
+        for pool in slots.values():
+            for row in pool:
+                row["object"] = renames.get(row["object"], row["object"])
+    rep["renamed_back"] = len(renames)
+    assert not [o for o in bpy.data.objects if re.search(r"\.\d{3}$", o.name)], \
+        "an exported object still carries a .### name-collision suffix"
     if tmp.name in bpy.data.collections:
         bpy.data.collections.remove(tmp)
     qa_cameras.ensure(scene)
@@ -688,6 +705,22 @@ def build():
     rep["set_blend_bytes"] = g1.SET_BLEND.stat().st_size
 
     # ---------------------------------------------------------------- 11. totals and the manifest
+    uv_missing = {"uv1": [], "uv2": []}
+    multi_mat = []
+    for mn, m in meshes.items():
+        me = bpy.data.meshes.get(mn)
+        if me is None:
+            continue
+        names = [u.name for u in me.uv_layers]
+        if g1.UV1 not in names:
+            uv_missing["uv1"].append(mn)
+        if mn in uv2_meshes and g1.UV2 not in names:
+            uv_missing["uv2"].append(mn)
+        if len(me.materials) != 1:
+            multi_mat.append((mn, len(me.materials)))
+    rep["uv_missing"] = {k: v[:20] for k, v in uv_missing.items()}
+    rep["uv_missing_counts"] = {k: len(v) for k, v in uv_missing.items()}
+    rep["meshes_not_single_material"] = multi_mat[:20]
     cls_tris = {"ARCH": 0, "ORN": 0, "ENV": 0}
     cls_objs = {"ARCH": 0, "ORN": 0, "ENV": 0}
     for a in assets.values():
