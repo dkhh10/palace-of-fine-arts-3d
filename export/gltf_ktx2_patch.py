@@ -35,12 +35,36 @@ for t in doc.get("textures", []):
     t.pop("source", None)
     changed.append(f"{name} -> {ktx}")
 
+# Drop the PNG image entries the textures no longer point at: gltfpack embeds every entry in images[], so
+# leaving them behind shipped a 153 MB glb that carried both the PNGs and the KTX2 files.
+used = set()
+for t in doc.get("textures", []):
+    if "source" in t:
+        used.add(t["source"])
+    bu = t.get("extensions", {}).get("KHR_texture_basisu")
+    if bu and "source" in bu:
+        used.add(bu["source"])
+remap, kept = {}, []
+for i, im in enumerate(images):
+    if i in used:
+        remap[i] = len(kept)
+        kept.append(im)
+dropped = len(images) - len(kept)
+doc["images"] = kept
+for t in doc.get("textures", []):
+    if "source" in t:
+        t["source"] = remap[t["source"]]
+    bu = t.get("extensions", {}).get("KHR_texture_basisu")
+    if bu and "source" in bu:
+        bu["source"] = remap[bu["source"]]
+
 if changed:
-    used = doc.setdefault("extensionsUsed", [])
-    if "KHR_texture_basisu" not in used:
-        used.append("KHR_texture_basisu")
+    used_ext = doc.setdefault("extensionsUsed", [])
+    if "KHR_texture_basisu" not in used_ext:
+        used_ext.append("KHR_texture_basisu")
     req = doc.setdefault("extensionsRequired", [])
     if "KHR_texture_basisu" not in req:
         req.append("KHR_texture_basisu")
 json.dump(doc, open(dst, "w"))
-print(json.dumps({"ktx2": changed, "left_as_png": skipped}))
+print(json.dumps({"ktx2": changed, "left_as_png": skipped, "images_kept": len(kept),
+                  "orphan_png_entries_dropped": dropped}))
