@@ -21,3 +21,6 @@ reference/scans/
 master.blend
 master.blend1
 master_delivery.blend
+# Local-only: exported chat transcript and LOD0 walkthrough copy (build products, not sources)
+session.txt
+master_walkthrough.blend
