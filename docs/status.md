@@ -547,3 +547,7 @@ In flight: code review of phase6-bake (Opus, read-only) -> docs/reviews/phase6_b
 
 ## 2026-09-15 · Gate 0 viewer report in (phase6-viewer ef6a270): column bbox delta 0 px, sky +2.5/255, GPU cost 0.2 ms at 1280x720 for 62 k tris; lead viewed renders/web/gate0_pair.png (960 px): registration and sky match, 15 borrowed-lightmap columns dark (expected until Gate 3), lit column 0.76-0.85 of Cycles = the missing compositor haze (Gate 4 item; manifest gets a compositor block)
 In flight: code reviews of phase6-bake and phase6-viewer (Opus, read-only). Next: merge both with fixes, tech_notes "Phase 6" (three Blender 5.2 findings), Gate 0 verdict to the user, ORN + trees decisions from the user, burn.
+
+## 2026-09-15 · Both Gate 0 reviews in (MERGE WITH FIXES: bake 10 findings, viewer 12 incl. one latent blocker); fixes running
+Bake fixes done (290b574): lightmap_scale = pi in the manifest, ground hi-twin excluded (461 -> 300 s, Gate 3 queue projection 5.9 h), NoColorSpace step, clipped count on the source EXR, manifest reset, sync without --delete; carries in export/README.md. Open question the two reviewers split on: is the column's 0.76x a missing pi or the missing compositor haze -> a no-compositor Cycles frame + a two-scale viewer test settles it.
+In flight: bake engineer (no-compositor frame, sky.rotation_deg), viewer engineer (findings 1-6, lightmap_scale + sky rotation from the manifest, then the pi parity test, pair sheet vs the no-compositor frame). Next: merge both, tech_notes, Gate 0 verdict, burn.
