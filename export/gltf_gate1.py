@@ -136,6 +136,47 @@ for cls, objs in sets.items():
                                                         if k.startswith("TEXCOORD")}))
     step.done(path, objects=len(objs), tris=tris, meshes=len(doc.get("meshes", [])))
 
+# ---------------------------------------------------------------- draw calls inside the cam01 frustum
+step = g0.Step("gltf_gate1:cam01_frustum")
+from mathutils import Vector  # noqa: E402
+cam = bpy.data.objects[g0.HERO_CAM]
+scene.camera = cam
+dg = bpy.context.evaluated_depsgraph_get()
+planes = []
+mw = cam.matrix_world
+frame = [mw @ v for v in cam.data.view_frame(scene=scene)]
+origin = mw.translation
+for i in range(4):
+    a_, b_ = frame[i] - origin, frame[(i + 1) % 4] - origin
+    planes.append((origin, b_.cross(a_).normalized()))
+fwd = (mw.to_quaternion() @ Vector((0, 0, -1))).normalized()
+planes.append((origin + fwd * cam.data.clip_start, fwd))
+planes.append((origin + fwd * cam.data.clip_end, -fwd))
+
+
+def visible(ob):
+    cs = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+    for p, n in planes:
+        if all((c - p).dot(n) < 0 for c in cs):
+            return False
+    return True
+
+
+vis_batches, vis_objs, vis_tris = set(), 0, 0
+for name, a in setjson["assets"].items():
+    ob = bpy.data.objects.get(name)
+    if ob is None or not visible(ob):
+        continue
+    vis_objs += 1
+    vis_tris += a["tris"]
+    for slot in (ob.data.materials or [None]):
+        vis_batches.add((ob.data.name, slot.name if slot else "-"))
+report["cam01_visible"] = dict(batches=len(vis_batches), objects=vis_objs, placed_tris=vis_tris,
+                               camera=g0.HERO_CAM,
+                               note="bounding-box test against the six camera planes; one batch per "
+                                    "(mesh, material slot), which is what EXT_mesh_gpu_instancing draws")
+step.done(batches=len(vis_batches), objects=vis_objs, tris=vis_tris)
+
 (g1.OUT / "gltf_gate1.json").write_text(json.dumps(report, indent=1) + "\n")
 print("[gate1] gltf per class:", json.dumps({k: (v["bytes"], v["meshes"], v["texcoord_sets"])
                                              for k, v in report["classes"].items()}))
