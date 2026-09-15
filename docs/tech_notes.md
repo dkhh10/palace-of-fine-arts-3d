@@ -259,3 +259,6 @@ no process. Never overlap Chrome with a bake: check `export/out/bake_queue/statu
   origin as an unplaced stub (1379/1379 shrubs measured). Any export or bake that selects a LOD0/LOD2 ENV *object* must take the transform from
   its LOD1 sibling (`placement_from` in export_set.json). The glTF writer now asserts 0 objects within 1 m of the origin per class and
   `export/verify_glb.py` checks drawn triangles vs export_set within 1 %.
+- (Gate 2) `Image.save()` on an image made with `images.new(float_buffer=True)` and filled by `foreach_set` wrote correctly sized all-zero PNGs
+  (15 detail maps, every byte 0). Write bake outputs from numpy with your own PNG writer and read every saved map back from disk before claiming a
+  number; in-memory statistics are not evidence (export/bake_lib.write_png_rgb8 / read_png_rgb8).
