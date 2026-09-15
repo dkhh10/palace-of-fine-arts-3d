@@ -678,12 +678,18 @@ def build_group_dome():
     pf = t.fract(up)
     arc = t.div(t.mul(2 * math.pi, r), I["Panels"])                   # metres of parallel per panel at this r
     ed = t.mul(t.minimum(pf, t.sub(1.0, pf)), arc)                    # metres to the nearest ridge
-    # per-panel tone: a hash (decorrelated neighbours) times a slower family drift, so the panels come in
-    # groups of three or four as they do in dome_2.jpg rather than as a per-panel dither.
-    ph = t.noise(t.combxyz(t.madd(pidx, 2.37, t.mul(I["Seed"], 0.113)), 11.3, 0.0), 1.0, detail=0.0)
-    pfam = t.noise(t.combxyz(t.madd(pidx, 0.42, t.mul(I["Seed"], 0.071)), 4.7, 0.0), 1.0, detail=2.0)
-    tone_p = t.mul(t.maprange(ph, 0.12, 0.88, t.sub(1.0, I["Panel Tone"]), t.add(1.0, I["Panel Tone"])),
-                   t.maprange(pfam, 0.20, 0.80, 0.94, 1.06))
+    # Per-panel tone: a WHITE-noise hash (uniform on 0..1), times a slower family drift on groups of four, so
+    # the panels come in families as they do in dome_2.jpg rather than as a per-panel dither.  It has to be
+    # white noise: the first cut used a Perlin `noise` node as the hash and measured a column-sd of 3.75 in the
+    # QA box instead of the ~9 the same `Panel Tone` should give, because Perlin's output clusters within about
+    # +-0.1 of 0.5, so three neighbouring panels drew three nearly identical tones.
+    wn = t.new("ShaderNodeTexWhiteNoise", noise_dimensions="1D")
+    t.plug(wn.inputs["W"], t.madd(pidx, 1.0, t.mul(I["Seed"], 0.37)))
+    ph = wn.outputs["Value"]
+    wf = t.new("ShaderNodeTexWhiteNoise", noise_dimensions="1D")
+    t.plug(wf.inputs["W"], t.madd(t.math("FLOOR", t.mul(pidx, 0.25)), 1.0, t.mul(I["Seed"], 0.91)))
+    tone_p = t.mul(t.maprange(ph, 0.0, 1.0, t.sub(1.0, I["Panel Tone"]), t.add(1.0, I["Panel Tone"])),
+                   t.maprange(wf.outputs["Value"], 0.0, 1.0, 0.94, 1.06))
     ridge_line = t.maprange(ed, t.mul(I["Ridge Width"], 0.22), t.mul(I["Ridge Width"], 0.75), 1.0, 0.0)
     ridge_lit = t.mul(t.maprange(ed, t.mul(I["Ridge Width"], 0.75), t.mul(I["Ridge Width"], 2.20), 1.0, 0.0),
                       t.sub(1.0, ridge_line))
@@ -1059,7 +1065,7 @@ def build_dome():
     # The streak colour is lightened and desaturated to 0.712 of the base's Rec.709 luminance at HSV saturation
     # 0.40 (was 0.606 at 0.531): the streaks in reference/photos/material_crops/dome_2.jpg are a grey-green wash,
     # not a brown one, and they have to pull the box's saturation DOWN toward ref 169's 0.272.
-    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.952, 0.995, 0.352), "Streak Color": C(0.700, 0.685, 0.420), "Moss Color": C(0.34, 0.42, 0.28),
+    g = t.group(G["dome"], Normal=N, **{"Base Color": C(0.966, 1.000, 0.385), "Streak Color": C(0.700, 0.685, 0.420), "Moss Color": C(0.34, 0.42, 0.28),
                                         "Grime Color": C(0.20, 0.13, 0.06), "Panels": 28.0, "Ridge Width": 0.30, "Ridge Dark": 0.30,
                                         "Panel Tone": 0.22, "Ring Spacing": 2.6, "Ring": 0.08, "Streaks": 0.75, "Streak Width": 1.4,
                                         "Moss": 0.12, "Grime": 0.55, "Base Normal Z": 0.52, "Roughness": 0.42, "Bump": 0.35, "Seed": 12.0})

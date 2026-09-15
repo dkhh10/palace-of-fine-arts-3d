@@ -6,8 +6,10 @@
 
 `dome` is item A (QA-10-8): the hero box 920 95 1000 120 against the acceptance window lum 205-235, hue 38-50,
 sat 0.22-0.32, column-sd >= 8, plus the row split (the box is NOT all dome -- `scripts/mat_r10_probe.py`
-ray-casts it as rows 95-115 `ARCH_rotunda_dome` and rows 116-119 `ARCH_rotunda_drum_cornice`, which is not
-materials' surface for this item but sets one sixth of every number in the box).
+ray-casts it as 267 of 400 rays on `ARCH_rotunda_dome` and 133 on `ARCH_rotunda_drum_cornice`, i.e. rows 95-111
+dome and rows 112-119 cornice).  The cornice is MAT_concrete_ochre, the hold-listed stone, so a third of every
+number in this box is not the dome membrane -- and in ref 169 four of those eight rows are still dome, because
+the modelled cap's rim sits about four rows higher than the photograph's.
 
 `hold` is the round-10b hero hold list from docs/briefs/materials_r10.md, measured on the same frame, with the
 BEFORE column read off `renders/final/v2/qa_round10b_cam01_cycles.png` rather than quoted.
@@ -25,7 +27,8 @@ from mat_r7_measure import load, stats, box, columns, BOXES, lum, ROOT
 
 BEFORE = ROOT / "renders" / "final" / "v2" / "qa_round10b_cam01_cycles.png"
 ALIGNED10B = ROOT / "renders" / "final" / "v2" / "round10b_cam01_aligned_vs_ref169.png"
-DOME_ROWS, CORNICE_ROWS = (95, 116), (116, 120)      # measured by scripts/mat_r10_probe.py
+DOME_ROWS, CORNICE_ROWS = (95, 112), (112, 120)      # scripts/mat_r10_probe.py: 267 of 400 rays dome,
+#                                                     133 drum cornice; the split lands on row 112
 WIN = dict(lum=(205.0, 235.0), hue=(38.0, 50.0), sat=(0.22, 0.32), colsd=8.0)
 REF_DOME = dict(lum=224.3, hue=44.1, sat=0.272, colsd=6.61)     # aligned sheet panel 1, ref 169
 
@@ -103,6 +106,34 @@ def crop(after, out):
     print(f"[crop] {out}  {sheet.size[0]}x{sheet.size[1]}")
 
 
+REF083 = Path("/Users/dk/Projects/3d render blender 3rd attempt building/reference/photos/"
+              "ornament_crops/coffered_ceiling_1.jpg")
+
+
+def coffer_crop(before, after, out):
+    """100 % coffer crop: cam04 before | after, next to ref 083 scaled to the same height."""
+    from PIL import ImageDraw
+    ims = []
+    for nm, p in (("round-10b cam04", before), ("round-10 cam04", after)):
+        im = Image.open(p).convert("RGB")
+        w, h = im.size
+        ims.append((nm, im.crop((int(w * 0.28), int(h * 0.20), int(w * 0.72), int(h * 0.80)))))
+    H = ims[0][1].size[1]
+    ref = Image.open(REF083).convert("RGB")
+    ref = ref.resize((int(ref.size[0] * H / ref.size[1]), H), Image.LANCZOS)
+    ims.append(("ref 083 (coffered_ceiling_1)", ref))
+    W = sum(i.size[0] for _, i in ims) + 12 * (len(ims) - 1)
+    sheet = Image.new("RGB", (W, H + 18), (18, 18, 18))
+    x = 0
+    d = ImageDraw.Draw(sheet)
+    for nm, im in ims:
+        sheet.paste(im, (x, 18))
+        d.text((x + 4, 4), nm, fill=(235, 235, 235))
+        x += im.size[0] + 12
+    sheet.save(out)
+    print(f"[coffer crop] {out}  {sheet.size[0]}x{sheet.size[1]}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "dome":
@@ -111,5 +142,7 @@ if __name__ == "__main__":
         hold(sys.argv[2])
     elif cmd == "crop":
         crop(sys.argv[2], sys.argv[3])
+    elif cmd == "coffercrop":
+        coffer_crop(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
         raise SystemExit(__doc__)

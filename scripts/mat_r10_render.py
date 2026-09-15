@@ -27,10 +27,10 @@ DOME_WINDOW = (890, 80, 1030, 135)          # x0, y0, x1, y1 in the 1920x1080 he
 
 # the sweep: structure strength, bracketing the column-sd the QA box asks for (>= 8, ref 169's own box 6.61)
 VARIANTS = [
-    ("a", {"Panel Tone": 0.22, "Ridge Dark": 0.30, "Streaks": 0.75}),
-    ("b", {"Panel Tone": 0.34, "Ridge Dark": 0.42, "Streaks": 0.85}),
-    ("c", {"Panel Tone": 0.14, "Ridge Dark": 0.20, "Streaks": 0.60}),
-    ("d", {"Panel Tone": 0.45, "Ridge Dark": 0.52, "Streaks": 0.95}),
+    ("a", {"Panel Tone": 0.30, "Ridge Dark": 0.35, "Streaks": 0.75}),
+    ("b", {"Panel Tone": 0.40, "Ridge Dark": 0.45, "Streaks": 0.85}),
+    ("c", {"Panel Tone": 0.50, "Ridge Dark": 0.55, "Streaks": 0.95}),
+    ("d", {"Panel Tone": 0.40, "Ridge Dark": 0.45, "Streaks": 0.00}),   # isolates the streaks' own contribution
 ]
 
 
