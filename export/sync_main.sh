@@ -20,7 +20,7 @@ fi
 if [ -d "$ROOT/export/out/gate2" ]; then
   mkdir -p "$MAIN/export/out/gate2"
   # tex/ is the 16-bit PNG bake output (regenerable, ~700 MB); only tex_ktx2 ships.
-  rsync -a --exclude 'gate2_bake.blend*' --exclude 'gate2_orn_bake.blend*' --exclude 'tex/' \
+  rsync -a --exclude 'gate2_bake.blend*' --exclude 'gate2_orn_bake.blend*' --exclude 'tex/' --exclude 'verify/verify_*.png' \
         "$ROOT/export/out/gate2/" "$MAIN/export/out/gate2/"
   echo "[gate2] synced to $MAIN/export/out/gate2 ($(du -sk "$MAIN/export/out/gate2" | cut -f1) KiB)"
 fi
