@@ -247,6 +247,8 @@ for cls, objs in sets.items():
     mesh_nodes = [nd for nd in doc.get("nodes", []) if "mesh" in nd]
     untransformed = [nd.get("name", "?") for nd in mesh_nodes
                      if "matrix" not in nd and not any(k in nd for k in ("translation", "rotation", "scale"))]
+    report["classes"][cls]["materials_expected"] = sorted(
+        {sl.name for o in objs for sl in o.data.materials if sl})
     report["classes"][cls]["mesh_nodes"] = len(mesh_nodes)
     report["classes"][cls]["untransformed_nodes"] = len(untransformed)
     report["classes"][cls]["identity_objects"] = len(identity_objs)

@@ -3,7 +3,10 @@
 
     python3 export/verify_glb.py [export/out/gate1]
 
-Per class the invariant is TRIANGLES DRAWN, not node count: gltfpack legitimately merges single-use nodes that
+Per class it also asserts that every material name the export set uses survives into the glb, for any
+class packed with -km (gltfpack merges materials with identical factors otherwise, and the ten identical
+backdrop greys collapsed to one, orphaning nine Gate 2 texture sets). The other invariant is TRIANGLES DRAWN,
+not node count: gltfpack legitimately merges single-use nodes that
 share a material (564 ARCH objects become 442 nodes, the 4 ground objects one node), so a node count proves
 nothing, while sum(primitive triangles x instance count) must equal export_set.json's placed triangles for that
 class. Node and instance counts are reported alongside. The complementary check - nothing stacked at the world
@@ -72,6 +75,15 @@ def main(out_dir):
               "arch" if a["cls"] == "ARCH" else "orn" if a["cls"] == "ORN" else "env"
         want_tris[cls] = want_tris.get(cls, 0) + a["tris"]
 
+    gl = json.loads((out / "gltf_gate1.json").read_text()) if (out / "gltf_gate1.json").exists() else {}
+    flags = {}
+    fp = out / "gltfpack_flags.txt"
+    if fp.exists():
+        for line in fp.read_text().split("\n"):
+            if line.strip():
+                parts = line.split()
+                flags[parts[0]] = " ".join(parts[1:])
+
     rows, bad = {}, []
     for cls in ("arch", "orn", "env", "ground"):
         p = out / f"{cls}.glb"
@@ -116,13 +128,30 @@ def main(out_dir):
                     w = [t[i] + ctr[i] for i in range(3)]
                     if sum(v * v for v in w) ** 0.5 < 1.0:
                         origin_inst += 1
-        rows[cls] = dict(tris_drawn=tris, tris_expected=want_tris.get(cls, 0),
+        # gltfpack merges materials whose factors match unless -km is given, and a merged-away name is a
+        # Gate 2 texture set that matches nothing. Assert the names for any class packed with -km; for the
+        # others report the loss without failing (they are frozen byte-identical this round).
+        want_mats = set((gl.get("classes", {}).get(cls) or {}).get("materials_expected") or [])
+        have_mats = {m.get("name") for m in doc.get("materials", []) if m.get("name")}
+        missing = sorted(want_mats - have_mats)
+        strict = "-km" in (flags.get(cls) or "")
+        rows[cls] = dict(gltfpack_flags=flags.get(cls), materials_expected=len(want_mats),
+                         materials_in_glb=len(doc.get("materials", [])),
+                         materials_named_in_glb=len(have_mats), materials_missing=len(missing),
+                         materials_missing_names=missing[:12], material_names_enforced=strict,
+                         tris_drawn=tris, tris_expected=want_tris.get(cls, 0),
                          placements_in_glb=plain + inst, objects_in_set=len(per_cls.get(cls, [])),
                          plain_nodes=plain, instanced_nodes=inst_nodes, instanced_placements=inst,
                          plain_nodes_with_geometry_at_origin=origin_inst, expected_at_origin=near_expected.get(cls, 0))
         # gltfpack drops degenerate triangles while it optimises, so the match is within a tolerance, not
         # exact: measured 0.19 % on arch and 0.16 % on orn, 0.00 % on env and ground. A DROPPED PLACEMENT is
         # orders of magnitude bigger than that (one stacked shrub group is 8.8 % of ENV).
+        if missing and strict:
+            bad.append(f"{cls}: {len(missing)} material names in the export set are absent from the packed "
+                       f"glb although it was packed with -km: {missing[:8]}")
+        elif missing:
+            print(f"[verify_glb] note {cls}: {len(missing)} material names merged away by gltfpack "
+                  f"(no -km on this class): {missing[:6]}")
         want = want_tris.get(cls, 0)
         rows[cls]["tris_delta"] = tris - want
         rows[cls]["tris_delta_pct"] = round(100.0 * (tris - want) / max(want, 1), 3)

@@ -304,6 +304,18 @@ from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
     false positives. It now takes each plain node's centre from its POSITION accessor `min`/`max` plus the
     node transform. All four classes report 0 nodes with geometry at the origin.
 
+14. **`-km` on env, and material names are now asserted.** The viewer review saw only one
+    `MAT_EXP_ENVBD__*` material in env.glb: gltfpack merges materials whose factors are identical, and the ten
+    backdrop greys were identical (flat `baseColorFactor`, no texture), so nine names vanished and nine Gate 2
+    backdrop texture sets matched no scene material. Two things changed since that build: item 12 gave the ten
+    meshes a UV layer and therefore the grey probe **texture**, which already kept them distinct (measured:
+    10/10 `ENVBD` names present before `-km`), and env is now packed with **`-km`** so it is structural rather
+    than incidental. `export/verify_glb.py` asserts, for any class packed with `-km`, that **every material
+    name the export set uses exists in the glb**, and reports (without failing) the same for the classes that
+    are frozen without it. Measured this pack — expected / in the glb / named / missing: arch 13/13/13/0,
+    orn 33/33/33/0, env **21/21/21/0** (enforced), ground 4/4/4/0. The flags each class was packed with are
+    written to `export/out/gate1/gltfpack_flags.txt` and read back by the verifier.
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the
