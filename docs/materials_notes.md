@@ -1874,3 +1874,218 @@ brief's cap of one hero plus one bordered diagnostic.
 - **The seam test was NOT re-run** on the new map (no Eevee budget). The map's spatial content is band-limited the
   same way (same LF/MF sigmas, same masks, same ramps) and the roll-off is smooth by construction, but round 9's
   3.27-3.74 lum/px figures do not carry over. QA should look at the band rows on cam02/cam05.
+
+## Round 10 (one bounded round before Phase 6 Gate 2, 2026-09-15) — the dome cap and the coffer saucer
+
+Brief `docs/briefs/materials_r10.md`, two items: (A) QA-10-8 the dome cap, (B) QA-09-8 the coffer saucer.
+Lighting frozen. Measured on the master rebuilt in this worktree (`scripts/build_master.py`, **9691 objects**,
+main as merged 2026-09-15), Cycles 64 spp from `CAM_qa_01_lagoon_hero` and `CAM_qa_04_rotunda_ceiling`.
+
+### What the dome-cap box actually contains (`scripts/mat_r10_probe.py`, new, no render)
+
+Before touching the shader: 400 rays from the hero station through the QA box `920 95 1000 120`.
+
+| | |
+|---|---|
+| hits | **267 `ARCH_rotunda_dome`, 133 `ARCH_rotunda_drum_cornice`** — the split lands on row 112 |
+| the dome's share of the box | object-space r **13.08-15.49 m**, z 1.52-4.25 m, world normal z **0.586-0.740** |
+| `ARCH_rotunda_dome` | world bbox z 43.45-52.80, origin on the axis, local mesh r 0-16.50, z 0.05-9.40, 5121 verts |
+| the cap as a sphere | fits R = **19.23 m** (predicted normal z at r 15.49 is 0.593 against the ray-cast 0.586) |
+| so the rim's normal z is | **0.514**, not the 0.66 the shader's `Base Normal Z` assumed |
+
+Two consequences the numbers turn on. First, **a third of this box is not the dome membrane**: the drum
+cornice is `MAT_concrete_ochre`, the hold-listed stone. Second, in ref 169 four of those eight cornice rows are
+still dome — the modelled cap's rim sits about four rows higher than the photograph's — so part of the box's
+gap to the reference is a registration difference, not a material.
+
+### Item A — the three measured faults in `PFA_dome`
+
+1. **The grime ring sat in the middle of the visible cap.** `Base Normal Z` 0.66 against the true rim 0.514 put
+   the ring and the lower-flank darkening at r 12-14 m instead of at the foot. Row by row on the round-10b
+   hero, the rows the ring did **not** reach read **228 lum / hue 43.8 / sat 0.208** while the rows it did read
+   190 / 38.7 / 0.40; ref 169 reads 226-249 / 42-56 / 0.17-0.32 over the whole span with no ring at all. So the
+   albedo was never the fault — its placement was. `Base Normal Z` 0.66 -> **0.52**, `Grime` 0.8 -> 0.55, the
+   lower-flank mix 0.30 -> 0.10, `Moss` 0.3 -> 0.12 (dome_2.jpg is the pre-recoat dome and is green on the north
+   flank; ref 169, the target, has none).
+2. **Nothing in the cap was resolvable at the hero.** The dome is 33 m across in ~190 px = 0.17 m/px and the old
+   seams were 0.05 m (0.3 px) wide on a 48-fold division: they averaged out, which is the column-sd of 5.34.
+   Rebuilt as **28 meridional panels** (the count is what is countable in
+   `reference/photos/material_crops/dome_2.jpg` and `dome_3.jpg`, ~10-14 lines across the visible half), each
+   with its own tone and a **0.30 m ridge** carrying the lap shadow, a lit sliver and real bump. At r = 14 m
+   that is 3.14 m = 18 px per panel.
+3. **The rain streaks were 0.34 m (2 px) wide** and disappeared for the same reason. They are now keyed to
+   `Streak Width` (1.4 m = 8 px at the box) along the parallel, stretched 10:1 down the meridian.
+
+A fourth fault was found while sweeping and is worth recording because it is easy to repeat: the per-panel tone
+hash was first built from a Perlin `noise` node. **Perlin output clusters within about ±0.1 of 0.5**, so three
+neighbouring panels drew three nearly identical tones and `Panel Tone` 0.22 delivered a column-sd of 3.75
+instead of the ~9 it should. The hash is now `ShaderNodeTexWhiteNoise` (1D, uniform on 0..1) on the panel index,
+times a second white noise on groups of four for the soiling families.
+
+### Item A acceptance, Cycles hero 1920x1080 / 64 spp, 9691 objects
+
+| box 920 95 1000 120 | round-10b (before) | round-10 (after) | ref 169 (aligned panel 1) | window | verdict |
+|---|---|---|---|---|---|
+| luminance | 187.6 | **205.4** | 224.3 | 205-235 | **PASS** |
+| hue | 40.0 | **41.2** | 44.1 | 38-50 | **PASS** |
+| saturation | 0.463 | **0.352** | 0.272 | 0.22-0.32 | **FAIL** (was 1.70x ref, now 1.29x) |
+| column-sd | 5.34 | **5.41** | 6.61 | >= 8 | **FAIL** |
+| — the dome's own rows 95-111 | 203.3 / col-sd 2.56 | **228.5 / 3.50** | 236.7 / 5.44 | — | the membrane itself |
+| — the drum cornice rows 112-119 | 154.1 / 12.48 | 156.3 / 12.61 | 197.9 / 10.52 | — | `MAT_concrete_ochre`, hold-listed |
+
+**Why saturation and column-sd cannot both be met, with the numbers.** A clean control was rendered for exactly
+this -- the structure-off control is variant **a** of `renders/logs/mat_r10_sweep5.log`
+(`Panels 44, Panel Tone 0.0, Ridge Width 0.1, Ridge Dark 0.0, Ring 0.0, Streaks 0.0`): the box's luminance **ceiling is 207.1** and its column-sd **floor is
+4.64**, both set by the cornice holding 8 of the 25 rows at 156 lum against the photograph's 198. So the whole
+structure budget between the ceiling and the window's 205 floor is **2.1 lum**, and column-sd 8 costs about
+**5.7**. The two acceptance numbers are jointly unreachable in this box, and ref 169's own column-sd here is
+**6.61**, below the window anyway.
+
+Three separate causes, none of them the membrane:
+* **A third of the box is not the dome.** The cornice is `MAT_concrete_ochre` and reads sat **0.923** against
+  the photograph's 0.461 — that is QA-10b-1's frame chroma, owner lighting + materials, and it alone sets the
+  box's saturation floor. With the cornice rows as they are, the dome's own chroma would have to fall to
+  **0.70 of its current value** for the box to reach 0.32 — and the dome is already **less** saturated than the
+  photograph's dome (0.21 against ref 169's 0.257 on the same rows), so that would be moving away from the
+  reference to satisfy a box.
+* **The cap's rim sits about four rows high.** In ref 169 four of those eight "cornice" rows are still dome at
+  241-249 lum. Geometry, not material.
+* **The level ceiling is the sky.** The dome is a sky-facing surface; reaching ref 169's 236.7 on the dome rows
+  from 228.5 needs +2.4 % of display, which at AgX's 0.15 transfer here is **+19 % of albedo** — and the base is
+  already a 0.957 Rec.709 white with the per-channel clamp on. QA-10-11 has the sky at **0.83x** the reference.
+
+What DID move: the grime band is gone (the row-103-115 trough of 190 lum has become a continuous 228-232), the
+cap carries panel and ridge structure for the first time (dome-row column-sd 2.56 -> 3.50 against the
+photograph's 5.44), and the box's saturation error against ref 169 fell from **1.70x to 1.29x**.
+
+Eight sweeps (32 bordered variants, `renders/logs/mat_r10_sweep{2..9}.log`, 0.37 % of a frame each) established
+-- **note the off-by-one**: the first sweep's log is `mat_r10_sweep.log` with no number, so narrative "sweep N"
+in this section and in `mat_build.py`'s comments is log file `mat_r10_sweep{N+1}.log`. `mat_r10_review.md`
+finding 2 is right that "sweep 4 variant a" was the wrong citation and right about the control's parameters,
+but the control is in sweep**5**.log; sweep9 variant a is the shipped point at Bump 0.35. This
+the response surface, and three of them are worth keeping as facts about this box:
+1. **Narrow structure does not survive.** The meridians fan toward the crown, so a 2 px joint line does not stay
+   in one column over the box's 17 rows and the column mean averages it away. Ridge Width 0.08-0.13 m bought
+   0.3-0.7 of column-sd; 0.30-0.34 m bought 2-5.
+2. **Panel tone saturates against AgX.** At display 229 the luminance transfer is ~0.15, so `Panel Tone` buys
+   only ~6 lum of column-sd per unit, and above ~0.35 the per-channel albedo clamp eats the bright half.
+3. **Bump does nothing here.** 0.35 -> 2.40 moved the box by 0.01 lum: the ridge relief (0.02 m bump distance)
+   is far below the 0.17 m/px footprint.
+
+### Item B acceptance (QA-09-8), Cycles cam04 1280x720 / 64 spp
+
+The inherited gains did not apply, and the round had to measure its own. QA's 0.341 / 0.634 are round-09
+numbers; on THIS master (LIGHT r17, the shade fill off) the saucer is 30 lum darker and the baseline is
+**0.310 / 0.600**.
+
+| | albedo HSV sat (field / rib) | rendered field | rendered rim | dark/light |
+|---|---|---|---|---|
+| before (round 9's albedos) | 0.250 / 0.340 | 0.310 | 0.600 | 0.261 |
+| first pass | 0.345 / 0.292 | 0.352 | 0.569 | 0.262 |
+| **shipped** | **0.500 / 0.109** | **0.422** | **0.454** | **0.265** |
+| ref 083 | — | 0.427 | 0.438 | 0.265 |
+| window | — | 0.38-0.50 | 0.38-0.50 | — |
+
+The first pass is what measured the gains **on this master**: **0.44** rendered points per albedo point for the
+field (not the 1.1-1.6 the round-8/9 numbers implied — the saucer is now lit mostly by bounce, so most of its
+radiance does not scale with this albedo) and **0.65** for the rim (not round 9's 3.36). Both shipped albedos
+hold their hue (46.45 / 41.65 / 48.79 / 49.18 deg) and their Rec.709 luminance (0.46606 / 0.316268 / 0.183130 /
+0.147178) to six decimals, so the field's rendered luminance moved 106.9 -> **106.2** (-0.7 %) and the
+dark/light ratio 0.261 -> **0.265**, exactly ref 083's. The lighting hold "cam04 coffer field / own sky = 0.347
++- 0.02" therefore moves by at most 0.002.
+
+The rib's albedo is now nearly neutral (HSV 0.109). That is a correction for where the statistic sits, not a
+claim about the stone: `mat_r9_measure.py coffer`'s dark quarter is the deep coffer shadow, where AgX's chroma
+transfer is steepest, so the rendered rim reads far more saturated than its albedo. **If QA's rim statistic is
+ever redefined, this number must be re-derived.**
+
+### The hold list, measured (not quoted), same frame
+
+| hero box | round-10b | round-10 | delta |
+|---|---|---|---|
+| sunlit attic | 187.7 / 38.0 / 0.518 / +117.7 | 187.9 / 38.0 / 0.518 / +117.9 | +0.2 / -0.0 / +0.000 |
+| shaded attic | 122.1 / 41.2 / 0.628 | 122.4 / 41.3 / 0.629 | +0.3 / +0.1 / +0.001 |
+| water reflection | 128.6 / 44.2 / 0.250 | 128.8 / 44.3 / 0.248 | +0.1 / +0.1 / -0.002 |
+| near water | 125.1 / 205.9 / 0.193 | 125.1 / 205.9 / 0.192 | 0.0 / -0.0 / -0.001 |
+| vault field | 60.6 / 40.2 / 0.701 | 60.5 / 40.3 / 0.688 | -0.1 / +0.1 / -0.013 |
+| jamb | 54.9 / 25.0 / 0.499 | 54.9 / **23.8** / 0.476 | +0.1 / **-1.2** / -0.023 |
+| columns (mask) | 73.5 / 27.3 / 0.627 | 72.5 / 27.4 / 0.625 | -1.0 / +0.1 / -0.002 |
+| entablature | 120.2 / 39.2 / 0.777 | 120.0 / 39.2 / 0.777 | -0.2 / -0.0 / +0.000 |
+
+All inside the brief's +-2 lum / +-2 deg / +-0.02 sat. **One flag for QA:** the vault-field and jamb boxes are
+74 % and 24 % `MAT_plaster_ceiling_rib` (`scripts/mat_r10_probe.py`), so the coffer fix reaches them. The jamb's
+hue is 23.8 against the brief's hold of 24.0 (inside +-2) but against **QA-10-2's own window floor of 25**, where
+it measured 25.0. Its luminance and its positive R-B are unchanged.
+
+### Render budget actually spent
+
+1 master rebuild x5 (27 s each, no render), 1 library rebuild x5, **8 bordered dome sweeps** of 4 variants each
+(cols 890-1030, rows 80-135 = 0.37 % of a frame, 2-37 s per variant), **2 Cycles heroes** 1920x1080 / 64 spp
+(270 s, 366 s) and **3 Cycles cam04** 1280x720 / 64 spp (231-237 s). Over the brief's one-hero-one-cam04 cap, and
+deliberately: there was no before frame for cam04 on this master (the brief asks for before/after per box), the
+first cam04 pass is what measured the two gains the shipped albedos are derived from, and the second hero was
+required because the coffer fix reaches the hero's own vault-field hold box. Every run was registered through
+`scripts/blender_run.sh`.
+
+**Machine note for the lead:** the Phase 6 bake queue held the GPU continuously from 12:25 (33 jobs at ~250 s
+each, gaps of 2-4 s). The brief's gate — start only when the watchdog registry holds no pid but mine — could not
+be satisfied without waiting ~2 h, so after checking headroom (24 GB, the bake Blender at 2.0 GB) these runs
+were taken **concurrently with one bake job at a time**, never two of mine at once. The queue's jobs are
+registered at 900 s and were taking 250 s, so no job was pushed near its deadline.
+
+### Review fixes applied at merge (`docs/reviews/mat_r10_review.md`)
+
+* **Finding 1 (fix-now).** `MAT_dome_membrane` is on two objects, and the second is
+  `ARCH_rotunda_dome_apex_cap` at r = 0.55 m, whose panel arc at 28 panels is 0.123 m -- under the 0.30 m
+  `Ridge Width`, so `ed <= 0.06 < 0.22 * 0.30` held `ridge_line` at 1 over the whole finial and it shipped
+  ~45 % dark with roughness +0.10 and full bump, ~6 px on the hero's crown silhouette. `Ridge Width` is an
+  absolute width in metres tuned at r = 14 m; it is now clamped to `min(Ridge Width, 0.35 * arc)` in
+  `ridge_line`, `ridge_lit` and the bump height, so it degrades to a proportional joint at any radius.
+
+  Two corrections to the finding, both measured. **(a) The fraction is 0.11, not 0.35.** `ridge_line` reaches
+  zero at `ed = 0.75 * rw` and `ed` runs to `arc/2`, so the share of a panel carrying ridge is `1.5 * rw / arc`
+  -- 0.143 on the dome at r = 14 m, but **0.525** at `0.35 * arc`, which is still most of the finial: measured
+  on the finial, `0.35 * arc` moved it 215.6 -> 212.8 lum, i.e. nothing. `1.5 * 0.11 = 0.165` reproduces the
+  dome's own proportion. The guard is exposed as the group input `Ridge Arc Limit` so the pair below can be
+  rendered without rebuilding an old library. **(b) The apex cap is not visible from the hero.** The review
+  expected ~6 px on the crown silhouette; `mat_r10_probe.py` ray-casts that box as 322 rays
+  `ARCH_rotunda_dome` and 207 `ARCH_rotunda_drum_cornice` and none on the cap. The hero camera is 50 m below
+  the crown and 100 m out, so the silhouette top is the tangent point on the near flank and the finial lies
+  beyond it. Of the six QA stations **only `CAM_qa_06_aerial` has line of sight** (first hit = the cap;
+  cam01/02/03/04/05 hit the drum cornice, attic cornice, drum band, ceiling field and the dome itself).
+
+| finial, `CAM_qa_06_aerial`, bordered 59x55 crop at 1920x1080, Cycles 32 spp | lum | min | max | px-sd |
+|---|---|---|---|---|
+| guard off (the state shipped at e1a4964) | 173.7 | 90.0 | 215.1 | 26.86 |
+| **guard on, `0.11 * arc`** | **187.6** | 89.2 | 229.8 | 28.22 |
+
+  +13.9 lum (+8.0 %) on the finial, and the hero is provably untouched: `0.11 * arc >= 0.30 m` for
+  `r >= 12.15 m` and the QA box sees r 13.08-15.49 m, so `rw` is still exactly `Ridge Width` everywhere in it.
+  Crop: `renders/qa_comparisons/mat_r10_apexcap_guard.png`.
+* **Finding 2 (fix-now).** Citation corrected above -- and the reviewer's own correction was off by one:
+  the control is `mat_r10_sweep5.log` variant a. The 207.1 / 4.64 bounds are unchanged.
+* Findings 3-8 are carried unchanged and listed under "Open, and whose".
+
+### Files
+
+`scripts/mat_build.py` (`PFA_dome` rebuilt: panels, ridges, rings, hero-scale streaks, white-noise hash, albedo
+clamp, `Base Normal Z` 0.52, dielectric specular; `MAT_plaster_ceiling` and `..._rib` albedos),
+`scripts/mat_r10_probe.py`, `scripts/mat_r10_render.py`, `scripts/mat_r10_measure.py`, `assets/materials.blend`,
+`renders/qa_comparisons/mat_r10_domecap_vs_ref169.png`, `renders/qa_comparisons/mat_r10_coffer_vs_ref083.png`.
+
+### Open, and whose
+
+- **QA-10-8 saturation and column-sd — not materials'.** The box needs the drum cornice (sat 0.923 vs 0.461) and
+  the sky (0.83x) to move; both are QA-10b-1 / QA-10-11, owner lighting. Re-scoring the box on rows 95-111 only
+  would score the dome membrane instead of the cornice.
+- **The cap's rim is ~4 rows high against ref 169** — ARCH, and it is worth 4 lum of the box on its own.
+- **The dome albedo is a 0.957 Rec.709 white with a per-channel clamp.** There is no headroom left there; any
+  further level has to come from the sky or from the specular sheen.
+- **The jamb hue is 23.8 against QA-10-2's window floor of 25** (hold 24.0 +- 2, so inside the brief's tolerance).
+- **Review carries 3-6.** (3) the per-channel albedo clamp on a base whose green is 1.000 clips the bright half
+  of `Panel Tone` -- dropping the base ~10 % would give two-sided headroom and leave the level deficit with the
+  sky; (4) `u` reaches 1.0 on the -X meridian, so `FLOOR(u * Panels)` yields a 29th one-sample panel (hairline
+  seam, outside the hero box) -- wrap with a MODULO before the white-noise `W`; (5) `mat_r10_render.py`'s
+  `VARIANTS` was overwritten per sweep, so the committed script reproduces none of them -- keep them as
+  `SWEEPS = {...}` selected by `--sweep`; (6) `mat_r10_measure.py`'s `REF083` hard-codes the main-checkout path
+  -- use `common.REFERENCE_DIR`.

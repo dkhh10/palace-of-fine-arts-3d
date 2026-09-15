@@ -1,0 +1,11 @@
+00:00.328  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+04:31.592  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/renders/previews/materials/r10a_cycles_01_lagoon_hero.png'
+[r10render] opened master in 0.8s, 9691 objects, jobs hero
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[r10render] CAM_qa_01_lagoon_hero 1920x1080 64spp border=None 270.5s -> r10a_cycles_01_lagoon_hero.png
+[r10render] done in 271.3s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 55963 exited rc=0 after 272 s (max 1200)

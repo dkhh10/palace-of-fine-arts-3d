@@ -1,0 +1,91 @@
+00:00.321  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/materials/master.blend"
+
+[dome_cap] 80x25 px, 400 rays
+     267  ARCH_rotunda_dome [MAT_dome_membrane]
+     133  ARCH_rotunda_drum_cornice [MAT_concrete_ochre]
+    ARCH_rotunda_drum_cornice [MAT_concrete_ochre]: object r 18.41-18.70 m, object z 0.33-0.92 m, world nz -0.923-0.857, object azimuth 89..107 deg
+    ARCH_rotunda_dome [MAT_dome_membrane]: object r 13.08-15.49 m, object z 1.52-4.25 m, world nz 0.586-0.740, object azimuth 84..111 deg
+
+[dome_wide] 210x70 px, 196 rays
+      60  ARCH_rotunda_dome [MAT_dome_membrane]
+      45  <sky>
+      28  ARCH_rotunda_drum_cornice [MAT_concrete_ochre]
+       6  ARCH_rotunda_attic_cornice [MAT_concrete_ochre]
+       5  INST_drum_band_026_LOD1 [MAT_ornament_concrete]
+       5  INST_drum_band_031_LOD1 [MAT_ornament_concrete]
+       4  INST_urn_002_LOD1 [MAT_ornament_concrete__ORN_urn_niche_v1_LOD1]
+       4  INST_drum_band_027_LOD1 [MAT_ornament_concrete]
+       4  INST_drum_band_028_LOD1 [MAT_ornament_concrete]
+       4  INST_drum_band_029_LOD1 [MAT_ornament_concrete]
+       4  INST_drum_band_030_LOD1 [MAT_ornament_concrete]
+       4  INST_drum_band_025_LOD1 [MAT_ornament_concrete]
+       4  INST_drum_band_032_LOD1 [MAT_ornament_concrete]
+       4  INST_drum_band_033_LOD1 [MAT_ornament_concrete]
+       4  ARCH_rotunda_drum_band [MAT_drum_band]
+       3  INST_drum_band_024_LOD1 [MAT_ornament_concrete]
+       2  INST_urn_001_LOD1 [MAT_ornament_concrete__ORN_urn_niche_v1_LOD1]
+       2  INST_drum_band_022_LOD1 [MAT_ornament_concrete]
+       2  INST_drum_band_034_LOD1 [MAT_ornament_concrete]
+       1  INST_drum_band_023_LOD1 [MAT_ornament_concrete]
+       1  INST_drum_band_036_LOD1 [MAT_ornament_concrete]
+    ARCH_rotunda_dome [MAT_dome_membrane]: object r 10.06-15.44 m, object z 1.59-6.55 m, world nz 0.586-0.849, object azimuth 61..136 deg
+    ARCH_rotunda_attic_cornice [MAT_concrete_ochre]: object r 24.44-25.86 m, object z -0.67--0.08 m, world nz -0.447-0.316, object azimuth 82..113 deg
+    INST_drum_band_027_LOD1 [MAT_ornament_concrete]: object r 0.29-0.43 m, object z 0.26-1.45 m, world nz -0.395-0.319, object azimuth 55..70 deg
+    INST_drum_band_028_LOD1 [MAT_ornament_concrete]: object r 0.28-0.42 m, object z 0.23-1.38 m, world nz -0.375-0.545, object azimuth 72..79 deg
+    INST_drum_band_036_LOD1 [MAT_ornament_concrete]: object r 0.46-0.46 m, object z 1.39-1.39 m, world nz 0.560-0.560, object azimuth 39..39 deg
+    INST_drum_band_029_LOD1 [MAT_ornament_concrete]: object r 0.23-0.38 m, object z 0.24-1.37 m, world nz -0.525-0.383, object azimuth 85..86 deg
+    INST_drum_band_030_LOD1 [MAT_ornament_concrete]: object r 0.25-0.39 m, object z 0.27-1.42 m, world nz -0.436-0.509, object azimuth 95..102 deg
+    INST_urn_002_LOD1 [MAT_ornament_concrete__ORN_urn_niche_v1_LOD1]: object r 0.32-0.60 m, object z 0.55-1.49 m, world nz -0.805-0.221, object azimuth 144..172 deg
+    INST_drum_band_026_LOD1 [MAT_ornament_concrete]: object r 0.29-0.45 m, object z 0.04-1.60 m, world nz -0.729-0.598, object azimuth 18..61 deg
+    INST_drum_band_025_LOD1 [MAT_ornament_concrete]: object r 0.41-0.51 m, object z 0.12-1.20 m, world nz -0.663-0.421, object azimuth 24..52 deg
+    ARCH_rotunda_drum_band [MAT_drum_band]: object r 17.76-17.79 m, object z 0.10-0.13 m, world nz -0.739--0.739, object azimuth 92..103 deg
+    INST_drum_band_023_LOD1 [MAT_ornament_concrete]: object r 0.50-0.50 m, object z 1.54-1.54 m, world nz -0.011--0.011, object azimuth 179..179 deg
+    INST_drum_band_034_LOD1 [MAT_ornament_concrete]: object r 0.61-0.61 m, object z 0.69-1.09 m, world nz -0.039-0.201, object azimuth 140..141 deg
+    INST_drum_band_033_LOD1 [MAT_ornament_concrete]: object r 0.43-0.50 m, object z 0.21-1.33 m, world nz -0.739-0.360, object azimuth 129..150 deg
+    INST_drum_band_032_LOD1 [MAT_ornament_concrete]: object r 0.30-0.44 m, object z 0.10-1.16 m, world nz -0.641-0.391, object azimuth 117..150 deg
+    INST_drum_band_022_LOD1 [MAT_ornament_concrete]: object r 0.59-0.63 m, object z 0.75-1.16 m, world nz 0.020-0.357, object azimuth 141..143 deg
+    INST_drum_band_031_LOD1 [MAT_ornament_concrete]: object r 0.18-0.41 m, object z 0.02-1.55 m, world nz -0.426-0.712, object azimuth 105..152 deg
+    INST_drum_band_024_LOD1 [MAT_ornament_concrete]: object r 0.56-0.60 m, object z 0.23-0.93 m, world nz -0.384-0.119, object azimuth 28..43 deg
+    ARCH_rotunda_drum_cornice [MAT_concrete_ochre]: object r 18.10-18.70 m, object z 0.20-0.74 m, world nz -0.923-0.000, object azimuth 77..119 deg
+    INST_urn_001_LOD1 [MAT_ornament_concrete__ORN_urn_niche_v1_LOD1]: object r 0.58-0.60 m, object z 0.90-1.24 m, world nz -0.114-0.130, object azimuth -5..1 deg
+
+[vault_field] 110x50 px, 272 rays
+     121  ARCH_rotunda_vault_coffers_00 [MAT_plaster_ceiling_rib]
+      79  ARCH_rotunda_ceiling_ribs [MAT_plaster_ceiling_rib]
+      37  ARCH_rotunda_ceiling_field [MAT_plaster_ceiling]
+      32  ARCH_rotunda_vault_00 [MAT_concrete_inner]
+       3  ARCH_rotunda_wall_00 [MAT_concrete_ochre]
+    ARCH_rotunda_ceiling_ribs [MAT_plaster_ceiling_rib]: object r 8.49-12.90 m, object z 25.25-27.29 m, world nz -0.928-0.000, object azimuth -106..-58 deg
+    ARCH_rotunda_ceiling_field [MAT_plaster_ceiling]: object r 8.80-12.89 m, object z 0.95-3.22 m, world nz 0.834-0.925, object azimuth -91..-70 deg
+    ARCH_rotunda_wall_00 [MAT_concrete_ochre]: object r 4.47-4.90 m, object z 21.80-21.89 m, world nz -0.666--0.666, object azimuth -14..2 deg
+    ARCH_rotunda_vault_coffers_00 [MAT_plaster_ceiling_rib]: object r 15.58-20.02 m, object z 19.44-22.78 m, world nz -0.951-0.608, object azimuth 83..111 deg
+    ARCH_rotunda_vault_00 [MAT_concrete_inner]: object r 4.33-7.30 m, object z 1.88-5.30 m, world nz -0.950--0.364, object azimuth -123..-26 deg
+
+[jamb] 20x80 px, 320 rays
+     138  ARCH_rotunda_column_03_LOD1 [MAT_column_rose]
+      77  ARCH_rotunda_vault_coffers_00 [MAT_plaster_ceiling_rib]
+      68  ARCH_rotunda_pier_core_01 [MAT_concrete_ochre]
+      17  ARCH_rotunda_wall_00 [MAT_concrete_ochre]
+      11  ARCH_rotunda_vault_00 [MAT_concrete_inner]
+       9  ARCH_rotunda_archivolt_00 [MAT_concrete_ochre]
+    ARCH_rotunda_wall_00 [MAT_concrete_ochre]: object r 5.55-6.21 m, object z 19.12-20.70 m, world nz -0.484--0.277, object azimuth -10..5 deg
+    ARCH_rotunda_column_03_LOD1 [MAT_column_rose]: object r 1.03-1.24 m, object z 5.82-11.47 m, world nz 0.003-0.025, object azimuth 37..90 deg
+    ARCH_rotunda_vault_coffers_00 [MAT_plaster_ceiling_rib]: object r 18.39-20.42 m, object z 17.50-20.76 m, world nz -1.000-0.715, object azimuth 80..83 deg
+    ARCH_rotunda_archivolt_00 [MAT_concrete_ochre]: object r 5.61-5.91 m, object z 2.02-2.75 m, world nz -0.484--0.069, object azimuth 9..10 deg
+    ARCH_rotunda_vault_00 [MAT_concrete_inner]: object r 6.37-6.69 m, object z 1.28-2.09 m, world nz -0.364--0.159, object azimuth -27..-22 deg
+    ARCH_rotunda_pier_core_01 [MAT_concrete_ochre]: object r 17.69-19.78 m, object z 15.14-17.49 m, world nz 0.000-0.000, object azimuth 80..80 deg
+
+[apex_cap] 23x23 px, 529 rays
+     322  ARCH_rotunda_dome [MAT_dome_membrane]
+     207  ARCH_rotunda_drum_cornice [MAT_concrete_ochre]
+    ARCH_rotunda_drum_cornice [MAT_concrete_ochre]: object r 18.41-18.70 m, object z 0.33-0.85 m, world nz -0.923-0.857, object azimuth 95..101 deg
+    ARCH_rotunda_dome [MAT_dome_membrane]: object r 13.86-15.45 m, object z 1.58-3.47 m, world nz 0.586-0.685, object azimuth 94..102 deg
+
+[ARCH_rotunda_dome] world bbox x -16.50..16.50  y -16.50..16.50  z 43.45..52.80
+    matrix_world translation (0.0, 0.0, 43.4)  scale (1.0, 1.0, 1.0)
+    material slots: ['MAT_dome_membrane']
+    local mesh: z 0.050..9.400, r 0.000..16.500, 5121 verts
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 59405 exited rc=0 after 3 s (max 600)
