@@ -1,0 +1,15 @@
+00:00.319  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/gate2_bake.blend"
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ENVBD__backdrop_door_green albedo: 15.9 s 1024->1024 coverage=0.85224 mean=[0.216069, 0.274465, 0.226547] bytes=3579119
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ENVBD__backdrop_door_green roughness: 15.5 s 1024->1024 coverage=0.85224 mean=[0.557637, 0.557637, 0.557637] bytes=2182043
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ENVBD__backdrop_door_green normal: 4.9 s 1024->1024 coverage=0.85109 mean=[0.499999, 0.500002, 1.0] bytes=3631737
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ENVBD__backdrop_door_green metallic: 1.7 s mean=[0.019366, 0.019366, 0.019366] std=[0.108286, 0.108286, 0.108286]
+[gate0] STEP bake_pbr_gate2:ENVBD__backdrop_door_green wall_s=39.9 gate2_ENVBD__backdrop_door_green_albedo.png=3579119B gate2_ENVBD__backdrop_door_green_roughness.png=2182043B gate2_ENVBD__backdrop_door_green_normal.png=3631737B gate2_ENVBD__backdrop_door_green_metallic.png=73598B wall=38.0
+[gate2] bake_pbr ENVBD__backdrop_door_green done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 74447 exited rc=0 after 41 s (max 900)

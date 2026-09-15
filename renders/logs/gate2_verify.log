@@ -1,0 +1,45 @@
+00:00.379  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate0/gate0_set.blend"
+03:05.949  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_A_procedural.exr'
+03:06.730  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_A2_procedural_seed2.exr'
+03:07.727  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_B0_baked_no_normal.exr'
+03:08.705  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_B_baked.exr'
+03:09.444  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_Ahi_procedural_hipoly.exr'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate2_verify] relinked 3 materials from master_delivery.blend
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake column albedo: 20.4 s coverage=0.67743 mean=[0.409344, 0.299029, 0.232393]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake column roughness: 20.0 s coverage=0.67827 mean=[0.734267, 0.734267, 0.734267]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake column normal: 6.0 s coverage=0.70415 mean=[0.50009, 0.4983, 0.990203]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake capital albedo: 24.4 s coverage=0.7567 mean=[0.488832, 0.418926, 0.170692]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake capital roughness: 23.6 s coverage=0.76645 mean=[0.826278, 0.826278, 0.826278]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake capital normal: 7.0 s coverage=0.75654 mean=[0.50307, 0.50008, 0.9568]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake ground albedo: 28.4 s coverage=0.67922 mean=[0.616901, 0.580986, 0.305444]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake ground roughness: 29.3 s coverage=0.67922 mean=[0.833396, 0.833396, 0.833396]
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2_verify] bake ground normal: 8.8 s coverage=0.67837 mean=[0.500011, 0.499998, 0.999996]
+[gate2_verify] A (procedural) 1.3 s -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_A_procedural.exr
+[gate2_verify] A2 (procedural, seed 12345) 0.6 s -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_A2_procedural_seed2.exr
+[gate2_verify] B0 (baked, no normal map) 0.8 s -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_B0_baked_no_normal.exr
+[gate2_verify] B (baked) 0.8 s -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_B_baked.exr
+[gate2_verify] A_hi (hi-poly, procedural) 0.6 s -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/verify/gate2_verify_Ahi_procedural_hipoly.exr
+[gate2_verify] column_sunlit: A=2.016187 B0=1.988437 (-1.38 %) B=1.988218 (-1.39 %) noise floor -1.04 % (739 px)
+[gate2_verify] column_shaded: A=1.399913 B0=1.403555 (+0.26 %) B=1.405444 (+0.40 %) noise floor -0.63 % (740 px)
+[gate2_verify]   capital_sunlit vs hi-poly: A_hi=4.012901 B-A_hi=+1.56 %  (A-A_hi +23.09 %)
+[gate2_verify] capital_sunlit: A=4.939375 B0=4.043303 (-18.14 %) B=4.075629 (-17.49 %) noise floor -2.35 % (218 px)
+[gate2_verify]   capital_shaded vs hi-poly: A_hi=2.511865 B-A_hi=-2.78 %  (A-A_hi +6.84 %)
+[gate2_verify] capital_shaded: A=2.683662 B0=2.373343 (-11.56 %) B=2.442141 (-9.00 %) noise floor -5.23 % (219 px)
+[gate0] STEP gate2_verify wall_s=189.1 verify.json=9070B worst_delta_pct=2.776 pass_3pct=True
+[gate2_verify] worst material-only box delta 2.776 %  pass(<=3 %)=True; with the normal map 17.487 %; noise floor 5.231 %; frame mean -0.032 % / -0.033 %
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 80360 exited rc=0 after 190 s (max 1800)

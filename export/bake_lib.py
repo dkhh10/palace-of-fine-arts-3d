@@ -108,7 +108,7 @@ def deviation(lo, hi):
 
 def run_bake(bake_type, samples, selected_to_active=False, cage=0.0, max_ray=0.0, margin=16,
              use_pass_direct=False, use_pass_indirect=False, use_pass_color=True, normal_space="TANGENT",
-             denoise=False):
+             denoise=False, clear=True):
     scene = bpy.context.scene
     scene.cycles.samples = samples
     scene.cycles.use_adaptive_sampling = False
@@ -119,7 +119,7 @@ def run_bake(bake_type, samples, selected_to_active=False, cage=0.0, max_ray=0.0
     b.max_ray_distance = max_ray
     b.margin = margin
     b.margin_type = "ADJACENT_FACES"
-    b.use_clear = True
+    b.use_clear = clear
     b.use_pass_direct = use_pass_direct
     b.use_pass_indirect = use_pass_indirect
     b.use_pass_color = use_pass_color
@@ -179,3 +179,102 @@ def set_ray_visibility(obj, value):
 def restore_ray_visibility(obj, prev):
     for a, v in prev.items():
         setattr(obj, a, v)
+
+
+# ---------------------------------------------------------------- Gate 2 additions
+SENTINEL = -1.0
+
+
+def fill_sentinel(img, value=SENTINEL):
+    """Write a value no bake can produce into every texel, so the texels the UV islands never touch are
+    identifiable afterwards. Gate 0 measured its statistics over the whole map, so an atlas that covers 40 %
+    of its image reported the fill colour as if it were baked data. Bake with use_clear=False after this."""
+    import numpy as np
+    n = img.size[0] * img.size[1] * 4
+    a = np.full(n, float(value), dtype=np.float32)
+    a[3::4] = 1.0
+    img.pixels.foreach_set(a)
+
+
+def masked_stats(img, label="", sentinel=SENTINEL):
+    """min / max / mean / std per channel over the COVERED texels only, plus the coverage fraction."""
+    import numpy as np
+    px = np.asarray(img.pixels[:], dtype=np.float32).reshape(-1, 4)
+    rgb = px[:, :3]
+    # strict: a texel only partly covered by an island comes back as a blend of the bake and the sentinel, so
+    # ANY negative channel means the texel is contaminated, not baked data (measured: a -0.5 fringe around every
+    # island when the threshold was sentinel/2).
+    m = rgb.min(axis=1) > -1e-4
+    cov = rgb[m] if m.any() else rgb[:0]
+    if cov.size == 0:
+        return dict(label=label, w=img.size[0], h=img.size[1], coverage=0.0, covered_px=0,
+                    total_px=int(rgb.shape[0]), min=None, max=None, mean=None, std=None)
+    return dict(label=label, w=img.size[0], h=img.size[1],
+                coverage=round(float(m.mean()), 5), covered_px=int(m.sum()), total_px=int(rgb.shape[0]),
+                min=[round(float(v), 6) for v in cov.min(axis=0)],
+                max=[round(float(v), 6) for v in cov.max(axis=0)],
+                mean=[round(float(v), 6) for v in cov.mean(axis=0)],
+                std=[round(float(v), 6) for v in cov.std(axis=0)])
+
+
+def flood_sentinel(img, fill_rgb, sentinel=SENTINEL):
+    """Replace the untouched texels with a constant (the covered mean). Keeps the mip chain and the UASTC
+    encoder from pulling a sentinel into the islands' edge blocks."""
+    import numpy as np
+    px = np.asarray(img.pixels[:], dtype=np.float32).reshape(-1, 4)
+    m = px[:, :3].min(axis=1) <= -1e-4
+    if m.any():
+        px[m, 0], px[m, 1], px[m, 2], px[m, 3] = fill_rgb[0], fill_rgb[1], fill_rgb[2], 1.0
+        img.pixels.foreach_set(px.reshape(-1))
+    return int(m.sum())
+
+
+def resize_copy(img, name, size):
+    """Box-filtered copy of a float image at `size` x `size`, plus the RMS error of that reduction."""
+    import bpy
+    import numpy as np
+    w, h = img.size
+    px = np.asarray(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    f = w // size
+    small = px.reshape(h // f, f, w // f, f, 4).mean(axis=(1, 3))
+    back = np.repeat(np.repeat(small, f, axis=0), f, axis=1)
+    rms = float(np.sqrt(((back[..., :3] - px[..., :3]) ** 2).mean()))
+    out = bpy.data.images.get(name)
+    if out:
+        bpy.data.images.remove(out)
+    out = bpy.data.images.new(name, size, size, alpha=False, float_buffer=True, is_data=img.is_float and True)
+    out.colorspace_settings.name = img.colorspace_settings.name
+    out.pixels.foreach_set(small.reshape(-1))
+    return out, round(rms, 6)
+
+
+def emit_bsdf_input(mat, socket_name):
+    """Route a Principled input into an Emission shader so a plain EMIT bake reads it back (Cycles has no
+    METALLIC bake type). Returns the state restore_emit() needs."""
+    nt = mat.node_tree
+    bsdf = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"), None)
+    out = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeOutputMaterial"), None)
+    if bsdf is None or out is None or not out.inputs["Surface"].links:
+        return None
+    emis = nt.nodes.new("ShaderNodeEmission")
+    emis.name = "BAKE_EMIT_PROBE"
+    src = bsdf.inputs[socket_name]
+    if src.links:
+        nt.links.new(src.links[0].from_socket, emis.inputs["Color"])
+    else:
+        v = src.default_value
+        if hasattr(v, "__len__"):                      # Base Color is an RGBA socket, Metallic a scalar
+            emis.inputs["Color"].default_value = (v[0], v[1], v[2], 1.0)
+        else:
+            emis.inputs["Color"].default_value = (float(v), float(v), float(v), 1.0)
+    prev = out.inputs["Surface"].links[0].from_socket
+    nt.links.new(emis.outputs["Emission"], out.inputs["Surface"])
+    return (nt, emis, out, prev)
+
+
+def restore_emit(state):
+    if not state:
+        return
+    nt, emis, out, prev = state
+    nt.links.new(prev, out.inputs["Surface"])
+    nt.nodes.remove(emis)

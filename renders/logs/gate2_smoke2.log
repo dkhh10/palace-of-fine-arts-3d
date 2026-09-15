@@ -1,0 +1,16 @@
+00:00.408  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/gate2_bake.blend"
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ARCH_rotunda__column_rose albedo: 36.3 s 2048->2048 coverage=0.40542 mean=[0.444314, 0.324702, 0.254636] bytes=8768904
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ARCH_rotunda__column_rose roughness: 38.8 s 2048->1024 coverage=0.40549 mean=[0.728982, 0.728982, 0.728982] bytes=1131855
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Baking map saved to internal image, save it externally or pack it
+[gate2] ARCH_rotunda__column_rose normal: 13.3 s 2048->2048 coverage=0.41118 mean=[0.500023, 0.499994, 0.999994] bytes=7902246
+[gate0] STEP bake_pbr_gate2:ARCH_rotunda__column_rose wall_s=93.6 gate2_ARCH_rotunda__column_rose_albedo.png=8768904B gate2_ARCH_rotunda__column_rose_roughness.png=1131855B gate2_ARCH_rotunda__column_rose_normal.png=7902246B wall=88.4
+[gate2] bake_pbr ARCH_rotunda__column_rose done
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 74500 exited rc=0 after 95 s (max 900)
