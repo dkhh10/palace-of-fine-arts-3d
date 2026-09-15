@@ -1,0 +1,6 @@
+00:00.614  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[gate0] STEP gate1_probe wall_s=2.6 probe.json=83400B trees=147 near_A=73 near_B=105 near_C=114 pbr_groups={'ARCH': 72, 'ORN': 13, 'ENV': 136}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 49087 exited rc=0 after 5 s (max 900)
