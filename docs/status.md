@@ -637,3 +637,6 @@ Next: QA 12b -> Gate 3 dispatch -> burn -> stop.
 
 ## 2026-09-15 · Final Gate 2 capture merged (viewer 9dcdc1e / 3be52fb): KTX2 detail set (33.6 MB), colour spaces right (cam05 box mean 144.8 vs Phase 5 145.4), QA-12-1 boxes moved < 1.5 % (material share exhausted); resident 1 305 MB at 1080p / 1 434 at 1440p; QA 12b dispatched
 Next: Gate 2 verdict -> Gate 3 bake dispatch -> burn -> stop.
+
+## 2026-09-15 · GATE 2 PASSED (QA 12b, 19412e4; decisions.md). Gate 3 bake dispatched (docs/briefs/phase6_gate3_bake.md: lightmaps, ORN/ARCH slot atlases, impostors, hero probe; ~6 h detached queue)
+Session burn (usage_from_transcripts, nominal):  455.69   opus-5 409, fable-5-1 46 . Next session: Gate 3 report -> review -> merge -> Gate 4 viewer (docs/briefs/phase6_gate4_viewer.md) -> QA round 13 (lightmaps alone) -> Gate 4 QA rounds toward the 6a definition of done.

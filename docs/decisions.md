@@ -347,3 +347,12 @@ The detail layer now ships the honest slope of the Phase 5 materials (Bump Dista
 derivation yields the 10x the QA box asks for, and a gain knob or a generated grain map would be invented relief. The rest of the cam05 pier-face
 amplitude is shading and occlusion, which Gate 2's direct mode excludes by construction and Gate 3's lightmaps carry. QA 12b re-scores with that
 attribution; Gate 2 passes on material rows only if the material share is within parity.
+
+## 2026-09-15 · Gate 2 PASSED (QA round 12b, 19412e4) — materials frozen
+62 material sets (60 baked + 2 from the atlas split), every ARCH/ground set with a real normal, a 33.6 MB tiling detail layer on 20 materials, 62/62 attached.
+Material rows: no station's residual is a material gap (the critic attributes every remaining deficit to shade/occlusion, per-instance weathering — Gate 3 —
+or the water — Gate 4). Where the sun reaches both frames the export is at or above Phase 5 (sunlit attic mid 1.10x / std 1.17x, pedestals 1.33x).
+Two rounds were needed (12, 12b): the missing ARCH normals and the merged-atlas coverage. Textures 953 MB resident (246 under budget; impostor lever unspent),
+hero 267 draws, GPU 1.8 ms at 1440p. Carried to Gate 3: QA-12b-1 sun-less stone reads olive (16-22 % of cam02/cam06 building pixels G > R; 0 % in the
+albedos themselves — the direct-mode PMREM diffuse; lightmaps replace it), QA-12b-2 S-colonnade wall blow-out 201-221 (shade), QA-12-4 per-instance
+weathering via the slot atlases, the sunlit-attic saturation at 0.94x must not drift further. QA-12-2 dome cap sat 0.69x stays open, non-blocking.
