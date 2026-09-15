@@ -134,7 +134,45 @@ for cls, objs in sets.items():
                                   texcoord_sets=sorted({k for m in doc.get("meshes", [])
                                                         for p in m["primitives"] for k in p["attributes"]
                                                         if k.startswith("TEXCOORD")}))
+    assert "TEXCOORD_1" in report["classes"][cls]["texcoord_sets"] or cls == "env", \
+        f"UV2 did not reach {cls}.gltf: {report['classes'][cls]['texcoord_sets']}"
     step.done(path, objects=len(objs), tris=tris, meshes=len(doc.get("meshes", [])))
+
+# ---------------------------------------------------------------- UV1 atlas check
+# The UV1 atlas was packed by one multi-object smart project per group. If that had failed, every mesh in the
+# group would sit on the full [0,1] square and the Gate 2 bake would overwrite itself. Measure it: per group,
+# the per-mesh UV1 bounding box and the worst pairwise box overlap.
+step = g0.Step("gltf_gate1:uv1_atlas")
+groups = {}
+for mn, m in setjson["meshes"].items():
+    me = bpy.data.meshes.get(mn)
+    if me is None or g1.UV1 not in me.uv_layers:
+        continue
+    if m["cls"] not in ("ARCH", "ORN") and m.get("kind") != "ground":
+        continue
+    uv = me.uv_layers[g1.UV1].uv
+    us = [uv[i].vector[0] for i in range(len(uv))]
+    vs = [uv[i].vector[1] for i in range(len(uv))]
+    if not us:
+        continue
+    groups.setdefault(m["material"], []).append(
+        (mn, [round(min(us), 4), round(min(vs), 4), round(max(us), 4), round(max(vs), 4)]))
+atlas = {}
+for mat, rows in sorted(groups.items()):
+    worst = 0.0
+    for i in range(len(rows)):
+        for j in range(i + 1, len(rows)):
+            a1, b1 = rows[i][1], rows[j][1]
+            ox = max(0.0, min(a1[2], b1[2]) - max(a1[0], b1[0]))
+            oy = max(0.0, min(a1[3], b1[3]) - max(a1[1], b1[1]))
+            area = max(1e-9, min((a1[2] - a1[0]) * (a1[3] - a1[1]), (b1[2] - b1[0]) * (b1[3] - b1[1])))
+            worst = max(worst, ox * oy / area)
+    atlas[mat] = dict(meshes=len(rows), worst_box_overlap_frac=round(worst, 4),
+                      boxes={r[0]: r[1] for r in rows})
+report["uv1_atlas"] = atlas
+report["uv1_atlas_worst"] = sorted(((v["worst_box_overlap_frac"], k) for k, v in atlas.items()),
+                                   reverse=True)[:5]
+step.done(groups=len(atlas), worst=report["uv1_atlas_worst"][:3])
 
 # ---------------------------------------------------------------- draw calls inside the cam01 frustum
 step = g0.Step("gltf_gate1:cam01_frustum")
