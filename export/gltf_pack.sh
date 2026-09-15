@@ -12,6 +12,46 @@ ROOT=${HERE:h}
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 export PATH="$MAIN/tools/bin:$PATH"
 
+# ---------------------------------------------------------------- Gate 2: the PBR set (no glb is rebuilt here)
+if [ "$1" = "--gate2" ]; then
+  OUT="$ROOT/export/out/gate2"
+  KTX="$OUT/tex_ktx2"
+  ETC="$OUT/tex_ktx2_etc1s"
+  TEXIN="$OUT/tex"
+  command -v toktx >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
+  rm -rf "$KTX" "$ETC"; mkdir -p "$KTX" "$ETC"
+  t0=$(date +%s); n=0
+  for f in "$TEXIN"/gate2_*.png(N); do
+    b=${f:t:r}
+    # Gate 1 review finding 1: colour is the default, data maps are the exception. Only the albedo is sRGB.
+    case "$b" in
+      *_albedo) oetf=srgb ;;
+      *)        oetf=linear ;;
+    esac
+    toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf $oetf \
+          "$KTX/$b.ktx2" "$f" >/dev/null
+    n=$((n+1))
+  done
+  t1=$(date +%s)
+  echo "[gate2] STEP toktx_uastc wall_s=$((t1-t0)) files=$n bytes=$(du -k "$KTX" 2>/dev/null | tail -1 | cut -f1)KiB"
+  # the mobile ETC1S variants: only the timing sample the brief asks for (the walk-near ARCH groups).
+  SAMPLE=$(python3 "$HERE/gate2_sample.py" 2>/dev/null)
+  t2=$(date +%s); m=0
+  for b in ${=SAMPLE}; do
+    for f in "$TEXIN"/gate2_${b}_*.png(N); do
+      k=${f:t:r}
+      case "$k" in
+        *_albedo) oetf=srgb ;;
+        *)        oetf=linear ;;
+      esac
+      toktx --t2 --encode etc1s --clevel 2 --qlevel 128 --genmipmap --assign_oetf $oetf \
+            "$ETC/$k.ktx2" "$f" >/dev/null && m=$((m+1))
+    done
+  done
+  echo "[gate2] STEP toktx_etc1s wall_s=$(( $(date +%s)-t2 )) files=$m bytes=$(du -k "$ETC" 2>/dev/null | tail -1 | cut -f1)KiB sample=\"$SAMPLE\""
+  exit 0
+fi
+
 # ---------------------------------------------------------------- Gate 1: one glb per class
 if [ "$1" = "--gate1" ]; then
   OUT="$ROOT/export/out/gate1"

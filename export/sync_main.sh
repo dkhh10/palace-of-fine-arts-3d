@@ -16,6 +16,13 @@ if [ -d "$ROOT/export/out/gate1" ]; then
         "$ROOT/export/out/gate1/" "$MAIN/export/out/gate1/"
   echo "[gate1] synced to $MAIN/export/out/gate1 ($(du -sk "$MAIN/export/out/gate1" | cut -f1) KiB)"
 fi
+# Gate 2: same rule - no --delete, the two bake blends (400 MB) stay in this worktree.
+if [ -d "$ROOT/export/out/gate2" ]; then
+  mkdir -p "$MAIN/export/out/gate2"
+  rsync -a --exclude 'gate2_bake.blend*' --exclude 'gate2_orn_bake.blend*' \
+        "$ROOT/export/out/gate2/" "$MAIN/export/out/gate2/"
+  echo "[gate2] synced to $MAIN/export/out/gate2 ($(du -sk "$MAIN/export/out/gate2" | cut -f1) KiB)"
+fi
 mkdir -p "$MAIN/export/out/bake_queue"
 cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 for f in "$ROOT"/renders/web/gate0_*.png(N); do cp -f "$f" "$MAIN/renders/web/"; done
