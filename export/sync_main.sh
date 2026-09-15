@@ -24,6 +24,15 @@ if [ -d "$ROOT/export/out/gate2" ]; then
         "$ROOT/export/out/gate2/" "$MAIN/export/out/gate2/"
   echo "[gate2] synced to $MAIN/export/out/gate2 ($(du -sk "$MAIN/export/out/gate2" | cut -f1) KiB)"
 fi
+# Gate 3: same rule - no --delete. The two bake blends (380 MB) and the float EXR sources (tex/, ~2 GB)
+# stay in this worktree; the KTX2, the .hdr probe/sky, the manifest, the UV2 and vertex hand-off npz ship.
+if [ -d "$ROOT/export/out/gate3" ]; then
+  mkdir -p "$MAIN/export/out/gate3"
+  rsync -a --exclude 'gate3_bake.blend*' --exclude 'gate3_imp.blend*' --exclude 'tex/' \
+        --exclude 'slots/' --exclude 'vertex/' --exclude 'impostor/*.png' --exclude 'probe/*.exr' \
+        "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
+  echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
+fi
 mkdir -p "$MAIN/export/out/bake_queue"
 cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 for f in "$ROOT"/renders/web/gate0_*.png(N); do cp -f "$f" "$MAIN/renders/web/"; done
