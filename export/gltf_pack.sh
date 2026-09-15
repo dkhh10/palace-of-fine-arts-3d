@@ -83,6 +83,7 @@ man["textures"] = dict(schema=prev_tex.get("schema"), ktx2_dir="tex_ktx2", files
 json.dump(man, open(man_p, "w"), indent=1)
 print("[gate1] manifest glb:", json.dumps(man["glb"]["per_class"]))
 PY2
+  python3 "$HERE/verify_glb.py" "$OUT" || exit 1
   exit 0
 fi
 

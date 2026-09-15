@@ -206,6 +206,22 @@ for cls, objs in sets.items():
         doc = json.loads(path.read_text())
         report["classes"].setdefault(cls, {})
     report.setdefault("treeboard_alpha_mask", []).extend(patched)
+    # QA-11c-1: 1379 shrub nodes were written with NO transform and their meshes are local, so the whole
+    # planting drew stacked at the origin. A mesh node may legitimately have no transform only when its
+    # Blender object's transform is identity (the merged ARCH/ENV groups carry world-space geometry).
+    identity_objs = {o.name for o in objs if o.matrix_world.translation.length < 1e-6
+                     and (o.matrix_world.to_3x3() - __import__("mathutils").Matrix.Identity(3)).median_scale < 1e-6}
+    mesh_nodes = [nd for nd in doc.get("nodes", []) if "mesh" in nd]
+    untransformed = [nd.get("name", "?") for nd in mesh_nodes
+                     if "matrix" not in nd and not any(k in nd for k in ("translation", "rotation", "scale"))]
+    report["classes"][cls]["mesh_nodes"] = len(mesh_nodes)
+    report["classes"][cls]["untransformed_nodes"] = len(untransformed)
+    report["classes"][cls]["identity_objects"] = len(identity_objs)
+    assert len(mesh_nodes) == len(objs), \
+        f"{cls}.gltf has {len(mesh_nodes)} mesh nodes for {len(objs)} exported objects"
+    assert len(untransformed) <= len(identity_objs), (
+        f"{cls}.gltf: {len(untransformed)} mesh nodes carry no transform but only {len(identity_objs)} of the "
+        f"{len(objs)} objects have an identity transform - e.g. {untransformed[:6]}")
     bad = []
     for mi, m in enumerate(doc.get("materials", [])):
         for slot in ("baseColorTexture", "metallicRoughnessTexture"):
@@ -220,6 +236,16 @@ for cls, objs in sets.items():
     assert not bad, (f"{cls}.gltf has materials whose texture texCoord is negative (three.js compiles that "
                      f"into an undeclared uv attribute and the whole program fails to link): {bad}")
     step.done(path, objects=len(objs), tris=tris, meshes=len(doc.get("meshes", [])))
+
+# second assertion (QA-11c-1): nothing may sit stacked at the world origin unless the export set says so
+near = {}
+for name, a in setjson["assets"].items():
+    loc = a.get("location_blender")
+    if loc and (loc[0] ** 2 + loc[1] ** 2 + loc[2] ** 2) ** 0.5 < 1.0:
+        near.setdefault(a["cls"], []).append(name)
+report["near_origin"] = {k: len(v) for k, v in near.items()}
+for cls_, names_ in near.items():
+    assert len(names_) <= 1, (f"{len(names_)} {cls_} objects sit within 1 m of the world origin: {names_[:8]}")
 
 assert report.get("treeboard_alpha_mask"), \
     "MAT_EXP_treeboard never reached a glTF: the far-tree boards would ship opaque again"

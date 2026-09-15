@@ -256,6 +256,30 @@ Fixed on `phase6-export` after `docs/reviews/phase6_export_gate1_review.md` (5 f
 Also seen by the cam04 probe and left for ENV/QA, not an export defect: `ENV_shrub_big3_0796_LOD2` sits **2.4 m**
 from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
 
+### QA round 11c (one blocker, the last of Gate 1)
+
+11. **QA-11c-1 — 1379 shrubs drew stacked at the world origin.** Root cause is in the source, not the writer: in
+    `master_delivery.blend` **only the `_LOD1` ENV objects carry a placement** — every `_LOD0` and `_LOD2` sibling
+    sits at the origin as an unplaced stub (measured: shrubs 1379/1379 LOD1 non-identity, 1379/1379 LOD0 and
+    1379/1379 LOD2 at the origin; `ENV_shrub_agap0_0005_LOD1` is at (-35.04, 2.93, -0.66), its LOD2 twin at
+    (0,0,0)). Taking the LOD2 **object** for the shrub budget therefore took the stub. The shrub export now takes
+    the **LOD1 object for the transform and its `_LOD2` mesh for the geometry**, exactly as the near trees already
+    did; the exported object keeps the `_LOD2` name and records `placement_from`. Triangles are unchanged
+    (135 880 placed), so no budget moves.
+
+    Three assertions were added so this class of bug cannot ship again:
+    * `gate1_set.py` — every exported asset records `location_blender` (its world bbox centre), and **no class may
+      have more than one object within 1 m of the world origin**;
+    * `gltf_gate1.py` — per class, `mesh nodes == exported objects`, and **a mesh node may carry no transform only
+      if its Blender object's transform is identity** (arch 2 = 2, orn 0 = 0, env 10 = 10, ground 4 = 4 — the
+      merged world-space groups), plus the same near-origin check read back from `export_set.json`;
+    * `export/verify_glb.py` (new, run at the end of `gltf_pack.sh --gate1`) — per class the **triangles the glb
+      actually draws** (primitive triangles x instance count) must match `export_set.json` within 1 %. Node counts
+      prove nothing after gltfpack merges single-use nodes (564 ARCH objects -> 442 nodes, 4 ground objects -> 1);
+      triangles do. Measured: arch -0.185 %, orn -0.157 %, env 0.000 %, ground 0.000 % — the small deficits are
+      gltfpack dropping degenerate triangles, and a single dropped placement group would be orders of magnitude
+      larger (the stacked shrubs were 8.8 % of ENV).
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the

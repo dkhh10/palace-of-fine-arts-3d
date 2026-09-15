@@ -168,7 +168,12 @@ def build():
         elif n.startswith("ENV_"):
             if n.startswith("ENV_tree") and lod == 1:
                 src["ENV_TREE"].append(ob)
-            elif n.startswith("ENV_shrub") and lod == 2:
+            elif n.startswith("ENV_shrub") and lod == 1:
+                # QA-11c-1: in master_delivery ONLY the _LOD1 objects carry a placement - every _LOD0 and
+                # _LOD2 sibling sits at the world origin as an unplaced stub (measured: 1379/1379 shrub LOD1
+                # objects non-identity, 1379/1379 LOD2 at the origin). Selecting the LOD2 OBJECT therefore
+                # stacked 1379 shrubs inside the rotunda. Take the LOD1 object for the transform and swap in
+                # its LOD2 mesh for the geometry, exactly as the near trees already do.
                 src["ENV_SHRUB"].append(ob)
             elif lod is None:
                 (src["ENV_GROUND"] if ENV_GROUND_RE.match(n) else
@@ -510,10 +515,15 @@ def build():
     env_so_far = sum(meshes[m.data.name]["tris"] for m in env_ground + backdrop)
     shrub_est = 0
     shrub_by_mesh = {}
+    shrub_lod2 = {}
     for ob in src["ENV_SHRUB"]:
+        lod2_name = re.sub(r"_LOD1$", "_LOD2", ob.data.name)
+        me2 = bpy.data.meshes.get(lod2_name)
+        assert me2 is not None, f"{ob.name}: no LOD2 mesh {lod2_name} for the shrub budget"
+        shrub_lod2[ob.data.name] = me2
         shrub_by_mesh.setdefault(ob.data.name, []).append(ob)
     for mname, obs in shrub_by_mesh.items():
-        shrub_est += tris_of(obs[0].data) * len(obs)
+        shrub_est += tris_of(shrub_lod2[mname]) * len(obs)
     tree_allow = max(0, g1.CLASS_BUDGET["ENV"] - env_so_far - shrub_est - 2 * len(tree_rows))
     # thin every prototype the within-radius set uses, then spend the allowance on real numbers
     thin_cache, thin_report = {}, {}
@@ -603,19 +613,22 @@ def build():
                                   height_m=t["height_m"], lod1_tris=t["lod1_tris"]) for t in near]
     # shrubs at LOD2, shared mesh per prototype
     for mname, obs in sorted(shrub_by_mesh.items()):
-        me = bpy.data.meshes.new_from_object(obs[0].evaluated_get(dg))
-        me.name = f"EXPM_{mname}"
+        me2 = shrub_lod2[mname]
+        me = me2.copy()                      # datablock copy: no depsgraph, no modifiers on shrubs
+        me.name = f"EXPM_{me2.name}"
         t = tris_of(me)
-        meshes[me.name] = dict(cls="ENV", src_mesh=mname, src_tris=t, tris=t, target=None, placements=len(obs),
+        meshes[me.name] = dict(cls="ENV", src_mesh=me2.name, src_tris=t, tris=t, target=None,
+                               placements=len(obs),
                                material=(me.materials[0].name if me.materials else None), instanced=True,
-                               src_material=None, kind="shrub")
+                               src_material=None, kind="shrub", placement_from=mname)
         for ob in obs:
-            no = bpy.data.objects.new(ob.name, me)
+            name2 = re.sub(r"_LOD1$", "_LOD2", ob.name)
+            no = bpy.data.objects.new(name2, me)
             colls["EXP_ENV"].objects.link(no)
-            placements.append((no, ob))
+            placements.append((no, ob))      # transform comes from the PLACED LOD1 object
             assets[no.name] = dict(cls="ENV", mesh=me.name, tris=t,
                                    material=(me.materials[0].name if me.materials else None),
-                                   instanced=True, kind="shrub")
+                                   instanced=True, kind="shrub", placement_from=ob.name)
     rep["env_tree_s"] = round(time.time() - t0, 1)
 
     # ---------------------------------------------------------------- 7. placements (assert before the UVs)
@@ -634,6 +647,26 @@ def build():
     assert worst < 1e-4, f"{worst_name} is {worst:.5f} m from its source"
     rep["placement_max_error_m"] = round(worst, 8)
     rep["placements_checked"] = len(placements)
+
+    # world-space bounding-box centre of every exported object: the manifest's placement of record, and what
+    # export/gltf_gate1.py asserts the glTF nodes reproduce (QA-11c-1).
+    near_origin = {}
+    for name, a in assets.items():
+        ob = bpy.data.objects.get(name)
+        if ob is None:
+            continue
+        cs = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+        ctr = sum(cs, Vector()) / 8.0
+        a["location_blender"] = [round(v, 4) for v in ctr]
+        a["identity_transform"] = bool(ob.matrix_world.translation.length < 1e-6
+                                       and abs(ob.matrix_world.to_scale().length - 1.7320508) < 1e-4)
+        if ctr.length < 1.0:
+            near_origin.setdefault(a["cls"], []).append(name)
+    rep["near_origin_objects"] = {k: sorted(v) for k, v in near_origin.items()}
+    rep["near_origin_counts"] = {k: len(v) for k, v in near_origin.items()}
+    for cls_, names_ in near_origin.items():
+        assert len(names_) <= 1, (f"{len(names_)} {cls_} objects have their world bbox centre within 1 m of "
+                                  f"the origin - unplaced stubs stacked at the origin: {names_[:8]}")
 
     # ---------------------------------------------------------------- 8. UVs
     t0 = time.time()
