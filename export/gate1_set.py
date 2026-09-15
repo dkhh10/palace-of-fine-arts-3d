@@ -612,22 +612,58 @@ def build():
             continue
         uv_groups.setdefault(a["material"], set()).add(ob.data.name)
     uv1_done = set()
+    atlas_tiles = {}
     for mat_name, mesh_names in sorted(uv_groups.items()):
         objs = []
         for mn in sorted(mesh_names):
             if mn in uv1_done:
                 continue
             uv1_done.add(mn)
-            o = bpy.data.objects.new(f"EXP_UVTMP_{mn}", bpy.data.meshes[mn])
+            me_ = bpy.data.meshes[mn]
+            # the source UV layers are dropped here so UV1 is layer 0 (TEXCOORD_0) and UV2 layer 1; without
+            # this the glb carried three UV sets and the first one was the unused inherited map.
+            while len(me_.uv_layers):
+                me_.uv_layers.remove(me_.uv_layers[0])
+            o = bpy.data.objects.new(f"EXP_UVTMP_{mn}", me_)
             tmp.objects.link(o)
             objs.append(o)
         if not objs:
             continue
         smart_project(objs, g1.UV1, TILE_MARGIN)
+        # smart_project packs EACH object into the full [0,1] even in multi-object edit mode (measured: the
+        # five multi-mesh ARCH groups came back 100 % overlapped). Pack them here instead: a square tile per
+        # mesh with side proportional to sqrt(its surface area), shelf-packed into the unit square, so texel
+        # density follows the asset and the Gate 2 bake of one atlas cannot overwrite itself.
+        if len(objs) > 1:
+            areas = [(o, max(1e-9, sum(p.area for p in o.data.polygons))) for o in objs]
+            areas.sort(key=lambda t: -t[1])
+            tot_a = sum(a for _, a in areas)
+            sides = [(o, math.sqrt(a / tot_a)) for o, a in areas]
+            k = (1.0 - 2 * TILE_MARGIN) / math.sqrt(sum(sd * sd for _, sd in sides) * 1.6)
+            sides = [(o, sd * k) for o, sd in sides]
+            x = y = TILE_MARGIN
+            row_h = 0.0
+            tiles = {}
+            for o, sd in sides:
+                if x + sd > 1.0 - TILE_MARGIN:
+                    x = TILE_MARGIN
+                    y += row_h + TILE_MARGIN
+                    row_h = 0.0
+                if y + sd > 1.0 - TILE_MARGIN:          # ran out of room: shrink the rest into the last row
+                    sd = max(1e-3, 1.0 - TILE_MARGIN - y)
+                tiles[o.data.name] = (x, y, sd)
+                uvs = o.data.uv_layers[g1.UV1].uv
+                for i in range(len(uvs)):
+                    u, v = uvs[i].vector
+                    uvs[i].vector = (x + u * sd, y + v * sd)
+                x += sd + TILE_MARGIN
+                row_h = max(row_h, sd)
+            atlas_tiles[mat_name] = {k2: [round(t, 5) for t in v2] for k2, v2 in tiles.items()}
         for o in objs:
             tmp.objects.unlink(o)
             bpy.data.objects.remove(o, do_unlink=True)
     rep["uv1_groups"] = len(uv_groups)
+    rep["uv1_atlas_tiles"] = atlas_tiles
     # UV2: a [0,1] lightmap unwrap per unique bakeable mesh
     uv2_meshes = [mn for mn, m in meshes.items()
                   if m["cls"] in ("ARCH", "ORN") or (m["cls"] == "ENV" and m.get("kind") == "ground")]

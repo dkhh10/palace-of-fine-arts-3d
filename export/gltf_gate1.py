@@ -213,23 +213,19 @@ from mathutils import Vector  # noqa: E402
 cam = bpy.data.objects[g0.HERO_CAM]
 scene.camera = cam
 dg = bpy.context.evaluated_depsgraph_get()
-planes = []
-mw = cam.matrix_world
-frame = [mw @ v for v in cam.data.view_frame(scene=scene)]
-origin = mw.translation
-for i in range(4):
-    a_, b_ = frame[i] - origin, frame[(i + 1) % 4] - origin
-    planes.append((origin, b_.cross(a_).normalized()))
-fwd = (mw.to_quaternion() @ Vector((0, 0, -1))).normalized()
-planes.append((origin + fwd * cam.data.clip_start, fwd))
-planes.append((origin + fwd * cam.data.clip_end, -fwd))
+from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
 
 
 def visible(ob):
-    cs = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
-    for p, n in planes:
-        if all((c - p).dot(n) < 0 for c in cs):
-            return False
+    """Conservative bbox test in normalised camera space (world_to_camera_view: u,v in [0,1] inside the frame,
+    z = distance in front). Reject only when every corner fails the SAME test."""
+    cs = [world_to_camera_view(scene, cam, ob.matrix_world @ Vector(c)) for c in ob.bound_box]
+    if all(c.z <= cam.data.clip_start for c in cs):
+        return False
+    if all(c.x < 0 for c in cs) or all(c.x > 1 for c in cs):
+        return False
+    if all(c.y < 0 for c in cs) or all(c.y > 1 for c in cs):
+        return False
     return True
 
 
