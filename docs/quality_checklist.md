@@ -528,3 +528,52 @@ Station averages (geometry rows, Phase 5 -> Gate 1): 01 **3.50** (-0.20), 02 **3
 04 **3.00** (-0.10), 05 **2.90** (-0.30), 06 **2.80** (-0.30). Station averages are all within 0.5; **three rows are
 not** — cam06 Silhouette -1.0 (backdrop gone), cam02 and cam05 Ornament -1.0 (attic panels) — and the parity rule is per
 row. Full report `docs/qa_round_11.md`; composite `renders/web/round11_gate.png`.
+
+## Round 11b — Phase 6 Gate 1 re-check (2026-09-15, export `ec4832b`, `?billboards=0`). **GATE 1: FAIL again.**
+
+**Both round-11 blockers are FIXED.** B1: all four Gate 1 glTFs carry zero negative `texCoord`, the ten
+`MAT_EXP_ENVBD__*` are plain grey factors with no probe texture, the page log has no shader error and no `useProgram`
+warning, programs 13 -> 12, and the backdrop is visibly back (cam06 city blocks / roofs / lawn / hill-forest ridge,
+cam05 horizon, cam01 horizon mass) — 151,737 placed tris draw again. B2: `voxel_remeshed` is empty, the three attic
+panels are built from the Phase 5 `_LOD1` (35.9k/35.7k/35.8k -> 7,999, exported bbox delta 8.8/5.6/4.2 mm) and read as
+continuous relief at 100 % at cam01 r1c2, cam02 (690,165)-(890,290) and cam05 (700,130)-(1200,220): no voids, no
+shredding. The restated acceptance from round 11 ("continuous relief at 100 % at every station where it is > 100 px")
+is met.
+
+**New blocker, and the reason the re-capture did not settle the gate: `?billboards=0` hides only the VIEWER's
+placeholders.** The export ships its own 127 far-tree stand-ins *inside* `env.glb` — `ENV_treeboard_000..126`,
+`kind: "tree_board"`, two triangles, `MAT_EXP_treeboard` (grey, **no `alphaMode`, therefore OPAQUE**), axis-aligned,
+scaled to the tree's width and height. Measured coverage (`scripts/qa_r11b_probe.py boards`, exact quad projection,
+upper bound before the depth test): **cam01 16.0 %, cam02 19.7 %, cam03 23.2 %, cam04 0 %, cam05 25.5 %, cam06 19.6 %
+of frame, and 44.5 % of the cam01 main-arch opening box (917,465)-(1000,620).** The widest board is 42.2 x 30.9 m, 43 of
+127 are over 20 m wide, and 94 of the 127 far-list trees are within 40 m of the walk path. With `?billboards=1` (the
+default) the same 127 trees draw twice.
+
+**Rules added by this round (binding):**
+1. The round-11 rule is restated with teeth: *every* placeholder set must be off in a gate capture that scores
+   geometry — the viewer's quads **and** the exported `ENV_treeboard_*` boards. A capture with either of them in frame
+   cannot satisfy Scale cues, the tile pass or the opening test.
+2. **The name-sweep pattern is incomplete.** `placeholder|proxy|blocker|fill|occlud|block|dummy|temp|card` has no
+   `board`, `impostor` or `billboard` term, so `export/name_sweep.py` reported 2540 objects / 0 hits / PASS with 127
+   placeholders in the render. Add `board|impostor|billboard|standin` to both `scripts/qa_name_sweep.py` and
+   `export/name_sweep.py`, and put the boards on this exemption record with their coverage, as the viewer quads are.
+3. **A gate capture's tiles must be re-cut from the frames being scored.** `renders/web/tiles/` still held the 14:42
+   round-11 tiles beside a 15:31 capture; QA re-cut them before viewing.
+4. **A claimed encoding change must be proven in pixels.** The sRGB re-encode is in `gltf_pack.sh` (85 KTX2, was 81) but
+   is invisible in the capture: cam04 — no boards, no backdrop, nothing else changed — is pixel-identical to round 11
+   (frame mean 88.51 -> 88.52). Tonal rows stay unscored either way: a neutral-grey pass against a full-colour Phase 5
+   render makes every luma ratio in `gate1_pairs.json` a sanity check, never a metric.
+
+**Still open from round 11:** QA-11-9, the cam04 ceiling sliver (a thin normal-mapped wedge plus a loose shard across
+the coffers, (400,80)-(600,350) at 100 %) — a decimation artefact on the building itself, named a blocker this round.
+QA-11-1 / QA-11-3 (colonnade-roof and south-colonnade canopy) carry to the Gate 3 impostor bake. QA-11-5 (ripple-free
+mirror water) carries to Gate 4.
+
+**Scores (geometry rows, Phase 5 round 09 -> Gate 1 round 11b):** 01 **3.60** (-0.10), 02 **3.20** (-0.10), 03 **2.60**
+(0.00), 04 **3.00** (-0.10), 05 **3.10** (-0.10), 06 **3.00** (-0.10). **Every row is within 0.5 for the first time** —
+but provisionally: five rows sit exactly at the limit and four of them (Scale cues at 01, 02, 05, 06) are scored on
+frames where a placeholder covers 16-26 % of the image. Silhouette against the Phase 5 Cycles hero is unchanged:
+scale 1.0000, dx 0.0, dy 0.0, apex delta 0.00 %H (apex row 84, corner-top row 209 in both). Budget and perf pass on
+every line: 2,736,568 placed tris of 3.0 M, 154 batches (140 at cam01), 1440p GPU 0.5-1.5 ms median — the hero is 6.8 %
+of the 22.2 ms a 45 fps frame allows — resident 1.016 GB of 1.2 GB. Full report `docs/qa_round_11b.md`; composite
+`renders/web/round11b_gate.png`.
