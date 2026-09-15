@@ -262,8 +262,11 @@ def emit_bsdf_input(mat, socket_name):
     if src.links:
         nt.links.new(src.links[0].from_socket, emis.inputs["Color"])
     else:
-        v = float(src.default_value)
-        emis.inputs["Color"].default_value = (v, v, v, 1.0)
+        v = src.default_value
+        if hasattr(v, "__len__"):                      # Base Color is an RGBA socket, Metallic a scalar
+            emis.inputs["Color"].default_value = (v[0], v[1], v[2], 1.0)
+        else:
+            emis.inputs["Color"].default_value = (float(v), float(v), float(v), 1.0)
     prev = out.inputs["Surface"].links[0].from_socket
     nt.links.new(emis.outputs["Emission"], out.inputs["Surface"])
     return (nt, emis, out, prev)

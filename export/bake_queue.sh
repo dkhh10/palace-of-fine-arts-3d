@@ -77,14 +77,21 @@ PY
   cp -f "$STATUS" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 }
 
+# Review finding 1 (phase6_bake_gate2_review.md): matching the SCRIPT NAME exempted any registered Blender
+# running a bake script, so a second queue - the export engineer's Gate 1 run, or a second --gate2 runner -
+# would have been treated as "our own job" and the two would have baked concurrently. blender_run.sh writes
+# BLENDER_RUN_OWNER as field 3 of the state file it names after the Blender pid, so tagging it with this
+# runner's own pid exempts exactly the one child this runner started and nothing else.
+RUNNER_TAG="bake_queue_${GATE}_$$"
+export BLENDER_RUN_OWNER="$RUNNER_TAG"
 gpu_free () {
-  # no LIVE registered Blender pid other than one this queue itself started
+  # no LIVE registered Blender pid other than the one this runner itself started
   local busy=0
   for f in "$STATE"/*(N); do
     local pid=${f:t}
     [[ "$pid" == <-> ]] || continue
     kill -0 "$pid" 2>/dev/null || continue          # stale registration, ignore
-    if grep -q "bake_orn.py\|bake_pbr.py" "$f" 2>/dev/null; then continue; fi   # our own job
+    [[ "$(awk 'NR==1{print $3}' "$f" 2>/dev/null)" == "$RUNNER_TAG" ]] && continue   # our own child
     busy=1
   done
   return $busy

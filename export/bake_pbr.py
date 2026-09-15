@@ -65,7 +65,12 @@ if "--gate2" in g0.script_argv():
         prev_hidden, extra, cage = None, [], 0.0
     bpy.context.view_layer.update()
 
-    BAKE = dict(albedo=("DIFFUSE", g2.SAMPLES_ALBEDO, "sRGB", (0.5, 0.5, 0.5)),
+    # Review finding 2: Cycles' DIFFUSE colour pass weights base colour by (1 - Metallic), so a material with
+    # a metallic input bakes its albedo dark and the viewer, which also applies `metallic`, attenuates it a
+    # second time. For those materials the albedo is read through the same Emission rewire the metallic map
+    # uses, which returns the Base Color itself.
+    albedo_via_emit = bool(job.get("metallic"))
+    BAKE = dict(albedo=(("EMIT" if albedo_via_emit else "DIFFUSE"), g2.SAMPLES_ALBEDO, "sRGB", (0.5, 0.5, 0.5)),
                 roughness=("ROUGHNESS", g2.SAMPLES_ROUGHNESS, "Non-Color", (0.5, 0.5, 0.5)),
                 normal=("NORMAL", g2.SAMPLES_NORMAL, "Non-Color", (0.5, 0.5, 1.0)))
     margin = 8 if (len(job["meshes"]) > 1 and not sta) else g2.BAKE_MARGIN_PX
@@ -81,9 +86,18 @@ if "--gate2" in g0.script_argv():
             bl.attach_target(ob, img, g2.UV1)
         bl.select_only(targets[0], *(targets[1:] + extra))
         kw = dict(samples=samples, selected_to_active=sta, cage=cage, max_ray=cage, margin=margin)
+        emit_states = []
         if kind == "albedo":
-            kw.update(use_pass_direct=False, use_pass_indirect=False, use_pass_color=True)
-        wall = bl.run_bake(btype, clear=False, **kw)   # the sentinel fill IS the clear
+            if albedo_via_emit:
+                emit_states = [bl.emit_bsdf_input(bpy.data.materials[n], "Base Color")
+                               for n in job["metallic"]]
+            else:
+                kw.update(use_pass_direct=False, use_pass_indirect=False, use_pass_color=True)
+        try:
+            wall = bl.run_bake(btype, clear=False, **kw)   # the sentinel fill IS the clear
+        finally:
+            for es in emit_states:
+                bl.restore_emit(es)
         st = bl.masked_stats(img, kind)
         mean = st["mean"] or list(neutral)
         n_flood = bl.flood_sentinel(img, mean if kind != "normal" else neutral)
@@ -94,7 +108,9 @@ if "--gate2" in g0.script_argv():
         bl.save_png(out_img, path, depth=16)
         rec["maps"][kind] = dict(path=str(path), bytes=os.path.getsize(path), bake_s=round(wall, 1),
                                  bake_px=bake_px, ship_px=ship_px, downsample_rms=rms,
-                                 bake_type=btype + ("/color-only" if kind == "albedo" else ""),
+                                 bake_type=btype + ("/EMIT(Base Color), metallic material"
+                                                    if (kind == "albedo" and albedo_via_emit)
+                                                    else "/color-only" if kind == "albedo" else ""),
                                  selected_to_active=sta, samples=samples, colorspace=cspace,
                                  flooded_px=n_flood, stats=st)
         print(f"[gate2] {job_id} {kind}: {wall:.1f} s {bake_px}->{ship_px} "

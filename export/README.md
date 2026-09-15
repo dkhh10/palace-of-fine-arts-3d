@@ -462,8 +462,12 @@ That is the cost of the user's instancing decision at Gate 1, recorded here so i
 no UV1 in the Gate 1 set (`export_set.json.uv_missing.uv1`), which is QA-11c-2's untextured backdrop. Gate 2
 generates one (`gate2_common.smart_uv1`, a multi-object smart project, island margin 0.004), bakes against it, and
 writes the exact loop UVs to **`out/gate2/backdrop_uv1.npz`** (one float32 `[loops, 2]` array per Gate 1 mesh name).
-`env.glb` must be re-exported with that layer before the backdrop textures can be used; until then the viewer reads
-`uv1_in_glb: false` and applies the `factor` values, which need no UV and already fix the grey. The same re-export is
+**Closed** — the export engineer re-exported `env.glb` with that layer (export b00344c), and `manifest_v3.py` now
+derives `uv1_in_glb` by reading `TEXCOORD_0` back out of the Gate 1 glTF instead of asserting it: all 60 sets are
+`true`. It also proves the layout is the baked one rather than a fresh unwrap — the set of distinct UV pairs in
+`env.gltf` matches `backdrop_uv1.npz` at **1.00000 on all ten meshes** under glTF's top-left origin
+(`v_gltf = 1 − v_blender`), against 0.0000–0.0017 without the flip. A mean-based check had called all ten a
+mismatch: the exporter de-duplicates vertices, so counts and means differ while the distinct-UV set does not. The same re-export is
 what gives the colonnade pedestals and balustrade (the other half of QA-11c-2) their texture — they are inside
 `EXPM_ARCH_colonnade_*_concrete_colonnade_merged`, which has had UV1 since Gate 1, so for them nothing but the
 Gate 2 material wiring is needed.
@@ -494,11 +498,13 @@ appending the `_LOD0` source objects to the bake blend and one selected-to-activ
 |---|---|---|---|---|---|---|---|
 | arch | 13 | 39 | 32 | 7 | 1 305.7 | 41 660 407 | 118.56 |
 | ground | 4 | 12 | 12 | 0 | 186.5 | 21 755 684 | 47.96 |
-| backdrop | 10 | 32 | 25 | 7 | 112.4 | 11 120 898 | 33.25 |
+| backdrop | 10 | 32 | 25 | 7 | 100.2 | 11 107 418 | 33.25 |
 | orn | 33 | 99 | 99 | 0 | 1 640.7 | 199 963 172 | 339.67 |
-| **total** | **60** | **182** | **168** | **14** | **3 245.3** | **274 500 161** | **539.44** |
+| **total** | **60** | **182** | **168** | **14** | **3 233.1** | **274 486 681** | **539.44** |
 
-Queue wall time 3 573 s over 60 jobs (mean 59.6 s), zero failures, zero retries. The 14 constants are 7 ARCH and
+Queue wall time 3 573 s over the 60-job run (mean 59.6 s), zero failures, zero retries; the two metallic
+backdrop jobs were re-run afterwards for review finding 2 (28 s + 12 s), which is why their bake seconds and
+KTX2 bytes here are slightly below the first pass. The 14 constants are 7 ARCH and
 7 backdrop maps whose covered texels varied by less than 0.005 — 13 flat normal maps and one flat roughness — and
 they ship as factors with no file and no GPU memory.
 
@@ -514,17 +520,27 @@ they ship as factors with no file and no GPU memory.
 | tree impostor atlases | 267.00 | 3 |
 | **total** | **1 166.33** | **33.67 MB under the 1 200 MB budget** |
 
-The Gate 1 projection was 1 343 MB. The 177 MB came from the ORN class, measured rather than assumed: ORN albedo
-at 2K for the 24 prototypes over 2 m and 1K for the 9 under it (the budget doc's named lever), and ORN roughness
-at 1K for all 33 — a colonnade capital is 2.9 mm per texel at 2K against a 1.4 cm pixel at its nearest station, so
-1K roughness is still finer than the screen. The impostor lever (2K -> 1K, -200 MB) is **not** spent and stays
-available to Gate 3. Measured cost of the 1K roughness: over the 43 groups baked at 2K and shipped at 1K, the
+The Gate 1 projection was 1 343 MB; the net is −176.7 MB, and it is **not** all ORN (review finding 3 corrected
+an earlier claim here). Measured, against the budget doc's own rows: ORN albedo + roughness **192.0 MB against
+296 MB (−104 MB)** and ARCH + ground **166.52 MB against 272 MB (−105.5 MB)**, less **+33.25 MB** for the backdrop,
+which the Gate 1 table did not carry at all. The ORN albedo keeps Gate 1's sizes — 2K for 26 prototypes and **1K
+for the 7 under 1 m** (`ORN_SMALL_DIM_M = 1.0`), not "9 under 2 m": the normal and AO maps of a prototype must
+share its resolution, so the albedo follows Gate 1's threshold and `gate2_set.py` now asserts the two agree
+(checked on all 33; no size changed, nothing re-baked). The saving that is actually ORN's is **roughness at 1K
+for all 33** — a colonnade capital is 2.9 mm per texel at 2K against a 1.4 cm pixel at its nearest station. The
+impostor lever (2K → 1K, −200 MB) is **not** spent and stays available to Gate 3. Measured cost of the 1K roughness: over the 43 groups baked at 2K and shipped at 1K, the
 reduction's RMS error is **0.0283 mean, 0.0521 worst**, against maps whose own standard deviation averages 0.0775.
 
 **Metallic: 2 of 30 source materials drive it**, both in the backdrop — `MAT_lamp_post` (mean 0.150) and
-`MAT_backdrop_door_green` (mean 0.019, std 0.108, i.e. metal fittings on a non-metal door). Both are baked through
+`MAT_backdrop_door_green` (mean 0.019, max 0.700, i.e. metal fittings on a non-metal door). Both are baked through
 an Emission rewire and shipped; every other material is `metallic.factor = 0.0` with no map. The brief expected
 none; these two are the exception and they cost 2.67 MB.
+
+**Their albedo is baked through the same rewire, not through DIFFUSE** (review finding 2). Cycles' DIFFUSE colour
+pass weights base colour by `(1 − Metallic)`, so a metallic material bakes dark and a viewer that also applies
+`metallic` attenuates it a second time. Re-baked through `emit_bsdf_input(mat, "Base Color")`: the lamp post's
+albedo mean went **0.189 → 0.207** and its brightest texel 0.881; the door's **0.216 → 0.225**. Only these two jobs
+of the 60 take the EMIT path — `bake_type` records which — and only they were re-run (28 s + 12 s).
 
 ### Verification, Blender side only (`export/out/gate2/verify.json`)
 
@@ -540,7 +556,11 @@ and produced a 16-54 % "noise floor" between two renders of the *same* scene. Wi
 | capital shaded | hi-poly | 2.511865 | 2.442141 | **−2.78 %** | −5.23 % | 219 |
 | whole frame | low-poly | 2.577324 | 2.576476 | **−0.03 %** | — | 921 600 |
 
-Worst box **2.78 %**, inside the 3 % the brief asks for.
+Worst box **2.78 %**, inside the 3 % the brief asks for — but read the two capital rows with their floors: at
+218/219 px their own noise floor (−2.35 %, −5.23 %) is **as large as or larger than the delta the gate passes on**,
+so those two rows show no disagreement rather than proving agreement. The column rows, 739/740 px, are the ones
+that carry weight: −1.39 % and +0.40 % against a 1.0 % floor. Tightening the capital means more samples or a
+seed-averaged reference, which is a carry (review finding 6), not a re-render done here.
 
 **Why the capital is measured against the hi-poly and the column is not.** The column's normal map carries only
 `MAT_column_rose`'s own bump, so the low-poly with the procedural material is the right reference. The capital's maps
@@ -550,3 +570,27 @@ evaluates on the hi surface — `Geometry ▸ Normal`, `PFA_concrete`'s edge and
 the hi-poly it replaces, +1.6 %. The gap is the low-poly itself: **the procedural low-poly is +23.1 % brighter than
 the hi-poly**, and the bake removes that error rather than introducing one. Reporting only the first number would
 have called a working bake a failure.
+
+### Review fixes applied (docs/reviews/phase6_bake_gate2_review.md, findings 1-3)
+
+1. **`bake_queue.sh` GPU rule.** Exempting any registered Blender whose command line matched `bake_orn.py|bake_pbr.py`
+   would have let a second queue — the export engineer's Gate 1 run, or a second `--gate2` runner — bake concurrently.
+   The runner now tags its child through `BLENDER_RUN_OWNER` with `bake_queue_<gate>_<its own pid>` and `gpu_free`
+   exempts only the state file carrying that tag (field 3 of the file `blender_run.sh` names after the Blender pid).
+   Every other live registered Blender, bake script or not, now blocks the queue.
+2. **Metallic albedo.** See the metallic paragraph above: baked through the Emission rewire, two jobs re-run.
+3. **The ORN size rule.** `gate2_set.py` took `size1 = j1["size"]` from Gate 1, leaving `gate2_common.size_for`'s
+   ORN branch dead. It now calls `size_for(CLS_ORN, max_dim_m)` and asserts the Gate 1 value matches — both use
+   `ORN_SMALL_DIM_M = 1.0`, so all 33 agree, no size changed and nothing was re-baked. The wrong claim ("9 under
+   2 m") is corrected above to 7 under 1 m.
+
+Carried, not fixed (findings 4, 5, 7, 8, 9, 10): `gate2_verify.py` writes `verify.json` before computing
+`worst_abs_delta_with_normal_pct` / `worst_abs_noise_floor_pct`, so those two are printed but not persisted; the pass
+metric mixes the B0 and B variants between the column and capital rows, and `gate2_report.py` prints a different field
+from the one `pass_3pct` uses (−1.39 vs −1.376); the capital's confidence (finding 6, stated with its floor above);
+`apply_final_cycles_checked` is not called on the `--gate2` bake path (harmless — DIFFUSE colour-only, ROUGHNESS,
+NORMAL and EMIT sample no light path — but the Eevee-rig assertion is absent); `gate2_set.py` writes the master
+prototype's slot order onto the Gate 1 lo/hi meshes without asserting the existing `material_index` was built against
+the same order; `bake_lib.py` `is_data=img.is_float and True` is always True (line 246 reassigns the colorspace, so it
+is cosmetic), `manifest_v3.py`'s `if kind == "ao"` is dead, and its `etc1s_encoder` string omits `--assign_oetf`; the
+five `renders/logs/gate2_*.log` sit outside the brief's `export/*`.

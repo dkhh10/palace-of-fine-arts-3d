@@ -324,7 +324,14 @@ for grp, cls in sorted(GROUPS.items()):
         set_material(ob.data, mats)
         ob.hide_viewport = ob.hide_select = False
     r = orn_rep[grp]
-    size1 = int(j1["size"])
+    # Review finding 3: taking the Gate 1 size verbatim left gate2_common.size_for's ORN branch dead code.
+    # The size now comes from size_for, and the Gate 1 value is the assertion - both use ORN_SMALL_DIM_M = 1.0,
+    # so this changes no size (checked on all 33) and re-bakes nothing; it only makes the rule live.
+    max_dim = man1["meshes"][group_meshes[grp][0]]["max_dim_m"]
+    size1 = g2.size_for(g2.CLS_ORN, max_dim)
+    if size1 != int(j1["size"]):
+        raise SystemExit(f"[gate2] {grp}: size_for says {size1} px, Gate 1 baked its normal/AO at "
+                         f"{j1['size']} px - the two maps would not share a resolution")
     jobs.append(dict(id=job_id(grp), group=grp, cls=g2.CLS_ORN, size=size1,
                      sizes=dict(albedo=size1, roughness=1024, normal=size1),
                      src_materials=mats, meshes=[group_meshes[grp][0]],
@@ -332,7 +339,7 @@ for grp, cls in sorted(GROUPS.items()):
                                 placements=r["placements"])],
                      lo_object=lo.name, hi_object=hi.name, matrix=r["matrix"],
                      gate1_job=j1["id"], gate1_normal=os.path.basename(j1["normal"]),
-                     gate1_ao=os.path.basename(j1["ao"]), max_dim_m=man1["meshes"][group_meshes[grp][0]]["max_dim_m"],
+                     gate1_ao=os.path.basename(j1["ao"]), max_dim_m=max_dim,
                      uv1_in_glb=True, blend="gate2_orn_bake.blend", metallic=[],
                      tris=eset["meshes"][group_meshes[grp][0]]["tris"],
                      area_m2=probe["groups"][grp]["area_m2"],

@@ -48,8 +48,74 @@ def reroot1(obj):
     return obj
 
 
+def gltf_uv0_meshes():
+    """Mesh names whose glTF primitives all carry TEXCOORD_0, read from the Gate 1 .gltf files.
+
+    `uv1_in_glb` is derived from the shipped file, never asserted by hand: the ten backdrop groups left
+    Gate 1 with no UV1 at all (QA-11c-2), Gate 2 generated one and wrote it to backdrop_uv1.npz, and the
+    export engineer re-exported env.glb with it. This reads back which meshes actually have it now.
+    """
+    have, seen = set(), {}
+    for cls in ("arch", "orn", "env", "ground"):
+        p = GATE1 / f"{cls}.gltf"
+        if not p.exists():
+            continue
+        d = json.loads(p.read_text())
+        for m in d.get("meshes", []):
+            n = m.get("name")
+            if not n:
+                continue
+            seen[n] = cls
+            if m["primitives"] and all("TEXCOORD_0" in pr.get("attributes", {}) for pr in m["primitives"]):
+                have.add(n)
+    return have, seen
+
+
+def backdrop_uv_matches(gltf_have):
+    """Prove that the UV1 now in env.gltf IS the layout Gate 2 baked against, not a fresh unwrap.
+
+    The exporter de-duplicates vertices, so counts and means cannot be compared (a mean test called all ten a
+    mismatch); the SET of distinct UV pairs survives de-duplication exactly. glTF puts the UV origin at the top
+    left, so Blender's exporter writes `v_gltf = 1 - v_blender` - the same flip every other texture in this
+    project already rides. Both hypotheses are measured and the better one is reported.
+    """
+    import numpy as np
+    npz = OUT / "backdrop_uv1.npz"
+    gp = GATE1 / "env.gltf"
+    if not (npz.exists() and gp.exists()):
+        return None
+    d = json.loads(gp.read_text())
+    z = np.load(str(npz))
+    bins, out = {}, {}
+    for m in d.get("meshes", []):
+        n = m.get("name")
+        if n not in z.files or not m["primitives"]:
+            continue
+        acc = d["accessors"][m["primitives"][0]["attributes"]["TEXCOORD_0"]]
+        if acc.get("componentType") != 5126:            # a quantised export is not comparable this way
+            continue
+        bv = d["bufferViews"][acc["bufferView"]]
+        uri = d["buffers"][bv["buffer"]].get("uri")
+        if not uri:
+            continue
+        if uri not in bins:
+            bins[uri] = (gp.parent / uri).read_bytes()
+        off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+        a = np.frombuffer(bins[uri], dtype=np.float32, count=acc["count"] * 2, offset=off).reshape(-1, 2)
+        b = z[n]
+        sg = {(round(float(x), 5), round(float(y), 5)) for x, y in a}
+        sd = {(round(float(x), 5), round(float(y), 5)) for x, y in b}
+        sf = {(round(float(x), 5), round(float(1.0 - y), 5)) for x, y in b}
+        direct, flip = len(sg & sd) / len(sg), len(sg & sf) / len(sg)
+        out[n] = dict(distinct_uv_gltf=len(sg), match_direct=round(direct, 5), match_v_flipped=round(flip, 5),
+                      v_flipped=flip > direct, match=round(max(direct, flip), 5))
+        out[n]["ok"] = out[n]["match"] >= 0.999
+    return out
+
+
 def main():
     man = reroot1(json.loads((GATE1 / "manifest.json").read_text()))
+    gltf_have, gltf_seen = gltf_uv0_meshes()
     jobs = {j["id"]: j for j in g2.read_jobs()["jobs"]}
     recs, missing = {}, []
     for jid in jobs:
@@ -71,7 +137,9 @@ def main():
         cls = job["cls"]
         entry = dict(job=jid, cls=cls, src_material=(job["src_materials"][0] if len(job["src_materials"]) == 1
                                                      else job["src_materials"]),
-                     size=job["size"], uv1_in_glb=job["uv1_in_glb"])
+                     size=job["size"],
+                     uv1_in_glb=(all(m in gltf_have for m in job["meshes"]) if gltf_seen
+                                 else job["uv1_in_glb"]))
         for kind, m in rec["maps"].items():
             st = m["stats"]
             mean = st.get("mean") or [0.0, 0.0, 0.0]
@@ -176,6 +244,28 @@ def main():
             "ETC1S instead of UASTC on the backdrop: ETC1S is a PAYLOAD lever, not a memory one. Both "
             "transcode to ASTC 4x4 on this GPU, so the resident bytes are identical"],
         note="the Gate 1 projection was 1343 MB against 1200")
+
+    uvchk = backdrop_uv_matches(gltf_have)
+    man["materials"]["uv1_in_glb_source"] = dict(
+        derived_from=[f"../gate1/{c}.gltf" for c in ("arch", "orn", "env", "ground")
+                      if (GATE1 / f"{c}.gltf").exists()],
+        meshes_with_texcoord_0=len(gltf_have), meshes_seen=len(gltf_seen),
+        backdrop_uv_crosscheck=uvchk,
+        note="uv1_in_glb is read back from the shipped glTF, not asserted. The backdrop cross-check compares "
+             "the UV bounding box and mean in env.gltf against export/out/gate2/backdrop_uv1.npz, the layout "
+             "the backdrop textures were baked against. The exporter de-duplicates vertices, so counts and "
+             "means differ; the SET of distinct UV pairs does not, and glTF's top-left origin means the match "
+             "is against v_gltf = 1 - v_blender.")
+    if uvchk:
+        bad = sorted(k for k, v in uvchk.items() if not v["ok"])
+        flipped = sum(1 for v in uvchk.values() if v["v_flipped"])
+        worst = min(v["match"] for v in uvchk.values())
+        print(f"[manifest_v3] backdrop UV cross-check: {len(uvchk) - len(bad)}/{len(uvchk)} meshes carry the "
+              f"baked layout (worst distinct-UV match {worst:.5f}, V-flipped on {flipped}/{len(uvchk)})"
+              + (f"; MISMATCH {bad}" if bad else ""))
+        assert not bad, f"env.gltf carries a different UV1 than the backdrop textures were baked against: {bad}"
+    n_uv = sum(1 for v in sets.values() if v["uv1_in_glb"])
+    print(f"[manifest_v3] uv1_in_glb true for {n_uv}/{len(sets)} material sets")
 
     mp = OUT / "manifest.json"
     mp.write_text(json.dumps(man, indent=1) + "\n")
