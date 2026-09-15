@@ -1,0 +1,167 @@
+{
+ "out": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-viewer/renders/web/_lm_pi.png",
+ "url": "http://127.0.0.1:63370/?station=1&size=1280x720&hud=0&water=0&t=0",
+ "station": 1,
+ "size": [
+  1280,
+  720
+ ],
+ "wall_s": 4.906,
+ "info": {
+  "station": {
+   "index": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "lens": 20,
+   "shift_y": 0.05999999865889549
+  },
+  "cameraWorldMatrix": [
+   -0.990205306637717,
+   0,
+   0.13961894823591808,
+   0,
+   0.001797119614624584,
+   0.9999171574920436,
+   0.012745529181734643,
+   0,
+   -0.13960738185208796,
+   0.01287160258210755,
+   -0.9901232755467234,
+   0,
+   -14.099999999999993,
+   1.3000000000000145,
+   -100,
+   1
+  ],
+  "projectionMatrix": [
+   1.1111111111111112,
+   0,
+   0,
+   0,
+   0,
+   1.9753086419753088,
+   0,
+   0,
+   0,
+   0.21333332856496173,
+   -1.000040000800612,
+   -1,
+   0,
+   0,
+   -0.20000400306035304,
+   0
+  ],
+  "fovVertical": 53.70162658790905,
+  "aspect": 1.7777777777777777,
+  "size": [
+   1280,
+   720
+  ],
+  "render": {
+   "frame": 49,
+   "calls": 20,
+   "triangles": 62013,
+   "points": 0,
+   "lines": 0
+  },
+  "memory": {
+   "geometries": 6,
+   "textures": 22
+  },
+  "gl": {
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+   "vendor": "Google Inc. (Apple)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "patchedMaterials": 4,
+  "lightmapsApplied": 3,
+  "unpatchedMaterials": [
+   "GATE0_column"
+  ],
+  "lightmapScale": 3.14159265358979,
+  "rgbmRange": 64,
+  "shaperPivot": 0.18,
+  "skyRotationDeg": 90,
+  "exposure": 0.14032656980172378,
+  "lutEnabled": true,
+  "lutSize": 65,
+  "waterZ": -1.3,
+  "notes": [
+   "exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
+   "sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
+   "sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
+   "PMREM environment from sky_glossy_4096x2048.hdr (specular only)",
+   "sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only",
+   "lightMapIntensity = lightmap_scale 3.14159",
+   "1 lightmap-free material(s) borrow the nearest-named lightmap (GATE0_column <- GATE0_column_lit; Gate 0 stand-in, Gate 3 bakes their own)",
+   "glb gate0.glb in 0.47 s: 18 meshes, 62000 placed tris, 4 materials patched (specular-only sun), 0 left on stock lighting: none",
+   "LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
+   "display: tone mapping OFF, exposure x0.14033, LUT on",
+   "ready in 1.21 s"
+  ]
+ },
+ "stats": {
+  "frames": 119,
+  "median": 16.69999998807907,
+  "mean": 16.656302520707875,
+  "p95": 18.400000035762787,
+  "min": 14.099999964237213,
+  "max": 18.900000035762787,
+  "drawCalls": 20,
+  "triangles": 62013
+ },
+ "cost": {
+  "frames": 60,
+  "median": 0.09999996423721313,
+  "mean": 0.06500000059604645,
+  "p95": 0.19999998807907104,
+  "min": 0,
+  "max": 0.20000004768371582
+ },
+ "probes": [
+  {
+   "name": "mesh_1",
+   "centre": [
+    704,
+    295
+   ],
+   "bbox": [
+    690.8,
+    226.5,
+    717.3,
+    363.2
+   ],
+   "rgba": [
+    206,
+    135,
+    40,
+    255
+   ]
+  }
+ ],
+ "pixels": null,
+ "written": [
+  {
+   "station": 1,
+   "file": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-viewer/renders/web/_lm_pi.png",
+   "draws": 20,
+   "tris": 62013
+  }
+ ],
+ "pageLog": [
+  "log: [pfa] exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
+  "log: [pfa] sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "log: [pfa] sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "log: [pfa] PMREM environment from sky_glossy_4096x2048.hdr (specular only)",
+  "log: [pfa] sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only",
+  "log: [pfa] lightMapIntensity = lightmap_scale 3.14159",
+  "log: [pfa] 1 lightmap-free material(s) borrow the nearest-named lightmap (GATE0_column <- GATE0_column_lit; Gate 0 stand-in, Gate 3 bakes their own)",
+  "log: [pfa] glb gate0.glb in 0.47 s: 18 meshes, 62000 placed tris, 4 materials patched (specular-only sun), 0 left on stock lighting: none",
+  "log: [pfa] LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
+  "log: [pfa] display: tone mapping OFF, exposure x0.14033, LUT on",
+  "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
+  "log: [pfa] ready in 1.21 s"
+ ]
+}
