@@ -4,10 +4,18 @@
 set -e
 HERE=${0:A:h}
 ROOT=${HERE:h}
-MAIN="/Users/dk/Projects/3d render blender 3rd attempt building"
+MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 mkdir -p "$MAIN/export/out/gate0" "$MAIN/renders/web"
 # review finding 9: no --delete. $MAIN/export/out/gate0/ is shared with the export and viewer agents.
-rsync -a --exclude 'gate0_set.blend*' "$ROOT/export/out/gate0/" "$MAIN/export/out/gate0/"
+[ -d "$ROOT/export/out/gate0" ] && \
+  rsync -a --exclude 'gate0_set.blend*' "$ROOT/export/out/gate0/" "$MAIN/export/out/gate0/"
+# Gate 1: the same rule - no --delete, and the two working .blends stay in this worktree (325 MB).
+if [ -d "$ROOT/export/out/gate1" ]; then
+  mkdir -p "$MAIN/export/out/gate1"
+  rsync -a --exclude 'gate1_set.blend*' --exclude 'gate1_bake.blend*' \
+        "$ROOT/export/out/gate1/" "$MAIN/export/out/gate1/"
+  echo "[gate1] synced to $MAIN/export/out/gate1 ($(du -sk "$MAIN/export/out/gate1" | cut -f1) KiB)"
+fi
 mkdir -p "$MAIN/export/out/bake_queue"
 cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 for f in "$ROOT"/renders/web/gate0_*.png(N); do cp -f "$f" "$MAIN/renders/web/"; done
