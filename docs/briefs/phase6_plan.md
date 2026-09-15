@@ -67,11 +67,53 @@ Mobile fallback ~120 MB total (LOD1/LOD2 geometry, halved textures, ETC1S).
 - Water: three.js planar Reflector on the plane at WATER_Z with the lagoon murk tint and a ripple normal map; the baked
   cubemap probe at the hero station is the fallback.
 
-## 4. Bake-time estimate
-Filled in from Gate 0 (docs/briefs/phase6_gate0.md report). Prior from Phase 5 wall times: a 1920x1080 Cycles hero at
-128 spp adaptive took 380 s; a 2K lightmap is 2x the pixels with no camera-ray culling, so expect 5-12 min per 2K asset at
-128 spp + OIDN, 40 assets = 4-8 h queue, run detached in per-asset jobs under 1800 s each. Normal/AO bakes from the
-LOD0 prototypes are cheap (< 1 min each). PBR bakes (emit-style) 1-2 min per 2K atlas.
+## 4. Bake times, measured at Gate 0 (bake engineer, 2026-09-15, M2 10-core Metal, Cycles GPU, one Blender at a time)
+
+Slice: `ARCH_rotunda_column_00_LOD0` 14 396 -> 3 500 tris, `INST_capital_rotunda_000_LOD0`
+(`ORN_capital_rotunda_v2_LOD0_a`) 64 000 -> 6 000 tris, ground `ARCH_rotunda_pedestal_00` 12 tris as modelled.
+All maps 2048^2. Every number below is a wall time printed by the script, not an estimate.
+
+| bake | settings | column | capital | ground | prior estimate |
+|---|---|---|---|---|---|
+| normal, hi -> lo, tangent | 4 spp, measured cage (4.3 mm / 28.2 mm) | **6.7 s** | **9.3 s** | 9.1 s (own shading normal, no hi twin) | < 60 s: right |
+| AO, hi -> lo | 128 spp | **146.2 s** | **220.9 s** | **226.5 s** | < 60 s: **wrong, 2.4-3.8x** |
+| albedo (DIFFUSE, colour pass only) | 16 spp | 22.6 s | 29.6 s | 30.8 s | 60-120 s: 2x pessimistic |
+| roughness (ROUGHNESS) | 16 spp | 22.6 s | 30.1 s | 31.2 s | (same pair) |
+| **lightmap** (DIFFUSE direct+indirect, colour off) | 128 spp + OIDN, UV2 | **305.6 s** | **221.3 s** | **299.5 s** | 5-12 min: right (3.7-5.1 min) |
+| lightmap in a 256 px atlas slot | 128 spp + OIDN | - | **5.1 s** | - | - |
+| all four maps, per asset | | 503.7 s | 511.2 s | 597.1 s | |
+
+Denoising: Blender 5.2's `BakeSettings` has no `use_denoising`; the bake honours `scene.cycles.use_denoising`,
+which is what these lightmaps used. `scene.cycles.use_adaptive_sampling` is off for every bake (fixed spp).
+
+Non-bake steps, same machine: `export_set.py` (open the 280 MB packed master, decimate, two smart-project UV
+unwraps, strip 9 653 objects, save the 22.6 MB working .blend) **18.8 s**; `gltf_export.py` **2.7 s**; `toktx`
+UASTC q2 + zstd 18 + mips on 9 x 2K PNG **29 s**; `gltfpack -cc` **< 1 s**; LUT lattice through the compositor
+**0.5 s** plus five Cycles proof patches **1.0 s**; the two 4096x2048 equirects at 16 spp **5.6 s + 5.7 s**; the
+1280x720 / 64 spp Cycles reference frame of the 17-object slice **11.6 s**.
+
+Projection for the Gate 3 queue at the same settings: ~40 ARCH/ENV assets x (lightmap 275 s mean + AO 198 s mean +
+PBR pair 54 s + normal 8 s) = **~5.9 h**, every job well under the 1800 s `blender_run.sh` cap, so the queue is
+per-asset and resumable. The AO row is the correction to make to the Gate 1 plan: AO is the second most expensive
+bake, not a free one, and at 64 spp it would halve.
+
+Lightmap value range (the -2.833 EV question), scene-linear, 2K, 128 spp + OIDN:
+
+| map | min | max | mean | mean of non-zero | p99 | RGBM8 range | source texels above the range | worst round-trip |
+|---|---|---|---|---|---|---|---|---|
+| column | 0.0 | 51.77 | 5.77 | 7.83 | 33.30 | 64 | **0** | 0.097 abs, 4.8 % rel p99 |
+| capital | 0.0 | 53.72 | 3.50 | 5.05 | 44.22 | 64 | **0** | 0.100 abs, 4.8 % rel p99 |
+| ground | 0.0 | 42.69 | 5.98 | 8.82 | 36.36 | 64 | **0** | 0.080 abs, 4.1 % rel p99 |
+| capital 256 px | 0.0 | 50.96 | 5.03 | 5.04 | 43.12 | 64 | **0** | 0.098 abs, 4.3 % rel p99 |
+
+The clipped count is taken on the **source EXR** against the encoding's ceiling (`rgb.max(-1) > 64`), not on the
+decoded buffer, where `rgbm_encode`'s clamp would make it 0 by construction. Nothing in the slice exceeds 64, so
+RGBM8 at range 64 carries the whole range; the cost is a 4.8 % relative error at the 99th percentile, which a
+gamma-2 encode of the RGB part would roughly halve if a later round needs it.
+
+Ground lightmap, before and after code-review finding 2 (its coincident hi twin was left ray-visible and
+self-shadowed the bake): **461.0 s -> 299.5 s**, max 48.69 -> 42.69, mean 4.15 -> 5.98, RGBM8 PNG 5.22 -> 7.07 MB.
+
 
 ## 4b. Decisions the user takes before Gate 1
 
