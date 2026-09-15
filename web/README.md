@@ -23,9 +23,9 @@ three.js tone mapping OFF and a 3D LUT baked from Blender's OCIO.
     npm run dev          # /assets/* is served straight from $PFA_MAIN_ROOT/export/out, never copied
     npm run build        # -> web/dist (2.0 MB: index 780 kB, basis transcoder 576 kB)
 
-URL parameters: `?station=1..6` (also keys 1-6), `?size=WxH`, `?water=0`, `?lut=0`, `?testlut=identity|gamma22`,
-`?test=1` (stand-in slice), `?exposure=`, `?skyrot=`, `?sun=`, `?lmscale=`, `?haze=` (diagnostic constant
-airlight, not the real mist), `?unlit=share|stock|black`, `?t=<seconds>` (freeze the water phase), `?hud=0`.
+URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?water=0`, `?lut=0`, `?testlut=identity|gamma22`,
+`?test=1`, `?exposure=`, `?skyrot=`, `?sun=`, `?lmscale=`, `?haze=` (diagnostic constant airlight, not the
+real mist), `?unlit=share|stock|black`, `?t=<seconds>` (freezes the water phase), `?hud=0`.
 
 ## Screenshots (never launch Chrome any other way)
     scripts/chrome_run.sh 300 -- node web/tools/screenshot.mjs --station 1 --size 1280x720 \
@@ -33,7 +33,7 @@ airlight, not the real mist), `?unlit=share|stock|black`, `?t=<seconds>` (freeze
 Check the GPU first (`export/out/bake_queue/status.json` idle, no Blender). `web/tools/gate0.sh` does the
 guard, build, screenshot and pair sheet in one go.
 
-## Manifest fields consumed (schema pfa-phase6-gate0/1)
+## Manifest fields (schema pfa-phase6-gate0/1)
 `glb.path`; `stations.<name>` (location, rotation_euler_xyz, lens_mm, sensor_width_mm, sensor_fit, shift_x/y,
 clip_start/end); `water.viewer_y`; `view.exposure_ev`; `lut` (path, size, shaper.min_ev/max_ev/pivot,
 exposure_applied_by); `sky.camera.hdr`, `sky.glossy.hdr`, `sky.rotation_deg`; `sun` (direction_blender =
