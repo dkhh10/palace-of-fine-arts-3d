@@ -325,3 +325,10 @@ untextured backdrop / pedestals (PBR bake), QA-11d-2 gltfpack -vp 16 on env.glb;
   polish item if the fluted shafts read flat at cam03; per-instance weathering variation survives only through the Gate 3 lightmap slot.
 - Hand-offs: export re-exports env.glb with the generated backdrop UV1 (backdrop_uv1.npz) and -vp 16; the viewer uses the Gate 2 ORN normal
   in place of the Gate 1 one and honours uv1_in_glb: false meanwhile.
+
+## 2026-09-15 · QA-12-1: merged UV1 groups get their own atlases (lead's call, after the export engineer's measurement)
+Every merged multi-object ARCH/ENV group packed its UV1 at 0.04-0.10 of the square (multi-object smart project + a sub-texel margin + a fixed tile
+guess): colonnade N/S 0.040/0.039, rotunda ochre 0.056 (the hero's stone), plaster rib 0.065, site podium 0.083, riprap 0.013 — the 0.40-0.69 figures
+were the single-object ORN prototypes. Decision: each merged mass goes onto its own 2K atlas (new material + set), the instanced meshes keep theirs
+(~0.40); +~50 MB resident accepted against the impostor lever; the affected groups are re-baked (albedo/roughness/normal) and every ARCH/ground set
+gets a bump-derived tangent normal (7 of 12 shipped none). Texel density where the hero looks is the reason; coverage numbers alone were not.
