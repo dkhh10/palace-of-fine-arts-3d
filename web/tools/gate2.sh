@@ -43,13 +43,13 @@ echo "gate2.sh: tag $TAG, manifest $MANIFEST, query ${QUERY[*]}"
 
 guard "$SHOTSIZE capture"
 scripts/chrome_run.sh 1200 -- node web/tools/screenshot.mjs \
-	--stations 1-6 --size "$SHOTSIZE" --frames 0 --warmup 12 \
+	--stations 1-6 --size "$SHOTSIZE" --frames 0 --warmup 12 --timeout 300000 \
 	"${QUERY[@]}" \
 	--out "renders/web/${TAG}.png" --json "renders/web/${TAG}_cam.json"
 
 guard "$PERFSIZE performance pass"
 scripts/chrome_run.sh 1200 -- node web/tools/screenshot.mjs \
-	--stations 1-6 --size "$PERFSIZE" --frames 120 --warmup 24 --shots 0 \
+	--stations 1-6 --size "$PERFSIZE" --frames 120 --warmup 24 --shots 0 --timeout 300000 \
 	"${QUERY[@]}" \
 	--out "renders/web/${TAG}_perf1440.png" --json "renders/web/${TAG}_perf_shot.json" \
 	--perf "renders/web/${TAG}_perf.json"
