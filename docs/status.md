@@ -588,3 +588,7 @@ In flight: export engineer (five review fixes + B1 texCoord + B2 attic panels vi
 
 ## 2026-09-15 · Export fixes in (ec4832b: sRGB tags, status sync, slot gutters 248/256, manifest flags, B1 backdrop texCoord asserted, B2 attic panels from the LOD1 mesh at 7 999 tris, dev 51-59 mm); phase6-export merged (8bfd907); lead re-captured with billboards off (1440p GPU 1.5 ms hero); QA round 11b dispatched
 In flight: QA 11b (tile re-check + re-score). Next: on PASS dispatch Gate 2 (docs/briefs/phase6_gate2_bake.md, bake engineer r2) + write the viewer Gate 2 brief; burn; stop.
+
+## 2026-09-15 · QA 11b (850209e): B1 + B2 FIXED, all rows within 0.5 (provisional) but GATE 1 FAIL: the export's own 127 opaque ENV_treeboard_* stand-ins in env.glb cover 16-26 % of the frames (44.5 % of the arch opening); cam04 ceiling sliver (QA-11-9) open
+Lead: viewer ?treeboards=0 hides the boards by material name (gltfpack -mi drops node names; b58240b), re-captured with both placeholder sets hidden (127 hidden, hero frame changed over 341 k px). Export engineer asked for: sweep pattern board|impostor|billboard with the exemption on record, QA-11-9 sliver, boards tagged in the glb.
+In flight: QA 11c (re-check on the clean capture), export fixes. Next: Gate 1 verdict -> Gate 2 dispatch.

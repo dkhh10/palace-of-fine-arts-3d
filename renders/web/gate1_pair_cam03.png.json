@@ -22,11 +22,11 @@
  ],
  "frame": {
   "reference_luma": 39.34,
-  "viewer_luma": 161.54,
-  "delta_luma": 122.2,
-  "ratio_linear": 8.3964,
-  "mean_abs_diff_255": 128.04,
-  "rms_diff_255": 138.11
+  "viewer_luma": 161.19,
+  "delta_luma": 121.86,
+  "ratio_linear": 8.3639,
+  "mean_abs_diff_255": 127.66,
+  "rms_diff_255": 137.77
  },
  "cells_3x4": [
   {
@@ -41,9 +41,9 @@
     240
    ],
    "reference_luma": 28.65,
-   "viewer_luma": 184.3,
-   "delta_luma": 155.65,
-   "ratio_linear": 23.2428
+   "viewer_luma": 179.03,
+   "delta_luma": 150.38,
+   "ratio_linear": 22.2032
   },
   {
    "cell": [
@@ -73,9 +73,9 @@
     240
    ],
    "reference_luma": 76.51,
-   "viewer_luma": 148.6,
-   "delta_luma": 72.09,
-   "ratio_linear": 2.2922
+   "viewer_luma": 148.69,
+   "delta_luma": 72.18,
+   "ratio_linear": 2.295
   },
   {
    "cell": [
@@ -105,9 +105,9 @@
     480
    ],
    "reference_luma": 19.97,
-   "viewer_luma": 197.95,
-   "delta_luma": 177.99,
-   "ratio_linear": 67.5016
+   "viewer_luma": 197.39,
+   "delta_luma": 177.42,
+   "ratio_linear": 67.1405
   },
   {
    "cell": [
@@ -121,9 +121,9 @@
     480
    ],
    "reference_luma": 50.44,
-   "viewer_luma": 186.66,
-   "delta_luma": 136.22,
-   "ratio_linear": 7.3617
+   "viewer_luma": 186.71,
+   "delta_luma": 136.27,
+   "ratio_linear": 7.3675
   },
   {
    "cell": [
@@ -137,9 +137,9 @@
     480
    ],
    "reference_luma": 40.9,
-   "viewer_luma": 147.73,
-   "delta_luma": 106.83,
-   "ratio_linear": 5.7685
+   "viewer_luma": 149.14,
+   "delta_luma": 108.23,
+   "ratio_linear": 5.8868
   },
   {
    "cell": [
@@ -185,9 +185,9 @@
     720
    ],
    "reference_luma": 53.47,
-   "viewer_luma": 178.25,
-   "delta_luma": 124.78,
-   "ratio_linear": 7.967
+   "viewer_luma": 178.26,
+   "delta_luma": 124.79,
+   "ratio_linear": 7.9674
   },
   {
    "cell": [
@@ -201,9 +201,9 @@
     720
    ],
    "reference_luma": 56.73,
-   "viewer_luma": 143.86,
-   "delta_luma": 87.13,
-   "ratio_linear": 4.8399
+   "viewer_luma": 144.02,
+   "delta_luma": 87.28,
+   "ratio_linear": 4.8487
   },
   {
    "cell": [

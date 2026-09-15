@@ -22,11 +22,11 @@
  ],
  "frame": {
   "reference_luma": 76.19,
-  "viewer_luma": 136.79,
-  "delta_luma": 60.6,
-  "ratio_linear": 3.0402,
-  "mean_abs_diff_255": 104.13,
-  "rms_diff_255": 116.15
+  "viewer_luma": 131.59,
+  "delta_luma": 55.4,
+  "ratio_linear": 2.8426,
+  "mean_abs_diff_255": 101.23,
+  "rms_diff_255": 112.53
  },
  "cells_3x4": [
   {
@@ -41,9 +41,9 @@
     240
    ],
    "reference_luma": 86.34,
-   "viewer_luma": 172.74,
-   "delta_luma": 86.4,
-   "ratio_linear": 3.6852
+   "viewer_luma": 165.71,
+   "delta_luma": 79.37,
+   "ratio_linear": 3.3519
   },
   {
    "cell": [
@@ -57,9 +57,9 @@
     240
    ],
    "reference_luma": 106.99,
-   "viewer_luma": 182.0,
-   "delta_luma": 75.02,
-   "ratio_linear": 2.3945
+   "viewer_luma": 178.76,
+   "delta_luma": 71.77,
+   "ratio_linear": 2.2981
   },
   {
    "cell": [
@@ -105,9 +105,9 @@
     480
    ],
    "reference_luma": 71.87,
-   "viewer_luma": 99.65,
-   "delta_luma": 27.78,
-   "ratio_linear": 2.3316
+   "viewer_luma": 87.79,
+   "delta_luma": 15.92,
+   "ratio_linear": 1.788
   },
   {
    "cell": [
@@ -121,9 +121,9 @@
     480
    ],
    "reference_luma": 59.57,
-   "viewer_luma": 138.92,
-   "delta_luma": 79.35,
-   "ratio_linear": 3.3868
+   "viewer_luma": 129.27,
+   "delta_luma": 69.7,
+   "ratio_linear": 2.9746
   },
   {
    "cell": [
@@ -137,9 +137,9 @@
     480
    ],
    "reference_luma": 67.76,
-   "viewer_luma": 162.27,
-   "delta_luma": 94.51,
-   "ratio_linear": 3.7662
+   "viewer_luma": 160.26,
+   "delta_luma": 92.5,
+   "ratio_linear": 3.67
   },
   {
    "cell": [
@@ -153,9 +153,9 @@
     480
    ],
    "reference_luma": 75.1,
-   "viewer_luma": 192.8,
-   "delta_luma": 117.7,
-   "ratio_linear": 5.2734
+   "viewer_luma": 194.36,
+   "delta_luma": 119.25,
+   "ratio_linear": 5.4148
   },
   {
    "cell": [
@@ -185,9 +185,9 @@
     720
    ],
    "reference_luma": 69.64,
-   "viewer_luma": 73.4,
-   "delta_luma": 3.76,
-   "ratio_linear": 1.8935
+   "viewer_luma": 64.4,
+   "delta_luma": -5.24,
+   "ratio_linear": 1.45
   },
   {
    "cell": [
@@ -201,9 +201,9 @@
     720
    ],
    "reference_luma": 57.03,
-   "viewer_luma": 84.55,
-   "delta_luma": 27.52,
-   "ratio_linear": 3.164
+   "viewer_luma": 68.1,
+   "delta_luma": 11.07,
+   "ratio_linear": 2.0827
   },
   {
    "cell": [
@@ -217,9 +217,9 @@
     720
    ],
    "reference_luma": 83.24,
-   "viewer_luma": 171.46,
-   "delta_luma": 88.22,
-   "ratio_linear": 3.1875
+   "viewer_luma": 166.71,
+   "delta_luma": 83.47,
+   "ratio_linear": 3.0214
   }
  ]
 }

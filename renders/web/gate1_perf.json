@@ -1,6 +1,6 @@
 {
- "generated": "2026-09-15T13:31:55.211Z",
- "url": "http://127.0.0.1:64309/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate1%2Fmanifest.json&t=0&billboards=0",
+ "generated": "2026-09-15T13:56:42.146Z",
+ "url": "http://127.0.0.1:64424/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate1%2Fmanifest.json&t=0&billboards=0&treeboards=0",
  "size": [
   2560,
   1440
@@ -64,60 +64,64 @@
   ]
  },
  "load_s": {
-  "plan_s": 0.06720000004768371,
-  "sky_s": 0.5112999999523162,
-  "lut_s": 0.06030000001192093,
-  "glb_s": 1.5755,
-  "total_s": 2.290399999976158
+  "plan_s": 0.07139999997615815,
+  "sky_s": 0.5254000000357628,
+  "lut_s": 0.06309999996423721,
+  "glb_s": 1.623199999988079,
+  "total_s": 2.3587999999523164
  },
  "glbs": [
   {
    "name": "arch.glb",
    "cls": "arch",
-   "url": "http://127.0.0.1:64309/assets/gate1/arch.glb",
+   "url": "http://127.0.0.1:64424/assets/gate1/arch.glb",
    "meshes": 27,
    "instancedMeshes": 15,
    "instances": 438,
    "tris": 844554,
    "materials": 17,
+   "hiddenBoards": 0,
    "bytes": 2571196,
-   "wall_s": 0.0875
+   "wall_s": 0.089
   },
   {
    "name": "orn.glb",
    "cls": "orn",
-   "url": "http://127.0.0.1:64309/assets/gate1/orn.glb",
+   "url": "http://127.0.0.1:64424/assets/gate1/orn.glb",
    "meshes": 33,
    "instancedMeshes": 32,
    "instances": 435,
    "tris": 1097468,
    "materials": 33,
+   "hiddenBoards": 0,
    "bytes": 154065360,
-   "wall_s": 1.0288000000119208
+   "wall_s": 1.0428000000119209
   },
   {
    "name": "env.glb",
    "cls": "env",
-   "url": "http://127.0.0.1:64309/assets/gate1/env.glb",
+   "url": "http://127.0.0.1:64424/assets/gate1/env.glb",
    "meshes": 39,
    "instancedMeshes": 32,
    "instances": 1458,
    "tris": 679779,
    "materials": 12,
+   "hiddenBoards": 127,
    "bytes": 33546212,
-   "wall_s": 0.2429000000357628
+   "wall_s": 0.257
   },
   {
    "name": "ground.glb",
    "cls": "ground",
-   "url": "http://127.0.0.1:64309/assets/gate1/ground.glb",
+   "url": "http://127.0.0.1:64424/assets/gate1/ground.glb",
    "meshes": 4,
    "instancedMeshes": 0,
    "instances": 0,
    "tris": 113043,
    "materials": 4,
+   "hiddenBoards": 0,
    "bytes": 1175488,
-   "wall_s": 0.009299999952316285
+   "wall_s": 0.01030000001192093
   }
  ],
  "billboards": null,
@@ -132,26 +136,26 @@
    "file": null,
    "frame_ms": {
     "median": 16.69999998807907,
-    "mean": 18.97983193297346,
+    "mean": 19.438655462084697,
     "p95": 18.600000023841858,
-    "min": 6.100000023841858,
-    "max": 178,
+    "min": 10.199999988079071,
+    "max": 190.19999998807907,
     "frames": 119
    },
    "fps_presented": 59.88023956370228,
    "gpu_cost_ms": {
     "median": 1.5,
-    "mean": 1.6883333335320154,
-    "p95": 3,
+    "mean": 1.6833333333333333,
+    "p95": 2.600000023841858,
     "frames": 60
    },
    "fps_uncapped": 666.6666666666666,
-   "draw_calls": 197,
-   "triangles": 5239243,
+   "draw_calls": 195,
+   "triangles": 5238735,
    "programs": 12,
    "info_memory": {
-    "geometries": 100,
-    "textures": 148
+    "geometries": 99,
+    "textures": 147
    },
    "resident": {
     "geometry_bytes": 33259440,
@@ -211,27 +215,27 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.599999964237213,
-    "mean": 19.325210084434318,
-    "p95": 20.100000023841858,
-    "min": 12.199999988079071,
-    "max": 195.60000002384186,
+    "median": 16.5,
+    "mean": 19.505042017007074,
+    "p95": 19.69999998807907,
+    "min": 3.300000011920929,
+    "max": 213.89999997615814,
     "frames": 119
    },
-   "fps_presented": 60.2409639852039,
+   "fps_presented": 60.60606060606061,
    "gpu_cost_ms": {
     "median": 1.4000000357627869,
-    "mean": 1.4849999994039536,
-    "p95": 1.9000000357627869,
+    "mean": 1.5416666666666667,
+    "p95": 2.400000035762787,
     "frames": 60
    },
    "fps_uncapped": 714.2856960393949,
-   "draw_calls": 191,
-   "triangles": 5113287,
+   "draw_calls": 189,
+   "triangles": 5112779,
    "programs": 12,
    "info_memory": {
-    "geometries": 101,
-    "textures": 148
+    "geometries": 100,
+    "textures": 147
    },
    "resident": {
     "geometry_bytes": 33259440,
@@ -291,27 +295,27 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.599999964237213,
-    "mean": 19.939495798419504,
-    "p95": 18.200000047683716,
-    "min": 3.800000011920929,
-    "max": 239.9000000357628,
+    "median": 16.80000001192093,
+    "mean": 20.12016806682619,
+    "p95": 18.400000035762787,
+    "min": 11.5,
+    "max": 242.79999995231628,
     "frames": 119
    },
-   "fps_presented": 60.2409639852039,
+   "fps_presented": 59.52380948157267,
    "gpu_cost_ms": {
     "median": 1.5,
-    "mean": 1.6800000001986821,
-    "p95": 2.600000023841858,
+    "mean": 1.646666666865349,
+    "p95": 2.5,
     "frames": 60
    },
    "fps_uncapped": 666.6666666666666,
-   "draw_calls": 201,
-   "triangles": 5361867,
+   "draw_calls": 199,
+   "triangles": 5361359,
    "programs": 12,
    "info_memory": {
-    "geometries": 104,
-    "textures": 148
+    "geometries": 103,
+    "textures": 147
    },
    "resident": {
     "geometry_bytes": 33259440,
@@ -372,26 +376,26 @@
    "file": null,
    "frame_ms": {
     "median": 16.799999952316284,
-    "mean": 20.039495798219153,
-    "p95": 18.900000035762787,
-    "min": 12.600000023841858,
-    "max": 172.29999995231628,
+    "mean": 20.050420168067227,
+    "p95": 19,
+    "min": 13.399999976158142,
+    "max": 175.5,
     "frames": 119
    },
    "fps_presented": 59.52380969275693,
    "gpu_cost_ms": {
     "median": 0.5,
-    "mean": 0.5516666660706202,
-    "p95": 1.0999999642372131,
+    "mean": 0.5783333331346512,
+    "p95": 1.2999999523162842,
     "frames": 60
    },
    "fps_uncapped": 2000,
-   "draw_calls": 78,
-   "triangles": 2572532,
+   "draw_calls": 77,
+   "triangles": 2572278,
    "programs": 12,
    "info_memory": {
-    "geometries": 104,
-    "textures": 148
+    "geometries": 103,
+    "textures": 147
    },
    "resident": {
     "geometry_bytes": 33259440,
@@ -451,27 +455,27 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.600000023841858,
-    "mean": 18.857142857142858,
-    "p95": 19.30000001192093,
-    "min": 7.899999976158142,
-    "max": 171.9000000357628,
+    "median": 16.69999998807907,
+    "mean": 18.91260504221716,
+    "p95": 19.399999976158142,
+    "min": 12.800000011920929,
+    "max": 170.39999997615814,
     "frames": 119
    },
-   "fps_presented": 60.24096376890021,
+   "fps_presented": 59.88023956370228,
    "gpu_cost_ms": {
-    "median": 1.399999976158142,
-    "mean": 1.5800000001986823,
-    "p95": 2.699999988079071,
+    "median": 1.4000000357627869,
+    "mean": 1.521666665871938,
+    "p95": 2.399999976158142,
     "frames": 60
    },
-   "fps_uncapped": 714.2857264499277,
-   "draw_calls": 187,
-   "triangles": 5003345,
+   "fps_uncapped": 714.2856960393949,
+   "draw_calls": 185,
+   "triangles": 5002837,
    "programs": 12,
    "info_memory": {
-    "geometries": 104,
-    "textures": 148
+    "geometries": 103,
+    "textures": 147
    },
    "resident": {
     "geometry_bytes": 33259440,
@@ -531,27 +535,27 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 17.19999998807907,
-    "mean": 20.833613445277976,
-    "p95": 19,
-    "min": 9.699999988079071,
-    "max": 244.89999997615814,
+    "median": 16.599999964237213,
+    "mean": 19.863865546318664,
+    "p95": 19.30000001192093,
+    "min": 12.100000023841858,
+    "max": 225.30000001192093,
     "frames": 119
    },
-   "fps_presented": 58.13953492401612,
+   "fps_presented": 60.2409639852039,
    "gpu_cost_ms": {
     "median": 1.5,
-    "mean": 1.6800000001986821,
-    "p95": 2.700000047683716,
+    "mean": 1.6533333331346511,
+    "p95": 2.699999988079071,
     "frames": 60
    },
    "fps_uncapped": 666.6666666666666,
-   "draw_calls": 203,
-   "triangles": 5391615,
+   "draw_calls": 201,
+   "triangles": 5391107,
    "programs": 12,
    "info_memory": {
-    "geometries": 104,
-    "textures": 148
+    "geometries": 103,
+    "textures": 147
    },
    "resident": {
     "geometry_bytes": 33259440,
