@@ -293,8 +293,8 @@ async function boot() {
 	requestAnimationFrame( () => {
 		renderFrame();
 		ui.style.display = 'none';
-		window.__pfaReady = true;
-		loadTimes.total_s = ( performance.now() - t0 ) / 1000;
+		loadTimes.total_s = ( performance.now() - t0 ) / 1000;   // set BEFORE __pfaReady: the harness
+		window.__pfaReady = true;                                // reads __pfaInfo() the moment it flips
 		note( `ready in ${loadTimes.total_s.toFixed( 2 )} s: ${MB( progress.loaded )} MB loaded of ${MB( progress.total )} MB planned `
 			+ `(plan ${loadTimes.plan_s.toFixed( 2 )} s, sky ${loadTimes.sky_s.toFixed( 2 )} s, lut ${loadTimes.lut_s.toFixed( 2 )} s, glb ${loadTimes.glb_s.toFixed( 2 )} s)` );
 		animate();
