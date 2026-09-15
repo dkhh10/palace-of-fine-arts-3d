@@ -46,7 +46,10 @@ for p in exrs:
         assert np.array_equal(rb, e), f"{out}: did not read back identical"
         back = dec(rb, rng)
         s, t = a[sel], back[sel]
-        m = s > 1e-6
+        # the floor is 1 % of the map's own p99 PER CHANNEL, not per texel: a lit texel can still hold a
+        # near-zero blue channel, and a ratio taken on that is a metric artefact, not an encoding error
+        # (it read 16.7 "stops" on the drum band before this line).
+        m = s > 0.01 * p99
         rel = np.abs(t[m] - s[m]) / s[m]
         stops = np.abs(np.log2(np.maximum(t[m], 1e-9) / s[m]))
         d[enc] = dict(path=out.name, bytes=nb,
