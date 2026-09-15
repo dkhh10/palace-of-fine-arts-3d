@@ -340,3 +340,10 @@ a real (low-frequency) normal, and the grain comes from `materials.detail`: five
 the source height at the true tile scale), 20 MB resident, applied in the viewer shader (albedo x detail / mean, normal blend). Resident projection
 1 248 MB with Gate 3 reservations; the impostor 2K -> 1K lever (-200 MB) covers it. Process rule added: the export sync writes export_set.json LAST
 (the bake engineer caught a blend/JSON mismatch mid-run).
+
+## 2026-09-15 · QA-12-1 closed as far as materials can close it (lead)
+The detail layer now ships the honest slope of the Phase 5 materials (Bump Distance 0.015 m differentiated at the 2K source: normal std 0.024 /
+0.019 on the two concrete sets, albedo contrast 3.3 %); the source height maps are 8-bit low-frequency JPEGs (texel gradient below 1/255), so no
+derivation yields the 10x the QA box asks for, and a gain knob or a generated grain map would be invented relief. The rest of the cam05 pier-face
+amplitude is shading and occlusion, which Gate 2's direct mode excludes by construction and Gate 3's lightmaps carry. QA 12b re-scores with that
+attribution; Gate 2 passes on material rows only if the material share is within parity.
