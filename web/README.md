@@ -69,6 +69,33 @@ manifest carries a set, so a grey capture can never be reported as a PBR one.
   ANGLE Metal) KTX2 UASTC transcodes to `RGBA_ASTC_4x4`, 1 byte/texel, so a 2K map is **5.59 MB**
   resident and a 4K one 22.4 MB — the figure to compare with `budget.resident_mb`.
 
+### Gate 2 capture, measured (`web/tools/gate2.sh`, 2026-09-15, manifest `pfa-phase6/3`)
+60 sets / 143 textures / 105 constant maps / 33 `in_glb` occlusion maps; 55 of 65 scene materials
+textured from 51 of 60 sets, 153 attachments, 143 unique files, **531.3 MB** resident, every one
+`RGBA_ASTC_4x4`; factors applied to all 55 before any download; 33 Gate 1 ORN normals replaced and
+**83 superseded Gate 1 textures disposed, 155.2 MB freed**; 0 failures, 0 colour-space conflicts.
+Unmatched, by design: the 10 foliage bark/leaf/shrub materials (rule 7). Unused, a hand-off: 9 of
+the 10 `MAT_EXP_ENVBD__*` sets, because `env.glb` carries exactly one backdrop material
+(`MAT_EXP_ENVBD__MAT_backdrop_building`, `uv1_in_glb: false`, factors only) — the other nine are
+merged away in the pack, so their bakes reach nothing until the backdrop is re-exported.
+
+| station | 01 | 02 | 03 | 04 | 05 | 06 |
+|---|---|---|---|---|---|---|
+| presented ms (1440p) | 16.50 | 16.60 | 16.70 | 16.70 | 16.70 | 16.60 |
+| GPU ms median / p95 | 1.40 / 1.70 | 1.30 / 1.50 | 1.40 / 2.00 | 0.30 / 0.40 | 1.60 / 1.90 | 1.90 / 2.10 |
+| draw calls | 231 | 217 | 234 | 99 | 210 | 241 |
+| triangles (M) | 5.41 | 5.08 | 5.48 | 2.36 | 4.86 | 5.60 |
+| pair-sheet linear ratio | **1.141** | 1.352 | 7.942* | 1.710 | 1.381 | 2.716 |
+| the same ratio in grey (Gate 1) | 1.187 | 1.461 | 8.373* | 2.259 | 1.454 | 2.837 |
+
+*cam03 and cam05 are scored against Eevee frames, not Cycles: not parity targets.
+Load 469.8 MB in 4.82 s (sky 0.53, lut 0.09, glb 1.64, textures 2.34). Resident **1 395.0 MB** at
+1440p = textures 921.4 + render targets 437.5 + geometry 36.2, and **1 266.0 MB** at 1080p (the
+render targets are 308.5 MB there). The render targets are two 2560x1440 HalfFloat `samples: 4`
+composer buffers (147.5 MB each), the 1024^2 water reflector (41.9) and the PMREM cubeUV (100.7).
+Texture memory alone is 921.4 MB against the manifest's 1 200 MB budget; the manifest's own
+projection is 1 166 MB including the Gate 3 lightmaps and impostors that do not exist yet.
+
 ## Instance chunking (QA-11d-1)
 The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
 batch scattered over the site has a site-spanning bounding sphere and passes the frustum test at every
