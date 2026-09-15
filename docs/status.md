@@ -592,3 +592,6 @@ In flight: QA 11b (tile re-check + re-score). Next: on PASS dispatch Gate 2 (doc
 ## 2026-09-15 · QA 11b (850209e): B1 + B2 FIXED, all rows within 0.5 (provisional) but GATE 1 FAIL: the export's own 127 opaque ENV_treeboard_* stand-ins in env.glb cover 16-26 % of the frames (44.5 % of the arch opening); cam04 ceiling sliver (QA-11-9) open
 Lead: viewer ?treeboards=0 hides the boards by material name (gltfpack -mi drops node names; b58240b), re-captured with both placeholder sets hidden (127 hidden, hero frame changed over 341 k px). Export engineer asked for: sweep pattern board|impostor|billboard with the exemption on record, QA-11-9 sliver, boards tagged in the glb.
 In flight: QA 11c (re-check on the clean capture), export fixes. Next: Gate 1 verdict -> Gate 2 dispatch.
+
+## 2026-09-15 · Export 2c1c7fe merged (4190b62; boards cut, cam04 rib group as modelled at 160 828 tris, scene 2 841 396); sweep pattern updated; capture 4 taken; QA 11c dispatched; Gate 2 viewer brief written
+In flight: QA 11c. Next: on PASS dispatch Gate 2 bake (phase6_gate2_bake.md) then the viewer Gate 2 round (phase6_gate2_viewer.md) once manifest v3 exists; burn; stop.
