@@ -1,0 +1,34 @@
+00:00.335  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+00:01.704  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/out/gate1/gate1_set.blend"
+00:03.623  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/out/gate1/gate1_bake.blend"
+[gate2] groups: {'arch': 15, 'ground': 4, 'backdrop': 10, 'orn': 33}
+[gate2] env src MAT_EXP_ENV__ENV_ground_colonnade_walk: 1 objects, 845 polys, materials ['MAT_paving_stone', 'MAT_paving_stone_worn']
+[gate2] env src MAT_EXP_ENV__ENV_lagoon_bed: 1 objects, 6377 polys, materials ['MAT_lagoon_bed']
+[gate2] env src MAT_EXP_ENV__ENV_terrain_ground: 1 objects, 44416 polys, materials ['MAT_lawn', 'MAT_soil', 'MAT_gravel_path']
+[gate2] env src MAT_EXP_ENV__riprap: 49 objects, 60560 polys, materials ['MAT_rock_riprap']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_building: 640 objects, 20891 polys, materials ['MAT_backdrop_building']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_door_green: 1 objects, 6 polys, materials ['MAT_backdrop_door_green']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_forest: 6 objects, 98920 polys, materials ['MAT_backdrop_forest']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_hill: 3 objects, 440 polys, materials ['MAT_backdrop_hill']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_roof: 516 objects, 4183 polys, materials ['MAT_backdrop_roof']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_roof_tile: 117 objects, 920 polys, materials ['MAT_backdrop_roof_tile']
+[gate2] env src MAT_EXP_ENVBD__MAT_backdrop_skylight: 2 objects, 618 polys, materials ['MAT_backdrop_skylight']
+[gate2] env src MAT_EXP_ENVBD__MAT_bird_white: 2 objects, 2256 polys, materials ['MAT_bird_white']
+[gate2] env src MAT_EXP_ENVBD__MAT_lamp_post: 1 objects, 510 polys, materials ['MAT_lamp_post']
+[gate2] env src MAT_EXP_ENVBD__MAT_lawn: 4 objects, 47357 polys, materials ['MAT_backdrop_hill', 'MAT_lawn', 'MAT_soil', 'MAT_backdrop_asphalt', 'MAT_gravel_path']
+[gate0] STEP gate2_set:env_poly_src wall_s=1.4 env_poly_src.npz=3030699B
+[gate2] materials needed: 29
+[gate2] relinked 29 materials; MAT_dome_membrane {'node_group': 'PFA_dome.001', 'panels': 28.0, 'n_nodes': 5}
+[gate2] EXPM_ENV_backdropgroup_lawn: per-polygon materials restored {'MAT_backdrop_hill': 52, 'MAT_lawn': 290, 'MAT_soil': 43, 'MAT_backdrop_asphalt': 1274, 'MAT_gravel_path': 1282}
+[gate2] EXPM_ENV_ground_colonnade_walk: per-polygon materials restored {'MAT_paving_stone': 772, 'MAT_paving_stone_worn': 73}
+[gate2] EXPM_ENV_terrain_ground: per-polygon materials restored {'MAT_lawn': 30547, 'MAT_soil': 4917, 'MAT_gravel_path': 8952}
+Info: Saved copy as "gate2_bake.blend"
+[gate0] STEP gate2_set:arch_env wall_s=1.9 gate2_bake.blend=255145281B jobs=29
+Info: Saved copy as "gate2_orn_bake.blend"
+[gate0] STEP gate2_set:orn wall_s=0.4 gate2_orn_bake.blend=155969001B
+[gate0] STEP gate2_set wall_s=3.7 bake_jobs.json=80983B gate2_set.json=3758B jobs=62
+[gate2] set done: 62 jobs
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 87348 exited rc=0 after 5 s (max 1800)

@@ -686,3 +686,85 @@ prototype's slot order onto the Gate 1 lo/hi meshes without asserting the existi
 the same order; `bake_lib.py` `is_data=img.is_float and True` is always True (line 246 reassigns the colorspace, so it
 is cosmetic), `manifest_v3.py`'s `if kind == "ao"` is dead, and its `etc1s_encoder` string omits `--assign_oetf`; the
 five `renders/logs/gate2_*.log` sit outside the brief's `export/*`.
+
+## QA-12-1 — why the stone read flat, and what actually fixes it
+
+QA round 12 failed Gate 2 on one row: at cam05 the pier face, attic wall and spandrel are smooth pale ochre at
+15-25 m, mid-band amplitude **2.68 against the Phase 5 reference's 10.11**, std 12.3 against 38.3. The report's
+root cause was that 7 of the ARCH/ground sets shipped `normal.texture: null`, and the prescribed fix was to bake
+each material's bump to a tangent normal map for every group.
+
+**The seven nulls were real and are fixed** — an ARCH or ground set now always ships a normal map
+(`manifest_v3.py`, the `CONSTANT_STD` rule no longer applies to them), so the viewer can never fall back to a flat
+geometry normal on stone. **But the normal map is not where the grain lives, and measurement says it cannot be.**
+
+| what was measured | result |
+|---|---|
+| Cycles NORMAL bake of the bump, `ARCH_site__concrete_podium` at 2K | X/Y std **0.00167** |
+| the same bake at 4K | X/Y std **0.00272** — 1.63x for 2x the resolution, i.e. it scales with the texel footprint |
+| the same bump baked as a HEIGHT map and converted to a normal at the map's own resolution (`bake_lib.height_to_normal`, no bake differentials in it) | flatter still |
+| the arithmetic | Bump `Distance` **0.015 m** against an atlas texel of **0.038-0.118 m**; the height field varies by only **0.041** (std, full range) from texel to texel |
+
+Extrapolated, the Cycles bake would need roughly **50x** the resolution to reach a usable amplitude. The grain is
+not missing from the bake; it is finer than the bake's Nyquist. Phase 5 does not have this problem because Cycles
+evaluates the same Bump per **camera pixel** — about 2 cm at the cam05 station — and because the detail images
+underneath it are 2048 px across a 2.16-2.71 m tile, i.e. **1.05-1.32 mm per texel**, 36-110x finer than any unique
+atlas this project can afford.
+
+### The fix: a shared object-space detail set (`materials.detail`)
+
+`export/gate2_detail.py` exports what Phase 5 itself uses — five shared texture sets, tiled in object space, on top
+of the baked albedo/roughness:
+
+| set | used by | object scale | tile | mm/texel in Blender |
+|---|---|---|---|---|
+| `concrete_wall_007` | colonnade, rotunda podium, drum band, ceiling ribs, paving stone | 0.462963 | 2.16 m | 1.05 |
+| `concrete_wall_008` | column rose, tan inner, concrete inner/ochre, plaster ceiling, paving | 0.369004 | 2.71 m | 1.32 |
+| `gravelly_sand` | gravel path | 0.403226 | 2.48 m | 1.21 |
+| `rock_boulder_dry` | riprap | 0.85 | 1.18 m | 0.57 |
+| `forest_ground_04` | soil | 0.31746 | 3.15 m | 1.54 |
+
+Each set ships albedo, roughness and a tangent normal derived from its own height at the tile's real scale
+(`k = Distance / m_per_texel`, 9.8-26.1), all at **1K = 19.95 MB resident for the whole scene** — independent of
+how many atlases exist, because the sets are shared. The height map itself is not shipped.
+
+**The proof QA asked for, on one group** (`ARCH_colonnade_south`, whose detail set is `concrete_wall_007`):
+
+| map | red mean / std | blue mean / std | red range |
+|---|---|---|---|
+| atlas normal, 2K at 3.8 cm/texel (before) | 0.50003 / **0.00205** | 1.00000 / **0.00015** | 0.4504 – 0.6033 |
+| detail normal, 1K over a 2.16 m tile = 2.11 mm/texel (after) | 0.49997 / **0.02363** | 0.99956 / **0.00916** | **0.0210 – 0.9779** |
+| ratio | **11.5x** | **61.1x** | flat band -> full relief |
+
+`manifest.materials.detail` carries the sets, the per-material object scale and the apply rule; the viewer
+multiplies the baked albedo by the detail albedo over its own mean and blends the detail normal over the baked one.
+Without that layer the atlas normal alone cannot move the cam05 numbers, whatever resolution it is baked at.
+
+### After the atlas split (export 9badae4) — the numbers that shipped
+
+The export engineer split every merged mass onto its own atlas. Re-baked all 19 ARCH/ground groups rather than
+the 11 named: the export regenerated every UV1 layout in one pass, and a stale UV scrambles a texture, so the 8
+unnamed groups cost ~8 minutes to prove instead of assume. The backdrop UV cross-check against
+`backdrop_uv1_shipped.npz` still matches at **1.00000 on all ten meshes**, which is also the canary that the
+regeneration was deterministic and the 33 ORN maps are therefore not stale.
+
+| group | area m2 | UV1 coverage | cm/texel | atlas normal std X/Y |
+|---|---|---|---|---|
+| colonnade north, instanced remainder | 205 | 0.427 | **1.07** | 0.01272 |
+| colonnade north, merged mass (new set) | 5 732 | 0.491 | **5.28** | 0.00270 |
+| colonnade south, instanced remainder | 204 | 0.432 | **1.06** | 0.01277 |
+| colonnade south, merged mass (new set) | 5 805 | 0.477 | **5.39** | 0.00271 |
+| rotunda concrete ochre | 26 288 | 0.623 | 10.03 | 0.02582 |
+| rotunda plaster ceiling rib | 2 443 | 0.827 | 2.65 | 0.00291 |
+| site concrete podium | 23 787 | 0.705 | 8.97 | 0.00273 |
+| ENV riprap | 1 021 | 0.990 | 1.57 | 0.00772 |
+
+The colonnade was one atlas at 0.161 coverage and **9.4 cm/texel**; it is now two, at 1.07 cm for the columns,
+bases and astragals the walker stands next to and 5.28 cm for the back wall — a 1.8x linear gain on the mass and
+**8.8x on the instanced remainder**. QA-12-3's box (the south colonnade back wall) sits on the merged mass.
+**19 of 19 ARCH/ground sets ship a normal texture; none is constant.** The atlas normals are still 0.003-0.026
+std, as the measurements above say they must be — the surface itself rides `materials.detail`.
+
+Resident after this round: **1 247.57 MB** (PBR 600.73 + ORN AO 147.89 + detail 19.95 + foliage 20 + the Gate 3
+reservations 459). That is 47.57 MB over the 1 200 MB line, which the lead accepted for the new atlases; the
+impostor lever (2K -> 1K, -200 MB) is still unspent and brings it to **1 047.57 MB** whenever Gate 3 wants it.

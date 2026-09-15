@@ -32,6 +32,17 @@ if [ "$1" = "--gate2" ]; then
           "$KTX/$b.ktx2" "$f" >/dev/null
     n=$((n+1))
   done
+  # the shared concrete/ground DETAIL set (QA-12-1): tiled in object space, not part of any atlas
+  for f in "$OUT"/detail/detail_*.png(N); do
+    b=${f:t:r}
+    case "$b" in
+      *_albedo) oetf=srgb ;;
+      *)        oetf=linear ;;
+    esac
+    toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf $oetf \
+          "$KTX/$b.ktx2" "$f" >/dev/null
+    n=$((n+1))
+  done
   t1=$(date +%s)
   echo "[gate2] STEP toktx_uastc wall_s=$((t1-t0)) files=$n bytes=$(du -k "$KTX" 2>/dev/null | tail -1 | cut -f1)KiB"
   # the mobile ETC1S variants: only the timing sample the brief asks for (the walk-near ARCH groups).
