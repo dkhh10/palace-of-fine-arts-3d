@@ -634,3 +634,6 @@ Resident 1 338 MB at 1440p (tex 987 incl. 67 MB of detail PNGs; KTX2 saves 47). 
 
 ## 2026-09-15 · Detail re-derivation merged (4c763c9): honest slope from 8-bit height sources (normal std 0.024 / 0.019), albedo contrast +35 %, colour spaces verified on disk; decision: the remaining cam05 amplitude is shading/occlusion (Gate 3). Viewer taking the final Gate 2 capture with the KTX2 detail set; QA 12b brief written (docs/briefs/qa_round_12b.md)
 Next: QA 12b -> Gate 3 dispatch -> burn -> stop.
+
+## 2026-09-15 · Final Gate 2 capture merged (viewer 9dcdc1e / 3be52fb): KTX2 detail set (33.6 MB), colour spaces right (cam05 box mean 144.8 vs Phase 5 145.4), QA-12-1 boxes moved < 1.5 % (material share exhausted); resident 1 305 MB at 1080p / 1 434 at 1440p; QA 12b dispatched
+Next: Gate 2 verdict -> Gate 3 bake dispatch -> burn -> stop.
