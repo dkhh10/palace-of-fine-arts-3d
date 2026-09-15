@@ -93,6 +93,9 @@ else:
         "cam04": [("CAM_qa_04_rotunda_ceiling", 1280, 720, SPP, None)],
         "hero":  [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, None)],
         "dome":  [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, DOME_WINDOW)],
+        # the acceptance pass: both frames from one open master, so the 160 MB load is paid once
+        "both":  [("CAM_qa_01_lagoon_hero", 1920, 1080, SPP, None),
+                  ("CAM_qa_04_rotunda_ceiling", 1280, 720, SPP, None)],
     }[JOBS]
     for cam, rx, ry, spp, win in SETS:
         obj = bpy.data.objects[cam]

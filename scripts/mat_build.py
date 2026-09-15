@@ -975,13 +975,16 @@ def build_concrete_family():
         # albedo saturation 0.40: rendered coffer sat 0.966 -> 0.614 (Eevee cam04), i.e. 0.94 rendered points per
         # albedo point, not the 1.28 the two round-6 materials suggested -- so the albedo goes to 0.25 to land the
         # rendered field near ref 083's 0.427.  Ratio held at 0.355 against round 6's 0.346.
-        # QA-09-8 (round 10): Cycles field sat 0.341 against the 0.38-0.50 window (ref 083 0.427).  The local
-        # gain around this operating point, read off the two committed measurements (albedo 0.40 -> Eevee 0.614,
-        # albedo 0.25 -> Eevee 0.415, and Cycles/Eevee 0.822 at albedo 0.25), is ~1.09 rendered points per albedo
-        # point in Cycles, so albedo saturation 0.250 -> 0.332 buys ~+0.089 and lands ~0.43.  HUE (46.45 / 41.65
-        # deg) and Rec.709 luminance (0.46606 / 0.316268) are held to 5 decimals, which is what holds the cam04
-        # coffer/sky luminance ratio the lighting round measured at 0.347.
-        "Base Color": C(0.50524, 0.46736, 0.33750), "Grey Color": C(0.350086, 0.314533, 0.233857), "Grey Drift": 0.16,
+        # QA-09-8 (round 10).  QA scored 0.341 on the round-09 frame; re-measured on THIS master (LIGHT r17, the
+        # shade fill off) by `mat_r9_measure.py coffer` the field is 0.310 at lum 106.9 -- the saucer lost 30 lum
+        # with the fill, so the whole operating point moved and the round-9 gain no longer applies as quoted.
+        # The gain at albedo 0.25 was ~1.09 rendered points per albedo point in Cycles at display 137 (from
+        # albedo 0.40 -> Eevee 0.614, 0.25 -> Eevee 0.415, Cycles/Eevee 0.822); AgX's chroma transfer at display
+        # 107 is ~1.35x the one at 137, so the local gain here is 1.1-1.6.  Albedo saturation 0.250 -> 0.345 is
+        # +0.095, i.e. +0.105 to +0.152 rendered, landing 0.415-0.462 inside the 0.38-0.50 window next to ref
+        # 083's 0.427.  HUE (46.45 / 41.65 deg) and Rec.709 luminance (0.46606 / 0.316268) are held to 5
+        # decimals, which is what holds the coffer/sky luminance ratio lighting measured at 0.347.
+        "Base Color": C(0.506932, 0.467441, 0.332040), "Grey Color": C(0.351557, 0.314453, 0.230270), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         # QA-04-7 "no dirt gradient inside any coffer": now that the ribs carry their own material, a LONG AO probe
@@ -1006,12 +1009,15 @@ def build_concrete_family():
         # measured gain for the field was 0.94 rendered points per albedo point; the rib renders at 1.29 albedo
         # points per rendered point, so 0.25 -> 0.34 puts it at ~0.44, mid-window, next to ref 083's 0.438.  Hue
         # (48.8 / 49.2 deg) and Rec.709 luminance (0.1831 / 0.1472) are held to 4 decimals by construction.
-        # QA-09-8 (round 10): the round-9 move overshot -- Cycles rim sat 0.634 against the same 0.38-0.50 window.
-        # Round 9 measured the rim's own gain directly (albedo 0.25 -> 0.34 moved Cycles rim 0.323 -> 0.625, i.e.
-        # 3.36 rendered points per albedo point, steep because the dark quarter sits where AgX's chroma transfer
-        # is steepest), so albedo saturation 0.340 -> 0.285 is -0.185 and lands ~0.45.  Hue (48.79 / 49.18 deg)
-        # and Rec.709 luminance (0.183130 / 0.147178) held to 6 decimals.
-        "Base Color": C(0.194545, 0.184190, 0.139100), "Grey Color": C(0.156131, 0.148107, 0.111634), "Grey Drift": 0.30,
+        # QA-09-8 (round 10): the round-9 move overshot -- QA scored the rim 0.634, and on THIS master it is
+        # 0.600 at lum 27.9, still far outside the 0.38-0.50 window.  Round 9 measured the rim's own gain
+        # directly (albedo 0.25 -> 0.34 moved Cycles rim 0.323 -> 0.625, i.e. 3.36 rendered points per albedo
+        # point -- steep because the dark quarter sits where AgX's chroma transfer is steepest), so albedo
+        # saturation 0.340 -> 0.292 is -0.048 and lands 0.398-0.475 for any gain between 2.6 and 4.2, i.e. the
+        # window is held even if the gain moved with the light as the field's did.  Hue (48.79 / 49.18 deg) and
+        # Rec.709 luminance (0.183130 / 0.147178) held to 6 decimals, so the dark/light ratio (0.261 here
+        # against ref 083's 0.265) and the coffer/sky ratio do not move.
+        "Base Color": C(0.194840, 0.184207, 0.137947), "Grey Color": C(0.156364, 0.148135, 0.110706), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
