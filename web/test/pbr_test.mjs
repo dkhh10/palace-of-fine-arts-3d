@@ -65,6 +65,75 @@ const v3 = {
 	check( g1.materials.count === 0 && g1.materials.mode === null, 'v2: no texture sets -> grey mode' );
 }
 
+// --- (a2) the REAL v3 contract (export/README.md "manifest.json v3") ---------------------------
+{
+	const real = {
+		schema: 'pfa-phase6/3', gate: 'gate2',
+		textures: {
+			ktx2_dir: 'tex_ktx2', files: [ 'orn_capital_rotunda_v1_ao.ktx2', 'bark_bluegum_diff_2k.ktx2' ],
+			gate2: {
+				ktx2_dir: '../gate2/tex_ktx2', bytes: 3000, resident_mb: 16.0,
+				files: {
+					gate2_arch_rotunda__MAT_column_rose_albedo: { path: 'gate2_arch_rotunda__MAT_column_rose_albedo.ktx2', w: 2048, h: 2048, map: 'albedo', colorspace: 'srgb', cls: 'arch', bytes: 2000, resident_mb: 5.33 },
+					gate2_arch_rotunda__MAT_column_rose_roughness: { path: 'gate2_arch_rotunda__MAT_column_rose_roughness.ktx2', w: 2048, h: 2048, map: 'roughness', colorspace: 'linear', cls: 'arch', bytes: 1000, resident_mb: 5.33 },
+				},
+			},
+		},
+		materials: {
+			mode: 'pbr', uv: 'TEXCOORD_0', constant_threshold: 0.02,
+			colorspace: { albedo: 'srgb', roughness: 'linear', normal: 'linear', occlusion: 'linear' },
+			sets: {
+				'MAT_EXP_ARCH_rotunda__MAT_column_rose': {
+					job: 'arch_rotunda__MAT_column_rose', cls: 'arch', src_material: 'MAT_column_rose', size: 2048,
+					albedo: { texture: 'gate2_arch_rotunda__MAT_column_rose_albedo', factor: [ 0.35, 0.22, 0.18 ] },
+					roughness: { texture: 'gate2_arch_rotunda__MAT_column_rose_roughness', factor: 0.83 },
+					normal: { texture: null, scale: 1.0 },
+					metallic: { texture: null, constant: true, factor: 0.0 },
+					occlusion: { texture: 'gate2_not_a_file' },      // a key in neither index
+					uv1_in_glb: true,
+				},
+				'MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a': {
+					job: 'orn_capital_rotunda_v1', cls: 'orn', src_material: null, size: 1024,
+					albedo: { texture: null, constant: true, factor: [ 0.5, 0.47, 0.42 ] },
+					occlusion: { texture: 'orn_capital_rotunda_v1_ao' },
+					uv1_in_glb: true,
+				},
+				'MAT_EXP_ENVBD__MAT_backdrop_building': {
+					job: 'backdrop_building', cls: 'backdrop', size: 1024,
+					albedo: { texture: 'gate2_backdrop_building_albedo', factor: [ 0.28, 0.27, 0.26 ] },
+					roughness: { texture: null, constant: true, factor: 0.9 },
+					uv1_in_glb: false,
+				},
+			},
+		},
+		budget: { resident_mb: { total: 980.0 }, budget_mb: 1200 },
+	};
+	const m = normaliseManifest( real, base );
+	const rose = m.materials.sets[ 'MAT_EXP_ARCH_rotunda__MAT_column_rose' ];
+	check( rose.maps.map.url === 'http://x/assets/gate2/tex_ktx2/gate2_arch_rotunda__MAT_column_rose_albedo.ktx2',
+		`v3 real: a texture KEY resolves through textures.gate2.files + ktx2_dir -> ${rose.maps.map.url.split( '/' ).pop()}` );
+	check( rose.maps.map.srgb === true && rose.maps.roughnessMap.srgb === false, 'v3 real: colour space from the file entry' );
+	check( JSON.stringify( rose.factors.map ) === '[0.35,0.22,0.18]' && rose.factors.roughnessMap === 0.83,
+		'v3 real: albedo and roughness factors kept alongside their textures' );
+	check( rose.factors.metalnessMap === 0 && ! rose.maps.metalnessMap, 'v3 real: metallic texture null + constant -> factor only' );
+	check( ! rose.maps.normalMap && rose.normalScale === 1.0, 'v3 real: a null normal texture leaves no map but keeps scale' );
+	const cap = m.materials.sets[ 'MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a' ];
+	check( cap.maps.aoMap && cap.maps.aoMap.url.endsWith( 'tex_ktx2/orn_capital_rotunda_v1_ao.ktx2' ),
+		'v3 real: an ORN occlusion key carried from Gate 1 resolves through the v2 file list' );
+	check( ! cap.maps.map && JSON.stringify( cap.factors.map ) === '[0.5,0.47,0.42]', 'v3 real: a constant albedo is the factor, no file' );
+	const bd = m.materials.sets[ 'MAT_EXP_ENVBD__MAT_backdrop_building' ];
+	check( Object.keys( bd.maps ).length === 0 && bd.factors.map && bd.factors.roughnessMap === 0.9,
+		'v3 real: uv1_in_glb false -> factors only, no texture requested' );
+	check( m.materials.constantMaps === 4 && m.materials.withoutUv1 === 1,
+		`v3 real: ${m.materials.constantMaps} constant maps, ${m.materials.withoutUv1} set without UV1` );
+	check( m.materials.budget.budget_mb === 1200 && m.materials.gate2Textures.files === 2, 'v3 real: budget and the gate2 texture index are carried' );
+	check( ! rose.maps.aoMap && m.notes.some( n => /not in textures\.gate2\.files/.test( n ) && /gate2_not_a_file/.test( n ) ),
+		'v3 real: an unresolvable key is skipped AND reported, not silently dropped' );
+	check( ! m.notes.some( n => /gate2_backdrop_building_albedo/.test( n ) ),
+		'v3 real: a uv1_in_glb false set requests nothing, so its key is not reported as unresolvable' );
+	check( pbrPlan( m.materials.sets ).length === 3, 'v3 real: the byte plan has the 3 real files (the constants cost nothing)' );
+}
+
 // alternative shapes: `per_material` under textures, per-set alias lists, absolute paths
 {
 	const alt = { textures: { per_material: {

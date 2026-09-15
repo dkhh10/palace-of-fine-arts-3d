@@ -126,7 +126,9 @@ function onProgressFor( url ) {
 /** HEAD every planned file so `total` is real before the first byte is fetched. */
 async function measurePlan( files ) {
 	progress.files = files;
-	await Promise.all( files.map( async ( f ) => {
+	// A Gate 2 plan is a few hundred files: HEAD them 16 at a time rather than all at once, or the
+	// browser's own connection limit turns the byte plan into the slowest part of the load.
+	const one = async ( f ) => {
 		try {
 			const r = await fetch( f.url, { method: 'HEAD', cache: 'no-cache' } );
 			const n = Number( r.headers.get( 'content-length' ) ) || 0;
@@ -134,7 +136,10 @@ async function measurePlan( files ) {
 		} catch ( e ) { /* fall through to the manifest's number */ }
 		if ( f.bytes ) { f.sizeFrom = 'manifest'; return; }
 		f.bytes = 0; f.sizeFrom = 'unknown'; progress.unknown.push( f.url );
-	} ) );
+	};
+	let next = 0;
+	await Promise.all( Array.from( { length: Math.min( 16, files.length ) },
+		async () => { while ( next < files.length ) await one( files[ next ++ ] ); } ) );
 	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
 	note( `load plan: ${files.length} files, ${MB( progress.total )} MB (${files.map( f => `${f.kind} ${MB( f.bytes )}` ).join( ', ' )})`
 		+ ( progress.unknown.length ? ` — ${progress.unknown.length} of unknown size` : '' ) );

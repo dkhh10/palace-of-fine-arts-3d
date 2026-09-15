@@ -86,12 +86,23 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 		matchedKeys.add( byKey.get( key ).name );
 		work.push( { ...row, set: byKey.get( key ), matchedOn: key, rank: work.length + 1 } );
 	}
+	// PASS 1, no network: every matched material takes its FACTORS immediately (v3 rule 3 — the
+	// factor is the baked map's mean, the right value before the texture streams in and the right
+	// multiplier, 1.0 / white, afterwards).  A `texture: null, constant: true` map is finished here.
+	let factored = 0, constantOnly = 0;
+	for ( const job of work ) {
+		const n = applyFactors( job.material, job.set );
+		if ( n ) factored ++;
+		if ( n && ! Object.keys( job.set.maps ).length ) constantOnly ++;
+	}
 	const report = {
 		materials_in_scene: rows.length, matched: work.length, unmatched,
 		sets_in_manifest: Object.keys( sets ).length, sets_used: matchedKeys.size,
 		sets_unused: Object.keys( sets ).filter( n => ! matchedKeys.has( n ) ),
 		order: [], textures: 0, unique_files: 0, bytes: 0, kept_glb_normal: 0, replaced_glb_normal: 0, kept_glb_ao: 0,
 		colourspace_conflicts: [], formats: {}, failed: [],
+		factored, constant_only: constantOnly,
+		without_uv1: work.filter( j => j.set.uv1InGlb === false ).map( j => j.material.name ),
 	};
 	// One GPU upload per file: a texture used by several materials is SHARED, never cloned (a clone
 	// of a CompressedTexture has its own uuid and three uploads the mips a second time).
@@ -122,9 +133,10 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 				t.needsUpdate = true;
 				if ( slot === 'normalMap' && m.normalMap ) report.replaced_glb_normal ++;
 				m[ slot ] = t;
-				if ( slot === 'map' ) m.color.setRGB( 1, 1, 1 );                        // the map IS the albedo
-				if ( slot === 'roughnessMap' ) m.roughness = set.roughnessFactor ?? 1.0;
-				if ( slot === 'metalnessMap' ) m.metalness = set.metalnessFactor ?? 1.0;
+				// v3 rule 3: never multiply the texture by the factor — the factor was the stand-in.
+				if ( slot === 'map' ) m.color.setRGB( 1, 1, 1 );
+				if ( slot === 'roughnessMap' ) m.roughness = 1.0;
+				if ( slot === 'metalnessMap' ) m.metalness = 1.0;
 				if ( slot === 'normalMap' && set.normalScale ) m.normalScale.set( set.normalScale, set.normalScale );
 				applied.push( slot );
 				report.textures ++;
@@ -137,7 +149,6 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 					}
 			} catch ( e ) { report.failed.push( { url: entry.url, error: e.message } ); }
 		}
-		if ( set.metalnessFactor !== undefined && ! set.maps.metalnessMap ) m.metalness = set.metalnessFactor;
 		if ( m.normalMap && ! set.maps.normalMap ) report.kept_glb_normal ++;    // ORN hi->lo normal kept
 		if ( applied.length ) { m.needsUpdate = true; }
 		report.order.push( { rank: job.rank, material: m.name, set: set.name, matched_on: job.matchedOn,
@@ -153,11 +164,27 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 			+ `${( report.bytes / 1e6 ).toFixed( 1 )} MB resident in ${report.unique_files} file(s) `
 			+ `[${Object.entries( report.formats ).map( ( [ f, n ] ) => `${n} ${f}` ).join( ', ' )}], requested nearest first `
 			+ `(${report.order.slice( 0, 3 ).map( r => `${r.material} ${r.distance_m} m` ).join( ', ' )} …)` );
+		note( `pbr: factors applied to ${factored} material(s) before any download, `
+			+ `${constantOnly} of them finished by their factors alone (constant maps)`
+			+ ( report.without_uv1.length ? `; ${report.without_uv1.length} set(s) have no UV1 in the glb and take factors only: ${report.without_uv1.slice( 0, 4 ).join( ', ' )}` : '' ) );
 		if ( unmatched.length ) note( `pbr: ${unmatched.length} material(s) with NO texture set, left as exported: `
 			+ unmatched.slice( 0, 12 ).map( u => u.material ).join( ', ' ) + ( unmatched.length > 12 ? ' …' : '' ) );
 		if ( report.failed.length ) note( `pbr: ${report.failed.length} texture(s) FAILED: ${report.failed.slice( 0, 4 ).map( f => `${f.url.split( '/' ).pop()} ${f.error}` ).join( '; ' )}` );
 	}
 	return report;
+}
+
+/** v3 factors, applied without any download: albedo -> material.color (linear RGB), roughness and
+ *  metallic -> the scalars, normal.scale -> normalScale.  Returns how many were applied. */
+export function applyFactors( m, set ) {
+	let n = 0;
+	const f = set.factors || {};
+	if ( Array.isArray( f.map ) && f.map.length >= 3 ) { m.color.setRGB( f.map[ 0 ], f.map[ 1 ], f.map[ 2 ], THREE.LinearSRGBColorSpace ); n ++; }
+	if ( typeof f.roughnessMap === 'number' ) { m.roughness = f.roughnessMap; n ++; }
+	if ( typeof f.metalnessMap === 'number' ) { m.metalness = f.metalnessMap; n ++; }
+	if ( typeof set.normalScale === 'number' && m.normalScale ) { m.normalScale.set( set.normalScale, set.normalScale ); n ++; }
+	if ( n ) m.needsUpdate = true;
+	return n;
 }
 
 /** three's numeric texture format as its constant name: RGBA_ASTC_4x4_Format, RGBAFormat, … .

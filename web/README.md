@@ -50,6 +50,25 @@ on what is textured first). Lighting is unchanged (`direct`: full sun + PMREM ir
 lightmaps). `?materials=grey|pbr` overrides the automatic choice; `auto` takes `pbr` whenever the
 manifest carries a set, so a grey capture can never be reported as a PBR one.
 
+### What the viewer does with manifest v3 (export/README.md is the contract)
+* `materials.sets[<glb material name>]` is matched on the full name first, then on either half of
+  `MAT_EXP_<zone>__<source material>`, then on a declared alias list; unmatched materials are listed
+  by name in `__pfaInfo().pbr.unmatched` and keep what the glb gave them (rule 7).
+* `texture` is a KEY into `textures.gate2.files` joined with `textures.gate2.ktx2_dir` (rule 1); a key
+  the Gate 2 index does not carry is looked up in the Gate 1 `textures.files` list (the ORN
+  `occlusion` maps), and a key in neither is skipped and reported.
+* **Factors first, textures after** (rules 2 and 3): every matched material takes its `factor`s before
+  a single byte is requested — albedo -> `material.color` (linear RGB), roughness/metallic -> the
+  scalars, `normal.scale` -> `normalScale`. `texture: null` finishes there. When a texture arrives it
+  replaces the factor: `color` goes white, `roughness`/`metalness` go to 1.0. The texture is never
+  multiplied by the factor.
+* `uv1_in_glb: false` (the ten backdrop groups) -> factors only, no request, listed in the report.
+* The Gate 2 ORN normal REPLACES the Gate 1 `orn_<proto>_normal` (rule 6); an `aoMap` the glb already
+  carries is kept rather than re-loaded, and counted as `kept_glb_ao`.
+* Resident texture bytes are summed per unique file with a format histogram: on this M2 (Chrome,
+  ANGLE Metal) KTX2 UASTC transcodes to `RGBA_ASTC_4x4`, 1 byte/texel, so a 2K map is **5.59 MB**
+  resident and a 4K one 22.4 MB — the figure to compare with `budget.resident_mb`.
+
 ## Instance chunking (QA-11d-1)
 The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
 batch scattered over the site has a site-spanning bounding sphere and passes the frustum test at every
