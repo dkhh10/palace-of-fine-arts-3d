@@ -55,4 +55,4 @@ scripts/chrome_run.sh 1200 -- node web/tools/screenshot.mjs \
 	--perf "renders/web/${TAG}_perf.json"
 
 python3 web/tools/gate1_sheets.py --viewer-glob "renders/web/${TAG}_cam%02d.png" --out-dir renders/web \
-	--prefix "$TAG" --tile-dir "renders/web/tiles_${TAG}"      # never overwrite the Gate 1 tiles
+	--prefix "$TAG" --tile-dir "renders/web/tiles/${TAG}"      # never overwrite the Gate 1 tiles
