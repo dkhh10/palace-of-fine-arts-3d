@@ -255,3 +255,24 @@ Format: date · decision · why · consequences. Newest at the bottom.
 - Gate 0 runs as two agents (bake engineer xhigh, viewer engineer high) on a manifest contract (docs/briefs/phase6_gate0.md);
   the slice is the 16 rotunda columns (one shared mesh, decimated 14.4 k -> 3.5 k) + the ground under them + the world sky.
 - Dispatch of any builder waits for the user's approval of docs/briefs/phase6_addendum_draft.md (user's rule).
+
+## 2026-09-15 · Gate 0 bake report in (phase6-bake 536fc15); lead's calls and the ORN_ decision for the user
+- **ORN_ export, three options measured on the capital slice (2K 128 spp lightmap 221 s; per-prototype normal+AO+PBR bake 290 s;
+  shared PBR KTX2 10.8 MB per prototype; 436 placements of 33 prototypes; a 3.0 m capital is 23 px at 1280 / 68 px at 3840 from cam01):**
+  (a) unique mesh per instance with its own 2K lightmap: 2.62 M unique tris, ~4 300 MB textures, 221 s x 436 = **29.5 h** of bakes;
+  (b) true instancing, shared PBR, no ornament lightmap (lit by sky PMREM + sun + prototype AO): 198 k unique tris, **357 MB**, **2.7 h**;
+  (c) instancing + a 256 px per-instance lightmap-atlas slot (two 4K atlases) and a custom material with a per-instance UV offset:
+  198 k unique tris, **451 MB**, 5.1 s x 436 = **3.3 h**; the 256 px slot is 3.8x the hero's sampling of a capital.
+  Hero-visible cost: (a) exact Cycles shade per capital at 29 h and 4 GB (not affordable on 6b); (b) the shaded side of every capital is
+  the PMREM's average, so the sun/shade contrast on the 16 rotunda capitals and 114 colonnade capitals is lost (the hero's capital
+  row sits in the shade band the round-10b boxes measure); (c) keeps that contrast at 94 MB over (b) and 0.6 h more.
+  **Lead recommends (c).** Numbers in export/out/gate0/orn_options.json. **The user chooses before the Gate 1 budget is written.**
+- gltfpack 1.2 refuses `-mi` with `-kn`: lead picks **`-cc -mi` (EXT_mesh_gpu_instancing, node names dropped)**; asset identity lives in
+  the manifest and the name sweep runs on the Blender-side export set (export/out/*/export_set.json), not on the glb.
+- Lightmaps: RGBM8 (range 64) PNG in emissiveTexture on TEXCOORD_1 for Gate 0 (0 clipped pixels, worst round-trip 4.8 % relative at p99).
+  For Gate 3 they become lossless KTX2 (toktx `--zcmp` without a Basis encode, so the M channel is not block-quantised) and the viewer
+  moves emissiveMap -> lightMap and decodes rgb * a * 64; a gamma-2 encode halves the round-trip error and is taken at Gate 3.
+- Three Blender 5.2 findings from the bake engineer go into docs/tech_notes.md "Phase 6" at the merge: `Image.save_render()` applies
+  no colour management; `scene.use_nodes = False` does not disable the compositor (`scene.compositing_node_group = None` does, and the
+  compositor moved 0.18 grey from 0.0821 to 0.0750); LOD0 objects are `hide_viewport` in the delivery file and absent from the depsgraph
+  (matrix_world reads identity, ray casts miss) until un-hidden and `view_layer.update()`.

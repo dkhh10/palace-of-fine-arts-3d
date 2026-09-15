@@ -540,3 +540,7 @@ In flight: nothing (no Blender, no Chrome running; watchdog loop pid 46808 still
 ## 2026-09-15 · Addendum approved (4 changes applied, CLAUDE.md a0a7156); Gate 0 dispatched
 In flight: bake engineer (Opus xhigh, branch phase6-bake: export/ scripts, bakes, LUT, sky, manifest, Cycles slice frame) and viewer engineer (Opus high, branch phase6-viewer: web/ Vite+three, station math, LUT pass, screenshot tool). GPU: bake engineer owns it; Chrome only when export/out/bake_queue/status.json is idle.
 Next: Gate 0 reports -> lead checks the pair image + numbers, fills plan §4, logs the three ORN options in decisions.md for the user's choice, status + burn, stop and report.
+
+## 2026-09-15 · Gate 0 bake report in (phase6-bake 536fc15): all 7 steps; review dispatched; viewer engineer finishing the pair image
+Lightmap 2K 128 spp OIDN: column 306 s, capital 221 s, ground 461 s (plan §4 filled); LUT 65^3 proven 0.072/255; equirects sun az error 0.03 deg; gate0.glb 57 MB (16 column placements + capital + pedestal, 62 k tris); ORN options (a) 29.5 h / 4.3 GB, (b) 2.7 h / 357 MB, (c) 3.3 h / 451 MB -> decisions.md, user chooses. GPU idle (status.json).
+In flight: code review of phase6-bake (Opus, read-only) -> docs/reviews/phase6_bake_gate0_review.md; viewer engineer (phase6-viewer) taking the cam01 screenshot + pair sheet. Next: review verdict, lead looks at renders/web/gate0_pair.png (960 px), merge both branches, tech_notes, burn, report.
