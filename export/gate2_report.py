@@ -41,6 +41,10 @@ for jid, rec in recs.items():
         else:
             r["constant"] += 1
 
+n_sets = len(man.get("materials", {}).get("sets", {}))
+if n_sets != len(recs):
+    print(f"WARNING manifest.json has {n_sets} material sets but {len(recs)} bake records exist - "
+          f"run `python3 export/manifest_v3.py` first, or every missing map counts as constant below")
 print(f"jobs done {len(recs)}/{len(jobs)}")
 print("%-9s %5s %5s %6s %5s %10s %13s %12s %11s" %
       ("class", "jobs", "maps", "ship", "const", "bake_s", "ktx2_B", "etc1s_B", "resident_MB"))
