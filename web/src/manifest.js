@@ -199,7 +199,9 @@ export function normaliseManifest( raw, baseUrl ) {
 	for ( const [ k, v ] of Object.entries( textures ) ) {
 		if ( k.includes( 'lightmap' ) && v && v.rgbm_range ) { rgbmFound = v.rgbm_range; break; }
 	}
-	const rgbmRange = def( rgbmFound, 7.0, 'lightmap rgbm_range (no textures.*lightmap*.rgbm_range in the manifest)' );
+	// manifest v2 carries the scene-wide value in lightmap_encoding.rgbm_range (QA-11c-3): use it before any default.
+	if ( rgbmFound === undefined && raw.lightmap_encoding && raw.lightmap_encoding.rgbm_range ) rgbmFound = raw.lightmap_encoding.rgbm_range;
+	const rgbmRange = def( rgbmFound, 7.0, 'lightmap rgbm_range (no textures.*lightmap*.rgbm_range or lightmap_encoding.rgbm_range in the manifest)' );
 
 	// lightmap_scale: the Cycles colour-off diffuse pass is irradiance/pi and three's lightMap path
 	// divides by pi again in BRDF_Lambert, so the manifest carries the compensating factor (pi).
