@@ -28,6 +28,9 @@ def main():
     man = json.loads((g3.GATE2_OUT / "manifest.json").read_text())
     setj = json.loads((g3.OUT / "gate3_set.json").read_text())
     comp = json.loads((g3.OUT / "compose.json").read_text()) if (g3.OUT / "compose.json").exists() else {}
+    # export/gate3_encode.py is the authoritative encode (range = the map's own max, error in stops).
+    enc = (json.loads((g3.OUT / "encode.json").read_text())["maps"]
+           if (g3.OUT / "encode.json").exists() else {})
     jobs = {j["id"]: j for j in g3.read_jobs()["jobs"]}
     man["schema"] = SCHEMA
     man["gate"] = "gate3"
@@ -66,15 +69,17 @@ def main():
         ka = add_tex(f"{base}_rgbm8", size, size, "lightmap", "rgbm8", True)
         kb = add_tex(f"{base}_gamma2", size, size, "lightmap", "gamma2", True)
         gate1_layout = j["kind"] == "own_gate1uv2"
+        en = enc.get(base, {})
         e = dict(size=size, textures={"rgbm8": ka, "gamma2": kb}, default="gamma2",
-                 range=r["map"]["range"], uv2_in_glb=gate1_layout or not row["uv2_relaid"],
+                 range=en.get("range", r["map"]["range"]), uv2_in_glb=gate1_layout or not row["uv2_relaid"],
                  uv2_source="gate1" if (gate1_layout or not row["uv2_relaid"]) else "gate3_relaid",
                  uv2_coverage=row["coverage_gate1"] if gate1_layout else row["coverage"],
                  cm_per_texel=row["cm_per_texel_gate1"] if gate1_layout else row["cm_per_texel"],
                  area_m2=row["area_m2"], tris=row["tris"], bake_s=r["bake_s"],
                  exr=f"tex/{r['map']['exr']['path']}" if "exr" in r["map"] else None,
-                 stats=r["map"]["stats"],
-                 roundtrip={"rgbm8": r["map"]["rgbm8"]["roundtrip"], "gamma2": r["map"]["gamma2"]["roundtrip"]})
+                 stats=en.get("stats", r["map"]["stats"]), signal_p99=en.get("signal_p99"),
+                 roundtrip={"rgbm8": en.get("rgbm8", r["map"]["rgbm8"]["roundtrip"]),
+                            "gamma2": en.get("gamma2", r["map"]["gamma2"]["roundtrip"])})
         if gate1_layout:
             e["note"] = ("diagnostic: the same asset baked on the FROZEN Gate 1 UV2 the glb still carries. "
                          "Usable today with no re-export, at the texel density that layout allows.")
@@ -85,15 +90,19 @@ def main():
     # ------------------------------------------------------------ lightmaps.slots
     atlases = {}
     for key, a in (comp.get("atlases") or {}).items():
+        en = enc.get(key, {})
         ka = add_tex(f"{key}_rgbm8", g3.ATLAS_PX, g3.ATLAS_PX, "lightmap_atlas", "rgbm8", True)
         kb = add_tex(f"{key}_gamma2", g3.ATLAS_PX, g3.ATLAS_PX, "lightmap_atlas", "gamma2", True)
         atlases[key] = dict(pool=a["pool"], atlas=a["atlas"], atlas_px=a["atlas_px"], slot_px=a["slot_px"],
                             gutter_px=a["gutter_px"], usable_px=a["usable_px"], uv2_scale=a["uv2_scale"],
                             slots_expected=a["slots_expected"], slots_filled=a["slots_filled"],
                             slots_blank_n=a["slots_blank_n"],
-                            textures={"rgbm8": ka, "gamma2": kb}, default="gamma2", range=a["range"],
-                            stats=a["stats"], exr=f"tex/{a['exr']['path']}" if "exr" in a else None,
-                            roundtrip={"rgbm8": a["rgbm8"]["roundtrip"], "gamma2": a["gamma2"]["roundtrip"]},
+                            textures={"rgbm8": ka, "gamma2": kb}, default="gamma2",
+                            range=en.get("range", a["range"]),
+                            stats=en.get("stats", a["stats"]), signal_p99=en.get("signal_p99"),
+                            exr=f"tex/{a['exr']['path']}" if "exr" in a else None,
+                            roundtrip={"rgbm8": en.get("rgbm8", a["rgbm8"]["roundtrip"]),
+                                       "gamma2": en.get("gamma2", a["gamma2"]["roundtrip"])},
                             slot_check=a.get("slot_check"))
 
     v = comp.get("vertex") or {}
