@@ -297,3 +297,10 @@ impostors beyond 25 m plus thinned LOD1 near the walk); and whether one bounded 
   merges and before any Gate 2 PBR bake. The lagoon mirror and the compositor are viewer-side levers (Gate 4), not materials.
 - GPU sharing rule for Phase 6 (lead): a bake queue job or a builder's Cycles frame starts only when the watchdog state dir
   (~/.cache/pfa_blender_watchdog) holds no live registered Blender pid other than its own; the detached queue waits, agents do not.
+
+## 2026-09-15 · MAT r10 merged (e0980f5): the bounded material round is closed
+Dome cap box lum 187.6 -> 205.4 and coffer field/rim 0.422 / 0.454 land in window; the cap's sat 0.352 and col-sd 5.4 stay outside because the
+QA box is one-third drum cornice (sat 0.92, QA-10b-1 lighting) and a structure-off control bounds the box at 207 lum / col-sd 4.6 — accepted, not
+chased (the user's rule: one round). QA re-scores QA-10-8 on rows 95-111. Jamb hue 23.8 (QA-10-2 floor 25) accepted as a rib-albedo side effect.
+Next: lead_build.sh + `PFA_PACK=1 scripts/phase5_deliver.sh 1b` regenerate master.blend / master_delivery.blend AFTER the Gate 1 ORN queue is
+idle (GPU rule); Gate 2 PBR bakes read the regenerated delivery file. Gate 1 geometry is unaffected (materials only).
