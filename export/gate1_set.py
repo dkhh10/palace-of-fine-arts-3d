@@ -342,8 +342,12 @@ def build():
         mat = grey(f"MAT_EXP_ORN__{pname}")
         me.materials.clear()
         me.materials.append(mat)
+        co = [v.co for v in me.vertices]
+        dims = ([round(max(c[i] for c in co) - min(c[i] for c in co), 3) for i in range(3)]
+                if co else [0.0, 0.0, 0.0])
         meshes[me.name] = dict(cls="ORN", src_mesh=pname, src_tris=s_t, tris=l_t, target=tgt,
-                               placements=len(obs), material=mat.name, instanced=True, src_material=None)
+                               placements=len(obs), material=mat.name, instanced=True, src_material=None,
+                               dims_m=dims, max_dim_m=max(dims))
         orn_lo[pname] = me
         # the hi twin, at the placement of the first instance, for the hi->lo normal + AO bake
         hi_me = bpy.data.meshes.new_from_object(obs[0].evaluated_get(dg))
@@ -703,6 +707,22 @@ def build():
     rep["meshes"] = meshes
     rep["wall_s"] = round(time.time() - t_all, 1)
     (g1.OUT / "export_set.json").write_text(json.dumps(rep, indent=1, default=str) + "\n")
+
+    # ---- the ORN normal + AO bake jobs (brief item 2): 2K per prototype, 1K under ORN_SMALL_DIM_M
+    jobs = []
+    for mname, m in sorted(meshes.items()):
+        if m["cls"] != "ORN":
+            continue
+        proto = m["src_mesh"]
+        key = re.sub(r"_LOD0(_a)*$", "", re.sub(r"^ORN_", "", proto))
+        size = g1.ORN_BAKE_SIZE_SMALL if m["max_dim_m"] < g1.ORN_SMALL_DIM_M else g1.ORN_BAKE_SIZE
+        jobs.append(dict(id=f"orn_{key}", prototype=proto, lo=mname, hi=f"EXPHI_{proto}", size=size,
+                         tris=m["tris"], src_tris=m["src_tris"], placements=m["placements"],
+                         max_dim_m=m["max_dim_m"],
+                         normal=f"tex/orn_{key}_normal.png", ao=f"tex/orn_{key}_ao.png"))
+    (g1.OUT / "bake_jobs.json").write_text(json.dumps(
+        dict(set_blend=str(g1.SET_BLEND), out=str(g1.TEX), jobs=jobs), indent=1) + "\n")
+    rep["bake_jobs"] = len(jobs)
 
     stations = {}
     for cam in [o for o in bpy.data.objects if o.type == "CAMERA"]:
