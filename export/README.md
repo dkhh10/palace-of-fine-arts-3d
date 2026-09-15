@@ -201,6 +201,40 @@ paths rewritten to `../gate0/<file>`, after asserting that the exposure and the 
 | `colour_source` | which Gate 0 manifest the colour blocks came from and which keys were carried |
 | `water`, `sun`, `stations`, `hero_camera`, `view`, `lut`, `sky`, `compositor`, `reference`, `lightmap_scale` | unchanged from Gate 0 (`lightmap_scale` = pi is the contract) |
 
+## Gate 1 review and QA round 11 — what was fixed, what carries
+
+Fixed on `phase6-export` after `docs/reviews/phase6_export_gate1_review.md` (5 fix-now) and `docs/qa_round_11.md`
+(2 blockers):
+
+1. `gltf_pack.sh` tagged colour textures `--assign_oetf linear`. **sRGB is now the default and only data maps
+   (`*_normal|*_nrm|*normal*|*_ao|*rough*|*disp*|*translu*|*_mask*`) are linear**; the glob takes `.jpg` too, so
+   the four bark diffuse maps reach toktx at all (85 KTX2, was 81), and `gltf_ktx2_patch.py` accepts `.jpg`.
+2. `bake_queue.sh` wrote `status.json` only inside the worktree. `write_status`/`record_job` now copy it to
+   `$MAIN/export/out/bake_queue/status.json` on every update — that copy is the GPU-liveness signal other agents
+   read, so keeping it in step is the design, not a sync step.
+3. The 256 px UV2 slots tiled with no gutter. `gate1_common.slot_uv()` is now the single source of truth for the
+   slot layout (`export/manifest_v2.py` re-derives from it): **4 px border on every side, 248 usable px,
+   `uv2_scale` 0.060547**, recorded in `manifest.lightmap_encoding.slot_atlas`.
+4. `voxel_remeshed` / `orn_lo_from_lod1` are in `manifest.json` (the QA contract), and each affected mesh record
+   carries the flag; the budget doc reads the flag instead of a cage-size proxy.
+5. The budget doc's per-near-tree cost is measured (`near_tris_used / near_exported` = 19 595, so 13 more trees
+   fit the headroom, not 19) and it states the radius rule's own count: **77 real-LOD1 trees within 25 m, 20
+   exported, 57 to the impostor list**.
+6. **QA blocker 1** — the grey UV1 probe was attached to the ten UV-less backdrop materials, so the exporter wrote
+   `baseColorTexture.texCoord = -1`, three.js failed to link the program and the whole backdrop (151 737 placed
+   tris) drew nowhere. A material only gets the probe when every mesh using it has UV1, and `gltf_gate1.py`
+   **asserts no material in any class references a texture with a negative `texCoord`**.
+7. **QA blocker 2** — the three ORN attic panels now build their low-poly from the Phase 5 `_LOD1` mesh
+   (35 912 / 35 651 / 35 823 -> 7 999 each, collapse clean, no voxel remesh). Root cause of a second defect found
+   on the way: an object created **after** the depsgraph was captured is not in it, and `evaluated_get(dg)` then
+   returns a STALE evaluation — v2 got v1's low-poly and v3 got v2's. `exp_mesh(src_me=...)` copies the mesh
+   datablock directly, and the exported mesh's bounding box is asserted against its own source.
+
+Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
+bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
+`rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the
+1 200 MB budget (a Gate 2/3 lever list).
+
 ## Carries (code-review findings 6-10, `docs/reviews/phase6_bake_gate0_review.md`, not fixed at Gate 0)
 
 6. `export/bake_lut.py` reports `u_error_deg` and `horizon_row_v` but never asserts them, and the

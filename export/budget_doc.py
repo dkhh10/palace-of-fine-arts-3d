@@ -186,10 +186,18 @@ def main():
     a("")
     a(f"{tr['cut']}")
     a("")
-    a("Each further near tree costs ~13 400 placed triangles. The ARCH class is "
+    per_tree = tr["near_tris_used"] // max(1, tr["near_exported"])
+    a(f"**The radius rule's own count is {tr['within_radius']}, not {tr['near_exported']}.** "
+      f"{tr['within_radius']} real-LOD1 trees are within 25 m of the walkable surface; the ENV allowance pays "
+      f"for {tr['near_exported']} of them and the other {tr['within_radius'] - tr['near_exported']} fall to "
+      f"the impostor list, closest-to-the-walk first. That is the number to carry to the user alongside the "
+      f"texture-memory line.")
+    a("")
+    a(f"Each further near tree costs {per_tree:,} placed triangles (measured: "
+      f"{tr['near_tris_used']:,} / {tr['near_exported']}). The ARCH class is "
       f"{BUDGET['ARCH'] - tot['placed_tris']['ARCH']:,} triangles under its budget and the scene total is "
       f"{TOTAL_BUDGET - tot['placed_total']:,} under 3.0 M, i.e. room for "
-      f"{(TOTAL_BUDGET - tot['placed_total']) // 13400} more real-LOD1 near trees if the lead reallocates "
+      f"{(TOTAL_BUDGET - tot['placed_total']) // per_tree} more real-LOD1 near trees if the lead reallocates "
       f"the headroom; not taken here, the class budgets stand as frozen.")
 
     # ---------------------------------------------------------------- bakes and packing
@@ -232,9 +240,25 @@ def main():
     a("")
     a("## Known items and hand-offs")
     a("")
-    deep = [b for b in bakes.values() if b["cage_extrusion_m"] > 0.1]
+    man0 = load("manifest.json") or {}
+    lod1_lo = man0.get("orn_lo_from_lod1") or s.get("orn_lo_from_lod1") or {}
+    if lod1_lo:
+        a(f"1. **The {len(lod1_lo)} ORN attic panels take their low-poly from the Phase 5 `_LOD1` mesh, not "
+          f"from LOD0.** COLLAPSE stalls on the LOD0 relief (~40 000 separate islands) and the voxel shell "
+          f"that replaced it read torn at cam02/cam05 (QA round 11 blocker 2). From `_LOD1` "
+          f"({'/'.join(str(v['lo_source_tris']) for v in lod1_lo.values())} tris) the collapse is clean to "
+          f"{'/'.join(str(v['out_tris']) for v in lod1_lo.values())}, and the lo->hi deviation dropped from "
+          f"367/457/412 mm to "
+          f"{'/'.join(str(round(bakes[i]['deviation_m']['max'] * 1000)) for i in sorted(bakes) if 'attic_panel' in i)} mm "
+          f"with the normal map's blue mean back at "
+          f"{'/'.join(format(bakes[i]['normal']['stats']['mean'][2], '.3f') for i in sorted(bakes) if 'attic_panel' in i)} "
+          f"(0.79-0.86 before, 0.97 on a clean pair). The hi-poly bake source is still the LOD0 prototype.")
+    remeshed = set(man0.get("voxel_remeshed") or s.get("voxel_remeshed") or [])
+    proto_of = {k: v.get("src_mesh") for k, v in meshes.items()}
+    deep = [b for b in bakes.values()
+            if any(proto_of.get(mn) == b["prototype"] for mn in remeshed)] if remeshed else []
     if deep:
-        a(f"1. **The {len(deep)} ORN attic panels are voxel-remeshed lo-polys.** COLLAPSE stalls on ~40 000 "
+        a(f"1b. **{len(deep)} meshes are voxel-remeshed lo-polys.** COLLAPSE stalls on ~40 000 "
           f"relief islands, so the 8 k lo is a voxel shell: lo->hi deviation mean 44-54 mm, max "
           f"{max(b['deviation_m']['max'] for b in deep) * 1000:.0f} mm, cage "
           f"{min(b['cage_extrusion_m'] for b in deep)}-{max(b['cage_extrusion_m'] for b in deep)} m, and the "

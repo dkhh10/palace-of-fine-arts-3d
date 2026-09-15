@@ -100,9 +100,23 @@ if not probe_path.exists():
     pim.file_format = "PNG"
     pim.save()
 probe = load_img(probe_path, "sRGB")
+# QA round 11 blocker 1: ten backdrop meshes have NO UV layer (they are merged flat-colour city blocks and are
+# never baked), and attaching the probe to their material made the exporter write
+# baseColorTexture.texCoord = -1. three.js compiles that into `uv18446744073709552000`, the program fails to
+# link, and all ten materials - 151 737 placed triangles, the whole backdrop - draw at no station. A material
+# only gets the probe when EVERY mesh that uses it has UV1; the rest keep a flat baseColorFactor.
+mats_uvless = set()
+for mn, m in json.loads((g1.OUT / "export_set.json").read_text())["meshes"].items():
+    me = bpy.data.meshes.get(mn)
+    if me is None:
+        continue
+    if g1.UV1 not in me.uv_layers:
+        mats_uvless.add(m["material"])
 n_probe = 0
 for mat in bpy.data.materials:
     if not mat.name.startswith("MAT_EXP_") or not mat.use_nodes:
+        continue
+    if mat.name in mats_uvless:
         continue
     nt = mat.node_tree
     bsdf = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"), None)
@@ -116,6 +130,7 @@ for mat in bpy.data.materials:
     nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
     n_probe += 1
 report["uv1_probe"] = dict(image=probe_path.name, materials=n_probe,
+                           skipped_uvless_materials=sorted(mats_uvless),
                            note="8x8 mid-grey on UV1 so TEXCOORD_0 reaches every glb; UV2 appears at Gate 3 "
                                 "with the lightmap, per the exporter's use-a-texture rule")
 step.done(probe_path, materials=n_probe)
@@ -169,6 +184,19 @@ for cls, objs in sets.items():
                                   texcoord_sets=sorted({k for m in doc.get("meshes", [])
                                                         for p in m["primitives"] for k in p["attributes"]
                                                         if k.startswith("TEXCOORD")}))
+    bad = []
+    for mi, m in enumerate(doc.get("materials", [])):
+        for slot in ("baseColorTexture", "metallicRoughnessTexture"):
+            t = (m.get("pbrMetallicRoughness") or {}).get(slot)
+            if t is not None and int(t.get("texCoord", 0)) < 0:
+                bad.append((m.get("name", mi), slot, t.get("texCoord")))
+        for slot in ("normalTexture", "occlusionTexture", "emissiveTexture"):
+            t = m.get(slot)
+            if t is not None and int(t.get("texCoord", 0)) < 0:
+                bad.append((m.get("name", mi), slot, t.get("texCoord")))
+    report["classes"][cls]["invalid_texcoords"] = bad
+    assert not bad, (f"{cls}.gltf has materials whose texture texCoord is negative (three.js compiles that "
+                     f"into an undeclared uv attribute and the whole program fails to link): {bad}")
     step.done(path, objects=len(objs), tris=tris, meshes=len(doc.get("meshes", [])))
 
 # ---------------------------------------------------------------- UV1 atlas check

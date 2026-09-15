@@ -11,7 +11,8 @@
 #     agent learns whether the GPU is busy. Idleness is never read from CPU or log silence.
 #   * a job starts only when the watchdog state dir holds no LIVE registered Blender pid other than this
 #     queue's own. Liveness is tested with kill -0 on each state file's name (the pid); stale files are ignored.
-#   * resume: a job whose export/out/gate1/bake/<id>.json exists and whose two maps exist is skipped.
+#   * resume: a job whose export/out/gate1/bake/<id>.json exists is skipped - that record is written
+#     only after both maps are saved. Recovery from a killed queue is `start` again.
 #   * every Blender goes through scripts/blender_run.sh 900 (the Gate 0 measurement was 9.3 s normal +
 #     220.9 s AO for a 64 k capital, so 900 s is ~3.5x the worst job).
 set -e
@@ -45,6 +46,11 @@ if extra:
     old["note"] = extra
 json.dump(old, open(path, "w"), indent=1)
 PY
+  # review finding 2: CLAUDE.md makes status.json the ONLY GPU-liveness signal for other agents, and
+  # they read the MAIN checkout's copy. Keeping it in step here (not only when sync_main.sh is run by
+  # hand) is the design, not a sync step.
+  mkdir -p "$MAIN/export/out/bake_queue"
+  cp -f "$STATUS" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 }
 
 record_job () {   # id seconds rc
@@ -57,6 +63,7 @@ d["jobs"] = [j for j in d["jobs"] if j["id"] != jid]
 d["jobs"].append(dict(id=jid, wall_s=float(secs), rc=int(rc), at=time.strftime("%Y-%m-%dT%H:%M:%S%z")))
 json.dump(d, open(path, "w"), indent=1)
 PY
+  cp -f "$STATUS" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 }
 
 gpu_free () {

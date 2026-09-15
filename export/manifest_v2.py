@@ -114,6 +114,31 @@ def main():
     assert not missing_range, f"lightmap textures without rgbm_range: {missing_range}"
     man["textures"] = tex
 
+    # slot layout: re-derived from export/gate1_common.slot_uv so the manifest can never disagree with the
+    # export set about the gutter (review finding 3).
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import gate1_common as g1c
+    n_slot = 0
+    for pool, rows in man.get("orn_slots", {}).items():
+        for r in rows:
+            atlas, slot, off, scale = g1c.slot_uv(r["atlas"] * g1c.ORN_ATLAS_SLOTS + r["slot"])
+            r["uv2_offset"], r["uv2_scale"] = off, scale
+            a = man["assets"].get(r["object"])
+            if a and a.get("lightmap", {}).get("mode") == "slot":
+                a["lightmap"].update(uv2_offset=off, uv2_scale=scale,
+                                     gutter_px=g1c.ORN_ATLAS_GUTTER_PX, slot_px=g1c.ORN_ATLAS_SLOT_PX)
+                n_slot += 1
+    man["lightmap_encoding"]["slot_atlas"] = dict(
+        atlas_px=g1c.ORN_ATLAS_PX, slot_px=g1c.ORN_ATLAS_SLOT_PX, gutter_px=g1c.ORN_ATLAS_GUTTER_PX,
+        usable_px=g1c.ORN_ATLAS_SLOT_PX - g1c.ORN_ATLAS_GUTTER_PX,
+        uv2_scale=(g1c.ORN_ATLAS_SLOT_PX - g1c.ORN_ATLAS_GUTTER_PX) / float(g1c.ORN_ATLAS_PX),
+        note="each instance samples the inner 248 px of its 256 px slot; the 4 px border on every side keeps "
+             "the Gate 3 bake margin, bilinear taps and the mip chain off the neighbouring instance")
+    man["slot_layout_source"] = "export/gate1_common.slot_uv"
+    print(f"[manifest_v2] slot layout re-derived for {n_slot} instances, gutter "
+          f"{g1c.ORN_ATLAS_GUTTER_PX} px, uv2_scale "
+          f"{man['lightmap_encoding']['slot_atlas']['uv2_scale']:.6f}")
+
     man["schema"] = "pfa-phase6/2"
     mp.write_text(json.dumps(man, indent=1) + "\n")
     print(f"[manifest_v2] {mp} {mp.stat().st_size} B; carried {carried}; "

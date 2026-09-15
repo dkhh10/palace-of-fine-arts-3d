@@ -20,13 +20,17 @@ if [ "$1" = "--gate1" ]; then
   command -v toktx    >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
   command -v gltfpack >/dev/null || { echo "gltf_pack.sh: gltfpack not on PATH" >&2; exit 2; }
   rm -rf "$KTX"; mkdir -p "$KTX"
+  : > "$OUT/gltfpack.log"                      # review finding 10: never append forever
   t0=$(date +%s); n=0
-  for f in "$TEXIN"/*.png(N); do
+  for f in "$TEXIN"/*.(png|jpg|jpeg)(N); do
     b=${f:t:r}
+    # review finding 1: COLOUR is the default and DATA is the exception, not the other way round. Tagging an
+    # sRGB colour texture `linear` makes the viewer skip the decode and it comes back ~1.47x too bright
+    # (0.5 linear grey is 0.735 in the file), which poisons every parity number.
     case "$b" in
       *lightmap*) continue ;;                 # RGBM8 stays PNG (UASTC would quantise the M channel)
-      *albedo*|*basecolor*) oetf=srgb ;;
-      *) oetf=linear ;;                       # normal + AO are data
+      *_normal|*_nrm|*normal*|*_ao|*rough*|*disp*|*translu*|*_mask*) oetf=linear ;;
+      *) oetf=srgb ;;
     esac
     toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf $oetf \
           "$KTX/$b.ktx2" "$f" >/dev/null

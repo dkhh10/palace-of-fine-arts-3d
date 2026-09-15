@@ -189,9 +189,14 @@ def build():
     tmp = bpy.data.collections.new("EXP_TMP")
     scene.collection.children.link(tmp)
 
-    def exp_mesh(ob, target_tris, name):
-        """Evaluated (modifiers applied) copy of ob's mesh, decimated to ~target_tris. Object space."""
-        me = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
+    def exp_mesh(ob, target_tris, name, allow_remesh=True, src_me=None):
+        """Evaluated (modifiers applied) copy of ob's mesh, decimated to ~target_tris. Object space.
+
+        `src_me` copies a mesh datablock directly and never touches the depsgraph: an object created after
+        `dg` was captured is not in it, and `evaluated_get(dg)` then hands back a STALE evaluation - measured,
+        it gave attic panel v2 the v1 low-poly and v3 the v2 one (lo->hi deviation 457 / 412 mm against
+        51 mm for the pair that happened to line up)."""
+        me = src_me.copy() if src_me is not None else bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
         me.name = name
         src_t = tris_of(me)
         if target_tris and src_t > target_tris:
@@ -220,7 +225,7 @@ def build():
             # Three ORN attic panels are ~40 000 separate islands of relief: COLLAPSE has no edge to collapse
             # across them and stalls at 38-78 k against an 8 k target. Voxel-remesh them into one shell first
             # (the relief is going into the hi->lo normal map anyway), then collapse.
-            if tris_of(me) > target_tris * 1.5:
+            if allow_remesh and tris_of(me) > target_tris * 1.5:
                 bpy.context.view_layer.objects.active = tob
                 dx, dy, dz = (max(1e-3, v) for v in tob.dimensions)
                 area = 2.0 * (dx * dy + dy * dz + dx * dz)
@@ -336,9 +341,35 @@ def build():
     for ob in src["ORN"]:
         by_proto.setdefault(ob.data.name, []).append(ob)
     orn_lo = {}
+    lo_sources = {}
+
+    def _bb(m):
+        co = [v.co for v in m.vertices]
+        return [[min(c[i] for c in co), max(c[i] for c in co)] for i in range(3)]
+
     for pname, obs in sorted(by_proto.items()):
         tgt = g1.orn_target(pname)
-        me, s_t, l_t = exp_mesh(obs[0], tgt, f"EXPM_{pname}")
+        lod1_name = g1.lo_from_lod1(pname)
+        lod1_me = bpy.data.meshes.get(lod1_name) if lod1_name else None
+        if lod1_me is not None:
+            # the _LOD1 twin must sit in the same prototype-local space as the LOD0 hi, or the hi->lo bake
+            # would be cast between two different objects. Assert it on the bounding box.
+            b0, b1 = _bb(obs[0].data), _bb(lod1_me)
+            worst_bb = max(abs(b0[i][j] - b1[i][j]) for i in range(3) for j in range(2))
+            assert worst_bb < 0.05, (f"{lod1_name} is not coincident with {pname}: bounding boxes differ by "
+                                     f"{worst_bb:.4f} m")
+            me, s_t, l_t = exp_mesh(None, tgt, f"EXPM_{pname}", allow_remesh=False, src_me=lod1_me)
+            # check the EXPORTED mesh, not just the two source datablocks: the stale-depsgraph bug passed the
+            # source check and still shipped the wrong panel.
+            bb_out, bb_src = _bb(me), _bb(lod1_me)
+            out_bb = max(abs(bb_out[i][j] - bb_src[i][j]) for i in range(3) for j in range(2))
+            assert out_bb < 0.01, (f"the exported low-poly for {pname} is not {lod1_name}: bounding boxes "
+                                   f"differ by {out_bb:.4f} m")
+            assert abs(s_t - len(lod1_me.polygons)) < len(lod1_me.polygons), "source tri count mismatch"
+            lo_sources[pname] = dict(lo_source=lod1_name, lo_source_tris=s_t, bbox_delta_m=round(worst_bb, 5),
+                                     exported_bbox_delta_m=round(out_bb, 5), out_tris=l_t, target=tgt)
+        else:
+            me, s_t, l_t = exp_mesh(obs[0], tgt, f"EXPM_{pname}")
         mat = grey(f"MAT_EXP_ORN__{pname}")
         me.materials.clear()
         me.materials.append(mat)
@@ -347,7 +378,8 @@ def build():
                 if co else [0.0, 0.0, 0.0])
         meshes[me.name] = dict(cls="ORN", src_mesh=pname, src_tris=s_t, tris=l_t, target=tgt,
                                placements=len(obs), material=mat.name, instanced=True, src_material=None,
-                               dims_m=dims, max_dim_m=max(dims))
+                               dims_m=dims, max_dim_m=max(dims),
+                               lo_source=lo_sources.get(pname, {}).get("lo_source"))
         orn_lo[pname] = me
         # the hi twin, at the placement of the first instance, for the hi->lo normal + AO bake
         hi_me = bpy.data.meshes.new_from_object(obs[0].evaluated_get(dg))
@@ -361,6 +393,7 @@ def build():
             placements.append((no, ob))
             assets[no.name] = dict(cls="ORN", mesh=me.name, tris=l_t, material=mat.name, instanced=True,
                                    prototype=pname)
+    rep["orn_lo_from_lod1"] = lo_sources
     rep["orn_s"] = round(time.time() - t0, 1)
 
     # ---------------------------------------------------------------- 5. ENV ground + backdrop
@@ -687,12 +720,10 @@ def build():
         pool = "orn" if m["cls"] == "ORN" else "arch_inst"
         i = counters[pool]
         counters[pool] += 1
-        atlas, s = divmod(i, g1.ORN_ATLAS_SLOTS)
-        row, col = divmod(s, g1.ORN_ATLAS_PX // g1.ORN_ATLAS_SLOT_PX)
+        atlas, s, off, scale = g1.slot_uv(i)
         a["lightmap"] = dict(mode="slot", pool=pool, atlas=atlas, slot=s,
-                             uv2_offset=[col * g1.ORN_ATLAS_SLOT_PX / g1.ORN_ATLAS_PX,
-                                         row * g1.ORN_ATLAS_SLOT_PX / g1.ORN_ATLAS_PX],
-                             uv2_scale=g1.ORN_ATLAS_SLOT_PX / g1.ORN_ATLAS_PX)
+                             uv2_offset=off, uv2_scale=scale,
+                             gutter_px=g1.ORN_ATLAS_GUTTER_PX, slot_px=g1.ORN_ATLAS_SLOT_PX)
         slots[pool].append(dict(object=name, atlas=atlas, slot=s))
     for name, a in assets.items():
         if "lightmap" in a:
@@ -782,6 +813,9 @@ def build():
                          budget=g1.CLASS_BUDGET, budget_total=g1.TOTAL_BUDGET,
                          draw_call_batches=draw_calls)
     rep["voxel_remeshed"] = sorted(remeshed)
+    for mn in remeshed:
+        if mn in meshes:
+            meshes[mn]["remeshed"] = True
     rep["assets"] = assets
     rep["meshes"] = meshes
     rep["wall_s"] = round(time.time() - t_all, 1)
@@ -833,6 +867,10 @@ def build():
                  note="direction the light travels; the viewer's DirectionalLight is specular-only"),
         stations=stations, hero_camera=g0.HERO_CAM,
         assets=assets, meshes=meshes, totals=rep["totals"],
+        voxel_remeshed=sorted(remeshed), orn_lo_from_lod1=lo_sources,
+        voxel_remeshed_note="COLLAPSE stalls on these meshes (thousands of separate relief islands), so the "
+                            "low-poly is a voxel shell and the relief lives entirely in the hi->lo normal map. "
+                            "QA reads this list, not a cage-size proxy.",
         orn_slots=slots, tree_rule=rep["tree_rule"], tree_far=far_rows,
         tree_near=[r["name"] for r in rep["tree_near_list"]],
         textures={}, lut={}, sky={}, compositor={}, reference={},

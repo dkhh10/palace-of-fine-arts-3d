@@ -69,6 +69,18 @@ ORN_TARGETS = [
     (r"^ORN_finial_", 2000),
 ]
 ORN_DEFAULT_TARGET = 3000
+# QA round 11 blocker 2: the LOD0 attic panels are ~40 000 separate relief islands, COLLAPSE stalls on them and
+# the voxel shell that replaced it read TORN at cam02/cam05 (figures in disconnected speckled fragments, black
+# voids). Build their low-poly from the Phase 5 _LOD1 mesh instead - a clean, connected reduction - and let
+# COLLAPSE take it to the target. The hi-poly bake source stays the LOD0 prototype.
+ORN_LO_FROM_LOD1 = (r"^ORN_attic_panel_",)
+
+
+def lo_from_lod1(proto_mesh_name):
+    """The _LOD1 twin to use as the low-poly base, or None to use the LOD0 prototype itself."""
+    if not any(re.match(pat, proto_mesh_name) for pat in ORN_LO_FROM_LOD1):
+        return None
+    return re.sub(r"_LOD0.*$", "_LOD1", proto_mesh_name)
 # prototypes whose longest dimension is under 1 m bake at 1K, the rest at 2K (brief item 2)
 ORN_BAKE_SIZE_SMALL = 1024
 ORN_BAKE_SIZE = 2048
@@ -83,6 +95,23 @@ BILLBOARD_PREFIX = "ENV_treeboard_"
 ORN_ATLAS_SLOT_PX = 256
 ORN_ATLAS_PX = 4096
 ORN_ATLAS_SLOTS = (ORN_ATLAS_PX // ORN_ATLAS_SLOT_PX) ** 2      # 256 slots per atlas
+# Review finding 3: slots that tile edge to edge have no gutter, so the Gate 3 bake margin, bilinear filtering
+# and every mip pull the neighbouring instance. A 4 px border on every side (8 px off the slot in each axis)
+# leaves 248 usable px, which still samples a 3 m capital 3.6x finer than the hero frame does.
+ORN_ATLAS_GUTTER_PX = 8
+
+
+def slot_uv(index):
+    """index -> (atlas, slot, uv2_offset, uv2_scale) with the gutter applied. One source of truth: the export
+    writes it into every asset and export/manifest_v2.py re-derives it from here."""
+    atlas, s = divmod(int(index), ORN_ATLAS_SLOTS)
+    per_row = ORN_ATLAS_PX // ORN_ATLAS_SLOT_PX
+    row, col = divmod(s, per_row)
+    half = ORN_ATLAS_GUTTER_PX / 2.0
+    scale = (ORN_ATLAS_SLOT_PX - ORN_ATLAS_GUTTER_PX) / float(ORN_ATLAS_PX)
+    off = [(col * ORN_ATLAS_SLOT_PX + half) / float(ORN_ATLAS_PX),
+           (row * ORN_ATLAS_SLOT_PX + half) / float(ORN_ATLAS_PX)]
+    return atlas, s, off, scale
 
 CLASS_BUDGET = {"ARCH": 1_100_000, "ORN": 1_100_000, "ENV": 800_000}
 TOTAL_BUDGET = 3_000_000
