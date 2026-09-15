@@ -47,6 +47,7 @@ const CFG = {
 	glbOverride: qs.get( 'glb' ),                       // comma-separated URLs, overrides the manifest's list
 	lighting: qs.get( 'lighting' ) || 'auto',           // auto | baked | direct  (see pickLightingMode)
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
+	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 };
 
 function glInfo() {
@@ -194,6 +195,25 @@ async function boot() {
 		manifest.glbs = CFG.glbOverride.split( ',' ).filter( Boolean ).map( ( u, i ) => ( {
 			url: new URL( u, manifestUrl ).href, name: u.split( '/' ).pop(), cls: `override_${i}`, bytes: null, order: i } ) );
 		note( `?glb override: ${manifest.glbs.map( g => g.name ).join( ', ' )}` );
+	}
+	// The colour pipeline (LUT + the two sky equirects) is the FROZEN Phase 5 look and is identical
+	// for every gate.  If this manifest does not carry it yet, borrow it from another manifest rather
+	// than falling back to gamma 2.2 and reporting parity against the wrong transform.
+	const needColour = ! ( manifest.lut && manifest.lut.url ) || ! manifest.sky.camera;
+	if ( CFG.colourFrom || needColour ) {
+		const src = new URL( CFG.colourFrom || '/assets/gate0/manifest.json', manifestUrl ).href;
+		if ( src !== manifestUrl ) {
+			try {
+				const r = await fetch( src, { cache: 'no-cache' } );
+				if ( ! r.ok ) throw new Error( `${r.status}` );
+				const other = normaliseManifest( await r.json(), src );
+				const took = [];
+				if ( ! ( manifest.lut && manifest.lut.url ) && other.lut && other.lut.url ) { manifest.lut = other.lut; manifest.exposure = other.exposure; took.push( 'lut + exposure' ); }
+				if ( ! manifest.sky.camera && other.sky.camera ) { manifest.sky = other.sky; took.push( 'sky' ); }
+				note( took.length ? `colour borrowed from ${src}: ${took.join( ', ' )} (this manifest carries none)`
+					: `colour fallback ${src} had nothing to add` );
+			} catch ( e ) { note( `colour fallback ${src} failed: ${e.message}` ); }
+		}
 	}
 	lightingMode = pickLightingMode();
 	note( `lighting mode: ${lightingMode}${CFG.lighting !== 'auto' ? ' (?lighting override)' : ''} — `

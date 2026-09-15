@@ -76,15 +76,27 @@ export function normaliseManifest( raw, baseUrl ) {
 	// taken from scripts/qa_cameras.py (stations_blender.json) by name purely as a cross-check.
 	let rawStations = pick( raw, 'stations', 'cameras' );
 	let stationList;
+	const byName = new Map( stationsFallback.stations.map( s => [ s.name, s ] ) );
+	// Keys 1-6 are the six scripts/qa_cameras.py stations BY NAME.  manifest v2 also carries cameras
+	// that are not QA stations (CAM_flythrough), so key order must never decide the index: a camera
+	// the generated list does not know is appended after 6, never inserted in front of the hero.
+	const indexFor = ( s, i ) => s.index ?? byName.get( s.name )?.index ?? null;
 	if ( rawStations && ! Array.isArray( rawStations ) && Object.keys( rawStations ).length ) {
-		stationList = Object.entries( rawStations ).map( ( [ name, s ], i ) => ( { name, index: s.index ?? i + 1, ...s } ) );
+		stationList = Object.entries( rawStations ).map( ( [ name, s ] ) => ( { ...s, name } ) );
 	} else if ( rawStations && rawStations.length ) {
-		stationList = rawStations.map( ( s, i ) => ( { index: s.index ?? i + 1, ...s } ) );
+		stationList = rawStations.slice();
 	} else {
 		stationList = stationsFallback.stations;
 		notes.push( 'stations: manifest had none, using scripts/qa_cameras.py fallback' );
 	}
-	const byName = new Map( stationsFallback.stations.map( s => [ s.name, s ] ) );
+	let nextExtra = stationsFallback.stations.length + 1;
+	const extras = [];
+	stationList = stationList.map( ( s, i ) => {
+		const idx = indexFor( s, i );
+		if ( idx === null ) extras.push( s.name );
+		return { ...s, index: idx === null ? nextExtra ++ : idx };
+	} ).sort( ( a, b ) => a.index - b.index );
+	if ( extras.length ) notes.push( `stations not in scripts/qa_cameras.py, indexed after 6: ${extras.join( ', ' )}` );
 	const stations = stationList.map( ( s, i ) => {
 		const ref = byName.get( s.name );
 		return {
@@ -208,9 +220,17 @@ export function normaliseManifest( raw, baseUrl ) {
 	const assetsRaw = pick( raw, 'assets' ) || [];
 	const assetList = Array.isArray( assetsRaw )
 		? assetsRaw : Object.entries( assetsRaw ).map( ( [ name, a ] ) => ( { name, ...a } ) );
+	const reservations = {};
 	for ( const a of assetList ) {
 		const lm = a.lightmap;
 		if ( ! lm ) continue;
+		// manifest v2 states a PLAN, not a texture: {mode:'slot', pool, atlas, slot, uv2_offset,
+		// uv2_scale} reserves an atlas cell, {mode:'asset', size} an own map, {mode:'none'} nothing.
+		// None of them exists before the Gate 3 bake, so they are counted per mode, not warned about.
+		if ( typeof lm === 'object' && lm.mode && ! lm.path && ! lm.url && ! lm.file ) {
+			reservations[ lm.mode ] = ( reservations[ lm.mode ] || 0 ) + 1;
+			continue;
+		}
 		// schema pfa-phase6-gate0/1: assets[].lightmap is a KEY into `textures`, not a URL.  Resolving
 		// it as a URL would 404 and, worse, skip the in-glb emissive path and leave the lightmap
 		// rendering as full-bright emissive.  A texture entry carries path, encoding and rgbm_range.
@@ -228,21 +248,34 @@ export function normaliseManifest( raw, baseUrl ) {
 		} );
 	}
 
+	if ( Object.keys( reservations ).length )
+		notes.push( `lightmap reservations for the Gate 3 bake, no texture yet: `
+			+ Object.entries( reservations ).map( ( [ m, n ] ) => `${n} mode "${m}"` ).join( ', ' ) );
+
 	// --- Gate 1 extras: far-tree billboard quads, ORN atlas slots ------------------------------
 	// `trees.far` is the Gate 3 impostor list: each entry is a prototype id, a height and a trunk base.
 	// Until that bake exists the viewer draws one flat, explicitly tagged quad per entry.
 	const treesRaw = pick( raw, 'trees', 'tree_lists', 'vegetation' ) || {};
-	const farRaw = pick( treesRaw, 'far', 'billboards', 'far_list' ) || [];
+	const farRaw = pick( raw, 'tree_far' ) || pick( treesRaw, 'far', 'billboards', 'far_list' ) || [];
 	const treesFar = ( Array.isArray( farRaw ) ? farRaw : [] ).map( ( t ) => ( {
 		prototype: t.prototype ?? t.proto ?? t.id ?? t.name ?? 'tree',
-		height: t.height ?? t.h ?? 12,
-		width: t.width ?? t.w ?? null,
+		id: t.billboard ?? null,
+		height: t.height_m ?? t.height ?? t.h ?? 12,
+		width: t.width_m ?? t.width ?? t.w ?? null,
 		base: t.trunk_base ?? t.base ?? t.location_blender ?? t.location ?? t.position ?? null,
 	} ) ).filter( t => Array.isArray( t.base ) && t.base.length === 3 );
 	if ( farRaw.length && treesFar.length !== farRaw.length )
-		notes.push( `trees.far: ${farRaw.length - treesFar.length} of ${farRaw.length} entries have no trunk base, skipped` );
-	const nearRaw = pick( treesRaw, 'near', 'near_list' ) || [];
-	const ornSlots = pick( raw, 'orn_slots', 'orn.slots', 'ornament.slots' ) || null;
+		notes.push( `tree_far: ${farRaw.length - treesFar.length} of ${farRaw.length} entries have no trunk base, skipped` );
+	const nearRaw = pick( raw, 'tree_near' ) || pick( treesRaw, 'near', 'near_list' ) || [];
+	// v2: orn_slots = { <pool>: [ {object, atlas, slot}, ... ] }.  Gate 1 has no atlas texture yet;
+	// the viewer only reports the reservation so a Gate 3 regression is visible in the sidecar.
+	const ornSlotsRaw = pick( raw, 'orn_slots', 'orn.slots', 'ornament.slots' ) || null;
+	const ornSlots = ornSlotsRaw && typeof ornSlotsRaw === 'object' && ! Array.isArray( ornSlotsRaw )
+		? Object.fromEntries( Object.entries( ornSlotsRaw ).map( ( [ pool, v ] ) => [ pool, {
+			entries: Array.isArray( v ) ? v.length : null,
+			atlases: Array.isArray( v ) ? new Set( v.map( e => e.atlas ) ).size : null,
+		} ] ) )
+		: ornSlotsRaw;
 
 	const out = {
 		raw, baseUrl, glb, glbs, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale,
