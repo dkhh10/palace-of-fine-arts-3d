@@ -60,7 +60,8 @@ if [ "$1" = "--gate1" ]; then
   command -v toktx    >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
   command -v gltfpack >/dev/null || { echo "gltf_pack.sh: gltfpack not on PATH" >&2; exit 2; }
   rm -rf "$KTX"; mkdir -p "$KTX"
-  : > "$OUT/gltfpack.log"                      # review finding 10: never append forever
+  : > "$OUT/gltfpack.log"
+  : > "$OUT/gltfpack_flags.txt"                      # review finding 10: never append forever
   t0=$(date +%s); n=0
   for f in "$TEXIN"/*.(png|jpg|jpeg)(N); do
     b=${f:t:r}
@@ -93,8 +94,12 @@ if [ "$1" = "--gate1" ]; then
     # Revert to (-vp 16) here if that size matters more than the residual error. Splitting the backdrop into
     # its own glb would shrink the box and is the structural fix, a Gate 2/3 option.
     # arch / orn / ground keep the default and stay byte-identical.
+    # -km (keep materials): gltfpack merges materials whose factors are identical, and the ten backdrop greys
+    # are identical, so nine of the ten names vanished and nine Gate 2 backdrop texture sets matched no scene
+    # material (docs/reviews/phase6_viewer_gate2_review.md). env keeps its names; arch/orn/ground are frozen
+    # byte-identical this round, and verify_glb reports - without failing - any names they lose.
     EXTRA=()
-    [ "$cls" = env ] && EXTRA=(-vpf)
+    [ "$cls" = env ] && EXTRA=(-vpf -km)
     if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else
@@ -103,6 +108,7 @@ if [ "$1" = "--gate1" ]; then
       SRC=png
     fi
     echo "[gate1] STEP gltfpack:$cls wall_s=$(( $(date +%s)-t2 )) source=$SRC $cls.glb=$(stat -f%z "$OUT/$cls.glb")B"
+    printf '%s\n' "$cls -cc -mi $EXTRA" >> "$OUT/gltfpack_flags.txt"
   done
   python3 - "$OUT" <<'PY2'
 import json, os, sys
