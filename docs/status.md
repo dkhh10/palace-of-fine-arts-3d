@@ -607,3 +607,6 @@ Session burn so far (usage_from_transcripts, nominal):  253.40   opus-5 223, fab
 
 ## 2026-09-15 · Gate 2 bake done (a9794e8): 60 jobs / 182 maps / 3 245 s of bakes, KTX2 274.5 MB, resident projection 1 166 MB of 1 200; verification on the Gate 0 slice worst 2.78 % (inside 3 %); manifest v3 synced
 In flight: phase6-bake Gate 2 code review; export engineer (backdrop UV1 into env.glb, -vp 16); viewer r3 (PBR wiring + capture, GPU free). Next: review + merges, Gate 2 capture, QA round 12 (PBR alone, direct lighting), Gate 3 brief (lightmaps + impostors + probe), burn, stop.
+
+## 2026-09-15 · Viewer r3 reported (phase6-viewer 875d7d9): PBR wired (55/65 materials, 531 MB of ASTC), 1440p GPU 0.3-1.9 ms, hero pair ratio 1.141 (direct mode, no lightmaps), QA-11d-1 regional batches (cam04 tris -15.6 %); resident 1 395 MB at 1440p incl. 437 MB render targets (textures 921 of the 1 200 budget)
+Hand-offs: nine of ten backdrop material bakes reach nothing until env.glb is re-exported with UV1 (export, in progress); direct-mode diffuse needs a camera-branch PMREM (Gate 3 bake adds it). One Chrome slip (10 s during a bake, killed). In flight: bake Gate 2 review, viewer r3 review, export hand-off. Next: merges, gate2 pair sheets, QA round 12.
