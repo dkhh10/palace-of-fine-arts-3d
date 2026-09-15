@@ -427,3 +427,60 @@ QA-11c-2 sees them untextured. Gate 2 therefore does two things for them:
   the Gate 1 mesh name) so the export engineer can apply the **identical** layout and re-export `env.glb`; the
   textures are already baked against it. Until that re-export the viewer must honour `uv1_in_glb: false` and use the
   factors only.
+
+## Gate 2 — what the bake found, and what it hands off
+
+**1. The "hero-near set" as the plan defines it is empty — measured, not assumed.** `docs/briefs/phase6_plan.md` §2
+asks for 4K on "the 6 assets inside the hero frame within 30 m of cam01". `CAM_qa_01_lagoon_hero` stands at
+`(-14.1, 100.0, 1.3)`, 100 m out in the lagoon, and the nearest bake group inside its frustum is the backdrop
+lamp post at **36.2 m** (then riprap 51.2 m, the lagoon bed 51.3 m); no group is within 30 m. The walkthrough's own
+stations do come close — 8 ARCH groups are within 30 m of one of the six QA stations, the nearest being the rotunda
+podium at 5.2 m and the south colonnade at 5.5 m — and that set is what `export/gate2_sample.py` returns and what the
+ETC1S timing sample uses. It is **not** baked at 4K: a 4K (albedo + normal + 1K roughness) set costs 48 MB resident
+per group against 12 MB at 2K, so 8 groups would be +288 MB on a budget that Gate 1 already projected 143 MB over.
+The size is one line in `gate2_common.size_for` if the lead wants to spend the impostor lever on it instead.
+
+**2. Texel density is the honest limit on the ARCH atlases, and 4K would not fix it.** The rotunda podium group is
+1 200 m² of surface on one 2K atlas = 1.7 cm per texel, seen from 5.2 m where a 1440p pixel covers 0.37 cm — the
+texture is 4.5x coarser than the screen, and 4K would still be 2.3x coarser. The colonnade is 3.8 cm per texel at
+5.5 m, 10x coarser. A unique atlas is the wrong tool at that range; a tiling detail texture blended in the viewer is,
+and that is a Gate 4 item, not a Gate 2 one. ORN is the opposite case: a colonnade capital is 2.9 mm per texel at 2K
+against a 1.4 cm pixel at its nearest station, which is why its roughness ships at 1K with no visible cost.
+
+**3. `PFA_concrete` reads world space, so a shared mesh can only carry one instance's answer.** The concrete group
+takes **Geometry ▸ Position** for its grey drift (`Grey Below Z` / `Grey Above Z`), `PFA_algae` puts the waterline
+band at world z = −1.3, and `PFA_instance` reads **Object Info ▸ Random / Location** for the per-instance weathering.
+Gate 1 shares one mesh across every placement (138 fluted columns, 105 drum-band instances, 39 colonnade capitals),
+so one texture must serve them all. Every job therefore bakes through the placement **closest to a QA station**
+(recorded per job as `reps[].object` / `station_d_m`, and for ORN as the `matrix` the lo/hi pair is moved onto), which
+makes the map right where it is seen best and wrong nowhere it is seen closely. The per-instance variation the
+Phase 0-5 non-negotiable asks for survives only through the Gate 3 per-instance lightmap slot, not through albedo.
+That is the cost of the user's instancing decision at Gate 1, recorded here so it is not rediscovered as a defect.
+
+**4. The backdrop: baked, but it needs one thing from the export engineer.** The ten `MAT_EXP_ENVBD__*` groups have
+no UV1 in the Gate 1 set (`export_set.json.uv_missing.uv1`), which is QA-11c-2's untextured backdrop. Gate 2
+generates one (`gate2_common.smart_uv1`, a multi-object smart project, island margin 0.004), bakes against it, and
+writes the exact loop UVs to **`out/gate2/backdrop_uv1.npz`** (one float32 `[loops, 2]` array per Gate 1 mesh name).
+`env.glb` must be re-exported with that layer before the backdrop textures can be used; until then the viewer reads
+`uv1_in_glb: false` and applies the `factor` values, which need no UV and already fix the grey. The same re-export is
+what gives the colonnade pedestals and balustrade (the other half of QA-11c-2) their texture — they are inside
+`EXPM_ARCH_colonnade_*_concrete_colonnade_merged`, which has had UV1 since Gate 1, so for them nothing but the
+Gate 2 material wiring is needed.
+
+**5. The Gate 1 merge flattened every ENV mesh onto one material slot**, and restoring it was not optional. Every
+`EXPM_ENV_*` mesh has `poly_material_index == {0: n}`, so taking slot 0 would have baked the gravel paths, the soil
+and the city asphalt as lawn. `gate2_set.py` rebuilds the per-polygon assignment from the source objects by nearest
+polygon centre in world space: `ENV_terrain_ground` comes back as **30 547 lawn / 4 917 soil / 8 952 gravel path**
+faces — the gravel count `docs/briefs/phase6_budget.md` measured independently for the walkable-surface rule — plus
+772 / 73 paving stone / worn on the colonnade walk and five materials across the backdrop lawn group.
+
+**6. ETC1S is a payload lever, not a memory one.** On the Apple GPU both UASTC and ETC1S transcode to ASTC 4x4, so
+the resident bytes are identical; what changes is the download. Measured on the sample: a 2K UASTC + zstd albedo is
+**3.5 MB** on disk against **194 KB** as ETC1S, an 18x reduction. That is the lever for 6b's 50 MB initial payload,
+and it costs nothing in GPU memory — so the budget-doc line "ETC1S instead of UASTC on the backdrop" does not move
+the 1 200 MB number and is not counted as one of the levers that does.
+
+**7. Carried to Gate 4 (not a Gate 2 defect, not fixed here).** The fluted shafts decimate 14 396 → 3 500 triangles
+and `gate1_common.ARCH_TARGETS` says "flutes → normal map", but **no ARCH hi→lo normal bake exists**: the brief scopes
+the ARCH normal to the material's own bump, and there is no hi twin for ARCH in the Gate 1 set. Adding it means
+appending the `_LOD0` source objects to the bake blend and one selected-to-active pass per shaft mesh.
