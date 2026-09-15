@@ -15,7 +15,8 @@ from mathutils import Vector
 
 CAM = "CAM_qa_01_lagoon_hero"
 RES = (1920, 1080)
-BOXES = {"dome_cap": (920, 95, 1000, 120), "dome_wide": (860, 80, 1070, 150)}
+BOXES = {"dome_cap": (920, 95, 1000, 120), "dome_wide": (860, 80, 1070, 150),
+         "vault_field": (900, 380, 1010, 430), "jamb": (872, 400, 892, 480)}
 
 
 def ray(scene, depsgraph, cam, px, py):
@@ -52,9 +53,11 @@ def main():
                 if obj is None:
                     counts["<sky>"] = counts.get("<sky>", 0) + 1
                     continue
-                counts[obj.name] = counts.get(obj.name, 0) + 1
+                mats = [sl.material.name for sl in obj.material_slots if sl.material]
+                key = f"{obj.name} [{','.join(mats)}]"
+                counts[key] = counts.get(key, 0) + 1
                 po = obj.matrix_world.inverted() @ loc
-                rows.append((obj.name, po, nrm, px, py))
+                rows.append((key, po, nrm, px, py))
         print(f"\n[{name}] {x1 - x0}x{y1 - y0} px, {sum(counts.values())} rays")
         for k, v in sorted(counts.items(), key=lambda kv: -kv[1]):
             print(f"    {v:4d}  {k}")

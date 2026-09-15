@@ -992,7 +992,13 @@ def build_concrete_family():
         # +0.095, i.e. +0.105 to +0.152 rendered, landing 0.415-0.462 inside the 0.38-0.50 window next to ref
         # 083's 0.427.  HUE (46.45 / 41.65 deg) and Rec.709 luminance (0.46606 / 0.316268) are held to 5
         # decimals, which is what holds the coffer/sky luminance ratio lighting measured at 0.347.
-        "Base Color": C(0.506932, 0.467441, 0.332040), "Grey Color": C(0.351557, 0.314453, 0.230270), "Grey Drift": 0.16,
+        # SECOND pass, on the gain measured here rather than inherited: albedo 0.250 -> 0.345 moved the rendered
+        # field 0.310 -> 0.352, i.e. **0.44** rendered points per albedo point, not the 1.1-1.6 the round-8/9
+        # numbers implied (the saucer is now lit mostly by bounce off the ribs and the drum, so much of its
+        # radiance does not scale with this albedo).  0.352 -> 0.42 therefore needs +0.155 of albedo: 0.345 ->
+        # **0.500**.  Hue 46.45 / 41.65 deg and Rec.709 luminance 0.46606 / 0.316268 held to 6 decimals, so the
+        # coffer/sky ratio and the dark/light ratio (0.262 here against ref 083's 0.265) do not move.
+        "Base Color": C(0.527722, 0.468145, 0.263861), "Grey Color": C(0.370110, 0.313513, 0.185055), "Grey Drift": 0.16,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.20, "Block Size": 1.5, "Blotch Size": 1.0,
         "Drift Size": 5.0, "Algae": 0.0,
         # QA-04-7 "no dirt gradient inside any coffer": now that the ribs carry their own material, a LONG AO probe
@@ -1025,7 +1031,14 @@ def build_concrete_family():
         # window is held even if the gain moved with the light as the field's did.  Hue (48.79 / 49.18 deg) and
         # Rec.709 luminance (0.183130 / 0.147178) held to 6 decimals, so the dark/light ratio (0.261 here
         # against ref 083's 0.265) and the coffer/sky ratio do not move.
-        "Base Color": C(0.194840, 0.184207, 0.137947), "Grey Color": C(0.156364, 0.148135, 0.110706), "Grey Drift": 0.30,
+        # SECOND pass: albedo 0.340 -> 0.292 moved the rendered rim 0.600 -> 0.569, i.e. **0.65** rendered points
+        # per albedo point, not round 9's 3.36.  0.569 -> 0.45 needs -0.183: 0.292 -> **0.109**, which lands in
+        # the 0.38-0.50 window for any gain between 0.5 and 0.9.  That is a nearly neutral rib ALBEDO, and it is
+        # a correction for where the measurement sits, not a claim about the stone: the tool's dark quarter is
+        # the deep coffer shadow, where AgX's chroma transfer is steepest, so the rendered rim reads far more
+        # saturated than its albedo.  If QA's rim statistic is ever redefined, re-derive this number.
+        # Hue 48.79 / 49.18 deg and Rec.709 luminance 0.183130 / 0.147178 held to 6 decimals.
+        "Base Color": C(0.187333, 0.183517, 0.166914), "Grey Color": C(0.150477, 0.147517, 0.134075), "Grey Drift": 0.30,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.24, "Block Size": 1.2, "Blotch Size": 0.7,
         "Drift Size": 3.0, "Algae": 0.0,
         "Detail Strength": 0.45, "Streaks": 0.0, "Patches": 0.0, "Edge Wear": 0.55, "Edge Radius": 0.035,
