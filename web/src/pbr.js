@@ -84,14 +84,14 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 		const key = keys.find( k => byKey.has( k ) );
 		if ( ! key ) { unmatched.push( { material: row.material.name || '(unnamed)', distance_m: Math.round( row.distance ) } ); continue; }
 		matchedKeys.add( byKey.get( key ).name );
-		work.push( { ...row, set: byKey.get( key ), matchedOn: key } );
+		work.push( { ...row, set: byKey.get( key ), matchedOn: key, rank: work.length + 1 } );
 	}
 	const report = {
 		materials_in_scene: rows.length, matched: work.length, unmatched,
 		sets_in_manifest: Object.keys( sets ).length, sets_used: matchedKeys.size,
 		sets_unused: Object.keys( sets ).filter( n => ! matchedKeys.has( n ) ),
 		order: [], textures: 0, unique_files: 0, bytes: 0, kept_glb_normal: 0, replaced_glb_normal: 0, kept_glb_ao: 0,
-		colourspace_conflicts: [], failed: [],
+		colourspace_conflicts: [], formats: {}, failed: [],
 	};
 	// One GPU upload per file: a texture used by several materials is SHARED, never cloned (a clone
 	// of a CompressedTexture has its own uuid and three uploads the mips a second time).
@@ -128,13 +128,19 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 				if ( slot === 'normalMap' && set.normalScale ) m.normalScale.set( set.normalScale, set.normalScale );
 				applied.push( slot );
 				report.textures ++;
+					if ( ! counted.has( entry.url ) ) {
+						counted.add( entry.url );
+						report.unique_files ++;
 						report.bytes += texBytes( t );
+						const f = formatName( t );
+						report.formats[ f ] = ( report.formats[ f ] || 0 ) + 1;
+					}
 			} catch ( e ) { report.failed.push( { url: entry.url, error: e.message } ); }
 		}
 		if ( set.metalnessFactor !== undefined && ! set.maps.metalnessMap ) m.metalness = set.metalnessFactor;
 		if ( m.normalMap && ! set.maps.normalMap ) report.kept_glb_normal ++;    // ORN hi->lo normal kept
 		if ( applied.length ) { m.needsUpdate = true; }
-		report.order.push( { material: m.name, set: set.name, matched_on: job.matchedOn,
+		report.order.push( { rank: job.rank, material: m.name, set: set.name, matched_on: job.matchedOn,
 			distance_m: Math.round( job.distance * 10 ) / 10, maps: applied } );
 		if ( onLoaded ) onLoaded( m, applied, report.order.length, work.length );
 	};
@@ -144,13 +150,28 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 	if ( note ) {
 		note( `pbr: ${report.matched} of ${report.materials_in_scene} scene materials textured from `
 			+ `${report.sets_used} of ${report.sets_in_manifest} manifest sets, ${report.textures} maps, `
-			+ `${( report.bytes / 1e6 ).toFixed( 1 )} MB resident, nearest first `
+			+ `${( report.bytes / 1e6 ).toFixed( 1 )} MB resident in ${report.unique_files} file(s) `
+			+ `[${Object.entries( report.formats ).map( ( [ f, n ] ) => `${n} ${f}` ).join( ', ' )}], requested nearest first `
 			+ `(${report.order.slice( 0, 3 ).map( r => `${r.material} ${r.distance_m} m` ).join( ', ' )} …)` );
 		if ( unmatched.length ) note( `pbr: ${unmatched.length} material(s) with NO texture set, left as exported: `
 			+ unmatched.slice( 0, 12 ).map( u => u.material ).join( ', ' ) + ( unmatched.length > 12 ? ' …' : '' ) );
 		if ( report.failed.length ) note( `pbr: ${report.failed.length} texture(s) FAILED: ${report.failed.slice( 0, 4 ).map( f => `${f.url.split( '/' ).pop()} ${f.error}` ).join( '; ' )}` );
 	}
 	return report;
+}
+
+/** three's numeric texture format as its constant name: RGBA_ASTC_4x4_Format, RGBAFormat, … .
+ *  The name matters for the memory budget: a KTX2 the device cannot keep compressed is transcoded to
+ *  RGBA8 and costs w*h*4 (x4/3 with mips) instead of the bytes the file ships. */
+let _formats = null;
+export function formatName( t ) {
+	if ( ! t ) return 'none';
+	if ( ! _formats ) {
+		_formats = new Map();
+		for ( const [ k, v ] of Object.entries( THREE ) ) if ( /Format$/.test( k ) && typeof v === 'number' && ! _formats.has( v ) ) _formats.set( v, k );
+	}
+	const n = _formats.get( t.format ) || `format_${t.format}`;
+	return t.isCompressedTexture ? n : `${n} (uncompressed)`;
 }
 
 /** Bytes a loaded texture occupies: compressed mips as shipped, uncompressed as w*h*4 (+mips). */

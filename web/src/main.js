@@ -27,7 +27,7 @@ import { makeWater } from './water.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { chunkInstancedMeshes } from './chunking.js';
-import { applyPbrSets, pbrPlan } from './pbr.js';
+import { applyPbrSets, pbrPlan, formatName } from './pbr.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -747,9 +747,12 @@ window.__pfaInfo = () => ( {
 function residentBytes() {
 	const geos = new Set(), texs = new Set();
 	let geometry = 0, texture = 0, instanceMatrices = 0;
+	const formats = {};
 	const addTex = ( t ) => {
 		if ( ! t || texs.has( t ) ) return;
 		texs.add( t );
+		const f = formatName( t );
+		formats[ f ] = ( formats[ f ] || 0 ) + 1;
 		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
 			for ( const m of t.mipmaps ) texture += m.data.byteLength;       // compressed (KTX2)
 		} else if ( t.image && t.image.width ) {
@@ -789,7 +792,7 @@ function residentBytes() {
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
-		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
+		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size, texture_formats: formats,
 		render_target_bytes: rtBytes, render_targets: rts,
 		total_bytes: Math.round( geometry + instanceMatrices + texture ) + rtBytes,
 		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
