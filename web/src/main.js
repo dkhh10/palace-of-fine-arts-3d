@@ -394,7 +394,11 @@ function processGltf( gltf, g ) {
 	gltf.scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
 		// QA round 11b: the export ships opaque ENV_treeboard_* stand-ins for the Gate 3 impostors; ?treeboards=0 hides them
-		if ( ! CFG.treeboards && ( /^ENV_treeboard_/.test( o.name ) || ( o.parent && /^ENV_treeboard_/.test( o.parent.name ) ) ) ) { o.visible = false; hiddenBoards ++; }
+		// gltfpack -mi drops node names, so the boards are recognised by their material (MAT_EXP_treeboard), one InstancedMesh
+		if ( ! CFG.treeboards ) {
+			const mm = Array.isArray( o.material ) ? o.material : [ o.material ];
+			if ( mm.some( ( m ) => m && /treeboard|impostor|billboard/i.test( m.name ) ) ) { o.visible = false; hiddenBoards += o.isInstancedMesh ? o.count : 1; }
+		}
 		meshes ++;
 		const geo = o.geometry;
 		const n = ( geo.index ? geo.index.count : geo.attributes.position.count ) / 3;
