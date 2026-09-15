@@ -19,7 +19,8 @@ fi
 # Gate 2: same rule - no --delete, the two bake blends (400 MB) stay in this worktree.
 if [ -d "$ROOT/export/out/gate2" ]; then
   mkdir -p "$MAIN/export/out/gate2"
-  rsync -a --exclude 'gate2_bake.blend*' --exclude 'gate2_orn_bake.blend*' \
+  # tex/ is the 16-bit PNG bake output (regenerable, ~700 MB); only tex_ktx2 ships.
+  rsync -a --exclude 'gate2_bake.blend*' --exclude 'gate2_orn_bake.blend*' --exclude 'tex/' \
         "$ROOT/export/out/gate2/" "$MAIN/export/out/gate2/"
   echo "[gate2] synced to $MAIN/export/out/gate2 ($(du -sk "$MAIN/export/out/gate2" | cut -f1) KiB)"
 fi
