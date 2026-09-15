@@ -230,6 +230,32 @@ Fixed on `phase6-export` after `docs/reviews/phase6_export_gate1_review.md` (5 f
    returns a STALE evaluation — v2 got v1's low-poly and v3 got v2's. `exp_mesh(src_me=...)` copies the mesh
    datablock directly, and the exported mesh's bounding box is asserted against its own source.
 
+### QA round 11b (three more, all on this branch)
+
+8. The sweep could not see stand-ins named `board` / `impostor` / `billboard`, so the export's own 127 far-tree
+   carriers passed as **0 hits** while covering 16-26 % of every frame. `export/name_sweep.py` now matches those
+   three words and lists `ENV_treeboard_\d+` as a **named exemption**: *"Gate 3 impostor carriers, hidden in
+   every QA capture until the impostor bake"*. The same three words belong in `scripts/qa_name_sweep.py` (the
+   lead's file): `PAT = re.compile(r"placeholder|proxy|blocker|fill|occlud|block|dummy|temp|card|board|impostor|billboard", re.I)`.
+9. The boards shipped **OPAQUE**, so a viewer that did not know the material name drew them as grey slabs.
+   `MAT_EXP_treeboard` now carries `alphaMode: "MASK"`, `alphaCutoff: 1.0` **and `baseColorFactor` alpha 0** in
+   the glb. The alpha 0 is not cosmetic: with an alpha of 1 gltfpack reasons "MASK over an always-opaque
+   material == OPAQUE" and strips `alphaMode` again (measured at cutoff 1.0, 0.99 and 0.5). The material name is
+   unchanged, so the viewer's existing name test still works.
+10. **QA-11-9, the cam04 ceiling sliver.** Ray-cast attribution through the cam04 station over the defect box
+    (470,140)-(600,350): `ARCH_rotunda_plaster_ceiling_rib_merged` **57.6 %** of the box and
+    `ARCH_rotunda_plaster_ceiling_merged` 41.8 % (`export/qa_cam04_probe.py`, 3 124 samples). The rib group is
+    the only decimated one of the two, so `ARCH_rotunda_ceiling_ribs` (19 564 -> 8 000) and the eight
+    `ARCH_rotunda_vault_coffers_*` (17 658 -> 6 000 each) now export **as modelled**: the merged mesh goes
+    **56 000 -> 160 828** triangles and the geometry at that station is the Phase 5 geometry, so no decimation
+    artefact can survive there. Cost +104 828 placed; ARCH 949 382 (150 618 under budget), scene 2 841 396
+    (158 604 under 3.0 M). A thin-triangle count is NOT the discriminator here and is not claimed as one: the
+    undecimated source has 12 625 triangles thinner than 50 (radial fans on a coffer are naturally thin)
+    against 174 in the decimated version.
+
+Also seen by the cam04 probe and left for ENV/QA, not an export defect: `ENV_shrub_big3_0796_LOD2` sits **2.4 m**
+from the cam04 station, inside the rotunda, and is hit by 5 of the 3 124 rays.
+
 Carried to Gate 2/3 (review findings 6-11, none a blocker): silent drop of an `ENV_*` LOD suffix that matches no
 bucket; `hide_render` never read; the near-tree allowance estimates shrubs from the raw mesh; no retry on
 `rc=143` in the queue; `new_from_object` meshes leak until `purge_orphans`; texture memory 1 343 MB against the
