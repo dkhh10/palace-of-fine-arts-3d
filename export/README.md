@@ -18,8 +18,8 @@ or step by step (each is idempotent and prints `STEP <name> wall_s=… <file>=<b
 | 2 | `--background out/gate0/gate0_set.blend --python export/bake_normal.py` | `tex/gate0_*_normal.png`, `*_ao.png` |
 | 3 | `… --python export/bake_pbr.py` | `tex/gate0_*_albedo.png`, `*_roughness.png` |
 | 4 | `… --python export/bake_lightmap.py` | `tex/gate0_*_lightmap.exr`, `*_lightmap_rgbm8.png` |
-| 5 | `… --python export/bake_lut.py` | `lut_agx_high_contrast_33.cube`, `sky_{camera,glossy}_4096x2048.{exr,hdr}` |
-| 6 | `… --python export/gltf_export.py` then `export/gltf_pack.sh` | `gate0.gltf`, `tex_ktx2/*.ktx2`, `gate0.glb` |
+| 5 | `… --python export/bake_lut.py` | `lut_agx_high_contrast_65.cube`, `sky_{camera,glossy}_4096x2048.{exr,hdr}` |
+| 6 | `… --python export/gltf_export.py` then `export/gltf_pack.sh` | `gate0.gltf`, `tex_ktx2/*.ktx2`, `gate0.glb`, `gate0_instanced.glb` |
 | 7 | `… --python export/render_reference.py` | `renders/web/gate0_cycles_cam01.png` |
 
 `export/out/bake_queue/status.json` is `{"state":"running"}` while any of these owns the GPU and `{"state":"idle"}`
@@ -40,7 +40,7 @@ renamed or removed, while that string stands.
 | `stations` | the six `scripts/qa_cameras.py` cameras by name: `location`, `rotation_euler_xyz` (Blender Z-up, XYZ order), `lens_mm`, `sensor_width_mm` 36, `sensor_fit` HORIZONTAL, `shift_x`, `shift_y`, `clip_start`, `clip_end`, `reference_photo`. `hero_camera` names the hero |
 | `assets` | per exported object: `mesh`, `tris`, `material`, `uv` (UV1 = material, UV2 = lightmap), `location_blender`, `lightmap` (the `textures` key that belongs to it, or `null`) |
 | `textures` | per map: `path` (relative to this file), `uv`, `colorspace`, `encoding`; lightmaps also carry `rgbm_range`, `decode` and the `exr` source |
-| `lut` | `.cube` path, `size` 33, the shaper, `exposure_ev`, `exposure_applied_by`, and the grey-plane `proof` |
+| `lut` | `.cube` path (`lut_agx_high_contrast_65.cube`), `size` 65, the shaper, `exposure_ev`, `exposure_applied_by`, `method`, and the five-patch grey `proof` |
 | `sky` | the two equirects (`camera` = background sphere, `glossy` = PMREM source), the mapping, how the Light Path branch was isolated, and the sun's measured position in the image |
 | `gltf`, `glb` | what the exporter and gltfpack produced, including `lightmap_slot` and `viewer_action` |
 | `reference_frame` | the Cycles frame the viewer is scored against |
@@ -57,7 +57,7 @@ graded  = LUT3D( clamp((log2(max(linear * 2^exposure_ev, 1e-10) / 0.18) - shaper
 framebuffer = graded            // already display-referred sRGB, no further encode
 ```
 
-`shaper.min_ev` −12.47393, `shaper.max_ev` 4.026069, pivot 0.18, `exposure_ev` −2.8331399. Exposure is applied by
+`lut.size` is 65 (a 33³ lattice left a 1.7/255 trilinear error on mid grey). `shaper.min_ev` −12.47393, `shaper.max_ev` 4.026069, pivot 0.18, `exposure_ev` −2.8331399. Exposure is applied by
 the viewer *before* the shaper; the LUT itself was baked through Blender at that exposure, so applying it twice, or
 not at all, is wrong in both directions. `lut.proof` carries the Cycles-rendered 0.18 grey patch and the same value
 pushed through the LUT — they must agree within 1/255.
@@ -68,3 +68,24 @@ glTF has no lightmap slot, so the map rides in `emissiveTexture` on `TEXCOORD_1`
 set `emissive` to black, move `emissiveMap` to `lightMap` (keeping `channel = 1`), set `lightMapIntensity = 1`, and
 decode RGBM8 as `rgb = texel.rgb * texel.a * rgbm_range` in linear space. The map is Cycles' **diffuse pass with
 colour off** (irradiance/π), so the viewer multiplies it by the base colour and adds no diffuse sun of its own.
+
+## Two Blender 5.2 findings this pipeline depends on (both measured here, both worth a docs/tech_notes.md entry)
+
+1. **`Image.save_render()` applies no colour management at all.** Pushed 0.18 and 0.02526 through it with the scene
+   at AgX / High Contrast / −2.833 EV and got 0.180 and 0.02525 back — the raw buffer. The LUT is therefore baked by
+   **rendering the lattice through the compositor** (`scene.compositing_node_group` = an Image node wired to a
+   `NodeGroupOutput`, render resolution = the lattice size, one sample), which is the path that does apply view
+   transform, look and exposure. `export/out/gate0/bake_lut.json` carries the probe as `save_render_probe`.
+2. **`scene.use_nodes = False` does not disable the compositor in 5.2** (the property is deprecated and on its way
+   out in 6.0). Only `scene.compositing_node_group = None` does. Measured on the 0.18 grey emission plane:
+   **0.075029** with `COMP_scene_golden_hour` still attached, **0.082078** without — a 7.5 % linear difference that
+   first showed up as a 1.7/255 "LUT failure". Every measurement render that is not meant to carry the Phase 5
+   compositor (the LUT proof, the two sky equirects) detaches the group; `export/render_reference.py` deliberately
+   keeps it, because the reference frame is the Phase 5 look.
+   Also: the compositor in 5.2 lives on `scene.compositing_node_group` and ends in a `NodeGroupOutput`, not on
+   `scene.node_tree` with a `CompositorNodeComposite`.
+
+A third, cheaper trap: `master_delivery.blend` is saved with `common.set_lod(viewport=1)`, so every `_LOD0` object is
+`hide_viewport=True`, is **not in the depsgraph**, and therefore reads back `matrix_world` as the identity and is
+invisible to `scene.ray_cast`. `export/export_set.py` un-hides the slice and calls `view_layer.update()` before it
+reads any transform, and asserts every placement afterwards (`placement_max_error_m` 0.0).
