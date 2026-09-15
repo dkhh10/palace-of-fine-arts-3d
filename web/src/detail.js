@@ -26,7 +26,7 @@
 // World space also breaks the "one atlas per shared mesh" repetition for free: each placement of a
 // shared mesh samples a different part of the tile.
 import * as THREE from 'three';
-import { candidateKeys } from './pbr.js';
+import { candidateKeys, texBytes } from './pbr.js';
 
 function once( src, needle, replacement, what ) {
 	const n = src.split( needle ).length - 1;
@@ -332,7 +332,9 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 	if ( synthetic ) {
 		for ( const name of wanted ) {
 			const rule = work.find( w => w.rule.set === name ).rule;
-			const tex = makeNoiseSet( detail.shipPx || 1024, rule.mmPerTexel || 1.05, detail.bumpDistanceM || 0.015 );
+			const px = ( detail.sets[ name ] && detail.sets[ name ].maps.map && detail.sets[ name ].maps.map.px )
+				|| ( typeof detail.shipPx === 'number' ? detail.shipPx : 1024 );
+			const tex = makeNoiseSet( px, rule.mmPerTexel || 1.05, detail.bumpDistanceM || 0.015 );
 			for ( const [ slot, t ] of Object.entries( tex ) ) {
 				t.colorSpace = slot === 'map' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
 				t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -340,7 +342,7 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 				const m = measureLinearMean( { image: t.image }, slot === 'map' );
 				if ( m ) t.userData.pfaLinearMean = m.mean;
 				report.textures ++;
-				report.bytes += ( detail.shipPx || 1024 ) * ( detail.shipPx || 1024 ) * 4 * 4 / 3;
+				report.bytes += px * px * 4 * 4 / 3;
 			}
 			loaded[ name ] = tex;
 			report.sets_loaded ++;
@@ -390,7 +392,8 @@ export async function applyDetail( { scene, detail, loadTexture, note, projectio
 				tex[ slot ] = t;
 				report.textures ++;
 				report.stats[ entry.url.split( '/' ).pop() ] = { mean8: Math.round( m.mean8 * 10 ) / 10, std8: Math.round( m.std8 * 10 ) / 10, from: m.from || 'cpu' };
-				report.bytes += ( t.image && t.image.width ) ? t.image.width * t.image.height * 4 * 4 / 3 : 0;
+				// compressed maps are summed from their mip data, uncompressed as w*h*4 (x4/3 with mips)
+				report.bytes += texBytes( t ) || ( ( t.image && t.image.width ) ? t.image.width * t.image.height * 4 * 4 / 3 : 0 );
 			} catch ( e ) { report.failed.push( { url: entry.url, error: e.message } ); }
 		}
 		loaded[ name ] = tex;

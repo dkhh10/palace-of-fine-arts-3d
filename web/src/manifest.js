@@ -378,12 +378,14 @@ export function normaliseManifest( raw, baseUrl ) {
 			if ( given ) return { url: resolveUrl( baseUrl, given ), fallback: null };
 			const png = resolveUrl( baseUrl, `${String( dDir ).replace( /\/$/, '' )}/${key}.png` );
 			const ktx2 = ( detailFiles[ key ] && dirG2 ) ? joinDir( dirG2, `${key}.ktx2` ) : null;
-			// The PNG is used whenever it exists, because the layer divides the SAMPLED value by the
-			// map's mean and only the PNG guarantees the two are in the same space: the KTX2 albedo
-			// is written with `--assign_oetf linear`, so the GPU returns the stored sRGB-encoded
-			// bytes undecoded while `mean_linear` is the decoded mean — dividing one by the other
-			// brightened the stone by 45 %.  The KTX2 set (4x cheaper) becomes the primary when the
-			// bake tags the albedo srgb, or declares the mean in the sampled space.
+			// KTX2 first (1 byte/texel against 4, and mips) whenever the manifest states the map's
+			// mean: the layer divides the SAMPLED value by that mean, so the two must be in the same
+			// space.  The Gate 2 KTX2 albedos carry DFD transfer 2 (sRGB) and the viewer sets
+			// SRGBColorSpace on them, so the sample is decoded linear and `mean_linear` is the right
+			// divisor.  Without a declared mean the PNG is used, because only a decodable image can
+			// be measured on the CPU.
+			const mean = entry && ( entry.mean_linear || entry.mean );
+			if ( ktx2 && Array.isArray( mean ) ) return { url: ktx2, fallback: png };
 			return { url: png, fallback: ktx2 };
 		};
 		const dSets = {};

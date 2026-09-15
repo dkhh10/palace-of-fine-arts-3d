@@ -120,26 +120,25 @@ albedo/roughness strength, `?detailnormal=<s>` the normal scale (default 0.5), `
 synthetic value-noise set of the same tile size for diagnosis.
 A map whose measured mean or std is below 1/255 is DROPPED with a note: an empty map as a ratio denominator
 turns the surface black (the first Gate 2 detail export shipped 15 of 15 maps all-zero and this caught it).
-The PNG set is used, not the KTX2 one: the layer divides the SAMPLED value by the map's own mean, and the
-KTX2 albedo is written `--assign_oetf linear`, so the GPU returns the stored sRGB bytes undecoded while
-`mean_linear` is the decoded mean — dividing one by the other brightened the stone 45 %. The KTX2 set (1.33 MB
-against 5.6 MB a map) becomes the primary the moment the bake tags the albedo srgb or states the mean in the
-sampled space; today the four used sets cost **67.1 MB** as PNGs.
+The **KTX2 set is used** whenever the manifest states each map's `mean_linear` (the layer divides the sampled
+value by that mean, so the two must be in the same space): the Gate 2 albedos carry DFD transfer 2 (sRGB) and
+the viewer sets `SRGBColorSpace` on them, so the sample is decoded and the linear mean is the right divisor.
+An earlier set tagged the albedo linear and the mismatch brightened the stone 45 % — the PNG path (CPU-measured
+mean) remains the fallback when no mean is declared. Resident: **33.6 MB** for the four used sets
+(concrete 2K, ground 1K, ASTC 4x4 with mips) against 134 MB as PNGs.
 
-**Measured, with the real maps (2026-09-15 21:30, bias -2, gain 1, normal scale 1).** The layer moves the
-QA-12-1 boxes by about 1 %: cam05 pier `1180 560 1280 680` (at 1280x720 = `787 373 853 453`) mid 7.08 -> 7.10,
-std 22.87 -> 22.89, hp9 8.09 -> 8.16 against the Phase 5 frame's 12.92 / 38.25 / 17.00; cam01 south-colonnade
-wall `1600 590 1670 635` mid 4.33 -> 4.41; cam03 paving `800 700 1200 900` hp9 14.99 -> 15.76 (+5 %); the
-sunlit attic `700 200 780 240` is unmoved (std 48.00 -> 47.98, hue 40.9 -> 41.0, sat 0.355 -> 0.354).
-Why it is small, measured three ways: the shipped maps' own contrast is `std_linear / mean_linear` = 3-6 %
-(albedo 0.0277 / 0.544), which after the display transform is about 2.5 of 255 on a mid-tone; at 15-25 m the
-tile is 3-6 texels per pixel, so mip filtering removes most of what is left (the explicit-gradient fetch with
-a -2 footprint shrink recovers part of it — a LOD *bias* argument is ignored on this stack); and the cam05
-pier faces away from the sun, where a normal perturbation only re-weights smooth sky irradiance.
-`?detailgain=<g>` raises the ratio to the power g (mean-preserving, contrast-scaling) for a measured curve of
-hp9 8.09 (g=1) -> 8.96 (3) -> 10.30 (6) -> 12.57 (10) and std 22.87 -> 24.75 at g=10, with the box mean within
-0.6 of 255 throughout. The default ships at **g = 1**, the bake's own contrast: closing the remaining gap to
-Phase 5 belongs in the detail export (higher map contrast, or a finer mm/texel), not in a viewer multiplier.
+**Measured on the final maps (2026-09-15 21:45, bias -2, gain 1, normal scale 1), detail off -> on.**
+cam05 pier `1180 560 1280 680` (= `787 373 853 453` at the reference's 1280x720): mid 7.08 -> 7.05, std
+22.87 -> 22.87, hp9 8.09 -> 8.14, mean 143.70 -> 144.78, against the Phase 5 frame's 12.92 / 38.25 / 17.00 /
+145.36. cam01 south-colonnade wall `1600 590 1670 635`: mid 4.33 -> 4.37, std 9.13 -> 9.07, hp9 5.97 -> 5.83.
+Sunlit attic `700 200 780 240` unmoved: std 48.00 -> 47.94, hp9 39.37 -> 39.38, mean 148.66 -> 149.55.
+The layer therefore moves the QA-12-1 boxes by under 1.5 %. Why, measured: the maps' own contrast is
+`std_linear / mean_linear` = 6.5 % on the albedo (0.0352 / 0.538) and a 0.024 slope on the normal; at 15-25 m
+the 2K tile is 3-6 texels per pixel, so most of it is filtered away (the explicit-gradient fetch with a -2
+footprint shrink recovers part — a LOD *bias* argument is ignored on this stack); and the cam05 pier faces
+away from the sun, where a normal perturbation only re-weights smooth sky irradiance, there being no shadows
+in `direct` mode. `?detailgain=<g>` raises the ratio to the power g, mean-preserving: hp9 8.09 (g=1) -> 8.96
+(3) -> 10.30 (6) -> 12.57 (10). Shipped at **g = 1**, the bake's own contrast.
 
 ## Instance chunking (QA-11d-1)
 The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
