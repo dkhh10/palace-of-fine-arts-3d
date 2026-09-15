@@ -466,7 +466,12 @@ def build():
                                                 max(c.y for c in corners) - min(c.y for c in corners)), 2),
                               walk_dist_m=round(d, 2),
                               lod1_tris=tris_of(bpy.data.meshes.new_from_object(ob.evaluated_get(dg)))))
-    within = [t for t in tree_rows if t["walk_dist_m"] <= g1.TREE_NEAR_RADIUS_M]
+    # 46 of the 147 _LOD1 tree OBJECTS in master_delivery already carry a _LOD2 blob mesh (1 188-1 596 tris):
+    # that downgrade is inherited from Phase 5. They are impostor-grade already, so they go straight to the
+    # billboard list and never spend the near-tree budget, which is reserved for real LOD1 crowns.
+    blob = [t for t in tree_rows if t["mesh"].endswith("_LOD2")]
+    within = [t for t in tree_rows
+              if t["walk_dist_m"] <= g1.TREE_NEAR_RADIUS_M and not t["mesh"].endswith("_LOD2")]
     within.sort(key=lambda t: t["walk_dist_m"])
     # budget: the ENV class allowance left for near trees after ground, backdrop and the shrubs
     env_so_far = sum(meshes[m.data.name]["tris"] for m in env_ground + backdrop)
@@ -503,6 +508,8 @@ def build():
              "(845 paving faces) + the MAT_gravel_path faces of ENV_terrain_ground (8 952 faces, 19 783 m2). "
              "MAT_lawn is excluded: 489 424 m2 out to +-365 m would make every tree near." % g1.TREE_NEAR_RADIUS_M,
         trees_total=len(tree_rows), within_radius=len(within), near_exported=len(near), far_billboards=len(far),
+        lod2_blob_objects=len(blob),
+        lod2_blob_within_radius=len([t for t in blob if t["walk_dist_m"] <= g1.TREE_NEAR_RADIUS_M]),
         thin_fraction=g1.TREE_NEAR_THIN, near_tris_budget=tree_allow, near_tris_used=used,
         cut="the near list is the `within_radius` set truncated by the ENV budget, closest to the walk first; "
             "the remainder joins the impostor list (docs/briefs/phase6_plan.md section 4b, user's decision)")
@@ -729,7 +736,10 @@ def build():
     uniq = {"ARCH": 0, "ORN": 0, "ENV": 0}
     for m in meshes.values():
         uniq[m["cls"]] += m["tris"]
-    draw_calls = len({(a["mesh"], a["material"]) for a in assets.values()})
+    draw_calls = 0
+    for mn in meshes:
+        me = bpy.data.meshes.get(mn)
+        draw_calls += max(1, len(me.materials)) if me else 1
     rep["totals"] = dict(placed_tris=cls_tris, placed_total=sum(cls_tris.values()),
                          unique_tris=uniq, unique_total=sum(uniq.values()),
                          objects=cls_objs, unique_meshes=len(meshes),
@@ -749,12 +759,14 @@ def build():
         proto = m["src_mesh"]
         key = re.sub(r"_LOD0(_a)*$", "", re.sub(r"^ORN_", "", proto))
         size = g1.ORN_BAKE_SIZE_SMALL if m["max_dim_m"] < g1.ORN_SMALL_DIM_M else g1.ORN_BAKE_SIZE
-        jobs.append(dict(id=f"orn_{key}", prototype=proto, lo=mname, hi=f"EXPHI_{proto}", size=size,
+        jobs.append(dict(id=f"orn_{key}", prototype=proto, lo=mname, lo_object=f"BAKE_LO_{proto}",
+                         hi=f"EXPHI_{proto}", size=size,
                          tris=m["tris"], src_tris=m["src_tris"], placements=m["placements"],
                          max_dim_m=m["max_dim_m"],
                          normal=f"tex/orn_{key}_normal.png", ao=f"tex/orn_{key}_ao.png"))
     (g1.OUT / "bake_jobs.json").write_text(json.dumps(
-        dict(set_blend=str(g1.SET_BLEND), out=str(g1.TEX), jobs=jobs), indent=1) + "\n")
+        dict(set_blend=str(g1.SET_BLEND), bake_blend=str(g1.BAKE_BLEND), out=str(g1.TEX), jobs=jobs),
+        indent=1) + "\n")
     rep["bake_jobs"] = len(jobs)
 
     stations = {}
@@ -793,7 +805,29 @@ def build():
     g1.OUT.mkdir(parents=True, exist_ok=True)
     (g1.OUT / "manifest.json").write_text(json.dumps(man, indent=1, default=str) + "\n")
 
-    step.done(g1.SET_BLEND, g1.OUT / "export_set.json", g1.OUT / "manifest.json",
+    # ---------------------------------------------------------------- 12. the slim bake file
+    # Each of the 33 ORN bake jobs re-opens its source; the full set is 206 MB (89 packed foliage images,
+    # 2 540 objects). Strip everything but the 33 lo/hi pairs at identity and save that instead.
+    keep_hi = {o.name for o in bpy.data.objects if o.name.startswith("EXPHI_")}
+    for ob in list(bpy.data.objects):
+        if ob.name not in keep_hi:
+            bpy.data.objects.remove(ob, do_unlink=True)
+    bakecoll = bpy.data.collections.new("BAKE")
+    scene.collection.children.link(bakecoll)
+    for pname, me in orn_lo.items():
+        bob = bpy.data.objects.new(f"BAKE_LO_{pname}", me)
+        bakecoll.objects.link(bob)
+        bob.matrix_world.identity()
+    for ob in bpy.data.objects:
+        ob.hide_viewport = False
+        ob.hide_render = False
+        ob.matrix_world.identity()
+    common.purge_orphans()
+    g0.save_copy(g1.BAKE_BLEND)
+    rep["bake_blend_bytes"] = g1.BAKE_BLEND.stat().st_size
+    (g1.OUT / "export_set.json").write_text(json.dumps(rep, indent=1, default=str) + "\n")
+
+    step.done(g1.SET_BLEND, g1.BAKE_BLEND, g1.OUT / "export_set.json", g1.OUT / "manifest.json",
               placed=sum(cls_tris.values()), arch=cls_tris["ARCH"], orn=cls_tris["ORN"], env=cls_tris["ENV"],
               unique=sum(uniq.values()), objects=len(assets), meshes=len(meshes), batches=draw_calls,
               near_trees=len(near), far_trees=len(far), removed=removed)

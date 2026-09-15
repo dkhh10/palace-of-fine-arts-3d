@@ -1,14 +1,14 @@
 """Gate 1 step 2: ONE ORN prototype's hi (LOD0) -> lo tangent normal map + AO. One Blender per job.
 
-    scripts/blender_run.sh 900 -- --background export/out/gate1/gate1_set.blend \
+    scripts/blender_run.sh 900 -- --background export/out/gate1/gate1_bake.blend \
         --python export/bake_orn.py -- --job orn_capital_rotunda_v2
 
 Driven by export/bake_queue.sh over export/out/gate1/bake_jobs.json; never start it by hand while another
 registered Blender is alive (the queue enforces that, see export/bake_queue.sh).
 
-Geometry note. gate1_set.blend holds the exported prototype mesh (EXPM_<proto>) placed N times at the real
-instance transforms, and its hi twin (EXPHI_<proto>) once, at identity, in EXP_ORN_HI. Both meshes are in the
-SAME prototype-local space, so the bake pair is made here: a throw-away lo object at identity over the hi twin.
+Geometry note. gate1_bake.blend holds only the 33 pairs: the exported prototype mesh on BAKE_LO_<proto> and its hi twin
+EXPHI_<proto>, both at identity in the same prototype-local space. (The full gate1_set.blend works too - the
+lo object is created on the fly - but it is 206 MB and every job would re-read it.)
 Everything else is hidden from the rays, so no neighbour can bleed into the AO.
 """
 import bpy
@@ -35,11 +35,12 @@ scene.cycles.use_denoising = False
 scene.cycles.use_adaptive_sampling = False
 step = g0.Step(f"bake_orn:{job_id}")
 
-lo_me = bpy.data.meshes[job["lo"]]
 hi = bpy.data.objects[job["hi"]]
 hi.matrix_world.identity()
-lo = bpy.data.objects.new(f"BAKE_LO_{job_id}", lo_me)
-bpy.context.scene.collection.objects.link(lo)
+lo = bpy.data.objects.get(job.get("lo_object", ""))
+if lo is None:                       # gate1_set.blend (the full set) rather than the slim gate1_bake.blend
+    lo = bpy.data.objects.new(f"BAKE_LO_{job_id}", bpy.data.meshes[job["lo"]])
+    bpy.context.scene.collection.objects.link(lo)
 lo.matrix_world.identity()
 bpy.context.view_layer.update()
 

@@ -24,6 +24,7 @@ OUT = ROOT / "export" / "out" / "gate1"
 TEX = OUT / "tex"
 QUEUE = ROOT / "export" / "out" / "bake_queue"
 SET_BLEND = OUT / "gate1_set.blend"
+BAKE_BLEND = OUT / "gate1_bake.blend"   # the 33 ORN lo/hi pairs only; what every bake job opens
 UV1 = g0.UV1
 UV2 = g0.UV2
 

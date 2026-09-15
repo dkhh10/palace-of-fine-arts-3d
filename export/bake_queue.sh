@@ -18,7 +18,7 @@ set -e
 HERE=${0:A:h}
 ROOT=${HERE:h}
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
-SRC="$ROOT/export/out/gate1/gate1_set.blend"
+SRC="$ROOT/export/out/gate1/gate1_bake.blend"
 JOBS="$ROOT/export/out/gate1/bake_jobs.json"
 QDIR="$ROOT/export/out/bake_queue"
 STATUS="$QDIR/status.json"
