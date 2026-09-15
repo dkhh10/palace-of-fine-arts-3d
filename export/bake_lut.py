@@ -149,11 +149,11 @@ me.from_pydata([(-10, -10, 0), (10, -10, 0), (10, 10, 0), (-10, 10, 0)], [], [(0
 plane = bpy.data.objects.new("GATE0_grey018", me)
 plane.data.materials.append(mat)
 scene.collection.objects.link(plane)
-plane.location = (0, 0, 500)
+plane.location = (0, 0, 490)
 cam_d = bpy.data.cameras.new("GATE0_grey_cam")
 cam = bpy.data.objects.new("GATE0_grey_cam", cam_d)
 scene.collection.objects.link(cam)
-cam.location = (0, 0, 499)
+cam.location = (0, 0, 500)        # looks along -Z, straight down at the plane 10 m below
 cam.rotation_euler = (0, 0, 0)
 cam_d.lens = 50.0
 keep_cam, keep_res, keep_nodes = scene.camera, (scene.render.resolution_x, scene.render.resolution_y), scene.use_nodes
@@ -228,6 +228,8 @@ for holder in (pano_d, getattr(pano_d, "cycles", None)):
             holder.panorama_type = "EQUIRECTANGULAR"
         except Exception:
             pass
+ptype = getattr(pano_d, "panorama_type", None) or getattr(getattr(pano_d, "cycles", None), "panorama_type", None)
+assert ptype == "EQUIRECTANGULAR", f"panorama type is {ptype!r}, not EQUIRECTANGULAR"
 pano.location = (0.0, 0.0, 12.0)
 pano.rotation_euler = (math.pi / 2.0, 0.0, 0.0)     # image centre = world +Y (the lagoon side)
 prev_hidden = bl.hide_all_but(set())                # world only

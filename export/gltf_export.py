@@ -67,8 +67,10 @@ def baked_material(name, key, lightmap):
         uv2 = nt.nodes.new("ShaderNodeUVMap"); uv2.uv_map = g0.UV2
         lm = nt.nodes.new("ShaderNodeTexImage"); lm.image = img(lightmap, "Non-Color")
         nt.links.new(uv2.outputs["UV"], lm.inputs["Vector"])
-        nt.links.new(lm.outputs["Color"], bsdf.inputs["Emission Color"])
-        bsdf.inputs["Emission Strength"].default_value = 1.0
+        em_in = bsdf.inputs.get("Emission Color") or bsdf.inputs.get("Emission")
+        nt.links.new(lm.outputs["Color"], em_in)
+        if "Emission Strength" in bsdf.inputs:
+            bsdf.inputs["Emission Strength"].default_value = 1.0
     return m
 
 
@@ -114,13 +116,19 @@ for ob in gate0.objects:
 bpy.context.view_layer.objects.active = list(gate0.objects)[0]
 
 gltf = g0.OUT / "gate0.gltf"
-bpy.ops.export_scene.gltf(
-    filepath=str(gltf), export_format="GLTF_SEPARATE", use_selection=True,
-    export_yup=True, export_apply=True, export_tangents=True, export_normals=True,
-    export_texcoords=True, export_materials="EXPORT", export_image_format="AUTO",
-    export_keep_originals=False, export_cameras=False, export_lights=False,
-    export_extras=False, export_animations=False, export_skins=False, export_morph=False,
-    export_texture_dir="tex_gltf")
+want = dict(filepath=str(gltf), export_format="GLTF_SEPARATE", use_selection=True,
+            export_yup=True, export_apply=True, export_tangents=True, export_normals=True,
+            export_texcoords=True, export_materials="EXPORT", export_image_format="AUTO",
+            export_keep_originals=False, export_cameras=False, export_lights=False,
+            export_extras=False, export_animations=False, export_skins=False, export_morph=False,
+            export_texture_dir="tex_gltf")
+props = set(bpy.ops.export_scene.gltf.get_rna_type().properties.keys())
+kwargs = {k: v for k, v in want.items() if k in props}
+dropped = sorted(set(want) - set(kwargs))
+if dropped:
+    print(f"[gate0] glTF exporter in this Blender has no {dropped}; using its defaults")
+report["gltf_export_args"] = dict(used=sorted(kwargs), dropped=dropped)
+bpy.ops.export_scene.gltf(**kwargs)
 doc = json.loads(gltf.read_text())
 report["gltf"] = dict(path=str(gltf), bytes=gltf.stat().st_size,
                       meshes=len(doc.get("meshes", [])), nodes=len(doc.get("nodes", [])),
