@@ -58,8 +58,10 @@ const CFG = {
 	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
 	detail: qs.has( 'detail' ) ? parseFloat( qs.get( 'detail' ) ) : 1.0,   // QA-12-1 detail layer strength, 0 = off
 	detailProj: qs.get( 'detailproj' ) || 'objxy',      // objxy (the manifest's plane) | dominant
-	detailNormal: qs.has( 'detailnormal' ) ? parseFloat( qs.get( 'detailnormal' ) ) : 0.5,  // detail normal scale
+	detailNormal: qs.has( 'detailnormal' ) ? parseFloat( qs.get( 'detailnormal' ) ) : 1.0,  // detail normal scale (1 = the map's own slope)
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
+	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
+	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
 };
 
 function glInfo() {
@@ -362,6 +364,7 @@ async function boot() {
 			detailReport = await applyDetail( {
 				scene, detail: manifest.materials.detail, note,
 				projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
+				lodBias: CFG.detailBias, gain: CFG.detailGain, debug: parseInt( qs.get( 'detaildebug' ) || '0', 10 ),
 				synthetic: CFG.detailTest === 'noise',
 				loadTexture: ( url ) => {
 					progress.label = url.split( '/' ).pop();
@@ -811,6 +814,8 @@ function residentBytes() {
 		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
 			if ( ! m ) continue;
 			for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) addTex( m[ k ] );
+			// the detail layer's maps are custom uniforms, not material slots, but they are resident
+			if ( m.userData.pfaDetailTextures ) for ( const t of m.userData.pfaDetailTextures ) addTex( t );
 		}
 	} );
 	if ( scene.background && scene.background.isTexture ) addTex( scene.background );

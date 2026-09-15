@@ -378,8 +378,12 @@ export function normaliseManifest( raw, baseUrl ) {
 			if ( given ) return { url: resolveUrl( baseUrl, given ), fallback: null };
 			const png = resolveUrl( baseUrl, `${String( dDir ).replace( /\/$/, '' )}/${key}.png` );
 			const ktx2 = ( detailFiles[ key ] && dirG2 ) ? joinDir( dirG2, `${key}.ktx2` ) : null;
-			const mean = entry && ( entry.mean_linear || entry.mean );
-			if ( ktx2 && Array.isArray( mean ) ) return { url: ktx2, fallback: png };
+			// The PNG is used whenever it exists, because the layer divides the SAMPLED value by the
+			// map's mean and only the PNG guarantees the two are in the same space: the KTX2 albedo
+			// is written with `--assign_oetf linear`, so the GPU returns the stored sRGB-encoded
+			// bytes undecoded while `mean_linear` is the decoded mean — dividing one by the other
+			// brightened the stone by 45 %.  The KTX2 set (4x cheaper) becomes the primary when the
+			// bake tags the albedo srgb, or declares the mean in the sampled space.
 			return { url: png, fallback: ktx2 };
 		};
 		const dSets = {};
@@ -394,7 +398,10 @@ export function normaliseManifest( raw, baseUrl ) {
 				const cs = ( typeof e === 'object' && e.colorspace ) || ( key === 'albedo' ? 'srgb' : 'linear' );
 				const u = detailUrl( ref, typeof e === 'object' ? e : null );
 				const declaredMean = ( typeof e === 'object' && ( e.mean_linear || e.mean ) ) || null;
-				maps[ slot ] = { url: u.url, fallback: u.fallback, key: ref, meanLinear: Array.isArray( declaredMean ) ? declaredMean : null,
+				const declaredStd = ( typeof e === 'object' && ( e.std_linear || e.std ) ) || null;
+				maps[ slot ] = { url: u.url, fallback: u.fallback, key: ref,
+					meanLinear: Array.isArray( declaredMean ) ? declaredMean : null,
+					stdLinear: Array.isArray( declaredStd ) ? declaredStd : null,
 					srgb: /srgb/i.test( cs ), px: ( typeof e === 'object' && e.px ) || detailRaw.ship_px || 1024,
 					bytes: detailFiles[ ref ] ? detailFiles[ ref ].bytes : null,
 					residentMb: detailFiles[ ref ] ? detailFiles[ ref ].resident_mb : null };
