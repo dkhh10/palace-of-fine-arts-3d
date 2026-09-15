@@ -108,9 +108,9 @@ async function boot() {
 	await loadSky();
 
 	// sun: SPECULAR ONLY (materials.js strips its diffuse term; the lightmap has the diffuse) -----
-	const d = manifest.sun.directionBlender;                       // direction of travel, Blender axes
-	sunLight = new THREE.DirectionalLight( new THREE.Color().setRGB( ...manifest.sun.color ), manifest.sun.irradiance );
-	sunLight.position.copy( b2t( d[ 0 ], d[ 1 ], d[ 2 ] ).multiplyScalar( 1000 ) );   // light sits along +dir, aims at origin
+	const d = manifest.sun.toSunBlender;                           // direction TOWARD the sun, Blender axes
+	sunLight = new THREE.DirectionalLight( new THREE.Color().setRGB( ...manifest.sun.color, THREE.LinearSRGBColorSpace ), manifest.sun.irradiance );
+	sunLight.position.copy( b2t( d[ 0 ], d[ 1 ], d[ 2 ] ).multiplyScalar( 1000 ) );   // the light sits toward the sun, aiming at the origin
 	sunLight.target.position.set( 0, 0, 0 );
 	sunLight.castShadow = false;                                   // shadows are in the lightmap
 	scene.add( sunLight, sunLight.target );

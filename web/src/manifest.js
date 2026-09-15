@@ -32,27 +32,43 @@ export function normaliseManifest( raw, baseUrl ) {
 	raw = raw || {};
 
 	// --- geometry ------------------------------------------------------------------------------
-	const glbRaw = pick( raw, 'glb', 'scene', 'model', 'assets.glb', 'files.glb' );
+	const glbRaw = pick( raw, 'glb', 'files.glb', 'assets.glb', 'model', 'gltf' );
 	const glb = resolveUrl( baseUrl, typeof glbRaw === 'string' ? glbRaw : glbRaw?.url );
 
 	// --- stations ------------------------------------------------------------------------------
-	let stations = pick( raw, 'stations', 'cameras' );
-	if ( ! stations || ! stations.length ) { stations = stationsFallback.stations; notes.push( 'stations: manifest had none, using scripts/qa_cameras.py fallback' ); }
-	stations = stations.map( ( s, i ) => ( {
-		index: s.index ?? i + 1,
-		name: s.name ?? `station_${i + 1}`,
-		location: s.location ?? s.loc,
-		target: s.target ?? null,
-		rotation_euler: s.rotation_euler ?? s.rotation ?? null,
-		matrix_world: s.matrix_world ?? s.matrix ?? null,
-		lens: s.lens ?? 35,
-		sensor_width: s.sensor_width ?? 36,
-		sensor_fit: s.sensor_fit ?? 'HORIZONTAL',
-		shift_x: s.shift_x ?? 0,
-		shift_y: s.shift_y ?? 0,
-		clip_start: s.clip_start ?? 0.1,
-		clip_end: s.clip_end ?? 5000,
-	} ) );
+	// schema pfa-phase6-gate0/1 keys stations by camera name with lens_mm / rotation_euler_xyz;
+	// older/array shapes are accepted too.  Look-at targets are not in the manifest, so they are
+	// taken from scripts/qa_cameras.py (stations_blender.json) by name purely as a cross-check.
+	let rawStations = pick( raw, 'stations', 'cameras' );
+	let stationList;
+	if ( rawStations && ! Array.isArray( rawStations ) ) {
+		stationList = Object.entries( rawStations ).map( ( [ name, s ], i ) => ( { name, index: s.index ?? i + 1, ...s } ) );
+	} else if ( rawStations && rawStations.length ) {
+		stationList = rawStations.map( ( s, i ) => ( { index: s.index ?? i + 1, ...s } ) );
+	} else {
+		stationList = stationsFallback.stations;
+		notes.push( 'stations: manifest had none, using scripts/qa_cameras.py fallback' );
+	}
+	const byName = new Map( stationsFallback.stations.map( s => [ s.name, s ] ) );
+	const stations = stationList.map( ( s, i ) => {
+		const ref = byName.get( s.name );
+		return {
+			index: s.index ?? i + 1,
+			name: s.name ?? `station_${i + 1}`,
+			location: s.location ?? s.loc,
+			target: s.target ?? ref?.target ?? null,
+			rotation_euler: s.rotation_euler_xyz ?? s.rotation_euler ?? s.rotation ?? null,
+			matrix_world: s.matrix_world ?? s.matrix ?? null,
+			lens: s.lens_mm ?? s.lens ?? 35,
+			sensor_width: s.sensor_width_mm ?? s.sensor_width ?? 36,
+			sensor_fit: s.sensor_fit ?? 'HORIZONTAL',
+			shift_x: s.shift_x ?? 0,
+			shift_y: s.shift_y ?? 0,
+			clip_start: s.clip_start ?? 0.1,
+			clip_end: s.clip_end ?? 5000,
+			reference_photo: s.reference_photo ?? ref?.ref ?? null,
+		};
+	} );
 
 	// --- colour --------------------------------------------------------------------------------
 	const lutRaw = pick( raw, 'lut', 'colour.lut', 'color.lut' );
@@ -65,16 +81,17 @@ export function normaliseManifest( raw, baseUrl ) {
 	} : null;
 	if ( ! lut ) notes.push( 'no LUT in the manifest: the display pass falls back to gamma 2.2 (NOT the Phase 5 look)' );
 
-	// Exposure.  A manifest may give a multiplier (exposure_multiplier / exposure_scale) or EV
-	// (exposure_ev, or `exposure` matching Blender's scene.view_settings.exposure = -2.833).
-	// If the LUT was baked WITH the exposure applied (lut.includes_exposure), the pass multiplies by 1.
-	let exposure = pick( raw, 'exposure_multiplier', 'exposure_scale', 'colour.exposure_multiplier' );
-	const ev = pick( raw, 'exposure_ev', 'exposure', 'view.exposure', 'colour.exposure' );
-	const lutHasExposure = pick( raw, 'lut.includes_exposure', 'colour.lut.includes_exposure' );
+	// Exposure.  export/bake_lut.py pushes the identity Hald through Blender's OWN view transform AT
+	// the scene's exposure, so a LUT from that bake ALREADY contains -2.833 EV and the pass multiplier
+	// must stay 1.0.  An explicit exposure_multiplier wins; `includes_exposure: false` switches to 2^EV.
+	let exposure = pick( raw, 'exposure_multiplier', 'exposure_scale', 'colour.exposure_multiplier', 'view.exposure_multiplier' );
+	const ev = pick( raw, 'exposure_ev', 'view.exposure_ev', 'exposure', 'view.exposure', 'colour.exposure' );
+	const lutHasExposure = pick( raw, 'lut.includes_exposure', 'view.lut.includes_exposure', 'colour.lut.includes_exposure' );
 	if ( exposure === undefined ) {
-		if ( lutHasExposure === true ) { exposure = 1.0; notes.push( 'exposure: LUT declares includes_exposure, pass multiplier = 1' ); }
-		else if ( ev !== undefined ) { exposure = Math.pow( 2, ev ); notes.push( `exposure: ${ev} EV -> multiplier ${Math.pow( 2, ev ).toFixed( 5 )}` ); }
-		else { exposure = 1.0; notes.push( 'exposure: absent, multiplier = 1 (assumes the LUT carries -2.833 EV)' ); }
+		if ( lutHasExposure === false && ev !== undefined ) { exposure = Math.pow( 2, ev ); notes.push( `exposure: LUT declares includes_exposure false, multiplier 2^${ev} = ${Math.pow( 2, ev ).toFixed( 5 )}` ); }
+		else if ( lut ) { exposure = 1.0; notes.push( `exposure: multiplier 1.0 (the LUT carries the ${ev !== undefined ? ev.toFixed( 3 ) : '-2.833'} EV exposure)` ); }
+		else if ( ev !== undefined ) { exposure = Math.pow( 2, ev ); notes.push( `exposure: no LUT, gamma fallback gets 2^${ev.toFixed( 3 )} = ${Math.pow( 2, ev ).toFixed( 5 )}` ); }
+		else { exposure = 1.0; notes.push( 'exposure: absent, multiplier = 1' ); }
 	}
 
 	// --- sky -----------------------------------------------------------------------------------
@@ -85,21 +102,29 @@ export function normaliseManifest( raw, baseUrl ) {
 		'sky.rotation_deg (Blender equirect u=0.5 faces -X, three faces +X)' );
 
 	// --- sun (specular only; the diffuse is in the lightmaps) ----------------------------------
+	// The manifest's `direction_blender` / `direction_gltf` is the direction the light TRAVELS, so the
+	// DirectionalLight is placed at -direction * d.  An azimuth/elevation pair instead points TOWARD
+	// the sun, so the light is placed at +direction * d.
 	const sunRaw = pick( raw, 'sun', 'light.sun' ) || {};
-	let sunDirBlender = pick( sunRaw, 'direction', 'vector', 'dir' );        // direction the light travels TO the scene
+	let toSunBlender = null;
+	const travel = pick( sunRaw, 'direction_blender', 'direction', 'vector', 'dir' );
 	const az = pick( sunRaw, 'azimuth', 'azimuth_deg' ), el = pick( sunRaw, 'elevation', 'elevation_deg' );
-	if ( ! sunDirBlender && az !== undefined && el !== undefined ) {
+	if ( travel ) { toSunBlender = travel.map( v => - v ); notes.push( `sun: travel direction [${travel.map( v => v.toFixed( 3 ) )}] -> light placed opposite` ); }
+	else if ( az !== undefined && el !== undefined ) {
 		// scripts/common.sun_direction: azimuth clockwise from north, -X = north, +Y = east
 		const a = az * Math.PI / 180, e = el * Math.PI / 180;
-		sunDirBlender = [ - Math.cos( a ) * Math.cos( e ), Math.sin( a ) * Math.cos( e ), Math.sin( e ) ];
+		toSunBlender = [ - Math.cos( a ) * Math.cos( e ), Math.sin( a ) * Math.cos( e ), Math.sin( e ) ];
 		notes.push( `sun: direction from azimuth ${az} / elevation ${el}` );
+	} else {
+		const a = 118.5 * Math.PI / 180, e = 7.36 * Math.PI / 180;
+		toSunBlender = [ - Math.cos( a ) * Math.cos( e ), Math.sin( a ) * Math.cos( e ), Math.sin( e ) ];
+		notes.push( 'sun: absent, using the Phase 5 world (az 118.5, el 7.36)' );
 	}
-	if ( ! sunDirBlender ) { sunDirBlender = [ - Math.cos( 118.5 * Math.PI / 180 ) * Math.cos( 7.36 * Math.PI / 180 ), Math.sin( 118.5 * Math.PI / 180 ) * Math.cos( 7.36 * Math.PI / 180 ), Math.sin( 7.36 * Math.PI / 180 ) ]; notes.push( 'sun: absent, using the Phase 5 world (az 118.5, el 7.36)' ); }
 	const sun = {
-		directionBlender: sunDirBlender,
-		irradiance: def( pick( sunRaw, 'irradiance', 'strength', 'energy' ), 67.3, 'sun.irradiance (W/m2, Phase 5 LIGHT_sun)' ),
+		toSunBlender,
+		irradiance: def( pick( sunRaw, 'energy_w_m2', 'irradiance', 'strength', 'energy' ), 67.3, 'sun.irradiance (W/m2, Phase 5 LIGHT_sun)' ),
 		color: pick( sunRaw, 'color', 'colour' ) || [ 1, 1, 1 ],
-		angleDeg: pick( sunRaw, 'angle_deg', 'angle' ) ?? 0.526,
+		angleDeg: pick( sunRaw, 'angle_deg' ) ?? ( pick( sunRaw, 'angle_rad' ) !== undefined ? pick( sunRaw, 'angle_rad' ) * 180 / Math.PI : 0.526 ),
 	};
 
 	// --- lightmaps -----------------------------------------------------------------------------
@@ -116,7 +141,10 @@ export function normaliseManifest( raw, baseUrl ) {
 			rgbmMaxRange: lm.rgbm_max_range ?? lm.max_range ?? 7.0,
 		} );
 	}
-	for ( const a of pick( raw, 'assets' ) || [] ) {
+	const assetsRaw = pick( raw, 'assets' ) || [];
+	const assetList = Array.isArray( assetsRaw )
+		? assetsRaw : Object.entries( assetsRaw ).map( ( [ name, a ] ) => ( { name, ...a } ) );
+	for ( const a of assetList ) {
 		const lm = a.lightmap;
 		if ( ! lm ) continue;
 		lightmaps.push( {
@@ -131,7 +159,7 @@ export function normaliseManifest( raw, baseUrl ) {
 
 	const out = {
 		raw, baseUrl, glb, stations, lut, exposure, sun, lightmaps, notes,
-		waterZ: def( pick( raw, 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
+		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
 		sky: { camera: skyCamera, glossy: skyGlossy, rotationDeg: skyRotationDeg },
 		frameSize: pick( raw, 'frame', 'render.frame' ) || { width: 1280, height: 720 },
 	};
