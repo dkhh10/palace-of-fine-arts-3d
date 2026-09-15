@@ -19,13 +19,53 @@ tone mapping OFF, a 3D LUT baked from Blender's OCIO.
 - **11b** open — `public/basis/*` (585 kB) duplicates `three/examples/jsm/libs/basis` (copy at build time).
 
 ## Carries from the Gate 1 code review (docs/reviews/phase6_viewer_gate1_review.md)
-- **G1-5** (Gate 3) `billboards.js` placeholder quads never go through `patchBakedMaterial`, so under
-  `baked` lighting they take the full unshadowed sun diffuse while everything round them is specular-only.
-- **G1-7** In `direct` mode the diffuse irradiance is PMREM'd from the GLOSSY-branch equirect (the bake
-  isolates camera vs glossy only), so a diffuse-branch difference in the Phase 5 world would go unnoticed.
-- **G1-8** `test/camera_test.mjs` skips every orientation cross-check without `PFA_MAIN_ROOT` and still
-  exits 0; it should fail when all stations skip.
+- **G1-5** done (Gate 2) — under `baked` lighting the `billboards.js` placeholder materials now go
+  through `patchBakedMaterial`, so they are specular-only like everything round them.
+- **G1-7** open. In `direct` mode the diffuse irradiance is PMREM'd from the GLOSSY-branch equirect (the
+  bake isolates camera vs glossy only), so a diffuse-branch difference in the Phase 5 world would go
+  unnoticed. Needs a camera-branch PMREM from the bake, not a viewer change.
+- **G1-8** done — `test/camera_test.mjs` FAILS when every station orientation cross-check skips.
+- **Gate 0 carry 7** still open: there is no `calc_matrix_camera()` dump in `export/out` (the export
+  engineer left none), so the only Blender cross-check remains matrix_world vs euler. Running Blender
+  to make one would block the bake queue's GPU guard, so it was not done here.
+- **Gate 0 carry 11** done — `screenshot.mjs`'s static server checks root containment on a path
+  boundary (`root + sep`), not a bare `startsWith`.
 - **11c** done — `npm run shot` now goes through `scripts/chrome_run.sh 600`.
+
+## LUT texel type and the device without `OES_texture_float_linear`
+The `.cube` LUT loads as `FloatType` where `OES_texture_float_linear` exists and as `UnsignedByte`
+where it does not (WebGL2 has no linear filtering of float textures without it, and a nearest-sampled
+LUT is worse than an 8-bit one). `?lutfloat=0` forces the 8-bit path on a device that has the
+extension, so the fallback is testable here: measured on the Gate 1 hero at 1280x720, 8-bit vs float
+is **mean |diff| 0.52 / 255, p99 1.0, mean luma -0.535 / 255** (max 71 on a handful of specular
+pixels). The fallback is safe for parity scoring; the float path stays the default.
+
+## Materials modes (Gate 2)
+`grey` — the neutral-grey export with the ORN normal + AO only: the frames QA scored at Gate 1.
+`pbr` — manifest v3 (`pfa-phase6/3`) names one texture set per material (albedo sRGB, roughness and
+normal linear, KTX2); the viewer attaches them to the materials the frozen Gate 1 glbs already carry,
+matching `MAT_EXP_<zone>__<source material>` on either half of the name, and loads them **nearest
+material to the station camera first** (KTX2 is a whole-file load, so request order is the only lever
+on what is textured first). Lighting is unchanged (`direct`: full sun + PMREM irradiance, no
+lightmaps). `?materials=grey|pbr` overrides the automatic choice; `auto` takes `pbr` whenever the
+manifest carries a set, so a grey capture can never be reported as a PBR one.
+
+## Instance chunking (QA-11d-1)
+The exporter collapses every placement of a shared mesh into ONE `EXT_mesh_gpu_instancing` node, so a
+batch scattered over the site has a site-spanning bounding sphere and passes the frustum test at every
+station. `src/chunking.js` splits such a batch (bounding radius >= 30 m) by median cuts into at most 4
+regional batches, keeping a cut only when it tightens the bounds to <= 0.8x, with a global cap of +160
+draw calls. Measured on the Gate 1 export, 1280x720, both placeholder sets hidden (`?chunk=0` is the
+control): 9 of 27 candidate batches split into 30, and
+
+| station | 01 | 02 | 03 | 04 | 05 | 06 |
+|---|---|---|---|---|---|---|
+| draws off -> on | 199 -> 231 | 193 -> 217 | 203 -> 234 | **99 -> 99** | 189 -> 210 | 205 -> 241 |
+| tris (M) off -> on | 5.44 -> 5.41 | 5.32 -> 5.08 | 5.57 -> 5.48 | **2.80 -> 2.36** | 5.21 -> 4.86 | 5.60 -> 5.60 |
+
+At 2560x1440 the hero's `gl.finish` GPU cost is 1.5 ms either way and cam04 goes 0.6 -> 0.5 ms; the
+hero stays at 231 draws of the 400-draw budget. Splitting every candidate (`?chunk=30,2,1.0`) costs
++50 more draws at the hero and saves no further triangles anywhere, so the 0.8 gain test stands.
 
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
@@ -35,9 +75,12 @@ tone mapping OFF, a 3D LUT baked from Blender's OCIO.
 URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb=a.glb,b.glb`, `?water=0`,
 `?lut=0`, `?testlut=identity|gamma22`, `?test=1`, `?exposure=`, `?skyrot=`, `?sun=`, `?lmscale=`, `?haze=`
 (diagnostic constant airlight, not the real mist), `?unlit=share|stock|black`, `?lighting=auto|baked|direct`,
-`?billboards=0`, `?t=<seconds>` (freezes the water phase), `?hud=0`.
+`?billboards=0`, `?treeboards=0`, `?t=<seconds>` (freezes the water phase), `?hud=0`,
+`?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`.
 
-## Screenshots and the Gate 1 pass (never launch Chrome any other way)
+## Screenshots and the gate passes (never launch Chrome any other way)
+    web/tools/gate2.sh [manifest_url]     # Gate 2: same, default /assets/gate2/manifest.json
+    PFA_TAG=gate2grey PFA_QUERY="materials=grey" web/tools/gate2.sh   # the grey control pass
     web/tools/gate1.sh [manifest_url]     # guard + build + 1920x1080 stations 1-6 + 1440p perf + sheets
     scripts/chrome_run.sh 600 -- node web/tools/screenshot.mjs --stations 1-6 --size 1920x1080 \
         --frames 0 --out renders/web/gate1.png            # -> gate1_cam01.png … gate1_cam06.png
@@ -45,6 +88,9 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
         --frames 120 --shots 0 --perf renders/web/gate1_perf.json
     python3 web/tools/gate1_sheets.py --viewer-glob 'renders/web/gate1_cam%02d.png' --out-dir renders/web
 Check the GPU first (`export/out/bake_queue/status.json` idle, **and** no `MacOS/Blender` process).
+`gate2.sh` is `gate1.sh` generalised: it hides BOTH placeholder sets by default
+(`billboards=0 treeboards=0`), names every output after `PFA_TAG` (default `gate2`) and adds
+`PFA_QUERY` last, so a repeated key wins (screenshot.mjs deduplicates, last one wins).
 `web/tools/gate0.sh` is the Gate 0 equivalent. `gate1_perf.json` carries, per station, the median presented
 frame time over 120 frames, the `gl.finish` GPU cost, draw calls, triangles, `renderer.info.memory` and the
 viewer's own resident byte sum; the sheets carry a per-frame and per-cell luma/linear comparison.

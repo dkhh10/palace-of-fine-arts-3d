@@ -52,7 +52,9 @@ const CFG = {
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
-	chunk: qs.has( 'chunk' ) ? parseFloat( qs.get( 'chunk' ) ) : null,  // 0 disables the QA-11d-1 instance chunking
+	// QA-11d-1 instance chunking: "0" disables it, "minRadius[,maxDepth[,gain]]" tunes it
+	chunk: qs.get( 'chunk' ),
+	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
 };
 
 function glInfo() {
@@ -350,6 +352,13 @@ async function boot() {
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
 	if ( CFG.billboards && manifest.treesFar.length ) {
 		billboards = makeTreeBillboards( manifest.treesFar );
+		// G1-5: under `baked` lighting every other material is specular-only, so an unpatched
+		// placeholder quad would take the full 67.3 W/m2 sun diffuse and read as a white card.
+		if ( lightingMode === 'baked' ) {
+			let n = 0;
+			for ( const m of billboards.children ) if ( m.material ) { patchBakedMaterial( m.material, {} ); n ++; }
+			note( `${n} billboard placeholder material(s) put on the specular-only path (G1-5)` );
+		}
 		scene.add( billboards );
 		aimBillboards( billboards, camera );
 		note( `${manifest.treesFar.length} far-tree placeholder quads in ${billboards.children.length} prototype group(s), tagged pfaPlaceholder=gate3_tree_impostor` );
@@ -443,8 +452,13 @@ async function loadGlbs() {
 	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those
 	// batches into regional ones so a station that sees little of the site draws little of it.
 	chunkStats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
-	if ( CFG.chunk !== 0 ) {
-		const opts = CFG.chunk ? { minRadius: CFG.chunk } : {};
+	const chunkArgs = ( CFG.chunk || '' ).split( ',' ).map( Number );
+	if ( CFG.chunk !== '0' ) {
+		const opts = {};
+		if ( chunkArgs.length && isFinite( chunkArgs[ 0 ] ) && chunkArgs[ 0 ] > 0 ) opts.minRadius = chunkArgs[ 0 ];
+		if ( isFinite( chunkArgs[ 1 ] ) ) opts.maxDepth = chunkArgs[ 1 ];
+		if ( isFinite( chunkArgs[ 2 ] ) ) opts.gain = chunkArgs[ 2 ];
+		chunkStats.opts = opts;
 		for ( const root of glbRoots ) {
 			const s = chunkInstancedMeshes( root, opts );
 			chunkStats.candidates += s.candidates; chunkStats.split += s.split;
@@ -452,7 +466,8 @@ async function loadGlbs() {
 			chunkStats.batches.push( ...s.batches );
 		}
 		note( `instance chunking (QA-11d-1): ${chunkStats.split} of ${chunkStats.candidates} site-spanning batches `
-			+ `(bounding radius >= ${CFG.chunk || 30} m) split into ${chunkStats.chunks} regional batches, `
+			+ `(bounding radius >= ${opts.minRadius || 30} m, depth ${opts.maxDepth || 2}, gain ${opts.gain ?? 0.8}) `
+			+ `split into ${chunkStats.chunks} regional batches, `
 			+ `+${chunkStats.added} draw calls when every chunk is in frame` );
 	} else { note( 'instance chunking disabled (?chunk=0)' ); }
 	finishMaterials();
@@ -602,10 +617,12 @@ async function loadLUT() {
 		// log2 shaper at the shadow end (1/255 of the shaper range is ~0.065 EV down there).  Float
 		// texels need OES_texture_float_linear for the trilinear fetch; WebGL2 has no linear float
 		// filtering without it, so fall back to 8-bit rather than render a nearest-sampled LUT.
-		const floatLinear = !! renderer.getContext().getExtension( 'OES_texture_float_linear' );
+		const hasExt = !! renderer.getContext().getExtension( 'OES_texture_float_linear' );
+		const floatLinear = hasExt && CFG.lutFloat;
 		const cubeLoader = new LUTCubeLoader( manager );
 		if ( floatLinear ) cubeLoader.setType( THREE.FloatType );
-		note( `LUT texel type ${floatLinear ? 'FloatType (OES_texture_float_linear)' : 'UnsignedByte (no OES_texture_float_linear)'}` );
+		note( `LUT texel type ${floatLinear ? 'FloatType (OES_texture_float_linear)' : 'UnsignedByte'}`
+			+ ` — extension ${hasExt ? 'present' : 'ABSENT'}${! CFG.lutFloat ? ', forced 8-bit by ?lutfloat=0' : ''}` );
 		const lut = url.endsWith( '.cube' )
 			? await cubeLoader.loadAsync( url, onProgressFor( url ) )
 			: await new LUTImageLoader( manager ).loadAsync( url, onProgressFor( url ) );

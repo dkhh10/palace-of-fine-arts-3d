@@ -176,6 +176,7 @@ def main():
     ap.add_argument("--panel-width", type=int, default=1280)
     ap.add_argument("--tiles", default="1", help="0 to skip the cam01 100 % tiles")
     ap.add_argument("--tile-dir", default=None, help="default <out-dir>/tiles (gitignored)")
+    ap.add_argument("--prefix", default="gate1", help="output name prefix: <prefix>_pair_cam0N.png, <prefix>_pairs.json")
     for n in range(1, 7):
         ap.add_argument(f"--ref-{n}", default=None)
     a = ap.parse_args()
@@ -193,7 +194,7 @@ def main():
         if not ref_path.exists():
             missing.append(f"station {n}: no reference at {ref_path}")
             continue
-        out_png = out_dir / f"gate1_pair_cam{n:02d}.png"
+        out_png = out_dir / f"{a.prefix}_pair_cam{n:02d}.png"
         res, size = make_sheet(viewer, ref_path, ref_label, out_png, a.panel_width, n)
         f = res["frame"]
         print(f"[gate1_sheets] cam{n:02d} -> {out_png} {size[0]}x{size[1]}  "
@@ -203,7 +204,7 @@ def main():
         if n == 1 and a.tiles != "0":
             tiles = make_tiles(viewer, ref_path, a.tile_dir or (out_dir / "tiles"))
             print(f"[gate1_sheets] {len(tiles)} cam01 100 % tiles -> {Path(tiles[0]).parent}")
-    idx = out_dir / "gate1_pairs.json"
+    idx = out_dir / f"{a.prefix}_pairs.json"
     idx.write_text(json.dumps({"sheets": summary, "missing": missing}, indent=1))
     for m in missing:
         print(f"[gate1_sheets] MISSING {m}", file=sys.stderr)

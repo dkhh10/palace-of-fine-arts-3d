@@ -113,7 +113,11 @@ try {
 		if ( o.dev ) { const s = await serveDev(); viteProc = s.proc; base = `http://127.0.0.1:${s.port}/`; }
 		else { const s = await serveDist(); server = s.srv; base = `http://127.0.0.1:${s.port}/`; }
 	}
-	const q = new URLSearchParams( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], [ 'hud', '0' ], ...o.query.map( s => s.split( /=(.*)/ ).slice( 0, 2 ) ) ] );
+	// Last --query wins: URLSearchParams.get() returns the FIRST value of a repeated key, so the
+	// pairs are deduplicated here (gate2.sh passes its defaults first and PFA_QUERY after).
+	const qmap = new Map( [ [ 'station', String( station ) ], [ 'size', `${W}x${H}` ], [ 'hud', '0' ] ] );
+	for ( const s of o.query ) { const [ k, v = '' ] = s.split( /=(.*)/ ); if ( k ) qmap.set( k, v ); }
+	const q = new URLSearchParams( [ ...qmap ] );
 	const url = `${base}${base.includes( '?' ) ? '&' : '?'}${q}`;
 
 	browser = await puppeteer.launch( {
