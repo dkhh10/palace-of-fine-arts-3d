@@ -107,7 +107,7 @@
    "reference_luma": 71.87,
    "viewer_luma": 87.79,
    "delta_luma": 15.92,
-   "ratio_linear": 1.788
+   "ratio_linear": 1.7879
   },
   {
    "cell": [
@@ -123,7 +123,7 @@
    "reference_luma": 59.57,
    "viewer_luma": 129.27,
    "delta_luma": 69.7,
-   "ratio_linear": 2.9746
+   "ratio_linear": 2.9744
   },
   {
    "cell": [
@@ -137,9 +137,9 @@
     480
    ],
    "reference_luma": 67.76,
-   "viewer_luma": 160.26,
+   "viewer_luma": 160.27,
    "delta_luma": 92.5,
-   "ratio_linear": 3.67
+   "ratio_linear": 3.6701
   },
   {
    "cell": [
