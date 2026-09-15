@@ -70,7 +70,8 @@ man["glb"] = dict(per_class=glbs, total_bytes=sum(v["bytes"] for v in glbs.value
                   gltfpack="-cc -mi (EXT_meshopt_compression + KHR_mesh_quantization + "
                            "EXT_mesh_gpu_instancing; node names dropped, the manifest's `assets` are the "
                            "identity). The viewer needs MeshoptDecoder and KTX2Loader.")
-man["textures"] = dict(ktx2_dir="tex_ktx2", files=tex,
+prev_tex = man.get("textures") if isinstance(man.get("textures"), dict) else {}
+man["textures"] = dict(schema=prev_tex.get("schema"), ktx2_dir="tex_ktx2", files=tex,
                        bytes=sum(os.path.getsize(os.path.join(ktx, f)) for f in tex),
                        encoding="toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap, "
                                 "linear OETF for the normal and AO data maps",

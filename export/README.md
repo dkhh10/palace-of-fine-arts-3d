@@ -196,7 +196,8 @@ paths rewritten to `../gate0/<file>`, after asserting that the exposure and the 
 | `orn_slots` | `{orn: [...], arch_inst: [...]}` - the per-instance 256 px lightmap-atlas slot assignment (atlas index + slot index), the user's option (c) |
 | `tree_rule`, `tree_near`, `tree_far` | the rule as applied with its counts, the near list, and the far list with prototype / height / trunk base for the Gate 3 impostor bake |
 | `glb` | `per_class` = `{arch, orn, env, ground}` with bytes, placed tris, objects, meshes; `total_bytes`; the gltfpack flags |
-| `textures` | the KTX2 directory, the file list, total bytes and the encoder line |
+| `textures` | `schema` (the shape of a per-map entry, and that **`rgbm_range` is required on every lightmap entry**), the KTX2 directory, the file list, total bytes and the encoder line |
+| `lightmap_encoding` | **the RGBM contract, read by the viewer, never defaulted**: `encoding` RGBM8, `rgbm_range` 64 (Gate 0 measured 0 source texels above it), `decode` = `rgb = texel.rgb * texel.a * rgbm_range`, `colorspace` NoColorSpace, `uv` TEXCOORD_1, `lightmap_scale` pi, `slot_atlas` = 4096 px / 256 px slots. A viewer that falls back to its own default (e.g. 7.0) is wrong by that ratio — 9x at 7.0. `export/manifest_v2.py` asserts the field is present on every lightmap texture entry. |
 | `colour_source` | which Gate 0 manifest the colour blocks came from and which keys were carried |
 | `water`, `sun`, `stations`, `hero_camera`, `view`, `lut`, `sky`, `compositor`, `reference`, `lightmap_scale` | unchanged from Gate 0 (`lightmap_scale` = pi is the contract) |
 

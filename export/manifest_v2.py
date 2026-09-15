@@ -81,11 +81,46 @@ def main():
                                  objects=v["placements"] if len(v["placements"]) <= 16 else
                                  v["placements"][:16] + [f"... {len(v['placements']) - 16} more"])
                          for k, v in sorted(inst.items())}
+    # ---------------------------------------------------------------- texture schema + lightmap encoding
+    # Hand-off from the viewer engineer (2026-09-15): manifest v2 carried no `rgbm_range`, and the viewer's
+    # own default is 7.0 - a 9x brightness error the moment a Gate 3 lightmap ships without it. The range is
+    # part of the contract, not a viewer default, so it is written here (and asserted) from Gate 1 onward.
+    lm_range = 64
+    g0tex = (g0m or {}).get("textures", {})
+    for v in g0tex.values():
+        if isinstance(v, dict) and "rgbm_range" in v:
+            lm_range = v["rgbm_range"]
+            break
+    man["lightmap_encoding"] = dict(
+        encoding="RGBM8", rgbm_range=lm_range, decode="rgb = texel.rgb * texel.a * rgbm_range",
+        colorspace="NoColorSpace", uv="UV2 / TEXCOORD_1", lightmap_scale=man.get("lightmap_scale"),
+        slot_atlas=dict(atlas_px=4096, slot_px=256),
+        note="Gate 0 measured 0 source texels above %d on every slice map; worst RGBM8 round-trip 4.8 %%%% "
+             "relative at p99. A viewer that falls back to any other range is wrong by that ratio." % lm_range)
+    tex = man.setdefault("textures", {})
+    if not isinstance(tex, dict):
+        tex = {}
+    tex["schema"] = dict(
+        per_map="each baked map is an entry {path, uv, colorspace, encoding}; a lightmap entry ALSO carries "
+                "rgbm_range and decode, and names its `exr` source",
+        required_on_lightmaps=["rgbm_range", "decode"],
+        rgbm_range_default_is_not_allowed="the viewer must read rgbm_range from the manifest, never default it")
+    for k, v in list(tex.items()):
+        if isinstance(v, dict) and "lightmap" in k.lower():
+            v.setdefault("rgbm_range", lm_range)
+            v.setdefault("decode", "rgb = texel.rgb * texel.a * rgbm_range")
+    missing_range = [k for k, v in tex.items()
+                     if isinstance(v, dict) and "lightmap" in k.lower() and "rgbm_range" not in v]
+    assert not missing_range, f"lightmap textures without rgbm_range: {missing_range}"
+    man["textures"] = tex
+
     man["schema"] = "pfa-phase6/2"
     mp.write_text(json.dumps(man, indent=1) + "\n")
     print(f"[manifest_v2] {mp} {mp.stat().st_size} B; carried {carried}; "
           f"{len(man['assets'])} assets, {len(man['instancing'])} instancing groups")
-    missing = [k for k in ("lut", "sky", "compositor", "reference", "glb", "textures") if not man.get(k)]
+    print(f"[manifest_v2] lightmap_encoding.rgbm_range = {man['lightmap_encoding']['rgbm_range']}, "
+          f"lightmap_scale = {man.get('lightmap_scale')}")
+    missing = [k for k in ("lut", "sky", "compositor", "reference", "glb") if not man.get(k)]
     if missing:
         print(f"[manifest_v2] WARNING empty blocks: {missing}")
     return 0
