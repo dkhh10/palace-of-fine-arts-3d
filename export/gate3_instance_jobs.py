@@ -91,6 +91,32 @@ def main():
                     variants=["shadow"], override_scope=scope, keep_arrays=True, est_s=120)], force)
         print(f"split target: {tgt}")
         return
+    if "--trees" in argv:
+        # Review finding 6 / lead decision 6: the 14 near trees carry the same cut-out zeros (77-99 % of
+        # their COLOR_0 vertices are exactly 0 -> black patches). Re-bake the two `vertex` jobs with the same
+        # shadow-ray wrap, in place: same ids, same out/gate3/vertex/<id>.npz path and schema, so
+        # gate3_compose.py --only vertex and the export's r2 encode re-run unchanged.
+        jp = OUT / "bake_jobs.json"
+        d = json.loads(jp.read_text())
+        before = OUT / "vertex_irradiance_before_shadowray.npz"
+        cur = OUT / "vertex_irradiance.npz"
+        if cur.exists() and not before.exists():
+            before.write_bytes(cur.read_bytes())
+        touched = []
+        for j in d["jobs"]:
+            if j["kind"] == "vertex":
+                j["override"] = "shadow"
+                touched.append(j["id"])
+                rec = OUT / "bake" / f"{j['id']}.json"
+                npz = OUT / "vertex" / f"{j['id']}.npz"
+                if (rec.exists() or npz.exists()) and not force:
+                    raise SystemExit(f"refusing to replace {j['id']}'s record/npz - pass --force")
+                for f in (rec, npz):
+                    if f.exists():
+                        f.unlink()
+        jp.write_text(json.dumps(d, indent=1))
+        print(f"vertex jobs armed with the shadow-ray override: {touched}; kept {before.name}")
+        return
     if "--probe" in argv:
         # 12 placements spread across the list (different meshes, sun and shade), both variants, and the
         # first chunk baked as one multi-object call against the second baked one object at a time: that is
