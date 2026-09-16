@@ -788,3 +788,6 @@ QA 14 running. Waiting: QA verdict; viewer's fast-preset table.
 
 ## 2026-09-16 · Fast preset measured (phase6-viewer 2d267ba): look 30.6-45.5 fps vs fast 36.4-49.3 fps at 1440p; 30/32 cam01 boxes within 0.03x (water R-B 0.953x worse, sunlit attic std 1.035x better). Neither reaches 45 fps except station 4. Default = look
 Waiting: QA 14 verdict. Then: merge phase6-viewer; Gate 4 decision; burn log.
+
+## 2026-09-16 · QA 14 in (cc14323): ONE MORE ROUND, no blocker; all 6a parity criteria PASS (thin: 03/06 at 2.56), 45 fps not met. Lead: one bounded round 15 (water, bloom, cam06/cam03, minors) then QA 15 + Fable final
+Viewer round 6 brief: docs/briefs/phase6_gate4_r6_viewer.md. Reviewer dispatched on phase6-viewer 8d76e7d..2d267ba (probe irradiance, refs, fast preset, reflset) -> docs/reviews/phase6_viewer_gate4_r6_review.md, merge after.

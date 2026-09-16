@@ -468,3 +468,11 @@ Attribution stands: water off alone 25.7 ms, water and bloom off 17.3 ms; both a
 the Phase 5 look (bloom = the compositor's glare) is frozen, so the default ships the full look at the measured frame time (34.6 fps at 1440p, everything on) and a non-default
 `?quality=fast` preset (half-res bloom, half-res Reflector, reflset=orn) is measured and documented with its box deltas for the user to choose at delivery. This is flagged to the
 user as an open choice, not decided for them.
+
+## 2026-09-16 · QA 14 verdict ONE MORE ROUND: 6a parity criteria met (thin), one bounded polish round, then the final judgement
+Scores 01 3.61 (P5 3.67) · 02 2.94 (2.94) · 03 2.56 (2.56) · 04 2.88 (2.81) · 05 2.83 (3.06) · 06 2.56 (2.67): every station within 0.5 of its Phase 5 score and none below 2.5;
+the reflection at the hero, the walk clamp and the loading screen pass; 45 fps is not met (34.6 fps, attribution accepted). QA-13-1, QA-13-2 closed; QA-12b-1 closed at cam06
+(1.5 % vs ref 1.4 %) and cut to a third at cam02 (7.4 % vs 2.2 %) — the airlight, as tested. By the stopping rule 6a could close here. Lead's call: ONE bounded round (round 15,
+docs/briefs/phase6_gate4_r6_viewer.md) because the hero water is an evenly blurred dark mirror where the reference has golden ripple streaks (ripple std 0.07x) — exactly the water
+lesson of attempts 1-2 — and because a smaller bloom radius serves both the flattened hero and the frame budget. Then QA 15 and the single Fable final judgement; 6a closes after
+that regardless of the round-15 delta (two rounds after Gate 4).
