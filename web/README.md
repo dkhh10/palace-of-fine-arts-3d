@@ -341,6 +341,38 @@ the presented frame sits at 16.6-25.8 ms, so what is missing the 45 fps target i
 headless Chrome's compositor, not in the renderer. That wants its own measurement before anything is
 optimised, and it is the open half of item 6.
 
+## QA notes — read before scoring (Gate 4 / QA 14)
+
+* **The parity references changed.** `gate1_sheets.py` now points stations 3, 5 and 6 at
+  `renders/previews/qa/round13_0{3,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
+  master.blend). Stations 3, 5 and 6 had been scored for several rounds against round-09 **Eevee**
+  frames, and station 6 against a **no-compositor** Cycles frame. Station 2's reference is still the
+  round-09 one and it predates the shade-fill-off, so it is **not** a Phase 5 parity target; 2 and 4
+  are re-rendering.
+* **What that does to the round13b numbers**, whole-frame luma ratio, viewer / reference:
+
+  | station | vs the OLD reference | vs the round-13 Cycles reference |
+  |---|---|---|
+  | cam03 colonnade walk | 2.08x | **1.67x** |
+  | cam05 south lawn | 1.12x | **1.08x** |
+  | cam06 aerial | 0.95x | **0.71x** |
+
+  cam03's "2.5x failure" was largely the wrong reference. **cam06 at 0.71x is a real deficit that the
+  old no-compositor reference was hiding — it is not a regression, and QA 14 should not re-discover it
+  as new.**
+* **The hero probe is used against the manifest's own stated contract.** `manifest.probe.use` says it
+  is "NOT the diffuse environment", and the viewer nevertheless convolves it and gives it to every
+  surface with no baked light. **The lead overrode `probe.use` deliberately** (logged in
+  `docs/decisions.md`) after the alternative — putting those surfaces on the direct sun+sky path — was
+  measured to be a no-op: the backdrop wall at cam01 has NdotL = -0.065 against the sun, so no
+  weighting of sun and sky can reach it, and `?lighting=direct` renders that pixel bit-identically.
+  See "Far trees" and `src/probeEnv.js` for the three caveats that come with it.
+* **Foliage hue is a HELD decision, not an oversight.** The shrubs and reeds now read warm amber-brown
+  (median hue 40.6 deg) where Cycles has olive-green. The bake side is testing whether Cycles bake rays
+  miss the sky's warm diffuse-branch tint; that result decides whether every baked irradiance shifts or
+  whether the shrubs get vertex irradiance like the 14 near trees. Do not score it as a viewer defect
+  until that lands.
+
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
   reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is
