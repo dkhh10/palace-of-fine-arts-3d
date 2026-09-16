@@ -768,3 +768,7 @@ Order on the bake's GPU-done signal: re-sync -> --perf + --breakdown -> gate4.sh
 
 ## 2026-09-16 · Item 6 measured (phase6-viewer 184d785): 31-34 fps at stations 1-3/5/6, 45 at 4; vsync quantisation (Reflector 6-9 ms + bloom 8 ms push a 17 ms frame past one interval). Lead: half-res bloom + half-res Reflector, box-checked (<= 0.03x)
 Resident 1 678 MB (tex 1 172, RT 444). Viewer applies the levers now (GPU free; bake on CPU encode/pack); Gate 4 capture after the manifest signal.
+
+## 2026-09-16 · Bake r2 in (phase6-bake 73d5bb0, synced): ceiling map fixed (0.72 -> 16.76 max, 30.7 % non-zero); sky-branch hypothesis REFUTED (bake [0,1,0] = diffuse branch); NO overnight re-bake
+Lead ran manifest_v4.py + sync: ceiling range 16.755 in the manifest (the stale 0.721 would have decoded the new map 23x too dark). Reviewer dispatched on main..phase6-bake -> docs/reviews/phase6_bake_gate3_r2_review.md. Viewer: re-sync, probe-as-specular A/B for QA-12b-1 (ship only if G > R drops and boxes hold), then gate4.sh -> "round14".
+Next: merge bake on review; QA 14 on round14; QA-12b-1 remaining candidates per decisions.md.

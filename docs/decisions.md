@@ -449,3 +449,14 @@ water and post off the frame is 17.3 ms = one vsync interval. The Reflector's se
 7.8-8.4 ms; together they push the frame a few ms past one interval, which quantises to two. Decision: bloom from a half-res source and the Reflector to a half-res target (its
 result is blurred by reflBlur regardless); every-other-frame reflection refused (temporal artefacts while walking). Acceptance: >= 45 fps at all six stations and every cam01 hero
 box within 0.03x of its full-res value; a lever whose box moves more is reverted and the trade-off reported.
+
+## 2026-09-16 · Sky-branch hypothesis REFUTED; no lightmap re-bake; QA-13-2 closed by the flipped-winding bake (lead, from the bake engineer's probe)
+Debug world (R = camera ray, G = neither camera nor glossy, B = glossy), lamps off: the podium DIFFUSE bake reads exactly [0, 1, 0]; the cam02 render's ARCH pixels [0.108, 0.878,
+0.014]; the sky [0.989, 0.001, 0]. Cycles bake rays take the diffuse branch exactly as the render does. Independently, the diffuse branch is the BLUER one (diffuse/camera =
+[1.49, 1.34, 4.16], SKY_DIFFUSE_TINT b = 70), so a camera-branch bake would have been less blue, the opposite of the symptom. The prepared 47-job corrected queue
+(PFA_BAKE_DIFFUSE_WORLD=1) stays unarmed and is not run; the overnight GPU slot is not needed. sky.diffuse matches the diffuse-branch equirect to three decimals.
+QA-12b-1 is therefore downstream of the bake: not the asset, the lightmap, the bake scene or the sky branch. Remaining candidates, in test order: the viewer's specular term (a
+sky-only glossy PMREM where Cycles' shaded stone reflects the warm sunlit surroundings — A/B with the hero probe as the specular envMap for lightmapped materials), then the
+Gate 2 albedo bake's tone against the Phase 5 material. The compositor's airlight is already a measured −14-point contributor with post on.
+Ceiling: re-baked with the winding flipped in the bake process only (UV2 bit-identical), max 0.721 -> 16.755, mean_nonzero 2.06 (rib map 1.70), 30.7 % non-zero texels, gamma2
+round-trip error 0.163 -> 0.025 stops; map replaced in place, manifest range updated by the lead's manifest_v4 run.
