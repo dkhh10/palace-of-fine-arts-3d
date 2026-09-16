@@ -367,3 +367,11 @@ export strips vertex colour attributes and packs with `-kv`, so orn.glb carries 
 trees, env.glb): the bake writes float32 scene-linear per mesh; the export encodes gamma-2 at a per-mesh range as FLOAT_COLOR and packs env.glb with `-vc 16`;
 the per-mesh range and decode string travel in export/out/gate3/uv2_relay_status.json and the manifest writer copies them into `lightmaps.vertex_irradiance`.
 Carried: three of the seven relaid assets still pack under the 0.15 UV2 threshold (riprap 0.114, colonnades 0.116/0.121) — baked against that layout, accepted.
+
+## 2026-09-16 · Gate 3 export r2 (lead): the 114 merged slot nodes are un-merged by a same-named material copy, not by gltfpack -kn
+gltfpack merges two meshes that share a material and an identical node-transform set; the colonnade colbase plinth/torus pairs qualify, so 114 of the 988 ORN/ARCH slot placements
+had no mesh of their own and the viewer could attach only 438 slots. `-kn` restores them only by disabling `-mi` (27 -> 564 draw calls, +52 kB). Accepted instead: the export gives the
+second mesh of each colliding group its own material copy under the same name, so `-km` keeps them apart while both stay instanced (27 -> 29 draw calls, +3.6 kB, placements 552 + 436
+= 988); the viewer joins materials by name and sees no new material. Also on record: Blender 5.2's glTF exporter emits a fake constant-white u8 COLOR_0 when the material's node tree
+references no colour attribute and pushes the real attribute to COLOR_1; the export drops the fake (u8, constant 1.0) and renumbers, asserting the survivor is u16/float. Vertex
+irradiance ships gamma-2 at each mesh's own max (0.469-43.32), 16-bit, decode v = c^2 * range_mesh * lightmaps.scale.
