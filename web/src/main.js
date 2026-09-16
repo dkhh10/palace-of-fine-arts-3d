@@ -61,6 +61,7 @@ const CFG = {
 	waterAniso: qs.has( 'wateraniso' ) ? parseFloat( qs.get( 'wateraniso' ) ) : null,
 	waterHoriz: qs.has( 'waterhoriz' ) ? parseFloat( qs.get( 'waterhoriz' ) ) : null,
 	waterGraze: qs.has( 'watergraze' ) ? parseFloat( qs.get( 'watergraze' ) ) : null,
+	waterCrest: qs.has( 'watercrest' ) ? parseFloat( qs.get( 'watercrest' ) ) : null,   // ripple anisotropy
 	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
@@ -368,6 +369,7 @@ async function boot() {
 			...( CFG.waterAniso !== null ? { distortAniso: CFG.waterAniso } : {} ),
 			...( CFG.waterHoriz !== null ? { horizonBias: CFG.waterHoriz } : {} ),
 			...( CFG.waterGraze !== null ? { grazingGain: CFG.waterGraze } : {} ),
+			...( CFG.waterCrest !== null ? { aniso: CFG.waterCrest } : {} ),
 			...( CFG.waterMurk ? { murk: CFG.waterMurk.split( ',' ).map( Number ) } : {} ) } );
 		scene.add( water );
 		const wu = water.material.uniforms;
@@ -578,6 +580,15 @@ async function boot() {
 	// `orn` (the default) cuts the 436 ORN instances only.  `both` also cuts the backdrop city
 	// blocks - MEASURED and rejected at the hero: the backdrop IS inside the reflected frustum there,
 	// and removing it left the reflection reading sky (lum 1.227x, sat 0.527x, R-B +23.2 -> -17.6).
+	// The water is a ShaderMaterial, so three's fog chunk never reaches it and applyMist skips it by
+	// name: it must be given the same airlight explicitly, or the one surface spanning 5-600 m at the
+	// hero is the only thing in the frame with no haze.
+	if ( water && water.userData.applyFog && scene.fog && postState && postState.mistSpec ) {
+		const ok = water.userData.applyFog( { color: scene.fog.color, near: scene.fog.near, far: scene.fog.far,
+			cap: postState.mistSpec.cap, k: postState.mistSpec.k, intensity: postState.mistSpec.intensity } );
+		if ( ok ) note( 'water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three\'s fog chunk cannot)' );
+	}
+
 	if ( water && CFG.reflSet !== 'full' ) reflectionSet = reduceReflectionSet( scene, water, camera,
 		{ note, orn: true, backdrop: CFG.reflSet === 'both' } );
 	else if ( water ) note( 'reflection draw set NOT reduced (?reflset=full): the Reflector traverses the whole scene' );

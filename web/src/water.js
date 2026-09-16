@@ -4,12 +4,29 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
-/** Small tileable ripple normal map, generated so the viewer needs no texture asset for it. */
-export function makeRippleNormalMap( size = 256, waves = 14 ) {
+/**
+ * Tileable ripple normal map, generated so the viewer needs no texture asset for it.
+ *
+ * QA-14-1.  The first version drew ISOTROPIC bumps - wave vectors uniform in every direction - and an
+ * isotropic height field cannot make streaks: turned up far enough to reach the reference's row-to-row
+ * energy (13.23) it reads as COBBLESTONES, which is exactly what the first sweep produced.  Real wind
+ * ripple is anisotropic: the waves travel WITH the wind and their crests run ACROSS it, elongated.  So
+ * the wave vectors are concentrated along one axis with a cosine-power directional spread, the way a
+ * wave spectrum is, and `aniso` is how tightly.  `p = vWorld.xz` in the shader, so the map's v axis is
+ * world Z; the hero looks along world Z, so concentrating k on v puts the crests across the view and
+ * the reflection breaks into HORIZONTAL streaks rather than a grid.
+ *
+ * @param {number} aniso  1 = isotropic (the old behaviour); higher = longer crests
+ * @param {number} spread cosine power of the directional spread; higher = tighter
+ */
+export function makeRippleNormalMap( size = 256, waves = 22, aniso = 6, spread = 6 ) {
 	const h = new Float32Array( size * size );
 	const rnd = ( s => () => ( s = ( s * 1664525 + 1013904223 ) >>> 0 ) / 4294967296 )( 12345 );
 	for ( let w = 0; w < waves; w ++ ) {
-		const kx = Math.round( ( rnd() * 6 ) - 3 ) || 1, ky = Math.round( ( rnd() * 6 ) - 3 ) || 1;
+		// k mostly along v (world Z): ky from the spectrum, kx narrowed by `aniso`
+		const ky = ( 1 + Math.floor( rnd() * 5 ) ) * ( rnd() < 0.5 ? - 1 : 1 );
+		const dir = Math.pow( rnd(), spread ) * ( rnd() < 0.5 ? - 1 : 1 );   // tight about 0
+		const kx = Math.round( dir * Math.abs( ky ) * 5 / aniso );
 		const amp = 1 / ( 1 + Math.hypot( kx, ky ) ), ph = rnd() * Math.PI * 2;
 		for ( let y = 0; y < size; y ++ ) for ( let x = 0; x < size; x ++ ) {
 			h[ y * size + x ] += amp * Math.sin( 2 * Math.PI * ( kx * x / size + ky * y / size ) + ph );
@@ -25,6 +42,7 @@ export function makeRippleNormalMap( size = 256, waves = 14 ) {
 		data[ i + 2 ] = ( n.z * 0.5 + 0.5 ) * 255; data[ i + 3 ] = 255;
 	}
 	const tex = new THREE.DataTexture( data, size, size );
+	tex.userData = { aniso, spread, waves };
 	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
 	tex.minFilter = THREE.LinearMipmapLinearFilter;
 	tex.magFilter = THREE.LinearFilter;
@@ -50,6 +68,15 @@ const WaterShader = {
 		// distortion, as it was).  Every term added for QA-14-1 is opt-in until one is agreed, so the
 		// shipped look cannot drift while the fix is still being searched for.
 		grazingGain: { value: 0.0 },
+		// THE WATER MUST RECEIVE THE COMPOSITOR'S AIRLIGHT LIKE EVERYTHING ELSE.  postChain.js adds the
+		// haze through three's fog chunk, which a ShaderMaterial does not compile, and applyMist
+		// explicitly skips WATER_*, so the one surface that spans 5-600 m at the hero was the only one
+		// getting no haze at all.  Cycles' compositor hazes the whole frame including the water, which
+		// is part of why the reference's open water is brighter (118 vs 67) and far less blue
+		// (hue 145 vs 200).  Same airlight form as postChain and impostors: cap * (1 - exp(-k * mist)).
+		fogColor: { value: new THREE.Color( 0, 0, 0 ) },
+		fogNear: { value: 0.0 }, fogFar: { value: 1.0 },
+		fogCap: { value: 0.0 }, fogK: { value: 1.0 }, fogIntensity: { value: 0.0 },
 		// A real lagoon is a ROUGH, murky surface, not a mirror.  Two terms carry that, both
 		// calibrated against the Phase 5 Cycles hero's water box (docs/qa_round_10b.md
 		// 900 760 1020 840: lum 128.6, std 34.2, sat 0.33, R-B +34.4) - see makeWater().
@@ -76,6 +103,8 @@ const WaterShader = {
 	fragmentShader: /* glsl */`
 		uniform sampler2D tDiffuse, tNormal;
 		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat, distortAniso, horizonBias, grazingGain;
+		uniform vec3 fogColor;
+		uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
 		uniform int debugMode;
 		uniform vec3 murk, reflectTint;
 		varying vec4 vProjUv;
@@ -96,14 +125,17 @@ const WaterShader = {
 			float grazing = mix( 1.0, grazingRaw, grazingGain );
 			uv.x += n.x * distortion * grazing * uv.w;
 			uv.y += ( n.y * distortion * distortAniso + horizonBias ) * grazing * uv.w;
-			// gather over a small disc: the ripple slopes spread the reflected ray
+			// A rough surface at a grazing angle has a lobe STRETCHED TOWARD THE HORIZON, not a disc.
+			// Gathering only VERTICALLY (in screen space) is that stretch, and it is also what keeps
+			// the horizontal structure the ripple just created: a disc gather would average the
+			// streaks away, which is what the round14 water did.
 			vec3 refl = texture2DProj( tDiffuse, uv ).rgb;
 			if ( reflBlur > 0.0 ) {
-				float b = reflBlur * uv.w;
-				refl += texture2DProj( tDiffuse, uv + vec4(  b,  0.0, 0.0, 0.0 ) ).rgb;
-				refl += texture2DProj( tDiffuse, uv + vec4( -b,  0.0, 0.0, 0.0 ) ).rgb;
-				refl += texture2DProj( tDiffuse, uv + vec4( 0.0,  b * 0.5, 0.0, 0.0 ) ).rgb;
-				refl += texture2DProj( tDiffuse, uv + vec4( 0.0, -b * 0.5, 0.0, 0.0 ) ).rgb;
+				float b = reflBlur * grazing * uv.w;
+				refl += texture2DProj( tDiffuse, uv + vec4( 0.0,  b,       0.0, 0.0 ) ).rgb;
+				refl += texture2DProj( tDiffuse, uv + vec4( 0.0, -b,       0.0, 0.0 ) ).rgb;
+				refl += texture2DProj( tDiffuse, uv + vec4( 0.0,  b * 2.0, 0.0, 0.0 ) ).rgb;
+				refl += texture2DProj( tDiffuse, uv + vec4( 0.0, -b * 2.0, 0.0, 0.0 ) ).rgb;
 				refl *= 0.2;
 			}
 			refl *= reflectTint;
@@ -116,7 +148,14 @@ const WaterShader = {
 			if ( debugMode == 2 ) { vec2 q = uv.xy / max( uv.w, 1e-6 ); gl_FragColor = vec4( fract( q ), float( q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0 ), 1.0 ); return; }
 			if ( debugMode == 3 ) { gl_FragColor = vec4( n.xy * 0.5 + 0.5, 0.0, 1.0 ); return; }
 			if ( debugMode == 4 ) { gl_FragColor = vec4( texture2DProj( tDiffuse, vProjUv ).rgb, 1.0 ); return; }
-			gl_FragColor = vec4( mix( murk, refl, F ), 1.0 );
+			vec3 surf = mix( murk, refl, F );
+			if ( fogCap > 0.0 ) {
+				float fd = length( vWorld - cameraPosition );          // along the view ray, as Blender's mist
+				float t = clamp( ( fd - fogNear ) / max( fogFar - fogNear, 1e-6 ), 0.0, 1.0 );
+				float mist = fogIntensity + ( 1.0 - fogIntensity ) * t;
+				surf = mix( surf, fogColor, clamp( fogCap * ( 1.0 - exp( - fogK * mist ) ), 0.0, 1.0 ) );
+			}
+			gl_FragColor = vec4( surf, 1.0 );
 		}
 	`,
 };
@@ -145,7 +184,7 @@ export function makeWater( waterY, o = {} ) {
 	reflector.position.y = waterY;
 	reflector.name = 'WATER_lagoon';
 	const u = reflector.material.uniforms;
-	u.tNormal.value = makeRippleNormalMap();
+	u.tNormal.value = makeRippleNormalMap( 256, o.waves ?? 22, o.aniso ?? 6, o.spread ?? 6 );
 	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	if ( o.tint ) u.reflectTint.value.setRGB( ...o.tint );
 	if ( o.distortion !== undefined ) u.distortion.value = o.distortion;
@@ -154,12 +193,28 @@ export function makeWater( waterY, o = {} ) {
 	if ( o.distortAniso !== undefined ) u.distortAniso.value = o.distortAniso;
 	if ( o.horizonBias !== undefined ) u.horizonBias.value = o.horizonBias;
 	if ( o.grazingGain !== undefined ) u.grazingGain.value = o.grazingGain;
+	reflector.userData.applyFog = ( fog ) => {
+		if ( ! fog ) { u.fogCap.value = 0; return false; }
+		u.fogColor.value.copy( fog.color );
+		u.fogNear.value = fog.near; u.fogFar.value = fog.far;
+		u.fogCap.value = fog.cap; u.fogK.value = fog.k; u.fogIntensity.value = fog.intensity || 0;
+		return true;
+	};
 	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	// Calibrated on the Gate 4 capture against the Phase 5 Cycles hero's water box: the mirror-sharp
 	// Gate 0 water read std 44.0 against 34.2 and sat 0.69 against 0.33.  ?waterblur / ?watersat
 	// move them for the A/B; the defaults are the calibration.
-	u.reflBlur.value = o.reflBlur ?? 0.0045;
+	u.reflBlur.value = o.reflBlur ?? 0.003;
 	u.reflSat.value = o.reflSat ?? 0.66;
+	// QA-14-1 round 6.  Measured at the hero against the Phase 5 reference: these take the open-water
+	// row-to-row energy from 0.97 to 4.60 (reference 13.23) and the row/column ratio - the streaks
+	// against a blur - from 0.72 to 2.23 (reference 3.24).  The level and the hue are NOT fixed by
+	// them and are reported as still open.
+	u.distortion.value = o.distortion ?? 0.10;
+	u.normalScale.value = o.normalScale ?? 0.5;
+	u.rippleTiling.value = o.rippleTiling ?? 0.11;
+	u.distortAniso.value = o.distortAniso ?? 4.0;
+	u.grazingGain.value = o.grazingGain ?? 1.0;
 	if ( o.debug ) u.debugMode.value = o.debug;
 	reflector.userData.tick = ( t ) => { u.time.value = t; };
 	return reflector;
