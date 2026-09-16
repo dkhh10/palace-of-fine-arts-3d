@@ -514,3 +514,15 @@ hand-set WATER_MURK; open-water lum 68.0 -> 87.3 (ref 118), the body term is now
 olive reflected stone, and featureless open water beside the reflection; the Cycles frame has 5-10 px crests everywhere breaking gold into short streaks. Decision: the new
 water is the default (settles the r7 review's fix-now 2); one more bounded pass — ripple frequency 5-8x finer with the displacement scaled down (2-5 cm ripples, 0.3-1 m streaks
 in metres), procedural or 16-bit normal, reflSat 0.66 tested at 1 before any other cause of the red deficit — then items 2-5 and the round-15 capture regardless.
+
+## 2026-09-16 · Shrub/reed bake re-run with a shadow-ray-only override; placements joined by location (lead, from the bake review 7d59c5f)
+The first per-placement bake (aaab677) made every card in the current job an opaque grey Principled with visible_shadow off so cut-out cards would not return 0 at transparent
+vertices (coverage 0.107 -> 0.859). The reviewer showed on the engineer's own probe arrays that this is not value-preserving: on vertices lit in both variants the opaque values
+are median 1.64x (up to 5.25x), because the real cut-out shadow is removed while the grey card still occludes indirect; and since the override was per job, only 28.9 % of a
+placement's nearest neighbours shared its job, so the numbers depended on the 4-way split. Decision: re-bake all 1 379 with the override applied to EVERY card in every job and
+only on non-shadow rays (Light Path Is Shadow Ray: the original cut-out chain for shadow rays, opaque grey otherwise; shadow visibility on), so the cut-out shadows are real and
+the result is partition-independent; verified by the probe ratio and one placement baked under two splits. 128 spp as before, ~43 GPU minutes accepted; Chrome pauses on
+status.json meanwhile. Join key: object names do not survive gltfpack -mi and the manifest's instancing.objects is truncated at 16, so the export joins by nearest instance
+translation with a stated tolerance and a loud failure on unmatched or duplicate rows; the name is a label. The 7 fully enclosed placements ship rgb 0 / cov 0 and the viewer
+falls back to the probe irradiance for cov == 0. The 14 near trees' COLOR_0 carries the same artefact (77-99 % exact zeros -> black patches): re-baked with the same override
+if it fits in 15 GPU minutes, else post-6a.
