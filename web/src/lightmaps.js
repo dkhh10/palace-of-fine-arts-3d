@@ -494,13 +494,20 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 		}
 		out.nodes ++; out.rows += count;
 	} );
+
 	for ( const n of ii.nodes ) if ( ! [ ...seen ].some( m => m.userData.pfaGltfNode === n.gltf_node ) )
 		out.missing.push( String( n.gltf_node ) );
 	out.census = census.join( ' ' );
 	if ( out.errors.length || out.missing.length )
 		note( `gate4 instance irradiance census (glb node:rows in ${root.name}): ${out.census}` );
+	// A node the scene never presented is the SAME failure as a misaligned one, and it is the likelier
+	// of the two: a mesh that gains a second primitive stops being the node object, loses
+	// `pfaGltfNode`, and its placements would revert to the probe with nothing but a console line to
+	// say so.  It goes in `errors`, which the caller throws on.
+	if ( out.missing.length ) out.errors.push( `glb node(s) ${out.missing.join( ', ' )} carry ${ii.placements - out.rows} `
+		+ 'placement(s) the scene never presented - they would silently fall back to the probe' );
 	out.enabled = out.nodes > 0 && ! out.errors.length;
-	if ( out.errors.length ) note( `gate4 instance irradiance FAILED on ${out.errors.length} node(s): ${out.errors.join( '; ' )}` );
+	if ( out.errors.length ) note( `gate4 instance irradiance FAILED: ${out.errors.join( '; ' )}` );
 	note( `gate4 instance irradiance: ${out.rows}/${ii.placements} placement(s) over ${out.nodes}/${ii.nodes.length} `
 		+ `glb node(s), ${out.materials} material(s) cloned and patched, ${out.dark} with cov == 0 left on the probe`
 		+ ( out.missing.length ? `; NODE(S) NOT FOUND IN THE SCENE: ${out.missing.join( ', ' )}` : '' ) );

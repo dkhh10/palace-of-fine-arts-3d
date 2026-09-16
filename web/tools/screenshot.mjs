@@ -190,7 +190,7 @@ try {
 	const pageLog = [];
 	page.on( 'console', ( m ) => { pageLog.push( `${m.type()}: ${m.text()}` ); console.log( `[page] ${m.text()}` ); } );
 	page.on( 'pageerror', ( e ) => { pageLog.push( `pageerror: ${e.message}` ); console.error( `[page error] ${e.message}` ); } );
-	page.on( 'requestfailed', ( r ) => { pageLog.push( `requestfailed: ${r.url()} ${r.failure()?.errorText}` ); } );
+	page.on( 'requestfailed', ( r ) => { pageLog.push( `requestfailed: ${r.method()} ${r.url()} ${r.failure()?.errorText}` ); } );
 	// A bare "Failed to load resource: 404" console line carries no URL, so record the response too -
 	// an unactionable page error is nearly as bad as a swallowed one.
 	page.on( 'response', ( r ) => { if ( r.status() >= 400 ) pageLog.push( `httperror: ${r.status()} ${r.url()}` ); } );
@@ -346,12 +346,12 @@ try {
 	// a missing atlas or GLB - which is strictly worse than an HTTP error that did arrive, so it
 	// fails a scored capture on the same terms.  (It is recorded with its URL by the requestfailed
 	// handler above, so unlike the bare `error: Failed to load resource` line it is actionable.)
-	// ERR_ABORTED is the ONE exception, and it is not a judgement call: Chrome reports a CANCELLED
-	// request that way, and this page cancels by design - the manifest lists both .hdr and .exr for
-	// every sky and the loader drops the one it does not use, and the LRU drops in-flight chunks.  A
-	// clean round-14 capture logs 189 of them with every asset present (639 MB loaded).  Anything
-	// else - ERR_FILE_NOT_FOUND, ERR_CONNECTION_*, ERR_FAILED - is a real miss and fails.
-	const IGNORE = /favicon|^error: Failed to load resource|^requestfailed: \S+ net::ERR_ABORTED$/;
+	// An aborted HEAD is the ONE exception, and the review pinned down why it is safe: the 189
+	// ERR_ABORTED lines a clean capture logs are measurePlan()'s own HEAD probes - 189 distinct urls,
+	// exactly the load plan - which Chrome reports as cancelled once the body is not read.  A
+	// cancelled GET is a different animal: it is an asset that started arriving and stopped, so it
+	// fails a scored capture like any other miss.  The method is recorded by the handler above.
+	const IGNORE = /favicon|^error: Failed to load resource|^requestfailed: HEAD \S+ net::ERR_ABORTED$/;
 	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror|httperror|requestfailed):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
 	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageErrors, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );

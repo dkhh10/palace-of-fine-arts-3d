@@ -443,12 +443,17 @@ async function boot() {
 			}
 		} else removeMist( scene );
 		if ( postState.want.bloom ) {
-			comp.bloomThreshold = CFG.bloomThreshold ?? comp.bloomThreshold * BLOOM_THRESHOLD_SCALE;
-			if ( CFG.bloomRadius !== null ) comp.bloomSize = CFG.bloomRadius;
-			const bp = makeBloom( comp, size, { half: CFG.bloomRes !== 'full' } );
+			// The manifest's own value stays readable on `comp` (the sidecar and the note below both
+			// report it); the viewer's scaled threshold is passed to makeBloom instead of overwriting it.
+			const bloomComp = { ...comp,
+				bloomThreshold: CFG.bloomThreshold ?? comp.bloomThreshold * BLOOM_THRESHOLD_SCALE,
+				bloomSize: CFG.bloomRadius ?? comp.bloomSize };
+			const bp = makeBloom( bloomComp, size, { half: CFG.bloomRes !== 'full' } );
 			if ( bp ) { composer.addPass( bp ); postState.bloom = true; postState.bloomRes = CFG.bloomRes;
-				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, `
-					+ `radius ${comp.bloomSize}, mip chain from ${bp.userData.sourceResolution.map( Math.round ).join( 'x' )} (?bloomres=${CFG.bloomRes})` ); }
+				note( `post bloom: threshold ${bloomComp.bloomThreshold.toFixed( 3 )} (scene-linear; manifest `
+					+ `${comp.bloomThreshold.toFixed( 4 )} x ${CFG.bloomThreshold !== null ? '?bloomthr' : BLOOM_THRESHOLD_SCALE}), `
+					+ `strength ${comp.bloomStrength}, radius ${bloomComp.bloomSize}, `
+					+ `mip chain from ${bp.userData.sourceResolution.map( Math.round ).join( 'x' )} (?bloomres=${CFG.bloomRes})` ); }
 		}
 	}
 	lutPass = new LUTDisplayPass( { exposure: manifest.exposure } );

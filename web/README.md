@@ -275,9 +275,9 @@ back out through the reflected ray). Swept b = 0.006/0.003 x s = 1.0/0.52 and fi
 | sat | 0.69 (2.10x) | 0.35 (1.07x) | 0.33 |
 | R-B | 59.7 (1.73x) | 22.7 (0.66x) | 34.4 |
 
-Defaults `reflBlur 0.0045`, `reflSat 0.66`; `?waterblur` / `?watersat` are the A/B. R-B is now 0.66x
-(too cool rather than too warm) and is deliberately NOT tuned out: the building being reflected is
-still missing its near-tree irradiance, so `reflectTint` should be revisited after that lands.
+That calibration is SUPERSEDED by round 7: the shipped defaults are now `reflBlur 0.003` and
+**`reflSat 1.0`** with `reflectTint (1, 1, 1)` — see "(iii)" below for why the 0.66 was wrong rather
+than merely retuned. `?waterblur` / `?watersat` remain the A/B.
 
 ### The upwelling term, derived (QA-14-1, round 6 item 1a)
 `murk` in `water.js` is the radiance that leaves the water BODY toward the camera; the shader's
@@ -341,7 +341,12 @@ Round 7 then replaced the ripple and the reflection tint (the lead's (i)-(iii) a
 * **(iii) the screen displacement is derived, and `reflSat` ships at 1.0.** A slope `s` tips the
   reflected ray by `2s`, and the projection turns that into `P00 / P11` times it in ndc, half that in
   uv — so the offset is exactly `projectionMatrix * slope`, read per station instead of fitted at the
-  hero's 20 mm lens. `distortion`, `distortAniso`, `normalScale` and `rippleTiling` are therefore all
+  hero's 20 mm lens. **Its axes are WORLD X and Z, not the camera's**: `slope.x` is pushed through
+  `P00` and `slope.y` (world Z) through `P11`, which is only the right pairing while the view looks
+  along world Z. It is exact at the hero and at cam05, within a few degrees at cam02 and cam06, and
+  at a station looking along world X the two would be swapped. The ripple's crests are locked to
+  world Z for the same reason (the wind direction is a property of the lagoon, not of the camera), so
+  the two share the one assumption; a camera-relative form would have to rotate both together. `distortion`, `distortAniso`, `normalScale` and `rippleTiling` are therefore all
   1.0 and are A/B dials only, and the round-6 grazing multiplier (not physical: the ray tips by `2s`
   whatever the incidence) ships at 0. `reflSat` 0.66 was double-counting the murk — the body term now
   goes through the same mix explicitly — and a dielectric's Fresnel reflection is spectrally flat, so
@@ -746,7 +751,12 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?uvdq=0` (leave gltfpack's texcoord quantisation in place — the Gate 4 step-0 A/B),
 `?vertexirr=auto|1|0`, `?post=all|none|mist,bloom,vignette`, `?mist=near,far`,
 `?waterblur=`, `?watersat=`, `?waterdist=`, `?waternorm=`, `?watertile=`, `?wateraniso=`,
-`?watercrest=`, `?watergraze=` (0 = the round-14 flat-mirror displacement exactly),
+`?watercrest=` (the directional fan's half-angle in DEGREES since round 7, was a cosine power),
+`?waterslope=` (the surface's rms slope in radians, default `RIPPLE.slopeRms` 0.0131),
+`?watergraze=` (0 = the shipped derived displacement; > 0 reinstates the round-6 grazing multiplier),
+`?instirr=auto|0` (the per-placement shrub/reed irradiance),
+`?bloomthr=` (scene-linear; the default is the manifest value x `BLOOM_THRESHOLD_SCALE` 2.0),
+`?bloomrad=` (UnrealBloomPass radius; measured NOT to be a lever, kept for the A/B),
 `?watergrazemax=` (the FIX-NOW 1 cap, default 6), `?watermurk=r,g,b` (overrides the derived
 upwelling term; `0.020,0.035,0.030` is the round-14 value), `?watermurkgain=k` (scales the derived
 one), `?waterdebug=1..6` (1 Fresnel F, 2 projected uv, 3 perturbed normal, 4 unperturbed reflection,
