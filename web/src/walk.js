@@ -160,15 +160,24 @@ export function groundAt( grids, x, z ) {
  * otherwise refuse every direction and look broken; the walker steps ashore instead.
  * @returns {{x:number,z:number,y:number,moved_m:number}|null}
  */
+/**
+ * How far above WATER_Z a cell must sit to count as dry.  QA-14 minor: at 0.05 m three of the 24
+ * walk probes ended standing on ground at -1.225 m, 25 mm BELOW the acceptance line of
+ * WATER_Z + 0.1.  The grid stores one height per cell, so the margin has to clear that line by more
+ * than the cell's own relief: 0.15 m leaves 50 mm of headroom and still lets the walker onto every
+ * bank the round-14 probe reached.
+ */
+export const SHORE_MARGIN_M = 0.15;
+
 export function nearestDry( grids, x, z, waterY, maxRings = 120 ) {
-	if ( groundAt( grids, x, z ) > waterY + 0.05 ) return { x, z, y: groundAt( grids, x, z ), moved_m: 0 };
+	if ( groundAt( grids, x, z ) > waterY + SHORE_MARGIN_M ) return { x, z, y: groundAt( grids, x, z ), moved_m: 0 };
 	for ( let r = 1; r <= maxRings; r ++ ) {
 		let best = null, bestD = Infinity;
 		for ( let i = - r; i <= r; i ++ ) {
 			for ( const [ dx, dz ] of [ [ i, - r ], [ i, r ], [ - r, i ], [ r, i ] ] ) {
 				const nx = x + dx * CELL, nz = z + dz * CELL;
 				const g = groundAt( grids, nx, nz );
-				if ( g <= waterY + 0.05 ) continue;
+				if ( g <= waterY + SHORE_MARGIN_M ) continue;
 				const d = ( nx - x ) ** 2 + ( nz - z ) ** 2;
 				if ( d < bestD ) { bestD = d; best = { x: nx, z: nz, y: g, moved_m: Math.sqrt( d ) }; }
 			}
@@ -218,10 +227,10 @@ export function stepWalker( grids, from, step, waterY, footY = 0 ) {
 	const n = Math.max( 1, Math.ceil( len / ( WALK_RADIUS * 0.8 ) ) );
 	for ( let i = 0; i < n; i ++ ) {
 		const nx = x + step.x / n, nz = z + step.z / n;
-		if ( groundAt( grids, nx, nz ) <= waterY + 0.05 ) { blocked = true; break; }
+		if ( groundAt( grids, nx, nz ) <= waterY + SHORE_MARGIN_M ) { blocked = true; break; }
 		const r = resolveObstacles( grids, nx, nz, footY );
 		const g = groundAt( grids, r.x, r.z );
-		if ( g <= waterY + 0.05 ) { blocked = true; break; }
+		if ( g <= waterY + SHORE_MARGIN_M ) { blocked = true; break; }
 		x = r.x; z = r.z; y = g;
 	}
 	return { x, z, y, blocked };

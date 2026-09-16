@@ -158,6 +158,8 @@ const progress = {
 	files: [],                       // { url, kind, bytes, loaded, sizeFrom, ms }
 	perFile: new Map(),              // url -> bytes counted so far (three loaders report cumulative)
 	unknown: [],
+	planned: new Set(),              // the urls measurePlan() HEADed; anything else is off-plan
+	extra: new Map(),                // off-plan url -> bytes counted, folded into the denominator
 };
 const MB = ( b ) => ( b / 1e6 ).toFixed( 1 );
 function drawProgress() {
@@ -165,7 +167,23 @@ function drawProgress() {
 	bar.style.width = `${pct.toFixed( 1 )}%`;
 	uiText.textContent = `${MB( progress.loaded )} / ${MB( progress.total )} MB` + ( progress.label ? ` — ${progress.label}` : '' );
 }
-function addBytes( url, delta ) { progress.loaded += delta; drawProgress(); }
+/**
+ * QA-14 minor: the bar read 639.0 MB loaded of 522.3 MB planned, 122 %.  measurePlan() HEADs every
+ * file the MANIFEST plan lists, but the detail-texture sets and anything else a module fetches on its
+ * own are never in that list, so their bytes landed in the numerator only.  Off-plan bytes are now
+ * folded into the DENOMINATOR as they arrive, which is what "count what is actually fetched" means:
+ * the bar can lag reality but it can never exceed 100 %, and `bytes.offPlan` in the sidecar names
+ * every url that was not planned so the plan can be fixed rather than patched over.
+ */
+function addBytes( url, delta ) {
+	progress.loaded += delta;
+	if ( url && ! progress.planned.has( url ) ) {
+		const n = ( progress.extra.get( url ) || 0 ) + delta;
+		progress.extra.set( url, n );
+		progress.total += delta;
+	}
+	drawProgress();
+}
 /** three's Loader.loadAsync onProgress reports the file's CUMULATIVE bytes: turn it into a delta. */
 function onProgressFor( url ) {
 	return ( e ) => {
@@ -192,7 +210,10 @@ async function measurePlan( files ) {
 	let next = 0;
 	await Promise.all( Array.from( { length: Math.min( 16, files.length ) },
 		async () => { while ( next < files.length ) await one( files[ next ++ ] ); } ) );
-	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+	files.forEach( ( f ) => progress.planned.add( f.url ) );
+	// anything already counted before the plan existed is, by definition, off-plan
+	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 )
+		+ [ ...progress.extra.values() ].reduce( ( a, b ) => a + b, 0 );
 	note( `load plan: ${files.length} files, ${MB( progress.total )} MB (${files.map( f => `${f.kind} ${MB( f.bytes )}` ).join( ', ' )})`
 		+ ( progress.unknown.length ? ` — ${progress.unknown.length} of unknown size` : '' ) );
 	drawProgress();
@@ -1096,6 +1117,7 @@ window.__pfaInfo = () => ( {
 	lightingMode,
 	schema: manifest ? manifest.schema : null,
 	bytes: { loaded: progress.loaded, planned: progress.total, unknownSize: progress.unknown.slice(),
+		offPlan: [ ...progress.extra.entries() ].map( ( [ url, b ] ) => ( { url, bytes: b } ) ),
 		files: progress.files.map( f => ( { kind: f.kind, bytes: f.bytes, sizeFrom: f.sizeFrom, name: f.url.split( '/' ).pop() } ) ) },
 	load_s: { ...loadTimes },
 	glbs: glbReport.slice(),
