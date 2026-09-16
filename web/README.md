@@ -363,9 +363,16 @@ optimised, and it is the open half of item 6.
   EEVEE frame from round 09, taken before the Phase 5 shade work the lightmaps were baked from, so it
   is not a parity target. The 6a criterion ("within 0.5 of its Phase 5 score") needs Phase 5 Cycles
   frames for stations 3 and 5 and a compositor-on frame for 6.
-* **Item 2, the far-tree impostors, is not started.** The 127 far trees are still the flat grey
-  `WEB_far_tree_billboard_*` placeholders, hidden in every capture, so the skyline behind the
-  colonnade is bare and the backdrop blocks show through where Cycles has foliage.
+* **Item 2 is done** (the far trees are octahedral impostors; see the section below). What remains
+  open there is ROTATIONAL pop: the blend has not been swept through a full camera rotation.
+
+## `PFA_DEV_SHARE_GPU=1` — development screenshots only
+`screenshot.mjs` refuses to run while any Blender process is alive. `PFA_DEV_SHARE_GPU=1` is a NARROW
+override, authorised by the lead (logged in `docs/decisions.md`) so that development screenshots could
+be taken while a lead-side Cycles reference render held the GPU. It still refuses when the bake queue
+is running, and it **refuses `--perf` outright**, because a frame time measured beside another GPU job
+is not a number anyone may score. **It must never be set for a capture that QA scores, and never for a
+performance pass.** `PFA_ALLOW_GPU=1` remains the blanket override and should not be used at all.
 
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
@@ -421,8 +428,26 @@ lighting runs — full DirectionalLight at the manifest's `energy_w_m2` plus PMR
 same LUT and exposure. The mode is chosen from the manifest before any material is touched; `?lighting=`
 overrides it and the choice is printed in the notes and in `gate1_perf.json`.
 
-## Far-tree billboards
-`trees.far` is drawn as one flat quad per entry, grey, grouped per prototype into an `InstancedMesh` named
-`WEB_far_tree_billboard_<prototype>` with `userData.pfaPlaceholder = 'gate3_tree_impostor'`. They are
-placeholders for the Gate 3 impostor bake and must be reported as such in any tile review. `?billboards=0`
-removes them.
+## Far trees: the Gate 3 octahedral impostors (item 2)
+The 127 far trees are drawn by `src/impostors.js` as one `InstancedMesh` per prototype
+(`WEB_impostor_<prototype>`), 16 draw calls, from the Gate 3 atlases. Every geometric and encoding
+field is READ from `manifest.impostors` and none is assumed; a missing one refuses the whole block
+rather than defaulting into NaN UVs. Screen-facing quad built in the vertex shader, the three frames
+around the view direction blended with the octahedral cell's barycentric weights, straight-alpha
+combination (`rgb = Σ w·a·rgb / Σ w·a`), alpha test 0.33, unlit — the atlas is baked radiance and goes
+straight into the linear buffer before the LUT. `?impostors=0` removes them, `?impnd=1` also loads the
+normal+depth atlases (off by default: the manifest says nothing samples them while `unlit` holds),
+`?impdebug=1|2|3|4` shows the raw sample / alpha / frame cell / quad uv.
+
+**The atlases are `KTXorientation: rd` (top-down) while `manifest.impostors.frame_uv` counts the row
+and `f.y` FROM THE BOTTOM**, measured with `ktx info` on all 16. The viewer therefore flips v. Without
+the flip the lookup lands on the mirrored elevation — the tree's sky-lit back side — and the hero drew
+the far trees deep blue: isolated raw sample `[0.2534 0.2911 0.4873]` before, `[0.4249 0.4298 0.2807]`
+after. The bake side may prefer to change the manifest's stated convention instead; either is fine, but
+the two must agree and today they do not.
+
+### The Gate 1 placeholders
+`makeTreeBillboards` still exists and draws one flat grey quad per entry as
+`WEB_far_tree_billboard_<prototype>` with `userData.pfaPlaceholder = 'gate3_tree_impostor'`. It is used
+ONLY when the impostors are unavailable or `?impostors=0`: when they build, the placeholders are not
+created at all, so a capture can never show a grey card and the name sweep stays clean.

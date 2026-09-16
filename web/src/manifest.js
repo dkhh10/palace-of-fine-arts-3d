@@ -650,6 +650,7 @@ export function normaliseManifest( raw, baseUrl ) {
 		let impostors = null;
 		if ( impRaw && impRaw.prototypes ) {
 			const protos = {};
+			let protosOk = true;
 			for ( const [ name, p ] of Object.entries( impRaw.prototypes ) ) {
 				const alb = resolveTexture( p.albedo ), nd = resolveTexture( p.normal_depth );
 				if ( ! alb || ! nd ) { g3notes.push( `impostor ${name}: atlas key missing from textures.gate3.files` ); continue; }
@@ -673,11 +674,22 @@ export function normaliseManifest( raw, baseUrl ) {
 			// depth encode as `depth_from_centre_m = (a - 0.5) * depth_range_m`.  `encode` and
 			// `frame_lookup` / `frame_uv` are carried verbatim so the impostor material can assert
 			// the contract it was written against instead of silently drifting from it.
-			impostors = { encode: impRaw.encode || null, frameLookup: impRaw.frame_lookup || null,
+			// NO SILENT DEFAULTS.  grid/frame_px/inner_px/gutter_px/atlas_px all go straight into the
+			// frame lookup; a missing one produced NaN UVs and a blank or garbage tree rather than an
+			// error.  The block is refused instead, and the viewer says which field was missing.
+			const geomFields = { grid: impRaw.grid, frame_px: impRaw.frame_px, inner_px: impRaw.inner_px,
+				gutter_px: impRaw.gutter_px, atlas_px: impRaw.atlas_px };
+			const missing = Object.entries( geomFields ).filter( ( [ , v ] ) => typeof v !== 'number' || ! ( v > 0 ) ).map( ( [ k ] ) => k );
+			if ( missing.length ) {
+				g3notes.push( `impostors REFUSED: manifest.impostors is missing ${missing.join( ', ' )}; `
+					+ 'those fields go straight into the frame lookup and a default would make NaN UVs' );
+				protosOk = false;
+			}
+			impostors = protosOk === false ? null : { encode: impRaw.encode || null, frameLookup: impRaw.frame_lookup || null,
 				frameUv: impRaw.frame_uv || null, lighting: impRaw.lighting || null,
-				mapping: impRaw.mapping || 'octahedral', grid: impRaw.grid ?? 12,
-				framePx: impRaw.frame_px ?? null, innerPx: impRaw.inner_px ?? null,
-				gutterPx: impRaw.gutter_px ?? null, atlasPx: impRaw.atlas_px ?? null,
+				mapping: impRaw.mapping || 'octahedral', grid: impRaw.grid,
+				framePx: impRaw.frame_px, innerPx: impRaw.inner_px,
+				gutterPx: impRaw.gutter_px, atlasPx: impRaw.atlas_px,
 				unlit: impRaw.unlit !== false, prototypeMap: impRaw.prototype_map || {},
 				prototypes: protos, count: Object.keys( protos ).length };
 		}

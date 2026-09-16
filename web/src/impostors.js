@@ -111,8 +111,11 @@ const fragmentShader = /* glsl */`
 			c0 = gi; c1 = gi + vec2( 1.0, 0.0 ); c2 = gi + vec2( 0.0, 1.0 );
 			w = vec3( 1.0 - fr.x - fr.y, fr.x, fr.y );
 		} else {
+			// Vertices (1,1), (0,1), (1,0).  At (fx,fy) = (0,1) the weight of (0,1) must be 1, so it
+			// is 1 - fx, and (1,0) gets 1 - fy.  Having these two swapped leaned the blend on the
+			// wrong neighbour by up to a cell off the diagonal and was discontinuous at the cell edge.
 			c0 = gi + vec2( 1.0, 1.0 ); c1 = gi + vec2( 0.0, 1.0 ); c2 = gi + vec2( 1.0, 0.0 );
-			w = vec3( fr.x + fr.y - 1.0, 1.0 - fr.y, 1.0 - fr.x );
+			w = vec3( fr.x + fr.y - 1.0, 1.0 - fr.x, 1.0 - fr.y );
 		}
 
 		vec4 s0 = sampleFrame( c0, vQuadUv );

@@ -1169,8 +1169,26 @@ window.__pfaPick = ( x, y ) => {
 			const d = p.distanceTo( c );
 			if ( d < nearD ) { nearD = d; near = name; }
 		}
+		// The sun term, decomposed: three's Lambert is irradiance * NdotL * albedo/pi, so a surface
+		// whose normal faces away from the sun gets NOTHING from it however bright the sun is, and the
+		// blue sky is then all the light it has.  Reported so "the sun is not reaching it" is a number.
+		let nWorld = null, ndotl = null;
+		if ( hit.normal ) {
+			nWorld = hit.normal.clone().transformDirection( o.matrixWorld ).normalize();
+			if ( sunLight ) {
+				const L = sunLight.position.clone().normalize();
+				ndotl = nWorld.dot( L );
+			}
+		}
 		out.push( {
 			distance_m: + hit.distance.toFixed( 2 ),
+			worldNormal: nWorld ? nWorld.toArray().map( v => + v.toFixed( 3 ) ) : null,
+			NdotL_sun: ndotl === null ? null : + ndotl.toFixed( 4 ),
+			sunReaches: ndotl === null ? null : ndotl > 0,
+			materialSide: m ? ( m.side === THREE.DoubleSide ? 'double' : m.side === THREE.BackSide ? 'back' : 'front' ) : null,
+			flatShading: m ? !! m.flatShading : null,
+			hasNormalAttr: !! ( g && g.attributes.normal ),
+			alphaMode: m ? { transparent: !! m.transparent, alphaTest: m.alphaTest ?? 0 } : null,
 			point: hit.point.toArray().map( v => + v.toFixed( 2 ) ),
 			mesh: o.name || '(unnamed - gltfpack -mi)',
 			root: ( () => { let p = o; while ( p && ! /^WEB_glb_|^WEB_/.test( p.name || '' ) ) p = p.parent; return p ? p.name : null; } )(),
