@@ -1005,3 +1005,84 @@ the near trees, the impostors, the foliage and the shrubs.
 `resident_mb` uses the same rule as Gate 2 — ASTC 4×4 on the Apple GPU = 1 byte/texel, ×4/3 for the mip chain — and
 **5.333 bytes/texel for an `rgbm8` (lossless, uncompressed RGBA8) variant**, which is why `default` is `gamma2`
 wherever the budget is tight. A texture shipped without mips counts ×1.0.
+
+## Gate 3 — what the bake found, and what it hands off
+
+Every number below is `python3 export/gate3_report.py`, printed from the records; nothing is typed by hand.
+65 jobs, 0 failures, 0 retries, queue wall 23 495 s (6 h 32 m) on one M2 GPU, plus a 764 s re-bake of the 16
+impostor atlases after the range fix below.
+
+**1. The blocker Gate 3 found: Gate 1's UV2 on the merged masses is margin-dominated.** Measured on
+`gate1_set.blend`: the south colonnade merged mass packs **0.0095** of its 2K map (median triangle **0.21 px**
+across — sub-texel), the rotunda ochre mass 0.0133, the riprap 0.0023, the site podium 0.0187, the ceiling rib
+0.0178. A lightmap on that layout is **32–69 cm per texel** and cannot carry a shadow edge. `gate3_set.py`
+re-unwraps UV2 for the seven assets under `UV2_RELAY_THRESHOLD` = 0.15 (smart project, island margin 0.0008),
+keeps the frozen layout beside it as the `UV2_gate1` layer, and writes `out/gate3/lightmap_uv2.npz` (one float32
+`(n_loops, 2)` array per Gate 1 MESH name) as the hand-off. Gain, cm/texel before → after: riprap 32.61 → 4.62,
+site podium 55.07 → 12.87, rotunda ochre 68.70 → 17.39, colonnade north 37.50 → 10.64, south 38.17 → 10.95,
+ceiling rib 18.11 → 5.15, colonnade walk 5.91 → 2.49. **Those seven ship `uv2_in_glb: false`** and the viewer
+must not apply them until `env.glb` / `arch.glb` / `ground.glb` are re-exported against the npz. Two of them
+were also baked on the frozen layout (`lmg1_*`, `uv2_in_glb: true`) so the viewer has something before the
+re-export: at 38.17 cm/texel the south colonnade map costs 28.7 s to bake and carries no contact shadow.
+
+**2. Occluders the export set does not contain, restored for the bake.** The Gate 1 set replaces the 127 far
+trees with billboard quads and the lagoon water with a viewer plane. A lightmap baked against a quad has no tree
+shadow where Phase 5 has one, and tree shadow is most of the per-instance variation QA-12-4 asks for
+(Phase 5's own shaft-to-shaft CV is 0.469/0.539, "overwhelmingly tree shadow"). `gate3_set.py` appends the 127
+real `source_tree` objects plus `ENV_lagoon_water` and `ENV_backdrop_bay` from `master_delivery.blend` and hides
+the 127 quads from the rays. The 33 EXPHI hi-poly twins are asserted `hide_render` in every job. The ORN
+instances carry the grey Gate 1 placeholder in `gate2_bake.blend`; `MAT_ornament_concrete` is relinked onto all
+33 so the bounce off 436 ornaments is ochre, not grey.
+
+**3. The terrain keeps a texture map, against the brief, on a measurement.** `ENV_terrain_ground` is
+514 896 m² with 22 450 vertices = **4.79 m per vertex**; its own UV2 packs 0.902, which at 4K is **18.44 cm per
+texel** — 26x finer than a `VERTEX_COLORS` bake could be. It ships as a 4K own map (849 s, the second longest
+job). The 20 near trees do take `VERTEX_COLORS` (0.07–0.19 m per vertex, finer than their leaf cards):
+14 meshes, 347 840 vertices, 184 kB npz, `in_glb: false` until `env.glb` carries COLOR_0.
+
+**4. Two surfaces come back almost black, and it is the geometry, not the bake.**
+`ARCH_rotunda_plaster_ceiling_merged` (756 m², 1 102 tris) has max **0.721** and 4.9 % non-zero texels;
+`ARCH_rotunda_drum_band_merged` max 26.6 with 5.7 % non-zero; `ENV_lagoon_bed` 3.5 % non-zero (it is under the
+water plane this bake restored — correct). These are merged masses whose area is mostly interior and backing
+faces the merge carried, so most of their UV2 is enclosed surface. **QA round 13 should look at the rotunda
+ceiling at cam04 specifically**: if the visible coffer field reads black there, the 1 102-triangle plaster shell
+is being drawn in front of the 160 828-triangle rib/coffer mesh rather than behind it, which is a Gate 1
+geometry question, not a lightmap one. `ENV_tree_broadleaf_06_LOD1` bakes to max 0.007 because it stands inside
+a backdrop city block (ray cast up from its crown hits `ENV_backdropgroup_backdrop_building` at z = 15.45 m) —
+the same is true of the Phase 5 renders, so the bake is faithful; it is an ENV placement defect, on record.
+
+**5. Encoding.** `export/gate3_encode.py` is the encoder and it is a separate pass over the archival EXRs, so
+`range` is each map's own maximum rather than the next power of two (that alone was worth up to a full stop:
+`ARCH_rotunda_column_tan_inner_merged` max 29.085 was being encoded at range 32, the atlases at 64). Error is
+reported in **stops** over the texels above 1 % of the map's own p99 — a relative error's 99th percentile is
+otherwise dominated by the invisible near-black tail, which read "16.7 stops" on the drum band before the floor
+was per-channel. Over all 23 maps: **gamma2 0.028–0.163 stops, rgbm8 0.009–0.058 stops, 0 clipped texels on
+every map.** gamma2 is the default (1 byte/texel against 4) and rgbm8 ships beside it for anything that needs
+exactness.
+
+**6. The impostor range is the crown's p99.9, not the atlas maximum.** Un-premultiplying the Cycles Combined
+pass with a 1e-4 alpha floor let a near-transparent leaf-card edge divide radiance by 10 000; the per-prototype
+range came out at 6–512 while the opaque crown sits at 0.25–5, and the 8-bit codes had a mean of **5/255**
+(32 % quantisation on the body). With a 0.02 alpha floor and `range = p99.9(alpha > 0.5) * 1.1` the ranges are
+**2.24–6.11** and the code means **61–97 of 255**, with 3–235 saturated texels per atlas (0.002–0.18 % of the
+crown). 16 prototypes, not 25: 46 of the 127 far trees were exported against an LOD2 blob and every impostor is
+baked from the LOD1 mesh, so the manifest carries `impostors.prototype_map`.
+
+**7. The probe must cull below the water plane.** The mirrored hero station is at z = −3.9, i.e. 2.6 m under the
+water it reflects. With the water surface and the lagoon bed left in, the +Y (up) face came back at mean
+**0.0003 / max 0.002** — black. Culling `ENV_lagoon_water`, `ENV_backdrop_bay`, `ENV_lagoon_bed` and every mesh
+whose bbox tops out at or below `water_z` gives the six faces means 0.38–4.66 and the building upside down in
+`pz`, which is what a planar reflection is.
+
+**8. `sky.diffuse`, for QA-12b-1.** The world's diffuse branch as a 1024x512 equirect (1.5 s, upper half mean
+5.736 against lower 0.060, so the top row is the zenith). Everything with a lightmap or a baked impostor takes
+no term from it; it is the irradiance environment for the near trees, the impostors, the foliage and the shrubs,
+and it replaces the glossy-branch PMREM that made 16–22 % of the cam02/cam06 building pixels read olive-green.
+
+**9. Resident, both accountings.** Gate 3 measured **250.60 MB** against its **459 MB** reservation
+(**−208.40**): lightmaps own 101.28, slot atlases 106.65, impostors 32.00 (16 x 2 atlases at 1K, no mips —
+an octahedral atlas mips across frames), probe cube 8.00, sky diffuse 2.67. Against this manifest's own carried
+rows the total is **1 055.17 MB**, 144.8 under the 1 200 MB line; against the viewer's *measured* texture
+residency at round 12b (953.5 MB) it is **1 204.10 MB**, 4.1 over. Levers still unspent, in order of value:
+the 2K impostor albedo is on disk (+50.3 MB, 170 px frames instead of 85), and the lossless rgbm8 variant of
+every lightmap is on disk (+623.8 MB, exact instead of 0.028–0.163 stops).
