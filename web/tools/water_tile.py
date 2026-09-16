@@ -36,7 +36,7 @@ def main():
     w, h = WIN[2] - WIN[0], WIN[3] - WIN[1]
     out = Image.new("RGB", (w, (h + BAR) * len(panels)), (16, 16, 16))
     d = ImageDraw.Draw(out)
-    tiles = Path(a.out).parent.parent / "tiles" / "round15"
+    tiles = Path("renders/web/tiles/round15")
     tiles.mkdir(parents=True, exist_ok=True)
     for i, (label, im) in enumerate(panels):
         y = i * (h + BAR)
