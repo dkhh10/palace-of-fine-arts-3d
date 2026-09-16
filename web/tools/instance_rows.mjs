@@ -50,14 +50,19 @@ gltf.scene.traverse( o => {
 	// The glTF node index is the stable key (three's traverse order is not part of the file): verify_glb.py
 	// and the manifest both address a node by it. GLTFLoader records it in parser.associations.
 	const assoc = gltf.parser.associations.get( o ) || {};
-	nodes.push( { order: order ++, gltf_node: assoc.nodes ?? null, gltf_mesh: assoc.meshes ?? null,
+	if ( ! Number.isInteger( assoc.nodes ) ) throw new Error(
+		`instanced mesh ${o.name || '(unnamed)'} has no glTF node index (three put it under a Group?): ` +
+		`the row order cannot be addressed without one` );
+	nodes.push( { order: order ++, gltf_node: assoc.nodes, gltf_mesh: assoc.meshes ?? null,
 		name: o.name || null, mesh: g.name || null,
 		material: ( Array.isArray( o.material ) ? o.material[ 0 ] : o.material )?.name || null,
 		count: o.count, tris, rows } );
 } );
 
 fs.mkdirSync( path.dirname( outPath ), { recursive: true } );
+// glb_bytes is the stale guard the consumer asserts: two checkouts hold an `env.glb` of the same name, and a
+// row order dumped from the wrong one matches within tolerance and ships silently (review r5 finding 4).
 fs.writeFileSync( outPath, JSON.stringify( { schema: 'pfa-phase6/instance-rows/1', glb: glbPath,
-	generated: new Date().toISOString(), nodes } ) );
+	glb_bytes: buf.byteLength, generated: new Date().toISOString(), nodes } ) );
 console.log( `[instance_rows] ${nodes.length} instanced meshes, ` +
 	`${nodes.reduce( ( a, n ) => a + n.count, 0 )} rows -> ${outPath}` );

@@ -34,14 +34,19 @@ WHAT IT FINDS (and why the manifest needs `nodes` as well as `meshes`): 25 of th
 node each, but gltfpack merged `EXPM_ENV_src_{maho2,pitto5,reed1}_LOD2.001` - a one-placement near-duplicate
 of its base mesh - into the base mesh's node. Those three nodes hold 46 / 102 / 76 rows against their base
 mesh's 45 / 101 / 75 placements, so a viewer binding the base mesh's array alone would be one row short and
-misaligned from the merge point on. A mesh's rows stay contiguous inside a node, so the node is described
-exactly by an ordered `segments` list of (mesh, count).
+misaligned from the merge point on. **A mesh's rows are NOT contiguous inside such a node**: the odd `.001`
+row sits INSIDE the base mesh's run (row 8 / 14 / 22), so the base mesh owns two segments. A node is an
+ordered list of `[mesh, count, offset]`, `offset` being the row index into that mesh's own array at which the
+segment starts - read the segments with a running cursor, never as one slice per mesh.
 
-BEFORE THE RE-BAKE LANDS: `instance_irradiance.json` gains `loc` per placement with the re-baked values
-(lead, session 4). While it is absent this script takes the positions from `out/gate1/env.gltf` by object
-name as a TEST HARNESS, runs the identical join on them and says so in `loc_source`; the manifest writer
-reports that string. The positions are the same either way - only the RGB values change in the re-bake.
+THE HARNESS IS OPT-IN. Positions come from `instance_irradiance.json` `placements[].loc`. If ANY placement
+lacks one this script exits: falling back to `out/gate1/env.gltf` translations looked up by object name is
+exactly the name join the bake review ruled out (docs/reviews/phase6_bake_gate4_instance_review.md,
+decisions.md 2026-09-16 "object names do not survive gltfpack -mi"). `PFA_INSTANCE_ORDER_HARNESS=1` enables
+that fallback for a dry run before the re-baked JSON lands and stamps `loc_in_json: false` on the output,
+which `verify_glb.py` then fails on, so a harness run can never be mistaken for the shipped one.
 """
+import hashlib
 import json
 import os
 import sys
@@ -53,7 +58,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gate3_common as g3  # noqa: E402
 
-SCHEMA = "pfa-phase6/gate4-instance-order/1"
+SCHEMA = "pfa-phase6/gate4-instance-order/2"   # /2: segments carry a per-segment offset
 TOL_M = 0.03        # max accepted row -> placement residual (worst measured 0.0057 m; nearest rival 0.088 m)
 MARGIN = 3.0        # the nearest placement must be this many times closer than the runner-up
 SWAP_TOL_M = 0.005  # axis-swap self-check against env.gltf (the JSON rounds loc to 3 decimals)
@@ -92,20 +97,34 @@ def main():
     glb_p = pick("export/out/gate1/env.glb")
     rows = json.loads(rows_p.read_text())
     assert rows.get("schema") == "pfa-phase6/instance-rows/1", f"rows schema {rows.get('schema')!r}"
-    if Path(rows["glb"]).name != glb_p.name or rows_p.stat().st_mtime < glb_p.stat().st_mtime - 1.0:
-        raise SystemExit(f"{rows_p.name} is older than {glb_p.name}: re-run "
+    # The rows file must come from THIS glb: same name, same size, not older. Two checkouts hold an env.glb
+    # of the same name and a row order dumped from the other one matches within tolerance (review r5, 4).
+    if (Path(rows["glb"]).name != glb_p.name
+            or rows.get("glb_bytes") != glb_p.stat().st_size
+            or rows_p.stat().st_mtime < glb_p.stat().st_mtime - 1.0):
+        raise SystemExit(f"{rows_p.name} was dumped from {rows['glb']} ({rows.get('glb_bytes')} B) and is "
+                         f"{'older than ' if rows_p.stat().st_mtime < glb_p.stat().st_mtime - 1.0 else ''}"
+                         f"not this {glb_p} ({glb_p.stat().st_size} B): re-run "
                          f"`node web/tools/instance_rows.mjs {glb_p} {rows_p}`")
     irr = json.loads(irr_p.read_text())
     assert irr.get("schema") == "pfa-phase6/gate4-instance-irradiance/1", f"irr schema {irr.get('schema')!r}"
 
-    # ---- placements: object -> (mesh, glTF-space position). `loc` is the contract; env.gltf is the harness.
+    # ---- placements: object -> (mesh, glTF-space position). `loc` is the ONLY production source.
     src_tr = source_translations()
-    have_loc = all("loc" in p for m in irr["meshes"].values() for p in m["placements"])
+    no_loc = [p["object"] for m in irr["meshes"].values() for p in m["placements"] if "loc" not in p]
+    have_loc = not no_loc
+    if no_loc and not os.environ.get("PFA_INSTANCE_ORDER_HARNESS"):
+        raise SystemExit(
+            f"{len(no_loc)} of {irr['placements']} placements in {irr_p.name} carry no `loc` (first: "
+            f"{no_loc[:3]}). The join needs the placement's own world translation; taking it from "
+            f"env.gltf BY OBJECT NAME is the name join the bake review ruled out. Wait for the re-baked "
+            f"JSON, or set PFA_INSTANCE_ORDER_HARNESS=1 for an explicit dry run (its output is stamped "
+            f"loc_in_json: false and verify_glb.py fails on it).")
     loc_source = ("instance_irradiance.json placements[].loc (Blender Z-up -> glTF by (x, z, -y))"
                   if have_loc else
-                  "TEST HARNESS: out/gate1/env.gltf node translations by object name - "
-                  "instance_irradiance.json carries no per-placement `loc` yet (it lands with the re-bake); "
-                  "the join itself is the same code either way")
+                  "TEST HARNESS (PFA_INSTANCE_ORDER_HARNESS=1): out/gate1/env.gltf node translations by "
+                  f"object name for {len(no_loc)} placements with no `loc`. NOT SHIPPABLE - the join code is "
+                  "the same, the key is not: re-run once the re-baked JSON carries loc.")
     pos, mesh_of_obj = {}, {}
     for mesh, m in irr["meshes"].items():
         assert m["n"] == len(m["placements"]), f"{mesh}: n={m['n']} but {len(m['placements'])} placements"
@@ -113,11 +132,11 @@ def main():
             o = pl["object"]
             assert o not in mesh_of_obj, f"duplicate placement object {o}"
             mesh_of_obj[o] = mesh
-            if have_loc:
+            if "loc" in pl:
                 pos[o] = np.array(to_gltf(pl["loc"]), dtype=np.float64)
             else:
                 assert o in src_tr, f"{o}: not in env.gltf and instance_irradiance.json carries no loc"
-                pos[o] = src_tr[o]
+                pos[o] = src_tr[o]                      # harness only: guarded above
     assert len(mesh_of_obj) == irr["placements"], f"{len(mesh_of_obj)} != {irr['placements']} placements"
 
     # ---- the axis swap, asserted on the seven placements whose loc the bake measured itself
@@ -179,16 +198,24 @@ def main():
             used[name] = (nd["gltf_node"], k)
             seq.append((name, mesh_of_obj[name]))
             per_mesh.setdefault(mesh_of_obj[name], []).append(name)
-        segs = []
+        # [mesh, count, offset]: `offset` is the row index INTO THAT MESH'S OWN array where the segment
+        # starts. A mesh can hold two segments in one node (the merged `.001` row lands inside the base
+        # mesh's run), so a consumer slicing `rgb[0 : 3*count]` per segment would repeat the first rows.
+        segs, cursor = [], {}
         for _, mesh in seq:
             if segs and segs[-1][0] == mesh:
                 segs[-1][1] += 1
             else:
-                segs.append([mesh, 1])
+                segs.append([mesh, 1, cursor.get(mesh, 0)])
+            cursor[mesh] = cursor.get(mesh, 0) + 1
         assert sum(s[1] for s in segs) == nd["count"] == len(seq)
+        for mesh in cursor:
+            got = [(s[2], s[1]) for s in segs if s[0] == mesh]
+            assert [o for o, _ in got] == list(np.cumsum([0] + [c for _, c in got])[:-1]), \
+                f"node {nd['gltf_node']}: {mesh} segment offsets are not a running cursor: {got}"
         nodes.append(dict(gltf_node=nd["gltf_node"], traverse_order=nd["order"], count=nd["count"],
-                          tris=nd["tris"], material=nd["material"], segments=[[m, c] for m, c in segs],
-                          objects=[n for n, _ in seq]))
+                          tris=nd["tris"], material=nd["material"],
+                          segments=[[m, c, o] for m, c, o in segs], objects=[n for n, _ in seq]))
 
     missing = sorted(set(mesh_of_obj) - set(used))
     if missing:
@@ -224,11 +251,19 @@ def main():
                glb_bytes=glb_p.stat().st_size, glb_mtime=int(glb_p.stat().st_mtime),
                source_gltf="../gate1/env.gltf", rows_file="instance_rows.json",
                irradiance="instance_irradiance.json",
-               irradiance_generated=irr.get("generated"), loc_source=loc_source, loc_in_json=have_loc,
+               irradiance_generated=irr.get("generated"),
+               # `generated` is the bake's own field and did not change when `loc` was added to the file on
+               # 2026-09-17, so the identity pin the manifest asserts is the file's HASH, not its timestamp.
+               irradiance_sha256=hashlib.sha256(irr_p.read_bytes()).hexdigest(),
+               irradiance_file=str(irr_p),
+               loc_source=loc_source, loc_in_json=have_loc,
                axis_swap="Blender (x, y, z) -> glTF (x, z, -y): +Y toward the lagoon -> -Z, +Z up -> +Y",
                axis_swap_check=dict(n=len(swap_check), worst_m=round(max(swap_check), 6),
                                     against="out/gate1/env.gltf node translations",
                                     placements="instance_irradiance.json checks.dark (bake-measured loc)"),
+               segments_format=("[mesh, count, offset]: `offset` indexes that MESH's own rgb/cov array "
+                                "(3*offset in the flat rgb). A mesh may own more than one segment in a node - "
+                                "read them with a running cursor, never one slice per mesh."),
                method=("per node: (1) a mesh is contained in the node when every one of its placements has a "
                        "row within %.3f m and the node's row count equals its contained meshes' placement "
                        "count; (2) rows matched one-to-one to those placements by nearest translation, "
@@ -251,7 +286,7 @@ def main():
     print(f"  loc source: {loc_source}")
     for n in out["merged_nodes"]:
         print(f"  merged node {n['gltf_node']}: {n['count']} rows = " +
-              " + ".join(f"{c}x{m.split('src_')[-1]}" for m, c in n["segments"]))
+              " + ".join(f"{c}x{m.split('src_')[-1]}@{o}" for m, c, o in n["segments"]))
     print(f"  -> {op}")
 
 

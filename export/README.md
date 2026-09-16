@@ -1490,8 +1490,14 @@ export/sync_main.sh
     ```sh
     node web/tools/instance_rows.mjs export/out/gate1/env.glb export/out/gate3/instance_rows.json
     python3 export/gate4_instance_order.py      # -> out/gate3/instance_order.json
+    python3 export/verify_glb.py                # the Gate 4 row-count gate (also inside gltf_pack.sh --gate1)
+    python3 export/gate4_order_selftest.py      # 10 negative cases against the same check
     python3 export/manifest_v4.py && export/sync_main.sh
     ```
+    **Re-run the whole chain after every re-bake.** `manifest_v4.py` refuses a stale join: it asserts the order
+    file's `irradiance_sha256` and `irradiance_generated` against the `instance_irradiance.json` on disk and its
+    `glb_bytes` against `env.glb` (the bake added `loc` to the file on 2026-09-17 without changing `generated`,
+    which is exactly why the hash, not the timestamp, is the pin).
     `instance_rows.mjs` is node, not python, because every accessor in the packed glbs rides in an
     `EXT_meshopt_compression` bufferView: it loads `env.glb` through three's `GLTFLoader` + `MeshoptDecoder`
     and dumps each `InstancedMesh`'s rows in accessor order, with the glTF node index from
@@ -1502,18 +1508,29 @@ export/sync_main.sh
     one-to-one by nearest translation: tolerance **0.03 m**, runner-up at least **3x** further. Measured:
     worst residual **5.9 mm** (gltfpack recentres a merged mesh, so the residual is that offset, not noise)
     against a smallest within-node placement separation of **88 mm**, worst margin **55x**, **1 379/1 379**
-    rows over **28/28** meshes and **25** instanced nodes. Any unmatched row, duplicate match or mesh found in
+    rows over **28/28** meshes and **25** instanced nodes — the shipped `instance_order.json` carries those two
+    numbers itself (`worst_residual_m`, `worst_margin_ratio`), so read them there rather than from this text. Any unmatched row, duplicate match or mesh found in
     two nodes is a hard failure — a silently swapped pair lights two shrubs with each other's irradiance. The
     object name rides along as a label and is cross-checked against the nearest `env.gltf` node, never joined
     on. `PFA_INSTANCE_IRR=<file>` runs the same join against a candidate JSON without touching the synced one.
+    **The name fallback is opt-in and unshippable.** If any placement lacks `loc` the join exits; only
+    `PFA_INSTANCE_ORDER_HARNESS=1` takes the positions from `env.gltf` by object name, and that output is
+    stamped `loc_in_json: false`, on which `manifest_v4.py` emits no array at all and `verify_glb.py` raises a
+    failure as soon as the irradiance JSON does carry `loc`.
     **What it found:** gltfpack merged `EXPM_ENV_src_{maho2,pitto5,reed1}_LOD2.001` — each a one-placement
     near-duplicate of its base mesh — into the base mesh's node, so glTF nodes 10 / 16 / 21 hold 46 / 102 / 76
     rows against their base mesh's 45 / 101 / 75, with the odd row *inside* the run (rows 8, 14, 22). A viewer
     binding one mesh's array to those nodes is one row short and misaligned from that point on, so the
-    manifest block carries `nodes[*].segments` — an ordered `(mesh, count)` list per node — beside the
-    per-mesh arrays; concatenating each segment's slice rebuilds the node's attribute exactly.
+    manifest block carries `nodes[*].segments` — an ordered **`[mesh, count, offset]`** list per node — beside
+    the per-mesh arrays. A mesh therefore owns **two** segments in those nodes (`8 @0 + 1 @0 + 37 @8` on node
+    10), and `offset` is the row index into that mesh's own array: read the segments with a running cursor,
+    never one slice per mesh, or 37 mahonias take the irradiance of placements 0-36. `verify_glb` checks the
+    offsets tile each mesh's array exactly once.
     **env.glb is not re-packed** (byte-identical, 36 946 188 B): the order is fully recoverable, no `COLOR_0`
     changes and nothing is re-decimated, so `lightmaps.instance_irradiance.in_glb` stays **false** and the
-    data ships in the manifest (+106 kB, 1.85 → 1.96 MB). `verify_glb.py` asserts it against the glb: every
-    node named is really instanced, its `TRANSLATION` accessor count equals its segment total, and each of the
-    28 meshes gets exactly its placement count of rows (`gate4_instance_irradiance.counts_match`).
+    data ships in the manifest: measured on the current artefacts, the block adds **107 kB** (1 852 075 B →
+    1 959 199 B) — worth serving gzip/br on the 6b host, since the manifest blocks the first frame. `verify_glb.py`
+    asserts the data against the glb: every node named is really instanced, its `TRANSLATION` accessor count
+    equals its segment total, the segment offsets tile each mesh's array once, and each of the 28 meshes gets
+    exactly its placement count of rows (`gate4_instance_irradiance.counts_match`). The MAIN `manifest.json` is
+    written by the lead's own `manifest_v4.py` run, so the size above is measured, not shipped by this branch.

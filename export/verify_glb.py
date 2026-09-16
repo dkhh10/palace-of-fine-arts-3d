@@ -16,6 +16,7 @@ can be tested, because a meshopt-compressed instancing accessor cannot be decode
 Exit 1 on any mismatch. No Blender, no GPU.
 """
 import json
+import os
 import struct
 import sys
 import time
@@ -82,7 +83,8 @@ def instance_irradiance_check(out, bad):
     every shrub after the first mismatched row.
     """
     g3dir = out.parent / "gate3"
-    alt = Path("/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate3")
+    alt = Path(os.environ.get("PFA_MAIN_ROOT",
+                              "/Users/dk/Projects/3d render blender 3rd attempt building")) / "export/out/gate3"
 
     def find(name):
         for d in (g3dir, alt):
@@ -94,16 +96,36 @@ def instance_irradiance_check(out, bad):
     if ip is None:
         return None                                   # the Gate 4 bake has not landed in this checkout
     irr = json.loads(ip.read_text())
+    # The join keys on each placement's own world `loc`. Until the bake writes it the chain CANNOT be run
+    # correctly, so a missing or harness order file is reported, not failed; once `loc` is there, both are
+    # hard failures (review r5, 3).
+    bakeable = all("loc" in p for m in irr.get("meshes", {}).values() for p in m.get("placements", []))
     if op is None:
-        bad.append("instance_irradiance.json is present but instance_order.json is not: the per-placement "
-                   "irradiance has no glb row order (run export/gate4_instance_order.py) and the viewer "
-                   "would bind 1 379 values in the bake's own order, which gltfpack does not preserve")
-        return dict(placements=irr.get("placements"), meshes=irr.get("meshes_n"), order_recovered=False)
+        msg = ("instance_irradiance.json is present but instance_order.json is not: the per-placement "
+               "irradiance has no glb row order (run export/gate4_instance_order.py) and the viewer would "
+               "bind the values in the bake's own order, which gltfpack does not preserve")
+        if bakeable:
+            bad.append(msg)
+        else:
+            print(f"[verify_glb] note: {msg} - and it cannot be run yet: the placements carry no `loc`")
+        return dict(placements=irr.get("placements"), meshes=irr.get("meshes_n"), order_recovered=False,
+                    loc_in_irradiance=bakeable)
     order = json.loads(op.read_text())
     glb = out / f"{order.get('glb', 'env.glb')}"
     if not glb.exists():
-        bad.append(f"instance_order.json refers to {glb.name}, which is not in {out}")
-        return dict(order_recovered=False)
+        # Only the Gate 1 out dir holds env.glb; on any other (gate0) this check has nothing to say and a
+        # `bad` would be a false failure of an unrelated pack (review r5, note 8).
+        print(f"[verify_glb] note: {glb.name} is not in {out}, skipping the Gate 4 instance-row check")
+        return None
+    if not order.get("loc_in_json", False):
+        msg = ("instance_order.json was produced by the PFA_INSTANCE_ORDER_HARNESS fallback "
+               "(loc_in_json: false): the row order comes from env.gltf BY OBJECT NAME, the join the bake "
+               "review ruled out. Re-run export/gate4_instance_order.py against an instance_irradiance.json "
+               "that carries per-placement `loc`")
+        if bakeable:
+            bad.append(msg + " - which this one does, so nothing excuses the harness file any more")
+        else:
+            print(f"[verify_glb] note: {msg}; manifest_v4.py emits no rgb array from it")
     if glb.stat().st_size != order.get("glb_bytes"):
         bad.append(f"instance_order.json was written against a {order.get('glb_bytes')} B {glb.name}, but "
                    f"the file on disk is {glb.stat().st_size} B - re-run web/tools/instance_rows.mjs and "
@@ -113,18 +135,25 @@ def instance_irradiance_check(out, bad):
     for nd in order["nodes"]:
         i = nd["gltf_node"]
         gi = ((doc["nodes"][i].get("extensions") or {}).get("EXT_mesh_gpu_instancing")
-              if 0 <= i < len(doc.get("nodes", [])) else None)
+              if isinstance(i, int) and 0 <= i < len(doc.get("nodes", [])) else None)
         if not gi:
             bad.append(f"{glb.name} node {i} carries no EXT_mesh_gpu_instancing, but instance_order.json "
                        f"maps {nd['count']} placement rows onto it")
             continue
         n_glb = accessor_count(doc, (gi.get("attributes") or {}).get("TRANSLATION"))
-        seg_total = sum(c for _, c in nd["segments"])
+        seg_total = sum(s[1] for s in nd["segments"])
         rows_total += seg_total
         if n_glb != nd["count"] or seg_total != nd["count"]:
             bad.append(f"{glb.name} node {i}: {n_glb} instance rows in the glb, {nd['count']} in "
                        f"instance_order.json, {seg_total} in its segments")
-        for m, c in nd["segments"]:
+        # [mesh, count, offset]: a mesh can own more than one segment in a node, and the offsets must
+        # tile that mesh's array exactly once - a wrong offset silently shifts a run of shrubs.
+        cursor = {}
+        for m, c, o in nd["segments"]:
+            if o != cursor.get(m, 0):
+                bad.append(f"{glb.name} node {i}: segment offset {o} for {m} but the running cursor is at "
+                           f"{cursor.get(m, 0)} - the per-mesh array would be read out of step")
+            cursor[m] = o + c
             per_mesh[m] = per_mesh.get(m, 0) + c
     mism = {m: (c, irr["meshes"].get(m, {}).get("n")) for m, c in per_mesh.items()
             if irr["meshes"].get(m, {}).get("n") != c}
@@ -142,6 +171,7 @@ def instance_irradiance_check(out, bad):
                 merged_nodes=[n["gltf_node"] for n in order["nodes"] if len(n["segments"]) > 1],
                 counts_match=not (mism or absent) and rows_total == irr["placements"],
                 join=order.get("method", "")[:80], loc_in_json=order.get("loc_in_json"),
+                loc_in_irradiance=bakeable,
                 worst_residual_m=order.get("worst_residual_m"),
                 worst_margin_ratio=order.get("worst_margin_ratio"),
                 order_recovered=True)
