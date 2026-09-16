@@ -30,6 +30,7 @@ import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { buildImpostors } from './impostors.js';
+import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
@@ -60,6 +61,7 @@ const CFG = {
 	impostors: qs.get( 'impostors' ) !== '0',           // Gate 3 octahedral far-tree impostors
 	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
 	impDebug: parseInt( qs.get( 'impdebug' ) || '0', 10 ),   // 1 raw, 2 alpha, 3 frame cell, 4 quad uv
+	probeEnv: qs.get( 'probe' ) !== '0',                // baked hero probe as the irradiance of unlit surfaces
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
@@ -188,7 +190,7 @@ async function fetchBuffer( url ) {
 
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
-let impostorGroup = null, impostorReport = null;
+let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -461,6 +463,30 @@ async function boot() {
 		loadTimes.tex_s = ( performance.now() - tt ) / 1000;
 		note( `pbr textures in ${loadTimes.tex_s.toFixed( 2 )} s; `
 			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
+	}
+
+	// QA-13-1: the baked hero probe as the irradiance of everything with no baked light ------------
+	// AFTER the PBR and detail passes (they may add an envMap or replace a material) and BEFORE the
+	// impostors, which are ShaderMaterials and take no environment at all.  Only in `baked` mode:
+	// ?lighting=direct is the untouched A/B.
+	if ( CFG.probeEnv && lightingMode === 'baked' && manifest.gate3 && manifest.gate3.probe ) {
+		try {
+			const rt = await buildProbeEnv( manifest.gate3.probe, {
+				renderer, note,
+				loadHdr: ( url ) => { progress.label = url.split( '/' ).pop(); return new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) ); },
+			} );
+			if ( rt ) {
+				probeTarget = rt;
+				probeReport = applyProbeEnv( scene, rt.texture, { note } );
+				probeReport.station = manifest.gate3.probe.station || null;
+				probeReport.positionBlender = manifest.gate3.probe.positionBlender || null;
+				note( 'probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest\'s own '
+					+ 'probe.use says it is not the diffuse environment; this use of it is the lead\'s QA-13-1 call '
+					+ 'and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.' );
+			}
+		} catch ( e ) { note( `probe env failed: ${e.message}; the sky-diffuse path stays` ); }
+	} else if ( manifest.gate3 && manifest.gate3.probe && ! CFG.probeEnv ) {
+		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
 	}
 
 	// far-tree impostors (Gate 4 item 2) ----------------------------------------------------------
@@ -975,6 +1001,7 @@ window.__pfaInfo = () => ( {
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
 	post: postState,
+	probeEnv: probeReport,
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
 		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
 		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },
