@@ -500,3 +500,29 @@ a per-mesh vertex bake would give 1 379 shrubs 28 wrong values. Decision: one sc
 instance's transform; ~16.5 kB), written to a new manifest block `lightmaps.instance_irradiance` {mesh: [rgb per placement in placement order], range_global, encoding}, consumed
 by the viewer as an InstancedBufferAttribute exactly like the ORN slot offsets (instancing kept; no COLOR_0). Estimated 3-5 GPU minutes. The 14 near trees keep their per-vertex
 COLOR_0 (one placement each).
+
+## 2026-09-16 · reflset=orn is the default reflection set (lead, session 4, from the r7 review's should-fix)
+The Gate 4 frame-rate entry said the default ships "everything on" while the viewer shipped `?reflset=orn` (the 436 ORN instances skipped in the reflection pass) as the look default.
+Authorised: it was measured within 0.03x on all four hero reflection boxes (the acceptance the frame-rate entry set for any lever) and saves ~2 ms; the backdrop stays in the
+reflection. The r7 review's two fix-now items (far-water uv leaving [0,1] under the grazing factor; the WIP water on by default before the tile is judged) go to the viewer
+engineer inside item 1; the default is decided by the lead after the 100 % open-water tile.
+
+## 2026-09-16 · Water tile judged (lead, session 4): the derived murk stays, the ripple must be 5-8x finer, the reflection's warm drain is reflSat
+Viewer 58fa59e: murk derived from MAT_water_lagoon's volume (σ_a, σ_s, g, 1.5 m, bed 0.12/0.10/0.06) gives an upwelling albedo (0.150,0.180,0.112) within 10 % of the Phase 5
+hand-set WATER_MURK; open-water lum 68.0 -> 87.3 (ref 118), the body term is now right and the residual is the reflection (0.45x in red). The 100 % open-water composite
+(renders/web/960/qa14_1_openwater_100pct.png): the viewer's water is a warped mirror with 40-80 px waves, contour banding from an 8-bit normal map times a large displacement,
+olive reflected stone, and featureless open water beside the reflection; the Cycles frame has 5-10 px crests everywhere breaking gold into short streaks. Decision: the new
+water is the default (settles the r7 review's fix-now 2); one more bounded pass — ripple frequency 5-8x finer with the displacement scaled down (2-5 cm ripples, 0.3-1 m streaks
+in metres), procedural or 16-bit normal, reflSat 0.66 tested at 1 before any other cause of the red deficit — then items 2-5 and the round-15 capture regardless.
+
+## 2026-09-16 · Shrub/reed bake re-run with a shadow-ray-only override; placements joined by location (lead, from the bake review 7d59c5f)
+The first per-placement bake (aaab677) made every card in the current job an opaque grey Principled with visible_shadow off so cut-out cards would not return 0 at transparent
+vertices (coverage 0.107 -> 0.859). The reviewer showed on the engineer's own probe arrays that this is not value-preserving: on vertices lit in both variants the opaque values
+are median 1.64x (up to 5.25x), because the real cut-out shadow is removed while the grey card still occludes indirect; and since the override was per job, only 28.9 % of a
+placement's nearest neighbours shared its job, so the numbers depended on the 4-way split. Decision: re-bake all 1 379 with the override applied to EVERY card in every job and
+only on non-shadow rays (Light Path Is Shadow Ray: the original cut-out chain for shadow rays, opaque grey otherwise; shadow visibility on), so the cut-out shadows are real and
+the result is partition-independent; verified by the probe ratio and one placement baked under two splits. 128 spp as before, ~43 GPU minutes accepted; Chrome pauses on
+status.json meanwhile. Join key: object names do not survive gltfpack -mi and the manifest's instancing.objects is truncated at 16, so the export joins by nearest instance
+translation with a stated tolerance and a loud failure on unmatched or duplicate rows; the name is a label. The 7 fully enclosed placements ship rgb 0 / cov 0 and the viewer
+falls back to the probe irradiance for cov == 0. The 14 near trees' COLOR_0 carries the same artefact (77-99 % exact zeros -> black patches): re-baked with the same override
+if it fits in 15 GPU minutes, else post-6a.
