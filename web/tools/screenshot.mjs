@@ -28,6 +28,7 @@
 //                     report where the walker ends, how often it was refused and the lowest ground it
 //                     stood on.  No input, no pointer lock, no rendered frame - it is the acceptance
 //                     evidence for "ground clamp, cannot walk into the lagoon" (Gate 4 item 5).
+//   --loading MS      shoot the loading screen MS after navigation, before waiting for __pfaReady
 //   --shots 0         measure only, write no PNGs (the performance pass)
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
 //   --breakdown N     item 6: split each presented frame into the JS spent in renderFrame() and the
@@ -193,6 +194,17 @@ try {
 
 	console.log( `[shot] ${url}` );
 	await page.goto( url, { waitUntil: 'domcontentloaded', timeout } );
+	// --loading MS: shoot the LOADING SCREEN before waiting for ready, so the progress panel a first
+	// visitor sees is evidence and not a claim.  The page is still loading, so this is deliberately
+	// racy: the delay picks a moment, and the shot records whatever the panel showed then.
+	if ( o.loading ) {
+		const wait = parseInt( o.loading, 10 ) || 1200;
+		await new Promise( ( r ) => setTimeout( r, wait ) );
+		const lf = out.replace( /(\.png)$/, '_loading$1' );
+		fs.mkdirSync( path.dirname( lf ), { recursive: true } );
+		await page.screenshot( { path: lf, captureBeyondViewport: false } );
+		console.log( `[shot] loading screen after ${wait} ms -> ${lf}` );
+	}
 	await page.waitForFunction( 'window.__pfaReady === true || window.__pfaError', { timeout, polling: 250 } );
 	const err = await page.evaluate( () => window.__pfaError || null );
 	if ( err ) throw new Error( `viewer boot failed:\n${err}` );

@@ -1,0 +1,2118 @@
+{
+ "generated": "2026-09-16T14:44:09.908Z",
+ "url": "http://127.0.0.1:56671/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate3%2Fmanifest.json&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
+ "size": [
+  2560,
+  1440
+ ],
+ "frames": 120,
+ "warmup": 24,
+ "gl": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+  "vendor": "Google Inc. (Apple)",
+  "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+ },
+ "schema": "pfa-phase6/4",
+ "lighting_mode": "baked",
+ "materials_mode": "pbr",
+ "materials": {
+  "materials_in_scene": 91,
+  "matched": 73,
+  "unmatched": [
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 0
+   },
+   {
+    "material": "MAT_leaf_cypress",
+    "distance_m": 0
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 32
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 33
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 65
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 70
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 89
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 92
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 93
+   },
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 95
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 96
+   },
+   {
+    "material": "MAT_leaf_pine",
+    "distance_m": 96
+   },
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 124
+   },
+   {
+    "material": "MAT_leaf_cypress",
+    "distance_m": 128
+   },
+   {
+    "material": "MAT_leaf_pine",
+    "distance_m": 131
+   },
+   {
+    "material": "MAT_leaf_broadleaf",
+    "distance_m": 154
+   }
+  ],
+  "sets_in_manifest": 62,
+  "sets_used": 62,
+  "sets_unused": [],
+  "textures": 214,
+  "unique_files": 181,
+  "bytes": 630548528,
+  "kept_glb_normal": 0,
+  "replaced_glb_normal": 33,
+  "kept_glb_ao": 0,
+  "colourspace_conflicts": [],
+  "formats": {
+   "RGBA_ASTC_4x4_Format": 181
+  },
+  "failed": [],
+  "factored": 73,
+  "constant_only": 0,
+  "flat_normal_constant": [],
+  "without_uv1": [],
+  "disposed": {
+   "disposed": 97,
+   "freed_bytes": 155197296,
+   "by_slot": {
+    "map": 64,
+    "normalMap": 33
+   },
+   "names": [
+    "887b50ac",
+    "6f08ff54",
+    "3f19f1c6",
+    "7e773c42",
+    "7cba3d4d",
+    "c3dd76eb",
+    "63ccf5aa",
+    "59c195b0",
+    "11b9d3e0",
+    "c2141a53",
+    "da4b490a",
+    "0aad7329"
+   ]
+  },
+  "order_count": 73,
+  "nearest_first": [
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_building",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_forest",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 3,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_hill",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 4,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 5,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 6,
+    "material": "MAT_EXP_ENVBD__MAT_bird_white",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 7,
+    "material": "MAT_EXP_ENVBD__MAT_lamp_post",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "metalnessMap"
+    ]
+   },
+   {
+    "rank": 8,
+    "material": "MAT_EXP_ENVBD__MAT_lawn",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   }
+  ]
+ },
+ "chunking": {
+  "candidates": 29,
+  "split": 16,
+  "chunks": 48,
+  "added": 32,
+  "batches": 16,
+  "opts": {}
+ },
+ "detail": {
+  "projection": "objxy",
+  "strength": 1,
+  "normal_scale": 1,
+  "sets_loaded": 4,
+  "materials": 29,
+  "textures": 12,
+  "bytes": 33554752,
+  "means": {
+   "concrete_wall_007": {
+    "albedo": [
+     0.537995,
+     0.505239,
+     0.43217
+    ],
+    "roughness": [
+     0.772646,
+     0.772646,
+     0.772646
+    ]
+   },
+   "concrete_wall_008": {
+    "albedo": [
+     0.543042,
+     0.511748,
+     0.441164
+    ],
+    "roughness": [
+     0.741141,
+     0.741141,
+     0.741141
+    ]
+   },
+   "gravelly_sand": {
+    "albedo": [
+     0.571771,
+     0.433472,
+     0.298813
+    ],
+    "roughness": [
+     0.792653,
+     0.792653,
+     0.792653
+    ]
+   },
+   "rock_boulder_dry": {
+    "albedo": [
+     0.657536,
+     0.609011,
+     0.550157
+    ],
+    "roughness": [
+     0.633512,
+     0.633512,
+     0.633512
+    ]
+   }
+  },
+  "by_set": {
+   "concrete_wall_007": 15,
+   "concrete_wall_008": 11,
+   "gravelly_sand": 2,
+   "rock_boulder_dry": 1
+  },
+  "unmatched_rules": [],
+  "applied": 29,
+  "failed": [],
+  "empty": [],
+  "fallbacks": [],
+  "stats": {
+   "detail_concrete_wall_007_albedo.ktx2": {
+    "mean8": 128.8,
+    "std8": 8.9,
+    "from": "manifest"
+   },
+   "detail_concrete_wall_007_roughness.ktx2": {
+    "mean8": 197,
+    "std8": 6.4,
+    "from": "manifest"
+   },
+   "detail_concrete_wall_007_normal.ktx2": {
+    "mean8": 127.4,
+    "std8": 6.7,
+    "from": "manifest"
+   },
+   "detail_concrete_wall_008_albedo.ktx2": {
+    "mean8": 130.5,
+    "std8": 8,
+    "from": "manifest"
+   },
+   "detail_concrete_wall_008_roughness.ktx2": {
+    "mean8": 189,
+    "std8": 1.7,
+    "from": "manifest"
+   },
+   "detail_concrete_wall_008_normal.ktx2": {
+    "mean8": 127.5,
+    "std8": 4.1,
+    "from": "manifest"
+   },
+   "detail_gravelly_sand_albedo.ktx2": {
+    "mean8": 110.5,
+    "std8": 14.8,
+    "from": "manifest"
+   },
+   "detail_gravelly_sand_roughness.ktx2": {
+    "mean8": 202.1,
+    "std8": 2.4,
+    "from": "manifest"
+   },
+   "detail_gravelly_sand_normal.ktx2": {
+    "mean8": 127.5,
+    "std8": 6.7,
+    "from": "manifest"
+   },
+   "detail_rock_boulder_dry_albedo.ktx2": {
+    "mean8": 155.3,
+    "std8": 22.6,
+    "from": "manifest"
+   },
+   "detail_rock_boulder_dry_roughness.ktx2": {
+    "mean8": 161.5,
+    "std8": 17.6,
+    "from": "manifest"
+   },
+   "detail_rock_boulder_dry_normal.ktx2": {
+    "mean8": 127.5,
+    "std8": 8.1,
+    "from": "manifest"
+   }
+  }
+ },
+ "bytes": {
+  "loaded": 638953134,
+  "planned": 522340337,
+  "unknownSize": [],
+  "files": [
+   {
+    "kind": "sky.camera",
+    "bytes": 3590278,
+    "sizeFrom": "HEAD",
+    "name": "sky_camera_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.glossy",
+    "bytes": 3661319,
+    "sizeFrom": "HEAD",
+    "name": "sky_glossy_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.diffuse",
+    "bytes": 2097202,
+    "sizeFrom": "HEAD",
+    "name": "sky_diffuse_1024x512.hdr"
+   },
+   {
+    "kind": "lut",
+    "bytes": 7415365,
+    "sizeFrom": "HEAD",
+    "name": "lut_agx_high_contrast_65.cube"
+   },
+   {
+    "kind": "glb:arch",
+    "bytes": 4613040,
+    "sizeFrom": "HEAD",
+    "name": "arch.glb"
+   },
+   {
+    "kind": "glb:orn",
+    "bytes": 154253424,
+    "sizeFrom": "HEAD",
+    "name": "orn.glb"
+   },
+   {
+    "kind": "glb:env",
+    "bytes": 36946188,
+    "sizeFrom": "HEAD",
+    "name": "env.glb"
+   },
+   {
+    "kind": "glb:ground",
+    "bytes": 1959104,
+    "sizeFrom": "HEAD",
+    "name": "ground.glb"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2242896,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 491922,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1643267,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2449540,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 605650,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1125700,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2260821,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 497583,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1658982,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2392867,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 591251,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1102371,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2851413,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 646953,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2129353,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2490664,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 530795,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1793469,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3339365,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 748096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2079134,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3095533,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 702428,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1396902,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2804485,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_podium_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 636212,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_podium_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2108776,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_podium_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1485557,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 400486,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1280655,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 2008203,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 449841,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1420029,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3328808,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 737571,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2501441,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3488792,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 827408,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1837186,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3367725,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 800429,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1618615,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1422419,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__paving_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 341811,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__paving_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 928575,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__paving_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 836814,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_building_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 590732,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_building_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 639008,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 751756,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 587808,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_normal.ktx2"
+   },
+   {
+    "kind": "tex:metalness",
+    "bytes": 11478,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_metallic.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 134591,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_forest_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 95306,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_forest_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 131960,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_forest_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 580865,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_hill_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 35979,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_hill_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 800525,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 307126,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 848817,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_tile_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 475143,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_tile_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 733854,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_tile_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 873148,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_skylight_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 951403,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_skylight_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 121134,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__bird_white_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 34890,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__bird_white_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 34332,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lamp_post_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 22972,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lamp_post_roughness.ktx2"
+   },
+   {
+    "kind": "tex:metalness",
+    "bytes": 20679,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lamp_post_metallic.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 904757,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lawn_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 582341,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__lawn_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3578131,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 909288,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2672743,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1147561,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 38096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 826019,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3691494,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 69786,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3031376,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 4401833,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 1007179,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2698342,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 4102834,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 891240,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3433027,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3689363,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 818390,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3473043,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3780167,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 841020,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3645781,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3801317,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 836955,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3655636,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3446980,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 823785,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3597453,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3439939,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 820599,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3550107,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3363276,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 810096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3529490,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3609292,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 851243,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3709017,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3583051,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 858018,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3493003,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3622554,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 866468,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3496026,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3644352,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 871701,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3568710,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3892387,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 848652,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3684105,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3532835,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 814140,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3590574,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 710685,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 571346,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 692006,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1555731,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 388416,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1731607,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1463192,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 325918,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1485218,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1392920,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 329114,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1458607,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1579603,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 374368,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1604848,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1428728,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 370358,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1576258,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1138152,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 884698,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1118952,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1136419,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 883057,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1114388,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1130599,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 880059,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1125880,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3407335,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 733203,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2939431,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3339817,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 748321,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2938913,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3355421,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 743270,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2996085,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1070807,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 840112,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1080497,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1067158,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 861525,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1105805,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 1044248,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 846913,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 1075358,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3740793,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 825585,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3591841,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3248473,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 737473,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3182602,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3413614,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 752683,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3201705,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3371758,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 755853,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 3206096,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map",
+    "bytes": 3081116,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness",
+    "bytes": 687573,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal",
+    "bytes": 2634035,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2"
+   }
+  ]
+ },
+ "load_s": {
+  "plan_s": 0.18519999998807907,
+  "sky_s": 0.6336000000238419,
+  "lut_s": 0.0645,
+  "glb_s": 2.325699999988079,
+  "tex_s": 2.809600000023842,
+  "total_s": 6.238800000011921
+ },
+ "glbs": [
+  {
+   "name": "arch.glb",
+   "cls": "arch",
+   "url": "http://127.0.0.1:56671/assets/gate1/arch.glb",
+   "meshes": 29,
+   "instancedMeshes": 17,
+   "instances": 552,
+   "tris": 947622,
+   "materials": 17,
+   "hiddenBoards": 0,
+   "bytes": 4613040,
+   "wall_s": 0.15689999997615814
+  },
+  {
+   "name": "orn.glb",
+   "cls": "orn",
+   "url": "http://127.0.0.1:56671/assets/gate1/orn.glb",
+   "meshes": 33,
+   "instancedMeshes": 32,
+   "instances": 435,
+   "tris": 1097468,
+   "materials": 33,
+   "hiddenBoards": 0,
+   "bytes": 154253424,
+   "wall_s": 1.146300000011921
+  },
+  {
+   "name": "env.glb",
+   "cls": "env",
+   "url": "http://127.0.0.1:56671/assets/gate1/env.glb",
+   "meshes": 50,
+   "instancedMeshes": 34,
+   "instances": 1526,
+   "tris": 679779,
+   "materials": 26,
+   "hiddenBoards": 127,
+   "bytes": 36946188,
+   "wall_s": 0.265
+  },
+  {
+   "name": "ground.glb",
+   "cls": "ground",
+   "url": "http://127.0.0.1:56671/assets/gate1/ground.glb",
+   "meshes": 4,
+   "instancedMeshes": 0,
+   "instances": 0,
+   "tris": 113043,
+   "materials": 4,
+   "hiddenBoards": 0,
+   "bytes": 1959104,
+   "wall_s": 0.018100000023841857
+  }
+ ],
+ "billboards": null,
+ "stations": [
+  {
+   "station": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 28.899999976158142,
+    "mean": 34.34453781512605,
+    "p95": 34,
+    "min": 8.199999988079071,
+    "max": 653.1999999880791,
+    "frames": 119
+   },
+   "fps_presented": 34.602076153113416,
+   "gpu_cost_ms": {
+    "median": 2.699999988079071,
+    "mean": 6.811666666467985,
+    "p95": 28.399999976158142,
+    "frames": 60
+   },
+   "fps_uncapped": 370.3703720056144,
+   "draw_calls": 314,
+   "triangles": 5238148,
+   "programs": 91,
+   "info_memory": {
+    "geometries": 156,
+    "textures": 307
+   },
+   "resident": {
+    "geometry_bytes": 62235126,
+    "instance_matrix_bytes": 168960,
+    "texture_bytes": 1171616256,
+    "geometries": 155,
+    "textures": 273,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 272,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1677830134,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 30,
+    "mean": 35.20504201710725,
+    "p95": 34.30000001192093,
+    "min": 2.300000011920929,
+    "max": 657,
+    "frames": 119
+   },
+   "fps_presented": 33.333333333333336,
+   "gpu_cost_ms": {
+    "median": 2.5,
+    "mean": 5.561666666467985,
+    "p95": 28.700000047683716,
+    "frames": 60
+   },
+   "fps_uncapped": 400,
+   "draw_calls": 304,
+   "triangles": 5059320,
+   "programs": 91,
+   "info_memory": {
+    "geometries": 160,
+    "textures": 307
+   },
+   "resident": {
+    "geometry_bytes": 62235126,
+    "instance_matrix_bytes": 168960,
+    "texture_bytes": 1171616256,
+    "geometries": 155,
+    "textures": 273,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 272,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1677830134,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 3,
+   "name": "CAM_qa_03_colonnade_walk",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 30.80000001192093,
+    "mean": 37.136134453681336,
+    "p95": 37.80000001192093,
+    "min": 12,
+    "max": 707.7999999523163,
+    "frames": 119
+   },
+   "fps_presented": 32.46753245496613,
+   "gpu_cost_ms": {
+    "median": 2.699999988079071,
+    "mean": 6.754999999205271,
+    "p95": 30.100000023841858,
+    "frames": 60
+   },
+   "fps_uncapped": 370.3703720056144,
+   "draw_calls": 324,
+   "triangles": 5440680,
+   "programs": 91,
+   "info_memory": {
+    "geometries": 164,
+    "textures": 307
+   },
+   "resident": {
+    "geometry_bytes": 62235126,
+    "instance_matrix_bytes": 168960,
+    "texture_bytes": 1171616256,
+    "geometries": 155,
+    "textures": 273,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 272,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1677830134,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 4,
+   "name": "CAM_qa_04_rotunda_ceiling",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 22.100000023841858,
+    "mean": 27.02352941186488,
+    "p95": 27.19999998807907,
+    "min": 18.899999976158142,
+    "max": 509.30000001192093,
+    "frames": 119
+   },
+   "fps_presented": 45.248868729465286,
+   "gpu_cost_ms": {
+    "median": 0.800000011920929,
+    "mean": 1.5033333331346512,
+    "p95": 1.600000023841858,
+    "frames": 60
+   },
+   "fps_uncapped": 1249.9999813735487,
+   "draw_calls": 158,
+   "triangles": 2204990,
+   "programs": 91,
+   "info_memory": {
+    "geometries": 164,
+    "textures": 307
+   },
+   "resident": {
+    "geometry_bytes": 62235126,
+    "instance_matrix_bytes": 168960,
+    "texture_bytes": 1171616256,
+    "geometries": 155,
+    "textures": 273,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 272,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1677830134,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 5,
+   "name": "CAM_qa_05_south_lawn",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 28.30000001192093,
+    "mean": 34.115126050319994,
+    "p95": 31.19999998807907,
+    "min": 12.800000011920929,
+    "max": 653.1999999880791,
+    "frames": 119
+   },
+   "fps_presented": 35.33568903105179,
+   "gpu_cost_ms": {
+    "median": 2.400000035762787,
+    "mean": 5.490000000596046,
+    "p95": 28.69999998807907,
+    "frames": 60
+   },
+   "fps_uncapped": 416.6666604578496,
+   "draw_calls": 297,
+   "triangles": 4863090,
+   "programs": 91,
+   "info_memory": {
+    "geometries": 164,
+    "textures": 307
+   },
+   "resident": {
+    "geometry_bytes": 62235126,
+    "instance_matrix_bytes": 168960,
+    "texture_bytes": 1171616256,
+    "geometries": 155,
+    "textures": 273,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 272,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1677830134,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 6,
+   "name": "CAM_qa_06_aerial",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 32.09999996423721,
+    "mean": 38.49831932783127,
+    "p95": 39.10000002384186,
+    "min": 8.699999988079071,
+    "max": 733.1999999880791,
+    "frames": 119
+   },
+   "fps_presented": 31.152648009785217,
+   "gpu_cost_ms": {
+    "median": 2.699999988079071,
+    "mean": 7.058333333333334,
+    "p95": 32.40000003576279,
+    "frames": 60
+   },
+   "fps_uncapped": 370.3703720056144,
+   "draw_calls": 336,
+   "triangles": 5597764,
+   "programs": 91,
+   "info_memory": {
+    "geometries": 164,
+    "textures": 307
+   },
+   "resident": {
+    "geometry_bytes": 62235126,
+    "instance_matrix_bytes": 168960,
+    "texture_bytes": 1171616256,
+    "geometries": 155,
+    "textures": 273,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 272,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1677830134,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  }
+ ]
+}
