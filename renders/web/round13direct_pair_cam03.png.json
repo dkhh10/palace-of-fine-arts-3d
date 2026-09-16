@@ -1,0 +1,225 @@
+{
+ "station": 3,
+ "station_name": "cam03 colonnade walk",
+ "viewer": {
+  "path": "renders/web/round13direct_cam03.png",
+  "size": [
+   1920,
+   1080
+  ]
+ },
+ "reference": {
+  "path": "renders/previews/qa/round09_03_colonnade_walk.png",
+  "size": [
+   1280,
+   720
+  ],
+  "label": "Eevee round-09 (no Cycles frame)"
+ },
+ "panel_size": [
+  1280,
+  720
+ ],
+ "frame": {
+  "reference_luma": 39.34,
+  "viewer_luma": 146.85,
+  "delta_luma": 107.52,
+  "ratio_linear": 7.504,
+  "mean_abs_diff_255": 112.62,
+  "rms_diff_255": 128.14
+ },
+ "cells_3x4": [
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "box": [
+    0,
+    0,
+    320,
+    240
+   ],
+   "reference_luma": 28.65,
+   "viewer_luma": 166.01,
+   "delta_luma": 137.36,
+   "ratio_linear": 19.6897
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "box": [
+    320,
+    0,
+    640,
+    240
+   ],
+   "reference_luma": 62.64,
+   "viewer_luma": 172.67,
+   "delta_luma": 110.03,
+   "ratio_linear": 4.8126
+  },
+  {
+   "cell": [
+    0,
+    2
+   ],
+   "box": [
+    640,
+    0,
+    960,
+    240
+   ],
+   "reference_luma": 76.51,
+   "viewer_luma": 136.71,
+   "delta_luma": 60.19,
+   "ratio_linear": 2.06
+  },
+  {
+   "cell": [
+    0,
+    3
+   ],
+   "box": [
+    960,
+    0,
+    1280,
+    240
+   ],
+   "reference_luma": 15.11,
+   "viewer_luma": 117.15,
+   "delta_luma": 102.04,
+   "ratio_linear": 37.7552
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "box": [
+    0,
+    240,
+    320,
+    480
+   ],
+   "reference_luma": 19.97,
+   "viewer_luma": 186.79,
+   "delta_luma": 166.82,
+   "ratio_linear": 62.3826
+  },
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "box": [
+    320,
+    240,
+    640,
+    480
+   ],
+   "reference_luma": 50.44,
+   "viewer_luma": 177.09,
+   "delta_luma": 126.65,
+   "ratio_linear": 6.9038
+  },
+  {
+   "cell": [
+    1,
+    2
+   ],
+   "box": [
+    640,
+    240,
+    960,
+    480
+   ],
+   "reference_luma": 40.9,
+   "viewer_luma": 139.62,
+   "delta_luma": 98.72,
+   "ratio_linear": 5.5367
+  },
+  {
+   "cell": [
+    1,
+    3
+   ],
+   "box": [
+    960,
+    240,
+    1280,
+    480
+   ],
+   "reference_luma": 15.42,
+   "viewer_luma": 113.11,
+   "delta_luma": 97.68,
+   "ratio_linear": 37.8231
+  },
+  {
+   "cell": [
+    2,
+    0
+   ],
+   "box": [
+    0,
+    480,
+    320,
+    720
+   ],
+   "reference_luma": 35.64,
+   "viewer_luma": 115.91,
+   "delta_luma": 80.27,
+   "ratio_linear": 9.6754
+  },
+  {
+   "cell": [
+    2,
+    1
+   ],
+   "box": [
+    320,
+    480,
+    640,
+    720
+   ],
+   "reference_luma": 53.47,
+   "viewer_luma": 178.21,
+   "delta_luma": 124.74,
+   "ratio_linear": 8.313
+  },
+  {
+   "cell": [
+    2,
+    2
+   ],
+   "box": [
+    640,
+    480,
+    960,
+    720
+   ],
+   "reference_luma": 56.73,
+   "viewer_luma": 138.0,
+   "delta_luma": 81.27,
+   "ratio_linear": 4.7868
+  },
+  {
+   "cell": [
+    2,
+    3
+   ],
+   "box": [
+    960,
+    480,
+    1280,
+    720
+   ],
+   "reference_luma": 16.55,
+   "viewer_luma": 120.98,
+   "delta_luma": 104.43,
+   "ratio_linear": 39.1189
+  }
+ ]
+}

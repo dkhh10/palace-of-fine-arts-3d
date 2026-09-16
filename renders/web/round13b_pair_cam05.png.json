@@ -1,0 +1,225 @@
+{
+ "station": 5,
+ "station_name": "cam05 south lawn",
+ "viewer": {
+  "path": "renders/web/round13b_cam05.png",
+  "size": [
+   1920,
+   1080
+  ]
+ },
+ "reference": {
+  "path": "renders/previews/qa/round09_05_south_lawn.png",
+  "size": [
+   1280,
+   720
+  ],
+  "label": "Eevee round-09 (no Cycles frame)"
+ },
+ "panel_size": [
+  1280,
+  720
+ ],
+ "frame": {
+  "reference_luma": 145.2,
+  "viewer_luma": 163.08,
+  "delta_luma": 17.88,
+  "ratio_linear": 1.1782,
+  "mean_abs_diff_255": 32.09,
+  "rms_diff_255": 55.23
+ },
+ "cells_3x4": [
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "box": [
+    0,
+    0,
+    320,
+    240
+   ],
+   "reference_luma": 180.25,
+   "viewer_luma": 180.43,
+   "delta_luma": 0.18,
+   "ratio_linear": 1.0019
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "box": [
+    320,
+    0,
+    640,
+    240
+   ],
+   "reference_luma": 169.86,
+   "viewer_luma": 172.88,
+   "delta_luma": 3.02,
+   "ratio_linear": 1.0427
+  },
+  {
+   "cell": [
+    0,
+    2
+   ],
+   "box": [
+    640,
+    0,
+    960,
+    240
+   ],
+   "reference_luma": 165.55,
+   "viewer_luma": 169.89,
+   "delta_luma": 4.34,
+   "ratio_linear": 1.0673
+  },
+  {
+   "cell": [
+    0,
+    3
+   ],
+   "box": [
+    960,
+    0,
+    1280,
+    240
+   ],
+   "reference_luma": 188.33,
+   "viewer_luma": 188.18,
+   "delta_luma": -0.14,
+   "ratio_linear": 0.9984
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "box": [
+    0,
+    240,
+    320,
+    480
+   ],
+   "reference_luma": 171.08,
+   "viewer_luma": 180.92,
+   "delta_luma": 9.84,
+   "ratio_linear": 1.0772
+  },
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "box": [
+    320,
+    240,
+    640,
+    480
+   ],
+   "reference_luma": 134.29,
+   "viewer_luma": 143.68,
+   "delta_luma": 9.39,
+   "ratio_linear": 1.133
+  },
+  {
+   "cell": [
+    1,
+    2
+   ],
+   "box": [
+    640,
+    240,
+    960,
+    480
+   ],
+   "reference_luma": 135.98,
+   "viewer_luma": 148.72,
+   "delta_luma": 12.73,
+   "ratio_linear": 1.1752
+  },
+  {
+   "cell": [
+    1,
+    3
+   ],
+   "box": [
+    960,
+    240,
+    1280,
+    480
+   ],
+   "reference_luma": 202.04,
+   "viewer_luma": 202.74,
+   "delta_luma": 0.7,
+   "ratio_linear": 1.0079
+  },
+  {
+   "cell": [
+    2,
+    0
+   ],
+   "box": [
+    0,
+    480,
+    320,
+    720
+   ],
+   "reference_luma": 94.59,
+   "viewer_luma": 120.96,
+   "delta_luma": 26.36,
+   "ratio_linear": 1.4519
+  },
+  {
+   "cell": [
+    2,
+    1
+   ],
+   "box": [
+    320,
+    480,
+    640,
+    720
+   ],
+   "reference_luma": 92.07,
+   "viewer_luma": 138.46,
+   "delta_luma": 46.39,
+   "ratio_linear": 1.9544
+  },
+  {
+   "cell": [
+    2,
+    2
+   ],
+   "box": [
+    640,
+    480,
+    960,
+    720
+   ],
+   "reference_luma": 102.63,
+   "viewer_luma": 151.25,
+   "delta_luma": 48.62,
+   "ratio_linear": 1.9091
+  },
+  {
+   "cell": [
+    2,
+    3
+   ],
+   "box": [
+    960,
+    480,
+    1280,
+    720
+   ],
+   "reference_luma": 105.73,
+   "viewer_luma": 158.88,
+   "delta_luma": 53.15,
+   "ratio_linear": 1.9651
+  }
+ ]
+}
