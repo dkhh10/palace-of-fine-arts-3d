@@ -719,3 +719,7 @@ Lead: refs 02/04 chained after 05/06 (QA: the round-09 cam02 reference predates 
 ## 2026-09-16 · Bake agent dispatched (phase6-bake, docs/briefs/phase6_gate3_rebake_ceiling.md): CPU prep now, the Cycles bake held until the lead's reference renders finish
 Agents live: viewer (mist/range hookup, QA-13-1 + olive diagnosis), export (leaf alphaMode MASK), bake (ceiling relay), reviewer (viewer r5b). GPU: refs 05/06 rendering, 02/04 chained (logs renders/logs/qa_r13_cycles_refs_b/_c.log).
 Next: merge viewer on r5b; env.glb leaf fix re-sync; bake go-signal when qa_render_round exits; Gate 4 capture + QA 14 vs round13_0N_cycles references.
+
+## 2026-09-16 · Viewer diagnoses in (phase6-viewer 1b7ad84; mist + range hookups 8628736): QA-13-1 = backdrop blocks under the diffuse PMREM (viewer fixes via the direct path); QA-12b-1 mechanism disputed, re-measure with post on + bake-scene check
+Viewer told: backdrop/unpatched surfaces onto the direct path; re-measure olive at cam02/06 with ?post=all. Bake agent told: read-only check of the bake scene's bounce materials, gallery fills, world, bounces. Tooling: __pfaPick pixel raycast (note: three's Raycaster does not skip invisible objects). renders/web tracked 44.9 MB.
+Waiting: r5b review -> merge viewer; export leaf fix; refs 05/06 then 02/04; bake step 1. Next: bake go-signal at GPU free; Gate 4 capture + QA 14.

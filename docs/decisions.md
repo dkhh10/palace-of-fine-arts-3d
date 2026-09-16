@@ -397,3 +397,16 @@ The four MAT_leaf_* materials reached env.glb without alphaMode, so glTF drew ev
 sets alphaMode MASK with the cutoff read from each source material in master_delivery.blend and verify_glb asserts MASK/BLEND on every material whose base colour texture carries alpha;
 a viewer-side alphaTest would pick the cutoff by guess. The far-tree impostors (16 InstancedMeshes, 127 trees, 16 draw calls) needed a V flip because the KTX2 atlases are top-down
 (KTXorientation rd) while the manifest's frame rows count from the bottom; recorded in web/README.md with the measured codes so the bake side can align the convention at the next bake.
+
+## 2026-09-16 · QA-13-1 and QA-12b-1 after the viewer's pixel picks (lead)
+QA-13-1 (blue bays between the north colonnade columns) is the backdrop city blocks, not a colonnade surface: env.glb carries no TEXCOORD_1, nothing patched them, and they take
+all their light from scene.environment, which Gate 3 switched from the glossy equirect to the DIFFUSE sky PMREM (3.9 % -> 23.0 % of the band B > R+20). Decision: viewer-side; the
+unpatched surfaces go on the existing direct path (sun Lambert + diffuse sky at the `direct` mode's weights). No UV2 or lightmap for the backdrop: it is far and never hero-critical.
+QA-12b-1 (olive cast in shade, 19.7 % at cam02): the viewer engineer showed the green is lightmap texel x warm albedo with the texel itself blue in shade, and proposed that
+`use_pass_color=false` bakes the indirect against a white albedo. Not accepted as the mechanism: Cycles' colour toggle strips only the baked surface's own albedo, bounced light keeps
+the neighbours' colours, and bake_lm.py does not touch bounces. Two candidates are checked before any re-bake is considered: round13b was captured with post OFF and so lacks the
+compositor's warm airlight (cap 0.25, k 5 as an extinction coefficient) that every shaded Phase 5 pixel has (viewer re-measures with ?post=all now that compositor.mist is real);
+and the bake scene's bounce-surface materials / Cycles-only gallery fills / world (bake engineer, read-only). A colour-on lightmap bake is not an option: it would bake albedo at
+5-17 cm/texel under the 2K PBR maps.
+Mist: the viewer had implemented the haze falloff 5.0 as an exponent; scripts/light_build.py uses it as an extinction coefficient, airlight = cap * (1 - exp(-k * mist)) — corrected,
+hero luma with post 127.3 -> 131.8 (Cycles 140.0).
