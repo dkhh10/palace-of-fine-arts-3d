@@ -221,6 +221,19 @@ def main(out_dir):
         if dup_names and not split:
             bad.append(f"{cls}: {dup_names} materials share a name but no mesh was split for the slot-merge "
                        f"guard - gltfpack merged names away or the export wrote a duplicate by accident")
+        # Review finding 3: the guard has to hold in BOTH directions. The split only works because `-km`
+        # (keep named materials, so equal-named materials are never merged) is on arch and env; orn and
+        # ground are packed `-cc -mi -kv` with no `-km`, so a split on either would be silently undone and
+        # the merged mesh would take one lightmap slot for two objects again. Neither is split today
+        # (gltf_gate1.json merge_split: arch 2 meshes, orn/env/ground none), and this makes that a rule
+        # rather than a coincidence: a split class must carry -km AND show its duplicate names in the glb.
+        if split and not strict:
+            bad.append(f"{cls}: {len(split)} mesh(es) were split for the slot-merge guard ({split[:4]}) but "
+                       f"the class is packed without -km ({flags.get(cls)}) - gltfpack merges the same-named "
+                       f"material copies back and the split does nothing")
+        if split and dup_names < len(split):
+            bad.append(f"{cls}: {len(split)} mesh(es) were split for the slot-merge guard but the glb holds "
+                       f"only {dup_names} duplicate material name(s) - gltfpack merged the copies back")
         # Every per-instance lightmap slot needs a MESH OF ITS OWN in the glb, or the viewer cannot address
         # it: it matches a drawn mesh (or instance) by world centre against `orn_slots`. Viewer round 13
         # found 114 of the 988 slots unreachable because gltfpack had merged the colonnade colbase

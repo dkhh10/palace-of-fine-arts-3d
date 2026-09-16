@@ -1310,3 +1310,19 @@ export/sync_main.sh
     The per-vertex mean ratio glb/npz is 0.89-1.31 because the exporter splits 6-36 % more vertices; the
     assertion is on the mean of the DISTINCT values, which a split cannot move (within 1 % on all 14).
     `export/name_sweep.py`: 2 540 objects, 127 exempt, **0 to explain**.
+24. **Review fixes (docs/reviews/phase6_export_gate3_review.md, findings 1-3, all three "fix now").**
+    (1)+(2) The encoder and the checker now resolve the Gate 3 hand-off **the same way**: MAIN's
+    `export/out/gate3`, through `PFA_MAIN_ROOT` (`gate3_relay_check.py` `__main__`; it used to hard-code the
+    MAIN path and to prefer a LOCAL `out/gate3` whenever one held a `lightmap_uv2.npz`, so it could have
+    validated the glbs against a file `gltf_gate1.py` never read). A missing npz now prints which file and
+    which directory and exits 1, instead of raising `FileNotFoundError` out of `np.load`.
+    (3) The material-split guard is **bidirectional**: a class with duplicate names but no split still fails,
+    and now a split class must also carry `-km` **and** show at least `len(split)` duplicate names in the
+    packed glb. `-km` is on arch and env only; **orn and ground are packed `-cc -mi -kv` with no `-km`, and
+    neither is split today** (`merge_split`: arch 2 meshes, orn/env/ground none) — the guard makes that a rule
+    instead of a coincidence, so a future split on either fails loudly rather than being merged back in
+    silence. Verified by a negative run with a fake split injected on orn: both new assertions fire.
+25. **`docs/briefs/phase6_budget.md` is stale for arch and env** (the lead owns that file; not edited here).
+    It predates the Gate 3 re-packs: arch.glb is **4 613 040 B** at **29 draw calls** (was quoted before the
+    `-kv` re-pack and the slot-merge material split) and env.glb is **36 951 988 B** (before `-kv`, `-vc 16`
+    and the 14 meshes' `COLOR_0`). orn.glb (154 253 424 B) and ground.glb (1 959 104 B) are unchanged.

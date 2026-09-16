@@ -18,6 +18,7 @@ What it proves, per mesh, from the files themselves - never from the script that
 No Blender, no GPU. Exit 1 on any mismatch.
 """
 import json
+import os
 import struct
 import sys
 from pathlib import Path
@@ -93,6 +94,16 @@ def main(out_dir, g3_dir, g3_out=None):
     packed = {cls: glb_json(out / f"{cls}.glb") for cls in CLASSES if (out / f"{cls}.glb").exists()}
     packed_attr = {cls: {k for m in d.get("meshes", []) for pr in m["primitives"] for k in pr["attributes"]}
                    for cls, d in packed.items()}
+
+    # Review finding 2: both hand-off files come from the SAME directory the encoder read, and a missing one
+    # says so instead of raising FileNotFoundError out of np.load three frames deep.
+    missing = [n for n in ("lightmap_uv2.npz", "vertex_irradiance.npz") if not (g3 / n).exists()]
+    if missing:
+        for n in missing:
+            print(f"[gate3_relay] FAIL {g3 / n} does not exist - the Gate 3 hand-off is incomplete. This is "
+                  f"the same directory export/gltf_gate1.py encodes from (MAIN's export/out/gate3, or "
+                  f"PFA_MAIN_ROOT's); pass it as argv[2] if the bake wrote it somewhere else.", file=sys.stderr)
+        return 1
 
     # ---------------------------------------------------------------- 1. the seven re-laid UV2 layers
     uv2 = {}
@@ -294,9 +305,15 @@ if __name__ == "__main__":
     # the Gate 3 npz files are the bake engineer's, and they live in the MAIN checkout (export/out/ is
     # gitignored and this worktree never ran the bake); the status file is written HERE and reaches MAIN
     # through export/sync_main.sh, like every other export output.
-    main_g3 = Path("/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate3")
-    local_g3 = ROOT / "export" / "out" / "gate3"
-    src = local_g3 if (local_g3 / "lightmap_uv2.npz").exists() else main_g3
+    #   Review findings 1-2 (docs/reviews/phase6_export_gate3_review.md): this used to hard-code the MAIN
+    # path and to prefer a LOCAL out/gate3 whenever it held a lightmap_uv2.npz, while the ENCODER
+    # (gltf_gate1.py:146, g1.MAIN_ROOT / export/out/gate3) always reads MAIN. Checking the glb against a file
+    # the encoder never read makes the PASS meaningless, so both halves now resolve the SAME way: MAIN,
+    # through PFA_MAIN_ROOT, with gate0_common's path as the default (the same expression gate1_common.py:20
+    # uses, spelled out here because this script must run without bpy).
+    main_g3 = Path(os.environ.get("PFA_MAIN_ROOT",
+                                  "/Users/dk/Projects/3d render blender 3rd attempt building")) \
+        / "export" / "out" / "gate3"
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "export" / "out" / "gate1",
-                  sys.argv[2] if len(sys.argv) > 2 else src,
-                  sys.argv[3] if len(sys.argv) > 3 else local_g3))
+                  sys.argv[2] if len(sys.argv) > 2 else main_g3,
+                  sys.argv[3] if len(sys.argv) > 3 else ROOT / "export" / "out" / "gate3"))
