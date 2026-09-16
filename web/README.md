@@ -539,7 +539,25 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
-## QA notes — read before scoring (Gate 4 / QA 14)
+## QA notes — read before scoring (Gate 4 / QA 15)
+
+### Round 7 additions (QA 15)
+* **The water changed twice.** The murk is derived (see "The upwelling term, derived") and the ripple is
+  procedural in metres (see the round-7 bullets). `?watermurk=0.020,0.035,0.030` is the round-14 murk;
+  there is no flag back to the round-6 texture ripple — it was an 8-bit map and its banding was a
+  scored defect, so it was deleted rather than kept as a switch. Commit `58fa59e` is the last frame
+  with it.
+* **Bloom ships at 2x the manifest threshold** (`BLOOM_THRESHOLD_SCALE`, postChain.js), because
+  UnrealBloomPass thresholds Rec.709 luminance and Blender's Glare node does not.
+  `?bloomthr=6.4136` restores the manifest value; `?bloomrad=` exists but is not the lever.
+* **The loading bar's denominator folds in off-plan bytes**, so it can lag but never exceed 100 %;
+  `bytes.offPlan` in the capture sidecar names every url the manifest plan did not list.
+* **The walk shore margin is 0.15 m** (`SHORE_MARGIN_M`, walk.js), up from 0.05, because three of the
+  24 round-14 probes stood at -1.225 m — 25 mm below the WATER_Z + 0.1 acceptance line.
+* **`requestfailed:` fails a scored capture**, except `net::ERR_ABORTED`, which is a cancelled request
+  and which a clean capture logs 189 of.
+
+### Carried from Gate 4 / QA 14
 
 * **The parity references changed.** `gate1_sheets.py` now points stations **2-6** at
   `renders/previews/qa/round13_0{2,3,4,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
