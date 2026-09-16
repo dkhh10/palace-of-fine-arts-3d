@@ -723,3 +723,7 @@ Next: merge viewer on r5b; env.glb leaf fix re-sync; bake go-signal when qa_rend
 ## 2026-09-16 · Viewer diagnoses in (phase6-viewer 1b7ad84; mist + range hookups 8628736): QA-13-1 = backdrop blocks under the diffuse PMREM (viewer fixes via the direct path); QA-12b-1 mechanism disputed, re-measure with post on + bake-scene check
 Viewer told: backdrop/unpatched surfaces onto the direct path; re-measure olive at cam02/06 with ?post=all. Bake agent told: read-only check of the bake scene's bounce materials, gallery fills, world, bounces. Tooling: __pfaPick pixel raycast (note: three's Raycaster does not skip invisible objects). renders/web tracked 44.9 MB.
 Waiting: r5b review -> merge viewer; export leaf fix; refs 05/06 then 02/04; bake step 1. Next: bake go-signal at GPU free; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Export leaf alpha in (phase6-export 35865b8): 8 env card materials alphaMode MASK @ 0.5 (read from master_delivery: alpha_threshold under HASHED; the leaf materials route through a node group, which is why the defect survived), synced
+verify_glb asserts MASK/BLEND + effective cutoff on every alpha-carrying base colour texture; the stale-glb pin now forces a full re-pack (toktx 258 s) whenever the glTFs regenerate. Review of 77063c6..35865b8 dispatched -> docs/reviews/phase6_export_gate3_r4_review.md; viewer told to re-sync and confirm cam02.
+Next: merge export r4 on review; r5b review -> merge viewer; refs; bake step 1; Gate 4 capture + QA 14.
