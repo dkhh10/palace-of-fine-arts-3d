@@ -24,6 +24,14 @@ if [ -d "$ROOT/export/out/gate2" ]; then
         "$ROOT/export/out/gate2/" "$MAIN/export/out/gate2/"
   echo "[gate2] synced to $MAIN/export/out/gate2 ($(du -sk "$MAIN/export/out/gate2" | cut -f1) KiB)"
 fi
+# Gate 3: this worktree only WRITES the export hand-off (uv2_relay_status.json) into out/gate3; the bake's
+# own gate3 outputs live in MAIN and must not be touched, hence no --delete and no blends/EXRs from here.
+if [ -d "$ROOT/export/out/gate3" ]; then
+  mkdir -p "$MAIN/export/out/gate3"
+  rsync -a --exclude 'gate3_*.blend*' --exclude 'tex/' \
+        "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
+  echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
+fi
 mkdir -p "$MAIN/export/out/bake_queue"
 cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
 for f in "$ROOT"/renders/web/gate0_*.png(N); do cp -f "$f" "$MAIN/renders/web/"; done

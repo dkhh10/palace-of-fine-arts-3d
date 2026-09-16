@@ -109,9 +109,18 @@ if [ "$1" = "--gate1" ]; then
     # are identical, so nine of the ten names vanished and nine Gate 2 backdrop texture sets matched no scene
     # material (docs/reviews/phase6_viewer_gate2_review.md). env keeps its names; arch/orn/ground are frozen
     # byte-identical this round, and verify_glb reports - without failing - any names they lose.
-    EXTRA=()
-    [ "$cls" = env ] && EXTRA=(-vpf -km)
-    [ "$cls" = arch ] && EXTRA=(-vpf -km)   # QA-12-1 re-pack: same flags as env, named materials kept
+    # -kv (keep source vertex attributes even if they aren't used): gltfpack strips any attribute no material
+    # references, and NOTHING in the glb references UV2 or the vertex irradiance - the lightmap textures are
+    # separate KTX2 files the viewer attaches from the manifest. Measured on the Gate 2 glbs: arch.gltf and
+    # ground.gltf carry TEXCOORD_1 on all 29 / 4 meshes and arch.glb / ground.glb carried NONE of it, so no
+    # lightmap could be applied to anything, re-laid or not (orn.gltf's COLOR_0 and TEXCOORD_1 went the same
+    # way). arch / env / ground therefore take -kv from Gate 3 on. orn deliberately does NOT: -kv would also
+    # restore the ORN meshes' own COLOR_0, which three.js multiplies into base colour, and that is a look
+    # change for the lead to decide (it also blocks the ORN slot-atlas lightmap - reported, not fixed here).
+    EXTRA=(-kv)
+    [ "$cls" = env ] && EXTRA=(-vpf -km -kv)
+    [ "$cls" = arch ] && EXTRA=(-vpf -km -kv)   # QA-12-1 re-pack: same flags as env, named materials kept
+    [ "$cls" = orn ] && EXTRA=()
     if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else

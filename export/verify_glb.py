@@ -34,6 +34,22 @@ def accessor_count(doc, idx):
     return doc["accessors"][idx]["count"] if idx is not None else 0
 
 
+def attr_tris(doc, attr):
+    """Triangles in the file's MESHES (not placements) whose primitive carries `attr`. gltfpack merges
+    primitives that share a material, so a primitive or vertex count proves nothing across the pack while the
+    triangle total is preserved to within the degenerate-triangle tolerance."""
+    t = 0
+    for me in doc.get("meshes", []):
+        for pr in me.get("primitives", []):
+            if attr not in (pr.get("attributes") or {}):
+                continue
+            if "indices" in pr:
+                t += accessor_count(doc, pr["indices"]) // 3
+            else:
+                t += accessor_count(doc, (pr.get("attributes") or {}).get("POSITION")) // 3
+    return t
+
+
 def mesh_centre(doc, mesh_idx):
     """Centre of a mesh's own bounding box, from the POSITION accessors' min/max (no codec needed)."""
     lo = [1e30] * 3
@@ -152,6 +168,26 @@ def main(out_dir):
         elif missing:
             print(f"[verify_glb] note {cls}: {len(missing)} material names merged away by gltfpack "
                   f"(no -km on this class): {missing[:6]}")
+        # Gate 3: the two hand-off attributes have to SURVIVE the pack. gltfpack strips every attribute no
+        # material references, and neither UV2 nor the near-tree irradiance is referenced by a glb material -
+        # the lightmap textures are separate KTX2 the viewer attaches from the manifest. Before Gate 3,
+        # arch.gltf carried TEXCOORD_1 on all 29 meshes and arch.glb carried none of it.
+        src_p = out / f"{cls}.gltf"
+        keeps_attrs = "-kv" in (flags.get(cls) or "")
+        if src_p.exists():
+            src = json.loads(src_p.read_text())
+            for attr in ("TEXCOORD_1", "COLOR_0"):
+                want_a, have_a = attr_tris(src, attr), attr_tris(doc, attr)
+                rows[cls][f"tris_with_{attr}"] = have_a
+                rows[cls][f"tris_with_{attr}_in_gltf"] = want_a
+                if not want_a:
+                    continue
+                if not keeps_attrs:
+                    print(f"[verify_glb] note {cls}: {attr} on {want_a} triangles in {cls}.gltf, {have_a} in "
+                          f"the glb (packed without -kv, so gltfpack strips what no material references)")
+                elif abs(have_a - want_a) / want_a > 0.01:
+                    bad.append(f"{cls}: {attr} reaches {have_a} triangles in the packed glb but {want_a} in "
+                               f"{cls}.gltf - the pack dropped the attribute the Gate 3 hand-off needs")
         want = want_tris.get(cls, 0)
         rows[cls]["tris_delta"] = tris - want
         rows[cls]["tris_delta_pct"] = round(100.0 * (tris - want) / max(want, 1), 3)
@@ -161,6 +197,38 @@ def main(out_dir):
         if origin_inst > max(1, near_expected.get(cls, 0)):
             bad.append(f"{cls}: {origin_inst} un-instanced mesh nodes have their GEOMETRY within 1 m of "
                        f"the world origin ({near_expected.get(cls, 0)} expected)")
+    # ------------------------------------------------------------ Gate 3 hand-off, per mesh
+    # 1. the seven re-laid meshes: their TEXCOORD_1 is the Gate 3 layout, not the Gate 1 one, and the island
+    #    area it packs is reported. The relay threshold is 0.15 of the square; three of the seven still land
+    #    below it after the re-lay (the bake measured the same and baked against it), so that is REPORTED, not
+    #    asserted - what is asserted is that the layer changed and that it packs more than Gate 1's.
+    # 2. the near-tree meshes carry COLOR_0 (the vertex irradiance), in the class that owns them.
+    g3 = dict(uv2=(gl.get("gate3_uv2") or {}).get("meshes") or {},
+              color0=(gl.get("gate3_color0") or {}).get("meshes") or {})
+    low = []
+    for mn, v in g3["uv2"].items():
+        if v.get("max_uv_delta", 0) <= 1e-5:
+            bad.append(f"{mn}: TEXCOORD_1 is identical to the Gate 1 layer (max delta {v.get('max_uv_delta')})")
+        if v.get("coverage_gate3", 0) <= v.get("coverage_gate1", 0):
+            bad.append(f"{mn}: the re-laid UV2 packs {v.get('coverage_gate3')} against Gate 1's "
+                       f"{v.get('coverage_gate1')}")
+        if v.get("coverage_gate3", 0) < 0.15:
+            low.append((mn, v.get("coverage_gate3")))
+    cls_of_col = {m: cls for cls, r in rows.items() for m in
+                  ((gl.get("classes", {}).get(cls) or {}).get("color0_meshes") or [])}
+    missing_col = sorted(m for m in g3["color0"] if m not in cls_of_col)
+    if g3["color0"] and missing_col:
+        bad.append(f"{len(missing_col)} near-tree meshes have the irradiance attribute but no glTF wrote "
+                   f"their COLOR_0: {missing_col[:6]}")
+    rows["gate3"] = dict(
+        uv2_meshes=len(g3["uv2"]),
+        uv2_coverage={m: [v.get("coverage_gate1"), v.get("coverage_gate3")] for m, v in g3["uv2"].items()},
+        uv2_below_threshold=low, uv2_threshold=0.15,
+        color0_meshes=len(g3["color0"]), color0_classes=sorted(set(cls_of_col.values())),
+        color0_encoding={m: (v.get("encode"), v.get("range")) for m, v in list(g3["color0"].items())[:1]})
+    if low:
+        print(f"[verify_glb] note: {len(low)} of {len(g3['uv2'])} re-laid meshes still pack under the 0.15 "
+              f"relay threshold (the bake measured the same and baked against this layout): {low}")
     print("[verify_glb] " + json.dumps(rows))
     (out / "verify_glb.json").write_text(json.dumps(dict(classes=rows, failures=bad), indent=1) + "\n")
     if bad:
