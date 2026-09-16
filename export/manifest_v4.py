@@ -34,29 +34,29 @@ def main():
     jobs = {j["id"]: j for j in g3.read_jobs()["jobs"]}
 
     # The export engineer applies out/gate3/lightmap_uv2.npz to the glbs and writes uv2_relay_status.json
-    # beside it. Until that file exists the seven re-laid assets ship `uv2_in_glb: false` and the viewer must
-    # not apply their maps. This writer never flips a flag on its own - the flag follows that file only.
-    rp = g3.OUT / "uv2_relay_status.json"
-    relay = json.loads(rp.read_text()) if rp.exists() else None
+    # (`pfa-phase6/gate3-relay/1`, export/gate3_relay_check.py) beside it, in MAIN. This writer NEVER decides
+    # a flag itself: `uv2_in_glb` and `vertex_irradiance.in_glb` are read from that file and from nowhere
+    # else, and stay false while it is absent. Background (docs/decisions.md 2026-09-16): gltfpack had been
+    # stripping TEXCOORD_1 from every glb since Gate 1, so Gate 1's own `uv2_in_glb: true` was never true.
+    rp = next((q for q in (g3.OUT / "uv2_relay_status.json",
+                           g3.MAIN_ROOT / "export" / "out" / "gate3" / "uv2_relay_status.json") if q.exists()),
+              None)
+    relay = json.loads(rp.read_text()) if rp is not None else None
+    if relay is not None:
+        assert relay.get("schema") == "pfa-phase6/gate3-relay/1", f"relay schema {relay.get('schema')!r}"
+    relay_uv2 = (relay or {}).get("uv2", {})
+    relay_all = (relay or {}).get("uv2_all_meshes", {})
+    relay_vi = (relay or {}).get("vertex_irradiance") or {}
 
-    def relay_flag(obj):
-        """True/False from uv2_relay_status.json, or None when it says nothing about this object.
-        Tolerated shapes: {"assets": {obj: bool | {"uv2_in_glb"|"applied"|"relaid": bool}}},
-        the same map at the top level, or {"applied": [obj, ...]}."""
-        if relay is None:
-            return None
-        d = relay.get("assets", relay) if isinstance(relay, dict) else {}
-        e = d.get(obj) if isinstance(d, dict) else None
-        if isinstance(e, bool):
-            return e
-        if isinstance(e, dict):
-            for k in ("uv2_in_glb", "applied", "relaid", "in_glb"):
-                if isinstance(e.get(k), bool):
-                    return e[k]
-        for k in ("applied", "relaid", "uv2_in_glb"):
-            v = relay.get(k) if isinstance(relay, dict) else None
-            if isinstance(v, list):
-                return obj in v
+    def relay_entry(mesh, obj):
+        """The relay row for an own-map asset, by MESH name first (its own key) then by asset name."""
+        for d in (relay_uv2, relay_all):
+            if mesh in d:
+                return d[mesh]
+        for d in (relay_uv2, relay_all):
+            for e in d.values():
+                if e.get("asset") == obj:
+                    return e
         return None
     man["schema"] = SCHEMA
     man["gate"] = "gate3"
@@ -97,9 +97,12 @@ def main():
         gate1_layout = j["kind"] == "own_gate1uv2"
         en = enc.get(base, {})
         in_glb = gate1_layout or not row["uv2_relaid"]
-        flag = relay_flag(j["object"])
-        if not gate1_layout and flag is not None:
-            in_glb = bool(flag)
+        ent = relay_entry(j.get("mesh", row.get("mesh", "")), j["object"])
+        if ent is not None and isinstance(ent.get("uv2_in_glb"), bool):
+            # For a gate3-relaid asset the flag IS the relay's. For the two `lmg1_*` diagnostics the sense is
+            # inverted: they are baked on the FROZEN Gate 1 layout, so they are usable only while the glb has
+            # NOT been re-laid.
+            in_glb = (not ent["uv2_in_glb"]) if gate1_layout else bool(ent["uv2_in_glb"])
         e = dict(size=size, textures={"rgbm8": ka, "gamma2": kb}, default="gamma2",
                  range=en.get("range", r["map"]["range"]), uv2_in_glb=in_glb,
                  uv2_source="gate1" if (gate1_layout or not row["uv2_relaid"]) else "gate3_relaid",
@@ -111,8 +114,9 @@ def main():
                  roundtrip={"rgbm8": en.get("rgbm8", r["map"]["rgbm8"]["roundtrip"]),
                             "gamma2": en.get("gamma2", r["map"]["gamma2"]["roundtrip"])})
         if gate1_layout:
-            e["note"] = ("diagnostic: the same asset baked on the FROZEN Gate 1 UV2 the glb still carries. "
-                         "Usable today with no re-export, at the texel density that layout allows.")
+            e["note"] = ("diagnostic: the same asset baked on the FROZEN Gate 1 UV2. Usable only while the "
+                         "glb still carries THAT layout - `uv2_in_glb` here is the inverse of the relay's "
+                         "flag for the same mesh, and goes false the moment the re-laid UV2 is packed.")
             assets.setdefault("_gate1_layout", {})[j["object"]] = e
         else:
             assets[j["object"]] = e
@@ -135,20 +139,49 @@ def main():
                                        "gamma2": en.get("gamma2", a["gamma2"]["roundtrip"])},
                             slot_check=a.get("slot_check"))
 
+    # The 988 slots are addressed by the ORN / ARCH-instance meshes' own TEXCOORD_1: if orn.glb is packed
+    # without `-kv` the atlases cannot be applied at all, so the relay's per-glb count is carried here too.
+    by_glb = {}
+    for e in relay_all.values():
+        g = by_glb.setdefault(e.get("glb", "?"), {"meshes": 0, "with_uv2": 0})
+        g["meshes"] += 1
+        g["with_uv2"] += 1 if e.get("uv2_in_glb") else 0
+    slot_meshes = [(k, e) for k, e in relay_all.items() if e.get("glb") == "orn.glb"]
+    slots_uv2 = bool(slot_meshes) and all(e.get("uv2_in_glb") for _, e in slot_meshes)
+
     v = comp.get("vertex") or {}
+    # The npz is the hand-off (float32, unencoded). What the glb actually carries is the export engineer's
+    # per-mesh gamma-2 encode of it, reported back in the relay's `vertex_irradiance` block; the manifest
+    # copies that range per mesh and says how to decode COLOR_0. Empty block -> in_glb stays false.
+    vi_in_glb = bool(relay_vi) and all(isinstance(r, dict) for r in relay_vi.values())
     vertex = dict(encode=v.get("encode", "none"), dtype=v.get("dtype", "float32"),
                   shape=v.get("shape", "(n_verts, 3)"), units=v.get("units"),
-                  attribute="COLOR_0", in_glb=False,
+                  attribute="COLOR_0", in_glb=vi_in_glb,
                   npz=v.get("npz"), bytes=v.get("bytes"), meshes_n=v.get("meshes"), verts=v.get("verts"),
-                  decode=("none: the npz holds the baked values themselves, scene-linear RGB, same units as "
-                          "a decoded lightmap texel. irradiance = value * lightmaps.scale (pi). How COLOR_0 "
-                          "is quantised in the glb is the exporter's call, made on these numbers."),
+                  npz_decode=("none: the npz holds the baked values themselves, scene-linear RGB, same units "
+                              "as a DECODED lightmap texel. irradiance = value * lightmaps.scale (pi)."),
+                  glb_encode="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
+                  glb_decode=("v = COLOR_0 * COLOR_0 * meshes[<mesh>].range, then "
+                              "irradiance = v * lightmaps.scale (pi) - exactly as a gamma2 lightmap texel. "
+                              "`range` is PER MESH: never use one shared range. glTF multiplies COLOR_0 into "
+                              "base colour by default, so these 14 meshes must consume it as irradiance, "
+                              "not as a tint."),
                   meshes={r["mesh"]: dict(verts=r["verts"], min=r.get("min"), max=r["max"], mean=r["mean"],
                                           mean_nonzero=r.get("mean_nonzero"), p99=r.get("p99"),
-                                          roundtrip=r["roundtrip"]) for r in v.get("rows", [])},
-                  note=("`in_glb: false` until env.glb is re-exported with COLOR_0. Until then the near trees "
-                        "stay on the PMREM path and must take their irradiance from sky.diffuse, not "
-                        "sky.glossy (QA-12b-1)."))
+                                          roundtrip=r["roundtrip"],
+                                          **{k: relay_vi[r["mesh"]][k]
+                                             for k in ("range", "encoding", "mean_linear",
+                                                       "roundtrip_rel_p99")
+                                             if isinstance(relay_vi.get(r["mesh"]), dict)
+                                             and k in relay_vi[r["mesh"]]})
+                          for r in v.get("rows", [])},
+                  note=(("COLOR_0 is in env.glb; `range` per mesh comes from uv2_relay_status.json."
+                         if vi_in_glb else
+                         "`in_glb: false` until env.glb is re-exported with COLOR_0 and the relay reports a "
+                         "per-mesh range; this writer re-runs on that hand-off. Until then the near trees "
+                         "stay on the PMREM path and must take their irradiance from sky.diffuse, not "
+                         "sky.glossy (QA-12b-1).")),
+                  relay_note=(relay or {}).get("vertex_irradiance_skipped"))
 
     man["lightmaps"] = dict(
         mode="baked", uv="TEXCOORD_1", scale=g3.LIGHTMAP_SCALE,
@@ -162,10 +195,22 @@ def main():
         uv2_relay_threshold=g3.UV2_RELAY_THRESHOLD,
         uv2_relaid=setj.get("uv2_relaid", []),
         uv2_npz="lightmap_uv2.npz",
-        uv2_relay_status=("uv2_relay_status.json" if relay is not None else
+        uv2_relay_status=(dict(file="uv2_relay_status.json", schema=relay.get("schema"),
+                               written_by=relay.get("written_by"),
+                               meshes_with_uv2=sum(1 for e in relay_all.values() if e.get("uv2_in_glb")),
+                               meshes_total=len(relay_all), by_glb=by_glb,
+                               relaid_in_glb=sorted(e.get("asset", k) for k, e in relay_uv2.items()
+                                                    if e.get("uv2_in_glb")),
+                               gltfpack_flags=relay.get("gltfpack_flags"))
+                          if relay is not None else
                           "not written yet: every re-laid asset stays uv2_in_glb=false"),
         assets=assets,
         slots=dict(atlases=atlases,
+                   uv2_in_glb=slots_uv2 if relay is not None else False,
+                   uv2_in_glb_source=("uv2_relay_status.json uv2_all_meshes, glb == orn.glb: "
+                                      f"{sum(1 for _, e in slot_meshes if e.get('uv2_in_glb'))} of "
+                                      f"{len(slot_meshes)} meshes carry TEXCOORD_1"
+                                      if relay is not None else "relay not written yet"),
                    note=("the per-instance uv2_offset / uv2_scale are `orn_slots`, unchanged since v2 and derived "
                          "from export/gate1_common.slot_uv; this block only names the atlas texture per pool and "
                          "atlas index. Atlas rows are laid out for the glTF UV flip (v_gltf = 1 - v_blender): "

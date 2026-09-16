@@ -110,6 +110,12 @@ Two rigs in `LIGHT` exist **only** to make Eevee agree with Cycles, and they mus
 - **`LIGHT_shade_fill`** — three wide-angle anti-sun lamps, **55 / 55 / 38.5 W/m2 in Eevee, 0.0 W/m2 in Cycles**
   (and `hide_render` there). The round-12 shade fix is three diffuse-only world sockets, and Eevee's shaded stone is
   lit by its screen-traced horizon scan rather than by the world, so those sockets never reach it (notes 22.1-22.2).
+- **`LIGHT_gallery_fill`** — a **third** engine-conditional rig, missed by the heading above (Gate 3 code review,
+  finding 11): 16 strips, **1 200 W total in Cycles, 0 W + `hide_render` in Eevee** — the opposite sense to the other
+  two. `light_presets.apply_final_cycles` / `apply_shade_for_engine` switch it with the rest, so any path that calls
+  them is right; a script that sets `scene.render.engine` by hand is wrong in both directions. It is inside every
+  Gate 3 lightmap (`rig.lights = 20` in the bake records), so the baked maps only reproduce Phase 5 because the bake
+  went through `apply_final_cycles_checked`.
 
 Both are engine-conditional, both are idempotent, and both read their energies from the objects' own custom
 properties (`energy_W`, `energy_W_eevee`). **Every** Cycles path must call the switch:
@@ -262,3 +268,18 @@ no process. Never overlap Chrome with a bake: check `export/out/bake_queue/statu
 - (Gate 2) `Image.save()` on an image made with `images.new(float_buffer=True)` and filled by `foreach_set` wrote correctly sized all-zero PNGs
   (15 detail maps, every byte 0). Write bake outputs from numpy with your own PNG writer and read every saved map back from disk before claiming a
   number; in-memory statistics are not evidence (export/bake_lib.write_png_rgb8 / read_png_rgb8).
+- (Gate 3) **Blender 5.2 writes a MULTI-PART EXR unless you ask it not to, and hides the multilayer format until you
+  switch media type.** Two separate 5.2 changes, both load-bearing for `export/bake_lm.py`'s impostor pass, which reads
+  the Combined / Normal / Depth passes back with its own EXR reader (`gate3_common.read_exr_channels`, written because
+  Blender exposes no way to read a render pass into Python):
+  1. `image_settings.file_format = "OPEN_EXR_MULTILAYER"` raises `TypeError: enum "OPEN_EXR_MULTILAYER" not found`
+     until `image_settings.media_type = "MULTI_LAYER_IMAGE"` is set first — the format enum is filtered by media type
+     in 5.x. Set `media_type`, then `file_format`.
+  2. With the format set, 5.2 writes a **multi-part** EXR (one part per render layer, version-flag bit 0x1000) by
+     default. Every simple reader — including ours, which asserts on that bit — refuses it. `image_settings.use_exr_interleave = True`
+     puts the channels back in a single part, which is what 4.x always wrote.
+  So the working incantation, in this order, is
+  `s.media_type = "MULTI_LAYER_IMAGE"; s.use_exr_interleave = True; s.file_format = "OPEN_EXR_MULTILAYER"`
+  (plus `color_depth = "32"`, `exr_codec = "NONE"`, `color_mode = "RGBA"` for an uncompressed scanline file the reader
+  can mmap). Single-layer `OPEN_EXR` saves need none of this: `media_type = "IMAGE"` and the plain format is enough.
+
