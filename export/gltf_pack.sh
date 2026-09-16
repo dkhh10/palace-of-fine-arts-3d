@@ -117,10 +117,18 @@ if [ "$1" = "--gate1" ]; then
     # way). arch / env / ground therefore take -kv from Gate 3 on. orn deliberately does NOT: -kv would also
     # restore the ORN meshes' own COLOR_0, which three.js multiplies into base colour, and that is a look
     # change for the lead to decide (it also blocks the ORN slot-atlas lightmap - reported, not fixed here).
-    EXTRA=(-kv)
-    [ "$cls" = env ] && EXTRA=(-vpf -km -kv)
-    [ "$cls" = arch ] && EXTRA=(-vpf -km -kv)   # QA-12-1 re-pack: same flags as env, named materials kept
-    [ "$cls" = orn ] && EXTRA=()
+    EXTRA=()
+    [ "$cls" = env ] && EXTRA=(-vpf -km)
+    [ "$cls" = arch ] && EXTRA=(-vpf -km)   # QA-12-1 re-pack: same flags as env, named materials kept
+    # a class gets -kv exactly when its .gltf carries an attribute the manifest owns (TEXCOORD_1 for a
+    # lightmap, COLOR_0 for the near-tree irradiance), so a class that has none is packed byte-identically.
+    KV=$(python3 - "$OUT" "$cls" <<'PY1'
+import json, os, sys
+c = json.load(open(os.path.join(sys.argv[1], "gltf_gate1.json")))["classes"].get(sys.argv[2], {})
+print("-kv" if (c.get("texcoord1_meshes") or c.get("color0_meshes")) and sys.argv[2] != "orn" else "")
+PY1
+)
+    [ -n "$KV" ] && EXTRA+=(-kv)
     if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else

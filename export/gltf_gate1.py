@@ -222,8 +222,21 @@ step = g0.Step("gltf_gate1:gate3_color0")
 vi_npz = G3 / "vertex_irradiance.npz"
 VI_RANGE = 64.0
 vi_report = {}
+vi_skip = None
 if vi_npz.exists():
     z3 = np.load(str(vi_npz))
+    # The Gate 3 code review (docs/reviews/phase6_bake_gate3_review.md, findings 3-4) found the first
+    # vertex_irradiance.npz shipped as uint8 gamma-2 codes at ONE shared range of 64, not the float32
+    # scene-linear per mesh the manifest and the README promise, and the bake is re-writing it. The export
+    # refuses to encode COLOR_0 from anything but the float32 file: the encoding that ships depends on the
+    # real per-mesh range, and a wrong one is invisible in the glb and wrong in every frame.
+    dts = sorted({str(np.asarray(z3[f]).dtype) for f in z3.files})
+    if dts != ["float32"]:
+        vi_skip = (f"vertex_irradiance.npz is {dts}, not float32 scene-linear (Gate 3 review findings 3-4): "
+                   f"COLOR_0 is NOT exported and lightmaps.vertex_irradiance.in_glb stays false")
+        print("[gate1] gate3_color0 SKIPPED - " + vi_skip)
+        z3 = {"files": []}
+        z3 = type("Empty", (), {"files": []})()
     for mn in z3.files:
         me = bpy.data.meshes.get(mn)
         assert me is not None, f"{vi_npz.name} names {mn}, which is not in the Gate 1 export set"
@@ -253,7 +266,7 @@ if vi_npz.exists():
 # attributes (-kv), and three.js multiplies COLOR_0 into the base colour - so they are counted here.
 other_colour = sorted(me.name for me in bpy.data.meshes
                       if me.color_attributes and me.name not in vi_report)
-report["gate3_color0"] = dict(source=str(vi_npz), meshes=vi_report, count=len(vi_report),
+report["gate3_color0"] = dict(source=str(vi_npz), meshes=vi_report, count=len(vi_report), skipped=vi_skip,
                               other_meshes_with_colour_attributes=len(other_colour),
                               other_names=other_colour[:12],
                               note="COLOR_0 = gamma2 code/255; irradiance = c*c*64*lightmap_scale. Standard "

@@ -126,8 +126,12 @@ def main(out_dir, g3_dir, g3_out=None):
         in_glb = "TEXCOORD_1" in packed_attr.get(cls, set())
         # the exported UVs must be the npz's values, not Gate 1's: compare the distinct SETS (the exporter
         # splits and welds vertices, so a 1:1 comparison is meaningless while the value set survives).
-        wset = set(map(tuple, np.unique(np.round(want, 4), axis=0)))
-        hset = np.unique(np.round(np.concatenate(got, axis=0), 4), axis=0)
+        # compared as integer 1e-4 keys: the glTF values are float32 and the npz float64 here, and
+        # round(x, 4) on the two dtypes does NOT produce equal floats (0.002 is not representable).
+        def key(a):
+            return np.unique(np.rint(np.asarray(a, dtype=np.float64) * 1e4).astype(np.int64), axis=0)
+        wset = set(map(tuple, key(want)))
+        hset = key(np.concatenate(got, axis=0))
         share = round(float(np.mean([tuple(x) in wset for x in hset])), 4)
         if share < 0.98:
             fail.append(f"{mn}: only {share:.1%} of the exported TEXCOORD_1 values are in "
@@ -147,7 +151,17 @@ def main(out_dir, g3_dir, g3_out=None):
     # ---------------------------------------------------------------- 2. the 14 near-tree COLOR_0 attributes
     vi = {}
     z3 = np.load(str(g3 / "vertex_irradiance.npz"))
-    for mn in z3.files:
+    # docs/reviews/phase6_bake_gate3_review.md findings 3-4: the first npz shipped as uint8 gamma-2 codes at
+    # one shared range of 64 instead of float32 scene-linear per mesh, and the bake is re-writing it. Until
+    # the float32 file lands, export/gltf_gate1.py writes no COLOR_0 and there is nothing to read back.
+    # The value tests below are written against the uint8 gamma-2 form; when the float32 npz lands, the
+    # encoder in gltf_gate1.py and these tests change together, so the skip follows what the export did.
+    vi_dtypes = sorted({str(np.asarray(z3[f]).dtype) for f in z3.files})
+    vi_skip = (gl.get("gate3_color0") or {}).get("skipped")
+    if vi_skip is None and vi_dtypes != ["float32"]:
+        vi_skip = (f"vertex_irradiance.npz is {vi_dtypes}, not float32 scene-linear (Gate 3 review findings "
+                   f"3-4); COLOR_0 was not exported and lightmaps.vertex_irradiance.in_glb stays false")
+    for mn in (z3.files if vi_skip is None else []):
         cls = cls_of.get(mn)
         if cls is None:
             fail.append(f"{mn}: the vertex irradiance npz names a mesh no class glTF contains")
@@ -204,7 +218,7 @@ def main(out_dir, g3_dir, g3_out=None):
              "lightmaps.vertex_irradiance.in_glb from this file. COLOR_0 is the gamma-2 CODE / 255: "
              "irradiance = COLOR_0^2 * 64 * lightmap_scale. Standard glTF multiplies COLOR_0 into base "
              "colour, so the viewer must consume these 14 meshes' COLOR_0 as irradiance, not as a tint.",
-        uv2=uv2, vertex_irradiance=vi,
+        uv2=uv2, vertex_irradiance=vi, vertex_irradiance_skipped=vi_skip, npz_dtypes=vi_dtypes,
         glb_bytes={cls: (out / f"{cls}.glb").stat().st_size for cls in CLASSES if (out / f"{cls}.glb").exists()},
         packed_attributes={cls: sorted(v) for cls, v in packed_attr.items()},
         gltfpack_flags=(out / "gltfpack_flags.txt").read_text().strip().split("\n")
