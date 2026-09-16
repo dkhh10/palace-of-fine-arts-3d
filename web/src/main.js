@@ -102,7 +102,8 @@ const CFG = {
 	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
-	vertexIrr: qs.get( 'vertexirr' ) || 'auto',         // near-tree COLOR_0 irradiance: auto | 1 | 0
+	vertexIrr: qs.get( 'vertexirr' ) || 'auto',
+	instIrr: qs.get( 'instirr' ) || 'auto',             // per-placement shrub/reed irradiance: auto | 0
 	post: qs.get( 'post' ),                             // all | none | mist,bloom,vignette (default none)
 	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
 	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
@@ -742,6 +743,14 @@ async function loadGlbs() {
 			const base = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
 			const gltf = await loader.parseAsync( buf, base );
 			gltf.scene.name = `WEB_glb_${g.cls}`;
+			// Gate 4 item 1c: the glTF NODE INDEX is the only stable key gltfpack -mi leaves (it drops
+			// node names), and it is what lightmaps.instance_irradiance.nodes[].gltf_node refers to.
+			// GLTFLoader's parser.associations is the only place it survives, so it is stamped on the
+			// object here, before any pass can reshape the graph.
+			if ( gltf.parser && gltf.parser.associations ) {
+				for ( const [ obj, a ] of gltf.parser.associations )
+					if ( obj && obj.isObject3D && a && typeof a.nodes === 'number' ) obj.userData.pfaGltfNode = a.nodes;
+			}
 			// FIRST, before any pass: gltfpack stores texcoords as normalised 12-bit ints with the
 			// dequantisation in KHR_texture_transform on the baseColorTexture only, so every UV that
 			// reaches a shader is 1/16 of its real value until this undoes it on the attribute.
@@ -771,7 +780,7 @@ async function loadGlbs() {
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
 		gate3Report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
-			vertexIrr: CFG.vertexIrr,
+			vertexIrr: CFG.vertexIrr, instIrr: CFG.instIrr,
 			loadTexture: ( url ) => {
 				progress.label = url.split( '/' ).pop();
 				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )

@@ -155,7 +155,9 @@ export function applyProbeEnv( scene, envTexture, { note = () => {}, intensity =
 			if ( ! m || seen.has( m.uuid ) ) continue;
 			seen.add( m.uuid );
 			if ( ! m.isMeshStandardMaterial ) { out.skippedNonStandard ++; continue; }   // impostors, water
-			if ( m.userData.pfaPatched ) { out.skippedPatched ++; continue; }            // lightmap or COLOR_0
+			// Gate 4 item 1c: the shrub/reed cards ARE patched, but their 7 cov == 0 placements fall
+			// back to the probe inside the shader, so they still need the envMap attached.
+			if ( m.userData.pfaPatched && ! m.userData.pfaWantsProbeEnv ) { out.skippedPatched ++; continue; }
 			if ( m.lightMap ) { out.skippedPatched ++; continue; }
 			if ( m.envMap ) { out.skippedHasEnv ++; continue; }
 			m.envMap = envTexture;

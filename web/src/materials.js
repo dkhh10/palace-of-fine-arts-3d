@@ -51,7 +51,7 @@ function once( src, needle, replacement, what ) {
  * @param {THREE.MeshStandardMaterial} mat
  * @param {{ specularOnlySun?:boolean, noEnvDiffuse?:boolean, lightMapEncoding?:string,
  *           rgbmMaxRange?:number, range?:number, slot?:boolean, atlasB?:THREE.Texture|null,
- *           flipV?:boolean, vertexIrradiance?:number }} opts
+ *           flipV?:boolean, vertexIrradiance?:number, instanceIrradiance?:number }} opts
  */
 export function patchBakedMaterial( mat, opts = {} ) {
 	const specularOnlySun = opts.specularOnlySun !== false;
@@ -69,8 +69,15 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	// removed from color_fragment and the decoded value is added to `irradiance` instead.  The value
 	// passed in is range * lightmaps.scale, so the shader constant is the whole decode.
 	const vertexIrr = typeof opts.vertexIrradiance === 'number' ? opts.vertexIrradiance : null;
+	// Gate 4 item 1c: one baked irradiance per shrub/reed PLACEMENT, uploaded as an
+	// InstancedBufferAttribute exactly like the ORN slot offsets.  `pfaInstOn` is 1 where the bake
+	// measured the placement (cov > 0) and 0 for the 7 fully enclosed cards, and it switches BOTH
+	// halves at once: where it is 1 the env (probe) diffuse is removed and the baked value is the
+	// irradiance; where it is 0 the probe path is untouched, which is the contract the manifest states.
+	// The value passed in is lightmaps.scale (pi), so the shader constant is the whole decode.
+	const instIrr = typeof opts.instanceIrradiance === 'number' ? opts.instanceIrradiance : null;
 	if ( mat.userData.pfaPatched ) return mat;
-	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr };
+	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr, instIrr };
 	if ( vertexIrr !== null ) mat.vertexColors = true;         // so three declares vColor for us
 
 	const prevCompile = mat.onBeforeCompile;
@@ -91,8 +98,14 @@ export function patchBakedMaterial( mat, opts = {} ) {
 				'vertex-irradiance colour tint removed' );
 		}
 		const decode = decodeGlsl( enc, maxRange );
-		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV || vertexIrr !== null ) {
+		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV || vertexIrr !== null || instIrr !== null ) {
 			let maps = THREE.ShaderChunk.lights_fragment_maps;
+			if ( instIrr !== null ) {
+				maps = once( maps, IBL_IRRADIANCE_LINE,
+					'iblIrradiance += ( 1.0 - vPfaInstOn ) * getIBLIrradiance( geometryNormal );   // PFA: the probe only where the bake measured nothing',
+					'instance-irradiance env gate' );
+				maps += `\n\tirradiance += vPfaInstIrr * ${instIrr.toFixed( 6 )};`;
+			}
 			if ( noEnvDiffuse ) {
 				maps = once( maps, IBL_IRRADIANCE_LINE,
 					'// PFA: env diffuse irradiance removed - the lightmap already carries the sky diffuse',
@@ -122,6 +135,17 @@ export function patchBakedMaterial( mat, opts = {} ) {
 			shader.fragmentShader = once( shader.fragmentShader,
 				'#include <lights_fragment_maps>', maps, 'lights_fragment_maps include' );
 		}
+		if ( instIrr !== null ) {
+			shader.vertexShader = once( shader.vertexShader, '#include <common>',
+				'#include <common>\nattribute vec3 pfaInstIrr;\nattribute float pfaInstOn;\n'
+				+ 'varying vec3 vPfaInstIrr;\nvarying float vPfaInstOn;', 'instance-irradiance attributes' );
+			shader.vertexShader = once( shader.vertexShader, '#include <uv_vertex>',
+				'#include <uv_vertex>\n\tvPfaInstIrr = pfaInstIrr;\n\tvPfaInstOn = pfaInstOn;',
+				'instance-irradiance varying write' );
+			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
+				'#include <common>\nvarying vec3 vPfaInstIrr;\nvarying float vPfaInstOn;',
+				'instance-irradiance varyings (fragment)' );
+		}
 		if ( slot ) {
 			shader.uniforms.pfaLmAtlasB = { value: opts.atlasB || mat.lightMap };
 			shader.vertexShader = once( shader.vertexShader, '#include <common>',
@@ -137,7 +161,7 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	};
 	const prevKey = mat.customProgramCacheKey;
 	mat.customProgramCacheKey = function () {
-		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}:${vertexIrr === null ? 'n' : vertexIrr.toFixed( 6 )}`;
+		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}:${vertexIrr === null ? 'n' : vertexIrr.toFixed( 6 )}:${instIrr === null ? 'n' : instIrr.toFixed( 6 )}`;
 	};
 	mat.needsUpdate = true;
 	return mat;
