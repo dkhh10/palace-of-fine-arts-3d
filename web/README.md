@@ -325,6 +325,48 @@ Measured at cam01 (`water_probe.py`, `open water 300 900 1600 1060`), round-6 WI
 | Fresnel fall | 33.6 | 26.7 | 36.1 | see below |
 | refl-mass lum | 65.9 | **84.8** | 88.2 | 0.75x -> 0.96x |
 
+Round 7 then replaced the ripple and the reflection tint (the lead's (i)-(iii) after judging the tile):
+
+* **(i) the ripple is procedural and in metres.** The 256 px 8-bit tiled normal map is gone. The height
+  field is eight sine waves summed in the shader with ANALYTIC derivatives, geometrically spaced
+  1.20 m -> 0.034 m (43 px -> 1.2 px at the hero's near water, where a pixel is 2.76 cm) — the
+  reference sheet's "0.3-1 m streaks by 2-5 cm ripples". Directions are a STRATIFIED fan of +/- 25°
+  about world Z (eight random draws from the old cosine-power spread put two waves 51° and 73° off
+  axis, which is a cross sea, not wind ripple). Amplitude is set by SLOPE, not height: every wave
+  carries the same slope amplitude, so `RIPPLE.slopeRms` 0.0131 rad (0.75°) is the whole surface's rms
+  slope — read back from the Phase 5 hero, whose reflection wanders ~30 px at the near water. Each
+  wave fades out below about one pixel footprint (`fwidth`), which is the viewer's equivalent of
+  MAT_water_lagoon's Toksvig depth ramp and is why the far lagoon does not sizzle.
+* **(ii) no more contour banding**, by construction: nothing is quantised to 8 bits any more.
+* **(iii) the screen displacement is derived, and `reflSat` ships at 1.0.** A slope `s` tips the
+  reflected ray by `2s`, and the projection turns that into `P00 / P11` times it in ndc, half that in
+  uv — so the offset is exactly `projectionMatrix * slope`, read per station instead of fitted at the
+  hero's 20 mm lens. `distortion`, `distortAniso`, `normalScale` and `rippleTiling` are therefore all
+  1.0 and are A/B dials only, and the round-6 grazing multiplier (not physical: the ray tips by `2s`
+  whatever the incidence) ships at 0. `reflSat` 0.66 was double-counting the murk — the body term now
+  goes through the same mix explicitly — and a dielectric's Fresnel reflection is spectrally flat, so
+  it and `reflectTint` are 1.0. That is the warm drain the reflected ochre was losing.
+
+| cam01 | round-6 WIP | + derived murk | + round-7 ripple | reference |
+|---|---|---|---|---|
+| open water lum | 68.0 | 87.3 | **88.4** | 118.0 |
+| open water hue | 198.9 | 194.8 | **195.6** | 144.8 |
+| open water sat | 0.292 | 0.245 | **0.361** | 0.041 |
+| open water rowHF | 4.60 | 3.88 | **6.91** | 13.23 |
+| open water row/col | 2.23 | 2.22 | **3.71** | 3.24 |
+| Fresnel fall | 33.6 | 26.7 | **20.8** | 36.1 |
+| refl-mass lum | 65.9 | 84.8 | **90.3** | 88.2 |
+| refl-mass hue | 42.1 | 50.7 | **45.6** | 42.4 |
+| refl-mass sat | 0.299 | 0.211 | **0.411** | 0.596 |
+
+Where the building reflects, the water is now at reference (lum 1.02x, hue within 3.2°). What is left
+is the OPEN water: its reflection is still `(1.91, 3.05, 3.90)` where the Phase 5 hero needs
+`(4.89, 4.89, 4.76)` — 0.39x in red. The sky at the mirrored 13-21° elevations is `(1.2-2.1,
+3.4-5.5, 7.2-10.2)`, so that red cannot come from the sky: Cycles' open lagoon is reflecting warm
+sunlit stone and shore across the whole crop where the viewer's much cleaner planar mirror reflects
+sky. That is a reflection-lobe width question, not a murk or a ripple one, and it is what keeps the
+open water's hue at 196° and its saturation at 0.361.
+
 The fall gets SMALLER, and that is the diagnosis rather than a regression: the ladder measures how much
 darker the near water (mostly body) is than the far water (mostly mirror), so it is set by the ratio
 between the body and the reflection. Inverting both frames through the LUT, the Phase 5 hero's open
