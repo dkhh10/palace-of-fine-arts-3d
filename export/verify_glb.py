@@ -246,6 +246,32 @@ def main(out_dir):
             bad.append(f"{cls}: {len(split)} mesh(es) were split for the slot-merge guard ({split[:4]}) but "
                        f"the class is packed without -km ({flags.get(cls)}) - gltfpack merges the same-named "
                        f"material copies back and the split does nothing")
+        # A glTF material with no `alphaMode` is OPAQUE by spec, so a cut-out card draws as a solid
+        # rectangle - which is exactly how every leaf card shipped at cam02 before gltf_gate1.py started
+        # writing the mode. gltf_gate1.json records, per class, which materials carry an alpha-bearing
+        # baseColorTexture and what mode they were given; assert the packed glb still says so. gltfpack does
+        # not drop alphaMode, but it DOES merge materials without -km, and a merged-away card material is the
+        # same defect wearing a different hat.
+        want_alpha = (gl.get("classes", {}).get(cls) or {}).get("alpha_mask_materials") or {}
+        have_mode = {m.get("name"): (m.get("alphaMode"), m.get("alphaCutoff"))
+                     for m in doc.get("materials", []) if m.get("name")}
+        # glTF's default alphaCutoff is 0.5, so gltfpack legitimately DROPS the field when it equals 0.5 -
+        # the effective value is still 0.5. Compare the effective one, or a non-default cutoff silently
+        # falling back to 0.5 would read as a pass.
+        wrong = []
+        for n, w in want_alpha.items():
+            mode, cut = have_mode.get(n) or (None, None)
+            eff = 0.5 if cut is None else float(cut)
+            if mode not in ("MASK", "BLEND"):
+                wrong.append((n, mode, "no alphaMode"))
+            elif mode == "MASK" and abs(eff - float(w["cutoff"])) > 1e-6:
+                wrong.append((n, mode, f"effective cutoff {eff}, wanted {w['cutoff']}"))
+        rows[cls]["alpha_cutout_materials"] = len(want_alpha)
+        rows[cls]["alpha_cutout_cutoffs"] = sorted({v["cutoff"] for v in want_alpha.values()})
+        if wrong:
+            bad.append(f"{cls}: {len(wrong)} material(s) with an alpha-carrying baseColorTexture do not "
+                       f"cut out correctly in the packed glb - without a mode glTF makes them OPAQUE and "
+                       f"every card draws as a solid rectangle: {wrong[:4]}")
         if split and dup_names < len(split):
             bad.append(f"{cls}: {len(split)} mesh(es) were split for the slot-merge guard but the glb holds "
                        f"only {dup_names} duplicate material name(s) - gltfpack merged the copies back")

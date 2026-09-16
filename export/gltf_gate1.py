@@ -15,6 +15,7 @@ import copy
 import os
 import sys
 import json
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gate0_common as g0  # noqa: E402
@@ -362,6 +363,61 @@ report["uv1_probe"] = dict(image=probe_path.name, materials=n_probe,
                                 "with the lightmap, per the exporter's use-a-texture rule")
 step.done(probe_path, materials=n_probe)
 
+# ---------------------------------------------------------------- Gate 3 hand-off 4: the card materials' alpha
+# A glTF material with no `alphaMode` is OPAQUE by spec, so every leaf card in env.glb drew as a solid
+# rectangle - metre-wide flat shards across a third of cam02 (viewer, 2026-09-16). The four MAT_leaf_*, the
+# three MAT_shrub* and MAT_reeds all export an RGBA base-colour PNG whose alpha IS the leaf shape, and none
+# of them declared a mode. The cutoff is READ, never guessed: export/read_alpha.py dumps every material whose
+# tree reaches an RGBA image (including inside node groups - these feed the Principled through one, which is
+# why the Alpha input is unlinked at 1.0) together with its clip value, into out/gate3/alpha_cutoffs.json.
+# The cut is NOT `material.alpha_threshold` (factory 0.5 on everything here, and inert under blend_method
+# HASHED / surface_render_method DITHERED - r4 review). It is mat_build.py's Transparent/Mix Shader pair
+# driven by a Map Range over the image alpha, `From Min = alpha_cut - 0.15`, `From Max = alpha_cut + 0.15`,
+# so the 50 % crossing is the midpoint: 0.45 for MAT_leaf_cypress, 0.42 for MAT_leaf_pine, 0.5 for the other
+# six. read_alpha.cut_chain walks that graph and returns a reason instead of a default when it does not fit.
+# The test for WHICH materials get it is the exported file itself - the baseColorTexture's own PNG header -
+# so a material whose colour ends up on the 8x8 UV1 probe (every ARCH/ORN one) is never touched.
+# alpha_cutoffs.json is the EXPORT's own hand-off (export/read_alpha.py writes it locally and
+# export/sync_main.sh copies it to MAIN), unlike the bake's npz files which only ever live in MAIN - so it
+# resolves local-then-MAIN, the same order export/manifest_v4.py uses for the relay json.
+LOCAL_G3 = Path(__file__).resolve().parents[1] / "export" / "out" / "gate3"
+alpha_json = next((q for q in (LOCAL_G3 / "alpha_cutoffs.json", G3 / "alpha_cutoffs.json") if q.exists()),
+                  LOCAL_G3 / "alpha_cutoffs.json")
+alpha_src = json.loads(alpha_json.read_text()) if alpha_json.exists() else None
+if alpha_src is not None:
+    assert alpha_src.get("schema") == "pfa-phase6/gate3-alpha/1", f"alpha schema {alpha_src.get('schema')!r}"
+alpha_cut = {k: v.get("cutoff") for k, v in ((alpha_src or {}).get("materials") or {}).items()}
+report["gate3_alpha_source"] = dict(file=str(alpha_json), present=alpha_src is not None,
+                                    materials=len(alpha_cut), read_from=(alpha_src or {}).get("source"))
+
+
+def png_has_alpha(path):
+    """True when the file is a PNG whose IHDR colour type carries alpha (4 = grey+A, 6 = RGBA), False for a
+    JPEG (which never has one). Anything else RAISES: a format this cannot read is exactly the case where a
+    cut-out card would silently ship opaque, which is the defect this whole pass exists to close (r4 review
+    carry)."""
+    b = Path(path).read_bytes()[:26]
+    if b[:8] == b"\x89PNG\r\n\x1a\n":
+        return b[25] in (4, 6)
+    if b[:2] == b"\xff\xd8":
+        return False
+    raise AssertionError(f"{path}: the exporter wrote a base-colour image this check cannot read "
+                         f"(magic {b[:8]!r}). Add the format here - a texture whose alpha cannot be tested "
+                         f"is a card that ships OPAQUE without a word.")
+
+
+import read_alpha  # noqa: E402  (cut_chain only; its discovery run is guarded by __main__)
+
+
+def cutoff_for(mat_name):
+    """The source material's clip value. glTF names are `MAT_EXP_<group>__<source material>` or the source
+    material's own name; try both, longest first, so `__` in a source name cannot mis-match."""
+    for k in (mat_name, mat_name.split("__")[-1] if "__" in mat_name else None):
+        if k and alpha_cut.get(k) is not None:
+            return float(alpha_cut[k]), k
+    return None, None
+
+
 # ---------------------------------------------------------------- the four class selections
 GROUND_KINDS = {"ground"}
 sets = {"arch": [], "orn": [], "env": [], "ground": []}
@@ -457,6 +513,51 @@ for cls, objs in sets.items():
         doc = json.loads(path.read_text())
         report["classes"].setdefault(cls, {})
     report.setdefault("treeboard_alpha_mask", []).extend(patched)
+    # ---------------------------------------------------------------- the card materials' alphaMode
+    # Decided by the EXPORTED texture, not by a name list: a baseColorTexture whose PNG carries alpha is a
+    # cut-out card and needs a mode, or the spec makes it opaque. MAT_EXP_treeboard already declares its own
+    # (MASK at 1.0, above) and is left alone.
+    imgs = [i.get("uri") for i in doc.get("images", [])]
+    texs = [t.get("source") for t in doc.get("textures", [])]
+    alpha_mats, alpha_missing = {}, []
+    for m in doc.get("materials", []):
+        bct = (m.get("pbrMetallicRoughness") or {}).get("baseColorTexture")
+        if bct is None or m.get("alphaMode"):
+            continue
+        src = imgs[texs[bct["index"]]] if bct["index"] < len(texs) and texs[bct["index"]] is not None else None
+        if not src or not png_has_alpha(path.parent / src):
+            continue
+        cut, key = cutoff_for(m.get("name", ""))
+        if cut is None:
+            alpha_missing.append(m.get("name"))
+            continue
+        # cross-check the hand-off against THIS blend's own material GRAPH - the same walk read_alpha.py
+        # made on master_delivery.blend, re-run here on the export copy. Comparing against
+        # `material.alpha_threshold` would have agreed with a wrong number: it is 0.5 on every material in
+        # the file, including the two whose real cut is 0.45 and 0.42.
+        bm = bpy.data.materials.get(key)
+        if bm is not None:
+            mine, why = read_alpha.cut_chain(bm)
+            assert mine is not None, (f"{m.get('name')}: alpha_cutoffs.json gives {cut} for {key}, but this "
+                                      f"blend's copy has no recognised cut chain ({why})")
+            assert abs(mine - cut) < 1e-6, (
+                f"{m.get('name')}: alpha_cutoffs.json says {cut} for {key}, this blend's graph says {mine} "
+                f"({why})")
+        m["alphaMode"] = "MASK"
+        m["alphaCutoff"] = cut
+        alpha_mats[m.get("name")] = dict(cutoff=cut, source_material=key, texture=src)
+    assert not alpha_missing, (
+        f"{cls}.gltf: {alpha_missing} have an alpha-carrying baseColorTexture but no clip value in "
+        f"{alpha_json.name} - run export/read_alpha.py on master_delivery.blend first")
+    if alpha_mats:
+        path.write_text(json.dumps(doc))
+        doc = json.loads(path.read_text())
+    report["classes"][cls]["alpha_mask_materials"] = alpha_mats
+    report.setdefault("gate3_alpha_mask", {}).update({f"{cls}:{k}": v for k, v in alpha_mats.items()})
+    # every material that declares a mode, for verify_glb to test the packed glb against
+    report["classes"][cls]["alpha_mode_materials"] = {
+        m.get("name"): [m.get("alphaMode"), m.get("alphaCutoff")]
+        for m in doc.get("materials", []) if m.get("alphaMode")}
     # ---------------------------------------------------------------- the FAKE COLOR_0 Blender writes
     # io_scene_gltf2/blender/exp/primitive_extract.py (5.2, ~line 818): with `export_all_vertex_colors` on,
     # if the MATERIAL's node tree references no colour attribute and the mesh has one, the exporter inserts a

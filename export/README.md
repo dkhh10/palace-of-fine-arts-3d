@@ -1367,3 +1367,54 @@ export/sync_main.sh
     uses, because `export/out/` is gitignored and a local-only lookup would have dropped `compositor.mist`
     silently after the merge. When neither exists it prints a WARNING naming the `read_mist.py` command and
     records `compositor.mist = null` with `mist_missing` saying why, instead of leaving the block absent.
+29. **Every leaf card shipped OPAQUE (viewer, cam02).** A glTF material with no `alphaMode` is OPAQUE by
+    spec, and none of the foliage materials declared one — so every near-tree leaf card drew as a solid
+    metre-wide rectangle across a third of cam02. **Eight** materials were affected, all in `env`, all with an
+    RGBA base-colour PNG whose alpha *is* the leaf shape: `MAT_leaf_broadleaf` (leaves_broadleaf.png),
+    `MAT_leaf_cypress` (needles_cypress.png), `MAT_leaf_eucalyptus` (leaves_eucalyptus.png), `MAT_leaf_pine`
+    (needles_pine.png), `MAT_reeds` (reeds.png), `MAT_shrub`, `MAT_shrub_light`, `MAT_shrub_dry` (all three
+    leaves_shrub.png). **All eight take `alphaMode: MASK` at `alphaCutoff` 0.5.**
+    The cutoff is read, not guessed. `export/read_alpha.py` (read-only on `master_delivery.blend`, no render,
+    no save) dumps every material whose node tree reaches an RGBA image — **including inside node groups**,
+    which is the whole trick here: these materials feed their Principled through a group and their Image
+    Texture nodes have no links in the material's own tree, so the Principled `Alpha` input is *unlinked at
+    1.0* and a "follow the Base Color link" test finds nothing. No material has a Math `GREATER_THAN` in an
+    alpha chain, so the clip value is each material's own **`alpha_threshold` = 0.5**, under
+    `blend_method HASHED` / `surface_render_method DITHERED` — Blender clips them stochastically and 0.5 is
+    the deterministic threshold the file states. All 28 materials it found agree on 0.5; `gltf_gate1.py`
+    additionally asserts the hand-off against its own copy of each datablock before writing the mode.
+    **Which** materials get it is decided by the exported file, never by a name list: the material's
+    `baseColorTexture` PNG header must carry alpha (colour type 4 or 6). That is why the 20 `MAT_ornament_*`
+    materials that also report `alpha_threshold` 0.5 are untouched — their colour ends up on the 8x8 UV1
+    probe, which is RGB. `alpha_cutoffs.json` resolves **local-then-MAIN** (it is the export's own hand-off,
+    like `uv2_relay_status.json`, not the bake's MAIN-only npz).
+    `verify_glb.py` now asserts, per class, that every material recorded with an alpha-carrying
+    baseColorTexture is `MASK` or `BLEND` in the **packed** glb and that its *effective* cutoff matches —
+    gltfpack legitimately drops `alphaCutoff` when it equals the glTF default of 0.5, so the check compares
+    the effective value or a non-default cutoff would silently fall back and still pass.
+    Cost: `env.glb` 36 945 984 → **36 946 136 B** (+152). arch, orn and ground byte-identical. The stale-glb
+    pin from item 28 required the full `gltf_pack.sh --gate1`, so toktx re-encoded all 85 KTX2 (258 s) —
+    an env-only re-pack is no longer possible once the other three glTFs have been regenerated.
+30. **Correction to item 29: `material.alpha_threshold` is NOT the cut (r4 review).** It is Blender's factory
+    **0.5 on every material in the file** and is inert under `blend_method HASHED` /
+    `surface_render_method DITHERED` — so reading it was right for six materials by coincidence and wrong for
+    two. The real cut is built by `scripts/mat_build.py leaf_material` (~1385-1417): the material output's
+    Surface is a **Mix Shader** between a **Transparent BSDF** and the shaded branch, and its factor is a
+    **Map Range** over the base-colour image's `Alpha`, `From Min = alpha_cut − 0.15`,
+    `From Max = alpha_cut + 0.15`. The 50 % crossing — the one number a glTF `alphaCutoff` can express — is
+    the **midpoint**, i.e. `alpha_cut` itself. `read_alpha.cut_chain()` walks exactly that graph and returns a
+    **reason** rather than a default on anything else; a file-backed alpha card that does not resolve is a
+    hard failure, and the script asserts it is running on `master_delivery.blend`.
+    The eight, as read: **MAT_leaf_cypress 0.45**, **MAT_leaf_pine 0.42** (`mat_build.py` ~1738-1741),
+    MAT_leaf_broadleaf / MAT_leaf_eucalyptus / MAT_reeds / MAT_shrub / MAT_shrub_light / MAT_shrub_dry 0.5.
+    `gltf_gate1.py` imports `cut_chain` (read_alpha's discovery run is guarded by `__main__`) and re-walks the
+    graph on its **own copy** of each material — comparing against `alpha_threshold` would have agreed with a
+    wrong number, since it reads 0.5 for the two that are not.
+    **glb evidence:** `env.glb` carries `alphaCutoff` **0.449999988** on MAT_leaf_cypress and **0.419999987**
+    on MAT_leaf_pine (float32 of 0.45 / 0.42), and omits the field on the six at 0.5 — gltfpack drops it only
+    when it equals the glTF default, and `verify_glb` compares the *effective* value so a dropped non-default
+    would fail. `verify_glb.json` records env `alpha_cutout_cutoffs: [0.42, 0.45, 0.5]`.
+    Also closed (r4 carry, same defect class): `png_has_alpha` no longer returns `None` for an unrecognised
+    format and silently skips the material — it returns False only for a JPEG (which never has alpha) and
+    **raises** otherwise, because a texture whose alpha cannot be tested is a card that ships opaque in
+    silence. `env.glb` 36 946 136 → **36 946 188 B** (+52); arch, orn, ground byte-identical.

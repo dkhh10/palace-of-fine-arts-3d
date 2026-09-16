@@ -1,0 +1,356 @@
+00:00.393  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/out/gate1/gate1_set.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/gltf_gate1.py:345: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if not mat.name.startswith("MAT_EXP_") or not mat.use_nodes:
+[gate0] STEP gltf_gate1:materials wall_s=0.1  with_maps=33 grey_only=0
+[gate0] STEP gltf_gate1:backdrop_uv1 wall_s=0.1  meshes=10 source=backdrop_uv1.npz
+[gate0] STEP gltf_gate1:gate3_uv2 wall_s=0.1  meshes=7 worst_coverage=0.11408
+[gate0] STEP gltf_gate1:gate3_color0 wall_s=0.0  meshes=14 other_meshes_with_colour=0
+[gate0] STEP gltf_gate1:gate3_color0 wall_s=0.1 uv1_probe_grey.png=260B materials=63
+INFO Draco is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_draco_bridge.dylib
+INFO MeshOptimizer is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_meshopt_bridge.dylib
+15:14:35 | INFO: Starting glTF 2.0 export
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_north_astragal_000
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_north_colbase_000_plinth
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_north_colbase_000_torus
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_north_column_000_LOD0
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_north_column_044_LOD0
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_north_concrete_colonnade_merged
+15:14:36 | WARNING: EXPM_ARCH_colonnade_north_concrete_colonnade_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_south_colbase_000_plinth
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_south_colbase_000_torus
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_south_column_000_LOD0
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_south_column_046_LOD0
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_colonnade_south_concrete_colonnade_merged
+15:14:36 | WARNING: EXPM_ARCH_colonnade_south_concrete_colonnade_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_astragal_00
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_colbase_00_plinth
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_colbase_00_torus
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_column_00_LOD0
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_column_tan_inner_merged
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_concrete_inner_merged
+15:14:36 | WARNING: EXPM_ARCH_rotunda_concrete_inner_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_concrete_ochre_merged
+15:14:36 | WARNING: EXPM_ARCH_rotunda_concrete_ochre_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_concrete_podium_merged
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_dome_membrane_merged
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_drum_band_merged
+15:14:36 | WARNING: EXPM_ARCH_rotunda_drum_band_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_inner_astragal_00
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_inner_colbase_00_plinth
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_inner_colbase_00_torus
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_inner_column_00_LOD0
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_plaster_ceiling_merged
+15:14:36 | WARNING: EXPM_ARCH_rotunda_plaster_ceiling_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_rotunda_plaster_ceiling_rib_merged
+15:14:36 | WARNING: EXPM_ARCH_rotunda_plaster_ceiling_rib_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_site_concrete_podium_merged
+15:14:36 | WARNING: EXPM_ARCH_site_concrete_podium_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Extracting primitive: EXPM_ARCH_site_paving_merged
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | INFO: Finished glTF 2.0 export in 0.41957712173461914 s
+
+Warning: EXPM_ARCH_colonnade_north_concrete_colonnade_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_colonnade_south_concrete_colonnade_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_rotunda_concrete_inner_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_rotunda_concrete_ochre_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_rotunda_drum_band_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_rotunda_plaster_ceiling_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_rotunda_plaster_ceiling_rib_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+Warning: EXPM_ARCH_site_concrete_podium_merged: Could not calculate tangents. Please try to triangulate the mesh first.
+[gate0] STEP gltf_gate1:arch wall_s=0.6 arch.gltf=126115B objects=564 tris=949382 meshes=29
+15:14:36 | INFO: Starting glTF 2.0 export
+15:14:36 | WARNING: Mesh EXPM_ORN_attic_figure_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:36 | INFO: Extracting primitive: EXPM_ORN_attic_figure_v1_LOD0_a
+15:14:36 | INFO: Primitives created: 1
+15:14:36 | WARNING: Mesh EXPM_ORN_attic_panel_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:36 | INFO: Extracting primitive: EXPM_ORN_attic_panel_v1_LOD0_a
+15:14:37 | INFO: Primitives created: 1
+15:14:37 | WARNING: Mesh EXPM_ORN_attic_panel_v2_LOD0_a is not valid, and may be exported wrongly
+15:14:37 | INFO: Extracting primitive: EXPM_ORN_attic_panel_v2_LOD0_a
+15:14:37 | INFO: Primitives created: 1
+15:14:37 | WARNING: Mesh EXPM_ORN_attic_panel_v3_LOD0_a is not valid, and may be exported wrongly
+15:14:37 | INFO: Extracting primitive: EXPM_ORN_attic_panel_v3_LOD0_a
+15:14:37 | INFO: Primitives created: 1
+15:14:37 | WARNING: Mesh EXPM_ORN_capital_colonnade_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:37 | INFO: Extracting primitive: EXPM_ORN_capital_colonnade_v1_LOD0_a
+15:14:38 | INFO: Primitives created: 1
+15:14:38 | WARNING: Mesh EXPM_ORN_capital_colonnade_v2_LOD0_a is not valid, and may be exported wrongly
+15:14:38 | INFO: Extracting primitive: EXPM_ORN_capital_colonnade_v2_LOD0_a
+15:14:38 | INFO: Primitives created: 1
+15:14:38 | WARNING: Mesh EXPM_ORN_capital_colonnade_v3_LOD0_a is not valid, and may be exported wrongly
+15:14:38 | INFO: Extracting primitive: EXPM_ORN_capital_colonnade_v3_LOD0_a
+15:14:38 | INFO: Primitives created: 1
+15:14:38 | WARNING: Mesh EXPM_ORN_capital_inner_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:38 | INFO: Extracting primitive: EXPM_ORN_capital_inner_v1_LOD0_a
+15:14:39 | INFO: Primitives created: 1
+15:14:39 | WARNING: Mesh EXPM_ORN_capital_rotunda_v2_LOD0_a is not valid, and may be exported wrongly
+15:14:39 | INFO: Extracting primitive: EXPM_ORN_capital_rotunda_v2_LOD0_a
+15:14:39 | INFO: Primitives created: 1
+15:14:39 | WARNING: Mesh EXPM_ORN_capital_rotunda_v3_LOD0_a is not valid, and may be exported wrongly
+15:14:39 | INFO: Extracting primitive: EXPM_ORN_capital_rotunda_v3_LOD0_a
+15:14:39 | INFO: Primitives created: 1
+15:14:39 | WARNING: Mesh EXPM_ORN_capital_rotunda_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:39 | INFO: Extracting primitive: EXPM_ORN_capital_rotunda_v1_LOD0_a
+15:14:39 | INFO: Primitives created: 1
+15:14:39 | INFO: Extracting primitive: EXPM_ORN_drum_band_v1_LOD0_a
+15:14:40 | INFO: Primitives created: 1
+15:14:40 | INFO: Extracting primitive: EXPM_ORN_corner_scroll_v2_LOD0_a
+15:14:40 | INFO: Primitives created: 1
+15:14:40 | INFO: Extracting primitive: EXPM_ORN_finial_v1_LOD0_a_a_a
+15:14:40 | INFO: Primitives created: 1
+15:14:40 | INFO: Extracting primitive: EXPM_ORN_frieze_rinceau_return_v3_LOD0_a
+15:14:40 | INFO: Primitives created: 1
+15:14:40 | INFO: Extracting primitive: EXPM_ORN_frieze_rinceau_v1_LOD0_a
+15:14:41 | INFO: Primitives created: 1
+15:14:41 | INFO: Extracting primitive: EXPM_ORN_frieze_rinceau_return_v2_LOD0_a
+15:14:41 | INFO: Primitives created: 1
+15:14:41 | WARNING: Mesh EXPM_ORN_frieze_rinceau_v3_LOD0_a is not valid, and may be exported wrongly
+15:14:41 | INFO: Extracting primitive: EXPM_ORN_frieze_rinceau_v3_LOD0_a
+15:14:41 | INFO: Primitives created: 1
+15:14:41 | INFO: Extracting primitive: EXPM_ORN_frieze_rinceau_return_v1_LOD0_a
+15:14:41 | INFO: Primitives created: 1
+15:14:41 | INFO: Extracting primitive: EXPM_ORN_winged_figure_v1_LOD0_a_a
+15:14:41 | INFO: Primitives created: 1
+15:14:41 | WARNING: Mesh EXPM_ORN_keystone_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:41 | INFO: Extracting primitive: EXPM_ORN_keystone_v1_LOD0_a
+15:14:42 | INFO: Primitives created: 1
+15:14:42 | INFO: Extracting primitive: EXPM_ORN_keystone_v2_LOD0_a
+15:14:42 | INFO: Primitives created: 1
+15:14:42 | INFO: Extracting primitive: EXPM_ORN_keystone_v3_LOD0_a
+15:14:42 | INFO: Primitives created: 1
+15:14:42 | INFO: Extracting primitive: EXPM_ORN_maiden_v1_LOD0_a
+15:14:42 | INFO: Primitives created: 1
+15:14:42 | INFO: Extracting primitive: EXPM_ORN_maiden_v2_LOD0_a
+15:14:42 | INFO: Primitives created: 1
+15:14:42 | INFO: Extracting primitive: EXPM_ORN_maiden_v3_LOD0_a
+15:14:43 | INFO: Primitives created: 1
+15:14:43 | WARNING: Mesh EXPM_ORN_rosette_ceiling_v1_LOD0_a is not valid, and may be exported wrongly
+15:14:43 | INFO: Extracting primitive: EXPM_ORN_rosette_ceiling_v1_LOD0_a
+15:14:43 | INFO: Primitives created: 1
+15:14:43 | WARNING: Mesh EXPM_ORN_rosette_ceiling_v2_LOD0_a is not valid, and may be exported wrongly
+15:14:43 | INFO: Extracting primitive: EXPM_ORN_rosette_ceiling_v2_LOD0_a
+15:14:43 | INFO: Primitives created: 1
+15:14:43 | WARNING: Mesh EXPM_ORN_rosette_ceiling_v3_LOD0_a is not valid, and may be exported wrongly
+15:14:43 | INFO: Extracting primitive: EXPM_ORN_rosette_ceiling_v3_LOD0_a
+15:14:43 | INFO: Primitives created: 1
+15:14:43 | INFO: Extracting primitive: EXPM_ORN_urn_niche_v1_LOD0_a_a_a
+15:14:43 | INFO: Primitives created: 1
+15:14:43 | INFO: Extracting primitive: EXPM_ORN_urn_v1_LOD0_a_a_a
+15:14:44 | INFO: Primitives created: 1
+15:14:44 | INFO: Extracting primitive: EXPM_ORN_urn_v3_LOD0_a_a_a
+15:14:44 | INFO: Primitives created: 1
+15:14:44 | INFO: Extracting primitive: EXPM_ORN_urn_v2_LOD0_a_a_a
+15:14:44 | INFO: Primitives created: 1
+15:14:44 | INFO: Finished glTF 2.0 export in 8.372277975082397 s
+
+[gate0] STEP gltf_gate1:orn wall_s=8.5 orn.gltf=179349B objects=436 tris=1099192 meshes=33
+15:14:45 | INFO: Starting glTF 2.0 export
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_building
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_door_green
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_forest
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_hill
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_roof
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_roof_tile
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_backdrop_skylight
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_bird_white
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_lamp_post
+15:14:45 | WARNING: EXPM_ENV_backdropgroup_lamp_post: Could not calculate tangents. Please try to triangulate the mesh first.
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_backdropgroup_lawn
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_agap0_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_agap1_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_agap2_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_big0_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_big1_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_big2_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_big3_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_maho0_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_maho1_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_maho2_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_maho2_LOD2.001
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto0_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto1_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto2_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto3_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto4_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto5_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto5_LOD2.001
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto6_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto7_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_pitto8_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_reed0_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_reed1_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_reed1_LOD2.001
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_reed2_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_twig0_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_twig1_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_src_twig2_LOD2
+15:14:45 | INFO: Primitives created: 1
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_broadleaf_s19_LOD1_thin
+15:14:45 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:45 | INFO: Primitives created: 2
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_cypress_s17_LOD1_thin
+15:14:45 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:45 | INFO: Primitives created: 2
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_cypress_s3_LOD1_thin
+15:14:45 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:45 | INFO: Primitives created: 2
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_cypress_s41_LOD1_thin
+15:14:45 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:45 | INFO: Primitives created: 2
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_cypress_column_s2_LOD1_thin
+15:14:45 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:45 | INFO: Primitives created: 2
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_cypress_column_s31_LOD1_thin
+15:14:45 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:45 | INFO: Primitives created: 2
+15:14:45 | INFO: Extracting primitive: EXPM_ENV_tree_eucalyptus_s5_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_eucalyptus_s23_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_eucalyptus_s61_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_pine_s7_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_pine_s29_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_redwood_s43_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_redwood_s13_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 2
+15:14:46 | INFO: Extracting primitive: EXPM_ENV_tree_willow_s37_LOD1_thin
+15:14:46 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_broadleaf_s53_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_broadleaf_s19_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_s41_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_s3_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_s41_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_s17_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_s17_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_s3_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_column_s31_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_cypress_column_s2_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_eucalyptus_s5_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_eucalyptus_s23_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_eucalyptus_s61_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_eucalyptus_s5_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_eucalyptus_s61_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_eucalyptus_s23_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_pine_s7_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_pine_s29_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_pine_s7_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_redwood_s43_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_redwood_s13_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_redwood_s43_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_redwood_s13_LOD2
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_willow_s11_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Extracting primitive: EXPM_treeboard_ENV_tree_willow_s37_LOD1
+15:14:46 | INFO: Primitives created: 1
+15:14:46 | INFO: Finished glTF 2.0 export in 1.6135411262512207 s
+Traceback (most recent call last):
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/gltf_gate1.py", line 530, in <module>
+    assert not alpha_missing, (
+           ^^^^^^^^^^^^^^^^^
+AssertionError: env.gltf: ['MAT_reeds', 'MAT_shrub_light', 'MAT_shrub', 'MAT_shrub_dry', 'MAT_leaf_broadleaf', 'MAT_leaf_cypress', 'MAT_leaf_eucalyptus', 'MAT_leaf_pine'] have an alpha-carrying baseColorTexture but no clip value in alpha_cutoffs.json - run export/read_alpha.py on master_delivery.blend first
+
+Warning: EXPM_ENV_backdropgroup_lamp_post: Could not calculate tangents. Please try to triangulate the mesh first.
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 32745 exited rc=0 after 13 s (max 900)
