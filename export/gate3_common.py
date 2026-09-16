@@ -69,6 +69,19 @@ UV2_RELAY_THRESHOLD = 0.15
 # asserts the covered texel set is bit-identical before and after). The six-station backface sweep
 # (export/out/gate3/scene_audit.json) found no other non-foliage object over 200 px with this defect.
 FLIP_NORMALS_FOR_BAKE = ("ARCH_rotunda_plaster_ceiling_merged",)
+
+# QA-12b-1, PREPARED BUT OFF BY DEFAULT (the lead decides on the overnight slot). If a Cycles bake's world
+# lookups carry the CAMERA ray flag, every bake-target job took the sky's camera branch (camera_boost 2.10,
+# camera_saturation 1.20, none of SKY_DIFFUSE_TINT) where the Cycles frame gets the diffuse branch
+# (diffuse_boost 2.50, the anti-sun/horizon tint). Round 13 measured exactly this for Eevee's light-probe
+# capture and fixed it by baking against the SAME sky built `split_rays=False` - the diffuse branch applied
+# to every ray - which is what `light_probes.bake_world(scene)` returns, reading the parameters from the
+# live world's own custom properties. Set PFA_BAKE_DIFFUSE_WORLD=1 to arm it for a queue run.
+# Only the four BAKE-TARGET kinds are affected: `sky` and `probe` isolate their own branch explicitly and
+# the impostors are Cycles RENDERS (camera rays primary, diffuse rays for the leaves), so all three are
+# already correct. Measured split of the overnight queue: 47 of 65 jobs, 22 499 s of the 23 419 s.
+BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex")
+BAKE_DIFFUSE_WORLD = bool(os.environ.get("PFA_BAKE_DIFFUSE_WORLD"))
 UV2_RELAY_ANGLE = 1.15
 UV2_RELAY_MARGIN = 0.0008
 

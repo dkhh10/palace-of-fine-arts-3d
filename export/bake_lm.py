@@ -50,8 +50,23 @@ def prepare(samples):
     scene.compositing_node_group = None
     hidden_hi = [o.name for o in bpy.data.objects if o.name.startswith("EXPHI") and not o.hide_render]
     assert not hidden_hi, f"hi-poly twins ray-visible: {hidden_hi}"
+    world_before = scene.world.name if scene.world else None
+    diffuse_world = False
+    if g3.BAKE_DIFFUSE_WORLD and job["kind"] in g3.BAKE_DIFFUSE_WORLD_KINDS:
+        # QA-12b-1, see gate3_common.BAKE_DIFFUSE_WORLD. The same sky built split_rays=False, exactly as
+        # light_probes.bake does for Eevee's probe capture; its parameters come from the live world's own
+        # custom properties, so this bakes whatever rig the blend carries.
+        import light_probes as lprobe
+        bw = lprobe.bake_world(scene)
+        assert bw is not None, ("PFA_BAKE_DIFFUSE_WORLD is set but light_probes.bake_world() returned None "
+                                f"for world {world_before!r} - it carries no sun_azimuth_deg/sun_elevation_deg")
+        scene.world = bw
+        diffuse_world = True
+        print(f"[gate3] {JOB_ID}: world {world_before!r} -> {bw.name!r} (diffuse branch on every ray)")
     rec["rig"] = dict(lights=len(lights), samples=c.samples, adaptive=c.use_adaptive_sampling,
-                      denoiser=c.denoiser, compositor=scene.compositing_node_group)
+                      denoiser=c.denoiser, compositor=scene.compositing_node_group,
+                      world=scene.world.name if scene.world else None, world_before=world_before,
+                      diffuse_world=diffuse_world)
     return lights
 
 
