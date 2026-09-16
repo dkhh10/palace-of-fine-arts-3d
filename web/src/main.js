@@ -366,8 +366,10 @@ async function boot() {
 			if ( spec && spec.refused ) { postState.mistRefused = spec.refused; note( `post mist REFUSED: ${spec.refused}` ); }
 			else if ( spec ) {
 				postState.mistSpec = spec;
-				note( `post mist: distance fog ${spec.near}..${spec.far} m from ${spec.source}, `
-					+ `haze [${comp.hazeColor.map( v => v.toFixed( 2 ) ).join( ', ' )}] strength ${comp.hazeStrength} falloff ${comp.hazeFalloff}`
+				note( `post mist: COMP_golden_hour airlight cap ${spec.cap} * (1 - exp(-k ${spec.k} * mist)), `
+					+ `mist = ${spec.shape} over ${spec.near}..${spec.far} m along the view ray (extinction length `
+					+ `${spec.extinctionLength_m.toFixed( 0 )} m), haze [${comp.hazeColor.map( v => v.toFixed( 2 ) ).join( ', ' )}], `
+					+ `from ${spec.source}`
 					+ ( spec.invented ? '. THESE ARE NOT BLENDER\'S NUMBERS - no scored capture may use them.' : '' ) );
 			}
 		} else removeMist( scene );
@@ -474,7 +476,7 @@ async function boot() {
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
 			fog: ( scene.fog && postState && postState.mistSpec ) ? {
 				color: scene.fog.color, near: scene.fog.near, far: scene.fog.far,
-				strength: postState.mistSpec.strength, falloff: postState.mistSpec.falloff,
+				cap: postState.mistSpec.cap, k: postState.mistSpec.k, intensity: postState.mistSpec.intensity,
 			} : null,
 			loadTexture: ( url ) => {
 				progress.label = url.split( '/' ).pop();

@@ -17,23 +17,51 @@
 import * as THREE from 'three';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-export const MIST_NEAR_M = 60;         // viewer's own: see above
-export const MIST_FAR_M = 1400;        // ~ the backdrop distance
+// Kept only as the ?mist= escape hatch's defaults; NEVER used when the manifest states the real ones.
+export const MIST_NEAR_M = 60;
+export const MIST_FAR_M = 1400;
 
 let fogChunkPatched = false;
 
+/** The mist pass's own shaping, from `compositor.mist.falloff`. */
+export function mistShapeGlsl( falloff ) {
+	const f = String( falloff || 'LINEAR' ).toUpperCase();
+	if ( f === 'QUADRATIC' ) return 't * t';
+	if ( f === 'INVERSE_QUADRATIC' ) return 'sqrt( t )';
+	return 't';                                  // LINEAR, which is what this scene uses
+}
+
 /**
- * Blender's haze is `mix( image, hazeColor, mist^falloff * strength )`; three's own fog chunk goes to
- * a FULL mix at `fogFar`, which at this site would bury the backdrop.  The chunk is replaced once,
- * with the falloff exponent and the strength ceiling as compile-time constants.
+ * COMP_golden_hour's haze, exactly as `scripts/light_build.py` builds it - NOT a power curve.
+ *
+ *   mist     = clamp( ( dist - start ) / depth, 0, 1 ), shaped by compositor.mist.falloff, then
+ *              intensity + (1 - intensity) * t.  `dist` is measured ALONG THE VIEW RAY in metres,
+ *              which is why fog_vertex below uses length( mvPosition.xyz ) and not three's -z.
+ *   airlight = cap * ( 1 - exp( -k * mist ) )    cap = "Haze Strength" (0.25), k = "Haze Falloff" (5.0)
+ *   out      = mix( image, hazeColor, clamp( airlight, 0, 1 ) )
+ *
+ * `Haze Falloff` is the EXTINCTION COEFFICIENT k, not an exponent: L = depth / k = 400 m here.  The
+ * viewer's first attempt read it as an exponent (`mist^5 * 0.25`), which is ~0 near the camera where
+ * the truth is cap*k*mist = 1.25*mist - the 5x error the review predicted, and it is why the mist
+ * measured as a no-op at the hero.
+ *
+ * The compositor also masks the haze off the BACKGROUND (`Depth < 4000`) because the sky model
+ * already carries it.  Here that is free: fog lives in the scene materials and the sky is the
+ * background, which runs no material.
  */
-function patchFogChunk( strength, falloff ) {
+function patchFogChunk( cap, k, shapeGlsl, intensity ) {
 	if ( fogChunkPatched ) return;
 	fogChunkPatched = true;
+	THREE.ShaderChunk.fog_vertex = /* glsl */`
+#ifdef USE_FOG
+	vFogDepth = length( mvPosition.xyz );   // along the VIEW RAY, as Blender's mist pass measures it
+#endif`;
 	THREE.ShaderChunk.fog_fragment = /* glsl */`
 #ifdef USE_FOG
-	float pfaMist = clamp( ( vFogDepth - fogNear ) / ( fogFar - fogNear ), 0.0, 1.0 );
-	gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, pow( pfaMist, ${falloff.toFixed( 3 )} ) * ${strength.toFixed( 5 )} );
+	float t = clamp( ( vFogDepth - fogNear ) / max( fogFar - fogNear, 1e-6 ), 0.0, 1.0 );
+	float pfaMist = ${intensity.toFixed( 5 )} + ( 1.0 - ${intensity.toFixed( 5 )} ) * ( ${shapeGlsl} );
+	float pfaAir = ${cap.toFixed( 5 )} * ( 1.0 - exp( - ${k.toFixed( 5 )} * pfaMist ) );
+	gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, clamp( pfaAir, 0.0, 1.0 ) );
 #endif`;
 }
 
@@ -69,7 +97,7 @@ export function applyMist( scene, comp, { near = null, far = null, allowInvented
 	const m = comp.mist;
 	let invented = false;
 	if ( near === null || far === null ) {
-		if ( m && typeof m.start === 'number' && typeof m.depth === 'number' ) {
+		if ( m && typeof m.start === 'number' && typeof m.depth === 'number' && m.use_mist !== false ) {
 			near = m.start; far = m.start + m.depth;
 		} else if ( allowInvented ) {
 			near = MIST_NEAR_M; far = MIST_FAR_M; invented = true;
@@ -78,7 +106,12 @@ export function applyMist( scene, comp, { near = null, far = null, allowInvented
 				+ 'the viewer will not invent a normalisation for a scored capture. ?mist=near,far overrides.' };
 		}
 	} else invented = true;
-	patchFogChunk( comp.hazeStrength, comp.hazeFalloff );
+	const shape = mistShapeGlsl( m && m.falloff );
+	const intensity = ( m && typeof m.intensity === 'number' ) ? m.intensity : 0;
+	if ( m && m.height ) return { refused: `compositor.mist.height = ${m.height} fades the mist above that world z; `
+		+ 'the viewer does not implement the height fade and will not approximate it' };
+	// cap = Haze Strength, k = Haze Falloff (the EXTINCTION COEFFICIENT, not an exponent)
+	patchFogChunk( comp.hazeStrength, comp.hazeFalloff, shape, intensity );
 	const col = new THREE.Color().setRGB( ...comp.hazeColor, THREE.LinearSRGBColorSpace );
 	scene.fog = new THREE.Fog( col, near, far );
 	// three only compiles the fog chunk into a material that asks for it
@@ -89,7 +122,10 @@ export function applyMist( scene, comp, { near = null, far = null, allowInvented
 			m.fog = true; m.needsUpdate = true;
 		}
 	} );
-	return { near, far, strength: comp.hazeStrength, falloff: comp.hazeFalloff, color: comp.hazeColor,
+	return { near, far, cap: comp.hazeStrength, k: comp.hazeFalloff, shape: ( m && m.falloff ) || 'LINEAR',
+		intensity, extinctionLength_m: ( far - near ) / comp.hazeFalloff, color: comp.hazeColor,
+		// kept under the old names so the impostor material and the sidecar keep reading one shape
+		strength: comp.hazeStrength, falloff: comp.hazeFalloff,
 		invented, source: invented ? 'the viewer (?mist= or the placeholder constants)' : 'manifest compositor.mist' };
 }
 

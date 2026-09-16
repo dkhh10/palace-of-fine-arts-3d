@@ -51,3 +51,5 @@ renders/web/full/
 renders/web/*_cam0*.png
 renders/web/*_perf1440*.png
 !renders/web/960/*
+renders/web/round13b_*.png
+renders/web/round13direct_*.png

@@ -54,7 +54,7 @@ const vertexShader = /* glsl */`
 		vDirBlender = vec3( d.x, - d.z, d.y );         // three -> Blender Z-up
 		vec4 mv = viewMatrix * vec4( world, 1.0 );
 		#ifdef PFA_FOG
-		vFogDepth = - mv.z;
+		vFogDepth = length( mv.xyz );          // along the VIEW RAY, as Blender's mist pass measures it
 		#endif
 		gl_Position = projectionMatrix * mv;
 	}
@@ -68,7 +68,7 @@ const fragmentShader = /* glsl */`
 	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
-	uniform float fogNear, fogFar, fogStrength, fogFalloff;
+	uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
 	varying float vFogDepth;
 	#endif
 	varying vec2 vQuadUv;
@@ -133,8 +133,11 @@ const fragmentShader = /* glsl */`
 		if ( debugMode == 4 ) { gl_FragColor = vec4( vQuadUv, 0.0, 1.0 ); return; }
 
 		#ifdef PFA_FOG
-		float mist = clamp( ( vFogDepth - fogNear ) / ( fogFar - fogNear ), 0.0, 1.0 );
-		lin = mix( lin, fogColor, pow( mist, fogFalloff ) * fogStrength );
+		// COMP_golden_hour's airlight, the same form postChain.js patches into three's fog chunk:
+		// cap * ( 1 - exp( -k * mist ) ), NOT a power curve.  fogK is the extinction coefficient.
+		float t = clamp( ( vFogDepth - fogNear ) / max( fogFar - fogNear, 1e-6 ), 0.0, 1.0 );
+		float mist = fogIntensity + ( 1.0 - fogIntensity ) * t;
+		lin = mix( lin, fogColor, clamp( fogCap * ( 1.0 - exp( - fogK * mist ) ), 0.0, 1.0 ) );
 		#endif
 
 		gl_FragColor = vec4( lin, 1.0 );
@@ -194,7 +197,7 @@ export function buildImpostors( { impostors, far, loadTexture, note = () => {}, 
 		};
 		if ( fog ) Object.assign( uniforms, {
 			fogColor: { value: fog.color }, fogNear: { value: fog.near }, fogFar: { value: fog.far },
-			fogStrength: { value: fog.strength }, fogFalloff: { value: fog.falloff },
+			fogCap: { value: fog.cap }, fogK: { value: fog.k }, fogIntensity: { value: fog.intensity || 0 },
 		} );
 		const mat = new THREE.ShaderMaterial( {
 			name: `MAT_WEB_impostor_${key}`,

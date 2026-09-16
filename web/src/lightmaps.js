@@ -283,7 +283,9 @@ export function applyGate3Lightmaps( o ) {
 		if ( v && v.applied && v.mode === 'global' )
 			note( `gate3 vertex irradiance: ${v.applied} COLOR_0 primitive(s), ${v.placements} placement(s), decoded at the ONE `
 				+ `global range ${v.globalRange.toFixed( 5 )} x scale ${gate3.scale.toFixed( 5 )} `
-				+ `(${gate3.vertexIrradiance.rangeSource}); gltfpack's shared buffers are harmless at one range` );
+				+ `read from ${gate3.vertexIrradiance.rangeFrom}`
+				+ ( gate3.vertexIrradiance.rangeSource ? `; the export derived it as ${gate3.vertexIrradiance.rangeSource}` : '' )
+				+ `; gltfpack's shared buffers are harmless at one range` );
 		else if ( v && v.wanted && ! v.error )
 			note( `gate3 vertex irradiance: ${v.applied}/${v.wanted} near-tree mesh(es) take COLOR_0 as baked irradiance `
 				+ `(range ${v.rangeMin.toFixed( 3 )}..${v.rangeMax.toFixed( 3 )}, x scale ${gate3.scale.toFixed( 5 )}); `

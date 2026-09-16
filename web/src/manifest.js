@@ -72,7 +72,7 @@ export function applyUv2RelayStatus( manifest, status ) {
 		// decode is simply refused, because a wrong range is a ~90x error in irradiance.
 		if ( globals.size === 1 && manifest.gate3.vertexIrradiance.range == null ) {
 			manifest.gate3.vertexIrradiance.range = [ ...globals ][ 0 ];
-			manifest.gate3.vertexIrradiance.rangeSource = 'uv2_relay_status.json range_global';
+			manifest.gate3.vertexIrradiance.rangeFrom = 'uv2_relay_status.json range_global (FALLBACK: the manifest key was absent)';
 		} else if ( globals.size > 1 ) {
 			manifest.gate3.vertexIrradiance.rangeConflict = [ ...globals ];
 		}
@@ -700,7 +700,10 @@ export function normaliseManifest( raw, baseUrl ) {
 			blockedNoUv2, frozenUsed, atlases, slots, slotCount: Object.keys( slots ).length, slotsNoAtlas,
 			vertexIrradiance: vi ? { inGlb: vi.in_glb === true, encode: vi.encode || 'gamma2',
 				range: typeof vi.range === 'number' ? vi.range : null,
-				rangeSource: vi.range_source || ( typeof vi.range === 'number' ? 'manifest lightmaps.vertex_irradiance.range' : null ),
+				// Which KEY the viewer read is not the same question as where the export derived the
+				// number; both are reported, so a relay fallback can never be mistaken for the manifest.
+				rangeFrom: typeof vi.range === 'number' ? 'manifest lightmaps.vertex_irradiance.range' : null,
+				rangeSource: vi.range_source || null,
 				attribute: vi.attribute || 'COLOR_0', meshes: vi.meshes_n ?? null } : null,
 			impostors, probe, notes: g3notes };
 		notes.push( `manifest v4 lightmaps: ${gate3.ownCount} own map(s) ready of ${Object.keys( ownMaps ).length}`
