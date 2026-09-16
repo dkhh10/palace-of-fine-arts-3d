@@ -292,6 +292,10 @@ elif job["kind"] == "impostor":
             nl = np.stack([nx, ny, nz], axis=-1)
             ln = np.linalg.norm(nl, axis=-1, keepdims=True)
             nl = np.where(ln > 1e-6, nl / np.maximum(ln, 1e-6), 0.0)
+            # a = 0.5 IS the billboard centre plane: z runs from dist-radius (near) to dist+radius (far) and
+            # depth_range_m = 2*radius, so the viewer recovers depth_from_centre_m = (a - 0.5)*depth_range_m,
+            # positive AWAY from the camera. `dist` is deliberately not exported: nothing outside this loop
+            # needs the camera stand-off (manifest_v4 `impostors.encode.normal_depth` says exactly this).
             dn = np.clip((np.where(np.isfinite(zz), zz, dist + radius) - (dist - radius)) / (2.0 * radius), 0.0, 1.0)
             nrm[y0:y0 + F, x0:x0 + F, :3] = nl * 0.5 + 0.5
             nrm[y0:y0 + F, x0:x0 + F, 3] = np.where(a > 1e-4, dn, 1.0)
@@ -339,7 +343,15 @@ elif job["kind"] == "impostor":
                s_per_view=round(render_s / max(nrender, 1), 3), range=rng,
                radius_m=round(radius, 4), centre=[round(float(v), 4) for v in centre],
                bbox_m=[round(float(hi[i] - lo[i]), 4) for i in range(3)],
-               centre_above_base_m=round(float(centre.z - lo.z), 4),
+               # The placement contract is the prototype's OWN z = 0 (the nursery ground plane the trees
+               # stand on and the plane tree_far's trunk_base maps to), never the bbox bottom: 14 of the 16
+               # prototypes have bbox_min.z = 0 but ENV_tree_willow_s37_LOD1 is -2.67 m and _s11 -0.72 m
+               # (drooping fronds that are buried in the master), and scaling by a bbox height that includes
+               # them makes the willow impostors 19 % / 6 % too small and lifts them off their trunks.
+               base_z_m=round(float(lo.z), 4),
+               centre_z_m=round(float(centre.z), 4),
+               height_above_base_m=round(float(hi.z - max(lo.z, 0.0)), 4),
+               centre_above_base_m=round(float(centre.z - lo.z), 4),   # diagnostic only, NOT the contract
                depth_range_m=round(2.0 * radius, 4), alpha_coverage=round(cov, 4),
                channels=chan_seen, files=out, bake_s=round(render_s, 1))
     print(f"[gate3] {JOB_ID}: {nrender} views {render_s:.1f}s ({render_s/max(nrender,1):.2f} s/view) "

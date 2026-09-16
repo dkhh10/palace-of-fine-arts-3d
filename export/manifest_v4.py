@@ -32,6 +32,32 @@ def main():
     enc = (json.loads((g3.OUT / "encode.json").read_text())["maps"]
            if (g3.OUT / "encode.json").exists() else {})
     jobs = {j["id"]: j for j in g3.read_jobs()["jobs"]}
+
+    # The export engineer applies out/gate3/lightmap_uv2.npz to the glbs and writes uv2_relay_status.json
+    # beside it. Until that file exists the seven re-laid assets ship `uv2_in_glb: false` and the viewer must
+    # not apply their maps. This writer never flips a flag on its own - the flag follows that file only.
+    rp = g3.OUT / "uv2_relay_status.json"
+    relay = json.loads(rp.read_text()) if rp.exists() else None
+
+    def relay_flag(obj):
+        """True/False from uv2_relay_status.json, or None when it says nothing about this object.
+        Tolerated shapes: {"assets": {obj: bool | {"uv2_in_glb"|"applied"|"relaid": bool}}},
+        the same map at the top level, or {"applied": [obj, ...]}."""
+        if relay is None:
+            return None
+        d = relay.get("assets", relay) if isinstance(relay, dict) else {}
+        e = d.get(obj) if isinstance(d, dict) else None
+        if isinstance(e, bool):
+            return e
+        if isinstance(e, dict):
+            for k in ("uv2_in_glb", "applied", "relaid", "in_glb"):
+                if isinstance(e.get(k), bool):
+                    return e[k]
+        for k in ("applied", "relaid", "uv2_in_glb"):
+            v = relay.get(k) if isinstance(relay, dict) else None
+            if isinstance(v, list):
+                return obj in v
+        return None
     man["schema"] = SCHEMA
     man["gate"] = "gate3"
     man["generator"] = "export/manifest_v4.py"
@@ -70,8 +96,12 @@ def main():
         kb = add_tex(f"{base}_gamma2", size, size, "lightmap", "gamma2", True)
         gate1_layout = j["kind"] == "own_gate1uv2"
         en = enc.get(base, {})
+        in_glb = gate1_layout or not row["uv2_relaid"]
+        flag = relay_flag(j["object"])
+        if not gate1_layout and flag is not None:
+            in_glb = bool(flag)
         e = dict(size=size, textures={"rgbm8": ka, "gamma2": kb}, default="gamma2",
-                 range=en.get("range", r["map"]["range"]), uv2_in_glb=gate1_layout or not row["uv2_relaid"],
+                 range=en.get("range", r["map"]["range"]), uv2_in_glb=in_glb,
                  uv2_source="gate1" if (gate1_layout or not row["uv2_relaid"]) else "gate3_relaid",
                  uv2_coverage=row["coverage_gate1"] if gate1_layout else row["coverage"],
                  cm_per_texel=row["cm_per_texel_gate1"] if gate1_layout else row["cm_per_texel"],
@@ -106,9 +136,15 @@ def main():
                             slot_check=a.get("slot_check"))
 
     v = comp.get("vertex") or {}
-    vertex = dict(encode=v.get("encode", "gamma2"), range=v.get("range"), attribute="COLOR_0", in_glb=False,
+    vertex = dict(encode=v.get("encode", "none"), dtype=v.get("dtype", "float32"),
+                  shape=v.get("shape", "(n_verts, 3)"), units=v.get("units"),
+                  attribute="COLOR_0", in_glb=False,
                   npz=v.get("npz"), bytes=v.get("bytes"), meshes_n=v.get("meshes"), verts=v.get("verts"),
-                  meshes={r["mesh"]: dict(verts=r["verts"], max=r["max"], mean=r["mean"],
+                  decode=("none: the npz holds the baked values themselves, scene-linear RGB, same units as "
+                          "a decoded lightmap texel. irradiance = value * lightmaps.scale (pi). How COLOR_0 "
+                          "is quantised in the glb is the exporter's call, made on these numbers."),
+                  meshes={r["mesh"]: dict(verts=r["verts"], min=r.get("min"), max=r["max"], mean=r["mean"],
+                                          mean_nonzero=r.get("mean_nonzero"), p99=r.get("p99"),
                                           roundtrip=r["roundtrip"]) for r in v.get("rows", [])},
                   note=("`in_glb: false` until env.glb is re-exported with COLOR_0. Until then the near trees "
                         "stay on the PMREM path and must take their irradiance from sky.diffuse, not "
@@ -126,6 +162,8 @@ def main():
         uv2_relay_threshold=g3.UV2_RELAY_THRESHOLD,
         uv2_relaid=setj.get("uv2_relaid", []),
         uv2_npz="lightmap_uv2.npz",
+        uv2_relay_status=("uv2_relay_status.json" if relay is not None else
+                          "not written yet: every re-laid asset stays uv2_in_glb=false"),
         assets=assets,
         slots=dict(atlases=atlases,
                    note=("the per-instance uv2_offset / uv2_scale are `orn_slots`, unchanged since v2 and derived "
@@ -147,13 +185,25 @@ def main():
                      "impostor_albedo", "gamma2", False)
         ka2 = add_tex(f"gate3_imp_{p}_albedo_{g3.IMP_ATLAS_PX}", g3.IMP_ATLAS_PX, g3.IMP_ATLAS_PX,
                       "impostor_albedo", "gamma2", False)
+        # review finding 5: the normal+depth atlas is packed with `--encode uastc` (gate3_pack.sh:44), i.e.
+        # ASTC 4x4, and was labelled `rgba8_unorm`. The residency was always counted right (1 B/texel); only
+        # the label was wrong, and a wrong label is what a viewer writes its loader against.
         kn = add_tex(f"gate3_imp_{p}_normdepth_{g3.IMP_SHIP_PX}", g3.IMP_SHIP_PX, g3.IMP_SHIP_PX,
-                     "impostor_normal_depth", "rgba8_unorm", False)
+                     "impostor_normal_depth", "uastc_astc4x4", False)
         kn2 = add_tex(f"gate3_imp_{p}_normdepth_{g3.IMP_ATLAS_PX}", g3.IMP_ATLAS_PX, g3.IMP_ATLAS_PX,
-                      "impostor_normal_depth", "rgba8_unorm", False)
+                      "impostor_normal_depth", "uastc_astc4x4", False)
+        # review finding 1: the prototype's own z = 0 is the placement datum, not the bbox bottom.
+        # base_z_m comes from the job the bake was handed (gate3_set.json impostor_prototypes), or from the
+        # record itself once it carries it; centre_z_m is the billboard centre above that datum.
+        base_z = r["base_z_m"] if "base_z_m" in r else round(float(j["bbox_min"][2]), 4)
+        top_z = r["base_z_m"] + r["bbox_m"][2] if "base_z_m" in r else round(float(j["bbox_max"][2]), 4)
+        centre_z = r["centre_z_m"] if "centre_z_m" in r else round(float(r["centre"][2]), 4)
+        h_above = r.get("height_above_base_m", round(top_z - max(base_z, 0.0), 4))
+        assert abs((centre_z - base_z) - r["centre_above_base_m"]) < 2e-3, f"{p}: base/centre disagree"
         protos[p] = dict(albedo=ka, normal_depth=kn, albedo_2k=ka2, normal_depth_2k=kn2,
                          range=r["range"], radius_m=r["radius_m"], bbox_m=r["bbox_m"],
-                         centre_above_base_m=r["centre_above_base_m"], depth_range_m=r["depth_range_m"],
+                         base_z_m=base_z, centre_z_m=centre_z, height_above_base_m=h_above,
+                         depth_range_m=r["depth_range_m"],
                          views=r["views"], alpha_coverage=r["alpha_coverage"],
                          render_s=r["render_s"], s_per_view=r["s_per_view"],
                          bytes=sum(f["bytes"] for f in r["files"].values()),
@@ -167,8 +217,17 @@ def main():
         inner_px=int(g3.IMP_INNER_PX * scale),
         variant_2k=dict(atlas_px=g3.IMP_ATLAS_PX, frame_px=g3.IMP_FRAME_PX, gutter_px=g3.IMP_GUTTER_PX,
                         inner_px=g3.IMP_INNER_PX, note="on disk; the budget lever is which of the two is loaded"),
-        encode=dict(albedo="gamma2 on RGB at the prototype's own `range`, straight alpha in A",
-                    normal_depth="rgb = world normal * 0.5 + 0.5 (Blender Z-up), a = depth / depth_range_m"),
+        encode=dict(albedo=("gamma2 on RGB at the prototype's own `range` (rgb = t.rgb * t.rgb * range, "
+                            "LINEAR oetf, NOT sRGB), straight (un-premultiplied) alpha in A"),
+                    normal_depth=("rgb = world normal * 0.5 + 0.5 (Blender Z-up); A is depth about the "
+                                  "BILLBOARD CENTRE, a = 0.5 there: depth_from_centre_m = "
+                                  "(a - 0.5) * depth_range_m, positive away from the camera. The camera "
+                                  "stand-off used at bake time is not exported and is not needed."),
+                    normal_depth_note=("block compressed (UASTC -> ASTC 4x4) on purpose while `unlit` holds "
+                                       "and nothing samples the normal or the depth. If the viewer ever "
+                                       "shades or soft-depth-tests the impostor, repack this map lossless "
+                                       "(toktx --zcmp, no --encode): +3.0 MB resident per prototype at 1K, "
+                                       "+48.0 MB over the 16.")),
         lighting=("baked: Cycles Combined at the final rig, sun + sky + leaf translucency, film_transparent, "
                   f"{g3.SAMPLES_IMPOSTOR} spp + OIDN, with a camera-invisible lawn plane for the ground bounce"),
         unlit=("the atlas already holds lit radiance: draw it straight into the linear buffer before the LUT, "
@@ -182,8 +241,13 @@ def main():
         instance_rotation=("IGNORED on purpose: the lighting is baked in world space, so the frame is picked "
                            "from the world-space view direction. Two instances of one prototype differ by "
                            "scale, not silhouette."),
-        placement=("s = tree_far[i].height_m / prototypes[p].bbox_m[2]; the quad is a screen-facing square of "
-                   "side 2*radius_m*s centred at trunk_base + (0,0,centre_above_base_m*s)"),
+        placement=("s = tree_far[i].height_m / prototypes[p].height_above_base_m; the quad is a screen-facing "
+                   "square of side 2*radius_m*s centred at trunk_base + (0,0, centre_z_m*s). Both heights are "
+                   "measured from the prototype's OWN z = 0, the plane trunk_base maps to - NOT from the "
+                   "bbox bottom: `base_z_m` is 0 for 14 of the 16 prototypes but -2.6748 m on "
+                   "ENV_tree_willow_s37_LOD1 and -0.7183 m on ENV_tree_willow_s11_LOD1 (fronds that hang "
+                   "below the trunk base and are buried in the Phase 5 scene). Dividing by bbox_m[2] there "
+                   "made those two impostors 19 % / 6 % too small and lifted them off their trunks."),
         prototype_map=setj["impostor_prototype_map"],
         prototypes=protos,
         billboards="join on tree_far[i].prototype through prototype_map",
@@ -220,10 +284,13 @@ def main():
         ktx2_dir="tex_ktx2", files=files, missing=missing_ktx,
         encoders=dict(rgbm8="toktx --t2 --zcmp 18 --genmipmap --assign_oetf linear (lossless, RGBA8 resident)",
                       gamma2="toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf linear",
-                      impostor="toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --assign_oetf linear (no mips)"),
+                      impostor=("toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --assign_oetf linear "
+                                "(no mips: an octahedral atlas mips across frame boundaries). Both impostor "
+                                "maps, albedo and normal+depth, go through this one encoder.")),
         bytes=sum(f["bytes"] for f in files.values()),
-        resident_rule=("ASTC 4x4 on the Apple GPU = 1 byte/texel, x4/3 for the mip chain; an rgbm8 / rgba8_unorm "
-                       "variant is uncompressed RGBA8 = 4 bytes/texel; a texture without mips counts x1.0"))
+        resident_rule=("ASTC 4x4 on the Apple GPU (`gamma2`, `uastc_astc4x4`) = 1 byte/texel, x4/3 for the "
+                       "mip chain; an `rgbm8` / `rgba8` variant is uncompressed RGBA8 = 4 bytes/texel; a "
+                       "texture without mips counts x1.0"))
 
     def res(pred):
         return round(sum(f["resident_mb"] for k, f in files.items() if pred(k, f)), 2)

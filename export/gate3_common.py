@@ -312,9 +312,14 @@ def read_hdr(path):
     return (px[..., :3] * f[..., None]).astype(np.float32)[::-1]
 
 
+BLOCK_ENCODES = ("gamma2", "uastc_astc4x4")     # UASTC -> ASTC 4x4 on the Apple GPU
+UNCOMPRESSED_ENCODES = ("rgbm8", "rgba8", "rgba8_unorm")
+
+
 def resident_mb(w, h, encode, mips=True):
     """Gate 2's rule: ASTC 4x4 on the Apple GPU = 1 byte/texel; uncompressed RGBA8 = 4. x4/3 for mips."""
-    per = 4.0 if encode in ("rgbm8", "rgba8") else 1.0
+    assert encode in BLOCK_ENCODES + UNCOMPRESSED_ENCODES, f"resident_mb: unknown encode {encode!r}"
+    per = 4.0 if encode in UNCOMPRESSED_ENCODES else 1.0
     return round(w * h * per * (4.0 / 3.0 if mips else 1.0) / (1024.0 * 1024.0), 2)
 
 
