@@ -734,3 +734,7 @@ Next: viewer fixes + measurements -> merge phase6-viewer; export r4 review -> me
 
 ## 2026-09-16 · Cycles references 03/05/06 done (renders/previews/qa/round13_0N_*_cycles.png, 1920x1080 128 spp, compositor on; 05+06 in 950 s); 02/04 rendering (pid 34504, max 3000 s)
 GPU still busy until 02/04 finish (~30 min); bake go-signal and the viewer's --perf after that.
+
+## 2026-09-16 · phase6-viewer MERGED (0458150, through 8d76e7d: r5b fixes d4a9b57 + measurements); QA-13-1 direct-path fix withdrawn on evidence, probe irradiance authorised for unlit-mapped surfaces
+Measurements: band B > R+20 17.6 % -> 15.5 % with post (target ≤ 3.9 %); olive cam02 46.5 -> 32.2 % with post (viewer mask), cam06 21.2 %. Leaf cards cut out after the alphaMode re-sync but stay blue (same sky-only path). Impostor rotational pop still unswept (re-check on the corrected-weights re-capture).
+Waiting: export r4 review -> merge; bake step 1 + scene check; refs 02/04 (pid 34504) -> GPU-free signal to bake and viewer. Next: probe irradiance measurement; ceiling bake; Gate 4 capture + QA 14.

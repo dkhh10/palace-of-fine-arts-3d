@@ -415,3 +415,11 @@ hero luma with post 127.3 -> 131.8 (Cycles 140.0).
 While the lead's Cycles reference renders (stations 2-6, ~20 min each) occupied the GPU, the viewer engineer was allowed to keep taking development screenshots through
 scripts/chrome_run.sh with PFA_DEV_SHARE_GPU=1, which keeps the bake-queue guard and refuses --perf outright. Scored captures and every perf measurement still require the GPU
 free (no bake queue, no lead render). The CLAUDE.md rule "never concurrent with the bake queue" is unchanged; this is the lead's standing exception for a lead render only.
+
+## 2026-09-16 · QA-13-1 revised (lead): the direct-path fix was a no-op; unlit-mapped surfaces take irradiance from the baked hero probe
+The viewer engineer measured the prescribed fix before shipping it: the blue backdrop wall is back-facing to the sun (NdotL −0.065) and its pixel is bit-identical in baked and direct
+modes, so no weighting of sun + sky changes it; what Cycles gives it and the viewer does not is the warm indirect bounce. The shrubs and reeds (no lightmap, no COLOR_0) sit on the same
+sky-only path, which is why the leaf cards cut out correctly after the alphaMode fix but stay blue: QA-13-1 and the blue foliage are one problem. Decision: manifest.probe (the baked
+6-face hero probe, real bounce in it) convolved to irradiance is the diffuse environment for every surface without a lightmap or COLOR_0; lightmapped and vertex-lit materials are
+unchanged; a warm irradiance floor was refused as a fudge. Single-point approximation for far surfaces, documented; Gate 4 QA judges it. Post on moves the olive fraction at cam02
+from 46.5 to 32.2 % on the viewer's own mask (−14 points): the missing airlight is a large contributor but does not close QA-12b-1 alone; the bake-scene check is still pending.
