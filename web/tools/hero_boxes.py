@@ -13,12 +13,15 @@ The point of several positional frames is the on/off table the Gate 4 brief asks
 same station with one feature switched and pass both files, and every box comes out as a ratio
 against the reference, so QA can attribute a change to the feature that caused it.
 """
-import argparse, json, sys
+import argparse, json, os, sys
 from pathlib import Path
 import numpy as np
 from PIL import Image
 
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+# The reference renders live in the MAIN checkout only (they are gitignored there); a worktree has to
+# be told where it is, exactly as gate4.sh and gate1_sheets.py do.  Never hard-code the path.
+MAIN = Path(os.environ.get("PFA_MAIN_ROOT")
+            or "/Users/dk/Projects/3d render blender 3rd attempt building")
 DEFAULT_REF = MAIN / "renders/previews/qa/round10b_01_lagoon_hero_cycles.png"
 AT = (1920, 1080)
 

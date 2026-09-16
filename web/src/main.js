@@ -59,6 +59,7 @@ const CFG = {
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
 	impostors: qs.get( 'impostors' ) !== '0',           // Gate 3 octahedral far-tree impostors
 	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
+	impDebug: parseInt( qs.get( 'impdebug' ) || '0', 10 ),   // 1 raw, 2 alpha, 3 frame cell, 4 quad uv
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
@@ -358,12 +359,17 @@ async function boot() {
 	if ( comp ) {
 		if ( postState.want.mist ) {
 			const mm = String( CFG.mist || '' ).split( ',' ).map( x => ( x.trim() === '' ? NaN : Number( x ) ) );
-			postState.mistSpec = applyMist( scene, comp,
-				{ near: isFinite( mm[ 0 ] ) ? mm[ 0 ] : MIST_NEAR_M, far: isFinite( mm[ 1 ] ) ? mm[ 1 ] : MIST_FAR_M } );
-			if ( postState.mistSpec ) note( `post mist: distance fog ${postState.mistSpec.near}..${postState.mistSpec.far} m, `
-				+ `haze [${comp.hazeColor.map( v => v.toFixed( 2 ) ).join( ', ' )}] strength ${comp.hazeStrength} falloff ${comp.hazeFalloff}. `
-				+ `NEAR AND FAR ARE THE VIEWER'S OWN: the manifest carries COMP_golden_hour's parameters but not `
-				+ `world.mist_settings.start/depth, which is what Blender's Mist pass normalises by (?mist=near,far).` );
+			const spec = applyMist( scene, comp, {
+				near: isFinite( mm[ 0 ] ) ? mm[ 0 ] : null,
+				far: isFinite( mm[ 1 ] ) ? mm[ 1 ] : null,
+			} );
+			if ( spec && spec.refused ) { postState.mistRefused = spec.refused; note( `post mist REFUSED: ${spec.refused}` ); }
+			else if ( spec ) {
+				postState.mistSpec = spec;
+				note( `post mist: distance fog ${spec.near}..${spec.far} m from ${spec.source}, `
+					+ `haze [${comp.hazeColor.map( v => v.toFixed( 2 ) ).join( ', ' )}] strength ${comp.hazeStrength} falloff ${comp.hazeFalloff}`
+					+ ( spec.invented ? '. THESE ARE NOT BLENDER\'S NUMBERS - no scored capture may use them.' : '' ) );
+			}
 		} else removeMist( scene );
 		if ( postState.want.bloom ) {
 			const bp = makeBloom( comp, size );
@@ -463,7 +469,7 @@ async function boot() {
 	if ( impAvailable ) {
 		const built = buildImpostors( {
 			impostors: manifest.gate3.impostors, far: manifest.treesFar, note,
-			normalDepth: CFG.impNormalDepth,
+			normalDepth: CFG.impNormalDepth, debug: CFG.impDebug,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
 			fog: ( scene.fog && postState && postState.mistSpec ) ? {

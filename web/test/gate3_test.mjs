@@ -84,7 +84,12 @@ const own = Object.values( g3.ownMaps );
 // always add up and that a blocked asset states a reason.  (They were 11 usable / 5 blocked before
 // the -kv re-pack, 16 / 0 after it.)
 const usable = own.filter( a => a.url ).length;
-check( own.length === 16 && g3.ownCount === usable, `${g3.ownCount}/${own.length} own map(s) resolved to a texture (${usable} usable)` );
+// PIN the export's state, not just the internal consistency: the -kv re-pack has landed and every
+// capture since shows 16/16, so a regression that loses a map must fail here (review fix-now 3).
+// `ownCount === usable` alone is a tautology - manifest.js defines one as the other.
+check( own.length === 16 && usable === 16 && g3.blockedNoUv2 === 0,
+	`${usable}/${own.length} own map(s) usable, ${g3.blockedNoUv2} blocked (16/16 and 0 expected since the -kv re-pack)` );
+check( g3.ownCount === usable, `the ownCount counter agrees with the list (${g3.ownCount})` );
 check( own.filter( a => a.url ).every( a => a.encode === 'gamma2' || a.encode === 'rgbm8' ), 'every resolved own map declares a known encode' );
 check( own.filter( a => a.url ).every( a => typeof a.range === 'number' && a.range > 0 ), 'every resolved own map carries its own range' );
 check( own.filter( a => a.blocked ).length === own.length - usable
@@ -134,8 +139,15 @@ check( !! g3.vertexIrradiance, `vertex irradiance declared for ${g3.vertexIrradi
 			const ranges = Object.values( vi2.byAsset ).map( v => v.range );
 			check( ranges.length === vi2.meshes && ranges.every( r => r > 0 ),
 				`${ranges.length} near-tree asset(s) carry a positive per-mesh range (${vi2.meshes} declared)` );
-			check( new Set( ranges.map( r => r.toFixed( 6 ) ) ).size > ranges.length / 2,
-				`the ranges are per MESH, not one shared value (${new Set( ranges.map( r => r.toFixed( 6 ) ) ).size} distinct of ${ranges.length})` );
+			// ONE GLOBAL RANGE since the re-encode: gltfpack -mi shares a COLOR_0 buffer across trees,
+			// so a per-mesh range could not be honoured.  What the test pins is that the range is
+			// STATED exactly once and is the same for every mesh - a second value would mean a mesh
+			// is about to be decoded with its neighbour's scale.
+			const distinct = new Set( ranges.map( r => r.toFixed( 6 ) ) );
+			check( distinct.size === 1 && vi2.range > 0 && Math.abs( vi2.range - ranges[ 0 ] ) < 1e-6,
+				`one global range ${vi2.range} shared by all ${ranges.length} near-tree mesh(es) `
+				+ `(${distinct.size} distinct), source: ${vi2.rangeSource}` );
+			check( ! vi2.rangeConflict, `no conflicting global range${vi2.rangeConflict ? ` (${vi2.rangeConflict})` : ''}` );
 		} else console.log( 'SKIP  COLOR_0 is not packed yet: no per-mesh ranges to check' );
 	} else console.log( 'SKIP  uv2_relay_status.json not on disk yet' );
 	// the flag must be able to go BACK: a manifest that says true with a glb that says false

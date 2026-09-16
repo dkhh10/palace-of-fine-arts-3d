@@ -92,11 +92,15 @@ export function dequantizeUvs( root, opts = {} ) {
 		report.meshes ++;
 		const mats = Array.isArray( o.material ) ? o.material : [ o.material ];
 		const xf = mats.map( ( m ) => m && m.userData.pfaUvXf ).find( Boolean ) || null;
-		// Idempotent: the recorded transform survives on the material, so without this a second call
-		// would scale an already-dequantised attribute a second time.
-		if ( ! xf || o.geometry.userData.pfaUvDequantized ) { report.skipped ++; return; }
+		if ( ! xf ) { report.skipped ++; return; }
 		if ( Math.abs( xf.rotation ) > EPS ) report.rotated ++;
-		if ( ! doneGeo.has( o.geometry.uuid ) ) {
+		// Idempotent on the GEOMETRY only: the recorded transform survives on the material, so without
+		// this guard a second call would scale an already-dequantised attribute again.  The material
+		// neutralisation below still runs, because a SECOND material sharing an already-dequantised
+		// geometry would otherwise keep repeat = 1/16 on its own textures (review carry 4).
+		const geoDone = o.geometry.userData.pfaUvDequantized;
+		if ( geoDone ) report.skipped ++;
+		if ( ! geoDone && ! doneGeo.has( o.geometry.uuid ) ) {
 			doneGeo.add( o.geometry.uuid );
 			report.geometries ++;
 			report.scales.push( xf.scale[ 0 ] );

@@ -280,10 +280,14 @@ export function applyGate3Lightmaps( o ) {
 			note( `gate3: ${report.own.blockedNoUv2InGlb} asset(s) have uv2_in_glb false with no frozen-layout twin — no map applied (there is no factor fallback for a lightmap)` );
 		if ( report.texturesFailed.length ) note( `gate3: ${report.texturesFailed.length} lightmap texture(s) failed: ${report.texturesFailed.slice( 0, 4 ).join( '; ' )}` );
 		const v = report.vertexIrradiance;
-		if ( v && v.wanted ) note( `gate3 vertex irradiance: ${v.applied}/${v.wanted} near-tree mesh(es) take COLOR_0 as baked irradiance `
-			+ `(range ${v.rangeMin.toFixed( 3 )}..${v.rangeMax.toFixed( 3 )}, x scale ${gate3.scale.toFixed( 5 )}); `
-			+ `${v.candidates} mesh(es) carry COLOR_0, ${v.instanced} of them batched, ${v.unmatchedMesh} unmatched by position; `
-			+ `match error <= ${v.maxMatchError_m.toFixed( 3 )} m` );
+		if ( v && v.applied && v.mode === 'global' )
+			note( `gate3 vertex irradiance: ${v.applied} COLOR_0 primitive(s), ${v.placements} placement(s), decoded at the ONE `
+				+ `global range ${v.globalRange.toFixed( 5 )} x scale ${gate3.scale.toFixed( 5 )} `
+				+ `(${gate3.vertexIrradiance.rangeSource}); gltfpack's shared buffers are harmless at one range` );
+		else if ( v && v.wanted && ! v.error )
+			note( `gate3 vertex irradiance: ${v.applied}/${v.wanted} near-tree mesh(es) take COLOR_0 as baked irradiance `
+				+ `(range ${v.rangeMin.toFixed( 3 )}..${v.rangeMax.toFixed( 3 )}, x scale ${gate3.scale.toFixed( 5 )}); `
+				+ `${v.candidates} mesh(es) carry COLOR_0, ${v.instanced} of them batched, ${v.unmatchedMesh} unmatched by position` );
 		return report;
 	} );
 	return report;
@@ -296,12 +300,22 @@ export function applyGate3Lightmaps( o ) {
  */
 export function applyVertexIrradiance( scene, gate3, assets, note = () => {}, mode = 'auto' ) {
 	const out = { wanted: 0, matched: 0, applied: 0, unmatched: 0, noColorAttribute: 0, candidates: 0,
-		instanced: 0, unmatchedMesh: 0, maxMatchError_m: 0, rangeMin: Infinity, rangeMax: - Infinity, meshes: [] };
+		instanced: 0, unmatchedMesh: 0, placements: 0, mode: 'per-mesh', globalRange: 0, error: null,
+		maxMatchError_m: 0, rangeMin: Infinity, rangeMax: - Infinity, meshes: [] };
 	const vi = gate3 && gate3.vertexIrradiance;
 	const byAsset = vi && vi.byAsset;
-	if ( mode === '0' || ! byAsset || ! Object.keys( byAsset ).length ) return out;
-	out.wanted = Object.keys( byAsset ).length;
-	const idx = centreGrid( assets, Object.keys( byAsset ) );
+	if ( mode === '0' || ! vi || ! vi.inGlb ) return out;
+	// NEVER a fallback to a guess: a wrong range is a ~90x error in irradiance, so if neither the
+	// manifest nor the relay states one, nothing is decoded and the reason is reported.
+	const globalRange = ( typeof vi.range === 'number' && vi.range > 0 && ! vi.rangeConflict ) ? vi.range : 0;
+	if ( ! globalRange && ( ! byAsset || ! Object.keys( byAsset ).length ) ) {
+		out.error = vi.rangeConflict ? `conflicting global ranges ${vi.rangeConflict.join( ', ' )}`
+			: 'COLOR_0 is in the glb but no range is stated (lightmaps.vertex_irradiance.range)';
+		note( `gate3 vertex irradiance REFUSED: ${out.error}. Nothing decoded - a wrong range is a ~90x error.` );
+		return out;
+	}
+	out.wanted = vi.meshes || Object.keys( byAsset || {} ).length;
+	const idx = centreGrid( assets, Object.keys( byAsset || {} ) );
 	const taken = new Set();
 	const todo = [];
 	// The CANDIDATE SET is `COLOR_0 itself`, not a position guess: only these 14 meshes carry a colour
@@ -326,6 +340,27 @@ export function applyVertexIrradiance( scene, gate3, assets, note = () => {}, mo
 	}
 	out.matched = todo.length;
 	out.unmatched = out.wanted - out.matched;
+
+	// ONE GLOBAL RANGE (manifest lightmaps.vertex_irradiance.range, or the relay's range_global while
+	// that key lands).  It is what makes gltfpack's sharing harmless: every COLOR_0 buffer decodes with
+	// the same scale, so a primitive that carries several trees' vertices - or several placements of
+	// one - is correct without any position join at all.  COLOR_0 is the identity; the join is only
+	// needed for the per-mesh ranges that this replaced.
+	if ( globalRange > 0 ) {
+		out.mode = 'global';
+		out.globalRange = globalRange;
+		out.rangeMin = out.rangeMax = globalRange;
+		for ( const mesh of cands ) {
+			const mat = mesh.material.clone();
+			mat.name = mesh.material.name;
+			mesh.material = mat;
+			patchBakedMaterial( mat, { vertexIrradiance: globalRange * gate3.scale } );
+			out.applied ++;
+			out.placements += mesh.isInstancedMesh ? mesh.count : 1;
+		}
+		return out;
+	}
+	if ( ! byAsset || ! Object.keys( byAsset ).length ) return out;
 	// AUTO means all-or-nothing.  gltfpack's -mi merges and instances geometry across trees that were
 	// baked with DIFFERENT per-mesh ranges (measured: 14 COLOR_0 primitives carrying 26 placements,
 	// ranges spanning 0.469..43.320), so a partial application would light two trees correctly and

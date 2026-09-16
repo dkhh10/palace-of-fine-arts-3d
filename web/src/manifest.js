@@ -55,13 +55,29 @@ export function applyUv2RelayStatus( manifest, status ) {
 	out.vertexIrradianceInGlb = vi && Object.keys( vi ).length ? true : false;
 	if ( vi && manifest.gate3.vertexIrradiance ) {
 		const byAsset = {};
+		const globals = new Set();
 		for ( const [ mesh, rec ] of Object.entries( vi ) ) {
-			if ( ! rec || rec.in_glb !== true || ! rec.asset || typeof rec.range !== 'number' ) continue;
-			byAsset[ rec.asset ] = { mesh, range: rec.range, encoding: rec.encoding || 'gamma2', attribute: rec.attribute || 'COLOR_0' };
+			if ( ! rec || rec.in_glb !== true || ! rec.asset ) continue;
+			const r = typeof rec.range_global === 'number' ? rec.range_global : rec.range;
+			if ( typeof r !== 'number' || ! ( r > 0 ) ) continue;
+			if ( typeof rec.range_global === 'number' ) globals.add( rec.range_global );
+			byAsset[ rec.asset ] = { mesh, range: r, encoding: rec.encoding || 'gamma2', attribute: rec.attribute || 'COLOR_0' };
 		}
 		manifest.gate3.vertexIrradiance.byAsset = byAsset;
 		manifest.gate3.vertexIrradiance.inGlb = Object.keys( byAsset ).length > 0;
+		// ONE GLOBAL RANGE (the lead's call after gltfpack -mi was found to share a COLOR_0 buffer
+		// across trees baked at different ranges).  The manifest's own
+		// `lightmaps.vertex_irradiance.range` wins; the relay's `range_global` is the fallback while
+		// that key is still landing.  If neither states it there is NO fallback to a guess - the
+		// decode is simply refused, because a wrong range is a ~90x error in irradiance.
+		if ( globals.size === 1 && manifest.gate3.vertexIrradiance.range == null ) {
+			manifest.gate3.vertexIrradiance.range = [ ...globals ][ 0 ];
+			manifest.gate3.vertexIrradiance.rangeSource = 'uv2_relay_status.json range_global';
+		} else if ( globals.size > 1 ) {
+			manifest.gate3.vertexIrradiance.rangeConflict = [ ...globals ];
+		}
 		out.vertexIrradianceAssets = Object.keys( byAsset ).length;
+		out.vertexIrradianceRange = manifest.gate3.vertexIrradiance.range ?? null;
 	}
 	if ( status.vertex_irradiance_skipped ) out.note = String( status.vertex_irradiance_skipped );
 	const g3 = manifest.gate3;
@@ -683,7 +699,9 @@ export function normaliseManifest( raw, baseUrl ) {
 			ownMaps, ownCount: Object.values( ownMaps ).filter( m => m.url ).length,
 			blockedNoUv2, frozenUsed, atlases, slots, slotCount: Object.keys( slots ).length, slotsNoAtlas,
 			vertexIrradiance: vi ? { inGlb: vi.in_glb === true, encode: vi.encode || 'gamma2',
-				range: vi.range ?? null, attribute: vi.attribute || 'COLOR_0', meshes: vi.meshes_n ?? null } : null,
+				range: typeof vi.range === 'number' ? vi.range : null,
+				rangeSource: vi.range_source || ( typeof vi.range === 'number' ? 'manifest lightmaps.vertex_irradiance.range' : null ),
+				attribute: vi.attribute || 'COLOR_0', meshes: vi.meshes_n ?? null } : null,
 			impostors, probe, notes: g3notes };
 		notes.push( `manifest v4 lightmaps: ${gate3.ownCount} own map(s) ready of ${Object.keys( ownMaps ).length}`
 			+ ( frozenUsed ? `, ${frozenUsed} on the frozen Gate 1 layout` : '' )

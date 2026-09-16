@@ -43,3 +43,11 @@ renders/web/gate1_pair_cam0*.png
 renders/web/gate2_pair_cam0*.png
 renders/web/gate*_pair_cam0*.png
 renders/web/round*_pair_cam0*.png
+
+# Gate 4 (review carry): full-resolution viewer frames are REGENERABLE and must not be committed.
+# Only 960 px copies under renders/web/960/ go in the tree (the CLAUDE.md image rule); the full-res
+# frames live beside them and here, and the gate tiles were already ignored above.
+renders/web/full/
+renders/web/*_cam0*.png
+renders/web/*_perf1440*.png
+!renders/web/960/*

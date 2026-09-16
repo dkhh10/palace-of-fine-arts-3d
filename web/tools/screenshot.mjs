@@ -26,7 +26,9 @@
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
 // It refuses to launch while the bake queue is running or any Blender process is alive
-// (PFA_ALLOW_GPU=1 overrides), so a bare `node tools/screenshot.mjs` cannot take the GPU either.
+// (PFA_ALLOW_GPU=1 overrides everything; PFA_DEV_SHARE_GPU=1 allows a DEVELOPMENT screenshot beside a
+// Blender render but still refuses the bake queue and refuses --perf), so a bare
+// `node tools/screenshot.mjs` cannot take the GPU either.
 // The browser is closed in a finally block and the process calls process.exit, so no Chrome is left
 // behind (a raw `--headless=new --screenshot` lingers 60-90 s on Chrome 152; puppeteer with an
 // explicit close does not).
@@ -125,7 +127,19 @@ function gpuGuard() {
 	} catch ( e ) { if ( /bake queue is running/.test( e.message ) ) throw e; }
 	let blender = '';
 	try { blender = execFileSync( 'pgrep', [ '-f', 'MacOS/Blender' ], { encoding: 'utf8' } ).trim(); } catch { /* none */ }
-	if ( blender ) throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
+	if ( ! blender ) return;
+	// PFA_DEV_SHARE_GPU is the narrow version of PFA_ALLOW_GPU: it lets a DEVELOPMENT screenshot run
+	// beside a Blender render (the lead's call while the Cycles reference frames render), but it never
+	// relaxes the bake-queue check above and it REFUSES to write a performance file - a frame time
+	// measured while something else owns the GPU is not a number anyone may score.
+	if ( process.env.PFA_DEV_SHARE_GPU === '1' ) {
+		if ( perfOut ) throw new Error( 'PFA_DEV_SHARE_GPU=1 with --perf: a frame time measured beside '
+			+ `a Blender render (pid ${blender.split( '\n' ).join( ', ' )}) is not measurable. Wait for the GPU.` );
+		console.log( `[shot] PFA_DEV_SHARE_GPU=1: sharing the GPU with Blender (pid ${blender.split( '\n' ).join( ', ' )}). `
+			+ 'DEVELOPMENT SCREENSHOT ONLY - no performance number from this run is valid.' );
+		return;
+	}
+	throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
 }
 
 let browser = null, server = null, viteProc = null;

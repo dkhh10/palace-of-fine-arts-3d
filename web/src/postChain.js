@@ -50,6 +50,8 @@ export function readCompositor( raw ) {
 		bloomStrength: g[ 'Bloom Strength' ] ?? 0,
 		bloomSize: g[ 'Bloom Size' ] ?? 0.5,
 		vignette: g.Vignette ?? 0,
+		// Blender's Mist pass normalisation, which the group's parameters alone do not carry.
+		mist: ( raw && raw.mist ) || g.mist || null,
 		group: g.group || 'COMP_golden_hour',
 	};
 }
@@ -59,8 +61,23 @@ export function readCompositor( raw ) {
  * The fog colour is the haze colour as exported (scene-linear, and well above 1.0 - it is a light,
  * not an sRGB swatch), so it goes in unclamped and the LUT does the rest.
  */
-export function applyMist( scene, comp, { near = MIST_NEAR_M, far = MIST_FAR_M } = {} ) {
+export function applyMist( scene, comp, { near = null, far = null, allowInvented = false } = {} ) {
 	if ( ! comp || comp.hazeStrength <= 0 ) return null;
+	// The mist is REFUSED until the manifest states Blender's own normalisation.  MIST_NEAR_M /
+	// MIST_FAR_M were the viewer's invention and must never reach a scored capture (review fix-now 2):
+	// `?mist=near,far` is the only way to use them, and it says so in the report it returns.
+	const m = comp.mist;
+	let invented = false;
+	if ( near === null || far === null ) {
+		if ( m && typeof m.start === 'number' && typeof m.depth === 'number' ) {
+			near = m.start; far = m.start + m.depth;
+		} else if ( allowInvented ) {
+			near = MIST_NEAR_M; far = MIST_FAR_M; invented = true;
+		} else {
+			return { refused: 'compositor.mist is not in the manifest (world.mist_settings.start/depth/falloff); '
+				+ 'the viewer will not invent a normalisation for a scored capture. ?mist=near,far overrides.' };
+		}
+	} else invented = true;
 	patchFogChunk( comp.hazeStrength, comp.hazeFalloff );
 	const col = new THREE.Color().setRGB( ...comp.hazeColor, THREE.LinearSRGBColorSpace );
 	scene.fog = new THREE.Fog( col, near, far );
@@ -72,7 +89,8 @@ export function applyMist( scene, comp, { near = MIST_NEAR_M, far = MIST_FAR_M }
 			m.fog = true; m.needsUpdate = true;
 		}
 	} );
-	return { near, far, strength: comp.hazeStrength, falloff: comp.hazeFalloff, color: comp.hazeColor };
+	return { near, far, strength: comp.hazeStrength, falloff: comp.hazeFalloff, color: comp.hazeColor,
+		invented, source: invented ? 'the viewer (?mist= or the placeholder constants)' : 'manifest compositor.mist' };
 }
 
 export function removeMist( scene ) {
@@ -100,9 +118,16 @@ export function makeBloom( comp, size ) {
 /** Which parts of the chain `?post=` asks for. `all` / `none` / a comma list of mist,bloom,vignette. */
 export function parsePost( spec ) {
 	const on = { mist: true, bloom: true, vignette: true };
-	const s = String( spec ?? 'all' ).trim().toLowerCase();
-	if ( s === 'all' || s === '1' || s === '' ) return on;
-	if ( s === 'none' || s === '0' ) return { mist: false, bloom: false, vignette: false };
+	const off = { mist: false, bloom: false, vignette: false };
+	// ONLY AN ABSENT PARAMETER MAY MEAN "the default".  `screenshot.mjs --query post=` emits an EMPTY
+	// value, and treating that as `all` would switch the invented mist on inside a scored capture
+	// (review fix-now 2).  An empty or unrecognised value is therefore `none`, never `all`.
+	if ( spec === undefined || spec === null ) return off;
+	const s = String( spec ).trim().toLowerCase();
+	if ( s === '' ) return off;
+	if ( s === 'all' || s === '1' ) return on;
+	if ( s === 'none' || s === '0' ) return off;
 	const want = new Set( s.split( ',' ).map( x => x.trim() ).filter( Boolean ) );
+	if ( ! want.size ) return off;
 	return { mist: want.has( 'mist' ), bloom: want.has( 'bloom' ), vignette: want.has( 'vignette' ) };
 }

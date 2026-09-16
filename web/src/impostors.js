@@ -65,6 +65,7 @@ const fragmentShader = /* glsl */`
 	uniform float range;             // the prototype's own gamma-2 range
 	uniform float grid, framePx, innerPx, gutterPx, atlasPx;
 	uniform float alphaTest;
+	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
 	uniform float fogNear, fogFar, fogStrength, fogFalloff;
@@ -73,12 +74,18 @@ const fragmentShader = /* glsl */`
 	varying vec2 vQuadUv;
 	varying vec3 vDirBlender;
 
-	// manifest.impostors.frame_uv, with f clamped and inset by half a texel
+	// manifest.impostors.frame_uv, with f clamped and sampled at texel centres.
+	//
+	// THE V FLIP.  The manifest counts the row "from the BOTTOM" and f.y likewise, but the atlases
+	// are written KTXorientation: rd (right, DOWN) - measured with ktx info on every one of the 16 -
+	// so data row 0 is the TOP.  Without this flip the lookup lands on the mirrored elevation, which
+	// is the tree's shaded side: the hero read the far trees as dark blue (raw code 0.25/0.29/0.49)
+	// because 49-101 of each atlas's 144 frames are sky-lit back sides, and it was picking those.
 	vec2 frameUv( vec2 cell, vec2 f ) {
 		vec2 g = clamp( f, 0.0, 1.0 );
-		vec2 px = vec2( cell.x * framePx + gutterPx, cell.y * framePx + gutterPx ) + g * innerPx;
-		px += ( g - 0.5 ) * 0.0;                       // inset handled by the 0.5 below
-		return ( px + 0.5 ) / atlasPx;
+		float px = cell.x * framePx + gutterPx + g.x * innerPx;
+		float pyFromBottom = cell.y * framePx + gutterPx + g.y * innerPx;
+		return vec2( ( px + 0.5 ) / atlasPx, 1.0 - ( pyFromBottom + 0.5 ) / atlasPx );
 	}
 
 	vec4 sampleFrame( vec2 cell, vec2 f ) { return texture2D( atlas, frameUv( cell, f ) ); }
@@ -120,6 +127,11 @@ const fragmentShader = /* glsl */`
 		// manifest.impostors.encode.albedo: gamma2 at the prototype's own range, LINEAR oetf
 		vec3 lin = rgb * rgb * range;
 
+		if ( debugMode == 1 ) { gl_FragColor = vec4( s0.rgb, 1.0 ); return; }
+		if ( debugMode == 2 ) { gl_FragColor = vec4( vec3( a ), 1.0 ); return; }
+		if ( debugMode == 3 ) { gl_FragColor = vec4( c0 / ( grid - 1.0 ), 0.0, 1.0 ); return; }
+		if ( debugMode == 4 ) { gl_FragColor = vec4( vQuadUv, 0.0, 1.0 ); return; }
+
 		#ifdef PFA_FOG
 		float mist = clamp( ( vFogDepth - fogNear ) / ( fogFar - fogNear ), 0.0, 1.0 );
 		lin = mix( lin, fogColor, pow( mist, fogFalloff ) * fogStrength );
@@ -133,7 +145,7 @@ const fragmentShader = /* glsl */`
  * One InstancedMesh per prototype, built from `manifest.gate3.impostors` and `manifest.trees.far`.
  * @returns {{ group:THREE.Group|null, report:object }}
  */
-export function buildImpostors( { impostors, far, loadTexture, note = () => {}, fog = null, normalDepth = false } ) {
+export function buildImpostors( { impostors, far, loadTexture, note = () => {}, fog = null, normalDepth = false, debug = 0 } ) {
 	const report = { prototypes: 0, instances: 0, drawCalls: 0, skipped: [], bytes: 0,
 		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0 };
 	if ( ! impostors || ! impostors.count || ! Array.isArray( far ) || ! far.length ) return { group: null, report };
@@ -178,6 +190,7 @@ export function buildImpostors( { impostors, far, loadTexture, note = () => {}, 
 			gutterPx: { value: impostors.gutterPx },
 			atlasPx: { value: impostors.atlasPx },
 			alphaTest: { value: ALPHA_TEST },
+			debugMode: { value: debug },
 		};
 		if ( fog ) Object.assign( uniforms, {
 			fogColor: { value: fog.color }, fogNear: { value: fog.near }, fogFar: { value: fog.far },
