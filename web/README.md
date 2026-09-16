@@ -279,6 +279,40 @@ Defaults `reflBlur 0.0045`, `reflSat 0.66`; `?waterblur` / `?watersat` are the A
 (too cool rather than too warm) and is deliberately NOT tuned out: the building being reflected is
 still missing its near-tree irradiance, so `reflectTint` should be revisited after that lands.
 
+### The upwelling term, derived (QA-14-1, round 6 item 1a)
+`murk` in `water.js` is the radiance that leaves the water BODY toward the camera; the shader's
+`mix( murk, refl, F )` already applies the view ray's `1 - F`, so `murk` is the emergent radiance at
+normal incidence. Round 14 shipped a hand value, `(0.020, 0.035, 0.030)`, which made the near water
+essentially `F * reflection` — a dark blue mirror. The Phase 5 hero's open-water crop inverts through
+the LUT to a scene-linear `(1.226, 1.317, 1.262)`: bright and very nearly neutral.
+
+The default is now **derived**, in `MURK_INPUTS` / `derivedMurk()`, from the shipped material and the
+scene's own light — never fitted to the metric:
+
+| input | value | source |
+|---|---|---|
+| `sigma_s` | `0.7 * (0.205, 0.250, 0.195)` | `WATER_VOLUME` Color x Density, `scripts/mat_build.py` |
+| `sigma_a` | `0.7 * (1 - (0.70, 0.80, 0.68))` | `WATER_VOLUME` Absorption Color x Density |
+| `g` | 0.3 | `WATER_VOLUME` Anisotropy (Henyey-Greenstein) |
+| depth, bed | 1.5 m, albedo `(0.12, 0.10, 0.06)` | `docs/reference_sheet.md` MAT_water_lagoon |
+| `E_sky` | `(3.651, 7.626, 16.040)` W/m² | cosine-weighted upper hemisphere of `sky_camera_4096x2048.exr` |
+| `E_sun` | `(8.622, 5.236, 0.0)` W/m² | manifest `LIGHT_sun`: 67.319 x sin 7.357° x colour |
+
+`b_b = sigma_s B(g)`, `R_col = b_b/(a+b_b) (1 - e^{-2(a+b_b)d})`, `R_bot = rho e^{-2 a d}`,
+`A_up = R_col + R_bot`, `E_in = 0.934 E_sky + 0.544 E_sun` (the second is the unpolarised Fresnel
+transmittance at the 7.4° sun's 82.6° incidence), `E_up = A_up E_in / (1 - 0.48 A_up)`, and
+`murk = E_up / (pi n^2)`.
+
+Two things are worth keeping in view. **The sky branch is `sky.camera`, not `sky.diffuse`**:
+`sky.diffuse` carries lighting's artificial shade fill (B/R 5.1, against the real sky's 4.4 and
+sky+sun's 1.3), and the Phase 5 material suppresses its own diffuse murk lobe to 0.085 at the hero
+precisely because that fill "returns blue and fights the warm streaks". **And the derivation
+cross-checks**: `A_up` lands at `(0.150, 0.180, 0.112)` where the Phase 5 material's hand-set murk
+albedo is `(0.165, 0.170, 0.1025)` — the same quantity to within 10 %, reached independently.
+
+Result `(0.2353, 0.3522, 0.3166)`, hue 162°, 10x the round-14 level. `?watermurk=r,g,b` overrides it
+(`0.020,0.035,0.030` is the exact round-14 revert), `?watermurkgain=k` scales it.
+
 ### The post chain (item 4)
 `src/postChain.js` reproduces `manifest.compositor.COMP_golden_hour` in scene-linear, BEFORE the LUT,
 which is where Blender's sits. `?post=all | none | mist,bloom,vignette`; **the default is `none`** so
