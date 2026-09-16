@@ -356,3 +356,14 @@ Two rounds were needed (12, 12b): the missing ARCH normals and the merged-atlas 
 hero 267 draws, GPU 1.8 ms at 1440p. Carried to Gate 3: QA-12b-1 sun-less stone reads olive (16-22 % of cam02/cam06 building pixels G > R; 0 % in the
 albedos themselves — the direct-mode PMREM diffuse; lightmaps replace it), QA-12b-2 S-colonnade wall blow-out 201-221 (shade), QA-12-4 per-instance
 weathering via the slot atlases, the sunlit-attic saturation at 0.94x must not drift further. QA-12-2 dome cap sat 0.69x stays open, non-blocking.
+
+## 2026-09-16 · Gate 3 hand-off: gltfpack had stripped UV2 from every glb since Gate 1; ORN ships without its cavity COLOR_0
+The export engineer measured that gltfpack removes any vertex attribute no glb material references, so TEXCOORD_1 was absent from arch/ground/env/orn.glb since
+Gate 1 (Gate 0 kept it only because its RGBM lightmap sat in the material's emissive slot). `uv2_in_glb: true` on the nine Gate 1-layout assets was never true; no
+Gate 3 lightmap could have attached. Fix: `-kv` per class when its .gltf carries TEXCOORD_1/COLOR_0 (arch + ground re-exported, +1.74 MB; verify_glb now asserts
+TEXCOORD_1 reach). ORN: `-kv` would also ship the prototypes' `cavity` FLOAT_COLOR attribute (scripts/orn_lib.py vertex_cavity), which the ornament material reads
+for recess dust and which the Gate 2 albedo bake therefore already contains; three.js would multiply it into base colour a second time. Lead's call: the ORN
+export strips vertex colour attributes and packs with `-kv`, so orn.glb carries TEXCOORD_1 for the slot atlases and no COLOR_0. Vertex irradiance (14 near
+trees, env.glb): the bake writes float32 scene-linear per mesh; the export encodes gamma-2 at a per-mesh range as FLOAT_COLOR and packs env.glb with `-vc 16`;
+the per-mesh range and decode string travel in export/out/gate3/uv2_relay_status.json and the manifest writer copies them into `lightmaps.vertex_irradiance`.
+Carried: three of the seven relaid assets still pack under the 0.15 UV2 threshold (riprap 0.114, colonnades 0.116/0.121) — baked against that layout, accepted.

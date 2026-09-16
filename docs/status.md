@@ -656,3 +656,7 @@ Next: merge the bake after review fixes (manifest flags flipped from the export 
 ## 2026-09-16 · Gate 3 bake review in (79ee07b): MERGE WITH FIXES (5 fix now, 9 carry); bake fix agent dispatched
 Fix now: impostor centre/bbox measured from the bbox bottom not the trunk base (willows), normal+depth encode formula misdocumented, vertex_irradiance.npz is uint8 gamma-2 (README promised float32 linear) with one shared range (rel_p99 0.244) -> per-mesh float32, impostor normal+depth declared rgba8 but packed UASTC. Export engineer told to do UV2 first and hold COLOR_0 for the corrected npz; viewer engineer told the three impostor fields change.
 Next: merge phase6-bake after the fixes (manifest flags flipped from the export hand-off json), then QA 13 on the viewer's baked capture.
+
+## 2026-09-16 · Export Gate 3 hand-off in (phase6-export 095f855): UV2 relay in arch/ground.glb; BLOCKER found — gltfpack stripped TEXCOORD_1 from every glb since Gate 1
+Fixed with -kv on arch + ground (verify_glb PASS, +1.74 MB, hand-off json written with uv2_all_meshes: 33 arch/ground true, 33 orn false); COLOR_0 held for the float32 npz. Lead decided (decisions.md): orn strips its cavity COLOR_0 and packs with -kv; vertex irradiance = gamma-2 per-mesh range, FLOAT_COLOR, env.glb -vc 16. Export engineer resumed for orn now, COLOR_0 after the bake fix lands; bake fix agent told to carry the per-mesh range from the hand-off json; viewer told arch/ground now carry UV2.
+Next: bake fix report -> export COLOR_0 -> merge bake + export -> QA 13 on the viewer's baked capture.
