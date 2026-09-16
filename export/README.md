@@ -920,9 +920,13 @@ per texture, a power of two at or above the map's own measured max, and is **not
     "bytes": 803100,                         // values themselves, same units as a DECODED lightmap texel.
     "meshes_n": 14, "verts": 347840,         // How COLOR_0 is quantised in the glb is the exporter's call,
                                              // made on these numbers.
+    "glb_encode": "gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
+    "glb_decode": "v = COLOR_0 * COLOR_0 * meshes[<mesh>].range, then irradiance = v * lightmaps.scale (pi) - exactly as a gamma2 lightmap texel. `range` is PER MESH; glTF multiplies COLOR_0 into base colour by default, so these 14 meshes must consume it as irradiance, not as a tint.",
     "meshes": { "<glb mesh>": { "verts": 17996, "min": 0.0, "max": 0.469, "mean": 0.000009,
                                 "mean_nonzero": 0.00472, "p99": 0.0,
-                                "roundtrip": { "abs_max": 0.0, "rel_p99": 0.0, "rel_mean": 0.0 } } },
+                                "roundtrip": { "abs_max": 0.0, "rel_p99": 0.0, "rel_mean": 0.0 },
+                                "range": 0.5, "encoding": "gamma2",   // <- copied from uv2_relay_status.json
+                                "mean_linear": 0.0, "roundtrip_rel_p99": 0.0 } },
     "note": "`in_glb: false` until the export engineer re-exports env.glb with COLOR_0. Until then the viewer keeps the near trees on the PMREM path and must use `sky.diffuse` for their irradiance, not `sky.glossy` (QA-12b-1)."
   }
 }
@@ -937,6 +941,17 @@ new loop UVs to `out/gate3/lightmap_uv2.npz` (one float32 `(n_loops, 2)` array p
 engineer can apply the identical layout and re-export. This is the same hand-off shape as Gate 2's
 `backdrop_uv1.npz`. **Until that re-export the viewer must honour `uv2_in_glb: false` and not apply those maps** —
 there is no factor fallback for a lightmap; the object stays on its Gate 2 material with no lightMap.
+
+**Who sets `uv2_in_glb`.** Not this writer. The export engineer applies the npz, re-packs, and writes
+`out/gate3/uv2_relay_status.json` (`pfa-phase6/gate3-relay/1`); `manifest_v4.py` reads that file — from the worktree
+or from MAIN — and takes every flag from it, leaving them **false** while the file is absent. Three consumers:
+`lightmaps.assets[*].uv2_in_glb` (the own maps, by MESH name), `lightmaps.slots.uv2_in_glb` (the 988 per-instance
+slots are addressed by the ORN meshes' own TEXCOORD_1, so they are unusable until `orn.glb` is packed with `-kv`),
+and `lightmaps.vertex_irradiance.in_glb`. The two `lmg1_*` diagnostics take the **inverse** of the relay's flag for
+their mesh: they are baked on the frozen Gate 1 layout and are usable only while the glb still carries it.
+`lightmaps.uv2_relay_status` in the manifest reports the file's schema, the per-glb TEXCOORD_1 counts and the
+gltfpack flags, so a reader can see why a flag is what it is. Background (docs/decisions.md 2026-09-16): gltfpack had
+been stripping TEXCOORD_1 from every glb since Gate 1, so Gate 1's own `uv2_in_glb: true` was never true.
 
 ### `impostors` — new
 
@@ -1157,8 +1172,14 @@ every lightmap is on disk (+623.8 MB, exact instead of 0.028–0.163 stops).
    (`0.72`–`52.83` across the 21 maps) instead of 64.0 presented as the norm.
 11. Both Blender 5.2 findings and the third engine-conditional rig are now in **docs/tech_notes.md** "Phase 6".
 
-Not fixed here (carries 6, 7, 8, 9, 10, 13, 14 stand as the review lists them). `uv2_in_glb` / `in_glb` were **not**
-flipped: `manifest_v4.py` now reads `out/gate3/uv2_relay_status.json` if the export engineer has written it and takes
-the flags from that file alone; the file does not exist yet, so all seven re-laid assets still ship
-`uv2_in_glb: false` and `vertex_irradiance.in_glb: false`, and `lightmaps.uv2_relay_status` says so in the manifest.
+**The flags, from the export engineer's file, never by hand.** `manifest_v4.py` now reads
+`out/gate3/uv2_relay_status.json` (schema `pfa-phase6/gate3-relay/1`) and every `uv2_in_glb` / `in_glb` comes from it.
+As of this run: the **seven** re-laid assets are `true` (arch.glb 29/29 and ground.glb 4/4 meshes carry TEXCOORD_1
+after the `-kv` re-pack), the two `lmg1_*` diagnostics are now `false` (inverse sense — the frozen layout they were
+baked on is no longer in the glb), `lightmaps.slots.uv2_in_glb` is **false** (0 of 33 `orn.glb` meshes carry
+TEXCOORD_1; the `-kv` re-pack of orn.glb was still running) and `vertex_irradiance.in_glb` is **false** — the relay
+checked the npz before this branch rewrote it and recorded `dtype uint8`, so COLOR_0 was not exported. Both re-run on
+the export engineer's next hand-off: re-running `python3 export/manifest_v4.py` is the whole step.
+
+Not fixed here: carries 6, 7, 8, 9, 10, 13 and 14 stand as the review lists them.
 
