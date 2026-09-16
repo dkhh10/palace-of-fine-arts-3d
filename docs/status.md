@@ -727,3 +727,7 @@ Waiting: r5b review -> merge viewer; export leaf fix; refs 05/06 then 02/04; bak
 ## 2026-09-16 · Export leaf alpha in (phase6-export 35865b8): 8 env card materials alphaMode MASK @ 0.5 (read from master_delivery: alpha_threshold under HASHED; the leaf materials route through a node group, which is why the defect survived), synced
 verify_glb asserts MASK/BLEND + effective cutoff on every alpha-carrying base colour texture; the stale-glb pin now forces a full re-pack (toktx 258 s) whenever the glTFs regenerate. Review of 77063c6..35865b8 dispatched -> docs/reviews/phase6_export_gate3_r4_review.md; viewer told to re-sync and confirm cam02.
 Next: merge export r4 on review; r5b review -> merge viewer; refs; bake step 1; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Viewer r5b review in (18f2e19/6f75281): MERGE WITH FIXES (3 fix now, 9 carry); impostor V flip confirmed correct; barycentric weights swapped (real blend bug)
+Fix now routed to the viewer: swapped upper-triangle weights (re-capture cam01/02 after), silent NaN fallbacks in the impostor manifest block, stale README lines; PFA_DEV_SHARE_GPU logged in decisions.md. Refs: 05 saved, 06 rendering, 02/04 chained.
+Next: viewer fixes + measurements -> merge phase6-viewer; export r4 review -> merge; bake step 1; GPU-free signal; Gate 4 capture + QA 14.

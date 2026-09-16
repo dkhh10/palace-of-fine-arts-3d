@@ -410,3 +410,8 @@ and the bake scene's bounce-surface materials / Cycles-only gallery fills / worl
 5-17 cm/texel under the 2K PBR maps.
 Mist: the viewer had implemented the haze falloff 5.0 as an exponent; scripts/light_build.py uses it as an extinction coefficient, airlight = cap * (1 - exp(-k * mist)) — corrected,
 hero luma with post 127.3 -> 131.8 (Cycles 140.0).
+
+## 2026-09-16 · Chrome during a lead render (lead): PFA_DEV_SHARE_GPU=1 for development screenshots only
+While the lead's Cycles reference renders (stations 2-6, ~20 min each) occupied the GPU, the viewer engineer was allowed to keep taking development screenshots through
+scripts/chrome_run.sh with PFA_DEV_SHARE_GPU=1, which keeps the bake-queue guard and refuses --perf outright. Scored captures and every perf measurement still require the GPU
+free (no bake queue, no lead render). The CLAUDE.md rule "never concurrent with the bake queue" is unchanged; this is the lead's standing exception for a lead render only.
