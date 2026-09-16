@@ -759,3 +759,6 @@ Export side closed for Gate 4 (carries in docs/reviews/phase6_export_gate3*_revi
 ## 2026-09-16 · Staged for the GPU: bake (ceiling as staged, then the sky-branch probe; corrected 47-job queue prepared behind PFA_BAKE_DIFFUSE_WORLD=1, ~6 h 15 m, NOT started) and viewer (gate4.sh one-command delivery capture; impostor rotational pop PASS, 61 frames at 1°, max/median 1.21x)
 Viewer 3a84e3f/2e28ade: refs repointed + "QA notes — read before scoring" in web/README.md (cam06 0.71x real, probe override, foliage held). Bake 6a0ec47: only the 47 bake-target jobs are affected by the branch (sky/probe/impostor jobs already correct).
 Next: cam04 ref -> GPU-free to bake -> probe verdict -> encode/pack -> manifest + sync -> viewer --perf + Gate 4 capture -> QA 14; overnight re-bake decision on the probe numbers.
+
+## 2026-09-16 · Cycles references complete: round13_02..06 on main (compositor on, 128 spp). GPU handed to the bake engineer (ceiling bake -> sky-branch probe -> encode/pack)
+Viewer's --perf and Gate 4 capture follow the bake report. QA 14 (docs/briefs/qa_round_14.md) after the capture.
