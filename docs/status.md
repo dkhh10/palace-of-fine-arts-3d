@@ -748,3 +748,7 @@ Lead queued a light-path branch test (debug world: camera red / glossy blue / di
 
 ## 2026-09-16 · QA-13-1 closed (phase6-viewer c79b7b6, probe irradiance): band 0.2 %, cam02 foliage hue 220° -> 41° (amber-brown vs Cycles olive: held for the branch test); refs repointed (cam06 real 0.71x)
 Viewer: commit repointed refs, prepare the one-command Gate 4 capture, sweep impostor rotational pop; --perf still held. GPU: refs 02/04 at ~7 min (pid 34504); then bake (ceiling + branch test), then viewer --perf, then Gate 4 capture + QA 14.
+
+## 2026-09-16 · Bake staged (phase6-bake 7ed1bdb): ceiling bake + sky-branch probe (debug world R=camera / G=diffuse / B=glossy; bake vs render) held for the GPU; precedent found — Phase 5's Eevee probe capture had the same camera-branch defect and light_probes.bake fixes it with make_sky_world(split_rays=False)
+sky.diffuse is confirmed the tinted branch (bake_lm.py isolates Is Diffuse Ray). If the probe confirms, the fix is a full Gate 3 lightmap re-bake with the corrected world (65 jobs, 6 h 30 m overnight last time); the bake engineer prepares the queue but does not start it — lead decides the overnight slot. Gate 4 capture + QA 14 proceed on the current maps for everything except QA-12b-1.
+GPU: refs 02/04 (pid 34504, ~9 min). Waiting: export cutoff fix; viewer capture prep + pop sweep.
