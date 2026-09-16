@@ -191,6 +191,9 @@ try {
 	page.on( 'console', ( m ) => { pageLog.push( `${m.type()}: ${m.text()}` ); console.log( `[page] ${m.text()}` ); } );
 	page.on( 'pageerror', ( e ) => { pageLog.push( `pageerror: ${e.message}` ); console.error( `[page error] ${e.message}` ); } );
 	page.on( 'requestfailed', ( r ) => { pageLog.push( `requestfailed: ${r.url()} ${r.failure()?.errorText}` ); } );
+	// A bare "Failed to load resource: 404" console line carries no URL, so record the response too -
+	// an unactionable page error is nearly as bad as a swallowed one.
+	page.on( 'response', ( r ) => { if ( r.status() >= 400 ) pageLog.push( `httperror: ${r.status()} ${r.url()}` ); } );
 
 	console.log( `[shot] ${url}` );
 	await page.goto( url, { waitUntil: 'domcontentloaded', timeout } );
@@ -336,8 +339,11 @@ try {
 	// A SCORED CAPTURE MUST FAIL ON A PAGE ERROR.  Six swallowed WebGL texSubImage2D failures went
 	// through a Gate capture unnoticed in round 14 and made every probe number an artefact
 	// (docs/reviews/phase6_viewer_gate4_r6_review.md finding 2).  PFA_ALLOW_PAGE_ERRORS=1 opts out.
-	const IGNORE = /favicon|net::ERR_ABORTED .*\.hdr/;
-	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
+	// `error: Failed to load resource ...` carries no URL and is always duplicated by an `httperror:`
+	// line that does, so the URL-less one is dropped and the httperror is what is judged.  favicon.ico
+	// is the one whitelisted 404 (index.html declares none); nothing else is.
+	const IGNORE = /favicon|^error: Failed to load resource/;
+	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror|httperror):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
 	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageErrors, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( pageErrors.length ) {

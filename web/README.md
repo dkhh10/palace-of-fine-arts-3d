@@ -486,6 +486,26 @@ Not shipped. The switch stays, and this is the standing lead on the olive cast.
   read-back that refuse the pass if it is ever black again, and `screenshot.mjs` now fails a capture
   on any page error. **Re-measured numbers supersede every probe figure in QA 14.**
 
+* **Re-measured with the working cube** (probe ON vs OFF, `post=all`, 1920x1080):
+
+  | measurement | probe OFF | probe ON | reference |
+  |---|---|---|---|
+  | cam01 band B > R+20 | 15.51 % | **0.29 %** | 0.05 % |
+  | cam01 band mean RGB | 105/92/68 | **103/86/41** | 80/64/24 |
+  | cam02 building G > R | 32.2 % | **41.7 %** | 26.9 % |
+  | cam06 building G > R | 21.4 % | 19.9 % | 12.6 % |
+  | cam02 foliage median hue | 220.9 | **180.0** | 102.4 |
+  | cam01 whole-frame luma | 131.50 (0.94x) | 130.38 (0.93x) | 139.98 |
+
+  **QA-13-1 is STILL CLOSED** — 0.29 % against a 3.9 % gate, and the band's mean RGB moves toward the
+  reference, so that conclusion survives the bug. Two others do NOT: the foliage goes blue → **cyan**
+  (180), not amber-brown, so the amber was purely the deleted sky; and the probe now makes cam02's
+  olive **worse** (32.2 → 41.7 %), so "the probe half-closed QA-12b-1" is void — it is the opposite.
+  Outside the water-reflection box every cam01 box moves < 0.01x, so the probe stays well contained.
+* **`?probespec=1` re-measured**: cam02 G > R 41.7 → 38.9 %, cam06 19.9 → 19.6 % — a real but small
+  gain, and only **15 of 32** cam01 box metrics stay within 0.03x (jamb sat 1.164x, shaded attic sat
+  1.153x, jamb lum 0.894x). Still not shipped; still the standing lead.
+
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
   reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is

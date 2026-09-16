@@ -78,13 +78,24 @@ export async function buildProbeEnv( probe, { renderer, loadHdr, note = () => {}
 
 	// And the PMREM read back off the GPU: this is what caught nothing in round 14 because nothing
 	// looked at it.  A black convolution means the upload silently failed again.
-	let probeSample = null;
+	// The PMREM is an ATLAS of mip levels with unused padding, so ONE texel proves nothing - the
+	// centre of the atlas is legitimately blank.  Sample a spread of points and require any to carry
+	// energy; that distinguishes "black cube" from "sampled the padding".
+	let probeSample = null, sampled = 0;
 	try {
-		const buf = new ( rt.texture.type === THREE.HalfFloatType ? Uint16Array : Float32Array )( 4 );
-		renderer.readRenderTargetPixels( rt, Math.floor( rt.width / 2 ), Math.floor( rt.height / 2 ), 1, 1, buf );
-		probeSample = Array.from( buf );
+		const Buf = rt.texture.type === THREE.HalfFloatType ? Uint16Array : Float32Array;
+		const pts = [ [ 2, 2 ], [ Math.floor( rt.width / 4 ), 2 ], [ 2, Math.floor( rt.height / 4 ) ],
+			[ Math.floor( rt.width / 4 ), Math.floor( rt.height / 4 ) ], [ Math.floor( rt.width / 2 ), Math.floor( rt.height / 2 ) ] ];
+		const seen = [];
+		for ( const [ x, y ] of pts ) {
+			const buf = new Buf( 4 );
+			renderer.readRenderTargetPixels( rt, x, y, 1, 1, buf );
+			seen.push( { at: [ x, y ], rgba: Array.from( buf ) } );
+			if ( buf[ 0 ] || buf[ 1 ] || buf[ 2 ] ) sampled ++;
+		}
+		probeSample = seen;
 	} catch ( e ) { note( `probe: could not read the PMREM back (${e.message}); the cube is unverified` ); }
-	const nonBlack = probeSample ? probeSample.slice( 0, 3 ).some( ( v ) => v !== 0 ) : null;
+	const nonBlack = probeSample ? sampled > 0 : null;
 	if ( nonBlack === false ) {
 		note( 'probe REFUSED: the convolved PMREM reads BLACK at its centre texel - the cube did not upload. '
 			+ 'A black envMap would OVERRIDE scene.environment and delete the sky irradiance (review finding 1).' );
@@ -96,8 +107,8 @@ export async function buildProbeEnv( probe, { renderer, loadHdr, note = () => {}
 	rt.userData = { probeSample, nonBlack, faceMeans };
 	note( `probe env: 6 x ${probe.sizePx || '?'} px HDR cube from ${probe.station || 'the hero station'} `
 		+ `convolved to irradiance in ${( ( performance.now() - t0 ) / 1000 ).toFixed( 2 )} s; `
-		+ `PMREM centre texel ${probeSample ? JSON.stringify( probeSample ) : 'unread'} `
-		+ `(${nonBlack === null ? 'UNVERIFIED' : 'non-black, verified'})` );
+		+ `PMREM read back at ${probeSample ? probeSample.length : 0} point(s), ${sampled} carrying energy `
+		+ `(${nonBlack === null ? 'UNVERIFIED' : 'verified non-black'}); faces ${faceMeans.map( ( m ) => m.toFixed( 1 ) ).join( '/' )}` );
 	return rt;
 }
 
