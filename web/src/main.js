@@ -29,6 +29,7 @@ import { makeWalk } from './walk.js';
 import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M } from './postChain.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
+import { buildImpostors } from './impostors.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
@@ -56,6 +57,8 @@ const CFG = {
 	glbOverride: qs.get( 'glb' ),                       // comma-separated URLs, overrides the manifest's list
 	lighting: qs.get( 'lighting' ) || 'auto',           // auto | baked | direct  (see pickLightingMode)
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
+	impostors: qs.get( 'impostors' ) !== '0',           // Gate 3 octahedral far-tree impostors
+	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
@@ -184,6 +187,7 @@ async function fetchBuffer( url ) {
 
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
+let impostorGroup = null, impostorReport = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -451,8 +455,36 @@ async function boot() {
 			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
 	}
 
+	// far-tree impostors (Gate 4 item 2) ----------------------------------------------------------
+	// They REPLACE the Gate 1 placeholder quads: when they build, the placeholders are not made at all,
+	// so a capture can never show a grey card where a tree should be and the name sweep stays clean.
+	const impAvailable = CFG.impostors && manifest.gate3 && manifest.gate3.impostors
+		&& manifest.gate3.impostors.count && manifest.treesFar.length;
+	if ( impAvailable ) {
+		const built = buildImpostors( {
+			impostors: manifest.gate3.impostors, far: manifest.treesFar, note,
+			normalDepth: CFG.impNormalDepth,
+			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
+			// automatic fog) - so the far trees recede with everything else when ?post has mist on
+			fog: ( scene.fog && postState && postState.mistSpec ) ? {
+				color: scene.fog.color, near: scene.fog.near, far: scene.fog.far,
+				strength: postState.mistSpec.strength, falloff: postState.mistSpec.falloff,
+			} : null,
+			loadTexture: ( url ) => {
+				progress.label = url.split( '/' ).pop();
+				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
+					: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+			},
+		} );
+		impostorReport = built.report;
+		if ( built.group ) { scene.add( built.group ); impostorGroup = built.group; }
+		await built.report.promise;
+	} else if ( manifest.treesFar.length && ! CFG.impostors ) {
+		note( 'far-tree impostors suppressed (?impostors=0)' );
+	}
+
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
-	if ( CFG.billboards && manifest.treesFar.length ) {
+	if ( ! impAvailable && CFG.billboards && manifest.treesFar.length ) {
 		billboards = makeTreeBillboards( manifest.treesFar );
 		// G1-5: under `baked` lighting every other material is specular-only, so an unpatched
 		// placeholder quad would take the full 67.3 W/m2 sun diffuse and read as a white card.
@@ -464,7 +496,7 @@ async function boot() {
 		scene.add( billboards );
 		aimBillboards( billboards, camera );
 		note( `${manifest.treesFar.length} far-tree placeholder quads in ${billboards.children.length} prototype group(s), tagged pfaPlaceholder=gate3_tree_impostor` );
-	} else if ( manifest.treesFar.length ) {
+	} else if ( manifest.treesFar.length && ! impAvailable ) {
 		note( `${manifest.treesFar.length} far-tree quads suppressed (?billboards=0)` );
 	}
 
@@ -935,6 +967,9 @@ window.__pfaInfo = () => ( {
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
 	post: postState,
+	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
+		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
+		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },
 	walk: walk ? { ...walk.state } : null,
 	materialsMode,
 	pbr: pbrReport,

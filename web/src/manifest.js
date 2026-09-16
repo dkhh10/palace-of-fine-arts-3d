@@ -637,10 +637,20 @@ export function normaliseManifest( raw, baseUrl ) {
 			for ( const [ name, p ] of Object.entries( impRaw.prototypes ) ) {
 				const alb = resolveTexture( p.albedo ), nd = resolveTexture( p.normal_depth );
 				if ( ! alb || ! nd ) { g3notes.push( `impostor ${name}: atlas key missing from textures.gate3.files` ); continue; }
+				// The geometry fields are the Gate 3 restatement: heights are measured from the
+				// prototype's OWN z = 0 (the plane `trunk_base` maps to), NOT from the bbox bottom.
+				// `base_z_m` is 0 for 14 of the 16 but -2.6748 m / -0.7183 m on the two willows,
+				// whose fronds hang below the trunk base; dividing by bbox[2] there made those
+				// impostors 19 % / 6 % too small and lifted them off their trunks.
 				protos[ name ] = { name, albedo: alb.url, normalDepth: nd.url,
 					range: p.range ?? null, bbox: p.bbox_m || null, radius: p.radius_m ?? null,
+					baseZ: p.base_z_m ?? 0, centreZ: p.centre_z_m ?? null,
+					heightAboveBase: p.height_above_base_m ?? null,
 					centreAboveBase: p.centre_above_base_m ?? null, depthRange: p.depth_range_m ?? null,
+					alphaCoverage: p.alpha_coverage ?? null,
 					bytes: ( ( alb.meta && alb.meta.bytes ) || 0 ) + ( ( nd.meta && nd.meta.bytes ) || 0 ) };
+				if ( ! ( protos[ name ].heightAboveBase > 0 ) || ! ( protos[ name ].radius > 0 ) || ! ( protos[ name ].range > 0 ) )
+					g3notes.push( `impostor ${name}: height_above_base_m / radius_m / range missing or not positive - it cannot be placed` );
 			}
 			// Every geometric and encoding field is READ, never assumed: the Gate 3 review is
 			// re-measuring `centre_above_base_m` / `bbox_m` from the trunk base and restating the

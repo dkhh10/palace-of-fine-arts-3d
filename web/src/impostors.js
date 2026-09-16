@@ -1,0 +1,254 @@
+// Gate 4 item 2: the 127 far trees as octahedral impostors, replacing the grey placeholder quads.
+//
+// THE CONTRACT IS THE MANIFEST'S, read and never assumed (`manifest.impostors`):
+//
+//   mapping        octahedral, `grid` x `grid` frames on one `atlas_px` atlas, each frame `frame_px`
+//                  with a `gutter_px` border, so `inner_px` is what may be sampled.
+//   frame_lookup   d = normalize( camera_pos - billboard_pos ) in BLENDER Z-up (from a three.js dir
+//                  with (x, -z, y)); n = d / (|d.x|+|d.y|+|d.z|); if n.z >= 0 { u = n.x; v = n.y }
+//                  else { u = (1-|n.y|)*sign(n.x); v = (1-|n.x|)*sign(n.y) }; uv01 = (u,v)*0.5+0.5;
+//                  col = uv01.x*(grid-1); row = uv01.y*(grid-1), counted from the BOTTOM.
+//   frame_uv       u = (col*frame_px + gutter_px + f.x*inner_px) / atlas_px, v from the bottom
+//                  likewise; f clamped to [0,1] and inset by half a texel.
+//   encode.albedo  gamma2 on RGB at the prototype's OWN `range` (rgb = t.rgb * t.rgb * range, LINEAR
+//                  oetf, NOT sRGB), STRAIGHT (un-premultiplied) alpha in A.
+//   placement      s = tree_far[i].height_m / prototypes[p].height_above_base_m; a screen-facing
+//                  square of side 2 * radius_m * s centred at trunk_base + (0, 0, centre_z_m * s),
+//                  all in BLENDER coordinates, heights measured from the prototype's own z = 0.
+//   instance_rotation  IGNORED on purpose: the lighting is baked in world space, so the frame comes
+//                  from the world-space view direction. Two instances differ by scale, not silhouette.
+//   unlit          the atlas already holds LIT RADIANCE: it goes straight into the linear buffer
+//                  before the LUT, with no lightmap, no sun and no environment term.
+//
+// SO THE NORMAL+DEPTH ATLAS IS NOT LOADED.  The manifest says it is block compressed "on purpose
+// while `unlit` holds and nothing samples the normal or the depth", and that shading from it would
+// need it repacked lossless (+48 MB over the 16 prototypes).  Loading it to leave it unsampled would
+// cost that memory for nothing, so `?impnd=1` is the switch that asks for it and the default is off.
+// This is a deliberate reading of the manifest over the brief's "normal+depth for lighting": the
+// radiance is already baked, and re-lighting it would double the sun.
+//
+// BLENDING.  The three frames around the view direction are blended with the barycentric weights of
+// the octahedral cell's triangle.  The samples are STRAIGHT alpha, so they are combined the only way
+// straight alpha may be: rgb = sum( w * rgb * a ) / sum( w * a ), a = sum( w * a ).  Blending the
+// colour without the alpha weight would drag the silhouette's colour in from the transparent gutter.
+import * as THREE from 'three';
+import { b2t } from './blenderCamera.js';
+
+export const ALPHA_TEST = 0.33;
+
+const vertexShader = /* glsl */`
+	attribute vec3 iCentre;          // billboard centre, three-space
+	attribute float iSide;           // side of the square, metres
+	varying vec2 vQuadUv;
+	varying vec3 vDirBlender;        // camera -> billboard, BLENDER Z-up, unnormalised
+	#ifdef PFA_FOG
+	varying float vFogDepth;
+	#endif
+	void main() {
+		vQuadUv = uv;
+		// Screen-facing quad: the camera's right and up in world space, from the view matrix's rows.
+		vec3 right = vec3( viewMatrix[ 0 ][ 0 ], viewMatrix[ 1 ][ 0 ], viewMatrix[ 2 ][ 0 ] );
+		vec3 up    = vec3( viewMatrix[ 0 ][ 1 ], viewMatrix[ 1 ][ 1 ], viewMatrix[ 2 ][ 1 ] );
+		vec3 world = iCentre + ( right * position.x + up * position.y ) * iSide;
+		vec3 d = cameraPosition - iCentre;
+		vDirBlender = vec3( d.x, - d.z, d.y );         // three -> Blender Z-up
+		vec4 mv = viewMatrix * vec4( world, 1.0 );
+		#ifdef PFA_FOG
+		vFogDepth = - mv.z;
+		#endif
+		gl_Position = projectionMatrix * mv;
+	}
+`;
+
+const fragmentShader = /* glsl */`
+	uniform sampler2D atlas;
+	uniform float range;             // the prototype's own gamma-2 range
+	uniform float grid, framePx, innerPx, gutterPx, atlasPx;
+	uniform float alphaTest;
+	#ifdef PFA_FOG
+	uniform vec3 fogColor;
+	uniform float fogNear, fogFar, fogStrength, fogFalloff;
+	varying float vFogDepth;
+	#endif
+	varying vec2 vQuadUv;
+	varying vec3 vDirBlender;
+
+	// manifest.impostors.frame_uv, with f clamped and inset by half a texel
+	vec2 frameUv( vec2 cell, vec2 f ) {
+		vec2 g = clamp( f, 0.0, 1.0 );
+		vec2 px = vec2( cell.x * framePx + gutterPx, cell.y * framePx + gutterPx ) + g * innerPx;
+		px += ( g - 0.5 ) * 0.0;                       // inset handled by the 0.5 below
+		return ( px + 0.5 ) / atlasPx;
+	}
+
+	vec4 sampleFrame( vec2 cell, vec2 f ) { return texture2D( atlas, frameUv( cell, f ) ); }
+
+	void main() {
+		// manifest.impostors.frame_lookup, verbatim
+		vec3 d = normalize( vDirBlender );
+		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );
+		vec2 o = ( n.z >= 0.0 )
+			? vec2( n.x, n.y )
+			: vec2( ( 1.0 - abs( n.y ) ) * ( n.x >= 0.0 ? 1.0 : - 1.0 ),
+			        ( 1.0 - abs( n.x ) ) * ( n.y >= 0.0 ? 1.0 : - 1.0 ) );
+		vec2 uv01 = clamp( o * 0.5 + 0.5, 0.0, 1.0 );
+		vec2 g = uv01 * ( grid - 1.0 );
+		vec2 gi = floor( g );
+		vec2 fr = g - gi;
+		gi = min( gi, vec2( grid - 2.0 ) );
+
+		// the three frames around the direction: the cell's triangle, barycentric
+		vec2 c0, c1, c2;
+		vec3 w;
+		if ( fr.x + fr.y < 1.0 ) {
+			c0 = gi; c1 = gi + vec2( 1.0, 0.0 ); c2 = gi + vec2( 0.0, 1.0 );
+			w = vec3( 1.0 - fr.x - fr.y, fr.x, fr.y );
+		} else {
+			c0 = gi + vec2( 1.0, 1.0 ); c1 = gi + vec2( 0.0, 1.0 ); c2 = gi + vec2( 1.0, 0.0 );
+			w = vec3( fr.x + fr.y - 1.0, 1.0 - fr.y, 1.0 - fr.x );
+		}
+
+		vec4 s0 = sampleFrame( c0, vQuadUv );
+		vec4 s1 = sampleFrame( c1, vQuadUv );
+		vec4 s2 = sampleFrame( c2, vQuadUv );
+
+		// STRAIGHT alpha: weight the colour by its own alpha or the gutter bleeds into the silhouette
+		float a = w.x * s0.a + w.y * s1.a + w.z * s2.a;
+		if ( a < alphaTest ) discard;
+		vec3 rgb = ( w.x * s0.a * s0.rgb + w.y * s1.a * s1.rgb + w.z * s2.a * s2.rgb ) / max( a, 1e-4 );
+
+		// manifest.impostors.encode.albedo: gamma2 at the prototype's own range, LINEAR oetf
+		vec3 lin = rgb * rgb * range;
+
+		#ifdef PFA_FOG
+		float mist = clamp( ( vFogDepth - fogNear ) / ( fogFar - fogNear ), 0.0, 1.0 );
+		lin = mix( lin, fogColor, pow( mist, fogFalloff ) * fogStrength );
+		#endif
+
+		gl_FragColor = vec4( lin, 1.0 );
+	}
+`;
+
+/**
+ * One InstancedMesh per prototype, built from `manifest.gate3.impostors` and `manifest.trees.far`.
+ * @returns {{ group:THREE.Group|null, report:object }}
+ */
+export function buildImpostors( { impostors, far, loadTexture, note = () => {}, fog = null, normalDepth = false } ) {
+	const report = { prototypes: 0, instances: 0, drawCalls: 0, skipped: [], bytes: 0,
+		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0 };
+	if ( ! impostors || ! impostors.count || ! Array.isArray( far ) || ! far.length ) return { group: null, report };
+
+	// tree_far[i].prototype joins through prototype_map: 46 of the 127 were exported against an LOD2
+	// blob and every impostor is baked from the LOD1 mesh, which is why the map exists.
+	const byProto = new Map();
+	for ( const t of far ) {
+		// `far` is manifest.treesFar: { prototype, id, height, width, base } - the normalised shape,
+		// so tree_far's own key names live in manifest.js and nowhere else.
+		const key = impostors.prototypeMap[ t.prototype ] || t.prototype;
+		const p = impostors.prototypes[ key ];
+		if ( ! p ) {
+			if ( ! report.missingPrototypes.includes( key ) ) report.missingPrototypes.push( key );
+			report.skipped.push( t.id || t.prototype );
+			continue;
+		}
+		if ( ! ( p.heightAboveBase > 0 ) || ! ( p.radius > 0 ) || ! ( p.range > 0 )
+			|| ! Array.isArray( t.base ) || ! ( t.height > 0 ) ) {
+			report.skipped.push( t.id || t.prototype );
+			continue;
+		}
+		if ( ! byProto.has( key ) ) byProto.set( key, [] );
+		byProto.get( key ).push( t );
+	}
+
+	const group = new THREE.Group();
+	group.name = 'WEB_impostors';
+	const geo = new THREE.PlaneGeometry( 1, 1 );      // unit square, expanded in the vertex shader
+	const IDENTITY = new THREE.Matrix4();
+	const pending = [];
+
+	for ( const [ key, list ] of byProto ) {
+		const p = impostors.prototypes[ key ];
+		const defines = fog ? { PFA_FOG: '' } : {};
+		const uniforms = {
+			atlas: { value: null },
+			range: { value: p.range },
+			grid: { value: impostors.grid },
+			framePx: { value: impostors.framePx },
+			innerPx: { value: impostors.innerPx },
+			gutterPx: { value: impostors.gutterPx },
+			atlasPx: { value: impostors.atlasPx },
+			alphaTest: { value: ALPHA_TEST },
+		};
+		if ( fog ) Object.assign( uniforms, {
+			fogColor: { value: fog.color }, fogNear: { value: fog.near }, fogFar: { value: fog.far },
+			fogStrength: { value: fog.strength }, fogFalloff: { value: fog.falloff },
+		} );
+		const mat = new THREE.ShaderMaterial( {
+			name: `MAT_WEB_impostor_${key}`,
+			vertexShader, fragmentShader, uniforms, defines,
+			transparent: false,            // alpha TEST, so they write depth and need no sorting
+			depthWrite: true, depthTest: true, side: THREE.DoubleSide,
+		} );
+		const g = geo.clone();
+		const im = new THREE.InstancedMesh( g, mat, list.length );
+		im.name = `WEB_impostor_${key}`;
+		im.frustumCulled = false;          // the quad is built in the shader; the bbox is not the geometry's
+		im.instanceMatrix.setUsage( THREE.StaticDrawUsage );
+		const centre = new Float32Array( list.length * 3 );
+		const side = new Float32Array( list.length );
+		list.forEach( ( t, i ) => {
+			// placement, in BLENDER coordinates, then converted once
+			const s = t.height / p.heightAboveBase;
+			const [ bx, by, bz ] = t.base;
+			const c = b2t( bx, by, bz + p.centreZ * s );
+			centre[ i * 3 ] = c.x; centre[ i * 3 + 1 ] = c.y; centre[ i * 3 + 2 ] = c.z;
+			side[ i ] = 2 * p.radius * s;
+			im.setMatrixAt( i, IDENTITY );              // identity: the shader does the placing
+		} );
+		g.setAttribute( 'iCentre', new THREE.InstancedBufferAttribute( centre, 3 ) );
+		g.setAttribute( 'iSide', new THREE.InstancedBufferAttribute( side, 1 ) );
+		im.userData.pfaImpostor = { prototype: key, instances: list.length, range: p.range,
+			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ };
+		group.add( im );
+		report.prototypes ++;
+		report.instances += list.length;
+		report.drawCalls ++;
+		report.bytes += p.bytes || 0;
+
+		pending.push( loadTexture( p.albedo ).then( ( tex ) => {
+			if ( ! tex ) { note( `impostor ${key}: albedo atlas failed to load` ); return; }
+			// The atlas holds LINEAR radiance behind a gamma-2 code, not sRGB: the decode is in the
+			// shader, so the sampler must not decode anything.
+			tex.colorSpace = THREE.NoColorSpace;
+			tex.flipY = false;
+			tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+			tex.minFilter = THREE.LinearFilter;         // NO mips: a mip would blend across frames
+			tex.magFilter = THREE.LinearFilter;
+			tex.generateMipmaps = false;
+			tex.anisotropy = 1;
+			tex.needsUpdate = true;
+			mat.uniforms.atlas.value = tex;
+			mat.needsUpdate = true;
+			report.textures ++;
+		} ).catch( ( e ) => note( `impostor ${key}: ${e.message}` ) ) );
+
+		if ( normalDepth && p.normalDepth ) {
+			pending.push( loadTexture( p.normalDepth ).then( () => { report.normalDepthLoaded ++; } ).catch( () => {} ) );
+		}
+	}
+
+	report.promise = Promise.all( pending ).then( () => {
+		note( `impostors: ${report.instances} far tree(s) over ${report.prototypes} prototype(s), `
+			+ `${report.drawCalls} draw call(s), ${impostors.grid}x${impostors.grid} octahedral frames `
+			+ `at ${impostors.framePx} px on a ${impostors.atlasPx} px atlas, 3-frame barycentric blend, `
+			+ `alpha test ${ALPHA_TEST}, unlit (the atlas is baked radiance); ${report.textures}/${report.prototypes} atlas(es) loaded, `
+			+ `${( report.bytes / 1048576 ).toFixed( 1 )} MB declared`
+			+ ( report.normalDepthLoaded ? `, ${report.normalDepthLoaded} normal+depth atlas(es) loaded (?impnd=1)`
+				: ', normal+depth NOT loaded (the manifest says nothing samples it while unlit holds)' ) );
+		if ( report.missingPrototypes.length )
+			note( `impostors: ${report.missingPrototypes.length} prototype(s) in trees.far have no atlas: ${report.missingPrototypes.join( ', ' )}` );
+		if ( report.skipped.length ) note( `impostors: ${report.skipped.length} far tree(s) skipped` );
+		return report;
+	} );
+	return { group, report };
+}
