@@ -1479,3 +1479,41 @@ export/sync_main.sh
     format and silently skips the material — it returns False only for a JPEG (which never has alpha) and
     **raises** otherwise, because a texture whose alpha cannot be tested is a card that ships opaque in
     silence. `env.glb` 36 946 136 → **36 946 188 B** (+52); arch, orn, ground byte-identical.
+
+31. **Gate 4 — the 1 379 shrub/reed placements' irradiance, ordered against `env.glb` itself** (export r5).
+    The bake hands over `out/gate3/instance_irradiance.json`: one scene-linear RGB per **placement** of the 28
+    card meshes. The viewer uploads those as an `InstancedBufferAttribute`, which is indexed by **glb instance
+    row**, and `gltfpack -mi` re-orders the rows, drops every node name (gltfpack 1.2 refuses `-kn` with
+    `-mi`) and merges meshes — so the file's own array order is not the contract and, per
+    `docs/reviews/phase6_bake_gate4_instance_review.md`, **a name cannot be recovered from the glb at all**.
+    The join is therefore positional, and the pipeline is:
+    ```sh
+    node web/tools/instance_rows.mjs export/out/gate1/env.glb export/out/gate3/instance_rows.json
+    python3 export/gate4_instance_order.py      # -> out/gate3/instance_order.json
+    python3 export/manifest_v4.py && export/sync_main.sh
+    ```
+    `instance_rows.mjs` is node, not python, because every accessor in the packed glbs rides in an
+    `EXT_meshopt_compression` bufferView: it loads `env.glb` through three's `GLTFLoader` + `MeshoptDecoder`
+    and dumps each `InstancedMesh`'s rows in accessor order, with the glTF node index from
+    `parser.associations` as the stable key. `gate4_instance_order.py` then converts each placement's Blender
+    `loc` to glTF space — **Blender (x, y, z) → glTF (x, z, −y)**, asserted on the seven bake-measured
+    `checks.dark` locs against the pre-pack `env.gltf` node translations (0.6 mm, the JSON's 3-decimal
+    rounding) — decides per node which mesh(es) it draws by containment, and matches rows to placements
+    one-to-one by nearest translation: tolerance **0.03 m**, runner-up at least **3x** further. Measured:
+    worst residual **5.9 mm** (gltfpack recentres a merged mesh, so the residual is that offset, not noise)
+    against a smallest within-node placement separation of **88 mm**, worst margin **55x**, **1 379/1 379**
+    rows over **28/28** meshes and **25** instanced nodes. Any unmatched row, duplicate match or mesh found in
+    two nodes is a hard failure — a silently swapped pair lights two shrubs with each other's irradiance. The
+    object name rides along as a label and is cross-checked against the nearest `env.gltf` node, never joined
+    on. `PFA_INSTANCE_IRR=<file>` runs the same join against a candidate JSON without touching the synced one.
+    **What it found:** gltfpack merged `EXPM_ENV_src_{maho2,pitto5,reed1}_LOD2.001` — each a one-placement
+    near-duplicate of its base mesh — into the base mesh's node, so glTF nodes 10 / 16 / 21 hold 46 / 102 / 76
+    rows against their base mesh's 45 / 101 / 75, with the odd row *inside* the run (rows 8, 14, 22). A viewer
+    binding one mesh's array to those nodes is one row short and misaligned from that point on, so the
+    manifest block carries `nodes[*].segments` — an ordered `(mesh, count)` list per node — beside the
+    per-mesh arrays; concatenating each segment's slice rebuilds the node's attribute exactly.
+    **env.glb is not re-packed** (byte-identical, 36 946 188 B): the order is fully recoverable, no `COLOR_0`
+    changes and nothing is re-decimated, so `lightmaps.instance_irradiance.in_glb` stays **false** and the
+    data ships in the manifest (+106 kB, 1.85 → 1.96 MB). `verify_glb.py` asserts it against the glb: every
+    node named is really instanced, its `TRANSLATION` accessor count equals its segment total, and each of the
+    28 meshes gets exactly its placement count of rows (`gate4_instance_irradiance.counts_match`).
