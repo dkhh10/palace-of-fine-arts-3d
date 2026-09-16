@@ -539,3 +539,21 @@ The 09-16 entry said reflSat 0.66 was to be "tested at 1"; the test showed it wa
 spectrally flat), so reflSat 1.0 and reflectTint 1.0 ship, with reflBlur 0.003 and the procedural 8-octave ripple (1.20 m -> 0.034 m, slope rms 0.0131 rad from the reference's
 reflection wander) and the displacement as the projection of the slope. Where the building reflects, lum 1.01x and hue within 3.3° of Cycles; the open water's residual (lum 0.75x,
 hue 196 vs 145°) is the reflection lobe against the sky and stays as a delivery note. The displacement is world-axis-locked and exact only near the hero heading (documented).
+
+## 2026-09-17 · FINAL JUDGEMENT OF 6a (lead, Fable; the single Fable QA pass of Phase 6): 6a CLOSED at parity, 45 fps left to the user's preset choice
+Inputs: QA 15 (212ca27, Opus xhigh: 6a PARITY REACHED, scores 01 3.72 / 02 3.00 / 03 2.56 / 04 2.88 / 05 2.94 / 06 2.83 against Phase 5 3.67 / 2.94 / 2.56 / 2.81 / 3.06 / 2.67,
+every station within 0.5, none below 2.5, MAE down at all six) and the lead's own six-station 100 % tile pass on round15 (43b1e0a). The lead's tiles agree with the critic's:
+architecture, ornament, lightmaps and the sky are at parity at every station (the rotunda pair tiles at cam01 are near-indistinguishable from Cycles; the cam04 ceiling has no
+defect); the hero water is now credible (the reflection breaks into warm streaks as Cycles', the hard line is gone); the residual that a walker will see is the FOLIAGE and the
+BACKDROP, not the building: shoreline shrubs are sparse pale-yellow leaf-card confetti with black alpha gaps, near trees read as blue-violet smeared blobs (impostors beside sharp
+neighbours at cam01/05, a hard-edged dark blob at cam02), the S-colonnade wall is a flat cream field with hard-edged leaf cards, the backdrop is untextured mustard boxes with
+faceted polyhedral far trees at cam06, the open water beside the reflection is a saturated blue slab (hue 196 vs 145°, sat 8.9x), the near colonnade shafts show vertical smearing
+at 100 % at cam03, and cam03's near shade floors at p10 53 vs 17 because probe-lit surfaces without baked light have no occlusion.
+Verdict: 6a is closed by both halves of the stopping rule (parity, and the second round after Gate 4). Not met: the >= 45 fps target (35.5 fps at 1440p with the full look;
+`?quality=fast` half-res bloom + half-res Reflector + reflset=orn is the documented preset; a scored 1440p measurement of that preset on the round15 build is owed at delivery and
+the choice of default is the user's, as decided 09-16). Post-6a backlog, in hero-visibility order: (1) shrub/reed/leaf-card albedo and card density (bake/export: the cards' hue is
+57.7 vs 102.4°, a material/albedo bake matter, and the cut-out cards need volume — denser cards or a card-cluster impostor); (2) near-tree impostor smear and colour at cam01/05;
+(3) baked occlusion or a lightmap for the probe-lit surfaces (cam03 near shade, S-colonnade wall, backdrop wall 1.26x); (4) backdrop textures and far-tree impostors at cam06;
+(5) open-water reflection lobe vs sky (hue/sat); (6) column-shaft UV stretch at cam03; (7) walk probe re-run at 30 s per heading; (8) the frame budget. None of these is a
+building defect; the export set has 0 placeholders to explain (name sweep), 127 hidden ENV_treeboard_* the standing exception. Phase 6b (web deployment) is the next plan:
+docs/briefs/phase6_plan.md Gate 5, and the user names the iPhone.

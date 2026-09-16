@@ -49,3 +49,28 @@ tuned on Eevee). 7. cam05 lagoon band bright (the hero / cam05 gloss-mix trade).
 west-soffit gap +0.22 (probe coverage; the Eevee test animation mispredicts that corner). 10. Entablature cornice / frieze sub-courses 1.33x / 0.87x
 (architecture option A). 11. Entablature row std 37 vs 40. 12. Sunlit chroma capped by AgX High Contrast (accepted). 13. ref 062 is a midday photo:
 cam02 matches its framing, never its tonality at golden hour.
+
+# Phase 6a — three.js walkthrough, local delivery (lead, 2026-09-17; closed at parity by docs/decisions.md "FINAL JUDGEMENT OF 6a")
+## Deliverables
+- Viewer: `web/` (Vite + three.js); `cd web && npm install && npm run dev`, or `npm run build` -> `web/dist`. Assets: `web/public/assets -> export/out` (gitignored, regenerable
+  from master_delivery.blend by the export/ chain: export_set -> gltf_pack -> bake_queue -> manifest_v4 -> sync_main; see export/README.md items 1-32).
+- Stations 1-6 as presets (keys 1-6), hero = CAM_qa_01_lagoon_hero; walk controls with ground clamp (shore margin 0.15 m, 24/24 probes above WATER_Z + 0.1); loading screen with
+  a correct total (640.1 MB); deterministic captures via `web/tools/gate4.sh` through scripts/chrome_run.sh.
+- Look: AgX High Contrast at -2.833 EV by the OCIO-baked 3D LUT; lightmaps (gamma-2, UV2 dequantised in the viewer), ORN slot atlases, hero probe, vertex irradiance on the 14 near
+  trees, per-placement irradiance on 1 379 shrubs/reeds, procedural ripple water with the reference sheet's murk, compositor airlight and bloom.
+## Measured (round15, 43b1e0a; docs/qa_round_15.md)
+| station | viewer vs Phase 5 score | Phase 5 | frame luma vs Cycles |
+|---|---|---|---|
+| 01 hero | 3.72 | 3.67 | 0.897x |
+| 02 | 3.00 | 2.94 | 1.030x |
+| 03 | 2.56 | 2.56 | 1.804x |
+| 04 | 2.88 | 2.81 | 1.118x |
+| 05 | 2.94 | 3.06 | 1.001x |
+| 06 | 2.83 | 2.67 | 0.993x |
+Frame time at 2560x1440, full look: 28.2 ms median (35.5 fps), 279 draws, 4.14 M tris, resident 1 677.9 MB. `?quality=fast` is the documented preset for the 45 fps target
+(to be measured on this build at delivery; the default is the user's choice).
+## Known issues (what a walker sees that the Cycles frames do not; owners in decisions.md "FINAL JUDGEMENT OF 6a")
+1. Shoreline shrubs/reeds are sparse pale-yellow leaf cards with alpha gaps; their hue is 45° too warm (albedo). 2. Near trees: blue-violet impostor smear at cam01/05, a
+hard-edged dark blob at cam02; two trees (broadleaf_s19, pine_s29) genuinely unlit. 3. Probe-lit surfaces without baked light have no occlusion: cam03 near shade p10 53 vs 17,
+S-colonnade wall flat, backdrop wall 1.26x. 4. Backdrop: untextured mustard blocks and faceted far trees (cam06). 5. Open water beside the reflection: hue 196 vs 145°,
+sat 8.9x, lum 0.75x (reflection lobe vs sky). 6. Column shafts at cam03 smear vertically at 100 %. 7. 35.5 fps, not 45. 8. Walk probe re-run at 30 s per heading owed.

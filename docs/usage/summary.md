@@ -1,6 +1,6 @@
 # Token usage summary (from Claude Code transcripts)
 
-Generated 2026-09-16T20:32:28Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (12 main sessions, 151 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
+Generated 2026-09-16T23:24:51Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (12 main sessions, 159 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
 
 Also in this folder: `daily.json` and `sessions_all.json` are raw `ccusage` exports (account-wide, every project, its own price table; `sessions_all.json` has no project field, which is why this script exists). `make_timeline.py` renders `docs/timeline.html` from `sessions.json`.
 
@@ -19,12 +19,12 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 
 | model | requests | input k | output k | thinking k (of output) | cache write 1h k | cache write 5m k | cache read k | cost USD |
 |---|---|---|---|---|---|---|---|---|
-| claude-opus-5 | 11161 | 22 | 8,559 | 3,939 | 0 | 94,800 | 2,023,674 | 1,818.42 |
-| claude-fable-5-1 | 1924 | 48 | 1,967 | 674 | 8,678 | 11,613 | 452,942 | 530.81 |
+| claude-opus-5 | 11891 | 24 | 8,693 | 3,960 | 0 | 101,108 | 2,154,960 | 1,926.84 |
+| claude-fable-5-1 | 1988 | 50 | 2,020 | 690 | 8,823 | 11,613 | 461,536 | 538.50 |
 | claude-sonnet-5 | 25 | 0 | 25 | 15 | 0 | 107 | 1,903 | 0.90 |
 | <synthetic> | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0.00 |
 
-**Grand total nominal cost: $2,350.13**
+**Grand total nominal cost: $2,466.24**
 
 ## Sessions
 
@@ -41,7 +41,7 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 | 9 | 52e90d0f | 2026-09-15T08:18 | 2026-09-15T08:20 | 0.03 | 3 | 0 | 0.82 |  |
 | 10 | c47a8492 | 2026-09-16T06:49 | 2026-09-16T11:51 | 5.03 | 46 | 4 | 46.70 | opus-5 42, fable-5-1 5 |
 | 11 | 87d95e57 | 2026-09-16T11:51 | 2026-09-16T15:45 | 3.89 | 181 | 12 | 217.93 | opus-5 199, fable-5-1 19 |
-| 12 | 5b1d192d | 2026-09-16T20:31 | 2026-09-16T20:32 | 0.01 | 6 | 0 | 1.04 | fable-5-1 1 |
+| 12 | 5b1d192d | 2026-09-16T20:31 | 2026-09-16T23:24 | 2.87 | 104 | 8 | 117.15 | opus-5 108, fable-5-1 9 |
 
 ## Cross-check: Claude Code internal cost-state per session
 
@@ -60,7 +60,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 9 52e90d0f | 0.82 | 0.01 | 0.0 | 0/0 | 0.82 |
 | 10 c47a8492 | 59.76 | 1.34 | 0.13 | 1644/91 | 46.70 |
 | 11 87d95e57 | 293.52 | 5.3 | 1.14 | 4532/434 | 217.93 |
-| total | 2,892.80 | | | | 2,350.13 |
+| total | 2,892.80 | | | | 2,466.24 |
 
 ## Daily nominal cost (this project only, UTC)
 
@@ -72,7 +72,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 2026-09-09 | 401.76 | 50.22 | 350.64 | 0.90 |
 | 2026-09-10 | 130.25 | 70.93 | 59.32 | 0.00 |
 | 2026-09-15 | 521.86 | 54.86 | 467.00 | 0.00 |
-| 2026-09-16 | 337.13 | 46.59 | 290.55 | -0.00 |
+| 2026-09-16 | 453.24 | 54.28 | 398.97 | -0.00 |
 
 ## Subagents per session (by model, count and cost)
 
@@ -87,7 +87,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 - Session 9 (52e90d0f): . Types: {}
 - Session 10 (c47a8492): 4 x opus-5 ($42). Types: {'general-purpose': 4}
 - Session 11 (87d95e57): 12 x opus-5 ($199). Types: {'general-purpose': 12}
-- Session 12 (5b1d192d): . Types: {}
+- Session 12 (5b1d192d): 8 x opus-5 ($108). Types: {'general-purpose': 8}
 
 ## Agents dispatched by role (subagent transcripts, classified from their spawn descriptions)
 
@@ -104,10 +104,10 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 9 | - | - | - | - | - | - | - | - | - | - | 0 ($0) |
 | 10 | - | - | - | - | - | - | - | - | - | 4 ($42) | 4 ($42) |
 | 11 | - | - | - | - | - | 1 ($103) | 2 ($17) | 7 ($21) | - | 2 ($57) | 12 ($199) |
-| 12 | - | - | - | - | - | - | - | - | - | - | 0 ($0) |
-| all | 4 ($24) | 12 ($126) | 9 ($126) | 12 ($246) | 12 ($299) | 16 ($418) | 19 ($151) | 52 ($110) | 2 ($6) | 13 ($523) | 151 ($2030) |
+| 12 | - | - | - | - | - | - | 1 ($7) | 3 ($6) | - | 4 ($95) | 8 ($108) |
+| all | 4 ($24) | 12 ($126) | 9 ($126) | 12 ($246) | 12 ($299) | 16 ($418) | 20 ($159) | 55 ($116) | 2 ($6) | 17 ($618) | 159 ($2139) |
 
-Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $1.
+Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $9.
 
 ## Subagent list (cost >= $5)
 
@@ -200,3 +200,7 @@ Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, s
 | 11 | ac740cdd8 | general-purpose | opus-5 | 09-16T13:12 | 09-16T15:29 | 139 | 23,990 | 25.65 | Bake engineer: rotunda ceiling re-bake |
 | 11 | a945eb6bf | general-purpose | opus-5 | 09-16T12:44 | 09-16T13:09 | 87 | 12,073 | 9.59 | QA round 13: lightmaps alone |
 | 11 | a3688d82c | general-purpose | opus-5 | 09-16T14:46 | 09-16T15:03 | 71 | 8,113 | 7.08 | QA round 14: Gate 4 |
+| 12 | af95ec134 | general-purpose | opus-5 | 09-16T20:34 | 09-16T23:18 | 20 | 65,693 | 53.86 | Viewer water murk and tile |
+| 12 | a965d8a7b | general-purpose | opus-5 | 09-16T21:34 | 09-16T22:49 | 36 | 29,989 | 19.95 | Export instance irradiance manifest |
+| 12 | a04ee4a2d | general-purpose | opus-5 | 09-16T20:34 | 09-16T22:41 | 29 | 13,877 | 18.42 | Bake per-placement shrub irradiance |
+| 12 | ae2445890 | general-purpose | opus-5 | 09-16T23:04 | 09-16T23:23 | 32 | 10,723 | 7.32 | QA round 15 critic |
