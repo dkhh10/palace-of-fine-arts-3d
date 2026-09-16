@@ -101,6 +101,9 @@ const WaterShader = {
  */
 export function makeWater( waterY, o = {} ) {
 	const size = o.size ?? 1200;
+	// Item 6: the Reflector renders the WHOLE SCENE a second time into this target - 6.3 ms at the
+	// hero, 8.6 ms at the aerial, and it doubles the draw calls.  Halving it is nearly free visually
+	// because `reflBlur` already gathers the reflection over a disc.
 	// The plane is rotated on the OBJECT, not baked into the geometry: Reflector derives the mirror
 	// normal from the object's world rotation (normal = +Z rotated by matrixWorld), so a geometry-baked
 	// rotation leaves it reflecting about a vertical plane.

@@ -143,11 +143,21 @@ export function removeMist( scene ) {
  * Bloom on the LINEAR buffer, which is where Blender's is: the threshold is a scene-linear radiance
  * (6.41 here), not a display value, so it only ever catches the sun-facing highlights.
  */
-export function makeBloom( comp, size ) {
+export function makeBloom( comp, size, { half = false } = {} ) {
 	if ( ! comp || comp.bloomStrength <= 0 ) return null;
-	const pass = new UnrealBloomPass( new THREE.Vector2( size.w, size.h ),
+	const div = half ? 2 : 1;
+	const pass = new UnrealBloomPass( new THREE.Vector2( size.w / div, size.h / div ),
 		comp.bloomStrength, comp.bloomSize, comp.bloomThreshold );
-	pass.name = 'PFA_bloom';
+	pass.name = half ? 'PFA_bloom_half' : 'PFA_bloom';
+	// EffectComposer.setSize() calls every pass with the COMPOSER's size, which would undo the
+	// constructor's half resolution on the first resize.  Intercept it so the mip chain stays half
+	// whatever the canvas does.  Item 6: bloom at full 1440p costs 7.8-8.4 ms, which is what pushes
+	// the frame past one vsync interval.
+	if ( half ) {
+		const base = pass.setSize.bind( pass );
+		pass.setSize = ( w, h ) => base( Math.max( 1, Math.round( w / 2 ) ), Math.max( 1, Math.round( h / 2 ) ) );
+	}
+	pass.userData = { halfRes: half, sourceResolution: [ size.w / div, size.h / div ] };
 	return pass;
 }
 

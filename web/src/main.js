@@ -42,6 +42,11 @@ const CFG = {
 	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
+	// Item 6: both levers were built and measured and BOTH DEFAULT TO FULL.  Half res buys only ~4 ms
+	// of the ~12 ms needed for 45 fps (the Reflector still submits all 314 draws; only its fill
+	// shrinks), and each breaks one cam01 acceptance box past 0.03x.  See web/README.md.
+	bloomRes: ( qs.get( 'bloomres' ) || 'full' ).toLowerCase(),   // full | half
+	reflRes: ( qs.get( 'reflres' ) || 'full' ).toLowerCase(),     // full | half
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
@@ -62,6 +67,7 @@ const CFG = {
 	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
 	impDebug: parseInt( qs.get( 'impdebug' ) || '0', 10 ),   // 1 raw, 2 alpha, 3 frame cell, 4 quad uv
 	probeEnv: qs.get( 'probe' ) !== '0',                // baked hero probe as the irradiance of unlit surfaces
+	probeSpec: qs.get( 'probespec' ) === '1',           // A/B: probe as the SPECULAR env of baked materials
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
@@ -337,12 +343,14 @@ async function boot() {
 
 	// water -------------------------------------------------------------------------------------
 	if ( CFG.water ) {
-		water = makeWater( manifest.waterZ, { resolution: 1024,
+		const reflPx = CFG.reflRes === 'full' ? 1024 : 512;
+		water = makeWater( manifest.waterZ, { resolution: reflPx,
 			...( CFG.waterBlur !== null ? { reflBlur: CFG.waterBlur } : {} ),
 			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ) } );
 		scene.add( water );
 		const wu = water.material.uniforms;
-		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector 1024x1024, `
+		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector ${reflPx}x${reflPx}`
+			+ ` (?reflres=${CFG.reflRes}), `
 			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}` );
 	}
 
@@ -376,9 +384,10 @@ async function boot() {
 			}
 		} else removeMist( scene );
 		if ( postState.want.bloom ) {
-			const bp = makeBloom( comp, size );
-			if ( bp ) { composer.addPass( bp ); postState.bloom = true;
-				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, radius ${comp.bloomSize}` ); }
+			const bp = makeBloom( comp, size, { half: CFG.bloomRes !== 'full' } );
+			if ( bp ) { composer.addPass( bp ); postState.bloom = true; postState.bloomRes = CFG.bloomRes;
+				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, `
+					+ `radius ${comp.bloomSize}, mip chain from ${bp.userData.sourceResolution.map( Math.round ).join( 'x' )} (?bloomres=${CFG.bloomRes})` ); }
 		}
 	}
 	lutPass = new LUTDisplayPass( { exposure: manifest.exposure } );
@@ -477,6 +486,11 @@ async function boot() {
 			} );
 			if ( rt ) {
 				probeTarget = rt;
+				// ?probespec=1 wants the probe as the SPECULAR env of the baked materials, and
+				// finishMaterials() already assigned the sky glossy one before the probe existed.
+				// Re-run it now that probeTarget is set; it is idempotent (it skips a material that
+				// already has the env it would assign).
+				if ( CFG.probeSpec ) assignSpecularEnv();
 				probeReport = applyProbeEnv( scene, rt.texture, { note } );
 				probeReport.station = manifest.gate3.probe.station || null;
 				probeReport.positionBlender = manifest.gate3.probe.positionBlender || null;
@@ -600,19 +614,26 @@ async function loadSky() {
  *  scene-wide diffuse environment can stay on the diffuse branch.  Called once, after the materials
  *  are final. */
 function assignSpecularEnv() {
-	if ( ! glossyEnv || ! diffusePmremTarget ) return 0;   // nothing to separate
+	// QA-12b-1 A/B (?probespec=1): the lead's hypothesis is that Cycles' shaded stone receives a
+	// glossy reflection of the WARM sunlit surroundings - the building and the ground - which a
+	// SKY-ONLY glossy PMREM cannot give, and that the missing warmth is what reads as olive.  The
+	// hero probe's glossy branch does contain those surroundings, so this swaps it in as the
+	// specular env of every BAKED material.  Same single-point caveat as the irradiance use.
+	const specEnv = ( CFG.probeSpec && probeTarget ) ? probeTarget.texture : glossyEnv;
+	if ( ! specEnv || ! diffusePmremTarget ) return 0;     // nothing to separate
 	let n = 0;
 	scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
 		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
-			if ( ! m || ! m.isMeshStandardMaterial || ! m.userData.pfaPatched || m.envMap === glossyEnv ) continue;
-			m.envMap = glossyEnv;
+			if ( ! m || ! m.isMeshStandardMaterial || ! m.userData.pfaPatched || m.envMap === specEnv ) continue;
+			m.envMap = specEnv;
 			m.envMapRotation.copy( envRotation );
 			m.needsUpdate = true;
 			n ++;
 		}
 	} );
-	if ( n ) note( `${n} baked material(s) take specular from the GLOSSY PMREM (material.envMap); the scene environment stays the DIFFUSE branch` );
+	if ( n ) note( `${n} baked material(s) take specular from ${CFG.probeSpec && probeTarget ? 'the HERO PROBE (?probespec=1)' : 'the GLOSSY sky PMREM'} `
+		+ '(material.envMap); the scene environment stays the DIFFUSE branch' );
 	return n;
 }
 
