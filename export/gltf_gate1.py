@@ -262,13 +262,32 @@ if vi_npz.exists():
                              code_mean=round(float(codes.mean()), 4), code_max=int(codes.max()),
                              color0_mean=round(float((codes / 255.0).mean()), 6),
                              linear_mean=round(float(lin.mean()), 6), linear_max=round(float(lin.max()), 4))
-# any OTHER mesh carrying colour attributes would also reach the glb now that the pack keeps source
-# attributes (-kv), and three.js multiplies COLOR_0 into the base colour - so they are counted here.
+# Any OTHER mesh carrying colour attributes would also reach the glb now that the pack keeps source
+# attributes (-kv), and standard glTF multiplies COLOR_0 into the base colour. On the ORN prototypes that
+# attribute is `cavity` (scripts/orn_lib.py vertex_cavity): the ornament material reads it for recess dust and
+# the Gate 2 albedo bake ALREADY contains it, so shipping it as COLOR_0 would apply the dust twice. The lead's
+# call (docs/decisions.md 2026-09-16): strip colour attributes from the export copies - never from the source
+# blend, and this script only ever reads gate1_set.blend - so orn.glb can be packed with -kv for its
+# TEXCOORD_1 and carry no COLOR_0 at all. Only the near-tree irradiance attribute this script just created
+# survives.
+stripped = {}
+for me in bpy.data.meshes:
+    if me.name in vi_report or not me.color_attributes:
+        continue
+    names = [a.name for a in me.color_attributes]
+    for n in names:
+        me.color_attributes.remove(me.color_attributes[n])
+    stripped[me.name] = names
 other_colour = sorted(me.name for me in bpy.data.meshes
                       if me.color_attributes and me.name not in vi_report)
+assert not other_colour, f"colour attributes survived the strip on {other_colour[:6]}"
 report["gate3_color0"] = dict(source=str(vi_npz), meshes=vi_report, count=len(vi_report), skipped=vi_skip,
                               other_meshes_with_colour_attributes=len(other_colour),
-                              other_names=other_colour[:12],
+                              stripped_colour_attributes={k: v for k, v in list(stripped.items())[:8]},
+                              stripped_count=len(stripped),
+                              stripped_note="ORN `cavity` (vertex_cavity) and any other source colour "
+                                            "attribute: already inside the Gate 2 albedo bake, removed from "
+                                            "the export copies only (docs/decisions.md 2026-09-16)",
                               note="COLOR_0 = gamma2 code/255; irradiance = c*c*64*lightmap_scale. Standard "
                                    "glTF multiplies COLOR_0 into base colour: the viewer must consume it as "
                                    "irradiance (manifest lightmaps.vertex_irradiance), not as a tint.")

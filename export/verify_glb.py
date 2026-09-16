@@ -214,6 +214,25 @@ def main(out_dir):
                        f"{v.get('coverage_gate1')}")
         if v.get("coverage_gate3", 0) < 0.15:
             low.append((mn, v.get("coverage_gate3")))
+    # 3. the lead's 2026-09-16 decision on ORN: orn.glb carries TEXCOORD_1 for the slot-atlas lightmap on all
+    #    33 prototype meshes and NO COLOR_0 - the `cavity` attribute is already inside the Gate 2 albedo bake,
+    #    and standard glTF would multiply it into base colour a second time.
+    for cls in ("arch", "orn", "env", "ground"):
+        r = rows.get(cls)
+        if r is None:
+            continue
+        n_uv2 = len((gl.get("classes", {}).get(cls) or {}).get("texcoord1_meshes") or [])
+        if cls == "orn":
+            if n_uv2 != 33:
+                bad.append(f"orn.gltf carries TEXCOORD_1 on {n_uv2} meshes, not the 33 ORN prototypes")
+            if not r.get("tris_with_TEXCOORD_1"):
+                bad.append("orn.glb carries no TEXCOORD_1: the ORN slot-atlas lightmap has no UV set")
+        extra_col = sorted(set((gl.get("classes", {}).get(cls) or {}).get("color0_meshes") or [])
+                           - set((gl.get("gate3_color0") or {}).get("meshes") or {}))
+        if extra_col:
+            bad.append(f"{cls}: COLOR_0 was exported for {len(extra_col)} meshes that are not the near-tree "
+                       f"irradiance ({extra_col[:4]}); three.js multiplies COLOR_0 into base colour and the "
+                       f"Gate 2 albedo bake already contains those attributes")
     cls_of_col = {m: cls for cls, r in rows.items() for m in
                   ((gl.get("classes", {}).get(cls) or {}).get("color0_meshes") or [])}
     missing_col = sorted(m for m in g3["color0"] if m not in cls_of_col)

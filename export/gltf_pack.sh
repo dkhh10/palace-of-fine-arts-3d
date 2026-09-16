@@ -109,6 +109,9 @@ if [ "$1" = "--gate1" ]; then
     # are identical, so nine of the ten names vanished and nine Gate 2 backdrop texture sets matched no scene
     # material (docs/reviews/phase6_viewer_gate2_review.md). env keeps its names; arch/orn/ground are frozen
     # byte-identical this round, and verify_glb reports - without failing - any names they lose.
+    # orn takes -kv too since the lead's 2026-09-16 decision: gltf_gate1.py strips the ORN `cavity` colour
+    # attribute from the export copies (it is already inside the Gate 2 albedo bake), so orn.glb carries
+    # TEXCOORD_1 for the slot-atlas lightmap and no COLOR_0 for three.js to multiply in.
     # -kv (keep source vertex attributes even if they aren't used): gltfpack strips any attribute no material
     # references, and NOTHING in the glb references UV2 or the vertex irradiance - the lightmap textures are
     # separate KTX2 files the viewer attaches from the manifest. Measured on the Gate 2 glbs: arch.gltf and
@@ -125,7 +128,7 @@ if [ "$1" = "--gate1" ]; then
     KV=$(python3 - "$OUT" "$cls" <<'PY1'
 import json, os, sys
 c = json.load(open(os.path.join(sys.argv[1], "gltf_gate1.json")))["classes"].get(sys.argv[2], {})
-print("-kv" if (c.get("texcoord1_meshes") or c.get("color0_meshes")) and sys.argv[2] != "orn" else "")
+print("-kv" if (c.get("texcoord1_meshes") or c.get("color0_meshes")) else "")
 PY1
 )
     [ -n "$KV" ] && EXTRA+=(-kv)

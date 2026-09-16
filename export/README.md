@@ -879,3 +879,12 @@ export/sync_main.sh
     `gate3_relay_check.py`: all seven re-laid layers in the glbs, ≥ 99.97 % of their exported `TEXCOORD_1`
     values found in the npz. 66 meshes carry `TEXCOORD_1` in the glTFs (29 arch + 4 ground + 33 orn); the 33
     `orn` ones are still stripped by the pack and are the open item.
+19. **ORN (lead's decision, docs/decisions.md 2026-09-16).** The `COLOR_0` on the ORN prototypes is the
+    `cavity` FLOAT_COLOR attribute (`scripts/orn_lib.py vertex_cavity`) the ornament material reads for recess
+    dust, and the Gate 2 albedo bake already contains it — shipping it would apply the dust twice, because
+    standard glTF multiplies `COLOR_0` into base colour. `gltf_gate1.py` removes colour attributes from the
+    **export copies** (26 meshes; the source blend is only ever read) except the near-tree irradiance, so
+    `orn` can take `-kv`: `orn.glb` 154 065 360 → **154 253 424 B** (+188 KB) and now carries `TEXCOORD_1` on
+    **112 533 of 112 533** triangles (all 33 prototypes) and no `COLOR_0`. `verify_glb` asserts both, and that
+    no class exports `COLOR_0` for a mesh that is not near-tree irradiance. All **66** UV2 meshes
+    (29 arch + 4 ground + 33 orn) are now `uv2_in_glb: true` in `uv2_relay_status.json`.
