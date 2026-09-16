@@ -731,3 +731,6 @@ Next: merge export r4 on review; r5b review -> merge viewer; refs; bake step 1; 
 ## 2026-09-16 · Viewer r5b review in (18f2e19/6f75281): MERGE WITH FIXES (3 fix now, 9 carry); impostor V flip confirmed correct; barycentric weights swapped (real blend bug)
 Fix now routed to the viewer: swapped upper-triangle weights (re-capture cam01/02 after), silent NaN fallbacks in the impostor manifest block, stale README lines; PFA_DEV_SHARE_GPU logged in decisions.md. Refs: 05 saved, 06 rendering, 02/04 chained.
 Next: viewer fixes + measurements -> merge phase6-viewer; export r4 review -> merge; bake step 1; GPU-free signal; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Cycles references 03/05/06 done (renders/previews/qa/round13_0N_*_cycles.png, 1920x1080 128 spp, compositor on; 05+06 in 950 s); 02/04 rendering (pid 34504, max 3000 s)
+GPU still busy until 02/04 finish (~30 min); bake go-signal and the viewer's --perf after that.
