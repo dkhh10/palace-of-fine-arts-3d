@@ -699,3 +699,7 @@ Next: merge export r3 -> run manifest_v4.py + sync from main -> message viewer; 
 ## 2026-09-16 · Viewer round 5 review in (882b908): MERGE WITH FIXES (3 one-line fix now, 9 carry); UV dequant fix proved sound (transform read from the glb, applied once, idempotent)
 Fix now: hero_boxes.py hard-coded MAIN path; empty `?post=` enables the whole chain incl. the placeholder mist; two gate3_test.mjs checks became tautologies. Carries incl. ~58 MB full-res PNGs under renders/web against the 960 px rule — viewer told to commit 960 px copies only and drop the one-shot A/B frames. Gate 2 carries 5 (export-owned), 10, 11 still open.
 Next: viewer fixes land with the item 2 (impostor) report -> merge phase6-viewer; export r3 review -> merge; QA 13 verdict; Cycles refs.
+
+## 2026-09-16 · Export r3 review in (ba27a1a): MERGE WITH FIXES (2 fix now, 7 carry); export engineer resumed
+Fix now: checks validate carried-over glbs against regenerated .gltf (fail on stale glb, re-pack or prove equality); manifest_v4.py reads mist_settings.json local-only (resolve local-then-MAIN; the file is in MAIN today). Carry for the viewer's item 4: compositor.mist omits the airlight cap/k, so a plain linear fog would be ~5x off near the camera — the viewer must read the compositor block's mapping, not just start/depth.
+Next: merge export r3 on the fix report, manifest_v4.py + sync from main, message viewer; QA 13; viewer item 2 + fixes -> merge; Cycles refs (still rendering).
