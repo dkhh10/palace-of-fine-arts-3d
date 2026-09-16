@@ -26,7 +26,7 @@ import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater, reduceReflectionSet } from './water.js';
 import { makeWalk } from './walk.js';
-import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M } from './postChain.js';
+import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M, BLOOM_THRESHOLD_SCALE } from './postChain.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { buildImpostors } from './impostors.js';
@@ -104,6 +104,8 @@ const CFG = {
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
 	vertexIrr: qs.get( 'vertexirr' ) || 'auto',         // near-tree COLOR_0 irradiance: auto | 1 | 0
 	post: qs.get( 'post' ),                             // all | none | mist,bloom,vignette (default none)
+	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
+	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
 	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
 };
 
@@ -419,6 +421,8 @@ async function boot() {
 			}
 		} else removeMist( scene );
 		if ( postState.want.bloom ) {
+			comp.bloomThreshold = CFG.bloomThreshold ?? comp.bloomThreshold * BLOOM_THRESHOLD_SCALE;
+			if ( CFG.bloomRadius !== null ) comp.bloomSize = CFG.bloomRadius;
 			const bp = makeBloom( comp, size, { half: CFG.bloomRes !== 'full' } );
 			if ( bp ) { composer.addPass( bp ); postState.bloom = true; postState.bloomRes = CFG.bloomRes;
 				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, `

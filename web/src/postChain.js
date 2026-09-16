@@ -143,6 +143,27 @@ export function removeMist( scene ) {
  * Bloom on the LINEAR buffer, which is where Blender's is: the threshold is a scene-linear radiance
  * (6.41 here), not a display value, so it only ever catches the sun-facing highlights.
  */
+/**
+ * QA-14-4.  UnrealBloomPass's threshold is NOT Blender's Glare threshold: it is a smoothstep on the
+ * pixel's Rec.709 luminance, where Blender's compositor node thresholds its own band-limited glare
+ * input, so the manifest's 6.4136 blooms far more of the frame here than it does in Cycles - measured
+ * at the hero it cost the capital row 31 % of its contact-shade std, the sunlit attic 20 % of its
+ * saturation, and it put a halo on the dome cap and fireflies on the impostors' alpha edges.
+ *
+ * SWEPT (cam01, 1920x1080, five captures, web/tools/bloom_boxes.py against the Phase 5 hero):
+ *   threshold        6.41    9.0    10.5   12.8   bloom OFF   reference
+ *   capital row std  0.69x   0.84x  0.85x  0.85x  0.85x       62.35
+ *   attic sat        0.80x   0.86x  0.87x  0.88x  0.88x       0.537
+ *   S-colonnade mid  0.40x   0.44x  0.44x  0.44x  0.44x       36.61
+ * At 2x the manifest value the three boxes are at the bloom-OFF ceiling, i.e. bloom costs the contact
+ * shade nothing measurable, while everything above 12.8 scene-linear (the sun-side sky, the specular
+ * highlights) still blooms.  RADIUS IS NOT THE LEVER: 0.6 -> 0.20 moved the capital row only
+ * 0.69x -> 0.72x and costs no frame time either (the pass's cost is its mip chain, not its radius) -
+ * the frame-time lever is ?bloomres=half, which is what the `fast` preset uses.
+ * ?bloomthr=6.4136 restores the manifest value.
+ */
+export const BLOOM_THRESHOLD_SCALE = 2.0;
+
 export function makeBloom( comp, size, { half = false } = {} ) {
 	if ( ! comp || comp.bloomStrength <= 0 ) return null;
 	const div = half ? 2 : 1;
