@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { dequantizeUvs } from './uvDequant.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { LUTCubeLoader } from 'three/addons/loaders/LUTCubeLoader.js';
@@ -65,6 +66,7 @@ const CFG = {
 	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
 	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
+	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
 };
 
 function glInfo() {
@@ -184,6 +186,7 @@ let userControlled = false, currentStation = null;
 let lightingMode = 'baked';
 const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, tex_s: 0, total_s: 0 };
 const glbReport = [];
+const uvDequantReport = [];
 const glbRoots = [];
 let chunkStats = null;
 let materialsMode = 'grey', pbrReport = null, detailReport = null;
@@ -535,6 +538,11 @@ async function loadGlbs() {
 			const base = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
 			const gltf = await loader.parseAsync( buf, base );
 			gltf.scene.name = `WEB_glb_${g.cls}`;
+			// FIRST, before any pass: gltfpack stores texcoords as normalised 12-bit ints with the
+			// dequantisation in KHR_texture_transform on the baseColorTexture only, so every UV that
+			// reaches a shader is 1/16 of its real value until this undoes it on the attribute.
+			// See src/uvDequant.js.  ?uvdq=0 restores the broken behaviour for an A/B.
+			uvDequantReport.push( { name: g.name, ...dequantizeUvs( gltf.scene, { note, enabled: CFG.uvDequant } ) } );
 			scene.add( gltf.scene );
 			glbRoots.push( gltf.scene );
 			const r = processGltf( gltf, g );
@@ -875,6 +883,7 @@ window.__pfaInfo = () => ( {
 		files: progress.files.map( f => ( { kind: f.kind, bytes: f.bytes, sizeFrom: f.sizeFrom, name: f.url.split( '/' ).pop() } ) ) },
 	load_s: { ...loadTimes },
 	glbs: glbReport.slice(),
+	uv_dequant: uvDequantReport.slice(),
 	resident: residentBytes(),
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
