@@ -1,0 +1,23 @@
+00:00.425  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+00:02.037  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/eq_diffuse.exr'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[skybranch] real world diffuse branch equirect mean [1.914934, 2.314315, 11.536818]
+00:02.321  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/eq_camera.exr'
+[skybranch] real world camera branch equirect mean [1.285893, 1.728284, 2.774826]
+00:02.584  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/eq_glossy.exr'
+[skybranch] real world glossy branch equirect mean [3.539734, 4.203312, 5.773133]
+Traceback (most recent call last):
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_skybranch_probe.py", line 274, in <module>
+    main()
+    ~~~~^^
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_skybranch_probe.py", line 161, in main
+    a = g3.read_exr32(shipped)
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_common.py", line 302, in read_exr32
+    row = np.frombuffer(d[i:i + nb], dtype="<f4").reshape(3, w)
+ValueError: cannot reshape array of size 579003 into shape (3,1024)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 37397 exited rc=0 after 3 s (max 1800)

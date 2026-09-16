@@ -50,8 +50,23 @@ def prepare(samples):
     scene.compositing_node_group = None
     hidden_hi = [o.name for o in bpy.data.objects if o.name.startswith("EXPHI") and not o.hide_render]
     assert not hidden_hi, f"hi-poly twins ray-visible: {hidden_hi}"
+    world_before = scene.world.name if scene.world else None
+    diffuse_world = False
+    if g3.BAKE_DIFFUSE_WORLD and job["kind"] in g3.BAKE_DIFFUSE_WORLD_KINDS:
+        # QA-12b-1, see gate3_common.BAKE_DIFFUSE_WORLD. The same sky built split_rays=False, exactly as
+        # light_probes.bake does for Eevee's probe capture; its parameters come from the live world's own
+        # custom properties, so this bakes whatever rig the blend carries.
+        import light_probes as lprobe
+        bw = lprobe.bake_world(scene)
+        assert bw is not None, ("PFA_BAKE_DIFFUSE_WORLD is set but light_probes.bake_world() returned None "
+                                f"for world {world_before!r} - it carries no sun_azimuth_deg/sun_elevation_deg")
+        scene.world = bw
+        diffuse_world = True
+        print(f"[gate3] {JOB_ID}: world {world_before!r} -> {bw.name!r} (diffuse branch on every ray)")
     rec["rig"] = dict(lights=len(lights), samples=c.samples, adaptive=c.use_adaptive_sampling,
-                      denoiser=c.denoiser, compositor=scene.compositing_node_group)
+                      denoiser=c.denoiser, compositor=scene.compositing_node_group,
+                      world=scene.world.name if scene.world else None, world_before=world_before,
+                      diffuse_world=diffuse_world)
     return lights
 
 
@@ -86,6 +101,45 @@ if job["kind"] in ("own", "own_gate1uv2"):
     ob.hide_render = ob.hide_viewport = ob.hide_select = False
     size, uvname = int(job["size"]), job["uv2"]
     assert ob.data.uv_layers.get(uvname) is not None, f"{ob.name} has no UV layer {uvname}"
+    if job.get("flip_normals_for_bake") or job["object"] in g3.FLIP_NORMALS_FOR_BAKE:
+        # QA-13-2, see gate3_common.FLIP_NORMALS_FOR_BAKE for the measurement. Bake-process only:
+        # this blend is never saved, so the exported geometry, UV1 and UV2 are untouched.
+        me_ = ob.data
+
+        def _face_uv_sets(m):
+            lay_ = m.uv_layers[uvname]
+            b = np.empty(len(m.loops) * 2, dtype=np.float32)
+            try:
+                lay_.uv.foreach_get("vector", b)
+            except Exception:
+                lay_.data.foreach_get("uv", b)
+            b = b.reshape(-1, 2)
+            return [tuple(sorted(tuple(map(float, b[li])) for li in pl.loop_indices))
+                    for pl in m.polygons]
+
+        def _nz(m):
+            return float(np.mean([pl.normal.z for pl in m.polygons]))
+
+        uv_before, nz_before = _face_uv_sets(me_), _nz(me_)
+        bl.select_only(ob)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.flip_normals()
+        bpy.ops.object.mode_set(mode="OBJECT")
+        uv_after, nz_after = _face_uv_sets(me_), _nz(me_)
+        assert uv_after == uv_before, \
+            f"{ob.name}: flip_normals moved the {uvname} layout - the map would not land on the glb"
+        assert nz_after < 0.0 < nz_before or nz_before < 0.0 < nz_after, \
+            f"{ob.name}: flip_normals did not reverse the facing (mean n.z {nz_before} -> {nz_after})"
+        rec["flip_normals_for_bake"] = dict(polys=len(me_.polygons), mean_normal_z_before=round(nz_before, 4),
+                                            mean_normal_z_after=round(nz_after, 4), uv_layout_identical=True)
+        print(f"[gate3] {JOB_ID}: normals flipped for the bake, mean n.z {nz_before:.3f} -> {nz_after:.3f}, "
+              f"{uvname} layout identical on all {len(me_.polygons)} faces")
+    if os.environ.get("PFA_LM_DRYRUN"):
+        # CPU-only validation of everything that happens before the first ray: no bake image, no GPU,
+        # no record written. Used to prove the QA-13-2 flip path while another agent holds the GPU.
+        print(f"[gate3] {JOB_ID}: DRY RUN ok (no bake) {json.dumps(rec.get('flip_normals_for_bake', {}))}")
+        raise SystemExit(0)
     img = bl.bake_image(f"{JOB_ID}_{size}", size=size, colorspace="Non-Color", float_buffer=True,
                         fill=(0.0, 0.0, 0.0, 1.0))
     bl.attach_target(ob, img, uvname)

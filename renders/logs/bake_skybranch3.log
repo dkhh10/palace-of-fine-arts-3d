@@ -1,0 +1,20 @@
+00:00.359  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[skybranch] shipped sky_diffuse mean [1.914222, 2.319097, 11.528573]
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_skybranch_probe.py:184: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  dbg.use_nodes = True
+[skybranch] debug world in, 20 lamps disabled
+[skybranch] pre-bake: 2542 render-visible meshes, world DBG_ray_class, target IMAGE_TEXTURES, mats ['MAT_concrete_podium']
+Info: Baking map saved to internal image, save it externally or pack it
+[skybranch] (a) bake mean over non-zero texels [0.0, 0.189371, 0.0] normalised [0.0, 1.0, 0.0]
+00:08.836  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/frame_cam02.exr'
+[skybranch] (b) frame ARCH mean [0.008561, 0.069592, 0.001125] normalised [0.108, 0.8778, 0.0142]
+[skybranch] (b) frame sky mean [0.989418, 0.001142, 0.0002] (sanity: should be pure red)
+[skybranch] VERDICT {"bake_dominant": "G", "frame_dominant": "G", "bake_takes_camera_branch": false, "frame_takes_diffuse_branch": true}
+[skybranch] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch_probe.json in 15.7 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 37553 exited rc=0 after 17 s (max 1800)

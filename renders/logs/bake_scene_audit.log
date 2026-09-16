@@ -1,0 +1,26 @@
+00:00.362  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_scene_audit.py:128: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  out = {"world": w.name, "use_nodes": bool(w.use_nodes)}
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_scene_audit.py:129: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  if not w.use_nodes:
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_scene_audit.py:66: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if not mat.use_nodes:
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[audit] bake scene: 20 lights, 11 bounce materials
+[audit] backface sweep cam01 done
+[audit] backface sweep cam02 done
+[audit] backface sweep cam03 done
+[audit] backface sweep cam04 done
+[audit] backface sweep cam05 done
+[audit] backface sweep cam06 done
+[audit] backface sweep: 69 objects over 200 px
+00:53.539  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[audit] delivery scene: 20 lights
+[audit] lights differing: 18; cycles keys differing: 3; world keys differing: 0
+[audit] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/scene_audit.json in 54.8 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 34346 exited rc=0 after 55 s (max 2400)

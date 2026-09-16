@@ -1077,14 +1077,15 @@ job). The 20 near trees do take `VERTEX_COLORS` (0.07–0.19 m per vertex, finer
 14 meshes, 347 840 vertices, 803 kB npz (float32, **unencoded** since the review fix below),
 `in_glb: false` until `env.glb` carries COLOR_0.
 
-**4. Two surfaces come back almost black, and it is the geometry, not the bake.**
+**4. Two surfaces come back almost black, and it is the geometry, not the bake.** *(The ceiling half of this
+finding was diagnosed wrong and is resolved below under "QA-13-2"; the guess that the shell was drawn in front
+of the rib mesh was refuted by measurement — its normals are inverted. The drum band and the lagoon bed stand.)*
 `ARCH_rotunda_plaster_ceiling_merged` (756 m², 1 102 tris) has max **0.721** and 4.9 % non-zero texels;
 `ARCH_rotunda_drum_band_merged` max 26.6 with 5.7 % non-zero; `ENV_lagoon_bed` 3.5 % non-zero (it is under the
 water plane this bake restored — correct). These are merged masses whose area is mostly interior and backing
-faces the merge carried, so most of their UV2 is enclosed surface. **QA round 13 should look at the rotunda
-ceiling at cam04 specifically**: if the visible coffer field reads black there, the 1 102-triangle plaster shell
-is being drawn in front of the 160 828-triangle rib/coffer mesh rather than behind it, which is a Gate 1
-geometry question, not a lightmap one. `ENV_tree_broadleaf_06_LOD1` bakes to max 0.007 because it stands inside
+faces the merge carried, so most of their UV2 is enclosed surface. QA round 13 did look at the rotunda ceiling
+at cam04 and the coffer field did read black (QA-13-2) — but not for the reason guessed here; see "QA-13-2"
+below. `ENV_tree_broadleaf_06_LOD1` bakes to max 0.007 because it stands inside
 a backdrop city block (ray cast up from its crown hits `ENV_backdropgroup_backdrop_building` at z = 15.45 m) —
 the same is true of the Phase 5 renders, so the bake is faithful; it is an ENV placement defect, on record.
 
@@ -1123,6 +1124,66 @@ rows the total is **1 055.17 MB**, 144.8 under the 1 200 MB line; against the vi
 residency at round 12b (953.5 MB) it is **1 204.10 MB**, 4.1 over. Levers still unspent, in order of value:
 the 2K impostor albedo is on disk (+50.3 MB, 170 px frames instead of 85), and the lossless rgbm8 variant of
 every lightmap is on disk (+623.8 MB, exact instead of 0.028–0.163 stops).
+
+### QA-13-2 — the rotunda plaster shell baked black because its normals are inverted (`FLIP_NORMALS_FOR_BAKE`)
+
+**Read this before re-baking anything.** `ARCH_rotunda_plaster_ceiling_merged` is a single-sided surface whose
+normals **all point up**, away from the rotunda it ceilings: `area_normal_up = 1.000`, and at cam04 every one of
+its 440 visible faces has `normal · to_camera = −0.99` (`export/out/gate3/ceiling_probe.json`,
+`export/gate3_ceiling_probe.py`). **A Cycles render flips the shading normal toward the incoming ray; a bake has
+no incoming ray and does not.** So the first bake integrated the sealed cavity between the shell and the dome
+(median ray hit 11.55 m, zero sky escape) instead of the lit rotunda below it (median 0.91 m, 59 % of rays
+inside 2 m), and came back at max 0.721 / 4.9 % non-zero while the Phase 5 frame has light there.
+
+It was **not** a UV2 problem — that was the first hypothesis and the measurement killed it: coverage 0.769 at
+**1.53 cm/texel**, with the cam04-visible faces already owning **78.9 % of the asset's UV2 and 60.6 % of the
+map**. Nor was it a draw-order problem: the rib/coffer mesh is correctly in front (39.4 % of the frame against
+the shell's 12.55 %).
+
+The fix is **bake-side only**. `gate3_common.FLIP_NORMALS_FOR_BAKE` names the asset; `gate3_set.py` puts
+`flip_normals_for_bake` on its own job; `bake_lm.py` reverses the winding after loading the blend and before
+attaching the bake target, then asserts (a) every face's UV2 corner set is **bit-identical** to before the flip,
+so the map still lands on the unchanged glb, and (b) the facing actually reversed. **The blend is never saved**,
+so Gate 1 geometry, UV1 and UV2 stay frozen, the glb is untouched, `lightmap_uv2.npz` is unchanged (this mesh
+was never in it), and the texture keys are unchanged — **the map is replaced in place; export re-applies
+nothing and the viewer renames nothing.** No other map is affected: in the other 64 jobs this shell is only an
+occluder, and Cycles does not backface-cull occlusion.
+
+Result, 1 313.8 s at 128 spp: max **0.721 → 16.755**, mean **0.000221 → 0.631**, mean-non-zero **0.0045 →
+2.057**, non-zero texels **4.9 % → 30.7 %**, 0 clipped. For scale the neighbouring rib map, which QA judged
+correctly lit, is mean-non-zero 1.696. Re-encoded at `range` **32.0 → 16.755**: gamma2 round-trip **0.163 →
+0.0248 stops**, rgbm8 0.0039 — from the worst of the 23 maps to among the best.
+
+**The six-station backface sweep** (`export/gate3_scene_audit.py` → `out/gate3/scene_audit.json`) found this is
+the **only** non-foliage object over 200 px that is seen from behind at any QA station; the trees above it in
+that list are two-sided leaf cards, which is expected. Run it again after any geometry change.
+
+### `PFA_BAKE_DIFFUSE_WORLD` — prepared, **off**, and it should stay off
+
+`gate3_common.BAKE_DIFFUSE_WORLD` swaps `light_probes.bake_world(scene)` — the Phase 5 sky rebuilt
+`split_rays=False`, i.e. the diffuse branch applied to every ray — in for the four **bake-target** job kinds
+(`own`, `own_gate1uv2`, `slot`, `vertex` = 47 of the 65 jobs, 22 499 s of the 23 419 s). It exists because
+round 13 measured Eevee's light-probe capture taking the world's **camera** branch, and the same failure in a
+Cycles bake would have put the plain blue sky into every lightmap where the render gets the tinted one
+(QA-12b-1).
+
+**It was tested and the hypothesis is refuted** (`export/gate3_skybranch_probe.py` →
+`out/gate3/skybranch_probe.json`). Against a debug world that reports the ray class as a colour — camera red,
+glossy blue, everything else green — with all 20 lamps off: the 256 px DIFFUSE bake came back
+**[0.000, 0.189, 0.000] = normalised [0, 1, 0], pure green** over its 3 629 non-zero texels (R and B *exactly*
+zero), and the cam02 frame's ARCH pixels **[0.108, 0.878, 0.014]**, also green. Sky pixels read
+**[0.989, 0.001, 0.000]**, pure red, so the gating itself is sound. **A Cycles bake takes the diffuse branch,
+exactly like the render.** Independently: the branch equirects are diffuse **[1.915, 2.314, 11.537]** vs camera
+**[1.286, 1.728, 2.775]**, ratio **[1.49, 1.34, 4.16]** — the *diffuse* branch is the blue one, so a
+camera-branch bake would have been *less* blue, the opposite of QA-12b-1's symptom. (The shipped
+`sky_diffuse_1024x512.exr` means **[1.914, 2.319, 11.529]**, matching the diffuse equirect to three decimals, so
+`sky.diffuse` carries the tinted branch as intended.)
+
+The switch is armed **only** by `PFA_BAKE_DIFFUSE_WORLD` set to `1`/`true`/`yes`/`on`; every other value,
+including `0`/`false`/`off`, is disarmed and an unrecognised value prints a warning. The environment is
+inherited straight through `bake_queue.sh` → `blender_run.sh` → Blender, so `bake_queue.sh --gate3` now echoes
+the armed state and the `FLIP_NORMALS_FOR_BAKE` list in its log header. Per-job the choice is recorded in
+`rec["rig"]["world"] / ["world_before"] / ["diffuse_world"]`.
 
 ### Review fixes applied (docs/reviews/phase6_bake_gate3_review.md, findings 1-5, plus carries 11 and 12)
 

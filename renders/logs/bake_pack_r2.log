@@ -1,0 +1,4 @@
+[gate3] STEP toktx_rgbm8_lossless wall_s=135 files=23
+[gate3] STEP toktx_gamma2_uastc wall_s=112 files=23
+[gate3] STEP toktx_impostor_nomips wall_s=20 files=64
+[gate3] tex_ktx2 total 460072 KiB, 110 files

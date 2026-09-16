@@ -56,6 +56,55 @@ MARGIN_SLOT = 6                # 16 px of margin on a 248 px slot would flood a 
 # median triangle 0.21 px across at 2K). Anything under this gets a new UV2 in gate3_bake.blend and a
 # hand-off npz; see export/README.md "Re-laid UV2".
 UV2_RELAY_THRESHOLD = 0.15
+
+# QA-13-2 (measured, export/out/gate3/ceiling_probe.json): the rotunda plaster shell is a single-sided
+# surface whose normals ALL point up, away from the rotunda it ceilings (area_normal_up = 1.000; at cam04
+# every one of its 440 visible faces has normal.dot(to_camera) = -0.99). A Cycles DIFFUSE bake integrates
+# the hemisphere around the SHADING normal only, so it integrated the enclosed cavity between the shell and
+# the dome (median ray hit 11.55 m, 0 sky escape) instead of the lit rotunda below (median hit 0.91 m, 59 %
+# of rays inside 2 m) -> max 0.72 over 4.9 % non-zero texels. A RENDER does not show this because Cycles
+# flips the shading normal toward the incoming ray; a bake has no incoming ray. The fix is bake-side only:
+# the winding is reversed in the bake process and never saved, so the glb keeps its Gate 1 geometry, UV1 and
+# UV2 (flip_normals permutes the loops of each face, which carries the UV data with them - the script
+# asserts the covered texel set is bit-identical before and after). The six-station backface sweep
+# (export/out/gate3/scene_audit.json) found no other non-foliage object over 200 px with this defect.
+FLIP_NORMALS_FOR_BAKE = ("ARCH_rotunda_plaster_ceiling_merged",)
+
+# QA-12b-1, PREPARED BUT OFF BY DEFAULT (the lead decides on the overnight slot). If a Cycles bake's world
+# lookups carry the CAMERA ray flag, every bake-target job took the sky's camera branch (camera_boost 2.10,
+# camera_saturation 1.20, none of SKY_DIFFUSE_TINT) where the Cycles frame gets the diffuse branch
+# (diffuse_boost 2.50, the anti-sun/horizon tint). Round 13 measured exactly this for Eevee's light-probe
+# capture and fixed it by baking against the SAME sky built `split_rays=False` - the diffuse branch applied
+# to every ray - which is what `light_probes.bake_world(scene)` returns, reading the parameters from the
+# live world's own custom properties. Set PFA_BAKE_DIFFUSE_WORLD=1 to arm it for a queue run. Review r2
+# finding 1: the environment is INHERITED all the way down (bake_queue.sh -> blender_run.sh -> Blender, no
+# scrub), and this switch fails silently rather than tripping the queue's rc-90 no-record guard, so the
+# spellings people use to DISARM a flag ("0", "false", "off") must not arm it. Only an explicit true value
+# counts, and `bake_queue.sh` echoes the armed state once in its log header so a run states which world it
+# baked against.
+# Only the four BAKE-TARGET kinds are affected: `sky` and `probe` isolate their own branch explicitly and
+# the impostors are Cycles RENDERS (camera rays primary, diffuse rays for the leaves), so all three are
+# already correct. Measured split of the overnight queue: 47 of 65 jobs, 22 499 s of the 23 419 s.
+BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex")
+BAKE_DIFFUSE_WORLD_ENV = "PFA_BAKE_DIFFUSE_WORLD"
+BAKE_DIFFUSE_WORLD_TRUE = ("1", "true", "yes", "on")
+
+
+def env_armed(name, true_values=BAKE_DIFFUSE_WORLD_TRUE):
+    """True only for an explicit true value. Any other value - including "0", "false", "off" and "" - is
+    disarmed, and an unrecognised non-empty value is reported so a typo cannot pass for either state."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return False
+    v = raw.strip().lower()
+    if v in true_values:
+        return True
+    if v not in ("", "0", "false", "no", "off"):
+        print(f"[gate3] {name}={raw!r} is not one of {true_values} - treating it as DISARMED")
+    return False
+
+
+BAKE_DIFFUSE_WORLD = env_armed(BAKE_DIFFUSE_WORLD_ENV)
 UV2_RELAY_ANGLE = 1.15
 UV2_RELAY_MARGIN = 0.0008
 

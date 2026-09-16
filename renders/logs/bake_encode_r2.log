@@ -1,0 +1,24 @@
+[gate3] encode gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged: max 48.346 range 48.346 (was 64) gamma2 0.0615 stops  rgbm8 0.0497 stops
+[gate3] encode gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged: max 44.410 range 44.410 (was 64) gamma2 0.0593 stops  rgbm8 0.0379 stops
+[gate3] encode gate3_lm_ARCH_rotunda_column_tan_inner_merged: max 29.085 range 29.085 (was 32) gamma2 0.0414 stops  rgbm8 0.0379 stops
+[gate3] encode gate3_lm_ARCH_rotunda_concrete_inner_merged: max 27.974 range 27.974 (was 32) gamma2 0.0518 stops  rgbm8 0.0230 stops
+[gate3] encode gate3_lm_ARCH_rotunda_concrete_ochre_merged: max 52.070 range 52.070 (was 64) gamma2 0.0527 stops  rgbm8 0.0562 stops
+[gate3] encode gate3_lm_ARCH_rotunda_concrete_podium_merged: max 31.737 range 31.737 (was 32) gamma2 0.0465 stops  rgbm8 0.0358 stops
+[gate3] encode gate3_lm_ARCH_rotunda_dome_membrane_merged: max 51.246 range 51.246 (was 64) gamma2 0.0280 stops  rgbm8 0.0477 stops
+[gate3] encode gate3_lm_ARCH_rotunda_drum_band_merged: max 26.579 range 26.579 (was 32) gamma2 0.0980 stops  rgbm8 0.0539 stops
+[gate3] encode gate3_lm_ARCH_rotunda_plaster_ceiling_merged: max 16.755 range 16.755 (was 32) gamma2 0.0248 stops  rgbm8 0.0039 stops
+[gate3] encode gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged: max 30.167 range 30.167 (was 32) gamma2 0.0527 stops  rgbm8 0.0475 stops
+[gate3] encode gate3_lm_ARCH_site_concrete_podium_merged: max 29.763 range 29.763 (was 32) gamma2 0.0537 stops  rgbm8 0.0335 stops
+[gate3] encode gate3_lm_ARCH_site_paving_merged: max 24.600 range 24.600 (was 32) gamma2 0.0520 stops  rgbm8 0.0096 stops
+[gate3] encode gate3_lm_ENV_ground_colonnade_walk: max 10.193 range 10.193 (was 16) gamma2 0.0317 stops  rgbm8 0.0089 stops
+[gate3] encode gate3_lm_ENV_lagoon_bed: max 22.391 range 22.391 (was 32) gamma2 0.0482 stops  rgbm8 0.0233 stops
+[gate3] encode gate3_lm_ENV_riprap_merged: max 26.719 range 26.719 (was 32) gamma2 0.0572 stops  rgbm8 0.0300 stops
+[gate3] encode gate3_lm_ENV_terrain_ground: max 19.277 range 19.277 (was 32) gamma2 0.0339 stops  rgbm8 0.0168 stops
+[gate3] encode gate3_lmatlas_arch_inst_0: max 34.595 range 34.595 (was 64) gamma2 0.0553 stops  rgbm8 0.0559 stops
+[gate3] encode gate3_lmatlas_arch_inst_1: max 43.075 range 43.075 (was 64) gamma2 0.0618 stops  rgbm8 0.0385 stops
+[gate3] encode gate3_lmatlas_arch_inst_2: max 42.822 range 42.822 (was 64) gamma2 0.0575 stops  rgbm8 0.0467 stops
+[gate3] encode gate3_lmatlas_orn_0: max 52.832 range 52.832 (was 64) gamma2 0.0560 stops  rgbm8 0.0554 stops
+[gate3] encode gate3_lmatlas_orn_1: max 50.837 range 50.837 (was 64) gamma2 0.0545 stops  rgbm8 0.0503 stops
+[gate3] encode gate3_lmg1_ARCH_colonnade_south_concrete_colonnade_merged: max 43.706 range 43.706 (was 64) gamma2 0.0592 stops  rgbm8 0.0409 stops
+[gate3] encode gate3_lmg1_ARCH_rotunda_concrete_ochre_merged: max 48.233 range 48.233 (was 64) gamma2 0.0514 stops  rgbm8 0.0576 stops
+[gate3] encode done: 23 maps in 51.9 s
