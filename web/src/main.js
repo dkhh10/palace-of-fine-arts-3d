@@ -26,6 +26,7 @@ import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
 import { makeWalk } from './walk.js';
+import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M } from './postChain.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { chunkInstancedMeshes } from './chunking.js';
@@ -71,6 +72,8 @@ const CFG = {
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
 	vertexIrr: qs.get( 'vertexirr' ) || 'auto',         // near-tree COLOR_0 irradiance: auto | 1 | 0
+	post: qs.get( 'post' ),                             // all | none | mist,bloom,vignette (default none)
+	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
 };
 
 function glInfo() {
@@ -180,7 +183,7 @@ async function fetchBuffer( url ) {
 }
 
 // ---------------------------------------------------------------------------- main
-let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null;
+let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -342,6 +345,28 @@ async function boot() {
 		type: THREE.HalfFloatType, colorSpace: THREE.NoColorSpace, samples: 4,
 	} ) );
 	composer.addPass( new RenderPass( scene, camera ) );
+	// Gate 4 item 4: the Phase 5 compositor, in scene-linear BEFORE the LUT, each part switchable.
+	// Default OFF so every capture so far stays comparable; ?post=all turns the chain on.
+	// `want` is what ?post asked for; the sibling fields are what actually ended up in the chain.
+	postState = { requested: CFG.post ?? 'none', want: parsePost( CFG.post ?? 'none' ), mistSpec: null, bloom: false, vignette: 0 };
+	const comp = readCompositor( manifest.compositor || ( manifest.raw && manifest.raw.compositor ) );
+	postState.compositor = comp;
+	if ( comp ) {
+		if ( postState.want.mist ) {
+			const mm = String( CFG.mist || '' ).split( ',' ).map( x => ( x.trim() === '' ? NaN : Number( x ) ) );
+			postState.mistSpec = applyMist( scene, comp,
+				{ near: isFinite( mm[ 0 ] ) ? mm[ 0 ] : MIST_NEAR_M, far: isFinite( mm[ 1 ] ) ? mm[ 1 ] : MIST_FAR_M } );
+			if ( postState.mistSpec ) note( `post mist: distance fog ${postState.mistSpec.near}..${postState.mistSpec.far} m, `
+				+ `haze [${comp.hazeColor.map( v => v.toFixed( 2 ) ).join( ', ' )}] strength ${comp.hazeStrength} falloff ${comp.hazeFalloff}. `
+				+ `NEAR AND FAR ARE THE VIEWER'S OWN: the manifest carries COMP_golden_hour's parameters but not `
+				+ `world.mist_settings.start/depth, which is what Blender's Mist pass normalises by (?mist=near,far).` );
+		} else removeMist( scene );
+		if ( postState.want.bloom ) {
+			const bp = makeBloom( comp, size );
+			if ( bp ) { composer.addPass( bp ); postState.bloom = true;
+				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, radius ${comp.bloomSize}` ); }
+		}
+	}
 	lutPass = new LUTDisplayPass( { exposure: manifest.exposure } );
 	lutPass.renderToScreen = true;
 	composer.addPass( lutPass );
@@ -349,6 +374,9 @@ async function boot() {
 	await loadLUT();
 	loadTimes.lut_s = ( performance.now() - tl ) / 1000;
 	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
+	if ( comp && postState.want.vignette ) { lutPass.uniforms.vignette.value = comp.vignette; postState.vignette = comp.vignette;
+		note( `post vignette: ${comp.vignette} in linear, before the transform` ); }
+	note( `post chain: ${[ postState.mistSpec && 'mist', postState.bloom && 'bloom', postState.vignette && 'vignette' ].filter( Boolean ).join( ' + ' ) || 'none'} (?post=${postState.requested})` );
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
 	if ( ! CFG.hud ) document.getElementById( 'hud' ).classList.add( 'hidden' );
@@ -906,6 +934,7 @@ window.__pfaInfo = () => ( {
 	resident: residentBytes(),
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
+	post: postState,
 	walk: walk ? { ...walk.state } : null,
 	materialsMode,
 	pbr: pbrReport,

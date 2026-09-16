@@ -259,6 +259,97 @@ Carried, visible in `renders/web/dq1.png` and NOT caused by this (both predate i
 the near-tree and shrub cards read as blue-white confetti (no vertex irradiance yet - `env.glb` has no
 `COLOR_0`, so they take the sky PMREM flat), and the panel behind the colonnade reads as flat blue.
 
+## Gate 4 items 3, 4 and 5
+
+### Water (item 3)
+The Gate 0 Reflector already reflected the rotunda; it reflected it as a MIRROR. Two physical terms
+were added and calibrated against the Phase 5 Cycles hero's water box (`900 760 1020 840`):
+`reflBlur` gathers the reflection over a small disc (the ripples' slope distribution, which is what
+takes the edge off `std`) and `reflSat` washes its colour toward neutral (the murk scattering light
+back out through the reflected ray). Swept b = 0.006/0.003 x s = 1.0/0.52 and fitted:
+
+| box | mirror | rough (now) | Cycles hero |
+|---|---|---|---|
+| lum | 127.1 (0.99x) | 135.3 (1.05x) | 128.6 |
+| std | 44.0 (1.29x) | 35.0 (1.02x) | 34.2 |
+| sat | 0.69 (2.10x) | 0.35 (1.07x) | 0.33 |
+| R-B | 59.7 (1.73x) | 22.7 (0.66x) | 34.4 |
+
+Defaults `reflBlur 0.0045`, `reflSat 0.66`; `?waterblur` / `?watersat` are the A/B. R-B is now 0.66x
+(too cool rather than too warm) and is deliberately NOT tuned out: the building being reflected is
+still missing its near-tree irradiance, so `reflectTint` should be revisited after that lands.
+
+### The post chain (item 4)
+`src/postChain.js` reproduces `manifest.compositor.COMP_golden_hour` in scene-linear, BEFORE the LUT,
+which is where Blender's sits. `?post=all | none | mist,bloom,vignette`; **the default is `none`** so
+the round13b captures stay comparable. Measured on the hero (`web/tools/hero_boxes.py`, the eight
+round-10b acceptance boxes, `renders/web/post_boxes.json`), whole-frame luma against the Cycles hero's
+139.98:
+
+| pass | whole frame | what moved |
+|---|---|---|
+| off | 135.99 (0.971x) | — |
+| mist | 135.99 (0.971x) | **nothing at all** — see below |
+| bloom | 138.80 (0.991x) | vault field 0.76 -> 0.93x, jamb R-B 0.90 -> 1.06x, shaded attic 0.93 -> 0.98x, entablature std 1.16 -> 0.99x and R-B 0.80 -> 0.90x, sunlit attic std 1.24 -> 0.88x; costs a little brightness (jamb 1.12 -> 1.28x, entablature 0.99 -> 1.11x) |
+| vignette | 135.22 (0.966x) | sky top 1.00 -> 0.99x, nothing else at 0.08 |
+| all | 138.04 (0.986x) | the closest whole-frame match of any variant |
+
+Bloom earns its place; vignette is within noise at the Phase 5 value of 0.08; **the mist is a no-op
+and that is a missing manifest field, not a bug.** Blender's Mist pass normalises distance by
+`world.mist_settings.start` and `.depth`, and the manifest carries only the group's parameters (it
+records the group's `Mist` INPUT as 0.0). `MIST_NEAR_M = 60` / `MIST_FAR_M = 1400` in `postChain.js`
+are the viewer's own invention, stated in the notes at load, and at the hero they put the haze factor
+below a thousandth. **Ask for the export: `world.mist_settings.start`, `.depth` and `.falloff` from
+`master_delivery.blend`.** Until then `?mist=near,far` is the only way to move it and no capture
+should be scored on the haze.
+
+### Walk controls (item 5)
+`src/walk.js`. WASD + mouse look through pointer lock, eye height 1.7 m, shift to run, `1`-`6` still
+jump to the stations. It refuses to start before `__pfaReady` and only on W/A/S/D, and
+`screenshot.mjs` sends no input, so a captured frame is always the station's own camera.
+
+The ground is a HEIGHTFIELD, not a raycast: riprap alone is 181 k vertices and three's `Raycaster` has
+no BVH, so a per-frame down-ray would cost more than the render. The ground meshes rasterise once into
+a 2 m grid **on the first walk key**, never at load (42 ms, 113 k triangles). The grid gives the
+shoreline for nothing — a cell below `WATER_Z` is lagoon — so "cannot walk into the water" and "cannot
+walk off the site" are one test, both derived from the ground meshes' own geometry. Columns: every
+`ARCH_`/`ORN_` footprint above knee height goes into a second grid and the walker, a 0.35 m circle, is
+pushed out on the axis of least penetration, so it slides along a colonnade. Under 0.45 m is stepped
+over, over 2.2 m is walked under. The hero station stands 100 m out OVER the lagoon, so `nearestDry()`
+steps the walker ashore (4.0 m at station 1) and says so, rather than refusing every direction.
+
+Evidence, 24 probes (six stations x four headings x 30 s at 3.2 m/s, `--walkprobe` through
+`screenshot.mjs`, `renders/web/walkprobe.json`): **the lowest ground the walker ever stood on is
+-1.22 m against the water at -1.30 m.** It never entered the lagoon from any station on any heading;
+the lagoon headings are refused (st1/180 1783 of 1801 steps, st5/180 1711, st2/270 1561) and the
+inland ones run the full 96 m unobstructed.
+
+## Tools added at Gate 4
+* `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
+  reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is
+  what measured the quantisation blocker above.
+* `web/tools/hero_boxes.py` — the eight cam01 acceptance boxes of `docs/qa_round_10b.md` on any set of
+  frames, each as a ratio against the Cycles hero. Several positional frames give the on/off
+  attribution table a gate needs.
+* `screenshot.mjs --walkprobe 0,90,180,270[:seconds]` — walks from each captured station without input
+  or a rendered frame and reports the path, the lowest ground and the refused steps.
+
+## Open, with owners
+* **The 14 near trees have no vertex irradiance** (viewer coded, export-blocked). `gltfpack -mi` both
+  splits each tree by material and instances primitives ACROSS different trees, so the 14 baked
+  COLOR_0 buffers arrive as 14 primitives carrying 26 placements and only 2 join unambiguously; the
+  baked ranges span 0.469..43.320, so a shared buffer cannot carry them. The pass is all-or-nothing in
+  `auto` and currently applies nothing. **Export fix: fold the range into the encoded value (one global
+  range, or linear FLOAT_COLOR) so a merge cannot break it, or keep those 14 meshes out of `-mi`.**
+* **Stations 3 and 5 have no Cycles reference.** `gate1_sheets.py` labels them "Eevee round-09 (no
+  Cycles frame)" and station 6 "Cycles round-09, no compositor". cam03's 2.47x is measured against an
+  EEVEE frame from round 09, taken before the Phase 5 shade work the lightmaps were baked from, so it
+  is not a parity target. The 6a criterion ("within 0.5 of its Phase 5 score") needs Phase 5 Cycles
+  frames for stations 3 and 5 and a compositor-on frame for 6.
+* **Item 2, the far-tree impostors, is not started.** The 127 far trees are still the flat grey
+  `WEB_far_tree_billboard_*` placeholders, hidden in every capture, so the skyline behind the
+  colonnade is bare and the backdrop blocks show through where Cycles has foliage.
+
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
     npm install && npm run dev     # /assets/* served from $PFA_MAIN_ROOT/export/out, never copied
@@ -268,7 +359,10 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?lut=0`, `?testlut=identity|gamma22`, `?test=1`, `?exposure=`, `?skyrot=`, `?sun=`, `?lmscale=`, `?haze=`
 (diagnostic constant airlight, not the real mist), `?unlit=share|stock|black`, `?lighting=auto|baked|direct`,
 `?billboards=0`, `?treeboards=0`, `?t=<seconds>` (freezes the water phase), `?hud=0`,
-`?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`.
+`?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`,
+`?uvdq=0` (leave gltfpack's texcoord quantisation in place — the Gate 4 step-0 A/B),
+`?vertexirr=auto|1|0`, `?post=all|none|mist,bloom,vignette`, `?mist=near,far`,
+`?waterblur=`, `?watersat=`.
 
 ## Screenshots and the gate passes (never launch Chrome any other way)
     web/tools/gate2.sh [manifest_url]     # Gate 2: same, default /assets/gate2/manifest.json
