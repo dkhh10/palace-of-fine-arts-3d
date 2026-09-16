@@ -703,3 +703,7 @@ Next: viewer fixes land with the item 2 (impostor) report -> merge phase6-viewer
 ## 2026-09-16 · Export r3 review in (ba27a1a): MERGE WITH FIXES (2 fix now, 7 carry); export engineer resumed
 Fix now: checks validate carried-over glbs against regenerated .gltf (fail on stale glb, re-pack or prove equality); manifest_v4.py reads mist_settings.json local-only (resolve local-then-MAIN; the file is in MAIN today). Carry for the viewer's item 4: compositor.mist omits the airlight cap/k, so a plain linear fog would be ~5x off near the camera — the viewer must read the compositor block's mapping, not just start/depth.
 Next: merge export r3 on the fix report, manifest_v4.py + sync from main, message viewer; QA 13; viewer item 2 + fixes -> merge; Cycles refs (still rendering).
+
+## 2026-09-16 · phase6-export r3 MERGED (14eadad) with the 2 review fixes (77063c6): re-pack of all four glbs byte-identical, stale-glb pins in both checkers, mist path local-then-MAIN
+Lead ran manifest_v4.py + sync from main: lightmaps.vertex_irradiance.range = 43.3198 (global), compositor.mist populated (start 20 m, depth 2000 m, LINEAR). Viewer engineer told; export side has nothing open except 5+7+8 carries in docs/reviews/phase6_export_gate3*_review.md.
+In flight: QA 13 (round13b), viewer item 2 + 3 fixes, Cycles refs 03/05/06 (pid 28283). Next: QA 13 verdict; merge phase6-viewer on its report; Gate 4 capture.
