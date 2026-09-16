@@ -794,3 +794,7 @@ Viewer round 6 brief: docs/briefs/phase6_gate4_r6_viewer.md. Reviewer dispatched
 
 ## 2026-09-16 · Viewer pre-merge review (5d034d6): MERGE BLOCKED — probe cube never uploaded (black envMap); QA-13-1 closure withdrawn pending re-measure; 6 further fix-now (capture fails on page errors, orbit/pick layers, slot-atlas fallback, quality case, README notes)
 Viewer told to stop round 6 work, fix, re-run the probe A/Bs with the real cube, report, then resume the round 6 brief and capture round15. phase6-viewer stays unmerged until the re-review. QA 15 brief on file (docs/briefs/qa_round_15.md).
+
+## 2026-09-16 · Probe fixes + re-measure in (phase6-viewer 1e9d2be, 82d44c5): all 7 fix-now closed; QA-13-1 still closed (0.29 %); probe worsens cam02 olive (41.7 %); foliage cyan -> vertex irradiance for shrubs/reeds dispatched (bake -> export -> viewer); water rebuild authorised
+Viewer continues round 6 items 1-4 (water rebuild first), round15 capture after the foliage env.glb lands; no interim merge (re-review after round 15). Bake engineer: vertex jobs for the card meshes (Chrome paused during the bake window). Export engineer: env re-export with the new COLOR_0 set after the bake.
+Lead context 300k: CHECKPOINT below if the session must restart.

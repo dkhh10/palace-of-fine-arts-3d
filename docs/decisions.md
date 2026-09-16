@@ -484,3 +484,12 @@ sky irradiance rather than gaining the warm bounce. The band measurements (0.2 %
 that. The decision to use the probe stands in principle; its result is void until re-measured with the real cube. QA-14's QA-13-1 "closed" is withdrawn pending round 15.
 Process lesson recorded: a scored capture must fail on any page error (gate4.sh / screenshot.mjs now do), and a "fix" that lands exactly on the reference numbers deserves the
 same suspicion as one that misses.
+
+## 2026-09-16 · Probe re-measured on the real cube (viewer 1e9d2be / 82d44c5): QA-13-1 closure stands; the probe does not touch QA-12b-1; foliage gets vertex irradiance
+Real cube, probe off -> on: cam01 band B > R+20 15.51 % -> 0.29 % (Cycles 0.05 %, gate 3.9 %), band mean RGB 105/92/68 -> 103/86/41 toward the reference 80/64/24; every cam01
+box outside the water moves < 0.01x. cam02 building G > R 32.2 -> 41.7 % (reference 26.9 %): the probe makes the olive WORSE at cam02, so the earlier "half-closed" statement is
+struck; probespec (15/32 boxes hold) stays off. Foliage reads cyan (hue 180 vs 102 reference): sky-lit cards with no baked light — the amber-brown of round 14 was the deleted
+sky. Decision: the shrub/reed/card meshes get bake-side vertex irradiance exactly as the 14 near trees (bake -> npz -> env.glb COLOR_0 -> viewer's existing consumer), inside
+round 15. Water (QA-14-1): the hard reflection edge is not clipping but the surface model (a near-mirror reflects the dark zenith where a rough lagoon samples the bright
+near-horizon); an isotropic ripple strong enough to satisfy the row-frequency metric reads as cobblestones, so the metric alone cannot accept the fix — the lead judges a 100 %
+open-water tile. Rebuild: anisotropic ripple normal (elongated crests) plus a horizon-stretched rough lobe.
