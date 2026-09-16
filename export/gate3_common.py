@@ -76,12 +76,35 @@ FLIP_NORMALS_FOR_BAKE = ("ARCH_rotunda_plaster_ceiling_merged",)
 # (diffuse_boost 2.50, the anti-sun/horizon tint). Round 13 measured exactly this for Eevee's light-probe
 # capture and fixed it by baking against the SAME sky built `split_rays=False` - the diffuse branch applied
 # to every ray - which is what `light_probes.bake_world(scene)` returns, reading the parameters from the
-# live world's own custom properties. Set PFA_BAKE_DIFFUSE_WORLD=1 to arm it for a queue run.
+# live world's own custom properties. Set PFA_BAKE_DIFFUSE_WORLD=1 to arm it for a queue run. Review r2
+# finding 1: the environment is INHERITED all the way down (bake_queue.sh -> blender_run.sh -> Blender, no
+# scrub), and this switch fails silently rather than tripping the queue's rc-90 no-record guard, so the
+# spellings people use to DISARM a flag ("0", "false", "off") must not arm it. Only an explicit true value
+# counts, and `bake_queue.sh` echoes the armed state once in its log header so a run states which world it
+# baked against.
 # Only the four BAKE-TARGET kinds are affected: `sky` and `probe` isolate their own branch explicitly and
 # the impostors are Cycles RENDERS (camera rays primary, diffuse rays for the leaves), so all three are
 # already correct. Measured split of the overnight queue: 47 of 65 jobs, 22 499 s of the 23 419 s.
 BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex")
-BAKE_DIFFUSE_WORLD = bool(os.environ.get("PFA_BAKE_DIFFUSE_WORLD"))
+BAKE_DIFFUSE_WORLD_ENV = "PFA_BAKE_DIFFUSE_WORLD"
+BAKE_DIFFUSE_WORLD_TRUE = ("1", "true", "yes", "on")
+
+
+def env_armed(name, true_values=BAKE_DIFFUSE_WORLD_TRUE):
+    """True only for an explicit true value. Any other value - including "0", "false", "off" and "" - is
+    disarmed, and an unrecognised non-empty value is reported so a typo cannot pass for either state."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return False
+    v = raw.strip().lower()
+    if v in true_values:
+        return True
+    if v not in ("", "0", "false", "no", "off"):
+        print(f"[gate3] {name}={raw!r} is not one of {true_values} - treating it as DISARMED")
+    return False
+
+
+BAKE_DIFFUSE_WORLD = env_armed(BAKE_DIFFUSE_WORLD_ENV)
 UV2_RELAY_ANGLE = 1.15
 UV2_RELAY_MARGIN = 0.0008
 

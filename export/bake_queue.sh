@@ -124,6 +124,20 @@ case "$cmd" in
     total=$(python3 -c "import json,sys;print(len(json.load(open('$JOBS'))['jobs']))")
     ids=(${(f)"$(python3 -c "import json;print('\n'.join(j['id'] for j in json.load(open('$JOBS'))['jobs']))")"})
     done_n=0
+    # review r2 finding 1: an inherited PFA_BAKE_DIFFUSE_WORLD silently changes the world 47 of the 65 jobs
+    # bake against, and nothing else in the run records it up front. State it once, here, for both spellings.
+    if [ "$GATE" = gate3 ]; then
+      armed=$(python3 -c "
+import os, sys
+sys.path.insert(0, '$ROOT/export')
+import gate3_common as g3
+print('ARMED (diffuse branch on every ray, light_probes.bake_world)' if g3.BAKE_DIFFUSE_WORLD
+      else 'off (the scene world as saved)')" 2>/dev/null || echo "unknown")
+      echo "[bake_queue] PFA_BAKE_DIFFUSE_WORLD=${PFA_BAKE_DIFFUSE_WORLD-<unset>} -> $armed"
+      echo "[bake_queue] flip_normals_for_bake: $(python3 -c "
+import sys; sys.path.insert(0, '$ROOT/export')
+import gate3_common as g3; print(', '.join(g3.FLIP_NORMALS_FOR_BAKE) or 'none')" 2>/dev/null || echo unknown)"
+    fi
     write_status waiting "" 0 "$total" "queued"
     for id in $ids; do
       rec="$RECDIR/$id.json"

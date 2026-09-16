@@ -242,6 +242,28 @@ independently runnable (`scripts/phase5_deliver.sh 4`) and logs to `renders/logs
   `matrix_world` reads identity and `scene.ray_cast` misses it. Un-hide, `view_layer.update()`, then read transforms.
 - gltfpack 1.2: `-mi` (EXT_mesh_gpu_instancing) and `-kn` (keep node names) are mutually exclusive. The lead chose `-cc -mi`.
 
+**Bake-side traps (Gate 3, all measured; the bake engineer's full write-up is in export/README.md):**
+- **A Cycles BAKE does not flip the shading normal; a RENDER does.** Cycles shades a rendered surface with the normal turned toward the
+  incoming ray, so an inside-out single-sided mesh renders correctly. A bake has no incoming ray: it integrates the hemisphere around the
+  mesh's own normal. `ARCH_rotunda_plaster_ceiling_merged` has `area_normal_up = 1.000` (every visible face at cam04 reads
+  `normal·to_camera = -0.99`), so its first lightmap integrated the sealed cavity above it — median ray hit 11.55 m, zero sky escape —
+  and came back at max 0.721 over 4.9 % non-zero texels while the Phase 5 frame has light there (QA-13-2). Baking it with the winding
+  reversed **in the bake process only** gives max 16.755 / 30.7 % non-zero. Before blaming a UV2 layout for a black map, check the
+  normals: this asset's UV2 was already fine (0.769 coverage, 1.53 cm/texel). `export/gate3_scene_audit.py` sweeps all six stations for
+  the same defect; only two-sided leaf cards should show up.
+- **`OPEN_EXR_MULTILAYER` is only offered once `image_settings.media_type = "MULTI_LAYER_IMAGE"`**, and without
+  `use_exr_interleave = True` 5.2 writes a **multi-part** EXR that `gate3_common.read_exr32` asserts against. Note also that
+  `read_exr32` parses only the uncompressed EXRs `write_exr32` emits — a Blender-rendered (ZIP) EXR must be read back through
+  `bpy.data.images.load`, not that reader.
+- **`Image.save()` on a generated float image writes zeros.** Every map in this pipeline leaves Blender through numpy and is read back
+  from the file before any number is recorded.
+- **A third engine-conditional rig: `LIGHT_gallery_fill`.** The "two Eevee-only rigs" section above is incomplete. These 16 strips are
+  **Cycles-only** — 1 200 W in Cycles, 0 W and `hide_render` in Eevee — the round-13 shade-fill pattern with the engines the other way
+  round (`light_presets.apply_gallery_for_engine`, chained from the per-engine switch so no call site can leave them wrong). They are on
+  in every Gate 3 map (`rig.lights = 20`) and in every Cycles hero. `master_delivery.blend` is *saved* in the Eevee state (gallery fill
+  0 W + hidden, `LIGHT_rotunda_vault_bounce_06/07` at 6x with a 21 m cutoff), so reading that file's lamps without calling
+  `apply_final_cycles` reports the wrong rig — the saved state is not the Cycles state.
+
 **Colour contract (viewer, tone mapping off):** `graded = LUT3D(clamp((log2(max(linear * 2^-2.8331, 1e-10) / 0.18) - (-12.47393))
 / (4.026069 - (-12.47393)), 0, 1))`, LUT 65^3 (a 33^3 lattice left 1.7/255 on mid grey), proven on five Cycles grey patches at worst
 0.072/255. The exposure is applied by the viewer before the shaper and the LUT was baked at that exposure: applying it twice or not at
