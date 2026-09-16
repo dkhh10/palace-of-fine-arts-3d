@@ -551,7 +551,12 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`,
 `?uvdq=0` (leave gltfpack's texcoord quantisation in place — the Gate 4 step-0 A/B),
 `?vertexirr=auto|1|0`, `?post=all|none|mist,bloom,vignette`, `?mist=near,far`,
-`?waterblur=`, `?watersat=`.
+`?waterblur=`, `?watersat=`, `?waterdist=`, `?waternorm=`, `?watertile=`, `?wateraniso=`,
+`?watercrest=`, `?watergraze=` (0 = the round-14 flat-mirror displacement exactly),
+`?watergrazemax=` (the FIX-NOW 1 cap, default 6), `?watermurk=r,g,b` (overrides the derived
+upwelling term; `0.020,0.035,0.030` is the round-14 value), `?watermurkgain=k` (scales the derived
+one), `?waterdebug=1..6` (1 Fresnel F, 2 projected uv, 3 perturbed normal, 4 unperturbed reflection,
+5 the murk alone, 6 the gathered reflection alone).
 
 ## Screenshots and the gate passes (never launch Chrome any other way)
     web/tools/gate2.sh [manifest_url]     # Gate 2: same, default /assets/gate2/manifest.json
