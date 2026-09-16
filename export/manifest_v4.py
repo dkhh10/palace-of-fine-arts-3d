@@ -24,6 +24,104 @@ def rec(jid):
     return json.loads(p.read_text()) if p.exists() else None
 
 
+def find(name):
+    """out/gate3 in this worktree first, then the MAIN checkout (the bake branch syncs its files there)."""
+    for base in (g3.OUT, g3.MAIN_ROOT / "export" / "out" / "gate3"):
+        p = base / name
+        if p.exists():
+            return p
+    return None
+
+
+def instance_block():
+    """`lightmaps.instance_irradiance`: the 1 379 shrub/reed placements, IN env.glb's INSTANCE ROW ORDER.
+
+    Two inputs, neither of them this writer's: `instance_irradiance.json` (bake engineer, one scene-linear
+    RGB per placement with its world `loc`) and `instance_order.json` (export/gate4_instance_order.py, the
+    glb row -> placement map joined on the instance TRANSLATION - `gltfpack -mi` strips node names and
+    re-orders the rows, so a name is a label, never the key). Every number below comes from one of those two
+    files. Without the order file the block still ships the bake's own summaries, with
+    `order_recovered: false` and no arrays: an array in the wrong order would light 1 379 shrubs with each
+    other's values.
+    """
+    ip = find("instance_irradiance.json")
+    if ip is None:
+        return dict(present=False,
+                    note="out/gate3/instance_irradiance.json not synced yet (bake branch, Gate 4)")
+    irr = json.loads(ip.read_text())
+    assert irr.get("schema") == "pfa-phase6/gate4-instance-irradiance/1", f"irr schema {irr.get('schema')!r}"
+    op = find("instance_order.json")
+    order = json.loads(op.read_text()) if op is not None else None
+    if order is not None:
+        assert order.get("schema") == "pfa-phase6/gate4-instance-order/1", f"order schema {order.get('schema')!r}"
+        assert order["placements"] == irr["placements"], \
+            f"order {order['placements']} placements != irradiance {irr['placements']}"
+        assert order["meshes_n"] == irr["meshes_n"], "order/irradiance mesh count mismatch"
+
+    rows_of = {m: e["objects"] for m, e in (order or {}).get("meshes", {}).items()}
+    meshes = {}
+    for mesh, m in sorted(irr["meshes"].items()):
+        by_obj = {p["object"]: p for p in m["placements"]}
+        e = dict(n=m["n"], min=m["min"], max=m["max"], mean=m["mean"], lum_min=m["lum_min"],
+                 lum_mean=m["lum_mean"], lum_max=m["lum_max"], cov_mean=m["cov_mean"])
+        if mesh in rows_of:
+            names = rows_of[mesh]
+            assert len(names) == m["n"], f"{mesh}: {len(names)} glb rows != {m['n']} placements"
+            missing = [n for n in names if n not in by_obj]
+            assert not missing, f"{mesh}: glb rows with no baked placement: {missing[:5]}"
+            e["rgb"] = [c for n in names for c in by_obj[n]["rgb"]]
+            e["cov"] = [by_obj[n]["cov"] for n in names]
+            e["glb_nodes"] = sorted({nd["gltf_node"] for nd in order["nodes"]
+                                     if any(s[0] == mesh for s in nd["segments"])})
+        meshes[mesh] = e
+
+    nodes = [dict(gltf_node=nd["gltf_node"], count=nd["count"], tris=nd["tris"], material=nd["material"],
+                  segments=nd["segments"]) for nd in (order or {}).get("nodes", [])]
+    return dict(
+        encode="none", dtype="float32", encoding=irr["encoding"], units=irr["units"],
+        attribute="_IRRADIANCE", json=ip.name, placements=irr["placements"], meshes_n=irr["meshes_n"],
+        range_global=irr["range_global"], lum_min=irr["lum_min"], lum_mean=irr["lum_mean"],
+        lum_max=irr["lum_max"], reduce=irr["reduce"],
+        in_glb=False,
+        delivery=("this manifest, not the glb: env.glb is unchanged (no re-pack, no COLOR_0 on the cards). "
+                  "`meshes[*].rgb` is a flat float32 RGB list to upload as an InstancedBufferAttribute on "
+                  "that mesh's InstancedMesh, exactly like the ORN slot offsets."),
+        decode=("irradiance = rgb * lightmaps.scale (pi) - the same units as a DECODED lightmap texel. "
+                "Multiply it into the card's diffuse term in place of the sky-only ambient, never as a tint. "
+                "Nothing is quantised: `range_global` is informational."),
+        order=("glb" if order is not None else "none"),
+        order_recovered=order is not None,
+        order_source=(dict(file=op.name, schema=order["schema"], generator=order["generator"],
+                           glb=order["glb"], glb_bytes=order["glb_bytes"], method=order["method"],
+                           join="instance translation (the only key gltfpack -mi leaves in the glb)",
+                           loc_source=order["loc_source"], loc_in_json=order["loc_in_json"],
+                           axis_swap=order["axis_swap"], axis_swap_check=order["axis_swap_check"],
+                           tol_m=order["tol_m"], margin=order["margin"],
+                           rows_matched=order["rows_matched"],
+                           worst_residual_m=order["worst_residual_m"],
+                           worst_margin_ratio=order["worst_margin_ratio"],
+                           name_crosscheck=order.get("name_crosscheck"))
+                      if order is not None else
+                      "instance_order.json not written yet: run `node web/tools/instance_rows.mjs "
+                      "export/out/gate1/env.glb export/out/gate3/instance_rows.json && python3 "
+                      "export/gate4_instance_order.py`. No rgb array ships until it is."),
+        key=("INSTANCE TRANSLATION. The object name in instance_irradiance.json is a label: gltfpack -mi "
+             "drops node names and re-orders the rows, so the arrays below are ordered by the positional "
+             "join in `order_source`, verified row by row against env.glb's own matrices."),
+        key_bake=irr["placement_key"],
+        irradiance_generated=irr.get("generated"),
+        nodes=nodes,
+        nodes_note=("the viewer binds per NODE, not per mesh: gltfpack merged the three one-placement "
+                    "*_LOD2.001 near-duplicates into their base mesh's instanced node, so nodes 10 / 16 / 21 "
+                    "hold 46 / 102 / 76 rows against their base mesh's 45 / 101 / 75. `segments` gives the "
+                    "node's rows as an ordered (mesh, count) list; concatenating each segment's slice of "
+                    "that mesh's `rgb` in this order rebuilds the node's attribute exactly. `gltf_node` is "
+                    "the index into env.glb's `nodes` array (three's GLTFLoader: parser.associations)."
+                    if nodes else "no order file: no node binding yet"),
+        dark=irr["checks"]["dark"],
+        meshes=meshes)
+
+
 def main():
     man = json.loads((g3.GATE2_OUT / "manifest.json").read_text())
     setj = json.loads((g3.OUT / "gate3_set.json").read_text())
@@ -199,6 +297,8 @@ def main():
                          "sky.glossy (QA-12b-1).")),
                   relay_note=(relay or {}).get("vertex_irradiance_skipped"))
 
+    instance = instance_block()
+
     man["lightmaps"] = dict(
         mode="baked", uv="TEXCOORD_1", scale=g3.LIGHTMAP_SCALE,
         bake=dict(engine="CYCLES", type="DIFFUSE", direct=True, indirect=True, color=False,
@@ -231,7 +331,8 @@ def main():
                          "from export/gate1_common.slot_uv; this block only names the atlas texture per pool and "
                          "atlas index. Atlas rows are laid out for the glTF UV flip (v_gltf = 1 - v_blender): "
                          "see export/gate3_compose.py, and `slot_check` is that proof read back from the PNG.")),
-        vertex_irradiance=vertex)
+        vertex_irradiance=vertex,
+        instance_irradiance=instance)
 
     # ------------------------------------------------------------ impostors
     protos, imp_bytes = {}, 0
