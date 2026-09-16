@@ -1135,6 +1135,69 @@ window.__pfaNames = () => {
 };
 
 /** Read back the linear pixel at the centre of a named object (LUT / luminance probes). */
+/**
+ * QA pick: what is UNDER a pixel.  `gltfpack -mi` drops every name, so the identity comes from the
+ * same world-bbox-centre join the lightmap pass uses, and everything that decides how the surface is
+ * lit is reported beside it: the material, whether it carries UV2, whether a lightmap actually
+ * attached, whether the environment still reaches it, and what the baked-material patch did.
+ * That is the whole question "which side owns this pixel", answered without changing anything.
+ */
+window.__pfaPick = ( x, y ) => {
+	const { w, h } = canvasSize();
+	const ndc = new THREE.Vector2( ( x / w ) * 2 - 1, - ( y / h ) * 2 + 1 );
+	const rc = new THREE.Raycaster();
+	rc.setFromCamera( ndc, camera );
+	rc.firstHitOnly = true;
+	// three's Raycaster does NOT skip invisible objects, so a hidden placeholder (?treeboards=0) would
+	// be reported as the thing under the pixel when it is not drawn at all.  Filter them out.
+	const visibleUp = ( o ) => { let p = o; while ( p ) { if ( p.visible === false ) return false; p = p.parent; } return true; };
+	const hits = rc.intersectObjects( scene.children, true ).filter( ( h ) => visibleUp( h.object ) );
+	const out = [];
+	for ( const hit of hits.slice( 0, 4 ) ) {
+		const o = hit.object;
+		const m = Array.isArray( o.material ) ? o.material[ 0 ] : o.material;
+		const g = o.geometry;
+		const box = new THREE.Box3().setFromObject( o );
+		const c = box.getCenter( new THREE.Vector3() );
+		// nearest manifest asset to the mesh centre, the same identity the lightmap join uses
+		let near = null, nearD = Infinity;
+		const assets = manifest && manifest.assets;
+		for ( const name in ( assets || {} ) ) {
+			const loc = assets[ name ] && assets[ name ].location_blender;
+			if ( ! Array.isArray( loc ) ) continue;
+			const p = b2t( loc[ 0 ], loc[ 1 ], loc[ 2 ] );
+			const d = p.distanceTo( c );
+			if ( d < nearD ) { nearD = d; near = name; }
+		}
+		out.push( {
+			distance_m: + hit.distance.toFixed( 2 ),
+			point: hit.point.toArray().map( v => + v.toFixed( 2 ) ),
+			mesh: o.name || '(unnamed - gltfpack -mi)',
+			root: ( () => { let p = o; while ( p && ! /^WEB_glb_|^WEB_/.test( p.name || '' ) ) p = p.parent; return p ? p.name : null; } )(),
+			instanced: !! o.isInstancedMesh, instanceCount: o.isInstancedMesh ? o.count : 1,
+			instanceId: hit.instanceId ?? null,
+			bboxCentre: c.toArray().map( v => + v.toFixed( 2 ) ),
+			nearestAsset: near, nearestAsset_m: + nearD.toFixed( 3 ),
+			material: m ? m.name : null,
+			materialType: m ? m.type : null,
+			hasUv1: !! ( g && g.attributes.uv1 ),
+			hasColor0: !! ( g && g.attributes.color ),
+			hasSlotAttr: !! ( g && g.attributes.pfaSlot ),
+			lightMap: m && m.lightMap ? ( m.lightMap.name || m.lightMap.source?.data?.src || 'yes' ) : null,
+			lightMapIntensity: m ? m.lightMapIntensity : null,
+			map: m && m.map ? ( m.map.name || 'yes' ) : null,
+			colorFactor: m && m.color ? m.color.toArray().map( v => + v.toFixed( 4 ) ) : null,
+			envMap: !! ( m && m.envMap ),
+			sceneEnvironment: !! scene.environment,
+			pfaPatched: m ? ( m.userData.pfaPatched || null ) : null,
+			vertexColors: m ? !! m.vertexColors : null,
+			visible: o.visible, renderOrder: o.renderOrder,
+			userData: o.userData && Object.keys( o.userData ).length ? o.userData : null,
+		} );
+	}
+	return { x, y, size: [ w, h ], pixel: window.__pfaPixel( x, y ), hits: out.length, under: out };
+};
+
 window.__pfaPixel = ( x, y ) => {
 	const gl = renderer.getContext();
 	const px = new Uint8Array( 4 );

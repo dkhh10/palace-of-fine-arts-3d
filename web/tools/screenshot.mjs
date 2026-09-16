@@ -15,6 +15,9 @@
 //   --timeout MS      ready timeout (default 120000)
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
 //   --pixels x,y;...  read back display pixels (after the screenshot) and print them
+//   --pick "x,y;x,y"  QA: what is UNDER those pixels - the mesh, its nearest manifest asset by the
+//                     bbox join, the material, whether it carries UV2, whether a lightmap attached,
+//                     whether the environment reaches it, and what the baked patch did
 //   --probe A,B       project objects whose name contains A / B and read their centre pixel
 //   --walkprobe 0,90,180,270[:seconds]
 //                     walk from each captured station on those headings (degrees, 0 = world -Z) and
@@ -248,6 +251,19 @@ try {
 		}
 	}
 
+	let picks = null;
+	if ( o.pick ) {
+		picks = await page.evaluate( ( spec ) => spec.split( ';' ).filter( Boolean ).map( ( t ) => {
+			const [ x, y ] = t.split( ',' ).map( Number );
+			return window.__pfaPick( x, y );
+		} ), o.pick );
+		for ( const p of picks ) {
+			console.log( `[pick] (${p.x},${p.y}) rgba ${JSON.stringify( p.pixel )} - ${p.hits} hit(s)` );
+			p.under.forEach( ( u, i ) => console.log( `[pick]   ${i}: ${u.distance_m} m  asset~${u.nearestAsset} (${u.nearestAsset_m} m)  `
+				+ `mat ${u.material}  uv1 ${u.hasUv1}  lightMap ${u.lightMap}  envMap ${u.envMap}  patched ${JSON.stringify( u.pfaPatched )}` ) );
+		}
+	}
+
 	let probes = null;
 	if ( o.probe ) {
 		probes = await page.evaluate( ( names ) => names.split( ',' ).filter( Boolean ).map( ( n ) => {
@@ -267,7 +283,7 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, walkProbes, written, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, walkProbes, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
