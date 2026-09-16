@@ -791,3 +791,6 @@ Waiting: QA 14 verdict. Then: merge phase6-viewer; Gate 4 decision; burn log.
 
 ## 2026-09-16 · QA 14 in (cc14323): ONE MORE ROUND, no blocker; all 6a parity criteria PASS (thin: 03/06 at 2.56), 45 fps not met. Lead: one bounded round 15 (water, bloom, cam06/cam03, minors) then QA 15 + Fable final
 Viewer round 6 brief: docs/briefs/phase6_gate4_r6_viewer.md. Reviewer dispatched on phase6-viewer 8d76e7d..2d267ba (probe irradiance, refs, fast preset, reflset) -> docs/reviews/phase6_viewer_gate4_r6_review.md, merge after.
+
+## 2026-09-16 · Viewer pre-merge review (5d034d6): MERGE BLOCKED — probe cube never uploaded (black envMap); QA-13-1 closure withdrawn pending re-measure; 6 further fix-now (capture fails on page errors, orbit/pick layers, slot-atlas fallback, quality case, README notes)
+Viewer told to stop round 6 work, fix, re-run the probe A/Bs with the real cube, report, then resume the round 6 brief and capture round15. phase6-viewer stays unmerged until the re-review. QA 15 brief on file (docs/briefs/qa_round_15.md).

@@ -476,3 +476,11 @@ the reflection at the hero, the walk clamp and the loading screen pass; 45 fps i
 docs/briefs/phase6_gate4_r6_viewer.md) because the hero water is an evenly blurred dark mirror where the reference has golden ripple streaks (ripple std 0.07x) — exactly the water
 lesson of attempts 1-2 — and because a smaller bloom radius serves both the flattened hero and the frame budget. Then QA 15 and the single Fable final judgement; 6a closes after
 that regardless of the round-15 delta (two rounds after Gate 4).
+
+## 2026-09-16 · CORRECTION: the probe-irradiance result of QA-13-1 was measured on a black environment (lead, from the pre-merge review 5d034d6)
+The code reviewer found that probeEnv.js built the CubeTexture from bare image records, so three.js took the DOM-source upload path and threw six swallowed texSubImage2D errors
+(visible in the committed round14_cam.json page log); the PMREM was of a black cube, and a black envMap overrides scene.environment, so the 15 unlit-mapped materials LOST their
+sky irradiance rather than gaining the warm bounce. The band measurements (0.2 %, mean RGB beside Cycles), the amber-brown foliage, and the probespec lead are all artefacts of
+that. The decision to use the probe stands in principle; its result is void until re-measured with the real cube. QA-14's QA-13-1 "closed" is withdrawn pending round 15.
+Process lesson recorded: a scored capture must fail on any page error (gate4.sh / screenshot.mjs now do), and a "fix" that lands exactly on the reference numbers deserves the
+same suspicion as one that misses.
