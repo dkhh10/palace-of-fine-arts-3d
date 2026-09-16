@@ -105,7 +105,8 @@ if len(lit) >= 20:
         sunlit=dict({kk: t_[kk] for kk in ("object", "mesh", "ground_ob", "where", "z")},
                     rgb=t_["rgb"], lum=round(t_["lum"], 4), ground_lum=round(t_["ground_lum"], 4)),
         ratio_shrub_sun_over_shade=round(t_["lum"] / max(s_["lum"], 1e-9), 2),
-        ratio_ground_sun_over_shade=round(t_["ground_lum"] / max(s_["ground_lum"], 1e-9), 2),
+        ratio_ground_sun_over_shade=(round(t_["ground_lum"] / s_["ground_lum"], 2)
+                                     if s_["ground_lum"] > 0 else None),   # review note 8: no 1/0 headline
         decile=dict(n=k,
                     shade_ground=round(mean(dec_lo, "ground_lum"), 4),
                     sun_ground=round(mean(dec_hi, "ground_lum"), 4),
@@ -136,6 +137,8 @@ for gob, rs in by_ob.items():
 out = dict(generated=time.strftime("%Y-%m-%dT%H:%M:%S"), placements_raycast=len(rows),
            with_ground_lightmap=len(with_g), check1=pick, correlation_by_ground=corr,
            ground_objects={k: len(v) for k, v in sorted(by_ob.items())},
+           all_ray_hits={k: sum(1 for r in rows if r["ground_ob"] == k)
+                         for k in sorted({r["ground_ob"] for r in rows})},
            no_ground_reason=sorted({r["where"] for r in rows if r["ground_lum"] is None}))
 (g3.OUT / "instance_check.json").write_text(json.dumps(out, indent=1))
 print(json.dumps({k: v for k, v in out.items() if k != "correlation_by_ground"}, indent=1)[:2000])

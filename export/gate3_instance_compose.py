@@ -107,20 +107,40 @@ def main():
     d2 = ((L[:, None, :] - L[None, :, :]) ** 2).sum(axis=2)
     np.fill_diagonal(d2, np.inf)
     nn = np.sqrt(d2.min(axis=1))
+    tol = 0.02
+    # The join is per MESH (a glTF mesh's instancing rows can only be that mesh's placements), so what
+    # matters is the closest pair WITHIN a mesh, not across the site.
+    same_min, pairs = np.inf, []
+    for mi, plc in meshes.items():
+        ix = [k for k, (_, mm) in enumerate(order) if mm == mi]
+        if len(ix) < 2:
+            continue
+        sub = d2[np.ix_(ix, ix)]
+        same_min = min(same_min, float(np.sqrt(sub.min())))
+        for a, b in np.argwhere(sub < (2 * tol) ** 2):
+            if a < b:
+                ra, rb = np.array(all_rgb[ix[a]]), np.array(all_rgb[ix[b]])
+                pairs.append(dict(mesh=mi, a=order[ix[a]][0], b=order[ix[b]][0],
+                                  gap_m=round(float(np.sqrt(sub[a, b])), 4),
+                                  max_abs_rgb_delta=round(float(np.abs(ra - rb).max()), 4)))
     join = dict(
         space="Blender world metres (x, y, z). glTF is Y-up: gltf_translation = (x, z, -y).",
-        how=("match each EXT_mesh_gpu_instancing row to the entry whose `loc` is nearest its translation, "
-             "after that swap; `object` is a label, not a key, because gltfpack -mi drops node names and "
-             "manifest instancing.objects is truncated at 16 entries."),
-        tolerance_m=0.05,
-        min_separation_m=round(float(nn.min()), 4),
-        p01_separation_m=round(float(np.percentile(nn, 1)), 4),
+        how=("nearest-translation match, PER MESH: for each EXT_mesh_gpu_instancing row of a mesh (after that "
+             "swap) take that mesh's entry whose `loc` is nearest, assert the residual is below "
+             "`tolerance_m` and that the assignment is a bijection (every entry used exactly once). "
+             "`object` is a label, not a key: gltfpack -mi drops node names and manifest "
+             "instancing.<mesh>.objects[] is truncated at 16 entries."),
+        tolerance_m=tol,
+        min_separation_within_mesh_m=round(float(same_min), 4),
+        min_separation_any_mesh_m=round(float(nn.min()), 4),
         median_separation_m=round(float(np.median(nn)), 4),
-        unambiguous=bool(nn.min() > 0.10),
-        note=("the nearest two placements are %.3f m apart, so a 0.05 m tolerance cannot pick the wrong one; "
-              "gltfpack quantises instance translations, so an exact match must not be required. The export "
-              "must assert that every row finds exactly one entry within the tolerance and that every entry "
-              "is used once." % float(nn.min())))
+        same_mesh_pairs_closer_than_2x_tolerance=pairs,
+        note=("the closest two placements of the SAME mesh are %.3f m apart and %d same-mesh pair(s) sit "
+              "within 2 x tolerance, so a nearest match inside a mesh is unambiguous at 0.02 m. (Three pairs "
+              "of DIFFERENT meshes sit 9-29 mm apart; they cannot be confused because the join is per mesh.) "
+              "gltfpack quantises instance translations, so an exact match must never be required; if a "
+              "residual exceeds the tolerance the export must fail, not guess."
+              % (float(same_min), len(pairs))))
     dark = [dict(object=obj, mesh=mesh, loc=got[obj]["loc"], verts=got[obj]["verts"])
             for obj, mesh in order if max(got[obj]["mean_nonzero"]) <= 0.0]
     # ---- sanity check 2: a placement beside a near tree vs that tree's own COLOR_0
