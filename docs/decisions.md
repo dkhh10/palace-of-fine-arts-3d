@@ -500,3 +500,9 @@ a per-mesh vertex bake would give 1 379 shrubs 28 wrong values. Decision: one sc
 instance's transform; ~16.5 kB), written to a new manifest block `lightmaps.instance_irradiance` {mesh: [rgb per placement in placement order], range_global, encoding}, consumed
 by the viewer as an InstancedBufferAttribute exactly like the ORN slot offsets (instancing kept; no COLOR_0). Estimated 3-5 GPU minutes. The 14 near trees keep their per-vertex
 COLOR_0 (one placement each).
+
+## 2026-09-16 · reflset=orn is the default reflection set (lead, session 4, from the r7 review's should-fix)
+The Gate 4 frame-rate entry said the default ships "everything on" while the viewer shipped `?reflset=orn` (the 436 ORN instances skipped in the reflection pass) as the look default.
+Authorised: it was measured within 0.03x on all four hero reflection boxes (the acceptance the frame-rate entry set for any lever) and saves ~2 ms; the backdrop stays in the
+reflection. The r7 review's two fix-now items (far-water uv leaving [0,1] under the grazing factor; the WIP water on by default before the tile is judged) go to the viewer
+engineer inside item 1; the default is decided by the lead after the 100 % open-water tile.
