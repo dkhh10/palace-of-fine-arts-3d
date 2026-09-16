@@ -29,6 +29,7 @@ import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
+import { applyGate3Lightmaps } from './lightmaps.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -172,6 +173,8 @@ async function fetchBuffer( url ) {
 
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null;
+let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
+let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
@@ -192,6 +195,9 @@ let materialsMode = 'grey', pbrReport = null, detailReport = null;
 function pickLightingMode() {
 	if ( CFG.lighting === 'baked' || CFG.lighting === 'direct' ) return CFG.lighting;
 	const tex = manifest.raw.textures || {};
+	// v4 states it: lightmaps.mode === 'baked' with at least one usable map.
+	if ( manifest.gate3 && manifest.gate3.mode === 'baked'
+		&& ( manifest.gate3.ownCount || manifest.gate3.slotCount ) ) return 'baked';
 	const baked = manifest.lightmaps.length > 0
 		|| Object.keys( tex ).some( k => k.toLowerCase().includes( 'lightmap' ) )
 		|| !! ( manifest.raw.gltf && manifest.raw.gltf.lightmap_slot );
@@ -271,6 +277,7 @@ async function boot() {
 	const plan = [];
 	if ( manifest.sky.camera ) plan.push( { url: manifest.sky.camera, kind: 'sky.camera', bytes: manifest.raw.sky?.camera?.bytes_hdr || 0 } );
 	if ( manifest.sky.glossy ) plan.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
+	if ( manifest.sky.diffuse ) plan.push( { url: manifest.sky.diffuse, kind: 'sky.diffuse', bytes: manifest.raw.sky?.diffuse?.bytes_hdr || 0 } );
 	if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) plan.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
 	if ( ! CFG.testScene ) for ( const g of manifest.glbs ) plan.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
 	// The PBR set is part of the payload, so it is in the byte plan from the first frame of the bar.
@@ -423,6 +430,15 @@ async function loadSky() {
 		return L.loadAsync( url, onProgressFor( url ) );
 	};
 	const rotY = THREE.MathUtils.degToRad( manifest.sky.rotationDeg );
+	envRotation = new THREE.Euler( 0, rotY, 0 );
+	const pmremOf = async ( url ) => {
+		const tex = await load( url );
+		const pmrem = new THREE.PMREMGenerator( renderer );
+		pmrem.compileEquirectangularShader();
+		const rt = pmrem.fromEquirectangular( tex );
+		tex.dispose(); pmrem.dispose();
+		return rt;
+	};
 	try {
 		if ( manifest.sky.camera ) {
 			const tex = await load( manifest.sky.camera );
@@ -432,16 +448,48 @@ async function loadSky() {
 			note( `sky background ${manifest.sky.camera.split( '/' ).pop()} ${tex.image.width}x${tex.image.height}, rotation ${manifest.sky.rotationDeg} deg` );
 		} else { scene.background = new THREE.Color( 0.09, 0.13, 0.22 ); note( 'no camera sky: flat background' ); }
 		if ( manifest.sky.glossy ) {
-			const tex = await load( manifest.sky.glossy );
-			const pmrem = new THREE.PMREMGenerator( renderer );
-			pmrem.compileEquirectangularShader();
-			pmremTarget = pmrem.fromEquirectangular( tex );
-			scene.environment = pmremTarget.texture;
-			scene.environmentRotation = new THREE.Euler( 0, rotY, 0 );
-			tex.dispose(); pmrem.dispose();
-			note( `PMREM environment from ${manifest.sky.glossy.split( '/' ).pop()} (specular only)` );
+			pmremTarget = await pmremOf( manifest.sky.glossy );
+			glossyEnv = pmremTarget.texture;
+			note( `PMREM specular environment from ${manifest.sky.glossy.split( '/' ).pop()}` );
+		}
+		// QA-12b-1: the world's DIFFUSE branch is a different colour from its glossy branch, and using
+		// the glossy PMREM as the diffuse environment made 16-22 % of the cam02/cam06 building pixels
+		// read olive-green.  v4 ships the diffuse branch as its own equirect, so:
+		//   scene.environment      = the DIFFUSE PMREM  -> the irradiance of everything with no lightmap
+		//                            (near trees, impostors, foliage, shrubs)
+		//   material.envMap        = the GLOSSY PMREM on every lightmapped material, whose env DIFFUSE
+		//                            term is deleted in the shader anyway, so it is specular-only
+		if ( manifest.sky.diffuse ) {
+			diffusePmremTarget = await pmremOf( manifest.sky.diffuse );
+			scene.environment = diffusePmremTarget.texture;
+			scene.environmentRotation = envRotation;
+			note( `PMREM diffuse environment from ${manifest.sky.diffuse.split( '/' ).pop()} (irradiance for everything without a lightmap; QA-12b-1)` );
+		} else if ( glossyEnv ) {
+			scene.environment = glossyEnv;
+			scene.environmentRotation = envRotation;
+			note( 'no sky.diffuse in the manifest: the GLOSSY PMREM is the diffuse environment too (QA-12b-1 unfixed)' );
 		}
 	} catch ( e ) { note( `sky load failed: ${e.message}` ); }
+}
+
+/** Every baked material takes its SPECULAR from the glossy branch through its own envMap, so the
+ *  scene-wide diffuse environment can stay on the diffuse branch.  Called once, after the materials
+ *  are final. */
+function assignSpecularEnv() {
+	if ( ! glossyEnv || ! diffusePmremTarget ) return 0;   // nothing to separate
+	let n = 0;
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m || ! m.isMeshStandardMaterial || ! m.userData.pfaPatched || m.envMap === glossyEnv ) continue;
+			m.envMap = glossyEnv;
+			m.envMapRotation.copy( envRotation );
+			m.needsUpdate = true;
+			n ++;
+		}
+	} );
+	if ( n ) note( `${n} baked material(s) take specular from the GLOSSY PMREM (material.envMap); the scene environment stays the DIFFUSE branch` );
+	return n;
 }
 
 let ktx2Loader = null;
@@ -486,6 +534,25 @@ async function loadGlbs() {
 		renderFrame();
 		await new Promise( ( r ) => requestAnimationFrame( r ) );
 	}
+	// Gate 3 (manifest v4): the baked lightmaps.  BEFORE chunking (a chunk inherits its slice of the
+	// per-instance slot attribute) and BEFORE the PBR / detail passes, which match on material NAME
+	// and so texture every clone this pass makes.
+	if ( manifest.gate3 && lightingMode === 'baked' ) {
+		gate3Report = applyGate3Lightmaps( {
+			scene, gate3: manifest.gate3, assets: manifest.assets, note,
+			loadTexture: ( url ) => {
+				progress.label = url.split( '/' ).pop();
+				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
+					: ( /\.(hdr)$/i.test( url ) ? new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) )
+						: ( /\.exr$/i.test( url ) ? new EXRLoader( manager ).loadAsync( url, onProgressFor( url ) )
+							: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) ) ) );
+			},
+		} );
+		await gate3Report.promise;
+		lightmapsApplied += gate3Report.own.applied;
+		patchedMaterials += gate3Report.own.applied + gate3Report.slots.meshes.length;
+	}
+
 	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those
 	// batches into regional ones so a station that sees little of the site draws little of it.
 	chunkStats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
@@ -580,6 +647,16 @@ function finishMaterials() {
 	if ( lightingMode === 'direct' ) {
 		note( `${noLightmapMaterials.length} material(s) on three's own lighting (Gate 1 has no lightmap bake); `
 			+ `${patchedMaterials} on the baked path` );
+		return;
+	}
+	// Gate 3 (manifest v4) bakes a map for everything that should have one, so a material without one
+	// is meant to have none (foliage, shrubs, impostors, the backdrop).  It stays on three's own
+	// lighting, whose diffuse irradiance now comes from `sky.diffuse` — never from a neighbour's map.
+	if ( manifest.gate3 ) {
+		const withMap = noLightmapMaterials.filter( m => m.lightMap ).length;
+		note( `${noLightmapMaterials.length - withMap} material(s) with no Gate 3 lightmap stay on the environment path `
+			+ `(diffuse irradiance from sky.diffuse); the Gate 0 "borrow a neighbour's lightmap" stand-in is off at Gate 3` );
+		assignSpecularEnv();
 		return;
 	}
 	// Gate 0 bakes a lightmap for ONE of the 16 columns; the other 15 share the mesh with a
@@ -763,6 +840,10 @@ window.__pfaInfo = () => ( {
 	gl: glInfo(),
 	patchedMaterials, lightmapsApplied, unpatchedMaterials: [ ...unpatchedMaterials ],
 	lightmapScale, rgbmRange: manifest ? manifest.rgbmRange : null,
+	gate3: gate3Report && { own: gate3Report.own, slots: gate3Report.slots,
+		materialsCloned: gate3Report.materialsCloned, texturesRequested: gate3Report.texturesRequested,
+		texturesLoaded: gate3Report.texturesLoaded, texturesFailed: gate3Report.texturesFailed },
+	skyDiffuse: manifest ? !! manifest.sky.diffuse : null,
 	shaperPivot: lutPass ? lutPass.uniforms.shaperPivot.value : null,
 	skyRotationDeg: manifest ? manifest.sky.rotationDeg : null,
 	exposure: lutPass ? lutPass.uniforms.exposure.value : null,
@@ -822,7 +903,8 @@ function residentBytes() {
 	// scene.environment IS pmremTarget.texture and has an image, so addTex would bill the cubeUV
 	// here AND addRT would bill the identical bytes below (review finding 1): count it once, as a
 	// render target.
-	if ( scene.environment && ! ( pmremTarget && scene.environment === pmremTarget.texture ) ) addTex( scene.environment );
+	const pmremTextures = [ pmremTarget, diffusePmremTarget ].filter( Boolean ).map( t => t.texture );
+	if ( scene.environment && ! pmremTextures.includes( scene.environment ) ) addTex( scene.environment );
 	// Render targets dominate the GPU-memory figure at 1440p and carry no `image`, so addTex() sees
 	// nothing: count them explicitly.  A HalfFloat RGBA target is 8 B/px, and three allocates an extra
 	// multisampled renderbuffer of samples x that size when `samples` > 0.
@@ -836,7 +918,8 @@ function residentBytes() {
 	};
 	if ( composer ) { addRT( composer.renderTarget1, 'composer.renderTarget1' ); addRT( composer.renderTarget2, 'composer.renderTarget2' ); }
 	if ( water && water.getRenderTarget ) addRT( water.getRenderTarget(), 'water.Reflector' );
-	if ( pmremTarget ) addRT( pmremTarget, 'PMREM cubeUV' );
+	if ( pmremTarget ) addRT( pmremTarget, 'PMREM cubeUV (glossy, specular)' );
+	if ( diffusePmremTarget ) addRT( diffusePmremTarget, 'PMREM cubeUV (diffuse, irradiance)' );
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),

@@ -157,6 +157,11 @@ export function normaliseManifest( raw, baseUrl ) {
 	const skyFile = ( v ) => ( typeof v === 'string' ? v : ( v && ( v.hdr || v.exr ) ) );
 	const skyCamera = resolveUrl( baseUrl, skyFile( pick( sky, 'camera', 'background', 'camera_hdr', 'camera_exr' ) ) );
 	const skyGlossy = resolveUrl( baseUrl, skyFile( pick( sky, 'glossy', 'specular', 'glossy_hdr', 'glossy_exr' ) ) );
+	// v4 `sky.diffuse` (QA-12b-1): the world's DIFFUSE branch as its own equirect.  The glossy branch
+	// is a different colour, and using its PMREM as the diffuse environment made 16-22 % of the
+	// cam02/cam06 building pixels read olive-green.  Diffuse irradiance comes from this one; specular
+	// radiance stays on `sky.glossy`; the background sphere stays `sky.camera`.
+	const skyDiffuse = resolveUrl( baseUrl, skyFile( pick( sky, 'diffuse', 'irradiance' ) ) );
 	// Blender/manifest mapping: u = 0.5 + atan2(bx, by)/360.  With three (X,Y,Z) = blender (x, z, -y)
 	// that is three's atan2(Z,X) + 90 deg, so the manifest's u is three's u + 0.25 and the environment
 	// needs a quarter turn about Y.  three's backgroundRotation applies the INVERSE sense, so the value
@@ -211,7 +216,11 @@ export function normaliseManifest( raw, baseUrl ) {
 	// Accepted shapes: {lightmaps:[{match|object|mesh|material, url, encoding, intensity}]}
 	//                  {assets:[{name, lightmap:{url, encoding}}]}
 	const lightmaps = [];
-	for ( const lm of pick( raw, 'lightmaps' ) || [] ) {
+	// v4 (`pfa-phase6/4`) makes `lightmaps` an OBJECT ({mode, scale, uv, assets, slots,
+	// vertex_irradiance}); the older shapes are arrays.  Iterating the object with for..of throws, so
+	// the v4 block is parsed further down (`gate3`) and this loop only ever sees an array.
+	const lightmapsRaw = pick( raw, 'lightmaps' );
+	for ( const lm of ( Array.isArray( lightmapsRaw ) ? lightmapsRaw : [] ) ) {
 		lightmaps.push( {
 			match: lm.match ?? lm.object ?? lm.mesh ?? lm.material ?? lm.name,
 			matchKind: lm.material ? 'material' : 'object',
@@ -293,13 +302,19 @@ export function normaliseManifest( raw, baseUrl ) {
 	const texG2 = pick( raw, 'textures.gate2' ) || {};
 	const filesG2 = ( texG2.files && typeof texG2.files === 'object' && ! Array.isArray( texG2.files ) ) ? texG2.files : {};
 	const dirG2 = texG2.ktx2_dir || '';
+	// v4 adds textures.gate3 (lightmaps, slot atlases, impostor atlases) with the same shape.
+	const texG3 = pick( raw, 'textures.gate3' ) || {};
+	const filesG3 = ( texG3.files && typeof texG3.files === 'object' && ! Array.isArray( texG3.files ) ) ? texG3.files : {};
+	const dirG3 = texG3.ktx2_dir || '';
 	const filesG1 = pick( raw, 'textures.files' );
 	const dirG1 = pick( raw, 'textures.ktx2_dir' ) || '';
 	const joinDir = ( dir, p ) => resolveUrl( baseUrl, ( dir && ! p.startsWith( '/' ) ) ? `${String( dir ).replace( /\/$/, '' )}/${p}` : p );
 	const unresolvedKeys = [];
-	/** A texture reference: a KEY into textures.gate2.files (v3) or a path (older shapes). */
+	/** A texture reference: a KEY into textures.gate3/gate2.files (v4/v3) or a path (older shapes). */
 	const resolveTexture = ( ref ) => {
 		if ( ! ref || typeof ref !== 'string' ) return null;
+		const g3 = filesG3[ ref ];
+		if ( g3 ) return { url: joinDir( dirG3, g3.path || `${ref}.ktx2` ), meta: g3 };
 		const g2 = filesG2[ ref ];
 		if ( g2 ) return { url: joinDir( dirG2, g2.path || `${ref}.ktx2` ), meta: g2 };
 		if ( Array.isArray( filesG1 ) ) {
@@ -466,6 +481,150 @@ export function normaliseManifest( raw, baseUrl ) {
 	}
 
 
+	// --- Gate 3 (manifest v4 `pfa-phase6/4`): baked lightmaps, slot atlases, impostors, probe ----
+	// export/README.md "manifest.json v4" is the contract.  The one rule that governs every map here:
+	//     irradiance = decode(texel) * lightmaps.scale          (scale = pi, unchanged since Gate 0)
+	// with `decode` chosen by the texture's own `encode`, NEVER guessed:
+	//     rgbm8  -> rgb = t.rgb * t.a * range      (lossless KTX2 only)
+	//     gamma2 -> rgb = t.rgb * t.rgb * range    (UASTC/ASTC, the shipped default)
+	// `range` is per texture and is not 64 by default.  Two things the viewer must honour:
+	//   * `uv2_in_glb: false` — the glb's UV2 is NOT the layout this map was baked on.  There is no
+	//     factor fallback for a lightmap, so the asset either takes the `_gate1_layout` twin (baked on
+	//     the frozen Gate 1 UV2, where the bake shipped one) or takes NO lightmap at all.
+	//   * `vertex_irradiance.in_glb: false` — the near trees' COLOR_0 is not in env.glb yet; they stay
+	//     on the environment path and their irradiance must come from `sky.diffuse`, not `sky.glossy`.
+	const g3 = ( lightmapsRaw && typeof lightmapsRaw === 'object' && ! Array.isArray( lightmapsRaw )
+		&& lightmapsRaw.assets ) ? lightmapsRaw : null;
+	let gate3 = null;
+	if ( g3 ) {
+		const g3notes = [];
+		const scale = g3.scale ?? lightmapScale;
+		const encodeOf = ( variant, meta ) => {
+			const e = ( meta && meta.encode ) || variant;
+			return /rgbm/i.test( e ) ? 'rgbm8' : ( /gamma2/i.test( e ) ? 'gamma2' : String( e ) );
+		};
+		/** One lightmap entry -> { url, encode, range, variant } or null (with a reason). */
+		const lmTexture = ( entry, what ) => {
+			if ( ! entry || ! entry.textures ) return null;
+			const want = entry.default || 'gamma2';
+			const key = entry.textures[ want ] ?? entry.textures.gamma2 ?? entry.textures.rgbm8;
+			const variant = entry.textures[ want ] ? want : ( entry.textures.gamma2 ? 'gamma2' : 'rgbm8' );
+			if ( ! key ) { g3notes.push( `${what}: no texture key in the manifest` ); return null; }
+			const res = resolveTexture( key );
+			if ( ! res ) { g3notes.push( `${what}: texture key "${key}" is not in textures.gate3.files` ); return null; }
+			const range = entry.range ?? ( res.meta && res.meta.range );
+			if ( range === undefined || range === null ) { g3notes.push( `${what}: no range, skipped (a defaulted range is a brightness error)` ); return null; }
+			return { url: res.url, textureKey: key, variant, encode: encodeOf( variant, res.meta ), range,
+				bytes: ( res.meta && res.meta.bytes ) ?? null, residentMb: ( res.meta && res.meta.resident_mb ) ?? null,
+				w: res.meta && res.meta.w, h: res.meta && res.meta.h };
+		};
+
+		// own-map assets, keyed by the glb OBJECT name.  `_gate1_layout` is not an asset: it is the
+		// frozen-layout twin of the assets whose UV2 was re-laid at Gate 3.
+		const frozen = ( g3.assets && g3.assets._gate1_layout ) || {};
+		const ownMaps = {};
+		let blockedNoUv2 = 0, frozenUsed = 0;
+		for ( const [ name, entry ] of Object.entries( g3.assets || {} ) ) {
+			if ( name.startsWith( '_' ) ) continue;
+			let use = entry, layout = entry.uv2_source || 'gate1', why = null;
+			if ( entry.uv2_in_glb === false ) {
+				if ( frozen[ name ] ) { use = frozen[ name ]; layout = 'gate1_frozen'; frozenUsed ++; }
+				else { blockedNoUv2 ++; why = 'uv2_in_glb false and no _gate1_layout twin'; }
+			}
+			const tex = why ? null : lmTexture( use, `lightmaps.assets.${name}` );
+			ownMaps[ name ] = {
+				name, size: entry.size ?? null, uv2InGlb: entry.uv2_in_glb !== false, layout,
+				cmPerTexel: ( use.cm_per_texel ?? entry.cm_per_texel ) ?? null,
+				blocked: why || ( tex ? null : 'no usable texture' ),
+				...( tex || {} ),
+			};
+		}
+		// per-instance slot atlases (the user's option (c)).  `orn_slots` carries the per-object
+		// offset/scale; `lightmaps.slots.atlases` names which texture each (pool, atlas) is.
+		const atlasRaw = ( g3.slots && g3.slots.atlases ) || {};
+		const atlases = {};
+		for ( const [ key, a ] of Object.entries( atlasRaw ) ) {
+			const tex = lmTexture( a, `lightmaps.slots.atlases.${key}` );
+			atlases[ key ] = { key, pool: a.pool, atlas: a.atlas, atlasPx: a.atlas_px ?? null,
+				slotPx: a.slot_px ?? null, gutterPx: a.gutter_px ?? null, usablePx: a.usable_px ?? null,
+				uv2Scale: a.uv2_scale ?? null, slotsFilled: a.slots_filled ?? null, ...( tex || {} ) };
+		}
+		const byPoolAtlas = {};
+		for ( const a of Object.values( atlases ) ) byPoolAtlas[ `${a.pool}/${a.atlas}` ] = a;
+		const slotsRaw = pick( raw, 'orn_slots' ) || {};
+		const slots = {};                       // glb object name -> { atlasKey, offset:[u,v], scale }
+		let slotsNoAtlas = 0;
+		for ( const [ pool, list ] of Object.entries( slotsRaw ) ) {
+			if ( ! Array.isArray( list ) ) continue;
+			for ( const s of list ) {
+				const a = byPoolAtlas[ `${pool}/${s.atlas}` ];
+				if ( ! a || ! a.url ) { slotsNoAtlas ++; continue; }
+				slots[ s.object ] = { object: s.object, pool, atlasKey: a.key,
+					offset: s.uv2_offset, scale: s.uv2_scale ?? a.uv2Scale };
+			}
+		}
+		// the near trees' per-vertex irradiance: a hand-off, not a texture, and `in_glb` says whether
+		// the exporter has written it as COLOR_0 yet.
+		const vi = g3.vertex_irradiance || null;
+
+		// impostors (item 2) and the mirrored hero probe (item 3) are parsed here so one place knows
+		// the v4 shape; the viewer modules consume them.
+		const impRaw = pick( raw, 'impostors' ) || null;
+		let impostors = null;
+		if ( impRaw && impRaw.prototypes ) {
+			const protos = {};
+			for ( const [ name, p ] of Object.entries( impRaw.prototypes ) ) {
+				const alb = resolveTexture( p.albedo ), nd = resolveTexture( p.normal_depth );
+				if ( ! alb || ! nd ) { g3notes.push( `impostor ${name}: atlas key missing from textures.gate3.files` ); continue; }
+				protos[ name ] = { name, albedo: alb.url, normalDepth: nd.url,
+					range: p.range ?? null, bbox: p.bbox_m || null, radius: p.radius_m ?? null,
+					centreAboveBase: p.centre_above_base_m ?? null, depthRange: p.depth_range_m ?? null,
+					bytes: ( ( alb.meta && alb.meta.bytes ) || 0 ) + ( ( nd.meta && nd.meta.bytes ) || 0 ) };
+			}
+			// Every geometric and encoding field is READ, never assumed: the Gate 3 review is
+			// re-measuring `centre_above_base_m` / `bbox_m` from the trunk base and restating the
+			// depth encode as `depth_from_centre_m = (a - 0.5) * depth_range_m`.  `encode` and
+			// `frame_lookup` / `frame_uv` are carried verbatim so the impostor material can assert
+			// the contract it was written against instead of silently drifting from it.
+			impostors = { encode: impRaw.encode || null, frameLookup: impRaw.frame_lookup || null,
+				frameUv: impRaw.frame_uv || null, lighting: impRaw.lighting || null,
+				mapping: impRaw.mapping || 'octahedral', grid: impRaw.grid ?? 12,
+				framePx: impRaw.frame_px ?? null, innerPx: impRaw.inner_px ?? null,
+				gutterPx: impRaw.gutter_px ?? null, atlasPx: impRaw.atlas_px ?? null,
+				unlit: impRaw.unlit !== false, prototypeMap: impRaw.prototype_map || {},
+				prototypes: protos, count: Object.keys( protos ).length };
+		}
+		const probeRaw = pick( raw, 'probe' ) || null;
+		let probe = null;
+		if ( probeRaw && probeRaw.files ) {
+			const dir = probeRaw.dir ? `${String( probeRaw.dir ).replace( /\/$/, '' )}/` : '';
+			const faces = ( probeRaw.faces || [ 'px', 'nx', 'py', 'ny', 'pz', 'nz' ] ).map( ( f ) => {
+				const e = probeRaw.files[ f ];
+				const p = typeof e === 'string' ? e : ( e && ( e.hdr || e.path || e.exr ) );
+				return p ? resolveUrl( baseUrl, `${dir}${p}` ) : null;
+			} );
+			if ( faces.every( Boolean ) ) probe = { faces, order: probeRaw.faces, sizePx: probeRaw.size_px ?? null,
+				station: probeRaw.station || null, positionGltf: probeRaw.position_gltf || null };
+			else g3notes.push( 'probe: not all six faces are in the manifest, ignored' );
+		}
+
+		gate3 = { mode: g3.mode || 'baked', scale, uv: g3.uv || 'TEXCOORD_1',
+			ownMaps, ownCount: Object.values( ownMaps ).filter( m => m.url ).length,
+			blockedNoUv2, frozenUsed, atlases, slots, slotCount: Object.keys( slots ).length, slotsNoAtlas,
+			vertexIrradiance: vi ? { inGlb: vi.in_glb === true, encode: vi.encode || 'gamma2',
+				range: vi.range ?? null, attribute: vi.attribute || 'COLOR_0', meshes: vi.meshes_n ?? null } : null,
+			impostors, probe, notes: g3notes };
+		notes.push( `manifest v4 lightmaps: ${gate3.ownCount} own map(s) ready of ${Object.keys( ownMaps ).length}`
+			+ ( frozenUsed ? `, ${frozenUsed} on the frozen Gate 1 layout` : '' )
+			+ ( blockedNoUv2 ? `, ${blockedNoUv2} blocked (uv2_in_glb false, no fallback)` : '' )
+			+ `; ${gate3.slotCount} per-instance slot(s) over ${Object.keys( atlases ).length} atlas(es)`
+			+ `; scale ${scale.toFixed( 5 )}` );
+		if ( impostors ) notes.push( `manifest v4 impostors: ${impostors.count} prototype(s), ${impostors.grid}x${impostors.grid} octahedral frames at ${impostors.framePx} px on a ${impostors.atlasPx} px atlas` );
+		if ( gate3.vertexIrradiance && ! gate3.vertexIrradiance.inGlb )
+			notes.push( `vertex irradiance for ${gate3.vertexIrradiance.meshes} near-tree mesh(es) is NOT in the glb (COLOR_0 pending the re-export): they stay on the environment path` );
+		g3notes.forEach( n => notes.push( `gate3: ${n}` ) );
+	}
+
 	// --- Gate 1 extras: far-tree billboard quads, ORN atlas slots ------------------------------
 	// `trees.far` is the Gate 3 impostor list: each entry is a prototype id, a height and a trunk base.
 	// Until that bake exists the viewer draws one flat, explicitly tagged quad per entry.
@@ -493,10 +652,15 @@ export function normaliseManifest( raw, baseUrl ) {
 
 	const out = {
 		raw, baseUrl, glb, glbs, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale, materials,
-		treesFar, treesNearCount: Array.isArray( nearRaw ) ? nearRaw.length : 0, ornSlots,
+		treesFar, treesNearCount: Array.isArray( nearRaw ) ? nearRaw.length : 0, ornSlots, gate3,
+		// `assets` is the identity the glb lost: gltfpack -mi drops every node and mesh name, so the
+		// only way back from a drawn mesh to a manifest asset is its world bounding-box CENTRE
+		// (`location_blender`, Blender Z-up).  Kept as a plain map for the lightmap matcher.
+		assets: ( pick( raw, 'assets' ) && ! Array.isArray( raw.assets ) ) ? raw.assets : null,
+		instancing: pick( raw, 'instancing' ) || null,
 		schema: pick( raw, 'schema' ) || null,
 		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
-		sky: { camera: skyCamera, glossy: skyGlossy, rotationDeg: skyRotationDeg },
+		sky: { camera: skyCamera, glossy: skyGlossy, diffuse: skyDiffuse, rotationDeg: skyRotationDeg },
 		frameSize: pick( raw, 'frame', 'render.frame' ) || { width: 1280, height: 720 },
 	};
 	if ( ! glbs.length ) notes.push( 'no glb in the manifest: test scene only' );
