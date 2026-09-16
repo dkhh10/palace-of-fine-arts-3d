@@ -70,6 +70,83 @@ export function makeWaveSet( o = {} ) {
 	return { a, b };
 }
 
+/**
+ * QA-14-1 item 1a.  THE UPWELLING TERM, DERIVED - not fitted to the metric.
+ *
+ * `murk` in the shader below is the radiance that leaves the water BODY toward the camera, before
+ * the Fresnel mix; the mix already applies the (1 - F) transmittance of the view ray, so `murk` is
+ * the emergent radiance at normal incidence.  The round-14 value (0.020, 0.035, 0.030) was a hand
+ * number and is ~13x too dark: it made the near water essentially `F * reflection`, i.e. a dark
+ * blue mirror, where the Phase 5 hero's open water inverts through the LUT to a near-neutral
+ * scene-linear (1.226, 1.317, 1.262).
+ *
+ * The inputs are the Phase 5 material's and the scene's own, in this order:
+ *   1. MAT_water_lagoon's WATER_VOLUME node (scripts/mat_build.py build_water):
+ *        sigma_s = density * Colour            = 0.7 * (0.205, 0.250, 0.195)
+ *        sigma_a = density * (1 - AbsorpColour) = 0.7 * (1 - (0.70, 0.80, 0.68))
+ *      This is the reference sheet's "volume absorption ~ (0.04, 0.07, 0.04)" line in its shipped
+ *      form: single-scatter albedo (0.41, 0.56, 0.38), i.e. the green-tea murk.
+ *   2. docs/reference_sheet.md MAT_water_lagoon: depth 1.5 m to a muddy bottom (0.12, 0.10, 0.06).
+ *   3. The scene's own downward irradiance: the cosine-weighted integral of the CAMERA-branch sky
+ *      equirect (export/out/gate0/sky_camera_4096x2048.exr) over the upper hemisphere, plus the
+ *      manifest's LIGHT_sun (67.319 W/m^2 * sin 7.357 deg * colour (1, 0.6073, 0)).
+ *      The camera branch, not sky.diffuse: sky.diffuse carries lighting's artificial shade fill
+ *      (B/R 5.1 against the real sky's 4.4 and sky+sun's 1.3), and the Phase 5 material suppresses
+ *      its own diffuse murk lobe to 0.085 at the hero precisely because that fill "returns blue and
+ *      fights the warm streaks" (mat_build.py round 8).  The water body is real light off a real
+ *      sky, so it takes the real sky.
+ *
+ * The chain, all of it Beer-Lambert over the two-way depth plus the two interface crossings:
+ *   b_b     = sigma_s * B(g),  B = (1-g)/(2g) * ((1+g)/sqrt(1+g^2) - 1)   backscatter fraction, HG
+ *   R_col   = b_b/(a+b_b) * (1 - exp(-2 (a+b_b) d))      light turned round inside the column
+ *   R_bot   = rho * exp(-2 a d)                          light off the bed and back up
+ *   A_up    = R_col + R_bot                              sub-surface upwelling albedo
+ *   E_in    = t_sky * E_sky + t_sun * E_sun              what crosses the surface downward
+ *             (t_sun is the Fresnel transmittance at the sun's 82.6 deg incidence = 0.544, which
+ *              is why a 7.4 deg sun contributes so much less than its horizontal irradiance)
+ *   E_up    = A_up * E_in / (1 - r_int * A_up)           r_int = 0.48, the diffuse internal reflectance
+ *   murk    = E_up / (pi * n^2)                          isotropic in-water radiance, out through n
+ *
+ * Result (0.2353, 0.3522, 0.3166): hue 162 deg, i.e. green, against the round-14 value's 160 deg but
+ * 10x its level.  Cross-check on the derivation, not on the metric: A_up comes out (0.150, 0.180,
+ * 0.112) and the Phase 5 material's own hand-set diffuse murk albedo is (0.165, 0.170, 0.1025) -
+ * the same quantity to within 10 %, reached independently.
+ *
+ * `?watermurk=0.020,0.035,0.030` restores the round-14 / WIP value exactly; `?watermurkgain=k`
+ * scales the derived one for an A/B without changing its hue.
+ */
+export const MURK_INPUTS = {
+	volumeDensity: 0.7,
+	scatterColour: [ 0.205, 0.250, 0.195 ],      // WATER_VOLUME "Color"
+	absorptionColour: [ 0.70, 0.80, 0.68 ],      // WATER_VOLUME "Absorption Color"
+	anisotropy: 0.3,                             // WATER_VOLUME "Anisotropy" (Henyey-Greenstein g)
+	depth_m: 1.5,                                // docs/reference_sheet.md
+	bottomAlbedo: [ 0.12, 0.10, 0.06 ],          // docs/reference_sheet.md, the muddy bed
+	skyIrradiance: [ 3.651, 7.626, 16.040 ],     // W/m^2, sky_camera_4096x2048.exr, upper hemisphere
+	sunIrradiance: [ 8.622, 5.236, 0.0 ],        // W/m^2 on the horizontal, manifest LIGHT_sun
+	skyTransmittance: 0.934,                     // Fresnel-averaged, diffuse sky into water
+	sunTransmittance: 0.544,                     // unpolarised Fresnel at 82.643 deg incidence
+	internalReflectance: 0.48,                   // diffuse upwelling reflected back down at the surface
+	ior: 1.333,
+};
+
+/** @returns {number[]} the emergent upwelling radiance (scene-linear RGB); see MURK_INPUTS. */
+export function derivedMurk( i = MURK_INPUTS ) {
+	const g = i.anisotropy;
+	const B = ( 1 - g ) / ( 2 * g ) * ( ( 1 + g ) / Math.sqrt( 1 + g * g ) - 1 );
+	const n2 = i.ior * i.ior, d = i.depth_m;
+	return [ 0, 1, 2 ].map( ( c ) => {
+		const sa = i.volumeDensity * ( 1 - i.absorptionColour[ c ] );
+		const ss = i.volumeDensity * i.scatterColour[ c ];
+		const bb = ss * B, k = sa + bb;
+		const rCol = bb / k * ( 1 - Math.exp( - 2 * k * d ) );
+		const rBot = i.bottomAlbedo[ c ] * Math.exp( - 2 * sa * d );
+		const aUp = rCol + rBot;
+		const eIn = i.skyTransmittance * i.skyIrradiance[ c ] + i.sunTransmittance * i.sunIrradiance[ c ];
+		return aUp * eIn / ( 1 - i.internalReflectance * aUp ) / ( Math.PI * n2 );
+	} );
+}
+
 const WaterShader = {
 	uniforms: {
 		color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
