@@ -95,6 +95,19 @@ def main(out_dir, g3_dir, g3_out=None):
     packed_attr = {cls: {k for m in d.get("meshes", []) for pr in m["primitives"] for k in pr["attributes"]}
                    for cls, d in packed.items()}
 
+    # Review r3 finding 1: the values come out of `<cls>.gltf` and the presence out of `<cls>.glb`, so a glb
+    # older than its glTF would be validated against a file it was not packed from. Same pin as verify_glb.
+    for cls in CLASSES:
+        gp = out / f"{cls}.glb"
+        if not gp.exists():
+            continue
+        for src_name in (f"{cls}.gltf", f"{cls}_ktx2.gltf"):
+            sp = out / src_name
+            if sp.exists() and sp.stat().st_mtime > gp.stat().st_mtime + 1.0:
+                fail.append(f"{cls}: {src_name} is newer than {cls}.glb - this check reads the attributes out "
+                            f"of the glTF and their presence out of the glb, and they are not the same run. "
+                            f"Re-run export/gltf_pack.sh --gate1.")
+
     # Review finding 2: both hand-off files come from the SAME directory the encoder read, and a missing one
     # says so instead of raising FileNotFoundError out of np.load three frames deep.
     missing = [n for n in ("lightmap_uv2.npz", "vertex_irradiance.npz") if not (g3 / n).exists()]

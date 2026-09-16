@@ -390,8 +390,23 @@ def main():
     # feeds it, and that pass is shaped entirely by scene.world.mist_settings. export/read_mist.py reads them
     # out of master_delivery.blend (read-only, no render) into out/gate3/mist_settings.json; this copies them
     # in so the viewer has the haze ramp's real start and depth instead of a zero.
-    mp = g3.OUT / "mist_settings.json"
-    if mp.exists():
+    # Review r3 finding 2: export/out/ is gitignored, so a local-only lookup would silently drop
+    # `compositor.mist` after the merge (the viewer would keep the 0.0 haze and nothing would say so).
+    # Same local-then-MAIN resolution as the relay json above, and it says so when neither exists.
+    mp = next((q for q in (g3.OUT / "mist_settings.json",
+                           g3.MAIN_ROOT / "export" / "out" / "gate3" / "mist_settings.json") if q.exists()),
+              None)
+    if mp is None:
+        print("[gate3] WARNING: no mist_settings.json in out/gate3 or MAIN's - compositor.mist is null and "
+              "the viewer has no haze ramp. Run: scripts/blender_run.sh 600 -- --background "
+              "master_delivery.blend --python export/read_mist.py", file=sys.stderr)
+        cb = man.get("compositor")
+        man["compositor"] = dict(cb if isinstance(cb, dict) else {}, mist=None,
+                                 mist_missing="mist_settings.json not found in out/gate3 or MAIN's; run "
+                                              "export/read_mist.py. COMP_golden_hour's own `Mist` group "
+                                              "input is a disconnected socket's 0.0 default, not the value "
+                                              "the render used.")
+    else:
         mj = json.loads(mp.read_text())
         assert mj.get("schema") == "pfa-phase6/gate3-mist/1", f"mist schema {mj.get('schema')!r}"
         comp_block = man.get("compositor")

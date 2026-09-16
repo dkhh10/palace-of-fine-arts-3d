@@ -1351,3 +1351,19 @@ export/sync_main.sh
     2000.0 m, `falloff` LINEAR, `height` 0.0, `intensity` 0.0**, view layer `use_pass_mist` **true**, scene
     unit scale 1.0. So `mist = clamp((dist − 20) / 2000, 0, 1)` along the view ray, in metres, no height
     falloff and no floor — a ramp that only reaches 1.0 at 2 020 m, which is why the haze reads as gentle.
+28. **Review r3 fixes (docs/reviews/phase6_export_gate3_r3_review.md, both "fix now").**
+    (1) A glb is now **pinned to the glTF it is checked against**. Both checks read the Gate 3 attributes out
+    of `<cls>.gltf` and their presence out of `<cls>.glb`, so a glb older than its source describes a file it
+    was never packed from — and neither check would catch it, because `verify_glb` compares triangle *counts*
+    and material *name sets*, never UV values or primitive→material order. `verify_glb.py` (class loop) and
+    `gate3_relay_check.py` (before the npz reads) now FAIL when `<cls>.gltf` or `<cls>_ktx2.gltf` is newer
+    than `<cls>.glb`, 1 s of slack for filesystem granularity. Verified: against the carried-over state they
+    reported arch/orn/ground stale (14:48:10 glTF vs 14:15:49 glb).
+    Then `export/gltf_pack.sh --gate1` re-packed all four from this run's glTFs (no Blender; toktx re-encoded
+    all 85 KTX2 in 203 s, which is why the env-only shortcut was taken the round before). **All four glbs came
+    back byte-identical** — arch 4 613 040, orn 154 253 424, env 36 945 984, ground 1 959 104 — which also
+    proves after the fact that the carried-over glbs were the right ones. No class glb is carried any more.
+    (2) `manifest_v4.py` resolves `mist_settings.json` **local-then-MAIN**, the same `next(...)` the relay json
+    uses, because `export/out/` is gitignored and a local-only lookup would have dropped `compositor.mist`
+    silently after the merge. When neither exists it prints a WARNING naming the `read_mist.py` command and
+    records `compositor.mist = null` with `mist_missing` saying why, instead of leaving the block absent.
