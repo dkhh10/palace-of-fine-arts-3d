@@ -24,7 +24,7 @@ import { makeStationCamera, stationMatrix, b2t, matrixMaxDiff } from './blenderC
 import { normaliseManifest, applyUv2RelayStatus, WATER_Z } from './manifest.js';
 import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
-import { makeWater } from './water.js';
+import { makeWater, reduceReflectionSet } from './water.js';
 import { makeWalk } from './walk.js';
 import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M } from './postChain.js';
 import { buildTestScene } from './testScene.js';
@@ -47,6 +47,7 @@ const CFG = {
 	// shrinks), and each breaks one cam01 acceptance box past 0.03x.  See web/README.md.
 	bloomRes: ( qs.get( 'bloomres' ) || 'full' ).toLowerCase(),   // full | half
 	reflRes: ( qs.get( 'reflres' ) || 'full' ).toLowerCase(),     // full | half
+	reflSet: ( qs.get( 'reflset' ) || 'orn' ).toLowerCase(),      // full | orn | both (item 6: cut the draw set)
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
@@ -196,7 +197,7 @@ async function fetchBuffer( url ) {
 
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
-let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null;
+let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -547,6 +548,16 @@ async function boot() {
 	} else if ( manifest.treesFar.length && ! impAvailable ) {
 		note( `${manifest.treesFar.length} far-tree quads suppressed (?billboards=0)` );
 	}
+
+	// Item 6: cut the Reflector's DRAW SET.  After every glb, the impostors and the probe pass, so
+	// the traversal sees the final scene.  The main camera is re-made per station, so applyStation
+	// enables every layer on it too.
+	// `orn` (the default) cuts the 436 ORN instances only.  `both` also cuts the backdrop city
+	// blocks - MEASURED and rejected at the hero: the backdrop IS inside the reflected frustum there,
+	// and removing it left the reflection reading sky (lum 1.227x, sat 0.527x, R-B +23.2 -> -17.6).
+	if ( water && CFG.reflSet !== 'full' ) reflectionSet = reduceReflectionSet( scene, water, camera,
+		{ note, orn: true, backdrop: CFG.reflSet === 'both' } );
+	else if ( water ) note( 'reflection draw set NOT reduced (?reflset=full): the Reflector traverses the whole scene' );
 
 	// first frame -------------------------------------------------------------------------------
 	renderFrame();
@@ -908,6 +919,7 @@ async function loadLUT() {
 function applyStation( n ) {
 	const st = stations.find( s => s.index === n ) || stations[ 0 ];
 	camera = makeStationCamera( st, camera.aspect || 16 / 9, camera );
+	camera.layers.enableAll();             // item 6: the reflection-excluded layer still draws here
 	currentStation = st;
 	userControlled = false;
 	if ( composer ) composer.passes[ 0 ].camera = camera;
@@ -1043,6 +1055,7 @@ window.__pfaInfo = () => ( {
 	chunking: chunkStats,
 	post: postState,
 	probeEnv: probeReport,
+	reflectionSet,
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
 		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
 		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },

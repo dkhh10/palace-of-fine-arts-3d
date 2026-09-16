@@ -131,3 +131,56 @@ export function makeWater( waterY, o = {} ) {
 	reflector.userData.tick = ( t ) => { u.time.value = t; };
 	return reflector;
 }
+
+
+/** Layer the reflection camera does NOT test; everything on it is excluded from the reflection. */
+export const REFLECT_EXCLUDE_LAYER = 2;
+
+/**
+ * Item 6: cut the Reflector's DRAW SET, not its resolution.
+ *
+ * The planar Reflector renders the whole scene a second time - measured at 6.3 ms (hero) and 8.6 ms
+ * (aerial), and it doubles the draw calls, 151 -> 301.  Halving its target recovered almost none of
+ * that, because the cost is the second scene TRAVERSAL and the submit, not the fill: at half
+ * resolution it still submitted all 314 draws.  Cutting what it traverses is the only lever that
+ * touches the real cost.
+ *
+ * three's Reflector clones the MAIN camera to make its reflection camera, so the clone inherits the
+ * main camera's layer mask.  This puts the excluded objects on their own layer, enables every layer
+ * on the main camera so they still draw normally, and restricts each reflection camera to layer 0.
+ *
+ * What is cut and why: the 436 ORN instances (sub-pixel in a reflection that `reflBlur` gathers over
+ * a disc, at hero distance) and the far backdrop city blocks (140-190 m away and behind the camera's
+ * own reflected frustum at the lagoon stations).  ARCH, the ground, the water-adjacent ENV, the
+ * impostors and the sky all stay.
+ *
+ * @returns {{excluded:number, orn:number, backdrop:number, kept:number}}
+ */
+export function reduceReflectionSet( scene, water, camera, { orn = true, backdrop = true, note = () => {} } = {} ) {
+	const out = { excluded: 0, orn: 0, backdrop: 0, kept: 0 };
+	if ( ! water || ! water.getReflectionCamera ) return out;
+	const rootOf = ( o ) => { let p = o; while ( p && ! /^WEB_glb_/.test( p.name || '' ) ) p = p.parent; return p ? p.name : ''; };
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		const mats = Array.isArray( o.material ) ? o.material : [ o.material ];
+		const name = mats.map( ( m ) => ( m && m.name ) || '' ).join( ' ' );
+		const isOrn = orn && /^WEB_glb_orn$/.test( rootOf( o ) );
+		const isBackdrop = backdrop && /MAT_EXP_ENVBD__MAT_backdrop_/.test( name );
+		if ( ! isOrn && ! isBackdrop ) { out.kept ++; return; }
+		o.layers.set( REFLECT_EXCLUDE_LAYER );        // off layer 0, so the reflection camera misses it
+		out.excluded ++;
+		if ( isOrn ) out.orn ++; else out.backdrop ++;
+	} );
+	if ( camera ) camera.layers.enableAll();          // the MAIN camera still draws everything
+
+	// Every reflection camera is a clone of a main camera, made lazily and cached per camera, so the
+	// restriction has to be applied to each one as it appears - a station change makes a new camera.
+	if ( ! water.userData.pfaReflectionLayersPatched ) {
+		water.userData.pfaReflectionLayersPatched = true;
+		const base = water.getReflectionCamera.bind( water );
+		water.getReflectionCamera = ( cam ) => { const c = base( cam ); c.layers.set( 0 ); return c; };
+	}
+	note( `reflection draw set reduced: ${out.excluded} mesh(es) excluded (${out.orn} ORN, ${out.backdrop} backdrop), `
+		+ `${out.kept} kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.` );
+	return out;
+}

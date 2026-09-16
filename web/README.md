@@ -363,6 +363,51 @@ so they need the lead's call): run `UnrealBloomPass` at half resolution, or drop
 1024x1024 target / update it every other frame. Either alone should bring stations 1-3 and 5-6 back
 under the boundary; station 4 already sits at 45.0 fps.
 
+### Item 6, second attempt: cutting the Reflector's DRAW SET (`?reflset=full|orn|both`)
+
+Halving resolutions bought ~4 ms of the ~12 needed, because the Reflector's cost is the second scene
+TRAVERSAL and submit, not the fill. So the draw set was cut instead, by layer: excluded meshes go on
+layer 2, the main camera enables every layer, and each reflection camera (three clones it from the
+main one) is restricted to layer 0.
+
+* **`both` — excluding the backdrop as well — was MEASURED AND REJECTED.** The far backdrop IS inside
+  the reflected frustum at the hero, and removing it left the reflection reading sky:
+  lum **1.227x**, std 1.143x, sat **0.527x**, R-B **+23.2 → −17.6**. Nowhere near the 0.03x gate.
+* **`orn` (the default) passes.** 36 meshes excluded, 129 kept. Water reflection box against the
+  full set: lum 0.997x, std 1.008x, sat 0.992x, R-B 0.979x — **all four within 0.03x**.
+* **But it does not reach 45 fps**, and the reason is worth recording: the 436 ORN instances are
+  already batched into ~36 draw calls, so cutting them removes 35 of 314 draws (11 %) and about 2 ms.
+
+| station | full set | `reflset=orn` | target |
+|---|---|---|---|
+| 1 | 29.5 ms | **27.3 ms** | < 22.2 |
+| 2 | 30.0 ms | 29.4 ms | |
+| 3 | 31.1 ms | 32.1 ms | |
+| 4 | 22.2 ms | **22.0 ms** | met |
+| 5 | 29.6 ms | 29.8 ms | |
+| 6 | 32.2 ms | 32.7 ms | |
+
+**What remains.** From the attribution table above: water off alone is 25.7 ms at station 1, still over
+the target; water AND bloom off is 17.3 ms. **So 45 fps at 1440p with the Gate 4 look is not reachable
+without dropping both the planar Reflector and bloom** — it is a look-versus-framerate decision, not an
+optimisation. Stopped here per the lead.
+
+### The open lead on QA-12b-1: the probe as the SPECULAR environment (`?probespec=1`, default OFF)
+
+The hypothesis is that Cycles' shaded stone receives a glossy reflection of the warm sunlit
+surroundings, which a sky-only glossy PMREM cannot give. Swapping the hero probe's glossy branch in as
+the specular `envMap` of the 77 baked materials:
+
+* **it works, directionally**: building pixels with G > R fall **21.7 % → 17.2 %** at cam02 and
+  19.4 % → 18.8 % at cam06; sampled pixels move warmer (cam02 (982,149) 143/147/125 → 139/142/116,
+  (1310,766) 66/66/50 → 62/61/42);
+* **but the cam01 boxes move far past 0.03x**: jamb sat **1.462x**, shaded attic sat 1.299x, jamb R-B
+  1.295x, shaded attic R-B 1.225x, columns sat 1.210x, jamb lum 0.816x;
+* **and the direction is mixed**: shaded attic R-B goes 0.84x → 1.03x of Cycles (better), jamb R-B
+  1.05x → 1.36x (worse). It overshoots where it was already close.
+
+Not shipped. The switch stays, and this is the standing lead on the olive cast.
+
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
   reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is
