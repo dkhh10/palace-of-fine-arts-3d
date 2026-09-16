@@ -92,7 +92,9 @@ export function dequantizeUvs( root, opts = {} ) {
 		report.meshes ++;
 		const mats = Array.isArray( o.material ) ? o.material : [ o.material ];
 		const xf = mats.map( ( m ) => m && m.userData.pfaUvXf ).find( Boolean ) || null;
-		if ( ! xf ) { report.skipped ++; return; }
+		// Idempotent: the recorded transform survives on the material, so without this a second call
+		// would scale an already-dequantised attribute a second time.
+		if ( ! xf || o.geometry.userData.pfaUvDequantized ) { report.skipped ++; return; }
 		if ( Math.abs( xf.rotation ) > EPS ) report.rotated ++;
 		if ( ! doneGeo.has( o.geometry.uuid ) ) {
 			doneGeo.add( o.geometry.uuid );

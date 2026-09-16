@@ -79,17 +79,25 @@ check( !! g3, 'the v4 `lightmaps` object is parsed (an array-only parser throws 
 check( m.glbs.length === 4, `${m.glbs.length} glb(s) (4 expected: a v4 regression here means the test scene)` );
 check( Math.abs( g3.scale - Math.PI ) < 1e-9, `lightmap scale ${g3.scale} == pi` );
 const own = Object.values( g3.ownMaps );
-// 16 own-map assets; 7 were re-unwrapped at Gate 3, 2 of those have a frozen-layout twin to fall
-// back on, so 11 are usable today and 5 are blocked until the export re-exports their UV2.
-check( own.length === 16 && g3.ownCount === 11, `${g3.ownCount}/${own.length} own map(s) resolved to a texture (11 usable, 5 blocked on the UV2 re-export)` );
+// 16 own-map assets.  How many are USABLE depends on how much UV2 the export has re-packed, so the
+// counts are derived from the manifest rather than frozen: what the test pins is that the two sides
+// always add up and that a blocked asset states a reason.  (They were 11 usable / 5 blocked before
+// the -kv re-pack, 16 / 0 after it.)
+const usable = own.filter( a => a.url ).length;
+check( own.length === 16 && g3.ownCount === usable, `${g3.ownCount}/${own.length} own map(s) resolved to a texture (${usable} usable)` );
 check( own.filter( a => a.url ).every( a => a.encode === 'gamma2' || a.encode === 'rgbm8' ), 'every resolved own map declares a known encode' );
 check( own.filter( a => a.url ).every( a => typeof a.range === 'number' && a.range > 0 ), 'every resolved own map carries its own range' );
-check( own.filter( a => a.blocked ).length === 5, `${own.filter( a => a.blocked ).length} asset(s) blocked with a stated reason (5 expected)` );
-check( own.filter( a => a.layout === 'gate1_frozen' && a.url ).length === g3.frozenUsed && g3.frozenUsed === 2,
-	`${g3.frozenUsed} asset(s) fall back to the frozen Gate 1 layout (2 expected)` );
+check( own.filter( a => a.blocked ).length === own.length - usable
+	&& own.filter( a => ! a.url ).every( a => !! a.blocked ),
+	`${own.filter( a => a.blocked ).length} asset(s) blocked, each with a stated reason (= ${own.length} - ${usable})` );
+check( own.filter( a => a.layout === 'gate1_frozen' && a.url ).length === g3.frozenUsed,
+	`${g3.frozenUsed} asset(s) fall back to the frozen Gate 1 layout (the counter agrees with the list)` );
 const relaid = ( raw.lightmaps.uv2_relaid || [] ).length;
-check( Object.values( g3.ownMaps ).filter( a => ! a.uv2InGlb ).length === relaid && relaid === 7,
-	`${relaid} asset(s) ship uv2_in_glb false (the export re-export)` );
+// An asset whose flag is false must be one of the re-laid ones: the re-export can only ever flip
+// those.  The count itself moves with the export, so it is reported, not pinned.
+const flagFalse = Object.values( g3.ownMaps ).filter( a => ! a.uv2InGlb );
+check( relaid === 7 && flagFalse.every( a => a.relaid ),
+	`${relaid} re-laid asset(s); ${flagFalse.length} still ship uv2_in_glb false, all of them re-laid` );
 check( g3.slotCount === 988, `${g3.slotCount} per-instance slot(s) (988 expected)` );
 check( g3.slotsNoAtlas === 0, `${g3.slotsNoAtlas} slot(s) whose atlas is missing (0 expected)` );
 check( Object.keys( g3.atlases ).length === 5 && Object.values( g3.atlases ).every( a => a.url ),
@@ -112,8 +120,10 @@ check( g3.vertexIrradiance && g3.vertexIrradiance.inGlb === false, 'vertex irrad
 		check( st.applied === 7, `${st.applied} re-laid asset(s) checked against the packed glbs (7 expected)` );
 		check( m2.gate3.ownCount >= before, `own maps usable ${before} -> ${m2.gate3.ownCount} after the relay status` );
 		const relaidNow = Object.values( m2.gate3.ownMaps ).filter( a => a.layout === 'gate3_relaid' && a.url );
-		check( relaidNow.length === st.flipped.length,
-			`${relaidNow.length} asset(s) now take the Gate 3 re-laid map, matching the ${st.flipped.length} flag(s) flipped` );
+		// Every re-laid asset the glbs really carry must end on its OWN Gate 3 map; `flipped` counts
+		// only the ones the relay had to correct, which is 0 once the manifest already says true.
+		check( relaidNow.length >= st.flipped.length && relaidNow.length === st.applied,
+			`${relaidNow.length} asset(s) take the Gate 3 re-laid map (${st.flipped.length} flag(s) needed flipping)` );
 		check( relaidNow.every( a => ! /lmg1/.test( a.textureKey || '' ) ),
 			'a re-laid asset takes its own Gate 3 map, never the frozen lmg1 twin' );
 	} else console.log( 'SKIP  uv2_relay_status.json not on disk yet' );
@@ -167,11 +177,11 @@ const rep = applyGate3Lightmaps( {
 	loadTexture: async ( url ) => { const t = new THREE.Texture(); t.name = url.split( '/' ).pop(); return t; },
 } );
 await rep.promise;
-check( rep.own.matched === 11 && rep.own.applied === 11, `own maps: ${rep.own.matched} matched, ${rep.own.applied} applied (11/11 usable)` );
+check( rep.own.matched === usable && rep.own.applied === usable, `own maps: ${rep.own.matched} matched, ${rep.own.applied} applied (${usable} usable)` );
 check( rep.own.maxMatchError_m < 1e-6, `own-map position join exact (max ${rep.own.maxMatchError_m.toExponential( 2 )} m)` );
 check( rep.slots.matched === 988 && rep.slots.unmatched === 0, `slots: ${rep.slots.matched} matched, ${rep.slots.unmatched} unmatched (988/0)` );
 check( rep.slots.applied === 988, `slots applied to ${rep.slots.applied} instance(s)` );
-check( rep.materialsCloned === 11 + byMesh.size - 1,
+check( rep.materialsCloned === usable + byMesh.size - 1,
 	`${rep.materialsCloned} material clone(s): one material cannot carry two different lightmap plans` );
 const straddling = rep.slots.meshes.filter( x => x.atlases.length > 1 );
 check( straddling.length === 3, `${straddling.length} mesh(es) straddle two slot atlases (3 expected: astragals, rotunda columns, ORN drum band)` );
@@ -194,8 +204,8 @@ check( !! im0 && im0.geometry.attributes.pfaSlot.isInstancedBufferAttribute
 	const r2 = applyGate3Lightmaps( { scene: s2, gate3: g3, assets: raw.assets, note: ( s ) => n2.push( s ),
 		loadTexture: async () => new THREE.Texture() } );
 	await r2.promise;
-	check( r2.own.matched === 11 && r2.own.applied === 0 && r2.own.noUv2Attribute === 11,
-		`a glb without TEXCOORD_1 applies 0 map(s) and reports all 11 (got ${r2.own.applied} applied, ${r2.own.noUv2Attribute} reported)` );
+	check( r2.own.matched === usable && r2.own.applied === 0 && r2.own.noUv2Attribute === usable,
+		`a glb without TEXCOORD_1 applies 0 map(s) and reports all ${usable} (got ${r2.own.applied} applied, ${r2.own.noUv2Attribute} reported)` );
 	check( n2.some( s => /NO TEXCOORD_1/.test( s ) ), 'and says so in the notes' );
 }
 
