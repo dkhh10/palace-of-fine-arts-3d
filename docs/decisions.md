@@ -506,3 +506,11 @@ The Gate 4 frame-rate entry said the default ships "everything on" while the vie
 Authorised: it was measured within 0.03x on all four hero reflection boxes (the acceptance the frame-rate entry set for any lever) and saves ~2 ms; the backdrop stays in the
 reflection. The r7 review's two fix-now items (far-water uv leaving [0,1] under the grazing factor; the WIP water on by default before the tile is judged) go to the viewer
 engineer inside item 1; the default is decided by the lead after the 100 % open-water tile.
+
+## 2026-09-16 · Water tile judged (lead, session 4): the derived murk stays, the ripple must be 5-8x finer, the reflection's warm drain is reflSat
+Viewer 58fa59e: murk derived from MAT_water_lagoon's volume (σ_a, σ_s, g, 1.5 m, bed 0.12/0.10/0.06) gives an upwelling albedo (0.150,0.180,0.112) within 10 % of the Phase 5
+hand-set WATER_MURK; open-water lum 68.0 -> 87.3 (ref 118), the body term is now right and the residual is the reflection (0.45x in red). The 100 % open-water composite
+(renders/web/960/qa14_1_openwater_100pct.png): the viewer's water is a warped mirror with 40-80 px waves, contour banding from an 8-bit normal map times a large displacement,
+olive reflected stone, and featureless open water beside the reflection; the Cycles frame has 5-10 px crests everywhere breaking gold into short streaks. Decision: the new
+water is the default (settles the r7 review's fix-now 2); one more bounded pass — ripple frequency 5-8x finer with the displacement scaled down (2-5 cm ripples, 0.3-1 m streaks
+in metres), procedural or 16-bit normal, reflSat 0.66 tested at 1 before any other cause of the red deficit — then items 2-5 and the round-15 capture regardless.
