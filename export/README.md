@@ -816,3 +816,370 @@ set was added. So the GPU returns linear after its sRGB decode and `mean_linear`
 `ratio = albedo_sampled / mean_linear` is correct as published, with no 45 % term. `mean_linear` and `std_linear`
 are measured on the linear array before the sRGB encode, and `file_mean` / `file_std` are read back from the
 written file.
+
+---
+
+## Running Gate 3 (the lightmap bake, branch `phase6-bake`)
+
+```sh
+scripts/blender_run.sh 1200 -- --background --python export/gate3_probe.py    # read-only inventory -> out/gate3/probe.json
+scripts/blender_run.sh 1800 -- --background --python export/gate3_set.py      # gate3_bake.blend + gate3_imp.blend + bake_jobs.json
+export/bake_queue.sh --gate3 start                                            # detached: one Blender per job, 1800 s each
+export/gate3_pack.sh                                                          # KTX2 (lossless RGBM8 + gamma-2 UASTC) + .hdr
+python3 export/manifest_v4.py                                                 # manifest v4, schema pfa-phase6/4
+export/sync_main.sh                                                           # copy out/ to the MAIN checkout (no --delete)
+```
+
+| file | what it writes |
+|---|---|
+| `export/gate3_common.py` | Gate 3 constants (sizes, spp, slot geometry, the two encodings) + numpy PNG/EXR IO that never goes through `Image.save()` |
+| `export/gate3_probe.py` | `out/gate3/probe.json` — read-only: per-asset UV2 coverage and cm/texel, the 988 slot instances, the vertex-bake candidates, the 25 far-tree prototypes |
+| `export/gate3_set.py` | `out/gate3/gate3_bake.blend` (scene + final Cycles rig, UV2 re-laid where it had to be), `gate3_imp.blend` (the 25 tree prototypes alone), `bake_jobs.json`, `lightmap_uv2.npz` |
+| `export/bake_lm.py --job <id>` | one job: an own map, a slot batch, a vertex-colour batch, an impostor prototype, the probe, or the diffuse equirect |
+| `export/bake_queue.sh --gate3` | the same detached queue, `out/bake_queue/status.json`, resume, the GPU rule with the own-pid exemption |
+| `export/gate3_pack.sh` | `out/gate3/tex_ktx2/*.ktx2` (both encodings) and `out/gate3/probe/*.hdr` |
+| `export/manifest_v4.py` | `out/gate3/manifest.json`, schema `pfa-phase6/4` |
+
+## manifest.json v4 — the contract with the viewer at Gate 3
+
+`export/out/gate3/manifest.json`, `schema` = `"pfa-phase6/4"`, `gate` = `"gate3"`. **Everything in v3 still holds** and is
+carried with its paths rewritten to `../gate2/<file>` / `../gate1/<file>` / `../gate0/<file>`: `units`, `water`, `view`,
+`sun`, `stations`, `hero_camera`, `lut`, `sky`, `compositor`, `reference`, `lightmap_scale`, `lightmap_encoding`,
+`assets`, `meshes`, `instancing`, `totals`, `orn_slots`, `tree_rule` / `tree_near` / `tree_far`, `glb`, `materials`,
+`textures` (including `textures.gate2`), `budget`, `colour_source`.
+
+Three keys are new (`lightmaps`, `impostors`, `probe`), `sky` gains one entry, `textures` gains `textures.gate3`, and
+`budget` is recomputed. Nothing in v3 is renamed or removed.
+
+**Every value below is copied out of a real `export/out/gate3/manifest.json` entry** (code review Gate 3, finding 12:
+this section had drifted from the writer in five places). `export/manifest_v4.py` is the only thing that fills these
+blocks and the file it writes is authoritative; where the two ever disagree again, the file wins.
+
+### The one rule that governs every lightmap in this file
+
+```
+irradiance = decode(texel) * lightmap_scale        // lightmap_scale = pi, unchanged since Gate 0
+```
+
+with `decode` chosen by the texture's own `encode` field, never guessed:
+
+| `encode` | decode | channels | why it exists |
+|---|---|---|---|
+| `"rgbm8"` | `rgb = t.rgb * t.a * range` | RGBA, **lossless KTX2 only** (`--zcmp`, no Basis) | exact; the M channel cannot survive block compression (a one-step error in M scales all three channels) |
+| `"gamma2"` | `rgb = t.rgb * t.rgb * range` | RGB, UASTC → ASTC 4×4 | block-compressible, 4× less resident; the Gate 0 carry ("a gamma-2 encode of the RGB part would roughly halve the 4.8 % RGBM error") |
+
+Every lightmap entry carries **both** variants and a `default` naming the one the budget can afford. `range` is
+per texture, a power of two at or above the map's own measured max, and is **not** assumed to be 64.
+`colorSpace = NoColorSpace` on every lightmap texture, in both variants. The sun `DirectionalLight` stays
+**specular-only** and no shadow map is drawn: the diffuse sun, the sky and every bounce are inside these maps.
+
+### `lightmaps` — new
+
+```jsonc
+"lightmaps": {
+  "mode": "baked",
+  "uv": "TEXCOORD_1",
+  "scale": 3.14159265358979,                 // == lightmap_scale
+  "bake": { "engine": "CYCLES", "type": "DIFFUSE", "direct": true, "indirect": true,
+            "color": false, "samples": 128, "denoiser": "OPENIMAGEDENOISE",
+            "rig": "light_presets.apply_final_cycles (Eevee-only rigs asserted off)" },
+
+  "assets": {                                // the own-map assets, keyed by the glb OBJECT name
+    "<object>": {
+      "size": 2048,
+      "textures": { "rgbm8": "<key into textures.gate3.files>", "gamma2": "<key>" },
+      "default": "gamma2",
+      "range": 29.085427,                    // the map's OWN max, per map: measured 0.72 (rotunda plaster
+                                             // ceiling) to 52.83 (the orn slot atlas 0). Never assume 64.
+      "uv2_in_glb": true,                    // FALSE means the glb's UV2 is stale: see "Re-laid UV2" below
+      "uv2_source": "gate1" | "gate3_relaid",
+      "uv2_coverage": 0.4912, "cm_per_texel": 5.31,
+      "exr": "tex/gate3_lm_<object>.exr",
+      "stats": { "min": 0.0, "max": 51.77, "mean": 5.77, "mean_nonzero": 7.83, "p99": 33.30,
+                 "clipped_px_vs_range": 0, "clipped_pct_vs_range": 0.0 },
+      "roundtrip": { "rgbm8_abs_max": 0.0, "rgbm8_rel_p99": 0.0,
+                     "gamma2_abs_max": 0.0, "gamma2_rel_p99": 0.0 }   // both measured on the file read back from disk
+    }
+  },
+
+  "slots": {                                 // the 988 per-instance slots, option (c)
+    "atlases": {
+      "<atlas key>": { "pool": "orn" | "arch_inst", "atlas": 0, "atlas_px": 4096,
+                       "slot_px": 256, "gutter_px": 8, "usable_px": 248,
+                       "slots_used": 256, "textures": { "rgbm8": "<key>", "gamma2": "<key>" },
+                       "default": "gamma2", "range": 52.832478, "stats": {...}, "exr": "..." }
+    },
+    "note": "the per-instance uv2_offset / uv2_scale are `orn_slots` (unchanged since v2, derived from export/gate1_common.slot_uv); this block only names which atlas texture each pool+atlas index is."
+  },
+
+  "vertex_irradiance": {                     // the near trees: no UV2 that could carry a lightmap
+    "encode": "none", "dtype": "float32", "shape": "(n_verts, 3)",
+    "units": "scene-linear irradiance / pi (x lightmaps.scale = pi)",
+    "attribute": "COLOR_0", "in_glb": false,
+    "npz": "vertex_irradiance.npz",          // float32 (n_verts, 3) per MESH name, NOT encoded: the baked
+    "bytes": 803100,                         // values themselves, same units as a DECODED lightmap texel.
+    "meshes_n": 14, "verts": 347840,         // How COLOR_0 is quantised in the glb is the exporter's call,
+                                             // made on these numbers.
+    "glb_encode": "gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
+    "glb_decode": "v = COLOR_0 * COLOR_0 * meshes[<mesh>].range, then irradiance = v * lightmaps.scale (pi) - exactly as a gamma2 lightmap texel. `range` is PER MESH; glTF multiplies COLOR_0 into base colour by default, so these 14 meshes must consume it as irradiance, not as a tint.",
+    "meshes": { "<glb mesh>": { "verts": 17996, "min": 0.0, "max": 0.469, "mean": 0.000009,
+                                "mean_nonzero": 0.00472, "p99": 0.0,
+                                "roundtrip": { "abs_max": 0.0, "rel_p99": 0.0, "rel_mean": 0.0 },
+                                "range": 0.5, "encoding": "gamma2",   // <- copied from uv2_relay_status.json
+                                "mean_linear": 0.0, "roundtrip_rel_p99": 0.0 } },
+    "note": "`in_glb: false` until the export engineer re-exports env.glb with COLOR_0. Until then the viewer keeps the near trees on the PMREM path and must use `sky.diffuse` for their irradiance, not `sky.glossy` (QA-12b-1)."
+  }
+}
+```
+
+**Re-laid UV2 (`uv2_in_glb: false`), the one thing the viewer cannot do alone.** Gate 1's UV2 on the merged ARCH and
+ENV masses is margin-dominated: measured on `gate1_set.blend`, the south colonnade merged mass packs **0.0095** of its
+2K map (median triangle 0.21 px across, i.e. sub-texel), the rotunda ochre mass 0.0133, the riprap 0.0023. A lightmap
+baked on that layout is 32–69 cm per texel and cannot carry a shadow edge. Gate 3 therefore re-unwraps UV2 for the
+assets below `lightmaps.uv2_relay_threshold` **in its own bake blend**, bakes against the new layout, and writes the
+new loop UVs to `out/gate3/lightmap_uv2.npz` (one float32 `(n_loops, 2)` array per Gate 1 MESH name) so the export
+engineer can apply the identical layout and re-export. This is the same hand-off shape as Gate 2's
+`backdrop_uv1.npz`. **Until that re-export the viewer must honour `uv2_in_glb: false` and not apply those maps** —
+there is no factor fallback for a lightmap; the object stays on its Gate 2 material with no lightMap.
+
+**Who sets `uv2_in_glb`.** Not this writer. The export engineer applies the npz, re-packs, and writes
+`out/gate3/uv2_relay_status.json` (`pfa-phase6/gate3-relay/1`); `manifest_v4.py` reads that file — from the worktree
+or from MAIN — and takes every flag from it, leaving them **false** while the file is absent. Three consumers:
+`lightmaps.assets[*].uv2_in_glb` (the own maps, by MESH name), `lightmaps.slots.uv2_in_glb` (the 988 per-instance
+slots are addressed by the ORN meshes' own TEXCOORD_1, so they are unusable until `orn.glb` is packed with `-kv`),
+and `lightmaps.vertex_irradiance.in_glb`. The two `lmg1_*` diagnostics take the **inverse** of the relay's flag for
+their mesh: they are baked on the frozen Gate 1 layout and are usable only while the glb still carries it.
+`lightmaps.uv2_relay_status` in the manifest reports the file's schema, the per-glb TEXCOORD_1 counts and the
+gltfpack flags, so a reader can see why a flag is what it is. Background (docs/decisions.md 2026-09-16): gltfpack had
+been stripping TEXCOORD_1 from every glb since Gate 1, so Gate 1's own `uv2_in_glb: true` was never true.
+
+### `impostors` — new
+
+```jsonc
+"impostors": {
+  "mapping": "octahedral",                   // FULL octahedron, not hemi
+  "grid": 12, "frame_px": 170, "inner_px": 162, "gutter_px": 4, "atlas_px": 2048,
+  "shipped_px": 1024,                        // the atlas actually referenced; the 2K variant is on disk
+  "encode": { "albedo": "gamma2 on RGB at the prototype's own `range` (rgb = t.rgb*t.rgb*range, LINEAR oetf, NOT sRGB), straight alpha in A",
+              "normal_depth": "rgb = world normal * 0.5 + 0.5 (Blender Z-up); A is depth about the BILLBOARD CENTRE, a = 0.5 there: depth_from_centre_m = (a - 0.5) * depth_range_m, positive away from the camera. The bake-time camera stand-off is not exported and is not needed.",
+              "normal_depth_note": "block compressed (UASTC -> ASTC 4x4) on purpose while `unlit` holds and nothing samples the normal or the depth; repack lossless (+3.0 MB resident per prototype at 1K, +48.0 over the 16) the day the viewer shades or soft-depth-tests it" },
+  "lighting": "baked: Cycles Combined at the final rig, sun + sky + leaf translucency, film_transparent",
+  "frame_lookup": "d = normalize(camera_pos - billboard_pos) in BLENDER Z-up (the viewer converts its own three.js dir back with (x, -z, y)); n = d / (|d.x|+|d.y|+|d.z|); if n.z >= 0 { u = n.x; v = n.y } else { u = (1-|n.y|)*sign(n.x); v = (1-|n.x|)*sign(n.y) }; uv01 = (u,v)*0.5+0.5; col = round(uv01.x*(grid-1)); row = round(uv01.y*(grid-1))",
+  "frame_uv": "u = (col*frame_px + gutter_px + f.x*inner_px) / atlas_px, v likewise with row; clamp f to [0,1] and inset by half a texel",
+  "instance_rotation": "IGNORED on purpose: the lighting is baked in world space, so the frame is picked from the world-space view direction and the instance's own Z rotation is not applied. Two instances of one prototype therefore differ by scale, not silhouette.",
+  "prototypes": {
+    "<prototype>": { "albedo": "<key into textures.gate3.files>", "normal_depth": "<key>",
+                     "albedo_2k": "<key>", "normal_depth_2k": "<key>",
+                     "range": 2.4210851,     // the gamma-2 range of THIS prototype's albedo
+                     "radius_m": 15.1491, "bbox_m": [16.7846, 20.7329, 14.367],
+                     "base_z_m": 0.0,        // bbox bottom in the prototype's own frame; -2.6748 on the willow
+                     "centre_z_m": 7.1835,   // billboard centre above the prototype's z = 0
+                     "height_above_base_m": 14.367,   // bbox_max.z - max(base_z_m, 0): the scale denominator
+                     "depth_range_m": 30.2983, "views": 144, "alpha_coverage": 0.1305,
+                     "render_s": 56.3, "s_per_view": 0.391, "bytes": 5176867,
+                     "roundtrip_albedo": { "abs_max": 42.59, "rel_p99": 0.02343, "rel_mean": 0.007219 } }
+  },
+  "placement": "s = tree_far[i].height_m / prototypes[p].height_above_base_m; the quad is a screen-facing square of side 2*radius_m*s centred at trunk_base + (0,0, centre_z_m*s). Both heights are measured from the prototype's OWN z = 0 - the plane trunk_base maps to - never from the bbox bottom.",
+  "prototype_map": { "<tree_far prototype, sometimes _LOD2>": "<the _LOD1 prototype actually baked>" },
+  "billboards": "join on `tree_far[i].prototype` through `prototype_map`; height_m and `placement` scale and place the quad"
+}
+```
+
+### `probe` — new
+
+```jsonc
+"probe": {
+  "kind": "cube", "faces": ["px","nx","py","ny","pz","nz"],   // three.js CubeTexture order, +X first
+  "size_px": 512, "rendered_px": 1024, "format": "rgbe .hdr (EXR kept on disk)",
+  "station": "CAM_qa_01_lagoon_hero",
+  "position_blender": [x, y, z],              // the hero station MIRRORED below the water plane: z = 2*water_z - cam_z
+  "position_gltf": [x, z, -y],
+  "axes": "faces are rendered in BLENDER world axes and named for the THREE.js axes after the (x, z, -y) swap; face `px` looks along three.js +X",
+  "samples": 64, "world_branch": "glossy",
+  "use": "fallback environment for the water plane and for anything the planar Reflector cannot reach; NOT the diffuse environment (see sky.diffuse)"
+}
+```
+
+### `sky.diffuse` — new entry in the existing `sky` block
+
+QA-12b-1 measured 16.0 % of the cam02 building pixels and 21.9 % of cam06's rendering with G > R (olive-green) against
+0.1 % in the Phase 5 Cycles hero, because the viewer's *diffuse* ambient came from the PMREM of the **glossy** branch.
+The world's diffuse branch is a different colour (it carries the warm sun-side / anti-sun / horizon tints). Gate 3
+exports it as a third equirect:
+
+```jsonc
+"sky": { "...v3 keys unchanged...": null,
+         "diffuse": { "hdr": "sky_diffuse_1024x512.hdr", "exr": "sky_diffuse_1024x512.exr",
+                      "w": 1024, "h": 512, "branch": "diffuse",
+                      "rotation_deg": 90.0, "u_offset": 0.25,
+                      "use": "PMREM source for IRRADIANCE only (scene.environment for diffuse). `sky.glossy` stays the PMREM source for specular and `sky.camera` the background sphere." } }
+```
+
+Everything a lightmap covers takes its diffuse from the lightmap, not from this. It applies to what has no lightmap:
+the near trees, the impostors, the foliage and the shrubs.
+
+### `textures.gate3` — the extension
+
+`textures` keeps every v2/v3 key unchanged and gains, with the same shape as `textures.gate2`:
+
+```jsonc
+"textures": {
+  "gate3": {
+    "ktx2_dir": "../gate3/tex_ktx2",
+    "encoders": { "rgbm8":  "toktx --t2 --zcmp 18 --genmipmap --assign_oetf linear   (lossless, RGBA8 resident)",
+                  "gamma2": "toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf linear",
+                  "impostor": "toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --assign_oetf LINEAR (NO mips: an octahedral atlas mips across frames). Both impostor maps go through this one encoder; `colorspace` is `linear` on both." },
+    "files": { "<key>": { "path": "<file>.ktx2", "w": 2048, "h": 2048, "map": "lightmap"|"impostor_albedo"|"impostor_normal_depth",
+                          "colorspace": "linear"|"srgb", "encode": "rgbm8"|"gamma2"|"uastc_astc4x4",
+                          "bytes": 0, "resident_mb": 0.0, "mips": true,
+                          "stats": { "min": [...], "max": [...], "mean": [...] } } },
+    "bytes": 0, "resident_mb": 0.0
+  }
+}
+```
+
+`resident_mb` uses the same rule as Gate 2 — ASTC 4×4 on the Apple GPU (`gamma2`, `uastc_astc4x4`) = 1 byte/texel,
+×4/3 for the mip chain — and **5.333 bytes/texel for an `rgbm8` (lossless, uncompressed RGBA8) variant**, which is why `default` is `gamma2`
+wherever the budget is tight. A texture shipped without mips counts ×1.0.
+
+## Gate 3 — what the bake found, and what it hands off
+
+Every number below is `python3 export/gate3_report.py`, printed from the records; nothing is typed by hand.
+65 jobs, 0 failures, 0 retries, queue wall 23 495 s (6 h 32 m) on one M2 GPU, plus a 764 s re-bake of the 16
+impostor atlases after the range fix below.
+
+**1. The blocker Gate 3 found: Gate 1's UV2 on the merged masses is margin-dominated.** Measured on
+`gate1_set.blend`: the south colonnade merged mass packs **0.0095** of its 2K map (median triangle **0.21 px**
+across — sub-texel), the rotunda ochre mass 0.0133, the riprap 0.0023, the site podium 0.0187, the ceiling rib
+0.0178. A lightmap on that layout is **32–69 cm per texel** and cannot carry a shadow edge. `gate3_set.py`
+re-unwraps UV2 for the seven assets under `UV2_RELAY_THRESHOLD` = 0.15 (smart project, island margin 0.0008),
+keeps the frozen layout beside it as the `UV2_gate1` layer, and writes `out/gate3/lightmap_uv2.npz` (one float32
+`(n_loops, 2)` array per Gate 1 MESH name) as the hand-off. Gain, cm/texel before → after: riprap 32.61 → 4.62,
+site podium 55.07 → 12.87, rotunda ochre 68.70 → 17.39, colonnade north 37.50 → 10.64, south 38.17 → 10.95,
+ceiling rib 18.11 → 5.15, colonnade walk 5.91 → 2.49. **Those seven ship `uv2_in_glb: false`** and the viewer
+must not apply them until `env.glb` / `arch.glb` / `ground.glb` are re-exported against the npz. Two of them
+were also baked on the frozen layout (`lmg1_*`, `uv2_in_glb: true`) so the viewer has something before the
+re-export: at 38.17 cm/texel the south colonnade map costs 28.7 s to bake and carries no contact shadow.
+
+**2. Occluders the export set does not contain, restored for the bake.** The Gate 1 set replaces the 127 far
+trees with billboard quads and the lagoon water with a viewer plane. A lightmap baked against a quad has no tree
+shadow where Phase 5 has one, and tree shadow is most of the per-instance variation QA-12-4 asks for
+(Phase 5's own shaft-to-shaft CV is 0.469/0.539, "overwhelmingly tree shadow"). `gate3_set.py` appends the 127
+real `source_tree` objects plus `ENV_lagoon_water` and `ENV_backdrop_bay` from `master_delivery.blend` and hides
+the 127 quads from the rays. The 33 EXPHI hi-poly twins are asserted `hide_render` in every job. The ORN
+instances carry the grey Gate 1 placeholder in `gate2_bake.blend`; `MAT_ornament_concrete` is relinked onto all
+33 so the bounce off 436 ornaments is ochre, not grey.
+
+**3. The terrain keeps a texture map, against the brief, on a measurement.** `ENV_terrain_ground` is
+514 896 m² with 22 450 vertices = **4.79 m per vertex**; its own UV2 packs 0.902, which at 4K is **18.44 cm per
+texel** — 26x finer than a `VERTEX_COLORS` bake could be. It ships as a 4K own map (849 s, the second longest
+job). The 20 near trees do take `VERTEX_COLORS` (0.07–0.19 m per vertex, finer than their leaf cards):
+14 meshes, 347 840 vertices, 803 kB npz (float32, **unencoded** since the review fix below),
+`in_glb: false` until `env.glb` carries COLOR_0.
+
+**4. Two surfaces come back almost black, and it is the geometry, not the bake.**
+`ARCH_rotunda_plaster_ceiling_merged` (756 m², 1 102 tris) has max **0.721** and 4.9 % non-zero texels;
+`ARCH_rotunda_drum_band_merged` max 26.6 with 5.7 % non-zero; `ENV_lagoon_bed` 3.5 % non-zero (it is under the
+water plane this bake restored — correct). These are merged masses whose area is mostly interior and backing
+faces the merge carried, so most of their UV2 is enclosed surface. **QA round 13 should look at the rotunda
+ceiling at cam04 specifically**: if the visible coffer field reads black there, the 1 102-triangle plaster shell
+is being drawn in front of the 160 828-triangle rib/coffer mesh rather than behind it, which is a Gate 1
+geometry question, not a lightmap one. `ENV_tree_broadleaf_06_LOD1` bakes to max 0.007 because it stands inside
+a backdrop city block (ray cast up from its crown hits `ENV_backdropgroup_backdrop_building` at z = 15.45 m) —
+the same is true of the Phase 5 renders, so the bake is faithful; it is an ENV placement defect, on record.
+
+**5. Encoding.** `export/gate3_encode.py` is the encoder and it is a separate pass over the archival EXRs, so
+`range` is each map's own maximum rather than the next power of two (that alone was worth up to a full stop:
+`ARCH_rotunda_column_tan_inner_merged` max 29.085 was being encoded at range 32, the atlases at 64). Error is
+reported in **stops** over the texels above 1 % of the map's own p99 — a relative error's 99th percentile is
+otherwise dominated by the invisible near-black tail, which read "16.7 stops" on the drum band before the floor
+was per-channel. Over all 23 maps: **gamma2 0.028–0.163 stops, rgbm8 0.009–0.058 stops, 0 clipped texels on
+every map.** gamma2 is the default (1 byte/texel against 4) and rgbm8 ships beside it for anything that needs
+exactness.
+
+**6. The impostor range is the crown's p99.9, not the atlas maximum.** Un-premultiplying the Cycles Combined
+pass with a 1e-4 alpha floor let a near-transparent leaf-card edge divide radiance by 10 000; the per-prototype
+range came out at 6–512 while the opaque crown sits at 0.25–5, and the 8-bit codes had a mean of **5/255**
+(32 % quantisation on the body). With a 0.02 alpha floor and `range = p99.9(alpha > 0.5) * 1.1` the ranges are
+**2.24–6.11** and the code means **61–97 of 255**, with 3–235 saturated texels per atlas (0.002–0.18 % of the
+crown). 16 prototypes, not 25: 46 of the 127 far trees were exported against an LOD2 blob and every impostor is
+baked from the LOD1 mesh, so the manifest carries `impostors.prototype_map`.
+
+**7. The probe must cull below the water plane.** The mirrored hero station is at z = −3.9, i.e. 2.6 m under the
+water it reflects. With the water surface and the lagoon bed left in, the +Y (up) face came back at mean
+**0.0003 / max 0.002** — black. Culling `ENV_lagoon_water`, `ENV_backdrop_bay`, `ENV_lagoon_bed` and every mesh
+whose bbox tops out at or below `water_z` gives the six faces means 0.38–4.66 and the building upside down in
+`pz`, which is what a planar reflection is.
+
+**8. `sky.diffuse`, for QA-12b-1.** The world's diffuse branch as a 1024x512 equirect (1.5 s, upper half mean
+5.736 against lower 0.060, so the top row is the zenith). Everything with a lightmap or a baked impostor takes
+no term from it; it is the irradiance environment for the near trees, the impostors, the foliage and the shrubs,
+and it replaces the glossy-branch PMREM that made 16–22 % of the cam02/cam06 building pixels read olive-green.
+
+**9. Resident, both accountings.** Gate 3 measured **250.60 MB** against its **459 MB** reservation
+(**−208.40**): lightmaps own 101.28, slot atlases 106.65, impostors 32.00 (16 x 2 atlases at 1K, no mips —
+an octahedral atlas mips across frames), probe cube 8.00, sky diffuse 2.67. Against this manifest's own carried
+rows the total is **1 055.17 MB**, 144.8 under the 1 200 MB line; against the viewer's *measured* texture
+residency at round 12b (953.5 MB) it is **1 204.10 MB**, 4.1 over. Levers still unspent, in order of value:
+the 2K impostor albedo is on disk (+50.3 MB, 170 px frames instead of 85), and the lossless rgbm8 variant of
+every lightmap is on disk (+623.8 MB, exact instead of 0.028–0.163 stops).
+
+### Review fixes applied (docs/reviews/phase6_bake_gate3_review.md, findings 1-5, plus carries 11 and 12)
+
+1. **The impostor placement datum.** `centre_above_base_m = centre.z - bbox_min.z` measured from the bbox bottom,
+   but `impostors.placement` adds it to `tree_far[i].trunk_base`, and `s = height_m / bbox_m[2]` divided by a height
+   that includes geometry below the trunk base. The datum is the prototype's **own z = 0** — in the impostor nursery
+   (x −600…−420, y ≈ −570) every prototype stands on the lawn plane at z = 0, and 14 of the 16 have `bbox_min.z`
+   exactly 0.0000. The two willows do not: `ENV_tree_willow_s37_LOD1` **−2.6748 m** and `ENV_tree_willow_s11_LOD1`
+   **−0.7183 m** (fronds hanging below the trunk, buried in the Phase 5 scene). The manifest now carries `base_z_m`,
+   `centre_z_m` and `height_above_base_m`, and `placement` is `s = height_m / height_above_base_m`, centre at
+   `trunk_base + (0,0, centre_z_m*s)`. Measured before → after, per unit of `tree_far.height_m`:
+
+   | prototype | scale denominator | centre above trunk base |
+   |---|---|---|
+   | `ENV_tree_willow_s37_LOD1` | 14.4175 → **11.7427** m (impostor +22.8 % bigger) | 0.500·h → **0.386**·h |
+   | `ENV_tree_willow_s11_LOD1` | 12.0017 → **11.2834** m (+6.4 %) | 0.500·h → **0.468**·h |
+   | the other 14 | unchanged (`base_z_m` = 0) | unchanged |
+
+   **No re-bake.** The atlas frames are rendered about `centre` with `ortho_scale = 2*radius*(frame/inner)`, and
+   neither `centre` nor `radius` changed: this is a record/manifest correction only. The measurement is the job's own
+   `bbox_min` / `bbox_max` in `out/gate3/gate3_set.json` (`impostor_prototypes`), the same numbers `bake_lm.py` was
+   handed, cross-checked against each record's `centre` (`centre_z - base_z == centre_above_base_m`, asserted in the
+   writer). `bake_lm.py` now records the three fields directly, so a re-bake needs no derivation.
+2. **The depth channel.** `bake_lm.py:295` writes `a = (z - (dist - radius)) / (2*radius)` with `dist = 6*radius`, so
+   `a = 0.5` is the billboard centre plane and `dist` is never exported. The manifest said `a = depth / depth_range_m`,
+   which the viewer cannot invert. It now says **`depth_from_centre_m = (a - 0.5) * depth_range_m`**, positive away
+   from the camera — the same text here and in the code comment.
+3 + 4. **Vertex irradiance ships unencoded.** One shared gamma-2 `range` of 64.0, set by the brightest of the 14
+   near-tree meshes, cost the dim ones their code space: roundtrip `rel_p99` was 0.2442 (cypress_s41), 0.2391
+   (pine_s29), 0.2264 (cypress_s3), 0.2153 (redwood_s13), 0.2085 (pine_s7), and `broadleaf_s19` (max 0.469) used
+   22 of 255 codes. `vertex_irradiance.npz` is a hand-off to the export engineer, not a shipped texture, so it now
+   holds **float32 `(n_verts, 3)` scene-linear RGB per mesh, no encoding at all** — `rel_p99` **0.0 on all 14**,
+   read back bit-identical per mesh. 183 719 → 803 100 B. `compose.json` keeps per-mesh min / max / mean /
+   mean_nonzero / p99 for the record, and `gate3_compose.py` gained `--only atlases|vertex` so the vertex pass can
+   re-run without reverting the five atlas PNGs to the first-pass power-of-two range (CPU, 0.1 s, no GPU, no re-bake).
+5. **The normal+depth atlas label.** `gate3_pack.sh:44` packs it `--encode uastc` (ASTC 4×4) while the manifest
+   declared `rgba8_unorm`. Residency was always computed right (`resident_mb` charges 1 B/texel to anything that is
+   not `rgbm8`/`rgba8`), so the **32.00 MB impostor line is unchanged**; only the label moved, to `uastc_astc4x4`,
+   and `resident_mb` now asserts on an encode it does not know. The explicit decision the review asked for: the map
+   **stays block compressed** while `impostors.unlit` holds and nothing samples the normal or the depth; the lossless
+   repack (`toktx --zcmp`, no `--encode`) is **+3.0 MB resident per prototype at 1K, +48.0 MB over the 16**, and is
+   recorded in `impostors.encode.normal_depth_note` as the lever to spend the day the viewer shades the impostor.
+12. **The v4 section above now comes from a real manifest entry**, with a line saying the file wins. Five divergences
+   closed: impostor albedo is gamma-2 at the prototype's own range (not "srgb + alpha"); the impostor encoder assigns
+   **linear**, not sRGB, and is one encoder for both maps; `trunk_base_offset_m` and `tris` are gone (never emitted)
+   and the real keys are listed; the vertex block is float32 with no `range`; and the example `range` values are real
+   (`0.72`–`52.83` across the 21 maps) instead of 64.0 presented as the norm.
+11. Both Blender 5.2 findings and the third engine-conditional rig are now in **docs/tech_notes.md** "Phase 6".
+
+**The flags, from the export engineer's file, never by hand.** `manifest_v4.py` now reads
+`out/gate3/uv2_relay_status.json` (schema `pfa-phase6/gate3-relay/1`) and every `uv2_in_glb` / `in_glb` comes from it.
+As of this run: the **seven** re-laid assets are `true` (arch.glb 29/29 and ground.glb 4/4 meshes carry TEXCOORD_1
+after the `-kv` re-pack), the two `lmg1_*` diagnostics are now `false` (inverse sense — the frozen layout they were
+baked on is no longer in the glb), `lightmaps.slots.uv2_in_glb` is **false** (0 of 33 `orn.glb` meshes carry
+TEXCOORD_1; the `-kv` re-pack of orn.glb was still running) and `vertex_irradiance.in_glb` is **false** — the relay
+checked the npz before this branch rewrote it and recorded `dtype uint8`, so COLOR_0 was not exported. Both re-run on
+the export engineer's next hand-off: re-running `python3 export/manifest_v4.py` is the whole step.
+
+Not fixed here: carries 6, 7, 8, 9, 10, 13 and 14 stand as the review lists them.
+
