@@ -738,3 +738,7 @@ GPU still busy until 02/04 finish (~30 min); bake go-signal and the viewer's --p
 ## 2026-09-16 · phase6-viewer MERGED (0458150, through 8d76e7d: r5b fixes d4a9b57 + measurements); QA-13-1 direct-path fix withdrawn on evidence, probe irradiance authorised for unlit-mapped surfaces
 Measurements: band B > R+20 17.6 % -> 15.5 % with post (target ≤ 3.9 %); olive cam02 46.5 -> 32.2 % with post (viewer mask), cam06 21.2 %. Leaf cards cut out after the alphaMode re-sync but stay blue (same sky-only path). Impostor rotational pop still unswept (re-check on the corrected-weights re-capture).
 Waiting: export r4 review -> merge; bake step 1 + scene check; refs 02/04 (pid 34504) -> GPU-free signal to bake and viewer. Next: probe irradiance measurement; ceiling bake; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Export r4 review in (677b792): MERGE WITH FIXES — the alpha cutoff was read from the inert alpha_threshold; the real cut is mat_build's map_range chain (cypress 0.45, pine 0.42, others 0.5); export engineer resumed
+Fix: read_alpha walks the Mix Shader -> Map Range chain in master_delivery.blend, gltf_gate1 cross-checks against it, verify_glb checks non-default cutoffs survive gltfpack; the silent png_has_alpha None skip becomes a failure. Merge of phase6-export r4 waits on this fix.
+GPU: 02/04 refs rendering (pid 34504). Waiting: bake step 1 + scene check; viewer probe irradiance.
