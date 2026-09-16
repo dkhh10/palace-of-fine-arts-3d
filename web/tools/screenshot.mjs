@@ -16,6 +16,11 @@
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
 //   --pixels x,y;...  read back display pixels (after the screenshot) and print them
 //   --probe A,B       project objects whose name contains A / B and read their centre pixel
+//   --walkprobe 0,90,180,270[:seconds]
+//                     walk from each captured station on those headings (degrees, 0 = world -Z) and
+//                     report where the walker ends, how often it was refused and the lowest ground it
+//                     stood on.  No input, no pointer lock, no rendered frame - it is the acceptance
+//                     evidence for "ground clamp, cannot walk into the lagoon" (Gate 4 item 5).
 //   --shots 0         measure only, write no PNGs (the performance pass)
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
@@ -209,6 +214,26 @@ try {
 
 	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
+	let walkProbes = null;
+	if ( o.walkprobe ) {
+		const [ hs, secs ] = String( o.walkprobe ).split( ':' );
+		const headings = hs.split( ',' ).map( Number ).filter( n => isFinite( n ) );
+		const seconds = Number( secs || 30 );
+		walkProbes = [];
+		for ( const st of shotList ) {
+			const name = await page.evaluate( ( n ) => window.__pfaStation( n ), st );
+			for ( const headingDeg of headings ) {
+				const r = await page.evaluate( ( a ) => window.__pfaWalkProbe( a ), { headingDeg, seconds } );
+				if ( ! r ) { console.log( '[shot] walkprobe: no walk controller' ); break; }
+				walkProbes.push( { station: st, name, ...r } );
+				if ( r.error ) { console.log( `[shot] walk st${st} heading ${headingDeg}: ${r.error}` ); continue; }
+				console.log( `[shot] walk st${st} heading ${headingDeg}: start (${r.start.x.toFixed( 1 )}, ${r.start.z.toFixed( 1 )})`
+					+ `${r.ashore_m > 0.01 ? ` [${r.ashore_m.toFixed( 1 )} m ashore]` : ''} -> end (${r.end.x.toFixed( 1 )}, ${r.end.z.toFixed( 1 )}), `
+					+ `lowest ground ${r.minGround.toFixed( 2 )} (water ${r.waterY}), refused ${r.blocked}/${r.samples} step(s)` );
+			}
+		}
+	}
+
 	let probes = null;
 	if ( o.probe ) {
 		probes = await page.evaluate( ( names ) => names.split( ',' ).filter( Boolean ).map( ( n ) => {
@@ -228,7 +253,7 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, written, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, walkProbes, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );

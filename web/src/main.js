@@ -25,6 +25,7 @@ import { normaliseManifest, applyUv2RelayStatus, WATER_Z } from './manifest.js';
 import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
+import { makeWalk } from './walk.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { chunkInstancedMeshes } from './chunking.js';
@@ -807,7 +808,7 @@ function applyStation( n ) {
 	return st;
 }
 
-let controls = null;
+let controls = null, walk = null;
 function installControls() {
 	controls = new OrbitControls( camera, renderer.domElement );
 	controls.enableDamping = true;
@@ -823,6 +824,13 @@ function installControls() {
 	};
 	renderer.domElement.addEventListener( 'pointerdown', enable );
 	renderer.domElement.addEventListener( 'wheel', enable, { passive: true } );
+	// Walk mode (Gate 4 item 5): WASD takes over from OrbitControls, eye height 1.7 m on the ground,
+	// out of the lagoon, out of the columns.  It builds its grids on the FIRST walk key, never at
+	// load, and refuses to start before __pfaReady - a capture sends no input and so never walks.
+	walk = makeWalk( () => camera, renderer.domElement, scene, {
+		waterY: manifest.waterZ, note,
+		onStart: () => { userControlled = true; if ( controls ) controls.enabled = false; },
+	} );
 	window.addEventListener( 'keydown', ( e ) => {
 		if ( e.key >= '1' && e.key <= '6' ) { applyStation( parseInt( e.key, 10 ) ); resize(); }
 		if ( e.key === 'h' ) document.getElementById( 'hud' ).classList.toggle( 'hidden' );
@@ -855,13 +863,16 @@ let measuring = false;
 function animate() {
 	requestAnimationFrame( animate );
 	if ( measuring ) return;
-	if ( userControlled && controls ) controls.update();
+	if ( walk && walk.state.active ) walk.tick();
+	else if ( userControlled && controls ) controls.update();
 	renderFrame();
 }
 
 // ---------------------------------------------------------------------------- test hooks
 window.__pfaReady = false;
 window.__pfaStation = ( n ) => { applyStation( n ); resize(); renderFrame(); return currentStation.name; };
+// Gate 4 item 5: drive the walker from the harness without input, pointer lock or a rendered frame.
+window.__pfaWalkProbe = ( o ) => ( walk ? walk.probe( o || {} ) : null );
 window.__pfaInfo = () => ( {
 	station: currentStation && { index: currentStation.index, name: currentStation.name, lens: currentStation.lens, shift_y: currentStation.shift_y },
 	cameraWorldMatrix: camera.matrixWorld.elements.slice(),
@@ -893,6 +904,7 @@ window.__pfaInfo = () => ( {
 	resident: residentBytes(),
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
+	walk: walk ? { ...walk.state } : null,
 	materialsMode,
 	pbr: pbrReport,
 	detail: detailReport,
