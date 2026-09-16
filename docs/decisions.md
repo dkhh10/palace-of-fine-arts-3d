@@ -423,3 +423,13 @@ sky-only path, which is why the leaf cards cut out correctly after the alphaMode
 6-face hero probe, real bounce in it) convolved to irradiance is the diffuse environment for every surface without a lightmap or COLOR_0; lightmapped and vertex-lit materials are
 unchanged; a warm irradiance floor was refused as a fudge. Single-point approximation for far surfaces, documented; Gate 4 QA judges it. Post on moves the olive fraction at cam02
 from 46.5 to 32.2 % on the viewer's own mask (−14 points): the missing airlight is a large contributor but does not close QA-12b-1 alone; the bake-scene check is still pending.
+
+## 2026-09-16 · QA-13-2 root cause is inverted normals, not UV2; QA-12b-1 is not the bake scene (lead, from the bake engineer's measurements)
+The rotunda plaster shell's visible faces already own 60.6 % of their map at 1.53 cm/texel; every one of them has its normal pointing UP, away from cam04 (normal·to_camera −0.99).
+A Cycles render flips the shading normal toward the ray, a bake has no ray, so the DIFFUSE bake integrated the enclosed cavity between shell and dome (median hit 11.55 m, no sky)
+instead of the lit rotunda below. The six-station sweep finds no second 100 %-backface object. Fix: re-bake this one asset with its winding reversed in the bake process only
+(FLIP_NORMALS_FOR_BAKE; UV2 corner sets asserted bit-identical, blend never saved), map replaced in place under the same keys; no relay, no glb change.
+The bake scene is the Cycles rig: same 11 warm ARCH bounce materials, same 20 LIGHT_* incl. the 16 x 1200 W gallery fill, world identical (WORLD_golden_hour, sun_disc off,
+elevation 7.357°, rotation 28.493°), Cycles bounces identical (max 8, diffuse 3, clamp_indirect 10). So the blue shade texel is not a grey bounce, a missing lamp, a different sky
+or a shorter path. Remaining hypothesis under test: the Phase 5 world's warm tint lives on the diffuse-ray branch of a Light Path gate; a bake may sample the sky under the
+camera-ray flag and miss it. Two-colour debug-world bake vs render queued after the ceiling bake.

@@ -742,3 +742,6 @@ Waiting: export r4 review -> merge; bake step 1 + scene check; refs 02/04 (pid 3
 ## 2026-09-16 · Export r4 review in (677b792): MERGE WITH FIXES — the alpha cutoff was read from the inert alpha_threshold; the real cut is mat_build's map_range chain (cypress 0.45, pine 0.42, others 0.5); export engineer resumed
 Fix: read_alpha walks the Mix Shader -> Map Range chain in master_delivery.blend, gltf_gate1 cross-checks against it, verify_glb checks non-default cutoffs survive gltfpack; the silent png_has_alpha None skip becomes a failure. Merge of phase6-export r4 waits on this fix.
 GPU: 02/04 refs rendering (pid 34504). Waiting: bake step 1 + scene check; viewer probe irradiance.
+
+## 2026-09-16 · Bake step 1 in (phase6-bake d0c2c28): ceiling defect = 100 % inverted normals (UV2 fine, 60.6 % of the map, 1.53 cm/texel); flipped-winding re-bake ready, held for the GPU. Bake scene audit: identical to the Cycles rig (QA-12b-1 not in the bake scene)
+Lead queued a light-path branch test (debug world: camera red / glossy blue / diffuse green; bake vs 160x90 render) after the ceiling bake to test whether bake rays miss the sky's warm diffuse-branch tint. Waiting: export cutoff fix -> merge; refs 02/04 (pid 34504) -> GPU-free to bake first, then the viewer's --perf; viewer probe irradiance.
