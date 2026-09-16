@@ -713,3 +713,41 @@ against round 09 — inside the parity window — and no row's residual is a mat
 resident **1 433.6 MB** at 1440p (textures 953.5 + RT 437.5 + geo 42.6), textures 246.5 MB under the 1 200 MB budget
 with the impostor lever (-200 MB) unspent, detail layer 33.6 MB, hero **267 draws of 400**, GPU **1.8 ms** median,
 load 537.4 MB in 4.78 s, 62/62 sets used, 0 failures. Composite `renders/web/round12b_gate.png`.
+
+### Round 13 — Phase 6 **Gate 3, the lightmaps alone**, 2026-09-16 (`docs/qa_round_13.md`). **LIGHTMAPS ACCEPTED, one re-bake**
+1. **The maps attach and they work.** 16/16 own maps (max match error 0.019 m) and 988/988 per-instance slots (0.005 m)
+   applied, 21/21 textures loaded, 0 failed. Hero whole-frame luma **117.5 -> 135.99** against the Cycles hero's 139.98
+   (**0.971x**), p10 52.89 vs 52.22; MAE against each station's reference falls on **all six** (hero 36.67 -> 29.88).
+   Boxes, Gate 2 -> baked vs Phase 5: hero shade band 1.18x -> **0.93x**, entablature 1.20x -> **0.99x**, columns
+   1.22x -> **1.00x**, capital row 1.25x -> **1.11x**, S-colonnade wall 1.44x -> **1.23x** with hp9 5.83 -> **27.71**
+   (ref 26.32), cam05 pier std 23.6 -> **29.4** and mid 5.82 -> **10.23** (ref 38.1 / 12.50). Seven of ten boxes close or
+   halve the deficit round 12b attributed to lighting. **No seam at any UV2 island edge, no slot bleed, no texel
+   blockiness, no encoding banding, no double shadow** in the six cam01 100 % tiles.
+2. **QA-13-2 — the one re-bake: `ARCH_rotunda_plaster_ceiling_merged`.** cam04's coffer field is **24.3 vs 60.7 = 0.40x**,
+   p10 **0.00**, **37.8 %** of pixels below luma 8 (Phase 5 0.0 %, p10 27.8). The ribs are lit from their own relaid map;
+   the coffer beds take the plaster shell's map, whose max is **0.72** over 4.9 % non-zero texels. The draw order is fine
+   (the rib/coffer mesh is in front). Re-bake with the visible shell split from the merged mass's interior/backing faces.
+3. **QA-13-1 NEW, largest colour error in the hero, NOT the bake.** The north colonnade bays read as saturated blue
+   rectangles (RGB ~52/86/188): **23.0 %** of the band `20 520 540 645` is B > R + 20 against **3.9 %** at Gate 2 and
+   **0.0 %** in Phase 5, and **96.4 %** of those pixels are **bit-identical with the lightmaps off**, so the surface takes
+   no light from either path. Not the background sky (the sky 30 px above is 181/204/222). Same blue at cam05 and cam06.
+   Owner viewer / export: identify the surface before Gate 4.
+4. **Carried.** QA-12b-1 olive **not closed and worse at cam02** (16.0 -> 19.7 %, cam06 21.9 -> 20.2 %, Phase 5 0.1 / 9.7 %;
+   30.9 % vs 2.3 % in the 40-60 luma bin, so not a brightness artefact) and **not** caused by the lightmaps — `direct` is as
+   green. QA-12b-2 halved but still a flat cream field at 100 %. QA-12-4 shaft CV 0.041/0.133 -> **0.088/0.187** (Phase 5
+   0.469/0.539). **The sunlit-attic saturation hold BREAKS: 0.94x -> 0.89x.** Colonnade-roof soffit leaks at 1.68x; the
+   vault field over-darkens to 0.76x. Accepted: QA-12-2 dome cap.
+5. **Named exceptions standing:** post, the 127 far-tree impostors (`WEB_far_tree_billboard_*`, hidden, declared
+   placeholders — the export-set name sweep is **0 to explain**), the 14 near-tree vertex irradiance (the blue foliage at
+   every station) and mist are Gate 4 and are **not** scored as defects.
+6. **Parity references.** Only station 1 has a reference rendered from the lighting the lightmaps were baked from.
+   3 / 5 are Eevee round-09, 6 is round-09 Cycles with no compositor, and **2 and 4 are round-09 Cycles frames that predate
+   LIGHT r18 and the shade-fill-off** (cam02's reference still shows the violet round 10b recorded as fixed). Stations
+   2-6 are scored provisionally; the Cycles re-renders must cover **2 and 4** as well as 3 / 5 / 6.
+
+**Scores (round 09 -> round 13).** 01 3.67->**3.39**, 02 2.94->**2.69**, 03 2.56->**2.69**, 04 2.81->**2.31**,
+05 3.06->**2.89**, 06 2.67->**2.33**. Every station average is inside the 0.5 window; cam04 and cam06 are below the 2.5
+floor; four individual rows are outside 0.5 (cam01 Lighting mood and Scale cues, cam04 Lighting mood and Ornament
+fidelity). Budget PASS: resident **1 677.8 MB** at 1440p (textures 1 171.6, 28.4 MB under the line with impostors still to
+come, RT 443.8, geo 62.4), hero **269 draws of 400**, GPU **2.3 ms** median / 435 fps uncapped, presented 39-45 fps,
+load 629.1 MB in 5.82 s, 62/62 sets, 0 failures. Composite `renders/web/round13_gate.png`.
