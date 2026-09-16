@@ -533,3 +533,9 @@ cards — the first bake was up to 2x too bright; global lum mean 2.02 -> 1.50. 
 is recorded, not used. Trees: the same override lifts vertex coverage 0.203 -> 0.756 over 347 840 verts (12 of 14 meshes 0.09-0.33 -> 0.86-0.98); broadleaf_s19 and pine_s29
 genuinely receive nothing (confirmed full shadow). So most of the zeros in the shipped COLOR_0 since Gate 3 were transparent-vertex artefacts, not shade; the export re-encodes
 COLOR_0 from the new npz. Join: per mesh, nearest translation, tolerance 0.02 m (closest same-mesh pair 0.088 m).
+
+## 2026-09-17 · Water round 7 accepted as the 6a default: reflSat 1.0, procedural ripple, derived displacement (lead, from the r7b review's note)
+The 09-16 entry said reflSat 0.66 was to be "tested at 1"; the test showed it was the warm drain (it double-counted the murk the body term now carries; a dielectric's reflection is
+spectrally flat), so reflSat 1.0 and reflectTint 1.0 ship, with reflBlur 0.003 and the procedural 8-octave ripple (1.20 m -> 0.034 m, slope rms 0.0131 rad from the reference's
+reflection wander) and the displacement as the projection of the slope. Where the building reflects, lum 1.01x and hue within 3.3° of Cycles; the open water's residual (lum 0.75x,
+hue 196 vs 145°) is the reflection lobe against the sky and stays as a delivery note. The displacement is world-axis-locked and exact only near the hero heading (documented).
