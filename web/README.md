@@ -161,6 +161,56 @@ lever: `?chunk=30,2,0.8,160` splits 26 batches (hero 303 draws, cam04 -17.4 %), 
 splits 6 (hero 235, cam04 -9.6 %), `?chunk=30,2,1.0` splits everything and saves no more triangles
 anywhere.
 
+## Gate 3 / manifest v4: baked lighting (item 1)
+
+`src/lightmaps.js` applies the v4 `lightmaps` block; `export/README.md` "manifest.json v4" is the
+contract and nothing here is defaulted.
+
+* **Identity.** `gltfpack -mi` drops every node and mesh name (measured: 0 named nodes and 0 named
+  meshes in all four Gate 1 glbs), so a drawn mesh is joined back to its manifest asset **by world
+  bounding-box centre** against `assets[<name>].location_blender`, in a 2 m grid, tolerance 1.5 m.
+  The match error is measured and reported: **max 0.080 m** over the 16 own-map assets and **0.089 m**
+  over the 988 instance slots on the real glbs (quantisation), 2.2e-16 m on the synthetic test scene.
+* **Decode.** `gamma2` -> `rgb*rgb*range`, `rgbm8` -> `rgb*a*range`, **range per texture** (16 distinct
+  values in this build; three's own 7.0 default never appears), `colorSpace = NoColorSpace`,
+  `lightMapIntensity = lightmaps.scale` = pi.
+* **Slots.** Each instance carries `pfaSlot = (offset.u, offset.v, scale)` as an
+  `InstancedBufferAttribute` and `pfaSlotB` selects the second atlas for the three meshes whose
+  instances straddle one (colonnade astragals, rotunda columns, ORN drum band). A single-placement
+  slot object arrives from gltfpack as a plain `Mesh`; it takes the same shader with the window as a
+  constant vertex attribute, so no 4K atlas is ever uploaded twice.
+* **Material splitting.** One glb material serves several assets with different plans (the colonnade
+  material is on the merged mass AND on the astragals), so a material is cloned the moment a second
+  mesh wants a different plan. This pass therefore runs BEFORE the PBR and detail passes, which match
+  on material name and so texture every clone. 60 clones on this build.
+* **`sky.diffuse` (QA-12b-1).** `scene.environment` is now the PMREM of the world's DIFFUSE branch —
+  the irradiance of everything with no lightmap (near trees, impostors, foliage, shrubs). Every baked
+  material takes its SPECULAR from the glossy PMREM through its own `material.envMap`, whose env
+  diffuse term is deleted in the shader anyway. Cost: one more PMREM target, 6.3 MB at 1024x512.
+* The Gate 0 "borrow the nearest-named lightmap" stand-in is **off** whenever the manifest is v4: at
+  Gate 3 a material with no map is meant to have none.
+
+### The blocker this found: no TEXCOORD_1 in any Gate 1 glb
+
+`gltfpack` prunes a vertex attribute no material references. The source `.gltf` files carry UV2 on
+29/29 arch, 33/33 orn and 4/4 ground primitives (env has none at all, which is a separate gap), and
+**all four `.glb` files carry none**. Measured on the real capture: 11 own maps and 988 instance slots
+are matched to their asset by position and then **0** are applied, because the mesh has no UV2 to
+sample them on. The fix is on the export side, one of:
+`gltfpack -kv` (keep source vertex attributes even if unused) — which is also what keeps `COLOR_0` for
+the 14 vertex-irradiance trees — or referencing the map as `emissiveTexture` with `texCoord: 1` in the
+glTF, which is the shape the Gate 0 contract already describes. `-kn` would additionally keep node
+names and make the position join a cross-check rather than the only identity.
+Until then `?lighting=baked` renders exactly the Gate 2 look, and says so in the notes.
+
+`web/tools/gate4.sh` is `gate2.sh` for v4: default manifest `/assets/gate3/manifest.json`, baked
+lighting, both placeholder sets hidden, water phase frozen at `t=0`; `PFA_TAG` names the outputs and
+`PFA_QUERY` is appended last and wins.
+
+`npm test` now includes `test/gate3_test.mjs`, which checks the v4 parse, the position join, the
+material clone, the per-instance attribute and the shader substitutions against three's own chunks —
+without a browser, so a `once()` failure cannot reach a capture unnoticed.
+
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
     npm install && npm run dev     # /assets/* served from $PFA_MAIN_ROOT/export/out, never copied

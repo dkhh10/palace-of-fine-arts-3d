@@ -42,3 +42,4 @@ renders/web/gate1_pair_cam0*.png
 # web/tools/gate1_sheets.py --viewer-glob 'renders/web/<tag>_cam%02d.png' --prefix <tag>
 renders/web/gate2_pair_cam0*.png
 renders/web/gate*_pair_cam0*.png
+renders/web/round*_pair_cam0*.png

@@ -86,7 +86,7 @@ export function applyGate3Lightmaps( o ) {
 	const { scene, gate3, assets, loadTexture, note } = o;
 	const report = {
 		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {} },
-		slots: { instances: 0, matched: 0, applied: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
+		slots: { instances: 0, matched: 0, applied: 0, single: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
 		materialsCloned: 0, texturesRequested: 0, texturesLoaded: 0, texturesFailed: [],
 		meshesSeen: 0, instancedMeshesSeen: 0,
 	};
@@ -95,7 +95,7 @@ export function applyGate3Lightmaps( o ) {
 	const ownReady = Object.values( gate3.ownMaps ).filter( m => m.url );
 	const ownIdx = centreGrid( assets, ownReady.map( m => m.name ) );
 	const slotIdx = centreGrid( assets, Object.keys( gate3.slots ) );
-	const ownTaken = new Set();
+	const ownTaken = new Set(), slotTaken = new Set();
 
 	// ---- pass 1: decide a plan per drawn mesh -------------------------------------------------
 	const plans = [];                      // { mesh, kind, ... }
@@ -113,6 +113,7 @@ export function applyGate3Lightmaps( o ) {
 				const hit = nearest( slotIdx, worldCentre( mesh, i ) );
 				if ( ! hit.name || hit.d > MAX_MATCH_M ) continue;
 				const s = gate3.slots[ hit.name ];
+				slotTaken.add( hit.name );
 				off[ i * 3 ] = s.offset[ 0 ]; off[ i * 3 + 1 ] = s.offset[ 1 ]; off[ i * 3 + 2 ] = s.scale;
 				atlasKeys.add( s.atlasKey );
 				matched ++; if ( hit.d > maxD ) maxD = hit.d;
@@ -126,20 +127,39 @@ export function applyGate3Lightmaps( o ) {
 			if ( keys.length > 1 ) {
 				for ( let i = 0; i < n; i ++ ) {
 					const hit = nearest( slotIdx, worldCentre( mesh, i ) );
-					if ( hit.name && gate3.slots[ hit.name ].atlasKey === keys[ 1 ] ) sel[ i ] = 1;
+					if ( hit.name && hit.d <= MAX_MATCH_M && gate3.slots[ hit.name ].atlasKey === keys[ 1 ] ) sel[ i ] = 1;
 				}
 			}
+			report.slots.meshes.push( { atlases: keys, instances: n, matched,
+				match_max_m: Math.round( maxD * 1000 ) / 1000, uv2: hasUv2 } );
 			if ( ! hasUv2 ) { report.slots.noUv2Attribute += matched; return; }
 			plans.push( { mesh, kind: 'slot', atlasKeys: keys, off, sel, matched, maxD } );
 		} else {
 			report.meshesSeen ++;
-			const hit = nearest( ownIdx, worldCentre( mesh ), ownTaken );
-			if ( ! hit.name || hit.d > MAX_MATCH_M ) return;
-			ownTaken.add( hit.name );
-			report.own.matched ++;
-			report.own.maxMatchError_m = Math.max( report.own.maxMatchError_m, hit.d );
-			if ( ! hasUv2 ) { report.own.noUv2Attribute ++; report.own.assets[ hit.name ] = 'no TEXCOORD_1 in the glb'; return; }
-			plans.push( { mesh, kind: 'own', name: hit.name, d: hit.d } );
+			const centre = worldCentre( mesh );
+			const hit = nearest( ownIdx, centre, ownTaken );
+			if ( hit.name && hit.d <= MAX_MATCH_M ) {
+				ownTaken.add( hit.name );
+				report.own.matched ++;
+				report.own.maxMatchError_m = Math.max( report.own.maxMatchError_m, hit.d );
+				if ( ! hasUv2 ) { report.own.noUv2Attribute ++; report.own.assets[ hit.name ] = 'no TEXCOORD_1 in the glb'; return; }
+				plans.push( { mesh, kind: 'own', name: hit.name, d: hit.d } );
+				return;
+			}
+			// gltfpack collapses a mesh with ONE placement into a plain node, so a slot object can
+			// arrive as an ordinary Mesh.  Same shader path, with the window as a constant vertex
+			// attribute instead of a per-instance one - no texture clone, so no second 4K upload.
+			const s = nearest( slotIdx, centre, slotTaken );
+			if ( ! s.name || s.d > MAX_MATCH_M ) return;
+			slotTaken.add( s.name );
+			report.slots.instances ++; report.slots.matched ++; report.slots.single ++;
+			report.slots.maxMatchError_m = Math.max( report.slots.maxMatchError_m, s.d );
+			if ( ! hasUv2 ) { report.slots.noUv2Attribute ++; return; }
+			const sl = gate3.slots[ s.name ];
+			const nv = mesh.geometry.attributes.position.count;
+			const off = new Float32Array( nv * 3 ), sel = new Float32Array( nv );
+			for ( let i = 0; i < nv; i ++ ) { off[ i * 3 ] = sl.offset[ 0 ]; off[ i * 3 + 1 ] = sl.offset[ 1 ]; off[ i * 3 + 2 ] = sl.scale; }
+			plans.push( { mesh, kind: 'slot', single: true, atlasKeys: [ sl.atlasKey ], off, sel, matched: 1, maxD: s.d } );
 		}
 	} );
 	report.own.unmatched = ownReady.length - report.own.matched;
@@ -190,8 +210,9 @@ export function applyGate3Lightmaps( o ) {
 			// slice (chunking.js), so a geometry shared by two InstancedMeshes is cloned first.
 			let geo = p.mesh.geometry;
 			if ( geo.attributes.pfaSlot ) { geo = geo.clone(); p.mesh.geometry = geo; }
-			geo.setAttribute( 'pfaSlot', new THREE.InstancedBufferAttribute( p.off, 3 ) );
-			geo.setAttribute( 'pfaSlotB', new THREE.InstancedBufferAttribute( p.sel, 1 ) );
+			const Attr = p.single ? THREE.BufferAttribute : THREE.InstancedBufferAttribute;
+			geo.setAttribute( 'pfaSlot', new Attr( p.off, 3 ) );
+			geo.setAttribute( 'pfaSlotB', new Attr( p.sel, 1 ) );
 			const a = gate3.atlases[ p.atlasKeys[ 0 ] ];
 			const b = p.atlasKeys[ 1 ] ? gate3.atlases[ p.atlasKeys[ 1 ] ] : null;
 			const mat = p.material;
@@ -203,8 +224,6 @@ export function applyGate3Lightmaps( o ) {
 				if ( tb ) { tb.flipY = false; tb.colorSpace = THREE.NoColorSpace; tb.needsUpdate = true; }
 				mat.needsUpdate = true;
 				report.slots.applied += p.matched;
-				report.slots.meshes.push( { atlases: p.atlasKeys, instances: p.mesh.count, matched: p.matched,
-					match_max_m: Math.round( p.maxD * 1000 ) / 1000, encode: a.encode, range: a.range } );
 			} ) );
 		}
 	}
