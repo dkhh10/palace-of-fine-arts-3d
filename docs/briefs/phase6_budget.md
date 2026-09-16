@@ -258,6 +258,17 @@ Each further near tree costs 19,595 placed triangles (measured: 391,908 / 20). T
 | env | 1,536 | 679,779 | 625,757 | 35,797,240 |
 | ground | 4 | 113,043 | 7,802 | 1,238,288 |
 
+Gate 3 export r2 (2026-09-16, phase6-export 6798563; the table above is the Gate 1 pack): `-kv` keeps TEXCOORD_1 (arch/ground/orn) and COLOR_0 (env, 14 near
+trees, 16-bit); the colonnade colbase plinth/torus merge collision is undone by a same-named material copy, so arch draws 29 calls (was 27) and yields 552 instanced
+placements (+ orn 436 = 988).
+
+| class | glb bytes (Gate 3 r2) | delta vs Gate 1 pack | note |
+|---|---|---|---|
+| arch | 4,613,040 | +1,024,008 | -kv TEXCOORD_1 + material split (+3,572) |
+| orn | 154,253,424 | +188,064 | -kv TEXCOORD_1, cavity COLOR_0 stripped |
+| env | 36,951,988 | +1,154,748 | -kv + 16-bit COLOR_0 vertex irradiance |
+| ground | 1,959,104 | +720,816 | -kv TEXCOORD_1 |
+
 
 ## Known items and hand-offs
 
