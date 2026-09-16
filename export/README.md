@@ -953,6 +953,118 @@ their mesh: they are baked on the frozen Gate 1 layout and are usable only while
 gltfpack flags, so a reader can see why a flag is what it is. Background (docs/decisions.md 2026-09-16): gltfpack had
 been stripping TEXCOORD_1 from every glb since Gate 1, so Gate 1's own `uv2_in_glb: true` was never true.
 
+### `lightmaps.instance_irradiance` — new at Gate 4 (the 1 379 shrub/reed placements)
+
+The 28 shrub/reed card meshes are the only env.glb geometry with neither a lightmap nor `COLOR_0`
+(`export/gate3_env_cards.py`, `out/gate3/env_cards.json`), so they were lit by the sky alone and read cyan
+(hue 180 against the reference's 102, QA round 14). They cannot take the near trees' per-mesh `COLOR_0`: those
+28 meshes carry **1 379 placements**, up to 101 on one mesh, 279 m apart on average across a 250 x 166 m site,
+so one value per mesh would give 1 379 shrubs 28 arbitrary irradiances. Per **placement** is the only correct
+granularity (docs/decisions.md 2026-09-16 "Shrub/reed irradiance is baked PER PLACEMENT, not per mesh"), and
+it keeps the instancing: one scene-linear RGB per instance, consumed as an `InstancedBufferAttribute` exactly
+like the ORN slot offsets, with no unique meshes and no `COLOR_0` on the cards.
+
+```jsonc
+"instance_irradiance": {                     // the shrub/reed cards: no UV2, and 1 379 instances of 28 meshes
+  "encode": "none", "dtype": "float32", "encoding": "linear-float32",
+  "units": "scene-linear irradiance / pi (x lightmaps.scale = pi)",   // same units as a DECODED lightmap texel
+  "attribute": "_IRRADIANCE",                // the viewer's per-instance attribute name; NOT COLOR_0
+  "json": "instance_irradiance.json",        // out/gate3/, 400 kB, the file below; nothing is quantised
+  "placements": 1379, "meshes_n": 28,
+  "range_global": 17.2167,                   // max component over all 1 379; informational, nothing is encoded to it
+  "in_glb": false,                           // true only once env.glb carries the attribute (export engineer)
+  "key": "WORLD TRANSLATION",                // `loc`, matched per mesh; the object name is only a label
+  "join": { "tolerance_m": 0.02, "min_separation_within_mesh_m": 0.0882 },
+  "meshes": { "<export-set mesh>": { "n": 101, "min": [...], "max": [...], "mean": [...],
+                                     "lum_min": 0.0, "lum_mean": 1.5, "lum_max": 8.6, "cov_mean": 0.85 } }
+}
+```
+
+`out/gate3/instance_irradiance.json` (`pfa-phase6/gate4-instance-irradiance/1`, written by
+`export/gate3_instance_compose.py`, **not** by `manifest_v4.py`; the manifest writer reads it the way it reads
+the relay file) carries, besides those summaries, `meshes["<mesh>"].placements = [{object, loc, rgb, mean_all,
+cov}, ...]`:
+
+* `loc` — **the key**: the placement's world translation in Blender metres. glTF is Y-up, so the instancing
+  row's translation is `(x, z, -y)` of this. Join **per mesh**: for each `EXT_mesh_gpu_instancing` row of a
+  mesh take that mesh's nearest entry, assert the residual is under `join.tolerance_m` (0.02 m) and that the
+  assignment is a bijection. Measured: the closest two placements of one mesh are **0.088 m** apart and no
+  same-mesh pair is within 2 x tolerance, so the match is unambiguous. (Three pairs of *different* meshes sit
+  9–29 mm apart; the per-mesh join cannot confuse them.) `gltfpack` quantises instance translations, so never
+  require an exact match — and never fall back to a guess: if a residual exceeds the tolerance, fail.
+* `object` — a label only (`ENV_shrub_pitto5_0999_LOD2`). It is **not resolvable from the glb**: `gltfpack -mi`
+  drops node names and the manifest's `instancing.<mesh>.objects[]` is truncated at 16 entries. The array order
+  is `export_set.json["assets"]` order filtered to the mesh; a convenience, never the contract.
+* `rgb` — float32 scene-linear irradiance / pi at that instance's own world transform, the mean over the card's
+  **lit** vertices. Use it as a decoded lightmap texel: `irradiance = rgb * lightmaps.scale`, multiplied into
+  the card's diffuse term in place of the sky-only ambient, never as a tint.
+* `mean_all` — the same mean over **all** vertices, i.e. `rgb` scaled down by the fraction of the card buried
+  in the terrain. Shipped for a consumer that wants the occluded form; `rgb` is the recommended one.
+* `cov` — the fraction of the card's vertices that received light (mean 0.853). **`cov == 0` is a contract, not
+  a diagnostic:** 7 placements are fully enclosed, ship `[0,0,0]`, and the viewer falls back to the probe
+  irradiance for them (lead, 2026-09-17). They are listed in `checks.dark`.
+
+**How it is baked** (`export/bake_lm.py` kind `instance`, jobs `inst_irr_00..03` from
+`export/gate3_instance_jobs.py`, run through `export/bake_queue.sh --gate3`): the same rig, `DIFFUSE`
+direct+indirect with `color: false` at 128 spp into `VERTEX_COLORS`, as the near trees' `vertex` kind, but the
+mesh data is made **single-user per placement inside the bake process** (nothing is saved, the export set's
+shared meshes are untouched) so each instance is baked at its own transform. Cost: 4 jobs, **2 517 s** of GPU,
+1.82 s per placement, ~100 placements per `bpy.ops.object.bake` call (a multi-object `VERTEX_COLORS` bake
+writes every selected object — proved by `inst_probe`, whose first chunk was batched and second baked one
+object at a time).
+
+**The material override, what it changes, and why the scope is the whole set.** A leaf card's material is
+alpha cut-out, and at a vertex that falls in a transparent texel a `DIFFUSE` bake returns exactly **0** — the
+same artefact that put 77–99 % exact zeros in the near trees' `COLOR_0`. On a 36-tri card it is fatal:
+`inst_probe` measured **10.7 %** coverage with the cards' own material and **1 of 12 placements entirely
+black**. The bake therefore wraps each card *material* so that **Light Path ▸ Is Shadow Ray** picks the
+original cut-out chain for shadow rays and an opaque grey Principled for every other ray, with
+`visible_shadow` left **ON**: every shadow the leaf casts — on itself, on its neighbours, on the ground — is
+the real leaf-shaped one, and only the baked surface itself is grey. Coverage rises to **0.853**. Because
+materials are shared datablocks the wrap covers all 1 379 placements in every job, so **no value depends on
+the job split**: one placement baked in two jobs with different companions and different chunk sizes returns a
+bit-identical rgb (`inst_splitA` / `inst_splitB`, delta 0.000000). The earlier form of this override (opaque
+material on the job's own objects with `visible_shadow = False`) was withdrawn at review: it removed the
+cards' real self- and neighbour shadow and only 28.9 % of nearest neighbours shared a job, so the values
+depended on the partition.
+
+**This is not a neutral re-encoding, and the README no longer claims it is.** Matched per vertex — same
+vertices, same transform, only the material changed — the shadow-ray wrap reads a **median 1.61x** brighter
+than the cut-out bake (0.12–3.39 across the 11 probe placements with any matched vertex; the two below 1.0 are
+cards whose few cut-out-lit vertices now sit in a real neighbour shadow). The withdrawn no-shadow variant was
+a further **median 1.14x** on top of that, up to **2.01x** on sunlit cards. `color: false` does divide the
+albedo out, but the surface that receives the light is a full grey lambert instead of a partly transparent
+leaf, so the number is a measurement of the *card's* incident light, not of the leaf's. Also measured and
+**not** used: the same wrap on **Is Camera Ray** (a bake's primary hit is a camera ray — coverage 0.857
+confirms it), which would leave the cut-out in place for the diffuse bounces between cards as well; it reads a
+median **0.929x** of the shadow-ray form. The lead prescribed the shadow-ray form; the camray number is here
+so the choice can be revisited with a measurement rather than an argument.
+
+**Verification** (`checks` in the same file, plus `out/gate3/instance_check.json` from
+`export/gate3_instance_check.py`, which ray-casts each placement onto the ground and samples that asset's baked
+lightmap EXR at the hit point): the shrubs track the ground under them monotonically — ground luminance
+quartiles 0.19 / 0.67 / 1.37 / 3.82 give shrub means **0.59 / 1.18 / 1.59 / 3.42** (n = 161 each, Pearson
+**0.617** over the 645 placements standing on the terrain; it was 0.456 before the real shadows came back).
+The shrub range is still compressed against the ground's (top decile over bottom decile: 13.5x against 106x)
+for two structural reasons, both expected: a card is vertical and is averaged over its whole height, so it
+keeps a large sky term where a horizontal texel in shade loses the sun term outright; and the ground texel
+directly under a shrub carries that shrub's own baked cut-out shadow, so the reference is biased low exactly
+where it is darkest. 701 of the 1 379 rays land on a lightmapped ground asset; the rest hit another card, the
+water or the backdrop lawn and are itemised in `all_ray_hits`.
+
+**The near trees were re-baked with the same wrap** (review finding 6, lead decision 2026-09-17). `vc_00` and
+`vc_01` re-ran in place — same ids, same `out/gate3/vertex/<id>.npz`, same schema, so `gate3_compose.py --only
+vertex` and the export's r2 encode re-run unchanged — for **117 s** of GPU. Vertex coverage over the 347 840
+verts went **0.203 → 0.756**; 12 of the 14 meshes moved from 0.09–0.33 to **0.86–0.98**. The two that did not
+are `broadleaf_s19` (0.002 → 0.010) and `pine_s29` (0.005 → 0.022): they have no loose vertices (checked), so
+with a grey lambert at every vertex they still receive essentially nothing — README's earlier "sit in full
+shadow" reading is **confirmed for those two** and was the cut-out artefact for the other twelve. The previous
+npz is kept as `out/gate3/vertex_irradiance_before_shadowray.npz` and the per-mesh before/after is in
+`out/gate3/vertex_before_shadowray.json`. `lightmaps.vertex_irradiance`'s per-mesh statistics in the manifest
+are regenerated from the new npz, so the stale `mean 0.000009` figures quoted in the block above belong to the
+pre-Gate-4 bake.
+
+
 ### `impostors` — new
 
 ```jsonc
