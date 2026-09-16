@@ -158,11 +158,22 @@ def main():
 
     shipped = g3.OUT / f"sky_diffuse_{g3.SKY_DIFFUSE_W}x{g3.SKY_DIFFUSE_H}.exr"
     if shipped.exists():
-        a = g3.read_exr32(shipped)
-        rep["shipped_sky_diffuse"] = mean_rgb(a)
-        rep["shipped_sky_diffuse"]["file"] = shipped.name
-        rep["shipped_sky_diffuse"]["branch_claimed_by_bake_lm"] = "diffuse (isolate Is Diffuse Ray = 1)"
-        log(f"shipped sky_diffuse mean {rep['shipped_sky_diffuse']['rgb']}")
+        try:
+            im = bpy.data.images.load(str(shipped))     # Blender-written ZIP EXR, not a g3.write_exr32 file
+            im.colorspace_settings.name = "Non-Color"
+            w_, h_ = im.size
+            arr = np.array(im.pixels[:], dtype=np.float32).reshape(h_, w_, -1)[:, :, :3].copy()
+            bpy.data.images.remove(im)
+            rep["shipped_sky_diffuse"] = mean_rgb(arr)
+            rep["shipped_sky_diffuse"]["file"] = shipped.name
+            rep["shipped_sky_diffuse"]["size"] = [w_, h_]
+            rep["shipped_sky_diffuse"]["branch_claimed_by_bake_lm"] = "diffuse (isolate Is Diffuse Ray = 1)"
+            log(f"shipped sky_diffuse mean {rep['shipped_sky_diffuse']['rgb']}")
+        except Exception as e:  # noqa: BLE001
+            rep["shipped_sky_diffuse"] = {"error": str(e)}
+            log(f"shipped sky_diffuse UNREADABLE: {e}")
+
+    OUT_JSON.write_text(json.dumps(rep, indent=1))
 
     # ---------------------------------------------------------------- the debug world
     dbg = bpy.data.worlds.new("DBG_ray_class")
@@ -213,6 +224,7 @@ def main():
                      "nonzero_texels": int(nz.sum()),
                      "nonzero_frac": round(float(nz.mean()), 4),
                      "mean_nonzero": mean_rgb(a, nz), "mean_all": mean_rgb(a)}
+    OUT_JSON.write_text(json.dumps(rep, indent=1))
     log(f"(a) bake mean over non-zero texels {rep['a_bake']['mean_nonzero']['rgb']} "
         f"normalised {rep['a_bake']['mean_nonzero']['normalised']}")
 
