@@ -816,3 +816,56 @@ set was added. So the GPU returns linear after its sRGB decode and `mean_linear`
 `ratio = albedo_sampled / mean_linear` is correct as published, with no 45 % term. `mean_linear` and `std_linear`
 are measured on the linear array before the sRGB encode, and `file_mean` / `file_std` are read back from the
 written file.
+
+## Gate 3 export hand-off (branch `phase6-export`, 2026-09-16)
+
+```sh
+scripts/blender_run.sh 900 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
+export/gltf_pack.sh --gate1            # KTX2 + the four glbs + verify_glb
+python3 export/gate3_relay_check.py    # reads the attributes BACK out -> out/gate3/uv2_relay_status.json
+export/sync_main.sh
+```
+
+14. **The blocker this gate found: `gltfpack` was stripping `TEXCOORD_1` out of every glb.** gltfpack removes
+    any vertex attribute no material references, and **nothing in a glb references UV2** — the lightmaps are
+    separate KTX2 files the viewer attaches from the manifest. Measured on the Gate 2 glbs: `arch.gltf`
+    carried `TEXCOORD_1` on **29/29** meshes and `arch.glb` on **0**; `ground.gltf` 4/4 → `ground.glb` 0;
+    `orn.gltf` carried `TEXCOORD_1` (33) and `COLOR_0` (13) → `orn.glb` neither. So **no lightmap could have
+    been applied to anything**, re-laid or not, and `lightmaps.assets[*].uv2_in_glb: true` on the nine Gate 1
+    assets was wrong for the same reason. The fix is gltfpack's `-kv` ("keep source vertex attributes even if
+    they aren't used"), given to a class exactly when its `.gltf` carries `TEXCOORD_1` or `COLOR_0`
+    (`gltf_pack.sh` asks `gltf_gate1.json`), so a class with neither is packed byte-identically.
+    **`orn` is excluded by hand**: `-kv` would also restore the ORN meshes' own `COLOR_0`, which three.js
+    multiplies into base colour — a look change for the lead, and it leaves the ORN slot-atlas lightmap
+    unusable until that call is made. `verify_glb.py` now asserts, per class packed with `-kv`, that the
+    triangles carrying `TEXCOORD_1` / `COLOR_0` in the glb match the `.gltf` to within the same 1 %
+    degenerate-triangle tolerance as the placement check.
+15. **The seven re-laid UV2 layers are in the glbs.** `export/out/gate3/lightmap_uv2.npz` (float32
+    `[loops, 2]` per Gate 1 mesh name) is loaded onto the **same** `UV2` layer — never a third layer, because
+    `TEXCOORD_n` follows the UV layer order and a third one would ship as `TEXCOORD_2` — with the loop count
+    asserted per mesh and `UV2` asserted to be UV layer 1. Island-area fraction of the unit square, Gate 1 →
+    Gate 3 (this is the bake's own `uv2_coverage` metric, recomputed here from the glTF's indices and
+    `TEXCOORD_1`): riprap 0.00229 → **0.11408** (×49.8), colonnade south 0.00950 → **0.11552** (×12.2),
+    colonnade north 0.00972 → **0.12071** (×12.4), rotunda ochre 0.01328 → **0.20723** (×15.6), ceiling rib
+    0.01777 → **0.21954** (×12.4), site podium 0.01870 → **0.34247** (×18.3), colonnade walk 0.12920 →
+    **0.72795** (×5.6). Three of the seven still pack under the 0.15 relay threshold; the bake measured the
+    same and baked against this layout, so that is reported, not asserted — what is asserted is that the
+    layer changed and that it packs more than Gate 1's.
+16. **`COLOR_0` for the near trees is NOT in the glbs yet.** `export/out/gate3/vertex_irradiance.npz` shipped
+    as **uint8** gamma-2 codes at one shared range of 64, not the float32 scene-linear per mesh the manifest
+    and this README promise (`docs/reviews/phase6_bake_gate3_review.md` findings 3-4), and the bake is
+    re-writing it. `gltf_gate1.py` reads the dtype and **refuses to encode `COLOR_0` from anything but the
+    float32 file**: the encoding that ships depends on the real per-mesh range, and a wrong one is invisible
+    in the glb and wrong in every frame. `lightmaps.vertex_irradiance.in_glb` stays **false**. When the
+    float32 npz lands, the encoder and the value tests in `gate3_relay_check.py` change together — the
+    attribute is written as `FLOAT_COLOR`/`POINT` (never `BYTE_COLOR`, which is sRGB in Blender and would be
+    linearised on export), the exporter's `export_all_vertex_colors` is already `True`, and gltfpack
+    quantises colours to **8 bits by default** (`-vc N`), so whatever encoding is chosen has to live in
+    `[0, 1]` and survive 8-bit — or `-vc 16` has to be added to `env`.
+17. **The hand-off file.** `export/out/gate3/uv2_relay_status.json` (`pfa-phase6/gate3-relay/1`) is written by
+    `export/gate3_relay_check.py`, which reads the attributes back out of the exported files — never from the
+    script that wrote them — and carries `{mesh: {uv2_in_glb, coverage, glb, asset, …}}` for the seven and
+    `{mesh: {in_glb, encoding, mean, …}}` for the near trees. **The manifest writer flips
+    `lightmaps.assets[*].uv2_in_glb` and `lightmaps.vertex_irradiance.in_glb` from that file; nobody edits
+    `manifest.json` by hand.** `export/sync_main.sh` copies `out/gate3/` to MAIN with no `--delete` and
+    excludes the bake's blends, so the export only ever adds its own file there.
