@@ -1395,3 +1395,26 @@ export/sync_main.sh
     Cost: `env.glb` 36 945 984 → **36 946 136 B** (+152). arch, orn and ground byte-identical. The stale-glb
     pin from item 28 required the full `gltf_pack.sh --gate1`, so toktx re-encoded all 85 KTX2 (258 s) —
     an env-only re-pack is no longer possible once the other three glTFs have been regenerated.
+30. **Correction to item 29: `material.alpha_threshold` is NOT the cut (r4 review).** It is Blender's factory
+    **0.5 on every material in the file** and is inert under `blend_method HASHED` /
+    `surface_render_method DITHERED` — so reading it was right for six materials by coincidence and wrong for
+    two. The real cut is built by `scripts/mat_build.py leaf_material` (~1385-1417): the material output's
+    Surface is a **Mix Shader** between a **Transparent BSDF** and the shaded branch, and its factor is a
+    **Map Range** over the base-colour image's `Alpha`, `From Min = alpha_cut − 0.15`,
+    `From Max = alpha_cut + 0.15`. The 50 % crossing — the one number a glTF `alphaCutoff` can express — is
+    the **midpoint**, i.e. `alpha_cut` itself. `read_alpha.cut_chain()` walks exactly that graph and returns a
+    **reason** rather than a default on anything else; a file-backed alpha card that does not resolve is a
+    hard failure, and the script asserts it is running on `master_delivery.blend`.
+    The eight, as read: **MAT_leaf_cypress 0.45**, **MAT_leaf_pine 0.42** (`mat_build.py` ~1738-1741),
+    MAT_leaf_broadleaf / MAT_leaf_eucalyptus / MAT_reeds / MAT_shrub / MAT_shrub_light / MAT_shrub_dry 0.5.
+    `gltf_gate1.py` imports `cut_chain` (read_alpha's discovery run is guarded by `__main__`) and re-walks the
+    graph on its **own copy** of each material — comparing against `alpha_threshold` would have agreed with a
+    wrong number, since it reads 0.5 for the two that are not.
+    **glb evidence:** `env.glb` carries `alphaCutoff` **0.449999988** on MAT_leaf_cypress and **0.419999987**
+    on MAT_leaf_pine (float32 of 0.45 / 0.42), and omits the field on the six at 0.5 — gltfpack drops it only
+    when it equals the glTF default, and `verify_glb` compares the *effective* value so a dropped non-default
+    would fail. `verify_glb.json` records env `alpha_cutout_cutoffs: [0.42, 0.45, 0.5]`.
+    Also closed (r4 carry, same defect class): `png_has_alpha` no longer returns `None` for an unrecognised
+    format and silently skips the material — it returns False only for a JPEG (which never has alpha) and
+    **raises** otherwise, because a texture whose alpha cannot be tested is a card that ships opaque in
+    silence. `env.glb` 36 946 136 → **36 946 188 B** (+52); arch, orn, ground byte-identical.
