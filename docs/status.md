@@ -785,3 +785,6 @@ Dispatched: QA 14 (Opus xhigh, docs/briefs/qa_round_14.md) on round14; viewer en
 
 ## 2026-09-16 · Item 6 closed as measured (phase6-viewer 7007645): reflset=orn default (−2 ms, boxes hold); 45 fps needs both the Reflector and bloom off -> default keeps the look, `?quality=fast` preset added for the user's choice
 QA 14 running. Waiting: QA verdict; viewer's fast-preset table.
+
+## 2026-09-16 · Fast preset measured (phase6-viewer 2d267ba): look 30.6-45.5 fps vs fast 36.4-49.3 fps at 1440p; 30/32 cam01 boxes within 0.03x (water R-B 0.953x worse, sunlit attic std 1.035x better). Neither reaches 45 fps except station 4. Default = look
+Waiting: QA 14 verdict. Then: merge phase6-viewer; Gate 4 decision; burn log.
