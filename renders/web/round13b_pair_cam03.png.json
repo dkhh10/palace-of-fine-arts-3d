@@ -22,11 +22,11 @@
  ],
  "frame": {
   "reference_luma": 39.34,
-  "viewer_luma": 83.66,
-  "delta_luma": 44.33,
-  "ratio_linear": 2.5345,
-  "mean_abs_diff_255": 45.82,
-  "rms_diff_255": 58.24
+  "viewer_luma": 81.73,
+  "delta_luma": 42.39,
+  "ratio_linear": 2.4658,
+  "mean_abs_diff_255": 43.33,
+  "rms_diff_255": 56.29
  },
  "cells_3x4": [
   {
@@ -105,9 +105,9 @@
     480
    ],
    "reference_luma": 19.97,
-   "viewer_luma": 78.21,
-   "delta_luma": 58.24,
-   "ratio_linear": 10.88
+   "viewer_luma": 78.09,
+   "delta_luma": 58.13,
+   "ratio_linear": 10.8455
   },
   {
    "cell": [
@@ -121,9 +121,9 @@
     480
    ],
    "reference_luma": 50.44,
-   "viewer_luma": 100.49,
-   "delta_luma": 50.05,
-   "ratio_linear": 2.4481
+   "viewer_luma": 100.48,
+   "delta_luma": 50.04,
+   "ratio_linear": 2.4476
   },
   {
    "cell": [
@@ -137,9 +137,9 @@
     480
    ],
    "reference_luma": 40.9,
-   "viewer_luma": 95.82,
-   "delta_luma": 54.92,
-   "ratio_linear": 2.8737
+   "viewer_luma": 95.73,
+   "delta_luma": 54.83,
+   "ratio_linear": 2.8698
   },
   {
    "cell": [
@@ -169,9 +169,9 @@
     720
    ],
    "reference_luma": 35.64,
-   "viewer_luma": 72.23,
-   "delta_luma": 36.6,
-   "ratio_linear": 3.0697
+   "viewer_luma": 56.9,
+   "delta_luma": 21.26,
+   "ratio_linear": 2.0839
   },
   {
    "cell": [
@@ -185,9 +185,9 @@
     720
    ],
    "reference_luma": 53.47,
-   "viewer_luma": 101.71,
-   "delta_luma": 48.24,
-   "ratio_linear": 2.6666
+   "viewer_luma": 100.0,
+   "delta_luma": 46.53,
+   "ratio_linear": 2.6087
   },
   {
    "cell": [
@@ -201,9 +201,9 @@
     720
    ],
    "reference_luma": 56.73,
-   "viewer_luma": 92.05,
-   "delta_luma": 35.31,
-   "ratio_linear": 1.9489
+   "viewer_luma": 86.07,
+   "delta_luma": 29.33,
+   "ratio_linear": 1.7658
   },
   {
    "cell": [
