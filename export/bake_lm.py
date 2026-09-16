@@ -120,6 +120,11 @@ if job["kind"] in ("own", "own_gate1uv2"):
                                             mean_normal_z_after=round(nz_after, 4), uv_layout_identical=True)
         print(f"[gate3] {JOB_ID}: normals flipped for the bake, mean n.z {nz_before:.3f} -> {nz_after:.3f}, "
               f"{uvname} layout identical on all {len(me_.polygons)} faces")
+    if os.environ.get("PFA_LM_DRYRUN"):
+        # CPU-only validation of everything that happens before the first ray: no bake image, no GPU,
+        # no record written. Used to prove the QA-13-2 flip path while another agent holds the GPU.
+        print(f"[gate3] {JOB_ID}: DRY RUN ok (no bake) {json.dumps(rec.get('flip_normals_for_bake', {}))}")
+        raise SystemExit(0)
     img = bl.bake_image(f"{JOB_ID}_{size}", size=size, colorspace="Non-Color", float_buffer=True,
                         fill=(0.0, 0.0, 0.0, 1.0))
     bl.attach_target(ob, img, uvname)

@@ -1,0 +1,8 @@
+00:00.423  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] lm_ARCH_rotunda_plaster_ceiling_merged: normals flipped for the bake, mean n.z 0.923 -> -0.923, UV2 layout identical on all 529 faces
+[gate3] lm_ARCH_rotunda_plaster_ceiling_merged: DRY RUN ok (no bake) {"polys": 529, "mean_normal_z_before": 0.9227, "mean_normal_z_after": -0.9227, "uv_layout_identical": true}
+blender_run.sh: pid 35086 exited rc=0 after 2 s (max 900)
