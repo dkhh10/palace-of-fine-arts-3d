@@ -442,3 +442,10 @@ the lead overrides that for surfaces with no baked irradiance because the probe 
 olive-green (ground bounce dominates a sideways leaf card): decision held until the light-path branch test; the candidates are a corrected bake branch or vertex irradiance for
 shrubs/reeds as for the 14 near trees. Re-measured against the new compositor-on Cycles references: cam03 1.67x (was 2.08x vs the Eevee frame), cam05 1.08x, cam06 0.71x — a
 real deficit the no-compositor reference had hidden.
+
+## 2026-09-16 · Gate 4 item 6 (lead): the 1440p frame is vsync-quantised, not GPU-bound; bloom and the water Reflector go to half resolution
+Measured (viewer 184d785): with the Gate 4 look the presented frame is 29.5-32.2 ms (33 fps) at stations 1-3, 5, 6 while CPU submit is 1.0-4.1 ms and gl.finish 0.5-2.6 ms; with
+water and post off the frame is 17.3 ms = one vsync interval. The Reflector's second scene pass costs 6.3-8.6 ms (draw calls 314 -> 164 without it) and the full-res bloom chain
+7.8-8.4 ms; together they push the frame a few ms past one interval, which quantises to two. Decision: bloom from a half-res source and the Reflector to a half-res target (its
+result is blurred by reflBlur regardless); every-other-frame reflection refused (temporal artefacts while walking). Acceptance: >= 45 fps at all six stations and every cam01 hero
+box within 0.03x of its full-res value; a lever whose box moves more is reverted and the trade-off reported.

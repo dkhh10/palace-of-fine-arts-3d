@@ -765,3 +765,6 @@ Viewer's --perf and Gate 4 capture follow the bake report. QA 14 (docs/briefs/qa
 
 ## 2026-09-16 · Viewer ready for the GPU (phase6-viewer bbe1d7b): refs 2-6 repointed (cam02 1.10x, cam04 0.95x on round13b; cam02 1.01x with the Gate 4 look), item 6 frame-breakdown instrumentation, 173 tests green
 Order on the bake's GPU-done signal: re-sync -> --perf + --breakdown -> gate4.sh capture -> QA 14. Bake engineer running the ceiling bake + sky-branch probe now.
+
+## 2026-09-16 · Item 6 measured (phase6-viewer 184d785): 31-34 fps at stations 1-3/5/6, 45 at 4; vsync quantisation (Reflector 6-9 ms + bloom 8 ms push a 17 ms frame past one interval). Lead: half-res bloom + half-res Reflector, box-checked (<= 0.03x)
+Resident 1 678 MB (tex 1 172, RT 444). Viewer applies the levers now (GPU free; bake on CPU encode/pack); Gate 4 capture after the manifest signal.
