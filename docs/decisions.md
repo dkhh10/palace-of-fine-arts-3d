@@ -375,3 +375,19 @@ second mesh of each colliding group its own material copy under the same name, s
 = 988); the viewer joins materials by name and sees no new material. Also on record: Blender 5.2's glTF exporter emits a fake constant-white u8 COLOR_0 when the material's node tree
 references no colour attribute and pushes the real attribute to COLOR_1; the export drops the fake (u8, constant 1.0) and renumbers, asserting the survivor is u16/float. Vertex
 irradiance ships gamma-2 at each mesh's own max (0.469-43.32), 16-bit, decode v = c^2 * range_mesh * lightmaps.scale.
+
+## 2026-09-16 · Gate 4 round 5 (lead): the dark lightmapped hero was gltfpack's 12-bit UV quantisation, never undone on TEXCOORD_1; vertex irradiance goes to one global range; Cycles references for stations 3/5/6
+Finding (viewer engineer): gltfpack stores every TEXCOORD as normalised 12-bit ints and puts the dequantisation in KHR_texture_transform on the material's baseColorTexture, which
+three.js applies only to that texture's own uv channel. TEXCOORD_1 carries no texture in the glb, so each lightmap sampled the bottom-left 1/16 x 1/16 of its map (hero luma 117.5 vs
+Cycles 140.0; no decode or flip could reach it). Second defect, same cause: the PBR/detail passes replaced material.map with an identity-transform texture, so albedo/roughness/normal
+had sampled the same window since Gate 2. The export owes nothing: with the transform undone the glb's UV2 matches the bake npz at IoU 0.994-0.999 on all seven relaid assets.
+Fix in the viewer (web/src/uvDequant.js, once per geometry attribute, before any pass): hero 134.3, p10 51.4 vs Cycles 52.2; V-flip stays off (worse). Gate 2's material parity
+scores (round 12b) were measured with this defect present and are therefore conservative; they are not re-scored.
+Vertex irradiance: the per-mesh range (decision above) is unusable because gltfpack -mi instances primitives across different trees (14 buffers, 26 placements, 2 unambiguous joins).
+Lead's call: ONE global range (max over the 14 = 43.32), gamma-2, 16-bit FLOAT_COLOR, -vc 16, -mi kept. Estimate: the darkest meaningful mesh (mean ~0.001) codes at c = 0.005 with a
+16-bit step of 1.5e-5, a relative step of ~0.6 % in linear value, so the uint8 shared-range defect (rel_p99 0.244) does not recur; the export reports roundtrip_rel_p99 per mesh and
+the fallback is keeping the 14 trees out of -mi if any mesh above 0.01 exceeds 2 %. Mist: world.mist_settings start/depth/falloff were never in the manifest (the compositor block
+recorded the group input as 0.0); they are read from master_delivery.blend into compositor.mist; the viewer's placeholder 60/1400 m is a no-op and is not scored.
+Parity references: stations 3 and 5 only had Eevee round-09 frames and station 6 a Cycles frame without the compositor, so 6a's "within 0.5 of its Phase 5 score" was unmeasurable on
+half the stations. The lead renders Cycles 1920x1080 128 spp compositor-on frames for cams 03/05/06 from master.blend (scripts/qa_render_round.py --round 13 --final) as the Gate 4
+references; QA 13 scores 3/5/6 provisionally until they land.
