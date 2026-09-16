@@ -324,58 +324,44 @@ Evidence, 24 probes (six stations x four headings x 30 s at 3.2 m/s, `--walkprob
 the lagoon headings are refused (st1/180 1783 of 1801 steps, st5/180 1711, st2/270 1561) and the
 inland ones run the full 96 m unobstructed.
 
-### Performance (item 6), 2560x1440, everything on, round13b
+### Performance (item 6), 2560x1440, the Gate 4 look — measured, and attributed
 
-| station | presented frame | fps | `gl.finish` render cost | draws | tris |
-|---|---|---|---|---|---|
-| 1 lagoon hero | 22.7 ms | 44.1 | 2.3 ms | 269 | 5.24 M |
-| 2 NE 3/4 | 22.2 ms | 45.0 | 2.1 ms | 259 | 5.06 M |
-| 3 colonnade walk | 24.3 ms | 41.2 | 2.1 ms | 279 | 5.44 M |
-| 4 rotunda ceiling | 16.6 ms | 60.2 | 0.6 ms | 113 | 2.20 M |
-| 5 south lawn | 24.9 ms | 40.2 | 2.1 ms | 252 | 4.86 M |
-| 6 aerial | 25.8 ms | 38.8 | 2.4 ms | 291 | 5.60 M |
+| station | presented | fps | JS submit | `gl.finish` | draws | tris |
+|---|---|---|---|---|---|---|
+| 1 lagoon hero | 29.5 ms | 33.9 | 4.0 ms | 2.6 ms | 314 | 5.24 M |
+| 2 NE 3/4 | 30.0 ms | 33.3 | 4.0 ms | 2.1 ms | 304 | 5.06 M |
+| 3 colonnade walk | 31.1 ms | 32.2 | 4.1 ms | 2.5 ms | 324 | 5.44 M |
+| 4 rotunda ceiling | 22.2 ms | 45.0 | 1.9 ms | 0.5 ms | 158 | 2.20 M |
+| 5 south lawn | 29.6 ms | 33.8 | 3.9 ms | 2.1 ms | 297 | 4.86 M |
+| 6 aerial | 32.2 ms | 31.1 | 2.7 ms | 2.4 ms | 336 | 5.60 M |
 
-Resident 1549-1678 MB (textures 1172, render targets 315-444, geometry 62); 272 textures, all
-`RGBA_ASTC_4x4`. **The frame is not GPU-bound**: the GPU does 0.6-2.4 ms of work (400-1600 fps) while
-the presented frame sits at 16.6-25.8 ms, so what is missing the 45 fps target is on the CPU or in
-headless Chrome's compositor, not in the renderer. That wants its own measurement before anything is
-optimised, and it is the open half of item 6.
+Resident 1677.8 MB (textures 1171.6, render targets 443.8, geometry 62.4), 272 textures, 90 programs.
 
-## QA notes — read before scoring (Gate 4 / QA 14)
+**Attribution** (stations 1 and 6, the same look with one feature removed at a time):
 
-* **The parity references changed.** `gate1_sheets.py` now points stations **2-6** at
-  `renders/previews/qa/round13_0{2,3,4,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
-  master.blend). They had been scored for several rounds against round-09 frames — **Eevee** at 3 and
-  5, a **no-compositor** Cycles frame at 6, and a **pre-shade-fill-off** Cycles frame at 2 — all of
-  which predate the Phase 5 lighting the lightmaps were baked from. Station 1 keeps its round-10b
-  hero, which is already a Phase 5 Cycles frame.
-* **What that does to the round13b numbers**, whole-frame luma ratio, viewer / reference:
+| configuration | st1 | st6 | draws st1 |
+|---|---|---|---|
+| Gate 4 look | 29.5 ms | 32.2 ms | 314 |
+| water off (no planar Reflector) | 25.7 ms | 26.3 ms | 164 |
+| post off (no `UnrealBloomPass`) | 23.6 ms | 27.1 ms | 301 |
+| both off | **17.3 ms** | **18.5 ms** | 151 |
 
-  | station | vs the OLD reference | vs the round-13 Cycles reference |
-  |---|---|---|
-  | cam02 NE three-quarter | 1.09x | **1.10x** |
-  | cam03 colonnade walk | 2.08x | **1.67x** |
-  | cam04 rotunda ceiling | 1.05x | **0.95x** |
-  | cam05 south lawn | 1.12x | **1.08x** |
-  | cam06 aerial | 0.95x | **0.71x** |
+So, per frame: the **water Reflector's second scene pass costs 6.3 ms (st1) / 8.6 ms (st6)** — it
+doubles the draw calls, 151 -> 301 — and **bloom costs 8.4 / 7.8 ms**, which is what a full-resolution
+multi-mip gaussian chain costs at 2560x1440. **The CPU submit is 1.0-4.1 ms and is never the
+bottleneck**, and `gl.finish` is 0.5-2.6 ms.
 
-  cam03's "2.5x failure" was largely the wrong reference. **cam06 at 0.71x is a real deficit that the
-  old no-compositor reference was hiding — it is not a regression, and QA 14 should not re-discover it
-  as new.** cam04 crossed from bright to slightly dark and its lightmap is being re-baked, so its
-  number will move again. These are all `round13b`, i.e. **post off, no probe, no impostors**: with the
-  Gate 4 look on, cam02 measures **1.01x** against its round-13 reference.
-* **The hero probe is used against the manifest's own stated contract.** `manifest.probe.use` says it
-  is "NOT the diffuse environment", and the viewer nevertheless convolves it and gives it to every
-  surface with no baked light. **The lead overrode `probe.use` deliberately** (logged in
-  `docs/decisions.md`) after the alternative — putting those surfaces on the direct sun+sky path — was
-  measured to be a no-op: the backdrop wall at cam01 has NdotL = -0.065 against the sun, so no
-  weighting of sun and sky can reach it, and `?lighting=direct` renders that pixel bit-identically.
-  See "Far trees" and `src/probeEnv.js` for the three caveats that come with it.
-* **Foliage hue is a HELD decision, not an oversight.** The shrubs and reeds now read warm amber-brown
-  (median hue 40.6 deg) where Cycles has olive-green. The bake side is testing whether Cycles bake rays
-  miss the sky's warm diffuse-branch tint; that result decides whether every baked irradiance shifts or
-  whether the shrubs get vertex irradiance like the 14 near trees. Do not score it as a viewer defect
-  until that lands.
+**The earlier puzzle — "22 ms presented against 2.3 ms of GPU work" — is the vsync quantum, not a
+mystery.** With both features off the frame lands at 17.3 ms, which is one 16.7 ms vsync interval: the
+viewer is vsync-locked at ~58 fps and has headroom. Adding the Reflector and bloom pushes the frame
+just past one interval, so it misses a vsync and quantises to **two** (~30 ms, ~33 fps). Nothing is
+slow by 13 ms; the frame is over the line by a couple of milliseconds and pays a whole interval.
+
+**That means the 45 fps target is reachable by taking a few ms off either feature, not by optimising
+the draw path.** Two levers, both measured above and neither applied (each changes the look slightly,
+so they need the lead's call): run `UnrealBloomPass` at half resolution, or drop the Reflector's
+1024x1024 target / update it every other frame. Either alone should bring stations 1-3 and 5-6 back
+under the boundary; station 4 already sits at 45.0 fps.
 
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
