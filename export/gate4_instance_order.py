@@ -106,13 +106,13 @@ def main():
                   "TEST HARNESS: out/gate1/env.gltf node translations by object name - "
                   "instance_irradiance.json carries no per-placement `loc` yet (it lands with the re-bake); "
                   "the join itself is the same code either way")
-    pos, mesh_of_obj, order_in_mesh = {}, {}, {}
+    pos, mesh_of_obj = {}, {}
     for mesh, m in irr["meshes"].items():
         assert m["n"] == len(m["placements"]), f"{mesh}: n={m['n']} but {len(m['placements'])} placements"
-        for i, pl in enumerate(m["placements"]):
+        for pl in m["placements"]:
             o = pl["object"]
             assert o not in mesh_of_obj, f"duplicate placement object {o}"
-            mesh_of_obj[o], order_in_mesh[o] = mesh, i
+            mesh_of_obj[o] = mesh
             if have_loc:
                 pos[o] = np.array(to_gltf(pl["loc"]), dtype=np.float64)
             else:
