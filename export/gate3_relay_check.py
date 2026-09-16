@@ -13,7 +13,7 @@ What it proves, per mesh, from the files themselves - never from the script that
   mesh's own gamma-2 codes at its own range, recomputed here from `gate3/vertex_irradiance.npz`, which is
   float32 scene-linear), and its decoded linear mean is compared with the npz's. The exporter splits and
   welds vertices, so the vertex COUNTS and therefore the means differ while the distinct value set does not -
-  both numbers are reported, and the mean is asserted only against a 25 % bound.
+  both numbers are reported; what is asserted is the mean over the DISTINCT value set, which a split cannot move.
 
 No Blender, no GPU. Exit 1 on any mismatch.
 """
@@ -247,13 +247,20 @@ def main(out_dir, g3_dir, g3_out=None):
             fail.append(f"{mn}: gltf_gate1.py encoded at range {w['range']}, the npz max is {rng}")
         if abs(lin_glb.max() - lin_npz.max()) > 1e-3 * max(rng, 1.0):
             fail.append(f"{mn}: COLOR_0 decodes to max {lin_glb.max():.4f}, the npz max is {lin_npz.max():.4f}")
-        # the mean is REPORTED, not asserted below 25 %: the exporter splits vertices per normal/UV seam, so
-        # a leaf-card mesh's exported vertex count is not the npz's and the two means are weighted
-        # differently. The value-set test above is the one that proves the encode; a wrong range or an sRGB
-        # pass moves every value and fails it. A mean that moves by a quarter means placements were lost.
-        if abs(lin_glb.mean() - lin_npz.mean()) > 0.25 * max(lin_npz.mean(), 1e-9):
-            fail.append(f"{mn}: COLOR_0 decodes to mean {lin_glb.mean():.6f}, the npz mean is "
-                        f"{lin_npz.mean():.6f} (> 25 %, far past what the vertex split explains)")
+        # The per-vertex mean is REPORTED, never asserted: the exporter splits a vertex per normal / UV seam,
+        # so a leaf-card mesh arrives with 6-36 % more vertices than the npz has and the two means weight the
+        # same values differently (measured ratios 0.89-1.31, all of them that reweighting). What IS
+        # split-invariant is the DISTINCT value set - a split duplicates a value, a weld drops a duplicate,
+        # neither invents or removes one - so the mean over unique decoded values is compared instead, against
+        # the npz pushed through the same 16-bit round trip.
+        u_glb = np.unique(lin_glb)
+        u_npz = np.unique(rt)
+        if abs(u_glb.mean() - u_npz.mean()) > 0.01 * max(u_npz.mean(), 1e-9):
+            fail.append(f"{mn}: the unique COLOR_0 values decode to mean {u_glb.mean():.6f}, the npz's unique "
+                        f"values to {u_npz.mean():.6f} (> 1 %) - the exported set is not this mesh's")
+        vi[mn]["mean_unique"] = round(float(u_glb.mean()), 6)
+        vi[mn]["mean_unique_npz"] = round(float(u_npz.mean()), 6)
+        vi[mn]["vertex_split_mean_ratio"] = round(float(lin_glb.mean() / max(lin_npz.mean(), 1e-12)), 4)
         if not in_glb:
             fail.append(f"{mn}: {cls}.glb has no COLOR_0 - gltfpack dropped the vertex irradiance")
 
