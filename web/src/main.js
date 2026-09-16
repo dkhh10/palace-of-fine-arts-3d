@@ -969,6 +969,26 @@ window.__pfaReady = false;
 window.__pfaStation = ( n ) => { applyStation( n ); resize(); renderFrame(); return currentStation.name; };
 // Gate 4 item 5: drive the walker from the harness without input, pointer lock or a rendered frame.
 window.__pfaWalkProbe = ( o ) => ( walk ? walk.probe( o || {} ) : null );
+
+/**
+ * Gate 4 item 2: orbit the camera around a world point, for the impostor rotational-pop sweep.
+ * An impostor picks its frame from the world-space view DIRECTION, so a pop can only be seen by
+ * rotating around one; the six fixed stations cannot show it.  Angles are degrees clockwise from
+ * world -Z, matching the walk probe's heading convention.
+ */
+window.__pfaOrbit = ( { target, dist = 30, headingDeg = 0, height = 12, fov = 40 } ) => {
+	const t = new THREE.Vector3( ...target );
+	const h = headingDeg * Math.PI / 180;
+	camera = new THREE.PerspectiveCamera( fov, camera.aspect || 16 / 9, 0.1, 5000 );
+	camera.position.set( t.x + Math.sin( h ) * dist, t.y + height, t.z + Math.cos( h ) * dist );
+	camera.lookAt( t );
+	camera.updateMatrixWorld( true );
+	currentStation = { index: 0, name: `orbit_${headingDeg}`, lens: null, shift_y: 0 };
+	userControlled = false;
+	if ( composer ) composer.passes[ 0 ].camera = camera;
+	renderFrame();
+	return { headingDeg, position: camera.position.toArray().map( v => + v.toFixed( 2 ) ), target: t.toArray() };
+};
 window.__pfaInfo = () => ( {
 	station: currentStation && { index: currentStation.index, name: currentStation.name, lens: currentStation.lens, shift_y: currentStation.shift_y },
 	cameraWorldMatrix: camera.matrixWorld.elements.slice(),

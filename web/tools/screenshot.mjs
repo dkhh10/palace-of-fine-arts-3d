@@ -18,6 +18,10 @@
 //   --pick "x,y;x,y"  QA: what is UNDER those pixels - the mesh, its nearest manifest asset by the
 //                     bbox join, the material, whether it carries UV2, whether a lightmap attached,
 //                     whether the environment reaches it, and what the baked patch did
+//   --orbit "tx,ty,tz:dist:height:h0,h1,..."
+//                     orbit the camera around a world point and shoot one PNG per heading; an
+//                     impostor picks its frame from the view DIRECTION, so rotational pop can only
+//                     be seen this way and never from the six fixed stations
 //   --probe A,B       project objects whose name contains A / B and read their centre pixel
 //   --walkprobe 0,90,180,270[:seconds]
 //                     walk from each captured station on those headings (degrees, 0 = world -Z) and
@@ -251,6 +255,23 @@ try {
 		}
 	}
 
+	// --orbit "tx,ty,tz:dist:height:h0,h1,h2,..."  one PNG per heading, for the impostor pop sweep
+	let orbits = null;
+	if ( o.orbit ) {
+		const [ tgt, dist, height, headings ] = String( o.orbit ).split( ':' );
+		const target = tgt.split( ',' ).map( Number );
+		const hs = headings.split( ',' ).map( Number ).filter( ( n ) => isFinite( n ) );
+		orbits = [];
+		for ( const headingDeg of hs ) {
+			const r = await page.evaluate( ( a ) => window.__pfaOrbit( a ), { target, dist: Number( dist ), height: Number( height ), headingDeg } );
+			await page.evaluate( ( n ) => window.__pfaRenderCost( n ), 6 );
+			const file = out.replace( /(\.png)$/, `_h${String( Math.round( headingDeg * 10 ) ).padStart( 5, '0' )}$1` );
+			if ( takeShots ) { await page.screenshot( { path: file, captureBeyondViewport: false } ); written.push( file ); }
+			orbits.push( { ...r, file } );
+		}
+		console.log( `[orbit] ${orbits.length} heading(s) around ${target} at ${dist} m` );
+	}
+
 	let picks = null;
 	if ( o.pick ) {
 		picks = await page.evaluate( ( spec ) => spec.split( ';' ).filter( Boolean ).map( ( t ) => {
@@ -283,7 +304,7 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, walkProbes, written, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
