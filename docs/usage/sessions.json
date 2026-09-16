@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-15T19:56:23.300407+00:00",
+ "generated": "2026-09-16T11:52:10.627303+00:00",
  "source": "/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building",
  "rates_usd_per_mtok": {
   "claude-fable-5-1": {
@@ -3123,17 +3123,17 @@
   {
    "session_id": "6460c313-5668-4669-b492-8fb279bb75e2",
    "first": "2026-09-15T07:49:15.529Z",
-   "last": "2026-09-15T19:56:18.035Z",
-   "main_user_turns": 306,
+   "last": "2026-09-16T06:48:56.059Z",
+   "main_user_turns": 317,
    "main": {
     "claude-fable-5-1": {
-     "input": 6366,
-     "output": 205337,
+     "input": 6478,
+     "output": 211450,
      "cw5m": 0,
-     "cw1h": 492498,
-     "cread": 104170412,
-     "thinking": 52272,
-     "requests": 306
+     "cw1h": 1556590,
+     "cread": 107961131,
+     "thinking": 53100,
+     "requests": 315
     }
    },
    "subagents": [
@@ -3437,6 +3437,29 @@
      ]
     },
     {
+     "agent": "ac0a249903c81ceaf",
+     "agentType": "general-purpose",
+     "description": "Gate 3 bake engineer r3 (Opus xhigh)",
+     "spawnDepth": 1,
+     "first": "2026-09-15T19:56:48.181Z",
+     "last": "2026-09-16T03:33:20.188Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 322,
+       "output": 211926,
+       "cw5m": 14225787,
+       "cw1h": 0,
+       "cread": 27284629,
+       "thinking": 96913,
+       "requests": 161
+      }
+     },
+     "cost_usd": 107.85,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
      "agent": "ace52b9453ca86c8c",
      "agentType": "general-purpose",
      "description": "Code review phase6-bake (Opus, read-only)",
@@ -3600,30 +3623,37 @@
    ],
    "total_by_model": {
     "claude-fable-5-1": {
-     "input": 6366,
-     "output": 205337,
+     "input": 6478,
+     "output": 211450,
      "cw5m": 0,
-     "cw1h": 492498,
-     "cread": 104170412,
-     "thinking": 52272,
-     "requests": 306
+     "cw1h": 1556590,
+     "cread": 107961131,
+     "thinking": 53100,
+     "requests": 315
     },
     "claude-opus-5": {
-     "input": 3892,
-     "output": 2252037,
-     "cw5m": 22895305,
+     "input": 4214,
+     "output": 2463963,
+     "cw5m": 37121092,
      "cw1h": 0,
-     "cread": 420102917,
-     "thinking": 936561,
-     "requests": 1946
+     "cread": 447387546,
+     "thinking": 1033474,
+     "requests": 2107
     }
    },
    "cost_by_model_usd": {
-    "claude-fable-5-1": 46.22,
-    "claude-opus-5": 409.47
+    "claude-fable-5-1": 68.76,
+    "claude-opus-5": 517.32
    },
-   "cost_usd": 455.69,
-   "wall_hours": 12.12
+   "cost_usd": 586.08,
+   "wall_hours": 22.99,
+   "claude_code_cost_state_usd": 766.31,
+   "claude_code_api_hours": 10.61,
+   "claude_code_tool_hours": 15.13,
+   "claude_code_lines": [
+    11640,
+    315
+   ]
   },
   {
    "session_id": "52e90d0f-93f3-45bb-a7d5-394f6faa187e",
@@ -3665,26 +3695,204 @@
     0,
     0
    ]
+  },
+  {
+   "session_id": "c47a8492-be20-4aa4-a385-e9e0be0c34ea",
+   "first": "2026-09-16T06:49:54.433Z",
+   "last": "2026-09-16T11:51:32.568Z",
+   "main_user_turns": 46,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 1060,
+     "output": 34378,
+     "cw5m": 0,
+     "cw1h": 110732,
+     "cread": 4493506,
+     "thinking": 8423,
+     "requests": 45
+    }
+   },
+   "subagents": [
+    {
+     "agent": "a62ae3479a450c056",
+     "agentType": "general-purpose",
+     "description": "Export Gate 3 UV2/COLOR_0 re-export",
+     "spawnDepth": 1,
+     "first": "2026-09-16T06:52:27.057Z",
+     "last": "2026-09-16T07:20:22.860Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 226,
+       "output": 100719,
+       "cw5m": 405855,
+       "cw1h": 0,
+       "cread": 17818036,
+       "thinking": 48146,
+       "requests": 113
+      }
+     },
+     "cost_usd": 13.96,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "a765607a73ca92be1",
+     "agentType": "general-purpose",
+     "description": "Gate 3 bake review fixes",
+     "spawnDepth": 1,
+     "first": "2026-09-16T07:05:50.472Z",
+     "last": "2026-09-16T07:17:44.785Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 102,
+       "output": 54018,
+       "cw5m": 142407,
+       "cw1h": 0,
+       "cread": 5595868,
+       "thinking": 15401,
+       "requests": 51
+      }
+     },
+     "cost_usd": 5.04,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "ab7a668c0fcb262dc",
+     "agentType": "general-purpose",
+     "description": "Gate 4 viewer round",
+     "spawnDepth": 1,
+     "first": "2026-09-16T06:52:43.001Z",
+     "last": "2026-09-16T07:21:37.406Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 254,
+       "output": 114004,
+       "cw5m": 313267,
+       "cw1h": 0,
+       "cread": 26329596,
+       "thinking": 39434,
+       "requests": 127
+      }
+     },
+     "cost_usd": 17.97,
+     "models": [
+      "claude-opus-5"
+     ]
+    },
+    {
+     "agent": "af2337b050fac9cce",
+     "agentType": "general-purpose",
+     "description": "Gate 3 bake code review",
+     "spawnDepth": 1,
+     "first": "2026-09-16T06:52:15.282Z",
+     "last": "2026-09-16T07:04:52.552Z",
+     "usage": {
+      "claude-opus-5": {
+       "input": 74,
+       "output": 52980,
+       "cw5m": 185398,
+       "cw1h": 0,
+       "cread": 4335819,
+       "thinking": 34339,
+       "requests": 37
+      }
+     },
+     "cost_usd": 4.65,
+     "models": [
+      "claude-opus-5"
+     ]
+    }
+   ],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 1060,
+     "output": 34378,
+     "cw5m": 0,
+     "cw1h": 110732,
+     "cread": 4493506,
+     "thinking": 8423,
+     "requests": 45
+    },
+    "claude-opus-5": {
+     "input": 656,
+     "output": 321721,
+     "cw5m": 1046927,
+     "cw1h": 0,
+     "cread": 54079319,
+     "thinking": 137320,
+     "requests": 328
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 5.07,
+    "claude-opus-5": 41.63
+   },
+   "cost_usd": 46.7,
+   "wall_hours": 5.03,
+   "claude_code_cost_state_usd": 59.76,
+   "claude_code_api_hours": 1.34,
+   "claude_code_tool_hours": 0.13,
+   "claude_code_lines": [
+    1644,
+    91
+   ]
+  },
+  {
+   "session_id": "87d95e57-98c0-4c4c-a708-4de25b276c70",
+   "first": "2026-09-16T11:51:40.629Z",
+   "last": "2026-09-16T11:51:57.218Z",
+   "main_user_turns": 5,
+   "main": {
+    "claude-fable-5-1": {
+     "input": 34,
+     "output": 713,
+     "cw5m": 0,
+     "cw1h": 27472,
+     "cread": 75981,
+     "thinking": 31,
+     "requests": 2
+    }
+   },
+   "subagents": [],
+   "total_by_model": {
+    "claude-fable-5-1": {
+     "input": 34,
+     "output": 713,
+     "cw5m": 0,
+     "cw1h": 27472,
+     "cread": 75981,
+     "thinking": 31,
+     "requests": 2
+    }
+   },
+   "cost_by_model_usd": {
+    "claude-fable-5-1": 0.6
+   },
+   "cost_usd": 0.6,
+   "wall_hours": 0.0
   }
  ],
  "grand_total_by_model": {
   "claude-fable-5-1": {
-   "input": 44966,
-   "output": 1785850,
+   "input": 46172,
+   "output": 1827054,
    "cw5m": 11613342,
-   "cw1h": 7144983,
-   "cread": 420124862,
-   "thinking": 625411,
-   "requests": 1738
+   "cw1h": 8347279,
+   "cread": 428485068,
+   "thinking": 634693,
+   "requests": 1794
   },
   "claude-opus-5": {
-   "input": 19160,
-   "output": 6910338,
-   "cw5m": 72563362,
+   "input": 20138,
+   "output": 7443985,
+   "cw5m": 87836076,
    "cw1h": 0,
-   "cread": 1687936939,
-   "thinking": 3285589,
-   "requests": 9580
+   "cread": 1769300887,
+   "thinking": 3519822,
+   "requests": 10069
   },
   "<synthetic>": {
    "input": 0,
@@ -3706,12 +3914,12 @@
   }
  },
  "grand_cost_by_model_usd": {
-  "claude-fable-5-1": 482.84,
-  "claude-opus-5": 1470.34,
+  "claude-fable-5-1": 511.05,
+  "claude-opus-5": 1619.83,
   "<synthetic>": 0,
   "claude-sonnet-5": 0.9
  },
- "grand_cost_usd": 1954.08,
+ "grand_cost_usd": 2131.78,
  "daily": {
   "2026-09-06": {
    "cost_usd": 57.75,
@@ -3847,25 +4055,25 @@
    }
   },
   "2026-09-15": {
-   "cost_usd": 462.95,
+   "cost_usd": 521.86,
    "by_model": {
     "claude-fable-5-1": {
-     "input": 6532,
-     "output": 208455,
+     "input": 6638,
+     "output": 212681,
      "cw5m": 0,
-     "cw1h": 836584,
-     "cread": 105039850,
-     "thinking": 52936,
-     "requests": 314
+     "cw1h": 855051,
+     "cread": 108227216,
+     "thinking": 53642,
+     "requests": 320
     },
     "claude-opus-5": {
-     "input": 3892,
-     "output": 2252037,
-     "cw5m": 22895305,
+     "input": 4130,
+     "output": 2433125,
+     "cw5m": 29863828,
      "cw1h": 0,
-     "cread": 420102917,
-     "thinking": 936561,
-     "requests": 1946
+     "cread": 439004569,
+     "thinking": 1024521,
+     "requests": 2065
     },
     "<synthetic>": {
      "input": 0,
@@ -3875,6 +4083,29 @@
      "cread": 0,
      "thinking": 0,
      "requests": 1
+    }
+   }
+  },
+  "2026-09-16": {
+   "cost_usd": 118.78,
+   "by_model": {
+    "claude-fable-5-1": {
+     "input": 1100,
+     "output": 36978,
+     "cw5m": 0,
+     "cw1h": 1183829,
+     "cread": 5172840,
+     "thinking": 8576,
+     "requests": 50
+    },
+    "claude-opus-5": {
+     "input": 740,
+     "output": 352559,
+     "cw5m": 8304191,
+     "cw1h": 0,
+     "cread": 62462296,
+     "thinking": 146273,
+     "requests": 370
     }
    }
   }
@@ -3951,7 +4182,18 @@
   "2026-09-15T16": 41.73,
   "2026-09-15T17": 53.26,
   "2026-09-15T18": 24.84,
-  "2026-09-15T19": 47.4
+  "2026-09-15T19": 50.42,
+  "2026-09-15T20": 16.41,
+  "2026-09-15T21": 12.89,
+  "2026-09-15T22": 12.57,
+  "2026-09-15T23": 14.02,
+  "2026-09-16T00": 13.35,
+  "2026-09-16T01": 13.49,
+  "2026-09-16T02": 14.97,
+  "2026-09-16T03": 19.08,
+  "2026-09-16T06": 22.33,
+  "2026-09-16T07": 34.96,
+  "2026-09-16T11": 0.6
  },
  "claude_code_cost_state": {
   "db75376f-0874-434f-b644-8a5e35d22392": {
@@ -4151,6 +4393,38 @@
     }
    }
   },
+  "6460c313-5668-4669-b492-8fb279bb75e2": {
+   "totalCostUSD": 766.30574225,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 3209,
+     "outputTokens": 16,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 0,
+     "costUSD": 0.0032890000000000003
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 7368,
+     "outputTokens": 211831,
+     "thinkingTokens": 53100,
+     "cacheReadInputTokens": 110247554,
+     "cacheCreationInputTokens": 1558883,
+     "webSearchRequests": 0,
+     "costUSD": 69.4047785
+    },
+    "claude-opus-5[1m]": {
+     "inputTokens": 1308437,
+     "outputTokens": 2516497,
+     "thinkingTokens": 1049030,
+     "cacheReadInputTokens": 740546267,
+     "cacheCreationInputTokens": 41147189,
+     "webSearchRequests": 0,
+     "costUSD": 696.8976747499996
+    }
+   }
+  },
   "52e90d0f-93f3-45bb-a7d5-394f6faa187e": {
    "totalCostUSD": 0.816968,
    "modelUsage": {
@@ -4162,6 +4436,38 @@
      "cacheCreationInputTokens": 35114,
      "webSearchRequests": 0,
      "costUSD": 0.816968
+    }
+   }
+  },
+  "c47a8492-be20-4aa4-a385-e9e0be0c34ea": {
+   "totalCostUSD": 59.761432500000005,
+   "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+     "inputTokens": 965,
+     "outputTokens": 13,
+     "thinkingTokens": 0,
+     "cacheReadInputTokens": 0,
+     "cacheCreationInputTokens": 0,
+     "webSearchRequests": 0,
+     "costUSD": 0.00103
+    },
+    "claude-fable-5-1": {
+     "inputTokens": 4192,
+     "outputTokens": 34508,
+     "thinkingTokens": 8423,
+     "cacheReadInputTokens": 5365537,
+     "cacheCreationInputTokens": 113796,
+     "webSearchRequests": 0,
+     "costUSD": 5.38462425
+    },
+    "claude-opus-5[1m]": {
+     "inputTokens": 209634,
+     "outputTokens": 327124,
+     "thinkingTokens": 137650,
+     "cacheReadInputTokens": 77172829,
+     "cacheCreationInputTokens": 1050095,
+     "webSearchRequests": 0,
+     "costUSD": 54.375778249999996
     }
    }
   }

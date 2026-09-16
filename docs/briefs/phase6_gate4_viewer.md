@@ -17,3 +17,17 @@ docs/qa_round_10b.md (the hero boxes the parity round will measure), docs/briefs
 6. Performance: 1440p median frame time and GPU cost, resident memory (textures + render targets, PMREM once), draw calls — target 45 fps or better with everything on.
 7. Capture: web/tools/gate4.sh (all six stations, baked lighting, post on, water on, placeholders gone), pair sheets vs the Phase 5 renders and the cam01 tiles; QA rounds 13+.
 Report < 30 lines: per-station numbers, the on/off box table for cam01, what is left, last commit id. Chrome only through scripts/chrome_run.sh with the GPU guard; never during a bake.
+
+## Round 5 resume (lead, 2026-09-16 session 3). Fresh agent, Opus high, from phase6-viewer d76bee0 (tree clean). Read first: docs/status.md from "2026-09-16 · CHECKPOINT" to the end
+(both addenda), the body of commit d76bee0 (`git log -1 --format=%B d76bee0`), web/README.md, docs/decisions.md "2026-09-16 · Gate 3 hand-off". Items 1 is done; items 2-7 not started.
+0. FIRST, before any capture: the open blocker. With lightmaps attached the hero reads mean luma 117.5 vs the Cycles hero 140.0 and the colonnade wall bands dark/blue; no decode
+   (gamma2/linear/rgbm8) or V-flip reaches 140. Run a lightmap-only debug pass on arch.glb + ground.glb (already carrying the Gate 3 TEXCOORD_1): (a) render a solid-colour /
+   checker UV2 test map in place of each own lightmap and compare against the bake-side layout in export/out/gate3/lightmap_uv2.npz (per-mesh island centroids bake-side vs
+   glb-side, meshopt-decoded); (b) check lightMapIntensity, the pi scale, the sky.diffuse double-count (is the environment still adding diffuse on lightmapped materials?), and
+   the LUT/exposure path with ?lighting=baked vs the Phase 5 hero. Write the finding in web/README.md. If the glb's islands are misplaced, STOP that thread and report: it is
+   export-owned and the lead reroutes it. If it is viewer-side, fix it and re-measure the hero luma.
+1. The lead will message you when the export merge lands (env.glb COLOR_0 + the 988-placement arch.glb). Then re-sync assets (web/public/assets -> export/out) and take the
+   six-station BAKED capture (post off, placeholders hidden, t=0) AND the matching ?lighting=direct capture of the same stations, pair sheets vs the Phase 5 renders, cam01
+   six 100 % tiles under renders/web/tiles/<capture>/, perf json. Name the capture "round13b" (round13_* is the pre-relay Gate 2 look and must not be scored). Commit, then report
+   the capture in < 10 lines and CONTINUE with items 2-7 without waiting.
+Rules as above: Chrome only through scripts/chrome_run.sh, never during a bake (none is running; check export/out/bake_queue/status.json anyway). Commit every script that runs.
