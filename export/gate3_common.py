@@ -56,6 +56,19 @@ MARGIN_SLOT = 6                # 16 px of margin on a 248 px slot would flood a 
 # median triangle 0.21 px across at 2K). Anything under this gets a new UV2 in gate3_bake.blend and a
 # hand-off npz; see export/README.md "Re-laid UV2".
 UV2_RELAY_THRESHOLD = 0.15
+
+# QA-13-2 (measured, export/out/gate3/ceiling_probe.json): the rotunda plaster shell is a single-sided
+# surface whose normals ALL point up, away from the rotunda it ceilings (area_normal_up = 1.000; at cam04
+# every one of its 440 visible faces has normal.dot(to_camera) = -0.99). A Cycles DIFFUSE bake integrates
+# the hemisphere around the SHADING normal only, so it integrated the enclosed cavity between the shell and
+# the dome (median ray hit 11.55 m, 0 sky escape) instead of the lit rotunda below (median hit 0.91 m, 59 %
+# of rays inside 2 m) -> max 0.72 over 4.9 % non-zero texels. A RENDER does not show this because Cycles
+# flips the shading normal toward the incoming ray; a bake has no incoming ray. The fix is bake-side only:
+# the winding is reversed in the bake process and never saved, so the glb keeps its Gate 1 geometry, UV1 and
+# UV2 (flip_normals permutes the loops of each face, which carries the UV data with them - the script
+# asserts the covered texel set is bit-identical before and after). The six-station backface sweep
+# (export/out/gate3/scene_audit.json) found no other non-foliage object over 200 px with this defect.
+FLIP_NORMALS_FOR_BAKE = ("ARCH_rotunda_plaster_ceiling_merged",)
 UV2_RELAY_ANGLE = 1.15
 UV2_RELAY_MARGIN = 0.0008
 

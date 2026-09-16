@@ -284,7 +284,8 @@ jobs.append(dict(id="probe_hero", kind="probe", blend="gate3_bake.blend", est_s=
 for row in sorted(own_rows, key=lambda r: -r["area_m2"]):
     jobs.append(dict(id="lm_" + row["object"], kind="own", blend="gate3_bake.blend",
                      object=row["object"], mesh=row["mesh"], size=row["size"],
-                     uv2=g3.UV2, uv2_relaid=row["uv2_relaid"], est_s=350))
+                     uv2=g3.UV2, uv2_relaid=row["uv2_relaid"],
+                     flip_normals_for_bake=row["object"] in g3.FLIP_NORMALS_FOR_BAKE, est_s=350))
 
 slots = man2["orn_slots"]
 for pool in ("orn", "arch_inst"):
