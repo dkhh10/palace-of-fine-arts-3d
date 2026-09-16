@@ -211,6 +211,54 @@ lighting, both placeholder sets hidden, water phase frozen at `t=0`; `PFA_TAG` n
 material clone, the per-instance attribute and the shader substitutions against three's own chunks —
 without a browser, so a `once()` failure cannot reach a capture unnoticed.
 
+### Gate 4 step 0: why the lightmaps read a stop dark, measured
+
+`gltfpack` quantises TEXCOORD_n to 12 bits and stores them as **normalised unsigned shorts**, so every
+UV that reaches a shader sits in `[0, 4095/65535] = [0, 0.0625]`.  The dequantisation is **not** in the
+accessor: gltfpack writes it into `KHR_texture_transform` (offset = the island's min, scale ~16) on the
+material's `baseColorTexture`, and three applies a texture transform only to the texture that carries
+it, on that texture's own uv channel.  Consequences, both measured on the real glbs:
+
+* `TEXCOORD_1` has no texture of its own in the glb, so the Gate 3 lightmap sampled the bottom-left
+  1/16 x 1/16 corner of its own map - almost all of it empty margin.  That is the hero at mean luma
+  **117.5** against the Cycles hero's 140.0 with the colonnade bands dark/blue, and it is why no decode
+  variant (gamma2 117.5 / linear 109.9 / rgbm8 120.0) and neither V orientation could reach 140: the
+  texels being read were the wrong ones.
+* The Gate 2 PBR and detail passes replace `material.map` with their own texture, whose transform is the
+  identity, so **every albedo / roughness / normal has sampled the same 1/16 window** (the tile magnified
+  ~16x) since Gate 2.
+
+**The islands are sound - the export owes nothing.**  `web/tools/uv2_debug.mjs` (GLTFLoader +
+MeshoptDecoder in node) decodes the glb's TEXCOORD_1, applies the material's transform and flips V;
+against the bake's own UV2 in `export/out/gate3/lightmap_uv2.npz` the occupancy IoU is **0.994-0.999**
+on all seven re-laid assets, each matched to the right mesh (riprap 1.000, colonnade N 0.999 / S 0.994,
+rotunda ochre 0.997, ceiling rib 0.999, podium 0.996, colonnade walk 0.999).  Before the transform is
+applied the IoU is 0.003.
+
+**Fix** `src/uvDequant.js`, called on each glb the moment it is parsed and before every other pass:
+`uv := uv * repeat + offset` written back as float32 once per geometry, then every texture on the
+material reset to the identity transform.  Every later pass then sees plain `[0,1]` UVs and needs to
+know nothing about quantisation.  All 114 meshes across the four glbs carry a recoverable transform
+(scale 8.41..16.0, none rotated); `?uvdq=0` restores the broken behaviour for an A/B.
+
+Measured at station 1, 1920x1080, `?lighting=baked`, 15/16 own maps live (the slot atlases still wait on
+the export merge), mean luma of the frame:
+
+| pass | mean | median | p10 | p90 | MAE vs Cycles |
+|---|---|---|---|---|---|
+| lightmaps, quantised UV (the blocker) | 117.5 | 135.2 | 22.3 | 197.3 | - |
+| **uv dequantised (`renders/web/dq1.png`)** | **134.3** | 149.5 | 51.4 | 198.7 | 31.1 |
+| the same with `?lmflip=1` | 117.8 | - | - | - | 42.0 |
+| Cycles hero `round10b_01_lagoon_hero_cycles.png` | 140.0 | 156.0 | 52.2 | 198.2 | - |
+
+The V flip stays **off**: the glb's TEXCOORD_1 already carries the Blender -> glTF flip (that is what the
+IoU above measures), and `?lmflip=1` is worse on every metric.  The shadow end now lands on the Cycles
+hero's (p10 51.4 vs 52.2) where the broken UV had it at 22.3.
+
+Carried, visible in `renders/web/dq1.png` and NOT caused by this (both predate it, both are items 2-3):
+the near-tree and shrub cards read as blue-white confetti (no vertex irradiance yet - `env.glb` has no
+`COLOR_0`, so they take the sky PMREM flat), and the panel behind the colonnade reads as flat blue.
+
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
     npm install && npm run dev     # /assets/* served from $PFA_MAIN_ROOT/export/out, never copied
