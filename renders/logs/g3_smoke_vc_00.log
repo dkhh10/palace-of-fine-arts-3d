@@ -1,0 +1,16 @@
+00:00.319  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] vc_00: ENV_tree_broadleaf_06_LOD1 17996 verts 2.0s max=0.007
+[gate3] vc_00: ENV_tree_pine_04_LOD1 27760 verts 2.8s max=43.618
+[gate3] vc_00: ENV_tree_eucalyptus_02_LOD1 24852 verts 2.7s max=71.911
+[gate3] vc_00: ENV_tree_eucalyptus_03_LOD1 25584 verts 2.4s max=53.393
+[gate3] vc_00: ENV_tree_eucalyptus_09_LOD1 24968 verts 2.3s max=61.965
+[gate3] vc_00: ENV_tree_cypress_06_LOD1 26464 verts 2.4s max=33.738
+[gate3] vc_00: ENV_tree_cypress_column_05_LOD1 23152 verts 2.4s max=42.559
+[gate3] job vc_00 done in 17.0 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 98108 exited rc=0 after 18 s (max 900)

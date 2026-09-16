@@ -1,0 +1,13 @@
+00:00.320  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+00:02.127  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/impostor/imp_ENV_tree_willow_s11_LOD1_view.exr'
+00:02.541  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/impostor/imp_ENV_tree_willow_s11_LOD1_view.exr'
+00:02.736  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/impostor/imp_ENV_tree_willow_s11_LOD1_view.exr'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] imp_ENV_tree_willow_s11_LOD1: 3 views 2.4s (0.79 s/view) range=16.0 alpha_cov=0.004
+[gate3] job imp_ENV_tree_willow_s11_LOD1 done in 3.4 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 97995 exited rc=0 after 4 s (max 900)

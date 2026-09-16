@@ -21,6 +21,7 @@ ROOT=${HERE:h}
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 GATE=gate1
 if [ "$1" = "--gate2" ]; then GATE=gate2; shift; fi
+if [ "$1" = "--gate3" ]; then GATE=gate3; shift; fi
 SRC="$ROOT/export/out/gate1/gate1_bake.blend"
 JOBS="$ROOT/export/out/gate1/bake_jobs.json"
 RECDIR="$ROOT/export/out/gate1/bake"
@@ -32,12 +33,19 @@ if [ "$GATE" = gate2 ]; then
   SCRIPT="$HERE/bake_pbr.py"
   SCRIPT_ARGS=(--gate2 --job)
 fi
+if [ "$GATE" = gate3 ]; then
+  JOBS="$ROOT/export/out/gate3/bake_jobs.json"
+  RECDIR="$ROOT/export/out/gate3/bake"
+  SCRIPT="$HERE/bake_lm.py"
+  SCRIPT_ARGS=(--job)
+fi
 QDIR="$ROOT/export/out/bake_queue"
 STATUS="$QDIR/status.json"
 LOG="$QDIR/bake_queue.log"
 STOP="$QDIR/STOP"
 STATE=${BLENDER_WATCHDOG_STATE:-$HOME/.cache/pfa_blender_watchdog}
 MAXS=900
+if [ "$GATE" = gate3 ]; then MAXS=1800; fi   # a 4K terrain lightmap at 128 spp + OIDN is the longest job
 mkdir -p "$QDIR" "$RECDIR"
 
 write_status () {  # state current done total extra
@@ -104,20 +112,23 @@ case "$cmd" in
   start)
     [ -f "$JOBS" ] || { echo "bake_queue: $JOBS missing - run export_set.py -- --gate1 first" >&2; exit 2; }
     rm -f "$STOP"
-    if [ "$GATE" = gate2 ]; then nohup "$0" --gate2 run >>"$LOG" 2>&1 &
-    else nohup "$0" run >>"$LOG" 2>&1 & fi
+    case "$GATE" in
+      gate2) nohup "$0" --gate2 run >>"$LOG" 2>&1 & ;;
+      gate3) nohup "$0" --gate3 run >>"$LOG" 2>&1 & ;;
+      *)     nohup "$0" run >>"$LOG" 2>&1 & ;;
+    esac
     echo "[bake_queue] detached pid $! - status: $STATUS, log: $LOG"
     ;;
   run)
-    [ "$GATE" = gate2 ] || [ -f "$SRC" ] || { echo "bake_queue: $SRC missing" >&2; exit 2; }
+    if [ "$GATE" = gate1 ] && [ ! -f "$SRC" ]; then echo "bake_queue: $SRC missing" >&2; exit 2; fi
     total=$(python3 -c "import json,sys;print(len(json.load(open('$JOBS'))['jobs']))")
     ids=(${(f)"$(python3 -c "import json;print('\n'.join(j['id'] for j in json.load(open('$JOBS'))['jobs']))")"})
     done_n=0
     write_status waiting "" 0 "$total" "queued"
     for id in $ids; do
       rec="$RECDIR/$id.json"
-      if [ "$GATE" = gate2 ]; then
-        SRC="$ROOT/export/out/gate2/$(python3 -c "import json;print(next(j['blend'] for j in json.load(open('$JOBS'))['jobs'] if j['id']=='$id'))")"
+      if [ "$GATE" != gate1 ]; then
+        SRC="$ROOT/export/out/$GATE/$(python3 -c "import json;print(next(j['blend'] for j in json.load(open('$JOBS'))['jobs'] if j['id']=='$id'))")"
       fi
       if [ -f "$rec" ]; then
         done_n=$((done_n+1))
@@ -154,5 +165,5 @@ case "$cmd" in
     write_status idle "" "$done_n" "$total" "finished"
     echo "[bake_queue] finished $done_n/$total"
     ;;
-  *) echo "usage: bake_queue.sh [--gate2] {start|run|status|stop}" >&2; exit 2 ;;
+  *) echo "usage: bake_queue.sh [--gate2|--gate3] {start|run|status|stop}" >&2; exit 2 ;;
 esac

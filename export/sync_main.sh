@@ -24,11 +24,12 @@ if [ -d "$ROOT/export/out/gate2" ]; then
         "$ROOT/export/out/gate2/" "$MAIN/export/out/gate2/"
   echo "[gate2] synced to $MAIN/export/out/gate2 ($(du -sk "$MAIN/export/out/gate2" | cut -f1) KiB)"
 fi
-# Gate 3: this worktree only WRITES the export hand-off (uv2_relay_status.json) into out/gate3; the bake's
-# own gate3 outputs live in MAIN and must not be touched, hence no --delete and no blends/EXRs from here.
+# Gate 3: same rule - no --delete. The two bake blends (380 MB) and the float EXR sources (tex/, ~2 GB)
+# stay in this worktree; the KTX2, the .hdr probe/sky, the manifest, the UV2 and vertex hand-off npz ship.
 if [ -d "$ROOT/export/out/gate3" ]; then
   mkdir -p "$MAIN/export/out/gate3"
-  rsync -a --exclude 'gate3_*.blend*' --exclude 'tex/' \
+  rsync -a --exclude 'gate3_bake.blend*' --exclude 'gate3_imp.blend*' --exclude 'tex/' \
+        --exclude 'slots/' --exclude 'vertex/' --exclude 'impostor/*.png' --exclude 'probe/*.exr' \
         "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
   echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
 fi

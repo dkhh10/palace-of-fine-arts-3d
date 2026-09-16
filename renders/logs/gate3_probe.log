@@ -1,0 +1,7 @@
+00:00.341  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate2/gate2_bake.blend"
+00:03.045  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[gate3] probe done in 6.9 s -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/probe.json
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 97361 exited rc=0 after 7 s (max 1200)
