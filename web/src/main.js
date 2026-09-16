@@ -38,6 +38,8 @@ const CFG = {
 	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
+	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
+	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
 	testLut: qs.get( 'testlut' ),                       // 'identity' | 'gamma22'
 	exposureOverride: qs.has( 'exposure' ) ? parseFloat( qs.get( 'exposure' ) ) : null,
@@ -323,9 +325,13 @@ async function boot() {
 
 	// water -------------------------------------------------------------------------------------
 	if ( CFG.water ) {
-		water = makeWater( manifest.waterZ, { resolution: 1024 } );
+		water = makeWater( manifest.waterZ, { resolution: 1024,
+			...( CFG.waterBlur !== null ? { reflBlur: CFG.waterBlur } : {} ),
+			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ) } );
 		scene.add( water );
-		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector 1024x1024` );
+		const wu = water.material.uniforms;
+		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector 1024x1024, `
+			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}` );
 	}
 
 	// display transform ---------------------------------------------------------------------------
