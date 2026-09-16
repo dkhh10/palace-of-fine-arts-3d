@@ -50,6 +50,12 @@ const CFG = {
 	bloomRes: ( qs.get( 'bloomres' ) || ( qs.get( 'quality' ) === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
 	reflRes: ( qs.get( 'reflres' ) || ( qs.get( 'quality' ) === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
 	reflSet: ( qs.get( 'reflset' ) || 'orn' ).toLowerCase(),      // full | orn | both (item 6: cut the draw set)
+	waterDebug: parseInt( qs.get( 'waterdebug' ) || '0', 10 ),   // 1 F, 2 proj uv, 3 normal, 4 raw refl
+	waterDist: qs.has( 'waterdist' ) ? parseFloat( qs.get( 'waterdist' ) ) : null,
+	waterNorm: qs.has( 'waternorm' ) ? parseFloat( qs.get( 'waternorm' ) ) : null,
+	waterTile: qs.has( 'watertile' ) ? parseFloat( qs.get( 'watertile' ) ) : null,
+	waterAniso: qs.has( 'wateraniso' ) ? parseFloat( qs.get( 'wateraniso' ) ) : null,
+	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
@@ -347,9 +353,14 @@ async function boot() {
 	// water -------------------------------------------------------------------------------------
 	if ( CFG.water ) {
 		const reflPx = CFG.reflRes === 'full' ? 1024 : 512;
-		water = makeWater( manifest.waterZ, { resolution: reflPx,
+		water = makeWater( manifest.waterZ, { resolution: reflPx, debug: CFG.waterDebug,
 			...( CFG.waterBlur !== null ? { reflBlur: CFG.waterBlur } : {} ),
-			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ) } );
+			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ),
+			...( CFG.waterDist !== null ? { distortion: CFG.waterDist } : {} ),
+			...( CFG.waterNorm !== null ? { normalScale: CFG.waterNorm } : {} ),
+			...( CFG.waterTile !== null ? { rippleTiling: CFG.waterTile } : {} ),
+			...( CFG.waterAniso !== null ? { distortAniso: CFG.waterAniso } : {} ),
+			...( CFG.waterMurk ? { murk: CFG.waterMurk.split( ',' ).map( Number ) } : {} ) } );
 		scene.add( water );
 		const wu = water.material.uniforms;
 		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector ${reflPx}x${reflPx}`

@@ -40,6 +40,7 @@ const WaterShader = {
 		murk: { value: new THREE.Color( 0.020, 0.035, 0.030 ) },
 		reflectTint: { value: new THREE.Color( 0.88, 0.94, 0.90 ) },
 		normalScale: { value: 0.06 }, rippleTiling: { value: 0.09 },
+		distortAniso: { value: 1.0 },
 		// A real lagoon is a ROUGH, murky surface, not a mirror.  Two terms carry that, both
 		// calibrated against the Phase 5 Cycles hero's water box (docs/qa_round_10b.md
 		// 900 760 1020 840: lum 128.6, std 34.2, sat 0.33, R-B +34.4) - see makeWater().
@@ -48,6 +49,9 @@ const WaterShader = {
 		//   reflSat    the murk scatters light back out through the reflected ray, washing its
 		//              colour toward neutral.  1.0 = a clean mirror.
 		reflBlur: { value: 0.0 }, reflSat: { value: 1.0 },
+		// QA-14-1 diagnostics: 1 = Fresnel F, 2 = the projected reflection uv, 3 = the perturbed
+		// normal's xy, 4 = the raw reflection sample, 5 = |ripple offset| in screen units.
+		debugMode: { value: 0 },
 	},
 	vertexShader: /* glsl */`
 		uniform mat4 textureMatrix;
@@ -62,7 +66,8 @@ const WaterShader = {
 	`,
 	fragmentShader: /* glsl */`
 		uniform sampler2D tDiffuse, tNormal;
-		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat;
+		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat, distortAniso;
+		uniform int debugMode;
 		uniform vec3 murk, reflectTint;
 		varying vec4 vProjUv;
 		varying vec3 vWorld;
@@ -72,8 +77,15 @@ const WaterShader = {
 			vec3 n2 = texture2D( tNormal, p * 2.7 - vec2( time * 0.009, time * 0.017 ) ).rgb * 2.0 - 1.0;
 			vec3 n = normalize( vec3( ( n1.xy + n2.xy ) * normalScale, 1.0 ) );
 			vec3 N = normalize( vec3( n.x, n.z, n.y ) );                       // tangent -> world (plane is +Y up)
+			// QA-14-1.  A grazing view turns a small surface slope into a LARGE vertical displacement of
+			// the reflected ray and a small horizontal one, which is why a real lagoon reads as
+			// horizontal streaks (the reference's row/col high-pass ratio is 3.24, a mirror's is ~1).
+			// The vertical term is therefore scaled by distortAniso, and both are scaled by 1/c so
+			// the displacement grows toward the horizon exactly as the geometry says it should.
 			vec4 uv = vProjUv;
-			uv.xy += n.xy * distortion * uv.w;                                  // ripples break the reflection
+			float grazing = clamp( 1.0 / max( dot( normalize( cameraPosition - vWorld ), N ), 0.02 ), 1.0, 40.0 );
+			uv.x += n.x * distortion * grazing * uv.w;
+			uv.y += n.y * distortion * distortAniso * grazing * uv.w;
 			// gather over a small disc: the ripple slopes spread the reflected ray
 			vec3 refl = texture2DProj( tDiffuse, uv ).rgb;
 			if ( reflBlur > 0.0 ) {
@@ -90,6 +102,10 @@ const WaterShader = {
 			vec3 V = normalize( cameraPosition - vWorld );
 			float c = clamp( dot( V, N ), 0.0, 1.0 );
 			float F = 0.02 + 0.98 * pow( 1.0 - c, 5.0 );                        // water, IOR 1.33
+			if ( debugMode == 1 ) { gl_FragColor = vec4( vec3( F ), 1.0 ); return; }
+			if ( debugMode == 2 ) { vec2 q = uv.xy / max( uv.w, 1e-6 ); gl_FragColor = vec4( fract( q ), float( q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0 ), 1.0 ); return; }
+			if ( debugMode == 3 ) { gl_FragColor = vec4( n.xy * 0.5 + 0.5, 0.0, 1.0 ); return; }
+			if ( debugMode == 4 ) { gl_FragColor = vec4( texture2DProj( tDiffuse, vProjUv ).rgb, 1.0 ); return; }
 			gl_FragColor = vec4( mix( murk, refl, F ), 1.0 );
 		}
 	`,
@@ -123,11 +139,16 @@ export function makeWater( waterY, o = {} ) {
 	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	if ( o.tint ) u.reflectTint.value.setRGB( ...o.tint );
 	if ( o.distortion !== undefined ) u.distortion.value = o.distortion;
+	if ( o.normalScale !== undefined ) u.normalScale.value = o.normalScale;
+	if ( o.rippleTiling !== undefined ) u.rippleTiling.value = o.rippleTiling;
+	if ( o.distortAniso !== undefined ) u.distortAniso.value = o.distortAniso;
+	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	// Calibrated on the Gate 4 capture against the Phase 5 Cycles hero's water box: the mirror-sharp
 	// Gate 0 water read std 44.0 against 34.2 and sat 0.69 against 0.33.  ?waterblur / ?watersat
 	// move them for the A/B; the defaults are the calibration.
 	u.reflBlur.value = o.reflBlur ?? 0.0045;
 	u.reflSat.value = o.reflSat ?? 0.66;
+	if ( o.debug ) u.debugMode.value = o.debug;
 	reflector.userData.tick = ( t ) => { u.time.value = t; };
 	return reflector;
 }
