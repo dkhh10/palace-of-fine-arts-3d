@@ -61,7 +61,8 @@ const CFG = {
 	waterAniso: qs.has( 'wateraniso' ) ? parseFloat( qs.get( 'wateraniso' ) ) : null,
 	waterHoriz: qs.has( 'waterhoriz' ) ? parseFloat( qs.get( 'waterhoriz' ) ) : null,
 	waterGraze: qs.has( 'watergraze' ) ? parseFloat( qs.get( 'watergraze' ) ) : null,
-	waterCrest: qs.has( 'watercrest' ) ? parseFloat( qs.get( 'watercrest' ) ) : null,   // ripple anisotropy
+	waterCrest: qs.has( 'watercrest' ) ? parseFloat( qs.get( 'watercrest' ) ) : null,   // directional spread power
+	waterSlope: qs.has( 'waterslope' ) ? parseFloat( qs.get( 'waterslope' ) ) : null,   // rms surface slope, rad
 	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear, overrides the derivation
 	waterMurkGain: qs.has( 'watermurkgain' ) ? parseFloat( qs.get( 'watermurkgain' ) ) : null,  // scales it
 	waterGrazeMax: qs.has( 'watergrazemax' ) ? parseFloat( qs.get( 'watergrazemax' ) ) : null,  // grazing cap
@@ -371,7 +372,8 @@ async function boot() {
 			...( CFG.waterAniso !== null ? { distortAniso: CFG.waterAniso } : {} ),
 			...( CFG.waterHoriz !== null ? { horizonBias: CFG.waterHoriz } : {} ),
 			...( CFG.waterGraze !== null ? { grazingGain: CFG.waterGraze } : {} ),
-			...( CFG.waterCrest !== null ? { aniso: CFG.waterCrest } : {} ),
+			...( CFG.waterCrest !== null ? { spread: CFG.waterCrest } : {} ),
+			...( CFG.waterSlope !== null ? { slopeRms: CFG.waterSlope } : {} ),
 			...( CFG.waterGrazeMax !== null ? { grazingMax: CFG.waterGrazeMax } : {} ),
 			...( CFG.waterMurkGain !== null ? { murkGain: CFG.waterMurkGain } : {} ),
 			...( CFG.waterMurk ? { murk: CFG.waterMurk.split( ',' ).map( Number ) } : {} ) } );
@@ -380,6 +382,8 @@ async function boot() {
 		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector ${reflPx}x${reflPx}`
 			+ ` (?reflres=${CFG.reflRes}), `
 			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}, `
+			+ `ripple ${water.userData.waveSet.a.length} waves `
+			+ `${water.userData.waveSet.b[ 0 ][ 1 ].toFixed( 2 )}-${water.userData.waveSet.b.at( -1 )[ 1 ].toFixed( 3 )} m, `
 			+ `murk ${wu.murk.value.toArray().map( v => v.toFixed( 4 ) ).join( ', ' )}`
 			+ ( CFG.waterMurk ? ' (?watermurk override)' : ` (derived; ?watermurkgain=${wu.murk.value.r / water.userData.murkDerived[ 0 ]})` )
 			+ `, grazing cap ${wu.grazingMax.value}` );
