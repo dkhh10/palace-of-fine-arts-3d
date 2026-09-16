@@ -775,3 +775,6 @@ Next: merge bake on review; QA 14 on round14; QA-12b-1 remaining candidates per 
 
 ## 2026-09-16 · Bake r2 review in (8c7b616): MERGE WITH FIXES (3 fix now: env-arming parse, README/tech_notes docs, stale worktree manifest; 9 carry); bake engineer resumed
 Merge of phase6-bake follows the fix commit. Viewer: half-res levers, probe-as-specular A/B, then round14.
+
+## 2026-09-16 · phase6-bake r2 MERGED with the 3 review fixes (88a9d6b): env_armed() strict parse, README + tech_notes "Bake-side traps", stale worktree manifest removed. MAIN manifest ceiling range 16.755 confirmed
+All three Phase 6 branches merged and in sync with main. Waiting on the viewer: half-res levers + probe-as-specular A/B -> round14 capture -> QA 14.
