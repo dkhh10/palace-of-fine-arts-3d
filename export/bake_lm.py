@@ -70,6 +70,67 @@ def prepare(samples):
     return lights
 
 
+def cutout_override(mats, mode):
+    """Gate 4 review fix 3. Wrap each material so the BAKED surface has a diffuse BSDF everywhere while the
+    scene's shadowing stays exactly what the cut-out casts:
+
+        mode "shadow": Light Path > Is Shadow Ray picks the ORIGINAL chain for shadow rays and an opaque grey
+                       Principled for every other ray. `visible_shadow` stays ON, so a card casts its real
+                       leaf-shaped shadow on itself, on its neighbours and on the ground.
+        mode "camray":  the same with Is Camera Ray (a bake's primary hit is a camera ray), which would also
+                       leave the cut-out in place for the diffuse bounces between cards. MEASURED ONLY.
+
+    Materials are shared datablocks, so wrapping them covers EVERY placement in the scene at once: the result
+    cannot depend on how the placements were split across queue jobs. Returns the undo list; nothing is saved.
+    """
+    flag = {"shadow": "Is Shadow Ray", "camray": "Is Camera Ray"}[mode]
+    undo = []
+    for mat in mats:
+        nt = mat.node_tree
+        if nt is None:
+            continue
+        out = next((n for n in nt.nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output), None)
+        if out is None or not out.inputs["Surface"].links:
+            continue
+        src = out.inputs["Surface"].links[0].from_socket
+        lp = nt.nodes.new("ShaderNodeLightPath")
+        grey = nt.nodes.new("ShaderNodeBsdfPrincipled")
+        grey.inputs["Base Color"].default_value = (0.5, 0.5, 0.5, 1.0)
+        grey.inputs["Roughness"].default_value = 1.0
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(lp.outputs[flag], mix.inputs[0])
+        a, b = (grey.outputs["BSDF"], src) if mode == "shadow" else (src, grey.outputs["BSDF"])
+        nt.links.new(a, mix.inputs[1])          # Fac = 0
+        nt.links.new(b, mix.inputs[2])          # Fac = 1
+        nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+        undo.append((nt, out, src, [lp, grey, mix]))
+    return undo
+
+
+def cutout_restore(undo):
+    for nt, out, src, nodes in undo:
+        nt.links.new(src, out.inputs["Surface"])
+        for n in nodes:
+            nt.nodes.remove(n)
+
+
+def materials_of(names):
+    """The distinct materials used by these objects, and how many objects in the blend share them."""
+    mats, seen = [], set()
+    for n in names:
+        ob = bpy.data.objects.get(n)
+        if ob is None or ob.type != "MESH":
+            continue
+        for s in ob.material_slots:
+            if s.material is not None and s.material.name not in seen:
+                seen.add(s.material.name)
+                mats.append(s.material)
+    users = sum(1 for o in bpy.data.objects
+                if o.type == "MESH" and any(s.material is not None and s.material.name in seen
+                                            for s in o.material_slots))
+    return mats, users
+
+
 def encode_and_write(key, rgb, out_dir=None, exr=True):
     """rgb: (h, w, 3) float32 BOTTOM-UP scene-linear irradiance/pi. Writes the EXR + both 8-bit encodings,
     reads every file back from disk and returns the record."""
@@ -191,6 +252,17 @@ elif job["kind"] == "vertex":
     scene.render.bake.target = "VERTEX_COLORS"
     arrays, rows = {}, []
     obs_by_mesh = {}
+    # Gate 4 review finding 6: the same cut-out zeros are in the 14 near trees' COLOR_0 (77-99 % exact
+    # zeros -> black vertex patches). With `override` set, the leaf materials take the same shadow-ray wrap
+    # as the cards, over the union of EVERY vertex job's objects so the two jobs see one identical scene.
+    tree_undo = []
+    if job.get("override"):
+        scope = [n for j in jobs.values() if j["kind"] == "vertex" for n in j["objects"]]
+        tmats, tusers = materials_of(scope)
+        tree_undo = cutout_override(tmats, job["override"])
+        rec["override"] = dict(mode=job["override"], scope_objects=len(scope),
+                               materials=[m.name for m in tmats], wrapped=len(tree_undo),
+                               mesh_objects_sharing_those_materials=tusers)
     for o in bpy.data.objects:
         if o.type == "MESH" and o.data is not None:
             obs_by_mesh.setdefault(o.data.name, []).append(o.name)
@@ -225,10 +297,14 @@ elif job["kind"] == "vertex":
         ca.data.foreach_get("color", buf)
         v = buf.reshape(n, 4)[:, :3].copy()
         arrays[me.name] = (v, name)
+        nzv = v.sum(axis=1) > 0.0
         rows.append(dict(object=name, mesh=me.name, verts=n, bake_s=round(dt, 1),
                          placements=len(obs_by_mesh.get(me.name, [])),
-                         max=round(float(v.max()), 4), mean=round(float(v.mean()), 4)))
-        print(f"[gate3] {JOB_ID}: {name} {n} verts {dt:.1f}s max={v.max():.3f}")
+                         max=round(float(v.max()), 4), mean=round(float(v.mean()), 4),
+                         coverage=round(float(nzv.mean()), 4),
+                         mean_nonzero=round(float(v[nzv].mean()) if nzv.any() else 0.0, 6)))
+        print(f"[gate3] {JOB_ID}: {name} {n} verts {dt:.1f}s max={v.max():.3f} cov={nzv.mean():.3f}")
+    cutout_restore(tree_undo)
     scene.render.bake.target = "IMAGE_TEXTURES"
     p = g3.OUT / "vertex" / f"{JOB_ID}.npz"
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -289,6 +365,17 @@ elif job["kind"] == "instance":
         ca_.data.foreach_get("color", buf_)
         return buf_.reshape(n_, 4)[:, :3].copy()
 
+    # The override SCOPE is every placement of every card mesh, not this job's slice: `scope` names the file
+    # whose object list defines it (review fix 3 - the values must not depend on the job split).
+    scope_names = list(job["objects"])
+    scope_src = job.get("override_scope")
+    if scope_src:
+        scope_names = [d["object"] for d in json.loads((g3.OUT / scope_src).read_text())["objects"]]
+    scope_mats, scope_users = materials_of(scope_names)
+    rec["override_scope"] = dict(source=scope_src or "job objects", objects=len(scope_names),
+                                 materials=[m.name for m in scope_mats],
+                                 mesh_objects_sharing_those_materials=scope_users)
+
     override = bpy.data.materials.new("MAT_INST_IRR_OPAQUE")
     override.use_nodes = True
     _bsdf = next(n for n in override.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
@@ -297,18 +384,23 @@ elif job["kind"] == "instance":
 
     results, arrays = {}, {}
     for variant in variants:
-        assert variant in ("asis", "opaque"), variant
-        saved = {}
-        if variant == "opaque":
-            # A leaf card's own material is alpha cut-out: at a vertex that falls in a transparent texel
-            # the DIFFUSE bake returns 0 (measured on the 14 near trees: 77-99 % of their COLOR_0 verts are
-            # exactly zero). An opaque grey Principled makes every vertex return the irradiance it actually
-            # receives; with `color: false` the albedo is divided out, so the value is the same quantity.
-            # visible_shadow off keeps the opaque card from casting the shadow the cut-out leaf does not.
+        assert variant in ("asis", "opaque", "shadow", "camray"), variant
+        saved, undo, appended = {}, [], []
+        if variant in ("shadow", "camray"):
+            # A leaf card's own material is alpha cut-out: at a vertex that falls in a transparent texel the
+            # DIFFUSE bake returns 0 (measured on the 14 near trees: 77-99 % of their COLOR_0 verts are
+            # exactly zero; on a 36-tri card, inst_probe measured 10.7 % coverage and 1 black placement in
+            # 12). The wrap below gives the baked surface a diffuse BSDF while the CUT-OUT still casts every
+            # shadow, and it is applied to the whole scope, so the split cannot change a value.
+            undo = cutout_override(scope_mats, variant)
+        elif variant == "opaque":
+            # Superseded by "shadow" (review fix 3): visible_shadow = False removes the card's real self- and
+            # neighbour shadow, which measured a median +64 % against `asis` on the vertices lit in both.
             for ob in obs:
                 saved[ob.name] = ([s.material for s in ob.material_slots], ob.visible_shadow)
                 if not ob.material_slots:
                     ob.data.materials.append(override)
+                    appended.append(ob)
                 else:
                     for s in ob.material_slots:
                         s.material = override
@@ -330,7 +422,7 @@ elif job["kind"] == "instance":
                 mean = v.mean(axis=0) if len(v) else np.zeros(3, np.float32)
                 mnz = v[nz].mean(axis=0) if nz.any() else np.zeros(3, np.float32)
                 rows.append(dict(object=o.name, mesh=src_mesh[o.name], verts=int(len(v)),
-                                 loc=[round(float(x), 3) for x in o.matrix_world.translation],
+                                 loc=[round(float(x), 4) for x in o.matrix_world.translation],
                                  mean=[float(x) for x in mean], mean_nonzero=[float(x) for x in mnz],
                                  coverage=round(float(nz.mean()) if len(v) else 0.0, 4),
                                  max=float(v.max()) if len(v) else 0.0,
@@ -343,12 +435,15 @@ elif job["kind"] == "instance":
                                 s_per_placement=round((time.time() - t0) / max(len(rows), 1), 3),
                                 zero_placements=sum(1 for r in rows if max(r["mean_nonzero"]) <= 0.0),
                                 coverage_mean=round(sum(r["coverage"] for r in rows) / max(len(rows), 1), 4))
+        cutout_restore(undo)
         if variant == "opaque":
             for ob in obs:
                 mats, vis = saved[ob.name]
                 for s, m in zip(ob.material_slots, mats):
                     s.material = m
                 ob.visible_shadow = vis
+            for ob in appended:                   # review note 9: zip() over an empty saved list restores nothing
+                ob.data.materials.pop(index=len(ob.data.materials) - 1)
     scene.render.bake.target = "IMAGE_TEXTURES"
     if arrays:
         p = g3.OUT / "instance" / f"{JOB_ID}.npz"

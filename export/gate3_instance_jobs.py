@@ -47,10 +47,14 @@ def placements():
     return rows, sorted(want)
 
 
-def write(jobs_new):
+def write(jobs_new, force=False):
     p = OUT / "bake_jobs.json"
     d = json.loads(p.read_text())
     ids = {j["id"] for j in jobs_new}
+    have = [j["id"] for j in jobs_new if (OUT / "bake" / f"{j['id']}.json").exists()]
+    if have and not force:
+        # review note 7: an accidental second run must not destroy a finished bake's records.
+        raise SystemExit(f"refusing to replace {len(have)} existing bake record(s) {have[:4]} - pass --force")
     d["jobs"] = [j for j in d["jobs"] if j["id"] not in ids] + jobs_new
     p.write_text(json.dumps(d, indent=1))
     for j in jobs_new:
@@ -64,6 +68,29 @@ def write(jobs_new):
 def main():
     rows, meshes = placements()
     argv = sys.argv[1:]
+    force = "--force" in argv
+    scope = "instance_jobs.json"            # the override covers all 1 379, whatever this job bakes
+    if "--probe2" in argv:
+        # Review fix 3 verification: the same 12 placements as inst_probe, as-is against the shadow-ray wrap
+        # (and camray, measured only), arrays kept so the ratio can be taken on the vertices lit in both.
+        step = max(len(rows) // 12, 1)
+        sel = [rows[i * step][0] for i in range(12)]
+        write([dict(id="inst_probe2", kind="instance", blend=BLEND, objects=sel, chunk=6,
+                    variants=["asis", "shadow", "camray"], override_scope=scope,
+                    single_chunk_index=1, keep_arrays=True, est_s=300)], force)
+        return
+    if "--split" in argv:
+        # Split independence: one target placement baked in two jobs with different companions and chunk
+        # sizes. With a scope-wide override the two values must agree to within sampling noise.
+        tgt = rows[len(rows) // 2][0]
+        near = [o for o, _ in rows[len(rows) // 2 + 1:len(rows) // 2 + 6]]
+        far = [o for o, _ in rows[:3]] + [o for o, _ in rows[-2:]]
+        write([dict(id="inst_splitA", kind="instance", blend=BLEND, objects=[tgt] + near, chunk=6,
+                    variants=["shadow"], override_scope=scope, keep_arrays=True, est_s=120),
+               dict(id="inst_splitB", kind="instance", blend=BLEND, objects=far + [tgt], chunk=2,
+                    variants=["shadow"], override_scope=scope, keep_arrays=True, est_s=120)], force)
+        print(f"split target: {tgt}")
+        return
     if "--probe" in argv:
         # 12 placements spread across the list (different meshes, sun and shade), both variants, and the
         # first chunk baked as one multi-object call against the second baked one object at a time: that is
@@ -74,7 +101,7 @@ def main():
                     variants=["asis", "opaque"], single_chunk_index=1, keep_arrays=True, est_s=240)])
         return
     n = int(argv[argv.index("--jobs") + 1]) if "--jobs" in argv else 4
-    variants = ["opaque"]
+    variants = ["shadow"]
     if "--variants" in argv:
         variants = argv[argv.index("--variants") + 1].split(",")
     per = -(-len(rows) // n)
@@ -83,8 +110,9 @@ def main():
         part = [o for o, _ in rows[i * per:(i + 1) * per]]
         if part:
             jobs.append(dict(id=f"inst_irr_{i:02d}", kind="instance", blend=BLEND, objects=part,
-                             chunk=CHUNK, variants=variants, est_s=60 + 2 * len(part)))
-    write(jobs)
+                             chunk=CHUNK, variants=variants, override_scope=scope,
+                             est_s=60 + 2 * len(part)))
+    write(jobs, force)
     (OUT / "instance_jobs.json").write_text(json.dumps(dict(
         placement_order="export_set.json assets order, filtered per mesh; object name is the key",
         meshes=len(meshes), placements=len(rows), chunk=CHUNK, variants=variants,

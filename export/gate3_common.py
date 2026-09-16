@@ -85,7 +85,7 @@ FLIP_NORMALS_FOR_BAKE = ("ARCH_rotunda_plaster_ceiling_merged",)
 # Only the four BAKE-TARGET kinds are affected: `sky` and `probe` isolate their own branch explicitly and
 # the impostors are Cycles RENDERS (camera rays primary, diffuse rays for the leaves), so all three are
 # already correct. Measured split of the overnight queue: 47 of 65 jobs, 22 499 s of the 23 419 s.
-BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex")
+BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex", "instance")
 BAKE_DIFFUSE_WORLD_ENV = "PFA_BAKE_DIFFUSE_WORLD"
 BAKE_DIFFUSE_WORLD_TRUE = ("1", "true", "yes", "on")
 
