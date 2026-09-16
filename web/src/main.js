@@ -380,7 +380,7 @@ async function boot() {
 		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector ${reflPx}x${reflPx}`
 			+ ` (?reflres=${CFG.reflRes}), `
 			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}, `
-			+ `murk ${[ ...wu.murk.value ].map( v => v.toFixed( 4 ) ).join( ', ' )}`
+			+ `murk ${wu.murk.value.toArray().map( v => v.toFixed( 4 ) ).join( ', ' )}`
 			+ ( CFG.waterMurk ? ' (?watermurk override)' : ` (derived; ?watermurkgain=${wu.murk.value.r / water.userData.murkDerived[ 0 ]})` )
 			+ `, grazing cap ${wu.grazingMax.value}` );
 	}
