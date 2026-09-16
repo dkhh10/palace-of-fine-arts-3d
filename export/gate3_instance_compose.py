@@ -54,7 +54,7 @@ def main():
 
     recs, got = {}, {}
     variant = plan["variants"][0]
-    for jid in plan["jobs"]:
+    for jid in list(plan["jobs"]):
         rec = json.loads((OUT / "bake" / f"{jid}.json").read_text())
         recs[jid] = {k: v for k, v in rec.items() if k != "results"}
         assert not rec["missing"], f"{jid}: missing objects {rec['missing']}"
@@ -86,12 +86,15 @@ def main():
                                 min=r6(M.min(axis=0)), max=r6(M.max(axis=0)), mean=r6(M.mean(axis=0)),
                                 lum_min=round(float(lum.min()), 6), lum_max=round(float(lum.max()), 6),
                                 lum_mean=round(float(lum.mean()), 6),
-                                lum_ratio=round(float(lum.max() / max(lum.min(), 1e-9)), 1),
+                                lum_ratio=(round(float(lum.max() / lum.min()), 1)
+                                           if lum.min() > 0 else None),
                                 cov_mean=round(float(np.mean([p["cov"] for p in plc])), 3),
                                 placements=plc)
         rows.append((mesh, out_meshes[mesh]))
 
     lum_all = A @ LUM
+    dark = [dict(object=obj, mesh=mesh, loc=got[obj]["loc"], verts=got[obj]["verts"])
+            for obj, mesh in order if max(got[obj]["mean_nonzero"]) <= 0.0]
     # ---- sanity check 2: a placement beside a near tree vs that tree's own COLOR_0
     eset = json.loads(pick("export/out/gate1/export_set.json").read_text())
     npz = np.load(str(pick("export/out/gate3/vertex_irradiance.npz")))
@@ -136,7 +139,7 @@ def main():
         reduce=("mean over the vertices that received light (cov), not over all vertices: see the module "
                 "docstring and out/gate3/bake/inst_probe.json"),
         bake=dict(engine="CYCLES", type="DIFFUSE", direct=True, indirect=True, color=False,
-                  samples=recs[plan["jobs"][0]]["samples"], denoiser="OPENIMAGEDENOISE",
+                  samples=recs[list(plan["jobs"])[0]]["samples"], denoiser="OPENIMAGEDENOISE",
                   target="VERTEX_COLORS", blend="gate3_bake.blend",
                   rig="light_presets.apply_final_cycles (same rig as every Gate 3 bake)",
                   single_user="mesh data copied per placement in the bake process only; nothing saved",
@@ -149,7 +152,11 @@ def main():
             count=dict(baked=len(got), env_cards=cards["summary"]["placements"],
                        meshes=len(out_meshes), env_cards_meshes=cards["summary"]["meshes"],
                        ok=len(got) == cards["summary"]["placements"] == len(order)),
-            near_tree=check2),
+            near_tree=check2,
+            dark=dict(note=("placements whose every vertex came back exactly 0: the card is fully enclosed "
+                            "(no ray escapes). Left as measured - nothing is invented here - but listed so "
+                            "the consumer can floor them if one turns out to be on camera."),
+                      n=len(dark), placements=dark)),
         meshes=out_meshes)
     OUT_JSON.write_text(json.dumps(doc, indent=1))
     kb = OUT_JSON.stat().st_size / 1024.0
@@ -158,9 +165,11 @@ def main():
     print(f"{'mesh':32s} {'n':>4s} {'lum_min':>8s} {'lum_mean':>8s} {'lum_max':>8s} {'ratio':>7s} {'cov':>5s}")
     for mesh, m in rows:
         print(f"{mesh:32s} {m['n']:4d} {m['lum_min']:8.4f} {m['lum_mean']:8.4f} {m['lum_max']:8.4f} "
-              f"{m['lum_ratio']:7.1f} {m['cov_mean']:5.2f}")
+              f"{(m['lum_ratio'] if m['lum_ratio'] is not None else float('inf')):7.1f} "
+              f"{m['cov_mean']:5.2f}")
     print(f"\nglobal: {len(order)} placements, range {doc['range_global']:.4f}, "
           f"lum {doc['lum_min']:.4f} .. {doc['lum_max']:.4f} (mean {doc['lum_mean']:.4f})")
+    print(f"dark (coverage 0): {len(dark)} -> {[d['object'] for d in dark]}")
     print(f"check 2 near tree: {json.dumps(check2)}")
     print(f"check 3 count: {json.dumps(doc['checks']['count'])}")
     print(f"wrote {OUT_JSON} ({kb:.1f} kB)")
