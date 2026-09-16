@@ -18,6 +18,7 @@ Exit 1 on any mismatch. No Blender, no GPU.
 import json
 import struct
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,6 +122,20 @@ def main(out_dir):
         if not p.exists():
             continue
         doc, _ = glb_json(p)
+        # Review r3 finding 1: every value below is read out of `<cls>.gltf` and compared with `<cls>.glb`,
+        # so a glb older than the glTF it is checked against makes the PASS describe a file that was never
+        # packed. Counts and material NAME SETS can match across a real change (a re-laid UV2, a different
+        # primitive -> material assignment, a re-copied material) because neither is compared value by value.
+        # mtime is the cheap pin: the pack writes the glb after reading both glTFs, so a newer source means
+        # the glb is stale. 1 s of slack for filesystem granularity.
+        for src_name in (f"{cls}.gltf", f"{cls}_ktx2.gltf"):
+            sp = out / src_name
+            if sp.exists() and sp.stat().st_mtime > p.stat().st_mtime + 1.0:
+                bad.append(f"{cls}: {src_name} is newer than {cls}.glb "
+                           f"({time.strftime('%H:%M:%S', time.localtime(sp.stat().st_mtime))} vs "
+                           f"{time.strftime('%H:%M:%S', time.localtime(p.stat().st_mtime))}) - the glb was "
+                           f"packed from a different glTF than the one this check reads. Re-run "
+                           f"export/gltf_pack.sh --gate1.")
         mesh_tris = []
         for me in doc.get("meshes", []):
             t = 0

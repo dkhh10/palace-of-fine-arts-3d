@@ -215,12 +215,19 @@ step.done(meshes=len(uv2_relay),
 # The 20 near trees have no UV2 that could carry a lightmap (0.07-0.19 m per vertex is finer than their leaf
 # cards, so Gate 3 baked them to VERTEX_COLORS). out/gate3/vertex_irradiance.npz is float32 SCENE-LINEAR
 # irradiance/pi per vertex per mesh (the bake's corrected file, phase6-bake ac63e44) - it is NOT encoded.
-# The lead's call (docs/decisions.md 2026-09-16) is the encode this export applies: gamma-2 at a PER-MESH
-# range, because one shared range wastes almost the whole code space on the dim meshes (this set spans
-# 0.469 to 43.3 - a factor of 92, i.e. 6.5 stops, which at a shared range is 6.5 stops of lost precision on
-# the darkest mesh). So COLOR_0 = sqrt(v / range_mesh) in [0, 1] and the viewer decodes
-# irradiance = COLOR_0^2 * range_mesh * lightmaps.scale, exactly as it decodes a gamma-2 lightmap texel.
-# `range` is the mesh's own max, so the brightest vertex codes to 1.0 and nothing clips.
+# The encode is gamma-2 at ONE GLOBAL range - the max over all 14 meshes (43.32) - so COLOR_0 =
+# sqrt(v / range) in [0, 1] and the viewer decodes irradiance = COLOR_0^2 * range * lightmaps.scale,
+# exactly as it decodes a gamma-2 lightmap texel, from a SINGLE number.
+#   The first encode used a PER-MESH range (2026-09-16), which is better use of the code space: the set
+# spans 0.469 to 43.32, 6.5 stops. The viewer cannot apply it. gltfpack's -mi splits each tree by material
+# and instances the resulting primitives ACROSS trees, so the 14 baked buffers arrive as 14 primitives over
+# 26 placements and only 2 of them join back to a mesh unambiguously - there is no way to know which mesh's
+# range a given primitive needs (viewer round 13b; lead's decision, docs/decisions.md 2026-09-16). One global
+# range needs no join. The cost is measured, not assumed: the 16-bit round trip's p99 relative error under
+# the global range is <= 0.92 % on every mesh whose mean irradiance is above 0.01, against <= 0.68 % per
+# mesh. The two meshes it does hurt (broadleaf_s19 26 %, pine_s29 14 %) have means of 9e-6 and 1.1e-3 - they
+# are in full shadow and no frame can show the difference. The alternative, keeping the 14 trees out of -mi,
+# costs draw calls and was declined.
 # FLOAT_COLOR/POINT is used deliberately: a BYTE_COLOR attribute is sRGB in Blender and the exporter would
 # linearise it, which would silently change every value. env.glb is packed with -vc 16 (gltfpack quantises
 # colours to 8 bits by default, which would put the code step at 1/255 - a 0.8 % linear error at mid grey and
@@ -242,6 +249,8 @@ if vi_npz.exists():
                    f"COLOR_0 is NOT exported and lightmaps.vertex_irradiance.in_glb stays false")
         print("[gate1] gate3_color0 SKIPPED - " + vi_skip)
         z3 = type("Empty", (), {"files": []})()
+    # ONE range for all 14 meshes, float32 so no code can exceed 1.0 after the buffer's round trip.
+    vi_range = float(np.float32(max((float(np.asarray(z3[f]).max()) for f in z3.files), default=1.0))) or 1.0
     for mn in z3.files:
         me = bpy.data.meshes.get(mn)
         assert me is not None, f"{vi_npz.name} names {mn}, which is not in the Gate 1 export set"
@@ -252,11 +261,7 @@ if vi_npz.exists():
         assert float(lin.min()) >= 0.0, f"{mn}: negative irradiance {float(lin.min())}"
         pre = [a.name for a in me.color_attributes]
         assert not pre, f"{mn} already carries colour attributes {pre}; COLOR_0 would not be the irradiance"
-        # the range is the mesh's own max, stored as float32 so the code can never exceed 1.0 after the
-        # float32 round trip the glTF buffer imposes.
-        rng = float(np.float32(lin.max()))
-        if rng <= 0.0:                       # a fully-shadowed mesh: keep the decode well defined
-            rng = 1.0
+        rng = vi_range
         code = np.sqrt(lin.astype(np.float64) / rng)
         assert code.max() <= 1.0 + 1e-6, f"{mn}: gamma2 code {code.max()} exceeds 1 at range {rng}"
         code = np.clip(code, 0.0, 1.0)
@@ -309,14 +314,16 @@ report["gate3_color0"] = dict(source=str(vi_npz), meshes=vi_report, count=len(vi
                               stripped_note="ORN `cavity` (vertex_cavity) and any other source colour "
                                             "attribute: already inside the Gate 2 albedo bake, removed from "
                                             "the export copies only (docs/decisions.md 2026-09-16)",
-                              encoding="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR/POINT, "
-                                       "env.glb packed with -vc 16",
-                              ranges={k: v["range"] for k, v in vi_report.items()},
-                              note="COLOR_0 = sqrt(irradiance_over_pi / range_mesh); the viewer decodes "
-                                   "c*c*range_mesh*lightmap_scale with the PER-MESH range from the manifest "
-                                   "(never one shared range). Standard glTF multiplies COLOR_0 into base "
-                                   "colour: the viewer must consume it as irradiance (manifest "
-                                   "lightmaps.vertex_irradiance), not as a tint.")
+                              encoding="gamma2 at ONE GLOBAL range (code = sqrt(v / range)), "
+                                       "FLOAT_COLOR/POINT, env.glb packed with -vc 16",
+                              range_global=(vi_range if vi_report else None),
+                              range_source="max over all 14 near-tree meshes in vertex_irradiance.npz",
+                              note="COLOR_0 = sqrt(irradiance_over_pi / range); the viewer decodes "
+                                   "c*c*range*lightmap_scale with ONE range for all 14 meshes - gltfpack's "
+                                   "-mi instances primitives across trees, so a per-mesh range cannot be "
+                                   "joined back to its mesh (viewer round 13b). Standard glTF multiplies "
+                                   "COLOR_0 into base colour: the viewer must consume it as irradiance "
+                                   "(manifest lightmaps.vertex_irradiance), not as a tint.")
 step.done(meshes=len(vi_report), other_meshes_with_colour=len(other_colour))
 
 probe = load_img(probe_path, "sRGB")

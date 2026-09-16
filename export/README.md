@@ -1326,3 +1326,44 @@ export/sync_main.sh
     It predates the Gate 3 re-packs: arch.glb is **4 613 040 B** at **29 draw calls** (was quoted before the
     `-kv` re-pack and the slot-merge material split) and env.glb is **36 951 988 B** (before `-kv`, `-vc 16`
     and the 14 meshes' `COLOR_0`). orn.glb (154 253 424 B) and ground.glb (1 959 104 B) are unchanged.
+26. **The near-tree `COLOR_0` range is GLOBAL, not per mesh (viewer round 13b; lead's decision).** The viewer
+    cannot apply a per-mesh range: `gltfpack -mi` splits each tree by material and instances the resulting
+    primitives **across** trees, so the 14 baked buffers arrive as 14 primitives over 26 placements and only
+    2 join back to a mesh unambiguously. `gltf_gate1.py` now encodes every mesh at **one range = 43.31984**
+    (the max over all 14 in `vertex_irradiance.npz`), still gamma-2, `FLOAT_COLOR`, `-vc 16`, same `-mi`.
+    `uv2_relay_status.json` carries `vertex_irradiance_range_global` once and `range` on each row (the same
+    number); `manifest_v4.py` copies it to `lightmaps.vertex_irradiance.range` — **one number the viewer
+    reads** — and asserts it exists whenever `in_glb` is true. The cost, measured per mesh (16-bit round-trip
+    p99 relative error, global vs per-mesh): pine_s7 **0.92 %** / 0.68, cypress_s3 0.61 / 0.45, cypress_s41
+    0.69 / 0.37, cypress_column_s31 0.32 / 0.23, redwood_s13 0.28 / 0.25, redwood_s43 0.26 / 0.19,
+    cypress_s17 0.23 / 0.22, euc_s23 0.15 / 0.15, euc_s5 0.14 / 0.14, cypress_column_s2 0.16 / 0.16,
+    euc_s61 0.07 / 0.07, willow_s37 0.03 / 0.02. **Worst is 0.92 %, the gate was 2 %.** The two meshes the
+    global range really costs — broadleaf_s19 26 % and pine_s29 14 % — have mean irradiance 9e-6 and 1.1e-3:
+    they sit in full shadow and no frame can show it. The declined alternative was keeping the 14 trees out
+    of `-mi`. `env.glb` 36 951 988 → **36 945 984 B** (−6 004; one range compresses marginally better).
+27. **`compositor.mist` (the manifest recorded the haze ramp as a zero).** `COMP_golden_hour`'s `Mist` group
+    input reads **0.0** in the carried `compositor` block, which is only what a *disconnected socket's stored
+    default* reports — the live value is the Mist **pass** the Render Layers node feeds it, and that pass is
+    shaped entirely by `scene.world.mist_settings`. `export/read_mist.py` (read-only, no render, no save,
+    through `scripts/blender_run.sh 600`) reads them out of `master_delivery.blend` into
+    `out/gate3/mist_settings.json` (`pfa-phase6/gate3-mist/1`), and `manifest_v4.py` copies them into
+    `compositor.mist` with the formula and the units. Measured: **`use_mist` true, `start` 20.0 m, `depth`
+    2000.0 m, `falloff` LINEAR, `height` 0.0, `intensity` 0.0**, view layer `use_pass_mist` **true**, scene
+    unit scale 1.0. So `mist = clamp((dist − 20) / 2000, 0, 1)` along the view ray, in metres, no height
+    falloff and no floor — a ramp that only reaches 1.0 at 2 020 m, which is why the haze reads as gentle.
+28. **Review r3 fixes (docs/reviews/phase6_export_gate3_r3_review.md, both "fix now").**
+    (1) A glb is now **pinned to the glTF it is checked against**. Both checks read the Gate 3 attributes out
+    of `<cls>.gltf` and their presence out of `<cls>.glb`, so a glb older than its source describes a file it
+    was never packed from — and neither check would catch it, because `verify_glb` compares triangle *counts*
+    and material *name sets*, never UV values or primitive→material order. `verify_glb.py` (class loop) and
+    `gate3_relay_check.py` (before the npz reads) now FAIL when `<cls>.gltf` or `<cls>_ktx2.gltf` is newer
+    than `<cls>.glb`, 1 s of slack for filesystem granularity. Verified: against the carried-over state they
+    reported arch/orn/ground stale (14:48:10 glTF vs 14:15:49 glb).
+    Then `export/gltf_pack.sh --gate1` re-packed all four from this run's glTFs (no Blender; toktx re-encoded
+    all 85 KTX2 in 203 s, which is why the env-only shortcut was taken the round before). **All four glbs came
+    back byte-identical** — arch 4 613 040, orn 154 253 424, env 36 945 984, ground 1 959 104 — which also
+    proves after the fact that the carried-over glbs were the right ones. No class glb is carried any more.
+    (2) `manifest_v4.py` resolves `mist_settings.json` **local-then-MAIN**, the same `next(...)` the relay json
+    uses, because `export/out/` is gitignored and a local-only lookup would have dropped `compositor.mist`
+    silently after the merge. When neither exists it prints a WARNING naming the `read_mist.py` command and
+    records `compositor.mist = null` with `mist_missing` saying why, instead of leaving the block absent.

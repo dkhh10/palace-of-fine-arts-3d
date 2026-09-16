@@ -1,0 +1,7 @@
+00:00.483  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[read_mist] {"use_mist": true, "start": 20.0, "depth": 2000.0, "falloff": "LINEAR", "height": 0.0, "intensity": 0.0} use_pass_mist=True
+[read_mist] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/out/gate3/mist_settings.json
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 28520 exited rc=0 after 3 s (max 600)
