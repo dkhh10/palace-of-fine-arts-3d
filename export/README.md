@@ -953,6 +953,77 @@ their mesh: they are baked on the frozen Gate 1 layout and are usable only while
 gltfpack flags, so a reader can see why a flag is what it is. Background (docs/decisions.md 2026-09-16): gltfpack had
 been stripping TEXCOORD_1 from every glb since Gate 1, so Gate 1's own `uv2_in_glb: true` was never true.
 
+### `lightmaps.instance_irradiance` — new at Gate 4 (the 1 379 shrub/reed placements)
+
+The 28 shrub/reed card meshes are the only env.glb geometry with neither a lightmap nor `COLOR_0`
+(`export/gate3_env_cards.py`, `out/gate3/env_cards.json`), so they were lit by the sky alone and read cyan
+(hue 180 against the reference's 102, QA round 14). They cannot take the near trees' per-mesh `COLOR_0`: those
+28 meshes carry **1 379 placements**, up to 101 on one mesh, 279 m apart on average across a 250 x 166 m site,
+so one value per mesh would give 1 379 shrubs 28 arbitrary irradiances. Per **placement** is the only correct
+granularity (docs/decisions.md 2026-09-16 "Shrub/reed irradiance is baked PER PLACEMENT, not per mesh"), and
+it keeps the instancing: one scene-linear RGB per instance, consumed as an `InstancedBufferAttribute` exactly
+like the ORN slot offsets, with no unique meshes and no `COLOR_0` on the cards.
+
+```jsonc
+"instance_irradiance": {                     // the shrub/reed cards: no UV2, and 1 379 instances of 28 meshes
+  "encode": "none", "dtype": "float32", "encoding": "linear-float32",
+  "units": "scene-linear irradiance / pi (x lightmaps.scale = pi)",   // same units as a DECODED lightmap texel
+  "attribute": "_IRRADIANCE",                // the viewer's per-instance attribute name; NOT COLOR_0
+  "json": "instance_irradiance.json",        // out/gate3/, 210 kB, the file below; nothing is quantised
+  "placements": 1379, "meshes_n": 28,
+  "range_global": 18.3965,                   // max component over all 1 379; informational, nothing is encoded to it
+  "in_glb": false,                           // true only once env.glb carries the attribute (export engineer)
+  "key": "OBJECT NAME",                      // gltfpack -mi re-orders and merges instances: match by name, never by index
+  "meshes": { "<export-set mesh>": { "n": 101, "min": [...], "max": [...], "mean": [...],
+                                     "lum_min": 0.0, "lum_mean": 1.668, "lum_max": 8.57, "cov_mean": 0.97 } }
+}
+```
+
+`out/gate3/instance_irradiance.json` (`pfa-phase6/gate4-instance-irradiance/1`, written by
+`export/gate3_instance_compose.py`, **not** by `manifest_v4.py`; the manifest writer reads it the way it reads
+the relay file) carries, besides those summaries, `meshes["<mesh>"].placements = [{object, rgb, cov}, ...]`:
+
+* `object` — the **key**: the Gate 1 export-set object name (`ENV_shrub_pitto5_0999_LOD2`). The array order is
+  `export_set.json["assets"]` order filtered to that mesh, which is the order the Gate 1 set lists the
+  placements; it is a convenience for a straight read, never the contract. `gltfpack -mi` re-orders and merges
+  instances across meshes (hand-off item 20), so the consumer must map each `EXT_mesh_gpu_instancing` row to an
+  entry **by object name** and fail loudly on a name it cannot find.
+* `rgb` — float32 scene-linear irradiance / pi at that instance's own world transform. Use it exactly as a
+  decoded lightmap texel: `irradiance = rgb * lightmaps.scale`, multiplied into the card's diffuse term in
+  place of the sky-only ambient, never as a tint.
+* `cov` — the fraction of the card's vertices that received light in the bake (mean 0.89). Diagnostic.
+
+**How it is baked** (`export/bake_lm.py` kind `instance`, jobs `inst_irr_00..03` from
+`export/gate3_instance_jobs.py`, run through `export/bake_queue.sh --gate3`): the same rig, `DIFFUSE`
+direct+indirect with `color: false` at 128 spp into `VERTEX_COLORS`, as the near trees' `vertex` kind, but the
+mesh data is made **single-user per placement inside the bake process** (nothing is saved, the export set's
+shared meshes are untouched) so each instance is baked at its own transform, and the placement's value is the
+mean over its vertices. Cost: 4 jobs, 2 597 s of GPU, 1.88 s per placement, ~100 placements per
+`bpy.ops.object.bake` call (a multi-object `VERTEX_COLORS` bake writes every selected object — proved by
+`inst_probe`, whose first chunk was batched and second baked one object at a time).
+
+**The one deviation from the trees' settings, and why it is necessary.** A leaf card's material is alpha
+cut-out, and at a vertex that falls in a transparent texel a `DIFFUSE` bake returns exactly **0** — this is why
+77–99 % of the 14 near trees' `COLOR_0` vertices are zero (`broadleaf_s19`: mean 0.000009 against mean_nonzero
+0.0047). On a 36-tri card that is fatal: `inst_probe` measured **10.7 %** coverage with the cards' own material
+and **1 of 12 placements entirely black**. The production bake therefore swaps the card material for an opaque
+grey Principled and turns the card's shadow ray visibility off for the duration; with `color: false` the albedo
+is divided out, so the quantity measured is unchanged, while coverage rises to 0.89 and no placement is black
+for want of a surface. The remaining zeros are vertices buried in the terrain (their hemisphere really is
+blocked), so `rgb` is the mean over the **lit** vertices — averaging the buried ones in would darken a
+placement by its own buried fraction, which is geometry, not light. Seven placements are enclosed outright
+(every vertex 0) and are listed in `checks.dark` as measured; nothing is invented for them.
+
+**Verification** (`checks` in the same file, plus `out/gate3/instance_check.json` from
+`export/gate3_instance_check.py`, which ray-casts each placement onto the ground and samples that asset's baked
+lightmap EXR at the hit point): the shrubs track the ground under them monotonically — ground luminance
+quartiles 0.19 / 0.67 / 1.37 / 3.82 give shrub means 1.12 / 1.83 / 1.99 / 3.57 (n = 161 each, Pearson 0.46 over
+645 placements on the terrain). The shrub range is compressed against the ground's (top decile over bottom
+decile: 6.2x against 106x) for two structural reasons, both expected: a card is vertical and is averaged over
+its whole height, so it keeps a large sky term where a horizontal texel in shade loses the sun term outright;
+and the ground texel directly under a shrub carries that shrub's own baked cut-out shadow, so the reference is
+biased low exactly where it is darkest.
+
 ### `impostors` — new
 
 ```jsonc

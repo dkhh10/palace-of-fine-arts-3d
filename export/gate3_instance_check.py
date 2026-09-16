@@ -83,18 +83,43 @@ for mesh, m in doc["meshes"].items():
 print(f"[gate4] ray-cast {len(rows)} placements in {time.time() - t0:.0f}s")
 
 with_g = [r for r in rows if r["ground_lum"] is not None]
-walk = [r for r in with_g if "colonnade_walk" in r["ground_ob"] or "paving" in r["ground_ob"]]
-lawn = [r for r in with_g if "terrain_ground" in r["ground_ob"]]
+# Check 1 of the brief. No shrub's ray lands on the colonnade walk (the 1 379 cards sit on the terrain,
+# the riprap, the lagoon bed and the podium), so "shaded" is taken as it is measured on the ground itself:
+# the placement standing on the DARKEST lightmapped ground texel - which is what colonnade / tree shade is
+# in a baked map - against the one on the brightest. Both single pair and decile means, the latter because
+# one texel of one card is noise and the decile is not.
+lit = sorted([r for r in with_g if "terrain_ground" in r["ground_ob"] or "paving" in r["ground_ob"]
+              or "colonnade_walk" in r["ground_ob"]], key=lambda r: r["ground_lum"])
 pick = {}
-if walk:
-    pick["shaded_colonnade"] = min(walk, key=lambda r: r["ground_lum"])
-if lawn:
-    pick["sunlit_lawn"] = max(lawn, key=lambda r: r["ground_lum"])
-if len(pick) == 2:
-    s, t = pick["shaded_colonnade"], pick["sunlit_lawn"]
-    pick["ratio_shrub_sun_over_shade"] = round(t["lum"] / max(s["lum"], 1e-9), 2)
-    pick["ratio_ground_sun_over_shade"] = round(t["ground_lum"] / max(s["ground_lum"], 1e-9), 2)
-    pick["agreement"] = round(pick["ratio_shrub_sun_over_shade"] / max(pick["ratio_ground_sun_over_shade"], 1e-9), 3)
+if len(lit) >= 20:
+    s_, t_ = lit[0], lit[-1]
+    k = max(len(lit) // 10, 5)
+    dec_lo, dec_hi = lit[:k], lit[-k:]
+
+    def mean(rs, key):
+        return float(np.mean([r[key] for r in rs]))
+
+    pick = dict(
+        shaded=dict({kk: s_[kk] for kk in ("object", "mesh", "ground_ob", "where", "z")},
+                    rgb=s_["rgb"], lum=round(s_["lum"], 4), ground_lum=round(s_["ground_lum"], 4)),
+        sunlit=dict({kk: t_[kk] for kk in ("object", "mesh", "ground_ob", "where", "z")},
+                    rgb=t_["rgb"], lum=round(t_["lum"], 4), ground_lum=round(t_["ground_lum"], 4)),
+        ratio_shrub_sun_over_shade=round(t_["lum"] / max(s_["lum"], 1e-9), 2),
+        ratio_ground_sun_over_shade=round(t_["ground_lum"] / max(s_["ground_lum"], 1e-9), 2),
+        decile=dict(n=k,
+                    shade_ground=round(mean(dec_lo, "ground_lum"), 4),
+                    sun_ground=round(mean(dec_hi, "ground_lum"), 4),
+                    shade_shrub=round(mean(dec_lo, "lum"), 4),
+                    sun_shrub=round(mean(dec_hi, "lum"), 4),
+                    ratio_ground=round(mean(dec_hi, "ground_lum") / max(mean(dec_lo, "ground_lum"), 1e-9), 2),
+                    ratio_shrub=round(mean(dec_hi, "lum") / max(mean(dec_lo, "lum"), 1e-9), 2)))
+    pick["agreement_decile"] = round(pick["decile"]["ratio_shrub"] / max(pick["decile"]["ratio_ground"], 1e-9), 3)
+    q = np.quantile([r["ground_lum"] for r in lit], [0.25, 0.5, 0.75])
+    bins = [[], [], [], []]
+    for r in lit:
+        bins[int(np.searchsorted(q, r["ground_lum"]))].append(r)
+    pick["quartiles"] = [dict(n=len(b), ground_lum=round(float(np.mean([r["ground_lum"] for r in b])), 4),
+                              shrub_lum=round(float(np.mean([r["lum"] for r in b])), 4)) for b in bins if b]
 
 by_ob = {}
 for r in with_g:
