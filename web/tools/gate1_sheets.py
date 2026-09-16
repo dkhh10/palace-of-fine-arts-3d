@@ -30,13 +30,19 @@ from PIL import Image, ImageDraw
 
 LUMA = np.array([0.2126, 0.7152, 0.0722], dtype=np.float64)
 
+# The PARITY target is the Phase 5 Cycles frame for the same station.  Stations 2-6 were scored for
+# several rounds against round-09 frames - EEVEE at 3 and 5, a NO-COMPOSITOR Cycles frame at 6, and a
+# pre-shade-fill-off Cycles frame at 2 - all of which predate the Phase 5 lighting the lightmaps were
+# baked from.  That is why cam03 read 2.5x without being a real parity failure.  All five are now
+# round-13 Cycles frames from master.blend at 1920x1080, 128 spp, compositor on.  Station 1 keeps its
+# round-10b hero, which is already a Phase 5 Cycles frame.
 DEFAULT_REFS = {
     1: ("renders/previews/qa/round10b_01_lagoon_hero_cycles.png", "Cycles round-10b hero"),
-    2: ("renders/previews/qa/round09_02_lagoon_ne_threequarter_cycles.png", "Cycles round-09"),
-    3: ("renders/previews/qa/round09_03_colonnade_walk.png", "Eevee round-09 (no Cycles frame)"),
-    4: ("renders/previews/qa/round09_04_rotunda_ceiling_cycles.png", "Cycles round-09"),
-    5: ("renders/previews/qa/round09_05_south_lawn.png", "Eevee round-09 (no Cycles frame)"),
-    6: ("renders/previews/qa/round09_06_aerial_nocomp.png", "Cycles round-09, no compositor"),
+    2: ("renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png", "Cycles round-13, compositor on"),
+    3: ("renders/previews/qa/round13_03_colonnade_walk_cycles.png", "Cycles round-13, compositor on"),
+    4: ("renders/previews/qa/round13_04_rotunda_ceiling_cycles.png", "Cycles round-13, compositor on"),
+    5: ("renders/previews/qa/round13_05_south_lawn_cycles.png", "Cycles round-13, compositor on"),
+    6: ("renders/previews/qa/round13_06_aerial_cycles.png", "Cycles round-13, compositor on"),
 }
 MAIN_ROOT = os.environ.get("PFA_MAIN_ROOT", "")
 

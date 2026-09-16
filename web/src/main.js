@@ -24,23 +24,48 @@ import { makeStationCamera, stationMatrix, b2t, matrixMaxDiff } from './blenderC
 import { normaliseManifest, applyUv2RelayStatus, WATER_Z } from './manifest.js';
 import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
-import { makeWater } from './water.js';
+import { makeWater, reduceReflectionSet } from './water.js';
 import { makeWalk } from './walk.js';
-import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M } from './postChain.js';
+import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M, BLOOM_THRESHOLD_SCALE } from './postChain.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { buildImpostors } from './impostors.js';
+import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
 import { applyGate3Lightmaps } from './lightmaps.js';
 
 const qs = new URLSearchParams( location.search );
+// ?quality is compared ONCE, lowercased, and an unknown value is rejected rather than echoed as a
+// preset name: ?quality=FAST used to report 'fast' and silently run the full-res chain.
+const QUALITY_RAW = ( qs.get( 'quality' ) || 'look' ).toLowerCase();
+const QUALITY = ( QUALITY_RAW === 'fast' || QUALITY_RAW === 'look' ) ? QUALITY_RAW : 'look';
 const CFG = {
 	station: parseInt( qs.get( 'station' ) || '1', 10 ),
 	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
+	// ?quality: `look` (the default) is the frozen Phase 5 look - planar Reflector at full resolution,
+	// full-res bloom.  `fast` is the ONE non-default preset: half-res bloom + a half-res Reflector
+	// target + the reduced reflection draw set.  It is a QUERY PARAMETER ONLY, no UI.  An explicit
+	// ?bloomres / ?reflres still wins over the preset, so the A/B switches keep working.
+	quality: QUALITY,
+	bloomRes: ( qs.get( 'bloomres' ) || ( QUALITY === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
+	reflRes: ( qs.get( 'reflres' ) || ( QUALITY === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
+	reflSet: ( qs.get( 'reflset' ) || 'orn' ).toLowerCase(),      // full | orn | both (item 6: cut the draw set)
+	waterDebug: parseInt( qs.get( 'waterdebug' ) || '0', 10 ),   // 1 F, 2 proj uv, 3 normal, 4 raw refl
+	waterDist: qs.has( 'waterdist' ) ? parseFloat( qs.get( 'waterdist' ) ) : null,
+	waterNorm: qs.has( 'waternorm' ) ? parseFloat( qs.get( 'waternorm' ) ) : null,
+	waterTile: qs.has( 'watertile' ) ? parseFloat( qs.get( 'watertile' ) ) : null,
+	waterAniso: qs.has( 'wateraniso' ) ? parseFloat( qs.get( 'wateraniso' ) ) : null,
+	waterHoriz: qs.has( 'waterhoriz' ) ? parseFloat( qs.get( 'waterhoriz' ) ) : null,
+	waterGraze: qs.has( 'watergraze' ) ? parseFloat( qs.get( 'watergraze' ) ) : null,
+	waterCrest: qs.has( 'watercrest' ) ? parseFloat( qs.get( 'watercrest' ) ) : null,   // directional spread power
+	waterSlope: qs.has( 'waterslope' ) ? parseFloat( qs.get( 'waterslope' ) ) : null,   // rms surface slope, rad
+	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear, overrides the derivation
+	waterMurkGain: qs.has( 'watermurkgain' ) ? parseFloat( qs.get( 'watermurkgain' ) ) : null,  // scales it
+	waterGrazeMax: qs.has( 'watergrazemax' ) ? parseFloat( qs.get( 'watergrazemax' ) ) : null,  // grazing cap
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
@@ -60,6 +85,8 @@ const CFG = {
 	impostors: qs.get( 'impostors' ) !== '0',           // Gate 3 octahedral far-tree impostors
 	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
 	impDebug: parseInt( qs.get( 'impdebug' ) || '0', 10 ),   // 1 raw, 2 alpha, 3 frame cell, 4 quad uv
+	probeEnv: qs.get( 'probe' ) !== '0',                // baked hero probe as the irradiance of unlit surfaces
+	probeSpec: qs.get( 'probespec' ) === '1',           // A/B: probe as the SPECULAR env of baked materials
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
@@ -75,8 +102,11 @@ const CFG = {
 	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
-	vertexIrr: qs.get( 'vertexirr' ) || 'auto',         // near-tree COLOR_0 irradiance: auto | 1 | 0
+	vertexIrr: qs.get( 'vertexirr' ) || 'auto',
+	instIrr: qs.get( 'instirr' ) || 'auto',             // per-placement shrub/reed irradiance: auto | 0
 	post: qs.get( 'post' ),                             // all | none | mist,bloom,vignette (default none)
+	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
+	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
 	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
 };
 
@@ -129,6 +159,8 @@ const progress = {
 	files: [],                       // { url, kind, bytes, loaded, sizeFrom, ms }
 	perFile: new Map(),              // url -> bytes counted so far (three loaders report cumulative)
 	unknown: [],
+	planned: new Set(),              // the urls measurePlan() HEADed; anything else is off-plan
+	extra: new Map(),                // off-plan url -> bytes counted, folded into the denominator
 };
 const MB = ( b ) => ( b / 1e6 ).toFixed( 1 );
 function drawProgress() {
@@ -136,7 +168,23 @@ function drawProgress() {
 	bar.style.width = `${pct.toFixed( 1 )}%`;
 	uiText.textContent = `${MB( progress.loaded )} / ${MB( progress.total )} MB` + ( progress.label ? ` — ${progress.label}` : '' );
 }
-function addBytes( url, delta ) { progress.loaded += delta; drawProgress(); }
+/**
+ * QA-14 minor: the bar read 639.0 MB loaded of 522.3 MB planned, 122 %.  measurePlan() HEADs every
+ * file the MANIFEST plan lists, but the detail-texture sets and anything else a module fetches on its
+ * own are never in that list, so their bytes landed in the numerator only.  Off-plan bytes are now
+ * folded into the DENOMINATOR as they arrive, which is what "count what is actually fetched" means:
+ * the bar can lag reality but it can never exceed 100 %, and `bytes.offPlan` in the sidecar names
+ * every url that was not planned so the plan can be fixed rather than patched over.
+ */
+function addBytes( url, delta ) {
+	progress.loaded += delta;
+	if ( url && ! progress.planned.has( url ) ) {
+		const n = ( progress.extra.get( url ) || 0 ) + delta;
+		progress.extra.set( url, n );
+		progress.total += delta;
+	}
+	drawProgress();
+}
 /** three's Loader.loadAsync onProgress reports the file's CUMULATIVE bytes: turn it into a delta. */
 function onProgressFor( url ) {
 	return ( e ) => {
@@ -163,7 +211,10 @@ async function measurePlan( files ) {
 	let next = 0;
 	await Promise.all( Array.from( { length: Math.min( 16, files.length ) },
 		async () => { while ( next < files.length ) await one( files[ next ++ ] ); } ) );
-	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+	files.forEach( ( f ) => progress.planned.add( f.url ) );
+	// anything already counted before the plan existed is, by definition, off-plan
+	progress.total = files.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 )
+		+ [ ...progress.extra.values() ].reduce( ( a, b ) => a + b, 0 );
 	note( `load plan: ${files.length} files, ${MB( progress.total )} MB (${files.map( f => `${f.kind} ${MB( f.bytes )}` ).join( ', ' )})`
 		+ ( progress.unknown.length ? ` — ${progress.unknown.length} of unknown size` : '' ) );
 	drawProgress();
@@ -188,7 +239,7 @@ async function fetchBuffer( url ) {
 
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
-let impostorGroup = null, impostorReport = null;
+let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -335,13 +386,31 @@ async function boot() {
 
 	// water -------------------------------------------------------------------------------------
 	if ( CFG.water ) {
-		water = makeWater( manifest.waterZ, { resolution: 1024,
+		const reflPx = CFG.reflRes === 'full' ? 1024 : 512;
+		water = makeWater( manifest.waterZ, { resolution: reflPx, debug: CFG.waterDebug,
 			...( CFG.waterBlur !== null ? { reflBlur: CFG.waterBlur } : {} ),
-			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ) } );
+			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ),
+			...( CFG.waterDist !== null ? { distortion: CFG.waterDist } : {} ),
+			...( CFG.waterNorm !== null ? { normalScale: CFG.waterNorm } : {} ),
+			...( CFG.waterTile !== null ? { rippleTiling: CFG.waterTile } : {} ),
+			...( CFG.waterAniso !== null ? { distortAniso: CFG.waterAniso } : {} ),
+			...( CFG.waterHoriz !== null ? { horizonBias: CFG.waterHoriz } : {} ),
+			...( CFG.waterGraze !== null ? { grazingGain: CFG.waterGraze } : {} ),
+			...( CFG.waterCrest !== null ? { spread: CFG.waterCrest } : {} ),
+			...( CFG.waterSlope !== null ? { slopeRms: CFG.waterSlope } : {} ),
+			...( CFG.waterGrazeMax !== null ? { grazingMax: CFG.waterGrazeMax } : {} ),
+			...( CFG.waterMurkGain !== null ? { murkGain: CFG.waterMurkGain } : {} ),
+			...( CFG.waterMurk ? { murk: CFG.waterMurk.split( ',' ).map( Number ) } : {} ) } );
 		scene.add( water );
 		const wu = water.material.uniforms;
-		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector 1024x1024, `
-			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}` );
+		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector ${reflPx}x${reflPx}`
+			+ ` (?reflres=${CFG.reflRes}), `
+			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}, `
+			+ `ripple ${water.userData.waveSet.a.length} waves `
+			+ `${water.userData.waveSet.b[ 0 ][ 1 ].toFixed( 2 )}-${water.userData.waveSet.b.at( -1 )[ 1 ].toFixed( 3 )} m, `
+			+ `murk ${wu.murk.value.toArray().map( v => v.toFixed( 4 ) ).join( ', ' )}`
+			+ ( CFG.waterMurk ? ' (?watermurk override)' : ` (derived; ?watermurkgain=${wu.murk.value.r / water.userData.murkDerived[ 0 ]})` )
+			+ `, grazing cap ${wu.grazingMax.value}` );
 	}
 
 	// display transform ---------------------------------------------------------------------------
@@ -374,9 +443,17 @@ async function boot() {
 			}
 		} else removeMist( scene );
 		if ( postState.want.bloom ) {
-			const bp = makeBloom( comp, size );
-			if ( bp ) { composer.addPass( bp ); postState.bloom = true;
-				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, radius ${comp.bloomSize}` ); }
+			// The manifest's own value stays readable on `comp` (the sidecar and the note below both
+			// report it); the viewer's scaled threshold is passed to makeBloom instead of overwriting it.
+			const bloomComp = { ...comp,
+				bloomThreshold: CFG.bloomThreshold ?? comp.bloomThreshold * BLOOM_THRESHOLD_SCALE,
+				bloomSize: CFG.bloomRadius ?? comp.bloomSize };
+			const bp = makeBloom( bloomComp, size, { half: CFG.bloomRes !== 'full' } );
+			if ( bp ) { composer.addPass( bp ); postState.bloom = true; postState.bloomRes = CFG.bloomRes;
+				note( `post bloom: threshold ${bloomComp.bloomThreshold.toFixed( 3 )} (scene-linear; manifest `
+					+ `${comp.bloomThreshold.toFixed( 4 )} x ${CFG.bloomThreshold !== null ? '?bloomthr' : BLOOM_THRESHOLD_SCALE}), `
+					+ `strength ${comp.bloomStrength}, radius ${bloomComp.bloomSize}, `
+					+ `mip chain from ${bp.userData.sourceResolution.map( Math.round ).join( 'x' )} (?bloomres=${CFG.bloomRes})` ); }
 		}
 	}
 	lutPass = new LUTDisplayPass( { exposure: manifest.exposure } );
@@ -388,6 +465,8 @@ async function boot() {
 	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
 	if ( comp && postState.want.vignette ) { lutPass.uniforms.vignette.value = comp.vignette; postState.vignette = comp.vignette;
 		note( `post vignette: ${comp.vignette} in linear, before the transform` ); }
+	note( `quality preset '${CFG.quality}'${QUALITY_RAW !== CFG.quality ? ` (?quality=${QUALITY_RAW} is not a preset; using look)` : ''}: `
+		+ `bloom ${CFG.bloomRes}-res, Reflector ${CFG.reflRes}-res target, reflection set ${CFG.reflSet}` );
 	note( `post chain: ${[ postState.mistSpec && 'mist', postState.bloom && 'bloom', postState.vignette && 'vignette' ].filter( Boolean ).join( ' + ' ) || 'none'} (?post=${postState.requested})` );
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
@@ -463,6 +542,35 @@ async function boot() {
 			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
 	}
 
+	// QA-13-1: the baked hero probe as the irradiance of everything with no baked light ------------
+	// AFTER the PBR and detail passes (they may add an envMap or replace a material) and BEFORE the
+	// impostors, which are ShaderMaterials and take no environment at all.  Only in `baked` mode:
+	// ?lighting=direct is the untouched A/B.
+	if ( CFG.probeEnv && lightingMode === 'baked' && manifest.gate3 && manifest.gate3.probe ) {
+		try {
+			const rt = await buildProbeEnv( manifest.gate3.probe, {
+				renderer, note,
+				loadHdr: ( url ) => { progress.label = url.split( '/' ).pop(); return new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) ); },
+			} );
+			if ( rt ) {
+				probeTarget = rt;
+				// ?probespec=1 wants the probe as the SPECULAR env of the baked materials, and
+				// finishMaterials() already assigned the sky glossy one before the probe existed.
+				// Re-run it now that probeTarget is set; it is idempotent (it skips a material that
+				// already has the env it would assign).
+				if ( CFG.probeSpec ) assignSpecularEnv();
+				probeReport = applyProbeEnv( scene, rt.texture, { note, gate3Report } );
+				probeReport.station = manifest.gate3.probe.station || null;
+				probeReport.positionBlender = manifest.gate3.probe.positionBlender || null;
+				note( 'probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest\'s own '
+					+ 'probe.use says it is not the diffuse environment; this use of it is the lead\'s QA-13-1 call '
+					+ 'and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.' );
+			}
+		} catch ( e ) { note( `probe env failed: ${e.message}; the sky-diffuse path stays` ); }
+	} else if ( manifest.gate3 && manifest.gate3.probe && ! CFG.probeEnv ) {
+		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
+	}
+
 	// far-tree impostors (Gate 4 item 2) ----------------------------------------------------------
 	// They REPLACE the Gate 1 placeholder quads: when they build, the placeholders are not made at all,
 	// so a capture can never show a grey card where a tree should be and the name sweep stays clean.
@@ -507,6 +615,25 @@ async function boot() {
 	} else if ( manifest.treesFar.length && ! impAvailable ) {
 		note( `${manifest.treesFar.length} far-tree quads suppressed (?billboards=0)` );
 	}
+
+	// Item 6: cut the Reflector's DRAW SET.  After every glb, the impostors and the probe pass, so
+	// the traversal sees the final scene.  The main camera is re-made per station, so applyStation
+	// enables every layer on it too.
+	// `orn` (the default) cuts the 436 ORN instances only.  `both` also cuts the backdrop city
+	// blocks - MEASURED and rejected at the hero: the backdrop IS inside the reflected frustum there,
+	// and removing it left the reflection reading sky (lum 1.227x, sat 0.527x, R-B +23.2 -> -17.6).
+	// The water is a ShaderMaterial, so three's fog chunk never reaches it and applyMist skips it by
+	// name: it must be given the same airlight explicitly, or the one surface spanning 5-600 m at the
+	// hero is the only thing in the frame with no haze.
+	if ( water && water.userData.applyFog && scene.fog && postState && postState.mistSpec ) {
+		const ok = water.userData.applyFog( { color: scene.fog.color, near: scene.fog.near, far: scene.fog.far,
+			cap: postState.mistSpec.cap, k: postState.mistSpec.k, intensity: postState.mistSpec.intensity } );
+		if ( ok ) note( 'water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three\'s fog chunk cannot)' );
+	}
+
+	if ( water && CFG.reflSet !== 'full' ) reflectionSet = reduceReflectionSet( scene, water, camera,
+		{ note, orn: true, backdrop: CFG.reflSet === 'both' } );
+	else if ( water ) note( 'reflection draw set NOT reduced (?reflset=full): the Reflector traverses the whole scene' );
 
 	// first frame -------------------------------------------------------------------------------
 	renderFrame();
@@ -574,19 +701,26 @@ async function loadSky() {
  *  scene-wide diffuse environment can stay on the diffuse branch.  Called once, after the materials
  *  are final. */
 function assignSpecularEnv() {
-	if ( ! glossyEnv || ! diffusePmremTarget ) return 0;   // nothing to separate
+	// QA-12b-1 A/B (?probespec=1): the lead's hypothesis is that Cycles' shaded stone receives a
+	// glossy reflection of the WARM sunlit surroundings - the building and the ground - which a
+	// SKY-ONLY glossy PMREM cannot give, and that the missing warmth is what reads as olive.  The
+	// hero probe's glossy branch does contain those surroundings, so this swaps it in as the
+	// specular env of every BAKED material.  Same single-point caveat as the irradiance use.
+	const specEnv = ( CFG.probeSpec && probeTarget ) ? probeTarget.texture : glossyEnv;
+	if ( ! specEnv || ! diffusePmremTarget ) return 0;     // nothing to separate
 	let n = 0;
 	scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
 		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
-			if ( ! m || ! m.isMeshStandardMaterial || ! m.userData.pfaPatched || m.envMap === glossyEnv ) continue;
-			m.envMap = glossyEnv;
+			if ( ! m || ! m.isMeshStandardMaterial || ! m.userData.pfaPatched || m.envMap === specEnv ) continue;
+			m.envMap = specEnv;
 			m.envMapRotation.copy( envRotation );
 			m.needsUpdate = true;
 			n ++;
 		}
 	} );
-	if ( n ) note( `${n} baked material(s) take specular from the GLOSSY PMREM (material.envMap); the scene environment stays the DIFFUSE branch` );
+	if ( n ) note( `${n} baked material(s) take specular from ${CFG.probeSpec && probeTarget ? 'the HERO PROBE (?probespec=1)' : 'the GLOSSY sky PMREM'} `
+		+ '(material.envMap); the scene environment stays the DIFFUSE branch' );
 	return n;
 }
 
@@ -614,6 +748,14 @@ async function loadGlbs() {
 			const base = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
 			const gltf = await loader.parseAsync( buf, base );
 			gltf.scene.name = `WEB_glb_${g.cls}`;
+			// Gate 4 item 1c: the glTF NODE INDEX is the only stable key gltfpack -mi leaves (it drops
+			// node names), and it is what lightmaps.instance_irradiance.nodes[].gltf_node refers to.
+			// GLTFLoader's parser.associations is the only place it survives, so it is stamped on the
+			// object here, before any pass can reshape the graph.
+			if ( gltf.parser && gltf.parser.associations ) {
+				for ( const [ obj, a ] of gltf.parser.associations )
+					if ( obj && obj.isObject3D && a && typeof a.nodes === 'number' ) obj.userData.pfaGltfNode = a.nodes;
+			}
 			// FIRST, before any pass: gltfpack stores texcoords as normalised 12-bit ints with the
 			// dequantisation in KHR_texture_transform on the baseColorTexture only, so every UV that
 			// reaches a shader is 1/16 of its real value until this undoes it on the attribute.
@@ -643,7 +785,7 @@ async function loadGlbs() {
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
 		gate3Report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
-			vertexIrr: CFG.vertexIrr,
+			vertexIrr: CFG.vertexIrr, instIrr: CFG.instIrr,
 			loadTexture: ( url ) => {
 				progress.label = url.split( '/' ).pop();
 				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
@@ -861,6 +1003,7 @@ async function loadLUT() {
 function applyStation( n ) {
 	const st = stations.find( s => s.index === n ) || stations[ 0 ];
 	camera = makeStationCamera( st, camera.aspect || 16 / 9, camera );
+	camera.layers.enableAll();             // item 6: the reflection-excluded layer still draws here
 	currentStation = st;
 	userControlled = false;
 	if ( composer ) composer.passes[ 0 ].camera = camera;
@@ -943,6 +1086,27 @@ window.__pfaReady = false;
 window.__pfaStation = ( n ) => { applyStation( n ); resize(); renderFrame(); return currentStation.name; };
 // Gate 4 item 5: drive the walker from the harness without input, pointer lock or a rendered frame.
 window.__pfaWalkProbe = ( o ) => ( walk ? walk.probe( o || {} ) : null );
+
+/**
+ * Gate 4 item 2: orbit the camera around a world point, for the impostor rotational-pop sweep.
+ * An impostor picks its frame from the world-space view DIRECTION, so a pop can only be seen by
+ * rotating around one; the six fixed stations cannot show it.  Angles are degrees clockwise from
+ * world -Z, matching the walk probe's heading convention.
+ */
+window.__pfaOrbit = ( { target, dist = 30, headingDeg = 0, height = 12, fov = 40 } ) => {
+	const t = new THREE.Vector3( ...target );
+	const h = headingDeg * Math.PI / 180;
+	camera = new THREE.PerspectiveCamera( fov, camera.aspect || 16 / 9, 0.1, 5000 );
+	camera.layers.enableAll();             // or ?reflset=orn leaves every ORN mesh (layer 2) invisible
+	camera.position.set( t.x + Math.sin( h ) * dist, t.y + height, t.z + Math.cos( h ) * dist );
+	camera.lookAt( t );
+	camera.updateMatrixWorld( true );
+	currentStation = { index: 0, name: `orbit_${headingDeg}`, lens: null, shift_y: 0 };
+	userControlled = false;
+	if ( composer ) composer.passes[ 0 ].camera = camera;
+	renderFrame();
+	return { headingDeg, position: camera.position.toArray().map( v => + v.toFixed( 2 ) ), target: t.toArray() };
+};
 window.__pfaInfo = () => ( {
 	station: currentStation && { index: currentStation.index, name: currentStation.name, lens: currentStation.lens, shift_y: currentStation.shift_y },
 	cameraWorldMatrix: camera.matrixWorld.elements.slice(),
@@ -967,6 +1131,7 @@ window.__pfaInfo = () => ( {
 	lightingMode,
 	schema: manifest ? manifest.schema : null,
 	bytes: { loaded: progress.loaded, planned: progress.total, unknownSize: progress.unknown.slice(),
+		offPlan: [ ...progress.extra.entries() ].map( ( [ url, b ] ) => ( { url, bytes: b } ) ),
 		files: progress.files.map( f => ( { kind: f.kind, bytes: f.bytes, sizeFrom: f.sizeFrom, name: f.url.split( '/' ).pop() } ) ) },
 	load_s: { ...loadTimes },
 	glbs: glbReport.slice(),
@@ -975,6 +1140,9 @@ window.__pfaInfo = () => ( {
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
 	post: postState,
+	probeEnv: probeReport,
+	reflectionSet,
+	quality: { preset: CFG.quality, bloomRes: CFG.bloomRes, reflRes: CFG.reflRes, reflSet: CFG.reflSet },
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
 		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
 		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },
@@ -1074,6 +1242,51 @@ window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	};
 	requestAnimationFrame( step );
 } );
+/**
+ * Item 6: WHERE the presented frame time goes.  At 1440p the GPU does 0.6-2.4 ms of work
+ * (gl.finish) while the presented frame sits at 16.6-25.8 ms, so the cost is not in the draw.  This
+ * splits each presented frame into
+ *   js_ms    the CPU inside renderFrame(): three's matrix/frustum/uniform work and the DRAW SUBMIT,
+ *            with no gl.finish, so it is the cost of BUILDING the frame, not of drawing it;
+ *   gap_ms   from the end of renderFrame() to the next rAF callback: vsync wait plus whatever the
+ *            browser's compositor does with the presented buffer.
+ * and reports the passes and render targets that could be driving it - the water Reflector renders
+ * the whole scene a second time, and the composer adds a full-screen pass per effect.
+ */
+window.__pfaFrameBreakdown = ( n = 120 ) => new Promise( ( resolve ) => {
+	const js = [], gap = [];
+	let last = performance.now();
+	measuring = true;
+	const step = () => {
+		const a = performance.now();
+		renderFrame();
+		const b = performance.now();
+		js.push( b - a );
+		gap.push( a - last );              // time since the previous frame's renderFrame START
+		last = a;
+		if ( js.length < n ) requestAnimationFrame( step );
+		else {
+			measuring = false;
+			const q = ( arr ) => { const s = arr.slice( 1 ).sort( ( x, y ) => x - y );
+				return { median: s[ Math.floor( s.length / 2 ) ], mean: s.reduce( ( x, y ) => x + y, 0 ) / s.length,
+					p95: s[ Math.floor( s.length * 0.95 ) ], min: s[ 0 ], max: s[ s.length - 1 ] }; };
+			const passes = composer ? composer.passes.map( ( p ) => p.name || p.constructor.name ) : [];
+			resolve( {
+				frames: js.length - 1,
+				js_ms: q( js ), presented_ms: q( gap ),
+				composerPasses: passes,
+				waterReflector: !! ( water && water.getRenderTarget ),
+				drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+				programs: renderer.info.programs ? renderer.info.programs.length : null,
+				geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
+				devicePixelRatio: renderer.getPixelRatio(),
+				drawingBuffer: [ renderer.domElement.width, renderer.domElement.height ],
+			} );
+		}
+	};
+	requestAnimationFrame( step );
+} );
+
 /** Frame cost without the vsync cap: n renders back to back, each followed by gl.finish().
  *  __pfaFrameStats is the presented frame time (60 Hz cap); this is the render cost. */
 window.__pfaRenderCost = ( n = 60 ) => {
@@ -1146,6 +1359,7 @@ window.__pfaPick = ( x, y ) => {
 	const { w, h } = canvasSize();
 	const ndc = new THREE.Vector2( ( x / w ) * 2 - 1, - ( y / h ) * 2 + 1 );
 	const rc = new THREE.Raycaster();
+	rc.layers.enableAll();                 // ORN is on layer 2 under ?reflset=orn; a default mask misses it
 	rc.setFromCamera( ndc, camera );
 	rc.firstHitOnly = true;
 	// three's Raycaster does NOT skip invisible objects, so a hidden placeholder (?treeboards=0) would

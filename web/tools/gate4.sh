@@ -12,8 +12,12 @@
 #
 # Defaults: baked lighting, both placeholder sets hidden, the water phase frozen at t=0 so a repeat
 # capture is byte-comparable.  PFA_QUERY is appended LAST and therefore wins:
-#   PFA_TAG=r13direct PFA_QUERY="lighting=direct" web/tools/gate4.sh    the control pass
-#   PFA_TAG=r13post   PFA_QUERY="post=all"       web/tools/gate4.sh    with the post chain on
+#   PFA_TAG=r13direct PFA_QUERY="lighting=direct" web/tools/gate4.sh   the lighting control pass
+#   PFA_TAG=g4nopost  PFA_QUERY="post=none"      web/tools/gate4.sh   the post-chain control
+#   PFA_TAG=g4noprobe PFA_QUERY="probe=0"        web/tools/gate4.sh   the QA-13-1 A/B
+#
+# This script NEVER sets PFA_DEV_SHARE_GPU: a Gate capture must own the GPU, and the guard below
+# refuses to start while the bake queue or any Blender process is alive.
 set -e
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 export PFA_MAIN_ROOT="$MAIN"
@@ -21,7 +25,12 @@ MANIFEST=${1:-/assets/gate3/manifest.json}
 TAG=${PFA_TAG:-gate4}
 SHOTSIZE=${PFA_SHOT_SIZE:-1920x1080}
 PERFSIZE=${PFA_PERF_SIZE:-2560x1440}
-QUERY=(--query "manifest=$MANIFEST" --query t=0 --query billboards=0 --query treeboards=0 --query lighting=baked)
+# The Gate 4 delivery look: baked lighting, the COMP_golden_hour post chain ON (mist + bloom +
+# vignette), the hero probe as the irradiance of everything with no baked light, the far-tree
+# impostors ON, the water ON, both placeholder sets gone, water phase frozen at t=0.  PFA_QUERY is
+# still appended last and still wins, so any one of these can be turned off for an A/B.
+QUERY=(--query "manifest=$MANIFEST" --query t=0 --query billboards=0 --query treeboards=0
+       --query lighting=baked --query post=all --query probe=1 --query impostors=1 --query water=1)
 for kv in ${=PFA_QUERY}; do QUERY+=(--query "$kv"); done   # space-separated k=v list
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT"

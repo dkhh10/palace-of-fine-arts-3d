@@ -264,6 +264,9 @@ export function applyGate3Lightmaps( o ) {
 	// world-bbox-centre lookup; the range is per mesh and never shared (manifest v4 says so twice).
 	report.vertexIrradiance = applyVertexIrradiance( scene, gate3, assets, note, o.vertexIrr );
 
+	// ---- pass 4: per-placement irradiance on the 1 379 shrub/reed cards (Gate 4 item 1c) -----
+	report.instanceIrradiance = applyInstanceIrradiance( scene, gate3, note, o.instIrr );
+
 	report.promise = Promise.all( pending ).then( () => {
 		note( `gate3 UV2 census: ${report.uv2.meshesWithUv2} mesh(es) carry TEXCOORD_1 (${report.uv2.drawnWithUv2} placements), `
 			+ `${report.uv2.meshesWithoutUv2} do not (${report.uv2.drawnWithoutUv2} placements)` );
@@ -279,6 +282,8 @@ export function applyGate3Lightmaps( o ) {
 		if ( report.own.blockedNoUv2InGlb )
 			note( `gate3: ${report.own.blockedNoUv2InGlb} asset(s) have uv2_in_glb false with no frozen-layout twin — no map applied (there is no factor fallback for a lightmap)` );
 		if ( report.texturesFailed.length ) note( `gate3: ${report.texturesFailed.length} lightmap texture(s) failed: ${report.texturesFailed.slice( 0, 4 ).join( '; ' )}` );
+		const ai = report.instanceIrradiance;
+		if ( ai && ai.errors.length ) throw new Error( `gate4 instance irradiance: ${ai.errors.join( '; ' )}` );
 		const v = report.vertexIrradiance;
 		if ( v && v.applied && v.mode === 'global' )
 			note( `gate3 vertex irradiance: ${v.applied} COLOR_0 primitive(s), ${v.placements} placement(s), decoded at the ONE `
@@ -395,4 +400,125 @@ export function applyVertexIrradiance( scene, gate3, assets, note = () => {}, mo
 	}
 	if ( ! isFinite( out.rangeMin ) ) { out.rangeMin = 0; out.rangeMax = 0; }
 	return out;
+}
+
+
+/**
+ * Gate 4 item 1c — the 1 379 shrub/reed placements' baked irradiance.
+ *
+ * These 28 card meshes are the only env.glb geometry with neither a lightmap nor `COLOR_0`, so until
+ * now they were lit by the hero probe alone and read cyan (hue 180 against the reference's 102).  The
+ * bake hands over one scene-linear rgb per PLACEMENT; it ships in the manifest, not the glb
+ * (`in_glb: false`), and the viewer uploads it as an `InstancedBufferAttribute` exactly like the ORN
+ * slot offsets.
+ *
+ * THE BINDING IS PER glTF NODE, NEVER PER MESH.  `gltfpack -mi` merged three `.001` single-placement
+ * meshes into their base mesh's node with the odd row INSIDE the run (node 10 = 8 x maho2 @0 +
+ * 1 x maho2.001 @0 + 37 x maho2 @8), so a node's rows are read from its ordered `segments` list
+ * `[mesh, count, offset]` with a RUNNING CURSOR, `offset` being the row index into that mesh's own
+ * array.  Slicing one range per mesh would give 37 mahonias the irradiance of placements 0-36.
+ * Any node whose row count differs from its segments' sum is a hard failure: a silently misaligned
+ * array lights each shrub with its neighbour's irradiance, which no metric would catch.
+ *
+ * `cov == 0` is a contract, not a diagnostic: the 7 fully enclosed placements ship [0,0,0] and keep
+ * the probe irradiance, which `pfaInstOn` switches per instance inside the shader.
+ *
+ * @returns {{wanted:number, nodes:number, rows:number, dark:number, materials:number, missing:string[], errors:string[]}}
+ */
+export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = 'auto' ) {
+	const out = { wanted: 0, nodes: 0, rows: 0, dark: 0, materials: 0, missing: [], errors: [], enabled: false };
+	const ii = gate3 && gate3.instanceIrradiance;
+	if ( mode === '0' || ! ii || ! ii.nodes.length ) return out;
+	out.wanted = ii.placements || 0;
+	const byNode = new Map();
+	for ( const n of ii.nodes ) byNode.set( n.gltf_node, n );
+	const seen = new Set();
+	// The node index is an index into ONE glb's `nodes` array, so the search has to be confined to the
+	// glb the manifest joined against (env.glb) - orn.glb has instanced nodes 1..n too, and matching
+	// across files is how the first run "found" 28 nodes for a 25-node block.
+	const root = scene.getObjectByName( `WEB_glb_${ii.glb || 'env'}` );
+	if ( ! root ) { out.errors.push( `no WEB_glb_${ii.glb || 'env'} in the scene` ); note( `gate4 instance irradiance: ${out.errors[ 0 ]}` ); return out; }
+	const census = [];
+	root.traverse( ( mesh ) => {
+		if ( ! mesh.isMesh ) return;
+		const gn = mesh.userData && mesh.userData.pfaGltfNode;
+		if ( gn !== undefined ) census.push( `${gn}:${mesh.isInstancedMesh ? mesh.count : 1}` );
+		if ( gn === undefined || ! byNode.has( gn ) || seen.has( mesh ) ) return;
+		seen.add( mesh );
+		const spec = byNode.get( gn );
+		const count = mesh.isInstancedMesh ? mesh.count : 1;
+		const total = spec.segments.reduce( ( a, s ) => a + s[ 1 ], 0 );
+		if ( total !== count || total !== spec.count ) {
+			out.errors.push( `glTF node ${gn} (${mesh.name || 'unnamed'}): ${count} row(s) in the glb, `
+				+ `${spec.count} in the manifest, ${total} in its segments - refusing to bind a misaligned array` );
+			return;
+		}
+		const irr = new Float32Array( count * 3 ), on = new Float32Array( count );
+		let cursor = 0, bad = null;
+		for ( const [ meshName, cnt, off ] of spec.segments ) {
+			const rec = ii.meshes[ meshName ];
+			if ( ! rec || ! rec.rgb || rec.rgb.length < 3 * ( off + cnt ) ) { bad = meshName; break; }
+			for ( let i = 0; i < cnt; i ++, cursor ++ ) {
+				const src = 3 * ( off + i );
+				irr[ 3 * cursor ] = rec.rgb[ src ];
+				irr[ 3 * cursor + 1 ] = rec.rgb[ src + 1 ];
+				irr[ 3 * cursor + 2 ] = rec.rgb[ src + 2 ];
+				const cov = rec.cov ? rec.cov[ off + i ] : 1;
+				on[ cursor ] = cov > 0 ? 1 : 0;
+				if ( ! ( cov > 0 ) ) out.dark ++;
+			}
+		}
+		if ( bad !== null || cursor !== count ) {
+			out.errors.push( `glTF node ${gn}: segment mesh "${bad}" missing or short (${cursor}/${count} rows written)` );
+			return;
+		}
+		// The attribute lives on the GEOMETRY and chunking hands each chunk its own slice, so a
+		// geometry shared by two InstancedMeshes is cloned first - the same rule as the ORN slots.
+		let geo = mesh.geometry;
+		if ( geo.attributes.pfaInstIrr ) { geo = geo.clone(); mesh.geometry = geo; }
+		const Attr = mesh.isInstancedMesh ? THREE.InstancedBufferAttribute : THREE.BufferAttribute;
+		geo.setAttribute( 'pfaInstIrr', new Attr( irr, 3 ) );
+		geo.setAttribute( 'pfaInstOn', new Attr( on, 1 ) );
+		// One material per node: it is patched with a per-instance attribute that other meshes sharing
+		// the datablock do not carry, and a missing attribute would silently read 0 on them.
+		const mats = Array.isArray( mesh.material ) ? mesh.material : [ mesh.material ];
+		mesh.material = Array.isArray( mesh.material ) ? mats.map( cloneForInstIrr ) : cloneForInstIrr( mats[ 0 ] );
+		const list = Array.isArray( mesh.material ) ? mesh.material : [ mesh.material ];
+		for ( const m of list ) {
+			if ( ! m ) continue;
+			// The probe must still reach it: the 7 cov == 0 placements fall back to it, and
+			// `pfaWantsProbeEnv` is what lets applyProbeEnv past its pfaPatched skip.
+			m.userData.pfaWantsProbeEnv = true;
+			patchBakedMaterial( m, { instanceIrradiance: gate3.scale, noEnvDiffuse: false, specularOnlySun: true } );
+			out.materials ++;
+		}
+		out.nodes ++; out.rows += count;
+	} );
+
+	for ( const n of ii.nodes ) if ( ! [ ...seen ].some( m => m.userData.pfaGltfNode === n.gltf_node ) )
+		out.missing.push( String( n.gltf_node ) );
+	out.census = census.join( ' ' );
+	if ( out.errors.length || out.missing.length )
+		note( `gate4 instance irradiance census (glb node:rows in ${root.name}): ${out.census}` );
+	// A node the scene never presented is the SAME failure as a misaligned one, and it is the likelier
+	// of the two: a mesh that gains a second primitive stops being the node object, loses
+	// `pfaGltfNode`, and its placements would revert to the probe with nothing but a console line to
+	// say so.  It goes in `errors`, which the caller throws on.
+	if ( out.missing.length ) out.errors.push( `glb node(s) ${out.missing.join( ', ' )} carry ${ii.placements - out.rows} `
+		+ 'placement(s) the scene never presented - they would silently fall back to the probe' );
+	out.enabled = out.nodes > 0 && ! out.errors.length;
+	if ( out.errors.length ) note( `gate4 instance irradiance FAILED: ${out.errors.join( '; ' )}` );
+	note( `gate4 instance irradiance: ${out.rows}/${ii.placements} placement(s) over ${out.nodes}/${ii.nodes.length} `
+		+ `glb node(s), ${out.materials} material(s) cloned and patched, ${out.dark} with cov == 0 left on the probe`
+		+ ( out.missing.length ? `; NODE(S) NOT FOUND IN THE SCENE: ${out.missing.join( ', ' )}` : '' ) );
+	return out;
+}
+
+function cloneForInstIrr( m ) {
+	if ( ! m ) return m;
+	if ( m.userData.pfaInstIrrClone ) return m;
+	const c = m.clone();
+	c.userData = { ...m.userData, pfaInstIrrClone: true };
+	c.name = m.name;
+	return c;
 }

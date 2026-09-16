@@ -18,14 +18,22 @@
 //   --pick "x,y;x,y"  QA: what is UNDER those pixels - the mesh, its nearest manifest asset by the
 //                     bbox join, the material, whether it carries UV2, whether a lightmap attached,
 //                     whether the environment reaches it, and what the baked patch did
+//   --orbit "tx,ty,tz:dist:height:h0,h1,..."
+//                     orbit the camera around a world point and shoot one PNG per heading; an
+//                     impostor picks its frame from the view DIRECTION, so rotational pop can only
+//                     be seen this way and never from the six fixed stations
 //   --probe A,B       project objects whose name contains A / B and read their centre pixel
 //   --walkprobe 0,90,180,270[:seconds]
 //                     walk from each captured station on those headings (degrees, 0 = world -Z) and
 //                     report where the walker ends, how often it was refused and the lowest ground it
 //                     stood on.  No input, no pointer lock, no rendered frame - it is the acceptance
 //                     evidence for "ground clamp, cannot walk into the lagoon" (Gate 4 item 5).
+//   --loading MS      shoot the loading screen MS after navigation, before waiting for __pfaReady
 //   --shots 0         measure only, write no PNGs (the performance pass)
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
+//   --breakdown N     item 6: split each presented frame into the JS spent in renderFrame() and the
+//                     gap to the next rAF, per station, and report the composer passes and whether
+//                     the water Reflector is rendering the scene a second time
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
 // It refuses to launch while the bake queue is running or any Blender process is alive
@@ -145,7 +153,7 @@ function gpuGuard() {
 	throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
 }
 
-let browser = null, server = null, viteProc = null;
+let browser = null, server = null, viteProc = null, pageErrorExit = false;
 const t0 = Date.now();
 try {
 	gpuGuard();
@@ -182,10 +190,24 @@ try {
 	const pageLog = [];
 	page.on( 'console', ( m ) => { pageLog.push( `${m.type()}: ${m.text()}` ); console.log( `[page] ${m.text()}` ); } );
 	page.on( 'pageerror', ( e ) => { pageLog.push( `pageerror: ${e.message}` ); console.error( `[page error] ${e.message}` ); } );
-	page.on( 'requestfailed', ( r ) => { pageLog.push( `requestfailed: ${r.url()} ${r.failure()?.errorText}` ); } );
+	page.on( 'requestfailed', ( r ) => { pageLog.push( `requestfailed: ${r.method()} ${r.url()} ${r.failure()?.errorText}` ); } );
+	// A bare "Failed to load resource: 404" console line carries no URL, so record the response too -
+	// an unactionable page error is nearly as bad as a swallowed one.
+	page.on( 'response', ( r ) => { if ( r.status() >= 400 ) pageLog.push( `httperror: ${r.status()} ${r.url()}` ); } );
 
 	console.log( `[shot] ${url}` );
 	await page.goto( url, { waitUntil: 'domcontentloaded', timeout } );
+	// --loading MS: shoot the LOADING SCREEN before waiting for ready, so the progress panel a first
+	// visitor sees is evidence and not a claim.  The page is still loading, so this is deliberately
+	// racy: the delay picks a moment, and the shot records whatever the panel showed then.
+	if ( o.loading ) {
+		const wait = parseInt( o.loading, 10 ) || 1200;
+		await new Promise( ( r ) => setTimeout( r, wait ) );
+		const lf = out.replace( /(\.png)$/, '_loading$1' );
+		fs.mkdirSync( path.dirname( lf ), { recursive: true } );
+		await page.screenshot( { path: lf, captureBeyondViewport: false } );
+		console.log( `[shot] loading screen after ${wait} ms -> ${lf}` );
+	}
 	await page.waitForFunction( 'window.__pfaReady === true || window.__pfaError', { timeout, polling: 250 } );
 	const err = await page.evaluate( () => window.__pfaError || null );
 	if ( err ) throw new Error( `viewer boot failed:\n${err}` );
@@ -229,6 +251,20 @@ try {
 	const stats = perStation.length ? perStation[ 0 ].frame_ms : null;      // back-compat: the sidecar's
 	const cost = perStation.length ? perStation[ 0 ].gpu_cost_ms : null;    // top-level pair is station 1's
 
+	let breakdown = null;
+	if ( o.breakdown ) {
+		breakdown = [];
+		for ( const st of shotList ) {
+			await page.evaluate( ( n ) => window.__pfaStation( n ), st );
+			await page.evaluate( ( n ) => window.__pfaRenderCost( n ), warmup );
+			const b = await page.evaluate( ( n ) => window.__pfaFrameBreakdown( n ), parseInt( o.breakdown, 10 ) || 120 );
+			breakdown.push( { station: st, ...b } );
+			console.log( `[break] st${st} presented median ${b.presented_ms.median.toFixed( 2 )} ms, `
+				+ `JS in renderFrame ${b.js_ms.median.toFixed( 2 )} ms (p95 ${b.js_ms.p95.toFixed( 2 )}), `
+				+ `${b.drawCalls} draws, passes [${b.composerPasses.join( ', ' )}], reflector ${b.waterReflector}` );
+		}
+	}
+
 	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
 	let walkProbes = null;
@@ -249,6 +285,23 @@ try {
 					+ `lowest ground ${r.minGround.toFixed( 2 )} (water ${r.waterY}), refused ${r.blocked}/${r.samples} step(s)` );
 			}
 		}
+	}
+
+	// --orbit "tx,ty,tz:dist:height:h0,h1,h2,..."  one PNG per heading, for the impostor pop sweep
+	let orbits = null;
+	if ( o.orbit ) {
+		const [ tgt, dist, height, headings ] = String( o.orbit ).split( ':' );
+		const target = tgt.split( ',' ).map( Number );
+		const hs = headings.split( ',' ).map( Number ).filter( ( n ) => isFinite( n ) );
+		orbits = [];
+		for ( const headingDeg of hs ) {
+			const r = await page.evaluate( ( a ) => window.__pfaOrbit( a ), { target, dist: Number( dist ), height: Number( height ), headingDeg } );
+			await page.evaluate( ( n ) => window.__pfaRenderCost( n ), 6 );
+			const file = out.replace( /(\.png)$/, `_h${String( Math.round( headingDeg * 10 ) ).padStart( 5, '0' )}$1` );
+			if ( takeShots ) { await page.screenshot( { path: file, captureBeyondViewport: false } ); written.push( file ); }
+			orbits.push( { ...r, file } );
+		}
+		console.log( `[orbit] ${orbits.length} heading(s) around ${target} at ${dist} m` );
 	}
 
 	let picks = null;
@@ -283,8 +336,33 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, walkProbes, written, pageLog };
+	// A SCORED CAPTURE MUST FAIL ON A PAGE ERROR.  Six swallowed WebGL texSubImage2D failures went
+	// through a Gate capture unnoticed in round 14 and made every probe number an artefact
+	// (docs/reviews/phase6_viewer_gate4_r6_review.md finding 2).  PFA_ALLOW_PAGE_ERRORS=1 opts out.
+	// `error: Failed to load resource ...` carries no URL and is always duplicated by an `httperror:`
+	// line that does, so the URL-less one is dropped and the httperror is what is judged.  favicon.ico
+	// is the one whitelisted 404 (index.html declares none); nothing else is.
+	// Round 7 review (SHOULD-FIX): a `requestfailed:` line is an asset that never arrived at all -
+	// a missing atlas or GLB - which is strictly worse than an HTTP error that did arrive, so it
+	// fails a scored capture on the same terms.  (It is recorded with its URL by the requestfailed
+	// handler above, so unlike the bare `error: Failed to load resource` line it is actionable.)
+	// An aborted HEAD is the ONE exception, and the review pinned down why it is safe: the 189
+	// ERR_ABORTED lines a clean capture logs are measurePlan()'s own HEAD probes - 189 distinct urls,
+	// exactly the load plan - which Chrome reports as cancelled once the body is not read.  A
+	// cancelled GET is a different animal: it is an asset that started arriving and stopped, so it
+	// fails a scored capture like any other miss.  The method is recorded by the handler above.
+	const IGNORE = /favicon|^error: Failed to load resource|^requestfailed: HEAD \S+ net::ERR_ABORTED$/;
+	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror|httperror|requestfailed):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageErrors, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
+	if ( pageErrors.length ) {
+		console.error( `[shot] PAGE ERRORS (${pageErrors.length}) - this capture is NOT scoreable:` );
+		pageErrors.slice( 0, 8 ).forEach( ( l ) => console.error( `[shot]   ${l.slice( 0, 160 )}` ) );
+		if ( process.env.PFA_ALLOW_PAGE_ERRORS !== '1' ) {
+			console.error( '[shot] set PFA_ALLOW_PAGE_ERRORS=1 to override (never for a scored capture)' );
+			pageErrorExit = true;
+		}
+	}
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
 		fs.writeFileSync( perfOut, JSON.stringify( {
@@ -328,5 +406,5 @@ try {
 	try { if ( server ) server.close(); } catch { /* ignore */ }
 	try { if ( viteProc ) viteProc.kill( 'SIGTERM' ); } catch { /* ignore */ }
 	console.log( `[shot] done in ${( ( Date.now() - t0 ) / 1000 ).toFixed( 1 )} s` );
-	process.exit( process.exitCode || 0 );
+	process.exit( process.exitCode || ( pageErrorExit ? 5 : 0 ) );
 }

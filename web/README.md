@@ -275,9 +275,112 @@ back out through the reflected ray). Swept b = 0.006/0.003 x s = 1.0/0.52 and fi
 | sat | 0.69 (2.10x) | 0.35 (1.07x) | 0.33 |
 | R-B | 59.7 (1.73x) | 22.7 (0.66x) | 34.4 |
 
-Defaults `reflBlur 0.0045`, `reflSat 0.66`; `?waterblur` / `?watersat` are the A/B. R-B is now 0.66x
-(too cool rather than too warm) and is deliberately NOT tuned out: the building being reflected is
-still missing its near-tree irradiance, so `reflectTint` should be revisited after that lands.
+That calibration is SUPERSEDED by round 7: the shipped defaults are now `reflBlur 0.003` and
+**`reflSat 1.0`** with `reflectTint (1, 1, 1)` — see "(iii)" below for why the 0.66 was wrong rather
+than merely retuned. `?waterblur` / `?watersat` remain the A/B.
+
+### The upwelling term, derived (QA-14-1, round 6 item 1a)
+`murk` in `water.js` is the radiance that leaves the water BODY toward the camera; the shader's
+`mix( murk, refl, F )` already applies the view ray's `1 - F`, so `murk` is the emergent radiance at
+normal incidence. Round 14 shipped a hand value, `(0.020, 0.035, 0.030)`, which made the near water
+essentially `F * reflection` — a dark blue mirror. The Phase 5 hero's open-water crop inverts through
+the LUT to a scene-linear `(1.226, 1.317, 1.262)`: bright and very nearly neutral.
+
+The default is now **derived**, in `MURK_INPUTS` / `derivedMurk()`, from the shipped material and the
+scene's own light — never fitted to the metric:
+
+| input | value | source |
+|---|---|---|
+| `sigma_s` | `0.7 * (0.205, 0.250, 0.195)` | `WATER_VOLUME` Color x Density, `scripts/mat_build.py` |
+| `sigma_a` | `0.7 * (1 - (0.70, 0.80, 0.68))` | `WATER_VOLUME` Absorption Color x Density |
+| `g` | 0.3 | `WATER_VOLUME` Anisotropy (Henyey-Greenstein) |
+| depth, bed | 1.5 m, albedo `(0.12, 0.10, 0.06)` | `docs/reference_sheet.md` MAT_water_lagoon |
+| `E_sky` | `(3.651, 7.626, 16.040)` W/m² | cosine-weighted upper hemisphere of `sky_camera_4096x2048.exr` |
+| `E_sun` | `(8.622, 5.236, 0.0)` W/m² | manifest `LIGHT_sun`: 67.319 x sin 7.357° x colour |
+
+`b_b = sigma_s B(g)`, `R_col = b_b/(a+b_b) (1 - e^{-2(a+b_b)d})`, `R_bot = rho e^{-2 a d}`,
+`A_up = R_col + R_bot`, `E_in = 0.934 E_sky + 0.544 E_sun` (the second is the unpolarised Fresnel
+transmittance at the 7.4° sun's 82.6° incidence), `E_up = A_up E_in / (1 - 0.48 A_up)`, and
+`murk = E_up / (pi n^2)`.
+
+Two things are worth keeping in view. **The sky branch is `sky.camera`, not `sky.diffuse`**:
+`sky.diffuse` carries lighting's artificial shade fill (B/R 5.1, against the real sky's 4.4 and
+sky+sun's 1.3), and the Phase 5 material suppresses its own diffuse murk lobe to 0.085 at the hero
+precisely because that fill "returns blue and fights the warm streaks". **And the derivation
+cross-checks**: `A_up` lands at `(0.150, 0.180, 0.112)` where the Phase 5 material's hand-set murk
+albedo is `(0.165, 0.170, 0.1025)` — the same quantity to within 10 %, reached independently.
+
+Result `(0.2353, 0.3522, 0.3166)`, hue 162°, 10x the round-14 level. `?watermurk=r,g,b` overrides it
+(`0.020,0.035,0.030` is the exact round-14 revert), `?watermurkgain=k` scales it.
+
+Measured at cam01 (`water_probe.py`, `open water 300 900 1600 1060`), round-6 WIP -> derived murk:
+
+| | round 6 WIP | derived murk | reference | |
+|---|---|---|---|---|
+| lum | 68.0 | **87.3** | 118.0 | 0.58x -> 0.74x |
+| hue | 198.9 | **194.8** | 144.8 | still blue |
+| sat | 0.292 | **0.245** | 0.041 | still 6x |
+| rowHF | 4.60 | 3.88 | 13.23 | a constant body term dilutes contrast |
+| row/col | 2.23 | 2.22 | 3.24 | unchanged, as expected |
+| Fresnel fall | 33.6 | 26.7 | 36.1 | see below |
+| refl-mass lum | 65.9 | **84.8** | 88.2 | 0.75x -> 0.96x |
+
+Round 7 then replaced the ripple and the reflection tint (the lead's (i)-(iii) after judging the tile):
+
+* **(i) the ripple is procedural and in metres.** The 256 px 8-bit tiled normal map is gone. The height
+  field is eight sine waves summed in the shader with ANALYTIC derivatives, geometrically spaced
+  1.20 m -> 0.034 m (43 px -> 1.2 px at the hero's near water, where a pixel is 2.76 cm) — the
+  reference sheet's "0.3-1 m streaks by 2-5 cm ripples". Directions are a STRATIFIED fan of +/- 25°
+  about world Z (eight random draws from the old cosine-power spread put two waves 51° and 73° off
+  axis, which is a cross sea, not wind ripple). Amplitude is set by SLOPE, not height: every wave
+  carries the same slope amplitude, so `RIPPLE.slopeRms` 0.0131 rad (0.75°) is the whole surface's rms
+  slope — read back from the Phase 5 hero, whose reflection wanders ~30 px at the near water. Each
+  wave fades out below about one pixel footprint (`fwidth`), which is the viewer's equivalent of
+  MAT_water_lagoon's Toksvig depth ramp and is why the far lagoon does not sizzle.
+* **(ii) no more contour banding**, by construction: nothing is quantised to 8 bits any more.
+* **(iii) the screen displacement is derived, and `reflSat` ships at 1.0.** A slope `s` tips the
+  reflected ray by `2s`, and the projection turns that into `P00 / P11` times it in ndc, half that in
+  uv — so the offset is exactly `projectionMatrix * slope`, read per station instead of fitted at the
+  hero's 20 mm lens. **Its axes are WORLD X and Z, not the camera's**: `slope.x` is pushed through
+  `P00` and `slope.y` (world Z) through `P11`, which is only the right pairing while the view looks
+  along world Z. It is exact at the hero and at cam05, within a few degrees at cam02 and cam06, and
+  at a station looking along world X the two would be swapped. The ripple's crests are locked to
+  world Z for the same reason (the wind direction is a property of the lagoon, not of the camera), so
+  the two share the one assumption; a camera-relative form would have to rotate both together. `distortion`, `distortAniso`, `normalScale` and `rippleTiling` are therefore all
+  1.0 and are A/B dials only, and the round-6 grazing multiplier (not physical: the ray tips by `2s`
+  whatever the incidence) ships at 0. `reflSat` 0.66 was double-counting the murk — the body term now
+  goes through the same mix explicitly — and a dielectric's Fresnel reflection is spectrally flat, so
+  it and `reflectTint` are 1.0. That is the warm drain the reflected ochre was losing.
+
+| cam01 | round-6 WIP | + derived murk | + round-7 ripple | reference |
+|---|---|---|---|---|
+| open water lum | 68.0 | 87.3 | **88.4** | 118.0 |
+| open water hue | 198.9 | 194.8 | **195.6** | 144.8 |
+| open water sat | 0.292 | 0.245 | **0.361** | 0.041 |
+| open water rowHF | 4.60 | 3.88 | **6.91** | 13.23 |
+| open water row/col | 2.23 | 2.22 | **3.71** | 3.24 |
+| Fresnel fall | 33.6 | 26.7 | **20.8** | 36.1 |
+| refl-mass lum | 65.9 | 84.8 | **90.3** | 88.2 |
+| refl-mass hue | 42.1 | 50.7 | **45.6** | 42.4 |
+| refl-mass sat | 0.299 | 0.211 | **0.411** | 0.596 |
+
+Where the building reflects, the water is now at reference (lum 1.02x, hue within 3.2°). What is left
+is the OPEN water: its reflection is still `(1.91, 3.05, 3.90)` where the Phase 5 hero needs
+`(4.89, 4.89, 4.76)` — 0.39x in red. The sky at the mirrored 13-21° elevations is `(1.2-2.1,
+3.4-5.5, 7.2-10.2)`, so that red cannot come from the sky: Cycles' open lagoon is reflecting warm
+sunlit stone and shore across the whole crop where the viewer's much cleaner planar mirror reflects
+sky. That is a reflection-lobe width question, not a murk or a ripple one, and it is what keeps the
+open water's hue at 196° and its saturation at 0.361.
+
+The fall gets SMALLER, and that is the diagnosis rather than a regression: the ladder measures how much
+darker the near water (mostly body) is than the far water (mostly mirror), so it is set by the ratio
+between the body and the reflection. Inverting both frames through the LUT, the Phase 5 hero's open
+water needs a reflection radiance of `(4.89, 4.89, 4.76)` where the viewer's reflector returns
+`(2.20, 2.91, 3.38)` — 0.45x in red, and blue instead of warm. The body term is now right; **the
+remaining level, hue and fall deficit is the reflected radiance**, not the murk. The reflected content
+itself is not the cause: measured in the direct view, the viewer's attic / entablature / column boxes
+at the 13-21° elevations the near water mirrors are 1.02-1.35x of Cycles and the sky band is 0.99x.
+`web/tools/water_derive.py` reproduces all of this without the viewer.
 
 ### The post chain (item 4)
 `src/postChain.js` reproduces `manifest.compositor.COMP_golden_hour` in scene-linear, BEFORE the LUT,
@@ -324,22 +427,283 @@ Evidence, 24 probes (six stations x four headings x 30 s at 3.2 m/s, `--walkprob
 the lagoon headings are refused (st1/180 1783 of 1801 steps, st5/180 1711, st2/270 1561) and the
 inland ones run the full 96 m unobstructed.
 
-### Performance (item 6), 2560x1440, everything on, round13b
+### Performance (item 6), 2560x1440, the Gate 4 look — measured, and attributed
 
-| station | presented frame | fps | `gl.finish` render cost | draws | tris |
+| station | presented | fps | JS submit | `gl.finish` | draws | tris |
+|---|---|---|---|---|---|---|
+| 1 lagoon hero | 29.5 ms | 33.9 | 4.0 ms | 2.6 ms | 314 | 5.24 M |
+| 2 NE 3/4 | 30.0 ms | 33.3 | 4.0 ms | 2.1 ms | 304 | 5.06 M |
+| 3 colonnade walk | 31.1 ms | 32.2 | 4.1 ms | 2.5 ms | 324 | 5.44 M |
+| 4 rotunda ceiling | 22.2 ms | 45.0 | 1.9 ms | 0.5 ms | 158 | 2.20 M |
+| 5 south lawn | 29.6 ms | 33.8 | 3.9 ms | 2.1 ms | 297 | 4.86 M |
+| 6 aerial | 32.2 ms | 31.1 | 2.7 ms | 2.4 ms | 336 | 5.60 M |
+
+Resident 1677.8 MB (textures 1171.6, render targets 443.8, geometry 62.4), 272 textures, 90 programs.
+
+**Attribution** (stations 1 and 6, the same look with one feature removed at a time):
+
+| configuration | st1 | st6 | draws st1 |
+|---|---|---|---|
+| Gate 4 look | 29.5 ms | 32.2 ms | 314 |
+| water off (no planar Reflector) | 25.7 ms | 26.3 ms | 164 |
+| post off (no `UnrealBloomPass`) | 23.6 ms | 27.1 ms | 301 |
+| both off | **17.3 ms** | **18.5 ms** | 151 |
+
+So, per frame: the **water Reflector's second scene pass costs 6.3 ms (st1) / 8.6 ms (st6)** — it
+doubles the draw calls, 151 -> 301 — and **bloom costs 8.4 / 7.8 ms**, which is what a full-resolution
+multi-mip gaussian chain costs at 2560x1440. **The CPU submit is 1.0-4.1 ms and is never the
+bottleneck**, and `gl.finish` is 0.5-2.6 ms.
+
+**The earlier puzzle — "22 ms presented against 2.3 ms of GPU work" — is the vsync quantum, not a
+mystery.** With both features off the frame lands at 17.3 ms, which is one 16.7 ms vsync interval: the
+viewer is vsync-locked at ~58 fps and has headroom. Adding the Reflector and bloom pushes the frame
+just past one interval, so it misses a vsync and quantises to **two** (~30 ms, ~33 fps). Nothing is
+slow by 13 ms; the frame is over the line by a couple of milliseconds and pays a whole interval.
+
+**That means the 45 fps target is reachable by taking a few ms off either feature, not by optimising
+the draw path.** Two levers, both measured above and neither applied (each changes the look slightly,
+so they need the lead's call): run `UnrealBloomPass` at half resolution, or drop the Reflector's
+1024x1024 target / update it every other frame. Either alone should bring stations 1-3 and 5-6 back
+under the boundary; station 4 already sits at 45.0 fps.
+
+### Item 6, second attempt: cutting the Reflector's DRAW SET (`?reflset=full|orn|both`)
+
+Halving resolutions bought ~4 ms of the ~12 needed, because the Reflector's cost is the second scene
+TRAVERSAL and submit, not the fill. So the draw set was cut instead, by layer: excluded meshes go on
+layer 2, the main camera enables every layer, and each reflection camera (three clones it from the
+main one) is restricted to layer 0.
+
+* **`both` — excluding the backdrop as well — was MEASURED AND REJECTED.** The far backdrop IS inside
+  the reflected frustum at the hero, and removing it left the reflection reading sky:
+  lum **1.227x**, std 1.143x, sat **0.527x**, R-B **+23.2 → −17.6**. Nowhere near the 0.03x gate.
+* **`orn` (the default) passes.** 36 meshes excluded, 129 kept. Water reflection box against the
+  full set: lum 0.997x, std 1.008x, sat 0.992x, R-B 0.979x — **all four within 0.03x**.
+* **But it does not reach 45 fps**, and the reason is worth recording: the 436 ORN instances are
+  already batched into ~36 draw calls, so cutting them removes 35 of 314 draws (11 %) and about 2 ms.
+
+| station | full set | `reflset=orn` | target |
+|---|---|---|---|
+| 1 | 29.5 ms | **27.3 ms** | < 22.2 |
+| 2 | 30.0 ms | 29.4 ms | |
+| 3 | 31.1 ms | 32.1 ms | |
+| 4 | 22.2 ms | **22.0 ms** | met |
+| 5 | 29.6 ms | 29.8 ms | |
+| 6 | 32.2 ms | 32.7 ms | |
+
+**What remains.** From the attribution table above: water off alone is 25.7 ms at station 1, still over
+the target; water AND bloom off is 17.3 ms. **So 45 fps at 1440p with the Gate 4 look is not reachable
+without dropping both the planar Reflector and bloom** — it is a look-versus-framerate decision, not an
+optimisation. Stopped here per the lead.
+
+### The two quality presets (`?quality=look|fast`) — the delivery choice
+
+`look` is the DEFAULT and is the frozen Phase 5 look: planar Reflector at a full 1024 target, full-res
+bloom, `reflset=orn`. `fast` is the ONE non-default preset — half-res bloom + a 512 Reflector target +
+`reflset=orn`. It is a **query parameter only, no UI**. An explicit `?bloomres` / `?reflres` still wins
+over the preset, so the A/B switches keep working.
+
+Presented median at 2560x1440, the Gate 4 look otherwise identical:
+
+| station | `look` (default) | `fast` | saved |
+|---|---|---|---|
+| 1 lagoon hero | 27.3 ms (36.6 fps) | **24.6 ms (40.7 fps)** | 2.7 ms |
+| 2 NE 3/4 | 29.4 ms (34.0) | **26.9 ms (37.2)** | 2.5 ms |
+| 3 colonnade walk | 32.1 ms (31.2) | **26.0 ms (38.5)** | 6.1 ms |
+| 4 rotunda ceiling | 22.0 ms (45.5) | **20.3 ms (49.3)** | 1.7 ms |
+| 5 south lawn | 29.8 ms (33.6) | **26.2 ms (38.2)** | 3.6 ms |
+| 6 aerial | 32.7 ms (30.6) | **27.5 ms (36.4)** | 5.2 ms |
+
+**Neither preset reaches 45 fps at 1440p except at station 4** — see the attribution above; that needs
+the Reflector or bloom gone entirely, which is a look change and is not on offer.
+
+What `fast` costs, by cam01 box (`fast` / `look`): **30 of 32 metrics are within 0.03x**. The two that
+are not:
+
+| box | metric | look | fast | ratio | direction vs Cycles |
 |---|---|---|---|---|---|
-| 1 lagoon hero | 22.7 ms | 44.1 | 2.3 ms | 269 | 5.24 M |
-| 2 NE 3/4 | 22.2 ms | 45.0 | 2.1 ms | 259 | 5.06 M |
-| 3 colonnade walk | 24.3 ms | 41.2 | 2.1 ms | 279 | 5.44 M |
-| 4 rotunda ceiling | 16.6 ms | 60.2 | 0.6 ms | 113 | 2.20 M |
-| 5 south lawn | 24.9 ms | 40.2 | 2.1 ms | 252 | 4.86 M |
-| 6 aerial | 25.8 ms | 38.8 | 2.4 ms | 291 | 5.60 M |
+| water reflection | R-B | 22.70 | 21.63 | 0.953x | **worse** (0.66x → 0.63x of Cycles) |
+| sunlit attic | std | 24.97 | 25.85 | 1.035x | **better** (0.85x → 0.88x of Cycles) |
 
-Resident 1549-1678 MB (textures 1172, render targets 315-444, geometry 62); 272 textures, all
-`RGBA_ASTC_4x4`. **The frame is not GPU-bound**: the GPU does 0.6-2.4 ms of work (400-1600 fps) while
-the presented frame sits at 16.6-25.8 ms, so what is missing the 45 fps target is on the CPU or in
-headless Chrome's compositor, not in the renderer. That wants its own measurement before anything is
-optimised, and it is the open half of item 6.
+Whole-frame luma is unchanged within noise (128.74 vs 128.97, reference 139.98). So `fast` buys
+1.7-6.1 ms for one box moving 4.7 % the wrong way on a metric that is already 0.66x of the reference,
+and one moving 3.5 % the right way. **The user chooses at delivery; the default remains `look`.**
+
+### The open lead on QA-12b-1: the probe as the SPECULAR environment (`?probespec=1`, default OFF)
+
+The hypothesis is that Cycles' shaded stone receives a glossy reflection of the warm sunlit
+surroundings, which a sky-only glossy PMREM cannot give. Swapping the hero probe's glossy branch in as
+the specular `envMap` of the 77 baked materials:
+
+* **it works, directionally**: building pixels with G > R fall **21.7 % → 17.2 %** at cam02 and
+  19.4 % → 18.8 % at cam06; sampled pixels move warmer (cam02 (982,149) 143/147/125 → 139/142/116,
+  (1310,766) 66/66/50 → 62/61/42);
+* **but the cam01 boxes move far past 0.03x**: jamb sat **1.462x**, shaded attic sat 1.299x, jamb R-B
+  1.295x, shaded attic R-B 1.225x, columns sat 1.210x, jamb lum 0.816x;
+* **and the direction is mixed**: shaded attic R-B goes 0.84x → 1.03x of Cycles (better), jamb R-B
+  1.05x → 1.36x (worse). It overshoots where it was already close.
+
+Not shipped. The switch stays, and this is the standing lead on the olive cast.
+
+## QA notes — read before scoring (Gate 4 / QA 15)
+
+### Round 7 additions (QA 15)
+* **The water changed twice.** The murk is derived (see "The upwelling term, derived") and the ripple is
+  procedural in metres (see the round-7 bullets). `?watermurk=0.020,0.035,0.030` is the round-14 murk;
+  there is no flag back to the round-6 texture ripple — it was an 8-bit map and its banding was a
+  scored defect, so it was deleted rather than kept as a switch. Commit `58fa59e` is the last frame
+  with it.
+* **Bloom ships at 2x the manifest threshold** (`BLOOM_THRESHOLD_SCALE`, postChain.js), because
+  UnrealBloomPass thresholds Rec.709 luminance and Blender's Glare node does not.
+  `?bloomthr=6.4136` restores the manifest value; `?bloomrad=` exists but is not the lever.
+* **The loading bar's denominator folds in off-plan bytes**, so it can lag but never exceed 100 %;
+  `bytes.offPlan` in the capture sidecar names every url the manifest plan did not list.
+* **The walk shore margin is 0.15 m** (`SHORE_MARGIN_M`, walk.js), up from 0.05, because three of the
+  24 round-14 probes stood at -1.225 m — 25 mm below the WATER_Z + 0.1 acceptance line.
+* **`requestfailed:` fails a scored capture**, except `net::ERR_ABORTED`, which is a cancelled request
+  and which a clean capture logs 189 of.
+
+### Round 15 against round 14 (`renders/web/round15_*`)
+Frame luma against each station's Cycles reference, from the pair sheets:
+
+| station | reference | round14 | round15 | round14 MAE | round15 MAE |
+|---|---|---|---|---|---|
+| 01 lagoon hero | 140.0 | 129.0 (0.878x) | **133.2 (0.897x)** | 29.68 | **26.58** |
+| 02 NE three-quarter | 100.4 | 101.2 (0.994x) | 107.7 (1.030x) | 23.72 | **23.27** |
+| 03 colonnade walk | 49.0 | 81.8 (1.846x) | 80.9 (1.804x) | 34.74 | **34.41** |
+| 04 rotunda ceiling | 63.5 | 70.7 (1.119x) | 70.6 (1.118x) | 13.13 | 13.12 |
+| 05 south lawn | 151.2 | 156.8 (1.046x) | **152.8 (1.001x)** | 25.36 | **22.52** |
+| 06 aerial | 100.9 | 77.8 (0.750x) | **101.0 (0.993x)** | 40.48 | **21.03** |
+
+Every station's MAE falls or holds. Two changes drive it: the derived murk (cam06, cam01, cam05) and
+the per-placement shrub/reed irradiance (cam02, cam03).
+
+### Item 1c — the 1 379 shrub/reed placements
+The 28 card meshes had neither a lightmap nor `COLOR_0` and were lit by the hero probe alone. They now
+take one baked scene-linear rgb per PLACEMENT from `lightmaps.instance_irradiance`, uploaded as an
+`InstancedBufferAttribute` (`pfaInstIrr`) with a companion `pfaInstOn`; where the bake measured nothing
+(`cov == 0`, 7 fully enclosed cards) `pfaInstOn` is 0 and the shader keeps the probe, which is why
+`probeEnv` now lets a material past its `pfaPatched` skip when it carries `pfaWantsProbeEnv`.
+
+**The binding is per glTF NODE, with a running cursor over `segments`, and confined to `env.glb`.** The
+node index is an index into one file's `nodes` array, and the first run searched every glb — orn.glb
+has instanced nodes 1..n too, so it "found" 28 nodes for a 25-node block and every row count
+disagreed. Confined to `WEB_glb_env` it binds **1 379/1 379 placements over 25/25 nodes**, 7 on the
+probe, exactly the manifest's own numbers. Any node whose row count differs from its segments' sum
+throws and the viewer refuses to boot: a misaligned array lights each shrub with its neighbour's
+irradiance and no metric would catch it.
+
+Measured at cam02, near-trees box `60 520 700 980`:
+
+| | rgb | lum | hue | sat | G > R |
+|---|---|---|---|---|---|
+| round 14 | 85.3 84.9 78.3 | 84.5 | 56.6 | 0.082 | 37.4 % |
+| round 15 before 1c | 100.1 113.7 116.8 | 111.1 | 191.1 | 0.143 | 79.4 % |
+| round 15 with 1c | 105.3 105.0 97.2 | 104.5 | 57.7 | 0.077 | 37.4 % |
+| Cycles reference | 100.9 108.4 97.7 | 106.0 | 102.4 | 0.098 | 70.9 % |
+
+Level lands (104.5 against 106.0, 0.99x) and the cyan is gone. The residual is HUE: 57.7° against
+102.4°, and G > R holds at 37 % where the reference is 71 %. That is the cards' own albedo and the
+near trees' `COLOR_0` warmth, not the irradiance — the baked irradiance is near-neutral golden-hour
+light, and no per-placement value can turn a warm albedo green. Reported to bake/export.
+`?instirr=0` is the A/B.
+
+cam06 is the derived murk: its whole lower frame is lagoon, which round 14 rendered as a near-black
+body. cam01 and cam05 improve on both axes; cam03 and cam04 are untouched by anything in round 7
+(their residual is the probe fill, see below); cam02 gains 1.1 of MAE because its near water is now
+brighter than the reference's there.
+
+Frame time at 2560x1440: **28.60 ms median** (35.0 fps presented, vsync-capped), render cost 2.00 ms,
+301 draws, resident 1 677.8 MB — within noise of round 14's 28.9 ms. The bloom threshold is not a
+frame-time lever and neither is its radius; `?bloomres=half` is (the `fast` preset).
+
+### QA-14-2 (cam03) and QA-14-3 (cam06) attributed — round 7 item 3
+Measured on the round-14 captures against the round-13 Cycles references, WITH and WITHOUT the post
+chain, so mist is separated from lighting before anything is blamed on it:
+
+| box | reference | viewer | viewer, post OFF |
+|---|---|---|---|
+| cam03 near 10-25 m | 62.3, p10 17.0 | 92.1 (1.48x), p10 52.5 | 91.9, p10 52.2 |
+| cam03 far 120 m+ | 85.6, p10 31.6 | 101.5 (1.19x), p10 47.5 | 92.1, p10 32.3 |
+| cam06 near 60 m | 82.6, p10 58.0 | 43.4 (0.52x), p10 3.6 | 26.7, p10 1.7 |
+| cam06 shoreline | 97.0, p10 61.5 | 52.2 (0.54x), p10 4.9 | 38.5, p10 2.7 |
+| cam06 far 400 m+ | 108.5, sat 0.246 | 91.7 (0.85x), sat 0.617 | 47.6, sat 0.768 |
+
+1. **cam03's 1.48x is NOT the mist.** Post moves the near box by 0.2 luma and its p10 by 0.3. The
+   frame has no deep shade because the surfaces there have no baked light and take the hero probe's
+   irradiance instead, and a single-point probe carries no occlusion — so the deepest recess at cam03
+   floors at 52 where Cycles reaches 17. Viewer-owned only in the choice (the QA-13-1 call);
+   the fix is baked light on those surfaces, i.e. **bake/export**, and `?probe=0` is the A/B.
+2. **cam06's near half is black BEFORE post** (26.7, p10 1.7), so no compositor change can reach it.
+   Most of that lower frame is the lagoon, which round 6 rendered as a near-black body — the derived
+   murk raises exactly this surface, so QA 15 should re-measure it before anything else is done.
+3. **cam06's far terrain is over-saturated before post too** (0.768 against the reference's 0.246);
+   the mist pulls it to 0.617, i.e. the airlight is already working in the right direction and is not
+   the cause. The backdrop terrain's own colour is — **bake/export**.
+
+### Carried from Gate 4 / QA 14
+
+* **The parity references changed.** `gate1_sheets.py` now points stations **2-6** at
+  `renders/previews/qa/round13_0{2,3,4,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
+  master.blend). They had been scored for several rounds against round-09 frames — **Eevee** at 3 and
+  5, a **no-compositor** Cycles frame at 6, and a **pre-shade-fill-off** Cycles frame at 2 — all of
+  which predate the Phase 5 lighting the lightmaps were baked from. Station 1 keeps its round-10b
+  hero, which is already a Phase 5 Cycles frame.
+* **What that does to the round13b numbers**, whole-frame luma ratio, viewer / reference:
+
+  | station | vs the OLD reference | vs the round-13 Cycles reference |
+  |---|---|---|
+  | cam02 NE three-quarter | 1.09x | **1.10x** |
+  | cam03 colonnade walk | 2.08x | **1.67x** |
+  | cam04 rotunda ceiling | 1.05x | **0.95x** |
+  | cam05 south lawn | 1.12x | **1.08x** |
+  | cam06 aerial | 0.95x | **0.71x** |
+
+  cam03's "2.5x failure" was largely the wrong reference. **cam06 at 0.71x is a real deficit that the
+  old no-compositor reference was hiding — it is not a regression, and QA 14 should not re-discover it
+  as new.** cam04 crossed from bright to slightly dark and its lightmap is being re-baked, so its
+  number will move again. These are all `round13b`, i.e. **post off, no probe, no impostors**: with the
+  Gate 4 look on, cam02 measures **1.01x** against its round-13 reference.
+* **The hero probe is used against the manifest's own stated contract.** `manifest.probe.use` says it
+  is "NOT the diffuse environment", and the viewer nevertheless convolves it and gives it to every
+  surface with no baked light. **The lead overrode `probe.use` deliberately** (logged in
+  `docs/decisions.md`) after the alternative — putting those surfaces on the direct sun+sky path — was
+  measured to be a no-op: the backdrop wall at cam01 has NdotL = -0.065 against the sun, so no
+  weighting of sun and sky can reach it, and `?lighting=direct` renders that pixel bit-identically.
+  See "Far trees" and `src/probeEnv.js` for the three caveats that come with it.
+* **Foliage hue is a HELD decision, not an oversight.** The shrubs and reeds now read warm amber-brown
+  (median hue 40.6 deg) where Cycles has olive-green. The bake side is testing whether Cycles bake rays
+  miss the sky's warm diffuse-branch tint; that result decides whether every baked irradiance shifts or
+  whether the shrubs get vertex irradiance like the 14 near trees. Do not score it as a viewer defect
+  until that lands.
+
+* **Round 14's probe numbers were measured on a BLACK cube and are void.** `probeEnv.js` passed
+  `t.image` into `new THREE.CubeTexture`, so all six faces took three's DOM-source branch,
+  `texSubImage2D` threw, and `WebGLState` swallowed it: the PMREM was black, and a black `envMap`
+  **overrides** `scene.environment`, so the 15 materials LOST their sky irradiance instead of gaining
+  the warm bounce. That — not a warm bounce — is what turned the foliage blue → amber-brown and the
+  band 15.5 % → 0.2 %. Fixed (`new THREE.CubeTexture( texs )`), with a CPU face check and a PMREM
+  read-back that refuse the pass if it is ever black again, and `screenshot.mjs` now fails a capture
+  on any page error. **Re-measured numbers supersede every probe figure in QA 14.**
+
+* **Re-measured with the working cube** (probe ON vs OFF, `post=all`, 1920x1080):
+
+  | measurement | probe OFF | probe ON | reference |
+  |---|---|---|---|
+  | cam01 band B > R+20 | 15.51 % | **0.29 %** | 0.05 % |
+  | cam01 band mean RGB | 105/92/68 | **103/86/41** | 80/64/24 |
+  | cam02 building G > R | 32.2 % | **41.7 %** | 26.9 % |
+  | cam06 building G > R | 21.4 % | 19.9 % | 12.6 % |
+  | cam02 foliage median hue | 220.9 | **180.0** | 102.4 |
+  | cam01 whole-frame luma | 131.50 (0.94x) | 130.38 (0.93x) | 139.98 |
+
+  **QA-13-1 is STILL CLOSED** — 0.29 % against a 3.9 % gate, and the band's mean RGB moves toward the
+  reference, so that conclusion survives the bug. Two others do NOT: the foliage goes blue → **cyan**
+  (180), not amber-brown, so the amber was purely the deleted sky; and the probe now makes cam02's
+  olive **worse** (32.2 → 41.7 %), so "the probe half-closed QA-12b-1" is void — it is the opposite.
+  Outside the water-reflection box every cam01 box moves < 0.01x, so the probe stays well contained.
+* **`?probespec=1` re-measured**: cam02 G > R 41.7 → 38.9 %, cam06 19.9 → 19.6 % — a real but small
+  gain, and only **15 of 32** cam01 box metrics stay within 0.03x (jamb sat 1.164x, shaded attic sat
+  1.153x, jamb lum 0.894x). Still not shipped; still the standing lead.
 
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
@@ -386,7 +750,17 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`,
 `?uvdq=0` (leave gltfpack's texcoord quantisation in place — the Gate 4 step-0 A/B),
 `?vertexirr=auto|1|0`, `?post=all|none|mist,bloom,vignette`, `?mist=near,far`,
-`?waterblur=`, `?watersat=`.
+`?waterblur=`, `?watersat=`, `?waterdist=`, `?waternorm=`, `?watertile=`, `?wateraniso=`,
+`?watercrest=` (the directional fan's half-angle in DEGREES since round 7, was a cosine power),
+`?waterslope=` (the surface's rms slope in radians, default `RIPPLE.slopeRms` 0.0131),
+`?watergraze=` (0 = the shipped derived displacement; > 0 reinstates the round-6 grazing multiplier),
+`?instirr=auto|0` (the per-placement shrub/reed irradiance),
+`?bloomthr=` (scene-linear; the default is the manifest value x `BLOOM_THRESHOLD_SCALE` 2.0),
+`?bloomrad=` (UnrealBloomPass radius; measured NOT to be a lever, kept for the A/B),
+`?watergrazemax=` (the FIX-NOW 1 cap, default 6), `?watermurk=r,g,b` (overrides the derived
+upwelling term; `0.020,0.035,0.030` is the round-14 value), `?watermurkgain=k` (scales the derived
+one), `?waterdebug=1..6` (1 Fresnel F, 2 projected uv, 3 perturbed normal, 4 unperturbed reflection,
+5 the murk alone, 6 the gathered reflection alone).
 
 ## Screenshots and the gate passes (never launch Chrome any other way)
     web/tools/gate2.sh [manifest_url]     # Gate 2: same, default /assets/gate2/manifest.json
