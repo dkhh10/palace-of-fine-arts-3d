@@ -392,6 +392,39 @@ the target; water AND bloom off is 17.3 ms. **So 45 fps at 1440p with the Gate 4
 without dropping both the planar Reflector and bloom** — it is a look-versus-framerate decision, not an
 optimisation. Stopped here per the lead.
 
+### The two quality presets (`?quality=look|fast`) — the delivery choice
+
+`look` is the DEFAULT and is the frozen Phase 5 look: planar Reflector at a full 1024 target, full-res
+bloom, `reflset=orn`. `fast` is the ONE non-default preset — half-res bloom + a 512 Reflector target +
+`reflset=orn`. It is a **query parameter only, no UI**. An explicit `?bloomres` / `?reflres` still wins
+over the preset, so the A/B switches keep working.
+
+Presented median at 2560x1440, the Gate 4 look otherwise identical:
+
+| station | `look` (default) | `fast` | saved |
+|---|---|---|---|
+| 1 lagoon hero | 27.3 ms (36.6 fps) | **24.6 ms (40.7 fps)** | 2.7 ms |
+| 2 NE 3/4 | 29.4 ms (34.0) | **26.9 ms (37.2)** | 2.5 ms |
+| 3 colonnade walk | 32.1 ms (31.2) | **26.0 ms (38.5)** | 6.1 ms |
+| 4 rotunda ceiling | 22.0 ms (45.5) | **20.3 ms (49.3)** | 1.7 ms |
+| 5 south lawn | 29.8 ms (33.6) | **26.2 ms (38.2)** | 3.6 ms |
+| 6 aerial | 32.7 ms (30.6) | **27.5 ms (36.4)** | 5.2 ms |
+
+**Neither preset reaches 45 fps at 1440p except at station 4** — see the attribution above; that needs
+the Reflector or bloom gone entirely, which is a look change and is not on offer.
+
+What `fast` costs, by cam01 box (`fast` / `look`): **30 of 32 metrics are within 0.03x**. The two that
+are not:
+
+| box | metric | look | fast | ratio | direction vs Cycles |
+|---|---|---|---|---|---|
+| water reflection | R-B | 22.70 | 21.63 | 0.953x | **worse** (0.66x → 0.63x of Cycles) |
+| sunlit attic | std | 24.97 | 25.85 | 1.035x | **better** (0.85x → 0.88x of Cycles) |
+
+Whole-frame luma is unchanged within noise (128.74 vs 128.97, reference 139.98). So `fast` buys
+1.7-6.1 ms for one box moving 4.7 % the wrong way on a metric that is already 0.66x of the reference,
+and one moving 3.5 % the right way. **The user chooses at delivery; the default remains `look`.**
+
 ### The open lead on QA-12b-1: the probe as the SPECULAR environment (`?probespec=1`, default OFF)
 
 The hypothesis is that Cycles' shaded stone receives a glossy reflection of the warm sunlit

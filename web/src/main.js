@@ -42,11 +42,13 @@ const CFG = {
 	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
-	// Item 6: both levers were built and measured and BOTH DEFAULT TO FULL.  Half res buys only ~4 ms
-	// of the ~12 ms needed for 45 fps (the Reflector still submits all 314 draws; only its fill
-	// shrinks), and each breaks one cam01 acceptance box past 0.03x.  See web/README.md.
-	bloomRes: ( qs.get( 'bloomres' ) || 'full' ).toLowerCase(),   // full | half
-	reflRes: ( qs.get( 'reflres' ) || 'full' ).toLowerCase(),     // full | half
+	// ?quality: `look` (the default) is the frozen Phase 5 look - planar Reflector at full resolution,
+	// full-res bloom.  `fast` is the ONE non-default preset: half-res bloom + a half-res Reflector
+	// target + the reduced reflection draw set.  It is a QUERY PARAMETER ONLY, no UI.  An explicit
+	// ?bloomres / ?reflres still wins over the preset, so the A/B switches keep working.
+	quality: ( qs.get( 'quality' ) || 'look' ).toLowerCase(),
+	bloomRes: ( qs.get( 'bloomres' ) || ( qs.get( 'quality' ) === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
+	reflRes: ( qs.get( 'reflres' ) || ( qs.get( 'quality' ) === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
 	reflSet: ( qs.get( 'reflset' ) || 'orn' ).toLowerCase(),      // full | orn | both (item 6: cut the draw set)
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
@@ -400,6 +402,7 @@ async function boot() {
 	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
 	if ( comp && postState.want.vignette ) { lutPass.uniforms.vignette.value = comp.vignette; postState.vignette = comp.vignette;
 		note( `post vignette: ${comp.vignette} in linear, before the transform` ); }
+	note( `quality preset '${CFG.quality}': bloom ${CFG.bloomRes}-res, Reflector ${CFG.reflRes}-res target, reflection set ${CFG.reflSet}` );
 	note( `post chain: ${[ postState.mistSpec && 'mist', postState.bloom && 'bloom', postState.vignette && 'vignette' ].filter( Boolean ).join( ' + ' ) || 'none'} (?post=${postState.requested})` );
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
@@ -1056,6 +1059,7 @@ window.__pfaInfo = () => ( {
 	post: postState,
 	probeEnv: probeReport,
 	reflectionSet,
+	quality: { preset: CFG.quality, bloomRes: CFG.bloomRes, reflRes: CFG.reflRes, reflSet: CFG.reflSet },
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
 		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
 		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },
