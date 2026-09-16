@@ -148,6 +148,18 @@ def main(out_dir, g3_dir, g3_out=None):
         if rec and abs(cov - (rec.get("coverage_gate3") or 0)) > 0.02:
             fail.append(f"{mn}: the glTF's TEXCOORD_1 packs {cov:.5f}, the blend's UV2 {rec.get('coverage_gate3')}")
 
+    # every OTHER mesh that carries UV2: the nine Gate 1-layout lightmaps ride on the same TEXCOORD_1 that
+    # gltfpack was stripping, so `lightmaps.assets[*].uv2_in_glb: true` was not true for them either. The
+    # manifest writer needs the whole list, not only the seven the Gate 3 bake re-laid.
+    all_uv2 = {}
+    for cls, g in files.items():
+        for mn, me in g.meshes().items():
+            if not any("TEXCOORD_1" in (pr.get("attributes") or {}) for pr in me["primitives"]):
+                continue
+            all_uv2[mn] = dict(glb=f"{cls}.glb", asset=asset_of.get(mn),
+                               uv2_in_glb="TEXCOORD_1" in packed_attr.get(cls, set()),
+                               uv2_source="gate3_relaid" if mn in uv2 else "gate1")
+
     # ---------------------------------------------------------------- 2. the 14 near-tree COLOR_0 attributes
     vi = {}
     z3 = np.load(str(g3 / "vertex_irradiance.npz"))
@@ -218,7 +230,8 @@ def main(out_dir, g3_dir, g3_out=None):
              "lightmaps.vertex_irradiance.in_glb from this file. COLOR_0 is the gamma-2 CODE / 255: "
              "irradiance = COLOR_0^2 * 64 * lightmap_scale. Standard glTF multiplies COLOR_0 into base "
              "colour, so the viewer must consume these 14 meshes' COLOR_0 as irradiance, not as a tint.",
-        uv2=uv2, vertex_irradiance=vi, vertex_irradiance_skipped=vi_skip, npz_dtypes=vi_dtypes,
+        uv2=uv2, uv2_all_meshes=all_uv2,
+        vertex_irradiance=vi, vertex_irradiance_skipped=vi_skip, npz_dtypes=vi_dtypes,
         glb_bytes={cls: (out / f"{cls}.glb").stat().st_size for cls in CLASSES if (out / f"{cls}.glb").exists()},
         packed_attributes={cls: sorted(v) for cls, v in packed_attr.items()},
         gltfpack_flags=(out / "gltfpack_flags.txt").read_text().strip().split("\n")
