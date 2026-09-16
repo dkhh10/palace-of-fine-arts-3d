@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { dequantizeUvs } from './uvDequant.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { LUTCubeLoader } from 'three/addons/loaders/LUTCubeLoader.js';
@@ -20,15 +21,19 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 
 import { makeStationCamera, stationMatrix, b2t, matrixMaxDiff } from './blenderCamera.js';
-import { normaliseManifest, WATER_Z } from './manifest.js';
+import { normaliseManifest, applyUv2RelayStatus, WATER_Z } from './manifest.js';
 import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
+import { makeWalk } from './walk.js';
+import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_M, MIST_FAR_M } from './postChain.js';
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
+import { buildImpostors } from './impostors.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
+import { applyGate3Lightmaps } from './lightmaps.js';
 
 const qs = new URLSearchParams( location.search );
 const CFG = {
@@ -36,6 +41,8 @@ const CFG = {
 	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
+	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
+	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
 	testLut: qs.get( 'testlut' ),                       // 'identity' | 'gamma22'
 	exposureOverride: qs.has( 'exposure' ) ? parseFloat( qs.get( 'exposure' ) ) : null,
@@ -50,6 +57,9 @@ const CFG = {
 	glbOverride: qs.get( 'glb' ),                       // comma-separated URLs, overrides the manifest's list
 	lighting: qs.get( 'lighting' ) || 'auto',           // auto | baked | direct  (see pickLightingMode)
 	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
+	impostors: qs.get( 'impostors' ) !== '0',           // Gate 3 octahedral far-tree impostors
+	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
+	impDebug: parseInt( qs.get( 'impdebug' ) || '0', 10 ),   // 1 raw, 2 alpha, 3 frame cell, 4 quad uv
 	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
@@ -62,6 +72,12 @@ const CFG = {
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
 	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
+	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
+	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
+	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
+	vertexIrr: qs.get( 'vertexirr' ) || 'auto',         // near-tree COLOR_0 irradiance: auto | 1 | 0
+	post: qs.get( 'post' ),                             // all | none | mist,bloom,vignette (default none)
+	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
 };
 
 function glInfo() {
@@ -171,7 +187,10 @@ async function fetchBuffer( url ) {
 }
 
 // ---------------------------------------------------------------------------- main
-let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null;
+let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
+let impostorGroup = null, impostorReport = null;
+let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
+let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
@@ -179,6 +198,7 @@ let userControlled = false, currentStation = null;
 let lightingMode = 'baked';
 const loadTimes = { plan_s: 0, sky_s: 0, lut_s: 0, glb_s: 0, tex_s: 0, total_s: 0 };
 const glbReport = [];
+const uvDequantReport = [];
 const glbRoots = [];
 let chunkStats = null;
 let materialsMode = 'grey', pbrReport = null, detailReport = null;
@@ -192,6 +212,9 @@ let materialsMode = 'grey', pbrReport = null, detailReport = null;
 function pickLightingMode() {
 	if ( CFG.lighting === 'baked' || CFG.lighting === 'direct' ) return CFG.lighting;
 	const tex = manifest.raw.textures || {};
+	// v4 states it: lightmaps.mode === 'baked' with at least one usable map.
+	if ( manifest.gate3 && manifest.gate3.mode === 'baked'
+		&& ( manifest.gate3.ownCount || manifest.gate3.slotCount ) ) return 'baked';
 	const baked = manifest.lightmaps.length > 0
 		|| Object.keys( tex ).some( k => k.toLowerCase().includes( 'lightmap' ) )
 		|| !! ( manifest.raw.gltf && manifest.raw.gltf.lightmap_slot );
@@ -254,6 +277,23 @@ async function boot() {
 			} catch ( e ) { note( `colour fallback ${src} failed: ${e.message}` ); }
 		}
 	}
+	// `uv2_in_glb` moves faster in the glbs than in the manifest: export/gate3_relay_check.py writes
+	// what each re-packed glb ACTUALLY carries, and that file wins until the bake rewrites the flags.
+	if ( manifest.gate3 ) {
+		const url = new URL( 'uv2_relay_status.json', manifestUrl ).href;
+		try {
+			const r = await fetch( url, { cache: 'no-cache' } );
+			if ( r.ok ) {
+				const st = applyUv2RelayStatus( manifest, await r.json() );
+				note( `uv2_relay_status.json: ${st.applied} asset(s) checked against the packed glbs, `
+					+ `${st.flipped.length} flag(s) flipped${st.flipped.length ? ` (${st.flipped.join( '; ' )})` : ''}; `
+					+ `${manifest.gate3.ownCount} own map(s) usable, ${manifest.gate3.blockedNoUv2} blocked, `
+					+ `${manifest.gate3.frozenUsed} on the frozen layout`
+					+ ( st.note ? `; vertex irradiance: ${st.note}` : '' ) );
+			} else note( `no uv2_relay_status.json (${r.status}): the manifest's own uv2_in_glb flags stand` );
+		} catch ( e ) { note( `uv2_relay_status.json fetch failed (${e.message}): the manifest's own flags stand` ); }
+	}
+
 	lightingMode = pickLightingMode();
 	note( `lighting mode: ${lightingMode}${CFG.lighting !== 'auto' ? ' (?lighting override)' : ''} — `
 		+ ( lightingMode === 'baked' ? 'lightmaps carry the diffuse, sun and env are specular-only'
@@ -271,6 +311,7 @@ async function boot() {
 	const plan = [];
 	if ( manifest.sky.camera ) plan.push( { url: manifest.sky.camera, kind: 'sky.camera', bytes: manifest.raw.sky?.camera?.bytes_hdr || 0 } );
 	if ( manifest.sky.glossy ) plan.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
+	if ( manifest.sky.diffuse ) plan.push( { url: manifest.sky.diffuse, kind: 'sky.diffuse', bytes: manifest.raw.sky?.diffuse?.bytes_hdr || 0 } );
 	if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) plan.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
 	if ( ! CFG.testScene ) for ( const g of manifest.glbs ) plan.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
 	// The PBR set is part of the payload, so it is in the byte plan from the first frame of the bar.
@@ -294,9 +335,13 @@ async function boot() {
 
 	// water -------------------------------------------------------------------------------------
 	if ( CFG.water ) {
-		water = makeWater( manifest.waterZ, { resolution: 1024 } );
+		water = makeWater( manifest.waterZ, { resolution: 1024,
+			...( CFG.waterBlur !== null ? { reflBlur: CFG.waterBlur } : {} ),
+			...( CFG.waterSat !== null ? { reflSat: CFG.waterSat } : {} ) } );
 		scene.add( water );
-		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector 1024x1024` );
+		const wu = water.material.uniforms;
+		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector 1024x1024, `
+			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}` );
 	}
 
 	// display transform ---------------------------------------------------------------------------
@@ -305,6 +350,35 @@ async function boot() {
 		type: THREE.HalfFloatType, colorSpace: THREE.NoColorSpace, samples: 4,
 	} ) );
 	composer.addPass( new RenderPass( scene, camera ) );
+	// Gate 4 item 4: the Phase 5 compositor, in scene-linear BEFORE the LUT, each part switchable.
+	// Default OFF so every capture so far stays comparable; ?post=all turns the chain on.
+	// `want` is what ?post asked for; the sibling fields are what actually ended up in the chain.
+	postState = { requested: CFG.post ?? 'none', want: parsePost( CFG.post ?? 'none' ), mistSpec: null, bloom: false, vignette: 0 };
+	const comp = readCompositor( manifest.compositor || ( manifest.raw && manifest.raw.compositor ) );
+	postState.compositor = comp;
+	if ( comp ) {
+		if ( postState.want.mist ) {
+			const mm = String( CFG.mist || '' ).split( ',' ).map( x => ( x.trim() === '' ? NaN : Number( x ) ) );
+			const spec = applyMist( scene, comp, {
+				near: isFinite( mm[ 0 ] ) ? mm[ 0 ] : null,
+				far: isFinite( mm[ 1 ] ) ? mm[ 1 ] : null,
+			} );
+			if ( spec && spec.refused ) { postState.mistRefused = spec.refused; note( `post mist REFUSED: ${spec.refused}` ); }
+			else if ( spec ) {
+				postState.mistSpec = spec;
+				note( `post mist: COMP_golden_hour airlight cap ${spec.cap} * (1 - exp(-k ${spec.k} * mist)), `
+					+ `mist = ${spec.shape} over ${spec.near}..${spec.far} m along the view ray (extinction length `
+					+ `${spec.extinctionLength_m.toFixed( 0 )} m), haze [${comp.hazeColor.map( v => v.toFixed( 2 ) ).join( ', ' )}], `
+					+ `from ${spec.source}`
+					+ ( spec.invented ? '. THESE ARE NOT BLENDER\'S NUMBERS - no scored capture may use them.' : '' ) );
+			}
+		} else removeMist( scene );
+		if ( postState.want.bloom ) {
+			const bp = makeBloom( comp, size );
+			if ( bp ) { composer.addPass( bp ); postState.bloom = true;
+				note( `post bloom: threshold ${comp.bloomThreshold.toFixed( 3 )} (scene-linear), strength ${comp.bloomStrength}, radius ${comp.bloomSize}` ); }
+		}
+	}
 	lutPass = new LUTDisplayPass( { exposure: manifest.exposure } );
 	lutPass.renderToScreen = true;
 	composer.addPass( lutPass );
@@ -312,6 +386,9 @@ async function boot() {
 	await loadLUT();
 	loadTimes.lut_s = ( performance.now() - tl ) / 1000;
 	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
+	if ( comp && postState.want.vignette ) { lutPass.uniforms.vignette.value = comp.vignette; postState.vignette = comp.vignette;
+		note( `post vignette: ${comp.vignette} in linear, before the transform` ); }
+	note( `post chain: ${[ postState.mistSpec && 'mist', postState.bloom && 'bloom', postState.vignette && 'vignette' ].filter( Boolean ).join( ' + ' ) || 'none'} (?post=${postState.requested})` );
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
 	if ( ! CFG.hud ) document.getElementById( 'hud' ).classList.add( 'hidden' );
@@ -386,8 +463,36 @@ async function boot() {
 			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
 	}
 
+	// far-tree impostors (Gate 4 item 2) ----------------------------------------------------------
+	// They REPLACE the Gate 1 placeholder quads: when they build, the placeholders are not made at all,
+	// so a capture can never show a grey card where a tree should be and the name sweep stays clean.
+	const impAvailable = CFG.impostors && manifest.gate3 && manifest.gate3.impostors
+		&& manifest.gate3.impostors.count && manifest.treesFar.length;
+	if ( impAvailable ) {
+		const built = buildImpostors( {
+			impostors: manifest.gate3.impostors, far: manifest.treesFar, note,
+			normalDepth: CFG.impNormalDepth, debug: CFG.impDebug,
+			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
+			// automatic fog) - so the far trees recede with everything else when ?post has mist on
+			fog: ( scene.fog && postState && postState.mistSpec ) ? {
+				color: scene.fog.color, near: scene.fog.near, far: scene.fog.far,
+				cap: postState.mistSpec.cap, k: postState.mistSpec.k, intensity: postState.mistSpec.intensity,
+			} : null,
+			loadTexture: ( url ) => {
+				progress.label = url.split( '/' ).pop();
+				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
+					: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+			},
+		} );
+		impostorReport = built.report;
+		if ( built.group ) { scene.add( built.group ); impostorGroup = built.group; }
+		await built.report.promise;
+	} else if ( manifest.treesFar.length && ! CFG.impostors ) {
+		note( 'far-tree impostors suppressed (?impostors=0)' );
+	}
+
 	// far-tree billboards (Gate 1 stand-in for the Gate 3 impostors) ------------------------------
-	if ( CFG.billboards && manifest.treesFar.length ) {
+	if ( ! impAvailable && CFG.billboards && manifest.treesFar.length ) {
 		billboards = makeTreeBillboards( manifest.treesFar );
 		// G1-5: under `baked` lighting every other material is specular-only, so an unpatched
 		// placeholder quad would take the full 67.3 W/m2 sun diffuse and read as a white card.
@@ -399,7 +504,7 @@ async function boot() {
 		scene.add( billboards );
 		aimBillboards( billboards, camera );
 		note( `${manifest.treesFar.length} far-tree placeholder quads in ${billboards.children.length} prototype group(s), tagged pfaPlaceholder=gate3_tree_impostor` );
-	} else if ( manifest.treesFar.length ) {
+	} else if ( manifest.treesFar.length && ! impAvailable ) {
 		note( `${manifest.treesFar.length} far-tree quads suppressed (?billboards=0)` );
 	}
 
@@ -423,6 +528,15 @@ async function loadSky() {
 		return L.loadAsync( url, onProgressFor( url ) );
 	};
 	const rotY = THREE.MathUtils.degToRad( manifest.sky.rotationDeg );
+	envRotation = new THREE.Euler( 0, rotY, 0 );
+	const pmremOf = async ( url ) => {
+		const tex = await load( url );
+		const pmrem = new THREE.PMREMGenerator( renderer );
+		pmrem.compileEquirectangularShader();
+		const rt = pmrem.fromEquirectangular( tex );
+		tex.dispose(); pmrem.dispose();
+		return rt;
+	};
 	try {
 		if ( manifest.sky.camera ) {
 			const tex = await load( manifest.sky.camera );
@@ -432,16 +546,48 @@ async function loadSky() {
 			note( `sky background ${manifest.sky.camera.split( '/' ).pop()} ${tex.image.width}x${tex.image.height}, rotation ${manifest.sky.rotationDeg} deg` );
 		} else { scene.background = new THREE.Color( 0.09, 0.13, 0.22 ); note( 'no camera sky: flat background' ); }
 		if ( manifest.sky.glossy ) {
-			const tex = await load( manifest.sky.glossy );
-			const pmrem = new THREE.PMREMGenerator( renderer );
-			pmrem.compileEquirectangularShader();
-			pmremTarget = pmrem.fromEquirectangular( tex );
-			scene.environment = pmremTarget.texture;
-			scene.environmentRotation = new THREE.Euler( 0, rotY, 0 );
-			tex.dispose(); pmrem.dispose();
-			note( `PMREM environment from ${manifest.sky.glossy.split( '/' ).pop()} (specular only)` );
+			pmremTarget = await pmremOf( manifest.sky.glossy );
+			glossyEnv = pmremTarget.texture;
+			note( `PMREM specular environment from ${manifest.sky.glossy.split( '/' ).pop()}` );
+		}
+		// QA-12b-1: the world's DIFFUSE branch is a different colour from its glossy branch, and using
+		// the glossy PMREM as the diffuse environment made 16-22 % of the cam02/cam06 building pixels
+		// read olive-green.  v4 ships the diffuse branch as its own equirect, so:
+		//   scene.environment      = the DIFFUSE PMREM  -> the irradiance of everything with no lightmap
+		//                            (near trees, impostors, foliage, shrubs)
+		//   material.envMap        = the GLOSSY PMREM on every lightmapped material, whose env DIFFUSE
+		//                            term is deleted in the shader anyway, so it is specular-only
+		if ( manifest.sky.diffuse ) {
+			diffusePmremTarget = await pmremOf( manifest.sky.diffuse );
+			scene.environment = diffusePmremTarget.texture;
+			scene.environmentRotation = envRotation;
+			note( `PMREM diffuse environment from ${manifest.sky.diffuse.split( '/' ).pop()} (irradiance for everything without a lightmap; QA-12b-1)` );
+		} else if ( glossyEnv ) {
+			scene.environment = glossyEnv;
+			scene.environmentRotation = envRotation;
+			note( 'no sky.diffuse in the manifest: the GLOSSY PMREM is the diffuse environment too (QA-12b-1 unfixed)' );
 		}
 	} catch ( e ) { note( `sky load failed: ${e.message}` ); }
+}
+
+/** Every baked material takes its SPECULAR from the glossy branch through its own envMap, so the
+ *  scene-wide diffuse environment can stay on the diffuse branch.  Called once, after the materials
+ *  are final. */
+function assignSpecularEnv() {
+	if ( ! glossyEnv || ! diffusePmremTarget ) return 0;   // nothing to separate
+	let n = 0;
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m || ! m.isMeshStandardMaterial || ! m.userData.pfaPatched || m.envMap === glossyEnv ) continue;
+			m.envMap = glossyEnv;
+			m.envMapRotation.copy( envRotation );
+			m.needsUpdate = true;
+			n ++;
+		}
+	} );
+	if ( n ) note( `${n} baked material(s) take specular from the GLOSSY PMREM (material.envMap); the scene environment stays the DIFFUSE branch` );
+	return n;
 }
 
 let ktx2Loader = null;
@@ -468,6 +614,11 @@ async function loadGlbs() {
 			const base = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
 			const gltf = await loader.parseAsync( buf, base );
 			gltf.scene.name = `WEB_glb_${g.cls}`;
+			// FIRST, before any pass: gltfpack stores texcoords as normalised 12-bit ints with the
+			// dequantisation in KHR_texture_transform on the baseColorTexture only, so every UV that
+			// reaches a shader is 1/16 of its real value until this undoes it on the attribute.
+			// See src/uvDequant.js.  ?uvdq=0 restores the broken behaviour for an A/B.
+			uvDequantReport.push( { name: g.name, ...dequantizeUvs( gltf.scene, { note, enabled: CFG.uvDequant } ) } );
 			scene.add( gltf.scene );
 			glbRoots.push( gltf.scene );
 			const r = processGltf( gltf, g );
@@ -486,6 +637,26 @@ async function loadGlbs() {
 		renderFrame();
 		await new Promise( ( r ) => requestAnimationFrame( r ) );
 	}
+	// Gate 3 (manifest v4): the baked lightmaps.  BEFORE chunking (a chunk inherits its slice of the
+	// per-instance slot attribute) and BEFORE the PBR / detail passes, which match on material NAME
+	// and so texture every clone this pass makes.
+	if ( manifest.gate3 && lightingMode === 'baked' ) {
+		gate3Report = applyGate3Lightmaps( {
+			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
+			vertexIrr: CFG.vertexIrr,
+			loadTexture: ( url ) => {
+				progress.label = url.split( '/' ).pop();
+				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
+					: ( /\.(hdr)$/i.test( url ) ? new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) )
+						: ( /\.exr$/i.test( url ) ? new EXRLoader( manager ).loadAsync( url, onProgressFor( url ) )
+							: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) ) ) );
+			},
+		} );
+		await gate3Report.promise;
+		lightmapsApplied += gate3Report.own.applied;
+		patchedMaterials += gate3Report.own.applied + gate3Report.slots.meshes.length;
+	}
+
 	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those
 	// batches into regional ones so a station that sees little of the site draws little of it.
 	chunkStats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
@@ -580,6 +751,16 @@ function finishMaterials() {
 	if ( lightingMode === 'direct' ) {
 		note( `${noLightmapMaterials.length} material(s) on three's own lighting (Gate 1 has no lightmap bake); `
 			+ `${patchedMaterials} on the baked path` );
+		return;
+	}
+	// Gate 3 (manifest v4) bakes a map for everything that should have one, so a material without one
+	// is meant to have none (foliage, shrubs, impostors, the backdrop).  It stays on three's own
+	// lighting, whose diffuse irradiance now comes from `sky.diffuse` — never from a neighbour's map.
+	if ( manifest.gate3 ) {
+		const withMap = noLightmapMaterials.filter( m => m.lightMap ).length;
+		note( `${noLightmapMaterials.length - withMap} material(s) with no Gate 3 lightmap stay on the environment path `
+			+ `(diffuse irradiance from sky.diffuse); the Gate 0 "borrow a neighbour's lightmap" stand-in is off at Gate 3` );
+		assignSpecularEnv();
 		return;
 	}
 	// Gate 0 bakes a lightmap for ONE of the 16 columns; the other 15 share the mesh with a
@@ -697,7 +878,7 @@ function applyStation( n ) {
 	return st;
 }
 
-let controls = null;
+let controls = null, walk = null;
 function installControls() {
 	controls = new OrbitControls( camera, renderer.domElement );
 	controls.enableDamping = true;
@@ -713,6 +894,13 @@ function installControls() {
 	};
 	renderer.domElement.addEventListener( 'pointerdown', enable );
 	renderer.domElement.addEventListener( 'wheel', enable, { passive: true } );
+	// Walk mode (Gate 4 item 5): WASD takes over from OrbitControls, eye height 1.7 m on the ground,
+	// out of the lagoon, out of the columns.  It builds its grids on the FIRST walk key, never at
+	// load, and refuses to start before __pfaReady - a capture sends no input and so never walks.
+	walk = makeWalk( () => camera, renderer.domElement, scene, {
+		waterY: manifest.waterZ, note,
+		onStart: () => { userControlled = true; if ( controls ) controls.enabled = false; },
+	} );
 	window.addEventListener( 'keydown', ( e ) => {
 		if ( e.key >= '1' && e.key <= '6' ) { applyStation( parseInt( e.key, 10 ) ); resize(); }
 		if ( e.key === 'h' ) document.getElementById( 'hud' ).classList.toggle( 'hidden' );
@@ -745,13 +933,16 @@ let measuring = false;
 function animate() {
 	requestAnimationFrame( animate );
 	if ( measuring ) return;
-	if ( userControlled && controls ) controls.update();
+	if ( walk && walk.state.active ) walk.tick();
+	else if ( userControlled && controls ) controls.update();
 	renderFrame();
 }
 
 // ---------------------------------------------------------------------------- test hooks
 window.__pfaReady = false;
 window.__pfaStation = ( n ) => { applyStation( n ); resize(); renderFrame(); return currentStation.name; };
+// Gate 4 item 5: drive the walker from the harness without input, pointer lock or a rendered frame.
+window.__pfaWalkProbe = ( o ) => ( walk ? walk.probe( o || {} ) : null );
 window.__pfaInfo = () => ( {
 	station: currentStation && { index: currentStation.index, name: currentStation.name, lens: currentStation.lens, shift_y: currentStation.shift_y },
 	cameraWorldMatrix: camera.matrixWorld.elements.slice(),
@@ -763,6 +954,10 @@ window.__pfaInfo = () => ( {
 	gl: glInfo(),
 	patchedMaterials, lightmapsApplied, unpatchedMaterials: [ ...unpatchedMaterials ],
 	lightmapScale, rgbmRange: manifest ? manifest.rgbmRange : null,
+	gate3: gate3Report && { own: gate3Report.own, slots: gate3Report.slots,
+		materialsCloned: gate3Report.materialsCloned, texturesRequested: gate3Report.texturesRequested,
+		texturesLoaded: gate3Report.texturesLoaded, texturesFailed: gate3Report.texturesFailed },
+	skyDiffuse: manifest ? !! manifest.sky.diffuse : null,
 	shaperPivot: lutPass ? lutPass.uniforms.shaperPivot.value : null,
 	skyRotationDeg: manifest ? manifest.sky.rotationDeg : null,
 	exposure: lutPass ? lutPass.uniforms.exposure.value : null,
@@ -775,9 +970,15 @@ window.__pfaInfo = () => ( {
 		files: progress.files.map( f => ( { kind: f.kind, bytes: f.bytes, sizeFrom: f.sizeFrom, name: f.url.split( '/' ).pop() } ) ) },
 	load_s: { ...loadTimes },
 	glbs: glbReport.slice(),
+	uv_dequant: uvDequantReport.slice(),
 	resident: residentBytes(),
 	billboards: billboards ? { ...billboards.userData } : null,
 	chunking: chunkStats,
+	post: postState,
+	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
+		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
+		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },
+	walk: walk ? { ...walk.state } : null,
 	materialsMode,
 	pbr: pbrReport,
 	detail: detailReport,
@@ -822,7 +1023,8 @@ function residentBytes() {
 	// scene.environment IS pmremTarget.texture and has an image, so addTex would bill the cubeUV
 	// here AND addRT would bill the identical bytes below (review finding 1): count it once, as a
 	// render target.
-	if ( scene.environment && ! ( pmremTarget && scene.environment === pmremTarget.texture ) ) addTex( scene.environment );
+	const pmremTextures = [ pmremTarget, diffusePmremTarget ].filter( Boolean ).map( t => t.texture );
+	if ( scene.environment && ! pmremTextures.includes( scene.environment ) ) addTex( scene.environment );
 	// Render targets dominate the GPU-memory figure at 1440p and carry no `image`, so addTex() sees
 	// nothing: count them explicitly.  A HalfFloat RGBA target is 8 B/px, and three allocates an extra
 	// multisampled renderbuffer of samples x that size when `samples` > 0.
@@ -836,7 +1038,8 @@ function residentBytes() {
 	};
 	if ( composer ) { addRT( composer.renderTarget1, 'composer.renderTarget1' ); addRT( composer.renderTarget2, 'composer.renderTarget2' ); }
 	if ( water && water.getRenderTarget ) addRT( water.getRenderTarget(), 'water.Reflector' );
-	if ( pmremTarget ) addRT( pmremTarget, 'PMREM cubeUV' );
+	if ( pmremTarget ) addRT( pmremTarget, 'PMREM cubeUV (glossy, specular)' );
+	if ( diffusePmremTarget ) addRT( diffusePmremTarget, 'PMREM cubeUV (diffuse, irradiance)' );
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
@@ -932,6 +1135,87 @@ window.__pfaNames = () => {
 };
 
 /** Read back the linear pixel at the centre of a named object (LUT / luminance probes). */
+/**
+ * QA pick: what is UNDER a pixel.  `gltfpack -mi` drops every name, so the identity comes from the
+ * same world-bbox-centre join the lightmap pass uses, and everything that decides how the surface is
+ * lit is reported beside it: the material, whether it carries UV2, whether a lightmap actually
+ * attached, whether the environment still reaches it, and what the baked-material patch did.
+ * That is the whole question "which side owns this pixel", answered without changing anything.
+ */
+window.__pfaPick = ( x, y ) => {
+	const { w, h } = canvasSize();
+	const ndc = new THREE.Vector2( ( x / w ) * 2 - 1, - ( y / h ) * 2 + 1 );
+	const rc = new THREE.Raycaster();
+	rc.setFromCamera( ndc, camera );
+	rc.firstHitOnly = true;
+	// three's Raycaster does NOT skip invisible objects, so a hidden placeholder (?treeboards=0) would
+	// be reported as the thing under the pixel when it is not drawn at all.  Filter them out.
+	const visibleUp = ( o ) => { let p = o; while ( p ) { if ( p.visible === false ) return false; p = p.parent; } return true; };
+	const hits = rc.intersectObjects( scene.children, true ).filter( ( h ) => visibleUp( h.object ) );
+	const out = [];
+	for ( const hit of hits.slice( 0, 4 ) ) {
+		const o = hit.object;
+		const m = Array.isArray( o.material ) ? o.material[ 0 ] : o.material;
+		const g = o.geometry;
+		const box = new THREE.Box3().setFromObject( o );
+		const c = box.getCenter( new THREE.Vector3() );
+		// nearest manifest asset to the mesh centre, the same identity the lightmap join uses
+		let near = null, nearD = Infinity;
+		const assets = manifest && manifest.assets;
+		for ( const name in ( assets || {} ) ) {
+			const loc = assets[ name ] && assets[ name ].location_blender;
+			if ( ! Array.isArray( loc ) ) continue;
+			const p = b2t( loc[ 0 ], loc[ 1 ], loc[ 2 ] );
+			const d = p.distanceTo( c );
+			if ( d < nearD ) { nearD = d; near = name; }
+		}
+		// The sun term, decomposed: three's Lambert is irradiance * NdotL * albedo/pi, so a surface
+		// whose normal faces away from the sun gets NOTHING from it however bright the sun is, and the
+		// blue sky is then all the light it has.  Reported so "the sun is not reaching it" is a number.
+		let nWorld = null, ndotl = null;
+		if ( hit.normal ) {
+			nWorld = hit.normal.clone().transformDirection( o.matrixWorld ).normalize();
+			if ( sunLight ) {
+				const L = sunLight.position.clone().normalize();
+				ndotl = nWorld.dot( L );
+			}
+		}
+		out.push( {
+			distance_m: + hit.distance.toFixed( 2 ),
+			worldNormal: nWorld ? nWorld.toArray().map( v => + v.toFixed( 3 ) ) : null,
+			NdotL_sun: ndotl === null ? null : + ndotl.toFixed( 4 ),
+			sunReaches: ndotl === null ? null : ndotl > 0,
+			materialSide: m ? ( m.side === THREE.DoubleSide ? 'double' : m.side === THREE.BackSide ? 'back' : 'front' ) : null,
+			flatShading: m ? !! m.flatShading : null,
+			hasNormalAttr: !! ( g && g.attributes.normal ),
+			alphaMode: m ? { transparent: !! m.transparent, alphaTest: m.alphaTest ?? 0 } : null,
+			point: hit.point.toArray().map( v => + v.toFixed( 2 ) ),
+			mesh: o.name || '(unnamed - gltfpack -mi)',
+			root: ( () => { let p = o; while ( p && ! /^WEB_glb_|^WEB_/.test( p.name || '' ) ) p = p.parent; return p ? p.name : null; } )(),
+			instanced: !! o.isInstancedMesh, instanceCount: o.isInstancedMesh ? o.count : 1,
+			instanceId: hit.instanceId ?? null,
+			bboxCentre: c.toArray().map( v => + v.toFixed( 2 ) ),
+			nearestAsset: near, nearestAsset_m: + nearD.toFixed( 3 ),
+			material: m ? m.name : null,
+			materialType: m ? m.type : null,
+			hasUv1: !! ( g && g.attributes.uv1 ),
+			hasColor0: !! ( g && g.attributes.color ),
+			hasSlotAttr: !! ( g && g.attributes.pfaSlot ),
+			lightMap: m && m.lightMap ? ( m.lightMap.name || m.lightMap.source?.data?.src || 'yes' ) : null,
+			lightMapIntensity: m ? m.lightMapIntensity : null,
+			map: m && m.map ? ( m.map.name || 'yes' ) : null,
+			colorFactor: m && m.color ? m.color.toArray().map( v => + v.toFixed( 4 ) ) : null,
+			envMap: !! ( m && m.envMap ),
+			sceneEnvironment: !! scene.environment,
+			pfaPatched: m ? ( m.userData.pfaPatched || null ) : null,
+			vertexColors: m ? !! m.vertexColors : null,
+			visible: o.visible, renderOrder: o.renderOrder,
+			userData: o.userData && Object.keys( o.userData ).length ? o.userData : null,
+		} );
+	}
+	return { x, y, size: [ w, h ], pixel: window.__pfaPixel( x, y ), hits: out.length, under: out };
+};
+
 window.__pfaPixel = ( x, y ) => {
 	const gl = renderer.getContext();
 	const px = new Uint8Array( 4 );

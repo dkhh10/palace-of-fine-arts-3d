@@ -161,6 +161,219 @@ lever: `?chunk=30,2,0.8,160` splits 26 batches (hero 303 draws, cam04 -17.4 %), 
 splits 6 (hero 235, cam04 -9.6 %), `?chunk=30,2,1.0` splits everything and saves no more triangles
 anywhere.
 
+## Gate 3 / manifest v4: baked lighting (item 1)
+
+`src/lightmaps.js` applies the v4 `lightmaps` block; `export/README.md` "manifest.json v4" is the
+contract and nothing here is defaulted.
+
+* **Identity.** `gltfpack -mi` drops every node and mesh name (measured: 0 named nodes and 0 named
+  meshes in all four Gate 1 glbs), so a drawn mesh is joined back to its manifest asset **by world
+  bounding-box centre** against `assets[<name>].location_blender`, in a 2 m grid, tolerance 1.5 m.
+  The match error is measured and reported: **max 0.080 m** over the 16 own-map assets and **0.089 m**
+  over the 988 instance slots on the real glbs (quantisation), 2.2e-16 m on the synthetic test scene.
+* **Decode.** `gamma2` -> `rgb*rgb*range`, `rgbm8` -> `rgb*a*range`, **range per texture** (16 distinct
+  values in this build; three's own 7.0 default never appears), `colorSpace = NoColorSpace`,
+  `lightMapIntensity = lightmaps.scale` = pi.
+* **Slots.** Each instance carries `pfaSlot = (offset.u, offset.v, scale)` as an
+  `InstancedBufferAttribute` and `pfaSlotB` selects the second atlas for the three meshes whose
+  instances straddle one (colonnade astragals, rotunda columns, ORN drum band). A single-placement
+  slot object arrives from gltfpack as a plain `Mesh`; it takes the same shader with the window as a
+  constant vertex attribute, so no 4K atlas is ever uploaded twice.
+* **Material splitting.** One glb material serves several assets with different plans (the colonnade
+  material is on the merged mass AND on the astragals), so a material is cloned the moment a second
+  mesh wants a different plan. This pass therefore runs BEFORE the PBR and detail passes, which match
+  on material name and so texture every clone. 60 clones on this build.
+* **`sky.diffuse` (QA-12b-1).** `scene.environment` is now the PMREM of the world's DIFFUSE branch —
+  the irradiance of everything with no lightmap (near trees, impostors, foliage, shrubs). Every baked
+  material takes its SPECULAR from the glossy PMREM through its own `material.envMap`, whose env
+  diffuse term is deleted in the shader anyway. Cost: one more PMREM target, 6.3 MB at 1024x512.
+* The Gate 0 "borrow the nearest-named lightmap" stand-in is **off** whenever the manifest is v4: at
+  Gate 3 a material with no map is meant to have none.
+
+### The blocker this found: no TEXCOORD_1 in any Gate 1 glb
+
+`gltfpack` prunes a vertex attribute no material references. The source `.gltf` files carry UV2 on
+29/29 arch, 33/33 orn and 4/4 ground primitives (env has none at all, which is a separate gap), and
+**all four `.glb` files carry none**. Measured on the real capture: 11 own maps and 988 instance slots
+are matched to their asset by position and then **0** are applied, because the mesh has no UV2 to
+sample them on. The fix is on the export side, one of:
+`gltfpack -kv` (keep source vertex attributes even if unused) — which is also what keeps `COLOR_0` for
+the 14 vertex-irradiance trees — or referencing the map as `emissiveTexture` with `texCoord: 1` in the
+glTF, which is the shape the Gate 0 contract already describes. `-kn` would additionally keep node
+names and make the position join a cross-check rather than the only identity.
+Until then `?lighting=baked` renders exactly the Gate 2 look, and says so in the notes.
+
+`web/tools/gate4.sh` is `gate2.sh` for v4: default manifest `/assets/gate3/manifest.json`, baked
+lighting, both placeholder sets hidden, water phase frozen at `t=0`; `PFA_TAG` names the outputs and
+`PFA_QUERY` is appended last and wins.
+
+`npm test` now includes `test/gate3_test.mjs`, which checks the v4 parse, the position join, the
+material clone, the per-instance attribute and the shader substitutions against three's own chunks —
+without a browser, so a `once()` failure cannot reach a capture unnoticed.
+
+### Gate 4 step 0: why the lightmaps read a stop dark, measured
+
+`gltfpack` quantises TEXCOORD_n to 12 bits and stores them as **normalised unsigned shorts**, so every
+UV that reaches a shader sits in `[0, 4095/65535] = [0, 0.0625]`.  The dequantisation is **not** in the
+accessor: gltfpack writes it into `KHR_texture_transform` (offset = the island's min, scale ~16) on the
+material's `baseColorTexture`, and three applies a texture transform only to the texture that carries
+it, on that texture's own uv channel.  Consequences, both measured on the real glbs:
+
+* `TEXCOORD_1` has no texture of its own in the glb, so the Gate 3 lightmap sampled the bottom-left
+  1/16 x 1/16 corner of its own map - almost all of it empty margin.  That is the hero at mean luma
+  **117.5** against the Cycles hero's 140.0 with the colonnade bands dark/blue, and it is why no decode
+  variant (gamma2 117.5 / linear 109.9 / rgbm8 120.0) and neither V orientation could reach 140: the
+  texels being read were the wrong ones.
+* The Gate 2 PBR and detail passes replace `material.map` with their own texture, whose transform is the
+  identity, so **every albedo / roughness / normal has sampled the same 1/16 window** (the tile magnified
+  ~16x) since Gate 2.
+
+**The islands are sound - the export owes nothing.**  `web/tools/uv2_debug.mjs` (GLTFLoader +
+MeshoptDecoder in node) decodes the glb's TEXCOORD_1, applies the material's transform and flips V;
+against the bake's own UV2 in `export/out/gate3/lightmap_uv2.npz` the occupancy IoU is **0.994-0.999**
+on all seven re-laid assets, each matched to the right mesh (riprap 1.000, colonnade N 0.999 / S 0.994,
+rotunda ochre 0.997, ceiling rib 0.999, podium 0.996, colonnade walk 0.999).  Before the transform is
+applied the IoU is 0.003.
+
+**Fix** `src/uvDequant.js`, called on each glb the moment it is parsed and before every other pass:
+`uv := uv * repeat + offset` written back as float32 once per geometry, then every texture on the
+material reset to the identity transform.  Every later pass then sees plain `[0,1]` UVs and needs to
+know nothing about quantisation.  All 114 meshes across the four glbs carry a recoverable transform
+(scale 8.41..16.0, none rotated); `?uvdq=0` restores the broken behaviour for an A/B.
+
+Measured at station 1, 1920x1080, `?lighting=baked`, 15/16 own maps live (the slot atlases still wait on
+the export merge), mean luma of the frame:
+
+| pass | mean | median | p10 | p90 | MAE vs Cycles |
+|---|---|---|---|---|---|
+| lightmaps, quantised UV (the blocker) | 117.5 | 135.2 | 22.3 | 197.3 | - |
+| **uv dequantised (`renders/web/dq1.png`)** | **134.3** | 149.5 | 51.4 | 198.7 | 31.1 |
+| the same with `?lmflip=1` | 117.8 | - | - | - | 42.0 |
+| Cycles hero `round10b_01_lagoon_hero_cycles.png` | 140.0 | 156.0 | 52.2 | 198.2 | - |
+
+The V flip stays **off**: the glb's TEXCOORD_1 already carries the Blender -> glTF flip (that is what the
+IoU above measures), and `?lmflip=1` is worse on every metric.  The shadow end now lands on the Cycles
+hero's (p10 51.4 vs 52.2) where the broken UV had it at 22.3.
+
+Carried, visible in `renders/web/dq1.png` and NOT caused by this (both predate it, both are items 2-3):
+the near-tree and shrub cards read as blue-white confetti (no vertex irradiance yet - `env.glb` has no
+`COLOR_0`, so they take the sky PMREM flat), and the panel behind the colonnade reads as flat blue.
+
+## Gate 4 items 3, 4 and 5
+
+### Water (item 3)
+The Gate 0 Reflector already reflected the rotunda; it reflected it as a MIRROR. Two physical terms
+were added and calibrated against the Phase 5 Cycles hero's water box (`900 760 1020 840`):
+`reflBlur` gathers the reflection over a small disc (the ripples' slope distribution, which is what
+takes the edge off `std`) and `reflSat` washes its colour toward neutral (the murk scattering light
+back out through the reflected ray). Swept b = 0.006/0.003 x s = 1.0/0.52 and fitted:
+
+| box | mirror | rough (now) | Cycles hero |
+|---|---|---|---|
+| lum | 127.1 (0.99x) | 135.3 (1.05x) | 128.6 |
+| std | 44.0 (1.29x) | 35.0 (1.02x) | 34.2 |
+| sat | 0.69 (2.10x) | 0.35 (1.07x) | 0.33 |
+| R-B | 59.7 (1.73x) | 22.7 (0.66x) | 34.4 |
+
+Defaults `reflBlur 0.0045`, `reflSat 0.66`; `?waterblur` / `?watersat` are the A/B. R-B is now 0.66x
+(too cool rather than too warm) and is deliberately NOT tuned out: the building being reflected is
+still missing its near-tree irradiance, so `reflectTint` should be revisited after that lands.
+
+### The post chain (item 4)
+`src/postChain.js` reproduces `manifest.compositor.COMP_golden_hour` in scene-linear, BEFORE the LUT,
+which is where Blender's sits. `?post=all | none | mist,bloom,vignette`; **the default is `none`** so
+the round13b captures stay comparable. Measured on the hero (`web/tools/hero_boxes.py`, the eight
+round-10b acceptance boxes, `renders/web/post_boxes.json`), whole-frame luma against the Cycles hero's
+139.98:
+
+| pass | whole frame | what moved |
+|---|---|---|
+| off | 135.99 (0.971x) | — |
+| mist | 135.99 (0.971x) | **nothing at all** — see below |
+| bloom | 138.80 (0.991x) | vault field 0.76 -> 0.93x, jamb R-B 0.90 -> 1.06x, shaded attic 0.93 -> 0.98x, entablature std 1.16 -> 0.99x and R-B 0.80 -> 0.90x, sunlit attic std 1.24 -> 0.88x; costs a little brightness (jamb 1.12 -> 1.28x, entablature 0.99 -> 1.11x) |
+| vignette | 135.22 (0.966x) | sky top 1.00 -> 0.99x, nothing else at 0.08 |
+| all | 138.04 (0.986x) | the closest whole-frame match of any variant |
+
+Bloom earns its place; vignette is within noise at the Phase 5 value of 0.08; **the mist is a no-op
+and that is a missing manifest field, not a bug.** Blender's Mist pass normalises distance by
+`world.mist_settings.start` and `.depth`, and the manifest carries only the group's parameters (it
+records the group's `Mist` INPUT as 0.0). `MIST_NEAR_M = 60` / `MIST_FAR_M = 1400` in `postChain.js`
+are the viewer's own invention, stated in the notes at load, and at the hero they put the haze factor
+below a thousandth. **Ask for the export: `world.mist_settings.start`, `.depth` and `.falloff` from
+`master_delivery.blend`.** Until then `?mist=near,far` is the only way to move it and no capture
+should be scored on the haze.
+
+### Walk controls (item 5)
+`src/walk.js`. WASD + mouse look through pointer lock, eye height 1.7 m, shift to run, `1`-`6` still
+jump to the stations. It refuses to start before `__pfaReady` and only on W/A/S/D, and
+`screenshot.mjs` sends no input, so a captured frame is always the station's own camera.
+
+The ground is a HEIGHTFIELD, not a raycast: riprap alone is 181 k vertices and three's `Raycaster` has
+no BVH, so a per-frame down-ray would cost more than the render. The ground meshes rasterise once into
+a 2 m grid **on the first walk key**, never at load (42 ms, 113 k triangles). The grid gives the
+shoreline for nothing — a cell below `WATER_Z` is lagoon — so "cannot walk into the water" and "cannot
+walk off the site" are one test, both derived from the ground meshes' own geometry. Columns: every
+`ARCH_`/`ORN_` footprint above knee height goes into a second grid and the walker, a 0.35 m circle, is
+pushed out on the axis of least penetration, so it slides along a colonnade. Under 0.45 m is stepped
+over, over 2.2 m is walked under. The hero station stands 100 m out OVER the lagoon, so `nearestDry()`
+steps the walker ashore (4.0 m at station 1) and says so, rather than refusing every direction.
+
+Evidence, 24 probes (six stations x four headings x 30 s at 3.2 m/s, `--walkprobe` through
+`screenshot.mjs`, `renders/web/walkprobe.json`): **the lowest ground the walker ever stood on is
+-1.22 m against the water at -1.30 m.** It never entered the lagoon from any station on any heading;
+the lagoon headings are refused (st1/180 1783 of 1801 steps, st5/180 1711, st2/270 1561) and the
+inland ones run the full 96 m unobstructed.
+
+### Performance (item 6), 2560x1440, everything on, round13b
+
+| station | presented frame | fps | `gl.finish` render cost | draws | tris |
+|---|---|---|---|---|---|
+| 1 lagoon hero | 22.7 ms | 44.1 | 2.3 ms | 269 | 5.24 M |
+| 2 NE 3/4 | 22.2 ms | 45.0 | 2.1 ms | 259 | 5.06 M |
+| 3 colonnade walk | 24.3 ms | 41.2 | 2.1 ms | 279 | 5.44 M |
+| 4 rotunda ceiling | 16.6 ms | 60.2 | 0.6 ms | 113 | 2.20 M |
+| 5 south lawn | 24.9 ms | 40.2 | 2.1 ms | 252 | 4.86 M |
+| 6 aerial | 25.8 ms | 38.8 | 2.4 ms | 291 | 5.60 M |
+
+Resident 1549-1678 MB (textures 1172, render targets 315-444, geometry 62); 272 textures, all
+`RGBA_ASTC_4x4`. **The frame is not GPU-bound**: the GPU does 0.6-2.4 ms of work (400-1600 fps) while
+the presented frame sits at 16.6-25.8 ms, so what is missing the 45 fps target is on the CPU or in
+headless Chrome's compositor, not in the renderer. That wants its own measurement before anything is
+optimised, and it is the open half of item 6.
+
+## Tools added at Gate 4
+* `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
+  reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is
+  what measured the quantisation blocker above.
+* `web/tools/hero_boxes.py` — the eight cam01 acceptance boxes of `docs/qa_round_10b.md` on any set of
+  frames, each as a ratio against the Cycles hero. Several positional frames give the on/off
+  attribution table a gate needs.
+* `screenshot.mjs --walkprobe 0,90,180,270[:seconds]` — walks from each captured station without input
+  or a rendered frame and reports the path, the lowest ground and the refused steps.
+
+## Open, with owners
+* **The 14 near trees have no vertex irradiance** (viewer coded, export-blocked). `gltfpack -mi` both
+  splits each tree by material and instances primitives ACROSS different trees, so the 14 baked
+  COLOR_0 buffers arrive as 14 primitives carrying 26 placements and only 2 join unambiguously; the
+  baked ranges span 0.469..43.320, so a shared buffer cannot carry them. The pass is all-or-nothing in
+  `auto` and currently applies nothing. **Export fix: fold the range into the encoded value (one global
+  range, or linear FLOAT_COLOR) so a merge cannot break it, or keep those 14 meshes out of `-mi`.**
+* **Stations 3 and 5 have no Cycles reference.** `gate1_sheets.py` labels them "Eevee round-09 (no
+  Cycles frame)" and station 6 "Cycles round-09, no compositor". cam03's 2.47x is measured against an
+  EEVEE frame from round 09, taken before the Phase 5 shade work the lightmaps were baked from, so it
+  is not a parity target. The 6a criterion ("within 0.5 of its Phase 5 score") needs Phase 5 Cycles
+  frames for stations 3 and 5 and a compositor-on frame for 6.
+* **Item 2 is done** (the far trees are octahedral impostors; see the section below). What remains
+  open there is ROTATIONAL pop: the blend has not been swept through a full camera rotation.
+
+## `PFA_DEV_SHARE_GPU=1` — development screenshots only
+`screenshot.mjs` refuses to run while any Blender process is alive. `PFA_DEV_SHARE_GPU=1` is a NARROW
+override, authorised by the lead (logged in `docs/decisions.md`) so that development screenshots could
+be taken while a lead-side Cycles reference render held the GPU. It still refuses when the bake queue
+is running, and it **refuses `--perf` outright**, because a frame time measured beside another GPU job
+is not a number anyone may score. **It must never be set for a capture that QA scores, and never for a
+performance pass.** `PFA_ALLOW_GPU=1` remains the blanket override and should not be used at all.
+
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
     npm install && npm run dev     # /assets/* served from $PFA_MAIN_ROOT/export/out, never copied
@@ -170,7 +383,10 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?lut=0`, `?testlut=identity|gamma22`, `?test=1`, `?exposure=`, `?skyrot=`, `?sun=`, `?lmscale=`, `?haze=`
 (diagnostic constant airlight, not the real mist), `?unlit=share|stock|black`, `?lighting=auto|baked|direct`,
 `?billboards=0`, `?treeboards=0`, `?t=<seconds>` (freezes the water phase), `?hud=0`,
-`?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`.
+`?materials=auto|pbr|grey`, `?chunk=0|minRadius[,maxDepth[,gain]]`, `?lutfloat=0`,
+`?uvdq=0` (leave gltfpack's texcoord quantisation in place — the Gate 4 step-0 A/B),
+`?vertexirr=auto|1|0`, `?post=all|none|mist,bloom,vignette`, `?mist=near,far`,
+`?waterblur=`, `?watersat=`.
 
 ## Screenshots and the gate passes (never launch Chrome any other way)
     web/tools/gate2.sh [manifest_url]     # Gate 2: same, default /assets/gate2/manifest.json
@@ -212,8 +428,26 @@ lighting runs — full DirectionalLight at the manifest's `energy_w_m2` plus PMR
 same LUT and exposure. The mode is chosen from the manifest before any material is touched; `?lighting=`
 overrides it and the choice is printed in the notes and in `gate1_perf.json`.
 
-## Far-tree billboards
-`trees.far` is drawn as one flat quad per entry, grey, grouped per prototype into an `InstancedMesh` named
-`WEB_far_tree_billboard_<prototype>` with `userData.pfaPlaceholder = 'gate3_tree_impostor'`. They are
-placeholders for the Gate 3 impostor bake and must be reported as such in any tile review. `?billboards=0`
-removes them.
+## Far trees: the Gate 3 octahedral impostors (item 2)
+The 127 far trees are drawn by `src/impostors.js` as one `InstancedMesh` per prototype
+(`WEB_impostor_<prototype>`), 16 draw calls, from the Gate 3 atlases. Every geometric and encoding
+field is READ from `manifest.impostors` and none is assumed; a missing one refuses the whole block
+rather than defaulting into NaN UVs. Screen-facing quad built in the vertex shader, the three frames
+around the view direction blended with the octahedral cell's barycentric weights, straight-alpha
+combination (`rgb = Σ w·a·rgb / Σ w·a`), alpha test 0.33, unlit — the atlas is baked radiance and goes
+straight into the linear buffer before the LUT. `?impostors=0` removes them, `?impnd=1` also loads the
+normal+depth atlases (off by default: the manifest says nothing samples them while `unlit` holds),
+`?impdebug=1|2|3|4` shows the raw sample / alpha / frame cell / quad uv.
+
+**The atlases are `KTXorientation: rd` (top-down) while `manifest.impostors.frame_uv` counts the row
+and `f.y` FROM THE BOTTOM**, measured with `ktx info` on all 16. The viewer therefore flips v. Without
+the flip the lookup lands on the mirrored elevation — the tree's sky-lit back side — and the hero drew
+the far trees deep blue: isolated raw sample `[0.2534 0.2911 0.4873]` before, `[0.4249 0.4298 0.2807]`
+after. The bake side may prefer to change the manifest's stated convention instead; either is fine, but
+the two must agree and today they do not.
+
+### The Gate 1 placeholders
+`makeTreeBillboards` still exists and draws one flat grey quad per entry as
+`WEB_far_tree_billboard_<prototype>` with `userData.pfaPlaceholder = 'gate3_tree_impostor'`. It is used
+ONLY when the impostors are unavailable or `?impostors=0`: when they build, the placeholders are not
+created at all, so a capture can never show a grey card and the name sweep stays clean.

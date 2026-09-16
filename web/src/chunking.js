@@ -59,8 +59,31 @@ function split( pos, idx, depth, opts ) {
 	return [ ...split( pos, left, depth + 1, opts ), ...split( pos, right, depth + 1, opts ) ];
 }
 
+/** Per-instance `pfa*` attributes (the Gate 3 lightmap slot window) live on the GEOMETRY, which the
+ *  chunks would otherwise share, so each chunk gets a geometry of its own that SHARES every vertex
+ *  buffer with the source and carries only its own slice of the instanced attributes.  No vertex data
+ *  is copied: the BufferAttribute objects are the same, so they are the same WebGL buffers. */
+function chunkGeometry( src, idx ) {
+	const names = Object.keys( src.attributes ).filter( n => n.startsWith( 'pfa' ) && src.attributes[ n ].isInstancedBufferAttribute );
+	if ( ! names.length ) return src;
+	const g = new THREE.BufferGeometry();
+	for ( const [ n, a ] of Object.entries( src.attributes ) ) if ( ! names.includes( n ) ) g.setAttribute( n, a );
+	if ( src.index ) g.setIndex( src.index );
+	for ( const grp of src.groups ) g.addGroup( grp.start, grp.count, grp.materialIndex );
+	if ( src.boundingBox ) g.boundingBox = src.boundingBox.clone();
+	if ( src.boundingSphere ) g.boundingSphere = src.boundingSphere.clone();
+	g.name = src.name;
+	for ( const n of names ) {
+		const a = src.attributes[ n ], k = a.itemSize;
+		const out = new a.array.constructor( idx.length * k );
+		idx.forEach( ( from, to ) => { for ( let c = 0; c < k; c ++ ) out[ to * k + c ] = a.array[ from * k + c ]; } );
+		g.setAttribute( n, new THREE.InstancedBufferAttribute( out, k ) );
+	}
+	return g;
+}
+
 function makeChunk( src, idx, tag ) {
-	const m = new THREE.InstancedMesh( src.geometry, src.material, idx.length );
+	const m = new THREE.InstancedMesh( chunkGeometry( src.geometry, idx ), src.material, idx.length );
 	m.name = `${src.name || 'instanced'}_chunk${tag}`;
 	m.frustumCulled = true;
 	m.visible = src.visible;

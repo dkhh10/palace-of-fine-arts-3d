@@ -15,13 +15,23 @@
 //   --timeout MS      ready timeout (default 120000)
 //   --json PATH       write the info + frame stats sidecar (default <out>.json)
 //   --pixels x,y;...  read back display pixels (after the screenshot) and print them
+//   --pick "x,y;x,y"  QA: what is UNDER those pixels - the mesh, its nearest manifest asset by the
+//                     bbox join, the material, whether it carries UV2, whether a lightmap attached,
+//                     whether the environment reaches it, and what the baked patch did
 //   --probe A,B       project objects whose name contains A / B and read their centre pixel
+//   --walkprobe 0,90,180,270[:seconds]
+//                     walk from each captured station on those headings (degrees, 0 = world -Z) and
+//                     report where the walker ends, how often it was refused and the lowest ground it
+//                     stood on.  No input, no pointer lock, no rendered frame - it is the acceptance
+//                     evidence for "ground clamp, cannot walk into the lagoon" (Gate 4 item 5).
 //   --shots 0         measure only, write no PNGs (the performance pass)
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
 // It refuses to launch while the bake queue is running or any Blender process is alive
-// (PFA_ALLOW_GPU=1 overrides), so a bare `node tools/screenshot.mjs` cannot take the GPU either.
+// (PFA_ALLOW_GPU=1 overrides everything; PFA_DEV_SHARE_GPU=1 allows a DEVELOPMENT screenshot beside a
+// Blender render but still refuses the bake queue and refuses --perf), so a bare
+// `node tools/screenshot.mjs` cannot take the GPU either.
 // The browser is closed in a finally block and the process calls process.exit, so no Chrome is left
 // behind (a raw `--headless=new --screenshot` lingers 60-90 s on Chrome 152; puppeteer with an
 // explicit close does not).
@@ -120,7 +130,19 @@ function gpuGuard() {
 	} catch ( e ) { if ( /bake queue is running/.test( e.message ) ) throw e; }
 	let blender = '';
 	try { blender = execFileSync( 'pgrep', [ '-f', 'MacOS/Blender' ], { encoding: 'utf8' } ).trim(); } catch { /* none */ }
-	if ( blender ) throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
+	if ( ! blender ) return;
+	// PFA_DEV_SHARE_GPU is the narrow version of PFA_ALLOW_GPU: it lets a DEVELOPMENT screenshot run
+	// beside a Blender render (the lead's call while the Cycles reference frames render), but it never
+	// relaxes the bake-queue check above and it REFUSES to write a performance file - a frame time
+	// measured while something else owns the GPU is not a number anyone may score.
+	if ( process.env.PFA_DEV_SHARE_GPU === '1' ) {
+		if ( perfOut ) throw new Error( 'PFA_DEV_SHARE_GPU=1 with --perf: a frame time measured beside '
+			+ `a Blender render (pid ${blender.split( '\n' ).join( ', ' )}) is not measurable. Wait for the GPU.` );
+		console.log( `[shot] PFA_DEV_SHARE_GPU=1: sharing the GPU with Blender (pid ${blender.split( '\n' ).join( ', ' )}). `
+			+ 'DEVELOPMENT SCREENSHOT ONLY - no performance number from this run is valid.' );
+		return;
+	}
+	throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
 }
 
 let browser = null, server = null, viteProc = null;
@@ -209,6 +231,39 @@ try {
 
 	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
+	let walkProbes = null;
+	if ( o.walkprobe ) {
+		const [ hs, secs ] = String( o.walkprobe ).split( ':' );
+		const headings = hs.split( ',' ).map( Number ).filter( n => isFinite( n ) );
+		const seconds = Number( secs || 30 );
+		walkProbes = [];
+		for ( const st of shotList ) {
+			const name = await page.evaluate( ( n ) => window.__pfaStation( n ), st );
+			for ( const headingDeg of headings ) {
+				const r = await page.evaluate( ( a ) => window.__pfaWalkProbe( a ), { headingDeg, seconds } );
+				if ( ! r ) { console.log( '[shot] walkprobe: no walk controller' ); break; }
+				walkProbes.push( { station: st, name, ...r } );
+				if ( r.error ) { console.log( `[shot] walk st${st} heading ${headingDeg}: ${r.error}` ); continue; }
+				console.log( `[shot] walk st${st} heading ${headingDeg}: start (${r.start.x.toFixed( 1 )}, ${r.start.z.toFixed( 1 )})`
+					+ `${r.ashore_m > 0.01 ? ` [${r.ashore_m.toFixed( 1 )} m ashore]` : ''} -> end (${r.end.x.toFixed( 1 )}, ${r.end.z.toFixed( 1 )}), `
+					+ `lowest ground ${r.minGround.toFixed( 2 )} (water ${r.waterY}), refused ${r.blocked}/${r.samples} step(s)` );
+			}
+		}
+	}
+
+	let picks = null;
+	if ( o.pick ) {
+		picks = await page.evaluate( ( spec ) => spec.split( ';' ).filter( Boolean ).map( ( t ) => {
+			const [ x, y ] = t.split( ',' ).map( Number );
+			return window.__pfaPick( x, y );
+		} ), o.pick );
+		for ( const p of picks ) {
+			console.log( `[pick] (${p.x},${p.y}) rgba ${JSON.stringify( p.pixel )} - ${p.hits} hit(s)` );
+			p.under.forEach( ( u, i ) => console.log( `[pick]   ${i}: ${u.distance_m} m  asset~${u.nearestAsset} (${u.nearestAsset_m} m)  `
+				+ `mat ${u.material}  uv1 ${u.hasUv1}  lightMap ${u.lightMap}  envMap ${u.envMap}  patched ${JSON.stringify( u.pfaPatched )}` ) );
+		}
+	}
+
 	let probes = null;
 	if ( o.probe ) {
 		probes = await page.evaluate( ( names ) => names.split( ',' ).filter( Boolean ).map( ( n ) => {
@@ -228,7 +283,7 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, written, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, walkProbes, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
