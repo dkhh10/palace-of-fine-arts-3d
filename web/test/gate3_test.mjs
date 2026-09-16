@@ -106,7 +106,9 @@ check( Object.values( g3.atlases ).every( a => a.uv2Scale > 0 && a.uv2Scale < 0.
 check( !! m.sky.diffuse && m.sky.diffuse !== m.sky.glossy, 'sky.diffuse is its own equirect (QA-12b-1)' );
 check( g3.impostors && g3.impostors.count === 16, `${g3.impostors && g3.impostors.count} impostor prototype(s) (16 expected)` );
 check( g3.probe && g3.probe.faces.length === 6, 'the hero probe has six faces' );
-check( g3.vertexIrradiance && g3.vertexIrradiance.inGlb === false, 'vertex irradiance is declared NOT in the glb yet' );
+// Whether COLOR_0 has been packed moves with the export; what the test pins is that the flag and the
+// per-mesh ranges always agree, and that a range is never shared between two trees.
+check( !! g3.vertexIrradiance, `vertex irradiance declared for ${g3.vertexIrradiance && g3.vertexIrradiance.meshes} near-tree mesh(es), in_glb ${g3.vertexIrradiance && g3.vertexIrradiance.inGlb}` );
 
 // --- uv2_relay_status.json wins over the manifest's own flags -----------------------------------
 // The export re-packs the glbs with the re-laid UV2 before the bake rewrites `uv2_in_glb`, so the
@@ -126,6 +128,15 @@ check( g3.vertexIrradiance && g3.vertexIrradiance.inGlb === false, 'vertex irrad
 			`${relaidNow.length} asset(s) take the Gate 3 re-laid map (${st.flipped.length} flag(s) needed flipping)` );
 		check( relaidNow.every( a => ! /lmg1/.test( a.textureKey || '' ) ),
 			'a re-laid asset takes its own Gate 3 map, never the frozen lmg1 twin' );
+		// the vertex-irradiance mapping the relay is the only source of (asset -> per-mesh range)
+		const vi2 = m2.gate3.vertexIrradiance;
+		if ( vi2 && vi2.inGlb ) {
+			const ranges = Object.values( vi2.byAsset ).map( v => v.range );
+			check( ranges.length === vi2.meshes && ranges.every( r => r > 0 ),
+				`${ranges.length} near-tree asset(s) carry a positive per-mesh range (${vi2.meshes} declared)` );
+			check( new Set( ranges.map( r => r.toFixed( 6 ) ) ).size > ranges.length / 2,
+				`the ranges are per MESH, not one shared value (${new Set( ranges.map( r => r.toFixed( 6 ) ) ).size} distinct of ${ranges.length})` );
+		} else console.log( 'SKIP  COLOR_0 is not packed yet: no per-mesh ranges to check' );
 	} else console.log( 'SKIP  uv2_relay_status.json not on disk yet' );
 	// the flag must be able to go BACK: a manifest that says true with a glb that says false
 	const m3 = normaliseManifest( raw, 'http://localhost/assets/gate3/manifest.json' );

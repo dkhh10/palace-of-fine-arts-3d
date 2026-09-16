@@ -30,6 +30,9 @@ import { patchBakedMaterial, attachLightMap } from './materials.js';
 
 const CELL = 2.0;                       // m, the match grid's cell size
 const MAX_MATCH_M = 1.5;                // m, beyond this a candidate is not the same object
+// Vertex irradiance is identified by COLOR_0, not by position, so the position join only has to pick
+// WHICH tree; a thinned LOD1 canopy's bbox centre sits further from the asset's than a mass's does.
+const VERTEX_MATCH_M = 12.0;
 
 function key( x, y, z ) { return `${Math.round( x / CELL )},${Math.round( y / CELL )},${Math.round( z / CELL )}`; }
 
@@ -242,6 +245,12 @@ export function applyGate3Lightmaps( o ) {
 		}
 	}
 
+	// ---- pass 3: vertex irradiance on the 14 near trees -------------------------------------
+	// COLOR_0 in env.glb carries each vertex's BAKED irradiance, gamma-2 at a per-mesh range, so these
+	// meshes leave the environment-lit path exactly as a lightmapped mass does.  The join is the same
+	// world-bbox-centre lookup; the range is per mesh and never shared (manifest v4 says so twice).
+	report.vertexIrradiance = applyVertexIrradiance( scene, gate3, assets, note, o.vertexIrr );
+
 	report.promise = Promise.all( pending ).then( () => {
 		note( `gate3 UV2 census: ${report.uv2.meshesWithUv2} mesh(es) carry TEXCOORD_1 (${report.uv2.drawnWithUv2} placements), `
 			+ `${report.uv2.meshesWithoutUv2} do not (${report.uv2.drawnWithoutUv2} placements)` );
@@ -255,7 +264,83 @@ export function applyGate3Lightmaps( o ) {
 		if ( report.own.blockedNoUv2InGlb )
 			note( `gate3: ${report.own.blockedNoUv2InGlb} asset(s) have uv2_in_glb false with no frozen-layout twin — no map applied (there is no factor fallback for a lightmap)` );
 		if ( report.texturesFailed.length ) note( `gate3: ${report.texturesFailed.length} lightmap texture(s) failed: ${report.texturesFailed.slice( 0, 4 ).join( '; ' )}` );
+		const v = report.vertexIrradiance;
+		if ( v && v.wanted ) note( `gate3 vertex irradiance: ${v.applied}/${v.wanted} near-tree mesh(es) take COLOR_0 as baked irradiance `
+			+ `(range ${v.rangeMin.toFixed( 3 )}..${v.rangeMax.toFixed( 3 )}, x scale ${gate3.scale.toFixed( 5 )}); `
+			+ `${v.candidates} mesh(es) carry COLOR_0, ${v.instanced} of them batched, ${v.unmatchedMesh} unmatched by position; `
+			+ `match error <= ${v.maxMatchError_m.toFixed( 3 )} m` );
 		return report;
 	} );
 	return report;
+}
+
+
+/**
+ * The 14 near trees: `COLOR_0` is baked irradiance (gamma-2, per-mesh range), not a vertex tint.
+ * Joined to the manifest asset by world bounding-box centre, exactly like an own map.
+ */
+export function applyVertexIrradiance( scene, gate3, assets, note = () => {}, mode = 'auto' ) {
+	const out = { wanted: 0, matched: 0, applied: 0, unmatched: 0, noColorAttribute: 0, candidates: 0,
+		instanced: 0, unmatchedMesh: 0, maxMatchError_m: 0, rangeMin: Infinity, rangeMax: - Infinity, meshes: [] };
+	const vi = gate3 && gate3.vertexIrradiance;
+	const byAsset = vi && vi.byAsset;
+	if ( mode === '0' || ! byAsset || ! Object.keys( byAsset ).length ) return out;
+	out.wanted = Object.keys( byAsset ).length;
+	const idx = centreGrid( assets, Object.keys( byAsset ) );
+	const taken = new Set();
+	const todo = [];
+	// The CANDIDATE SET is `COLOR_0 itself`, not a position guess: only these 14 meshes carry a colour
+	// attribute in the whole export (ORN's `cavity` was deliberately stripped so it could not be
+	// mistaken for one), so the attribute identifies them and the position join only has to say WHICH
+	// tree each is.  The tolerance is therefore generous and the worst distance is reported.
+	const cands = [];
+	scene.traverse( ( mesh ) => {
+		if ( ! mesh.isMesh || ! mesh.visible ) return;
+		if ( ! mesh.geometry.attributes.color ) return;
+		if ( mesh.material && mesh.material.userData.pfaPatched ) return;   // already a lightmapped mass
+		cands.push( mesh );
+	} );
+	out.candidates = cands.length;
+	for ( const mesh of cands ) {
+		const n = mesh.isInstancedMesh ? mesh.count : 1;
+		if ( n !== 1 ) { out.instanced ++; continue; }   // a batched tree cannot take a per-mesh range
+		const hit = nearest( idx, worldCentre( mesh, mesh.isInstancedMesh ? 0 : undefined ), taken );
+		if ( ! hit.name || hit.d > VERTEX_MATCH_M ) { out.unmatchedMesh ++; continue; }
+		todo.push( { mesh, name: hit.name, d: hit.d } );
+		taken.add( hit.name );
+	}
+	out.matched = todo.length;
+	out.unmatched = out.wanted - out.matched;
+	// AUTO means all-or-nothing.  gltfpack's -mi merges and instances geometry across trees that were
+	// baked with DIFFERENT per-mesh ranges (measured: 14 COLOR_0 primitives carrying 26 placements,
+	// ranges spanning 0.469..43.320), so a partial application would light two trees correctly and
+	// leave their neighbours on the sky - which reads as a viewer bug rather than as the export gap it
+	// is.  ?vertexirr=1 forces it anyway for an A/B.
+	out.mode = mode || 'auto';
+	if ( out.mode !== '1' && todo.length < out.wanted ) {
+		out.skipped = true;
+		note( `gate3 vertex irradiance SKIPPED (?vertexirr=1 to force): only ${todo.length} of ${out.wanted} baked near-tree `
+			+ `mesh(es) can be joined to a glb primitive of their own. ${out.candidates} primitive(s) carry COLOR_0, `
+			+ `${out.instanced} of them are instanced batches sharing one geometry across trees whose baked ranges differ `
+			+ `(0.469..43.320), so no single range is right for them. EXPORT-side: fold the range into the encoded value `
+			+ `(one global range, or linear FLOAT_COLOR) so a merge cannot break it, or keep these 14 meshes out of -mi. `
+			+ `The near trees stay on the environment-lit path.` );
+		return out;
+	}
+	for ( const t of todo ) {
+		out.maxMatchError_m = Math.max( out.maxMatchError_m, t.d );
+		if ( ! t.mesh.geometry.attributes.color ) { out.noColorAttribute ++; continue; }
+		const rec = byAsset[ t.name ];
+		out.rangeMin = Math.min( out.rangeMin, rec.range );
+		out.rangeMax = Math.max( out.rangeMax, rec.range );
+		// one material per mesh: two trees never share a range
+		const mat = t.mesh.material.clone();
+		mat.name = t.mesh.material.name;
+		t.mesh.material = mat;
+		patchBakedMaterial( mat, { vertexIrradiance: rec.range * gate3.scale } );
+		out.applied ++;
+		out.meshes.push( { asset: t.name, range: rec.range, match_m: + t.d.toFixed( 4 ) } );
+	}
+	if ( ! isFinite( out.rangeMin ) ) { out.rangeMin = 0; out.rangeMax = 0; }
+	return out;
 }

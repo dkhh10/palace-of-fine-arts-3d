@@ -49,8 +49,20 @@ export function applyUv2RelayStatus( manifest, status ) {
 		out.flipped.push( `${rec.asset} -> ${a.layout}${a.blocked ? ` (${a.blocked})` : ''}` );
 	}
 	out.meshes = status.uv2_all_meshes ? Object.keys( status.uv2_all_meshes ).length : 0;
+	// The relay is the only place the per-mesh RANGE and the mesh -> asset mapping live together;
+	// the manifest's own `meshes` block is keyed by the EXPM mesh name and carries no asset.
 	const vi = status.vertex_irradiance;
 	out.vertexIrradianceInGlb = vi && Object.keys( vi ).length ? true : false;
+	if ( vi && manifest.gate3.vertexIrradiance ) {
+		const byAsset = {};
+		for ( const [ mesh, rec ] of Object.entries( vi ) ) {
+			if ( ! rec || rec.in_glb !== true || ! rec.asset || typeof rec.range !== 'number' ) continue;
+			byAsset[ rec.asset ] = { mesh, range: rec.range, encoding: rec.encoding || 'gamma2', attribute: rec.attribute || 'COLOR_0' };
+		}
+		manifest.gate3.vertexIrradiance.byAsset = byAsset;
+		manifest.gate3.vertexIrradiance.inGlb = Object.keys( byAsset ).length > 0;
+		out.vertexIrradianceAssets = Object.keys( byAsset ).length;
+	}
 	if ( status.vertex_irradiance_skipped ) out.note = String( status.vertex_irradiance_skipped );
 	const g3 = manifest.gate3;
 	g3.ownCount = Object.values( g3.ownMaps ).filter( m => m.url ).length;

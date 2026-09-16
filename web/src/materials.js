@@ -51,7 +51,7 @@ function once( src, needle, replacement, what ) {
  * @param {THREE.MeshStandardMaterial} mat
  * @param {{ specularOnlySun?:boolean, noEnvDiffuse?:boolean, lightMapEncoding?:string,
  *           rgbmMaxRange?:number, range?:number, slot?:boolean, atlasB?:THREE.Texture|null,
- *           flipV?:boolean }} opts
+ *           flipV?:boolean, vertexIrradiance?:number }} opts
  */
 export function patchBakedMaterial( mat, opts = {} ) {
 	const specularOnlySun = opts.specularOnlySun !== false;
@@ -64,8 +64,14 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	// bottom left; whether the baked map needs the flip is a property of how the encoder wrote the
 	// image, so it is measured against the Cycles frame rather than assumed either way.
 	const flipV = !! opts.flipV;
+	// Vertex irradiance (the 14 near trees): COLOR_0 carries the BAKED irradiance, gamma-2 at a
+	// per-mesh range.  glTF would multiply it into base colour; here it is light, so the tint is
+	// removed from color_fragment and the decoded value is added to `irradiance` instead.  The value
+	// passed in is range * lightmaps.scale, so the shader constant is the whole decode.
+	const vertexIrr = typeof opts.vertexIrradiance === 'number' ? opts.vertexIrradiance : null;
 	if ( mat.userData.pfaPatched ) return mat;
-	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV };
+	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr };
+	if ( vertexIrr !== null ) mat.vertexColors = true;         // so three declares vColor for us
 
 	const prevCompile = mat.onBeforeCompile;
 	mat.onBeforeCompile = function ( shader, renderer ) {
@@ -78,8 +84,14 @@ export function patchBakedMaterial( mat, opts = {} ) {
 			shader.fragmentShader = once( shader.fragmentShader,
 				'#include <lights_physical_pars_fragment>', chunk, 'lights_physical_pars_fragment include' );
 		}
+		if ( vertexIrr !== null ) {
+			// glTF's own use of COLOR_0 is a base-colour tint; these meshes carry light, not colour.
+			shader.fragmentShader = once( shader.fragmentShader, '#include <color_fragment>',
+				'// PFA: COLOR_0 is BAKED IRRADIANCE on this mesh, not a vertex tint - see below',
+				'vertex-irradiance colour tint removed' );
+		}
 		const decode = decodeGlsl( enc, maxRange );
-		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV ) {
+		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV || vertexIrr !== null ) {
 			let maps = THREE.ShaderChunk.lights_fragment_maps;
 			if ( noEnvDiffuse ) {
 				maps = once( maps, IBL_IRRADIANCE_LINE,
@@ -102,6 +114,11 @@ export function patchBakedMaterial( mat, opts = {} ) {
 					'slot atlas lightmap fetch' );
 			}
 			if ( decode !== LM_DECODE_LINE ) maps = once( maps, LM_DECODE_LINE, decode, `${enc} lightmap decode` );
+			if ( vertexIrr !== null ) {
+				// gamma2 per mesh: v = c*c*range, then irradiance = v * lightmaps.scale (pi).
+				// Both factors are folded into the constant below.
+				maps += `\n\tirradiance += vColor.rgb * vColor.rgb * ${vertexIrr.toFixed( 6 )};`;
+			}
 			shader.fragmentShader = once( shader.fragmentShader,
 				'#include <lights_fragment_maps>', maps, 'lights_fragment_maps include' );
 		}
@@ -120,7 +137,7 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	};
 	const prevKey = mat.customProgramCacheKey;
 	mat.customProgramCacheKey = function () {
-		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}`;
+		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}:${vertexIrr === null ? 'n' : vertexIrr.toFixed( 6 )}`;
 	};
 	mat.needsUpdate = true;
 	return mat;

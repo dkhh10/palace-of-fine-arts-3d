@@ -70,6 +70,7 @@ const CFG = {
 	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
+	vertexIrr: qs.get( 'vertexirr' ) || 'auto',         // near-tree COLOR_0 irradiance: auto | 1 | 0
 };
 
 function glInfo() {
@@ -574,6 +575,7 @@ async function loadGlbs() {
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
 		gate3Report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
+			vertexIrr: CFG.vertexIrr,
 			loadTexture: ( url ) => {
 				progress.label = url.split( '/' ).pop();
 				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )

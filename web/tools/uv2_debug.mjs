@@ -54,8 +54,10 @@ gltf.scene.traverse( o => {
 		verts: g.getAttribute( 'position' ).count,
 		tris: ( g.index ? g.index.count : g.getAttribute( 'position' ).count ) / 3,
 		has_uv2: !! uv1,
+		has_color: !! g.getAttribute( 'color' ),
+		color_items: g.getAttribute( 'color' ) ? g.getAttribute( 'color' ).itemSize : 0,
 		centre: centres[ 0 ],
-		centres: centres.length <= 4 ? centres : undefined,
+		centres: centres.length <= 24 ? centres : undefined,
 		ncentres: centres.length,
 	};
 	if ( uv1 ) {
