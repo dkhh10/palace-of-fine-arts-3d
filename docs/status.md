@@ -772,3 +772,6 @@ Resident 1 678 MB (tex 1 172, RT 444). Viewer applies the levers now (GPU free; 
 ## 2026-09-16 · Bake r2 in (phase6-bake 73d5bb0, synced): ceiling map fixed (0.72 -> 16.76 max, 30.7 % non-zero); sky-branch hypothesis REFUTED (bake [0,1,0] = diffuse branch); NO overnight re-bake
 Lead ran manifest_v4.py + sync: ceiling range 16.755 in the manifest (the stale 0.721 would have decoded the new map 23x too dark). Reviewer dispatched on main..phase6-bake -> docs/reviews/phase6_bake_gate3_r2_review.md. Viewer: re-sync, probe-as-specular A/B for QA-12b-1 (ship only if G > R drops and boxes hold), then gate4.sh -> "round14".
 Next: merge bake on review; QA 14 on round14; QA-12b-1 remaining candidates per decisions.md.
+
+## 2026-09-16 · Bake r2 review in (8c7b616): MERGE WITH FIXES (3 fix now: env-arming parse, README/tech_notes docs, stale worktree manifest; 9 carry); bake engineer resumed
+Merge of phase6-bake follows the fix commit. Viewer: half-res levers, probe-as-specular A/B, then round14.
