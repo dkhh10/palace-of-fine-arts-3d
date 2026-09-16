@@ -313,6 +313,28 @@ albedo is `(0.165, 0.170, 0.1025)` — the same quantity to within 10 %, reached
 Result `(0.2353, 0.3522, 0.3166)`, hue 162°, 10x the round-14 level. `?watermurk=r,g,b` overrides it
 (`0.020,0.035,0.030` is the exact round-14 revert), `?watermurkgain=k` scales it.
 
+Measured at cam01 (`water_probe.py`, `open water 300 900 1600 1060`), round-6 WIP -> derived murk:
+
+| | round 6 WIP | derived murk | reference | |
+|---|---|---|---|---|
+| lum | 68.0 | **87.3** | 118.0 | 0.58x -> 0.74x |
+| hue | 198.9 | **194.8** | 144.8 | still blue |
+| sat | 0.292 | **0.245** | 0.041 | still 6x |
+| rowHF | 4.60 | 3.88 | 13.23 | a constant body term dilutes contrast |
+| row/col | 2.23 | 2.22 | 3.24 | unchanged, as expected |
+| Fresnel fall | 33.6 | 26.7 | 36.1 | see below |
+| refl-mass lum | 65.9 | **84.8** | 88.2 | 0.75x -> 0.96x |
+
+The fall gets SMALLER, and that is the diagnosis rather than a regression: the ladder measures how much
+darker the near water (mostly body) is than the far water (mostly mirror), so it is set by the ratio
+between the body and the reflection. Inverting both frames through the LUT, the Phase 5 hero's open
+water needs a reflection radiance of `(4.89, 4.89, 4.76)` where the viewer's reflector returns
+`(2.20, 2.91, 3.38)` — 0.45x in red, and blue instead of warm. The body term is now right; **the
+remaining level, hue and fall deficit is the reflected radiance**, not the murk. The reflected content
+itself is not the cause: measured in the direct view, the viewer's attic / entablature / column boxes
+at the 13-21° elevations the near water mirrors are 1.02-1.35x of Cycles and the sky band is 0.99x.
+`web/tools/water_derive.py` reproduces all of this without the viewer.
+
 ### The post chain (item 4)
 `src/postChain.js` reproduces `manifest.compositor.COMP_golden_hour` in scene-linear, BEFORE the LUT,
 which is where Blender's sits. `?post=all | none | mist,bloom,vignette`; **the default is `none`** so
