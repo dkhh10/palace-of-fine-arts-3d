@@ -370,8 +370,11 @@ step.done(probe_path, materials=n_probe)
 # of them declared a mode. The cutoff is READ, never guessed: export/read_alpha.py dumps every material whose
 # tree reaches an RGBA image (including inside node groups - these feed the Principled through one, which is
 # why the Alpha input is unlinked at 1.0) together with its clip value, into out/gate3/alpha_cutoffs.json.
-# All eight report `material.alpha_threshold` = 0.5 under blend_method HASHED / surface_render_method
-# DITHERED: Blender clips them stochastically, and 0.5 is the deterministic threshold the file states.
+# The cut is NOT `material.alpha_threshold` (factory 0.5 on everything here, and inert under blend_method
+# HASHED / surface_render_method DITHERED - r4 review). It is mat_build.py's Transparent/Mix Shader pair
+# driven by a Map Range over the image alpha, `From Min = alpha_cut - 0.15`, `From Max = alpha_cut + 0.15`,
+# so the 50 % crossing is the midpoint: 0.45 for MAT_leaf_cypress, 0.42 for MAT_leaf_pine, 0.5 for the other
+# six. read_alpha.cut_chain walks that graph and returns a reason instead of a default when it does not fit.
 # The test for WHICH materials get it is the exported file itself - the baseColorTexture's own PNG header -
 # so a material whose colour ends up on the 8x8 UV1 probe (every ARCH/ORN one) is never touched.
 # alpha_cutoffs.json is the EXPORT's own hand-off (export/read_alpha.py writes it locally and
@@ -389,15 +392,21 @@ report["gate3_alpha_source"] = dict(file=str(alpha_json), present=alpha_src is n
 
 
 def png_has_alpha(path):
-    """True when the file is a PNG whose IHDR colour type carries alpha (4 = grey+A, 6 = RGBA). JPEG never
-    does. Unknown suffixes are reported as None and treated as no alpha."""
-    try:
-        b = Path(path).read_bytes()[:26]
-    except OSError:
-        return None
-    if b[:8] != b"\x89PNG\r\n\x1a\n":
-        return False if Path(path).suffix.lower() in (".jpg", ".jpeg") else None
-    return b[25] in (4, 6)
+    """True when the file is a PNG whose IHDR colour type carries alpha (4 = grey+A, 6 = RGBA), False for a
+    JPEG (which never has one). Anything else RAISES: a format this cannot read is exactly the case where a
+    cut-out card would silently ship opaque, which is the defect this whole pass exists to close (r4 review
+    carry)."""
+    b = Path(path).read_bytes()[:26]
+    if b[:8] == b"\x89PNG\r\n\x1a\n":
+        return b[25] in (4, 6)
+    if b[:2] == b"\xff\xd8":
+        return False
+    raise AssertionError(f"{path}: the exporter wrote a base-colour image this check cannot read "
+                         f"(magic {b[:8]!r}). Add the format here - a texture whose alpha cannot be tested "
+                         f"is a card that ships OPAQUE without a word.")
+
+
+import read_alpha  # noqa: E402  (cut_chain only; its discovery run is guarded by __main__)
 
 
 def cutoff_for(mat_name):
@@ -516,19 +525,24 @@ for cls, objs in sets.items():
         if bct is None or m.get("alphaMode"):
             continue
         src = imgs[texs[bct["index"]]] if bct["index"] < len(texs) and texs[bct["index"]] is not None else None
-        if not src or png_has_alpha(path.parent / src) is not True:
+        if not src or not png_has_alpha(path.parent / src):
             continue
         cut, key = cutoff_for(m.get("name", ""))
         if cut is None:
             alpha_missing.append(m.get("name"))
             continue
-        # cross-check the hand-off against THIS blend's own datablock: the two files must agree or the
-        # cutoff that ships is not the one that was read.
+        # cross-check the hand-off against THIS blend's own material GRAPH - the same walk read_alpha.py
+        # made on master_delivery.blend, re-run here on the export copy. Comparing against
+        # `material.alpha_threshold` would have agreed with a wrong number: it is 0.5 on every material in
+        # the file, including the two whose real cut is 0.45 and 0.42.
         bm = bpy.data.materials.get(key)
-        if bm is not None and hasattr(bm, "alpha_threshold"):
-            assert abs(float(bm.alpha_threshold) - cut) < 1e-6, (
-                f"{m.get('name')}: alpha_cutoffs.json says {cut} for {key}, this blend's material says "
-                f"{float(bm.alpha_threshold)}")
+        if bm is not None:
+            mine, why = read_alpha.cut_chain(bm)
+            assert mine is not None, (f"{m.get('name')}: alpha_cutoffs.json gives {cut} for {key}, but this "
+                                      f"blend's copy has no recognised cut chain ({why})")
+            assert abs(mine - cut) < 1e-6, (
+                f"{m.get('name')}: alpha_cutoffs.json says {cut} for {key}, this blend's graph says {mine} "
+                f"({why})")
         m["alphaMode"] = "MASK"
         m["alphaCutoff"] = cut
         alpha_mats[m.get("name")] = dict(cutoff=cut, source_material=key, texture=src)
