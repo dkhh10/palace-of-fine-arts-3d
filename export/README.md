@@ -1502,7 +1502,8 @@ export/sync_main.sh
 26. **The near-tree `COLOR_0` range is GLOBAL, not per mesh (viewer round 13b; lead's decision).** The viewer
     cannot apply a per-mesh range: `gltfpack -mi` splits each tree by material and instances the resulting
     primitives **across** trees, so the 14 baked buffers arrive as 14 primitives over 26 placements and only
-    2 join back to a mesh unambiguously. `gltf_gate1.py` now encodes every mesh at **one range = 43.31984**
+    2 join back to a mesh unambiguously. `gltf_gate1.py` now encodes every mesh at **one range** read from the
+    npz on every run (**43.31984** at r2; **44.25656** after the shadow-ray re-bake, export r6)
     (the max over all 14 in `vertex_irradiance.npz`), still gamma-2, `FLOAT_COLOR`, `-vc 16`, same `-mi`.
     `uv2_relay_status.json` carries `vertex_irradiance_range_global` once and `range` on each row (the same
     number); `manifest_v4.py` copies it to `lightmaps.vertex_irradiance.range` — **one number the viewer
@@ -1591,3 +1592,76 @@ export/sync_main.sh
     format and silently skips the material — it returns False only for a JPEG (which never has alpha) and
     **raises** otherwise, because a texture whose alpha cannot be tested is a card that ships opaque in
     silence. `env.glb` 36 946 136 → **36 946 188 B** (+52); arch, orn, ground byte-identical.
+
+31. **Gate 4 — the 1 379 shrub/reed placements' irradiance, ordered against `env.glb` itself** (export r5).
+    The bake hands over `out/gate3/instance_irradiance.json`: one scene-linear RGB per **placement** of the 28
+    card meshes. The viewer uploads those as an `InstancedBufferAttribute`, which is indexed by **glb instance
+    row**, and `gltfpack -mi` re-orders the rows, drops every node name (gltfpack 1.2 refuses `-kn` with
+    `-mi`) and merges meshes — so the file's own array order is not the contract and, per
+    `docs/reviews/phase6_bake_gate4_instance_review.md`, **a name cannot be recovered from the glb at all**.
+    The join is therefore positional, and the pipeline is:
+    ```sh
+    node web/tools/instance_rows.mjs export/out/gate1/env.glb export/out/gate3/instance_rows.json
+    python3 export/gate4_instance_order.py      # -> out/gate3/instance_order.json (tolerance 0.02 m)
+    python3 export/verify_glb.py                # the Gate 4 row-count gate (also inside gltf_pack.sh --gate1)
+    python3 export/gate4_order_selftest.py      # 10 negative cases against the same check
+    python3 export/manifest_v4.py && export/sync_main.sh
+    ```
+    **Re-run the whole chain after every re-bake.** `manifest_v4.py` refuses a stale join: it asserts the order
+    file's `irradiance_sha256` and `irradiance_generated` against the `instance_irradiance.json` on disk and its
+    `glb_bytes` against `env.glb` (the bake added `loc` to the file on 2026-09-17 without changing `generated`,
+    which is exactly why the hash, not the timestamp, is the pin).
+    `instance_rows.mjs` is node, not python, because every accessor in the packed glbs rides in an
+    `EXT_meshopt_compression` bufferView: it loads `env.glb` through three's `GLTFLoader` + `MeshoptDecoder`
+    and dumps each `InstancedMesh`'s rows in accessor order, with the glTF node index from
+    `parser.associations` as the stable key. `gate4_instance_order.py` then converts each placement's Blender
+    `loc` to glTF space — **Blender (x, y, z) → glTF (x, z, −y)**, asserted on the seven bake-measured
+    `checks.dark` locs against the pre-pack `env.gltf` node translations (0.6 mm, the JSON's 3-decimal
+    rounding) — decides per node which mesh(es) it draws by containment, and matches rows to placements
+    one-to-one by nearest translation: tolerance **0.02 m** (the value the bake states), runner-up at least
+    **3x** further. Measured:
+    worst residual **5.9 mm** (gltfpack recentres a merged mesh, so the residual is that offset, not noise)
+    against a smallest within-node placement separation of **88 mm**, worst margin **55x**, **1 379/1 379**
+    rows over **28/28** meshes and **25** instanced nodes — the shipped `instance_order.json` carries those two
+    numbers itself (`worst_residual_m`, `worst_margin_ratio`), so read them there rather than from this text. Any unmatched row, duplicate match or mesh found in
+    two nodes is a hard failure — a silently swapped pair lights two shrubs with each other's irradiance. The
+    object name rides along as a label and is cross-checked against the nearest `env.gltf` node, never joined
+    on. `PFA_INSTANCE_IRR=<file>` runs the same join against a candidate JSON without touching the synced one.
+    **The name fallback is opt-in and unshippable.** If any placement lacks `loc` the join exits; only
+    `PFA_INSTANCE_ORDER_HARNESS=1` takes the positions from `env.gltf` by object name, and that output is
+    stamped `loc_in_json: false`, on which `manifest_v4.py` emits no array at all and `verify_glb.py` raises a
+    failure as soon as the irradiance JSON does carry `loc`.
+    **What it found:** gltfpack merged `EXPM_ENV_src_{maho2,pitto5,reed1}_LOD2.001` — each a one-placement
+    near-duplicate of its base mesh — into the base mesh's node, so glTF nodes 10 / 16 / 21 hold 46 / 102 / 76
+    rows against their base mesh's 45 / 101 / 75, with the odd row *inside* the run (rows 8, 14, 22). A viewer
+    binding one mesh's array to those nodes is one row short and misaligned from that point on, so the
+    manifest block carries `nodes[*].segments` — an ordered **`[mesh, count, offset]`** list per node — beside
+    the per-mesh arrays. A mesh therefore owns **two** segments in those nodes (`8 @0 + 1 @0 + 37 @8` on node
+    10), and `offset` is the row index into that mesh's own array: read the segments with a running cursor,
+    never one slice per mesh, or 37 mahonias take the irradiance of placements 0-36. `verify_glb` checks the
+    offsets tile each mesh's array exactly once.
+    **env.glb is not re-packed** (byte-identical, 36 946 188 B): the order is fully recoverable, no `COLOR_0`
+    changes and nothing is re-decimated, so `lightmaps.instance_irradiance.in_glb` stays **false** and the
+    data ships in the manifest: measured on the current artefacts, the block adds **107 kB** (1 852 075 B →
+    1 959 199 B) — worth serving gzip/br on the 6b host, since the manifest blocks the first frame. `verify_glb.py`
+    asserts the data against the glb: every node named is really instanced, its `TRANSLATION` accessor count
+    equals its segment total, the segment offsets tile each mesh's array once, and each of the 28 meshes gets
+    exactly its placement count of rows (`gate4_instance_irradiance.counts_match`). The MAIN `manifest.json` is
+    written by the lead's own `manifest_v4.py` run, so the size above is measured, not shipped by this branch.
+
+32. **Export r6 — the shadow-ray re-bake re-encoded** (2026-09-17, against `phase6-bake f9feec3`). Both hand-off
+    files were re-baked with shadow rays, so both were re-run through the unchanged r2/r5 chain, in order:
+    `gltf_gate1.py` (COLOR_0 from the new `vertex_irradiance.npz`), `gltf_pack.sh --gate1`,
+    `gate3_relay_check.py`, `instance_rows.mjs`, `gate4_instance_order.py`, `verify_glb.py`,
+    `gate4_order_selftest.py`. **COLOR_0:** one global range **44.25656** (was 43.31984 — the max moved only
+    2 %, but the per-mesh means rose 2.6-5.0x on the twelve trees whose coverage rose, and broadleaf_s19 /
+    willow_s37 are unchanged at 1.0x); the 16-bit round trip's `roundtrip_rel_p99` is **<= 0.47 %** on every
+    mesh with a mean above 0.01 and 28 % / 21 % on the two in full shadow (means 8e-6 and 0.0045), the same
+    structural result as r2 and for the same reason. **The glbs:** `env.glb` **36 946 188 -> 38 119 568 B**
+    (+1 173 380, the denser COLOR_0 codes at `-vc 16`); arch, orn and ground are byte-identical.
+    **The join, on the new glb:** 1 379/1 379 rows, 28/28 meshes, 25 nodes, worst residual **5.8 mm**, worst
+    margin **68.7x**, axis swap off by **0.1 mm** on the seven bake-measured locs (the new JSON carries `loc`
+    to 4 decimals). `verify_glb` PASS, `gate4_order_selftest` 10/10. The stale guards both fired on the way
+    through and are the reason the order was re-run at all: `verify_glb` refused the old order file against
+    the new `env.glb` by size, and `manifest_v4` refuses it against a different `instance_irradiance.json` by
+    sha256 — verified by hand on this round's files.
