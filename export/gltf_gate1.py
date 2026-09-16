@@ -11,6 +11,7 @@ The four files are separate so the viewer can stream them by class (arch and gro
 `export/gltf_pack.sh --gate1` turns the PNGs into KTX2 and each .gltf into a meshopt .glb.
 """
 import bpy
+import copy
 import os
 import sys
 import json
@@ -212,22 +213,27 @@ step.done(meshes=len(uv2_relay),
 
 # ---------------------------------------------------------------- Gate 3 hand-off 2: near-tree COLOR_0
 # The 20 near trees have no UV2 that could carry a lightmap (0.07-0.19 m per vertex is finer than their leaf
-# cards, so Gate 3 baked them to VERTEX_COLORS). out/gate3/vertex_irradiance.npz is uint8 per vertex per mesh
-# and is ALREADY the gamma-2 code the manifest declares: irradiance/pi = (code/255)^2 * range, range = 64
-# (`lightmaps.vertex_irradiance.encode/range`). So COLOR_0 carries code/255 - a value in [0,1] that gltfpack's
-# default 8-bit colour quantisation reproduces exactly - and the viewer decodes c*c*range*lightmap_scale.
+# cards, so Gate 3 baked them to VERTEX_COLORS). out/gate3/vertex_irradiance.npz is float32 SCENE-LINEAR
+# irradiance/pi per vertex per mesh (the bake's corrected file, phase6-bake ac63e44) - it is NOT encoded.
+# The lead's call (docs/decisions.md 2026-09-16) is the encode this export applies: gamma-2 at a PER-MESH
+# range, because one shared range wastes almost the whole code space on the dim meshes (this set spans
+# 0.469 to 43.3 - a factor of 92, i.e. 6.5 stops, which at a shared range is 6.5 stops of lost precision on
+# the darkest mesh). So COLOR_0 = sqrt(v / range_mesh) in [0, 1] and the viewer decodes
+# irradiance = COLOR_0^2 * range_mesh * lightmaps.scale, exactly as it decodes a gamma-2 lightmap texel.
+# `range` is the mesh's own max, so the brightest vertex codes to 1.0 and nothing clips.
 # FLOAT_COLOR/POINT is used deliberately: a BYTE_COLOR attribute is sRGB in Blender and the exporter would
-# linearise it, which would silently change every value. Vertex counts are asserted per mesh.
+# linearise it, which would silently change every value. env.glb is packed with -vc 16 (gltfpack quantises
+# colours to 8 bits by default, which would put the code step at 1/255 - a 0.8 % linear error at mid grey and
+# far worse near black). Vertex counts are asserted per mesh.
 step = g0.Step("gltf_gate1:gate3_color0")
 vi_npz = G3 / "vertex_irradiance.npz"
-VI_RANGE = 64.0
 vi_report = {}
 vi_skip = None
 if vi_npz.exists():
     z3 = np.load(str(vi_npz))
     # The Gate 3 code review (docs/reviews/phase6_bake_gate3_review.md, findings 3-4) found the first
     # vertex_irradiance.npz shipped as uint8 gamma-2 codes at ONE shared range of 64, not the float32
-    # scene-linear per mesh the manifest and the README promise, and the bake is re-writing it. The export
+    # scene-linear per mesh the manifest and the README promise, and the bake re-wrote it. The export still
     # refuses to encode COLOR_0 from anything but the float32 file: the encoding that ships depends on the
     # real per-mesh range, and a wrong one is invisible in the glb and wrong in every frame.
     dts = sorted({str(np.asarray(z3[f]).dtype) for f in z3.files})
@@ -235,20 +241,28 @@ if vi_npz.exists():
         vi_skip = (f"vertex_irradiance.npz is {dts}, not float32 scene-linear (Gate 3 review findings 3-4): "
                    f"COLOR_0 is NOT exported and lightmaps.vertex_irradiance.in_glb stays false")
         print("[gate1] gate3_color0 SKIPPED - " + vi_skip)
-        z3 = {"files": []}
         z3 = type("Empty", (), {"files": []})()
     for mn in z3.files:
         me = bpy.data.meshes.get(mn)
         assert me is not None, f"{vi_npz.name} names {mn}, which is not in the Gate 1 export set"
-        codes = np.asarray(z3[mn])
-        assert codes.dtype == np.uint8, f"{mn}: vertex irradiance is {codes.dtype}, the gamma2 codes are uint8"
-        assert codes.shape == (len(me.vertices), 3), \
-            f"{mn}: Gate 3 wrote {codes.shape[0]} vertex colours, the Gate 1 mesh has {len(me.vertices)} verts"
+        lin = np.asarray(z3[mn])
+        assert lin.dtype == np.float32, f"{mn}: vertex irradiance is {lin.dtype}, the bake writes float32"
+        assert lin.shape == (len(me.vertices), 3), \
+            f"{mn}: Gate 3 wrote {lin.shape[0]} vertex colours, the Gate 1 mesh has {len(me.vertices)} verts"
+        assert float(lin.min()) >= 0.0, f"{mn}: negative irradiance {float(lin.min())}"
         pre = [a.name for a in me.color_attributes]
         assert not pre, f"{mn} already carries colour attributes {pre}; COLOR_0 would not be the irradiance"
+        # the range is the mesh's own max, stored as float32 so the code can never exceed 1.0 after the
+        # float32 round trip the glTF buffer imposes.
+        rng = float(np.float32(lin.max()))
+        if rng <= 0.0:                       # a fully-shadowed mesh: keep the decode well defined
+            rng = 1.0
+        code = np.sqrt(lin.astype(np.float64) / rng)
+        assert code.max() <= 1.0 + 1e-6, f"{mn}: gamma2 code {code.max()} exceeds 1 at range {rng}"
+        code = np.clip(code, 0.0, 1.0)
         ca = me.color_attributes.new(name="irradiance", type="FLOAT_COLOR", domain="POINT")
         rgba = np.ones((len(me.vertices), 4), dtype=np.float32)
-        rgba[:, :3] = codes.astype(np.float32) / 255.0
+        rgba[:, :3] = code.astype(np.float32)
         ca.data.foreach_set("color", rgba.reshape(-1))
         for attr in ("active_color_index", "render_color_index"):
             try:
@@ -256,12 +270,19 @@ if vi_npz.exists():
             except (AttributeError, TypeError):
                 pass
         me.update()
-        lin = (codes.astype(np.float64) / 255.0) ** 2 * VI_RANGE
-        vi_report[mn] = dict(verts=int(codes.shape[0]), attribute=ca.name, domain="POINT", type="FLOAT_COLOR",
-                             encode="gamma2", range=VI_RANGE,
-                             code_mean=round(float(codes.mean()), 4), code_max=int(codes.max()),
-                             color0_mean=round(float((codes / 255.0).mean()), 6),
-                             linear_mean=round(float(lin.mean()), 6), linear_max=round(float(lin.max()), 4))
+        # what the viewer will get back out of a 16-bit quantised COLOR_0, measured here so the hand-off can
+        # be compared against it rather than against the ideal.
+        q16 = (np.round(rgba[:, :3].astype(np.float64) * 65535.0) / 65535.0) ** 2 * rng
+        nz = lin > 0
+        rel = np.abs(q16[nz] - lin[nz]) / lin[nz] if nz.any() else np.zeros(1)
+        vi_report[mn] = dict(verts=int(lin.shape[0]), attribute=ca.name, domain="POINT", type="FLOAT_COLOR",
+                             encode="gamma2", range=rng,
+                             code_mean=round(float(code.mean()), 6), code_max=round(float(code.max()), 6),
+                             color0_mean=round(float(code.mean()), 6),
+                             linear_mean=round(float(lin.mean()), 6), linear_max=round(float(lin.max()), 4),
+                             linear_mean_vc16=round(float(q16.mean()), 6),
+                             vc16_rel_p99=round(float(np.percentile(rel, 99)), 6),
+                             vc16_rel_max=round(float(rel.max()), 6))
 # Any OTHER mesh carrying colour attributes would also reach the glb now that the pack keeps source
 # attributes (-kv), and standard glTF multiplies COLOR_0 into the base colour. On the ORN prototypes that
 # attribute is `cavity` (scripts/orn_lib.py vertex_cavity): the ornament material reads it for recess dust and
@@ -288,9 +309,14 @@ report["gate3_color0"] = dict(source=str(vi_npz), meshes=vi_report, count=len(vi
                               stripped_note="ORN `cavity` (vertex_cavity) and any other source colour "
                                             "attribute: already inside the Gate 2 albedo bake, removed from "
                                             "the export copies only (docs/decisions.md 2026-09-16)",
-                              note="COLOR_0 = gamma2 code/255; irradiance = c*c*64*lightmap_scale. Standard "
-                                   "glTF multiplies COLOR_0 into base colour: the viewer must consume it as "
-                                   "irradiance (manifest lightmaps.vertex_irradiance), not as a tint.")
+                              encoding="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR/POINT, "
+                                       "env.glb packed with -vc 16",
+                              ranges={k: v["range"] for k, v in vi_report.items()},
+                              note="COLOR_0 = sqrt(irradiance_over_pi / range_mesh); the viewer decodes "
+                                   "c*c*range_mesh*lightmap_scale with the PER-MESH range from the manifest "
+                                   "(never one shared range). Standard glTF multiplies COLOR_0 into base "
+                                   "colour: the viewer must consume it as irradiance (manifest "
+                                   "lightmaps.vertex_irradiance), not as a tint.")
 step.done(meshes=len(vi_report), other_meshes_with_colour=len(other_colour))
 
 probe = load_img(probe_path, "sRGB")
@@ -424,6 +450,63 @@ for cls, objs in sets.items():
         doc = json.loads(path.read_text())
         report["classes"].setdefault(cls, {})
     report.setdefault("treeboard_alpha_mask", []).extend(patched)
+    # ---------------------------------------------------------------- the slot-merge guard (viewer round 13)
+    # gltfpack merges two meshes into one when they share a material AND their node transform SETS are
+    # identical - which is exactly the case for the colonnade `colbase_###_plinth` and `colbase_###_torus`
+    # pairs (both sit at the colbase origin with no rotation). arch.glb shipped 56 + 58 = 114 fewer
+    # placements than `orn_slots.arch_inst` names, so 114 of the 988 per-instance lightmap slots had no mesh
+    # of their own and the surviving merged mesh took ONE slot for both halves. The rotunda pairs escape only
+    # because the plinth carries a rotation the torus does not.
+    #   The two ways out are gltfpack's `-kn` (keep named nodes: it disables -mi, so arch goes from 27 draw
+    # calls to 564 for +52 552 B) and breaking the merge key. Breaking the key is what ships: the SECOND mesh
+    # of each colliding group gets its own copy of the material, with the SAME NAME, so gltfpack (-km, which
+    # disables named-material merging) keeps them apart and the meshes stay separate instanced nodes.
+    # Measured: +3 572 B and +2 draw calls, against -kn's +52 552 B and +537. The viewer matches materials by
+    # name (web/src/pbr.js candidateKeys, web/src/detail.js), so a duplicate name resolves to the same
+    # Gate 2 texture set and nothing downstream sees a new material.
+    nodes_by_mesh = {}
+    for nd in doc.get("nodes", []):
+        if "mesh" in nd:
+            nodes_by_mesh.setdefault(nd["mesh"], []).append(nd)
+
+    def _tkey(nd):
+        return json.dumps([nd.get("translation"), nd.get("rotation"), nd.get("scale"), nd.get("matrix")])
+
+    merge_groups = {}
+    for mi, m in enumerate(doc.get("meshes", [])):
+        key = (tuple(p.get("material") for p in m["primitives"]),
+               tuple(sorted({_tkey(nd) for nd in nodes_by_mesh.get(mi, [])})))
+        merge_groups.setdefault(key, []).append(mi)
+    split_meshes = []
+    for key, mis in merge_groups.items():
+        if len(mis) < 2 or not key[1]:
+            continue
+        for mi in mis[1:]:
+            for p in doc["meshes"][mi]["primitives"]:
+                if p.get("material") is None:
+                    continue
+                doc["materials"].append(copy.deepcopy(doc["materials"][p["material"]]))
+                p["material"] = len(doc["materials"]) - 1
+            split_meshes.append(doc["meshes"][mi].get("name"))
+    if split_meshes:
+        path.write_text(json.dumps(doc))
+        doc = json.loads(path.read_text())
+        # the guard has to hold AFTER the split, or gltfpack will merge something else away silently
+        nodes_by_mesh = {}
+        for nd in doc.get("nodes", []):
+            if "mesh" in nd:
+                nodes_by_mesh.setdefault(nd["mesh"], []).append(nd)
+        seen = {}
+        for mi, m in enumerate(doc.get("meshes", [])):
+            key = (tuple(p.get("material") for p in m["primitives"]),
+                   tuple(sorted({_tkey(nd) for nd in nodes_by_mesh.get(mi, [])})))
+            assert key not in seen or not key[1], (
+                f"{cls}.gltf: {m.get('name')} and {seen.get(key)} still share a material and an identical "
+                f"node transform set - gltfpack would merge them and their lightmap slots would collide")
+            seen[key] = m.get("name")
+        report["classes"][cls]["materials"] = len(doc.get("materials", []))
+    report["classes"][cls]["merge_split_meshes"] = split_meshes
+    report.setdefault("merge_split", {})[cls] = split_meshes
     # QA-11c-1: 1379 shrub nodes were written with NO transform and their meshes are local, so the whole
     # planting drew stacked at the origin. A mesh node may legitimately have no transform only when its
     # Blender object's transform is identity (the merged ARCH/ENV groups carry world-space geometry).

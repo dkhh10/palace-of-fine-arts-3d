@@ -9,10 +9,11 @@ What it proves, per mesh, from the files themselves - never from the script that
 * the seven re-laid masses - TEXCOORD_1 in `<cls>.gltf` is the layout of `gate3/lightmap_uv2.npz` (the
   island-area fraction is recomputed from the glTF's own indices and TEXCOORD_1, which is the same metric the
   bake reports as `uv2_coverage`), and the attribute survives into the packed `<cls>.glb`;
-* the 14 near trees - COLOR_0 exists, is NOT sRGB-encoded (every distinct value is a multiple of 1/255 and the
-  distinct set is a subset of the gamma-2 codes in `gate3/vertex_irradiance.npz`), and its decoded linear mean
-  is compared with the npz's. The exporter splits and welds vertices, so the vertex COUNTS and therefore the
-  means differ slightly while the distinct value set does not - both numbers are reported.
+* the 14 near trees - COLOR_0 exists, is NOT sRGB-encoded (every distinct exported value is one of THIS
+  mesh's own gamma-2 codes at its own range, recomputed here from `gate3/vertex_irradiance.npz`, which is
+  float32 scene-linear), and its decoded linear mean is compared with the npz's. The exporter splits and
+  welds vertices, so the vertex COUNTS and therefore the means differ while the distinct value set does not -
+  both numbers are reported, and the mean is asserted only against a 25 % bound.
 
 No Blender, no GPU. Exit 1 on any mismatch.
 """
@@ -25,7 +26,6 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 CLASSES = ("arch", "orn", "env", "ground")
-VI_RANGE = 64.0                      # manifest lightmaps.vertex_irradiance.range
 COMP = {5120: ("i1", 127.0), 5121: ("u1", 255.0), 5122: ("i2", 32767.0),
         5123: ("u2", 65535.0), 5125: ("u4", 4294967295.0), 5126: ("f4", 1.0)}
 NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
@@ -164,15 +164,15 @@ def main(out_dir, g3_dir, g3_out=None):
     vi = {}
     z3 = np.load(str(g3 / "vertex_irradiance.npz"))
     # docs/reviews/phase6_bake_gate3_review.md findings 3-4: the first npz shipped as uint8 gamma-2 codes at
-    # one shared range of 64 instead of float32 scene-linear per mesh, and the bake is re-writing it. Until
-    # the float32 file lands, export/gltf_gate1.py writes no COLOR_0 and there is nothing to read back.
-    # The value tests below are written against the uint8 gamma-2 form; when the float32 npz lands, the
-    # encoder in gltf_gate1.py and these tests change together, so the skip follows what the export did.
+    # one shared range of 64 instead of float32 scene-linear per mesh, and the bake re-wrote it (phase6-bake
+    # ac63e44). export/gltf_gate1.py still refuses to encode COLOR_0 from anything but the float32 file, and
+    # the tests below are written against that form: per-mesh range = the mesh's own max, code = sqrt(v/range).
     vi_dtypes = sorted({str(np.asarray(z3[f]).dtype) for f in z3.files})
     vi_skip = (gl.get("gate3_color0") or {}).get("skipped")
     if vi_skip is None and vi_dtypes != ["float32"]:
         vi_skip = (f"vertex_irradiance.npz is {vi_dtypes}, not float32 scene-linear (Gate 3 review findings "
                    f"3-4); COLOR_0 was not exported and lightmaps.vertex_irradiance.in_glb stays false")
+    wrote = (gl.get("gate3_color0") or {}).get("meshes") or {}
     for mn in (z3.files if vi_skip is None else []):
         cls = cls_of.get(mn)
         if cls is None:
@@ -180,7 +180,11 @@ def main(out_dir, g3_dir, g3_out=None):
             continue
         g = files[cls]
         me = g.meshes()[mn]
-        codes = np.asarray(z3[mn]).astype(np.float64)
+        lin_npz = np.asarray(z3[mn]).astype(np.float64)
+        # the encode rule (docs/decisions.md 2026-09-16): gamma-2 at the mesh's OWN max, so the range is
+        # recomputed here from the npz - never taken from the script that wrote the attribute. The writer's
+        # own number is cross-checked below.
+        rng = float(np.float32(lin_npz.max())) or 1.0
         vals, ctype, norm_flag, n_v = [], set(), set(), 0
         for pr in me["primitives"]:
             ai = pr["attributes"].get("COLOR_0")
@@ -195,31 +199,52 @@ def main(out_dir, g3_dir, g3_out=None):
             fail.append(f"{mn}: {cls}.gltf carries no COLOR_0 - the vertex irradiance did not reach the export")
             continue
         c = np.concatenate(vals, axis=0)
-        # not sRGB-encoded: every exported value is a multiple of 1/255 and belongs to this mesh's own codes.
-        q = np.abs(c * 255.0 - np.round(c * 255.0)).max()
-        codeset = set(np.unique(np.round(codes)).astype(int).tolist())
-        stray = sorted(set(np.unique(np.round(c * 255.0)).astype(int).tolist()) - codeset)
-        lin_glb = (c ** 2) * VI_RANGE
-        lin_npz = (codes / 255.0) ** 2 * VI_RANGE
+        lin_glb = (c ** 2) * rng
+        # not sRGB-encoded, and not some other mesh's values: every exported code must be one of THIS mesh's
+        # own gamma-2 codes. (The exporter splits and welds vertices, so the counts differ while the value
+        # SET survives; an sRGB encode would move every value by up to 0.3.)
+        want_codes = np.unique(np.sqrt(np.clip(lin_npz, 0.0, None) / rng).astype(np.float32).astype(np.float64))
+        got_codes = np.unique(c.astype(np.float64))
+        j = np.clip(np.searchsorted(want_codes, got_codes), 0, len(want_codes) - 1)
+        near = np.minimum(np.abs(want_codes[j] - got_codes),
+                          np.abs(want_codes[np.maximum(j - 1, 0)] - got_codes))
+        q = float(near.max())
+        nz = lin_npz > 0
+        # the round trip, per vertex, is only defined on the shared value set; compare the DISTRIBUTIONS
+        # (mean and max) and the worst code displacement instead.
+        rel = (2.0 * q / max(float(np.sqrt(lin_npz[nz].min() / rng)), 1e-9)) if nz.any() else 0.0
         in_glb = "COLOR_0" in packed_attr.get(cls, set())
+        w = wrote.get(mn) or {}
         vi[mn] = dict(asset=asset_of.get(mn), glb=f"{cls}.glb", in_glb=bool(in_glb),
-                      encoding="gamma2", range=VI_RANGE, attribute="COLOR_0",
+                      encoding="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
+                      range=rng, attribute="COLOR_0",
                       component_type=sorted(ctype), normalized=sorted(norm_flag),
                       mean=round(float(lin_glb.mean()), 6), mean_npz=round(float(lin_npz.mean()), 6),
+                      mean_linear=round(float(lin_npz.mean()), 6),
                       mean_delta=round(float(lin_glb.mean() - lin_npz.mean()), 6),
+                      mean_rel_delta=round(float(abs(lin_glb.mean() - lin_npz.mean())
+                                                 / max(lin_npz.mean(), 1e-12)), 6),
                       color0_mean=round(float(c.mean()), 6), color0_max=round(float(c.max()), 6),
                       max_npz=round(float(lin_npz.max()), 4), max_glb=round(float(lin_glb.max()), 4),
-                      verts_npz=int(codes.shape[0]), verts_in_gltf=int(n_v),
-                      code_quantisation_error=round(float(q), 6), codes_not_in_npz=stray[:6],
-                      decode="irradiance = COLOR_0^2 * range * lightmap_scale",
+                      verts_npz=int(lin_npz.shape[0]), verts_in_gltf=int(n_v),
+                      code_quantisation_error=round(q, 8), roundtrip_rel_p99=round(float(rel), 6),
+                      range_from_writer=w.get("range"),
+                      decode="irradiance = COLOR_0^2 * range * lightmap_scale (range is PER MESH)",
                       source="gate3/vertex_irradiance.npz")
-        if q > 2e-3:
-            fail.append(f"{mn}: COLOR_0 values are not multiples of 1/255 (max {q:.4f}) - the exporter "
-                        f"transformed the gamma-2 codes (sRGB encode?)")
-        if stray:
-            fail.append(f"{mn}: COLOR_0 carries codes the npz does not: {stray[:6]}")
-        if abs(lin_glb.max() - lin_npz.max()) > 1e-3:
+        if q > 1e-5:
+            fail.append(f"{mn}: exported COLOR_0 codes are up to {q:.6f} away from this mesh's own gamma-2 "
+                        f"codes - the exporter transformed them (sRGB encode? wrong range?)")
+        if w.get("range") is not None and abs(float(w["range"]) - rng) > 1e-6 * max(rng, 1.0):
+            fail.append(f"{mn}: gltf_gate1.py encoded at range {w['range']}, the npz max is {rng}")
+        if abs(lin_glb.max() - lin_npz.max()) > 1e-3 * max(rng, 1.0):
             fail.append(f"{mn}: COLOR_0 decodes to max {lin_glb.max():.4f}, the npz max is {lin_npz.max():.4f}")
+        # the mean is REPORTED, not asserted below 25 %: the exporter splits vertices per normal/UV seam, so
+        # a leaf-card mesh's exported vertex count is not the npz's and the two means are weighted
+        # differently. The value-set test above is the one that proves the encode; a wrong range or an sRGB
+        # pass moves every value and fails it. A mean that moves by a quarter means placements were lost.
+        if abs(lin_glb.mean() - lin_npz.mean()) > 0.25 * max(lin_npz.mean(), 1e-9):
+            fail.append(f"{mn}: COLOR_0 decodes to mean {lin_glb.mean():.6f}, the npz mean is "
+                        f"{lin_npz.mean():.6f} (> 25 %, far past what the vertex split explains)")
         if not in_glb:
             fail.append(f"{mn}: {cls}.glb has no COLOR_0 - gltfpack dropped the vertex irradiance")
 
@@ -227,8 +252,9 @@ def main(out_dir, g3_dir, g3_out=None):
         schema="pfa-phase6/gate3-relay/1", written_by="export/gate3_relay_check.py",
         source_blend="export/out/gate1/gate1_set.blend (frozen Gate 1 geometry)",
         note="The bake engineer's manifest writer flips lightmaps.assets[<asset>].uv2_in_glb and "
-             "lightmaps.vertex_irradiance.in_glb from this file. COLOR_0 is the gamma-2 CODE / 255: "
-             "irradiance = COLOR_0^2 * 64 * lightmap_scale. Standard glTF multiplies COLOR_0 into base "
+             "lightmaps.vertex_irradiance.in_glb from this file, and copies `range` PER MESH out of the "
+             "vertex_irradiance block. COLOR_0 is a gamma-2 code at that mesh's own range: "
+             "irradiance = COLOR_0^2 * range * lightmap_scale. Standard glTF multiplies COLOR_0 into base "
              "colour, so the viewer must consume these 14 meshes' COLOR_0 as irradiance, not as a tint.",
         uv2=uv2, uv2_all_meshes=all_uv2,
         vertex_irradiance=vi, vertex_irradiance_skipped=vi_skip, npz_dtypes=vi_dtypes,

@@ -132,6 +132,17 @@ print("-kv" if (c.get("texcoord1_meshes") or c.get("color0_meshes")) else "")
 PY1
 )
     [ -n "$KV" ] && EXTRA+=(-kv)
+    # -vc 16 (colour quantisation bits, default 8): the near-tree irradiance rides in COLOR_0 as a gamma-2
+    # code at a per-mesh range (lead's decision, docs/decisions.md 2026-09-16). At the default 8 bits the code
+    # step is 1/255, which is a 0.8 % linear error at mid grey and much worse near black; at 16 bits it is
+    # 1/65535. Given only to the class that actually carries COLOR_0, so every other class stays byte-identical.
+    VC=$(python3 - "$OUT" "$cls" <<'PY1b'
+import json, os, sys
+c = json.load(open(os.path.join(sys.argv[1], "gltf_gate1.json")))["classes"].get(sys.argv[2], {})
+print("-vc" if c.get("color0_meshes") else "")
+PY1b
+)
+    [ -n "$VC" ] && EXTRA+=(-vc 16)
     if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else

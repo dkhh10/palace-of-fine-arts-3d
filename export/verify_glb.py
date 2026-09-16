@@ -91,6 +91,21 @@ def main(out_dir):
               "arch" if a["cls"] == "ARCH" else "orn" if a["cls"] == "ORN" else "env"
         want_tris[cls] = want_tris.get(cls, 0) + a["tris"]
 
+    # how many of the 988 per-instance lightmap slots each class owns (manifest `orn_slots`, the bake's).
+    # A slot is addressed by world centre, so it needs its own mesh or instance in the packed glb.
+    slot_objects = {}
+    man_p = out / "manifest.json"
+    if man_p.exists():
+        man = json.loads(man_p.read_text())
+        cls_of_obj = {name: ("ground" if a.get("kind") == "ground" else
+                             "arch" if a["cls"] == "ARCH" else "orn" if a["cls"] == "ORN" else "env")
+                      for name, a in setjson["assets"].items()}
+        for rows_ in (man.get("orn_slots") or {}).values():
+            for s in rows_:
+                c = cls_of_obj.get(s.get("object"))
+                if c:
+                    slot_objects[c] = slot_objects.get(c, 0) + 1
+
     gl = json.loads((out / "gltf_gate1.json").read_text()) if (out / "gltf_gate1.json").exists() else {}
     flags = {}
     fp = out / "gltfpack_flags.txt"
@@ -151,10 +166,16 @@ def main(out_dir):
         have_mats = {m.get("name") for m in doc.get("materials", []) if m.get("name")}
         missing = sorted(want_mats - have_mats)
         strict = "-km" in (flags.get(cls) or "")
+        # the slot-merge guard (gltf_gate1.py) deliberately gives a colliding mesh its own copy of the
+        # material under the SAME NAME, so a class can hold more materials than names. That is the only
+        # legitimate source of a duplicate name, and it is checked against the split list below.
+        split = (gl.get("classes", {}).get(cls) or {}).get("merge_split_meshes") or []
+        dup_names = len(doc.get("materials", [])) - len(have_mats)
         rows[cls] = dict(gltfpack_flags=flags.get(cls), materials_expected=len(want_mats),
                          materials_in_glb=len(doc.get("materials", [])),
                          materials_named_in_glb=len(have_mats), materials_missing=len(missing),
                          materials_missing_names=missing[:12], material_names_enforced=strict,
+                         merge_split_meshes=split, duplicate_material_names=dup_names,
                          tris_drawn=tris, tris_expected=want_tris.get(cls, 0),
                          placements_in_glb=plain + inst, objects_in_set=len(per_cls.get(cls, [])),
                          plain_nodes=plain, instanced_nodes=inst_nodes, instanced_placements=inst,
@@ -197,6 +218,19 @@ def main(out_dir):
         if origin_inst > max(1, near_expected.get(cls, 0)):
             bad.append(f"{cls}: {origin_inst} un-instanced mesh nodes have their GEOMETRY within 1 m of "
                        f"the world origin ({near_expected.get(cls, 0)} expected)")
+        if dup_names and not split:
+            bad.append(f"{cls}: {dup_names} materials share a name but no mesh was split for the slot-merge "
+                       f"guard - gltfpack merged names away or the export wrote a duplicate by accident")
+        # Every per-instance lightmap slot needs a MESH OF ITS OWN in the glb, or the viewer cannot address
+        # it: it matches a drawn mesh (or instance) by world centre against `orn_slots`. Viewer round 13
+        # found 114 of the 988 slots unreachable because gltfpack had merged the colonnade colbase
+        # plinth/torus pairs. The class's placements must therefore cover its share of the slot table.
+        slots_here = slot_objects.get(cls, 0)
+        rows[cls]["slot_objects_in_manifest"] = slots_here
+        if slots_here and plain + inst < slots_here:
+            bad.append(f"{cls}: {plain + inst} placements in the glb for {slots_here} per-instance lightmap "
+                       f"slots in orn_slots - gltfpack merged {slots_here - (plain + inst)} slot mesh(es) "
+                       f"away and the viewer cannot address them")
     # ------------------------------------------------------------ Gate 3 hand-off, per mesh
     # 1. the seven re-laid meshes: their TEXCOORD_1 is the Gate 3 layout, not the Gate 1 one, and the island
     #    area it packs is reported. The relay threshold is 0.15 of the square; three of the seven still land
