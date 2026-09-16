@@ -762,3 +762,6 @@ Next: cam04 ref -> GPU-free to bake -> probe verdict -> encode/pack -> manifest 
 
 ## 2026-09-16 · Cycles references complete: round13_02..06 on main (compositor on, 128 spp). GPU handed to the bake engineer (ceiling bake -> sky-branch probe -> encode/pack)
 Viewer's --perf and Gate 4 capture follow the bake report. QA 14 (docs/briefs/qa_round_14.md) after the capture.
+
+## 2026-09-16 · Viewer ready for the GPU (phase6-viewer bbe1d7b): refs 2-6 repointed (cam02 1.10x, cam04 0.95x on round13b; cam02 1.01x with the Gate 4 look), item 6 frame-breakdown instrumentation, 173 tests green
+Order on the bake's GPU-done signal: re-sync -> --perf + --breakdown -> gate4.sh capture -> QA 14. Bake engineer running the ceiling bake + sky-branch probe now.
