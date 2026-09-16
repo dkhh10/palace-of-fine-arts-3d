@@ -324,6 +324,23 @@ Evidence, 24 probes (six stations x four headings x 30 s at 3.2 m/s, `--walkprob
 the lagoon headings are refused (st1/180 1783 of 1801 steps, st5/180 1711, st2/270 1561) and the
 inland ones run the full 96 m unobstructed.
 
+### Performance (item 6), 2560x1440, everything on, round13b
+
+| station | presented frame | fps | `gl.finish` render cost | draws | tris |
+|---|---|---|---|---|---|
+| 1 lagoon hero | 22.7 ms | 44.1 | 2.3 ms | 269 | 5.24 M |
+| 2 NE 3/4 | 22.2 ms | 45.0 | 2.1 ms | 259 | 5.06 M |
+| 3 colonnade walk | 24.3 ms | 41.2 | 2.1 ms | 279 | 5.44 M |
+| 4 rotunda ceiling | 16.6 ms | 60.2 | 0.6 ms | 113 | 2.20 M |
+| 5 south lawn | 24.9 ms | 40.2 | 2.1 ms | 252 | 4.86 M |
+| 6 aerial | 25.8 ms | 38.8 | 2.4 ms | 291 | 5.60 M |
+
+Resident 1549-1678 MB (textures 1172, render targets 315-444, geometry 62); 272 textures, all
+`RGBA_ASTC_4x4`. **The frame is not GPU-bound**: the GPU does 0.6-2.4 ms of work (400-1600 fps) while
+the presented frame sits at 16.6-25.8 ms, so what is missing the 45 fps target is on the CPU or in
+headless Chrome's compositor, not in the renderer. That wants its own measurement before anything is
+optimised, and it is the open half of item 6.
+
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
   reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is
