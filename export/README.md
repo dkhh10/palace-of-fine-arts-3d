@@ -1390,7 +1390,8 @@ export/sync_main.sh
 26. **The near-tree `COLOR_0` range is GLOBAL, not per mesh (viewer round 13b; lead's decision).** The viewer
     cannot apply a per-mesh range: `gltfpack -mi` splits each tree by material and instances the resulting
     primitives **across** trees, so the 14 baked buffers arrive as 14 primitives over 26 placements and only
-    2 join back to a mesh unambiguously. `gltf_gate1.py` now encodes every mesh at **one range = 43.31984**
+    2 join back to a mesh unambiguously. `gltf_gate1.py` now encodes every mesh at **one range** read from the
+    npz on every run (**43.31984** at r2; **44.25656** after the shadow-ray re-bake, export r6)
     (the max over all 14 in `vertex_irradiance.npz`), still gamma-2, `FLOAT_COLOR`, `-vc 16`, same `-mi`.
     `uv2_relay_status.json` carries `vertex_irradiance_range_global` once and `range` on each row (the same
     number); `manifest_v4.py` copies it to `lightmaps.vertex_irradiance.range` — **one number the viewer
@@ -1489,7 +1490,7 @@ export/sync_main.sh
     The join is therefore positional, and the pipeline is:
     ```sh
     node web/tools/instance_rows.mjs export/out/gate1/env.glb export/out/gate3/instance_rows.json
-    python3 export/gate4_instance_order.py      # -> out/gate3/instance_order.json
+    python3 export/gate4_instance_order.py      # -> out/gate3/instance_order.json (tolerance 0.02 m)
     python3 export/verify_glb.py                # the Gate 4 row-count gate (also inside gltf_pack.sh --gate1)
     python3 export/gate4_order_selftest.py      # 10 negative cases against the same check
     python3 export/manifest_v4.py && export/sync_main.sh
@@ -1505,7 +1506,8 @@ export/sync_main.sh
     `loc` to glTF space — **Blender (x, y, z) → glTF (x, z, −y)**, asserted on the seven bake-measured
     `checks.dark` locs against the pre-pack `env.gltf` node translations (0.6 mm, the JSON's 3-decimal
     rounding) — decides per node which mesh(es) it draws by containment, and matches rows to placements
-    one-to-one by nearest translation: tolerance **0.03 m**, runner-up at least **3x** further. Measured:
+    one-to-one by nearest translation: tolerance **0.02 m** (the value the bake states), runner-up at least
+    **3x** further. Measured:
     worst residual **5.9 mm** (gltfpack recentres a merged mesh, so the residual is that offset, not noise)
     against a smallest within-node placement separation of **88 mm**, worst margin **55x**, **1 379/1 379**
     rows over **28/28** meshes and **25** instanced nodes — the shipped `instance_order.json` carries those two
@@ -1534,3 +1536,20 @@ export/sync_main.sh
     equals its segment total, the segment offsets tile each mesh's array once, and each of the 28 meshes gets
     exactly its placement count of rows (`gate4_instance_irradiance.counts_match`). The MAIN `manifest.json` is
     written by the lead's own `manifest_v4.py` run, so the size above is measured, not shipped by this branch.
+
+32. **Export r6 — the shadow-ray re-bake re-encoded** (2026-09-17, against `phase6-bake f9feec3`). Both hand-off
+    files were re-baked with shadow rays, so both were re-run through the unchanged r2/r5 chain, in order:
+    `gltf_gate1.py` (COLOR_0 from the new `vertex_irradiance.npz`), `gltf_pack.sh --gate1`,
+    `gate3_relay_check.py`, `instance_rows.mjs`, `gate4_instance_order.py`, `verify_glb.py`,
+    `gate4_order_selftest.py`. **COLOR_0:** one global range **44.25656** (was 43.31984 — the max moved only
+    2 %, but the per-mesh means rose 2.6-5.0x on the twelve trees whose coverage rose, and broadleaf_s19 /
+    willow_s37 are unchanged at 1.0x); the 16-bit round trip's `roundtrip_rel_p99` is **<= 0.47 %** on every
+    mesh with a mean above 0.01 and 28 % / 21 % on the two in full shadow (means 8e-6 and 0.0045), the same
+    structural result as r2 and for the same reason. **The glbs:** `env.glb` **36 946 188 -> 38 119 568 B**
+    (+1 173 380, the denser COLOR_0 codes at `-vc 16`); arch, orn and ground are byte-identical.
+    **The join, on the new glb:** 1 379/1 379 rows, 28/28 meshes, 25 nodes, worst residual **5.8 mm**, worst
+    margin **68.7x**, axis swap off by **0.1 mm** on the seven bake-measured locs (the new JSON carries `loc`
+    to 4 decimals). `verify_glb` PASS, `gate4_order_selftest` 10/10. The stale guards both fired on the way
+    through and are the reason the order was re-run at all: `verify_glb` refused the old order file against
+    the new `env.glb` by size, and `manifest_v4` refuses it against a different `instance_irradiance.json` by
+    sha256 — verified by hand on this round's files.

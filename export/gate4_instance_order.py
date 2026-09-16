@@ -20,7 +20,8 @@ measured itself, against the pre-pack `out/gate1/env.gltf` node translations: me
 is the JSON's own 3-decimal rounding. Then, per node:
 
 1. a mesh is `contained` in an instanced node when EVERY one of its placements has a row of that node within
-   `TOL_M`; a mesh must be contained in exactly one node, and a card node's row count must equal the sum of
+   `TOL_M` (0.02 m, the tolerance the bake states); a mesh must be contained in exactly one node, and a
+   card node's row count must equal the sum of
    its contained meshes' placement counts (nothing unexplained, nothing missing);
 2. rows are matched one-to-one to that node's placements by nearest translation, requiring residual < `TOL_M`
    and a runner-up at least `MARGIN` times further. Headroom: the worst residual measured is 5.7 mm
@@ -59,7 +60,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gate3_common as g3  # noqa: E402
 
 SCHEMA = "pfa-phase6/gate4-instance-order/2"   # /2: segments carry a per-segment offset
-TOL_M = 0.03        # max accepted row -> placement residual (worst measured 0.0057 m; nearest rival 0.088 m)
+TOL_M = 0.02        # max accepted row -> placement residual: the bake states the join at 0.02 m
+                    # (export/README.md, phase6-bake f9feec3). Worst measured 0.0059 m against a
+                    # smallest within-node placement separation of 0.088 m, so 0.02 keeps 3.4x of
+                    # headroom over the residual and stays 2.2x under half the separation.
 MARGIN = 3.0        # the nearest placement must be this many times closer than the runner-up
 SWAP_TOL_M = 0.005  # axis-swap self-check against env.gltf (the JSON rounds loc to 3 decimals)
 

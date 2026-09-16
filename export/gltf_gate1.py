@@ -216,7 +216,8 @@ step.done(meshes=len(uv2_relay),
 # The 20 near trees have no UV2 that could carry a lightmap (0.07-0.19 m per vertex is finer than their leaf
 # cards, so Gate 3 baked them to VERTEX_COLORS). out/gate3/vertex_irradiance.npz is float32 SCENE-LINEAR
 # irradiance/pi per vertex per mesh (the bake's corrected file, phase6-bake ac63e44) - it is NOT encoded.
-# The encode is gamma-2 at ONE GLOBAL range - the max over all 14 meshes (43.32) - so COLOR_0 =
+# The encode is gamma-2 at ONE GLOBAL range - the max over all 14 meshes, computed from the npz on
+# every run (43.32 before the shadow-ray re-bake, 44.2566 after it, phase6-bake f9feec3) - so COLOR_0 =
 # sqrt(v / range) in [0, 1] and the viewer decodes irradiance = COLOR_0^2 * range * lightmaps.scale,
 # exactly as it decodes a gamma-2 lightmap texel, from a SINGLE number.
 #   The first encode used a PER-MESH range (2026-09-16), which is better use of the code space: the set
