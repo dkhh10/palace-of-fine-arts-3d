@@ -23,3 +23,9 @@ draw calls), the walk-probe json, the loading-screen screenshot.
    median at 1440p or the measured number with the GPU-vs-CPU attribution? Verdict: GATE 4 PASSED / ONE MORE ROUND (name the items) / FAILED (name the blocker).
 Write docs/qa_round_14.md (< 120 lines), renders/web/round14_gate.png (960 px composite), append docs/quality_checklist.md; commit only those + scripts/qa_*.py on main.
 Report < 20 lines: verdict, per-station scores, the three worst boxes with numbers, tile defects, commit id.
+
+Addendum (lead, 2026-09-16): the capture is `round14` in the phase6-viewer worktree (`.claude/worktrees/phase6-viewer/renders/web/`: round14_cam01..06.png full-res untracked on disk,
+960/ copies, six pair sheets, tiles/round14/, round14_perf.json, round14_walk.json, 960/round14_loading_screen.jpg). Read docs/status.md's "round14 CAPTURED" entry for the
+whole-frame ratios and what was NOT shipped (half-res levers, probe-as-specular). Perf is 34.6 fps with everything on: score it as measured with the viewer's attribution (Reflector
+second traversal + full-res bloom over one vsync interval); the 45 fps work continues in parallel. The sky-branch hypothesis for QA-12b-1 was refuted (decisions.md); the olive cast
+is downstream of the bake and still open — report its numbers, do not attribute it to the lightmaps.

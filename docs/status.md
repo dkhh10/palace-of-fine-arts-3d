@@ -778,3 +778,7 @@ Merge of phase6-bake follows the fix commit. Viewer: half-res levers, probe-as-s
 
 ## 2026-09-16 · phase6-bake r2 MERGED with the 3 review fixes (88a9d6b): env_armed() strict parse, README + tech_notes "Bake-side traps", stale worktree manifest removed. MAIN manifest ceiling range 16.755 confirmed
 All three Phase 6 branches merged and in sync with main. Waiting on the viewer: half-res levers + probe-as-specular A/B -> round14 capture -> QA 14.
+
+## 2026-09-16 · round14 CAPTURED (phase6-viewer 1cc73fd; A/Bs b12670a): Gate 4 look on the re-baked ceiling. Whole-frame vs reference: 01 0.92x · 02 1.01x · 03 1.67x · 04 1.11x · 05 1.04x · 06 0.75x; post-off control 0.85/0.97/1.80/1.12/0.98/0.43
+Not shipped: half-res bloom/Reflector (only ~4 of the ~12 ms needed; the Reflector's cost is its second scene traversal at 314 draws, not fill; each lever also moved a box: water R-B 0.943x, sunlit attic std 1.035x) and probe-as-specular (G > R cam02 21.7 -> 17.2 % but cam01 boxes moved 1.2-1.5x). Perf everything on: 28.9 ms (34.6 fps), 1 678 MB. Walk: 24 probes, zero in the lagoon. Artefacts: renders/web/round14_cam01..06.png (untracked full-res, 960 px copies tracked), pair sheets, tiles/round14/, round14_perf.json, round14_walk.json, 960/round14_loading_screen.jpg — all in the phase6-viewer worktree.
+Dispatched: QA 14 (Opus xhigh, docs/briefs/qa_round_14.md) on round14; viewer engineer on the Reflector draw set (item 6). Open: cam03 1.67x, cam06 0.75x, QA-12b-1, 45 fps.
