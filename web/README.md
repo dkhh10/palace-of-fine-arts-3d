@@ -557,6 +557,27 @@ Not shipped. The switch stays, and this is the standing lead on the olive cast.
 * **`requestfailed:` fails a scored capture**, except `net::ERR_ABORTED`, which is a cancelled request
   and which a clean capture logs 189 of.
 
+### Round 15 against round 14 (`renders/web/round15_*`)
+Frame luma against each station's Cycles reference, from the pair sheets:
+
+| station | reference | round14 | round15 | round14 MAE | round15 MAE |
+|---|---|---|---|---|---|
+| 01 lagoon hero | 140.0 | 129.0 (0.878x) | **133.8 (0.903x)** | 29.68 | **26.89** |
+| 02 NE three-quarter | 100.4 | 101.2 (0.994x) | 110.7 (1.052x) | 23.72 | 24.86 |
+| 03 colonnade walk | 49.0 | 81.8 (1.846x) | 81.4 (1.826x) | 34.74 | 34.77 |
+| 04 rotunda ceiling | 63.5 | 70.7 (1.119x) | 70.6 (1.118x) | 13.13 | 13.12 |
+| 05 south lawn | 151.2 | 156.8 (1.046x) | **153.6 (1.008x)** | 25.36 | **22.90** |
+| 06 aerial | 100.9 | 77.8 (0.750x) | **101.1 (0.994x)** | 40.48 | **21.15** |
+
+cam06 is the derived murk: its whole lower frame is lagoon, which round 14 rendered as a near-black
+body. cam01 and cam05 improve on both axes; cam03 and cam04 are untouched by anything in round 7
+(their residual is the probe fill, see below); cam02 gains 1.1 of MAE because its near water is now
+brighter than the reference's there.
+
+Frame time at 2560x1440: **28.60 ms median** (35.0 fps presented, vsync-capped), render cost 2.00 ms,
+301 draws, resident 1 677.8 MB — within noise of round 14's 28.9 ms. The bloom threshold is not a
+frame-time lever and neither is its radius; `?bloomres=half` is (the `fast` preset).
+
 ### QA-14-2 (cam03) and QA-14-3 (cam06) attributed — round 7 item 3
 Measured on the round-14 captures against the round-13 Cycles references, WITH and WITHOUT the post
 chain, so mist is separated from lighting before anything is blamed on it:
