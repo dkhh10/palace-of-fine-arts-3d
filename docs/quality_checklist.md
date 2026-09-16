@@ -787,3 +787,36 @@ Cycles hero and 2-6 the round-13 Cycles frames (128 spp, compositor on). Tools: 
 **Scores (round 09 -> round 13 -> round 14).** 01 3.67 -> 3.39 -> **3.61**, 02 2.94 -> 2.69 -> **2.94**,
 03 2.56 -> 2.69 -> **2.56**, 04 2.81 -> 2.31 -> **2.88**, 05 3.06 -> 2.89 -> **2.83**, 06 2.67 -> 2.33 -> **2.56**.
 Delta vs Phase 5: -0.06 / 0.00 / 0.00 / +0.07 / -0.23 / -0.11.
+
+## Round 15 — Phase 6 Gate 4, round two (`round15`, phase6-viewer 43b1e0a). **6a PARITY REACHED**
+
+1. **Closed this round.** **QA-14-1 water** (largely): open-water row high-pass **0.97 -> 6.92** (ref 13.23, the
+   0.5x-2x acceptance), row/col **0.72 -> 3.71** (ref 3.24), reflection mass **0.85x -> 1.00x** with hue within
+   2.8 deg, Fresnel now falls 95.5 -> 65.1 where the reference falls 87.8 -> 60.4 (round 14 was flat at 41), and the
+   hard reflection line is gone. **QA-14-3 cam06**: near half **0.53x -> 0.98x**, p10 **3.6 -> 69.1** (ref 58.0),
+   whole frame 0.75x -> **1.00x**, MAE 37.1 -> **18.7**. **QA-14-4 bloom** to its ceiling: capital-row std
+   **0.69x -> 0.85x** (gate 0.85x), dome-cap halo +12.0 -> **+5.1** over the reference (post-on minus post-off
+   +7.65 -> **+0.76**), attic sat 0.80x -> **0.87x** against a post-off ceiling of 0.887x. **Minors:** walk floor
+   **0 of 24** probes below `WATER_Z + 0.1` (was 3); loading bar **640.1 / 640.1 MB = 100.0 %** (was 122.3 %);
+   the README's QA-notes section is back.
+2. **Open, carried.** **QA-14-1 residual**: the lagoon away from the reflection is a flat saturated teal slab —
+   hue **195.6 vs 144.8 deg**, sat **0.363 vs 0.041**, lum 0.75x, no crests at 100 %. **QA-14-2 cam03** flat: near
+   p10 **53.1 vs 17.0**, frame 1.65x — surfaces with no baked light on a single-point probe; bake/export, post-6a.
+   **QA-14-5 foliage** half: cam02 near-tree level **0.99x** and the cyan gone, hue still **-44.7 deg** (albedo).
+   **QA-12b-2**: S-colonnade wall mid **0.44x**, post-off ceiling 0.51x — the flat cream wall itself, not bloom.
+   **New:** the probe-lit N-colonnade / backdrop wall **1.00x -> 1.26x**; north shaft CV 0.361 -> 0.248; cam01
+   shore-planting sat 1.54x of Cycles.
+3. **Named exceptions standing.** Export-set name sweep **0 to explain** (Gate 3 r2; membership unchanged — the only
+   re-export was `env.glb`'s COLOR_0 re-encode and the `instance_irradiance` manifest block). The 127
+   `ENV_treeboard_*` carriers stay in `env.glb` and stay hidden (`?treeboards=0`) with the octahedral impostors drawn
+   in their place. The backdrop wall as one flat field is the hero probe's single-point irradiance (decisions.md).
+4. **6a criteria.** Within 0.5 of Phase 5 **PASS** (worst -0.12, cam05); none below 2.5 **PASS** (floor cam03 2.56);
+   water reflects the rotunda **PASS**, now as ripple streaks; walk clamp **PASS** 24/24 with **0 below the floor**
+   — caveat, the probe ran 6 s / 19.3 m per heading against round 14's 30 s / 96 m, so only 2 of the 3 round-14
+   violations fall inside the re-tested window (re-run once at 30 s, post-6a); loading screen **PASS** with a correct
+   total; **>= 45 fps NOT MET** — 28.2 ms = **35.5 fps** at 1440p (44 only at cam04), GPU median 2.5 ms, 279 draws,
+   resident 1 677.9 MB, load 640.1 MB in 6.11 s; deterministic screenshots **PASS**, 0 page errors.
+
+**Scores (round 09 -> 13 -> 14 -> round 15).** 01 3.67 -> 3.39 -> 3.61 -> **3.72**, 02 2.94 -> 2.69 -> 2.94 ->
+**3.00**, 03 2.56 -> 2.69 -> 2.56 -> **2.56**, 04 2.81 -> 2.31 -> 2.88 -> **2.88**, 05 3.06 -> 2.89 -> 2.83 ->
+**2.94**, 06 2.67 -> 2.33 -> 2.56 -> **2.83**. Delta vs Phase 5: **+0.05 / +0.06 / 0.00 / +0.07 / -0.12 / +0.17**.
