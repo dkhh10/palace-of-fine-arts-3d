@@ -869,3 +869,13 @@ export/sync_main.sh
     `lightmaps.assets[*].uv2_in_glb` and `lightmaps.vertex_irradiance.in_glb` from that file; nobody edits
     `manifest.json` by hand.** `export/sync_main.sh` copies `out/gate3/` to MAIN with no `--delete` and
     excludes the bake's blends, so the export only ever adds its own file there.
+18. **What it cost and what verify says.** `arch.glb` 3 589 032 → **4 609 468 B** (+1.02 MB, +28 %) and
+    `ground.glb` 1 238 288 → **1 959 104 B** (+0.72 MB, +58 %) for `-kv`; `env.glb` (35 797 240 B) and
+    `orn.glb` (154 065 360 B) are byte-identical, so the payload grows **1.74 MB** in total and nothing else
+    moves. `verify_glb` PASS: arch 947 622 drawn triangles (−0.185 % against `export_set.json`, the usual
+    degenerate-triangle loss), orn −0.157 %, env and ground 0.000 %, 15/15 + 62/62 material names kept under
+    `-km`, 0 objects at the origin; `TEXCOORD_1` reaches **349 614 of arch's 351 374** triangles (−0.5 %) and
+    **113 043 of 113 043** on ground. `export/name_sweep.py`: 2 540 objects, 127 exempt, **0 to explain**.
+    `gate3_relay_check.py`: all seven re-laid layers in the glbs, ≥ 99.97 % of their exported `TEXCOORD_1`
+    values found in the npz. 66 meshes carry `TEXCOORD_1` in the glTFs (29 arch + 4 ground + 33 orn); the 33
+    `orn` ones are still stripped by the pack and are the open item.
