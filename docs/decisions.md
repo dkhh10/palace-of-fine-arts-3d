@@ -526,3 +526,10 @@ status.json meanwhile. Join key: object names do not survive gltfpack -mi and th
 translation with a stated tolerance and a loud failure on unmatched or duplicate rows; the name is a label. The 7 fully enclosed placements ship rgb 0 / cov 0 and the viewer
 falls back to the probe irradiance for cov == 0. The 14 near trees' COLOR_0 carries the same artefact (77-99 % exact zeros -> black patches): re-baked with the same override
 if it fits in 15 GPU minutes, else post-6a.
+
+## 2026-09-17 · Shadow-ray bake measured and merged; the 14 near trees' COLOR_0 was mostly the cut-out-zero artefact (lead, bake f9feec3)
+Partition independence is exact (one placement under two splits: delta 0.000000). Shadow-ray vs the withdrawn opaque/no-shadow values: median 1.138x, up to 2.01x on sunlit
+cards — the first bake was up to 2x too bright; global lum mean 2.02 -> 1.50. The camray variant (cut-out kept for diffuse bounces too) reads 0.929x of the shadow-ray form and
+is recorded, not used. Trees: the same override lifts vertex coverage 0.203 -> 0.756 over 347 840 verts (12 of 14 meshes 0.09-0.33 -> 0.86-0.98); broadleaf_s19 and pine_s29
+genuinely receive nothing (confirmed full shadow). So most of the zeros in the shipped COLOR_0 since Gate 3 were transparent-vertex artefacts, not shade; the export re-encodes
+COLOR_0 from the new npz. Join: per mesh, nearest translation, tolerance 0.02 m (closest same-mesh pair 0.088 m).
