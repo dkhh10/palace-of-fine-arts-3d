@@ -557,6 +557,30 @@ Not shipped. The switch stays, and this is the standing lead on the olive cast.
 * **`requestfailed:` fails a scored capture**, except `net::ERR_ABORTED`, which is a cancelled request
   and which a clean capture logs 189 of.
 
+### QA-14-2 (cam03) and QA-14-3 (cam06) attributed — round 7 item 3
+Measured on the round-14 captures against the round-13 Cycles references, WITH and WITHOUT the post
+chain, so mist is separated from lighting before anything is blamed on it:
+
+| box | reference | viewer | viewer, post OFF |
+|---|---|---|---|
+| cam03 near 10-25 m | 62.3, p10 17.0 | 92.1 (1.48x), p10 52.5 | 91.9, p10 52.2 |
+| cam03 far 120 m+ | 85.6, p10 31.6 | 101.5 (1.19x), p10 47.5 | 92.1, p10 32.3 |
+| cam06 near 60 m | 82.6, p10 58.0 | 43.4 (0.52x), p10 3.6 | 26.7, p10 1.7 |
+| cam06 shoreline | 97.0, p10 61.5 | 52.2 (0.54x), p10 4.9 | 38.5, p10 2.7 |
+| cam06 far 400 m+ | 108.5, sat 0.246 | 91.7 (0.85x), sat 0.617 | 47.6, sat 0.768 |
+
+1. **cam03's 1.48x is NOT the mist.** Post moves the near box by 0.2 luma and its p10 by 0.3. The
+   frame has no deep shade because the surfaces there have no baked light and take the hero probe's
+   irradiance instead, and a single-point probe carries no occlusion — so the deepest recess at cam03
+   floors at 52 where Cycles reaches 17. Viewer-owned only in the choice (the QA-13-1 call);
+   the fix is baked light on those surfaces, i.e. **bake/export**, and `?probe=0` is the A/B.
+2. **cam06's near half is black BEFORE post** (26.7, p10 1.7), so no compositor change can reach it.
+   Most of that lower frame is the lagoon, which round 6 rendered as a near-black body — the derived
+   murk raises exactly this surface, so QA 15 should re-measure it before anything else is done.
+3. **cam06's far terrain is over-saturated before post too** (0.768 against the reference's 0.246);
+   the mist pulls it to 0.617, i.e. the airlight is already working in the right direction and is not
+   the cause. The backdrop terrain's own colour is — **bake/export**.
+
 ### Carried from Gate 4 / QA 14
 
 * **The parity references changed.** `gate1_sheets.py` now points stations **2-6** at
