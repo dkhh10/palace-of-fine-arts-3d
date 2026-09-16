@@ -22,3 +22,8 @@ capture of the same stations, pair sheets vs the Phase 5 Cycles renders, renders
    is judged after post + water + impostors, so no gate verdict here. Name sweep: read the export engineer's latest sweep result, restate the count.
 Write docs/qa_round_13.md (< 110 lines), renders/web/round13_gate.png (960 px composite, one per gate), append docs/quality_checklist.md; commit only those + scripts/qa_*.py.
 Report < 20 lines: the verdict, the rebake list if any, the three worst boxes with numbers, the commit id.
+
+Addendum (lead, 2026-09-16 session 3): the capture to score is `renders/web/round13b_cam01..06.png` (+ round13b_direct_*, round13b_pair_*, tiles/round13b/, round13b_perf.json), taken
+after orn.glb's UV2, env.glb's COLOR_0 and the 988-placement arch.glb landed. `renders/web/round13_cam01..06.png` predate the -kv re-pack (Gate 2 look) — do NOT score them.
+The re-export HAS landed by the time you are dispatched (all seven relaid assets on their own Gate 3 maps); read docs/status.md's latest entry for the viewer engineer's step-0
+finding on the hero luma (117.5 vs 140.0 before the fix) and state whether the capture closes it.
