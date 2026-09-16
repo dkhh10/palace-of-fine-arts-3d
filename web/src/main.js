@@ -1121,6 +1121,51 @@ window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	};
 	requestAnimationFrame( step );
 } );
+/**
+ * Item 6: WHERE the presented frame time goes.  At 1440p the GPU does 0.6-2.4 ms of work
+ * (gl.finish) while the presented frame sits at 16.6-25.8 ms, so the cost is not in the draw.  This
+ * splits each presented frame into
+ *   js_ms    the CPU inside renderFrame(): three's matrix/frustum/uniform work and the DRAW SUBMIT,
+ *            with no gl.finish, so it is the cost of BUILDING the frame, not of drawing it;
+ *   gap_ms   from the end of renderFrame() to the next rAF callback: vsync wait plus whatever the
+ *            browser's compositor does with the presented buffer.
+ * and reports the passes and render targets that could be driving it - the water Reflector renders
+ * the whole scene a second time, and the composer adds a full-screen pass per effect.
+ */
+window.__pfaFrameBreakdown = ( n = 120 ) => new Promise( ( resolve ) => {
+	const js = [], gap = [];
+	let last = performance.now();
+	measuring = true;
+	const step = () => {
+		const a = performance.now();
+		renderFrame();
+		const b = performance.now();
+		js.push( b - a );
+		gap.push( a - last );              // time since the previous frame's renderFrame START
+		last = a;
+		if ( js.length < n ) requestAnimationFrame( step );
+		else {
+			measuring = false;
+			const q = ( arr ) => { const s = arr.slice( 1 ).sort( ( x, y ) => x - y );
+				return { median: s[ Math.floor( s.length / 2 ) ], mean: s.reduce( ( x, y ) => x + y, 0 ) / s.length,
+					p95: s[ Math.floor( s.length * 0.95 ) ], min: s[ 0 ], max: s[ s.length - 1 ] }; };
+			const passes = composer ? composer.passes.map( ( p ) => p.name || p.constructor.name ) : [];
+			resolve( {
+				frames: js.length - 1,
+				js_ms: q( js ), presented_ms: q( gap ),
+				composerPasses: passes,
+				waterReflector: !! ( water && water.getRenderTarget ),
+				drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+				programs: renderer.info.programs ? renderer.info.programs.length : null,
+				geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
+				devicePixelRatio: renderer.getPixelRatio(),
+				drawingBuffer: [ renderer.domElement.width, renderer.domElement.height ],
+			} );
+		}
+	};
+	requestAnimationFrame( step );
+} );
+
 /** Frame cost without the vsync cap: n renders back to back, each followed by gl.finish().
  *  __pfaFrameStats is the presented frame time (60 Hz cap); this is the render cost. */
 window.__pfaRenderCost = ( n = 60 ) => {

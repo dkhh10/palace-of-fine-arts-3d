@@ -343,23 +343,27 @@ optimised, and it is the open half of item 6.
 
 ## QA notes — read before scoring (Gate 4 / QA 14)
 
-* **The parity references changed.** `gate1_sheets.py` now points stations 3, 5 and 6 at
-  `renders/previews/qa/round13_0{3,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
-  master.blend). Stations 3, 5 and 6 had been scored for several rounds against round-09 **Eevee**
-  frames, and station 6 against a **no-compositor** Cycles frame. Station 2's reference is still the
-  round-09 one and it predates the shade-fill-off, so it is **not** a Phase 5 parity target; 2 and 4
-  are re-rendering.
+* **The parity references changed.** `gate1_sheets.py` now points stations **2-6** at
+  `renders/previews/qa/round13_0{2,3,4,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
+  master.blend). They had been scored for several rounds against round-09 frames — **Eevee** at 3 and
+  5, a **no-compositor** Cycles frame at 6, and a **pre-shade-fill-off** Cycles frame at 2 — all of
+  which predate the Phase 5 lighting the lightmaps were baked from. Station 1 keeps its round-10b
+  hero, which is already a Phase 5 Cycles frame.
 * **What that does to the round13b numbers**, whole-frame luma ratio, viewer / reference:
 
   | station | vs the OLD reference | vs the round-13 Cycles reference |
   |---|---|---|
+  | cam02 NE three-quarter | 1.09x | **1.10x** |
   | cam03 colonnade walk | 2.08x | **1.67x** |
+  | cam04 rotunda ceiling | 1.05x | **0.95x** |
   | cam05 south lawn | 1.12x | **1.08x** |
   | cam06 aerial | 0.95x | **0.71x** |
 
   cam03's "2.5x failure" was largely the wrong reference. **cam06 at 0.71x is a real deficit that the
   old no-compositor reference was hiding — it is not a regression, and QA 14 should not re-discover it
-  as new.**
+  as new.** cam04 crossed from bright to slightly dark and its lightmap is being re-baked, so its
+  number will move again. These are all `round13b`, i.e. **post off, no probe, no impostors**: with the
+  Gate 4 look on, cam02 measures **1.01x** against its round-13 reference.
 * **The hero probe is used against the manifest's own stated contract.** `manifest.probe.use` says it
   is "NOT the diffuse environment", and the viewer nevertheless convolves it and gives it to every
   surface with no baked light. **The lead overrode `probe.use` deliberately** (logged in

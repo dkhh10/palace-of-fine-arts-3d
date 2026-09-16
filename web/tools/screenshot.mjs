@@ -30,6 +30,9 @@
 //                     evidence for "ground clamp, cannot walk into the lagoon" (Gate 4 item 5).
 //   --shots 0         measure only, write no PNGs (the performance pass)
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
+//   --breakdown N     item 6: split each presented frame into the JS spent in renderFrame() and the
+//                     gap to the next rAF, per station, and report the composer passes and whether
+//                     the water Reflector is rendering the scene a second time
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
 //
 // It refuses to launch while the bake queue is running or any Blender process is alive
@@ -233,6 +236,20 @@ try {
 	const stats = perStation.length ? perStation[ 0 ].frame_ms : null;      // back-compat: the sidecar's
 	const cost = perStation.length ? perStation[ 0 ].gpu_cost_ms : null;    // top-level pair is station 1's
 
+	let breakdown = null;
+	if ( o.breakdown ) {
+		breakdown = [];
+		for ( const st of shotList ) {
+			await page.evaluate( ( n ) => window.__pfaStation( n ), st );
+			await page.evaluate( ( n ) => window.__pfaRenderCost( n ), warmup );
+			const b = await page.evaluate( ( n ) => window.__pfaFrameBreakdown( n ), parseInt( o.breakdown, 10 ) || 120 );
+			breakdown.push( { station: st, ...b } );
+			console.log( `[break] st${st} presented median ${b.presented_ms.median.toFixed( 2 )} ms, `
+				+ `JS in renderFrame ${b.js_ms.median.toFixed( 2 )} ms (p95 ${b.js_ms.p95.toFixed( 2 )}), `
+				+ `${b.drawCalls} draws, passes [${b.composerPasses.join( ', ' )}], reflector ${b.waterReflector}` );
+		}
+	}
+
 	if ( o.names ) { const n = await page.evaluate( () => window.__pfaNames() ); console.log( '[shot] meshes: ' + JSON.stringify( n ) ); }
 
 	let walkProbes = null;
@@ -304,7 +321,7 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, written, pageLog };
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
