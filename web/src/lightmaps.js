@@ -92,7 +92,7 @@ export function applyGate3Lightmaps( o ) {
 	// the only thing a capture ever ships with.
 	const encOf = ( e ) => o.encodeOverride || e;
 	const report = {
-		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {} },
+		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {}, nearMiss: {} },
 		slots: { instances: 0, matched: 0, applied: 0, single: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
 		materialsCloned: 0, texturesRequested: 0, texturesLoaded: 0, texturesFailed: [],
 		meshesSeen: 0, instancedMeshesSeen: 0,
@@ -152,22 +152,33 @@ export function applyGate3Lightmaps( o ) {
 			const centre = worldCentre( mesh );
 			const hit = nearest( ownIdx, centre, ownTaken );
 			if ( hit.name && hit.d <= MAX_MATCH_M ) {
-				ownTaken.add( hit.name );
-				report.own.matched ++;
-				report.own.maxMatchError_m = Math.max( report.own.maxMatchError_m, hit.d );
-				if ( ! hasUv2 ) { report.own.noUv2Attribute ++; report.own.assets[ hit.name ] = 'no TEXCOORD_1 in the glb'; return; }
-				plans.push( { mesh, kind: 'own', name: hit.name, d: hit.d } );
-				return;
+				// A mesh with NO TEXCOORD_1 must not CLAIM the asset: env.glb carries no UV2 at all and
+				// several of its meshes sit within the tolerance of a ground asset's centre (measured:
+				// ENV_ground_colonnade_walk was being taken by an env mesh, so the colonnade walk lost
+				// its baked shade and cam03 read 2.5x the Cycles frame).  Leave the asset unclaimed so
+				// the mesh that CAN carry it still gets it, and report the near miss.
+				if ( ! hasUv2 ) {
+					if ( ! report.own.nearMiss[ hit.name ] ) {
+						report.own.noUv2Attribute ++;
+						report.own.nearMiss[ hit.name ] = `a mesh ${hit.d.toFixed( 2 )} m away carries no TEXCOORD_1`;
+					}
+				} else {
+					ownTaken.add( hit.name );
+					report.own.matched ++;
+					report.own.maxMatchError_m = Math.max( report.own.maxMatchError_m, hit.d );
+					plans.push( { mesh, kind: 'own', name: hit.name, d: hit.d } );
+					return;
+				}
 			}
 			// gltfpack collapses a mesh with ONE placement into a plain node, so a slot object can
 			// arrive as an ordinary Mesh.  Same shader path, with the window as a constant vertex
 			// attribute instead of a per-instance one - no texture clone, so no second 4K upload.
 			const s = nearest( slotIdx, centre, slotTaken );
 			if ( ! s.name || s.d > MAX_MATCH_M ) return;
+			if ( ! hasUv2 ) { report.slots.noUv2Attribute ++; return; }   // same rule: do not claim it
 			slotTaken.add( s.name );
 			report.slots.instances ++; report.slots.matched ++; report.slots.single ++;
 			report.slots.maxMatchError_m = Math.max( report.slots.maxMatchError_m, s.d );
-			if ( ! hasUv2 ) { report.slots.noUv2Attribute ++; return; }
 			const sl = gate3.slots[ s.name ];
 			const nv = mesh.geometry.attributes.position.count;
 			const off = new Float32Array( nv * 3 ), sel = new Float32Array( nv );
@@ -197,6 +208,7 @@ export function applyGate3Lightmaps( o ) {
 	}
 
 	// ---- pass 3: attributes, shader patch, textures --------------------------------------------
+	const appliedNames = new Set();
 	const texCache = new Map();
 	const fetch = ( url ) => {
 		if ( ! texCache.has( url ) ) {
@@ -220,6 +232,7 @@ export function applyGate3Lightmaps( o ) {
 				if ( ! t ) return;
 				attachLightMap( p.material, t, gate3.scale );
 				report.own.applied ++;
+				appliedNames.add( p.name );
 				report.own.assets[ p.name ] = `${lm.encode} range ${lm.range.toFixed( 2 )} layout ${lm.layout} (match ${p.d.toFixed( 3 )} m)`;
 			} ) );
 		} else {
@@ -257,10 +270,12 @@ export function applyGate3Lightmaps( o ) {
 		note( `gate3 lightmaps: ${report.own.applied}/${ownReady.length} own map(s), `
 			+ `${report.slots.applied}/${gate3.slotCount} instance slot(s), ${report.materialsCloned} material(s) cloned; `
 			+ `match error <= ${Math.max( report.own.maxMatchError_m, report.slots.maxMatchError_m ).toFixed( 3 )} m` );
+		if ( report.own.applied < ownReady.length )
+			note( `gate3 own maps NOT applied: ${ownReady.filter( m => ! appliedNames.has( m.name ) ).map( m => m.name ).join( ', ' )}` );
 		if ( report.own.noUv2Attribute || report.slots.noUv2Attribute )
-			note( `gate3 BLOCKED: ${report.own.noUv2Attribute} own map(s) and ${report.slots.noUv2Attribute} instance(s) matched an asset `
-				+ `but their glb mesh carries NO TEXCOORD_1 (gltfpack prunes an unreferenced attribute: the re-export needs -kv). `
-				+ `They stay on the environment-lit path.` );
+			note( `gate3 near misses: ${report.own.noUv2Attribute} own asset(s) and ${report.slots.noUv2Attribute} instance(s) had a mesh with NO `
+				+ `TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: `
+				+ Object.entries( report.own.nearMiss ).map( ( [ k, v ] ) => `${k} (${v})` ).join( '; ' ) );
 		if ( report.own.blockedNoUv2InGlb )
 			note( `gate3: ${report.own.blockedNoUv2InGlb} asset(s) have uv2_in_glb false with no frozen-layout twin — no map applied (there is no factor fallback for a lightmap)` );
 		if ( report.texturesFailed.length ) note( `gate3: ${report.texturesFailed.length} lightmap texture(s) failed: ${report.texturesFailed.slice( 0, 4 ).join( '; ' )}` );
