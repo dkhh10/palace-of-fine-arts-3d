@@ -220,6 +220,7 @@ elif job["kind"] == "impostor":
     scene.render.use_persistent_data = True
     N = g3.IMP_GRID
     MAXV = int(os.environ.get("PFA_IMP_MAX_VIEWS", "0"))
+    IMP_ALPHA_FLOOR = 0.02
     A = g3.IMP_ATLAS_PX
     F = g3.IMP_FRAME_PX
     alb = np.zeros((A, A, 4), dtype=np.float32)       # straight-alpha radiance, bottom-up
@@ -278,7 +279,11 @@ elif job["kind"] == "impostor":
             nx, ny, nz = pick("ViewLayer.Normal.X"), pick("ViewLayer.Normal.Y"), pick("ViewLayer.Normal.Z")
             zz = pick("ViewLayer.Depth.Z", "ViewLayer.Depth.V")
             a = np.clip(ca, 0.0, 1.0)
-            inv = np.where(a > 1e-4, 1.0 / np.maximum(a, 1e-4), 0.0)
+            # Un-premultiply with a floor on alpha. With 1e-4 a near-transparent leaf-card edge divides the
+            # radiance by 1e-4 and the atlas maximum ran to 4 digits: the prototype range was picked at 512
+            # while the opaque crown sits at 0.25-5, so the 8-bit codes came out at a mean of 5/255 (32 %
+            # quantisation on the body). 0.02 caps the amplification at 50x.
+            inv = np.where(a > IMP_ALPHA_FLOOR, 1.0 / np.maximum(a, IMP_ALPHA_FLOOR), 0.0)
             y0, x0 = row * F, col * F
             alb[y0:y0 + F, x0:x0 + F, 0] = cr * inv
             alb[y0:y0 + F, x0:x0 + F, 1] = cg * inv
@@ -305,7 +310,10 @@ elif job["kind"] == "impostor":
         return red
 
     alb1k, nrm1k = reduce2(alb), reduce2(nrm)
-    rng = g3.pick_range(alb[..., :3])
+    # the range is the OPAQUE crown's own maximum (alpha > 0.5) with 10 % headroom, not the atlas max:
+    # the semi-transparent edge is where the outliers live and it must not set the code scale.
+    body = alb[..., 3] > 0.5
+    rng = float(max(alb[body][:, :3].max() * 1.1, 1e-3)) if bool(body.any()) else g3.pick_range(alb[..., :3])
     out = {}
     for tag, arr, px in (("2048", alb, A), ("1024", alb1k, A // 2)):
         enc = np.concatenate([g3.gamma2_encode(arr[..., :3], rng),
