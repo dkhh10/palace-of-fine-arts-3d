@@ -40,6 +40,14 @@ const WaterShader = {
 		murk: { value: new THREE.Color( 0.020, 0.035, 0.030 ) },
 		reflectTint: { value: new THREE.Color( 0.88, 0.94, 0.90 ) },
 		normalScale: { value: 0.06 }, rippleTiling: { value: 0.09 },
+		// A real lagoon is a ROUGH, murky surface, not a mirror.  Two terms carry that, both
+		// calibrated against the Phase 5 Cycles hero's water box (docs/qa_round_10b.md
+		// 900 760 1020 840: lum 128.6, std 34.2, sat 0.33, R-B +34.4) - see makeWater().
+		//   reflBlur   the slope distribution of the ripples: the reflection is gathered over a
+		//              small disc instead of a point, which is what takes the edge off `std`.
+		//   reflSat    the murk scatters light back out through the reflected ray, washing its
+		//              colour toward neutral.  1.0 = a clean mirror.
+		reflBlur: { value: 0.0 }, reflSat: { value: 1.0 },
 	},
 	vertexShader: /* glsl */`
 		uniform mat4 textureMatrix;
@@ -54,7 +62,7 @@ const WaterShader = {
 	`,
 	fragmentShader: /* glsl */`
 		uniform sampler2D tDiffuse, tNormal;
-		uniform float time, distortion, normalScale, rippleTiling;
+		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat;
 		uniform vec3 murk, reflectTint;
 		varying vec4 vProjUv;
 		varying vec3 vWorld;
@@ -66,7 +74,19 @@ const WaterShader = {
 			vec3 N = normalize( vec3( n.x, n.z, n.y ) );                       // tangent -> world (plane is +Y up)
 			vec4 uv = vProjUv;
 			uv.xy += n.xy * distortion * uv.w;                                  // ripples break the reflection
-			vec3 refl = texture2DProj( tDiffuse, uv ).rgb * reflectTint;
+			// gather over a small disc: the ripple slopes spread the reflected ray
+			vec3 refl = texture2DProj( tDiffuse, uv ).rgb;
+			if ( reflBlur > 0.0 ) {
+				float b = reflBlur * uv.w;
+				refl += texture2DProj( tDiffuse, uv + vec4(  b,  0.0, 0.0, 0.0 ) ).rgb;
+				refl += texture2DProj( tDiffuse, uv + vec4( -b,  0.0, 0.0, 0.0 ) ).rgb;
+				refl += texture2DProj( tDiffuse, uv + vec4( 0.0,  b * 0.5, 0.0, 0.0 ) ).rgb;
+				refl += texture2DProj( tDiffuse, uv + vec4( 0.0, -b * 0.5, 0.0, 0.0 ) ).rgb;
+				refl *= 0.2;
+			}
+			refl *= reflectTint;
+			// the murk scatters the reflection's colour toward neutral
+			refl = mix( vec3( dot( refl, vec3( 0.2126, 0.7152, 0.0722 ) ) ), refl, reflSat );
 			vec3 V = normalize( cameraPosition - vWorld );
 			float c = clamp( dot( V, N ), 0.0, 1.0 );
 			float F = 0.02 + 0.98 * pow( 1.0 - c, 5.0 );                        // water, IOR 1.33
@@ -100,6 +120,11 @@ export function makeWater( waterY, o = {} ) {
 	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	if ( o.tint ) u.reflectTint.value.setRGB( ...o.tint );
 	if ( o.distortion !== undefined ) u.distortion.value = o.distortion;
+	// Calibrated on the Gate 4 capture against the Phase 5 Cycles hero's water box: the mirror-sharp
+	// Gate 0 water read std 44.0 against 34.2 and sat 0.69 against 0.33.  ?waterblur / ?watersat
+	// move them for the A/B; the defaults are the calibration.
+	u.reflBlur.value = o.reflBlur ?? 0.0045;
+	u.reflSat.value = o.reflSat ?? 0.66;
 	reflector.userData.tick = ( t ) => { u.time.value = t; };
 	return reflector;
 }

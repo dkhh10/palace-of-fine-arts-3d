@@ -33,6 +33,9 @@ export const LUTDisplayShader = {
 		// exactly where Blender's compositor sits relative to the view transform.
 		hazeColor: { value: new THREE.Vector3( 5.320881, 3.739, 1.960339 ) },
 		hazeStrength: { value: 0.0 },
+		// COMP_golden_hour's Vignette, applied in LINEAR before the transform, which is where
+		// Blender's sits.  0 = off; the Phase 5 value is 0.08.
+		vignette: { value: 0.0 },
 	},
 	vertexShader: /* glsl */`
 		varying vec2 vUv;
@@ -45,12 +48,19 @@ export const LUTDisplayShader = {
 		uniform vec3 domainMin, domainMax;
 		uniform int useShaper, lutEnabled;
 		uniform vec3 hazeColor;
-		uniform float hazeStrength;
+		uniform float hazeStrength, vignette;
 		varying vec2 vUv;
 		void main() {
 			vec4 src = texture2D( tDiffuse, vUv );
 			vec3 lin = max( src.rgb, vec3( 0.0 ) );
 			if ( hazeStrength > 0.0 ) lin = mix( lin, hazeColor, hazeStrength );
+			if ( vignette > 0.0 ) {
+				// Blender's vignette darkens toward the corners; the falloff is the usual cos^4-ish
+				// curve normalised so the centre is untouched.
+				vec2 d = ( vUv - 0.5 ) * 2.0;
+				float r = clamp( dot( d, d ) * 0.5, 0.0, 1.0 );
+				lin *= 1.0 - vignette * r * r;
+			}
 			vec3 c = lin * exposure;
 			if ( lutEnabled == 0 ) { gl_FragColor = vec4( pow( c, vec3( 1.0 / 2.2 ) ), src.a ); return; }
 			vec3 t;

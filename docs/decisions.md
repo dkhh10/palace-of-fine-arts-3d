@@ -397,3 +397,66 @@ The four MAT_leaf_* materials reached env.glb without alphaMode, so glTF drew ev
 sets alphaMode MASK with the cutoff read from each source material in master_delivery.blend and verify_glb asserts MASK/BLEND on every material whose base colour texture carries alpha;
 a viewer-side alphaTest would pick the cutoff by guess. The far-tree impostors (16 InstancedMeshes, 127 trees, 16 draw calls) needed a V flip because the KTX2 atlases are top-down
 (KTXorientation rd) while the manifest's frame rows count from the bottom; recorded in web/README.md with the measured codes so the bake side can align the convention at the next bake.
+
+## 2026-09-16 · QA-13-1 and QA-12b-1 after the viewer's pixel picks (lead)
+QA-13-1 (blue bays between the north colonnade columns) is the backdrop city blocks, not a colonnade surface: env.glb carries no TEXCOORD_1, nothing patched them, and they take
+all their light from scene.environment, which Gate 3 switched from the glossy equirect to the DIFFUSE sky PMREM (3.9 % -> 23.0 % of the band B > R+20). Decision: viewer-side; the
+unpatched surfaces go on the existing direct path (sun Lambert + diffuse sky at the `direct` mode's weights). No UV2 or lightmap for the backdrop: it is far and never hero-critical.
+QA-12b-1 (olive cast in shade, 19.7 % at cam02): the viewer engineer showed the green is lightmap texel x warm albedo with the texel itself blue in shade, and proposed that
+`use_pass_color=false` bakes the indirect against a white albedo. Not accepted as the mechanism: Cycles' colour toggle strips only the baked surface's own albedo, bounced light keeps
+the neighbours' colours, and bake_lm.py does not touch bounces. Two candidates are checked before any re-bake is considered: round13b was captured with post OFF and so lacks the
+compositor's warm airlight (cap 0.25, k 5 as an extinction coefficient) that every shaded Phase 5 pixel has (viewer re-measures with ?post=all now that compositor.mist is real);
+and the bake scene's bounce-surface materials / Cycles-only gallery fills / world (bake engineer, read-only). A colour-on lightmap bake is not an option: it would bake albedo at
+5-17 cm/texel under the 2K PBR maps.
+Mist: the viewer had implemented the haze falloff 5.0 as an exponent; scripts/light_build.py uses it as an extinction coefficient, airlight = cap * (1 - exp(-k * mist)) — corrected,
+hero luma with post 127.3 -> 131.8 (Cycles 140.0).
+
+## 2026-09-16 · Chrome during a lead render (lead): PFA_DEV_SHARE_GPU=1 for development screenshots only
+While the lead's Cycles reference renders (stations 2-6, ~20 min each) occupied the GPU, the viewer engineer was allowed to keep taking development screenshots through
+scripts/chrome_run.sh with PFA_DEV_SHARE_GPU=1, which keeps the bake-queue guard and refuses --perf outright. Scored captures and every perf measurement still require the GPU
+free (no bake queue, no lead render). The CLAUDE.md rule "never concurrent with the bake queue" is unchanged; this is the lead's standing exception for a lead render only.
+
+## 2026-09-16 · QA-13-1 revised (lead): the direct-path fix was a no-op; unlit-mapped surfaces take irradiance from the baked hero probe
+The viewer engineer measured the prescribed fix before shipping it: the blue backdrop wall is back-facing to the sun (NdotL −0.065) and its pixel is bit-identical in baked and direct
+modes, so no weighting of sun + sky changes it; what Cycles gives it and the viewer does not is the warm indirect bounce. The shrubs and reeds (no lightmap, no COLOR_0) sit on the same
+sky-only path, which is why the leaf cards cut out correctly after the alphaMode fix but stay blue: QA-13-1 and the blue foliage are one problem. Decision: manifest.probe (the baked
+6-face hero probe, real bounce in it) convolved to irradiance is the diffuse environment for every surface without a lightmap or COLOR_0; lightmapped and vertex-lit materials are
+unchanged; a warm irradiance floor was refused as a fudge. Single-point approximation for far surfaces, documented; Gate 4 QA judges it. Post on moves the olive fraction at cam02
+from 46.5 to 32.2 % on the viewer's own mask (−14 points): the missing airlight is a large contributor but does not close QA-12b-1 alone; the bake-scene check is still pending.
+
+## 2026-09-16 · QA-13-2 root cause is inverted normals, not UV2; QA-12b-1 is not the bake scene (lead, from the bake engineer's measurements)
+The rotunda plaster shell's visible faces already own 60.6 % of their map at 1.53 cm/texel; every one of them has its normal pointing UP, away from cam04 (normal·to_camera −0.99).
+A Cycles render flips the shading normal toward the ray, a bake has no ray, so the DIFFUSE bake integrated the enclosed cavity between shell and dome (median hit 11.55 m, no sky)
+instead of the lit rotunda below. The six-station sweep finds no second 100 %-backface object. Fix: re-bake this one asset with its winding reversed in the bake process only
+(FLIP_NORMALS_FOR_BAKE; UV2 corner sets asserted bit-identical, blend never saved), map replaced in place under the same keys; no relay, no glb change.
+The bake scene is the Cycles rig: same 11 warm ARCH bounce materials, same 20 LIGHT_* incl. the 16 x 1200 W gallery fill, world identical (WORLD_golden_hour, sun_disc off,
+elevation 7.357°, rotation 28.493°), Cycles bounces identical (max 8, diffuse 3, clamp_indirect 10). So the blue shade texel is not a grey bounce, a missing lamp, a different sky
+or a shorter path. Remaining hypothesis under test: the Phase 5 world's warm tint lives on the diffuse-ray branch of a Light Path gate; a bake may sample the sky under the
+camera-ray flag and miss it. Two-colour debug-world bake vs render queued after the ceiling bake.
+
+## 2026-09-16 · QA-13-1 closed with the hero probe as the diffuse environment for unlit-mapped surfaces (lead override of manifest probe.use)
+Result (viewer c79b7b6, post on): cam01 band B > R+20 15.5 % -> 0.2 % (Cycles 0.0 %), band mean RGB [105 92 68] -> [95 76 30] against Cycles [80 64 24]; cam02 shrub/reed/backdrop
+median hue 220° -> 41°; 15 materials touched, 77 lightmapped or vertex-lit untouched. The manifest's probe.use says the probe is the water fallback, not the diffuse environment;
+the lead overrides that for surfaces with no baked irradiance because the probe is the only baked data with the courtyard's warm bounce in it. Caveats on record: single-point
+(hero station) approximation for surfaces 140-190 m away and at the other stations; the probe was rendered on the sky's glossy branch. Foliage now reads amber-brown where Cycles has
+olive-green (ground bounce dominates a sideways leaf card): decision held until the light-path branch test; the candidates are a corrected bake branch or vertex irradiance for
+shrubs/reeds as for the 14 near trees. Re-measured against the new compositor-on Cycles references: cam03 1.67x (was 2.08x vs the Eevee frame), cam05 1.08x, cam06 0.71x — a
+real deficit the no-compositor reference had hidden.
+
+## 2026-09-16 · Gate 4 item 6 (lead): the 1440p frame is vsync-quantised, not GPU-bound; bloom and the water Reflector go to half resolution
+Measured (viewer 184d785): with the Gate 4 look the presented frame is 29.5-32.2 ms (33 fps) at stations 1-3, 5, 6 while CPU submit is 1.0-4.1 ms and gl.finish 0.5-2.6 ms; with
+water and post off the frame is 17.3 ms = one vsync interval. The Reflector's second scene pass costs 6.3-8.6 ms (draw calls 314 -> 164 without it) and the full-res bloom chain
+7.8-8.4 ms; together they push the frame a few ms past one interval, which quantises to two. Decision: bloom from a half-res source and the Reflector to a half-res target (its
+result is blurred by reflBlur regardless); every-other-frame reflection refused (temporal artefacts while walking). Acceptance: >= 45 fps at all six stations and every cam01 hero
+box within 0.03x of its full-res value; a lever whose box moves more is reverted and the trade-off reported.
+
+## 2026-09-16 · Sky-branch hypothesis REFUTED; no lightmap re-bake; QA-13-2 closed by the flipped-winding bake (lead, from the bake engineer's probe)
+Debug world (R = camera ray, G = neither camera nor glossy, B = glossy), lamps off: the podium DIFFUSE bake reads exactly [0, 1, 0]; the cam02 render's ARCH pixels [0.108, 0.878,
+0.014]; the sky [0.989, 0.001, 0]. Cycles bake rays take the diffuse branch exactly as the render does. Independently, the diffuse branch is the BLUER one (diffuse/camera =
+[1.49, 1.34, 4.16], SKY_DIFFUSE_TINT b = 70), so a camera-branch bake would have been less blue, the opposite of the symptom. The prepared 47-job corrected queue
+(PFA_BAKE_DIFFUSE_WORLD=1) stays unarmed and is not run; the overnight GPU slot is not needed. sky.diffuse matches the diffuse-branch equirect to three decimals.
+QA-12b-1 is therefore downstream of the bake: not the asset, the lightmap, the bake scene or the sky branch. Remaining candidates, in test order: the viewer's specular term (a
+sky-only glossy PMREM where Cycles' shaded stone reflects the warm sunlit surroundings — A/B with the hero probe as the specular envMap for lightmapped materials), then the
+Gate 2 albedo bake's tone against the Phase 5 material. The compositor's airlight is already a measured −14-point contributor with post on.
+Ceiling: re-baked with the winding flipped in the bake process only (UV2 bit-identical), max 0.721 -> 16.755, mean_nonzero 2.06 (rib map 1.70), 30.7 % non-zero texels, gamma2
+round-trip error 0.163 -> 0.025 stops; map replaced in place, manifest range updated by the lead's manifest_v4 run.

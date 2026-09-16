@@ -715,3 +715,63 @@ Lead: export engineer resumed for alphaMode MASK on the leaf materials (cutoff r
 ## 2026-09-16 · QA round 13 in (f8c9002): LIGHTMAPS ACCEPTED, one re-bake (ARCH_rotunda_plaster_ceiling_merged, QA-13-2); hero 135.99 vs 139.98 (0.971x), MAE down at all six stations
 Scores 01 3.39 · 02 2.69 · 03 2.69 · 04 2.31 · 05 2.89 · 06 2.33 (all inside the 0.5 window; 04/06 below the 2.5 floor). New QA-13-1: saturated blue bays on the N-colonnade (23 % of the band B > R+20, bit-identical with lightmaps off -> a surface lit by neither path; viewer/export to identify). QA-12b-1 olive cast not closed and worse at cam02 (19.7 %); sunlit-attic sat hold broke (0.89x). No seam, slot bleed, blockiness, banding or double shadow at 100 %. Budget/perf PASS (1 678 MB at 1440p, GPU 2.3 ms).
 Lead: refs 02/04 chained after 05/06 (QA: the round-09 cam02 reference predates the shade-fill-off; only station 1 had a reference from the baked lighting); rebake brief written (docs/briefs/phase6_gate3_rebake_ceiling.md), bake agent dispatched when the GPU frees; viewer engineer told to identify QA-13-1 and decompose the olive pixel. Next: r5b review -> merge viewer; env.glb leaf fix; rebake; Gate 4 capture + QA 14 against the new references.
+
+## 2026-09-16 · Bake agent dispatched (phase6-bake, docs/briefs/phase6_gate3_rebake_ceiling.md): CPU prep now, the Cycles bake held until the lead's reference renders finish
+Agents live: viewer (mist/range hookup, QA-13-1 + olive diagnosis), export (leaf alphaMode MASK), bake (ceiling relay), reviewer (viewer r5b). GPU: refs 05/06 rendering, 02/04 chained (logs renders/logs/qa_r13_cycles_refs_b/_c.log).
+Next: merge viewer on r5b; env.glb leaf fix re-sync; bake go-signal when qa_render_round exits; Gate 4 capture + QA 14 vs round13_0N_cycles references.
+
+## 2026-09-16 · Viewer diagnoses in (phase6-viewer 1b7ad84; mist + range hookups 8628736): QA-13-1 = backdrop blocks under the diffuse PMREM (viewer fixes via the direct path); QA-12b-1 mechanism disputed, re-measure with post on + bake-scene check
+Viewer told: backdrop/unpatched surfaces onto the direct path; re-measure olive at cam02/06 with ?post=all. Bake agent told: read-only check of the bake scene's bounce materials, gallery fills, world, bounces. Tooling: __pfaPick pixel raycast (note: three's Raycaster does not skip invisible objects). renders/web tracked 44.9 MB.
+Waiting: r5b review -> merge viewer; export leaf fix; refs 05/06 then 02/04; bake step 1. Next: bake go-signal at GPU free; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Export leaf alpha in (phase6-export 35865b8): 8 env card materials alphaMode MASK @ 0.5 (read from master_delivery: alpha_threshold under HASHED; the leaf materials route through a node group, which is why the defect survived), synced
+verify_glb asserts MASK/BLEND + effective cutoff on every alpha-carrying base colour texture; the stale-glb pin now forces a full re-pack (toktx 258 s) whenever the glTFs regenerate. Review of 77063c6..35865b8 dispatched -> docs/reviews/phase6_export_gate3_r4_review.md; viewer told to re-sync and confirm cam02.
+Next: merge export r4 on review; r5b review -> merge viewer; refs; bake step 1; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Viewer r5b review in (18f2e19/6f75281): MERGE WITH FIXES (3 fix now, 9 carry); impostor V flip confirmed correct; barycentric weights swapped (real blend bug)
+Fix now routed to the viewer: swapped upper-triangle weights (re-capture cam01/02 after), silent NaN fallbacks in the impostor manifest block, stale README lines; PFA_DEV_SHARE_GPU logged in decisions.md. Refs: 05 saved, 06 rendering, 02/04 chained.
+Next: viewer fixes + measurements -> merge phase6-viewer; export r4 review -> merge; bake step 1; GPU-free signal; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Cycles references 03/05/06 done (renders/previews/qa/round13_0N_*_cycles.png, 1920x1080 128 spp, compositor on; 05+06 in 950 s); 02/04 rendering (pid 34504, max 3000 s)
+GPU still busy until 02/04 finish (~30 min); bake go-signal and the viewer's --perf after that.
+
+## 2026-09-16 · phase6-viewer MERGED (0458150, through 8d76e7d: r5b fixes d4a9b57 + measurements); QA-13-1 direct-path fix withdrawn on evidence, probe irradiance authorised for unlit-mapped surfaces
+Measurements: band B > R+20 17.6 % -> 15.5 % with post (target ≤ 3.9 %); olive cam02 46.5 -> 32.2 % with post (viewer mask), cam06 21.2 %. Leaf cards cut out after the alphaMode re-sync but stay blue (same sky-only path). Impostor rotational pop still unswept (re-check on the corrected-weights re-capture).
+Waiting: export r4 review -> merge; bake step 1 + scene check; refs 02/04 (pid 34504) -> GPU-free signal to bake and viewer. Next: probe irradiance measurement; ceiling bake; Gate 4 capture + QA 14.
+
+## 2026-09-16 · Export r4 review in (677b792): MERGE WITH FIXES — the alpha cutoff was read from the inert alpha_threshold; the real cut is mat_build's map_range chain (cypress 0.45, pine 0.42, others 0.5); export engineer resumed
+Fix: read_alpha walks the Mix Shader -> Map Range chain in master_delivery.blend, gltf_gate1 cross-checks against it, verify_glb checks non-default cutoffs survive gltfpack; the silent png_has_alpha None skip becomes a failure. Merge of phase6-export r4 waits on this fix.
+GPU: 02/04 refs rendering (pid 34504). Waiting: bake step 1 + scene check; viewer probe irradiance.
+
+## 2026-09-16 · Bake step 1 in (phase6-bake d0c2c28): ceiling defect = 100 % inverted normals (UV2 fine, 60.6 % of the map, 1.53 cm/texel); flipped-winding re-bake ready, held for the GPU. Bake scene audit: identical to the Cycles rig (QA-12b-1 not in the bake scene)
+Lead queued a light-path branch test (debug world: camera red / glossy blue / diffuse green; bake vs 160x90 render) after the ceiling bake to test whether bake rays miss the sky's warm diffuse-branch tint. Waiting: export cutoff fix -> merge; refs 02/04 (pid 34504) -> GPU-free to bake first, then the viewer's --perf; viewer probe irradiance.
+
+## 2026-09-16 · QA-13-1 closed (phase6-viewer c79b7b6, probe irradiance): band 0.2 %, cam02 foliage hue 220° -> 41° (amber-brown vs Cycles olive: held for the branch test); refs repointed (cam06 real 0.71x)
+Viewer: commit repointed refs, prepare the one-command Gate 4 capture, sweep impostor rotational pop; --perf still held. GPU: refs 02/04 at ~7 min (pid 34504); then bake (ceiling + branch test), then viewer --perf, then Gate 4 capture + QA 14.
+
+## 2026-09-16 · Bake staged (phase6-bake 7ed1bdb): ceiling bake + sky-branch probe (debug world R=camera / G=diffuse / B=glossy; bake vs render) held for the GPU; precedent found — Phase 5's Eevee probe capture had the same camera-branch defect and light_probes.bake fixes it with make_sky_world(split_rays=False)
+sky.diffuse is confirmed the tinted branch (bake_lm.py isolates Is Diffuse Ray). If the probe confirms, the fix is a full Gate 3 lightmap re-bake with the corrected world (65 jobs, 6 h 30 m overnight last time); the bake engineer prepares the queue but does not start it — lead decides the overnight slot. Gate 4 capture + QA 14 proceed on the current maps for everything except QA-12b-1.
+GPU: refs 02/04 (pid 34504, ~9 min). Waiting: export cutoff fix; viewer capture prep + pop sweep.
+
+## 2026-09-16 · phase6-export r4 MERGED (cb4de91, through 0ba4cb8): cutoffs from the real Mix Shader -> Map Range chain (cypress 0.45, pine 0.42 in the glb as float32), png_has_alpha raises on unknown formats; verify_glb PASS from main
+Export side closed for Gate 4 (carries in docs/reviews/phase6_export_gate3*_review.md). Viewer told to re-sync. GPU: refs cam04 rendering (pid 34504).
+
+## 2026-09-16 · Staged for the GPU: bake (ceiling as staged, then the sky-branch probe; corrected 47-job queue prepared behind PFA_BAKE_DIFFUSE_WORLD=1, ~6 h 15 m, NOT started) and viewer (gate4.sh one-command delivery capture; impostor rotational pop PASS, 61 frames at 1°, max/median 1.21x)
+Viewer 3a84e3f/2e28ade: refs repointed + "QA notes — read before scoring" in web/README.md (cam06 0.71x real, probe override, foliage held). Bake 6a0ec47: only the 47 bake-target jobs are affected by the branch (sky/probe/impostor jobs already correct).
+Next: cam04 ref -> GPU-free to bake -> probe verdict -> encode/pack -> manifest + sync -> viewer --perf + Gate 4 capture -> QA 14; overnight re-bake decision on the probe numbers.
+
+## 2026-09-16 · Cycles references complete: round13_02..06 on main (compositor on, 128 spp). GPU handed to the bake engineer (ceiling bake -> sky-branch probe -> encode/pack)
+Viewer's --perf and Gate 4 capture follow the bake report. QA 14 (docs/briefs/qa_round_14.md) after the capture.
+
+## 2026-09-16 · Viewer ready for the GPU (phase6-viewer bbe1d7b): refs 2-6 repointed (cam02 1.10x, cam04 0.95x on round13b; cam02 1.01x with the Gate 4 look), item 6 frame-breakdown instrumentation, 173 tests green
+Order on the bake's GPU-done signal: re-sync -> --perf + --breakdown -> gate4.sh capture -> QA 14. Bake engineer running the ceiling bake + sky-branch probe now.
+
+## 2026-09-16 · Item 6 measured (phase6-viewer 184d785): 31-34 fps at stations 1-3/5/6, 45 at 4; vsync quantisation (Reflector 6-9 ms + bloom 8 ms push a 17 ms frame past one interval). Lead: half-res bloom + half-res Reflector, box-checked (<= 0.03x)
+Resident 1 678 MB (tex 1 172, RT 444). Viewer applies the levers now (GPU free; bake on CPU encode/pack); Gate 4 capture after the manifest signal.
+
+## 2026-09-16 · Bake r2 in (phase6-bake 73d5bb0, synced): ceiling map fixed (0.72 -> 16.76 max, 30.7 % non-zero); sky-branch hypothesis REFUTED (bake [0,1,0] = diffuse branch); NO overnight re-bake
+Lead ran manifest_v4.py + sync: ceiling range 16.755 in the manifest (the stale 0.721 would have decoded the new map 23x too dark). Reviewer dispatched on main..phase6-bake -> docs/reviews/phase6_bake_gate3_r2_review.md. Viewer: re-sync, probe-as-specular A/B for QA-12b-1 (ship only if G > R drops and boxes hold), then gate4.sh -> "round14".
+Next: merge bake on review; QA 14 on round14; QA-12b-1 remaining candidates per decisions.md.
+
+## 2026-09-16 · Bake r2 review in (8c7b616): MERGE WITH FIXES (3 fix now: env-arming parse, README/tech_notes docs, stale worktree manifest; 9 carry); bake engineer resumed
+Merge of phase6-bake follows the fix commit. Viewer: half-res levers, probe-as-specular A/B, then round14.
