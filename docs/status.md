@@ -683,3 +683,7 @@ Lead ran manifest_v4.py + sync_main.sh: 16/16 own maps uv2_in_glb true, slots tr
 ## 2026-09-16 · Export Gate 3 review in (c0120b2): MERGE WITH FIXES (3 fix now, 8 carry, Gate 1's 5 fix-now all closed); export engineer resumed for the fixes
 Fix now: gate3_relay_check.py hard-codes the MAIN path (PFA_MAIN_ROOT ignored); encoder reads MAIN's out/gate3 while the checker prefers a local one; the material-split guard is one-directional and relies on -km, which orn/ground do not get. Budget doc's Gate 1 byte table now carries a Gate 3 r2 addendum (arch 4.61 MB / 29 draw calls, env 36.95 MB).
 Next: merge phase6-export on the fix report; viewer step 0 finding pending, then round13b capture; QA 13.
+
+## 2026-09-16 · phase6-export MERGED (584a79d) with the 3 review fixes (ed00a62); glbs unchanged since the sync, relay check PASS from main
+Fixes: PFA_MAIN_ROOT honoured in gate3_relay_check.py, checker and encoder read the same out/gate3, clear FAIL on a missing npz; material-split guard bidirectional (-km required and dup_names >= split; only arch is split today). 8 carries stay in docs/reviews/phase6_export_gate3_review.md.
+In flight: viewer engineer (phase6-viewer) on step 0 then round13b. Next: QA 13 on round13b.
