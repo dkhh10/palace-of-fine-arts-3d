@@ -562,12 +562,45 @@ Frame luma against each station's Cycles reference, from the pair sheets:
 
 | station | reference | round14 | round15 | round14 MAE | round15 MAE |
 |---|---|---|---|---|---|
-| 01 lagoon hero | 140.0 | 129.0 (0.878x) | **133.8 (0.903x)** | 29.68 | **26.89** |
-| 02 NE three-quarter | 100.4 | 101.2 (0.994x) | 110.7 (1.052x) | 23.72 | 24.86 |
-| 03 colonnade walk | 49.0 | 81.8 (1.846x) | 81.4 (1.826x) | 34.74 | 34.77 |
+| 01 lagoon hero | 140.0 | 129.0 (0.878x) | **133.2 (0.897x)** | 29.68 | **26.58** |
+| 02 NE three-quarter | 100.4 | 101.2 (0.994x) | 107.7 (1.030x) | 23.72 | **23.27** |
+| 03 colonnade walk | 49.0 | 81.8 (1.846x) | 80.9 (1.804x) | 34.74 | **34.41** |
 | 04 rotunda ceiling | 63.5 | 70.7 (1.119x) | 70.6 (1.118x) | 13.13 | 13.12 |
-| 05 south lawn | 151.2 | 156.8 (1.046x) | **153.6 (1.008x)** | 25.36 | **22.90** |
-| 06 aerial | 100.9 | 77.8 (0.750x) | **101.1 (0.994x)** | 40.48 | **21.15** |
+| 05 south lawn | 151.2 | 156.8 (1.046x) | **152.8 (1.001x)** | 25.36 | **22.52** |
+| 06 aerial | 100.9 | 77.8 (0.750x) | **101.0 (0.993x)** | 40.48 | **21.03** |
+
+Every station's MAE falls or holds. Two changes drive it: the derived murk (cam06, cam01, cam05) and
+the per-placement shrub/reed irradiance (cam02, cam03).
+
+### Item 1c — the 1 379 shrub/reed placements
+The 28 card meshes had neither a lightmap nor `COLOR_0` and were lit by the hero probe alone. They now
+take one baked scene-linear rgb per PLACEMENT from `lightmaps.instance_irradiance`, uploaded as an
+`InstancedBufferAttribute` (`pfaInstIrr`) with a companion `pfaInstOn`; where the bake measured nothing
+(`cov == 0`, 7 fully enclosed cards) `pfaInstOn` is 0 and the shader keeps the probe, which is why
+`probeEnv` now lets a material past its `pfaPatched` skip when it carries `pfaWantsProbeEnv`.
+
+**The binding is per glTF NODE, with a running cursor over `segments`, and confined to `env.glb`.** The
+node index is an index into one file's `nodes` array, and the first run searched every glb — orn.glb
+has instanced nodes 1..n too, so it "found" 28 nodes for a 25-node block and every row count
+disagreed. Confined to `WEB_glb_env` it binds **1 379/1 379 placements over 25/25 nodes**, 7 on the
+probe, exactly the manifest's own numbers. Any node whose row count differs from its segments' sum
+throws and the viewer refuses to boot: a misaligned array lights each shrub with its neighbour's
+irradiance and no metric would catch it.
+
+Measured at cam02, near-trees box `60 520 700 980`:
+
+| | rgb | lum | hue | sat | G > R |
+|---|---|---|---|---|---|
+| round 14 | 85.3 84.9 78.3 | 84.5 | 56.6 | 0.082 | 37.4 % |
+| round 15 before 1c | 100.1 113.7 116.8 | 111.1 | 191.1 | 0.143 | 79.4 % |
+| round 15 with 1c | 105.3 105.0 97.2 | 104.5 | 57.7 | 0.077 | 37.4 % |
+| Cycles reference | 100.9 108.4 97.7 | 106.0 | 102.4 | 0.098 | 70.9 % |
+
+Level lands (104.5 against 106.0, 0.99x) and the cyan is gone. The residual is HUE: 57.7° against
+102.4°, and G > R holds at 37 % where the reference is 71 %. That is the cards' own albedo and the
+near trees' `COLOR_0` warmth, not the irradiance — the baked irradiance is near-neutral golden-hour
+light, and no per-placement value can turn a warm albedo green. Reported to bake/export.
+`?instirr=0` is the A/B.
 
 cam06 is the derived murk: its whole lower frame is lagoon, which round 14 rendered as a near-black
 body. cam01 and cam05 improve on both axes; cam03 and cam04 are untouched by anything in round 7
