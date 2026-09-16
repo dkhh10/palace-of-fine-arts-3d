@@ -493,3 +493,10 @@ sky. Decision: the shrub/reed/card meshes get bake-side vertex irradiance exactl
 round 15. Water (QA-14-1): the hard reflection edge is not clipping but the surface model (a near-mirror reflects the dark zenith where a rough lagoon samples the bright
 near-horizon); an isotropic ripple strong enough to satisfy the row-frequency metric reads as cobblestones, so the metric alone cannot accept the fix — the lead judges a 100 %
 open-water tile. Rebuild: anisotropic ripple normal (elongated crests) plus a horizon-stretched rough lobe.
+
+## 2026-09-16 · Shrub/reed irradiance is baked PER PLACEMENT, not per mesh (lead, at session close; to execute next session)
+The bake engineer measured (phase6-bake 67f4e90, export/out/gate3/env_cards.json): 28 shrub/reed card meshes carry 1 379 placements, up to 101 per mesh, 279 m apart on average, so
+a per-mesh vertex bake would give 1 379 shrubs 28 wrong values. Decision: one scene-linear RGB per PLACEMENT (the mesh's vertex-averaged Cycles DIFFUSE irradiance at that
+instance's transform; ~16.5 kB), written to a new manifest block `lightmaps.instance_irradiance` {mesh: [rgb per placement in placement order], range_global, encoding}, consumed
+by the viewer as an InstancedBufferAttribute exactly like the ORN slot offsets (instancing kept; no COLOR_0). Estimated 3-5 GPU minutes. The 14 near trees keep their per-vertex
+COLOR_0 (one placement each).
