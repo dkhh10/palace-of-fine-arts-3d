@@ -5,16 +5,24 @@
 CPU only, no Blender, no GPU. One scene-linear RGB per PLACEMENT of the 28 shrub/reed card meshes, in the
 same units as a DECODED lightmap texel and as vertex_irradiance.npz (irradiance / pi; x lightmaps.scale).
 
-THE REDUCTION, and why it is the non-zero mean. A leaf card's own material is alpha cut-out: where a vertex
-falls in a transparent texel the DIFFUSE bake returns exactly 0. Measured on inst_probe (12 placements, both
-variants, out/gate3/bake/inst_probe.json): with the card's own material only 10.7 % of vertices came back
-non-zero and one placement of twelve was entirely black, so the plain vertex mean is 10-50x too dark and
-carries no light information at all. The production bake therefore replaces the card material with an opaque
-grey Principled (`color: false` divides the albedo out, so the measured quantity is unchanged) and turns the
-card's shadow ray visibility off, which lifts coverage to 0.86 mean with no black placement. The remaining
-zeros are the card vertices buried in the terrain (their hemisphere is fully blocked); averaging them in
-would darken a placement by its own buried fraction, which is geometry, not light. `rgb` is therefore the
-mean over the vertices that received light; `cov` ships beside it so the consumer can see how many that was.
+THE OVERRIDE, and why it is not a neutral re-encoding. A leaf card's material is alpha cut-out: where a
+vertex falls in a transparent texel the DIFFUSE bake returns exactly 0. Measured on inst_probe/inst_probe2
+(12 placements): only 10.7 % of vertices come back non-zero with the card's own material and 1 placement of
+12 is entirely black, so the plain vertex mean of a 36-tri card is noise. The bake therefore wraps each card
+MATERIAL so that non-shadow rays see an opaque grey Principled while shadow rays keep the original cut-out
+chain (`visible_shadow` stays ON, so every shadow the leaf casts is real), which lifts coverage to 0.79-0.95.
+Because materials are shared datablocks the wrap covers all 1 379 placements in every job, so no value
+depends on the job split (measured: one placement baked in two different splits is bit-identical).
+This CHANGES the measured number, it does not preserve it: `color: false` divides the albedo out, but the
+surface that receives the light is a full grey lambert instead of a partly transparent leaf. Matched
+per-vertex against the cut-out bake the shadow-ray wrap is a median 1.61x brighter (0.12-3.39 over 11
+placements with any matched vertex), and the superseded `visible_shadow = False` variant was a further
+median 1.14x brighter than this one (up to 2.01x on sunlit cards).
+
+THE REDUCTION is the mean over the vertices that received light. The remaining zeros are the card vertices
+buried in the terrain (their hemisphere really is blocked); averaging them in would darken a placement by
+its own buried fraction, which is geometry, not light. `cov` ships beside `rgb` with `mean_all` (the
+all-vertex mean) for a consumer that wants the occluded form.
 
 Also runs sanity checks 2 and 3 of the brief (the near-tree neighbour and the 1 379 count); check 1 (shaded
 colonnade vs sunlit lawn against the ground lightmap) needs a ray cast and lives in gate3_instance_check.py.
@@ -75,7 +83,9 @@ def main():
         assert it["mesh"] == mesh, f"{obj}: baked mesh {it['mesh']} != export set {mesh}"
         rgb = np.array(it["mean_nonzero"], dtype=np.float64)
         all_rgb.append(rgb)
-        meshes.setdefault(mesh, []).append(dict(object=obj, rgb=r6(rgb), cov=round(it["coverage"], 3)))
+        meshes.setdefault(mesh, []).append(dict(
+            object=obj, loc=[round(float(x), 4) for x in it["loc"]], rgb=r6(rgb),
+            mean_all=r6(it["mean"]), cov=round(it["coverage"], 3)))
     A = np.array(all_rgb)
 
     out_meshes, rows = {}, []
@@ -93,6 +103,24 @@ def main():
         rows.append((mesh, out_meshes[mesh]))
 
     lum_all = A @ LUM
+    L = np.array([got[o]["loc"] for o, _ in order], dtype=float)
+    d2 = ((L[:, None, :] - L[None, :, :]) ** 2).sum(axis=2)
+    np.fill_diagonal(d2, np.inf)
+    nn = np.sqrt(d2.min(axis=1))
+    join = dict(
+        space="Blender world metres (x, y, z). glTF is Y-up: gltf_translation = (x, z, -y).",
+        how=("match each EXT_mesh_gpu_instancing row to the entry whose `loc` is nearest its translation, "
+             "after that swap; `object` is a label, not a key, because gltfpack -mi drops node names and "
+             "manifest instancing.objects is truncated at 16 entries."),
+        tolerance_m=0.05,
+        min_separation_m=round(float(nn.min()), 4),
+        p01_separation_m=round(float(np.percentile(nn, 1)), 4),
+        median_separation_m=round(float(np.median(nn)), 4),
+        unambiguous=bool(nn.min() > 0.10),
+        note=("the nearest two placements are %.3f m apart, so a 0.05 m tolerance cannot pick the wrong one; "
+              "gltfpack quantises instance translations, so an exact match must not be required. The export "
+              "must assert that every row finds exactly one entry within the tolerance and that every entry "
+              "is used once." % float(nn.min())))
     dark = [dict(object=obj, mesh=mesh, loc=got[obj]["loc"], verts=got[obj]["verts"])
             for obj, mesh in order if max(got[obj]["mean_nonzero"]) <= 0.0]
     # ---- sanity check 2: a placement beside a near tree vs that tree's own COLOR_0
@@ -114,11 +142,20 @@ def main():
         nz = v.sum(axis=1) > 0
         tree_mnz = v[nz].mean(axis=0) if nz.any() else np.zeros(3)
         shrub = np.array(got[o]["mean_nonzero"], dtype=float)
+        # review finding 6: the bare ratio has no control. Add one - the median of every placement within
+        # 20 m of that tree - and state the tree's own coverage, since a low coverage makes the tree's mean
+        # a mean over a biased 23 % of its vertices rather than over its canopy.
+        tp = trees[tn]
+        near = [np.array(got[x]["mean_nonzero"], dtype=float) @ LUM
+                for x, _ in order if np.linalg.norm(np.array(got[x]["loc"])[:2] - tp[:2]) <= 20.0]
         check2 = dict(tree=tn, tree_mesh=eset["assets"][tn]["mesh"],
                       tree_color0_mean_nonzero=r6(tree_mnz),
                       tree_color0_coverage=round(float(nz.mean()), 4),
                       shrub=o, shrub_rgb=r6(shrub), distance_m=round(d, 2),
-                      lum_ratio_shrub_over_tree=round(float((shrub @ LUM) / max(tree_mnz @ LUM, 1e-9)), 3))
+                      lum_ratio_shrub_over_tree=round(float((shrub @ LUM) / max(tree_mnz @ LUM, 1e-9)), 3),
+                      control=dict(n_within_20m=len(near),
+                                   median_lum_within_20m=round(float(np.median(near)), 4) if near else None,
+                                   site_median_lum=round(float(np.median(A @ LUM)), 4)))
 
     doc = dict(
         schema="pfa-phase6/gate4-instance-irradiance/1",
@@ -131,21 +168,27 @@ def main():
         lum_min=round(float(lum_all.min()), 6), lum_max=round(float(lum_all.max()), 6),
         lum_mean=round(float(lum_all.mean()), 6),
         placement_order=plan["placement_order"],
-        placement_key=("OBJECT NAME. The array order is export_set.json assets order filtered to the mesh, "
-                       "which is the order the Gate 1 set lists the placements; it is a convenience, never "
-                       "the contract - gltfpack -mi re-orders and merges instances across meshes, so the "
-                       "consumer must match EXT_mesh_gpu_instancing rows to these entries by object name "
-                       "(README 'Gate 3 export hand-off' item 20)."),
-        reduce=("mean over the vertices that received light (cov), not over all vertices: see the module "
-                "docstring and out/gate3/bake/inst_probe.json"),
+        placement_key=("WORLD TRANSLATION (`loc`). The object name is a label: gltfpack -mi drops node "
+                       "names and the manifest's instancing.<mesh>.objects[] is truncated at 16 entries, so "
+                       "no name survives where the consumer can read it. The array order is export_set.json "
+                       "assets order filtered to the mesh; it is a convenience, never the contract, because "
+                       "gltfpack -mi re-orders and merges instances (README hand-off item 20)."),
+        join=join,
+        reduce=("`rgb` = mean over the vertices that received light (`cov`); `mean_all` = the same mean over "
+                "ALL vertices, which is `rgb` scaled down by the fraction of the card buried in the terrain. "
+                "Use `rgb`. The 7 placements with cov == 0 are fully enclosed and ship [0,0,0]: the viewer "
+                "falls back to the probe irradiance for cov == 0 (lead, 2026-09-17)."),
         bake=dict(engine="CYCLES", type="DIFFUSE", direct=True, indirect=True, color=False,
                   samples=recs[list(plan["jobs"])[0]]["samples"], denoiser="OPENIMAGEDENOISE",
                   target="VERTEX_COLORS", blend="gate3_bake.blend",
                   rig="light_presets.apply_final_cycles (same rig as every Gate 3 bake)",
                   single_user="mesh data copied per placement in the bake process only; nothing saved",
-                  material_override=("opaque grey Principled (base 0.5, roughness 1) with the card's shadow "
-                                     "ray visibility off, because the cut-out material returns 0 at a "
-                                     "transparent vertex; `color: false` divides the albedo out"),
+                  material_override=("Light Path > Is Shadow Ray mixes the card's ORIGINAL cut-out chain for "
+                                     "shadow rays with an opaque grey Principled (base 0.5, roughness 1) for "
+                                     "every other ray; visible_shadow stays ON. Applied to the material, so "
+                                     "all 1 379 placements are wrapped in every job. This is NOT a neutral "
+                                     "re-encoding: matched per-vertex it is a median 1.61x brighter than the "
+                                     "cut-out bake - see the module docstring"),
                   variant=variant, jobs=recs,
                   bake_s=round(sum(r["bake_s"] for r in recs.values()), 1)),
         checks=dict(
