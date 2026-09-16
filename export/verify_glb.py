@@ -255,14 +255,23 @@ def main(out_dir):
         want_alpha = (gl.get("classes", {}).get(cls) or {}).get("alpha_mask_materials") or {}
         have_mode = {m.get("name"): (m.get("alphaMode"), m.get("alphaCutoff"))
                      for m in doc.get("materials", []) if m.get("name")}
-        wrong = [(n, have_mode.get(n)) for n in want_alpha
-                 if (have_mode.get(n) or (None,))[0] not in ("MASK", "BLEND")]
+        # glTF's default alphaCutoff is 0.5, so gltfpack legitimately DROPS the field when it equals 0.5 -
+        # the effective value is still 0.5. Compare the effective one, or a non-default cutoff silently
+        # falling back to 0.5 would read as a pass.
+        wrong = []
+        for n, w in want_alpha.items():
+            mode, cut = have_mode.get(n) or (None, None)
+            eff = 0.5 if cut is None else float(cut)
+            if mode not in ("MASK", "BLEND"):
+                wrong.append((n, mode, "no alphaMode"))
+            elif mode == "MASK" and abs(eff - float(w["cutoff"])) > 1e-6:
+                wrong.append((n, mode, f"effective cutoff {eff}, wanted {w['cutoff']}"))
         rows[cls]["alpha_cutout_materials"] = len(want_alpha)
         rows[cls]["alpha_cutout_cutoffs"] = sorted({v["cutoff"] for v in want_alpha.values()})
         if wrong:
-            bad.append(f"{cls}: {len(wrong)} material(s) with an alpha-carrying baseColorTexture are not "
-                       f"MASK or BLEND in the packed glb - glTF makes them OPAQUE and every cut-out card "
-                       f"draws as a solid rectangle: {wrong[:4]}")
+            bad.append(f"{cls}: {len(wrong)} material(s) with an alpha-carrying baseColorTexture do not "
+                       f"cut out correctly in the packed glb - without a mode glTF makes them OPAQUE and "
+                       f"every card draws as a solid rectangle: {wrong[:4]}")
         if split and dup_names < len(split):
             bad.append(f"{cls}: {len(split)} mesh(es) were split for the slot-merge guard but the glb holds "
                        f"only {dup_names} duplicate material name(s) - gltfpack merged the copies back")

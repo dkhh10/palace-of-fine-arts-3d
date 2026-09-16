@@ -374,7 +374,12 @@ step.done(probe_path, materials=n_probe)
 # DITHERED: Blender clips them stochastically, and 0.5 is the deterministic threshold the file states.
 # The test for WHICH materials get it is the exported file itself - the baseColorTexture's own PNG header -
 # so a material whose colour ends up on the 8x8 UV1 probe (every ARCH/ORN one) is never touched.
-alpha_json = G3 / "alpha_cutoffs.json"
+# alpha_cutoffs.json is the EXPORT's own hand-off (export/read_alpha.py writes it locally and
+# export/sync_main.sh copies it to MAIN), unlike the bake's npz files which only ever live in MAIN - so it
+# resolves local-then-MAIN, the same order export/manifest_v4.py uses for the relay json.
+LOCAL_G3 = Path(__file__).resolve().parents[1] / "export" / "out" / "gate3"
+alpha_json = next((q for q in (LOCAL_G3 / "alpha_cutoffs.json", G3 / "alpha_cutoffs.json") if q.exists()),
+                  LOCAL_G3 / "alpha_cutoffs.json")
 alpha_src = json.loads(alpha_json.read_text()) if alpha_json.exists() else None
 if alpha_src is not None:
     assert alpha_src.get("schema") == "pfa-phase6/gate3-alpha/1", f"alpha schema {alpha_src.get('schema')!r}"
