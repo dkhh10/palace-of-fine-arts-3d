@@ -751,3 +751,39 @@ floor; four individual rows are outside 0.5 (cam01 Lighting mood and Scale cues,
 fidelity). Budget PASS: resident **1 677.8 MB** at 1440p (textures 1 171.6, 28.4 MB under the line with impostors still to
 come, RT 443.8, geo 62.4), hero **269 draws of 400**, GPU **2.3 ms** median / 435 fps uncapped, presented 39-45 fps,
 load 629.1 MB in 5.82 s, 62/62 sets, 0 failures. Composite `renders/web/round13_gate.png`.
+
+## Round 14 — Phase 6 **Gate 4** (the viewer proper: baked + probe + impostors + water + post), 2026-09-16. **ONE MORE ROUND**
+
+Full report `docs/qa_round_14.md`; composite `renders/web/round14_gate.png`; capture `round14` (phase6-viewer 1cc73fd,
+`lighting=baked&post=all&probe=1&impostors=1&water=1&billboards=0&treeboards=0&t=0`), references station 1 the Phase 5
+Cycles hero and 2-6 the round-13 Cycles frames (128 spp, compositor on). Tools: `scripts/qa_r13_probe.py --round 14`
+(now carries `band / foliage / mist / water / walk` and a `--round` capture selector) and `qa_r13_gate.py --round 14`.
+
+1. **Closed.** **QA-13-1** the blue colonnade bays: band `20 520 540 645` B > R+20 **23.0 % -> 0.2 %** (Cycles 0.0 %,
+   gate 3.9 %), hue 219.9 -> 40.2 (ref 40.9), level 1.00x; the same surface at cam06 64.7 -> 4.6 % (ref 10.9 %).
+   **QA-13-2** the coffer field: **0.40x -> 1.02x**, p10 0.00 -> 29.5 (ref 28.6), below luma 8 **37.78 -> 0.02 %**.
+   **QA-12b-1** at cam06 (G>R 20.2 -> **1.5 %**, ref 1.4 %) and cut to a third at cam02 (19.7 -> **7.4 %**, ref 2.2 %)
+   — all of it the compositor airlight, none of it the lightmaps. **QA-12-4** shaft CV 0.088/0.187 -> **0.327/0.361**
+   (Phase 5 0.469/0.539).
+2. **New, open.** **QA-14-1 water at cam01** — the ripple does not exist: row high-pass in the open lagoon **0.97 vs
+   13.23 (0.07x)**, row/col 0.72 vs **3.24**, open water 66.8 vs 118.0 (0.57x), hue **200 vs 145 deg**, sat 0.326 vs
+   0.041, and the near-edge Fresnel flattens to ~41 where the reference falls 96.5 -> 60.4. The rotunda *does* reflect,
+   so the 6a criterion passes. **QA-14-2** cam03 1.67x, p10 39.8 vs 7.3 (no deep shade). **QA-14-3** cam06 p10 9.7 vs
+   65.6, near ground 0.53x, far terrain sat 3.7x (the haze never desaturates). **QA-14-4** bloom flattens the hero:
+   capital-row std 0.93x -> **0.69x**, S-colonnade mid **0.40x**, vault field 0.76x -> **1.25x**, sunlit-attic sat hold
+   0.89x -> **0.80x**, a halo on the dome cap and fireflies on the leaf-card edges. **QA-14-5** near foliage reads as
+   flat angular cut-outs with black gaps; cam02 hue **-45.9 deg** against Cycles' olive (held decision, still open).
+3. **Named exceptions standing.** The 127 `WEB_far_tree_billboard_*` carriers are in `env.glb` and hidden
+   (`hiddenBoards: 127`) with the octahedral impostors drawn in their place — on record, not a sweep hit; the export
+   set's own sweep is **0 to explain**. The backdrop wall reading as one flat mustard field is the hero probe's
+   single-point irradiance, accepted in `docs/decisions.md`. cam06's 0.71x level is a real deficit the old
+   no-compositor reference hid, not a regression.
+4. **6a criteria.** Within 0.5 of Phase 5 at every station **PASS** (worst -0.23); none below 2.5 **PASS but thin**
+   (cam03 and cam06 both 2.56); water reflects the rotunda **PASS**; walk never in the lagoon **PASS** (24/24) but
+   **3 of 24 probes stand at -1.225 m, 25 mm below the `WATER_Z + 0.1` floor**; loading screen **PASS** with an 18 %
+   denominator error (planned 522.3 MB vs 639.0 MB loaded); **>= 45 fps NOT MET** — 28.9 ms = **34.6 fps** at 1440p
+   (45.0 only at cam04), GPU median 2.7 ms, 314 draws, resident 1 677.8 MB; the frame is vsync-quantised, attributed.
+
+**Scores (round 09 -> round 13 -> round 14).** 01 3.67 -> 3.39 -> **3.61**, 02 2.94 -> 2.69 -> **2.94**,
+03 2.56 -> 2.69 -> **2.56**, 04 2.81 -> 2.31 -> **2.88**, 05 3.06 -> 2.89 -> **2.83**, 06 2.67 -> 2.33 -> **2.56**.
+Delta vs Phase 5: -0.06 / 0.00 / 0.00 / +0.07 / -0.23 / -0.11.
