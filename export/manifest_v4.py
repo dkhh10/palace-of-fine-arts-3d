@@ -154,18 +154,33 @@ def main():
     # per-mesh gamma-2 encode of it, reported back in the relay's `vertex_irradiance` block; the manifest
     # copies that range per mesh and says how to decode COLOR_0. Empty block -> in_glb stays false.
     vi_in_glb = bool(relay_vi) and all(isinstance(r, dict) for r in relay_vi.values())
+    relay_vi_range = (relay or {}).get("vertex_irradiance_range_global")
+    if relay_vi_range is None and relay_vi:
+        rr = {r.get("range") for r in relay_vi.values() if isinstance(r, dict)}
+        relay_vi_range = rr.pop() if len(rr) == 1 else None
+    assert not vi_in_glb or relay_vi_range is not None, (
+        "uv2_relay_status.json says COLOR_0 is in the glb but carries no single global range; the viewer "
+        "cannot pick a per-mesh one (gltfpack -mi instances primitives across trees)")
     vertex = dict(encode=v.get("encode", "none"), dtype=v.get("dtype", "float32"),
                   shape=v.get("shape", "(n_verts, 3)"), units=v.get("units"),
                   attribute="COLOR_0", in_glb=vi_in_glb,
                   npz=v.get("npz"), bytes=v.get("bytes"), meshes_n=v.get("meshes"), verts=v.get("verts"),
                   npz_decode=("none: the npz holds the baked values themselves, scene-linear RGB, same units "
                               "as a DECODED lightmap texel. irradiance = value * lightmaps.scale (pi)."),
-                  glb_encode="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
-                  glb_decode=("v = COLOR_0 * COLOR_0 * meshes[<mesh>].range, then "
+                  glb_encode="gamma2 at ONE GLOBAL range (code = sqrt(v / range)), FLOAT_COLOR, "
+                             "env.glb -vc 16",
+                  # ONE number for the whole block (lead's decision after viewer round 13b): gltfpack's -mi
+                  # instances primitives across trees, so the 14 baked buffers arrive as 14 primitives over
+                  # 26 placements and a PER-MESH range cannot be joined back to its mesh. The per-mesh rows
+                  # below still carry `range` (the same value) plus their own mean and round-trip error.
+                  range=relay_vi_range,
+                  range_source=("uv2_relay_status.json vertex_irradiance_range_global = the max over all 14 "
+                                "near-tree meshes in vertex_irradiance.npz"),
+                  glb_decode=("v = COLOR_0 * COLOR_0 * lightmaps.vertex_irradiance.range, then "
                               "irradiance = v * lightmaps.scale (pi) - exactly as a gamma2 lightmap texel. "
-                              "`range` is PER MESH: never use one shared range. glTF multiplies COLOR_0 into "
-                              "base colour by default, so these 14 meshes must consume it as irradiance, "
-                              "not as a tint."),
+                              "ONE global `range` for all 14 meshes; do not look for a per-mesh one. glTF "
+                              "multiplies COLOR_0 into base colour by default, so these 14 meshes must "
+                              "consume it as irradiance, not as a tint."),
                   meshes={r["mesh"]: dict(verts=r["verts"], min=r.get("min"), max=r["max"], mean=r["mean"],
                                           mean_nonzero=r.get("mean_nonzero"), p99=r.get("p99"),
                                           roundtrip=r["roundtrip"],
@@ -175,10 +190,11 @@ def main():
                                              if isinstance(relay_vi.get(r["mesh"]), dict)
                                              and k in relay_vi[r["mesh"]]})
                           for r in v.get("rows", [])},
-                  note=(("COLOR_0 is in env.glb; `range` per mesh comes from uv2_relay_status.json."
+                  note=(("COLOR_0 is in env.glb; the single global `range` comes from "
+                         "uv2_relay_status.json."
                          if vi_in_glb else
                          "`in_glb: false` until env.glb is re-exported with COLOR_0 and the relay reports a "
-                         "per-mesh range; this writer re-runs on that hand-off. Until then the near trees "
+                         "global range; this writer re-runs on that hand-off. Until then the near trees "
                          "stay on the PMREM path and must take their irradiance from sky.diffuse, not "
                          "sky.glossy (QA-12b-1).")),
                   relay_note=(relay or {}).get("vertex_irradiance_skipped"))
@@ -367,6 +383,31 @@ def main():
                  f"{total} MB; against the viewer's MEASURED texture residency at round 12b "
                  f"({QA12B_VIEWER_TEXTURE_MB} MB) it is {b['measured_total_mb']} MB. The budget line is "
                  f"{b['budget_mb']} MB.")
+
+    # ------------------------------------------------------------ compositor.mist (lead, viewer round 13b)
+    # The carried `compositor` block records COMP_golden_hour's `Mist` INPUT as 0.0, which is only what a
+    # disconnected socket's stored default reports - the live value is the Mist PASS the Render Layers node
+    # feeds it, and that pass is shaped entirely by scene.world.mist_settings. export/read_mist.py reads them
+    # out of master_delivery.blend (read-only, no render) into out/gate3/mist_settings.json; this copies them
+    # in so the viewer has the haze ramp's real start and depth instead of a zero.
+    mp = g3.OUT / "mist_settings.json"
+    if mp.exists():
+        mj = json.loads(mp.read_text())
+        assert mj.get("schema") == "pfa-phase6/gate3-mist/1", f"mist schema {mj.get('schema')!r}"
+        comp_block = man.get("compositor")
+        if not isinstance(comp_block, dict):
+            comp_block = {}
+        comp_block["mist"] = dict(**(mj.get("mist") or {}),
+                                  use_pass_mist=mj.get("use_pass_mist"),
+                                  units="metres (1 BU = 1 m), measured along the view ray from the camera",
+                                  source="master_delivery.blend scene.world.mist_settings, "
+                                         "read by export/read_mist.py",
+                                  file="mist_settings.json", read_at=mj.get("source"),
+                                  formula=mj.get("note"),
+                                  group_input_note=("COMP_golden_hour's own `Mist` group input reads 0.0 in "
+                                                    "this block: that is a disconnected socket's stored "
+                                                    "default, NOT the value the render used."))
+        man["compositor"] = comp_block
 
     man["gate3"] = dict(generated=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                         jobs=len(jobs), records=len(list(g3.REC.glob("*.json"))))

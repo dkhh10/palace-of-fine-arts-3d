@@ -179,6 +179,7 @@ def main(out_dir, g3_dir, g3_out=None):
     # ac63e44). export/gltf_gate1.py still refuses to encode COLOR_0 from anything but the float32 file, and
     # the tests below are written against that form: per-mesh range = the mesh's own max, code = sqrt(v/range).
     vi_dtypes = sorted({str(np.asarray(z3[f]).dtype) for f in z3.files})
+    vi_range = float(np.float32(max((float(np.asarray(z3[f]).max()) for f in z3.files), default=1.0))) or 1.0
     vi_skip = (gl.get("gate3_color0") or {}).get("skipped")
     if vi_skip is None and vi_dtypes != ["float32"]:
         vi_skip = (f"vertex_irradiance.npz is {vi_dtypes}, not float32 scene-linear (Gate 3 review findings "
@@ -192,10 +193,11 @@ def main(out_dir, g3_dir, g3_out=None):
         g = files[cls]
         me = g.meshes()[mn]
         lin_npz = np.asarray(z3[mn]).astype(np.float64)
-        # the encode rule (docs/decisions.md 2026-09-16): gamma-2 at the mesh's OWN max, so the range is
-        # recomputed here from the npz - never taken from the script that wrote the attribute. The writer's
-        # own number is cross-checked below.
-        rng = float(np.float32(lin_npz.max())) or 1.0
+        # the encode rule (docs/decisions.md 2026-09-16, revised after viewer round 13b): gamma-2 at ONE
+        # GLOBAL range - the max over all 14 meshes - because gltfpack's -mi instances primitives across
+        # trees and a per-mesh range cannot be joined back to its mesh. Recomputed here from the npz, never
+        # taken from the script that wrote the attribute; the writer's own number is cross-checked below.
+        rng = vi_range
         vals, ctype, norm_flag, n_v = [], set(), set(), 0
         for pr in me["primitives"]:
             ai = pr["attributes"].get("COLOR_0")
@@ -232,8 +234,10 @@ def main(out_dir, g3_dir, g3_out=None):
         in_glb = "COLOR_0" in packed_attr.get(cls, set())
         w = wrote.get(mn) or {}
         vi[mn] = dict(asset=asset_of.get(mn), glb=f"{cls}.glb", in_glb=bool(in_glb),
-                      encoding="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
-                      range=rng, attribute="COLOR_0",
+                      encoding="gamma2 at one global range (code = sqrt(v / range)), FLOAT_COLOR, "
+                               "env.glb -vc 16",
+                      range=rng, range_global=rng, max_this_mesh=round(float(lin_npz.max()), 6),
+                      attribute="COLOR_0",
                       component_type=sorted(ctype), normalized=sorted(norm_flag),
                       mean=round(float(lin_glb.mean()), 6), mean_npz=round(float(lin_npz.mean()), 6),
                       mean_linear=round(float(lin_npz.mean()), 6),
@@ -246,7 +250,9 @@ def main(out_dir, g3_dir, g3_out=None):
                       verts_npz=int(lin_npz.shape[0]), verts_in_gltf=int(n_v),
                       code_quantisation_error=round(q, 8), roundtrip_rel_p99=round(float(rel), 6),
                       range_from_writer=w.get("range"),
-                      decode="irradiance = COLOR_0^2 * range * lightmap_scale (range is PER MESH)",
+                      decode="irradiance = COLOR_0^2 * range * lightmap_scale (ONE global range for all "
+                             "14 meshes; gltfpack -mi instances primitives across trees, so a per-mesh "
+                             "range cannot be joined back to its mesh)",
                       source="gate3/vertex_irradiance.npz")
         # Blender writes a FLOAT_COLOR attribute as a 16-bit normalised accessor, so an exported code sits
         # at most 0.5/65535 = 7.6e-6 from the true one. 4e-5 is that bound with room for the float32 round
@@ -256,6 +262,8 @@ def main(out_dir, g3_dir, g3_out=None):
                         f"codes - the exporter transformed them (sRGB encode? wrong range?)")
         if w.get("range") is not None and abs(float(w["range"]) - rng) > 1e-6 * max(rng, 1.0):
             fail.append(f"{mn}: gltf_gate1.py encoded at range {w['range']}, the npz max is {rng}")
+        # under a global range only the brightest mesh codes to 1.0; every mesh's own max must still come
+        # back as its own max, to within the 16-bit step at that code.
         if abs(lin_glb.max() - lin_npz.max()) > 1e-3 * max(rng, 1.0):
             fail.append(f"{mn}: COLOR_0 decodes to max {lin_glb.max():.4f}, the npz max is {lin_npz.max():.4f}")
         # The per-vertex mean is REPORTED, never asserted: the exporter splits a vertex per normal / UV seam,
@@ -280,11 +288,13 @@ def main(out_dir, g3_dir, g3_out=None):
         source_blend="export/out/gate1/gate1_set.blend (frozen Gate 1 geometry)",
         note="The bake engineer's manifest writer flips lightmaps.assets[<asset>].uv2_in_glb and "
              "lightmaps.vertex_irradiance.in_glb from this file, and copies `range` PER MESH out of the "
-             "vertex_irradiance block. COLOR_0 is a gamma-2 code at that mesh's own range: "
+             "vertex_irradiance block (ONE global `range` for all 14 meshes, not one per mesh). "
+             "COLOR_0 is a gamma-2 code at that range: "
              "irradiance = COLOR_0^2 * range * lightmap_scale. Standard glTF multiplies COLOR_0 into base "
              "colour, so the viewer must consume these 14 meshes' COLOR_0 as irradiance, not as a tint.",
         uv2=uv2, uv2_all_meshes=all_uv2,
         vertex_irradiance=vi, vertex_irradiance_skipped=vi_skip, npz_dtypes=vi_dtypes,
+        vertex_irradiance_range_global=(vi_range if vi else None),
         glb_bytes={cls: (out / f"{cls}.glb").stat().st_size for cls in CLASSES if (out / f"{cls}.glb").exists()},
         packed_attributes={cls: sorted(v) for cls, v in packed_attr.items()},
         gltfpack_flags=(out / "gltfpack_flags.txt").read_text().strip().split("\n")
