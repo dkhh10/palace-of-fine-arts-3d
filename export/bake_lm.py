@@ -238,6 +238,129 @@ elif job["kind"] == "vertex":
     rec.update(npz=p.name, npz_bytes=p.stat().st_size, meshes=len(arrays), items=rows,
                bake_s=round(sum(r.get("bake_s", 0.0) for r in rows), 1))
 
+# ================================================================ instance irradiance (per PLACEMENT)
+elif job["kind"] == "instance":
+    # Gate 4, docs/decisions.md 2026-09-16 "Shrub/reed irradiance is baked PER PLACEMENT, not per mesh".
+    # One scene-linear RGB per placement = the mesh's vertex-averaged DIFFUSE direct+indirect irradiance
+    # (colour off) at that instance's own world transform. The mesh data is made single-user HERE, in the
+    # bake process only - this blend is never saved, so the export set's shared meshes are untouched.
+    prepare(g3.SAMPLES_VERTEX)
+    scene.render.bake.target = "VERTEX_COLORS"
+    b = scene.render.bake
+    b.use_selected_to_active = False
+    b.use_clear = True
+    b.use_pass_direct = True
+    b.use_pass_indirect = True
+    b.use_pass_color = False
+    scene.cycles.samples = SPP_OVERRIDE or g3.SAMPLES_VERTEX
+    scene.cycles.use_adaptive_sampling = False
+    vl = bpy.context.view_layer
+    chunk = int(job.get("chunk", 100))
+    variants = list(job.get("variants", ["opaque"]))
+    single_idx = job.get("single_chunk_index")
+    keep_arrays = bool(job.get("keep_arrays"))
+
+    obs, src_mesh, missing = [], {}, []
+    for name in job["objects"]:
+        ob = bpy.data.objects.get(name)
+        if ob is None or ob.type != "MESH":
+            missing.append(dict(object=name, why="absent" if ob is None else f"type {ob.type}"))
+            continue
+        if name not in vl.objects:
+            missing.append(dict(object=name, why="not in view layer"))
+            continue
+        ob.hide_render = ob.hide_viewport = ob.hide_select = False
+        src_mesh[name] = ob.data.name
+        ob.data = ob.data.copy()
+        me = ob.data
+        ca = me.color_attributes.get("COLOR_0")
+        if ca is None:
+            ca = me.color_attributes.new(name="COLOR_0", type="FLOAT_COLOR", domain="POINT")
+        me.color_attributes.active_color = ca
+        me.color_attributes.render_color_index = list(me.color_attributes).index(ca)
+        obs.append(ob)
+    assert obs, f"{JOB_ID}: no bakeable object in {len(job['objects'])} names"
+
+    def read_rgb(ob_):
+        me_ = ob_.data
+        ca_ = me_.color_attributes["COLOR_0"]
+        n_ = len(me_.vertices)
+        buf_ = np.empty(n_ * 4, dtype=np.float32)
+        ca_.data.foreach_get("color", buf_)
+        return buf_.reshape(n_, 4)[:, :3].copy()
+
+    override = bpy.data.materials.new("MAT_INST_IRR_OPAQUE")
+    override.use_nodes = True
+    _bsdf = next(n for n in override.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    _bsdf.inputs["Base Color"].default_value = (0.5, 0.5, 0.5, 1.0)
+    _bsdf.inputs["Roughness"].default_value = 1.0
+
+    results, arrays = {}, {}
+    for variant in variants:
+        assert variant in ("asis", "opaque"), variant
+        saved = {}
+        if variant == "opaque":
+            # A leaf card's own material is alpha cut-out: at a vertex that falls in a transparent texel
+            # the DIFFUSE bake returns 0 (measured on the 14 near trees: 77-99 % of their COLOR_0 verts are
+            # exactly zero). An opaque grey Principled makes every vertex return the irradiance it actually
+            # receives; with `color: false` the albedo is divided out, so the value is the same quantity.
+            # visible_shadow off keeps the opaque card from casting the shadow the cut-out leaf does not.
+            for ob in obs:
+                saved[ob.name] = ([s.material for s in ob.material_slots], ob.visible_shadow)
+                if not ob.material_slots:
+                    ob.data.materials.append(override)
+                else:
+                    for s in ob.material_slots:
+                        s.material = override
+                ob.visible_shadow = False
+        rows, t0 = [], time.time()
+        for ci in range(0, len(obs), chunk):
+            part = obs[ci:ci + chunk]
+            one_by_one = single_idx is not None and ci // chunk == int(single_idx)
+            for grp in ([[o] for o in part] if one_by_one else [part]):
+                for o in bpy.context.selected_objects:
+                    o.select_set(False)
+                for o in grp:
+                    o.select_set(True)
+                vl.objects.active = grp[0]
+                bpy.ops.object.bake(type="DIFFUSE")
+            for o in part:
+                v = read_rgb(o)
+                nz = v.sum(axis=1) > 0.0
+                mean = v.mean(axis=0) if len(v) else np.zeros(3, np.float32)
+                mnz = v[nz].mean(axis=0) if nz.any() else np.zeros(3, np.float32)
+                rows.append(dict(object=o.name, mesh=src_mesh[o.name], verts=int(len(v)),
+                                 loc=[round(float(x), 3) for x in o.matrix_world.translation],
+                                 mean=[float(x) for x in mean], mean_nonzero=[float(x) for x in mnz],
+                                 coverage=round(float(nz.mean()) if len(v) else 0.0, 4),
+                                 max=float(v.max()) if len(v) else 0.0,
+                                 how="single" if one_by_one else "batch"))
+                if keep_arrays:
+                    arrays[f"{variant}:{o.name}"] = v
+            print(f"[gate3] {JOB_ID} {variant}: {ci + len(part)}/{len(obs)} "
+                  f"({time.time() - t0:.0f}s, {'single' if one_by_one else 'batch'})")
+        results[variant] = dict(items=rows, bake_s=round(time.time() - t0, 1),
+                                s_per_placement=round((time.time() - t0) / max(len(rows), 1), 3),
+                                zero_placements=sum(1 for r in rows if max(r["mean_nonzero"]) <= 0.0),
+                                coverage_mean=round(sum(r["coverage"] for r in rows) / max(len(rows), 1), 4))
+        if variant == "opaque":
+            for ob in obs:
+                mats, vis = saved[ob.name]
+                for s, m in zip(ob.material_slots, mats):
+                    s.material = m
+                ob.visible_shadow = vis
+    scene.render.bake.target = "IMAGE_TEXTURES"
+    if arrays:
+        p = g3.OUT / "instance" / f"{JOB_ID}.npz"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(str(p), **arrays)
+        back = np.load(str(p))
+        assert sorted(back.files) == sorted(arrays), f"{p}: array set changed on write"
+        rec.update(npz=p.name, npz_bytes=p.stat().st_size)
+    rec.update(placements=len(obs), missing=missing, chunk=chunk, variants=variants,
+               samples=scene.cycles.samples, single_chunk_index=single_idx, results=results,
+               bake_s=round(sum(r["bake_s"] for r in results.values()), 1))
+
 # ================================================================ impostor
 elif job["kind"] == "impostor":
     prepare(g3.SAMPLES_IMPOSTOR)
