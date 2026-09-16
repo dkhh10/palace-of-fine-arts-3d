@@ -695,3 +695,7 @@ Dispatched: QA 13 (Opus xhigh) on round13b from the viewer worktree; code review
 ## 2026-09-16 · Export r3 in (phase6-export 05967b5): global COLOR_0 range 43.32 (worst 16-bit rel_p99 0.92 %, gate 2 %), mist read from master_delivery (start 20 m, depth 2000 m, LINEAR); env.glb synced
 manifest_v4.py's new keys (lightmaps.vertex_irradiance.range, compositor.mist) need main's gate2 outputs, so they land after the merge; review of ed00a62..05967b5 dispatched -> docs/reviews/phase6_export_gate3_r3_review.md. Viewer engineer told the numbers and key names. Cycles refs for 03/05/06 still rendering (pid 28283).
 Next: merge export r3 -> run manifest_v4.py + sync from main -> message viewer; QA 13 verdict; viewer review verdict.
+
+## 2026-09-16 · Viewer round 5 review in (882b908): MERGE WITH FIXES (3 one-line fix now, 9 carry); UV dequant fix proved sound (transform read from the glb, applied once, idempotent)
+Fix now: hero_boxes.py hard-coded MAIN path; empty `?post=` enables the whole chain incl. the placeholder mist; two gate3_test.mjs checks became tautologies. Carries incl. ~58 MB full-res PNGs under renders/web against the 960 px rule — viewer told to commit 960 px copies only and drop the one-shot A/B frames. Gate 2 carries 5 (export-owned), 10, 11 still open.
+Next: viewer fixes land with the item 2 (impostor) report -> merge phase6-viewer; export r3 review -> merge; QA 13 verdict; Cycles refs.
