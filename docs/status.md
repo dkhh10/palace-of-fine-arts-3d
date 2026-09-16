@@ -752,3 +752,6 @@ Viewer: commit repointed refs, prepare the one-command Gate 4 capture, sweep imp
 ## 2026-09-16 · Bake staged (phase6-bake 7ed1bdb): ceiling bake + sky-branch probe (debug world R=camera / G=diffuse / B=glossy; bake vs render) held for the GPU; precedent found — Phase 5's Eevee probe capture had the same camera-branch defect and light_probes.bake fixes it with make_sky_world(split_rays=False)
 sky.diffuse is confirmed the tinted branch (bake_lm.py isolates Is Diffuse Ray). If the probe confirms, the fix is a full Gate 3 lightmap re-bake with the corrected world (65 jobs, 6 h 30 m overnight last time); the bake engineer prepares the queue but does not start it — lead decides the overnight slot. Gate 4 capture + QA 14 proceed on the current maps for everything except QA-12b-1.
 GPU: refs 02/04 (pid 34504, ~9 min). Waiting: export cutoff fix; viewer capture prep + pop sweep.
+
+## 2026-09-16 · phase6-export r4 MERGED (cb4de91, through 0ba4cb8): cutoffs from the real Mix Shader -> Map Range chain (cypress 0.45, pine 0.42 in the glb as float32), png_has_alpha raises on unknown formats; verify_glb PASS from main
+Export side closed for Gate 4 (carries in docs/reviews/phase6_export_gate3*_review.md). Viewer told to re-sync. GPU: refs cam04 rendering (pid 34504).
