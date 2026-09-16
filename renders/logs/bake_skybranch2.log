@@ -1,0 +1,28 @@
+00:00.354  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+00:01.288  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/eq_diffuse.exr'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[skybranch] real world diffuse branch equirect mean [1.914934, 2.314316, 11.536818]
+00:01.568  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/eq_camera.exr'
+[skybranch] real world camera branch equirect mean [1.285893, 1.728284, 2.774826]
+00:01.824  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/skybranch/eq_glossy.exr'
+[skybranch] real world glossy branch equirect mean [3.539734, 4.203312, 5.773133]
+[skybranch] shipped sky_diffuse mean [1.914222, 2.319097, 11.528573]
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_skybranch_probe.py:180: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  dbg.use_nodes = True
+[skybranch] debug world in, 20 lamps disabled
+Traceback (most recent call last):
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_skybranch_probe.py", line 286, in <module>
+    main()
+    ~~~~^^
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/gate3_skybranch_probe.py", line 228, in main
+    log(f"(a) bake mean over non-zero texels {rep['a_bake']['mean_nonzero']['rgb']} "
+                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+Info: Baking map saved to internal image, save it externally or pack it
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 6596, total unfreed memory 1.395660 MB
+blender_run.sh: pid 37465 exited rc=0 after 3 s (max 1800)

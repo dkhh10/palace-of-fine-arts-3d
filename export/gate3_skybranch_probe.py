@@ -27,6 +27,8 @@ import sys
 import time
 from pathlib import Path
 
+import os
+
 import bpy
 import numpy as np
 from mathutils import Vector
@@ -96,11 +98,13 @@ def main():
         return a, dt
 
     # ---------------------------------------------------------------- (c) the real world's two branches
+    if os.environ.get("PFA_SKIP_C"):
+        rep["real_world"] = {"skipped": "PFA_SKIP_C"}
     real = sc.world
     wt = real.node_tree
     lp = next((n for n in wt.nodes if n.bl_idname == "ShaderNodeLightPath"), None)
     rep["real_world"] = {"world": real.name, "has_light_path": lp is not None}
-    if lp is not None:
+    if lp is not None and not os.environ.get("PFA_SKIP_C"):
         saved = [(ln.from_socket.name, ln.to_node.name, list(ln.to_node.inputs).index(ln.to_socket))
                  for o in lp.outputs for ln in o.links]
         saved_defaults = [(node, idx, list(wt.nodes[node].inputs[idx].default_value)
@@ -211,6 +215,15 @@ def main():
     ob.hide_render = ob.hide_viewport = ob.hide_select = False
     uvname = g3.UV2
     assert ob.data.uv_layers.get(uvname) is not None, f"{ASSET} has no {uvname}"
+    vis = [o.name for o in bpy.data.objects if o.type == "MESH" and not o.hide_render]
+    rep["pre_bake"] = {"render_visible_meshes": len(vis), "asset_hide_render": bool(ob.hide_render),
+                       "world": sc.world.name, "engine": sc.render.engine,
+                       "bake_target": sc.render.bake.target,
+                       "uv_layers": [ly.name for ly in ob.data.uv_layers],
+                       "active_render_uv": next((ly.name for ly in ob.data.uv_layers if ly.active_render), None),
+                       "materials": [m.name if m else None for m in ob.data.materials]}
+    log(f"pre-bake: {len(vis)} render-visible meshes, world {sc.world.name}, "
+        f"target {sc.render.bake.target}, mats {rep['pre_bake']['materials']}")
     img = bl.bake_image("skybranch_bake", size=BAKE_PX, colorspace="Non-Color", float_buffer=True,
                         fill=(0.0, 0.0, 0.0, 1.0))
     bl.attach_target(ob, img, uvname)
@@ -219,14 +232,19 @@ def main():
                      use_pass_indirect=True, use_pass_color=False, denoise=False)
     bl.detach_targets()
     a = bl.image_array(img)[:, :, :3].copy()
+    rep["pre_bake"]["image_has_data"] = bool(img.has_data)
+    rep["pre_bake"]["image_size"] = list(img.size)
     nz = a.max(axis=-1) > 0.0
     rep["a_bake"] = {"asset": ASSET, "px": BAKE_PX, "spp": BAKE_SPP, "bake_s": round(dt, 1),
                      "nonzero_texels": int(nz.sum()),
                      "nonzero_frac": round(float(nz.mean()), 4),
                      "mean_nonzero": mean_rgb(a, nz), "mean_all": mean_rgb(a)}
     OUT_JSON.write_text(json.dumps(rep, indent=1))
-    log(f"(a) bake mean over non-zero texels {rep['a_bake']['mean_nonzero']['rgb']} "
-        f"normalised {rep['a_bake']['mean_nonzero']['normalised']}")
+    if rep["a_bake"]["mean_nonzero"] is None:
+        log(f"(a) bake produced NO non-zero texel ({dt:.1f}s) - see rep['pre_bake']")
+    else:
+        log(f"(a) bake mean over non-zero texels {rep['a_bake']['mean_nonzero']['rgb']} "
+            f"normalised {rep['a_bake']['mean_nonzero']['normalised']}")
 
     # ---------------------------------------------------------------- (b) the frame, ARCH mask by ray-cast
     cd = bpy.data.cameras.new("SKYBRANCH_cam02")
@@ -269,8 +287,8 @@ def main():
         f"normalised {rep['b_frame']['mean_arch']['normalised']}")
     log(f"(b) frame sky mean {rep['b_frame']['mean_sky']['rgb']} (sanity: should be pure red)")
 
-    ba = rep["a_bake"]["mean_nonzero"]["normalised"]
-    fa = rep["b_frame"]["mean_arch"]["normalised"]
+    ba = (rep["a_bake"]["mean_nonzero"] or {}).get("normalised")
+    fa = (rep["b_frame"]["mean_arch"] or {}).get("normalised")
     rep["verdict"] = {
         "bake_dominant": ["R", "G", "B"][int(np.argmax(ba))] if ba else None,
         "frame_dominant": ["R", "G", "B"][int(np.argmax(fa))] if fa else None,
