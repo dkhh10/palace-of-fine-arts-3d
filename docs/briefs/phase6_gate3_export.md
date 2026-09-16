@@ -31,3 +31,12 @@ B. Second finding (viewer, checkpoint addendum 2): gltfpack merged one node of e
    of each option and ship the smaller one that reaches 988. Record the choice in export/README.md.
 C. Sync (export/sync_main.sh, no --delete), name sweep unchanged, commit after every script. Do NOT edit manifest.json (the lead runs manifest_v4.py after your report).
 Report < 20 lines: per-mesh COLOR_0 mean check, verify_glb, env/arch sizes before/after, placements count, sync done, last commit id.
+
+## Resume r5 (lead, 2026-09-16 session 4). Fresh agent, Opus high, from phase6-export 0ba4cb8 (tree clean; `git merge main` first). Dispatched only after the bake engineer's instance-irradiance report is in docs/status.md.
+Read first: docs/status.md latest bake report, docs/decisions.md "2026-09-16 · Shrub/reed irradiance is baked PER PLACEMENT", export/README.md manifest v4 `lightmaps.instance_irradiance`
+spec (bake engineer), export/out/gate3/instance_irradiance.json, docs/briefs/phase6_gate4_bake_instance_irradiance.md.
+A. manifest_v4.py emits `lightmaps.instance_irradiance` from that json, matched to env.glb's instance order per mesh by source object name (the json states its order; verify it
+   against the glb's EXT_mesh_gpu_instancing matrices, not by assumption): per mesh a flat rgb list in glb instance order, range_global, encoding, count. No COLOR_0 change, no
+   re-decimation; env.glb is re-packed only if the instance order has to be made stable (state why if so). verify_glb asserts count per mesh == glb instance count for the 28 meshes.
+B. Lead runs `python3 export/manifest_v4.py && export/sync_main.sh` after your report; do NOT edit manifest.json by hand. Commit after every script. Report < 15 lines: the
+   28-mesh count check, order verification method, any glb byte delta, last commit id.

@@ -16,3 +16,19 @@ Scope, in this order, each measured against the QA-14 numbers before and after, 
 5. Capture "round15" with web/tools/gate4.sh (same set as round14: six stations, post-off control, pair sheets, cam01 tiles under renders/web/tiles/round15/, perf json, walk json,
    loading screen at 960 px). Commit after every measured step. Chrome through scripts/chrome_run.sh only; the GPU is free.
 Report < 20 lines: per item before/after numbers, what was reported to other owners, per-station ms, last commit id.
+
+## Resume (lead, 2026-09-16 session 4). Fresh agent, Opus high, worktree `.claude/worktrees/phase6-viewer` at 2dab197 (WIP, tree clean).
+Read first: `git log -1 --format=%B 2dab197` (the exact state of the water rebuild: what is on by default, what failed, the next lever), then the brief above, docs/qa_round_14.md,
+docs/decisions.md from "2026-09-16 · QA 14 verdict" to the end, web/README.md. The two earlier viewer engineers' items 1-3 + 5 of round 5 are merged; the round-5 review's seven
+fix-now items are closed at 1e9d2be — do not redo them.
+Item 1 continues, in this order, and then STOP and report (the lead judges the open-water tile before items 2-5):
+ a. Murk to the reference sheet's MAT_water_lagoon (docs/reference_sheet.md material catalog line: absorption 0.04/0.07/0.04 over 1.5 m to a muddy bottom 0.12/0.10/0.06; the
+    WIP message computes the current murk ~5x too dark, ~10x too saturated). Derive the upwelling term from those numbers (Beer-Lambert over the two-way depth, bottom albedo),
+    not by tuning to the metric; re-measure with web/tools/water_probe.py (lum 118, hue 145°, sat 0.041, Fresnel 96.5 -> 60.4 toward the near edge are the targets).
+ b. Capture cam01 fresh and cut the 100 % open-water tile to renders/web/960/qa14_1_openwater_100pct.png (also the same crop of the Phase 5 hero beside it, one composite,
+    960 px wide) — this is what the lead judges. Report the before/after table (rowHF, row/col, lum, hue, sat, Fresnel) and the composite path, then stop.
+Chrome only through scripts/chrome_run.sh; a bake engineer runs a short GPU job early this session — screenshot.mjs pauses on export/out/bake_queue/status.json, so if a capture
+refuses, do code work and retry; no perf measurement while that file says running. Commit after every measured step.
+Queued after the lead's judgement (do not start yet): items 2-5 above, plus item 1c: consume `lightmaps.instance_irradiance` (manifest block per docs/decisions.md "PER PLACEMENT"
+entry) as an InstancedBufferAttribute on the 28 shrub/reed card meshes — exactly like the ORN slot offsets — replacing the probe irradiance for those materials only; it lands
+in env.glb/manifest after the export engineer's re-export (the lead tells you when).
