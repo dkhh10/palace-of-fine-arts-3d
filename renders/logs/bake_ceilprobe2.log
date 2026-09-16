@@ -1,0 +1,177 @@
+00:00.441  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+[ceilprobe] visibility synced on 160 objects
+[ceilprobe] cam04: shell 12.553 % of pixels, 440 faces visible
+[ceilprobe] cam04: normals toward camera mean dot -0.9918, area facing away 1.0
+[ceilprobe] cam01: shell 0.033 % of pixels, 11 faces visible
+[ceilprobe] cam01: normals toward camera mean dot -0.6591, area facing away 1.0
+[ceilprobe] hemisphere plus_normal: sky 0.0, median hit 11.551 m, <2 m 0.0664
+[ceilprobe] hemisphere minus_normal: sky 0.0, median hit 0.912 m, <2 m 0.5922
+[ceilprobe] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/ceiling_probe.json in 71.7 s
+{
+ "blend": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend",
+ "shell": "ARCH_rotunda_plaster_ceiling_merged",
+ "hide_viewport_synced_to_hide_render": 160,
+ "uv2_layer_baked": "UV2",
+ "uv2_layer_active_render_in_saved_blend": "UVMap",
+ "uv2_layers": [
+  "UVMap",
+  "UV2"
+ ],
+ "mesh": "EXPM_ARCH_rotunda_plaster_ceiling_merged",
+ "polys": 529,
+ "tris": 1102,
+ "world_area_m2": 756.0,
+ "uv2_coverage": 0.76869,
+ "normals": {
+  "area_normal_up_gt_0.5": 1.0,
+  "area_normal_down_lt_-0.5": 0.0,
+  "area_normal_side": 0.0
+ },
+ "stations": {
+  "cam04": {
+   "rays": 129600,
+   "top_hits_pct": {
+    "ARCH_rotunda_plaster_ceiling_rib_merged": 39.4,
+    "ARCH_rotunda_concrete_inner_merged": 16.22,
+    "<sky>": 12.72,
+    "ARCH_rotunda_plaster_ceiling_merged": 12.55,
+    "ARCH_rotunda_concrete_ochre_merged": 9.81,
+    "ARCH_rotunda_column_tan_inner_merged": 4.26,
+    "INST_capital_inner_002_LOD0": 0.75,
+    "INST_capital_inner_003_LOD0": 0.65
+   },
+   "shell_pixel_pct": 12.553,
+   "shell_faces_hit": 440,
+   "visible_faces": 440,
+   "visible_area_m2": 583.9,
+   "visible_area_frac_of_asset": 0.7723,
+   "visible_uv2_area": 0.60622,
+   "visible_uv2_frac_of_map": 0.60622,
+   "visible_uv2_frac_of_asset_uv2": 0.7886,
+   "normal_dot_to_camera": {
+    "mean": -0.9918,
+    "faces_facing_away_dot_lt_0": 440,
+    "area_frac_facing_away": 1.0
+   }
+  },
+  "cam01": {
+   "rays": 129600,
+   "top_hits_pct": {
+    "<sky>": 36.49,
+    "ENV_lagoon_water": 35.6,
+    "ARCH_rotunda_concrete_ochre_merged": 6.58,
+    "ARCH_colonnade_north_concrete_colonnade_merged": 1.07,
+    "ENV_backdropgroup_backdrop_building": 1.02,
+    "ARCH_colonnade_south_concrete_colonnade_merged": 0.98,
+    "ARCH_site_concrete_podium_merged": 0.92,
+    "ARCH_rotunda_plaster_ceiling_rib_merged": 0.71
+   },
+   "shell_pixel_pct": 0.033,
+   "shell_faces_hit": 11,
+   "visible_faces": 11,
+   "visible_area_m2": 23.5,
+   "visible_area_frac_of_asset": 0.0311,
+   "visible_uv2_area": 0.02824,
+   "visible_uv2_frac_of_map": 0.02824,
+   "visible_uv2_frac_of_asset_uv2": 0.0367,
+   "normal_dot_to_camera": {
+    "mean": -0.6591,
+    "faces_facing_away_dot_lt_0": 11,
+    "area_frac_facing_away": 1.0
+   }
+  }
+ },
+ "map": {
+  "exr": "export/out/gate3/tex/gate3_lm_ARCH_rotunda_plaster_ceiling_merged.exr",
+  "size": 2048,
+  "nonzero_pct_whole_map": 4.892,
+  "max_whole_map": 0.34011
+ },
+ "map_on_faces": {
+  "all_faces": {
+   "texels": 3224177,
+   "texels_pct_of_map": 76.87,
+   "nonzero_pct": 5.996,
+   "min": 0.0,
+   "max": 0.34011,
+   "mean": 0.000256,
+   "mean_nonzero": 0.004263,
+   "p50": 0.0,
+   "p99": 0.00666
+  },
+  "cam04_visible": {
+   "texels": 2542772,
+   "texels_pct_of_map": 60.624,
+   "nonzero_pct": 5.582,
+   "min": 0.0,
+   "max": 0.29654,
+   "mean": 0.000182,
+   "mean_nonzero": 0.003262,
+   "p50": 0.0,
+   "p99": 0.00516
+  },
+  "cam01_visible": {
+   "texels": 118412,
+   "texels_pct_of_map": 2.823,
+   "nonzero_pct": 6.681,
+   "min": 0.0,
+   "max": 0.09038,
+   "mean": 0.000214,
+   "mean_nonzero": 0.003208,
+   "p50": 0.0,
+   "p99": 0.00547
+  },
+  "visible_union": {
+   "texels": 2542772,
+   "texels_pct_of_map": 60.624,
+   "nonzero_pct": 5.582,
+   "min": 0.0,
+   "max": 0.29654,
+   "mean": 0.000182,
+   "mean_nonzero": 0.003262,
+   "p50": 0.0,
+   "p99": 0.00516
+  },
+  "not_visible": {
+   "texels": 681405,
+   "texels_pct_of_map": 16.246,
+   "nonzero_pct": 7.543,
+   "min": 0.0,
+   "max": 0.34011,
+   "mean": 0.00053,
+   "mean_nonzero": 0.007026,
+   "p50": 0.0,
+   "p99": 0.01438,
+   "faces": 89,
+   "area_frac": 0.2277
+  }
+ },
+ "hemisphere_test": {
+  "plus_normal": {
+   "faces": 48,
+   "rays": 4608,
+   "cosine_weighted_sky_visibility": 0.0,
+   "hit_dist_m_p50": 11.551,
+   "hit_dist_m_mean": 11.149,
+   "frac_rays_hitting_within_2m": 0.0664
+  },
+  "minus_normal": {
+   "faces": 48,
+   "rays": 4608,
+   "cosine_weighted_sky_visibility": 0.0,
+   "hit_dist_m_p50": 0.912,
+   "hit_dist_m_mean": 12.529,
+   "frac_rays_hitting_within_2m": 0.5922
+  }
+ },
+ "rib_reference": {
+  "polys": 82678,
+  "area_normal_down_lt_-0.5": 0.3267,
+  "area_normal_up_gt_0.5": 0.3302
+ },
+ "elapsed_s": 71.7
+}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 33517 exited rc=0 after 73 s (max 1500)
