@@ -30,10 +30,10 @@ const check = ( ok, msg ) => { if ( ! ok ) fails ++; console.log( `${ok ? 'PASS'
 const src = readFileSync( path.join( WEB, 'src/manifest.js' ), 'utf8' )
 	.replace( /^import stationsFallback.*$/m,
 		'const stationsFallback = ' + readFileSync( path.join( WEB, 'src/stations_blender.json' ), 'utf8' ) + ';' )
-	.replace( /^export /gm, '' ) + '\nmodule.exports = { normaliseManifest };';
+	.replace( /^export /gm, '' ) + '\nmodule.exports = { normaliseManifest, applyUv2RelayStatus, selectOwnMap };';
 const tmp = path.join( mkdtempSync( path.join( os.tmpdir(), 'pfa-gate3-' ) ), 'manifest.cjs' );
 writeFileSync( tmp, src );
-const { normaliseManifest } = createRequire( import.meta.url )( tmp );
+const { normaliseManifest, applyUv2RelayStatus } = createRequire( import.meta.url )( tmp );
 
 // ---------------------------------------------------------------- 3. the shader patches, always run
 {
@@ -85,7 +85,7 @@ check( own.length === 16 && g3.ownCount === 11, `${g3.ownCount}/${own.length} ow
 check( own.filter( a => a.url ).every( a => a.encode === 'gamma2' || a.encode === 'rgbm8' ), 'every resolved own map declares a known encode' );
 check( own.filter( a => a.url ).every( a => typeof a.range === 'number' && a.range > 0 ), 'every resolved own map carries its own range' );
 check( own.filter( a => a.blocked ).length === 5, `${own.filter( a => a.blocked ).length} asset(s) blocked with a stated reason (5 expected)` );
-check( own.filter( a => a.layout === 'gate1_frozen' ).length === g3.frozenUsed && g3.frozenUsed === 2,
+check( own.filter( a => a.layout === 'gate1_frozen' && a.url ).length === g3.frozenUsed && g3.frozenUsed === 2,
 	`${g3.frozenUsed} asset(s) fall back to the frozen Gate 1 layout (2 expected)` );
 const relaid = ( raw.lightmaps.uv2_relaid || [] ).length;
 check( Object.values( g3.ownMaps ).filter( a => ! a.uv2InGlb ).length === relaid && relaid === 7,
@@ -99,6 +99,31 @@ check( !! m.sky.diffuse && m.sky.diffuse !== m.sky.glossy, 'sky.diffuse is its o
 check( g3.impostors && g3.impostors.count === 16, `${g3.impostors && g3.impostors.count} impostor prototype(s) (16 expected)` );
 check( g3.probe && g3.probe.faces.length === 6, 'the hero probe has six faces' );
 check( g3.vertexIrradiance && g3.vertexIrradiance.inGlb === false, 'vertex irradiance is declared NOT in the glb yet' );
+
+// --- uv2_relay_status.json wins over the manifest's own flags -----------------------------------
+// The export re-packs the glbs with the re-laid UV2 before the bake rewrites `uv2_in_glb`, so the
+// relay file is the live truth.  Checked against the real file when it is on disk.
+{
+	const relayPath = path.join( MAIN, 'export/out/gate3/uv2_relay_status.json' );
+	const m2 = normaliseManifest( raw, 'http://localhost/assets/gate3/manifest.json' );
+	const before = m2.gate3.ownCount;
+	if ( existsSync( relayPath ) ) {
+		const st = applyUv2RelayStatus( m2, JSON.parse( readFileSync( relayPath, 'utf8' ) ) );
+		check( st.applied === 7, `${st.applied} re-laid asset(s) checked against the packed glbs (7 expected)` );
+		check( m2.gate3.ownCount >= before, `own maps usable ${before} -> ${m2.gate3.ownCount} after the relay status` );
+		const relaidNow = Object.values( m2.gate3.ownMaps ).filter( a => a.layout === 'gate3_relaid' && a.url );
+		check( relaidNow.length === st.flipped.length,
+			`${relaidNow.length} asset(s) now take the Gate 3 re-laid map, matching the ${st.flipped.length} flag(s) flipped` );
+		check( relaidNow.every( a => ! /lmg1/.test( a.textureKey || '' ) ),
+			'a re-laid asset takes its own Gate 3 map, never the frozen lmg1 twin' );
+	} else console.log( 'SKIP  uv2_relay_status.json not on disk yet' );
+	// the flag must be able to go BACK: a manifest that says true with a glb that says false
+	const m3 = normaliseManifest( raw, 'http://localhost/assets/gate3/manifest.json' );
+	const victim = Object.values( m3.gate3.ownMaps ).find( a => a.uv2InGlb && a.url && ! a.relaid );
+	applyUv2RelayStatus( m3, { uv2: { X: { asset: victim.name, uv2_in_glb: false } } } );
+	check( ! m3.gate3.ownMaps[ victim.name ].url && !! m3.gate3.ownMaps[ victim.name ].blocked,
+		'a glb that does NOT carry UV2 removes the map rather than applying the wrong layout' );
+}
 
 // --- the position join, on a synthetic scene ---------------------------------------------------
 // One mesh per own-map asset and one InstancedMesh per instanced mesh, each placed so its world

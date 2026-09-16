@@ -15,6 +15,51 @@ function pick( obj, ...keys ) {
 	return undefined;
 }
 
+/** Choose which of an own-map asset's two baked variants applies, from its CURRENT `uv2InGlb`.
+ *  `uv2_in_glb` true -> the map baked on the layout the glb carries (Gate 3's re-laid one for the
+ *  seven relaid assets); false -> the `_gate1_layout` twin baked on the frozen layout, where the bake
+ *  shipped one; neither -> NO map, because there is no factor fallback for a lightmap. */
+export function selectOwnMap( a ) {
+	const tex = a.uv2InGlb ? a.gate3Tex : a.frozenTex;
+	a.layout = a.uv2InGlb ? ( a.relaid ? 'gate3_relaid' : 'gate1' ) : 'gate1_frozen';
+	a.blocked = tex ? null : ( a.uv2InGlb ? 'no usable texture' : 'uv2_in_glb false and no _gate1_layout twin' );
+	for ( const k of [ 'url', 'textureKey', 'variant', 'encode', 'range', 'bytes', 'residentMb', 'w', 'h' ] ) a[ k ] = tex ? tex[ k ] : undefined;
+	if ( ! a.uv2InGlb && a.frozenTex ) a.cmPerTexelEffective = a.frozenCmPerTexel;
+	else a.cmPerTexelEffective = a.cmPerTexel;
+	return a;
+}
+
+/**
+ * Fold `export/out/gate3/uv2_relay_status.json` (written by export/gate3_relay_check.py) into a
+ * normalised manifest.  The export re-packs the glbs with the re-laid UV2 before the bake rewrites
+ * `lightmaps.assets[*].uv2_in_glb`, so that file — not the manifest — is what the glb on disk
+ * actually carries.  Returns a short report for the notes.
+ */
+export function applyUv2RelayStatus( manifest, status ) {
+	const out = { applied: 0, flipped: [], meshes: 0, vertexIrradianceInGlb: null, note: null };
+	if ( ! manifest.gate3 || ! status || ! status.uv2 ) return out;
+	for ( const rec of Object.values( status.uv2 ) ) {
+		const a = manifest.gate3.ownMaps[ rec.asset ];
+		if ( ! a ) continue;
+		out.applied ++;
+		const want = rec.uv2_in_glb === true;
+		if ( a.uv2InGlb === want ) continue;
+		a.uv2InGlb = want;
+		selectOwnMap( a );
+		out.flipped.push( `${rec.asset} -> ${a.layout}${a.blocked ? ` (${a.blocked})` : ''}` );
+	}
+	out.meshes = status.uv2_all_meshes ? Object.keys( status.uv2_all_meshes ).length : 0;
+	const vi = status.vertex_irradiance;
+	out.vertexIrradianceInGlb = vi && Object.keys( vi ).length ? true : false;
+	if ( status.vertex_irradiance_skipped ) out.note = String( status.vertex_irradiance_skipped );
+	const g3 = manifest.gate3;
+	g3.ownCount = Object.values( g3.ownMaps ).filter( m => m.url ).length;
+	g3.blockedNoUv2 = Object.values( g3.ownMaps ).filter( m => m.blocked ).length;
+	g3.frozenUsed = Object.values( g3.ownMaps ).filter( m => m.layout === 'gate1_frozen' && m.url ).length;
+	g3.relayStatus = out;
+	return out;
+}
+
 export function resolveUrl( base, url ) {
 	if ( ! url ) return null;
 	if ( /^(https?:)?\//.test( url ) ) return url;
@@ -523,22 +568,26 @@ export function normaliseManifest( raw, baseUrl ) {
 		// frozen-layout twin of the assets whose UV2 was re-laid at Gate 3.
 		const frozen = ( g3.assets && g3.assets._gate1_layout ) || {};
 		const ownMaps = {};
-		let blockedNoUv2 = 0, frozenUsed = 0;
+		// BOTH candidates are resolved up front and the choice is made by `uv2_in_glb`, because that
+		// flag moves: the export re-packs the glbs with the re-laid UV2 faster than the bake rewrites
+		// the manifest, and `export/out/gate3/uv2_relay_status.json` is the live truth
+		// (`selectOwnMap` below is re-run against it at load time).
 		for ( const [ name, entry ] of Object.entries( g3.assets || {} ) ) {
 			if ( name.startsWith( '_' ) ) continue;
-			let use = entry, layout = entry.uv2_source || 'gate1', why = null;
-			if ( entry.uv2_in_glb === false ) {
-				if ( frozen[ name ] ) { use = frozen[ name ]; layout = 'gate1_frozen'; frozenUsed ++; }
-				else { blockedNoUv2 ++; why = 'uv2_in_glb false and no _gate1_layout twin'; }
-			}
-			const tex = why ? null : lmTexture( use, `lightmaps.assets.${name}` );
 			ownMaps[ name ] = {
-				name, size: entry.size ?? null, uv2InGlb: entry.uv2_in_glb !== false, layout,
-				cmPerTexel: ( use.cm_per_texel ?? entry.cm_per_texel ) ?? null,
-				blocked: why || ( tex ? null : 'no usable texture' ),
-				...( tex || {} ),
+				name, size: entry.size ?? null,
+				uv2InGlb: entry.uv2_in_glb !== false,
+				uv2Declared: entry.uv2_in_glb !== false,
+				cmPerTexel: entry.cm_per_texel ?? null,
+				relaid: entry.uv2_source === 'gate3_relaid',
+				gate3Tex: lmTexture( entry, `lightmaps.assets.${name}` ),
+				frozenTex: frozen[ name ] ? lmTexture( frozen[ name ], `lightmaps.assets._gate1_layout.${name}` ) : null,
+				frozenCmPerTexel: frozen[ name ] ? ( frozen[ name ].cm_per_texel ?? null ) : null,
 			};
+			selectOwnMap( ownMaps[ name ] );
 		}
+		let blockedNoUv2 = Object.values( ownMaps ).filter( a => a.blocked ).length;
+		let frozenUsed = Object.values( ownMaps ).filter( a => a.layout === 'gate1_frozen' && a.url ).length;
 		// per-instance slot atlases (the user's option (c)).  `orn_slots` carries the per-object
 		// offset/scale; `lightmaps.slots.atlases` names which texture each (pool, atlas) is.
 		const atlasRaw = ( g3.slots && g3.slots.atlases ) || {};

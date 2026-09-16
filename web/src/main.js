@@ -20,7 +20,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 
 import { makeStationCamera, stationMatrix, b2t, matrixMaxDiff } from './blenderCamera.js';
-import { normaliseManifest, WATER_Z } from './manifest.js';
+import { normaliseManifest, applyUv2RelayStatus, WATER_Z } from './manifest.js';
 import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater } from './water.js';
@@ -63,6 +63,8 @@ const CFG = {
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
 	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
+	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
+	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 };
 
 function glInfo() {
@@ -260,6 +262,23 @@ async function boot() {
 			} catch ( e ) { note( `colour fallback ${src} failed: ${e.message}` ); }
 		}
 	}
+	// `uv2_in_glb` moves faster in the glbs than in the manifest: export/gate3_relay_check.py writes
+	// what each re-packed glb ACTUALLY carries, and that file wins until the bake rewrites the flags.
+	if ( manifest.gate3 ) {
+		const url = new URL( 'uv2_relay_status.json', manifestUrl ).href;
+		try {
+			const r = await fetch( url, { cache: 'no-cache' } );
+			if ( r.ok ) {
+				const st = applyUv2RelayStatus( manifest, await r.json() );
+				note( `uv2_relay_status.json: ${st.applied} asset(s) checked against the packed glbs, `
+					+ `${st.flipped.length} flag(s) flipped${st.flipped.length ? ` (${st.flipped.join( '; ' )})` : ''}; `
+					+ `${manifest.gate3.ownCount} own map(s) usable, ${manifest.gate3.blockedNoUv2} blocked, `
+					+ `${manifest.gate3.frozenUsed} on the frozen layout`
+					+ ( st.note ? `; vertex irradiance: ${st.note}` : '' ) );
+			} else note( `no uv2_relay_status.json (${r.status}): the manifest's own uv2_in_glb flags stand` );
+		} catch ( e ) { note( `uv2_relay_status.json fetch failed (${e.message}): the manifest's own flags stand` ); }
+	}
+
 	lightingMode = pickLightingMode();
 	note( `lighting mode: ${lightingMode}${CFG.lighting !== 'auto' ? ' (?lighting override)' : ''} — `
 		+ ( lightingMode === 'baked' ? 'lightmaps carry the diffuse, sun and env are specular-only'
@@ -539,7 +558,7 @@ async function loadGlbs() {
 	// and so texture every clone this pass makes.
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
 		gate3Report = applyGate3Lightmaps( {
-			scene, gate3: manifest.gate3, assets: manifest.assets, note,
+			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
 			loadTexture: ( url ) => {
 				progress.label = url.split( '/' ).pop();
 				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )

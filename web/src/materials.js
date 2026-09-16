@@ -50,7 +50,8 @@ function once( src, needle, replacement, what ) {
 /**
  * @param {THREE.MeshStandardMaterial} mat
  * @param {{ specularOnlySun?:boolean, noEnvDiffuse?:boolean, lightMapEncoding?:string,
- *           rgbmMaxRange?:number, range?:number, slot?:boolean, atlasB?:THREE.Texture|null }} opts
+ *           rgbmMaxRange?:number, range?:number, slot?:boolean, atlasB?:THREE.Texture|null,
+ *           flipV?:boolean }} opts
  */
 export function patchBakedMaterial( mat, opts = {} ) {
 	const specularOnlySun = opts.specularOnlySun !== false;
@@ -59,8 +60,12 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	// `range` is the v4 per-texture value; `rgbmMaxRange` is the Gate 0/2 name for the same thing.
 	const maxRange = opts.range ?? opts.rgbmMaxRange ?? 7.0;
 	const slot = !! opts.slot;
+	// Diagnostic only (?lmflip=1).  glTF UVs have their origin at the TOP left and Blender's at the
+	// bottom left; whether the baked map needs the flip is a property of how the encoder wrote the
+	// image, so it is measured against the Cycles frame rather than assumed either way.
+	const flipV = !! opts.flipV;
 	if ( mat.userData.pfaPatched ) return mat;
-	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot };
+	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV };
 
 	const prevCompile = mat.onBeforeCompile;
 	mat.onBeforeCompile = function ( shader, renderer ) {
@@ -74,19 +79,25 @@ export function patchBakedMaterial( mat, opts = {} ) {
 				'#include <lights_physical_pars_fragment>', chunk, 'lights_physical_pars_fragment include' );
 		}
 		const decode = decodeGlsl( enc, maxRange );
-		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot ) {
+		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV ) {
 			let maps = THREE.ShaderChunk.lights_fragment_maps;
 			if ( noEnvDiffuse ) {
 				maps = once( maps, IBL_IRRADIANCE_LINE,
 					'// PFA: env diffuse irradiance removed - the lightmap already carries the sky diffuse',
 					'no env diffuse' );
 			}
+			if ( flipV && ! slot ) {
+				maps = once( maps, LM_FETCH_LINE,
+					'vec4 lightMapTexel = texture2D( lightMap, vec2( vLightMapUv.x, 1.0 - vLightMapUv.y ) );',
+					'lightmap V flip' );
+			}
 			if ( slot ) {
 				// The instance's own window into the 4K slot atlas.  vLightMapUv is the mesh's [0,1]
 				// UV2; clamping it keeps a wrapped or slightly out-of-range texel inside the slot's
 				// 248 usable px instead of bleeding into the neighbour's.
 				maps = once( maps, LM_FETCH_LINE,
-					'vec2 pfaSlotUv = clamp( vLightMapUv, 0.0, 1.0 ) * vPfaSlot.z + vPfaSlot.xy;\n'
+					`vec2 pfaSlotUv0 = clamp( vLightMapUv, 0.0, 1.0 );${flipV ? '\n\t\tpfaSlotUv0.y = 1.0 - pfaSlotUv0.y;' : ''}\n`
+					+ '\t\tvec2 pfaSlotUv = pfaSlotUv0 * vPfaSlot.z + vPfaSlot.xy;\n'
 					+ '\t\tvec4 lightMapTexel = mix( texture2D( lightMap, pfaSlotUv ), texture2D( pfaLmAtlasB, pfaSlotUv ), vPfaSlotB );',
 					'slot atlas lightmap fetch' );
 			}
@@ -109,7 +120,7 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	};
 	const prevKey = mat.customProgramCacheKey;
 	mat.customProgramCacheKey = function () {
-		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}`;
+		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}`;
 	};
 	mat.needsUpdate = true;
 	return mat;

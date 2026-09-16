@@ -84,11 +84,18 @@ function worldCentre( mesh, i ) {
  */
 export function applyGate3Lightmaps( o ) {
 	const { scene, gate3, assets, loadTexture, note } = o;
+	const flipV = !! o.flipV;
+	// ?lmenc= forces the decode for a measurement pass; the manifest's own `encode` is the default and
+	// the only thing a capture ever ships with.
+	const encOf = ( e ) => o.encodeOverride || e;
 	const report = {
 		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {} },
 		slots: { instances: 0, matched: 0, applied: 0, single: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
 		materialsCloned: 0, texturesRequested: 0, texturesLoaded: 0, texturesFailed: [],
 		meshesSeen: 0, instancedMeshesSeen: 0,
+		// the UV2 census: a lightmap can only attach to a mesh that carries TEXCOORD_1, and gltfpack
+		// prunes it unless the pack ran with -kv, so the count is reported every load.
+		uv2: { meshesWithUv2: 0, meshesWithoutUv2: 0, drawnWithUv2: 0, drawnWithoutUv2: 0 },
 	};
 	if ( ! gate3 ) return report;
 
@@ -103,6 +110,9 @@ export function applyGate3Lightmaps( o ) {
 	scene.traverse( ( mesh ) => {
 		if ( ! mesh.isMesh || ! mesh.visible ) return;
 		const hasUv2 = !! mesh.geometry.attributes.uv1;
+		const placements = mesh.isInstancedMesh ? mesh.count : 1;
+		if ( hasUv2 ) { report.uv2.meshesWithUv2 ++; report.uv2.drawnWithUv2 += placements; }
+		else { report.uv2.meshesWithoutUv2 ++; report.uv2.drawnWithoutUv2 += placements; }
 		if ( mesh.isInstancedMesh ) {
 			report.instancedMeshesSeen ++;
 			const n = mesh.count;
@@ -196,9 +206,13 @@ export function applyGate3Lightmaps( o ) {
 	const pending = [];
 	for ( const p of plans ) {
 		if ( ! p.material ) continue;
+		if ( ! p.mesh.geometry.attributes.uv1 ) {            // belt and braces: never attach without UV2
+			note( `gate3: refusing to attach a lightmap to a mesh with no uv1 attribute (${p.kind})` );
+			continue;
+		}
 		if ( p.kind === 'own' ) {
 			const lm = gate3.ownMaps[ p.name ];
-			patchBakedMaterial( p.material, { lightMapEncoding: lm.encode, range: lm.range } );
+			patchBakedMaterial( p.material, { lightMapEncoding: encOf( lm.encode ), range: lm.range, flipV } );
 			pending.push( fetch( lm.url ).then( ( t ) => {
 				if ( ! t ) return;
 				attachLightMap( p.material, t, gate3.scale );
@@ -219,7 +233,7 @@ export function applyGate3Lightmaps( o ) {
 			pending.push( Promise.all( [ fetch( a.url ), b ? fetch( b.url ) : Promise.resolve( null ) ] ).then( ( [ ta, tb ] ) => {
 				if ( ! ta ) return;
 				// The patch must know the second sampler before the program is built.
-				patchBakedMaterial( mat, { lightMapEncoding: a.encode, range: a.range, slot: true, atlasB: tb || ta } );
+				patchBakedMaterial( mat, { lightMapEncoding: encOf( a.encode ), range: a.range, slot: true, atlasB: tb || ta, flipV } );
 				attachLightMap( mat, ta, gate3.scale );
 				if ( tb ) { tb.flipY = false; tb.colorSpace = THREE.NoColorSpace; tb.needsUpdate = true; }
 				mat.needsUpdate = true;
@@ -229,6 +243,8 @@ export function applyGate3Lightmaps( o ) {
 	}
 
 	report.promise = Promise.all( pending ).then( () => {
+		note( `gate3 UV2 census: ${report.uv2.meshesWithUv2} mesh(es) carry TEXCOORD_1 (${report.uv2.drawnWithUv2} placements), `
+			+ `${report.uv2.meshesWithoutUv2} do not (${report.uv2.drawnWithoutUv2} placements)` );
 		note( `gate3 lightmaps: ${report.own.applied}/${ownReady.length} own map(s), `
 			+ `${report.slots.applied}/${gate3.slotCount} instance slot(s), ${report.materialsCloned} material(s) cloned; `
 			+ `match error <= ${Math.max( report.own.maxMatchError_m, report.slots.maxMatchError_m ).toFixed( 3 )} m` );
