@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+"""Gate 3 hand-off check: read the two Gate 3 attributes BACK out of the exported files and write the status
+the bake engineer's manifest writer flips `uv2_in_glb` / `vertex_irradiance.in_glb` from.
+
+    python3 export/gate3_relay_check.py [export/out/gate1] [export/out/gate3]
+
+What it proves, per mesh, from the files themselves - never from the script that wrote them:
+
+* the seven re-laid masses - TEXCOORD_1 in `<cls>.gltf` is the layout of `gate3/lightmap_uv2.npz` (the
+  island-area fraction is recomputed from the glTF's own indices and TEXCOORD_1, which is the same metric the
+  bake reports as `uv2_coverage`), and the attribute survives into the packed `<cls>.glb`;
+* the 14 near trees - COLOR_0 exists, is NOT sRGB-encoded (every distinct exported value is one of THIS
+  mesh's own gamma-2 codes at its own range, recomputed here from `gate3/vertex_irradiance.npz`, which is
+  float32 scene-linear), and its decoded linear mean is compared with the npz's. The exporter splits and
+  welds vertices, so the vertex COUNTS and therefore the means differ while the distinct value set does not -
+  both numbers are reported; what is asserted is the mean over the DISTINCT value set, which a split cannot move.
+
+No Blender, no GPU. Exit 1 on any mismatch.
+"""
+import json
+import os
+import struct
+import sys
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
+CLASSES = ("arch", "orn", "env", "ground")
+COMP = {5120: ("i1", 127.0), 5121: ("u1", 255.0), 5122: ("i2", 32767.0),
+        5123: ("u2", 65535.0), 5125: ("u4", 4294967295.0), 5126: ("f4", 1.0)}
+NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
+
+
+def glb_json(path):
+    b = path.read_bytes()
+    assert b[:4] == b"glTF", f"{path} is not a glb"
+    ln = struct.unpack("<I", b[12:16])[0]
+    return json.loads(b[20:20 + ln])
+
+
+class Gltf:
+    """A .gltf plus its .bin, with accessor reads. Only the plain (uncompressed) layout is supported: the
+    packed glb is meshopt-compressed and is inspected through its JSON alone."""
+
+    def __init__(self, path):
+        self.path = path
+        self.doc = json.loads(path.read_text())
+        self.buf = [(path.parent / b["uri"]).read_bytes() if "uri" in b else b"" for b in self.doc["buffers"]]
+
+    def read(self, idx):
+        acc = self.doc["accessors"][idx]
+        dt, norm = COMP[acc["componentType"]]
+        n = NCOMP[acc["type"]]
+        bv = self.doc["bufferViews"][acc["bufferView"]]
+        off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+        stride = bv.get("byteStride") or np.dtype(dt).itemsize * n
+        raw = self.buf[bv["buffer"]]
+        item = np.dtype(dt).itemsize * n
+        if stride == item:
+            a = np.frombuffer(raw, dtype=dt, count=acc["count"] * n, offset=off).reshape(-1, n)
+        else:
+            rows = np.frombuffer(raw, dtype=np.uint8, count=acc["count"] * stride, offset=off).reshape(-1, stride)
+            a = np.frombuffer(rows[:, :item].tobytes(), dtype=dt).reshape(-1, n)
+        return a.astype(np.float64) / norm if acc.get("normalized") else a, acc
+
+    def meshes(self):
+        return {m.get("name"): m for m in self.doc.get("meshes", []) if m.get("name")}
+
+
+def uv_area_fraction(uv, idx):
+    """Sum |UV triangle area| over the primitive's triangles - the bake's `uv2_coverage`."""
+    t = uv[idx].reshape(-1, 3, 2)
+    a, b, c = t[:, 0], t[:, 1], t[:, 2]
+    cross = (b[:, 0] - a[:, 0]) * (c[:, 1] - a[:, 1]) - (c[:, 0] - a[:, 0]) * (b[:, 1] - a[:, 1])
+    return float(np.abs(cross).sum() * 0.5)
+
+
+def main(out_dir, g3_dir, g3_out=None):
+    out, g3 = Path(out_dir), Path(g3_dir)
+    g3o = Path(g3_out) if g3_out else ROOT / "export" / "out" / "gate3"
+    g3o.mkdir(parents=True, exist_ok=True)
+    fail, status = [], {}
+    setjson = json.loads((out / "export_set.json").read_text())
+    asset_of = {a["mesh"]: n for n, a in setjson["assets"].items() if a.get("mesh")}
+    gl = json.loads((out / "gltf_gate1.json").read_text())
+    cls_of = {}
+    for cls in CLASSES:
+        p = out / f"{cls}.gltf"
+        if p.exists():
+            for mn in Gltf(p).meshes():
+                cls_of[mn] = cls
+    files = {cls: Gltf(out / f"{cls}.gltf") for cls in CLASSES if (out / f"{cls}.gltf").exists()}
+    packed = {cls: glb_json(out / f"{cls}.glb") for cls in CLASSES if (out / f"{cls}.glb").exists()}
+    packed_attr = {cls: {k for m in d.get("meshes", []) for pr in m["primitives"] for k in pr["attributes"]}
+                   for cls, d in packed.items()}
+
+    # Review finding 2: both hand-off files come from the SAME directory the encoder read, and a missing one
+    # says so instead of raising FileNotFoundError out of np.load three frames deep.
+    missing = [n for n in ("lightmap_uv2.npz", "vertex_irradiance.npz") if not (g3 / n).exists()]
+    if missing:
+        for n in missing:
+            print(f"[gate3_relay] FAIL {g3 / n} does not exist - the Gate 3 hand-off is incomplete. This is "
+                  f"the same directory export/gltf_gate1.py encodes from (MAIN's export/out/gate3, or "
+                  f"PFA_MAIN_ROOT's); pass it as argv[2] if the bake wrote it somewhere else.", file=sys.stderr)
+        return 1
+
+    # ---------------------------------------------------------------- 1. the seven re-laid UV2 layers
+    uv2 = {}
+    z2 = np.load(str(g3 / "lightmap_uv2.npz"))
+    for mn in z2.files:
+        cls = cls_of.get(mn)
+        if cls is None:
+            fail.append(f"{mn}: the Gate 3 UV2 npz names a mesh no class glTF contains")
+            continue
+        g = files[cls]
+        me = g.meshes()[mn]
+        want = np.asarray(z2[mn], dtype=np.float64)
+        cov, seen, n_v, got = 0.0, 0, 0, []
+        for pr in me["primitives"]:
+            ai = pr["attributes"].get("TEXCOORD_1")
+            if ai is None:
+                continue
+            seen += 1
+            uv, acc = g.read(ai)
+            # glTF flips V against Blender: v_gltf = 1 - v_blender. |area| is unaffected; the value
+            # comparison below is not, so flip back here.
+            uv = np.column_stack([uv[:, 0], 1.0 - uv[:, 1]])
+            idx, _ = g.read(pr["indices"])
+            cov += uv_area_fraction(uv, idx.reshape(-1).astype(np.int64))
+            n_v += acc["count"]
+            got.append(uv)
+        if not seen:
+            fail.append(f"{mn}: {cls}.gltf carries no TEXCOORD_1 - the re-laid UV2 did not reach the export")
+            continue
+        rec = (gl.get("gate3_uv2") or {}).get("meshes", {}).get(mn, {})
+        in_glb = "TEXCOORD_1" in packed_attr.get(cls, set())
+        # the exported UVs must be the npz's values, not Gate 1's: compare the distinct SETS (the exporter
+        # splits and welds vertices, so a 1:1 comparison is meaningless while the value set survives).
+        # compared as integer 1e-4 keys: the glTF values are float32 and the npz float64 here, and
+        # round(x, 4) on the two dtypes does NOT produce equal floats (0.002 is not representable).
+        def key(a):
+            return np.unique(np.rint(np.asarray(a, dtype=np.float64) * 1e4).astype(np.int64), axis=0)
+        wset = set(map(tuple, key(want)))
+        hset = key(np.concatenate(got, axis=0))
+        share = round(float(np.mean([tuple(x) in wset for x in hset])), 4)
+        if share < 0.98:
+            fail.append(f"{mn}: only {share:.1%} of the exported TEXCOORD_1 values are in "
+                        f"lightmap_uv2.npz - the glTF is not carrying the Gate 3 layout")
+        uv2[mn] = dict(asset=asset_of.get(mn), glb=f"{cls}.glb", uv2_in_glb=bool(in_glb),
+                       coverage=round(cov, 5), coverage_gate1=rec.get("coverage_gate1"),
+                       coverage_in_blend=rec.get("coverage_gate3"), gain=rec.get("gain"),
+                       loops_npz=int(want.shape[0]), verts_in_gltf=int(n_v),
+                       distinct_uv_share_from_npz=share, uv_set="TEXCOORD_1",
+                       source="gate3/lightmap_uv2.npz")
+        if not in_glb:
+            fail.append(f"{mn}: {cls}.glb has no TEXCOORD_1 (gltfpack strips attributes no material uses "
+                        f"unless -kv is given) - the lightmap has no UV set to land on")
+        if rec and abs(cov - (rec.get("coverage_gate3") or 0)) > 0.02:
+            fail.append(f"{mn}: the glTF's TEXCOORD_1 packs {cov:.5f}, the blend's UV2 {rec.get('coverage_gate3')}")
+
+    # every OTHER mesh that carries UV2: the nine Gate 1-layout lightmaps ride on the same TEXCOORD_1 that
+    # gltfpack was stripping, so `lightmaps.assets[*].uv2_in_glb: true` was not true for them either. The
+    # manifest writer needs the whole list, not only the seven the Gate 3 bake re-laid.
+    all_uv2 = {}
+    for cls, g in files.items():
+        for mn, me in g.meshes().items():
+            if not any("TEXCOORD_1" in (pr.get("attributes") or {}) for pr in me["primitives"]):
+                continue
+            all_uv2[mn] = dict(glb=f"{cls}.glb", asset=asset_of.get(mn),
+                               uv2_in_glb="TEXCOORD_1" in packed_attr.get(cls, set()),
+                               uv2_source="gate3_relaid" if mn in uv2 else "gate1")
+
+    # ---------------------------------------------------------------- 2. the 14 near-tree COLOR_0 attributes
+    vi = {}
+    z3 = np.load(str(g3 / "vertex_irradiance.npz"))
+    # docs/reviews/phase6_bake_gate3_review.md findings 3-4: the first npz shipped as uint8 gamma-2 codes at
+    # one shared range of 64 instead of float32 scene-linear per mesh, and the bake re-wrote it (phase6-bake
+    # ac63e44). export/gltf_gate1.py still refuses to encode COLOR_0 from anything but the float32 file, and
+    # the tests below are written against that form: per-mesh range = the mesh's own max, code = sqrt(v/range).
+    vi_dtypes = sorted({str(np.asarray(z3[f]).dtype) for f in z3.files})
+    vi_skip = (gl.get("gate3_color0") or {}).get("skipped")
+    if vi_skip is None and vi_dtypes != ["float32"]:
+        vi_skip = (f"vertex_irradiance.npz is {vi_dtypes}, not float32 scene-linear (Gate 3 review findings "
+                   f"3-4); COLOR_0 was not exported and lightmaps.vertex_irradiance.in_glb stays false")
+    wrote = (gl.get("gate3_color0") or {}).get("meshes") or {}
+    for mn in (z3.files if vi_skip is None else []):
+        cls = cls_of.get(mn)
+        if cls is None:
+            fail.append(f"{mn}: the vertex irradiance npz names a mesh no class glTF contains")
+            continue
+        g = files[cls]
+        me = g.meshes()[mn]
+        lin_npz = np.asarray(z3[mn]).astype(np.float64)
+        # the encode rule (docs/decisions.md 2026-09-16): gamma-2 at the mesh's OWN max, so the range is
+        # recomputed here from the npz - never taken from the script that wrote the attribute. The writer's
+        # own number is cross-checked below.
+        rng = float(np.float32(lin_npz.max())) or 1.0
+        vals, ctype, norm_flag, n_v = [], set(), set(), 0
+        for pr in me["primitives"]:
+            ai = pr["attributes"].get("COLOR_0")
+            if ai is None:
+                continue
+            a, acc = g.read(ai)
+            ctype.add(acc["componentType"])
+            norm_flag.add(bool(acc.get("normalized")))
+            vals.append(a[:, :3])
+            n_v += acc["count"]
+        if not vals:
+            fail.append(f"{mn}: {cls}.gltf carries no COLOR_0 - the vertex irradiance did not reach the export")
+            continue
+        c = np.concatenate(vals, axis=0)
+        lin_glb = (c ** 2) * rng
+        # not sRGB-encoded, and not some other mesh's values: every exported code must be one of THIS mesh's
+        # own gamma-2 codes. (The exporter splits and welds vertices, so the counts differ while the value
+        # SET survives; an sRGB encode would move every value by up to 0.3.)
+        want_codes = np.unique(np.sqrt(np.clip(lin_npz, 0.0, None) / rng).astype(np.float32).astype(np.float64))
+        got_codes = np.unique(c.astype(np.float64))
+        j = np.clip(np.searchsorted(want_codes, got_codes), 0, len(want_codes) - 1)
+        near = np.minimum(np.abs(want_codes[j] - got_codes),
+                          np.abs(want_codes[np.maximum(j - 1, 0)] - got_codes))
+        q = float(near.max())
+        nz = lin_npz > 0
+        # the round trip, per vertex, is only defined on the shared value set (the exporter splits vertices),
+        # so the fidelity figure is the encode's own: push the npz through sqrt -> float32 -> the 16-bit
+        # normalised accessor Blender writes (and gltfpack's -vc 16 keeps) -> square -> range, and report the
+        # relative error that survives. `q` below is the measured displacement of the exported codes.
+        rt = (np.round(np.sqrt(lin_npz / rng).astype(np.float32).astype(np.float64) * 65535.0)
+              / 65535.0) ** 2 * rng
+        rel_v = np.abs(rt[nz] - lin_npz[nz]) / lin_npz[nz] if nz.any() else np.zeros(1)
+        rel = float(np.percentile(rel_v, 99))
+        in_glb = "COLOR_0" in packed_attr.get(cls, set())
+        w = wrote.get(mn) or {}
+        vi[mn] = dict(asset=asset_of.get(mn), glb=f"{cls}.glb", in_glb=bool(in_glb),
+                      encoding="gamma2 per mesh (code = sqrt(v / range)), FLOAT_COLOR, env.glb -vc 16",
+                      range=rng, attribute="COLOR_0",
+                      component_type=sorted(ctype), normalized=sorted(norm_flag),
+                      mean=round(float(lin_glb.mean()), 6), mean_npz=round(float(lin_npz.mean()), 6),
+                      mean_linear=round(float(lin_npz.mean()), 6),
+                      mean_delta=round(float(lin_glb.mean() - lin_npz.mean()), 6),
+                      roundtrip_mean=round(float(rt.mean()), 6),
+                      mean_rel_delta=round(float(abs(lin_glb.mean() - lin_npz.mean())
+                                                 / max(lin_npz.mean(), 1e-12)), 6),
+                      color0_mean=round(float(c.mean()), 6), color0_max=round(float(c.max()), 6),
+                      max_npz=round(float(lin_npz.max()), 4), max_glb=round(float(lin_glb.max()), 4),
+                      verts_npz=int(lin_npz.shape[0]), verts_in_gltf=int(n_v),
+                      code_quantisation_error=round(q, 8), roundtrip_rel_p99=round(float(rel), 6),
+                      range_from_writer=w.get("range"),
+                      decode="irradiance = COLOR_0^2 * range * lightmap_scale (range is PER MESH)",
+                      source="gate3/vertex_irradiance.npz")
+        # Blender writes a FLOAT_COLOR attribute as a 16-bit normalised accessor, so an exported code sits
+        # at most 0.5/65535 = 7.6e-6 from the true one. 4e-5 is that bound with room for the float32 round
+        # trip; an sRGB pass or a wrong range moves values by 1e-1, not 1e-5.
+        if q > 4e-5:
+            fail.append(f"{mn}: exported COLOR_0 codes are up to {q:.6f} away from this mesh's own gamma-2 "
+                        f"codes - the exporter transformed them (sRGB encode? wrong range?)")
+        if w.get("range") is not None and abs(float(w["range"]) - rng) > 1e-6 * max(rng, 1.0):
+            fail.append(f"{mn}: gltf_gate1.py encoded at range {w['range']}, the npz max is {rng}")
+        if abs(lin_glb.max() - lin_npz.max()) > 1e-3 * max(rng, 1.0):
+            fail.append(f"{mn}: COLOR_0 decodes to max {lin_glb.max():.4f}, the npz max is {lin_npz.max():.4f}")
+        # The per-vertex mean is REPORTED, never asserted: the exporter splits a vertex per normal / UV seam,
+        # so a leaf-card mesh arrives with 6-36 % more vertices than the npz has and the two means weight the
+        # same values differently (measured ratios 0.89-1.31, all of them that reweighting). What IS
+        # split-invariant is the DISTINCT value set - a split duplicates a value, a weld drops a duplicate,
+        # neither invents or removes one - so the mean over unique decoded values is compared instead, against
+        # the npz pushed through the same 16-bit round trip.
+        u_glb = np.unique(lin_glb)
+        u_npz = np.unique(rt)
+        if abs(u_glb.mean() - u_npz.mean()) > 0.01 * max(u_npz.mean(), 1e-9):
+            fail.append(f"{mn}: the unique COLOR_0 values decode to mean {u_glb.mean():.6f}, the npz's unique "
+                        f"values to {u_npz.mean():.6f} (> 1 %) - the exported set is not this mesh's")
+        vi[mn]["mean_unique"] = round(float(u_glb.mean()), 6)
+        vi[mn]["mean_unique_npz"] = round(float(u_npz.mean()), 6)
+        vi[mn]["vertex_split_mean_ratio"] = round(float(lin_glb.mean() / max(lin_npz.mean(), 1e-12)), 4)
+        if not in_glb:
+            fail.append(f"{mn}: {cls}.glb has no COLOR_0 - gltfpack dropped the vertex irradiance")
+
+    status = dict(
+        schema="pfa-phase6/gate3-relay/1", written_by="export/gate3_relay_check.py",
+        source_blend="export/out/gate1/gate1_set.blend (frozen Gate 1 geometry)",
+        note="The bake engineer's manifest writer flips lightmaps.assets[<asset>].uv2_in_glb and "
+             "lightmaps.vertex_irradiance.in_glb from this file, and copies `range` PER MESH out of the "
+             "vertex_irradiance block. COLOR_0 is a gamma-2 code at that mesh's own range: "
+             "irradiance = COLOR_0^2 * range * lightmap_scale. Standard glTF multiplies COLOR_0 into base "
+             "colour, so the viewer must consume these 14 meshes' COLOR_0 as irradiance, not as a tint.",
+        uv2=uv2, uv2_all_meshes=all_uv2,
+        vertex_irradiance=vi, vertex_irradiance_skipped=vi_skip, npz_dtypes=vi_dtypes,
+        glb_bytes={cls: (out / f"{cls}.glb").stat().st_size for cls in CLASSES if (out / f"{cls}.glb").exists()},
+        packed_attributes={cls: sorted(v) for cls, v in packed_attr.items()},
+        gltfpack_flags=(out / "gltfpack_flags.txt").read_text().strip().split("\n")
+        if (out / "gltfpack_flags.txt").exists() else [], failures=fail)
+    (g3o / "uv2_relay_status.json").write_text(json.dumps(status, indent=1) + "\n")
+    print(f"[gate3_relay] wrote {g3o / 'uv2_relay_status.json'}")
+    print("[gate3_relay] uv2:", json.dumps({m: [v["uv2_in_glb"], v["coverage"], v["glb"]] for m, v in uv2.items()}))
+    print("[gate3_relay] color0:", json.dumps({m: [v["in_glb"], v["mean"], v["mean_npz"]] for m, v in vi.items()}))
+    if fail:
+        for f in fail:
+            print("[gate3_relay] FAIL " + f, file=sys.stderr)
+        return 1
+    print(f"[gate3_relay] PASS: {len(uv2)} re-laid UV2 layers and {len(vi)} COLOR_0 attributes are in the glbs")
+    return 0
+
+
+if __name__ == "__main__":
+    # the Gate 3 npz files are the bake engineer's, and they live in the MAIN checkout (export/out/ is
+    # gitignored and this worktree never ran the bake); the status file is written HERE and reaches MAIN
+    # through export/sync_main.sh, like every other export output.
+    #   Review findings 1-2 (docs/reviews/phase6_export_gate3_review.md): this used to hard-code the MAIN
+    # path and to prefer a LOCAL out/gate3 whenever it held a lightmap_uv2.npz, while the ENCODER
+    # (gltf_gate1.py:146, g1.MAIN_ROOT / export/out/gate3) always reads MAIN. Checking the glb against a file
+    # the encoder never read makes the PASS meaningless, so both halves now resolve the SAME way: MAIN,
+    # through PFA_MAIN_ROOT, with gate0_common's path as the default (the same expression gate1_common.py:20
+    # uses, spelled out here because this script must run without bpy).
+    main_g3 = Path(os.environ.get("PFA_MAIN_ROOT",
+                                  "/Users/dk/Projects/3d render blender 3rd attempt building")) \
+        / "export" / "out" / "gate3"
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "export" / "out" / "gate1",
+                  sys.argv[2] if len(sys.argv) > 2 else main_g3,
+                  sys.argv[3] if len(sys.argv) > 3 else ROOT / "export" / "out" / "gate3"))

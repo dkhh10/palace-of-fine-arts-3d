@@ -109,9 +109,40 @@ if [ "$1" = "--gate1" ]; then
     # are identical, so nine of the ten names vanished and nine Gate 2 backdrop texture sets matched no scene
     # material (docs/reviews/phase6_viewer_gate2_review.md). env keeps its names; arch/orn/ground are frozen
     # byte-identical this round, and verify_glb reports - without failing - any names they lose.
+    # orn takes -kv too since the lead's 2026-09-16 decision: gltf_gate1.py strips the ORN `cavity` colour
+    # attribute from the export copies (it is already inside the Gate 2 albedo bake), so orn.glb carries
+    # TEXCOORD_1 for the slot-atlas lightmap and no COLOR_0 for three.js to multiply in.
+    # -kv (keep source vertex attributes even if they aren't used): gltfpack strips any attribute no material
+    # references, and NOTHING in the glb references UV2 or the vertex irradiance - the lightmap textures are
+    # separate KTX2 files the viewer attaches from the manifest. Measured on the Gate 2 glbs: arch.gltf and
+    # ground.gltf carry TEXCOORD_1 on all 29 / 4 meshes and arch.glb / ground.glb carried NONE of it, so no
+    # lightmap could be applied to anything, re-laid or not (orn.gltf's COLOR_0 and TEXCOORD_1 went the same
+    # way). arch / env / ground therefore take -kv from Gate 3 on. orn deliberately does NOT: -kv would also
+    # restore the ORN meshes' own COLOR_0, which three.js multiplies into base colour, and that is a look
+    # change for the lead to decide (it also blocks the ORN slot-atlas lightmap - reported, not fixed here).
     EXTRA=()
     [ "$cls" = env ] && EXTRA=(-vpf -km)
     [ "$cls" = arch ] && EXTRA=(-vpf -km)   # QA-12-1 re-pack: same flags as env, named materials kept
+    # a class gets -kv exactly when its .gltf carries an attribute the manifest owns (TEXCOORD_1 for a
+    # lightmap, COLOR_0 for the near-tree irradiance), so a class that has none is packed byte-identically.
+    KV=$(python3 - "$OUT" "$cls" <<'PY1'
+import json, os, sys
+c = json.load(open(os.path.join(sys.argv[1], "gltf_gate1.json")))["classes"].get(sys.argv[2], {})
+print("-kv" if (c.get("texcoord1_meshes") or c.get("color0_meshes")) else "")
+PY1
+)
+    [ -n "$KV" ] && EXTRA+=(-kv)
+    # -vc 16 (colour quantisation bits, default 8): the near-tree irradiance rides in COLOR_0 as a gamma-2
+    # code at a per-mesh range (lead's decision, docs/decisions.md 2026-09-16). At the default 8 bits the code
+    # step is 1/255, which is a 0.8 % linear error at mid grey and much worse near black; at 16 bits it is
+    # 1/65535. Given only to the class that actually carries COLOR_0, so every other class stays byte-identical.
+    VC=$(python3 - "$OUT" "$cls" <<'PY1b'
+import json, os, sys
+c = json.load(open(os.path.join(sys.argv[1], "gltf_gate1.json")))["classes"].get(sys.argv[2], {})
+print("-vc" if c.get("color0_meshes") else "")
+PY1b
+)
+    [ -n "$VC" ] && EXTRA+=(-vc 16)
     if gltfpack -i "$OUT/${cls}_ktx2.gltf" -o "$OUT/$cls.glb" -cc -mi $EXTRA 2>>"$OUT/gltfpack.log"; then
       SRC=ktx2
     else

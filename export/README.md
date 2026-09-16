@@ -1183,3 +1183,146 @@ the export engineer's next hand-off: re-running `python3 export/manifest_v4.py` 
 
 Not fixed here: carries 6, 7, 8, 9, 10, 13 and 14 stand as the review lists them.
 
+
+## Gate 3 export hand-off (branch `phase6-export`, 2026-09-16)
+
+```sh
+scripts/blender_run.sh 900 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
+export/gltf_pack.sh --gate1            # KTX2 + the four glbs + verify_glb
+python3 export/gate3_relay_check.py    # reads the attributes BACK out -> out/gate3/uv2_relay_status.json
+export/sync_main.sh
+```
+
+14. **The blocker this gate found: `gltfpack` was stripping `TEXCOORD_1` out of every glb.** gltfpack removes
+    any vertex attribute no material references, and **nothing in a glb references UV2** — the lightmaps are
+    separate KTX2 files the viewer attaches from the manifest. Measured on the Gate 2 glbs: `arch.gltf`
+    carried `TEXCOORD_1` on **29/29** meshes and `arch.glb` on **0**; `ground.gltf` 4/4 → `ground.glb` 0;
+    `orn.gltf` carried `TEXCOORD_1` (33) and `COLOR_0` (13) → `orn.glb` neither. So **no lightmap could have
+    been applied to anything**, re-laid or not, and `lightmaps.assets[*].uv2_in_glb: true` on the nine Gate 1
+    assets was wrong for the same reason. The fix is gltfpack's `-kv` ("keep source vertex attributes even if
+    they aren't used"), given to a class exactly when its `.gltf` carries `TEXCOORD_1` or `COLOR_0`
+    (`gltf_pack.sh` asks `gltf_gate1.json`), so a class with neither is packed byte-identically.
+    **`orn` is excluded by hand**: `-kv` would also restore the ORN meshes' own `COLOR_0`, which three.js
+    multiplies into base colour — a look change for the lead, and it leaves the ORN slot-atlas lightmap
+    unusable until that call is made. `verify_glb.py` now asserts, per class packed with `-kv`, that the
+    triangles carrying `TEXCOORD_1` / `COLOR_0` in the glb match the `.gltf` to within the same 1 %
+    degenerate-triangle tolerance as the placement check.
+15. **The seven re-laid UV2 layers are in the glbs.** `export/out/gate3/lightmap_uv2.npz` (float32
+    `[loops, 2]` per Gate 1 mesh name) is loaded onto the **same** `UV2` layer — never a third layer, because
+    `TEXCOORD_n` follows the UV layer order and a third one would ship as `TEXCOORD_2` — with the loop count
+    asserted per mesh and `UV2` asserted to be UV layer 1. Island-area fraction of the unit square, Gate 1 →
+    Gate 3 (this is the bake's own `uv2_coverage` metric, recomputed here from the glTF's indices and
+    `TEXCOORD_1`): riprap 0.00229 → **0.11408** (×49.8), colonnade south 0.00950 → **0.11552** (×12.2),
+    colonnade north 0.00972 → **0.12071** (×12.4), rotunda ochre 0.01328 → **0.20723** (×15.6), ceiling rib
+    0.01777 → **0.21954** (×12.4), site podium 0.01870 → **0.34247** (×18.3), colonnade walk 0.12920 →
+    **0.72795** (×5.6). Three of the seven still pack under the 0.15 relay threshold; the bake measured the
+    same and baked against this layout, so that is reported, not asserted — what is asserted is that the
+    layer changed and that it packs more than Gate 1's.
+16. **`COLOR_0` for the near trees is NOT in the glbs yet.** `export/out/gate3/vertex_irradiance.npz` shipped
+    as **uint8** gamma-2 codes at one shared range of 64, not the float32 scene-linear per mesh the manifest
+    and this README promise (`docs/reviews/phase6_bake_gate3_review.md` findings 3-4), and the bake is
+    re-writing it. `gltf_gate1.py` reads the dtype and **refuses to encode `COLOR_0` from anything but the
+    float32 file**: the encoding that ships depends on the real per-mesh range, and a wrong one is invisible
+    in the glb and wrong in every frame. `lightmaps.vertex_irradiance.in_glb` stays **false**. When the
+    float32 npz lands, the encoder and the value tests in `gate3_relay_check.py` change together — the
+    attribute is written as `FLOAT_COLOR`/`POINT` (never `BYTE_COLOR`, which is sRGB in Blender and would be
+    linearised on export), the exporter's `export_all_vertex_colors` is already `True`, and gltfpack
+    quantises colours to **8 bits by default** (`-vc N`), so whatever encoding is chosen has to live in
+    `[0, 1]` and survive 8-bit — or `-vc 16` has to be added to `env`.
+17. **The hand-off file.** `export/out/gate3/uv2_relay_status.json` (`pfa-phase6/gate3-relay/1`) is written by
+    `export/gate3_relay_check.py`, which reads the attributes back out of the exported files — never from the
+    script that wrote them — and carries `{mesh: {uv2_in_glb, coverage, glb, asset, …}}` for the seven and
+    `{mesh: {in_glb, encoding, mean, …}}` for the near trees. **The manifest writer flips
+    `lightmaps.assets[*].uv2_in_glb` and `lightmaps.vertex_irradiance.in_glb` from that file; nobody edits
+    `manifest.json` by hand.** `export/sync_main.sh` copies `out/gate3/` to MAIN with no `--delete` and
+    excludes the bake's blends, so the export only ever adds its own file there.
+18. **What it cost and what verify says.** `arch.glb` 3 589 032 → **4 609 468 B** (+1.02 MB, +28 %) and
+    `ground.glb` 1 238 288 → **1 959 104 B** (+0.72 MB, +58 %) for `-kv`; `env.glb` (35 797 240 B) and
+    `orn.glb` (154 065 360 B) are byte-identical, so the payload grows **1.74 MB** in total and nothing else
+    moves. `verify_glb` PASS: arch 947 622 drawn triangles (−0.185 % against `export_set.json`, the usual
+    degenerate-triangle loss), orn −0.157 %, env and ground 0.000 %, 15/15 + 62/62 material names kept under
+    `-km`, 0 objects at the origin; `TEXCOORD_1` reaches **349 614 of arch's 351 374** triangles (−0.5 %) and
+    **113 043 of 113 043** on ground. `export/name_sweep.py`: 2 540 objects, 127 exempt, **0 to explain**.
+    `gate3_relay_check.py`: all seven re-laid layers in the glbs, ≥ 99.97 % of their exported `TEXCOORD_1`
+    values found in the npz. 66 meshes carry `TEXCOORD_1` in the glTFs (29 arch + 4 ground + 33 orn); the 33
+    `orn` ones are still stripped by the pack and are the open item.
+19. **ORN (lead's decision, docs/decisions.md 2026-09-16).** The `COLOR_0` on the ORN prototypes is the
+    `cavity` FLOAT_COLOR attribute (`scripts/orn_lib.py vertex_cavity`) the ornament material reads for recess
+    dust, and the Gate 2 albedo bake already contains it — shipping it would apply the dust twice, because
+    standard glTF multiplies `COLOR_0` into base colour. `gltf_gate1.py` removes colour attributes from the
+    **export copies** (26 meshes; the source blend is only ever read) except the near-tree irradiance, so
+    `orn` can take `-kv`: `orn.glb` 154 065 360 → **154 253 424 B** (+188 KB) and now carries `TEXCOORD_1` on
+    **112 533 of 112 533** triangles (all 33 prototypes) and no `COLOR_0`. `verify_glb` asserts both, and that
+    no class exports `COLOR_0` for a mesh that is not near-tree irradiance. All **66** UV2 meshes
+    (29 arch + 4 ground + 33 orn) are now `uv2_in_glb: true` in `uv2_relay_status.json`.
+20. **The near-tree `COLOR_0` (Gate 3 hand-off 2, resume r2).** `out/gate3/vertex_irradiance.npz` is now the
+    corrected float32 scene-linear file (phase6-bake ac63e44), and `gltf_gate1.py` encodes it per the lead's
+    decision (docs/decisions.md 2026-09-16): **gamma-2 at a PER-MESH range**, `code = sqrt(v / range)`,
+    `range` = that mesh's own max, written as a `FLOAT_COLOR`/`POINT` attribute named `irradiance` and packed
+    with `-vc 16` on `env` only. Per-mesh ranges span **0.469 to 43.32** — 6.5 stops — which is why one shared
+    range was refused: at range 64 the darkest mesh would have used 8 % of the code space.
+    The decode the manifest publishes is `v = COLOR_0² · range_mesh`, then `irradiance = v · lightmaps.scale`.
+21. **Blender writes a FAKE white `COLOR_0` and pushes the real data to `COLOR_1`.** With
+    `export_all_vertex_colors=True`, `io_scene_gltf2/blender/exp/primitive_extract.py` (5.2, ~line 818) does:
+    *if the material's node tree references no colour attribute and the mesh has one, insert a "fake Vertex
+    Color" as `COLOR_0`* — a constant-white `UNSIGNED_BYTE` VEC4 — and append the real attribute as `COLOR_1`.
+    The near-tree materials read colour from textures, never from an attribute, so the first run shipped
+    `COLOR_0` with min = max = 1.0 on all 14 meshes and the irradiance hidden in `COLOR_1` (measured:
+    `COLOR_0` u8 constant 1.0, `COLOR_1` u16-normalised, mean 0.1097). *This is also what the earlier README
+    note meant by "orn.gltf carries the ORN meshes' COLOR_0/COLOR_1" — the ORN `cavity` was `COLOR_1` too.*
+    `gltf_gate1.py` now drops the fake and renumbers, **proving** which is which rather than assuming: the
+    fake is the `UNSIGNED_BYTE` set whose every value is 1.0, there must be exactly one of it and exactly one
+    survivor, and the survivor must be `UNSIGNED_SHORT`/float. 27 primitives fixed on `env`, and the file is
+    asserted to end with `COLOR_0` and nothing else. Blender writes a `FLOAT_COLOR` attribute as a **16-bit
+    normalised** accessor, so the gamma-2 code keeps a 1/65535 step end to end (`-vc 16` stops gltfpack
+    requantising it to 8; the packed `env.glb` carries 5123/VEC4/normalized on all 14).
+22. **The colonnade colbase merge (viewer round-13 finding 2), and why the fix is not `-kn`.** gltfpack merges
+    two meshes when they share a material **and** their node transform SETS are identical. The colonnade
+    `colbase_###_plinth` (12 tris) and `colbase_###_torus` (600 tris) sit at the same origin with no rotation,
+    so gltfpack merged each pair into one 612-tri mesh: arch.glb drew **438** of the 988 per-instance lightmap
+    slots, 56 + 58 = **114** short, and the surviving mesh took ONE slot for both halves. The rotunda pairs
+    escaped only because their plinth carries a rotation the torus does not. Both options were measured on the
+    same `arch_ktx2.gltf`:
+    | option | arch.glb | Δ bytes | draw calls | placements | slots reached |
+    |---|---|---|---|---|---|
+    | as shipped | 4 609 468 | — | 27 | 442 | 438 / 988 |
+    | `-kn` | 4 662 020 | **+52 552** | **564** | 564 | 988 |
+    | material split (shipped) | 4 613 040 | **+3 572** | **29** | 556 | **988** |
+    `-kn` reaches 988 only by disabling `-mi` (gltfpack 1.2 warns "-kn disables mesh merge (-mm) and mesh
+    instancing (-mi)"), which costs 537 draw calls — every colonnade column drawn one at a time. What ships
+    instead breaks the merge KEY: `gltf_gate1.py` gives the second mesh of each colliding group its own copy
+    of the material **under the same name**, so `-km` (already on arch, and it disables named-material
+    merging) keeps them apart and both meshes stay instanced. The viewer matches materials by name
+    (`web/src/pbr.js candidateKeys`, `web/src/detail.js`), so a duplicate name resolves to the same Gate 2
+    texture set and nothing downstream sees a new material. The collision is DETECTED, not hard-coded — any
+    two meshes sharing a material and a transform set are split — and after the split `gltf_gate1.py` asserts
+    no collision survives. `verify_glb.py` now also asserts, per class, that `placements_in_glb` covers that
+    class's share of `orn_slots` (arch 556 ≥ 552, orn 436 ≥ 436), which is the regression guard: the old pack
+    would have failed it.
+23. **What resume r2 cost.** `arch.glb` 4 609 468 → **4 613 040** (+3 572 B, the material split) and
+    `env.glb` 35 797 240 → **36 951 988** (+1 154 748 B, +3.2 %: `-kv` plus the 14 meshes' 16-bit `COLOR_0`).
+    `orn.glb` (154 253 424) and `ground.glb` (1 959 104) are byte-identical. `verify_glb` PASS (arch −0.185 %,
+    orn −0.157 %, env and ground 0.000 % against `export_set.json`; `COLOR_0` reaches 274 162 of env's
+    274 162 `COLOR_0` triangles; 0 objects at the origin). `gate3_relay_check` PASS: every exported code sits
+    **7.6e-6** from this mesh's own gamma-2 code — exactly the 0.5/65535 bound — and the 16-bit round trip's
+    p99 relative error is **≤ 0.7 %** on every mesh whose mean is above 0.01 (the two near-black meshes,
+    broadleaf_s19 at 9e-6 and pine_s29 at 1.1e-3, read 2.8 % and 7.6 % of a value no frame can show).
+    The per-vertex mean ratio glb/npz is 0.89-1.31 because the exporter splits 6-36 % more vertices; the
+    assertion is on the mean of the DISTINCT values, which a split cannot move (within 1 % on all 14).
+    `export/name_sweep.py`: 2 540 objects, 127 exempt, **0 to explain**.
+24. **Review fixes (docs/reviews/phase6_export_gate3_review.md, findings 1-3, all three "fix now").**
+    (1)+(2) The encoder and the checker now resolve the Gate 3 hand-off **the same way**: MAIN's
+    `export/out/gate3`, through `PFA_MAIN_ROOT` (`gate3_relay_check.py` `__main__`; it used to hard-code the
+    MAIN path and to prefer a LOCAL `out/gate3` whenever one held a `lightmap_uv2.npz`, so it could have
+    validated the glbs against a file `gltf_gate1.py` never read). A missing npz now prints which file and
+    which directory and exits 1, instead of raising `FileNotFoundError` out of `np.load`.
+    (3) The material-split guard is **bidirectional**: a class with duplicate names but no split still fails,
+    and now a split class must also carry `-km` **and** show at least `len(split)` duplicate names in the
+    packed glb. `-km` is on arch and env only; **orn and ground are packed `-cc -mi -kv` with no `-km`, and
+    neither is split today** (`merge_split`: arch 2 meshes, orn/env/ground none) — the guard makes that a rule
+    instead of a coincidence, so a future split on either fails loudly rather than being merged back in
+    silence. Verified by a negative run with a fake split injected on orn: both new assertions fire.
+25. **`docs/briefs/phase6_budget.md` is stale for arch and env** (the lead owns that file; not edited here).
+    It predates the Gate 3 re-packs: arch.glb is **4 613 040 B** at **29 draw calls** (was quoted before the
+    `-kv` re-pack and the slot-merge material split) and env.glb is **36 951 988 B** (before `-kv`, `-vc 16`
+    and the 14 meshes' `COLOR_0`). orn.glb (154 253 424 B) and ground.glb (1 959 104 B) are unchanged.
