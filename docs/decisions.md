@@ -433,3 +433,12 @@ The bake scene is the Cycles rig: same 11 warm ARCH bounce materials, same 20 LI
 elevation 7.357°, rotation 28.493°), Cycles bounces identical (max 8, diffuse 3, clamp_indirect 10). So the blue shade texel is not a grey bounce, a missing lamp, a different sky
 or a shorter path. Remaining hypothesis under test: the Phase 5 world's warm tint lives on the diffuse-ray branch of a Light Path gate; a bake may sample the sky under the
 camera-ray flag and miss it. Two-colour debug-world bake vs render queued after the ceiling bake.
+
+## 2026-09-16 · QA-13-1 closed with the hero probe as the diffuse environment for unlit-mapped surfaces (lead override of manifest probe.use)
+Result (viewer c79b7b6, post on): cam01 band B > R+20 15.5 % -> 0.2 % (Cycles 0.0 %), band mean RGB [105 92 68] -> [95 76 30] against Cycles [80 64 24]; cam02 shrub/reed/backdrop
+median hue 220° -> 41°; 15 materials touched, 77 lightmapped or vertex-lit untouched. The manifest's probe.use says the probe is the water fallback, not the diffuse environment;
+the lead overrides that for surfaces with no baked irradiance because the probe is the only baked data with the courtyard's warm bounce in it. Caveats on record: single-point
+(hero station) approximation for surfaces 140-190 m away and at the other stations; the probe was rendered on the sky's glossy branch. Foliage now reads amber-brown where Cycles has
+olive-green (ground bounce dominates a sideways leaf card): decision held until the light-path branch test; the candidates are a corrected bake branch or vertex irradiance for
+shrubs/reeds as for the 14 near trees. Re-measured against the new compositor-on Cycles references: cam03 1.67x (was 2.08x vs the Eevee frame), cam05 1.08x, cam06 0.71x — a
+real deficit the no-compositor reference had hidden.

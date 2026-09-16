@@ -745,3 +745,6 @@ GPU: 02/04 refs rendering (pid 34504). Waiting: bake step 1 + scene check; viewe
 
 ## 2026-09-16 · Bake step 1 in (phase6-bake d0c2c28): ceiling defect = 100 % inverted normals (UV2 fine, 60.6 % of the map, 1.53 cm/texel); flipped-winding re-bake ready, held for the GPU. Bake scene audit: identical to the Cycles rig (QA-12b-1 not in the bake scene)
 Lead queued a light-path branch test (debug world: camera red / glossy blue / diffuse green; bake vs 160x90 render) after the ceiling bake to test whether bake rays miss the sky's warm diffuse-branch tint. Waiting: export cutoff fix -> merge; refs 02/04 (pid 34504) -> GPU-free to bake first, then the viewer's --perf; viewer probe irradiance.
+
+## 2026-09-16 · QA-13-1 closed (phase6-viewer c79b7b6, probe irradiance): band 0.2 %, cam02 foliage hue 220° -> 41° (amber-brown vs Cycles olive: held for the branch test); refs repointed (cam06 real 0.71x)
+Viewer: commit repointed refs, prepare the one-command Gate 4 capture, sweep impostor rotational pop; --perf still held. GPU: refs 02/04 at ~7 min (pid 34504); then bake (ceiling + branch test), then viewer --perf, then Gate 4 capture + QA 14.
