@@ -41,6 +41,15 @@ const WaterShader = {
 		reflectTint: { value: new THREE.Color( 0.88, 0.94, 0.90 ) },
 		normalScale: { value: 0.06 }, rippleTiling: { value: 0.09 },
 		distortAniso: { value: 1.0 },
+		// A ROUGH surface at a grazing angle does not reflect a point - its lobe is stretched toward
+		// the HORIZON, so the near water carries the bright near-horizon band rather than the dark
+		// zenith a mirror gives it.  That, not the murk, is why the reference's open water is bright
+		// (lum 118) and nearly neutral (sat 0.041) while a mirror reads dark blue (66.8, sat 0.326).
+		horizonBias: { value: 0.0 },
+		// grazingGain 0 reproduces the round14 surface EXACTLY (the displacement is then n.xy *
+		// distortion, as it was).  Every term added for QA-14-1 is opt-in until one is agreed, so the
+		// shipped look cannot drift while the fix is still being searched for.
+		grazingGain: { value: 0.0 },
 		// A real lagoon is a ROUGH, murky surface, not a mirror.  Two terms carry that, both
 		// calibrated against the Phase 5 Cycles hero's water box (docs/qa_round_10b.md
 		// 900 760 1020 840: lum 128.6, std 34.2, sat 0.33, R-B +34.4) - see makeWater().
@@ -66,7 +75,7 @@ const WaterShader = {
 	`,
 	fragmentShader: /* glsl */`
 		uniform sampler2D tDiffuse, tNormal;
-		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat, distortAniso;
+		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat, distortAniso, horizonBias, grazingGain;
 		uniform int debugMode;
 		uniform vec3 murk, reflectTint;
 		varying vec4 vProjUv;
@@ -83,9 +92,10 @@ const WaterShader = {
 			// The vertical term is therefore scaled by distortAniso, and both are scaled by 1/c so
 			// the displacement grows toward the horizon exactly as the geometry says it should.
 			vec4 uv = vProjUv;
-			float grazing = clamp( 1.0 / max( dot( normalize( cameraPosition - vWorld ), N ), 0.02 ), 1.0, 40.0 );
+			float grazingRaw = clamp( 1.0 / max( dot( normalize( cameraPosition - vWorld ), N ), 0.02 ), 1.0, 40.0 );
+			float grazing = mix( 1.0, grazingRaw, grazingGain );
 			uv.x += n.x * distortion * grazing * uv.w;
-			uv.y += n.y * distortion * distortAniso * grazing * uv.w;
+			uv.y += ( n.y * distortion * distortAniso + horizonBias ) * grazing * uv.w;
 			// gather over a small disc: the ripple slopes spread the reflected ray
 			vec3 refl = texture2DProj( tDiffuse, uv ).rgb;
 			if ( reflBlur > 0.0 ) {
@@ -142,6 +152,8 @@ export function makeWater( waterY, o = {} ) {
 	if ( o.normalScale !== undefined ) u.normalScale.value = o.normalScale;
 	if ( o.rippleTiling !== undefined ) u.rippleTiling.value = o.rippleTiling;
 	if ( o.distortAniso !== undefined ) u.distortAniso.value = o.distortAniso;
+	if ( o.horizonBias !== undefined ) u.horizonBias.value = o.horizonBias;
+	if ( o.grazingGain !== undefined ) u.grazingGain.value = o.grazingGain;
 	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	// Calibrated on the Gate 4 capture against the Phase 5 Cycles hero's water box: the mirror-sharp
 	// Gate 0 water read std 44.0 against 34.2 and sat 0.69 against 0.33.  ?waterblur / ?watersat

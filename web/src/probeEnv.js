@@ -40,10 +40,16 @@ export async function buildProbeEnv( probe, { renderer, loadHdr, note = () => {}
 	const texs = await Promise.all( probe.faces.map( ( u ) => loadHdr( u ) ) );
 	if ( texs.some( ( t ) => ! t || ! t.image ) ) { note( 'probe: a face failed to load; the sky-diffuse path stays' ); return null; }
 
-	// three's CubeTexture takes the six images directly; the faces are already named for the three.js
-	// axes (the manifest says so: "face `px` looks along three.js +X"), and px nx py ny pz nz is
-	// three's own face order, so nothing is re-ordered here.
-	const cube = new THREE.CubeTexture( texs.map( ( t ) => t.image ) );
+	// THE CUBE MUST BE BUILT FROM THE DataTextureS THEMSELVES, NOT FROM THEIR `.image`.
+	// three picks the data-upload path from `texture.image[0].isDataTexture`; RGBELoader's `.image` is
+	// a bare {data,width,height}, so passing those makes all six faces take the DOM-source branch,
+	// `texSubImage2D` throws, and WebGLState SWALLOWS the error - leaving a zero-filled cube whose
+	// PMREM is BLACK.  A black envMap OVERRIDES scene.environment, so the materials lose their sky
+	// irradiance instead of gaining the warm bounce.  That is exactly what shipped in round 14 and it
+	// invalidated every probe measurement; see docs/reviews/phase6_viewer_gate4_r6_review.md finding 1.
+	// Face order px nx py ny pz nz is three's own, and the manifest's `axes` already names the faces
+	// for the three.js axes, so nothing is re-ordered.
+	const cube = new THREE.CubeTexture( texs );
 	cube.type = texs[ 0 ].type;
 	cube.format = texs[ 0 ].format;
 	cube.colorSpace = texs[ 0 ].colorSpace;
@@ -51,14 +57,47 @@ export async function buildProbeEnv( probe, { renderer, loadHdr, note = () => {}
 	cube.generateMipmaps = false;
 	cube.needsUpdate = true;
 
+	// The faces decoded on the CPU: a zero face means the HDR never loaded, before the GPU is involved.
+	const faceMeans = texs.map( ( t ) => {
+		const d = t.image && t.image.data;
+		if ( ! d || ! d.length ) return 0;
+		let sum = 0;
+		for ( let i = 0; i < d.length; i += Math.max( 4, Math.floor( d.length / 4096 ) * 4 ) ) sum += Math.abs( d[ i ] );
+		return sum;
+	} );
+	if ( faceMeans.some( ( m ) => ! ( m > 0 ) ) ) {
+		note( `probe REFUSED: ${faceMeans.filter( ( m ) => ! ( m > 0 ) ).length} of 6 faces decoded to all zero` );
+		texs.forEach( ( t ) => t.dispose() );
+		return null;
+	}
+
 	const pmrem = new THREE.PMREMGenerator( renderer );
 	pmrem.compileCubemapShader();
 	const rt = pmrem.fromCubemap( cube );
 	pmrem.dispose();
+
+	// And the PMREM read back off the GPU: this is what caught nothing in round 14 because nothing
+	// looked at it.  A black convolution means the upload silently failed again.
+	let probeSample = null;
+	try {
+		const buf = new ( rt.texture.type === THREE.HalfFloatType ? Uint16Array : Float32Array )( 4 );
+		renderer.readRenderTargetPixels( rt, Math.floor( rt.width / 2 ), Math.floor( rt.height / 2 ), 1, 1, buf );
+		probeSample = Array.from( buf );
+	} catch ( e ) { note( `probe: could not read the PMREM back (${e.message}); the cube is unverified` ); }
+	const nonBlack = probeSample ? probeSample.slice( 0, 3 ).some( ( v ) => v !== 0 ) : null;
+	if ( nonBlack === false ) {
+		note( 'probe REFUSED: the convolved PMREM reads BLACK at its centre texel - the cube did not upload. '
+			+ 'A black envMap would OVERRIDE scene.environment and delete the sky irradiance (review finding 1).' );
+		cube.dispose(); texs.forEach( ( t ) => t.dispose() ); rt.dispose();
+		return null;
+	}
 	cube.dispose();
 	texs.forEach( ( t ) => t.dispose() );
+	rt.userData = { probeSample, nonBlack, faceMeans };
 	note( `probe env: 6 x ${probe.sizePx || '?'} px HDR cube from ${probe.station || 'the hero station'} `
-		+ `convolved to irradiance in ${( ( performance.now() - t0 ) / 1000 ).toFixed( 2 )} s` );
+		+ `convolved to irradiance in ${( ( performance.now() - t0 ) / 1000 ).toFixed( 2 )} s; `
+		+ `PMREM centre texel ${probeSample ? JSON.stringify( probeSample ) : 'unread'} `
+		+ `(${nonBlack === null ? 'UNVERIFIED' : 'non-black, verified'})` );
 	return rt;
 }
 
@@ -72,9 +111,26 @@ export async function buildProbeEnv( probe, { renderer, loadHdr, note = () => {}
  *
  * @returns {{materials:number, meshes:number, skippedPatched:number, skippedHasEnv:number, names:string[]}}
  */
-export function applyProbeEnv( scene, envTexture, { note = () => {}, intensity = 1.0 } = {} ) {
-	const out = { materials: 0, meshes: 0, skippedPatched: 0, skippedHasEnv: 0, skippedNonStandard: 0, names: [] };
+export function applyProbeEnv( scene, envTexture, { note = () => {}, intensity = 1.0, gate3Report = null } = {} ) {
+	const out = { materials: 0, meshes: 0, skippedPatched: 0, skippedHasEnv: 0, skippedNonStandard: 0,
+		refused: null, names: [] };
 	if ( ! envTexture ) return out;
+	// THE PROBE MUST NOT MASK A FAILED LIGHTMAP.  For the 988 instance SLOTS, patchBakedMaterial runs
+	// inside the texture .then, so a failed atlas - or a mesh with no UV2 - leaves the material with
+	// neither `pfaPatched` nor a lightMap.  It would then look plausibly lit with the probe instead of
+	// black, hiding the failure (review finding 5).  If any lightmap failed, the pass refuses outright.
+	if ( gate3Report ) {
+		const failed = ( gate3Report.texturesFailed || [] ).length;
+		const slotsShort = ( gate3Report.slots && gate3Report.slots.matched > gate3Report.slots.applied )
+			? gate3Report.slots.matched - gate3Report.slots.applied : 0;
+		const noUv2 = ( gate3Report.slots && gate3Report.slots.noUv2Attribute ) || 0;
+		if ( failed || slotsShort || noUv2 ) {
+			out.refused = `${failed} lightmap texture(s) failed, ${slotsShort} slot(s) matched but not applied, `
+				+ `${noUv2} slot instance(s) with no UV2 - the probe would make them look lit instead of black`;
+			note( `probe env REFUSED: ${out.refused}. Fix the lightmaps first; ?probe=0 is not the answer.` );
+			return out;
+		}
+	}
 	const seen = new Set();
 	scene.traverse( ( o ) => {
 		if ( ! o.isMesh || ! o.material ) return;

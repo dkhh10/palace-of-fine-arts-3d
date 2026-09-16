@@ -37,6 +37,10 @@ import { applyDetail } from './detail.js';
 import { applyGate3Lightmaps } from './lightmaps.js';
 
 const qs = new URLSearchParams( location.search );
+// ?quality is compared ONCE, lowercased, and an unknown value is rejected rather than echoed as a
+// preset name: ?quality=FAST used to report 'fast' and silently run the full-res chain.
+const QUALITY_RAW = ( qs.get( 'quality' ) || 'look' ).toLowerCase();
+const QUALITY = ( QUALITY_RAW === 'fast' || QUALITY_RAW === 'look' ) ? QUALITY_RAW : 'look';
 const CFG = {
 	station: parseInt( qs.get( 'station' ) || '1', 10 ),
 	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
@@ -46,15 +50,17 @@ const CFG = {
 	// full-res bloom.  `fast` is the ONE non-default preset: half-res bloom + a half-res Reflector
 	// target + the reduced reflection draw set.  It is a QUERY PARAMETER ONLY, no UI.  An explicit
 	// ?bloomres / ?reflres still wins over the preset, so the A/B switches keep working.
-	quality: ( qs.get( 'quality' ) || 'look' ).toLowerCase(),
-	bloomRes: ( qs.get( 'bloomres' ) || ( qs.get( 'quality' ) === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
-	reflRes: ( qs.get( 'reflres' ) || ( qs.get( 'quality' ) === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
+	quality: QUALITY,
+	bloomRes: ( qs.get( 'bloomres' ) || ( QUALITY === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
+	reflRes: ( qs.get( 'reflres' ) || ( QUALITY === 'fast' ? 'half' : 'full' ) ).toLowerCase(),
 	reflSet: ( qs.get( 'reflset' ) || 'orn' ).toLowerCase(),      // full | orn | both (item 6: cut the draw set)
 	waterDebug: parseInt( qs.get( 'waterdebug' ) || '0', 10 ),   // 1 F, 2 proj uv, 3 normal, 4 raw refl
 	waterDist: qs.has( 'waterdist' ) ? parseFloat( qs.get( 'waterdist' ) ) : null,
 	waterNorm: qs.has( 'waternorm' ) ? parseFloat( qs.get( 'waternorm' ) ) : null,
 	waterTile: qs.has( 'watertile' ) ? parseFloat( qs.get( 'watertile' ) ) : null,
 	waterAniso: qs.has( 'wateraniso' ) ? parseFloat( qs.get( 'wateraniso' ) ) : null,
+	waterHoriz: qs.has( 'waterhoriz' ) ? parseFloat( qs.get( 'waterhoriz' ) ) : null,
+	waterGraze: qs.has( 'watergraze' ) ? parseFloat( qs.get( 'watergraze' ) ) : null,
 	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
@@ -360,6 +366,8 @@ async function boot() {
 			...( CFG.waterNorm !== null ? { normalScale: CFG.waterNorm } : {} ),
 			...( CFG.waterTile !== null ? { rippleTiling: CFG.waterTile } : {} ),
 			...( CFG.waterAniso !== null ? { distortAniso: CFG.waterAniso } : {} ),
+			...( CFG.waterHoriz !== null ? { horizonBias: CFG.waterHoriz } : {} ),
+			...( CFG.waterGraze !== null ? { grazingGain: CFG.waterGraze } : {} ),
 			...( CFG.waterMurk ? { murk: CFG.waterMurk.split( ',' ).map( Number ) } : {} ) } );
 		scene.add( water );
 		const wu = water.material.uniforms;
@@ -413,7 +421,8 @@ async function boot() {
 	if ( CFG.haze > 0 ) { lutPass.uniforms.hazeStrength.value = CFG.haze; note( `diagnostic constant haze ${CFG.haze} with COMP_golden_hour's colour (not the real depth mist)` ); }
 	if ( comp && postState.want.vignette ) { lutPass.uniforms.vignette.value = comp.vignette; postState.vignette = comp.vignette;
 		note( `post vignette: ${comp.vignette} in linear, before the transform` ); }
-	note( `quality preset '${CFG.quality}': bloom ${CFG.bloomRes}-res, Reflector ${CFG.reflRes}-res target, reflection set ${CFG.reflSet}` );
+	note( `quality preset '${CFG.quality}'${QUALITY_RAW !== CFG.quality ? ` (?quality=${QUALITY_RAW} is not a preset; using look)` : ''}: `
+		+ `bloom ${CFG.bloomRes}-res, Reflector ${CFG.reflRes}-res target, reflection set ${CFG.reflSet}` );
 	note( `post chain: ${[ postState.mistSpec && 'mist', postState.bloom && 'bloom', postState.vignette && 'vignette' ].filter( Boolean ).join( ' + ' ) || 'none'} (?post=${postState.requested})` );
 	note( `display: tone mapping OFF, exposure x${manifest.exposure.toFixed( 5 )}, LUT ${lutPass.uniforms.lutEnabled.value ? 'on' : 'OFF (gamma 2.2 fallback)'}` );
 
@@ -506,7 +515,7 @@ async function boot() {
 				// Re-run it now that probeTarget is set; it is idempotent (it skips a material that
 				// already has the env it would assign).
 				if ( CFG.probeSpec ) assignSpecularEnv();
-				probeReport = applyProbeEnv( scene, rt.texture, { note } );
+				probeReport = applyProbeEnv( scene, rt.texture, { note, gate3Report } );
 				probeReport.station = manifest.gate3.probe.station || null;
 				probeReport.positionBlender = manifest.gate3.probe.positionBlender || null;
 				note( 'probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest\'s own '
@@ -1027,6 +1036,7 @@ window.__pfaOrbit = ( { target, dist = 30, headingDeg = 0, height = 12, fov = 40
 	const t = new THREE.Vector3( ...target );
 	const h = headingDeg * Math.PI / 180;
 	camera = new THREE.PerspectiveCamera( fov, camera.aspect || 16 / 9, 0.1, 5000 );
+	camera.layers.enableAll();             // or ?reflset=orn leaves every ORN mesh (layer 2) invisible
 	camera.position.set( t.x + Math.sin( h ) * dist, t.y + height, t.z + Math.cos( h ) * dist );
 	camera.lookAt( t );
 	camera.updateMatrixWorld( true );
@@ -1287,6 +1297,7 @@ window.__pfaPick = ( x, y ) => {
 	const { w, h } = canvasSize();
 	const ndc = new THREE.Vector2( ( x / w ) * 2 - 1, - ( y / h ) * 2 + 1 );
 	const rc = new THREE.Raycaster();
+	rc.layers.enableAll();                 // ORN is on layer 2 under ?reflset=orn; a default mask misses it
 	rc.setFromCamera( ndc, camera );
 	rc.firstHitOnly = true;
 	// three's Raycaster does NOT skip invisible objects, so a hidden placeholder (?treeboards=0) would

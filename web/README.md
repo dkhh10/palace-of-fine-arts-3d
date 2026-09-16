@@ -441,6 +441,51 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
+## QA notes — read before scoring (Gate 4 / QA 14)
+
+* **The parity references changed.** `gate1_sheets.py` now points stations **2-6** at
+  `renders/previews/qa/round13_0{2,3,4,5,6}_*_cycles.png` (1920x1080, 128 spp, compositor on, from
+  master.blend). They had been scored for several rounds against round-09 frames — **Eevee** at 3 and
+  5, a **no-compositor** Cycles frame at 6, and a **pre-shade-fill-off** Cycles frame at 2 — all of
+  which predate the Phase 5 lighting the lightmaps were baked from. Station 1 keeps its round-10b
+  hero, which is already a Phase 5 Cycles frame.
+* **What that does to the round13b numbers**, whole-frame luma ratio, viewer / reference:
+
+  | station | vs the OLD reference | vs the round-13 Cycles reference |
+  |---|---|---|
+  | cam02 NE three-quarter | 1.09x | **1.10x** |
+  | cam03 colonnade walk | 2.08x | **1.67x** |
+  | cam04 rotunda ceiling | 1.05x | **0.95x** |
+  | cam05 south lawn | 1.12x | **1.08x** |
+  | cam06 aerial | 0.95x | **0.71x** |
+
+  cam03's "2.5x failure" was largely the wrong reference. **cam06 at 0.71x is a real deficit that the
+  old no-compositor reference was hiding — it is not a regression, and QA 14 should not re-discover it
+  as new.** cam04 crossed from bright to slightly dark and its lightmap is being re-baked, so its
+  number will move again. These are all `round13b`, i.e. **post off, no probe, no impostors**: with the
+  Gate 4 look on, cam02 measures **1.01x** against its round-13 reference.
+* **The hero probe is used against the manifest's own stated contract.** `manifest.probe.use` says it
+  is "NOT the diffuse environment", and the viewer nevertheless convolves it and gives it to every
+  surface with no baked light. **The lead overrode `probe.use` deliberately** (logged in
+  `docs/decisions.md`) after the alternative — putting those surfaces on the direct sun+sky path — was
+  measured to be a no-op: the backdrop wall at cam01 has NdotL = -0.065 against the sun, so no
+  weighting of sun and sky can reach it, and `?lighting=direct` renders that pixel bit-identically.
+  See "Far trees" and `src/probeEnv.js` for the three caveats that come with it.
+* **Foliage hue is a HELD decision, not an oversight.** The shrubs and reeds now read warm amber-brown
+  (median hue 40.6 deg) where Cycles has olive-green. The bake side is testing whether Cycles bake rays
+  miss the sky's warm diffuse-branch tint; that result decides whether every baked irradiance shifts or
+  whether the shrubs get vertex irradiance like the 14 near trees. Do not score it as a viewer defect
+  until that lands.
+
+* **Round 14's probe numbers were measured on a BLACK cube and are void.** `probeEnv.js` passed
+  `t.image` into `new THREE.CubeTexture`, so all six faces took three's DOM-source branch,
+  `texSubImage2D` threw, and `WebGLState` swallowed it: the PMREM was black, and a black `envMap`
+  **overrides** `scene.environment`, so the 15 materials LOST their sky irradiance instead of gaining
+  the warm bounce. That — not a warm bounce — is what turned the foliage blue → amber-brown and the
+  band 15.5 % → 0.2 %. Fixed (`new THREE.CubeTexture( texs )`), with a CPU face check and a PMREM
+  read-back that refuse the pass if it is ever black again, and `screenshot.mjs` now fails a capture
+  on any page error. **Re-measured numbers supersede every probe figure in QA 14.**
+
 ## Tools added at Gate 4
 * `web/tools/uv2_debug.mjs` — GLTFLoader + MeshoptDecoder in node: decodes a glb's TEXCOORD_0/1,
   reports the KHR_texture_transform each material carries and the UV occupancy of each mesh. This is

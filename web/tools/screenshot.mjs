@@ -153,7 +153,7 @@ function gpuGuard() {
 	throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
 }
 
-let browser = null, server = null, viteProc = null;
+let browser = null, server = null, viteProc = null, pageErrorExit = false;
 const t0 = Date.now();
 try {
 	gpuGuard();
@@ -333,8 +333,21 @@ try {
 		} ), o.pixels );
 	}
 
-	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageLog };
+	// A SCORED CAPTURE MUST FAIL ON A PAGE ERROR.  Six swallowed WebGL texSubImage2D failures went
+	// through a Gate capture unnoticed in round 14 and made every probe number an artefact
+	// (docs/reviews/phase6_viewer_gate4_r6_review.md finding 2).  PFA_ALLOW_PAGE_ERRORS=1 opts out.
+	const IGNORE = /favicon|net::ERR_ABORTED .*\.hdr/;
+	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
+	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageErrors, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
+	if ( pageErrors.length ) {
+		console.error( `[shot] PAGE ERRORS (${pageErrors.length}) - this capture is NOT scoreable:` );
+		pageErrors.slice( 0, 8 ).forEach( ( l ) => console.error( `[shot]   ${l.slice( 0, 160 )}` ) );
+		if ( process.env.PFA_ALLOW_PAGE_ERRORS !== '1' ) {
+			console.error( '[shot] set PFA_ALLOW_PAGE_ERRORS=1 to override (never for a scored capture)' );
+			pageErrorExit = true;
+		}
+	}
 	if ( perfOut ) {
 		fs.mkdirSync( path.dirname( perfOut ), { recursive: true } );
 		fs.writeFileSync( perfOut, JSON.stringify( {
@@ -378,5 +391,5 @@ try {
 	try { if ( server ) server.close(); } catch { /* ignore */ }
 	try { if ( viteProc ) viteProc.kill( 'SIGTERM' ); } catch { /* ignore */ }
 	console.log( `[shot] done in ${( ( Date.now() - t0 ) / 1000 ).toFixed( 1 )} s` );
-	process.exit( process.exitCode || 0 );
+	process.exit( process.exitCode || ( pageErrorExit ? 5 : 0 ) );
 }
