@@ -450,6 +450,74 @@ for cls, objs in sets.items():
         doc = json.loads(path.read_text())
         report["classes"].setdefault(cls, {})
     report.setdefault("treeboard_alpha_mask", []).extend(patched)
+    # ---------------------------------------------------------------- the FAKE COLOR_0 Blender writes
+    # io_scene_gltf2/blender/exp/primitive_extract.py (5.2, ~line 818): with `export_all_vertex_colors` on,
+    # if the MATERIAL's node tree references no colour attribute and the mesh has one, the exporter inserts a
+    # "fake Vertex Color" as COLOR_0 - a constant-white UNSIGNED_BYTE VEC4 - and the real attribute follows as
+    # COLOR_1. The near-tree materials read their colour from textures, never from a colour attribute, so the
+    # irradiance shipped as COLOR_1 behind an all-white COLOR_0 (measured: COLOR_0 u8 min=max=1.0, COLOR_1
+    # u16-normalised mean 0.1097). The manifest's contract is COLOR_0, so the fake is dropped here and the
+    # real set is renumbered. Proven per primitive, not assumed: the fake is the UNSIGNED_BYTE set whose every
+    # value is 1.0, and there must be exactly one of it and one survivor.
+    acc_of = doc.get("accessors", [])
+    bufs = {}
+
+    def _acc_vals(ai):
+        """Every value of a VEC4 colour accessor, normalised to [0, 1] (plain buffer layout only)."""
+        acc = acc_of[ai]
+        comp = {5121: ("u1", 255.0), 5123: ("u2", 65535.0), 5126: ("f4", 1.0)}[acc["componentType"]]
+        bv = doc["bufferViews"][acc["bufferView"]]
+        uri = doc["buffers"][bv["buffer"]].get("uri")
+        if uri not in bufs:
+            bufs[uri] = (path.parent / uri).read_bytes()
+        off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+        n = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}[acc["type"]]
+        assert not bv.get("byteStride") or bv["byteStride"] == np.dtype(comp[0]).itemsize * n, \
+            f"{cls}.gltf: interleaved colour bufferView (stride {bv.get('byteStride')}) is not handled"
+        a = np.frombuffer(bufs[uri], dtype=comp[0], count=acc["count"] * n, offset=off).reshape(-1, n)
+        return a.astype(np.float64) / comp[1]
+
+    fake_dropped, colour_prims = 0, 0
+    for m in doc.get("meshes", []):
+        for pr in m["primitives"]:
+            cols = sorted(k for k in pr["attributes"] if k.startswith("COLOR_"))
+            if len(cols) < 2:
+                continue
+            colour_prims += 1
+            fake = [k for k in cols
+                    if acc_of[pr["attributes"][k]]["componentType"] == 5121
+                    and float(_acc_vals(pr["attributes"][k]).min()) == 1.0]
+            assert len(fake) == 1 and len(cols) - len(fake) == 1, (
+                f"{cls}.gltf {m.get('name')}: {cols} - expected exactly one constant-white UNSIGNED_BYTE "
+                f"COLOR_n (Blender's fake) and exactly one real colour set, found {len(fake)} fake")
+            real = [k for k in cols if k not in fake][0]
+            assert acc_of[pr["attributes"][real]]["componentType"] in (5123, 5126), (
+                f"{cls}.gltf {m.get('name')}: the real colour set {real} is component type "
+                f"{acc_of[pr['attributes'][real]]['componentType']}, not the 16-bit/float the gamma-2 "
+                f"per-mesh encode needs")
+            pr["attributes"]["COLOR_0"] = pr["attributes"].pop(real)
+            for k in fake:
+                if k != "COLOR_0":
+                    pr["attributes"].pop(k)
+            fake_dropped += 1
+    if fake_dropped:
+        path.write_text(json.dumps(doc))
+        doc = json.loads(path.read_text())
+    report["classes"][cls]["fake_color0_dropped"] = fake_dropped
+    report["classes"][cls]["colour_primitives_with_two_sets"] = colour_prims
+    # the COLOR_n census has to describe the file as it now stands (gltf_pack.sh reads `color0_meshes` to
+    # decide -kv / -vc 16, and verify_glb tests the packed glb against it)
+    col_meshes = {m.get("name") for m in doc.get("meshes", [])
+                  for p in m["primitives"] if "COLOR_0" in p["attributes"]}
+    report["classes"][cls]["color0_meshes"] = sorted(x for x in col_meshes if x)
+    report["classes"][cls]["color0_primitives"] = sum(
+        1 for m in doc.get("meshes", []) for p in m["primitives"] if "COLOR_0" in p["attributes"])
+    report["classes"][cls]["colour_sets_after_fix"] = sorted(
+        {k for m in doc.get("meshes", []) for p in m["primitives"] for k in p["attributes"]
+         if k.startswith("COLOR_")})
+    assert report["classes"][cls]["colour_sets_after_fix"] in ([], ["COLOR_0"]), (
+        f"{cls}.gltf still carries {report['classes'][cls]['colour_sets_after_fix']} - the manifest's "
+        f"contract is COLOR_0 and three.js reads no second colour set")
     # ---------------------------------------------------------------- the slot-merge guard (viewer round 13)
     # gltfpack merges two meshes into one when they share a material AND their node transform SETS are
     # identical - which is exactly the case for the colonnade `colbase_###_plinth` and `colbase_###_torus`

@@ -210,9 +210,14 @@ def main(out_dir, g3_dir, g3_out=None):
                           np.abs(want_codes[np.maximum(j - 1, 0)] - got_codes))
         q = float(near.max())
         nz = lin_npz > 0
-        # the round trip, per vertex, is only defined on the shared value set; compare the DISTRIBUTIONS
-        # (mean and max) and the worst code displacement instead.
-        rel = (2.0 * q / max(float(np.sqrt(lin_npz[nz].min() / rng)), 1e-9)) if nz.any() else 0.0
+        # the round trip, per vertex, is only defined on the shared value set (the exporter splits vertices),
+        # so the fidelity figure is the encode's own: push the npz through sqrt -> float32 -> the 16-bit
+        # normalised accessor Blender writes (and gltfpack's -vc 16 keeps) -> square -> range, and report the
+        # relative error that survives. `q` below is the measured displacement of the exported codes.
+        rt = (np.round(np.sqrt(lin_npz / rng).astype(np.float32).astype(np.float64) * 65535.0)
+              / 65535.0) ** 2 * rng
+        rel_v = np.abs(rt[nz] - lin_npz[nz]) / lin_npz[nz] if nz.any() else np.zeros(1)
+        rel = float(np.percentile(rel_v, 99))
         in_glb = "COLOR_0" in packed_attr.get(cls, set())
         w = wrote.get(mn) or {}
         vi[mn] = dict(asset=asset_of.get(mn), glb=f"{cls}.glb", in_glb=bool(in_glb),
@@ -222,6 +227,7 @@ def main(out_dir, g3_dir, g3_out=None):
                       mean=round(float(lin_glb.mean()), 6), mean_npz=round(float(lin_npz.mean()), 6),
                       mean_linear=round(float(lin_npz.mean()), 6),
                       mean_delta=round(float(lin_glb.mean() - lin_npz.mean()), 6),
+                      roundtrip_mean=round(float(rt.mean()), 6),
                       mean_rel_delta=round(float(abs(lin_glb.mean() - lin_npz.mean())
                                                  / max(lin_npz.mean(), 1e-12)), 6),
                       color0_mean=round(float(c.mean()), 6), color0_max=round(float(c.max()), 6),
@@ -231,7 +237,10 @@ def main(out_dir, g3_dir, g3_out=None):
                       range_from_writer=w.get("range"),
                       decode="irradiance = COLOR_0^2 * range * lightmap_scale (range is PER MESH)",
                       source="gate3/vertex_irradiance.npz")
-        if q > 1e-5:
+        # Blender writes a FLOAT_COLOR attribute as a 16-bit normalised accessor, so an exported code sits
+        # at most 0.5/65535 = 7.6e-6 from the true one. 4e-5 is that bound with room for the float32 round
+        # trip; an sRGB pass or a wrong range moves values by 1e-1, not 1e-5.
+        if q > 4e-5:
             fail.append(f"{mn}: exported COLOR_0 codes are up to {q:.6f} away from this mesh's own gamma-2 "
                         f"codes - the exporter transformed them (sRGB encode? wrong range?)")
         if w.get("range") is not None and abs(float(w["range"]) - rng) > 1e-6 * max(rng, 1.0):
