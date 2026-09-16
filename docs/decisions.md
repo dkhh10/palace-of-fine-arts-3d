@@ -460,3 +460,11 @@ sky-only glossy PMREM where Cycles' shaded stone reflects the warm sunlit surrou
 Gate 2 albedo bake's tone against the Phase 5 material. The compositor's airlight is already a measured −14-point contributor with post on.
 Ceiling: re-baked with the winding flipped in the bake process only (UV2 bit-identical), max 0.721 -> 16.755, mean_nonzero 2.06 (rib map 1.70), 30.7 % non-zero texels, gamma2
 round-trip error 0.163 -> 0.025 stops; map replaced in place, manifest range updated by the lead's manifest_v4 run.
+
+## 2026-09-16 · Gate 4 frame rate (lead): the default keeps the look; 45 fps at 1440p is not reachable with the Reflector and bloom, so a documented fast preset carries the trade-off
+Measured (viewer 7007645): reflset=orn (the 436 ORN instances skipped in the reflection pass, 36 meshes on a reflection-excluded layer, reflection box within 0.03x on all four
+metrics) saves ~2 ms because the instances were already ~36 draw calls; excluding the backdrop was rejected (it is in the reflected frustum: sat 0.527x, R-B sign flip).
+Attribution stands: water off alone 25.7 ms, water and bloom off 17.3 ms; both are needed to reach 22.2 ms. The reflection at the hero station is a hard requirement of 6a and
+the Phase 5 look (bloom = the compositor's glare) is frozen, so the default ships the full look at the measured frame time (34.6 fps at 1440p, everything on) and a non-default
+`?quality=fast` preset (half-res bloom, half-res Reflector, reflset=orn) is measured and documented with its box deltas for the user to choose at delivery. This is flagged to the
+user as an open choice, not decided for them.
