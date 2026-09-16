@@ -135,9 +135,15 @@ export function applyProbeEnv( scene, envTexture, { note = () => {}, intensity =
 		const slotsShort = ( gate3Report.slots && gate3Report.slots.matched > gate3Report.slots.applied )
 			? gate3Report.slots.matched - gate3Report.slots.applied : 0;
 		const noUv2 = ( gate3Report.slots && gate3Report.slots.noUv2Attribute ) || 0;
-		if ( failed || slotsShort || noUv2 ) {
+		// Round 7 review (SHOULD-FIX): `own.unmatched` is the same failure one level up - a lightmap
+		// the manifest declares that found NO mesh to attach to.  That mesh then has neither
+		// `pfaPatched` nor a lightMap either, so the probe would light it exactly as it lights the
+		// failed-atlas case above, and the missing bake would never be seen.  Same refusal.
+		const ownShort = ( gate3Report.own && gate3Report.own.unmatched ) || 0;
+		if ( failed || slotsShort || noUv2 || ownShort ) {
 			out.refused = `${failed} lightmap texture(s) failed, ${slotsShort} slot(s) matched but not applied, `
-				+ `${noUv2} slot instance(s) with no UV2 - the probe would make them look lit instead of black`;
+				+ `${noUv2} slot instance(s) with no UV2, ${ownShort} declared lightmap(s) matched to no mesh `
+				+ `- the probe would make them look lit instead of black`;
 			note( `probe env REFUSED: ${out.refused}. Fix the lightmaps first; ?probe=0 is not the answer.` );
 			return out;
 		}

@@ -62,7 +62,9 @@ const CFG = {
 	waterHoriz: qs.has( 'waterhoriz' ) ? parseFloat( qs.get( 'waterhoriz' ) ) : null,
 	waterGraze: qs.has( 'watergraze' ) ? parseFloat( qs.get( 'watergraze' ) ) : null,
 	waterCrest: qs.has( 'watercrest' ) ? parseFloat( qs.get( 'watercrest' ) ) : null,   // ripple anisotropy
-	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear
+	waterMurk: qs.get( 'watermurk' ) || null,                    // "r,g,b" linear, overrides the derivation
+	waterMurkGain: qs.has( 'watermurkgain' ) ? parseFloat( qs.get( 'watermurkgain' ) ) : null,  // scales it
+	waterGrazeMax: qs.has( 'watergrazemax' ) ? parseFloat( qs.get( 'watergrazemax' ) ) : null,  // grazing cap
 	waterBlur: qs.has( 'waterblur' ) ? parseFloat( qs.get( 'waterblur' ) ) : null,   // reflection gather radius
 	waterSat: qs.has( 'watersat' ) ? parseFloat( qs.get( 'watersat' ) ) : null,      // reflection saturation
 	lut: qs.get( 'lut' ) !== '0',
@@ -370,12 +372,17 @@ async function boot() {
 			...( CFG.waterHoriz !== null ? { horizonBias: CFG.waterHoriz } : {} ),
 			...( CFG.waterGraze !== null ? { grazingGain: CFG.waterGraze } : {} ),
 			...( CFG.waterCrest !== null ? { aniso: CFG.waterCrest } : {} ),
+			...( CFG.waterGrazeMax !== null ? { grazingMax: CFG.waterGrazeMax } : {} ),
+			...( CFG.waterMurkGain !== null ? { murkGain: CFG.waterMurkGain } : {} ),
 			...( CFG.waterMurk ? { murk: CFG.waterMurk.split( ',' ).map( Number ) } : {} ) } );
 		scene.add( water );
 		const wu = water.material.uniforms;
 		note( `water plane at y = ${manifest.waterZ} (WATER_Z ${WATER_Z}), planar Reflector ${reflPx}x${reflPx}`
 			+ ` (?reflres=${CFG.reflRes}), `
-			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}` );
+			+ `reflection gather ${wu.reflBlur.value} / saturation ${wu.reflSat.value}, `
+			+ `murk ${[ ...wu.murk.value ].map( v => v.toFixed( 4 ) ).join( ', ' )}`
+			+ ( CFG.waterMurk ? ' (?watermurk override)' : ` (derived; ?watermurkgain=${wu.murk.value.r / water.userData.murkDerived[ 0 ]})` )
+			+ `, grazing cap ${wu.grazingMax.value}` );
 	}
 
 	// display transform ---------------------------------------------------------------------------

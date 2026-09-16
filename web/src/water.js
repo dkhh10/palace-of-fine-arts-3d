@@ -51,6 +51,83 @@ export function makeRippleNormalMap( size = 256, waves = 22, aniso = 6, spread =
 	return tex;
 }
 
+/**
+ * QA-14-1 item 1a.  THE UPWELLING TERM, DERIVED - not fitted to the metric.
+ *
+ * `murk` in the shader below is the radiance that leaves the water BODY toward the camera, before
+ * the Fresnel mix; the mix already applies the (1 - F) transmittance of the view ray, so `murk` is
+ * the emergent radiance at normal incidence.  The round-14 value (0.020, 0.035, 0.030) was a hand
+ * number and is ~13x too dark: it made the near water essentially `F * reflection`, i.e. a dark
+ * blue mirror, where the Phase 5 hero's open water inverts through the LUT to a near-neutral
+ * scene-linear (1.226, 1.317, 1.262).
+ *
+ * The inputs are the Phase 5 material's and the scene's own, in this order:
+ *   1. MAT_water_lagoon's WATER_VOLUME node (scripts/mat_build.py build_water):
+ *        sigma_s = density * Colour            = 0.7 * (0.205, 0.250, 0.195)
+ *        sigma_a = density * (1 - AbsorpColour) = 0.7 * (1 - (0.70, 0.80, 0.68))
+ *      This is the reference sheet's "volume absorption ~ (0.04, 0.07, 0.04)" line in its shipped
+ *      form: single-scatter albedo (0.41, 0.56, 0.38), i.e. the green-tea murk.
+ *   2. docs/reference_sheet.md MAT_water_lagoon: depth 1.5 m to a muddy bottom (0.12, 0.10, 0.06).
+ *   3. The scene's own downward irradiance: the cosine-weighted integral of the CAMERA-branch sky
+ *      equirect (export/out/gate0/sky_camera_4096x2048.exr) over the upper hemisphere, plus the
+ *      manifest's LIGHT_sun (67.319 W/m^2 * sin 7.357 deg * colour (1, 0.6073, 0)).
+ *      The camera branch, not sky.diffuse: sky.diffuse carries lighting's artificial shade fill
+ *      (B/R 5.1 against the real sky's 4.4 and sky+sun's 1.3), and the Phase 5 material suppresses
+ *      its own diffuse murk lobe to 0.085 at the hero precisely because that fill "returns blue and
+ *      fights the warm streaks" (mat_build.py round 8).  The water body is real light off a real
+ *      sky, so it takes the real sky.
+ *
+ * The chain, all of it Beer-Lambert over the two-way depth plus the two interface crossings:
+ *   b_b     = sigma_s * B(g),  B = (1-g)/(2g) * ((1+g)/sqrt(1+g^2) - 1)   backscatter fraction, HG
+ *   R_col   = b_b/(a+b_b) * (1 - exp(-2 (a+b_b) d))      light turned round inside the column
+ *   R_bot   = rho * exp(-2 a d)                          light off the bed and back up
+ *   A_up    = R_col + R_bot                              sub-surface upwelling albedo
+ *   E_in    = t_sky * E_sky + t_sun * E_sun              what crosses the surface downward
+ *             (t_sun is the Fresnel transmittance at the sun's 82.6 deg incidence = 0.544, which
+ *              is why a 7.4 deg sun contributes so much less than its horizontal irradiance)
+ *   E_up    = A_up * E_in / (1 - r_int * A_up)           r_int = 0.48, the diffuse internal reflectance
+ *   murk    = E_up / (pi * n^2)                          isotropic in-water radiance, out through n
+ *
+ * Result (0.2353, 0.3522, 0.3166): hue 162 deg, i.e. green, against the round-14 value's 160 deg but
+ * 10x its level.  Cross-check on the derivation, not on the metric: A_up comes out (0.150, 0.180,
+ * 0.112) and the Phase 5 material's own hand-set diffuse murk albedo is (0.165, 0.170, 0.1025) -
+ * the same quantity to within 10 %, reached independently.
+ *
+ * `?watermurk=0.020,0.035,0.030` restores the round-14 / WIP value exactly; `?watermurkgain=k`
+ * scales the derived one for an A/B without changing its hue.
+ */
+export const MURK_INPUTS = {
+	volumeDensity: 0.7,
+	scatterColour: [ 0.205, 0.250, 0.195 ],      // WATER_VOLUME "Color"
+	absorptionColour: [ 0.70, 0.80, 0.68 ],      // WATER_VOLUME "Absorption Color"
+	anisotropy: 0.3,                             // WATER_VOLUME "Anisotropy" (Henyey-Greenstein g)
+	depth_m: 1.5,                                // docs/reference_sheet.md
+	bottomAlbedo: [ 0.12, 0.10, 0.06 ],          // docs/reference_sheet.md, the muddy bed
+	skyIrradiance: [ 3.651, 7.626, 16.040 ],     // W/m^2, sky_camera_4096x2048.exr, upper hemisphere
+	sunIrradiance: [ 8.622, 5.236, 0.0 ],        // W/m^2 on the horizontal, manifest LIGHT_sun
+	skyTransmittance: 0.934,                     // Fresnel-averaged, diffuse sky into water
+	sunTransmittance: 0.544,                     // unpolarised Fresnel at 82.643 deg incidence
+	internalReflectance: 0.48,                   // diffuse upwelling reflected back down at the surface
+	ior: 1.333,
+};
+
+/** @returns {number[]} the emergent upwelling radiance (scene-linear RGB); see MURK_INPUTS. */
+export function derivedMurk( i = MURK_INPUTS ) {
+	const g = i.anisotropy;
+	const B = ( 1 - g ) / ( 2 * g ) * ( ( 1 + g ) / Math.sqrt( 1 + g * g ) - 1 );
+	const n2 = i.ior * i.ior, d = i.depth_m;
+	return [ 0, 1, 2 ].map( ( c ) => {
+		const sa = i.volumeDensity * ( 1 - i.absorptionColour[ c ] );
+		const ss = i.volumeDensity * i.scatterColour[ c ];
+		const bb = ss * B, k = sa + bb;
+		const rCol = bb / k * ( 1 - Math.exp( - 2 * k * d ) );
+		const rBot = i.bottomAlbedo[ c ] * Math.exp( - 2 * sa * d );
+		const aUp = rCol + rBot;
+		const eIn = i.skyTransmittance * i.skyIrradiance[ c ] + i.sunTransmittance * i.sunIrradiance[ c ];
+		return aUp * eIn / ( 1 - i.internalReflectance * aUp ) / ( Math.PI * n2 );
+	} );
+}
+
 const WaterShader = {
 	uniforms: {
 		color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
@@ -85,9 +162,12 @@ const WaterShader = {
 		//   reflSat    the murk scatters light back out through the reflected ray, washing its
 		//              colour toward neutral.  1.0 = a clean mirror.
 		reflBlur: { value: 0.0 }, reflSat: { value: 1.0 },
-		// QA-14-1 diagnostics: 1 = Fresnel F, 2 = the projected reflection uv, 3 = the perturbed
-		// normal's xy, 4 = the raw reflection sample, 5 = |ripple offset| in screen units.
+		// QA-14-1 diagnostics: 1 = Fresnel F, 2 = the projected reflection uv (blue = out of range),
+		// 3 = the perturbed normal's xy, 4 = the UNPERTURBED reflection sample, 5 = the murk term
+		// alone, 6 = the gathered (perturbed, clamped, blurred) reflection alone.
 		debugMode: { value: 0 },
+		// Round 7 review FIX-NOW 1: the ceiling on the grazing multiplier; see the shader.
+		grazingMax: { value: 6.0 },
 	},
 	vertexShader: /* glsl */`
 		uniform mat4 textureMatrix;
@@ -102,7 +182,7 @@ const WaterShader = {
 	`,
 	fragmentShader: /* glsl */`
 		uniform sampler2D tDiffuse, tNormal;
-		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat, distortAniso, horizonBias, grazingGain;
+		uniform float time, distortion, normalScale, rippleTiling, reflBlur, reflSat, distortAniso, horizonBias, grazingGain, grazingMax;
 		uniform vec3 fogColor;
 		uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
 		uniform int debugMode;
@@ -121,21 +201,31 @@ const WaterShader = {
 			// The vertical term is therefore scaled by distortAniso, and both are scaled by 1/c so
 			// the displacement grows toward the horizon exactly as the geometry says it should.
 			vec4 uv = vProjUv;
-			float grazingRaw = clamp( 1.0 / max( dot( normalize( cameraPosition - vWorld ), N ), 0.02 ), 1.0, 40.0 );
+			// Round 7 review FIX-NOW 1: the cap was 40, and 40 x distortion 0.10 x distortAniso 4 is a
+			// 16-screen displacement - the projected uv left [0, 1] on the far water and the
+			// ClampToEdge reflection target smeared its border texels across the whole far lagoon.
+			// Two guards, both needed: the cap comes down to grazingMax (6 is the last value whose
+			// worst-case offset, 6 x 0.10 x 4 x 0.5 = 1.2 of a screen, is still bounded by the clamp
+			// rather than relying on it), and the projected uv is CLAMPED to [0, 1] after every
+			// offset, so no sample can reach a border texel however the normal is perturbed.
+			float grazingRaw = clamp( 1.0 / max( dot( normalize( cameraPosition - vWorld ), N ), 0.02 ), 1.0, grazingMax );
 			float grazing = mix( 1.0, grazingRaw, grazingGain );
 			uv.x += n.x * distortion * grazing * uv.w;
 			uv.y += ( n.y * distortion * distortAniso + horizonBias ) * grazing * uv.w;
+			// work in normalised screen uv from here so the clamp is exact (texture2DProj divides by w)
+			vec2 quv = uv.xy / max( uv.w, 1e-6 );
+			quv = clamp( quv, 0.0, 1.0 );
 			// A rough surface at a grazing angle has a lobe STRETCHED TOWARD THE HORIZON, not a disc.
 			// Gathering only VERTICALLY (in screen space) is that stretch, and it is also what keeps
 			// the horizontal structure the ripple just created: a disc gather would average the
 			// streaks away, which is what the round14 water did.
-			vec3 refl = texture2DProj( tDiffuse, uv ).rgb;
+			vec3 refl = texture2D( tDiffuse, quv ).rgb;
 			if ( reflBlur > 0.0 ) {
-				float b = reflBlur * grazing * uv.w;
-				refl += texture2DProj( tDiffuse, uv + vec4( 0.0,  b,       0.0, 0.0 ) ).rgb;
-				refl += texture2DProj( tDiffuse, uv + vec4( 0.0, -b,       0.0, 0.0 ) ).rgb;
-				refl += texture2DProj( tDiffuse, uv + vec4( 0.0,  b * 2.0, 0.0, 0.0 ) ).rgb;
-				refl += texture2DProj( tDiffuse, uv + vec4( 0.0, -b * 2.0, 0.0, 0.0 ) ).rgb;
+				float b = reflBlur * grazing;
+				refl += texture2D( tDiffuse, clamp( quv + vec2( 0.0,  b       ), 0.0, 1.0 ) ).rgb;
+				refl += texture2D( tDiffuse, clamp( quv + vec2( 0.0, -b       ), 0.0, 1.0 ) ).rgb;
+				refl += texture2D( tDiffuse, clamp( quv + vec2( 0.0,  b * 2.0 ), 0.0, 1.0 ) ).rgb;
+				refl += texture2D( tDiffuse, clamp( quv + vec2( 0.0, -b * 2.0 ), 0.0, 1.0 ) ).rgb;
 				refl *= 0.2;
 			}
 			refl *= reflectTint;
@@ -146,6 +236,8 @@ const WaterShader = {
 			float F = 0.02 + 0.98 * pow( 1.0 - c, 5.0 );                        // water, IOR 1.33
 			if ( debugMode == 1 ) { gl_FragColor = vec4( vec3( F ), 1.0 ); return; }
 			if ( debugMode == 2 ) { vec2 q = uv.xy / max( uv.w, 1e-6 ); gl_FragColor = vec4( fract( q ), float( q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0 ), 1.0 ); return; }
+			if ( debugMode == 5 ) { gl_FragColor = vec4( murk, 1.0 ); return; }          // the upwelling term alone
+			if ( debugMode == 6 ) { gl_FragColor = vec4( refl, 1.0 ); return; }          // the gathered reflection alone
 			if ( debugMode == 3 ) { gl_FragColor = vec4( n.xy * 0.5 + 0.5, 0.0, 1.0 ); return; }
 			if ( debugMode == 4 ) { gl_FragColor = vec4( texture2DProj( tDiffuse, vProjUv ).rgb, 1.0 ); return; }
 			vec3 surf = mix( murk, refl, F );
@@ -185,6 +277,10 @@ export function makeWater( waterY, o = {} ) {
 	reflector.name = 'WATER_lagoon';
 	const u = reflector.material.uniforms;
 	u.tNormal.value = makeRippleNormalMap( 256, o.waves ?? 22, o.aniso ?? 6, o.spread ?? 6 );
+	// QA-14-1 item 1a: the DERIVED upwelling term is the default (see MURK_INPUTS / derivedMurk).
+	// `o.murk` (?watermurk=r,g,b) overrides it outright; `o.murkGain` (?watermurkgain=k) scales it.
+	reflector.userData.murkDerived = derivedMurk();
+	u.murk.value.setRGB( ...reflector.userData.murkDerived.map( ( v ) => v * ( o.murkGain ?? 1 ) ) );
 	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	if ( o.tint ) u.reflectTint.value.setRGB( ...o.tint );
 	if ( o.distortion !== undefined ) u.distortion.value = o.distortion;
@@ -193,6 +289,7 @@ export function makeWater( waterY, o = {} ) {
 	if ( o.distortAniso !== undefined ) u.distortAniso.value = o.distortAniso;
 	if ( o.horizonBias !== undefined ) u.horizonBias.value = o.horizonBias;
 	if ( o.grazingGain !== undefined ) u.grazingGain.value = o.grazingGain;
+	if ( o.grazingMax !== undefined ) u.grazingMax.value = o.grazingMax;
 	reflector.userData.applyFog = ( fog ) => {
 		if ( ! fog ) { u.fogCap.value = 0; return false; }
 		u.fogColor.value.copy( fog.color );
@@ -200,7 +297,6 @@ export function makeWater( waterY, o = {} ) {
 		u.fogCap.value = fog.cap; u.fogK.value = fog.k; u.fogIntensity.value = fog.intensity || 0;
 		return true;
 	};
-	if ( o.murk ) u.murk.value.setRGB( ...o.murk );
 	// Calibrated on the Gate 4 capture against the Phase 5 Cycles hero's water box: the mirror-sharp
 	// Gate 0 water read std 44.0 against 34.2 and sat 0.69 against 0.33.  ?waterblur / ?watersat
 	// move them for the A/B; the defaults are the calibration.

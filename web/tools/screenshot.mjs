@@ -342,8 +342,12 @@ try {
 	// `error: Failed to load resource ...` carries no URL and is always duplicated by an `httperror:`
 	// line that does, so the URL-less one is dropped and the httperror is what is judged.  favicon.ico
 	// is the one whitelisted 404 (index.html declares none); nothing else is.
+	// Round 7 review (SHOULD-FIX): a `requestfailed:` line is an asset that never arrived at all -
+	// a missing atlas or GLB - which is strictly worse than an HTTP error that did arrive, so it
+	// fails a scored capture on the same terms.  (It is recorded with its URL by the requestfailed
+	// handler above, so unlike the bare `error: Failed to load resource` line it is actionable.)
 	const IGNORE = /favicon|^error: Failed to load resource/;
-	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror|httperror):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
+	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror|httperror|requestfailed):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
 	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageErrors, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
 	if ( pageErrors.length ) {
