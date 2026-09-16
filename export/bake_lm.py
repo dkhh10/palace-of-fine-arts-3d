@@ -313,7 +313,12 @@ elif job["kind"] == "impostor":
     # the range is the OPAQUE crown's own maximum (alpha > 0.5) with 10 % headroom, not the atlas max:
     # the semi-transparent edge is where the outliers live and it must not set the code scale.
     body = alb[..., 3] > 0.5
-    rng = float(max(alb[body][:, :3].max() * 1.1, 1e-3)) if bool(body.any()) else g3.pick_range(alb[..., :3])
+    # p99.9 of the opaque crown, not its max: ENV_tree_cypress_s17_LOD1 had ONE texel at 233 (a sun glint
+    # through a leaf card) and the max rule set its range to 256, which put the whole crown at a code mean
+    # of 8/255. The 0.1 % above the range clip; everything else gains 5x of code space.
+    rng = (float(max(np.percentile(alb[body][:, :3], 99.9) * 1.1, 1e-3))
+           if bool(body.any()) else g3.pick_range(alb[..., :3]))
+    clipped_body = int((alb[body][:, :3] > rng).sum())
     out = {}
     for tag, arr, px in (("2048", alb, A), ("1024", alb1k, A // 2)):
         enc = np.concatenate([g3.gamma2_encode(arr[..., :3], rng),

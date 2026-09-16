@@ -43,6 +43,7 @@ print("\n== per-map EXR range (source, before any encoding) ==")
 print(f"{'map':52s} {'px':>5s} {'cov':>6s} {'cm/tx':>6s} {'min':>5s} {'max':>8s} {'mean':>8s} {'p99':>8s} "
       f"{'rng':>5s} {'clip':>5s} {'g2 relp99':>9s} {'rgbm relp99':>11s} {'bake_s':>7s}")
 setj = json.loads((g3.OUT / "gate3_set.json").read_text())
+enc = json.loads((g3.OUT / "encode.json").read_text())["maps"] if (g3.OUT / "encode.json").exists() else {}
 own_rows = {r["object"]: r for r in setj["own_maps"]}
 rows = []
 for jid, r in recs.items():
@@ -53,16 +54,17 @@ for jid, r in recs.items():
     m = r["map"]
     rows.append((r["object"] + (" [gate1 UV2]" if g1 else ""), r["size"],
                  row["coverage_gate1"] if g1 else row["coverage"],
-                 row["cm_per_texel_gate1"] if g1 else row["cm_per_texel"], m, r["bake_s"]))
+                 row["cm_per_texel_gate1"] if g1 else row["cm_per_texel"],
+                 enc.get(r["key"], m), r["bake_s"]))
 comp = json.loads((g3.OUT / "compose.json").read_text()) if (g3.OUT / "compose.json").exists() else {}
 for k, a in sorted((comp.get("atlases") or {}).items()):
-    rows.append((k, a["size"][0], None, None, a, None))
+    rows.append((k, a["size"][0], None, None, enc.get(k, a), None))
 for name, px, cov, cm, m, bs in sorted(rows, key=lambda t: t[0]):
     st = m["stats"]
     print(f"{name[:52]:52s} {px:5d} {cov if cov is not None else '-':>6} {cm if cm is not None else '-':>6} "
           f"{st['min']:5.2f} {st['max']:8.3f} {st['mean']:8.4f} {st['p99']:8.3f} {m['range']:5.0f} "
-          f"{st['clipped_px_vs_range']:5d} {m['gamma2']['roundtrip']['rel_p99']:9.4f} "
-          f"{m['rgbm8']['roundtrip']['rel_p99']:11.4f} {bs if bs is not None else '-':>7}")
+          f"{st['clipped_px_vs_range']:5d} {m['gamma2'].get('stops_p99', -1):9.4f} "
+          f"{m['rgbm8'].get('stops_p99', -1):11.4f} {bs if bs is not None else '-':>7}")
 
 print("\n== slot atlases ==")
 per_job = [(jid, r) for jid, r in recs.items() if r["kind"] == "slot"]
@@ -80,13 +82,21 @@ if v:
           f"{v['bytes']} B npz")
 
 print("\n== impostors ==")
+import numpy as _np  # noqa: E402
+def _sat(proto):
+    """texels of the opaque crown at code 255 = clipped by the p99.9 range, read off the shipped atlas."""
+    a = g3.read_png(g3.OUT / "impostor" / f"gate3_imp_{proto}_albedo_{g3.IMP_SHIP_PX}.png")
+    m = a[..., 3] > 128
+    return (int((a[..., :3][m] >= 255).any(axis=-1).sum()), int(m.sum()),
+            round(float(a[..., :3][m].mean()), 1))
 imp = [(jid, r) for jid, r in recs.items() if r["kind"] == "impostor"]
-print(f"{'prototype':36s} {'views':>5s} {'s':>7s} {'s/view':>7s} {'rng':>5s} {'alpha':>6s} "
-      f"{'alb1k B':>9s} {'alb2k B':>9s} {'nd1k B':>9s}")
+print(f"{'prototype':36s} {'views':>5s} {'s':>7s} {'s/view':>7s} {'rng':>6s} {'alpha':>6s} "
+      f"{'code':>5s} {'sat px':>7s} {'alb1k B':>9s} {'alb2k B':>9s} {'nd1k B':>9s}")
 for jid, r in sorted(imp):
     f = r["files"]
+    sat, body, code = _sat(r["prototype"])
     print(f"{r['prototype'][:36]:36s} {r['views']:5d} {r['render_s']:7.1f} {r['s_per_view']:7.3f} "
-          f"{r['range']:5.0f} {r['alpha_coverage']:6.3f} {f['albedo_1024']['bytes']:9d} "
+          f"{r['range']:6.2f} {r['alpha_coverage']:6.3f} {code:5.1f} {sat:7d} {f['albedo_1024']['bytes']:9d} "
           f"{f['albedo_2048']['bytes']:9d} {f['normdepth_1024']['bytes']:9d}")
 if imp:
     print(f"  total {sum(r['render_s'] for _, r in imp):.1f} s, "
