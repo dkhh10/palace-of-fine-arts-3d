@@ -215,8 +215,12 @@ check( !! im0 && im0.geometry.attributes.pfaSlot.isInstancedBufferAttribute
 	const r2 = applyGate3Lightmaps( { scene: s2, gate3: g3, assets: raw.assets, note: ( s ) => n2.push( s ),
 		loadTexture: async () => new THREE.Texture() } );
 	await r2.promise;
-	check( r2.own.matched === usable && r2.own.applied === 0 && r2.own.noUv2Attribute === usable,
-		`a glb without TEXCOORD_1 applies 0 map(s) and reports all ${usable} (got ${r2.own.applied} applied, ${r2.own.noUv2Attribute} reported)` );
+	// A mesh that cannot carry a map does not CLAIM the asset (it would lock out the mesh that can),
+	// so `matched` is 0 and every asset is reported as a near miss instead.
+	check( r2.own.matched === 0 && r2.own.applied === 0 && r2.own.noUv2Attribute === usable
+		&& Object.keys( r2.own.nearMiss ).length === usable,
+		`a glb without TEXCOORD_1 claims nothing and reports all ${usable} as near misses `
+		+ `(got ${r2.own.matched} matched, ${r2.own.applied} applied, ${r2.own.noUv2Attribute} reported)` );
 	check( n2.some( s => /NO TEXCOORD_1/.test( s ) ), 'and says so in the notes' );
 }
 
