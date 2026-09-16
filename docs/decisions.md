@@ -391,3 +391,9 @@ recorded the group input as 0.0); they are read from master_delivery.blend into 
 Parity references: stations 3 and 5 only had Eevee round-09 frames and station 6 a Cycles frame without the compositor, so 6a's "within 0.5 of its Phase 5 score" was unmeasurable on
 half the stations. The lead renders Cycles 1920x1080 128 spp compositor-on frames for cams 03/05/06 from master.blend (scripts/qa_render_round.py --round 13 --final) as the Gate 4
 references; QA 13 scores 3/5/6 provisionally until they land.
+
+## 2026-09-16 · Gate 4 item 2 (lead): leaf-card alpha is fixed in the export, not guessed in the viewer; impostor row order recorded
+The four MAT_leaf_* materials reached env.glb without alphaMode, so glTF drew every near-tree leaf card as an opaque rectangle (sky-lit blue shards over a third of cam02). The export
+sets alphaMode MASK with the cutoff read from each source material in master_delivery.blend and verify_glb asserts MASK/BLEND on every material whose base colour texture carries alpha;
+a viewer-side alphaTest would pick the cutoff by guess. The far-tree impostors (16 InstancedMeshes, 127 trees, 16 draw calls) needed a V flip because the KTX2 atlases are top-down
+(KTXorientation rd) while the manifest's frame rows count from the bottom; recorded in web/README.md with the measured codes so the bake side can align the convention at the next bake.
