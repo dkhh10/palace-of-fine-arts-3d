@@ -312,3 +312,43 @@ blender_run.sh: pid 41961 exited rc=0 after 139 s (max 1800)
 00:00.327  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
 /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
   override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_01 shadow: 16/32 (73s, batch)
+[gate3] tfirr_01 shadow: 32/32 (131s, batch)
+[gate3] job tfirr_01 done in 131.2 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 42285 exited rc=0 after 132 s (max 1800)
+[bake_queue] tfirr_01 rc=0 132s (92/94)
+00:00.398  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_02 shadow: 16/32 (70s, batch)
+[gate3] tfirr_02 shadow: 32/32 (144s, batch)
+[gate3] job tfirr_02 done in 143.8 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 42596 exited rc=0 after 146 s (max 1800)
+[bake_queue] tfirr_02 rc=0 146s (93/94)
+00:00.391  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_03 shadow: 16/31 (80s, batch)
+[gate3] tfirr_03 shadow: 31/31 (143s, batch)
+[gate3] job tfirr_03 done in 143.4 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 42793 exited rc=0 after 145 s (max 1800)
+[bake_queue] tfirr_03 rc=0 145s (94/94)
+[bake_queue] finished 94/94
