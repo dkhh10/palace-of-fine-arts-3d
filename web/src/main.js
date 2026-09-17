@@ -30,6 +30,7 @@ import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { buildImpostors } from './impostors.js';
+import { applyFoliage, applyShrubLod, nearTreeImpostorEntries } from './foliage.js';
 import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
@@ -104,7 +105,18 @@ const CFG = {
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
 	vertexIrr: qs.get( 'vertexirr' ) || 'auto',
 	instIrr: qs.get( 'instirr' ) || 'auto',             // per-placement shrub/reed irradiance: auto | 0
-	post: qs.get( 'post' ) || 'all',                    // all | none | mist,bloom,vignette (default all since 6a: the Phase 5 compositor look)
+	// Phase 6c item C — the foliage pass.  `treemesh` is metres from the walker: inside it a tree
+	// draws its mesh, beyond it its impostor, with `treefade` metres of dissolve between.  `inf`
+	// (or `never`) keeps every mesh for ever and creates no near-tree impostor at all, which is the
+	// round-15 behaviour and therefore the A/B for anything this pass changes at range.
+	leafNormal: qs.has( 'leafnormal' ) ? parseFloat( qs.get( 'leafnormal' ) ) : 0.5,
+	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
+	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
+	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (default 40)
+	treeFade: qs.has( 'treefade' ) ? parseFloat( qs.get( 'treefade' ) ) : 5,
+	imp2k: qs.get( 'imp2k' ) !== '0',                   // the 2K impostor atlas variant on desktop
+	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : 30,   // LOD1 within this many metres
+	post: qs.get( 'post' ) || 'all',                  // all | none | mist,bloom,vignette (default all since 6a: the Phase 5 compositor look)
 	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
 	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
 	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
@@ -240,6 +252,7 @@ async function fetchBuffer( url ) {
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
 let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
+let foliageReport = null, shrubLodReport = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -571,15 +584,43 @@ async function boot() {
 		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
 	}
 
+	// Phase 6c item C: the leaf shader, the crown-bent normals and the runtime tree LOD -----------
+	// AFTER the probe pass, because `applyProbeEnv` reads `pfaPatched` and the foliage patch adds its
+	// own chain on top of whatever the shrub/reed cards already carry; BEFORE the impostors, which
+	// need the near-tree units and the switch uniforms this pass computes.
+	{
+		const t = ( CFG.treeMesh || '' ).toLowerCase();
+		const meshDist = ( t === 'inf' || t === 'never' ) ? Infinity
+			: ( CFG.treeMesh !== null && CFG.treeMesh !== '' && isFinite( parseFloat( CFG.treeMesh ) ) ? parseFloat( CFG.treeMesh ) : 40 );
+		const trnArg = ( CFG.leafTrn || '' ).toLowerCase();
+		const trnShrubs = trnArg === 'shrubs' || trnArg === '1s';
+		const trnScale = trnShrubs ? 1 : ( CFG.leafTrn !== null && isFinite( parseFloat( CFG.leafTrn ) ) ? parseFloat( CFG.leafTrn ) : 1 );
+		// alphaToCoverage is only worth asking for when the target this draws into is multisampled:
+		// the composer's is `samples: 4` and so is the Reflector's, and with ?post=none the canvas
+		// itself is `antialias: true`.
+		const msaa = CFG.leafSoft && ( ( composer && composer.renderTarget1 && composer.renderTarget1.samples > 0 )
+			|| renderer.getContext().getParameter( renderer.getContext().SAMPLES ) > 0 );
+		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa,
+			normalBlend: CFG.leafNormal, trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade } );
+		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
+	}
+
 	// far-tree impostors (Gate 4 item 2) ----------------------------------------------------------
 	// They REPLACE the Gate 1 placeholder quads: when they build, the placeholders are not made at all,
 	// so a capture can never show a grey card where a tree should be and the name sweep stays clean.
 	const impAvailable = CFG.impostors && manifest.gate3 && manifest.gate3.impostors
 		&& manifest.gate3.impostors.count && manifest.treesFar.length;
 	if ( impAvailable ) {
+		// 6c C2: the near trees join the impostor set so that a tree beyond the switch distance is
+		// drawn ONCE, as a card, instead of as a full mesh for ever.  With ?treemesh=inf the list is
+		// empty and the build is exactly the round-15 one.
+		const nearEntries = ( foliageReport && Number.isFinite( foliageReport.meshDist ) )
+			? nearTreeImpostorEntries( foliageReport.units, manifest.gate3.impostors, note ) : [];
 		const built = buildImpostors( {
-			impostors: manifest.gate3.impostors, far: manifest.treesFar, note,
+			impostors: manifest.gate3.impostors, far: manifest.treesFar, near: nearEntries, note,
 			normalDepth: CFG.impNormalDepth, debug: CFG.impDebug,
+			atlas2k: CFG.imp2k,
+			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
 			fog: ( scene.fog && postState && postState.mistSpec ) ? {
@@ -1141,6 +1182,14 @@ window.__pfaInfo = () => ( {
 	chunking: chunkStats,
 	post: postState,
 	probeEnv: probeReport,
+	// 6c item C.  `units` is dropped (14 Vector3 triples the harness never reads); its count stays.
+	foliage: foliageReport && { geometries: foliageReport.geometries, clusters: foliageReport.clusters,
+		leafMaterials: foliageReport.leafMaterials, cardMaterials: foliageReport.cardMaterials,
+		barkMaterials: foliageReport.barkMaterials, bent: foliageReport.bent, softened: foliageReport.softened,
+		normalBlend: foliageReport.normalBlend, trnScale: foliageReport.trnScale, trnShrubs: foliageReport.trnShrubs,
+		msaa: foliageReport.msaa, meshDist: Number.isFinite( foliageReport.meshDist ) ? foliageReport.meshDist : null,
+		fadeBand: foliageReport.fadeBand, units: foliageReport.units.length, skipped: foliageReport.skipped.length },
+	shrubLod: shrubLodReport,
 	reflectionSet,
 	quality: { preset: CFG.quality, bloomRes: CFG.bloomRes, reflRes: CFG.reflRes, reflSet: CFG.reflSet },
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,

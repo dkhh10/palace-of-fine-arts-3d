@@ -194,6 +194,21 @@ for ( const [ meshName, names ] of byMesh ) {
 	im.name = meshName;
 	scene.add( im );
 }
+// Gate 4 item 1c lives in the same pass and REFUSES to boot when a declared node is not presented,
+// so the synthetic scene has to carry env.glb's instanced nodes too - otherwise every run of this
+// file dies on "no WEB_glb_env in the scene" before a single instance-irradiance check is reached.
+const envRoot = new THREE.Group();
+envRoot.name = 'WEB_glb_env';
+const iiNodes = ( g3.instanceIrradiance && g3.instanceIrradiance.nodes ) || [];
+for ( const n of iiNodes ) {
+	const count = n.segments.reduce( ( a, s ) => a + s[ 1 ], 0 );
+	const im = new THREE.InstancedMesh( new THREE.PlaneGeometry( 1, 1 ), sharedMat(), count );
+	im.name = `env_node_${n.gltf_node}`;
+	im.userData.pfaGltfNode = n.gltf_node;
+	envRoot.add( im );
+}
+scene.add( envRoot );
+
 const notes = [];
 const rep = applyGate3Lightmaps( {
 	scene, gate3: g3, assets: raw.assets, note: ( s ) => notes.push( s ),
@@ -210,7 +225,10 @@ const straddling = rep.slots.meshes.filter( x => x.atlases.length > 1 );
 check( straddling.length === 3, `${straddling.length} mesh(es) straddle two slot atlases (3 expected: astragals, rotunda columns, ORN drum band)` );
 // every lightmapped material must decode with ITS OWN range, never a default
 const ranges = new Set();
-scene.traverse( ( o ) => { if ( o.isMesh && o.material.userData.pfaPatched ) ranges.add( o.material.userData.pfaPatched.maxRange ); } );
+// Only the LIGHTMAPPED materials: the env nodes above are patched for the per-placement
+// irradiance, which carries no lightmap texture and so no per-texture range to check.
+scene.traverse( ( o ) => { if ( o.isMesh && ! Array.isArray( o.material ) && o.material.lightMap
+	&& o.material.userData.pfaPatched ) ranges.add( o.material.userData.pfaPatched.maxRange ); } );
 check( ! ranges.has( 7 ) && ! ranges.has( undefined ) && ranges.size > 3,
 	`${ranges.size} distinct per-texture range(s) in use, none of them three's 7.0 default` );
 // the slot attribute really is per instance
@@ -224,8 +242,9 @@ check( !! im0 && im0.geometry.attributes.pfaSlot.isInstancedBufferAttribute
 	const mat = sharedMat();
 	for ( const a of own ) s2.add( meshAt( b2t( ...raw.assets[ a.name ].location_blender ), mat, false ) );
 	const n2 = [];
+	// instIrr '0': this fixture is about the UV2 blocker and presents no env.glb nodes at all.
 	const r2 = applyGate3Lightmaps( { scene: s2, gate3: g3, assets: raw.assets, note: ( s ) => n2.push( s ),
-		loadTexture: async () => new THREE.Texture() } );
+		instIrr: '0', loadTexture: async () => new THREE.Texture() } );
 	await r2.promise;
 	// A mesh that cannot carry a map does not CLAIM the asset (it would lock out the mesh that can),
 	// so `matched` is 0 and every asset is reported as a near miss instead.

@@ -660,7 +660,12 @@ export function normaliseManifest( raw, baseUrl ) {
 				// `base_z_m` is 0 for 14 of the 16 but -2.6748 m / -0.7183 m on the two willows,
 				// whose fronds hang below the trunk base; dividing by bbox[2] there made those
 				// impostors 19 % / 6 % too small and lifted them off their trunks.
+				// 6c C2: the 2K albedo variant, if the export shipped one for this prototype.  It is
+				// resolved the same way and never constructed from the 1K name.
+				const alb2k = p.albedo_2k ? resolveTexture( p.albedo_2k ) : null;
 				protos[ name ] = { name, albedo: alb.url, normalDepth: nd.url,
+					albedo2k: alb2k ? alb2k.url : null,
+					bytes2k: ( alb2k && alb2k.meta && alb2k.meta.bytes ) || 0,
 					range: p.range ?? null, bbox: p.bbox_m || null, radius: p.radius_m ?? null,
 					baseZ: p.base_z_m ?? 0, centreZ: p.centre_z_m ?? null,
 					heightAboveBase: p.height_above_base_m ?? null,
@@ -692,6 +697,17 @@ export function normaliseManifest( raw, baseUrl ) {
 				framePx: impRaw.frame_px, innerPx: impRaw.inner_px,
 				gutterPx: impRaw.gutter_px, atlasPx: impRaw.atlas_px,
 				unlit: impRaw.unlit !== false, prototypeMap: impRaw.prototype_map || {},
+				// The 2K variant RE-STATES the atlas geometry (a 2048 px atlas of 170 px frames with
+				// a 4 px gutter is not the 1K block x2), so it is read whole or not at all: a partial
+				// block would be a frame lookup off by a texel row on every tree.
+				variant2k: ( () => {
+					const v = impRaw.variant_2k;
+					if ( ! v ) return null;
+					const g = { atlasPx: v.atlas_px, framePx: v.frame_px, gutterPx: v.gutter_px, innerPx: v.inner_px };
+					const bad = Object.entries( g ).filter( ( [ , x ] ) => typeof x !== 'number' || ! ( x > 0 ) ).map( ( [ k ] ) => k );
+					if ( bad.length ) { g3notes.push( `impostors variant_2k ignored: missing ${bad.join( ', ' )}` ); return null; }
+					return g;
+				} )(),
 				prototypes: protos, count: Object.keys( protos ).length };
 		}
 		const probeRaw = pick( raw, 'probe' ) || null;

@@ -39,13 +39,23 @@ export const ALPHA_TEST = 0.33;
 const vertexShader = /* glsl */`
 	attribute vec3 iCentre;          // billboard centre, three-space
 	attribute float iSide;           // side of the square, metres
+	attribute vec3 iSwitch;          // 6c C2: the tree's crown centre, for the mesh/impostor switch
+	attribute float iNear;           // 1 where a MESH exists for this tree and may replace the card
+	uniform float pfaMeshDist, pfaFadeBand;
 	varying vec2 vQuadUv;
 	varying vec3 vDirBlender;        // camera -> billboard, BLENDER Z-up, unnormalised
+	varying float vPfaFade;          // 1 = the impostor is the LOD, 0 = the mesh is
 	#ifdef PFA_FOG
 	varying float vFogDepth;
 	#endif
 	void main() {
 		vQuadUv = uv;
+		// The SAME formula and the SAME uniforms as the mesh side (foliage.js), from the SAME crown
+		// centre, so the two dissolves are exact complements and no tree is ever drawn twice or not
+		// at all.  A tree with no mesh (the 127 far ones today) has iNear = 0 and never fades.
+		vPfaFade = ( iNear > 0.5 )
+			? smoothstep( pfaMeshDist, pfaMeshDist + pfaFadeBand, distance( cameraPosition, iSwitch ) )
+			: 1.0;
 		// Screen-facing quad: the camera's right and up in world space, from the view matrix's rows.
 		vec3 right = vec3( viewMatrix[ 0 ][ 0 ], viewMatrix[ 1 ][ 0 ], viewMatrix[ 2 ][ 0 ] );
 		vec3 up    = vec3( viewMatrix[ 0 ][ 1 ], viewMatrix[ 1 ][ 1 ], viewMatrix[ 2 ][ 1 ] );
@@ -73,6 +83,11 @@ const fragmentShader = /* glsl */`
 	#endif
 	varying vec2 vQuadUv;
 	varying vec3 vDirBlender;
+	varying float vPfaFade;
+
+	// The mesh side's dither, verbatim (foliage.js): a purely spatial hash, so the crossfade is a
+	// fixed pattern and a screenshot is byte-identical twice running.
+	float pfaHash( vec2 p ) { return fract( 52.9829189 * fract( dot( p, vec2( 0.06711056, 0.00583715 ) ) ) ); }
 
 	// manifest.impostors.frame_uv, with f clamped and sampled at texel centres.
 	//
@@ -91,6 +106,7 @@ const fragmentShader = /* glsl */`
 	vec4 sampleFrame( vec2 cell, vec2 f ) { return texture2D( atlas, frameUv( cell, f ) ); }
 
 	void main() {
+		if ( vPfaFade < 0.9995 && pfaHash( gl_FragCoord.xy ) > vPfaFade ) discard;
 		// manifest.impostors.frame_lookup, verbatim
 		vec3 d = normalize( vDirBlender );
 		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );
@@ -151,10 +167,18 @@ const fragmentShader = /* glsl */`
  * One InstancedMesh per prototype, built from `manifest.gate3.impostors` and `manifest.trees.far`.
  * @returns {{ group:THREE.Group|null, report:object }}
  */
-export function buildImpostors( { impostors, far, loadTexture, note = () => {}, fog = null, normalDepth = false, debug = 0 } ) {
-	const report = { prototypes: 0, instances: 0, drawCalls: 0, skipped: [], bytes: 0,
-		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0 };
-	if ( ! impostors || ! impostors.count || ! Array.isArray( far ) || ! far.length ) return { group: null, report };
+export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
+	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null } ) {
+	const report = { prototypes: 0, instances: 0, nearInstances: 0, drawCalls: 0, skipped: [], bytes: 0,
+		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0,
+		atlas2k: false, atlas2kMissing: [] };
+	if ( ! impostors || ! impostors.count ) return { group: null, report };
+	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
+	if ( ! far.length ) return { group: null, report };
+	// 6c C2: the 2K variant on desktop.  `variant_2k` re-states the geometry of the atlas (frame,
+	// gutter, inner), so it is READ from the manifest exactly as the 1K block is and never scaled by
+	// hand; a prototype missing a 2K texture keeps its 1K one AND its 1K geometry.
+	const v2k = atlas2k ? impostors.variant2k : null;
 
 	// tree_far[i].prototype joins through prototype_map: 46 of the 127 were exported against an LOD2
 	// blob and every impostor is baked from the LOD1 mesh, which is why the map exists.
@@ -187,16 +211,22 @@ export function buildImpostors( { impostors, far, loadTexture, note = () => {}, 
 	for ( const [ key, list ] of byProto ) {
 		const p = impostors.prototypes[ key ];
 		const defines = fog ? { PFA_FOG: '' } : {};
+		// 2K only where BOTH the variant geometry and this prototype's 2K texture exist.
+		const use2k = !! ( v2k && p.albedo2k );
+		if ( atlas2k && ! use2k && ! report.atlas2kMissing.includes( key ) ) report.atlas2kMissing.push( key );
+		const geom = use2k ? v2k : impostors;
 		const uniforms = {
 			atlas: { value: null },
 			range: { value: p.range },
 			grid: { value: impostors.grid },
-			framePx: { value: impostors.framePx },
-			innerPx: { value: impostors.innerPx },
-			gutterPx: { value: impostors.gutterPx },
-			atlasPx: { value: impostors.atlasPx },
+			framePx: { value: geom.framePx },
+			innerPx: { value: geom.innerPx },
+			gutterPx: { value: geom.gutterPx },
+			atlasPx: { value: geom.atlasPx },
 			alphaTest: { value: ALPHA_TEST },
 			debugMode: { value: debug },
+			pfaMeshDist: switchUniforms ? switchUniforms.pfaMeshDist : { value: 1e9 },
+			pfaFadeBand: switchUniforms ? switchUniforms.pfaFadeBand : { value: 1 },
 		};
 		if ( fog ) Object.assign( uniforms, {
 			fogColor: { value: fog.color }, fogNear: { value: fog.near }, fogFar: { value: fog.far },
@@ -215,6 +245,9 @@ export function buildImpostors( { impostors, far, loadTexture, note = () => {}, 
 		im.instanceMatrix.setUsage( THREE.StaticDrawUsage );
 		const centre = new Float32Array( list.length * 3 );
 		const side = new Float32Array( list.length );
+		const swtch = new Float32Array( list.length * 3 );
+		const nearFlag = new Float32Array( list.length );
+		let nearHere = 0;
 		list.forEach( ( t, i ) => {
 			// placement, in BLENDER coordinates, then converted once
 			const s = t.height / p.heightAboveBase;
@@ -222,19 +255,29 @@ export function buildImpostors( { impostors, far, loadTexture, note = () => {}, 
 			const c = b2t( bx, by, bz + p.centreZ * s );
 			centre[ i * 3 ] = c.x; centre[ i * 3 + 1 ] = c.y; centre[ i * 3 + 2 ] = c.z;
 			side[ i ] = 2 * p.radius * s;
+			// 6c C2: a tree that also has a MESH fades between the two; one that does not is always
+			// the impostor.  The switch distance is measured to the CROWN centre the mesh side uses,
+			// never to the billboard centre, or the two dissolves would cross at different metres.
+			const sw = ( t.near && Array.isArray( t.switchCentre ) ) ? t.switchCentre : null;
+			if ( sw ) { swtch[ i * 3 ] = sw[ 0 ]; swtch[ i * 3 + 1 ] = sw[ 1 ]; swtch[ i * 3 + 2 ] = sw[ 2 ]; nearFlag[ i ] = 1; nearHere ++; }
+			else { swtch[ i * 3 ] = c.x; swtch[ i * 3 + 1 ] = c.y; swtch[ i * 3 + 2 ] = c.z; }
 			im.setMatrixAt( i, IDENTITY );              // identity: the shader does the placing
 		} );
+		report.nearInstances += nearHere;
 		g.setAttribute( 'iCentre', new THREE.InstancedBufferAttribute( centre, 3 ) );
 		g.setAttribute( 'iSide', new THREE.InstancedBufferAttribute( side, 1 ) );
-		im.userData.pfaImpostor = { prototype: key, instances: list.length, range: p.range,
-			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ };
+		g.setAttribute( 'iSwitch', new THREE.InstancedBufferAttribute( swtch, 3 ) );
+		g.setAttribute( 'iNear', new THREE.InstancedBufferAttribute( nearFlag, 1 ) );
+		im.userData.pfaImpostor = { prototype: key, instances: list.length, near: nearHere, range: p.range,
+			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ, atlas2k: use2k };
 		group.add( im );
 		report.prototypes ++;
 		report.instances += list.length;
 		report.drawCalls ++;
 		report.bytes += p.bytes || 0;
 
-		pending.push( loadTexture( p.albedo ).then( ( tex ) => {
+		if ( use2k ) { report.atlas2k = true; report.bytes += ( p.bytes2k || 0 ) - ( p.bytes || 0 ); }
+		pending.push( loadTexture( use2k ? p.albedo2k : p.albedo ).then( ( tex ) => {
 			if ( ! tex ) { note( `impostor ${key}: albedo atlas failed to load` ); return; }
 			// The atlas holds LINEAR radiance behind a gamma-2 code, not sRGB: the decode is in the
 			// shader, so the sampler must not decode anything.
@@ -257,6 +300,10 @@ export function buildImpostors( { impostors, far, loadTexture, note = () => {}, 
 	}
 
 	report.promise = Promise.all( pending ).then( () => {
+		if ( report.nearInstances ) note( `impostors: ${report.nearInstances} of them are NEAR trees that also have a mesh `
+			+ `(6c C2): they dissolve into their mesh inside the switch distance and the mesh dissolves into them beyond it` );
+		if ( atlas2k ) note( `impostor atlas: 2K variant on ${report.atlas2k ? report.prototypes - report.atlas2kMissing.length : 0}/${report.prototypes} prototype(s)`
+			+ ( report.atlas2kMissing.length ? `; 1K kept on ${report.atlas2kMissing.join( ', ' )} (no albedo_2k in the manifest)` : '' ) );
 		note( `impostors: ${report.instances} far tree(s) over ${report.prototypes} prototype(s), `
 			+ `${report.drawCalls} draw call(s), ${impostors.grid}x${impostors.grid} octahedral frames `
 			+ `at ${impostors.framePx} px on a ${impostors.atlasPx} px atlas, 3-frame barycentric blend, `
