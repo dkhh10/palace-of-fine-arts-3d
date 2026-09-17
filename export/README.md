@@ -1683,10 +1683,14 @@ export/sync_main.sh
     (components of <= 2 faces) are split from the branches, the branches take their pro-rata share of the
     8 k budget through the gate1_set COLLAPSE path, the cards fill the rest and are then grown
     `min(1.6, 1/sqrt(keep))` about their own centre so a crown that keeps 18-31 % of its cards does not go
-    see-through (leaf area kept 0.24-0.80). Result: **7 992-8 243 tris** each, 129 817 unique, 1 030 195
+    see-through. Result: **7 992-8 243 tris** each, 129 817 unique, 1 030 195
     placed, `env_trees.glb` **2 014 340 B**. The transforms are the impostors' own
-    (`s = height_m / height_above_base_m` at `trunk_base`, rotation ignored), asserted per row; worst crown-top
-    deviation against the impostor quad **0.76 m** on a 37 m tree. Hand-off for the vertex-AO bake:
+    (`s = height_m / height_above_base_m` at `trunk_base`, rotation ignored); worst crown-top
+    deviation against the impostor quad **0.76 m** on a 37 m tree.
+    *(Round 2 corrections, review items 1-3: the leaf-area figure quoted here was the MODELLED
+    `keep_fraction * scale^2`, now replaced by a measured `sum f.calc_area()` ratio - see item 43; the card
+    thinning kept contiguous blocks and now strides; and "asserted per row" was a tautology, the real assert
+    is on the exported glTF - see item 43.)* Hand-off for the vertex-AO bake:
     `out/gate3/trees_far/{topology.json, trees_far_lod2.blend}` (32 MB, the 16 objects alone in prototype world
     space). `vertex_ao.npz` comes back on the same contract as `vertex_irradiance.npz` and is attached as
     COLOR_0 by re-running the script.
@@ -1759,3 +1763,39 @@ export/sync_main.sh
     **22 KTX2, 13 001 325 B (13.0 MB), was 44 files / 59.0 MB.** `sync_main.sh` deliberately has no
     `--delete`, so MAIN's 22 dropped `*_2048.ktx2` were removed by hand after the sync (44 -> 22 files,
     57 708 -> 12 744 KiB).
+
+43. **Round-2 review fixes (docs/reviews/phase6c_export_r1_review.md).** The three that change what item 34
+    reports:
+    * **The placement asserts were tautologies.** `trees_far` asserted `no.location` against the `trunk_base`
+      it had been assigned three lines earlier; `shrub_lod1` asserted an object's translation against the
+      source translation it had just been decomposed from. Neither could fail. Both now read the WRITTEN
+      glTF back and assert every node translation against `to_gltf(loc) = (x, z, -y)` (and, in `trees_far`,
+      every node scale against `height_m / height_above_base_m`), which crosses the exporter's Z-up -> Y-up
+      swap and float32 round trip and is the same key the per-placement irradiance join uses after gltfpack
+      drops the node names. `PLACE_TOL_M = 0.001`; measured on the shipped glTFs, worst residual
+      **0.029 mm** over the 127 tree rows and **0.050 mm** over the 1 376 shrub rows.
+    * **`shrub_lod1`'s `centre_delta_m` is not a tolerance.** The review asked for `d < PLACE_TOL_M`, but
+      `d` is the LOD1 instance's translation against the Gate 1 asset's `location_blender`, which
+      `gate1_set.py` records as the **LOD2 object's bounding-box centre**. LOD1 and LOD2 are different
+      meshes, so `d` is **0.2171-1.9503 m** (p50 0.80) across all 1 376 placements and a 0.01 m assert would
+      fail every row. It stays a reported number; `placement_check.centre_delta_note` says why.
+    * **Leaf area is measured, not modelled.** `leaf_area_kept` was `keep_fraction * scale^2`, which assumes
+      every card has the mean area and that the grow is exact. It is now
+      `sum f.calc_area()` over the kept cards after the grow / over all cards before the thin, with
+      `leaf_area_m2_before/after` per prototype and the old estimate retained as `leaf_area_kept_modelled`.
+    * **The card thinning strides.** `(i % 1000) >= keep_pct` keeps the first `keep_pct` of every run of
+      1 000 components, and `components()` returns broadly spatial order, so whole branches went bald at the
+      18-31 % keep the big crowns land on. `(i * 997) % 1000` is a bijection mod 1000: the same number of
+      cards survive, scattered through the crown.
+    The other four: `foliage_tex.py` asserts the colour space `read_foliage.image_info` recorded (sRGB
+    albedo, Non-Color factor and normal) instead of assuming it; `sync_main.sh` tests
+    `PFA_SYNC_STATUS = 1` rather than `-n`; `gltf_pack.sh --trees/--shrubs` **exits 1** when gltfpack refuses
+    the KTX2 glTF instead of silently shipping the PNG glTF under a manifest that advertises `ktx2_dir`; and
+    `verify_glb.py` **fails** when a side glb or its report is missing instead of returning `None` and
+    letting the run print PASS. `manifest_v4` accepts instance-irradiance schema `/1` or `/2` (`IRR_SCHEMAS`)
+    - `/2` adds the bake's per-prototype `E_bake` block and changes no field this writer reads.
+44. **`verify_glb` reads COLOR_0 out of the GLB.** `extra_glb_check` used to report `color0` by echoing the
+    builder's report, which is written by the Blender run BEFORE gltfpack - and gltfpack drops vertex colours
+    without `-kv`. It is now counted per PRIMITIVE in the glb (bark and leaf are separate meshes) and fails
+    three ways: declared but absent, partial, or present but undeclared. `color0_primitives` and
+    `color0_range` are in the report line.
