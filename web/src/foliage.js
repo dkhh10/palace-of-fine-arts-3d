@@ -109,6 +109,15 @@ export const NORMAL_GATE = 0.45;
 // flat) with no visible softening at station 3's 8 m in the 1:1 tile.  1.5 buys about twice as much
 // and starts to mush the card silhouettes, so it is left as the switch, not the default.  The leaf
 // cards keep 0: the tree crowns' edges are not what QA measured.
+/**
+ * The environment lobe's scale on the LOD2 shrub / reed cards (?cardenv=), and the same number is
+ * `loadShrubLod1`'s default for the LOD1 meshes (?shrubenv=), so crossing the LOD distance cannot
+ * change a shrub's level.  SWEPT (6c round 3, stations 1, 2, 3, 5): at 1.0 the seven QA shrub boxes
+ * read 1.52 / 1.21 / 1.37 / 1.38 / 1.24 / 0.92 / 2.07x the reference, at 0.3 they read
+ * 1.36 / 1.10 / 1.18 / 1.14 / 1.02 / 0.88 / 1.53x, and at 0 two of them fall through to 0.82-0.84x.
+ * Hard-edge share falls with it (02 reed clump 5.80 -> 2.07 % against the reference's 1.57).
+ */
+export const CARD_ENV = 0.3;
 export const CARD_MIP_BIAS = 0.8;
 export const LEAF_MIP_BIAS = 0.0;
 
@@ -515,6 +524,16 @@ export function applyFoliage( o ) {
 	const interior = parseInterior( o.interior, CROWN_INTERIOR );
 	const cardInterior = parseInterior( o.cardInterior, CARD_INTERIOR );
 	const normalGate = num( o.normalGate, NORMAL_GATE, 0, 0.99 );
+	// `?cardenv=` — the ENVIRONMENT lobe on the LOD2 shrub / reed cards, the LOD1 set's `?shrubenv=`
+	// applied to the cards it switches to.  MEASURED (6c round 3): with the lobe removed the station-3
+	// LOD1 shrubs drop from 2.07x the reference to 1.34x and their hard-edge share from 12.5 % to
+	// 6.8 %, and the cam02 reed clump from 1.38x to 1.06x with its hard-edge share landing on the
+	// reference's (1.66 % against 1.57), while the per-placement diffuse - the term the bake ships and
+	// the one both QA and the brief suspected - moves those boxes by less than 0.01x even when it is
+	// multiplied by its own `cov`.  A card is one flat quad whose normal reflects the horizon, and the
+	// PMREM lobe (with KHR_materials_sheen, which is an environment lobe too) hands every one of them
+	// a sky highlight the Cycles reference's hundred separate leaves never get.
+	const cardEnv = num( o.cardEnv, CARD_ENV, 0, 4 );
 	// `?foliagebias=` — the LOD bias on the cut-out fetch.  "cardBias" alone, or "cardBias,leafBias".
 	const biases = String( o.mipBias === undefined || o.mipBias === null ? '' : o.mipBias ).split( ',' );
 	const cardMip = num( parseFloat( biases[ 0 ] ), CARD_MIP_BIAS, 0, 4 );
@@ -523,7 +542,8 @@ export function applyFoliage( o ) {
 		bent: 0, softened: 0, units: [], normalBlend: bend, trnScale, meshDist, fadeBand,
 		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend,
 		trnMapped: 0, byMesh: new Map(), recrown: null,
-		interior, cardInterior, normalGate, interiorMaterials: 0, cardMipBias: cardMip, leafMipBias: leafMip };
+		interior, cardInterior, normalGate, interiorMaterials: 0, cardMipBias: cardMip, leafMipBias: leafMip,
+		cardEnv, cardEnvMaterials: 0 };
 	// 6c round 2: a lazily loaded glb (env_trees, env_shrubs) is a SECOND applyFoliage call, and its
 	// materials must share the FIRST call's uniform objects - the impostor dissolve reads the same
 	// pfaMeshDist / pfaFadeBand, and two copies would drift the moment a flag moved one of them.
@@ -604,6 +624,11 @@ export function applyFoliage( o ) {
 			} );
 			// Soft edges: keep the export's MASK cutoff exactly, let three resolve the boundary texel
 			// across the MSAA samples instead of cutting it binary.
+			if ( card && cardEnv !== 1 ) {
+				mat.envMapIntensity = ( mat.envMapIntensity ?? 1 ) * cardEnv;
+				if ( mat.sheenColor ) mat.sheenColor.multiplyScalar( cardEnv );
+				report.cardEnvMaterials ++;
+			}
 			if ( o.msaa && mat.alphaTest > 0 ) { mat.alphaToCoverage = true; report.softened ++; }
 			if ( mat.userData.pfaFoliage && mat.userData.pfaFoliage.interior ) report.interiorMaterials ++;
 			if ( leaf ) report.leafMaterials ++; else if ( card ) report.cardMaterials ++; else report.barkMaterials ++;

@@ -108,6 +108,8 @@ const CFG = {
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
 	vertexIrr: qs.get( 'vertexirr' ) || 'auto',
 	instIrr: qs.get( 'instirr' ) || 'auto',             // per-placement shrub/reed irradiance: auto | 0
+	// 6c round 3: the exponent on the per-placement cov correction (0 = the shipped rgb, 1 = mean_all)
+	shrubCov: qs.has( 'shrubcov' ) ? parseFloat( qs.get( 'shrubcov' ) ) : undefined,
 	// Phase 6c item C — the foliage pass.  `treemesh` is metres from the walker: inside it a tree
 	// draws its mesh, beyond it its impostor, with `treefade` metres of dissolve between.  `inf`
 	// (or `never`) keeps every mesh for ever and creates no near-tree impostor at all, which is the
@@ -134,7 +136,8 @@ const CFG = {
 	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : undefined,   // LOD1 within this many metres
 	// 6c round 2, the two lazily loaded glbs and the foliage material textures
 	farTreeLight: ( qs.get( 'fartreelight' ) || 'near' ).toLowerCase(),   // near | probe | 0
-	shrubEnv: qs.has( 'shrubenv' ) ? parseFloat( qs.get( 'shrubenv' ) ) : 1,   // env term on the LOD1 shrubs
+	shrubEnv: qs.has( 'shrubenv' ) ? parseFloat( qs.get( 'shrubenv' ) ) : undefined,  // env term on the LOD1 shrubs
+	cardEnv: qs.has( 'cardenv' ) ? parseFloat( qs.get( 'cardenv' ) ) : undefined,     // the same on the LOD2 cards
 	farTrn: qs.has( 'fartrn' ) ? parseFloat( qs.get( 'fartrn' ) ) : undefined,  // translucency on the far-tree meshes
 	farAo: qs.has( 'farao' ) ? parseFloat( qs.get( 'farao' ) ) : 1,   // how much of the env term the AO occludes
 	farTreeMesh: qs.has( 'fartreemesh' ) ? parseFloat( qs.get( 'fartreemesh' ) ) : undefined,  // the far trees' own switch distance
@@ -662,7 +665,7 @@ async function boot() {
 		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa, vertexIrrScale,
 			normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
 			interior: CFG.crownInt, cardInterior: CFG.cardInt, normalGate: CFG.leafGate,
-			mipBias: CFG.foliageBias,
+			mipBias: CFG.foliageBias, cardEnv: CFG.cardEnv,
 			trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade,
 			trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null } );
 		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
@@ -820,7 +823,7 @@ async function loadLazyFoliage() {
 		interior: foliageReport ? foliageReport.interior : CFG.crownInt,
 		cardInterior: foliageReport ? foliageReport.cardInterior : CFG.cardInt,
 		normalGate: foliageReport ? foliageReport.normalGate : CFG.leafGate,
-		mipBias: CFG.foliageBias,
+		mipBias: CFG.foliageBias, shrubCov: CFG.shrubCov,
 		trnScale: foliageReport ? foliageReport.trnScale : 1,
 		trnShrubs: foliageReport ? foliageReport.trnShrubs : false,
 		trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null,
@@ -990,7 +993,7 @@ async function loadGlbs() {
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
 		gate3Report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
-			vertexIrr: CFG.vertexIrr, instIrr: CFG.instIrr,
+			vertexIrr: CFG.vertexIrr, instIrr: CFG.instIrr, shrubCov: CFG.shrubCov,
 			loadTexture: ( url ) => {
 				progress.label = url.split( '/' ).pop();
 				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
@@ -1360,7 +1363,8 @@ window.__pfaInfo = () => ( {
 		depthMean: foliageReport.depthMean, clustersOver40m: foliageReport.clustersOver40m,
 		interior: foliageReport.interior, cardInterior: foliageReport.cardInterior,
 		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials,
-		cardMipBias: foliageReport.cardMipBias, leafMipBias: foliageReport.leafMipBias },
+		cardMipBias: foliageReport.cardMipBias, leafMipBias: foliageReport.leafMipBias,
+		cardEnv: foliageReport.cardEnv, cardEnvMaterials: foliageReport.cardEnvMaterials },
 	shrubLod: shrubLodReport,
 	impostorModulation: impModReport,
 	reflectionSet,

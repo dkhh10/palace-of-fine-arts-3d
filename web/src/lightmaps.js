@@ -265,7 +265,8 @@ export function applyGate3Lightmaps( o ) {
 	report.vertexIrradiance = applyVertexIrradiance( scene, gate3, assets, note, o.vertexIrr );
 
 	// ---- pass 4: per-placement irradiance on the 1 379 shrub/reed cards (Gate 4 item 1c) -----
-	report.instanceIrradiance = applyInstanceIrradiance( scene, gate3, note, o.instIrr );
+	report.instanceIrradiance = applyInstanceIrradiance( scene, gate3, note, o.instIrr,
+		{ covScale: o.shrubCov } );
 
 	report.promise = Promise.all( pending ).then( () => {
 		note( `gate3 UV2 census: ${report.uv2.meshesWithUv2} mesh(es) carry TEXCOORD_1 (${report.uv2.drawnWithUv2} placements), `
@@ -434,6 +435,21 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 	const ii = opts.block || ( gate3 && gate3.instanceIrradiance );
 	const scale = opts.scale !== undefined ? opts.scale : ( gate3 && gate3.scale );
 	const label = opts.label || 'gate4 instance irradiance';
+	// 6c ROUND 3 — `?shrubcov=` (0 = the round-16b behaviour, 1 = the full correction).
+	// The manifest ships ONE irradiance per placement and the viewer applies it to every fragment of
+	// that card, but `rgb` is the mean over the vertices that RECEIVED light (`cov` is their fraction):
+	// the occluded rest of the card is then drawn at the lit mean.  Multiplying by `cov` is the
+	// manifest's own `mean_all` - the mean over ALL the card's vertices - which charges the occluded
+	// fraction with the zero the bake measured for it.  The manifest's `reduce` note says to use `rgb`
+	// because the uncovered fraction is "the card buried in the terrain", and for a buried card that
+	// note is right; export's Cycles DiffCol pass (export/out/gate3/foliage/albedo_check.json, verdict
+	// owner LIGHTING: every shrub box's shipped albedo is 2-13 % DARKER than the albedo Cycles uses on
+	// the same cards) says the 1.34-1.70x level gap is nevertheless in the irradiance, and this is the
+	// only term in it the viewer holds.  `k` is the exponent so the two readings can be weighed on the
+	// boxes rather than argued: the measurement is in web/README.md.
+	const covK = Number.isFinite( opts.covScale ) ? Math.min( Math.max( opts.covScale, 0 ), 2 ) : 0;
+	out.covScale = covK;
+	let covSum = 0, covN = 0;
 	if ( mode === '0' || ! ii || ! ii.nodes || ! ii.nodes.length ) return out;
 	out.wanted = ii.placements || 0;
 	const byNode = new Map();
@@ -466,12 +482,15 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 			if ( ! rec || ! rec.rgb || rec.rgb.length < 3 * ( off + cnt ) ) { bad = meshName; break; }
 			for ( let i = 0; i < cnt; i ++, cursor ++ ) {
 				const src = 3 * ( off + i );
-				irr[ 3 * cursor ] = rec.rgb[ src ];
-				irr[ 3 * cursor + 1 ] = rec.rgb[ src + 1 ];
-				irr[ 3 * cursor + 2 ] = rec.rgb[ src + 2 ];
 				const cov = rec.cov ? rec.cov[ off + i ] : 1;
+				// cov == 0 keeps its [0,0,0] and falls back to the probe: 0^k would be the same value
+				// but the intent is clearer written out, and k = 0 must leave the shipped rgb alone.
+				const f = ( covK > 0 && cov > 0 ) ? Math.pow( cov, covK ) : 1;
+				irr[ 3 * cursor ] = rec.rgb[ src ] * f;
+				irr[ 3 * cursor + 1 ] = rec.rgb[ src + 1 ] * f;
+				irr[ 3 * cursor + 2 ] = rec.rgb[ src + 2 ] * f;
 				on[ cursor ] = cov > 0 ? 1 : 0;
-				if ( ! ( cov > 0 ) ) out.dark ++;
+				if ( cov > 0 ) { covSum += cov; covN ++; } else out.dark ++;
 			}
 		}
 		if ( bad !== null || cursor !== count ) {
@@ -514,8 +533,10 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 		+ 'placement(s) the scene never presented - they would silently fall back to the probe' );
 	out.enabled = out.nodes > 0 && ! out.errors.length;
 	if ( out.errors.length ) note( `${label} FAILED: ${out.errors.join( '; ' )}` );
+	out.covMean = covN ? covSum / covN : 1;
 	note( `${label}: ${out.rows}/${ii.placements} placement(s) over ${out.nodes}/${ii.nodes.length} `
 		+ `glb node(s), ${out.materials} material(s) cloned and patched, ${out.dark} with cov == 0 left on the probe`
+		+ ( covK > 0 ? `; irradiance x cov^${covK} (mean cov ${out.covMean.toFixed( 3 )}, ?shrubcov=)` : '' )
 		+ ( out.missing.length ? `; NODE(S) NOT FOUND IN THE SCENE: ${out.missing.join( ', ' )}` : '' ) );
 	return out;
 }

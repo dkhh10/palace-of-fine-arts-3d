@@ -26,7 +26,7 @@
 //     the hero probe + full sun direct (the viewer's ordinary "no baked light" path), `0` refuses to
 //     draw the meshes at all and every far tree stays the impostor it was.
 import * as THREE from 'three';
-import { applyFoliage, farTreeIrradiance, irradianceRatio, recordShaderError } from './foliage.js';
+import { applyFoliage, farTreeIrradiance, irradianceRatio, recordShaderError, CARD_ENV } from './foliage.js';
 import { applyInstanceIrradiance } from './lightmaps.js';
 import { patchBakedMaterial } from './materials.js';
 import { applyProbeEnv } from './probeEnv.js';
@@ -55,6 +55,12 @@ const _m4 = /* one shared scratch matrix */ new THREE.Matrix4();         // see 
 // The walk-up LOD1 set's own switch distance (?walkupmesh=).  15 m, not the LOD2's 12: the walk-in
 // that failed QA 16 stops AT a tree, and a 3 m crown wants the LOD1 all the way in.
 const WALKUP_DIST_M = 15;
+/** `?walkupmesh=<m>` beats the block's own `draw_within_m`, which beats the 15 m default. */
+function walkupDist( o, block ) {
+	if ( Number.isFinite( o.walkupDist ) ) return o.walkupDist;
+	if ( block && Number.isFinite( block.draw_within_m ) ) return block.draw_within_m;
+	return WALKUP_DIST_M;
+}
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
 /**
@@ -220,22 +226,54 @@ export async function loadFarTrees( o ) {
 	//   * `o.walkup` is 'off' / '0' to force the LOD2 set back (the A/B), and a walk-up glb that fails
 	//     the join falls back to the LOD2 block instead of leaving every far tree an impostor.
 	const trees = ( manifest.raw && manifest.raw.trees ) || {};
-	const wantWalkup = !! ( trees.walkup_mesh && trees.walkup_mesh.glb )
-		&& String( o.walkup === undefined || o.walkup === null ? '' : o.walkup ).toLowerCase() !== '0'
-		&& String( o.walkup === undefined || o.walkup === null ? '' : o.walkup ).toLowerCase() !== 'off';
-	let fm = wantWalkup ? trees.walkup_mesh : trees.far_mesh;
-	out.set = wantWalkup ? 'walkup_mesh' : 'far_mesh';
+	const askWalk = String( o.walkup === undefined || o.walkup === null ? '' : o.walkup ).toLowerCase();
+	const wantWalkup = !! ( trees.walkup_mesh && trees.walkup_mesh.glb ) && askWalk !== '0' && askWalk !== 'off';
+	// The walk-up block states what it SHARES instead of repeating it, "so the two can never
+	// disagree" (manifest `placements.same_as`, `lighting`): the placements and the per-placement
+	// irradiance are trees.far_mesh's, row for row, and this set ships no COLOR_0 by design because
+	// the round-3 interior term carries the occlusion.  Resolving those references here is the whole
+	// difference between the two sets as far as this loader is concerned.
+	let fm = trees.far_mesh;
+	out.set = 'far_mesh';
+	if ( wantWalkup ) {
+		const w = trees.walkup_mesh;
+		const far = trees.far_mesh || {};
+		const place = Array.isArray( w.placements ) ? w.placements
+			: ( w.placements && w.placements.same_as ? far.placements : null );
+		const lighting = ( w.lighting && typeof w.lighting === 'object' ) ? w.lighting : far.lighting;
+		if ( Array.isArray( place ) && place.length ) {
+			fm = { ...w, placements: place, lighting, impostor_join: w.impostor_join || far.impostor_join };
+			out.set = 'walkup_mesh';
+		} else {
+			note( 'far-tree meshes: trees.walkup_mesh carries no placements and none can be resolved from '
+				+ 'trees.far_mesh — the LOD2 set is used' );
+		}
+	}
 	if ( ! fm || ! fm.glb ) { note( 'far-tree meshes: no trees.far_mesh in the manifest (export item A)' ); return out; }
 	if ( o.mode === '0' ) { note( 'far-tree meshes SUPPRESSED (?fartreelight=0): the 127 far trees stay impostors' ); return out; }
-	if ( wantWalkup ) note( `far-tree meshes: the WALK-UP set trees.walkup_mesh (${fm.glb}) replaces trees.far_mesh `
-		+ `(item 3); it draws within ${Number.isFinite( o.walkupDist ) ? o.walkupDist : WALKUP_DIST_M} m, the impostor beyond` );
+	if ( out.set === 'walkup_mesh' ) note( `far-tree meshes: the WALK-UP set trees.walkup_mesh (${fm.glb}) replaces `
+		+ `trees.far_mesh (item 3); ${fm.placements.length} placement(s) and the per-placement irradiance are read from `
+		+ `far_mesh as the manifest says; it draws within ${walkupDist( o, fm )} m, the impostor beyond` );
 	const placements = Array.isArray( fm.placements ) ? fm.placements : [];
 	if ( ! placements.length ) { out.error = 'trees.far_mesh.placements is empty'; note( `far-tree meshes: ${out.error}` ); return out; }
 	out.placements = placements.length;
 
 	const t0 = performance.now();
-	const got = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, fm.glb ), loadGlb, note, 'env_trees.glb' );
-	if ( ! got ) { out.error = 'not found'; return out; }
+	const got = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, fm.glb ), loadGlb, note, fm.glb );
+	if ( ! got ) {
+		out.error = 'not found';
+		// The walk-up glb is an extra file on the wire: if it is not deployed yet (or 404s), the LOD2
+		// set must still draw.  The manifest's own `load` note says as much - "until it is in, every
+		// tree is the 8 k far mesh" - and it is the same fallback a failed join takes.
+		if ( out.set === 'walkup_mesh' ) {
+			note( `far-tree meshes: ${fm.glb} did not load — falling back to trees.far_mesh (the LOD2 set)` );
+			const back = await loadFarTrees( { ...o, walkup: '0' } );
+			back.walkupError = `${fm.glb} not found`;
+			back.walkupFellBack = true;
+			return back;
+		}
+		return out;
+	}
 	const gltf = got.value;
 	out.glb = got.url;
 	const root = gltf.scene;
@@ -497,8 +535,7 @@ export async function loadFarTrees( o ) {
 	// the self-shadowing of the DENSE source tree and an 8 k-triangle LOD2 crown has almost none of it.
 	// So the mesh is kept for what only a mesh can do - silhouette and parallax when the walker is a
 	// few metres away - and the atlas carries every station.
-	const farDist = out.set === 'walkup_mesh'
-		? ( Number.isFinite( o.walkupDist ) ? o.walkupDist : WALKUP_DIST_M )
+	const farDist = out.set === 'walkup_mesh' ? walkupDist( o, fm )
 		: ( Number.isFinite( o.farMeshDist ) ? o.farMeshDist : 12 );
 
 	// `?fartrn=` — the translucency scale on the FAR-tree meshes alone.  The Phase 5 mix adds a back
@@ -657,6 +694,9 @@ export async function loadShrubLod1( o ) {
 	// the SAME per-placement irradiance, in this glb's own row order (manifest `shrubs.lod1.join`)
 	const bound = applyInstanceIrradiance( scene, manifest.gate3, note, 'auto',
 		{ root, block: lod1Irr ? { ...lod1Irr, placements: lod1Irr.placements ?? block.placements } : null,
+			// the SAME cov exponent as the LOD2 cards, or crossing the LOD distance would change a
+			// shrub's level - which is the one thing the shared irradiance exists to prevent
+			covScale: o.shrubCov,
 			scale: manifest.gate3 ? manifest.gate3.scale : Math.PI, label: 'shrub/reed LOD1 irradiance' } );
 	out.lod1Nodes = bound.nodes; out.lod1Rows = bound.rows;
 	if ( bound.errors.length ) {
@@ -672,7 +712,8 @@ export async function loadShrubLod1( o ) {
 	// up, and their diffuse is a single direction-independent baked irradiance while their SPECULAR
 	// (plus the material's KHR_materials_sheen, which is an environment lobe too) is free to sample the
 	// blue sky from every interior leaf that the bake would have occluded.  Measured, see web/README.md.
-	const envScale = Number.isFinite( o.envScale ) ? o.envScale : 1;
+	// The LOD2 cards' `?cardenv=` default, shared so the LOD switch cannot change a shrub's level.
+	const envScale = Number.isFinite( o.envScale ) ? o.envScale : CARD_ENV;
 	if ( envScale !== 1 ) {
 		let n = 0;
 		root.traverse( ( m ) => {
