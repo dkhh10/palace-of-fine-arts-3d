@@ -8,13 +8,15 @@ sheet and the table are the same pixels.  Full-res to renders/web/tiles/<tag>/, 
 renders/web/960/ for committing.
 """
 import argparse
+import os
 from pathlib import Path
 
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB = ROOT / "renders" / "web"
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+# the reference frames live in the MAIN checkout only (CLAUDE.md); a worktree reads them by that path
+MAIN = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
 REF = {
     1: MAIN / "renders/previews/qa/round10b_01_lagoon_hero_cycles.png",
     2: MAIN / "renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png",

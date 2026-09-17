@@ -1,6 +1,6 @@
 {
- "generated": "2026-09-17T10:09:50.252Z",
- "url": "http://127.0.0.1:62928/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate3%2Fmanifest.json&t=0&billboards=0&treeboards=0&lighting=baked&post=none&probe=1&impostors=1&water=1",
+ "generated": "2026-09-17T10:32:29.582Z",
+ "url": "http://127.0.0.1:63137/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate3%2Fmanifest.json&t=0&billboards=0&treeboards=0&lighting=baked&post=none&probe=1&impostors=1&water=1",
  "size": [
   2560,
   1440
@@ -202,18 +202,18 @@
     "normalMap": 33
    },
    "names": [
-    "6e055fcc",
-    "36b1bc56",
-    "7da589d7",
-    "1d38729f",
-    "500aff35",
-    "b098f065",
-    "9aff5648",
-    "90ffe9a4",
-    "bacff602",
-    "a113a857",
-    "1b55e28d",
-    "256dec64"
+    "a1296e24",
+    "39afb050",
+    "e3cb276a",
+    "b5ec3748",
+    "eaf43a98",
+    "325c31e8",
+    "bf0ad850",
+    "2b0643ba",
+    "46cb7e30",
+    "36d76f9d",
+    "00a464cf",
+    "58cc2a79"
    ]
   },
   "order_count": 73,
@@ -441,295 +441,295 @@
   "unknownSize": [],
   "offPlan": [
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_0_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_0_gamma2.ktx2",
     "bytes": 10016857
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_1_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_1_gamma2.ktx2",
     "bytes": 10328656
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
     "bytes": 2043381
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
     "bytes": 1913551
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_2_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_2_gamma2.ktx2",
     "bytes": 1459576
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
     "bytes": 2908460
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
     "bytes": 1442913
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
     "bytes": 2080290
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
     "bytes": 1933822
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
     "bytes": 2198971
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
     "bytes": 377440
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
     "bytes": 1619649
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
-    "bytes": 1974792
-   },
-   {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
     "bytes": 3429313
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
+    "bytes": 1974792
+   },
+   {
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
     "bytes": 737242
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lmatlas_orn_0_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lmatlas_orn_0_gamma2.ktx2",
     "bytes": 16656146
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lmatlas_orn_1_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lmatlas_orn_1_gamma2.ktx2",
     "bytes": 10306550
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
     "bytes": 4391299
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
     "bytes": 270462
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
     "bytes": 4038405
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
     "bytes": 6962432
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_concrete_wall_007_albedo.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_concrete_wall_007_albedo.ktx2",
     "bytes": 4089587
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_concrete_wall_007_roughness.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_concrete_wall_007_roughness.ktx2",
     "bytes": 916668
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_concrete_wall_007_normal.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_concrete_wall_007_normal.ktx2",
     "bytes": 3526879
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_concrete_wall_008_albedo.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_concrete_wall_008_albedo.ktx2",
     "bytes": 2829232
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_concrete_wall_008_roughness.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_concrete_wall_008_roughness.ktx2",
     "bytes": 404333
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_concrete_wall_008_normal.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_concrete_wall_008_normal.ktx2",
     "bytes": 2204758
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_gravelly_sand_albedo.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_gravelly_sand_albedo.ktx2",
     "bytes": 1195972
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_gravelly_sand_roughness.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_gravelly_sand_roughness.ktx2",
     "bytes": 787309
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_gravelly_sand_normal.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_gravelly_sand_normal.ktx2",
     "bytes": 1067574
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_rock_boulder_dry_albedo.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_rock_boulder_dry_albedo.ktx2",
     "bytes": 1176349
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_rock_boulder_dry_roughness.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_rock_boulder_dry_roughness.ktx2",
     "bytes": 997991
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate2/tex_ktx2/detail_rock_boulder_dry_normal.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate2/tex_ktx2/detail_rock_boulder_dry_normal.ktx2",
     "bytes": 1070828
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/probe/gate3_probe_hero_px.hdr",
+    "url": "http://127.0.0.1:63137/assets/gate3/probe/gate3_probe_hero_px.hdr",
     "bytes": 1048625
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/probe/gate3_probe_hero_nx.hdr",
+    "url": "http://127.0.0.1:63137/assets/gate3/probe/gate3_probe_hero_nx.hdr",
     "bytes": 1048625
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/probe/gate3_probe_hero_py.hdr",
+    "url": "http://127.0.0.1:63137/assets/gate3/probe/gate3_probe_hero_py.hdr",
     "bytes": 1048625
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/probe/gate3_probe_hero_ny.hdr",
+    "url": "http://127.0.0.1:63137/assets/gate3/probe/gate3_probe_hero_ny.hdr",
     "bytes": 1048625
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/probe/gate3_probe_hero_pz.hdr",
+    "url": "http://127.0.0.1:63137/assets/gate3/probe/gate3_probe_hero_pz.hdr",
     "bytes": 1048625
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/probe/gate3_probe_hero_nz.hdr",
+    "url": "http://127.0.0.1:63137/assets/gate3/probe/gate3_probe_hero_nz.hdr",
     "bytes": 1048625
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_broadleaf_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_broadleaf_albedo_1024.ktx2",
     "bytes": 463538
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_broadleaf_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_broadleaf_translu_1024.ktx2",
     "bytes": 389486
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_cypress_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_cypress_albedo_1024.ktx2",
     "bytes": 595477
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_cypress_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_cypress_translu_1024.ktx2",
     "bytes": 395461
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_eucalyptus_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_eucalyptus_albedo_1024.ktx2",
     "bytes": 492355
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_eucalyptus_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_eucalyptus_translu_1024.ktx2",
     "bytes": 385841
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_pine_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_pine_albedo_1024.ktx2",
     "bytes": 528739
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_pine_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_pine_translu_1024.ktx2",
     "bytes": 362403
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_reeds_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_reeds_albedo_1024.ktx2",
     "bytes": 435873
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_reeds_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_reeds_translu_1024.ktx2",
     "bytes": 397525
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_albedo_1024.ktx2",
     "bytes": 862893
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_translu_1024.ktx2",
     "bytes": 668960
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_dry_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_dry_albedo_1024.ktx2",
     "bytes": 875093
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_dry_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_dry_translu_1024.ktx2",
     "bytes": 596095
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_light_albedo_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_light_albedo_1024.ktx2",
     "bytes": 873979
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_light_translu_1024.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_light_translu_1024.ktx2",
     "bytes": 691511
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s19_LOD1_albedo_2048.ktx2",
-    "bytes": 662844
-   },
-   {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s41_LOD1_albedo_2048.ktx2",
-    "bytes": 566564
-   },
-   {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s53_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s53_LOD1_albedo_2048.ktx2",
     "bytes": 682547
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s3_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s19_LOD1_albedo_2048.ktx2",
+    "bytes": 662844
+   },
+   {
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s41_LOD1_albedo_2048.ktx2",
+    "bytes": 566564
+   },
+   {
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s3_LOD1_albedo_2048.ktx2",
     "bytes": 581724
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s17_LOD1_albedo_2048.ktx2",
-    "bytes": 623712
-   },
-   {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s31_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s31_LOD1_albedo_2048.ktx2",
     "bytes": 407708
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s2_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s17_LOD1_albedo_2048.ktx2",
+    "bytes": 623712
+   },
+   {
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s2_LOD1_albedo_2048.ktx2",
     "bytes": 388501
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s5_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s5_LOD1_albedo_2048.ktx2",
     "bytes": 545645
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s23_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s23_LOD1_albedo_2048.ktx2",
     "bytes": 504774
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s61_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s61_LOD1_albedo_2048.ktx2",
     "bytes": 519699
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s29_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s29_LOD1_albedo_2048.ktx2",
     "bytes": 659106
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s7_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s7_LOD1_albedo_2048.ktx2",
     "bytes": 648635
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s43_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s43_LOD1_albedo_2048.ktx2",
     "bytes": 569204
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s13_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s13_LOD1_albedo_2048.ktx2",
     "bytes": 589556
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s37_LOD1_albedo_2048.ktx2",
-    "bytes": 842333
-   },
-   {
-    "url": "http://127.0.0.1:62928/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s11_LOD1_albedo_2048.ktx2",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s11_LOD1_albedo_2048.ktx2",
     "bytes": 924785
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate1/env_trees_lod1.glb",
+    "url": "http://127.0.0.1:63137/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s37_LOD1_albedo_2048.ktx2",
+    "bytes": 842333
+   },
+   {
+    "url": "http://127.0.0.1:63137/assets/gate1/env_trees_lod1.glb",
     "bytes": 7642344
    },
    {
-    "url": "http://127.0.0.1:62928/assets/gate1/env_shrubs.glb",
+    "url": "http://127.0.0.1:63137/assets/gate1/env_shrubs.glb",
     "bytes": 422520
    }
   ],
@@ -1871,18 +1871,18 @@
   ]
  },
  "load_s": {
-  "plan_s": 0.16469999998807908,
-  "sky_s": 0.5525999999642373,
-  "lut_s": 0.056,
-  "glb_s": 2.151900000035763,
-  "tex_s": 2.751199999988079,
-  "total_s": 6.238899999976158
+  "plan_s": 0.16479999995231628,
+  "sky_s": 0.5493000000119209,
+  "lut_s": 0.05690000003576279,
+  "glb_s": 2.193399999976158,
+  "tex_s": 2.8555,
+  "total_s": 6.409300000011921
  },
  "glbs": [
   {
    "name": "arch.glb",
    "cls": "arch",
-   "url": "http://127.0.0.1:62928/assets/gate1/arch.glb",
+   "url": "http://127.0.0.1:63137/assets/gate1/arch.glb",
    "meshes": 29,
    "instancedMeshes": 17,
    "instances": 552,
@@ -1890,12 +1890,12 @@
    "materials": 17,
    "hiddenBoards": 0,
    "bytes": 4613040,
-   "wall_s": 0.10879999995231629
+   "wall_s": 0.10780000001192093
   },
   {
    "name": "orn.glb",
    "cls": "orn",
-   "url": "http://127.0.0.1:62928/assets/gate1/orn.glb",
+   "url": "http://127.0.0.1:63137/assets/gate1/orn.glb",
    "meshes": 33,
    "instancedMeshes": 32,
    "instances": 435,
@@ -1903,12 +1903,12 @@
    "materials": 33,
    "hiddenBoards": 0,
    "bytes": 154253424,
-   "wall_s": 1.041399999976158
+   "wall_s": 1.039800000011921
   },
   {
    "name": "env.glb",
    "cls": "env",
-   "url": "http://127.0.0.1:62928/assets/gate1/env.glb",
+   "url": "http://127.0.0.1:63137/assets/gate1/env.glb",
    "meshes": 50,
    "instancedMeshes": 34,
    "instances": 1526,
@@ -1916,12 +1916,12 @@
    "materials": 26,
    "hiddenBoards": 127,
    "bytes": 38119568,
-   "wall_s": 0.2715999999642372
+   "wall_s": 0.2745
   },
   {
    "name": "ground.glb",
    "cls": "ground",
-   "url": "http://127.0.0.1:62928/assets/gate1/ground.glb",
+   "url": "http://127.0.0.1:63137/assets/gate1/ground.glb",
    "meshes": 4,
    "instancedMeshes": 0,
    "instances": 0,
@@ -1929,7 +1929,7 @@
    "materials": 4,
    "hiddenBoards": 0,
    "bytes": 1959104,
-   "wall_s": 0.01719999998807907
+   "wall_s": 0.01780000001192093
   }
  ],
  "billboards": null,
@@ -1943,21 +1943,21 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 23.099999964237213,
-    "mean": 27.027731092537152,
-    "p95": 25.30000001192093,
-    "min": 13.800000011920929,
-    "max": 284.30000001192093,
+    "median": 23.5,
+    "mean": 27.511764705682,
+    "p95": 25.19999998807907,
+    "min": 14.199999988079071,
+    "max": 285.39999997615814,
     "frames": 119
    },
-   "fps_presented": 43.29004335706375,
+   "fps_presented": 42.5531914893617,
    "gpu_cost_ms": {
-    "median": 3,
-    "mean": 3.478333333134651,
-    "p95": 4.199999988079071,
+    "median": 3.199999988079071,
+    "mean": 3.528333334128062,
+    "p95": 4.900000035762787,
     "frames": 60
    },
-   "fps_uncapped": 333.3333333333333,
+   "fps_uncapped": 312.5000011641532,
    "draw_calls": 316,
    "triangles": 5242235,
    "programs": 90,
@@ -2036,21 +2036,21 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 26.299999952316284,
-    "mean": 31.050420168067227,
-    "p95": 27.900000035762787,
-    "min": 16.19999998807907,
-    "max": 326.89999997615814,
+    "median": 29.30000001192093,
+    "mean": 34.71764705862318,
+    "p95": 31.899999976158142,
+    "min": 6.199999988079071,
+    "max": 373.2000000476837,
     "frames": 119
    },
-   "fps_presented": 38.022813757150914,
+   "fps_presented": 34.12969281887858,
    "gpu_cost_ms": {
-    "median": 3.099999964237213,
-    "mean": 3.531666667262713,
-    "p95": 4.5,
+    "median": 3.199999988079071,
+    "mean": 3.7916666666666665,
+    "p95": 4.700000047683716,
     "frames": 60
    },
-   "fps_uncapped": 322.58064888270417,
+   "fps_uncapped": 312.5000011641532,
    "draw_calls": 311,
    "triangles": 5235131,
    "programs": 90,
@@ -2129,18 +2129,18 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 26.30000001192093,
-    "mean": 30.6714285717291,
-    "p95": 29.30000001192093,
-    "min": 9.600000023841858,
-    "max": 324.5,
+    "median": 28.900000035762787,
+    "mean": 33.64117647018753,
+    "p95": 32.10000002384186,
+    "min": 14.299999952316284,
+    "max": 354.69999998807907,
     "frames": 119
    },
-   "fps_presented": 38.02281367097843,
+   "fps_presented": 34.60207608174856,
    "gpu_cost_ms": {
     "median": 3.300000011920929,
-    "mean": 3.7666666666666666,
-    "p95": 5,
+    "mean": 4.064999999602636,
+    "p95": 4.899999976158142,
     "frames": 60
    },
    "fps_uncapped": 303.0303019356355,
@@ -2222,18 +2222,18 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 16.69999998807907,
-    "mean": 22.156302521208755,
-    "p95": 18.900000035762787,
-    "min": 13.5,
-    "max": 291.2000000476837,
+    "median": 18,
+    "mean": 24.09915966396572,
+    "p95": 20.900000035762787,
+    "min": 15,
+    "max": 316.30000001192093,
     "frames": 119
    },
-   "fps_presented": 59.88023956370228,
+   "fps_presented": 55.55555555555556,
    "gpu_cost_ms": {
     "median": 0.8999999761581421,
-    "mean": 0.8983333329359691,
-    "p95": 1.300000011920929,
+    "mean": 1.1833333333333333,
+    "p95": 1.5999999642372131,
     "frames": 60
    },
    "fps_uncapped": 1111.1111405455044,
@@ -2315,21 +2315,21 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 23.899999976158142,
-    "mean": 28.48571428581446,
-    "p95": 25.599999964237213,
-    "min": 3.699999988079071,
-    "max": 312.60000002384186,
+    "median": 27.80000001192093,
+    "mean": 32.343697479292125,
+    "p95": 31.399999976158142,
+    "min": 16.600000023841858,
+    "max": 335.0999999642372,
     "frames": 119
    },
-   "fps_presented": 41.84100422583963,
+   "fps_presented": 35.9712230061579,
    "gpu_cost_ms": {
-    "median": 2.900000035762787,
-    "mean": 3.3033333331346513,
-    "p95": 4.300000011920929,
+    "median": 3.199999988079071,
+    "mean": 3.621666666865349,
+    "p95": 4.599999964237213,
     "frames": 60
    },
-   "fps_uncapped": 344.8275819544844,
+   "fps_uncapped": 312.5000011641532,
    "draw_calls": 301,
    "triangles": 5006641,
    "programs": 92,
@@ -2408,21 +2408,21 @@
    ],
    "file": null,
    "frame_ms": {
-    "median": 26.69999998807907,
-    "mean": 31.809243697579166,
-    "p95": 28.80000001192093,
-    "min": 14.800000011920929,
-    "max": 337.2000000476837,
+    "median": 27.599999964237213,
+    "mean": 32.96722689045578,
+    "p95": 31.30000001192093,
+    "min": 4.399999976158142,
+    "max": 351,
     "frames": 119
    },
-   "fps_presented": 37.45318353732122,
+   "fps_presented": 36.23188410491859,
    "gpu_cost_ms": {
-    "median": 3.100000023841858,
-    "mean": 3.6433333327372868,
-    "p95": 4.699999988079071,
+    "median": 3.199999988079071,
+    "mean": 3.896666666865349,
+    "p95": 5.199999988079071,
     "frames": 60
    },
-   "fps_uncapped": 322.5806426803478,
+   "fps_uncapped": 312.5000011641532,
    "draw_calls": 338,
    "triangles": 5601851,
    "programs": 92,

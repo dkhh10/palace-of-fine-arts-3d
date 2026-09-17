@@ -543,7 +543,7 @@ export function applyFoliage( o ) {
 		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend,
 		trnMapped: 0, byMesh: new Map(), recrown: null,
 		interior, cardInterior, normalGate, interiorMaterials: 0, cardMipBias: cardMip, leafMipBias: leafMip,
-		cardEnv, cardEnvMaterials: 0 };
+		cardEnv, cardEnvMaterials: 0, cardEnvAlready: 0 };
 	// 6c round 2: a lazily loaded glb (env_trees, env_shrubs) is a SECOND applyFoliage call, and its
 	// materials must share the FIRST call's uniform objects - the impostor dissolve reads the same
 	// pfaMeshDist / pfaFadeBand, and two copies would drift the moment a flag moved one of them.
@@ -624,9 +624,18 @@ export function applyFoliage( o ) {
 			} );
 			// Soft edges: keep the export's MASK cutoff exactly, let three resolve the boundary texel
 			// across the MSAA samples instead of cutting it binary.
-			if ( card && cardEnv !== 1 ) {
+			// ONCE PER MATERIAL, and the guard is the point (r3 review 1).  `loadShrubLod1` scales the
+			// same 25 clones by `?shrubenv=` before it calls this pass, so without the flag the LOD1
+			// set shipped at 0.3 x 0.3 = 0.09 - three times less environment than the LOD2 cards it
+			// dissolves into, which is exactly the discontinuity the shared constant exists to
+			// prevent.  `pfaEnvScaled` is written by whichever pass gets there first and read by both.
+			if ( card && mat.userData.pfaEnvScaled !== undefined ) {
+				report.cardEnvAlready ++;
+			} else if ( card && cardEnv !== 1 ) {
 				mat.envMapIntensity = ( mat.envMapIntensity ?? 1 ) * cardEnv;
 				if ( mat.sheenColor ) mat.sheenColor.multiplyScalar( cardEnv );
+				mat.userData.pfaEnvScaled = cardEnv;
+				mat.needsUpdate = true;
 				report.cardEnvMaterials ++;
 			}
 			if ( o.msaa && mat.alphaTest > 0 ) { mat.alphaToCoverage = true; report.softened ++; }
@@ -741,6 +750,9 @@ export function applyFoliage( o ) {
 		+ `; ${report.units.length} near-tree unit(s) found, LOD switch at ${Number.isFinite( meshDist ) ? `${meshDist} m + ${fadeBand} m fade` : 'never (mesh always)'}` );
 	const fmt = ( x ) => `str ${x.str.toFixed( 2 )} low ${x.low.toFixed( 2 )} gamma ${x.gamma.toFixed( 2 )} `
 		+ `gain ${x.gain.toFixed( 2 )} trn ${x.trn.toFixed( 2 )} sun ${x.sun.toFixed( 2 )}`;
+	note( `foliage: environment lobe x${cardEnv} on ${report.cardEnvMaterials} card material(s)`
+		+ ( report.cardEnvAlready ? `, ${report.cardEnvAlready} already scaled by an earlier pass and LEFT ALONE` : '' )
+		+ ' (?cardenv=, shared with ?shrubenv= so the LOD switch cannot change a shrub\'s level)' );
 	note( `foliage interior: ${report.interiorMaterials} material(s) darkened by depth into their own cluster — `
 		+ `crowns (${fmt( interior )}), cards (${fmt( cardInterior )}); crown-bend gated above `
 		+ `r ${normalGate.toFixed( 2 )} of the cluster half-extent (?leafgate=, ?crownint=, ?cardint=)` );

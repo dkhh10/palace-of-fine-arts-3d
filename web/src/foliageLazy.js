@@ -57,8 +57,11 @@ const _m4 = /* one shared scratch matrix */ new THREE.Matrix4();         // see 
 const WALKUP_DIST_M = 15;
 /** `?walkupmesh=<m>` beats the block's own `draw_within_m`, which beats the 15 m default. */
 function walkupDist( o, block ) {
-	if ( Number.isFinite( o.walkupDist ) ) return o.walkupDist;
-	if ( block && Number.isFinite( block.draw_within_m ) ) return block.draw_within_m;
+	// Clamped like every other numeric switch (round-1 review 3): a negative value would kill the
+	// mesh set outright and a huge one would submit all 254 rows, 3.77 M triangles, every frame.
+	const cl = ( x ) => Math.min( Math.max( x, 0 ), 60 );
+	if ( Number.isFinite( o.walkupDist ) ) return cl( o.walkupDist );
+	if ( block && Number.isFinite( block.draw_within_m ) ) return cl( block.draw_within_m );
 	return WALKUP_DIST_M;
 }
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
