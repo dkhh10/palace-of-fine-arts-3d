@@ -798,6 +798,7 @@ async function loadLazyFoliage() {
 		trnScale: foliageReport ? foliageReport.trnScale : 1,
 		trnShrubs: foliageReport ? foliageReport.trnShrubs : false,
 		trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null,
+		albedoMaps: foliageTexReport ? foliageTexReport.albedoMaps : null,
 		meshDist: foliageReport ? foliageReport.meshDist : 40,
 		fadeBand: foliageReport ? foliageReport.fadeBand : 5,
 		uvDequant: CFG.uvDequant,

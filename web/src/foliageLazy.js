@@ -134,6 +134,33 @@ export function prototypeEbake( lit ) {
 	return n ? out : null;
 }
 
+/**
+ * The same tinted albedo on a lazily loaded root.  `applyFoliageTextures` runs before the first frame,
+ * over the glbs that are in by then; env_trees.glb and env_shrubs.glb arrive later and carry the same
+ * material NAMES with the same untinted source card, so they take the same replacement here - one
+ * material must not look different because of which file it was loaded from.
+ */
+export function applyFoliageAlbedo( root, maps, note = () => {} ) {
+	let n = 0;
+	if ( ! maps ) return n;
+	const seen = new Set();
+	root.traverse( ( m ) => {
+		if ( ! m.isMesh ) return;
+		for ( const mat of Array.isArray( m.material ) ? m.material : [ m.material ] ) {
+			const t = mat && maps[ mat.name ];
+			if ( ! t || seen.has( mat.uuid ) ) continue;
+			seen.add( mat.uuid );
+			const old = mat.map;
+			if ( old ) { t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.channel = old.channel; }
+			mat.map = t;
+			mat.needsUpdate = true;
+			n ++;
+		}
+	} );
+	if ( n ) note( `foliage textures: the tinted albedo on ${n} material(s) of ${root.name}` );
+	return n;
+}
+
 // ---------------------------------------------------------------- item 1: the far-tree meshes
 
 /**
@@ -173,6 +200,7 @@ export async function loadFarTrees( o ) {
 			if ( obj && obj.isObject3D && a && typeof a.nodes === 'number' ) obj.userData.pfaGltfNode = a.nodes;
 	}
 	dequantizeUvs( root, { note, enabled: o.uvDequant !== false } );
+	applyFoliageAlbedo( root, o.albedoMaps, note );
 	scene.add( root );
 	root.updateMatrixWorld( true );
 
@@ -477,6 +505,7 @@ export async function loadShrubLod1( o ) {
 			if ( obj && obj.isObject3D && a && typeof a.nodes === 'number' ) obj.userData.pfaGltfNode = a.nodes;
 	}
 	dequantizeUvs( root, { note, enabled: o.uvDequant !== false } );
+	applyFoliageAlbedo( root, o.albedoMaps, note );
 	scene.add( root );
 	root.updateMatrixWorld( true );
 
@@ -595,7 +624,7 @@ export async function applyFoliageTextures( o ) {
 			if ( ! byName.get( mat.name ).includes( mat ) ) byName.get( mat.name ).push( mat );
 		}
 	} );
-	const trnMaps = {};
+	const trnMaps = {}, albedoMaps = {};
 	// The first file that answers fixes the directory for the rest: a wrong candidate is a 404 per
 	// file otherwise, and there are 16 of them.
 	let prefix = null;
@@ -637,9 +666,10 @@ export async function applyFoliageTextures( o ) {
 				mat.needsUpdate = true;
 			}
 		}
-		if ( aTex ) { out.albedo ++; out.materials.push( name ); }
+		if ( aTex ) { out.albedo ++; out.materials.push( name ); albedoMaps[ name ] = aTex; }
 	}
 	out.trnMaps = trnMaps;
+	out.albedoMaps = albedoMaps;
 	note( `foliage textures (materials.foliage, ${out.size} px): ${out.albedo} tinted albedo(s) and `
 		+ `${out.translucency} translucency factor map(s) on ${out.materials.join( ', ' )}`
 		+ ( out.missing.length ? `; ${out.missing.length} declared material(s) not in the scene: ${out.missing.join( ', ' )}` : '' ) );
