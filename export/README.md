@@ -1714,7 +1714,14 @@ export/sync_main.sh
     the new `env.glb` by size, and `manifest_v4` refuses it against a different `instance_irradiance.json` by
     sha256 — verified by hand on this round's files.
 
-33. **6c item 1 — the impostor blue is in the ATLAS, and a re-bake with the diffuse-branch sky will not fix
+33. **`export/sync_main.sh` no longer copies `bake_queue/status.json`** (lead, 2026-09-17, 6c). That file is the
+    **GPU lock**, not an artefact: every agent reads MAIN's copy to decide whether the GPU is busy, and an
+    export sync was pushing this worktree's stale copy over it - harmless while both were idle, but mid-bake it
+    tells the viewer's headless Chrome the GPU is free. The bake engineer's queue and `gpu_lock.sh` write MAIN's
+    copy themselves; the sync only does it when **`PFA_SYNC_STATUS=1`** says the caller is the queue. Everything
+    else in the sync is unchanged (still no `--delete`).
+
+35. **6c item 1 — the impostor blue is in the ATLAS, and a re-bake with the diffuse-branch sky will not fix
     it** (2026-09-17, `export/imp_diag_atlas.py`, `imp_diag_ref.py`, `imp_diag_view.py`, `imp_diag_sheet.py`;
     sheet `renders/web/960/6c_impostor_diag.png`, JSONs in `out/gate3/impostor_diag_*.json`). Test tree:
     `ENV_tree_broadleaf_s53_LOD1`, the far tree that stands on the axis of station 2 at 40.2 m
