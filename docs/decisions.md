@@ -632,7 +632,7 @@ the atlas's 1.284x / 17.12 against the reference 39.4 / 17.46) because the atlas
 albedo and environment AO each move it under 0.05x. Decision (engineer's, accepted by the lead): `?fartreemesh=` defaults to 12 m per placement (the walker sees a mesh
 only when standing at a far tree), near trees keep 40 m; the blue blob at station 2 is fixed by the E_placement/E_bake modulation (`?impmod=full` default, 145 trees
 modulated), station 2 MAE 23.13 -> 20.08. A permanent placement gate (mesh bbox centre vs impostor quad centre < 1 m; today max 0.73 m, median 0.25) refuses to draw
-env_trees.glb otherwise — it read 905 m on the pre-fix glb. Cost: every station within +3 ms of round 15 (hero +1.9 ms); resident GPU memory 1 717 MB, +111 over
+env_trees.glb otherwise — it read 905 m on the pre-fix glb. Cost: every station within +3 ms of round 15 (hero +1.9 ms); resident GPU memory 1 800.6 MB (round16b_perf.json; the README and this entry first said 1 717), +116 over
 round 16 and above the 1 200 MB Gate 1 budget (6a shipped at ~1 055 resident in the manifest's accounting) — QA 16 reports it; 6b's mobile tier is where it is cut.
 Open (export, post-6c): a walk-up that stops at a far tree sees the LOD2's grown cards and the magnified 1 K atlas; that tree wants its LOD1.
 
@@ -670,3 +670,17 @@ the 1.34-1.70x level excess is the viewer's lighting of the cards (the mean_nonz
 were measured (alpha population 1 %, footprint < 1 %, packed vs disk PNG identical). Residual: MAT_reeds reads 1.49 on 0.6 % of card pixels with a node chain identical
 to the seven that agree; left unfixed (a 0.69 scale would be fitting a number; moves the worst box < 0.3 %) — delivery-notes residual. env_trees_lod1.glb (7.6 MB,
 25.6-30 k tris per prototype, no AO, same placements and order) is the walk-up set, manifest `trees.walkup_mesh` draw_within_m 15.
+
+## 2026-09-17 · Viewer r3 (33903b8): two look decisions ratified, and the lead's 100 % tile judgement of round16c (renders/web/960/lead_tiles_r16c_cam0{1,2,5}.jpg)
+Look decisions (viewer engineer's, measured, accepted): (1) the environment lobe on flat foliage cards (PMREM + sheen) was the shrub brightness — `?cardenv=`/`?shrubenv=`
+default 0.3 takes the shrub boxes from 1.34-1.70x to 0.88-1.36x of the reference and cuts the hard-edge share at six boxes of seven; the brief's cov hypothesis was
+measured wrong (< 0.01x). (2) An enclosure term on the impostor atlas (`?impint=0.90,0.015`) gives the crowns their interior: cam02 centre/edge 0.394 vs ref 0.364,
+cam05 range/mean 1.722 vs 1.773; the mesh-side crown bend is gated to the outer shell and kept for the walk-up. Resident memory 1 931.4 MB (+131, all the walk-up set's
+472 k unique tris; 1.61x the Gate 1 budget) — accepted for 6c on this Mac, 6b's tiers cut it.
+Lead's tiles, before/after/reference at 100 %: station 2 — the fill tree is now a dark crown with a lit rim instead of a green cloud, the near-left tree likewise; the
+shrubs are darker but still read as card clusters; the far impostors at the top-left are still lavender; one reed spray is still several times the reference's size.
+Station 5 — the crowns have volume (dark cores, lit shells) and the shore shrubs sit near the reference level; a few crowns go blotchy near-black where the enclosure term
+and the sun-path term stack. Station 1 — the colonnade trees now have shadowed cores; the left-shore band is still paler and sparser than the reference. Verdict: a
+clear improvement, credible at the stations, not yet at 3 m in the shrub band; the two-round rule closes 6c after QA 17 whatever it scores; the residuals above go to
+docs/delivery.md with owners (shrub structure = a denser LOD1 card set, export; lavender far impostors = the modulation at the horizon band, viewer; reed scale =
+export; blotchy crowns = clamp the stacked darkening, viewer).
