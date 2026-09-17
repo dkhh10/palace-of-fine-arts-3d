@@ -574,11 +574,69 @@ def main():
         f"to_gltf(trunk_base), tolerance {PLACE_TOL_M*1000:.0f} mm"
     assert worst_s < 1e-5, f"{gltf_p.name}: worst node scale residual {worst_s:.2e} against height_m / " \
                            f"height_above_base_m"
+    # ---- COLOR_0 MUST BE THE AO, AND IT IS CHECKED IN THE DATA, NOT BY NAME.
+    # These meshes carry exactly ONE colour layer ('irradiance'), but the exporter writes TWO attributes:
+    # a CONSTANT WHITE COLOR_0 (unsigned byte, from the material side) and the real layer as COLOR_1
+    # (unsigned short). env.gltf's near trees come out with a single COLOR_0, so this is specific to the
+    # far-tree materials. Shipping that as-is is worse than shipping no AO at all: three.js multiplies
+    # COLOR_0 into base colour, so every far tree would be multiplied by white - the AO silently doing
+    # nothing - while every "COLOR_0 present" check passed. So: decode each colour attribute, require
+    # exactly one that is not constant, promote it to COLOR_0 and drop the rest.
+    if ao_rep:
+        bin_uri = doc["buffers"][0]["uri"]
+        blob = (gltf_p.parent / bin_uri).read_bytes()
+        comp = {5121: ("u1", 255.0), 5123: ("u2", 65535.0), 5126: ("f4", 1.0)}
+
+        def is_constant(ai):
+            acc = doc["accessors"][ai]
+            bv = doc["bufferViews"][acc["bufferView"]]
+            fmt, norm = comp[acc["componentType"]]
+            n = acc["count"] * (4 if acc["type"] == "VEC4" else 3)
+            off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+            v = np.frombuffer(blob, dtype=np.dtype(fmt), count=n, offset=off).astype(np.float64) / norm
+            return bool(v.max() - v.min() < 1e-6), float(v.min()), float(v.max())
+
+        promoted, dropped, kept_stats = 0, 0, {}
+        for m_ in doc.get("meshes", []):
+            for pr in m_["primitives"]:
+                at = pr["attributes"]
+                cols = sorted(k for k in at if k.startswith("COLOR_"))
+                if not cols:
+                    continue
+                live = [(k, is_constant(at[k])) for k in cols]
+                varying = [(k, st) for k, st in live if not st[0]]
+                assert len(varying) == 1, (
+                    f"{m_.get('name')}: {len(varying)} non-constant colour attributes out of {cols} "
+                    f"({[(k, round(st[1], 4), round(st[2], 4)) for k, st in live]}). Exactly one is the "
+                    f"vertex AO; this export cannot tell which one the viewer should use.")
+                keep, st = varying[0]
+                for k in cols:
+                    if k != keep:
+                        del at[k]
+                        dropped += 1
+                if keep != "COLOR_0":
+                    at["COLOR_0"] = at.pop(keep)
+                    promoted += 1
+                kept_stats[m_.get("name")] = [round(st[1], 5), round(st[2], 5)]
+        gltf_p.write_text(json.dumps(doc))
+        doc = json.loads(gltf_p.read_text())
+        rep["color0"]["gltf_fixup"] = dict(
+            promoted_to_color0=promoted, constant_attributes_dropped=dropped,
+            kept_range_per_mesh=kept_stats,
+            why="the exporter emitted a CONSTANT WHITE COLOR_0 beside the real layer; three.js multiplies "
+                "COLOR_0 into base colour, so shipping it would have made the AO a no-op while every "
+                "presence check passed. The surviving attribute is chosen by DECODING the buffer and "
+                "requiring exactly one non-constant colour attribute per primitive.")
+
     attr = {}
     for m_ in doc.get("meshes", []):
         for pr in m_["primitives"]:
             for k in pr["attributes"]:
                 attr.setdefault(k, set()).add(m_.get("name"))
+    assert not ao_rep or not attr.get("COLOR_1"), \
+        f"COLOR_1 survived on {len(attr['COLOR_1'])} meshes after the fixup"
+    assert not ao_rep or len(attr.get("COLOR_0", ())) == len(protos_out), \
+        f"COLOR_0 on {len(attr.get('COLOR_0', ()))} meshes, expected all {len(protos_out)}"
     rep["gltf"] = dict(
         path=gltf_p.name, bytes=gltf_p.stat().st_size, nodes=len(doc.get("nodes", [])),
         meshes=len(doc.get("meshes", [])), materials=[m.get("name") for m in doc.get("materials", [])],
@@ -620,9 +678,17 @@ def main():
                                  "index, so an npz baked against this blend is only valid while this value "
                                  "is unchanged; export/trees_far.py refuses to attach across a change.",
                 lod2_objects_rejected=rejected,
-                prototypes={k: {kk: v[kk] for kk in
-                                ("mesh", "tris", "verts", "materials", "uv_layers", "bbox_min", "bbox_max",
-                                 "height_above_base_m", "src_tris", "reduction")}
+                anchor_note=("`anchor` is the point in PROTOTYPE WORLD SPACE that this export subtracts "
+                             "from the mesh, so that a placement is exactly `location = trunk_base, "
+                             "scale = s`. It is the impostor's own axis: the prototype bbox XY centre at "
+                             "z = 0 (manifest `impostors.placement`), verified per prototype by "
+                             "reproducing `radius_m` - see `anchor_check`. Anything baked against these "
+                             "meshes must subtract the SAME anchor."),
+                prototypes={k: {**{kk: v[kk] for kk in
+                                   ("mesh", "tris", "verts", "materials", "uv_layers", "bbox_min",
+                                    "bbox_max", "height_above_base_m", "src_tris", "reduction")},
+                                "anchor": v["anchor_check"]["anchor"],
+                                "anchor_check": v["anchor_check"]}
                             for k, v in protos_out.items()},
                 placements=placements)
     (OUT3 / "topology.json").write_text(json.dumps(topo, indent=1) + "\n")
