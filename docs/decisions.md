@@ -591,3 +591,24 @@ and the viewer's leaf shader consumes the translucency factor; next session. (2)
 not ship; 1K stays; a real 2K would be a Phase 5 material regeneration and is not requested. (3) Shrub LOD1 in its own env_shrubs.glb (accepted: putting it in env.glb would rebuild
 the UV1 atlases every bake is pinned to). Also accepted for review: -vpf instead of -vp 16 on the new glbs (with -vp 16 gltfpack folds the dequantisation into the instance rows
 and the positional join is unrecoverable); 3 of 28 shrub meshes have no LOD1 and stay LOD2.
+
+## 2026-09-17 · Session 5: three round-1 reviews (docs/reviews/phase6c_{bake,export,viewer}_r1_review.md) and what they change
+Bake MERGE WITH FIXES, export MERGE WITH FIXES, viewer SEND BACK on one line: the mesh/impostor dissolve keeps the same hash set on both sides (mesh `hash > 1-t`,
+impostor `hash > t`), so mid-fade half the crown is drawn twice and half is see-through; the impostor test becomes the exact complement. All fix-now items are forwarded
+to the running round-2 engineers (messages recorded in status.md). Two lead decisions from the bake review: (a) E_bake is measured on the body that produced the atlas
+(the gate3_imp.blend _LOD1 prototype), with the same mean_nonzero-over-cov reducer as E_placement, both taken raw; (b) because the review shows the atlas blue is not a
+diffuse term (a sun-only render reads B = 0 with three blue fill lamps in the rig, a sky-only render reads B 0.387: a specular/transmission response to sky radiance),
+the E_placement/E_bake ratio is VALIDATED ON ONE PLACEMENT (the prototype nearest cam02; B/G must move from 1.356 toward the reference 0.648) before the 16 jobs are queued.
+If it fails, the lead chooses between a neutral-nursery atlas re-bake (sun + grey ambient, no sky) and shipping the far-tree meshes without impostor modulation; the vertex
+AO and the 127-placement irradiance run regardless. The overwritten asis/diffuse diagnosis numbers (finding 3) are not re-spent on the GPU; the README notes their provenance.
+
+## 2026-09-17 · E_placement/E_bake validated on one placement (bake 3f2dc91): the RAW ratio ships; and the far-tree meshes were 300 m off
+TREEFAR_000 (broadleaf_s53, 40 m on station 2's axis): E_bake [3.04, 2.25, 5.58] on the _LOD1 nursery object that produced the atlas, E_placement [3.19, 2.24, 0.98] ->
+ratio [1.05, 0.99, 0.175]: same warm light, 5.7x less blue; through the delivery LUT the crown hue goes 205.5° -> 72.6° against the reference 52.2° (86.7 % of the gap,
+no overshoot in hue). On B/G alone it overshoots (1.267 -> 0.041 vs 0.648), a ratio of a 1.2/255 blue channel. Decision: ship the raw per-channel ratio, no exponent
+(the k = 0.4386 variant that matches B/G lands the hue at 105.4°, worse), clamp 4.0, fall back to 1 on a zero E_bake channel; `?impmod=full` becomes the viewer default
+once the manifest block exists. All 36 jobs ran (764 s): vertex AO calibrated (1 km plane = 1.0000 in every job), 127 placements none dark, E_bake per prototype with cov.
+Defect surfaced by the bake's own placement of the same meshes: export/trees_far.py bakes the prototype world matrix into the LOD2 mesh and never subtracts the anchor,
+so every far tree in the shipped env_trees.glb stands ~300 m from its impostor; only the z assert fired (review finding 1: the placement assert was a tautology).
+The export engineer fixes it before the COLOR_0 re-run; the new assert compares the gltf node translation with the impostor placement AND the placed bbox with the
+impostor quad; the viewer's round16b info block reports the max mesh-vs-impostor deviation and stops if it exceeds 1 m.
