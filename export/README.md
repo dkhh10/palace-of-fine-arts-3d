@@ -1799,3 +1799,33 @@ export/sync_main.sh
     without `-kv`. It is now counted per PRIMITIVE in the glb (bark and leaf are separate meshes) and fails
     three ways: declared but absent, partial, or present but undeclared. `color0_primitives` and
     `color0_range` are in the report line.
+
+45. **Finding 9 (two LOD2 prototypes float): DIAGNOSED, not yet fixed - the fix needs an AO re-bake.**
+    Cause proven by measurement, not inferred (`/tmp/diag9.py` pattern, three prototypes through
+    `split_cards` -> `collapse` -> `thin_and_grow` with the z extent printed at every stage):
+    it is the **branch COLLAPSE decimate**, not the card thinning.
+    | prototype | branch z before collapse | after | cards z |
+    |---|---|---|---|
+    | `cypress_column_s2` | 0.000 | **3.654** | 3.936 (foliage genuinely starts there) |
+    | `redwood_s13` | 0.000 | **4.476** | 4.400 |
+    | `cypress_column_s31` (control) | 0.000 | -0.005 | 2.980 |
+    The decimate ratios are effectively identical (0.209 / 0.207 / 0.201), so it is the trunk's own
+    topology: Decimate COLLAPSE run over the whole branch mesh finds the trunk-base rings the cheapest
+    edges to remove. Per-material z confirms the cards are innocent - `MAT_leaf_*` on those two starts at
+    3.936 / 4.400 m in the SOURCE.
+    `bbox_min.z - base_z_m` over all 16: broadleaf_s19 +0.000, broadleaf_s53 +0.000, **cypress_column_s2
+    +3.654**, cypress_column_s31 -0.005, cypress_s17 -0.004, cypress_s3 -0.004, cypress_s41 -0.003,
+    eucalyptus_s23 -0.010, eucalyptus_s5 -0.007, eucalyptus_s61 -0.006, pine_s29 -0.502, pine_s7 -0.008,
+    **redwood_s13 +4.355**, redwood_s43 -0.005, willow_s11 +0.411, willow_s37 +1.526. (The willows are the
+    hanging fronds the thinning drops, below the trunk base and buried in the Phase 5 scene; pine_s29 hangs
+    *below* base_z, which is not the defect.)
+    **A band split is the wrong fix, measured:** protecting the faces wholly below `base_z + 5 m` and
+    decimating base and rest separately fixes `redwood_s13` (0.000) but only improves `cypress_column_s2`
+    to +1.061 and *regresses* the control `cypress_column_s31` from -0.005 to +1.372 - the trunk is built
+    from long vertical quads, so at a 2 m band there are no faces wholly inside it at all. The fix should
+    be Decimate's own `vertex_group` / `vertex_group_factor` protection of the trunk-base band, which
+    preserves those vertices without re-partitioning the mesh.
+    **Why it is not in this round:** the fix changes mesh TOPOLOGY, and `out/gate3/trees_far/vertex_ao.npz`
+    is addressed by vertex index. It therefore has to land in the same topology revision as the card-thinning
+    stride (item 43) and share one re-bake of the 16 AO jobs. `CARD_SELECT` already refuses to attach across
+    such a change; the trunk fix must join that contract before it ships.
