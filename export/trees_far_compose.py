@@ -117,12 +117,23 @@ def main():
             loose_verts=it["loose_verts"],
             mean_all_verts=round(float(g_all.mean()), 6),
             calibration=cals[p], bake_s=it["bake_s"], job=f"tfao_{p}")
+    # The npz is stamped with the LOD2 topology it was baked on. `export/trees_far.py` reads this key and
+    # REFUSES to attach COLOR_0 when it does not match its own TOPOLOGY_REV - which is what stops a rev-1 AO
+    # array being painted onto a rev-2 mesh with the same vertex count but a different card selection.
+    topo_rev = int(topo.get("topology_rev", 1))
     npz = TF / "vertex_ao.npz"
-    np.savez_compressed(str(npz), **arrays)
+    payload = dict(arrays)
+    payload["topology_rev"] = np.array([topo_rev], dtype=np.int32)
+    np.savez_compressed(str(npz), **payload)
     back = np.load(str(npz))
-    assert sorted(back.files) == sorted(arrays), f"{npz}: mesh set changed on write"
+    assert sorted(back.files) == sorted(payload), f"{npz}: mesh set changed on write"
+    assert int(np.asarray(back["topology_rev"]).reshape(-1)[0]) == topo_rev
     for k, v in arrays.items():
         assert np.array_equal(np.asarray(back[k]), v), f"{npz}: {k} changed on write"
+    (TF / "vertex_ao.json").write_text(json.dumps(
+        dict(npz=npz.name, topology_rev=topo_rev, meshes=len(arrays),
+             note="sidecar for a reader that will not open the npz; the npz carries the same `topology_rev`"),
+        indent=1) + "\n")
 
     # ------------------------------------------------------------------ 2. E_bake, per prototype
     proto_out, missing_eb, worlds = {}, [], {}
@@ -263,6 +274,10 @@ def main():
                                 "reported as `cov` on both sides.")),
         prototypes=proto_out, prototypes_missing=missing_eb,
         vertex_ao=dict(npz="trees_far/vertex_ao.npz", dtype="float32", encode="none",
+                       topology_rev=topo_rev,
+                       topology_rev_note=("the LOD2 topology this AO was baked on, stamped into the npz as "
+                                          "the key `topology_rev` and into trees_far/vertex_ao.json. "
+                                          "export/trees_far.py refuses to attach COLOR_0 on a mismatch."),
                        units="0-1 ambient occlusion (1 = unoccluded)",
                        bake=("Cycles DIFFUSE direct+indirect, colour off, every light hidden, uniform white "
                              "world of radiance 1, the shadow-ray cut-out override, 64 spp, VERTEX_COLORS, "
