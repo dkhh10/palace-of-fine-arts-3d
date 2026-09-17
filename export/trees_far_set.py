@@ -1,22 +1,22 @@
-"""Phase 6c item 2 (bake): build the two blends the far-tree lighting bake needs, and queue its 35 jobs.
+"""Phase 6c item 2 (bake): build the blend the far-tree irradiance bake needs, and queue its 36 jobs.
 
     scripts/blender_run.sh 900 -- --background --python export/trees_far_set.py
 
 CPU only (it opens and saves blends; nothing is rendered). Writes, under export/out/gate3/trees_far/:
 
-  trees_far_ebake.blend   gate3_imp.blend (the nursery: one prototype alone on a lawn under the open sky,
-                          the lamps exactly as the impostor atlas bake had them) with the export's 16 LOD2
-                          prototype objects appended. They need no transform: trees_far.py baked each
-                          prototype's own world matrix into its mesh, and that world space IS the nursery
-                          (measured: EXPM_treefar_ENV_tree_broadleaf_s19_LOD1's bbox centre is
-                          (-431.96, -569.89) and gate3_imp.blend's ENV_tree_broadleaf_s19_LOD1 stands at
-                          (-432, -570, 0)). The 16 LOD1 prototypes are hidden from render, so each E_bake
-                          job measures the LOD2 mesh in exactly the environment the atlas was rendered in.
-
-  trees_far_irr.blend     gate3_bake.blend with the same 16 meshes placed at the 127 `tree_far` placements
+  trees_far_irr.blend     gate3_bake.blend with the export's 16 LOD2 prototype meshes placed at the 127
+                          `tree_far` placements
                           and the 127 `source_tree` objects hidden from render - i.e. the scene as it ships
-                          once the far trees are meshes. E_placement is then measured on the SAME geometry
-                          as E_bake, which is what makes E_placement / E_bake unit-free.
+                          once the far trees are meshes. That is the geometry the mesh path's `_IRRADIANCE`
+                          and vertex AO belong to.
+
+E_bake needs no blend of its own. Review r1 finding 5: the divisor must describe THE BODY THAT PRODUCED THE
+ATLAS, which is the `_LOD1` prototype object in gate3_imp.blend that job `imp_<proto>` rendered - not the
+export's LOD2 reduction. The 16 E_bake jobs therefore run on gate3_imp.blend itself, on those objects, with
+every other mesh but the lawn hidden exactly as the impostor job hides it, at the same rig. Both sides of the
+ratio use the same reducer (`mean_nonzero` over the cov mask, gate3_instance_compose.py:84) and the same
+shadow-ray cut-out override, so what does NOT cancel is only the LOD1 -> LOD2 crown density, which is
+reported per prototype as `cov`.
 
 THE PLACEMENT ANCHOR, and a defect in the export's own placement. trees_far.py does
 `src.transform(ob.matrix_world)` and then places the mesh with `location = trunk_base, scale = s` - but it
@@ -27,7 +27,8 @@ with the anchor removed:
 
     matrix_world = Translation(trunk_base) @ Scale(s) @ Translation(-anchor_p)
 
-where `anchor_p` is the prototype object's own world translation, read from gate3_bake.blend (z asserted 0,
+where `anchor_p` is the prototype object's own world translation, read from gate3_imp.blend and cross-
+checked against gate3_bake.blend (z asserted 0,
 which is what makes `height_above_base_m` measurable from the bbox top). The bake is therefore correct
 whatever the export does; the export's `env_trees.glb` needs the same subtraction (reported to the lead).
 """
@@ -45,7 +46,6 @@ import gate3_common as g3      # noqa: E402
 
 TF = g3.OUT / "trees_far"
 LOD2_BLEND = TF / "trees_far_lod2.blend"
-EBAKE_BLEND = TF / "trees_far_ebake.blend"
 IRR_BLEND = TF / "trees_far_irr.blend"
 SPP_AO = 64            # brief item 2
 SPP_IRR = 128          # g3.SAMPLES_VERTEX - the same as the shrub instance bake, so the two are comparable
@@ -105,30 +105,26 @@ def main():
     rep = dict(generated=time.strftime("%Y-%m-%dT%H:%M:%S"), generator="export/trees_far_set.py",
                prototypes=len(protos), placements=len(topo["placements"]))
 
-    # ---------------------------------------------------------------- 1. the E_bake blend (the nursery)
-    step = g0.Step("trees_far_set:ebake_blend")
+    # ---------------------------------------------------------------- 1. the nursery: anchors only
+    # No blend is built here: the E_bake jobs open gate3_imp.blend as the impostor jobs did. What this pass
+    # takes from it is the prototype ANCHOR - the object's own world translation, which trees_far.py baked
+    # into the LOD2 mesh and never subtracted again (see the module docstring).
+    step = g0.Step("trees_far_set:anchors")
     bpy.ops.wm.open_mainfile(filepath=str(g3.IMP_BLEND), load_ui=False)
-    anchors = {}
+    anchors, nursery = {}, {}
     for p in protos:
         ob = bpy.data.objects.get(p)
         assert ob is not None, f"{p} is not in {g3.IMP_BLEND.name}"
         t = ob.matrix_world.translation
         assert abs(t.z) < 1e-4, f"{p}: prototype origin z = {t.z}, the LOD2 mesh assumes z = 0 is its base"
         anchors[p] = [round(float(t.x), 6), round(float(t.y), 6), round(float(t.z), 6)]
-        ob.hide_render = True
-    added = append_objects(LOD2_BLEND)
-    got = {o.name: o for o in added}
-    for p in protos:
-        o = got[mesh_of[p]]
-        assert len(o.data.vertices) == topo["prototypes"][p]["verts"], \
-            f"{p}: {len(o.data.vertices)} verts != topology.json {topo['prototypes'][p]['verts']}"
-        assert max(abs(v) for v in o.matrix_world.translation) < 1e-6, f"{o.name} is not at the identity"
-        o.hide_render = o.hide_viewport = o.hide_select = False
-    rep["ebake"] = dict(blend=EBAKE_BLEND.name, appended=len(added),
-                        lod1_hidden=len(protos), remapped_materials=dedupe_materials(),
-                        lawn="GATE3_imp_lawn" in bpy.data.objects, anchors=anchors)
-    g0.save_copy(EBAKE_BLEND)
-    step.done(EBAKE_BLEND, objects=len(bpy.data.objects))
+        nursery[p] = dict(object=p, mesh=ob.data.name, verts=len(ob.data.vertices),
+                          materials=[m.name if m else None for m in ob.data.materials])
+    rep["ebake"] = dict(blend=g3.IMP_BLEND.name, prototypes=len(nursery),
+                        lawn="GATE3_imp_lawn" in bpy.data.objects, anchors=anchors,
+                        objects=nursery,
+                        why="review r1 finding 5: the divisor is measured on the body that produced the atlas")
+    step.done(g3.IMP_BLEND, objects=len(bpy.data.objects))
 
     # ---------------------------------------------------------------- 2. the E_placement blend (the site)
     step = g0.Step("trees_far_set:irr_blend")
@@ -198,10 +194,10 @@ def main():
                          samples=SPP_AO, direct=True, indirect=True, override="shadow",
                          out="trees_far/ao", est_s=120))
     for p in protos:
-        jobs.append(dict(id=f"tfeb_{p}", kind="proto", blend=f"trees_far/{EBAKE_BLEND.name}",
-                         group="tfeb", objects=[mesh_of[p]], isolate=["GATE3_imp_lawn"], world="scene",
+        jobs.append(dict(id=f"tfeb_{p}", kind="proto", blend=g3.IMP_BLEND.name,
+                         group="tfeb", objects=[p], isolate=["GATE3_imp_lawn"], world="scene",
                          lights="scene", samples=SPP_IRR, direct=True, indirect=True, override="shadow",
-                         out="trees_far/ebake", est_s=180))
+                         out="trees_far/ebake", est_s=300))
     per = (len(placed) + IRR_JOBS - 1) // IRR_JOBS
     for k in range(IRR_JOBS):
         part = [d["object"] for d in placed[k * per:(k + 1) * per]]

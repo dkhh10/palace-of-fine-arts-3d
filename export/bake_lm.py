@@ -391,7 +391,16 @@ elif job["kind"] == "proto":
         ca.data.foreach_get("color", buf)
         v = buf.reshape(n, 4)[:, :3].copy()
         nz = v.sum(axis=1) > 0.0
+        # a vertex no polygon references is never written by the bake and stays at use_clear's black. Tell
+        # those apart from vertices that really are fully occluded, so the consumer knows which zeros to trust.
+        lbuf = np.empty(len(me.loops), dtype=np.int32)
+        me.loops.foreach_get("vertex_index", lbuf)
+        faced = np.zeros(n, dtype=bool)
+        faced[lbuf] = True
         row = dict(object=name, mesh=me.name, verts=n, bake_s=round(dt, 1),
+                   loose_verts=int((~faced).sum()),
+                   zeros=int((~nz).sum()), zeros_loose=int((~nz & ~faced).sum()),
+                   zeros_faced=int((~nz & faced).sum()),
                    loc=[round(float(x), 4) for x in ob.matrix_world.translation],
                    min=[float(x) for x in v.min(axis=0)], max=[float(x) for x in v.max(axis=0)],
                    mean=[float(x) for x in v.mean(axis=0)],
