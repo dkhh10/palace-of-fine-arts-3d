@@ -42,7 +42,13 @@ import read_alpha  # noqa: E402
 
 SCHEMA = "pfa-phase6c/shrub-lod1/1"
 GLTF_NAME = "env_shrubs"
-PLACE_TOL_M = 0.01       # against the Gate 1 asset's own `location_blender` bbox centre
+PLACE_TOL_M = 0.001      # exported glTF node translation vs to_gltf(the placement source's translation)
+
+
+def to_gltf(loc):
+    """Blender Z-up world translation -> glTF Y-up, the exporter's own swap: (x, y, z) -> (x, z, -y).
+    The same helper as export/gate4_instance_order.py, which is what the per-placement join keys on."""
+    return (float(loc[0]), float(loc[2]), -float(loc[1]))
 
 
 def tris_of(me):
@@ -135,9 +141,15 @@ def main():
         pl["bbox_centre"] = [round(v, 4) for v in ctr]
         pl["gate1_bbox_centre"] = a["location_blender"]
         pl["centre_delta_m"] = round(d, 4)
-        worst = max(worst, (no.matrix_world.translation
-                            - bpy.data.objects[a["placement_from"]].matrix_world.translation).length)
-    assert worst < PLACE_TOL_M, f"worst placement error {worst:.5f} m"
+        pl["loc_blender"] = [float(v) for v in no.matrix_world.translation]
+        worst = max(worst, d)
+    # NOT asserted: `centre_delta_m` is the LOD1 instance's translation against the Gate 1 asset's
+    # `location_blender`, which gate1_set.py records as the LOD2 object's BOUNDING-BOX CENTRE. LOD1 and LOD2
+    # are different meshes, so their bbox centres legitimately differ - measured 0.22 to 1.95 m over the
+    # 1 376 placements - and a 0.01 m tolerance on it would fail every row. It is kept as a reported number.
+    # What this script replaced here was an assert of `no.matrix_world.translation` against the translation
+    # it had just been built from, which is a tautology. The check that can fail is on the EXPORTED glTF,
+    # below: the node translations against to_gltf(the placement source's own world translation).
     assert all(m["placements"] == eset["meshes"][k]["placements"] for k, m in meshes.items()), \
         "a LOD1 mesh got a different placement count than its LOD2 twin"
     lone = {k: m["placements"] for k, m in meshes.items() if m["placements"] < 2}
@@ -192,11 +204,40 @@ def main():
     if alpha_mats:
         gltf_p.write_text(json.dumps(doc))
         doc = json.loads(gltf_p.read_text())
+    # ---- the placement check that can fail: the EXPORTED node translations, per row. This crosses the
+    # exporter boundary - the Z-up -> Y-up swap (x, y, z) -> (x, z, -y), `export_apply`, and the float32
+    # round trip - and it is the same key `gate4_instance_order.py PFA_ORDER_SET=shrub_lod1` joins the
+    # per-placement irradiance on after gltfpack drops the node names.
+    nodes = {n.get("name"): n for n in doc.get("nodes", []) if "mesh" in n}
+    assert len(nodes) == len(placements), \
+        f"{gltf_p.name} has {len(nodes)} mesh nodes, the export placed {len(placements)}"
+    worst_t, worst_row = 0.0, None
+    for pl in placements:
+        nd = nodes.get(pl["object"])
+        assert nd is not None, f"{gltf_p.name} has no node named {pl['object']!r}"
+        want_t = to_gltf(pl["loc_blender"])
+        got_t = tuple(float(v) for v in nd.get("translation", (0.0, 0.0, 0.0)))
+        dt = max(abs(g - w) for g, w in zip(got_t, want_t))
+        if dt > worst_t:
+            worst_t, worst_row = dt, pl["object"]
+    assert worst_t < PLACE_TOL_M, \
+        f"{gltf_p.name}: worst node translation residual {worst_t*1000:.3f} mm on {worst_row}, " \
+        f"tolerance {PLACE_TOL_M*1000:.0f} mm"
+    for pl in placements:
+        pl.pop("loc_blender", None)
     attr = {}
     for m_ in doc.get("meshes", []):
         for pr in m_["primitives"]:
             for k in pr["attributes"]:
                 attr.setdefault(k, set()).add(m_.get("name"))
+    rep["placement_check"] = dict(
+        rows=len(placements), tol_m=PLACE_TOL_M,
+        worst_translation_residual_m=round(worst_t, 6), worst_translation_row=worst_row,
+        rule="every env_shrubs.gltf node translation == to_gltf(the placement source object's world "
+             "translation) = (x, z, -y), read back out of the written glTF",
+        centre_delta_note="placements[].centre_delta_m is the LOD1 translation against the Gate 1 asset's "
+                          "`location_blender` (the LOD2 object's BBOX CENTRE, gate1_set.py): different "
+                          "meshes, so it is 0.22-1.95 m by construction and is reported, never asserted")
     rep["gltf"] = dict(path=gltf_p.name, bytes=gltf_p.stat().st_size, nodes=len(doc.get("nodes", [])),
                        meshes=len(doc.get("meshes", [])),
                        materials=[m.get("name") for m in doc.get("materials", [])],

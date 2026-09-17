@@ -35,6 +35,12 @@ def find(name):
     return None
 
 
+# The bake engineer's instance_irradiance.json schema ids this writer accepts. /2 adds a `prototypes`
+# block (per-prototype E_bake for the impostor modulation, decisions.md 2026-09-17) on top of /1 and
+# changes no field read here.
+IRR_SCHEMAS = ("pfa-phase6/gate4-instance-irradiance/1", "pfa-phase6/gate4-instance-irradiance/2")
+
+
 def instance_block():
     """`lightmaps.instance_irradiance`: the 1 379 shrub/reed placements, IN env.glb's INSTANCE ROW ORDER.
 
@@ -51,7 +57,11 @@ def instance_block():
         return dict(present=False,
                     note="out/gate3/instance_irradiance.json not synced yet (bake branch, Gate 4)")
     irr = json.loads(ip.read_text())
-    assert irr.get("schema") == "pfa-phase6/gate4-instance-irradiance/1", f"irr schema {irr.get('schema')!r}"
+    # /2 is /1 plus a `prototypes` block carrying each impostor prototype's E_bake (the isolated bake's
+    # environment irradiance), which the per-placement impostor modulation divides by - additive, so every
+    # field this writer reads is unchanged. Accept both; anything else is a contract change, not a version.
+    assert irr.get("schema") in IRR_SCHEMAS, \
+        f"irr schema {irr.get('schema')!r}, expected one of {sorted(IRR_SCHEMAS)}"
     op = find("instance_order.json")
     order = json.loads(op.read_text()) if op is not None else None
     if order is not None:
@@ -177,6 +187,8 @@ def instance_lod1_block(base):
         return None
     irr = json.loads(ip.read_text())
     order = json.loads(op.read_text())
+    assert irr.get("schema") in IRR_SCHEMAS, \
+        f"irr schema {irr.get('schema')!r}, expected one of {sorted(IRR_SCHEMAS)}"
     assert order.get("schema") == "pfa-phase6/gate4-instance-order/2", f"order schema {order.get('schema')!r}"
     assert order.get("set") == "shrub_lod1", f"{op.name} is the {order.get('set')!r} set"
     if not order.get("loc_in_json"):

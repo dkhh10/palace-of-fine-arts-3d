@@ -142,7 +142,17 @@ def extra_glb_check(out, bad, name, report_name, maker):
     """
     glb = out / f"{name}.glb"
     rep_p = out / report_name
-    if not glb.exists() or not rep_p.exists():
+    # A missing file is a FAILURE, not "nothing to check". Returning None here meant a deleted, never-built
+    # or half-packed env_trees.glb / env_shrubs.glb made verify_glb print PASS - the manifest still names the
+    # glb, and the viewer's lazy load is the first thing that finds out. Both are unconditional outputs of
+    # this pipeline; if one is genuinely not wanted, remove it from the manifest, not from this check.
+    if not glb.exists():
+        bad.append(f"{name}: {glb.name} is missing - run its builder, then "
+                   f"export/gltf_pack.sh {maker}")
+        return None
+    if not rep_p.exists():
+        bad.append(f"{name}: {glb.name} exists but its report {report_name} does not, so nothing about it "
+                   f"can be checked - re-run its builder, then export/gltf_pack.sh {maker}")
         return None
     rep = json.loads(rep_p.read_text())
     for src_name in (f"{name}.gltf", f"{name}_ktx2.gltf"):

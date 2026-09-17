@@ -113,6 +113,12 @@ def main():
         ai = e["albedo_image"]
         ap = ai.get("path") or str(MAIN_ROOT / "assets" / "textures" / "foliage" / ai["file"])
         assert os.path.exists(ap), f"{mat}: albedo source {ap} is not on disk"
+        # The tint is applied in LINEAR, so s2l() below has to be the right decode. `sRGB` is what the
+        # node tree says this image is; a `Non-Color` albedo would already be linear and s2l would darken it
+        # ~1.9x - the same size as the bug this whole script exists to fix, and invisible in the output.
+        assert ai.get("colorspace") == "sRGB", \
+            f"{mat}: albedo {ai.get('file')} is colour space {ai.get('colorspace')!r}, this script decodes " \
+            f"it as sRGB (read_foliage.image_info)"
         if ap not in src_cache:
             src_cache[ap] = np.asarray(Image.open(ap).convert("RGBA"), dtype=np.float64) / 255.0
         im = src_cache[ap]
@@ -143,6 +149,9 @@ def main():
         if tmap and mr and k is not None:
             tp = tmap.get("path") or str(MAIN_ROOT / "assets" / "textures" / "foliage" / tmap["file"])
             assert os.path.exists(tp), f"{mat}: translucency source {tp} is not on disk"
+            assert tmap.get("colorspace") == "Non-Color", \
+                f"{mat}: translucency factor {tmap.get('file')} is colour space " \
+                f"{tmap.get('colorspace')!r}; it is read raw (no decode), which is only right for Non-Color"
             t = np.asarray(Image.open(tp).convert("L"), dtype=np.float64) / 255.0   # Non-Color, already linear
             fm, fx = float(mr["From Min"]), float(mr["From Max"])
             tm, tx = float(mr["To Min"]), float(mr["To Max"])
@@ -170,6 +179,9 @@ def main():
             key = os.path.splitext(os.path.basename(np_path))[0]
             if key not in rep["normals"]:
                 assert os.path.exists(np_path), f"{mat}: normal source {np_path} is not on disk"
+                assert ni.get("colorspace") == "Non-Color", \
+                    f"{mat}: normal map {ni.get('file')} is colour space {ni.get('colorspace')!r}; it is " \
+                    f"copied through raw and tagged linear for toktx, which is only right for Non-Color"
                 n = np.asarray(Image.open(np_path).convert("RGB"), dtype=np.float64) / 255.0
                 nf = {}
                 for px in PX_SET:

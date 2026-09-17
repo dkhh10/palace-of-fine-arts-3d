@@ -37,7 +37,8 @@ fi
 # GPU is busy. Copying this worktree's stale copy over it would tell the viewer's headless Chrome the GPU is
 # free in the middle of a bake. The bake engineer's queue and gpu_lock.sh write MAIN's copy themselves; this
 # sync only does it when PFA_SYNC_STATUS=1 says the caller IS the queue.
-if [ -n "$PFA_SYNC_STATUS" ]; then
+# `= 1`, not `-n`: PFA_SYNC_STATUS=0 is how a caller says "I am NOT the queue", and -n treats that as true.
+if [ "${PFA_SYNC_STATUS:-}" = 1 ]; then
   mkdir -p "$MAIN/export/out/bake_queue"
   cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
   echo "[bake_queue] status.json copied to MAIN (PFA_SYNC_STATUS=1)"

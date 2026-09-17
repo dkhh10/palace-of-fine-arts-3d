@@ -170,13 +170,16 @@ sys.exit(0 if d.get('gltf',{}).get('color0_meshes') else 1)
   # row's TRANSLATION is no longer the node's world translation (env_trees rows came out 40-700 m from their
   # nodes, with instance scales of 0.001) and the per-placement join - the only key that survives the pack -
   # cannot be recovered. env.glb takes -vpf for a different reason (QA-11d-2) and its rows match to 5.9 mm.
-  if gltfpack -i "$OUT/${NAME}_ktx2.gltf" -o "$OUT/$NAME.glb" -cc -mi -vpf $EXTRA 2>>"$OUT/gltfpack.log"; then
-    SRC=ktx2
-  else
-    echo "[$TAG] gltfpack refused the KTX2 glTF; falling back to the PNG glTF" >&2
-    gltfpack -i "$G" -o "$OUT/$NAME.glb" -cc -mi -vpf $EXTRA 2>>"$OUT/gltfpack.log"
-    SRC=png
+  # NO PNG FALLBACK. The manifest advertises `textures.ktx2_dir` and the viewer's loader is configured for
+  # KTX2, so a glb silently packed from the PNG glTF ships uncompressed textures under a manifest that says
+  # otherwise: several hundred MB of GPU memory, a different colour pipeline, and nothing anywhere saying so.
+  # A gltfpack refusal is a build failure - fix the KTX2 glTF (gltf_ktx2_patch.py) and re-run.
+  if ! gltfpack -i "$OUT/${NAME}_ktx2.gltf" -o "$OUT/$NAME.glb" -cc -mi -vpf $EXTRA 2>>"$OUT/gltfpack.log"; then
+    echo "[$TAG] gltfpack refused $OUT/${NAME}_ktx2.gltf - see $OUT/gltfpack.log. NOT falling back to the" >&2
+    echo "[$TAG] PNG glTF: the manifest advertises ktx2_dir, so a PNG-textured $NAME.glb would be a lie." >&2
+    exit 1
   fi
+  SRC=ktx2
   echo "[$TAG] STEP gltfpack wall_s=$(( $(date +%s)-t2 )) source=$SRC $NAME.glb=$(stat -f%z "$OUT/$NAME.glb")B"
   printf '%s\n' "$NAME -cc -mi -vpf $EXTRA" >> "$OUT/gltfpack_flags.txt"
   python3 "$HERE/verify_glb.py" "$OUT" || exit 1

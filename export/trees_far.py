@@ -62,6 +62,13 @@ BRANCH_MAX = 4600        # ... and over this there is nothing left for the crown
 CARD_SCALE_MAX = 1.6     # 1/sqrt(keep) capped: these meshes are seen from ~3 m, not only at 40 m
 GLTF_NAME = "env_trees"
 CROWN_TOP_TOL_REL = 0.08   # LOD2 crown top vs the impostor quad's top, as a fraction of the tallest far tree
+PLACE_TOL_M = 0.001        # exported glTF node translation vs to_gltf(trunk_base), per row
+
+
+def to_gltf(loc):
+    """Blender Z-up world translation -> glTF Y-up, the exporter's own swap: (x, y, z) -> (x, z, -y).
+    The same helper as export/gate4_instance_order.py, which is what the per-placement join keys on."""
+    return (float(loc[0]), float(loc[2]), -float(loc[1]))
 OUT3 = g0.ROOT / "export" / "out" / "gate3" / "trees_far"
 
 
@@ -167,9 +174,15 @@ def thin_and_grow(me, target_tris, scale_max):
     total = sum(len(f.verts) - 2 for c in comps for f in c)
     keep_fraction = 1.0 if total <= 0 else max(0.0, min(1.0, float(target_tris) / float(total)))
     keep_pct = int(keep_fraction * 1000)      # floor: a card can be more than 2 triangles
+    area_before = sum(f.calc_area() for c in cards for f in c)
     drop, kept = [], []
     for i, c in enumerate(cards):
-        if (i % 1000) >= keep_pct:
+        # STRIDE, not `i % 1000`: the components come back in bmesh order, which is broadly spatial, so
+        # `(i % 1000) >= keep_pct` keeps the first keep_pct of every run of 1000 - one contiguous block of
+        # foliage kept and the rest of the run stripped, i.e. bald branches wherever a run boundary falls
+        # (visible at 18-31 % keep, which is where the big crowns land). 997 is coprime with 1000, so this is
+        # a bijection mod 1000: exactly the same number of cards survive, scattered through the crown.
+        if (i * 997) % 1000 >= keep_pct:
             drop.extend(c)
         else:
             kept.append(c)
@@ -183,13 +196,23 @@ def thin_and_grow(me, target_tris, scale_max):
             ctr /= len(vs)
             for v in vs:
                 v.co = ctr + (v.co - ctr) * scale
+    # MEASURED, not modelled: `keep_fraction * scale^2` assumes every card has the mean area and that the
+    # grow is exact, and it is the number the crown's opacity actually depends on. calc_area() after the
+    # grow, over the cards that survive, against every card's area before it.
+    area_after = sum(f.calc_area() for c in kept for f in c)
     bmesh.ops.delete(bm, geom=drop, context="FACES")
     bm.to_mesh(me)
     bm.free()
     me.update()
     return dict(cards_before=len(cards), cards_kept=len(kept),
                 keep_fraction=round(keep_fraction, 4), card_scale=round(scale, 4),
-                leaf_area_kept=round(min(1.0, keep_fraction * scale * scale), 4))
+                leaf_area_m2_before=round(float(area_before), 4),
+                leaf_area_m2_after=round(float(area_after), 4),
+                leaf_area_kept=round(float(area_after / area_before), 4) if area_before > 0 else None,
+                leaf_area_kept_modelled=round(min(1.0, keep_fraction * scale * scale), 4),
+                leaf_area_note="leaf_area_kept is measured (sum f.calc_area() after the grow / before the "
+                               "thin); leaf_area_kept_modelled is the old keep_fraction * scale^2 estimate, "
+                               "kept only so the two can be compared")
 
 
 def join(branch, cards, name, materials):
@@ -307,8 +330,10 @@ def main():
         # how far the LOD2 crown top then lands from the impostor quad's top, trunk_base.z + height_m.
         top = float(row["trunk_base"][2]) + protos_out[p]["height_above_base_m"] * s
         want = float(row["trunk_base"][2]) + float(row["height_m"])
-        assert max(abs(a - float(b)) for a, b in zip(no.location, row["trunk_base"])) < 1e-4, \
-            f"{no.name}: translation {list(no.location)} != trunk_base {row['trunk_base']}"
+        # NOT asserted here: `no.location` was assigned from `row["trunk_base"]` three lines up, so any
+        # check of one against the other is a tautology that passes however wrong the export is. The
+        # translation is asserted after the glTF is written, against the EXPORTED node - which is the only
+        # place the exporter's Z-up -> Y-up swap and its float32 round trip can actually go wrong.
         worst_dev = max(worst_dev, abs(top - want))
         placements.append(dict(index=i, object=no.name, prototype=p, mesh=me.name,
                                source_prototype=row["prototype"], source_tree=row["source_tree"],
@@ -325,7 +350,10 @@ def main():
     rep["placement_check"] = dict(
         rule="s = tree_far[i].height_m / impostors.prototypes[p].height_above_base_m, translation = "
              "trunk_base, rotation ignored - manifest `impostors.placement`, verbatim",
-        translation="asserted equal to the manifest's trunk_base on every one of the 127 rows",
+        translation=("asserted AFTER the export: every env_trees.gltf node translation against "
+                     "to_gltf(trunk_base) = (x, z, -y), and every node scale against s, on all 127 rows "
+                     "(`gltf_translation_check` below). The in-Blender assert this replaces compared "
+                     "`no.location` with the value it had just been assigned and could not fail."),
         worst_crown_top_deviation_m=round(worst_dev, 4),
         crown_top_note="the LOD2 crown top against the impostor quad's top (trunk_base.z + height_m): the "
                        "card thinning takes or grows the topmost card, so the two silhouettes differ by "
@@ -414,6 +442,31 @@ def main():
     if alpha_mats:
         gltf_p.write_text(json.dumps(doc))
         doc = json.loads(gltf_p.read_text())
+    # ---- the placement check that can fail: the EXPORTED node translations, per row.
+    # `no.location` was assigned from `trunk_base`, so comparing the two in Blender proves nothing. This
+    # crosses the exporter boundary - the Z-up -> Y-up swap (x, y, z) -> (x, z, -y), `export_apply`, and the
+    # float32 round trip - which is where a placement can really move, and it is the same key the
+    # per-placement irradiance join uses after gltfpack drops the node names.
+    nodes = {n.get("name"): n for n in doc.get("nodes", []) if "mesh" in n}
+    assert len(nodes) == len(placements), \
+        f"{gltf_p.name} has {len(nodes)} mesh nodes, the export placed {len(placements)}"
+    worst_t, worst_s, worst_row = 0.0, 0.0, None
+    for pl, row in zip(placements, far):
+        nd = nodes.get(pl["object"])
+        assert nd is not None, f"{gltf_p.name} has no node named {pl['object']!r}"
+        want_t = to_gltf(row["trunk_base"])
+        got_t = tuple(float(v) for v in nd.get("translation", (0.0, 0.0, 0.0)))
+        dt = max(abs(g - w) for g, w in zip(got_t, want_t))
+        got_s = tuple(float(v) for v in nd.get("scale", (1.0, 1.0, 1.0)))
+        ds = max(abs(v - pl["scale"]) for v in got_s)
+        if dt > worst_t:
+            worst_t, worst_row = dt, pl["object"]
+        worst_s = max(worst_s, ds)
+    assert worst_t < PLACE_TOL_M, \
+        f"{gltf_p.name}: worst node translation residual {worst_t*1000:.3f} mm on {worst_row} against " \
+        f"to_gltf(trunk_base), tolerance {PLACE_TOL_M*1000:.0f} mm"
+    assert worst_s < 1e-5, f"{gltf_p.name}: worst node scale residual {worst_s:.2e} against height_m / " \
+                           f"height_above_base_m"
     attr = {}
     for m_ in doc.get("meshes", []):
         for pr in m_["primitives"]:
@@ -427,6 +480,12 @@ def main():
         unique_tris=sum(v["tris"] for v in protos_out.values()),
         attributes={k: len(v) for k, v in sorted(attr.items())},
         color0_meshes=sorted(x for x in attr.get("COLOR_0", set()) if x),
+        gltf_translation_check=dict(
+            rows=len(placements), tol_m=PLACE_TOL_M,
+            worst_translation_residual_m=round(worst_t, 6), worst_translation_row=worst_row,
+            worst_scale_residual=round(worst_s, 9),
+            rule="every node translation == to_gltf(trunk_base) = (x, z, -y), every node scale == "
+                 "height_m / height_above_base_m, read back out of the written glTF"),
         alpha_mask_materials=alpha_mats,
         alpha_mode_materials={m.get("name"): [m.get("alphaMode"), m.get("alphaCutoff")]
                               for m in doc.get("materials", []) if m.get("alphaMode")},
