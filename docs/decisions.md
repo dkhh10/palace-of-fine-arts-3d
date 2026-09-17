@@ -623,3 +623,5 @@ branch COLLAPSE decimate dropping the lowest geometry, not the cards) are fixed 
 together with the card-thinning stride from review finding 3; the AO is re-baked on rev 2 (16 jobs, 44 s GPU) and the attach refuses a revision mismatch. The bake's
 four irradiance jobs on the export's anchor are unaffected (join by location). shrub_lod1's placement check is the exported node translation against to_gltf (0.050 mm),
 not the LOD2 bbox-centre distance the brief named (0.2-1.95 m by construction, reported only).
+Addendum (bake r2b 9844bc0, after the anchor fix): the one-placement validation re-measured E_placement [3.159, 2.223, 1.020], ratio [1.038, 0.989, 0.183], display hue
+205.5° -> 73.1° vs 52.2° (86.4 % of the gap, no overshoot); the B/G-matching exponent would be k = 0.4506 (hue 105.6°, worse). Conclusion unchanged: strength 1.0 ships.
