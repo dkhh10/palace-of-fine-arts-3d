@@ -138,6 +138,10 @@ const CFG = {
 	farTrn: qs.has( 'fartrn' ) ? parseFloat( qs.get( 'fartrn' ) ) : undefined,  // translucency on the far-tree meshes
 	farAo: qs.has( 'farao' ) ? parseFloat( qs.get( 'farao' ) ) : 1,   // how much of the env term the AO occludes
 	farTreeMesh: qs.has( 'fartreemesh' ) ? parseFloat( qs.get( 'fartreemesh' ) ) : undefined,  // the far trees' own switch distance
+	// 6c round 3 item 3: the walk-up LOD1 tree set (trees.walkup_mesh).  A distance in metres is the
+	// switch distance, "0" / "off" forces the LOD2 set back for the A/B, absent = 15 m when the
+	// manifest carries the block and the LOD2 set when it does not.
+	walkupMesh: qs.get( 'walkupmesh' ),
 	foliageTex: qs.get( 'foliagetex' ) || '1024',                         // 1024 | 2048 | 0
 	// The impostor atlases were baked with each prototype ALONE under the open sky, so their light is
 	// the sky's.  `impmod` re-lights each placement by E_placement / E_bake: `chroma` (the default)
@@ -828,6 +832,7 @@ async function loadLazyFoliage() {
 	};
 	try {
 		farTreeReport = await loadFarTrees( { ...common, impostorGroup, farTrn: CFG.farTrn, aoEnv: CFG.farAo, farMeshDist: CFG.farTreeMesh,
+			walkup: CFG.walkupMesh, walkupDist: parseFloat( CFG.walkupMesh ),
 			mode: CFG.farTreeLight, impMode: impModReport ? impModReport.mode : 'chroma' } );
 		if ( farTreeReport && farTreeReport.update ) farTreeUpdate = farTreeReport.update;
 	} catch ( e ) { note( `far-tree meshes FAILED: ${e.message}` ); farTreeReport = { error: e.message }; }
@@ -1365,13 +1370,16 @@ window.__pfaInfo = () => ( {
 		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes,
 		// round-1 review 5: the three 6c defaults the info block was missing
 		atlas2k: impostorReport.atlas2k, atlasGeometry: impostorReport.drawnGeom,
-		nearInstances: impostorReport.nearInstances, modulated: impostorReport.modulated },
+		nearInstances: impostorReport.nearInstances, modulated: impostorReport.modulated,
+		interior: impostorReport.interior },
 	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
 		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
 		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, aoAlphaForced: farTreeReport.aoAlphaForced || 0,
 		placementCheck: farTreeReport.placementCheck, drawCalls: farTreeReport.drawCalls,
 		tris: farTreeReport.tris, chunks: farTreeReport.chunks, wall_s: farTreeReport.wall_s,
-		impostors: farTreeReport.impostors, error: farTreeReport.error },
+		impostors: farTreeReport.impostors, error: farTreeReport.error,
+		set: farTreeReport.set, meshDist: farTreeReport.meshDist,
+		walkupFellBack: farTreeReport.walkupFellBack || false, walkupError: farTreeReport.walkupError || null },
 	shrubLod1: shrubLod1Report,
 	foliageTextures: foliageTexReport && { size: foliageTexReport.size, albedo: foliageTexReport.albedo,
 		translucency: foliageTexReport.translucency, materials: foliageTexReport.materials,

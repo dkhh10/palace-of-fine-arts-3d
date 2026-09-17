@@ -52,6 +52,9 @@ const PLACEMENT_BASE_TOL_M = 3.0;
 const PLACEMENT_BASE_TOL_REL = 0.4;
 const CULL_MARGIN_M = 10;
 const _m4 = /* one shared scratch matrix */ new THREE.Matrix4();         // see `out.update`: the water's mirrored camera stands further back
+// The walk-up LOD1 set's own switch distance (?walkupmesh=).  15 m, not the LOD2's 12: the walk-in
+// that failed QA 16 stops AT a tree, and a 3 m crown wants the LOD1 all the way in.
+const WALKUP_DIST_M = 15;
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
 /**
@@ -204,9 +207,28 @@ export async function loadFarTrees( o ) {
 	const out = { glb: null, bytes: 0, wall_s: 0, nodes: 0, rows: 0, joined: 0, unjoined: 0,
 		placements: 0, lit: 0, litFrom: null, ao: false, aoEncode: null, impostors: null,
 		chunks: 0, drawCalls: 0, tris: 0, error: null };
-	const fm = manifest.raw && manifest.raw.trees && manifest.raw.trees.far_mesh;
+	// 6c ROUND 3, ITEM 3 — THE WALK-UP SET.  `trees.walkup_mesh` is the same contract as
+	// `trees.far_mesh` (a glb of instance rows joined to the same placements by translation), so it is
+	// consumed by THIS loader with the block swapped, not by a second one: the positional join, the
+	// crown-deviation gate, the per-placement irradiance, the leaf shader and the impostor complement
+	// are all the same code and can only agree if they are literally the same lines.
+	//   * where a walk-up LOD1 exists it REPLACES the LOD2 set rather than stacking with it - the LOD2
+	//     only ever drew inside 12 m, which is inside the walk-up's own 15 m, so drawing both would
+	//     put two crowns in the same place for the whole band;
+	//   * the tier order the brief sets is therefore: LOD1 within `?walkupmesh=` (15 m), else the LOD2
+	//     within `?fartreemesh=` (12 m), else the impostor;
+	//   * `o.walkup` is 'off' / '0' to force the LOD2 set back (the A/B), and a walk-up glb that fails
+	//     the join falls back to the LOD2 block instead of leaving every far tree an impostor.
+	const trees = ( manifest.raw && manifest.raw.trees ) || {};
+	const wantWalkup = !! ( trees.walkup_mesh && trees.walkup_mesh.glb )
+		&& String( o.walkup === undefined || o.walkup === null ? '' : o.walkup ).toLowerCase() !== '0'
+		&& String( o.walkup === undefined || o.walkup === null ? '' : o.walkup ).toLowerCase() !== 'off';
+	let fm = wantWalkup ? trees.walkup_mesh : trees.far_mesh;
+	out.set = wantWalkup ? 'walkup_mesh' : 'far_mesh';
 	if ( ! fm || ! fm.glb ) { note( 'far-tree meshes: no trees.far_mesh in the manifest (export item A)' ); return out; }
 	if ( o.mode === '0' ) { note( 'far-tree meshes SUPPRESSED (?fartreelight=0): the 127 far trees stay impostors' ); return out; }
+	if ( wantWalkup ) note( `far-tree meshes: the WALK-UP set trees.walkup_mesh (${fm.glb}) replaces trees.far_mesh `
+		+ `(item 3); it draws within ${Number.isFinite( o.walkupDist ) ? o.walkupDist : WALKUP_DIST_M} m, the impostor beyond` );
 	const placements = Array.isArray( fm.placements ) ? fm.placements : [];
 	if ( ! placements.length ) { out.error = 'trees.far_mesh.placements is empty'; note( `far-tree meshes: ${out.error}` ); return out; }
 	out.placements = placements.length;
@@ -264,6 +286,15 @@ export async function loadFarTrees( o ) {
 			+ `and ${placements.length - seenPlacements.size} placement(s) were never presented`;
 		note( `far-tree meshes: JOIN FAILED — ${out.error}; the meshes are not drawn and every far tree stays its impostor` );
 		scene.remove( root );
+		// A walk-up set that will not join must not cost the round-16b behaviour: fall back to the
+		// LOD2 block, once, and report both.  (`walkup: '0'` is what that call means.)
+		if ( out.set === 'walkup_mesh' ) {
+			note( 'far-tree meshes: falling back to trees.far_mesh (the LOD2 set) for this session' );
+			const back = await loadFarTrees( { ...o, walkup: '0' } );
+			back.walkupError = out.error;
+			back.walkupFellBack = true;
+			return back;
+		}
 		return out;
 	}
 
@@ -466,7 +497,9 @@ export async function loadFarTrees( o ) {
 	// the self-shadowing of the DENSE source tree and an 8 k-triangle LOD2 crown has almost none of it.
 	// So the mesh is kept for what only a mesh can do - silhouette and parallax when the walker is a
 	// few metres away - and the atlas carries every station.
-	const farDist = Number.isFinite( o.farMeshDist ) ? o.farMeshDist : 12;
+	const farDist = out.set === 'walkup_mesh'
+		? ( Number.isFinite( o.walkupDist ) ? o.walkupDist : WALKUP_DIST_M )
+		: ( Number.isFinite( o.farMeshDist ) ? o.farMeshDist : 12 );
 
 	// `?fartrn=` — the translucency scale on the FAR-tree meshes alone.  The Phase 5 mix adds a back
 	// lobe of the full unoccluded sun, and Cycles' own version of that lobe is occluded by the rest of
