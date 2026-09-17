@@ -46,6 +46,23 @@ scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--orbit "-39.89,7.46,-8.57:3:-6.8:248,68" \
 	--out "renders/web/${TAG}_walkin.png" --json "renders/web/${TAG}_walkin.json"
 
+# --- 4b. the treeMeshDist A/B ------------------------------------------------------------------
+# The far tree that fills cam02 stands at 43 m, just outside the 40 m default, so the frame that
+# started this pass is decided by this one number.  Station 2 at delivery resolution and the six-
+# station 1440p performance pass are both taken at 60 m so the choice is made on a measured frame
+# time and a measured tile, not on an opinion.
+scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
+	--station 2 --size 1920x1080 --frames 0 --warmup 12 --timeout 420000 \
+	--query manifest=/assets/gate3/manifest.json --query t=0 --query billboards=0 --query treeboards=0 \
+	--query treemesh=60 \
+	--out "renders/web/${TAG}m60_cam02.png" --json "renders/web/${TAG}m60_cam.json"
+scripts/chrome_run.sh 1200 -- node web/tools/screenshot.mjs \
+	--stations 1-6 --size 2560x1440 --frames 120 --warmup 24 --shots 0 --timeout 420000 \
+	--query manifest=/assets/gate3/manifest.json --query t=0 --query billboards=0 --query treeboards=0 \
+	--query treemesh=60 \
+	--out "renders/web/${TAG}m60_perf1440.png" --json "renders/web/${TAG}m60_perf_shot.json" \
+	--perf "renders/web/${TAG}m60_perf.json"
+
 # --- 5. the box tables, committed -------------------------------------------------------------
 if [[ -f "$REF_CAM02" && -f "renders/web/${TAG}_cam02.png" ]]; then
 	python3 web/tools/foliage_boxes.py --ref "$REF_CAM02" \
