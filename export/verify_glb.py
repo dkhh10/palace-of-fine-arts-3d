@@ -211,12 +211,30 @@ def extra_glb_check(out, bad, name, report_name, maker):
         if g_mode != mode or abs(float(g_cut) - float(cut if cut is not None else 0.5)) > 1e-5:
             bad.append(f"{name}.glb {mname}: alphaMode {g_mode} cutoff {g_cut}, the glTF declared "
                        f"{mode} {cut} - a leaf card that ships OPAQUE is a solid rectangle")
+    # COLOR_0 (item B's vertex AO), read out of the GLB, not echoed from the report. gltfpack drops vertex
+    # colours unless it is given `-kv`, and the report is written by the Blender run BEFORE the pack, so a
+    # missing `-kv` would leave the report saying COLOR_0 and the glb shipping none - trees with no occlusion
+    # and nothing to see in a diff. Primitives, not meshes: gltfpack splits bark and leaf into separate meshes.
+    prim_all = sum(len(m.get("primitives", [])) for m in doc.get("meshes", []))
+    prim_c0 = sum(1 for m in doc.get("meshes", []) for pr in m.get("primitives", [])
+                  if "COLOR_0" in (pr.get("attributes") or {}))
+    want_c0 = bool(rep.get("gltf", {}).get("color0_meshes"))
+    if want_c0 and prim_c0 == 0:
+        bad.append(f"{name}: {report_name} names {len(rep['gltf']['color0_meshes'])} COLOR_0 meshes but "
+                   f"{name}.glb carries COLOR_0 on 0 of {prim_all} primitives - gltfpack dropped the vertex "
+                   f"colours. `-kv` is missing from the pack flags (export/gltf_pack.sh {maker}).")
+    elif want_c0 and prim_c0 < prim_all:
+        bad.append(f"{name}: COLOR_0 on {prim_c0} of {prim_all} primitives in {name}.glb - the vertex AO is "
+                   f"attached per MESH, so every primitive of every mesh must carry it")
+    elif not want_c0 and prim_c0:
+        bad.append(f"{name}.glb carries COLOR_0 on {prim_c0} primitives that {report_name} does not declare")
     return dict(glb=f"{name}.glb", bytes=glb.stat().st_size, meshes=len(doc.get("meshes", [])),
                 instanced_nodes=inst_nodes, plain_nodes=plain_nodes, rows=rows_total,
                 placements=len(rep["placements"]), rows_expected=want_rows, drawn_tris=drawn_tris, export_tris=want_tris,
                 unique_tris=sum(v["tris"] for v in protos.values()),
                 alpha_materials={k: list(v) for k, v in sorted(got.items()) if v[0]},
-                color0=bool(rep.get("gltf", {}).get("color0_meshes")))
+                color0=want_c0, color0_primitives=f"{prim_c0}/{prim_all}",
+                color0_range=(rep.get("color0") or {}).get("range"))
 
 
 def instance_irradiance_check(out, bad):
