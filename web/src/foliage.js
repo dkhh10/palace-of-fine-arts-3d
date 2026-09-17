@@ -103,6 +103,14 @@ export const CROWN_INTERIOR = { str: 0.30, low: 0.0, gamma: 1.0, gain: 1.05, trn
 export const CARD_INTERIOR = { str: 0.20, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0, sun: 0.30 };
 /** How much of the radius the crown-bend is faded in over: 0 = bend everywhere (round-16b). */
 export const NORMAL_GATE = 0.45;
+/** LOD bias on the cut-out fetch: the shrub / reed cards, then the tree leaf cards (?foliagebias=). */
+// MEASURED (6c round 3): 0.8 on the cards drops the hard-edge share at four of the five shrub boxes
+// (02 reed clump 6.22 -> 5.80, 02 shore 9.31 -> 8.92, 05 shore 9.38 -> 9.09, 01 shore 7.15 -> 7.17
+// flat) with no visible softening at station 3's 8 m in the 1:1 tile.  1.5 buys about twice as much
+// and starts to mush the card silhouettes, so it is left as the switch, not the default.  The leaf
+// cards keep 0: the tree crowns' edges are not what QA measured.
+export const CARD_MIP_BIAS = 0.8;
+export const LEAF_MIP_BIAS = 0.0;
 
 /** `"str[,low[,gamma[,gain[,trn[,sun]]]]]"` (or an object) over a default, every field clamped. */
 export function parseInterior( v, dflt ) {
@@ -309,10 +317,12 @@ const HASH_GLSL = /* glsl */`
  * translucent mix (materials with a Phase 5 constant and `frontSub` resolved by the caller).
  */
 function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, band, sign = 1,
-	trnMap = null, switchMask = false, interior = null } ) {
+	trnMap = null, switchMask = false, interior = null, mipBias = 0 } ) {
 	if ( mat.userData.pfaFoliage ) return false;
 	const it = interiorOff( interior ) ? null : interior;
+	const bias = Number.isFinite( mipBias ) && mipBias > 0 ? Math.min( mipBias, 4 ) : 0;
 	const u = {
+		pfaMipBias: { value: bias },
 		pfaInterior: { value: new THREE.Vector4( it ? it.str : 0, it ? it.low : 0,
 			it ? it.gamma : 1, it ? it.gain : 1 ) },
 		// (the translucent lobe's share of the occlusion, the sun-path term's strength)
@@ -330,7 +340,7 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		pfaSwitchSign: { value: sign },
 	};
 	mat.userData.pfaFoliage = { trn, tint, frontSub, fade, dist, band, sign, trnMap: !! trnMap, switchMask,
-		interior: it, uniforms: u };
+		interior: it, mipBias: bias, uniforms: u };
 	const prev = mat.onBeforeCompile;
 	mat.onBeforeCompile = function ( shader, renderer ) {
 		if ( prev ) prev.call( this, shader, renderer );
@@ -418,6 +428,22 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 				+ '\t\treflectedLight.directDiffuse *= pfaOcc;\n\t\treflectedLight.directSpecular *= pfaOcc;\n\t}\n'
 				+ '\t#include <lights_fragment_end>', 'crown interior occlusion' );
 		}
+		if ( bias > 0 ) {
+			// THE HARD EDGE (QA 16 open 1: 2x-8x the reference's hard-edge share).  A shrub card is a
+			// 1 K cut-out drawn at 8-40 m, and three picks its mip from the screen-space derivative,
+			// which for a card seen almost edge-on is a sharp level: the leaf boundary arrives as a
+			// full-contrast step and `hard%` counts it.  The reference is Cycles with the same
+			// texture and many rays per pixel.  A positive LOD bias asks for the next mip up, which
+			// carries the same silhouette with a soft boundary - and it softens the ALPHA with it,
+			// because the alpha is that texture's own channel, so the alphaToCoverage resolve gets a
+			// gradient to work with instead of a step.  `?foliagebias=`; 0 is the round-16b path.
+			let chunk = THREE.ShaderChunk.map_fragment;
+			chunk = once( chunk, 'texture2D( map, vMapUv )', 'texture2D( map, vMapUv, pfaMipBias )', 'map mip bias' );
+			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
+				'#include <common>\nuniform float pfaMipBias;', 'mip bias uniform' );
+			shader.fragmentShader = once( shader.fragmentShader, '#include <map_fragment>', chunk,
+				'map_fragment include' );
+		}
 		if ( trn > 0 ) {
 			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
 				'#include <common>\nuniform float pfaTrnFac;\nuniform vec3 pfaTrnTint;\nuniform float pfaFrontSub;\n'
@@ -448,7 +474,7 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		// `pfaInterior` and `pfaTrnOcc` are uniforms; only WHETHER the interior is patched in is a
 		// program difference, so one bit is all the key needs.
 		return `${prevKey ? prevKey.call( this ) : ''}|fol:${trn.toFixed( 3 )}:${frontSub}:${fade ? 1 : 0}`
-			+ `:${trnMap ? 1 : 0}:${switchMask ? 1 : 0}:${it ? 1 : 0}`;
+			+ `:${trnMap ? 1 : 0}:${switchMask ? 1 : 0}:${it ? 1 : 0}:${bias > 0 ? 1 : 0}`;
 	};
 	mat.needsUpdate = true;
 	return true;
@@ -489,11 +515,15 @@ export function applyFoliage( o ) {
 	const interior = parseInterior( o.interior, CROWN_INTERIOR );
 	const cardInterior = parseInterior( o.cardInterior, CARD_INTERIOR );
 	const normalGate = num( o.normalGate, NORMAL_GATE, 0, 0.99 );
+	// `?foliagebias=` — the LOD bias on the cut-out fetch.  "cardBias" alone, or "cardBias,leafBias".
+	const biases = String( o.mipBias === undefined || o.mipBias === null ? '' : o.mipBias ).split( ',' );
+	const cardMip = num( parseFloat( biases[ 0 ] ), CARD_MIP_BIAS, 0, 4 );
+	const leafMip = num( parseFloat( biases[ 1 ] ), LEAF_MIP_BIAS, 0, 4 );
 	const report = { geometries: 0, clusters: 0, leafMaterials: 0, cardMaterials: 0, barkMaterials: 0,
 		bent: 0, softened: 0, units: [], normalBlend: bend, trnScale, meshDist, fadeBand,
 		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend,
 		trnMapped: 0, byMesh: new Map(), recrown: null,
-		interior, cardInterior, normalGate, interiorMaterials: 0 };
+		interior, cardInterior, normalGate, interiorMaterials: 0, cardMipBias: cardMip, leafMipBias: leafMip };
 	// 6c round 2: a lazily loaded glb (env_trees, env_shrubs) is a SECOND applyFoliage call, and its
 	// materials must share the FIRST call's uniform objects - the impostor dissolve reads the same
 	// pfaMeshDist / pfaFadeBand, and two copies would drift the moment a flag moved one of them.
@@ -566,6 +596,7 @@ export function applyFoliage( o ) {
 				// bark has no crown of its own (its cluster is the trunk, whose "interior" is the
 				// axis), so it is left alone; leaves take the crown term, cards their own.
 				interior: leaf ? interior : ( card ? cardInterior : null ),
+				mipBias: leaf ? leafMip : ( card ? cardMip : 0 ),
 				// The trees switch to their impostor at `meshDist`; the shrub/reed cards have no
 				// second LOD until export item E lands, so they are patched with the SAME shader and
 				// an infinite distance, and `applyShrubLod` only has to move a uniform.

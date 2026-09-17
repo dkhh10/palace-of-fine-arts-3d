@@ -477,7 +477,7 @@ export async function loadFarTrees( o ) {
 		scene: root, sun: o.sun, note, msaa: o.msaa, vertexIrrScale: 0,
 		sharedUniforms: o.foliageReport ? o.foliageReport.shared.uniforms : null,
 		normalBlend: o.normalBlend, cardNormalBlend: o.cardNormalBlend,
-		interior: o.interior, cardInterior: o.cardInterior, normalGate: o.normalGate,
+		interior: o.interior, cardInterior: o.cardInterior, normalGate: o.normalGate, mipBias: o.mipBias,
 		trnScale: Number.isFinite( o.farTrn ) ? o.farTrn : o.trnScale,
 		trnShrubs: o.trnShrubs, trnMaps: o.trnMaps,
 		// the FAR trees' own switch distance (see `farMeshDist`), not the near trees' 40 m
@@ -661,7 +661,7 @@ export async function loadShrubLod1( o ) {
 		scene: root, sun: o.sun, note, msaa: o.msaa, vertexIrrScale: 0,
 		sharedUniforms: o.foliageReport ? o.foliageReport.shared.uniforms : null,
 		normalBlend: o.normalBlend, cardNormalBlend: o.cardNormalBlend,
-		interior: o.interior, cardInterior: o.cardInterior, normalGate: o.normalGate,
+		interior: o.interior, cardInterior: o.cardInterior, normalGate: o.normalGate, mipBias: o.mipBias,
 		trnScale: o.trnScale, trnShrubs: o.trnShrubs, trnMaps: o.trnMaps,
 		meshDist: o.meshDist, fadeBand: o.fadeBand,
 	} );

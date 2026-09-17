@@ -124,6 +124,7 @@ const CFG = {
 	cardInt: qs.get( 'cardint' ),
 	leafGate: qs.has( 'leafgate' ) ? parseFloat( qs.get( 'leafgate' ) ) : undefined,
 	impInt: qs.get( 'impint' ),
+	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
 	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (default 40)
@@ -657,6 +658,7 @@ async function boot() {
 		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa, vertexIrrScale,
 			normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
 			interior: CFG.crownInt, cardInterior: CFG.cardInt, normalGate: CFG.leafGate,
+			mipBias: CFG.foliageBias,
 			trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade,
 			trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null } );
 		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
@@ -814,6 +816,7 @@ async function loadLazyFoliage() {
 		interior: foliageReport ? foliageReport.interior : CFG.crownInt,
 		cardInterior: foliageReport ? foliageReport.cardInterior : CFG.cardInt,
 		normalGate: foliageReport ? foliageReport.normalGate : CFG.leafGate,
+		mipBias: CFG.foliageBias,
 		trnScale: foliageReport ? foliageReport.trnScale : 1,
 		trnShrubs: foliageReport ? foliageReport.trnShrubs : false,
 		trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null,
@@ -1351,7 +1354,8 @@ window.__pfaInfo = () => ( {
 		fadeBand: foliageReport.fadeBand, units: foliageReport.units.length, skipped: foliageReport.skipped.length,
 		depthMean: foliageReport.depthMean, clustersOver40m: foliageReport.clustersOver40m,
 		interior: foliageReport.interior, cardInterior: foliageReport.cardInterior,
-		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials },
+		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials,
+		cardMipBias: foliageReport.cardMipBias, leafMipBias: foliageReport.leafMipBias },
 	shrubLod: shrubLodReport,
 	impostorModulation: impModReport,
 	reflectionSet,
