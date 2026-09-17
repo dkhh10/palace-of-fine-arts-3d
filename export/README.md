@@ -1665,3 +1665,36 @@ export/sync_main.sh
     through and are the reason the order was re-run at all: `verify_glb` refused the old order file against
     the new `env.glb` by size, and `manifest_v4` refuses it against a different `instance_irradiance.json` by
     sha256 — verified by hand on this round's files.
+
+33. **6c item 1 — the impostor blue is in the ATLAS, and a re-bake with the diffuse-branch sky will not fix
+    it** (2026-09-17, `export/imp_diag_atlas.py`, `imp_diag_ref.py`, `imp_diag_view.py`, `imp_diag_sheet.py`;
+    sheet `renders/web/960/6c_impostor_diag.png`, JSONs in `out/gate3/impostor_diag_*.json`). Test tree:
+    `ENV_tree_broadleaf_s53_LOD1`, the far tree that stands on the axis of station 2 at 40.2 m
+    (`tree_far[0]`), frame **col 1 row 7** — the frame `impostors.frame_lookup` picks from that station.
+    * **The shipped atlas is blue by itself.** Decoded with the manifest's own rule, the crown (alpha > 0.5)
+      of that frame is linear **[0.186, 0.275, 0.372]**, hue **211.4 deg**, B/G **1.356**. Over all 16
+      prototypes the whole-atlas crown hue is **149-257 deg** with B/G **0.87-1.52** and 40-63 % of crown
+      texels having BLUE as their maximum channel. Sun-facing frames are green (41-72 deg); it is the
+      sky-lit side of the octahedron that is blue.
+    * **The encode chain is exact.** A fresh 64 spp Cycles render of the same prototype at the same view and
+      the same rig reads **[0.193, 0.274, 0.375]**, hue **213.2**, B/G **1.367** — within 4 % of what the
+      atlas decodes. Nothing is lost or shifted between Cycles and the gamma-2/`range` encode.
+    * **The diffuse-branch sky is not the cause.** The same view with `light_probes.bake_world` (the world's
+      diffuse branch on every ray) reads hue **215.6**, B/G **1.431**: a **2.4 deg** move, in the wrong
+      direction. Re-baking the 16 prototypes that way would spend 16 GPU jobs and change nothing.
+    * **Ground truth.** The same tree as a MESH in the Phase 5 Cycles reference at station 2
+      (`renders/previews/qa/round13_02_..._cycles.png`, projected by `imp_diag_ref.py`) is display-referred
+      sRGB **[18.6, 17.6, 11.4]**, hue **52.2 deg**, B/G **0.648**. Through the same AgX High Contrast at
+      -2.833 EV the atlas frame is **[17.8, 32.2, 38.8]**, hue **199 deg**, B/G **1.207**: the same
+      brightness in R, **1.8x** the G and **3.4x** the B, **147 deg** of hue apart.
+    * **Where the blue comes from.** Decomposed at the same view: **sun only** (no world) is
+      **[0.113, 0.112, 0.000]**, hue 59.4, B/G **0.0**; **sky only** (every light hidden) is
+      **[0.078, 0.157, 0.387]**, hue 224.6, B/G **2.458**, 82 % blue-max. The leaf albedo carries no blue at
+      all, so **100 % of the impostor's blue channel is the sky term**, and the nursery
+      (`gate3_imp.blend`: one prototype alone on a lawn) gives every prototype the whole unoccluded sky dome.
+      In the delivery scene the same tree stands in a thicket in front of the sunlit ochre building, so that
+      sky term is mostly occluded and replaced by warm bounce — which is exactly what the reference shows.
+    * **So the fix is context, not a re-bake of the same isolated tree**: the per-placement irradiance and
+      vertex AO of 6c item B (and the far-tree meshes of item A) are what carry the occlusion the nursery
+      cannot know. Whatever still draws an impostor beyond `treeMeshDist` needs the same per-placement
+      modulation, or its sky term has to be baked with the scene around it. That call is the lead's.

@@ -41,7 +41,11 @@ VARIANTS = arg("--variants", "asis,diffuse").split(",")
 OUTD = g3.OUT / "impostor"
 OUTD.mkdir(parents=True, exist_ok=True)
 scene = bpy.context.scene
-man = json.load(open(g3.OUT / "manifest.json"))
+MANIFEST = g3.OUT / "manifest.json"
+if not MANIFEST.exists():                      # the synced copy lives in MAIN (MANIFEST_IS_IN_MAIN.txt)
+    from pathlib import Path as _P
+    MANIFEST = _P("/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate3/manifest.json")
+man = json.load(open(MANIFEST))
 imp = man["impostors"]
 RANGE = float(imp["prototypes"][PROTO]["range"])
 jobs = {j["id"]: j for j in g3.read_jobs()["jobs"]}
@@ -85,6 +89,29 @@ def stats(lin, alpha, tag):
                 blue_max_px_pct=round(100.0 * float((f[body].argmax(axis=-1) == 2).mean()), 2))
 
 
+_SAVE_SCENE = None
+
+
+def save_scene():
+    """A scene that exists only to carry the delivery view transform and 8-bit PNG output for save_render."""
+    global _SAVE_SCENE
+    if _SAVE_SCENE is None:
+        sc = bpy.data.scenes.new("DIAG_SAVE")
+        v = sc.view_settings
+        v.view_transform, v.look = VIEW["view_transform"], VIEW["look"]
+        v.exposure, v.gamma = float(VIEW["exposure_ev"]), float(VIEW["gamma"])
+        sc.display_settings.display_device = VIEW["display_device"]
+        st = sc.render.image_settings
+        # Blender 5.2 gates file_format on media_type, and a new scene inherits the blend's MULTI_LAYER_IMAGE
+        print("[diag] save scene media_type", st.media_type, "->",
+              [i.identifier for i in st.bl_rna.properties["media_type"].enum_items])
+        st.media_type = "IMAGE"
+        st.file_format, st.color_depth, st.color_mode = "PNG", "8", "RGBA"
+        st.compression = 15
+        _SAVE_SCENE = sc
+    return _SAVE_SCENE
+
+
 def to_display(rgb, alpha, path):
     """rgb: (h, w, 3) linear PREMULTIPLIED, bottom-up. -> the delivery view transform, as an 8-bit PNG."""
     h, w = rgb.shape[:2]
@@ -92,9 +119,17 @@ def to_display(rgb, alpha, path):
     buf = np.concatenate([rgb.astype(np.float32), alpha.astype(np.float32)[..., None]], axis=-1)
     img.pixels.foreach_set(buf.reshape(-1))
     img.file_format = "PNG"
-    img.save_render(filepath=str(path), scene=scene)
+    # save_render takes the SCENE's image_settings, and this blend's are the multilayer-EXR ones the bake
+    # needs, so the save goes through a throwaway scene that carries only the delivery view transform.
+    img.save_render(filepath=str(path), scene=save_scene())
     bpy.data.images.remove(img)
-    back = g3.read_png(path)                 # bottom-up uint8; a float image that wrote zeros is caught here
+    # read the file back (tech_notes: a generated float image can write zeros) as RAW 0-1 display codes
+    rd = bpy.data.images.load(str(path))
+    rd.colorspace_settings.name = "Non-Color"
+    px = np.empty(len(rd.pixels), dtype=np.float32)
+    rd.pixels.foreach_get(px)
+    back = (px.reshape(rd.size[1], rd.size[0], 4) * 255.0)
+    bpy.data.images.remove(rd)
     assert back[..., :3].max() > 0, f"{path}: the view transform wrote black"
     return back
 
@@ -170,16 +205,28 @@ r.film_transparent = True
 vl = bpy.context.view_layer
 vl.use_pass_normal = vl.use_pass_z = False
 s = r.image_settings
-s.media_type = "MULTI_LAYER_IMAGE"
-s.use_exr_interleave = True
-s.file_format, s.color_depth, s.exr_codec, s.color_mode = "OPEN_EXR_MULTILAYER", "32", "NONE", "RGBA"
+
+
+def exr_settings():
+    """The bake's output settings. Applied AFTER the rig, because light_presets.apply_final_cycles sets
+    file_format = PNG and Blender 5.2 refuses that while media_type is MULTI_LAYER_IMAGE."""
+    s.media_type = "MULTI_LAYER_IMAGE"
+    s.use_exr_interleave = True
+    s.file_format, s.color_depth, s.exr_codec, s.color_mode = "OPEN_EXR_MULTILAYER", "32", "NONE", "RGBA"
+    # light_presets.apply_final_cycles sets film_transparent = False; the impostor bake needs it True or the
+    # sky fills the frame, alpha comes back 1 everywhere and the "crown" mean is the sky's blue.
+    r.film_transparent = True
+
+
 tmp = OUTD / "diag_view.exr"
 world_ship = scene.world
 GIN = G2 * SCALE
 IN2 = INNER * SCALE
 
 for variant in VARIANTS:
+    s.media_type = "IMAGE"                    # let the rig set its PNG default, then take it back
     lights = g0.apply_final_cycles_checked(scene)
+    exr_settings()
     c = scene.cycles
     c.use_adaptive_sampling = False
     c.time_limit = 0.0
@@ -195,6 +242,12 @@ for variant in VARIANTS:
         bw = lprobe.bake_world(scene)
         assert bw is not None, "bake_world() returned None: the world carries no sun az/el"
         scene.world = bw
+    # the decomposition: which term carries the blue
+    for lo in bpy.data.objects:
+        if lo.type == "LIGHT":
+            lo.hide_render = (variant == "skyonly")
+    if variant == "sunonly":
+        scene.world = None
     t0 = time.time()
     r.filepath = str(tmp)[:-4]
     bpy.ops.render.render(write_still=True)
@@ -216,7 +269,7 @@ for variant in VARIANTS:
     p = OUTD / f"diag_{PROTO}_{COL}_{ROW}_{variant}.png"
     d8 = to_display(pm, al, p)
     rep["variants"][variant] = dict(render_s=round(secs, 1), lights=len(lights),
-                                    world=scene.world.name, world_props=wprops,
+                                    world=scene.world.name if scene.world else None, world_props=wprops,
                                     linear=stats(lin, al, f"{variant}_linear"),
                                     display=display_stats(d8, al, f"{variant}_display"), png=p.name)
     print(f"[diag] {PROTO} {variant}: {secs:.1f}s  linear {rep['variants'][variant]['linear']}")
