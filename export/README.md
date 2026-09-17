@@ -1829,3 +1829,31 @@ export/sync_main.sh
     is addressed by vertex index. It therefore has to land in the same topology revision as the card-thinning
     stride (item 43) and share one re-bake of the 16 AO jobs. `CARD_SELECT` already refuses to attach across
     such a change; the trunk fix must join that contract before it ships.
+
+46. **Topology rev 2: finding 9 fixed, the stride on, one revision, one re-bake.** `TOPOLOGY_REV = 2`
+    (rev 1 = `CARD_SELECT` "block" with no trunk protection, which the first `vertex_ao.npz` was baked
+    against). Three changes, all of which move vertices:
+    * **Decimate's vertex group, with the semantics measured rather than assumed.** The group marks what
+      GETS decimated (weight 1 = full ratio, weight 0 = left alone), *not* what is protected: putting the
+      base band in the group left the whole upper trunk untouched at **10 727 tris against a 2 631 target**.
+      So the group holds everything ABOVE `base_z + BASE_BAND_M`, by membership rather than
+      `invert_vertex_group`, so it does not depend on a flag's meaning. Band and factor chosen by sweeping
+      (0.5/1/2/3/5 m x 1.0/0.3/0.2) over both failures, a control and a willow: **1 m at factor 1.0** puts
+      all four at 0.000 for **11-21 extra branch triangles**; 5 m cost +1 304 on the control for no gain.
+    * **The lowest leaf cards are force-kept** whatever the stride says (`cards_forced_low`). On the willows
+      the lowest geometry is fronds hanging BELOW the trunk base, and subsampling at 9-12 % always took
+      them: 43 cards on `willow_s11`, 7 on `willow_s37`.
+    * **`CARD_SELECT = "stride"`** (item 43).
+    **`bbox_min.z - base_z`, rev 1 -> rev 2, all 16:** broadleaf_s19 +0.000 -> +0.000, broadleaf_s53 +0.000
+    -> +0.000, **cypress_column_s2 +3.654 -> +0.000**, cypress_column_s31 (control) -0.005 -> +0.000,
+    cypress_s17 -0.004 -> +0.000, cypress_s3 -0.004 -> +0.000, cypress_s41 -0.003 -> +0.000, eucalyptus_s23
+    -0.010 -> +0.000, eucalyptus_s5 -0.007 -> +0.000, eucalyptus_s61 -0.006 -> +0.000, pine_s29 -0.502 ->
+    +0.000, pine_s7 -0.008 -> +0.000, **redwood_s13 +4.355 -> +0.000**, redwood_s43 -0.005 -> +0.000,
+    willow_s11 +0.411 -> -0.000, willow_s37 +1.526 -> +0.000. **All 16 within 0.05 m, nothing regressed.**
+    Triangles 7 856-8 020 (was 7 992-8 243), measured leaf area kept **0.234-0.782**.
+    **The revision gate.** `topology.json` carries `topology_rev`, `card_select`, `vertex_counts` and
+    `topology_rev_note`. The COLOR_0 attach reads `topology_rev` from the npz (an npz key, or a sibling
+    `vertex_ao.json`) and **refuses any other value**, printing what to re-bake, rather than aborting - the
+    export must still be able to publish a new revision for the bake to work from. Verified live: the rev-1
+    npz was refused ("declares topology_rev None ... this export builds rev 2") and the run still published
+    rev 2. A count check could not have caught this: the stride keeps the same card COUNT as rev 1.

@@ -70,7 +70,22 @@ ANCHOR_TOL_M = 0.02        # reconstructed prototype bbox/radius vs the manifest
 # branches); `block` is what out/gate3/trees_far/vertex_ao.npz was baked against. Flipping this to `stride`
 # REQUIRES the 16 AO jobs to be re-baked - the COLOR_0 attach below refuses the mismatch rather than
 # shipping trees lit by another vertex's occlusion.
-CARD_SELECT = "block"      # "stride" | "block"
+CARD_SELECT = "stride"     # "stride" | "block"
+# TOPOLOGY REVISION. Bumped whenever anything changes WHICH vertices these meshes have, because the vertex
+# AO is addressed by index. rev 1 = CARD_SELECT "block" with no trunk protection (what the first
+# vertex_ao.npz was baked against); rev 2 = the stride plus the trunk-base protection below. The COLOR_0
+# attach refuses an npz whose `topology_rev` is not this one.
+TOPOLOGY_REV = 2
+# Decimate COLLAPSE run over a whole branch mesh finds the TRUNK-BASE rings the cheapest edges to remove,
+# so two prototypes lost 3.65 m / 4.48 m of trunk and their crowns floated (README item 45). The lowest
+# band goes into a vertex group the modifier is told to preserve. A band split was measured and rejected:
+# the trunk is long vertical quads, so at 2 m no face lies wholly inside the band at all, and splitting at
+# 5 m regressed a prototype that was fine.
+# Band chosen by sweeping (band, factor) over the two failures plus a control and a willow: 1 m at factor
+# 1.0 puts all four at zmin - base_z = 0.000 for 11-21 extra branch triangles, and the control does not
+# move. Wider bands cost more (5 m: +1 304 on the control) for no further gain.
+BASE_BAND_M = 1.0
+DECIMATE_VG_FACTOR = 1.0   # Decimate `vertex_group_factor`
 
 
 
@@ -142,9 +157,15 @@ def split_cards(me):
     return out[0], out[1], stats
 
 
-def collapse(me, target, tmp_coll):
+def collapse(me, target, tmp_coll, protect_below=None):
     """gate1_set.exp_mesh's COLLAPSE path (weld, then iterate the ratio), without the voxel fallback:
-    a remeshed branch skeleton is a blob and these meshes are seen close up."""
+    a remeshed branch skeleton is a blob and these meshes are seen close up.
+
+    `protect_below`: a world z. Vertices at or under it go into a vertex group the Decimate modifier is
+    told to preserve (`vertex_group` + `vertex_group_factor`), which is what keeps the trunk reaching the
+    ground - see BASE_BAND_* above. It is an INFLUENCE, not a hard keep, so the triangle budget still
+    holds; the group is remapped by Blender across each modifier apply.
+    """
     if tris_of(me) <= target:
         return me
     bm = bmesh.new()
@@ -156,6 +177,18 @@ def collapse(me, target, tmp_coll):
     tob = bpy.data.objects.new("EXP_TMP_treedec", me)
     tmp_coll.objects.link(tob)
     bpy.context.view_layer.objects.active = tob
+    vg_name = None
+    if protect_below is not None:
+        # MEASURED SEMANTICS: Decimate's vertex group marks what GETS decimated (weight 1 = full ratio,
+        # weight 0 = left alone), not what is protected - assigning the base band weight 1 left the whole
+        # upper trunk untouched at 10 727 tris against a 2 631 target. So the group holds EVERYTHING ABOVE
+        # the band, and the band, at weight 0, is what survives. Membership rather than
+        # `invert_vertex_group`, so this does not depend on a flag's meaning.
+        idx = [i for i, v in enumerate(me.vertices) if v.co.z > protect_below]
+        if idx and len(idx) < len(me.vertices):
+            vg = tob.vertex_groups.new(name="DECIMATE_ABOVE_BASE")
+            vg.add(idx, 1.0, "REPLACE")
+            vg_name = vg.name
     for _ in range(4):
         cur = tris_of(me)
         if cur <= target * 1.05:
@@ -164,6 +197,9 @@ def collapse(me, target, tmp_coll):
         m.decimate_type = "COLLAPSE"
         m.ratio = max(1e-4, float(target) / float(cur))
         m.use_collapse_triangulate = True
+        if vg_name:
+            m.vertex_group = vg_name
+            m.vertex_group_factor = DECIMATE_VG_FACTOR
         bpy.ops.object.modifier_apply(modifier=m.name)
         if tris_of(me) >= cur:
             break
@@ -173,7 +209,7 @@ def collapse(me, target, tmp_coll):
     return out
 
 
-def thin_and_grow(me, target_tris, scale_max):
+def thin_and_grow(me, target_tris, scale_max, protect_below=None):
     """Drop whole leaf cards to `target_tris`, then scale the survivors about their own centre so the crown
     keeps as much of its leaf area as `scale_max` allows. Returns the stats."""
     bm = bmesh.new()
@@ -184,7 +220,7 @@ def thin_and_grow(me, target_tris, scale_max):
     keep_fraction = 1.0 if total <= 0 else max(0.0, min(1.0, float(target_tris) / float(total)))
     keep_pct = int(keep_fraction * 1000)      # floor: a card can be more than 2 triangles
     area_before = sum(f.calc_area() for c in cards for f in c)
-    drop, kept = [], []
+    drop, kept, forced = [], [], 0
     for i, c in enumerate(cards):
         # STRIDE vs BLOCK (CARD_SELECT). The components come back in bmesh order, which is broadly spatial,
         # so `(i % 1000) >= keep_pct` keeps the first keep_pct of every run of 1000 - one contiguous block of
@@ -192,7 +228,13 @@ def thin_and_grow(me, target_tris, scale_max):
         # (visible at 18-31 % keep, which is where the big crowns land). 997 is coprime with 1000, so the
         # stride is a bijection mod 1000: exactly as many cards survive, scattered through the crown.
         k = (i * 997) % 1000 if CARD_SELECT == "stride" else i % 1000
-        if k >= keep_pct:
+        # The lowest cards are force-kept whatever the stride says. On the two willows the lowest geometry
+        # is hanging fronds BELOW the trunk base, and any subsampling of 9-12 % takes them, which lifts the
+        # mesh off the bottom of its own impostor. There are only a handful of them.
+        low = protect_below is not None and min(v.co.z for f in c for v in f.verts) <= protect_below
+        if low:
+            forced += 1
+        if k >= keep_pct and not low:
             drop.extend(c)
         else:
             kept.append(c)
@@ -215,6 +257,7 @@ def thin_and_grow(me, target_tris, scale_max):
     bm.free()
     me.update()
     return dict(card_select=CARD_SELECT, cards_before=len(cards), cards_kept=len(kept),
+                cards_forced_low=forced,
                 keep_fraction=round(keep_fraction, 4), card_scale=round(scale, 4),
                 leaf_area_m2_before=round(float(area_before), 4),
                 leaf_area_m2_after=round(float(area_after), 4),
@@ -324,10 +367,14 @@ def main():
         branch, cards, st = split_cards(src)
         branch_target = int(min(BRANCH_MAX, max(BRANCH_MIN,
                                                 round(TRI_TARGET * st["branch_tris"] / max(st["tris"], 1)))))
-        branch = collapse(branch, branch_target, tmp)
+        # the band is measured from the SOURCE's own base (== the manifest's base_z_m, asserted above),
+        # so the willows' fronds below the trunk base are inside it.
+        base_z = float(slo[2])
+        protect_below = base_z + BASE_BAND_M
+        branch = collapse(branch, branch_target, tmp, protect_below=protect_below)
         branch_tris = tris_of(branch)
         card_budget = max(0, TRI_TARGET - branch_tris)
-        cst = thin_and_grow(cards, card_budget, CARD_SCALE_MAX)
+        cst = thin_and_grow(cards, card_budget, CARD_SCALE_MAX, protect_below=protect_below)
         me = join(branch, cards, f"EXPM_treefar_{p}", materials)
         # the mesh origin becomes the impostor's own axis at the trunk-base plane, so a placement is exactly
         # `location = trunk_base, scale = s` - and the EXPORTED node translation is then to_gltf(trunk_base)
@@ -348,6 +395,8 @@ def main():
         assert tris_of(me) <= TRI_TARGET * 1.05, f"{p}: {tris_of(me)} tris over the {TRI_TARGET} target"
         protos_out[p] = dict(
             anchor_check=anchor_check,
+            base_z_m=round(float(slo[2]), 4), protect_below_z=round(float(protect_below), 4),
+            bbox_min_z_over_base_m=round(float(lo[2]) - float(slo[2]), 4),
             mesh=me.name, tris=tris_of(me), verts=int(co.shape[0]),
             materials=[m.name for m in me.materials],
             uv_layers=[u.name for u in me.uv_layers],
@@ -455,29 +504,40 @@ def main():
     ao_p = next((q for q in (OUT3 / "vertex_ao.npz",
                              g0.MAIN_ROOT / "export/out/gate3/trees_far/vertex_ao.npz") if q.exists()), None)
     ao_rep = {}
+    # THE TOPOLOGY REVISION GATE. The AO is addressed BY VERTEX INDEX, so an npz is only valid for the
+    # exact meshes the hand-off blend carried. Both of this round's fixes - the card-thinning stride and the
+    # trunk-base protection - change WHICH vertices exist, and the stride keeps the same card COUNT, so the
+    # shape check below cannot see the difference. The npz therefore has to name the revision it was baked
+    # against: `topology_rev` inside the npz, or in a sibling vertex_ao.json. A mismatch is NOT fatal - the
+    # export still has to be able to publish a new revision for the bake to work from - but it never
+    # attaches, and it says so loudly and in the report.
+    ao_rev, ao_rev_src = None, None
     if ao_p is not None:
-        # The AO is addressed BY VERTEX INDEX, so it is only valid for the exact mesh the hand-off blend
-        # carried. `CARD_SELECT` decides WHICH leaf cards survive, so a change there re-points every value
-        # onto a different vertex - and because the stride keeps the same NUMBER of cards, the shape check
-        # below would not catch it. Pin it against the hand-off that produced this npz: topology.json's own
-        # `card_select`, defaulting to "block" for the round-1 hand-off, which predates the field.
-        prev_p = next((q for q in (OUT3 / "topology.json",
-                                   g0.MAIN_ROOT / "export/out/gate3/trees_far/topology.json")
-                       if q.exists()), None)
-        prev_sel = "block"
-        if prev_p is not None:
-            prev_sel = (json.loads(prev_p.read_text()) or {}).get("card_select", "block")
-        assert prev_sel == CARD_SELECT, (
-            f"{ao_p.name} was baked against the hand-off built with CARD_SELECT={prev_sel!r}, this run uses "
-            f"{CARD_SELECT!r}. The thinning keeps a DIFFERENT set of leaf cards, so every AO value would "
-            f"land on a different vertex - and the two keep the same card COUNT, so the shape check below "
-            f"cannot see it. Re-bake the 16 vertex-AO jobs against the new trees_far_lod2.blend, or put "
-            f"CARD_SELECT back to {prev_sel!r}.")
+        try:
+            zz = np.load(str(ao_p))
+            if "topology_rev" in zz.files:
+                ao_rev, ao_rev_src = int(np.asarray(zz["topology_rev"]).reshape(-1)[0]), ao_p.name
+        except Exception:
+            pass
+        side = ao_p.with_suffix(".json")
+        if ao_rev is None and side.exists():
+            ao_rev, ao_rev_src = (json.loads(side.read_text()) or {}).get("topology_rev"), side.name
+        if ao_rev != TOPOLOGY_REV:
+            print(f"[trees_far] REFUSING to attach COLOR_0: {ao_p.name} declares topology_rev "
+                  f"{ao_rev!r} (from {ao_rev_src or 'nothing - it predates the field'}), this export builds "
+                  f"rev {TOPOLOGY_REV} (CARD_SELECT={CARD_SELECT!r}, trunk-base protection on). Every AO "
+                  f"value would land on a different vertex. Re-bake the 16 jobs against this run's "
+                  f"trees_far_lod2.blend and stamp them topology_rev {TOPOLOGY_REV}.", file=sys.stderr)
+            rep["color0_refused"] = dict(npz=str(ao_p), npz_topology_rev=ao_rev,
+                                         export_topology_rev=TOPOLOGY_REV, card_select=CARD_SELECT)
+            ao_p = None
+    if ao_p is not None:
         z = np.load(str(ao_p))
-        dts = sorted({str(np.asarray(z[f]).dtype) for f in z.files})
+        dts = sorted({str(np.asarray(z[f]).dtype) for f in z.files if f != "topology_rev"})
         assert dts == ["float32"], f"{ao_p.name} is {dts}, the contract is float32 (gltf_gate1.py's rule)"
-        rng = float(np.float32(max((float(np.asarray(z[f]).max()) for f in z.files), default=1.0))) or 1.0
-        for mn in z.files:
+        rng = float(np.float32(max((float(np.asarray(z[f]).max()) for f in z.files
+                                    if f != "topology_rev"), default=1.0))) or 1.0
+        for mn in [f for f in z.files if f != "topology_rev"]:
             me = bpy.data.meshes.get(mn)
             assert me is not None, f"{ao_p.name} names {mn}, which is not a far-tree LOD2 mesh"
             lin = np.asarray(z[mn]).astype(np.float64)
@@ -493,9 +553,12 @@ def main():
             ao_rep[mn] = dict(verts=int(lin.shape[0]), range=rng, encode="gamma2",
                               linear_mean=round(float(lin.mean()), 6), code_mean=round(float(code.mean()), 6))
         rep["color0"] = dict(source=str(ao_p), range=rng, meshes=ao_rep, card_select=CARD_SELECT,
+                             topology_rev=TOPOLOGY_REV,
                              encode="COLOR_0 = sqrt(linear / range); viewer decodes linear = COLOR_0^2 * range")
     else:
-        rep["color0"] = dict(source=None, note="out/gate3/trees_far/vertex_ao.npz (item B) not present yet: "
+        rep["color0"] = dict(source=None, topology_rev=TOPOLOGY_REV,
+                             note="out/gate3/trees_far/vertex_ao.npz (item B) not present or not at this "
+                                  "topology revision: "
                                                "env_trees.glb ships without COLOR_0, re-run this script and "
                                                "gltf_pack.sh --trees when the bake lands")
     step.done(meshes=len(ao_rep))
@@ -674,6 +737,17 @@ def main():
                            "16 meshes and packs env_trees.glb with -vc 16"),
                 placement=rep["placement_check"],
                 tri_target=TRI_TARGET, card_scale_max=CARD_SCALE_MAX, card_select=CARD_SELECT,
+                topology_rev=TOPOLOGY_REV,
+                topology_rev_note=("rev 1 = CARD_SELECT 'block', no trunk-base protection (what the FIRST "
+                                   "vertex_ao.npz was baked against). rev 2 = the (i*997)%1000 stride plus "
+                                   "the Decimate vertex-group protection of the lowest band, so the trunk "
+                                   "reaches the ground. The AO is addressed by VERTEX INDEX: an npz is only "
+                                   "valid for the revision it was baked against, and rev 2 keeps the same "
+                                   "card COUNT as rev 1, so a count check cannot tell them apart. Stamp the "
+                                   "npz with `topology_rev` (an npz key, or a sibling vertex_ao.json); "
+                                   "export/trees_far.py refuses to attach any other value. Per-prototype "
+                                   "vertex counts are `prototypes[p].verts`."),
+                vertex_counts={k: v["verts"] for k, v in sorted(protos_out.items())},
                 card_select_note="which leaf cards the thinning keeps. The vertex AO is addressed by vertex "
                                  "index, so an npz baked against this blend is only valid while this value "
                                  "is unchanged; export/trees_far.py refuses to attach across a change.",
