@@ -1,8 +1,22 @@
-"""Phase 6c item A: a real LOD2 MESH for each of the 16 far-tree prototypes, instanced at the 127
-`tree_far` placements, as its own lazily loaded `env_trees.glb`.
+"""Phase 6c item A: a real MESH for each of the 16 far-tree prototypes, instanced at the 127
+`tree_far` placements, as its own lazily loaded glb. TWO SETS, one code path (`SETS` / `PFA_TREES_SET`):
 
+    # item A - the far set, 8 k per prototype, with the item-B vertex AO: env_trees.glb
     scripts/blender_run.sh 900 -- --background master_delivery.blend --python export/trees_far.py
     export/gltf_pack.sh --trees          # KTX2 (shared tex_ktx2) + gltfpack -cc -mi -> env_trees.glb
+
+    # round-3 item 2 - the WALK-UP set, 30 k per prototype, no vertex AO: env_trees_lod1.glb
+    PFA_TREES_SET=walkup scripts/blender_run.sh 900 -- --background master_delivery.blend \
+        --python export/trees_far.py
+    export/gltf_pack.sh --trees-lod1
+
+The walk-up set exists because a tree the walker is 3 m from is the one thing an 8 k mesh cannot carry, and
+it shares this file so that it cannot drift from the far set's anchor, placement rule or ROW ORDER - the
+viewer reuses env_trees.glb's placement rows and its per-placement irradiance for it, and after
+`gltfpack -mi` the only key left is the row's position in its mesh's instancing buffer. That sameness is
+asserted, not assumed: `instance_order_check` below reads both written glTFs and compares them node name by
+node name and translation by translation, and verify_glb's `trees_lod1_order_check` compares the two packed
+glbs' node, row and material sequence.
 
 CPU only: no render, no GPU, master_delivery.blend is opened read-only and never saved over.
 
@@ -56,11 +70,50 @@ import gate1_common as g1  # noqa: E402
 import read_alpha  # noqa: E402  (cut_chain / png_has_alpha; the discovery run is guarded by __main__)
 
 SCHEMA = "pfa-phase6c/trees-far/1"
-TRI_TARGET = 8000        # brief item A: <= 8 k triangles per prototype
-BRANCH_MIN = 1500        # a trunk under this reads as a wire at 3 m
-BRANCH_MAX = 4600        # ... and over this there is nothing left for the crown
-CARD_SCALE_MAX = 1.6     # 1/sqrt(keep) capped: these meshes are seen from ~3 m, not only at 40 m
-GLTF_NAME = "env_trees"
+
+# ---------------------------------------------------------------- the two sets this script builds
+# Round 3 item 2 adds a WALK-UP set: the same 16 prototypes, the same anchor and the same 127 placements in
+# the same order, reduced to 30 k instead of 8 k, for the few trees a walker is within ~15 m of. It is the
+# same code path on purpose - a second script would be a second anchor, a second placement rule and a second
+# way for the two glbs to disagree about where a tree stands, which is the one thing the viewer cannot
+# recover once gltfpack has dropped the node names and left only the positional join.
+#
+# `far` reproduces round 2 EXACTLY (every value below is the constant it replaces), so the default run and
+# env_trees.glb are unchanged; `PFA_TREES_SET=walkup` builds the other one. Same pattern as
+# gate4_instance_order.py's SETS / PFA_ORDER_SET.
+SETS = {
+    "far": dict(
+        tri_target=8000,          # brief item A: <= 8 k triangles per prototype
+        branch_min=1500,          # a trunk under this reads as a wire at 3 m
+        branch_max=4600,          # ... and over this there is nothing left for the crown
+        card_scale_max=1.6,       # 1/sqrt(keep) capped: seen from ~3 m, not only at 40 m
+        gltf_name="env_trees", mesh_prefix="EXPM_treefar_",
+        color0=True, hand_off=True, report="trees_far.json", order_against=None),
+    "walkup": dict(
+        # 30 k is the brief's budget. The source _LOD1 meshes are 25.6 k-45.2 k triangles, so this is a
+        # reduction of at most 0.66 and two prototypes need none at all.
+        tri_target=30000,
+        # the branch clamps are the `far` ones scaled by the same 30000/8000, so the pro-rata split between
+        # trunk and crown behaves identically at the larger budget
+        branch_min=5625, branch_max=17250,
+        # NO GROW. `far` scales the surviving cards by 1/sqrt(keep) because it drops 70-80 % of them and the
+        # crown would go see-through; at 30 k the keep fraction is 0.7-1.0 and a grown card is a visibly
+        # wrong leaf at the 3 m this mesh exists for. 1.0 makes min(scale_max, 1/sqrt(keep)) == 1.0 always.
+        card_scale_max=1.0,
+        gltf_name="env_trees_lod1", mesh_prefix="EXPM_treewalk_",
+        # no vertex AO: the brief gives the viewer's interior term the job, and there is no bake for this
+        # topology (the AO npz is addressed by vertex index against the `far` meshes' revision).
+        color0=False, hand_off=False, report="trees_far_lod1.json", order_against="env_trees"),
+}
+SET_NAME = os.environ.get("PFA_TREES_SET", "far")
+assert SET_NAME in SETS, f"PFA_TREES_SET={SET_NAME!r}, expected one of {sorted(SETS)}"
+SET = SETS[SET_NAME]
+TRI_TARGET = SET["tri_target"]
+BRANCH_MIN = SET["branch_min"]
+BRANCH_MAX = SET["branch_max"]
+CARD_SCALE_MAX = SET["card_scale_max"]
+GLTF_NAME = SET["gltf_name"]
+MESH_PREFIX = SET["mesh_prefix"]
 CROWN_TOP_TOL_REL = 0.08   # LOD2 crown top vs the impostor quad's top, as a fraction of the tallest far tree
 PLACE_TOL_M = 0.001        # exported glTF node translation vs to_gltf(trunk_base), per row
 ANCHOR_TOL_M = 0.02        # reconstructed prototype bbox/radius vs the manifest's own impostor numbers
@@ -310,6 +363,7 @@ def main():
 
     rep = dict(schema=SCHEMA, generated=time.strftime("%Y-%m-%dT%H:%M:%S"),
                generator="export/trees_far.py", source_blend=bpy.data.filepath,
+               set=SET_NAME, set_params={k: v for k, v in SET.items()},
                manifest=str(man_p), tri_target=TRI_TARGET, branch_min=BRANCH_MIN, branch_max=BRANCH_MAX,
                card_scale_max=CARD_SCALE_MAX)
 
@@ -337,7 +391,7 @@ def main():
             bpy.data.meshes.remove(me2)
 
         src = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
-        src.name = f"EXPM_treefar_{p}_src"
+        src.name = f"{MESH_PREFIX}{p}_src"
         src.transform(ob.matrix_world)          # prototype world space: z = 0 is the trunk-base plane
         # ---- THE ANCHOR. `src.transform(ob.matrix_world)` leaves the mesh at the prototype's own WORLD
         # position (x ~ -430, y ~ -570 for the s19 broadleaf). Placing it at `location = trunk_base` then
@@ -387,7 +441,7 @@ def main():
         branch_tris = tris_of(branch)
         card_budget = max(0, TRI_TARGET - branch_tris)
         cst = thin_and_grow(cards, card_budget, CARD_SCALE_MAX, protect_below=protect_below)
-        me, mesh_repaired = join(branch, cards, f"EXPM_treefar_{p}", materials)
+        me, mesh_repaired = join(branch, cards, f"{MESH_PREFIX}{p}", materials)
         # the mesh origin becomes the impostor's own axis at the trunk-base plane, so a placement is exactly
         # `location = trunk_base, scale = s` - and the EXPORTED node translation is then to_gltf(trunk_base)
         # verbatim, which is what the per-row assert after the glTF write checks.
@@ -513,10 +567,14 @@ def main():
         tol_rel=CROWN_TOP_TOL_REL, rows=len(placements))
 
     # ---------------------------------------------------------------- COLOR_0 (item B's vertex AO)
-    step = g0.Step("trees_far:color0")
-    ao_p = next((q for q in (OUT3 / "vertex_ao.npz",
-                             g0.MAIN_ROOT / "export/out/gate3/trees_far/vertex_ao.npz") if q.exists()), None)
+    # Only the `far` set. The AO npz is addressed by VERTEX INDEX against the meshes the `far` reduction
+    # builds at its own topology revision, so there is nothing valid to attach to a 30 k walk-up mesh; the
+    # brief gives the viewer's interior term that job instead.
+    step = g0.Step(f"trees_far:color0:{SET_NAME}")
     ao_rep = {}
+    ao_p = None if not SET["color0"] else next((q for q in (OUT3 / "vertex_ao.npz",
+                             g0.MAIN_ROOT / "export/out/gate3/trees_far/vertex_ao.npz") if q.exists()),
+                                                None)
     # THE TOPOLOGY REVISION GATE. The AO is addressed BY VERTEX INDEX, so an npz is only valid for the
     # exact meshes the hand-off blend carried. Both of this round's fixes - the card-thinning stride and the
     # trunk-base protection - change WHICH vertices exist, and the stride keeps the same card COUNT, so the
@@ -569,11 +627,14 @@ def main():
                              topology_rev=TOPOLOGY_REV,
                              encode="COLOR_0 = sqrt(linear / range); viewer decodes linear = COLOR_0^2 * range")
     else:
-        rep["color0"] = dict(source=None, topology_rev=TOPOLOGY_REV,
-                             note="out/gate3/trees_far/vertex_ao.npz (item B) not present or not at this "
-                                  "topology revision: "
-                                               "env_trees.glb ships without COLOR_0, re-run this script and "
-                                               "gltf_pack.sh --trees when the bake lands")
+        rep["color0"] = dict(
+            source=None, topology_rev=TOPOLOGY_REV,
+            note=("this set ships no COLOR_0 by design (brief item 2): the viewer's interior term carries "
+                  "the occlusion, and the AO npz is addressed by vertex index against the `far` meshes"
+                  if not SET["color0"] else
+                  "out/gate3/trees_far/vertex_ao.npz (item B) not present or not at this topology "
+                  "revision: env_trees.glb ships without COLOR_0, re-run this script and "
+                  "gltf_pack.sh --trees when the bake lands"))
     step.done(meshes=len(ao_rep))
 
     # ---------------------------------------------------------------- env_trees.gltf
@@ -650,6 +711,41 @@ def main():
         f"to_gltf(trunk_base), tolerance {PLACE_TOL_M*1000:.0f} mm"
     assert worst_s < 1e-5, f"{gltf_p.name}: worst node scale residual {worst_s:.2e} against height_m / " \
                            f"height_above_base_m"
+    # ---- SAME INSTANCE ORDER AS THE OTHER SET, asserted against the file, not assumed from the code.
+    # The brief's requirement is that the viewer can reuse `env_trees.glb`'s placement rows and its
+    # per-placement irradiance for this glb. After gltfpack -mi the node NAMES are gone and the only key
+    # left is the row's position in its mesh's instancing buffer, so "same order" has to mean: the same
+    # mesh-node sequence, name for name, translation for translation. Both sets build it from the same
+    # `far` list in the same loop, but that is the kind of invariant that holds until somebody sorts
+    # something, so it is read back out of the two written glTFs and compared row by row.
+    order_check = None
+    other = SET.get("order_against")
+    if other:
+        op = g1.OUT / f"{other}.gltf"
+        assert op.exists(), (f"{gltf_p.name}: the {other} set's glTF is not at {op} - build it first "
+                             f"(PFA_TREES_SET={next(k for k, v in SETS.items() if v['gltf_name'] == other)}"
+                             f"), because this set's rows must match its order")
+        odoc = json.loads(op.read_text())
+        orows = [n for n in odoc.get("nodes", []) if "mesh" in n]
+        mrows = [nodes[pl["object"]] for pl in placements]
+        assert len(orows) == len(mrows), \
+            f"{gltf_p.name} has {len(mrows)} mesh nodes, {op.name} has {len(orows)}"
+        worst_o, worst_o_row = 0.0, None
+        for i, (a, b) in enumerate(zip(orows, mrows)):
+            assert a.get("name") == b.get("name"), (
+                f"row {i}: {op.name} has node {a.get('name')!r}, {gltf_p.name} has {b.get('name')!r} - "
+                f"the two sets are not in the same instance order and the placement rows cannot be reused")
+            d = max(abs(float(x) - float(y))
+                    for x, y in zip(a.get("translation", (0, 0, 0)), b.get("translation", (0, 0, 0))))
+            if d > worst_o:
+                worst_o, worst_o_row = d, a.get("name")
+        assert worst_o < PLACE_TOL_M, (
+            f"{gltf_p.name}: worst translation difference against {op.name} is {worst_o * 1000:.3f} mm on "
+            f"{worst_o_row}")
+        order_check = dict(against=op.name, rows=len(mrows),
+                           worst_translation_delta_m=round(worst_o, 6), worst_row=worst_o_row,
+                           rule="node name and translation, row by row, against the other set's glTF - the "
+                                "positional join is the only key that survives gltfpack -mi")
     # ---- COLOR_0 MUST BE THE AO, AND IT IS CHECKED IN THE DATA, NOT BY NAME.
     # These meshes carry exactly ONE colour layer ('irradiance'), but the exporter writes TWO attributes:
     # a CONSTANT WHITE COLOR_0 (unsigned byte, from the material side) and the real layer as COLOR_1
@@ -721,6 +817,7 @@ def main():
         unique_tris=sum(v["tris"] for v in protos_out.values()),
         attributes={k: len(v) for k, v in sorted(attr.items())},
         color0_meshes=sorted(x for x in attr.get("COLOR_0", set()) if x),
+        instance_order_check=order_check,
         gltf_translation_check=dict(
             rows=len(placements), tol_m=PLACE_TOL_M,
             worst_translation_residual_m=round(worst_t, 6), worst_translation_row=worst_row,
@@ -734,6 +831,21 @@ def main():
     step.done(gltf_p, bytes=gltf_p.stat().st_size, nodes=len(doc.get("nodes", [])))
 
     # ---------------------------------------------------------------- the bake hand-off blend
+    # `far` only: it exists so the bake can compute the vertex AO against these exact meshes. The walk-up
+    # set has no bake, and writing it here would OVERWRITE the `far` set's topology.json and
+    # trees_far_lod2.blend - the two files the AO's revision gate is keyed on.
+    if not SET["hand_off"]:
+        rep["hand_off"] = dict(written=False,
+                               why="the walk-up set has no vertex-AO bake; writing topology.json here "
+                                   "would overwrite the `far` set's hand-off and invalidate its revision "
+                                   "gate")
+        rep["wall_s"] = round(time.time() - t_start, 1)
+        (g1.OUT / SET["report"]).write_text(json.dumps(rep, indent=1) + "\n")
+        print(f"[trees_far:{SET_NAME}] {len(protos_out)} prototypes "
+              f"{min(v['tris'] for v in protos_out.values())}-"
+              f"{max(v['tris'] for v in protos_out.values())} tris, {len(placements)} placements, "
+              f"{gltf_p.stat().st_size} B glTF -> {g1.OUT / SET['report']}")
+        return
     step = g0.Step("trees_far:hand_off_blend")
     topo = dict(schema=SCHEMA, generated=rep["generated"], generator="export/trees_far.py",
                 source_blend=bpy.data.filepath, manifest=str(man_p),
@@ -799,11 +911,10 @@ def main():
                            meshes=sorted(keep_meshes))
     step.done(blend_p, bytes=blend_p.stat().st_size)
     rep["wall_s"] = round(time.time() - t_start, 1)
-    (g1.OUT / "trees_far.json").write_text(json.dumps(rep, indent=1) + "\n")
+    (g1.OUT / SET["report"]).write_text(json.dumps(rep, indent=1) + "\n")
     print(f"[trees_far] {len(protos_out)} prototypes "
           f"{min(v['tris'] for v in protos_out.values())}-{max(v['tris'] for v in protos_out.values())} tris, "
-          f"{len(placements)} placements, hand-off {blend_p.name} "
-          f"{blend_p.stat().st_size/1e6:.1f} MB -> {g1.OUT / 'trees_far.json'}")
+          f"{len(placements)} placements -> {g1.OUT / SET['report']}")
 
 
 if __name__ == "__main__":

@@ -129,6 +129,70 @@ def shrub_lod1_order_check(out, bad):
                 shares_irradiance_with="instance_order.json (the LOD2 set) - same instance_irradiance.json")
 
 
+def trees_lod1_order_check(out, bad):
+    """Phase 6c round 3 item 2: `env_trees_lod1.glb` (the walk-up set) against `env_trees.glb`.
+
+    The brief's requirement is that the viewer reuses env_trees.glb's placement rows and its per-placement
+    irradiance for the walk-up glb, so the two files have to present the SAME rows in the SAME order.
+    `export/trees_far.py` asserts that before the pack, node name by node name and translation by
+    translation, against the other set's glTF. What this adds is the only part gltfpack can still break: the
+    pack groups placements into `EXT_mesh_gpu_instancing` buffers in its own order and drops the names, so a
+    different mesh split or a different merge would re-segment the rows even though the glTF was identical.
+
+    The row TRANSLATIONS themselves are not readable here - `gltfpack -cc` meshopt-encodes every buffer view,
+    and decoding it needs the viewer's own loader (web/tools/instance_rows.mjs, which is how Gate 4 recovers
+    env.glb's order). What IS readable from the JSON, and is what re-segmentation would move, is the
+    structure: the same number of meshes, the same instanced nodes in the same sequence, the same row count
+    in each, and the same material on each. All four are compared.
+    """
+    a_p, b_p = out / "env_trees.glb", out / "env_trees_lod1.glb"
+    if not b_p.exists():
+        return None                      # extra_glb_check already failed on the missing file
+    if not a_p.exists():
+        bad.append("env_trees_lod1: env_trees.glb is missing, so the walk-up set's row order cannot be "
+                   "checked against the set it must match")
+        return None
+    ad, _ = glb_json(a_p)
+    bd, _ = glb_json(b_p)
+
+    def rows(doc):
+        o = []
+        for nd in doc.get("nodes", []):
+            if "mesh" not in nd:
+                continue
+            gi = (nd.get("extensions") or {}).get("EXT_mesh_gpu_instancing")
+            n = accessor_count(doc, list((gi.get("attributes") or {}).values())[0]) if gi else 1
+            me = doc["meshes"][nd["mesh"]]
+            mats = [doc["materials"][pr["material"]].get("name")
+                    for pr in me.get("primitives", []) if "material" in pr]
+            o.append((n, tuple(mats)))
+        return o
+
+    ra, rb = rows(ad), rows(bd)
+    if len(ra) != len(rb):
+        bad.append(f"env_trees_lod1.glb has {len(rb)} instanced nodes, env_trees.glb has {len(ra)} - "
+                   f"gltfpack segmented the rows differently and the placement rows cannot be reused")
+    else:
+        for i, (x, y) in enumerate(zip(ra, rb)):
+            if x[0] != y[0]:
+                bad.append(f"env_trees_lod1.glb node {i} has {y[0]} instance rows, env_trees.glb has "
+                           f"{x[0]} - the per-placement irradiance would land on the wrong tree")
+                break
+            if x[1] != y[1]:
+                bad.append(f"env_trees_lod1.glb node {i} draws material {y[1]}, env_trees.glb draws "
+                           f"{x[1]} - the two sets are not in the same mesh order")
+                break
+    return dict(glb="env_trees_lod1.glb", against="env_trees.glb",
+                instanced_nodes=[len(ra), len(rb)],
+                rows=[sum(n for n, _ in ra), sum(n for n, _ in rb)],
+                meshes=[len(ad.get("meshes", [])), len(bd.get("meshes", []))],
+                structure_matches=not any("env_trees_lod1.glb node" in x or
+                                          "instanced nodes" in x for x in bad),
+                translations="asserted pre-pack in export/trees_far.py `instance_order_check` (node name "
+                             "and translation, row by row, against env_trees.gltf); the packed rows are "
+                             "meshopt-encoded and only the viewer's loader can decode them")
+
+
 def extra_glb_check(out, bad, name, report_name, maker):
     """Phase 6c: one of the side glbs - `env_trees` (item A, the far trees' LOD2 meshes) or `env_shrubs`
     (item E, the shrub/reed LOD1 set).
@@ -618,6 +682,12 @@ def main(out_dir):
     rt = extra_glb_check(out, bad, "env_trees", "trees_far.json", "--trees")
     if rt is not None:
         rows["trees_far"] = rt
+    rw = extra_glb_check(out, bad, "env_trees_lod1", "trees_far_lod1.json", "--trees-lod1")
+    if rw:
+        rows["trees_walkup"] = rw
+    rwo = trees_lod1_order_check(out, bad)
+    if rwo:
+        rows["trees_walkup_order"] = rwo
     rs = extra_glb_check(out, bad, "env_shrubs", "shrub_lod1.json", "--shrubs")
     if rs is not None:
         rows["shrub_lod1"] = rs

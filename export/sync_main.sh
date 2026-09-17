@@ -34,6 +34,7 @@ if [ -d "$ROOT/export/out/gate3" ]; then
   rsync -a --exclude 'gate3_bake.blend*' --exclude 'gate3_imp.blend*' --exclude 'tex/' \
         --exclude 'slots/' --exclude 'vertex/' --exclude 'impostor/*.png' --exclude 'probe/*.exr' \
         --exclude 'trees_far/trees_far_irr.blend*' --exclude 'trees_far/ao/' --exclude 'trees_far/ebake/' \
+        --exclude 'foliage/albedo_pass_*.exr' \
         "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
   echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
 fi

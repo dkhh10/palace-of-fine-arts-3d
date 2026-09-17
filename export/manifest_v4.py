@@ -839,6 +839,67 @@ def main():
             placed_tris=tf["gltf"]["placed_tris"],
             source="export/trees_far.py + export/gltf_pack.sh --trees",
             topology="out/gate3/trees_far/topology.json"))
+        # -------------------------------------------------- Phase 6c round 3 item 2: the WALK-UP set
+        # `PFA_TREES_SET=walkup export/trees_far.py` + `gltf_pack.sh --trees-lod1` build
+        # `env_trees_lod1.glb`: the same 16 prototypes at 30 k instead of 8 k, at the SAME 127 placements
+        # in the SAME row order, for the handful of trees a walker comes within ~15 m of. The viewer draws
+        # it only inside `draw_within_m`; beyond that the 8 k far mesh, and beyond `treeMeshDist` the
+        # impostor.
+        tw_p = next((q for q in (g3.GATE1_OUT / "trees_far_lod1.json",
+                                 g3.MAIN_ROOT / "export" / "out" / "gate1" / "trees_far_lod1.json")
+                     if q.exists()), None)
+        if tw_p is not None:
+            tw = json.loads(tw_p.read_text())
+            assert tw.get("schema") == "pfa-phase6c/trees-far/1", f"trees_far_lod1 schema {tw.get('schema')!r}"
+            assert tw.get("set") == "walkup", f"trees_far_lod1.json is the {tw.get('set')!r} set"
+            tw_glb = next((q for q in (g3.GATE1_OUT / "env_trees_lod1.glb",
+                                       g3.MAIN_ROOT / "export" / "out" / "gate1" / "env_trees_lod1.glb")
+                           if q.exists()), None)
+            # the placements are not repeated here ON PURPOSE. They are the same 127 rows as
+            # `trees.far_mesh.placements`, in the same order, and that is asserted twice - pre-pack, node
+            # name and translation against env_trees.gltf (trees_far.py `instance_order_check`), and
+            # post-pack, node-for-node row counts and materials (verify_glb `trees_lod1_order_check`). A
+            # second copy of the list in this file could only ever disagree with the first.
+            assert len(tw["placements"]) == len(tf["placements"]), \
+                (f"the walk-up set has {len(tw['placements'])} placements and the far set "
+                 f"{len(tf['placements'])}: they are not the same rows")
+            man["trees"]["walkup_mesh"] = dict(
+                glb="env_trees_lod1.glb",
+                bytes=(tw_glb.stat().st_size if tw_glb else None),
+                load="lazy, beside env_trees.glb; until it is in, every tree is the 8 k far mesh",
+                draw_within_m=15.0,
+                textures="external, exactly as far_mesh: the same leaf and bark KTX2 in textures.ktx2_dir",
+                prototypes=[dict(name=k, mesh=v["mesh"], tris=v["tris"], verts=v["verts"],
+                                 materials=v["materials"],
+                                 height_above_base_m=v["height_above_base_m"],
+                                 src_tris=v["src_tris"], card_scale=v["reduction"]["card_scale"],
+                                 cards=[v["reduction"]["cards_kept"], v["reduction"]["cards_before"]])
+                            for k, v in sorted(tw["prototypes"].items())],
+                placements=dict(
+                    count=len(tw["placements"]),
+                    same_as="trees.far_mesh.placements",
+                    note="identical rows in identical order - read them from far_mesh; they are not "
+                         "repeated here so the two can never disagree",
+                    verified_pre_pack=tw["gltf"].get("instance_order_check"),
+                    verified_post_pack="verify_glb.py trees_lod1_order_check"),
+                join=("the same positional join as far_mesh, and the same result: 32 meshes and 254 rows "
+                      "for 127 trees, node for node. A row's placement - and therefore its entry in "
+                      "far_mesh.lighting's per-placement irradiance - is found by matching the "
+                      "EXT_mesh_gpu_instancing TRANSLATION to trees.far_mesh.placements[].loc in glTF "
+                      "space (Blender (x, y, z) -> glTF (x, z, -y)), because gltfpack drops node names."),
+                color0=dict(present=False, note=tw["color0"].get("note")),
+                lighting="reuse trees.far_mesh.lighting verbatim: same placements, same rows, same order. "
+                         "This set carries no vertex AO by design (brief item 2) - the viewer's interior "
+                         "term covers it.",
+                crown_top_deviation_m=tw["placement_check"]["worst_crown_top_deviation_m"],
+                unique_tris=sum(v["tris"] for v in tw["prototypes"].values()),
+                placed_tris=tw["gltf"]["placed_tris"],
+                tri_target=tw["tri_target"],
+                source="PFA_TREES_SET=walkup export/trees_far.py + export/gltf_pack.sh --trees-lod1")
+        else:
+            print("[gate3] note: no out/gate1/trees_far_lod1.json - manifest has no `trees.walkup_mesh` "
+                  "block (run PFA_TREES_SET=walkup export/trees_far.py, then "
+                  "export/gltf_pack.sh --trees-lod1)", file=sys.stderr)
     else:
         print("[gate3] note: no out/gate1/trees_far.json - manifest has no `trees.far_mesh` block "
               "(run export/trees_far.py, then export/gltf_pack.sh --trees)", file=sys.stderr)
