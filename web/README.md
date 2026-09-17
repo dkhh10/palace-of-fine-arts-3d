@@ -737,8 +737,14 @@ Every number here is from `renders/web/round16b_*` and re-derivable from the com
 | delta | +1.9 | +1.3 | **-0.2** | +0.2 | +1.4 | +1.4 |
 
 Post off: 23.5-27.5 ms.  Draw calls 329-351 (round 16: 274-301), triangles 5.2-5.6 M (4.1-4.5 M).
-**Resident 1717.2 MB** against round 16's 1606.6: +54 MB of texture (the 16 foliage maps at 1 K) and
-+57 MB of geometry (`env_trees.glb` 129 k unique tris, `env_shrubs.glb` 17 k).  Run-to-run spread on
+**Resident 1800.6 MB** against round 16's 1684.7 and round 15's 1677.9 (QA 16 §4; this paragraph said
+1717.2 / 1606.6 until 6c round 3 — those two figures were wrong by ~83 MB and the committed
+`round16b_perf.json` was right all along, its `total_bytes` agreeing with the sum of the classes).
+**+115.9 MB over round 15, by class**: texture 1171.6 -> **1227.5** (+55.9, the 16 foliage albedo /
+translucency maps at 1 K), geometry 62.3 -> **129.0** (+66.7, `env_trees.glb` 129 k unique tris and
+`env_shrubs.glb` 17 k, both lazily loaded), instance matrices 0.2 -> 0.3 (+0.1), render targets
+443.8 unchanged.  That is **1.50x** the 1 200 MB Gate 1 budget; 6c does not chase it (6b's tiers do).
+Run-to-run spread on
 this machine is about 2 ms, measured on two passes over identical geometry.
 
 **Parity per station** (viewer against the Phase 5 Cycles reference, `mean|diff|/255`; lower is better):
