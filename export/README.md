@@ -1084,9 +1084,10 @@ draw beyond `treeMeshDist` need a third number so the two paths agree across the
       "bake": "lights off, uniform white world, DIFFUSE colour off, the shadow-ray cut-out override, 64 spp, VERTEX_COLORS",
       "topology": "asserted equal to the export's LOD2 vertex count per prototype; a mismatch is a hard failure",
       "meshes": { "<LOD2 mesh>": { "verts": 0, "min": 0.0, "mean": 0.0, "max": 0.0 } } },
-    "instance_irradiance": {                  // per PLACEMENT, exactly the shrub/reed schema and join
+    "instance_irradiance": {                  // per PLACEMENT, the shrub/reed schema and join, at /2
       "json": "trees_far/instance_irradiance.json",
-      "schema": "pfa-phase6/gate4-instance-irradiance/1",
+      "schema": "pfa-phase6/gate4-instance-irradiance/2",   // /1 is the shrub file; /2 adds `prototypes`
+      "reduce": "`rgb` = mean_nonzero over the cov mask, the reducer the shrub file ships; `cov` beside it",
       "encode": "none", "dtype": "float32", "encoding": "linear-float32",
       "units": "scene-linear irradiance / pi (x lightmaps.scale = pi)",
       "attribute": "_IRRADIANCE", "placements": 127, "key": "WORLD TRANSLATION",
@@ -1094,7 +1095,8 @@ draw beyond `treeMeshDist` need a third number so the two paths agree across the
     "prototype_e_bake": {                     // 16 values, in the SAME json under `prototypes`
       "where": "trees_far/instance_irradiance.json -> prototypes[\"<prototype>\"].E_bake = [r, g, b]",
       "units": "the same scene-linear irradiance / pi as instance_irradiance",
-      "bake": "the vertex-averaged DIFFUSE irradiance (colour off, the same shadow-ray override) of that prototype's LOD2 mesh in gate3_imp.blend's OWN environment - the lawn under the open sky, the lamps exactly as the atlas bake had them",
+      "bake": "the DIFFUSE irradiance (colour off, the same shadow-ray override, the same mean_nonzero reducer) of the `_LOD1` PROTOTYPE OBJECT that job imp_<proto> rendered into the atlas, in gate3_imp.blend's OWN environment - the lawn under the open sky, the prototype isolated, the lamps exactly as the atlas bake had them. NOT the export's LOD2 mesh (review r1 finding 5): the divisor has to describe the body that produced the atlas. LOD2 is the mesh path's AO / _IRRADIANCE geometry only.",
+      "raw": "BOTH VALUES RAW: this file's `rgb` (or the unscaled `_IRRADIANCE` attribute) over this file's E_bake. `lightmaps.scale` (pi) is applied to NEITHER - scaling only the numerator makes every impostor pi x too bright (review r1 finding 7).",
       "use": "IMPOSTOR ONLY. Beyond `treeMeshDist` the viewer draws atlas_frame * (E_placement / E_bake) per placement, per channel: the atlas already holds lit radiance baked in the nursery, so dividing it by the irradiance that nursery supplied and multiplying by the irradiance the placement actually receives turns the unlit atlas into the same shading the mesh path applies. Clamp the ratio (the lead sets the ceiling) and fall back to 1 where E_bake has a zero channel." } } }
 ```
 
@@ -1785,3 +1787,64 @@ export/sync_main.sh
     Scale(s) @ Translation(-anchor_p)` with `anchor_p` the prototype object's own world translation, z
     asserted 0 - and that is exactly what `export/trees_far_set.py` does for the bake, so **the bake's
     numbers are correct whatever `env_trees.glb` currently does**. Reported to the lead.
+
+
+38. **6c item 2 - the far-tree lighting hand-off: 36 jobs, `vertex_ao.npz` + `instance_irradiance.json` at
+    schema /2** (2026-09-17; `export/trees_far_set.py`, `export/bake_lm.py` kind `proto`,
+    `export/trees_far_compose.py`, `export/trees_far_ratio_check.py`). All 36 through
+    `bake_queue.sh --gate3`, **764 s of Blender wall in total** (16 AO jobs 44 s, 16 E_bake jobs 158 s,
+    4 x ~32-placement irradiance jobs 562 s).
+    * **Vertex AO is normalised, not assumed.** Each AO job hides every light, swaps in a uniform white
+      world of radiance 1 and bakes the prototype ALONE (all 16 sit at the world origin in
+      `trees_far_lod2.blend`), plus a 2 m calibration plane 1 km away with nothing above it. That plane
+      reads **1.0000 in all 16 jobs**, which is what makes the raw DIFFUSE value the AO factor. Every
+      array is asserted in [0, 1] and against the export's LOD2 vertex count. `loose_verts` is **0**
+      everywhere, so no zero is an unbaked vertex - the zeros are crown interior.
+    * **E_bake is measured on the body that produced the atlas** (review r1 finding 5): the `_LOD1`
+      prototype object in `gate3_imp.blend`, isolated with the lawn exactly as `imp_<proto>` isolated it,
+      at the same rig, 128 spp. Both sides of the ratio use `mean_nonzero` over the cov mask (finding 4)
+      and both ship `cov`. Determinism checked: `tfeb_ENV_tree_broadleaf_s53_LOD1` baked with an override
+      scope of 1 object and again with all 16 gives the **identical** [3.04233, 2.24703, 5.57665].
+
+    | prototype | LOD2 verts | AO min / mean / max | AO zeros % | E_bake R, G, B | E_bake cov |
+    |---|---|---|---|---|---|
+    | `broadleaf_s19` | 14007 | 0.000 / 0.218 / 0.977 | 27.7 | 2.693, 2.018, 5.162 | 0.948 |
+    | `broadleaf_s53` | 14118 | 0.000 / 0.231 / 0.969 | 23.4 | 3.042, 2.247, 5.577 | 0.943 |
+    | `cypress_column_s2` | 13299 | 0.000 / 0.216 / 0.979 | 27.1 | 1.906, 1.425, 4.332 | 0.889 |
+    | `cypress_column_s31` | 13312 | 0.000 / 0.193 / 1.000 | 34.0 | 1.715, 1.277, 3.788 | 0.818 |
+    | `cypress_s17` | 14040 | 0.000 / 0.285 / 0.977 | 12.4 | 2.786, 2.117, 6.047 | 0.978 |
+    | `cypress_s3` | 14147 | 0.000 / 0.287 / 0.977 | 10.6 | 2.716, 2.052, 5.669 | 0.977 |
+    | `cypress_s41` | 14334 | 0.000 / 0.255 / 0.977 | 12.8 | 2.419, 1.831, 5.073 | 0.972 |
+    | `eucalyptus_s23` | 13207 | 0.000 / 0.357 / 1.000 | 17.6 | 3.501, 2.675, 7.639 | 0.979 |
+    | `eucalyptus_s5` | 12599 | 0.000 / 0.344 / 1.000 | 19.6 | 3.394, 2.587, 7.414 | 0.965 |
+    | `eucalyptus_s61` | 12714 | 0.000 / 0.344 / 1.000 | 17.7 | 3.459, 2.615, 7.078 | 0.973 |
+    | `pine_s29` | 14388 | 0.000 / 0.330 / 0.980 | 11.4 | 3.898, 2.958, 8.909 | 0.992 |
+    | `pine_s7` | 14292 | 0.000 / 0.337 / 0.969 | 10.0 | 3.963, 2.955, 8.053 | 0.992 |
+    | `redwood_s13` | 14726 | 0.000 / 0.297 / 1.000 | 13.3 | 3.437, 2.534, 7.228 | 0.996 |
+    | `redwood_s43` | 14791 | 0.000 / 0.282 / 0.995 | 13.7 | 3.217, 2.383, 7.159 | 0.996 |
+    | `willow_s11` | 8979 | 0.000 / 0.472 / 1.000 | 4.6 | 3.169, 2.435, 6.455 | 0.992 |
+    | `willow_s37` | 8572 | 0.000 / 0.502 / 1.000 | 4.2 | 3.129, 2.395, 6.446 | 0.992 |
+
+    * **E_placement, 127 placements, 0 dark.** `trees_far_irr.blend` = `gate3_bake.blend` with the 127 LOD2
+      placements linked in and the 127 `source_tree` objects and 127 `ENV_treeboard_*` billboards hidden -
+      the scene as it ships once the far trees are meshes. Per-channel **0.130-4.920 R, 0.158-3.701 G,
+      0.196-9.064 B**, luminance **0.156-4.262** (mean 2.273), cov mean **0.871**, **0** placements with a zero
+      channel (the shrub file had 7). The join is unambiguous: the closest two placements of the same mesh
+      are **6.11 m** apart against a 0.02 m tolerance, and no same-mesh pair sits within 2x it.
+    * **The ratio was validated on one placement before the other 15 E_bake jobs were queued** (review r1
+      finding 6, the lead's gate), and it is judged DISPLAY-referred through `lut_agx_high_contrast_65.cube`
+      at -2.8331399 EV, because the reference is a display PNG whose `b_over_g_linear` is only an
+      inverse-sRGB of it. Test: `TREEFAR_000`, `ENV_tree_broadleaf_s53_LOD1`, 40.19 m on the axis of
+      station 2, frame col 1 row 7. E_bake **[3.042, 2.247, 5.577]**, E_placement **[3.189, 2.235, 0.978]**
+      -> ratio **[1.048, 0.995, 0.175]**: the placement receives the same warm light and **5.7x less blue**,
+      which is the diagnosis' prediction measured. The crown goes display sRGB8 **[21.5, 33.6, 42.6] ->
+      [23.7, 29.7, 1.2]**, **hue 205.5 -> 72.6 deg against the reference's 52.2** - 86.7 % of the hue gap
+      closed, no overshoot - at 0.92x the luminance. **PASS**, so all 16 were queued.
+    * **The one caveat, reported rather than smoothed over:** on B/G alone the full ratio overshoots
+      (display 1.267 -> 0.041 against 0.648). B/G is the fragile metric here - after modulation the display
+      BLUE is 1.2/255, so it is a ratio of a near-black channel - and hue, which uses all three, says the
+      full ratio is right. The structural reason an overshoot is possible at all: E_placement is the mean
+      over the WHOLE crown volume while the atlas frame shows only the sky-facing outer shell, which keeps
+      more sky than the volume mean; and the reference's own `foliage_p80` crop biases the target blue-up
+      (carry 9). If the lead wants the B/G matched instead of the hue, `ratio ** k` with **k = 0.4386**
+      lands display B/G exactly on 0.648 (hue 105.4, worse). Numbers in `trees_far/ratio_check.json`.

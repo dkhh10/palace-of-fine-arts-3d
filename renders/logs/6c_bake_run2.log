@@ -1,0 +1,272 @@
+[bake_queue] PFA_BAKE_DIFFUSE_WORLD=<unset> -> off (the scene world as saved)
+[bake_queue] flip_normals_for_bake: ARCH_rotunda_plaster_ceiling_merged
+[bake_queue] skip sky_diffuse (already done)
+[bake_queue] skip probe_hero (already done)
+[bake_queue] skip lm_ENV_terrain_ground (already done)
+[bake_queue] skip lm_ARCH_rotunda_concrete_ochre_merged (already done)
+[bake_queue] skip lm_ARCH_site_concrete_podium_merged (already done)
+[bake_queue] skip lm_ENV_lagoon_bed (already done)
+[bake_queue] skip lm_ARCH_colonnade_south_concrete_colonnade_merged (already done)
+[bake_queue] skip lm_ARCH_colonnade_north_concrete_colonnade_merged (already done)
+[bake_queue] skip lm_ARCH_site_paving_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_concrete_inner_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_plaster_ceiling_rib_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_drum_band_merged (already done)
+[bake_queue] skip lm_ENV_ground_colonnade_walk (already done)
+[bake_queue] skip lm_ARCH_rotunda_concrete_podium_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_dome_membrane_merged (already done)
+[bake_queue] skip lm_ENV_riprap_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_plaster_ceiling_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_column_tan_inner_merged (already done)
+[bake_queue] skip slot_orn_0_00 (already done)
+[bake_queue] skip slot_orn_0_01 (already done)
+[bake_queue] skip slot_orn_0_02 (already done)
+[bake_queue] skip slot_orn_0_03 (already done)
+[bake_queue] skip slot_orn_0_04 (already done)
+[bake_queue] skip slot_orn_0_05 (already done)
+[bake_queue] skip slot_orn_0_06 (already done)
+[bake_queue] skip slot_orn_1_00 (already done)
+[bake_queue] skip slot_orn_1_01 (already done)
+[bake_queue] skip slot_orn_1_02 (already done)
+[bake_queue] skip slot_orn_1_03 (already done)
+[bake_queue] skip slot_orn_1_04 (already done)
+[bake_queue] skip slot_arch_inst_0_00 (already done)
+[bake_queue] skip slot_arch_inst_0_01 (already done)
+[bake_queue] skip slot_arch_inst_0_02 (already done)
+[bake_queue] skip slot_arch_inst_0_03 (already done)
+[bake_queue] skip slot_arch_inst_0_04 (already done)
+[bake_queue] skip slot_arch_inst_0_05 (already done)
+[bake_queue] skip slot_arch_inst_0_06 (already done)
+[bake_queue] skip slot_arch_inst_1_00 (already done)
+[bake_queue] skip slot_arch_inst_1_01 (already done)
+[bake_queue] skip slot_arch_inst_1_02 (already done)
+[bake_queue] skip slot_arch_inst_1_03 (already done)
+[bake_queue] skip slot_arch_inst_1_04 (already done)
+[bake_queue] skip slot_arch_inst_1_05 (already done)
+[bake_queue] skip slot_arch_inst_1_06 (already done)
+[bake_queue] skip slot_arch_inst_2_00 (already done)
+[bake_queue] skip vc_00 (already done)
+[bake_queue] skip vc_01 (already done)
+[bake_queue] skip imp_ENV_tree_broadleaf_s19_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_broadleaf_s53_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_column_s2_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_column_s31_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_s17_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_s3_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_s41_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_eucalyptus_s23_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_eucalyptus_s5_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_eucalyptus_s61_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_pine_s29_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_pine_s7_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_redwood_s13_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_redwood_s43_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_willow_s11_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_willow_s37_LOD1 (already done)
+[bake_queue] skip lmg1_ARCH_colonnade_south_concrete_colonnade_merged (already done)
+[bake_queue] skip lmg1_ARCH_rotunda_concrete_ochre_merged (already done)
+[bake_queue] skip inst_probe (already done)
+[bake_queue] skip inst_probe2 (already done)
+[bake_queue] skip inst_splitA (already done)
+[bake_queue] skip inst_splitB (already done)
+[bake_queue] skip inst_irr_00 (already done)
+[bake_queue] skip inst_irr_01 (already done)
+[bake_queue] skip inst_irr_02 (already done)
+[bake_queue] skip inst_irr_03 (already done)
+[bake_queue] skip tfao_ENV_tree_broadleaf_s19_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_broadleaf_s53_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_column_s2_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_column_s31_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_s17_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_s3_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_s41_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_eucalyptus_s23_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_eucalyptus_s5_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_eucalyptus_s61_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_pine_s29_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_pine_s7_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_redwood_s13_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_redwood_s43_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_willow_s11_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_willow_s37_LOD1 (already done)
+00:00.445  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_broadleaf_s53_LOD1: ENV_tree_broadleaf_s53_LOD1 47456 verts 7.2s mean=3.4148 max=51.3786 cov=0.943
+[gate3] job tfeb_ENV_tree_broadleaf_s53_LOD1 done in 7.3 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 43828 exited rc=0 after 9 s (max 1800)
+[bake_queue] tfeb_ENV_tree_broadleaf_s53_LOD1 rc=0 9s (90/109)
+[bake_queue] skip tfirr_00 (already done)
+[bake_queue] skip tfirr_01 (already done)
+[bake_queue] skip tfirr_02 (already done)
+[bake_queue] skip tfirr_03 (already done)
+00:00.399  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_broadleaf_s19_LOD1: ENV_tree_broadleaf_s19_LOD1 43420 verts 6.6s mean=3.1190 max=48.9024 cov=0.948
+[gate3] job tfeb_ENV_tree_broadleaf_s19_LOD1 done in 6.6 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 43888 exited rc=0 after 7 s (max 1800)
+[bake_queue] tfeb_ENV_tree_broadleaf_s19_LOD1 rc=0 7s (95/109)
+00:00.343  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_cypress_column_s2_LOD1: ENV_tree_cypress_column_s2_LOD1 59772 verts 10.1s mean=2.2718 max=52.6829 cov=0.889
+[gate3] job tfeb_ENV_tree_cypress_column_s2_LOD1 done in 10.1 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 43909 exited rc=0 after 10 s (max 1800)
+[bake_queue] tfeb_ENV_tree_cypress_column_s2_LOD1 rc=0 10s (96/109)
+00:00.342  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_cypress_column_s31_LOD1: ENV_tree_cypress_column_s31_LOD1 62312 verts 10.8s mean=1.8479 max=54.0365 cov=0.818
+[gate3] job tfeb_ENV_tree_cypress_column_s31_LOD1 done in 10.9 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 43930 exited rc=0 after 11 s (max 1800)
+[bake_queue] tfeb_ENV_tree_cypress_column_s31_LOD1 rc=0 11s (97/109)
+00:00.330  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_cypress_s17_LOD1: ENV_tree_cypress_s17_LOD1 66968 verts 9.5s mean=3.5683 max=51.9262 cov=0.978
+[gate3] job tfeb_ENV_tree_cypress_s17_LOD1 done in 9.5 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 43955 exited rc=0 after 11 s (max 1800)
+[bake_queue] tfeb_ENV_tree_cypress_s17_LOD1 rc=0 11s (98/109)
+00:00.346  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_cypress_s3_LOD1: ENV_tree_cypress_s3_LOD1 66280 verts 9.5s mean=3.3987 max=51.1851 cov=0.977
+[gate3] job tfeb_ENV_tree_cypress_s3_LOD1 done in 9.6 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 43983 exited rc=0 after 10 s (max 1800)
+[bake_queue] tfeb_ENV_tree_cypress_s3_LOD1 rc=0 10s (99/109)
+00:00.339  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_cypress_s41_LOD1: ENV_tree_cypress_s41_LOD1 65128 verts 9.6s mean=3.0195 max=52.8489 cov=0.972
+[gate3] job tfeb_ENV_tree_cypress_s41_LOD1 done in 9.6 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44007 exited rc=0 after 11 s (max 1800)
+[bake_queue] tfeb_ENV_tree_cypress_s41_LOD1 rc=0 11s (100/109)
+00:00.345  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_eucalyptus_s23_LOD1: ENV_tree_eucalyptus_s23_LOD1 61536 verts 8.1s mean=4.5101 max=52.6106 cov=0.979
+[gate3] job tfeb_ENV_tree_eucalyptus_s23_LOD1 done in 8.2 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44028 exited rc=0 after 9 s (max 1800)
+[bake_queue] tfeb_ENV_tree_eucalyptus_s23_LOD1 rc=0 9s (101/109)
+00:00.343  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_eucalyptus_s5_LOD1: ENV_tree_eucalyptus_s5_LOD1 60464 verts 8.3s mean=4.3078 max=52.4109 cov=0.965
+[gate3] job tfeb_ENV_tree_eucalyptus_s5_LOD1 done in 8.3 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44049 exited rc=0 after 9 s (max 1800)
+[bake_queue] tfeb_ENV_tree_eucalyptus_s5_LOD1 rc=0 9s (102/109)
+00:00.338  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_eucalyptus_s61_LOD1: ENV_tree_eucalyptus_s61_LOD1 60216 verts 8.2s mean=4.2656 max=52.4893 cov=0.973
+[gate3] job tfeb_ENV_tree_eucalyptus_s61_LOD1 done in 8.2 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44074 exited rc=0 after 9 s (max 1800)
+[bake_queue] tfeb_ENV_tree_eucalyptus_s61_LOD1 rc=0 9s (103/109)
+00:00.351  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_pine_s29_LOD1: ENV_tree_pine_s29_LOD1 72860 verts 10.6s mean=5.2147 max=51.7905 cov=0.992
+[gate3] job tfeb_ENV_tree_pine_s29_LOD1 done in 10.6 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44135 exited rc=0 after 11 s (max 1800)
+[bake_queue] tfeb_ENV_tree_pine_s29_LOD1 rc=0 11s (104/109)
+00:00.351  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_pine_s7_LOD1: ENV_tree_pine_s7_LOD1 69272 verts 10.3s mean=4.9513 max=52.6438 cov=0.992
+[gate3] job tfeb_ENV_tree_pine_s7_LOD1 done in 10.4 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44195 exited rc=0 after 12 s (max 1800)
+[bake_queue] tfeb_ENV_tree_pine_s7_LOD1 rc=0 12s (105/109)
+00:00.350  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_redwood_s13_LOD1: ENV_tree_redwood_s13_LOD1 67340 verts 10.1s mean=4.3810 max=51.1184 cov=0.996
+[gate3] job tfeb_ENV_tree_redwood_s13_LOD1 done in 10.2 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44230 exited rc=0 after 11 s (max 1800)
+[bake_queue] tfeb_ENV_tree_redwood_s13_LOD1 rc=0 11s (106/109)
+00:00.334  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_redwood_s43_LOD1: ENV_tree_redwood_s43_LOD1 66756 verts 10.2s mean=4.2337 max=51.2424 cov=0.996
+[gate3] job tfeb_ENV_tree_redwood_s43_LOD1 done in 10.2 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44258 exited rc=0 after 11 s (max 1800)
+[bake_queue] tfeb_ENV_tree_redwood_s43_LOD1 rc=0 11s (107/109)
+00:00.336  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_willow_s11_LOD1: ENV_tree_willow_s11_LOD1 54088 verts 7.4s mean=3.9890 max=52.4432 cov=0.992
+[gate3] job tfeb_ENV_tree_willow_s11_LOD1 done in 7.4 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44278 exited rc=0 after 8 s (max 1800)
+[bake_queue] tfeb_ENV_tree_willow_s11_LOD1 rc=0 8s (108/109)
+00:00.339  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfeb_ENV_tree_willow_s37_LOD1: ENV_tree_willow_s37_LOD1 56484 verts 7.8s mean=3.9569 max=51.8147 cov=0.992
+[gate3] job tfeb_ENV_tree_willow_s37_LOD1 done in 7.8 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 44311 exited rc=0 after 9 s (max 1800)
+[bake_queue] tfeb_ENV_tree_willow_s37_LOD1 rc=0 9s (109/109)
+[bake_queue] finished 109/109
