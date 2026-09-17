@@ -635,3 +635,20 @@ modulated), station 2 MAE 23.13 -> 20.08. A permanent placement gate (mesh bbox 
 env_trees.glb otherwise — it read 905 m on the pre-fix glb. Cost: every station within +3 ms of round 15 (hero +1.9 ms); resident GPU memory 1 717 MB, +111 over
 round 16 and above the 1 200 MB Gate 1 budget (6a shipped at ~1 055 resident in the manifest's accounting) — QA 16 reports it; 6b's mobile tier is where it is cut.
 Open (export, post-6c): a walk-up that stops at a far tree sees the LOD2's grown cards and the magnified 1 K atlas; that tree wants its LOD1.
+
+## 2026-09-17 · Lead 100 % tile judgement of round16b at stations 1, 2, 5 (renders/web/960/lead_tiles_r16b_cam0{1,2,5}.jpg; 640x460 crops at 100 % beside the Cycles frame)
+Verdict: the 6c round-1 fixes hold (no blue blob, far trees placed, station 2 numerically up), but foliage at close range is NOT yet credible; a second 6c round is
+needed (the brief allows two). What the tiles show, station by station:
+- Station 2 (the user's complaint): the tree that fills the frame is now green but a smooth opaque rounded mass with no leaf or branch structure — a magnified 85 px
+  impostor frame beyond the 12 m mesh distance; the reference is a dark tree with visible branching. The near-left tree is a soft mass; the far impostors at the top-left
+  read pale lavender against the reference's dark green; one reed spray is several times the reference's size; the shore shrubs are pale confetti.
+- Station 5: the near trees (meshes, within 40 m) render as uniformly lit yellow-green clouds — the crown-bent normals plus soft edges remove the interior shadow that
+  gives the reference's trees their volume; the shore shrubs are straw-yellow sparse card clusters where the reference has dense, dark-green, species-distinct shrubs.
+- Station 1: acceptable at distance; trees in front of the colonnade are lighter and yellower than the reference, the left-shore shrubs pale; the untextured backdrop
+  wall behind the north bays is the known 6a residual.
+Round-2 items, owners to be fixed after QA 16's boxes (the critic measures level/hue/sat of the shrub and tree boxes at 2 and 5): (a) viewer — tree interior shading:
+reduce or gate the crown-bent normal blend and add an interior-darkening term (the near trees carry COLOR_0 irradiance, the far meshes vertex AO) so crowns stop reading
+as balloons; (b) shrub brightness/colour — decide from the boxes whether the tinted albedo, the per-placement irradiance or the translucency term is what makes them
+straw-pale (export or viewer accordingly); (c) the station-2 fill tree — measure its distance; if the mesh at that magnification reads better than the blob in a tile
+(not in the box metric alone), raise fartreemesh to cover it; else the impostor atlas needs a finer near-frame set for that prototype. Reed-card scale checked against
+the reference at station 2.
