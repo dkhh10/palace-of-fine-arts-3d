@@ -325,7 +325,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `(6c C2): they dissolve into their mesh inside the switch distance and the mesh dissolves into them beyond it` );
 		if ( atlas2k ) note( `impostor atlas: 2K variant on ${report.atlas2k ? report.prototypes - report.atlas2kMissing.length : 0}/${report.prototypes} prototype(s)`
 			+ ( report.atlas2kMissing.length ? `; 1K kept on ${report.atlas2kMissing.join( ', ' )} (no albedo_2k in the manifest)` : '' ) );
-		note( `impostors: ${report.instances} far tree(s) over ${report.prototypes} prototype(s), `
+		note( `impostors: ${report.instances} tree(s) (${report.instances - report.nearInstances} far + ${report.nearInstances} near) `
+			+ `over ${report.prototypes} prototype(s), `
 			+ `${report.drawCalls} draw call(s), ${impostors.grid}x${impostors.grid} octahedral frames `
 			+ `at ${impostors.framePx} px on a ${impostors.atlasPx} px atlas, 3-frame barycentric blend, `
 			+ `alpha test ${ALPHA_TEST}, unlit (the atlas is baked radiance); ${report.textures}/${report.prototypes} atlas(es) loaded, `
