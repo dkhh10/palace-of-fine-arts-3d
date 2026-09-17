@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import fs from 'node:fs';
 import path from 'node:path';
 import { normaliseManifest } from '../src/manifest.js';
-import { irradianceRatio, applyFoliage, RATIO_CLAMP } from '../src/foliage.js';
+import { irradianceRatio, applyFoliage, farTreeIrradiance, RATIO_CLAMP } from '../src/foliage.js';
 import { lazyUrlCandidates, loadFarTrees, markShrubLodRows, prototypeEbake } from '../src/foliageLazy.js';
 import { buildImpostors } from '../src/impostors.js';
 
@@ -181,6 +181,36 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 		if ( a ) for ( let i = 0; i < a.count; i ++ ) if ( a.getX( i ) === 0 ) masked ++;
 	} );
 	ok( masked === 3, `the mask is on the right ROWS (${masked} zeros)` );
+}
+
+// ---------------------------------------------------------------- 5b. the bake's json, end to end
+// The file the bake shipped, flattened exactly as loadFarTreeLighting flattens it, then pushed
+// through the consumer that will run the day the lead's manifest_v4 puts the block in the manifest.
+{
+	const f = path.join( MAIN, 'export/out/gate3/trees_far/instance_irradiance.json' );
+	if ( ! fs.existsSync( f ) ) {
+		info( 'no trees_far/instance_irradiance.json yet, skipped' );
+	} else {
+		const j = JSON.parse( fs.readFileSync( f, 'utf8' ) );
+		const rows = [];
+		for ( const rec of Object.values( j.meshes || {} ) ) for ( const r of rec.placements || [] ) rows.push( r );
+		ok( rows.length === 127, `${rows.length} rows flattened out of meshes[*].placements (expected 127)` );
+		const eb = prototypeEbake( { prototypes: j.prototypes } );
+		ok( eb && Object.keys( eb ).length === 16, `${eb ? Object.keys( eb ).length : 0} prototype E_bake values (expected 16)` );
+		const raw2 = JSON.parse( JSON.stringify( { trees: { far_mesh: { lighting: { rows, prototypes: j.prototypes } } },
+			impostors: raw.impostors } ) );
+		for ( const mode of [ 'full', 'chroma' ] ) {
+			const notes = [];
+			const out = farTreeIrradiance( manifest.treesFar, raw2, mode, ( m ) => notes.push( m ) );
+			ok( out.applied === 127, `mode ${mode}: ${out.applied}/127 placements modulated (${out.unmatched} unmatched)` );
+			const v = [ ...out.byIndex.values() ];
+			const mx = Math.max( ...v.flat() ), mn = Math.min( ...v.flat() );
+			const clamped = v.filter( ( r ) => r.some( ( x ) => Math.abs( x - RATIO_CLAMP ) < 1e-9 ) ).length;
+			info( `mode ${mode}: ratio range ${mn.toFixed( 3 )}..${mx.toFixed( 3 )}, ${clamped} placement(s) on the ${RATIO_CLAMP} clamp` );
+			ok( mx <= RATIO_CLAMP + 1e-9, `mode ${mode}: no channel above the clamp (max ${mx.toFixed( 3 )})` );
+			ok( mn > 0, `mode ${mode}: every channel positive (min ${mn.toFixed( 3 )})` );
+		}
+	}
 }
 
 // ---------------------------------------------------------------- 6. E_bake plumbing
