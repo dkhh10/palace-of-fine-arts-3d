@@ -123,10 +123,16 @@ fi
 # class glbs stay byte-identical and the viewer can load this one lazily. Its textures are the leaf and bark
 # PNGs env.gltf already uses, so they are normally already in tex_ktx2; any that are not are encoded here with
 # the same rule as --gate1 (colour is the default, data maps are the exception).
-if [ "$1" = "--trees" ] || [ "$1" = "--shrubs" ]; then
+if [ "$1" = "--trees" ] || [ "$1" = "--shrubs" ] || [ "$1" = "--trees-lod1" ]; then
   OUT="$ROOT/export/out/gate1"
   KTX="$OUT/tex_ktx2"
+  # --trees-lod1 is the 6c round-3 WALK-UP set: the same 16 prototypes and the same 127 placements at 30 k
+  # instead of 8 k, lazily loaded and drawn only within ~15 m. Same flags as --trees on purpose - it shares
+  # env.glb's leaf and bark KTX2 through -tr and the same tex_ktx2 directory - except that it never has a
+  # COLOR_0 to keep (the EXTRA probe below finds none, so -kv/-vc are not added).
   if [ "$1" = "--trees" ]; then NAME=env_trees; TAG=trees; REPORT=trees_far.json; MAKER=export/trees_far.py
+  elif [ "$1" = "--trees-lod1" ]; then NAME=env_trees_lod1; TAG=trees_lod1; REPORT=trees_far_lod1.json
+                                MAKER="PFA_TREES_SET=walkup export/trees_far.py"
   else                          NAME=env_shrubs; TAG=shrubs; REPORT=shrub_lod1.json; MAKER=export/shrub_lod1.py
   fi
   G="$OUT/$NAME.gltf"
