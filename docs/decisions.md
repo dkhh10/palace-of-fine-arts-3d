@@ -569,3 +569,9 @@ Foliage at close range (user's cam02 screenshot): the near-left tree is a leaf-c
 the centre blob is a far-tree IMPOSTOR whose "far" classification is fixed at export by distance to the hero station, so at cam02 it stands a few metres from the camera at
 85 px per frame, and the shrubs/reeds are LOD2 card meshes with a hard mask. These are the post-6a residuals already listed in the final judgement; the proposed fix is a foliage
 pass (6c) offered to the user, not started.
+
+## 2026-09-17 · User: foliage pass (6c) before 6b; the full look stays the default preset; the iPhone is still to be named
+Plan docs/briefs/phase6c_foliage.md: every tree gets a mesh (127 far trees at LOD2 in a lazily-loaded env_trees.glb, runtime mesh/impostor switch by walker distance, 2K impostor
+atlas), a leaf shader (two-sided, translucency, soft edges, bent normals), shrub/reed LOD1 within 30 m with the albedo hue fixed in the export, 2K leaf textures. Acceptance by
+100 % tiles at stations 1/2/5 and QA 16 (no station drops > 0.1, station 2 rises, +3 ms budget). Two rounds maximum. The impostor blue cast is diagnosed atlas-vs-viewer before any
+re-bake. 6b (deployment) follows; the fast preset stays documented and non-default.
