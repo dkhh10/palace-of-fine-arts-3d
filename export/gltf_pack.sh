@@ -118,11 +118,14 @@ fi
 # class glbs stay byte-identical and the viewer can load this one lazily. Its textures are the leaf and bark
 # PNGs env.gltf already uses, so they are normally already in tex_ktx2; any that are not are encoded here with
 # the same rule as --gate1 (colour is the default, data maps are the exception).
-if [ "$1" = "--trees" ]; then
+if [ "$1" = "--trees" ] || [ "$1" = "--shrubs" ]; then
   OUT="$ROOT/export/out/gate1"
   KTX="$OUT/tex_ktx2"
-  G="$OUT/env_trees.gltf"
-  [ -f "$G" ] || { echo "gltf_pack.sh: $G missing - run export/trees_far.py first" >&2; exit 2; }
+  if [ "$1" = "--trees" ]; then NAME=env_trees; TAG=trees; REPORT=trees_far.json; MAKER=export/trees_far.py
+  else                          NAME=env_shrubs; TAG=shrubs; REPORT=shrub_lod1.json; MAKER=export/shrub_lod1.py
+  fi
+  G="$OUT/$NAME.gltf"
+  [ -f "$G" ] || { echo "gltf_pack.sh: $G missing - run $MAKER first" >&2; exit 2; }
   command -v toktx    >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
   command -v gltfpack >/dev/null || { echo "gltf_pack.sh: gltfpack not on PATH" >&2; exit 2; }
   mkdir -p "$KTX"
@@ -142,32 +145,35 @@ print(' '.join(i['uri'] for i in d.get('images',[]) if i.get('uri')))
           "$KTX/$b.ktx2" "$OUT/$f" >/dev/null
     n=$((n+1))
   done
-  echo "[trees] STEP toktx wall_s=$(( $(date +%s)-t0 )) new_files=$n (the rest were already in tex_ktx2)"
-  python3 "$HERE/gltf_ktx2_patch.py" "$G" "$OUT/env_trees_ktx2.gltf" "tex_ktx2" >/dev/null
+  echo "[$TAG] STEP toktx wall_s=$(( $(date +%s)-t0 )) new_files=$n (the rest were already in tex_ktx2)"
+  python3 "$HERE/gltf_ktx2_patch.py" "$G" "$OUT/${NAME}_ktx2.gltf" "tex_ktx2" >/dev/null
   # -km: the viewer picks the leaf materials out by name (MAT_leaf_*), and gltfpack merges materials whose
   # factors match. -kv/-vc 16 only once the item B vertex AO is in the glTF, so the file stays byte-identical
   # between a re-run without it.
   # -tr (keep referring to the original texture paths): the leaf and bark KTX2 are the ones env.glb already
-  # carries, and embedding them again costs 24 MB in a file whose geometry is under 1 MB. They sit in the
+  # carries, and embedding them again costs 24 MB in a file whose geometry is ~1 MB. They sit in the
   # tex_ktx2 directory beside this glb, which is exactly where the relative URIs resolve from.
   EXTRA=(-km -tr)
   if python3 -c "
 import json,sys
-d=json.load(open('$OUT/trees_far.json'))
+d=json.load(open('$OUT/$REPORT'))
 sys.exit(0 if d.get('gltf',{}).get('color0_meshes') else 1)
 "; then EXTRA+=(-kv -vc 16); fi
   t2=$(date +%s)
-  # -vp 16 (not env.glb's -vpf): these 16 meshes share one bounding box ~40 m across, where 16-bit position
-  # quantisation is sub-millimetre. gltfpack's own reported error is printed in the log below.
-  if gltfpack -i "$OUT/env_trees_ktx2.gltf" -o "$OUT/env_trees.glb" -cc -mi -vp 16 $EXTRA 2>>"$OUT/gltfpack.log"; then
+  # -vpf (float positions), the same as env.glb and arch.glb, and NOT the briefed -vp 16. Measured: with
+  # -vp 16 gltfpack folds each mesh's dequantisation transform into its EXT_mesh_gpu_instancing rows, so a
+  # row's TRANSLATION is no longer the node's world translation (env_trees rows came out 40-700 m from their
+  # nodes, with instance scales of 0.001) and the per-placement join - the only key that survives the pack -
+  # cannot be recovered. env.glb takes -vpf for a different reason (QA-11d-2) and its rows match to 5.9 mm.
+  if gltfpack -i "$OUT/${NAME}_ktx2.gltf" -o "$OUT/$NAME.glb" -cc -mi -vpf $EXTRA 2>>"$OUT/gltfpack.log"; then
     SRC=ktx2
   else
-    echo "[trees] gltfpack refused the KTX2 glTF; falling back to the PNG glTF" >&2
-    gltfpack -i "$G" -o "$OUT/env_trees.glb" -cc -mi -vp 16 $EXTRA 2>>"$OUT/gltfpack.log"
+    echo "[$TAG] gltfpack refused the KTX2 glTF; falling back to the PNG glTF" >&2
+    gltfpack -i "$G" -o "$OUT/$NAME.glb" -cc -mi -vpf $EXTRA 2>>"$OUT/gltfpack.log"
     SRC=png
   fi
-  echo "[trees] STEP gltfpack wall_s=$(( $(date +%s)-t2 )) source=$SRC env_trees.glb=$(stat -f%z "$OUT/env_trees.glb")B"
-  printf '%s\n' "env_trees -cc -mi -vp 16 $EXTRA" >> "$OUT/gltfpack_flags.txt"
+  echo "[$TAG] STEP gltfpack wall_s=$(( $(date +%s)-t2 )) source=$SRC $NAME.glb=$(stat -f%z "$OUT/$NAME.glb")B"
+  printf '%s\n' "$NAME -cc -mi -vpf $EXTRA" >> "$OUT/gltfpack_flags.txt"
   python3 "$HERE/verify_glb.py" "$OUT" || exit 1
   exit 0
 fi

@@ -162,6 +162,67 @@ def instance_block():
         meshes=meshes)
 
 
+def instance_lod1_block(base):
+    """`lightmaps.instance_irradiance.lod1`: the SAME per-placement irradiance, re-ordered for the shrub/reed
+    LOD1 glb (`env_shrubs.glb`, Phase 6c item E).
+
+    The values are not re-baked and not re-derived: they are `instance_irradiance.json`'s own RGB per
+    placement, emitted a second time in **env_shrubs.glb's** row order, because that order is a different
+    permutation of the same placements and `offset` indexes a mesh's own array. That is how both LODs share
+    a placement's irradiance - swapping LOD must not change a shrub's lighting. Three of the 1 379 placements
+    have no LOD1 (export/shrub_lod1.py `skipped_meshes`): they keep the env.glb card and are absent here.
+    """
+    ip, op = find("instance_irradiance.json"), find("instance_order_shrub_lod1.json")
+    if ip is None or op is None:
+        return None
+    irr = json.loads(ip.read_text())
+    order = json.loads(op.read_text())
+    assert order.get("schema") == "pfa-phase6/gate4-instance-order/2", f"order schema {order.get('schema')!r}"
+    assert order.get("set") == "shrub_lod1", f"{op.name} is the {order.get('set')!r} set"
+    if not order.get("loc_in_json"):
+        return dict(present=False, note="the LOD1 order file is a PFA_INSTANCE_ORDER_HARNESS run")
+    sha = hashlib.sha256(ip.read_bytes()).hexdigest()
+    assert order.get("irradiance_sha256") in (None, sha), (
+        f"{op.name} was built against a different {ip.name}: re-run "
+        f"PFA_ORDER_SET=shrub_lod1 python3 export/gate4_instance_order.py")
+    glb = next((q for q in (g3.GATE1_OUT / order["glb"],
+                            g3.MAIN_ROOT / "export" / "out" / "gate1" / order["glb"]) if q.exists()), None)
+    assert glb is not None, f"{op.name} refers to {order['glb']}, which is in no out/gate1"
+    assert glb.stat().st_size == order["glb_bytes"], (
+        f"{op.name} holds the row order of a {order['glb_bytes']} B {order['glb']}, the file on disk is "
+        f"{glb.stat().st_size} B: re-dump the rows and re-run the join")
+    by_obj = {p["object"]: p for m in irr["meshes"].values() for p in m["placements"]}
+    meshes = {}
+    for mesh, e in sorted(order["meshes"].items()):
+        names = e["objects"]
+        missing = [n for n in names if n not in by_obj]
+        assert not missing, f"{mesh}: LOD1 glb rows with no baked placement: {missing[:5]}"
+        meshes[mesh] = dict(n=len(names),
+                            rgb=[c for n in names for c in by_obj[n]["rgb"]],
+                            cov=[by_obj[n]["cov"] for n in names],
+                            glb_nodes=sorted({nd["gltf_node"] for nd in order["nodes"]
+                                              if any(sg[0] == mesh for sg in nd["segments"])}))
+    covered = sum(len(e["objects"]) for e in order["meshes"].values())
+    return dict(
+        glb=order["glb"], placements=covered, meshes_n=len(meshes),
+        placements_in_lod2=base.get("placements"),
+        not_in_lod1=(base.get("placements") or 0) - covered,
+        encode=base.get("encode"), dtype=base.get("dtype"), decode=base.get("decode"),
+        key=("INSTANCE TRANSLATION, the same join as the LOD2 set, run against env_shrubs.glb: "
+             "`mesh` keys stay the LOD2 mesh names so the two LODs' arrays line up by mesh, while the "
+             "row ORDER is this glb's own."),
+        order_source=dict(file=op.name, glb_bytes=order["glb_bytes"], tol_m=order["tol_m"],
+                          margin=order["margin"], rows_matched=order["rows_matched"],
+                          worst_residual_m=order["worst_residual_m"],
+                          worst_margin_ratio=order["worst_margin_ratio"],
+                          axis_swap=order["axis_swap"], name_crosscheck=order.get("name_crosscheck")),
+        nodes=[dict(gltf_node=nd["gltf_node"], count=nd["count"], tris=nd["tris"],
+                    material=nd["material"], segments=nd["segments"]) for nd in order["nodes"]],
+        nodes_note=("read exactly as the LOD2 `nodes`: an ordered [mesh, count, offset] list per node with a "
+                    "running cursor, `gltf_node` indexing env_shrubs.glb's own nodes array."),
+        meshes=meshes)
+
+
 def main():
     man = json.loads((g3.GATE2_OUT / "manifest.json").read_text())
     setj = json.loads((g3.OUT / "gate3_set.json").read_text())
@@ -338,6 +399,9 @@ def main():
                   relay_note=(relay or {}).get("vertex_irradiance_skipped"))
 
     instance = instance_block()
+    inst_lod1 = instance_lod1_block(instance)
+    if inst_lod1 is not None:
+        instance["lod1"] = inst_lod1
 
     man["lightmaps"] = dict(
         mode="baked", uv="TEXCOORD_1", scale=g3.LIGHTMAP_SCALE,
@@ -621,6 +685,35 @@ def main():
             materials=entries,
             source="export/read_foliage.py + export/foliage_tex.py + export/gltf_pack.sh --foliage")
         man["materials"] = mats_block
+
+    # ------------------------------------------------------------ Phase 6c item E: the shrub/reed LOD1 set
+    sl_p = next((q for q in (g3.GATE1_OUT / "shrub_lod1.json",
+                             g3.MAIN_ROOT / "export" / "out" / "gate1" / "shrub_lod1.json") if q.exists()),
+                None)
+    if sl_p is not None:
+        sl = json.loads(sl_p.read_text())
+        assert sl.get("schema") == "pfa-phase6c/shrub-lod1/1", f"shrub_lod1 schema {sl.get('schema')!r}"
+        sl_glb = next((q for q in (g3.GATE1_OUT / "env_shrubs.glb",
+                                   g3.MAIN_ROOT / "export" / "out" / "gate1" / "env_shrubs.glb")
+                       if q.exists()), None)
+        man["shrubs"] = dict(lod1=dict(
+            glb="env_shrubs.glb", bytes=(sl_glb.stat().st_size if sl_glb else None),
+            load="lazy, beside env_trees.glb; until it is in, every shrub is the env.glb LOD2 card",
+            textures="external, not embedded (gltfpack -tr): the same KTX2 in `textures.ktx2_dir` env.glb "
+                     "carries. The tinted replacements are `materials.foliage`.",
+            meshes=[dict(lod2_mesh=k, mesh=v["mesh"], source=v["lod1_mesh"], tris=v["tris"],
+                         verts=v["verts"], lod2_tris=v["lod2_tris"], placements=v["placements"],
+                         materials=v["materials"]) for k, v in sorted(sl["meshes"].items())],
+            placements=len(sl["placements"]),
+            placed_tris=sl["placed_tris"], placed_tris_lod2=sl["placed_tris_lod2"],
+            unique_tris=sum(v["tris"] for v in sl["meshes"].values()),
+            join=("lightmaps.instance_irradiance.lod1 - the SAME per-placement irradiance in this glb's own "
+                  "row order, so swapping LOD does not change a shrub's lighting"),
+            not_in_lod1=dict(placements=sl["placements_without_lod1"], meshes=sl["skipped_meshes"]),
+            source="export/shrub_lod1.py + export/gltf_pack.sh --shrubs",
+            note=("a separate glb rather than more meshes inside env.glb: putting them in env.glb means "
+                  "re-running gate1_set.py, which rebuilds the UV1 atlases every Gate 2 PBR bake and every "
+                  "Gate 3 lightmap is pinned to (export/shrub_lod1.py, export/README.md item 34).")))
 
     # ------------------------------------------------------------ Phase 6c item A: the far trees' meshes
     # export/trees_far.py + `gltf_pack.sh --trees` build `env_trees.glb`: the 16 impostor prototypes as real

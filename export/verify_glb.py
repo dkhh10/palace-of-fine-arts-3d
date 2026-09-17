@@ -71,27 +71,85 @@ def mesh_centre(doc, mesh_idx):
     return [(lo[i] + hi[i]) / 2.0 for i in range(3)] if seen else None
 
 
-def trees_far_check(out, bad):
-    """Phase 6c item A: env_trees.glb, the far trees' LOD2 meshes.
+def shrub_lod1_order_check(out, bad):
+    """Phase 6c item E: `instance_order_shrub_lod1.json` against `env_shrubs.glb` itself.
 
-    It is not one of the four export_set.json classes, so the class loop cannot see it. What it is checked
-    against is `out/gate1/trees_far.json`, which export/trees_far.py wrote in the same Blender run that wrote
-    the glTF: the 16 prototype meshes and their triangle counts, and the 127 placements. The three failures
-    that matter and are invisible in a viewer are (1) a glb packed from a different glTF than the report
-    describes, (2) instance rows lost or duplicated by `gltfpack -mi` - a tree in the wrong place or missing -
-    and (3) a leaf material that lost its `alphaMode`, which draws every card as a solid rectangle
-    (export/README.md items 29-30).
+    Both LODs bind the SAME per-placement irradiance, so the LOD1 row order has to be as hard-pinned as the
+    LOD2 one: a stale order file does not look like an error in the viewer, it looks like the shrubs changing
+    lighting when the walker crosses the LOD distance.
     """
-    glb = out / "env_trees.glb"
-    rep_p = out / "trees_far.json"
+    g3dir = out.parent / "gate3"
+    alt = Path(os.environ.get("PFA_MAIN_ROOT",
+                              "/Users/dk/Projects/3d render blender 3rd attempt building")) / "export/out/gate3"
+    op = next((d / "instance_order_shrub_lod1.json" for d in (g3dir, alt)
+               if (d / "instance_order_shrub_lod1.json").exists()), None)
+    glb = out / "env_shrubs.glb"
+    if op is None or not glb.exists():
+        return None
+    order = json.loads(op.read_text())
+    if order.get("set") != "shrub_lod1":
+        bad.append(f"{op.name} is the {order.get('set')!r} set, not shrub_lod1")
+        return None
+    if glb.stat().st_size != order.get("glb_bytes"):
+        bad.append(f"{op.name} was written against a {order.get('glb_bytes')} B env_shrubs.glb, the file on "
+                   f"disk is {glb.stat().st_size} B - re-dump the rows and re-run "
+                   f"PFA_ORDER_SET=shrub_lod1 export/gate4_instance_order.py")
+        return None
+    if not order.get("loc_in_json"):
+        bad.append(f"{op.name} is a PFA_INSTANCE_ORDER_HARNESS run: the LOD1 rows would be joined by name")
+    doc, _ = glb_json(glb)
+    per_mesh, rows_total = {}, 0
+    for nd in order["nodes"]:
+        i = nd["gltf_node"]
+        gi = ((doc["nodes"][i].get("extensions") or {}).get("EXT_mesh_gpu_instancing")
+              if isinstance(i, int) and 0 <= i < len(doc.get("nodes", [])) else None)
+        if not gi:
+            bad.append(f"env_shrubs.glb node {i} carries no EXT_mesh_gpu_instancing but the order file "
+                       f"gives it {nd['count']} rows")
+            continue
+        n = accessor_count(doc, list((gi.get("attributes") or {}).values())[0])
+        if n != nd["count"]:
+            bad.append(f"env_shrubs.glb node {i} has {n} instance rows, the order file says {nd['count']}")
+        rows_total += nd["count"]
+        cursor = {}
+        for mesh, count, off in nd["segments"]:
+            if off != cursor.get(mesh, 0):
+                bad.append(f"env_shrubs.glb node {i}: {mesh} segment starts at {off}, the running cursor is "
+                           f"at {cursor.get(mesh, 0)}")
+            cursor[mesh] = cursor.get(mesh, 0) + count
+            per_mesh[mesh] = per_mesh.get(mesh, 0) + count
+    for mesh, e in order["meshes"].items():
+        if per_mesh.get(mesh) != e["n"]:
+            bad.append(f"env_shrubs.glb gives {mesh} {per_mesh.get(mesh)} rows, the order file lists {e['n']}")
+    return dict(glb="env_shrubs.glb", rows=rows_total, placements=order["placements"],
+                meshes=len(order["meshes"]), nodes=len(order["nodes"]),
+                worst_residual_m=order["worst_residual_m"],
+                worst_margin_ratio=order["worst_margin_ratio"],
+                counts_match=not any("env_shrubs" in b for b in bad),
+                shares_irradiance_with="instance_order.json (the LOD2 set) - same instance_irradiance.json")
+
+
+def extra_glb_check(out, bad, name, report_name, maker):
+    """Phase 6c: one of the side glbs - `env_trees` (item A, the far trees' LOD2 meshes) or `env_shrubs`
+    (item E, the shrub/reed LOD1 set).
+
+    Neither is one of the four export_set.json classes, so the class loop cannot see them. Each is checked
+    against the report its builder wrote in the same Blender run that wrote the glTF: the source meshes and
+    their triangle counts, and the placements. The three failures that matter and are invisible in a viewer
+    are (1) a glb packed from a different glTF than the report describes, (2) instance rows lost or duplicated
+    by `gltfpack -mi` - a tree or shrub in the wrong place or missing - and (3) a leaf material that lost its
+    `alphaMode`, which draws every card as a solid rectangle (export/README.md items 29-30).
+    """
+    glb = out / f"{name}.glb"
+    rep_p = out / report_name
     if not glb.exists() or not rep_p.exists():
         return None
     rep = json.loads(rep_p.read_text())
-    for src_name in ("env_trees.gltf", "env_trees_ktx2.gltf"):
+    for src_name in (f"{name}.gltf", f"{name}_ktx2.gltf"):
         sp = out / src_name
         if sp.exists() and sp.stat().st_mtime > glb.stat().st_mtime + 1.0:
-            bad.append(f"trees: {src_name} is newer than env_trees.glb - the glb was packed from a different "
-                       f"glTF than this check reads. Re-run export/gltf_pack.sh --trees.")
+            bad.append(f"{name}: {src_name} is newer than {name}.glb - the glb was packed from a different "
+                       f"glTF than this check reads. Re-run export/gltf_pack.sh {maker}.")
     doc, _ = glb_json(glb)
     mesh_tris = []
     for me in doc.get("meshes", []):
@@ -120,40 +178,43 @@ def trees_far_check(out, bad):
     # tree is bark + leaf, so the row count to expect is the pre-pack glTF's nodes weighted by their mesh's
     # primitive count - not the placement count. Read from env_trees.gltf, which the mtime pin above ties to
     # this glb.
-    src = json.loads((out / "env_trees.gltf").read_text()) if (out / "env_trees.gltf").exists() else None
+    sgp = out / f"{name}.gltf"
+    src = json.loads(sgp.read_text()) if sgp.exists() else None
+    protos = rep.get("prototypes") or rep.get("meshes")
     want_rows = len(rep["placements"])
-    want_meshes = len(rep["prototypes"])
+    want_meshes = len(protos)
     if src is not None:
         prims = [len(m.get("primitives", [])) for m in src.get("meshes", [])]
         want_rows = sum(prims[n["mesh"]] for n in src.get("nodes", []) if "mesh" in n)
         want_meshes = sum(prims)
     if rows_total != want_rows:
-        bad.append(f"env_trees.glb draws {rows_total} tree instances, env_trees.gltf has {want_rows} "
-                   f"(placements x primitives per tree)")
+        bad.append(f"{name}.glb draws {rows_total} instances, {name}.gltf has {want_rows} "
+                   f"(placements x primitives per mesh)")
     if len(doc.get("meshes", [])) != want_meshes:
-        bad.append(f"env_trees.glb has {len(doc.get('meshes', []))} meshes, env_trees.gltf has "
-                   f"{want_meshes} primitives over {len(rep['prototypes'])} prototypes")
-    want_tris = sum(rep["prototypes"][pl["prototype"]]["tris"] for pl in rep["placements"])
+        bad.append(f"{name}.glb has {len(doc.get('meshes', []))} meshes, {name}.gltf has "
+                   f"{want_meshes} primitives over {len(protos)} source meshes")
+    pkey = "prototype" if "prototypes" in rep else "lod2_mesh"
+    want_tris = sum(protos[pl[pkey]]["tris"] for pl in rep["placements"])
     # gltfpack welds and re-triangulates, so the count moves a little; more than 1 % means geometry was lost.
     if want_tris and abs(drawn_tris - want_tris) > 0.01 * want_tris:
-        bad.append(f"env_trees.glb draws {drawn_tris} triangles, the export placed {want_tris} "
+        bad.append(f"{name}.glb draws {drawn_tris} triangles, the export placed {want_tris} "
                    f"({100.0*(drawn_tris-want_tris)/want_tris:+.1f} %)")
     # the cut-out cards: the effective cutoff, because gltfpack drops `alphaCutoff` when it is the default 0.5
     want_alpha = rep.get("gltf", {}).get("alpha_mode_materials") or {}
     got = {m.get("name"): (m.get("alphaMode"), m.get("alphaCutoff", 0.5)) for m in doc.get("materials", [])}
-    for name, (mode, cut) in want_alpha.items():
-        if name not in got:
-            bad.append(f"env_trees.glb lost material {name!r} (gltfpack merged or renamed it): the viewer "
+    for mname, (mode, cut) in want_alpha.items():
+        if mname not in got:
+            bad.append(f"{name}.glb lost material {mname!r} (gltfpack merged or renamed it): the viewer "
                        f"picks the leaf materials out by name")
             continue
-        g_mode, g_cut = got[name]
+        g_mode, g_cut = got[mname]
         if g_mode != mode or abs(float(g_cut) - float(cut if cut is not None else 0.5)) > 1e-5:
-            bad.append(f"env_trees.glb {name}: alphaMode {g_mode} cutoff {g_cut}, the glTF declared "
+            bad.append(f"{name}.glb {mname}: alphaMode {g_mode} cutoff {g_cut}, the glTF declared "
                        f"{mode} {cut} - a leaf card that ships OPAQUE is a solid rectangle")
-    return dict(glb="env_trees.glb", bytes=glb.stat().st_size, meshes=len(doc.get("meshes", [])),
+    return dict(glb=f"{name}.glb", bytes=glb.stat().st_size, meshes=len(doc.get("meshes", [])),
                 instanced_nodes=inst_nodes, plain_nodes=plain_nodes, rows=rows_total,
                 placements=len(rep["placements"]), rows_expected=want_rows, drawn_tris=drawn_tris, export_tris=want_tris,
-                unique_tris=sum(v["tris"] for v in rep["prototypes"].values()),
+                unique_tris=sum(v["tris"] for v in protos.values()),
                 alpha_materials={k: list(v) for k, v in sorted(got.items()) if v[0]},
                 color0=bool(rep.get("gltf", {}).get("color0_meshes")))
 
@@ -526,9 +587,15 @@ def main(out_dir):
     if r4 is not None:
         rows["gate4_instance_irradiance"] = r4
     # ------------------------------------------------------------ Phase 6c: the far trees' LOD2 meshes
-    rt = trees_far_check(out, bad)
+    rt = extra_glb_check(out, bad, "env_trees", "trees_far.json", "--trees")
     if rt is not None:
         rows["trees_far"] = rt
+    rs = extra_glb_check(out, bad, "env_shrubs", "shrub_lod1.json", "--shrubs")
+    if rs is not None:
+        rows["shrub_lod1"] = rs
+    ro = shrub_lod1_order_check(out, bad)
+    if ro is not None:
+        rows["shrub_lod1_order"] = ro
     rows["gate3"] = dict(
         uv2_meshes=len(g3["uv2"]),
         uv2_coverage={m: [v.get("coverage_gate1"), v.get("coverage_gate3")] for m, v in g3["uv2"].items()},

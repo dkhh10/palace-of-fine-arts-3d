@@ -1672,3 +1672,63 @@ export/sync_main.sh
     tells the viewer's headless Chrome the GPU is free. The bake engineer's queue and `gpu_lock.sh` write MAIN's
     copy themselves; the sync only does it when **`PFA_SYNC_STATUS=1`** says the caller is the queue. Everything
     else in the sync is unchanged (still no `--delete`).
+
+## Phase 6c (foliage pass, branch `phase6-export`, 2026-09-17)
+
+34. **Item A - `env_trees.glb`: every far tree gets a real mesh.** `export/trees_far.py` builds one LOD2 mesh
+    per impostor prototype from its `_LOD1` and instances it at the 127 `tree_far` placements;
+    `export/gltf_pack.sh --trees` packs it. **The shipped `_LOD2` objects are not used and the reason is
+    measured, not assumed**: all 16 exist and every one is a branch skeleton of 1 188-3 812 triangles with
+    **six** leaf faces (`topology.json` `lod2_objects_rejected`). The reduction is card-aware - leaf cards
+    (components of <= 2 faces) are split from the branches, the branches take their pro-rata share of the
+    8 k budget through the gate1_set COLLAPSE path, the cards fill the rest and are then grown
+    `min(1.6, 1/sqrt(keep))` about their own centre so a crown that keeps 18-31 % of its cards does not go
+    see-through (leaf area kept 0.24-0.80). Result: **7 992-8 243 tris** each, 129 817 unique, 1 030 195
+    placed, `env_trees.glb` **2 014 340 B**. The transforms are the impostors' own
+    (`s = height_m / height_above_base_m` at `trunk_base`, rotation ignored), asserted per row; worst crown-top
+    deviation against the impostor quad **0.76 m** on a 37 m tree. Hand-off for the vertex-AO bake:
+    `out/gate3/trees_far/{topology.json, trees_far_lod2.blend}` (32 MB, the 16 objects alone in prototype world
+    space). `vertex_ao.npz` comes back on the same contract as `vertex_irradiance.npz` and is attached as
+    COLOR_0 by re-running the script.
+35. **Item E - `env_shrubs.glb`: the shrub/reed LOD1 set, as a SEPARATE glb.** The brief said "into env.glb".
+    It is not, and the reason is the pinned bake state: env.glb's contents come from `gate1_set.py`, which
+    rebuilds the **UV1 atlases** every Gate 2 PBR bake and every Gate 3 lightmap was baked against (QA-12-1,
+    items 14-15, 28), and a re-packed env.glb also invalidates `instance_order.json` and pushes arch/orn/ground
+    back through gltfpack. `env_shrubs.glb` (25 meshes, 1 376 placements, 549 748 placed tris against the LOD2
+    set's 135 472, **422 520 B**) carries the same transforms and loads lazily. **Three of the 28 are skipped**:
+    `EXPM_ENV_src_{maho2,pitto5,reed1}_LOD2` have no `_LOD1` in the source (item 31's three near-duplicates),
+    so a "LOD1" copy would be the card env.glb already draws - and, as lone one-placement meshes, gltfpack
+    merged two of them into a single node, collapsing two placements into ONE instance row (measured 1 378 rows
+    for 1 379 placements). Those three keep their env.glb card at every distance.
+36. **Both new glbs take `-vpf`, not the briefed `-vp 16`.** With `-vp 16` gltfpack folds each mesh's
+    dequantisation transform into its `EXT_mesh_gpu_instancing` rows: measured on env_trees, the rows came out
+    **40-700 m** from their nodes with instance scales of 0.001, and the positional join - the only key that
+    survives `-mi` - is then unrecoverable. With `-vpf` (what env.glb and arch.glb already use) the rows match
+    the node translations and the join's worst residual is the familiar **5.8 mm**. Both also take `-tr`
+    (external textures): the leaf and bark KTX2 are the ones env.glb already carries, and embedding them again
+    cost env_trees **24 960 876 B** against 2 014 340 B.
+37. **The join for both LODs is one irradiance file.** `export/gate4_instance_order.py` grew a `SETS` table and
+    `PFA_ORDER_SET`: the default is unchanged (byte-identical output re-verified, `gate4_order_selftest` 10/10)
+    and `PFA_ORDER_SET=shrub_lod1` runs the same positional join against `env_shrubs.glb`, restricted to the
+    placements that set carries. `manifest_v4` emits `lightmaps.instance_irradiance.lod1` - the SAME per-
+    placement RGB in the LOD1 glb's own row order (+56 kB), so crossing the LOD distance cannot change a
+    shrub's lighting. `verify_glb` gained `trees_far`, `shrub_lod1` and `shrub_lod1_order`.
+38. **Item D - the foliage cards ship the MATERIAL's albedo, not the raw texture.** `export/read_foliage.py`
+    reads the graph (tint, translucent colour, the translucency factor's Map Range, alpha cut, roughness,
+    specular, sheen, normal strength) with the structure asserted; `export/foliage_tex.py` composes
+    `clip(image_linear * tint)` with an alpha-weighted resample plus the translucency factor map;
+    `gltf_pack.sh --foliage` encodes both sizes into `out/gate3/foliage/tex_ktx2`, and they land in the
+    manifest as `materials.foliage`. **What it found:** env.glb ships the raw 1 K PNG, so MAT_shrub /
+    MAT_shrub_light / MAT_shrub_dry are three identical mid-green cards at hue 95.4 / value 0.344 where the
+    materials are 95.0/0.464, 94.2/0.516 and **36.1/0.600** (straw), and MAT_reeds is 0.491 against 0.651. So
+    the albedo is not "45 deg too warm" - it is the untinted texture, ~1.9x too dark on the shrubs. The warmth
+    QA measured at cam02 is in the shading, and the missing term is the **Translucent branch**: colour
+    `albedo * (0.85, 1.15, 0.60)`-style green-biased multipliers at
+    `maprange(trn, 0.05, 0.85, 0.35, 1.55) * translucency`, which is what makes a backlit leaf green in Cycles
+    and is now shipped as a per-material factor map for item C.
+39. **There is no 2 K foliage source.** Every map under `assets/textures/foliage/` is **1024x1024**
+    (`scripts/mat_leaf_textures.py` generates them at 1 K), so the briefed 2048 set is an upsample: 4x the
+    texture memory for no new detail, its only real gain a smoother alpha edge at 3 m. Both are built and both
+    are in the manifest - **13.0 MB of KTX2 at 1 K, 46.0 MB at 2 K** - with the 1 K named as the default. A
+    genuine 2 K would mean re-running the generator, which changes a Phase 5 material source and needs the
+    user's approval.
