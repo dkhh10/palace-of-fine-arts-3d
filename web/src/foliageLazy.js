@@ -36,6 +36,7 @@ import { chunkInstancedMeshes } from './chunking.js';
 import { resolveUrl } from './manifest.js';
 
 const JOIN_TOL_M = 0.05;          // the export measured 5.8 mm; 50 mm is a generous ceiling
+const CULL_MARGIN_M = 10;         // see `out.update`: the water's mirrored camera stands further back
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
 /**
@@ -50,10 +51,15 @@ export function lazyUrlCandidates( baseUrl, spec ) {
 	const add = ( u ) => { if ( u && ! out.includes( u ) ) out.push( u ); };
 	const clean = String( spec || '' ).replace( /^\.\//, '' );
 	if ( ! clean ) return out;
-	add( resolveUrl( baseUrl, clean ) );
 	const base = clean.split( '/' ).pop();
-	add( resolveUrl( baseUrl, `../gate1/${base}` ) );
+	// LIKELIEST FIRST, so the usual case costs no 404 at all: a bare `x.glb` is in ../gate1 (where
+	// gltf_pack.sh writes and where `glb.per_class` points), and an `out/...` path is the OUT root the
+	// manifest still has in it.  The as-written spelling is tried too, so a corrected manifest works
+	// without a viewer change either way.
+	if ( ! clean.includes( '/' ) ) add( resolveUrl( baseUrl, `../gate1/${base}` ) );
 	if ( /^out\// .test( clean ) ) add( resolveUrl( baseUrl, `../${clean.replace( /^out\//, '' )}` ) );
+	add( resolveUrl( baseUrl, clean ) );
+	add( resolveUrl( baseUrl, `../gate1/${base}` ) );
 	if ( /^out\/gate3\//.test( clean ) ) add( resolveUrl( baseUrl, clean.replace( /^out\/gate3\//, '' ) ) );
 	return out;
 }
@@ -333,7 +339,11 @@ export async function loadFarTrees( o ) {
 	out.update = ( camera ) => {
 		const d = shared && shared.pfaMeshDist ? shared.pfaMeshDist.value : 40;
 		const band = shared && shared.pfaFadeBand ? shared.pfaFadeBand.value : 5;
-		const lim = d + band;
+		// + CULL_MARGIN_M because the WATER draws the scene a second time from the mirrored camera,
+		// which stands a few metres further from a tree than this one does.  Without the margin a tree
+		// right at the switch could be culled for the main camera while the reflection's own dissolve
+		// wanted to draw it - and its impostor, being the exact complement, would not draw either.
+		const lim = d + band + CULL_MARGIN_M;
 		let on = 0;
 		for ( const b of batches ) {
 			b.mesh.visible = camera.position.distanceTo( b.centre ) - b.radius <= lim;
@@ -481,19 +491,24 @@ export async function applyFoliageTextures( o ) {
 		}
 	} );
 	const trnMaps = {};
+	// The first file that answers fixes the directory for the rest: a wrong candidate is a 404 per
+	// file otherwise, and there are 16 of them.
+	let prefix = null;
+	const fetchOne = async ( file, what ) => {
+		if ( prefix ) {
+			try { return await loadTexture( prefix + file ); } catch ( e ) { /* fall through to the search */ }
+		}
+		const g = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, `${dir}/${file}` ), loadTexture, note, what );
+		if ( g ) prefix = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
+		return g && g.value;
+	};
 	for ( const [ name, rec ] of Object.entries( fol.materials ) ) {
 		const mats = byName.get( name ) || [];
 		const alb = pick( rec, 'albedo' ), trn = pick( rec, 'translucency_map' );
 		const tint = rec.translucency && rec.translucency.colour_multiplier;
 		let aTex = null, tTex = null;
-		if ( alb ) {
-			const g = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, `${dir}/${alb}` ), loadTexture, note, `foliage albedo ${name}` );
-			aTex = g && g.value;
-		}
-		if ( trn ) {
-			const g = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, `${dir}/${trn}` ), loadTexture, note, `foliage translucency ${name}` );
-			tTex = g && g.value;
-		}
+		if ( alb ) aTex = await fetchOne( alb, `foliage albedo ${name}` );
+		if ( trn ) tTex = await fetchOne( trn, `foliage translucency ${name}` );
 		if ( tTex ) {
 			tTex.colorSpace = THREE.NoColorSpace;          // a factor, not a colour
 			tTex.wrapS = tTex.wrapT = THREE.ClampToEdgeWrapping;
