@@ -30,7 +30,7 @@ import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { buildImpostors } from './impostors.js';
-import { applyFoliage, applyShrubLod, nearTreeImpostorEntries } from './foliage.js';
+import { applyFoliage, applyShrubLod, nearTreeImpostorEntries, equirectIntegral, farTreeIrradiance } from './foliage.js';
 import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
@@ -116,6 +116,12 @@ const CFG = {
 	treeFade: qs.has( 'treefade' ) ? parseFloat( qs.get( 'treefade' ) ) : 5,
 	imp2k: qs.get( 'imp2k' ) !== '0',                   // the 2K impostor atlas variant on desktop
 	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : 30,   // LOD1 within this many metres
+	// The impostor atlases were baked with each prototype ALONE under the open sky, so their light is
+	// the sky's.  `impmod` re-lights each placement by E_placement / E_bake: `chroma` (the default)
+	// corrects the COLOUR only, `full` the level too (only honest once E_bake is measured, which the
+	// bake ships per prototype), `0` draws the atlas as baked.  `impbake=r,g,b` overrides E_bake.
+	impMod: ( qs.get( 'impmod' ) || 'chroma' ).toLowerCase(),
+	impBake: qs.get( 'impbake' ),
 	post: qs.get( 'post' ) || 'all',                  // all | none | mist,bloom,vignette (default all since 6a: the Phase 5 compositor look)
 	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
 	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
@@ -252,7 +258,7 @@ async function fetchBuffer( url ) {
 // ---------------------------------------------------------------------------- main
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
 let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
-let foliageReport = null, shrubLodReport = null;
+let foliageReport = null, shrubLodReport = null, skySphereIntegral = null, impModReport = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -600,7 +606,9 @@ async function boot() {
 		// itself is `antialias: true`.
 		const msaa = CFG.leafSoft && ( ( composer && composer.renderTarget1 && composer.renderTarget1.samples > 0 )
 			|| renderer.getContext().getParameter( renderer.getContext().SAMPLES ) > 0 );
-		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa,
+		const vi = manifest.gate3 && manifest.gate3.vertexIrradiance;
+		const vertexIrrScale = ( vi && vi.range > 0 && ! vi.rangeConflict ) ? vi.range * manifest.gate3.scale : 0;
+		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa, vertexIrrScale,
 			normalBlend: CFG.leafNormal, trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade } );
 		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
 	}
@@ -614,10 +622,31 @@ async function boot() {
 		// 6c C2: the near trees join the impostor set so that a tree beyond the switch distance is
 		// drawn ONCE, as a card, instead of as a full mesh for ever.  With ?treemesh=inf the list is
 		// empty and the build is exactly the round-15 one.
+		// E_bake: the irradiance the atlases were baked under.  Sphere-averaged, both terms carry the
+		// same 1/4, so the ratio only needs sun + sky:  E = sunColour * irradiance + integral L_sky dw.
+		// It is an ESTIMATE of the bake rig (which also had a lawn bounce), which is exactly why the
+		// default mode is `chroma`: a wrong magnitude cancels, a wrong colour does not.
+		let eBake = null, eBakeFrom = 'none';
+		if ( CFG.impBake && CFG.impBake.split( ',' ).length === 3 ) {
+			eBake = CFG.impBake.split( ',' ).map( Number ); eBakeFrom = '?impbake';
+		} else if ( skySphereIntegral && sunLight ) {
+			const sc = sunLight.color.clone().multiplyScalar( sunLight.intensity );
+			eBake = [ sc.r + skySphereIntegral.x, sc.g + skySphereIntegral.y, sc.b + skySphereIntegral.z ];
+			eBakeFrom = 'sun + the sky diffuse integral (estimate)';
+		}
+		const impMode = CFG.impMod === '0' ? '0' : ( CFG.impMod === 'full' ? 'full' : 'chroma' );
+		const far = farTreeIrradiance( manifest.treesFar, manifest.raw, impMode, note );
+		const treesFar = ( impMode !== '0' && far.byIndex.size )
+			? manifest.treesFar.map( ( t, i ) => ( far.byIndex.has( i ) ? { ...t, irr: far.byIndex.get( i ) } : t ) )
+			: manifest.treesFar;
 		const nearEntries = ( foliageReport && Number.isFinite( foliageReport.meshDist ) )
-			? nearTreeImpostorEntries( foliageReport.units, manifest.gate3.impostors, note ) : [];
+			? nearTreeImpostorEntries( foliageReport.units, manifest.gate3.impostors, note, eBake, impMode ) : [];
+		impModReport = { mode: impMode, eBake, eBakeFrom, far: far.applied, farUnmatched: far.unmatched,
+			near: nearEntries.filter( ( e ) => e.irr ).length };
+		note( `impostor irradiance modulation: mode ${impMode}, E_bake ${eBake ? eBake.map( ( v ) => v.toFixed( 2 ) ).join( '/' ) : 'unknown'} `
+			+ `from ${eBakeFrom}; ${impModReport.far} far + ${impModReport.near} near placement(s) modulated` );
 		const built = buildImpostors( {
-			impostors: manifest.gate3.impostors, far: manifest.treesFar, near: nearEntries, note,
+			impostors: manifest.gate3.impostors, far: treesFar, near: nearEntries, note,
 			normalDepth: CFG.impNormalDepth, debug: CFG.impDebug,
 			atlas2k: CFG.imp2k,
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
@@ -697,8 +726,13 @@ async function loadSky() {
 	};
 	const rotY = THREE.MathUtils.degToRad( manifest.sky.rotationDeg );
 	envRotation = new THREE.Euler( 0, rotY, 0 );
-	const pmremOf = async ( url ) => {
+	const pmremOf = async ( url, measure = false ) => {
 		const tex = await load( url );
+		if ( measure ) {
+			skySphereIntegral = equirectIntegral( tex );
+			if ( skySphereIntegral ) note( `sky diffuse integral / L dw = ${skySphereIntegral.toArray().map( ( v ) => v.toFixed( 3 ) ).join( ', ' )} `
+				+ '(the sky half of the irradiance the impostor atlases were baked under)' );
+		}
 		const pmrem = new THREE.PMREMGenerator( renderer );
 		pmrem.compileEquirectangularShader();
 		const rt = pmrem.fromEquirectangular( tex );
@@ -726,7 +760,7 @@ async function loadSky() {
 		//   material.envMap        = the GLOSSY PMREM on every lightmapped material, whose env DIFFUSE
 		//                            term is deleted in the shader anyway, so it is specular-only
 		if ( manifest.sky.diffuse ) {
-			diffusePmremTarget = await pmremOf( manifest.sky.diffuse );
+			diffusePmremTarget = await pmremOf( manifest.sky.diffuse, true );
 			scene.environment = diffusePmremTarget.texture;
 			scene.environmentRotation = envRotation;
 			note( `PMREM diffuse environment from ${manifest.sky.diffuse.split( '/' ).pop()} (irradiance for everything without a lightmap; QA-12b-1)` );
@@ -1190,6 +1224,7 @@ window.__pfaInfo = () => ( {
 		msaa: foliageReport.msaa, meshDist: Number.isFinite( foliageReport.meshDist ) ? foliageReport.meshDist : null,
 		fadeBand: foliageReport.fadeBand, units: foliageReport.units.length, skipped: foliageReport.skipped.length },
 	shrubLod: shrubLodReport,
+	impostorModulation: impModReport,
 	reflectionSet,
 	quality: { preset: CFG.quality, bloomRes: CFG.bloomRes, reflRes: CFG.reflRes, reflSet: CFG.reflSet },
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,

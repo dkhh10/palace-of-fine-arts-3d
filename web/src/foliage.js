@@ -131,7 +131,26 @@ export function clusterCrowns( geometry, cell = CLUSTER_CELL ) {
 		boxes[ i ].getCenter( v3 );
 		centres[ i * 3 ] = v3.x; centres[ i * 3 + 1 ] = v3.y; centres[ i * 3 + 2 ] = v3.z;
 	}
-	return { ids, centres, boxes, count };
+	// The mean of COLOR_0 per cluster, RAW (still gamma-2 coded).  On the near trees COLOR_0 is the
+	// BAKED IRRADIANCE at the vertex (lightmaps.vertex_irradiance), so this is the one measurement of
+	// "what light does this tree actually stand in" the viewer already owns - the impostor
+	// modulation's E_placement until the bake ships the far trees' own values.
+	const col = geometry.getAttribute( 'color' );
+	let colourMean = null;
+	if ( col && col.itemSize >= 3 ) {
+		const sum = new Float64Array( count * 3 ), nv = new Float64Array( count );
+		// The encode is gamma-2 (v = c*c*range), so the mean is taken on the DECODED value: the mean
+		// of c and the mean of c*c are not the same number and only the second is an irradiance.
+		for ( let v = 0; v < n; v ++ ) {
+			const id = ids[ v ], x = col.getX( v ), y = col.getY( v ), z = col.getZ( v );
+			sum[ id * 3 ] += x * x; sum[ id * 3 + 1 ] += y * y; sum[ id * 3 + 2 ] += z * z;
+			nv[ id ] ++;
+		}
+		colourMean = new Float32Array( count * 3 );
+		for ( let i = 0; i < count; i ++ ) for ( let k = 0; k < 3; k ++ )
+			colourMean[ i * 3 + k ] = nv[ i ] ? sum[ i * 3 + k ] / nv[ i ] : 0;
+	}
+	return { ids, centres, boxes, count, colourMean };
 }
 
 /**
@@ -258,9 +277,11 @@ export function applyFoliage( o ) {
 	const trnScale = o.trnScale ?? 1.0;
 	const meshDist = o.meshDist ?? 40;
 	const fadeBand = o.fadeBand ?? 5;
+	// range x scale: the whole decode of COLOR_0 into scene-linear irradiance, from the manifest.
+	const vertexIrrScale = o.vertexIrrScale ?? 0;
 	const report = { geometries: 0, clusters: 0, leafMaterials: 0, cardMaterials: 0, barkMaterials: 0,
 		bent: 0, softened: 0, units: [], normalBlend: bend, trnScale, meshDist, fadeBand,
-		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [] };
+		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale };
 	const shared = { uniforms: {
 		pfaMeshDist: { value: Number.isFinite( meshDist ) ? meshDist : 1e9 },
 		pfaFadeBand: { value: Math.max( fadeBand, 1e-3 ) },
@@ -332,8 +353,13 @@ export function applyFoliage( o ) {
 			for ( let c = 0; c < cl.count; c ++ ) {
 				box.copy( cl.boxes[ c ] ).applyMatrix4( mtx );
 				const centre = box.getCenter( new THREE.Vector3() ), size = box.getSize( new THREE.Vector3() );
+				const cm = cl.colourMean;
 				const rec = { centre, minY: box.min.y, maxY: box.max.y, width: Math.max( size.x, size.z ),
-					mesh: mesh.name, instance: i, material: leafMat ? leafMat.name : null };
+					mesh: mesh.name, instance: i, material: leafMat ? leafMat.name : null,
+					// decoded with the ONE global range the manifest declares x lightmaps.scale
+					irradiance: ( cm && vertexIrrScale > 0 )
+						? [ cm[ c * 3 ] * vertexIrrScale, cm[ c * 3 + 1 ] * vertexIrrScale, cm[ c * 3 + 2 ] * vertexIrrScale ]
+						: null };
 				( leafMat ? crowns : trunks ).push( rec );
 			}
 		}
@@ -350,7 +376,7 @@ export function applyFoliage( o ) {
 			baseY: best ? Math.min( best.minY, c.minY ) : c.minY,
 			topY: Math.max( c.maxY, best ? best.maxY : c.maxY ),
 			species: SPECIES_OF[ c.material ] || null, mesh: c.mesh, instance: c.instance,
-			trunkDist_m: best ? bestD : null,
+			trunkDist_m: best ? bestD : null, irradiance: c.irradiance,
 		} );
 	}
 	note( `foliage: ${report.geometries} geometr(ies) clustered into ${report.clusters} crown(s), `
@@ -423,12 +449,94 @@ export function applyShrubLod( { scene, manifest, note = () => {}, dist = 30 } )
 }
 
 /**
+ * ∫ L dω over an equirectangular sky, as a Vector3 (scene-linear).  Used only for its CHROMATICITY:
+ * it is the sky half of the irradiance the impostor atlases were baked under (`manifest.impostors.
+ * lighting`: each prototype alone on a lawn under the whole open sky), and the bake's diagnosis
+ * measured that light at hue 225 deg against the scene's 52 deg.
+ */
+export function equirectIntegral( texture ) {
+	const img = texture && texture.image;
+	if ( ! img || ! img.data || ! img.width || ! img.height ) return null;
+	const { data, width: w, height: h } = img;
+	const half = data.BYTES_PER_ELEMENT === 2;
+	const ch = data.length / ( w * h );
+	if ( ch < 3 ) return null;
+	const get = ( i ) => ( half ? THREE.DataUtils.fromHalfFloat( data[ i ] ) : data[ i ] );
+	const acc = new THREE.Vector3();
+	const dTheta = Math.PI / h, dPhi = 2 * Math.PI / w;
+	for ( let j = 0; j < h; j ++ ) {
+		const sinT = Math.sin( ( j + 0.5 ) * dTheta ) * dTheta * dPhi;
+		let r = 0, g = 0, b = 0;
+		for ( let i = 0; i < w; i ++ ) {
+			const k = ( j * w + i ) * ch;
+			r += get( k ); g += get( k + 1 ); b += get( k + 2 );
+		}
+		acc.x += r * sinT; acc.y += g * sinT; acc.z += b * sinT;
+	}
+	return acc;
+}
+
+/**
+ * C2 / the bake's impostor diagnosis: the per-placement modulation `E_placement / E_bake`.
+ *
+ * `mode`:
+ *   'full'    the ratio as it stands - only correct once E_bake is a MEASURED value (the bake ships
+ *             it per prototype in the far-tree irradiance JSON);
+ *   'chroma'  the ratio normalised to unit luminance, so only the COLOUR of the light is corrected
+ *             and the atlas keeps its own level.  This is the default while E_bake is the viewer's
+ *             own estimate (sun + sky integral), because an estimate that is off by a factor would
+ *             otherwise re-light every far tree by that factor.
+ */
+export function irradianceRatio( ePlacement, eBake, mode = 'chroma' ) {
+	if ( ! ePlacement || ! eBake ) return null;
+	const r = [ 0, 1, 2 ].map( ( i ) => ( eBake[ i ] > 1e-9 ? ePlacement[ i ] / eBake[ i ] : 1 ) );
+	if ( ! r.every( ( x ) => isFinite( x ) && x > 0 ) ) return null;
+	if ( mode !== 'chroma' ) return r;
+	const lum = 0.2126 * r[ 0 ] + 0.7152 * r[ 1 ] + 0.0722 * r[ 2 ];
+	return lum > 1e-9 ? r.map( ( x ) => x / lum ) : null;
+}
+
+/**
+ * The far trees' own modulation, when the bake's JSON is in the manifest.  Contract (bake item 2 /
+ * `trees.far_mesh.lighting`): `prototypes: { <name>: { E_bake: [r,g,b] } }` and a placement list
+ * carrying a Blender location and an rgb, joined to `manifest.treesFar[i].base` BY LOCATION - the
+ * same join the shrub irradiance uses, with the same refusal to guess when it does not land.
+ */
+export function farTreeIrradiance( treesFar, raw, mode, note = () => {} ) {
+	const lit = raw && raw.trees && raw.trees.far_mesh && raw.trees.far_mesh.lighting;
+	const rows = lit && ( lit.placements || lit.instances );
+	if ( ! lit || ! Array.isArray( rows ) || ! rows.length || ! lit.prototypes ) {
+		note( 'far-tree impostor modulation: the bake\'s trees.far_mesh.lighting is not in the manifest yet '
+			+ '(E_placement per placement + E_bake per prototype); the far atlases draw unmodulated' );
+		return { applied: 0, unmatched: 0, byIndex: new Map() };
+	}
+	const key = ( p ) => `${p[ 0 ].toFixed( 2 )},${p[ 1 ].toFixed( 2 )},${p[ 2 ].toFixed( 2 )}`;
+	const byLoc = new Map();
+	for ( const r of rows ) {
+		const loc = r.location_blender || r.loc || r.location;
+		if ( Array.isArray( loc ) && Array.isArray( r.rgb ) ) byLoc.set( key( loc ), r.rgb );
+	}
+	const byIndex = new Map();
+	let unmatched = 0;
+	treesFar.forEach( ( t, i ) => {
+		const e = Array.isArray( t.base ) ? byLoc.get( key( t.base ) ) : null;
+		const proto = lit.prototypes[ t.prototype ] || lit.prototypes[ ( raw.impostors && raw.impostors.prototype_map && raw.impostors.prototype_map[ t.prototype ] ) || t.prototype ];
+		const eb = proto && ( proto.E_bake || proto.e_bake );
+		const ratio = irradianceRatio( e, eb, mode );
+		if ( ratio ) byIndex.set( i, ratio ); else unmatched ++;
+	} );
+	note( `far-tree impostor modulation: ${byIndex.size}/${treesFar.length} placement(s) joined by location `
+		+ `(${unmatched} unmatched), mode ${mode}` );
+	return { applied: byIndex.size, unmatched, byIndex };
+}
+
+/**
  * C2: turn the near-tree units into impostor entries in the shape `buildImpostors` reads, choosing
  * each one's prototype by SPECIES and then by the closest width/height aspect - the export dropped
  * the node names, so the material is the only species evidence in the glb, and the aspect is what
  * separates a columnar cypress from a spreading one.
  */
-export function nearTreeImpostorEntries( units, impostors, note = () => {} ) {
+export function nearTreeImpostorEntries( units, impostors, note = () => {}, eBake = null, mode = 'chroma' ) {
 	const out = [], chosen = {};
 	if ( ! impostors || ! impostors.prototypes ) return out;
 	const protos = Object.entries( impostors.prototypes );
@@ -452,6 +560,9 @@ export function nearTreeImpostorEntries( units, impostors, note = () => {} ) {
 			// trunk base: three (x, y, z) -> Blender (x, -z, y).
 			base: [ u.centre.x, - u.centre.z, u.baseY ],
 			near: true, switchCentre: [ u.centre.x, u.centre.y, u.centre.z ],
+			// E_placement is this crown's own mean COLOR_0 irradiance - the only measured "what light
+			// does this tree stand in" the viewer owns until the bake ships the far trees' values.
+			irr: ( mode === '0' || ! mode ) ? null : irradianceRatio( u.irradiance, eBake, mode ),
 		} );
 	}
 	note( `near-tree impostors: ${out.length}/${units.length} unit(s) matched a prototype by species + aspect `
