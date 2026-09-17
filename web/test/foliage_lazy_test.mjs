@@ -84,22 +84,34 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 	}
 	const root = new THREE.Group();
 	const protoInfo = new Map( ( fm.prototypes || [] ).map( ( q ) => [ q.name, q ] ) );
+	const impProtos = manifest.gate3.impostors.prototypes;
 	for ( const [ proto, list ] of byProto ) {
-		const mats = ( protoInfo.get( proto ) || {} ).materials || [ 'MAT_bark_cypress', 'MAT_leaf_cypress' ];
+		const info = protoInfo.get( proto ) || {};
+		const ip = impProtos[ proto ] || {};
+		const mats = info.materials || [ 'MAT_bark_cypress', 'MAT_leaf_cypress' ];
+		// the prototype's own bounding volume, in PROTOTYPE space: trunk base at the origin, the tree
+		// standing up to `heightAboveBase` - which is what the export's LOD2 objects are (and what the
+		// 300 m placement bug broke).  The test therefore exercises the placement check for real.
+		const h = ip.heightAboveBase || info.height_above_base_m || 12;
+		const r = ip.radius || 2;
 		for ( const matName of mats ) {
-			// a two-triangle "crown" so clusterCrowns has something to flood-fill
 			const g = new THREE.BufferGeometry();
 			const isLeaf = /^MAT_leaf_/.test( matName );
-			const y = isLeaf ? 8 : 1;
+			const y0 = isLeaf ? h * 0.25 : 0, y1 = isLeaf ? h : h * 0.3;
+			// symmetric about the trunk in XZ, exactly as a prototype in its own space is
 			g.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( [
-				- 1, y, 0, 1, y, 0, 0, y + 1, 0, - 1, y, 1, 1, y, 1, 0, y + 1, 1 ] ), 3 ) );
+				- r, y0, - r, r, y0, - r, 0, y1, - r, - r, y0, r, r, y0, r, 0, y1, r ] ), 3 ) );
 			g.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( 18 ).fill( 0 ).map( ( _, i ) => ( i % 3 === 2 ? 1 : 0 ) ), 3 ) );
 			const m = new THREE.MeshStandardMaterial( { name: matName } );
 			const im = new THREE.InstancedMesh( g, m, list.length );
 			im.name = `mesh_${root.children.length}`;
 			list.forEach( ( p, i ) => {
-				// the manifest's loc is BLENDER (x, y, z) -> three (x, z, -y)
-				im.setMatrixAt( i, new THREE.Matrix4().makeTranslation( p.loc[ 0 ], p.loc[ 2 ], - p.loc[ 1 ] ) );
+				// the export's own rule: scale = height_m / height_above_base, translation = trunk base,
+				// and the manifest's loc is BLENDER (x, y, z) -> three (x, z, -y)
+				const sc = ( p.height_m || h ) / h;
+				im.setMatrixAt( i, new THREE.Matrix4().compose(
+					new THREE.Vector3( p.loc[ 0 ], p.loc[ 2 ], - p.loc[ 1 ] ),
+					new THREE.Quaternion(), new THREE.Vector3( sc, sc, sc ) ) );
 			} );
 			root.add( im );
 		}
@@ -124,6 +136,11 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 	} );
 	info( notes.filter( ( n ) => n.startsWith( 'far-tree' ) ).join( '\n      ' ) );
 	ok( rep.error === null, `join clean (${rep.error || 'no error'})` );
+	info( `placement check: ${JSON.stringify( rep.placementCheck )}` );
+	ok( rep.placementCheck && rep.placementCheck.compared === 127,
+		`every placement compared against its impostor quad (${rep.placementCheck && rep.placementCheck.compared})` );
+	ok( rep.placementCheck && rep.placementCheck.over_tolerance === 0,
+		`no mesh stands away from its impostor (${rep.placementCheck && rep.placementCheck.over_tolerance} over tolerance)` );
 	ok( rep.rows === 254 && rep.joined === 254, `254/254 instance rows joined (${rep.joined}/${rep.rows})` );
 	ok( rep.placements === 127, `127 placements declared (${rep.placements})` );
 	ok( !! rep.update, 'a per-frame distance cull was returned' );

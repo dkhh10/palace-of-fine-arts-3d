@@ -36,6 +36,14 @@ import { chunkInstancedMeshes } from './chunking.js';
 import { resolveUrl } from './manifest.js';
 
 const JOIN_TOL_M = 0.05;          // the export measured 5.8 mm; 50 mm is a generous ceiling
+// A mesh tree must stand where its impostor stands (the lead's gate, 2026-09-17, after the export
+// was found placing every far tree ~300 m off).  The REFUSAL runs on the two components that are
+// exact by construction - the trunk's XZ and the base plane - because a real crown's bounding box is
+// legitimately a metre or two off its trunk axis, while the defect is hundreds of metres.  The
+// lead's own number, the distance from the mesh bbox centre to the impostor quad centre, is measured
+// and reported beside them.
+const PLACEMENT_XZ_TOL_M = 5.0;
+const PLACEMENT_BASE_TOL_M = 3.0;
 const CULL_MARGIN_M = 10;         // see `out.update`: the water's mirrored camera stands further back
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
@@ -90,19 +98,27 @@ export async function loadFarTreeLighting( manifest, fetchJson, note = () => {} 
 	const fm = manifest && manifest.raw && manifest.raw.trees && manifest.raw.trees.far_mesh;
 	const lit = fm && fm.lighting;
 	if ( ! lit ) { note( 'far-tree lighting: trees.far_mesh.lighting is not in the manifest (bake item B)' ); return null; }
-	const has = ( b ) => b && b.prototypes && Array.isArray( b.placements || b.instances || b.rows );
+	const has = ( b ) => b && b.prototypes && Array.isArray( b.rows || b.placements || b.instances );
 	if ( has( lit ) ) { note( 'far-tree lighting: inline in the manifest' ); return lit; }
 	const spec = lit.json || ( lit.instance_irradiance && lit.instance_irradiance.json );
 	if ( ! spec ) { note( 'far-tree lighting: the block names neither rows nor a json to fetch' ); return null; }
 	const got = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, spec ), fetchJson, note, 'far-tree lighting json' );
 	if ( ! got ) return null;
 	const j = got.value;
-	lit.placements = j.placements || j.instances || j.rows || null;
+	// schema pfa-phase6/gate4-instance-irradiance/2: the rows are NESTED, one list per LOD2 mesh
+	// (`meshes[<mesh>].placements[] = { object, loc, rgb, mean_all, cov }`), and the top-level
+	// `placements` is a COUNT, not a list.  Flattened here into one row list, which is the only shape
+	// every consumer reads.
+	const flat = [];
+	for ( const rec of Object.values( j.meshes || {} ) )
+		for ( const r of ( rec && rec.placements ) || [] ) flat.push( r );
+	lit.rows = flat.length ? flat
+		: ( Array.isArray( j.placements ) ? j.placements : ( Array.isArray( j.rows ) ? j.rows : null ) );
 	lit.prototypes = j.prototypes || lit.prototypes || null;
 	lit.schema = j.schema || lit.schema || null;
 	lit.reduce = j.reduce || lit.reduce || null;
 	note( `far-tree lighting: ${got.url.split( '/' ).pop()} (${lit.schema || 'no schema'}), `
-		+ `${( lit.placements || [] ).length} placement row(s), ${Object.keys( lit.prototypes || {} ).length} prototype E_bake value(s)` );
+		+ `${( lit.rows || [] ).length} placement row(s), ${Object.keys( lit.prototypes || {} ).length} prototype E_bake value(s)` );
 	return has( lit ) ? lit : null;
 }
 
@@ -184,7 +200,7 @@ export async function loadFarTrees( o ) {
 				}
 				p = best; d = bestD;
 			}
-			rowsOf.push( { mesh, row: i, placement: p || null, residual_m: p ? d : null } );
+			rowsOf.push( { mesh, row: i, placement: p || null, residual_m: p ? d : null, mtx: m.clone() } );
 			out.rows ++;
 			if ( p ) out.joined ++; else out.unjoined ++;
 		}
@@ -199,9 +215,76 @@ export async function loadFarTrees( o ) {
 		return out;
 	}
 
+	// ---- DOES THE MESH STAND WHERE ITS IMPOSTOR STANDS? ---------------------------------------
+	// The join above matches an instance ROW's translation to a placement, which says nothing about
+	// where the GEOMETRY of that row ends up: a prototype mesh that kept its source object's world
+	// matrix draws its tree hundreds of metres from its own instance origin, and every metric in the
+	// frame would still look plausible.  So the world bounding box of each placement's meshes is
+	// compared with the centre of the impostor quad that placement has always had.  Over the tolerance
+	// the meshes are NOT drawn: a far tree in the wrong place is worse than the impostor it replaces.
+	const impProtos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.prototypes ) || {};
+	const placeBox = new Map();
+	const _b = new THREE.Box3();
+	for ( const r of rowsOf ) {
+		if ( ! r.placement ) continue;
+		if ( ! r.mesh.geometry.boundingBox ) r.mesh.geometry.computeBoundingBox();
+		_b.copy( r.mesh.geometry.boundingBox ).applyMatrix4( r.mtx );
+		const cur = placeBox.get( r.placement.index );
+		if ( cur ) cur.union( _b ); else placeBox.set( r.placement.index, _b.clone() );
+	}
+	const dev = [];
+	const _c = new THREE.Vector3(), _mid = new THREE.Vector3();
+	for ( const p of placements ) {
+		const box = placeBox.get( p.index ), proto = impProtos[ p.prototype ];
+		if ( ! box ) continue;
+		box.getCenter( _mid );
+		// the trunk base, in three space: the impostor quad's XZ is exactly this
+		const bx = p.loc[ 0 ], bz3 = - p.loc[ 1 ], by = p.loc[ 2 ];
+		const xz = Math.hypot( _mid.x - bx, _mid.z - bz3 );
+		const base = Math.abs( box.min.y - by );
+		let centre = null;
+		if ( proto && proto.heightAboveBase > 0 ) {
+			// the impostor's own placement rule, verbatim (manifest impostors.placement)
+			const sc = ( p.height_m || proto.heightAboveBase ) / proto.heightAboveBase;
+			_c.set( bx, by + ( proto.centreZ || 0 ) * sc, bz3 );
+			centre = _mid.distanceTo( _c );
+		}
+		dev.push( { index: p.index, xz, base, centre } );
+	}
+	const worst = ( key ) => dev.reduce( ( a, b ) => ( ( b[ key ] ?? - 1 ) > ( a[ key ] ?? - 1 ) ? b : a ), dev[ 0 ] || {} );
+	const med = ( key ) => {
+		const v = dev.map( ( x ) => x[ key ] ).filter( ( x ) => x !== null ).sort( ( a, b ) => a - b );
+		return v.length ? + v[ Math.floor( v.length / 2 ) ].toFixed( 3 ) : null;
+	};
+	const wXz = worst( 'xz' ), wBase = worst( 'base' ), wC = worst( 'centre' );
+	const over = dev.filter( ( x ) => x.xz > PLACEMENT_XZ_TOL_M || x.base > PLACEMENT_BASE_TOL_M );
+	out.placementCheck = {
+		compared: dev.length,
+		tolerance: { xz_m: PLACEMENT_XZ_TOL_M, base_m: PLACEMENT_BASE_TOL_M },
+		max_xz_m: dev.length ? + wXz.xz.toFixed( 3 ) : null, max_xz_at: dev.length ? wXz.index : null,
+		max_base_m: dev.length ? + wBase.base.toFixed( 3 ) : null,
+		// the lead's number: mesh bbox centre vs impostor quad centre
+		max_centre_m: wC && wC.centre !== null && wC.centre !== undefined ? + wC.centre.toFixed( 3 ) : null,
+		median_xz_m: med( 'xz' ), median_centre_m: med( 'centre' ),
+		over_tolerance: over.length,
+	};
+	if ( over.length ) {
+		out.error = `${over.length}/${dev.length} far-tree mesh(es) do not stand where their impostor stands `
+			+ `(worst trunk offset ${out.placementCheck.max_xz_m} m at placement ${out.placementCheck.max_xz_at}, `
+			+ `worst base offset ${out.placementCheck.max_base_m} m; tolerances ${PLACEMENT_XZ_TOL_M} / ${PLACEMENT_BASE_TOL_M} m)`;
+		note( `far-tree meshes: PLACEMENT CHECK FAILED — ${out.error}; the meshes are NOT drawn and every far tree `
+			+ 'stays its impostor.  This is an EXPORT defect (the prototype mesh keeps its source world matrix), not a flag.' );
+		scene.remove( root );
+		return out;
+	}
+	note( `far-tree meshes: placement check OK over ${dev.length} placement(s) — trunk offset max `
+		+ `${out.placementCheck.max_xz_m} m (median ${out.placementCheck.median_xz_m}), base offset max `
+		+ `${out.placementCheck.max_base_m} m, mesh bbox centre vs impostor quad centre max `
+		+ `${out.placementCheck.max_centre_m} m (median ${out.placementCheck.median_centre_m})` );
+
 	// ---- E_placement per row ------------------------------------------------------------------
 	const lit = fm.lighting;
-	const rows = lit && ( lit.placements || lit.instances || lit.rows );
+	const rows = lit && ( lit.rows || lit.instances || ( Array.isArray( lit.placements ) ? lit.placements : null ) );
 	const byBakeLoc = new Map();
 	if ( Array.isArray( rows ) ) for ( const r of rows ) {
 		const loc = r.location_blender || r.loc || r.location;

@@ -624,7 +624,9 @@ export function irradianceRatio( ePlacement, eBake, mode = 'chroma', clamp = RAT
  */
 export function farTreeIrradiance( treesFar, raw, mode, note = () => {} ) {
 	const lit = raw && raw.trees && raw.trees.far_mesh && raw.trees.far_mesh.lighting;
-	const rows = lit && ( lit.placements || lit.instances );
+	// schema /2 nests the rows per mesh and makes the top-level `placements` a count, so `rows` is the
+	// flattened list `loadFarTreeLighting` leaves behind; an inline block may use either name.
+	const rows = lit && ( lit.rows || lit.instances || ( Array.isArray( lit.placements ) ? lit.placements : null ) );
 	if ( ! lit || ! Array.isArray( rows ) || ! rows.length || ! lit.prototypes ) {
 		note( 'far-tree impostor modulation: the bake\'s trees.far_mesh.lighting is not in the manifest yet '
 			+ '(E_placement per placement + E_bake per prototype); the far atlases draw unmodulated' );
