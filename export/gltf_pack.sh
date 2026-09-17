@@ -63,6 +63,56 @@ if [ "$1" = "--gate2" ]; then
   exit 0
 fi
 
+# ---------------------------------------------------------------- Phase 6c item D: the foliage card maps
+# export/foliage_tex.py writes out/gate3/foliage/tex/*.png (albedo+alpha with the material's tint applied,
+# the translucency factor map, the leaf normal maps) at 1024 and 2048. Its own KTX2 directory, because
+# gate3_pack.sh rm -rf's out/gate3/tex_ktx2 on every bake round and these are not the bake's files.
+if [ "$1" = "--foliage" ]; then
+  OUT="$ROOT/export/out/gate3/foliage"
+  KTX="$OUT/tex_ktx2"
+  TEXIN="$OUT/tex"
+  [ -d "$TEXIN" ] || { echo "gltf_pack.sh: $TEXIN missing - run export/foliage_tex.py first" >&2; exit 2; }
+  command -v toktx >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
+  rm -rf "$KTX"; mkdir -p "$KTX"
+  t0=$(date +%s); n=0
+  for f in "$TEXIN"/*.png(N); do
+    b=${f:t:r}
+    # colour is the default, data is the exception (gate1 review finding 1): only the albedo is sRGB.
+    case "$b" in
+      *_albedo_*) oetf=srgb ;;
+      *)          oetf=linear ;;
+    esac
+    toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf $oetf \
+          "$KTX/$b.ktx2" "$f" >/dev/null
+    n=$((n+1))
+  done
+  echo "[foliage] STEP toktx wall_s=$(( $(date +%s)-t0 )) files=$n bytes=$(du -k "$KTX" | tail -1 | cut -f1)KiB"
+  python3 - "$OUT" <<'PYF'
+import json, os, sys
+out = sys.argv[1]
+rep = json.load(open(os.path.join(out, "foliage_tex.json")))
+ktx = os.path.join(out, "tex_ktx2")
+have = {f[:-5] for f in os.listdir(ktx)}
+miss = []
+for m, v in rep["materials"].items():
+    for k, f in v["files"].items():
+        if f.endswith(".png") and f[:-4] not in have:
+            miss.append(f)
+for k, v in rep["normals"].items():
+    for f in v["files"].values():
+        if f[:-4] not in have:
+            miss.append(f)
+assert not miss, f"toktx produced no KTX2 for {miss}"
+rep["ktx2_dir"] = "tex_ktx2"
+rep["ktx2_bytes"] = sum(os.path.getsize(os.path.join(ktx, f)) for f in os.listdir(ktx))
+rep["ktx2_files"] = sorted(os.listdir(ktx))
+json.dump(rep, open(os.path.join(out, "foliage_tex.json"), "w"), indent=1)
+print(f"[foliage] {len(rep['ktx2_files'])} KTX2, {rep['ktx2_bytes']/1e6:.1f} MB "
+      f"({sum(os.path.getsize(os.path.join(ktx, f)) for f in rep['ktx2_files'] if f.endswith('_2048.ktx2'))/1e6:.1f} MB of it the 2K set)")
+PYF
+  exit 0
+fi
+
 # ---------------------------------------------------------------- Phase 6c item A: env_trees.glb
 # The far trees' LOD2 meshes (export/trees_far.py) pack on their own so nothing else is touched: the four
 # class glbs stay byte-identical and the viewer can load this one lazily. Its textures are the leaf and bark

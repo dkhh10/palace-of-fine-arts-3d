@@ -9,6 +9,7 @@ fills them and it never invents a number - every value comes from a bake record,
 """
 import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -563,6 +564,63 @@ def main():
                                                     "this block: that is a disconnected socket's stored "
                                                     "default, NOT the value the render used."))
         man["compositor"] = comp_block
+
+    # ------------------------------------------------------------ Phase 6c item D: the foliage card maps
+    # `materials.note` says a material that is not in `materials.sets` keeps what the glb gave it, and for the
+    # eight leaf/shrub/reed cards what the glb gave them is the RAW 1 K texture - the Phase 5 material is
+    # `image * tint`, and its Translucent branch is not in the glb at all. export/read_foliage.py reads both
+    # out of master_delivery.blend and export/foliage_tex.py composes them; this block is how the viewer finds
+    # them. These maps REPLACE the glb's baseColorTexture on exactly these materials.
+    fo_p = next((q for q in (g3.OUT / "foliage" / "foliage_tex.json",
+                             g3.MAIN_ROOT / "export" / "out" / "gate3" / "foliage" / "foliage_tex.json")
+                 if q.exists()), None)
+    if fo_p is not None:
+        fo = json.loads(fo_p.read_text())
+        assert fo.get("schema") == "pfa-phase6c/foliage-tex/1", f"foliage schema {fo.get('schema')!r}"
+        mats_block = man.get("materials")
+        if not isinstance(mats_block, dict):
+            mats_block = {}
+        def key(fname):
+            return fname[:-4] if fname.endswith(".png") else fname
+        entries = {}
+        for m, v in sorted(fo["materials"].items()):
+            f, st, tr = v["files"], v["stats"], v["translucency"]
+            nrm = fo["normals"].get(f.get("normal"), {}) if f.get("normal") else {}
+            entries[m] = dict(
+                albedo={str(px): key(f[f"albedo_{px}"]) for px in fo["sizes"] if f"albedo_{px}" in f},
+                translucency_map={str(px): key(f[f"translu_{px}"]) for px in fo["sizes"]
+                                  if f"translu_{px}" in f},
+                normal={str(px): key(n) for px, n in (nrm.get("files") or {}).items()},
+                normal_scale=tr.get("normal_strength"),
+                translucency=dict(colour_multiplier=tr.get("colour_multiplier"),
+                                  constant=tr.get("constant"),
+                                  factor_range=[tr.get("factor_min"), tr.get("factor_max")],
+                                  factor_mean_in_leaf=tr.get("factor_mean_in_leaf"),
+                                  how="mix = factor_map (linear grey, already includes the constant); "
+                                      "0 = the Principled branch, 1 = a Translucent BSDF whose colour is "
+                                      "albedo * colour_multiplier. With no map, apply `constant` uniformly."),
+                alphaMode=v["alpha_mode"], alphaCutoff=v["alpha_cutoff"],
+                double_sided=v["double_sided"], roughness=v["roughness"],
+                specular=v["specular"], sheen=v["sheen"],
+                source_texture=st["source"], source_px=st["source_px"], tint=st["tint"],
+                hue_src_vs_material=[st["src_hsv"], st["tinted_hsv"]])
+        mats_block["foliage"] = dict(
+            dir="out/gate3/foliage/tex_ktx2", sizes=fo["sizes"],
+            colorspace=dict(albedo="srgb", translucency_map="linear", normal="linear"),
+            bytes=fo.get("ktx2_bytes"), files=len(fo.get("ktx2_files") or []),
+            replaces=("the glb's baseColorTexture on these eight materials: the glb carries the untinted "
+                      "source PNG, which is the same card for MAT_shrub / MAT_shrub_light / MAT_shrub_dry "
+                      "and about 1.9x too dark on all three"),
+            resolution_note=("every source is 1024x1024 (scripts/mat_leaf_textures.py), so the 2048 set is an "
+                             "upsample: 4x the memory, no new detail, a smoother alpha edge at 3 m. The 1K "
+                             "set is the default; loading the 2K one is a budget decision."),
+            per_size_bytes={str(px): sum(os.path.getsize(os.path.join(str(fo_p.parent), "tex_ktx2", fn))
+                                         for fn in (fo.get("ktx2_files") or [])
+                                         if fn.endswith(f"_{px}.ktx2"))
+                            for px in fo["sizes"]},
+            materials=entries,
+            source="export/read_foliage.py + export/foliage_tex.py + export/gltf_pack.sh --foliage")
+        man["materials"] = mats_block
 
     # ------------------------------------------------------------ Phase 6c item A: the far trees' meshes
     # export/trees_far.py + `gltf_pack.sh --trees` build `env_trees.glb`: the 16 impostor prototypes as real
