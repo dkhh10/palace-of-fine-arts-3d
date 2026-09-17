@@ -654,3 +654,11 @@ straw-pale (export or viewer accordingly); (c) the station-2 fill tree — measu
 the reference at station 2.
 Ratified (viewer r2 review carry 9): the 12 m far-tree mesh default (above) and `?farao=1` — the far meshes' vertex AO also attenuates the environment lobes
 (iblIrradiance / radiance), beyond the manifest's stated COLOR_0 x placement rgb use; measured 0.042x on the far-tree box and kept on its merits.
+
+## 2026-09-17 · QA 16 (8cf34ec): ONE MORE ROUND — the last 6c round; owners
+Scores 01 3.72 / 02 3.13 (+0.13) / 03 2.56 / 04 2.88 / 05 2.94 / 06 2.83; the stated acceptance passes (no drop, station 2 rises, +1.9 ms) but the tiles do not: crowns are
+balloons (cam02 centre/edge 0.504 vs 0.364, cam05 1.26 vs 1.77), shrubs 1.34-1.70x too bright with 2-8x the hard-edge share, the walk-in reads as cut-outs. Round 2 of 2:
+viewer owns crown interior/rim and the shrub level/edges (after the export settles the albedo with a Cycles DiffCol pass — the lead doubts "albedo" because the tint is the
+Phase 5 material's own; the likelier cause is the mean_nonzero irradiance reducer without cov and no self-shadow); export ships a walk-up LOD1 glb for the 16 prototypes
+(<= 30 k tris each, no AO bake). Resident memory is 1 800.6 MB (1.5x the Gate 1 budget); accepted for 6c, cut in 6b's tiers. After round16c: QA 17, the lead's tiles, then
+6b regardless of the result (the two-round rule).
