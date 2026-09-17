@@ -43,7 +43,7 @@ const QUALITY_RAW = ( qs.get( 'quality' ) || 'look' ).toLowerCase();
 const QUALITY = ( QUALITY_RAW === 'fast' || QUALITY_RAW === 'look' ) ? QUALITY_RAW : 'look';
 const CFG = {
 	station: parseInt( qs.get( 'station' ) || '1', 10 ),
-	manifestUrl: qs.get( 'manifest' ) || '/assets/gate0/manifest.json',
+	manifestUrl: qs.get( 'manifest' ) || '/assets/gate3/manifest.json',   // delivery default (6a); ?manifest=/assets/gate0/manifest.json for the Gate 0 slice
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
 	// ?quality: `look` (the default) is the frozen Phase 5 look - planar Reflector at full resolution,
@@ -81,13 +81,13 @@ const CFG = {
 	time: qs.has( 't' ) ? parseFloat( qs.get( 't' ) ) : null,      // freeze the water phase (captures)
 	glbOverride: qs.get( 'glb' ),                       // comma-separated URLs, overrides the manifest's list
 	lighting: qs.get( 'lighting' ) || 'auto',           // auto | baked | direct  (see pickLightingMode)
-	billboards: qs.get( 'billboards' ) !== '0',         // far-tree placeholder quads
+	billboards: qs.get( 'billboards' ) === '1',         // far-tree placeholder quads (dev only; off by default since 6a, impostors replace them)
 	impostors: qs.get( 'impostors' ) !== '0',           // Gate 3 octahedral far-tree impostors
 	impNormalDepth: qs.get( 'impnd' ) === '1',          // also load the normal+depth atlases
 	impDebug: parseInt( qs.get( 'impdebug' ) || '0', 10 ),   // 1 raw, 2 alpha, 3 frame cell, 4 quad uv
 	probeEnv: qs.get( 'probe' ) !== '0',                // baked hero probe as the irradiance of unlit surfaces
 	probeSpec: qs.get( 'probespec' ) === '1',           // A/B: probe as the SPECULAR env of baked materials
-	treeboards: qs.get( 'treeboards' ) !== '0',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b)
+	treeboards: qs.get( 'treeboards' ) === '1',         // the export's own ENV_treeboard_* stand-ins inside env.glb (QA 11b; off by default since 6a)
 	colourFrom: qs.get( 'colour' ),                     // manifest to borrow lut / sky / exposure from
 	materials: qs.get( 'materials' ) || 'auto',         // auto | pbr | grey  (see pickMaterialsMode)
 	// QA-11d-1 instance chunking: "0" disables it, "minRadius[,maxDepth[,gain]]" tunes it
@@ -104,7 +104,7 @@ const CFG = {
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
 	vertexIrr: qs.get( 'vertexirr' ) || 'auto',
 	instIrr: qs.get( 'instirr' ) || 'auto',             // per-placement shrub/reed irradiance: auto | 0
-	post: qs.get( 'post' ),                             // all | none | mist,bloom,vignette (default none)
+	post: qs.get( 'post' ) || 'all',                    // all | none | mist,bloom,vignette (default all since 6a: the Phase 5 compositor look)
 	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
 	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
 	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
