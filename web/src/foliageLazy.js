@@ -104,8 +104,18 @@ export async function loadFarTreeLighting( manifest, fetchJson, note = () => {} 
 	const fm = manifest && manifest.raw && manifest.raw.trees && manifest.raw.trees.far_mesh;
 	const lit = fm && fm.lighting;
 	if ( ! lit ) { note( 'far-tree lighting: trees.far_mesh.lighting is not in the manifest (bake item B)' ); return null; }
+	// manifest_v4 ships the block INLINE and split by consumer: `mesh.placements[]` is the per-tree
+	// E_placement the MESH path wants, `impostor.prototypes[p].E_bake` the denominator the IMPOSTOR
+	// path wants.  Both are normalised onto the block itself (`rows`, `prototypes`) so every consumer
+	// reads one shape whether the block arrived inline or as the bake's sidecar json.
+	if ( lit.mesh && Array.isArray( lit.mesh.placements ) ) lit.rows = lit.mesh.placements;
+	if ( lit.impostor && lit.impostor.prototypes ) lit.prototypes = lit.impostor.prototypes;
 	const has = ( b ) => b && b.prototypes && Array.isArray( b.rows || b.placements || b.instances );
-	if ( has( lit ) ) { note( 'far-tree lighting: inline in the manifest' ); return lit; }
+	if ( has( lit ) ) {
+		note( `far-tree lighting: inline in the manifest (${lit.schema || 'no schema'}), ${lit.rows.length} `
+			+ `placement row(s), ${Object.keys( lit.prototypes ).length} prototype E_bake value(s)` );
+		return lit;
+	}
 	const spec = lit.json || ( lit.instance_irradiance && lit.instance_irradiance.json );
 	if ( ! spec ) { note( 'far-tree lighting: the block names neither rows nor a json to fetch' ); return null; }
 	const got = await firstThatLoads( lazyUrlCandidates( manifest.baseUrl, spec ), fetchJson, note, 'far-tree lighting json' );
@@ -392,8 +402,13 @@ export async function loadFarTrees( o ) {
 			for ( let i = 0; i < col.count; i ++ ) if ( col.array[ i * 4 + 3 ] !== one ) { col.array[ i * 4 + 3 ] = one; touched ++; }
 			if ( touched ) { col.needsUpdate = true; out.aoAlphaForced = ( out.aoAlphaForced || 0 ) + touched; }
 		}
-		if ( String( c0.encode || 'none' ).toLowerCase() !== 'gamma2' ) return;
-		out.aoEncode = 'gamma2';
+		// The manifest states the encode as prose ("COLOR_0 = sqrt(linear / range); viewer decodes
+		// linear = COLOR_0^2 * range"), so it is MATCHED, not compared: reading it as the token
+		// "gamma2" would silently leave the AO as sqrt(AO) - every crown a stop too bright.
+		const enc = String( c0.encode || 'none' );
+		if ( ! /sqrt|\^ ?2|\*\s*color_0|gamma-? ?2/i.test( enc ) ) return;
+		const aoRange = ( typeof c0.range === 'number' && c0.range > 0 ) ? c0.range : 1;
+		out.aoEncode = `gamma2 x range ${aoRange.toFixed( 6 )}`;
 		for ( const mat of Array.isArray( mesh.material ) ? mesh.material : [ mesh.material ] ) {
 			if ( ! mat || mat.userData.pfaAoSquared ) continue;
 			mat.userData.pfaAoSquared = true;
@@ -401,7 +416,7 @@ export async function loadFarTrees( o ) {
 			mat.onBeforeCompile = function ( sh, r ) {
 				if ( prev ) prev.call( this, sh, r );
 				sh.fragmentShader = sh.fragmentShader.replace( '#include <color_fragment>',
-					'#include <color_fragment>\n\tdiffuseColor.rgb *= vColor.rgb;   // PFA: gamma2 AO, squared back to linear' );
+					`#include <color_fragment>\n\tdiffuseColor.rgb *= vColor.rgb * ${aoRange.toFixed( 7 )};   // PFA: AO = COLOR_0^2 * range` );
 			};
 			mat.needsUpdate = true;
 		}

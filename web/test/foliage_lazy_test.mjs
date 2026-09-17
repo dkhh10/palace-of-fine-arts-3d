@@ -10,7 +10,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { normaliseManifest } from '../src/manifest.js';
 import { irradianceRatio, applyFoliage, farTreeIrradiance, RATIO_CLAMP } from '../src/foliage.js';
-import { lazyUrlCandidates, loadFarTrees, markShrubLodRows, prototypeEbake } from '../src/foliageLazy.js';
+import { lazyUrlCandidates, loadFarTrees, markShrubLodRows, prototypeEbake,
+	loadFarTreeLighting } from '../src/foliageLazy.js';
 import { buildImpostors } from '../src/impostors.js';
 
 let fails = 0;
@@ -75,6 +76,20 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 {
 	const fm = raw.trees && raw.trees.far_mesh;
 	ok( !! fm, 'manifest carries trees.far_mesh' );
+	// the normaliser the viewer runs before anything reads the block (inline OR sidecar)
+	const notesL = [];
+	const lit = await loadFarTreeLighting( manifest, async () => { throw new Error( 'no fetch in this test' ); },
+		( m ) => notesL.push( m ) );
+	info( notesL.join( '\n      ' ) );
+	if ( lit ) {
+		ok( Array.isArray( lit.rows ) && lit.rows.length === 127, `lighting normalised to ${lit.rows && lit.rows.length} rows` );
+		ok( lit.prototypes && Object.keys( lit.prototypes ).length === 16,
+			`${lit.prototypes ? Object.keys( lit.prototypes ).length : 0} prototype E_bake values` );
+		const e = prototypeEbake( lit );
+		ok( !! e, 'prototypeEbake reads the normalised block -> ?impmod defaults to full' );
+	} else {
+		info( 'trees.far_mesh.lighting not in the manifest yet' );
+	}
 	const placements = fm.placements;
 	// one instanced node per prototype per material, gltfpack-style, rows in manifest order
 	const byProto = new Map();
@@ -131,7 +146,7 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 		loadGlb: async ( url ) => ( url.includes( 'gate1/env_trees.glb' ) || url.endsWith( '/env_trees.glb' ) )
 			? { scene: root, parser: null, userData: {} } : Promise.reject( new Error( '404' ) ),
 		impostorGroup: built.group, foliageReport: null, probeTexture: null,
-		scale: manifest.gate3.scale, mode: 'near', impMode: 'chroma', meshDist: 40, fadeBand: 5,
+		scale: manifest.gate3.scale, mode: 'near', impMode: lit ? 'full' : 'chroma', meshDist: 40, fadeBand: 5,
 		uvDequant: false,
 	} );
 	info( notes.filter( ( n ) => n.startsWith( 'far-tree' ) ).join( '\n      ' ) );
@@ -215,11 +230,13 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 
 // ---------------------------------------------------------------- 6. E_bake plumbing
 {
-	const lit = raw.trees.far_mesh.lighting;
-	const e = prototypeEbake( lit );
-	info( e ? `${Object.keys( e ).length} prototype E_bake value(s) in the manifest -> ?impmod defaults to full`
+	const l = raw.trees.far_mesh.lighting;
+	const e = prototypeEbake( l );
+	info( e ? `${Object.keys( e ).length} prototype E_bake value(s) -> ?impmod defaults to full`
 		: 'no prototype E_bake in the manifest yet -> ?impmod stays chroma' );
-	ok( true, 'E_bake presence reported' );
+	const c0 = raw.trees.far_mesh.color0 || {};
+	info( `COLOR_0: present=${c0.present} topology_rev=${c0.topology_rev} range=${c0.range} encode="${String( c0.encode ).slice( 0, 60 )}"` );
+	ok( true, 'E_bake and COLOR_0 presence reported' );
 }
 
 console.log( fails ? `${fails} FAILURES` : 'all foliage-lazy checks passed' );
