@@ -28,8 +28,12 @@ fi
 # stay in this worktree; the KTX2, the .hdr probe/sky, the manifest, the UV2 and vertex hand-off npz ship.
 if [ -d "$ROOT/export/out/gate3" ]; then
   mkdir -p "$MAIN/export/out/gate3"
+  # 6c: trees_far_irr.blend is a 326 MB working blend (gate3_bake + the 127 LOD2 far-tree placements), the
+  # same class as gate3_bake.blend; trees_far/ao and trees_far/ebake are the per-job arrays the compose step
+  # reduces. Only vertex_ao.npz, instance_irradiance.json and the small json reports ship.
   rsync -a --exclude 'gate3_bake.blend*' --exclude 'gate3_imp.blend*' --exclude 'tex/' \
         --exclude 'slots/' --exclude 'vertex/' --exclude 'impostor/*.png' --exclude 'probe/*.exr' \
+        --exclude 'trees_far/trees_far_irr.blend*' --exclude 'trees_far/ao/' --exclude 'trees_far/ebake/' \
         "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
   echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
 fi
