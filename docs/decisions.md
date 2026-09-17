@@ -652,3 +652,5 @@ as balloons; (b) shrub brightness/colour — decide from the boxes whether the t
 straw-pale (export or viewer accordingly); (c) the station-2 fill tree — measure its distance; if the mesh at that magnification reads better than the blob in a tile
 (not in the box metric alone), raise fartreemesh to cover it; else the impostor atlas needs a finer near-frame set for that prototype. Reed-card scale checked against
 the reference at station 2.
+Ratified (viewer r2 review carry 9): the 12 m far-tree mesh default (above) and `?farao=1` — the far meshes' vertex AO also attenuates the environment lobes
+(iblIrradiance / radiance), beyond the manifest's stated COLOR_0 x placement rgb use; measured 0.042x on the far-tree box and kept on its merits.
