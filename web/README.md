@@ -591,16 +591,33 @@ ratio.
 
 **The shrub / reed cards** (QA 16 open 1) take the same interior term plus a height term (lower and
 inner cards darker) and a LOD bias on the cut-out fetch (`?foliagebias=`, 0.8 on the cards, 0 on the
-leaves).  Level against the reference: 01 shore **1.61 -> 1.52x**, 01 shore S 1.28 -> 1.21x, 02 shore
-**1.62 -> 1.37x**, 02 reed clump 1.50 -> 1.39x, 05 shore 1.35 -> 1.24x, 05 W 1.11 -> 0.92x, 03 cards
-2.20 -> 2.07x.  Hard-edge share moves little (02 reed 6.22 -> 5.80 %, 02 shore 9.31 -> 8.92 %): it is
-driven by the cards' contrast against a bright ground, not by texture filtering.  **The remaining
-level gap is not the viewer's to close by guessing**: the manifest's own
-`lightmaps.instance_irradiance.reduce` says `rgb` is the mean over the vertices that RECEIVED light
-and that the uncovered fraction is the card buried in the terrain, so multiplying by `cov` would
-darken the visible part of a card by how much of it is underground.  Station 3's 1:1 tile shows gold
-and cream cut-outs where Cycles has dark green at the same 8 m - a source-colour difference, which is
-what export's Cycles DiffCol pass was opened to settle.
+leaves), and - what actually carries the level - the ENVIRONMENT lobe at 0.3 (`?cardenv=` on the LOD2
+cards, `?shrubenv=` on the LOD1 meshes; see `CARD_ENV`).
+
+| shrub / reed box | round16b | **round16c** | hard-edge % (round16b -> round16c, ref) |
+|---|---|---|---|
+| 01 shore | 1.61x | **1.36x** | 6.82 -> **3.44** (1.77) |
+| 01 shore S | 1.28x | **1.10x** | 7.57 -> **5.29** (3.38) |
+| 02 shore | 1.62x | **1.12x** | 8.56 -> 9.38 (3.44) |
+| 02 reed clump | 1.50x | **1.06x** | 6.22 -> **0.62** (1.57) |
+| 05 shore | 1.35x | **1.02x** | 7.92 -> **3.64** (4.30) |
+| 05 W | 1.11x | **0.88x** | 6.79 -> **6.57** (4.06) |
+| 03 cards | 2.20x | **1.32x** | 12.11 -> **3.05** (1.48) |
+
+QA 16's 1.34-1.70x band becomes 0.88-1.36x and the hard-edge share falls at six of the seven boxes.
+**How that was settled, in order, because two of the three candidates were wrong.**  Export's Cycles
+DiffCol pass (`export/out/gate3/foliage/albedo_check.json`, verdict owner LIGHTING) found every shrub
+box's shipped albedo 2-13 % **darker** than the albedo Cycles itself uses on those cards, so the tint
+chain is not it.  The per-placement irradiance is not it either: multiplied by its own `cov`
+(`?shrubcov=1`, mean cov 0.857 - the manifest's own `mean_all`) every shrub box moves by less than
+0.01x, and the manifest's `reduce` note explains why that term was suspect in the first place (`rgb`
+is the mean over the vertices that RECEIVED light, and the uncovered fraction is the card buried in
+the terrain, so charging it with zero would darken a card by how much of it is underground).  What
+was left is the environment: a card is one flat quad whose normal reflects the horizon, and three's
+PMREM lobe - with `KHR_materials_sheen`, an environment lobe too - hands every one of them a sky
+highlight that the reference's hundred separate leaves never get.  At 0.3 the seven boxes read
+1.36 / 1.10 / 1.18 / 1.14 / 1.02 / 0.88 / 1.53x in the sweep and the shipped capture lands the table
+above; at 0 two of them fall through to 0.82-0.84x, so 0 is too far.
 
 **The walk-up set** (`trees.walkup_mesh`, item 3) is consumed by the far-tree loader with the block
 swapped, so the join, the placement gate, the irradiance and the impostor complement are the same
