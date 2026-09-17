@@ -8,8 +8,9 @@
 import * as THREE from 'three';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { normaliseManifest } from '../src/manifest.js';
-import { irradianceRatio, applyFoliage, farTreeIrradiance, RATIO_CLAMP } from '../src/foliage.js';
+import { irradianceRatio, applyFoliage, farTreeIrradiance, RATIO_RULES, ratioRules } from '../src/foliage.js';
 import { lazyUrlCandidates, loadFarTrees, markShrubLodRows, prototypeEbake,
 	loadFarTreeLighting } from '../src/foliageLazy.js';
 import { buildImpostors } from '../src/impostors.js';
@@ -18,7 +19,21 @@ let fails = 0;
 const ok = ( c, m ) => { console.log( `${c ? 'PASS' : 'FAIL'}  ${m}` ); if ( ! c ) fails ++; };
 const info = ( m ) => console.log( `      ${m}` );
 
-const MAIN = process.env.PFA_MAIN_ROOT || path.resolve( import.meta.dirname, '../../..' );
+// PFA_MAIN_ROOT wins; then this checkout's own root (web/test -> <repo>); then, when this IS a
+// worktree, the MAIN checkout it was made from - `export/out` is gitignored and exists only there, so
+// without this a worktree run would skip every manifest-backed check for no good reason.
+function mainRoot() {
+	if ( process.env.PFA_MAIN_ROOT ) return process.env.PFA_MAIN_ROOT;
+	const here = path.resolve( import.meta.dirname, '../..' );
+	if ( fs.existsSync( path.join( here, 'export/out/gate3/manifest.json' ) ) ) return here;
+	try {
+		const common = execFileSync( 'git', [ '-C', here, 'rev-parse', '--path-format=absolute', '--git-common-dir' ],
+			{ encoding: 'utf8' } ).trim();
+		if ( common ) return path.dirname( common );        // <main>/.git -> <main>
+	} catch ( e ) { /* not a git checkout: fall through */ }
+	return here;
+}
+const MAIN = mainRoot();
 const MANIFEST = path.join( MAIN, 'export/out/gate3/manifest.json' );
 
 // ---------------------------------------------------------------- 1. the url candidates
@@ -33,11 +48,24 @@ const MANIFEST = path.join( MAIN, 'export/out/gate3/manifest.json' );
 
 // ---------------------------------------------------------------- 2. the ratio, clamped
 {
-	ok( irradianceRatio( [ 1, 1, 1 ], [ 0, 1, 1 ], 'full' )[ 0 ] === 1, 'E_bake zero channel -> 1, not a runaway' );
+	ok( irradianceRatio( [ 1, 1, 1 ], [ 0, 1, 1 ], 'full' )[ 0 ] === RATIO_RULES.zeroChannelFallback,
+		'E_bake zero channel -> the fallback, not a runaway' );
 	const r = irradianceRatio( [ 100, 1, 1 ], [ 1, 1, 1 ], 'full' );
-	ok( r[ 0 ] === RATIO_CLAMP, `full mode clamped at ${RATIO_CLAMP} (got ${r[ 0 ]})` );
+	ok( r[ 0 ] === RATIO_RULES.clamp, `full mode clamped at ${RATIO_RULES.clamp} (got ${r[ 0 ]})` );
 	const c = irradianceRatio( [ 2, 2, 2 ], [ 1, 1, 1 ], 'chroma' );
 	ok( Math.abs( c[ 0 ] - 1 ) < 1e-6 && Math.abs( c[ 1 ] - 1 ) < 1e-6, 'chroma mode is level-free' );
+	// the clamp bites in chroma too (round-2 review 4): without it the runaway channel dominates the
+	// luminance the normalisation divides by, so the OTHER two channels come out wrong.
+	const big = irradianceRatio( [ 100, 1, 1 ], [ 1, 1, 1 ], 'chroma' );
+	const bigClamped = irradianceRatio( [ 4, 1, 1 ], [ 1, 1, 1 ], 'chroma' );
+	ok( big.every( ( x, i ) => Math.abs( x - bigClamped[ i ] ) < 1e-9 ),
+		`chroma clamps before normalising (${big.map( x => x.toFixed( 3 ) ).join( '/' )})` );
+	// and the three rules come from the manifest, not from the constants
+	const rr = ratioRules( { trees: { far_mesh: { lighting: { impostor: { strength: 2, clamp: 9, zero_channel_fallback: 0 } } } } } );
+	ok( rr.strength === 2 && rr.clamp === 9 && rr.zeroChannelFallback === 0,
+		`ratio rules read from the manifest (${rr.strength}/${rr.clamp}/${rr.zeroChannelFallback})` );
+	ok( irradianceRatio( [ 3, 1, 1 ], [ 1, 1, 1 ], 'full', rr )[ 0 ] === 9,
+		'the manifest strength and clamp are applied (3^2 = 9, at the 9 ceiling)' );
 }
 
 // ---------------------------------------------------------------- 3. the dissolve is a complement
@@ -66,8 +94,12 @@ const MANIFEST = path.join( MAIN, 'export/out/gate3/manifest.json' );
 }
 
 if ( ! fs.existsSync( MANIFEST ) ) {
-	ok( false, `no manifest at ${MANIFEST} (set PFA_MAIN_ROOT)` );
-	process.exit( 1 );
+	// export/out is gitignored and lives in the MAIN checkout only, so a worktree run legitimately has
+	// no manifest: the checks above (which need none) still ran and the rest is SKIPPED, the same way
+	// manifest_test.mjs skips its gate manifests.  PFA_MAIN_ROOT points the run at the real assets.
+	info( `no manifest at ${MANIFEST}: the manifest-backed checks are skipped (set PFA_MAIN_ROOT to run them)` );
+	console.log( fails ? `${fails} FAILURES` : 'all foliage-lazy checks passed (manifest-backed ones skipped)' );
+	process.exit( fails ? 1 : 0 );
 }
 const raw = JSON.parse( fs.readFileSync( MANIFEST, 'utf8' ) );
 const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' );
@@ -215,17 +247,20 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 		ok( rows.length === 127, `${rows.length} rows flattened out of meshes[*].placements (expected 127)` );
 		const eb = prototypeEbake( { prototypes: j.prototypes } );
 		ok( eb && Object.keys( eb ).length === 16, `${eb ? Object.keys( eb ).length : 0} prototype E_bake values (expected 16)` );
-		const raw2 = JSON.parse( JSON.stringify( { trees: { far_mesh: { lighting: { rows, prototypes: j.prototypes } } },
-			impostors: raw.impostors } ) );
+		const impBlock = ( ( ( raw.trees || {} ).far_mesh || {} ).lighting || {} ).impostor || null;
+		const raw2 = JSON.parse( JSON.stringify( { trees: { far_mesh: { lighting: {
+			rows, prototypes: j.prototypes, impostor: impBlock } } }, impostors: raw.impostors } ) );
+		info( `ratio rules: ${JSON.stringify( ratioRules( raw2 ) )}` );
 		for ( const mode of [ 'full', 'chroma' ] ) {
 			const notes = [];
 			const out = farTreeIrradiance( manifest.treesFar, raw2, mode, ( m ) => notes.push( m ) );
 			ok( out.applied === 127, `mode ${mode}: ${out.applied}/127 placements modulated (${out.unmatched} unmatched)` );
 			const v = [ ...out.byIndex.values() ];
 			const mx = Math.max( ...v.flat() ), mn = Math.min( ...v.flat() );
-			const clamped = v.filter( ( r ) => r.some( ( x ) => Math.abs( x - RATIO_CLAMP ) < 1e-9 ) ).length;
-			info( `mode ${mode}: ratio range ${mn.toFixed( 3 )}..${mx.toFixed( 3 )}, ${clamped} placement(s) on the ${RATIO_CLAMP} clamp` );
-			ok( mx <= RATIO_CLAMP + 1e-9, `mode ${mode}: no channel above the clamp (max ${mx.toFixed( 3 )})` );
+			const rr2 = ratioRules( raw2 );
+			const clamped = v.filter( ( r ) => r.some( ( x ) => Math.abs( x - rr2.clamp ) < 1e-9 ) ).length;
+			info( `mode ${mode}: ratio range ${mn.toFixed( 3 )}..${mx.toFixed( 3 )}, ${clamped} placement(s) on the ${rr2.clamp} clamp` );
+			ok( mx <= rr2.clamp + 1e-9, `mode ${mode}: no channel above the clamp (max ${mx.toFixed( 3 )})` );
 			ok( mn > 0, `mode ${mode}: every channel positive (min ${mn.toFixed( 3 )})` );
 		}
 	}

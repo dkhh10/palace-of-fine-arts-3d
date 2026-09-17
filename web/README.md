@@ -750,7 +750,7 @@ this machine is about 2 ms, measured on two passes over identical geometry.
 | 03 colonnade walk | 34.41 | 34.40 | **33.94** |
 | 04 rotunda ceiling | 13.12 | 13.12 | 13.12 |
 | 05 south lawn | 22.52 | 22.60 | **22.22** |
-| 06 aerial | 21.03 | 20.99 | **20.58** |
+| 06 aerial | 21.03 | 20.99 | **20.59** |
 
 Every station falls or holds, and station 2 - the one the foliage brief required to rise - improves by
 3.05, the largest move of the round.  The hero's own shore-foliage box does not move (0.696x both).
@@ -799,6 +799,19 @@ textures at 1 024 px, no shader error and no page error.
 mesh bbox centre against the impostor quad centre **max 0.73 m, median 0.254 m** over 127 placements;
 trunk offset max 0.721 m, median 0.186.  On the previous glb the same check read 905.1 m and refused
 to draw the meshes at all.
+
+**Open items carried from the round-2 review** (5-9, none of them a pixel today):
+* the number that justifies the 12 m far-tree default now has a committed sheet,
+  `renders/web/960/round16b_meshdist_ab.jpg` (reference / the mesh at station distance / the shipped
+  12 m), beside `round16b_foliage_boxes.json`;
+* the E_placement join is an exact 2-dp key with no tolerance, and a missed row would fall silently to
+  the probe (254/254 today) - it should refuse instead;
+* a placement whose crown does not cluster would keep `iNear = 0` (impostor always drawn) while its
+  mesh still fades in, the mirror of round-1 finding 4 (127/127 matched today);
+* inside the 0.9995 guard both sides keep about 0.05 % of the pixels - an overlap, never a hole, so
+  the partition is exact everywhere except that one band, which the guard exists to make invisible;
+* the 12 m far-tree switch and `?farao=1` (AO on `iblIrradiance` / `radiance`, beyond the manifest's
+  stated COLOR_0 use) are the lead's to ratify in docs/decisions.md.
 
 ### Round 7 additions (QA 15)
 * **The water changed twice.** The murk is derived (see "The upwelling term, derived") and the ripple is
@@ -1015,9 +1028,20 @@ shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (transl
 mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
 `?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
 `?fartreelight=near|probe|0` (what lights the 127 far-tree MESHES until the bake ships their
-irradiance; `0` suppresses the meshes entirely and every far tree stays its impostor),
-`?foliagetex=1024|2048|0` (export item D's tinted albedo + translucency factor maps; `0` keeps the
-glb's untinted source card),
+irradiance; `0` suppresses the meshes entirely and every far tree stays its impostor — inert once the
+bake's block is in the manifest, which is the shipped case),
+`?foliagetex=1024|2048|0` (export item D's tinted albedo + translucency factor maps, default **1024**;
+`0` keeps the glb's untinted source card),
+`?fartreemesh=` (metres, default **12**: the FAR trees' own mesh/impostor switch, carried per
+placement as the impostor attribute `iDist`, while `?treemesh=` keeps the near trees' 40 — `40` here
+reproduces the mesh-at-station look the README measures and rejects),
+`?farao=` (0..1, default **1**: how much of the far-tree meshes' ENVIRONMENT term — `iblIrradiance`,
+`radiance` and with them the sheen lobe — the baked per-vertex AO occludes; `0` is glTF's own reading
+of COLOR_0, an albedo tint only),
+`?fartrn=` (default: follows `?leaftrn=`, i.e. the Phase 5 constants — the translucency scale on the
+far-tree MESHES alone; measured at 0.015x of the far-tree box, kept as the A/B),
+`?shrubenv=` (default **1**: the environment term on the LOD1 shrub meshes, the same lever as
+`?farao=` for a set that has no baked AO to occlude it with),
 `?bloomthr=` (scene-linear; the default is the manifest value x `BLOOM_THRESHOLD_SCALE` 2.0),
 `?bloomrad=` (UnrealBloomPass radius; measured NOT to be a lever, kept for the A/B),
 `?watergrazemax=` (the FIX-NOW 1 cap, default 6), `?watermurk=r,g,b` (overrides the derived

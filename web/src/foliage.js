@@ -601,19 +601,46 @@ export function equirectIntegral( texture ) {
  *             own estimate (sun + sky integral), because an estimate that is off by a factor would
  *             otherwise re-light every far tree by that factor.
  */
-export const RATIO_CLAMP = 4.0;        // the lead's ceiling (docs/decisions.md 2026-09-17)
+/**
+ * The ratio rules, as the manifest states them.  `trees.far_mesh.lighting.impostor` ships `strength`,
+ * `clamp` and `zero_channel_fallback`, and its own `how` is the formula below verbatim:
+ *     atlas_frame * clamp( ( E_placement / E_bake ) ** strength, 0, clamp )   per channel.
+ * The constants here are only the fallback for a manifest that does not carry the block; they happen
+ * to equal today's values, which is exactly why reading them matters - a bake that changes the
+ * ceiling would otherwise be silently ignored by the viewer.
+ */
+export const RATIO_RULES = { strength: 1.0, clamp: 4.0, zeroChannelFallback: 1.0 };
 
-export function irradianceRatio( ePlacement, eBake, mode = 'chroma', clamp = RATIO_CLAMP ) {
+export function ratioRules( raw ) {
+	const b = raw && raw.trees && raw.trees.far_mesh && raw.trees.far_mesh.lighting
+		&& raw.trees.far_mesh.lighting.impostor;
+	const num = ( v, d ) => ( typeof v === 'number' && isFinite( v ) && v > 0 ? v : d );
+	return b ? {
+		strength: num( b.strength, RATIO_RULES.strength ),
+		clamp: num( b.clamp, RATIO_RULES.clamp ),
+		// a fallback of 0 is meaningful (draw nothing there), so it is only rejected when absent
+		zeroChannelFallback: ( typeof b.zero_channel_fallback === 'number' && isFinite( b.zero_channel_fallback ) )
+			? b.zero_channel_fallback : RATIO_RULES.zeroChannelFallback,
+		from: 'trees.far_mesh.lighting.impostor',
+	} : { ...RATIO_RULES, from: 'the viewer\'s defaults (no impostor block in the manifest)' };
+}
+
+export function irradianceRatio( ePlacement, eBake, mode = 'chroma', rules = RATIO_RULES ) {
 	if ( ! ePlacement || ! eBake ) return null;
-	// "fall back to 1 where E_bake has a zero channel" - a zero channel is not a small number, it is
-	// no measurement at all, and 0/0 would otherwise re-light that channel by an arbitrary factor.
-	const r = [ 0, 1, 2 ].map( ( i ) => ( eBake[ i ] > 1e-9 ? ePlacement[ i ] / eBake[ i ] : 1 ) );
+	// a number keeps the old call shape (the clamp) working
+	const R = ( typeof rules === 'number' ) ? { ...RATIO_RULES, clamp: rules } : ( rules || RATIO_RULES );
+	// "fall back to `zero_channel_fallback` where E_bake has a zero channel" - a zero channel is not a
+	// small number, it is no measurement at all, and 0/0 would otherwise re-light it arbitrarily.
+	const r = [ 0, 1, 2 ].map( ( i ) => ( eBake[ i ] > 1e-9
+		? Math.pow( ePlacement[ i ] / eBake[ i ], R.strength ) : R.zeroChannelFallback ) );
 	if ( ! r.every( ( x ) => isFinite( x ) && x > 0 ) ) return null;
-	// The ceiling applies to the RATIO, before the chroma normalisation: a placement the bake measured
-	// in deep shade divided by a nursery under the open sky can otherwise run away.
-	if ( mode !== 'chroma' ) return r.map( ( x ) => Math.min( x, clamp ) );
-	const lum = 0.2126 * r[ 0 ] + 0.7152 * r[ 1 ] + 0.0722 * r[ 2 ];
-	return lum > 1e-9 ? r.map( ( x ) => x / lum ) : null;
+	// The ceiling applies to the RATIO, in BOTH modes: a placement the bake measured in deep shade
+	// divided by a nursery under the open sky can otherwise run away, and chroma's normalisation
+	// divides by a luminance that the same runaway channel dominates.
+	const c = r.map( ( x ) => Math.min( x, R.clamp ) );
+	if ( mode !== 'chroma' ) return c;
+	const lum = 0.2126 * c[ 0 ] + 0.7152 * c[ 1 ] + 0.0722 * c[ 2 ];
+	return lum > 1e-9 ? c.map( ( x ) => x / lum ) : null;
 }
 
 /**
@@ -632,6 +659,7 @@ export function farTreeIrradiance( treesFar, raw, mode, note = () => {} ) {
 			+ '(E_placement per placement + E_bake per prototype); the far atlases draw unmodulated' );
 		return { applied: 0, unmatched: 0, byIndex: new Map() };
 	}
+	const rules = ratioRules( raw );
 	const key = ( p ) => `${p[ 0 ].toFixed( 2 )},${p[ 1 ].toFixed( 2 )},${p[ 2 ].toFixed( 2 )}`;
 	const byLoc = new Map();
 	for ( const r of rows ) {
@@ -644,11 +672,12 @@ export function farTreeIrradiance( treesFar, raw, mode, note = () => {} ) {
 		const e = Array.isArray( t.base ) ? byLoc.get( key( t.base ) ) : null;
 		const proto = lit.prototypes[ t.prototype ] || lit.prototypes[ ( raw.impostors && raw.impostors.prototype_map && raw.impostors.prototype_map[ t.prototype ] ) || t.prototype ];
 		const eb = proto && ( proto.E_bake || proto.e_bake );
-		const ratio = irradianceRatio( e, eb, mode );
+		const ratio = irradianceRatio( e, eb, mode, rules );
 		if ( ratio ) byIndex.set( i, ratio ); else unmatched ++;
 	} );
 	note( `far-tree impostor modulation: ${byIndex.size}/${treesFar.length} placement(s) joined by location `
-		+ `(${unmatched} unmatched), mode ${mode}` );
+		+ `(${unmatched} unmatched), mode ${mode}, strength ${rules.strength}, clamp ${rules.clamp}, `
+		+ `zero-channel fallback ${rules.zeroChannelFallback} (from ${rules.from})` );
 	return { applied: byIndex.size, unmatched, byIndex };
 }
 

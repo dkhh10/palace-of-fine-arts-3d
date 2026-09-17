@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { stationMatrix, makeStationCamera, matrixMaxDiff, b2t, vFovDeg } from '../src/blenderCamera.js';
 
@@ -17,7 +18,21 @@ import { stationMatrix, makeStationCamera, matrixMaxDiff, b2t, vFovDeg } from '.
 // against itself.  Without a manifest the orientation checks are SKIPPED, never silently passed.
 const data = JSON.parse( readFileSync( new URL( '../src/stations_blender.json', import.meta.url ) ) );
 const WEB = path.resolve( fileURLToPath( new URL( '..', import.meta.url ) ) );
-const MAIN = process.env.PFA_MAIN_ROOT || path.resolve( WEB, '..' );
+// PFA_MAIN_ROOT wins; then this checkout; then, when this is a WORKTREE, the main checkout it was
+// made from - `export/out` is gitignored and exists only there, so a worktree run would otherwise
+// skip every cross-check and fail below (which is the right refusal, but for the wrong reason).
+function mainRoot() {
+	if ( process.env.PFA_MAIN_ROOT ) return process.env.PFA_MAIN_ROOT;
+	const here = path.resolve( WEB, '..' );
+	if ( existsSync( path.join( here, 'export/out' ) ) ) return here;
+	try {
+		const common = execFileSync( 'git', [ '-C', here, 'rev-parse', '--path-format=absolute', '--git-common-dir' ],
+			{ encoding: 'utf8' } ).trim();
+		if ( common ) return path.dirname( common );
+	} catch ( e ) { /* not a git checkout */ }
+	return here;
+}
+const MAIN = mainRoot();
 const manifestPath = [ 'export/out/gate1/manifest.json', 'export/out/gate0/manifest.json' ]
 	.map( p => path.join( MAIN, p ) ).find( existsSync ) || null;
 const blenderStations = manifestPath ? ( JSON.parse( readFileSync( manifestPath ) ).stations || {} ) : {};

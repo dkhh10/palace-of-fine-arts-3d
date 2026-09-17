@@ -53,6 +53,14 @@ renders/web/*_perf1440*.png
 # the bare-URL capture (C4): the full-res PNG is regenerable, the 960 px copy under 960/ is committed
 renders/web/*_bareurl.png
 renders/web/*_walkin*.png
+# 6c round-2 A/B and diagnostic captures: regenerable from the flags named in web/README.md, and the
+# ones any number cites are kept as 960 px copies under renders/web/960/ (round-2 review 2)
+renders/web/r16b_*.png
+renders/web/smoke_*.png
+renders/web/smoke16b_*.png
+renders/web/round16bm60_*.png
+renders/web/placecheck*.png
+renders/web/verify*.png
 !renders/web/960/*
 renders/web/round13b_*.png
 renders/web/round13direct_*.png
