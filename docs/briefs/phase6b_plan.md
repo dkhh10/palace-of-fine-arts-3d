@@ -22,9 +22,10 @@ The desktop download is therefore ~840 MB against a 50 MB initial payload: 6b is
    exists, else the decimated LOD0 at half budget), textures halved (ETC1S KTX2, the toktx `--encode etc1s` path in gltf_pack.sh), impostors only for the far trees, shrubs
    at LOD2, water without the planar reflection, post = LUT only. Target: loads and walks at 30 fps on the named iPhone; resident < 700 MB. User-agent + a WebGL
    probe (max texture size, ASTC/ETC support) pick the tier automatically; `?tier=` overrides.
-4. Hosting and staging: static site + assets on object storage with HTTP range and Brotli (Vercel is connected to this session and hosts the static build; large
-   assets go to Vercel Blob or an R2 bucket behind the same origin, because per-file limits and egress pricing decide, not convenience — the lead lists the two with
-   their measured cost for ~840 MB x N visitors before the user picks). Deployment through one script (`web/deploy.sh`), never a hand upload; the staging URL is
+4. Hosting and staging: static site + assets on object storage with HTTP range and Brotli. Cost table in docs/briefs/phase6b_hosting.md (researched 2026-09-17):
+   Cloudflare Pages + R2 on one custom subdomain ~$0/month at 50-1 000 full downloads (R2 egress free, no per-file ceiling, same origin so no CORS); Vercel needs Pro +
+   Blob ($20-118/month, Hobby's Blob stops at 10 GB/month, range support undocumented, terms exclude bulk file delivery); GitHub Pages / Netlify ruled out by their
+   bandwidth caps. Lead's recommendation: Cloudflare Pages + R2. Deployment through one script (`web/deploy.sh`), never a hand upload; the staging URL is
    password-free but unlisted; `docs/delivery.md` gets the URL and the tier table.
 5. QA on the URL (Opus xhigh, one round): stations 1-6 in headless Chrome against the staging URL (screenshot.mjs takes a base URL), Safari on this Mac by the user
    (one screenshot at the hero), iOS Safari on the named iPhone by the user (a screen recording of a 30 s walk), initial payload measured from the network log
