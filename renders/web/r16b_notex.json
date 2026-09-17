@@ -1,0 +1,4589 @@
+{
+ "out": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-viewer/renders/web/r16b_notex.png",
+ "url": "http://127.0.0.1:61480/?station=2&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate3%2Fmanifest.json&t=0&billboards=0&treeboards=0&foliagetex=0",
+ "station": 2,
+ "size": [
+  1920,
+  1080
+ ],
+ "wall_s": 8.483,
+ "info": {
+  "station": {
+   "index": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "lens": 27,
+   "shift_y": 0
+  },
+  "cameraWorldMatrix": [
+   -0.2924011927395074,
+   0,
+   0.9562957400744361,
+   0,
+   0.017759810439461666,
+   0.9998275355190107,
+   0.005430317774835987,
+   0,
+   -0.9561308130259518,
+   0.01857146246210328,
+   -0.29235076391956083,
+   0,
+   -79.800003,
+   1.5500000000000038,
+   -24.40000000000001,
+   1
+  ],
+  "projectionMatrix": [
+   1.4999999999999998,
+   0,
+   0,
+   0,
+   0,
+   2.666666666666666,
+   0,
+   0,
+   0,
+   0,
+   -1.000040000800612,
+   -1,
+   0,
+   0,
+   -0.20000400306035304,
+   0
+  ],
+  "fovVertical": 41.112090439166934,
+  "aspect": 1.7777777777777777,
+  "size": [
+   1920,
+   1080
+  ],
+  "render": {
+   "frame": 539,
+   "calls": 378,
+   "triangles": 6179506,
+   "points": 0,
+   "lines": 0,
+   "programs": 106
+  },
+  "memory": {
+   "geometries": 217,
+   "textures": 320
+  },
+  "gl": {
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+   "vendor": "Google Inc. (Apple)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "patchedMaterials": 65,
+  "lightmapsApplied": 16,
+  "unpatchedMaterials": [
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+   "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+   "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+   "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+   "MAT_EXP_ARCH_site__MAT_concrete_podium",
+   "MAT_EXP_ARCH_site__MAT_paving",
+   "MAT_EXP_ORN__ORN_attic_figure_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_attic_panel_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_inner_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_rotunda_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_drum_band_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_corner_scroll_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_winged_figure_v1_LOD0_a_a",
+   "MAT_EXP_ORN__ORN_keystone_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_maiden_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_maiden_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_maiden_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_urn_niche_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+   "MAT_EXP_ENVBD__MAT_backdrop_building",
+   "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+   "MAT_EXP_ENVBD__MAT_backdrop_forest",
+   "MAT_EXP_ENVBD__MAT_backdrop_hill",
+   "MAT_EXP_ENVBD__MAT_backdrop_roof",
+   "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+   "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+   "MAT_EXP_ENVBD__MAT_bird_white",
+   "MAT_EXP_ENVBD__MAT_lamp_post",
+   "MAT_EXP_ENVBD__MAT_lawn",
+   "MAT_reeds",
+   "MAT_shrub_light",
+   "MAT_shrub",
+   "MAT_shrub_dry",
+   "MAT_bark_cypress",
+   "MAT_leaf_broadleaf",
+   "MAT_leaf_cypress",
+   "MAT_bark_eucalyptus",
+   "MAT_leaf_eucalyptus",
+   "MAT_leaf_pine",
+   "MAT_EXP_treeboard",
+   "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+   "MAT_EXP_ENV__ENV_lagoon_bed",
+   "MAT_EXP_ENV__riprap",
+   "MAT_EXP_ENV__ENV_terrain_ground"
+  ],
+  "lightmapScale": 3.14159265358979,
+  "rgbmRange": 64,
+  "gate3": {
+   "own": {
+    "matched": 16,
+    "applied": 16,
+    "blockedNoUv2InGlb": 0,
+    "noUv2Attribute": 1,
+    "unmatched": 0,
+    "maxMatchError_m": 0.019115870881182308,
+    "assets": {
+     "ARCH_colonnade_south_concrete_colonnade_merged": "gamma2 range 44.41 layout gate3_relaid (match 0.001 m)",
+     "ARCH_colonnade_north_concrete_colonnade_merged": "gamma2 range 48.35 layout gate3_relaid (match 0.001 m)",
+     "ARCH_rotunda_drum_band_merged": "gamma2 range 26.58 layout gate1 (match 0.001 m)",
+     "ARCH_rotunda_column_tan_inner_merged": "gamma2 range 29.08 layout gate1 (match 0.000 m)",
+     "ARCH_rotunda_concrete_inner_merged": "gamma2 range 27.97 layout gate1 (match 0.000 m)",
+     "ARCH_rotunda_concrete_ochre_merged": "gamma2 range 52.07 layout gate3_relaid (match 0.000 m)",
+     "ARCH_rotunda_concrete_podium_merged": "gamma2 range 31.74 layout gate1 (match 0.000 m)",
+     "ARCH_rotunda_plaster_ceiling_merged": "gamma2 range 16.76 layout gate1 (match 0.000 m)",
+     "ARCH_rotunda_dome_membrane_merged": "gamma2 range 51.25 layout gate1 (match 0.001 m)",
+     "ENV_lagoon_bed": "gamma2 range 22.39 layout gate1 (match 0.011 m)",
+     "ARCH_site_paving_merged": "gamma2 range 24.60 layout gate1 (match 0.000 m)",
+     "ARCH_site_concrete_podium_merged": "gamma2 range 29.76 layout gate3_relaid (match 0.000 m)",
+     "ARCH_rotunda_plaster_ceiling_rib_merged": "gamma2 range 30.17 layout gate3_relaid (match 0.000 m)",
+     "ENV_ground_colonnade_walk": "gamma2 range 10.19 layout gate3_relaid (match 0.003 m)",
+     "ENV_riprap_merged": "gamma2 range 26.72 layout gate3_relaid (match 0.019 m)",
+     "ENV_terrain_ground": "gamma2 range 19.28 layout gate1 (match 0.018 m)"
+    },
+    "nearMiss": {
+     "ENV_terrain_ground": "a mesh 0.08 m away carries no TEXCOORD_1"
+    }
+   },
+   "slots": {
+    "instances": 988,
+    "matched": 988,
+    "applied": 988,
+    "single": 1,
+    "noUv2Attribute": 0,
+    "unmatched": 0,
+    "maxMatchError_m": 0.004784595021219775,
+    "meshes": [
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0",
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 114,
+      "matched": 114,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 56,
+      "matched": 56,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 56,
+      "matched": 56,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 48,
+      "matched": 48,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 58,
+      "matched": 58,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 58,
+      "matched": 58,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 50,
+      "matched": 50,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1",
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 3,
+      "matched": 3,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 3,
+      "matched": 3,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 2,
+      "matched": 2,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 39,
+      "matched": 39,
+      "match_max_m": 0.004,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 38,
+      "matched": 38,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 37,
+      "matched": 37,
+      "match_max_m": 0.004,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 6,
+      "matched": 6,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 5,
+      "matched": 5,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0"
+      ],
+      "instances": 5,
+      "matched": 5,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_0",
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 105,
+      "matched": 105,
+      "match_max_m": 0.004,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 5,
+      "matched": 5,
+      "match_max_m": 0.004,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 4,
+      "matched": 4,
+      "match_max_m": 0.004,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 4,
+      "matched": 4,
+      "match_max_m": 0.005,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 3,
+      "matched": 3,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 9,
+      "matched": 9,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 7,
+      "matched": 7,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 17,
+      "matched": 17,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 15,
+      "matched": 15,
+      "match_max_m": 0.004,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 9,
+      "matched": 9,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 7,
+      "matched": 7,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 9,
+      "matched": 9,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_orn_1"
+      ],
+      "instances": 7,
+      "matched": 7,
+      "match_max_m": 0.002,
+      "uv2": true
+     }
+    ]
+   },
+   "materialsCloned": 9,
+   "texturesRequested": 21,
+   "texturesLoaded": 21,
+   "texturesFailed": []
+  },
+  "skyDiffuse": true,
+  "shaperPivot": 0.18,
+  "skyRotationDeg": 90,
+  "exposure": 0.14032656980172378,
+  "lutEnabled": true,
+  "lutSize": 65,
+  "waterZ": -1.3,
+  "lightingMode": "baked",
+  "schema": "pfa-phase6/4",
+  "bytes": {
+   "loaded": 651002335,
+   "planned": 651002335,
+   "unknownSize": [],
+   "offPlan": [
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_0_gamma2.ktx2",
+     "bytes": 10016857
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_1_gamma2.ktx2",
+     "bytes": 10328656
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
+     "bytes": 2043381
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
+     "bytes": 1913551
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_2_gamma2.ktx2",
+     "bytes": 1459576
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
+     "bytes": 2908460
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
+     "bytes": 1442913
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
+     "bytes": 2080290
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
+     "bytes": 1933822
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
+     "bytes": 2198971
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
+     "bytes": 377440
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
+     "bytes": 1619649
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
+     "bytes": 3429313
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
+     "bytes": 1974792
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lmatlas_orn_0_gamma2.ktx2",
+     "bytes": 16656146
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
+     "bytes": 737242
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lmatlas_orn_1_gamma2.ktx2",
+     "bytes": 10306550
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
+     "bytes": 4391299
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
+     "bytes": 270462
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
+     "bytes": 4038405
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
+     "bytes": 6962432
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_concrete_wall_007_albedo.ktx2",
+     "bytes": 4089587
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_concrete_wall_007_roughness.ktx2",
+     "bytes": 916668
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_concrete_wall_007_normal.ktx2",
+     "bytes": 3526879
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_concrete_wall_008_albedo.ktx2",
+     "bytes": 2829232
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_concrete_wall_008_roughness.ktx2",
+     "bytes": 404333
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_concrete_wall_008_normal.ktx2",
+     "bytes": 2204758
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_gravelly_sand_albedo.ktx2",
+     "bytes": 1195972
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_gravelly_sand_roughness.ktx2",
+     "bytes": 787309
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_gravelly_sand_normal.ktx2",
+     "bytes": 1067574
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_rock_boulder_dry_albedo.ktx2",
+     "bytes": 1176349
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_rock_boulder_dry_roughness.ktx2",
+     "bytes": 997991
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate2/tex_ktx2/detail_rock_boulder_dry_normal.ktx2",
+     "bytes": 1070828
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/probe/gate3_probe_hero_px.hdr",
+     "bytes": 1048625
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/probe/gate3_probe_hero_nx.hdr",
+     "bytes": 1048625
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/probe/gate3_probe_hero_py.hdr",
+     "bytes": 1048625
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/probe/gate3_probe_hero_ny.hdr",
+     "bytes": 1048625
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/probe/gate3_probe_hero_nz.hdr",
+     "bytes": 1048625
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/probe/gate3_probe_hero_pz.hdr",
+     "bytes": 1048625
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s53_LOD1_albedo_2048.ktx2",
+     "bytes": 682547
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s41_LOD1_albedo_2048.ktx2",
+     "bytes": 566564
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s19_LOD1_albedo_2048.ktx2",
+     "bytes": 662844
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s17_LOD1_albedo_2048.ktx2",
+     "bytes": 623712
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s3_LOD1_albedo_2048.ktx2",
+     "bytes": 581724
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s31_LOD1_albedo_2048.ktx2",
+     "bytes": 407708
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s2_LOD1_albedo_2048.ktx2",
+     "bytes": 388501
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s5_LOD1_albedo_2048.ktx2",
+     "bytes": 545645
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s23_LOD1_albedo_2048.ktx2",
+     "bytes": 504774
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s61_LOD1_albedo_2048.ktx2",
+     "bytes": 519699
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s7_LOD1_albedo_2048.ktx2",
+     "bytes": 648635
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s29_LOD1_albedo_2048.ktx2",
+     "bytes": 659106
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s43_LOD1_albedo_2048.ktx2",
+     "bytes": 569204
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s13_LOD1_albedo_2048.ktx2",
+     "bytes": 589556
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s37_LOD1_albedo_2048.ktx2",
+     "bytes": 842333
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s11_LOD1_albedo_2048.ktx2",
+     "bytes": 924785
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate1/env_trees.glb",
+     "bytes": 3699324
+    },
+    {
+     "url": "http://127.0.0.1:61480/assets/gate1/env_shrubs.glb",
+     "bytes": 422520
+    }
+   ],
+   "files": [
+    {
+     "kind": "sky.camera",
+     "bytes": 3590278,
+     "sizeFrom": "HEAD",
+     "name": "sky_camera_4096x2048.hdr"
+    },
+    {
+     "kind": "sky.glossy",
+     "bytes": 3661319,
+     "sizeFrom": "HEAD",
+     "name": "sky_glossy_4096x2048.hdr"
+    },
+    {
+     "kind": "sky.diffuse",
+     "bytes": 2097202,
+     "sizeFrom": "HEAD",
+     "name": "sky_diffuse_1024x512.hdr"
+    },
+    {
+     "kind": "lut",
+     "bytes": 7415365,
+     "sizeFrom": "HEAD",
+     "name": "lut_agx_high_contrast_65.cube"
+    },
+    {
+     "kind": "glb:arch",
+     "bytes": 4613040,
+     "sizeFrom": "HEAD",
+     "name": "arch.glb"
+    },
+    {
+     "kind": "glb:orn",
+     "bytes": 154253424,
+     "sizeFrom": "HEAD",
+     "name": "orn.glb"
+    },
+    {
+     "kind": "glb:env",
+     "bytes": 38119568,
+     "sizeFrom": "HEAD",
+     "name": "env.glb"
+    },
+    {
+     "kind": "glb:ground",
+     "bytes": 1959104,
+     "sizeFrom": "HEAD",
+     "name": "ground.glb"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2242896,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 491922,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1643267,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2449540,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 605650,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1125700,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2260821,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 497583,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1658982,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2392867,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 591251,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1102371,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2851413,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__column_rose_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 646953,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__column_rose_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2129353,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__column_rose_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2490664,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 530795,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1793469,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__column_tan_inner_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3339365,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_inner_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 748096,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_inner_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2079134,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_inner_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3095533,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 702428,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1396902,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_ochre_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2804485,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_podium_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 636212,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_podium_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2108776,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__concrete_podium_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1485557,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__dome_membrane_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 400486,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__dome_membrane_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1280655,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__dome_membrane_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 2008203,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__drum_band_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 449841,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__drum_band_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1420029,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__drum_band_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3328808,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 737571,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2501441,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3488792,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 827408,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1837186,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3367725,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_site__concrete_podium_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 800429,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_site__concrete_podium_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1618615,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_site__concrete_podium_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1422419,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_site__paving_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 341811,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_site__paving_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 928575,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ARCH_site__paving_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 836814,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_building_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 590732,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_building_roughness.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 639008,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_door_green_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 751756,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_door_green_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 587808,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_door_green_normal.ktx2"
+    },
+    {
+     "kind": "tex:metalness",
+     "bytes": 11478,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_door_green_metallic.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 134591,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_forest_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 95306,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_forest_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 131960,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_forest_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 580865,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_hill_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 35979,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_hill_roughness.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 800525,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_roof_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 307126,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_roof_roughness.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 848817,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_roof_tile_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 475143,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_roof_tile_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 733854,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_roof_tile_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 873148,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_skylight_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 951403,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__backdrop_skylight_roughness.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 121134,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__bird_white_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 34890,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__bird_white_roughness.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 34332,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__lamp_post_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 22972,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__lamp_post_roughness.ktx2"
+    },
+    {
+     "kind": "tex:metalness",
+     "bytes": 20679,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__lamp_post_metallic.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 904757,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__lawn_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 582341,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENVBD__lawn_roughness.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3578131,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 909288,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2672743,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1147561,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_lagoon_bed_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 38096,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_lagoon_bed_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 826019,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_lagoon_bed_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3691494,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_terrain_ground_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 69786,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_terrain_ground_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3031376,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__ENV_terrain_ground_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 4401833,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__riprap_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 1007179,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__riprap_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2698342,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ENV__riprap_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 4102834,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 891240,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3433027,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3689363,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 818390,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3473043,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3780167,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 841020,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3645781,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3801317,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 836955,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3655636,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_attic_panel_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3446980,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 823785,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3597453,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3439939,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 820599,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3550107,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3363276,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 810096,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3529490,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3609292,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 851243,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3709017,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3583051,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 858018,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3493003,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3622554,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 866468,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3496026,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3644352,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 871701,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3568710,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3892387,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 848652,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3684105,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3532835,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 814140,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3590574,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 710685,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 571346,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 692006,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_finial_v1_LOD0_a_a_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1555731,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 388416,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1731607,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1463192,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 325918,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1485218,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1392920,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 329114,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1458607,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1579603,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 374368,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1604848,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1428728,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 370358,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1576258,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1138152,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 884698,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1118952,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1136419,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 883057,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1114388,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1130599,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 880059,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1125880,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3407335,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 733203,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2939431,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3339817,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 748321,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2938913,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3355421,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 743270,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2996085,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1070807,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 840112,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1080497,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1067158,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 861525,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1105805,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 1044248,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 846913,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 1075358,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3740793,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 825585,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3591841,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3248473,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 737473,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3182602,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3413614,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 752683,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3201705,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v2_LOD0_a_a_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3371758,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 755853,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 3206096,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_urn_v3_LOD0_a_a_a_normal.ktx2"
+    },
+    {
+     "kind": "tex:map",
+     "bytes": 3081116,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2"
+    },
+    {
+     "kind": "tex:roughness",
+     "bytes": 687573,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2"
+    },
+    {
+     "kind": "tex:normal",
+     "bytes": 2634035,
+     "sizeFrom": "HEAD",
+     "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2"
+    }
+   ]
+  },
+  "load_s": {
+   "plan_s": 0.16859999996423722,
+   "sky_s": 0.5481000000238418,
+   "lut_s": 0.0565,
+   "glb_s": 2.147199999988079,
+   "tex_s": 2.851100000023842,
+   "total_s": 6.383100000023842
+  },
+  "glbs": [
+   {
+    "name": "arch.glb",
+    "cls": "arch",
+    "url": "http://127.0.0.1:61480/assets/gate1/arch.glb",
+    "meshes": 29,
+    "instancedMeshes": 17,
+    "instances": 552,
+    "tris": 947622,
+    "materials": 17,
+    "hiddenBoards": 0,
+    "bytes": 4613040,
+    "wall_s": 0.10819999998807907
+   },
+   {
+    "name": "orn.glb",
+    "cls": "orn",
+    "url": "http://127.0.0.1:61480/assets/gate1/orn.glb",
+    "meshes": 33,
+    "instancedMeshes": 32,
+    "instances": 435,
+    "tris": 1097468,
+    "materials": 33,
+    "hiddenBoards": 0,
+    "bytes": 154253424,
+    "wall_s": 1.04
+   },
+   {
+    "name": "env.glb",
+    "cls": "env",
+    "url": "http://127.0.0.1:61480/assets/gate1/env.glb",
+    "meshes": 50,
+    "instancedMeshes": 34,
+    "instances": 1526,
+    "tris": 679779,
+    "materials": 26,
+    "hiddenBoards": 127,
+    "bytes": 38119568,
+    "wall_s": 0.273
+   },
+   {
+    "name": "ground.glb",
+    "cls": "ground",
+    "url": "http://127.0.0.1:61480/assets/gate1/ground.glb",
+    "meshes": 4,
+    "instancedMeshes": 0,
+    "instances": 0,
+    "tris": 113043,
+    "materials": 4,
+    "hiddenBoards": 0,
+    "bytes": 1959104,
+    "wall_s": 0.01659999996423721
+   }
+  ],
+  "uv_dequant": [
+   {
+    "name": "arch.glb",
+    "meshes": 29,
+    "geometries": 29,
+    "sets": 58,
+    "materials": 17,
+    "skipped": 0,
+    "bytes": 7891136,
+    "rotated": 0,
+    "scales": [
+     15.9097242,
+     15.9097242,
+     15.168294,
+     15.9097242,
+     15.9097242,
+     15.9603224,
+     15.9512062,
+     15.8664751,
+     15.9512062,
+     15.9512062,
+     15.95679,
+     15.9489031,
+     15.9100637,
+     15.9100637,
+     15.9489031,
+     15.9533167,
+     15.8423529,
+     15.9537783,
+     15.9100637,
+     13.1390057,
+     15.9855995,
+     15.9533167,
+     15.9533167,
+     15.9533167,
+     15.9533167,
+     15.2957287,
+     15.9010715,
+     15.9432373,
+     15.9607677
+    ]
+   },
+   {
+    "name": "orn.glb",
+    "meshes": 33,
+    "geometries": 33,
+    "sets": 66,
+    "materials": 33,
+    "skipped": 0,
+    "bytes": 2005088,
+    "rotated": 0,
+    "scales": [
+     15.9098539,
+     15.8680868,
+     15.8617039,
+     15.8447256,
+     15.8362188,
+     15.8198166,
+     15.8400745,
+     15.8385477,
+     15.7878284,
+     15.8259192,
+     15.8245764,
+     15.925108,
+     15.8989716,
+     15.9633331,
+     12.2246304,
+     11.3201551,
+     12.137702,
+     11.7653646,
+     13.4261847,
+     15.7934914,
+     15.8722162,
+     15.8770618,
+     15.8759365,
+     15.9362488,
+     15.8701868,
+     15.9016705,
+     15.8855715,
+     15.8612747,
+     15.8828526,
+     15.9232416,
+     15.9064121,
+     15.9065847,
+     15.9061184
+    ]
+   },
+   {
+    "name": "env.glb",
+    "meshes": 50,
+    "geometries": 50,
+    "sets": 50,
+    "materials": 26,
+    "skipped": 0,
+    "bytes": 6299992,
+    "rotated": 0,
+    "scales": [
+     15.879777,
+     15.9829369,
+     15.868701,
+     15.9843826,
+     15.6023407,
+     15.3893147,
+     15.6990919,
+     15.8119926,
+     15.875473,
+     15.8849154,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     16.003664,
+     13.6031132,
+     16.003664,
+     6.08139181,
+     6.08139181,
+     16.003664,
+     6.72153759,
+     16.003664,
+     6.72153759,
+     16.003664,
+     6.72153759,
+     16.003664,
+     6.40146494,
+     6.40146494,
+     16.003664
+    ]
+   },
+   {
+    "name": "ground.glb",
+    "meshes": 4,
+    "geometries": 4,
+    "sets": 8,
+    "materials": 4,
+    "skipped": 0,
+    "bytes": 3385856,
+    "rotated": 0,
+    "scales": [
+     15.9399452,
+     8.40719891,
+     15.9172192,
+     15.9872561
+    ]
+   }
+  ],
+  "resident": {
+   "geometry_bytes": 128998994,
+   "instance_matrix_bytes": 274432,
+   "texture_bytes": 1238725760,
+   "geometries": 332,
+   "textures": 297,
+   "texture_formats": {
+    "RGBA_ASTC_4x4_Format": 296,
+    "RGBAFormat (uncompressed)": 1
+   },
+   "render_target_bytes": 314785792,
+   "render_targets": [
+    {
+     "what": "composer.renderTarget1",
+     "size": [
+      1920,
+      1080
+     ],
+     "samples": 4,
+     "bytes": 82944000
+    },
+    {
+     "what": "composer.renderTarget2",
+     "size": [
+      1920,
+      1080
+     ],
+     "samples": 4,
+     "bytes": 82944000
+    },
+    {
+     "what": "water.Reflector",
+     "size": [
+      1024,
+      1024
+     ],
+     "samples": 4,
+     "bytes": 41943040
+    },
+    {
+     "what": "PMREM cubeUV (glossy, specular)",
+     "size": [
+      3072,
+      4096
+     ],
+     "samples": 0,
+     "bytes": 100663296
+    },
+    {
+     "what": "PMREM cubeUV (diffuse, irradiance)",
+     "size": [
+      768,
+      1024
+     ],
+     "samples": 0,
+     "bytes": 6291456
+    }
+   ],
+   "total_bytes": 1682784978,
+   "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+  },
+  "billboards": null,
+  "chunking": {
+   "candidates": 29,
+   "split": 16,
+   "chunks": 48,
+   "added": 32,
+   "batches": [
+    {
+     "name": "mesh_0",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 114,
+     "radius_m": 118.5,
+     "chunks": 4,
+     "chunk_radius_m": [
+      23.8,
+      58.8,
+      21.9,
+      31.6
+     ]
+    },
+    {
+     "name": "mesh_8",
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "instances": 50,
+     "radius_m": 54.5,
+     "chunks": 4,
+     "chunk_radius_m": [
+      19,
+      20.3,
+      15.4,
+      20
+     ]
+    },
+    {
+     "name": "mesh_3",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 48,
+     "radius_m": 53.7,
+     "chunks": 4,
+     "chunk_radius_m": [
+      17.2,
+      17.8,
+      17.8,
+      17.8
+     ]
+    },
+    {
+     "name": "mesh_6",
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "instances": 58,
+     "radius_m": 52.3,
+     "chunks": 4,
+     "chunk_radius_m": [
+      11.4,
+      17,
+      15,
+      17.9
+     ]
+    },
+    {
+     "name": "mesh_7",
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "instances": 58,
+     "radius_m": 52.3,
+     "chunks": 4,
+     "chunk_radius_m": [
+      11.4,
+      17,
+      15,
+      17.9
+     ]
+    },
+    {
+     "name": "mesh_1",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 56,
+     "radius_m": 50.8,
+     "chunks": 3,
+     "chunk_radius_m": [
+      24,
+      15.6,
+      14.9
+     ]
+    },
+    {
+     "name": "mesh_2",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 56,
+     "radius_m": 50.8,
+     "chunks": 3,
+     "chunk_radius_m": [
+      24,
+      15.6,
+      14.9
+     ]
+    },
+    {
+     "name": "mesh_4",
+     "material": "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+     "instances": 39,
+     "radius_m": 119.2,
+     "chunks": 2,
+     "chunk_radius_m": [
+      52.4,
+      50.8
+     ]
+    },
+    {
+     "name": "mesh_5",
+     "material": "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+     "instances": 38,
+     "radius_m": 117.4,
+     "chunks": 2,
+     "chunk_radius_m": [
+      80.9,
+      47.5
+     ]
+    },
+    {
+     "name": "mesh_6",
+     "material": "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+     "instances": 37,
+     "radius_m": 117.2,
+     "chunks": 2,
+     "chunk_radius_m": [
+      45.4,
+      80
+     ]
+    },
+    {
+     "name": "mesh_11",
+     "material": "MAT_shrub",
+     "instances": 77,
+     "radius_m": 137.4,
+     "chunks": 3,
+     "chunk_radius_m": [
+      90.1,
+      55.1,
+      53.6
+     ]
+    },
+    {
+     "name": "mesh_10",
+     "material": "MAT_shrub_light",
+     "instances": 46,
+     "radius_m": 135.3,
+     "chunks": 2,
+     "chunk_radius_m": [
+      96.3,
+      96.3
+     ]
+    },
+    {
+     "name": "mesh_16",
+     "material": "MAT_shrub_light",
+     "instances": 102,
+     "radius_m": 134.3,
+     "chunks": 3,
+     "chunk_radius_m": [
+      54.8,
+      57.2,
+      108.2
+     ]
+    },
+    {
+     "name": "mesh_22",
+     "material": "MAT_shrub_dry",
+     "instances": 87,
+     "radius_m": 133.6,
+     "chunks": 3,
+     "chunk_radius_m": [
+      51.9,
+      31.4,
+      126.7
+     ]
+    },
+    {
+     "name": "mesh_14",
+     "material": "MAT_shrub_dry",
+     "instances": 60,
+     "radius_m": 132.2,
+     "chunks": 2,
+     "chunk_radius_m": [
+      94.1,
+      88.5
+     ]
+    },
+    {
+     "name": "mesh_13",
+     "material": "MAT_shrub",
+     "instances": 59,
+     "radius_m": 131.8,
+     "chunks": 3,
+     "chunk_radius_m": [
+      46.8,
+      74.1,
+      105.2
+     ]
+    }
+   ],
+   "opts": {}
+  },
+  "post": {
+   "requested": "all",
+   "want": {
+    "mist": true,
+    "bloom": true,
+    "vignette": true
+   },
+   "mistSpec": {
+    "near": 20,
+    "far": 2020,
+    "cap": 0.25,
+    "k": 5,
+    "shape": "LINEAR",
+    "intensity": 0,
+    "extinctionLength_m": 400,
+    "color": [
+     5.320880889892578,
+     3.739000082015991,
+     1.9603391885757446
+    ],
+    "strength": 0.25,
+    "falloff": 5,
+    "invented": false,
+    "source": "manifest compositor.mist"
+   },
+   "bloom": true,
+   "vignette": 0.07999999821186066,
+   "compositor": {
+    "hazeColor": [
+     5.320880889892578,
+     3.739000082015991,
+     1.9603391885757446
+    ],
+    "hazeStrength": 0.25,
+    "hazeFalloff": 5,
+    "bloomThreshold": 6.41361141204834,
+    "bloomStrength": 0.05000000074505806,
+    "bloomSize": 0.6000000238418579,
+    "vignette": 0.07999999821186066,
+    "mist": {
+     "use_mist": true,
+     "start": 20,
+     "depth": 2000,
+     "falloff": "LINEAR",
+     "height": 0,
+     "intensity": 0,
+     "use_pass_mist": true,
+     "units": "metres (1 BU = 1 m), measured along the view ray from the camera",
+     "source": "master_delivery.blend scene.world.mist_settings, read by export/read_mist.py",
+     "file": "mist_settings.json",
+     "read_at": "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend",
+     "formula": "Blender's mist pass: t = clamp((dist - start) / depth, 0, 1) shaped by `falloff` (QUADRATIC t^2, LINEAR t, INVERSE_QUADRATIC sqrt(t)), then mist = intensity + (1 - intensity) * t, measured along the view ray from the camera in metres (1 BU = 1 m here). `height` > 0 fades the mist out above z = height in WORLD space (Blender +Z; the viewer's +Y after the glTF swap). The compositor group's own `Mist` input reads 0.0 because that is a disconnected socket's stored default - the live value is this pass.",
+     "group_input_note": "COMP_golden_hour's own `Mist` group input reads 0.0 in this block: that is a disconnected socket's stored default, NOT the value the render used."
+    },
+    "group": "COMP_golden_hour"
+   },
+   "bloomRes": "full"
+  },
+  "probeEnv": {
+   "materials": 11,
+   "meshes": 149,
+   "skippedPatched": 77,
+   "skippedHasEnv": 25,
+   "skippedNonStandard": 1,
+   "refused": null,
+   "names": [
+    "MAT_EXP_ENVBD__MAT_backdrop_building",
+    "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+    "MAT_EXP_ENVBD__MAT_backdrop_forest",
+    "MAT_EXP_ENVBD__MAT_backdrop_hill",
+    "MAT_EXP_ENVBD__MAT_backdrop_roof",
+    "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+    "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+    "MAT_EXP_ENVBD__MAT_bird_white",
+    "MAT_EXP_ENVBD__MAT_lamp_post",
+    "MAT_EXP_ENVBD__MAT_lawn",
+    "MAT_EXP_treeboard"
+   ],
+   "station": "CAM_qa_01_lagoon_hero",
+   "positionBlender": null
+  },
+  "foliage": {
+   "geometries": 49,
+   "clusters": 58,
+   "leafMaterials": 8,
+   "cardMaterials": 25,
+   "barkMaterials": 6,
+   "bent": 8,
+   "softened": 33,
+   "normalBlend": 0.5,
+   "trnScale": 1,
+   "trnShrubs": false,
+   "msaa": true,
+   "meshDist": 40,
+   "fadeBand": 5,
+   "units": 18,
+   "skipped": 0
+  },
+  "shrubLod": {
+   "dist": 30,
+   "lod1": 0,
+   "lod2": 0,
+   "missing": [],
+   "source": null,
+   "asked": false
+  },
+  "impostorModulation": {
+   "mode": "full",
+   "eBake": 16,
+   "eBakeFrom": "the bake, per prototype (16 value(s))",
+   "far": 127,
+   "farUnmatched": 0,
+   "near": 18
+  },
+  "reflectionSet": {
+   "excluded": 36,
+   "orn": 36,
+   "backdrop": 0,
+   "kept": 129
+  },
+  "quality": {
+   "preset": "look",
+   "bloomRes": "full",
+   "reflRes": "full",
+   "reflSet": "orn"
+  },
+  "impostors": {
+   "prototypes": 16,
+   "instances": 145,
+   "drawCalls": 16,
+   "textures": 16,
+   "bytes": 9717337,
+   "skipped": 0,
+   "missingPrototypes": [],
+   "atlas2k": true,
+   "atlasGeometry": {
+    "framePx": 170,
+    "atlasPx": 2048,
+    "innerPx": 162
+   },
+   "nearInstances": 18,
+   "modulated": 145
+  },
+  "farTrees": {
+   "glb": "http://127.0.0.1:61480/assets/gate1/env_trees.glb",
+   "rows": 254,
+   "joined": 254,
+   "placements": 127,
+   "lit": 254,
+   "litFrom": "trees.far_mesh.lighting (the bake, per placement)",
+   "ao": true,
+   "aoEncode": "gamma2 x range 1.000000",
+   "aoAlphaForced": 0,
+   "placementCheck": {
+    "compared": 127,
+    "tolerance": {
+     "xz_m": 5,
+     "base_m": "max(3, 0.4 x height)"
+    },
+    "max_xz_m": 0.721,
+    "max_xz_at": 89,
+    "max_base_m": 3.271,
+    "max_centre_m": 0.73,
+    "median_xz_m": 0.186,
+    "median_centre_m": 0.254,
+    "over_tolerance": 0
+   },
+   "drawCalls": 142,
+   "tris": 1007775,
+   "chunks": 136,
+   "wall_s": 0.2209000000357628,
+   "impostors": {
+    "placements": 127,
+    "modulated": 127,
+    "batches": 16,
+    "unmatched": 0
+   },
+   "error": null
+  },
+  "shrubLod1": {
+   "glb": "http://127.0.0.1:61480/assets/gate1/env_shrubs.glb",
+   "dist": 30,
+   "lod1Nodes": 25,
+   "lod1Rows": 1376,
+   "lod2Materials": 25,
+   "masked": 3,
+   "errors": [],
+   "wall_s": 0.03439999997615814,
+   "lod1Materials": 25
+  },
+  "foliageTextures": {
+   "size": null,
+   "albedo": 0,
+   "translucency": 0,
+   "materials": [],
+   "missing": []
+  },
+  "shaderErrors": [],
+  "walk": {
+   "active": false,
+   "blocked": 0,
+   "buildMs": 0,
+   "y": 0
+  },
+  "materialsMode": "pbr",
+  "pbr": {
+   "materials_in_scene": 112,
+   "matched": 73,
+   "unmatched": [
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 0
+    },
+    {
+     "material": "MAT_bark_cypress",
+     "distance_m": 0
+    },
+    {
+     "material": "MAT_leaf_cypress",
+     "distance_m": 0
+    },
+    {
+     "material": "MAT_bark_eucalyptus",
+     "distance_m": 0
+    },
+    {
+     "material": "MAT_bark_cypress",
+     "distance_m": 0
+    },
+    {
+     "material": "MAT_leaf_eucalyptus",
+     "distance_m": 1
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 1
+    },
+    {
+     "material": "MAT_leaf_pine",
+     "distance_m": 1
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 1
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 1
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_reeds",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_shrub",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 2
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 3
+    },
+    {
+     "material": "MAT_shrub",
+     "distance_m": 3
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 3
+    },
+    {
+     "material": "MAT_reeds",
+     "distance_m": 3
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 4
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 4
+    },
+    {
+     "material": "MAT_reeds",
+     "distance_m": 5
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 11
+    },
+    {
+     "material": "MAT_shrub_dry",
+     "distance_m": 17
+    },
+    {
+     "material": "MAT_bark_cypress",
+     "distance_m": 27
+    },
+    {
+     "material": "MAT_leaf_cypress",
+     "distance_m": 32
+    },
+    {
+     "material": "MAT_shrub",
+     "distance_m": 40
+    },
+    {
+     "material": "MAT_shrub",
+     "distance_m": 44
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 45
+    },
+    {
+     "material": "MAT_shrub",
+     "distance_m": 46
+    },
+    {
+     "material": "MAT_shrub_light",
+     "distance_m": 58
+    },
+    {
+     "material": "MAT_leaf_pine",
+     "distance_m": 123
+    },
+    {
+     "material": "MAT_bark_eucalyptus",
+     "distance_m": 134
+    },
+    {
+     "material": "MAT_leaf_eucalyptus",
+     "distance_m": 137
+    },
+    {
+     "material": "MAT_bark_eucalyptus",
+     "distance_m": 155
+    },
+    {
+     "material": "MAT_leaf_broadleaf",
+     "distance_m": 156
+    },
+    {
+     "material": "MAT_leaf_eucalyptus",
+     "distance_m": 160
+    }
+   ],
+   "sets_in_manifest": 62,
+   "sets_used": 62,
+   "sets_unused": [],
+   "order": [
+    {
+     "rank": 3,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_forest",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_forest",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_forest",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 2,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_building",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_building",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_building",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap"
+     ]
+    },
+    {
+     "rank": 4,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_hill",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_hill",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_hill",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap"
+     ]
+    },
+    {
+     "rank": 5,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap"
+     ]
+    },
+    {
+     "rank": 6,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 7,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap"
+     ]
+    },
+    {
+     "rank": 8,
+     "material": "MAT_EXP_ENVBD__MAT_lamp_post",
+     "set": "MAT_EXP_ENVBD__MAT_lamp_post",
+     "matched_on": "MAT_EXP_ENVBD__MAT_lamp_post",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "metalnessMap"
+     ]
+    },
+    {
+     "rank": 1,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 9,
+     "material": "MAT_EXP_ENVBD__MAT_lawn",
+     "set": "MAT_EXP_ENVBD__MAT_lawn",
+     "matched_on": "MAT_EXP_ENVBD__MAT_lawn",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap"
+     ]
+    },
+    {
+     "rank": 11,
+     "material": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "set": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "matched_on": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 10,
+     "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "set": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "matched_on": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 14,
+     "material": "MAT_EXP_ENVBD__MAT_bird_white",
+     "set": "MAT_EXP_ENVBD__MAT_bird_white",
+     "matched_on": "MAT_EXP_ENVBD__MAT_bird_white",
+     "distance_m": 11.4,
+     "maps": [
+      "map",
+      "roughnessMap"
+     ]
+    },
+    {
+     "rank": 12,
+     "material": "MAT_EXP_ENV__riprap",
+     "set": "MAT_EXP_ENV__riprap",
+     "matched_on": "MAT_EXP_ENV__riprap",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 13,
+     "material": "MAT_EXP_ENV__ENV_terrain_ground",
+     "set": "MAT_EXP_ENV__ENV_terrain_ground",
+     "matched_on": "MAT_EXP_ENV__ENV_terrain_ground",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 15,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 18.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 16,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 18.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 18,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 22.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 19,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 22.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 17,
+     "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "distance_m": 19.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 22,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 24.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 21,
+     "material": "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+     "distance_m": 24.4,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 20,
+     "material": "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+     "distance_m": 24.4,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 23,
+     "material": "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+     "distance_m": 24.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 25,
+     "material": "MAT_EXP_ORN__ORN_maiden_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_maiden_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_maiden_v2_LOD0_a",
+     "distance_m": 27.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 24,
+     "material": "MAT_EXP_ORN__ORN_maiden_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_maiden_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_maiden_v1_LOD0_a",
+     "distance_m": 25.6,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 26,
+     "material": "MAT_EXP_ORN__ORN_maiden_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_maiden_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_maiden_v3_LOD0_a",
+     "distance_m": 31.6,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 28,
+     "material": "MAT_EXP_ARCH_site__MAT_paving",
+     "set": "MAT_EXP_ARCH_site__MAT_paving",
+     "matched_on": "MAT_EXP_ARCH_site__MAT_paving",
+     "distance_m": 45.4,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 27,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "distance_m": 41.9,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 29,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "distance_m": 47.3,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 30,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "distance_m": 53.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 31,
+     "material": "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+     "set": "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+     "matched_on": "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+     "distance_m": 55.6,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 32,
+     "material": "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a",
+     "set": "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a",
+     "matched_on": "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a",
+     "distance_m": 56,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 35,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "distance_m": 57.9,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 33,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "distance_m": 57.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 34,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "distance_m": 57.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 37,
+     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
+     "distance_m": 60.6,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 36,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 60.3,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 38,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 61.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 41,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "distance_m": 61.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 42,
+     "material": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+     "distance_m": 61.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 39,
+     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+     "distance_m": 61.3,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 43,
+     "material": "MAT_EXP_ORN__ORN_keystone_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_keystone_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_keystone_v1_LOD0_a",
+     "distance_m": 62.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 40,
+     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v3_LOD0_a",
+     "distance_m": 61.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 45,
+     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+     "distance_m": 63.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 46,
+     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+     "distance_m": 64,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 44,
+     "material": "MAT_EXP_ORN__ORN_attic_figure_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_attic_figure_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_attic_figure_v1_LOD0_a",
+     "distance_m": 62.2,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 47,
+     "material": "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
+     "distance_m": 65.2,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 50,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 66.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 51,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 66.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 48,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "distance_m": 65.9,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 52,
+     "material": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "distance_m": 66.6,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 49,
+     "material": "MAT_EXP_ORN__ORN_attic_panel_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_attic_panel_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_attic_panel_v1_LOD0_a",
+     "distance_m": 66,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 53,
+     "material": "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+     "set": "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+     "matched_on": "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+     "distance_m": 66.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 56,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 67.4,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 55,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "distance_m": 67.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 54,
+     "material": "MAT_EXP_ORN__ORN_capital_inner_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_inner_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_inner_v1_LOD0_a",
+     "distance_m": 66.9,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 57,
+     "material": "MAT_EXP_ORN__ORN_winged_figure_v1_LOD0_a_a",
+     "set": "MAT_EXP_ORN__ORN_winged_figure_v1_LOD0_a_a",
+     "matched_on": "MAT_EXP_ORN__ORN_winged_figure_v1_LOD0_a_a",
+     "distance_m": 67.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 58,
+     "material": "MAT_EXP_ORN__ORN_urn_niche_v1_LOD0_a_a_a",
+     "set": "MAT_EXP_ORN__ORN_urn_niche_v1_LOD0_a_a_a",
+     "matched_on": "MAT_EXP_ORN__ORN_urn_niche_v1_LOD0_a_a_a",
+     "distance_m": 68.3,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 60,
+     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v3_LOD0_a",
+     "distance_m": 68.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 59,
+     "material": "MAT_EXP_ORN__ORN_corner_scroll_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_corner_scroll_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_corner_scroll_v2_LOD0_a",
+     "distance_m": 68.3,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 61,
+     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_v1_LOD0_a",
+     "distance_m": 68.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 64,
+     "material": "MAT_EXP_ORN__ORN_rosette_ceiling_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_rosette_ceiling_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_rosette_ceiling_v1_LOD0_a",
+     "distance_m": 72.2,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 63,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+     "distance_m": 71.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 62,
+     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+     "distance_m": 70.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 65,
+     "material": "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+     "distance_m": 72.5,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 68,
+     "material": "MAT_EXP_ORN__ORN_rosette_ceiling_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_rosette_ceiling_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_rosette_ceiling_v3_LOD0_a",
+     "distance_m": 82.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 66,
+     "material": "MAT_EXP_ORN__ORN_drum_band_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_drum_band_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_drum_band_v1_LOD0_a",
+     "distance_m": 75.6,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 67,
+     "material": "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+     "distance_m": 78.9,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 69,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "distance_m": 96.4,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 70,
+     "material": "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+     "set": "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+     "matched_on": "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+     "distance_m": 97.4,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 71,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+     "distance_m": 110.7,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap",
+      "metalnessMap"
+     ]
+    },
+    {
+     "rank": 72,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "distance_m": 116.9,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 73,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "distance_m": 121.2,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    }
+   ],
+   "textures": 214,
+   "unique_files": 181,
+   "bytes": 630548528,
+   "kept_glb_normal": 0,
+   "replaced_glb_normal": 33,
+   "kept_glb_ao": 0,
+   "colourspace_conflicts": [],
+   "formats": {
+    "RGBA_ASTC_4x4_Format": 181
+   },
+   "failed": [],
+   "factored": 73,
+   "constant_only": 0,
+   "flat_normal_constant": [],
+   "without_uv1": [],
+   "disposed": {
+    "disposed": 97,
+    "freed_bytes": 155197296,
+    "by_slot": {
+     "map": 64,
+     "normalMap": 33
+    },
+    "names": [
+     "db64ede9",
+     "520b56ee",
+     "949d3a96",
+     "01ac7737",
+     "35b52d1f",
+     "e90f2a2e",
+     "a2b201c9",
+     "5b886be8",
+     "8350d49b",
+     "31ebd32f",
+     "b26a46e9",
+     "6957c25a"
+    ]
+   }
+  },
+  "detail": {
+   "projection": "objxy",
+   "strength": 1,
+   "normal_scale": 1,
+   "sets_loaded": 4,
+   "materials": 29,
+   "textures": 12,
+   "bytes": 33554752,
+   "means": {
+    "concrete_wall_007": {
+     "albedo": [
+      0.537995,
+      0.505239,
+      0.43217
+     ],
+     "roughness": [
+      0.772646,
+      0.772646,
+      0.772646
+     ]
+    },
+    "concrete_wall_008": {
+     "albedo": [
+      0.543042,
+      0.511748,
+      0.441164
+     ],
+     "roughness": [
+      0.741141,
+      0.741141,
+      0.741141
+     ]
+    },
+    "gravelly_sand": {
+     "albedo": [
+      0.571771,
+      0.433472,
+      0.298813
+     ],
+     "roughness": [
+      0.792653,
+      0.792653,
+      0.792653
+     ]
+    },
+    "rock_boulder_dry": {
+     "albedo": [
+      0.657536,
+      0.609011,
+      0.550157
+     ],
+     "roughness": [
+      0.633512,
+      0.633512,
+      0.633512
+     ]
+    }
+   },
+   "by_set": {
+    "concrete_wall_007": 15,
+    "concrete_wall_008": 11,
+    "gravelly_sand": 2,
+    "rock_boulder_dry": 1
+   },
+   "unmatched_rules": [],
+   "applied": [
+    {
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_rose"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_podium"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_rose"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_tan_inner"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_concrete_inner"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_concrete_ochre"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_podium"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_drum_band"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_tan_inner"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_tan_inner"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_tan_inner"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_column_tan_inner"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_plaster_ceiling"
+    },
+    {
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_plaster_ceiling_rib"
+    },
+    {
+     "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_podium"
+    },
+    {
+     "material": "MAT_EXP_ARCH_site__MAT_paving",
+     "set": "concrete_wall_008",
+     "tile_m": 2.71,
+     "src": "MAT_paving"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_concrete_colonnade"
+    },
+    {
+     "material": "MAT_EXP_ENVBD__MAT_lawn",
+     "set": "gravelly_sand",
+     "tile_m": 2.48,
+     "src": "MAT_gravel_path"
+    },
+    {
+     "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_paving_stone"
+    },
+    {
+     "material": "MAT_EXP_ENV__riprap",
+     "set": "rock_boulder_dry",
+     "tile_m": 1.1765,
+     "src": "MAT_rock_riprap"
+    },
+    {
+     "material": "MAT_EXP_ENV__ENV_terrain_ground",
+     "set": "gravelly_sand",
+     "tile_m": 2.48,
+     "src": "MAT_gravel_path"
+    }
+   ],
+   "failed": [],
+   "empty": [],
+   "fallbacks": [],
+   "stats": {
+    "detail_concrete_wall_007_albedo.ktx2": {
+     "mean8": 128.8,
+     "std8": 8.9,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_007_roughness.ktx2": {
+     "mean8": 197,
+     "std8": 6.4,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_007_normal.ktx2": {
+     "mean8": 127.4,
+     "std8": 6.7,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_008_albedo.ktx2": {
+     "mean8": 130.5,
+     "std8": 8,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_008_roughness.ktx2": {
+     "mean8": 189,
+     "std8": 1.7,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_008_normal.ktx2": {
+     "mean8": 127.5,
+     "std8": 4.1,
+     "from": "manifest"
+    },
+    "detail_gravelly_sand_albedo.ktx2": {
+     "mean8": 110.5,
+     "std8": 14.8,
+     "from": "manifest"
+    },
+    "detail_gravelly_sand_roughness.ktx2": {
+     "mean8": 202.1,
+     "std8": 2.4,
+     "from": "manifest"
+    },
+    "detail_gravelly_sand_normal.ktx2": {
+     "mean8": 127.5,
+     "std8": 6.7,
+     "from": "manifest"
+    },
+    "detail_rock_boulder_dry_albedo.ktx2": {
+     "mean8": 155.3,
+     "std8": 22.6,
+     "from": "manifest"
+    },
+    "detail_rock_boulder_dry_roughness.ktx2": {
+     "mean8": 161.5,
+     "std8": 17.6,
+     "from": "manifest"
+    },
+    "detail_rock_boulder_dry_normal.ktx2": {
+     "mean8": 127.5,
+     "std8": 8.1,
+     "from": "manifest"
+    }
+   }
+  },
+  "notes": [
+   "4 glbs, loaded in manifest order: arch:arch.glb, orn:orn.glb, env:env.glb, ground:ground.glb",
+   "stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough",
+   "exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
+   "sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
+   "lightmap reservations for the Gate 3 bake, no texture yet: 988 mode \"slot\", 16 mode \"asset\", 1536 mode \"none\"",
+   "materials.detail: 5 tiling set(s), 15 maps, 18 glb material rule(s) + 15 source-material rule(s), mode \"object_space_tiled\", bump distance 0.015 m",
+   "detail: 3 merged group(s) list more than one source material, the first is used: MAT_EXP_ENVBD__MAT_lawn: MAT_gravel_path + MAT_soil -> gravelly_sand; MAT_EXP_ENV__ENV_ground_colonnade_walk: MAT_paving_stone + MAT_paving_stone_worn -> concrete_wall_007; MAT_EXP_ENV__ENV_terrain_ground: MAT_gravel_path + MAT_soil -> gravelly_sand",
+   "materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 307.8 MB declared, mode \"pbr\"",
+   "manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159",
+   "manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas",
+   "manifest pfa-phase6/4 at http://127.0.0.1:61480/assets/gate3/manifest.json",
+   "uv2_relay_status.json: 7 asset(s) checked against the packed glbs, 0 flag(s) flipped; 16 own map(s) usable, 0 blocked, 0 on the frozen layout",
+   "lighting mode: baked — lightmaps carry the diffuse, sun and env are specular-only",
+   "materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares \"pbr\"",
+   "load plan: 189 files, 523.5 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:arch 4.6, glb:orn 154.3, glb:env 38.1, glb:ground 2.0, tex:map 2.2, tex:roughness 0.5, tex:normal 1.6, tex:map 2.4, tex:roughness 0.6, tex:normal 1.1, tex:map 2.3, tex:roughness 0.5, tex:normal 1.7, tex:map 2.4, tex:roughness 0.6, tex:normal 1.1, tex:map 2.9, tex:roughness 0.6, tex:normal 2.1, tex:map 2.5, tex:roughness 0.5, tex:normal 1.8, tex:map 3.3, tex:roughness 0.7, tex:normal 2.1, tex:map 3.1, tex:roughness 0.7, tex:normal 1.4, tex:map 2.8, tex:roughness 0.6, tex:normal 2.1, tex:map 1.5, tex:roughness 0.4, tex:normal 1.3, tex:map 2.0, tex:roughness 0.4, tex:normal 1.4, tex:map 3.3, tex:roughness 0.7, tex:normal 2.5, tex:map 3.5, tex:roughness 0.8, tex:normal 1.8, tex:map 3.4, tex:roughness 0.8, tex:normal 1.6, tex:map 1.4, tex:roughness 0.3, tex:normal 0.9, tex:map 0.8, tex:roughness 0.6, tex:map 0.6, tex:roughness 0.8, tex:normal 0.6, tex:metalness 0.0, tex:map 0.1, tex:roughness 0.1, tex:normal 0.1, tex:map 0.6, tex:roughness 0.0, tex:map 0.8, tex:roughness 0.3, tex:map 0.8, tex:roughness 0.5, tex:normal 0.7, tex:map 0.9, tex:roughness 1.0, tex:map 0.1, tex:roughness 0.0, tex:map 0.0, tex:roughness 0.0, tex:metalness 0.0, tex:map 0.9, tex:roughness 0.6, tex:map 3.6, tex:roughness 0.9, tex:normal 2.7, tex:map 1.1, tex:roughness 0.0, tex:normal 0.8, tex:map 3.7, tex:roughness 0.1, tex:normal 3.0, tex:map 4.4, tex:roughness 1.0, tex:normal 2.7, tex:map 4.1, tex:roughness 0.9, tex:normal 3.4, tex:map 3.7, tex:roughness 0.8, tex:normal 3.5, tex:map 3.8, tex:roughness 0.8, tex:normal 3.6, tex:map 3.8, tex:roughness 0.8, tex:normal 3.7, tex:map 3.4, tex:roughness 0.8, tex:normal 3.6, tex:map 3.4, tex:roughness 0.8, tex:normal 3.6, tex:map 3.4, tex:roughness 0.8, tex:normal 3.5, tex:map 3.6, tex:roughness 0.9, tex:normal 3.7, tex:map 3.6, tex:roughness 0.9, tex:normal 3.5, tex:map 3.6, tex:roughness 0.9, tex:normal 3.5, tex:map 3.6, tex:roughness 0.9, tex:normal 3.6, tex:map 3.9, tex:roughness 0.8, tex:normal 3.7, tex:map 3.5, tex:roughness 0.8, tex:normal 3.6, tex:map 0.7, tex:roughness 0.6, tex:normal 0.7, tex:map 1.6, tex:roughness 0.4, tex:normal 1.7, tex:map 1.5, tex:roughness 0.3, tex:normal 1.5, tex:map 1.4, tex:roughness 0.3, tex:normal 1.5, tex:map 1.6, tex:roughness 0.4, tex:normal 1.6, tex:map 1.4, tex:roughness 0.4, tex:normal 1.6, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 3.4, tex:roughness 0.7, tex:normal 2.9, tex:map 3.3, tex:roughness 0.7, tex:normal 2.9, tex:map 3.4, tex:roughness 0.7, tex:normal 3.0, tex:map 1.1, tex:roughness 0.8, tex:normal 1.1, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 1.0, tex:roughness 0.8, tex:normal 1.1, tex:map 3.7, tex:roughness 0.8, tex:normal 3.6, tex:map 3.2, tex:roughness 0.7, tex:normal 3.2, tex:map 3.4, tex:roughness 0.8, tex:normal 3.2, tex:map 3.4, tex:roughness 0.8, tex:normal 3.2, tex:map 3.1, tex:roughness 0.7, tex:normal 2.6)",
+   "sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
+   "PMREM specular environment from sky_glossy_4096x2048.hdr",
+   "sky diffuse integral / L dw = 33.665, 38.253, 213.742 (the sky half of the irradiance the impostor atlases were baked under)",
+   "PMREM diffuse environment from sky_diffuse_1024x512.hdr (irradiance for everything without a lightmap; QA-12b-1)",
+   "sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only",
+   "water plane at y = -1.3 (WATER_Z -1.3), planar Reflector 1024x1024 (?reflres=full), reflection gather 0.003 / saturation 1, ripple 8 waves 1.20-0.034 m, murk 0.2353, 0.3523, 0.3166 (derived; ?watermurkgain=1), grazing cap 6",
+   "post mist: COMP_golden_hour airlight cap 0.25 * (1 - exp(-k 5 * mist)), mist = LINEAR over 20..2020 m along the view ray (extinction length 400 m), haze [5.32, 3.74, 1.96], from manifest compositor.mist",
+   "post bloom: threshold 12.827 (scene-linear; manifest 6.4136 x 2), strength 0.05000000074505806, radius 0.6000000238418579, mip chain from 1920x1080 (?bloomres=full)",
+   "LUT texel type FloatType (OES_texture_float_linear) — extension present",
+   "LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
+   "post vignette: 0.07999999821186066 in linear, before the transform",
+   "quality preset 'look': bloom full-res, Reflector full-res target, reflection set orn",
+   "post chain: mist + bloom + vignette (?post=all)",
+   "display: tone mapping OFF, exposure x0.14033, LUT on",
+   "lightMapIntensity = lightmap_scale 3.14159",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 58 uv set(s) on 29 geometr(ies), 17 material transform(s) neutralised, scale 13.139..15.986, +7.53 MB",
+   "glb arch.glb (arch) 4.6 MB in 0.11 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 66 uv set(s) on 33 geometr(ies), 33 material transform(s) neutralised, scale 11.320..15.963, +1.91 MB",
+   "glb orn.glb (orn) 154.3 MB in 1.04 s: 33 meshes, 32 instanced (435 instances), 1097468 placed tris, 33 materials",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 50 uv set(s) on 50 geometr(ies), 26 material transform(s) neutralised, scale 6.081..16.004, +6.01 MB",
+   "glb env.glb (env) 38.1 MB in 0.27 s: 50 meshes, 34 instanced (1526 instances), 679779 placed tris, 26 materials",
+   "127 ENV_treeboard_* stand-ins hidden (?treeboards=0)",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB",
+   "glb ground.glb (ground) 2.0 MB in 0.02 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
+   "gate4 instance irradiance: 1379/1379 placement(s) over 25/25 glb node(s), 25 material(s) cloned and patched, 7 with cov == 0 left on the probe",
+   "gate3 UV2 census: 66 mesh(es) carry TEXCOORD_1 (1004 placements), 50 do not (1416 placements)",
+   "gate3 lightmaps: 16/16 own map(s), 988/988 instance slot(s), 9 material(s) cloned; match error <= 0.019 m",
+   "gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)",
+   "gate3 vertex irradiance: 14 COLOR_0 primitive(s), 26 placement(s), decoded at the ONE global range 44.25656 x scale 3.14159 read from manifest lightmaps.vertex_irradiance.range; the export derived it as uv2_relay_status.json vertex_irradiance_range_global = the max over all 14 near-tree meshes in vertex_irradiance.npz; gltfpack's shared buffers are harmless at one range",
+   "instance chunking (QA-11d-1): 16 of 29 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 48 regional batches, +32 draw calls when every chunk is in frame",
+   "26 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 \"borrow a neighbour's lightmap\" stand-in is off at Gate 3",
+   "102 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch",
+   "pbr: 73 of 112 scene materials textured from 62 of 62 manifest sets, 214 maps, 630.5 MB resident in 181 file(s) [181 RGBA_ASTC_4x4_Format], requested nearest first (MAT_EXP_ENVBD__MAT_backdrop_forest 0 m, MAT_EXP_ENVBD__MAT_backdrop_building 0 m, MAT_EXP_ENVBD__MAT_backdrop_hill 0 m …)",
+   "pbr: factors applied to 73 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
+   "pbr: 39 material(s) with NO texture set, left as exported: MAT_shrub_light, MAT_bark_cypress, MAT_leaf_cypress, MAT_bark_eucalyptus, MAT_bark_cypress, MAT_leaf_eucalyptus, MAT_shrub_dry, MAT_leaf_pine, MAT_shrub_light, MAT_shrub_light, MAT_shrub_dry, MAT_reeds …",
+   "detail (QA-12-1): 29 material(s) on 4 tiling set(s) (concrete_wall_007 x15, concrete_wall_008 x11, gravelly_sand x2, rock_boulder_dry x1), 12 textures, 33.6 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
+   "pbr textures in 2.85 s; 97 superseded Gate 1 texture(s) disposed, 155.2 MB freed",
+   "probe env: 6 x 512 px HDR cube from CAM_qa_01_lagoon_hero convolved to irradiance in 0.09 s; PMREM read back at 5 point(s), 4 carrying energy (verified non-black); faces 15220279.0/14174575.0/16682134.0/13403637.0/15810468.0/13729954.0",
+   "probe env applied to 11 material(s) with no baked light of their own (77 lightmapped or vertex-lit, 25 already had an envMap, 1 not MeshStandard): MAT_EXP_ENVBD__MAT_backdrop_building, MAT_EXP_ENVBD__MAT_backdrop_door_green, MAT_EXP_ENVBD__MAT_backdrop_forest, MAT_EXP_ENVBD__MAT_backdrop_hill, MAT_EXP_ENVBD__MAT_backdrop_roof, MAT_EXP_ENVBD__MAT_backdrop_roof_tile, MAT_EXP_ENVBD__MAT_backdrop_skylight, MAT_EXP_ENVBD__MAT_bird_white …",
+   "probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest's own probe.use says it is not the diffuse environment; this use of it is the lead's QA-13-1 call and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.",
+   "far-tree lighting: inline in the manifest (pfa-phase6/gate4-instance-irradiance/2), 127 placement row(s), 16 prototype E_bake value(s)",
+   "foliage textures OFF (?foliagetex=0): the cards keep the glb's untinted source texture",
+   "shrub/reed LOD: 3 placement(s) over 3 node(s) have no LOD1 (EXPM_ENV_src_maho2_LOD2.001, EXPM_ENV_src_pitto5_LOD2.001, EXPM_ENV_src_reed1_LOD2.001) and are masked OUT of the switch — their card draws at every distance",
+   "foliage: 11 bark cluster(s) re-crowned so trunk and canopy cross the LOD distance together (max move 7.52 m)",
+   "foliage: 49 geometr(ies) clustered into 58 crown(s), normals bent 0.50 toward the crown centre on 8 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 8 leaf + 25 card + 6 bark material(s) patched, 33 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 18 near-tree unit(s) found, LOD switch at 40 m + 5 m fade",
+   "shrub/reed LOD: no LOD1 set in the manifest (export item E) — every card stays on the shipped LOD2, switch distance 30 m is wired and idle (?shrublod=)",
+   "far-tree impostor modulation: 127/127 placement(s) joined by location (0 unmatched), mode full",
+   "near-tree impostors: 18/18 unit(s) matched a prototype by species + aspect (broadleaf_s53 x1, cypress_column_s2 x6, eucalyptus_s61 x6, pine_s7 x5)",
+   "impostor irradiance modulation: mode full, E_bake 16 per-prototype value(s) from the bake, per prototype (16 value(s)); 127 far + 18 near placement(s) modulated",
+   "impostors: 145/145 placement(s) carry an E_placement / E_bake modulation (?impmod=0 reverts); the rest draw the atlas radiance unchanged",
+   "impostors: 18 of them are NEAR trees that also have a mesh (6c C2): they dissolve into their mesh inside the switch distance and the mesh dissolves into them beyond it",
+   "impostor atlas: 2K variant on 16/16 prototype(s)",
+   "impostors: 145 tree(s) (127 far + 18 near) over 16 prototype(s), 16 draw call(s), 12x12 octahedral frames at 170 px on a 2048 px atlas (the 2K variant, ?imp2k=0 reverts), 3-frame barycentric blend, alpha test 0.33, unlit (the atlas is baked radiance); 16/16 atlas(es) loaded, 9.3 MB declared, normal+depth NOT loaded (the manifest says nothing samples it while unlit holds)",
+   "water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)",
+   "reflection draw set reduced: 36 mesh(es) excluded (36 ORN, 0 backdrop), 129 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.",
+   "ready in 6.38 s: 646.9 MB loaded of 646.9 MB planned (plan 0.17 s, sky 0.55 s, lut 0.06 s, glb 2.15 s)",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 32 uv set(s) on 32 geometr(ies), 6 material transform(s) neutralised, scale 6.081..147.958, +1.72 MB",
+   "far-tree meshes: placement check OK over 127 placement(s) — trunk offset max 0.721 m (median 0.186), base offset max 3.271 m, mesh bbox centre vs impostor quad centre max 0.73 m (median 0.254)",
+   "foliage: 16 bark cluster(s) re-crowned so trunk and canopy cross the LOD distance together (max move 6.76 m)",
+   "foliage: 32 geometr(ies) clustered into 32 crown(s), normals bent 0.50 toward the crown centre on 16 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 4 leaf + 0 card + 2 bark material(s) patched, 4 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 127 near-tree unit(s) found, LOD switch at 40 m + 5 m fade",
+   "far-tree impostor modulation: 127/127 placement(s) joined by location (0 unmatched), mode full",
+   "far-tree impostors: 127 placement(s) over 16 batch(es) now fade to a MESH (iNear = 1), 127 re-lit by E_placement / E_bake",
+   "far-tree meshes: env_trees.glb in 0.22 s — 254/254 instance row(s) joined to 127/127 placement(s) by translation (<= 0.05 m), 1008 k placed tris in 142 batch(es) (26 split into 136); lighting from trees.far_mesh.lighting (the bake, per placement) on 254 row(s); vertex AO present (gamma2 x range 1.000000)",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 25 uv set(s) on 25 geometr(ies), 4 material transform(s) neutralised, scale 16.004..16.004, +0.27 MB",
+   "shrub/reed LOD1 irradiance: 1376/1376 placement(s) over 25/25 glb node(s), 25 material(s) cloned and patched, 7 with cov == 0 left on the probe",
+   "foliage: 25 geometr(ies) clustered into 25 crown(s), normals bent 0.50 toward the crown centre on 0 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 0 leaf + 25 card + 0 bark material(s) patched, 25 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 0 near-tree unit(s) found, LOD switch at 40 m + 5 m fade",
+   "shrub/reed LOD1: env_shrubs.glb in 0.03 s — 1376/1376 placement(s) over 25 node(s) on their own baked irradiance, LOD1 within 30 m on 25 material(s), the env.glb cards beyond it on 25, 3 of them carrying the per-row mask for the placements with no LOD1",
+   "lazy foliage done in 0.59 s"
+  ]
+ },
+ "stats": null,
+ "cost": null,
+ "perStation": [
+  {
+   "station": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "size": [
+    1920,
+    1080
+   ],
+   "file": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-viewer/renders/web/r16b_notex.png",
+   "frame_ms": null,
+   "fps_presented": null,
+   "gpu_cost_ms": null,
+   "fps_uncapped": null,
+   "draw_calls": 375,
+   "triangles": 6166286,
+   "programs": 107,
+   "info_memory": {
+    "geometries": 218,
+    "textures": 324
+   },
+   "resident": {
+    "geometry_bytes": 128998994,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1238725760,
+    "geometries": 332,
+    "textures": 297,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 296,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 314785792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       1920,
+       1080
+      ],
+      "samples": 4,
+      "bytes": 82944000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       1920,
+       1080
+      ],
+      "samples": 4,
+      "bytes": 82944000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1682784978,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  }
+ ],
+ "probes": null,
+ "pixels": null,
+ "picks": null,
+ "orbits": null,
+ "walkProbes": null,
+ "breakdown": null,
+ "written": [
+  {
+   "station": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "file": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-viewer/renders/web/r16b_notex.png",
+   "draws": 375,
+   "tris": 6166286
+  }
+ ],
+ "pageErrors": [],
+ "pageLog": [
+  "httperror: 404 http://127.0.0.1:61480/favicon.ico",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "log: [pfa] 4 glbs, loaded in manifest order: arch:arch.glb, orn:orn.glb, env:env.glb, ground:ground.glb",
+  "log: [pfa] stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough",
+  "log: [pfa] exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
+  "log: [pfa] sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
+  "log: [pfa] lightmap reservations for the Gate 3 bake, no texture yet: 988 mode \"slot\", 16 mode \"asset\", 1536 mode \"none\"",
+  "log: [pfa] materials.detail: 5 tiling set(s), 15 maps, 18 glb material rule(s) + 15 source-material rule(s), mode \"object_space_tiled\", bump distance 0.015 m",
+  "log: [pfa] detail: 3 merged group(s) list more than one source material, the first is used: MAT_EXP_ENVBD__MAT_lawn: MAT_gravel_path + MAT_soil -> gravelly_sand; MAT_EXP_ENV__ENV_ground_colonnade_walk: MAT_paving_stone + MAT_paving_stone_worn -> concrete_wall_007; MAT_EXP_ENV__ENV_terrain_ground: MAT_gravel_path + MAT_soil -> gravelly_sand",
+  "log: [pfa] materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 307.8 MB declared, mode \"pbr\"",
+  "log: [pfa] manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159",
+  "log: [pfa] manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas",
+  "log: [pfa] manifest pfa-phase6/4 at http://127.0.0.1:61480/assets/gate3/manifest.json",
+  "log: [pfa] uv2_relay_status.json: 7 asset(s) checked against the packed glbs, 0 flag(s) flipped; 16 own map(s) usable, 0 blocked, 0 on the frozen layout",
+  "log: [pfa] lighting mode: baked — lightmaps carry the diffuse, sun and env are specular-only",
+  "log: [pfa] materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares \"pbr\"",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate3/sky_diffuse_1024x512.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate0/sky_camera_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate0/sky_glossy_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate1/arch.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate1/ground.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate0/lut_agx_high_contrast_65.cube net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__column_rose_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__column_rose_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__column_rose_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_inner_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__dome_membrane_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__concrete_podium_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__drum_band_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__drum_band_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__drum_band_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_site__concrete_podium_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_site__paving_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_site__paving_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_site__concrete_podium_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_site__concrete_podium_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ARCH_site__paving_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_building_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_door_green_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_building_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_door_green_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_door_green_metallic.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_forest_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_forest_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_forest_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_door_green_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_hill_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_hill_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_roof_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_roof_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_roof_tile_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_roof_tile_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_roof_tile_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_skylight_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__bird_white_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_skylight_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__bird_white_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__lamp_post_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__lamp_post_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__lamp_post_metallic.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__lawn_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENVBD__lawn_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_lagoon_bed_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_lagoon_bed_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_lagoon_bed_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_terrain_ground_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__riprap_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_terrain_ground_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__ENV_terrain_ground_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__riprap_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ENV__riprap_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate1/env.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_attic_panel_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate2/tex_ktx2/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2 net::ERR_ABORTED",
+  "log: [pfa] load plan: 189 files, 523.5 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:arch 4.6, glb:orn 154.3, glb:env 38.1, glb:ground 2.0, tex:map 2.2, tex:roughness 0.5, tex:normal 1.6, tex:map 2.4, tex:roughness 0.6, tex:normal 1.1, tex:map 2.3, tex:roughness 0.5, tex:normal 1.7, tex:map 2.4, tex:roughness 0.6, tex:normal 1.1, tex:map 2.9, tex:roughness 0.6, tex:normal 2.1, tex:map 2.5, tex:roughness 0.5, tex:normal 1.8, tex:map 3.3, tex:roughness 0.7, tex:normal 2.1, tex:map 3.1, tex:roughness 0.7, tex:normal 1.4, tex:map 2.8, tex:roughness 0.6, tex:normal 2.1, tex:map 1.5, tex:roughness 0.4, tex:normal 1.3, tex:map 2.0, tex:roughness 0.4, tex:normal 1.4, tex:map 3.3, tex:roughness 0.7, tex:normal 2.5, tex:map 3.5, tex:roughness 0.8, tex:normal 1.8, tex:map 3.4, tex:roughness 0.8, tex:normal 1.6, tex:map 1.4, tex:roughness 0.3, tex:normal 0.9, tex:map 0.8, tex:roughness 0.6, tex:map 0.6, tex:roughness 0.8, tex:normal 0.6, tex:metalness 0.0, tex:map 0.1, tex:roughness 0.1, tex:normal 0.1, tex:map 0.6, tex:roughness 0.0, tex:map 0.8, tex:roughness 0.3, tex:map 0.8, tex:roughness 0.5, tex:normal 0.7, tex:map 0.9, tex:roughness 1.0, tex:map 0.1, tex:roughness 0.0, tex:map 0.0, tex:roughness 0.0, tex:metalness 0.0, tex:map 0.9, tex:roughness 0.6, tex:map 3.6, tex:roughness 0.9, tex:normal 2.7, tex:map 1.1, tex:roughness 0.0, tex:normal 0.8, tex:map 3.7, tex:roughness 0.1, tex:normal 3.0, tex:map 4.4, tex:roughness 1.0, tex:normal 2.7, tex:map 4.1, tex:roughness 0.9, tex:normal 3.4, tex:map 3.7, tex:roughness 0.8, tex:normal 3.5, tex:map 3.8, tex:roughness 0.8, tex:normal 3.6, tex:map 3.8, tex:roughness 0.8, tex:normal 3.7, tex:map 3.4, tex:roughness 0.8, tex:normal 3.6, tex:map 3.4, tex:roughness 0.8, tex:normal 3.6, tex:map 3.4, tex:roughness 0.8, tex:normal 3.5, tex:map 3.6, tex:roughness 0.9, tex:normal 3.7, tex:map 3.6, tex:roughness 0.9, tex:normal 3.5, tex:map 3.6, tex:roughness 0.9, tex:normal 3.5, tex:map 3.6, tex:roughness 0.9, tex:normal 3.6, tex:map 3.9, tex:roughness 0.8, tex:normal 3.7, tex:map 3.5, tex:roughness 0.8, tex:normal 3.6, tex:map 0.7, tex:roughness 0.6, tex:normal 0.7, tex:map 1.6, tex:roughness 0.4, tex:normal 1.7, tex:map 1.5, tex:roughness 0.3, tex:normal 1.5, tex:map 1.4, tex:roughness 0.3, tex:normal 1.5, tex:map 1.6, tex:roughness 0.4, tex:normal 1.6, tex:map 1.4, tex:roughness 0.4, tex:normal 1.6, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 3.4, tex:roughness 0.7, tex:normal 2.9, tex:map 3.3, tex:roughness 0.7, tex:normal 2.9, tex:map 3.4, tex:roughness 0.7, tex:normal 3.0, tex:map 1.1, tex:roughness 0.8, tex:normal 1.1, tex:map 1.1, tex:roughness 0.9, tex:normal 1.1, tex:map 1.0, tex:roughness 0.8, tex:normal 1.1, tex:map 3.7, tex:roughness 0.8, tex:normal 3.6, tex:map 3.2, tex:roughness 0.7, tex:normal 3.2, tex:map 3.4, tex:roughness 0.8, tex:normal 3.2, tex:map 3.4, tex:roughness 0.8, tex:normal 3.2, tex:map 3.1, tex:roughness 0.7, tex:normal 2.6)",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "requestfailed: HEAD http://127.0.0.1:61480/assets/gate1/orn.glb net::ERR_ABORTED",
+  "log: [pfa] sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "log: [pfa] PMREM specular environment from sky_glossy_4096x2048.hdr",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "log: [pfa] sky diffuse integral / L dw = 33.665, 38.253, 213.742 (the sky half of the irradiance the impostor atlases were baked under)",
+  "log: [pfa] PMREM diffuse environment from sky_diffuse_1024x512.hdr (irradiance for everything without a lightmap; QA-12b-1)",
+  "log: [pfa] sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only",
+  "log: [pfa] water plane at y = -1.3 (WATER_Z -1.3), planar Reflector 1024x1024 (?reflres=full), reflection gather 0.003 / saturation 1, ripple 8 waves 1.20-0.034 m, murk 0.2353, 0.3523, 0.3166 (derived; ?watermurkgain=1), grazing cap 6",
+  "log: [pfa] post mist: COMP_golden_hour airlight cap 0.25 * (1 - exp(-k 5 * mist)), mist = LINEAR over 20..2020 m along the view ray (extinction length 400 m), haze [5.32, 3.74, 1.96], from manifest compositor.mist",
+  "log: [pfa] post bloom: threshold 12.827 (scene-linear; manifest 6.4136 x 2), strength 0.05000000074505806, radius 0.6000000238418579, mip chain from 1920x1080 (?bloomres=full)",
+  "log: [pfa] LUT texel type FloatType (OES_texture_float_linear) — extension present",
+  "log: [pfa] LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
+  "log: [pfa] post vignette: 0.07999999821186066 in linear, before the transform",
+  "log: [pfa] quality preset 'look': bloom full-res, Reflector full-res target, reflection set orn",
+  "log: [pfa] post chain: mist + bloom + vignette (?post=all)",
+  "log: [pfa] display: tone mapping OFF, exposure x0.14033, LUT on",
+  "log: [pfa] station 2 CAM_qa_02_lagoon_ne_threequarter\n  source           rotation_euler  (look-at cross-check max element diff 2.16e-7)\n  world matrix     [-0.29240, 0.00000, 0.95630, 0.00000, -0.24327, 0.96710, -0.07438, 0.00000, -0.92484, -0.25439, -0.28278, 0.00000, -79.80000, 1.55000, -24.40000, 1.00000]\n  projection       [1.50000, 0.00000, 0.00000, 0.00000, 0.00000, 2.66667, 0.00000, 0.00000, 0.00000, 0.00000, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 41.112 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
+  "log: [pfa] lightMapIntensity = lightmap_scale 3.14159",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 58 uv set(s) on 29 geometr(ies), 17 material transform(s) neutralised, scale 13.139..15.986, +7.53 MB",
+  "log: [pfa] glb arch.glb (arch) 4.6 MB in 0.11 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 66 uv set(s) on 33 geometr(ies), 33 material transform(s) neutralised, scale 11.320..15.963, +1.91 MB",
+  "log: [pfa] glb orn.glb (orn) 154.3 MB in 1.04 s: 33 meshes, 32 instanced (435 instances), 1097468 placed tris, 33 materials",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 50 uv set(s) on 50 geometr(ies), 26 material transform(s) neutralised, scale 6.081..16.004, +6.01 MB",
+  "log: [pfa] glb env.glb (env) 38.1 MB in 0.27 s: 50 meshes, 34 instanced (1526 instances), 679779 placed tris, 26 materials",
+  "log: [pfa] 127 ENV_treeboard_* stand-ins hidden (?treeboards=0)",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB",
+  "log: [pfa] glb ground.glb (ground) 2.0 MB in 0.02 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
+  "log: [pfa] gate4 instance irradiance: 1379/1379 placement(s) over 25/25 glb node(s), 25 material(s) cloned and patched, 7 with cov == 0 left on the probe",
+  "log: [pfa] gate3 UV2 census: 66 mesh(es) carry TEXCOORD_1 (1004 placements), 50 do not (1416 placements)",
+  "log: [pfa] gate3 lightmaps: 16/16 own map(s), 988/988 instance slot(s), 9 material(s) cloned; match error <= 0.019 m",
+  "log: [pfa] gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)",
+  "log: [pfa] gate3 vertex irradiance: 14 COLOR_0 primitive(s), 26 placement(s), decoded at the ONE global range 44.25656 x scale 3.14159 read from manifest lightmaps.vertex_irradiance.range; the export derived it as uv2_relay_status.json vertex_irradiance_range_global = the max over all 14 near-tree meshes in vertex_irradiance.npz; gltfpack's shared buffers are harmless at one range",
+  "log: [pfa] instance chunking (QA-11d-1): 16 of 29 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 48 regional batches, +32 draw calls when every chunk is in frame",
+  "log: [pfa] 26 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 \"borrow a neighbour's lightmap\" stand-in is off at Gate 3",
+  "log: [pfa] 102 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch",
+  "log: [pfa] pbr: 73 of 112 scene materials textured from 62 of 62 manifest sets, 214 maps, 630.5 MB resident in 181 file(s) [181 RGBA_ASTC_4x4_Format], requested nearest first (MAT_EXP_ENVBD__MAT_backdrop_forest 0 m, MAT_EXP_ENVBD__MAT_backdrop_building 0 m, MAT_EXP_ENVBD__MAT_backdrop_hill 0 m …)",
+  "log: [pfa] pbr: factors applied to 73 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
+  "log: [pfa] pbr: 39 material(s) with NO texture set, left as exported: MAT_shrub_light, MAT_bark_cypress, MAT_leaf_cypress, MAT_bark_eucalyptus, MAT_bark_cypress, MAT_leaf_eucalyptus, MAT_shrub_dry, MAT_leaf_pine, MAT_shrub_light, MAT_shrub_light, MAT_shrub_dry, MAT_reeds …",
+  "log: [pfa] detail (QA-12-1): 29 material(s) on 4 tiling set(s) (concrete_wall_007 x15, concrete_wall_008 x11, gravelly_sand x2, rock_boulder_dry x1), 12 textures, 33.6 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
+  "log: [pfa] pbr textures in 2.85 s; 97 superseded Gate 1 texture(s) disposed, 155.2 MB freed",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000d4e00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "log: [pfa] probe env: 6 x 512 px HDR cube from CAM_qa_01_lagoon_hero convolved to irradiance in 0.09 s; PMREM read back at 5 point(s), 4 carrying energy (verified non-black); faces 15220279.0/14174575.0/16682134.0/13403637.0/15810468.0/13729954.0",
+  "log: [pfa] probe env applied to 11 material(s) with no baked light of their own (77 lightmapped or vertex-lit, 25 already had an envMap, 1 not MeshStandard): MAT_EXP_ENVBD__MAT_backdrop_building, MAT_EXP_ENVBD__MAT_backdrop_door_green, MAT_EXP_ENVBD__MAT_backdrop_forest, MAT_EXP_ENVBD__MAT_backdrop_hill, MAT_EXP_ENVBD__MAT_backdrop_roof, MAT_EXP_ENVBD__MAT_backdrop_roof_tile, MAT_EXP_ENVBD__MAT_backdrop_skylight, MAT_EXP_ENVBD__MAT_bird_white …",
+  "log: [pfa] probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest's own probe.use says it is not the diffuse environment; this use of it is the lead's QA-13-1 call and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.",
+  "log: [pfa] far-tree lighting: inline in the manifest (pfa-phase6/gate4-instance-irradiance/2), 127 placement row(s), 16 prototype E_bake value(s)",
+  "log: [pfa] foliage textures OFF (?foliagetex=0): the cards keep the glb's untinted source texture",
+  "log: [pfa] shrub/reed LOD: 3 placement(s) over 3 node(s) have no LOD1 (EXPM_ENV_src_maho2_LOD2.001, EXPM_ENV_src_pitto5_LOD2.001, EXPM_ENV_src_reed1_LOD2.001) and are masked OUT of the switch — their card draws at every distance",
+  "log: [pfa] foliage: 11 bark cluster(s) re-crowned so trunk and canopy cross the LOD distance together (max move 7.52 m)",
+  "log: [pfa] foliage: 49 geometr(ies) clustered into 58 crown(s), normals bent 0.50 toward the crown centre on 8 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 8 leaf + 25 card + 6 bark material(s) patched, 33 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 18 near-tree unit(s) found, LOD switch at 40 m + 5 m fade",
+  "log: [pfa] shrub/reed LOD: no LOD1 set in the manifest (export item E) — every card stays on the shipped LOD2, switch distance 30 m is wired and idle (?shrublod=)",
+  "log: [pfa] far-tree impostor modulation: 127/127 placement(s) joined by location (0 unmatched), mode full",
+  "log: [pfa] near-tree impostors: 18/18 unit(s) matched a prototype by species + aspect (broadleaf_s53 x1, cypress_column_s2 x6, eucalyptus_s61 x6, pine_s7 x5)",
+  "log: [pfa] impostor irradiance modulation: mode full, E_bake 16 per-prototype value(s) from the bake, per prototype (16 value(s)); 127 far + 18 near placement(s) modulated",
+  "log: [pfa] impostors: 145/145 placement(s) carry an E_placement / E_bake modulation (?impmod=0 reverts); the rest draw the atlas radiance unchanged",
+  "log: [pfa] impostors: 18 of them are NEAR trees that also have a mesh (6c C2): they dissolve into their mesh inside the switch distance and the mesh dissolves into them beyond it",
+  "log: [pfa] impostor atlas: 2K variant on 16/16 prototype(s)",
+  "log: [pfa] impostors: 145 tree(s) (127 far + 18 near) over 16 prototype(s), 16 draw call(s), 12x12 octahedral frames at 170 px on a 2048 px atlas (the 2K variant, ?imp2k=0 reverts), 3-frame barycentric blend, alpha test 0.33, unlit (the atlas is baked radiance); 16/16 atlas(es) loaded, 9.3 MB declared, normal+depth NOT loaded (the manifest says nothing samples it while unlit holds)",
+  "log: [pfa] water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)",
+  "log: [pfa] reflection draw set reduced: 36 mesh(es) excluded (36 ORN, 0 backdrop), 129 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.",
+  "log: [pfa] ready in 6.38 s: 646.9 MB loaded of 646.9 MB planned (plan 0.17 s, sky 0.55 s, lut 0.06 s, glb 2.15 s)",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 32 uv set(s) on 32 geometr(ies), 6 material transform(s) neutralised, scale 6.081..147.958, +1.72 MB",
+  "log: [pfa] far-tree meshes: placement check OK over 127 placement(s) — trunk offset max 0.721 m (median 0.186), base offset max 3.271 m, mesh bbox centre vs impostor quad centre max 0.73 m (median 0.254)",
+  "log: [pfa] foliage: 16 bark cluster(s) re-crowned so trunk and canopy cross the LOD distance together (max move 6.76 m)",
+  "log: [pfa] foliage: 32 geometr(ies) clustered into 32 crown(s), normals bent 0.50 toward the crown centre on 16 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 4 leaf + 0 card + 2 bark material(s) patched, 4 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 127 near-tree unit(s) found, LOD switch at 40 m + 5 m fade",
+  "log: [pfa] far-tree impostor modulation: 127/127 placement(s) joined by location (0 unmatched), mode full",
+  "log: [pfa] far-tree impostors: 127 placement(s) over 16 batch(es) now fade to a MESH (iNear = 1), 127 re-lit by E_placement / E_bake",
+  "log: [pfa] far-tree meshes: env_trees.glb in 0.22 s — 254/254 instance row(s) joined to 127/127 placement(s) by translation (<= 0.05 m), 1008 k placed tris in 142 batch(es) (26 split into 136); lighting from trees.far_mesh.lighting (the bake, per placement) on 254 row(s); vertex AO present (gamma2 x range 1.000000)",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 25 uv set(s) on 25 geometr(ies), 4 material transform(s) neutralised, scale 16.004..16.004, +0.27 MB",
+  "log: [pfa] shrub/reed LOD1 irradiance: 1376/1376 placement(s) over 25/25 glb node(s), 25 material(s) cloned and patched, 7 with cov == 0 left on the probe",
+  "log: [pfa] foliage: 25 geometr(ies) clustered into 25 crown(s), normals bent 0.50 toward the crown centre on 0 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 0 leaf + 25 card + 0 bark material(s) patched, 25 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 0 near-tree unit(s) found, LOD switch at 40 m + 5 m fade",
+  "log: [pfa] shrub/reed LOD1: env_shrubs.glb in 0.03 s — 1376/1376 placement(s) over 25 node(s) on their own baked irradiance, LOD1 within 30 m on 25 material(s), the env.glb cards beyond it on 25, 3 of them carrying the per-row mask for the placements with no LOD1",
+  "log: [pfa] lazy foliage done in 0.59 s",
+  "log: [pfa] station 2 CAM_qa_02_lagoon_ne_threequarter\n  source           rotation_euler  (look-at cross-check max element diff 2.16e-7)\n  world matrix     [-0.29240, 0.00000, 0.95630, 0.00000, -0.24327, 0.96710, -0.07438, 0.00000, -0.92484, -0.25439, -0.28278, 0.00000, -79.80000, 1.55000, -24.40000, 1.00000]\n  projection       [1.50000, 0.00000, 0.00000, 0.00000, 0.00000, 2.66667, 0.00000, 0.00000, 0.00000, 0.00000, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 41.112 deg  aspect 1.77778  near 0.10000000149011612  far 5000"
+ ]
+}

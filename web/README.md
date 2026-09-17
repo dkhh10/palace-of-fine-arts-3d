@@ -544,7 +544,274 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
-## QA notes — read before scoring (Gate 4 / QA 15)
+## QA notes — read before scoring (Phase 6c / QA 16)
+
+### The 6c foliage pass (item C), what it does and what it measured
+
+`src/foliage.js` is the whole of it; `?leafnormal= ?cardnormal= ?leaftrn= ?leafsoft= ?treemesh=
+?treefade= ?shrublod= ?imp2k= ?impmod= ?impbake=` are its switches and every default below is the
+shipped one.  **The round-15 look is one URL away** — `?leafnormal=0&leaftrn=0&leafsoft=0&treemesh=inf&imp2k=0&impmod=0`
+— and every number in this section is measured against exactly that.
+
+**C1, the leaf shader.**
+1. *Crown-bent normals.* A leaf card carries its own card normal, so a canopy of randomly-facing
+   quads shades to one flat average.  Each geometry's vertices are flood-filled on a 6 m XZ grid into
+   connected CROWNS (the export merged several trees into single primitives — `MAT_bark_cypress`
+   spans 229 m, `MAT_leaf_cypress` 230 m — so a bbox centre would sit in mid-air between two trees),
+   every vertex gets its crown's centre in `pfaCrown`, and the normal becomes
+   `normalize( mix( cardNormal, radial, 0.5 ) )`.  49 geometries, 58 crowns.
+2. *Translucency.* The Phase 5 material is `Mix( Principled, Translucent( base * tint ), t )`
+   (`scripts/mat_build.py leaf_material`), so the viewer adds the back lobe at `t` and subtracts `t`
+   of the front lobe — nothing else.  No forward-scatter phase function and no rim boost: the
+   acceptance reference is a Cycles frame of that same mix.  `t` and the tint are the Phase 5
+   constants per material (0.18 pine … 0.45 reeds); export item D's `*_trn` mask (0.05..0.85 ->
+   0.35..1.55) replaces the constant when it lands.
+3. *Soft edges.* `alphaToCoverage` on every card material whose `alphaTest` came from the manifest,
+   so three's own alphatest chunk resolves the boundary texel across the 4 MSAA samples of the
+   composer target (and of the Reflector's).  The MASK cutoffs are untouched (0.42 pine … 0.5).
+
+**The shrub/reed cards are NOT normal-bent (`?cardnormal=0.5` is the A/B), and they get no
+translucent term (`?leaftrn=shrubs` is the A/B).**  Both are the same reason: their material is
+patched by `applyInstanceIrradiance` with `specularOnlySun: true`, so they have no sun diffuse at
+all — their diffuse is ONE baked scene-linear irradiance per placement added with no cosine, which
+is already the two-sided model translucency approximates, and on 1 372 of the 1 379 the normal
+therefore drives the SPECULAR alone.  Measured at cam02 in the round-15 near-trees box
+`60 520 700 980`, bending them aimed sky reflection at the camera:
+
+| cam02, box 60 520 700 980 | rgb | lum | hue | sat | G>R |
+|---|---|---|---|---|---|
+| Cycles reference | 100.9 108.4 97.7 | 106.0 | 102.4 | 0.098 | 70.9 % |
+| round-15 equivalent | 105.3 105.0 97.2 | 104.5 (0.986x) | 57.7 | 0.077 | 37.4 % |
+| 6c with the cards bent | 102.5 106.0 **104.6** | 105.1 | 156.9 | **0.033** | 70.1 % |
+| **6c as shipped** | 105.4 105.5 98.4 | **104.9 (0.990x)** | 60.2 | 0.067 | 38.4 % |
+
+The reference has blue LOWEST (97.7); bending the cards made it the HIGHEST and washed the
+saturation to a third of the reference's.  The G > R gain it bought was the sky, not the foliage.
+Shipped, the box holds its round-15 level (0.990x against 0.986x) and the whole cam02 frame moves
+1.073x -> 1.076x.  The residual hue (60 deg against 102 deg) is unchanged and still the cards' own
+albedo — export item E owns it.
+
+**What cam02 actually shows, and it is not a leaf card.**  The 100 % tile
+`renders/web/960/6c_cam02_tree_tile.png` (Cycles / round-15 / 6c, box `700 660 1240 950`) is the
+user's finding: the tree filling the middle of cam02 is a far-tree IMPOSTOR standing ~15 m from the
+camera, an 85 px atlas frame magnified into a smooth blue-green blob against the reference's
+thousands of leaf clusters.  It has no mesh to switch to until `env_trees.glb` (export item A)
+lands.  What 6c could do for it, it did — the 2K atlas variant and the soft edges:
+
+| cam02, box 700 660 1240 950 | hp9 | mid(5-21) | std |
+|---|---|---|---|
+| Cycles reference | 17.46 | 14.04 | 47.72 |
+| round-15 equivalent | 15.81 | 14.00 | 43.68 |
+| 6c as shipped | **16.88** | **14.52** | 43.89 |
+
+**C2, the runtime LOD.**  `treeMeshDist` (`?treemesh=`, default 40 m, `inf` disables) with a 5 m
+crossfade (`?treefade=`).  The distance is computed IN THE VERTEX SHADER from `pfaCrown`, so a
+merged mesh switches per TREE and there is no per-frame CPU work at all; the impostor side runs the
+same formula on the same crown centre through `iSwitch` / `iNear`, so the two dissolves are exact
+complements and no tree is ever drawn twice or not at all.  The crossfade is a stochastic
+(interleaved-gradient-noise) dither, not an alpha ramp, because a card's alpha is a texture and
+three's alphaToCoverage smoothstep turns a constant per-tree factor back into a hard step; the hash
+is purely spatial, so a repeated capture is byte-identical.  18 near-tree units are found (the
+manifest declares 20 `tree_near` names; 18 crowns are present in `env.glb`) and each is matched to
+an impostor prototype by SPECIES — from the leaf material, because gltfpack dropped every node name
+— and then by the closest width/height aspect, which is what separates a columnar cypress from a
+spreading one.  The 127 far trees have `iNear = 0` and never fade.  Impostor atlas: the 2K variant
+by default (`?imp2k=0` reverts), read WHOLE from `manifest.impostors.variant_2k` — a 2048 px atlas
+of 170 px frames with a 4 px gutter is not the 1K block doubled.
+
+**The impostor irradiance modulation (`?impmod=`), from the bake's diagnosis.**  The atlases were
+baked with each prototype ALONE on a lawn under the whole open sky, so their light is the sky's
+(hue 225 deg) while the same tree in the scene stands in warm bounce (hue 52 deg in the Cycles
+frame).  Radiance is linear in the irradiance that made it, so the fix is a per-placement ratio and
+not a re-bake: `radiance_scene = atlas * ( E_placement / E_bake )`, carried as the instanced
+attribute `iIrr`.  The far trees take `E_placement` from `trees.far_mesh.lighting` when the bake
+ships it (joined by location, and it refuses to guess when it has not landed — today it reports
+0/127); the 18 near trees take it from their own crown mean of `COLOR_0`, which IS baked irradiance
+(`lightmaps.vertex_irradiance`, one global range 44.2566 x pi).  `E_bake` is the bake's to measure
+per prototype; until then the viewer estimates it as `sunColour * irradiance + integral L_sky dw`
+off the sky-diffuse equirect — measured `100.98 / 79.14 / 213.74`, which corroborates the bake's
+225 deg — and therefore ships in mode **`chroma`**: the ratio normalised to unit luminance, so only
+the COLOUR of the light is corrected and an estimate that is off by a factor cannot re-light every
+tree by that factor.  `?impmod=full` is the mode to switch to the day `E_bake` is measured;
+`?impmod=0` draws the atlas as baked.
+
+**C3, the shrub/reed LOD.**  Wired and idle: there is no LOD1 set in the manifest yet (export item
+E).  The consumer reads either `raw.shrub_lod = { dist_m?, lod1_nodes, lod2_nodes }` (glTF node
+indices into env.glb, the same index space as `lightmaps.instance_irradiance.nodes[].gltf_node`) or
+a `lod: "LOD1"|"LOD2"` field on those same nodes, joins through `mesh.userData.pfaGltfNode` exactly
+as the instance irradiance does, and reports any node the scene does not present.  The switch is
+the C2 shader with the sign flipped, so LOD1 and LOD2 share one dissolve and one code path.
+`?shrublod=` is the distance, default 30 m.
+
+**The hero does not move.**  cam01 whole frame 133.2 -> 133.1 (0.999x), left shore foliage
+`0 700 700 1080` 94.6 -> 94.6 (1.001x): the hero's foliage is far shrubs and small impostors, and
+nothing in 6c is aimed at them.
+
+### Round 2 of the 6c pass (read this before QA 16)
+
+Round 1 shipped the leaf shader and the runtime LOD on the assets that existed then; round 2 is the
+three things that were waiting on somebody else, plus the round-1 code review
+(`docs/reviews/phase6c_viewer_r1_review.md`), whose blocker was real.
+
+**The dissolve was not a complement, and now is.**  Both sides discarded on `hash > vPfaFade` while
+the mesh's fade is `1 - t` and the impostor's is `t`, so both kept `{ hash <= min(t, 1-t) }`: at
+mid-crossfade half the crown drew twice and half showed the background through the tree.  The mesh
+now discards `hash >= vPfaFade` and the impostor `hash < 1 - vPfaFade`, which partition `[0,1)` with
+no pixel drawn twice and none left out — including `hash == 0` (a `<=`/`>` pair keeps it on both
+sides) and both degenerate ends: with `?treemesh=inf` the impostor's fade is 0 and it must keep
+NOTHING, and at the other end the mesh's fade is 0 and the impostor keeps everything.  The guard on
+each side is therefore the FULLY VISIBLE case (`< 0.9995`), never the invisible one.
+`web/test/foliage_lazy_test.mjs` checks the partition numerically at 11 fade levels x 20 hashes and
+pins both shader strings.
+
+**The trunk now switches with its canopy.**  A bark cluster's `pfaCrown` was its own centre, several
+metres below the crown centre the impostor's `iSwitch` uses, so a trunk crossed 40 m at a different
+frame from the leaves above it.  The `PAIR_MAX_M` join is now run the other way round as well and
+the crown's centre is written back into the bark geometry's `pfaCrown`, in that geometry's own local
+space (one instance is enough: a tree is rigid, so crown − trunk is the same offset in every row).
+
+**The far trees have meshes (`src/foliageLazy.js`, `trees.far_mesh`).**  `env_trees.glb` — 16
+prototypes x (bark + leaf) as 32 `EXT_mesh_gpu_instancing` nodes, 254 rows for the 127 placements —
+is fetched AFTER the first frame; `window.__pfaLazyReady` flips when it and `env_shrubs.glb` are in,
+and `screenshot.mjs` waits for it, so a scored capture always shows the finished scene.  The join is
+POSITIONAL (gltfpack drops node names): each instance row's translation against
+`trees.far_mesh.placements[].loc`, 254/254 rows to 127/127 placements, and a row that matches nothing
+is a hard failure that removes the whole glb rather than drawing an unlit tree.  Lighting is exactly
+the shrub cards' model — one baked irradiance per placement (`pfaInstIrr`, specular-only sun) x the
+per-vertex AO in `COLOR_0` — with `trees.far_mesh.lighting` as its source when the bake ships it and
+`?fartreelight=` choosing the fallback until then.  Then the impostor rows for those 127 are flipped
+to `iNear = 1` with the SAME crown centre the mesh switches on, so the two dissolves cross at the
+same metre.  Cost: 1.03 M placed triangles would be vertex-shaded every frame for fragments the
+dissolve throws away, so the batches are chunked (`minCount 2`, `maxDepth 3`) and every chunk whose
+whole bounding sphere lies beyond `treeMeshDist + treefade` is hidden before three sees it — from
+the origin 32 of 142 batches are submitted, from 5 km away none.
+
+**The shrub/reed LOD1 set is live (`shrubs.lod1`).**  `env_shrubs.glb` carries 1 376 of the 1 379
+placements as LOD1 meshes; they take the SAME per-placement irradiance through
+`lightmaps.instance_irradiance.lod1` (the manifest's own promise: crossing the LOD distance cannot
+change a shrub's light) and the same binder, per glTF NODE with the `segments` cursor.  The three
+placements with no LOD1 (`not_in_lod1`) sit INSIDE nodes whose other rows do have one, so the switch
+is masked per ROW through `pfaSwitchOn`, written before the first foliage pass because a shader
+attribute has to exist when the program is built; those three keep their card at every distance.
+
+**The cards ship the MATERIAL's albedo (`materials.foliage`).**  The glb carries the untinted source
+PNG — the same card for MAT_shrub / MAT_shrub_light / MAT_shrub_dry, about 1.9x too dark — and the
+Phase 5 translucency is a per-texel factor, not a constant.  Both now come from the manifest: the
+tinted albedo replaces `material.map` and the factor map replaces `pfaTrnFac` (the map already
+carries the Map Range, so the constant is NOT applied twice; `?leaftrn=` still scales both paths).
+`?foliagetex=1024` is the default because every foliage source is generated at 1 K and the 2 K set is
+an upsample (export/README.md item 39): 4x the texture memory, no new detail.
+
+**`?impmod` now defaults to `full`** the day the bake's per-prototype `E_bake` is in the manifest,
+and to `chroma` until then.  The ratio is clamped at **4.0** (the lead's ceiling) and falls back to 1
+per channel where `E_bake` has a zero channel.  Both sides of the division are the RAW manifest
+values (irradiance / pi); where the NEAR trees' own crown irradiance is used it is a decoded full
+irradiance, so the per-prototype `E_bake` is scaled by `lightmaps.scale` before it meets them.
+
+**The other round-1 review items.**  Every numeric foliage switch falls back to its default instead
+of reaching `smoothstep` as NaN (`?treefade=x` used to discard every foliage fragment); a near-tree
+unit that matches no prototype keeps its mesh at every distance instead of dissolving with nothing
+behind it; the impostor summary prints the atlas geometry that actually DRAWS and
+`__pfaInfo().impostors` carries `atlas2k`, `atlasGeometry`, `nearInstances` and `modulated`; the 2K
+byte accounting no longer subtracts the 1K figure when no 2K count is declared; `applyShrubLod`'s
+"not asked" sentinel is `undefined`, so `?shrublod=30` is an override and any explicit value beats
+the manifest's `dist_m`; and a failed shader patch surfaces on `__pfaError` (with
+`__pfaInfo().shaderErrors`) instead of throwing inside `onBeforeCompile` and killing the first frame.
+
+**The box tables can be re-derived.**  `web/tools/foliage_boxes.py --json` now writes every row of
+every box, with the colour columns AND `qa12_boxes.py`'s `mid(5-21)` / `hp9` / `std` (imported, not
+re-implemented).  `renders/web/round16b_foliage_boxes.json` is the committed sidecar for QA 16; the
+full-res PNGs stay gitignored.
+
+### Round 16b, measured (the 6c round-2 capture)
+
+Every number here is from `renders/web/round16b_*` and re-derivable from the committed sidecars
+(`round16b_foliage_boxes.json`, `round16b_hero_boxes.json`, `round16b_pairs.json`, `round16b_perf.json`).
+
+**Frame time at 2560x1440**, median over 120 frames after 24 warm-up, per station, against round 15:
+
+| station | 01 | 02 | 03 | 04 | 05 | 06 |
+|---|---|---|---|---|---|---|
+| round 15 | 28.2 | 32.2 | 32.9 | 22.5 | 30.4 | 32.1 |
+| **round 16b** | **30.1** | **33.5** | **32.7** | **22.7** | **31.8** | **33.5** |
+| delta | +1.9 | +1.3 | **-0.2** | +0.2 | +1.4 | +1.4 |
+
+Post off: 23.5-27.5 ms.  Draw calls 329-351 (round 16: 274-301), triangles 5.2-5.6 M (4.1-4.5 M).
+**Resident 1717.2 MB** against round 16's 1606.6: +54 MB of texture (the 16 foliage maps at 1 K) and
++57 MB of geometry (`env_trees.glb` 129 k unique tris, `env_shrubs.glb` 17 k).  Run-to-run spread on
+this machine is about 2 ms, measured on two passes over identical geometry.
+
+**Parity per station** (viewer against the Phase 5 Cycles reference, `mean|diff|/255`; lower is better):
+
+| station | round 15 | round 16 | round 16b |
+|---|---|---|---|
+| 01 lagoon hero | 26.58 | 26.75 | **26.52** |
+| 02 NE three-quarter | 23.27 | 23.13 | **20.08** |
+| 03 colonnade walk | 34.41 | 34.40 | **33.94** |
+| 04 rotunda ceiling | 13.12 | 13.12 | 13.12 |
+| 05 south lawn | 22.52 | 22.60 | **22.22** |
+| 06 aerial | 21.03 | 20.99 | **20.59** |
+
+Every station falls or holds, and station 2 - the one the foliage brief required to rise - improves by
+3.05, the largest move of the round.  The hero's own shore-foliage box does not move (0.696x both).
+
+**The far tree that fills cam02**, box `700 660 1240 950`, the user's finding:
+
+| | rgb | lum | hue | sat | G>R | mid | hp9 | std |
+|---|---|---|---|---|---|---|---|---|
+| Cycles reference | 45.3 39.5 21.3 | 39.4 | 45.5 | 0.530 | 33.3 | 14.04 | 17.46 | 47.72 |
+| round 15 | 55.3 56.1 50.5 | 55.5 (1.409x) | 68.2 | 0.100 | 74.0 | 14.00 | 15.81 | 43.68 |
+| round 16 | 55.3 56.3 50.8 | 55.7 (1.414x) | 70.9 | 0.099 | 72.2 | 14.52 | 16.88 | 43.89 |
+| **round 16b** | 55.2 52.1 22.4 | **50.6 (1.284x)** | **54.3** | **0.594** | **57.0** | **14.46** | **17.12** | **45.23** |
+
+The blue cast is gone, and it is the MODULATION that removed it, not the mesh: with the bake's
+per-prototype `E_bake` in the manifest `?impmod` resolves to `full`, every one of the 127 far
+placements is drawn as `atlas x (E_placement / E_bake)` per channel, and the box lands within 9 deg of
+the reference's hue and 0.06 of its saturation where round 16 was 25 deg and 0.43 away.
+
+**Near-trees box** `60 520 700 980`: lum 104.9 (0.990x) -> 109.8 (1.036x), hue 60.2 -> 70.8 (reference
+102.4), **G > R 38.4 % -> 66.2 %** against the reference's 70.9 %.
+
+**Why the far-tree MESH is not what carries a station.**  Measured at 40 m, the same box reads 1.957x
+with hp9 34.56 - twice the reference's high-frequency detail - and the tile shows cream-white leaves
+where the reference is dark green.  The atlas carries the self-shadowing of the DENSE source tree; an
+8 k-triangle LOD2 crown has almost none of it, and nothing available puts it back: the translucency
+term accounts for 0.015x of it, the tinted albedo 0.007x, and the baked AO applied to the environment
+lobes 0.042x (that last one is right on its own merits and ships).  So `?fartreemesh=` defaults to
+**12 m**: the mesh does what only a mesh can do - silhouette, parallax and see-through canopy when the
+walker is a few metres away, which `renders/web/960/round16b_walkin_tile.jpg` shows at 3 m - and the
+modulated atlas carries every station.  At cam02 the result is byte-identical to drawing no far mesh
+at all.  The near trees keep the shared 40 m (`?treemesh=`), which is why the two distances are
+separate uniforms: the impostor carries the far one per placement in `iDist`.
+`?fartreemesh=40` reproduces the mesh-at-station look for the A/B.  **Open, for the export:** at 3 m
+the LOD2 crown is coarse and pale - big grown cards, 1 K atlas magnified - so a walk-up that wants to
+stop AT a tree wants its LOD1, not this LOD2.
+
+**treeMeshDist 60 m was measured and rejected** (before the far trees got their own distance): +1.5 to
++4.0 ms and both cam02 boxes further from the reference (near-trees 1.046x -> 1.185x).
+
+**The bare URL**, no query string at all, boots the delivery look with every 6c default on: `impmod`
+full with 16 per-prototype `E_bake` values, 127 far + 18 near placements modulated, 254/254 far-tree
+rows lit from the bake, 1 376/1 376 LOD1 shrub placements on their own baked irradiance, the foliage
+textures at 1 024 px, no shader error and no page error.
+
+**The far-tree placement gate** (the lead's, after the export was found placing every tree ~300 m off):
+mesh bbox centre against the impostor quad centre **max 0.73 m, median 0.254 m** over 127 placements;
+trunk offset max 0.721 m, median 0.186.  On the previous glb the same check read 905.1 m and refused
+to draw the meshes at all.
+
+**Open items carried from the round-2 review** (5-9, none of them a pixel today):
+* the number that justifies the 12 m far-tree default now has a committed sheet,
+  `renders/web/960/round16b_meshdist_ab.jpg` (reference / the mesh at station distance / the shipped
+  12 m), beside `round16b_foliage_boxes.json`;
+* the E_placement join is an exact 2-dp key with no tolerance, and a missed row would fall silently to
+  the probe (254/254 today) - it should refuse instead;
+* a placement whose crown does not cluster would keep `iNear = 0` (impostor always drawn) while its
+  mesh still fades in, the mirror of round-1 finding 4 (127/127 matched today);
+* inside the 0.9995 guard both sides keep about 0.05 % of the pixels - an overlap, never a hole, so
+  the partition is exact everywhere except that one band, which the guard exists to make invisible;
+* the 12 m far-tree switch and `?farao=1` (AO on `iblIrradiance` / `radiance`, beyond the manifest's
+  stated COLOR_0 use) are the lead's to ratify in docs/decisions.md.
 
 ### Round 7 additions (QA 15)
 * **The water changed twice.** The murk is derived (see "The upwelling term, derived") and the ripple is
@@ -755,6 +1022,26 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?waterslope=` (the surface's rms slope in radians, default `RIPPLE.slopeRms` 0.0131),
 `?watergraze=` (0 = the shipped derived displacement; > 0 reinstates the round-6 grazing multiplier),
 `?instirr=auto|0` (the per-placement shrub/reed irradiance),
+`?leafnormal=` (crown-bent leaf normals, 0..1, default 0.5), `?cardnormal=` (the same for the
+shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (translucency scale, or
+`shrubs` to include the cards), `?leafsoft=0` (no alphaToCoverage), `?treemesh=` (metres, or `inf`:
+mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
+`?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
+`?fartreelight=near|probe|0` (what lights the 127 far-tree MESHES until the bake ships their
+irradiance; `0` suppresses the meshes entirely and every far tree stays its impostor — inert once the
+bake's block is in the manifest, which is the shipped case),
+`?foliagetex=1024|2048|0` (export item D's tinted albedo + translucency factor maps, default **1024**;
+`0` keeps the glb's untinted source card),
+`?fartreemesh=` (metres, default **12**: the FAR trees' own mesh/impostor switch, carried per
+placement as the impostor attribute `iDist`, while `?treemesh=` keeps the near trees' 40 — `40` here
+reproduces the mesh-at-station look the README measures and rejects),
+`?farao=` (0..1, default **1**: how much of the far-tree meshes' ENVIRONMENT term — `iblIrradiance`,
+`radiance` and with them the sheen lobe — the baked per-vertex AO occludes; `0` is glTF's own reading
+of COLOR_0, an albedo tint only),
+`?fartrn=` (default: follows `?leaftrn=`, i.e. the Phase 5 constants — the translucency scale on the
+far-tree MESHES alone; measured at 0.015x of the far-tree box, kept as the A/B),
+`?shrubenv=` (default **1**: the environment term on the LOD1 shrub meshes, the same lever as
+`?farao=` for a set that has no baked AO to occlude it with),
 `?bloomthr=` (scene-linear; the default is the manifest value x `BLOOM_THRESHOLD_SCALE` 2.0),
 `?bloomrad=` (UnrealBloomPass radius; measured NOT to be a lever, kept for the A/B),
 `?watergrazemax=` (the FIX-NOW 1 cap, default 6), `?watermurk=r,g,b` (overrides the derived

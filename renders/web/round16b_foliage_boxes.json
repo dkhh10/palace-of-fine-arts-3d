@@ -1,0 +1,212 @@
+{
+ "at": [
+  1920,
+  1080
+ ],
+ "reference": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png",
+ "images": [
+  "renders/web/round15_cam02.png:round15",
+  "renders/web/round16_cam02.png:round16",
+  "renders/web/round16b_cam02.png:round16b"
+ ],
+ "boxes": [
+  {
+   "box": [
+    60,
+    520,
+    700,
+    980
+   ],
+   "label": "near trees (the round-15 box)",
+   "rows": [
+    {
+     "frame": "reference",
+     "rgb": [
+      100.86,
+      108.39,
+      97.73
+     ],
+     "lum": 106.02,
+     "lum_ratio": 1.0,
+     "hue": 102.4,
+     "sat": 0.0983,
+     "g_gt_r_pct": 70.9,
+     "p10": 21.08,
+     "mean": 106.02,
+     "std": 77.88,
+     "mid_5_21": 16.83,
+     "hp9": 21.54,
+     "px": [
+      640,
+      460
+     ]
+    },
+    {
+     "frame": "round15",
+     "rgb": [
+      105.29,
+      104.98,
+      97.19
+     ],
+     "lum": 104.48,
+     "lum_ratio": 0.9855,
+     "hue": 57.7,
+     "sat": 0.0769,
+     "g_gt_r_pct": 37.4,
+     "p10": 32.34,
+     "mean": 104.48,
+     "std": 74.49,
+     "mid_5_21": 19.69,
+     "hp9": 28.33,
+     "px": [
+      640,
+      460
+     ]
+    },
+    {
+     "frame": "round16",
+     "rgb": [
+      105.43,
+      105.45,
+      98.36
+     ],
+     "lum": 104.94,
+     "lum_ratio": 0.9898,
+     "hue": 60.2,
+     "sat": 0.0672,
+     "g_gt_r_pct": 38.4,
+     "p10": 32.34,
+     "mean": 104.94,
+     "std": 74.44,
+     "mid_5_21": 19.97,
+     "hp9": 28.5,
+     "px": [
+      640,
+      460
+     ]
+    },
+    {
+     "frame": "round16b",
+     "rgb": [
+      109.23,
+      110.75,
+      102.32
+     ],
+     "lum": 109.82,
+     "lum_ratio": 1.0359,
+     "hue": 70.8,
+     "sat": 0.0761,
+     "g_gt_r_pct": 66.2,
+     "p10": 28.92,
+     "mean": 109.82,
+     "std": 74.81,
+     "mid_5_21": 15.5,
+     "hp9": 21.45,
+     "px": [
+      640,
+      460
+     ]
+    }
+   ]
+  },
+  {
+   "box": [
+    700,
+    660,
+    1240,
+    950
+   ],
+   "label": "the far tree that fills cam02",
+   "rows": [
+    {
+     "frame": "reference",
+     "rgb": [
+      45.29,
+      39.47,
+      21.27
+     ],
+     "lum": 39.4,
+     "lum_ratio": 1.0,
+     "hue": 45.5,
+     "sat": 0.5302,
+     "g_gt_r_pct": 33.3,
+     "p10": 4.15,
+     "mean": 39.4,
+     "std": 47.72,
+     "mid_5_21": 14.04,
+     "hp9": 17.46,
+     "px": [
+      540,
+      290
+     ]
+    },
+    {
+     "frame": "round15",
+     "rgb": [
+      55.3,
+      56.06,
+      50.46
+     ],
+     "lum": 55.49,
+     "lum_ratio": 1.4086,
+     "hue": 68.2,
+     "sat": 0.0998,
+     "g_gt_r_pct": 74.0,
+     "p10": 24.23,
+     "mean": 55.49,
+     "std": 43.68,
+     "mid_5_21": 14.0,
+     "hp9": 15.81,
+     "px": [
+      540,
+      290
+     ]
+    },
+    {
+     "frame": "round16",
+     "rgb": [
+      55.29,
+      56.3,
+      50.75
+     ],
+     "lum": 55.69,
+     "lum_ratio": 1.4135,
+     "hue": 70.9,
+     "sat": 0.0985,
+     "g_gt_r_pct": 72.2,
+     "p10": 23.01,
+     "mean": 55.69,
+     "std": 43.89,
+     "mid_5_21": 14.52,
+     "hp9": 16.88,
+     "px": [
+      540,
+      290
+     ]
+    },
+    {
+     "frame": "round16b",
+     "rgb": [
+      55.19,
+      52.07,
+      22.4
+     ],
+     "lum": 50.59,
+     "lum_ratio": 1.2842,
+     "hue": 54.3,
+     "sat": 0.5942,
+     "g_gt_r_pct": 57.0,
+     "p10": 18.57,
+     "mean": 50.59,
+     "std": 45.23,
+     "mid_5_21": 14.46,
+     "hp9": 17.12,
+     "px": [
+      540,
+      290
+     ]
+    }
+   ]
+  }
+ ]
+}

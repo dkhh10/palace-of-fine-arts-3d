@@ -209,6 +209,13 @@ try {
 		console.log( `[shot] loading screen after ${wait} ms -> ${lf}` );
 	}
 	await page.waitForFunction( 'window.__pfaReady === true || window.__pfaError', { timeout, polling: 250 } );
+	// 6c round 2: `__pfaReady` is the FIRST FRAME, and the two foliage glbs load after it on purpose.
+	// A scored capture must show the finished scene, so it also waits for `__pfaLazyReady` whenever the
+	// page declares one (an older build does not, and the wait is skipped).
+	if ( await page.evaluate( () => window.__pfaLazyReady !== undefined ) ) {
+		await page.waitForFunction( 'window.__pfaLazyReady === true || window.__pfaError', { timeout, polling: 250 } );
+		console.log( '[shot] lazy foliage loaded (__pfaLazyReady)' );
+	}
 	const err = await page.evaluate( () => window.__pfaError || null );
 	if ( err ) throw new Error( `viewer boot failed:\n${err}` );
 
@@ -298,7 +305,13 @@ try {
 			const r = await page.evaluate( ( a ) => window.__pfaOrbit( a ), { target, dist: Number( dist ), height: Number( height ), headingDeg } );
 			await page.evaluate( ( n ) => window.__pfaRenderCost( n ), 6 );
 			const file = out.replace( /(\.png)$/, `_h${String( Math.round( headingDeg * 10 ) ).padStart( 5, '0' )}$1` );
-			if ( takeShots ) { await page.screenshot( { path: file, captureBeyondViewport: false } ); written.push( file ); }
+			// `written` holds {file, station, draws, tris} objects - the summary at the end stats w.file,
+			// and a bare string here threw "path must be of type string ... Received undefined" AFTER
+			// every frame was already on disk, which aborted the capture script.
+			if ( takeShots ) {
+				await page.screenshot( { path: file, captureBeyondViewport: false } );
+				written.push( { file, station: `orbit_${headingDeg}`, draws: r.draws ?? '-', tris: r.tris ?? '-' } );
+			}
 			orbits.push( { ...r, file } );
 		}
 		console.log( `[orbit] ${orbits.length} heading(s) around ${target} at ${dist} m` );
