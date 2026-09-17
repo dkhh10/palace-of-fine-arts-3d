@@ -116,6 +116,14 @@ const CFG = {
 	// fall back to the default, never reach smoothstep as NaN and erase the canopy (round-1 review 3).
 	leafNormal: qs.has( 'leafnormal' ) ? parseFloat( qs.get( 'leafnormal' ) ) : 0.5,
 	cardNormal: qs.has( 'cardnormal' ) ? parseFloat( qs.get( 'cardnormal' ) ) : 0,   // the shrub/reed cards' bend
+	// 6c round 3 — the crown interior (QA 16 open 2).  `crownint` / `cardint` are
+	// "str[,low[,gamma[,gain[,trn]]]]" over foliage.js' CROWN_INTERIOR / CARD_INTERIOR ("0" = off,
+	// "1" = the default), `leafgate` the radius above which the crown-bent normal fades in (0 =
+	// round-16b, bend everywhere), `impint` the same interior on the ATLAS crowns: "str[,radiusUV]".
+	crownInt: qs.get( 'crownint' ),
+	cardInt: qs.get( 'cardint' ),
+	leafGate: qs.has( 'leafgate' ) ? parseFloat( qs.get( 'leafgate' ) ) : undefined,
+	impInt: qs.get( 'impint' ),
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
 	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (default 40)
@@ -648,6 +656,7 @@ async function boot() {
 		markShrubLodRows( scene, manifest, note );
 		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa, vertexIrrScale,
 			normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
+			interior: CFG.crownInt, cardInterior: CFG.cardInt, normalGate: CFG.leafGate,
 			trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade,
 			trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null } );
 		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
@@ -709,7 +718,7 @@ async function boot() {
 		const built = buildImpostors( {
 			impostors: manifest.gate3.impostors, far: treesFar, near: nearEntries, note,
 			normalDepth: CFG.impNormalDepth, debug: CFG.impDebug,
-			atlas2k: CFG.imp2k,
+			atlas2k: CFG.imp2k, interior: CFG.impInt,
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
@@ -802,6 +811,9 @@ async function loadLazyFoliage() {
 		probeTexture: probeTarget ? probeTarget.texture : null,
 		foliageReport, msaa: foliageReport ? foliageReport.msaa : false,
 		normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
+		interior: foliageReport ? foliageReport.interior : CFG.crownInt,
+		cardInterior: foliageReport ? foliageReport.cardInterior : CFG.cardInt,
+		normalGate: foliageReport ? foliageReport.normalGate : CFG.leafGate,
 		trnScale: foliageReport ? foliageReport.trnScale : 1,
 		trnShrubs: foliageReport ? foliageReport.trnShrubs : false,
 		trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null,
@@ -1336,7 +1348,9 @@ window.__pfaInfo = () => ( {
 		barkMaterials: foliageReport.barkMaterials, bent: foliageReport.bent, softened: foliageReport.softened,
 		normalBlend: foliageReport.normalBlend, trnScale: foliageReport.trnScale, trnShrubs: foliageReport.trnShrubs,
 		msaa: foliageReport.msaa, meshDist: Number.isFinite( foliageReport.meshDist ) ? foliageReport.meshDist : null,
-		fadeBand: foliageReport.fadeBand, units: foliageReport.units.length, skipped: foliageReport.skipped.length },
+		fadeBand: foliageReport.fadeBand, units: foliageReport.units.length, skipped: foliageReport.skipped.length,
+		interior: foliageReport.interior, cardInterior: foliageReport.cardInterior,
+		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials },
 	shrubLod: shrubLodReport,
 	impostorModulation: impModReport,
 	reflectionSet,
