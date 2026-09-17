@@ -2138,3 +2138,71 @@ verbatim under their own heading: a reference to "item 37" means item 37 of the 
     * **Review carry 7 (second half) / round-1 finding 5 - `read_foliage.chain_to_image` walks unknown
       `bl_idname`s silently** and pins `ShaderNodeHueSaturation` without checking its sockets. It should
       raise on an unknown node, now that the tint it produces is what ships.
+
+### Round 3 (2026-09-17) — the last 6c export round
+
+47. **Item 1 — the shrub/reed level gap is LIGHTING, and the number is the Cycles Diffuse Colour pass.**
+    QA 16 "Open 1" measures the viewer's shrub boxes at 1.34-1.70x the Cycles level and assigns EXPORT on the
+    grounds that the round-2 tinted albedo pushed four of five boxes further out. A rendered level is
+    albedo x irradiance, so it cannot separate the two; `export/foliage_albedo_render.py` renders the albedo
+    alone (DiffCol + IndexMA + IndexOB, 16 spp, 1920x1080, cam02 and cam05, 32 s, master_delivery never
+    saved) and `export/foliage_albedo_check.py` divides it into the shipped tinted albedo.
+    **Every shrub box's shipped albedo is DARKER than the albedo Cycles uses on the same cards:**
+
+    | shrub box | 02 shore | 02 reed clump SE | 05 shore | 05 W |
+    |---|---|---|---|---|
+    | shipped albedo / pass albedo | **0.98** | **0.87** | **0.98** | **0.89** |
+
+    Per material, pixel-weighted over those boxes: MAT_shrub_light **0.98** (94 % of cam02's shore box),
+    MAT_shrub **0.92**, MAT_shrub_dry **0.90**, MAT_reeds **1.49** on **0.6 %** of the boxes' card pixels.
+    So the albedo cannot be the 1.34-1.70x; if anything it *understates* the viewer's irradiance excess.
+    **Owner: VIEWER** (the irradiance reducer, the translucency term, the missing self-shadow).
+    Three ways the comparison could have lied, each measured and ruled out rather than argued:
+    * **Two different texel populations.** `leaf_material` RAMPS the alpha (`maprange(a, cut-0.15, cut+0.15,
+      0, 1)`), so the texels Cycles draws opaque are `a > cut+0.15` while the viewer's glTF `MASK` draws
+      `a > cut`. The ratio is taken over the ramp population; `as_drawn_over_ramp` is 0.991-1.001 on all
+      eight, so the choice is worth 1 %.
+    * **Density selection.** A pixel only clears `alpha > 0.98` where the sheet is locally dense, which on a
+      32 %-opaque sheet is a colour-correlated subset. Reproduced on the texture at 3x3, 5x5 and 9x9
+      footprints: the mean moves by **under 1 %** on every material, including MAT_reeds.
+    * **The source.** Every foliage image in master_delivery is a PACKED `...png.001` duplicate and
+      `foliage_tex.py` tints the FILE. `export/foliage_uv_probe.py` decodes both through the same loader:
+      **max RGB delta 0.000000 and max alpha delta 0.000000 on all eight**. The two halves of the pipeline
+      read the same image.
+    The **translucent branch** is applied before the ratio is taken (Cycles' DiffCol sums the diffuse
+    closures and `leaf_material` mixes a Translucent BSDF at `maprange(trn)*constant`), and the
+    `material.pass_index` map is validated by HUE, not trusted: worst |delta hue| **11.7 deg** over every
+    material and box, with MAT_shrub_dry reading 36-40 deg where the others read 69-95.
+    **MAT_reeds is a measured outlier and is NOT fixed here.** It is +45 % on the whole frame as well as in
+    the boxes, on 248 objects with full-sheet UVs, 7 of them large enough to judge in frame, whose per-object
+    means scatter by only +-7 % - so it is neither a small-sample artefact of the per-instance terms nor any
+    of the three above. Its node chain is structurally identical to the seven materials that agree
+    (`VectorMath -> HueSaturation -> VectorMath -> TexImage`), so there is no missing node to add, and
+    scaling its albedo by 0.69 would be fitting a number rather than fixing a chain. It covers 0.6 % of the
+    shrub boxes' card pixels and moves the worst box level by under 0.3 %. Sheet:
+    `renders/web/960/6c_albedo_check.jpg`; numbers: `out/gate3/foliage/albedo_check.json` and `uv_probe.json`.
+48. **Item 2 — `env_trees_lod1.glb`, the walk-up set.** `trees_far.py` grew a `SETS` table and
+    `PFA_TREES_SET` (the same pattern as `gate4_instance_order.py`), because a second script would be a
+    second anchor, a second placement rule and a second way for the two glbs to disagree about where a tree
+    stands - the one thing the viewer cannot recover once `gltfpack -mi` has dropped the node names.
+    **The default is byte-identical**: `env_trees.glb` re-packs to sha256 `7e17167d...`, the same file as
+    before the refactor. `PFA_TREES_SET=walkup` builds the 16 prototypes at **25 604-29 984 tris** (all under
+    the 30 k budget; the source `_LOD1` meshes are 25.6 k-45.2 k, so two need no reduction at all),
+    **472 626 unique** and **3 771 087 placed** over the same 127 placements. **`env_trees_lod1.glb` =
+    7 642 344 B** (32 meshes, 254 rows, external KTX2 through `-tr` exactly as `env_trees.glb`).
+    * **No card grow.** The far set scales surviving cards by `1/sqrt(keep)` because it drops 70-80 % of
+      them; at 30 k the keep fraction is 0.7-1.0 and a grown leaf is visible at the 3 m this mesh exists for,
+      so `card_scale_max = 1.0` makes `min(scale_max, 1/sqrt(keep))` exactly 1.
+    * **No COLOR_0** (brief: the viewer's interior term covers it), and **no hand-off blend** - writing one
+      would overwrite the far set's `topology.json` and invalidate the vertex AO's revision gate.
+    * **Same instance order, asserted twice.** Pre-pack, `instance_order_check` reads both written glTFs and
+      compares all 127 mesh nodes name for name and translation for translation (worst delta **0.000 m**).
+      Post-pack, `verify_glb.trees_lod1_order_check` compares what gltfpack could still re-segment: meshes
+      32/32, instanced nodes 32/32, rows 254/254, and the material on each node. The row TRANSLATIONS
+      themselves are meshopt-encoded by `-cc` and only the viewer's loader can decode them
+      (`web/tools/instance_rows.mjs`, how Gate 4 recovers env.glb's order).
+    * `manifest_v4` writes `trees.walkup_mesh` {glb, bytes, prototypes, placements, join, draw_within_m
+      15 m, lighting}. **`placements` is deliberately not a second copy of the 127 rows** - it is
+      `{count, same_as: "trees.far_mesh.placements", verified_pre_pack, verified_post_pack}`, because two
+      lists that must be identical can only ever disagree. `lighting` says to reuse
+      `trees.far_mesh.lighting` verbatim.

@@ -1,8 +1,22 @@
-"""Phase 6c item A: a real LOD2 MESH for each of the 16 far-tree prototypes, instanced at the 127
-`tree_far` placements, as its own lazily loaded `env_trees.glb`.
+"""Phase 6c item A: a real MESH for each of the 16 far-tree prototypes, instanced at the 127
+`tree_far` placements, as its own lazily loaded glb. TWO SETS, one code path (`SETS` / `PFA_TREES_SET`):
 
+    # item A - the far set, 8 k per prototype, with the item-B vertex AO: env_trees.glb
     scripts/blender_run.sh 900 -- --background master_delivery.blend --python export/trees_far.py
     export/gltf_pack.sh --trees          # KTX2 (shared tex_ktx2) + gltfpack -cc -mi -> env_trees.glb
+
+    # round-3 item 2 - the WALK-UP set, 30 k per prototype, no vertex AO: env_trees_lod1.glb
+    PFA_TREES_SET=walkup scripts/blender_run.sh 900 -- --background master_delivery.blend \
+        --python export/trees_far.py
+    export/gltf_pack.sh --trees-lod1
+
+The walk-up set exists because a tree the walker is 3 m from is the one thing an 8 k mesh cannot carry, and
+it shares this file so that it cannot drift from the far set's anchor, placement rule or ROW ORDER - the
+viewer reuses env_trees.glb's placement rows and its per-placement irradiance for it, and after
+`gltfpack -mi` the only key left is the row's position in its mesh's instancing buffer. That sameness is
+asserted, not assumed: `instance_order_check` below reads both written glTFs and compares them node name by
+node name and translation by translation, and verify_glb's `trees_lod1_order_check` compares the two packed
+glbs' node, row and material sequence.
 
 CPU only: no render, no GPU, master_delivery.blend is opened read-only and never saved over.
 
