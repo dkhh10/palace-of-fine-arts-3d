@@ -370,8 +370,20 @@ export async function loadFarTrees( o ) {
 	// when the export encodes it gamma2, where the value has to be squared back to linear.
 	const c0 = fm.color0 || {};
 	root.traverse( ( mesh ) => {
-		if ( ! mesh.isMesh || ! mesh.geometry.getAttribute( 'color' ) ) return;
+		const col = mesh.isMesh && mesh.geometry.getAttribute( 'color' );
+		if ( ! col ) return;
 		out.ao = true;
+		// The bake ships AO as COLOR_0, and gltfpack writes it as a normalized VEC4: three's
+		// `color_fragment` multiplies the WHOLE vec4 into diffuseColor, so a stored alpha below 1
+		// would multiply the leaf's alpha as well and the MASK cutoff would eat the canopy.  AO is an
+		// rgb factor; the alpha is forced to opaque here, once, and the count is reported.
+		if ( col.itemSize === 4 && ! mesh.geometry.userData.pfaAoAlphaFixed ) {
+			mesh.geometry.userData.pfaAoAlphaFixed = true;
+			const one = col.normalized ? ( col.array.BYTES_PER_ELEMENT === 1 ? 255 : 65535 ) : 1;
+			let touched = 0;
+			for ( let i = 0; i < col.count; i ++ ) if ( col.array[ i * 4 + 3 ] !== one ) { col.array[ i * 4 + 3 ] = one; touched ++; }
+			if ( touched ) { col.needsUpdate = true; out.aoAlphaForced = ( out.aoAlphaForced || 0 ) + touched; }
+		}
 		if ( String( c0.encode || 'none' ).toLowerCase() !== 'gamma2' ) return;
 		out.aoEncode = 'gamma2';
 		for ( const mat of Array.isArray( mesh.material ) ? mesh.material : [ mesh.material ] ) {
