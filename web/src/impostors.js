@@ -211,7 +211,10 @@ const fragmentShader = /* glsl */`
 `;
 
 /** The atlas crown's interior term: `"str[,radius]"`, "0" / "off", or null for the default. */
-export const IMP_INTERIOR = [ 0.40, 0.055 ];
+// MEASURED, not chosen (6c round 3, the sweep in web/README.md): at 0.90 / 0.015 the cam02 crown
+// box lands on the reference's centre/edge (0.364 against 0.364) and the cam05 crown on its
+// range/mean within 0.073, with every crown box's LEVEL inside 0.9-1.1x of the reference.
+export const IMP_INTERIOR = [ 0.90, 0.015 ];
 export function parseImpInterior( v ) {
 	const d = [ ...IMP_INTERIOR ];
 	if ( v === null || v === undefined || v === '' ) return d;

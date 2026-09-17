@@ -99,32 +99,33 @@ const MIN_HALF_M = 0.25;           // m, the smallest half-extent an ellipsoid n
  * contrast moves; `low` darkens the bottom of a cluster (`pfaCrownD.y`), which is what the shrub and
  * reed CARD clusters want and a tree crown does not.
  */
-export const CROWN_INTERIOR = { str: 0.55, low: 0.0, gamma: 1.0, gain: 1.06, trn: 0.85 };
-export const CARD_INTERIOR = { str: 0.30, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0 };
+export const CROWN_INTERIOR = { str: 0.30, low: 0.0, gamma: 1.0, gain: 1.05, trn: 0.85, sun: 0.50 };
+export const CARD_INTERIOR = { str: 0.20, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0, sun: 0.30 };
 /** How much of the radius the crown-bend is faded in over: 0 = bend everywhere (round-16b). */
 export const NORMAL_GATE = 0.45;
 
-/** `"str[,low[,gamma[,gain[,trn]]]]"` (or an object) over a default, every field clamped. */
+/** `"str[,low[,gamma[,gain[,trn[,sun]]]]]"` (or an object) over a default, every field clamped. */
 export function parseInterior( v, dflt ) {
 	const d = { ...dflt };
 	if ( v === null || v === undefined || v === '' ) return d;
 	if ( typeof v === 'object' ) Object.assign( d, v );
 	else {
 		const s = String( v ).trim().toLowerCase();
-		if ( s === '0' || s === 'off' ) return { str: 0, low: 0, gamma: 1, gain: 1, trn: 0 };
+		if ( s === '0' || s === 'off' ) return { str: 0, low: 0, gamma: 1, gain: 1, trn: 0, sun: 0 };
 		if ( s === '1' || s === 'on' ) return { ...dflt };
 		const p = s.split( ',' ).map( ( x ) => parseFloat( x ) );
-		const keys = [ 'str', 'low', 'gamma', 'gain', 'trn' ];
+		const keys = [ 'str', 'low', 'gamma', 'gain', 'trn', 'sun' ];
 		for ( let i = 0; i < keys.length; i ++ ) if ( Number.isFinite( p[ i ] ) ) d[ keys[ i ] ] = p[ i ];
 	}
 	const cl = ( x, lo, hi, f ) => ( Number.isFinite( x ) ? Math.min( Math.max( x, lo ), hi ) : f );
 	return { str: cl( d.str, 0, 1, dflt.str ), low: cl( d.low, 0, 1, dflt.low ),
 		gamma: cl( d.gamma, 0.1, 8, dflt.gamma ), gain: cl( d.gain, 0.25, 4, dflt.gain ),
-		trn: cl( d.trn, 0, 1, dflt.trn ) };
+		trn: cl( d.trn, 0, 1, dflt.trn ), sun: cl( d.sun, 0, 1, dflt.sun ) };
 }
 
 /** True where the interior term would do nothing at all (so the program is left unpatched). */
-const interiorOff = ( it ) => ! it || ( it.str <= 0 && it.low <= 0 && Math.abs( it.gain - 1 ) < 1e-6 );
+const interiorOff = ( it ) => ! it
+	|| ( it.str <= 0 && it.low <= 0 && it.sun <= 0 && Math.abs( it.gain - 1 ) < 1e-6 );
 
 /** Shader-patch failures, surfaced instead of thrown: onBeforeCompile runs at the first render. */
 export const shaderErrors = [];
@@ -252,13 +253,21 @@ function prepareGeometry( geo, bend, cache, gate = 0 ) {
 		const dx = ( pos.getX( v ) - crown[ v * 3 ] ) / half[ c ];
 		const dy = ( pos.getY( v ) - crown[ v * 3 + 1 ] ) / half[ c + 1 ];
 		const dz = ( pos.getZ( v ) - crown[ v * 3 + 2 ] ) / half[ c + 2 ];
-		const r = Math.sqrt( dx * dx + dy * dy + dz * dz );
+		// A BOX norm, not a Euclidean one.  Measured (r3a): with sqrt(dx^2+dy^2+dz^2) almost every
+		// leaf reads r ~ 1 - a card in the middle of the canopy but off-centre on one axis is already
+		// "at the silhouette" - so the depth attribute was ~0 nearly everywhere and the term moved
+		// cam02's centre/edge by 0.03.  max(|dx|,|dy|,|dz|) is 1 on the cluster's own box face and
+		// falls linearly to 0 at its centre, which is the distribution the canopy actually has.
+		const r = Math.max( Math.abs( dx ), Math.abs( dy ), Math.abs( dz ) );
 		rNorm[ v ] = r;
 		const lower = Math.min( Math.max( ( ytop[ id ] - pos.getY( v ) ) / yspan[ id ], 0 ), 1 );
 		depth[ v * 2 ] = Math.round( Math.min( Math.max( 1 - r, 0 ), 1 ) * 255 );
 		depth[ v * 2 + 1 ] = Math.round( lower * 255 );
 	}
 	geo.setAttribute( 'pfaCrownD', new THREE.BufferAttribute( depth, 2, true ) );
+	let dsum = 0;
+	for ( let v = 0; v < n; v ++ ) dsum += depth[ v * 2 ];
+	cl.depthMean = n ? dsum / n / 255 : 0;
 
 	if ( bend > 0 ) {
 		const nrm = geo.getAttribute( 'normal' );
@@ -306,7 +315,8 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 	const u = {
 		pfaInterior: { value: new THREE.Vector4( it ? it.str : 0, it ? it.low : 0,
 			it ? it.gamma : 1, it ? it.gain : 1 ) },
-		pfaTrnOcc: { value: it ? it.trn : 0 },
+		// (the translucent lobe's share of the occlusion, the sun-path term's strength)
+		pfaInteriorB: { value: new THREE.Vector2( it ? it.trn : 0, it ? it.sun : 0 ) },
 		pfaTrnFac: { value: trn },
 		// 6c round 2: export item D's per-texel translucency FACTOR (materials.foliage), which already
 		// includes the Phase 5 constant - `pfaTrnFac` then carries only the ?leaftrn scale.
@@ -358,27 +368,54 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 				'LOD dissolve' );
 		}
 		if ( it ) {
-			// The vertex's own depth into its crown, written at load (prepareGeometry).  One vec2 of
-			// normalised bytes: 1 byte per component per vertex, no per-frame CPU work.
+			// The vertex's own depth into its crown, written at load (prepareGeometry): one vec2 of
+			// normalised bytes, no per-frame CPU work.  The THIRD component is computed here.
 			shader.vertexShader = once( shader.vertexShader, '#include <common>',
-				'#include <common>\nattribute vec2 pfaCrownD;\nvarying vec2 vPfaCrownD;', 'interior attribute (vertex)' );
-			shader.vertexShader = once( shader.vertexShader, '#include <uv_vertex>',
-				'#include <uv_vertex>\n\tvPfaCrownD = pfaCrownD;', 'interior varying write' );
+				'#include <common>\nattribute vec2 pfaCrownD;\nvarying vec3 vPfaCrownD;\nuniform vec3 pfaSunDir;',
+				'interior attribute (vertex)' );
+			// THE SUN PATH, and why the depth term alone was not enough.  Measured on the forced-mesh
+			// A/B (r3mA/r3mC): with the interior taken to BLACK the cam02 mesh crown lost 6 % of its
+			// level, because a camera outside an opaque canopy only ever sees its outer SHELL - the
+			// geometric interior is hidden behind the very leaves that are lit.  What is dark in the
+			// reference is not the middle of the crown but the leaves the sun had to cross the crown
+			// to reach.  So: treat the cluster as a sphere of its own radius, and measure how far a
+			// sun ray travels inside it to arrive at this vertex - 0 on the sunward surface, 2 radii
+			// on the far side.  `|u|` is the radius the depth attribute already carries, the
+			// direction is the world radial, and `pfaSunDir` is the shared sun uniform, so this costs
+			// one normalize per vertex and works through instancing and any rotation.
+			shader.vertexShader = once( shader.vertexShader, '#include <worldpos_vertex>',
+				'#include <worldpos_vertex>\n\t{\n'
+				+ '\t\tvec4 pfaIC = vec4( pfaCrown, 1.0 );\n\t\tvec4 pfaIP = vec4( transformed, 1.0 );\n'
+				+ '\t\t#ifdef USE_INSTANCING\n\t\tpfaIC = instanceMatrix * pfaIC;\n\t\tpfaIP = instanceMatrix * pfaIP;\n\t\t#endif\n'
+				+ '\t\tvec3 pfaD3 = ( modelMatrix * pfaIP ).xyz - ( modelMatrix * pfaIC ).xyz;\n'
+				+ '\t\tfloat pfaRad = 1.0 - clamp( pfaCrownD.x, 0.0, 1.0 );\n'
+				+ '\t\tvec3 pfaU = ( dot( pfaD3, pfaD3 ) > 1e-10 ? normalize( pfaD3 ) : vec3( 0.0, 1.0, 0.0 ) ) * pfaRad;\n'
+				+ '\t\tfloat pfaUL = dot( pfaU, pfaSunDir );\n'
+				+ '\t\tfloat pfaPath = - pfaUL + sqrt( max( 1.0 - dot( pfaU, pfaU ) + pfaUL * pfaUL, 0.0 ) );\n'
+				+ '\t\tvPfaCrownD = vec3( pfaCrownD.xy, clamp( pfaPath * 0.5, 0.0, 1.0 ) );\n\t}',
+				'interior varying write' );
 			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
-				'#include <common>\nvarying vec2 vPfaCrownD;\nuniform vec4 pfaInterior;\nuniform float pfaTrnOcc;',
+				'#include <common>\nvarying vec3 vPfaCrownD;\nuniform vec4 pfaInterior;\nuniform vec2 pfaInteriorB;',
 				'interior varyings (fragment)' );
-			// BEFORE `lights_fragment_end`, where RE_IndirectDiffuse / RE_IndirectSpecular consume
-			// these three terms: `irradiance` carries the near trees' COLOR_0 bake and the shrubs'
-			// per-placement value, `iblIrradiance` the probe's diffuse and `radiance` its specular
-			// (and the sheen lobe computed from it).  Scaling them here occludes every light a leaf
-			// receives, whichever path this material is on, with nothing to keep in step by hand.
-			// `pfaOcc` stays in scope for the translucent lobe appended after the include.
+			// BEFORE `lights_fragment_end`, and it has to scale BOTH halves of the frame's light,
+			// because they are finished at different points in the chunk chain:
+			//   * the INDIRECT terms are still inputs here - `irradiance` carries the near trees'
+			//     COLOR_0 bake and the shrubs' per-placement value, `iblIrradiance` the probe's
+			//     diffuse, `radiance` its specular (and the sheen lobe computed from it) - and
+			//     RE_IndirectDiffuse / RE_IndirectSpecular consume them inside the include;
+			//   * the DIRECT terms are already accumulated: `lights_fragment_begin` ran the light
+			//     loop long before this line.  Scaling only the inputs therefore missed every
+			//     material that still has a sun diffuse, which is why r3max (interior fully black)
+			//     moved the cam02 crown by 5 % and not by 40 %.  `reflectedLight` is scaled in place.
+			// `pfaOcc` stays in scope for the translucent lobe appended after the include, which is
+			// attenuated separately so the rim can keep it.
 			shader.fragmentShader = once( shader.fragmentShader, '#include <lights_fragment_end>',
 				'float pfaOcc = 1.0;\n\t{\n'
-				+ '\t\tvec2 pfaD = clamp( vPfaCrownD, 0.0, 1.0 );\n'
-				+ '\t\tpfaOcc = clamp( ( 1.0 - pfaInterior.x * pow( pfaD.x, pfaInterior.z ) - pfaInterior.y * pfaD.y )\n'
-				+ '\t\t\t* pfaInterior.w, 0.0, 4.0 );\n'
-				+ '\t\tirradiance *= pfaOcc;\n\t\tiblIrradiance *= pfaOcc;\n\t\tradiance *= pfaOcc;\n\t}\n'
+				+ '\t\tvec3 pfaD = clamp( vPfaCrownD, 0.0, 1.0 );\n'
+				+ '\t\tpfaOcc = clamp( ( 1.0 - pfaInterior.x * pow( pfaD.x, pfaInterior.z ) - pfaInterior.y * pfaD.y\n'
+				+ '\t\t\t- pfaInteriorB.y * pfaD.z ) * pfaInterior.w, 0.0, 4.0 );\n'
+				+ '\t\tirradiance *= pfaOcc;\n\t\tiblIrradiance *= pfaOcc;\n\t\tradiance *= pfaOcc;\n'
+				+ '\t\treflectedLight.directDiffuse *= pfaOcc;\n\t\treflectedLight.directSpecular *= pfaOcc;\n\t}\n'
 				+ '\t#include <lights_fragment_end>', 'crown interior occlusion' );
 		}
 		if ( trn > 0 ) {
@@ -398,7 +435,7 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 				// 6c round 3: the back lobe is the FULL unoccluded sun, which is right at the rim and
 				// is half of why an interior leaf glowed.  `mix( 1, pfaOcc, pfaTrnOcc )` keeps it at
 				// the silhouette (pfaOcc = 1 there) and attenuates it inside with everything else.
-				+ ( it ? '\t\tfloat pfaTrnO = mix( 1.0, pfaOcc, pfaTrnOcc );\n' : '' )
+				+ ( it ? '\t\tfloat pfaTrnO = mix( 1.0, pfaOcc, pfaInteriorB.x );\n' : '' )
 				+ `\t\treflectedLight.directDiffuse += ${it ? 'pfaTrnO * ' : ''}pfaSunIrr * RECIPROCAL_PI * diffuseColor.rgb * pfaT\n`
 				+ '\t\t\t* ( pfaTrnTint * pfaBack - pfaFrontSub * pfaFront );\n\t}',
 				'translucent mix' );
@@ -542,7 +579,19 @@ export function applyFoliage( o ) {
 		}
 	}
 	report.geometries = cache.size;
-	for ( const cl of cache.values() ) report.clusters += cl.count;
+	let dw = 0, dn = 0, bigCluster = 0;
+	for ( const cl of cache.values() ) {
+		report.clusters += cl.count;
+		// the mean depth actually written, so "the interior term did nothing" can be told from
+		// "the interior term is off" without a debug render
+		if ( cl.depthMean !== undefined ) { dw += cl.depthMean * cl.ids.length; dn += cl.ids.length; }
+		for ( let i = 0; i < cl.count; i ++ ) {
+			const b = cl.boxes[ i ];
+			if ( Math.max( b.max.x - b.min.x, b.max.z - b.min.z ) > 40 ) bigCluster ++;
+		}
+	}
+	report.depthMean = dn ? dw / dn : 0;
+	report.clustersOver40m = bigCluster;
 
 	// ---- the tree units: one per crown cluster per instance, in world space -----------------
 	const box = new THREE.Box3(), mtx = new THREE.Matrix4();
@@ -635,7 +684,7 @@ export function applyFoliage( o ) {
 		+ ( o.trnShrubs ? ' (shrub/reed cards INCLUDED, ?leaftrn=shrubs)' : ' (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance)' )
 		+ `; ${report.units.length} near-tree unit(s) found, LOD switch at ${Number.isFinite( meshDist ) ? `${meshDist} m + ${fadeBand} m fade` : 'never (mesh always)'}` );
 	const fmt = ( x ) => `str ${x.str.toFixed( 2 )} low ${x.low.toFixed( 2 )} gamma ${x.gamma.toFixed( 2 )} `
-		+ `gain ${x.gain.toFixed( 2 )} trn ${x.trn.toFixed( 2 )}`;
+		+ `gain ${x.gain.toFixed( 2 )} trn ${x.trn.toFixed( 2 )} sun ${x.sun.toFixed( 2 )}`;
 	note( `foliage interior: ${report.interiorMaterials} material(s) darkened by depth into their own cluster — `
 		+ `crowns (${fmt( interior )}), cards (${fmt( cardInterior )}); crown-bend gated above `
 		+ `r ${normalGate.toFixed( 2 )} of the cluster half-extent (?leafgate=, ?crownint=, ?cardint=)` );

@@ -1349,6 +1349,7 @@ window.__pfaInfo = () => ( {
 		normalBlend: foliageReport.normalBlend, trnScale: foliageReport.trnScale, trnShrubs: foliageReport.trnShrubs,
 		msaa: foliageReport.msaa, meshDist: Number.isFinite( foliageReport.meshDist ) ? foliageReport.meshDist : null,
 		fadeBand: foliageReport.fadeBand, units: foliageReport.units.length, skipped: foliageReport.skipped.length,
+		depthMean: foliageReport.depthMean, clustersOver40m: foliageReport.clustersOver40m,
 		interior: foliageReport.interior, cardInterior: foliageReport.cardInterior,
 		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials },
 	shrubLod: shrubLodReport,
