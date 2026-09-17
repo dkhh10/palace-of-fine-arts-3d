@@ -820,3 +820,41 @@ Delta vs Phase 5: -0.06 / 0.00 / 0.00 / +0.07 / -0.23 / -0.11.
 **Scores (round 09 -> 13 -> 14 -> round 15).** 01 3.67 -> 3.39 -> 3.61 -> **3.72**, 02 2.94 -> 2.69 -> 2.94 ->
 **3.00**, 03 2.56 -> 2.69 -> 2.56 -> **2.56**, 04 2.81 -> 2.31 -> 2.88 -> **2.88**, 05 3.06 -> 2.89 -> 2.83 ->
 **2.94**, 06 2.67 -> 2.33 -> 2.56 -> **2.83**. Delta vs Phase 5: **+0.05 / +0.06 / 0.00 / +0.07 / -0.12 / +0.17**.
+
+## Round 16 (Phase 6c, the foliage gate, round one of two) — 2026-09-17, `round16b` on main @ 98b9f3e
+**Verdict: ONE MORE ROUND.** The stated 6c acceptance passes — no station drops, station 2 rises **+0.13**, every
+frame time is within **+1.9 ms** of round 15 (gate +3), resident memory reported — but 6c's own goal ("foliage
+credible at 3 m from every station and along the walk") is not met, and CLAUDE.md's rule is that the numeric boxes
+never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/web/round16b_gate.png`.
+1. **Closed by 6c.** The impostor blue cast, by per-placement `E_placement / E_bake` modulation and not by a
+   re-bake: cam02's fill tree **1.41x -> 1.28x**, hue **68.2 -> 54.3** (ref 45.5), sat **0.100 -> 0.594** (ref
+   0.530); the hero's far-tree roofline **1.12x -> 1.01x**, hue **137.5 -> 75.3** (ref 76.9); cam02 near trees
+   G>R **37.4 -> 66.2 %** (ref 70.9). cam02 MAE **23.11 -> 20.48**, the round's largest move.
+2. **Open, with owners.** *(a) Shrub/reed cards, EXPORT:* frame-normalised level against Cycles st1 **1.70x**,
+   st2 1.47x, st3 1.34x, st5 1.34x, with **2-8x** the reference's hard-edge share and about half its leaf-green
+   pixel share (st5 15.1 % vs 33.4 %). The tinted albedo fixed the hue (st2 G>R 4.2 -> 58.8 %) and pushed the level
+   FURTHER out at four boxes of five; `post=off` is identical, so it is the albedo. *(b) Crown interiors, VIEWER:*
+   centre/edge 0.504 vs the reference's 0.364 at cam02 and (p90-p10)/mean 1.26 vs 1.77 at cam05, every viewer crown
+   at 1.6-4.5x the reference's p10 — and 6c's soft edges flattened cam05 a further 6 %. *(c) The 3 m walk-in,
+   EXPORT:* the LOD2 crown at 3 m is magnified cream cut-outs and bare sticks; it wants its LOD1.
+3. **Named exceptions standing, 0 new to explain.** Export-set sweep over the manifests: only
+   `ARCH_rotunda_inner_block`, `ENV_backdrop_fill(roof)` and the bake-side `LIGHT_gallery_fill_*`; 6c's new members
+   (`ENV_tree_<species>_s##` x16, `EXPM_ENV_src_*_LOD2` x25) carry no hit, and every other pattern match in those
+   files is a JSON field name, not an object. The 127 hidden `ENV_treeboard_*` carriers stay as before.
+4. **Perf and memory.** 30.1 / 33.5 / 32.7 / 22.7 / 31.8 / 33.5 ms at 2560x1440 (hero **33.2 fps**); draws 329-351,
+   5.24-5.60 M tris, load 660.0 MB in 6.43 s. **Resident 1 800.6 MB = 1.50x the 1 200 MB Gate 1 budget** — note
+   `web/README.md` and `docs/decisions.md` both say 1 717 MB; the committed `round16b_perf.json` says 1 800.6
+   (+115.9 over round 16), so the two documents are wrong by ~83 MB (viewer, documentation only).
+5. **Bare URL = the delivery look.** Luma 1.0002x of the station-1 preset, 0 page errors, 0 shader errors,
+   `impmod` full with 16 `E_bake`, 254/254 far-tree rows lit, 1 376/1 376 LOD1 shrubs, 2K atlas on 16/16.
+6. **New tile defects, carried not caused by 6c:** cam03's shrub cards are the same straw-pale confetti at ~8 m with
+   the round's worst hard-edge share (12.1 % vs the reference's 1.5 %); cam06's water carries a regular diagonal
+   moiré at grazing incidence (hp9 identical to round 15, so it is a round-15 carry this tile pass first reports).
+7. **Not re-measured on round16b:** the walk clamp. `round16_walk.json` (6c round one, before `env_trees.glb` and
+   `env_shrubs.glb`) reads 24/24 probes, lowest -0.702 m, 0 below `WATER_Z + 0.1`; re-run once at 30 s on the 6c
+   scene, which added 1.0 M placed triangles a ground clamp may hit.
+
+**Scores (round 13 -> 14 -> 15 -> round 16).** 01 3.39 -> 3.61 -> 3.72 -> **3.72**, 02 2.69 -> 2.94 -> 3.00 ->
+**3.13**, 03 2.69 -> 2.56 -> 2.56 -> **2.56**, 04 2.31 -> 2.88 -> 2.88 -> **2.88**, 05 2.89 -> 2.83 -> 2.94 ->
+**2.94**, 06 2.33 -> 2.56 -> 2.83 -> **2.83**. Delta vs round 15: **0.00 / +0.13 / 0 / 0 / 0 / 0**; vs Phase 5:
+**+0.05 / +0.19 / 0.00 / +0.07 / -0.12 / +0.17**.
