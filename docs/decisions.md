@@ -703,5 +703,12 @@ Gate 1 budget and a 664 MB payload = 6b's tiers; (9) the +3 ms gate = settled by
 6a unchanged: cam03 no deep shade and blurred/banded column concrete at 1 m (materials/export texel budget), cam06 water moiré, flat backdrop blocks and
 faceted backdrop trees (in the Cycles source too), untextured colonnade backdrop walls (N 1.26x), hero reflection cooler/less saturated than Cycles,
 30.9 fps cold at the hero against 45.
+Perf A/B result (same session, docs/perf_ab_6c.md; passes A/B/C = round-15 look / 6c look / round-15 look, 2560x1440, gate4 settings): 6c look minus
+the mean of the two round-15 passes = +1.75 / -0.75 / +3.10 / -0.10 / +0.90 / +0.85 ms at stations 1-6, with an A-C drift of +0.30 / +2.10 / +0.80 / +1.40 /
+0.00 / -0.70 ms. The +3 ms conjunct therefore PASSES at stations 1, 2, 4, 5, 6 and sits on the line at station 3 (+3.10 against a 0.80 drift; the only
+station whose triangles rose, 4.49 -> 5.98 M, the walk-up LOD1 within 15 m). The cold pass's +4.2 / +4.8 ms at stations 1 / 2 was day-to-day machine drift
+(the same-day round-15 look reproduces round 15's 28.2 ms and its 279 draws / 4.14 M tris exactly), not a 6c regression. Resident 1 931.4 MB for the 6c
+look against 1 788.0 MB for the round-15 look on the same build (+143 MB = the walk-up set). Residual 9 is closed; station 3's +3.1 ms goes to 6b's tiers
+with the memory.
 Decision: 6c is closed. Phase 6b starts on the user's three answers (iPhone model; host — the lead recommends Cloudflare Pages + R2 per
 docs/briefs/phase6b_hosting.md; whether the 50 MB tier-0 first look may be lower-resolution). The Gate 5 briefs are written only after those answers.

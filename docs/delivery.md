@@ -110,3 +110,6 @@ budget); load 664.0 MB in 6.74 s; walk clamp 24/24 probes at 30 s above WATER_Z 
    unchanged: cam03 has no deep shade (1.64x) and its column concrete is blurred and banded at 1 m (materials/export texel budget); cam06 water moiré at grazing
    incidence; backdrop city blocks flat and untextured, backdrop trees faceted (in the Cycles source too); S- and N-colonnade backdrop walls untextured (N 1.26x);
    hero reflection cooler and less saturated than Cycles, open lagoon a flat teal slab; 30.9 fps cold at the hero against the 45 target.
+Perf A/B (same session, docs/perf_ab_6c.md): the 6c look costs +1.75 / -0.75 / +3.10 / -0.10 / +0.90 / +0.85 ms over the round-15 look at stations 1-6
+(drift control 0.0-2.1 ms), so the +3 ms gate passes at five stations and sits on the line at station 3 (the walk-up LOD1 within 15 m, +1.5 M tris);
+the cold pass's +4 ms at stations 1/2 was machine drift. Resident 1 931.4 vs 1 788.0 MB on the same build (the walk-up set).
