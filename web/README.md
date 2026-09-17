@@ -544,7 +544,71 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
-## QA notes — read before scoring (Phase 6c / QA 16)
+## QA notes — read before scoring (Phase 6c / QA 17, round 3)
+
+### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set
+
+**What QA 16 asked for and where it landed** (`?crownint= ?cardint= ?leafgate= ?impint= ?foliagebias=
+?walkupmesh=`; every one has an off value, and every number below is `web/tools/r3_boxes.py`, which
+imports QA's own `scripts/qa_r16_probe.py` measures rather than re-implementing them).
+
+| crown box (QA 16 open 2) | round16b | **round 3** | reference |
+|---|---|---|---|
+| 02 fill tree centre/edge | 0.504 | **0.368** | **0.364** |
+| 02 fill tree p10 / level | 18.6 / 1.28x | **5.3 / 1.07x** | 4.1 / 1.00x |
+| 05 lawn tree range/mean | 1.260 | **1.701** | **1.773** |
+| 05 lawn tree p10 / level | 58.9 / 1.19x | **27.0 / 1.07x** | 31.7 / 1.00x |
+| 01 shore crown range/mean | 1.036 | **1.585** | 1.443 |
+| 01 shore crown p10 / level | 61.4 / 1.18x | **20.9 / 1.01x** | 36.8 / 1.00x |
+
+Both targets the brief set are met (cam02 within 0.004 of 0.364, cam05 within 0.073 of 1.773) and
+every crown and tree box's LEVEL is now inside 0.9-1.1x of the reference, where round16b ran
+1.04-1.28x.  Station 1's centre/edge moves the other way (0.680 -> 0.453 against 0.852) while its p10
+and range/mean move toward the reference: the hero's crown box is now a little too dark rather than
+too flat, and the 1:1 tile (`renders/web/960/r3i090015_crown_tile.jpg`) is the judgement, not the
+ratio.
+
+**Three things do the work, and the third is the one that carries the numbers.**
+1. *The crown-bend is gated* (`?leafgate=`, default 0.45): the bend is what rounds the silhouette and
+   it was also what flattened the inside, so it now fades in over the outer shell only and the
+   interior keeps its card normals.
+2. *An interior term per fragment* (`?crownint=str,low,gamma,gain,trn,sun`, `?cardint=` for the card
+   clusters): `pfaCrownD` carries each vertex's depth into its own cluster (box-normalised, written at
+   load, two bytes) and the vertex shader adds the SUN PATH - how far a sun ray crosses the crown
+   sphere to reach that vertex.  Both attenuate `irradiance`, `iblIrradiance`, `radiance` AND the
+   already-accumulated direct terms, plus the Phase 5 translucent back lobe at `trn` of the same
+   factor so the rim keeps its glow.  **Measured honestly: on the mesh crowns this is worth about 6 %
+   of the level at full strength.**  A camera outside an opaque canopy sees its outer SHELL, so a
+   depth-from-centre term has almost no visible fragments to act on; it is kept because it is right
+   where a crown IS seen into (the walk-up, the LOD1 set) and it costs nothing per frame.
+3. *The atlas crowns' own interior* (`?impint=str,radiusUV`, default 0.90 / 0.015).  All three of
+   QA's crown boxes are IMPOSTOR cards at the shipped switch distances - `?fartreemesh=12` was
+   ratified, and every measured crown is beyond it - so this is what moves them.  A far crown is flat
+   because three atlas frames are blended per fragment for the view direction and then magnified; the
+   fragment's own ENCLOSURE in the silhouette (four alpha taps on the dominant frame) says how much of
+   that self-shadow to put back.  Dense clumps darken, holes and the rim keep their level, which is
+   also why the tile gains leaf structure and not just a darker tree.
+
+**The shrub / reed cards** (QA 16 open 1) take the same interior term plus a height term (lower and
+inner cards darker) and a LOD bias on the cut-out fetch (`?foliagebias=`, 0.8 on the cards, 0 on the
+leaves).  Level against the reference: 01 shore **1.61 -> 1.52x**, 01 shore S 1.28 -> 1.21x, 02 shore
+**1.62 -> 1.37x**, 02 reed clump 1.50 -> 1.39x, 05 shore 1.35 -> 1.24x, 05 W 1.11 -> 0.92x, 03 cards
+2.20 -> 2.07x.  Hard-edge share moves little (02 reed 6.22 -> 5.80 %, 02 shore 9.31 -> 8.92 %): it is
+driven by the cards' contrast against a bright ground, not by texture filtering.  **The remaining
+level gap is not the viewer's to close by guessing**: the manifest's own
+`lightmaps.instance_irradiance.reduce` says `rgb` is the mean over the vertices that RECEIVED light
+and that the uncovered fraction is the card buried in the terrain, so multiplying by `cov` would
+darken the visible part of a card by how much of it is underground.  Station 3's 1:1 tile shows gold
+and cream cut-outs where Cycles has dark green at the same 8 m - a source-colour difference, which is
+what export's Cycles DiffCol pass was opened to settle.
+
+**The walk-up set** (`trees.walkup_mesh`, item 3) is consumed by the far-tree loader with the block
+swapped, so the join, the placement gate, the irradiance and the impostor complement are the same
+lines for both sets.  Where it exists it REPLACES the LOD2 set (which only drew inside 12 m, inside
+the walk-up's 15) and `?walkupmesh=<m>` moves the distance; `=0` forces the LOD2 set back; a walk-up
+glb that fails the join falls back to `trees.far_mesh` and reports `walkupFellBack`.
+
+## QA notes — earlier rounds (Phase 6c / QA 16)
 
 ### The 6c foliage pass (item C), what it does and what it measured
 
