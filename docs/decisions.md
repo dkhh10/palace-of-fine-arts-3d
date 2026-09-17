@@ -612,3 +612,14 @@ Defect surfaced by the bake's own placement of the same meshes: export/trees_far
 so every far tree in the shipped env_trees.glb stands ~300 m from its impostor; only the z assert fired (review finding 1: the placement assert was a tautology).
 The export engineer fixes it before the COLOR_0 re-run; the new assert compares the gltf node translation with the impostor placement AND the placed bbox with the
 impostor quad; the viewer's round16b info block reports the max mesh-vs-impostor deviation and stops if it exceeds 1 m.
+
+## 2026-09-17 · Export r2 (ebdf4e5): tinted albedo ships, 2K dropped, COLOR_0 was constant white, and the far-tree LOD2 gets a topology revision 2
+Tinted shrub/reed albedo: value 1.35-1.5x up (shrub 0.344 -> 0.464, reeds 0.491 -> 0.651), dry shrub hue 36° straw; the near-tree materials carry an identity tint, so
+the cam02 hue gap (57.7° vs 102.4°) is the missing Translucent branch, which the viewer's 6c leaf shader supplies, not the albedo. 2K set dropped (22 KTX2, 13.0 MB).
+Defect the export found in its own output: the glTF exporter wrote a constant white byte COLOR_0 beside the real AO layer in COLOR_1, so the far-tree AO would have been a
+silent no-op in three.js; the attach now decodes every colour attribute from the .bin, promotes the one non-constant layer and drops constants, and verify_glb reads
+COLOR_0 from the glb rather than echoing the builder. Decision: two prototypes floating 2.4-2.8 m x s above trunk_base (cypress_column_s2, redwood_s13; cause = the
+branch COLLAPSE decimate dropping the lowest geometry, not the cards) are fixed with Decimate vertex-group protection, shipped as ONE topology revision (`topology_rev: 2`)
+together with the card-thinning stride from review finding 3; the AO is re-baked on rev 2 (16 jobs, 44 s GPU) and the attach refuses a revision mismatch. The bake's
+four irradiance jobs on the export's anchor are unaffected (join by location). shrub_lod1's placement check is the exported node translation against to_gltf (0.050 mm),
+not the LOD2 bbox-centre distance the brief named (0.2-1.95 m by construction, reported only).
