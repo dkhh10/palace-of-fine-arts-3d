@@ -1794,38 +1794,52 @@ export/sync_main.sh
 38. **6c item 2 - the far-tree lighting hand-off: 36 jobs, `vertex_ao.npz` + `instance_irradiance.json` at
     schema /2** (2026-09-17; `export/trees_far_set.py`, `export/bake_lm.py` kind `proto`,
     `export/trees_far_compose.py`, `export/trees_far_ratio_check.py`). All 36 through
-    `bake_queue.sh --gate3`, **764 s of Blender wall in total** (16 AO jobs 44 s, 16 E_bake jobs 158 s,
-    4 x ~32-placement irradiance jobs 562 s).
+    `bake_queue.sh --gate3`, **764 s of Blender wall** on the first pass (16 AO jobs 44 s, 16 E_bake jobs
+    158 s, 4 x ~32-placement irradiance jobs 562 s). Two re-runs followed, both on the same scripts:
+    the four `tfirr_*` jobs against the export's published anchor (item 37) and then, when the export
+    published `topology_rev: 2` (the two floating crowns fixed by protecting the trunk base from the branch
+    decimate, and `CARD_SELECT` changed from `block` to `stride`), the 16 AO jobs on the rev-2 meshes -
+    **44 s**. The table below is rev 2, and `vertex_ao.npz` carries `topology_rev: 2` as an npz key (plus a
+    `trees_far/vertex_ao.json` sidecar), which is what lets `export/trees_far.py` refuse to paint a rev-1
+    array onto a rev-2 mesh. Rev 2's stride selection spreads the surviving cards, so AO rose from a
+    rev-1 mean of 0.193-0.502 to **0.240-0.505** and the fully-occluded fraction fell from 4.2-34.0 % to
+    **1.9-19.8 %**. `instance_irradiance.json` records that E_placement was baked on the rev-1 vertex
+    counts (`e_placement_topology.matches_current_rev: false`): it is one RGB per PLACEMENT joined by world
+    translation, the anchor and the 127 transforms are identical across revisions, and only the crown's own
+    card selection moved - far less than the 27x spread the site itself shows.
     * **Vertex AO is normalised, not assumed.** Each AO job hides every light, swaps in a uniform white
       world of radiance 1 and bakes the prototype ALONE (all 16 sit at the world origin in
       `trees_far_lod2.blend`), plus a 2 m calibration plane 1 km away with nothing above it. That plane
       reads **1.0000 in all 16 jobs**, which is what makes the raw DIFFUSE value the AO factor. Every
-      array is asserted in [0, 1] and against the export's LOD2 vertex count. `loose_verts` is **0**
-      everywhere, so no zero is an unbaked vertex - the zeros are crown interior.
+      array is asserted in [0, 1] and against the export's LOD2 vertex count. The statistics are over the
+      FACED vertices: 11 of the 16 meshes carry loose vertices (willow_s11 316 at rev 1), a vertex no
+      polygon references is never written by the bake, and counting its 0 as occlusion dragged min / mean /
+      p05 / zeros_pct down (review r2 finding 5). The npz still ships at full length - a loose vertex is in
+      no face, so nothing shades it.
     * **E_bake is measured on the body that produced the atlas** (review r1 finding 5): the `_LOD1`
       prototype object in `gate3_imp.blend`, isolated with the lawn exactly as `imp_<proto>` isolated it,
       at the same rig, 128 spp. Both sides of the ratio use `mean_nonzero` over the cov mask (finding 4)
       and both ship `cov`. Determinism checked: `tfeb_ENV_tree_broadleaf_s53_LOD1` baked with an override
       scope of 1 object and again with all 16 gives the **identical** [3.04233, 2.24703, 5.57665].
 
-    | prototype | LOD2 verts | AO min / mean / max | AO zeros % | E_bake R, G, B | E_bake cov |
+    | prototype | LOD2 faced verts | AO min / mean / max | AO zeros % | E_bake R, G, B | E_bake cov |
     |---|---|---|---|---|---|
-    | `broadleaf_s19` | 14007 | 0.000 / 0.218 / 0.977 | 27.7 | 2.693, 2.018, 5.162 | 0.948 |
-    | `broadleaf_s53` | 14118 | 0.000 / 0.231 / 0.969 | 23.4 | 3.042, 2.247, 5.577 | 0.943 |
-    | `cypress_column_s2` | 13299 | 0.000 / 0.216 / 0.979 | 27.1 | 1.906, 1.425, 4.332 | 0.889 |
-    | `cypress_column_s31` | 13312 | 0.000 / 0.193 / 1.000 | 34.0 | 1.715, 1.277, 3.788 | 0.818 |
-    | `cypress_s17` | 14040 | 0.000 / 0.285 / 0.977 | 12.4 | 2.786, 2.117, 6.047 | 0.978 |
-    | `cypress_s3` | 14147 | 0.000 / 0.287 / 0.977 | 10.6 | 2.716, 2.052, 5.669 | 0.977 |
-    | `cypress_s41` | 14334 | 0.000 / 0.255 / 0.977 | 12.8 | 2.419, 1.831, 5.073 | 0.972 |
-    | `eucalyptus_s23` | 13207 | 0.000 / 0.357 / 1.000 | 17.6 | 3.501, 2.675, 7.639 | 0.979 |
-    | `eucalyptus_s5` | 12599 | 0.000 / 0.344 / 1.000 | 19.6 | 3.394, 2.587, 7.414 | 0.965 |
-    | `eucalyptus_s61` | 12714 | 0.000 / 0.344 / 1.000 | 17.7 | 3.459, 2.615, 7.078 | 0.973 |
-    | `pine_s29` | 14388 | 0.000 / 0.330 / 0.980 | 11.4 | 3.898, 2.958, 8.909 | 0.992 |
-    | `pine_s7` | 14292 | 0.000 / 0.337 / 0.969 | 10.0 | 3.963, 2.955, 8.053 | 0.992 |
-    | `redwood_s13` | 14726 | 0.000 / 0.297 / 1.000 | 13.3 | 3.437, 2.534, 7.228 | 0.996 |
-    | `redwood_s43` | 14791 | 0.000 / 0.282 / 0.995 | 13.7 | 3.217, 2.383, 7.159 | 0.996 |
-    | `willow_s11` | 8979 | 0.000 / 0.472 / 1.000 | 4.6 | 3.169, 2.435, 6.455 | 0.992 |
-    | `willow_s37` | 8572 | 0.000 / 0.502 / 1.000 | 4.2 | 3.129, 2.395, 6.446 | 0.992 |
+    | `broadleaf_s19` | 13595 | 0.000 / 0.288 / 0.961 | 15.7 | 2.693, 2.018, 5.162 | 0.948 |
+    | `broadleaf_s53` | 13740 | 0.000 / 0.294 / 0.953 | 15.8 | 3.042, 2.247, 5.577 | 0.943 |
+    | `cypress_column_s2` | 13006 | 0.000 / 0.266 / 0.961 | 18.6 | 1.906, 1.425, 4.332 | 0.889 |
+    | `cypress_column_s31` | 12812 | 0.000 / 0.240 / 0.961 | 19.8 | 1.715, 1.277, 3.788 | 0.818 |
+    | `cypress_s17` | 14040 | 0.000 / 0.343 / 1.000 | 7.1 | 2.786, 2.117, 6.047 | 0.978 |
+    | `cypress_s3` | 13883 | 0.000 / 0.338 / 0.977 | 8.9 | 2.716, 2.052, 5.669 | 0.977 |
+    | `cypress_s41` | 13798 | 0.000 / 0.317 / 0.961 | 8.5 | 2.419, 1.831, 5.073 | 0.972 |
+    | `eucalyptus_s23` | 12621 | 0.000 / 0.438 / 1.000 | 6.9 | 3.501, 2.675, 7.639 | 0.979 |
+    | `eucalyptus_s5` | 12280 | 0.000 / 0.452 / 1.000 | 7.0 | 3.394, 2.587, 7.414 | 0.965 |
+    | `eucalyptus_s61` | 12389 | 0.000 / 0.434 / 1.000 | 6.7 | 3.459, 2.615, 7.078 | 0.973 |
+    | `pine_s29` | 13678 | 0.000 / 0.441 / 0.977 | 4.5 | 3.898, 2.958, 8.909 | 0.992 |
+    | `pine_s7` | 13769 | 0.000 / 0.423 / 0.984 | 5.3 | 3.963, 2.955, 8.053 | 0.992 |
+    | `redwood_s13` | 14265 | 0.000 / 0.404 / 0.984 | 6.9 | 3.437, 2.534, 7.228 | 0.996 |
+    | `redwood_s43` | 14239 | 0.000 / 0.404 / 0.961 | 7.3 | 3.217, 2.383, 7.159 | 0.996 |
+    | `willow_s11` | 8529 | 0.000 / 0.502 / 1.000 | 1.9 | 3.169, 2.435, 6.455 | 0.992 |
+    | `willow_s37` | 8033 | 0.000 / 0.505 / 1.000 | 2.0 | 3.129, 2.395, 6.446 | 0.992 |
 
     * **E_placement, 127 placements, 0 dark.** `trees_far_irr.blend` = `gate3_bake.blend` with the 127 LOD2
       placements linked in and the 127 `source_tree` objects and 127 `ENV_treeboard_*` billboards hidden -

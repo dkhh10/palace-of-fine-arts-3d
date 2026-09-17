@@ -1,0 +1,10 @@
+00:00.847  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_imp.blend"
+00:01.037  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/gate3_bake.blend"
+[gate0] STEP trees_far_set:nursery wall_s=0.2 gate3_imp.blend=67033928B objects=491
+Info: Saved copy as "trees_far_irr.blend"
+[gate0] STEP trees_far_set:irr_blend wall_s=1.6 trees_far_irr.blend=329029235B objects=2872
+[trees_far_set] 36 jobs queued (109 in the file), 127 placements, 1.9 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 47873 exited rc=0 after 3 s (max 900)

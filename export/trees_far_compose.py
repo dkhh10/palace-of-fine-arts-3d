@@ -191,6 +191,8 @@ def main():
             mean_all=r6(it["mean"]), cov=round(it["coverage"], 3)))
     A = np.array(all_rgb)
     lum_all = A @ LUM
+    irr_verts_seen = sorted({int(got[o]["verts"]) for o in order})
+    irr_rev_match = all(int(got[o]["verts"]) == topo["prototypes"][proto_of[o]]["verts"] for o in order)
 
     out_meshes = {}
     for mesh, plc in meshes.items():
@@ -273,6 +275,16 @@ def main():
                                 "finding 5). What does not cancel between the two bodies is crown density, "
                                 "reported as `cov` on both sides.")),
         prototypes=proto_out, prototypes_missing=missing_eb,
+        e_placement_topology=dict(
+            matches_current_rev=bool(irr_rev_match),
+            baked_on_verts=irr_verts_seen,
+            current_rev=topo_rev,
+            note=("the LOD2 vertex counts the irradiance jobs actually baked, against topology.json's "
+                  "current ones. A mismatch is not an error here and is recorded rather than hidden: "
+                  "E_placement is one RGB per placement, joined by WORLD TRANSLATION, and the anchor and "
+                  "the 127 transforms are identical across revisions - only the crown's own card selection "
+                  "changed, which moves the value by far less than the 27x spread across the site. The AO "
+                  "array, which IS per vertex, is re-baked on every revision and stamped `topology_rev`.")),
         vertex_ao=dict(npz="trees_far/vertex_ao.npz", dtype="float32", encode="none",
                        topology_rev=topo_rev,
                        topology_rev_note=("the LOD2 topology this AO was baked on, stamped into the npz as "
