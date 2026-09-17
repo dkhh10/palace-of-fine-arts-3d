@@ -126,6 +126,8 @@ const CFG = {
 	// 6c round 2, the two lazily loaded glbs and the foliage material textures
 	farTreeLight: ( qs.get( 'fartreelight' ) || 'near' ).toLowerCase(),   // near | probe | 0
 	shrubEnv: qs.has( 'shrubenv' ) ? parseFloat( qs.get( 'shrubenv' ) ) : 1,   // env term on the LOD1 shrubs
+	farTrn: qs.has( 'fartrn' ) ? parseFloat( qs.get( 'fartrn' ) ) : undefined,  // translucency on the far-tree meshes
+	farAo: qs.has( 'farao' ) ? parseFloat( qs.get( 'farao' ) ) : 1,   // how much of the env term the AO occludes
 	foliageTex: qs.get( 'foliagetex' ) || '1024',                         // 1024 | 2048 | 0
 	// The impostor atlases were baked with each prototype ALONE under the open sky, so their light is
 	// the sky's.  `impmod` re-lights each placement by E_placement / E_bake: `chroma` (the default)
@@ -809,7 +811,7 @@ async function loadLazyFoliage() {
 		scale: manifest.gate3 ? manifest.gate3.scale : Math.PI,
 	};
 	try {
-		farTreeReport = await loadFarTrees( { ...common, impostorGroup,
+		farTreeReport = await loadFarTrees( { ...common, impostorGroup, farTrn: CFG.farTrn, aoEnv: CFG.farAo,
 			mode: CFG.farTreeLight, impMode: impModReport ? impModReport.mode : 'chroma' } );
 		if ( farTreeReport && farTreeReport.update ) farTreeUpdate = farTreeReport.update;
 	} catch ( e ) { note( `far-tree meshes FAILED: ${e.message}` ); farTreeReport = { error: e.message }; }

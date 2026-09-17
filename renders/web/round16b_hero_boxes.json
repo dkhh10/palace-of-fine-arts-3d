@@ -1,0 +1,90 @@
+{
+ "at": [
+  1920,
+  1080
+ ],
+ "reference": "/Users/dk/Projects/3d render blender 3rd attempt building/renders/final/hero_cam01_3840x2160_128spp.png",
+ "images": [
+  "renders/web/round16_cam01.png:round16",
+  "renders/web/round16b_cam01.png:round16b"
+ ],
+ "boxes": [
+  {
+   "box": [
+    0,
+    700,
+    700,
+    1080
+   ],
+   "label": "cam01 left shore foliage",
+   "rows": [
+    {
+     "frame": "reference",
+     "rgb": [
+      120.05,
+      138.6,
+      155.94
+     ],
+     "lum": 135.91,
+     "lum_ratio": 1.0,
+     "hue": 209.0,
+     "sat": 0.2302,
+     "g_gt_r_pct": 89.3,
+     "p10": 87.99,
+     "mean": 135.91,
+     "std": 32.84,
+     "mid_5_21": 5.99,
+     "hp9": 19.31,
+     "px": [
+      700,
+      380
+     ]
+    },
+    {
+     "frame": "round16",
+     "rgb": [
+      73.96,
+      99.63,
+      106.03
+     ],
+     "lum": 94.63,
+     "lum_ratio": 0.6963,
+     "hue": 192.0,
+     "sat": 0.3025,
+     "g_gt_r_pct": 63.8,
+     "p10": 57.53,
+     "mean": 94.63,
+     "std": 28.92,
+     "mid_5_21": 5.95,
+     "hp9": 16.65,
+     "px": [
+      700,
+      380
+     ]
+    },
+    {
+     "frame": "round16b",
+     "rgb": [
+      74.22,
+      99.65,
+      104.4
+     ],
+     "lum": 94.58,
+     "lum_ratio": 0.6959,
+     "hue": 189.4,
+     "sat": 0.2891,
+     "g_gt_r_pct": 62.2,
+     "p10": 57.13,
+     "mean": 94.58,
+     "std": 29.4,
+     "mid_5_21": 6.14,
+     "hp9": 16.96,
+     "px": [
+      700,
+      380
+     ]
+    }
+   ]
+  }
+ ]
+}

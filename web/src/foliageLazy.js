@@ -26,7 +26,7 @@
 //     the hero probe + full sun direct (the viewer's ordinary "no baked light" path), `0` refuses to
 //     draw the meshes at all and every far tree stays the impostor it was.
 import * as THREE from 'three';
-import { applyFoliage, farTreeIrradiance, irradianceRatio } from './foliage.js';
+import { applyFoliage, farTreeIrradiance, irradianceRatio, recordShaderError } from './foliage.js';
 import { applyInstanceIrradiance } from './lightmaps.js';
 import { patchBakedMaterial } from './materials.js';
 import { applyProbeEnv } from './probeEnv.js';
@@ -86,6 +86,13 @@ async function firstThatLoads( cands, load, note, what ) {
 	}
 	note( `${what}: none of ${cands.length} candidate url(s) answered — ${tried.join( '; ' )}` );
 	return null;
+}
+
+/** Exactly one occurrence, or the patch is refused (the same rule as foliage.js). */
+function once( src, needle, replacement, what ) {
+	const n = src.split( needle ).length - 1;
+	if ( n !== 1 ) throw new Error( `foliageLazy patch "${what}": expected 1 occurrence, found ${n}` );
+	return src.replace( needle, replacement );
 }
 
 const b2tKey = ( x, y, z ) => `${x.toFixed( 2 )},${y.toFixed( 2 )},${z.toFixed( 2 )}`;
@@ -406,17 +413,38 @@ export async function loadFarTrees( o ) {
 		// linear = COLOR_0^2 * range"), so it is MATCHED, not compared: reading it as the token
 		// "gamma2" would silently leave the AO as sqrt(AO) - every crown a stop too bright.
 		const enc = String( c0.encode || 'none' );
-		if ( ! /sqrt|\^ ?2|\*\s*color_0|gamma-? ?2/i.test( enc ) ) return;
+		const gamma2 = /sqrt|\^ ?2|\*\s*color_0|gamma-? ?2/i.test( enc );
 		const aoRange = ( typeof c0.range === 'number' && c0.range > 0 ) ? c0.range : 1;
-		out.aoEncode = `gamma2 x range ${aoRange.toFixed( 6 )}`;
+		out.aoEncode = gamma2 ? `gamma2 x range ${aoRange.toFixed( 6 )}` : 'linear';
+		const aoEnv = Number.isFinite( o.aoEnv ) ? Math.min( Math.max( o.aoEnv, 0 ), 1 ) : 1;
+		out.aoEnv = aoEnv;
 		for ( const mat of Array.isArray( mesh.material ) ? mesh.material : [ mesh.material ] ) {
-			if ( ! mat || mat.userData.pfaAoSquared ) continue;
-			mat.userData.pfaAoSquared = true;
+			if ( ! mat || mat.userData.pfaAoPatched ) continue;
+			mat.userData.pfaAoPatched = true;
 			const prev = mat.onBeforeCompile;
 			mat.onBeforeCompile = function ( sh, r ) {
 				if ( prev ) prev.call( this, sh, r );
-				sh.fragmentShader = sh.fragmentShader.replace( '#include <color_fragment>',
-					`#include <color_fragment>\n\tdiffuseColor.rgb *= vColor.rgb * ${aoRange.toFixed( 7 )};   // PFA: AO = COLOR_0^2 * range` );
+				try {
+					// AO IS THE ENVIRONMENT'S VISIBILITY, not just an albedo multiplier.  glTF's COLOR_0
+					// only tints base colour, so three applies it to the DIFFUSE ALBEDO and leaves the
+					// image-based specular (and KHR_materials_sheen, which is an environment lobe too)
+					// sampling the whole sky from every interior leaf the bake measured as occluded -
+					// which is what made an 8 k-triangle LOD2 crown read cream-white against the Cycles
+					// reference's dark green.  The bake's own 0-1 AO is exactly the visibility factor
+					// those terms want, so it multiplies them here as well.  ?farao= is the A/B.
+					if ( gamma2 ) sh.fragmentShader = once( sh.fragmentShader, '#include <color_fragment>',
+						`#include <color_fragment>\n\tdiffuseColor.rgb *= vColor.rgb * ${aoRange.toFixed( 7 )};   // PFA: AO = COLOR_0^2 * range`,
+						'AO gamma2 decode' );
+					if ( aoEnv > 0 ) {
+						const ao = gamma2 ? `( vColor.rgb * vColor.rgb * ${aoRange.toFixed( 7 )} )` : 'vColor.rgb';
+						sh.fragmentShader = once( sh.fragmentShader, '#include <lights_fragment_maps>',
+							'#include <lights_fragment_maps>\n\t{\n'
+							+ `\t\tvec3 pfaAoV = mix( vec3( 1.0 ), ${ao}, ${aoEnv.toFixed( 4 )} );\n`
+							+ '\t\tiblIrradiance *= pfaAoV;\n\t\tradiance *= pfaAoV;\n'
+							+ '\t\t#ifdef USE_SHEEN\n\t\tsheenSpecularIndirect *= pfaAoV;\n\t\t#endif\n\t}',
+							'AO on the environment terms' );
+					}
+				} catch ( e ) { recordShaderError( `far-tree AO on ${mat.name || '(unnamed)'}`, e ); }
 			};
 			mat.needsUpdate = true;
 		}
@@ -425,13 +453,20 @@ export async function loadFarTrees( o ) {
 	if ( o.probeTexture ) applyProbeEnv( root, o.probeTexture, { note: () => {} } );
 
 	// ---- the leaf shader and the LOD dissolve, sharing the first pass's uniforms ---------------
+	// `?fartrn=` — the translucency scale on the FAR-tree meshes alone.  The Phase 5 mix adds a back
+	// lobe of the full unoccluded sun, and Cycles' own version of that lobe is occluded by the rest of
+	// the crown; the near trees carry a dense LOD1 canopy that hides most of it, while a far tree is an
+	// 8 k-triangle LOD2 with big cards and nothing to shadow them, so the same term over-lights it.
+	// Measured at cam02, see web/README.md.
 	const fol = applyFoliage( {
 		scene: root, sun: o.sun, note, msaa: o.msaa, vertexIrrScale: 0,
 		sharedUniforms: o.foliageReport ? o.foliageReport.shared.uniforms : null,
 		normalBlend: o.normalBlend, cardNormalBlend: o.cardNormalBlend,
-		trnScale: o.trnScale, trnShrubs: o.trnShrubs, trnMaps: o.trnMaps,
+		trnScale: Number.isFinite( o.farTrn ) ? o.farTrn : o.trnScale,
+		trnShrubs: o.trnShrubs, trnMaps: o.trnMaps,
 		meshDist: o.meshDist, fadeBand: o.fadeBand,
 	} );
+	out.trnScale = Number.isFinite( o.farTrn ) ? o.farTrn : o.trnScale;
 	out.foliage = { geometries: fol.geometries, clusters: fol.clusters, leafMaterials: fol.leafMaterials,
 		barkMaterials: fol.barkMaterials, bent: fol.bent, softened: fol.softened, units: fol.units.length };
 
