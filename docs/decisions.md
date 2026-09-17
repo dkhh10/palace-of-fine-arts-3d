@@ -625,3 +625,13 @@ four irradiance jobs on the export's anchor are unaffected (join by location). s
 not the LOD2 bbox-centre distance the brief named (0.2-1.95 m by construction, reported only).
 Addendum (bake r2b 9844bc0, after the anchor fix): the one-placement validation re-measured E_placement [3.159, 2.223, 1.020], ratio [1.038, 0.989, 0.183], display hue
 205.5° -> 73.1° vs 52.2° (86.4 % of the gap, no overshoot); the B/G-matching exponent would be k = 0.4506 (hue 105.6°, worse). Conclusion unchanged: strength 1.0 ships.
+
+## 2026-09-17 · Viewer r2 (1dc121d): far-tree meshes only within 12 m; the modulated atlas wins at distance; resident memory 1 717 MB
+Measured by the viewer engineer at the stations: the 8 k-triangle LOD2 crown at station distance scores worse than the modulated atlas (far-tree box 1.957x, hp9 34.56 vs
+the atlas's 1.284x / 17.12 against the reference 39.4 / 17.46) because the atlas carries the dense tree's self-shadowing and a thinned crown does not; translucency, tinted
+albedo and environment AO each move it under 0.05x. Decision (engineer's, accepted by the lead): `?fartreemesh=` defaults to 12 m per placement (the walker sees a mesh
+only when standing at a far tree), near trees keep 40 m; the blue blob at station 2 is fixed by the E_placement/E_bake modulation (`?impmod=full` default, 145 trees
+modulated), station 2 MAE 23.13 -> 20.08. A permanent placement gate (mesh bbox centre vs impostor quad centre < 1 m; today max 0.73 m, median 0.25) refuses to draw
+env_trees.glb otherwise — it read 905 m on the pre-fix glb. Cost: every station within +3 ms of round 15 (hero +1.9 ms); resident GPU memory 1 717 MB, +111 over
+round 16 and above the 1 200 MB Gate 1 budget (6a shipped at ~1 055 resident in the manifest's accounting) — QA 16 reports it; 6b's mobile tier is where it is cut.
+Open (export, post-6c): a walk-up that stops at a far tree sees the LOD2's grown cards and the magnified 1 K atlas; that tree wants its LOD1.
