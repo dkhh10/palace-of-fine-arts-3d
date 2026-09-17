@@ -662,3 +662,11 @@ viewer owns crown interior/rim and the shrub level/edges (after the export settl
 Phase 5 material's own; the likelier cause is the mean_nonzero irradiance reducer without cov and no self-shadow); export ships a walk-up LOD1 glb for the 16 prototypes
 (<= 30 k tris each, no AO bake). Resident memory is 1 800.6 MB (1.5x the Gate 1 budget); accepted for 6c, cut in 6b's tiers. After round16c: QA 17, the lead's tiles, then
 6b regardless of the result (the two-round rule).
+
+## 2026-09-17 · Export r3 (edaa437): the shrub albedo is NOT the cause of the shrub brightness — it is lighting (viewer); walk-up LOD1 glb shipped
+A Cycles Diffuse Colour pass at cam02/cam05 (foliage isolated, film transparent) divided into the shipped tinted albedo gives 0.87-0.98 in every QA-16 shrub box (per
+material shrub_light 0.98, shrub 0.92, shrub_dry 0.90) — the shipped albedo is at or below what Cycles uses, so QA 16's "owner EXPORT" is overturned by measurement and
+the 1.34-1.70x level excess is the viewer's lighting of the cards (the mean_nonzero irradiance without cov, no self-shadow, the translucency term). Three confounders
+were measured (alpha population 1 %, footprint < 1 %, packed vs disk PNG identical). Residual: MAT_reeds reads 1.49 on 0.6 % of card pixels with a node chain identical
+to the seven that agree; left unfixed (a 0.69 scale would be fitting a number; moves the worst box < 0.3 %) — delivery-notes residual. env_trees_lod1.glb (7.6 MB,
+25.6-30 k tris per prototype, no AO, same placements and order) is the walk-up set, manifest `trees.walkup_mesh` draw_within_m 15.
