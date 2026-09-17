@@ -1753,3 +1753,35 @@ export/sync_main.sh
       vertex AO of 6c item B (and the far-tree meshes of item A) are what carry the occlusion the nursery
       cannot know. Whatever still draws an impostor beyond `treeMeshDist` needs the same per-placement
       modulation, or its sky term has to be baked with the scene around it. That call is the lead's.
+
+36. **Round-1 review, carried open items (bake).** `docs/reviews/phase6c_bake_r1_review.md` items 8-10, left
+    open by the lead's instruction, all in the item-1 diagnosis tooling and none of them affecting a shipped
+    number: (8) `imp_diag_atlas.py:33`, `imp_diag_ref.py:28`, `imp_diag_sheet.py:24` and
+    `imp_diag_view.py:59` hard-code the MAIN path instead of
+    `os.environ.get("PFA_MAIN_ROOT", "<default>")` as every other export script does; (9)
+    `imp_diag_ref.py`'s `foliage_p80` is a fixed quantile rather than a sky test, so the ground-truth crop
+    keeps sky when there is more than 20 % of it and throws away sunlit leaves when there is none - the
+    147 deg hue gap dwarfs that bias, and the same caveat is written into `trees_far/ratio_check.json`;
+    (10a) `imp_diag_sheet.py:70-82` re-derives the crop without `shift_x`/`shift_y` and with a wider box than
+    `imp_diag_ref.py` (harmless only because station 2's shifts are 0); (10b) "sun-facing frames are green
+    (41-72 deg)" in item 35 has no script that selects frames BY sun direction - 41.4 deg is the lowest
+    *nearest-cam02* frame hue in `impostor_diag_atlas.json`, so read it as that. Review item 3 is fixed
+    (`imp_diag_view.py` now merges variants into one report and the usage line tees the run), but **the
+    `asis` 213.2 / 1.367 and `diffuse` 215.6 / 1.431 headline numbers in item 35 and in docs/decisions.md
+    come from the run that the old fixed path overwrote**; they were not re-spent on the GPU. Review item
+    10c is fixed by shipping `trees_far/instance_irradiance.json` at schema
+    **`pfa-phase6/gate4-instance-irradiance/2`** (the shrub file stays at /1).
+
+37. **The export's far-tree placement puts every LOD2 mesh in the tree LIBRARY's coordinates** (found while
+    building the 6c item-2 irradiance scene; `export/trees_far.py` is the export engineer's file and was not
+    touched). `trees_far.py:253` does `src.transform(ob.matrix_world)` - "prototype world space", which for
+    these prototypes is the off-site nursery row in `master_delivery.blend` at x = -432 .. -600, y = -570 -
+    and `:299-305` then places the instance with `location = trunk_base, scale = s` **without subtracting
+    that anchor again**. Measured: `EXPM_treefar_ENV_tree_broadleaf_s19_LOD1`'s bbox is
+    x [-440.13, -423.79], y [-580.02, -559.75] while `tree_far[1].trunk_base` is (-29.96, 29.68, -0.90) at
+    s = 0.618, so that tree lands about **300 m** from where it belongs. Only the z assert fires
+    (`height_above_base_m` is measured from the bbox top, which the offset does not move), which is why the
+    hand-off passed. The fix is one line at the placement - `matrix_world = Translation(trunk_base) @
+    Scale(s) @ Translation(-anchor_p)` with `anchor_p` the prototype object's own world translation, z
+    asserted 0 - and that is exactly what `export/trees_far_set.py` does for the bake, so **the bake's
+    numbers are correct whatever `env_trees.glb` currently does**. Reported to the lead.
