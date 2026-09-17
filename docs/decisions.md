@@ -591,3 +591,13 @@ and the viewer's leaf shader consumes the translucency factor; next session. (2)
 not ship; 1K stays; a real 2K would be a Phase 5 material regeneration and is not requested. (3) Shrub LOD1 in its own env_shrubs.glb (accepted: putting it in env.glb would rebuild
 the UV1 atlases every bake is pinned to). Also accepted for review: -vpf instead of -vp 16 on the new glbs (with -vp 16 gltfpack folds the dequantisation into the instance rows
 and the positional join is unrecoverable); 3 of 28 shrub meshes have no LOD1 and stay LOD2.
+
+## 2026-09-17 · Session 5: three round-1 reviews (docs/reviews/phase6c_{bake,export,viewer}_r1_review.md) and what they change
+Bake MERGE WITH FIXES, export MERGE WITH FIXES, viewer SEND BACK on one line: the mesh/impostor dissolve keeps the same hash set on both sides (mesh `hash > 1-t`,
+impostor `hash > t`), so mid-fade half the crown is drawn twice and half is see-through; the impostor test becomes the exact complement. All fix-now items are forwarded
+to the running round-2 engineers (messages recorded in status.md). Two lead decisions from the bake review: (a) E_bake is measured on the body that produced the atlas
+(the gate3_imp.blend _LOD1 prototype), with the same mean_nonzero-over-cov reducer as E_placement, both taken raw; (b) because the review shows the atlas blue is not a
+diffuse term (a sun-only render reads B = 0 with three blue fill lamps in the rig, a sky-only render reads B 0.387: a specular/transmission response to sky radiance),
+the E_placement/E_bake ratio is VALIDATED ON ONE PLACEMENT (the prototype nearest cam02; B/G must move from 1.356 toward the reference 0.648) before the 16 jobs are queued.
+If it fails, the lead chooses between a neutral-nursery atlas re-bake (sun + grey ambient, no sky) and shipping the far-tree meshes without impostor modulation; the vertex
+AO and the 127-placement irradiance run regardless. The overwritten asis/diffuse diagnosis numbers (finding 3) are not re-spent on the GPU; the README notes their provenance.
