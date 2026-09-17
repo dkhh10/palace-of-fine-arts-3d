@@ -680,6 +680,11 @@ export function nearTreeImpostorEntries( units, impostors, note = () => {}, eBak
 		}
 		if ( ! best ) { out.unmatched.push( u ); continue; }
 		chosen[ best ] = ( chosen[ best ] || 0 ) + 1;
+		// `eBake` is either ONE rgb (the viewer's own sky estimate) or a map keyed by PROTOTYPE (the
+		// bake's measured E_bake, which is per prototype because each atlas was baked in its own
+		// nursery).  A near tree borrows the atlas of the prototype it was matched to, so it must
+		// divide by THAT prototype's value.
+		const eb = Array.isArray( eBake ) ? eBake : ( eBake && eBake[ best ] ) || null;
 		out.push( {
 			prototype: best, id: `near_${u.mesh}_${u.instance}_${out.length}`, height,
 			// `base` is BLENDER (x, y, z) as manifest.impostors.placement states, from the three-space
@@ -688,7 +693,7 @@ export function nearTreeImpostorEntries( units, impostors, note = () => {}, eBak
 			near: true, switchCentre: [ u.centre.x, u.centre.y, u.centre.z ],
 			// E_placement is this crown's own mean COLOR_0 irradiance - the only measured "what light
 			// does this tree stand in" the viewer owns until the bake ships the far trees' values.
-			irr: ( mode === '0' || ! mode ) ? null : irradianceRatio( u.irradiance, eBake, mode ),
+			irr: ( mode === '0' || ! mode ) ? null : irradianceRatio( u.irradiance, eb, mode ),
 		} );
 	}
 	note( `near-tree impostors: ${out.length}/${units.length} unit(s) matched a prototype by species + aspect `

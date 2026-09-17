@@ -695,9 +695,13 @@ async function boot() {
 		// Round-1 review 4: a unit with no impostor behind it must NOT dissolve at the switch distance.
 		if ( nearEntries.unmatched && nearEntries.unmatched.length )
 			keepMeshAlways( foliageReport, nearEntries.unmatched.map( ( u ) => u.mesh ), note );
-		impModReport = { mode: impMode, eBake, eBakeFrom, far: far.applied, farUnmatched: far.unmatched,
+		impModReport = { mode: impMode, eBake: Array.isArray( eBake ) ? eBake : ( eBake ? Object.keys( eBake ).length : null ),
+			eBakeFrom, far: far.applied, farUnmatched: far.unmatched,
 			near: nearEntries.filter( ( e ) => e.irr ).length };
-		note( `impostor irradiance modulation: mode ${impMode}, E_bake ${eBake ? eBake.map( ( v ) => v.toFixed( 2 ) ).join( '/' ) : 'unknown'} `
+		// eBake is EITHER one rgb (the viewer's sky estimate) OR a map keyed by prototype (the bake's)
+		const eBakeStr = Array.isArray( eBake ) ? eBake.map( ( v ) => v.toFixed( 2 ) ).join( '/' )
+			: ( eBake ? `${Object.keys( eBake ).length} per-prototype value(s)` : 'unknown' );
+		note( `impostor irradiance modulation: mode ${impMode}, E_bake ${eBakeStr} `
 			+ `from ${eBakeFrom}; ${impModReport.far} far + ${impModReport.near} near placement(s) modulated` );
 		const built = buildImpostors( {
 			impostors: manifest.gate3.impostors, far: treesFar, near: nearEntries, note,
