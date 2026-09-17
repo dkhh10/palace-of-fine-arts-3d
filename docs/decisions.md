@@ -557,3 +557,15 @@ the choice of default is the user's, as decided 09-16). Post-6a backlog, in hero
 (5) open-water reflection lobe vs sky (hue/sat); (6) column-shaft UV stretch at cam03; (7) walk probe re-run at 30 s per heading; (8) the frame budget. None of these is a
 building defect; the export set has 0 placeholders to explain (name sweep), 127 hidden ENV_treeboard_* the standing exception. Phase 6b (web deployment) is the next plan:
 docs/briefs/phase6_plan.md Gate 5, and the user names the iPhone.
+
+## 2026-09-17 · Delivery defect found by the user: the viewer's bare-URL defaults were the Gate 0 development settings (lead fix 5e1fffa)
+The user opened the viewer at its bare URL and saw six bare column shafts on a flat lagoon: main.js defaulted `manifest` to the Gate 0 slice (18 meshes, 73 MB), `billboards`
+and `treeboards` (placeholder quads) to ON and `post` to none. Every QA capture passed the delivery flags explicitly through gate4.sh, so no round ever saw the bare page. Fix:
+the defaults are now the QA'd look (gate3 manifest, billboards/treeboards off, post all); the captures are unaffected because they still pass the flags. Verified in headless
+Brave (the user's browser) at the user's 1422x1630 window: 640.1 MB, 279 draws, the full building. Lesson for the checklist: a gate must include one capture with NO query
+string. Also: web/node_modules had become a symlink loop across the checkouts (the viewer and export worktrees link to MAIN's; MAIN's pointed at itself); reinstalled from the
+lockfile in MAIN. `npm run dev` crashes in a Vite middleware hook and is unfixed (the static build is what the captures and the user use).
+Foliage at close range (user's cam02 screenshot): the near-left tree is a leaf-card tree at LOD1 (large flat cards, low-res cut-out, no translucency, one irradiance per vertex),
+the centre blob is a far-tree IMPOSTOR whose "far" classification is fixed at export by distance to the hero station, so at cam02 it stands a few metres from the camera at
+85 px per frame, and the shrubs/reeds are LOD2 card meshes with a hard mask. These are the post-6a residuals already listed in the final judgement; the proposed fix is a foliage
+pass (6c) offered to the user, not started.
