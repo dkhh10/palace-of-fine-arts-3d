@@ -684,3 +684,24 @@ and the sun-path term stack. Station 1 — the colonnade trees now have shadowed
 clear improvement, credible at the stations, not yet at 3 m in the shrub band; the two-round rule closes 6c after QA 17 whatever it scores; the residuals above go to
 docs/delivery.md with owners (shrub structure = a denser LOD1 card set, export; lavender far impostors = the modulation at the horizon band, viewer; reed scale =
 export; blotchy crowns = clamp the stacked darkening, viewer).
+
+## 2026-09-17 · 6c CLOSED WITH RESIDUALS (QA 17 at 47a2f7e on round16c; the two-round rule) — residual owners; 6b starts
+QA 17 scores 01 3.78 / 02 3.25 / 03 2.63 / 04 2.88 / 05 2.94 / 06 2.83 (round 15: 3.72 / 3.00 / 2.56 / 2.88 / 2.94 / 2.83; no station drops, three rise;
+station 2 +0.25). The 6c acceptance passes on three conjuncts of four (no drop; station 2 up; crowns with interior AND shrubs at the reference level) and
+fails the +3 ms conjunct on the cold pass of record (+4.2 / +4.8 ms at stations 1 / 2 against a round-15 figure from another day; draws and triangles
+identical there). Round 2 of 2 is spent, so 6c closes whatever the tiles still show (QA 16 decision). The lead's round16c tile judgement (above) and QA 17
+§4-5 agree: crowns credible at the stations, the shrub band still card clusters at 3 m, station 5 the one station 6c made measurably worse (frame 3 %
+under, blotchy near-black crowns where the enclosure and sun-path terms stack).
+Residuals, with owners, carried to docs/delivery.md (Phase 6c section) — none is worked before 6b ships; every one is 6b-or-later backlog, and any fix
+that touches the frozen look needs its own entry here first: (1) shrub/reed card STRUCTURE = a denser, smaller, more varied LOD1 card set, EXPORT
+(not another shading term); (2) the stacked darkening overshoots (hero crown p10 0.57x, station 5 under, blotchy crowns) = clamp impint + crownint +
+sun-path and hold the frame at 1.00x, VIEWER; (3) the pale halo around dark crowns = the impostor alpha fringe (premultiply / mip bias), VIEWER;
+(4) far-tree tops opaque where the reference shows sky = atlas alpha at the crown top or a mesh at that distance, BAKE/EXPORT; (5) the lavender far
+impostors at the horizon band (lead's tiles) = the modulation at the horizon, VIEWER; (6) one reed spray several times the reference's size = EXPORT;
+(7) MAT_reeds albedo 1.49x on 0.6 % of card pixels = EXPORT, deliberately left (measured, < 0.3 % on the worst box); (8) resident 1 931.4 MB = 1.61x the
+Gate 1 budget and a 664 MB payload = 6b's tiers; (9) the +3 ms gate = settled by the same-session perf A/B (result appended below); (10) carried from
+6a unchanged: cam03 no deep shade and blurred/banded column concrete at 1 m (materials/export texel budget), cam06 water moiré, flat backdrop blocks and
+faceted backdrop trees (in the Cycles source too), untextured colonnade backdrop walls (N 1.26x), hero reflection cooler/less saturated than Cycles,
+30.9 fps cold at the hero against 45.
+Decision: 6c is closed. Phase 6b starts on the user's three answers (iPhone model; host — the lead recommends Cloudflare Pages + R2 per
+docs/briefs/phase6b_hosting.md; whether the 50 MB tier-0 first look may be lower-resolution). The Gate 5 briefs are written only after those answers.

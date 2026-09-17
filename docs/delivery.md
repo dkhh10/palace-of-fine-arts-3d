@@ -74,3 +74,39 @@ Frame time at 2560x1440, full look: 28.2 ms median (35.5 fps), 279 draws, 4.14 M
 hard-edged dark blob at cam02; two trees (broadleaf_s19, pine_s29) genuinely unlit. 3. Probe-lit surfaces without baked light have no occlusion: cam03 near shade p10 53 vs 17,
 S-colonnade wall flat, backdrop wall 1.26x. 4. Backdrop: untextured mustard blocks and faceted far trees (cam06). 5. Open water beside the reflection: hue 196 vs 145°,
 sat 8.9x, lum 0.75x (reflection lobe vs sky). 6. Column shafts at cam03 smear vertically at 100 %. 7. 35.5 fps, not 45. 8. Walk probe re-run at 30 s per heading owed.
+
+# Phase 6c — the foliage gate (lead, 2026-09-17; CLOSED WITH RESIDUALS by docs/qa_round_17.md and decisions.md "6c CLOSED WITH RESIDUALS")
+## What changed (main at 401e6dd, captured as round16c; branches phase6-bake 784808e, phase6-export edaa437, phase6-viewer a1bf41d)
+- Trees: crown-bent leaf normals and translucency on the near meshes; a 2K impostor atlas with per-prototype irradiance modulation (`impmod=full`) and an
+  enclosure term (`impint 0.90/0.015`) that gives the far crowns a dark interior and a lit rim; far trees switch to mesh at 12 m, near trees at 40 m; a walk-up
+  LOD1 glb (`env_trees_lod1.glb`, 7.6 MB, 25.6-30 k tris per prototype, drawn within 15 m) for the 16 prototypes.
+- Shrubs and reeds: LOD1 card clusters within the walk-in distance (`shrublod`), a Cycles-measured albedo check (shipped albedo 0.87-0.98 of what Cycles uses;
+  `albedo_check.json`), the environment lobe on flat cards cut to 0.3 (`cardenv`/`shrubenv`), crown/card interior terms (`crownint`, `cardint`), `foliagebias 0.8`.
+- Every switch and its shipped default is in web/README.md ("src/foliage.js"); the bare URL boots this look. Nothing outside foliage changed: every round-14/15
+  architecture box is unmoved (hero shade band 0.99x, S-colonnade mid 0.45x, attic sat 0.87x, cam04 coffer 1.02x, N-colonnade wall 1.26x).
+## Measured (round16c; docs/qa_round_17.md)
+| station | round 17 | round 15 | Phase 5 | MAE vs Cycles (full frame, r16b -> r16c) |
+|---|---|---|---|---|
+| 01 hero | 3.78 | 3.72 | 3.67 | 24.79 -> 24.75 |
+| 02 | 3.25 | 3.00 | 2.94 | 20.48 -> 18.68 |
+| 03 | 2.63 | 2.56 | 2.56 | 35.41 -> 34.80 |
+| 04 | 2.88 | 2.88 | 2.81 | 13.08 -> 13.08 |
+| 05 | 2.94 | 2.94 | 3.06 | 20.37 -> 21.32 |
+| 06 | 2.83 | 2.83 | 2.67 | 18.41 -> 18.14 |
+Foliage boxes: shrub bands 0.91-1.47x of the reference (round 15: 1.34-1.70x) with the hard-edge share halved (hero 6.82 -> 3.44 %, ref 1.77); crowns at target
+(cam02 centre/edge 0.393 vs ref 0.364, cam05 range/mean 1.722 vs 1.773); the 3 m walk-in reads as a canopy. Frame time at 2560x1440, cold pass of record:
+32.4 / 37.0 / 35.1 / 22.1 / 32.2 / 34.0 ms (hero 30.9 fps); resident 1 931.4 MB (texture 1 227.5 + render targets 443.8 + geometry 260.0; 1.61x the Gate 1
+budget); load 664.0 MB in 6.74 s; walk clamp 24/24 probes at 30 s above WATER_Z + 0.1 (lowest -0.750 m); name sweep 0 new; bare URL = station-1 preset
+(luma 0.9999x).
+## Known issues (residuals from docs/qa_round_17.md §7 and decisions.md; owners; nothing here is worked before 6b ships)
+1. Shrub and reed STRUCTURE: level, hue and edge softness at the reference, but the cards are broad flat angular blades with ~half the reference's leaf-green
+   share at five boxes (cam03 1.53x at 8 m, hero 1.47x). Owner EXPORT: a denser LOD1 card set (more, smaller, more varied cards per cluster). 2. The darkening
+   overshoots: hero crown p10 0.57x of the reference, station 5 runs 3 % under and is the only station whose MAE rises, some crowns blotchy near-black. Owner
+   VIEWER: clamp the stacked impint + crownint + sun-path darkening, hold the frame at 1.00x. 3. A pale halo around the now-dark crowns (alpha fringe on the
+   impostor cut-out). Owner VIEWER: premultiply / mip bias on the atlas edge. 4. Far-tree tops opaque where the reference shows sky (cam02, cam03). Owner
+   BAKE/EXPORT: atlas alpha at the crown top or a mesh at that distance. 5. Lavender far impostors at the horizon band (station 2 top-left). Owner VIEWER: the
+   modulation at the horizon. 6. One reed spray several times the reference's size (station 2). Owner EXPORT. 7. MAT_reeds albedo 1.49x on 0.6 % of card pixels,
+   measured and left (moves the worst box < 0.3 %). Owner EXPORT. 8. Resident 1 931.4 MB (1.61x budget) and a 664 MB payload: 6b's tiers. 9. Carried from 6a
+   unchanged: cam03 has no deep shade (1.64x) and its column concrete is blurred and banded at 1 m (materials/export texel budget); cam06 water moiré at grazing
+   incidence; backdrop city blocks flat and untextured, backdrop trees faceted (in the Cycles source too); S- and N-colonnade backdrop walls untextured (N 1.26x);
+   hero reflection cooler and less saturated than Cycles, open lagoon a flat teal slab; 30.9 fps cold at the hero against the 45 target.
