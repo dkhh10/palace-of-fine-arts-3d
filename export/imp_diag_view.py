@@ -2,7 +2,8 @@
 frame the shipped atlas holds for the same direction, both pushed through the delivery view transform.
 
     scripts/blender_run.sh 900 -- --background export/out/gate3/gate3_imp.blend --python-exit-code 1 \
-        --python export/imp_diag_view.py -- --proto <name> --col C --row R [--scale 4] [--variants asis,diffuse]
+        --python export/imp_diag_view.py -- --proto <name> --col C --row R [--scale 4] [--variants asis,diffuse] \
+        2>&1 | tee -a renders/logs/imp_diag_view.log       # review r1 finding 3: always tee the run
 
 `asis`   reproduces the Gate 3 bake exactly (the blend's own split-ray world) - if this matches the atlas, the
          encode chain is faithful and the question is what the bake SAW, not how it was written.
@@ -157,8 +158,24 @@ def display_stats(u8, alpha, tag):
 
 
 # ------------------------------------------------------------------ the shipped atlas frame, for comparison
+# Review r1 finding 3: this report used to be written from scratch on every run, so a second run with other
+# variants silently replaced the first and the numbers that carry the verdict survived nowhere. The file is
+# now MERGED into - earlier variants are kept, a re-run of the same variant replaces only itself - and every
+# run is tee'd into renders/logs/ by the caller. The `asis` / `diffuse` headline numbers in
+# docs/decisions.md and README #35 come from the run that was overwritten before this fix; they are marked
+# as such in the README and were not re-spent on the GPU.
+REPORT = g3.OUT / f"impostor_diag_view_{PROTO}.json"
 rep = dict(prototype=PROTO, col=COL, row=ROW, scale=SCALE, spp=SPP, range=RANGE,
            dir_blender=[round(float(c), 4) for c in octa_dir(COL, ROW, imp["grid"])], variants={})
+if REPORT.exists():
+    try:
+        prev = json.loads(REPORT.read_text())
+        if (prev.get("col"), prev.get("row")) == (COL, ROW):
+            rep["variants"].update(prev.get("variants") or {})
+            rep["merged_from_runs"] = (prev.get("merged_from_runs") or 0) + 1
+    except Exception as e:
+        print(f"[diag] existing {REPORT.name} unreadable ({e}) - starting a fresh report")
+rep["runs"] = (rep.get("runs") or [])
 vs = scene.view_settings
 vs.view_transform, vs.look = VIEW["view_transform"], VIEW["look"]
 vs.exposure, vs.gamma = float(VIEW["exposure_ev"]), float(VIEW["gamma"])
@@ -276,6 +293,6 @@ for variant in VARIANTS:
 
 if tmp.exists():
     tmp.unlink()
-out = g3.OUT / f"impostor_diag_view_{PROTO}.json"
-json.dump(rep, open(out, "w"), indent=1)
-print(f"[diag] wrote {out}")
+rep["runs"].append(dict(at=time.strftime("%Y-%m-%dT%H:%M:%S"), variants=list(VARIANTS)))
+json.dump(rep, open(REPORT, "w"), indent=1)
+print(f"[diag] wrote {REPORT} ({len(rep['variants'])} variants: {', '.join(sorted(rep['variants']))})")
