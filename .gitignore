@@ -50,6 +50,9 @@ renders/web/round*_pair_cam0*.png
 renders/web/full/
 renders/web/*_cam0*.png
 renders/web/*_perf1440*.png
+# the bare-URL capture (C4): the full-res PNG is regenerable, the 960 px copy under 960/ is committed
+renders/web/*_bareurl.png
+renders/web/*_walkin*.png
 !renders/web/960/*
 renders/web/round13b_*.png
 renders/web/round13direct_*.png
