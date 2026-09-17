@@ -110,7 +110,11 @@ const fragmentShader = /* glsl */`
 	vec4 sampleFrame( vec2 cell, vec2 f ) { return texture2D( atlas, frameUv( cell, f ) ); }
 
 	void main() {
-		if ( vPfaFade < 0.9995 && pfaHash( gl_FragCoord.xy ) > vPfaFade ) discard;
+		// THE EXACT COMPLEMENT OF THE MESH TEST (round-1 review, blocker 1).  The mesh keeps
+		// { hash <= 1 - t } and this side's vPfaFade IS t, so keeping { hash <= 1 - vPfaFade } here
+		// would keep the SAME set: at mid-fade half the crown drew twice and half showed background.
+		// The impostor must keep exactly what the mesh discards: { hash > 1 - t }.
+		if ( vPfaFade > 0.0005 && pfaHash( gl_FragCoord.xy ) <= 1.0 - vPfaFade ) discard;
 		// manifest.impostors.frame_lookup, verbatim
 		vec3 d = normalize( vDirBlender );
 		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );
@@ -184,7 +188,10 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null } ) {
 	const report = { prototypes: 0, instances: 0, nearInstances: 0, drawCalls: 0, skipped: [], bytes: 0,
 		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0,
-		atlas2k: false, atlas2kMissing: [], modulated: 0 };
+		atlas2k: false, atlas2kMissing: [], modulated: 0,
+		// the atlas geometry that ACTUALLY draws, so the summary can never name the 1K one while the
+		// 2K variant is on screen (round-1 review 5)
+		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
 	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
 	if ( ! far.length ) return { group: null, report };
@@ -228,6 +235,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		const use2k = !! ( v2k && p.albedo2k );
 		if ( atlas2k && ! use2k && ! report.atlas2kMissing.includes( key ) ) report.atlas2kMissing.push( key );
 		const geom = use2k ? v2k : impostors;
+		if ( use2k ) report.drawnGeom = { framePx: geom.framePx, atlasPx: geom.atlasPx, innerPx: geom.innerPx };
 		const uniforms = {
 			atlas: { value: null },
 			range: { value: p.range },
@@ -288,14 +296,18 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		g.setAttribute( 'iNear', new THREE.InstancedBufferAttribute( nearFlag, 1 ) );
 		g.setAttribute( 'iIrr', new THREE.InstancedBufferAttribute( irr, 3 ) );
 		im.userData.pfaImpostor = { prototype: key, instances: list.length, near: nearHere, range: p.range,
-			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ, atlas2k: use2k };
+			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ, atlas2k: use2k,
+			// 6c round 2: gltfpack drops node names, so the id (the billboard name) is the only key that
+			// joins a row of this batch to a placement of the lazily loaded env_trees.glb.
+			ids: list.map( ( t ) => t.id || null ) };
 		group.add( im );
 		report.prototypes ++;
 		report.instances += list.length;
 		report.drawCalls ++;
 		report.bytes += p.bytes || 0;
 
-		if ( use2k ) { report.atlas2k = true; report.bytes += ( p.bytes2k || 0 ) - ( p.bytes || 0 ); }
+		// A manifest with no declared 2K byte count must KEEP the 1K figure, not subtract it (carry 6).
+		if ( use2k ) { report.atlas2k = true; if ( p.bytes2k ) report.bytes += p.bytes2k - ( p.bytes || 0 ); }
 		pending.push( loadTexture( use2k ? p.albedo2k : p.albedo ).then( ( tex ) => {
 			if ( ! tex ) { note( `impostor ${key}: albedo atlas failed to load` ); return; }
 			// The atlas holds LINEAR radiance behind a gamma-2 code, not sRGB: the decode is in the
@@ -328,7 +340,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		note( `impostors: ${report.instances} tree(s) (${report.instances - report.nearInstances} far + ${report.nearInstances} near) `
 			+ `over ${report.prototypes} prototype(s), `
 			+ `${report.drawCalls} draw call(s), ${impostors.grid}x${impostors.grid} octahedral frames `
-			+ `at ${impostors.framePx} px on a ${impostors.atlasPx} px atlas, 3-frame barycentric blend, `
+			+ `at ${report.drawnGeom.framePx} px on a ${report.drawnGeom.atlasPx} px atlas`
+			+ ( report.atlas2k ? ' (the 2K variant, ?imp2k=0 reverts)' : '' ) + ', 3-frame barycentric blend, '
 			+ `alpha test ${ALPHA_TEST}, unlit (the atlas is baked radiance); ${report.textures}/${report.prototypes} atlas(es) loaded, `
 			+ `${( report.bytes / 1048576 ).toFixed( 1 )} MB declared`
 			+ ( report.normalDepthLoaded ? `, ${report.normalDepthLoaded} normal+depth atlas(es) loaded (?impnd=1)`
@@ -339,4 +352,48 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		return report;
 	} );
 	return { group, report };
+}
+
+
+/**
+ * 6c round 2 — the far trees gain a MESH after the impostors were built (env_trees.glb is loaded
+ * lazily, after the first frame).  This flips those placements from "impostor for ever" (iNear = 0)
+ * to "impostor only beyond pfaMeshDist" (iNear = 1) and gives each one the crown centre the MESH
+ * side switches on, so the two dissolves stay exact complements - the same rule the near trees
+ * already follow.  `byId`: billboard name -> { switchCentre: [x,y,z] (three space), irr?: [r,g,b] }.
+ */
+export function activateImpostorMeshes( group, byId, note = () => {} ) {
+	const out = { placements: 0, modulated: 0, batches: 0, unmatched: 0 };
+	if ( ! group || ! byId || ! byId.size ) return out;
+	group.traverse( ( im ) => {
+		const d = im.userData && im.userData.pfaImpostor;
+		if ( ! im.isInstancedMesh || ! d || ! d.ids ) return;
+		const g = im.geometry;
+		const near = g.getAttribute( 'iNear' ), sw = g.getAttribute( 'iSwitch' ), irr = g.getAttribute( 'iIrr' );
+		if ( ! near || ! sw ) return;
+		let touched = 0;
+		d.ids.forEach( ( id, i ) => {
+			const rec = id ? byId.get( id ) : null;
+			if ( ! rec ) return;
+			near.array[ i ] = 1;
+			sw.array[ i * 3 ] = rec.switchCentre[ 0 ];
+			sw.array[ i * 3 + 1 ] = rec.switchCentre[ 1 ];
+			sw.array[ i * 3 + 2 ] = rec.switchCentre[ 2 ];
+			if ( irr && Array.isArray( rec.irr ) && rec.irr.length === 3
+				&& rec.irr.every( ( x ) => isFinite( x ) && x > 0 ) ) {
+				irr.array[ i * 3 ] = rec.irr[ 0 ]; irr.array[ i * 3 + 1 ] = rec.irr[ 1 ]; irr.array[ i * 3 + 2 ] = rec.irr[ 2 ];
+				out.modulated ++;
+			}
+			touched ++; out.placements ++;
+		} );
+		if ( touched ) {
+			near.needsUpdate = true; sw.needsUpdate = true; if ( irr ) irr.needsUpdate = true;
+			d.near += touched; out.batches ++;
+		}
+	} );
+	out.unmatched = byId.size - out.placements;
+	note( `far-tree impostors: ${out.placements} placement(s) over ${out.batches} batch(es) now fade to a MESH `
+		+ `(iNear = 1)${out.modulated ? `, ${out.modulated} re-lit by E_placement / E_bake` : ''}`
+		+ ( out.unmatched ? `; ${out.unmatched} mesh placement(s) matched no impostor row` : '' ) );
+	return out;
 }

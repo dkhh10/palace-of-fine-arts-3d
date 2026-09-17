@@ -209,6 +209,13 @@ try {
 		console.log( `[shot] loading screen after ${wait} ms -> ${lf}` );
 	}
 	await page.waitForFunction( 'window.__pfaReady === true || window.__pfaError', { timeout, polling: 250 } );
+	// 6c round 2: `__pfaReady` is the FIRST FRAME, and the two foliage glbs load after it on purpose.
+	// A scored capture must show the finished scene, so it also waits for `__pfaLazyReady` whenever the
+	// page declares one (an older build does not, and the wait is skipped).
+	if ( await page.evaluate( () => window.__pfaLazyReady !== undefined ) ) {
+		await page.waitForFunction( 'window.__pfaLazyReady === true || window.__pfaError', { timeout, polling: 250 } );
+		console.log( '[shot] lazy foliage loaded (__pfaLazyReady)' );
+	}
 	const err = await page.evaluate( () => window.__pfaError || null );
 	if ( err ) throw new Error( `viewer boot failed:\n${err}` );
 

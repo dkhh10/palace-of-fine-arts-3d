@@ -425,10 +425,16 @@ export function applyVertexIrradiance( scene, gate3, assets, note = () => {}, mo
  *
  * @returns {{wanted:number, nodes:number, rows:number, dark:number, materials:number, missing:string[], errors:string[]}}
  */
-export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = 'auto' ) {
+export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = 'auto', opts = {} ) {
 	const out = { wanted: 0, nodes: 0, rows: 0, dark: 0, materials: 0, missing: [], errors: [], enabled: false };
-	const ii = gate3 && gate3.instanceIrradiance;
-	if ( mode === '0' || ! ii || ! ii.nodes.length ) return out;
+	// 6c round 2: the same binder serves the shrub/reed LOD1 set in its own glb - `block` is
+	// lightmaps.instance_irradiance.lod1, `root` the env_shrubs scene, and the manifest promises the
+	// SAME per-placement rgb in that glb's own row order, so crossing the LOD distance cannot change
+	// a shrub's light.  Nothing else about the binding changes: still per glTF NODE, still segments.
+	const ii = opts.block || ( gate3 && gate3.instanceIrradiance );
+	const scale = opts.scale !== undefined ? opts.scale : ( gate3 && gate3.scale );
+	const label = opts.label || 'gate4 instance irradiance';
+	if ( mode === '0' || ! ii || ! ii.nodes || ! ii.nodes.length ) return out;
 	out.wanted = ii.placements || 0;
 	const byNode = new Map();
 	for ( const n of ii.nodes ) byNode.set( n.gltf_node, n );
@@ -436,8 +442,8 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 	// The node index is an index into ONE glb's `nodes` array, so the search has to be confined to the
 	// glb the manifest joined against (env.glb) - orn.glb has instanced nodes 1..n too, and matching
 	// across files is how the first run "found" 28 nodes for a 25-node block.
-	const root = scene.getObjectByName( `WEB_glb_${ii.glb || 'env'}` );
-	if ( ! root ) { out.errors.push( `no WEB_glb_${ii.glb || 'env'} in the scene` ); note( `gate4 instance irradiance: ${out.errors[ 0 ]}` ); return out; }
+	const root = opts.root || scene.getObjectByName( `WEB_glb_${ii.glb || 'env'}` );
+	if ( ! root ) { out.errors.push( `no WEB_glb_${ii.glb || 'env'} in the scene` ); note( `${label}: ${out.errors[ 0 ]}` ); return out; }
 	const census = [];
 	root.traverse( ( mesh ) => {
 		if ( ! mesh.isMesh ) return;
@@ -489,7 +495,7 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 			// The probe must still reach it: the 7 cov == 0 placements fall back to it, and
 			// `pfaWantsProbeEnv` is what lets applyProbeEnv past its pfaPatched skip.
 			m.userData.pfaWantsProbeEnv = true;
-			patchBakedMaterial( m, { instanceIrradiance: gate3.scale, noEnvDiffuse: false, specularOnlySun: true } );
+			patchBakedMaterial( m, { instanceIrradiance: scale, noEnvDiffuse: false, specularOnlySun: true } );
 			out.materials ++;
 		}
 		out.nodes ++; out.rows += count;
@@ -499,7 +505,7 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 		out.missing.push( String( n.gltf_node ) );
 	out.census = census.join( ' ' );
 	if ( out.errors.length || out.missing.length )
-		note( `gate4 instance irradiance census (glb node:rows in ${root.name}): ${out.census}` );
+		note( `${label} census (glb node:rows in ${root.name}): ${out.census}` );
 	// A node the scene never presented is the SAME failure as a misaligned one, and it is the likelier
 	// of the two: a mesh that gains a second primitive stops being the node object, loses
 	// `pfaGltfNode`, and its placements would revert to the probe with nothing but a console line to
@@ -507,8 +513,8 @@ export function applyInstanceIrradiance( scene, gate3, note = () => {}, mode = '
 	if ( out.missing.length ) out.errors.push( `glb node(s) ${out.missing.join( ', ' )} carry ${ii.placements - out.rows} `
 		+ 'placement(s) the scene never presented - they would silently fall back to the probe' );
 	out.enabled = out.nodes > 0 && ! out.errors.length;
-	if ( out.errors.length ) note( `gate4 instance irradiance FAILED: ${out.errors.join( '; ' )}` );
-	note( `gate4 instance irradiance: ${out.rows}/${ii.placements} placement(s) over ${out.nodes}/${ii.nodes.length} `
+	if ( out.errors.length ) note( `${label} FAILED: ${out.errors.join( '; ' )}` );
+	note( `${label}: ${out.rows}/${ii.placements} placement(s) over ${out.nodes}/${ii.nodes.length} `
 		+ `glb node(s), ${out.materials} material(s) cloned and patched, ${out.dark} with cov == 0 left on the probe`
 		+ ( out.missing.length ? `; NODE(S) NOT FOUND IN THE SCENE: ${out.missing.join( ', ' )}` : '' ) );
 	return out;

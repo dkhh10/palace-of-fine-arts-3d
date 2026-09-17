@@ -30,7 +30,10 @@ import { readCompositor, applyMist, removeMist, makeBloom, parsePost, MIST_NEAR_
 import { buildTestScene } from './testScene.js';
 import { makeTreeBillboards, aimBillboards } from './billboards.js';
 import { buildImpostors } from './impostors.js';
-import { applyFoliage, applyShrubLod, nearTreeImpostorEntries, equirectIntegral, farTreeIrradiance } from './foliage.js';
+import { applyFoliage, applyShrubLod, nearTreeImpostorEntries, equirectIntegral, farTreeIrradiance,
+	keepMeshAlways, shaderErrors } from './foliage.js';
+import { loadFarTrees, loadShrubLod1, loadFarTreeLighting, prototypeEbake, applyFoliageTextures,
+	markShrubLodRows } from './foliageLazy.js';
 import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
@@ -109,6 +112,8 @@ const CFG = {
 	// draws its mesh, beyond it its impostor, with `treefade` metres of dissolve between.  `inf`
 	// (or `never`) keeps every mesh for ever and creates no near-tree impostor at all, which is the
 	// round-15 behaviour and therefore the A/B for anything this pass changes at range.
+	// Every numeric switch below is guarded in applyFoliage (Number.isFinite + a clamp): a typo must
+	// fall back to the default, never reach smoothstep as NaN and erase the canopy (round-1 review 3).
 	leafNormal: qs.has( 'leafnormal' ) ? parseFloat( qs.get( 'leafnormal' ) ) : 0.5,
 	cardNormal: qs.has( 'cardnormal' ) ? parseFloat( qs.get( 'cardnormal' ) ) : 0,   // the shrub/reed cards' bend
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
@@ -116,12 +121,18 @@ const CFG = {
 	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (default 40)
 	treeFade: qs.has( 'treefade' ) ? parseFloat( qs.get( 'treefade' ) ) : 5,
 	imp2k: qs.get( 'imp2k' ) !== '0',                   // the 2K impostor atlas variant on desktop
-	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : 30,   // LOD1 within this many metres
+	// undefined = "not asked", so the manifest's own dist_m still wins; an explicit value always does
+	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : undefined,   // LOD1 within this many metres
+	// 6c round 2, the two lazily loaded glbs and the foliage material textures
+	farTreeLight: ( qs.get( 'fartreelight' ) || 'near' ).toLowerCase(),   // near | probe | 0
+	foliageTex: qs.get( 'foliagetex' ) || '1024',                         // 1024 | 2048 | 0
 	// The impostor atlases were baked with each prototype ALONE under the open sky, so their light is
 	// the sky's.  `impmod` re-lights each placement by E_placement / E_bake: `chroma` (the default)
 	// corrects the COLOUR only, `full` the level too (only honest once E_bake is measured, which the
 	// bake ships per prototype), `0` draws the atlas as baked.  `impbake=r,g,b` overrides E_bake.
-	impMod: ( qs.get( 'impmod' ) || 'chroma' ).toLowerCase(),
+	// null = not asked: `full` becomes the default the day the bake's per-prototype E_bake is in the
+	// manifest, `chroma` until then (the lead's rule, docs/decisions.md 2026-09-17).
+	impMod: qs.has( 'impmod' ) ? String( qs.get( 'impmod' ) ).toLowerCase() : null,
 	impBake: qs.get( 'impbake' ),
 	post: qs.get( 'post' ) || 'all',                  // all | none | mist,bloom,vignette (default all since 6a: the Phase 5 compositor look)
 	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
@@ -260,6 +271,8 @@ async function fetchBuffer( url ) {
 let composer, lutPass, water, manifest, stations, sunLight, billboards = null, pmremTarget = null, postState = null;
 let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
 let foliageReport = null, shrubLodReport = null, skySphereIntegral = null, impModReport = null;
+let farTreeReport = null, shrubLod1Report = null, foliageTexReport = null, farTreeUpdate = null;
+let farTreeLighting = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
 let patchedMaterials = 0, lightmapsApplied = 0;
@@ -591,6 +604,19 @@ async function boot() {
 		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
 	}
 
+	// 6c round 2: the bake's far-tree lighting (a few kB, inline or a sidecar json).  Fetched HERE,
+	// not with the lazy glb, because the impostors are built below and their modulation mode depends
+	// on whether E_bake has been measured.
+	if ( manifest.raw && manifest.raw.trees && manifest.raw.trees.far_mesh ) {
+		try {
+			farTreeLighting = await loadFarTreeLighting( manifest, async ( url ) => {
+				const r = await fetch( url );
+				if ( ! r.ok ) throw new Error( `HTTP ${r.status}` );
+				return r.json();
+			}, note );
+		} catch ( e ) { note( `far-tree lighting: ${e.message}` ); }
+	}
+
 	// Phase 6c item C: the leaf shader, the crown-bent normals and the runtime tree LOD -----------
 	// AFTER the probe pass, because `applyProbeEnv` reads `pfaPatched` and the foliage patch adds its
 	// own chain on top of whatever the shrub/reed cards already carry; BEFORE the impostors, which
@@ -609,9 +635,17 @@ async function boot() {
 			|| renderer.getContext().getParameter( renderer.getContext().SAMPLES ) > 0 );
 		const vi = manifest.gate3 && manifest.gate3.vertexIrradiance;
 		const vertexIrrScale = ( vi && vi.range > 0 && ! vi.rangeConflict ) ? vi.range * manifest.gate3.scale : 0;
+		// 6c round 2, BEFORE the patch: export item D's tinted albedo and per-texel translucency
+		// factor (the glb ships the untinted source card), and the per-row LOD mask for the three
+		// shrub meshes with no LOD1 - a shader attribute has to exist when the program is built.
+		foliageTexReport = await applyFoliageTextures( { scene, manifest, note, mode: CFG.foliageTex,
+			loadTexture: ( url ) => { progress.label = url.split( '/' ).pop();
+				return getKTX2().loadAsync( url, onProgressFor( url ) ); } } );
+		markShrubLodRows( scene, manifest, note );
 		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa, vertexIrrScale,
 			normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
-			trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade } );
+			trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade,
+			trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null } );
 		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
 	}
 
@@ -628,21 +662,38 @@ async function boot() {
 		// same 1/4, so the ratio only needs sun + sky:  E = sunColour * irradiance + integral L_sky dw.
 		// It is an ESTIMATE of the bake rig (which also had a lawn bounce), which is exactly why the
 		// default mode is `chroma`: a wrong magnitude cancels, a wrong colour does not.
+		// The bake's own per-prototype E_bake, when it has shipped: raw manifest units (irradiance/pi),
+		// so it is scaled by lightmaps.scale here to match the near trees' own crown irradiance, which
+		// is a decoded FULL irradiance.  The far trees' side divides raw by raw and never sees this.
+		const protoE = prototypeEbake( farTreeLighting );
 		let eBake = null, eBakeFrom = 'none';
 		if ( CFG.impBake && CFG.impBake.split( ',' ).length === 3 ) {
 			eBake = CFG.impBake.split( ',' ).map( Number ); eBakeFrom = '?impbake';
+		} else if ( protoE ) {
+			const k = manifest.gate3 ? manifest.gate3.scale : Math.PI;
+			eBake = {};
+			for ( const [ name, e ] of Object.entries( protoE ) ) eBake[ name ] = e.map( ( x ) => x * k );
+			eBakeFrom = `the bake, per prototype (${Object.keys( protoE ).length} value(s))`;
 		} else if ( skySphereIntegral && sunLight ) {
 			const sc = sunLight.color.clone().multiplyScalar( sunLight.intensity );
 			eBake = [ sc.r + skySphereIntegral.x, sc.g + skySphereIntegral.y, sc.b + skySphereIntegral.z ];
 			eBakeFrom = 'sun + the sky diffuse integral (estimate)';
 		}
-		const impMode = CFG.impMod === '0' ? '0' : ( CFG.impMod === 'full' ? 'full' : 'chroma' );
+		// ?impmod= wins; with nothing asked the mode is `full` once E_bake is MEASURED and `chroma`
+		// while it is the viewer's own sky estimate (an estimate off by a factor would re-light every
+		// tree by that factor; a chroma-normalised ratio cannot).
+		const impMode = CFG.impMod === '0' ? '0'
+			: ( CFG.impMod === 'full' ? 'full'
+				: ( CFG.impMod === 'chroma' ? 'chroma' : ( protoE ? 'full' : 'chroma' ) ) );
 		const far = farTreeIrradiance( manifest.treesFar, manifest.raw, impMode, note );
 		const treesFar = ( impMode !== '0' && far.byIndex.size )
 			? manifest.treesFar.map( ( t, i ) => ( far.byIndex.has( i ) ? { ...t, irr: far.byIndex.get( i ) } : t ) )
 			: manifest.treesFar;
 		const nearEntries = ( foliageReport && Number.isFinite( foliageReport.meshDist ) )
 			? nearTreeImpostorEntries( foliageReport.units, manifest.gate3.impostors, note, eBake, impMode ) : [];
+		// Round-1 review 4: a unit with no impostor behind it must NOT dissolve at the switch distance.
+		if ( nearEntries.unmatched && nearEntries.unmatched.length )
+			keepMeshAlways( foliageReport, nearEntries.unmatched.map( ( u ) => u.mesh ), note );
 		impModReport = { mode: impMode, eBake, eBakeFrom, far: far.applied, farUnmatched: far.unmatched,
 			near: nearEntries.filter( ( e ) => e.irr ).length };
 		note( `impostor irradiance modulation: mode ${impMode}, E_bake ${eBake ? eBake.map( ( v ) => v.toFixed( 2 ) ).join( '/' ) : 'unknown'} `
@@ -717,7 +768,55 @@ async function boot() {
 		note( `ready in ${loadTimes.total_s.toFixed( 2 )} s: ${MB( progress.loaded )} MB loaded of ${MB( progress.total )} MB planned `
 			+ `(plan ${loadTimes.plan_s.toFixed( 2 )} s, sky ${loadTimes.sky_s.toFixed( 2 )} s, lut ${loadTimes.lut_s.toFixed( 2 )} s, glb ${loadTimes.glb_s.toFixed( 2 )} s)` );
 		animate();
+		loadLazyFoliage();
 	} );
+}
+
+/**
+ * 6c round 2 — the two lazily loaded foliage glbs.  Called AFTER `__pfaReady` and after the first
+ * frame is on screen: nothing in that frame depends on either file, and a capture harness that waits
+ * for `__pfaReady` would otherwise be paying for them.  `__pfaLazyReady` flips when both are done, and
+ * `__pfaInfo()` carries both reports, so a capture can wait for the full scene when it wants it.
+ */
+async function loadLazyFoliage() {
+	const t0 = performance.now();
+	window.__pfaLazyReady = false;
+	const loader = new GLTFLoader( manager ).setKTX2Loader( getKTX2() ).setMeshoptDecoder( MeshoptDecoder );
+	const loadGlb = async ( url ) => {
+		const buf = await fetchBuffer( url );
+		const base = url.slice( 0, url.lastIndexOf( '/' ) + 1 );
+		const gltf = await loader.parseAsync( buf, base );
+		gltf.userData.pfaBytes = buf.byteLength;
+		return gltf;
+	};
+	const common = {
+		scene, manifest, loadGlb, note, sun: sunLight,
+		probeTexture: probeTarget ? probeTarget.texture : null,
+		foliageReport, msaa: foliageReport ? foliageReport.msaa : false,
+		normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
+		trnScale: foliageReport ? foliageReport.trnScale : 1,
+		trnShrubs: foliageReport ? foliageReport.trnShrubs : false,
+		trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null,
+		meshDist: foliageReport ? foliageReport.meshDist : 40,
+		fadeBand: foliageReport ? foliageReport.fadeBand : 5,
+		uvDequant: CFG.uvDequant,
+		scale: manifest.gate3 ? manifest.gate3.scale : Math.PI,
+	};
+	try {
+		farTreeReport = await loadFarTrees( { ...common, impostorGroup,
+			mode: CFG.farTreeLight, impMode: impModReport ? impModReport.mode : 'chroma' } );
+		if ( farTreeReport && farTreeReport.update ) farTreeUpdate = farTreeReport.update;
+	} catch ( e ) { note( `far-tree meshes FAILED: ${e.message}` ); farTreeReport = { error: e.message }; }
+	renderFrame();
+	await new Promise( ( r ) => requestAnimationFrame( r ) );
+	try {
+		shrubLod1Report = await loadShrubLod1( { ...common,
+			dist: shrubLodReport ? shrubLodReport.dist : 30, mode: CFG.shrubLod === 0 ? '0' : 'on' } );
+	} catch ( e ) { note( `shrub/reed LOD1 FAILED: ${e.message}` ); shrubLod1Report = { errors: [ e.message ] }; }
+	if ( farTreeUpdate ) farTreeUpdate( camera );
+	renderFrame();
+	window.__pfaLazyReady = true;
+	note( `lazy foliage done in ${( ( performance.now() - t0 ) / 1000 ).toFixed( 2 )} s` );
 }
 
 async function loadSky() {
@@ -1137,6 +1236,10 @@ function resize() {
 
 const _lastCamPos = new THREE.Vector3( Infinity, Infinity, Infinity );
 function renderFrame() {
+	// 6c round 2: the far-tree meshes are only ever DRAWN inside the switch distance, so a chunk whose
+	// whole bounding sphere is beyond it is hidden before three sees it.  254 instance rows x ~8 k
+	// tris would otherwise be vertex-shaded every frame for fragments the dissolve throws away.
+	if ( farTreeUpdate ) farTreeUpdate( camera );
 	if ( billboards && camera.position.distanceToSquared( _lastCamPos ) > 1e-6 ) {
 		aimBillboards( billboards, camera );
 		_lastCamPos.copy( camera.position );
@@ -1231,7 +1334,20 @@ window.__pfaInfo = () => ( {
 	quality: { preset: CFG.quality, bloomRes: CFG.bloomRes, reflRes: CFG.reflRes, reflSet: CFG.reflSet },
 	impostors: impostorReport && { prototypes: impostorReport.prototypes, instances: impostorReport.instances,
 		drawCalls: impostorReport.drawCalls, textures: impostorReport.textures, bytes: impostorReport.bytes,
-		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes },
+		skipped: impostorReport.skipped.length, missingPrototypes: impostorReport.missingPrototypes,
+		// round-1 review 5: the three 6c defaults the info block was missing
+		atlas2k: impostorReport.atlas2k, atlasGeometry: impostorReport.drawnGeom,
+		nearInstances: impostorReport.nearInstances, modulated: impostorReport.modulated },
+	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
+		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
+		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, drawCalls: farTreeReport.drawCalls,
+		tris: farTreeReport.tris, chunks: farTreeReport.chunks, wall_s: farTreeReport.wall_s,
+		impostors: farTreeReport.impostors, error: farTreeReport.error },
+	shrubLod1: shrubLod1Report,
+	foliageTextures: foliageTexReport && { size: foliageTexReport.size, albedo: foliageTexReport.albedo,
+		translucency: foliageTexReport.translucency, materials: foliageTexReport.materials,
+		missing: foliageTexReport.missing },
+	shaderErrors: shaderErrors.slice(),
 	walk: walk ? { ...walk.state } : null,
 	materialsMode,
 	pbr: pbrReport,

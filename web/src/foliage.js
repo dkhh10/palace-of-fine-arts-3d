@@ -75,6 +75,17 @@ const SPECIES_OF = { MAT_leaf_cypress: 'cypress', MAT_leaf_pine: 'pine',
 const CLUSTER_CELL = 6.0;          // m, the flood-fill grid; > the gap inside one crown, < the gap between two
 const PAIR_MAX_M = 9.0;            // m, how far a trunk cluster may be from its crown
 
+/** Shader-patch failures, surfaced instead of thrown: onBeforeCompile runs at the first render. */
+export const shaderErrors = [];
+export function recordShaderError( where, e ) {
+	const msg = `${where}: ${e && e.message ? e.message : e}`;
+	shaderErrors.push( msg );
+	if ( typeof window !== 'undefined' ) {
+		window.__pfaError = ( window.__pfaError ? `${window.__pfaError}\n` : '' ) + `foliage shader patch — ${msg}`;
+	}
+	return msg;
+}
+
 function once( src, needle, replacement, what ) {
 	const n = src.split( needle ).length - 1;
 	if ( n !== 1 ) throw new Error( `foliage patch "${what}": expected 1 occurrence, found ${n}` );
@@ -198,10 +209,14 @@ const HASH_GLSL = /* glsl */`
  * Patch one foliage / bark MeshStandardMaterial: the LOD dissolve (all tree materials) and the
  * translucent mix (materials with a Phase 5 constant and `frontSub` resolved by the caller).
  */
-function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, band, sign = 1 } ) {
+function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, band, sign = 1,
+	trnMap = null, switchMask = false } ) {
 	if ( mat.userData.pfaFoliage ) return false;
 	const u = {
 		pfaTrnFac: { value: trn },
+		// 6c round 2: export item D's per-texel translucency FACTOR (materials.foliage), which already
+		// includes the Phase 5 constant - `pfaTrnFac` then carries only the ?leaftrn scale.
+		pfaTrnMap: { value: trnMap },
 		pfaTrnTint: { value: new THREE.Vector3( ...tint ) },
 		pfaFrontSub: { value: frontSub },
 		// Per MATERIAL, not shared: the trees switch at `treeMeshDist` and the shrub/reed cards at
@@ -210,21 +225,31 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		pfaSwitchBand: { value: Math.max( band, 1e-3 ) },
 		pfaSwitchSign: { value: sign },
 	};
-	mat.userData.pfaFoliage = { trn, tint, frontSub, fade, dist, band, sign, uniforms: u };
+	mat.userData.pfaFoliage = { trn, tint, frontSub, fade, dist, band, sign, trnMap: !! trnMap, switchMask, uniforms: u };
 	const prev = mat.onBeforeCompile;
 	mat.onBeforeCompile = function ( shader, renderer ) {
 		if ( prev ) prev.call( this, shader, renderer );
+		// The patch below runs at the FIRST RENDER of this material.  A throw here takes the frame
+		// with it and the page never becomes ready, so a failed patch is recorded on __pfaError and
+		// the material simply compiles unpatched - visible, reported, not fatal (round-1 review 9).
+		try {
 		Object.assign( shader.uniforms, u, shared.uniforms );
 		if ( fade ) {
 			shader.vertexShader = once( shader.vertexShader, '#include <common>',
 				'#include <common>\nattribute vec3 pfaCrown;\nuniform float pfaSwitchDist;\nuniform float pfaSwitchBand;\n'
-				+ 'uniform float pfaSwitchSign;\nvarying float vPfaFade;', 'fade attributes (vertex)' );
+				+ 'uniform float pfaSwitchSign;\nvarying float vPfaFade;'
+				+ ( switchMask ? '\nattribute float pfaSwitchOn;' : '' ), 'fade attributes (vertex)' );
 			shader.vertexShader = once( shader.vertexShader, '#include <worldpos_vertex>',
 				'#include <worldpos_vertex>\n\t{\n\t\tvec4 pfaC = vec4( pfaCrown, 1.0 );\n'
 				+ '\t\t#ifdef USE_INSTANCING\n\t\tpfaC = instanceMatrix * pfaC;\n\t\t#endif\n'
 				+ '\t\tvec3 pfaCw = ( modelMatrix * pfaC ).xyz;\n'
 				+ '\t\tfloat pfaT = smoothstep( pfaSwitchDist, pfaSwitchDist + pfaSwitchBand, distance( cameraPosition, pfaCw ) );\n'
-				+ '\t\tvPfaFade = ( pfaSwitchSign > 0.0 ) ? 1.0 - pfaT : pfaT;\n\t}',
+				+ '\t\tvPfaFade = ( pfaSwitchSign > 0.0 ) ? 1.0 - pfaT : pfaT;\n'
+				// 6c round 2: three of the 28 shrub/reed meshes have no LOD1 (manifest shrubs.lod1.not_in_lod1)
+				// and gltfpack merged their single placements INTO a node whose other rows do, so the switch
+				// has to be per ROW there: pfaSwitchOn = 0 means "this placement has no second LOD, always draw".
+				+ ( switchMask ? '\t\tvPfaFade = mix( 1.0, vPfaFade, pfaSwitchOn );\n' : '' )
+				+ '\t}',
 				'fade distance (vertex)' );
 			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
 				`#include <common>\nvarying float vPfaFade;${HASH_GLSL}`, 'fade varying (fragment)' );
@@ -238,21 +263,28 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		if ( trn > 0 ) {
 			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
 				'#include <common>\nuniform float pfaTrnFac;\nuniform vec3 pfaTrnTint;\nuniform float pfaFrontSub;\n'
-				+ 'uniform vec3 pfaSunDir;\nuniform vec3 pfaSunIrr;', 'translucency uniforms' );
+				+ 'uniform vec3 pfaSunDir;\nuniform vec3 pfaSunIrr;'
+				+ ( trnMap ? '\nuniform sampler2D pfaTrnMap;' : '' ), 'translucency uniforms' );
 			shader.fragmentShader = once( shader.fragmentShader, '#include <lights_fragment_end>',
 				'#include <lights_fragment_end>\n\t{\n'
 				+ '\t\tvec3 pfaL = normalize( ( viewMatrix * vec4( pfaSunDir, 0.0 ) ).xyz );\n'
 				+ '\t\tfloat pfaBack = max( dot( - normal, pfaL ), 0.0 );\n'
 				+ '\t\tfloat pfaFront = max( dot( normal, pfaL ), 0.0 );\n'
-				+ '\t\treflectedLight.directDiffuse += pfaSunIrr * RECIPROCAL_PI * diffuseColor.rgb * pfaTrnFac\n'
+				// With the map, `t` is the texel (the Map Range in the Phase 5 node tree is already baked
+				// into it) and pfaTrnFac carries only the ?leaftrn scale; without it, the constant.
+				+ ( trnMap ? '\t\tfloat pfaT = pfaTrnFac * texture2D( pfaTrnMap, vMapUv ).r;\n'
+					: '\t\tfloat pfaT = pfaTrnFac;\n' )
+				+ '\t\treflectedLight.directDiffuse += pfaSunIrr * RECIPROCAL_PI * diffuseColor.rgb * pfaT\n'
 				+ '\t\t\t* ( pfaTrnTint * pfaBack - pfaFrontSub * pfaFront );\n\t}',
 				'translucent mix' );
 		}
+		} catch ( e ) { recordShaderError( `material ${mat.name || '(unnamed)'}`, e ); }
 	};
 	const prevKey = mat.customProgramCacheKey;
 	mat.customProgramCacheKey = function () {
 		// `sign`, `dist` and `band` are UNIFORMS, so they do not belong in the program key.
-		return `${prevKey ? prevKey.call( this ) : ''}|fol:${trn.toFixed( 3 )}:${frontSub}:${fade ? 1 : 0}`;
+		return `${prevKey ? prevKey.call( this ) : ''}|fol:${trn.toFixed( 3 )}:${frontSub}:${fade ? 1 : 0}`
+			+ `:${trnMap ? 1 : 0}:${switchMask ? 1 : 0}`;
 	};
 	mat.needsUpdate = true;
 	return true;
@@ -273,17 +305,26 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
  */
 export function applyFoliage( o ) {
 	const { scene, sun, note = () => {} } = o;
-	const bend = o.normalBlend ?? 0.5;
-	const trnScale = o.trnScale ?? 1.0;
-	const meshDist = o.meshDist ?? 40;
-	const fadeBand = o.fadeBand ?? 5;
+	// Round-1 review 3: a non-numeric or out-of-range switch must fall back to its DEFAULT, never to
+	// NaN - `smoothstep` with a NaN edge returns NaN, `hash > NaN` is false, and the frame loses every
+	// foliage fragment (or keeps every one), which reads as a viewer bug rather than as a bad flag.
+	const num = ( v, dflt, lo = - Infinity, hi = Infinity ) =>
+		( Number.isFinite( v ) ? Math.min( Math.max( v, lo ), hi ) : dflt );
+	const bend = num( o.normalBlend, 0.5, 0, 1 );
+	const trnScale = num( o.trnScale, 1.0, 0, 8 );
+	const meshDist = ( o.meshDist === Infinity ) ? Infinity : num( o.meshDist, 40, 0, 1e6 );
+	const fadeBand = num( o.fadeBand, 5, 0.01, 1e5 );
 	// range x scale: the whole decode of COLOR_0 into scene-linear irradiance, from the manifest.
-	const vertexIrrScale = o.vertexIrrScale ?? 0;
-	const cardBend = o.cardNormalBlend ?? 0;
+	const vertexIrrScale = num( o.vertexIrrScale, 0, 0, 1e9 );
+	const cardBend = num( o.cardNormalBlend, 0, 0, 1 );
 	const report = { geometries: 0, clusters: 0, leafMaterials: 0, cardMaterials: 0, barkMaterials: 0,
 		bent: 0, softened: 0, units: [], normalBlend: bend, trnScale, meshDist, fadeBand,
-		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend };
-	const shared = { uniforms: {
+		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend,
+		trnMapped: 0, byMesh: new Map(), recrown: null };
+	// 6c round 2: a lazily loaded glb (env_trees, env_shrubs) is a SECOND applyFoliage call, and its
+	// materials must share the FIRST call's uniform objects - the impostor dissolve reads the same
+	// pfaMeshDist / pfaFadeBand, and two copies would drift the moment a flag moved one of them.
+	const shared = o.sharedUniforms ? { uniforms: o.sharedUniforms } : { uniforms: {
 		pfaMeshDist: { value: Number.isFinite( meshDist ) ? meshDist : 1e9 },
 		pfaFadeBand: { value: Math.max( fadeBand, 1e-3 ) },
 		pfaSunDir: { value: sun ? sun.position.clone().normalize() : new THREE.Vector3( 0, 1, 0 ) },
@@ -292,6 +333,9 @@ export function applyFoliage( o ) {
 		pfaSunIrr: { value: sun ? sun.color.clone().multiplyScalar( sun.intensity ) : new THREE.Color( 0, 0, 0 ) },
 	} };
 	report.shared = shared;
+	// export item D's per-texel translucency factor, by material name (materials.foliage); the map
+	// already carries the Phase 5 constant, so where one exists the constant is NOT applied again.
+	const trnMaps = o.trnMaps || {};
 
 	const cache = new Map();          // geometry uuid -> its clustering
 	const seenMat = new Set();
@@ -305,6 +349,11 @@ export function applyFoliage( o ) {
 	} );
 
 	for ( const { mesh, mats } of meshes ) {
+		// mesh NAME -> the materials whose switch uniform that mesh obeys, so a caller that finds a
+		// tree with no impostor behind it can put exactly those materials back on "always mesh".
+		const byMesh = report.byMesh.get( mesh.name ) || [];
+		for ( const m of mats ) if ( m && ! byMesh.includes( m ) ) byMesh.push( m );
+		report.byMesh.set( mesh.name, byMesh );
 		const foliage = mats.some( ( x ) => x && isFoliage( x.name ) );
 		// THE SHRUB / REED CARDS ARE NOT BENT BY DEFAULT, and the reason is what their shader does
 		// with a normal.  Their diffuse is one baked irradiance per placement added with NO cosine,
@@ -330,9 +379,16 @@ export function applyFoliage( o ) {
 			// `specularOnlySun` (the shrub/reed patch) has already removed it.
 			const specOnly = !! ( mat.userData.pfaPatched && mat.userData.pfaPatched.specularOnlySun );
 			const wantTrn = p5 && ( leaf || ( card && o.trnShrubs ) );
-			const trn = wantTrn ? p5.trn * trnScale : 0;
+			const tmap = wantTrn ? ( trnMaps[ mat.name ] || null ) : null;
+			// With the map the factor IS the texel (Map Range baked in), so the constant is not
+			// multiplied in a second time; `trnScale` (?leaftrn=) still scales both paths.
+			const trn = wantTrn ? ( tmap ? trnScale : p5.trn * trnScale ) : 0;
+			if ( tmap ) report.trnMapped ++;
 			patchFoliageMaterial( mat, {
-				shared, trn, tint: p5 ? p5.tint : [ 1, 1, 1 ],
+				shared, trn, tint: ( tmap && tmap.userData && tmap.userData.pfaTint ) || ( p5 ? p5.tint : [ 1, 1, 1 ] ),
+				trnMap: tmap,
+				// per ROW where the geometry says so (the three shrub meshes with no LOD1)
+				switchMask: !! ( mesh.geometry.attributes && mesh.geometry.attributes.pfaSwitchOn ),
 				frontSub: specOnly ? 0 : 1, fade: true,
 				// The trees switch to their impostor at `meshDist`; the shrub/reed cards have no
 				// second LOD until export item E lands, so they are patched with the SAME shader and
@@ -367,6 +423,7 @@ export function applyFoliage( o ) {
 				const cm = cl.colourMean;
 				const rec = { centre, minY: box.min.y, maxY: box.max.y, width: Math.max( size.x, size.z ),
 					mesh: mesh.name, instance: i, material: leafMat ? leafMat.name : null,
+					geo: mesh.geometry, cluster: c, mtx: mtx.clone(), barkOnly,
 					// decoded with the ONE global range the manifest declares x lightmaps.scale
 					irradiance: ( cm && vertexIrrScale > 0 )
 						? [ cm[ c * 3 ] * vertexIrrScale, cm[ c * 3 + 1 ] * vertexIrrScale, cm[ c * 3 + 2 ] * vertexIrrScale ]
@@ -390,6 +447,45 @@ export function applyFoliage( o ) {
 			trunkDist_m: best ? bestD : null, irradiance: c.irradiance,
 		} );
 	}
+	// ROUND-1 REVIEW 2 — the trunk must cross the switch distance at the same frame as its crown.
+	// The bark cluster's own centre sits several metres BELOW the crown centre the impostor's iSwitch
+	// uses, so a bark-only mesh dissolved at a different distance from the canopy above it.  The
+	// pairing already exists (PAIR_MAX_M); here it is run the other way round and the crown's centre
+	// is written back into the BARK geometry's pfaCrown, in that geometry's own local space.
+	// One instance is enough: a tree is rigid, so crown - trunk is the same offset in every row.
+	{
+		const rc = { clusters: 0, unpaired: 0, maxMove_m: 0 };
+		const done = new Set(), inv = new THREE.Matrix4(), local = new THREE.Vector3();
+		for ( const t of trunks ) {
+			if ( ! t.barkOnly ) continue;
+			const k = `${t.geo.uuid}:${t.cluster}`;
+			if ( done.has( k ) ) continue;
+			done.add( k );
+			let best = null, bestD = PAIR_MAX_M;
+			for ( const c of crowns ) {
+				const d = Math.hypot( c.centre.x - t.centre.x, c.centre.z - t.centre.z );
+				if ( d < bestD ) { bestD = d; best = c; }
+			}
+			if ( ! best ) { rc.unpaired ++; continue; }
+			inv.copy( t.mtx ).invert();
+			local.copy( best.centre ).applyMatrix4( inv );
+			const cl = cache.get( t.geo.uuid ), attr = t.geo.getAttribute( 'pfaCrown' );
+			if ( ! cl || ! attr ) { rc.unpaired ++; continue; }
+			for ( let v = 0; v < cl.ids.length; v ++ ) {
+				if ( cl.ids[ v ] !== t.cluster ) continue;
+				attr.array[ v * 3 ] = local.x; attr.array[ v * 3 + 1 ] = local.y; attr.array[ v * 3 + 2 ] = local.z;
+			}
+			attr.needsUpdate = true;
+			rc.clusters ++;
+			rc.maxMove_m = Math.max( rc.maxMove_m, best.centre.distanceTo( t.centre ) );
+		}
+		report.recrown = rc;
+		if ( rc.clusters || rc.unpaired )
+			note( `foliage: ${rc.clusters} bark cluster(s) re-crowned so trunk and canopy cross the LOD distance `
+				+ `together (max move ${rc.maxMove_m.toFixed( 2 )} m)`
+				+ ( rc.unpaired ? `; ${rc.unpaired} found no crown within ${PAIR_MAX_M} m and keep their own centre` : '' ) );
+	}
+
 	note( `foliage: ${report.geometries} geometr(ies) clustered into ${report.clusters} crown(s), `
 		+ `normals bent ${bend.toFixed( 2 )} toward the crown centre on ${report.bent} mesh(es) `
 		+ `(shrub/reed cards at ${cardBend.toFixed( 2 )}: the normal only drives their specular); `
@@ -415,15 +511,19 @@ export function applyFoliage( o ) {
  * Both are joined through `mesh.userData.pfaGltfNode`, exactly as the instance irradiance is, and a
  * node the scene does not present is reported, never silently skipped.
  */
-export function applyShrubLod( { scene, manifest, note = () => {}, dist = 30 } ) {
-	const out = { dist, lod1: 0, lod2: 0, missing: [], source: null };
+export function applyShrubLod( { scene, manifest, note = () => {}, dist } ) {
+	// `undefined` is "the caller did not ask", so an explicit ?shrublod=30 is still an override and
+	// any explicit value still beats the manifest's own dist_m (round-1 review 9).
+	const asked = Number.isFinite( dist );
+	const out = { dist: asked ? dist : 30, lod1: 0, lod2: 0, missing: [], source: null, asked };
+	dist = out.dist;
 	const raw = ( manifest && manifest.raw ) || {};
 	const ii = ( manifest && manifest.gate3 && manifest.gate3.instanceIrradiance ) || null;
 	const lod1 = new Set(), lod2 = new Set();
 	if ( raw.shrub_lod && ( raw.shrub_lod.lod1_nodes || raw.shrub_lod.lod2_nodes ) ) {
 		( raw.shrub_lod.lod1_nodes || [] ).forEach( ( n ) => lod1.add( n ) );
 		( raw.shrub_lod.lod2_nodes || [] ).forEach( ( n ) => lod2.add( n ) );
-		if ( typeof raw.shrub_lod.dist_m === 'number' && dist === 30 ) out.dist = dist = raw.shrub_lod.dist_m;
+		if ( typeof raw.shrub_lod.dist_m === 'number' && ! asked ) out.dist = dist = raw.shrub_lod.dist_m;
 		out.source = 'shrub_lod';
 	} else if ( ii && ii.nodes && ii.nodes.some( ( n ) => n.lod ) ) {
 		for ( const n of ii.nodes ) {
@@ -499,11 +599,17 @@ export function equirectIntegral( texture ) {
  *             own estimate (sun + sky integral), because an estimate that is off by a factor would
  *             otherwise re-light every far tree by that factor.
  */
-export function irradianceRatio( ePlacement, eBake, mode = 'chroma' ) {
+export const RATIO_CLAMP = 4.0;        // the lead's ceiling (docs/decisions.md 2026-09-17)
+
+export function irradianceRatio( ePlacement, eBake, mode = 'chroma', clamp = RATIO_CLAMP ) {
 	if ( ! ePlacement || ! eBake ) return null;
+	// "fall back to 1 where E_bake has a zero channel" - a zero channel is not a small number, it is
+	// no measurement at all, and 0/0 would otherwise re-light that channel by an arbitrary factor.
 	const r = [ 0, 1, 2 ].map( ( i ) => ( eBake[ i ] > 1e-9 ? ePlacement[ i ] / eBake[ i ] : 1 ) );
 	if ( ! r.every( ( x ) => isFinite( x ) && x > 0 ) ) return null;
-	if ( mode !== 'chroma' ) return r;
+	// The ceiling applies to the RATIO, before the chroma normalisation: a placement the bake measured
+	// in deep shade divided by a nursery under the open sky can otherwise run away.
+	if ( mode !== 'chroma' ) return r.map( ( x ) => Math.min( x, clamp ) );
 	const lum = 0.2126 * r[ 0 ] + 0.7152 * r[ 1 ] + 0.0722 * r[ 2 ];
 	return lum > 1e-9 ? r.map( ( x ) => x / lum ) : null;
 }
@@ -550,12 +656,16 @@ export function farTreeIrradiance( treesFar, raw, mode, note = () => {} ) {
  */
 export function nearTreeImpostorEntries( units, impostors, note = () => {}, eBake = null, mode = 'chroma' ) {
 	const out = [], chosen = {};
-	if ( ! impostors || ! impostors.prototypes ) return out;
+	// Round-1 review 4: the mesh fade is a per-MATERIAL uniform, so a unit that matches no prototype
+	// still dissolves at the switch distance with NOTHING behind it.  Every such unit's mesh is
+	// collected here and the caller puts those materials back on "always mesh".
+	out.unmatched = [];
+	if ( ! impostors || ! impostors.prototypes ) { out.unmatched = units.slice(); return out; }
 	const protos = Object.entries( impostors.prototypes );
 	for ( const u of units ) {
-		if ( ! u.species ) continue;
+		if ( ! u.species ) { out.unmatched.push( u ); continue; }
 		const cands = protos.filter( ( [ k ] ) => k.toLowerCase().includes( u.species ) );
-		if ( ! cands.length ) continue;
+		if ( ! cands.length ) { out.unmatched.push( u ); continue; }
 		const height = Math.max( u.topY - u.baseY, 0.1 );
 		const aspect = u.width / height;
 		let best = null, bestE = Infinity;
@@ -564,7 +674,7 @@ export function nearTreeImpostorEntries( units, impostors, note = () => {}, eBak
 			const e = Math.abs( Math.log( ( 2 * p.radius / p.heightAboveBase ) / aspect ) );
 			if ( e < bestE ) { bestE = e; best = k; }
 		}
-		if ( ! best ) continue;
+		if ( ! best ) { out.unmatched.push( u ); continue; }
 		chosen[ best ] = ( chosen[ best ] || 0 ) + 1;
 		out.push( {
 			prototype: best, id: `near_${u.mesh}_${u.instance}_${out.length}`, height,
@@ -578,6 +688,29 @@ export function nearTreeImpostorEntries( units, impostors, note = () => {}, eBak
 		} );
 	}
 	note( `near-tree impostors: ${out.length}/${units.length} unit(s) matched a prototype by species + aspect `
-		+ `(${Object.entries( chosen ).map( ( [ k, v ] ) => `${k.replace( /^ENV_tree_|_LOD1$/g, '' )} x${v}` ).join( ', ' )})` );
+		+ `(${Object.entries( chosen ).map( ( [ k, v ] ) => `${k.replace( /^ENV_tree_|_LOD1$/g, '' )} x${v}` ).join( ', ' )})`
+		+ ( out.unmatched.length ? `; ${out.unmatched.length} unit(s) matched NOTHING and keep their mesh at every distance` : '' ) );
 	return out;
+}
+
+
+/**
+ * Round-1 review 4 — put the materials of these meshes back on "always draw the mesh" (an infinite
+ * switch distance), because no impostor was built behind them.  Returns the number of materials moved.
+ */
+export function keepMeshAlways( report, meshNames, note = () => {} ) {
+	if ( ! report || ! report.byMesh || ! meshNames || ! meshNames.length ) return 0;
+	const seen = new Set();
+	let n = 0;
+	for ( const name of new Set( meshNames ) ) {
+		for ( const mat of report.byMesh.get( name ) || [] ) {
+			const f = mat && mat.userData.pfaFoliage;
+			if ( ! f || seen.has( mat.uuid ) ) continue;
+			seen.add( mat.uuid );
+			f.uniforms.pfaSwitchDist.value = 1e9; f.dist = Infinity;
+			n ++;
+		}
+	}
+	if ( n ) note( `foliage: ${n} material(s) kept on the mesh at every distance - their tree(s) have no impostor to fade into` );
+	return n;
 }
