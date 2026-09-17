@@ -48,7 +48,7 @@ from pathlib import Path
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gate0_common as g0  # noqa: E402
@@ -63,6 +63,15 @@ CARD_SCALE_MAX = 1.6     # 1/sqrt(keep) capped: these meshes are seen from ~3 m,
 GLTF_NAME = "env_trees"
 CROWN_TOP_TOL_REL = 0.08   # LOD2 crown top vs the impostor quad's top, as a fraction of the tallest far tree
 PLACE_TOL_M = 0.001        # exported glTF node translation vs to_gltf(trunk_base), per row
+ANCHOR_TOL_M = 0.02        # reconstructed prototype bbox/radius vs the manifest's own impostor numbers
+# WHICH CARDS THE THINNING KEEPS. This is part of the vertex-AO contract, not a style choice: the bake
+# computes one AO value per vertex of the mesh THIS script built, addressed by index, so changing the
+# surviving subset silently re-points every value. `stride` is correct (review item 3: `block` leaves bald
+# branches); `block` is what out/gate3/trees_far/vertex_ao.npz was baked against. Flipping this to `stride`
+# REQUIRES the 16 AO jobs to be re-baked - the COLOR_0 attach below refuses the mismatch rather than
+# shipping trees lit by another vertex's occlusion.
+CARD_SELECT = "block"      # "stride" | "block"
+
 
 
 def to_gltf(loc):
@@ -177,12 +186,13 @@ def thin_and_grow(me, target_tris, scale_max):
     area_before = sum(f.calc_area() for c in cards for f in c)
     drop, kept = [], []
     for i, c in enumerate(cards):
-        # STRIDE, not `i % 1000`: the components come back in bmesh order, which is broadly spatial, so
-        # `(i % 1000) >= keep_pct` keeps the first keep_pct of every run of 1000 - one contiguous block of
+        # STRIDE vs BLOCK (CARD_SELECT). The components come back in bmesh order, which is broadly spatial,
+        # so `(i % 1000) >= keep_pct` keeps the first keep_pct of every run of 1000 - one contiguous block of
         # foliage kept and the rest of the run stripped, i.e. bald branches wherever a run boundary falls
-        # (visible at 18-31 % keep, which is where the big crowns land). 997 is coprime with 1000, so this is
-        # a bijection mod 1000: exactly the same number of cards survive, scattered through the crown.
-        if (i * 997) % 1000 >= keep_pct:
+        # (visible at 18-31 % keep, which is where the big crowns land). 997 is coprime with 1000, so the
+        # stride is a bijection mod 1000: exactly as many cards survive, scattered through the crown.
+        k = (i * 997) % 1000 if CARD_SELECT == "stride" else i % 1000
+        if k >= keep_pct:
             drop.extend(c)
         else:
             kept.append(c)
@@ -204,7 +214,7 @@ def thin_and_grow(me, target_tris, scale_max):
     bm.to_mesh(me)
     bm.free()
     me.update()
-    return dict(cards_before=len(cards), cards_kept=len(kept),
+    return dict(card_select=CARD_SELECT, cards_before=len(cards), cards_kept=len(kept),
                 keep_fraction=round(keep_fraction, 4), card_scale=round(scale, 4),
                 leaf_area_m2_before=round(float(area_before), 4),
                 leaf_area_m2_after=round(float(area_after), 4),
@@ -274,6 +284,42 @@ def main():
         src = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
         src.name = f"EXPM_treefar_{p}_src"
         src.transform(ob.matrix_world)          # prototype world space: z = 0 is the trunk-base plane
+        # ---- THE ANCHOR. `src.transform(ob.matrix_world)` leaves the mesh at the prototype's own WORLD
+        # position (x ~ -430, y ~ -570 for the s19 broadleaf). Placing it at `location = trunk_base` then
+        # ADDS the placement on top of that, which put every far tree ~300 m off its trunk. Only z looked
+        # right, because the prototype's own z = 0 already IS the base plane, which is why the crown-top
+        # assert passed. The mesh is therefore re-anchored below so that the point the impostor rotates
+        # about maps to the mesh origin, and `location = trunk_base` then means what it says.
+        #
+        # Which point is that? manifest `impostors.placement`: "the quad is a screen-facing square of side
+        # 2*radius_m*s centred at trunk_base + (0,0, centre_z_m*s)" and both heights are measured from the
+        # prototype's own z = 0. So the axis is the prototype's BBOX XY CENTRE at z = 0. That is not assumed:
+        # radius_m is reproduced below from the bbox as hypot(half the XY diagonal, the greater z offset from
+        # centre_z_m) and asserted against the manifest's own number for all 16 prototypes.
+        sco = np.array([list(v.co) for v in src.vertices], dtype=np.float64)
+        slo, shi = sco.min(axis=0), sco.max(axis=0)
+        anchor = Vector(((slo[0] + shi[0]) * 0.5, (slo[1] + shi[1]) * 0.5, 0.0))
+        ref0 = imp["prototypes"][p]
+        half_xy = math.hypot((shi[0] - slo[0]) * 0.5, (shi[1] - slo[1]) * 0.5)
+        cz = float(ref0["centre_z_m"])
+        r_calc = math.hypot(half_xy, max(abs(float(shi[2]) - cz), abs(float(slo[2]) - cz)))
+        anchor_check = dict(
+            anchor=[round(float(v), 4) for v in anchor],
+            bbox_m=[round(float(shi[0] - slo[0]), 4), round(float(shi[1] - slo[1]), 4),
+                    round(float(shi[2] - slo[2]), 4)],
+            manifest_bbox_m=ref0["bbox_m"], radius_m=round(r_calc, 4),
+            manifest_radius_m=ref0["radius_m"], base_z_m=round(float(slo[2]), 4),
+            manifest_base_z_m=ref0["base_z_m"],
+            rule="anchor = (bbox XY centre, z = 0); radius reproduced as hypot(half the XY diagonal, the "
+                 "greater |z - centre_z_m|) and asserted against the manifest")
+        for key, got, wantv in (("bbox_m[0]", float(shi[0] - slo[0]), ref0["bbox_m"][0]),
+                                ("bbox_m[1]", float(shi[1] - slo[1]), ref0["bbox_m"][1]),
+                                ("radius_m", r_calc, float(ref0["radius_m"])),
+                                ("base_z_m", float(slo[2]), float(ref0["base_z_m"]))):
+            assert abs(got - wantv) < ANCHOR_TOL_M, (
+                f"{p}: {key} reconstructed as {got:.4f} m, the impostor bake recorded {wantv:.4f} m. The "
+                f"anchor this export places on is NOT the point the impostor rotates about, so the mesh and "
+                f"the impostor would not land in the same place.")
         materials = [m for m in src.materials]
         branch, cards, st = split_cards(src)
         branch_target = int(min(BRANCH_MAX, max(BRANCH_MIN,
@@ -283,6 +329,10 @@ def main():
         card_budget = max(0, TRI_TARGET - branch_tris)
         cst = thin_and_grow(cards, card_budget, CARD_SCALE_MAX)
         me = join(branch, cards, f"EXPM_treefar_{p}", materials)
+        # the mesh origin becomes the impostor's own axis at the trunk-base plane, so a placement is exactly
+        # `location = trunk_base, scale = s` - and the EXPORTED node translation is then to_gltf(trunk_base)
+        # verbatim, which is what the per-row assert after the glTF write checks.
+        me.transform(Matrix.Translation(-anchor))
         for d in (src, branch, cards):
             bpy.data.meshes.remove(d)
         co = np.array([list(v.co) for v in me.vertices], dtype=np.float64)
@@ -297,6 +347,7 @@ def main():
              f"{ref['height_above_base_m']:.3f} m - the two would not crossfade")
         assert tris_of(me) <= TRI_TARGET * 1.05, f"{p}: {tris_of(me)} tris over the {TRI_TARGET} target"
         protos_out[p] = dict(
+            anchor_check=anchor_check,
             mesh=me.name, tris=tris_of(me), verts=int(co.shape[0]),
             materials=[m.name for m in me.materials],
             uv_layers=[u.name for u in me.uv_layers],
@@ -342,6 +393,37 @@ def main():
                                scale=round(s, 6), height_m=row["height_m"],
                                walk_dist_m=row["walk_dist_m"]))
     assert len(placements) == len(far) == 127, f"{len(placements)} placements, expected 127"
+
+    # ---- THE PLACED MESH, IN WORLD SPACE, AGAINST THE IMPOSTOR QUAD (per row).
+    # This is the check the export did not have: `no.location` was right all along, but the mesh under it
+    # carried the prototype's own world position, so the tree DREW ~300 m away while every assert passed.
+    # Nothing here is derived from `no.location`; it is the evaluated world bounding box of the geometry.
+    bpy.context.view_layer.update()
+    worst_xy, worst_xy_row, worst_top, worst_top_row = 0.0, None, 0.0, None
+    for pl, row in zip(placements, far):
+        no = bpy.data.objects[pl["object"]]
+        cs = [no.matrix_world @ Vector(c) for c in no.bound_box]
+        bx = [min(c[k] for c in cs) for k in range(3)], [max(c[k] for c in cs) for k in range(3)]
+        tb = [float(v) for v in row["trunk_base"]]
+        # (1) the crown sits over its trunk: the drawn XY centre against trunk_base, tolerated at the
+        #     impostor quad's own half-width so a tree can lean but cannot be in another postcode.
+        cx, cy = (bx[0][0] + bx[1][0]) * 0.5, (bx[0][1] + bx[1][1]) * 0.5
+        dxy = math.hypot(cx - tb[0], cy - tb[1])
+        quad_r = float(imp["prototypes"][pl["prototype"]]["radius_m"]) * pl["scale"]
+        assert dxy <= quad_r, (
+            f"{pl['object']}: the placed mesh's XY centre is {dxy:.3f} m from trunk_base "
+            f"{tb[:2]}, outside its own impostor quad (radius {quad_r:.3f} m). The mesh is anchored "
+            f"somewhere other than the point the impostor rotates about.")
+        # (2) the crown top against the impostor quad's top, measured on the drawn geometry
+        dtop = abs(float(bx[1][2]) - (tb[2] + float(row["height_m"])))
+        if dxy > worst_xy:
+            worst_xy, worst_xy_row = dxy, pl["object"]
+        if dtop > worst_top:
+            worst_top, worst_top_row = dtop, pl["object"]
+        pl["placed_bbox_min"] = [round(float(v), 4) for v in bx[0]]
+        pl["placed_bbox_max"] = [round(float(v), 4) for v in bx[1]]
+        pl["placed_xy_offset_m"] = round(dxy, 4)
+        pl["placed_top_delta_m"] = round(dtop, 4)
     tallest = max(float(r["height_m"]) for r in far)
     assert worst_dev < CROWN_TOP_TOL_REL * tallest, \
         f"worst crown-top deviation {worst_dev:.3f} m over {CROWN_TOP_TOL_REL:.0%} of {tallest:.1f} m"
@@ -358,6 +440,14 @@ def main():
         crown_top_note="the LOD2 crown top against the impostor quad's top (trunk_base.z + height_m): the "
                        "card thinning takes or grows the topmost card, so the two silhouettes differ by "
                        "this much where they crossfade",
+        placed_mesh_check=dict(
+            rule="per row, on the EVALUATED world bounding box of the placed mesh (not on no.location): "
+                 "the drawn XY centre is within the row's own impostor quad radius (radius_m * s) of "
+                 "trunk_base, and the drawn top is measured against trunk_base.z + height_m",
+            worst_xy_offset_m=round(worst_xy, 4), worst_xy_row=worst_xy_row,
+            worst_top_delta_m=round(worst_top, 4), worst_top_row=worst_top_row,
+            why="the round-1 export placed a mesh that carried the prototype's own world position on top of "
+                "trunk_base, so every far tree drew ~300 m away while every assert passed"),
         tol_rel=CROWN_TOP_TOL_REL, rows=len(placements))
 
     # ---------------------------------------------------------------- COLOR_0 (item B's vertex AO)
@@ -366,6 +456,23 @@ def main():
                              g0.MAIN_ROOT / "export/out/gate3/trees_far/vertex_ao.npz") if q.exists()), None)
     ao_rep = {}
     if ao_p is not None:
+        # The AO is addressed BY VERTEX INDEX, so it is only valid for the exact mesh the hand-off blend
+        # carried. `CARD_SELECT` decides WHICH leaf cards survive, so a change there re-points every value
+        # onto a different vertex - and because the stride keeps the same NUMBER of cards, the shape check
+        # below would not catch it. Pin it against the hand-off that produced this npz: topology.json's own
+        # `card_select`, defaulting to "block" for the round-1 hand-off, which predates the field.
+        prev_p = next((q for q in (OUT3 / "topology.json",
+                                   g0.MAIN_ROOT / "export/out/gate3/trees_far/topology.json")
+                       if q.exists()), None)
+        prev_sel = "block"
+        if prev_p is not None:
+            prev_sel = (json.loads(prev_p.read_text()) or {}).get("card_select", "block")
+        assert prev_sel == CARD_SELECT, (
+            f"{ao_p.name} was baked against the hand-off built with CARD_SELECT={prev_sel!r}, this run uses "
+            f"{CARD_SELECT!r}. The thinning keeps a DIFFERENT set of leaf cards, so every AO value would "
+            f"land on a different vertex - and the two keep the same card COUNT, so the shape check below "
+            f"cannot see it. Re-bake the 16 vertex-AO jobs against the new trees_far_lod2.blend, or put "
+            f"CARD_SELECT back to {prev_sel!r}.")
         z = np.load(str(ao_p))
         dts = sorted({str(np.asarray(z[f]).dtype) for f in z.files})
         assert dts == ["float32"], f"{ao_p.name} is {dts}, the contract is float32 (gltf_gate1.py's rule)"
@@ -385,7 +492,7 @@ def main():
             me.update()
             ao_rep[mn] = dict(verts=int(lin.shape[0]), range=rng, encode="gamma2",
                               linear_mean=round(float(lin.mean()), 6), code_mean=round(float(code.mean()), 6))
-        rep["color0"] = dict(source=str(ao_p), range=rng, meshes=ao_rep,
+        rep["color0"] = dict(source=str(ao_p), range=rng, meshes=ao_rep, card_select=CARD_SELECT,
                              encode="COLOR_0 = sqrt(linear / range); viewer decodes linear = COLOR_0^2 * range")
     else:
         rep["color0"] = dict(source=None, note="out/gate3/trees_far/vertex_ao.npz (item B) not present yet: "
@@ -508,7 +615,10 @@ def main():
                     encode="the export writes COLOR_0 = sqrt(linear / range) at one shared range over all "
                            "16 meshes and packs env_trees.glb with -vc 16"),
                 placement=rep["placement_check"],
-                tri_target=TRI_TARGET, card_scale_max=CARD_SCALE_MAX,
+                tri_target=TRI_TARGET, card_scale_max=CARD_SCALE_MAX, card_select=CARD_SELECT,
+                card_select_note="which leaf cards the thinning keeps. The vertex AO is addressed by vertex "
+                                 "index, so an npz baked against this blend is only valid while this value "
+                                 "is unchanged; export/trees_far.py refuses to attach across a change.",
                 lod2_objects_rejected=rejected,
                 prototypes={k: {kk: v[kk] for kk in
                                 ("mesh", "tris", "verts", "materials", "uv_layers", "bbox_min", "bbox_max",

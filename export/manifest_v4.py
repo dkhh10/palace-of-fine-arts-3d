@@ -41,6 +41,58 @@ def find(name):
 IRR_SCHEMAS = ("pfa-phase6/gate4-instance-irradiance/1", "pfa-phase6/gate4-instance-irradiance/2")
 
 
+def trees_lighting_block(tf):
+    """`trees.far_mesh.lighting`: the far trees' per-placement irradiance and, for the IMPOSTORS, the
+    per-prototype `E_bake` the atlas frame is divided by.
+
+    The bake engineer's `out/gate3/trees_far/instance_irradiance.json` (schema /2). Two consumers, and they
+    are not the same thing:
+      * the far-tree MESH takes COLOR_0 (the vertex AO in the glb) times this file's per-placement `rgb`;
+      * the IMPOSTOR beyond `treeMeshDist` is `atlas_frame * (E_placement / E_bake)` per channel
+        (decisions.md 2026-09-17): the atlas was baked with each prototype alone under the whole unoccluded
+        sky, which is where its blue cast comes from.
+    BOTH SIDES OF THAT RATIO ARE RAW. `lightmaps.scale` (pi) is applied to NEITHER - scaling only the
+    numerator would make every impostor pi times too bright. This writer therefore copies the numbers
+    through verbatim and does not rescale, round or re-order them.
+    """
+    ip = next((q for q in (g3.OUT / "trees_far" / "instance_irradiance.json",
+                           g3.MAIN_ROOT / "export/out/gate3/trees_far/instance_irradiance.json")
+               if q.exists()), None)
+    if ip is None:
+        return dict(present=False,
+                    note="out/gate3/trees_far/instance_irradiance.json not synced yet (bake branch)")
+    irr = json.loads(ip.read_text())
+    assert irr.get("schema") in IRR_SCHEMAS, \
+        f"trees_far irr schema {irr.get('schema')!r}, expected one of {sorted(IRR_SCHEMAS)}"
+    rows = {pl["object"]: pl for m in irr["meshes"].values() for pl in m["placements"]}
+    per, missing, worst = [], [], 0.0
+    for pl in tf["placements"]:
+        r = rows.get(pl["object"])
+        if r is None:
+            missing.append(pl["object"])
+            continue
+        # the bake keys on WORLD TRANSLATION and carries the object name only as a label; assert the two
+        # agree so a re-baked file in a different order cannot be joined by name alone.
+        worst = max(worst, max(abs(float(a_) - float(b_)) for a_, b_ in zip(r["loc"], pl["loc"])))
+        per.append(dict(index=pl["index"], object=pl["object"], prototype=pl["prototype"],
+                        loc=pl["loc"], rgb=r["rgb"], cov=r.get("cov")))
+    assert not missing, (f"trees_far/instance_irradiance.json has no row for {missing[:4]} "
+                         f"({len(missing)} of {len(tf['placements'])}): re-run the bake's join")
+    assert worst < 0.02, (f"trees_far/instance_irradiance.json row locations differ from trees_far.json by "
+                          f"up to {worst:.4f} m - the two were built from different placements")
+    return dict(
+        present=True, source=ip.name, schema=irr["schema"], generated=irr.get("generated"),
+        units=irr.get("units"), encoding=irr.get("encoding"), scale_applied="none (raw, see `ratio`)",
+        range_global=irr.get("range_global"),
+        mesh=dict(how="COLOR_0 (vertex AO, gamma2 - see `color0`) x placements[].rgb for that tree",
+                  placements=per),
+        impostor=dict(
+            how=irr["ratio"]["use"], raw=irr["ratio"]["raw"],
+            prototypes={k: dict(E_bake=v["E_bake"], cov=v["cov"]) for k, v in sorted(irr["prototypes"].items())}),
+        reduce=irr.get("reduce"), key=irr.get("key"), placement_key=irr.get("placement_key"),
+        vertex_ao=irr.get("vertex_ao"))
+
+
 def instance_block():
     """`lightmaps.instance_irradiance`: the 1 379 shrub/reed placements, IN env.glb's INSTANCE ROW ORDER.
 
@@ -774,6 +826,7 @@ def main():
                   "(Blender (x, y, z) -> glTF (x, z, -y)), because gltfpack drops node names."),
             color0=(dict(tf["color0"], present=True) if tf.get("color0", {}).get("source")
                     else dict(present=False, note=tf["color0"].get("note"))),
+            lighting=trees_lighting_block(tf),
             unique_tris=sum(v["tris"] for v in tf["prototypes"].values()),
             placed_tris=tf["gltf"]["placed_tris"],
             source="export/trees_far.py + export/gltf_pack.sh --trees",
