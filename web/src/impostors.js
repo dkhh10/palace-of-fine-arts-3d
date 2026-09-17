@@ -84,6 +84,8 @@ const fragmentShader = /* glsl */`
 	uniform float grid, framePx, innerPx, gutterPx, atlasPx;
 	uniform float alphaTest;
 	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv
+	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV)
+	uniform vec2 pfaImpInterior;
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
 	uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
@@ -171,6 +173,26 @@ const fragmentShader = /* glsl */`
 		// iIrr is that ratio, 1 where nothing is known.  ?impmod=0 sets it back to 1 everywhere.
 		lin *= vPfaIrr;
 
+		// 6c ROUND 3 — THE INTERIOR OF AN IMPOSTOR CROWN (QA 16 open 2).  At station 2 the tree that
+		// fills the frame is an atlas card magnified from an 85 px frame, and it reads as a smooth
+		// opaque mass: centre/edge 0.504 against the Cycles reference's 0.364, p10 18.6 against 4.1.
+		// The frame the bake wrote is not that flat - three of them are blended per fragment for the
+		// view direction, and that average, plus the bilinear magnification, is what takes the
+		// canopy's self-shadow out.  What is restored here is only what the blend removed, and it is
+		// restored the way the shadow is actually distributed: by how ENCLOSED the fragment is inside
+		// the silhouette.  Four alpha taps around it on the dominant frame - opaque on all four means
+		// the fragment is inside the canopy, any one of them open means it is at the rim or against
+		// the sky, which keeps its full level (the reference's crowns are lit at the edge too).
+		// ?impint=0 is the A/B; ?impint=str,radius sets both.
+		if ( pfaImpInterior.x > 0.0 ) {
+			float rr = pfaImpInterior.y;
+			float e = min( min( sampleFrame( c0, clamp( vQuadUv + vec2( rr, 0.0 ), 0.0, 1.0 ) ).a,
+			                    sampleFrame( c0, clamp( vQuadUv - vec2( rr, 0.0 ), 0.0, 1.0 ) ).a ),
+			               min( sampleFrame( c0, clamp( vQuadUv + vec2( 0.0, rr ), 0.0, 1.0 ) ).a,
+			                    sampleFrame( c0, clamp( vQuadUv - vec2( 0.0, rr ), 0.0, 1.0 ) ).a ) );
+			lin *= 1.0 - pfaImpInterior.x * smoothstep( 0.25, 0.95, e );
+		}
+
 		if ( debugMode == 1 ) { gl_FragColor = vec4( s0.rgb, 1.0 ); return; }
 		if ( debugMode == 2 ) { gl_FragColor = vec4( vec3( a ), 1.0 ); return; }
 		if ( debugMode == 3 ) { gl_FragColor = vec4( c0 / ( grid - 1.0 ), 0.0, 1.0 ); return; }
@@ -188,17 +210,37 @@ const fragmentShader = /* glsl */`
 	}
 `;
 
+/** The atlas crown's interior term: `"str[,radius]"`, "0" / "off", or null for the default. */
+// MEASURED, not chosen (6c round 3, the sweep in web/README.md): at 0.90 / 0.015 the cam02 crown
+// box lands on the reference's centre/edge (0.364 against 0.364) and the cam05 crown on its
+// range/mean within 0.073, with every crown box's LEVEL inside 0.9-1.1x of the reference.
+export const IMP_INTERIOR = [ 0.90, 0.015 ];
+export function parseImpInterior( v ) {
+	const d = [ ...IMP_INTERIOR ];
+	if ( v === null || v === undefined || v === '' ) return d;
+	const s = String( v ).trim().toLowerCase();
+	if ( s === '0' || s === 'off' ) return [ 0, d[ 1 ] ];
+	if ( s === '1' || s === 'on' ) return d;
+	const p = s.split( ',' ).map( ( x ) => parseFloat( x ) );
+	if ( Number.isFinite( p[ 0 ] ) ) d[ 0 ] = Math.min( Math.max( p[ 0 ], 0 ), 1 );
+	if ( Number.isFinite( p[ 1 ] ) ) d[ 1 ] = Math.min( Math.max( p[ 1 ], 0.002 ), 0.4 );
+	return d;
+}
+
 /**
  * One InstancedMesh per prototype, built from `manifest.gate3.impostors` and `manifest.trees.far`.
  * @returns {{ group:THREE.Group|null, report:object }}
  */
 export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
-	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null } ) {
+	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null } ) {
+	// 6c round 3: (strength, radius in frame UV).  `?impint=` — see the fragment shader.
+	const impInterior = parseImpInterior( interior );
 	const report = { prototypes: 0, instances: 0, nearInstances: 0, drawCalls: 0, skipped: [], bytes: 0,
 		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0,
 		atlas2k: false, atlas2kMissing: [], modulated: 0,
 		// the atlas geometry that ACTUALLY draws, so the summary can never name the 1K one while the
 		// 2K variant is on screen (round-1 review 5)
+		interior: { strength: impInterior[ 0 ], radius_uv: impInterior[ 1 ] },
 		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
 	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
@@ -254,6 +296,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			atlasPx: { value: geom.atlasPx },
 			alphaTest: { value: ALPHA_TEST },
 			debugMode: { value: debug },
+			pfaImpInterior: { value: new THREE.Vector2( impInterior[ 0 ], impInterior[ 1 ] ) },
 			pfaMeshDist: switchUniforms ? switchUniforms.pfaMeshDist : { value: 1e9 },
 			pfaFadeBand: switchUniforms ? switchUniforms.pfaFadeBand : { value: 1 },
 		};

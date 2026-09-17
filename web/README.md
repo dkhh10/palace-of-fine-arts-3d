@@ -544,7 +544,150 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
-## QA notes — read before scoring (Phase 6c / QA 16)
+## QA notes — read before scoring (Phase 6c / QA 17, round 3)
+
+### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set
+
+**What QA 16 asked for and where it landed** (`?crownint= ?cardint= ?leafgate= ?impint= ?foliagebias=
+?walkupmesh=`; every one has an off value, and every number below is `web/tools/r3_boxes.py`, which
+imports QA's own `scripts/qa_r16_probe.py` measures rather than re-implementing them).
+
+| crown box (QA 16 open 2) | round16b | **round16c** | reference |
+|---|---|---|---|
+| 02 fill tree centre/edge | 0.504 | **0.393** | **0.364** |
+| 02 fill tree p10 / level | 18.6 / 1.28x | **5.3 / 1.01x** | 4.1 / 1.00x |
+| 05 lawn tree range/mean | 1.260 | **1.722** | **1.773** |
+| 05 lawn tree p10 / level | 58.9 / 1.19x | **27.0 / 1.05x** | 31.7 / 1.00x |
+| 01 shore crown range/mean | 1.036 | **1.705** | 1.443 |
+| 01 shore crown p10 / level | 61.4 / 1.18x | **20.9 / 0.94x** | 36.8 / 1.00x |
+
+Both targets the brief set are met (cam02 within 0.029 of 0.364, cam05 within 0.051 of 1.773) and
+every crown and tree box's LEVEL is now inside 0.9-1.1x of the reference, where round16b ran
+1.04-1.28x.  Station 1's centre/edge moves the other way (0.680 -> 0.453 against 0.852) while its p10
+and range/mean move toward the reference: the hero's crown box is now a little too dark rather than
+too flat, and the 1:1 tile (`renders/web/960/r3i090015_crown_tile.jpg`) is the judgement, not the
+ratio.
+
+**Three things do the work, and the third is the one that carries the numbers.**
+1. *The crown-bend is gated* (`?leafgate=`, default 0.45): the bend is what rounds the silhouette and
+   it was also what flattened the inside, so it now fades in over the outer shell only and the
+   interior keeps its card normals.
+2. *An interior term per fragment* (`?crownint=str,low,gamma,gain,trn,sun`, `?cardint=` for the card
+   clusters): `pfaCrownD` carries each vertex's depth into its own cluster (box-normalised, written at
+   load, two bytes) and the vertex shader adds the SUN PATH - how far a sun ray crosses the crown
+   sphere to reach that vertex.  Both attenuate `irradiance`, `iblIrradiance`, `radiance` AND the
+   already-accumulated direct terms, plus the Phase 5 translucent back lobe at `trn` of the same
+   factor so the rim keeps its glow.  **Measured honestly: on the mesh crowns this is worth about 6 %
+   of the level at full strength.**  A camera outside an opaque canopy sees its outer SHELL, so a
+   depth-from-centre term has almost no visible fragments to act on; it is kept because it is right
+   where a crown IS seen into (the walk-up, the LOD1 set) and it costs nothing per frame.
+3. *The atlas crowns' own interior* (`?impint=str,radiusUV`, default 0.90 / 0.015).  All three of
+   QA's crown boxes are IMPOSTOR cards at the shipped switch distances - `?fartreemesh=12` was
+   ratified, and every measured crown is beyond it - so this is what moves them.  A far crown is flat
+   because three atlas frames are blended per fragment for the view direction and then magnified; the
+   fragment's own ENCLOSURE in the silhouette (four alpha taps on the dominant frame) says how much of
+   that self-shadow to put back.  Dense clumps darken, holes and the rim keep their level, which is
+   also why the tile gains leaf structure and not just a darker tree.
+
+**The shrub / reed cards** (QA 16 open 1) take the same interior term plus a height term (lower and
+inner cards darker) and a LOD bias on the cut-out fetch (`?foliagebias=`, 0.8 on the cards, 0 on the
+leaves), and - what actually carries the level - the ENVIRONMENT lobe at 0.3 (`?cardenv=` on the LOD2
+cards, `?shrubenv=` on the LOD1 meshes; see `CARD_ENV`).
+
+| shrub / reed box | round16b | **round16c** | hard-edge % (round16b -> round16c, ref) |
+|---|---|---|---|
+| 01 shore (LOD2 cards) | 1.61x | **1.36x** | 6.82 -> **3.44** (1.77) |
+| 01 shore S (LOD2) | 1.28x | **1.10x** | 7.57 -> **5.29** (3.38) |
+| 02 shore (LOD1) | 1.62x | **1.18x** | 8.56 -> 8.99 (3.44) |
+| 02 reed clump (LOD1) | 1.50x | **1.14x** | 6.22 -> **2.07** (1.57) |
+| 05 shore (LOD2) | 1.35x | **1.02x** | 7.92 -> **3.64** (4.30) |
+| 05 W (LOD2) | 1.11x | **0.88x** | 6.79 -> **6.57** (4.06) |
+| 03 cards (LOD1) | 2.20x | **1.53x** | 12.11 -> **4.82** (1.48) |
+
+QA 16's 1.34-1.70x band becomes **0.88-1.53x** and the hard-edge share falls at six of the seven
+boxes.  Station 3 at 1.53x is the worst box left and the one to read first next round.  Every number
+here is regenerable from `renders/web/round16c_r3boxes.txt`, which is that tool's committed output.
+
+**The r3 review's fix 1, and what it changed.**  `loadShrubLod1` scales its 25 materials by
+`?shrubenv=` and then calls `applyFoliage`, which was scaling the same clones again by `CARD_ENV`:
+the LOD1 set shipped at 0.3 x 0.3 = **0.09**, three times less environment than the LOD2 cards it
+dissolves into - the exact discontinuity the shared constant exists to prevent.  `pfaEnvScaled` is
+now written by whichever pass gets there first and read by both, and the boot log says so in one
+line per pass (`environment lobe x0.3 on 25 card material(s)`, then `on 0 ..., 25 already scaled by an
+earlier pass and LEFT ALONE`).  It moves the three LOD1 boxes only: 02 shore 1.12 -> 1.18x, 02 reed
+1.06 -> 1.14x, 03 cards 1.32 -> 1.53x.  The LOD2 boxes (01, 05) are unchanged.
+**How that was settled, in order, because two of the three candidates were wrong.**  Export's Cycles
+DiffCol pass (`export/out/gate3/foliage/albedo_check.json`, verdict owner LIGHTING) found every shrub
+box's shipped albedo 2-13 % **darker** than the albedo Cycles itself uses on those cards, so the tint
+chain is not it.  The per-placement irradiance is not it either: multiplied by its own `cov`
+(`?shrubcov=1`, mean cov 0.857 - the manifest's own `mean_all`) every shrub box moves by less than
+0.01x, and the manifest's `reduce` note explains why that term was suspect in the first place (`rgb`
+is the mean over the vertices that RECEIVED light, and the uncovered fraction is the card buried in
+the terrain, so charging it with zero would darken a card by how much of it is underground).  What
+was left is the environment: a card is one flat quad whose normal reflects the horizon, and three's
+PMREM lobe - with `KHR_materials_sheen`, an environment lobe too - hands every one of them a sky
+highlight that the reference's hundred separate leaves never get.  At 0.3 the seven boxes read
+1.36 / 1.10 / 1.18 / 1.14 / 1.02 / 0.88 / 1.53x in the sweep and the shipped capture lands the table
+above; at 0 two of them fall through to 0.82-0.84x, so 0 is too far.
+
+**The walk-up set** (`trees.walkup_mesh`, item 3) is consumed by the far-tree loader with the block
+swapped, so the join, the placement gate, the irradiance and the impostor complement are the same
+lines for both sets.  The block states what it SHARES rather than repeating it - its placements and
+its per-placement irradiance are `trees.far_mesh`'s, row for row, and it ships no COLOR_0 because the
+round-3 interior term carries the occlusion - and the loader resolves all three.  Where it exists it
+REPLACES the LOD2 set (which only drew inside 12 m, inside the walk-up's own `draw_within_m` of 15)
+so no band draws two crowns; `?walkupmesh=<m>` moves the distance, `=0` forces the LOD2 set back, and
+a walk-up glb that is missing or will not join falls back to `trees.far_mesh` and reports
+`walkupFellBack`.  **Measured on round16c:** 254/254 rows joined to 127/127 placements, all 254 lit
+from `far_mesh.lighting`, 3.77 M placed triangles in 142 culled batches, placement check max trunk
+offset 0.237 m.  The 3 m walk-in (`renders/web/960/round16c_walkin_tile.jpg`) reads as a canopy -
+overlapping leaf cards, branches, sky through the gaps - where QA 16 found "magnified cream-white
+cut-outs and a few bare sticks".  It costs **+131 MB resident** (geometry 129.0 -> 260.0 MB, the LOD1
+set's 472 k unique triangles); the payload moves 660.0 -> 664.0 MB because the LOD2 tree glb is no
+longer fetched.
+
+### Round16c, measured (the capture QA 17 scores)
+
+`PFA_TAG=round16c web/tools/foliage_capture.sh` — six stations at 1920x1080, the `post=none` control,
+the 2560x1440 performance pass, the bare URL, the station-2 walk-in, the 30 s walk probe, the pair
+sheets and the tiles.  **0 page errors, 0 shader errors**, ready in 6.51 s, 145 placements modulated,
+254/254 far-tree rows lit, 1 376/1 376 LOD1 shrubs bound.
+
+| | 01 | 02 | 03 | 04 | 05 | 06 |
+|---|---|---|---|---|---|---|
+| frame ms, 1440p, round 15 | 28.2 | 32.2 | 32.9 | 22.5 | 30.4 | 32.1 |
+| frame ms, round16b | 30.1 | 33.5 | 32.7 | 22.7 | 31.8 | 33.5 |
+| frame ms, **round16c pass A** | **30.2** | **33.5** | **34.4** | **23.2** | **33.7** | **35.1** |
+| frame ms, round16c pass B | 32.9 | 37.4 | 37.2 | 21.9 | 32.1 | 34.8 |
+| MAE vs the Cycles reference (`*_pairs.json`) | 26.27 | 18.38 | 33.39 | 13.12 | 22.50 | 20.30 |
+| MAE delta vs round16b | **-0.25** | **-1.70** | **-0.55** | 0.00 | **+0.28** | **-0.29** |
+| MAE delta vs round 15 | **-0.31** | **-4.89** | **-1.02** | 0.00 | **-0.02** | **-0.73** |
+
+**Parity**: five stations improve against round16b and **station 5 is 0.28 worse** (22.22 -> 22.50);
+against round 15 every station improves or holds.  The MAE row is `frame.mean_abs_diff_255` read out
+of the committed `round16c_pairs.json` / `round16b_pairs.json` (`gate1_sheets.py`'s own number, on
+its 1280x720 panels) - regenerate it from those files, never by hand.
+
+**Frame time, honestly.**  Two 1440p passes of the identical build were taken this session and they
+disagree by up to 3.9 ms (station 2: 33.5 then 37.4), which is larger than the ~2 ms spread the round-2
+notes measured: the Air throttles after a long capture session.  The geometry says which differences
+are real - **draw calls are identical to round16b at all six stations and triangles are identical at
+five**; only station 3 carries more, 5.59 -> **5.98 M** (+0.39 M), the walk-up LOD1 replacing LOD2
+within 15 m of the colonnade walk.  So station 3's rise is 6c's and the rest is the machine.  Against
+round 15, pass A is +2.0 / +1.3 / +1.5 / +0.7 / **+3.3** / **+3.0** and pass B is +4.7 / +5.2 / +4.3 /
+-0.6 / +1.7 / +2.7: **the +3 ms gate cannot be called from either pass alone** and wants one cold
+1440p pass on the merged branch.  Both files are committed (`round16c_perf.json`, `round16cB_perf.json`).
+Draws 183-351, triangles 2.75-5.98 M, load 664.0 MB in 6.51 s.  **Resident 1 931.4 MB** (texture
+1 227.5 + render targets 443.8 + geometry 260.0), 1.61x the 1 200 MB Gate 1 budget: +130.8 over
+round16b, all of it the walk-up set's geometry.  **The walk clamp, re-run as QA 16 §6.4 asked**
+(24 probes, six stations x four headings x **30 s** at 3.2 m/s, on the full 6c scene): lowest ground
+**-0.750 m** against the `WATER_Z + 0.1` floor of -1.20, **0 probes below it**.  **Bare URL**: luma
+ratio **0.9999** against the station-1 preset, MAE 8.09/255 (the 1280x720 capture upscaled - the same
+resampling round16b measured at 8.23), and its boot log carries every round-3 default -
+`crownint 0.30/0/1/1.05/0.85/0.50`, `cardint 0.20/0.30`, `leafgate 0.45`, `impint 0.90/0.015`,
+`cardenv 0.30`, `foliagebias 0.8`, `walkup_mesh` at 15 m.
+
+## QA notes — earlier rounds (Phase 6c / QA 16)
 
 ### The 6c foliage pass (item C), what it does and what it measured
 
@@ -737,8 +880,14 @@ Every number here is from `renders/web/round16b_*` and re-derivable from the com
 | delta | +1.9 | +1.3 | **-0.2** | +0.2 | +1.4 | +1.4 |
 
 Post off: 23.5-27.5 ms.  Draw calls 329-351 (round 16: 274-301), triangles 5.2-5.6 M (4.1-4.5 M).
-**Resident 1717.2 MB** against round 16's 1606.6: +54 MB of texture (the 16 foliage maps at 1 K) and
-+57 MB of geometry (`env_trees.glb` 129 k unique tris, `env_shrubs.glb` 17 k).  Run-to-run spread on
+**Resident 1800.6 MB** against round 16's 1684.7 and round 15's 1677.9 (QA 16 §4; this paragraph said
+1717.2 / 1606.6 until 6c round 3 — those two figures were wrong by ~83 MB and the committed
+`round16b_perf.json` was right all along, its `total_bytes` agreeing with the sum of the classes).
+**+115.9 MB over round 15, by class**: texture 1171.6 -> **1227.5** (+55.9, the 16 foliage albedo /
+translucency maps at 1 K), geometry 62.3 -> **129.0** (+66.7, `env_trees.glb` 129 k unique tris and
+`env_shrubs.glb` 17 k, both lazily loaded), instance matrices 0.2 -> 0.3 (+0.1), render targets
+443.8 unchanged.  That is **1.50x** the 1 200 MB Gate 1 budget; 6c does not chase it (6b's tiers do).
+Run-to-run spread on
 this machine is about 2 ms, measured on two passes over identical geometry.
 
 **Parity per station** (viewer against the Phase 5 Cycles reference, `mean|diff|/255`; lower is better):
@@ -996,6 +1145,14 @@ chain, so mist is separated from lighting before anything is blamed on it:
   frames for stations 3 and 5 and a compositor-on frame for 6.
 * **Item 2 is done** (the far trees are octahedral impostors; see the section below). What remains
   open there is ROTATIONAL pop: the blend has not been swept through a full camera rotation.
+
+* **6c round 3, carried from `docs/reviews/phase6c_viewer_r3_review.md`.** (a) With the walk-up set on,
+  `?fartreemesh=` is silently ignored — the LOD2 block is not loaded at all, so its switch distance has
+  nothing to move; `?walkupmesh=` is the distance that matters and `?walkupmesh=0` puts `?fartreemesh=`
+  back in charge. (b) `web/tools/r3_crown_tile.py` and `r3_boxes.py` read the reference frames from
+  `PFA_MAIN_ROOT` (default the main checkout), because `reference/` and `renders/previews/qa/` exist
+  there only. (c) The six-station gate composite is committed at 960 px only
+  (`renders/web/960/round16c_gate.jpg`); the full-res PNG is regenerable and is not tracked.
 
 ## `PFA_DEV_SHARE_GPU=1` — development screenshots only
 `screenshot.mjs` refuses to run while any Blender process is alive. `PFA_DEV_SHARE_GPU=1` is a NARROW

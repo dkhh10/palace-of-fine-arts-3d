@@ -104,6 +104,55 @@ if ( ! fs.existsSync( MANIFEST ) ) {
 const raw = JSON.parse( fs.readFileSync( MANIFEST, 'utf8' ) );
 const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' );
 
+// The synthetic glb, exactly as gltfpack emits it: one instanced node per prototype per material,
+// rows in the manifest order.  Both tree sets (far_mesh and walkup_mesh) are the SAME 254 rows over
+// the SAME 127 placements, so one builder serves both.
+function makeRoot() {
+		const fm = raw.trees && raw.trees.far_mesh;
+		const placements = fm.placements;
+		// one instanced node per prototype per material, gltfpack-style, rows in manifest order
+		const byProto = new Map();
+		for ( const p of placements ) {
+			if ( ! byProto.has( p.prototype ) ) byProto.set( p.prototype, [] );
+			byProto.get( p.prototype ).push( p );
+		}
+		const root = new THREE.Group();
+		const protoInfo = new Map( ( fm.prototypes || [] ).map( ( q ) => [ q.name, q ] ) );
+		const impProtos = manifest.gate3.impostors.prototypes;
+		for ( const [ proto, list ] of byProto ) {
+			const info = protoInfo.get( proto ) || {};
+			const ip = impProtos[ proto ] || {};
+			const mats = info.materials || [ 'MAT_bark_cypress', 'MAT_leaf_cypress' ];
+			// the prototype's own bounding volume, in PROTOTYPE space: trunk base at the origin, the tree
+			// standing up to `heightAboveBase` - which is what the export's LOD2 objects are (and what the
+			// 300 m placement bug broke).  The test therefore exercises the placement check for real.
+			const h = ip.heightAboveBase || info.height_above_base_m || 12;
+			const r = ip.radius || 2;
+			for ( const matName of mats ) {
+				const g = new THREE.BufferGeometry();
+				const isLeaf = /^MAT_leaf_/.test( matName );
+				const y0 = isLeaf ? h * 0.25 : 0, y1 = isLeaf ? h : h * 0.3;
+				// symmetric about the trunk in XZ, exactly as a prototype in its own space is
+				g.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( [
+					- r, y0, - r, r, y0, - r, 0, y1, - r, - r, y0, r, r, y0, r, 0, y1, r ] ), 3 ) );
+				g.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( 18 ).fill( 0 ).map( ( _, i ) => ( i % 3 === 2 ? 1 : 0 ) ), 3 ) );
+				const m = new THREE.MeshStandardMaterial( { name: matName } );
+				const im = new THREE.InstancedMesh( g, m, list.length );
+				im.name = `mesh_${root.children.length}`;
+				list.forEach( ( p, i ) => {
+					// the export's own rule: scale = height_m / height_above_base, translation = trunk base,
+					// and the manifest's loc is BLENDER (x, y, z) -> three (x, z, -y)
+					const sc = ( p.height_m || h ) / h;
+					im.setMatrixAt( i, new THREE.Matrix4().compose(
+						new THREE.Vector3( p.loc[ 0 ], p.loc[ 2 ], - p.loc[ 1 ] ),
+						new THREE.Quaternion(), new THREE.Vector3( sc, sc, sc ) ) );
+				} );
+				root.add( im );
+			}
+		}
+	return root;
+}
+
 // ---------------------------------------------------------------- 4. the far-tree join
 {
 	const fm = raw.trees && raw.trees.far_mesh;
@@ -123,46 +172,7 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 		info( 'trees.far_mesh.lighting not in the manifest yet' );
 	}
 	const placements = fm.placements;
-	// one instanced node per prototype per material, gltfpack-style, rows in manifest order
-	const byProto = new Map();
-	for ( const p of placements ) {
-		if ( ! byProto.has( p.prototype ) ) byProto.set( p.prototype, [] );
-		byProto.get( p.prototype ).push( p );
-	}
-	const root = new THREE.Group();
-	const protoInfo = new Map( ( fm.prototypes || [] ).map( ( q ) => [ q.name, q ] ) );
-	const impProtos = manifest.gate3.impostors.prototypes;
-	for ( const [ proto, list ] of byProto ) {
-		const info = protoInfo.get( proto ) || {};
-		const ip = impProtos[ proto ] || {};
-		const mats = info.materials || [ 'MAT_bark_cypress', 'MAT_leaf_cypress' ];
-		// the prototype's own bounding volume, in PROTOTYPE space: trunk base at the origin, the tree
-		// standing up to `heightAboveBase` - which is what the export's LOD2 objects are (and what the
-		// 300 m placement bug broke).  The test therefore exercises the placement check for real.
-		const h = ip.heightAboveBase || info.height_above_base_m || 12;
-		const r = ip.radius || 2;
-		for ( const matName of mats ) {
-			const g = new THREE.BufferGeometry();
-			const isLeaf = /^MAT_leaf_/.test( matName );
-			const y0 = isLeaf ? h * 0.25 : 0, y1 = isLeaf ? h : h * 0.3;
-			// symmetric about the trunk in XZ, exactly as a prototype in its own space is
-			g.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( [
-				- r, y0, - r, r, y0, - r, 0, y1, - r, - r, y0, r, r, y0, r, 0, y1, r ] ), 3 ) );
-			g.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( 18 ).fill( 0 ).map( ( _, i ) => ( i % 3 === 2 ? 1 : 0 ) ), 3 ) );
-			const m = new THREE.MeshStandardMaterial( { name: matName } );
-			const im = new THREE.InstancedMesh( g, m, list.length );
-			im.name = `mesh_${root.children.length}`;
-			list.forEach( ( p, i ) => {
-				// the export's own rule: scale = height_m / height_above_base, translation = trunk base,
-				// and the manifest's loc is BLENDER (x, y, z) -> three (x, z, -y)
-				const sc = ( p.height_m || h ) / h;
-				im.setMatrixAt( i, new THREE.Matrix4().compose(
-					new THREE.Vector3( p.loc[ 0 ], p.loc[ 2 ], - p.loc[ 1 ] ),
-					new THREE.Quaternion(), new THREE.Vector3( sc, sc, sc ) ) );
-			} );
-			root.add( im );
-		}
-	}
+	const root = makeRoot();
 	const scene = new THREE.Scene();
 	const sun = new THREE.DirectionalLight( 0xffffff, 1 );
 	sun.position.set( 1, 1, 1 );
@@ -205,6 +215,55 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 	ok( onFar === 0, `nothing submitted from 5 km away (${onFar} batch(es))` );
 	ok( onNear > 0 && onNear <= 16, `standing at placement 0, only the batches around it are submitted (${onNear}/${rep.batches})` );
 	info( `far-tree mesh switch ${rep.meshDist} m: ${onNear} of ${rep.batches} batch(es) submitted at the tree, 0 at 5 km` );
+}
+
+// ---------------------------------------------------------------- 4b. the walk-up LOD1 tree set
+// Same synthetic glb, served under the walk-up name: the block states its placements and its lighting
+// BY REFERENCE to trees.far_mesh, so this proves the loader resolves both instead of reading an empty
+// list, takes the block's own `draw_within_m`, and falls back to the LOD2 set when the glb is absent.
+{
+	const w = raw.trees && raw.trees.walkup_mesh;
+	if ( ! w || ! w.glb ) {
+		info( 'trees.walkup_mesh is not in this manifest yet: the walk-up checks are skipped' );
+	} else {
+		const scene = new THREE.Scene();
+		const sun = new THREE.DirectionalLight( 0xffffff, 1 );
+		sun.position.set( 1, 1, 1 );
+		const built = buildImpostors( { impostors: manifest.gate3.impostors, far: manifest.treesFar,
+			near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
+		if ( built.group ) scene.add( built.group );
+		const common = { scene, manifest, sun, note: () => {}, impostorGroup: built.group,
+			foliageReport: null, probeTexture: null, scale: manifest.gate3.scale, mode: 'near',
+			impMode: 'full', meshDist: 40, fadeBand: 5, uvDequant: false };
+		const serve = ( name ) => async ( url ) => ( url.endsWith( `/${name}` )
+			? { scene: makeRoot(), parser: null, userData: {} } : Promise.reject( new Error( '404' ) ) );
+		const up = await loadFarTrees( { ...common, loadGlb: serve( w.glb ) } );
+		ok( up.set === 'walkup_mesh', `the walk-up set is chosen when the block is present (${up.set})` );
+		ok( up.error === null && up.rows === 254 && up.joined === 254,
+			`the walk-up glb joins on far_mesh's own placements (${up.joined}/${up.rows}, ${up.error || 'no error'})` );
+		ok( up.placements === 127, `127 placements resolved through placements.same_as (${up.placements})` );
+		ok( up.meshDist === ( w.draw_within_m || 15 ),
+			`the block's own draw_within_m is the switch distance (${up.meshDist} m)` );
+		ok( up.lit === 254, `every row lit from far_mesh.lighting (${up.lit}/254)` );
+		// and with only the LOD2 glb on the wire it must fall back rather than lose every mesh
+		const scene2 = new THREE.Scene();
+		const built2 = buildImpostors( { impostors: manifest.gate3.impostors, far: manifest.treesFar,
+			near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
+		if ( built2.group ) scene2.add( built2.group );
+		const back = await loadFarTrees( { ...common, scene: scene2, impostorGroup: built2.group,
+			loadGlb: serve( 'env_trees.glb' ) } );
+		ok( back.walkupFellBack === true && back.set === 'far_mesh' && back.joined === 254,
+			`a missing walk-up glb falls back to the LOD2 set (${back.set}, fellBack=${back.walkupFellBack})` );
+		// ?walkupmesh=0 is the A/B and must not even look for the file
+		const scene3 = new THREE.Scene();
+		const built3 = buildImpostors( { impostors: manifest.gate3.impostors, far: manifest.treesFar,
+			near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
+		if ( built3.group ) scene3.add( built3.group );
+		const off = await loadFarTrees( { ...common, scene: scene3, impostorGroup: built3.group,
+			walkup: '0', loadGlb: serve( 'env_trees.glb' ) } );
+		ok( off.set === 'far_mesh' && ! off.walkupFellBack && off.meshDist === 12,
+			`?walkupmesh=0 is the LOD2 set at 12 m (${off.set}, ${off.meshDist} m)` );
+	}
 }
 
 // ---------------------------------------------------------------- 5. the shrub rows with no LOD1

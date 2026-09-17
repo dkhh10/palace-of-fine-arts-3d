@@ -46,11 +46,22 @@ scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--orbit "-39.89,7.46,-8.57:3:-6.8:248,68" \
 	--out "renders/web/${TAG}_walkin.png" --json "renders/web/${TAG}_walkin.json"
 
-# --- 4b. the treeMeshDist A/B ------------------------------------------------------------------
+# --- 4b. the walk clamp, re-run on the 6c scene (QA 16 section 6.4) ----------------------------
+# 6c added 1.0 M placed triangles a ground clamp may now hit, and round16_walk.json was taken before
+# env_trees.glb and env_shrubs.glb existed and over the short 6 s window round 15 flagged.  24 probes,
+# six stations x four headings x 30 s at 3.2 m/s: the acceptance is 0 probes below WATER_Z + 0.1.
+scripts/chrome_run.sh 1500 -- node web/tools/screenshot.mjs \
+	--stations 1-6 --size 1280x720 --frames 0 --shots 0 --warmup 8 --timeout 420000 \
+	--query manifest=/assets/gate3/manifest.json --query t=0 --query billboards=0 --query treeboards=0 \
+	--walkprobe 0,90,180,270:30 \
+	--out "renders/web/${TAG}_walk.png" --json "renders/web/${TAG}_walk.json"
+
+# --- 4c. the treeMeshDist A/B (PFA_M60=1 only; ratified at 12 m in round 2) --------------------
 # The far tree that fills cam02 stands at 43 m, just outside the 40 m default, so the frame that
 # started this pass is decided by this one number.  Station 2 at delivery resolution and the six-
 # station 1440p performance pass are both taken at 60 m so the choice is made on a measured frame
 # time and a measured tile, not on an opinion.
+if [[ -n "${PFA_M60:-}" ]]; then
 scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs \
 	--station 2 --size 1920x1080 --frames 0 --warmup 12 --timeout 420000 \
 	--query manifest=/assets/gate3/manifest.json --query t=0 --query billboards=0 --query treeboards=0 \
@@ -62,11 +73,12 @@ scripts/chrome_run.sh 1200 -- node web/tools/screenshot.mjs \
 	--query treemesh=60 \
 	--out "renders/web/${TAG}m60_perf1440.png" --json "renders/web/${TAG}m60_perf_shot.json" \
 	--perf "renders/web/${TAG}m60_perf.json"
+fi
 
 # --- 5. the box tables, committed -------------------------------------------------------------
 if [[ -f "$REF_CAM02" && -f "renders/web/${TAG}_cam02.png" ]]; then
 	python3 web/tools/foliage_boxes.py --ref "$REF_CAM02" \
-		renders/web/round15_cam02.png:round15 renders/web/round16_cam02.png:round16 \
+		renders/web/round15_cam02.png:round15 renders/web/round16b_cam02.png:round16b \
 		"renders/web/${TAG}_cam02.png:${TAG}" \
 		--box "60 520 700 980:near trees (the round-15 box)" \
 		--box "700 660 1240 950:the far tree that fills cam02" \
@@ -75,13 +87,15 @@ fi
 if [[ -f "renders/web/${TAG}_cam01.png" ]]; then
 	python3 web/tools/foliage_boxes.py \
 		--ref "$MAIN/renders/final/hero_cam01_3840x2160_128spp.png" \
-		renders/web/round16_cam01.png:round16 "renders/web/${TAG}_cam01.png:${TAG}" \
+		renders/web/round16b_cam01.png:round16b "renders/web/${TAG}_cam01.png:${TAG}" \
 		--box "0 700 700 1080:cam01 left shore foliage" \
 		--json "renders/web/${TAG}_hero_boxes.json" || true
 fi
 
 # --- 6. the 100 % tiles and the 960 px copies --------------------------------------------------
-python3 web/tools/foliage_tile.py --tag "$TAG"
+python3 web/tools/foliage_tile.py --tag "$TAG" --prev round16b
+python3 web/tools/r3_crown_tile.py --tag "$TAG" --boxes crown --prev round16b
+python3 web/tools/r3_crown_tile.py --tag "$TAG" --boxes shrub --prev round16b
 for f in renders/web/${TAG}_cam0*.png renders/web/${TAG}_bareurl.png renders/web/${TAG}_walkin*.png; do
 	[[ -f "$f" ]] || continue
 	sips -Z 960 "$f" --out "renders/web/960/$(basename ${f%.png}).jpg" >/dev/null
