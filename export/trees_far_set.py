@@ -161,50 +161,65 @@ def main():
     # THE PLACEMENT ASSERT IS ON THE PLACED MESH'S WORLD BBOX (review r2 finding 2). The old one -
     # `matrix_world @ (anchor.x, anchor.y, 0)` against `loc` - is an algebraic identity for
     # `T(loc) @ S @ T(-anchor)`, so `worst_anchor_residual_m = 0` proved nothing about where the vertices
-    # actually land. That is why the wrong anchor went unnoticed. This one reads the bbox back:
-    #   XY centre within XY_TOL of trunk_base, and the bottom within Z_TOL of loc.z + bbox_min.z * s.
-    # It fails on a wrong anchor, which is the whole point.
-    XY_TOL, Z_TOL = 0.05, 0.05
-    placed, worst_xy, worst_z = [], 0.0, 0.0
+    # actually land. That is why the wrong anchor went unnoticed. This one reads the bbox back and compares
+    # it with `topology.json`'s own `placed_bbox_min` / `placed_bbox_max`, which export/trees_far.py computes
+    # independently, plus the bottom against `loc.z + bbox_min.z * s`. It fails on a wrong anchor - and note
+    # that "XY centre == trunk_base" would NOT be the right test: the anchor is the SOURCE mesh's bbox XY
+    # centre (the impostor's axis), and the reduction then shifts the reduced crown's own centre off it by
+    # `placed_xy_offset_m` (0.10-2.83 m over the 127, median 0.28), which is the export's business, not a
+    # placement error.
+    BBOX_TOL, Z_TOL = 0.005, 0.05          # topology.json rounds its bboxes to 4 dp
+    placed, worst_bbox, worst_z = [], 0.0, 0.0
     for row in topo["placements"]:
         p = row["prototype"]
         s = float(row["scale"])
-        a = Vector(anchors[p])
         me = got[mesh_of[p]].data
         no = bpy.data.objects.new(row["object"], me)
         bpy.context.scene.collection.objects.link(no)
-        no.matrix_world = (Matrix.Translation(Vector(row["loc"]))
-                           @ Matrix.Diagonal((s, s, s, 1.0))
-                           @ Matrix.Translation(-a))
+        # The export has ALREADY subtracted the anchor from the mesh, so the placement is the impostor's
+        # verbatim: `location = trunk_base, scale = s`, rotation ignored. Subtracting `anchor` again here
+        # would be the first run's error with the sign flipped.
+        no.matrix_world = Matrix.Translation(Vector(row["loc"])) @ Matrix.Diagonal((s, s, s, 1.0))
         corners = [no.matrix_world @ Vector(c) for c in no.bound_box]
-        wlo = Vector((min(c.x for c in corners), min(c.y for c in corners), min(c.z for c in corners)))
-        whi = Vector((max(c.x for c in corners), max(c.y for c in corners), max(c.z for c in corners)))
-        centre_xy = ((wlo.x + whi.x) * 0.5, (wlo.y + whi.y) * 0.5)
-        d_xy = max(abs(centre_xy[0] - float(row["loc"][0])), abs(centre_xy[1] - float(row["loc"][1])))
+        wlo = [min(c[i] for c in corners) for i in range(3)]
+        whi = [max(c[i] for c in corners) for i in range(3)]
+        # THE ASSERT IS A CROSS-CHECK AGAINST THE EXPORT'S OWN PUBLISHED BBOX, not against the transform
+        # algebra (review r2 finding 2). topology.json carries `placed_bbox_min` / `placed_bbox_max` computed
+        # independently by export/trees_far.py; if the blend this appended from is not the anchored one, or
+        # the anchor moved, these disagree by metres and this stops. The old assert -
+        # `matrix_world @ (anchor.x, anchor.y, 0)` against `trunk_base` - is an identity and passed anyway.
+        d_bbox = max(max(abs(wlo[i] - float(row["placed_bbox_min"][i])) for i in range(3)),
+                     max(abs(whi[i] - float(row["placed_bbox_max"][i])) for i in range(3)))
+        assert d_bbox <= BBOX_TOL, (
+            f"{no.name} ({p}): placed world bbox [{[round(v, 3) for v in wlo]}, "
+            f"{[round(v, 3) for v in whi]}] is {d_bbox:.3f} m from the export's own "
+            f"[{row['placed_bbox_min']}, {row['placed_bbox_max']}] - this blend's mesh is not the anchored "
+            "one the glb ships")
         want_z = float(row["loc"][2]) + float(topo["prototypes"][p]["bbox_min"][2]) * s
-        d_z = abs(wlo.z - want_z)
-        assert d_xy <= XY_TOL, (
-            f"{no.name} ({p}): placed bbox XY centre {centre_xy} is {d_xy:.3f} m from trunk_base "
-            f"{row['loc'][:2]} - the anchor in topology.json is not the one the mesh was built with")
+        d_z = abs(wlo[2] - want_z)
         assert d_z <= Z_TOL, (
-            f"{no.name} ({p}): placed bbox bottom z {wlo.z:.3f} is {d_z:.3f} m from "
+            f"{no.name} ({p}): placed bbox bottom z {wlo[2]:.3f} is {d_z:.3f} m from "
             f"loc.z + bbox_min.z * s = {want_z:.3f}")
-        worst_xy, worst_z = max(worst_xy, d_xy), max(worst_z, d_z)
+        worst_bbox, worst_z = max(worst_bbox, d_bbox), max(worst_z, d_z)
         top = float(row["loc"][2]) + topo["prototypes"][p]["height_above_base_m"] * s
         placed.append(dict(object=no.name, prototype=p, mesh=me.name, loc=row["loc"], scale=round(s, 6),
                            height_m=row["height_m"], walk_dist_m=row["walk_dist_m"],
                            source_tree=row["source_tree"], crown_top_z=round(top, 4),
-                           bbox_centre_xy=[round(float(v), 4) for v in centre_xy],
-                           bbox_min_z=round(float(wlo.z), 4),
-                           residual_xy_m=round(float(d_xy), 5), residual_z_m=round(float(d_z), 5)))
+                           bbox_centre_xy=[round((wlo[i] + whi[i]) * 0.5, 4) for i in (0, 1)],
+                           bbox_min_z=round(float(wlo[2]), 4),
+                           residual_bbox_m=round(float(d_bbox), 5), residual_z_m=round(float(d_z), 5),
+                           # the export's own measure of how far the reduced crown's bbox centre sits from
+                           # the impostor axis: the reduction's, not the placement's
+                           placed_xy_offset_m=row.get("placed_xy_offset_m")))
     assert len(placed) == 127, f"{len(placed)} placements"
     rep["irr"] = dict(blend=IRR_BLEND.name, placements=len(placed), templates_hidden=len(added),
                       source_trees_hidden=len(hidden_src), source_trees_missing=missing_src,
                       billboards_hidden=len(boards),
                       anchor_source="topology.json prototypes[p].anchor (export/trees_far.py)",
-                      assert_on="the placed mesh's WORLD bbox, not the transform algebra (r2 finding 2)",
-                      tol_xy_m=XY_TOL, tol_z_m=Z_TOL,
-                      worst_residual_xy_m=round(worst_xy, 5), worst_residual_z_m=round(worst_z, 5),
+                      assert_on=("the placed mesh's WORLD bbox against topology.json's own placed_bbox_*, "
+                                 "not the transform algebra (r2 finding 2)"),
+                      tol_bbox_m=BBOX_TOL, tol_z_m=Z_TOL,
+                      worst_residual_bbox_m=round(worst_bbox, 5), worst_residual_z_m=round(worst_z, 5),
                       remapped_materials=dedupe_materials())
     (TF / "irr_scope.json").write_text(json.dumps(
         dict(note="override scope for the shadow-ray cut-out wrap: every far-tree placement, so no value "
