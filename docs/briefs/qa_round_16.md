@@ -15,3 +15,10 @@ Score table per station vs round 15 and Phase 5. Verdict: 6c ACCEPTED (no statio
 station, the box and the owner: bake / export / viewer) — two rounds maximum, this is round one. Then the residual defect list for docs/delivery.md.
 Write docs/qa_round_16.md (< 120 lines), renders/web/round16b_gate.png (960 px composite), append docs/quality_checklist.md; commit only those + scripts/qa_*.py on main.
 Report < 20 lines: the verdict, per-station scores with the delta to round 15, the foliage boxes at 1/2/5, the tile defects, perf and memory, commit id.
+Addendum (lead, after the merge b661489): the full-resolution tiles are gitignored and live only in the viewer worktree — read them at
+.claude/worktrees/phase6-viewer/renders/web/tiles/round16b/ (read-only; cut your own 100 % tiles from renders/web/round16b_cam0N.png on main for stations 1-6 as the
+gate requires). The foliage boxes the viewer measured are renders/web/round16b_foliage_boxes.json and round16b_hero_boxes.json; the A/B for the 12 m far-tree mesh default
+is renders/web/960/round16b_meshdist_ab.jpg. Do your six-station tile review and write its defect list BEFORE reading docs/decisions.md's entry "Lead 100 % tile judgement of
+round16b" (it exists; read it afterwards and state where you agree and disagree). Add to the method: shrub/reed boxes at stations 2 and 5 and a tree-crown box at 5 with
+level, hue, sat, and an interior-vs-rim contrast measure (crown centre luminance / crown edge luminance) against the reference, so the round-2 owners can be assigned from
+numbers. Resident GPU memory: report 1 717 MB against the 1 200 MB Gate 1 budget as a finding with an owner suggestion, not a blocker for 6c.
