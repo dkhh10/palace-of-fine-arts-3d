@@ -24,8 +24,10 @@ scene-linear numbers are reported beside it.
 
 `foliage_p80` is a fixed quantile rather than a sky test (review r1 finding 9), so the target carries a bias
 the 147 deg hue gap dwarfs; it is the direction and the size of the move that this test is for, not the third
-decimal. PASS = the display-referred B/G closes at least half the gap to the reference without ending further
-from it on the other side than it started on this one.
+decimal. PASS is decided on the display-referred HUE (all three channels): it must close at least half the gap to the
+reference without overshooting past it. Display B/G is reported beside it with its own sub-verdict and it
+FAILS - the raw ratio takes it past the target - because after modulation the display blue is ~1/255 and B/G
+is then a ratio of a near-black channel. The lead ships strength 1.0 (the raw ratio) on the hue evidence.
 """
 import json
 import os
@@ -126,7 +128,15 @@ def main():
     bg_target = float(ref["b_over_g_srgb"])
     gap = dbg_before - bg_target
     moved = dbg_before - dbg_after
-    passed = bool(moved >= 0.5 * gap and abs(dbg_after - bg_target) <= gap)
+    # Review r2 finding 6: the verdict must name its metric, and the other one must stay visible.
+    # THE VERDICT IS ON DISPLAY HUE, which uses all three channels. Display B/G is reported beside it with
+    # its own sub-verdict and it does NOT pass: after modulation the display blue is ~1/255, so B/G is a
+    # ratio of a near-black channel and the raw ratio takes it past the reference.
+    h_before, h_after, h_target = hue_deg(d_before), hue_deg(d_after), ref["hue_srgb_deg"]
+    h_gap = h_before - h_target
+    h_moved = h_before - h_after
+    passed = bool(h_moved >= 0.5 * h_gap and h_after >= h_target)
+    bg_passed = bool(moved >= 0.5 * gap and abs(dbg_after - bg_target) <= 0.25 * gap)
     # The full ratio overshoots (see `overshoot` below). Solve for the exponent k in `ratio ** k` that lands
     # the DISPLAY B/G exactly on the reference, so the lead has a measured number to set a partial strength
     # or a clamp from, instead of a guess. Bisection on a monotone function, 40 steps.
@@ -161,14 +171,22 @@ def main():
         linear_b_over_g_after=round(float(after[2] / after[1]), 4),
         linear_b_over_g_reference_inverse_srgb=round(float(ref["b_over_g_linear"]), 4),
         lut=LUT_PATH, lut_exposure_ev=round(LUT_EV, 6),
+        verdict_metric="display hue closure (all three channels), through the delivery LUT",
         hue_closure=dict(
-            before=hue_deg(d_before), after=hue_deg(d_after), target=ref["hue_srgb_deg"],
-            pct_of_gap_closed=round(100.0 * (hue_deg(d_before) - hue_deg(d_after))
-                                    / (hue_deg(d_before) - ref["hue_srgb_deg"]), 1),
-            at_k=hue_deg(d_k), overshoot=bool(hue_deg(d_after) < ref["hue_srgb_deg"]),
-            note=("HUE is the robust summary here and B/G is not: after modulation the display BLUE is "
-                  "1.2/255, so display B/G is a ratio of a near-black channel. On hue the FULL ratio closes "
-                  "the gap without overshooting and beats the partial strength k.")),
+            verdict="PASS" if passed else "FAIL",
+            before=h_before, after=h_after, target=h_target,
+            pct_of_gap_closed=round(100.0 * h_moved / h_gap, 1),
+            at_k=hue_deg(d_k), overshoot=bool(h_after < h_target),
+            note=("THE VERDICT IS COMPUTED ON THIS METRIC. Hue uses all three channels; display B/G does "
+                  "not survive the modulation, because the display blue lands at ~1/255. On hue the FULL "
+                  "ratio closes the gap without overshooting and beats the partial strength k.")),
+        b_over_g_check=dict(
+            verdict="PASS" if bg_passed else "FAIL (overshoots; not the metric the verdict uses)",
+            before=round(dbg_before, 4), after=round(dbg_after, 4), target=round(bg_target, 4),
+            pct_of_gap_closed=round(100.0 * float(moved) / gap, 1) if gap else None,
+            note=("kept visible on purpose (review r2 finding 6): the raw ratio takes display B/G from "
+                  "1.267 past 0.648 to 0.041. It is a ratio of a near-black channel, which is why it is "
+                  "reported and not decided on - but it is not hidden.")),
         overshoot=dict(
             distance_before=round(abs(dbg_before - bg_target), 4),
             distance_after=round(abs(dbg_after - bg_target), 4),
@@ -193,17 +211,20 @@ def main():
         luminance_scale=round(float((after @ [0.2126, 0.7152, 0.0722])
                                     / (before @ [0.2126, 0.7152, 0.0722])), 4),
         verdict="PASS" if passed else "FAIL",
+        strength_shipped=dict(
+            strength=1.0, clamp=4.0, zero_channel_fallback=1.0,
+            where="docs/decisions.md 2026-09-17 'E_placement/E_bake validated on one placement'",
+            note="the raw per-channel ratio, no exponent; k = 0.4386 was measured and NOT taken"),
         note=("Judged DISPLAY-referred, through the delivery LUT, because the reference is a display PNG. "
-              "PASS = the display B/G closes at least half the gap to the reference and does not end further "
-              "from it than it started. The reference is impostor_diag_ref.json foliage_p80, a fixed "
-              "quantile (review r1 finding 9)."))
+              "PASS = the display HUE closes at least half the gap to the reference without overshooting "
+              "past it; display B/G is reported beside it and fails. The reference is "
+              "impostor_diag_ref.json foliage_p80, a fixed quantile (review r1 finding 9)."))
     (TF / "ratio_check.json").write_text(json.dumps(out, indent=1) + "\n")
     for k in ("E_bake", "E_placement", "ratio", "crown_before", "crown_after",
               "linear_b_over_g_before", "linear_b_over_g_after",
               "display_before_srgb8", "display_after_srgb8",
               "display_b_over_g_before", "display_b_over_g_after", "display_b_over_g_target",
-              "display_hue_before", "display_hue_after", "display_hue_target",
-              "moved_pct_of_gap", "hue_closure", "overshoot", "partial_strength", "luminance_scale",
+              "verdict_metric", "hue_closure", "b_over_g_check", "partial_strength", "luminance_scale",
               "verdict"):
         print(f"  {k:20s} {out[k]}")
 

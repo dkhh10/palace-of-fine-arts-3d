@@ -18,19 +18,18 @@ ratio use the same reducer (`mean_nonzero` over the cov mask, gate3_instance_com
 shadow-ray cut-out override, so what does NOT cancel is only the LOD1 -> LOD2 crown density, which is
 reported per prototype as `cov`.
 
-THE PLACEMENT ANCHOR, and a defect in the export's own placement. trees_far.py does
-`src.transform(ob.matrix_world)` and then places the mesh with `location = trunk_base, scale = s` - but it
-never subtracts the prototype's own translation, so the mesh vertices still carry the tree library's world
-position (x = -432 .. -600, y = -570 in master_delivery.blend) and a placed tree lands at
-`trunk_base + s * library_position`, hundreds of metres from where it belongs. This script therefore places
-with the anchor removed:
+THE PLACEMENT ANCHOR IS THE EXPORT'S, READ AND NOT RECOMPUTED (review r2 finding 1). A far tree is placed
 
     matrix_world = Translation(trunk_base) @ Scale(s) @ Translation(-anchor_p)
 
-where `anchor_p` is the prototype object's own world translation, read from gate3_imp.blend and cross-
-checked against gate3_bake.blend (z asserted 0,
-which is what makes `height_above_base_m` measurable from the bbox top). The bake is therefore correct
-whatever the export does; the export's `env_trees.glb` needs the same subtraction (reported to the lead).
+where `anchor_p` = `topology.json prototypes[p].anchor` - the LOD2 mesh's bbox XY centre at z = 0, the point
+the impostor rotates about, which `export/trees_far.py` subtracts from the mesh and asserts against the
+manifest's `radius_m` / `base_z_m`. There is exactly one anchor and exactly one place it is computed. This
+script's FIRST run derived its own - the prototype object's world translation - which is a different point
+(up to (3.44, 2.66) m; over 1 m on six prototypes), so the first E_placement set was baked with trees metres
+from where `env_trees.glb` draws them; those four `tfirr_*` jobs were re-run. The assert is on the placed
+mesh's world bbox, never on the transform algebra, because the algebraic form is an identity that passes
+whatever anchor it is given - which is exactly how the first run's error survived.
 """
 import bpy
 import json
@@ -105,23 +104,36 @@ def main():
     rep = dict(generated=time.strftime("%Y-%m-%dT%H:%M:%S"), generator="export/trees_far_set.py",
                prototypes=len(protos), placements=len(topo["placements"]))
 
-    # ---------------------------------------------------------------- 1. the nursery: anchors only
-    # No blend is built here: the E_bake jobs open gate3_imp.blend as the impostor jobs did. What this pass
-    # takes from it is the prototype ANCHOR - the object's own world translation, which trees_far.py baked
-    # into the LOD2 mesh and never subtracted again (see the module docstring).
-    step = g0.Step("trees_far_set:anchors")
+    # ---------------------------------------------------------------- 1. the anchor, and the nursery
+    # THE ANCHOR IS THE EXPORT'S AND IS READ, NEVER RECOMPUTED (review r2 finding 1, lead's decision).
+    # `export/trees_far.py` subtracts `anchor` = the LOD2 mesh's bbox XY centre at z = 0 - the point the
+    # impostor rotates about, asserted there against the manifest's radius_m / base_z_m - and writes it into
+    # topology.json. The bake's first run used the prototype OBJECT's world translation instead, which is a
+    # different point (up to (3.44, 2.66) m on pine_s7 / pine_s29, over 1 m on six prototypes), so it baked
+    # E_placement with trees metres from where env_trees.glb draws them. One source of truth, no second
+    # derivation: if topology.json does not carry `anchor`, this stops.
+    missing_anchor = [p for p in protos if "anchor" not in topo["prototypes"][p]]
+    assert not missing_anchor, (
+        f"topology.json carries no `anchor` for {len(missing_anchor)} prototypes ({missing_anchor[:3]}). "
+        "Re-run export/trees_far.py (phase6-export) first: the bake must not invent its own anchor.")
+    anchors = {p: [float(v) for v in topo["prototypes"][p]["anchor"]] for p in protos}
+    for p, a in anchors.items():
+        assert len(a) == 3 and abs(a[2]) < 1e-6, f"{p}: anchor {a} - z must be 0 (the trunk-base plane)"
+
+    # No blend is built for E_bake: those jobs open gate3_imp.blend as the impostor jobs did, on the `_LOD1`
+    # prototype objects, and need no anchor at all.
+    step = g0.Step("trees_far_set:nursery")
     bpy.ops.wm.open_mainfile(filepath=str(g3.IMP_BLEND), load_ui=False)
-    anchors, nursery = {}, {}
+    nursery = {}
     for p in protos:
         ob = bpy.data.objects.get(p)
         assert ob is not None, f"{p} is not in {g3.IMP_BLEND.name}"
-        t = ob.matrix_world.translation
-        assert abs(t.z) < 1e-4, f"{p}: prototype origin z = {t.z}, the LOD2 mesh assumes z = 0 is its base"
-        anchors[p] = [round(float(t.x), 6), round(float(t.y), 6), round(float(t.z), 6)]
         nursery[p] = dict(object=p, mesh=ob.data.name, verts=len(ob.data.vertices),
-                          materials=[m.name if m else None for m in ob.data.materials])
+                          materials=[m.name if m else None for m in ob.data.materials],
+                          object_translation=[round(float(x), 4) for x in ob.matrix_world.translation])
     rep["ebake"] = dict(blend=g3.IMP_BLEND.name, prototypes=len(nursery),
                         lawn="GATE3_imp_lawn" in bpy.data.objects, anchors=anchors,
+                        anchor_source="topology.json prototypes[p].anchor (export/trees_far.py)",
                         objects=nursery,
                         why="review r1 finding 5: the divisor is measured on the body that produced the atlas")
     step.done(g3.IMP_BLEND, objects=len(bpy.data.objects))
@@ -129,12 +141,6 @@ def main():
     # ---------------------------------------------------------------- 2. the E_placement blend (the site)
     step = g0.Step("trees_far_set:irr_blend")
     bpy.ops.wm.open_mainfile(filepath=str(g3.BAKE_BLEND), load_ui=False)
-    for p in protos:                                   # the same anchors, cross-checked against the nursery
-        ob = bpy.data.objects.get(p)
-        assert ob is not None, f"{p} is not in {g3.BAKE_BLEND.name}"
-        t = [round(float(x), 6) for x in ob.matrix_world.translation]
-        assert max(abs(a - b) for a, b in zip(t, anchors[p])) < 1e-4, \
-            f"{p}: anchor {t} in the bake blend != {anchors[p]} in the nursery"
     added = append_objects(LOD2_BLEND)
     got = {o.name: o for o in added}
     for o in added:                                    # the templates themselves never render
@@ -152,7 +158,14 @@ def main():
     for n in boards:
         bpy.data.objects[n].hide_render = True
 
-    placed, worst = [], 0.0
+    # THE PLACEMENT ASSERT IS ON THE PLACED MESH'S WORLD BBOX (review r2 finding 2). The old one -
+    # `matrix_world @ (anchor.x, anchor.y, 0)` against `loc` - is an algebraic identity for
+    # `T(loc) @ S @ T(-anchor)`, so `worst_anchor_residual_m = 0` proved nothing about where the vertices
+    # actually land. That is why the wrong anchor went unnoticed. This one reads the bbox back:
+    #   XY centre within XY_TOL of trunk_base, and the bottom within Z_TOL of loc.z + bbox_min.z * s.
+    # It fails on a wrong anchor, which is the whole point.
+    XY_TOL, Z_TOL = 0.05, 0.05
+    placed, worst_xy, worst_z = [], 0.0, 0.0
     for row in topo["placements"]:
         p = row["prototype"]
         s = float(row["scale"])
@@ -163,19 +176,35 @@ def main():
         no.matrix_world = (Matrix.Translation(Vector(row["loc"]))
                            @ Matrix.Diagonal((s, s, s, 1.0))
                            @ Matrix.Translation(-a))
-        # the trunk base must land on `loc`: the anchor is the prototype's own origin and the LOD2 mesh's
-        # z = 0 is its base plane, so (anchor.x, anchor.y, 0) maps to `loc` exactly.
-        base = no.matrix_world @ Vector((a.x, a.y, 0.0))
-        worst = max(worst, max(abs(base[i] - float(row["loc"][i])) for i in range(3)))
+        corners = [no.matrix_world @ Vector(c) for c in no.bound_box]
+        wlo = Vector((min(c.x for c in corners), min(c.y for c in corners), min(c.z for c in corners)))
+        whi = Vector((max(c.x for c in corners), max(c.y for c in corners), max(c.z for c in corners)))
+        centre_xy = ((wlo.x + whi.x) * 0.5, (wlo.y + whi.y) * 0.5)
+        d_xy = max(abs(centre_xy[0] - float(row["loc"][0])), abs(centre_xy[1] - float(row["loc"][1])))
+        want_z = float(row["loc"][2]) + float(topo["prototypes"][p]["bbox_min"][2]) * s
+        d_z = abs(wlo.z - want_z)
+        assert d_xy <= XY_TOL, (
+            f"{no.name} ({p}): placed bbox XY centre {centre_xy} is {d_xy:.3f} m from trunk_base "
+            f"{row['loc'][:2]} - the anchor in topology.json is not the one the mesh was built with")
+        assert d_z <= Z_TOL, (
+            f"{no.name} ({p}): placed bbox bottom z {wlo.z:.3f} is {d_z:.3f} m from "
+            f"loc.z + bbox_min.z * s = {want_z:.3f}")
+        worst_xy, worst_z = max(worst_xy, d_xy), max(worst_z, d_z)
         top = float(row["loc"][2]) + topo["prototypes"][p]["height_above_base_m"] * s
         placed.append(dict(object=no.name, prototype=p, mesh=me.name, loc=row["loc"], scale=round(s, 6),
                            height_m=row["height_m"], walk_dist_m=row["walk_dist_m"],
-                           source_tree=row["source_tree"], crown_top_z=round(top, 4)))
-    assert worst < 1e-4, f"placement anchor residual {worst:.6f} m"
+                           source_tree=row["source_tree"], crown_top_z=round(top, 4),
+                           bbox_centre_xy=[round(float(v), 4) for v in centre_xy],
+                           bbox_min_z=round(float(wlo.z), 4),
+                           residual_xy_m=round(float(d_xy), 5), residual_z_m=round(float(d_z), 5)))
     assert len(placed) == 127, f"{len(placed)} placements"
     rep["irr"] = dict(blend=IRR_BLEND.name, placements=len(placed), templates_hidden=len(added),
                       source_trees_hidden=len(hidden_src), source_trees_missing=missing_src,
-                      billboards_hidden=len(boards), worst_anchor_residual_m=round(worst, 8),
+                      billboards_hidden=len(boards),
+                      anchor_source="topology.json prototypes[p].anchor (export/trees_far.py)",
+                      assert_on="the placed mesh's WORLD bbox, not the transform algebra (r2 finding 2)",
+                      tol_xy_m=XY_TOL, tol_z_m=Z_TOL,
+                      worst_residual_xy_m=round(worst_xy, 5), worst_residual_z_m=round(worst_z, 5),
                       remapped_materials=dedupe_materials())
     (TF / "irr_scope.json").write_text(json.dumps(
         dict(note="override scope for the shadow-ray cut-out wrap: every far-tree placement, so no value "

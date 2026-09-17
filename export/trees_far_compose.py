@@ -91,14 +91,31 @@ def main():
             f"{p}: the unoccluded calibration plane baked {cm:.5f}, not 1.0 - the AO is not normalised"
         cals[p] = round(cm, 5)
         arrays[mesh_of[p]] = a
-        g = a.mean(axis=1)
+        # Review r2 finding 5: a vertex no polygon references is never written by the bake, so its 0 is
+        # "unbaked", not "fully occluded". 11 of the 16 meshes have some (willow_s11 316 of its 416 zeros),
+        # and counting them dragged min / mean / p05 / zeros_pct down. The STATISTICS below are over the
+        # FACED vertices only; the array itself still ships at full length, because the consumer attaches it
+        # as COLOR_0 on the same topology and a loose vertex is in no face, so its value is never shaded.
+        faced_n = int(it["verts"] - it["loose_verts"])
+        g_all = a.mean(axis=1)
+        nzero_faced = int(it["zeros_faced"])
+        # the faced set is not indexable from the record, but every loose vertex is one of the zeros
+        # (`zeros_loose == loose_verts` on every mesh), so the faced distribution is the nonzero values plus
+        # `zeros_faced` zeros - which is exactly what the order statistics below need.
+        assert it["zeros_loose"] == it["loose_verts"], \
+            f"{p}: {it['loose_verts']} loose verts but {it['zeros_loose']} of them are zero - the faced " \
+            "distribution cannot be reconstructed from the record"
+        nz = g_all[g_all > 0.0]
+        g = np.concatenate([nz, np.zeros(nzero_faced, dtype=nz.dtype)]) if nzero_faced else nz
+        assert g.size == faced_n, f"{p}: reconstructed {g.size} faced values, expected {faced_n}"
         ao_meshes[mesh_of[p]] = dict(
-            prototype=p, verts=int(a.shape[0]),
+            prototype=p, verts=int(a.shape[0]), faced_verts=faced_n,
             min=round(float(g.min()), 6), mean=round(float(g.mean()), 6), max=round(float(g.max()), 6),
             p05=round(float(np.percentile(g, 5)), 6), p50=round(float(np.percentile(g, 50)), 6),
             p95=round(float(np.percentile(g, 95)), 6),
-            zeros=it["zeros"], zeros_pct=round(100.0 * it["zeros"] / a.shape[0], 2),
-            loose_verts=it["loose_verts"], zeros_loose=it["zeros_loose"],
+            zeros=nzero_faced, zeros_pct=round(100.0 * nzero_faced / max(faced_n, 1), 2),
+            loose_verts=it["loose_verts"],
+            mean_all_verts=round(float(g_all.mean()), 6),
             calibration=cals[p], bake_s=it["bake_s"], job=f"tfao_{p}")
     npz = TF / "vertex_ao.npz"
     np.savez_compressed(str(npz), **arrays)
@@ -108,13 +125,14 @@ def main():
         assert np.array_equal(np.asarray(back[k]), v), f"{npz}: {k} changed on write"
 
     # ------------------------------------------------------------------ 2. E_bake, per prototype
-    proto_out, missing_eb = {}, []
+    proto_out, missing_eb, worlds = {}, [], {}
     for p in protos:
         f = REC / f"tfeb_{p}.json"
         if not f.exists():
             missing_eb.append(p)
             continue
         rec = json.loads(f.read_text())
+        worlds[f"tfeb_{p}"] = rec["rig"]["world"]
         it = rec["items"][0]
         assert it["object"] == p, f"tfeb_{p} baked {it['object']}"
         proto_out[p] = dict(E_bake=r6(it["mean_nonzero"]), cov=round(it["coverage"], 4),
@@ -124,15 +142,26 @@ def main():
                             samples=rec["samples"], bake_s=it["bake_s"], job=f"tfeb_{p}",
                             zero_channel=bool(min(it["mean_nonzero"]) <= 0.0))
 
+    # carry 8: a half-finished queue must not ship a schema /2 file with an incomplete `prototypes` block -
+    # the viewer would have no divisor for those prototypes and no way to know it.
+    assert not missing_eb, f"E_bake missing for {len(missing_eb)} prototypes: {missing_eb}"
+
     # ------------------------------------------------------------------ 3. E_placement, per placement
     got = {}
     for jid in [j["id"] for j in plan["jobs"] if j["kind"] == "instance"]:
         rec = json.loads((REC / f"{jid}.json").read_text())
         assert not rec["missing"], f"{jid}: missing objects {rec['missing']}"
+        worlds[jid] = rec["rig"]["world"]
         res = rec["results"]["shadow"]
         for it in res["items"]:
             assert it["object"] not in got, f"duplicate placement {it['object']}"
             got[it["object"]] = it
+    # review r2 finding 4: the ratio is only meaningful if numerator and divisor saw the SAME world. Both
+    # kinds are now in BAKE_DIFFUSE_WORLD_KINDS, so an armed flag moves them together - and this asserts it
+    # rather than trusting it.
+    assert len(set(worlds.values())) == 1, \
+        f"E_bake and E_placement baked against different worlds: {worlds}"
+
     order = [d["object"] for d in places["placements"]]
     absent = [o for o in order if o not in got]
     assert not absent, f"{len(absent)} placements never baked, first: {absent[:5]}"
@@ -209,12 +238,25 @@ def main():
                 "ALL vertices. Use `rgb`: it is the reducer the shrub file ships and the reducer `E_bake` "
                 "uses, so E_placement / E_bake is unit-free."),
         ratio=dict(use=("IMPOSTOR ONLY. Beyond `treeMeshDist` the viewer draws "
-                        "atlas_frame * (E_placement / E_bake) per placement, per channel."),
+                        "atlas_frame * clamp((E_placement / E_bake) ** strength, 0, clamp) per placement, "
+                        "per channel."),
+                   strength=1.0, clamp=4.0, zero_channel_fallback=1.0,
+                   strength_decision=("STRENGTH 1.0 = the full RAW per-channel ratio, no exponent "
+                                      "(docs/decisions.md 2026-09-17 'E_placement/E_bake validated on one "
+                                      "placement'). Measured on TREEFAR_000 through the delivery LUT: the "
+                                      "raw ratio closes 86.7 % of the HUE gap (205.5 -> 72.6 deg against "
+                                      "the reference 52.2) with no overshoot, while the k = 0.4386 variant "
+                                      "that matches display B/G instead lands the hue at 105.4 deg, worse. "
+                                      "The raw ratio does overshoot on B/G alone (1.267 -> 0.041 vs 0.648), "
+                                      "which is a ratio of a 1.2/255 blue channel - see "
+                                      "trees_far/ratio_check.json, which carries both metrics and names the "
+                                      "one the verdict used."),
                    raw=("BOTH VALUES RAW: the numerator is this file's `rgb` (or the unscaled `_IRRADIANCE` "
                         "attribute), the denominator this file's `prototypes[p].E_bake`. `lightmaps.scale` "
                         "(pi) is applied to NEITHER - scaling only the numerator makes every impostor pi x "
                         "too bright (review r1 finding 7)."),
-                   fallback="clamp the ratio to the lead's ceiling; use 1.0 where E_bake has a zero channel",
+                   fallback=("clamp at 4.0; use 1.0 in any channel where E_bake is 0 (none of the 16 is, "
+                             "today: min E_bake channel over the 16 prototypes is 1.277)"),
                    e_bake_body=("the `_LOD1` prototype object in gate3_imp.blend that job imp_<proto> "
                                 "rendered into the atlas - NOT the export's LOD2 reduction (review r1 "
                                 "finding 5). What does not cancel between the two bodies is crown density, "
@@ -230,9 +272,15 @@ def main():
                                       "bakes 1.000 in every job (`calibration` per mesh), which is what "
                                       "makes the raw bake value the AO factor"),
                        topology="asserted equal to topology.json's LOD2 vertex count per prototype",
-                       zeros=("vertices whose hemisphere is fully blocked by the crown. They are real "
-                              "(`loose_verts` = 0 everywhere, so none of them is an unbaked vertex) and "
-                              "they sit inside the crown; `zeros_pct` per mesh says how many."),
+                       zeros=("`zeros` / `zeros_pct` count the FACED vertices whose hemisphere is fully "
+                              "blocked by the crown - real occlusion, inside the crown. They exclude the "
+                              "LOOSE vertices (`loose_verts`, 11 of the 16 meshes have some, willow_s11 "
+                              "316): a vertex no polygon references is never written by the bake, so its 0 "
+                              "means UNBAKED, not occluded, and counting it dragged min / mean / p05 down "
+                              "(review r2 finding 5). Every statistic in this block is over the faced "
+                              "vertices; `mean_all_verts` is the old all-vertex mean, kept for comparison. "
+                              "The npz array still ships at full length - a loose vertex is in no face, so "
+                              "nothing ever shades it."),
                        meshes=ao_meshes),
         bake=dict(engine="CYCLES", type="DIFFUSE", direct=True, indirect=True, color=False,
                   target="VERTEX_COLORS", denoiser="OPENIMAGEDENOISE",
@@ -254,6 +302,11 @@ def main():
                                      "Applied to the MATERIAL over the whole scope, so no value depends on "
                                      "the job split. Not a neutral re-encoding - the same wrap the shrub "
                                      "file documents."),
+                  worlds=worlds,
+                  worlds_note=("the world every E_bake and E_placement job recorded; asserted equal, so the "
+                               "ratio cannot mix a diffuse-branch numerator with a split-ray divisor "
+                               "(review r2 finding 4 - `proto` is now in "
+                               "gate3_common.BAKE_DIFFUSE_WORLD_KINDS beside `instance`)"),
                   jobs=[j["id"] for j in plan["jobs"]]),
         meshes=out_meshes)
     (TF / "instance_irradiance.json").write_text(json.dumps(doc, indent=1) + "\n")

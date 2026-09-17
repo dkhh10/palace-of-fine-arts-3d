@@ -1774,20 +1774,22 @@ export/sync_main.sh
     10c is fixed by shipping `trees_far/instance_irradiance.json` at schema
     **`pfa-phase6/gate4-instance-irradiance/2`** (the shrub file stays at /1).
 
-37. **The export's far-tree placement puts every LOD2 mesh in the tree LIBRARY's coordinates** (found while
-    building the 6c item-2 irradiance scene; `export/trees_far.py` is the export engineer's file and was not
-    touched). `trees_far.py:253` does `src.transform(ob.matrix_world)` - "prototype world space", which for
-    these prototypes is the off-site nursery row in `master_delivery.blend` at x = -432 .. -600, y = -570 -
-    and `:299-305` then places the instance with `location = trunk_base, scale = s` **without subtracting
-    that anchor again**. Measured: `EXPM_treefar_ENV_tree_broadleaf_s19_LOD1`'s bbox is
-    x [-440.13, -423.79], y [-580.02, -559.75] while `tree_far[1].trunk_base` is (-29.96, 29.68, -0.90) at
-    s = 0.618, so that tree lands about **300 m** from where it belongs. Only the z assert fires
-    (`height_above_base_m` is measured from the bbox top, which the offset does not move), which is why the
-    hand-off passed. The fix is one line at the placement - `matrix_world = Translation(trunk_base) @
-    Scale(s) @ Translation(-anchor_p)` with `anchor_p` the prototype object's own world translation, z
-    asserted 0 - and that is exactly what `export/trees_far_set.py` does for the bake, so **the bake's
-    numbers are correct whatever `env_trees.glb` currently does**. Reported to the lead.
-
+37. **The far-tree placement anchor: one definition, the export's - and the bake's first run used another**
+    (corrected 2026-09-17 after `docs/reviews/phase6c_bake_r2_review.md` finding 1; supersedes what this
+    item said before). `export/trees_far.py` DOES subtract an anchor: `:301` takes the LOD2 mesh's **bbox XY
+    centre at z = 0** - the point the impostor rotates about - asserts it against the manifest's `radius_m` /
+    `base_z_m`, and `:335` transforms the mesh by `Translation(-anchor)` before the 127 placements set
+    `location = trunk_base, scale = s`. That is the definition, it is computed once, and it now ships in
+    `topology.json` as `prototypes[p].anchor`. **The bake's first run derived a different one** - the
+    prototype OBJECT's world translation out of `gate3_imp.blend` - and the two differ by up to
+    **(3.44, 2.66) m** (pine_s7, pine_s29; over 1 m on six prototypes), so the first `E_placement` set was
+    baked with trees up to ~2.2 m x s from where `env_trees.glb` draws them. The four `tfirr_*` jobs were
+    re-run against the export's anchor; `trees_far_set.py` now READS it and refuses to start if
+    `topology.json` does not carry it. What let the error through was review finding 2: the old assert,
+    `matrix_world @ (anchor.x, anchor.y, 0)` against `trunk_base`, is an algebraic identity for
+    `T(loc) @ S @ T(-anchor)` and passes whatever anchor it is handed. It is now an assert on the **placed
+    mesh's world bbox** - XY centre within 0.05 m of `trunk_base`, bottom within 0.05 m of
+    `loc.z + bbox_min.z * s` - which fails on a wrong anchor.
 
 38. **6c item 2 - the far-tree lighting hand-off: 36 jobs, `vertex_ao.npz` + `instance_irradiance.json` at
     schema /2** (2026-09-17; `export/trees_far_set.py`, `export/bake_lm.py` kind `proto`,
@@ -1848,3 +1850,19 @@ export/sync_main.sh
       more sky than the volume mean; and the reference's own `foliage_p80` crop biases the target blue-up
       (carry 9). If the lead wants the B/G matched instead of the hue, `ratio ** k` with **k = 0.4386**
       lands display B/G exactly on 0.648 (hue 105.4, worse). Numbers in `trees_far/ratio_check.json`.
+
+39. **Round-2 review, carried open items (bake).** `docs/reviews/phase6c_bake_r2_review.md` 7, 9 and 10; 8 is
+    fixed (`trees_far_compose.py` now asserts `not missing_eb`, so a half-finished queue cannot ship a
+    schema /2 file with an incomplete `prototypes` block). (7) `trees_far_ratio_check.py:47-48` hard-codes
+    the LUT shaper constants (`-2.8331399`, `-12.47393`, `16.5`, `0.18`) instead of parsing the `.cube`
+    header or importing `gate0_common`; they match today, so the display path really is the delivery LUT,
+    but a re-bake at another exposure would mis-judge silently. (9) Two prototypes' LOD2 meshes float:
+    `topology.json` `bbox_min.z` is **3.6541** (cypress_column_s2) and **4.3547** (redwood_s13) where the
+    other 14 are ~0, so those crowns sit 2.4-2.8 m x s above `trunk_base` in the glb and in
+    `trees_far_irr.blend`. That is the export's reduction, not the bake's, and the bake's new bbox assert
+    measures against `topology.json`'s own `bbox_min.z`, so it is consistent with whatever the export
+    ships - for the export engineer. (10) The `tfeb_ENV_tree_broadleaf_s53_LOD1` determinism check
+    (override scope of 1 object vs all 16, identical `mean=3.4148 cov=0.943`) survives only in
+    `renders/logs/6c_bake_run1.log:291` and `6c_bake_run2.log:96`, because run 2 overwrote the record;
+    superseded records should be kept beside the new one.
+

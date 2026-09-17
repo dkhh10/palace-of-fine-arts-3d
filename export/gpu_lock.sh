@@ -28,6 +28,11 @@ ROOT=${HERE:h}
 MAIN=${PFA_MAIN_ROOT:-/Users/dk/Projects/3d render blender 3rd attempt building}
 QDIR="$ROOT/export/out/bake_queue"
 STATUS="$QDIR/status.json"
+# Review r2 finding 3: CLAUDE.md's GPU signal is the MAIN checkout's copy, not this worktree's. Writes
+# already mirror to MAIN; the READER has to read MAIN too, or an agent in another worktree - whose own copy
+# is a stale `idle` from an earlier gate - is told the GPU is free in the middle of a live bake. `lock_state`
+# reads BOTH and the effective-RUNNING one wins, so the lock holds whichever file a caller happens to have.
+MAIN_STATUS="$MAIN/export/out/bake_queue/status.json"
 mkdir -p "$QDIR"
 OWNER=${PFA_QUEUE_OWNER:-phase6-bake/gpu_lock}
 
@@ -43,37 +48,48 @@ set -- "${args[@]}"
 # Prints "<effective state> <holder owner> <reason>".  A `running` record whose pid is gone or whose
 # expires_at has passed is reported as idle (stale), which is what makes a crash self-healing.
 lock_state () {
-  python3 - "$STATUS" <<'PY'
+  python3 - "$MAIN_STATUS" "$STATUS" <<'PYEOF'
 import json, os, sys, time
-path = sys.argv[1]
-d = {}
-if os.path.exists(path):
+
+
+def read(path):
+    if not os.path.exists(path):
+        return {}
     try:
-        d = json.load(open(path))
+        return json.load(open(path))
     except Exception:
-        d = {}
-state = d.get("state", "absent")
-owner = d.get("owner", "-")
-if state != "running":
-    print(f"idle {owner} state={state}")
-    raise SystemExit(0)
-pid, exp = d.get("pid"), d.get("expires_at")
-if pid:
-    try:
-        os.kill(int(pid), 0)
-    except ValueError:
-        pid = None
-    except ProcessLookupError:
-        # EPERM (PermissionError) means the process EXISTS and is not ours: that is ALIVE, not stale.
-        print(f"idle {owner} stale: pid {pid} is gone")
+        return {}
+
+
+def effective(d, where):
+    """(state, description). `running` with a dead pid or a passed expires_at reads as IDLE - that is what
+    makes a crash between claim and release self-healing (review r1 finding 1)."""
+    state, owner = d.get("state", "absent"), d.get("owner", "-")
+    if state != "running":
+        return "idle", f"idle {owner} state={state} [{where}]"
+    pid, exp = d.get("pid"), d.get("expires_at")
+    if pid:
+        try:
+            os.kill(int(pid), 0)
+        except ValueError:
+            pass
+        except ProcessLookupError:
+            return "idle", f"idle {owner} stale: pid {pid} is gone [{where}]"
+        except PermissionError:
+            pass          # EPERM means the process EXISTS and is not ours: alive, not stale
+    if exp and time.time() > float(exp):
+        return "idle", f"idle {owner} stale: expired {int(time.time() - float(exp))}s ago [{where}]"
+    left = int(float(exp) - time.time()) if exp else "-"
+    return "running", f"running {owner} pid={pid} expires_in={left}s [{where}]"
+
+
+rows = [effective(read(p), w) for p, w in ((sys.argv[1], "MAIN"), (sys.argv[2], "worktree"))]
+for st, msg in rows:
+    if st == "running":
+        print(msg)
         raise SystemExit(0)
-    except PermissionError:
-        pass
-if exp and time.time() > float(exp):
-    print(f"idle {owner} stale: expired {int(time.time() - float(exp))}s ago")
-    raise SystemExit(0)
-print(f"running {owner} pid={pid} expires_in={int(float(exp) - time.time()) if exp else '-'}s")
-PY
+print(rows[0][1])
+PYEOF
 }
 
 write_status () {   # state note pid expires_at
@@ -115,11 +131,14 @@ case "${1:-}" in
     lock_state
     ;;
   claim)
+    # A bare `claim` is an AGENT-level hold: there is no process to name, so it records NO pid and the
+    # honest `secs` alone governs it. Naming the calling shell's pid (what this did) was worse than useless -
+    # that shell exits when the command returns, so every later `check` read a live lock as stale. A claim
+    # around a real process uses `gpu_lock.sh run`, which records its own pid, or passes PFA_LOCK_PID.
     guard
     secs=${3:-1800}
-    pid=${PFA_LOCK_PID:-$PPID}
-    write_status running "${2:-}" "$pid" $(( $(date +%s) + secs ))
-    echo "[gpu_lock] running  ${2:-}  (pid $pid, ${secs}s)"
+    write_status running "${2:-}" "${PFA_LOCK_PID:-}" $(( $(date +%s) + secs ))
+    echo "[gpu_lock] running  ${2:-}  (pid ${PFA_LOCK_PID:-none}, ${secs}s)"
     ;;
   release)
     guard
