@@ -1732,3 +1732,30 @@ export/sync_main.sh
     are in the manifest - **13.0 MB of KTX2 at 1 K, 46.0 MB at 2 K** - with the 1 K named as the default. A
     genuine 2 K would mean re-running the generator, which changes a Phase 5 material source and needs the
     user's approval.
+
+### Round 2 (2026-09-17)
+
+40. **Item 1 - the tinted albedo is what ships, and it was already right; what was missing is the number
+    against the render.** `foliage_tex.py` already composed `clip(image_linear * tint)` (item 38), and the
+    re-run reproduces the brief's targets exactly: MAT_shrub **95.4/0.344 -> 95.0/0.464**, MAT_shrub_light
+    **95.4/0.344 -> 94.2/0.516**, MAT_shrub_dry **95.4/0.344 -> 36.1/0.600** (the straw one), MAT_reeds
+    **68.7/0.491 -> 69.3/0.651**; `clipped_texel_fraction` 0.0000 on all eight, so no tint (MAT_shrub_dry's
+    6.3x red included) blows a texel. **No Cycles bake was needed**: every term is a graph constant read by
+    `read_foliage.py`, so this ran on the CPU in numpy, no Blender and no GPU.
+41. **The cam02 hue gap is NOT the leaf albedo, measured.** `scripts/qa_r13_probe.py`'s own box
+    (station 2, `60 520 700 980`) on `renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png`
+    reproduces QA's **102.4 deg** exactly (crop mean `[100.9 108.4 97.7]`, sat 0.098 - that mean is mostly
+    sky-lit background). Restricted to the green-dominant pixels, which is what a leaf actually is, the
+    reference reads **90.5 deg, sat 0.526**. The four tree materials in that box carry an *identity* tint
+    (broadleaf 93.1, cypress 92.5, eucalyptus 80.6; only pine is tinted, 100.8 -> 102.7), i.e. their shipped
+    albedo is already within 0-10 deg of the reference's leaf hue. So the viewer's 57.7 deg cannot be fixed by
+    the albedo on the near trees - it is the shading, and the term the glb never carried is the Translucent
+    branch (item 38). What the tint *does* fix is the shrub/reed **value** (1.35-1.5x too dark) and
+    MAT_shrub_dry's hue, which was the wrong plant entirely (95.4 green where the material is 36.1 straw).
+42. **Item 2 - the 2 K set is gone** (lead decision 2). `PX_SET = (1024,)`; `foliage_tex.py` now deletes any
+    PNG in `tex/` it did not write this run (`stale_removed` in the report), `gltf_pack.sh --foliage` already
+    `rm -rf`s its KTX2 directory, and the manifest's `sizes`, `per_size_bytes` and every `albedo` /
+    `translucency_map` / `normal` key follow `fo["sizes"]`, so they carry one size with no code change.
+    **22 KTX2, 13 001 325 B (13.0 MB), was 44 files / 59.0 MB.** `sync_main.sh` deliberately has no
+    `--delete`, so MAIN's 22 dropped `*_2048.ktx2` were removed by hand after the sync (44 -> 22 files,
+    57 708 -> 12 744 KiB).

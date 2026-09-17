@@ -65,8 +65,10 @@ fi
 
 # ---------------------------------------------------------------- Phase 6c item D: the foliage card maps
 # export/foliage_tex.py writes out/gate3/foliage/tex/*.png (albedo+alpha with the material's tint applied,
-# the translucency factor map, the leaf normal maps) at 1024 and 2048. Its own KTX2 directory, because
-# gate3_pack.sh rm -rf's out/gate3/tex_ktx2 on every bake round and these are not the bake's files.
+# the translucency factor map, the leaf normal maps) at 1024 - 1 K ONLY since the lead dropped the 2 K
+# upsample (decisions.md 2026-09-17, decision 2). Its own KTX2 directory, because gate3_pack.sh rm -rf's
+# out/gate3/tex_ktx2 on every bake round and these are not the bake's files. `rm -rf "$KTX"` below is what
+# keeps a dropped size from surviving in the KTX2 set; foliage_tex.py does the same for the PNGs.
 if [ "$1" = "--foliage" ]; then
   OUT="$ROOT/export/out/gate3/foliage"
   KTX="$OUT/tex_ktx2"
@@ -107,8 +109,11 @@ rep["ktx2_dir"] = "tex_ktx2"
 rep["ktx2_bytes"] = sum(os.path.getsize(os.path.join(ktx, f)) for f in os.listdir(ktx))
 rep["ktx2_files"] = sorted(os.listdir(ktx))
 json.dump(rep, open(os.path.join(out, "foliage_tex.json"), "w"), indent=1)
+sizes = sorted({f.rsplit("_", 1)[-1][:-5] for f in rep["ktx2_files"]})
+per_size = {px: sum(os.path.getsize(os.path.join(ktx, f))
+                    for f in rep["ktx2_files"] if f.endswith(f"_{px}.ktx2")) for px in sizes}
 print(f"[foliage] {len(rep['ktx2_files'])} KTX2, {rep['ktx2_bytes']/1e6:.1f} MB "
-      f"({sum(os.path.getsize(os.path.join(ktx, f)) for f in rep['ktx2_files'] if f.endswith('_2048.ktx2'))/1e6:.1f} MB of it the 2K set)")
+      + ", ".join(f"{px}: {b/1e6:.1f} MB" for px, b in sorted(per_size.items())))
 PYF
   exit 0
 fi

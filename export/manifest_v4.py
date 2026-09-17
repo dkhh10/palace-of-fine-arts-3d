@@ -675,9 +675,11 @@ def main():
             replaces=("the glb's baseColorTexture on these eight materials: the glb carries the untinted "
                       "source PNG, which is the same card for MAT_shrub / MAT_shrub_light / MAT_shrub_dry "
                       "and about 1.9x too dark on all three"),
-            resolution_note=("every source is 1024x1024 (scripts/mat_leaf_textures.py), so the 2048 set is an "
-                             "upsample: 4x the memory, no new detail, a smoother alpha edge at 3 m. The 1K "
-                             "set is the default; loading the 2K one is a budget decision."),
+            resolution_note=("1 K only. Every source is 1024x1024 (scripts/mat_leaf_textures.py), so the "
+                             "2048 set round 1 also shipped was an upsample - 4x the memory, no new detail, "
+                             "its only gain a smoother alpha edge at 3 m - and the lead dropped it "
+                             "(decisions.md 2026-09-17, decision 2). A genuine 2 K would mean re-running the "
+                             "generator, i.e. a Phase 5 material change, which needs the user's approval."),
             per_size_bytes={str(px): sum(os.path.getsize(os.path.join(str(fo_p.parent), "tex_ktx2", fn))
                                          for fn in (fo.get("ktx2_files") or [])
                                          if fn.endswith(f"_{px}.ktx2"))
