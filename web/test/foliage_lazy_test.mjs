@@ -1,0 +1,179 @@
+// 6c round 2 — the lazy foliage consumers, tested against the REAL manifest with a synthetic scene.
+//
+// Nothing here needs a GPU: three's scene graph, the geometry attributes and the material patches are
+// all plain JS, and `loadFarTrees` takes its glb through an injected `loadGlb`.  The synthetic glb is
+// built from the manifest's own placement table, exactly as gltfpack emits it (one instanced node per
+// prototype per material, rows in the manifest's order), so the POSITIONAL JOIN is tested on the real
+// 127 placements and the real 254 rows.
+import * as THREE from 'three';
+import fs from 'node:fs';
+import path from 'node:path';
+import { normaliseManifest } from '../src/manifest.js';
+import { irradianceRatio, applyFoliage, RATIO_CLAMP } from '../src/foliage.js';
+import { lazyUrlCandidates, loadFarTrees, markShrubLodRows, prototypeEbake } from '../src/foliageLazy.js';
+import { buildImpostors } from '../src/impostors.js';
+
+let fails = 0;
+const ok = ( c, m ) => { console.log( `${c ? 'PASS' : 'FAIL'}  ${m}` ); if ( ! c ) fails ++; };
+const info = ( m ) => console.log( `      ${m}` );
+
+const MAIN = process.env.PFA_MAIN_ROOT || path.resolve( import.meta.dirname, '../../..' );
+const MANIFEST = path.join( MAIN, 'export/out/gate3/manifest.json' );
+
+// ---------------------------------------------------------------- 1. the url candidates
+{
+	const base = 'http://x/assets/gate3/manifest.json';
+	const a = lazyUrlCandidates( base, 'env_trees.glb' );
+	ok( a.includes( 'http://x/assets/gate3/env_trees.glb' ), 'candidate: beside the manifest' );
+	ok( a.includes( 'http://x/assets/gate1/env_trees.glb' ), 'candidate: ../gate1 (where gltf_pack.sh writes)' );
+	const b = lazyUrlCandidates( base, 'out/gate3/foliage/tex_ktx2/x.ktx2' );
+	ok( b.includes( 'http://x/assets/gate3/foliage/tex_ktx2/x.ktx2' ), 'candidate: the OUT root stripped' );
+}
+
+// ---------------------------------------------------------------- 2. the ratio, clamped
+{
+	ok( irradianceRatio( [ 1, 1, 1 ], [ 0, 1, 1 ], 'full' )[ 0 ] === 1, 'E_bake zero channel -> 1, not a runaway' );
+	const r = irradianceRatio( [ 100, 1, 1 ], [ 1, 1, 1 ], 'full' );
+	ok( r[ 0 ] === RATIO_CLAMP, `full mode clamped at ${RATIO_CLAMP} (got ${r[ 0 ]})` );
+	const c = irradianceRatio( [ 2, 2, 2 ], [ 1, 1, 1 ], 'chroma' );
+	ok( Math.abs( c[ 0 ] - 1 ) < 1e-6 && Math.abs( c[ 1 ] - 1 ) < 1e-6, 'chroma mode is level-free' );
+}
+
+// ---------------------------------------------------------------- 3. the dissolve is a complement
+// The two tests live in different files and must partition the pixels exactly: the mesh keeps
+// { hash <= meshFade }, the impostor must keep its complement and nothing else.
+{
+	const fol = fs.readFileSync( path.resolve( import.meta.dirname, '../src/foliage.js' ), 'utf8' );
+	const imp = fs.readFileSync( path.resolve( import.meta.dirname, '../src/impostors.js' ), 'utf8' );
+	const meshDiscard = /vPfaFade < 0\.9995 && pfaHash\( gl_FragCoord\.xy \) >= vPfaFade/.test( fol );
+	const impDiscard = /vPfaFade < 0\.9995 && pfaHash\( gl_FragCoord\.xy \) < 1\.0 - vPfaFade/.test( imp );
+	ok( meshDiscard, 'mesh discards hash >= vPfaFade (keeps hash < 1-t)' );
+	ok( impDiscard, 'impostor discards hash < 1 - vPfaFade (keeps hash >= 1-t) — the exact complement' );
+	// and a numeric check of the partition at ten fade values
+	let bad = 0;
+	for ( let k = 0; k <= 10; k ++ ) {
+		const t = k / 10;                       // the impostor's vPfaFade; the mesh's is 1 - t
+		for ( let h = 0; h < 1; h += 0.05 ) {
+			// exactly the two shipped tests, guards included
+			const meshFade = 1 - t;
+			const meshKeeps = ! ( meshFade < 0.9995 && h >= meshFade );
+			const impKeeps = ! ( t < 0.9995 && h < 1 - t );
+			if ( meshKeeps === impKeeps ) bad ++;
+		}
+	}
+	ok( bad === 0, `every (fade, hash) pair is drawn exactly once (${bad} overlaps/holes)` );
+}
+
+if ( ! fs.existsSync( MANIFEST ) ) {
+	ok( false, `no manifest at ${MANIFEST} (set PFA_MAIN_ROOT)` );
+	process.exit( 1 );
+}
+const raw = JSON.parse( fs.readFileSync( MANIFEST, 'utf8' ) );
+const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' );
+
+// ---------------------------------------------------------------- 4. the far-tree join
+{
+	const fm = raw.trees && raw.trees.far_mesh;
+	ok( !! fm, 'manifest carries trees.far_mesh' );
+	const placements = fm.placements;
+	// one instanced node per prototype per material, gltfpack-style, rows in manifest order
+	const byProto = new Map();
+	for ( const p of placements ) {
+		if ( ! byProto.has( p.prototype ) ) byProto.set( p.prototype, [] );
+		byProto.get( p.prototype ).push( p );
+	}
+	const root = new THREE.Group();
+	const protoInfo = new Map( ( fm.prototypes || [] ).map( ( q ) => [ q.name, q ] ) );
+	for ( const [ proto, list ] of byProto ) {
+		const mats = ( protoInfo.get( proto ) || {} ).materials || [ 'MAT_bark_cypress', 'MAT_leaf_cypress' ];
+		for ( const matName of mats ) {
+			// a two-triangle "crown" so clusterCrowns has something to flood-fill
+			const g = new THREE.BufferGeometry();
+			const isLeaf = /^MAT_leaf_/.test( matName );
+			const y = isLeaf ? 8 : 1;
+			g.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( [
+				- 1, y, 0, 1, y, 0, 0, y + 1, 0, - 1, y, 1, 1, y, 1, 0, y + 1, 1 ] ), 3 ) );
+			g.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( 18 ).fill( 0 ).map( ( _, i ) => ( i % 3 === 2 ? 1 : 0 ) ), 3 ) );
+			const m = new THREE.MeshStandardMaterial( { name: matName } );
+			const im = new THREE.InstancedMesh( g, m, list.length );
+			im.name = `mesh_${root.children.length}`;
+			list.forEach( ( p, i ) => {
+				// the manifest's loc is BLENDER (x, y, z) -> three (x, z, -y)
+				im.setMatrixAt( i, new THREE.Matrix4().makeTranslation( p.loc[ 0 ], p.loc[ 2 ], - p.loc[ 1 ] ) );
+			} );
+			root.add( im );
+		}
+	}
+	const scene = new THREE.Scene();
+	const sun = new THREE.DirectionalLight( 0xffffff, 1 );
+	sun.position.set( 1, 1, 1 );
+
+	// the impostors the far trees are supposed to fade into
+	const built = buildImpostors( { impostors: manifest.gate3.impostors, far: manifest.treesFar,
+		near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
+	if ( built.group ) scene.add( built.group );
+
+	const notes = [];
+	const rep = await loadFarTrees( {
+		scene, manifest, sun, note: ( m ) => notes.push( m ),
+		loadGlb: async ( url ) => ( url.includes( 'gate1/env_trees.glb' ) || url.endsWith( '/env_trees.glb' ) )
+			? { scene: root, parser: null, userData: {} } : Promise.reject( new Error( '404' ) ),
+		impostorGroup: built.group, foliageReport: null, probeTexture: null,
+		scale: manifest.gate3.scale, mode: 'near', impMode: 'chroma', meshDist: 40, fadeBand: 5,
+		uvDequant: false,
+	} );
+	info( notes.filter( ( n ) => n.startsWith( 'far-tree' ) ).join( '\n      ' ) );
+	ok( rep.error === null, `join clean (${rep.error || 'no error'})` );
+	ok( rep.rows === 254 && rep.joined === 254, `254/254 instance rows joined (${rep.joined}/${rep.rows})` );
+	ok( rep.placements === 127, `127 placements declared (${rep.placements})` );
+	ok( !! rep.update, 'a per-frame distance cull was returned' );
+	// the impostor side must now know these trees have a mesh
+	ok( rep.impostors && rep.impostors.placements === 127,
+		`127 impostor rows flipped to iNear = 1 (${rep.impostors && rep.impostors.placements})` );
+	// and the cull must hide a batch the camera is nowhere near
+	const cam = new THREE.PerspectiveCamera();
+	cam.position.set( 5000, 0, 5000 );
+	const onFar = rep.update( cam );
+	cam.position.set( 0, 0, 0 );
+	const onNear = rep.update( cam );
+	ok( onFar === 0, `nothing submitted from 5 km away (${onFar} batch(es))` );
+	ok( onNear > 0 && onNear < rep.batches, `only the near batches at the origin (${onNear}/${rep.batches})` );
+}
+
+// ---------------------------------------------------------------- 5. the shrub rows with no LOD1
+{
+	const ii = raw.lightmaps.instance_irradiance;
+	const orphan = Object.keys( ( raw.shrubs.lod1.not_in_lod1 && raw.shrubs.lod1.not_in_lod1.meshes ) || {} );
+	ok( orphan.length === 3, `3 shrub meshes have no LOD1 (${orphan.length})` );
+	const scene = new THREE.Scene();
+	const env = new THREE.Group();
+	env.name = 'WEB_glb_env';
+	scene.add( env );
+	for ( const n of ii.nodes ) {
+		const g = new THREE.BufferGeometry();
+		g.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( 9 ), 3 ) );
+		const im = new THREE.InstancedMesh( g, new THREE.MeshStandardMaterial( { name: 'MAT_shrub' } ), n.count );
+		im.userData.pfaGltfNode = n.gltf_node;
+		env.add( im );
+	}
+	const out = markShrubLodRows( scene, manifest, () => {} );
+	ok( out.rows === 3, `3 placements masked out of the LOD switch (${out.rows})` );
+	let masked = 0;
+	env.traverse( ( m ) => {
+		const a = m.geometry && m.geometry.getAttribute( 'pfaSwitchOn' );
+		if ( a ) for ( let i = 0; i < a.count; i ++ ) if ( a.getX( i ) === 0 ) masked ++;
+	} );
+	ok( masked === 3, `the mask is on the right ROWS (${masked} zeros)` );
+}
+
+// ---------------------------------------------------------------- 6. E_bake plumbing
+{
+	const lit = raw.trees.far_mesh.lighting;
+	const e = prototypeEbake( lit );
+	info( e ? `${Object.keys( e ).length} prototype E_bake value(s) in the manifest -> ?impmod defaults to full`
+		: 'no prototype E_bake in the manifest yet -> ?impmod stays chroma' );
+	ok( true, 'E_bake presence reported' );
+}
+
+console.log( fails ? `${fails} FAILURES` : 'all foliage-lazy checks passed' );
+process.exit( fails ? 1 : 0 );

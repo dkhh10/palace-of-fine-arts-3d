@@ -114,7 +114,10 @@ const fragmentShader = /* glsl */`
 		// { hash <= 1 - t } and this side's vPfaFade IS t, so keeping { hash <= 1 - vPfaFade } here
 		// would keep the SAME set: at mid-fade half the crown drew twice and half showed background.
 		// The impostor must keep exactly what the mesh discards: { hash > 1 - t }.
-		if ( vPfaFade > 0.0005 && pfaHash( gl_FragCoord.xy ) <= 1.0 - vPfaFade ) discard;
+		// The guard is the FULLY VISIBLE case (vPfaFade = 1 keeps every pixel, including hash == 0),
+		// never the invisible one: with ?treemesh=inf the mesh side draws everything and this side's
+		// vPfaFade is 0, where { hash > 1 } must keep NOTHING.
+		if ( vPfaFade < 0.9995 && pfaHash( gl_FragCoord.xy ) < 1.0 - vPfaFade ) discard;
 		// manifest.impostors.frame_lookup, verbatim
 		vec3 d = normalize( vDirBlender );
 		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );

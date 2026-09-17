@@ -257,7 +257,9 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 			// stochastic rather than a coverage ramp because a card's alpha is a TEXTURE and three's
 			// alphaToCoverage smoothstep would turn a constant per-tree factor back into a hard step.
 			shader.fragmentShader = once( shader.fragmentShader, '#include <alphatest_fragment>',
-				'if ( vPfaFade < 0.9995 && pfaHash( gl_FragCoord.xy ) > vPfaFade ) discard;\n\t#include <alphatest_fragment>',
+				// STRICT `>=` against the impostor's strict `<`: the two tests partition [0,1) exactly,
+				// including the pixels where the hash is exactly 0 (round-1 review 1).
+				'if ( vPfaFade < 0.9995 && pfaHash( gl_FragCoord.xy ) >= vPfaFade ) discard;\n\t#include <alphatest_fragment>',
 				'LOD dissolve' );
 		}
 		if ( trn > 0 ) {
