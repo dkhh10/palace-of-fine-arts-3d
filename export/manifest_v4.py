@@ -87,7 +87,15 @@ def trees_lighting_block(tf):
         mesh=dict(how="COLOR_0 (vertex AO, gamma2 - see `color0`) x placements[].rgb for that tree",
                   placements=per),
         impostor=dict(
+            # `how` is a formula, so every symbol in it has to be IN the manifest: a viewer that only reads
+            # manifest.json cannot go and find strength/clamp/the zero-channel rule in the bake's own JSON
+            # (review r2 finding 1). Copied verbatim, no defaults invented here - a missing key would mean
+            # the bake changed its contract and should be noticed, not papered over.
             how=irr["ratio"]["use"], raw=irr["ratio"]["raw"],
+            strength=irr["ratio"]["strength"], clamp=irr["ratio"]["clamp"],
+            zero_channel_fallback=irr["ratio"]["zero_channel_fallback"],
+            fallback=irr["ratio"]["fallback"],
+            e_bake_body=irr["ratio"].get("e_bake_body"),
             prototypes={k: dict(E_bake=v["E_bake"], cov=v["cov"]) for k, v in sorted(irr["prototypes"].items())}),
         reduce=irr.get("reduce"), key=irr.get("key"), placement_key=irr.get("placement_key"),
         vertex_ao=irr.get("vertex_ao"))

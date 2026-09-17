@@ -204,7 +204,22 @@ def main():
     for name in stale:
         (TEX / name).unlink()
     rep["stale_removed"] = stale
-    (OUT / "foliage_tex.json").write_text(json.dumps(rep, indent=1) + "\n")
+    # MERGE, do not clobber. `gltf_pack.sh --foliage` writes `ktx2_dir`, `ktx2_bytes` and `ktx2_files` back
+    # into this same file after it encodes, and manifest_v4's `materials.foliage` reads them - a plain
+    # overwrite here silently drops the whole KTX2 side of the block until someone re-packs (review r2
+    # finding 2: that is exactly what happened). Keys this run owns win; keys only the packer writes survive.
+    rep_p = OUT / "foliage_tex.json"
+    carried = {}
+    if rep_p.exists():
+        try:
+            prev = json.loads(rep_p.read_text())
+            carried = {k: v for k, v in prev.items() if k not in rep}
+        except (ValueError, OSError):
+            carried = {}
+    if carried:
+        rep["carried_from_previous"] = sorted(carried)
+        rep.update(carried)
+    rep_p.write_text(json.dumps(rep, indent=1) + "\n")
     n = len(list(TEX.glob("*.png")))
     if stale:
         print(f"[foliage_tex] removed {len(stale)} stale PNG from an earlier PX_SET")

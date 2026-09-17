@@ -1065,6 +1065,56 @@ are regenerated from the new npz, so the stale `mean 0.000009` figures quoted in
 pre-Gate-4 bake.
 
 
+### `trees.far_mesh.lighting` — new at 6c (the 127 far trees once they are MESHES, and what the impostors divide by)
+
+6c item A gives every one of the 127 far trees a real LOD2 mesh in a lazily loaded `env_trees.glb`
+(`EXT_mesh_gpu_instancing`, the same transforms as the `tree_far` entries). Mesh trees cannot be `unlit` the
+way the impostor atlas is, so they need the same two terms the near trees and the shrubs already have — one
+static ambient-occlusion factor per prototype, and one irradiance per placement — and the impostors that still
+draw beyond `treeMeshDist` need a third number so the two paths agree across the crossfade.
+
+```jsonc
+"trees": { "far_mesh": {
+  "glb": "env_trees.glb", "placements": 127, "prototypes_n": 16,
+  "lighting": {
+    "vertex_ao": {                            // per PROTOTYPE, on the export's LOD2 topology
+      "npz": "trees_far/vertex_ao.npz",       // out/gate3/, float32 per vertex, key = the LOD2 mesh name
+      "dtype": "float32", "encode": "none",
+      "units": "0-1 ambient occlusion (1 = unoccluded)",
+      "bake": "lights off, uniform white world, DIFFUSE colour off, the shadow-ray cut-out override, 64 spp, VERTEX_COLORS",
+      "topology": "asserted equal to the export's LOD2 vertex count per prototype; a mismatch is a hard failure",
+      "meshes": { "<LOD2 mesh>": { "verts": 0, "min": 0.0, "mean": 0.0, "max": 0.0 } } },
+    "instance_irradiance": {                  // per PLACEMENT, the shrub/reed schema and join, at /2
+      "json": "trees_far/instance_irradiance.json",
+      "schema": "pfa-phase6/gate4-instance-irradiance/2",   // /1 is the shrub file; /2 adds `prototypes`
+      "reduce": "`rgb` = mean_nonzero over the cov mask, the reducer the shrub file ships; `cov` beside it",
+      "encode": "none", "dtype": "float32", "encoding": "linear-float32",
+      "units": "scene-linear irradiance / pi (x lightmaps.scale = pi)",
+      "attribute": "_IRRADIANCE", "placements": 127, "key": "WORLD TRANSLATION",
+      "join": { "tolerance_m": 0.02 } },
+    "prototype_e_bake": {                     // 16 values, in the SAME json under `prototypes`
+      "where": "trees_far/instance_irradiance.json -> prototypes[\"<prototype>\"].E_bake = [r, g, b]",
+      "units": "the same scene-linear irradiance / pi as instance_irradiance",
+      "bake": "the DIFFUSE irradiance (colour off, the same shadow-ray override, the same mean_nonzero reducer) of the `_LOD1` PROTOTYPE OBJECT that job imp_<proto> rendered into the atlas, in gate3_imp.blend's OWN environment - the lawn under the open sky, the prototype isolated, the lamps exactly as the atlas bake had them. NOT the export's LOD2 mesh (review r1 finding 5): the divisor has to describe the body that produced the atlas. LOD2 is the mesh path's AO / _IRRADIANCE geometry only.",
+      "raw": "BOTH VALUES RAW: this file's `rgb` (or the unscaled `_IRRADIANCE` attribute) over this file's E_bake. `lightmaps.scale` (pi) is applied to NEITHER - scaling only the numerator makes every impostor pi x too bright (review r1 finding 7).",
+      "use": "IMPOSTOR ONLY. Beyond `treeMeshDist` the viewer draws atlas_frame * (E_placement / E_bake) per placement, per channel: the atlas already holds lit radiance baked in the nursery, so dividing it by the irradiance that nursery supplied and multiplying by the irradiance the placement actually receives turns the unlit atlas into the same shading the mesh path applies. Clamp the ratio (the lead sets the ceiling) and fall back to 1 where E_bake has a zero channel." } } }
+```
+
+Why the division exists: the 6c item-1 diagnosis (finding 33 below) measured that the atlas is a faithful
+encode of Cycles, and that Cycles rendered each prototype ALONE on a lawn under the whole unoccluded sky dome
+— sun-only gives the crown `[0.113, 0.112, 0.000]` and sky-only `[0.078, 0.157, 0.387]`, so every blue photon
+in the atlas is a sky term the scene does not have. `E_placement / E_bake` removes exactly that nursery sky
+and puts the placement’s own irradiance in its place, which is why the impostor and the mesh match across
+the crossfade instead of the impostor jumping blue (lead’s decision, docs/decisions.md 2026-09-17).
+
+**The GPU path for these jobs.** The 16 AO jobs, the 127-placement irradiance and the 16 `E_bake` values all
+go through `export/bake_queue.sh --gate3` like every other bake. `export/gpu_lock.sh claim|release` is the
+accepted path for a **one-off** Blender run that is not a queue job (it was added for the 6c item-1
+diagnosis): it writes the same `state: running|idle` into `out/bake_queue/status.json` and copies it to MAIN,
+which is the only GPU-liveness signal other agents may read. Mutual exclusion itself still comes one level
+down, from `scripts/blender_run.sh` registering the pid with the watchdog.
+
+
 ### `impostors` — new
 
 ```jsonc
@@ -1673,6 +1723,194 @@ export/sync_main.sh
     copy themselves; the sync only does it when **`PFA_SYNC_STATUS=1`** says the caller is the queue. Everything
     else in the sync is unchanged (still no `--delete`).
 
+## Phase 6c (bake engineer's notes, branch `phase6-bake`, 2026-09-17)
+
+*Two agents appended to this file in the same round and their item numbers overlap. Both tails are kept
+verbatim under their own heading: a reference to "item 37" means item 37 of the section it is written in
+(`export/README.md items 33 and 35-38` in the bake's commits = this section; item 34-46 references in
+`export/trees_far.py`, `foliage_tex.py` and the export commits = the section below).*
+
+35. **6c item 1 — the impostor blue is in the ATLAS, and a re-bake with the diffuse-branch sky will not fix
+    it** (2026-09-17, `export/imp_diag_atlas.py`, `imp_diag_ref.py`, `imp_diag_view.py`, `imp_diag_sheet.py`;
+    sheet `renders/web/960/6c_impostor_diag.png`, JSONs in `out/gate3/impostor_diag_*.json`). Test tree:
+    `ENV_tree_broadleaf_s53_LOD1`, the far tree that stands on the axis of station 2 at 40.2 m
+    (`tree_far[0]`), frame **col 1 row 7** — the frame `impostors.frame_lookup` picks from that station.
+    * **The shipped atlas is blue by itself.** Decoded with the manifest's own rule, the crown (alpha > 0.5)
+      of that frame is linear **[0.186, 0.275, 0.372]**, hue **211.4 deg**, B/G **1.356**. Over all 16
+      prototypes the whole-atlas crown hue is **149-257 deg** with B/G **0.87-1.52** and 40-63 % of crown
+      texels having BLUE as their maximum channel. Sun-facing frames are green (41-72 deg); it is the
+      sky-lit side of the octahedron that is blue.
+    * **The encode chain is exact.** A fresh 64 spp Cycles render of the same prototype at the same view and
+      the same rig reads **[0.193, 0.274, 0.375]**, hue **213.2**, B/G **1.367** — within 4 % of what the
+      atlas decodes. Nothing is lost or shifted between Cycles and the gamma-2/`range` encode.
+    * **The diffuse-branch sky is not the cause.** The same view with `light_probes.bake_world` (the world's
+      diffuse branch on every ray) reads hue **215.6**, B/G **1.431**: a **2.4 deg** move, in the wrong
+      direction. Re-baking the 16 prototypes that way would spend 16 GPU jobs and change nothing.
+    * **Ground truth.** The same tree as a MESH in the Phase 5 Cycles reference at station 2
+      (`renders/previews/qa/round13_02_..._cycles.png`, projected by `imp_diag_ref.py`) is display-referred
+      sRGB **[18.6, 17.6, 11.4]**, hue **52.2 deg**, B/G **0.648**. Through the same AgX High Contrast at
+      -2.833 EV the atlas frame is **[17.8, 32.2, 38.8]**, hue **199 deg**, B/G **1.207**: the same
+      brightness in R, **1.8x** the G and **3.4x** the B, **147 deg** of hue apart.
+    * **Where the blue comes from.** Decomposed at the same view: **sun only** (no world) is
+      **[0.113, 0.112, 0.000]**, hue 59.4, B/G **0.0**; **sky only** (every light hidden) is
+      **[0.078, 0.157, 0.387]**, hue 224.6, B/G **2.458**, 82 % blue-max. The leaf albedo carries no blue at
+      all, so **100 % of the impostor's blue channel is the sky term**, and the nursery
+      (`gate3_imp.blend`: one prototype alone on a lawn) gives every prototype the whole unoccluded sky dome.
+      In the delivery scene the same tree stands in a thicket in front of the sunlit ochre building, so that
+      sky term is mostly occluded and replaced by warm bounce — which is exactly what the reference shows.
+    * **So the fix is context, not a re-bake of the same isolated tree**: the per-placement irradiance and
+      vertex AO of 6c item B (and the far-tree meshes of item A) are what carry the occlusion the nursery
+      cannot know. Whatever still draws an impostor beyond `treeMeshDist` needs the same per-placement
+      modulation, or its sky term has to be baked with the scene around it. That call is the lead's.
+
+36. **Round-1 review, carried open items (bake).** `docs/reviews/phase6c_bake_r1_review.md` items 8-10, left
+    open by the lead's instruction, all in the item-1 diagnosis tooling and none of them affecting a shipped
+    number: (8) `imp_diag_atlas.py:33`, `imp_diag_ref.py:28`, `imp_diag_sheet.py:24` and
+    `imp_diag_view.py:59` hard-code the MAIN path instead of
+    `os.environ.get("PFA_MAIN_ROOT", "<default>")` as every other export script does; (9)
+    `imp_diag_ref.py`'s `foliage_p80` is a fixed quantile rather than a sky test, so the ground-truth crop
+    keeps sky when there is more than 20 % of it and throws away sunlit leaves when there is none - the
+    147 deg hue gap dwarfs that bias, and the same caveat is written into `trees_far/ratio_check.json`;
+    (10a) `imp_diag_sheet.py:70-82` re-derives the crop without `shift_x`/`shift_y` and with a wider box than
+    `imp_diag_ref.py` (harmless only because station 2's shifts are 0); (10b) "sun-facing frames are green
+    (41-72 deg)" in item 35 has no script that selects frames BY sun direction - 41.4 deg is the lowest
+    *nearest-cam02* frame hue in `impostor_diag_atlas.json`, so read it as that. Review item 3 is fixed
+    (`imp_diag_view.py` now merges variants into one report and the usage line tees the run), but **the
+    `asis` 213.2 / 1.367 and `diffuse` 215.6 / 1.431 headline numbers in item 35 and in docs/decisions.md
+    come from the run that the old fixed path overwrote**; they were not re-spent on the GPU. Review item
+    10c is fixed by shipping `trees_far/instance_irradiance.json` at schema
+    **`pfa-phase6/gate4-instance-irradiance/2`** (the shrub file stays at /1).
+
+37. **The far-tree placement anchor: one definition, the export's - and the bake's first run used another**
+    (corrected 2026-09-17 after `docs/reviews/phase6c_bake_r2_review.md` finding 1; supersedes what this
+    item said before). `export/trees_far.py` DOES subtract an anchor: `:301` takes the LOD2 mesh's **bbox XY
+    centre at z = 0** - the point the impostor rotates about - asserts it against the manifest's `radius_m` /
+    `base_z_m`, and `:335` transforms the mesh by `Translation(-anchor)` before the 127 placements set
+    `location = trunk_base, scale = s`. That is the definition, it is computed once, and it now ships in
+    `topology.json` as `prototypes[p].anchor`. **The bake's first run derived a different one** - the
+    prototype OBJECT's world translation out of `gate3_imp.blend` - and the two differ by up to
+    **(3.44, 2.66) m** (pine_s7, pine_s29; over 1 m on six prototypes), so the first `E_placement` set was
+    baked with trees up to ~2.2 m x s from where `env_trees.glb` draws them. The four `tfirr_*` jobs were
+    re-run against the export's anchor; `trees_far_set.py` now READS it and refuses to start if
+    `topology.json` does not carry it. What let the error through was review finding 2: the old assert,
+    `matrix_world @ (anchor.x, anchor.y, 0)` against `trunk_base`, is an algebraic identity for
+    `T(loc) @ S @ T(-anchor)` and passes whatever anchor it is handed. It is now an assert on the **placed
+    mesh's WORLD bbox against `topology.json`'s own `placed_bbox_min` / `placed_bbox_max`** - which
+    `export/trees_far.py` computes independently - at **0.005 m**, plus the bottom against
+    `loc.z + bbox_min.z * s` at **0.05 m**; worst residual **7e-05 m over 127/127 rows**. Note what it is
+    deliberately NOT: "XY centre within 0.05 m of `trunk_base`" would fail on correct data, because the
+    anchor is the SOURCE prototype's bbox XY centre (the impostor's axis) and the reduction then shifts the
+    reduced crown's own centre off it by `placed_xy_offset_m`, 0.10-2.83 m over the 127 (median 0.28).
+
+38. **6c item 2 - the far-tree lighting hand-off: 36 jobs, `vertex_ao.npz` + `instance_irradiance.json` at
+    schema /2** (2026-09-17; `export/trees_far_set.py`, `export/bake_lm.py` kind `proto`,
+    `export/trees_far_compose.py`, `export/trees_far_ratio_check.py`). All 36 through
+    `bake_queue.sh --gate3`, **764 s of Blender wall** on the first pass (16 AO jobs 44 s, 16 E_bake jobs
+    158 s, 4 x ~32-placement irradiance jobs 562 s). Two re-runs followed, both on the same scripts:
+    the four `tfirr_*` jobs against the export's published anchor (item 37) and then, when the export
+    published `topology_rev: 2` (the two floating crowns fixed by protecting the trunk base from the branch
+    decimate, and `CARD_SELECT` changed from `block` to `stride`), the 16 AO jobs on the rev-2 meshes -
+    **44 s**. The table below is rev 2, and `vertex_ao.npz` carries `topology_rev: 2` as an npz key (plus a
+    `trees_far/vertex_ao.json` sidecar), which is what lets `export/trees_far.py` refuse to paint a rev-1
+    array onto a rev-2 mesh. Rev 2's stride selection spreads the surviving cards, so AO rose from a
+    rev-1 mean of 0.193-0.502 to **0.240-0.505** and the fully-occluded fraction fell from 4.2-34.0 % to
+    **1.9-19.8 %**. `instance_irradiance.json` records that E_placement was baked on the rev-1 vertex
+    counts (`e_placement_topology.matches_current_rev: false`): it is one RGB per PLACEMENT joined by world
+    translation, the anchor and the 127 transforms are identical across revisions, and only the crown's own
+    card selection moved - far less than the 27x spread the site itself shows.
+    * **Vertex AO is normalised, not assumed.** Each AO job hides every light, swaps in a uniform white
+      world of radiance 1 and bakes the prototype ALONE (all 16 sit at the world origin in
+      `trees_far_lod2.blend`), plus a 2 m calibration plane 1 km away with nothing above it. That plane
+      reads **1.0000 in all 16 jobs**, which is what makes the raw DIFFUSE value the AO factor. Every
+      array is asserted in [0, 1] and against the export's LOD2 vertex count. The statistics are over the
+      FACED vertices: 11 of the 16 meshes carry loose vertices (willow_s11 316 at rev 1), a vertex no
+      polygon references is never written by the bake, and counting its 0 as occlusion dragged min / mean /
+      p05 / zeros_pct down (review r2 finding 5). The npz still ships at full length - a loose vertex is in
+      no face, so nothing shades it.
+    * **E_bake is measured on the body that produced the atlas** (review r1 finding 5): the `_LOD1`
+      prototype object in `gate3_imp.blend`, isolated with the lawn exactly as `imp_<proto>` isolated it,
+      at the same rig, 128 spp. Both sides of the ratio use `mean_nonzero` over the cov mask (finding 4)
+      and both ship `cov`. Determinism checked: `tfeb_ENV_tree_broadleaf_s53_LOD1` baked with an override
+      scope of 1 object and again with all 16 gives the **identical** [3.04233, 2.24703, 5.57665].
+
+    | prototype | LOD2 faced verts | AO min / mean / max | AO zeros % | E_bake R, G, B | E_bake cov |
+    |---|---|---|---|---|---|
+    | `broadleaf_s19` | 13595 | 0.000 / 0.288 / 0.961 | 15.7 | 2.693, 2.018, 5.162 | 0.948 |
+    | `broadleaf_s53` | 13740 | 0.000 / 0.294 / 0.953 | 15.8 | 3.042, 2.247, 5.577 | 0.943 |
+    | `cypress_column_s2` | 13006 | 0.000 / 0.266 / 0.961 | 18.6 | 1.906, 1.425, 4.332 | 0.889 |
+    | `cypress_column_s31` | 12812 | 0.000 / 0.240 / 0.961 | 19.8 | 1.715, 1.277, 3.788 | 0.818 |
+    | `cypress_s17` | 14040 | 0.000 / 0.343 / 1.000 | 7.1 | 2.786, 2.117, 6.047 | 0.978 |
+    | `cypress_s3` | 13883 | 0.000 / 0.338 / 0.977 | 8.9 | 2.716, 2.052, 5.669 | 0.977 |
+    | `cypress_s41` | 13798 | 0.000 / 0.317 / 0.961 | 8.5 | 2.419, 1.831, 5.073 | 0.972 |
+    | `eucalyptus_s23` | 12621 | 0.000 / 0.438 / 1.000 | 6.9 | 3.501, 2.675, 7.639 | 0.979 |
+    | `eucalyptus_s5` | 12280 | 0.000 / 0.452 / 1.000 | 7.0 | 3.394, 2.587, 7.414 | 0.965 |
+    | `eucalyptus_s61` | 12389 | 0.000 / 0.434 / 1.000 | 6.7 | 3.459, 2.615, 7.078 | 0.973 |
+    | `pine_s29` | 13678 | 0.000 / 0.441 / 0.977 | 4.5 | 3.898, 2.958, 8.909 | 0.992 |
+    | `pine_s7` | 13769 | 0.000 / 0.423 / 0.984 | 5.3 | 3.963, 2.955, 8.053 | 0.992 |
+    | `redwood_s13` | 14265 | 0.000 / 0.404 / 0.984 | 6.9 | 3.437, 2.534, 7.228 | 0.996 |
+    | `redwood_s43` | 14239 | 0.000 / 0.404 / 0.961 | 7.3 | 3.217, 2.383, 7.159 | 0.996 |
+    | `willow_s11` | 8529 | 0.000 / 0.502 / 1.000 | 1.9 | 3.169, 2.435, 6.455 | 0.992 |
+    | `willow_s37` | 8033 | 0.000 / 0.505 / 1.000 | 2.0 | 3.129, 2.395, 6.446 | 0.992 |
+
+    * **E_placement, 127 placements, 0 dark.** `trees_far_irr.blend` = `gate3_bake.blend` with the 127 LOD2
+      placements linked in and the 127 `source_tree` objects and 127 `ENV_treeboard_*` billboards hidden -
+      the scene as it ships once the far trees are meshes. Per-channel **0.130-4.920 R, 0.158-3.701 G,
+      0.196-9.064 B**, luminance **0.156-4.262** (mean 2.273), cov mean **0.871**, **0** placements with a zero
+      channel (the shrub file had 7). The join is unambiguous: the closest two placements of the same mesh
+      are **6.11 m** apart against a 0.02 m tolerance, and no same-mesh pair sits within 2x it.
+    * **The ratio was validated on one placement before the other 15 E_bake jobs were queued** (review r1
+      finding 6, the lead's gate), and it is judged DISPLAY-referred through `lut_agx_high_contrast_65.cube`
+      at -2.8331399 EV, because the reference is a display PNG whose `b_over_g_linear` is only an
+      inverse-sRGB of it. Test: `TREEFAR_000`, `ENV_tree_broadleaf_s53_LOD1`, 40.19 m on the axis of
+      station 2, frame col 1 row 7. E_bake **[3.042, 2.247, 5.577]**, E_placement **[3.189, 2.235, 0.978]**
+      -> ratio **[1.048, 0.995, 0.175]**: the placement receives the same warm light and **5.7x less blue**,
+      which is the diagnosis' prediction measured. The crown goes display sRGB8 **[21.5, 33.6, 42.6] ->
+      [23.7, 29.7, 1.2]**, **hue 205.5 -> 72.6 deg against the reference's 52.2** - 86.7 % of the hue gap
+      closed, no overshoot - at 0.92x the luminance. **PASS**, so all 16 were queued.
+    * **The one caveat, reported rather than smoothed over:** on B/G alone the full ratio overshoots
+      (display 1.267 -> 0.041 against 0.648). B/G is the fragile metric here - after modulation the display
+      BLUE is 1.2/255, so it is a ratio of a near-black channel - and hue, which uses all three, says the
+      full ratio is right. The structural reason an overshoot is possible at all: E_placement is the mean
+      over the WHOLE crown volume while the atlas frame shows only the sky-facing outer shell, which keeps
+      more sky than the volume mean; and the reference's own `foliage_p80` crop biases the target blue-up
+      (carry 9). If the lead wants the B/G matched instead of the hue, `ratio ** k` with **k = 0.4386**
+      lands display B/G exactly on 0.648 (hue 105.4, worse). Numbers in `trees_far/ratio_check.json`.
+
+39. **Round-2 review, carried open items (bake).** `docs/reviews/phase6c_bake_r2_review.md` 7, 9 and 10; 8 is
+    fixed (`trees_far_compose.py` now asserts `not missing_eb`, so a half-finished queue cannot ship a
+    schema /2 file with an incomplete `prototypes` block). (7) `trees_far_ratio_check.py:47-48` hard-codes
+    the LUT shaper constants (`-2.8331399`, `-12.47393`, `16.5`, `0.18`) instead of parsing the `.cube`
+    header or importing `gate0_common`; they match today, so the display path really is the delivery LUT,
+    but a re-bake at another exposure would mis-judge silently. (9) Two prototypes' LOD2 meshes float:
+    `topology.json` `bbox_min.z` is **3.6541** (cypress_column_s2) and **4.3547** (redwood_s13) where the
+    other 14 are ~0, so those crowns sit 2.4-2.8 m x s above `trunk_base` in the glb and in
+    `trees_far_irr.blend`. That is the export's reduction, not the bake's, and the bake's new bbox assert
+    measures against `topology.json`'s own `bbox_min.z`, so it is consistent with whatever the export
+    ships - for the export engineer. (10) The `tfeb_ENV_tree_broadleaf_s53_LOD1` determinism check
+    (override scope of 1 object vs all 16, identical `mean=3.4148 cov=0.943`) survives only in
+    `renders/logs/6c_bake_run1.log:291` and `6c_bake_run2.log:96`, because run 2 overwrote the record;
+    superseded records should be kept beside the new one.
+
+40. **Round-2b review, carried open items (bake).** `docs/reviews/phase6c_bake_r2b_review.md` 5, 7 and 8;
+    1-4 and carry 6 are fixed (the hand-off file's `placement_transform` and `ratio.strength_decision` now
+    describe the rule that is used and quote `ratio_check.json`'s own anchor-corrected figures instead of
+    the pre-fix ones; item 37's last sentence states the assert that exists; and when
+    `e_placement_topology.matches_current_rev` is false, `trees_far_compose.py` ASSERTS that
+    `trees_far_set.json`'s recorded anchors equal `topology.json`'s current ones - 0.0 m today - instead of
+    arguing it in prose). (5) The pidless `gpu_lock.sh claim` is crash-safe only on the clock: with no pid
+    to disprove it, a crashed agent holds the published GPU signal for the whole `secs` and `guard` refuses
+    other owners until it expires. **Prefer `gpu_lock.sh run <secs> -- <cmd>` (or pass `PFA_LOCK_PID`),
+    which records a real pid and releases from a trap; a bare `claim` must pass an honest SHORT `secs`,
+    never the 1800 s default for a long hold.** (7) `trees_far_ratio_check.py:138` computes the hue verdict
+    as `h_moved >= 0.5 * h_gap and h_after >= h_target`, which assumes the crown starts BLUER than the
+    reference; with a future reference above the crown hue the first term is trivially true and the
+    direction is unchecked - compare on `abs()` with an explicit direction. (8) r2 carries 7 and 10 are
+    still open: the LUT shaper constants in `trees_far_ratio_check.py:49-50` are a hard-coded copy of
+    `gate0_common.SHAPER_*` rather than parsed from the `.cube` header, and `status.json` keeps only the
+    newest record per job id, so the first-pass `tfao` / `tfirr` timings survive only in the committed
+    `renders/logs/6c_bake_run3.log` and `6c_bake_run4.log`.
+
+
 ## Phase 6c (foliage pass, branch `phase6-export`, 2026-09-17)
 
 34. **Item A - `env_trees.glb`: every far tree gets a real mesh.** `export/trees_far.py` builds one LOD2 mesh
@@ -1800,7 +2038,9 @@ export/sync_main.sh
     three ways: declared but absent, partial, or present but undeclared. `color0_primitives` and
     `color0_range` are in the report line.
 
-45. **Finding 9 (two LOD2 prototypes float): DIAGNOSED, not yet fixed - the fix needs an AO re-bake.**
+45. **Finding 9 (two LOD2 prototypes float): the DIAGNOSIS. SUPERSEDED BY ITEM 46, which fixes it in
+    this same round** - read 46 for what ships. Kept because the measurements below are what identified
+    the cause and ruled out the card thinning.
     Cause proven by measurement, not inferred (`/tmp/diag9.py` pattern, three prototypes through
     `split_cards` -> `collapse` -> `thin_and_grow` with the z extent printed at every stage):
     it is the **branch COLLAPSE decimate**, not the card thinning.
@@ -1857,3 +2097,44 @@ export/sync_main.sh
     export must still be able to publish a new revision for the bake to work from. Verified live: the rev-1
     npz was refused ("declares topology_rev None ... this export builds rev 2") and the run still published
     rev 2. A count check could not have caught this: the stride keeps the same card COUNT as rev 1.
+
+47. **Round-2 review fixes (`docs/reviews/phase6c_export_r2_review.md`, MERGE WITH FIXES).**
+    * **Fix 1 - `trees.far_mesh.lighting.impostor` is now implementable from the manifest alone.** Its `how`
+      is the formula `atlas_frame * clamp((E_placement / E_bake) ** strength, 0, clamp)`, and `strength`,
+      `clamp`, `zero_channel_fallback`, `fallback` and `e_bake_body` are copied verbatim from the bake JSON's
+      `ratio` beside it. Copied, never defaulted: a missing key means the bake changed its contract and
+      should fail loudly rather than be papered over.
+    * **Fix 2 - `foliage_tex.py` merges into `foliage_tex.json` instead of clobbering it.**
+      `gltf_pack.sh --foliage` writes `ktx2_dir`/`ktx2_bytes`/`ktx2_files` back into that same file and
+      `manifest_v4`'s `materials.foliage` reads them, so a plain overwrite dropped the entire KTX2 side of
+      the block - which is exactly what had happened. Keys this run owns win, keys only the packer writes
+      are carried (listed in `carried_from_previous`). Re-packed: **22 KTX2, 13 001 325 B, and all 22
+      sha256 are byte-identical to before the re-pack**; a bare `foliage_tex.py` re-run now leaves them in
+      place (verified).
+    * **Fix 3 - `shrub_lod1.json` carries `placement_check` again.** One CPU re-run plus
+      `gltf_pack.sh --shrubs`: 1 376 rows, **worst node-translation residual 0.0 mm** (the 0.050 mm quoted
+      earlier was an artefact of comparing against the report's 4-dp-rounded `loc`; the live check uses the
+      full-precision translation, and the exporter writes the same float32 back). **`env_shrubs.glb` is
+      byte-identical - 422 520 B, sha256 32987a9b... - so `instance_order_shrub_lod1.json` stays valid and
+      the viewer's round-16b capture is unaffected.**
+    * **Carry 6 - `me.validate()` after `join()`, and what it actually means here.** The exporter logs
+      "Mesh ... is not valid" for all 16 far trees. `validate()` now runs after the join and its result is
+      recorded per prototype as `mesh_validate`. **It returns True on all 16 while the vertex and face
+      counts are unchanged on all 16 (`geometry_changed: false`) and the packed `env_trees.glb` is
+      byte-identical (sha256 `7e17167d...`)** - so on these meshes it normalises something that is not
+      geometry, and a bare True is not an alarm. The counts are what matter, because a real repair would
+      move every vertex index and silently invalidate the index-addressed vertex AO; they are recorded
+      before and after so that shows up as a number, not a flag. The rev-2 AO is therefore still valid.
+48. **Open items carried out of the round-2 review** (recorded here on the lead's instruction, not fixed):
+    * **Review carry 4 - the KTX2-refusal `exit 1` is only in `--trees`/`--shrubs`.** `gltf_pack.sh`'s
+      `--gate1` and `--gate0` branches still log to stderr and pack the PNG glTF at exit 0, under the same
+      manifest that advertises `ktx2_dir` - and that is the whole arch/orn/env/ground payload, not a 3.7 MB
+      side file. Fix is the same `exit 1` in both branches; untouched here only because those branches
+      produce the outputs every pinned bake and `instance_order.json` depend on.
+    * **Review carry 5 - `shrub_lod1_order_check` still returns `None`** when
+      `instance_order_shrub_lod1.json` or `env_shrubs.glb` is missing, so a run without the order file
+      prints PASS with the LOD1 row order unchecked. `extra_glb_check` was fixed; this one needs the same
+      `bad.append`.
+    * **Review carry 7 (second half) / round-1 finding 5 - `read_foliage.chain_to_image` walks unknown
+      `bl_idname`s silently** and pins `ShaderNodeHueSaturation` without checking its sockets. It should
+      raise on an unknown node, now that the tint it produces is what ships.

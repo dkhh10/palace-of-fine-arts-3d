@@ -280,7 +280,19 @@ def join(branch, cards, name, materials):
     bm.to_mesh(out)
     bm.free()
     out.update()
-    return out
+    # carry 6: bmesh can hand back geometry the exporter will silently drop or mis-index (loose verts,
+    # duplicate faces, bad loops). validate() repairs it and returns whether it changed anything.
+    # MEASURED: it returns True on all 16 prototypes while the vertex and face counts are unchanged and the
+    # packed env_trees.glb is byte-identical (sha256 7e17167d...), so on these meshes it is normalising
+    # something that is not geometry. A bare True is therefore not an alarm; the COUNTS are. They are
+    # recorded before and after so a real repair - which would move every vertex index and invalidate the
+    # vertex AO - is visible as a number rather than a flag.
+    before = (len(out.vertices), len(out.polygons))
+    fixed = bool(out.validate(verbose=False, clean_customdata=False))
+    after = (len(out.vertices), len(out.polygons))
+    return out, dict(returned=fixed, verts=before[0], faces=before[1],
+                     verts_after=after[0], faces_after=after[1],
+                     geometry_changed=(before != after))
 
 
 def main():
@@ -375,7 +387,7 @@ def main():
         branch_tris = tris_of(branch)
         card_budget = max(0, TRI_TARGET - branch_tris)
         cst = thin_and_grow(cards, card_budget, CARD_SCALE_MAX, protect_below=protect_below)
-        me = join(branch, cards, f"EXPM_treefar_{p}", materials)
+        me, mesh_repaired = join(branch, cards, f"EXPM_treefar_{p}", materials)
         # the mesh origin becomes the impostor's own axis at the trunk-base plane, so a placement is exactly
         # `location = trunk_base, scale = s` - and the EXPORTED node translation is then to_gltf(trunk_base)
         # verbatim, which is what the per-row assert after the glTF write checks.
@@ -395,6 +407,7 @@ def main():
         assert tris_of(me) <= TRI_TARGET * 1.05, f"{p}: {tris_of(me)} tris over the {TRI_TARGET} target"
         protos_out[p] = dict(
             anchor_check=anchor_check,
+            mesh_validate=mesh_repaired,
             base_z_m=round(float(slo[2]), 4), protect_below_z=round(float(protect_below), 4),
             bbox_min_z_over_base_m=round(float(lo[2]) - float(slo[2]), 4),
             mesh=me.name, tris=tris_of(me), verts=int(co.shape[0]),

@@ -49,9 +49,16 @@ if [ "$GATE" = gate3 ]; then MAXS=1800; fi   # a 4K terrain lightmap at 128 spp 
 mkdir -p "$QDIR" "$RECDIR"
 
 write_status () {  # state current done total extra
-  python3 - "$STATUS" "$1" "$2" "$3" "$4" "$5" <<'PY'
+  # Review r1 finding 1 (docs/reviews/phase6c_bake_r1_review.md), the same hole gpu_lock.sh had: a killed
+  # runner used to leave this file saying `running` for ever, and the watchdog only kills pids - it never
+  # edits this file. Every `running` record now carries the RUNNER's pid and an honest `expires_at`
+  # (the per-job maximum plus a minute of queue overhead), and a reader treats `running` with a dead pid or a
+  # passed expires_at as idle. `export/gpu_lock.sh check` is that reader.
+  local lpid="" lexp=""
+  case "$1" in running|waiting) lpid=$RUNNER_PID; lexp=$(( $(date +%s) + MAXS + 60 ));; esac
+  python3 - "$STATUS" "$1" "$2" "$3" "$4" "$5" "$lpid" "$lexp" <<'PY'
 import json, os, sys, time
-path, state, current, done, total, extra = sys.argv[1:7]
+path, state, current, done, total, extra, pid, exp = sys.argv[1:9]
 old = {}
 if os.path.exists(path):
     try:
@@ -60,6 +67,8 @@ if os.path.exists(path):
         old = {}
 old.update(dict(state=state, current=current or None, done=int(done), total=int(total),
                 owner=os.environ.get("PFA_QUEUE_OWNER", "phase6-export/bake_queue"), updated=time.strftime("%Y-%m-%dT%H:%M:%S%z")))
+old["pid"] = int(pid) if pid else None
+old["expires_at"] = float(exp) if exp else None
 old.setdefault("started", time.strftime("%Y-%m-%dT%H:%M:%S%z"))
 if extra:
     old["note"] = extra
@@ -91,6 +100,7 @@ PY
 # BLENDER_RUN_OWNER as field 3 of the state file it names after the Blender pid, so tagging it with this
 # runner's own pid exempts exactly the one child this runner started and nothing else.
 RUNNER_TAG="bake_queue_${GATE}_$$"
+RUNNER_PID=$$
 export BLENDER_RUN_OWNER="$RUNNER_TAG"
 gpu_free () {
   # no LIVE registered Blender pid other than the one this runner itself started
@@ -121,6 +131,13 @@ case "$cmd" in
     ;;
   run)
     if [ "$GATE" = gate1 ] && [ ! -f "$SRC" ]; then echo "bake_queue: $SRC missing" >&2; exit 2; fi
+    # review r1 finding 1: whatever kills this runner, the file other agents read must not stay `running`.
+    queue_died () {
+      python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('state')=='idle' else 1)" \
+        "$STATUS" 2>/dev/null && return 0
+      write_status idle "" "${done_n:-0}" "${total:-0}" "runner exited"
+    }
+    trap queue_died EXIT INT TERM
     total=$(python3 -c "import json,sys;print(len(json.load(open('$JOBS'))['jobs']))")
     ids=(${(f)"$(python3 -c "import json;print('\n'.join(j['id'] for j in json.load(open('$JOBS'))['jobs']))")"})
     done_n=0

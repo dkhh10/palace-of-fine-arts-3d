@@ -1,0 +1,164 @@
+[bake_queue] PFA_BAKE_DIFFUSE_WORLD=<unset> -> off (the scene world as saved)
+[bake_queue] flip_normals_for_bake: ARCH_rotunda_plaster_ceiling_merged
+[bake_queue] skip sky_diffuse (already done)
+[bake_queue] skip probe_hero (already done)
+[bake_queue] skip lm_ENV_terrain_ground (already done)
+[bake_queue] skip lm_ARCH_rotunda_concrete_ochre_merged (already done)
+[bake_queue] skip lm_ARCH_site_concrete_podium_merged (already done)
+[bake_queue] skip lm_ENV_lagoon_bed (already done)
+[bake_queue] skip lm_ARCH_colonnade_south_concrete_colonnade_merged (already done)
+[bake_queue] skip lm_ARCH_colonnade_north_concrete_colonnade_merged (already done)
+[bake_queue] skip lm_ARCH_site_paving_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_concrete_inner_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_plaster_ceiling_rib_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_drum_band_merged (already done)
+[bake_queue] skip lm_ENV_ground_colonnade_walk (already done)
+[bake_queue] skip lm_ARCH_rotunda_concrete_podium_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_dome_membrane_merged (already done)
+[bake_queue] skip lm_ENV_riprap_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_plaster_ceiling_merged (already done)
+[bake_queue] skip lm_ARCH_rotunda_column_tan_inner_merged (already done)
+[bake_queue] skip slot_orn_0_00 (already done)
+[bake_queue] skip slot_orn_0_01 (already done)
+[bake_queue] skip slot_orn_0_02 (already done)
+[bake_queue] skip slot_orn_0_03 (already done)
+[bake_queue] skip slot_orn_0_04 (already done)
+[bake_queue] skip slot_orn_0_05 (already done)
+[bake_queue] skip slot_orn_0_06 (already done)
+[bake_queue] skip slot_orn_1_00 (already done)
+[bake_queue] skip slot_orn_1_01 (already done)
+[bake_queue] skip slot_orn_1_02 (already done)
+[bake_queue] skip slot_orn_1_03 (already done)
+[bake_queue] skip slot_orn_1_04 (already done)
+[bake_queue] skip slot_arch_inst_0_00 (already done)
+[bake_queue] skip slot_arch_inst_0_01 (already done)
+[bake_queue] skip slot_arch_inst_0_02 (already done)
+[bake_queue] skip slot_arch_inst_0_03 (already done)
+[bake_queue] skip slot_arch_inst_0_04 (already done)
+[bake_queue] skip slot_arch_inst_0_05 (already done)
+[bake_queue] skip slot_arch_inst_0_06 (already done)
+[bake_queue] skip slot_arch_inst_1_00 (already done)
+[bake_queue] skip slot_arch_inst_1_01 (already done)
+[bake_queue] skip slot_arch_inst_1_02 (already done)
+[bake_queue] skip slot_arch_inst_1_03 (already done)
+[bake_queue] skip slot_arch_inst_1_04 (already done)
+[bake_queue] skip slot_arch_inst_1_05 (already done)
+[bake_queue] skip slot_arch_inst_1_06 (already done)
+[bake_queue] skip slot_arch_inst_2_00 (already done)
+[bake_queue] skip vc_00 (already done)
+[bake_queue] skip vc_01 (already done)
+[bake_queue] skip imp_ENV_tree_broadleaf_s19_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_broadleaf_s53_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_column_s2_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_column_s31_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_s17_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_s3_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_cypress_s41_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_eucalyptus_s23_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_eucalyptus_s5_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_eucalyptus_s61_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_pine_s29_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_pine_s7_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_redwood_s13_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_redwood_s43_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_willow_s11_LOD1 (already done)
+[bake_queue] skip imp_ENV_tree_willow_s37_LOD1 (already done)
+[bake_queue] skip lmg1_ARCH_colonnade_south_concrete_colonnade_merged (already done)
+[bake_queue] skip lmg1_ARCH_rotunda_concrete_ochre_merged (already done)
+[bake_queue] skip inst_probe (already done)
+[bake_queue] skip inst_probe2 (already done)
+[bake_queue] skip inst_splitA (already done)
+[bake_queue] skip inst_splitB (already done)
+[bake_queue] skip inst_irr_00 (already done)
+[bake_queue] skip inst_irr_01 (already done)
+[bake_queue] skip inst_irr_02 (already done)
+[bake_queue] skip inst_irr_03 (already done)
+[bake_queue] skip tfao_ENV_tree_broadleaf_s19_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_broadleaf_s53_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_column_s2_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_column_s31_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_s17_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_s3_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_cypress_s41_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_eucalyptus_s23_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_eucalyptus_s5_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_eucalyptus_s61_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_pine_s29_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_pine_s7_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_redwood_s13_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_redwood_s43_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_willow_s11_LOD1 (already done)
+[bake_queue] skip tfao_ENV_tree_willow_s37_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_broadleaf_s19_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_broadleaf_s53_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_cypress_column_s2_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_cypress_column_s31_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_cypress_s17_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_cypress_s3_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_cypress_s41_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_eucalyptus_s23_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_eucalyptus_s5_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_eucalyptus_s61_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_pine_s29_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_pine_s7_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_redwood_s13_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_redwood_s43_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_willow_s11_LOD1 (already done)
+[bake_queue] skip tfeb_ENV_tree_willow_s37_LOD1 (already done)
+00:00.325  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_00 shadow: 16/32 (73s, batch)
+[gate3] tfirr_00 shadow: 32/32 (139s, batch)
+[gate3] job tfirr_00 done in 138.9 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 47008 exited rc=0 after 139 s (max 1800)
+[bake_queue] tfirr_00 rc=0 139s (106/109)
+00:00.388  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_01 shadow: 16/32 (74s, batch)
+[gate3] tfirr_01 shadow: 32/32 (133s, batch)
+[gate3] job tfirr_01 done in 132.9 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 47276 exited rc=0 after 134 s (max 1800)
+[bake_queue] tfirr_01 rc=0 134s (107/109)
+00:00.382  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_02 shadow: 16/32 (68s, batch)
+[gate3] tfirr_02 shadow: 32/32 (140s, batch)
+[gate3] job tfirr_02 done in 139.7 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 47493 exited rc=0 after 142 s (max 1800)
+[bake_queue] tfirr_02 rc=0 142s (108/109)
+00:00.386  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/trees_far/trees_far_irr.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/bake_lm.py:492: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  override.use_nodes = True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[gate0] apply_final_cycles ok: engine=CYCLES lights=20 shade_fill=0 vault_bounce=2 (all at energy_W, no custom distance)
+[gate3] tfirr_03 shadow: 16/31 (80s, batch)
+[gate3] tfirr_03 shadow: 31/31 (143s, batch)
+[gate3] job tfirr_03 done in 142.7 s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 47621 exited rc=0 after 144 s (max 1800)
+[bake_queue] tfirr_03 rc=0 144s (109/109)
+[bake_queue] finished 109/109

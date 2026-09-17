@@ -85,7 +85,12 @@ FLIP_NORMALS_FOR_BAKE = ("ARCH_rotunda_plaster_ceiling_merged",)
 # Only the four BAKE-TARGET kinds are affected: `sky` and `probe` isolate their own branch explicitly and
 # the impostors are Cycles RENDERS (camera rays primary, diffuse rays for the leaves), so all three are
 # already correct. Measured split of the overnight queue: 47 of 65 jobs, 22 499 s of the 23 419 s.
-BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex", "instance")
+# `proto` (6c item 2) is a BAKE-TARGET kind too, and it is the DIVISOR of a ratio whose numerator is an
+# `instance` bake (review r2 finding 4): if the flag were armed with `proto` left out, E_placement would be
+# measured against the diffuse-branch sky and E_bake against the split-ray world, and every ratio would be
+# silently wrong in exactly the blue channel this whole exercise is about. Both 6c runs were unarmed, and
+# trees_far_compose.py now asserts the two sides recorded the same world name as well.
+BAKE_DIFFUSE_WORLD_KINDS = ("own", "own_gate1uv2", "slot", "vertex", "instance", "proto")
 BAKE_DIFFUSE_WORLD_ENV = "PFA_BAKE_DIFFUSE_WORLD"
 BAKE_DIFFUSE_WORLD_TRUE = ("1", "true", "yes", "on")
 
