@@ -544,7 +544,108 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
-## QA notes — read before scoring (Gate 4 / QA 15)
+## QA notes — read before scoring (Phase 6c / QA 16)
+
+### The 6c foliage pass (item C), what it does and what it measured
+
+`src/foliage.js` is the whole of it; `?leafnormal= ?cardnormal= ?leaftrn= ?leafsoft= ?treemesh=
+?treefade= ?shrublod= ?imp2k= ?impmod= ?impbake=` are its switches and every default below is the
+shipped one.  **The round-15 look is one URL away** — `?leafnormal=0&leaftrn=0&leafsoft=0&treemesh=inf&imp2k=0&impmod=0`
+— and every number in this section is measured against exactly that.
+
+**C1, the leaf shader.**
+1. *Crown-bent normals.* A leaf card carries its own card normal, so a canopy of randomly-facing
+   quads shades to one flat average.  Each geometry's vertices are flood-filled on a 6 m XZ grid into
+   connected CROWNS (the export merged several trees into single primitives — `MAT_bark_cypress`
+   spans 229 m, `MAT_leaf_cypress` 230 m — so a bbox centre would sit in mid-air between two trees),
+   every vertex gets its crown's centre in `pfaCrown`, and the normal becomes
+   `normalize( mix( cardNormal, radial, 0.5 ) )`.  49 geometries, 58 crowns.
+2. *Translucency.* The Phase 5 material is `Mix( Principled, Translucent( base * tint ), t )`
+   (`scripts/mat_build.py leaf_material`), so the viewer adds the back lobe at `t` and subtracts `t`
+   of the front lobe — nothing else.  No forward-scatter phase function and no rim boost: the
+   acceptance reference is a Cycles frame of that same mix.  `t` and the tint are the Phase 5
+   constants per material (0.18 pine … 0.45 reeds); export item D's `*_trn` mask (0.05..0.85 ->
+   0.35..1.55) replaces the constant when it lands.
+3. *Soft edges.* `alphaToCoverage` on every card material whose `alphaTest` came from the manifest,
+   so three's own alphatest chunk resolves the boundary texel across the 4 MSAA samples of the
+   composer target (and of the Reflector's).  The MASK cutoffs are untouched (0.42 pine … 0.5).
+
+**The shrub/reed cards are NOT normal-bent (`?cardnormal=0.5` is the A/B), and they get no
+translucent term (`?leaftrn=shrubs` is the A/B).**  Both are the same reason: their material is
+patched by `applyInstanceIrradiance` with `specularOnlySun: true`, so they have no sun diffuse at
+all — their diffuse is ONE baked scene-linear irradiance per placement added with no cosine, which
+is already the two-sided model translucency approximates, and on 1 372 of the 1 379 the normal
+therefore drives the SPECULAR alone.  Measured at cam02 in the round-15 near-trees box
+`60 520 700 980`, bending them aimed sky reflection at the camera:
+
+| cam02, box 60 520 700 980 | rgb | lum | hue | sat | G>R |
+|---|---|---|---|---|---|
+| Cycles reference | 100.9 108.4 97.7 | 106.0 | 102.4 | 0.098 | 70.9 % |
+| round-15 equivalent | 105.3 105.0 97.2 | 104.5 (0.986x) | 57.7 | 0.077 | 37.4 % |
+| 6c with the cards bent | 102.5 106.0 **104.6** | 105.1 | 156.9 | **0.033** | 70.1 % |
+| **6c as shipped** | 105.4 105.5 98.4 | **104.9 (0.990x)** | 60.2 | 0.067 | 38.4 % |
+
+The reference has blue LOWEST (97.7); bending the cards made it the HIGHEST and washed the
+saturation to a third of the reference's.  The G > R gain it bought was the sky, not the foliage.
+Shipped, the box holds its round-15 level (0.990x against 0.986x) and the whole cam02 frame moves
+1.073x -> 1.076x.  The residual hue (60 deg against 102 deg) is unchanged and still the cards' own
+albedo — export item E owns it.
+
+**What cam02 actually shows, and it is not a leaf card.**  The 100 % tile
+`renders/web/960/6c_cam02_tree_tile.png` (Cycles / round-15 / 6c, box `700 660 1240 950`) is the
+user's finding: the tree filling the middle of cam02 is a far-tree IMPOSTOR standing ~15 m from the
+camera, an 85 px atlas frame magnified into a smooth blue-green blob against the reference's
+thousands of leaf clusters.  It has no mesh to switch to until `env_trees.glb` (export item A)
+lands.  What 6c could do for it, it did — the 2K atlas variant and the soft edges:
+
+| cam02, box 700 660 1240 950 | hp9 | mid(5-21) | std |
+|---|---|---|---|
+| Cycles reference | 17.46 | 14.04 | 47.72 |
+| round-15 equivalent | 15.81 | 14.00 | 43.68 |
+| 6c as shipped | **16.88** | **14.52** | 43.89 |
+
+**C2, the runtime LOD.**  `treeMeshDist` (`?treemesh=`, default 40 m, `inf` disables) with a 5 m
+crossfade (`?treefade=`).  The distance is computed IN THE VERTEX SHADER from `pfaCrown`, so a
+merged mesh switches per TREE and there is no per-frame CPU work at all; the impostor side runs the
+same formula on the same crown centre through `iSwitch` / `iNear`, so the two dissolves are exact
+complements and no tree is ever drawn twice or not at all.  The crossfade is a stochastic
+(interleaved-gradient-noise) dither, not an alpha ramp, because a card's alpha is a texture and
+three's alphaToCoverage smoothstep turns a constant per-tree factor back into a hard step; the hash
+is purely spatial, so a repeated capture is byte-identical.  18 near-tree units are found (the
+manifest declares 20 `tree_near` names; 18 crowns are present in `env.glb`) and each is matched to
+an impostor prototype by SPECIES — from the leaf material, because gltfpack dropped every node name
+— and then by the closest width/height aspect, which is what separates a columnar cypress from a
+spreading one.  The 127 far trees have `iNear = 0` and never fade.  Impostor atlas: the 2K variant
+by default (`?imp2k=0` reverts), read WHOLE from `manifest.impostors.variant_2k` — a 2048 px atlas
+of 170 px frames with a 4 px gutter is not the 1K block doubled.
+
+**The impostor irradiance modulation (`?impmod=`), from the bake's diagnosis.**  The atlases were
+baked with each prototype ALONE on a lawn under the whole open sky, so their light is the sky's
+(hue 225 deg) while the same tree in the scene stands in warm bounce (hue 52 deg in the Cycles
+frame).  Radiance is linear in the irradiance that made it, so the fix is a per-placement ratio and
+not a re-bake: `radiance_scene = atlas * ( E_placement / E_bake )`, carried as the instanced
+attribute `iIrr`.  The far trees take `E_placement` from `trees.far_mesh.lighting` when the bake
+ships it (joined by location, and it refuses to guess when it has not landed — today it reports
+0/127); the 18 near trees take it from their own crown mean of `COLOR_0`, which IS baked irradiance
+(`lightmaps.vertex_irradiance`, one global range 44.2566 x pi).  `E_bake` is the bake's to measure
+per prototype; until then the viewer estimates it as `sunColour * irradiance + integral L_sky dw`
+off the sky-diffuse equirect — measured `100.98 / 79.14 / 213.74`, which corroborates the bake's
+225 deg — and therefore ships in mode **`chroma`**: the ratio normalised to unit luminance, so only
+the COLOUR of the light is corrected and an estimate that is off by a factor cannot re-light every
+tree by that factor.  `?impmod=full` is the mode to switch to the day `E_bake` is measured;
+`?impmod=0` draws the atlas as baked.
+
+**C3, the shrub/reed LOD.**  Wired and idle: there is no LOD1 set in the manifest yet (export item
+E).  The consumer reads either `raw.shrub_lod = { dist_m?, lod1_nodes, lod2_nodes }` (glTF node
+indices into env.glb, the same index space as `lightmaps.instance_irradiance.nodes[].gltf_node`) or
+a `lod: "LOD1"|"LOD2"` field on those same nodes, joins through `mesh.userData.pfaGltfNode` exactly
+as the instance irradiance does, and reports any node the scene does not present.  The switch is
+the C2 shader with the sign flipped, so LOD1 and LOD2 share one dissolve and one code path.
+`?shrublod=` is the distance, default 30 m.
+
+**The hero does not move.**  cam01 whole frame 133.2 -> 133.1 (0.999x), left shore foliage
+`0 700 700 1080` 94.6 -> 94.6 (1.001x): the hero's foliage is far shrubs and small impostors, and
+nothing in 6c is aimed at them.
 
 ### Round 7 additions (QA 15)
 * **The water changed twice.** The murk is derived (see "The upwelling term, derived") and the ripple is
@@ -755,6 +856,11 @@ URL parameters: `?station=1..6` (keys 1-6 too), `?size=WxH`, `?manifest=`, `?glb
 `?waterslope=` (the surface's rms slope in radians, default `RIPPLE.slopeRms` 0.0131),
 `?watergraze=` (0 = the shipped derived displacement; > 0 reinstates the round-6 grazing multiplier),
 `?instirr=auto|0` (the per-placement shrub/reed irradiance),
+`?leafnormal=` (crown-bent leaf normals, 0..1, default 0.5), `?cardnormal=` (the same for the
+shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (translucency scale, or
+`shrubs` to include the cards), `?leafsoft=0` (no alphaToCoverage), `?treemesh=` (metres, or `inf`:
+mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
+`?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
 `?bloomthr=` (scene-linear; the default is the manifest value x `BLOOM_THRESHOLD_SCALE` 2.0),
 `?bloomrad=` (UnrealBloomPass radius; measured NOT to be a lever, kept for the A/B),
 `?watergrazemax=` (the FIX-NOW 1 cap, default 6), `?watermurk=r,g,b` (overrides the derived
