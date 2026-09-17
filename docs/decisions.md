@@ -575,3 +575,10 @@ Plan docs/briefs/phase6c_foliage.md: every tree gets a mesh (127 far trees at LO
 atlas), a leaf shader (two-sided, translucency, soft edges, bent normals), shrub/reed LOD1 within 30 m with the albedo hue fixed in the export, 2K leaf textures. Acceptance by
 100 % tiles at stations 1/2/5 and QA 16 (no station drops > 0.1, station 2 rises, +3 ms budget). Two rounds maximum. The impostor blue cast is diagnosed atlas-vs-viewer before any
 re-bake. 6b (deployment) follows; the fast preset stays documented and non-default.
+
+## 2026-09-17 · Impostor blue cast is the isolated bake's open sky, not the encode or the viewer (bake f41ba19); impostors get per-placement modulation, no atlas re-bake
+The shipped atlas frame matches a fresh Cycles render of the same view within 4 % (hue 211° vs 213°), the diffuse-branch sky would move it +2.4° the wrong way, the leaf albedo
+has no blue (sun-only hue 59°), and 100 % of the blue is the sky term: gate3_imp.blend bakes each prototype alone on a lawn under the whole unoccluded sky, whereas in the
+scene the same tree as a mesh in the Phase 5 reference at station 2 reads hue 52° (147° apart, 3.4x the blue). Decision: impostors beyond the mesh distance are drawn as
+atlas x (E_placement / E_bake): the per-placement irradiance of item B divided by the irradiance of the isolated bake environment per prototype (16 values, bake item 2). The
+one-off diagnosis used export/gpu_lock.sh for status.json (accepted); export/sync_main.sh must stop copying bake_queue/status.json (export engineer) — it overwrote the lock once.
