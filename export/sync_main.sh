@@ -28,12 +28,23 @@ fi
 # stay in this worktree; the KTX2, the .hdr probe/sky, the manifest, the UV2 and vertex hand-off npz ship.
 if [ -d "$ROOT/export/out/gate3" ]; then
   mkdir -p "$MAIN/export/out/gate3"
+  # 6c: trees_far_irr.blend is a 326 MB working blend (gate3_bake + the 127 LOD2 far-tree placements), the
+  # same class as gate3_bake.blend; trees_far/ao and trees_far/ebake are the per-job arrays the compose step
+  # reduces. Only vertex_ao.npz, instance_irradiance.json and the small json reports ship.
   rsync -a --exclude 'gate3_bake.blend*' --exclude 'gate3_imp.blend*' --exclude 'tex/' \
         --exclude 'slots/' --exclude 'vertex/' --exclude 'impostor/*.png' --exclude 'probe/*.exr' \
+        --exclude 'trees_far/trees_far_irr.blend*' --exclude 'trees_far/ao/' --exclude 'trees_far/ebake/' \
         "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
   echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
 fi
-mkdir -p "$MAIN/export/out/bake_queue"
-cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
+# bake_queue/status.json is the GPU LOCK, not an artefact: every agent reads MAIN's copy to decide whether the
+# GPU is busy. Copying this worktree's stale copy over it would tell the viewer's headless Chrome the GPU is
+# free in the middle of a bake. The bake engineer's queue and gpu_lock.sh write MAIN's copy themselves; this
+# sync only does it when PFA_SYNC_STATUS=1 says the caller IS the queue.
+if [ -n "$PFA_SYNC_STATUS" ]; then
+  mkdir -p "$MAIN/export/out/bake_queue"
+  cp -f "$ROOT/export/out/bake_queue/status.json" "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || true
+  echo "[bake_queue] status.json copied to MAIN (PFA_SYNC_STATUS=1)"
+fi
 for f in "$ROOT"/renders/web/gate0_*.png(N); do cp -f "$f" "$MAIN/renders/web/"; done
 echo "[gate0] synced to $MAIN/export/out/gate0 ($(du -sk "$MAIN/export/out/gate0" | cut -f1) KiB)"

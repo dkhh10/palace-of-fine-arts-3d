@@ -314,6 +314,118 @@ elif job["kind"] == "vertex":
     rec.update(npz=p.name, npz_bytes=p.stat().st_size, meshes=len(arrays), items=rows,
                bake_s=round(sum(r.get("bake_s", 0.0) for r in rows), 1))
 
+# ================================================================ per-PROTOTYPE vertex bake (6c item 2)
+elif job["kind"] == "proto":
+    # One prototype per job, ISOLATED: the 16 far-tree LOD2 prototypes sit on top of each other at the world
+    # origin in trees_far_lod2.blend and 12 m apart on one lawn in the E_bake blend, exactly as the impostor
+    # bake had them, so every other mesh but `isolate` is hidden from render before the bake.
+    #   world "white"  + lights "off"   -> vertex AO: under a uniform environment of radiance 1 a DIFFUSE
+    #                                     bake with the colour pass off returns irradiance/pi in [0, 1], and
+    #                                     1 is the unoccluded value (asserted on a calibration plane far from
+    #                                     the tree, which is what `cal` records).
+    #   world "scene" + lights "scene" -> E_bake: the same measurement under the rig the atlas was baked at.
+    # Same shadow-ray cut-out override as `vertex` / `instance`, over the union of every `proto` job's
+    # objects, so a value cannot depend on the job split.
+    lights = prepare(int(job.get("samples", g3.SAMPLES_VERTEX)))
+    keep = set(job["objects"]) | set(job.get("isolate", []))
+    hidden = []
+    for o in bpy.data.objects:
+        if o.type == "MESH" and o.name not in keep and not o.hide_render:
+            o.hide_render = True
+            hidden.append(o.name)
+    cal = None
+    if job.get("world") == "white":
+        for o in bpy.data.objects:
+            if o.type == "LIGHT":
+                o.hide_render = True
+        w = bpy.data.worlds.new("GATE3_ao_white")
+        w.use_nodes = True
+        bg = next(n for n in w.node_tree.nodes if n.type == "BACKGROUND")
+        bg.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+        bg.inputs["Strength"].default_value = 1.0
+        scene.world = w
+        rec["rig"]["world"] = w.name
+        rec["rig"]["lights_hidden"] = sum(1 for o in bpy.data.objects if o.type == "LIGHT")
+        # the unoccluded reference, 1 km away with nothing above it
+        bpy.ops.mesh.primitive_plane_add(size=2.0, location=(1000.0, 1000.0, 0.0))
+        calo = bpy.context.active_object
+        calo.name = "GATE3_ao_cal"
+        calmat = bpy.data.materials.new("MAT_GATE3_ao_cal")
+        calmat.use_nodes = True
+        _cb = next(n for n in calmat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+        _cb.inputs["Base Color"].default_value = (0.5, 0.5, 0.5, 1.0)
+        _cb.inputs["Roughness"].default_value = 1.0
+        calo.data.materials.append(calmat)
+        keep.add(calo.name)
+    scope = [n for j in jobs.values() if j["kind"] == "proto" and j.get("group") == job.get("group")
+             for n in j["objects"]]
+    smats, susers = materials_of(scope)
+    undo = cutout_override(smats, job.get("override", "shadow")) if job.get("override") else []
+    rec["override"] = dict(mode=job.get("override"), scope_objects=len(scope),
+                           materials=[m.name for m in smats], wrapped=len(undo),
+                           mesh_objects_sharing_those_materials=susers)
+    scene.render.bake.target = "VERTEX_COLORS"
+    b = scene.render.bake
+    b.use_selected_to_active = False
+    b.use_clear = True
+    b.use_pass_direct = bool(job.get("direct", True))
+    b.use_pass_indirect = bool(job.get("indirect", True))
+    b.use_pass_color = False
+    arrays, rows = {}, []
+    targets = list(job["objects"]) + ([ "GATE3_ao_cal" ] if job.get("world") == "white" else [])
+    for name in targets:
+        ob = bpy.data.objects.get(name)
+        assert ob is not None and ob.type == "MESH", f"{JOB_ID}: {name} is not a mesh in this blend"
+        me = ob.data
+        ca = me.color_attributes.get("COLOR_0")
+        if ca is None:
+            ca = me.color_attributes.new(name="COLOR_0", type="FLOAT_COLOR", domain="POINT")
+        me.color_attributes.active_color = ca
+        me.color_attributes.render_color_index = list(me.color_attributes).index(ca)
+        bl.select_only(ob)
+        t0 = time.time()
+        bpy.ops.object.bake(type="DIFFUSE")
+        dt = time.time() - t0
+        n = len(me.vertices)
+        buf = np.empty(n * 4, dtype=np.float32)
+        ca.data.foreach_get("color", buf)
+        v = buf.reshape(n, 4)[:, :3].copy()
+        nz = v.sum(axis=1) > 0.0
+        # a vertex no polygon references is never written by the bake and stays at use_clear's black. Tell
+        # those apart from vertices that really are fully occluded, so the consumer knows which zeros to trust.
+        lbuf = np.empty(len(me.loops), dtype=np.int32)
+        me.loops.foreach_get("vertex_index", lbuf)
+        faced = np.zeros(n, dtype=bool)
+        faced[lbuf] = True
+        row = dict(object=name, mesh=me.name, verts=n, bake_s=round(dt, 1),
+                   loose_verts=int((~faced).sum()),
+                   zeros=int((~nz).sum()), zeros_loose=int((~nz & ~faced).sum()),
+                   zeros_faced=int((~nz & faced).sum()),
+                   loc=[round(float(x), 4) for x in ob.matrix_world.translation],
+                   min=[float(x) for x in v.min(axis=0)], max=[float(x) for x in v.max(axis=0)],
+                   mean=[float(x) for x in v.mean(axis=0)],
+                   mean_nonzero=[float(x) for x in (v[nz].mean(axis=0) if nz.any() else np.zeros(3))],
+                   coverage=round(float(nz.mean()), 4))
+        if name == "GATE3_ao_cal":
+            cal = row
+        else:
+            arrays[me.name] = v
+            rows.append(row)
+        print(f"[gate3] {JOB_ID}: {name} {n} verts {dt:.1f}s "
+              f"mean={v.mean():.4f} max={v.max():.4f} cov={nz.mean():.3f}")
+    cutout_restore(undo)
+    scene.render.bake.target = "IMAGE_TEXTURES"
+    p = g3.OUT / job.get("out", "proto") / f"{JOB_ID}.npz"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(str(p), **arrays)
+    back = np.load(str(p))
+    assert sorted(back.files) == sorted(arrays), f"{p}: array set changed on write"
+    rec.update(group=job.get("group"), npz=str(p.relative_to(g3.OUT)), npz_bytes=p.stat().st_size,
+               world_mode=job.get("world", "scene"), isolate=sorted(job.get("isolate", [])),
+               hidden_from_render=len(hidden), samples=scene.cycles.samples,
+               direct=b.use_pass_direct, indirect=b.use_pass_indirect, cal=cal, items=rows,
+               bake_s=round(sum(r["bake_s"] for r in rows), 1))
+
 # ================================================================ instance irradiance (per PLACEMENT)
 elif job["kind"] == "instance":
     # Gate 4, docs/decisions.md 2026-09-16 "Shrub/reed irradiance is baked PER PLACEMENT, not per mesh".
