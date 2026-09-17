@@ -1665,3 +1665,10 @@ export/sync_main.sh
     through and are the reason the order was re-run at all: `verify_glb` refused the old order file against
     the new `env.glb` by size, and `manifest_v4` refuses it against a different `instance_irradiance.json` by
     sha256 — verified by hand on this round's files.
+
+33. **`export/sync_main.sh` no longer copies `bake_queue/status.json`** (lead, 2026-09-17, 6c). That file is the
+    **GPU lock**, not an artefact: every agent reads MAIN's copy to decide whether the GPU is busy, and an
+    export sync was pushing this worktree's stale copy over it - harmless while both were idle, but mid-bake it
+    tells the viewer's headless Chrome the GPU is free. The bake engineer's queue and `gpu_lock.sh` write MAIN's
+    copy themselves; the sync only does it when **`PFA_SYNC_STATUS=1`** says the caller is the queue. Everything
+    else in the sync is unchanged (still no `--delete`).
