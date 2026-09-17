@@ -110,6 +110,7 @@ const CFG = {
 	// (or `never`) keeps every mesh for ever and creates no near-tree impostor at all, which is the
 	// round-15 behaviour and therefore the A/B for anything this pass changes at range.
 	leafNormal: qs.has( 'leafnormal' ) ? parseFloat( qs.get( 'leafnormal' ) ) : 0.5,
+	cardNormal: qs.has( 'cardnormal' ) ? parseFloat( qs.get( 'cardnormal' ) ) : 0,   // the shrub/reed cards' bend
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
 	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (default 40)
@@ -609,7 +610,8 @@ async function boot() {
 		const vi = manifest.gate3 && manifest.gate3.vertexIrradiance;
 		const vertexIrrScale = ( vi && vi.range > 0 && ! vi.rangeConflict ) ? vi.range * manifest.gate3.scale : 0;
 		foliageReport = applyFoliage( { scene, sun: sunLight, note, msaa, vertexIrrScale,
-			normalBlend: CFG.leafNormal, trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade } );
+			normalBlend: CFG.leafNormal, cardNormalBlend: CFG.cardNormal,
+			trnScale, trnShrubs, meshDist, fadeBand: CFG.treeFade } );
 		shrubLodReport = applyShrubLod( { scene, manifest, note, dist: CFG.shrubLod } );
 	}
 

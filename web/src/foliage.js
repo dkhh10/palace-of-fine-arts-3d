@@ -279,9 +279,10 @@ export function applyFoliage( o ) {
 	const fadeBand = o.fadeBand ?? 5;
 	// range x scale: the whole decode of COLOR_0 into scene-linear irradiance, from the manifest.
 	const vertexIrrScale = o.vertexIrrScale ?? 0;
+	const cardBend = o.cardNormalBlend ?? 0;
 	const report = { geometries: 0, clusters: 0, leafMaterials: 0, cardMaterials: 0, barkMaterials: 0,
 		bent: 0, softened: 0, units: [], normalBlend: bend, trnScale, meshDist, fadeBand,
-		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale };
+		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend };
 	const shared = { uniforms: {
 		pfaMeshDist: { value: Number.isFinite( meshDist ) ? meshDist : 1e9 },
 		pfaFadeBand: { value: Math.max( fadeBand, 1e-3 ) },
@@ -305,10 +306,20 @@ export function applyFoliage( o ) {
 
 	for ( const { mesh, mats } of meshes ) {
 		const foliage = mats.some( ( x ) => x && isFoliage( x.name ) );
+		// THE SHRUB / REED CARDS ARE NOT BENT BY DEFAULT, and the reason is what their shader does
+		// with a normal.  Their diffuse is one baked irradiance per placement added with NO cosine,
+		// and `noEnvDiffuse: false` only lets the environment reach the 7 cov == 0 cards, so on 1 372
+		// of the 1 379 the normal drives the SPECULAR alone.  Bending it outward therefore does not
+		// round their shading; it aims more sky reflection at the camera.  Measured at cam02 in the
+		// 60 520 700 980 box: blue 97.2 -> 104.6 where the Cycles reference has blue LOWEST at 97.7,
+		// saturation 0.077 -> 0.033 against the reference's 0.098.  `?cardnormal=` is the A/B.
+		const cardsOnly = foliage && ! mats.some( ( x ) => x && LEAF_RE.test( x.name || '' ) )
+			&& mats.some( ( x ) => x && CARD_RE.test( x.name || '' ) );
+		const thisBend = ! foliage ? 0 : ( cardsOnly ? cardBend : bend );
 		let cl;
-		try { cl = prepareGeometry( mesh.geometry, foliage ? bend : 0, cache ); }
+		try { cl = prepareGeometry( mesh.geometry, thisBend, cache ); }
 		catch ( e ) { report.skipped.push( `${mesh.name}: ${e.message}` ); continue; }
-		if ( foliage && bend > 0 ) report.bent ++;
+		if ( thisBend > 0 ) report.bent ++;
 		for ( const mat of mats ) {
 			if ( ! mat || ! mat.isMeshStandardMaterial || seenMat.has( mat.uuid ) ) continue;
 			seenMat.add( mat.uuid );
@@ -380,7 +391,8 @@ export function applyFoliage( o ) {
 		} );
 	}
 	note( `foliage: ${report.geometries} geometr(ies) clustered into ${report.clusters} crown(s), `
-		+ `normals bent ${bend.toFixed( 2 )} toward the crown centre on ${report.bent} mesh(es); `
+		+ `normals bent ${bend.toFixed( 2 )} toward the crown centre on ${report.bent} mesh(es) `
+		+ `(shrub/reed cards at ${cardBend.toFixed( 2 )}: the normal only drives their specular); `
 		+ `${report.leafMaterials} leaf + ${report.cardMaterials} card + ${report.barkMaterials} bark material(s) patched, `
 		+ `${report.softened} on alphaToCoverage (${o.msaa ? 'MSAA target' : 'no MSAA: hard cut kept'}); `
 		+ `translucency x${trnScale} from the Phase 5 constants`
