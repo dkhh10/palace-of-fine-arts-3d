@@ -858,3 +858,31 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 **3.13**, 03 2.69 -> 2.56 -> 2.56 -> **2.56**, 04 2.31 -> 2.88 -> 2.88 -> **2.88**, 05 2.89 -> 2.83 -> 2.94 ->
 **2.94**, 06 2.33 -> 2.56 -> 2.83 -> **2.83**. Delta vs round 15: **0.00 / +0.13 / 0 / 0 / 0 / 0**; vs Phase 5:
 **+0.05 / +0.19 / 0.00 / +0.07 / -0.12 / +0.17**.
+
+## Round 17 (Phase 6c foliage gate, round two of two, `round16c`) — 6c CLOSED WITH RESIDUALS
+1. **Crown interior CLOSED.** cam02 centre/edge 0.504 -> **0.393** (ref 0.364), p10 18.6 -> **5.3** (ref 4.1); cam05 range/mean
+   1.26 -> **1.72** (ref 1.77); every crown box's level inside 0.94-1.05x. **Shrub/reed LEVEL CLOSED**: frame-normalised
+   1.09-1.70x -> **0.91-1.47x** over eight boxes, hard-edge share down at seven of eight. **3 m walk-in CLOSED**: the walk-up
+   LOD1 set reads as a canopy (overlapping cards, branches, sky through the gaps).
+2. **Shrub STRUCTURE still open (export).** Broad flat angular cards at 3 m and 8 m; leaf-green pixel share ~half the
+   reference's at five boxes; worst boxes cam03 1.53x and the hero's own band 1.47x.
+3. **The darkening overshoots (viewer).** Hero crown p10 20.9 vs ref 36.8 and centre/edge 0.491 vs 0.852; station 5's frame
+   146.8 vs the reference's 151.2 and the only station whose MAE rises; blotchy near-black crowns; a pale halo now reads
+   around the darker crowns (carried from round16b, newly conspicuous).
+4. **Far-tree tops stay opaque (bake/export):** cam02 r1c3, cam03 r1c1 — solid cut-outs where the reference shows sky
+   through the twigs. Unmoved by round 3.
+5. **New at 100 %, carried not caused by 6c:** cam03's column concrete is visibly blurred and vertically banded at 1 m;
+   cam06's backdrop trees are faceted low-poly **in the Cycles reference too**, so they are a Phase 5 asset, not a viewer defect.
+6. **Named exceptions standing, 0 new to explain** (export-set sweep over the manifests; the round-3 walk-up set adds no hit).
+7. **Perf and memory.** Cold 1440p pass of record 32.4 / 37.0 / 35.1 / 22.1 / 32.2 / 34.0 ms = **+4.2 / +4.8 / +2.2 / -0.4 /
+   +1.8 / +1.9** on round 15 — the **+3 ms gate fails at stations 1 and 2 on the pass of record**, cause unestablished
+   (draws identical to round16b at all six, triangles identical at five; only cam03 adds geometry, +0.39 M). Same-session
+   A/B pending. Hero **30.9 fps**. **Resident 1 931.4 MB = 1.61x the 1 200 MB Gate 1 budget** (+130.8, all walk-up geometry);
+   this supersedes every earlier figure. Load 664.0 MB in 6.74 s.
+8. **Walk clamp re-run at 30 s on the full 6c scene:** 24/24 probes, lowest ground **-0.750 m** vs the -1.20 floor, **0 below**. Closed.
+9. **Bare URL = the delivery look:** luma 0.9999x of the station-1 preset, MAE 8.09/255 (upscale), 0 page errors, every round-3 default in the boot log.
+
+**Scores (round 14 -> 15 -> 16 -> round 17).** 01 3.61 -> 3.72 -> 3.72 -> **3.78**, 02 2.94 -> 3.00 -> 3.13 -> **3.25**,
+03 2.56 -> 2.56 -> 2.56 -> **2.63**, 04 2.88 -> 2.88 -> 2.88 -> **2.88**, 05 2.83 -> 2.94 -> 2.94 -> **2.94**, 06 2.56 ->
+2.83 -> 2.83 -> **2.83**. Delta vs round 16: **+0.06 / +0.12 / +0.07 / 0 / 0 / 0**; vs round 15: **+0.06 / +0.25 / +0.07 /
+0 / 0 / 0**; vs Phase 5: **+0.11 / +0.31 / +0.07 / +0.07 / -0.12 / +0.17**. None below 2.5; none outside 0.5 of Phase 5.
