@@ -392,22 +392,8 @@ report["gate3_alpha_source"] = dict(file=str(alpha_json), present=alpha_src is n
                                     materials=len(alpha_cut), read_from=(alpha_src or {}).get("source"))
 
 
-def png_has_alpha(path):
-    """True when the file is a PNG whose IHDR colour type carries alpha (4 = grey+A, 6 = RGBA), False for a
-    JPEG (which never has one). Anything else RAISES: a format this cannot read is exactly the case where a
-    cut-out card would silently ship opaque, which is the defect this whole pass exists to close (r4 review
-    carry)."""
-    b = Path(path).read_bytes()[:26]
-    if b[:8] == b"\x89PNG\r\n\x1a\n":
-        return b[25] in (4, 6)
-    if b[:2] == b"\xff\xd8":
-        return False
-    raise AssertionError(f"{path}: the exporter wrote a base-colour image this check cannot read "
-                         f"(magic {b[:8]!r}). Add the format here - a texture whose alpha cannot be tested "
-                         f"is a card that ships OPAQUE without a word.")
-
-
-import read_alpha  # noqa: E402  (cut_chain only; its discovery run is guarded by __main__)
+import read_alpha  # noqa: E402  (cut_chain / png_has_alpha; its discovery run is guarded by __main__)
+from read_alpha import png_has_alpha  # noqa: E402  (one copy, shared with export/trees_far.py)
 
 
 def cutoff_for(mat_name):

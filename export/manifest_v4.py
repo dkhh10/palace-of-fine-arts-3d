@@ -564,6 +564,59 @@ def main():
                                                     "default, NOT the value the render used."))
         man["compositor"] = comp_block
 
+    # ------------------------------------------------------------ Phase 6c item A: the far trees' meshes
+    # export/trees_far.py + `gltf_pack.sh --trees` build `env_trees.glb`: the 16 impostor prototypes as real
+    # LOD2 meshes, instanced at the same 127 `tree_far` placements the impostors use, in their own file so
+    # the viewer can load it lazily and swap mesh <-> impostor at `treeMeshDist`. Same local-then-MAIN
+    # resolution as every other hand-off, because export/out is gitignored.
+    tf_p = next((q for q in (g3.GATE1_OUT / "trees_far.json",
+                             g3.MAIN_ROOT / "export" / "out" / "gate1" / "trees_far.json") if q.exists()),
+                None)
+    if tf_p is not None:
+        tf = json.loads(tf_p.read_text())
+        assert tf.get("schema") == "pfa-phase6c/trees-far/1", f"trees_far schema {tf.get('schema')!r}"
+        tf_glb = next((q for q in (g3.GATE1_OUT / "env_trees.glb",
+                                   g3.MAIN_ROOT / "export" / "out" / "gate1" / "env_trees.glb")
+                       if q.exists()), None)
+        man["trees"] = dict(far_mesh=dict(
+            glb="env_trees.glb",
+            bytes=(tf_glb.stat().st_size if tf_glb else None),
+            load="lazy: nothing in the first frame depends on it; until it is in, the 127 far trees are the "
+                 "impostors they always were",
+            textures=("external, not embedded: the leaf and bark KTX2 in `textures.ktx2_dir` that env.glb "
+                      "already carries (gltfpack -tr). Serve tex_ktx2 beside the glb or the trees load "
+                      "untextured."),
+            prototypes=[dict(name=k, mesh=v["mesh"], tris=v["tris"], verts=v["verts"],
+                             materials=v["materials"],
+                             height_above_base_m=v["height_above_base_m"],
+                             src_tris=v["src_tris"], card_scale=v["reduction"]["card_scale"],
+                             cards=[v["reduction"]["cards_kept"], v["reduction"]["cards_before"]])
+                        for k, v in sorted(tf["prototypes"].items())],
+            placements=[dict(index=pl["index"], prototype=pl["prototype"], mesh=pl["mesh"],
+                             loc=pl["loc"], scale=pl["scale"], height_m=pl["height_m"],
+                             source_tree=pl["source_tree"], billboard=pl["billboard"],
+                             walk_dist_m=pl["walk_dist_m"])
+                        for pl in tf["placements"]],
+            placement=tf["placement_check"]["rule"],
+            impostor_join="placements[i].billboard is tree_far[i].billboard and placements[i].prototype is "
+                          "impostors.prototype_map[tree_far[i].prototype]: the mesh and the impostor are the "
+                          "same tree at the same transform, which is what makes the crossfade legal",
+            crown_top_deviation_m=tf["placement_check"]["worst_crown_top_deviation_m"],
+            rows=("every tree is bark + leaf, so gltfpack -mi emits TWO instanced nodes per prototype (32 "
+                  "meshes, 254 rows for 127 trees). Per-placement data is per TREE, not per row: a row's "
+                  "placement is found the same way as `lightmaps.instance_irradiance`, by matching the "
+                  "EXT_mesh_gpu_instancing TRANSLATION to `placements[].loc` in glTF space "
+                  "(Blender (x, y, z) -> glTF (x, z, -y)), because gltfpack drops node names."),
+            color0=(dict(tf["color0"], present=True) if tf.get("color0", {}).get("source")
+                    else dict(present=False, note=tf["color0"].get("note"))),
+            unique_tris=sum(v["tris"] for v in tf["prototypes"].values()),
+            placed_tris=tf["gltf"]["placed_tris"],
+            source="export/trees_far.py + export/gltf_pack.sh --trees",
+            topology="out/gate3/trees_far/topology.json"))
+    else:
+        print("[gate3] note: no out/gate1/trees_far.json - manifest has no `trees.far_mesh` block "
+              "(run export/trees_far.py, then export/gltf_pack.sh --trees)", file=sys.stderr)
+
     man["gate3"] = dict(generated=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                         jobs=len(jobs), records=len(list(g3.REC.glob("*.json"))))
     p = g3.OUT / "manifest.json"

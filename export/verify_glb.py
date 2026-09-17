@@ -71,6 +71,93 @@ def mesh_centre(doc, mesh_idx):
     return [(lo[i] + hi[i]) / 2.0 for i in range(3)] if seen else None
 
 
+def trees_far_check(out, bad):
+    """Phase 6c item A: env_trees.glb, the far trees' LOD2 meshes.
+
+    It is not one of the four export_set.json classes, so the class loop cannot see it. What it is checked
+    against is `out/gate1/trees_far.json`, which export/trees_far.py wrote in the same Blender run that wrote
+    the glTF: the 16 prototype meshes and their triangle counts, and the 127 placements. The three failures
+    that matter and are invisible in a viewer are (1) a glb packed from a different glTF than the report
+    describes, (2) instance rows lost or duplicated by `gltfpack -mi` - a tree in the wrong place or missing -
+    and (3) a leaf material that lost its `alphaMode`, which draws every card as a solid rectangle
+    (export/README.md items 29-30).
+    """
+    glb = out / "env_trees.glb"
+    rep_p = out / "trees_far.json"
+    if not glb.exists() or not rep_p.exists():
+        return None
+    rep = json.loads(rep_p.read_text())
+    for src_name in ("env_trees.gltf", "env_trees_ktx2.gltf"):
+        sp = out / src_name
+        if sp.exists() and sp.stat().st_mtime > glb.stat().st_mtime + 1.0:
+            bad.append(f"trees: {src_name} is newer than env_trees.glb - the glb was packed from a different "
+                       f"glTF than this check reads. Re-run export/gltf_pack.sh --trees.")
+    doc, _ = glb_json(glb)
+    mesh_tris = []
+    for me in doc.get("meshes", []):
+        t = 0
+        for pr in me.get("primitives", []):
+            if "indices" in pr:
+                t += accessor_count(doc, pr["indices"]) // 3
+            else:
+                t += accessor_count(doc, (pr.get("attributes") or {}).get("POSITION")) // 3
+        mesh_tris.append(t)
+    rows_total, drawn_tris, inst_nodes, plain_nodes = 0, 0, 0, 0
+    for nd in doc.get("nodes", []):
+        if "mesh" not in nd:
+            continue
+        gi = (nd.get("extensions") or {}).get("EXT_mesh_gpu_instancing")
+        if gi:
+            n = accessor_count(doc, list((gi.get("attributes") or {}).values())[0])
+            inst_nodes += 1
+            rows_total += n
+            drawn_tris += n * mesh_tris[nd["mesh"]]
+        else:
+            plain_nodes += 1
+            rows_total += 1
+            drawn_tris += mesh_tris[nd["mesh"]]
+    # gltfpack splits a multi-primitive mesh into one mesh (and one instanced node) PER PRIMITIVE, and every
+    # tree is bark + leaf, so the row count to expect is the pre-pack glTF's nodes weighted by their mesh's
+    # primitive count - not the placement count. Read from env_trees.gltf, which the mtime pin above ties to
+    # this glb.
+    src = json.loads((out / "env_trees.gltf").read_text()) if (out / "env_trees.gltf").exists() else None
+    want_rows = len(rep["placements"])
+    want_meshes = len(rep["prototypes"])
+    if src is not None:
+        prims = [len(m.get("primitives", [])) for m in src.get("meshes", [])]
+        want_rows = sum(prims[n["mesh"]] for n in src.get("nodes", []) if "mesh" in n)
+        want_meshes = sum(prims)
+    if rows_total != want_rows:
+        bad.append(f"env_trees.glb draws {rows_total} tree instances, env_trees.gltf has {want_rows} "
+                   f"(placements x primitives per tree)")
+    if len(doc.get("meshes", [])) != want_meshes:
+        bad.append(f"env_trees.glb has {len(doc.get('meshes', []))} meshes, env_trees.gltf has "
+                   f"{want_meshes} primitives over {len(rep['prototypes'])} prototypes")
+    want_tris = sum(rep["prototypes"][pl["prototype"]]["tris"] for pl in rep["placements"])
+    # gltfpack welds and re-triangulates, so the count moves a little; more than 1 % means geometry was lost.
+    if want_tris and abs(drawn_tris - want_tris) > 0.01 * want_tris:
+        bad.append(f"env_trees.glb draws {drawn_tris} triangles, the export placed {want_tris} "
+                   f"({100.0*(drawn_tris-want_tris)/want_tris:+.1f} %)")
+    # the cut-out cards: the effective cutoff, because gltfpack drops `alphaCutoff` when it is the default 0.5
+    want_alpha = rep.get("gltf", {}).get("alpha_mode_materials") or {}
+    got = {m.get("name"): (m.get("alphaMode"), m.get("alphaCutoff", 0.5)) for m in doc.get("materials", [])}
+    for name, (mode, cut) in want_alpha.items():
+        if name not in got:
+            bad.append(f"env_trees.glb lost material {name!r} (gltfpack merged or renamed it): the viewer "
+                       f"picks the leaf materials out by name")
+            continue
+        g_mode, g_cut = got[name]
+        if g_mode != mode or abs(float(g_cut) - float(cut if cut is not None else 0.5)) > 1e-5:
+            bad.append(f"env_trees.glb {name}: alphaMode {g_mode} cutoff {g_cut}, the glTF declared "
+                       f"{mode} {cut} - a leaf card that ships OPAQUE is a solid rectangle")
+    return dict(glb="env_trees.glb", bytes=glb.stat().st_size, meshes=len(doc.get("meshes", [])),
+                instanced_nodes=inst_nodes, plain_nodes=plain_nodes, rows=rows_total,
+                placements=len(rep["placements"]), rows_expected=want_rows, drawn_tris=drawn_tris, export_tris=want_tris,
+                unique_tris=sum(v["tris"] for v in rep["prototypes"].values()),
+                alpha_materials={k: list(v) for k, v in sorted(got.items()) if v[0]},
+                color0=bool(rep.get("gltf", {}).get("color0_meshes")))
+
+
 def instance_irradiance_check(out, bad):
     """Gate 4: the 1 379 shrub/reed placements' irradiance is addressed BY ROW, so the row count has to match.
 
@@ -438,6 +525,10 @@ def main(out_dir):
     r4 = instance_irradiance_check(out, bad)
     if r4 is not None:
         rows["gate4_instance_irradiance"] = r4
+    # ------------------------------------------------------------ Phase 6c: the far trees' LOD2 meshes
+    rt = trees_far_check(out, bad)
+    if rt is not None:
+        rows["trees_far"] = rt
     rows["gate3"] = dict(
         uv2_meshes=len(g3["uv2"]),
         uv2_coverage={m: [v.get("coverage_gate1"), v.get("coverage_gate3")] for m, v in g3["uv2"].items()},

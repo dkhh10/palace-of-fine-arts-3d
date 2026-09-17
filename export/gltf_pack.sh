@@ -63,6 +63,65 @@ if [ "$1" = "--gate2" ]; then
   exit 0
 fi
 
+# ---------------------------------------------------------------- Phase 6c item A: env_trees.glb
+# The far trees' LOD2 meshes (export/trees_far.py) pack on their own so nothing else is touched: the four
+# class glbs stay byte-identical and the viewer can load this one lazily. Its textures are the leaf and bark
+# PNGs env.gltf already uses, so they are normally already in tex_ktx2; any that are not are encoded here with
+# the same rule as --gate1 (colour is the default, data maps are the exception).
+if [ "$1" = "--trees" ]; then
+  OUT="$ROOT/export/out/gate1"
+  KTX="$OUT/tex_ktx2"
+  G="$OUT/env_trees.gltf"
+  [ -f "$G" ] || { echo "gltf_pack.sh: $G missing - run export/trees_far.py first" >&2; exit 2; }
+  command -v toktx    >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
+  command -v gltfpack >/dev/null || { echo "gltf_pack.sh: gltfpack not on PATH" >&2; exit 2; }
+  mkdir -p "$KTX"
+  t0=$(date +%s); n=0
+  for f in $(python3 -c "
+import json,sys
+d=json.load(open('$G'))
+print(' '.join(i['uri'] for i in d.get('images',[]) if i.get('uri')))
+"); do
+    b=${f:t:r}
+    [ -f "$KTX/$b.ktx2" ] && continue
+    case "$b" in
+      *_normal|*_nrm|*normal*|*_ao|*rough*|*disp*|*translu*|*_mask*) oetf=linear ;;
+      *) oetf=srgb ;;
+    esac
+    toktx --t2 --encode uastc --uastc_quality 2 --zcmp 18 --genmipmap --assign_oetf $oetf \
+          "$KTX/$b.ktx2" "$OUT/$f" >/dev/null
+    n=$((n+1))
+  done
+  echo "[trees] STEP toktx wall_s=$(( $(date +%s)-t0 )) new_files=$n (the rest were already in tex_ktx2)"
+  python3 "$HERE/gltf_ktx2_patch.py" "$G" "$OUT/env_trees_ktx2.gltf" "tex_ktx2" >/dev/null
+  # -km: the viewer picks the leaf materials out by name (MAT_leaf_*), and gltfpack merges materials whose
+  # factors match. -kv/-vc 16 only once the item B vertex AO is in the glTF, so the file stays byte-identical
+  # between a re-run without it.
+  # -tr (keep referring to the original texture paths): the leaf and bark KTX2 are the ones env.glb already
+  # carries, and embedding them again costs 24 MB in a file whose geometry is under 1 MB. They sit in the
+  # tex_ktx2 directory beside this glb, which is exactly where the relative URIs resolve from.
+  EXTRA=(-km -tr)
+  if python3 -c "
+import json,sys
+d=json.load(open('$OUT/trees_far.json'))
+sys.exit(0 if d.get('gltf',{}).get('color0_meshes') else 1)
+"; then EXTRA+=(-kv -vc 16); fi
+  t2=$(date +%s)
+  # -vp 16 (not env.glb's -vpf): these 16 meshes share one bounding box ~40 m across, where 16-bit position
+  # quantisation is sub-millimetre. gltfpack's own reported error is printed in the log below.
+  if gltfpack -i "$OUT/env_trees_ktx2.gltf" -o "$OUT/env_trees.glb" -cc -mi -vp 16 $EXTRA 2>>"$OUT/gltfpack.log"; then
+    SRC=ktx2
+  else
+    echo "[trees] gltfpack refused the KTX2 glTF; falling back to the PNG glTF" >&2
+    gltfpack -i "$G" -o "$OUT/env_trees.glb" -cc -mi -vp 16 $EXTRA 2>>"$OUT/gltfpack.log"
+    SRC=png
+  fi
+  echo "[trees] STEP gltfpack wall_s=$(( $(date +%s)-t2 )) source=$SRC env_trees.glb=$(stat -f%z "$OUT/env_trees.glb")B"
+  printf '%s\n' "env_trees -cc -mi -vp 16 $EXTRA" >> "$OUT/gltfpack_flags.txt"
+  python3 "$HERE/verify_glb.py" "$OUT" || exit 1
+  exit 0
+fi
+
 # ---------------------------------------------------------------- Gate 1: one glb per class
 if [ "$1" = "--gate1" ]; then
   OUT="$ROOT/export/out/gate1"

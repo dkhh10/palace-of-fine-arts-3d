@@ -31,6 +31,21 @@ import gate3_common as g3  # noqa: E402
 MATH_1IN = {"ROUND", "FLOOR", "CEIL", "TRUNC", "FRACT", "ABSOLUTE", "SQRT", "SIGN"}
 
 
+def png_has_alpha(path):
+    """True when the file is a PNG whose IHDR colour type carries alpha (4 = grey+A, 6 = RGBA), False for a
+    JPEG (which never has one). Anything else RAISES: a format this cannot read is exactly the case where a
+    cut-out card would silently ship opaque, which is the defect this whole pass exists to close (r4 review
+    carry). Lives here rather than in gltf_gate1.py because export/trees_far.py needs the same test."""
+    b = Path(path).read_bytes()[:26]
+    if b[:8] == b"\x89PNG\r\n\x1a\n":
+        return b[25] in (4, 6)
+    if b[:2] == b"\xff\xd8":
+        return False
+    raise AssertionError(f"{path}: the exporter wrote a base-colour image this check cannot read "
+                         f"(magic {b[:8]!r}). Add the format here - a texture whose alpha cannot be tested "
+                         f"is a card that ships OPAQUE without a word.")
+
+
 def cut_chain(mat):
     """(cutoff, description) for a material whose alpha is cut by mat_build.py's Transparent/Mix/Map Range
     trio, else (None, why). Never guesses and never falls back to `material.alpha_threshold`."""
