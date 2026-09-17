@@ -1065,6 +1065,54 @@ are regenerated from the new npz, so the stale `mean 0.000009` figures quoted in
 pre-Gate-4 bake.
 
 
+### `trees.far_mesh.lighting` — new at 6c (the 127 far trees once they are MESHES, and what the impostors divide by)
+
+6c item A gives every one of the 127 far trees a real LOD2 mesh in a lazily loaded `env_trees.glb`
+(`EXT_mesh_gpu_instancing`, the same transforms as the `tree_far` entries). Mesh trees cannot be `unlit` the
+way the impostor atlas is, so they need the same two terms the near trees and the shrubs already have — one
+static ambient-occlusion factor per prototype, and one irradiance per placement — and the impostors that still
+draw beyond `treeMeshDist` need a third number so the two paths agree across the crossfade.
+
+```jsonc
+"trees": { "far_mesh": {
+  "glb": "env_trees.glb", "placements": 127, "prototypes_n": 16,
+  "lighting": {
+    "vertex_ao": {                            // per PROTOTYPE, on the export's LOD2 topology
+      "npz": "trees_far/vertex_ao.npz",       // out/gate3/, float32 per vertex, key = the LOD2 mesh name
+      "dtype": "float32", "encode": "none",
+      "units": "0-1 ambient occlusion (1 = unoccluded)",
+      "bake": "lights off, uniform white world, DIFFUSE colour off, the shadow-ray cut-out override, 64 spp, VERTEX_COLORS",
+      "topology": "asserted equal to the export's LOD2 vertex count per prototype; a mismatch is a hard failure",
+      "meshes": { "<LOD2 mesh>": { "verts": 0, "min": 0.0, "mean": 0.0, "max": 0.0 } } },
+    "instance_irradiance": {                  // per PLACEMENT, exactly the shrub/reed schema and join
+      "json": "trees_far/instance_irradiance.json",
+      "schema": "pfa-phase6/gate4-instance-irradiance/1",
+      "encode": "none", "dtype": "float32", "encoding": "linear-float32",
+      "units": "scene-linear irradiance / pi (x lightmaps.scale = pi)",
+      "attribute": "_IRRADIANCE", "placements": 127, "key": "WORLD TRANSLATION",
+      "join": { "tolerance_m": 0.02 } },
+    "prototype_e_bake": {                     // 16 values, in the SAME json under `prototypes`
+      "where": "trees_far/instance_irradiance.json -> prototypes[\"<prototype>\"].E_bake = [r, g, b]",
+      "units": "the same scene-linear irradiance / pi as instance_irradiance",
+      "bake": "the vertex-averaged DIFFUSE irradiance (colour off, the same shadow-ray override) of that prototype's LOD2 mesh in gate3_imp.blend's OWN environment - the lawn under the open sky, the lamps exactly as the atlas bake had them",
+      "use": "IMPOSTOR ONLY. Beyond `treeMeshDist` the viewer draws atlas_frame * (E_placement / E_bake) per placement, per channel: the atlas already holds lit radiance baked in the nursery, so dividing it by the irradiance that nursery supplied and multiplying by the irradiance the placement actually receives turns the unlit atlas into the same shading the mesh path applies. Clamp the ratio (the lead sets the ceiling) and fall back to 1 where E_bake has a zero channel." } } }
+```
+
+Why the division exists: the 6c item-1 diagnosis (finding 33 below) measured that the atlas is a faithful
+encode of Cycles, and that Cycles rendered each prototype ALONE on a lawn under the whole unoccluded sky dome
+— sun-only gives the crown `[0.113, 0.112, 0.000]` and sky-only `[0.078, 0.157, 0.387]`, so every blue photon
+in the atlas is a sky term the scene does not have. `E_placement / E_bake` removes exactly that nursery sky
+and puts the placement’s own irradiance in its place, which is why the impostor and the mesh match across
+the crossfade instead of the impostor jumping blue (lead’s decision, docs/decisions.md 2026-09-17).
+
+**The GPU path for these jobs.** The 16 AO jobs, the 127-placement irradiance and the 16 `E_bake` values all
+go through `export/bake_queue.sh --gate3` like every other bake. `export/gpu_lock.sh claim|release` is the
+accepted path for a **one-off** Blender run that is not a queue job (it was added for the 6c item-1
+diagnosis): it writes the same `state: running|idle` into `out/bake_queue/status.json` and copies it to MAIN,
+which is the only GPU-liveness signal other agents may read. Mutual exclusion itself still comes one level
+down, from `scripts/blender_run.sh` registering the pid with the watchdog.
+
+
 ### `impostors` — new
 
 ```jsonc
