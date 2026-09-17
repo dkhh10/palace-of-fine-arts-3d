@@ -1788,8 +1788,12 @@ export/sync_main.sh
     `topology.json` does not carry it. What let the error through was review finding 2: the old assert,
     `matrix_world @ (anchor.x, anchor.y, 0)` against `trunk_base`, is an algebraic identity for
     `T(loc) @ S @ T(-anchor)` and passes whatever anchor it is handed. It is now an assert on the **placed
-    mesh's world bbox** - XY centre within 0.05 m of `trunk_base`, bottom within 0.05 m of
-    `loc.z + bbox_min.z * s` - which fails on a wrong anchor.
+    mesh's WORLD bbox against `topology.json`'s own `placed_bbox_min` / `placed_bbox_max`** - which
+    `export/trees_far.py` computes independently - at **0.005 m**, plus the bottom against
+    `loc.z + bbox_min.z * s` at **0.05 m**; worst residual **7e-05 m over 127/127 rows**. Note what it is
+    deliberately NOT: "XY centre within 0.05 m of `trunk_base`" would fail on correct data, because the
+    anchor is the SOURCE prototype's bbox XY centre (the impostor's axis) and the reduction then shifts the
+    reduced crown's own centre off it by `placed_xy_offset_m`, 0.10-2.83 m over the 127 (median 0.28).
 
 38. **6c item 2 - the far-tree lighting hand-off: 36 jobs, `vertex_ao.npz` + `instance_irradiance.json` at
     schema /2** (2026-09-17; `export/trees_far_set.py`, `export/bake_lm.py` kind `proto`,
@@ -1879,4 +1883,23 @@ export/sync_main.sh
     (override scope of 1 object vs all 16, identical `mean=3.4148 cov=0.943`) survives only in
     `renders/logs/6c_bake_run1.log:291` and `6c_bake_run2.log:96`, because run 2 overwrote the record;
     superseded records should be kept beside the new one.
+
+40. **Round-2b review, carried open items (bake).** `docs/reviews/phase6c_bake_r2b_review.md` 5, 7 and 8;
+    1-4 and carry 6 are fixed (the hand-off file's `placement_transform` and `ratio.strength_decision` now
+    describe the rule that is used and quote `ratio_check.json`'s own anchor-corrected figures instead of
+    the pre-fix ones; item 37's last sentence states the assert that exists; and when
+    `e_placement_topology.matches_current_rev` is false, `trees_far_compose.py` ASSERTS that
+    `trees_far_set.json`'s recorded anchors equal `topology.json`'s current ones - 0.0 m today - instead of
+    arguing it in prose). (5) The pidless `gpu_lock.sh claim` is crash-safe only on the clock: with no pid
+    to disprove it, a crashed agent holds the published GPU signal for the whole `secs` and `guard` refuses
+    other owners until it expires. **Prefer `gpu_lock.sh run <secs> -- <cmd>` (or pass `PFA_LOCK_PID`),
+    which records a real pid and releases from a trap; a bare `claim` must pass an honest SHORT `secs`,
+    never the 1800 s default for a long hold.** (7) `trees_far_ratio_check.py:138` computes the hue verdict
+    as `h_moved >= 0.5 * h_gap and h_after >= h_target`, which assumes the crown starts BLUER than the
+    reference; with a future reference above the crown hue the first term is trivially true and the
+    direction is unchecked - compare on `abs()` with an explicit direction. (8) r2 carries 7 and 10 are
+    still open: the LUT shaper constants in `trees_far_ratio_check.py:49-50` are a hard-coded copy of
+    `gate0_common.SHAPER_*` rather than parsed from the `.cube` header, and `status.json` keeps only the
+    newest record per job id, so the first-pass `tfao` / `tfirr` timings survive only in the committed
+    `renders/logs/6c_bake_run3.log` and `6c_bake_run4.log`.
 

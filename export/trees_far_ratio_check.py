@@ -214,7 +214,10 @@ def main():
         strength_shipped=dict(
             strength=1.0, clamp=4.0, zero_channel_fallback=1.0,
             where="docs/decisions.md 2026-09-17 'E_placement/E_bake validated on one placement'",
-            note="the raw per-channel ratio, no exponent; k = 0.4386 was measured and NOT taken"),
+            note=("the raw per-channel ratio, no exponent; k = %.4f was measured on THIS run and NOT taken "
+                  "(it lands the hue at %.1f deg against the reference %.1f). Every figure here and in "
+                  "instance_irradiance.json's `ratio.strength_decision` comes from this file."
+                  % (float(k), hue_deg(d_k), ref["hue_srgb_deg"]))),
         note=("Judged DISPLAY-referred, through the delivery LUT, because the reference is a display PNG. "
               "PASS = the display HUE closes at least half the gap to the reference without overshooting "
               "past it; display B/G is reported beside it and fails. The reference is "

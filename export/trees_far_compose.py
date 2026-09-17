@@ -67,6 +67,10 @@ def main():
     mesh_of = {p: topo["prototypes"][p]["mesh"] for p in protos}
     loc_of = {d["object"]: d["loc"] for d in places["placements"]}
     proto_of = {d["object"]: d["prototype"] for d in places["placements"]}
+    rcp = TF / "ratio_check.json"
+    assert rcp.exists(), (f"{rcp.name} is missing - run export/trees_far_ratio_check.py first: the `ratio` "
+                          "block quotes its measurement rather than repeating it by hand")
+    rc = json.loads(rcp.read_text())
     doc = dict(schema="pfa-phase6/gate4-instance-irradiance/2",
                generated=time.strftime("%Y-%m-%dT%H:%M:%S"),
                generator="export/trees_far_compose.py",
@@ -193,6 +197,17 @@ def main():
     lum_all = A @ LUM
     irr_verts_seen = sorted({int(got[o]["verts"]) for o in order})
     irr_rev_match = all(int(got[o]["verts"]) == topo["prototypes"][proto_of[o]]["verts"] for o in order)
+    # carry 6: when the irradiance was baked on an earlier LOD2 revision, the only thing that makes it
+    # reusable is that the ANCHOR - and therefore every one of the 127 world transforms the join keys on -
+    # did not move. Assert it instead of asserting it in prose.
+    set_anchors = json.loads((TF / "trees_far_set.json").read_text())["ebake"]["anchors"]
+    anchor_delta_max = max(
+        (max(abs(float(a) - float(b)) for a, b in zip(set_anchors[q], topo["prototypes"][q]["anchor"]))
+         for q in protos), default=0.0)
+    if not irr_rev_match:
+        assert anchor_delta_max <= 1e-6, (
+            f"E_placement was baked on another LOD2 revision AND the anchor moved by {anchor_delta_max} m "
+            "since - the join by world translation is no longer valid, re-run the tfirr_* jobs")
 
     out_meshes = {}
     for mesh, plc in meshes.items():
@@ -254,16 +269,21 @@ def main():
                         "atlas_frame * clamp((E_placement / E_bake) ** strength, 0, clamp) per placement, "
                         "per channel."),
                    strength=1.0, clamp=4.0, zero_channel_fallback=1.0,
-                   strength_decision=("STRENGTH 1.0 = the full RAW per-channel ratio, no exponent "
-                                      "(docs/decisions.md 2026-09-17 'E_placement/E_bake validated on one "
-                                      "placement'). Measured on TREEFAR_000 through the delivery LUT: the "
-                                      "raw ratio closes 86.7 % of the HUE gap (205.5 -> 72.6 deg against "
-                                      "the reference 52.2) with no overshoot, while the k = 0.4386 variant "
-                                      "that matches display B/G instead lands the hue at 105.4 deg, worse. "
-                                      "The raw ratio does overshoot on B/G alone (1.267 -> 0.041 vs 0.648), "
-                                      "which is a ratio of a 1.2/255 blue channel - see "
-                                      "trees_far/ratio_check.json, which carries both metrics and names the "
-                                      "one the verdict used."),
+                   strength_decision=(
+                       "STRENGTH 1.0 = the full RAW per-channel ratio, no exponent (docs/decisions.md "
+                       "2026-09-17 'E_placement/E_bake validated on one placement'). Measured on "
+                       "TREEFAR_000 through the delivery LUT, on the ANCHOR-CORRECTED re-run: ratio "
+                       "%s, the raw ratio closes %.1f %% of the HUE gap (%.1f -> %.1f deg "
+                       "against the reference %.1f) with no overshoot, while the k = %.4f variant that "
+                       "matches display B/G instead lands the hue at %.1f deg, worse. The raw ratio does "
+                       "overshoot on B/G alone (%.4f -> %.4f vs %.3f), which is a ratio of a ~1/255 blue "
+                       "channel - see trees_far/ratio_check.json, which carries both metrics and names the "
+                       "one the verdict used. These figures are read from that file, not retyped."
+                       % (rc["ratio"], rc["hue_closure"]["pct_of_gap_closed"], rc["hue_closure"]["before"],
+                          rc["hue_closure"]["after"], rc["hue_closure"]["target"],
+                          rc["partial_strength"]["k"], rc["partial_strength"]["display_hue"],
+                          rc["b_over_g_check"]["before"], rc["b_over_g_check"]["after"],
+                          rc["b_over_g_check"]["target"])),
                    raw=("BOTH VALUES RAW: the numerator is this file's `rgb` (or the unscaled `_IRRADIANCE` "
                         "attribute), the denominator this file's `prototypes[p].E_bake`. `lightmaps.scale` "
                         "(pi) is applied to NEITHER - scaling only the numerator makes every impostor pi x "
@@ -277,6 +297,12 @@ def main():
         prototypes=proto_out, prototypes_missing=missing_eb,
         e_placement_topology=dict(
             matches_current_rev=bool(irr_rev_match),
+            anchors_unchanged=anchor_delta_max,
+            anchors_note=("carry 6: reusing an E_placement set baked on an earlier LOD2 revision is only "
+                          "legitimate while the ANCHOR has not moved - the join is by world translation. "
+                          "That is asserted, not argued: the anchors trees_far_set.json recorded for the "
+                          "run that produced these values are compared with topology.json's current ones, "
+                          "and the largest difference is this many metres."),
             baked_on_verts=irr_verts_seen,
             current_rev=topo_rev,
             note=("the LOD2 vertex counts the irradiance jobs actually baked, against topology.json's "
@@ -318,10 +344,15 @@ def main():
                   E_placement_scene=("gate3_bake.blend with the 127 LOD2 placements linked in, the 127 "
                                      "`source_tree` objects and the 127 `ENV_treeboard_*` billboards hidden "
                                      "from render - the scene as it ships once the far trees are meshes"),
-                  placement_transform=("Translation(trunk_base) @ Scale(s) @ Translation(-anchor_p): the "
-                                       "export bakes the prototype's own world matrix into the mesh and "
-                                       "never subtracts it again, so the anchor has to come off here "
-                                       "(export/trees_far_set.py, and a defect reported for env_trees.glb)"),
+                  placement_transform=("Translation(trunk_base) @ Scale(s), rotation ignored - the "
+                                       "impostor's own placement rule verbatim. export/trees_far.py has "
+                                       "ALREADY subtracted the anchor from the mesh (`anchor` = the source "
+                                       "prototype's bbox XY centre at z = 0, the point the impostor rotates "
+                                       "about, published per prototype in trees_far/topology.json), so the "
+                                       "bake reads that anchor and subtracts nothing a second time. The "
+                                       "placement is checked by comparing the placed mesh's WORLD bbox with "
+                                       "topology.json's independently computed placed_bbox_min / "
+                                       "placed_bbox_max: worst residual 7e-05 m over 127/127 rows."),
                   rig="light_presets.apply_final_cycles (the rig every Gate 3 bake and the atlas used)",
                   material_override=("Light Path > Is Shadow Ray: the baked surface is an opaque grey "
                                      "Principled (base 0.5, roughness 1) while shadow rays keep the "
