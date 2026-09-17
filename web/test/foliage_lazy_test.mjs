@@ -166,10 +166,13 @@ const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' )
 	const cam = new THREE.PerspectiveCamera();
 	cam.position.set( 5000, 0, 5000 );
 	const onFar = rep.update( cam );
-	cam.position.set( 0, 0, 0 );
+	// stand ON a placement (Blender loc -> three): its own batch must be submitted, almost nothing else
+	const p0 = placements[ 0 ].loc;
+	cam.position.set( p0[ 0 ], p0[ 2 ] + 2, - p0[ 1 ] );
 	const onNear = rep.update( cam );
 	ok( onFar === 0, `nothing submitted from 5 km away (${onFar} batch(es))` );
-	ok( onNear > 0 && onNear < rep.batches, `only the near batches at the origin (${onNear}/${rep.batches})` );
+	ok( onNear > 0 && onNear <= 16, `standing at placement 0, only the batches around it are submitted (${onNear}/${rep.batches})` );
+	info( `far-tree mesh switch ${rep.meshDist} m: ${onNear} of ${rep.batches} batch(es) submitted at the tree, 0 at 5 km` );
 }
 
 // ---------------------------------------------------------------- 5. the shrub rows with no LOD1

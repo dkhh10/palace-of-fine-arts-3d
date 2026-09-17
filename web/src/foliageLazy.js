@@ -50,7 +50,8 @@ const PLACEMENT_XZ_TOL_M = 5.0;
 // third of its height, so the tolerance is max(3 m, 0.4 x height).
 const PLACEMENT_BASE_TOL_M = 3.0;
 const PLACEMENT_BASE_TOL_REL = 0.4;
-const CULL_MARGIN_M = 10;         // see `out.update`: the water's mirrored camera stands further back
+const CULL_MARGIN_M = 10;
+const _m4 = /* one shared scratch matrix */ new THREE.Matrix4();         // see `out.update`: the water's mirrored camera stands further back
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
 /**
@@ -437,11 +438,17 @@ export async function loadFarTrees( o ) {
 						'AO gamma2 decode' );
 					if ( aoEnv > 0 ) {
 						const ao = gamma2 ? `( vColor.rgb * vColor.rgb * ${aoRange.toFixed( 7 )} )` : 'vColor.rgb';
-						sh.fragmentShader = once( sh.fragmentShader, '#include <lights_fragment_maps>',
-							'#include <lights_fragment_maps>\n\t{\n'
+						// The anchor is `lights_fragment_end`, NOT `lights_fragment_maps`: patchBakedMaterial
+						// has already replaced the maps INCLUDE with its expanded chunk, so the include
+						// string is gone by the time this runs.  `lights_fragment_end` survives every
+						// patch in the chain (the translucency one re-emits it), and it is where
+						// RE_IndirectDiffuse / RE_IndirectSpecular consume these three terms - scaling
+						// `radiance` there covers the sheen lobe too, which is computed from it.
+						sh.fragmentShader = once( sh.fragmentShader, '#include <lights_fragment_end>',
+							'{\n'
 							+ `\t\tvec3 pfaAoV = mix( vec3( 1.0 ), ${ao}, ${aoEnv.toFixed( 4 )} );\n`
-							+ '\t\tiblIrradiance *= pfaAoV;\n\t\tradiance *= pfaAoV;\n'
-							+ '\t\t#ifdef USE_SHEEN\n\t\tsheenSpecularIndirect *= pfaAoV;\n\t\t#endif\n\t}',
+							+ '\t\tiblIrradiance *= pfaAoV;\n\t\tradiance *= pfaAoV;\n\t}\n'
+							+ '\t#include <lights_fragment_end>',
 							'AO on the environment terms' );
 					}
 				} catch ( e ) { recordShaderError( `far-tree AO on ${mat.name || '(unnamed)'}`, e ); }
@@ -453,6 +460,14 @@ export async function loadFarTrees( o ) {
 	if ( o.probeTexture ) applyProbeEnv( root, o.probeTexture, { note: () => {} } );
 
 	// ---- the leaf shader and the LOD dissolve, sharing the first pass's uniforms ---------------
+	// `?fartreemesh=` — the FAR trees' own switch distance.  MEASURED (web/README.md): at station 2 the
+	// modulated impostor matches the Cycles reference on every column of the far-tree box while the
+	// LOD2 mesh reads 1.96x and twice the reference's high-frequency detail, because the atlas carries
+	// the self-shadowing of the DENSE source tree and an 8 k-triangle LOD2 crown has almost none of it.
+	// So the mesh is kept for what only a mesh can do - silhouette and parallax when the walker is a
+	// few metres away - and the atlas carries every station.
+	const farDist = Number.isFinite( o.farMeshDist ) ? o.farMeshDist : 12;
+
 	// `?fartrn=` — the translucency scale on the FAR-tree meshes alone.  The Phase 5 mix adds a back
 	// lobe of the full unoccluded sun, and Cycles' own version of that lobe is occluded by the rest of
 	// the crown; the near trees carry a dense LOD1 canopy that hides most of it, while a far tree is an
@@ -464,8 +479,10 @@ export async function loadFarTrees( o ) {
 		normalBlend: o.normalBlend, cardNormalBlend: o.cardNormalBlend,
 		trnScale: Number.isFinite( o.farTrn ) ? o.farTrn : o.trnScale,
 		trnShrubs: o.trnShrubs, trnMaps: o.trnMaps,
-		meshDist: o.meshDist, fadeBand: o.fadeBand,
+		// the FAR trees' own switch distance (see `farMeshDist`), not the near trees' 40 m
+		meshDist: farDist, fadeBand: o.fadeBand,
 	} );
+	out.meshDist = farDist;
 	out.trnScale = Number.isFinite( o.farTrn ) ? o.farTrn : o.trnScale;
 	out.foliage = { geometries: fol.geometries, clusters: fol.clusters, leafMaterials: fol.leafMaterials,
 		barkMaterials: fol.barkMaterials, bent: fol.bent, softened: fol.softened, units: fol.units.length };
@@ -491,7 +508,7 @@ export async function loadFarTrees( o ) {
 		if ( ! p ) return;
 		const c = crownOf.get( p.index );
 		if ( ! c ) return;
-		byId.set( t.id, { switchCentre: [ c.x, c.y, c.z ], irr: far.byIndex.get( i ) || null } );
+		byId.set( t.id, { switchCentre: [ c.x, c.y, c.z ], dist: farDist, irr: far.byIndex.get( i ) || null } );
 	} );
 	out.impostors = activateImpostorMeshes( o.impostorGroup, byId, note );
 
@@ -504,13 +521,27 @@ export async function loadFarTrees( o ) {
 	const ch = chunkInstancedMeshes( root, { minRadius: 12, minCount: 2, maxDepth: 3, gain: 0.95, budget: 256 } );
 	out.chunks = ch.chunks; out.split = ch.split; out.added = ch.added;
 	const batches = [];
+	const _row = new THREE.Vector3();
 	root.traverse( ( mesh ) => {
 		if ( ! mesh.isMesh ) return;
 		mesh.frustumCulled = true;
 		if ( ! mesh.geometry.boundingSphere ) mesh.geometry.computeBoundingSphere();
 		if ( mesh.isInstancedMesh ) mesh.computeBoundingSphere();
 		const s = ( mesh.isInstancedMesh ? mesh.boundingSphere : mesh.geometry.boundingSphere );
-		if ( s ) batches.push( { mesh, centre: s.center.clone(), radius: s.radius } );
+		// The test below is against each ROW's own trunk, not the batch's bounding sphere: a chunk of
+		// trees scattered over 60 m has a 30 m radius, so `distance - radius` is small almost
+		// everywhere and the batch would be submitted at every station (measured: 0.93 M triangles
+		// drawn for fragments the 12 m dissolve throws away).  254 rows is nothing to test per frame.
+		const n = mesh.isInstancedMesh ? mesh.count : 1;
+		const rows = new Float32Array( n * 3 );
+		const rad = ( s ? s.radius : 0 );
+		for ( let i = 0; i < n; i ++ ) {
+			if ( mesh.isInstancedMesh ) _row.setFromMatrixPosition(
+				_m4.fromArray( mesh.instanceMatrix.array, i * 16 ).premultiply( mesh.matrixWorld ) );
+			else _row.setFromMatrixPosition( mesh.matrixWorld );
+			rows[ i * 3 ] = _row.x; rows[ i * 3 + 1 ] = _row.y; rows[ i * 3 + 2 ] = _row.z;
+		}
+		if ( s ) batches.push( { mesh, centre: s.center.clone(), radius: rad, rows } );
 		out.drawCalls ++;
 		const idx = mesh.geometry.index;
 		out.tris += ( idx ? idx.count : mesh.geometry.getAttribute( 'position' ).count ) / 3
@@ -518,7 +549,9 @@ export async function loadFarTrees( o ) {
 	} );
 	const shared = o.foliageReport ? o.foliageReport.shared.uniforms : null;
 	out.update = ( camera ) => {
-		const d = shared && shared.pfaMeshDist ? shared.pfaMeshDist.value : 40;
+		// the FAR trees' own distance, not the shared (near-tree) one - otherwise 1.0 M triangles are
+		// submitted out to 40 m for fragments the dissolve throws away at 12
+		const d = farDist;
 		const band = shared && shared.pfaFadeBand ? shared.pfaFadeBand.value : 5;
 		// + CULL_MARGIN_M because the WATER draws the scene a second time from the mirrored camera,
 		// which stands a few metres further from a tree than this one does.  Without the margin a tree
@@ -526,9 +559,17 @@ export async function loadFarTrees( o ) {
 		// wanted to draw it - and its impostor, being the exact complement, would not draw either.
 		const lim = d + band + CULL_MARGIN_M;
 		let on = 0;
+		const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+		const lim2 = lim * lim;
 		for ( const b of batches ) {
-			b.mesh.visible = camera.position.distanceTo( b.centre ) - b.radius <= lim;
-			if ( b.mesh.visible ) on ++;
+			let near = false;
+			const r = b.rows;
+			for ( let i = 0; i < r.length; i += 3 ) {
+				const dx = r[ i ] - cx, dy = r[ i + 1 ] - cy, dz = r[ i + 2 ] - cz;
+				if ( dx * dx + dy * dy + dz * dz <= lim2 ) { near = true; break; }
+			}
+			b.mesh.visible = near;
+			if ( near ) on ++;
 		}
 		return on;
 	};

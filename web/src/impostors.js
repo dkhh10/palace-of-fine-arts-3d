@@ -41,6 +41,7 @@ const vertexShader = /* glsl */`
 	attribute float iSide;           // side of the square, metres
 	attribute vec3 iSwitch;          // 6c C2: the tree's crown centre, for the mesh/impostor switch
 	attribute float iNear;           // 1 where a MESH exists for this tree and may replace the card
+	attribute float iDist;           // per-placement switch distance; <= 0 = use the shared pfaMeshDist
 	attribute vec3 iIrr;             // 6c: E_placement / E_bake for THIS placement (1,1,1 = untouched)
 	varying vec3 vPfaIrr;
 	uniform float pfaMeshDist, pfaFadeBand;
@@ -56,8 +57,12 @@ const vertexShader = /* glsl */`
 		// The SAME formula and the SAME uniforms as the mesh side (foliage.js), from the SAME crown
 		// centre, so the two dissolves are exact complements and no tree is ever drawn twice or not
 		// at all.  A tree with no mesh (the 127 far ones today) has iNear = 0 and never fades.
+		// The FAR trees carry their own distance: their LOD2 mesh is measurably worse than the
+		// modulated atlas at station distance (web/README.md), so it is only allowed close in, while
+		// the near trees keep the shared 40 m.  One uniform could not express both.
+		float pfaD = ( iDist > 0.0 ) ? iDist : pfaMeshDist;
 		vPfaFade = ( iNear > 0.5 )
-			? smoothstep( pfaMeshDist, pfaMeshDist + pfaFadeBand, distance( cameraPosition, iSwitch ) )
+			? smoothstep( pfaD, pfaD + pfaFadeBand, distance( cameraPosition, iSwitch ) )
 			: 1.0;
 		// Screen-facing quad: the camera's right and up in world space, from the view matrix's rows.
 		vec3 right = vec3( viewMatrix[ 0 ][ 0 ], viewMatrix[ 1 ][ 0 ], viewMatrix[ 2 ][ 0 ] );
@@ -271,6 +276,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		const side = new Float32Array( list.length );
 		const swtch = new Float32Array( list.length * 3 );
 		const nearFlag = new Float32Array( list.length );
+		const switchDist = new Float32Array( list.length );
 		const irr = new Float32Array( list.length * 3 ).fill( 1 );
 		let nearHere = 0, modHere = 0;
 		list.forEach( ( t, i ) => {
@@ -297,6 +303,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		g.setAttribute( 'iSide', new THREE.InstancedBufferAttribute( side, 1 ) );
 		g.setAttribute( 'iSwitch', new THREE.InstancedBufferAttribute( swtch, 3 ) );
 		g.setAttribute( 'iNear', new THREE.InstancedBufferAttribute( nearFlag, 1 ) );
+		g.setAttribute( 'iDist', new THREE.InstancedBufferAttribute( switchDist, 1 ) );
 		g.setAttribute( 'iIrr', new THREE.InstancedBufferAttribute( irr, 3 ) );
 		im.userData.pfaImpostor = { prototype: key, instances: list.length, near: nearHere, range: p.range,
 			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ, atlas2k: use2k,
@@ -373,12 +380,14 @@ export function activateImpostorMeshes( group, byId, note = () => {} ) {
 		if ( ! im.isInstancedMesh || ! d || ! d.ids ) return;
 		const g = im.geometry;
 		const near = g.getAttribute( 'iNear' ), sw = g.getAttribute( 'iSwitch' ), irr = g.getAttribute( 'iIrr' );
+		const dist = g.getAttribute( 'iDist' );
 		if ( ! near || ! sw ) return;
 		let touched = 0;
 		d.ids.forEach( ( id, i ) => {
 			const rec = id ? byId.get( id ) : null;
 			if ( ! rec ) return;
 			near.array[ i ] = 1;
+			if ( dist && rec.dist > 0 ) dist.array[ i ] = rec.dist;
 			sw.array[ i * 3 ] = rec.switchCentre[ 0 ];
 			sw.array[ i * 3 + 1 ] = rec.switchCentre[ 1 ];
 			sw.array[ i * 3 + 2 ] = rec.switchCentre[ 2 ];
@@ -391,6 +400,7 @@ export function activateImpostorMeshes( group, byId, note = () => {} ) {
 		} );
 		if ( touched ) {
 			near.needsUpdate = true; sw.needsUpdate = true; if ( irr ) irr.needsUpdate = true;
+			if ( dist ) dist.needsUpdate = true;
 			d.near += touched; out.batches ++;
 		}
 	} );
