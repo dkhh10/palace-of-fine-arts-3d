@@ -552,16 +552,16 @@ Not shipped. The switch stays, and this is the standing lead on the olive cast.
 ?walkupmesh=`; every one has an off value, and every number below is `web/tools/r3_boxes.py`, which
 imports QA's own `scripts/qa_r16_probe.py` measures rather than re-implementing them).
 
-| crown box (QA 16 open 2) | round16b | **round 3** | reference |
+| crown box (QA 16 open 2) | round16b | **round16c** | reference |
 |---|---|---|---|
-| 02 fill tree centre/edge | 0.504 | **0.368** | **0.364** |
-| 02 fill tree p10 / level | 18.6 / 1.28x | **5.3 / 1.07x** | 4.1 / 1.00x |
-| 05 lawn tree range/mean | 1.260 | **1.701** | **1.773** |
-| 05 lawn tree p10 / level | 58.9 / 1.19x | **27.0 / 1.07x** | 31.7 / 1.00x |
-| 01 shore crown range/mean | 1.036 | **1.585** | 1.443 |
-| 01 shore crown p10 / level | 61.4 / 1.18x | **20.9 / 1.01x** | 36.8 / 1.00x |
+| 02 fill tree centre/edge | 0.504 | **0.394** | **0.364** |
+| 02 fill tree p10 / level | 18.6 / 1.28x | **5.3 / 1.01x** | 4.1 / 1.00x |
+| 05 lawn tree range/mean | 1.260 | **1.722** | **1.773** |
+| 05 lawn tree p10 / level | 58.9 / 1.19x | **27.0 / 1.05x** | 31.7 / 1.00x |
+| 01 shore crown range/mean | 1.036 | **1.705** | 1.443 |
+| 01 shore crown p10 / level | 61.4 / 1.18x | **20.9 / 0.94x** | 36.8 / 1.00x |
 
-Both targets the brief set are met (cam02 within 0.004 of 0.364, cam05 within 0.073 of 1.773) and
+Both targets the brief set are met (cam02 within 0.030 of 0.364, cam05 within 0.051 of 1.773) and
 every crown and tree box's LEVEL is now inside 0.9-1.1x of the reference, where round16b ran
 1.04-1.28x.  Station 1's centre/edge moves the other way (0.680 -> 0.453 against 0.852) while its p10
 and range/mean move toward the reference: the hero's crown box is now a little too dark rather than
@@ -604,9 +604,44 @@ what export's Cycles DiffCol pass was opened to settle.
 
 **The walk-up set** (`trees.walkup_mesh`, item 3) is consumed by the far-tree loader with the block
 swapped, so the join, the placement gate, the irradiance and the impostor complement are the same
-lines for both sets.  Where it exists it REPLACES the LOD2 set (which only drew inside 12 m, inside
-the walk-up's 15) and `?walkupmesh=<m>` moves the distance; `=0` forces the LOD2 set back; a walk-up
-glb that fails the join falls back to `trees.far_mesh` and reports `walkupFellBack`.
+lines for both sets.  The block states what it SHARES rather than repeating it - its placements and
+its per-placement irradiance are `trees.far_mesh`'s, row for row, and it ships no COLOR_0 because the
+round-3 interior term carries the occlusion - and the loader resolves all three.  Where it exists it
+REPLACES the LOD2 set (which only drew inside 12 m, inside the walk-up's own `draw_within_m` of 15)
+so no band draws two crowns; `?walkupmesh=<m>` moves the distance, `=0` forces the LOD2 set back, and
+a walk-up glb that is missing or will not join falls back to `trees.far_mesh` and reports
+`walkupFellBack`.  **Measured on round16c:** 254/254 rows joined to 127/127 placements, all 254 lit
+from `far_mesh.lighting`, 3.77 M placed triangles in 142 culled batches, placement check max trunk
+offset 0.237 m.  The 3 m walk-in (`renders/web/960/round16c_walkin_tile.jpg`) reads as a canopy -
+overlapping leaf cards, branches, sky through the gaps - where QA 16 found "magnified cream-white
+cut-outs and a few bare sticks".  It costs **+131 MB resident** (geometry 129.0 -> 260.0 MB, the LOD1
+set's 472 k unique triangles); the payload moves 660.0 -> 664.0 MB because the LOD2 tree glb is no
+longer fetched.
+
+### Round16c, measured (the capture QA 17 scores)
+
+`PFA_TAG=round16c web/tools/foliage_capture.sh` — six stations at 1920x1080, the `post=none` control,
+the 2560x1440 performance pass, the bare URL, the station-2 walk-in, the 30 s walk probe, the pair
+sheets and the tiles.  **0 page errors, 0 shader errors**, ready in 6.35 s, 145 placements modulated,
+254/254 far-tree rows lit, 1 376/1 376 LOD1 shrubs bound.
+
+| | 01 | 02 | 03 | 04 | 05 | 06 |
+|---|---|---|---|---|---|---|
+| frame ms, 1440p, round16b | 30.1 | 33.5 | 32.7 | 22.7 | 31.8 | 33.5 |
+| frame ms, **round16c** | **29.7** | **33.5** | **33.2** | **21.3** | **31.5** | **34.0** |
+| delta vs round 15 | +1.5 | +1.3 | +0.3 | **-1.2** | +1.1 | +1.9 |
+| MAE vs the Cycles reference, delta vs round16b | **-0.24** | **-1.00** | **-0.84** | 0.00 | **-1.30** | **-0.91** |
+
+Every station is inside the +3 ms gate against round 15 and every station's parity improves or holds.
+Draws 183-351, triangles 2.75-5.98 M, load 664.0 MB in 6.35 s.  **Resident 1 931.4 MB** (texture
+1 227.5 + render targets 443.8 + geometry 260.0), 1.61x the 1 200 MB Gate 1 budget: +130.8 over
+round16b, all of it the walk-up set's geometry.  **The walk clamp, re-run as QA 16 §6.4 asked**
+(24 probes, six stations x four headings x **30 s** at 3.2 m/s, on the full 6c scene): lowest ground
+**-0.750 m** against the `WATER_Z + 0.1` floor of -1.20, **0 probes below it**.  **Bare URL**: luma
+ratio **1.0000** against the station-1 preset, MAE 8.24/255 (the 1280x720 capture upscaled - the same
+resampling round16b measured at 8.23), and its boot log carries every round-3 default -
+`crownint 0.30/0/1/1.05/0.85/0.50`, `cardint 0.20/0.30`, `leafgate 0.45`, `impint 0.90/0.015`,
+`cardenv 0.30`, `foliagebias 0.8`, `walkup_mesh` at 15 m.
 
 ## QA notes — earlier rounds (Phase 6c / QA 16)
 
