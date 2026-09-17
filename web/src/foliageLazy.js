@@ -410,6 +410,28 @@ export async function loadShrubLod1( o ) {
 	}
 	if ( o.probeTexture ) applyProbeEnv( root, o.probeTexture, { note: () => {} } );
 
+	// `?shrubenv=` — the ENVIRONMENT term on the LOD1 meshes only.  A LOD2 card is one flat quad whose
+	// normal reflects the horizon; a LOD1 shrub is a hundred leaves facing every direction, including
+	// up, and their diffuse is a single direction-independent baked irradiance while their SPECULAR
+	// (plus the material's KHR_materials_sheen, which is an environment lobe too) is free to sample the
+	// blue sky from every interior leaf that the bake would have occluded.  Measured, see web/README.md.
+	const envScale = Number.isFinite( o.envScale ) ? o.envScale : 1;
+	if ( envScale !== 1 ) {
+		let n = 0;
+		root.traverse( ( m ) => {
+			if ( ! m.isMesh ) return;
+			for ( const mat of Array.isArray( m.material ) ? m.material : [ m.material ] ) {
+				if ( ! mat || mat.userData.pfaEnvScaled ) continue;
+				mat.userData.pfaEnvScaled = envScale;
+				mat.envMapIntensity = ( mat.envMapIntensity ?? 1 ) * envScale;
+				if ( mat.sheenColor ) mat.sheenColor.multiplyScalar( envScale );
+				mat.needsUpdate = true; n ++;
+			}
+		} );
+		out.envScale = envScale;
+		note( `shrub/reed LOD1: environment term x${envScale} on ${n} material(s) (?shrubenv=)` );
+	}
+
 	// the leaf shader on the LOD1 cards, then the switch: LOD1 within `dist` (sign +1)
 	const fol = applyFoliage( {
 		scene: root, sun: o.sun, note, msaa: o.msaa, vertexIrrScale: 0,

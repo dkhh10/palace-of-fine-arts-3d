@@ -125,6 +125,7 @@ const CFG = {
 	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : undefined,   // LOD1 within this many metres
 	// 6c round 2, the two lazily loaded glbs and the foliage material textures
 	farTreeLight: ( qs.get( 'fartreelight' ) || 'near' ).toLowerCase(),   // near | probe | 0
+	shrubEnv: qs.has( 'shrubenv' ) ? parseFloat( qs.get( 'shrubenv' ) ) : 1,   // env term on the LOD1 shrubs
 	foliageTex: qs.get( 'foliagetex' ) || '1024',                         // 1024 | 2048 | 0
 	// The impostor atlases were baked with each prototype ALONE under the open sky, so their light is
 	// the sky's.  `impmod` re-lights each placement by E_placement / E_bake: `chroma` (the default)
@@ -810,7 +811,7 @@ async function loadLazyFoliage() {
 	renderFrame();
 	await new Promise( ( r ) => requestAnimationFrame( r ) );
 	try {
-		shrubLod1Report = await loadShrubLod1( { ...common,
+		shrubLod1Report = await loadShrubLod1( { ...common, envScale: CFG.shrubEnv,
 			dist: shrubLodReport ? shrubLodReport.dist : 30, mode: CFG.shrubLod === 0 ? '0' : 'on' } );
 	} catch ( e ) { note( `shrub/reed LOD1 FAILED: ${e.message}` ); shrubLod1Report = { errors: [ e.message ] }; }
 	if ( farTreeUpdate ) farTreeUpdate( camera );
