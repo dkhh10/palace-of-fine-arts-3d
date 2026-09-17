@@ -1,0 +1,96 @@
+[rev2] waiting for a topology_rev 2 vertex_ao.npz and an idle bake queue (max 2 h, sleep 60 s) at 09:59:52
+[rev2] GO at 10:08:13: vertex_ao.npz 683480 B, topology_rev 2, queue idle
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[gate0] STEP trees_far:meshes wall_s=12.6  prototypes=16 tris=126997 worst=8020
+[gate0] STEP trees_far:placements wall_s=0.2  placements=127 worst_crown_top_dev_mm=891.8
+[gate0] STEP trees_far:color0 wall_s=0.0  meshes=16
+INFO Draco is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_draco_bridge.dylib
+INFO MeshOptimizer is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_meshopt_bridge.dylib
+10:08:28 | INFO: Starting glTF 2.0 export
+10:08:28 | WARNING: Mesh EXPM_treefar_ENV_tree_broadleaf_s53_LOD1 is not valid, and may be exported wrongly
+10:08:28 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_broadleaf_s53_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_broadleaf_s19_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_broadleaf_s19_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_cypress_s41_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_s41_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_cypress_s3_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_s3_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_cypress_s17_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_s17_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_cypress_column_s31_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_column_s31_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_cypress_column_s2_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_column_s2_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_eucalyptus_s5_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_eucalyptus_s5_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_eucalyptus_s23_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_eucalyptus_s23_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_eucalyptus_s61_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_eucalyptus_s61_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_pine_s7_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_pine_s7_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_pine_s29_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_pine_s29_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_redwood_s43_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_redwood_s43_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_redwood_s13_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_redwood_s13_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_willow_s11_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_willow_s11_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | WARNING: Mesh EXPM_treefar_ENV_tree_willow_s37_LOD1 is not valid, and may be exported wrongly
+10:08:29 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_willow_s37_LOD1
+10:08:29 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+10:08:29 | INFO: Primitives created: 2
+10:08:29 | INFO: Finished glTF 2.0 export in 1.1003551483154297 s
+
+[gate0] STEP trees_far:gltf wall_s=1.4 env_trees.gltf=72625B bytes=72625 nodes=127
+Info: Deleted 2832 data-block(s)
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: Saved copy as "trees_far_lod2.blend"
+[gate0] STEP trees_far:hand_off_blend wall_s=11.8 trees_far_lod2.blend=38486285B bytes=38486285
+[trees_far] 16 prototypes 7856-8020 tris, 127 placements, hand-off trees_far_lod2.blend 38.5 MB -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-export/export/out/gate1/trees_far.json
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 49207 exited rc=0 after 28 s (max 900)
+[rev2] COLOR_0 attached, range 1.0000001192092896 meshes 16
+[trees] STEP toktx wall_s=1 new_files=0 (the rest were already in tex_ktx2)
+[trees] STEP gltfpack wall_s=0 source=ktx2 env_trees.glb=3699324B
+[verify_glb] note: 3 of 7 re-laid meshes still pack under the 0.15 relay threshold (the bake measured the same and baked against this layout): [('EXPM_ARCH_colonnade_north_concrete_colonnade_merged', 0.12071), ('EXPM_ARCH_colonnade_south_concrete_colonnade_merged', 0.11552), ('EXPM_ENV_riprap_merged', 0.11408)]
+[verify_glb] {"arch": {"gltfpack_flags": "-cc -mi -vpf -km -kv", "materials_expected": 15, "materials_in_glb": 17, "materials_named_in_glb": 15, "materials_missing": 0, "materials_missing_names": [], "material_names_enforced": true, "merge_split_meshes": ["EXPM_ARCH_colonnade_north_colbase_000_torus", "EXPM_ARCH_colonnade_south_colbase_000_torus"], "duplicate_material_names": 2, "tris_drawn": 947622, "tris_expected": 949382, "placements_in_glb": 556, "objects_in_set": 564, "plain_nodes": 4, "instanced_nodes": 17, "instanced_placements": 552, "plain_nodes_with_geometry_at_origin": 0, "expected_at_origin": 0, "tris_with_TEXCOORD_1": 349614, "tris_with_TEXCOORD_1_in_gltf": 351374, "tris_with_COLOR_0": 0, "tris_with_COLOR_0_in_gltf": 0, "tris_delta": -1760, "tris_delta_pct": -0.185, "alpha_cutout_materials": 0, "alpha_cutout_cutoffs": [], "slot_objects_in_manifest": 552}, "orn": {"gltfpack_flags": "-cc -mi -kv", "materials_expected": 33, "materials_in_glb": 33, "materials_named_in_glb": 33, "materials_missing": 0, "materials_missing_names": [], "material_names_enforced": false, "merge_split_meshes": [], "duplicate_material_names": 0, "tris_drawn": 1097468, "tris_expected": 1099192, "placements_in_glb": 436, "objects_in_set": 436, "plain_nodes": 1, "instanced_nodes": 32, "instanced_placements": 435, "plain_nodes_with_geometry_at_origin": 0, "expected_at_origin": 0, "tris_with_TEXCOORD_1": 112533, "tris_with_TEXCOORD_1_in_gltf": 112533, "tris_with_COLOR_0": 0, "tris_with_COLOR_0_in_gltf": 0, "tris_delta": -1724, "tris_delta_pct": -0.157, "alpha_cutout_materials": 0, "alpha_cutout_cutoffs": [], "slot_objects_in_manifest": 436}, "env": {"gltfpack_flags": "-cc -mi -vpf -km -kv -vc 16", "materials_expected": 21, "materials_in_glb": 21, "materials_named_in_glb": 21, "materials_missing": 0, "materials_missing_names": [], "material_names_enforced": true, "merge_split_meshes": [], "duplicate_material_names": 0, "tris_drawn": 679779, "tris_expected": 679779, "placements_in_glb": 1531, "objects_in_set": 1536, "plain_nodes": 5, "instanced_nodes": 34, "instanced_placements": 1526, "plain_nodes_with_geometry_at_origin": 0, "expected_at_origin": 0, "tris_with_TEXCOORD_1": 0, "tris_with_TEXCOORD_1_in_gltf": 0, "tris_with_COLOR_0": 274162, "tris_with_COLOR_0_in_gltf": 274162, "tris_delta": 0, "tris_delta_pct": 0.0, "alpha_cutout_materials": 8, "alpha_cutout_cutoffs": [0.42, 0.45, 0.5], "slot_objects_in_manifest": 0}, "ground": {"gltfpack_flags": "-cc -mi -kv", "materials_expected": 4, "materials_in_glb": 4, "materials_named_in_glb": 4, "materials_missing": 0, "materials_missing_names": [], "material_names_enforced": false, "merge_split_meshes": [], "duplicate_material_names": 0, "tris_drawn": 113043, "tris_expected": 113043, "placements_in_glb": 1, "objects_in_set": 4, "plain_nodes": 1, "instanced_nodes": 0, "instanced_placements": 0, "plain_nodes_with_geometry_at_origin": 0, "expected_at_origin": 0, "tris_with_TEXCOORD_1": 113043, "tris_with_TEXCOORD_1_in_gltf": 113043, "tris_with_COLOR_0": 0, "tris_with_COLOR_0_in_gltf": 0, "tris_delta": 0, "tris_delta_pct": 0.0, "alpha_cutout_materials": 0, "alpha_cutout_cutoffs": [], "slot_objects_in_manifest": 0}, "gate4_instance_irradiance": {"placements": 1379, "rows_in_glb": 1379, "meshes": 28, "meshes_matched": 28, "nodes": 25, "merged_nodes": [10, 16, 21], "counts_match": true, "join": "per node: (1) a mesh is contained in the node when every one of its placements h", "loc_in_json": true, "loc_in_irradiance": true, "worst_residual_m": 0.005775, "worst_margin_ratio": 68.667, "order_recovered": true}, "trees_far": {"glb": "env_trees.glb", "bytes": 3699324, "meshes": 32, "instanced_nodes": 32, "plain_nodes": 0, "rows": 254, "placements": 127, "rows_expected": 254, "drawn_tris": 1007775, "export_tris": 1007775, "unique_tris": 126997, "alpha_materials": {"MAT_leaf_broadleaf": ["MASK", 0.5], "MAT_leaf_cypress": ["MASK", 0.449999988], "MAT_leaf_eucalyptus": ["MASK", 0.5], "MAT_leaf_pine": ["MASK", 0.419999987]}, "color0": true, "color0_primitives": "32/32", "color0_range": 1.0000001192092896}, "shrub_lod1": {"glb": "env_shrubs.glb", "bytes": 422520, "meshes": 25, "instanced_nodes": 25, "plain_nodes": 0, "rows": 1376, "placements": 1376, "rows_expected": 1376, "drawn_tris": 549748, "export_tris": 549748, "unique_tris": 17094, "alpha_materials": {"MAT_reeds": ["MASK", 0.5], "MAT_shrub": ["MASK", 0.5], "MAT_shrub_dry": ["MASK", 0.5], "MAT_shrub_light": ["MASK", 0.5]}, "color0": false, "color0_primitives": "0/25", "color0_range": null}, "shrub_lod1_order": {"glb": "env_shrubs.glb", "rows": 1376, "placements": 1376, "meshes": 25, "nodes": 25, "worst_residual_m": 0.005775, "worst_margin_ratio": 68.667, "counts_match": true, "shares_irradiance_with": "instance_order.json (the LOD2 set) - same instance_irradiance.json"}, "gate3": {"uv2_meshes": 7, "uv2_coverage": {"EXPM_ARCH_colonnade_north_concrete_colonnade_merged": [0.00972, 0.12071], "EXPM_ARCH_colonnade_south_concrete_colonnade_merged": [0.0095, 0.11552], "EXPM_ARCH_rotunda_concrete_ochre_merged": [0.01328, 0.20723], "EXPM_ARCH_rotunda_plaster_ceiling_rib_merged": [0.01777, 0.21954], "EXPM_ARCH_site_concrete_podium_merged": [0.0187, 0.34247], "EXPM_ENV_ground_colonnade_walk": [0.1292, 0.72795], "EXPM_ENV_riprap_merged": [0.00229, 0.11408]}, "uv2_below_threshold": [["EXPM_ARCH_colonnade_north_concrete_colonnade_merged", 0.12071], ["EXPM_ARCH_colonnade_south_concrete_colonnade_merged", 0.11552], ["EXPM_ENV_riprap_merged", 0.11408]], "uv2_threshold": 0.15, "color0_meshes": 14, "color0_classes": ["env"], "color0_encoding": {"EXPM_ENV_tree_broadleaf_s19_LOD1_thin": ["gamma2", 44.25655746459961]}}}
+[verify_glb] PASS: every placed triangle in export_set.json is drawn by the glb
+[gate1] synced to /Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate1 (1523564 KiB)
+[gate3] synced to /Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate3 (538124 KiB)
+[gate0] synced to /Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate0 (720464 KiB)
+[rev2] DONE at 10:08:42
