@@ -7,8 +7,7 @@
  "images": [
   "renders/web/round15_cam02.png:round15",
   "renders/web/round16_cam02.png:round16",
-  "renders/web/round16b_cam02.png:round16b",
-  "renders/web/round16bm60_cam02.png:round16b_m60"
+  "renders/web/round16b_cam02.png:round16b"
  ],
  "boxes": [
   {
@@ -18,7 +17,7 @@
     700,
     980
    ],
-   "label": "near trees",
+   "label": "near trees (the round-15 box)",
    "rows": [
     {
      "frame": "reference",
@@ -89,42 +88,20 @@
     {
      "frame": "round16b",
      "rgb": [
-      110.53,
-      111.71,
-      103.35
+      109.23,
+      110.75,
+      102.32
      ],
-     "lum": 110.86,
-     "lum_ratio": 1.0457,
-     "hue": 68.5,
-     "sat": 0.0748,
-     "g_gt_r_pct": 64.9,
-     "p10": 29.77,
-     "mean": 110.86,
-     "std": 74.48,
-     "mid_5_21": 15.42,
-     "hp9": 23.58,
-     "px": [
-      640,
-      460
-     ]
-    },
-    {
-     "frame": "round16b_m60",
-     "rgb": [
-      128.65,
-      125.69,
-      115.71
-     ],
-     "lum": 125.6,
-     "lum_ratio": 1.1847,
-     "hue": 46.3,
-     "sat": 0.1006,
-     "g_gt_r_pct": 48.3,
-     "p10": 46.67,
-     "mean": 125.6,
-     "std": 69.07,
-     "mid_5_21": 18.98,
-     "hp9": 26.44,
+     "lum": 109.82,
+     "lum_ratio": 1.0359,
+     "hue": 70.8,
+     "sat": 0.0761,
+     "g_gt_r_pct": 66.2,
+     "p10": 28.92,
+     "mean": 109.82,
+     "std": 74.81,
+     "mid_5_21": 15.5,
+     "hp9": 21.45,
      "px": [
       640,
       460
@@ -210,42 +187,20 @@
     {
      "frame": "round16b",
      "rgb": [
-      88.39,
-      76.8,
-      47.03
+      55.19,
+      52.07,
+      22.4
      ],
-     "lum": 77.11,
-     "lum_ratio": 1.9574,
-     "hue": 43.2,
-     "sat": 0.4679,
-     "g_gt_r_pct": 24.8,
-     "p10": 20.5,
-     "mean": 77.11,
-     "std": 58.81,
-     "mid_5_21": 21.94,
-     "hp9": 34.56,
-     "px": [
-      540,
-      290
-     ]
-    },
-    {
-     "frame": "round16b_m60",
-     "rgb": [
-      104.43,
-      89.58,
-      57.77
-     ],
-     "lum": 90.44,
-     "lum_ratio": 2.2957,
-     "hue": 40.9,
-     "sat": 0.4468,
-     "g_gt_r_pct": 14.4,
-     "p10": 33.77,
-     "mean": 90.44,
-     "std": 56.66,
-     "mid_5_21": 23.18,
-     "hp9": 32.38,
+     "lum": 50.59,
+     "lum_ratio": 1.2842,
+     "hue": 54.3,
+     "sat": 0.5942,
+     "g_gt_r_pct": 57.0,
+     "p10": 18.57,
+     "mean": 50.59,
+     "std": 45.23,
+     "mid_5_21": 14.46,
+     "hp9": 17.12,
      "px": [
       540,
       290

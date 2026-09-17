@@ -723,6 +723,83 @@ every box, with the colour columns AND `qa12_boxes.py`'s `mid(5-21)` / `hp9` / `
 re-implemented).  `renders/web/round16b_foliage_boxes.json` is the committed sidecar for QA 16; the
 full-res PNGs stay gitignored.
 
+### Round 16b, measured (the 6c round-2 capture)
+
+Every number here is from `renders/web/round16b_*` and re-derivable from the committed sidecars
+(`round16b_foliage_boxes.json`, `round16b_hero_boxes.json`, `round16b_pairs.json`, `round16b_perf.json`).
+
+**Frame time at 2560x1440**, median over 120 frames after 24 warm-up, per station, against round 15:
+
+| station | 01 | 02 | 03 | 04 | 05 | 06 |
+|---|---|---|---|---|---|---|
+| round 15 | 28.2 | 32.2 | 32.9 | 22.5 | 30.4 | 32.1 |
+| **round 16b** | **30.1** | **33.5** | **32.7** | **22.7** | **31.8** | **33.5** |
+| delta | +1.9 | +1.3 | **-0.2** | +0.2 | +1.4 | +1.4 |
+
+Post off: 23.5-27.5 ms.  Draw calls 329-351 (round 16: 274-301), triangles 5.2-5.6 M (4.1-4.5 M).
+**Resident 1717.2 MB** against round 16's 1606.6: +54 MB of texture (the 16 foliage maps at 1 K) and
++57 MB of geometry (`env_trees.glb` 129 k unique tris, `env_shrubs.glb` 17 k).  Run-to-run spread on
+this machine is about 2 ms, measured on two passes over identical geometry.
+
+**Parity per station** (viewer against the Phase 5 Cycles reference, `mean|diff|/255`; lower is better):
+
+| station | round 15 | round 16 | round 16b |
+|---|---|---|---|
+| 01 lagoon hero | 26.58 | 26.75 | **26.52** |
+| 02 NE three-quarter | 23.27 | 23.13 | **20.08** |
+| 03 colonnade walk | 34.41 | 34.40 | **33.94** |
+| 04 rotunda ceiling | 13.12 | 13.12 | 13.12 |
+| 05 south lawn | 22.52 | 22.60 | **22.22** |
+| 06 aerial | 21.03 | 20.99 | **20.58** |
+
+Every station falls or holds, and station 2 - the one the foliage brief required to rise - improves by
+3.05, the largest move of the round.  The hero's own shore-foliage box does not move (0.696x both).
+
+**The far tree that fills cam02**, box `700 660 1240 950`, the user's finding:
+
+| | rgb | lum | hue | sat | G>R | mid | hp9 | std |
+|---|---|---|---|---|---|---|---|---|
+| Cycles reference | 45.3 39.5 21.3 | 39.4 | 45.5 | 0.530 | 33.3 | 14.04 | 17.46 | 47.72 |
+| round 15 | 55.3 56.1 50.5 | 55.5 (1.409x) | 68.2 | 0.100 | 74.0 | 14.00 | 15.81 | 43.68 |
+| round 16 | 55.3 56.3 50.8 | 55.7 (1.414x) | 70.9 | 0.099 | 72.2 | 14.52 | 16.88 | 43.89 |
+| **round 16b** | 55.2 52.1 22.4 | **50.6 (1.284x)** | **54.3** | **0.594** | **57.0** | **14.46** | **17.12** | **45.23** |
+
+The blue cast is gone, and it is the MODULATION that removed it, not the mesh: with the bake's
+per-prototype `E_bake` in the manifest `?impmod` resolves to `full`, every one of the 127 far
+placements is drawn as `atlas x (E_placement / E_bake)` per channel, and the box lands within 9 deg of
+the reference's hue and 0.06 of its saturation where round 16 was 25 deg and 0.43 away.
+
+**Near-trees box** `60 520 700 980`: lum 104.9 (0.990x) -> 109.8 (1.036x), hue 60.2 -> 70.8 (reference
+102.4), **G > R 38.4 % -> 66.2 %** against the reference's 70.9 %.
+
+**Why the far-tree MESH is not what carries a station.**  Measured at 40 m, the same box reads 1.957x
+with hp9 34.56 - twice the reference's high-frequency detail - and the tile shows cream-white leaves
+where the reference is dark green.  The atlas carries the self-shadowing of the DENSE source tree; an
+8 k-triangle LOD2 crown has almost none of it, and nothing available puts it back: the translucency
+term accounts for 0.015x of it, the tinted albedo 0.007x, and the baked AO applied to the environment
+lobes 0.042x (that last one is right on its own merits and ships).  So `?fartreemesh=` defaults to
+**12 m**: the mesh does what only a mesh can do - silhouette, parallax and see-through canopy when the
+walker is a few metres away, which `renders/web/960/round16b_walkin_tile.jpg` shows at 3 m - and the
+modulated atlas carries every station.  At cam02 the result is byte-identical to drawing no far mesh
+at all.  The near trees keep the shared 40 m (`?treemesh=`), which is why the two distances are
+separate uniforms: the impostor carries the far one per placement in `iDist`.
+`?fartreemesh=40` reproduces the mesh-at-station look for the A/B.  **Open, for the export:** at 3 m
+the LOD2 crown is coarse and pale - big grown cards, 1 K atlas magnified - so a walk-up that wants to
+stop AT a tree wants its LOD1, not this LOD2.
+
+**treeMeshDist 60 m was measured and rejected** (before the far trees got their own distance): +1.5 to
++4.0 ms and both cam02 boxes further from the reference (near-trees 1.046x -> 1.185x).
+
+**The bare URL**, no query string at all, boots the delivery look with every 6c default on: `impmod`
+full with 16 per-prototype `E_bake` values, 127 far + 18 near placements modulated, 254/254 far-tree
+rows lit from the bake, 1 376/1 376 LOD1 shrub placements on their own baked irradiance, the foliage
+textures at 1 024 px, no shader error and no page error.
+
+**The far-tree placement gate** (the lead's, after the export was found placing every tree ~300 m off):
+mesh bbox centre against the impostor quad centre **max 0.73 m, median 0.254 m** over 127 placements;
+trunk offset max 0.721 m, median 0.186.  On the previous glb the same check read 905.1 m and refused
+to draw the meshes at all.
+
 ### Round 7 additions (QA 15)
 * **The water changed twice.** The murk is derived (see "The upwelling term, derived") and the ripple is
   procedural in metres (see the round-7 bullets). `?watermurk=0.020,0.035,0.030` is the round-14 murk;
