@@ -43,7 +43,13 @@ const JOIN_TOL_M = 0.05;          // the export measured 5.8 mm; 50 mm is a gene
 // lead's own number, the distance from the mesh bbox centre to the impostor quad centre, is measured
 // and reported beside them.
 const PLACEMENT_XZ_TOL_M = 5.0;
+// The base check is RELATIVE to the tree, because a prototype's own lowest vertex is not always its
+// base plane: the LOD2 reduction keeps leaf cards and thins branches, so several prototypes' lowest
+// geometry sits metres up the trunk (measured on the shipped glb: leaf primitives start at y = 3.1
+// and 3.7 m).  A tree pushed vertically off its placement is out by hundreds of metres, not by a
+// third of its height, so the tolerance is max(3 m, 0.4 x height).
 const PLACEMENT_BASE_TOL_M = 3.0;
+const PLACEMENT_BASE_TOL_REL = 0.4;
 const CULL_MARGIN_M = 10;         // see `out.update`: the water's mirrored camera stands further back
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
@@ -277,7 +283,8 @@ export async function loadFarTrees( o ) {
 			_c.set( bx, by + ( proto.centreZ || 0 ) * sc, bz3 );
 			centre = _mid.distanceTo( _c );
 		}
-		dev.push( { index: p.index, xz, base, centre } );
+		dev.push( { index: p.index, xz, base, centre,
+			baseTol: Math.max( PLACEMENT_BASE_TOL_M, PLACEMENT_BASE_TOL_REL * ( p.height_m || 0 ) ) } );
 	}
 	const worst = ( key ) => dev.reduce( ( a, b ) => ( ( b[ key ] ?? - 1 ) > ( a[ key ] ?? - 1 ) ? b : a ), dev[ 0 ] || {} );
 	const med = ( key ) => {
@@ -285,10 +292,10 @@ export async function loadFarTrees( o ) {
 		return v.length ? + v[ Math.floor( v.length / 2 ) ].toFixed( 3 ) : null;
 	};
 	const wXz = worst( 'xz' ), wBase = worst( 'base' ), wC = worst( 'centre' );
-	const over = dev.filter( ( x ) => x.xz > PLACEMENT_XZ_TOL_M || x.base > PLACEMENT_BASE_TOL_M );
+	const over = dev.filter( ( x ) => x.xz > PLACEMENT_XZ_TOL_M || x.base > x.baseTol );
 	out.placementCheck = {
 		compared: dev.length,
-		tolerance: { xz_m: PLACEMENT_XZ_TOL_M, base_m: PLACEMENT_BASE_TOL_M },
+		tolerance: { xz_m: PLACEMENT_XZ_TOL_M, base_m: `max(${PLACEMENT_BASE_TOL_M}, ${PLACEMENT_BASE_TOL_REL} x height)` },
 		max_xz_m: dev.length ? + wXz.xz.toFixed( 3 ) : null, max_xz_at: dev.length ? wXz.index : null,
 		max_base_m: dev.length ? + wBase.base.toFixed( 3 ) : null,
 		// the lead's number: mesh bbox centre vs impostor quad centre
@@ -299,7 +306,8 @@ export async function loadFarTrees( o ) {
 	if ( over.length ) {
 		out.error = `${over.length}/${dev.length} far-tree mesh(es) do not stand where their impostor stands `
 			+ `(worst trunk offset ${out.placementCheck.max_xz_m} m at placement ${out.placementCheck.max_xz_at}, `
-			+ `worst base offset ${out.placementCheck.max_base_m} m; tolerances ${PLACEMENT_XZ_TOL_M} / ${PLACEMENT_BASE_TOL_M} m)`;
+			+ `worst base offset ${out.placementCheck.max_base_m} m; tolerances ${PLACEMENT_XZ_TOL_M} m horizontally, `
+			+ `max(${PLACEMENT_BASE_TOL_M}, ${PLACEMENT_BASE_TOL_REL} x height) vertically)`;
 		note( `far-tree meshes: PLACEMENT CHECK FAILED — ${out.error}; the meshes are NOT drawn and every far tree `
 			+ 'stays its impostor.  This is an EXPORT defect (the prototype mesh keeps its source world matrix), not a flag.' );
 		scene.remove( root );
@@ -705,21 +713,44 @@ export function markShrubLodRows( scene, manifest, note = () => {} ) {
 	const nodes = new Map( ( ii.nodes || [] ).map( ( n ) => [ n.gltf_node, n ] ) );
 	const root = scene.getObjectByName( `WEB_glb_${ii.glb || 'env'}` );
 	if ( ! root ) return out;
-	root.traverse( ( mesh ) => {
-		if ( ! mesh.isMesh ) return;
-		const spec = nodes.get( mesh.userData && mesh.userData.pfaGltfNode );
-		if ( ! spec ) return;
-		const count = mesh.isInstancedMesh ? mesh.count : 1;
-		const on = new Float32Array( count ).fill( 1 );
+	// The node's OWN row order, from its segments: 1 = this placement has a LOD1, 0 = it never does.
+	const nodeMask = new Map();
+	for ( const spec of nodes.values() ) {
+		const total = spec.segments.reduce( ( a, x ) => a + x[ 1 ], 0 );
+		const on = new Float32Array( total ).fill( 1 );
 		let cursor = 0, orphans = 0;
 		for ( const [ meshName, cnt ] of spec.segments ) {
 			const isOrphan = orphan.has( meshName );
-			for ( let i = 0; i < cnt && cursor < count; i ++, cursor ++ ) if ( isOrphan ) { on[ cursor ] = 0; orphans ++; }
+			for ( let i = 0; i < cnt && cursor < total; i ++, cursor ++ ) if ( isOrphan ) { on[ cursor ] = 0; orphans ++; }
 		}
-		if ( ! orphans ) return;
+		if ( orphans ) nodeMask.set( spec.gltf_node, on );
+	}
+	const doneNodes = new Set();
+	root.traverse( ( mesh ) => {
+		if ( ! mesh.isMesh ) return;
+		const gn = mesh.userData && mesh.userData.pfaGltfNode;
+		const full = nodeMask.get( gn );
+		if ( ! full ) return;
+		const count = mesh.isInstancedMesh ? mesh.count : 1;
+		// QA-11d-1 chunking has already split some of these batches, and a chunk carries its source's
+		// userData (so the same gltf_node) but only SOME of its rows.  `pfaChunk.indices` is the map
+		// back; without it the mask would be written at the wrong row of every chunk.
+		const idx = mesh.userData.pfaChunk && mesh.userData.pfaChunk.indices;
+		if ( idx && idx.length !== count ) { out.errors = ( out.errors || [] ).concat( `chunk ${mesh.name}: ${idx.length} indices for ${count} rows` ); return; }
+		if ( ! idx && count !== full.length ) {
+			out.errors = ( out.errors || [] ).concat( `node ${gn}: ${count} rows in the scene, ${full.length} in the manifest` );
+			return;
+		}
+		const on = new Float32Array( count );
+		let orphans = 0;
+		for ( let i = 0; i < count; i ++ ) {
+			on[ i ] = full[ idx ? idx[ i ] : i ];
+			if ( ! on[ i ] ) orphans ++;
+		}
 		const Attr = mesh.isInstancedMesh ? THREE.InstancedBufferAttribute : THREE.BufferAttribute;
 		mesh.geometry.setAttribute( 'pfaSwitchOn', new Attr( on, 1 ) );
-		out.nodes ++; out.rows += orphans; out.meshes.push( spec.gltf_node );
+		if ( orphans ) { out.rows += orphans; out.meshes.push( gn ); }
+		if ( ! doneNodes.has( gn ) ) { doneNodes.add( gn ); out.nodes ++; }
 	} );
 	if ( out.nodes ) note( `shrub/reed LOD: ${out.rows} placement(s) over ${out.nodes} node(s) have no LOD1 `
 		+ `(${[ ...orphan ].join( ', ' )}) and are masked OUT of the switch — their card draws at every distance` );

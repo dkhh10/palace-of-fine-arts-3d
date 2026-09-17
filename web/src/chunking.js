@@ -93,7 +93,10 @@ function makeChunk( src, idx, tag ) {
 	m.matrixAutoUpdate = src.matrixAutoUpdate;
 	m.matrix.copy( src.matrix );                 // a source with matrixAutoUpdate false keeps its place
 	m.matrixWorld.copy( src.matrixWorld );
-	m.userData = { ...src.userData, pfaChunk: { of: src.name, instances: idx.length, tag } };
+	// `indices` is the map back to the SOURCE batch's rows.  A pass that runs after chunking and has
+	// per-row data keyed to the original glTF node (the 6c shrub LOD mask) cannot otherwise place it:
+	// the chunk's row i is the source's row indices[i], and nothing else records that.
+	m.userData = { ...src.userData, pfaChunk: { of: src.name, instances: idx.length, tag, indices: idx.slice() } };
 	const dst = m.instanceMatrix.array, srcArr = src.instanceMatrix.array;
 	idx.forEach( ( from, to ) => { for ( let k = 0; k < 16; k ++ ) dst[ to * 16 + k ] = srcArr[ from * 16 + k ]; } );
 	m.instanceMatrix.needsUpdate = true;
