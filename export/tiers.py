@@ -608,28 +608,46 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                           "of the hero frame.")
         uniq.sort(key=lambda e: (e["tier"], e["order"], e["path"]))
 
+    mobile_only = []
     if not mobile:
-        # `manifest_mobile.json` publishes half-resolution files the desktop tiers do not fetch, and the
-        # trim above drops a few more. A deploy is built from ONE plan, so the desktop plan names every
-        # one of them, at tier 2 - otherwise a phone hitting the same origin 404s on every texture.
-        # AFTER the trim, so a dropped lo copy is still named (it is on disk and mobile may want it).
+        # QA-18 blocker: `groups/m_*.glb` existed only in manifest_mobile.json's `files[]`, and
+        # `deploy_from` said the desktop plan was complete, so a deploy built from this file published
+        # no mobile group and `?tier=mobile` 404'd on the staging URL. Every file only the mobile plan
+        # fetches is now named HERE too, with `tier: "mobile"` and `desktop: false` - a string tier so
+        # a viewer looping tiers 0, 1, 2 cannot pick it up, and a boolean for a viewer that filters.
+        # Sources, in this order: the mobile manifest when it exists (authoritative), and the two
+        # directories the mobile plan draws from, so a first run before the mobile manifest is written
+        # still names them. AFTER the trim, so a dropped half-resolution copy is named too.
         have = {e["path"] for e in uniq}
-        extra = []
-        for f in sorted(lowres.glob("*.ktx2")):
-            rel = G.pub_rel(f, base)
-            if rel in have:
+        want = []
+        mob_p = out / "manifest_mobile.json"
+        if mob_p.exists():
+            want += [e["path"] for e in json.loads(mob_p.read_text()).get("files", [])]
+        want += [G.pub_rel(f, base) for f in sorted((out / "groups").glob("m_*.glb"))]
+        want += [G.pub_rel(f, base) for f in sorted(lowres.glob("*.ktx2"))]
+        seen_mo = set()
+        for rel in want:
+            rel = os.path.normpath(rel)
+            if rel in have or rel in seen_mo:
                 continue
-            extra.append(dict(path=rel, tier=2, kind="mobile_lo", order=99, key=f.stem,
-                              why="published for manifest_mobile.json and for the trimmed keys; the "
-                                  "desktop tiers never fetch it",
-                              bytes=f.stat().st_size, transfer=transfer_bytes(f)))
-        uniq += extra
-        uniq.sort(key=lambda e: (e["tier"], e["order"], e["path"]))
+            seen_mo.add(rel)
+            ap_ = (base / rel).resolve()
+            if not ap_.exists():
+                ap_ = (G.PUB_BASE / rel).resolve()
+            if not ap_.exists():
+                continue
+            mobile_only.append(dict(
+                path=rel, tier="mobile", desktop=False, kind="mobile_only", order=999, key=None,
+                why="published for manifest_mobile.json only; the desktop viewer never fetches it, "
+                    "and a deploy built from this file must still carry it",
+                bytes=ap_.stat().st_size, transfer=transfer_bytes(ap_)))
+        uniq += mobile_only
+        uniq.sort(key=lambda e: (str(e["tier"]), e["order"], e["path"]))
 
     tier_bytes, tier_files, tier_transfer, oversize = (defaultdict(int), defaultdict(int),
                                                        defaultdict(int), [])
     for e in uniq:
-        if e["bytes"] is None:
+        if e["bytes"] is None or not isinstance(e["tier"], int):
             continue
         tier_bytes[e["tier"]] += e["bytes"]
         tier_transfer[e["tier"]] += e["transfer"] or 0
@@ -736,8 +754,19 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                     "KTX2, glb, wasm, .hdr and .cube. `first_frame_transfer_bytes` = tier 0 + "
                     "`boot_overhead_bytes.total`, and THAT is what is tested against 50 000 000.",
         station_order=order, oversize=oversize, path_rebase=rebased,
-        deploy_from=("this file: every path both variants fetch is named here, including the "
-                     "half-resolution files only manifest_mobile.json uses (kind `mobile_lo`)."
+        mobile_only=dict(
+            files=len(mobile_only),
+            bytes=sum(e["bytes"] or 0 for e in mobile_only),
+            tier="mobile",
+            note="rows with `tier: \"mobile\"` and `desktop: false`: the desktop viewer's tier loop "
+                 "(0, 1, 2) must skip them, and a deploy must still publish them. They are the "
+                 "`groups/m_*.glb` and the half-resolution files only manifest_mobile.json fetches."
+        ) if not mobile else None,
+        deploy_from=("the deploy set is the UNION of this file's `files[]` and "
+                     "manifest_mobile.json's. After the QA-18 fix that union equals THIS file alone: "
+                     "every path the mobile plan fetches is named here too, as `kind: mobile_only` "
+                     "with `tier: \"mobile\"` and `desktop: false`. Publishing from this file is "
+                     "therefore complete; unioning both plans is equivalent and also correct."
                      if not mobile else
                      "manifest.json, NOT this file. This is a LOAD plan: its material sets name the "
                      "full-resolution keys and the viewer redirects them to `tiers.lowres.dir`, so a "
