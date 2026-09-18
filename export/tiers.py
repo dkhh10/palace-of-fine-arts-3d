@@ -526,7 +526,8 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
     budget_left = G.TIER0_BUDGET - boot["total"]
 
     def t0_transfer():
-        return sum(e["transfer"] or 0 for e in uniq if e["tier"] == 0)
+        return sum(e["transfer"] or 0 for e in uniq
+                   if e["tier"] == 0 and not e.get("_drop"))
 
     if t0_transfer() > budget_left:
         trim["reason"] = (f"tier 0 + boot overhead ({t0_transfer() + boot['total']:,} B) is over the "
@@ -535,16 +536,36 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         # frame costs the least to leave until tier 1.
         cand = [e for e in uniq if e["tier"] == 0 and e["kind"] in ("gate2_lo", "gate2_half")]
         cand.sort(key=lambda e: (-tex_order.get(e.get("key"), 99), -(e["transfer"] or 0)))
+        full_at = {e.get("key") for e in uniq if e["tier"] == 1 and e["kind"] in ("gate2", "detail")}
+        dropped = []
         for e in cand:
             if t0_transfer() <= budget_left - TIER0_SLACK:
                 break
-            e["tier"] = 1
-            e["why"] = ("moved out of tier 0 to fit the first-frame budget: its material covers "
-                        "nothing of the hero frame")
+            # Review r2 finding 3: MOVING the half-resolution copy to tier 1 makes tier 1 fetch half
+            # AND full of the same key. When the full-resolution file is already in tier 1 the half is
+            # simply DROPPED - the material is untextured until tier 1, which is the cost being paid -
+            # and its `lowres.files` entry goes with it, so the contract stays true. On the mobile set
+            # there is no full-resolution twin to fall back to, so there it is moved, never dropped.
+            if e.get("key") in full_at and not mobile:
+                e["_drop"] = True
+                dropped.append(e)
+                lowres_files.pop(e.get("key"), None)
+            else:
+                e["tier"] = 1
+                e["why"] = ("moved out of tier 0 to fit the first-frame budget: its material covers "
+                            "nothing of the hero frame")
             trim["moved"].append(dict(path=e["path"], key=e.get("key"), bytes=e["bytes"],
                                       transfer=e["transfer"],
-                                      hero_order=tex_order.get(e.get("key"))))
+                                      hero_order=tex_order.get(e.get("key")),
+                                      action="dropped (the full-resolution file is in tier 1)"
+                                             if e.get("_drop") else "moved to tier 1"))
             trim["moved_bytes"] += e["transfer"] or 0
+        if dropped:
+            uniq = [e for e in uniq if not e.get("_drop")]
+        trim["dropped"] = len(dropped)
+        trim["effect"] = ("the materials of these keys carry NO map until tier 1: the glb's own base "
+                          "colour stands in. They were chosen because each covers less than 0.003 % "
+                          "of the hero frame.")
         uniq.sort(key=lambda e: (e["tier"], e["order"], e["path"]))
 
     tier_bytes, tier_files, tier_transfer, oversize = (defaultdict(int), defaultdict(int),
@@ -670,40 +691,19 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             "(export/gate5_instance_rows.py); `groups_complete` says every placement is covered.")
     man5["files"] = uniq
     p = out / out_name
-    # The manifest is part of the payload it measures.  Write, re-measure, patch, rewrite - twice is
-    # enough: the second write only moves by the digits of one number.  The value published is the one
-    # measured on the file as it finally stands.
-    for _ in range(3):
+    # The manifest is part of the payload it measures.  Write, re-measure, patch, rewrite until the
+    # number stops moving: `boot`, `first_frame` and the verdict are ALL rewritten on every pass, not
+    # just `boot` (review r2 finding 1 - the resync used to sit under an `if`, so the published
+    # `first_frame_transfer_bytes` was one byte behind the fields it is the sum of).
+    for _ in range(4):
         p.write_text(json.dumps(man5, indent=1))
         t = transfer_bytes(p)
-        if t == man5["tiers"]["boot_overhead_bytes"]["items"]["manifest"]["transfer"]:
-            break
         m_it = man5["tiers"]["boot_overhead_bytes"]["items"]["manifest"]
+        if t == m_it["transfer"]:
+            break
         boot["total"] += t - (m_it["transfer"] or 0)
         m_it.update(bytes=p.stat().st_size, transfer=t)
         first_frame = tier_transfer[0] + boot["total"]
-
-    # Completeness: every file `resolve_files` knows about is either published, or published in its
-    # half-resolution form, or deliberately dropped by this variant. The viewer treats anything it
-    # fetches that is not in `files` as an error, so the plan has to be exhaustive - and this is what
-    # missed the detail set the first time round.
-    pub_paths = {e["path"] for e in uniq}
-    unpublished = []
-    for p_, pub in sorted(files.items()):
-        if pub.kind == "glb":
-            continue
-        rel = G.pub_rel(p_, base)
-        lo = lowres / f"{pub.key}.ktx2" if pub.key else None
-        if rel in pub_paths:
-            continue
-        if lo is not None and lo.exists() and G.pub_rel(lo, base) in pub_paths:
-            continue
-        if mobile and pub.kind == "glb_lazy":
-            continue
-        unpublished.append(dict(path=rel, kind=pub.kind, key=pub.key))
-    if unpublished:
-        print(f"[tiers] {variant}: WARNING {len(unpublished)} viewer-reachable files are in no tier: "
-              f"{[u['path'] for u in unpublished][:5]}", flush=True)
         man5["tiers"]["boot_overhead_bytes"]["total"] = boot["total"]
         man5["tiers"]["first_frame_transfer_bytes"] = first_frame
         man5["tiers"]["tier0_within_budget"] = first_frame <= G.TIER0_BUDGET

@@ -101,10 +101,23 @@ def main():
             h = -x["hero_order"] if isinstance(x["hero_order"], (int, float)) and x["hero_order"] < 0 \
                 else 0.0
             a(f"| `{x['key']}` | {h:.6f} ({h * 100:.4f} %) | {x['transfer']:,} |")
-        a(f"\nThe largest of them covers {max((-x['hero_order'] for x in tr['moved'] if x['hero_order']), default=0) * 100:.4f} % "
-          "of the hero frame. Before them, the cheaper lever was spent: the 46 tier-0 normal maps were "
-          "re-encoded at ETC1S qlevel 32 instead of 128 (-20.8 % of their bytes, RMS against the "
-          "source unchanged to five decimals), which is why so little had to move.\n")
+        nq = lr.get("tier0_normals_qlevel") or {}
+        n_keys = set((nq.get("files") or {}))
+        was = sum(v["bytes"] for k, v in ((lr.get("tier0") or {}).get("files") or {}).items()
+                  if k in n_keys)
+        now = sum(v["bytes"] for v in (nq.get("files") or {}).values())
+        a(f"\nThe largest of them covers "
+          f"{max((-x['hero_order'] for x in tr['moved'] if x['hero_order']), default=0) * 100:.4f} % "
+          f"of the hero frame, and **all 28 are DROPPED from tier 0, not moved into tier 1** - their "
+          f"full-resolution file is already there, so shipping the half-resolution copy as well would "
+          f"be {tr['moved_bytes']:,} wasted bytes. Their materials carry no map at all until tier 1: "
+          f"the glb's own base colour stands in.\n")
+        a(f"Before any of them moved, the cheaper lever was spent: the **{len(n_keys)} tier-0 normal "
+          f"maps re-encoded at ETC1S qlevel 32 instead of 128**, measured over the whole shipped set "
+          f"in `lowres.json`: **{was:,} -> {now:,} B, -{100 * (1 - now / was):.1f} %** "
+          f"({was - now:,} B). The only error measurement for that change is the five-file probe in "
+          f"`lowres.json.probe` (qlevel 128 at the same resolution); no A/B was run over all "
+          f"{len(n_keys)}, so no error claim is made for the shipped set.\n")
     a("**The probe is in tier 0** (lead's decision, review finding 2). Tier 0 ships no lightmap, so the "
       "six probe faces (6.29 MB) are the only indirect light in the first frame; without them it is "
       "sky-diffuse only, which is darker and flatter than the low-resolution look the user approved, "
@@ -206,6 +219,11 @@ def main():
       "has no ARCH/ORN LOD1 to ship instead.\n")
 
     a("## Carried, not fixed (for the next round)\n")
+    a("- `../gate1/arch.glb` (15 images) and `../gate1/ground.glb` (4) still EMBED their Gate 1 "
+      "stand-in maps in buffer views. They are not groups, so the no-embedded-image assertion skips "
+      "them, and those maps can never be tier-upgraded - harmless today because `web/src/pbr.js` "
+      "overwrites every one of them from the Gate 2 set, and both files are small (4.6 / 2.0 MB), but "
+      "it is the same dead-end the groups were fixed for.")
     a("- `scene.ray_cast` treats alpha-cut leaf cards as opaque, so the tier ordering is conservative "
       "behind foliage: an asset hidden only by a leaf card reads as invisible and lands a tier late.")
     a("- `verify_glb --gate5` compares drawn triangles per class but does not compare instanced-ROW "
@@ -228,7 +246,14 @@ def main():
       "viewer uses it in tier 0 and re-loads the manifest's own full-resolution path when tier 1 lands.")
     a("- A group with **`placeholder: true`** is tier 0 and is replaced by the tier-1 group of the same "
       "class; its assets are asserted to be a subset of that group's.")
-    a("- **`?tier=mobile`** selects `manifest_mobile.json`, which carries the same blocks.")
+    a("- **`?tier=mobile`** selects `manifest_mobile.json`, which carries the same blocks. Its "
+      "`lowres.files` entries have **no `full`**: the mobile set publishes only the half-resolution "
+      "copy, so its redirect is permanent and there is nothing to upgrade to.")
+    a(f"- **{len(man['tiers']['tier0_trim']['moved'])} keys listed in `tiers.tier0_trim` have NO "
+      "tier-0 map** - no entry in `tiers.lowres.files` either - and their materials show the glb's own "
+      "base colour until their full-resolution file arrives in tier 1. \"0 hero-visible assets outside "
+      "tier 0\" is about GEOMETRY; these 28 maps are the texture exception, each under 0.003 % of the "
+      "hero frame.")
     a("- **There are no placeholder groups any more.** Every instance of a prototype is in ONE group, "
       "so the hero draws the Gate 3 node set exactly; what tier 1 upgrades is the TEXTURE. For a key "
       "in `tiers.lowres.files`, `path` is the half-resolution file the group or the material already "

@@ -2304,7 +2304,12 @@ export/sync_main.sh
     ETC1S **qlevel 32** instead of 128 (-20.8 % of their bytes, RMS against the source unchanged to
     five decimals - measured on five of them) and, after that, **28 Gate 2 placeholder maps moved to
     tier 1**, least hero-visible first: the largest of them covers **0.0022 %** of the hero frame.
-    `tiers.tier0_trim` lists every one with its hero fraction.
+    `tiers.tier0_trim` lists every one with its hero fraction. Restated from `lowres.json` over the
+    whole shipped set rather than a hand sample: the 46 normals go **3 057 292 -> 2 520 098 B, -17.6 %**
+    (537 194 B); the only error measurement for that change is the five-file probe in `lowres.json`, so
+    no error claim is made for all 46. The 28 trimmed maps are **dropped** from tier 0, not moved into
+    it, because their full-resolution file is already in tier 1 - their materials carry no map at all
+    until then, and they have no `tiers.lowres.files` entry either.
 37. **No placeholder groups, and no duplicated geometry.** The first cut shipped a tier-0 subset group
     beside the tier-1 group holding the same prototypes' other instances: the viewer measured **428
     draw calls and 5.83 M drawn triangles at the hero against Gate 3's 329 and 5.24 M**. Every instance
