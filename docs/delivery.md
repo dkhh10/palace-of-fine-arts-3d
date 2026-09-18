@@ -160,3 +160,6 @@ materials/programs, -si 0.5 facets, three .001 cards probe-lit, arch/ground embe
 screenshot; iPhone 16 Pro 30 s walk on the URL. Redeploy = `PFA_MAIN_ROOT=<main> web/deploy.sh --project pfa-walkthrough` after `npx wrangler login`; captures = `web/tools/gate5.sh <url>`.
 Post-close fix (2026-09-18, 1c4b0f5, deploy 5): the bare URL defaulted to the unpublished gate3 manifest and drew the viewer's test scene; the default is now the gate5
 manifest and the bare URL was verified headlessly (renders/web/960/bareurl_cam01.jpg). If a phone still shows the test scene, reload: index.html is cached 300 s.
+User evidence 2026-09-18 20:59: iPhone 16 Pro, iOS Safari, 5G, bare URL, portrait — the mobile tier auto-selected and drew the whole hero scene
+(renders/web/user/iphone16pro_hero_portrait_20260918.jpg). Visible in it: the two mobile residuals (no reflection in the water; the building small and centred in portrait)
+and a cosmetic one: the station HUD prints shift_y as 0.05999999865889549 (viewer, format to 2 decimals). Still owed: the 30 s walk recording and the Mac Safari screenshot.
