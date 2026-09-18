@@ -886,3 +886,27 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 03 2.56 -> 2.56 -> 2.56 -> **2.63**, 04 2.88 -> 2.88 -> 2.88 -> **2.88**, 05 2.83 -> 2.94 -> 2.94 -> **2.94**, 06 2.56 ->
 2.83 -> 2.83 -> **2.83**. Delta vs round 16: **+0.06 / +0.12 / +0.07 / 0 / 0 / 0**; vs round 15: **+0.06 / +0.25 / +0.07 /
 0 / 0 / 0**; vs Phase 5: **+0.11 / +0.31 / +0.07 / +0.07 / -0.12 / +0.17**. None below 2.5; none outside 0.5 of Phase 5.
+
+## Round 18 — Phase 6b Gate 5, the staging deployment (2026-09-18, Opus xhigh; docs/qa_round_18.md). **ONE FIX ROUND**
+1. **Payload on the URL is the figure of record: 46 814 308 B = 46.81 MB before the first frame** (320 requests, first frame 8.11 s), 3.19 MB inside the
+   50 MB conjunct. The local dev-server 50.24 MB in web/README is HTTP/1.1 headers and no compression and is NOT the figure. Tiers 46.9 / 456.3 / 69.6 MB
+   in 7.6 / 51.8 / 12.9 s, all tiers 74.5 s, 581.1 MB total; 0 files over 25 MiB, 0 tier failures, 0 lowres left, 182+4 upgrades all succeeded.
+2. **Desktop parity with the 6c build is exact.** Luma 0.998-1.002x, MAE 0.03-1.37/255, **0 of 25 round-13/15/16 boxes move > 3 %** (worst 0.987x); MAE
+   against the Cycles references moves by <= 0.10. Scores carry unchanged: **01 3.78 · 02 3.25 · 03 2.63 · 04 2.88 · 05 2.94 · 06 2.83**; none below 2.5,
+   none outside 0.5 of Phase 5. 36 tiles at 100 % beside round16c: **no new defect**; every 6c residual reproduces (blurred banded cam03 columns, flat
+   card shrubs, pale crown halo, flat backdrop planes, cam06 water moiré, cam04 entablature aliasing).
+3. **BLOCKER — the mobile fallback has no geometry on the URL.** All 7 `groups/m_*.glb` 404: 18 page errors, **49 draws / 548 triangles at every station**
+   (sky, water, far-tree impostors only). They exist on disk and in `manifest_mobile.files` but are in **no** deploy plan: `manifest.json.files` omits
+   them while `tiers.deploy_from` asserts the desktop plan is complete, and deploy.sh trusts it. 14 571 144 B. Owner export (primary), deploy (assert).
+   Mobile is therefore unscorable, and its resident (<700 MB) and 30 fps targets are unmeasured.
+4. **Loading-screen denominator is wrong in both variants** (viewer): `tier0_planned_bytes` 29.2 MB desktop vs 46.9 MB fetched; 325.8 MB mobile vs 24.1 MB.
+5. **Perf is not throttled; no cold re-measure needed.** 1440p medians 31.7 / 38.0 / 37.7 / 25.1 / 34.2 / 34.2 = +2.0 / +7.6 / +4.2 / +3.1 / +4.4 / +1.9
+   on perf_ab pass B but only -0.7 / +1.0 / +2.6 / +3.0 / +2.0 / +0.2 on round16c cold; gpu_cost medians unchanged (1.0-3.7 vs 1.0-3.4 ms), max/p95
+   18-22x = the single-outlier signature of every earlier pass, and the lead's independent URL cold pass agrees within 1.1 ms at five stations. Carried:
+   hero **31.5 fps** against the 45 target. **Resident 1 861.3 MB = 0.964x of round16c's 1 931.4** — lighter, because the split uploads 269 unique texture
+   sources for 333 texture objects where round16c uploaded 289 for 289. Streaming costs nothing resident.
+6. **Headers verified live per path class** (deploy 2): bake assets `max-age=31536000, immutable`; manifests and the relay status `max-age=60,
+   must-revalidate` (brotli); site `max-age=300, must-revalidate`. Largest published file 16.7 MB against the 25 MiB cap.
+7. **Name sweep over BOTH gate5 manifests: 0 hits** (they key on texture and group names); round 17's gate1/gate3 exceptions stand, 0 new to explain.
+8. **Evidence owed:** the user's macOS **Safari** screenshot (no capture in this round is anything but HeadlessChrome/152 — no Safari claim can be made)
+   and the **iPhone 16 Pro** 30 s iOS Safari walk, which cannot be taken until item 3 is fixed.
