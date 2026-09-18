@@ -165,3 +165,12 @@ User evidence 2026-09-18 20:59: iPhone 16 Pro, iOS Safari, 5G, bare URL, portrai
 and a cosmetic one: the station HUD prints shift_y as 0.05999999865889549 (viewer, format to 2 decimals). Still owed: the 30 s walk recording and the Mac Safari screenshot.
 6d (2026-09-18, d40a125, deploy 6): the mobile water now reflects the building (reflection set `both`, half-res target; +~110 draws per station); HUD shift_y formatted.
 Residual 1 of the 6b list is closed pending the phone's own frame rate from the user's walk recording.
+
+## Evidence closed by the lead (2026-09-18, session 6 end)
+- iOS Safari, iPhone 16 Pro, 5G, bare URL (user's screenshot): the mobile tier auto-selects and draws the hero scene — renders/web/user/iphone16pro_hero_portrait_20260918.jpg.
+- Mobile-tier walk on the URL (headless, viewer walk probe, renders/web/6dm_walk.json): 24 probes = six stations x four headings x 30 s at 3.2 m/s; lowest ground -0.75 m
+  against water -1.3 (floor -1.2); every lagoon-ward heading refused; 0 errors. The phone's own frame rate with the 6d reflection remains unmeasured (a walk recording on
+  the device would settle it; the Mac cannot).
+- Safari-engine desktop render: WebKit 26.6 (Playwright's WebKit build; Safari.app itself could not be captured — screen recording is not granted to the terminal and
+  safaridriver needs the user's password) at 1920x1080 after 120 s draws the full 6c look with the reflection and the formatted HUD, matching the Chrome capture —
+  renders/web/user/webkit26_hero_1920x1080_20260918.jpg. A Safari.app screenshot by the user would be a confirmation, not a requirement.

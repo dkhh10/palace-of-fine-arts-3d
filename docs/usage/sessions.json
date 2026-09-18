@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-18T17:49:10.592677+00:00",
+ "generated": "2026-09-18T21:33:58.739877+00:00",
  "source": "/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building",
  "rates_usd_per_mtok": {
   "claude-fable-5-1": {
@@ -4971,17 +4971,17 @@
   {
    "session_id": "3ada03f9-fea6-41d6-8a2e-0db788998458",
    "first": "2026-09-17T21:16:53.967Z",
-   "last": "2026-09-18T17:48:49.276Z",
-   "main_user_turns": 146,
+   "last": "2026-09-18T21:33:27.637Z",
+   "main_user_turns": 189,
    "main": {
     "claude-fable-5-1": {
-     "input": 3162,
-     "output": 112028,
+     "input": 4214,
+     "output": 142221,
      "cw5m": 0,
-     "cw1h": 362986,
-     "cread": 28093549,
-     "thinking": 31233,
-     "requests": 145
+     "cw1h": 720284,
+     "cread": 41709145,
+     "thinking": 40797,
+     "requests": 187
     }
    },
    "subagents": [
@@ -5172,13 +5172,13 @@
    ],
    "total_by_model": {
     "claude-fable-5-1": {
-     "input": 3162,
-     "output": 112028,
+     "input": 4214,
+     "output": 142221,
      "cw5m": 0,
-     "cw1h": 362986,
-     "cread": 28093549,
-     "thinking": 31233,
-     "requests": 145
+     "cw1h": 720284,
+     "cread": 41709145,
+     "thinking": 40797,
+     "requests": 187
     },
     "claude-opus-5": {
      "input": 1720,
@@ -5200,23 +5200,23 @@
     }
    },
    "cost_by_model_usd": {
-    "claude-fable-5-1": 19.92,
+    "claude-fable-5-1": 31.99,
     "claude-opus-5": 175.05,
     "claude-sonnet-5": 0.5
    },
-   "cost_usd": 195.47,
-   "wall_hours": 20.53
+   "cost_usd": 207.54,
+   "wall_hours": 24.28
   }
  ],
  "grand_total_by_model": {
   "claude-fable-5-1": {
-   "input": 57014,
-   "output": 2293560,
+   "input": 58066,
+   "output": 2323753,
    "cw5m": 11613342,
-   "cw1h": 9998038,
-   "cread": 531799272,
-   "thinking": 762543,
-   "requests": 2332
+   "cw1h": 10355336,
+   "cread": 545414868,
+   "thinking": 772107,
+   "requests": 2374
   },
   "claude-opus-5": {
    "input": 29346,
@@ -5247,12 +5247,12 @@
   }
  },
  "grand_cost_by_model_usd": {
-  "claude-fable-5-1": 593.33,
+  "claude-fable-5-1": 605.4,
   "claude-opus-5": 2387.02,
   "claude-sonnet-5": 3.24,
   "<synthetic>": 0
  },
- "grand_cost_usd": 2983.59,
+ "grand_cost_usd": 2995.66,
  "daily": {
   "2026-09-06": {
    "cost_usd": 57.75,
@@ -5484,16 +5484,16 @@
    }
   },
   "2026-09-18": {
-   "cost_usd": 191.51,
+   "cost_usd": 203.58,
    "by_model": {
     "claude-fable-5-1": {
-     "input": 2566,
-     "output": 91748,
+     "input": 3618,
+     "output": 121941,
      "cw5m": 0,
-     "cw1h": 266707,
-     "cread": 26055179,
-     "thinking": 25335,
-     "requests": 121
+     "cw1h": 624005,
+     "cread": 39670775,
+     "thinking": 34899,
+     "requests": 163
     },
     "claude-opus-5": {
      "input": 1720,
@@ -5609,7 +5609,11 @@
   "2026-09-18T14": 2.86,
   "2026-09-18T15": 71.03,
   "2026-09-18T16": 76.79,
-  "2026-09-18T17": 40.83
+  "2026-09-18T17": 41.53,
+  "2026-09-18T18": 1.38,
+  "2026-09-18T19": 0.12,
+  "2026-09-18T20": 6.18,
+  "2026-09-18T21": 3.68
  },
  "claude_code_cost_state": {
   "db75376f-0874-434f-b644-8a5e35d22392": {
