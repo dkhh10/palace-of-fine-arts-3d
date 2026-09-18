@@ -23,7 +23,7 @@ export function selectOwnMap( a ) {
 	const tex = a.uv2InGlb ? a.gate3Tex : a.frozenTex;
 	a.layout = a.uv2InGlb ? ( a.relaid ? 'gate3_relaid' : 'gate1' ) : 'gate1_frozen';
 	a.blocked = tex ? null : ( a.uv2InGlb ? 'no usable texture' : 'uv2_in_glb false and no _gate1_layout twin' );
-	for ( const k of [ 'url', 'textureKey', 'variant', 'encode', 'range', 'bytes', 'residentMb', 'w', 'h' ] ) a[ k ] = tex ? tex[ k ] : undefined;
+	for ( const k of [ 'url', 'textureKey', 'variant', 'encode', 'range', 'bytes', 'residentMb', 'w', 'h', 'tier' ] ) a[ k ] = tex ? tex[ k ] : undefined;
 	if ( ! a.uv2InGlb && a.frozenTex ) a.cmPerTexelEffective = a.frozenCmPerTexel;
 	else a.cmPerTexelEffective = a.cmPerTexel;
 	return a;
@@ -95,6 +95,129 @@ export function resolveUrl( base, url ) {
 }
 
 /**
+ * manifest v5 (`pfa-phase6/5`) LOAD TIERS.  The contract the viewer consumes is in web/README.md
+ * "Phase 6b"; this reads it and nothing here invents one.  Three places may declare a file's tier and
+ * the SMALLEST wins, because a tier number is "the latest moment this file may arrive" and a file
+ * named twice must arrive by the earlier of the two:
+ *   1. `files[<path>].tier`      the per-file table (authoritative, carries bytes and the `lo` variant)
+ *   2. `tiers[n].files[]`        the per-tier file list
+ *   3. the owning object's own `tier` (a glb group, a texture entry)
+ * A file NO tier mentions is tier 0: it boots.  That way an export that forgets a file ships a slower
+ * first payload, never a missing one, and `tiers.undeclared` in the viewer's report names it.
+ *
+ * Accepted shapes for `tiers`: an ARRAY of tier objects, `{ list: [...] }`, or an object keyed
+ * "0"/"tier0"/"t0".  Each tier object: { tier|index|n, bytes|total_bytes, label, files[] }.
+ */
+export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
+	const notes = [];
+	const out = { present: false, count: 0, list: [], oversize: [], byUrl: new Map(), files: new Map(),
+		totals: {}, notes, declaredBytes: 0 };
+	const rawTiers = pick( raw, 'tiers', 'load_tiers' );
+	const rawFiles = pick( raw, 'files', 'tiers.files' );
+	if ( ! rawTiers && ! ( rawFiles && typeof rawFiles === 'object' ) ) return out;
+
+	/** Record `url` at tier `t` unless it is already recorded at an earlier one. */
+	const claim = ( url, t ) => {
+		if ( ! url || ! Number.isFinite( t ) ) return;
+		const prev = out.byUrl.get( url );
+		if ( prev === undefined || t < prev ) out.byUrl.set( url, t );
+	};
+	const entryOf = ( v ) => ( typeof v === 'string' ? { path: v } : ( v && typeof v === 'object' ? v : null ) );
+
+	// --- the per-file table --------------------------------------------------------------------
+	// { "<path>": { bytes, tier, kind, lo: { path, bytes, tier } } }.  `lo` is the LOW-RESOLUTION
+	// stand-in an earlier tier ships for a texture whose full-resolution file arrives later; the
+	// viewer loads `lo` first and hot-swaps the full file onto the same material when it lands.
+	if ( rawFiles && typeof rawFiles === 'object' && ! Array.isArray( rawFiles ) ) {
+		for ( const [ p, v ] of Object.entries( rawFiles ) ) {
+			const e = entryOf( v ) || {};
+			const url = resolve( baseUrl, e.path || p );
+			if ( ! url ) continue;
+			const tier = Number.isFinite( e.tier ) ? e.tier : undefined;
+			const loRaw = entryOf( e.lo || e.low || e.variant_lo );
+			let lo = null;
+			if ( loRaw && loRaw.path ) {
+				const loUrl = resolve( baseUrl, loRaw.path );
+				// `lo` pointing at the same file is not a variant: there is nothing to swap.
+				if ( loUrl && loUrl !== url ) {
+					lo = { url: loUrl, bytes: loRaw.bytes ?? null,
+						tier: Number.isFinite( loRaw.tier ) ? loRaw.tier : 0,
+						standIn: loRaw.stand_in === true || loRaw.standIn === true };
+					claim( loUrl, lo.tier );
+				}
+			}
+			const row = { url, path: e.path || p, bytes: e.bytes ?? e.size ?? null, tier, kind: e.kind || null, lo };
+			out.files.set( url, row );
+			if ( tier !== undefined ) claim( url, tier );
+			if ( row.bytes ) out.declaredBytes += row.bytes;
+		}
+	}
+
+	// --- the tier list -------------------------------------------------------------------------
+	let list = [];
+	if ( Array.isArray( rawTiers ) ) list = rawTiers;
+	else if ( rawTiers && typeof rawTiers === 'object' ) {
+		if ( Array.isArray( rawTiers.list ) ) list = rawTiers.list;
+		else if ( Array.isArray( rawTiers.tiers ) ) list = rawTiers.tiers;
+		else list = Object.entries( rawTiers )
+			.filter( ( [ k, v ] ) => /^(tier|t)?\d+$/i.test( k ) && v && typeof v === 'object' )
+			.map( ( [ k, v ] ) => ( { tier: parseInt( String( k ).replace( /^(tier|t)/i, '' ), 10 ), ...v } ) );
+	}
+	for ( let i = 0; i < list.length; i ++ ) {
+		const t = list[ i ] || {};
+		const n = Number.isFinite( t.tier ) ? t.tier : ( Number.isFinite( t.index ) ? t.index : ( Number.isFinite( t.n ) ? t.n : i ) );
+		const files = [];
+		for ( const f of ( Array.isArray( t.files ) ? t.files : [] ) ) {
+			const e = entryOf( f );
+			if ( ! e || ! ( e.path || typeof f === 'string' ) ) continue;
+			const url = resolve( baseUrl, e.path );
+			if ( ! url ) continue;
+			files.push( url );
+			claim( url, n );
+			if ( ! out.files.has( url ) ) out.files.set( url, { url, path: e.path, bytes: e.bytes ?? null, tier: n, kind: e.kind || null, lo: null } );
+		}
+		out.list.push( { tier: n, bytes: t.bytes ?? t.total_bytes ?? null, label: t.label || t.note || null,
+			files, count: t.files_n ?? files.length } );
+	}
+	out.list.sort( ( a, b ) => a.tier - b.tier );
+	// A declared per-tier byte total is what the loading screen's denominator uses; when the export
+	// states none, sum the per-file bytes of that tier instead of guessing.
+	for ( const t of out.list ) {
+		if ( t.bytes === null || t.bytes === undefined ) {
+			let sum = 0, known = 0;
+			for ( const [ url, n ] of out.byUrl ) {
+				if ( n !== t.tier ) continue;
+				const row = out.files.get( url );
+				if ( row && row.bytes ) { sum += row.bytes; known ++; }
+			}
+			t.bytes = known ? sum : null;
+			t.bytesFrom = known ? 'summed from files[]' : 'unknown';
+		} else t.bytesFrom = 'declared';
+		out.totals[ t.tier ] = t.bytes;
+	}
+	const oversizeRaw = ( rawTiers && ! Array.isArray( rawTiers ) && ( rawTiers.oversize || rawTiers.over_size ) ) || [];
+	for ( const v of ( Array.isArray( oversizeRaw ) ? oversizeRaw : [] ) ) {
+		const e = entryOf( v );
+		if ( ! e ) continue;
+		out.oversize.push( { url: resolve( baseUrl, e.path ), path: e.path, bytes: e.bytes ?? null, reason: e.reason || null } );
+	}
+	out.present = out.list.length > 0 || out.files.size > 0;
+	out.count = out.list.length ? ( Math.max( ...out.list.map( t => t.tier ) ) + 1 )
+		: ( out.byUrl.size ? Math.max( ...out.byUrl.values() ) + 1 : 0 );
+	if ( out.present ) notes.push( `manifest tiers: ${out.count} tier(s), `
+		+ out.list.map( t => `tier ${t.tier} ${( ( t.bytes || 0 ) / 1e6 ).toFixed( 1 )} MB in ${t.count} file(s) (${t.bytesFrom})` ).join( ', ' )
+		+ ( out.oversize.length ? `; ${out.oversize.length} file(s) over the host's per-file cap: ${out.oversize.map( o => o.path ).join( ', ' )}` : '' ) );
+	return out;
+}
+
+/** The tier a url belongs to.  A url no tier declares is tier 0 — it boots (see readTiers). */
+export function tierForUrl( tiers, url, fallback = 0 ) {
+	if ( ! tiers || ! tiers.present || ! url ) return fallback;
+	const t = tiers.byUrl.get( url );
+	return t === undefined ? fallback : t;
+}
+
+/**
  * @param {object|null} raw  parsed manifest.json (null -> pure defaults, test-scene mode)
  * @param {string} baseUrl   absolute URL of the manifest, for relative asset paths
  */
@@ -105,6 +228,13 @@ export function normaliseManifest( raw, baseUrl ) {
 		return value;
 	};
 	raw = raw || {};
+
+	// --- load tiers (manifest v5) --------------------------------------------------------------
+	// Read FIRST: every url built below asks it which tier it belongs to, and a manifest without a
+	// `tiers` block yields `present: false`, which makes every consumer behave exactly as it did at
+	// v4 (one tier, everything at boot).
+	const tiers = readTiers( raw, baseUrl );
+	tiers.notes.forEach( n => notes.push( n ) );
 
 	// --- geometry ------------------------------------------------------------------------------
 	// schema pfa-phase6/2 ships ONE GLB PER CLASS (arch / orn / env / ground) loaded in the manifest's
@@ -121,7 +251,15 @@ export function normaliseManifest( raw, baseUrl ) {
 			url,
 			name: url.split( '/' ).pop(),
 			cls: o.class ?? o.cls ?? o.kind ?? key ?? `part_${i}`,
+			// v5 `glb.groups`: the group KEY is the identity (orn_t1_03), `class` stays the lighting /
+			// naming class (orn) so WEB_glb_<class> and the instance-irradiance lookup keep working.
+			group: key ?? null,
 			bytes: o.bytes ?? o.size ?? o.byte_length ?? null,
+			// The group's own `tier` is the weakest of the three declarations (readTiers), so it only
+			// applies when neither `files` nor the tier list named this file.
+			tier: tierForUrl( tiers, url, Number.isFinite( o.tier ) ? o.tier : 0 ),
+			declaredTier: Number.isFinite( o.tier ) ? o.tier : null,
+			stations: o.stations || o.station_visibility || null,
 			order: o.order ?? i,
 		};
 	};
@@ -138,9 +276,13 @@ export function normaliseManifest( raw, baseUrl ) {
 	};
 	// 'glb.per_class' is what export/gltf_pack.sh --gate1 actually writes:
 	// glb.per_class = { arch:{path,bytes,…}, orn, env, ground } in load order.
-	let glbs = listOf( pick( raw, 'glbs', 'glb.per_class', 'glb.parts', 'glb.files', 'glb.classes', 'files.glbs' ) ).filter( Boolean );
+	// v5 `glb.groups` is read BEFORE `glb.per_class`: a manifest that carries both is a v5 one whose
+	// per_class block is kept for the older tools, and loading both would draw every mesh twice.
+	let glbs = listOf( pick( raw, 'glbs', 'glb.groups', 'glb.per_class', 'glb.parts', 'glb.files', 'glb.classes', 'files.glbs' ) ).filter( Boolean );
 	if ( ! glbs.length ) glbs = listOf( glbRaw ).filter( Boolean );
-	glbs.sort( ( a, b ) => a.order - b.order );
+	// Tier first, then the manifest's own order inside a tier: tier 0 is what boots, and a later tier
+	// can never be pulled in front of it by an `order` field.
+	glbs.sort( ( a, b ) => ( a.tier - b.tier ) || ( a.order - b.order ) );
 	glbs.forEach( ( g, i ) => { g.order = i; } );
 	const glb = glbs.length ? glbs[ 0 ].url : null;
 	if ( glbs.length > 1 ) notes.push( `${glbs.length} glbs, loaded in manifest order: ${glbs.map( g => `${g.cls}:${g.name}` ).join( ', ' )}` );
@@ -434,7 +576,12 @@ export function normaliseManifest( raw, baseUrl ) {
 			if ( declared === null || declared === undefined ) { srgb = SRGB_DEFAULT[ slot ]; csFallbacks.push( `${name}.${slot}=${srgb ? 'sRGB' : 'linear'}` ); }
 			else srgb = /srgb|s-rgb|colou?r$/i.test( String( declared ) ) && ! /non-?colou?r|linear|data|raw/i.test( String( declared ) );
 			const bytes = o.bytes ?? o.size_bytes ?? ( res.meta && res.meta.bytes ) ?? null;
+			// v5: which tier this map arrives in, and the low-resolution stand-in an earlier tier
+			// ships for it (files[<path>].lo).  Both are null at v4, where every map is tier 0.
+			const fileRow = tiers.files.get( res.url ) || null;
 			set.maps[ slot ] = { url: res.url, srgb, declared, bytes,
+				tier: tierForUrl( tiers, res.url, Number.isFinite( res.meta && res.meta.tier ) ? res.meta.tier : 0 ),
+				lo: fileRow && fileRow.lo ? { ...fileRow.lo, srgb } : null,
 				key: hasTextureKey ? ref : null, w: res.meta && res.meta.w, h: res.meta && res.meta.h,
 				residentMb: res.meta && res.meta.resident_mb };
 			mapCount ++; setBytes += bytes || 0;
@@ -588,6 +735,7 @@ export function normaliseManifest( raw, baseUrl ) {
 			const range = entry.range ?? ( res.meta && res.meta.range );
 			if ( range === undefined || range === null ) { g3notes.push( `${what}: no range, skipped (a defaulted range is a brightness error)` ); return null; }
 			return { url: res.url, textureKey: key, variant, encode: encodeOf( variant, res.meta ), range,
+				tier: tierForUrl( tiers, res.url, 0 ),
 				bytes: ( res.meta && res.meta.bytes ) ?? null, residentMb: ( res.meta && res.meta.resident_mb ) ?? null,
 				w: res.meta && res.meta.w, h: res.meta && res.meta.h };
 		};
@@ -781,6 +929,7 @@ export function normaliseManifest( raw, baseUrl ) {
 		: ornSlotsRaw;
 
 	const out = {
+		tiers,
 		raw, baseUrl, glb, glbs, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale, materials,
 		treesFar, treesNearCount: Array.isArray( nearRaw ) ? nearRaw.length : 0, ornSlots, gate3,
 		// `assets` is the identity the glb lost: gltfpack -mi drops every node and mesh name, so the

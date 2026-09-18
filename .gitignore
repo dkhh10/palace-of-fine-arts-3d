@@ -64,3 +64,6 @@ renders/web/verify*.png
 !renders/web/960/*
 renders/web/round13b_*.png
 renders/web/round13direct_*.png
+
+# Phase 6b: the development STUB tier manifest (web/tools/stub_tiers.mjs regenerates it)
+web/public/stub/
