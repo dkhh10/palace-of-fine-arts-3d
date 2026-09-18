@@ -735,3 +735,11 @@ ripple is procedural, so the tier-0 water differs only in what it reflects. The 
 irradiance row cannot be keyed and they stay on the probe (3 of 1 379) — carried. Reviews r1 and r2 (MERGE WITH FIXES, all applied); the third delta (the wire
 pass) was verified by the lead against the MAIN manifests (first_frame_on_wire_bytes, tier0_within_target, unpublished 0, verify_gate5 fail [] on 2 540 assets)
 instead of a third reviewer round, to hold the budget; logged here as the deviation.
+
+## 2026-09-18 · Gate 5 frame time: the tiered plan costs -0.1 / +2.0 ms at stations 2 / 3 (same session); the URL's +7 / +4 vs the A/B baseline is drift — no change
+A cold pass on the staging URL gave 30.8 / 37.2 / 37.9 / 24.3 / 33.2 / 34.3 ms against the 6c A/B pass B (29.7 / 30.4 / 33.5 / 22.0 / 29.8 / 32.3). The viewer engineer's
+same-session A/B on one build (gate5 plan vs v4 plan, stations 2 / 3): 35.30 / 35.30 vs 35.40 / 33.30 ms, so the plan costs -0.1 / +2.0 ms and the v4 build itself sits
++5.0 ms over the pass-B figure in this session — the same day-to-day drift the 6c A/B found; only a same-session A/B is callable. Structural cost of the split, carried:
+a class shipped as two groups is parsed twice, so shared materials exist once per group and compile their own programs (141 / 143 programs vs 94 / 96, 254 vs 198
+geometries, 135 vs 112 materials, +5 / +4 draws); the texture cache is net lighter (resident 1 861 vs 1 906 MB). The export lever (one group per class, ~7 MB more
+geometry in tier 0) would push tier 0 over 50 MB on the wire, and the viewer lever (materials shared across groups) is large and risky; neither is taken in 6b.
