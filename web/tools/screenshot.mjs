@@ -161,7 +161,7 @@ let browser = null, server = null, viteProc = null, pageErrorExit = false, cdp =
 const t0 = Date.now();
 // --net bookkeeping: every request the page made, with the bytes that crossed the wire.
 const net = { byId: new Map(), done: [], bytes: 0, t0: null };
-let navAt = null, readyAt = null, tiersAt = null, bytesAtReady = 0;
+let navAt = null, readyAt = null, tiersAt = null, bytesAtReady = 0, readyAtPage = null;
 try {
 	gpuGuard();
 	let base = o.url;
@@ -241,6 +241,10 @@ try {
 	await page.waitForFunction( 'window.__pfaReady === true || window.__pfaError', { timeout, polling: 250 } );
 	readyAt = Date.now();
 	bytesAtReady = net.bytes;
+	// The page's own mark beats the poll: __pfaReady is noticed up to `polling` ms late and the next
+	// tier has started downloading by then.  With it, "before the first frame" is recomputed from the
+	// request timeline below instead of from whatever had arrived when node looked.
+	readyAtPage = await page.evaluate( () => window.__pfaReadyAt ?? null );
 	// 6b: `__pfaReady` is TIER 0 — the first presented frame.  Tiers 1-2 stream behind it, so a
 	// capture that is going to be scored waits for `__pfaTiersReady` as well.  `?tiers=0` flips it
 	// immediately (there is nothing to stream), which is exactly how the tier-0 capture is taken.
@@ -448,19 +452,28 @@ try {
 		const requests = net.done.map( ( r ) => ( { url: r.url, status: r.status ?? null, mime: r.mime || null,
 			bytes: r.bytes, start_s: rel( r.start ), end_s: rel( r.end ), failed: r.failed || null } ) )
 			.sort( ( a, b ) => ( a.end_s ?? 0 ) - ( b.end_s ?? 0 ) );
+		// the page's own first-frame mark, in the same rebased seconds as the requests
+		const readyRel = readyAtPage !== null ? readyAtPage / 1000
+			: ( readyAt && navAt ? ( readyAt - navAt ) / 1000 : null );
+		if ( readyRel !== null ) {
+			const before = requests.filter( ( r ) => r.end_s !== null && r.end_s <= readyRel );
+			bytesAtReady = before.reduce( ( a, r ) => a + r.bytes, 0 );
+		}
 		const byKind = {};
 		for ( const r of requests ) { const k = ( r.url.match( /\.(glb|ktx2|hdr|exr|cube|json|js|wasm|png)(\?|$)/i ) || [ , 'other' ] )[ 1 ].toLowerCase();
 			byKind[ k ] = ( byKind[ k ] || 0 ) + r.bytes; }
 		fs.mkdirSync( path.dirname( netOut ), { recursive: true } );
 		fs.writeFileSync( netOut, JSON.stringify( {
 			generated: new Date().toISOString(), url, size: [ W, H ],
-			time_to_first_frame_s: readyAt && navAt ? + ( ( readyAt - navAt ) / 1000 ).toFixed( 3 ) : null,
+			time_to_first_frame_s: readyAtPage !== null ? + ( readyAtPage / 1000 ).toFixed( 3 )
+				: ( readyAt && navAt ? + ( ( readyAt - navAt ) / 1000 ).toFixed( 3 ) : null ),
+			first_frame_from: readyAtPage !== null ? 'the page (window.__pfaReadyAt)' : 'the harness poll',
 			time_to_all_tiers_s: tiersAt && navAt ? + ( ( tiersAt - navAt ) / 1000 ).toFixed( 3 ) : null,
 			bytes_before_first_frame: bytesAtReady,
 			bytes_total: net.bytes,
 			bytes_by_kind: byKind,
-			requests_before_first_frame: requests.filter( ( r ) => r.end_s !== null && readyAt && navAt
-				&& r.end_s * 1000 <= ( readyAt - navAt ) ).length,
+			requests_before_first_frame: readyRel === null ? null
+				: requests.filter( ( r ) => r.end_s !== null && r.end_s <= readyRel ).length,
 			requests_n: requests.length,
 			viewer_tiers: info.tiers ?? null,
 			viewer_device: info.device ?? null,

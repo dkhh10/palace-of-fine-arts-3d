@@ -89,8 +89,15 @@ if ( manifestInAssets ) {
 }
 
 let source = 'v5 files table';
-if ( raw.files && typeof raw.files === 'object' && ! Array.isArray( raw.files ) ) {
-	for ( const [ p, v ] of Object.entries( raw.files ) ) {
+// `files` is the ordered load PLAN: an array of { path, tier, kind, key, bytes } as the export
+// writes it, or a map keyed by path.  Its paths reach out of the gate5 directory (../gate0 for the
+// LUT and the sky, ../gate1 for the glbs, ../gate2 for the PBR sets, ../gate3 for the lightmaps),
+// which is exactly why the publish set is built from the PLAN and not from one folder.
+if ( raw.files && typeof raw.files === 'object' ) {
+	const fileEntries = Array.isArray( raw.files )
+		? raw.files.map( ( v ) => [ ( v && v.path ) || '', v ] ).filter( ( [ q ] ) => q )
+		: Object.entries( raw.files );
+	for ( const [ p, v ] of fileEntries ) {
 		const e = ( v && typeof v === 'object' ) ? v : {};
 		const tier = Number.isFinite( e.tier ) ? e.tier : 0;
 		const hit = toDisk( e.path || p );

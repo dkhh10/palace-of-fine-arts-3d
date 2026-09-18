@@ -358,6 +358,9 @@ let tierOf = () => 0;
 // env geometry and the impostor atlases, because applyFoliage produces the near-tree units the
 // impostor build consumes and neither pass may run twice.
 let sceneCompletionTier = 0;
+// where the hero probe's six HDR faces are: the viewer used to fetch them at boot whatever the
+// manifest said, which made an export that moved them to a later tier save nothing
+let probeTier = 0;
 
 function setupTiers() {
 	const t = manifest.tiers;
@@ -378,14 +381,19 @@ function setupTiers() {
 		if ( t.oversize.length ) note( `${t.oversize.length} published file(s) over the host's per-file cap: `
 			+ t.oversize.map( o => `${o.path} ${( ( o.bytes || 0 ) / 1e6 ).toFixed( 1 )} MB` ).join( ', ' ) );
 	}
-	// where the foliage / impostor passes belong: the later of the env glb and the impostor atlases
-	const envGlb = manifest.glbs.find( ( g ) => g.cls === 'env' );
-	let impTier = 0;
+	// Where the foliage / impostor passes belong: after the LAST env group (v5 splits env across
+	// tiers, and applyFoliage clusters crowns across the whole set — running it on half the trees and
+	// again on the other half would re-cluster what it had already patched) and after the impostor
+	// atlases, whose low-resolution stand-ins are what an early tier ships.
+	let envTier = 0, impTier = 0;
+	for ( const g of manifest.glbs ) if ( g.cls === 'env' ) envTier = Math.max( envTier, g.tier );
 	const protos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.prototypes ) || {};
 	for ( const p of Object.values( protos ) ) impTier = Math.max( impTier, tierOf( p.albedo ), tierOf( p.normalDepth ) );
-	sceneCompletionTier = Math.max( envGlb ? envGlb.tier : 0, impTier );
+	sceneCompletionTier = Math.max( envTier, impTier );
+	const pf = manifest.gate3 && manifest.gate3.probe ? manifest.gate3.probe.faces : null;
+	probeTier = pf ? Math.max( ...pf.map( ( u ) => tierOf( u ) ) ) : 0;
 	if ( sceneCompletionTier > 0 ) note( `foliage + impostors run at tier ${sceneCompletionTier} `
-		+ `(env glb tier ${envGlb ? envGlb.tier : '-'}, impostor atlases tier ${impTier})` );
+		+ `(last env group tier ${envTier}, impostor atlases tier ${impTier})` );
 
 	const byTier = {};
 	for ( const g of manifest.glbs ) ( byTier[ g.tier ] ||= [] ).push( g.cls );
@@ -400,7 +408,7 @@ function setupTiers() {
  *  the export measured), otherwise the sum of what this viewer planned for it. */
 function tierBytes( t ) {
 	const declared = manifest.tiers && manifest.tiers.totals ? manifest.tiers.totals[ t ] : null;
-	if ( declared ) return declared;
+	if ( declared ) return declared + ( t === 0 ? ( manifest.tiers.bootOverhead || 0 ) : 0 );
 	return ( tierState.plan ? tierState.plan( t ) : [] ).reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
 }
 
@@ -564,6 +572,15 @@ async function boot() {
 	// byte budget before anything downloads ------------------------------------------------------
 	const tp = performance.now();
 	await measurePlan( tierPlan( 0 ) );
+	// The page's own cost (manifest + /basis/ + the bundle) when the manifest states it: already paid
+	// by the time this line runs, so it goes into BOTH sides of the bar rather than capping it.
+	if ( manifest.tiers && manifest.tiers.bootOverhead > 0 ) {
+		progress.total += manifest.tiers.bootOverhead;
+		progress.loaded += manifest.tiers.bootOverhead;
+		note( `boot overhead ${MB( manifest.tiers.bootOverhead )} MB counted into tier 0 (already downloaded: `
+			+ 'the manifest, the KTX2 transcoder and the bundle)' );
+		drawProgress();
+	}
 	tierState.tier0PlannedBytes = progress.total;
 	loadTimes.plan_s = ( performance.now() - tp ) / 1000;
 
@@ -703,34 +720,13 @@ async function boot() {
 	// brought and in nearest-material-first order.  A later tier runs the same pass over ITS roots and
 	// upgrades the maps this tier could only show as factors (streamTiers -> upgradePbrSets).
 
-	// QA-13-1: the baked hero probe as the irradiance of everything with no baked light ------------
-	// AFTER the PBR and detail passes (they may add an envMap or replace a material) and BEFORE the
-	// impostors, which are ShaderMaterials and take no environment at all.  Only in `baked` mode:
-	// ?lighting=direct is the untouched A/B.
-	if ( CFG.probeEnv && lightingMode === 'baked' && manifest.gate3 && manifest.gate3.probe ) {
-		try {
-			const rt = await buildProbeEnv( manifest.gate3.probe, {
-				renderer, note,
-				loadHdr: ( url ) => { progress.label = url.split( '/' ).pop(); return new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) ); },
-			} );
-			if ( rt ) {
-				probeTarget = rt;
-				// ?probespec=1 wants the probe as the SPECULAR env of the baked materials, and
-				// finishMaterials() already assigned the sky glossy one before the probe existed.
-				// Re-run it now that probeTarget is set; it is idempotent (it skips a material that
-				// already has the env it would assign).
-				if ( CFG.probeSpec ) assignSpecularEnv();
-				probeReport = applyProbeEnv( scene, rt.texture, { note, gate3Report } );
-				probeReport.station = manifest.gate3.probe.station || null;
-				probeReport.positionBlender = manifest.gate3.probe.positionBlender || null;
-				note( 'probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest\'s own '
-					+ 'probe.use says it is not the diffuse environment; this use of it is the lead\'s QA-13-1 call '
-					+ 'and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.' );
-			}
-		} catch ( e ) { note( `probe env failed: ${e.message}; the sky-diffuse path stays` ); }
-	} else if ( manifest.gate3 && manifest.gate3.probe && ! CFG.probeEnv ) {
-		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
-	}
+	// QA-13-1, tier-aware (6b): the baked hero probe is the irradiance of everything with no baked
+	// light.  The export may put its six HDR faces in a later tier (6.3 MB); until they arrive those
+	// surfaces take the sky-diffuse PMREM, which is the documented ?probe=0 path — dimmer and flatter
+	// in the shade, never unlit.  `probeTier` is where the faces actually are.
+	if ( probeTier === 0 || ! ( manifest.gate3 && manifest.gate3.probe ) ) await setupProbeEnv();
+	else note( `probe env deferred to tier ${probeTier} (${manifest.gate3.probe.faces.length} face(s)); until then `
+		+ 'surfaces with no baked light take the sky-diffuse PMREM' );
 
 	// 6c foliage, the far-tree impostors and the far-tree lighting run ONCE, at the load tier that
 	// brings the env glb and the impostor atlases (tier 0 when the manifest has no tiers, which is
@@ -748,6 +744,10 @@ async function boot() {
 		ui.style.display = 'none';
 		loadTimes.total_s = ( performance.now() - t0 ) / 1000;   // set BEFORE __pfaReady: the harness
 		window.__pfaReady = true;                                // reads __pfaInfo() the moment it flips
+		// 6b: the page's OWN first-frame time, in ms since the document started.  A harness that polls
+		// for __pfaReady notices it up to a poll late, and the tier-1 stream has begun by then, so
+		// "bytes before the first frame" measured from the poll is too high.  This is the honest mark.
+		window.__pfaReadyAt = performance.now();
 		tierState.per.push( { tier: 0, wall_s: loadTimes.total_s,
 			bytes: progress.loaded, planned: tierState.tier0PlannedBytes, glbs: glbRoots.length } );
 		note( `ready in ${loadTimes.total_s.toFixed( 2 )} s: ${MB( progress.loaded )} MB loaded of ${MB( progress.total )} MB planned `
@@ -789,6 +789,7 @@ async function streamTiers() {
 				if ( up.upgraded ) disposeOrphans( scene, beforeTex );
 				tierState.upgrades = [ ...( tierState.upgrades || [] ), { tier: t, ...up, failed: up.failed.length } ];
 			}
+			if ( t === probeTier ) await setupProbeEnv();
 			if ( t === sceneCompletionTier ) await setupFoliageAndImpostors();
 			if ( roots.length ) applyReflectionAndFog();
 			tierState.now = t;
@@ -819,6 +820,42 @@ async function streamTiers() {
 			+ `; ${MB( progress.loaded )} MB total` );
 		renderFrame();
 	}
+}
+
+/**
+ * The baked hero probe as the irradiance of everything with no baked light.  Extracted so a
+ * manifest that puts its faces in a later tier can run it there instead of at boot.
+ */
+async function setupProbeEnv() {
+	// QA-13-1: the baked hero probe as the irradiance of everything with no baked light ------------
+	// AFTER the PBR and detail passes (they may add an envMap or replace a material) and BEFORE the
+	// impostors, which are ShaderMaterials and take no environment at all.  Only in `baked` mode:
+	// ?lighting=direct is the untouched A/B.
+	if ( CFG.probeEnv && lightingMode === 'baked' && manifest.gate3 && manifest.gate3.probe ) {
+		try {
+			const rt = await buildProbeEnv( manifest.gate3.probe, {
+				renderer, note,
+				loadHdr: ( url ) => { progress.label = url.split( '/' ).pop(); return new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) ); },
+			} );
+			if ( rt ) {
+				probeTarget = rt;
+				// ?probespec=1 wants the probe as the SPECULAR env of the baked materials, and
+				// finishMaterials() already assigned the sky glossy one before the probe existed.
+				// Re-run it now that probeTarget is set; it is idempotent (it skips a material that
+				// already has the env it would assign).
+				if ( CFG.probeSpec ) assignSpecularEnv();
+				probeReport = applyProbeEnv( scene, rt.texture, { note, gate3Report } );
+				probeReport.station = manifest.gate3.probe.station || null;
+				probeReport.positionBlender = manifest.gate3.probe.positionBlender || null;
+				note( 'probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest\'s own '
+					+ 'probe.use says it is not the diffuse environment; this use of it is the lead\'s QA-13-1 call '
+					+ 'and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.' );
+			}
+		} catch ( e ) { note( `probe env failed: ${e.message}; the sky-diffuse path stays` ); }
+	} else if ( manifest.gate3 && manifest.gate3.probe && ! CFG.probeEnv ) {
+		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
+	}
+
 }
 
 /**
@@ -1229,7 +1266,18 @@ async function afterGeometry( newRoots, tier ) {
 		// The per-placement irradiance binds to the glb `instance_irradiance.glb` names: with that glb
 		// in a later tier it is not an error that it is missing, it is simply not here yet.
 		const iiGlb = manifest.gate3.instanceIrradiance ? manifest.gate3.instanceIrradiance.glb : null;
-		const iiHere = ! iiGlb || !! scene.getObjectByName( `WEB_glb_${iiGlb}` );
+		// The per-placement irradiance is keyed to the glTF NODE INDEX and the per-node row counts of
+		// ONE env glb (gltfpack drops names, so the index is the only key there is).  When v5 splits
+		// env into per-tier GROUPS those indices no longer exist: node 1 of env_t0 is a different mesh
+		// with a different row count, and lightmaps.js refuses to bind a misaligned array — rightly,
+		// because binding it would tint 1 379 shrubs from the wrong rows.  The pass is skipped, loudly:
+		// the export has to re-emit `lightmaps.instance_irradiance` per GROUP for it to come back.
+		const envGroups = manifest.glbs.filter( ( g ) => g.cls === ( iiGlb || 'env' ) ).length;
+		const iiSplit = !! ( iiGlb && envGroups > 1 );
+		const iiHere = ! iiGlb || ( ! iiSplit && !! scene.getObjectByName( `WEB_glb_${iiGlb}` ) );
+		if ( iiSplit && ! tier ) note( `gate4 instance irradiance SKIPPED: ${iiGlb} ships as ${envGroups} tier groups and the `
+			+ `manifest's node indices / row counts are those of the single ${iiGlb}.glb — the 1 379 shrub and reed `
+			+ `placements stay on the probe until the export re-emits lightmaps.instance_irradiance per group` );
 		const report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
 			vertexIrr: CFG.vertexIrr, instIrr: iiHere ? CFG.instIrr : '0', shrubCov: CFG.shrubCov,
