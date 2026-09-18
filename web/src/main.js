@@ -217,7 +217,7 @@ if ( MOBILE ) {
 	set( 'imp2k', 'imp2k', s.imp2k );
 	set( 'reflset', 'reflSet', s.reflSet );
 	set( 'reflres', 'reflRes', 'half' );
-	note( `mobile render settings: ${took.join( ', ' )}; the planar reflection draws the SKY only `
+	note( `mobile render settings: ${took.join( ', ' )}; the planar reflection draws the reduced set (?reflset=${CFG.reflSet}) `
 		+ `(no second scene pass), the drawing buffer is capped at ${( s.maxDrawingBufferPx / 1e6 ).toFixed( 1 )} M pixels` );
 }
 
@@ -1807,7 +1807,7 @@ function applyStation( n ) {
 		const dist = st.target ? b2t( ...st.target ).distanceTo( camera.position ) : 40;
 		controls.target.copy( camera.position.clone().add( camera.getWorldDirection( new THREE.Vector3() ).multiplyScalar( dist ) ) );
 	}
-	document.getElementById( 'hud' ).textContent = `${st.index}. ${st.name}  lens ${st.lens} mm  shift_y ${st.shift_y}`;
+	document.getElementById( 'hud' ).textContent = `${st.index}. ${st.name}  lens ${st.lens} mm  shift_y ${Number( st.shift_y || 0 ).toFixed( 2 )}`;
 	const chk = stationMatrix( st );
 	console.log( `[pfa] station ${st.index} ${st.name}
   source           ${chk.source}${chk.lookAtMatrix ? `  (look-at cross-check max element diff ${matrixMaxDiff( chk.matrix, chk.lookAtMatrix ).toExponential( 2 )})` : '  (look-at degenerate)'}

@@ -88,7 +88,7 @@ export const TIER_SETTINGS = {
 		shrubLod: 0,                        // LOD2 cards only: no env_shrubs.glb either
 		walkupMesh: '0',                    // no walk-up LOD1 tree set
 		imp2k: false,                       // the 1K impostor atlas
-		reflSet: 'all',
+		reflSet: 'both',   // 6d: was 'all' (sky only); 'both' keeps ARCH, ground, near ENV and impostors, drops ORN and backdrop, at the half-res target
 		foliageTex: '1024',
 	},
 };
