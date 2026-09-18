@@ -1389,13 +1389,30 @@ the directory is rebuilt on every deploy), and checks the limits BEFORE the uplo
   a pipeline's status from its last command — so the `|| exit 4` guard was dead until `setopt
   pipefail`.  Every dry run now runs `pipefail_selftest`, which feeds `link_set` a manifest naming one
   missing file and refuses to continue unless that fails (it reports `rc 3`).
-- **`_headers`:** `assets/*` immutable for a year (a bake goes to a new gate directory, never in
-  place), **and after it** `/assets/*manifest*.json` and `/assets/*_status.json` at
-  `max-age=60, must-revalidate` — the last matching rule wins, and `*` spans `/`, so without those two
-  the load plan itself would be pinned for a year and a returning visitor would get a stale one.  The
-  site is `max-age=300`.  Deliberately **no `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-
-  Policy`** — measured, not assumed: three's `KTX2Loader` transfers ArrayBuffers to its worker pool
-  and neither it nor the basis transcoder mentions `SharedArrayBuffer`.
+- **`_headers`, and the concatenation trap.**  Workers static assets **concatenates** the value of
+  every matching rule instead of letting the most specific one win: live, `/assets/gate5/manifest.json`
+  came back as `public, max-age=300, must-revalidate, public, max-age=31536000, immutable` — two
+  policies in one header — and `uv2_relay_status.json` had all three joined.  Each block therefore
+  begins with `! Cache-Control`, which DETACHES what an earlier-applied rule set, and states the whole
+  policy; the blocks are written least-specific first, the order the platform applies them in.  A
+  second live finding: **only one wildcard per pattern matches** — `/assets/*manifest*.json` matched
+  nothing while `/assets/*_status.json` matched — so the manifests get two explicit rules.
+  `Access-Control-Allow-Origin: *` is set once, on `/assets/*`, and never repeated (it would
+  concatenate too).  Expected value per path class, one `Cache-Control` each:
+
+  | path | Cache-Control |
+  |---|---|
+  | `/`, `/index.html`, `/assets/index-*.js`, `/basis/*` | `public, max-age=300, must-revalidate` |
+  | `/assets/<gate>/**` (glb, ktx2, hdr, cube) | `public, max-age=31536000, immutable` |
+  | `/assets/<gate>/manifest.json`, `manifest_mobile.json`, `uv2_relay_status.json` | `public, max-age=60, must-revalidate` |
+
+  Deliberately **no `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-Policy`** — measured, not
+  assumed: three's `KTX2Loader` transfers ArrayBuffers to its worker pool and neither it nor the basis
+  transcoder mentions `SharedArrayBuffer`.
+- **Carry — no range support.**  Workers static assets answered `Range: bytes=0-99` with **200 and no
+  `Content-Range`**.  Nothing breaks: the glTF, KTX2 and HDR loaders all fetch whole files, and the
+  `_headers` immutability is what keeps a second visit cheap.  It matters only if a future loader
+  starts range-fetching, or for the R2 fallback below, whose own Function does honour `Range`.
 - **Over 25 MiB:** `--r2` uploads exactly those files to an R2 bucket and leaves them out of the
   upload; `functions/assets/[[path]].js` serves them at the SAME url from the `ASSETS_BUCKET` binding
   with `Range` and `If-None-Match` passed through.  Under Workers the binding moves into the same

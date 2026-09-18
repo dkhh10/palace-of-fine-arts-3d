@@ -174,23 +174,41 @@ fi
 
 # ---------------------------------------------------------------------------- 4. headers
 cat > "$OUT/_headers" <<'HEADERS'
+# Workers static assets CONCATENATES the value of every matching rule instead of letting the more
+# specific one win: a manifest under /assets/ came back as
+#   "public, max-age=300, must-revalidate, public, max-age=31536000, immutable"
+# which is two policies in one header.  `! Cache-Control` DETACHES what an earlier-applied rule set,
+# so each block below states the whole policy and every response carries exactly one Cache-Control.
+# The blocks are written least-specific first, which is the order the platform applies them in.
+#
+# Only ONE wildcard per pattern is matched: `/assets/*manifest*.json` silently matched nothing live,
+# while `/assets/*_status.json` matched.  Hence the two explicit manifest rules.
+
+# The site: small, and it changes with every deploy.
+/*
+  Cache-Control: public, max-age=300, must-revalidate
+
 # Every bake file lives under a gate directory that is rewritten as a whole, never in place, so its
 # url identifies its content: cache it for a year and never revalidate.
 /assets/*
+  ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
-# ...EXCEPT the manifests and the relay status, which live under assets/ but are the LOAD PLAN: a
+
+# ...EXCEPT the manifests and the relay status, which live under assets/ but ARE the load plan: a
 # year of immutable caching would serve a returning visitor a stale plan for a bake that has moved.
-# Pages applies the LAST matching rule, so these come after the block above, and `*` spans `/`.
-/assets/*manifest*.json
+# (Access-Control-Allow-Origin is inherited from the /assets/* rule and must not be repeated, or it
+# would concatenate too.)
+/assets/*manifest.json
+  ! Cache-Control
   Cache-Control: public, max-age=60, must-revalidate
-  Access-Control-Allow-Origin: *
+/assets/*manifest_mobile.json
+  ! Cache-Control
+  Cache-Control: public, max-age=60, must-revalidate
 /assets/*_status.json
+  ! Cache-Control
   Cache-Control: public, max-age=60, must-revalidate
-  Access-Control-Allow-Origin: *
-# The site is small and changes with every deploy.
-/*
-  Cache-Control: public, max-age=300, must-revalidate
+
 # Deliberately NOT set: Cross-Origin-Opener-Policy / Cross-Origin-Embedder-Policy.  three's
 # KTX2Loader transfers ArrayBuffers to its worker pool and never allocates a SharedArrayBuffer
 # (checked: zero matches in KTX2Loader.js and in the basis transcoder), so cross-origin isolation
