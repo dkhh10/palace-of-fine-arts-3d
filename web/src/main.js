@@ -352,7 +352,8 @@ let gate3Report = null;
 // manifest with no `tiers` block has one tier: `count` 1, nothing streams, and every code path below
 // behaves exactly as it did at v4.
 const tierState = { present: false, count: 1, max: Infinity, now: 0, tier0PlannedBytes: 0,
-	plan: null, per: [], deferredLightmaps: 0, streaming: false, done: false, stub: null };
+	plan: null, per: [], deferredLightmaps: 0, streaming: false, done: false, stub: null,
+	loading: 0, substituted: 0 };
 let tierOf = () => 0;
 // The tier at which the scene is complete enough for the foliage / impostor passes: the later of the
 // env geometry and the impostor atlases, because applyFoliage produces the near-tree units the
@@ -424,6 +425,8 @@ function tierBytes( t ) {
 let patchedMaterials = 0, lightmapsApplied = 0;
 // what the last whole-scene gate3 pass had already counted (its report is a total, not a delta)
 let gate3Counted = { own: 0, patched: 0 };
+// instance-irradiance groups already bound (one binding per group, ever)
+const iiBoundGroups = new Set();
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
@@ -784,6 +787,7 @@ async function streamTiers() {
 		for ( let t = 1; t < tierState.count && t <= tierState.max; t ++ ) {
 			const t0 = performance.now();
 			const before = progress.loaded;
+			tierState.loading = t;
 			progress.tier = { index: t, base: before, total: tierBytes( t ) };
 			drawTierProgress();
 			const plan = tierState.plan ? tierState.plan( t ) : [];
@@ -1219,6 +1223,24 @@ function assignSpecularEnv() {
 }
 
 let ktx2Loader = null;
+/**
+ * A GLB names its external textures at FULL resolution — that is the file the look needs — but tier 0
+ * ships their half-resolution stand-ins (`tiers.lowres.files[key].full` says which file each stands
+ * in for).  When GLTFLoader asks for a file whose own tier has not arrived, it is served the stand-in
+ * instead; `upgradeGlbTextures` puts the full file on the same material when its tier lands.  Without
+ * this the tier-0 payload pulled the whole 91.7 MB full-resolution glb texture set.
+ */
+function tierSubstitute( url ) {
+	const t = manifest && manifest.tiers;
+	if ( ! t || ! t.lowresFor || ! t.lowresFor.size ) return url;
+	const here = Math.max( tierState.now || 0, tierState.loading || 0 );
+	if ( tierOf( url ) <= here ) return url;               // its own tier has arrived: the real file
+	const lo = t.lowresFor.get( url );
+	if ( ! lo || lo.tier > here ) return url;              // no stand-in available yet: the real file
+	tierState.substituted ++;
+	return lo.url;
+}
+
 let ktx2RawLoad = null;
 function getKTX2() {
 	// One instance, kept alive: it owns a worker pool and also transcodes any .ktx2 lightmap.
@@ -1235,7 +1257,7 @@ function getKTX2() {
 			// so it goes straight to the real loader.  (An embedded texture also cannot be upgraded to
 			// a later tier: there is no url for the manifest to name.)
 			if ( /^blob:/.test( url ) ) return ktx2RawLoad( url, onLoad, onProgress, onError );
-			loadAnyTexture( url ).then( ( t ) => onLoad && onLoad( t ) ).catch( ( e ) => {
+			loadAnyTexture( tierSubstitute( url ) ).then( ( t ) => onLoad && onLoad( t ) ).catch( ( e ) => {
 				if ( onError ) onError( e ); else note( `ktx2 ${url.split( '/' ).pop()} failed: ${e.message}` );
 			} );
 			return ktx2Loader;
@@ -1285,6 +1307,8 @@ async function loadGlbs( list = manifest.glbs ) {
 			// reaches a shader is 1/16 of its real value until this undoes it on the attribute.
 			// See src/uvDequant.js.  ?uvdq=0 restores the broken behaviour for an A/B.
 			uvDequantReport.push( { name: g.name, ...dequantizeUvs( gltf.scene, { note, enabled: CFG.uvDequant } ) } );
+			gltf.scene.userData.pfaGroup = g.group || null;
+			gltf.scene.userData.pfaClass = g.cls;
 			scene.add( gltf.scene );
 			glbRoots.push( gltf.scene );
 			newRoots.push( gltf.scene );
@@ -1373,23 +1397,40 @@ async function afterGeometry( newRoots, tier ) {
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
 		// The per-placement irradiance binds to the glb `instance_irradiance.glb` names: with that glb
 		// in a later tier it is not an error that it is missing, it is simply not here yet.
-		const iiGlb = manifest.gate3.instanceIrradiance ? manifest.gate3.instanceIrradiance.glb : null;
+		const iiBlock = manifest.gate3.instanceIrradiance;
+		const iiGlb = iiBlock ? iiBlock.glb : null;
+		// v5: the per-GROUP re-keying.  Each group's nodes are indices into ITS glb, so each is bound
+		// against the root that carries that group and nothing is bound across files.  A group whose
+		// glb has not arrived yet is simply not in this list; the pass re-runs at its tier.
+		// A group is bound EXACTLY ONCE, in the tier that brought it and before chunking splits its
+		// instanced meshes: after chunking the per-node row counts no longer match the manifest's and
+		// the binder refuses the array (rightly — it would light each card from a neighbour's row).
+		const instanceGroups = [];
+		if ( iiBlock && iiBlock.groups ) {
+			for ( const [ id, grp ] of Object.entries( iiBlock.groups ) ) {
+				if ( iiBoundGroups.has( id ) ) continue;
+				const root = newRoots.find( ( r ) => r.userData.pfaGroup === id )
+					|| ( ! newRoots.length ? glbRoots.find( ( r ) => r.userData.pfaGroup === id ) : null );
+				if ( root ) { instanceGroups.push( { id, nodes: grp.nodes, placements: grp.placements, root } ); iiBoundGroups.add( id ); }
+			}
+		}
 		// The per-placement irradiance is keyed to the glTF NODE INDEX and the per-node row counts of
-		// ONE env glb (gltfpack drops names, so the index is the only key there is).  When v5 splits
-		// env into per-tier GROUPS those indices no longer exist: node 1 of env_t0 is a different mesh
-		// with a different row count, and lightmaps.js refuses to bind a misaligned array — rightly,
-		// because binding it would tint 1 379 shrubs from the wrong rows.  The pass is skipped, loudly:
-		// the export has to re-emit `lightmaps.instance_irradiance` per GROUP for it to come back.
+		// the glb it was joined against (gltfpack drops names, so the index is the only key there is).
+		// With `groups` the manifest states that per group and each is bound to its own root; WITHOUT
+		// it, and with env split across tiers, the single-glb indices are meaningless and binding them
+		// would tint 1 379 shrubs from the wrong rows — so that case is skipped, loudly.
 		const envGroups = manifest.glbs.filter( ( g ) => g.cls === ( iiGlb || 'env' ) ).length;
-		const iiSplit = !! ( iiGlb && envGroups > 1 );
-		const iiHere = ! iiGlb || ( ! iiSplit && !! scene.getObjectByName( `WEB_glb_${iiGlb}` ) );
+		const iiSplit = !! ( iiGlb && envGroups > 1 && ! instanceGroups.length );
+		const iiHere = ! iiGlb || instanceGroups.length > 0
+			|| ( ! iiSplit && !! scene.getObjectByName( `WEB_glb_${iiGlb}` ) );
 		if ( iiSplit && ! tier ) note( `gate4 instance irradiance SKIPPED: ${iiGlb} ships as ${envGroups} tier groups and the `
-			+ `manifest's node indices / row counts are those of the single ${iiGlb}.glb — the 1 379 shrub and reed `
-			+ `placements stay on the probe until the export re-emits lightmaps.instance_irradiance per group` );
+			+ `manifest carries no per-group node indices (lightmaps.instance_irradiance.groups) — the shrub and reed `
+			+ `placements stay on the probe` );
 		const report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
 			vertexIrr: CFG.vertexIrr, instIrr: iiHere ? CFG.instIrr : '0', shrubCov: CFG.shrubCov,
 			tierOf, maxTier: tier, skipIrradiance: ! newRoots.length,
+			instanceGroups: iiHere ? instanceGroups : [],
 			loadTexture: loadAnyTexture,
 		} );
 		await report.promise;
@@ -1830,6 +1871,7 @@ window.__pfaInfo = () => ( {
 		deferred_lightmaps: tierState.deferredLightmaps, upgrades: tierState.upgrades || [],
 		lowres_remaining: tierState.lowresRemaining || [],
 		lowres_etc_textures: tierState.lowresEtcTextures ?? null,
+		lowres_substituted: tierState.substituted,
 		texture_sharing: { urls: textureShare.urls, shared_users: textureShare.shared,
 			bytes_saved_estimate: textureShare.bytesSaved },
 		stub: tierState.stub, error: tierState.error || null },

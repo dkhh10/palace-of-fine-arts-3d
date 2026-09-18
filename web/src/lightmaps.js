@@ -283,8 +283,29 @@ export function applyGate3Lightmaps( o ) {
 	else report.vertexIrradiance = applyVertexIrradiance( scene, gate3, assets, note, o.vertexIrr );
 
 	// ---- pass 4: per-placement irradiance on the 1 379 shrub/reed cards (Gate 4 item 1c) -----
-	report.instanceIrradiance = o.skipIrradiance ? null
-		: applyInstanceIrradiance( scene, gate3, note, o.instIrr, { covScale: o.shrubCov } );
+	// v5 ships the block re-keyed PER GROUP (a glTF node index only means anything inside the glb it
+	// indexes, and env is several glbs now).  `instanceGroups` is what the caller resolved: the id,
+	// that group's nodes, and the root they are in.  One call per group, one merged report.
+	if ( o.skipIrradiance ) report.instanceIrradiance = null;
+	else if ( Array.isArray( o.instanceGroups ) && o.instanceGroups.length ) {
+		const merged = { wanted: 0, nodes: 0, rows: 0, dark: 0, materials: 0, missing: [], errors: [],
+			enabled: false, groups: [], covScale: null, covMean: null };
+		for ( const grp of o.instanceGroups ) {
+			const block = { ...gate3.instanceIrradiance, nodes: grp.nodes, placements: grp.placements };
+			const r = applyInstanceIrradiance( scene, gate3, note, o.instIrr,
+				{ covScale: o.shrubCov, root: grp.root, block, label: `gate4 instance irradiance [${grp.id}]` } );
+			for ( const k of [ 'wanted', 'nodes', 'rows', 'dark', 'materials' ] ) merged[ k ] += r[ k ] || 0;
+			merged.missing.push( ...( r.missing || [] ).map( ( n ) => `${grp.id}:${n}` ) );
+			merged.errors.push( ...( r.errors || [] ) );
+			merged.covScale = r.covScale; merged.covMean = r.covMean;
+			merged.groups.push( { id: grp.id, nodes: r.nodes, rows: r.rows, missing: ( r.missing || [] ).length } );
+		}
+		merged.enabled = merged.nodes > 0 && ! merged.errors.length;
+		note( `gate4 instance irradiance: ${merged.rows}/${merged.wanted} placement(s) over ${merged.nodes} node(s) `
+			+ `in ${o.instanceGroups.length} group(s) [${merged.groups.map( ( g ) => `${g.id} ${g.rows}` ).join( ', ' )}], `
+			+ `${merged.materials} material(s) patched, ${merged.dark} with cov == 0 left on the probe` );
+		report.instanceIrradiance = merged;
+	} else report.instanceIrradiance = applyInstanceIrradiance( scene, gate3, note, o.instIrr, { covScale: o.shrubCov } );
 
 	report.promise = Promise.all( pending ).then( () => {
 		note( `gate3 UV2 census: ${report.uv2.meshesWithUv2} mesh(es) carry TEXCOORD_1 (${report.uv2.drawnWithUv2} placements), `

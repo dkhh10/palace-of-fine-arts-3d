@@ -128,12 +128,29 @@ for ( const which of [ 'manifest.json', 'manifest_mobile.json' ] ) {
 	check( m.glbs.some( ( g ) => g.cls === 'arch' ), `${which}: the arch class is in the glb list` );
 	check( ! m.glbs.some( ( g ) => /env_(trees|shrubs)/.test( g.name ) ), `${which}: no lazy foliage glb in the glb list` );
 	check( t.oversize.length === 0, `${which}: no file over the host's per-file cap` );
-	// The desktop set sharpens in tier 1 from half-res ETC1S stand-ins; the mobile set IS the halved
-	// ETC1S encode, so it has nothing to stand in for and carries no lowres table.
+	// Both variants ship low-resolution stand-ins now (the desktop PBR sets, and on both the maps the
+	// glbs reference).  What matters is that every one of them has a full-resolution successor in a
+	// LATER tier — a stand-in with nothing to upgrade to would stay on screen for ever.
 	const withLo = Object.values( m.materials.sets ).filter( ( s ) => Object.values( s.maps ).some( ( e ) => e.lo ) ).length;
-	if ( t.variant === 'mobile' || /mobile/.test( which ) )
-		check( withLo === 0 && t.lowres.size === 0, `${which}: no low-resolution stand-ins (the whole set is already halved)` );
-	else check( withLo > 0, `${which}: ${withLo} material set(s) have a low-resolution stand-in for tier 0` );
+	console.log( `NOTE  ${which}: ${t.lowres.size} low-resolution stand-in(s), ${withLo} material set(s) wearing one at tier 0` );
+	// A stand-in is only ever USED while its full-resolution file has not arrived, so what has to hold
+	// is that a stand-in the viewer can be served has a successor it can be upgraded to.  A stand-in
+	// that arrives with (or after) its full file is simply never fetched — the viewer takes the full
+	// one — and is reported so the export can drop those rows from the plan.
+	let useless = 0, inverted = 0;
+	for ( const [ lo, full ] of t.upgradeOf ) {
+		const lt = t.byUrl.get( lo ) ?? 0;
+		if ( full.tier < lt ) inverted ++;
+		else if ( full.tier === lt ) useless ++;
+	}
+	check( t.upgradeOf.size > 0 && t.lowresFor.size === t.upgradeOf.size,
+		`${which}: every stand-in is paired both ways (${t.upgradeOf.size} pair(s))` );
+	if ( useless || inverted ) console.log( `NOTE  ${which}: ${useless} stand-in(s) share a tier with their full file and `
+		+ `${inverted} arrive AFTER it — the viewer takes the full file in both cases and never fetches them` );
+	const ii = m.gate3 && m.gate3.instanceIrradiance;
+	if ( ii ) check( !! ii.groups && Object.keys( ii.groups ).length > 0,
+		`${which}: instance_irradiance is re-keyed per group (${ii.groups ? Object.keys( ii.groups ).join( ', ' ) : 'MISSING'})` );
+	check( t.bootOverhead > 0, `${which}: boot overhead ${( ( t.bootOverhead || 0 ) / 1e6 ).toFixed( 2 )} MB is in the manifest` );
 }
 
 console.log( fails ? `${fails} FAILED` : 'all tier checks passed' );

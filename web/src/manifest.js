@@ -111,7 +111,8 @@ export function resolveUrl( base, url ) {
 export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 	const notes = [];
 	const out = { present: false, count: 0, list: [], oversize: [], byUrl: new Map(), files: new Map(),
-		byKey: new Map(), lowres: new Map(), upgradeOf: new Map(), totals: {}, notes, declaredBytes: 0 };
+		byKey: new Map(), lowres: new Map(), upgradeOf: new Map(), lowresFor: new Map(),
+		totals: {}, notes, declaredBytes: 0 };
 	const rawTiers = pick( raw, 'tiers', 'load_tiers' );
 	const rawFiles = pick( raw, 'files', 'tiers.files' );
 	if ( ! rawTiers && ! ( rawFiles && typeof rawFiles === 'object' ) ) return out;
@@ -172,9 +173,19 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 			const url = resolve( baseUrl, e.path );
 			if ( ! url ) continue;
 			const row = out.files.get( url );
-			out.lowres.set( key, { url, bytes: e.bytes ?? ( row && row.bytes ) ?? null, px: e.px ?? null,
-				tier: row && Number.isFinite( row.tier ) ? row.tier : 0 } );
-			claim( url, row && Number.isFinite( row.tier ) ? row.tier : 0 );
+			const loTier = row && Number.isFinite( row.tier ) ? row.tier : 0;
+			out.lowres.set( key, { url, bytes: e.bytes ?? ( row && row.bytes ) ?? null, px: e.px ?? null, tier: loTier } );
+			claim( url, loTier );
+			// `full` states the file this stands in for outright — the only way to know it for a
+			// texture the GLB names itself, where no material set and no key in the plan mentions it.
+			const fullUrl = e.full ? resolve( baseUrl, e.full ) : null;
+			if ( fullUrl && fullUrl !== url ) {
+				const fr = out.files.get( fullUrl );
+				const fullTier = fr && Number.isFinite( fr.tier ) ? fr.tier : loTier;
+				out.upgradeOf.set( url, { url: fullUrl, tier: fullTier, key, bytes: fr ? fr.bytes : null } );
+				const prev = out.lowresFor.get( fullUrl );
+				if ( ! prev || loTier < prev.tier ) out.lowresFor.set( fullUrl, { url, tier: loTier, key } );
+			}
 		}
 		notes.push( `manifest tiers: ${out.lowres.size} low-resolution stand-in(s) in ${lowres.dir || '(no dir)'}`
 			+ ( lowres.chosen ? ` — ${lowres.chosen}` : '' ) );
@@ -263,7 +274,9 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 		const full = sorted[ sorted.length - 1 ];
 		for ( const r of sorted.slice( 0, -1 ) ) {
 			if ( r.url === full.url ) continue;
-			out.upgradeOf.set( r.url, { url: full.url, tier: full.tier, key, bytes: full.bytes } );
+			if ( ! out.upgradeOf.has( r.url ) ) out.upgradeOf.set( r.url, { url: full.url, tier: full.tier, key, bytes: full.bytes } );
+			const prev = out.lowresFor.get( full.url );
+			if ( ! prev || ( r.tier ?? 0 ) < prev.tier ) out.lowresFor.set( full.url, { url: r.url, tier: r.tier ?? 0, key } );
 		}
 	}
 	// The textures the GLB references itself (`gltfpack -tr`: the leaf, bark and ORN occlusion maps)
@@ -288,6 +301,8 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 			const full = outsideLo.get( row.url.split( '/' ).pop() );
 			if ( ! full || full.url === row.url || ( full.tier ?? 0 ) <= ( row.tier ?? 0 ) ) continue;
 			out.upgradeOf.set( row.url, { url: full.url, tier: full.tier, key: full.key || null, bytes: full.bytes, byName: true } );
+			const prev = out.lowresFor.get( full.url );
+			if ( ! prev || ( row.tier ?? 0 ) < prev.tier ) out.lowresFor.set( full.url, { url: row.url, tier: row.tier ?? 0, key: row.key || null } );
 			paired ++;
 		}
 		if ( paired ) notes.push( `manifest tiers: ${paired} low-resolution file(s) paired to their full-resolution `
@@ -1034,7 +1049,16 @@ export function normaliseManifest( raw, baseUrl ) {
 				// manifest that writes "env.glb", "../gate1/env.glb" or an absolute path all mean the
 				// same root, and anything but the stem silently found no root at all.
 				glb: String( ( ii.order_source && ii.order_source.glb ) || 'env.glb' )
-					.split( '/' ).pop().replace( /\.glb$/, '' ) } : null,
+					.split( '/' ).pop().replace( /\.glb$/, '' ),
+				// v5: the same block re-keyed PER GROUP, because a glTF node index only means anything
+				// inside the glb it indexes and env now ships as several.  { <group id>: { glb, nodes } }.
+				groups: ( ii.groups && typeof ii.groups === 'object' && ! Array.isArray( ii.groups ) )
+					? Object.fromEntries( Object.entries( ii.groups ).map( ( [ id, g ] ) => [ id, {
+						id, glb: g.glb || null, nodes: Array.isArray( g.nodes ) ? g.nodes : [],
+						placements: Array.isArray( g.nodes ) ? g.nodes.reduce( ( a, n ) => a + ( n.count || 0 ), 0 ) : 0,
+					} ] ) ) : null,
+				groupsComplete: ii.groups_complete ?? null,
+				groupsPlacements: ii.groups_placements ?? null } : null,
 			impostors, probe, notes: g3notes };
 		notes.push( `manifest v4 lightmaps: ${gate3.ownCount} own map(s) ready of ${Object.keys( ownMaps ).length}`
 			+ ( frozenUsed ? `, ${frozenUsed} on the frozen Gate 1 layout` : '' )
