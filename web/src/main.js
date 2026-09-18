@@ -405,6 +405,8 @@ function tierBytes( t ) {
 }
 
 let patchedMaterials = 0, lightmapsApplied = 0;
+// what the last whole-scene gate3 pass had already counted (its report is a total, not a delta)
+let gate3Counted = { own: 0, patched: 0 };
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
@@ -1236,11 +1238,14 @@ async function afterGeometry( newRoots, tier ) {
 		} );
 		await report.promise;
 		if ( ! iiHere ) note( `gate3 instance irradiance postponed: ${iiGlb}.glb is in a later load tier` );
-		lightmapsApplied += report.own.applied;
-		patchedMaterials += report.own.applied + report.slots.meshes.length;
+		// The pass re-plans the WHOLE scene every time, so its counts are totals, not deltas: what a
+		// re-run adds is the difference against the last one, or a three-tier load would report three
+		// times the lightmaps it applied.
+		lightmapsApplied += report.own.applied - gate3Counted.own;
+		patchedMaterials += ( report.own.applied + report.slots.meshes.length ) - gate3Counted.patched;
+		gate3Counted = { own: report.own.applied, patched: report.own.applied + report.slots.meshes.length };
 		tierState.deferredLightmaps = report.deferred.length;
-		gate3Report = gate3Report ? { ...report, own: { ...report.own,
-			applied: gate3Report.own.applied + report.own.applied } } : report;
+		gate3Report = report;
 	}
 
 	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those

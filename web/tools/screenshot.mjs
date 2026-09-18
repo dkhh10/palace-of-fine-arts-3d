@@ -35,6 +35,10 @@
 //                     gap to the next rAF, per station, and report the composer passes and whether
 //                     the water Reflector is rendering the scene a second time
 //   --warmup N        frames rendered and discarded after each station switch (default 20)
+//   --net PATH        Phase 6b: the wire record of the load — bytes before the first frame (the
+//                     initial payload the 50 MB budget is about), time to first frame, time to the
+//                     last load tier, bytes by file kind, and every request with its own bytes and
+//                     timings.  Use it with --url against the staging deployment.
 //
 // It refuses to launch while the bake queue is running or any Blender process is alive
 // (PFA_ALLOW_GPU=1 overrides everything; PFA_DEV_SHARE_GPU=1 allows a DEVELOPMENT screenshot beside a
@@ -153,8 +157,11 @@ function gpuGuard() {
 	throw new Error( `a Blender process is alive (pid ${blender.split( '\n' ).join( ', ' )}): refusing to use the GPU` );
 }
 
-let browser = null, server = null, viteProc = null, pageErrorExit = false;
+let browser = null, server = null, viteProc = null, pageErrorExit = false, cdp = null;
 const t0 = Date.now();
+// --net bookkeeping: every request the page made, with the bytes that crossed the wire.
+const net = { byId: new Map(), done: [], bytes: 0, t0: null };
+let navAt = null, readyAt = null, tiersAt = null, bytesAtReady = 0;
 try {
 	gpuGuard();
 	let base = o.url;
@@ -195,8 +202,31 @@ try {
 	// an unactionable page error is nearly as bad as a swallowed one.
 	page.on( 'response', ( r ) => { if ( r.status() >= 400 ) pageLog.push( `httperror: ${r.status()} ${r.url()}` ); } );
 
+	// --net: the wire-level record of the load, for the Gate 5 payload numbers.  CCDP's
+	// `encodedDataLength` is what actually crossed the network (after Brotli/gzip), which is the
+	// number the 50 MB initial-payload budget is written in; puppeteer's own response events do not
+	// carry it.  Timestamps are CDP monotonic seconds, rebased on the navigation below.
+	if ( o.net ) {
+		cdp = await page.createCDPSession();
+		await cdp.send( 'Network.enable' );
+		cdp.on( 'Network.requestWillBeSent', ( e ) => {
+			net.byId.set( e.requestId, { url: e.request.url, method: e.request.method, start: e.timestamp, bytes: 0 } );
+			if ( net.t0 === null ) net.t0 = e.timestamp;
+		} );
+		cdp.on( 'Network.responseReceived', ( e ) => { const r = net.byId.get( e.requestId ); if ( r ) { r.status = e.response.status; r.mime = e.response.mimeType; r.fromCache = e.response.fromDiskCache; } } );
+		cdp.on( 'Network.loadingFinished', ( e ) => {
+			const r = net.byId.get( e.requestId );
+			if ( ! r ) return;
+			r.bytes = e.encodedDataLength || 0; r.end = e.timestamp;
+			net.bytes += r.bytes;
+			net.done.push( r );
+		} );
+		cdp.on( 'Network.loadingFailed', ( e ) => { const r = net.byId.get( e.requestId ); if ( r ) { r.failed = e.errorText; r.end = e.timestamp; net.done.push( r ); } } );
+	}
+
 	console.log( `[shot] ${url}` );
 	await page.goto( url, { waitUntil: 'domcontentloaded', timeout } );
+	navAt = Date.now();
 	// --loading MS: shoot the LOADING SCREEN before waiting for ready, so the progress panel a first
 	// visitor sees is evidence and not a claim.  The page is still loading, so this is deliberately
 	// racy: the delay picks a moment, and the shot records whatever the panel showed then.
@@ -209,7 +239,17 @@ try {
 		console.log( `[shot] loading screen after ${wait} ms -> ${lf}` );
 	}
 	await page.waitForFunction( 'window.__pfaReady === true || window.__pfaError', { timeout, polling: 250 } );
-	// 6c round 2: `__pfaReady` is the FIRST FRAME, and the two foliage glbs load after it on purpose.
+	readyAt = Date.now();
+	bytesAtReady = net.bytes;
+	// 6b: `__pfaReady` is TIER 0 — the first presented frame.  Tiers 1-2 stream behind it, so a
+	// capture that is going to be scored waits for `__pfaTiersReady` as well.  `?tiers=0` flips it
+	// immediately (there is nothing to stream), which is exactly how the tier-0 capture is taken.
+	if ( await page.evaluate( () => window.__pfaTiersReady !== undefined ) ) {
+		await page.waitForFunction( 'window.__pfaTiersReady === true || window.__pfaError', { timeout, polling: 250 } );
+		tiersAt = Date.now();
+		console.log( `[shot] load tiers complete (__pfaTiersReady) after ${( ( tiersAt - t0 ) / 1000 ).toFixed( 1 )} s` );
+	}
+	// 6c round 2: the two foliage glbs load after the first frame on purpose.
 	// A scored capture must show the finished scene, so it also waits for `__pfaLazyReady` whenever the
 	// page declares one (an older build does not, and the wait is skipped).
 	if ( await page.evaluate( () => window.__pfaLazyReady !== undefined ) ) {
@@ -393,6 +433,39 @@ try {
 			stations: perStation,
 		}, null, 1 ) );
 		console.log( `[shot] wrote ${perfOut}` );
+	}
+	// --net PATH: the Gate 5 payload record.  "Before the first frame" is every request that FINISHED
+	// before `__pfaReady` flipped — that is the initial payload the 50 MB budget is about — and the
+	// per-tier arrival is the viewer's own accounting (__pfaInfo().tiers.per_tier), which knows which
+	// file belonged to which tier and the wire does not.
+	if ( o.net ) {
+		const netOut = path.resolve( REPO, o.net );
+		const rel = ( ts ) => ( net.t0 === null || ts === undefined ? null : + ( ts - net.t0 ).toFixed( 3 ) );
+		const requests = net.done.map( ( r ) => ( { url: r.url, status: r.status ?? null, mime: r.mime || null,
+			bytes: r.bytes, start_s: rel( r.start ), end_s: rel( r.end ), failed: r.failed || null } ) )
+			.sort( ( a, b ) => ( a.end_s ?? 0 ) - ( b.end_s ?? 0 ) );
+		const byKind = {};
+		for ( const r of requests ) { const k = ( r.url.match( /\.(glb|ktx2|hdr|exr|cube|json|js|wasm|png)(\?|$)/i ) || [ , 'other' ] )[ 1 ].toLowerCase();
+			byKind[ k ] = ( byKind[ k ] || 0 ) + r.bytes; }
+		fs.mkdirSync( path.dirname( netOut ), { recursive: true } );
+		fs.writeFileSync( netOut, JSON.stringify( {
+			generated: new Date().toISOString(), url, size: [ W, H ],
+			time_to_first_frame_s: readyAt && navAt ? + ( ( readyAt - navAt ) / 1000 ).toFixed( 3 ) : null,
+			time_to_all_tiers_s: tiersAt && navAt ? + ( ( tiersAt - navAt ) / 1000 ).toFixed( 3 ) : null,
+			bytes_before_first_frame: bytesAtReady,
+			bytes_total: net.bytes,
+			bytes_by_kind: byKind,
+			requests_before_first_frame: requests.filter( ( r ) => r.end_s !== null && readyAt && navAt
+				&& r.end_s * 1000 <= ( readyAt - navAt ) ).length,
+			requests_n: requests.length,
+			viewer_tiers: info.tiers ?? null,
+			viewer_device: info.device ?? null,
+			viewer_bytes: info.bytes ? { loaded: info.bytes.loaded, planned: info.bytes.planned } : null,
+			requests,
+		}, null, 1 ) );
+		console.log( `[shot] net: ${( bytesAtReady / 1e6 ).toFixed( 1 )} MB before the first frame at `
+			+ `${readyAt && navAt ? ( ( readyAt - navAt ) / 1000 ).toFixed( 2 ) : '?'} s, ${( net.bytes / 1e6 ).toFixed( 1 )} MB total `
+			+ `over ${requests.length} request(s) -> ${netOut}` );
 	}
 	written.forEach( w => console.log( `[shot] wrote ${w.file} (${( fs.statSync( w.file ).size / 1024 ).toFixed( 0 )} kB) station ${w.station} draws ${w.draws} tris ${w.tris}` ) );
 	console.log( `[shot] ${info.schema || '(no schema)'} lighting ${info.lightingMode} materials ${info.materialsMode || '?'} `

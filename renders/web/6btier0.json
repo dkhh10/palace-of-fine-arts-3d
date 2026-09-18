@@ -1,0 +1,1805 @@
+{
+ "out": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6b-viewer/renders/web/6btier0.png",
+ "url": "http://127.0.0.1:49751/?station=1&size=960x540&hud=0&manifest=%2Fstub%2Fgate5%2Fmanifest.json&tiers=0&t=0&billboards=0&treeboards=0",
+ "station": 1,
+ "size": [
+  960,
+  540
+ ],
+ "wall_s": 10.322,
+ "info": {
+  "station": {
+   "index": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "lens": 20,
+   "shift_y": 0.05999999865889549
+  },
+  "cameraWorldMatrix": [
+   -0.990205306637717,
+   0,
+   0.13961894823591808,
+   0,
+   0.001797119614624584,
+   0.9999171574920436,
+   0.012745529181734643,
+   0,
+   -0.13960738185208796,
+   0.01287160258210755,
+   -0.9901232755467234,
+   0,
+   -14.099999999999993,
+   1.3000000000000145,
+   -100,
+   1
+  ],
+  "projectionMatrix": [
+   1.1111111111111112,
+   0,
+   0,
+   0,
+   0,
+   1.9753086419753088,
+   0,
+   0,
+   0,
+   0.21333332856496173,
+   -1.000040000800612,
+   -1,
+   0,
+   0,
+   -0.20000400306035304,
+   0
+  ],
+  "fovVertical": 53.70162658790905,
+  "aspect": 1.7777777777777777,
+  "size": [
+   960,
+   540
+  ],
+  "render": {
+   "frame": 404,
+   "calls": 109,
+   "triangles": 1824234,
+   "points": 0,
+   "lines": 0,
+   "programs": 44
+  },
+  "memory": {
+   "geometries": 34,
+   "textures": 70
+  },
+  "gl": {
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+   "vendor": "Google Inc. (Apple)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "patchedMaterials": 33,
+  "lightmapsApplied": 16,
+  "unpatchedMaterials": [
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+   "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+   "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+   "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+   "MAT_EXP_ARCH_site__MAT_concrete_podium",
+   "MAT_EXP_ARCH_site__MAT_paving",
+   "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+   "MAT_EXP_ENV__ENV_lagoon_bed",
+   "MAT_EXP_ENV__riprap",
+   "MAT_EXP_ENV__ENV_terrain_ground"
+  ],
+  "lightmapScale": 3.14159265358979,
+  "rgbmRange": 64,
+  "gate3": {
+   "own": {
+    "matched": 16,
+    "applied": 16,
+    "blockedNoUv2InGlb": 0,
+    "noUv2Attribute": 1,
+    "unmatched": 0,
+    "maxMatchError_m": 0.019115870881182308,
+    "assets": {
+     "ARCH_rotunda_concrete_inner_merged": "gamma2 range 27.97 layout gate1 (match 0.000 m)",
+     "ARCH_colonnade_north_concrete_colonnade_merged": "gamma2 range 48.35 layout gate3_relaid (match 0.001 m)",
+     "ARCH_rotunda_concrete_ochre_merged": "gamma2 range 52.07 layout gate3_relaid (match 0.000 m)",
+     "ARCH_rotunda_drum_band_merged": "gamma2 range 26.58 layout gate1 (match 0.001 m)",
+     "ARCH_colonnade_south_concrete_colonnade_merged": "gamma2 range 44.41 layout gate3_relaid (match 0.001 m)",
+     "ARCH_rotunda_concrete_podium_merged": "gamma2 range 31.74 layout gate1 (match 0.000 m)",
+     "ARCH_site_paving_merged": "gamma2 range 24.60 layout gate1 (match 0.000 m)",
+     "ARCH_rotunda_plaster_ceiling_merged": "gamma2 range 16.76 layout gate1 (match 0.000 m)",
+     "ENV_lagoon_bed": "gamma2 range 22.39 layout gate1 (match 0.011 m)",
+     "ARCH_rotunda_column_tan_inner_merged": "gamma2 range 29.08 layout gate1 (match 0.000 m)",
+     "ARCH_rotunda_dome_membrane_merged": "gamma2 range 51.25 layout gate1 (match 0.001 m)",
+     "ARCH_site_concrete_podium_merged": "gamma2 range 29.76 layout gate3_relaid (match 0.000 m)",
+     "ARCH_rotunda_plaster_ceiling_rib_merged": "gamma2 range 30.17 layout gate3_relaid (match 0.000 m)",
+     "ENV_ground_colonnade_walk": "gamma2 range 10.19 layout gate3_relaid (match 0.003 m)",
+     "ENV_riprap_merged": "gamma2 range 26.72 layout gate3_relaid (match 0.019 m)",
+     "ENV_terrain_ground": "gamma2 range 19.28 layout gate1 (match 0.018 m)"
+    },
+    "nearMiss": {
+     "ENV_terrain_ground": "a mesh 0.08 m away carries no TEXCOORD_1"
+    }
+   },
+   "slots": {
+    "instances": 552,
+    "matched": 552,
+    "applied": 0,
+    "single": 0,
+    "noUv2Attribute": 0,
+    "unmatched": 0,
+    "maxMatchError_m": 0.002951116390727869,
+    "meshes": [
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0",
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 114,
+      "matched": 114,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 56,
+      "matched": 56,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 56,
+      "matched": 56,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 48,
+      "matched": 48,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_0"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.002,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 58,
+      "matched": 58,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 58,
+      "matched": 58,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 50,
+      "matched": 50,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0.003,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0.001,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_1",
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 16,
+      "matched": 16,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     },
+     {
+      "atlases": [
+       "gate3_lmatlas_arch_inst_2"
+      ],
+      "instances": 8,
+      "matched": 8,
+      "match_max_m": 0,
+      "uv2": true
+     }
+    ]
+   },
+   "materialsCloned": 9,
+   "texturesRequested": 16,
+   "texturesLoaded": 16,
+   "texturesFailed": []
+  },
+  "skyDiffuse": true,
+  "shaperPivot": 0.18,
+  "skyRotationDeg": 90,
+  "exposure": 0.14032656980172378,
+  "lutEnabled": true,
+  "lutSize": 65,
+  "waterZ": -1.3,
+  "lightingMode": "baked",
+  "schema": "pfa-phase6/5",
+  "bytes": {
+   "loaded": 81926210,
+   "planned": 81926210,
+   "unknownSize": [],
+   "offPlan": [
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
+     "bytes": 2043381
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
+     "bytes": 1442913
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
+     "bytes": 2908460
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
+     "bytes": 1913551
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
+     "bytes": 2080290
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
+     "bytes": 1933822
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
+     "bytes": 2198971
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
+     "bytes": 377440
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
+     "bytes": 1619649
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
+     "bytes": 3429313
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
+     "bytes": 1974792
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
+     "bytes": 737242
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
+     "bytes": 4391299
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
+     "bytes": 270462
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
+     "bytes": 4038405
+    },
+    {
+     "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
+     "bytes": 6962432
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_007_albedo.ktx2",
+     "bytes": 4089587
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_007_roughness.ktx2",
+     "bytes": 916668
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_007_normal.ktx2",
+     "bytes": 3526879
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_008_albedo.ktx2",
+     "bytes": 2829232
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_008_roughness.ktx2",
+     "bytes": 404333
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_008_normal.ktx2",
+     "bytes": 2204758
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_rock_boulder_dry_albedo.ktx2",
+     "bytes": 1176349
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_rock_boulder_dry_roughness.ktx2",
+     "bytes": 997991
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_rock_boulder_dry_normal.ktx2",
+     "bytes": 1070828
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_gravelly_sand_albedo.ktx2",
+     "bytes": 1195972
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_gravelly_sand_roughness.ktx2",
+     "bytes": 787309
+    },
+    {
+     "url": "/assets/gate2/tex_ktx2/detail_gravelly_sand_normal.ktx2",
+     "bytes": 1067574
+    }
+   ],
+   "files": [
+    {
+     "kind": "sky.camera",
+     "bytes": 3590278,
+     "sizeFrom": "HEAD",
+     "name": "sky_camera_4096x2048.hdr"
+    },
+    {
+     "kind": "sky.glossy",
+     "bytes": 3661319,
+     "sizeFrom": "HEAD",
+     "name": "sky_glossy_4096x2048.hdr"
+    },
+    {
+     "kind": "sky.diffuse",
+     "bytes": 2097202,
+     "sizeFrom": "HEAD",
+     "name": "sky_diffuse_1024x512.hdr"
+    },
+    {
+     "kind": "lut",
+     "bytes": 7415365,
+     "sizeFrom": "HEAD",
+     "name": "lut_agx_high_contrast_65.cube"
+    },
+    {
+     "kind": "glb:arch",
+     "bytes": 4613040,
+     "sizeFrom": "HEAD",
+     "name": "arch.glb"
+    },
+    {
+     "kind": "glb:ground",
+     "bytes": 1959104,
+     "sizeFrom": "HEAD",
+     "name": "ground.glb"
+    }
+   ]
+  },
+  "load_s": {
+   "plan_s": 0.012,
+   "sky_s": 0.5768000000715255,
+   "lut_s": 0.0625,
+   "glb_s": 3.8663999999761582,
+   "tex_s": 3.364899999976158,
+   "total_s": 4.580299999952317
+  },
+  "device": {
+   "tier": "desktop",
+   "from": "probe",
+   "reasons": [
+    "no mobile evidence: desktop"
+   ],
+   "gl": {
+    "maxTextureSize": 16384,
+    "astc": true,
+    "etc2": true,
+    "bptc": true,
+    "s3tc": true,
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+    "vendor": "Google Inc. (Apple)",
+    "webgl2": true
+   },
+   "env": {
+    "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "maxTouchPoints": 0,
+    "deviceMemoryGb": 16,
+    "hardwareConcurrency": 8,
+    "devicePixelRatio": 1,
+    "screen": [
+     800,
+     600
+    ]
+   },
+   "pixelRatio": 1,
+   "drawingBufferPx": 518400
+  },
+  "tiers": {
+   "present": true,
+   "count": 3,
+   "max": 0,
+   "now": 0,
+   "streaming": false,
+   "done": true,
+   "tier0_planned_bytes": 23336308,
+   "per_tier": [
+    {
+     "tier": 0,
+     "wall_s": 4.580299999952317,
+     "bytes": 81926210,
+     "planned": 23336308,
+     "glbs": 2
+    }
+   ],
+   "declared_bytes": {
+    "0": 69920144,
+    "1": 536600365,
+    "2": 53188159
+   },
+   "oversize": [
+    {
+     "url": "/assets/gate1/orn.glb",
+     "path": "/assets/gate1/orn.glb",
+     "bytes": 154253424,
+     "reason": "over the Cloudflare Pages 25 MiB per-file cap; the real export splits or moves it to R2"
+    },
+    {
+     "url": "/assets/gate1/env.glb",
+     "path": "/assets/gate1/env.glb",
+     "bytes": 38119568,
+     "reason": "over the Cloudflare Pages 25 MiB per-file cap; the real export splits or moves it to R2"
+    }
+   ],
+   "deferred_lightmaps": 17,
+   "upgrades": [],
+   "stub": {
+    "generator": "web/tools/stub_tiers.mjs",
+    "source": "export/out/gate3/manifest.json",
+    "rule": "tier 0 = lut + sky + probe + arch.glb + ground.glb + ARCH/GROUND textures and lightmaps; tier 1 = orn.glb + ORN lightmap atlases + ORN textures + impostor atlases; tier 2 = env.glb + ENV/foliage textures + the three lazy foliage glbs",
+    "warning": "STUB. It cannot split a glb (gltfpack) and it makes no low-resolution texture variant (toktx). Replace with export/out/gate5/manifest.json when it lands in MAIN.",
+    "lo_stand_in": null,
+    "dropped_variant": "30 rgbm8 lightmap file(s) left out of the tiers: the manifest's own default is gamma2 and the viewer loads only that one",
+    "unresolved": [
+     "../gate1/canonical/cam_01_lagoon_hero.png",
+     "canonical/cam_02_ne_shore_threequarter.jpg",
+     "canonical/cam_03_colonnade_walk.jpg",
+     "canonical/cam_04_rotunda_ceiling.jpg",
+     "canonical/cam_05_south_lawn.jpg",
+     "canonical/cam_06_aerial.jpg",
+     "gate2 backdrop_uv1.npz",
+     "../gate1/bark_bluegum_diff_2k.ktx2",
+     "../gate1/bark_bluegum_disp_2k.ktx2",
+     "../gate1/bark_bluegum_rough_2k.ktx2",
+     "../gate1/chinese_cedar_bark_diff_2k.ktx2",
+     "../gate1/chinese_cedar_bark_disp_2k.ktx2",
+     "../gate1/chinese_cedar_bark_rough_2k.ktx2",
+     "../gate1/leaves_broadleaf.ktx2",
+     "../gate1/leaves_broadleaf_nrm.ktx2",
+     "../gate1/leaves_eucalyptus.ktx2",
+     "../gate1/leaves_eucalyptus_nrm.ktx2",
+     "../gate1/leaves_shrub.ktx2",
+     "../gate1/leaves_shrub_nrm.ktx2",
+     "../gate1/needles_cypress.ktx2",
+     "../gate1/needles_cypress_nrm.ktx2",
+     "../gate1/needles_pine.ktx2",
+     "../gate1/needles_pine_nrm.ktx2",
+     "../gate1/orn_attic_figure_v1_ao.ktx2",
+     "../gate1/orn_attic_figure_v1_normal.ktx2",
+     "../gate1/orn_attic_panel_v1_ao.ktx2",
+     "../gate1/orn_attic_panel_v1_normal.ktx2",
+     "../gate1/orn_attic_panel_v2_ao.ktx2",
+     "../gate1/orn_attic_panel_v2_normal.ktx2",
+     "../gate1/orn_attic_panel_v3_ao.ktx2",
+     "../gate1/orn_attic_panel_v3_normal.ktx2",
+     "../gate1/orn_capital_colonnade_v1_ao.ktx2",
+     "../gate1/orn_capital_colonnade_v1_normal.ktx2",
+     "../gate1/orn_capital_colonnade_v2_ao.ktx2",
+     "../gate1/orn_capital_colonnade_v2_normal.ktx2",
+     "../gate1/orn_capital_colonnade_v3_ao.ktx2",
+     "../gate1/orn_capital_colonnade_v3_normal.ktx2",
+     "../gate1/orn_capital_inner_v1_ao.ktx2",
+     "../gate1/orn_capital_inner_v1_normal.ktx2",
+     "../gate1/orn_capital_rotunda_v1_ao.ktx2",
+     "../gate1/orn_capital_rotunda_v1_normal.ktx2",
+     "../gate1/orn_capital_rotunda_v2_ao.ktx2",
+     "../gate1/orn_capital_rotunda_v2_normal.ktx2",
+     "../gate1/orn_capital_rotunda_v3_ao.ktx2",
+     "../gate1/orn_capital_rotunda_v3_normal.ktx2",
+     "../gate1/orn_corner_scroll_v2_ao.ktx2",
+     "../gate1/orn_corner_scroll_v2_normal.ktx2",
+     "../gate1/orn_drum_band_v1_ao.ktx2",
+     "../gate1/orn_drum_band_v1_normal.ktx2",
+     "../gate1/orn_finial_v1_ao.ktx2",
+     "../gate1/orn_finial_v1_normal.ktx2",
+     "../gate1/orn_frieze_rinceau_return_v1_ao.ktx2",
+     "../gate1/orn_frieze_rinceau_return_v1_normal.ktx2",
+     "../gate1/orn_frieze_rinceau_return_v2_ao.ktx2",
+     "../gate1/orn_frieze_rinceau_return_v2_normal.ktx2",
+     "../gate1/orn_frieze_rinceau_return_v3_ao.ktx2",
+     "../gate1/orn_frieze_rinceau_return_v3_normal.ktx2",
+     "../gate1/orn_frieze_rinceau_v1_ao.ktx2",
+     "../gate1/orn_frieze_rinceau_v1_normal.ktx2",
+     "../gate1/orn_frieze_rinceau_v3_ao.ktx2",
+     "../gate1/orn_frieze_rinceau_v3_normal.ktx2",
+     "../gate1/orn_keystone_v1_ao.ktx2",
+     "../gate1/orn_keystone_v1_normal.ktx2",
+     "../gate1/orn_keystone_v2_ao.ktx2",
+     "../gate1/orn_keystone_v2_normal.ktx2",
+     "../gate1/orn_keystone_v3_ao.ktx2",
+     "../gate1/orn_keystone_v3_normal.ktx2",
+     "../gate1/orn_maiden_v1_ao.ktx2",
+     "../gate1/orn_maiden_v1_normal.ktx2",
+     "../gate1/orn_maiden_v2_ao.ktx2",
+     "../gate1/orn_maiden_v2_normal.ktx2",
+     "../gate1/orn_maiden_v3_ao.ktx2",
+     "../gate1/orn_maiden_v3_normal.ktx2",
+     "../gate1/orn_rosette_ceiling_v1_ao.ktx2",
+     "../gate1/orn_rosette_ceiling_v1_normal.ktx2",
+     "../gate1/orn_rosette_ceiling_v2_ao.ktx2",
+     "../gate1/orn_rosette_ceiling_v2_normal.ktx2",
+     "../gate1/orn_rosette_ceiling_v3_ao.ktx2",
+     "../gate1/orn_rosette_ceiling_v3_normal.ktx2",
+     "../gate1/orn_urn_niche_v1_ao.ktx2",
+     "../gate1/orn_urn_niche_v1_normal.ktx2",
+     "../gate1/orn_urn_v1_ao.ktx2",
+     "../gate1/orn_urn_v1_normal.ktx2",
+     "../gate1/orn_urn_v2_ao.ktx2",
+     "../gate1/orn_urn_v2_normal.ktx2",
+     "../gate1/orn_urn_v3_ao.ktx2",
+     "../gate1/orn_urn_v3_normal.ktx2",
+     "../gate1/orn_winged_figure_v1_ao.ktx2",
+     "../gate1/orn_winged_figure_v1_normal.ktx2",
+     "../gate1/reeds.ktx2",
+     "../gate1/reeds_nrm.ktx2",
+     "../gate1/uv1_probe_grey.ktx2",
+     "../gate0/renders/web/gate0_cycles_cam01.png",
+     "../gate0/renders/web/gate0_cycles_cam01_nocomp.png",
+     "leaves_broadleaf.png",
+     "needles_cypress.png",
+     "leaves_eucalyptus.png",
+     "needles_pine.png",
+     "reeds.png",
+     "leaves_shrub.png",
+     "tex/gate3_lm_ENV_terrain_ground.exr",
+     "gate3_lm_ENV_terrain_ground_rgbm8.png",
+     "gate3_lm_ENV_terrain_ground_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_concrete_ochre_merged.exr",
+     "gate3_lm_ARCH_rotunda_concrete_ochre_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_site_concrete_podium_merged.exr",
+     "gate3_lm_ARCH_site_concrete_podium_merged_rgbm8.png",
+     "gate3_lm_ARCH_site_concrete_podium_merged_gamma2.png",
+     "tex/gate3_lm_ENV_lagoon_bed.exr",
+     "gate3_lm_ENV_lagoon_bed_rgbm8.png",
+     "gate3_lm_ENV_lagoon_bed_gamma2.png",
+     "tex/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged.exr",
+     "gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_rgbm8.png",
+     "gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged.exr",
+     "gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_rgbm8.png",
+     "gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_site_paving_merged.exr",
+     "gate3_lm_ARCH_site_paving_merged_rgbm8.png",
+     "gate3_lm_ARCH_site_paving_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_concrete_inner_merged.exr",
+     "gate3_lm_ARCH_rotunda_concrete_inner_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged.exr",
+     "gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_drum_band_merged.exr",
+     "gate3_lm_ARCH_rotunda_drum_band_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.png",
+     "tex/gate3_lm_ENV_ground_colonnade_walk.exr",
+     "gate3_lm_ENV_ground_colonnade_walk_rgbm8.png",
+     "gate3_lm_ENV_ground_colonnade_walk_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_concrete_podium_merged.exr",
+     "gate3_lm_ARCH_rotunda_concrete_podium_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_dome_membrane_merged.exr",
+     "gate3_lm_ARCH_rotunda_dome_membrane_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.png",
+     "tex/gate3_lm_ENV_riprap_merged.exr",
+     "gate3_lm_ENV_riprap_merged_rgbm8.png",
+     "gate3_lm_ENV_riprap_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_plaster_ceiling_merged.exr",
+     "gate3_lm_ARCH_rotunda_plaster_ceiling_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.png",
+     "tex/gate3_lm_ARCH_rotunda_column_tan_inner_merged.exr",
+     "gate3_lm_ARCH_rotunda_column_tan_inner_merged_rgbm8.png",
+     "gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.png",
+     "tex/gate3_lmg1_ARCH_colonnade_south_concrete_colonnade_merged.exr",
+     "gate3_lmg1_ARCH_colonnade_south_concrete_colonnade_merged_rgbm8.png",
+     "gate3_lmg1_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.png",
+     "tex/gate3_lmg1_ARCH_rotunda_concrete_ochre_merged.exr",
+     "gate3_lmg1_ARCH_rotunda_concrete_ochre_merged_rgbm8.png",
+     "gate3_lmg1_ARCH_rotunda_concrete_ochre_merged_gamma2.png",
+     "tex/gate3_lmatlas_orn_0.exr",
+     "gate3_lmatlas_orn_0_rgbm8.png",
+     "gate3_lmatlas_orn_0_gamma2.png",
+     "tex/gate3_lmatlas_orn_1.exr",
+     "gate3_lmatlas_orn_1_rgbm8.png",
+     "gate3_lmatlas_orn_1_gamma2.png",
+     "tex/gate3_lmatlas_arch_inst_0.exr",
+     "gate3_lmatlas_arch_inst_0_rgbm8.png",
+     "gate3_lmatlas_arch_inst_0_gamma2.png",
+     "tex/gate3_lmatlas_arch_inst_1.exr",
+     "gate3_lmatlas_arch_inst_1_rgbm8.png",
+     "gate3_lmatlas_arch_inst_1_gamma2.png",
+     "tex/gate3_lmatlas_arch_inst_2.exr",
+     "gate3_lmatlas_arch_inst_2_rgbm8.png",
+     "gate3_lmatlas_arch_inst_2_gamma2.png",
+     "uv2_relay_status.json vertex_irradiance_range_global = the max over all 14 near-tree meshes in vertex_irradiance.npz"
+    ]
+   },
+   "error": null
+  },
+  "glbs": [
+   {
+    "name": "arch.glb",
+    "cls": "arch",
+    "url": "/assets/gate1/arch.glb",
+    "meshes": 29,
+    "instancedMeshes": 17,
+    "instances": 552,
+    "tris": 947622,
+    "materials": 17,
+    "hiddenBoards": 0,
+    "bytes": 4613040,
+    "wall_s": 0.10970000004768371
+   },
+   {
+    "name": "ground.glb",
+    "cls": "ground",
+    "url": "/assets/gate1/ground.glb",
+    "meshes": 4,
+    "instancedMeshes": 0,
+    "instances": 0,
+    "tris": 113043,
+    "materials": 4,
+    "hiddenBoards": 0,
+    "bytes": 1959104,
+    "wall_s": 0.0275
+   }
+  ],
+  "uv_dequant": [
+   {
+    "name": "arch.glb",
+    "meshes": 29,
+    "geometries": 29,
+    "sets": 58,
+    "materials": 17,
+    "skipped": 0,
+    "bytes": 7891136,
+    "rotated": 0,
+    "scales": [
+     15.9097242,
+     15.9097242,
+     15.168294,
+     15.9097242,
+     15.9097242,
+     15.9603224,
+     15.9512062,
+     15.8664751,
+     15.9512062,
+     15.9512062,
+     15.95679,
+     15.9489031,
+     15.9100637,
+     15.9100637,
+     15.9489031,
+     15.9533167,
+     15.8423529,
+     15.9537783,
+     15.9100637,
+     13.1390057,
+     15.9855995,
+     15.9533167,
+     15.9533167,
+     15.9533167,
+     15.9533167,
+     15.2957287,
+     15.9010715,
+     15.9432373,
+     15.9607677
+    ]
+   },
+   {
+    "name": "ground.glb",
+    "meshes": 4,
+    "geometries": 4,
+    "sets": 8,
+    "materials": 4,
+    "skipped": 0,
+    "bytes": 3385856,
+    "rotated": 0,
+    "scales": [
+     15.9399452,
+     8.40719891,
+     15.9172192,
+     15.9872561
+    ]
+   }
+  ],
+  "resident": {
+   "geometry_bytes": 26973442,
+   "instance_matrix_bytes": 35328,
+   "texture_bytes": 219505088,
+   "geometries": 34,
+   "textures": 53,
+   "texture_formats": {
+    "RGBA_ASTC_4x4_Format": 52,
+    "RGBAFormat (uncompressed)": 1
+   },
+   "render_target_bytes": 190369792,
+   "render_targets": [
+    {
+     "what": "composer.renderTarget1",
+     "size": [
+      960,
+      540
+     ],
+     "samples": 4,
+     "bytes": 20736000
+    },
+    {
+     "what": "composer.renderTarget2",
+     "size": [
+      960,
+      540
+     ],
+     "samples": 4,
+     "bytes": 20736000
+    },
+    {
+     "what": "water.Reflector",
+     "size": [
+      1024,
+      1024
+     ],
+     "samples": 4,
+     "bytes": 41943040
+    },
+    {
+     "what": "PMREM cubeUV (glossy, specular)",
+     "size": [
+      3072,
+      4096
+     ],
+     "samples": 0,
+     "bytes": 100663296
+    },
+    {
+     "what": "PMREM cubeUV (diffuse, irradiance)",
+     "size": [
+      768,
+      1024
+     ],
+     "samples": 0,
+     "bytes": 6291456
+    }
+   ],
+   "total_bytes": 436883650,
+   "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+  },
+  "billboards": null,
+  "chunking": {
+   "candidates": 7,
+   "split": 7,
+   "chunks": 26,
+   "added": 19,
+   "batches": [
+    {
+     "name": "mesh_0",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 114,
+     "radius_m": 118.5,
+     "chunks": 4,
+     "chunk_radius_m": [
+      23.8,
+      58.8,
+      21.9,
+      31.6
+     ]
+    },
+    {
+     "name": "mesh_8",
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "instances": 50,
+     "radius_m": 54.5,
+     "chunks": 4,
+     "chunk_radius_m": [
+      19,
+      20.3,
+      15.4,
+      20
+     ]
+    },
+    {
+     "name": "mesh_3",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 48,
+     "radius_m": 53.7,
+     "chunks": 4,
+     "chunk_radius_m": [
+      17.2,
+      17.8,
+      17.8,
+      17.8
+     ]
+    },
+    {
+     "name": "mesh_6",
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "instances": 58,
+     "radius_m": 52.3,
+     "chunks": 4,
+     "chunk_radius_m": [
+      11.4,
+      17,
+      15,
+      17.9
+     ]
+    },
+    {
+     "name": "mesh_7",
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "instances": 58,
+     "radius_m": 52.3,
+     "chunks": 4,
+     "chunk_radius_m": [
+      11.4,
+      17,
+      15,
+      17.9
+     ]
+    },
+    {
+     "name": "mesh_1",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 56,
+     "radius_m": 50.8,
+     "chunks": 3,
+     "chunk_radius_m": [
+      24,
+      15.6,
+      14.9
+     ]
+    },
+    {
+     "name": "mesh_2",
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "instances": 56,
+     "radius_m": 50.8,
+     "chunks": 3,
+     "chunk_radius_m": [
+      24,
+      15.6,
+      14.9
+     ]
+    }
+   ],
+   "spent": 0,
+   "opts": {}
+  },
+  "post": {
+   "requested": "all",
+   "want": {
+    "mist": true,
+    "bloom": true,
+    "vignette": true
+   },
+   "mistSpec": {
+    "near": 20,
+    "far": 2020,
+    "cap": 0.25,
+    "k": 5,
+    "shape": "LINEAR",
+    "intensity": 0,
+    "extinctionLength_m": 400,
+    "color": [
+     5.320880889892578,
+     3.739000082015991,
+     1.9603391885757446
+    ],
+    "strength": 0.25,
+    "falloff": 5,
+    "invented": false,
+    "source": "manifest compositor.mist"
+   },
+   "bloom": true,
+   "vignette": 0.07999999821186066,
+   "compositor": {
+    "hazeColor": [
+     5.320880889892578,
+     3.739000082015991,
+     1.9603391885757446
+    ],
+    "hazeStrength": 0.25,
+    "hazeFalloff": 5,
+    "bloomThreshold": 6.41361141204834,
+    "bloomStrength": 0.05000000074505806,
+    "bloomSize": 0.6000000238418579,
+    "vignette": 0.07999999821186066,
+    "mist": {
+     "use_mist": true,
+     "start": 20,
+     "depth": 2000,
+     "falloff": "LINEAR",
+     "height": 0,
+     "intensity": 0,
+     "use_pass_mist": true,
+     "units": "metres (1 BU = 1 m), measured along the view ray from the camera",
+     "source": "master_delivery.blend scene.world.mist_settings, read by export/read_mist.py",
+     "file": "/assets/gate3/mist_settings.json",
+     "read_at": "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend",
+     "formula": "Blender's mist pass: t = clamp((dist - start) / depth, 0, 1) shaped by `falloff` (QUADRATIC t^2, LINEAR t, INVERSE_QUADRATIC sqrt(t)), then mist = intensity + (1 - intensity) * t, measured along the view ray from the camera in metres (1 BU = 1 m here). `height` > 0 fades the mist out above z = height in WORLD space (Blender +Z; the viewer's +Y after the glTF swap). The compositor group's own `Mist` input reads 0.0 because that is a disconnected socket's stored default - the live value is this pass.",
+     "group_input_note": "COMP_golden_hour's own `Mist` group input reads 0.0 in this block: that is a disconnected socket's stored default, NOT the value the render used."
+    },
+    "group": "COMP_golden_hour"
+   },
+   "bloomRes": "full"
+  },
+  "probeEnv": null,
+  "foliage": null,
+  "shrubLod": null,
+  "impostorModulation": null,
+  "reflectionSet": {
+   "excluded": 0,
+   "orn": 0,
+   "backdrop": 0,
+   "kept": 53,
+   "all": false
+  },
+  "quality": {
+   "preset": "look",
+   "bloomRes": "full",
+   "reflRes": "full",
+   "reflSet": "orn"
+  },
+  "impostors": null,
+  "farTrees": null,
+  "shrubLod1": null,
+  "foliageTextures": null,
+  "shaderErrors": [],
+  "walk": {
+   "active": false,
+   "blocked": 0,
+   "buildMs": 0,
+   "y": 0
+  },
+  "materialsMode": "pbr",
+  "pbr": {
+   "materials_in_scene": 30,
+   "matched": 30,
+   "unmatched": [],
+   "sets_in_manifest": 62,
+   "sets_used": 15,
+   "sets_unused": [
+    "MAT_EXP_ENVBD__MAT_backdrop_building",
+    "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+    "MAT_EXP_ENVBD__MAT_backdrop_forest",
+    "MAT_EXP_ENVBD__MAT_backdrop_hill",
+    "MAT_EXP_ENVBD__MAT_backdrop_roof",
+    "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+    "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+    "MAT_EXP_ENVBD__MAT_bird_white",
+    "MAT_EXP_ENVBD__MAT_lamp_post",
+    "MAT_EXP_ENVBD__MAT_lawn",
+    "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+    "MAT_EXP_ENV__ENV_lagoon_bed",
+    "MAT_EXP_ENV__ENV_terrain_ground",
+    "MAT_EXP_ENV__riprap",
+    "MAT_EXP_ORN__ORN_attic_figure_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_attic_panel_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_inner_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_capital_rotunda_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_corner_scroll_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_drum_band_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+    "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_frieze_rinceau_return_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_frieze_rinceau_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_keystone_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_maiden_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_maiden_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_maiden_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_rosette_ceiling_v1_LOD0_a",
+    "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+    "MAT_EXP_ORN__ORN_rosette_ceiling_v3_LOD0_a",
+    "MAT_EXP_ORN__ORN_urn_niche_v1_LOD0_a_a_a",
+    "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+    "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+    "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a",
+    "MAT_EXP_ORN__ORN_winged_figure_v1_LOD0_a_a"
+   ],
+   "order": [
+    {
+     "rank": 1,
+     "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "distance_m": 28.8,
+     "maps": []
+    },
+    {
+     "rank": 2,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+     "distance_m": 59.1,
+     "maps": []
+    },
+    {
+     "rank": 3,
+     "material": "MAT_EXP_ARCH_site__MAT_paving",
+     "set": "MAT_EXP_ARCH_site__MAT_paving",
+     "matched_on": "MAT_EXP_ARCH_site__MAT_paving",
+     "distance_m": 62.8,
+     "maps": []
+    },
+    {
+     "rank": 4,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "distance_m": 64.9,
+     "maps": []
+    },
+    {
+     "rank": 5,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "distance_m": 68.5,
+     "maps": []
+    },
+    {
+     "rank": 6,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "distance_m": 69.6,
+     "maps": []
+    },
+    {
+     "rank": 7,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "distance_m": 72.3,
+     "maps": []
+    },
+    {
+     "rank": 8,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "distance_m": 74.2,
+     "maps": []
+    },
+    {
+     "rank": 9,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+     "distance_m": 74.2,
+     "maps": []
+    },
+    {
+     "rank": 10,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "distance_m": 76.7,
+     "maps": []
+    },
+    {
+     "rank": 11,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 77.7,
+     "maps": []
+    },
+    {
+     "rank": 12,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+     "distance_m": 79.8,
+     "maps": []
+    },
+    {
+     "rank": 13,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 80.1,
+     "maps": []
+    },
+    {
+     "rank": 14,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+     "distance_m": 82.9,
+     "maps": []
+    },
+    {
+     "rank": 15,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+     "distance_m": 83.2,
+     "maps": []
+    },
+    {
+     "rank": 16,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 85,
+     "maps": []
+    },
+    {
+     "rank": 17,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 85.1,
+     "maps": []
+    },
+    {
+     "rank": 18,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+     "distance_m": 86.2,
+     "maps": []
+    },
+    {
+     "rank": 19,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+     "distance_m": 87.6,
+     "maps": []
+    },
+    {
+     "rank": 20,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 115.8,
+     "maps": []
+    },
+    {
+     "rank": 21,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "distance_m": 116.6,
+     "maps": []
+    },
+    {
+     "rank": 22,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 117.7,
+     "maps": []
+    },
+    {
+     "rank": 23,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 121.2,
+     "maps": []
+    },
+    {
+     "rank": 24,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 121.2,
+     "maps": []
+    },
+    {
+     "rank": 25,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "distance_m": 122,
+     "maps": []
+    },
+    {
+     "rank": 26,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+     "distance_m": 122.1,
+     "maps": []
+    },
+    {
+     "rank": 1,
+     "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "set": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "matched_on": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "distance_m": 0,
+     "maps": []
+    },
+    {
+     "rank": 2,
+     "material": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "set": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "matched_on": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "distance_m": 0,
+     "maps": []
+    },
+    {
+     "rank": 3,
+     "material": "MAT_EXP_ENV__riprap",
+     "set": "MAT_EXP_ENV__riprap",
+     "matched_on": "MAT_EXP_ENV__riprap",
+     "distance_m": 0,
+     "maps": []
+    },
+    {
+     "rank": 4,
+     "material": "MAT_EXP_ENV__ENV_terrain_ground",
+     "set": "MAT_EXP_ENV__ENV_terrain_ground",
+     "matched_on": "MAT_EXP_ENV__ENV_terrain_ground",
+     "distance_m": 0,
+     "maps": []
+    }
+   ],
+   "textures": 0,
+   "unique_files": 0,
+   "bytes": 0,
+   "kept_glb_normal": 0,
+   "replaced_glb_normal": 0,
+   "kept_glb_ao": 0,
+   "colourspace_conflicts": [],
+   "formats": {},
+   "failed": [],
+   "factored": 30,
+   "constant_only": 0,
+   "flat_normal_constant": [],
+   "without_uv1": [],
+   "deferred": 78,
+   "disposed": {
+    "disposed": 0,
+    "freed_bytes": 0,
+    "by_slot": {},
+    "names": []
+   }
+  },
+  "detail": {
+   "projection": "objxy",
+   "strength": 1,
+   "normal_scale": 1,
+   "sets_loaded": 3,
+   "materials": 3,
+   "textures": 9,
+   "bytes": 20971760,
+   "means": {
+    "concrete_wall_007": {
+     "albedo": [
+      0.537995,
+      0.505239,
+      0.43217
+     ],
+     "roughness": [
+      0.772646,
+      0.772646,
+      0.772646
+     ]
+    },
+    "rock_boulder_dry": {
+     "albedo": [
+      0.657536,
+      0.609011,
+      0.550157
+     ],
+     "roughness": [
+      0.633512,
+      0.633512,
+      0.633512
+     ]
+    },
+    "gravelly_sand": {
+     "albedo": [
+      0.571771,
+      0.433472,
+      0.298813
+     ],
+     "roughness": [
+      0.792653,
+      0.792653,
+      0.792653
+     ]
+    }
+   },
+   "by_set": {
+    "concrete_wall_007": 1,
+    "rock_boulder_dry": 1,
+    "gravelly_sand": 1
+   },
+   "unmatched_rules": [
+    "MAT_EXP_ENVBD__MAT_lawn",
+    "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+    "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+    "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+    "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+    "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+    "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+    "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+    "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+    "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+    "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+    "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+    "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+    "MAT_EXP_ARCH_site__MAT_concrete_podium",
+    "MAT_EXP_ARCH_site__MAT_paving"
+   ],
+   "applied": [
+    {
+     "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "set": "concrete_wall_007",
+     "tile_m": 2.16,
+     "src": "MAT_paving_stone"
+    },
+    {
+     "material": "MAT_EXP_ENV__riprap",
+     "set": "rock_boulder_dry",
+     "tile_m": 1.1765,
+     "src": "MAT_rock_riprap"
+    },
+    {
+     "material": "MAT_EXP_ENV__ENV_terrain_ground",
+     "set": "gravelly_sand",
+     "tile_m": 2.48,
+     "src": "MAT_gravel_path"
+    }
+   ],
+   "failed": [],
+   "empty": [],
+   "fallbacks": [],
+   "stats": {
+    "detail_concrete_wall_007_albedo.ktx2": {
+     "mean8": 128.8,
+     "std8": 8.9,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_007_roughness.ktx2": {
+     "mean8": 197,
+     "std8": 6.4,
+     "from": "manifest"
+    },
+    "detail_concrete_wall_007_normal.ktx2": {
+     "mean8": 127.4,
+     "std8": 6.7,
+     "from": "manifest"
+    },
+    "detail_rock_boulder_dry_albedo.ktx2": {
+     "mean8": 155.3,
+     "std8": 22.6,
+     "from": "manifest"
+    },
+    "detail_rock_boulder_dry_roughness.ktx2": {
+     "mean8": 161.5,
+     "std8": 17.6,
+     "from": "manifest"
+    },
+    "detail_rock_boulder_dry_normal.ktx2": {
+     "mean8": 127.5,
+     "std8": 8.1,
+     "from": "manifest"
+    },
+    "detail_gravelly_sand_albedo.ktx2": {
+     "mean8": 110.5,
+     "std8": 14.8,
+     "from": "manifest"
+    },
+    "detail_gravelly_sand_roughness.ktx2": {
+     "mean8": 202.1,
+     "std8": 2.4,
+     "from": "manifest"
+    },
+    "detail_gravelly_sand_normal.ktx2": {
+     "mean8": 127.5,
+     "std8": 6.7,
+     "from": "manifest"
+    }
+   }
+  },
+  "notes": [
+   "device tier: desktop (probe) — no mobile evidence: desktop; gl ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version), max texture 16384, astc true etc2 true s3tc true bptc true, dpr 1, screen 800x600, touch 0",
+   "manifest tiers: 3 tier(s), tier 0 69.9 MB in 31 file(s) (declared), tier 1 536.6 MB in 251 file(s) (declared), tier 2 53.2 MB in 16 file(s) (declared); 2 file(s) over the host's per-file cap: /assets/gate1/orn.glb, /assets/gate1/env.glb",
+   "4 glbs, loaded in manifest order: arch:arch.glb, ground:ground.glb, orn:orn.glb, env:env.glb",
+   "stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough",
+   "exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
+   "sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
+   "lightmap reservations for the Gate 3 bake, no texture yet: 988 mode \"slot\", 16 mode \"asset\", 1536 mode \"none\"",
+   "materials.detail: 5 tiling set(s), 15 maps, 18 glb material rule(s) + 15 source-material rule(s), mode \"object_space_tiled\", bump distance 0.015 m",
+   "detail: 3 merged group(s) list more than one source material, the first is used: MAT_EXP_ENVBD__MAT_lawn: MAT_gravel_path + MAT_soil -> gravelly_sand; MAT_EXP_ENV__ENV_ground_colonnade_walk: MAT_paving_stone + MAT_paving_stone_worn -> concrete_wall_007; MAT_EXP_ENV__ENV_terrain_ground: MAT_gravel_path + MAT_soil -> gravelly_sand",
+   "materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 307.8 MB declared, mode \"pbr\"",
+   "manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159",
+   "manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas",
+   "manifest pfa-phase6/5 at http://127.0.0.1:49751/stub/gate5/manifest.json",
+   "uv2_relay_status.json: 7 asset(s) checked against the packed glbs, 0 flag(s) flipped; 16 own map(s) usable, 0 blocked, 0 on the frozen layout",
+   "lighting mode: baked — lightmaps carry the diffuse, sun and env are specular-only",
+   "materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares \"pbr\"",
+   "TIERS ARE A STUB (web/tools/stub_tiers.mjs): STUB. It cannot split a glb (gltfpack) and it makes no low-resolution texture variant (toktx). Replace with export/out/gate5/manifest.json when it lands in MAIN.",
+   "2 published file(s) over the host's per-file cap: /assets/gate1/orn.glb 154.3 MB, /assets/gate1/env.glb 38.1 MB",
+   "foliage + impostors run at tier 2 (env glb tier 2, impostor atlases tier 1)",
+   "load tiers: 3 declared, streaming up to 0 (?tiers=0); glbs tier 0: arch+ground, tier 1: orn, tier 2: env; declared bytes 0=69.9 MB, 1=536.6 MB, 2=53.2 MB",
+   "load plan: 6 files, 23.3 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:arch 4.6, glb:ground 2.0)",
+   "sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
+   "PMREM specular environment from sky_glossy_4096x2048.hdr",
+   "sky diffuse integral / L dw = 33.665, 38.253, 213.742 (the sky half of the irradiance the impostor atlases were baked under)",
+   "PMREM diffuse environment from sky_diffuse_1024x512.hdr (irradiance for everything without a lightmap; QA-12b-1)",
+   "sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only",
+   "water plane at y = -1.3 (WATER_Z -1.3), planar Reflector 1024x1024 (?reflres=full), reflection gather 0.003 / saturation 1, ripple 8 waves 1.20-0.034 m, murk 0.2353, 0.3523, 0.3166 (derived; ?watermurkgain=1), grazing cap 6",
+   "post mist: COMP_golden_hour airlight cap 0.25 * (1 - exp(-k 5 * mist)), mist = LINEAR over 20..2020 m along the view ray (extinction length 400 m), haze [5.32, 3.74, 1.96], from manifest compositor.mist",
+   "post bloom: threshold 12.827 (scene-linear; manifest 6.4136 x 2), strength 0.05000000074505806, radius 0.6000000238418579, mip chain from 960x540 (?bloomres=full)",
+   "LUT texel type FloatType (OES_texture_float_linear) — extension present",
+   "LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
+   "post vignette: 0.07999999821186066 in linear, before the transform",
+   "quality preset 'look': bloom full-res, Reflector full-res target, reflection set orn",
+   "post chain: mist + bloom + vignette (?post=all)",
+   "display: tone mapping OFF, exposure x0.14033, LUT on",
+   "lightMapIntensity = lightmap_scale 3.14159",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 58 uv set(s) on 29 geometr(ies), 17 material transform(s) neutralised, scale 13.139..15.986, +7.53 MB",
+   "glb arch.glb (arch) 4.6 MB in 0.11 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
+   "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB",
+   "glb ground.glb (ground) 2.0 MB in 0.03 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
+   "gate3 UV2 census: 33 mesh(es) carry TEXCOORD_1 (568 placements), 1 do not (1 placements)",
+   "gate3 lightmaps: 16/16 own map(s), 0/988 instance slot(s), 9 material(s) cloned; match error <= 0.019 m",
+   "gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)",
+   "gate3: 17 lightmap(s) deferred to a later load tier (max tier now 0): gate3_lmatlas_arch_inst_0+gate3_lmatlas_arch_inst_1 @1, gate3_lmatlas_arch_inst_0 @1, gate3_lmatlas_arch_inst_1 @1, gate3_lmatlas_arch_inst_1+gate3_lmatlas_arch_inst_2 @1, gate3_lmatlas_arch_inst_2 @1 …. Those materials stay on the environment path until their tier lands.",
+   "gate3 vertex irradiance: 0/14 near-tree mesh(es) take COLOR_0 as baked irradiance (range 44.257..44.257, x scale 3.14159); 0 mesh(es) carry COLOR_0, 0 of them batched, 0 unmatched by position",
+   "gate3 instance irradiance postponed: /assets/gate1/env.glb is in a later load tier",
+   "instance chunking (QA-11d-1): 7 of 7 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 26 regional batches, +19 draw calls when every chunk is in frame",
+   "6 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 \"borrow a neighbour's lightmap\" stand-in is off at Gate 3",
+   "16 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch",
+   "pbr: 26 of 26 scene materials textured from 15 of 62 manifest sets, 0 maps, 0.0 MB resident in 0 file(s) [], requested nearest first (MAT_EXP_ARCH_site__MAT_concrete_podium 28.8 m, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre 59.1 m, MAT_EXP_ARCH_site__MAT_paving 62.8 m …)",
+   "pbr: factors applied to 26 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
+   "detail (QA-12-1): 25 material(s) on 2 tiling set(s) (concrete_wall_007 x14, concrete_wall_008 x11), 6 textures, 25.2 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
+   "detail: 4 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap",
+   "pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 0 maps, 0.0 MB resident in 0 file(s) [], requested nearest first (MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m, MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__riprap 0 m …)",
+   "pbr: factors applied to 4 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
+   "detail (QA-12-1): 3 material(s) on 3 tiling set(s) (concrete_wall_007 x1, rock_boulder_dry x1, gravelly_sand x1), 9 textures, 21.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
+   "detail: 15 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
+   "pbr textures in 3.37 s; 0 superseded texture(s) disposed, 0.0 MB freed",
+   "probe env failed: fetch for \"http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_px.hdr\" responded with 404: Not Found; the sky-diffuse path stays",
+   "water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)",
+   "reflection draw set reduced: 0 mesh(es) excluded (0 ORN, 0 backdrop), 53 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.",
+   "ready in 4.58 s: 81.9 MB loaded of 81.9 MB planned (plan 0.01 s, sky 0.58 s, lut 0.06 s, glb 3.87 s) — TIER 0 of 3",
+   "lazy foliage not loaded: it belongs to tier 2 and ?tiers=0 stops at 0",
+   "tiers complete: 0:81.9 MB/4.6 s; 81.9 MB total"
+  ]
+ },
+ "stats": null,
+ "cost": null,
+ "perStation": [
+  {
+   "station": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "size": [
+    960,
+    540
+   ],
+   "file": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6b-viewer/renders/web/6btier0.png",
+   "frame_ms": null,
+   "fps_presented": null,
+   "gpu_cost_ms": null,
+   "fps_uncapped": null,
+   "draw_calls": 109,
+   "triangles": 1824234,
+   "programs": 44,
+   "info_memory": {
+    "geometries": 34,
+    "textures": 70
+   },
+   "resident": {
+    "geometry_bytes": 26973442,
+    "instance_matrix_bytes": 35328,
+    "texture_bytes": 219505088,
+    "geometries": 34,
+    "textures": 53,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 52,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 190369792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       960,
+       540
+      ],
+      "samples": 4,
+      "bytes": 20736000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       960,
+       540
+      ],
+      "samples": 4,
+      "bytes": 20736000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 436883650,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  }
+ ],
+ "probes": null,
+ "pixels": null,
+ "picks": null,
+ "orbits": null,
+ "walkProbes": null,
+ "breakdown": null,
+ "written": [
+  {
+   "station": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "file": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6b-viewer/renders/web/6btier0.png",
+   "draws": 109,
+   "tris": 1824234
+  }
+ ],
+ "pageErrors": [
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_px.hdr",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_nx.hdr",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_py.hdr",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_ny.hdr",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_pz.hdr",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_nz.hdr"
+ ],
+ "pageLog": [
+  "log: [pfa] device tier: desktop (probe) — no mobile evidence: desktop; gl ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version), max texture 16384, astc true etc2 true s3tc true bptc true, dpr 1, screen 800x600, touch 0",
+  "httperror: 404 http://127.0.0.1:49751/favicon.ico",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "log: [pfa] manifest tiers: 3 tier(s), tier 0 69.9 MB in 31 file(s) (declared), tier 1 536.6 MB in 251 file(s) (declared), tier 2 53.2 MB in 16 file(s) (declared); 2 file(s) over the host's per-file cap: /assets/gate1/orn.glb, /assets/gate1/env.glb",
+  "log: [pfa] 4 glbs, loaded in manifest order: arch:arch.glb, ground:ground.glb, orn:orn.glb, env:env.glb",
+  "log: [pfa] stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough",
+  "log: [pfa] exposure: the LUT says exposure_applied_by \"viewer (multiply linear by 2^exposure_ev before the shaper)\", multiplier 2^-2.8331 = 0.14033",
+  "log: [pfa] sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite",
+  "log: [pfa] lightmap reservations for the Gate 3 bake, no texture yet: 988 mode \"slot\", 16 mode \"asset\", 1536 mode \"none\"",
+  "log: [pfa] materials.detail: 5 tiling set(s), 15 maps, 18 glb material rule(s) + 15 source-material rule(s), mode \"object_space_tiled\", bump distance 0.015 m",
+  "log: [pfa] detail: 3 merged group(s) list more than one source material, the first is used: MAT_EXP_ENVBD__MAT_lawn: MAT_gravel_path + MAT_soil -> gravelly_sand; MAT_EXP_ENV__ENV_ground_colonnade_walk: MAT_paving_stone + MAT_paving_stone_worn -> concrete_wall_007; MAT_EXP_ENV__ENV_terrain_ground: MAT_gravel_path + MAT_soil -> gravelly_sand",
+  "log: [pfa] materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 307.8 MB declared, mode \"pbr\"",
+  "log: [pfa] manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159",
+  "log: [pfa] manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas",
+  "log: [pfa] manifest pfa-phase6/5 at http://127.0.0.1:49751/stub/gate5/manifest.json",
+  "log: [pfa] uv2_relay_status.json: 7 asset(s) checked against the packed glbs, 0 flag(s) flipped; 16 own map(s) usable, 0 blocked, 0 on the frozen layout",
+  "log: [pfa] lighting mode: baked — lightmaps carry the diffuse, sun and env are specular-only",
+  "log: [pfa] materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares \"pbr\"",
+  "log: [pfa] TIERS ARE A STUB (web/tools/stub_tiers.mjs): STUB. It cannot split a glb (gltfpack) and it makes no low-resolution texture variant (toktx). Replace with export/out/gate5/manifest.json when it lands in MAIN.",
+  "log: [pfa] 2 published file(s) over the host's per-file cap: /assets/gate1/orn.glb 154.3 MB, /assets/gate1/env.glb 38.1 MB",
+  "log: [pfa] foliage + impostors run at tier 2 (env glb tier 2, impostor atlases tier 1)",
+  "log: [pfa] load tiers: 3 declared, streaming up to 0 (?tiers=0); glbs tier 0: arch+ground, tier 1: orn, tier 2: env; declared bytes 0=69.9 MB, 1=536.6 MB, 2=53.2 MB",
+  "requestfailed: HEAD http://127.0.0.1:49751/assets/gate3/sky_diffuse_1024x512.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:49751/assets/gate1/ground.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:49751/assets/gate0/sky_glossy_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:49751/assets/gate0/sky_camera_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:49751/assets/gate1/arch.glb net::ERR_ABORTED",
+  "log: [pfa] load plan: 6 files, 23.3 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:arch 4.6, glb:ground 2.0)",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "requestfailed: HEAD http://127.0.0.1:49751/assets/gate0/lut_agx_high_contrast_65.cube net::ERR_ABORTED",
+  "log: [pfa] sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "log: [pfa] PMREM specular environment from sky_glossy_4096x2048.hdr",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "log: [pfa] sky diffuse integral / L dw = 33.665, 38.253, 213.742 (the sky half of the irradiance the impostor atlases were baked under)",
+  "log: [pfa] PMREM diffuse environment from sky_diffuse_1024x512.hdr (irradiance for everything without a lightmap; QA-12b-1)",
+  "log: [pfa] sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only",
+  "log: [pfa] water plane at y = -1.3 (WATER_Z -1.3), planar Reflector 1024x1024 (?reflres=full), reflection gather 0.003 / saturation 1, ripple 8 waves 1.20-0.034 m, murk 0.2353, 0.3523, 0.3166 (derived; ?watermurkgain=1), grazing cap 6",
+  "log: [pfa] post mist: COMP_golden_hour airlight cap 0.25 * (1 - exp(-k 5 * mist)), mist = LINEAR over 20..2020 m along the view ray (extinction length 400 m), haze [5.32, 3.74, 1.96], from manifest compositor.mist",
+  "log: [pfa] post bloom: threshold 12.827 (scene-linear; manifest 6.4136 x 2), strength 0.05000000074505806, radius 0.6000000238418579, mip chain from 960x540 (?bloomres=full)",
+  "log: [pfa] LUT texel type FloatType (OES_texture_float_linear) — extension present",
+  "log: [pfa] LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18",
+  "log: [pfa] post vignette: 0.07999999821186066 in linear, before the transform",
+  "log: [pfa] quality preset 'look': bloom full-res, Reflector full-res target, reflection set orn",
+  "log: [pfa] post chain: mist + bloom + vignette (?post=all)",
+  "log: [pfa] display: tone mapping OFF, exposure x0.14033, LUT on",
+  "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
+  "log: [pfa] lightMapIntensity = lightmap_scale 3.14159",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 58 uv set(s) on 29 geometr(ies), 17 material transform(s) neutralised, scale 13.139..15.986, +7.53 MB",
+  "log: [pfa] glb arch.glb (arch) 4.6 MB in 0.11 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
+  "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB",
+  "log: [pfa] glb ground.glb (ground) 2.0 MB in 0.03 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
+  "log: [pfa] gate3 UV2 census: 33 mesh(es) carry TEXCOORD_1 (568 placements), 1 do not (1 placements)",
+  "log: [pfa] gate3 lightmaps: 16/16 own map(s), 0/988 instance slot(s), 9 material(s) cloned; match error <= 0.019 m",
+  "log: [pfa] gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)",
+  "log: [pfa] gate3: 17 lightmap(s) deferred to a later load tier (max tier now 0): gate3_lmatlas_arch_inst_0+gate3_lmatlas_arch_inst_1 @1, gate3_lmatlas_arch_inst_0 @1, gate3_lmatlas_arch_inst_1 @1, gate3_lmatlas_arch_inst_1+gate3_lmatlas_arch_inst_2 @1, gate3_lmatlas_arch_inst_2 @1 …. Those materials stay on the environment path until their tier lands.",
+  "log: [pfa] gate3 vertex irradiance: 0/14 near-tree mesh(es) take COLOR_0 as baked irradiance (range 44.257..44.257, x scale 3.14159); 0 mesh(es) carry COLOR_0, 0 of them batched, 0 unmatched by position",
+  "log: [pfa] gate3 instance irradiance postponed: /assets/gate1/env.glb is in a later load tier",
+  "log: [pfa] instance chunking (QA-11d-1): 7 of 7 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 26 regional batches, +19 draw calls when every chunk is in frame",
+  "log: [pfa] 6 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 \"borrow a neighbour's lightmap\" stand-in is off at Gate 3",
+  "log: [pfa] 16 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch",
+  "log: [pfa] pbr: 26 of 26 scene materials textured from 15 of 62 manifest sets, 0 maps, 0.0 MB resident in 0 file(s) [], requested nearest first (MAT_EXP_ARCH_site__MAT_concrete_podium 28.8 m, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre 59.1 m, MAT_EXP_ARCH_site__MAT_paving 62.8 m …)",
+  "log: [pfa] pbr: factors applied to 26 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
+  "log: [pfa] detail (QA-12-1): 25 material(s) on 2 tiling set(s) (concrete_wall_007 x14, concrete_wall_008 x11), 6 textures, 25.2 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
+  "log: [pfa] detail: 4 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap",
+  "log: [pfa] pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 0 maps, 0.0 MB resident in 0 file(s) [], requested nearest first (MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m, MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__riprap 0 m …)",
+  "log: [pfa] pbr: factors applied to 4 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "log: [pfa] detail (QA-12-1): 3 material(s) on 3 tiling set(s) (concrete_wall_007 x1, rock_boulder_dry x1, gravelly_sand x1), 9 textures, 21.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
+  "log: [pfa] detail: 15 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
+  "log: [pfa] pbr textures in 3.37 s; 0 superseded texture(s) disposed, 0.0 MB freed",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "warn: [.WebGL-0x134000dba00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_px.hdr",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "log: [pfa] probe env failed: fetch for \"http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_px.hdr\" responded with 404: Not Found; the sky-diffuse path stays",
+  "log: [pfa] water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)",
+  "log: [pfa] reflection draw set reduced: 0 mesh(es) excluded (0 ORN, 0 backdrop), 53 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_nx.hdr",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_py.hdr",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_ny.hdr",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_pz.hdr",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "httperror: 404 http://127.0.0.1:49751/assets/gate3/probe//assets/gate3/probe/gate3_probe_hero_nz.hdr",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "log: [pfa] ready in 4.58 s: 81.9 MB loaded of 81.9 MB planned (plan 0.01 s, sky 0.58 s, lut 0.06 s, glb 3.87 s) — TIER 0 of 3",
+  "log: [pfa] lazy foliage not loaded: it belongs to tier 2 and ?tiers=0 stops at 0",
+  "log: [pfa] tiers complete: 0:81.9 MB/4.6 s; 81.9 MB total",
+  "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000"
+ ]
+}

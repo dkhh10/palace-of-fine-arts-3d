@@ -63,16 +63,25 @@ function candidates( p, dir ) {
 	return [ ...new Set( out ) ].filter( ( c ) => ! c.startsWith( '..' ) );
 }
 
-/** "../gate1/arch.glb" -> "/assets/gate1/arch.glb", but only when that file (or dir) exists. */
+/**
+ * "../gate1/arch.glb" -> "/assets/gate1/arch.glb", but only when that file (or dir) exists.
+ * Returns { url, usedDir }: `usedDir` means the path only resolved once the enclosing `ktx2_dir` /
+ * `dir` was prepended, and THAT STRING MUST BE LEFT AS IT IS.  The two consumers join a dir to a path
+ * differently — manifest.js's joinDir drops the dir when the path is absolute, while the probe block
+ * concatenates the two — so rewriting a dir-relative path to an absolute url produced
+ * `/assets/gate3/probe//assets/gate3/probe/...`.  Rewriting the DIR alone is right for both.
+ */
 function toAbs( p, wantDir = false, dir = null ) {
 	if ( typeof p !== 'string' || ! p || /^(https?:)?\//.test( p ) ) return null;
-	for ( const rel of candidates( p, wantDir ? null : dir ) ) {
+	const withDir = candidates( p, wantDir ? null : dir );
+	const withoutDir = candidates( p, null );
+	for ( const rel of withDir ) {
 		const disk = path.join( OUT_ROOT, rel );
 		if ( ! fs.existsSync( disk ) ) continue;
 		if ( fs.statSync( disk ).isDirectory() !== wantDir ) continue;
 		const url = `/assets/${rel}`;
 		if ( ! wantDir ) rewritten.set( url, disk );
-		return url;
+		return { url, usedDir: ! withoutDir.includes( rel ) };
 	}
 	unresolved.push( p );
 	return null;
@@ -94,12 +103,12 @@ function walk( node, keyPath, dir ) {
 	}
 	if ( typeof node !== 'string' ) return node;
 	const key = keyPath.split( '.' ).pop().replace( /\[\d+\]$/, '' );
-	if ( DIR_KEY.test( key ) ) { const a = toAbs( node, true ); return a || node; }
+	if ( DIR_KEY.test( key ) ) { const a = toAbs( node, true ); return a ? a.url : node; }
 	if ( ! EXT.test( node ) ) return node;
 	const a = toAbs( node, false, dir );
 	if ( ! a ) return node;
-	found.push( { url: a, jsonPath: keyPath } );
-	return a;
+	found.push( { url: a.url, jsonPath: keyPath } );
+	return a.usedDir ? node : a.url;                 // a dir-relative path stays relative to its dir
 }
 const m = walk( raw, '', null );
 

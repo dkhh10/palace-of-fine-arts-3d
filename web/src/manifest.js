@@ -890,7 +890,11 @@ export function normaliseManifest( raw, baseUrl ) {
 				placements: ii.placements ?? null, meshesN: ii.meshes_n ?? null,
 				rangeGlobal: ii.range_global ?? null, nodes: Array.isArray( ii.nodes ) ? ii.nodes : [],
 				meshes: ii.meshes || {}, darkN: ( ii.dark && ii.dark.n ) || 0,
-				glb: ( ( ii.order_source && ii.order_source.glb ) || 'env.glb' ).replace( /\.glb$/, '' ) } : null,
+				// The BASENAME, because this is a scene-graph key (`WEB_glb_<class>`), not a url: a
+				// manifest that writes "env.glb", "../gate1/env.glb" or an absolute path all mean the
+				// same root, and anything but the stem silently found no root at all.
+				glb: String( ( ii.order_source && ii.order_source.glb ) || 'env.glb' )
+					.split( '/' ).pop().replace( /\.glb$/, '' ) } : null,
 			impostors, probe, notes: g3notes };
 		notes.push( `manifest v4 lightmaps: ${gate3.ownCount} own map(s) ready of ${Object.keys( ownMaps ).length}`
 			+ ( frozenUsed ? `, ${frozenUsed} on the frozen Gate 1 layout` : '' )
