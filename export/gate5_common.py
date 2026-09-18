@@ -37,6 +37,50 @@ PUB_BASE = MAIN / "export/out/gate5"
 HERO = "CAM_qa_01_lagoon_hero"
 CAP_BYTES = 25 * 1024 * 1024          # Cloudflare Pages' per-file ceiling
 TIER0_BUDGET = 50_000_000             # "initial payload <= 50 MB" (CLAUDE.md 6b), decimal MB
+# What the plan is actually held to, so the measured wire total has room for the response headers the
+# network log counts and this accounting cannot see per file (lead, 2026-09-18).
+TIER0_TARGET = 49_500_000
+# The viewer's Chrome network log of a tier-0 boot, read READ-ONLY from the phase6b-viewer worktree.
+NET_LOG = Path(os.environ.get(
+    "PFA_NET_LOG",
+    MAIN / ".claude/worktrees/phase6b-viewer/renders/web/gate5_tier0_net.json"))
+
+
+def header_bytes_per_request(net_log=None):
+    """The mean response-header size, MEASURED, not assumed.
+
+    Chrome reports `encodedDataLength`, which is body + response headers. For a response the host does
+    not compress - the `.hdr` equirects, the packed glbs, `.cube` - the body size on disk is known
+    exactly, so the difference IS the header block. Measured on the viewer's tier-0 log: 162 B on the
+    9 radiance files, 161 B on the 4 glbs, 154 B on the LUT. Compressed responses are excluded (their
+    body is brotli/gzip, not the gzip -9 estimate here) and so are the 0-byte blob rows the KTX2
+    worker creates. Returns (bytes_per_request, sample_n, source).
+    """
+    p = Path(net_log or NET_LOG)
+    if not p.exists():
+        return 162, 0, f"{p} absent: the measured default from the 2026-09-18 tier-0 log"
+    import collections
+    from urllib.parse import urlparse, unquote
+    doc = json.loads(p.read_text())
+    agg, mimes = collections.Counter(), {}
+    for r in doc.get("requests", []):
+        b = os.path.basename(unquote(urlparse(r["url"]).path))
+        agg[b] += r.get("bytes") or 0
+        mimes[b] = r.get("mime")
+    deltas = []
+    for name, got in agg.items():
+        # only the types no host compresses, and only where the file is on disk to measure against
+        if not name.lower().endswith((".hdr", ".glb", ".cube", ".wasm")):
+            continue
+        for root in (MAIN / "export/out").glob(f"*/**/{name}"):
+            d = got - root.stat().st_size
+            if 0 < d < 4096:
+                deltas.append(d)
+            break
+    if not deltas:
+        return 162, 0, f"{p}: no uncompressed response matched a file on disk"
+    deltas.sort()
+    return deltas[len(deltas) // 2], len(deltas), str(p)
 
 # The 16-bit PNG bake output is regenerable and was never synced to MAIN (export/sync_main.sh excludes
 # `tex/`), so the low-res tier-0 variants are encoded from the bake worktree's copies.  Overridable.

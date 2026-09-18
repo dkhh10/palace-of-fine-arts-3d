@@ -76,13 +76,25 @@ def main():
       "Cloudflare Pages compresses (html, css, js, json, txt, svg), size on disk for KTX2, glb, wasm, "
       "`.hdr` and `.cube` (Pages serves those as `application/octet-stream` and does not compress "
       "them). gzip, not brotli, so the estimate errs high.\n")
-    a("| variant | tier 0 transfer | boot overhead | first frame | budget | verdict |")
-    a("|---|---|---|---|---|---|")
+    a("| variant | tier 0 transfer | boot overhead | response headers | ON THE WIRE | target | verdict |")
+    a("|---|---|---|---|---|---|---|")
     for name, m in (("desktop", man), ("mobile", mob)):
         t = m["tiers"]
+        h = t["request_header_allowance"]
         a(f"| {name} | {t['transfer_bytes']['0']:,} | {t['boot_overhead_bytes']['total']:,} | "
-          f"**{t['first_frame_transfer_bytes']:,}** | 50,000,000 | "
-          f"{'WITHIN' if t['tier0_within_budget'] else 'OVER'} |")
+          f"{h['total']:,} ({h['requests']} x {h['bytes_per_request']}) | "
+          f"**{t['first_frame_on_wire_bytes']:,}** | {t['tier0_target_bytes']:,} | "
+          f"{'WITHIN' if t['tier0_within_target'] else 'OVER'} |")
+    a("")
+    h = man["tiers"]["request_header_allowance"]
+    a(f"The header allowance is measured, not assumed: Chrome's `encodedDataLength` is body + response "
+      f"headers, and on the {h['samples']} tier-0 responses no host compresses (`.hdr`, `.glb`, "
+      f"`.cube`, `.wasm`) the body size on disk is known exactly, so the difference IS the header "
+      f"block - **{h['bytes_per_request']} B**, median, from the viewer's own log. The rest of the gap "
+      "between this table and the viewer's 50.4 MB dev-server measurement is compression the dev "
+      "server does not do and Cloudflare Pages does: `manifest.json` 2,517,666 B there against "
+      "224,918 gzipped, the Vite bundle 1,177,647 against 321,602, `uv2_relay_status.json` 31,977 "
+      "against 3,914 - 3.2 MB of text that arrives compressed in production.\n")
     a("")
     a("`boot_overhead_bytes` is what the browser fetches before frame 1 that is not in `files`:\n")
     a("| item | path | bytes | transfer |")
@@ -267,6 +279,10 @@ def main():
       "`tiers.first_frame_transfer_bytes` are what the loading screen should count against.")
     a("- The four v4 paths that were relative to `out/gate3` are rebased to `../gate3/...`; what moved "
       "is listed in `tiers.path_rebase`.\n")
+    a("## The water\n")
+    a(f"- {man['tiers']['water_textures']}\n")
+    a("## ENV instances after the split\n")
+    a(f"- {man['glb'].get('instancing_note', '')}\n")
     a("## The deploy set — every directory the publish must carry\n")
     a("`files` spans four gates, not just gate5: the LUT and the sky are gate0, the glb-external maps "
       "and the lazy foliage glbs are gate1, the Gate 2 PBR and detail sets are gate2, the lightmaps, "
@@ -286,6 +302,10 @@ def main():
         a(f"| `export/out/{d}` | {dirs_n[d]} | {dirs_b[d]:,} | {dirs_t[d]:,} |")
     a(f"| **all** | {sum(dirs_n.values())} | **{sum(dirs_b.values()):,}** | "
       f"{sum(dirs_t.values()):,} |")
+    a(f"\n**Build the publish directory from `manifest.json` only** - {man['tiers']['deploy_from']} "
+      "`manifest_mobile.json` is a LOAD plan, not a deploy plan: its material sets name the "
+      "full-resolution keys the viewer redirects, so a walker resolving them there would publish the "
+      "whole desktop set.\n")
     a("\nThe mobile set is a subset of the same directories. `web/deploy.sh` should build the publish "
       "directory FROM `files` (copy each path, keeping it relative to `out/gate5`), not by copying "
       "`out/` wholesale: `out/` also holds ~2 GB of bake sources, the `rgbm8` lightmap twins and the "

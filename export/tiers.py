@@ -52,7 +52,10 @@ COMPRESSIBLE_EXT = {".json", ".js", ".mjs", ".css", ".html", ".txt", ".svg", ".m
 TIER0_NORMAL_QLEVEL = 32
 # Headroom kept under the budget when the trim runs, so a manifest that grows by a few kB on the next
 # run does not put the first frame back over it.
-TIER0_SLACK = 500_000
+TIER0_SLACK = 100_000
+# Requests the network log shows that are not in `files`: the page, the Vite bundle, the KTX2
+# transcoder's js and wasm, the manifest, and the favicon the browser asks for unprompted.
+BOOT_REQUESTS = 6
 
 GLTFPACK = str(G.MAIN / "tools/bin/gltfpack")
 # gltf_pack.sh's Gate 3 flags per class, so a group is packed exactly as its class was, plus `-tr`.
@@ -253,11 +256,14 @@ def rebase_gate3_paths(man):
     """v4's paths are relative to out/gate3; v5 lives in out/gate5, so the gate3-relative ones are
     rewritten.  Everything already written as `../gate0/...`, `../gate1/...` or `../gate2/...` is a
     sibling path and is left alone.  Recorded in `tiers.path_rebase` - never a silent rewrite."""
-    moved = {}
+    moved = []
+
+    def note_move(where, was):
+        moved.append(dict(field=where, was=was))
 
     def to3(v, where):
         if isinstance(v, str) and v and not v.startswith("../") and not v.startswith("/"):
-            moved[where] = v
+            note_move(where, v)
             return "../gate3/" + v.replace("out/gate3/", "")
         return v
 
@@ -269,13 +275,33 @@ def rebase_gate3_paths(man):
             man["sky"]["diffuse"][k] = to3(man["sky"]["diffuse"][k], f"sky.diffuse.{k}")
     fol = man["materials"].get("foliage") or {}
     if fol.get("dir"):
-        moved["materials.foliage.dir"] = fol["dir"]
+        note_move("materials.foliage.dir", fol["dir"])
         fol["dir"] = "../gate3/" + fol["dir"].replace("out/gate3/", "")
+    g2 = man["textures"].get("gate2") or {}
+    if g2.get("etc1s_dir"):
+        note_move("textures.gate2.etc1s_dir", g2.pop("etc1s_dir"))
+        g2["etc1s_note"] = ("the Gate 2 mobile TIMING sample (30 files); it is not published - the "
+                            "mobile manifest reads the half-resolution set in `tiers.lowres.dir`. The "
+                            "directory name is deliberately not a path any more, so a deploy walker "
+                            "cannot pick it up as a candidate.")
+    imp = man.get("impostors") or {}
+    v2 = imp.get("variant_2k")
+    if isinstance(v2, dict):
+        dropped_2k = 0
+        for proto in (imp.get("prototypes") or {}).values():
+            for k in ("albedo_2k", "normal_depth_2k"):
+                if proto.pop(k, None):
+                    dropped_2k += 1
+        if dropped_2k:
+            note_move("impostors.prototypes[*].{albedo,normal_depth}_2k", f"{dropped_2k} keys")
+            v2["note"] = (v2.get("note", "") + " The 2 K texture keys are removed from this manifest: "
+                          "the 1 K set is what ships, and naming the 2 K files here made every deploy "
+                          "walker treat them as part of the payload.").strip()
     for blk, key in ((man["trees"].get("far_mesh"), "trees.far_mesh.glb"),
                      (man["trees"].get("walkup_mesh"), "trees.walkup_mesh.glb"),
                      (man["shrubs"].get("lod1"), "shrubs.lod1.glb")):
         if blk and blk.get("glb") and "/" not in blk["glb"]:
-            moved[key] = blk["glb"]
+            note_move(key, blk["glb"])
             blk["glb"] = "../gate1/" + blk["glb"]
     return moved
 
@@ -522,16 +548,30 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
     # transcoder, this manifest).  If tier 0 + boot is over the budget, the least hero-visible tier-0
     # Gate 2 placeholders are moved to tier 1, cheapest look first, and what moved is recorded.
     boot = boot_overhead(out, out / out_name)
+    hdr_b, hdr_n, hdr_src = G.header_bytes_per_request()
     trim = dict(moved=[], moved_bytes=0, reason=None)
-    budget_left = G.TIER0_BUDGET - boot["total"]
+
+    def t0_files():
+        return sum(1 for e in uniq if e["tier"] == 0 and not e.get("_drop"))
 
     def t0_transfer():
         return sum(e["transfer"] or 0 for e in uniq
                    if e["tier"] == 0 and not e.get("_drop"))
 
-    if t0_transfer() > budget_left:
-        trim["reason"] = (f"tier 0 + boot overhead ({t0_transfer() + boot['total']:,} B) is over the "
-                          f"{G.TIER0_BUDGET:,} B budget")
+    def headers():
+        # one response-header block per tier-0 request, plus the boot requests the log also shows
+        # (page, bundle, transcoder js + wasm, manifest, favicon)
+        return hdr_b * (t0_files() + BOOT_REQUESTS)
+
+    def on_wire():
+        return t0_transfer() + boot["total"] + headers()
+
+    budget_left = G.TIER0_TARGET - boot["total"]
+
+    if on_wire() > G.TIER0_TARGET:
+        trim["reason"] = (f"tier 0 on the wire ({on_wire():,} B = {t0_transfer():,} files + "
+                          f"{boot['total']:,} boot + {headers():,} headers) is over the "
+                          f"{G.TIER0_TARGET:,} B target")
         # least hero-visible first: a placeholder map whose material covers almost none of the hero
         # frame costs the least to leave until tier 1.
         cand = [e for e in uniq if e["tier"] == 0 and e["kind"] in ("gate2_lo", "gate2_half")]
@@ -539,7 +579,7 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         full_at = {e.get("key") for e in uniq if e["tier"] == 1 and e["kind"] in ("gate2", "detail")}
         dropped = []
         for e in cand:
-            if t0_transfer() <= budget_left - TIER0_SLACK:
+            if on_wire() <= G.TIER0_TARGET - TIER0_SLACK:
                 break
             # Review r2 finding 3: MOVING the half-resolution copy to tier 1 makes tier 1 fetch half
             # AND full of the same key. When the full-resolution file is already in tier 1 the half is
@@ -568,6 +608,24 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                           "of the hero frame.")
         uniq.sort(key=lambda e: (e["tier"], e["order"], e["path"]))
 
+    if not mobile:
+        # `manifest_mobile.json` publishes half-resolution files the desktop tiers do not fetch, and the
+        # trim above drops a few more. A deploy is built from ONE plan, so the desktop plan names every
+        # one of them, at tier 2 - otherwise a phone hitting the same origin 404s on every texture.
+        # AFTER the trim, so a dropped lo copy is still named (it is on disk and mobile may want it).
+        have = {e["path"] for e in uniq}
+        extra = []
+        for f in sorted(lowres.glob("*.ktx2")):
+            rel = G.pub_rel(f, base)
+            if rel in have:
+                continue
+            extra.append(dict(path=rel, tier=2, kind="mobile_lo", order=99, key=f.stem,
+                              why="published for manifest_mobile.json and for the trimmed keys; the "
+                                  "desktop tiers never fetch it",
+                              bytes=f.stat().st_size, transfer=transfer_bytes(f)))
+        uniq += extra
+        uniq.sort(key=lambda e: (e["tier"], e["order"], e["path"]))
+
     tier_bytes, tier_files, tier_transfer, oversize = (defaultdict(int), defaultdict(int),
                                                        defaultdict(int), [])
     for e in uniq:
@@ -581,6 +639,8 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                                  reason="single texture or container above the 25 MiB Pages cap; "
                                         "not splittable without re-baking it"))
     first_frame = tier_transfer[0] + boot["total"]
+    hdr_total = hdr_b * (tier_files[0] + BOOT_REQUESTS)
+    on_wire_bytes = first_frame + hdr_total
 
     # Completeness: every file `resolve_files` knows about is either published, or published in its
     # half-resolution form, or deliberately dropped by this variant. The viewer treats anything it
@@ -609,6 +669,8 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
     for e in uniq:
         if not e["path"].endswith(".ktx2"):
             continue
+        if e["kind"] == "mobile_lo":
+            continue          # published for the other variant; this viewer never uploads it
         px = e.get("px")
         if not px:
             g2 = man["textures"]["gate2"]["files"].get(e.get("key") or "")
@@ -630,6 +692,17 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                        + (0 if mobile else sum(man["glb"]["per_class"][c]["bytes"]
                                                for c in ("arch", "ground"))),
                        gltfpack=man["glb"]["gltfpack"],
+                       instancing_note=(
+                           "ENV draws 1 523 instanced rows + 6 plain nodes = 1 529 placements against "
+                           "env.glb's 1 526 + 5 = 1 531. Nothing is missing: all 1 536 source nodes are "
+                           "in the groups and the triangles DRAWN are 679 779, exactly Gate 3's. "
+                           "gltfpack merges single-use meshes that share a material, and it merges two "
+                           "more of them in the split than in the whole file, so three cards that were "
+                           "instanced rows are now inside a merged plain node. Those three are the "
+                           "`.001` near-duplicates listed in `instance_order_groups.json.unmatched`: "
+                           "a merged plain node has no per-instance row, so their irradiance cannot be "
+                           "keyed and they fall back to the probe, as the seven fully enclosed cards "
+                           "already do."),
                        note="orn.glb (154 253 424 B) and env.glb (38 119 568 B) are NOT published: both "
                             "are over Cloudflare Pages' 25 MiB per-file cap. Their nodes ship as "
                             "`groups`, packed with the same gltfpack flags from the same gate1 .bin, so "
@@ -645,15 +718,35 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         total_bytes=sum(tier_bytes.values()),
         total_transfer_bytes=sum(tier_transfer.values()),
         boot_overhead_bytes=boot,
+        request_header_allowance=dict(
+            bytes_per_request=hdr_b, requests=tier_files[0] + BOOT_REQUESTS, total=hdr_total,
+            samples=hdr_n, measured_from=hdr_src,
+            note="Chrome's encodedDataLength is body + response headers; on the responses no host "
+                 "compresses (.hdr, .glb, .cube, .wasm) the body size on disk is known exactly, so "
+                 "the difference IS the header block. Median of those."),
         first_frame_transfer_bytes=first_frame,
+        first_frame_on_wire_bytes=on_wire_bytes,
+        tier0_target_bytes=G.TIER0_TARGET,
         tier0_trim=trim,
         unpublished=unpublished,
-        tier0_within_budget=first_frame <= G.TIER0_BUDGET,
+        tier0_within_budget=on_wire_bytes <= G.TIER0_BUDGET,
+        tier0_within_target=on_wire_bytes <= G.TIER0_TARGET,
         budget_note="the budget is TRANSFER bytes as the network log sees them: gzip -9 for the types "
                     "Cloudflare Pages compresses (html, css, js, json, txt, svg), size on disk for "
                     "KTX2, glb, wasm, .hdr and .cube. `first_frame_transfer_bytes` = tier 0 + "
                     "`boot_overhead_bytes.total`, and THAT is what is tested against 50 000 000.",
         station_order=order, oversize=oversize, path_rebase=rebased,
+        deploy_from=("this file: every path both variants fetch is named here, including the "
+                     "half-resolution files only manifest_mobile.json uses (kind `mobile_lo`)."
+                     if not mobile else
+                     "manifest.json, NOT this file. This is a LOAD plan: its material sets name the "
+                     "full-resolution keys and the viewer redirects them to `tiers.lowres.dir`, so a "
+                     "deploy walker resolving those keys here would publish the full desktop set. The "
+                     "desktop plan names every file this one fetches."),
+        water_textures=("none: the lagoon ripple is procedural (8 analytic waves in web/src/water.js, "
+                        "`rippleTiling`), so there is no ripple or normal map to tier - 0 bytes in "
+                        "every tier. The tier-0 water differs from the tier-1 water only in what it "
+                        "REFLECTS, which is the scene, not a map of its own."),
         resident_estimate_mb=dict(by_kind={k: round(v, 1) for k, v in sorted(res.items())},
                                   total=res_total,
                                   rule=man["budget"]["rule"]),
@@ -706,14 +799,19 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         first_frame = tier_transfer[0] + boot["total"]
         man5["tiers"]["boot_overhead_bytes"]["total"] = boot["total"]
         man5["tiers"]["first_frame_transfer_bytes"] = first_frame
-        man5["tiers"]["tier0_within_budget"] = first_frame <= G.TIER0_BUDGET
+        on_wire_bytes = first_frame + hdr_total
+        man5["tiers"]["first_frame_on_wire_bytes"] = on_wire_bytes
+        man5["tiers"]["tier0_within_budget"] = on_wire_bytes <= G.TIER0_BUDGET
+        man5["tiers"]["tier0_within_target"] = on_wire_bytes <= G.TIER0_TARGET
     p.write_text(json.dumps(man5, indent=1))
     print(f"[tiers] {variant}: " + ", ".join(
         f"t{t} {tier_bytes[t]/1e6:.1f} MB / {tier_files[t]} files" for t in sorted(tier_bytes))
         + f"; total {sum(tier_bytes.values())/1e6:.1f} MB; resident est {res_total:.0f} MB")
-    print(f"[tiers] {variant}: first frame = tier 0 {tier_transfer[0]/1e6:.2f} MB transfer + boot "
-          f"{boot['total']/1e6:.2f} MB = {first_frame/1e6:.2f} MB, "
-          f"{'within' if first_frame <= G.TIER0_BUDGET else 'OVER'} the 50.0 MB budget"
+    print(f"[tiers] {variant}: first frame = tier 0 {tier_transfer[0]/1e6:.2f} MB + boot "
+          f"{boot['total']/1e6:.2f} MB + headers {hdr_total/1e3:.0f} kB = "
+          f"{on_wire_bytes/1e6:.2f} MB on the wire, "
+          f"{'within' if on_wire_bytes <= G.TIER0_TARGET else 'OVER'} the "
+          f"{G.TIER0_TARGET/1e6:.1f} MB target"
           + (f" (moved {len(trim['moved'])} placeholder maps out, {trim['moved_bytes']/1e6:.2f} MB)"
              if trim["moved"] else "") )
     print(f"[tiers] {variant}: {len(oversize)} files over the 25 MiB cap -> {p}")

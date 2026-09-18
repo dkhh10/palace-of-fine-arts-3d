@@ -2342,3 +2342,38 @@ export/sync_main.sh
     (lightmaps, impostors, probe, foliage cards) and `out/gate5`. `web/deploy.sh` must build the
     publish directory FROM `files`, not by copying `out/` wholesale - `out/` also holds ~2 GB of bake
     sources, the `rgbm8` lightmap twins and the unpublished `orn.glb` / `env.glb`.
+
+### Gate 5 wire pass (2026-09-18, viewer network log + lead items 1-4)
+
+43. **The budget is now what the network log counts.** `tiers.request_header_allowance` adds one
+    response-header block per tier-0 request (+6 boot requests), at **162 B**, MEASURED from the
+    viewer's `renders/web/gate5_tier0_net.json`: Chrome's `encodedDataLength` is body + headers, and on
+    the 14 tier-0 responses no host compresses (`.hdr`, `.glb`, `.cube`, `.wasm`) the body size on disk
+    is exact, so the difference is the header block. `tiers.first_frame_on_wire_bytes` = tier 0
+    transfer + boot + headers, tested against `G.TIER0_TARGET` = **49 500 000**. Desktop **49 316 003**,
+    mobile **47 556 566**. The rest of the gap to the viewer's 50.4 MB is compression the dev server
+    does not do and Pages does (manifest 2 517 666 -> 224 918, bundle 1 177 647 -> 321 602,
+    uv2_relay 31 977 -> 3 914).
+44. **31 placeholder maps trimmed** (1 735 243 B), least hero-visible first; the largest covers
+    **0.019 %** of the hero frame, every one is listed in `tiers.tier0_trim` with its fraction, and
+    each is DROPPED rather than moved, because its full-resolution file is already in tier 1.
+45. **`files[]` is the whole deploy set.** `web/tools/publish_set.mjs` now finds **0** files by
+    reference in the desktop plan (was 108): the v5 manifest no longer NAMES a file it does not publish
+    (`textures.gate2.etc1s_dir` and the impostor `*_2k` keys are gone, with a note in their place),
+    `tiers.path_rebase` is a LIST - as a dict its keys ended in `_dir` and every walker read them as
+    directory declarations - and every half-resolution file only `manifest_mobile.json` needs is named
+    at tier 2 as `kind: mobile_lo`. `tiers.deploy_from` says it: **build the publish directory from
+    `manifest.json`**, never from `manifest_mobile.json`, which is a LOAD plan whose material sets name
+    the full-resolution keys the viewer redirects.
+46. **The water has no texture to tier.** The lagoon ripple is procedural - 8 analytic waves in
+    `web/src/water.js` under `rippleTiling` - so there is no ripple or normal map in any tier, in
+    either variant, at 0 bytes. The tier-0 water differs from the tier-1 water only in what it
+    REFLECTS.
+47. **ENV instances: 1 523 instanced rows + 6 plain nodes = 1 529 placements, against env.glb's
+    1 526 + 5 = 1 531 - and nothing is missing.** All 1 536 source nodes are in the groups and the
+    triangles DRAWN are 679 779, exactly Gate 3's. gltfpack merges single-use meshes that share a
+    material and merges two more of them in the split than in the whole file, so three cards that used
+    to be instanced rows now sit inside a merged plain node. Those three are the `.001` near-duplicates
+    in `instance_order_groups.json.unmatched`: a merged plain node has no per-instance row, so their
+    irradiance cannot be keyed and they fall back to the probe, as the seven fully enclosed cards
+    already do. 1 376 of 1 379 placements keyed.
