@@ -38,6 +38,15 @@ if [ -d "$ROOT/export/out/gate3" ]; then
         "$ROOT/export/out/gate3/" "$MAIN/export/out/gate3/"
   echo "[gate3] synced to $MAIN/export/out/gate3 ($(du -sk "$MAIN/export/out/gate3" | cut -f1) KiB)"
 fi
+# Gate 5 (6b): the tiers, the per-tier glb groups, the half-resolution ETC1S set and the two manifests.
+# Same rule - no --delete, because MAIN's out/gate5 is what the viewer engineer captures against. Nothing
+# from another gate is touched. The manifests' own paths are already written relative to MAIN's out/gate5
+# (export/gate5_common.pub_rel), so the copy needs no rewriting.
+if [ -d "$ROOT/export/out/gate5" ]; then
+  mkdir -p "$MAIN/export/out/gate5"
+  rsync -a --exclude '_tmp/' --exclude 'gltf/' "$ROOT/export/out/gate5/" "$MAIN/export/out/gate5/"
+  echo "[gate5] synced to $MAIN/export/out/gate5 ($(du -sk "$MAIN/export/out/gate5" | cut -f1) KiB)"
+fi
 # bake_queue/status.json is the GPU LOCK, not an artefact: every agent reads MAIN's copy to decide whether the
 # GPU is busy. Copying this worktree's stale copy over it would tell the viewer's headless Chrome the GPU is
 # free in the middle of a bake. The bake engineer's queue and gpu_lock.sh write MAIN's copy themselves; this

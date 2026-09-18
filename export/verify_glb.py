@@ -417,6 +417,222 @@ def instance_irradiance_check(out, bad):
                 order_recovered=True)
 
 
+# --------------------------------------------------------------------------------- 6b Gate 5: the groups
+def glb_placed_tris(doc):
+    """Triangles DRAWN by a glb: sum(primitive triangles x instance count), the same invariant Gate 1
+    checks.  gltfpack merges single-use nodes, so a node or primitive count proves nothing."""
+    mesh_tris = []
+    for me in doc.get("meshes", []):
+        t = 0
+        for pr in me.get("primitives", []):
+            if "indices" in pr:
+                t += accessor_count(doc, pr["indices"]) // 3
+            else:
+                t += accessor_count(doc, (pr.get("attributes") or {}).get("POSITION")) // 3
+        mesh_tris.append(t)
+    tris = nodes = placements = 0
+    for nd in doc.get("nodes", []):
+        if "mesh" not in nd:
+            continue
+        nodes += 1
+        gi = (nd.get("extensions") or {}).get("EXT_mesh_gpu_instancing")
+        if gi:
+            n = accessor_count(doc, (gi.get("attributes") or {}).get("TRANSLATION"))
+            if n == 0:
+                n = max((accessor_count(doc, i) for i in (gi.get("attributes") or {}).values()),
+                        default=0)
+            tris += mesh_tris[nd["mesh"]] * n
+            placements += n
+        else:
+            tris += mesh_tris[nd["mesh"]]
+            placements += 1
+    return dict(tris=tris, nodes=nodes, placements=placements, meshes=len(mesh_tris))
+
+
+def _glb_json_chunk(b):
+    ln = int.from_bytes(b[12:16], "little")
+    return b[20:20 + ln]
+
+
+def _pub(out, rel):
+    """A published path resolves either in THIS worktree's out/gate5 (what it just wrote) or in MAIN's
+    out/gate5 (where the other gates live and where sync_main.sh copies to). Both are tried, in that
+    order, so the check works before and after the sync."""
+    p = Path(out) / rel
+    if p.exists():
+        return p
+    main = Path(os.environ.get("PFA_MAIN_ROOT",
+                               "/Users/dk/Projects/3d render blender 3rd attempt building"))
+    return main / "export/out/gate5" / rel
+
+
+def verify_gate5(out_dir, variant="desktop"):
+    """Item D: the per-tier groups carry the Gate 3 geometry, once each, under the per-file cap.
+
+    Four assertions, none of which a wrong cut can pass:
+      1. every Gate 1 asset appears EXACTLY ONCE across the non-placeholder groups and the whole-file
+         classes (a tier-0 placeholder group is allowed to repeat its own assets and must be a SUBSET
+         of the tier that replaces it);
+      2. the triangles DRAWN per class, summed over its groups, equal `glb.per_class[cls].placed_tris`
+         from manifest v4 - which is what "geometry is identical to Gate 3, so the six-station ray test
+         is unaffected" means in a file that has been re-packed (the mobile variant is SIMPLIFIED on
+         purpose, so there the ratio is reported and only bounded);
+      3. every external texture URI a group carries resolves to a file that is published;
+      4. no published file is over the per-file cap.
+    """
+    out = Path(out_dir)
+    name = "manifest_mobile.json" if variant == "mobile" else "manifest.json"
+    man = json.loads((out / name).read_text())
+    # v5 carries every v4 block forward, so the Gate 3 truth is inside this same file: `assets` (the
+    # export set's identity) and `glb.per_class_gate3` (what Gate 3 actually drew, per class).
+    v4 = dict(assets=man["assets"], glb=dict(per_class=man["glb"]["per_class_gate3"]))
+    bad, rep = [], {}
+    cap = man["tiers"]["per_file_cap_bytes"]
+    groups = man["glb"]["groups"]
+    placeholders = [g for g in groups if g.get("placeholder")]
+    real = [g for g in groups if not g.get("placeholder")]
+
+    # 1. every asset exactly once
+    seen = {}
+    for g in real:
+        for a in g["assets"]:
+            seen.setdefault(a, []).append(g["id"])
+    whole = [e for e in man["files"] if e["kind"] == "glb"]
+    for e in whole:
+        cls = os.path.basename(e["path"]).replace(".glb", "")
+        for a, rec in v4["assets"].items():
+            c = "ground" if rec.get("kind") == "ground" else \
+                "arch" if rec["cls"] == "ARCH" else "orn" if rec["cls"] == "ORN" else "env"
+            if c == cls:
+                seen.setdefault(a, []).append(cls + ".glb")
+    dup = {a: g for a, g in seen.items() if len(g) > 1}
+    miss = sorted(set(v4["assets"]) - set(seen))
+    if dup:
+        bad.append(f"{len(dup)} assets appear in more than one published file, e.g. "
+                   f"{list(dup.items())[:3]}")
+    if miss:
+        bad.append(f"{len(miss)} Gate 1 assets are in no published file, e.g. {miss[:5]}")
+    rep["assets_covered"] = len(seen)
+    rep["assets_expected"] = len(v4["assets"])
+
+    # a placeholder must be a subset of the tier that replaces it, or it shows something tier 1 removes
+    for g in placeholders:
+        same_cls = {a for r in real if r["cls"] == g["cls"] for a in r["assets"]}
+        extra = sorted(set(g["assets"]) - same_cls)
+        if extra:
+            bad.append(f"placeholder {g['id']} carries {len(extra)} assets no real group has, e.g. "
+                       f"{extra[:3]}")
+
+    # 2. triangles drawn per class
+    per_cls = {}
+    for g in groups:
+        if g.get("placeholder"):
+            continue
+        doc, _ = glb_json(_pub(out, g["path"]))
+        c = glb_placed_tris(doc)
+        d = per_cls.setdefault(g["cls"], dict(tris=0, placements=0, groups=0))
+        d["tris"] += c["tris"]
+        d["placements"] += c["placements"]
+        d["groups"] += 1
+    for e in whole:
+        cls = os.path.basename(e["path"]).replace(".glb", "")
+        gp = _pub(out, e["path"])
+        if gp.exists():
+            doc, _ = glb_json(gp)
+            c = glb_placed_tris(doc)
+            d = per_cls.setdefault(cls, dict(tris=0, placements=0, groups=0))
+            d["tris"] += c["tris"]
+            d["placements"] += c["placements"]
+            d["groups"] += 1
+    for cls, d in sorted(per_cls.items()):
+        want = (v4["glb"]["per_class"].get(cls) or {}).get("placed_tris")
+        if not want:
+            continue
+        d["gate3_tris"] = want
+        d["ratio"] = round(d["tris"] / want, 4)
+        if variant == "mobile":
+            lo, hi = (0.3, 0.75) if cls in ("arch", "orn") else (0.99, 1.01)
+            if not lo <= d["ratio"] <= hi:
+                bad.append(f"{cls}: mobile draws {d['tris']} triangles, ratio {d['ratio']} outside "
+                           f"[{lo}, {hi}] of Gate 3's {want}")
+        elif abs(d["tris"] - want) / want > 0.005:
+            bad.append(f"{cls}: the groups draw {d['tris']} triangles against Gate 3's {want} "
+                       f"({100 * (d['tris'] / want - 1):+.3f} %, tolerance 0.5 %)")
+    rep["per_class"] = per_cls
+
+    # 2b. the container itself: tiers.py rewrites the JSON chunk of every group after gltfpack, to point
+    # the `-tr` URIs at the published layout, so the GLB header and chunk framing are checked byte by
+    # byte here - a wrong length is invisible in a tier table and fatal in the browser.
+    for g in groups:
+        b = _pub(out, g["path"]).read_bytes()
+        if b[:4] != b"glTF" or int.from_bytes(b[8:12], "little") != len(b):
+            bad.append(f"{g['id']}: GLB header length {int.from_bytes(b[8:12], 'little')} against "
+                       f"{len(b)} bytes on disk")
+            continue
+        off, kinds = 12, []
+        while off < len(b):
+            ln = int.from_bytes(b[off:off + 4], "little")
+            kinds.append(b[off + 4:off + 8])
+            if ln % 4 or off + 8 + ln > len(b):
+                bad.append(f"{g['id']}: chunk at {off} has length {ln}, unaligned or past the end")
+                break
+            off += 8 + ln
+        else:
+            if kinds[:1] != [b"JSON"]:
+                bad.append(f"{g['id']}: first chunk is {kinds[:1]}, not JSON")
+            doc = json.loads(_glb_json_chunk(b))
+            # No image may ride in a bufferView: an embedded texture reaches three.js as a blob with
+            # no name, so no tier can pair it with its full-resolution twin and the half-resolution
+            # copy would stay in place for ever (viewer measurement, 2026-09-18).
+            emb = [i for i, im in enumerate(doc.get("images", []))
+                   if im.get("bufferView") is not None or not im.get("uri")]
+            if emb:
+                bad.append(f"{g['id']}: {len(emb)} of {len(doc.get('images', []))} images are embedded "
+                           f"(bufferView) or have no uri - `-tr` lost, nothing can upgrade them")
+
+    # 3. every external texture a group refers to is published, and resolves
+    published = {os.path.normpath(e["path"]) for e in man["files"]}
+    missing_tex = []
+    lo_dir = (man["tiers"].get("lowres") or {}).get("dir", "tex_lo")
+    lo_of = {}
+    for e in man["files"]:
+        if e.get("key") and e["path"].startswith(lo_dir + "/"):
+            lo_of[e["key"]] = e["path"]
+    for g in groups:
+        for t in g["textures"]:
+            key = os.path.basename(t)[:-len(".ktx2")] if t.endswith(".ktx2") else None
+            # published as itself, or as the half-resolution twin the viewer redirects to (the mobile
+            # set publishes only the twin)
+            if os.path.normpath(t) not in published and key not in lo_of:
+                missing_tex.append((g["id"], t))
+            elif os.path.normpath(t) in published and not _pub(out, t).exists():
+                missing_tex.append((g["id"], t + " (not on disk)"))
+    if missing_tex:
+        bad.append(f"{len(missing_tex)} group textures are not published or not on disk, e.g. "
+                   f"{missing_tex[:3]}")
+    rep["group_textures"] = sum(len(g["textures"]) for g in groups)
+
+    # 4. the per-file cap
+    over = [(e["path"], e["bytes"]) for e in man["files"] if (e["bytes"] or 0) > cap]
+    if over:
+        bad.append(f"{len(over)} published files over the {cap} B cap: {over[:3]}")
+    rep["files"] = len(man["files"])
+    rep["tier_bytes"] = man["tiers"]["bytes"]
+
+    print(f"[verify5:{variant}] assets {rep['assets_covered']}/{rep['assets_expected']}, "
+          f"{rep['files']} published files, tiers {rep['tier_bytes']}")
+    for cls, d in sorted(per_cls.items()):
+        print(f"[verify5:{variant}] {cls}: {d['groups']} file(s), {d['placements']} placements, "
+              f"{d['tris']} tris" + (f" = {d['ratio']}x Gate 3" if "ratio" in d else ""))
+    for b in bad:
+        print(f"[verify5:{variant}] FAIL {b}")
+    rep["fail"] = bad
+    (out / f"verify_gate5_{variant}.json").write_text(json.dumps(rep, indent=1))
+    print(f"[verify5:{variant}] {'PASS' if not bad else 'FAIL'} -> "
+          f"{out / f'verify_gate5_{variant}.json'}")
+    return 1 if bad else 0
+
+
 def main(out_dir):
     out = Path(out_dir)
     setjson = json.loads((out / "export_set.json").read_text())
@@ -714,4 +930,12 @@ def main(out_dir):
 
 
 if __name__ == "__main__":
+    if "--gate5" in sys.argv:
+        args = [a for a in sys.argv[1:] if not a.startswith("--")]
+        d = args[0] if args else str(ROOT / "export" / "out" / "gate5")
+        rc = 0
+        for v in ("desktop", "mobile"):
+            if Path(d, "manifest_mobile.json" if v == "mobile" else "manifest.json").exists():
+                rc |= verify_gate5(d, v)
+        sys.exit(rc)
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "export" / "out" / "gate1"))
