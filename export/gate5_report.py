@@ -71,10 +71,44 @@ def main():
         tot = sum(m["tiers"]["bytes"].values())
         a(f"| {name} | **all** | {sum(m['tiers']['files'].values())} | {tot:,} | **{tot / MB:.1f}** |")
     a("")
-    a(f"Tier 0 budget 50 MB: desktop **{man['tiers']['bytes']['0'] / MB:.1f} MB** "
-      f"({'within' if man['tiers']['tier0_within_budget'] else 'OVER'}), mobile "
-      f"**{mob['tiers']['bytes']['0'] / MB:.1f} MB** "
-      f"({'within' if mob['tiers']['tier0_within_budget'] else 'OVER'}).")
+    a("## The first frame, on the wire\n")
+    a("The budget is **transfer bytes as the network log sees them**: `gzip -9` for the types "
+      "Cloudflare Pages compresses (html, css, js, json, txt, svg), size on disk for KTX2, glb, wasm, "
+      "`.hdr` and `.cube` (Pages serves those as `application/octet-stream` and does not compress "
+      "them). gzip, not brotli, so the estimate errs high.\n")
+    a("| variant | tier 0 transfer | boot overhead | first frame | budget | verdict |")
+    a("|---|---|---|---|---|---|")
+    for name, m in (("desktop", man), ("mobile", mob)):
+        t = m["tiers"]
+        a(f"| {name} | {t['transfer_bytes']['0']:,} | {t['boot_overhead_bytes']['total']:,} | "
+          f"**{t['first_frame_transfer_bytes']:,}** | 50,000,000 | "
+          f"{'WITHIN' if t['tier0_within_budget'] else 'OVER'} |")
+    a("")
+    a("`boot_overhead_bytes` is what the browser fetches before frame 1 that is not in `files`:\n")
+    a("| item | path | bytes | transfer |")
+    a("|---|---|---|---|")
+    for k, v in man["tiers"]["boot_overhead_bytes"]["items"].items():
+        a(f"| {k} | `{v['path']}` | {v['bytes']:,} | {v['transfer']:,} |")
+    a("")
+    tr = man["tiers"]["tier0_trim"]
+    if tr["moved"]:
+        a(f"To fit, **{len(tr['moved'])} Gate 2 placeholder maps ({tr['moved_bytes']:,} transfer "
+          f"bytes) moved from tier 0 to tier 1**, least hero-visible first. Their materials' share of "
+          f"the hero frame, from `visibility.json`:\n")
+        a("| texture | hero fraction of the frame | transfer |")
+        a("|---|---|---|")
+        for x in tr["moved"][:40]:
+            h = -x["hero_order"] if isinstance(x["hero_order"], (int, float)) and x["hero_order"] < 0 \
+                else 0.0
+            a(f"| `{x['key']}` | {h:.6f} ({h * 100:.4f} %) | {x['transfer']:,} |")
+        a(f"\nThe largest of them covers {max((-x['hero_order'] for x in tr['moved'] if x['hero_order']), default=0) * 100:.4f} % "
+          "of the hero frame. Before them, the cheaper lever was spent: the 46 tier-0 normal maps were "
+          "re-encoded at ETC1S qlevel 32 instead of 128 (-20.8 % of their bytes, RMS against the "
+          "source unchanged to five decimals), which is why so little had to move.\n")
+    a("**The probe is in tier 0** (lead's decision, review finding 2). Tier 0 ships no lightmap, so the "
+      "six probe faces (6.29 MB) are the only indirect light in the first frame; without them it is "
+      "sky-diffuse only, which is darker and flatter than the low-resolution look the user approved, "
+      "not merely softer.\n")
     a(f"The same look at Gate 3 was **{sum(p.bytes or 0 for p in G.resolve_files(v4).values()) / MB:.1f} "
       f"MB** over {len(G.resolve_files(v4))} files, with `orn.glb` (154.3 MB) and `env.glb` (38.1 MB) "
       "both over the 25 MiB per-file cap.\n")
@@ -171,6 +205,17 @@ def main():
       "ARCH and ORN, which is the brief's \"decimated LOD0 at half the Gate 1 budget\" - the export set "
       "has no ARCH/ORN LOD1 to ship instead.\n")
 
+    a("## Carried, not fixed (for the next round)\n")
+    a("- `scene.ray_cast` treats alpha-cut leaf cards as opaque, so the tier ordering is conservative "
+      "behind foliage: an asset hidden only by a leaf card reads as invisible and lands a tier late.")
+    a("- `verify_glb --gate5` compares drawn triangles per class but does not compare instanced-ROW "
+      "counts against a Gate 3 figure; the placements column is reported, not asserted.")
+    a("- `tiers.py` still prints two hardcoded byte figures for `orn.glb` / `env.glb` in the `glb.note` "
+      "text (154 253 424 / 38 119 568) that differ from `per_class_gate3` (154 065 360 / 35 797 240): "
+      "the note quotes the files on disk, the block quotes what manifest v4 recorded at Gate 1.")
+    a("- `gate5_tex.py --mobile` no longer writes a second texture set; it now says so and exits.")
+    a("- `lowres.json` `wall_s` is this run's seconds; `wall_s_cumulative` is the running total.\n")
+
     a("## Viewer contract — what changed in v5 (breaking, on purpose)\n")
     a("- **`glb.per_class` is gone**, replaced by `glb.groups` (a list with `path`, `cls`, `tier`, "
       "`nodes`, `assets`, `hero_fraction`, `station_visibility`, `textures`, `placeholder`). The Gate 3 "
@@ -184,8 +229,64 @@ def main():
     a("- A group with **`placeholder: true`** is tier 0 and is replaced by the tier-1 group of the same "
       "class; its assets are asserted to be a subset of that group's.")
     a("- **`?tier=mobile`** selects `manifest_mobile.json`, which carries the same blocks.")
+    a("- **There are no placeholder groups any more.** Every instance of a prototype is in ONE group, "
+      "so the hero draws the Gate 3 node set exactly; what tier 1 upgrades is the TEXTURE. For a key "
+      "in `tiers.lowres.files`, `path` is the half-resolution file the group or the material already "
+      "has and `full` is the full-resolution file to re-load into the same slot - including the ORN "
+      "occlusion maps, which arrive inside the glb at half resolution and are named by each set's "
+      "`occlusion.gate1_texture`.")
+    a("- **`uv2_relay_status.json` is published beside the manifest** (tier 0) and named at "
+      "`lightmaps.uv2_relay_status.path`; main.js already resolves it against the manifest URL.")
+    a("- **`lightmaps.instance_irradiance.groups`** replaces the env.glb-keyed `nodes` (see above).")
+    a("- **`files[*].transfer`** is the gzip-estimated wire size; `tiers.transfer_bytes` and "
+      "`tiers.first_frame_transfer_bytes` are what the loading screen should count against.")
     a("- The four v4 paths that were relative to `out/gate3` are rebased to `../gate3/...`; what moved "
       "is listed in `tiers.path_rebase`.\n")
+    a("## The deploy set — every directory the publish must carry\n")
+    a("`files` spans four gates, not just gate5: the LUT and the sky are gate0, the glb-external maps "
+      "and the lazy foliage glbs are gate1, the Gate 2 PBR and detail sets are gate2, the lightmaps, "
+      "impostors, probe and foliage cards are gate3. **A deploy that publishes only `out/gate5` 404s on "
+      "every `../gate0/...` path.**\n")
+    a("| directory | files | bytes | transfer |")
+    a("|---|---|---|---|")
+    import collections as _c
+    dirs_b, dirs_n, dirs_t = _c.Counter(), _c.Counter(), _c.Counter()
+    for e in man["files"]:
+        d = e["path"].split("/")[0]
+        d = "gate5" if d not in ("..",) else e["path"].split("/")[1]
+        dirs_b[d] += e["bytes"] or 0
+        dirs_t[d] += e.get("transfer") or 0
+        dirs_n[d] += 1
+    for d in sorted(dirs_b, key=lambda d: -dirs_b[d]):
+        a(f"| `export/out/{d}` | {dirs_n[d]} | {dirs_b[d]:,} | {dirs_t[d]:,} |")
+    a(f"| **all** | {sum(dirs_n.values())} | **{sum(dirs_b.values()):,}** | "
+      f"{sum(dirs_t.values()):,} |")
+    a("\nThe mobile set is a subset of the same directories. `web/deploy.sh` should build the publish "
+      "directory FROM `files` (copy each path, keeping it relative to `out/gate5`), not by copying "
+      "`out/` wholesale: `out/` also holds ~2 GB of bake sources, the `rgbm8` lightmap twins and the "
+      "unpublished `orn.glb` / `env.glb`, none of which are in the plan.\n")
+
+    a("## Shrub and reed irradiance after the split\n")
+    ii = man["lightmaps"]["instance_irradiance"]
+    a(f"- `lightmaps.instance_irradiance.groups` re-keys the block to the per-tier ENV groups: "
+      f"{ii.get('groups_placements')} of {ii.get('placements')} placements, "
+      f"{'complete' if ii.get('groups_complete') else 'INCOMPLETE'}.")
+    a("- **How the viewer joins it:** for each group id in `groups`, bind under "
+      "`WEB_glb_<group id>` by `mesh.userData.pfaGltfNode`, exactly as `applyInstanceIrradiance` does "
+      "today, passing that group's scene as `opts.root` and `groups[id].nodes` as `opts.block.nodes`. "
+      "`segments` has the same `[mesh, count, offset]` meaning; `meshes[*].rgb` is unchanged.")
+    ig = json.loads((out / "instance_order_groups.json").read_text())
+    a(f"- The join is the bake's own key, the instance translation: rows decoded from the packed group "
+      f"with `web/tools/instance_rows.mjs`, brought back to Blender space, matched to the nearest "
+      f"placement within {ig['tolerance_m']} m with the runner-up at least {ig['margin']}x further; a "
+      f"placement claimed twice is a hard failure.")
+    if ig.get("unmatched"):
+        a(f"- **{len(ig['unmatched'])} placements are unmatched** and fall back to the probe: "
+          + ", ".join(f"`{u['object']}`" for u in ig["unmatched"])
+          + ". These are the three `.001` near-duplicate cards the manifest's own `lod1` block already "
+            "reports as `not_in_lod1: 3`.")
+    a("")
+
     a("## Files in MAIN\n")
     for name, m in (("desktop", man), ("mobile", mob)):
         miss = present_in_main(m)

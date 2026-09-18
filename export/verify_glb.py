@@ -581,18 +581,31 @@ def verify_gate5(out_dir, variant="desktop"):
             if kinds[:1] != [b"JSON"]:
                 bad.append(f"{g['id']}: first chunk is {kinds[:1]}, not JSON")
             doc = json.loads(_glb_json_chunk(b))
-            emb = [i for i, im in enumerate(doc.get("images", [])) if not im.get("uri")]
+            # No image may ride in a bufferView: an embedded texture reaches three.js as a blob with
+            # no name, so no tier can pair it with its full-resolution twin and the half-resolution
+            # copy would stay in place for ever (viewer measurement, 2026-09-18).
+            emb = [i for i, im in enumerate(doc.get("images", []))
+                   if im.get("bufferView") is not None or not im.get("uri")]
             if emb:
-                bad.append(f"{g['id']}: {len(emb)} images are embedded, not external (-tr lost)")
+                bad.append(f"{g['id']}: {len(emb)} of {len(doc.get('images', []))} images are embedded "
+                           f"(bufferView) or have no uri - `-tr` lost, nothing can upgrade them")
 
     # 3. every external texture a group refers to is published, and resolves
     published = {os.path.normpath(e["path"]) for e in man["files"]}
     missing_tex = []
+    lo_dir = (man["tiers"].get("lowres") or {}).get("dir", "tex_lo")
+    lo_of = {}
+    for e in man["files"]:
+        if e.get("key") and e["path"].startswith(lo_dir + "/"):
+            lo_of[e["key"]] = e["path"]
     for g in groups:
         for t in g["textures"]:
-            if os.path.normpath(t) not in published:
+            key = os.path.basename(t)[:-len(".ktx2")] if t.endswith(".ktx2") else None
+            # published as itself, or as the half-resolution twin the viewer redirects to (the mobile
+            # set publishes only the twin)
+            if os.path.normpath(t) not in published and key not in lo_of:
                 missing_tex.append((g["id"], t))
-            if not _pub(out, t).exists():
+            elif os.path.normpath(t) in published and not _pub(out, t).exists():
                 missing_tex.append((g["id"], t + " (not on disk)"))
     if missing_tex:
         bad.append(f"{len(missing_tex)} group textures are not published or not on disk, e.g. "

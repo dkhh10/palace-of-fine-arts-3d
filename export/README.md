@@ -2280,3 +2280,60 @@ export/sync_main.sh                          # gate5 -> MAIN (no --delete)
     path and re-load the full file when tier 1 arrives; treat a tier-0 `glb.groups[*]` with
     `placeholder: true` as replaceable by the tier-1 group of the same class; `?tier=mobile` selects
     `manifest_mobile.json`.
+
+### Gate 5 review pass (2026-09-18, `docs/reviews/phase6b_export_r1_review.md` + two viewer measurements)
+
+```sh
+python3 export/tiers.py                    # desktop  (packs groups)
+python3 export/tiers.py --mobile           # mobile   (packs m_* groups; the two no longer clobber)
+python3 export/gate5_instance_rows.py      # per-group shrub/reed irradiance node maps
+python3 export/tiers.py --no-pack ; python3 export/tiers.py --mobile --no-pack   # fold them in
+python3 export/verify_glb.py --gate5 export/out/gate5 ; python3 export/gate5_report.py
+export/sync_main.sh
+```
+
+35. **The budget is TRANSFER bytes, and it now includes the boot overhead.** `files[*].transfer` is
+    `gzip -9` for the types Cloudflare Pages compresses and the size on disk for KTX2 / glb / wasm /
+    `.hdr` / `.cube`. `tiers.boot_overhead_bytes` measures what the browser fetches before frame 1 that
+    is NOT in `files` - `web/dist/index.html`, the Vite bundle, `/basis/` (the path main.js gives
+    KTX2Loader) and the manifest itself, which is iterated to a fixed point because it is part of the
+    payload it reports. `tiers.first_frame_transfer_bytes` = tier 0 + that, and THAT is what is tested
+    against 50 000 000. Desktop **49 488 169 B**, mobile **47 515 …** - both within.
+36. **The probe is in tier 0** (lead's decision). Tier 0 ships no lightmap, so without it the first
+    frame is sky-diffuse-lit only. The 6.29 MB was found in two places: the 46 tier-0 normal maps at
+    ETC1S **qlevel 32** instead of 128 (-20.8 % of their bytes, RMS against the source unchanged to
+    five decimals - measured on five of them) and, after that, **28 Gate 2 placeholder maps moved to
+    tier 1**, least hero-visible first: the largest of them covers **0.0022 %** of the hero frame.
+    `tiers.tier0_trim` lists every one with its hero fraction.
+37. **No placeholder groups, and no duplicated geometry.** The first cut shipped a tier-0 subset group
+    beside the tier-1 group holding the same prototypes' other instances: the viewer measured **428
+    draw calls and 5.83 M drawn triangles at the hero against Gate 3's 329 and 5.24 M**. Every instance
+    of a prototype is now in exactly ONE group (`orn_t0`, `orn_t2`, `env_t0`, `env_t2`), whose tier is
+    the earliest any instance needs. What tier 1 upgrades is the TEXTURE, never the mesh.
+38. **A group embeds nothing and names the FULL-resolution file.** Pointing the URIs at `tex_lo` was
+    the first cut and it dead-ends: a texture that arrives inside the glb reaches three.js as a blob
+    with no name, so nothing can pair it with its full-resolution twin. Each group's image URIs are
+    `../../gate1/tex_ktx2/<name>.ktx2`; `tiers.lowres.files[key]` carries `path` (the half-resolution
+    copy) and `full` (that same URI), and the viewer redirects the URI to `path` while the scene is in
+    tier 0. `verify_glb --gate5` fails any group image with a `bufferView` or without a `uri`.
+39. **`lightmaps.instance_irradiance.groups`** re-keys the 1 379 shrub/reed placements to the per-tier
+    ENV groups, which renumber env.glb's node indices. The join is the bake's own key - the instance
+    TRANSLATION - decoded with `web/tools/instance_rows.mjs`, brought back to Blender space as
+    `(x, -z, y)`, matched to the nearest placement within 0.02 m with the runner-up at least 3x
+    further; `segments` is REBUILT from the matched rows. Matching node-to-node against env.glb was
+    tried first and fails: the split changes which meshes gltfpack merges into one node, and 4 of the
+    25 card nodes came out with a different row count (224 placements lost). **1 376 of 1 379**
+    covered; the three `.001` near-duplicate cards the manifest's own `lod1` block already calls
+    `not_in_lod1` fall back to the probe, as they do today.
+40. **`uv2_relay_status.json` is published beside the v5 manifest** (tier 0) and named at
+    `lightmaps.uv2_relay_status.path`: main.js resolves it against the manifest URL, and a 404 there
+    silently changes which lightmap variant every own-map asset uses.
+41. **`tiers.unpublished` is the completeness guard.** Every file `gate5_common.resolve_files` knows
+    about is published, or published as its half-resolution twin, or deliberately dropped by that
+    variant; anything else is listed. It is 0 on both variants. The viewer treats a fetch outside
+    `files` as an error, so the plan has to be exhaustive - this is what missed the detail set.
+42. **The deploy set is four gates, not one.** `files` spans `out/gate0` (LUT, sky), `out/gate1`
+    (group textures, the lazy foliage glbs, arch/ground), `out/gate2` (PBR, detail), `out/gate3`
+    (lightmaps, impostors, probe, foliage cards) and `out/gate5`. `web/deploy.sh` must build the
+    publish directory FROM `files`, not by copying `out/` wholesale - `out/` also holds ~2 GB of bake
+    sources, the `rgbm8` lightmap twins and the unpublished `orn.glb` / `env.glb`.

@@ -41,6 +41,19 @@ import gate5_common as G
 import gate5_split
 import gate5_tex
 
+# What Cloudflare Pages compresses by default, by content type: html, css, javascript, json, plain text
+# and svg.  Everything else - KTX2, glb, wasm, .hdr, and `.cube`, which Pages serves as
+# application/octet-stream - is counted at its size on disk, which is what the network log will show.
+# The LUT is the one file where that costs real headroom; the report says what a `_headers` rule buys.
+COMPRESSIBLE_EXT = {".json", ".js", ".mjs", ".css", ".html", ".txt", ".svg", ".map"}
+# The tier-0 normal maps are re-encoded at this ETC1S quality.  Measured on five of the 46 (qlevel 128 ->
+# 32): 33 786 B -> 26 747 B, -20.8 %, with the RMS against the source moving by +0.00001 or less.  It is
+# the cheapest room in tier 0 there is, which is why it is spent before any texture is moved out.
+TIER0_NORMAL_QLEVEL = 32
+# Headroom kept under the budget when the trim runs, so a manifest that grows by a few kB on the next
+# run does not put the first frame back over it.
+TIER0_SLACK = 500_000
+
 GLTFPACK = str(G.MAIN / "tools/bin/gltfpack")
 # gltf_pack.sh's Gate 3 flags per class, so a group is packed exactly as its class was, plus `-tr`.
 #
@@ -267,6 +280,49 @@ def rebase_gate3_paths(man):
     return moved
 
 
+def transfer_bytes(path):
+    """What the network log will show for this file: gzip -9 for the types the host compresses, the
+    size on disk for everything else.  gzip, not brotli: it is available here, and it OVERSTATES the
+    transfer slightly, which is the right direction for a budget."""
+    path = Path(path)
+    if not path.exists():
+        return None
+    if path.suffix.lower() not in COMPRESSIBLE_EXT:
+        return path.stat().st_size
+    import gzip as _gz
+    return len(_gz.compress(path.read_bytes(), 9))
+
+
+def boot_overhead(out, man_path):
+    """Everything the browser fetches before the first frame that is NOT in `files`: the page, the JS
+    bundle, the KTX2 transcoder (web/src/main.js configures `setTranscoderPath('/basis/')`) and the
+    manifest itself.  Measured from `web/dist` as built on main - if it is not built, the sizes are
+    reported as null and the budget test says so rather than quietly passing."""
+    dist = G.MAIN / "web/dist"
+    items = {}
+    for name, rel in (("page", "index.html"),
+                      ("bundle", None),
+                      ("transcoder_js", "basis/basis_transcoder.js"),
+                      ("transcoder_wasm", "basis/basis_transcoder.wasm")):
+        if name == "bundle":
+            js = sorted((dist / "assets").glob("index-*.js")) if (dist / "assets").is_dir() else []
+            pth = js[0] if js else None
+        else:
+            pth = dist / rel
+        items[name] = dict(path=str(pth.relative_to(G.MAIN)) if pth and pth.exists() else None,
+                           bytes=pth.stat().st_size if pth and pth.exists() else None,
+                           transfer=transfer_bytes(pth) if pth and pth.exists() else None)
+    items["manifest"] = dict(path=os.path.basename(str(man_path)),
+                             bytes=Path(man_path).stat().st_size if Path(man_path).exists() else None,
+                             transfer=transfer_bytes(man_path) if Path(man_path).exists() else None)
+    total = sum(v["transfer"] or 0 for v in items.values())
+    return dict(items=items, total=total,
+                complete=all(v["transfer"] is not None for v in items.values()),
+                note="web/dist is Vite's build of the viewer as it stands on main; the bundle hash "
+                     "changes with every viewer change, so this is an estimate of the same order, not "
+                     "a pin. `/basis/` is the path web/src/main.js gives KTX2Loader.")
+
+
 def resident_mb(px, mips=True, uncompressed=False):
     """The budget doc's rule: ASTC 4x4 on this GPU (and on the A18 Pro) is 1 byte per texel, x4/3 for
     the mip chain; an rgbm8 / rgba8 variant is uncompressed RGBA8 at 4 bytes per texel."""
@@ -346,15 +402,22 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         elif pub.kind == "sky":
             put(rel, 0, kind, "background + PMREM + diffuse environment", key=pub.key)
         elif pub.kind == "probe":
-            put(rel, 1, kind, "water's fallback environment; the planar reflector carries the hero",
-                key=pub.key)
+            # Lead's decision (review finding 2, 2026-09-18): the probe is tier 0. Without it the first
+            # frame carries no lightmap AND no environment, so it is sky-diffuse-lit only - darker and
+            # flatter than the low-resolution look the user approved, not just softer.
+            put(rel, 0, kind, "the first frame's environment: tier 0 ships no lightmap, so this is the "
+                              "only indirect light there is until tier 1", key=pub.key)
         elif pub.kind == "gate2":
             hero = pub.key in hero_tex
             put(rel, 0 if (mobile and hero) else 1 if hero else 2, kind,
                 "hero material" if hero else "not seen from the hero",
                 order_key=tex_order.get(pub.key, 99), key=pub.key, px=px)
         elif pub.kind == "detail":
-            put(rel, 1, kind, "shared object-space detail set (QA-12-1)", key=pub.key, px=px)
+            # The viewer tiles these in object space over every concrete and ground surface and binds
+            # them at boot (web/src/detail.js), so at full resolution they were an unlabelled 23.3 MB
+            # of tier 0. Tier 0 takes the half-resolution ETC1S copy; tier 1 restores the full set.
+            put(rel, 1, kind, "full-resolution object-space detail set (QA-12-1); tier 0 carries the "
+                              "half-resolution ETC1S copy", key=pub.key, px=px)
         elif pub.kind in ("lightmap", "lightmap_atlas"):
             put(rel, 1, kind, "the baked light; tier 0 ships none", key=pub.key, px=px)
         elif pub.kind == "impostor":
@@ -369,6 +432,18 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                 continue                  # impostors for ALL far trees: no near mesh, no walk-up set
             put(rel, 2, kind, "lazily loaded foliage set", key=pub.key)
 
+    # web/src/main.js resolves `uv2_relay_status.json` against the MANIFEST url, and it is the file
+    # that decides which lightmap variant every own-map asset uses, so a 404 there silently changes the
+    # light. It is copied beside the v5 manifest rather than left in gate3.
+    relay_src = G.GATE3 / "uv2_relay_status.json"
+    if relay_src.exists():
+        (out / "uv2_relay_status.json").write_bytes(relay_src.read_bytes())
+        put("uv2_relay_status.json", 0, "relay",
+            "which lightmap layout each own-map asset actually carries; main.js fetches it beside the "
+            "manifest and the manifest's own uv2_in_glb flags are only the fallback", key="uv2_relay")
+        man5.setdefault("lightmaps", {}).setdefault("uv2_relay_status", {})["path"] = \
+            "uv2_relay_status.json"
+
     lowres_files = {}
     if not mobile:
         for cls in ("arch", "ground"):
@@ -376,14 +451,17 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             pth = os.path.normpath(os.path.join(str(G.GATE3), g["path"]))
             put(G.pub_rel(pth, base), 0, "glb",
                 f"{cls}: the building itself, already under the cap", key=cls)
-        for k in sorted(set(hero_tex) | set(imp_keys)):
-            f = lowres / f"{k}.ktx2"
-            if not f.exists():
-                continue
-            rel = G.pub_rel(f, base)
-            put(rel, 0, "gate2_lo" if k in hero_tex else "impostor_lo",
-                "half-resolution ETC1S placeholder, replaced in tier 1", key=k, px=lr_px.get(k))
-            lowres_files[k] = dict(path=rel, bytes=f.stat().st_size, px=lr_px.get(k))
+        detail_keys = {pub.key for pub in files.values() if pub.kind == "detail" and pub.key}
+        kinds_lo = [(hero_tex, "gate2_lo"), (imp_keys, "impostor_lo"), (detail_keys, "detail_lo")]
+        for keys, kind_lo in kinds_lo:
+            for k in sorted(keys):
+                f = lowres / f"{k}.ktx2"
+                if not f.exists() or k in lowres_files:
+                    continue
+                rel = G.pub_rel(f, base)
+                put(rel, 0, kind_lo, "half-resolution ETC1S copy, upgraded in tier 1",
+                    key=k, px=lr_px.get(k))
+                lowres_files[k] = dict(path=rel, bytes=f.stat().st_size, px=lr_px.get(k))
 
     # A group's own external textures (`-tr`) get the group's tier: published once, whichever groups
     # reach them, at the EARLIEST tier that needs them.  Read back out of the packed glb, never guessed.
@@ -397,9 +475,36 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             f"{g['nodes']} nodes, hero {g['hero_fraction']*100:.2f} %", order_key=-g["hero_fraction"])
         for rel in g["textures"]:
             tex_tier[rel] = min(tex_tier.get(rel, 9), t)
+    # A group's URIs name the FULL-resolution files.  Desktop publishes the half-resolution twin in the
+    # group's tier (that is what the first frame fetches, through the viewer's redirect) and the full
+    # file in tier 1; MOBILE publishes only the half-resolution twin, and its redirect is permanent.
     for rel, t in sorted(tex_tier.items()):
-        put(rel, t, "glb_texture", "external map a glb group refers to (gltfpack -tr)")
+        key = os.path.basename(rel)[:-len(".ktx2")] if rel.endswith(".ktx2") else None
+        lo_p = lowres / f"{key}.ktx2" if key else None
+        has_lo = bool(lo_p and lo_p.exists())
+        if has_lo:
+            lo_rel = G.pub_rel(lo_p, base)
+            put(lo_rel, t, "glb_texture_lo",
+                "half-resolution ETC1S copy of a map a glb group names; the viewer redirects the "
+                "group's URI here until the full file is in", key=key, px=lr_px.get(key))
+            lowres_files.setdefault(key, dict(path=lo_rel, bytes=lo_p.stat().st_size,
+                                              px=lr_px.get(key)))
+        if not mobile or not has_lo:
+            put(rel, 1 if has_lo else t,
+                "glb_texture_full" if has_lo else "glb_texture",
+                "the map a glb group's URI names" + (
+                    "; tier 1, because tier 0 fetches the half-resolution copy instead" if has_lo
+                    else "; no half-resolution copy exists, so it is fetched as it is"), key=key)
+        if has_lo and not mobile:
+            lowres_files[key]["full"] = rel
 
+    if not mobile:
+        for k, v in lowres_files.items():
+            if "full" in v:
+                continue
+            pub = next((p_ for p_, q in files.items() if q.key == k), None)
+            if pub:
+                v["full"] = G.pub_rel(pub, base)
     seen, uniq = set(), []
     for e in sorted(entries, key=lambda e: (e["tier"], e["order"], e["path"])):
         if e["path"] in seen:
@@ -409,18 +514,74 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         if not ap_.exists():
             ap_ = (G.PUB_BASE / e["path"]).resolve()
         e["bytes"] = ap_.stat().st_size if ap_.exists() else None
+        e["transfer"] = transfer_bytes(ap_) if ap_.exists() else None
         uniq.append(e)
 
-    tier_bytes, tier_files, oversize = defaultdict(int), defaultdict(int), []
+    # ---- tier 0 is measured against the WHOLE first-frame payload, in TRANSFER bytes -------------
+    # `boot` is what the browser fetches before frame 1 that is not in `files` (page, bundle, KTX2
+    # transcoder, this manifest).  If tier 0 + boot is over the budget, the least hero-visible tier-0
+    # Gate 2 placeholders are moved to tier 1, cheapest look first, and what moved is recorded.
+    boot = boot_overhead(out, out / out_name)
+    trim = dict(moved=[], moved_bytes=0, reason=None)
+    budget_left = G.TIER0_BUDGET - boot["total"]
+
+    def t0_transfer():
+        return sum(e["transfer"] or 0 for e in uniq if e["tier"] == 0)
+
+    if t0_transfer() > budget_left:
+        trim["reason"] = (f"tier 0 + boot overhead ({t0_transfer() + boot['total']:,} B) is over the "
+                          f"{G.TIER0_BUDGET:,} B budget")
+        # least hero-visible first: a placeholder map whose material covers almost none of the hero
+        # frame costs the least to leave until tier 1.
+        cand = [e for e in uniq if e["tier"] == 0 and e["kind"] in ("gate2_lo", "gate2_half")]
+        cand.sort(key=lambda e: (-tex_order.get(e.get("key"), 99), -(e["transfer"] or 0)))
+        for e in cand:
+            if t0_transfer() <= budget_left - TIER0_SLACK:
+                break
+            e["tier"] = 1
+            e["why"] = ("moved out of tier 0 to fit the first-frame budget: its material covers "
+                        "nothing of the hero frame")
+            trim["moved"].append(dict(path=e["path"], key=e.get("key"), bytes=e["bytes"],
+                                      transfer=e["transfer"],
+                                      hero_order=tex_order.get(e.get("key"))))
+            trim["moved_bytes"] += e["transfer"] or 0
+        uniq.sort(key=lambda e: (e["tier"], e["order"], e["path"]))
+
+    tier_bytes, tier_files, tier_transfer, oversize = (defaultdict(int), defaultdict(int),
+                                                       defaultdict(int), [])
     for e in uniq:
         if e["bytes"] is None:
             continue
         tier_bytes[e["tier"]] += e["bytes"]
+        tier_transfer[e["tier"]] += e["transfer"] or 0
         tier_files[e["tier"]] += 1
         if e["bytes"] > cap:
             oversize.append(dict(path=e["path"], bytes=e["bytes"], tier=e["tier"],
                                  reason="single texture or container above the 25 MiB Pages cap; "
                                         "not splittable without re-baking it"))
+    first_frame = tier_transfer[0] + boot["total"]
+
+    # Completeness: every file `resolve_files` knows about is either published, or published in its
+    # half-resolution form, or deliberately dropped by this variant. The viewer treats anything it
+    # fetches that is not in `files` as an error, so the plan has to be exhaustive - and this is what
+    # missed the detail set the first time round.
+    pub_paths = {e["path"] for e in uniq}
+    unpublished = []
+    for p_, pub in sorted(files.items()):
+        if pub.kind == "glb":
+            continue
+        rel = G.pub_rel(p_, base)
+        lo = lowres / f"{pub.key}.ktx2" if pub.key else None
+        if rel in pub_paths:
+            continue
+        if lo is not None and lo.exists() and G.pub_rel(lo, base) in pub_paths:
+            continue
+        if mobile and pub.kind == "glb_lazy":
+            continue
+        unpublished.append(dict(path=rel, kind=pub.kind, key=pub.key))
+    if unpublished:
+        print(f"[tiers] {variant}: WARNING {len(unpublished)} viewer-reachable files are in no tier: "
+              f"{[u['path'] for u in unpublished][:5]}", flush=True)
 
     # ASTC-rule resident estimate per class (docs/briefs/phase6_budget.md, manifest v4 `budget.rule`).
     res = defaultdict(float)
@@ -458,9 +619,19 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         budget_bytes=dict(tier0=G.TIER0_BUDGET), per_file_cap_bytes=cap,
         host="Cloudflare Pages (25 MiB per file, unmetered bandwidth)",
         bytes={str(t): tier_bytes[t] for t in sorted(tier_bytes)},
+        transfer_bytes={str(t): tier_transfer[t] for t in sorted(tier_transfer)},
         files={str(t): tier_files[t] for t in sorted(tier_files)},
         total_bytes=sum(tier_bytes.values()),
-        tier0_within_budget=tier_bytes[0] <= G.TIER0_BUDGET,
+        total_transfer_bytes=sum(tier_transfer.values()),
+        boot_overhead_bytes=boot,
+        first_frame_transfer_bytes=first_frame,
+        tier0_trim=trim,
+        unpublished=unpublished,
+        tier0_within_budget=first_frame <= G.TIER0_BUDGET,
+        budget_note="the budget is TRANSFER bytes as the network log sees them: gzip -9 for the types "
+                    "Cloudflare Pages compresses (html, css, js, json, txt, svg), size on disk for "
+                    "KTX2, glb, wasm, .hdr and .cube. `first_frame_transfer_bytes` = tier 0 + "
+                    "`boot_overhead_bytes.total`, and THAT is what is tested against 50 000 000.",
         station_order=order, oversize=oversize, path_rebase=rebased,
         resident_estimate_mb=dict(by_kind={k: round(v, 1) for k, v in sorted(res.items())},
                                   total=res_total,
@@ -478,15 +649,74 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         note="tier 0 boots the scene, tier 1 is the full look at the hero, tier 2 is everything the "
              "hero never sees, in station order. A tier-0 group is a PLACEHOLDER: the same assets "
              "arrive again in tier 1 at LOD0 with their own maps, and the viewer swaps them.")
+    # (5) `lightmaps.instance_irradiance` was keyed to env.glb's node indices, which the split
+    # renumbers: without this the 1 379 shrub/reed placements bind nothing and fall back to the probe.
+    ig = out / "instance_order_groups.json"
+    if ig.exists():
+        doc = json.loads(ig.read_text())
+        ii = man5["lightmaps"]["instance_irradiance"]
+        ii["groups"] = {k: v for k, v in doc["groups"].items()
+                        if (k.startswith("m_") == bool(mobile))}
+        ii["groups_placements"] = sum(v["placements"] for v in ii["groups"].values())
+        ii["groups_complete"] = ii["groups_placements"] == (ii.get("placements") or 0)
+        ii["groups_join"] = (
+            "env.glb is not published any more, so `nodes` (keyed to its node indices) cannot be used "
+            "as it stands. `groups[<group id>]` carries the SAME entries re-numbered for that group's "
+            "glb: bind under `WEB_glb_<group id>` by `mesh.userData.pfaGltfNode` exactly as "
+            "web/src/lightmaps.js applyInstanceIrradiance does today, with `opts.root` set to that "
+            "group's scene. `segments` is unchanged - it addresses rows inside a node by mesh name and "
+            "offset, which the split cannot move. `gltf_node_env` is the old index, for tracing only. "
+            "The match is row-by-row on instance translation within 0.02 m "
+            "(export/gate5_instance_rows.py); `groups_complete` says every placement is covered.")
     man5["files"] = uniq
     p = out / out_name
+    # The manifest is part of the payload it measures.  Write, re-measure, patch, rewrite - twice is
+    # enough: the second write only moves by the digits of one number.  The value published is the one
+    # measured on the file as it finally stands.
+    for _ in range(3):
+        p.write_text(json.dumps(man5, indent=1))
+        t = transfer_bytes(p)
+        if t == man5["tiers"]["boot_overhead_bytes"]["items"]["manifest"]["transfer"]:
+            break
+        m_it = man5["tiers"]["boot_overhead_bytes"]["items"]["manifest"]
+        boot["total"] += t - (m_it["transfer"] or 0)
+        m_it.update(bytes=p.stat().st_size, transfer=t)
+        first_frame = tier_transfer[0] + boot["total"]
+
+    # Completeness: every file `resolve_files` knows about is either published, or published in its
+    # half-resolution form, or deliberately dropped by this variant. The viewer treats anything it
+    # fetches that is not in `files` as an error, so the plan has to be exhaustive - and this is what
+    # missed the detail set the first time round.
+    pub_paths = {e["path"] for e in uniq}
+    unpublished = []
+    for p_, pub in sorted(files.items()):
+        if pub.kind == "glb":
+            continue
+        rel = G.pub_rel(p_, base)
+        lo = lowres / f"{pub.key}.ktx2" if pub.key else None
+        if rel in pub_paths:
+            continue
+        if lo is not None and lo.exists() and G.pub_rel(lo, base) in pub_paths:
+            continue
+        if mobile and pub.kind == "glb_lazy":
+            continue
+        unpublished.append(dict(path=rel, kind=pub.kind, key=pub.key))
+    if unpublished:
+        print(f"[tiers] {variant}: WARNING {len(unpublished)} viewer-reachable files are in no tier: "
+              f"{[u['path'] for u in unpublished][:5]}", flush=True)
+        man5["tiers"]["boot_overhead_bytes"]["total"] = boot["total"]
+        man5["tiers"]["first_frame_transfer_bytes"] = first_frame
+        man5["tiers"]["tier0_within_budget"] = first_frame <= G.TIER0_BUDGET
     p.write_text(json.dumps(man5, indent=1))
     print(f"[tiers] {variant}: " + ", ".join(
         f"t{t} {tier_bytes[t]/1e6:.1f} MB / {tier_files[t]} files" for t in sorted(tier_bytes))
         + f"; total {sum(tier_bytes.values())/1e6:.1f} MB; resident est {res_total:.0f} MB")
-    print(f"[tiers] {variant}: tier 0 "
-          f"{'within' if tier_bytes[0] <= G.TIER0_BUDGET else 'OVER'} the 50 MB budget; "
-          f"{len(oversize)} files over the 25 MiB cap -> {p}")
+    print(f"[tiers] {variant}: first frame = tier 0 {tier_transfer[0]/1e6:.2f} MB transfer + boot "
+          f"{boot['total']/1e6:.2f} MB = {first_frame/1e6:.2f} MB, "
+          f"{'within' if first_frame <= G.TIER0_BUDGET else 'OVER'} the 50.0 MB budget"
+          + (f" (moved {len(trim['moved'])} placeholder maps out, {trim['moved_bytes']/1e6:.2f} MB)"
+             if trim["moved"] else "") )
+    print(f"[tiers] {variant}: {len(oversize)} files over the 25 MiB cap -> {p}")
     return man5
 
 
@@ -520,6 +750,11 @@ def main():
         for slot in ("albedo", "normal_depth"):
             if v.get(slot):
                 imp_keys.add(v[slot])
+    # The detail set is bound at boot on every concrete and ground surface (web/src/detail.js), so it
+    # is part of the first frame whether the plan says so or not: tier 0 gets a half-resolution copy on
+    # BOTH variants.  The mobile manifest swaps every texture there is.
+    need |= {pub.key for pub in G.resolve_files(man).values()
+             if pub.key and pub.kind == "detail"}
     if a.mobile:
         need |= {pub.key for pub in G.resolve_files(man).values()
                  if pub.key and pub.kind in ("gate2", "detail", "lightmap", "lightmap_atlas",
@@ -534,16 +769,42 @@ def main():
                                                 encoder=rep["encoder"], resize_div=rep["resize_div"],
                                                 dir=rep["dir"]))
         lr["groups_and_mobile"]["files"].update(rep["files"])
-        lr["groups_and_mobile"]["wall_s"] = round(
-            lr["groups_and_mobile"]["wall_s"] + rep["wall_s"], 1)
+        # carry (a) from the review: `wall_s` used to accumulate across runs, so the report's ETC1S
+        # seconds grew every time the chain was re-run. It is now THIS run's seconds for the files this
+        # run actually encoded, with the running total kept beside it and labelled.
+        lr["groups_and_mobile"]["wall_s"] = rep["wall_s"]
+        lr["groups_and_mobile"]["wall_s_cumulative"] = round(
+            lr["groups_and_mobile"].get("wall_s_cumulative", 0.0) + rep["wall_s"], 1)
+        lr["groups_and_mobile"]["files_this_run"] = len(rep["files"])
         lr["groups_and_mobile"]["missing"] = rep["missing"]
+        lr_p.write_text(json.dumps(lr, indent=1))
+
+    # The cheapest room in tier 0: the normal maps at a lower ETC1S quality.  Measured on five of the
+    # 46 tier-0 normals, qlevel 128 -> 32 is -20.8 % of their bytes for an RMS change of +0.00001 or
+    # less against the source, which is far below what moving a whole map to tier 1 costs.  Done before
+    # the trim, so the trim only has to find what this does not.
+    if not a.no_pack:
+        _, t0keys = gate5_tex.tier0_texture_keys(man, vis)
+        norms = sorted({k for k, tag in t0keys if tag.endswith(":normal")})
+        nrep = gate5_tex.encode_set(norms, man, lowres, "etc1s", 2,
+                                    f"tier0 normals etc1s /2 qlevel {TIER0_NORMAL_QLEVEL}",
+                                    qlevel=TIER0_NORMAL_QLEVEL)
+        lr_p = out / "lowres.json"
+        lr = json.loads(lr_p.read_text()) if lr_p.exists() else {}
+        lr["tier0_normals_qlevel"] = nrep
         lr_p.write_text(json.dumps(lr, indent=1))
 
     # ------------------------------------------------------------------------------- the glb groups
     gfile = out / ("groups_mobile.json" if a.mobile else "groups.json")
     if not a.no_pack:
-        if not a.mobile:
-            shutil.rmtree(out / "groups", ignore_errors=True)
+        # Review finding 4: remove only THIS variant's groups. `rm -rf groups/` on the desktop run
+        # deleted the `m_*` files manifest_mobile.json points at, so idempotency depended on a run
+        # order that only the README knew about.
+        gdir = out / "groups"
+        if gdir.is_dir():
+            for f in sorted(gdir.iterdir()):
+                if f.name.startswith("m_") == bool(a.mobile):
+                    f.unlink()
         groups = build_all_groups(man, vis, order, out, a.cap, lowres, log, a.mobile)
         gfile.write_text(json.dumps(dict(groups=groups), indent=1))
     else:
@@ -556,29 +817,30 @@ def main():
 
 
 def build_all_groups(man, vis, order, out, cap, lowres, log, mobile):
-    """The tier-0 placeholders and the tier-1/2 groups, desktop or mobile."""
+    """One group per (class, tier).  NO duplicated geometry, desktop or mobile.
+
+    The first cut shipped a tier-0 PLACEHOLDER group (the hero-visible subset) beside the tier-1 group
+    that carried the same prototypes' other instances.  Measured by the viewer engineer at the hero:
+    428 draw calls and 5.83 M drawn triangles against Gate 3's 329 and 5.24 M, because both were in the
+    scene at once and a prototype's instances were cut across two files.  Now every instance of a
+    prototype is in exactly ONE group, whose tier is the earliest any of its instances needs, and the
+    group's own maps are the half-resolution ETC1S set from the start.  What tier 1 upgrades is the
+    TEXTURE, not the geometry: `tiers.lowres.files[key].full` names the full-resolution file for every
+    key a group refers to, so the viewer re-loads the map and keeps the mesh.
+    """
+    # Every group refers to the FULL-RESOLUTION map by its published name, and embeds nothing.  Pointing
+    # the URIs at `tex_lo` instead was the first cut and it dead-ends: a texture that arrives inside the
+    # glb reaches three.js as a blob with no name, so no tier can ever pair it with its full-resolution
+    # twin and the half-resolution copy stays in place for ever.  With the full name in the glb, the
+    # viewer redirects the URI to `tiers.lowres.files[key].path` while it is in tier 0 and lets it
+    # resolve normally afterwards - the same by-name pairing it already does for the Gate 2 sets.
     groups = []
-    hero_orn = sorted(n for n, x in vis["assets"].items()
-                      if x["hero"] > 0 and (man["assets"].get(n) or {}).get("cls") == "ORN")
-    env_nodes = {n for n, _ in class_nodes("env")[0]}
-    hero_env = sorted(n for n, x in vis["assets"].items()
-                      if x["hero"] > 0 and n in env_nodes and "treeboard" not in n)
-    if mobile:
-        # The mobile set has no full-resolution second copy to swap to, so there is no placeholder
-        # tier-0 group: the tier-1 groups ARE the mobile geometry and tier 0 takes the hero ones.
-        for cls in ("arch", "ground", "orn", "env"):
-            groups += build_groups(cls, vis, order, out, man, cap, log, prefix=f"m_{cls}",
-                                   lowres_dir=lowres, simplify=MOBILE_SIMPLIFY.get(cls),
-                                   hero_tier=0)
-        return groups
-    for cls, names, prefix in (("orn", hero_orn, "orn_t0"), ("env", hero_env, "env_t0")):
-        groups.append(make_group(
-            cls, prefix, names, out, man, cap, log, lowres_dir=lowres, tier=0, vis=vis,
-            extra=dict(placeholder=True, texture_encoding="etc1s, half resolution",
-                       replaced_by=f"the tier-1 {cls} group (the same assets at LOD0 with their "
-                                   f"own full-resolution maps)")))
-    for cls in ("orn", "env"):
-        groups += build_groups(cls, vis, order, out, man, cap, log, prefix=cls)
+    for cls in ("orn", "env") if not mobile else ("arch", "ground", "orn", "env"):
+        groups += build_groups(cls, vis, order, out, man, cap, log,
+                               prefix=f"m_{cls}" if mobile else cls,
+                               lowres_dir=None,
+                               simplify=MOBILE_SIMPLIFY.get(cls) if mobile else None,
+                               hero_tier=0)
     return groups
 
 

@@ -45,15 +45,15 @@ def _run(cmd):
     return time.time() - t0
 
 
-def encode_etc1s(src, dst, oetf, resize=None):
-    cmd = [TOKTX, "--t2", "--encode", "etc1s", "--clevel", "2", "--qlevel", "128",
+def encode_etc1s(src, dst, oetf, resize=None, qlevel=128):
+    cmd = [TOKTX, "--t2", "--encode", "etc1s", "--clevel", "2", "--qlevel", str(qlevel),
            "--genmipmap", "--assign_oetf", oetf]
     if resize:
         cmd += ["--resize", f"{resize}x{resize}"]
     return _run(cmd + [str(dst), str(src)])
 
 
-def encode_uastc(src, dst, oetf, resize=None):
+def encode_uastc(src, dst, oetf, resize=None, qlevel=None):
     cmd = [TOKTX, "--t2", "--encode", "uastc", "--uastc_quality", "2", "--zcmp", "18",
            "--genmipmap", "--assign_oetf", oetf]
     if resize:
@@ -138,7 +138,7 @@ def probe(man, vis, tmp, n=6):
     return rows
 
 
-def encode_set(keys, man, outdir, encoder, resize_div, tag):
+def encode_set(keys, man, outdir, encoder, resize_div, tag, qlevel=128):
     """Encode `keys` into `outdir`; returns per-key bytes and the total wall time."""
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -153,12 +153,13 @@ def encode_set(keys, man, outdir, encoder, resize_div, tag):
         rz = max(4, w // resize_div) if resize_div > 1 else None
         dst = outdir / f"{key}.ktx2"
         fn = encode_etc1s if encoder == "etc1s" else encode_uastc
-        wall += fn(src, dst, oetf, resize=rz)
-        made[key] = dict(bytes=dst.stat().st_size, px=rz or w, src_px=w, oetf=oetf, encoder=encoder)
+        wall += fn(src, dst, oetf, resize=rz, qlevel=qlevel)
+        made[key] = dict(bytes=dst.stat().st_size, px=rz or w, src_px=w, oetf=oetf, encoder=encoder,
+                         qlevel=qlevel if encoder == "etc1s" else None)
     print(f"[gate5tex] {tag}: {len(made)} files, {sum(v['bytes'] for v in made.values())/1e6:.2f} MB, "
           f"{wall:.0f} s wall" + (f", {len(missing)} with no source png" if missing else ""), flush=True)
     return dict(files=made, missing=missing, wall_s=round(wall, 1), encoder=encoder,
-                resize_div=resize_div, dir=str(outdir))
+                resize_div=resize_div, qlevel=qlevel, dir=str(outdir))
 
 
 def main():
@@ -166,7 +167,10 @@ def main():
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--encode", action="store_true")
     ap.add_argument("--mobile", action="store_true")
-    ap.add_argument("--tier0-div", type=int, default=4, help="tier-0 downscale divisor (1 = full res)")
+    ap.add_argument("--tier0-div", type=int, default=2,
+                    help="tier-0 downscale divisor (1 = full res). 2 is what ships - tiers.py encodes "
+                         "the group and mobile copies at /2 too, so any other value makes the two "
+                         "halves of the tier-0 set disagree.")
     ap.add_argument("--out", default=str(G.OUT))
     a = ap.parse_args()
     man, vis = G.manifest(), G.visibility(Path(a.out) / "visibility.json")
@@ -197,9 +201,11 @@ def main():
         rep["tier0_orn_ao"] = encode_set(ao, man, out / "tex_lo", "etc1s", a.tier0_div,
                                          f"tier0 orn ao etc1s /{a.tier0_div}")
     if a.mobile:
-        keys = sorted({pub.key for pub in G.resolve_files(man).values()
-                       if pub.kind in ("gate2", "detail") and pub.key})
-        rep["mobile"] = encode_set(keys, man, out / "tex_mobile", "etc1s", 2, "mobile etc1s /2")
+        # The mobile manifest swaps every texture to the SAME half-resolution ETC1S files tier 0 uses
+        # (tiers.py --mobile encodes whatever is still missing into tex_lo), so a second directory would
+        # be a set nothing reads and sync_main would ship. Kept as an explicit refusal, not a silent no-op.
+        print("[gate5tex] --mobile is not a separate set: the mobile manifest reads tex_lo. Run "
+              "`python3 export/tiers.py --mobile`, which encodes what is missing there.", flush=True)
     shutil.rmtree(tmp, ignore_errors=True)
     p.write_text(json.dumps(rep, indent=1))
     print(f"[gate5tex] wrote {p}", flush=True)
