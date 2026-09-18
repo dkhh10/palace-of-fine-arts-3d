@@ -128,6 +128,15 @@ Target on the iPhone 16 Pro: **< 700 MB**. Desktop, by the same rule: 1073 MB (m
 
 The ratio is triangles DRAWN against `glb.per_class[cls].placed_tris` at Gate 3. Desktop's 0.9981 / 0.9984 on arch and orn are the same degenerate-triangle loss Gate 3 itself reported (-0.185 % / -0.157 %); env and ground are exact. The mobile ratios are `gltfpack -si 0.5` on ARCH and ORN, which is the brief's "decimated LOD0 at half the Gate 1 budget" - the export set has no ARCH/ORN LOD1 to ship instead.
 
+## Viewer contract — what changed in v5 (breaking, on purpose)
+
+- **`glb.per_class` is gone**, replaced by `glb.groups` (a list with `path`, `cls`, `tier`, `nodes`, `assets`, `hero_fraction`, `station_visibility`, `textures`, `placeholder`). The Gate 3 figures are kept as `glb.per_class_gate3` for reference only: `orn.glb` (154.3 MB) and `env.glb` (38.1 MB) are NOT published, because both are over the 25 MiB per-file cap. A viewer that still reads `per_class` will 404 rather than quietly download 192 MB of files that are not on the host.
+- **`files`** is the load plan: an array already in (tier, hero coverage, path) order, each entry `{path, tier, kind, why, bytes, key, px}`. `tiers.bytes` is the loading-screen denominator.
+- **`tiers.lowres.files[key]`** gives the tier-0 half-resolution variant of a texture key; the viewer uses it in tier 0 and re-loads the manifest's own full-resolution path when tier 1 lands.
+- A group with **`placeholder: true`** is tier 0 and is replaced by the tier-1 group of the same class; its assets are asserted to be a subset of that group's.
+- **`?tier=mobile`** selects `manifest_mobile.json`, which carries the same blocks.
+- The four v4 paths that were relative to `out/gate3` are rebased to `../gate3/...`; what moved is listed in `tiers.path_rebase`.
+
 ## Files in MAIN
 
 - desktop: 564 published files, **0 missing** from `/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate5`.
