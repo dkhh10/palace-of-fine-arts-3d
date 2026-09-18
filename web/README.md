@@ -1268,24 +1268,47 @@ What the viewer does with it:
 gltfpack cannot instance across group boundaries, so a class split into three groups draws each
 prototype up to three times; that is the honest price of a 25 MiB per-file cap.
 
-### Two things the split breaks that the export owns
+### The two things the split broke, and where they stand
 
-1. **`lightmaps.instance_irradiance` is keyed to the node indices of ONE env glb.**  gltfpack drops
-   names, so the glTF node index and the per-node row counts are the only key there is — and node 1
-   of `env_t0` is a different mesh with a different row count.  `lightmaps.js` refuses to bind a
-   misaligned array (rightly: binding it would tint 1 379 shrubs from the wrong rows), and the viewer
-   now detects the split up front and skips the pass with a loud note instead of failing to boot.
-   The 1 379 shrub and reed placements stay on the probe until the export re-emits the block per
-   group.  Measured effect at the hero: the shrub band reads warmer, luma ratio 1.007 against the v4
-   frame.
-2. **A texture the GLB references itself has no upgrade path.**  With `gltfpack -tr` the leaf, bark
-   and ORN occlusion maps are external files named inside the glb, so when tier 0 ships the glb
-   pointing at `tex_lo/`, nothing in the manifest says which full-resolution file replaces it — the
-   viewer's hot-swap works on manifest-declared material sets (`upgradePbrSets`), not on maps that
-   arrived with the geometry.  As shipped, 41 of those stay at the low-resolution ETC1S variant for
-   the whole session.  Either the glbs reference the FULL names and the lo variant is offered through
-   `tiers.lowres.files[<the glb's texture name>]`, or the low-resolution set is accepted and the
-   full-resolution copies come out of the plan.
+1. **`lightmaps.instance_irradiance` is keyed to the node indices of ONE env glb** — gltfpack drops
+   names, so the glTF node index and the per-node row counts are the only key there is, and node 1 of
+   `env_t0` is a different mesh with a different row count.  **Fixed by the export** (`groups`, the
+   block re-keyed per group) and consumed here: the viewer binds one group per call, against the root
+   that carries it, **exactly once**, in the tier that brought it and BEFORE chunking splits its
+   instanced meshes — after chunking the row counts no longer match and `lightmaps.js` refuses the
+   array, which is right.  Measured on the gate5 manifest: 1 368 + 8 = **1 376 of 1 379** placements
+   over 25 nodes in `env_t0` + `env_t2`; the 3 `.001` cards are the export's known unmatched.  With no
+   `groups` block and env split across tiers the pass is skipped with a loud note instead.
+2. **A texture the GLB references itself had no upgrade path.**  With `gltfpack -tr` the leaf, bark
+   and ORN occlusion maps are external files named inside the glb, and no material set in the
+   manifest mentions them.  **Fixed both sides:** the export ships `tiers.lowres.files[key].full`, and
+   the viewer reads it in both directions — `upgradeOf` (stand-in → full) and `lowresFor` (full →
+   stand-in).  A glb names its texture at FULL resolution, so while that file's tier has not arrived
+   the KTX2 loader is served the stand-in instead, and `upgradeGlbTextures` puts the full file on the
+   same material when the tier lands.  Measured after tier 2 on the gate5 manifest:
+   `lowres_remaining: []` and `lowres_etc_textures: 0` — **nothing in the scene is still a
+   low-resolution encode**, and 94 glb-referenced maps were swapped.  Two details that made it work:
+   three's `LoaderUtils.resolveURL` does not normalise, so every url is canonicalised before any tier
+   or cache lookup (`canonUrl`), and the upgrade target is always the highest-tier file OUTSIDE
+   `tiers.lowres.dir` — a stand-in that shares a tier with its full file must never be picked as the
+   successor, or the sweep swaps full-resolution maps DOWN.
+
+### Known limits, measured and carried (phase6b_viewer_r1_review 8-12)
+
+- The FIRST consumer of a cached texture gets the cached object itself, not a clone, and the upgrade
+  passes set `colorSpace` / `wrap` / `flipY` on it; a later consumer's clone inherits that sampler
+  state.  Harmless for the sets shipped today (every user of a given file wants the same sampler);
+  the clean form is to clone for every consumer and keep the cached object pristine.
+- A rejected load is cached as a rejected promise: a transient network failure is permanent for that
+  url, with no retry.
+- `--r2 --dry-run` still removes the oversize files from the publish directory although nothing was
+  uploaded, so the final census and a locally served `deploy_out` are wrong for that combination.
+- `functions/assets/[[path]].js` handles GET only: a HEAD for an R2-only asset falls through to the
+  static assets and 404s, and an unsatisfiable Range returns 404 rather than 416.  The
+  Range / If-None-Match / 206 / 304 path itself is correct.  It is the documented fallback and is not
+  in use — every published file is under the 25 MiB cap.
+- `pixelRatioFor`'s 0.25 floor can exceed `maxDrawingBufferPx` above ~24 M CSS pixels, which no
+  device reaches; the iPhone 16 Pro solves to 1.40 Mpx, inside the 1.5 Mpx cap.
 
 `web/tools/stub_tiers.mjs` builds a v5 STUB from the v4 manifest (`node web/tools/stub_tiers.mjs` →
 `web/public/stub/gate5`, gitignored, `?manifest=/stub/gate5/manifest.json`).  It was how this path
@@ -1337,43 +1360,71 @@ resident bytes are identical at every station.
 
 ## Deploying
 
-    web/deploy.sh --dry-run                       # assemble + verify, no login needed
+    web/deploy.sh --dry-run                       # assemble, verify, `wrangler deploy --dry-run`
     web/deploy.sh --project pfa-walkthrough       # the real deploy (after `npx wrangler login`)
     web/deploy.sh --dry-run --r2                  # the same with the oversize files going to R2
 
+**Workers static assets, not Pages.** wrangler 4.135 delegates every `wrangler pages ...` command to
+"the latest version of Cloudflare Pages, now part of Cloudflare Workers" and fails without an assets
+directory; the legacy path needs `--force` and is deprecated.  So `deploy.sh` writes
+`web/wrangler.jsonc` — an **assets-only Worker**: a name, a compatibility date and
+`assets.directory` pointing at the publish directory, with **no Worker script** — and deploys with
+`npx wrangler deploy --config web/wrangler.jsonc`.  `--dry-run` is a real wrangler flag there: it
+builds and validates and uploads nothing, which is what this script's `--dry-run` runs.  The staging
+URL is `https://<name>.<account>.workers.dev` and wrangler prints it on the real deploy.  The same
+limits hold (25 MiB per file, 20 000 files) and `_headers` is honoured the same way; static asset
+requests are free and unmetered on the free plan.  No credential is read or written by the script:
+it uses whatever `npx wrangler login` left in the user's own config.
+
 It builds `web/dist`, assembles `web/deploy_out` as the site plus one **hard link** per bake file at
-`assets/<gate>/...` (the urls the viewer already asks for; hard links because the bake is ~840 MB and
-the directory is rebuilt on every deploy), checks Cloudflare Pages' free-tier limits BEFORE the
-upload (**25 MiB per file, 20 000 files**), writes `_headers`, and runs `npx wrangler pages deploy`.
-No credential is read or written by the script: the real deploy uses the user's own
-`npx wrangler login`, and `--dry-run` stops before that line.
+`assets/<gate>/...` (the urls the viewer already asks for; hard links because the bake is ~600 MB and
+the directory is rebuilt on every deploy), and checks the limits BEFORE the upload.
 
+- **`tiers.deploy_from`** (the export's wire pass) says the DESKTOP manifest's plan is the complete
+  deploy set — the half-resolution files only the mobile variant fetches included (`kind: mobile_lo`).
+  When it is present the mobile manifest is published as a FILE and never walked: walking it would
+  pull the full-resolution keys its material sets name, which the viewer redirects and never fetches.
+- **A missing file stops the deploy, and that guard is itself tested.**  `publish_set.mjs` exits 3
+  when the manifest names a file nothing answers, but it is the left side of a pipeline and zsh takes
+  a pipeline's status from its last command — so the `|| exit 4` guard was dead until `setopt
+  pipefail`.  Every dry run now runs `pipefail_selftest`, which feeds `link_set` a manifest naming one
+  missing file and refuses to continue unless that fails (it reports `rc 3`).
 - **`_headers`:** `assets/*` immutable for a year (a bake goes to a new gate directory, never in
-  place), the site revalidated at 5 minutes, and deliberately **no `Cross-Origin-Opener-Policy` /
-  `Cross-Origin-Embedder-Policy`** — measured, not assumed: three's `KTX2Loader` transfers
-  ArrayBuffers to its worker pool and neither it nor the basis transcoder mentions
-  `SharedArrayBuffer`, so cross-origin isolation would buy no transcoding speed and would force
-  `Cross-Origin-Resource-Policy` onto every asset response.
-- **Over 25 MiB:** `--r2` uploads exactly those files to an R2 bucket (`wrangler r2 object put`) and
-  leaves them out of the Pages upload; `functions/assets/[[path]].js` serves them at the SAME url
-  from the `ASSETS_BUCKET` binding, with `Range` and `If-None-Match` passed through, and falls back
-  to Pages' own asset when there is no binding or no object.  It is the documented fallback: the
-  tier split is supposed to keep every published file under the cap.
-- **`web/tools/publish_set.mjs`** decides what is in the set.  It reads the v5 `files[]` table and
-  then finds what no path in the manifest spells — the detail tiling keys (resolved against every
-  directory the manifest declares), `materials.foliage.dir`'s generated file names, and the textures
-  a glb references itself (`gltfpack -tr` leaves the leaf and bark maps external) — and reports those
-  as *found by reference, not in files[]* so the export can list them.  Without them the first
-  assembled directory had 104 missing-file errors.  A file the manifest names and disk does not
-  answer stops the deploy: a deployment with a hole in the building is worse than no deployment.
+  place), **and after it** `/assets/*manifest*.json` and `/assets/*_status.json` at
+  `max-age=60, must-revalidate` — the last matching rule wins, and `*` spans `/`, so without those two
+  the load plan itself would be pinned for a year and a returning visitor would get a stale one.  The
+  site is `max-age=300`.  Deliberately **no `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-
+  Policy`** — measured, not assumed: three's `KTX2Loader` transfers ArrayBuffers to its worker pool
+  and neither it nor the basis transcoder mentions `SharedArrayBuffer`.
+- **Over 25 MiB:** `--r2` uploads exactly those files to an R2 bucket and leaves them out of the
+  upload; `functions/assets/[[path]].js` serves them at the SAME url from the `ASSETS_BUCKET` binding
+  with `Range` and `If-None-Match` passed through.  Under Workers the binding moves into the same
+  `wrangler.jsonc` (`r2_buckets`) with a small Worker script for `/assets/*` misses.  It is the
+  documented fallback and is **not in use**: every published file is under the cap.
+- **`web/tools/publish_set.mjs`** decides what is in the set from the plan's resolved paths (which
+  reach into gate0/1/2/3/5, not one folder), and reports anything it had to find by reference rather
+  than from `files[]`.  Against the wire-pass manifests it reports none: the plan is complete.
 
-Verified end to end today with the stub manifest: the assembled directory, served as a plain static
-site and captured through `--url`, renders the hero at **MAE 0.0006 / luma 1.00000** against the v4
-baseline with no page errors — 392 files, 732 MB, 2 of them over 25 MiB (`orn.glb` 147 MiB and
-`env.glb` 36 MiB, which the export's tier split is meant to cut).
+**Measured, current gate5 manifests:** publish set **709 files, 615 MB, 0 over 25 MiB, 0 unresolved**;
+`wrangler deploy --dry-run` reads 724 files from the assets directory, finds no bindings and exits
+without uploading.
 
-**Staging URL:** not deployed yet — it needs the user's `npx wrangler login` once, in their own
-session.  The URL goes here and in `docs/delivery.md` when it exists.
+### The initial payload, with its unit
+
+The 6b budget is **50 MB**, and the two readings of "MB" differ by 5 %:
+
+| | bytes | decimal MB | MiB |
+|---|---|---|---|
+| the export's model (`tiers.first_frame_transfer_bytes`) | 49 279 553 | 49.28 | 47.00 |
+| **measured on the wire** (`--net bytes_before_first_frame`) | **50 236 320** | **50.24** | **47.91** |
+
+So it is **inside 50 MiB and 236 kB over 50 000 000 decimal bytes**, and the report says which.  The
+whole difference from the export's model is per-request overhead, not asset bytes: 320 requests
+finish before the first frame (297 of them assets), and CDP's `encodedDataLength` counts response
+headers, which works out at ~2 990 B per request on the local HTTP/1.1 test server.  The asset bytes
+alone are 49.65 MB.  The levers, if the decimal figure has to come under: fewer tier-0 REQUESTS (the
+146 half-resolution stand-ins dominate the count, not the bytes), or measuring against the staging URL,
+where HTTP/2 or HTTP/3 header compression makes that overhead a fraction of what HTTP/1.1 spends.
 
 ## Capturing a gate 5 round
 

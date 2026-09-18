@@ -785,6 +785,10 @@ async function streamTiers() {
 	tierState.streaming = true;
 	try {
 		for ( let t = 1; t < tierState.count && t <= tierState.max; t ++ ) {
+		// EACH TIER IS ISOLATED.  A throw in afterGeometry / applyDetail / setupFoliageAndImpostors
+		// used to abort every LATER tier with one line, which is how a single bad bind cost the scene
+		// its trees.  The tier is recorded as failed, its step is named, and the stream goes on.
+		try {
 			const t0 = performance.now();
 			const before = progress.loaded;
 			tierState.loading = t;
@@ -793,10 +797,13 @@ async function streamTiers() {
 			const plan = tierState.plan ? tierState.plan( t ) : [];
 			for ( const f of plan ) progress.planned.add( f.url );          // its bytes are not off-plan
 			progress.total += plan.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+			tierState.step = 'glbs';
 			const roots = await loadGlbs( manifest.glbs.filter( ( g ) => g.tier === t ) );
+			tierState.step = 'afterGeometry';
 			await afterGeometry( roots, t );
 			// the maps an earlier tier showed as a factor or a low-resolution stand-in, and the maps the
 			// GLBS reference themselves, which no manifest material set names
+			tierState.step = 'texture upgrade';
 			{
 				const beforeTex = collectTextures( scene );
 				const up = materialsMode === 'pbr'
@@ -809,6 +816,7 @@ async function streamTiers() {
 				tierState.upgrades = [ ...( tierState.upgrades || [] ), { tier: t, ...up, failed: up.failed.length,
 					glb_textures: glbUp.upgraded, glb_textures_remaining: glbUp.remaining.length } ];
 			}
+			tierState.step = 'probe';
 			if ( t === probeTier ) await setupProbeEnv();
 			if ( t === detailTier && detailPending.length ) {
 				const roots = detailPending.splice( 0, detailPending.length );
@@ -821,6 +829,7 @@ async function streamTiers() {
 				}
 				renderFrame();
 			}
+			tierState.step = 'foliage+impostors';
 			if ( t === sceneCompletionTier ) await setupFoliageAndImpostors();
 			if ( roots.length ) applyReflectionAndFog();
 			tierState.now = t;
@@ -831,12 +840,20 @@ async function streamTiers() {
 				+ ( tierState.deferredLightmaps ? `, ${tierState.deferredLightmaps} lightmap(s) still deferred` : '' ) );
 			renderFrame();
 			await new Promise( ( r ) => requestAnimationFrame( r ) );
+		} catch ( e ) {
+			const failed = { tier: t, error: e.message, step: tierState.step || 'unknown' };
+			tierState.failures = [ ...( tierState.failures || [] ), failed ];
+			note( `tier ${t} FAILED at ${failed.step}: ${e.message} — later tiers still load` );
+			console.error( `[pfa] tier ${t} failed at ${failed.step}`, e );
+			renderFrame();
+		}
 		}
 		// The lazily loaded foliage glbs belong to the tier that owns the env geometry; with no tiers
 		// they run here exactly as they did before 6b.  With ?tiers= stopping short of that tier there
 		// is no foliage report for them to join to, so they are not fetched at all — a tier-0 capture
 		// must cost tier 0 and nothing else.
 		if ( sceneCompletionTier <= tierState.max ) await loadLazyFoliage();
+		else note( `lazy foliage not loaded: it belongs to tier ${sceneCompletionTier} and ?tiers=${CFG.tiers} stops at ${tierState.max}` );
 		// One more sweep AFTER the lazy foliage and the impostors: those passes load textures of their
 		// own, and anything they took as a stand-in would otherwise never be upgraded (the per-tier
 		// sweep ran before them).  It is a no-op when there is nothing left.
@@ -846,7 +863,6 @@ async function streamTiers() {
 				loadTexture: loadAnyTexture, upgradeOf: manifest.tiers.upgradeOf } );
 			if ( late.upgraded ) { disposeOrphans( scene, beforeTex ); renderFrame(); }
 		}
-		else note( `lazy foliage not loaded: it belongs to tier ${sceneCompletionTier} and ?tiers=${CFG.tiers} stops at ${tierState.max}` );
 	} catch ( e ) {
 		note( `tier stream FAILED: ${e.message}` );
 		tierState.error = e.message;
@@ -1908,6 +1924,7 @@ window.__pfaInfo = () => ( {
 		declared_bytes: manifest && manifest.tiers ? manifest.tiers.totals : null,
 		oversize: manifest && manifest.tiers ? manifest.tiers.oversize : [],
 		deferred_lightmaps: tierState.deferredLightmaps, upgrades: tierState.upgrades || [],
+		failures: tierState.failures || [],
 		lowres_remaining: tierState.lowresRemaining || [],
 		lowres_etc_textures: tierState.lowresEtcTextures ?? null,
 		lowres_etc_names: tierState.lowresEtcNames || [],

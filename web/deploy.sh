@@ -11,8 +11,8 @@
 #   --r2                 move files over 25 MiB to R2 behind functions/assets/[[path]].js
 #   --allow-oversize     assemble anyway with files over 25 MiB (to serve the directory locally and
 #                        test the artefact; a Pages upload would reject them)
-#   --project NAME       Cloudflare Pages project (default $PFA_PAGES_PROJECT or pfa-walkthrough)
-#   --branch NAME        Pages branch (default staging; Pages gives it its own preview url)
+#   --project NAME       Worker name (default $PFA_PAGES_PROJECT or pfa-walkthrough); the staging url
+#                        is https://<name>.<account>.workers.dev, printed by wrangler on deploy
 #   --manifest PATH      the desktop manifest to publish (default $PFA_MAIN_ROOT/export/out/gate5/manifest.json,
 #                        falling back to the gate3 v4 manifest so the script is testable today)
 #   --mobile PATH        the mobile manifest (default: manifest_mobile.json beside the desktop one)
@@ -38,15 +38,21 @@
 #      node_modules/three/examples/jsm/loaders/KTX2Loader.js and the basis transcoder: zero matches
 #      for SharedArrayBuffer), so cross-origin isolation would buy nothing and would force a
 #      Cross-Origin-Resource-Policy header onto every asset response.
-#   5. `npx wrangler pages deploy <dir> --project-name <name> --branch <branch>`.  NO TOKEN IS EVER
-#      READ OR WRITTEN BY THIS SCRIPT: it uses whatever `npx wrangler login` left in the user's own
-#      wrangler config.  --dry-run stops before this line and works with no login at all.
+#   5. An assets-only Worker: web/wrangler.jsonc naming the publish directory, then
+#      `npx wrangler deploy --config web/wrangler.jsonc`.  (wrangler 4.135 delegates `wrangler pages
+#      deploy` to Workers anyway and fails without an assets directory; the legacy path needs --force
+#      and is deprecated.)  NO TOKEN IS EVER READ OR WRITTEN BY THIS SCRIPT: it uses whatever
+#      `npx wrangler login` left in the user's own wrangler config, and --dry-run uploads nothing.
 set -e
+# publish_set.mjs is the LEFT side of a pipeline and exits 3 when the manifest names a file nothing
+# answers.  zsh reports a pipeline's status from its LAST command, so without this the `|| exit 4`
+# guard below was dead and a deployment with a hole in the building would have shipped silently
+# (phase6b_viewer_r1_review blocker 1).  `pipefail_selftest` proves it on every dry run.
+setopt pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAIN=${PFA_MAIN_ROOT:-$ROOT}
 ASSETS=${PFA_ASSETS:-$MAIN/export/out}
 PROJECT=${PFA_PAGES_PROJECT:-pfa-walkthrough}
-BRANCH=staging
 DRY=0
 KEEP=0
 R2=0
@@ -65,7 +71,6 @@ while [ $# -gt 0 ]; do
 		--r2) R2=1 ;;
 		--allow-oversize) ALLOW_OVER=1 ;;
 		--project) PROJECT=$2; shift ;;
-		--branch) BRANCH=$2; shift ;;
 		--manifest) MANIFEST=$2; shift ;;
 		--mobile) MOBILE=$2; shift ;;
 		--bucket) R2_BUCKET=$2; shift ;;
@@ -86,7 +91,7 @@ if [ -z "$MOBILE" ] && [ -f "$(dirname "$MANIFEST")/manifest_mobile.json" ]; the
 	MOBILE="$(dirname "$MANIFEST")/manifest_mobile.json"
 fi
 
-echo "deploy.sh: project $PROJECT branch $BRANCH  (dry-run $DRY)"
+echo "deploy.sh: worker $PROJECT  (dry-run $DRY)"
 echo "deploy.sh: desktop manifest $MANIFEST"
 [ -n "$MOBILE" ] && echo "deploy.sh: mobile manifest  $MOBILE" || echo "deploy.sh: mobile manifest  (none yet)"
 
@@ -126,11 +131,22 @@ link_set "$MANIFEST" > "$OUT/.linked" || {
 	echo "deploy.sh: the desktop manifest names files that are not on disk — refusing to deploy a set with holes" >&2
 	exit 4
 }
-if [ -n "$MOBILE" ]; then
+# `tiers.deploy_from` (the export's wire pass): the DESKTOP manifest's plan is the complete deploy
+# set, the half-resolution files only the mobile variant fetches included (kind `mobile_lo`).  The
+# mobile manifest is then published as a FILE and never walked — walking it would pull the
+# full-resolution keys its material sets name, which the viewer redirects and never fetches.
+DEPLOY_FROM=$(node -e 'const m=require(process.argv[1]);process.stdout.write(String((m.tiers&&m.tiers.deploy_from)||""))' "$MANIFEST" 2>/dev/null || true)
+if [ -n "$MOBILE" ] && [ -z "$DEPLOY_FROM" ]; then
 	link_set "$MOBILE" >> "$OUT/.linked" || {
 		echo "deploy.sh: the mobile manifest names files that are not on disk — refusing to deploy a set with holes" >&2
 		exit 4
 	}
+elif [ -n "$MOBILE" ]; then
+	echo "deploy.sh: tiers.deploy_from says the desktop plan is the whole deploy set; the mobile manifest is published as a file, not walked"
+	MREL="assets/$( cd "$(dirname "$MOBILE")" && pwd | sed "s|^$ASSETS/||" )/$(basename "$MOBILE")"
+	mkdir -p "$(dirname "$OUT/$MREL")"
+	[ -e "$OUT/$MREL" ] || ln "$MOBILE" "$OUT/$MREL" 2>/dev/null || cp "$MOBILE" "$OUT/$MREL"
+	echo "L $(stat -f %z "$MOBILE") $MREL" >> "$OUT/.linked"
 fi
 LINKED=$(grep -c '^L ' "$OUT/.linked" || true)
 COPIED=$(grep -c '^C ' "$OUT/.linked" || true)
@@ -162,6 +178,15 @@ cat > "$OUT/_headers" <<'HEADERS'
 # url identifies its content: cache it for a year and never revalidate.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+# ...EXCEPT the manifests and the relay status, which live under assets/ but are the LOAD PLAN: a
+# year of immutable caching would serve a returning visitor a stale plan for a bake that has moved.
+# Pages applies the LAST matching rule, so these come after the block above, and `*` spans `/`.
+/assets/*manifest*.json
+  Cache-Control: public, max-age=60, must-revalidate
+  Access-Control-Allow-Origin: *
+/assets/*_status.json
+  Cache-Control: public, max-age=60, must-revalidate
   Access-Control-Allow-Origin: *
 # The site is small and changes with every deploy.
 /*
@@ -199,12 +224,58 @@ elif [ "$OVER" -ne 0 ]; then
 	echo "deploy.sh: $OVER file(s) over the cap, kept by --allow-oversize (a Pages upload WILL reject them)" >&2
 fi
 
+# ---------------------------------------------------------------------------- 4c. the guard's guard
+# A deploy that cannot fail on a missing file is worse than no deploy.  This proves, on every dry run,
+# that publish_set's exit 3 really does stop the pipeline: a manifest naming one file that does not
+# exist must make `link_set` fail, which is what the `|| exit 4` guard acts on.  Before `setopt
+# pipefail` this test failed - zsh took the pipeline's status from the `while` loop, which is 0.
+pipefail_selftest() {
+	local tmp rc
+	tmp=$(mktemp -d)
+	printf '%s' '{"schema":"pfa-phase6/5","tiers":{"bytes":{"0":1}},"files":[{"path":"no/such/file.ktx2","tier":0,"kind":"gate2","bytes":1}]}' > "$tmp/manifest.json"
+	set +e
+	( OUT="$tmp/out"; mkdir -p "$OUT"; link_set "$tmp/manifest.json" >/dev/null 2>&1 )
+	rc=$?
+	set -e
+	rm -rf "$tmp"
+	if [ "$rc" = "0" ]; then
+		echo "deploy.sh: SELF TEST FAILED - a manifest naming a missing file did NOT stop the publish set." >&2
+		echo "           The missing-file guard is dead (is 'setopt pipefail' still there?). Refusing to continue." >&2
+		exit 7
+	fi
+	echo "deploy.sh: self test OK - a manifest naming a missing file stops the publish set (rc $rc)"
+}
+if [ "$DRY" = "1" ]; then pipefail_selftest; fi
+
 # ---------------------------------------------------------------------------- 5. deploy
-CMD=(npx wrangler pages deploy "$OUT" --project-name "$PROJECT" --branch "$BRANCH")
+# Workers STATIC ASSETS, not Pages: wrangler 4.135 delegates every `wrangler pages ...` command to
+# "the latest version of Cloudflare Pages, now part of Cloudflare Workers", and the legacy path needs
+# --force and is deprecated.  An assets-only Worker (no script) is the supported shape: a
+# wrangler.jsonc naming the publish directory, deployed with `wrangler deploy`.  The same limits hold
+# (25 MiB per file, 20 000 files) and `_headers` is honoured the same way; static asset requests are
+# free and unmetered.  If oversize files ever have to go to R2, the binding moves INTO this config
+# (`r2_buckets`) with a small Worker script for `/assets/*` misses — the documented fallback only.
+CONFIG="$ROOT/web/wrangler.jsonc"
+ASSETS_REL=$(python3 -c 'import os,sys;print(os.path.relpath(sys.argv[1],sys.argv[2]))' "$OUT" "$ROOT/web")
+cat > "$CONFIG" <<JSONC
+{
+  // Generated by web/deploy.sh — do not edit; the publish directory is rebuilt on every deploy.
+  "name": "$PROJECT",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "$ASSETS_REL",
+    "html_handling": "auto-trailing-slash"
+  }
+}
+JSONC
+echo "deploy.sh: wrote $CONFIG (assets-only Worker, directory $ASSETS_REL)"
+
 if [ "$DRY" = "1" ]; then
-	echo "deploy.sh: DRY RUN — nothing uploaded. The deploy command is:"
-	echo "  ${CMD[*]}"
+	echo "deploy.sh: DRY RUN — \`wrangler deploy --dry-run\` builds and validates, uploads nothing."
+	npx wrangler deploy --config "$CONFIG" --dry-run
+	echo "deploy.sh: the real deploy is:  npx wrangler deploy --config $CONFIG"
 	echo "deploy.sh: it needs a Cloudflare login once, in the user's own session: npx wrangler login"
+	echo "deploy.sh: the staging url is printed by that command (https://$PROJECT.<account>.workers.dev)"
 	exit 0
 fi
-"${CMD[@]}"
+npx wrangler deploy --config "$CONFIG"
