@@ -232,6 +232,6 @@ The mobile set is a subset of the same directories. `web/deploy.sh` should build
 
 ## Files in MAIN
 
-- desktop: 588 published files, **1 missing** from `/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate5`: ['uv2_relay_status.json']
-- mobile: 341 published files, **1 missing** from `/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate5`: ['uv2_relay_status.json']
+- desktop: 588 published files, **0 missing** from `/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate5`.
+- mobile: 341 published files, **0 missing** from `/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate5`.
 
