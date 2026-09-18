@@ -268,12 +268,19 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 		if ( ! byKeyAll.has( row.key ) ) byKeyAll.set( row.key, [] );
 		byKeyAll.get( row.key ).push( row );
 	}
+	// The stand-ins live in `tiers.lowres.dir`; anything else is a full-resolution file.  The two can
+	// share a tier (28 ORN pairs do), so "highest tier" alone would sometimes pick the STAND-IN as the
+	// successor and the upgrade would swap a full-resolution map for a half-resolution one.
+	const loDirEarly = ( lowres && typeof lowres.dir === 'string' ) ? lowres.dir.replace( /\/$/, '' ) : null;
+	const isLoPath = ( p ) => !! loDirEarly && ( String( p ).startsWith( `${loDirEarly}/` ) || String( p ).includes( `/${loDirEarly}/` ) );
 	for ( const [ key, rows ] of byKeyAll ) {
 		if ( rows.length < 2 ) continue;
 		const sorted = rows.slice().sort( ( a, b ) => a.tier - b.tier );
-		const full = sorted[ sorted.length - 1 ];
-		for ( const r of sorted.slice( 0, -1 ) ) {
-			if ( r.url === full.url ) continue;
+		const fulls = sorted.filter( ( r ) => ! isLoPath( r.path ) );
+		const full = fulls.length ? fulls[ fulls.length - 1 ] : sorted[ sorted.length - 1 ];
+		if ( isLoPath( full.path ) ) continue;               // nothing here is a full-resolution file
+		for ( const r of sorted ) {
+			if ( r.url === full.url || ! isLoPath( r.path ) ) continue;
 			if ( ! out.upgradeOf.has( r.url ) ) out.upgradeOf.set( r.url, { url: full.url, tier: full.tier, key, bytes: full.bytes } );
 			const prev = out.lowresFor.get( full.url );
 			if ( ! prev || ( r.tier ?? 0 ) < prev.tier ) out.lowresFor.set( full.url, { url: r.url, tier: r.tier ?? 0, key } );

@@ -837,6 +837,15 @@ async function streamTiers() {
 		// is no foliage report for them to join to, so they are not fetched at all — a tier-0 capture
 		// must cost tier 0 and nothing else.
 		if ( sceneCompletionTier <= tierState.max ) await loadLazyFoliage();
+		// One more sweep AFTER the lazy foliage and the impostors: those passes load textures of their
+		// own, and anything they took as a stand-in would otherwise never be upgraded (the per-tier
+		// sweep ran before them).  It is a no-op when there is nothing left.
+		if ( tierState.max === Infinity && manifest.tiers && manifest.tiers.upgradeOf && manifest.tiers.upgradeOf.size ) {
+			const beforeTex = collectTextures( scene );
+			const late = await upgradeGlbTextures( { scene, maxTier: tierState.count - 1, note,
+				loadTexture: loadAnyTexture, upgradeOf: manifest.tiers.upgradeOf } );
+			if ( late.upgraded ) { disposeOrphans( scene, beforeTex ); renderFrame(); }
+		}
 		else note( `lazy foliage not loaded: it belongs to tier ${sceneCompletionTier} and ?tiers=${CFG.tiers} stops at ${tierState.max}` );
 	} catch ( e ) {
 		note( `tier stream FAILED: ${e.message}` );
@@ -868,9 +877,25 @@ async function streamTiers() {
 				? `LOW-RESOLUTION FILES STILL IN THE SCENE after the last tier: ${left.length} — `
 					+ left.slice( 0, 6 ).map( ( u ) => u.split( '/' ).pop() ).join( ', ' ) + ( left.length > 6 ? ' …' : '' )
 				: 'low-resolution check: 0 tier-0 stand-in textures remain in the scene after the last tier' );
-			if ( etc && DEVICE.tier !== 'mobile' ) note( `low-resolution check: ${etc} texture(s) are STILL in an ETC `
-				+ 'format on the desktop tier — an embedded (buffer-view) texture has no url, so no tier can replace '
-				+ 'it; the export has to pack the groups with EXTERNAL textures for those to sharpen' );
+			if ( etc && DEVICE.tier !== 'mobile' ) {
+				// Name them: an ETC texture on the desktop tier is either a stand-in nothing upgraded or
+				// a file the export only ever published in that encode, and the two are different bugs.
+				const names = new Set();
+				scene.traverse( ( o ) => {
+					if ( ! o.isMesh ) return;
+					for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+						if ( ! m ) continue;
+						for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) {
+							const t2 = m[ k ];
+							if ( t2 && /ETC/i.test( formatName( t2 ) ) )
+								names.add( ( t2.userData && t2.userData.pfaUrl ) ? t2.userData.pfaUrl.split( '/' ).slice( -2 ).join( '/' ) : `(no url, ${m.name || k})` );
+						}
+					}
+				} );
+				tierState.lowresEtcNames = [ ...names ];
+				note( `low-resolution check: ${etc} texture(s) are STILL in an ETC format on the desktop tier: `
+					+ [ ...names ].slice( 0, 10 ).join( ', ' ) );
+			}
 		}
 		renderFrame();
 	}
@@ -1230,10 +1255,23 @@ let ktx2Loader = null;
  * instead; `upgradeGlbTextures` puts the full file on the same material when its tier lands.  Without
  * this the tier-0 payload pulled the whole 91.7 MB full-resolution glb texture set.
  */
+/**
+ * The same file, spelled one way.  three's LoaderUtils.resolveURL concatenates a glTF's base path
+ * and its image URI WITHOUT normalising, so a group in `groups/` asking for `../../gate1/tex_ktx2/x`
+ * reaches the loader as `/assets/gate5/groups/../../gate1/tex_ktx2/x`: the browser normalises it on
+ * the wire, but a Map keyed by the normalised url never matched it — the tier lookup missed and tier
+ * 0 pulled the full-resolution set.  Everything that keys on a url normalises it here first.
+ */
+function canonUrl( url ) {
+	if ( typeof url !== 'string' || /^(blob|data):/.test( url ) ) return url;
+	try { return new URL( url, location.href ).href; } catch ( e ) { return url; }
+}
+
 function tierSubstitute( url ) {
 	const t = manifest && manifest.tiers;
 	if ( ! t || ! t.lowresFor || ! t.lowresFor.size ) return url;
 	const here = Math.max( tierState.now || 0, tierState.loading || 0 );
+	url = canonUrl( url );
 	if ( tierOf( url ) <= here ) return url;               // its own tier has arrived: the real file
 	const lo = t.lowresFor.get( url );
 	if ( ! lo || lo.tier > here ) return url;              // no stand-in available yet: the real file
@@ -1362,7 +1400,8 @@ function rawLoadTexture( url ) {
  */
 const textureCache = new Map();          // url -> Promise<THREE.Texture> (the first one loaded)
 const textureShare = { urls: 0, shared: 0, bytesSaved: 0 };
-function loadAnyTexture( url ) {
+function loadAnyTexture( rawUrl ) {
+	const url = canonUrl( rawUrl );
 	if ( ! textureCache.has( url ) ) {
 		textureShare.urls ++;
 		textureCache.set( url, rawLoadTexture( url ).then( ( t ) => {
@@ -1871,6 +1910,7 @@ window.__pfaInfo = () => ( {
 		deferred_lightmaps: tierState.deferredLightmaps, upgrades: tierState.upgrades || [],
 		lowres_remaining: tierState.lowresRemaining || [],
 		lowres_etc_textures: tierState.lowresEtcTextures ?? null,
+		lowres_etc_names: tierState.lowresEtcNames || [],
 		lowres_substituted: tierState.substituted,
 		texture_sharing: { urls: textureShare.urls, shared_users: textureShare.shared,
 			bytes_saved_estimate: textureShare.bytesSaved },

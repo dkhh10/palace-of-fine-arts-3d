@@ -143,8 +143,12 @@ for ( const which of [ 'manifest.json', 'manifest_mobile.json' ] ) {
 		if ( full.tier < lt ) inverted ++;
 		else if ( full.tier === lt ) useless ++;
 	}
-	check( t.upgradeOf.size > 0 && t.lowresFor.size === t.upgradeOf.size,
-		`${which}: every stand-in is paired both ways (${t.upgradeOf.size} pair(s))` );
+	// Desktop sharpens in tier 1, so it has pairs; the mobile set IS the halved encode and its
+	// lowres table names no full-resolution successor at all, which is correct — what must hold on
+	// both is that the two directions agree.
+	check( t.lowresFor.size === t.upgradeOf.size,
+		`${which}: the stand-in pairing agrees in both directions (${t.upgradeOf.size} pair(s))` );
+	if ( ! /mobile/.test( which ) ) check( t.upgradeOf.size > 0, `${which}: the desktop set has stand-ins to sharpen` );
 	if ( useless || inverted ) console.log( `NOTE  ${which}: ${useless} stand-in(s) share a tier with their full file and `
 		+ `${inverted} arrive AFTER it — the viewer takes the full file in both cases and never fetches them` );
 	const ii = m.gate3 && m.gate3.instanceIrradiance;
