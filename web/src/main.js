@@ -1855,7 +1855,13 @@ function resize() {
 		renderer.setPixelRatio( r );
 		if ( composer ) composer.setPixelRatio( r );          // EffectComposer caches it; setSize alone would not
 	}
-	renderer.setSize( w, h, false );
+	// updateStyle TRUE.  With a pixel ratio below 1 (the mobile cap) `false` left the canvas with no
+	// CSS size, so it displayed at its INTRINSIC size — the drawing buffer — and the frame occupied
+	// only the top-left 832x1801 of a 1170x2532 page with black around it.  three sets
+	// style.width/height to the CSS size and the buffer to size x ratio, which is the whole point of
+	// the cap: full viewport, fewer pixels.  At ratio 1 (desktop) the style it writes equals the
+	// intrinsic size, so nothing changes there.
+	renderer.setSize( w, h, true );
 	camera.aspect = w / h;
 	camera.updateProjectionMatrix();
 	if ( composer ) composer.setSize( w, h );
@@ -2317,7 +2323,12 @@ window.__pfaPick = ( x, y ) => {
 window.__pfaPixel = ( x, y ) => {
 	const gl = renderer.getContext();
 	const px = new Uint8Array( 4 );
-	gl.readPixels( x, renderer.domElement.height - 1 - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px );
+	// x, y are CSS pixels (what __pfaPick and the probes measure in); readPixels wants DRAWING-BUFFER
+	// pixels, and the two differ by the pixel ratio whenever the mobile cap is in force.
+	const r = renderer.getPixelRatio();
+	const bx = Math.min( Math.max( Math.round( x * r ), 0 ), renderer.domElement.width - 1 );
+	const by = Math.min( Math.max( Math.round( y * r ), 0 ), renderer.domElement.height - 1 );
+	gl.readPixels( bx, renderer.domElement.height - 1 - by, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px );
 	return Array.from( px );
 };
 
