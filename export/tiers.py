@@ -78,13 +78,65 @@ def pack(gltf, glb, cls, log, simplify=None):
     return time.time() - t0
 
 
+def _glb_chunks(b):
+    assert b[:4] == b"glTF", "not a glb"
+    out, off = [], 12
+    while off < len(b):
+        ln = int.from_bytes(b[off:off + 4], "little")
+        ty = b[off + 4:off + 8]
+        out.append((ty, b[off + 8:off + 8 + ln]))
+        off += 8 + ln
+    return out
+
+
 def glb_image_uris(path):
     """The external texture URIs a packed group refers to (`-tr`), read back OUT of the glb."""
-    b = Path(path).read_bytes()
-    assert b[:4] == b"glTF", f"{path} is not a glb"
-    ln = int.from_bytes(b[12:16], "little")
-    doc = json.loads(b[20:20 + ln])
+    doc = json.loads(_glb_chunks(Path(path).read_bytes())[0][1])
     return [im["uri"] for im in doc.get("images", []) if im.get("uri")]
+
+
+def rewrite_glb_image_uris(path, sources, pub_dir):
+    """Point a packed group's external texture URIs at the PUBLISHED layout.
+
+    gltfpack rewrites a `-tr` URI relative to the output file, so a group built in a worktree comes out
+    pointing at `../../../../../../../export/out/gate1/tex_ktx2/x.ktx2` - correct on this disk, wrong on
+    the web. The map is `{basename: absolute source}` from the splitter, and the URI written back is that
+    source's path relative to the PUBLISHED group directory (MAIN out/gate5/groups). Matching on the
+    basename, not on position: gltfpack may drop or reorder images.
+    """
+    b = Path(path).read_bytes()
+    chunks = _glb_chunks(b)
+    doc = json.loads(chunks[0][1])
+    changed = []
+    for im in doc.get("images", []):
+        u = im.get("uri")
+        if not u:
+            continue
+        src = sources.get(os.path.basename(u))
+        if not src:
+            raise RuntimeError(f"{path}: no source recorded for image uri {u}")
+        # a file this worktree produced (tex_lo) is published under gate5; anything else under MAIN
+        srcp = Path(src)
+        if srcp.is_relative_to(G.OUT):
+            pub = G.PUB_BASE / srcp.relative_to(G.OUT)
+        else:
+            pub = srcp
+        new = os.path.relpath(pub, pub_dir)
+        if new != u:
+            changed.append((u, new))
+        im["uri"] = new
+    if not changed:
+        return 0
+    js = json.dumps(doc, separators=(",", ":")).encode()
+    js += b" " * (-len(js) % 4)
+    out = bytearray(b"glTF") + (2).to_bytes(4, "little") + b"\0\0\0\0"
+    out += len(js).to_bytes(4, "little") + chunks[0][0] + js
+    for ty, data in chunks[1:]:
+        pad = b"\0" * (-len(data) % 4)
+        out += (len(data) + len(pad)).to_bytes(4, "little") + ty + data + pad
+    out[8:12] = len(out).to_bytes(4, "little")
+    Path(path).write_bytes(bytes(out))
+    return len(changed)
 
 
 # ------------------------------------------------------------------ which node belongs to which group
@@ -123,6 +175,7 @@ def make_group(cls, gid, names, out, man, cap, log, lowres_dir=None, drop_normal
     glb = gdir / f"{gid}.glb"
     wall = pack(gltf, glb, cls, log, simplify=simplify)
     gltf.unlink(missing_ok=True)          # regenerable, and never published
+    rewrite_glb_image_uris(glb, rep["image_sources"], G.PUB_BASE / "groups")
     size = glb.stat().st_size
     hero = sum((vis["assets"].get(n) or {}).get("hero", 0.0) for n in names) if vis else 0.0
     st = {}
@@ -146,7 +199,8 @@ def make_group(cls, gid, names, out, man, cap, log, lowres_dir=None, drop_normal
     return rec
 
 
-def build_groups(cls, vis, order, out, man, cap, log, prefix=None, lowres_dir=None, simplify=None):
+def build_groups(cls, vis, order, out, man, cap, log, prefix=None, lowres_dir=None, simplify=None,
+                 hero_tier=1):
     """One group per TIER per class, re-cut only if a group does not fit under `cap`.
 
     With `-tr` a group is geometry alone, so the cap is not what shapes the cut any more: tier 1 is
@@ -155,9 +209,9 @@ def build_groups(cls, vis, order, out, man, cap, log, prefix=None, lowres_dir=No
     nodes, doc = class_nodes(cls)
     by_mesh, ordered, score = group_by_mesh(nodes, vis, order)
     prefix = prefix or cls
-    buckets = {1: [], 2: []}
+    buckets = {hero_tier: [], 2: []}
     for mesh in ordered:
-        buckets[1 if -score[mesh][0] > 0 else 2].append(mesh)
+        buckets[hero_tier if -score[mesh][0] > 0 else 2].append(mesh)
     recs = []
     for tier, meshes in sorted(buckets.items()):
         if not meshes:
@@ -277,8 +331,8 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         """The half-resolution ETC1S copy of a texture, when one exists."""
         f = lowres / f"{pub.key}.ktx2" if pub.key else None
         if mobile and f and f.exists():
-            return os.path.relpath(f, str(base)), lr_px.get(pub.key), True
-        return os.path.relpath(pub.path, str(base)), None, False
+            return G.pub_rel(f, base), lr_px.get(pub.key), True
+        return G.pub_rel(pub.path, base), None, False
 
     swapped = 0
     for p_, pub in sorted(files.items()):
@@ -320,13 +374,13 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         for cls in ("arch", "ground"):
             g = man["glb"]["per_class"][cls]
             pth = os.path.normpath(os.path.join(str(G.GATE3), g["path"]))
-            put(os.path.relpath(pth, str(base)), 0, "glb",
+            put(G.pub_rel(pth, base), 0, "glb",
                 f"{cls}: the building itself, already under the cap", key=cls)
         for k in sorted(set(hero_tex) | set(imp_keys)):
             f = lowres / f"{k}.ktx2"
             if not f.exists():
                 continue
-            rel = os.path.relpath(f, str(base))
+            rel = G.pub_rel(f, base)
             put(rel, 0, "gate2_lo" if k in hero_tex else "impostor_lo",
                 "half-resolution ETC1S placeholder, replaced in tier 1", key=k, px=lr_px.get(k))
             lowres_files[k] = dict(path=rel, bytes=f.stat().st_size, px=lr_px.get(k))
@@ -352,6 +406,8 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             continue
         seen.add(e["path"])
         ap_ = (base / e["path"]).resolve()
+        if not ap_.exists():
+            ap_ = (G.PUB_BASE / e["path"]).resolve()
         e["bytes"] = ap_.stat().st_size if ap_.exists() else None
         uniq.append(e)
 
@@ -510,10 +566,8 @@ def build_all_groups(man, vis, order, out, cap, lowres, log, mobile):
         # tier-0 group: the tier-1 groups ARE the mobile geometry and tier 0 takes the hero ones.
         for cls in ("arch", "ground", "orn", "env"):
             groups += build_groups(cls, vis, order, out, man, cap, log, prefix=f"m_{cls}",
-                                   lowres_dir=lowres, simplify=MOBILE_SIMPLIFY.get(cls))
-        for g in groups:
-            if g["hero_fraction"] > 0:
-                g["tier"] = 0
+                                   lowres_dir=lowres, simplify=MOBILE_SIMPLIFY.get(cls),
+                                   hero_tier=0)
         return groups
     for cls, names, prefix in (("orn", hero_orn, "orn_t0"), ("env", hero_env, "env_t0")):
         groups.append(make_group(

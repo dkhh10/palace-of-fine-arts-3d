@@ -29,6 +29,11 @@ GATE3 = MAIN / "export/out/gate3"
 GATE1 = MAIN / "export/out/gate1"
 MANIFEST_V4 = GATE3 / "manifest.json"
 OUT = Path(os.environ.get("PFA_GATE5_OUT", ROOT / "export/out/gate5"))
+# Where the published tree IS, whatever worktree produced it: every path in the manifest is relative to
+# MAIN's out/gate5, because that is what export/sync_main.sh copies to and what web/public/assets points
+# at.  Computing them against a worktree's own out/gate5 gives `../../../../../../export/out/gate3/...`,
+# which resolves on this disk and nowhere on the web.
+PUB_BASE = MAIN / "export/out/gate5"
 HERO = "CAM_qa_01_lagoon_hero"
 CAP_BYTES = 25 * 1024 * 1024          # Cloudflare Pages' per-file ceiling
 TIER0_BUDGET = 50_000_000             # "initial payload <= 50 MB" (CLAUDE.md 6b), decimal MB
@@ -37,6 +42,10 @@ TIER0_BUDGET = 50_000_000             # "initial payload <= 50 MB" (CLAUDE.md 6b
 # `tex/`), so the low-res tier-0 variants are encoded from the bake worktree's copies.  Overridable.
 BAKE_ROOT = Path(os.environ.get(
     "PFA_BAKE_ROOT", MAIN / ".claude/worktrees/phase6-bake/export/out"))
+# The 6c foliage card PNGs (export/foliage_tex.py) were written on the phase6-export branch and are not
+# in MAIN either - the sync ships `foliage/tex_ktx2`, not `foliage/tex`.
+EXPORT_ROOT = Path(os.environ.get(
+    "PFA_EXPORT_ROOT", MAIN / ".claude/worktrees/phase6-export/export/out"))
 
 
 def manifest(path=None):
@@ -107,6 +116,17 @@ class Pub:
 
     def rel_to(self, base):
         return os.path.relpath(self.path, str(base))
+
+
+def pub_rel(path, local_out):
+    """The path a manifest publishes, in the PUBLISHED layout (MAIN out/gate5), not on this disk.
+    A file this worktree produced under `local_out` keeps its name relative to gate5; anything else is
+    relative to MAIN's out/gate5, where every gate sits side by side."""
+    path = os.path.normpath(str(path))
+    local_out = os.path.normpath(str(local_out))
+    if path.startswith(local_out + os.sep):
+        return os.path.relpath(path, local_out)
+    return os.path.relpath(path, str(PUB_BASE))
 
 
 def resolve_files(man, base=None):
@@ -195,6 +215,13 @@ def png_source(key, man):
         return None
     if key in man["textures"]["gate3"]["files"]:
         for root in (BAKE_ROOT / "gate3/tex", BAKE_ROOT / "gate3/impostor", GATE3 / "tex"):
+            p = root / f"{key}.png"
+            if p.exists():
+                return p
+        return None
+    if key.startswith("foliage_"):
+        for root in (GATE3 / "foliage/tex", EXPORT_ROOT / "gate3/foliage/tex",
+                     BAKE_ROOT / "gate3/foliage/tex"):
             p = root / f"{key}.png"
             if p.exists():
                 return p

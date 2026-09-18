@@ -134,21 +134,25 @@ def split(cls, out_path, node_names, manifest=None, drop_gate1_normals=False,
     for b in doc.get("buffers", []):
         if b.get("uri"):
             b["uri"] = os.path.join(rel, os.path.basename(b["uri"]))
+    image_sources = {}
     for im in doc.get("images", []):
         u = im.get("uri")
         if not u:
             continue
         stem, ext = os.path.splitext(os.path.basename(u))
+        src = None
         if image_dir:
             cand = Path(image_dir) / f"{stem}{image_suffix}{ext}"
             if cand.exists():
-                im["uri"] = os.path.relpath(cand.resolve(), out_path.parent.resolve())
-                continue
-        im["uri"] = os.path.join(rel, os.path.dirname(u), os.path.basename(u))
+                src = cand.resolve()
+        if src is None:
+            src = (Path(gate1) / u).resolve()
+        image_sources[os.path.basename(str(src))] = str(src)
+        im["uri"] = os.path.relpath(src, out_path.parent.resolve())
     out_path.write_text(json.dumps(doc))
     return dict(gltf=str(out_path), nodes=len(keep), requested=len(want), missing=missing,
                 meshes=len(meshes), materials=len(mats), textures=len(texs), images=len(imgs),
-                image_uris=[im.get("uri") for im in imgs],
+                image_uris=[im.get("uri") for im in imgs], image_sources=image_sources,
                 dropped_gate1_normals=sorted(set(dropped)))
 
 
