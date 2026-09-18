@@ -712,3 +712,16 @@ look against 1 788.0 MB for the round-15 look on the same build (+143 MB = the w
 with the memory.
 Decision: 6c is closed. Phase 6b starts on the user's three answers (iPhone model; host — the lead recommends Cloudflare Pages + R2 per
 docs/briefs/phase6b_hosting.md; whether the 50 MB tier-0 first look may be lower-resolution). The Gate 5 briefs are written only after those answers.
+
+## 2026-09-18 · 6b: the user's three decisions, and the hosting refinement (free tier)
+User's answers to docs/briefs/phase6b_plan.md: (1) iPhone **16 Pro / 16 Pro Max** (A18 Pro, 8 GB; ASTC via KTX2 transcode; mobile tier target 30 fps,
+< 700 MB resident); (2) host: "I have a free Vercel plan; if you have something free, go ahead" — Vercel Hobby cannot serve the payload (Blob stops at
+10 GB/month, ~12 downloads), so the host is **Cloudflare, free tier**; (3) the 50 MB tier-0 first look **may** show the building at placeholder resolution
+with a progress readout; tier 1 sharpens it.
+Hosting refinement (lead): Cloudflare **Pages alone** (unmetered bandwidth, 20 000 files, 25 MiB per file, same origin, no CORS/COEP) carries everything
+once no file exceeds 25 MiB — the tier split cuts orn.glb (154 MB) into visibility-ordered groups anyway, and the mobile textures are half-size ETC1S.
+Any file that must stay over 25 MiB (a 4K UASTC atlas, if one survives the tiers) goes to R2 (free: 10 GB, free egress) behind a Pages Function binding at
+the same `/assets/...` path, so the viewer sees one origin either way. No custom domain: `<project>.pages.dev` is the unlisted staging URL. The user
+runs `npx wrangler login` once, in the session, when the deploy script is ready (the lead asks; no credential is stored in the repo).
+Gate 5 briefs: docs/briefs/phase6b_export.md (tiers, per-station visibility, mobile manifest, ETC1S; branch phase6b-export) and
+docs/briefs/phase6b_viewer.md (progressive loading, tier switch, deploy script, Pages Function fallback; branch phase6b-viewer). Both Opus high.
