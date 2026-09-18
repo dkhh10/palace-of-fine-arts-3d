@@ -141,3 +141,20 @@ the cold pass's +4 ms at stations 1/2 was machine drift. Resident 1 931.4 vs 1 7
    stand-in images (overwritten by the Gate 2 sets; not tier-upgradable) — export. 4. Workers static assets serve no byte ranges (200 to a Range request); the loaders fetch
    whole files — viewer carry for any future range loader. 5. The 28 + 31 trimmed placeholder maps (<= 0.019 % of the hero frame each) carry no map until tier 1 — export.
 6. Every 6c residual in the Phase 6c section stands. 7. Owed from the user: the Safari hero screenshot and the iPhone 16 Pro 30 s walk against the URL.
+
+## Verdict and close (QA 18 -> ONE FIX ROUND -> QA 18b: 6b DONE WITH RESIDUALS, 98ab252; decisions.md "6b DONE WITH RESIDUALS")
+| item | desktop | mobile (iPhone 16 Pro tier, `?tier=mobile`) |
+|---|---|---|
+| bytes before the first frame on the URL | 46 808 904 B (PASS <= 50 MB) | 46 738 628 B |
+| total stream | 581 MB / 622 requests / 74.5 s | 61.7 MB |
+| resident | 1 861 MB | 499.7 MB (target < 700) |
+| draws / tris (hero) | 335 / 5.25 M | 169 / 1.78 M |
+| scores 01-06 | 3.78 / 3.25 / 2.63 / 2.88 / 2.94 / 2.83 (carry) | 2.9 / 3.0 / 2.3 / 2.7 / 2.5 / 2.4 (first) |
+| page errors / 404s | 0 / 0 | 0 / 0 (favicon only) |
+Fix round: the seven mobile group glbs were unpublished (deploy plan from the desktop manifest only) -> publish set = union of both plans with verify_publish (1 051 paths);
+the mobile tier was fetching the desktop textures -> by-name redirect (resident 1 453 -> 500 MB); loading-bar denominators; the mobile canvas filled 51 % of the page ->
+full CSS size with the cap on the pixel ratio (found and fixed inside the closing round, gate5c).
+Residuals (owners): 1. mobile water reflects nothing — hero lagoon without the rotunda, station 6 bay near-black (viewer; reduced reflection set on the mobile Reflector).
+2. mobile portrait framing small and centred (viewer/station choice). 3. 302 by-reference mobile paths not named in files[] (export). 4. per-group duplicate
+materials/programs, -si 0.5 facets, three .001 cards probe-lit, arch/ground embedded stand-ins (export). 5. every 6c residual above. Owed from the user: Safari hero
+screenshot; iPhone 16 Pro 30 s walk on the URL. Redeploy = `PFA_MAIN_ROOT=<main> web/deploy.sh --project pfa-walkthrough` after `npx wrangler login`; captures = `web/tools/gate5.sh <url>`.

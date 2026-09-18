@@ -743,3 +743,17 @@ same-session A/B on one build (gate5 plan vs v4 plan, stations 2 / 3): 35.30 / 3
 a class shipped as two groups is parsed twice, so shared materials exist once per group and compile their own programs (141 / 143 programs vs 94 / 96, 254 vs 198
 geometries, 135 vs 112 materials, +5 / +4 draws); the texture cache is net lighter (resident 1 861 vs 1 906 MB). The export lever (one group per class, ~7 MB more
 geometry in tier 0) would push tier 0 over 50 MB on the wire, and the viewer lever (materials shared across groups) is large and risky; neither is taken in 6b.
+
+## 2026-09-18 · 6b DONE WITH RESIDUALS (QA 18b, 98ab252) — the project's web deliverable is live; stopping per the 6b rule
+Staging: https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev (Cloudflare Workers static assets, free tier, unlisted). Desktop: 46 808 904 B before the first frame on the URL (<= 50 MB), parity with round16c at
+all six stations (luma 1.000, MAE <= 0.001/255 vs the previous capture; 0 of 25 boxes > 3 % vs round16c), scores carry 3.78 / 3.25 / 2.63 / 2.88 / 2.94 / 2.83,
+resident 1 861 MB (-70 vs 6c), hero ~32 fps. Mobile (iPhone 16 Pro tier, scored on gate5c): whole scene at all six stations, 142-180 draws / 1.5-1.9 M tris, resident
+499.7 MB (< 700), first frame 46.7 MB, total 61.7 MB, 0 page errors; first mobile scores 2.9 / 3.0 / 2.3 / 2.7 / 2.5 / 2.4. One fix round was spent (mobile groups
+unpublished; canvas scaling fixed within the closing round). The rule "6b stops at deployment plus one clean QA round" is met; polish beyond is a new phase.
+Residuals, owners, first items of any follow-on: (1) VIEWER — the mobile water reflects nothing (reflectionSet kept 1 vs desktop 134): no rotunda in the hero lagoon,
+station 5's lower half flat, station 6's bay a near-black band; fix = a reduced reflection set (ARCH class only) on the mobile Reflector at 512, then re-measure mobile
+frame time. (2) VIEWER — mobile portrait framing: the horizontal sensor fit at 1170x2532 leaves the building small and centred; a portrait station/sensor-fit choice.
+(3) EXPORT — 302 by-reference mobile paths outside files[] (published via the desktop plan; verify_publish covers them, the plan does not name them). (4) EXPORT —
+the split's duplicate materials/programs per group (141 vs 94 programs) and the -si 0.5 mobile decimation facets; the three .001 cards on the probe; arch/ground
+embedded stand-ins. (5) Carried from 6c/6a unchanged (docs/delivery.md). Owed from the user, not blockers: the macOS Safari hero screenshot and the iPhone 16 Pro
+30 s walk on the URL (every capture is headless Chrome).
