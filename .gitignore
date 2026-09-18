@@ -67,3 +67,6 @@ renders/web/round13direct_*.png
 
 # Phase 6b: the development STUB tier manifest (web/tools/stub_tiers.mjs regenerates it)
 web/public/stub/
+
+# Phase 6b: the assembled Cloudflare Pages publish directory (web/deploy.sh rebuilds it)
+web/deploy_out/
