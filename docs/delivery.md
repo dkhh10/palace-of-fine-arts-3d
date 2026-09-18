@@ -134,7 +134,7 @@ the cold pass's +4 ms at stations 1/2 was machine drift. Resident 1 931.4 vs 1 7
 | time to first frame / all tiers | 8.1 s / 74.5 s on the lead's connection; 581 MB over 622 requests |
 | hero draws / tris after tier 2 | 335 / 5 245 128 (round16c 329 / 5 242 248) |
 | 1440p medians, right after the 30-min capture | 31.7 / 38.0 / 37.7 / 25.1 / 34.2 / 34.2 ms, resident 1 861 MB (A/B pass B 29.7 / 30.4 / 33.5 / 22.0 / 29.8 / 32.3) |
-| 1440p medians, cold pass | (appended below) |
+| 1440p medians, cold pass (machine idle 15 min) | 30.8 / 37.2 / 37.9 / 24.3 / 33.2 / 34.3 ms, resident 1 861 MB — the tiered build costs about +1 / +7 / +4 / +2 / +3 / +2 ms over the A/B baseline; stations 2-3 under diagnosis |
 ## Known issues (owners)
 1. The tier-0 first look (approved by the user): low-res concrete, saturated columns, coarse water reflection, no trees for the first seconds; trees and sharp maps arrive with
    tiers 1-2. 2. Three `.001` shrub cards are drawn inside a gltfpack-merged node and stay probe-lit (no irradiance key) — export. 3. arch.glb / ground.glb embed 15 / 4 Gate 1
