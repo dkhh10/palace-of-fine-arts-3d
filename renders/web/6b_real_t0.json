@@ -1,12 +1,12 @@
 {
  "out": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6b-viewer/renders/web/6b_real_t0.png",
- "url": "http://127.0.0.1:50103/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=0&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
+ "url": "http://127.0.0.1:50201/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=0&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
  "station": 1,
  "size": [
   1920,
   1080
  ],
- "wall_s": 3.278,
+ "wall_s": 2.748,
  "info": {
   "station": {
    "index": 1,
@@ -57,16 +57,16 @@
    1080
   ],
   "render": {
-   "frame": 436,
+   "frame": 324,
    "calls": 202,
    "triangles": 2410733,
    "points": 0,
    "lines": 0,
-   "programs": 32
+   "programs": 28
   },
   "memory": {
    "geometries": 94,
-   "textures": 223
+   "textures": 208
   },
   "gl": {
    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
@@ -494,57 +494,177 @@
   "lightingMode": "baked",
   "schema": "pfa-phase6/5",
   "bytes": {
-   "loaded": 57936291,
-   "planned": 57936291,
+   "loaded": 41721239,
+   "planned": 41721239,
    "unknownSize": [],
    "offPlan": [
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_concrete_wall_007_albedo.ktx2",
-     "bytes": 4089587
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/uv1_probe_grey.ktx2",
+     "bytes": 499
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_concrete_wall_007_roughness.ktx2",
-     "bytes": 916668
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_attic_figure_v1_ao.ktx2",
+     "bytes": 145386
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_concrete_wall_007_normal.ktx2",
-     "bytes": 3526879
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_attic_panel_v1_ao.ktx2",
+     "bytes": 144499
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_concrete_wall_008_albedo.ktx2",
-     "bytes": 2829232
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_attic_panel_v2_ao.ktx2",
+     "bytes": 143638
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_concrete_wall_008_roughness.ktx2",
-     "bytes": 404333
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_colonnade_v1_ao.ktx2",
+     "bytes": 160352
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_concrete_wall_008_normal.ktx2",
-     "bytes": 2204758
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_colonnade_v2_ao.ktx2",
+     "bytes": 161587
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_rock_boulder_dry_albedo.ktx2",
-     "bytes": 1176349
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_colonnade_v3_ao.ktx2",
+     "bytes": 160224
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_rock_boulder_dry_roughness.ktx2",
-     "bytes": 997991
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_inner_v1_ao.ktx2",
+     "bytes": 162233
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_rock_boulder_dry_normal.ktx2",
-     "bytes": 1070828
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_rotunda_v2_ao.ktx2",
+     "bytes": 167508
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_gravelly_sand_albedo.ktx2",
-     "bytes": 1195972
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_rotunda_v3_ao.ktx2",
+     "bytes": 168501
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_gravelly_sand_roughness.ktx2",
-     "bytes": 787309
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_capital_rotunda_v1_ao.ktx2",
+     "bytes": 168310
     },
     {
-     "url": "http://127.0.0.1:50103/assets/gate2/tex_ktx2/detail_gravelly_sand_normal.ktx2",
-     "bytes": 1067574
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_drum_band_v1_ao.ktx2",
+     "bytes": 120276
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_corner_scroll_v2_ao.ktx2",
+     "bytes": 127520
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_frieze_rinceau_return_v3_ao.ktx2",
+     "bytes": 66023
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_frieze_rinceau_v1_ao.ktx2",
+     "bytes": 76329
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_frieze_rinceau_v3_ao.ktx2",
+     "bytes": 75611
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_frieze_rinceau_return_v1_ao.ktx2",
+     "bytes": 75561
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_winged_figure_v1_ao.ktx2",
+     "bytes": 105338
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_keystone_v1_ao.ktx2",
+     "bytes": 47496
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_keystone_v2_ao.ktx2",
+     "bytes": 46956
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_keystone_v3_ao.ktx2",
+     "bytes": 47336
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_maiden_v1_ao.ktx2",
+     "bytes": 107595
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_maiden_v2_ao.ktx2",
+     "bytes": 111363
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_maiden_v3_ao.ktx2",
+     "bytes": 103567
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_rosette_ceiling_v1_ao.ktx2",
+     "bytes": 45707
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_rosette_ceiling_v3_ao.ktx2",
+     "bytes": 44302
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_urn_niche_v1_ao.ktx2",
+     "bytes": 110439
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/orn_urn_v1_ao.ktx2",
+     "bytes": 128204
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/reeds.ktx2",
+     "bytes": 77724
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/reeds_nrm.ktx2",
+     "bytes": 27133
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/chinese_cedar_bark_rough_2k.ktx2",
+     "bytes": 18935
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/leaves_shrub.ktx2",
+     "bytes": 78640
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/chinese_cedar_bark_diff_2k.ktx2",
+     "bytes": 165036
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/leaves_shrub_nrm.ktx2",
+     "bytes": 47133
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/chinese_cedar_bark_disp_2k.ktx2",
+     "bytes": 133460
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/needles_cypress.ktx2",
+     "bytes": 66325
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/needles_cypress_nrm.ktx2",
+     "bytes": 29753
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/bark_bluegum_diff_2k.ktx2",
+     "bytes": 176742
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/bark_bluegum_rough_2k.ktx2",
+     "bytes": 63165
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/bark_bluegum_disp_2k.ktx2",
+     "bytes": 68618
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/leaves_eucalyptus.ktx2",
+     "bytes": 48276
+    },
+    {
+     "url": "http://127.0.0.1:50201/assets/gate5/groups/../tex_lo/leaves_eucalyptus_nrm.ktx2",
+     "bytes": 29128
     }
    ],
    "files": [
@@ -1475,12 +1595,12 @@
    ]
   },
   "load_s": {
-   "plan_s": 0.05159999990463257,
-   "sky_s": 0.5535,
-   "lut_s": 0.05839999997615814,
-   "glb_s": 1.168,
-   "tex_s": 0.8058000000715255,
-   "total_s": 1.883899999976158
+   "plan_s": 0.06539999997615814,
+   "sky_s": 0.5766000000238418,
+   "lut_s": 0.06039999997615814,
+   "glb_s": 0.7085,
+   "tex_s": 0.3147999999523163,
+   "total_s": 1.4616999999284743
   },
   "device": {
    "tier": "desktop",
@@ -1523,8 +1643,8 @@
    "per_tier": [
     {
      "tier": 0,
-     "wall_s": 1.883899999976158,
-     "bytes": 57936291,
+     "wall_s": 1.4616999999284743,
+     "bytes": 41721239,
      "planned": 37668811,
      "glbs": 4
     }
@@ -1537,6 +1657,13 @@
    "oversize": [],
    "deferred_lightmaps": 60,
    "upgrades": [],
+   "lowres_remaining": [],
+   "lowres_etc_textures": null,
+   "texture_sharing": {
+    "urls": 188,
+    "shared_users": 1,
+    "bytes_saved_estimate": 24
+   },
    "stub": null,
    "error": null
   },
@@ -1544,7 +1671,7 @@
    {
     "name": "orn_t0.glb",
     "cls": "orn",
-    "url": "http://127.0.0.1:50103/assets/gate5/groups/orn_t0.glb",
+    "url": "http://127.0.0.1:50201/assets/gate5/groups/orn_t0.glb",
     "meshes": 27,
     "instancedMeshes": 18,
     "instances": 115,
@@ -1552,12 +1679,12 @@
     "materials": 27,
     "hiddenBoards": 0,
     "bytes": 1521460,
-    "wall_s": 0.12219999992847443
+    "wall_s": 0.1285
    },
    {
     "name": "arch.glb",
     "cls": "arch",
-    "url": "http://127.0.0.1:50103/assets/gate1/arch.glb",
+    "url": "http://127.0.0.1:50201/assets/gate1/arch.glb",
     "meshes": 29,
     "instancedMeshes": 17,
     "instances": 552,
@@ -1565,12 +1692,12 @@
     "materials": 17,
     "hiddenBoards": 0,
     "bytes": 4613040,
-    "wall_s": 0.04339999997615814
+    "wall_s": 0.050299999952316286
    },
    {
     "name": "ground.glb",
     "cls": "ground",
-    "url": "http://127.0.0.1:50103/assets/gate1/ground.glb",
+    "url": "http://127.0.0.1:50201/assets/gate1/ground.glb",
     "meshes": 4,
     "instancedMeshes": 0,
     "instances": 0,
@@ -1578,12 +1705,12 @@
     "materials": 4,
     "hiddenBoards": 0,
     "bytes": 1959104,
-    "wall_s": 0.020300000071525572
+    "wall_s": 0.020899999976158143
    },
    {
     "name": "env_t0.glb",
     "cls": "env",
-    "url": "http://127.0.0.1:50103/assets/gate5/groups/env_t0.glb",
+    "url": "http://127.0.0.1:50201/assets/gate5/groups/env_t0.glb",
     "meshes": 33,
     "instancedMeshes": 22,
     "instances": 134,
@@ -1591,7 +1718,7 @@
     "materials": 13,
     "hiddenBoards": 0,
     "bytes": 2058992,
-    "wall_s": 0.027700000047683717
+    "wall_s": 0.033
    }
   ],
   "uv_dequant": [
@@ -1740,13 +1867,15 @@
   "resident": {
    "geometry_bytes": 37076760,
    "instance_matrix_bytes": 51264,
-   "texture_bytes": 205698824,
+   "texture_bytes": 157114296,
    "geometries": 94,
-   "textures": 210,
+   "textures": 195,
+   "texture_sources": 189,
+   "textures_sharing_a_source": 6,
    "texture_formats": {
-    "RGB_ETC2_Format": 187,
-    "RGBA_ASTC_4x4_Format": 16,
-    "RGBA_ETC2_EAC_Format": 6,
+    "RGB_ETC2_Format": 183,
+    "RGBA_ASTC_4x4_Format": 1,
+    "RGBA_ETC2_EAC_Format": 4,
     "RGBAFormat (uncompressed)": 1
    },
    "render_target_bytes": 314785792,
@@ -1797,8 +1926,8 @@
      "bytes": 6291456
     }
    ],
-   "total_bytes": 557612640,
-   "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   "total_bytes": 509028112,
+   "note": "viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
   },
   "billboards": null,
   "chunking": {
@@ -2077,11 +2206,11 @@
      ]
     },
     {
-     "rank": 2,
-     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
-     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
-     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
-     "distance_m": 79.2,
+     "rank": 3,
+     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+     "distance_m": 79.3,
      "maps": [
       "map",
       "roughnessMap",
@@ -2089,11 +2218,11 @@
      ]
     },
     {
-     "rank": 3,
-     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
-     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
-     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
-     "distance_m": 79.3,
+     "rank": 2,
+     "material": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+     "distance_m": 79.2,
      "maps": [
       "map",
       "roughnessMap",
@@ -2197,18 +2326,6 @@
      ]
     },
     {
-     "rank": 13,
-     "material": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
-     "set": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
-     "matched_on": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
-     "distance_m": 89.1,
-     "maps": [
-      "map",
-      "roughnessMap",
-      "normalMap"
-     ]
-    },
-    {
      "rank": 12,
      "material": "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
      "set": "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
@@ -2221,10 +2338,10 @@
      ]
     },
     {
-     "rank": 14,
-     "material": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
-     "set": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
-     "matched_on": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "rank": 13,
+     "material": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
      "distance_m": 89.1,
      "maps": [
       "map",
@@ -2233,11 +2350,11 @@
      ]
     },
     {
-     "rank": 16,
-     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
-     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
-     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
-     "distance_m": 93.3,
+     "rank": 14,
+     "material": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+     "distance_m": 89.1,
      "maps": [
       "map",
       "roughnessMap",
@@ -2262,6 +2379,18 @@
      "set": "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
      "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
      "distance_m": 94.8,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 16,
+     "material": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+     "set": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+     "matched_on": "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+     "distance_m": 93.3,
      "maps": [
       "map",
       "roughnessMap",
@@ -2397,11 +2526,11 @@
      "maps": []
     },
     {
-     "rank": 4,
-     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
-     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
-     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
-     "distance_m": 64.9,
+     "rank": 1,
+     "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+     "distance_m": 28.8,
      "maps": [
       "map",
       "roughnessMap",
@@ -2409,11 +2538,11 @@
      ]
     },
     {
-     "rank": 1,
-     "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
-     "set": "MAT_EXP_ARCH_site__MAT_concrete_podium",
-     "matched_on": "MAT_EXP_ARCH_site__MAT_concrete_podium",
-     "distance_m": 28.8,
+     "rank": 4,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+     "distance_m": 64.9,
      "maps": [
       "map",
       "roughnessMap",
@@ -2433,11 +2562,11 @@
      ]
     },
     {
-     "rank": 5,
-     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
-     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
-     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
-     "distance_m": 68.5,
+     "rank": 6,
+     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+     "distance_m": 69.6,
      "maps": [
       "map",
       "roughnessMap",
@@ -2445,11 +2574,11 @@
      ]
     },
     {
-     "rank": 6,
-     "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
-     "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
-     "matched_on": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
-     "distance_m": 69.6,
+     "rank": 5,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+     "distance_m": 68.5,
      "maps": [
       "map",
       "roughnessMap",
@@ -2505,18 +2634,6 @@
      ]
     },
     {
-     "rank": 8,
-     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
-     "set": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
-     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
-     "distance_m": 74.2,
-     "maps": [
-      "map",
-      "roughnessMap",
-      "normalMap"
-     ]
-    },
-    {
      "rank": 11,
      "material": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
      "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
@@ -2534,6 +2651,18 @@
      "set": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
      "matched_on": "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
      "distance_m": 80.1,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 8,
+     "material": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "set": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "matched_on": "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+     "distance_m": 74.2,
      "maps": [
       "map",
       "roughnessMap",
@@ -2613,18 +2742,6 @@
      ]
     },
     {
-     "rank": 21,
-     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-     "distance_m": 116.6,
-     "maps": [
-      "map",
-      "roughnessMap",
-      "normalMap"
-     ]
-    },
-    {
      "rank": 20,
      "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
      "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
@@ -2673,18 +2790,6 @@
      ]
     },
     {
-     "rank": 25,
-     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-     "distance_m": 122,
-     "maps": [
-      "map",
-      "roughnessMap",
-      "normalMap"
-     ]
-    },
-    {
      "rank": 26,
      "material": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
      "set": "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
@@ -2697,11 +2802,11 @@
      ]
     },
     {
-     "rank": 2,
-     "material": "MAT_EXP_ENV__ENV_lagoon_bed",
-     "set": "MAT_EXP_ENV__ENV_lagoon_bed",
-     "matched_on": "MAT_EXP_ENV__ENV_lagoon_bed",
-     "distance_m": 0,
+     "rank": 21,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "distance_m": 116.6,
      "maps": [
       "map",
       "roughnessMap",
@@ -2709,10 +2814,22 @@
      ]
     },
     {
-     "rank": 1,
-     "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
-     "set": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
-     "matched_on": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "rank": 25,
+     "material": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "set": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "matched_on": "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+     "distance_m": 122,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
+     "rank": 2,
+     "material": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "set": "MAT_EXP_ENV__ENV_lagoon_bed",
+     "matched_on": "MAT_EXP_ENV__ENV_lagoon_bed",
      "distance_m": 0,
      "maps": [
       "map",
@@ -2733,6 +2850,18 @@
      ]
     },
     {
+     "rank": 1,
+     "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "set": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "matched_on": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+     "distance_m": 0,
+     "maps": [
+      "map",
+      "roughnessMap",
+      "normalMap"
+     ]
+    },
+    {
      "rank": 4,
      "material": "MAT_EXP_ENV__ENV_terrain_ground",
      "set": "MAT_EXP_ENV__ENV_terrain_ground",
@@ -2745,10 +2874,10 @@
      ]
     },
     {
-     "rank": 2,
-     "material": "MAT_EXP_ENVBD__MAT_backdrop_roof",
-     "set": "MAT_EXP_ENVBD__MAT_backdrop_roof",
-     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+     "rank": 3,
+     "material": "MAT_EXP_ENVBD__MAT_bird_white",
+     "set": "MAT_EXP_ENVBD__MAT_bird_white",
+     "matched_on": "MAT_EXP_ENVBD__MAT_bird_white",
      "distance_m": 0,
      "maps": [
       "map",
@@ -2756,10 +2885,10 @@
      ]
     },
     {
-     "rank": 3,
-     "material": "MAT_EXP_ENVBD__MAT_bird_white",
-     "set": "MAT_EXP_ENVBD__MAT_bird_white",
-     "matched_on": "MAT_EXP_ENVBD__MAT_bird_white",
+     "rank": 2,
+     "material": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+     "set": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+     "matched_on": "MAT_EXP_ENVBD__MAT_backdrop_roof",
      "distance_m": 0,
      "maps": [
       "map",
@@ -2839,45 +2968,12 @@
     ]
    }
   },
-  "detail": {
-   "projection": "objxy",
-   "strength": 1,
-   "normal_scale": 1,
-   "sets_loaded": 0,
-   "materials": 0,
-   "textures": 0,
-   "bytes": 0,
-   "means": {},
-   "by_set": {},
-   "unmatched_rules": [
-    "MAT_EXP_ENVBD__MAT_lawn",
-    "MAT_EXP_ENV__ENV_ground_colonnade_walk",
-    "MAT_EXP_ENV__ENV_terrain_ground",
-    "MAT_EXP_ENV__riprap",
-    "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
-    "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
-    "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
-    "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
-    "MAT_EXP_ARCH_rotunda__MAT_column_rose",
-    "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
-    "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
-    "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
-    "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
-    "MAT_EXP_ARCH_rotunda__MAT_drum_band",
-    "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
-    "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
-    "MAT_EXP_ARCH_site__MAT_concrete_podium",
-    "MAT_EXP_ARCH_site__MAT_paving"
-   ],
-   "applied": [],
-   "failed": [],
-   "empty": [],
-   "fallbacks": [],
-   "stats": {}
-  },
+  "detail": null,
   "notes": [
    "device tier: desktop (probe) — no mobile evidence: desktop; gl ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version), max texture 16384, astc true etc2 true s3tc true bptc true, dpr 1, screen 800x600, touch 0",
    "manifest tiers: 178 low-resolution stand-in(s) in tex_lo — half-resolution ETC1S: measured smaller AND lower RMS than quarter-res UASTC on 5 of 6 sampled maps (export/out/gate5/lowres.json `probe`)",
+   "manifest tiers: 42 low-resolution file(s) paired to their full-resolution twin BY NAME (no key in the plan — these are the maps the glbs reference themselves)",
+   "manifest tiers: 220 low-resolution file(s) have a full-resolution successor in a later tier",
    "manifest tiers: 3 tier(s), tier 0 43.3 MB in 228 file(s) (declared), tier 1 488.3 MB in 286 file(s) (declared), tier 2 69.4 MB in 50 file(s) (declared)",
    "glb arch.glb (arch) taken from the load plan: it is not in glb.groups",
    "glb ground.glb (ground) taken from the load plan: it is not in glb.groups",
@@ -2891,10 +2987,11 @@
    "materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 307.8 MB declared, mode \"pbr\"",
    "manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159",
    "manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas",
-   "manifest pfa-phase6/5 at http://127.0.0.1:50103/assets/gate5/manifest.json",
+   "manifest pfa-phase6/5 at http://127.0.0.1:50201/assets/gate5/manifest.json",
    "no uv2_relay_status.json (404): the manifest's own uv2_in_glb flags stand",
    "lighting mode: baked (?lighting override) — lightmaps carry the diffuse, sun and env are specular-only",
    "materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares \"pbr\"",
+   "detail tiling sets are tier 1 (15 map(s)): the first frame shows the baked maps without the grain layer, and it is applied when that tier lands",
    "foliage + impostors run at tier 2 (last env group tier 2, impostor atlases tier 1)",
    "load tiers: 3 declared, streaming up to 0 (?tiers=0); glbs tier 0: orn+arch+ground+env, tier 1: orn+env, tier 2: orn+env; declared bytes 0=43.3 MB, 1=488.3 MB, 2=69.4 MB",
    "load plan: 154 files, 37.7 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:orn 1.5, glb:arch 4.6, glb:ground 2.0, glb:env 2.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1)",
@@ -2914,9 +3011,9 @@
    "display: tone mapping OFF, exposure x0.14033, LUT on",
    "lightMapIntensity = lightmap_scale 3.14159",
    "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 54 uv set(s) on 27 geometr(ies), 27 material transform(s) neutralised, scale 11.320..15.936, +1.61 MB",
-   "glb orn_t0.glb (orn) 1.5 MB in 0.12 s: 27 meshes, 18 instanced (115 instances), 355333 placed tris, 27 materials",
+   "glb orn_t0.glb (orn) 1.5 MB in 0.13 s: 27 meshes, 18 instanced (115 instances), 355333 placed tris, 27 materials",
    "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 58 uv set(s) on 29 geometr(ies), 17 material transform(s) neutralised, scale 13.139..15.986, +7.53 MB",
-   "glb arch.glb (arch) 4.6 MB in 0.04 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
+   "glb arch.glb (arch) 4.6 MB in 0.05 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
    "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB",
    "glb ground.glb (ground) 2.0 MB in 0.02 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
    "uv dequantisation (gltfpack KHR_texture_transform -> attribute): 33 uv set(s) on 33 geometr(ies), 13 material transform(s) neutralised, scale 6.081..16.004, +1.33 MB",
@@ -2932,30 +3029,22 @@
    "instance chunking (QA-11d-1): 7 of 7 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 26 regional batches, +19 draw calls when every chunk is in frame",
    "61 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 \"borrow a neighbour's lightmap\" stand-in is off at Gate 3",
    "4 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch",
-   "pbr: 27 of 27 scene materials textured from 27 of 62 manifest sets, 81 maps, 37.2 MB resident in 81 file(s) [81 RGB_ETC2_Format], requested nearest first (MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a 78.9 m, MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a 79.2 m, MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a 79.3 m …)",
+   "pbr: 27 of 27 scene materials textured from 27 of 62 manifest sets, 81 maps, 37.2 MB resident in 81 file(s) [81 RGB_ETC2_Format], requested nearest first (MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a 78.9 m, MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a 79.3 m, MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a 79.2 m …)",
    "pbr: factors applied to 27 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
-   "detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-   "detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
-   "pbr: 26 of 26 scene materials textured from 15 of 62 manifest sets, 75 maps, 22.0 MB resident in 42 file(s) [42 RGB_ETC2_Format], requested nearest first (MAT_EXP_ARCH_site__MAT_paving 62.8 m, MAT_EXP_ARCH_rotunda__MAT_concrete_podium 64.9 m, MAT_EXP_ARCH_site__MAT_concrete_podium 28.8 m …)",
+   "pbr: 26 of 26 scene materials textured from 15 of 62 manifest sets, 75 maps, 22.0 MB resident in 42 file(s) [42 RGB_ETC2_Format], requested nearest first (MAT_EXP_ARCH_site__MAT_paving 62.8 m, MAT_EXP_ARCH_site__MAT_concrete_podium 28.8 m, MAT_EXP_ARCH_rotunda__MAT_concrete_podium 64.9 m …)",
    "pbr: factors applied to 26 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
-   "detail (QA-12-1): 25 material(s) on 2 tiling set(s) (concrete_wall_007 x14, concrete_wall_008 x11), 6 textures, 25.2 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-   "detail: 4 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap",
-   "pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 12 maps, 6.3 MB resident in 12 file(s) [12 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m, MAT_EXP_ENV__riprap 0 m …)",
+   "pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 12 maps, 6.3 MB resident in 12 file(s) [12 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__riprap 0 m, MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m …)",
    "pbr: factors applied to 4 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
-   "detail (QA-12-1): 3 material(s) on 3 tiling set(s) (concrete_wall_007 x1, rock_boulder_dry x1, gravelly_sand x1), 9 textures, 21.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-   "detail: 15 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
-   "pbr: 5 of 13 scene materials textured from 5 of 62 manifest sets, 11 maps, 1.9 MB resident in 11 file(s) [11 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENVBD__MAT_backdrop_roof 0 m, MAT_EXP_ENVBD__MAT_bird_white 0 m, MAT_EXP_ENVBD__MAT_backdrop_building 0 m …)",
+   "pbr: 5 of 13 scene materials textured from 5 of 62 manifest sets, 11 maps, 1.9 MB resident in 11 file(s) [11 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENVBD__MAT_bird_white 0 m, MAT_EXP_ENVBD__MAT_backdrop_roof 0 m, MAT_EXP_ENVBD__MAT_backdrop_building 0 m …)",
    "pbr: factors applied to 5 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
    "pbr: 8 material(s) with NO texture set, left as exported: MAT_shrub_light, MAT_shrub, MAT_reeds, MAT_shrub_dry, MAT_bark_eucalyptus, MAT_leaf_eucalyptus, MAT_bark_cypress, MAT_leaf_cypress",
-   "detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-   "detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
-   "pbr textures in 0.81 s; 52 superseded texture(s) disposed, 0.0 MB freed",
+   "pbr textures in 0.31 s; 52 superseded texture(s) disposed, 0.0 MB freed",
    "probe env deferred to tier 1 (6 face(s)); until then surfaces with no baked light take the sky-diffuse PMREM",
    "water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)",
    "reflection draw set reduced: 27 mesh(es) excluded (27 ORN, 0 backdrop), 86 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.",
-   "ready in 1.88 s: 57.9 MB loaded of 57.9 MB planned (plan 0.05 s, sky 0.55 s, lut 0.06 s, glb 1.17 s) — TIER 0 of 3",
+   "ready in 1.46 s: 41.7 MB loaded of 41.7 MB planned (plan 0.07 s, sky 0.58 s, lut 0.06 s, glb 0.71 s) — TIER 0 of 3",
    "lazy foliage not loaded: it belongs to tier 2 and ?tiers=0 stops at 0",
-   "tiers complete: 0:57.9 MB/1.9 s; 57.9 MB total"
+   "tiers complete: 0:41.7 MB/1.5 s; 41.7 MB total"
   ]
  },
  "stats": null,
@@ -2975,21 +3064,23 @@
    "fps_uncapped": null,
    "draw_calls": 202,
    "triangles": 2410733,
-   "programs": 32,
+   "programs": 28,
    "info_memory": {
     "geometries": 94,
-    "textures": 223
+    "textures": 208
    },
    "resident": {
     "geometry_bytes": 37076760,
     "instance_matrix_bytes": 51264,
-    "texture_bytes": 205698824,
+    "texture_bytes": 157114296,
     "geometries": 94,
-    "textures": 210,
+    "textures": 195,
+    "texture_sources": 189,
+    "textures_sharing_a_source": 6,
     "texture_formats": {
-     "RGB_ETC2_Format": 187,
-     "RGBA_ASTC_4x4_Format": 16,
-     "RGBA_ETC2_EAC_Format": 6,
+     "RGB_ETC2_Format": 183,
+     "RGBA_ASTC_4x4_Format": 1,
+     "RGBA_ETC2_EAC_Format": 4,
      "RGBAFormat (uncompressed)": 1
     },
     "render_target_bytes": 314785792,
@@ -3040,8 +3131,8 @@
       "bytes": 6291456
      }
     ],
-    "total_bytes": 557612640,
-    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+    "total_bytes": 509028112,
+    "note": "viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
    }
   }
  ],
@@ -3061,13 +3152,15 @@
   }
  ],
  "pageErrors": [
-  "httperror: 404 http://127.0.0.1:50103/assets/gate5/uv2_relay_status.json"
+  "httperror: 404 http://127.0.0.1:50201/assets/gate5/uv2_relay_status.json"
  ],
  "pageLog": [
   "log: [pfa] device tier: desktop (probe) — no mobile evidence: desktop; gl ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version), max texture 16384, astc true etc2 true s3tc true bptc true, dpr 1, screen 800x600, touch 0",
+  "httperror: 404 http://127.0.0.1:50201/favicon.ico",
   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
-  "httperror: 404 http://127.0.0.1:50103/favicon.ico",
   "log: [pfa] manifest tiers: 178 low-resolution stand-in(s) in tex_lo — half-resolution ETC1S: measured smaller AND lower RMS than quarter-res UASTC on 5 of 6 sampled maps (export/out/gate5/lowres.json `probe`)",
+  "log: [pfa] manifest tiers: 42 low-resolution file(s) paired to their full-resolution twin BY NAME (no key in the plan — these are the maps the glbs reference themselves)",
+  "log: [pfa] manifest tiers: 220 low-resolution file(s) have a full-resolution successor in a later tier",
   "log: [pfa] manifest tiers: 3 tier(s), tier 0 43.3 MB in 228 file(s) (declared), tier 1 488.3 MB in 286 file(s) (declared), tier 2 69.4 MB in 50 file(s) (declared)",
   "log: [pfa] glb arch.glb (arch) taken from the load plan: it is not in glb.groups",
   "log: [pfa] glb ground.glb (ground) taken from the load plan: it is not in glb.groups",
@@ -3081,170 +3174,171 @@
   "log: [pfa] materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 307.8 MB declared, mode \"pbr\"",
   "log: [pfa] manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159",
   "log: [pfa] manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas",
-  "log: [pfa] manifest pfa-phase6/5 at http://127.0.0.1:50103/assets/gate5/manifest.json",
-  "httperror: 404 http://127.0.0.1:50103/assets/gate5/uv2_relay_status.json",
+  "log: [pfa] manifest pfa-phase6/5 at http://127.0.0.1:50201/assets/gate5/manifest.json",
+  "httperror: 404 http://127.0.0.1:50201/assets/gate5/uv2_relay_status.json",
   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
   "log: [pfa] no uv2_relay_status.json (404): the manifest's own uv2_in_glb flags stand",
   "log: [pfa] lighting mode: baked (?lighting override) — lightmaps carry the diffuse, sun and env are specular-only",
   "log: [pfa] materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares \"pbr\"",
+  "log: [pfa] detail tiling sets are tier 1 (15 map(s)): the first frame shows the baked maps without the grain layer, and it is applied when that tier lands",
   "log: [pfa] foliage + impostors run at tier 2 (last env group tier 2, impostor atlases tier 1)",
   "log: [pfa] load tiers: 3 declared, streaming up to 0 (?tiers=0); glbs tier 0: orn+arch+ground+env, tier 1: orn+env, tier 2: orn+env; declared bytes 0=43.3 MB, 1=488.3 MB, 2=69.4 MB",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/groups/orn_t0.glb net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate3/sky_diffuse_1024x512.hdr net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate0/sky_camera_4096x2048.hdr net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate0/sky_glossy_4096x2048.hdr net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate1/ground.glb net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/groups/env_t0.glb net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate1/arch.glb net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate0/lut_agx_high_contrast_65.cube net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__bird_white_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENVBD__bird_white_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__riprap_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__riprap_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ENV__riprap_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2 net::ERR_ABORTED",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/groups/orn_t0.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate3/sky_diffuse_1024x512.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate0/sky_camera_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate0/sky_glossy_4096x2048.hdr net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate1/ground.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/groups/env_t0.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate1/arch.glb net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__bird_white_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENVBD__bird_white_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__riprap_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__riprap_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ENV__riprap_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate0/lut_agx_high_contrast_65.cube net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2 net::ERR_ABORTED",
   "log: [pfa] load plan: 154 files, 37.7 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:orn 1.5, glb:arch 4.6, glb:ground 2.0, glb:env 2.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.0, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.2, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.0, tex:map:lo 0.2, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1, tex:map:lo 0.1, tex:roughness:lo 0.0, tex:normal:lo 0.1)",
   "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
-  "requestfailed: HEAD http://127.0.0.1:50103/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2 net::ERR_ABORTED",
+  "requestfailed: HEAD http://127.0.0.1:50201/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2 net::ERR_ABORTED",
   "log: [pfa] sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg",
   "warn: RGBELoader has been deprecated. Please use HDRLoader instead.",
   "log: [pfa] PMREM specular environment from sky_glossy_4096x2048.hdr",
@@ -3264,9 +3358,9 @@
   "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000",
   "log: [pfa] lightMapIntensity = lightmap_scale 3.14159",
   "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 54 uv set(s) on 27 geometr(ies), 27 material transform(s) neutralised, scale 11.320..15.936, +1.61 MB",
-  "log: [pfa] glb orn_t0.glb (orn) 1.5 MB in 0.12 s: 27 meshes, 18 instanced (115 instances), 355333 placed tris, 27 materials",
+  "log: [pfa] glb orn_t0.glb (orn) 1.5 MB in 0.13 s: 27 meshes, 18 instanced (115 instances), 355333 placed tris, 27 materials",
   "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 58 uv set(s) on 29 geometr(ies), 17 material transform(s) neutralised, scale 13.139..15.986, +7.53 MB",
-  "log: [pfa] glb arch.glb (arch) 4.6 MB in 0.04 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
+  "log: [pfa] glb arch.glb (arch) 4.6 MB in 0.05 s: 29 meshes, 17 instanced (552 instances), 947622 placed tris, 17 materials",
   "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB",
   "log: [pfa] glb ground.glb (ground) 2.0 MB in 0.02 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials",
   "log: [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 33 uv set(s) on 33 geometr(ies), 13 material transform(s) neutralised, scale 6.081..16.004, +1.33 MB",
@@ -3282,45 +3376,22 @@
   "log: [pfa] instance chunking (QA-11d-1): 7 of 7 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 26 regional batches, +19 draw calls when every chunk is in frame",
   "log: [pfa] 61 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 \"borrow a neighbour's lightmap\" stand-in is off at Gate 3",
   "log: [pfa] 4 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch",
-  "log: [pfa] pbr: 27 of 27 scene materials textured from 27 of 62 manifest sets, 81 maps, 37.2 MB resident in 81 file(s) [81 RGB_ETC2_Format], requested nearest first (MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a 78.9 m, MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a 79.2 m, MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a 79.3 m …)",
+  "log: [pfa] pbr: 27 of 27 scene materials textured from 27 of 62 manifest sets, 81 maps, 37.2 MB resident in 81 file(s) [81 RGB_ETC2_Format], requested nearest first (MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a 78.9 m, MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a 79.3 m, MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a 79.2 m …)",
   "log: [pfa] pbr: factors applied to 27 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
-  "log: [pfa] detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-  "log: [pfa] detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
-  "log: [pfa] pbr: 26 of 26 scene materials textured from 15 of 62 manifest sets, 75 maps, 22.0 MB resident in 42 file(s) [42 RGB_ETC2_Format], requested nearest first (MAT_EXP_ARCH_site__MAT_paving 62.8 m, MAT_EXP_ARCH_rotunda__MAT_concrete_podium 64.9 m, MAT_EXP_ARCH_site__MAT_concrete_podium 28.8 m …)",
+  "log: [pfa] pbr: 26 of 26 scene materials textured from 15 of 62 manifest sets, 75 maps, 22.0 MB resident in 42 file(s) [42 RGB_ETC2_Format], requested nearest first (MAT_EXP_ARCH_site__MAT_paving 62.8 m, MAT_EXP_ARCH_site__MAT_concrete_podium 28.8 m, MAT_EXP_ARCH_rotunda__MAT_concrete_podium 64.9 m …)",
   "log: [pfa] pbr: factors applied to 26 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
-  "log: [pfa] detail (QA-12-1): 25 material(s) on 2 tiling set(s) (concrete_wall_007 x14, concrete_wall_008 x11), 6 textures, 25.2 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-  "log: [pfa] detail: 4 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "log: [pfa] pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 12 maps, 6.3 MB resident in 12 file(s) [12 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m, MAT_EXP_ENV__riprap 0 m …)",
+  "log: [pfa] pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 12 maps, 6.3 MB resident in 12 file(s) [12 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__riprap 0 m, MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m …)",
   "log: [pfa] pbr: factors applied to 4 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
-  "log: [pfa] detail (QA-12-1): 3 material(s) on 3 tiling set(s) (concrete_wall_007 x1, rock_boulder_dry x1, gravelly_sand x1), 9 textures, 21.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-  "log: [pfa] detail: 15 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "warn: [.WebGL-0x114000db400] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.",
-  "log: [pfa] pbr: 5 of 13 scene materials textured from 5 of 62 manifest sets, 11 maps, 1.9 MB resident in 11 file(s) [11 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENVBD__MAT_backdrop_roof 0 m, MAT_EXP_ENVBD__MAT_bird_white 0 m, MAT_EXP_ENVBD__MAT_backdrop_building 0 m …)",
+  "log: [pfa] pbr: 5 of 13 scene materials textured from 5 of 62 manifest sets, 11 maps, 1.9 MB resident in 11 file(s) [11 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENVBD__MAT_bird_white 0 m, MAT_EXP_ENVBD__MAT_backdrop_roof 0 m, MAT_EXP_ENVBD__MAT_backdrop_building 0 m …)",
   "log: [pfa] pbr: factors applied to 5 material(s) before any download, 0 of them finished by their factors alone (constant maps)",
   "log: [pfa] pbr: 8 material(s) with NO texture set, left as exported: MAT_shrub_light, MAT_shrub, MAT_reeds, MAT_shrub_dry, MAT_bark_eucalyptus, MAT_leaf_eucalyptus, MAT_bark_cypress, MAT_leaf_cypress",
-  "log: [pfa] detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection objxy (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1",
-  "log: [pfa] detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving",
-  "log: [pfa] pbr textures in 0.81 s; 52 superseded texture(s) disposed, 0.0 MB freed",
+  "log: [pfa] pbr textures in 0.31 s; 52 superseded texture(s) disposed, 0.0 MB freed",
   "log: [pfa] probe env deferred to tier 1 (6 face(s)); until then surfaces with no baked light take the sky-diffuse PMREM",
   "log: [pfa] water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)",
   "log: [pfa] reflection draw set reduced: 27 mesh(es) excluded (27 ORN, 0 backdrop), 86 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.",
-  "log: [pfa] ready in 1.88 s: 57.9 MB loaded of 57.9 MB planned (plan 0.05 s, sky 0.55 s, lut 0.06 s, glb 1.17 s) — TIER 0 of 3",
+  "log: [pfa] ready in 1.46 s: 41.7 MB loaded of 41.7 MB planned (plan 0.07 s, sky 0.58 s, lut 0.06 s, glb 0.71 s) — TIER 0 of 3",
   "log: [pfa] lazy foliage not loaded: it belongs to tier 2 and ?tiers=0 stops at 0",
-  "log: [pfa] tiers complete: 0:57.9 MB/1.9 s; 57.9 MB total",
+  "log: [pfa] tiers complete: 0:41.7 MB/1.5 s; 41.7 MB total",
   "log: [pfa] station 1 CAM_qa_01_lagoon_hero\n  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)\n  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]\n  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]\n  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000"
  ]
 }

@@ -361,6 +361,10 @@ let sceneCompletionTier = 0;
 // where the hero probe's six HDR faces are: the viewer used to fetch them at boot whatever the
 // manifest said, which made an export that moved them to a later tier save nothing
 let probeTier = 0;
+// where the QA-12-1 detail tiling sets are: 23 MB of shared grain the export puts in tier 1, which
+// the viewer used to fetch at boot whatever the plan said (20.3 MB of the tier-0 payload)
+let detailTier = 0;
+const detailPending = [];
 
 function setupTiers() {
 	const t = manifest.tiers;
@@ -392,6 +396,11 @@ function setupTiers() {
 	sceneCompletionTier = Math.max( envTier, impTier );
 	const pf = manifest.gate3 && manifest.gate3.probe ? manifest.gate3.probe.faces : null;
 	probeTier = pf ? Math.max( ...pf.map( ( u ) => tierOf( u ) ) ) : 0;
+	const dsets = ( manifest.materials && manifest.materials.detail && manifest.materials.detail.sets ) || {};
+	const durls = Object.values( dsets ).flatMap( ( set ) => Object.values( set.maps || {} ).map( ( m ) => m.url ) ).filter( Boolean );
+	detailTier = durls.length ? Math.max( ...durls.map( ( u ) => tierOf( u ) ) ) : 0;
+	if ( detailTier > 0 ) note( `detail tiling sets are tier ${detailTier} (${durls.length} map(s)): the first frame `
+		+ 'shows the baked maps without the grain layer, and it is applied when that tier lands' );
 	if ( sceneCompletionTier > 0 ) note( `foliage + impostors run at tier ${sceneCompletionTier} `
 		+ `(last env group tier ${envTier}, impostor atlases tier ${impTier})` );
 
@@ -797,6 +806,17 @@ async function streamTiers() {
 					glb_textures: glbUp.upgraded, glb_textures_remaining: glbUp.remaining.length } ];
 			}
 			if ( t === probeTier ) await setupProbeEnv();
+			if ( t === detailTier && detailPending.length ) {
+				const roots = detailPending.splice( 0, detailPending.length );
+				for ( const root of roots ) {
+					detailReport = await applyDetail( {
+						scene: root, detail: manifest.materials.detail, note,
+						projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
+						lodBias: CFG.detailBias, gain: CFG.detailGain, debug: parseInt( qs.get( 'detaildebug' ) || '0', 10 ),
+						synthetic: CFG.detailTest === 'noise', loadTexture: loadAnyTexture } );
+				}
+				renderFrame();
+			}
 			if ( t === sceneCompletionTier ) await setupFoliageAndImpostors();
 			if ( roots.length ) applyReflectionAndFog();
 			tierState.now = t;
@@ -1443,7 +1463,11 @@ async function applyMaterialPasses( roots, tier ) {
 			},
 		} );
 		pbrReport = pbrReport ? mergePbrReports( pbrReport, rep ) : rep;
-		if ( CFG.detail > 0 && manifest.materials.detail ) {
+		// The detail layer waits for the tier its maps are in (they are shared tiling sets, not part of
+		// any one asset), and is applied to every root that was waiting when that tier lands.
+		if ( CFG.detail > 0 && manifest.materials.detail && detailTier > tier ) {
+			if ( ! detailPending.includes( root ) ) detailPending.push( root );
+		} else if ( CFG.detail > 0 && manifest.materials.detail ) {
 			detailReport = await applyDetail( {
 				scene: root, detail: manifest.materials.detail, note,
 				projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
