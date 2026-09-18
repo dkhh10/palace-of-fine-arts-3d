@@ -1,0 +1,1367 @@
+{
+ "generated": "2026-09-18T15:33:30.468Z",
+ "url": "http://127.0.0.1:49895/?station=1&size=2560x1440&hud=0&manifest=%2Fstub%2Fgate5%2Fmanifest.json&tiers=all&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
+ "size": [
+  2560,
+  1440
+ ],
+ "frames": 120,
+ "warmup": 24,
+ "gl": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+  "vendor": "Google Inc. (Apple)",
+  "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+ },
+ "schema": "pfa-phase6/5",
+ "lighting_mode": "baked",
+ "materials_mode": "pbr",
+ "materials": {
+  "materials_in_scene": 112,
+  "matched": 73,
+  "unmatched": [
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 0
+   },
+   {
+    "material": "MAT_leaf_cypress",
+    "distance_m": 0
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 32
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 33
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 34
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 34
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 35
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 40
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 40
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 41
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 44
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 51
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 52
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 53
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 56
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 61
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 62
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 64
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 65
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 65
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 67
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 68
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 70
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 89
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 92
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 93
+   },
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 95
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 96
+   },
+   {
+    "material": "MAT_leaf_pine",
+    "distance_m": 96
+   },
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 124
+   },
+   {
+    "material": "MAT_leaf_cypress",
+    "distance_m": 128
+   },
+   {
+    "material": "MAT_leaf_pine",
+    "distance_m": 131
+   },
+   {
+    "material": "MAT_leaf_broadleaf",
+    "distance_m": 154
+   }
+  ],
+  "sets_in_manifest": 62,
+  "sets_used": 33,
+  "sets_unused": [
+   "MAT_EXP_ENVBD__MAT_backdrop_building",
+   "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+   "MAT_EXP_ENVBD__MAT_backdrop_forest",
+   "MAT_EXP_ENVBD__MAT_backdrop_hill",
+   "MAT_EXP_ENVBD__MAT_backdrop_roof",
+   "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+   "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+   "MAT_EXP_ENVBD__MAT_bird_white",
+   "MAT_EXP_ENVBD__MAT_lamp_post",
+   "MAT_EXP_ENVBD__MAT_lawn",
+   "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+   "MAT_EXP_ENV__ENV_lagoon_bed",
+   "MAT_EXP_ENV__ENV_terrain_ground",
+   "MAT_EXP_ENV__riprap",
+   "MAT_EXP_ORN__ORN_attic_figure_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_attic_panel_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_attic_panel_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_colonnade_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_colonnade_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_colonnade_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_inner_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_capital_rotunda_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_corner_scroll_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_drum_band_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_keystone_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_keystone_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_keystone_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_maiden_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_maiden_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_maiden_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v1_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_urn_niche_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_winged_figure_v1_LOD0_a_a"
+  ],
+  "textures": 124,
+  "unique_files": 124,
+  "bytes": 391471680,
+  "kept_glb_normal": 0,
+  "replaced_glb_normal": 33,
+  "kept_glb_ao": 0,
+  "colourspace_conflicts": [],
+  "formats": {
+   "RGBA_ASTC_4x4_Format": 124
+  },
+  "failed": [],
+  "factored": 73,
+  "constant_only": 0,
+  "flat_normal_constant": [],
+  "without_uv1": [],
+  "deferred": 78,
+  "disposed": {
+   "disposed": 10,
+   "freed_bytes": 1120,
+   "by_slot": {
+    "map": 10
+   },
+   "names": [
+    "250af456",
+    "974f93d2",
+    "66ddf33e",
+    "a8b618b2",
+    "d1791bf2",
+    "683378bf",
+    "8cddd6d7",
+    "436405d8",
+    "dcc68b43",
+    "9454b497"
+   ]
+  },
+  "order_count": 73,
+  "nearest_first": [
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+    "distance_m": 28.8,
+    "maps": []
+   },
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+    "distance_m": 0,
+    "maps": []
+   },
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+    "distance_m": 73.7,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_building",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+    "distance_m": 59.1,
+    "maps": []
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ENV__ENV_lagoon_bed",
+    "distance_m": 0,
+    "maps": []
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+    "distance_m": 73.7,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_forest",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   }
+  ]
+ },
+ "chunking": {
+  "candidates": 29,
+  "split": 16,
+  "chunks": 48,
+  "added": 32,
+  "batches": 16,
+  "spent": 0,
+  "opts": {}
+ },
+ "detail": {
+  "projection": "objxy",
+  "strength": 1,
+  "normal_scale": 1,
+  "sets_loaded": 1,
+  "materials": 1,
+  "textures": 3,
+  "bytes": 4194384,
+  "means": {
+   "gravelly_sand": {
+    "albedo": [
+     0.571771,
+     0.433472,
+     0.298813
+    ],
+    "roughness": [
+     0.792653,
+     0.792653,
+     0.792653
+    ]
+   }
+  },
+  "by_set": {
+   "gravelly_sand": 1
+  },
+  "unmatched_rules": [
+   "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+   "MAT_EXP_ENV__ENV_terrain_ground",
+   "MAT_EXP_ENV__riprap",
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+   "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+   "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+   "MAT_EXP_ARCH_site__MAT_concrete_podium",
+   "MAT_EXP_ARCH_site__MAT_paving"
+  ],
+  "applied": 1,
+  "failed": [],
+  "empty": [],
+  "fallbacks": [],
+  "stats": {
+   "detail_gravelly_sand_albedo.ktx2": {
+    "mean8": 110.5,
+    "std8": 14.8,
+    "from": "manifest"
+   },
+   "detail_gravelly_sand_roughness.ktx2": {
+    "mean8": 202.1,
+    "std8": 2.4,
+    "from": "manifest"
+   },
+   "detail_gravelly_sand_normal.ktx2": {
+    "mean8": 127.5,
+    "std8": 6.7,
+    "from": "manifest"
+   }
+  }
+ },
+ "bytes": {
+  "loaded": 663960584,
+  "planned": 661450192,
+  "unknownSize": [],
+  "offPlan": [
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
+    "bytes": 2043381
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
+    "bytes": 2080290
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
+    "bytes": 1913551
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
+    "bytes": 1442913
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
+    "bytes": 2908460
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
+    "bytes": 1933822
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
+    "bytes": 2198971
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
+    "bytes": 377440
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
+    "bytes": 1619649
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
+    "bytes": 3429313
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
+    "bytes": 1974792
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
+    "bytes": 737242
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
+    "bytes": 4391299
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
+    "bytes": 270462
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
+    "bytes": 4038405
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
+    "bytes": 6962432
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_007_albedo.ktx2",
+    "bytes": 4089587
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_007_roughness.ktx2",
+    "bytes": 916668
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_007_normal.ktx2",
+    "bytes": 3526879
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_008_albedo.ktx2",
+    "bytes": 2829232
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_008_roughness.ktx2",
+    "bytes": 404333
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_concrete_wall_008_normal.ktx2",
+    "bytes": 2204758
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_rock_boulder_dry_albedo.ktx2",
+    "bytes": 1176349
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_rock_boulder_dry_roughness.ktx2",
+    "bytes": 997991
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_rock_boulder_dry_normal.ktx2",
+    "bytes": 1070828
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_gravelly_sand_albedo.ktx2",
+    "bytes": 1195972
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_gravelly_sand_roughness.ktx2",
+    "bytes": 787309
+   },
+   {
+    "url": "/assets/gate2/tex_ktx2/detail_gravelly_sand_normal.ktx2",
+    "bytes": 1067574
+   },
+   {
+    "url": "/assets/gate3/probe/gate3_probe_hero_nx.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "/assets/gate3/probe/gate3_probe_hero_py.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "/assets/gate3/probe/gate3_probe_hero_px.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "/assets/gate3/probe/gate3_probe_hero_pz.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "/assets/gate3/probe/gate3_probe_hero_nz.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "/assets/gate3/probe/gate3_probe_hero_ny.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_0_gamma2.ktx2",
+    "bytes": 10016857
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_1_gamma2.ktx2",
+    "bytes": 10328656
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lmatlas_arch_inst_2_gamma2.ktx2",
+    "bytes": 1459576
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lmatlas_orn_0_gamma2.ktx2",
+    "bytes": 16656146
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_lmatlas_orn_1_gamma2.ktx2",
+    "bytes": 10306550
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_broadleaf_albedo_1024.ktx2",
+    "bytes": 463538
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_broadleaf_translu_1024.ktx2",
+    "bytes": 389486
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_cypress_albedo_1024.ktx2",
+    "bytes": 595477
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_cypress_translu_1024.ktx2",
+    "bytes": 395461
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_eucalyptus_albedo_1024.ktx2",
+    "bytes": 492355
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_eucalyptus_translu_1024.ktx2",
+    "bytes": 385841
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_pine_albedo_1024.ktx2",
+    "bytes": 528739
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_leaf_pine_translu_1024.ktx2",
+    "bytes": 362403
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_reeds_albedo_1024.ktx2",
+    "bytes": 435873
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_reeds_translu_1024.ktx2",
+    "bytes": 397525
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_albedo_1024.ktx2",
+    "bytes": 862893
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_translu_1024.ktx2",
+    "bytes": 668960
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_dry_albedo_1024.ktx2",
+    "bytes": 875093
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_dry_translu_1024.ktx2",
+    "bytes": 596095
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_light_albedo_1024.ktx2",
+    "bytes": 873979
+   },
+   {
+    "url": "/assets/gate3/foliage/tex_ktx2/foliage_MAT_shrub_light_translu_1024.ktx2",
+    "bytes": 691511
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s53_LOD1_albedo_2048.ktx2",
+    "bytes": 682547
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s41_LOD1_albedo_2048.ktx2",
+    "bytes": 566564
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_broadleaf_s19_LOD1_albedo_2048.ktx2",
+    "bytes": 662844
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s3_LOD1_albedo_2048.ktx2",
+    "bytes": 581724
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_s17_LOD1_albedo_2048.ktx2",
+    "bytes": 623712
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s31_LOD1_albedo_2048.ktx2",
+    "bytes": 407708
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_cypress_column_s2_LOD1_albedo_2048.ktx2",
+    "bytes": 388501
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s5_LOD1_albedo_2048.ktx2",
+    "bytes": 545645
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s23_LOD1_albedo_2048.ktx2",
+    "bytes": 504774
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_eucalyptus_s61_LOD1_albedo_2048.ktx2",
+    "bytes": 519699
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s7_LOD1_albedo_2048.ktx2",
+    "bytes": 648635
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_pine_s29_LOD1_albedo_2048.ktx2",
+    "bytes": 659106
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s43_LOD1_albedo_2048.ktx2",
+    "bytes": 569204
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s37_LOD1_albedo_2048.ktx2",
+    "bytes": 842333
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_redwood_s13_LOD1_albedo_2048.ktx2",
+    "bytes": 589556
+   },
+   {
+    "url": "/assets/gate3/tex_ktx2/gate3_imp_ENV_tree_willow_s11_LOD1_albedo_2048.ktx2",
+    "bytes": 924785
+   },
+   {
+    "url": "/assets/gate1/env_trees_lod1.glb",
+    "bytes": 7642344
+   },
+   {
+    "url": "/assets/gate1/env_shrubs.glb",
+    "bytes": 422520
+   }
+  ],
+  "files": [
+   {
+    "kind": "sky.camera",
+    "bytes": 3590278,
+    "sizeFrom": "HEAD",
+    "name": "sky_camera_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.glossy",
+    "bytes": 3661319,
+    "sizeFrom": "HEAD",
+    "name": "sky_glossy_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.diffuse",
+    "bytes": 2097202,
+    "sizeFrom": "HEAD",
+    "name": "sky_diffuse_1024x512.hdr"
+   },
+   {
+    "kind": "lut",
+    "bytes": 7415365,
+    "sizeFrom": "HEAD",
+    "name": "lut_agx_high_contrast_65.cube"
+   },
+   {
+    "kind": "glb:arch",
+    "bytes": 4613040,
+    "sizeFrom": "HEAD",
+    "name": "arch.glb"
+   },
+   {
+    "kind": "glb:ground",
+    "bytes": 1959104,
+    "sizeFrom": "HEAD",
+    "name": "ground.glb"
+   }
+  ]
+ },
+ "load_s": {
+  "plan_s": 0.0105,
+  "sky_s": 0.5575,
+  "lut_s": 0.05709999990463257,
+  "glb_s": 1.2113999999761582,
+  "tex_s": 4.173399999976159,
+  "total_s": 1.9882999999523163
+ },
+ "glbs": [
+  {
+   "name": "arch.glb",
+   "cls": "arch",
+   "url": "/assets/gate1/arch.glb",
+   "meshes": 29,
+   "instancedMeshes": 17,
+   "instances": 552,
+   "tris": 947622,
+   "materials": 17,
+   "hiddenBoards": 0,
+   "bytes": 4613040,
+   "wall_s": 0.113
+  },
+  {
+   "name": "ground.glb",
+   "cls": "ground",
+   "url": "/assets/gate1/ground.glb",
+   "meshes": 4,
+   "instancedMeshes": 0,
+   "instances": 0,
+   "tris": 113043,
+   "materials": 4,
+   "hiddenBoards": 0,
+   "bytes": 1959104,
+   "wall_s": 0.0215
+  },
+  {
+   "name": "orn.glb",
+   "cls": "orn",
+   "url": "/assets/gate1/orn.glb",
+   "meshes": 33,
+   "instancedMeshes": 32,
+   "instances": 435,
+   "tris": 1097468,
+   "materials": 33,
+   "hiddenBoards": 0,
+   "bytes": 154253424,
+   "wall_s": 1.4662999999523163
+  },
+  {
+   "name": "env.glb",
+   "cls": "env",
+   "url": "/assets/gate1/env.glb",
+   "meshes": 50,
+   "instancedMeshes": 34,
+   "instances": 1526,
+   "tris": 679779,
+   "materials": 26,
+   "hiddenBoards": 127,
+   "bytes": 38119568,
+   "wall_s": 0.3747000000476837
+  }
+ ],
+ "billboards": null,
+ "stations": [
+  {
+   "station": 1,
+   "name": "CAM_qa_01_lagoon_hero",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 32.89999997615814,
+    "mean": 39.740336134654136,
+    "p95": 41,
+    "min": 6.600000023841858,
+    "max": 738.5,
+    "frames": 119
+   },
+   "fps_presented": 30.395136800142144,
+   "gpu_cost_ms": {
+    "median": 3.5,
+    "mean": 7.153333332141241,
+    "p95": 29.700000047683716,
+    "frames": 60
+   },
+   "fps_uncapped": 285.7142857142857,
+   "draw_calls": 329,
+   "triangles": 5242248,
+   "programs": 131,
+   "info_memory": {
+    "geometries": 255,
+    "textures": 363
+   },
+   "resident": {
+    "geometry_bytes": 259752338,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1244318112,
+    "geometries": 332,
+    "textures": 295,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 294,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1948154674,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 34.39999997615814,
+    "mean": 41.660504201881025,
+    "p95": 37.89999997615814,
+    "min": 14.600000023841858,
+    "max": 846.2999999523163,
+    "frames": 119
+   },
+   "fps_presented": 29.06976746200806,
+   "gpu_cost_ms": {
+    "median": 3.399999976158142,
+    "mean": 7.3766666650772095,
+    "p95": 32.59999990463257,
+    "frames": 60
+   },
+   "fps_uncapped": 294.117649121268,
+   "draw_calls": 324,
+   "triangles": 5235144,
+   "programs": 131,
+   "info_memory": {
+    "geometries": 260,
+    "textures": 363
+   },
+   "resident": {
+    "geometry_bytes": 259752338,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1244318112,
+    "geometries": 332,
+    "textures": 295,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 294,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1948154674,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 3,
+   "name": "CAM_qa_03_colonnade_walk",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 37,
+    "mean": 43.476470588636,
+    "p95": 39.699999928474426,
+    "min": 15.199999928474426,
+    "max": 761,
+    "frames": 119
+   },
+   "fps_presented": 27.027027027027028,
+   "gpu_cost_ms": {
+    "median": 3.700000047683716,
+    "mean": 8.668333333730697,
+    "p95": 36.10000002384186,
+    "frames": 60
+   },
+   "fps_uncapped": 270.2702667871647,
+   "draw_calls": 347,
+   "triangles": 5983404,
+   "programs": 133,
+   "info_memory": {
+    "geometries": 271,
+    "textures": 367
+   },
+   "resident": {
+    "geometry_bytes": 259752338,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1244318112,
+    "geometries": 332,
+    "textures": 295,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 294,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1948154674,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 4,
+   "name": "CAM_qa_04_rotunda_ceiling",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 24,
+    "mean": 29.448739495597966,
+    "p95": 27.5,
+    "min": 20.600000023841858,
+    "max": 561.2000000476837,
+    "frames": 119
+   },
+   "fps_presented": 41.666666666666664,
+   "gpu_cost_ms": {
+    "median": 1,
+    "mean": 1.7433333337306975,
+    "p95": 1.899999976158142,
+    "frames": 60
+   },
+   "fps_uncapped": 1000,
+   "draw_calls": 183,
+   "triangles": 2754810,
+   "programs": 133,
+   "info_memory": {
+    "geometries": 271,
+    "textures": 367
+   },
+   "resident": {
+    "geometry_bytes": 259752338,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1244318112,
+    "geometries": 332,
+    "textures": 295,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 294,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1948154674,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 5,
+   "name": "CAM_qa_05_south_lawn",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 33.90000009536743,
+    "mean": 40.694117647259176,
+    "p95": 37.199999928474426,
+    "min": 14.700000047683716,
+    "max": 771.3000000715256,
+    "frames": 119
+   },
+   "fps_presented": 29.498524990761105,
+   "gpu_cost_ms": {
+    "median": 3.399999976158142,
+    "mean": 7.099999998013178,
+    "p95": 34.199999928474426,
+    "frames": 60
+   },
+   "fps_uncapped": 294.117649121268,
+   "draw_calls": 314,
+   "triangles": 5006654,
+   "programs": 133,
+   "info_memory": {
+    "geometries": 271,
+    "textures": 367
+   },
+   "resident": {
+    "geometry_bytes": 259752338,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1244318112,
+    "geometries": 332,
+    "textures": 295,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 294,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1948154674,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 6,
+   "name": "CAM_qa_06_aerial",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 35.09999990463257,
+    "mean": 41.755462185675356,
+    "p95": 38.5,
+    "min": 13.300000071525574,
+    "max": 808.7999999523163,
+    "frames": 119
+   },
+   "fps_presented": 28.490028567436493,
+   "gpu_cost_ms": {
+    "median": 3.600000023841858,
+    "mean": 8.948333332935968,
+    "p95": 37.39999997615814,
+    "frames": 60
+   },
+   "fps_uncapped": 277.7777759381283,
+   "draw_calls": 351,
+   "triangles": 5601864,
+   "programs": 133,
+   "info_memory": {
+    "geometries": 271,
+    "textures": 367
+   },
+   "resident": {
+    "geometry_bytes": 259752338,
+    "instance_matrix_bytes": 274432,
+    "texture_bytes": 1244318112,
+    "geometries": 332,
+    "textures": 295,
+    "texture_formats": {
+     "RGBA_ASTC_4x4_Format": 294,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 1948154674,
+    "note": "viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  }
+ ]
+}

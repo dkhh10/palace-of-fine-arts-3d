@@ -404,7 +404,11 @@ try {
 	// exactly the load plan - which Chrome reports as cancelled once the body is not read.  A
 	// cancelled GET is a different animal: it is an asset that started arriving and stopped, so it
 	// fails a scored capture like any other miss.  The method is recorded by the handler above.
-	const IGNORE = /favicon|^error: Failed to load resource|^requestfailed: HEAD \S+ net::ERR_ABORTED$/;
+	// 6b adds ONE more: `manifest_mobile.json` is an OPTIONAL sibling the mobile tier probes for, and
+	// its absence is a documented fallback the viewer logs ("staying on the DESKTOP asset set with the
+	// mobile render settings") rather than a broken capture.  A mobile manifest that exists and fails
+	// to parse is a different line in the viewer's own notes and is not ignored here.
+	const IGNORE = /favicon|^error: Failed to load resource|^requestfailed: HEAD \S+ net::ERR_ABORTED$|^httperror: 404 \S+manifest_mobile\.json$/;
 	const pageErrors = pageLog.filter( ( l ) => /^(error|pageerror|httperror|requestfailed):|Failed to execute/.test( l ) && ! IGNORE.test( l ) );
 	const sidecar = { out, url, station, size: [ W, H ], wall_s: ( Date.now() - t0 ) / 1000, info, stats, cost, perStation, probes, pixels, picks, orbits, walkProbes, breakdown, written, pageErrors, pageLog };
 	fs.writeFileSync( jsonOut, JSON.stringify( sidecar, null, 1 ) );
