@@ -530,7 +530,9 @@ def main():
         rep = gate5_tex.encode_set(todo, man, lowres, "etc1s", 2, "etc1s /2")
         lr_p = out / "lowres.json"
         lr = json.loads(lr_p.read_text()) if lr_p.exists() else {}
-        lr.setdefault("groups_and_mobile", dict(files={}, wall_s=0.0))
+        lr.setdefault("groups_and_mobile", dict(files={}, wall_s=0.0,
+                                                encoder=rep["encoder"], resize_div=rep["resize_div"],
+                                                dir=rep["dir"]))
         lr["groups_and_mobile"]["files"].update(rep["files"])
         lr["groups_and_mobile"]["wall_s"] = round(
             lr["groups_and_mobile"]["wall_s"] + rep["wall_s"], 1)

@@ -2206,3 +2206,77 @@ verbatim under their own heading: a reference to "item 37" means item 37 of the 
       `{count, same_as: "trees.far_mesh.placements", verified_pre_pack, verified_post_pack}`, because two
       lists that must be identical can only ever disagree. `lighting` says to reuse
       `trees.far_mesh.lighting` verbatim.
+
+## Phase 6b Gate 5 — load tiers, per-tier groups, mobile (branch `phase6b-export`, 2026-09-18)
+
+```sh
+# A: per-station, per-asset visibility (CPU, no render; ~310 s at 640x360)
+scripts/blender_run.sh 1800 -- --background \
+  .claude/worktrees/phase6-export/export/out/gate1/gate1_set.blend \
+  --python export/gate5_visibility.py -- --rays 640x360 --out export/out/gate5
+python3 export/gate5_tex.py --probe          # the ETC1S / quarter-res-UASTC measurement
+python3 export/gate5_tex.py --encode --tier0-div 2
+python3 export/tiers.py                      # desktop  -> out/gate5/manifest.json
+python3 export/tiers.py --mobile             # mobile   -> out/gate5/manifest_mobile.json
+python3 export/verify_glb.py --gate5 export/out/gate5
+python3 export/gate5_report.py               # docs/briefs/phase6b_export_report.md
+export/sync_main.sh                          # gate5 -> MAIN (no --delete)
+```
+**Order matters**: the desktop run `rm -rf`s `out/gate5/groups`, so it goes first and `--mobile` second.
+
+27. **The tiers, measured.** Desktop tier 0 **43.3 MB / 228 files**, tier 1 488.3 MB / 286, tier 2
+    69.4 MB / 50; total **601.1 MB** against the 671.0 MB the same look cost at Gate 3. Mobile total
+    **61.9 MB** (t0 40.7 / t1 11.8 / t2 9.4), ASTC-rule resident estimate **274 MB** against the
+    iPhone 16 Pro's 700 MB target. **0 files over Cloudflare Pages' 25 MiB cap** in either variant
+    (at Gate 3, `orn.glb` at 154.3 MB and `env.glb` at 38.1 MB were both over it).
+28. **`-tr` on every group, and why the first cut was wrong.** The first desktop cut packed the groups
+    the way `gltf_pack.sh` packs a class, with the Gate 1 maps embedded: the 16 ENV groups came to
+    **180.3 MB against env.glb's 38.1 MB**, because gltfpack embeds a copy of every map into every
+    group that reaches it and the bark, leaf and needle sets are shared by most of them. With `-tr`
+    a group is geometry alone (`env_g06` 11 100 000 B -> 409 892 B), each map is published once, and a
+    map can carry its own tier. The group `.gltf` is written INTO the groups directory because
+    gltfpack rewrites a kept URI relative to the OUTPUT file; `tiers.rewrite_glb_image_uris` then
+    rewrites the packed glb's JSON chunk so the URIs are relative to the PUBLISHED `out/gate5/groups`,
+    not to whichever worktree built them, and `verify_glb --gate5` re-checks the GLB framing byte by
+    byte afterwards.
+29. **The 86.3 MB of ORN Gate 1 normal maps are not published at all.** Every Gate 2 ORN set declares
+    `normal.replaces_gate1: orn_<proto>_normal`, and `web/src/pbr.js` (line ~157, `replaced_glb_normal`)
+    overwrites `normalMap` from the Gate 2 set on every ORN material — so at Gate 3 those 33 maps were
+    downloaded inside `orn.glb`, decoded, and thrown away. `gate5_split.py --drop-gate1-normals` removes
+    `normalTexture` from exactly the materials whose Gate 2 set declares the replacement (27 + 6 across
+    the ORN groups, 0 on ENV), so the payload loses 86.3 MB and **the rendered result is unchanged**:
+    the map that is dropped is the one the viewer was already replacing. `occlusionTexture` is never
+    dropped — pbr.js KEEPS the glb's aoMap (`kept_glb_ao`) and no Gate 2 set replaces it.
+30. **The tier-0 encoding, decided by measurement.** The brief offered "ETC1S KTX2 or quarter-res UASTC,
+    whichever is smaller at equal or better look". Neither dominated, so two intermediate ETC1S
+    resolutions were measured with them (bytes / RMS against the source png, in linear light, the
+    decoded image resampled back to the source resolution). **Half-resolution ETC1S is smaller AND
+    lower-error than quarter-res UASTC on 5 of 6 sampled maps**, and 8-15x smaller on the two normals
+    for +0.0005 RMS. Tier 0 and the entire mobile set use it; the numbers are in
+    `out/gate5/lowres.json` and the report.
+31. **What tier 0 does NOT carry, and why.** No lightmaps and no detail set (the first frame is allowed
+    to be a placeholder — the user's decision, docs/decisions.md 2026-09-18). **The probe moved to
+    tier 1**, against the brief's list: the six `.hdr` faces are 6.29 MB, tier 0 had 6.7 MB of headroom,
+    and the probe is the water's FALLBACK environment — the hero's water is the planar reflector. The
+    lead can move it back by one line in `tiers.assign_and_write` if the first frame's water looks wrong.
+    The `ENV_treeboard_*` stand-ins are in tier 1, not tier 0: the viewer hides them by default
+    (`?treeboards=0` since 6a) and draws those trees from the impostor atlases, which ARE in tier 0 at
+    half resolution — 0 hero-visible assets are missing from tier 0 once the boards are accounted for.
+32. **Mobile geometry.** ARCH and ORN have no LOD1 in the export set (Gate 1 is LOD0, and
+    `orn_lo_from_lod1` covers only the three attic panels), so the brief's fallback applies:
+    `gltfpack -si 0.5`, which is CPU and needs no Blender. Measured drawn triangles: arch **0.4723x**,
+    orn **0.6204x** of Gate 3. ENV is already `_LOD1`/`_LOD2` and ground is the terrain and lagoon bed,
+    where a simplifier would move the shoreline, so neither is simplified (1.0000x). The three lazy
+    foliage glbs (`env_trees`, `env_trees_lod1`, `env_shrubs`) are not published on mobile at all.
+    **Known compromise, for the QA round:** `-si` keeps UV2 interpolated but does not respect the
+    lightmap island borders, so a mobile ARCH/ORN lightmap may bleed at an island edge.
+33. **Paths.** Every path in v5 is relative to **MAIN's `out/gate5`**, not to the worktree that built it
+    (`gate5_common.pub_rel`). `tiers.rebase_gate3_paths` rewrites the four v4 entries that were relative
+    to `out/gate3` (`textures.gate3.ktx2_dir`, `probe.dir`, `sky.diffuse.hdr`, `materials.foliage.dir`)
+    and spells out the three lazy glbs; what it moved is recorded in `tiers.path_rebase`, never silently.
+34. **What the viewer has to do with this** (viewer brief, not done here): read `tiers.bytes` for the
+    loading-screen denominator; load `files` in array order, which is already (tier, hero coverage,
+    path); for a tier-0 texture key use `tiers.lowres.files[key].path` instead of the manifest's own
+    path and re-load the full file when tier 1 arrives; treat a tier-0 `glb.groups[*]` with
+    `placeholder: true` as replaceable by the tier-1 group of the same class; `?tier=mobile` selects
+    `manifest_mobile.json`.
