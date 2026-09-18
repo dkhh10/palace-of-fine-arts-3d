@@ -725,3 +725,13 @@ the same `/assets/...` path, so the viewer sees one origin either way. No custom
 runs `npx wrangler login` once, in the session, when the deploy script is ready (the lead asks; no credential is stored in the repo).
 Gate 5 briefs: docs/briefs/phase6b_export.md (tiers, per-station visibility, mobile manifest, ETC1S; branch phase6b-export) and
 docs/briefs/phase6b_viewer.md (progressive loading, tier switch, deploy script, Pages Function fallback; branch phase6b-viewer). Both Opus high.
+
+## 2026-09-18 · Gate 5 export merged (939eb53); tier-0 budget is wire bytes; the third delta was lead-verified, not re-reviewed
+The 50 MB initial payload is measured as Chrome's network log sees it (body + headers, Brotli where Pages compresses), which is what the QA brief reads.
+The export's estimate carries a measured 162 B per-request header allowance and counts .hdr/.glb/.cube/.wasm at disk size; desktop first frame 49 316 003 B,
+mobile 47 556 566 B, target 49 500 000 to leave margin for Chrome's count. Trim = 31 placeholder maps (largest 0.019 % of the hero frame) dropped from tier 0,
+their full-res files being in tier 1 anyway. The probe is in tier 0 (the viewer showed tier 0 without it as sky-lit blue on the colonnade and podium). The water
+ripple is procedural, so the tier-0 water differs only in what it reflects. The three `.001` shrub cards are drawn inside a gltfpack-merged plain node; their
+irradiance row cannot be keyed and they stay on the probe (3 of 1 379) — carried. Reviews r1 and r2 (MERGE WITH FIXES, all applied); the third delta (the wire
+pass) was verified by the lead against the MAIN manifests (first_frame_on_wire_bytes, tier0_within_target, unpublished 0, verify_gate5 fail [] on 2 540 assets)
+instead of a third reviewer round, to hold the budget; logged here as the deviation.
