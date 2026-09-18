@@ -111,8 +111,9 @@ export function resolveUrl( base, url ) {
 export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 	const notes = [];
 	const out = { present: false, count: 0, list: [], oversize: [], byUrl: new Map(), files: new Map(),
-		byKey: new Map(), lowres: new Map(), upgradeOf: new Map(), lowresFor: new Map(),
-		totals: {}, notes, declaredBytes: 0 };
+		byKey: new Map(), byKeyRows: new Map(), byBasename: new Map(),
+		lowres: new Map(), upgradeOf: new Map(), lowresFor: new Map(),
+		totals: {}, notes, declaredBytes: 0, foreign: 0 };
 	const rawTiers = pick( raw, 'tiers', 'load_tiers' );
 	const rawFiles = pick( raw, 'files', 'tiers.files' );
 	if ( ! rawTiers && ! ( rawFiles && typeof rawFiles === 'object' ) ) return out;
@@ -137,6 +138,13 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 			: Object.entries( rawFiles );
 		for ( const [ p, v ] of entries ) {
 			const e = entryOf( v ) || {};
+			// A row whose `tier` is not a NUMBER belongs to the other variant: the desktop plan carries
+			// 149 `kind: "mobile_only"` rows with `tier: "mobile"` and `desktop: false`, which exist so
+			// one deploy set can serve both, and which this variant must never fetch, tier, pair or
+			// count.  They are skipped outright rather than falling through to the "no tier declared
+			// means tier 0" rule, which would have put every one of them in the first payload's table.
+			if ( e.tier !== undefined && ! Number.isFinite( e.tier ) ) { out.foreign ++; continue; }
+			if ( e.desktop === false && ! /mobile/i.test( String( raw.tiers && raw.tiers.variant || '' ) ) ) { out.foreign ++; continue; }
 			const url = resolve( baseUrl, e.path || p );
 			if ( ! url ) continue;
 			const tier = Number.isFinite( e.tier ) ? e.tier : undefined;
@@ -156,6 +164,14 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 				key: e.key || null, order: e.order ?? null, why: e.why || null, lo };
 			out.files.set( url, row );
 			if ( row.key && ! out.byKey.has( row.key ) ) out.byKey.set( row.key, row );
+			// every row of this key, and the lowest-tier row per FILE NAME: the plan is the authority on
+			// which file a variant actually publishes for a texture, and the mobile manifest's
+			// `textures.gate2` block still spells the DESKTOP paths while its plan publishes
+			// half-resolution copies under tex_lo/ with the same key and the same base name.
+			if ( row.key ) { if ( ! out.byKeyRows.has( row.key ) ) out.byKeyRows.set( row.key, [] ); out.byKeyRows.get( row.key ).push( row ); }
+			const bn = url.split( '/' ).pop();
+			const prevBn = out.byBasename.get( bn );
+			if ( ! prevBn || ( row.tier ?? 0 ) < ( prevBn.tier ?? 0 ) ) out.byBasename.set( bn, row );
 			if ( tier !== undefined ) claim( url, tier );
 			if ( row.bytes ) out.declaredBytes += row.bytes;
 		}
@@ -332,6 +348,8 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 		if ( ! e ) continue;
 		out.oversize.push( { url: resolve( baseUrl, e.path ), path: e.path, bytes: e.bytes ?? null, reason: e.reason || null } );
 	}
+	if ( out.foreign ) notes.push( `manifest tiers: ${out.foreign} row(s) of the plan belong to the OTHER variant `
+		+ '(tier is not a number, or desktop:false) and are ignored here' );
 	out.present = out.list.length > 0 || out.files.size > 0;
 	out.count = out.list.length ? ( Math.max( ...out.list.map( t => t.tier ) ) + 1 )
 		: ( out.byUrl.size ? Math.max( ...out.byUrl.values() ) + 1 : 0 );
@@ -683,12 +701,30 @@ export function normaliseManifest( raw, baseUrl ) {
 	const joinDir = ( dir, p ) => resolveUrl( baseUrl, ( dir && ! p.startsWith( '/' ) ) ? `${String( dir ).replace( /\/$/, '' )}/${p}` : p );
 	const unresolvedKeys = [];
 	/** A texture reference: a KEY into textures.gate3/gate2.files (v4/v3) or a path (older shapes). */
+	/** The file THIS variant's plan publishes for a texture key, when the tables point elsewhere.
+	 *  The mobile manifest keeps the DESKTOP paths in `textures.gate2/gate3` and publishes
+	 *  half-resolution copies under `tex_lo/` with the same key; the plan is the authority on what
+	 *  exists, so a url the plan does not carry is replaced by the plan's lowest-tier row for that
+	 *  key.  On desktop the two agree and this never fires. */
+	const planRowFor = ( ref, url ) => {
+		if ( ! tiers.present || ! ref || ( url && tiers.files.has( url ) ) ) return null;
+		const rows = tiers.byKeyRows.get( ref );
+		if ( ! rows || ! rows.length ) return null;
+		return rows.slice().sort( ( a, b ) => ( a.tier ?? 0 ) - ( b.tier ?? 0 ) )[ 0 ];
+	};
+	let planRedirects = 0;
 	const resolveTexture = ( ref ) => {
 		if ( ! ref || typeof ref !== 'string' ) return null;
+		const redirect = ( url, meta ) => {
+			const row = planRowFor( ref, url );
+			if ( ! row ) return { url, meta };
+			planRedirects ++;
+			return { url: row.url, meta: { ...( meta || {} ), bytes: row.bytes ?? ( meta && meta.bytes ), tier: row.tier, from_plan: true } };
+		};
 		const g3 = filesG3[ ref ];
-		if ( g3 ) return { url: joinDir( dirG3, g3.path || `${ref}.ktx2` ), meta: g3 };
+		if ( g3 ) return redirect( joinDir( dirG3, g3.path || `${ref}.ktx2` ), g3 );
 		const g2 = filesG2[ ref ];
-		if ( g2 ) return { url: joinDir( dirG2, g2.path || `${ref}.ktx2` ), meta: g2 };
+		if ( g2 ) return redirect( joinDir( dirG2, g2.path || `${ref}.ktx2` ), g2 );
 		if ( Array.isArray( filesG1 ) ) {
 			const hit = filesG1.find( n => n === ref || n === `${ref}.ktx2` || ( typeof n === 'string' && n.startsWith( `${ref}.` ) ) );
 			if ( hit ) return { url: joinDir( dirG1, hit ), meta: null };
@@ -736,13 +772,24 @@ export function normaliseManifest( raw, baseUrl ) {
 			// v5: which tier this map arrives in, and the low-resolution stand-in an earlier tier
 			// ships for it (files[<path>].lo).  Both are null at v4, where every map is tier 0.
 			const fileRow = tiers.files.get( res.url ) || null;
+			// resolveTexture has already redirected the url to what THIS variant's plan publishes.
+			const planRow = res.meta && res.meta.from_plan ? { url: res.url, tier: res.meta.tier, bytes: res.meta.bytes } : null;
 			// Two spellings of the same thing: `files[path].lo` (per file) and `tiers.lowres.files[key]`
 			// (per texture key, which is what the export writes).  Either gives the earlier tier's
 			// stand-in for this map.
 			const byKeyLo = ( hasTextureKey && ref ) ? tiers.lowres.get( ref ) : null;
 			const lo = ( fileRow && fileRow.lo ) || byKeyLo || null;
-			set.maps[ slot ] = { url: res.url, srgb, declared, bytes,
-				tier: tierForUrl( tiers, res.url, Number.isFinite( res.meta && res.meta.tier ) ? res.meta.tier : 0 ),
+			set.maps[ slot ] = { url: planRow ? planRow.url : res.url, srgb, declared,
+				bytes: planRow ? planRow.bytes : bytes,
+				fromPlan: !! planRow,
+				// THE PLAN IS THE LIST OF WHAT EXISTS for this variant.  The mobile manifest's material
+				// sets name the DESKTOP full-resolution keys (the export says so), and those files are
+				// not in the mobile plan at all — treating them as "no tier declared, so tier 0" fetched
+				// 487 MB of desktop textures on the mobile variant.  A map that is not in the plan but
+				// has a stand-in that is takes the stand-in, whatever the tiers say.
+				inPlan: planRow ? true : ( tiers.present ? tiers.files.has( res.url ) : true ),
+				tier: planRow ? ( planRow.tier ?? 0 )
+					: tierForUrl( tiers, res.url, Number.isFinite( res.meta && res.meta.tier ) ? res.meta.tier : 0 ),
 				lo: lo && lo.url !== res.url ? { ...lo, srgb } : null,
 				key: hasTextureKey ? ref : null, w: res.meta && res.meta.w, h: res.meta && res.meta.h,
 				residentMb: res.meta && res.meta.resident_mb };
@@ -835,6 +882,8 @@ export function normaliseManifest( raw, baseUrl ) {
 		if ( groupExtras.length ) notes.push( `detail: ${groupExtras.length} merged group(s) list more than one source material, the first is used: ${groupExtras.join( '; ' )}` );
 	}
 
+	if ( planRedirects ) notes.push( `${planRedirects} texture key(s) redirected to the file THIS variant's `
+		+ 'plan publishes (the texture tables spell the other variant\'s paths)' );
 	const materials = {
 		mode: materialsMode,
 		detail,
