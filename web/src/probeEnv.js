@@ -140,7 +140,18 @@ export function applyProbeEnv( scene, envTexture, { note = () => {}, intensity =
 		// `pfaPatched` nor a lightMap either, so the probe would light it exactly as it lights the
 		// failed-atlas case above, and the missing bake would never be seen.  Same refusal.
 		const ownShort = ( gate3Report.own && gate3Report.own.unmatched ) || 0;
-		if ( failed || slotsShort || noUv2 || ownShort ) {
+		// 6b: a lightmap DEFERRED to a later load tier is not a failed one.  Its material was never
+		// patched (lightmaps.js leaves it on the environment path on purpose), so the probe lighting it
+		// is exactly right — it is the irradiance of everything with no baked light, and "no baked
+		// light YET" is that same case.  The count of deferred maps is subtracted before the refusal,
+		// so the rule still fires for a bake that is genuinely short.
+		const deferredSlots = ( gate3Report.deferred || [] ).filter( ( d ) => d.kind === 'slot' ).length;
+		const deferredOwn = ( gate3Report.deferred || [] ).filter( ( d ) => d.kind === 'own' ).length;
+		if ( deferredSlots || deferredOwn ) {
+			note( `probe env: ${deferredOwn} own map(s) and ${deferredSlots} slot atlas(es) are DEFERRED to a later `
+				+ 'load tier, not failed; the probe lights their surfaces until the tier lands' );
+		}
+		if ( failed || ( slotsShort && ! deferredSlots ) || noUv2 || ( ownShort && ! deferredOwn ) ) {
 			out.refused = `${failed} lightmap texture(s) failed, ${slotsShort} slot(s) matched but not applied, `
 				+ `${noUv2} slot instance(s) with no UV2, ${ownShort} declared lightmap(s) matched to no mesh `
 				+ `- the probe would make them look lit instead of black`;

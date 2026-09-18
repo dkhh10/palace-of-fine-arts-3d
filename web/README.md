@@ -1162,6 +1162,298 @@ is running, and it **refuses `--perf` outright**, because a frame time measured 
 is not a number anyone may score. **It must never be set for a capture that QA scores, and never for a
 performance pass.** `PFA_ALLOW_GPU=1` remains the blanket override and should not be used at all.
 
+# Phase 6b — load tiers, the device tier, and the deployment
+
+Nothing in 6b changes the Phase 5 look.  The delivery frame is byte-comparable before and after:
+the hero at 1920x1080 through the three-tier stub tiers against the same build on the v4 manifest is
+**MAE 0.0006 of 255, 0.0095 % of pixels differing by more than 1, luma ratio 1.00000**, with 329
+draws, 5 242 248 triangles and 1 819.1 MB resident on both sides.
+
+## The two axes: `?tier=` and `?tiers=`
+
+| | what it picks | values | default |
+|---|---|---|---|
+| `?tier=` | the ASSET SET | `desktop` / `mobile` / `auto` | `auto` — the probe in `src/device.js` |
+| `?tiers=` | how many LOAD TIERS of that set to fetch | `all` / `0` / `1` / … | `all` |
+
+`?tiers=0` boots tier 0 and stops: nothing streams, no lazy foliage glb is fetched, and
+`window.__pfaTiersReady` flips immediately.  That is how the tier-0 capture is taken.
+
+## What boots, and what streams
+
+1. **Tier 0** is the first presented frame: the glb groups whose `tier` is 0, the colour pipeline
+   (both sky equirects, the diffuse one and the LUT — forced to tier 0 whatever the manifest says,
+   because there is no first frame without a display transform), the hero probe, and the textures
+   whose own tier has arrived.  `window.__pfaReady` flips on that frame, exactly as before 6b; the
+   loading panel's denominator is tier 0's bytes.
+2. **Tiers 1..n** stream after that frame, in manifest order, behind a small readout (`#tiers`,
+   bottom right, hidden by `?hud=0` and removed when the last tier lands).  Each tier
+   - loads its own glb groups and runs the same post-geometry passes over the roots it brought
+     (`afterGeometry`): the Gate 3 lightmaps over the whole scene, chunking with the draw-call budget
+     carried across tiers, the PBR and detail passes over the new roots, the probe environment;
+   - upgrades the maps an earlier tier could only show as a factor or a low-resolution stand-in
+     (`upgradePbrSets`), swapping the full file onto the SAME material and freeing the old one;
+   - binds the lightmaps that were deferred with it.
+3. `window.__pfaTiersReady` flips when the last tier (and the lazy foliage that belongs to it) is in.
+   `tools/screenshot.mjs` waits for it, so a scored capture is always of the finished scene.
+
+**A material with no map yet is not a black material.**  Two rules make the tier-0 look honest:
+a PBR map that has not arrived leaves the manifest's `factor` in place (v3 rule 3 — the factor IS
+the map's baked mean), and a lightmap in a later tier is NOT attached and its material is NOT
+patched specular-only; it stays on the environment path, exactly like every material that has no
+baked map at all, until its tier lands.
+
+## The manifest v5 contract the viewer reads
+
+The export writes this shape (`export/out/gate5/manifest.json`, schema `pfa-phase6/5`), and
+`src/manifest.js` `readTiers` reads it; the other shapes below are accepted too, so the development
+stub and any later spelling keep working.
+
+```jsonc
+"glb": {
+  "groups": [                              // ONLY the classes that had to be split (orn, env)
+    { "id": "orn_t0", "cls": "orn", "path": "groups/orn_t0.glb", "bytes": 1521460, "nodes": 124 }, … ],
+  "per_class_gate3": { … } },              // the unsplit gate3 glbs, kept for reference, NOT loaded
+"tiers": {
+  "bytes": { "0": 43289847, "1": 488326492, "2": 69435010 },   // the loading screen's denominator
+  "files": { "0": 228, "1": 286, "2": 50 },                    // counts, not the plan
+  "boot_overhead_bytes": …,                // the manifest + /basis/ + the bundle (counted into tier 0)
+  "lowres": { "dir": "tex_lo", "files": { "<texture key>": { "path": …, "bytes": …, "px": 1024 } } },
+  "oversize": [] },
+"files": [                                 // THE PLAN, in load order
+  { "path": "groups/orn_t0.glb", "tier": 0, "kind": "glb_group:orn", "bytes": 1521460, "key": null },
+  { "path": "../gate1/arch.glb",  "tier": 0, "kind": "glb",          "bytes": 4613040 },
+  { "path": "tex_lo/x.ktx2",      "tier": 0, "kind": "gate2_lo",     "key": "gate2_…_albedo" }, … ]
+```
+
+What the viewer does with it:
+
+- **`files` is the load plan and the authority on what exists.**  It is read as an array (the
+  export's shape) or as a map keyed by path.  Its paths reach out of the gate5 folder — `../gate0`
+  for the LUT and sky, `../gate1` for the whole glbs, `../gate2` for the PBR sets, `../gate3` for the
+  lightmaps — which is why `web/tools/publish_set.mjs` builds the publish directory from the PLAN and
+  not from one folder.
+- **`glb.groups` holds only what was split.**  `arch.glb` and `ground.glb` ship whole and appear only
+  in the plan, so any `kind: "glb*"` row the groups do not name is added to the glb list; without
+  that the building itself never loads.  The three LAZY foliage glbs (`trees.far_mesh.glb`,
+  `trees.walkup_mesh.glb`, `shrubs.lod1.glb`) are in the plan as well and are **excluded** here —
+  `foliageLazy.js` loads them itself after the first frame; loading them twice drew the far-tree set
+  twice (606 draws and 16.5 M triangles against 329 and 5.2 M).
+- **Tiers.**  Three places may declare a file's tier — `files[].tier`, membership in a tier's own
+  `files` list, and the owning object's `tier` — and **the smallest wins**, because a tier is "the
+  latest moment this file may arrive".  **A file no tier mentions is tier 0**: an export that forgets
+  one ships a slower first payload, never a missing asset, and `__pfaInfo().tiers` says what it had to
+  assume.  `tiers.bytes` is the export's own per-tier total and is what the readout counts against;
+  without one the viewer sums the plan and says which it used.
+- **`tiers.lowres.files[key]`** is the tier-0 half-res ETC1S stand-in of a texture, keyed by the
+  TEXTURE KEY every material set already uses.  `files[path].lo` (per path) means the same thing and
+  is accepted too.  A stand-in pointing at the file it stands in for is not a variant and is ignored.
+- **`tiers.boot_overhead_bytes`** is what the page costs before any asset: the manifest, the KTX2
+  transcoder under `/basis/` and the bundle.  The browser fetches those, not the viewer's loaders, so
+  they go into both sides of the bar — already paid, because the script running is the proof they
+  arrived — and the denominator becomes the number the 50 MB budget is written in.
+- `glb` groups: `cls` is the lighting class (`WEB_glb_<class>`, the instance-irradiance lookup), `id`
+  is the identity, and the second group of a class becomes `WEB_glb_<class>_<id>`.
+- `glb.groups` is read BEFORE `glb.per_class`: a manifest carrying both is a v5 one keeping the old
+  block, and loading both would draw every mesh twice.
+
+### What the split costs, measured at the hero against the same build on the v4 manifest
+
+| | v4, one glb per class | v5, per-tier groups |
+|---|---|---|
+| draw calls | 329 | 428 |
+| triangles | 5 242 248 | 5 831 639 |
+| resident | 1 819.1 MB | 2 217.5 MB |
+
+gltfpack cannot instance across group boundaries, so a class split into three groups draws each
+prototype up to three times; that is the honest price of a 25 MiB per-file cap.
+
+### The two things the split broke, and where they stand
+
+1. **`lightmaps.instance_irradiance` is keyed to the node indices of ONE env glb** — gltfpack drops
+   names, so the glTF node index and the per-node row counts are the only key there is, and node 1 of
+   `env_t0` is a different mesh with a different row count.  **Fixed by the export** (`groups`, the
+   block re-keyed per group) and consumed here: the viewer binds one group per call, against the root
+   that carries it, **exactly once**, in the tier that brought it and BEFORE chunking splits its
+   instanced meshes — after chunking the row counts no longer match and `lightmaps.js` refuses the
+   array, which is right.  Measured on the gate5 manifest: 1 368 + 8 = **1 376 of 1 379** placements
+   over 25 nodes in `env_t0` + `env_t2`; the 3 `.001` cards are the export's known unmatched.  With no
+   `groups` block and env split across tiers the pass is skipped with a loud note instead.
+2. **A texture the GLB references itself had no upgrade path.**  With `gltfpack -tr` the leaf, bark
+   and ORN occlusion maps are external files named inside the glb, and no material set in the
+   manifest mentions them.  **Fixed both sides:** the export ships `tiers.lowres.files[key].full`, and
+   the viewer reads it in both directions — `upgradeOf` (stand-in → full) and `lowresFor` (full →
+   stand-in).  A glb names its texture at FULL resolution, so while that file's tier has not arrived
+   the KTX2 loader is served the stand-in instead, and `upgradeGlbTextures` puts the full file on the
+   same material when the tier lands.  Measured after tier 2 on the gate5 manifest:
+   `lowres_remaining: []` and `lowres_etc_textures: 0` — **nothing in the scene is still a
+   low-resolution encode**, and 94 glb-referenced maps were swapped.  Two details that made it work:
+   three's `LoaderUtils.resolveURL` does not normalise, so every url is canonicalised before any tier
+   or cache lookup (`canonUrl`), and the upgrade target is always the highest-tier file OUTSIDE
+   `tiers.lowres.dir` — a stand-in that shares a tier with its full file must never be picked as the
+   successor, or the sweep swaps full-resolution maps DOWN.
+
+### Known limits, measured and carried (phase6b_viewer_r1_review 8-12)
+
+- The FIRST consumer of a cached texture gets the cached object itself, not a clone, and the upgrade
+  passes set `colorSpace` / `wrap` / `flipY` on it; a later consumer's clone inherits that sampler
+  state.  Harmless for the sets shipped today (every user of a given file wants the same sampler);
+  the clean form is to clone for every consumer and keep the cached object pristine.
+- A rejected load is cached as a rejected promise: a transient network failure is permanent for that
+  url, with no retry.
+- `--r2 --dry-run` still removes the oversize files from the publish directory although nothing was
+  uploaded, so the final census and a locally served `deploy_out` are wrong for that combination.
+- `functions/assets/[[path]].js` handles GET only: a HEAD for an R2-only asset falls through to the
+  static assets and 404s, and an unsatisfiable Range returns 404 rather than 416.  The
+  Range / If-None-Match / 206 / 304 path itself is correct.  It is the documented fallback and is not
+  in use — every published file is under the 25 MiB cap.
+- `pixelRatioFor`'s 0.25 floor can exceed `maxDrawingBufferPx` above ~24 M CSS pixels, which no
+  device reaches; the iPhone 16 Pro solves to 1.40 Mpx, inside the 1.5 Mpx cap.
+
+`web/tools/stub_tiers.mjs` builds a v5 STUB from the v4 manifest (`node web/tools/stub_tiers.mjs` →
+`web/public/stub/gate5`, gitignored, `?manifest=/stub/gate5/manifest.json`).  It was how this path
+was written and measured before the export's gate5 existed, and it is still the fixture that proves
+the streaming machinery itself is neutral: against the same build on the v4 manifest the stub's three
+tiers gave **MAE 0.0006 of 255 and luma ratio 1.00000** at the hero, with draws, triangles and
+resident bytes identical.  It cannot split a glb and it makes no low-resolution variant, and it marks
+itself `tiers.stub` so the viewer says so in the boot log.
+
+## The device tier
+
+`src/device.js` decides `desktop` or `mobile` from the GPU's own evidence first and the user agent
+second, and every input is in the boot log and in `__pfaInfo().device`.  It is `mobile` on any of:
+a phone/tablet UA (including a Macintosh UA with touch points — iPadOS 13+ reports that); ASTC
+without S3TC or BPTC (a mobile tile GPU); `MAX_TEXTURE_SIZE <= 4096`; or a touch screen whose short
+side is at most 900 CSS px at devicePixelRatio 2 or more.  `?tier=` overrides it.
+
+The mobile tier takes `manifest_mobile.json` beside the desktop manifest (absent today: the viewer
+then keeps the desktop asset set, says so, and still applies the render settings — and an absent
+`manifest_mobile.json` is not a page error), plus these settings, each of which an explicit query
+parameter still overrides:
+
+| setting | value | why |
+|---|---|---|
+| drawing buffer | pixel ratio solved for <= 1.5 M px | 1170x2532 at dpr 3 would be 26 M px |
+| post chain | `none` (the LUT display pass still runs) | mist + bloom are three full-screen passes |
+| water | reflection draw set = **sky alone** (`?reflset=all`) | no second scene pass; the lagoon still ripples and reflects the sky with the right Fresnel, and no longer reflects the building |
+| trees | every tree is its impostor (`treemesh=0`, `fartreelight=0`, `walkupmesh=0`) | no near-tree mesh, and `env_trees*.glb` is never fetched |
+| shrubs | LOD2 cards only (`shrublod=0`) | `env_shrubs.glb` is never fetched |
+| impostors | the 1K atlas (`imp2k=0`) | half the atlas memory |
+
+Measured on this Mac at 1170x2532 with `?tier=mobile` on the DESKTOP asset set (there is no mobile
+manifest yet): 153 draws, 2 620 117 triangles, 16.60 ms, pixel ratio 0.712 for a 832x1801 = 1.498 M
+pixel drawing buffer, 1 495.9 MB resident.  The halved ETC1S set is the export's half of the < 700 MB
+target.
+
+## Performance: the stream costs nothing once everything is resident
+
+Same session, 2560x1440, gate4 perf settings, stations 1-6 (median presented frame time, ms):
+
+| | 1 | 2 | 3 | 4 | 5 | 6 | resident |
+|---|---|---|---|---|---|---|---|
+| v4 manifest, one tier | 31.00 | 36.40 | 36.70 | 24.70 | 32.20 | 35.50 | 1 948.2 MB |
+| stub, three tiers | 32.90 | 34.40 | 37.00 | 24.00 | 33.90 | 35.10 | 1 948.2 MB |
+| delta | +1.90 | -2.00 | +0.30 | -0.70 | +1.70 | -0.40 | 0 |
+
+Non-monotonic and inside the session drift the 6c A/B already measured; draws, triangles and
+resident bytes are identical at every station.
+
+## Deploying
+
+    web/deploy.sh --dry-run                       # assemble, verify, `wrangler deploy --dry-run`
+    web/deploy.sh --project pfa-walkthrough       # the real deploy (after `npx wrangler login`)
+    web/deploy.sh --dry-run --r2                  # the same with the oversize files going to R2
+
+**Workers static assets, not Pages.** wrangler 4.135 delegates every `wrangler pages ...` command to
+"the latest version of Cloudflare Pages, now part of Cloudflare Workers" and fails without an assets
+directory; the legacy path needs `--force` and is deprecated.  So `deploy.sh` writes
+`web/wrangler.jsonc` — an **assets-only Worker**: a name, a compatibility date and
+`assets.directory` pointing at the publish directory, with **no Worker script** — and deploys with
+`npx wrangler deploy --config web/wrangler.jsonc`.  `--dry-run` is a real wrangler flag there: it
+builds and validates and uploads nothing, which is what this script's `--dry-run` runs.  The staging
+URL is `https://<name>.<account>.workers.dev` and wrangler prints it on the real deploy.  The same
+limits hold (25 MiB per file, 20 000 files) and `_headers` is honoured the same way; static asset
+requests are free and unmetered on the free plan.  No credential is read or written by the script:
+it uses whatever `npx wrangler login` left in the user's own config.
+
+It builds `web/dist`, assembles `web/deploy_out` as the site plus one **hard link** per bake file at
+`assets/<gate>/...` (the urls the viewer already asks for; hard links because the bake is ~600 MB and
+the directory is rebuilt on every deploy), and checks the limits BEFORE the upload.
+
+- **`tiers.deploy_from`** (the export's wire pass) says the DESKTOP manifest's plan is the complete
+  deploy set — the half-resolution files only the mobile variant fetches included (`kind: mobile_lo`).
+  When it is present the mobile manifest is published as a FILE and never walked: walking it would
+  pull the full-resolution keys its material sets name, which the viewer redirects and never fetches.
+- **A missing file stops the deploy, and that guard is itself tested.**  `publish_set.mjs` exits 3
+  when the manifest names a file nothing answers, but it is the left side of a pipeline and zsh takes
+  a pipeline's status from its last command — so the `|| exit 4` guard was dead until `setopt
+  pipefail`.  Every dry run now runs `pipefail_selftest`, which feeds `link_set` a manifest naming one
+  missing file and refuses to continue unless that fails (it reports `rc 3`).
+- **`_headers`:** `assets/*` immutable for a year (a bake goes to a new gate directory, never in
+  place), **and after it** `/assets/*manifest*.json` and `/assets/*_status.json` at
+  `max-age=60, must-revalidate` — the last matching rule wins, and `*` spans `/`, so without those two
+  the load plan itself would be pinned for a year and a returning visitor would get a stale one.  The
+  site is `max-age=300`.  Deliberately **no `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-
+  Policy`** — measured, not assumed: three's `KTX2Loader` transfers ArrayBuffers to its worker pool
+  and neither it nor the basis transcoder mentions `SharedArrayBuffer`.
+- **Over 25 MiB:** `--r2` uploads exactly those files to an R2 bucket and leaves them out of the
+  upload; `functions/assets/[[path]].js` serves them at the SAME url from the `ASSETS_BUCKET` binding
+  with `Range` and `If-None-Match` passed through.  Under Workers the binding moves into the same
+  `wrangler.jsonc` (`r2_buckets`) with a small Worker script for `/assets/*` misses.  It is the
+  documented fallback and is **not in use**: every published file is under the cap.
+- **`web/tools/publish_set.mjs`** decides what is in the set from the plan's resolved paths (which
+  reach into gate0/1/2/3/5, not one folder), and reports anything it had to find by reference rather
+  than from `files[]`.  Against the wire-pass manifests it reports none: the plan is complete.
+
+**Measured, current gate5 manifests:** publish set **709 files, 615 MB, 0 over 25 MiB, 0 unresolved**;
+`wrangler deploy --dry-run` reads 724 files from the assets directory, finds no bindings and exits
+without uploading.
+
+### The initial payload, with its unit
+
+The 6b budget is **50 MB**, and the two readings of "MB" differ by 5 %:
+
+| | bytes | decimal MB | MiB |
+|---|---|---|---|
+| the export's model (`tiers.first_frame_transfer_bytes`) | 49 279 553 | 49.28 | 47.00 |
+| **measured on the wire** (`--net bytes_before_first_frame`) | **50 236 320** | **50.24** | **47.91** |
+
+So it is **inside 50 MiB and 236 kB over 50 000 000 decimal bytes**, and the report says which.  The
+whole difference from the export's model is per-request overhead, not asset bytes: 320 requests
+finish before the first frame (297 of them assets), and CDP's `encodedDataLength` counts response
+headers, which works out at ~2 990 B per request on the local HTTP/1.1 test server.  The asset bytes
+alone are 49.65 MB.  The levers, if the decimal figure has to come under: fewer tier-0 REQUESTS (the
+146 half-resolution stand-ins dominate the count, not the bytes), or measuring against the staging URL,
+where HTTP/2 or HTTP/3 header compression makes that overhead a fraction of what HTTP/1.1 spends.
+
+## Capturing a gate 5 round
+
+    web/tools/gate5.sh https://<project>.pages.dev      # or with no url: serves web/dist locally
+    PFA_TAG=gate5b web/tools/gate5.sh <url>             # a second round, different names
+
+It writes exactly the names `docs/briefs/qa_round_18.md` reads: `renders/web/<tag>_cam0N.png`
+(stations 1-6, 1920x1080, desktop), `<tag>_net.json`, `<tag>_perf.json` (1440p, gate4 settings,
+desktop) and `<tag>m_cam0N.png` (stations 1-6 at `?tier=mobile`, 1170x2532).  Same GPU guards as
+`gate4.sh`, re-checked before every Chrome session.
+
+`tools/screenshot.mjs --net PATH` is where the payload numbers come from: it records the wire bytes
+(CDP `encodedDataLength`, i.e. after Brotli/gzip, which is what the 50 MB budget is written in) of
+every request, the bytes that finished before the first frame, the time to that frame and to the
+last tier, and the viewer's own per-tier accounting.
+
+## Reading a tier load in `__pfaInfo()`
+
+`device` carries the tier, why it was chosen, the GL capabilities, the pixel ratio and the drawing
+buffer.  `tiers` carries `count`, `now`, `max`, `per_tier` (wall seconds, bytes and glbs per tier),
+the manifest's `declared_bytes`, `oversize`, `deferred_lightmaps`, the PBR `upgrades` per tier, and
+`stub` when the manifest is the development stub.
+
+One reporting difference to expect against a pre-6b capture: `patchedMaterials` counts more on a
+tiered load (87 against 65 at the hero), because the Gate 3 pass runs again at each tier and by then
+chunking has split the instanced meshes into more of them.  `lightmapsApplied` (16) and every
+rendered pixel are unchanged.
+
+
 ## Run
     export PFA_MAIN_ROOT="/path/to/main checkout"   # holds export/out (the bake output)
     npm install && npm run dev     # /assets/* served from $PFA_MAIN_ROOT/export/out, never copied

@@ -21,7 +21,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 
 import { makeStationCamera, stationMatrix, b2t, matrixMaxDiff } from './blenderCamera.js';
-import { normaliseManifest, applyUv2RelayStatus, WATER_Z } from './manifest.js';
+import { normaliseManifest, applyUv2RelayStatus, tierForUrl, WATER_Z } from './manifest.js';
+import { probeGl, probeEnv, chooseTier, pixelRatioFor, TIER_SETTINGS } from './device.js';
 import { patchBakedMaterial, attachLightMap } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater, reduceReflectionSet } from './water.js';
@@ -36,7 +37,7 @@ import { loadFarTrees, loadShrubLod1, loadFarTreeLighting, prototypeEbake, apply
 	markShrubLodRows } from './foliageLazy.js';
 import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
-import { applyPbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
+import { applyPbrSets, upgradePbrSets, upgradeGlbTextures, pbrPlan, formatName, texBytes, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
 import { applyGate3Lightmaps } from './lightmaps.js';
 
@@ -158,6 +159,12 @@ const CFG = {
 	bloomThreshold: qs.has( 'bloomthr' ) ? parseFloat( qs.get( 'bloomthr' ) ) : null,  // scene-linear
 	bloomRadius: qs.has( 'bloomrad' ) ? parseFloat( qs.get( 'bloomrad' ) ) : null,     // UnrealBloomPass radius
 	mist: qs.get( 'mist' ),                             // near,far in metres (the manifest carries neither)
+	// Phase 6b.  `?tier=` picks the ASSET SET (desktop | mobile | auto, default auto = the device
+	// probe in src/device.js).  `?tiers=` is the other axis: how many LOAD TIERS of that set to fetch
+	// — `all` (the default) streams every one after the first frame, `0` boots tier 0 and stops there,
+	// `1` stops after tier 1.  A manifest with no `tiers` block has one tier and both are no-ops.
+	deviceTier: ( qs.get( 'tier' ) || 'auto' ).toLowerCase(),
+	tiers: ( qs.get( 'tiers' ) || 'all' ).toLowerCase(),
 };
 
 function glInfo() {
@@ -178,10 +185,41 @@ const note = ( s ) => { log.push( s ); console.log( `[pfa] ${s}` ); };
 // ---------------------------------------------------------------------------- renderer + scene
 const container = document.getElementById( 'app' );
 const renderer = new THREE.WebGLRenderer( { antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true } );
-renderer.setPixelRatio( 1 );                            // deterministic screenshots
+renderer.setPixelRatio( 1 );                            // deterministic screenshots (the mobile tier raises it below)
 renderer.toneMapping = THREE.NoToneMapping;             // the LUT pass IS the display transform
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 container.appendChild( renderer.domElement );
+
+// ---------------------------------------------------------------------------- device tier (6b)
+// Decided BEFORE the composer exists, because EffectComposer captures the renderer's pixel ratio at
+// construction: a ratio set afterwards would size the canvas and leave every render target at the old
+// one.  Everything the choice was made from is kept for the boot log and __pfaInfo().device.
+const DEVICE = ( () => {
+	const gl = probeGl( renderer ), env = probeEnv();
+	const choice = chooseTier( { gl, env, query: CFG.deviceTier } );
+	return { ...choice, gl, env, settings: TIER_SETTINGS[ choice.tier ] || TIER_SETTINGS.desktop };
+} )();
+const MOBILE = DEVICE.tier === 'mobile';
+note( `device tier: ${DEVICE.tier} (${DEVICE.from}) — ${DEVICE.reasons.join( '; ' )}; `
+	+ `gl ${DEVICE.gl.renderer || '?'}, max texture ${DEVICE.gl.maxTextureSize}, `
+	+ `astc ${DEVICE.gl.astc} etc2 ${DEVICE.gl.etc2} s3tc ${DEVICE.gl.s3tc} bptc ${DEVICE.gl.bptc}, `
+	+ `dpr ${DEVICE.env.devicePixelRatio}, screen ${DEVICE.env.screen.join( 'x' )}, touch ${DEVICE.env.maxTouchPoints}` );
+// The mobile tier's render settings, applied ONLY where the url asked for nothing: an explicit
+// ?post= / ?treemesh= / ?shrublod= still wins, so every A/B keeps working on a phone.
+if ( MOBILE ) {
+	const s = DEVICE.settings, took = [];
+	const set = ( key, cfgKey, value ) => { if ( ! qs.has( key ) && value !== null && value !== undefined ) { CFG[ cfgKey ] = value; took.push( `${cfgKey}=${value}` ); } };
+	set( 'post', 'post', s.post );
+	set( 'treemesh', 'treeMesh', s.treeMesh );
+	set( 'fartreelight', 'farTreeLight', s.farTreeLight );
+	set( 'shrublod', 'shrubLod', s.shrubLod );
+	set( 'walkupmesh', 'walkupMesh', s.walkupMesh );
+	set( 'imp2k', 'imp2k', s.imp2k );
+	set( 'reflset', 'reflSet', s.reflSet );
+	set( 'reflres', 'reflRes', 'half' );
+	note( `mobile render settings: ${took.join( ', ' )}; the planar reflection draws the SKY only `
+		+ `(no second scene pass), the drawing buffer is capped at ${( s.maxDrawingBufferPx / 1e6 ).toFixed( 1 )} M pixels` );
+}
 
 const scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera( 50, 16 / 9, 0.1, 5000 );
@@ -211,12 +249,26 @@ const progress = {
 	unknown: [],
 	planned: new Set(),              // the urls measurePlan() HEADed; anything else is off-plan
 	extra: new Map(),                // off-plan url -> bytes counted, folded into the denominator
+	tier: null,                      // 6b: { index, base, total } while a later tier streams
 };
 const MB = ( b ) => ( b / 1e6 ).toFixed( 1 );
+// 6b: the streaming readout.  The loading PANEL belongs to tier 0 and goes away with the first frame;
+// tiers 1-2 arrive behind a finished picture, so they get one small line instead ("tier 1: 212 / 380
+// MB"), hidden with ?hud=0 like the HUD and removed the moment the last tier lands.
+const tierUi = document.getElementById( 'tiers' );
+function drawTierProgress() {
+	if ( ! tierUi ) return;
+	const s = progress.tier;
+	if ( ! s || ! CFG.hud ) { tierUi.classList.add( 'hidden' ); return; }
+	const got = Math.max( 0, progress.loaded - s.base );
+	tierUi.classList.remove( 'hidden' );
+	tierUi.textContent = `tier ${s.index}: ${MB( Math.min( got, s.total || got ) )} / ${MB( s.total )} MB`;
+}
 function drawProgress() {
 	const pct = progress.total ? Math.min( 100, 100 * progress.loaded / progress.total ) : 0;
 	bar.style.width = `${pct.toFixed( 1 )}%`;
 	uiText.textContent = `${MB( progress.loaded )} / ${MB( progress.total )} MB` + ( progress.label ? ` — ${progress.label}` : '' );
+	if ( progress.tier ) drawTierProgress();
 }
 /**
  * QA-14 minor: the bar read 639.0 MB loaded of 522.3 MB planned, 122 %.  measurePlan() HEADs every
@@ -295,7 +347,86 @@ let farTreeReport = null, shrubLod1Report = null, foliageTexReport = null, farTr
 let farTreeLighting = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
+// ---------------------------------------------------------------------------- load tiers (6b)
+// `now` is the highest tier that has fully arrived, `max` is how far this url goes (?tiers=).  A
+// manifest with no `tiers` block has one tier: `count` 1, nothing streams, and every code path below
+// behaves exactly as it did at v4.
+const tierState = { present: false, count: 1, max: Infinity, now: 0, tier0PlannedBytes: 0,
+	plan: null, per: [], deferredLightmaps: 0, streaming: false, done: false, stub: null,
+	loading: 0, substituted: 0 };
+let tierOf = () => 0;
+// The tier at which the scene is complete enough for the foliage / impostor passes: the later of the
+// env geometry and the impostor atlases, because applyFoliage produces the near-tree units the
+// impostor build consumes and neither pass may run twice.
+let sceneCompletionTier = 0;
+// where the hero probe's six HDR faces are: the viewer used to fetch them at boot whatever the
+// manifest said, which made an export that moved them to a later tier save nothing
+let probeTier = 0;
+// where the QA-12-1 detail tiling sets are: 23 MB of shared grain the export puts in tier 1, which
+// the viewer used to fetch at boot whatever the plan said (20.3 MB of the tier-0 payload)
+let detailTier = 0;
+const detailPending = [];
+
+function setupTiers() {
+	const t = manifest.tiers;
+	const askedAll = CFG.tiers === 'all' || CFG.tiers === '';
+	if ( ! askedAll && ! /^\d+$/.test( CFG.tiers ) ) note( `?tiers=${CFG.tiers} is neither "all" nor a number: streaming every tier` );
+	tierState.max = askedAll || ! /^\d+$/.test( CFG.tiers ) ? Infinity : parseInt( CFG.tiers, 10 );
+	tierState.present = !! ( t && t.present );
+	tierState.count = tierState.present ? Math.max( 1, t.count ) : 1;
+	// The colour pipeline is tier 0 whatever the manifest says: there is no first frame without a
+	// display transform, and the background sphere IS the first frame at five of the six stations.
+	const colour = new Set( [ manifest.sky.camera, manifest.sky.glossy, manifest.sky.diffuse,
+		manifest.lut && manifest.lut.url ].filter( Boolean ) );
+	tierOf = ( url ) => ( colour.has( url ) ? 0 : tierForUrl( manifest.tiers, url, 0 ) );
+	if ( t && t.present ) {
+		for ( const u of colour ) if ( tierForUrl( t, u, 0 ) > 0 ) note( `colour file ${u.split( '/' ).pop()} is declared tier ${tierForUrl( t, u, 0 )} in the manifest; the viewer loads it at tier 0 anyway` );
+		tierState.stub = ( manifest.raw.tiers && manifest.raw.tiers.stub ) || null;
+		if ( tierState.stub ) note( `TIERS ARE A STUB (${tierState.stub.generator}): ${tierState.stub.warning}` );
+		if ( t.oversize.length ) note( `${t.oversize.length} published file(s) over the host's per-file cap: `
+			+ t.oversize.map( o => `${o.path} ${( ( o.bytes || 0 ) / 1e6 ).toFixed( 1 )} MB` ).join( ', ' ) );
+	}
+	// Where the foliage / impostor passes belong: after the LAST env group (v5 splits env across
+	// tiers, and applyFoliage clusters crowns across the whole set — running it on half the trees and
+	// again on the other half would re-cluster what it had already patched) and after the impostor
+	// atlases, whose low-resolution stand-ins are what an early tier ships.
+	let envTier = 0, impTier = 0;
+	for ( const g of manifest.glbs ) if ( g.cls === 'env' ) envTier = Math.max( envTier, g.tier );
+	const protos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.prototypes ) || {};
+	for ( const p of Object.values( protos ) ) impTier = Math.max( impTier, tierOf( p.albedo ), tierOf( p.normalDepth ) );
+	sceneCompletionTier = Math.max( envTier, impTier );
+	const pf = manifest.gate3 && manifest.gate3.probe ? manifest.gate3.probe.faces : null;
+	probeTier = pf ? Math.max( ...pf.map( ( u ) => tierOf( u ) ) ) : 0;
+	const dsets = ( manifest.materials && manifest.materials.detail && manifest.materials.detail.sets ) || {};
+	const durls = Object.values( dsets ).flatMap( ( set ) => Object.values( set.maps || {} ).map( ( m ) => m.url ) ).filter( Boolean );
+	detailTier = durls.length ? Math.max( ...durls.map( ( u ) => tierOf( u ) ) ) : 0;
+	if ( detailTier > 0 ) note( `detail tiling sets are tier ${detailTier} (${durls.length} map(s)): the first frame `
+		+ 'shows the baked maps without the grain layer, and it is applied when that tier lands' );
+	if ( sceneCompletionTier > 0 ) note( `foliage + impostors run at tier ${sceneCompletionTier} `
+		+ `(last env group tier ${envTier}, impostor atlases tier ${impTier})` );
+
+	const byTier = {};
+	for ( const g of manifest.glbs ) ( byTier[ g.tier ] ||= [] ).push( g.cls );
+	if ( ! byTier[ 0 ] && manifest.glbs.length ) note( `NO glb is tier 0: the first frame has no geometry `
+		+ `(tiers present: ${Object.keys( byTier ).join( ', ' )})` );
+	note( `load tiers: ${tierState.count} declared, streaming up to ${tierState.max === Infinity ? 'all' : tierState.max}`
+		+ ` (?tiers=${CFG.tiers}); glbs ` + Object.entries( byTier ).map( ( [ k, v ] ) => `tier ${k}: ${v.join( '+' )}` ).join( ', ' )
+		+ ( tierState.present ? `; declared bytes ${Object.entries( manifest.tiers.totals ).map( ( [ k, b ] ) => `${k}=${MB( b || 0 )} MB` ).join( ', ' )}` : '' ) );
+}
+
+/** The bytes tier `t` is expected to cost: the manifest's own total when it states one (that is what
+ *  the export measured), otherwise the sum of what this viewer planned for it. */
+function tierBytes( t ) {
+	const declared = manifest.tiers && manifest.tiers.totals ? manifest.tiers.totals[ t ] : null;
+	if ( declared ) return declared + ( t === 0 ? ( manifest.tiers.bootOverhead || 0 ) : 0 );
+	return ( tierState.plan ? tierState.plan( t ) : [] ).reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+}
+
 let patchedMaterials = 0, lightmapsApplied = 0;
+// what the last whole-scene gate3 pass had already counted (its report is a total, not a delta)
+let gate3Counted = { own: 0, patched: 0 };
+// instance-irradiance groups already bound (one binding per group, ever)
+const iiBoundGroups = new Set();
 const unpatchedMaterials = new Set();
 const seenMats = new Set(), lightmapMaterials = [], noLightmapMaterials = [];
 let userControlled = false, currentStation = null;
@@ -344,12 +475,24 @@ function pickMaterialsMode() {
 
 async function boot() {
 	const t0 = performance.now();
-	const manifestUrl = new URL( CFG.manifestUrl, location.href ).href;
+	let manifestUrl = new URL( CFG.manifestUrl, location.href ).href;
 	let raw = null;
 	try {
 		const r = await fetch( manifestUrl, { cache: 'no-cache' } );
 		if ( r.ok ) raw = await r.json(); else note( `manifest ${r.status} at ${manifestUrl}` );
 	} catch ( e ) { note( `manifest fetch failed: ${e.message}` ); }
+	// 6b: the mobile ASSET SET is a sibling manifest (LOD1 geometry, halved ETC1S textures).  If the
+	// export has not written one yet the desktop set is kept and the mobile RENDER settings still
+	// apply — a phone then loads more than it should, and the log says so, which is a better failure
+	// than a blank page.
+	if ( MOBILE && DEVICE.settings.manifest ) {
+		const mUrl = new URL( DEVICE.settings.manifest, manifestUrl ).href;
+		try {
+			const r = await fetch( mUrl, { cache: 'no-cache' } );
+			if ( r.ok ) { raw = await r.json(); manifestUrl = mUrl; note( `mobile asset set: ${mUrl}` ); }
+			else note( `mobile manifest ${r.status} at ${mUrl}: staying on the DESKTOP asset set with the mobile render settings` );
+		} catch ( e ) { note( `mobile manifest fetch failed (${e.message}): staying on the DESKTOP asset set` ); }
+	}
 	manifest = normaliseManifest( raw, manifestUrl );
 	manifest.notes.forEach( note );
 	stations = manifest.stations;
@@ -410,17 +553,47 @@ async function boot() {
 			: 'neutral grey as exported (Gate 1 frames)' )
 		+ ( manifest.materials && manifest.materials.mode ? `; manifest declares "${manifest.materials.mode}"` : '' ) );
 
+	// load tiers (6b) ----------------------------------------------------------------------------
+	// tierState.max is how far this url goes; tierState.now is how far it has got.  Everything that
+	// asks "is this file mine yet?" goes through `tierOf`, and the COLOUR pipeline (the two sky
+	// equirects, the diffuse one and the LUT) is forced to tier 0 whatever the manifest says: there is
+	// no first frame without a display transform, and a background is 3.6 MB.
+	setupTiers();
+	// What tier `t` adds to the byte plan, and nothing an earlier tier already counted.  Lightmaps
+	// stay OFF the plan exactly as they were at v4 (an own map that matches no mesh is never fetched,
+	// and planning it would leave the bar short of 100 %); addBytes folds them into the denominator as
+	// they arrive.
+	const tierPlan = ( t ) => {
+		const p = [];
+		if ( t === 0 ) {
+			if ( manifest.sky.camera ) p.push( { url: manifest.sky.camera, kind: 'sky.camera', bytes: manifest.raw.sky?.camera?.bytes_hdr || 0 } );
+			if ( manifest.sky.glossy ) p.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
+			if ( manifest.sky.diffuse ) p.push( { url: manifest.sky.diffuse, kind: 'sky.diffuse', bytes: manifest.raw.sky?.diffuse?.bytes_hdr || 0 } );
+			if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) p.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
+		}
+		if ( ! CFG.testScene ) for ( const g of manifest.glbs ) if ( g.tier === t ) p.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
+		// The PBR set is part of the payload, so it is in the byte plan from the first frame of the bar.
+		if ( materialsMode === 'pbr' && ! CFG.testScene ) {
+			const before = t > 0 ? new Set( pbrPlan( manifest.materials.sets, t - 1 ).map( f => f.url ) ) : new Set();
+			p.push( ...pbrPlan( manifest.materials.sets, t ).filter( f => ! before.has( f.url ) ) );
+		}
+		return p;
+	};
+	tierState.plan = tierPlan;
+
 	// byte budget before anything downloads ------------------------------------------------------
 	const tp = performance.now();
-	const plan = [];
-	if ( manifest.sky.camera ) plan.push( { url: manifest.sky.camera, kind: 'sky.camera', bytes: manifest.raw.sky?.camera?.bytes_hdr || 0 } );
-	if ( manifest.sky.glossy ) plan.push( { url: manifest.sky.glossy, kind: 'sky.glossy', bytes: manifest.raw.sky?.glossy?.bytes_hdr || 0 } );
-	if ( manifest.sky.diffuse ) plan.push( { url: manifest.sky.diffuse, kind: 'sky.diffuse', bytes: manifest.raw.sky?.diffuse?.bytes_hdr || 0 } );
-	if ( CFG.lut && manifest.lut && manifest.lut.url && ! CFG.testLut ) plan.push( { url: manifest.lut.url, kind: 'lut', bytes: 0 } );
-	if ( ! CFG.testScene ) for ( const g of manifest.glbs ) plan.push( { url: g.url, kind: `glb:${g.cls}`, bytes: g.bytes || 0 } );
-	// The PBR set is part of the payload, so it is in the byte plan from the first frame of the bar.
-	if ( materialsMode === 'pbr' && ! CFG.testScene ) plan.push( ...pbrPlan( manifest.materials.sets ) );
-	await measurePlan( plan );
+	await measurePlan( tierPlan( 0 ) );
+	// The page's own cost (manifest + /basis/ + the bundle) when the manifest states it: already paid
+	// by the time this line runs, so it goes into BOTH sides of the bar rather than capping it.
+	if ( manifest.tiers && manifest.tiers.bootOverhead > 0 ) {
+		progress.total += manifest.tiers.bootOverhead;
+		progress.loaded += manifest.tiers.bootOverhead;
+		note( `boot overhead ${MB( manifest.tiers.bootOverhead )} MB counted into tier 0 (already downloaded: `
+			+ 'the manifest, the KTX2 transcoder and the bundle)' );
+		drawProgress();
+	}
+	tierState.tier0PlannedBytes = progress.total;
 	loadTimes.plan_s = ( performance.now() - tp ) / 1000;
 
 	// sky --------------------------------------------------------------------------------------
@@ -529,10 +702,17 @@ async function boot() {
 	window.addEventListener( 'resize', resize );
 	installControls();
 
-	// geometry: the glbs in the manifest's order, each one drawn as soon as it lands --------------
+	// geometry: TIER 0's glbs, in the manifest's order, each one drawn as soon as it lands ---------
 	const tg = performance.now();
-	if ( manifest.glbs.length && ! CFG.testScene ) await loadGlbs();
-	else {
+	const tier0Glbs = manifest.glbs.filter( ( g ) => g.tier === 0 );
+	if ( tier0Glbs.length && ! CFG.testScene ) {
+		const roots = await loadGlbs( tier0Glbs );
+		await afterGeometry( roots, 0 );
+	} else if ( manifest.glbs.length && ! CFG.testScene ) {
+		// Every glb is in a later tier: the first frame is the sky and the water, which is a manifest
+		// defect, not a viewer state.  It is said once, loudly, and the stream still runs.
+		note( `PFA_TIER0_NO_GEOMETRY: ${manifest.glbs.length} glb(s) and none in tier 0` );
+	} else {
 		buildTestScene( scene );
 		if ( CFG.testScene ) note( 'test scene (?test=1)' );
 		else {
@@ -548,53 +728,200 @@ async function boot() {
 	}
 	loadTimes.glb_s = ( performance.now() - tg ) / 1000;
 
-	// materials: the Gate 2 PBR texture sets, nearest material to THIS station first ---------------
-	if ( materialsMode === 'pbr' && glbRoots.length ) {
-		const tt = performance.now();
-		let drawn = 0;
-		const texturesBeforePbr = collectTextures( scene );
-		pbrReport = await applyPbrSets( {
-			scene, camera, sets: manifest.materials.sets, note,
-			loadTexture: ( url ) => {
-				progress.label = url.split( '/' ).pop();
-				return /\.ktx2$/i.test( url )
-					? getKTX2().loadAsync( url, onProgressFor( url ) )
-					: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
-			},
-			// progressive: the near materials are visible while the far ones are still downloading
-			onLoaded: ( m, applied, done, total ) => {
-				progress.label = `materials ${done}/${total}`;
-				if ( done - drawn >= 16 || done === total ) { drawn = done; renderFrame(); }
-			},
-		} );
-		// QA-12-1: the tiling grain layer on top of the baked maps, before the orphan sweep so a
-		// detail texture is never mistaken for an orphan.
-		if ( CFG.detail > 0 && manifest.materials.detail ) {
-			detailReport = await applyDetail( {
-				scene, detail: manifest.materials.detail, note,
-				projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
-				lodBias: CFG.detailBias, gain: CFG.detailGain, debug: parseInt( qs.get( 'detaildebug' ) || '0', 10 ),
-				synthetic: CFG.detailTest === 'noise',
-				loadTexture: ( url ) => {
-					progress.label = url.split( '/' ).pop();
-					return /\.ktx2$/i.test( url )
-						? getKTX2().loadAsync( url, onProgressFor( url ) )
-						: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
-				},
-			} );
+	// materials: the Gate 2 PBR texture sets ran inside afterGeometry(), over the roots tier 0
+	// brought and in nearest-material-first order.  A later tier runs the same pass over ITS roots and
+	// upgrades the maps this tier could only show as factors (streamTiers -> upgradePbrSets).
+
+	// QA-13-1, tier-aware (6b): the baked hero probe is the irradiance of everything with no baked
+	// light.  The export may put its six HDR faces in a later tier (6.3 MB); until they arrive those
+	// surfaces take the sky-diffuse PMREM, which is the documented ?probe=0 path — dimmer and flatter
+	// in the shade, never unlit.  `probeTier` is where the faces actually are.
+	if ( probeTier === 0 || ! ( manifest.gate3 && manifest.gate3.probe ) ) await setupProbeEnv();
+	else note( `probe env deferred to tier ${probeTier} (${manifest.gate3.probe.faces.length} face(s)); until then `
+		+ 'surfaces with no baked light take the sky-diffuse PMREM' );
+
+	// 6c foliage, the far-tree impostors and the far-tree lighting run ONCE, at the load tier that
+	// brings the env glb and the impostor atlases (tier 0 when the manifest has no tiers, which is
+	// every manifest up to v4 — the order there is unchanged).  They cannot be split across tiers:
+	// applyFoliage patches each leaf material exactly once and the impostor build needs the near-tree
+	// units that patch produces.
+	if ( sceneCompletionTier === 0 ) await setupFoliageAndImpostors();
+
+	applyReflectionAndFog();
+
+	// first frame -------------------------------------------------------------------------------
+	renderFrame();
+	requestAnimationFrame( () => {
+		renderFrame();
+		ui.style.display = 'none';
+		loadTimes.total_s = ( performance.now() - t0 ) / 1000;   // set BEFORE __pfaReady: the harness
+		window.__pfaReady = true;                                // reads __pfaInfo() the moment it flips
+		// 6b: the page's OWN first-frame time, in ms since the document started.  A harness that polls
+		// for __pfaReady notices it up to a poll late, and the tier-1 stream has begun by then, so
+		// "bytes before the first frame" measured from the poll is too high.  This is the honest mark.
+		window.__pfaReadyAt = performance.now();
+		tierState.per.push( { tier: 0, wall_s: loadTimes.total_s,
+			bytes: progress.loaded, planned: tierState.tier0PlannedBytes, glbs: glbRoots.length } );
+		note( `ready in ${loadTimes.total_s.toFixed( 2 )} s: ${MB( progress.loaded )} MB loaded of ${MB( progress.total )} MB planned `
+			+ `(plan ${loadTimes.plan_s.toFixed( 2 )} s, sky ${loadTimes.sky_s.toFixed( 2 )} s, lut ${loadTimes.lut_s.toFixed( 2 )} s, glb ${loadTimes.glb_s.toFixed( 2 )} s)`
+			+ ( tierState.count > 1 ? ` — TIER 0 of ${tierState.count}` : '' ) );
+		animate();
+		// 6b: tiers 1..n stream BEHIND the presented first frame, in manifest order.  The lazy foliage
+		// glbs are part of that stream now (they used to be started here directly); with no tiers in
+		// the manifest streamTiers() does exactly what this line did.
+		streamTiers();
+	} );
+}
+
+/**
+ * 6b: load tiers 1..max after the first frame is on screen.  Each tier brings its glb groups, the
+ * full-resolution files of the textures earlier tiers could only show as a factor or a low-resolution
+ * stand-in, and the lightmaps that were deferred with them; the scene-completion passes (foliage,
+ * impostors) run at the tier that brings their geometry.  Nothing here blocks a frame: every step is
+ * awaited between rendered frames, and `__pfaTiersReady` flips when the last one lands.
+ */
+async function streamTiers() {
+	window.__pfaTiersReady = false;
+	tierState.streaming = true;
+	try {
+		for ( let t = 1; t < tierState.count && t <= tierState.max; t ++ ) {
+		// EACH TIER IS ISOLATED.  A throw in afterGeometry / applyDetail / setupFoliageAndImpostors
+		// used to abort every LATER tier with one line, which is how a single bad bind cost the scene
+		// its trees.  The tier is recorded as failed, its step is named, and the stream goes on.
+		try {
+			const t0 = performance.now();
+			const before = progress.loaded;
+			tierState.loading = t;
+			progress.tier = { index: t, base: before, total: tierBytes( t ) };
+			drawTierProgress();
+			const plan = tierState.plan ? tierState.plan( t ) : [];
+			for ( const f of plan ) progress.planned.add( f.url );          // its bytes are not off-plan
+			progress.total += plan.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+			tierState.step = 'glbs';
+			const roots = await loadGlbs( manifest.glbs.filter( ( g ) => g.tier === t ) );
+			tierState.step = 'afterGeometry';
+			await afterGeometry( roots, t );
+			// the maps an earlier tier showed as a factor or a low-resolution stand-in, and the maps the
+			// GLBS reference themselves, which no manifest material set names
+			tierState.step = 'texture upgrade';
+			{
+				const beforeTex = collectTextures( scene );
+				const up = materialsMode === 'pbr'
+					? await upgradePbrSets( { scene, maxTier: t, loadTexture: loadAnyTexture, note } )
+					: { upgraded: 0, candidates: 0, bytes: 0, failed: [] };
+				const glbUp = await upgradeGlbTextures( { scene, maxTier: t, note, loadTexture: loadAnyTexture,
+					upgradeOf: manifest.tiers ? manifest.tiers.upgradeOf : null } );
+				if ( up.upgraded || glbUp.upgraded ) disposeOrphans( scene, beforeTex );
+				tierState.lowresRemaining = glbUp.remaining;
+				tierState.upgrades = [ ...( tierState.upgrades || [] ), { tier: t, ...up, failed: up.failed.length,
+					glb_textures: glbUp.upgraded, glb_textures_remaining: glbUp.remaining.length } ];
+			}
+			tierState.step = 'probe';
+			if ( t === probeTier ) await setupProbeEnv();
+			if ( t === detailTier && detailPending.length ) {
+				const roots = detailPending.splice( 0, detailPending.length );
+				for ( const root of roots ) {
+					detailReport = await applyDetail( {
+						scene: root, detail: manifest.materials.detail, note,
+						projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
+						lodBias: CFG.detailBias, gain: CFG.detailGain, debug: parseInt( qs.get( 'detaildebug' ) || '0', 10 ),
+						synthetic: CFG.detailTest === 'noise', loadTexture: loadAnyTexture } );
+				}
+				renderFrame();
+			}
+			tierState.step = 'foliage+impostors';
+			if ( t === sceneCompletionTier ) await setupFoliageAndImpostors();
+			if ( roots.length ) applyReflectionAndFog();
+			tierState.now = t;
+			const wall = ( performance.now() - t0 ) / 1000;
+			tierState.per.push( { tier: t, wall_s: wall, bytes: progress.loaded - before,
+				planned: progress.tier.total, glbs: roots.length } );
+			note( `tier ${t} in ${wall.toFixed( 2 )} s: ${MB( progress.loaded - before )} MB, ${roots.length} glb(s)`
+				+ ( tierState.deferredLightmaps ? `, ${tierState.deferredLightmaps} lightmap(s) still deferred` : '' ) );
 			renderFrame();
-		} else if ( manifest.materials.detail ) {
-			note( `detail layer OFF (?detail=${CFG.detail}); the manifest carries ${Object.keys( manifest.materials.detail.sets ).length} tiling set(s)` );
+			await new Promise( ( r ) => requestAnimationFrame( r ) );
+		} catch ( e ) {
+			const failed = { tier: t, error: e.message, step: tierState.step || 'unknown' };
+			tierState.failures = [ ...( tierState.failures || [] ), failed ];
+			note( `tier ${t} FAILED at ${failed.step}: ${e.message} — later tiers still load` );
+			console.error( `[pfa] tier ${t} failed at ${failed.step}`, e );
+			renderFrame();
 		}
-
-		// A replaced Gate 1 map (the ORN normals) is unreachable but still on the GPU: free it.
-		const freed = disposeOrphans( scene, texturesBeforePbr );
-		pbrReport.disposed = freed;
-		loadTimes.tex_s = ( performance.now() - tt ) / 1000;
-		note( `pbr textures in ${loadTimes.tex_s.toFixed( 2 )} s; `
-			+ `${freed.disposed} superseded Gate 1 texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
+		}
+		// The lazily loaded foliage glbs belong to the tier that owns the env geometry; with no tiers
+		// they run here exactly as they did before 6b.  With ?tiers= stopping short of that tier there
+		// is no foliage report for them to join to, so they are not fetched at all — a tier-0 capture
+		// must cost tier 0 and nothing else.
+		if ( sceneCompletionTier <= tierState.max ) await loadLazyFoliage();
+		else note( `lazy foliage not loaded: it belongs to tier ${sceneCompletionTier} and ?tiers=${CFG.tiers} stops at ${tierState.max}` );
+		// One more sweep AFTER the lazy foliage and the impostors: those passes load textures of their
+		// own, and anything they took as a stand-in would otherwise never be upgraded (the per-tier
+		// sweep ran before them).  It is a no-op when there is nothing left.
+		if ( tierState.max === Infinity && manifest.tiers && manifest.tiers.upgradeOf && manifest.tiers.upgradeOf.size ) {
+			const beforeTex = collectTextures( scene );
+			const late = await upgradeGlbTextures( { scene, maxTier: tierState.count - 1, note,
+				loadTexture: loadAnyTexture, upgradeOf: manifest.tiers.upgradeOf } );
+			if ( late.upgraded ) { disposeOrphans( scene, beforeTex ); renderFrame(); }
+		}
+	} catch ( e ) {
+		note( `tier stream FAILED: ${e.message}` );
+		tierState.error = e.message;
+	} finally {
+		progress.tier = null;
+		drawTierProgress();
+		tierState.streaming = false;
+		tierState.done = true;
+		window.__pfaTiersReady = true;
+		if ( tierState.count > 1 ) note( `tiers complete: ${tierState.per.map( p => `${p.tier}:${MB( p.bytes )} MB/${p.wall_s.toFixed( 1 )} s` ).join( ', ' )}`
+			+ `; ${MB( progress.loaded )} MB total` );
+		// THE ASSERTION: after the last tier nothing in the scene may still be wearing a file an
+		// earlier tier shipped as a low-resolution stand-in.  It is stated either way, so a capture
+		// can be checked without re-deriving it.
+		if ( tierState.max === Infinity && manifest.tiers && manifest.tiers.upgradeOf && manifest.tiers.upgradeOf.size ) {
+			const left = lowresStillInScene();
+			tierState.lowresRemaining = left;
+			// The url check only sees textures that HAVE a url.  A texture the glb embedded in a buffer
+			// view reaches three as a blob and keeps whatever encode the pack chose, so the format
+			// census is the other half of the same question: on the desktop tier every map is UASTC
+			// (ASTC on this GPU), and anything still in an ETC1S/ETC2 format is a low-resolution
+			// leftover that no viewer-side swap can reach.
+			const res = residentBytes();
+			const etc = Object.entries( res.texture_formats || {} )
+				.filter( ( [ f ] ) => /ETC/i.test( f ) ).reduce( ( a, [ , n ] ) => a + n, 0 );
+			tierState.lowresEtcTextures = etc;
+			note( left.length
+				? `LOW-RESOLUTION FILES STILL IN THE SCENE after the last tier: ${left.length} — `
+					+ left.slice( 0, 6 ).map( ( u ) => u.split( '/' ).pop() ).join( ', ' ) + ( left.length > 6 ? ' …' : '' )
+				: 'low-resolution check: 0 tier-0 stand-in textures remain in the scene after the last tier' );
+			if ( etc && DEVICE.tier !== 'mobile' ) {
+				// Name them: an ETC texture on the desktop tier is either a stand-in nothing upgraded or
+				// a file the export only ever published in that encode, and the two are different bugs.
+				const names = new Set();
+				scene.traverse( ( o ) => {
+					if ( ! o.isMesh ) return;
+					for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+						if ( ! m ) continue;
+						for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) {
+							const t2 = m[ k ];
+							if ( t2 && /ETC/i.test( formatName( t2 ) ) )
+								names.add( ( t2.userData && t2.userData.pfaUrl ) ? t2.userData.pfaUrl.split( '/' ).slice( -2 ).join( '/' ) : `(no url, ${m.name || k})` );
+						}
+					}
+				} );
+				tierState.lowresEtcNames = [ ...names ];
+				note( `low-resolution check: ${etc} texture(s) are STILL in an ETC format on the desktop tier: `
+					+ [ ...names ].slice( 0, 10 ).join( ', ' ) );
+			}
+		}
+		renderFrame();
 	}
+}
 
+/**
+ * The baked hero probe as the irradiance of everything with no baked light.  Extracted so a
+ * manifest that puts its faces in a later tier can run it there instead of at boot.
+ */
+async function setupProbeEnv() {
 	// QA-13-1: the baked hero probe as the irradiance of everything with no baked light ------------
 	// AFTER the PBR and detail passes (they may add an envMap or replace a material) and BEFORE the
 	// impostors, which are ShaderMaterials and take no environment at all.  Only in `baked` mode:
@@ -624,6 +951,14 @@ async function boot() {
 		note( 'probe env OFF (?probe=0): surfaces with no baked light stay on the sky-diffuse PMREM' );
 	}
 
+}
+
+/**
+ * The passes that need the WHOLE scene: the bake's far-tree lighting, the leaf shader and crown
+ * normals, the shrub LOD, and the far-tree impostors.  Run once, from boot() when the env geometry is
+ * in tier 0 and from streamTiers() when it is not.
+ */
+async function setupFoliageAndImpostors() {
 	// 6c round 2: the bake's far-tree lighting (a few kB, inline or a sidecar json).  Fetched HERE,
 	// not with the lazy glb, because the impostors are built below and their modulation mode depends
 	// on whether E_bake has been measured.
@@ -765,6 +1100,14 @@ async function boot() {
 		note( `${manifest.treesFar.length} far-tree quads suppressed (?billboards=0)` );
 	}
 
+}
+
+/**
+ * The Reflector's draw set and the water's airlight.  Re-run after every tier that adds geometry:
+ * both are traversals of the finished scene, and a mesh that arrives later must be excluded from the
+ * reflection on the same terms as one that was there at boot.
+ */
+function applyReflectionAndFog() {
 	// Item 6: cut the Reflector's DRAW SET.  After every glb, the impostors and the probe pass, so
 	// the traversal sees the final scene.  The main camera is re-made per station, so applyStation
 	// enables every layer on it too.
@@ -781,21 +1124,9 @@ async function boot() {
 	}
 
 	if ( water && CFG.reflSet !== 'full' ) reflectionSet = reduceReflectionSet( scene, water, camera,
-		{ note, orn: true, backdrop: CFG.reflSet === 'both' } );
+		{ note, orn: true, backdrop: CFG.reflSet === 'both', all: CFG.reflSet === 'all' } );
 	else if ( water ) note( 'reflection draw set NOT reduced (?reflset=full): the Reflector traverses the whole scene' );
 
-	// first frame -------------------------------------------------------------------------------
-	renderFrame();
-	requestAnimationFrame( () => {
-		renderFrame();
-		ui.style.display = 'none';
-		loadTimes.total_s = ( performance.now() - t0 ) / 1000;   // set BEFORE __pfaReady: the harness
-		window.__pfaReady = true;                                // reads __pfaInfo() the moment it flips
-		note( `ready in ${loadTimes.total_s.toFixed( 2 )} s: ${MB( progress.loaded )} MB loaded of ${MB( progress.total )} MB planned `
-			+ `(plan ${loadTimes.plan_s.toFixed( 2 )} s, sky ${loadTimes.sky_s.toFixed( 2 )} s, lut ${loadTimes.lut_s.toFixed( 2 )} s, glb ${loadTimes.glb_s.toFixed( 2 )} s)` );
-		animate();
-		loadLazyFoliage();
-	} );
 }
 
 /**
@@ -933,9 +1264,59 @@ function assignSpecularEnv() {
 }
 
 let ktx2Loader = null;
+/**
+ * A GLB names its external textures at FULL resolution — that is the file the look needs — but tier 0
+ * ships their half-resolution stand-ins (`tiers.lowres.files[key].full` says which file each stands
+ * in for).  When GLTFLoader asks for a file whose own tier has not arrived, it is served the stand-in
+ * instead; `upgradeGlbTextures` puts the full file on the same material when its tier lands.  Without
+ * this the tier-0 payload pulled the whole 91.7 MB full-resolution glb texture set.
+ */
+/**
+ * The same file, spelled one way.  three's LoaderUtils.resolveURL concatenates a glTF's base path
+ * and its image URI WITHOUT normalising, so a group in `groups/` asking for `../../gate1/tex_ktx2/x`
+ * reaches the loader as `/assets/gate5/groups/../../gate1/tex_ktx2/x`: the browser normalises it on
+ * the wire, but a Map keyed by the normalised url never matched it — the tier lookup missed and tier
+ * 0 pulled the full-resolution set.  Everything that keys on a url normalises it here first.
+ */
+function canonUrl( url ) {
+	if ( typeof url !== 'string' || /^(blob|data):/.test( url ) ) return url;
+	try { return new URL( url, location.href ).href; } catch ( e ) { return url; }
+}
+
+function tierSubstitute( url ) {
+	const t = manifest && manifest.tiers;
+	if ( ! t || ! t.lowresFor || ! t.lowresFor.size ) return url;
+	const here = Math.max( tierState.now || 0, tierState.loading || 0 );
+	url = canonUrl( url );
+	if ( tierOf( url ) <= here ) return url;               // its own tier has arrived: the real file
+	const lo = t.lowresFor.get( url );
+	if ( ! lo || lo.tier > here ) return url;              // no stand-in available yet: the real file
+	tierState.substituted ++;
+	return lo.url;
+}
+
+let ktx2RawLoad = null;
 function getKTX2() {
 	// One instance, kept alive: it owns a worker pool and also transcodes any .ktx2 lightmap.
-	if ( ! ktx2Loader ) ktx2Loader = new KTX2Loader( manager ).setTranscoderPath( '/basis/' ).detectSupport( renderer );
+	if ( ! ktx2Loader ) {
+		ktx2Loader = new KTX2Loader( manager ).setTranscoderPath( '/basis/' ).detectSupport( renderer );
+		ktx2RawLoad = ktx2Loader.load.bind( ktx2Loader );
+		// GLTFLoader asks THIS loader for every texture `gltfpack -tr` left external, and it caches
+		// per parse, so the same file reached the GPU once per glb group that referenced it.  Routing
+		// its `load` through the shared cache makes the groups share one upload (and stamps `pfaUrl`,
+		// which is what the tier upgrade of a glb-referenced texture is keyed on).
+		ktx2Loader.load = ( url, onLoad, onProgress, onError ) => {
+			// A glTF image stored in a BUFFER VIEW reaches the loader as a blob: url that GLTFLoader
+			// made and revokes itself.  It has no identity to cache on and no extension to switch on,
+			// so it goes straight to the real loader.  (An embedded texture also cannot be upgraded to
+			// a later tier: there is no url for the manifest to name.)
+			if ( /^blob:/.test( url ) ) return ktx2RawLoad( url, onLoad, onProgress, onError );
+			loadAnyTexture( tierSubstitute( url ) ).then( ( t ) => onLoad && onLoad( t ) ).catch( ( e ) => {
+				if ( onError ) onError( e ); else note( `ktx2 ${url.split( '/' ).pop()} failed: ${e.message}` );
+			} );
+			return ktx2Loader;
+		};
+	}
 	return ktx2Loader;
 }
 
@@ -943,19 +1324,30 @@ function getKTX2() {
  *  BRDF_Lambert, so the manifest's lightmap_scale (pi) is applied as lightMapIntensity. */
 let lightmapScale = 1.0;
 
-async function loadGlbs() {
+/**
+ * Load ONE GROUP of glbs — at v4 that is every glb in the manifest, at v5 it is the groups of one
+ * load tier — and return the roots it added.  What happens AFTER the geometry (lightmaps, chunking,
+ * the PBR and detail passes, the probe) is `afterGeometry`, because a later tier has to run the same
+ * passes over the meshes it brings and nothing else.
+ */
+async function loadGlbs( list = manifest.glbs ) {
 	lightmapScale = CFG.lmScale !== null ? CFG.lmScale : manifest.lightmapScale;
-	note( `lightMapIntensity = lightmap_scale ${lightmapScale.toFixed( 5 )}${CFG.lmScale !== null ? ' (?lmscale override)' : ''}` );
+	if ( ! glbRoots.length ) note( `lightMapIntensity = lightmap_scale ${lightmapScale.toFixed( 5 )}${CFG.lmScale !== null ? ' (?lmscale override)' : ''}` );
 	const loader = new GLTFLoader( manager ).setKTX2Loader( getKTX2() ).setMeshoptDecoder( MeshoptDecoder );
-	let first = true;
-	for ( const g of manifest.glbs ) {
+	const newRoots = [];
+	let first = ! glbRoots.length;
+	for ( const g of list ) {
 		const t = performance.now();
 		progress.label = g.name;
 		try {
 			const buf = await fetchBuffer( g.url );
 			const base = g.url.slice( 0, g.url.lastIndexOf( '/' ) + 1 );
 			const gltf = await loader.parseAsync( buf, base );
-			gltf.scene.name = `WEB_glb_${g.cls}`;
+			// The root name is the lighting CLASS, because reduceReflectionSet and the instance
+			// irradiance both look a class up by name.  v5 may ship several GROUPS of one class, and
+			// two roots may not share a name, so the second group onward carries its group key too.
+			gltf.scene.name = scene.getObjectByName( `WEB_glb_${g.cls}` )
+				? `WEB_glb_${g.cls}_${g.group || g.order}` : `WEB_glb_${g.cls}`;
 			// Gate 4 item 1c: the glTF NODE INDEX is the only stable key gltfpack -mi leaves (it drops
 			// node names), and it is what lightmaps.instance_irradiance.nodes[].gltf_node refers to.
 			// GLTFLoader's parser.associations is the only place it survives, so it is stamped on the
@@ -969,8 +1361,11 @@ async function loadGlbs() {
 			// reaches a shader is 1/16 of its real value until this undoes it on the attribute.
 			// See src/uvDequant.js.  ?uvdq=0 restores the broken behaviour for an A/B.
 			uvDequantReport.push( { name: g.name, ...dequantizeUvs( gltf.scene, { note, enabled: CFG.uvDequant } ) } );
+			gltf.scene.userData.pfaGroup = g.group || null;
+			gltf.scene.userData.pfaClass = g.cls;
 			scene.add( gltf.scene );
 			glbRoots.push( gltf.scene );
+			newRoots.push( gltf.scene );
 			const r = processGltf( gltf, g );
 			r.bytes = buf.byteLength; r.wall_s = ( performance.now() - t ) / 1000;
 			glbReport.push( r );
@@ -987,31 +1382,129 @@ async function loadGlbs() {
 		renderFrame();
 		await new Promise( ( r ) => requestAnimationFrame( r ) );
 	}
+	return newRoots;
+}
+
+/** The loader every texture pass uses: KTX2 through the shared transcoder, HDR/EXR through their own,
+ *  everything else through TextureLoader, with the bytes counted into the progress bar either way. */
+function rawLoadTexture( url ) {
+	progress.label = url.split( '/' ).pop();
+	if ( /\.ktx2$/i.test( url ) ) {
+		// the ORIGINAL load: `loadAsync` calls `this.load`, which is the method the dedupe below
+		// replaces, so going through it here would recurse forever
+		const ktx = getKTX2();
+		return new Promise( ( resolve, reject ) => ktx2RawLoad( url, resolve, onProgressFor( url ), reject ) );
+	}
+	if ( /\.hdr$/i.test( url ) ) return new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) );
+	if ( /\.exr$/i.test( url ) ) return new EXRLoader( manager ).loadAsync( url, onProgressFor( url ) );
+	return new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+}
+
+/**
+ * ONE GPU UPLOAD PER URL, across every glb group and every manifest pass.
+ *
+ * GLTFLoader caches textures per PARSE, so a texture `gltfpack -tr` left external and two tier groups
+ * both reference was uploaded twice — and so was a lightmap or a PBR map whose two users were passes
+ * with their own little caches.  Measured at the hero on the v5 groups: 2 217 MB resident against
+ * 1 819 MB for the same scene as one glb per class.
+ *
+ * The cache holds the FIRST texture per url; every later user gets `clone()`, which copies the
+ * sampler state but shares `texture.source`.  three keys its WebGLTexture by source + sampler cache
+ * key and refcounts it (`usedTimes` in WebGLTextures.deallocateTexture), so identical users share one
+ * upload, a user that needs different sampler state gets its own — which is correct, not a leak — and
+ * disposing one clone cannot pull the texture out from under another.
+ */
+const textureCache = new Map();          // url -> Promise<THREE.Texture> (the first one loaded)
+const textureShare = { urls: 0, shared: 0, bytesSaved: 0 };
+function loadAnyTexture( rawUrl ) {
+	const url = canonUrl( rawUrl );
+	if ( ! textureCache.has( url ) ) {
+		textureShare.urls ++;
+		textureCache.set( url, rawLoadTexture( url ).then( ( t ) => {
+			t.userData.pfaUrl = url;     // the identity the glb-texture upgrade below is keyed on
+			return t;
+		} ) );
+		return textureCache.get( url );
+	}
+	return textureCache.get( url ).then( ( t ) => {
+		textureShare.shared ++;
+		textureShare.bytesSaved += texBytes( t );
+		const c = t.clone();             // shares `source`: one upload, independent sampler state
+		c.userData.pfaUrl = url;
+		return c;
+	} );
+}
+
+/**
+ * Everything that has to happen once a group of glbs is in the scene.  Called for tier 0 during boot
+ * and again for each later tier; `newRoots` is what that tier added (empty when a tier brings only
+ * textures), and `tier` is how far the load has got, which is what the lightmap and PBR passes test
+ * a file's own tier against.
+ */
+async function afterGeometry( newRoots, tier ) {
 	// Gate 3 (manifest v4): the baked lightmaps.  BEFORE chunking (a chunk inherits its slice of the
 	// per-instance slot attribute) and BEFORE the PBR / detail passes, which match on material NAME
 	// and so texture every clone this pass makes.
+	// It runs over the WHOLE scene, not over newRoots: a later tier's job is as much to bind the maps
+	// an earlier tier deferred as to light the meshes it brought.  The pass re-plans from scratch and
+	// is idempotent (see applyGate3Lightmaps), and the two irradiance passes are skipped on a re-run
+	// that added no geometry, since they would traverse the same meshes for the same result.
 	if ( manifest.gate3 && lightingMode === 'baked' ) {
-		gate3Report = applyGate3Lightmaps( {
+		// The per-placement irradiance binds to the glb `instance_irradiance.glb` names: with that glb
+		// in a later tier it is not an error that it is missing, it is simply not here yet.
+		const iiBlock = manifest.gate3.instanceIrradiance;
+		const iiGlb = iiBlock ? iiBlock.glb : null;
+		// v5: the per-GROUP re-keying.  Each group's nodes are indices into ITS glb, so each is bound
+		// against the root that carries that group and nothing is bound across files.  A group whose
+		// glb has not arrived yet is simply not in this list; the pass re-runs at its tier.
+		// A group is bound EXACTLY ONCE, in the tier that brought it and before chunking splits its
+		// instanced meshes: after chunking the per-node row counts no longer match the manifest's and
+		// the binder refuses the array (rightly — it would light each card from a neighbour's row).
+		const instanceGroups = [];
+		if ( iiBlock && iiBlock.groups ) {
+			for ( const [ id, grp ] of Object.entries( iiBlock.groups ) ) {
+				if ( iiBoundGroups.has( id ) ) continue;
+				const root = newRoots.find( ( r ) => r.userData.pfaGroup === id )
+					|| ( ! newRoots.length ? glbRoots.find( ( r ) => r.userData.pfaGroup === id ) : null );
+				if ( root ) { instanceGroups.push( { id, nodes: grp.nodes, placements: grp.placements, root } ); iiBoundGroups.add( id ); }
+			}
+		}
+		// The per-placement irradiance is keyed to the glTF NODE INDEX and the per-node row counts of
+		// the glb it was joined against (gltfpack drops names, so the index is the only key there is).
+		// With `groups` the manifest states that per group and each is bound to its own root; WITHOUT
+		// it, and with env split across tiers, the single-glb indices are meaningless and binding them
+		// would tint 1 379 shrubs from the wrong rows — so that case is skipped, loudly.
+		const envGroups = manifest.glbs.filter( ( g ) => g.cls === ( iiGlb || 'env' ) ).length;
+		const iiSplit = !! ( iiGlb && envGroups > 1 && ! instanceGroups.length );
+		const iiHere = ! iiGlb || instanceGroups.length > 0
+			|| ( ! iiSplit && !! scene.getObjectByName( `WEB_glb_${iiGlb}` ) );
+		if ( iiSplit && ! tier ) note( `gate4 instance irradiance SKIPPED: ${iiGlb} ships as ${envGroups} tier groups and the `
+			+ `manifest carries no per-group node indices (lightmaps.instance_irradiance.groups) — the shrub and reed `
+			+ `placements stay on the probe` );
+		const report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
-			vertexIrr: CFG.vertexIrr, instIrr: CFG.instIrr, shrubCov: CFG.shrubCov,
-			loadTexture: ( url ) => {
-				progress.label = url.split( '/' ).pop();
-				return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
-					: ( /\.(hdr)$/i.test( url ) ? new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) )
-						: ( /\.exr$/i.test( url ) ? new EXRLoader( manager ).loadAsync( url, onProgressFor( url ) )
-							: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) ) ) );
-			},
+			vertexIrr: CFG.vertexIrr, instIrr: iiHere ? CFG.instIrr : '0', shrubCov: CFG.shrubCov,
+			tierOf, maxTier: tier, skipIrradiance: ! newRoots.length,
+			instanceGroups: iiHere ? instanceGroups : [],
+			loadTexture: loadAnyTexture,
 		} );
-		await gate3Report.promise;
-		lightmapsApplied += gate3Report.own.applied;
-		patchedMaterials += gate3Report.own.applied + gate3Report.slots.meshes.length;
+		await report.promise;
+		if ( ! iiHere ) note( `gate3 instance irradiance postponed: ${iiGlb}.glb is in a later load tier` );
+		// The pass re-plans the WHOLE scene every time, so its counts are totals, not deltas: what a
+		// re-run adds is the difference against the last one, or a three-tier load would report three
+		// times the lightmaps it applied.
+		lightmapsApplied += report.own.applied - gate3Counted.own;
+		patchedMaterials += ( report.own.applied + report.slots.meshes.length ) - gate3Counted.patched;
+		gate3Counted = { own: report.own.applied, patched: report.own.applied + report.slots.meshes.length };
+		tierState.deferredLightmaps = report.deferred.length;
+		gate3Report = report;
 	}
 
 	// QA-11d-1: a site-spanning InstancedMesh passes the frustum test everywhere.  Split those
 	// batches into regional ones so a station that sees little of the site draws little of it.
-	chunkStats = { candidates: 0, split: 0, chunks: 0, added: 0, batches: [] };
+	chunkStats = chunkStats || { candidates: 0, split: 0, chunks: 0, added: 0, batches: [], spent: 0 };
 	const chunkArgs = ( CFG.chunk || '' ).split( ',' ).map( Number );
-	if ( CFG.chunk !== '0' ) {
+	if ( CFG.chunk !== '0' && newRoots.length ) {
 		const opts = {};
 		if ( chunkArgs.length && isFinite( chunkArgs[ 0 ] ) && chunkArgs[ 0 ] > 0 ) opts.minRadius = chunkArgs[ 0 ];
 		if ( isFinite( chunkArgs[ 1 ] ) ) opts.maxDepth = chunkArgs[ 1 ];
@@ -1019,9 +1512,10 @@ async function loadGlbs() {
 		if ( isFinite( chunkArgs[ 3 ] ) ) opts.budget = chunkArgs[ 3 ];
 		chunkStats.opts = opts;
 		// The budget is the ADDED draw calls over the WHOLE scene, so it has to be spent across the
-		// glbs, not per glb (each root would otherwise get the full allowance).
-		let left = opts.budget !== undefined ? opts.budget : 32;
-		for ( const root of glbRoots ) {
+		// glbs, not per glb (each root would otherwise get the full allowance) — and across TIERS too,
+		// so what earlier tiers spent is carried in chunkStats.added.
+		let left = ( opts.budget !== undefined ? opts.budget : 32 ) - chunkStats.added;
+		for ( const root of newRoots ) {
 			const s = chunkInstancedMeshes( root, { ...opts, budget: left } );
 			left -= s.added;
 			chunkStats.candidates += s.candidates; chunkStats.split += s.split;
@@ -1032,8 +1526,75 @@ async function loadGlbs() {
 			+ `(bounding radius >= ${opts.minRadius || 30} m, depth ${opts.maxDepth || 2}, gain ${opts.gain ?? 0.8}) `
 			+ `split into ${chunkStats.chunks} regional batches, `
 			+ `+${chunkStats.added} draw calls when every chunk is in frame` );
-	} else { note( 'instance chunking disabled (?chunk=0)' ); }
+	} else if ( CFG.chunk === '0' && ! tier ) { note( 'instance chunking disabled (?chunk=0)' ); }
 	finishMaterials();
+
+	// The Gate 2 PBR sets and the QA-12-1 detail layer, over the meshes THIS tier brought.  Passing
+	// the new root as the traversal root is what keeps a second tier from re-walking (and re-loading)
+	// materials an earlier one already textured; the tier UPGRADE of an existing material is a
+	// different pass (upgradePbrSets), run from streamTiers.
+	if ( materialsMode === 'pbr' && newRoots.length ) await applyMaterialPasses( newRoots, tier );
+
+	// QA-13-1: the baked hero probe as the irradiance of everything with no baked light, for the new
+	// meshes too (applyProbeEnv skips a material that already has it).
+	if ( probeTarget ) {
+		if ( CFG.probeSpec ) assignSpecularEnv();
+		for ( const root of newRoots ) applyProbeEnv( root, probeTarget.texture, { note: () => {}, gate3Report } );
+	}
+}
+
+/** The PBR + detail passes over one or more roots (Gate 2 / QA-12-1), tier-aware. */
+async function applyMaterialPasses( roots, tier ) {
+	const tt = performance.now();
+	const texturesBeforePbr = collectTextures( scene );
+	for ( const root of roots ) {
+		let drawn = 0;
+		const rep = await applyPbrSets( {
+			scene: root, camera, sets: manifest.materials.sets, note, maxTier: tier,
+			loadTexture: loadAnyTexture,
+			// progressive: the near materials are visible while the far ones are still downloading
+			onLoaded: ( m, applied, done, total ) => {
+				progress.label = `materials ${done}/${total}`;
+				if ( done - drawn >= 16 || done === total ) { drawn = done; renderFrame(); }
+			},
+		} );
+		pbrReport = pbrReport ? mergePbrReports( pbrReport, rep ) : rep;
+		// The detail layer waits for the tier its maps are in (they are shared tiling sets, not part of
+		// any one asset), and is applied to every root that was waiting when that tier lands.
+		if ( CFG.detail > 0 && manifest.materials.detail && detailTier > tier ) {
+			if ( ! detailPending.includes( root ) ) detailPending.push( root );
+		} else if ( CFG.detail > 0 && manifest.materials.detail ) {
+			detailReport = await applyDetail( {
+				scene: root, detail: manifest.materials.detail, note,
+				projection: CFG.detailProj, strength: CFG.detail, normalScale: CFG.detailNormal,
+				lodBias: CFG.detailBias, gain: CFG.detailGain, debug: parseInt( qs.get( 'detaildebug' ) || '0', 10 ),
+				synthetic: CFG.detailTest === 'noise',
+				loadTexture: loadAnyTexture,
+			} );
+			renderFrame();
+		} else if ( manifest.materials.detail && ! tier ) {
+			note( `detail layer OFF (?detail=${CFG.detail}); the manifest carries ${Object.keys( manifest.materials.detail.sets ).length} tiling set(s)` );
+		}
+	}
+	// A replaced Gate 1 map (the ORN normals) is unreachable but still on the GPU: free it.
+	const freed = disposeOrphans( scene, texturesBeforePbr );
+	if ( pbrReport ) pbrReport.disposed = freed;
+	loadTimes.tex_s += ( performance.now() - tt ) / 1000;
+	note( `pbr textures in ${( ( performance.now() - tt ) / 1000 ).toFixed( 2 )} s; `
+		+ `${freed.disposed} superseded texture(s) disposed, ${MB( freed.freed_bytes )} MB freed` );
+}
+
+/** Two PBR reports over disjoint roots, added up: the numbers are per scene, not per glb. */
+function mergePbrReports( a, b ) {
+	const out = { ...a };
+	for ( const k of [ 'materials_in_scene', 'matched', 'textures', 'unique_files', 'bytes', 'kept_glb_normal',
+		'replaced_glb_normal', 'kept_glb_ao', 'factored', 'constant_only' ] ) out[ k ] = ( a[ k ] || 0 ) + ( b[ k ] || 0 );
+	for ( const k of [ 'unmatched', 'order', 'colourspace_conflicts', 'failed', 'flat_normal_constant', 'without_uv1' ] )
+		out[ k ] = [ ...( a[ k ] || [] ), ...( b[ k ] || [] ) ];
+	out.formats = { ...a.formats };
+	for ( const [ f, n ] of Object.entries( b.formats || {} ) ) out.formats[ f ] = ( out.formats[ f ] || 0 ) + n;
+	out.sets_used = Math.max( a.sets_used || 0, b.sets_used || 0 );
+	return out;
 }
 
 /** Walk one loaded glb: count it, and put every MeshStandardMaterial on the right lighting path. */
@@ -1260,6 +1821,13 @@ function installControls() {
 
 function resize() {
 	const { w, h } = canvasSize();
+	// 6b: the mobile tier solves the pixel ratio for a drawing-buffer budget instead of taking the
+	// device's own (3 on the named iPhone).  Desktop stays at 1, which is what every capture uses.
+	const r = pixelRatioFor( w, h, DEVICE.settings.maxDrawingBufferPx, DEVICE.env.devicePixelRatio );
+	if ( Math.abs( renderer.getPixelRatio() - r ) > 1e-3 ) {
+		renderer.setPixelRatio( r );
+		if ( composer ) composer.setPixelRatio( r );          // EffectComposer caches it; setSize alone would not
+	}
 	renderer.setSize( w, h, false );
 	camera.aspect = w / h;
 	camera.updateProjectionMatrix();
@@ -1346,6 +1914,24 @@ window.__pfaInfo = () => ( {
 		offPlan: [ ...progress.extra.entries() ].map( ( [ url, b ] ) => ( { url, bytes: b } ) ),
 		files: progress.files.map( f => ( { kind: f.kind, bytes: f.bytes, sizeFrom: f.sizeFrom, name: f.url.split( '/' ).pop() } ) ) },
 	load_s: { ...loadTimes },
+	// 6b: which asset tier this device got and why, and how the load tiers streamed.
+	device: { tier: DEVICE.tier, from: DEVICE.from, reasons: DEVICE.reasons, gl: DEVICE.gl, env: DEVICE.env,
+		pixelRatio: renderer.getPixelRatio(),
+		drawingBufferPx: renderer.domElement.width * renderer.domElement.height },
+	tiers: { present: tierState.present, count: tierState.count, max: tierState.max === Infinity ? null : tierState.max,
+		now: tierState.now, streaming: tierState.streaming, done: tierState.done,
+		tier0_planned_bytes: tierState.tier0PlannedBytes, per_tier: tierState.per.slice(),
+		declared_bytes: manifest && manifest.tiers ? manifest.tiers.totals : null,
+		oversize: manifest && manifest.tiers ? manifest.tiers.oversize : [],
+		deferred_lightmaps: tierState.deferredLightmaps, upgrades: tierState.upgrades || [],
+		failures: tierState.failures || [],
+		lowres_remaining: tierState.lowresRemaining || [],
+		lowres_etc_textures: tierState.lowresEtcTextures ?? null,
+		lowres_etc_names: tierState.lowresEtcNames || [],
+		lowres_substituted: tierState.substituted,
+		texture_sharing: { urls: textureShare.urls, shared_users: textureShare.shared,
+			bytes_saved_estimate: textureShare.bytesSaved },
+		stub: tierState.stub, error: tierState.error || null },
 	glbs: glbReport.slice(),
 	uv_dequant: uvDequantReport.slice(),
 	resident: residentBytes(),
@@ -1397,16 +1983,41 @@ window.__pfaInfo = () => ( {
 	notes: log.slice(),
 } );
 
+/** Every texture in the scene whose url an earlier tier shipped as a low-resolution stand-in. */
+function lowresStillInScene() {
+	const up = manifest.tiers && manifest.tiers.upgradeOf;
+	if ( ! up || ! up.size ) return [];
+	const left = new Set();
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m ) continue;
+			for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) {
+				const u = m[ k ] && m[ k ].userData && m[ k ].userData.pfaUrl;
+				if ( u && up.has( u ) ) left.add( u );
+			}
+		}
+	} );
+	return [ ...left ];
+}
+
 /** Resident GPU-side bytes we can account for: unique geometries and unique textures in the scene.
  *  renderer.info.memory only counts objects, so this is the viewer's own sum, stated as an estimate:
  *  compressed textures are summed from their mip data, uncompressed ones as w*h*4*(4/3 with mips). */
 function residentBytes() {
-	const geos = new Set(), texs = new Set();
+	const geos = new Set(), texs = new Set(), sources = new Set();
 	let geometry = 0, texture = 0, instanceMatrices = 0;
+	let sharedTextures = 0;
 	const formats = {};
+	// Per SOURCE, not per texture object: two Texture clones that share `texture.source` are ONE
+	// upload on the GPU (three refcounts the WebGLTexture per source + sampler cache key), so counting
+	// them twice would report memory the card never spent.  `textures` still counts the objects.
 	const addTex = ( t ) => {
 		if ( ! t || texs.has( t ) ) return;
 		texs.add( t );
+		const src = t.source || t;
+		if ( sources.has( src ) ) { sharedTextures ++; return; }
+		sources.add( src );
 		const f = formatName( t );
 		formats[ f ] = ( formats[ f ] || 0 ) + 1;
 		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
@@ -1455,10 +2066,12 @@ function residentBytes() {
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
-		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size, texture_formats: formats,
+		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
+		texture_sources: sources.size, textures_sharing_a_source: sharedTextures, texture_formats: formats,
 		render_target_bytes: rtBytes, render_targets: rts,
 		total_bytes: Math.round( geometry + instanceMatrices + texture ) + rtBytes,
-		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
+		note: 'viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU '
+			+ 'upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
 			+ 'mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer',
 	};
 }

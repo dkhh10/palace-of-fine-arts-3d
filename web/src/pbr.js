@@ -94,7 +94,7 @@ export function materialsByDistance( scene, camera ) {
  *   note(string), onTexture(material, slot, texture, bytes) optional, concurrency
  * @returns {Promise<object>} report
  */
-export async function applyPbrSets( { scene, camera, sets, loadTexture, note, onLoaded, concurrency = 3 } ) {
+export async function applyPbrSets( { scene, camera, sets, loadTexture, note, onLoaded, concurrency = 3, maxTier = Infinity } ) {
 	const byKey = indexSets( sets );
 	const rows = materialsByDistance( scene, camera );
 	const work = [], unmatched = [], matchedKeys = new Set();
@@ -137,9 +137,17 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 	const runOne = async ( job ) => {
 		const { material: m, set } = job;
 		const applied = [];
-		for ( const [ slot, entry ] of Object.entries( set.maps ) ) {
+		// Phase 6b: what this material is wearing, so the tier upgrade knows what to replace and a
+		// second pass never re-downloads a file the material already has.
+		const state = m.userData.pfaPbr = m.userData.pfaPbr || { set, variants: {} };
+		state.set = set;
+		for ( const [ slot, full ] of Object.entries( set.maps ) ) {
 			// The ORN hi->lo normal and the AO baked into the glb stay unless the manifest replaces them.
 			if ( slot === 'aoMap' && m.aoMap ) { report.kept_glb_ao ++; continue; }
+			// Which FILE of this entry belongs to the tier that has arrived (null: the factor stands).
+			const entry = mapForTier( full, maxTier );
+			if ( ! entry ) { report.deferred = ( report.deferred || 0 ) + 1; continue; }
+			if ( entry.variant === 'lo' ) report.lo_variants = ( report.lo_variants || 0 ) + 1;
 			try {
 				// Claimed before the await: at concurrency > 1 two workers would otherwise both find
 				// the url unclaimed and the last write would win silently (review finding 8).
@@ -161,6 +169,7 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 				if ( slot === 'roughnessMap' ) m.roughness = 1.0;
 				if ( slot === 'metalnessMap' ) m.metalness = 1.0;
 				if ( slot === 'normalMap' && set.normalScale ) m.normalScale.set( set.normalScale, set.normalScale );
+				state.variants[ slot ] = entry.url;
 				applied.push( slot );
 				report.textures ++;
 					if ( ! counted.has( entry.url ) ) {
@@ -282,15 +291,158 @@ export function disposeOrphans( scene, before ) {
 	return { disposed: names.length, freed_bytes: freed, by_slot: bySlot, names: names.slice( 0, 12 ) };
 }
 
-/** Every texture file the PBR sets reference, for the byte plan (deduplicated). */
-export function pbrPlan( sets ) {
+/**
+ * Phase 6b: WHICH FILE of a map entry this tier gets.
+ *   - the full file, when its own tier has arrived;
+ *   - its `lo` low-resolution stand-in, when that has arrived and the full file has not;
+ *   - null, when neither has: the material keeps the manifest's FACTOR (v3 rule 3 — the factor is the
+ *     map's baked mean), which is exactly the right value to show before a texture exists.
+ * At v4, where every entry is tier 0 and carries no `lo`, this always returns the full file.
+ */
+export function mapForTier( entry, maxTier = Infinity ) {
+	if ( ! entry ) return null;
+	const tier = Number.isFinite( entry.tier ) ? entry.tier : 0;
+	if ( tier <= maxTier ) return { url: entry.url, srgb: entry.srgb, bytes: entry.bytes, variant: 'full', tier };
+	const lo = entry.lo;
+	if ( lo && lo.url && ( Number.isFinite( lo.tier ) ? lo.tier : 0 ) <= maxTier )
+		return { url: lo.url, srgb: entry.srgb, bytes: lo.bytes, variant: 'lo', tier: lo.tier ?? 0, standIn: !! lo.standIn };
+	return null;
+}
+
+/** Every texture file the PBR sets reference AT THIS TIER, for the byte plan (deduplicated). */
+export function pbrPlan( sets, maxTier = Infinity ) {
 	const seen = new Set(), files = [];
 	for ( const set of Object.values( sets ) ) {
 		for ( const [ slot, e ] of Object.entries( set.maps ) ) {
-			if ( seen.has( e.url ) ) continue;
-			seen.add( e.url );
-			files.push( { url: e.url, kind: `tex:${slot.replace( 'Map', '' )}`, bytes: e.bytes || 0 } );
+			const pick = mapForTier( e, maxTier );
+			if ( ! pick || seen.has( pick.url ) ) continue;
+			seen.add( pick.url );
+			files.push( { url: pick.url, kind: `tex:${slot.replace( 'Map', '' )}${pick.variant === 'lo' ? ':lo' : ''}`, bytes: pick.bytes || 0 } );
 		}
 	}
 	return files;
+}
+
+/**
+ * Phase 6b, the OTHER half of the tier upgrade: the textures the GLB references itself.
+ *
+ * With `gltfpack -tr` the leaf, bark and ORN occlusion maps are external files named inside the glb
+ * and nowhere in the manifest, so `upgradePbrSets` (which walks manifest material sets) cannot see
+ * them.  When tier 0 ships a glb pointing at the low-resolution `tex_lo` encode, the only identity
+ * those maps have is the URL they were loaded from — stamped on `texture.userData.pfaUrl` by the
+ * viewer's shared texture cache — and `manifest.tiers.upgradeOf` says which url supersedes it and
+ * when.  This swaps them on the same material, exactly like a manifest map.
+ *
+ * `remaining` is the assertion the boot log carries: after the last tier nothing in the scene may
+ * still be wearing a low-resolution file.
+ */
+export async function upgradeGlbTextures( { scene, maxTier, upgradeOf, loadTexture, note, concurrency = 3 } ) {
+	const report = { candidates: 0, upgraded: 0, bytes: 0, failed: [], remaining: [], maxTier };
+	if ( ! upgradeOf || ! upgradeOf.size ) return report;
+	const jobs = [], seen = new Set();
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m ) continue;
+			for ( const slot of MAT_SLOTS ) {
+				const t = m[ slot ];
+				const url = t && t.userData && t.userData.pfaUrl;
+				if ( ! url ) continue;
+				const up = upgradeOf.get( url );
+				if ( ! up ) continue;
+				report.candidates ++;
+				if ( up.tier > maxTier ) { report.remaining.push( url ); continue; }
+				const key = `${m.uuid}:${slot}`;
+				if ( seen.has( key ) ) continue;
+				seen.add( key );
+				jobs.push( { material: m, slot, from: t, to: up } );
+			}
+		}
+	} );
+	const counted = new Set();
+	let cursor = 0;
+	const worker = async () => {
+		while ( cursor < jobs.length ) {
+			const j = jobs[ cursor ++ ];
+			try {
+				const t = await loadTexture( j.to.url );
+				// the glb's own sampler state is the right one: only the pixels change
+				t.colorSpace = j.from.colorSpace;
+				t.wrapS = j.from.wrapS; t.wrapT = j.from.wrapT;
+				t.channel = j.from.channel;
+				t.flipY = j.from.flipY;
+				t.anisotropy = Math.max( t.anisotropy || 1, j.from.anisotropy || 1 );
+				t.needsUpdate = true;
+				j.material[ j.slot ] = t;
+				j.material.needsUpdate = true;
+				report.upgraded ++;
+				if ( ! counted.has( j.to.url ) ) { counted.add( j.to.url ); report.bytes += texBytes( t ); }
+			} catch ( e ) { report.failed.push( { url: j.to.url, error: e.message } ); }
+		}
+	};
+	await Promise.all( Array.from( { length: Math.max( 1, concurrency ) }, worker ) );
+	report.remaining = [ ...new Set( report.remaining ) ];
+	if ( note && ( report.upgraded || report.remaining.length ) )
+		note( `glb textures tier ${maxTier}: ${report.upgraded} map(s) swapped to their full-resolution file `
+			+ `(${( report.bytes / 1e6 ).toFixed( 1 )} MB)`
+			+ ( report.remaining.length ? `, ${report.remaining.length} still low-resolution (their tier has not landed)` : '' )
+			+ ( report.failed.length ? `; ${report.failed.length} FAILED` : '' ) );
+	return report;
+}
+
+/**
+ * Phase 6b tier upgrade: every material that is wearing a `lo` stand-in (or no map at all, only its
+ * factor) takes the file its entry names, now that `maxTier` has arrived.  The swap is on the SAME
+ * material, so nothing is rebuilt and no program is recompiled; the superseded stand-ins are disposed
+ * by the caller's `disposeOrphans` sweep, exactly like the Gate 1 maps the Gate 2 set replaced.
+ */
+export async function upgradePbrSets( { scene, maxTier, loadTexture, note, concurrency = 3 } ) {
+	const jobs = [];
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			const st = m && m.userData && m.userData.pfaPbr;
+			if ( ! st || jobs.some( ( j ) => j.material === m ) ) continue;
+			for ( const [ slot, e ] of Object.entries( st.set.maps ) ) {
+				const pick = mapForTier( e, maxTier );
+				if ( ! pick ) continue;
+				if ( st.variants[ slot ] === pick.url ) continue;         // already wearing this file
+				jobs.push( { material: m, set: st.set, slot, pick, from: st.variants[ slot ] || '(factor only)' } );
+			}
+		}
+	} );
+	const report = { candidates: jobs.length, upgraded: 0, from_lo: 0, from_factor: 0, bytes: 0, failed: [], maxTier };
+	const cache = new Map();
+	const get = ( url ) => { if ( ! cache.has( url ) ) cache.set( url, loadTexture( url ) ); return cache.get( url ); };
+	let cursor = 0;
+	const counted = new Set();
+	const worker = async () => {
+		while ( cursor < jobs.length ) {
+			const j = jobs[ cursor ++ ];
+			try {
+				const t = await get( j.pick.url );
+				t.colorSpace = j.pick.srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+				t.channel = 0;
+				if ( j.set.wrap === 'repeat' ) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+				t.anisotropy = Math.max( t.anisotropy || 1, 8 );
+				t.needsUpdate = true;
+				j.material[ j.slot ] = t;
+				if ( j.slot === 'map' ) j.material.color.setRGB( 1, 1, 1 );
+				if ( j.slot === 'roughnessMap' ) j.material.roughness = 1.0;
+				if ( j.slot === 'metalnessMap' ) j.material.metalness = 1.0;
+				if ( j.slot === 'normalMap' && j.set.normalScale ) j.material.normalScale.set( j.set.normalScale, j.set.normalScale );
+				j.material.needsUpdate = true;
+				j.material.userData.pfaPbr.variants[ j.slot ] = j.pick.url;
+				report.upgraded ++;
+				if ( j.from === '(factor only)' ) report.from_factor ++; else report.from_lo ++;
+				if ( ! counted.has( j.pick.url ) ) { counted.add( j.pick.url ); report.bytes += texBytes( t ); }
+			} catch ( e ) { report.failed.push( { url: j.pick.url, error: e.message } ); }
+		}
+	};
+	await Promise.all( Array.from( { length: Math.max( 1, concurrency ) }, worker ) );
+	if ( note && report.candidates ) note( `pbr tier ${maxTier}: ${report.upgraded}/${report.candidates} map(s) upgraded `
+		+ `(${report.from_factor} from the factor alone, ${report.from_lo} from a low-resolution stand-in), `
+		+ `${( report.bytes / 1e6 ).toFixed( 1 )} MB`
+		+ ( report.failed.length ? `; ${report.failed.length} FAILED: ${report.failed.slice( 0, 3 ).map( f => f.url.split( '/' ).pop() ).join( ', ' )}` : '' ) );
+	return report;
 }
