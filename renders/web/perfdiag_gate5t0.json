@@ -1,0 +1,1506 @@
+{
+ "generated": "2026-09-18T16:54:39.741Z",
+ "url": "http://127.0.0.1:50700/?station=1&size=2560x1440&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=0&tier=desktop&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
+ "size": [
+  2560,
+  1440
+ ],
+ "frames": 120,
+ "warmup": 24,
+ "gl": {
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+  "vendor": "Google Inc. (Apple)",
+  "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+ },
+ "schema": "pfa-phase6/5",
+ "lighting_mode": "baked",
+ "materials_mode": "pbr",
+ "materials": {
+  "materials_in_scene": 92,
+  "matched": 62,
+  "unmatched": [
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 32
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 33
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 34
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 34
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 35
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 36
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 38
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 40
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 40
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 41
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 44
+   },
+   {
+    "material": "MAT_reeds",
+    "distance_m": 51
+   },
+   {
+    "material": "MAT_shrub_dry",
+    "distance_m": 52
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 53
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 56
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 61
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 62
+   },
+   {
+    "material": "MAT_shrub_light",
+    "distance_m": 65
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 67
+   },
+   {
+    "material": "MAT_shrub",
+    "distance_m": 68
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 89
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 92
+   },
+   {
+    "material": "MAT_bark_eucalyptus",
+    "distance_m": 93
+   },
+   {
+    "material": "MAT_leaf_eucalyptus",
+    "distance_m": 96
+   },
+   {
+    "material": "MAT_bark_cypress",
+    "distance_m": 132
+   },
+   {
+    "material": "MAT_leaf_cypress",
+    "distance_m": 134
+   }
+  ],
+  "sets_in_manifest": 62,
+  "sets_used": 27,
+  "sets_unused": [
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade",
+   "MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged",
+   "MAT_EXP_ARCH_rotunda__MAT_column_rose",
+   "MAT_EXP_ARCH_rotunda__MAT_column_tan_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_inner",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+   "MAT_EXP_ARCH_rotunda__MAT_concrete_podium",
+   "MAT_EXP_ARCH_rotunda__MAT_dome_membrane",
+   "MAT_EXP_ARCH_rotunda__MAT_drum_band",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling",
+   "MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib",
+   "MAT_EXP_ARCH_site__MAT_concrete_podium",
+   "MAT_EXP_ARCH_site__MAT_paving",
+   "MAT_EXP_ENVBD__MAT_backdrop_building",
+   "MAT_EXP_ENVBD__MAT_backdrop_door_green",
+   "MAT_EXP_ENVBD__MAT_backdrop_forest",
+   "MAT_EXP_ENVBD__MAT_backdrop_hill",
+   "MAT_EXP_ENVBD__MAT_backdrop_roof",
+   "MAT_EXP_ENVBD__MAT_backdrop_roof_tile",
+   "MAT_EXP_ENVBD__MAT_backdrop_skylight",
+   "MAT_EXP_ENVBD__MAT_bird_white",
+   "MAT_EXP_ENVBD__MAT_lamp_post",
+   "MAT_EXP_ENVBD__MAT_lawn",
+   "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+   "MAT_EXP_ENV__ENV_lagoon_bed",
+   "MAT_EXP_ENV__ENV_terrain_ground",
+   "MAT_EXP_ENV__riprap",
+   "MAT_EXP_ORN__ORN_attic_panel_v3_LOD0_a",
+   "MAT_EXP_ORN__ORN_finial_v1_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_rosette_ceiling_v2_LOD0_a",
+   "MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a",
+   "MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a"
+  ],
+  "textures": 145,
+  "unique_files": 115,
+  "bytes": 56275112,
+  "kept_glb_normal": 0,
+  "replaced_glb_normal": 0,
+  "kept_glb_ao": 0,
+  "colourspace_conflicts": [],
+  "formats": {
+   "RGB_ETC2_Format": 115
+  },
+  "failed": [],
+  "factored": 62,
+  "constant_only": 0,
+  "flat_normal_constant": [],
+  "without_uv1": [],
+  "lo_variants": 56,
+  "deferred": 25,
+  "disposed": {
+   "disposed": 41,
+   "freed_bytes": 2568,
+   "by_slot": {
+    "map": 41
+   },
+   "names": [
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2",
+    "../../gate1/tex_ktx2/uv1_probe_grey.ktx2"
+   ]
+  },
+  "order_count": 62,
+  "nearest_first": [
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a",
+    "distance_m": 73.7,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ARCH_site__MAT_concrete_podium",
+    "distance_m": 28.8,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ENV__ENV_ground_colonnade_walk",
+    "distance_m": 0,
+    "maps": []
+   },
+   {
+    "rank": 1,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_building",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a",
+    "distance_m": 79.2,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ARCH_rotunda__MAT_concrete_ochre",
+    "distance_m": 59.1,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ENV__ENV_lagoon_bed",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap",
+     "normalMap"
+    ]
+   },
+   {
+    "rank": 2,
+    "material": "MAT_EXP_ENVBD__MAT_backdrop_roof",
+    "distance_m": 0,
+    "maps": [
+     "map",
+     "roughnessMap"
+    ]
+   }
+  ]
+ },
+ "chunking": {
+  "candidates": 29,
+  "split": 16,
+  "chunks": 48,
+  "added": 32,
+  "batches": 16,
+  "spent": 0,
+  "opts": {}
+ },
+ "detail": null,
+ "bytes": {
+  "loaded": 46943046,
+  "planned": 46943046,
+  "unknownSize": [],
+  "offPlan": [
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/uv1_probe_grey.ktx2",
+    "bytes": 499
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_attic_figure_v1_ao.ktx2",
+    "bytes": 145386
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_attic_panel_v1_ao.ktx2",
+    "bytes": 144499
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_attic_panel_v2_ao.ktx2",
+    "bytes": 143638
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_colonnade_v1_ao.ktx2",
+    "bytes": 160352
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_colonnade_v2_ao.ktx2",
+    "bytes": 161587
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_colonnade_v3_ao.ktx2",
+    "bytes": 160224
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_rotunda_v2_ao.ktx2",
+    "bytes": 167508
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_inner_v1_ao.ktx2",
+    "bytes": 162233
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_rotunda_v1_ao.ktx2",
+    "bytes": 168310
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_capital_rotunda_v3_ao.ktx2",
+    "bytes": 168501
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_drum_band_v1_ao.ktx2",
+    "bytes": 120276
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_corner_scroll_v2_ao.ktx2",
+    "bytes": 127520
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_frieze_rinceau_return_v3_ao.ktx2",
+    "bytes": 66023
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_frieze_rinceau_v3_ao.ktx2",
+    "bytes": 75611
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_frieze_rinceau_v1_ao.ktx2",
+    "bytes": 76329
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_frieze_rinceau_return_v1_ao.ktx2",
+    "bytes": 75561
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_winged_figure_v1_ao.ktx2",
+    "bytes": 105338
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_keystone_v3_ao.ktx2",
+    "bytes": 47336
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_keystone_v1_ao.ktx2",
+    "bytes": 47496
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_keystone_v2_ao.ktx2",
+    "bytes": 46956
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_maiden_v1_ao.ktx2",
+    "bytes": 107595
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_maiden_v3_ao.ktx2",
+    "bytes": 103567
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_maiden_v2_ao.ktx2",
+    "bytes": 111363
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_rosette_ceiling_v3_ao.ktx2",
+    "bytes": 44302
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_rosette_ceiling_v1_ao.ktx2",
+    "bytes": 45707
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_urn_niche_v1_ao.ktx2",
+    "bytes": 110439
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/orn_urn_v1_ao.ktx2",
+    "bytes": 128204
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/reeds.ktx2",
+    "bytes": 77724
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/reeds_nrm.ktx2",
+    "bytes": 27133
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/leaves_shrub.ktx2",
+    "bytes": 78640
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/leaves_shrub_nrm.ktx2",
+    "bytes": 47133
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/chinese_cedar_bark_diff_2k.ktx2",
+    "bytes": 165036
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/chinese_cedar_bark_rough_2k.ktx2",
+    "bytes": 18935
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/chinese_cedar_bark_disp_2k.ktx2",
+    "bytes": 133460
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/needles_cypress.ktx2",
+    "bytes": 66325
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/needles_cypress_nrm.ktx2",
+    "bytes": 29753
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/bark_bluegum_diff_2k.ktx2",
+    "bytes": 176742
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/bark_bluegum_rough_2k.ktx2",
+    "bytes": 63165
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/bark_bluegum_disp_2k.ktx2",
+    "bytes": 68618
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/leaves_eucalyptus.ktx2",
+    "bytes": 48276
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate5/tex_lo/leaves_eucalyptus_nrm.ktx2",
+    "bytes": 29128
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate3/probe/gate3_probe_hero_px.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate3/probe/gate3_probe_hero_nx.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate3/probe/gate3_probe_hero_pz.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate3/probe/gate3_probe_hero_ny.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate3/probe/gate3_probe_hero_py.hdr",
+    "bytes": 1048625
+   },
+   {
+    "url": "http://127.0.0.1:50700/assets/gate3/probe/gate3_probe_hero_nz.hdr",
+    "bytes": 1048625
+   }
+  ],
+  "files": [
+   {
+    "kind": "sky.camera",
+    "bytes": 3590278,
+    "sizeFrom": "HEAD",
+    "name": "sky_camera_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.glossy",
+    "bytes": 3661319,
+    "sizeFrom": "HEAD",
+    "name": "sky_glossy_4096x2048.hdr"
+   },
+   {
+    "kind": "sky.diffuse",
+    "bytes": 2097202,
+    "sizeFrom": "HEAD",
+    "name": "sky_diffuse_1024x512.hdr"
+   },
+   {
+    "kind": "lut",
+    "bytes": 7415365,
+    "sizeFrom": "HEAD",
+    "name": "lut_agx_high_contrast_65.cube"
+   },
+   {
+    "kind": "glb:orn",
+    "bytes": 1573076,
+    "sizeFrom": "HEAD",
+    "name": "orn_t0.glb"
+   },
+   {
+    "kind": "glb:arch",
+    "bytes": 4613040,
+    "sizeFrom": "HEAD",
+    "name": "arch.glb"
+   },
+   {
+    "kind": "glb:ground",
+    "bytes": 1959104,
+    "sizeFrom": "HEAD",
+    "name": "ground.glb"
+   },
+   {
+    "kind": "glb:env",
+    "bytes": 2116728,
+    "sizeFrom": "HEAD",
+    "name": "env_t0.glb"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 96320,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 29721,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 8823,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 123197,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 37913,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 2010,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 97500,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 29662,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 9582,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 121716,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 37272,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 2144,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 113802,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 34899,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 4188,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_rose_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 98853,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 29989,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 5328,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__column_tan_inner_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 140624,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 41751,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 1577,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_inner_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 137982,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 39872,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 13848,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__concrete_ochre_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 65775,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 25308,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 3806,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__dome_membrane_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 80601,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 27014,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 1396,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__drum_band_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 139457,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 39157,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 1371,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 154256,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 45365,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 1729,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 148724,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 43855,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 1914,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ARCH_site__concrete_podium_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 41285,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_building_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 36215,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_building_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 30891,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 41011,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 2286,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_door_green_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 37803,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 12085,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_roof_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 38739,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_skylight_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 46078,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__backdrop_skylight_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 19333,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__bird_white_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 6932,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENVBD__bird_white_roughness.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 26935,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 7039,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 2958,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_lagoon_bed_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 128012,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 9401,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 2103,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__ENV_terrain_ground_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 173779,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 47701,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 26855,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ENV__riprap_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 175950,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 46941,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 93568,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 169470,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 45558,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 117891,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 169572,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 45605,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 121201,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 172196,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 46158,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 128095,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 172757,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 46534,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 127634,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 166782,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 45755,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 127516,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 47281,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 131281,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 177841,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 47331,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 131968,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 179667,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 47572,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 130691,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 176797,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 47818,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 132033,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 168700,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 45227,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 109180,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 162129,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 44342,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 106734,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 76203,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 26312,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 59882,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 149670,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 41522,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 80614,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 147466,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 41320,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 84417,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 142975,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 40951,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 80503,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 157060,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 43718,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 104775,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 137496,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 41080,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 102451,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2"
+   },
+   {
+    "kind": "tex:map:lo",
+    "bytes": 134430,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2"
+   },
+   {
+    "kind": "tex:roughness:lo",
+    "bytes": 38577,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2"
+   },
+   {
+    "kind": "tex:normal:lo",
+    "bytes": 66675,
+    "sizeFrom": "HEAD",
+    "name": "gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2"
+   }
+  ]
+ },
+ "load_s": {
+  "plan_s": 0.050300000071525575,
+  "sky_s": 0.5625,
+  "lut_s": 0.058300000071525575,
+  "glb_s": 0.7072000000476837,
+  "tex_s": 0.30389999997615813,
+  "total_s": 1.5881000000238419
+ },
+ "glbs": [
+  {
+   "name": "orn_t0.glb",
+   "cls": "orn",
+   "url": "http://127.0.0.1:50700/assets/gate5/groups/orn_t0.glb",
+   "meshes": 27,
+   "instancedMeshes": 27,
+   "instances": 402,
+   "tris": 1017205,
+   "materials": 27,
+   "hiddenBoards": 0,
+   "bytes": 1573076,
+   "wall_s": 0.12129999995231629
+  },
+  {
+   "name": "arch.glb",
+   "cls": "arch",
+   "url": "http://127.0.0.1:50700/assets/gate1/arch.glb",
+   "meshes": 29,
+   "instancedMeshes": 17,
+   "instances": 552,
+   "tris": 947622,
+   "materials": 17,
+   "hiddenBoards": 0,
+   "bytes": 4613040,
+   "wall_s": 0.04560000002384186
+  },
+  {
+   "name": "ground.glb",
+   "cls": "ground",
+   "url": "http://127.0.0.1:50700/assets/gate1/ground.glb",
+   "meshes": 4,
+   "instancedMeshes": 0,
+   "instances": 0,
+   "tris": 113043,
+   "materials": 4,
+   "hiddenBoards": 0,
+   "bytes": 1959104,
+   "wall_s": 0.023100000023841858
+  },
+  {
+   "name": "env_t0.glb",
+   "cls": "env",
+   "url": "http://127.0.0.1:50700/assets/gate5/groups/env_t0.glb",
+   "meshes": 36,
+   "instancedMeshes": 29,
+   "instances": 1475,
+   "tris": 287177,
+   "materials": 14,
+   "hiddenBoards": 97,
+   "bytes": 2116728,
+   "wall_s": 0.03439999997615814
+  }
+ ],
+ "billboards": null,
+ "stations": [
+  {
+   "station": 2,
+   "name": "CAM_qa_02_lagoon_ne_threequarter",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 23.399999976158142,
+    "mean": 27.973109243296776,
+    "p95": 26.200000047683716,
+    "min": 5.5,
+    "max": 541.0999999046326,
+    "frames": 119
+   },
+   "fps_presented": 42.735042778584734,
+   "gpu_cost_ms": {
+    "median": 1.5,
+    "mean": 2.135000000397364,
+    "p95": 4.699999928474426,
+    "frames": 60
+   },
+   "fps_uncapped": 666.6666666666666,
+   "draw_calls": 217,
+   "triangles": 3380109,
+   "programs": 38,
+   "info_memory": {
+    "geometries": 111,
+    "textures": 181
+   },
+   "resident": {
+    "geometry_bytes": 37191652,
+    "instance_matrix_bytes": 155456,
+    "texture_bytes": 145929320,
+    "geometries": 107,
+    "textures": 176,
+    "texture_sources": 161,
+    "textures_sharing_a_source": 15,
+    "texture_formats": {
+     "RGB_ETC2_Format": 153,
+     "RGBA_ASTC_4x4_Format": 3,
+     "RGBA_ETC2_EAC_Format": 4,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 627086220,
+    "note": "viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  },
+  {
+   "station": 3,
+   "name": "CAM_qa_03_colonnade_walk",
+   "size": [
+    2560,
+    1440
+   ],
+   "file": null,
+   "frame_ms": {
+    "median": 23.299999952316284,
+    "mean": 28.294117647058822,
+    "p95": 26.100000023841858,
+    "min": 3.899999976158142,
+    "max": 574.2000000476837,
+    "frames": 119
+   },
+   "fps_presented": 42.91845502345542,
+   "gpu_cost_ms": {
+    "median": 1.6999999284744263,
+    "mean": 2.0500000019868216,
+    "p95": 2.200000047683716,
+    "frames": 60
+   },
+   "fps_uncapped": 588.2353188669815,
+   "draw_calls": 229,
+   "triangles": 3529205,
+   "programs": 38,
+   "info_memory": {
+    "geometries": 114,
+    "textures": 181
+   },
+   "resident": {
+    "geometry_bytes": 37191652,
+    "instance_matrix_bytes": 155456,
+    "texture_bytes": 145929320,
+    "geometries": 107,
+    "textures": 176,
+    "texture_sources": 161,
+    "textures_sharing_a_source": 15,
+    "texture_formats": {
+     "RGB_ETC2_Format": 153,
+     "RGBA_ASTC_4x4_Format": 3,
+     "RGBA_ETC2_EAC_Format": 4,
+     "RGBAFormat (uncompressed)": 1
+    },
+    "render_target_bytes": 443809792,
+    "render_targets": [
+     {
+      "what": "composer.renderTarget1",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "composer.renderTarget2",
+      "size": [
+       2560,
+       1440
+      ],
+      "samples": 4,
+      "bytes": 147456000
+     },
+     {
+      "what": "water.Reflector",
+      "size": [
+       1024,
+       1024
+      ],
+      "samples": 4,
+      "bytes": 41943040
+     },
+     {
+      "what": "PMREM cubeUV (glossy, specular)",
+      "size": [
+       3072,
+       4096
+      ],
+      "samples": 0,
+      "bytes": 100663296
+     },
+     {
+      "what": "PMREM cubeUV (diffuse, irradiance)",
+      "size": [
+       768,
+       1024
+      ],
+      "samples": 0,
+      "bytes": 6291456
+     }
+    ],
+    "total_bytes": 627086220,
+    "note": "viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer"
+   }
+  }
+ ]
+}
