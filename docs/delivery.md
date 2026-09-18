@@ -113,3 +113,31 @@ budget); load 664.0 MB in 6.74 s; walk clamp 24/24 probes at 30 s above WATER_Z 
 Perf A/B (same session, docs/perf_ab_6c.md): the 6c look costs +1.75 / -0.75 / +3.10 / -0.10 / +0.90 / +0.85 ms over the round-15 look at stations 1-6
 (drift control 0.0-2.1 ms), so the +3 ms gate passes at five stations and sits on the line at station 3 (the walk-up LOD1 within 15 m, +1.5 M tris);
 the cold pass's +4 ms at stations 1/2 was machine drift. Resident 1 931.4 vs 1 788.0 MB on the same build (the walk-up set).
+
+# Phase 6b — web deployment (lead, 2026-09-18; verdict per docs/qa_round_18.md, appended below when it lands)
+## Deliverables
+- Staging URL (unlisted, no auth): https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev — Cloudflare Workers static assets (free tier; wrangler 4.135
+  delegates Pages to it), 694 files / 615 MB published from the manifest's `files` plan across export/out/gate0..gate5, every file under 25 MiB, HTTP/2 + Brotli on
+  html/js/json, cache: site 300 s, plan JSONs 60 s, bake files immutable. Deploy = `web/deploy.sh --project pfa-walkthrough` (dry-run needs no login); logs renders/logs/6b_deploy_*.log.
+- Load tiers (manifest v5, export/tiers.py, export/gate5_visibility.py): tier 0 = the hero's first frame (arch + ground glb, ORN low LOD groups, the LUT, sky, probe, half-res
+  ETC1S stand-ins of the hero-visible maps) 48.2 MB planned / 46.8 MB measured on the wire before the first frame; tier 1 = 490.4 MB (full-look textures, lightmaps, ORN LOD0
+  groups in hero-visibility order); tier 2 = 69.8 MB. The viewer boots on tier 0 (`window.__pfaReady`), streams tiers 1-2 with material hot-swap and lightmap binding, one GPU
+  upload per URL, `?tiers=0|N|all`, a tier readout; after tier 2 the frame is the 6c frame (parity vs round16c MAE 0.02-0.26 of 255 at the six stations, luma 1.000-1.002).
+- Mobile tier (`?tier=mobile`, auto by a GL/UA/dpr probe; iPhone 16 Pro target): manifest_mobile.json, 61.4 MB total, first frame 47.6 MB planned; LOD1/decimated geometry,
+  half-res ETC1S, impostors for every tree, shrubs LOD2, sky-only reflection, LUT-only post, drawing buffer <= 1.5 Mpx; resident estimate 306 MB (< 700).
+- Reproduction: export chain items 27-47 in export/README.md; viewer "Phase 6b" in web/README.md; captures by `web/tools/gate5.sh <url>` (stations 1-6, payload log, perf,
+  mobile), QA fixtures renders/web/gate5_* and 960 px copies in renders/web/960/.
+## Measured on the staging URL (gate5 capture, 2026-09-18)
+| item | value |
+|---|---|
+| bytes before the first frame | 46 814 308 B (320 requests) — definition of done <= 50 MB PASS |
+| time to first frame / all tiers | 8.1 s / 74.5 s on the lead's connection; 581 MB over 622 requests |
+| hero draws / tris after tier 2 | 335 / 5 245 128 (round16c 329 / 5 242 248) |
+| 1440p medians, right after the 30-min capture | 31.7 / 38.0 / 37.7 / 25.1 / 34.2 / 34.2 ms, resident 1 861 MB (A/B pass B 29.7 / 30.4 / 33.5 / 22.0 / 29.8 / 32.3) |
+| 1440p medians, cold pass | (appended below) |
+## Known issues (owners)
+1. The tier-0 first look (approved by the user): low-res concrete, saturated columns, coarse water reflection, no trees for the first seconds; trees and sharp maps arrive with
+   tiers 1-2. 2. Three `.001` shrub cards are drawn inside a gltfpack-merged node and stay probe-lit (no irradiance key) — export. 3. arch.glb / ground.glb embed 15 / 4 Gate 1
+   stand-in images (overwritten by the Gate 2 sets; not tier-upgradable) — export. 4. Workers static assets serve no byte ranges (200 to a Range request); the loaders fetch
+   whole files — viewer carry for any future range loader. 5. The 28 + 31 trimmed placeholder maps (<= 0.019 % of the hero frame each) carry no map until tier 1 — export.
+6. Every 6c residual in the Phase 6c section stands. 7. Owed from the user: the Safari hero screenshot and the iPhone 16 Pro 30 s walk against the URL.
