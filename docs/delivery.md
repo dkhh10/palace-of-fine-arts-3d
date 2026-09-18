@@ -158,3 +158,5 @@ Residuals (owners): 1. mobile water reflects nothing — hero lagoon without the
 2. mobile portrait framing small and centred (viewer/station choice). 3. 302 by-reference mobile paths not named in files[] (export). 4. per-group duplicate
 materials/programs, -si 0.5 facets, three .001 cards probe-lit, arch/ground embedded stand-ins (export). 5. every 6c residual above. Owed from the user: Safari hero
 screenshot; iPhone 16 Pro 30 s walk on the URL. Redeploy = `PFA_MAIN_ROOT=<main> web/deploy.sh --project pfa-walkthrough` after `npx wrangler login`; captures = `web/tools/gate5.sh <url>`.
+Post-close fix (2026-09-18, 1c4b0f5, deploy 5): the bare URL defaulted to the unpublished gate3 manifest and drew the viewer's test scene; the default is now the gate5
+manifest and the bare URL was verified headlessly (renders/web/960/bareurl_cam01.jpg). If a phone still shows the test scene, reload: index.html is cached 300 s.

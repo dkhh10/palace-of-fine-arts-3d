@@ -934,3 +934,7 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 8. **Loading bar fixed:** tier-0 denominator vs bytes fetched now 95.2 % desktop / 98.0 % mobile (round 18: 160.9 % / 7.4 %). **Name sweep 0 hits** over both
    manifests including the 149 new rows. **Still owed by the user:** the macOS Safari hero screenshot (every capture is HeadlessChrome/152) and the
    iPhone 16 Pro walk recording, takeable for the first time now.
+
+## Gate rule added 2026-09-18 (lead, after the bare staging URL drew the test scene)
+- Every QA round against a deployed host captures the BARE URL (no query string) at the hero in addition to the parameterised stations; the manifest note in the boot
+  log must name the delivery manifest and the glb count must equal the plan's; the test-scene fallback on a bare URL is a blocker regardless of every other metric.

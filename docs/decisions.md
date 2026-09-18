@@ -757,3 +757,11 @@ frame time. (2) VIEWER — mobile portrait framing: the horizontal sensor fit at
 the split's duplicate materials/programs per group (141 vs 94 programs) and the -si 0.5 mobile decimation facets; the three .001 cards on the probe; arch/ground
 embedded stand-ins. (5) Carried from 6c/6a unchanged (docs/delivery.md). Owed from the user, not blockers: the macOS Safari hero screenshot and the iPhone 16 Pro
 30 s walk on the URL (every capture is headless Chrome).
+
+## 2026-09-18 · Post-close fix: the bare staging URL drew the TEST SCENE (default manifest path was the unpublished gate3 one)
+The user opened the bare URL on the iPhone and saw the viewer's test scene (a cylinder and posts on a plane). Cause: main.js defaulted `?manifest` to
+/assets/gate3/manifest.json, which is not in the published set (404), so the manifest yielded 0 glbs and the viewer fell back to its test scene. Every capture and both
+QA rounds passed `?manifest=/assets/gate5/manifest.json` explicitly; QA 17's bare-URL check ran locally where gate3 exists. Fix (lead, one line, 1c4b0f5): default =
+/assets/gate5/manifest.json; rebuilt, redeployed (deploy 5), verified with a headless capture of the bare URL at the hero (6 glbs loaded, building present). Gate rule
+added to docs/quality_checklist.md: every deployment QA round captures the BARE URL on the deployed host with no query string, and a test-scene fallback on a bare
+URL is a blocker. Viewer carry: on the bare URL a missing manifest should show an error screen, never the test scene.
