@@ -144,7 +144,7 @@ def main():
         a(f"**{name}**\n")
         a("| tier | kind | files | MB |")
         a("|---|---|---|---|")
-        for k in sorted(b, key=lambda k: (k[0], -b[k])):
+        for k in sorted(b, key=lambda k: (str(k[0]), -b[k])):
             a(f"| {k[0]} | {k[1]} | {n[k]} | {b[k] / MB:.2f} |")
         a("")
 
@@ -258,6 +258,12 @@ def main():
       "viewer uses it in tier 0 and re-loads the manifest's own full-resolution path when tier 1 lands.")
     a("- A group with **`placeholder: true`** is tier 0 and is replaced by the tier-1 group of the same "
       "class; its assets are asserted to be a subset of that group's.")
+    mo = man["tiers"].get("mobile_only") or {}
+    a(f"- **{mo.get('files', 0)} rows in this plan carry `kind: \"mobile_only\"`, `tier: \"mobile\"` "
+      f"and `desktop: false`** ({mo.get('bytes', 0):,} B: the 7 `groups/m_*.glb` and the "
+      "half-resolution files only the mobile plan fetches). **A desktop tier loop over 0, 1, 2 must "
+      "skip them** - the tier is a STRING, so a numeric comparison already does, and `desktop: false` "
+      "is there for a filter. A deploy must publish them: that is the point of naming them here.")
     a("- **`?tier=mobile`** selects `manifest_mobile.json`, which carries the same blocks. Its "
       "`lowres.files` entries have **no `full`**: the mobile set publishes only the half-resolution "
       "copy, so its redirect is permanent and there is nothing to upgrade to.")
@@ -291,7 +297,7 @@ def main():
     a("| directory | files | bytes | transfer |")
     a("|---|---|---|---|")
     import collections as _c
-    dirs_b, dirs_n, dirs_t = _c.Counter(), _c.Counter(), _c.Counter()
+    dirs_b, dirs_n, dirs_t = _c.Counter(), _c.Counter(), _c.Counter()   # every row, mobile-only included
     for e in man["files"]:
         d = e["path"].split("/")[0]
         d = "gate5" if d not in ("..",) else e["path"].split("/")[1]
@@ -302,10 +308,13 @@ def main():
         a(f"| `export/out/{d}` | {dirs_n[d]} | {dirs_b[d]:,} | {dirs_t[d]:,} |")
     a(f"| **all** | {sum(dirs_n.values())} | **{sum(dirs_b.values()):,}** | "
       f"{sum(dirs_t.values()):,} |")
-    a(f"\n**Build the publish directory from `manifest.json` only** - {man['tiers']['deploy_from']} "
-      "`manifest_mobile.json` is a LOAD plan, not a deploy plan: its material sets name the "
-      "full-resolution keys the viewer redirects, so a walker resolving them there would publish the "
-      "whole desktop set.\n")
+    a(f"\n**The deploy set is the union of both manifests' `files[]`, and after the QA-18 fix that "
+      f"union equals `manifest.json` alone**: {mo.get('files', 0)} rows of it are the mobile-only "
+      f"files, `kind: mobile_only`. Publishing from `manifest.json` is complete; unioning both plans "
+      f"is equivalent and also correct. What must NOT happen is publishing from "
+      f"`manifest_mobile.json` alone - it is a LOAD plan whose material sets name the full-resolution "
+      f"keys the viewer redirects, so a walker resolving them there would publish the whole desktop "
+      f"set.\n")
     a("\nThe mobile set is a subset of the same directories. `web/deploy.sh` should build the publish "
       "directory FROM `files` (copy each path, keeping it relative to `out/gate5`), not by copying "
       "`out/` wholesale: `out/` also holds ~2 GB of bake sources, the `rgbm8` lightmap twins and the "
