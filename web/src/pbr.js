@@ -324,6 +324,73 @@ export function pbrPlan( sets, maxTier = Infinity ) {
 }
 
 /**
+ * Phase 6b, the OTHER half of the tier upgrade: the textures the GLB references itself.
+ *
+ * With `gltfpack -tr` the leaf, bark and ORN occlusion maps are external files named inside the glb
+ * and nowhere in the manifest, so `upgradePbrSets` (which walks manifest material sets) cannot see
+ * them.  When tier 0 ships a glb pointing at the low-resolution `tex_lo` encode, the only identity
+ * those maps have is the URL they were loaded from — stamped on `texture.userData.pfaUrl` by the
+ * viewer's shared texture cache — and `manifest.tiers.upgradeOf` says which url supersedes it and
+ * when.  This swaps them on the same material, exactly like a manifest map.
+ *
+ * `remaining` is the assertion the boot log carries: after the last tier nothing in the scene may
+ * still be wearing a low-resolution file.
+ */
+export async function upgradeGlbTextures( { scene, maxTier, upgradeOf, loadTexture, note, concurrency = 3 } ) {
+	const report = { candidates: 0, upgraded: 0, bytes: 0, failed: [], remaining: [], maxTier };
+	if ( ! upgradeOf || ! upgradeOf.size ) return report;
+	const jobs = [], seen = new Set();
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m ) continue;
+			for ( const slot of MAT_SLOTS ) {
+				const t = m[ slot ];
+				const url = t && t.userData && t.userData.pfaUrl;
+				if ( ! url ) continue;
+				const up = upgradeOf.get( url );
+				if ( ! up ) continue;
+				report.candidates ++;
+				if ( up.tier > maxTier ) { report.remaining.push( url ); continue; }
+				const key = `${m.uuid}:${slot}`;
+				if ( seen.has( key ) ) continue;
+				seen.add( key );
+				jobs.push( { material: m, slot, from: t, to: up } );
+			}
+		}
+	} );
+	const counted = new Set();
+	let cursor = 0;
+	const worker = async () => {
+		while ( cursor < jobs.length ) {
+			const j = jobs[ cursor ++ ];
+			try {
+				const t = await loadTexture( j.to.url );
+				// the glb's own sampler state is the right one: only the pixels change
+				t.colorSpace = j.from.colorSpace;
+				t.wrapS = j.from.wrapS; t.wrapT = j.from.wrapT;
+				t.channel = j.from.channel;
+				t.flipY = j.from.flipY;
+				t.anisotropy = Math.max( t.anisotropy || 1, j.from.anisotropy || 1 );
+				t.needsUpdate = true;
+				j.material[ j.slot ] = t;
+				j.material.needsUpdate = true;
+				report.upgraded ++;
+				if ( ! counted.has( j.to.url ) ) { counted.add( j.to.url ); report.bytes += texBytes( t ); }
+			} catch ( e ) { report.failed.push( { url: j.to.url, error: e.message } ); }
+		}
+	};
+	await Promise.all( Array.from( { length: Math.max( 1, concurrency ) }, worker ) );
+	report.remaining = [ ...new Set( report.remaining ) ];
+	if ( note && ( report.upgraded || report.remaining.length ) )
+		note( `glb textures tier ${maxTier}: ${report.upgraded} map(s) swapped to their full-resolution file `
+			+ `(${( report.bytes / 1e6 ).toFixed( 1 )} MB)`
+			+ ( report.remaining.length ? `, ${report.remaining.length} still low-resolution (their tier has not landed)` : '' )
+			+ ( report.failed.length ? `; ${report.failed.length} FAILED` : '' ) );
+	return report;
+}
+
+/**
  * Phase 6b tier upgrade: every material that is wearing a `lo` stand-in (or no map at all, only its
  * factor) takes the file its entry names, now that `maxTier` has arrived.  The swap is on the SAME
  * material, so nothing is rebuilt and no program is recompiled; the superseded stand-ins are disposed

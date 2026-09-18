@@ -111,7 +111,7 @@ export function resolveUrl( base, url ) {
 export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 	const notes = [];
 	const out = { present: false, count: 0, list: [], oversize: [], byUrl: new Map(), files: new Map(),
-		byKey: new Map(), lowres: new Map(), totals: {}, notes, declaredBytes: 0 };
+		byKey: new Map(), lowres: new Map(), upgradeOf: new Map(), totals: {}, notes, declaredBytes: 0 };
 	const rawTiers = pick( raw, 'tiers', 'load_tiers' );
 	const rawFiles = pick( raw, 'files', 'tiers.files' );
 	if ( ! rawTiers && ! ( rawFiles && typeof rawFiles === 'object' ) ) return out;
@@ -244,6 +244,65 @@ export function readTiers( raw, baseUrl, resolve = resolveUrl ) {
 	out.bootOverheadDetail = ( bootRaw && typeof bootRaw === 'object' ) ? bootRaw : null;
 	if ( out.bootOverhead ) notes.push( `manifest tiers: boot overhead ${( out.bootOverhead / 1e6 ).toFixed( 1 )} MB `
 		+ '(the manifest, the KTX2 transcoder and the bundle) counted into tier 0' );
+
+	// --- what replaces a low-resolution file when its tier lands ---------------------------------
+	// The plan carries BOTH encodes of a texture under the same `key` (the tier-0 `tex_lo` ETC1S and
+	// the full-resolution file in a later tier).  Grouping by key gives, for each low-resolution url,
+	// the url that supersedes it and the tier it arrives in — which is the only way to upgrade a
+	// texture the GLB references itself: `gltfpack -tr` leaves those maps external, the glb spells
+	// the tex_lo path, and no material set in the manifest mentions them at all.
+	const byKeyAll = new Map();
+	for ( const row of out.files.values() ) {
+		if ( ! row.key || ! Number.isFinite( row.tier ) ) continue;
+		if ( ! byKeyAll.has( row.key ) ) byKeyAll.set( row.key, [] );
+		byKeyAll.get( row.key ).push( row );
+	}
+	for ( const [ key, rows ] of byKeyAll ) {
+		if ( rows.length < 2 ) continue;
+		const sorted = rows.slice().sort( ( a, b ) => a.tier - b.tier );
+		const full = sorted[ sorted.length - 1 ];
+		for ( const r of sorted.slice( 0, -1 ) ) {
+			if ( r.url === full.url ) continue;
+			out.upgradeOf.set( r.url, { url: full.url, tier: full.tier, key, bytes: full.bytes } );
+		}
+	}
+	// The textures the GLB references itself (`gltfpack -tr`: the leaf, bark and ORN occlusion maps)
+	// have NO key in the plan — nothing in the manifest names them, only the glb does — so they are
+	// paired by FILE NAME between the low-resolution directory and everything outside it.  Without
+	// this the 41 maps that arrive with tier-0 geometry stay at their tex_lo encode for the session.
+	const loDir = ( lowres && typeof lowres.dir === 'string' ) ? lowres.dir.replace( /\/$/, '' ) : null;
+	if ( loDir ) {
+		const outsideLo = new Map();                     // basename -> the highest-tier row not in tex_lo
+		for ( const row of out.files.values() ) {
+			const p = String( row.path || '' );
+			if ( p.startsWith( `${loDir}/` ) || p.includes( `/${loDir}/` ) ) continue;
+			const base = row.url.split( '/' ).pop();
+			const prev = outsideLo.get( base );
+			if ( ! prev || ( row.tier ?? 0 ) > ( prev.tier ?? 0 ) ) outsideLo.set( base, row );
+		}
+		let paired = 0;
+		for ( const row of out.files.values() ) {
+			const p = String( row.path || '' );
+			if ( ! ( p.startsWith( `${loDir}/` ) || p.includes( `/${loDir}/` ) ) ) continue;
+			if ( out.upgradeOf.has( row.url ) ) continue;
+			const full = outsideLo.get( row.url.split( '/' ).pop() );
+			if ( ! full || full.url === row.url || ( full.tier ?? 0 ) <= ( row.tier ?? 0 ) ) continue;
+			out.upgradeOf.set( row.url, { url: full.url, tier: full.tier, key: full.key || null, bytes: full.bytes, byName: true } );
+			paired ++;
+		}
+		if ( paired ) notes.push( `manifest tiers: ${paired} low-resolution file(s) paired to their full-resolution `
+			+ `twin BY NAME (no key in the plan — these are the maps the glbs reference themselves)` );
+	}
+
+	// the same relation stated the other way round by `tiers.lowres`, for a plan that carries no keys
+	for ( const [ key, lo ] of out.lowres ) {
+		if ( out.upgradeOf.has( lo.url ) ) continue;
+		const full = out.byKey.get( key );
+		if ( full && full.url !== lo.url && full.tier > lo.tier )
+			out.upgradeOf.set( lo.url, { url: full.url, tier: full.tier, key, bytes: full.bytes } );
+	}
+	if ( out.upgradeOf.size ) notes.push( `manifest tiers: ${out.upgradeOf.size} low-resolution file(s) have a `
+		+ 'full-resolution successor in a later tier' );
 
 	const oversizeRaw = ( rawTiers && ! Array.isArray( rawTiers ) && ( rawTiers.oversize || rawTiers.over_size ) ) || [];
 	for ( const v of ( Array.isArray( oversizeRaw ) ? oversizeRaw : [] ) ) {

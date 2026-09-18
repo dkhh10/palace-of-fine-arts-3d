@@ -37,7 +37,7 @@ import { loadFarTrees, loadShrubLod1, loadFarTreeLighting, prototypeEbake, apply
 	markShrubLodRows } from './foliageLazy.js';
 import { buildProbeEnv, applyProbeEnv } from './probeEnv.js';
 import { chunkInstancedMeshes } from './chunking.js';
-import { applyPbrSets, upgradePbrSets, pbrPlan, formatName, collectTextures, disposeOrphans } from './pbr.js';
+import { applyPbrSets, upgradePbrSets, upgradeGlbTextures, pbrPlan, formatName, texBytes, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
 import { applyGate3Lightmaps } from './lightmaps.js';
 
@@ -782,12 +782,19 @@ async function streamTiers() {
 			progress.total += plan.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
 			const roots = await loadGlbs( manifest.glbs.filter( ( g ) => g.tier === t ) );
 			await afterGeometry( roots, t );
-			// the maps an earlier tier showed as a factor or a low-resolution stand-in
-			if ( materialsMode === 'pbr' ) {
+			// the maps an earlier tier showed as a factor or a low-resolution stand-in, and the maps the
+			// GLBS reference themselves, which no manifest material set names
+			{
 				const beforeTex = collectTextures( scene );
-				const up = await upgradePbrSets( { scene, maxTier: t, loadTexture: loadAnyTexture, note } );
-				if ( up.upgraded ) disposeOrphans( scene, beforeTex );
-				tierState.upgrades = [ ...( tierState.upgrades || [] ), { tier: t, ...up, failed: up.failed.length } ];
+				const up = materialsMode === 'pbr'
+					? await upgradePbrSets( { scene, maxTier: t, loadTexture: loadAnyTexture, note } )
+					: { upgraded: 0, candidates: 0, bytes: 0, failed: [] };
+				const glbUp = await upgradeGlbTextures( { scene, maxTier: t, note, loadTexture: loadAnyTexture,
+					upgradeOf: manifest.tiers ? manifest.tiers.upgradeOf : null } );
+				if ( up.upgraded || glbUp.upgraded ) disposeOrphans( scene, beforeTex );
+				tierState.lowresRemaining = glbUp.remaining;
+				tierState.upgrades = [ ...( tierState.upgrades || [] ), { tier: t, ...up, failed: up.failed.length,
+					glb_textures: glbUp.upgraded, glb_textures_remaining: glbUp.remaining.length } ];
 			}
 			if ( t === probeTier ) await setupProbeEnv();
 			if ( t === sceneCompletionTier ) await setupFoliageAndImpostors();
@@ -818,6 +825,29 @@ async function streamTiers() {
 		window.__pfaTiersReady = true;
 		if ( tierState.count > 1 ) note( `tiers complete: ${tierState.per.map( p => `${p.tier}:${MB( p.bytes )} MB/${p.wall_s.toFixed( 1 )} s` ).join( ', ' )}`
 			+ `; ${MB( progress.loaded )} MB total` );
+		// THE ASSERTION: after the last tier nothing in the scene may still be wearing a file an
+		// earlier tier shipped as a low-resolution stand-in.  It is stated either way, so a capture
+		// can be checked without re-deriving it.
+		if ( tierState.max === Infinity && manifest.tiers && manifest.tiers.upgradeOf && manifest.tiers.upgradeOf.size ) {
+			const left = lowresStillInScene();
+			tierState.lowresRemaining = left;
+			// The url check only sees textures that HAVE a url.  A texture the glb embedded in a buffer
+			// view reaches three as a blob and keeps whatever encode the pack chose, so the format
+			// census is the other half of the same question: on the desktop tier every map is UASTC
+			// (ASTC on this GPU), and anything still in an ETC1S/ETC2 format is a low-resolution
+			// leftover that no viewer-side swap can reach.
+			const res = residentBytes();
+			const etc = Object.entries( res.texture_formats || {} )
+				.filter( ( [ f ] ) => /ETC/i.test( f ) ).reduce( ( a, [ , n ] ) => a + n, 0 );
+			tierState.lowresEtcTextures = etc;
+			note( left.length
+				? `LOW-RESOLUTION FILES STILL IN THE SCENE after the last tier: ${left.length} — `
+					+ left.slice( 0, 6 ).map( ( u ) => u.split( '/' ).pop() ).join( ', ' ) + ( left.length > 6 ? ' …' : '' )
+				: 'low-resolution check: 0 tier-0 stand-in textures remain in the scene after the last tier' );
+			if ( etc && DEVICE.tier !== 'mobile' ) note( `low-resolution check: ${etc} texture(s) are STILL in an ETC `
+				+ 'format on the desktop tier — an embedded (buffer-view) texture has no url, so no tier can replace '
+				+ 'it; the export has to pack the groups with EXTERNAL textures for those to sharpen' );
+		}
 		renderFrame();
 	}
 }
@@ -1169,9 +1199,28 @@ function assignSpecularEnv() {
 }
 
 let ktx2Loader = null;
+let ktx2RawLoad = null;
 function getKTX2() {
 	// One instance, kept alive: it owns a worker pool and also transcodes any .ktx2 lightmap.
-	if ( ! ktx2Loader ) ktx2Loader = new KTX2Loader( manager ).setTranscoderPath( '/basis/' ).detectSupport( renderer );
+	if ( ! ktx2Loader ) {
+		ktx2Loader = new KTX2Loader( manager ).setTranscoderPath( '/basis/' ).detectSupport( renderer );
+		ktx2RawLoad = ktx2Loader.load.bind( ktx2Loader );
+		// GLTFLoader asks THIS loader for every texture `gltfpack -tr` left external, and it caches
+		// per parse, so the same file reached the GPU once per glb group that referenced it.  Routing
+		// its `load` through the shared cache makes the groups share one upload (and stamps `pfaUrl`,
+		// which is what the tier upgrade of a glb-referenced texture is keyed on).
+		ktx2Loader.load = ( url, onLoad, onProgress, onError ) => {
+			// A glTF image stored in a BUFFER VIEW reaches the loader as a blob: url that GLTFLoader
+			// made and revokes itself.  It has no identity to cache on and no extension to switch on,
+			// so it goes straight to the real loader.  (An embedded texture also cannot be upgraded to
+			// a later tier: there is no url for the manifest to name.)
+			if ( /^blob:/.test( url ) ) return ktx2RawLoad( url, onLoad, onProgress, onError );
+			loadAnyTexture( url ).then( ( t ) => onLoad && onLoad( t ) ).catch( ( e ) => {
+				if ( onError ) onError( e ); else note( `ktx2 ${url.split( '/' ).pop()} failed: ${e.message}` );
+			} );
+			return ktx2Loader;
+		};
+	}
 	return ktx2Loader;
 }
 
@@ -1240,12 +1289,51 @@ async function loadGlbs( list = manifest.glbs ) {
 
 /** The loader every texture pass uses: KTX2 through the shared transcoder, HDR/EXR through their own,
  *  everything else through TextureLoader, with the bytes counted into the progress bar either way. */
-function loadAnyTexture( url ) {
+function rawLoadTexture( url ) {
 	progress.label = url.split( '/' ).pop();
-	return /\.ktx2$/i.test( url ) ? getKTX2().loadAsync( url, onProgressFor( url ) )
-		: ( /\.(hdr)$/i.test( url ) ? new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) )
-			: ( /\.exr$/i.test( url ) ? new EXRLoader( manager ).loadAsync( url, onProgressFor( url ) )
-				: new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) ) ) );
+	if ( /\.ktx2$/i.test( url ) ) {
+		// the ORIGINAL load: `loadAsync` calls `this.load`, which is the method the dedupe below
+		// replaces, so going through it here would recurse forever
+		const ktx = getKTX2();
+		return new Promise( ( resolve, reject ) => ktx2RawLoad( url, resolve, onProgressFor( url ), reject ) );
+	}
+	if ( /\.hdr$/i.test( url ) ) return new RGBELoader( manager ).loadAsync( url, onProgressFor( url ) );
+	if ( /\.exr$/i.test( url ) ) return new EXRLoader( manager ).loadAsync( url, onProgressFor( url ) );
+	return new THREE.TextureLoader( manager ).loadAsync( url, onProgressFor( url ) );
+}
+
+/**
+ * ONE GPU UPLOAD PER URL, across every glb group and every manifest pass.
+ *
+ * GLTFLoader caches textures per PARSE, so a texture `gltfpack -tr` left external and two tier groups
+ * both reference was uploaded twice — and so was a lightmap or a PBR map whose two users were passes
+ * with their own little caches.  Measured at the hero on the v5 groups: 2 217 MB resident against
+ * 1 819 MB for the same scene as one glb per class.
+ *
+ * The cache holds the FIRST texture per url; every later user gets `clone()`, which copies the
+ * sampler state but shares `texture.source`.  three keys its WebGLTexture by source + sampler cache
+ * key and refcounts it (`usedTimes` in WebGLTextures.deallocateTexture), so identical users share one
+ * upload, a user that needs different sampler state gets its own — which is correct, not a leak — and
+ * disposing one clone cannot pull the texture out from under another.
+ */
+const textureCache = new Map();          // url -> Promise<THREE.Texture> (the first one loaded)
+const textureShare = { urls: 0, shared: 0, bytesSaved: 0 };
+function loadAnyTexture( url ) {
+	if ( ! textureCache.has( url ) ) {
+		textureShare.urls ++;
+		textureCache.set( url, rawLoadTexture( url ).then( ( t ) => {
+			t.userData.pfaUrl = url;     // the identity the glb-texture upgrade below is keyed on
+			return t;
+		} ) );
+		return textureCache.get( url );
+	}
+	return textureCache.get( url ).then( ( t ) => {
+		textureShare.shared ++;
+		textureShare.bytesSaved += texBytes( t );
+		const c = t.clone();             // shares `source`: one upload, independent sampler state
+		c.userData.pfaUrl = url;
+		return c;
+	} );
 }
 
 /**
@@ -1716,6 +1804,10 @@ window.__pfaInfo = () => ( {
 		declared_bytes: manifest && manifest.tiers ? manifest.tiers.totals : null,
 		oversize: manifest && manifest.tiers ? manifest.tiers.oversize : [],
 		deferred_lightmaps: tierState.deferredLightmaps, upgrades: tierState.upgrades || [],
+		lowres_remaining: tierState.lowresRemaining || [],
+		lowres_etc_textures: tierState.lowresEtcTextures ?? null,
+		texture_sharing: { urls: textureShare.urls, shared_users: textureShare.shared,
+			bytes_saved_estimate: textureShare.bytesSaved },
 		stub: tierState.stub, error: tierState.error || null },
 	glbs: glbReport.slice(),
 	uv_dequant: uvDequantReport.slice(),
@@ -1768,16 +1860,41 @@ window.__pfaInfo = () => ( {
 	notes: log.slice(),
 } );
 
+/** Every texture in the scene whose url an earlier tier shipped as a low-resolution stand-in. */
+function lowresStillInScene() {
+	const up = manifest.tiers && manifest.tiers.upgradeOf;
+	if ( ! up || ! up.size ) return [];
+	const left = new Set();
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
+			if ( ! m ) continue;
+			for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) {
+				const u = m[ k ] && m[ k ].userData && m[ k ].userData.pfaUrl;
+				if ( u && up.has( u ) ) left.add( u );
+			}
+		}
+	} );
+	return [ ...left ];
+}
+
 /** Resident GPU-side bytes we can account for: unique geometries and unique textures in the scene.
  *  renderer.info.memory only counts objects, so this is the viewer's own sum, stated as an estimate:
  *  compressed textures are summed from their mip data, uncompressed ones as w*h*4*(4/3 with mips). */
 function residentBytes() {
-	const geos = new Set(), texs = new Set();
+	const geos = new Set(), texs = new Set(), sources = new Set();
 	let geometry = 0, texture = 0, instanceMatrices = 0;
+	let sharedTextures = 0;
 	const formats = {};
+	// Per SOURCE, not per texture object: two Texture clones that share `texture.source` are ONE
+	// upload on the GPU (three refcounts the WebGLTexture per source + sampler cache key), so counting
+	// them twice would report memory the card never spent.  `textures` still counts the objects.
 	const addTex = ( t ) => {
 		if ( ! t || texs.has( t ) ) return;
 		texs.add( t );
+		const src = t.source || t;
+		if ( sources.has( src ) ) { sharedTextures ++; return; }
+		sources.add( src );
 		const f = formatName( t );
 		formats[ f ] = ( formats[ f ] || 0 ) + 1;
 		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
@@ -1826,10 +1943,12 @@ function residentBytes() {
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
-		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size, texture_formats: formats,
+		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
+		texture_sources: sources.size, textures_sharing_a_source: sharedTextures, texture_formats: formats,
 		render_target_bytes: rtBytes, render_targets: rts,
 		total_bytes: Math.round( geometry + instanceMatrices + texture ) + rtBytes,
-		note: 'viewer-side sum; compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
+		note: 'viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU '
+			+ 'upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
 			+ 'mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer',
 	};
 }
