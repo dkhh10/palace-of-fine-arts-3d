@@ -163,3 +163,5 @@ manifest and the bare URL was verified headlessly (renders/web/960/bareurl_cam01
 User evidence 2026-09-18 20:59: iPhone 16 Pro, iOS Safari, 5G, bare URL, portrait — the mobile tier auto-selected and drew the whole hero scene
 (renders/web/user/iphone16pro_hero_portrait_20260918.jpg). Visible in it: the two mobile residuals (no reflection in the water; the building small and centred in portrait)
 and a cosmetic one: the station HUD prints shift_y as 0.05999999865889549 (viewer, format to 2 decimals). Still owed: the 30 s walk recording and the Mac Safari screenshot.
+6d (2026-09-18, d40a125, deploy 6): the mobile water now reflects the building (reflection set `both`, half-res target; +~110 draws per station); HUD shift_y formatted.
+Residual 1 of the 6b list is closed pending the phone's own frame rate from the user's walk recording.

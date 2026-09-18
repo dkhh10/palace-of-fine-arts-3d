@@ -765,3 +765,12 @@ QA rounds passed `?manifest=/assets/gate5/manifest.json` explicitly; QA 17's bar
 /assets/gate5/manifest.json; rebuilt, redeployed (deploy 5), verified with a headless capture of the bare URL at the hero (6 glbs loaded, building present). Gate rule
 added to docs/quality_checklist.md: every deployment QA round captures the BARE URL on the deployed host with no query string, and a test-scene fallback on a bare
 URL is a blocker. Viewer carry: on the bare URL a missing manifest should show an error screen, never the test scene.
+
+## 2026-09-18 · 6d (mobile polish, lead fix, one round): the mobile water reflects the building; HUD formatting; worktrees removed
+After the user's iPhone screenshot confirmed the mobile tier loads, the first 6b residual was fixed as a lead fix under 20 lines (d40a125): the mobile tier's
+reflection set goes from `all` (sky only) to `both` (ARCH, ground, water-adjacent ENV and impostors reflect; ORN and backdrop excluded) at the half-res 512 target.
+Local mobile captures at stations 1 / 5 / 6 (renders/web/960/6dm_cam0N.jpg): the rotunda and colonnade reflect in the hero lagoon, station 5's lower half has its
+reflection, station 6's bay is water again. Cost: 278 / 265 / 300 draws against 169 / 163 / 180 (the second scene pass); the headless Mac measure is vsync-capped
+at 16.7 ms so the phone's own frame rate is judged from the user's walk recording (owed). The station HUD prints shift_y to two decimals. Deployed (deploy 6).
+The merged phase6b worktrees were removed (branches kept). Remaining residuals stand as listed under "6b DONE WITH RESIDUALS"; no further polish is scheduled
+until the user says whether the 4.0 hero target (Phase 5 / 6c backlog) is still the goal.
