@@ -584,13 +584,23 @@ async function boot() {
 	// byte budget before anything downloads ------------------------------------------------------
 	const tp = performance.now();
 	await measurePlan( tierPlan( 0 ) );
-	// The page's own cost (manifest + /basis/ + the bundle) when the manifest states it: already paid
-	// by the time this line runs, so it goes into BOTH sides of the bar rather than capping it.
+	// THE DENOMINATOR IS THE MANIFEST'S OWN (QA 18 finding 2).  HEADing the viewer's plan measured
+	// something else entirely — it misses the lightmaps, which are deliberately off-plan, and on the
+	// mobile variant it counted the full-resolution keys the material sets name and the viewer
+	// redirects, so the bar read 100 % at 62 % of the download on desktop and 7 % at the end on
+	// mobile.  `tiers.bytes[0]` is what the export measured for the variant IN USE, and the boot
+	// overhead (manifest + /basis/ + the bundle) is already paid by the time this line runs, so it
+	// goes into both sides rather than capping the bar.
+	const headSum = progress.total;
+	const declared0 = manifest.tiers && manifest.tiers.totals ? manifest.tiers.totals[ 0 ] : null;
+	if ( declared0 ) {
+		progress.total = declared0 + ( manifest.tiers.bootOverhead || 0 );
+		note( `tier 0 denominator ${MB( progress.total )} MB from the manifest (tiers.bytes[0] `
+			+ `${MB( declared0 )} + boot overhead ${MB( manifest.tiers.bootOverhead || 0 )}); `
+			+ `the viewer's own HEAD plan summed ${MB( headSum )} MB, which is not what gets fetched` );
+	} else note( `tier 0 denominator ${MB( headSum )} MB from the viewer's HEAD plan (the manifest declares none)` );
 	if ( manifest.tiers && manifest.tiers.bootOverhead > 0 ) {
-		progress.total += manifest.tiers.bootOverhead;
 		progress.loaded += manifest.tiers.bootOverhead;
-		note( `boot overhead ${MB( manifest.tiers.bootOverhead )} MB counted into tier 0 (already downloaded: `
-			+ 'the manifest, the KTX2 transcoder and the bundle)' );
 		drawProgress();
 	}
 	tierState.tier0PlannedBytes = progress.total;
@@ -796,7 +806,9 @@ async function streamTiers() {
 			drawTierProgress();
 			const plan = tierState.plan ? tierState.plan( t ) : [];
 			for ( const f of plan ) progress.planned.add( f.url );          // its bytes are not off-plan
-			progress.total += plan.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
+			// the manifest's own total for this tier, for the same reason as tier 0's
+			const declaredT = manifest.tiers && manifest.tiers.totals ? manifest.tiers.totals[ t ] : null;
+			progress.total += declaredT || plan.reduce( ( a, f ) => a + ( f.bytes || 0 ), 0 );
 			tierState.step = 'glbs';
 			const roots = await loadGlbs( manifest.glbs.filter( ( g ) => g.tier === t ) );
 			tierState.step = 'afterGeometry';
@@ -1285,11 +1297,22 @@ function canonUrl( url ) {
 
 function tierSubstitute( url ) {
 	const t = manifest && manifest.tiers;
-	if ( ! t || ! t.lowresFor || ! t.lowresFor.size ) return url;
+	// `lowresFor` alone is not the gate: the MOBILE plan states no `full` for its stand-ins, so that
+	// map is empty there and the by-name redirect below is the only one that can fire.
+	if ( ! t || ! t.present || ( ! ( t.lowresFor && t.lowresFor.size ) && ! t.files.size ) ) return url;
 	const here = Math.max( tierState.now || 0, tierState.loading || 0 );
 	url = canonUrl( url );
+	const lo0 = t.lowresFor.get( url );
+	// Not in this variant's plan at all — a glb naming the desktop file on the mobile variant, where
+	// the plan publishes a half-resolution copy of the same NAME.  The plan is the authority on what
+	// exists, so its row wins; the stand-in map is tried first, the base name after it.
+	if ( t.files.size && ! t.files.has( url ) ) {
+		const byName = t.byBasename && t.byBasename.get( url.split( '/' ).pop() );
+		const pick = lo0 || ( byName && byName.url !== url ? byName : null );
+		if ( pick ) { tierState.substituted ++; return pick.url; }
+	}
 	if ( tierOf( url ) <= here ) return url;               // its own tier has arrived: the real file
-	const lo = t.lowresFor.get( url );
+	const lo = lo0;
 	if ( ! lo || lo.tier > here ) return url;              // no stand-in available yet: the real file
 	tierState.substituted ++;
 	return lo.url;
@@ -1417,7 +1440,11 @@ function rawLoadTexture( url ) {
 const textureCache = new Map();          // url -> Promise<THREE.Texture> (the first one loaded)
 const textureShare = { urls: 0, shared: 0, bytesSaved: 0 };
 function loadAnyTexture( rawUrl ) {
-	const url = canonUrl( rawUrl );
+	// EVERY texture load goes through the plan redirect, not only the glbs': the detail sets, the
+	// foliage cards and the impostor atlases build their own urls from a directory and a name, and on
+	// the mobile variant those directories are the desktop ones while the plan publishes
+	// half-resolution copies.  A url the plan carries is never redirected, so desktop is untouched.
+	const url = tierSubstitute( canonUrl( rawUrl ) );
 	if ( ! textureCache.has( url ) ) {
 		textureShare.urls ++;
 		textureCache.set( url, rawLoadTexture( url ).then( ( t ) => {

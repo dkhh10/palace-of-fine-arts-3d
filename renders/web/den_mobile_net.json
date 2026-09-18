@@ -1,0 +1,4431 @@
+{
+ "generated": "2026-09-18T17:17:03.813Z",
+ "url": "http://127.0.0.1:50931/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=all&tier=mobile&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
+ "size": [
+  1920,
+  1080
+ ],
+ "time_to_first_frame_s": 1.65,
+ "first_frame_from": "the page (window.__pfaReadyAt)",
+ "time_to_all_tiers_s": 2.993,
+ "bytes_before_first_frame": 52351789,
+ "bytes_total": 67238077,
+ "bytes_by_kind": {
+  "other": 1678,
+  "js": 1237477,
+  "json": 5025516,
+  "glb": 14572268,
+  "hdr": 15642007,
+  "ktx2": 22816120,
+  "cube": 7415519,
+  "wasm": 527492
+ },
+ "requests_before_first_frame": 376,
+ "requests_n": 477,
+ "viewer_tiers": {
+  "present": true,
+  "count": 3,
+  "max": null,
+  "now": 2,
+  "streaming": false,
+  "done": true,
+  "tier0_planned_bytes": 47555413,
+  "per_tier": [
+   {
+    "tier": 0,
+    "wall_s": 1.5787000000476836,
+    "bytes": 46621188,
+    "planned": 47555413,
+    "glbs": 4
+   },
+   {
+    "tier": 1,
+    "wall_s": 0.34110000002384183,
+    "bytes": 3784633,
+    "planned": 5556749,
+    "glbs": 0
+   },
+   {
+    "tier": 2,
+    "wall_s": 0.7703999999761582,
+    "bytes": 11086266,
+    "planned": 9415204,
+    "glbs": 3
+   }
+  ],
+  "declared_bytes": {
+   "0": 46461150,
+   "1": 5556749,
+   "2": 9415204
+  },
+  "oversize": [],
+  "deferred_lightmaps": 0,
+  "upgrades": [
+   {
+    "tier": 1,
+    "candidates": 0,
+    "upgraded": 0,
+    "from_lo": 0,
+    "from_factor": 0,
+    "bytes": 0,
+    "failed": 0,
+    "maxTier": 1,
+    "glb_textures": 0,
+    "glb_textures_remaining": 0
+   },
+   {
+    "tier": 2,
+    "candidates": 1,
+    "upgraded": 1,
+    "from_lo": 0,
+    "from_factor": 1,
+    "bytes": 174776,
+    "failed": 0,
+    "maxTier": 2,
+    "glb_textures": 0,
+    "glb_textures_remaining": 0
+   }
+  ],
+  "failures": [],
+  "lowres_remaining": [],
+  "lowres_etc_textures": null,
+  "lowres_etc_names": [],
+  "lowres_substituted": 110,
+  "texture_sharing": {
+   "urls": 298,
+   "shared_users": 62,
+   "bytes_saved_estimate": 43866360
+  },
+  "stub": null,
+  "error": null
+ },
+ "viewer_device": {
+  "tier": "mobile",
+  "from": "query",
+  "reasons": [
+   "?tier=mobile"
+  ],
+  "gl": {
+   "maxTextureSize": 16384,
+   "astc": true,
+   "etc2": true,
+   "bptc": true,
+   "s3tc": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+   "vendor": "Google Inc. (Apple)",
+   "webgl2": true
+  },
+  "env": {
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+   "maxTouchPoints": 0,
+   "deviceMemoryGb": 16,
+   "hardwareConcurrency": 8,
+   "devicePixelRatio": 1,
+   "screen": [
+    800,
+    600
+   ]
+  },
+  "pixelRatio": 0.8505172717997146,
+  "drawingBufferPx": 1498176
+ },
+ "viewer_bytes": {
+  "loaded": 61492087,
+  "planned": 79678887
+ },
+ "requests": [
+  {
+   "url": "http://127.0.0.1:50931/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=all&tier=mobile&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1",
+   "status": 200,
+   "mime": "text/html",
+   "bytes": 1540,
+   "start_s": 0,
+   "end_s": 0.004,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/index-CT68KBNV.js",
+   "status": 200,
+   "mime": "text/javascript",
+   "bytes": 1179791,
+   "start_s": 0.008,
+   "end_s": 0.026,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/favicon.ico",
+   "status": 404,
+   "mime": "text/plain",
+   "bytes": 138,
+   "start_s": 0.074,
+   "end_s": 0.075,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/manifest.json",
+   "status": 200,
+   "mime": "application/json",
+   "bytes": 2571092,
+   "start_s": 0.071,
+   "end_s": 0.096,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/manifest_mobile.json",
+   "status": 200,
+   "mime": "application/json",
+   "bytes": 2422447,
+   "start_s": 0.103,
+   "end_s": 0.111,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/uv2_relay_status.json",
+   "status": 200,
+   "mime": "application/json",
+   "bytes": 31977,
+   "start_s": 0.122,
+   "end_s": 0.124,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_ground_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.129,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/sky_diffuse_1024x512.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.129,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_arch_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.13,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.131,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.131,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate0/sky_camera_4096x2048.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.132,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.132,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate0/sky_glossy_4096x2048.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.132,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_orn_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.133,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.133,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.133,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.134,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.126,
+   "end_s": 0.134,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.126,
+   "end_s": 0.134,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.129,
+   "end_s": 0.134,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.129,
+   "end_s": 0.135,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.13,
+   "end_s": 0.135,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.131,
+   "end_s": 0.136,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.132,
+   "end_s": 0.136,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.131,
+   "end_s": 0.136,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_env_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.136,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.132,
+   "end_s": 0.136,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.132,
+   "end_s": 0.138,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.133,
+   "end_s": 0.138,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.133,
+   "end_s": 0.138,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.134,
+   "end_s": 0.139,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.133,
+   "end_s": 0.14,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.134,
+   "end_s": 0.14,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.134,
+   "end_s": 0.14,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.134,
+   "end_s": 0.141,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.135,
+   "end_s": 0.141,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.135,
+   "end_s": 0.143,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.136,
+   "end_s": 0.143,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.135,
+   "end_s": 0.143,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.136,
+   "end_s": 0.144,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.136,
+   "end_s": 0.144,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.136,
+   "end_s": 0.144,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.138,
+   "end_s": 0.144,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.138,
+   "end_s": 0.144,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.138,
+   "end_s": 0.145,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.139,
+   "end_s": 0.145,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.14,
+   "end_s": 0.145,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.139,
+   "end_s": 0.146,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.14,
+   "end_s": 0.146,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.14,
+   "end_s": 0.146,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.141,
+   "end_s": 0.146,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.143,
+   "end_s": 0.147,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.143,
+   "end_s": 0.147,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.143,
+   "end_s": 0.147,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.144,
+   "end_s": 0.147,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.144,
+   "end_s": 0.147,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.144,
+   "end_s": 0.148,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.144,
+   "end_s": 0.148,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.144,
+   "end_s": 0.148,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.145,
+   "end_s": 0.148,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.145,
+   "end_s": 0.149,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.145,
+   "end_s": 0.149,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.146,
+   "end_s": 0.149,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__bird_white_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.146,
+   "end_s": 0.149,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__bird_white_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.146,
+   "end_s": 0.15,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.146,
+   "end_s": 0.15,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.147,
+   "end_s": 0.15,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.147,
+   "end_s": 0.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.147,
+   "end_s": 0.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate0/lut_agx_high_contrast_65.cube",
+   "status": 200,
+   "mime": "text/plain",
+   "bytes": 0,
+   "start_s": 0.125,
+   "end_s": 0.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.147,
+   "end_s": 0.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.147,
+   "end_s": 0.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.148,
+   "end_s": 0.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.148,
+   "end_s": 0.152,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.148,
+   "end_s": 0.155,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__riprap_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.149,
+   "end_s": 0.156,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__riprap_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.148,
+   "end_s": 0.156,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__riprap_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.149,
+   "end_s": 0.156,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.149,
+   "end_s": 0.156,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.149,
+   "end_s": 0.157,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.15,
+   "end_s": 0.157,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.15,
+   "end_s": 0.157,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.15,
+   "end_s": 0.157,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.15,
+   "end_s": 0.158,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.151,
+   "end_s": 0.158,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.151,
+   "end_s": 0.158,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.151,
+   "end_s": 0.158,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.151,
+   "end_s": 0.159,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.151,
+   "end_s": 0.159,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.152,
+   "end_s": 0.159,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.156,
+   "end_s": 0.159,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.155,
+   "end_s": 0.159,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.156,
+   "end_s": 0.16,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.156,
+   "end_s": 0.16,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.156,
+   "end_s": 0.16,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.156,
+   "end_s": 0.16,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.157,
+   "end_s": 0.16,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.157,
+   "end_s": 0.16,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.158,
+   "end_s": 0.161,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.157,
+   "end_s": 0.161,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.158,
+   "end_s": 0.161,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.158,
+   "end_s": 0.162,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.158,
+   "end_s": 0.162,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.158,
+   "end_s": 0.162,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.159,
+   "end_s": 0.163,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.159,
+   "end_s": 0.163,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.159,
+   "end_s": 0.163,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.16,
+   "end_s": 0.163,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.159,
+   "end_s": 0.163,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.159,
+   "end_s": 0.164,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.16,
+   "end_s": 0.164,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.16,
+   "end_s": 0.164,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.16,
+   "end_s": 0.165,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.16,
+   "end_s": 0.165,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.161,
+   "end_s": 0.166,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.161,
+   "end_s": 0.166,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.161,
+   "end_s": 0.166,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.161,
+   "end_s": 0.167,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.162,
+   "end_s": 0.167,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.162,
+   "end_s": 0.167,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.163,
+   "end_s": 0.169,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.162,
+   "end_s": 0.169,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.163,
+   "end_s": 0.169,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.163,
+   "end_s": 0.17,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.163,
+   "end_s": 0.17,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.164,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.164,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.164,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.165,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.166,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.165,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.166,
+   "end_s": 0.171,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.166,
+   "end_s": 0.172,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.166,
+   "end_s": 0.172,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.167,
+   "end_s": 0.172,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.169,
+   "end_s": 0.172,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.17,
+   "end_s": 0.172,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.167,
+   "end_s": 0.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.169,
+   "end_s": 0.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.169,
+   "end_s": 0.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.17,
+   "end_s": 0.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.17,
+   "end_s": 0.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.174,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.17,
+   "end_s": 0.174,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.174,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.174,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.174,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.175,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.175,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.171,
+   "end_s": 0.175,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.172,
+   "end_s": 0.175,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.172,
+   "end_s": 0.175,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.172,
+   "end_s": 0.175,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.173,
+   "end_s": 0.176,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.173,
+   "end_s": 0.176,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.172,
+   "end_s": 0.176,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.173,
+   "end_s": 0.176,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.173,
+   "end_s": 0.176,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.173,
+   "end_s": 0.178,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate0/sky_camera_4096x2048.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 3590440,
+   "start_s": 0.177,
+   "end_s": 0.185,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate0/sky_glossy_4096x2048.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 3661481,
+   "start_s": 0.41,
+   "end_s": 0.418,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/sky_diffuse_1024x512.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 2097364,
+   "start_s": 0.696,
+   "end_s": 0.704,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate0/lut_agx_high_contrast_65.cube",
+   "status": 200,
+   "mime": "text/plain",
+   "bytes": 7415519,
+   "start_s": 0.733,
+   "end_s": 0.749,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_arch_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 2329101,
+   "start_s": 0.8,
+   "end_s": 0.807,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/uv1_probe_grey.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 649,
+   "start_s": 0.812,
+   "end_s": 0.813,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/basis/basis_transcoder.js",
+   "status": 200,
+   "mime": "text/javascript",
+   "bytes": 57686,
+   "start_s": 0.819,
+   "end_s": 0.82,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/basis/basis_transcoder.wasm",
+   "status": 200,
+   "mime": "application/wasm",
+   "bytes": 527492,
+   "start_s": 0.819,
+   "end_s": 0.821,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_ground_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 1957273,
+   "start_s": 0.941,
+   "end_s": 0.948,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_orn_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 1134905,
+   "start_s": 0.96,
+   "end_s": 0.964,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_attic_figure_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 145539,
+   "start_s": 0.967,
+   "end_s": 0.973,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_attic_panel_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 144652,
+   "start_s": 0.967,
+   "end_s": 0.973,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_colonnade_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 160505,
+   "start_s": 0.967,
+   "end_s": 0.974,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_colonnade_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 161740,
+   "start_s": 0.967,
+   "end_s": 0.974,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_attic_panel_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 143791,
+   "start_s": 0.967,
+   "end_s": 0.974,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_colonnade_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 160377,
+   "start_s": 0.968,
+   "end_s": 0.974,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_inner_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 162386,
+   "start_s": 0.968,
+   "end_s": 0.979,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_rotunda_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 167661,
+   "start_s": 0.968,
+   "end_s": 0.979,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_drum_band_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 120429,
+   "start_s": 0.968,
+   "end_s": 0.979,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_corner_scroll_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 127673,
+   "start_s": 0.968,
+   "end_s": 0.98,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_rotunda_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 168654,
+   "start_s": 0.968,
+   "end_s": 0.982,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_capital_rotunda_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 168463,
+   "start_s": 0.968,
+   "end_s": 0.983,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_frieze_rinceau_return_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 66175,
+   "start_s": 0.968,
+   "end_s": 0.987,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_frieze_rinceau_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76481,
+   "start_s": 0.968,
+   "end_s": 0.988,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_frieze_rinceau_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 75763,
+   "start_s": 0.968,
+   "end_s": 0.988,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_frieze_rinceau_return_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 75713,
+   "start_s": 0.968,
+   "end_s": 0.989,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_keystone_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47648,
+   "start_s": 0.968,
+   "end_s": 0.989,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_winged_figure_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 105491,
+   "start_s": 0.968,
+   "end_s": 0.989,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_keystone_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47108,
+   "start_s": 0.968,
+   "end_s": 0.991,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_keystone_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47488,
+   "start_s": 0.968,
+   "end_s": 0.991,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_maiden_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 107748,
+   "start_s": 0.969,
+   "end_s": 0.991,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_rosette_ceiling_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45859,
+   "start_s": 0.969,
+   "end_s": 0.992,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_maiden_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 111516,
+   "start_s": 0.969,
+   "end_s": 0.992,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_maiden_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 103720,
+   "start_s": 0.969,
+   "end_s": 0.992,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_urn_niche_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 110592,
+   "start_s": 0.969,
+   "end_s": 0.993,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_rosette_ceiling_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44454,
+   "start_s": 0.969,
+   "end_s": 0.993,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_urn_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128357,
+   "start_s": 0.969,
+   "end_s": 0.994,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_env_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 2116889,
+   "start_s": 1.046,
+   "end_s": 1.053,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/reeds.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 77876,
+   "start_s": 1.057,
+   "end_s": 1.061,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/reeds_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27285,
+   "start_s": 1.057,
+   "end_s": 1.062,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/leaves_shrub.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 78792,
+   "start_s": 1.057,
+   "end_s": 1.062,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/leaves_shrub_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47285,
+   "start_s": 1.057,
+   "end_s": 1.062,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/chinese_cedar_bark_rough_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 19087,
+   "start_s": 1.057,
+   "end_s": 1.062,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/chinese_cedar_bark_diff_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 165189,
+   "start_s": 1.057,
+   "end_s": 1.063,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/chinese_cedar_bark_disp_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 133613,
+   "start_s": 1.057,
+   "end_s": 1.063,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/needles_cypress_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29905,
+   "start_s": 1.057,
+   "end_s": 1.064,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/needles_cypress.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 66477,
+   "start_s": 1.057,
+   "end_s": 1.065,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/bark_bluegum_rough_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 63317,
+   "start_s": 1.058,
+   "end_s": 1.065,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/bark_bluegum_diff_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 176895,
+   "start_s": 1.057,
+   "end_s": 1.066,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/leaves_eucalyptus.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48428,
+   "start_s": 1.058,
+   "end_s": 1.066,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/bark_bluegum_disp_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 68770,
+   "start_s": 1.058,
+   "end_s": 1.067,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/leaves_eucalyptus_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29280,
+   "start_s": 1.058,
+   "end_s": 1.067,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 118121,
+   "start_s": 1.149,
+   "end_s": 1.152,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 138135,
+   "start_s": 1.149,
+   "end_s": 1.152,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 148877,
+   "start_s": 1.149,
+   "end_s": 1.152,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36544,
+   "start_s": 1.156,
+   "end_s": 1.157,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 40024,
+   "start_s": 1.156,
+   "end_s": 1.157,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44007,
+   "start_s": 1.156,
+   "end_s": 1.157,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2248,
+   "start_s": 1.158,
+   "end_s": 1.159,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2065,
+   "start_s": 1.159,
+   "end_s": 1.159,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 14000,
+   "start_s": 1.158,
+   "end_s": 1.16,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 121869,
+   "start_s": 1.161,
+   "end_s": 1.162,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 123350,
+   "start_s": 1.161,
+   "end_s": 1.162,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 113955,
+   "start_s": 1.161,
+   "end_s": 1.162,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37424,
+   "start_s": 1.165,
+   "end_s": 1.166,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 35051,
+   "start_s": 1.165,
+   "end_s": 1.167,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38065,
+   "start_s": 1.165,
+   "end_s": 1.167,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2295,
+   "start_s": 1.168,
+   "end_s": 1.169,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2161,
+   "start_s": 1.168,
+   "end_s": 1.169,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4339,
+   "start_s": 1.168,
+   "end_s": 1.169,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 99005,
+   "start_s": 1.17,
+   "end_s": 1.171,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 140777,
+   "start_s": 1.17,
+   "end_s": 1.171,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 154409,
+   "start_s": 1.17,
+   "end_s": 1.171,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 30141,
+   "start_s": 1.174,
+   "end_s": 1.175,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41903,
+   "start_s": 1.174,
+   "end_s": 1.175,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45517,
+   "start_s": 1.174,
+   "end_s": 1.176,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 5479,
+   "start_s": 1.176,
+   "end_s": 1.177,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1728,
+   "start_s": 1.176,
+   "end_s": 1.177,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1880,
+   "start_s": 1.177,
+   "end_s": 1.178,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 139610,
+   "start_s": 1.178,
+   "end_s": 1.179,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80753,
+   "start_s": 1.178,
+   "end_s": 1.179,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 65927,
+   "start_s": 1.179,
+   "end_s": 1.18,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 39309,
+   "start_s": 1.181,
+   "end_s": 1.182,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27166,
+   "start_s": 1.182,
+   "end_s": 1.182,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 25460,
+   "start_s": 1.182,
+   "end_s": 1.183,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1547,
+   "start_s": 1.184,
+   "end_s": 1.185,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1522,
+   "start_s": 1.184,
+   "end_s": 1.185,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3957,
+   "start_s": 1.185,
+   "end_s": 1.185,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 96472,
+   "start_s": 1.186,
+   "end_s": 1.187,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 97652,
+   "start_s": 1.186,
+   "end_s": 1.187,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29873,
+   "start_s": 1.263,
+   "end_s": 1.264,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29814,
+   "start_s": 1.263,
+   "end_s": 1.265,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 8974,
+   "start_s": 1.265,
+   "end_s": 1.266,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 9733,
+   "start_s": 1.266,
+   "end_s": 1.267,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_concrete_wall_007_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 138689,
+   "start_s": 1.273,
+   "end_s": 1.275,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_concrete_wall_007_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41411,
+   "start_s": 1.277,
+   "end_s": 1.279,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_concrete_wall_007_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 77003,
+   "start_s": 1.28,
+   "end_s": 1.281,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_concrete_wall_008_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 130174,
+   "start_s": 1.283,
+   "end_s": 1.284,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_concrete_wall_008_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 15338,
+   "start_s": 1.287,
+   "end_s": 1.289,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_concrete_wall_008_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 34264,
+   "start_s": 1.29,
+   "end_s": 1.292,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27087,
+   "start_s": 1.325,
+   "end_s": 1.328,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__riprap_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 173932,
+   "start_s": 1.325,
+   "end_s": 1.328,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 162907,
+   "start_s": 1.325,
+   "end_s": 1.328,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 7190,
+   "start_s": 1.33,
+   "end_s": 1.331,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3109,
+   "start_s": 1.332,
+   "end_s": 1.333,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__riprap_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47853,
+   "start_s": 1.332,
+   "end_s": 1.333,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47855,
+   "start_s": 1.332,
+   "end_s": 1.333,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128165,
+   "start_s": 1.334,
+   "end_s": 1.336,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29138,
+   "start_s": 1.335,
+   "end_s": 1.336,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__riprap_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27007,
+   "start_s": 1.335,
+   "end_s": 1.336,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 9552,
+   "start_s": 1.339,
+   "end_s": 1.34,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2254,
+   "start_s": 1.34,
+   "end_s": 1.341,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_rock_boulder_dry_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48076,
+   "start_s": 1.346,
+   "end_s": 1.347,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_rock_boulder_dry_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48346,
+   "start_s": 1.348,
+   "end_s": 1.349,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_rock_boulder_dry_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 35939,
+   "start_s": 1.351,
+   "end_s": 1.352,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_gravelly_sand_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46156,
+   "start_s": 1.353,
+   "end_s": 1.354,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_gravelly_sand_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 23827,
+   "start_s": 1.355,
+   "end_s": 1.356,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/detail_gravelly_sand_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28805,
+   "start_s": 1.357,
+   "end_s": 1.358,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 137649,
+   "start_s": 1.363,
+   "end_s": 1.365,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 179820,
+   "start_s": 1.363,
+   "end_s": 1.365,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 177994,
+   "start_s": 1.363,
+   "end_s": 1.365,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41232,
+   "start_s": 1.369,
+   "end_s": 1.371,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47483,
+   "start_s": 1.369,
+   "end_s": 1.371,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47724,
+   "start_s": 1.369,
+   "end_s": 1.371,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 102604,
+   "start_s": 1.372,
+   "end_s": 1.374,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 130844,
+   "start_s": 1.372,
+   "end_s": 1.374,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 132121,
+   "start_s": 1.372,
+   "end_s": 1.374,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76355,
+   "start_s": 1.376,
+   "end_s": 1.377,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 56269,
+   "start_s": 1.377,
+   "end_s": 1.378,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 169623,
+   "start_s": 1.377,
+   "end_s": 1.378,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46296,
+   "start_s": 1.379,
+   "end_s": 1.38,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26464,
+   "start_s": 1.379,
+   "end_s": 1.38,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 60034,
+   "start_s": 1.381,
+   "end_s": 1.382,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37554,
+   "start_s": 1.382,
+   "end_s": 1.383,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45710,
+   "start_s": 1.381,
+   "end_s": 1.383,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 56958,
+   "start_s": 1.384,
+   "end_s": 1.385,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 118044,
+   "start_s": 1.384,
+   "end_s": 1.385,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 176103,
+   "start_s": 1.385,
+   "end_s": 1.386,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47168,
+   "start_s": 1.387,
+   "end_s": 1.388,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 67790,
+   "start_s": 1.388,
+   "end_s": 1.389,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47093,
+   "start_s": 1.39,
+   "end_s": 1.391,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37837,
+   "start_s": 1.39,
+   "end_s": 1.391,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 24013,
+   "start_s": 1.391,
+   "end_s": 1.392,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 176950,
+   "start_s": 1.392,
+   "end_s": 1.393,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 93720,
+   "start_s": 1.392,
+   "end_s": 1.393,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53490,
+   "start_s": 1.393,
+   "end_s": 1.394,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 157213,
+   "start_s": 1.396,
+   "end_s": 1.397,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 176657,
+   "start_s": 1.396,
+   "end_s": 1.397,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47970,
+   "start_s": 1.397,
+   "end_s": 1.398,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 132186,
+   "start_s": 1.399,
+   "end_s": 1.4,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 43870,
+   "start_s": 1.4,
+   "end_s": 1.402,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47433,
+   "start_s": 1.4,
+   "end_s": 1.402,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 134583,
+   "start_s": 1.402,
+   "end_s": 1.403,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 104928,
+   "start_s": 1.403,
+   "end_s": 1.404,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 131434,
+   "start_s": 1.403,
+   "end_s": 1.404,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38729,
+   "start_s": 1.406,
+   "end_s": 1.407,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 168853,
+   "start_s": 1.406,
+   "end_s": 1.408,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 169725,
+   "start_s": 1.407,
+   "end_s": 1.409,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 66827,
+   "start_s": 1.408,
+   "end_s": 1.409,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55004,
+   "start_s": 1.411,
+   "end_s": 1.413,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45379,
+   "start_s": 1.412,
+   "end_s": 1.413,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45757,
+   "start_s": 1.412,
+   "end_s": 1.413,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 121354,
+   "start_s": 1.415,
+   "end_s": 1.416,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46719,
+   "start_s": 1.415,
+   "end_s": 1.416,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 109333,
+   "start_s": 1.415,
+   "end_s": 1.417,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55154,
+   "start_s": 1.418,
+   "end_s": 1.419,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37831,
+   "start_s": 1.418,
+   "end_s": 1.419,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 162282,
+   "start_s": 1.419,
+   "end_s": 1.42,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45651,
+   "start_s": 1.434,
+   "end_s": 1.436,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 78994,
+   "start_s": 1.433,
+   "end_s": 1.436,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36570,
+   "start_s": 1.437,
+   "end_s": 1.439,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26453,
+   "start_s": 1.438,
+   "end_s": 1.439,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44494,
+   "start_s": 1.438,
+   "end_s": 1.439,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 74119,
+   "start_s": 1.44,
+   "end_s": 1.44,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 63212,
+   "start_s": 1.44,
+   "end_s": 1.441,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 106887,
+   "start_s": 1.441,
+   "end_s": 1.442,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 25963,
+   "start_s": 1.443,
+   "end_s": 1.443,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53517,
+   "start_s": 1.443,
+   "end_s": 1.444,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 58750,
+   "start_s": 1.444,
+   "end_s": 1.445,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 147619,
+   "start_s": 1.444,
+   "end_s": 1.446,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45215,
+   "start_s": 1.446,
+   "end_s": 1.447,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 149823,
+   "start_s": 1.447,
+   "end_s": 1.448,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 35960,
+   "start_s": 1.448,
+   "end_s": 1.449,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41472,
+   "start_s": 1.449,
+   "end_s": 1.449,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 84569,
+   "start_s": 1.451,
+   "end_s": 1.452,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 172910,
+   "start_s": 1.45,
+   "end_s": 1.452,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41674,
+   "start_s": 1.452,
+   "end_s": 1.453,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80766,
+   "start_s": 1.454,
+   "end_s": 1.456,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 172349,
+   "start_s": 1.454,
+   "end_s": 1.456,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46686,
+   "start_s": 1.455,
+   "end_s": 1.457,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 127787,
+   "start_s": 1.458,
+   "end_s": 1.459,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 166935,
+   "start_s": 1.458,
+   "end_s": 1.459,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46310,
+   "start_s": 1.46,
+   "end_s": 1.46,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128248,
+   "start_s": 1.461,
+   "end_s": 1.462,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 143128,
+   "start_s": 1.462,
+   "end_s": 1.463,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45907,
+   "start_s": 1.463,
+   "end_s": 1.464,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 127669,
+   "start_s": 1.465,
+   "end_s": 1.466,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41103,
+   "start_s": 1.466,
+   "end_s": 1.467,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80655,
+   "start_s": 1.468,
+   "end_s": 1.469,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41437,
+   "start_s": 1.479,
+   "end_s": 1.481,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__bird_white_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 19485,
+   "start_s": 1.48,
+   "end_s": 1.481,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37955,
+   "start_s": 1.479,
+   "end_s": 1.481,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__bird_white_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 7083,
+   "start_s": 1.482,
+   "end_s": 1.484,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36367,
+   "start_s": 1.482,
+   "end_s": 1.484,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 12237,
+   "start_s": 1.483,
+   "end_s": 1.484,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 31043,
+   "start_s": 1.486,
+   "end_s": 1.487,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38891,
+   "start_s": 1.486,
+   "end_s": 1.487,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46230,
+   "start_s": 1.488,
+   "end_s": 1.489,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41163,
+   "start_s": 1.488,
+   "end_s": 1.489,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2437,
+   "start_s": 1.49,
+   "end_s": 1.491,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/probe/gate3_probe_hero_nx.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 1048787,
+   "start_s": 1.511,
+   "end_s": 1.522,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/probe/gate3_probe_hero_ny.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 1048787,
+   "start_s": 1.511,
+   "end_s": 1.523,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/probe/gate3_probe_hero_px.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 1048787,
+   "start_s": 1.511,
+   "end_s": 1.523,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/probe/gate3_probe_hero_py.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 1048787,
+   "start_s": 1.511,
+   "end_s": 1.523,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/probe/gate3_probe_hero_pz.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 1048787,
+   "start_s": 1.511,
+   "end_s": 1.523,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate3/probe/gate3_probe_hero_nz.hdr",
+   "status": 200,
+   "mime": "image/vnd.radiance",
+   "bytes": 1048787,
+   "start_s": 1.511,
+   "end_s": 1.523,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 122286,
+   "start_s": 1.662,
+   "end_s": 1.666,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 119827,
+   "start_s": 1.662,
+   "end_s": 1.666,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 97894,
+   "start_s": 1.662,
+   "end_s": 1.667,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lmatlas_arch_inst_2_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76510,
+   "start_s": 1.662,
+   "end_s": 1.668,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 79877,
+   "start_s": 1.662,
+   "end_s": 1.669,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 116816,
+   "start_s": 1.663,
+   "end_s": 1.671,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 89665,
+   "start_s": 1.663,
+   "end_s": 1.672,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lmatlas_arch_inst_1_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 463283,
+   "start_s": 1.662,
+   "end_s": 1.673,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 49837,
+   "start_s": 1.663,
+   "end_s": 1.673,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28375,
+   "start_s": 1.663,
+   "end_s": 1.673,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 63219,
+   "start_s": 1.663,
+   "end_s": 1.673,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 120752,
+   "start_s": 1.663,
+   "end_s": 1.675,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 164363,
+   "start_s": 1.664,
+   "end_s": 1.676,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29099,
+   "start_s": 1.664,
+   "end_s": 1.676,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 158057,
+   "start_s": 1.663,
+   "end_s": 1.677,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 206124,
+   "start_s": 1.664,
+   "end_s": 1.68,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lmatlas_arch_inst_0_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 453787,
+   "start_s": 1.663,
+   "end_s": 1.681,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 272392,
+   "start_s": 1.664,
+   "end_s": 1.681,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lmatlas_orn_0_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 651144,
+   "start_s": 1.664,
+   "end_s": 1.683,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lmatlas_orn_1_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 424378,
+   "start_s": 1.664,
+   "end_s": 1.683,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_arch_t2.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 80359,
+   "start_s": 2.176,
+   "end_s": 2.179,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_orn_t2.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 175304,
+   "start_s": 2.185,
+   "end_s": 2.186,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_finial_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26930,
+   "start_s": 2.187,
+   "end_s": 2.19,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_rosette_ceiling_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46742,
+   "start_s": 2.187,
+   "end_s": 2.19,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_frieze_rinceau_return_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 65060,
+   "start_s": 2.187,
+   "end_s": 2.19,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_urn_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 127521,
+   "start_s": 2.187,
+   "end_s": 2.191,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_attic_panel_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 142286,
+   "start_s": 2.187,
+   "end_s": 2.191,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/orn_urn_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128676,
+   "start_s": 2.188,
+   "end_s": 2.191,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/groups/m_env_t2.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 6778437,
+   "start_s": 2.247,
+   "end_s": 2.264,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/leaves_broadleaf_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 18835,
+   "start_s": 2.277,
+   "end_s": 2.281,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/needles_pine_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28608,
+   "start_s": 2.277,
+   "end_s": 2.281,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/leaves_broadleaf.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 40441,
+   "start_s": 2.277,
+   "end_s": 2.281,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/needles_pine.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 61870,
+   "start_s": 2.277,
+   "end_s": 2.281,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 34418,
+   "start_s": 2.338,
+   "end_s": 2.341,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__paving_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 65016,
+   "start_s": 2.443,
+   "end_s": 2.445,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__paving_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 25170,
+   "start_s": 2.447,
+   "end_s": 2.448,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ARCH_site__paving_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1774,
+   "start_s": 2.449,
+   "end_s": 2.45,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 148555,
+   "start_s": 2.541,
+   "end_s": 2.546,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 146958,
+   "start_s": 2.541,
+   "end_s": 2.546,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 68989,
+   "start_s": 2.541,
+   "end_s": 2.546,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 23676,
+   "start_s": 2.549,
+   "end_s": 2.552,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41865,
+   "start_s": 2.55,
+   "end_s": 2.552,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42125,
+   "start_s": 2.55,
+   "end_s": 2.552,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 119821,
+   "start_s": 2.556,
+   "end_s": 2.558,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 121049,
+   "start_s": 2.556,
+   "end_s": 2.558,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 68758,
+   "start_s": 2.556,
+   "end_s": 2.558,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53587,
+   "start_s": 2.561,
+   "end_s": 2.562,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36327,
+   "start_s": 2.561,
+   "end_s": 2.562,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 173652,
+   "start_s": 2.561,
+   "end_s": 2.563,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45959,
+   "start_s": 2.563,
+   "end_s": 2.564,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 32706,
+   "start_s": 2.564,
+   "end_s": 2.565,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 50592,
+   "start_s": 2.565,
+   "end_s": 2.567,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27831,
+   "start_s": 2.566,
+   "end_s": 2.567,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45942,
+   "start_s": 2.566,
+   "end_s": 2.568,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 148080,
+   "start_s": 2.595,
+   "end_s": 2.596,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_hill_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 32231,
+   "start_s": 2.618,
+   "end_s": 2.621,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_forest_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 15793,
+   "start_s": 2.618,
+   "end_s": 2.621,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_tile_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36259,
+   "start_s": 2.618,
+   "end_s": 2.621,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_forest_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 22665,
+   "start_s": 2.624,
+   "end_s": 2.626,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_hill_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 8693,
+   "start_s": 2.624,
+   "end_s": 2.626,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_tile_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 11801,
+   "start_s": 2.624,
+   "end_s": 2.626,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_forest_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3845,
+   "start_s": 2.627,
+   "end_s": 2.628,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_tile_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3771,
+   "start_s": 2.627,
+   "end_s": 2.628,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__lamp_post_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4726,
+   "start_s": 2.627,
+   "end_s": 2.628,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__lamp_post_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3842,
+   "start_s": 2.629,
+   "end_s": 2.63,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__lawn_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 33611,
+   "start_s": 2.629,
+   "end_s": 2.63,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__lamp_post_metallic.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3169,
+   "start_s": 2.631,
+   "end_s": 2.631,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__lawn_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 30749,
+   "start_s": 2.631,
+   "end_s": 2.632,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_metallic.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1869,
+   "start_s": 2.675,
+   "end_s": 2.676,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_broadleaf_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 39806,
+   "start_s": 2.699,
+   "end_s": 2.701,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_broadleaf_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27439,
+   "start_s": 2.724,
+   "end_s": 2.726,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_cypress_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 64235,
+   "start_s": 2.727,
+   "end_s": 2.728,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_cypress_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28247,
+   "start_s": 2.73,
+   "end_s": 2.731,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_eucalyptus_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46400,
+   "start_s": 2.732,
+   "end_s": 2.734,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_eucalyptus_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26864,
+   "start_s": 2.739,
+   "end_s": 2.74,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_pine_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 60827,
+   "start_s": 2.741,
+   "end_s": 2.742,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_leaf_pine_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26252,
+   "start_s": 2.744,
+   "end_s": 2.744,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_reeds_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 79044,
+   "start_s": 2.745,
+   "end_s": 2.746,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_reeds_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 35903,
+   "start_s": 2.748,
+   "end_s": 2.749,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_shrub_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 79707,
+   "start_s": 2.75,
+   "end_s": 2.75,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_shrub_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 40915,
+   "start_s": 2.756,
+   "end_s": 2.757,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_shrub_dry_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80493,
+   "start_s": 2.758,
+   "end_s": 2.759,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_shrub_dry_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37527,
+   "start_s": 2.762,
+   "end_s": 2.763,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_shrub_light_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80269,
+   "start_s": 2.764,
+   "end_s": 2.765,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/foliage_MAT_shrub_light_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42083,
+   "start_s": 2.767,
+   "end_s": 2.768,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_broadleaf_s53_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55644,
+   "start_s": 2.865,
+   "end_s": 2.87,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_broadleaf_s19_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 56009,
+   "start_s": 2.865,
+   "end_s": 2.87,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_s41_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 51071,
+   "start_s": 2.866,
+   "end_s": 2.87,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_s3_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 51700,
+   "start_s": 2.866,
+   "end_s": 2.87,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_s17_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53267,
+   "start_s": 2.866,
+   "end_s": 2.871,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_column_s31_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 43103,
+   "start_s": 2.866,
+   "end_s": 2.871,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_column_s2_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41796,
+   "start_s": 2.866,
+   "end_s": 2.872,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_eucalyptus_s5_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 54960,
+   "start_s": 2.866,
+   "end_s": 2.872,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_eucalyptus_s23_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 52722,
+   "start_s": 2.866,
+   "end_s": 2.872,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_eucalyptus_s61_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 52843,
+   "start_s": 2.866,
+   "end_s": 2.873,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_pine_s7_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53548,
+   "start_s": 2.866,
+   "end_s": 2.873,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_pine_s29_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55532,
+   "start_s": 2.866,
+   "end_s": 2.873,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_redwood_s43_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 52088,
+   "start_s": 2.867,
+   "end_s": 2.874,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_redwood_s13_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 52836,
+   "start_s": 2.867,
+   "end_s": 2.874,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_willow_s11_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 60586,
+   "start_s": 2.867,
+   "end_s": 2.874,
+   "failed": null
+  },
+  {
+   "url": "http://127.0.0.1:50931/assets/gate5/tex_lo/gate3_imp_ENV_tree_willow_s37_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 57944,
+   "start_s": 2.867,
+   "end_s": 2.874,
+   "failed": null
+  }
+ ]
+}

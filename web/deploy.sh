@@ -131,26 +131,37 @@ link_set "$MANIFEST" > "$OUT/.linked" || {
 	echo "deploy.sh: the desktop manifest names files that are not on disk — refusing to deploy a set with holes" >&2
 	exit 4
 }
-# `tiers.deploy_from` (the export's wire pass): the DESKTOP manifest's plan is the complete deploy
-# set, the half-resolution files only the mobile variant fetches included (kind `mobile_lo`).  The
-# mobile manifest is then published as a FILE and never walked — walking it would pull the
-# full-resolution keys its material sets name, which the viewer redirects and never fetches.
-DEPLOY_FROM=$(node -e 'const m=require(process.argv[1]);process.stdout.write(String((m.tiers&&m.tiers.deploy_from)||""))' "$MANIFEST" 2>/dev/null || true)
-if [ -n "$MOBILE" ] && [ -z "$DEPLOY_FROM" ]; then
+# THE PUBLISH SET IS THE UNION OF BOTH PLANS.  `tiers.deploy_from` says the desktop plan names every
+# path both variants fetch, and that held for the 142 `mobile_lo` textures but NOT for the seven
+# mobile group glbs (14 571 144 B), which are named in manifest_mobile.files alone — QA 18's blocker:
+# `?tier=mobile` 404ed on every one of them.  Both plans are walked now and deduped by resolved path
+# (link_set skips a target that already exists), and 2b below proves every path of BOTH manifests is
+# in the publish directory.  The mobile manifest's material sets name desktop full-resolution keys;
+# those are in the union anyway.
+MOBILE_FILES=0
+if [ -n "$MOBILE" ]; then
+	BEFORE_N=$(wc -l < "$OUT/.linked" | tr -d ' ')
 	link_set "$MOBILE" >> "$OUT/.linked" || {
 		echo "deploy.sh: the mobile manifest names files that are not on disk — refusing to deploy a set with holes" >&2
 		exit 4
 	}
-elif [ -n "$MOBILE" ]; then
-	echo "deploy.sh: tiers.deploy_from says the desktop plan is the whole deploy set; the mobile manifest is published as a file, not walked"
-	MREL="assets/$( cd "$(dirname "$MOBILE")" && pwd | sed "s|^$ASSETS/||" )/$(basename "$MOBILE")"
-	mkdir -p "$(dirname "$OUT/$MREL")"
-	[ -e "$OUT/$MREL" ] || ln "$MOBILE" "$OUT/$MREL" 2>/dev/null || cp "$MOBILE" "$OUT/$MREL"
-	echo "L $(stat -f %z "$MOBILE") $MREL" >> "$OUT/.linked"
+	MOBILE_FILES=$(( $(wc -l < "$OUT/.linked" | tr -d ' ') - BEFORE_N ))
+	echo "deploy.sh: the mobile plan added $MOBILE_FILES file(s) the desktop plan does not name"
 fi
 LINKED=$(grep -c '^L ' "$OUT/.linked" || true)
 COPIED=$(grep -c '^C ' "$OUT/.linked" || true)
 echo "deploy.sh: $LINKED hard-linked, $COPIED copied from $ASSETS"
+
+# --------------------------------------------------------------- 2b. every planned path is present
+# publish_set guarantees a path resolved ON DISK; this guarantees it is IN THE PUBLISH DIRECTORY,
+# for BOTH manifests.  It is the check QA 18's blocker needed: the seven mobile group glbs were on
+# disk and named in the mobile plan, and were simply never linked.
+VERIFY=("$MANIFEST")
+[ -n "$MOBILE" ] && VERIFY+=("$MOBILE")
+node "$ROOT/web/tools/verify_publish.mjs" --dir "$OUT" "${VERIFY[@]}" || {
+	echo "deploy.sh: the publish directory does not answer every planned path — refusing to deploy" >&2
+	exit 8
+}
 
 # ---------------------------------------------------------------------------- 3. the host's limits
 rm -f "$OUT/.linked"

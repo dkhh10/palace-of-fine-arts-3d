@@ -301,6 +301,11 @@ export function disposeOrphans( scene, before ) {
  */
 export function mapForTier( entry, maxTier = Infinity ) {
 	if ( ! entry ) return null;
+	// Not in THIS variant's plan: the file is not published here (the mobile sets name the desktop
+	// keys), so the stand-in that IS in the plan is the only honest answer.
+	if ( entry.inPlan === false && entry.lo && entry.lo.url )
+		return { url: entry.lo.url, srgb: entry.srgb, bytes: entry.lo.bytes, variant: 'lo',
+			tier: entry.lo.tier ?? 0, standIn: !! entry.lo.standIn, onlyFile: true };
 	const tier = Number.isFinite( entry.tier ) ? entry.tier : 0;
 	if ( tier <= maxTier ) return { url: entry.url, srgb: entry.srgb, bytes: entry.bytes, variant: 'full', tier };
 	const lo = entry.lo;
