@@ -910,3 +910,27 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 7. **Name sweep over BOTH gate5 manifests: 0 hits** (they key on texture and group names); round 17's gate1/gate3 exceptions stand, 0 new to explain.
 8. **Evidence owed:** the user's macOS **Safari** screenshot (no capture in this round is anything but HeadlessChrome/152 — no Safari claim can be made)
    and the **iPhone 16 Pro** 30 s iOS Safari walk, which cannot be taken until item 3 is fixed.
+
+## Round 18b — Phase 6b Gate 5, the fix round and the closing 6b round (2026-09-18, Opus xhigh; docs/qa_round_18b.md). **6b DONE WITH RESIDUALS**
+1. **The round-18 blocker is closed.** `manifest.json` names 149 mobile-tier rows, 0 mobile paths are missing from the desktop plan, the publish set is the
+   union with `verify_publish` (1 051 paths, 0 missing). Curl on the live URL: **all 7 `groups/m_*.glb` 200, `model/gltf-binary`, immutable, byte-exact**;
+   39 further sampled paths 200 with the right cache class; the only >= 400 in either capture is `/favicon.ico`; 0 files over 25 MiB.
+2. **Mobile loads and walks at all six stations.** 142-180 draws / 1.51-1.91 M tris, 0 page errors, 7 of 7 groups, 16 lightmaps, 110 ETC2 substitutions.
+   **Resident 499.7 MB against the 700 MB target.** Mobile bytes before the first frame **46 738 628 B = 46.74 MB** in 8.6 s, 61.7 MB total.
+3. **First mobile scores** (36 tiles at 100 %, 2 x 3 per portrait station): **01 2.9 · 02 3.0 · 03 2.3 · 04 2.7 · 05 2.5 · 06 2.4** against desktop's
+   3.78 / 3.25 / 2.63 / 2.88 / 2.94 / 2.83. The centre band (mobile rows 936-1595 = the desktop frame) matches desktop within 2 % at four stations; the two
+   water stations are 1.14x and 1.11x brighter. Mobile's conjunct is "loads and walks", not 6a's 2.5 desktop floor.
+4. **Residual (VIEWER): the mobile water reflects nothing.** `reflectionSet` `{excluded: 169, kept: 1, all: true}` vs desktop's `kept: 134` — no rotunda in
+   the hero lagoon, a flat lower half at station 05, and a **near-black bay band** at station 06. One cause, three symptoms; 6a's "water reflects the
+   rotunda at the hero" does not hold on the mobile tier.
+5. **Residual (ENV / EXPORT):** aerial impostors read as flat lavender-grey or black cards and the far terrain shows decimation facets; the 1 m column
+   concrete blur is worse on mobile and the column base shows `-si 0.5` facets; foliage is cards only by design. **Residual (EXPORT):** 302 by-reference
+   mobile paths are still outside `files[]`, so `verify_publish` cannot cover them.
+6. **Found and fixed inside the round (VIEWER):** `gate5bm` painted the canvas 832x1801 in the top-left of the 1170x2532 page (50.6 % of it) at every
+   station; viewer 13a673c sets full CSS size and caps the pixel ratio, and `gate5cm` fills the page. The mobile tiles above are all `gate5cm`.
+7. **Desktop is untouched by the fix.** MAE vs round-18 `gate5` <= 0.001/255 at every station (02 and 04 bit-identical), payload **46 808 904 B = 46.81 MB**
+   before the first frame, resident **1 861.3 MB** identical, perf within ±3 ms of the cold pass (31.2 / 35.6 / 38.9 / 25.5 / 34.5 / 36.5), hero 32.1 fps.
+   Desktop scores carry: 01 3.78 · 02 3.25 · 03 2.63 · 04 2.88 · 05 2.94 · 06 2.83.
+8. **Loading bar fixed:** tier-0 denominator vs bytes fetched now 95.2 % desktop / 98.0 % mobile (round 18: 160.9 % / 7.4 %). **Name sweep 0 hits** over both
+   manifests including the 149 new rows. **Still owed by the user:** the macOS Safari hero screenshot (every capture is HeadlessChrome/152) and the
+   iPhone 16 Pro walk recording, takeable for the first time now.
