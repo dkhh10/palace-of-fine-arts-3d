@@ -48,7 +48,7 @@ const QUALITY_RAW = ( qs.get( 'quality' ) || 'look' ).toLowerCase();
 const QUALITY = ( QUALITY_RAW === 'fast' || QUALITY_RAW === 'look' ) ? QUALITY_RAW : 'look';
 const CFG = {
 	station: parseInt( qs.get( 'station' ) || '1', 10 ),
-	manifestUrl: qs.get( 'manifest' ) || '/assets/gate3/manifest.json',   // delivery default (6a); ?manifest=/assets/gate0/manifest.json for the Gate 0 slice
+	manifestUrl: qs.get( 'manifest' ) || '/assets/gate5/manifest.json',   // delivery default (6b: the tiered plan; gate3 is not published); ?manifest=/assets/gate0/manifest.json for the Gate 0 slice
 	testScene: qs.get( 'test' ) === '1',
 	water: qs.get( 'water' ) !== '0',
 	// ?quality: `look` (the default) is the frozen Phase 5 look - planar Reflector at full resolution,
