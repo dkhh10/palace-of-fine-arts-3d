@@ -91,7 +91,15 @@ export function applyGate3Lightmaps( o ) {
 	// ?lmenc= forces the decode for a measurement pass; the manifest's own `encode` is the default and
 	// the only thing a capture ever ships with.
 	const encOf = ( e ) => o.encodeOverride || e;
+	// Phase 6b: a lightmap whose file belongs to a LATER load tier is not attached and its material is
+	// not patched — it stays on the environment path (three's own lighting), which is what every
+	// material without a baked map already does, instead of being patched specular-only and rendering
+	// black while it waits.  The pass is re-run when that tier lands (it re-plans from scratch and is
+	// idempotent: a material it cloned last time is already the mesh's own, so nothing clones twice).
+	const tierOf = o.tierOf || ( () => 0 );
+	const maxTier = o.maxTier ?? Infinity;
 	const report = {
+		deferred: [], maxTier,
 		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {}, nearMiss: {} },
 		slots: { instances: 0, matched: 0, applied: 0, single: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
 		materialsCloned: 0, texturesRequested: 0, texturesLoaded: 0, texturesFailed: [],
@@ -227,6 +235,8 @@ export function applyGate3Lightmaps( o ) {
 		}
 		if ( p.kind === 'own' ) {
 			const lm = gate3.ownMaps[ p.name ];
+			const t = tierOf( lm.url );
+			if ( t > maxTier ) { report.deferred.push( { kind: 'own', name: p.name, url: lm.url, tier: t } ); continue; }
 			patchBakedMaterial( p.material, { lightMapEncoding: encOf( lm.encode ), range: lm.range, flipV } );
 			pending.push( fetch( lm.url ).then( ( t ) => {
 				if ( ! t ) return;
@@ -236,6 +246,12 @@ export function applyGate3Lightmaps( o ) {
 				report.own.assets[ p.name ] = `${lm.encode} range ${lm.range.toFixed( 2 )} layout ${lm.layout} (match ${p.d.toFixed( 3 )} m)`;
 			} ) );
 		} else {
+			const a = gate3.atlases[ p.atlasKeys[ 0 ] ];
+			const b = p.atlasKeys[ 1 ] ? gate3.atlases[ p.atlasKeys[ 1 ] ] : null;
+			// The tier test comes BEFORE the geometry work: a deferred plan must leave the mesh exactly
+			// as it found it, or the re-run at the next tier would clone the geometry a second time.
+			const at = Math.max( tierOf( a.url ), b ? tierOf( b.url ) : 0 );
+			if ( at > maxTier ) { report.deferred.push( { kind: 'slot', name: p.atlasKeys.join( '+' ), url: a.url, tier: at } ); continue; }
 			// The per-instance window lives on the GEOMETRY, and chunking hands each chunk its own
 			// slice (chunking.js), so a geometry shared by two InstancedMeshes is cloned first.
 			let geo = p.mesh.geometry;
@@ -243,8 +259,6 @@ export function applyGate3Lightmaps( o ) {
 			const Attr = p.single ? THREE.BufferAttribute : THREE.InstancedBufferAttribute;
 			geo.setAttribute( 'pfaSlot', new Attr( p.off, 3 ) );
 			geo.setAttribute( 'pfaSlotB', new Attr( p.sel, 1 ) );
-			const a = gate3.atlases[ p.atlasKeys[ 0 ] ];
-			const b = p.atlasKeys[ 1 ] ? gate3.atlases[ p.atlasKeys[ 1 ] ] : null;
 			const mat = p.material;
 			pending.push( Promise.all( [ fetch( a.url ), b ? fetch( b.url ) : Promise.resolve( null ) ] ).then( ( [ ta, tb ] ) => {
 				if ( ! ta ) return;
@@ -262,11 +276,15 @@ export function applyGate3Lightmaps( o ) {
 	// COLOR_0 in env.glb carries each vertex's BAKED irradiance, gamma-2 at a per-mesh range, so these
 	// meshes leave the environment-lit path exactly as a lightmapped mass does.  The join is the same
 	// world-bbox-centre lookup; the range is per mesh and never shared (manifest v4 says so twice).
-	report.vertexIrradiance = applyVertexIrradiance( scene, gate3, assets, note, o.vertexIrr );
+	// `skipIrradiance` is the tier re-run: both passes already ran at tier 0 over the same meshes and
+	// they write vertex attributes and uniforms, so running them again would cost the same traversal
+	// for no change.  (A tier that ADDS meshes re-runs them on the new root instead.)
+	if ( o.skipIrradiance ) report.vertexIrradiance = null;
+	else report.vertexIrradiance = applyVertexIrradiance( scene, gate3, assets, note, o.vertexIrr );
 
 	// ---- pass 4: per-placement irradiance on the 1 379 shrub/reed cards (Gate 4 item 1c) -----
-	report.instanceIrradiance = applyInstanceIrradiance( scene, gate3, note, o.instIrr,
-		{ covScale: o.shrubCov } );
+	report.instanceIrradiance = o.skipIrradiance ? null
+		: applyInstanceIrradiance( scene, gate3, note, o.instIrr, { covScale: o.shrubCov } );
 
 	report.promise = Promise.all( pending ).then( () => {
 		note( `gate3 UV2 census: ${report.uv2.meshesWithUv2} mesh(es) carry TEXCOORD_1 (${report.uv2.drawnWithUv2} placements), `
@@ -283,6 +301,9 @@ export function applyGate3Lightmaps( o ) {
 		if ( report.own.blockedNoUv2InGlb )
 			note( `gate3: ${report.own.blockedNoUv2InGlb} asset(s) have uv2_in_glb false with no frozen-layout twin — no map applied (there is no factor fallback for a lightmap)` );
 		if ( report.texturesFailed.length ) note( `gate3: ${report.texturesFailed.length} lightmap texture(s) failed: ${report.texturesFailed.slice( 0, 4 ).join( '; ' )}` );
+		if ( report.deferred.length ) note( `gate3: ${report.deferred.length} lightmap(s) deferred to a later load tier `
+			+ `(max tier now ${maxTier}): ${[ ...new Set( report.deferred.map( d => `${d.name} @${d.tier}` ) ) ].slice( 0, 6 ).join( ', ' )}`
+			+ `${report.deferred.length > 6 ? ' …' : ''}. Those materials stay on the environment path until their tier lands.` );
 		const ai = report.instanceIrradiance;
 		if ( ai && ai.errors.length ) throw new Error( `gate4 instance irradiance: ${ai.errors.join( '; ' )}` );
 		const v = report.vertexIrradiance;

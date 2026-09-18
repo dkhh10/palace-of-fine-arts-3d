@@ -12,6 +12,11 @@
   #hud { position: fixed; left: 12px; bottom: 10px; font: 12px/1.5 ui-monospace, Menlo, monospace;
          color: #e8e2d8; text-shadow: 0 1px 2px #000; pointer-events: none; }
   #hud.hidden { display: none; }
+  /* Phase 6b: the streaming readout for tiers 1-2, behind an already finished first frame. */
+  #tiers { position: fixed; right: 12px; bottom: 10px; font: 11px/1.4 ui-monospace, Menlo, monospace;
+           color: #cfc8bb; background: rgba(11,13,16,.55); padding: 3px 7px; border-radius: 3px;
+           text-shadow: 0 1px 2px #000; pointer-events: none; }
+  #tiers.hidden { display: none; }
   #loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 12px;
              background: #0b0d10; color: #cfc8bb; font: 13px/1.6 ui-monospace, Menlo, monospace; }
   #track { width: 320px; height: 3px; background: #23262b; }
@@ -21,6 +26,7 @@
 <body>
 <div id="app"></div>
 <div id="hud"></div>
+<div id="tiers" class="hidden"></div>
 <div id="loading"><div>Palace of Fine Arts</div><div id="track"><div id="bar"></div></div><div id="loading-text">loading…</div></div>
 <script type="module" src="/src/main.js"></script>
 </body>

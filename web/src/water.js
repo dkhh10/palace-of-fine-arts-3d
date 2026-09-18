@@ -379,16 +379,23 @@ export const REFLECT_EXCLUDE_LAYER = 2;
  *
  * @returns {{excluded:number, orn:number, backdrop:number, kept:number}}
  */
-export function reduceReflectionSet( scene, water, camera, { orn = true, backdrop = true, note = () => {} } = {} ) {
-	const out = { excluded: 0, orn: 0, backdrop: 0, kept: 0 };
+export function reduceReflectionSet( scene, water, camera, { orn = true, backdrop = true, all = false, note = () => {} } = {} ) {
+	const out = { excluded: 0, orn: 0, backdrop: 0, kept: 0, all };
 	if ( ! water || ! water.getReflectionCamera ) return out;
+	// v5 may ship several GROUPS of one class, so a root is `WEB_glb_orn` or `WEB_glb_orn_<group>`.
 	const rootOf = ( o ) => { let p = o; while ( p && ! /^WEB_glb_/.test( p.name || '' ) ) p = p.parent; return p ? p.name : ''; };
 	scene.traverse( ( o ) => {
 		if ( ! o.isMesh ) return;
 		const mats = Array.isArray( o.material ) ? o.material : [ o.material ];
 		const name = mats.map( ( m ) => ( m && m.name ) || '' ).join( ' ' );
-		const isOrn = orn && /^WEB_glb_orn$/.test( rootOf( o ) );
-		const isBackdrop = backdrop && /MAT_EXP_ENVBD__MAT_backdrop_/.test( name );
+		// `all` is the MOBILE tier (device.js): every mesh leaves the reflection, so the Reflector's
+		// second pass draws the background sphere alone.  The water still ripples and still reflects
+		// the sky with the right Fresnel; it no longer reflects the building, which is the mobile
+		// compromise the 6b plan asks for ("water without the planar Reflector") without giving the
+		// lagoon a black surface or needing a second water shader.
+		const isOrn = ! all && orn && /^WEB_glb_orn(_|$)/.test( rootOf( o ) );
+		const isBackdrop = ! all && backdrop && /MAT_EXP_ENVBD__MAT_backdrop_/.test( name );
+		if ( all && o !== water ) { o.layers.set( REFLECT_EXCLUDE_LAYER ); out.excluded ++; return; }
 		if ( ! isOrn && ! isBackdrop ) { out.kept ++; return; }
 		o.layers.set( REFLECT_EXCLUDE_LAYER );        // off layer 0, so the reflection camera misses it
 		out.excluded ++;
@@ -403,7 +410,9 @@ export function reduceReflectionSet( scene, water, camera, { orn = true, backdro
 		const base = water.getReflectionCamera.bind( water );
 		water.getReflectionCamera = ( cam ) => { const c = base( cam ); c.layers.set( 0 ); return c; };
 	}
-	note( `reflection draw set reduced: ${out.excluded} mesh(es) excluded (${out.orn} ORN, ${out.backdrop} backdrop), `
-		+ `${out.kept} kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.` );
+	note( all
+		? `reflection draw set: EVERY mesh excluded (${out.excluded}); the Reflector draws the sky alone (mobile tier / ?reflset=all)`
+		: `reflection draw set reduced: ${out.excluded} mesh(es) excluded (${out.orn} ORN, ${out.backdrop} backdrop), `
+			+ `${out.kept} kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.` );
 	return out;
 }
