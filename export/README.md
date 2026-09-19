@@ -2508,10 +2508,17 @@ stream: gltfpack quantises TEXCOORD_0 over the file's own range, and the tiled v
 ~0.87 texels of a 1024 px map — still sub-texel, and ~0.02 px on screen at 40 m. Tier 0 is untouched and
 byte-identical; no other glb changed.
 
-**Stale after this change:** `out/gate5/manifest*.json` still advertise `trees.far_mesh.bytes` /
-`files[].bytes` = 3 699 324 for this file (the progress readout only). `python3 export/tiers.py --no-pack`
-refreshes both without repacking a group; it was deliberately NOT run here, because it rewrites both manifests
-and this branch's contract was that nothing but `env_trees.glb` changes.
+**Stale after this change, and why it stays stale:** `out/gate5/manifest.json` still advertises
+`files[].bytes` = 3 699 324 for this file (the progress readout only; `manifest_mobile.json` does not list the
+lazy glbs at all). `python3 export/tiers.py --no-pack` was run to refresh it and **reverted**: it does refresh
+the byte count and nothing else of this export (desktop `files[540].bytes/transfer` 3 699 324 -> 3 856 412,
+`tiers.bytes/transfer_bytes[2]` 58 344 715 -> 58 501 803, the two grand totals; mobile byte-identical), but it
+ALSO re-measures `tiers.boot_overhead_bytes` from `MAIN/web/dist`, which has been rebuilt since the manifests
+were written (bundle `index-CglJAl3O.js` 1 197 522 B -> `index-CLU6xaD-.js` 1 199 428 B, boot total
+1 115 259 -> 1 116 029 B, and the `tier0_trim.reason` sentence that quotes it). That is another agent's viewer
+build, not this change, so the manifests were restored byte-identical to MAIN and the refresh belongs to
+whoever next rebuilds them — by then the bundle it measures will be the one being shipped. Tier 0 is unaffected
+either way: this file is tier 2, and the tier-0 wire total moves only by the boot-overhead line.
 
 ```
 # reproduce (CPU only for the probe; the export is one Blender, no GPU)
