@@ -573,6 +573,10 @@ silhouettes in the user's desktop capture):
   Alpha-to-coverage with three's own analytic ramp, `saturate((a - alphaTest)/fwidth(a) + 0.5)`, written
   into `gl_FragColor.a`, resolved by the composer target's four samples. The cutoff is unchanged.
 
+Every equivalence and engagement number below is reproducible from the captures with
+`python3 scripts/qa_p7_probe.py diff <tagA> <tagB>` (the exact invocations are in that file's docstring;
+re-capture first with `web/tools/p7.sh`, the full-resolution PNGs are gitignored).
+
 Measured in QA 17's own crown boxes, A ALONE (floors off, `p7base` → `p7a`), reference in brackets:
 
 | crown box | hard-edge % | halo ring % | halo dL (ring − background, /255) |
@@ -585,6 +589,13 @@ and with item B's floor on top (the shipped default, `p7six_6c` → `p7six`): ha
 1.54 → 1.47, 6.03 → 5.04; halo dL −2.06 → −6.83, −0.72 → −2.44, −9.76 → −14.58. The halo RING share
 barely moves because that ring is mostly other foliage at these boxes; what moves is its level relative
 to the background, which is the halo itself, and it moves toward the reference at all three boxes.
+Both switches report themselves in the boot note: an unrecognised `?impedge=` value says so before
+falling back to `both`, and a refused alpha-to-coverage names the right reason (`?leafsoft=0` when that
+is what turned it off, the target's samples otherwise) — round-1 review 6 and 7. One caveat from the
+same finding: `?impedge=0` restores the 6c frame exactly, but `?impdebug=1` (the raw-sample debug view)
+shows the RECONSTRUCTED rgb either way, because that is what the shader now computes; the debug path is
+not part of the equivalence claim.
+
 Both halves are verified to ENGAGE rather than assumed (three has to honour `alphaToCoverage` on a
 raw ShaderMaterial for the second one to do anything): `?impedge=premul` against `both` differs on
 0.60-3.10 % of the pixels at cam01/02/05 (that difference is the coverage resolve, at the silhouette)
@@ -721,6 +732,8 @@ Every one of these is still overridable by query.
 | | 6c mobile | Phase 7 mobile | delta |
 |---|---|---|---|
 | resident | 499.7 MB | **561.9 MB** | +62.2 (ceiling 700) |
+| downloaded (the whole load) | 61.49 MB | **65.61 MB** | +4.12 |
+| of that, before the first frame | 52.36 MB | **52.36 MB** | **+0.00** |
 | — texture / render target / geometry | 204.8 / 237.4 / 57.5 | 204.8 / 237.4 / **119.6** | all of it geometry |
 | draws at station 1 | 278 | 340 | +62 |
 | triangles at station 1 | 2.74 M | 4.17 M | +1.43 M |
@@ -731,6 +744,15 @@ Stations 2-6 after: 366 / 4.67 M, 388 / 4.87 M, 206 / 2.43 M, 315 / 3.68 M, 350 
 far radius from 10 m to 45 m changes only two of the six station frames — cam02 +1.16 % whole-frame luma
 on 3.52 % of its pixels, cam03 +0.31 % on 0.81 % — because the LOD2 set carries vertex AO where the
 walk-up LOD1 set does not; the other four are byte-identical.
+
+**The extra bytes are tier 2, not tier 0** (round-1 review 3). Measured with `screenshot.mjs --net` on
+both configurations, `renders/web/p7net_{6c,p7}_net.json`: `bytes_before_first_frame` is *identical* to
+the byte — 52 356 936 in each, over the same 376 requests — because `trees.far_mesh` and `shrubs.lod1`
+are both `load: lazy` in the manifest and are fetched after `window.__pfaReadyAt`. Only `bytes_total`
+moves, 67.24 → 71.37 MB on the wire (uncompressed, off the local server; the 50 MB budget is written in
+post-Brotli CDN bytes, which is a different figure this capture does not produce). So the Phase 7 mobile
+change cannot move the initial-payload definition of done. For the record, the REJECTED walk-up
+configuration downloaded 69.56 MB (+8.06) — twice the shipped set's extra bytes for the same radius.
 
 Memory, attributed by measurement on the same orbit fixture: LOD1 shrubs **+1.7 MB**, near-tree meshes
 **0** (that geometry is already in the mobile payload and was simply never drawn), the LOD2 far-tree set

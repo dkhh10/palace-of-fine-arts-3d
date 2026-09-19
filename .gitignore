@@ -91,4 +91,6 @@ renders/web/p7*.png
 # the per-capture sidecars are ~210 kB each and fully regenerable; the perf JSONs are the evidence
 renders/web/p7*_shot.json
 renders/web/p7*_cam.json
+renders/web/p7net_6c.json
+renders/web/p7net_p7.json
 !renders/web/960/*

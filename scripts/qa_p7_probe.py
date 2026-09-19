@@ -3,13 +3,23 @@
 
 No Blender, no Chrome.  It reuses QA 17's own definitions rather than inventing new ones: the crown
 boxes, `crown_stats`, `box_stats` and the reference set all come from `scripts/qa_r16_probe.py` in
-the MAIN checkout (PFA_QA_ROOT, default the main path), so a Phase 7 number and a QA 17 number are
-the same measure.  The CAPTURES are read from this worktree (PFA_VIEWER_WEB), the REFERENCES from
-MAIN — nothing in MAIN is written.
+the MAIN checkout (PFA_MAIN_ROOT, the same variable p7.sh exports), so a Phase 7 number and a QA 17
+number are the same measure.  The CAPTURES are read from this worktree (PFA_VIEWER_WEB), the
+REFERENCES from MAIN — nothing in MAIN is written.
 
     PFA_VIEWER_WEB=renders/web python3 scripts/qa_p7_probe.py crown p7base p7ab
     python3 scripts/qa_p7_probe.py edge  p7base p7ab       # hard-edge share and halo share
     python3 scripts/qa_p7_probe.py frame p7base p7ab       # whole-frame luma vs the reference
+    python3 scripts/qa_p7_probe.py diff  p7six_6c p7base   # two captures against each other
+
+`diff` is how the branch's three equivalence / engagement headlines are reproduced from the captures
+(the full-resolution PNGs are gitignored, so re-capture with `web/tools/p7.sh` first):
+
+    diff p7six_6c p7base            the 6c RESTORE: every Phase 7 term off by query vs the 6c build
+                                    itself -> MAE 0.0001 / 0.0000 / 0.0005 out of 255 at cam01/02/05
+    diff p7six p7edge_premul        item A's alpha-to-coverage half -> 0.60-3.10 % of pixels
+    diff p7six p7edge_a2c           item A's premultiplied half     -> 4.95-6.97 % of pixels
+    diff p7a p7crf45                item B's MESH-side floor        -> 0.005-0.012 % of pixels
 
 `<tag>_cam0N.png` is the file each tag names, as every gate script writes it.
 
@@ -27,7 +37,8 @@ from pathlib import Path
 
 import numpy as np
 
-MAIN = Path(os.environ.get("PFA_QA_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
+MAIN = Path(os.environ.get("PFA_MAIN_ROOT",
+                           "/Users/dk/Projects/3d render blender 3rd attempt building"))
 sys.path.insert(0, str(MAIN / "scripts"))
 import qa_r17_probe  # noqa: E402,F401  (registers round 17 on the shared module)
 import qa_r16_probe as P16  # noqa: E402
@@ -107,6 +118,27 @@ def cmd_edge(tags):
         print()
 
 
+def cmd_diff(tags):
+    """Two captures against each other, per station: MAE, max, and the share of pixels that moved.
+
+    `changed %` counts any channel differing at all, which is the strict form the equivalence claims
+    are made in; `> 2/255` beside it is the share that would be visible at all in an 8-bit frame.
+    """
+    if len(tags) < 2:
+        print("diff needs two tags")
+        return
+    a, b = tags[0], tags[1]
+    print(f"== {a} vs {b} ==")
+    print(f"{'station':10s} {'MAE/255':>9s} {'max':>5s} {'changed %':>10s} {'> 2/255 %':>10s}")
+    for st in range(1, 7):
+        if not (VIEW / f"{a}_cam{st:02d}.png").exists() or not (VIEW / f"{b}_cam{st:02d}.png").exists():
+            continue
+        x, y = img(a, st), img(b, st)
+        d = np.abs(x - y)
+        print(f"cam{st:02d}      {d.mean():9.4f} {d.max():5.0f} "
+              f"{100 * (d.max(2) > 0).mean():9.3f}% {100 * (d.max(2) > 2).mean():9.3f}%")
+
+
 def cmd_frame(tags):
     """Whole-frame luma against the reference, every station the tags have a capture for."""
     print("== whole-frame luma / reference ==")
@@ -128,4 +160,4 @@ def cmd_frame(tags):
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "crown"
     tags = sys.argv[2:] or ["p7base"]
-    {"crown": cmd_crown, "edge": cmd_edge, "frame": cmd_frame}[cmd](tags)
+    {"crown": cmd_crown, "edge": cmd_edge, "frame": cmd_frame, "diff": cmd_diff}[cmd](tags)

@@ -1088,7 +1088,7 @@ async function setupFoliageAndImpostors() {
 			atlas2k: CFG.imp2k, interior: CFG.impInt,
 			// Phase 7 item A: the card-edge treatment, and whether a multisampled target exists for
 			// its alpha-to-coverage half (the same `msaa` the leaf cards were given).
-			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false,
+			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false, leafSoft: CFG.leafSoft,
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on

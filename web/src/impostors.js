@@ -336,13 +336,17 @@ export function parseImpInterior( v ) {
  */
 export const IMP_EDGE = { premul: true, a2c: true };
 export function parseImpEdge( v, msaa = true ) {
-	let d = { ...IMP_EDGE };
+	let d = { ...IMP_EDGE }, unknown = null;
 	const s = ( v === null || v === undefined ) ? '' : String( v ).trim().toLowerCase();
 	if ( s === '0' || s === 'off' || s === 'none' ) d = { premul: false, a2c: false };
 	else if ( s === 'premul' ) d = { premul: true, a2c: false };
 	else if ( s === 'a2c' ) d = { premul: false, a2c: true };
 	else if ( s === 'both' || s === '1' || s === 'on' || s === '' ) d = { ...IMP_EDGE };
-	return { premul: d.premul, a2c: d.a2c && !! msaa, a2cAsked: d.a2c, msaa: !! msaa };
+	// Round-1 review 7: a typo used to fall back to `both` in silence, which reads in a capture as
+	// "the A/B did nothing" rather than as "the A/B never ran".  It still falls back - a bad switch
+	// must never take the frame with it - but it says so.
+	else unknown = s;
+	return { premul: d.premul, a2c: d.a2c && !! msaa, a2cAsked: d.a2c, msaa: !! msaa, unknown };
 }
 
 /**
@@ -351,7 +355,7 @@ export function parseImpEdge( v, msaa = true ) {
  */
 export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
 	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null,
-	edge = null, msaa = false } ) {
+	edge = null, msaa = false, leafSoft = true } ) {
 	// 6c round 3: (strength, radius in frame UV, Phase 7 floor).  `?impint=` — see the fragment shader.
 	const impInterior = parseImpInterior( interior );
 	// Phase 7 item A: `?impedge=` — see the header.
@@ -528,8 +532,13 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `${( report.bytes / 1048576 ).toFixed( 1 )} MB declared`
 			+ ( report.normalDepthLoaded ? `, ${report.normalDepthLoaded} normal+depth atlas(es) loaded (?impnd=1)`
 				: ', normal+depth NOT loaded (the manifest says nothing samples it while unlit holds)' ) );
+		// Round-1 review 6: `?leafsoft=0` is folded into the msaa flag upstream, so the honest reason
+		// for a refusal is that switch when it was given, and the target only otherwise.
+		const a2cWhy = leafSoft ? 'no multisampled target' : '?leafsoft=0';
+		if ( impEdge.unknown !== null ) note( `?impedge=${impEdge.unknown} is not a value `
+			+ `(0 | premul | a2c | both): using both, the default` );
 		note( `impostor edge (Phase 7 A): premultiplied 12-tap reconstruction ${impEdge.premul ? 'ON' : 'off'}, `
-			+ `alpha-to-coverage ${impEdge.a2c ? 'ON' : ( impEdge.a2cAsked ? 'asked but OFF (no multisampled target)' : 'off' )}`
+			+ `alpha-to-coverage ${impEdge.a2c ? 'ON' : ( impEdge.a2cAsked ? `asked but OFF (${a2cWhy})` : 'off' )}`
 			+ ` (?impedge=0|premul|a2c|both); interior floor ${impInterior[ 2 ].toFixed( 2 )} of the card's own `
 			+ `radiance (?impint=str,radius,floor)` );
 		if ( report.missingPrototypes.length )
