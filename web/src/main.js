@@ -99,7 +99,11 @@ const CFG = {
 	chunk: qs.get( 'chunk' ),                           // "minRadius[,maxDepth[,gain[,budget]]]" 
 	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
 	detail: qs.has( 'detail' ) ? parseFloat( qs.get( 'detail' ) ) : 1.0,   // QA-12-1 detail layer strength, 0 = off
-	detailProj: qs.get( 'detailproj' ) || 'objxy',      // objxy (the manifest's plane) | dominant
+	// Phase 8c item A (export's texel analysis, docs/briefs/phase8c_export_analysis.md): the detail
+	// layer's objxy plane streaks DOWN a column shaft - 15 texels/m vertically against 948
+	// horizontally - which is cam03's column banding.  `dominant` samples the axis-aligned plane
+	// most facing the surface, so a shaft takes an unsmeared tile.  The url still overrides.
+	detailProj: qs.get( 'detailproj' ) || 'dominant',   // dominant (default) | objxy (the manifest's plane)
 	detailNormal: qs.has( 'detailnormal' ) ? parseFloat( qs.get( 'detailnormal' ) ) : 1.0,  // detail normal scale (1 = the map's own slope)
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
@@ -129,6 +133,12 @@ const CFG = {
 	impInt: qs.get( 'impint' ),
 	// Phase 7 item A — the impostor card edge: 0 | premul | a2c | both (default both).
 	impEdge: qs.get( 'impedge' ),
+	// Phase 8b item A — the atlas alpha spent as COVERAGE where a texel is bigger than a screen
+	// pixel: 0 | 1 | magLo[,magHi] (default on, handover 1 -> 2 screen px per texel).
+	impCov: qs.get( 'impcov' ),
+	// Phase 8b item 3 — the 12 x 3 BAND atlas in place of the octahedral frames, wherever the
+	// manifest carries `impostors.band`: 0 reverts to the octahedral (2K) path.
+	impBand: qs.get( 'impband' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
@@ -397,7 +407,15 @@ function setupTiers() {
 	let envTier = 0, impTier = 0;
 	for ( const g of manifest.glbs ) if ( g.cls === 'env' ) envTier = Math.max( envTier, g.tier );
 	const protos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.prototypes ) || {};
-	for ( const p of Object.values( protos ) ) impTier = Math.max( impTier, tierOf( p.albedo ), tierOf( p.normalDepth ) );
+	// albedo2k and the band atlas count: the 2K variant and the band are tier-1 files whose tier-0
+	// stand-in is the 1K atlas, so leaving them out made "the impostor pass waits for its atlases"
+	// true only by accident of the 1K rows (phase8_viewer_r1_review carry).
+	const bandProtos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.band
+		&& manifest.gate3.impostors.band.prototypes ) || {};
+	for ( const p of Object.values( protos ) )
+		impTier = Math.max( impTier, tierOf( p.albedo ), tierOf( p.normalDepth ),
+			p.albedo2k ? tierOf( p.albedo2k ) : 0 );
+	for ( const b of Object.values( bandProtos ) ) impTier = Math.max( impTier, tierOf( b.albedo ) );
 	sceneCompletionTier = Math.max( envTier, impTier );
 	const pf = manifest.gate3 && manifest.gate3.probe ? manifest.gate3.probe.faces : null;
 	probeTier = pf ? Math.max( ...pf.map( ( u ) => tierOf( u ) ) ) : 0;
@@ -975,6 +993,7 @@ async function setupProbeEnv() {
  * in tier 0 and from streamTiers() when it is not.
  */
 async function setupFoliageAndImpostors() {
+	let msaaSamples = 0;                 // Phase 8b: the target's MSAA count, measured below
 	// 6c round 2: the bake's far-tree lighting (a few kB, inline or a sidecar json).  Fetched HERE,
 	// not with the lazy glb, because the impostors are built below and their modulation mode depends
 	// on whether E_bake has been measured.
@@ -1009,8 +1028,13 @@ async function setupFoliageAndImpostors() {
 		// alphaToCoverage is only worth asking for when the target this draws into is multisampled:
 		// the composer's is `samples: 4` and so is the Reflector's, and with ?post=none the canvas
 		// itself is `antialias: true`.
-		const msaa = CFG.leafSoft && ( ( composer && composer.renderTarget1 && composer.renderTarget1.samples > 0 )
-			|| renderer.getContext().getParameter( renderer.getContext().SAMPLES ) > 0 );
+		const targetSamples = ( composer && composer.renderTarget1 && composer.renderTarget1.samples > 0 )
+			? composer.renderTarget1.samples
+			: renderer.getContext().getParameter( renderer.getContext().SAMPLES );
+		const msaa = CFG.leafSoft && targetSamples > 0;
+		// Phase 8b: the coverage quantum the impostors dither against is the TARGET'S own sample
+		// count, read here with the flag rather than assumed to be four.
+		msaaSamples = msaa ? targetSamples : 0;
 		const vi = manifest.gate3 && manifest.gate3.vertexIrradiance;
 		const vertexIrrScale = ( vi && vi.range > 0 && ! vi.rangeConflict ) ? vi.range * manifest.gate3.scale : 0;
 		// 6c round 2, BEFORE the patch: export item D's tinted albedo and per-texel translucency
@@ -1089,6 +1113,10 @@ async function setupFoliageAndImpostors() {
 			// Phase 7 item A: the card-edge treatment, and whether a multisampled target exists for
 			// its alpha-to-coverage half (the same `msaa` the leaf cards were given).
 			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false, leafSoft: CFG.leafSoft,
+			// Phase 8b item A: alpha as coverage under magnification, and the quantum it dithers to.
+			coverage: CFG.impCov, samples: msaaSamples,
+			// Phase 8b item 3: the band block is the MANIFEST's; the switch only says whether to use it.
+			band: { block: manifest.gate3.impostors.band || null, switch: CFG.impBand },
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
@@ -2009,7 +2037,10 @@ window.__pfaInfo = () => ( {
 		// round-1 review 5: the three 6c defaults the info block was missing
 		atlas2k: impostorReport.atlas2k, atlasGeometry: impostorReport.drawnGeom,
 		nearInstances: impostorReport.nearInstances, modulated: impostorReport.modulated,
-		interior: impostorReport.interior },
+		interior: impostorReport.interior,
+		// Phase 7 item A / Phase 8b item A, so a capture can be told apart from its A/B without
+		// reading the boot log: what the card edge and the coverage path actually did.
+		edge: impostorReport.edge, coverage: impostorReport.coverage, band: impostorReport.band },
 	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
 		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
 		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, aoAlphaForced: farTreeReport.aoAlphaForced || 0,

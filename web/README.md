@@ -784,6 +784,253 @@ set's brightness against the atlas card, surfaced by C's S3 pass, is a new item 
 far-tree mesh lighting.
 
 
+## Phase 8b — the far-tree card under magnification (`?impcov=`), 2026-09-19
+
+The bake engineer's analysis (`docs/briefs/phase8b_bake_analysis.md`) and the lead's 8b decision
+(`docs/decisions.md`): at station 2 the crown that fills the frame is an 81 px inner atlas frame
+stretched over 736 screen px — **one 1K texel covers 9.1 screen px at 1080p** — and 93-100 % of the
+covered crown-top texels are `0 < a < 1`. `fwidth( a )` is the alpha change per SCREEN PIXEL, so
+under that magnification Phase 7's ramp is ~9x too narrow, saturates, and the alpha test is a binary
+mask again: a texel at `a = 0.45` paints 81 solid screen px. Silhouette crossings per 100 screen px
+(the atlas probe's own measure, `export/p8_atlas_probe.py viewer`): Cycles 7.76, the viewer 2.40.
+
+`?impcov=magLo,magHi,share[,ramp]`, **default on at `1,2,0.15,1`**, `?impcov=0` restores Phase 7.
+Two halves, neither touching the atlas, the colour or the interior term:
+
+* **the ramp, scaled by the magnification.** `fwidth( a ) * mag` is the alpha change across one ATLAS
+  TEXEL (mag = screen px per texel, measured per fragment from the derivatives of the frame uv), so
+  the cut resolves over exactly one texel's worth of screen pixels — the finest edge the data
+  honestly carries — and closes back onto Phase 7 at mag = 1. A flat canopy interior has
+  `fwidth ~ 0`, so this half can never dither a crown. On its own it is nearly a no-op: cam02
+  crossings 2.92 → 3.64, cam01 5.73 → 5.67.
+* **the coverage share.** The ramp recovers the EDGE, not the AMOUNT of sky; for that the straight
+  alpha is spent as the covered fraction of its texel's footprint, `mix( ramp, a, share )`. With a
+  multisampled target the fraction goes to the hardware coverage mask; with none (`?leafsoft=0`,
+  `?impedge=0|premul`, an un-multisampled canvas) a 4x4 Bayer cell spends it spatially — the ordered
+  dither is the FALLBACK, not the mechanism. Both paths report themselves in the boot note.
+
+### The share, swept (stations 1, 2, 5, `web/tools/p7.sh desk <tag> impcov=1,2,<share>`)
+
+Crossings per 100 screen px in the crown box `lum < 40` (`<60` in brackets), Cycles in the last row:
+
+| share | cam01 | cam02 | cam02 foliage % | cam01 box c/e | cam02 box c/e | cam02 box level |
+|---|---|---|---|---|---|---|
+| 0 (Phase 7) | 5.73 (7.95) | 2.92 (2.44) | 77.07 | 0.532 | 0.397 | 1.04x |
+| ramp only | 5.67 (7.79) | 3.64 (2.68) | 75.92 | 0.536 | 0.390 | 1.07x |
+| 0.10 | 5.80 (8.23) | 5.29 (3.55) | 75.06 | 0.542 | 0.392 | 1.09x |
+| **0.15** | **6.55 (9.31)** | **6.82 (4.24)** | **74.19** | **0.550** | **0.398** | **1.10x** |
+| 0.20 | 8.00 (10.77) | 8.46 (5.01) | 73.31 | 0.564 | 0.406 | 1.11x |
+| 0.25 | 8.96 (11.68) | 10.21 (5.95) | 72.35 | 0.572 | 0.412 | 1.13x |
+| 0.50 | 13.22 (15.53) | 13.94 (7.94) | 68.52 | 0.612 | 0.439 | 1.19x |
+| 1.00 | 15.01 (17.76) | 16.79 (9.80) | 61.62 | 0.678 | 0.487 | 1.30x |
+| **Cycles** | **11.73 (12.00)** | **7.76 (5.34)** | **72.26** | 0.852 | 0.364 | 1.00x |
+
+**0.15 adopted**: the largest share at which every QA-17 crown box's centre/edge holds against
+Phase 7 (cam02 0.398 against 0.397, cam05 0.908 against 0.912, cam01 0.550 against 0.532 — toward
+the reference's 0.852) and every whole-frame luma stays within 0.007x (cam01 0.927x → 0.929x and
+cam05 0.976x → 0.979x move TOWARD the reference; cam02 1.052x → 1.059x away). At the hero every box
+number improves — leaf % 25.2 → 22.9 against the reference's 22.2, p10 0.894x → 0.902x, level
+0.94x → 0.95x. Above 0.15 the station-2 crossings overshoot and the crown-BOX level walks off.
+
+### What this does not fix, measured and reported rather than fitted
+
+* **The structure is not in the 1K atlas.** Spending the whole alpha (share 1) reaches the crossings
+  target at the hero (11.88 against Cycles' 11.73 in the first, pre-dithered form) and overshoots at
+  station 2 (13.6-16.8 against 7.76), but the 100 % tiles show a HALFTONE: at 9 screen px per texel a
+  fragment's alpha is constant across a 9x9 block, so spending it — through a Bayer cell or through a
+  4-sample coverage mask — manufactures sub-texel structure the bake never had, at the wrong
+  frequency. **The tiles overrode the metric** (CLAUDE.md gate rule), which is why the shipped share
+  is 0.15 and not the value that hits the number. A faint dot texture remains visible at 200 % where
+  a crown crosses a bright wall; at 100 % it is subtle. The tile sheets for THIS step are
+  `renders/web/960/p8ship_crown_tile.jpg` (Cycles | Phase 7 | 1K + 0.15, at the three QA-17 crown
+  boxes), `renders/web/960/p8cov_crown_tile.jpg`, the rejected first form where the halftone is
+  unmistakable, and `renders/web/960/p8s02_crown_tile.jpg`, the share-0.20 step above it. **They are
+  the 1K, objxy state of that day, not the shipped one**: the shipped state is the 2K atlas of the
+  section below plus `dominant` (Phase 8c item A), and its tiles are
+  `renders/web/960/p8k2_cam02_crown.jpg` / `p8k2_cam01_crown.jpg` and
+  `renders/web/960/p8cproj_cam03_column.jpg`.
+* **The other half of the 8b decision is the 2K atlas** (export, tier 1): it halves the texel to 4.5
+  screen px and carries 3.28 crossings of its own against the 1K frame's 2.40. The share is to be
+  re-swept on it — a finer texel makes the same share both more honest and less visible.
+* **A true alpha-blended impostor** would spend the same fraction with no dot texture at all, but it
+  means the transparent queue, sorting and no depth write for 127 cards: out of scope here, logged
+  for the lead.
+
+### Deliverable B — the 2K atlases (export re-sync, 2026-09-19)
+
+Boot log, desktop tier, `tiers=all`: `impostor atlas: 2K variant on 16/16 prototype(s)` and
+`... 12x12 octahedral frames at 170 px on a 2048 px atlas (the 2K variant, ?imp2k=0 reverts) ...
+16/16 atlas(es) loaded, 9.3 MB declared`. The manifest publishes each `albedo_2k` with the 1K file as
+its tier-0 stand-in (`tiers.lowres.files[..._albedo_2048].path` is the 1024 ktx2, `full` the 2048
+one), so the first frame draws the 1K bytes and tier 1 upgrades them; `?imp2k=0` still keeps the 1K
+geometry AND the 1K file. Albedo only — no 2K normal+depth, which nothing samples while `unlit` holds.
+
+The 2K atlas is worth more than the coverage share, and it costs nothing at the sampling side:
+
+| capture | cam01 | cam02 | cam05 | cam02 box c/e | cam02 box level |
+|---|---|---|---|---|---|
+| 1K, Phase 7 | 5.73 | 2.92 | 6.51 | 0.397 | 1.04x |
+| 1K, share 0.15 (Phase 8b as shipped) | 6.55 | 6.82 | 7.05 | 0.398 | 1.10x |
+| 2K, coverage off | 7.33 | 3.87 | 8.27 | 0.427 | 1.05x |
+| **2K, share 0.15 (the default now)** | **7.65** | **6.98** | **8.54** | **0.430** | **1.10x** |
+| 2K, share 0.25 | 9.10 | 9.63 | 9.12 | 0.439 | 1.12x |
+| 2K, share 0.40 | 10.80 | 11.72 | 9.69 | — | — |
+| Cycles | 11.73 | 7.76 | 15.89 | 0.364 | 1.00x |
+
+**The share stays at 0.15.** At 2K one texel is 4.5 screen px, so the dot texture is finer, but the
+200 % hero tile (`renders/web/tiles/p8k2/p8k2_cam01_crown_200.png`) shows it plainly at 0.25 and as a
+halftone at 0.40, while station 2 overshoots Cycles' 7.76 from 0.25 up. 0.15 keeps station 2 just
+under the reference (6.98) and every box where the 1K default had it.
+
+**Plainly, for the lead: at 100 % the station-2 crown is still a MASS next to Cycles.**
+`renders/web/tiles/p8k2/p8k2_cam02_crown_100.png` (960 px `renders/web/960/p8k2_cam02_crown.jpg`),
+Cycles | Phase 7 1K | 1K + 0.15 | 2K + 0.15 | 2K + 0.25: the reference is twigs and branches with sky
+between them; the 2K card is a softer, more broken-up blob with the colonnade showing through in
+places. 2K + coverage moves the numbers (crossings 2.92 → 6.98 at station 2, 5.73 → 7.65 at the hero)
+and the silhouette reads better, but no sampling of a 162 px frame can put branches back. What is
+left is the band-atlas stretch (12 az x 3 el at 341 px, 13 min GPU, 128 MB, +13 MB payload) from the
+bake engineer's option 4 — the lead's call.
+
+### Reproducing
+
+```
+web/tools/p7.sh desk p8base impcov=0        # the Phase 7 frame
+web/tools/p7.sh desk p8ship                 # the shipped default
+python3 export/p8_atlas_probe.py viewer p8base p8ship --stations 1,2,5
+PFA_VIEWER_WEB=renders/web python3 $PFA_MAIN_ROOT/scripts/qa_p7_probe.py crown p8base p8ship
+python3 web/tools/r3_crown_tile.py --tag p8ship --prev p8base --boxes crown
+```
+`?impcov=0` against the Phase 7 capture: MAE 0.0000-0.0006 / 255 and 0.00-0.007 % of pixels changed,
+which is the water's own frame-to-frame drift, not the switch. `node web/test/impostor_cov_test.mjs`
+covers the parser, the fallback's dependence on the real target (including `?impedge=premul`, where
+three writes no coverage mask on a multisampled target), and the shader's preprocessor branches.
+
+
+## Phase 8b item 3 — the BAND atlas sampling path (`?impband=`), 2026-09-19
+
+The contract is `docs/briefs/phase8b_band_atlas.md`; this is the viewer half, ready for the real
+bake. `impostors.band` in the manifest drives it and `?impband=0` keeps the octahedral (2K) path.
+
+* **Read, never assumed.** The block is taken whole or refused: `frame_px`, `gutter_px`, `inner_px`,
+  `atlas_px [4096, 1024]`, `columns`, `rows`, `azimuth0_deg`, `elevations_deg`, `row_origin`, and a
+  per-prototype band albedo. A missing or non-numeric field is named in the boot log and the
+  prototype keeps its octahedral atlas — a defaulted `azimuth0_deg` would rotate 127 trees in silence.
+* **Selection.** Azimuth is `atan2( d.x, d.y ) - azimuth0` on the tree→camera direction in Blender
+  Z-up, which grows from +Y toward +X = clockwise seen from above; the column coordinate is that over
+  360/columns, wrapped, and the TWO neighbouring columns are blended linearly in angle (the last
+  wraps into the first). The elevation row is the NEAREST of `elevations_deg` — no blend. The
+  stations look at the crowns from 0-15°, so they use rows 0 and 1.
+* **Everything else is shared.** Both paths fill the same three cells + weights, so the Phase 7
+  premultiplied 12-tap reconstruction (8 taps here, the third weight being 0), the Phase 8b coverage
+  ramp and share, the interior enclosure term and its floor, the E_placement/E_bake modulation and
+  the mist are one copy of the code. The band replaces the ALBEDO LOOKUP and nothing else.
+* **The atlas geometry is now (width, height) plus a row origin**, so one sampler serves a square
+  octahedral atlas and a 4096x1024 band. The octahedral path passes `(atlas_px, atlas_px)` and
+  `rowFromTop = 0` and is unchanged.
+* **The coverage share for the band** is its own constant (`IMP_COV.shareBand`, 0.15 today). At
+  341 px frames a texel is ~2.2 screen px at station 2 instead of 4.5, so it is to be re-swept on the
+  REAL atlas — the fixture's content is upscaled 2K and would fit a meaningless number.
+
+### The fixture, and what it proves
+
+`web/tools/p8_band_fixture.py` re-lays the baked 2K octahedral frames as the contract's 12x3 grid
+(341 px frames, gutter 8, inner 325, rows from the bottom), writes `band.json` and a patched asset
+MIRROR (symlinks to MAIN's `export/out`, `gate5/manifest.json` replaced, band rows at tier 1 with the
+1K octahedral as the tier-0 stand-in). Nothing in MAIN is written. 16 prototypes in 11 s, 0.6-0.9 MB
+per atlas.
+
+```
+python3 web/tools/p8_band_fixture.py
+PFA_ASSETS=$PWD/export/out/p8/band_fixture/assets web/tools/p7.sh desk p8bandfix
+```
+
+Boot log, desktop tier: `impostor BAND atlas (Phase 8b) on 16/16 prototype(s): 12 azimuth x 3
+elevation frames of 341 px (inner 325, gutter 8) on a 4096x1024 atlas; azimuth 0 at 0 deg, clockwise
+seen from above, elevation rows 0/20/40 deg from row 0 at the bottom; two-azimuth linear blend,
+nearest elevation row`, and the summary line now names the mapping that DRAWS (`12x3 band frames …,
+two-azimuth linear blend`). No page errors, 16/16 atlases loaded, 9.6 MB declared.
+
+The fixture's CONTENT is the 2K content, so the tile is a path check, not a look check:
+`renders/web/960/p8bandfix_cam02_crown.jpg` (full-res `renders/web/tiles/p8bandfix/`) shows an
+upright, coherent crown beside the 2K octahedral one — the layout, the v flip and the frame
+selection are right. Crossings move as expected for a different (nearest-frame, two-column) blend:
+cam02 6.98 → 8.72, cam01 7.65 → 7.80. `node web/test/impostor_band_test.mjs` pins the convention,
+the wrap, the blend, the nearest row, the layout arithmetic in both row origins, and the GLSL lines
+that mirror `bandSelect`.
+
+## Phase 8 far-tree A/B — the LOD2 mesh set against the 2K card, 2026-09-19 (evidence only, not adopted)
+
+The lever is live, no re-wiring: `?walkupmesh=0` takes the **LOD2 far set** (`trees.far_mesh`, the one
+mobile draws, vertex-AO lit) instead of the desktop default's walk-up LOD1 set, and `?fartreemesh=<m>`
+is that set's switch distance — it IS `DEVICE.settings.farTreeMesh` (the tier field, 45 m on mobile).
+The field is finite-only, so "all distances" is `?fartreemesh=100000`. Desktop default: the walk-up
+LOD1 set within 15 m, the 2K impostor card beyond.
+
+One session, gate4 settings, 2560x1440, 120 frames after 24 of warmup, stations 1-6, **the default
+repeated LAST as the drift control** (`web/tools/p8_perf_table.py`):
+
+| setting | median frame ms (6 stations) | worst station | draws | tris | resident MB |
+|---|---|---|---|---|---|
+| default (first) | 31.85 | 36.00 | 355 | 5.98 M | 3550.1 |
+| LOD2 @ 60 m | 30.75 (−1.10) | 36.70 | 399 | 6.36 M | 3306.2 (−243.9) |
+| LOD2 @ 120 m | 31.95 (+0.10) | 37.30 | 439 | 6.59 M | 3306.2 (−243.9) |
+| LOD2 all | 34.40 (+2.55) | 40.60 | 575 | 7.21 M | 3306.2 (−243.9) |
+| **default (repeated last)** | **36.75 (+4.90)** | 40.20 | 355 | 5.98 M | 3550.1 |
+
+**The drift is bigger than every delta**: the same default measured 31.85 ms first and 36.75 ms last,
+so against a drift-corrected baseline all three LOD2 settings are at or below the default. Memory goes
+DOWN 244 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
+
+Crossings per 100 screen px (lum < 40) and the QA-17 boxes, 1920x1080, cam01 / cam02 / cam05:
+
+| setting | crossings | cam01 leaf % (ref 22.2) | cam02 box level (ref 1.00x) | cam05 leaf % (ref 9.4) |
+|---|---|---|---|---|
+| 2K card + 0.15 (default) | 7.64 / 6.97 / 8.54 | 24.5 | 1.10x | 20.8 |
+| LOD2 @ 60 m | 11.66 / 14.96 / 8.54 | **4.0** | **1.84x** | 20.8 |
+| LOD2 @ 120 m | 12.15 / 14.96 / 10.44 | 3.9 | 1.84x | **0.6** |
+| LOD2 all | 12.15 / 14.95 / 10.87 | 3.9 | 1.84x | 0.6 |
+| Cycles | 11.73 / 7.76 / 15.89 | 22.2 | 1.00x | 9.4 |
+
+**The metric likes it and the tiles reject it.** `renders/web/tiles/p8lod/p8lod_cam02_crown_100.png`
+(960 px `renders/web/960/p8lod_cam02_crown.jpg`) and `…/p8lod_cam01_crown_200.png`: at station 2 the
+LOD2 tree is a sparse skeleton of oversized yellow leaf cards on bare branches, 1.84x the reference's
+level, with the colonnade visible straight through it; at the hero its crown is nearly bare (leaf
+4.0 % against the reference's 22.2 %); at 120 m (cam05) it all but disappears, 0.6 %. Its crossings
+score is high for the wrong reason — isolated leaf cards against a bright background cross the
+threshold constantly. **At 100 m it reads as a faceted polygon tree, not as twigs.**
+
+So: every setting is within +3 ms of the same-session default and none costs memory, but none of them
+is a better crown than the 2K card at any station. Nothing adopted — the lead decides between this,
+the band atlas and stopping.
+
+## Phase 8c item A — the detail layer's projection default (`?detailproj=`), 2026-09-19
+
+The export's texel analysis (`docs/briefs/phase8c_export_analysis.md`): cam03's column banding is the
+detail layer's `objxy` plane streaking DOWN the shaft — **15 texels/m vertically against 948
+horizontally**. The lever already existed; the default is now **`dominant`** (the axis-aligned plane
+most facing the surface), and `?detailproj=objxy` restores the Phase 5-7 plane.
+
+100 % tile, the near right column at cam03, Cycles | objxy | dominant:
+`renders/web/tiles/p8cproj/p8cproj_cam03_column_100.png` (960 px
+`renders/web/960/p8cproj_cam03_column.jpg`). The smear is gone and the shaft carries its grain and
+pores again; no flute-to-flute seam is visible at 100 %, so the triplanar blend was NOT needed
+(it stays available as future work if a seam ever shows on a curved face).
+
+Regression, six stations at 1920x1080, `p8cbase` (`?detailproj=objxy`) against `p8cproj` (default):
+
+| station | MAE /255 | pixels > 2/255 | frame luma objxy → dominant (ref) |
+|---|---|---|---|
+| cam01 | 0.20 | 2.9 % | 0.929x → 0.929x |
+| cam02 | 0.34 | 5.1 % | 1.058x → 1.058x |
+| **cam03** | **2.26** | **40.9 %** | **1.626x → 1.619x** |
+| cam04 | 0.37 | 5.9 % | 1.113x → 1.113x |
+| cam05 | 0.37 | 6.4 % | 0.979x → 0.979x |
+| cam06 | 0.08 | 0.8 % | 0.979x → 0.979x |
+
+Every station is touched (the layer is on every baked material) but only cam03 moves materially, and
+its whole-frame luma moves TOWARD the reference. No other station's luma changes by more than
+0.001x.
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set

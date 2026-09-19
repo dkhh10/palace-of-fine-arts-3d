@@ -1,0 +1,191 @@
+// Phase 8b item A — alpha as COVERAGE under magnification, checked without a browser:
+//   node test/impostor_cov_test.mjs
+//
+// Three things none of which a screenshot can show:
+//   1. `?impcov=` parses the way the header says (off / default / band / a typo that says so), and
+//      the coverage QUANTUM follows the target: 1/samples only when a coverage mask is actually
+//      written, 1 (the ordered-dither fallback) otherwise - including the case that bit Phase 7,
+//      `?impedge=premul` on a multisampled target, where three sets no alphaToCoverage at all;
+//   2. buildImpostors turns that into the define, the uniform and the report the boot note reads;
+//   3. the shader still COMPILES as GLSL ES 1.0 in the four define combinations (a missing
+//      `#endif` or a `pfaBayer4` behind the wrong guard is a black canvas in Chrome and nothing at
+//      all in node), and `?impcov=0` leaves the Phase 7 source byte-identical.
+import * as THREE from 'three';
+import { buildImpostors, parseImpCov, IMP_COV, ALPHA_TEST } from '../src/impostors.js';
+
+let fails = 0;
+const check = ( ok, msg ) => { if ( ! ok ) fails ++; console.log( `${ok ? 'PASS' : 'FAIL'}  ${msg}` ); };
+
+// ---- 1. the parser ----------------------------------------------------------------------------
+const on4 = parseImpCov( null, { a2c: true, samples: 4 } );
+check( on4.on && on4.magLo === 1 && on4.magHi === 2, `default: on, handover 1->2 (got ${on4.magLo}->${on4.magHi})` );
+check( on4.samples === 4 && ! on4.dither, 'default on a 4x target: the coverage mask resolves it, no dither fallback' );
+check( on4.share === IMP_COV.share && on4.ramp === 1, 'default: the shipped share and a ramp of one texel' );
+for ( const v of [ '0', 'off', 'none', 'OFF' ] )
+	check( parseImpCov( v, { a2c: true, samples: 4 } ).on === false, `?impcov=${v} restores Phase 7` );
+for ( const v of [ '1', 'on', '' ] )
+	check( parseImpCov( v, { a2c: true, samples: 4 } ).on === true, `?impcov=${v} is the default` );
+const band = parseImpCov( '2,6', { a2c: true, samples: 4 } );
+check( band.on && band.magLo === 2 && band.magHi === 6, 'a band parses: 2 -> 6 screen px per texel' );
+const one = parseImpCov( '3', { a2c: true, samples: 4 } );
+check( one.magLo === 3 && one.magHi === 6, 'one number sets magLo and doubles it for magHi' );
+const rev = parseImpCov( '4,2', { a2c: true, samples: 4 } );
+check( rev.magHi > rev.magLo, 'an inverted band cannot divide by zero' );
+const bad = parseImpCov( 'yes please', { a2c: true, samples: 4 } );
+check( bad.on && bad.magLo === 1 && bad.unknown === 'yes please', 'a typo falls back to the default AND says so' );
+// the quantum: no mask written -> 1, which is the ordered-dither fallback
+check( parseImpCov( null, { a2c: false, samples: 4 } ).dither === true, 'no alpha-to-coverage: the ordered-dither fallback' );
+check( parseImpCov( null, { a2c: true, samples: 1 } ).dither === true, 'a 1-sample target is not multisampled: the fallback' );
+check( parseImpCov( null, { a2c: true, samples: 8 } ).dither === false, 'an 8x target resolves the coverage in hardware' );
+
+// ---- 2. the build -----------------------------------------------------------------------------
+const IMPOSTORS = {
+	count: 1, grid: 12, atlasPx: 1024, framePx: 85, innerPx: 81, gutterPx: 2,
+	prototypeMap: {}, variant2k: null,
+	prototypes: { P: { albedo: 'a.ktx2', range: 2, radius: 5, heightAboveBase: 10, centreZ: 5, bytes: 1 } },
+};
+const FAR = [ { prototype: 'P', id: 't1', height: 10, base: [ 0, 0, 0 ] } ];
+
+async function build( opts ) {
+	const notes = [];
+	const { group, report } = buildImpostors( {
+		impostors: IMPOSTORS, far: FAR, loadTexture: async () => null,
+		note: ( m ) => notes.push( m ), ...opts,
+	} );
+	await report.promise;
+	const mat = group.children[ 0 ].material;
+	return { report, mat, group, notes: notes.join( '\n' ) };
+}
+
+const b = await build( { edge: null, msaa: true, samples: 4, coverage: null } );
+check( 'PFA_IMP_COV' in b.mat.defines, 'default: PFA_IMP_COV is defined' );
+check( b.mat.uniforms.pfaImpCov.value.x === 1 && b.mat.uniforms.pfaImpCov.value.y === 2
+	&& b.mat.uniforms.pfaImpCov.value.z === IMP_COV.share && b.mat.uniforms.pfaImpCov.value.w === 1,
+'the uniform carries (magLo, magHi, share, ramp)' );
+const sh = parseImpCov( '1,2,0.45,2', { a2c: true, samples: 4 } );
+check( sh.share === 0.45 && sh.ramp === 2 && sh.magLo === 1 && sh.magHi === 2,
+	'the third and fourth fields are the share and the ramp scale' );
+check( parseImpCov( '1,2,9', { a2c: true, samples: 4 } ).share === 1, 'the share is clamped to [0,1], never NaN' );
+check( parseImpCov( '1,2,-3', { a2c: true, samples: 4 } ).share === 0, 'a negative share clamps to 0' );
+check( parseImpCov( null, { a2c: true, samples: 4 } ).share === IMP_COV.share, 'the default share is the shipped one' );
+check( b.report.coverage.on && b.report.coverage.samples === 4 && b.report.coverage.orderedDither === false,
+	'the report states the coverage path, for __pfaInfo and the gate' );
+check( /alpha as COVERAGE \(Phase 8b\): ON/.test( b.notes ) && /4-sample coverage mask/.test( b.notes ),
+	'the boot note names it' );
+
+const off = await build( { edge: null, msaa: true, samples: 4, coverage: '0' } );
+check( ! ( 'PFA_IMP_COV' in off.mat.defines ), '?impcov=0: the define is gone (the Phase 7 program)' );
+check( off.mat.fragmentShader === b.mat.fragmentShader, 'the source is one string: only the defines differ' );
+check( /alpha as COVERAGE \(Phase 8b\): off/.test( off.notes ), '?impcov=0 says so in the boot note' );
+
+const noMsaa = await build( { edge: null, msaa: false, samples: 0, coverage: null } );
+check( noMsaa.mat.alphaToCoverage === false, 'no multisampled target: three writes no coverage mask' );
+check( noMsaa.report.coverage.orderedDither === true, 'and the ordered-dither fallback takes over' );
+check( /ordered dither \(no coverage mask\)/.test( noMsaa.notes ), 'the fallback is named in the boot note' );
+
+const premulOnly = await build( { edge: 'premul', msaa: true, samples: 4, coverage: null } );
+check( premulOnly.mat.alphaToCoverage === false && premulOnly.report.coverage.orderedDither === true,
+	'?impedge=premul on an MSAA target: no mask is written, so the dither takes over' );
+
+// ---- 2b. Phase 8b deliverable B: the 2K variant, ahead of the export landing its keys ----------
+// The viewer must DRAW the 2K geometry when the manifest carries a per-prototype `albedo_2k` and the
+// `variant_2k` block, and keep the 1K where it does not - the coverage path then sees half the
+// magnification with no change of its own, because `mag` is measured per fragment from innerPx.
+const IMP2K = {
+	...IMPOSTORS,
+	variant2k: { atlasPx: 2048, framePx: 170, gutterPx: 4, innerPx: 162 },
+	prototypes: { P: { ...IMPOSTORS.prototypes.P, albedo2k: 'a2k.ktx2', bytes2k: 4 },
+		Q: { albedo: 'q.ktx2', range: 2, radius: 5, heightAboveBase: 10, centreZ: 5, bytes: 1 } },
+};
+const FAR2 = [ ...FAR, { prototype: 'Q', id: 't2', height: 10, base: [ 10, 0, 0 ] } ];
+const k2 = await build( { impostors: IMP2K, far: FAR2, atlas2k: true, msaa: true, samples: 4 } );
+check( k2.report.atlas2k === true, '2K: the report says the 2K variant is drawn' );
+check( k2.report.drawnGeom.atlasPx === 2048 && k2.report.drawnGeom.innerPx === 162,
+	'2K: the DRAWN geometry is the 2K one, read from variant_2k and never scaled by hand' );
+check( k2.report.atlas2kMissing.includes( 'Q' ), '2K: a prototype with no albedo_2k is named, not silently 1K' );
+check( /2K variant on 1\/2 prototype\(s\)/.test( k2.notes ) && /1K kept on Q/.test( k2.notes ),
+	'2K: the boot note says which prototypes got it' );
+const k1 = await build( { impostors: IMP2K, far: FAR2, atlas2k: false, msaa: true, samples: 4 } );
+check( k1.report.atlas2k === false && k1.report.drawnGeom.atlasPx === 1024,
+	'?imp2k=0 keeps the 1K atlas and says so' );
+// the coverage uniform is independent of the atlas: the magnification is measured in the shader
+check( k2.mat.uniforms.pfaImpCov.value.z === IMP_COV.share
+	&& k2.mat.uniforms.innerPx.value === 162,
+	'2K: the coverage share is unchanged and innerPx (which sets the measured magnification) follows the atlas' );
+
+// ---- 3. the shader compiles, in every define combination ---------------------------------------
+// A headless WebGL context is not available, so the program is built by three's own shader chain
+// and parsed: the guards are checked structurally (every #ifdef closed, every symbol defined in the
+// branch that uses it), which is what the define combinations can actually break.
+const SRC = b.mat.fragmentShader;
+for ( const sym of [ 'pfaBayer4', 'pfaImpCov', 'PFA_IMP_COV' ] )
+	check( SRC.includes( sym ), `the shader carries ${sym}` );
+const ifs = ( SRC.match( /#ifdef|#ifndef|#if\b/g ) || [] ).length;
+const ends = ( SRC.match( /#endif/g ) || [] ).length;
+check( ifs === ends, `every preprocessor guard is closed (${ifs} open, ${ends} #endif)` );
+// pfaBayer4 is used only where it is defined
+const defAt = SRC.indexOf( 'float pfaBayer4' );
+const useAt = SRC.indexOf( 'pfaBayer4( gl_FragCoord' );
+check( defAt > 0 && useAt > defAt, 'pfaBayer4 is declared before it is called' );
+check( SRC.indexOf( '#ifdef PFA_IMP_COV' ) < defAt, 'and its declaration sits inside the PFA_IMP_COV guard' );
+// the Phase 7 contract: the cutoff itself is untouched
+check( ALPHA_TEST === 0.33, 'the alpha test is unchanged at 0.33' );
+check( /pfaCov = mix\( pfaCov, covMag, magT \)/.test( SRC ), 'the two paths are mixed by the magnification' );
+check( /fwidth\( a \) \* max\( pfaMag, 1.0 \)/.test( SRC ), 'the ramp width is the alpha change per ATLAS TEXEL' );
+check( /mix\( covRamp, clamp\( a, 0.0, 1.0 \), pfaImpCov.z \)/.test( SRC ), 'the share mixes the raw coverage into the ramp' );
+check( ! /lin \*= pow/.test( SRC ) && ! /rgb \*= /.test( SRC ), 'and nothing in the colour path changed' );
+
+// The same preprocessor pass the GPU would do, so a branch that never compiles here is caught.
+function preprocess( src, defines ) {
+	const out = [];
+	const stack = [ true ];
+	for ( const line of src.split( '\n' ) ) {
+		const t = line.trim();
+		let m;
+		if ( ( m = t.match( /^#ifdef\s+(\w+)/ ) ) ) { stack.push( stack[ stack.length - 1 ] && m[ 1 ] in defines ); continue; }
+		if ( ( m = t.match( /^#ifndef\s+(\w+)/ ) ) ) { stack.push( stack[ stack.length - 1 ] && ! ( m[ 1 ] in defines ) ); continue; }
+		if ( t === '#else' ) { const top = stack.pop(); stack.push( stack[ stack.length - 1 ] && ! top ); continue; }
+		if ( t === '#endif' ) { stack.pop(); continue; }
+		if ( stack[ stack.length - 1 ] ) out.push( line );
+	}
+	return out.join( '\n' );
+}
+for ( const combo of [ {}, { PFA_IMP_COV: '' }, { PFA_IMP_COV: '', PFA_IMP_A2C: '' },
+	{ PFA_IMP_COV: '', PFA_IMP_A2C: '', PFA_IMP_PREMUL: '' }, { PFA_IMP_A2C: '', PFA_IMP_PREMUL: '' },
+	{ PFA_IMP_COV: '', PFA_IMP_PREMUL: '', PFA_FOG: '' } ] ) {
+	const name = Object.keys( combo ).join( '+' ) || '(none)';
+	const p = preprocess( SRC, combo );
+	const usesBayer = p.includes( 'pfaBayer4( gl_FragCoord' );
+	check( ! usesBayer || p.includes( 'float pfaBayer4' ), `${name}: pfaBayer4 defined wherever it is called` );
+	check( ( p.match( /\{/g ) || [] ).length === ( p.match( /\}/g ) || [] ).length, `${name}: braces balance` );
+	check( p.includes( 'if ( pfaCov <= 0.0 ) discard;' ), `${name}: the fragment is still dropped at zero coverage` );
+	check( ( p.match( /float pfaCov;|float pfaCov =/g ) || [] ).length === 1, `${name}: pfaCov is declared exactly once` );
+	// No declaration in main() may shadow another: a redeclared name is a link failure in Chrome and
+	// nothing at all in node, and it cost one capture round.
+	const body = p.slice( p.indexOf( 'void main()' ) );
+	const names = [];
+	let depth = 0;
+	for ( const line of body.split( '\n' ) ) {
+		const m = line.match( /^\s*(?:float|vec2|vec3|vec4|int)\s+(\w+)\s*[;=]/ );
+		// only main's OWN scope: an inner block may legally reuse a name
+		if ( m && depth === 1 ) names.push( m[ 1 ] );
+		depth += ( line.match( /\{/g ) || [] ).length - ( line.match( /\}/g ) || [] ).length;
+	}
+	check( new Set( names ).size === names.length,
+		`${name}: no declaration shadows another in main's scope (${names.length} declarations)` );
+	// The dither is the FALLBACK: it may only survive the preprocessor where no coverage mask is
+	// written. The define is not in the source (three prepends it), so the combination is the truth
+	// — testing the string made this assertion pass for every combination, which is no test at all.
+	check( ! p.includes( 'pfaBayer4( gl_FragCoord' ) || ! ( 'PFA_IMP_A2C' in combo ),
+		`${name}: the ordered dither is the no-mask fallback` );
+	check( p.includes( 'gl_FragColor = vec4( lin, pfaCov );' ), `${name}: the coverage reaches the output` );
+	// no define combination may leave `a` unassigned or assigned twice
+	check( ( p.match( /^\s*float a;$/gm ) || [] ).length === 1, `${name}: the alpha is declared once` );
+}
+
+// three has to keep honouring the flag on a raw ShaderMaterial, or the coverage never reaches the GPU
+check( b.mat.alphaToCoverage === true, 'the material asks for alpha-to-coverage on a multisampled target' );
+check( THREE.REVISION >= '186'.slice( 0, 3 ), `three r${THREE.REVISION}` );
+
+console.log( fails ? `\n${fails} FAILED` : '\nall passed' );
+process.exit( fails ? 1 : 0 );
