@@ -870,3 +870,15 @@ resident) but reads as a faceted polygon skeleton at 100 m with the colonnade vi
 card 24.5 %); its crossings score is an artefact of isolated leaf cards. Nothing adopted. Decision: the band atlas per docs/briefs/phase8b_band_atlas.md (12 az x 3 el
 at 341 px, 4096x1024, ~13 min GPU, +128 MB, +13 MB tier 1; bake -> export -> viewer in lockstep under one contract), sequenced after the 8a export sync so the
 shrub and column improvements deploy first. If the band atlas does not put branch structure in the station-2 tile, the crown stays a residual and Phase 8 closes.
+
+## 2026-09-19 · QA 20 (1a4f401) on deploy 8: 8c CLOSED; 8a NOT CLOSED (+ a walk-in shrub-set bug); 8b part 1 improved but dithered at 100 %
+8c: cam03 shaft banding anisotropy 4.76 -> 1.39 (ref 1.60), grain 1.25x of the reference, no flute seam — closed. 8a: the LOD2 densification moved the leaf-green share at
+one box of eight (hero shore 0.62x -> 0.84x); the others are unmoved (cam05 shore 0.29x), hard-edge share up at 6/8; at 100 % cam05's band is indistinguishable from
+gate7. The structure change is real at 200 % but the metric and the tiles say the shore bands need more than card density (the leaf-green share is a colour-coverage
+measure: the cards' albedo/lighting, not their count, dominates it) — owner ENV/EXPORT, re-scoped next session. BUG (owner VIEWER/EXPORT): `env_shrubs.glb` (the 6c
+LOD1 walk-in set, 463 922 tris) is drawn in full at every station although `shrubLod` reports lod1:0 — +1.12 M triangles per frame at the five water stations, on
+mobile too; fix before any further perf claim. 8b part 1: crossings 5.73 -> 7.99 / 2.92 -> 6.97 / 6.51 -> 8.53 with the boxes improving, BUT every far crown against
+the sky carries an ordered dot grid at 100 % (share 0.15 on 2K) — the band pass moved the default to share 0.10 on the band atlas; QA 21 must check the 100 % tiles
+for the grid before the band ships as closed. Resident: `resident()` never counted the impostor atlases (~+67 MB unbilled in every Phase 6-8 memory figure) —
+correct the counter (viewer) and restate. Station 3 perf +3.1 ms vs gate7 (drift caveat; re-measure same-session after the shrub-set bug). Scores desktop
+3.78 / 3.25 / 2.75 / 2.88 / 3.06 / 2.89; mobile 3.2 / 3.3 / 2.4 / 2.7 / 2.8 / 2.5. Blue-violet shaded stone visible on desktop cam02 too (carry).
