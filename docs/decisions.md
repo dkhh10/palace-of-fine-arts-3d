@@ -1030,3 +1030,14 @@ share 0.062 vs 0.248 (no dark core), a gold cast g-r -0.030 vs +0.003; the colum
 missing deep shade (carried since Phase 6, QA-21 residual) plus ~1.3x of its own. A UV scale would halve a blob that already matches the reference and break the LOD-switch
 match that is in frame at cam03. Decision: 8a closes on the tiles at 1 and 5 with the cam03 interior darkness logged as a lighting residual (owner VIEWER/LIGHTING, with
 the cam03 deep-shade carry); the 3 m walk-in option (k = 2 on shrub / shrub_light, +16 kB tier 2) is recorded, not taken — no station shows it.
+
+## 2026-09-19 · Belt export chain r2 merged (66aace8; reviews r5 af110d5 and r6 7b8a111): the far-tree irradiance re-bake is accepted as a correction, verified by QA 23
+r5 caught a deploy blocker: manifest_v4 had run before the far glbs were re-written (127 placements against 166 instances; the viewer would have dropped the whole
+far-tree mesh layer on join failure) and the per-tree irradiance was keyed by the TREEFAR index the interleave had shifted. Fixed: the join is by world location (0.02 m
+cells, unique, residual 0), the 39 belt rows were BAKED (4 jobs, 13 min GPU; not stood in), manifest_v4 asserts placements == tree_far + billboard identity + glb newer than
+its report, verify_glb --gate5 check 5 compares all four counts, no hard-coded 127 remains. r6 finding: the re-bake also moved the 127 existing rows — full-mode modulation
+median 0.942 -> 1.390 (+48 %; 116 of 127 bake bodies changed verts and now match the exported LOD2/AO topology exactly where the 6c bodies did not; E_bake bit-identical).
+Lead decision: accepted as a correction of the 6c mismatch, NOT re-baked; QA 23 measures the far trees at 1/2/5 against the Phase 8 Cycles references (level, crossings, the
+belt trees at cam02/cam05 which ship at median 0.24 modulation) and any brightness regression is a blocker with the fix being a re-key to the 6c bodies. First frame
+49 273 775 B (726 225 under the rule); tier 0 48 139 115. Carries: env_trees_lod1 mtime guard, stale 127/254/46 statements inside the delivered manifests, the grid-key
+half-cell brittleness, a test pinning the far count to export_set.json.
