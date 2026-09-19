@@ -1005,3 +1005,23 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 5. **A cull is verifiable to the triangle.** The fix round claimed -1 410 000 at the hero and -2 020 000 at cam06; the delivered frames say -1 395 080 and
    -2 010 552, with every 1440p median equal or faster and the hero at 35.5 fps. A claim with a number attached is a claim QA can settle in one command.
 6. **Scores.** Desktop 01 **3.81** · 02 **3.14** · 03 2.75 · 04 2.88 · 05 3.12 · 06 **3.03**; mobile 3.2 / 3.22 / 2.44 / 2.7 / 2.88 / 2.58.
+
+## QA round 23 (Phase 8 closing: 8d belt r2 + the far-tree irradiance re-bake, live URL, tag `gate11`, 2026-09-19) — **8d CLOSED · re-bake = BRIGHTNESS REGRESSION (blocker, EXPORT) · 8a closed with residual · 8e closed · fix round VERIFIED with a new cost**
+1. **Build the thing out of the thing.** The belt rebuilt from the real Sapling prototypes through the far-tree path cleared in one round what two
+   rounds of icosphere shaping could not: crowns with sky gaps and trunks at 1 / 2 / 3 / 5 and in the reflection, parity to the Phase 8 Cycles
+   reference improving at every band (hero N 11.24 -> 9.62 % MAE), and the hero band's sd and hf finally moving toward ref 169 instead of away.
+2. **A correction is still a regression if it moves away from the reference.** The far-tree irradiance re-bake was accepted as a topology fix
+   (modulation median 0.942 -> 1.390). On the far trees it buys ~1 % of screen luma — harmless. On every crown read against a background it is
+   +4 to +16 %, moves 7 of 10 boxes away from Cycles, and drops 8e's blade metric from 5/6 to 2/6 under target. Accept a bake correction only with
+   the delivered frames measured against the reference, not against the bake's own inputs.
+3. **When a threshold metric moves, ask whether the picture moved.** 8e's blade p90 rose 22.7 -> 25.2 px and the tile shows the same leaves in the
+   same places, only brighter: a brightness-thresholded run metric widens when the subject brightens. State the photometric confound before
+   scoring the geometric claim.
+4. **A control box is a control only while its background holds still.** The three QA-17 "building behind" crowns moved most this round (up to
+   1.246x Cycles) because the belt behind them changed — not the crowns. Decompose foliage share from background share before attributing a move.
+5. **Removing geometry in one frame can add it in another.** The belt cost -13 644 triangles at five stations and **+1 301 870 at cam03**, where
+   the far-tree path draws it as LOD2 meshes instead of billboards: +3.5 ms, 25.9 fps, the slowest station. Check every station's triangle count,
+   not the hero's.
+6. **When the reference set is regenerated, keep it at full resolution.** Only the 960 px JPEG copies of the Phase 8 Cycles references survived
+   (PNGs gitignored, the worktree gone), so this round's parity is measured at 960 px on both sides and no sharpness claim can be made from them.
+7. **Scores.** Desktop 01 **3.97** · 02 **3.22** · 03 **2.83** · 04 2.88 · 05 **3.20** · 06 3.03; mobile **3.32 / 3.30 / 2.52 / 2.70 / 2.96 / 2.58**.

@@ -43,7 +43,7 @@ BELT = [
     ("02 belt band", 2, (0, 380, 960, 700)),
     ("05 belt band", 5, (0, 620, 1920, 800)),
 ]
-CAM06_CITY = (1280, 0, 1920, 400)
+CAM06_CITY = (1280, 60, 1920, 300)
 SHORE = [
     ("01 shore band", 1, (0, 590, 640, 700)),
     ("03 shrub cards", 3, (820, 600, 1300, 760)),
@@ -167,17 +167,17 @@ def cmd_gate():
                           (_im(WEB / f"{CUR}_cam01.png").crop(box), f"{CUR} hero belt N (r2)"),
                           (_p8(1, box), "CYCLES Phase 8"),
                           (_ref169(box), "ref 169 registered")]))
-    name, st, box = BELT[4]
-    panels.append(_stack([(_im(WEB / f"{PREV}_cam05.png").crop(box), f"{PREV} cam05 belt band"),
-                          (_im(WEB / f"{CUR}_cam05.png").crop(box), f"{CUR} cam05 belt band"),
-                          (_p8(5, box), "CYCLES Phase 8")]))
+    box5 = (350, 600, 1000, 800)
+    panels.append(_stack([(_im(WEB / f"{PREV}_cam05.png").crop(box5), f"{PREV} cam05 belt (shards)"),
+                          (_im(WEB / f"{CUR}_cam05.png").crop(box5), f"{CUR} cam05 belt (r2)"),
+                          (_p8(5, box5), "CYCLES Phase 8")]))
     panels.append(_stack([(_im(WEB / f"{PREV}_cam06.png").crop(CAM06_CITY), f"{PREV} cam06 city"),
                           (_im(WEB / f"{CUR}_cam06.png").crop(CAM06_CITY), f"{CUR} cam06 city"),
                           (_p8(6, CAM06_CITY), "CYCLES Phase 8"),
                           (_im(REF105).crop(CAM06_CITY), "ref 105")]))
     wu = _im(WEB / f"{CUR}_walkup_h00000.png")
     w, h = wu.size
-    panels.append(_stack([(wu.crop((0, h // 3, min(w, 1100), h // 3 + 760)),
+    panels.append(_stack([(wu.crop((0, h // 3, min(w, 1100), h // 3 + 560)),
                            f"{CUR} 2.5 m walk-up (8e close cards)"),
                           (_im(WEB / f"{CUR}_orbit_h02530.png").crop(ORBIT[0][2]),
                            f"{CUR}_orbit crown")]))
