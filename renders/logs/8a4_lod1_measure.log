@@ -1,0 +1,29 @@
+viewer  grain median 2.0 px p90 4.0 px | body luma 0.142 | sat 0.74 | g-r -0.030 | dark share (<0.05) 0.062 | luma sd 0.112
+cycles  grain median 2.0 px p90 4.0 px | body luma 0.058 | sat 0.78 | g-r +0.003 | dark share (<0.05) 0.248 | luma sd 0.105
+
+LOD1 at cam03 (18 mm, 960/d): card px, painted-leaf px, blob run p90 / thickness p90 / coverage
+  MAT_shrub        n=  8 d 17.3-27.8 m (p50 19.8), scale p50 1.46
+       3.0 m card  75.0x 98.4 px  painted leaf ~ 5.2 px  k=1  23.4/11.2/0.53  k=2  17.8/ 8.4/1.02x  k=3  24.8/ 8.4/1.05x  k2+cut(0.52)  17.1/ 8.4/1.00x
+      17.3 m card  13.0x 17.1 px  painted leaf ~ 0.9 px  k=1  15.4/10.3/0.58  k=2   7.0/ 5.6/1.00x  k=3   5.6/ 5.6/0.95x  k2+cut(0.49)   7.0/ 5.6/1.01x
+      19.8 m card  11.4x 14.9 px  painted leaf ~ 0.8 px  k=1  12.6/ 9.4/0.57  k=2   7.0/ 5.6/1.00x  k=3   4.2/ 5.6/1.02x  k2+cut(0.47)   7.0/ 5.6/1.01x
+      30.0 m card   7.5x  9.8 px  painted leaf ~ 0.5 px  k=1   8.4/ 6.6/0.52  k=2   8.1/ 4.7/1.16x  k=3   9.8/ 2.8/1.10x  k2+cut(0.57)   4.2/ 3.3/0.94x
+  MAT_shrub_light  n= 20 d 18.7-29.3 m (p50 25.9), scale p50 1.06
+       3.0 m card  57.7x 78.1 px  painted leaf ~ 4.1 px  k=1  22.0/ 9.4/0.53  k=2  16.9/ 8.4/1.03x  k=3  22.9/11.2/1.07x  k2+cut(0.53)  16.9/ 8.4/1.00x
+      18.7 m card   9.3x 12.5 px  painted leaf ~ 0.7 px  k=1   9.8/ 7.5/0.54  k=2   4.2/ 2.8/1.00x  k=3  12.6/ 5.6/1.16x  k2+cut(0.49)   4.2/ 2.8/1.00x
+      25.9 m card   6.7x  9.1 px  painted leaf ~ 0.5 px  k=1   8.1/ 6.2/0.52  k=2   9.0/ 4.4/1.09x  k=3   9.8/ 2.8/1.29x  k2+cut(0.51)   5.8/ 4.2/1.02x
+      30.0 m card   5.8x  7.8 px  painted leaf ~ 0.4 px  k=1   8.4/ 6.5/0.62  k=2   7.9/ 4.6/0.93x  k=3   8.4/ 2.8/0.90x  k2+cut(0.45)   8.4/ 4.5/1.07x
+  MAT_shrub_dry    n= 25 d 17.7-29.0 m (p50 22.0), scale p50 1.06
+       3.0 m card  30.4x 74.4 px  painted leaf ~ 3.9 px  k=1  18.4/ 8.4/0.54  k=2  14.9/ 8.4/1.08x  k=3  11.2/10.3/1.04x  k2+cut(0.54)  12.0/ 8.4/1.01x
+      17.7 m card   5.1x 12.6 px  painted leaf ~ 0.7 px  k=1   7.0/ 5.6/0.66  k=2   7.0/ 5.6/0.99x  k=3   7.0/ 5.6/0.95x  k2+cut(0.47)   7.0/ 5.6/1.01x
+      22.0 m card   4.1x 10.1 px  painted leaf ~ 0.5 px  k=1   5.6/ 5.6/0.69  k=2   5.6/ 5.5/1.01x  k=3   5.6/ 2.8/0.87x  k2+cut(0.51)   5.6/ 5.5/0.96x
+      30.0 m card   3.0x  7.4 px  painted leaf ~ 0.4 px  k=1   4.2/ 4.7/0.67  k=2   4.2/ 2.8/0.93x  k=3   4.2/ 2.8/0.86x  k2+cut(0.42)   4.2/ 2.8/1.05x
+  MAT_reeds        n=  8 d 21.3-26.9 m (p50 24.1), scale p50 0.81
+       3.0 m card   7.8x 59.9 px  painted leaf ~ 3.2 px  k=1   7.2/ 6.5/0.24  k=2   4.2/ 5.6/1.00x  k=3   2.8/ 2.8/0.86x  k2+cut(0.50)   4.2/ 5.6/1.00x
+      21.3 m card   1.1x  8.4 px  painted leaf ~ 0.4 px  k=1   1.4/ 2.8/0.17  k=2   1.9/ 1.9/1.00x  k=3   1.4/ 2.8/0.37x  k2+cut(0.50)   1.9/ 1.9/1.00x
+      24.1 m card   1.0x  7.5 px  painted leaf ~ 0.4 px  k=1   1.4/ 2.8/0.14  k=2   2.8/ 2.8/1.00x  k=3   0.9/ 1.9/0.34x  k2+cut(0.48)   2.8/ 2.8/1.66x
+      30.0 m card   0.8x  6.0 px  painted leaf ~ 0.3 px  k=1   1.4/ 2.8/0.17  k=2   2.8/ 2.8/1.99x  k=3   0.5/ 0.9/0.50x  k2+cut(0.52)   1.9/ 1.9/1.33x
+box                              viewer luma cycles luma   ratio   v g-r   c g-r
+bush 860-1180,650-760                  0.212       0.119    1.79  -0.045  -0.012
+pavement 700-1400,820-900              0.389       0.284    1.37  -0.012  -0.016
+far water/shore 1250-1700,690-740       0.277       0.156    1.78  -0.081  -0.066
+column shade 300-520,300-800           0.340       0.133    2.55  -0.089  -0.050
