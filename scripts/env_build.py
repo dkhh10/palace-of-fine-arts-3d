@@ -574,17 +574,24 @@ BLADE_W = 0.05             # grass / reed blade width (m)
 # and 8 m stations, and the even scatter of big quads is what reads as "angular cut-out lobes".
 #   LOD1 now runs a 1.65 x card at full coverage (1.87 x the cards, 25 % narrower) and a 0.75 blade factor
 #   (2.3 x the blades, 33 % narrower), which lands the whole unique LOD1 set at 1.83 x its round-02 triangles,
-#   inside the 2 x cap the 8a brief sets. LOD2 keeps its round-02 numbers: it is the mobile / far set.
+#   inside the 2 x cap the 8a brief sets.
+#
+# LOD2 IS THE LEVER (lead's decision, 2026-09-19, after the 8a report). `export/gate1_set.py` ("# shrubs at
+# LOD2, shared mesh per prototype") ships the LOD2 mesh for all 1 379 placements while taking the placed _LOD1
+# object's transform, so every station -- the hero's shore band at 80-160 m included -- draws LOD2, and a LOD1
+# change alone reaches only the Cycles renders and the Blender viewport. LOD2 therefore takes both the clump
+# emitter (free) and a densification to card 3.30 / cover 0.85 / blade 0.24: a 28 cm leaf card instead of 38 cm.
+# The +105 k placed triangles break the Gate 1 ENV freeze of 800 k; the lead accepted the exception and the
+# viewer measures the frame cost after export.
 SHRUB_LOD = {0: dict(card=1.00, cover=1.00, blade=1.00, sub=2),
              1: dict(card=1.65, cover=1.00, blade=0.75, sub=2),
-             2: dict(card=4.50, cover=0.85, blade=0.12, sub=1)}
-# Cards are emitted in CLUMPS at several scales at these LODs (structure, not count: at LOD0 the card total is
-# unchanged, so LOD0 keeps its triangle count exactly and only the distribution changes). LOD2 keeps the even
-# scatter so its meshes stay byte-for-byte what the web export ships.
-CLUMP_LODS = (0, 1)
+             2: dict(card=3.30, cover=0.85, blade=0.24, sub=1)}
+# Cards are emitted in CLUMPS at several scales at these LODs (structure, not count: at a given card count the
+# triangle total is untouched, which is why LOD0 keeps its count exactly and only the distribution changes).
+CLUMP_LODS = (0, 1, 2)
 CLUMP_N = (4, 9)                              # cards per clump
 CLUMP_SIZES = (0.58, 0.82, 1.05, 1.38)        # the several leaf scales; mean square = 1.00, so coverage is kept
-TUFT_LODS = (0, 1)                            # blade clumps: tufts of 4-8 blades instead of an even fan
+TUFT_LODS = (0, 1, 2)                         # blade clumps: tufts of 4-8 blades instead of an even fan
 # a shrub farther than this from every QA camera renders its LOD1 mesh even at LOD0 (LOD2 beyond 2 x)
 SHRUB_FAR = 80.0
 
