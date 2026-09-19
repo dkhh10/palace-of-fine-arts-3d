@@ -19,7 +19,19 @@ if [ "$1" = "--gate2" ]; then
   ETC="$OUT/tex_ktx2_etc1s"
   TEXIN="$OUT/tex"
   command -v toktx >/dev/null || { echo "gltf_pack.sh: toktx not on PATH" >&2; exit 2; }
-  rm -rf "$KTX" "$ETC"; mkdir -p "$KTX" "$ETC"
+  # r4 finding 3: NOT `rm -rf "$KTX"`. The PNG sources under out/gate2/tex are ~700 MB and sync_main.sh
+  # deliberately leaves them behind, so in a worktree this step used to delete 203 maps and re-encode only
+  # the 36 whose PNG happened to be local - and manifest_v3 was then written against a partial texture set
+  # (the 8d chain, repaired by hand). Only the maps this run REGENERATES are removed; every other .ktx2 is
+  # left exactly as it is, which is also what makes the step re-runnable after a partial re-bake.
+  mkdir -p "$KTX" "$ETC"
+  stale=0
+  for f in "$TEXIN"/gate2_*.png(N) "$OUT"/detail/detail_*.png(N); do
+    b=${f:t:r}
+    [ -f "$KTX/$b.ktx2" ] && { rm -f "$KTX/$b.ktx2"; stale=$((stale+1)); }
+    [ -f "$ETC/$b.ktx2" ] && rm -f "$ETC/$b.ktx2"
+  done
+  echo "[gate2] KTX2 kept $(ls "$KTX" | wc -l | tr -d ' ') existing map(s), replacing $stale from $TEXIN"
   t0=$(date +%s); n=0
   for f in "$TEXIN"/gate2_*.png(N); do
     b=${f:t:r}

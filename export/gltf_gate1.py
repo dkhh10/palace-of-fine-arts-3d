@@ -494,11 +494,23 @@ for cls, objs in sets.items():
     # a texture outside the tiled set (in env.gltf sampler 1 is shared with the LOD2 tree leaf cards -
     # review r3 finding 9 - which must NOT be re-wrapped by a shrub fix).
     if cls == "env":
+        # r4 finding 1: the LEAF materials go with them. env_trees.gltf ships MAT_leaf_* on a REPEAT
+        # sampler (its cards' UVs run -2..2); the same material NAMES here on a CLAMP sampler is exactly
+        # the last-root-wins hazard 8a-3 closed for the shrubs - foliageLazy copies each root's sampler
+        # onto the ONE shared tinted albedo. Every root that carries the name now agrees on REPEAT.
+        # It is a no-op for this root's own pixels: env.gltf's leaf UVs are inside 0-1 (asserted below).
         tiled = [m for m, f in fuv.SHRUB_TILE.items() if f != (1.0, 1.0)]
+        tiled += sorted({(m.get("name") or "") for m in doc.get("materials", [])
+                         if (m.get("name") or "").startswith("MAT_leaf")})
         wrap = fuv.patch_samplers(doc, tiled, path.name)
         report["shrub_uv_tiling"]["wrap_patch"] = wrap
         report["shrub_uv_tiling"]["uv_range"] = {
             m: fuv.leaf_uv_range(doc, path, prefix=m) for m in sorted(fuv.SHRUB_TILE)}
+        leaf_uv = fuv.leaf_uv_range(doc, path, prefix="MAT_leaf")
+        report["shrub_uv_tiling"]["leaf_uv_range"] = leaf_uv
+        assert leaf_uv is None or (leaf_uv["min"] >= -1e-4 and leaf_uv["max"] <= 1 + 1e-4), \
+            f"{path.name}: leaf TEXCOORD_0 is {leaf_uv} - this root's cards are not tiled, so REPEAT must " \
+            f"be a no-op for them"
         if wrap:
             path.write_text(json.dumps(doc))
             doc = json.loads(path.read_text())

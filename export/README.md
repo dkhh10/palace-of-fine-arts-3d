@@ -2652,6 +2652,17 @@ at 54 m 1.00x (15.4 -> 7.0) / 1.00x (15.4 -> 7.0) / 1.03x (4.2 -> 4.2) / 1.00x; 
 in `env.gltf` for those three materials only (cloned, because sampler 1 is shared with the tree leaf cards)
 and in `env_shrubs.gltf` to match, so the one shared runtime albedo cannot be re-wrapped to CLAMP.
 
+**r4 fixes (pre-deploy).** (1) `env.gltf` now patches the four `MAT_leaf_*` materials to REPEAT beside the
+three shrub ones - `env_trees.gltf` ships those same names on a REPEAT sampler with UVs at -2..2, and
+`foliageLazy` copies each root's sampler onto the ONE shared tinted albedo, so a CLAMP here was a
+last-root-wins hazard. In the packed `env.glb` the four leaf materials move from sampler 1 (33071) to the
+wrap-less sampler 2 (= REPEAT, the glTF default) beside the shrubs; `MAT_reeds` stays on 1 = CLAMP, and
+this root's own leaf UVs are asserted inside 0-1 (measured 0.0000-1.0000 over 250 980 verts), so it is a
+no-op for its pixels. Cost: `env_t2.glb` **-64 B**, `env_t0.glb` and the whole of tier 0 **unchanged**.
+(2) `gate2_common.GATE1_BLEND_DIR` defaults local-then-MAIN instead of to the phase6-export worktree.
+(3) `gltf_pack.sh --gate2` no longer `rm -rf`s `tex_ktx2`: it removes only the maps whose PNG source is in
+`out/gate2/tex` (the ones it is about to re-encode) and prints how many it kept.
+
 **Cost.** `env_t0.glb` **2 172 384 -> 2 172 696 B (+312)** — the only tier-0 geometry change; tier 0 total
 48 269 972 -> **48 270 284 (+312)**; first frame on the wire 49 393 776 -> **49 394 896 (+1 120**, the +312
 plus the boot-overhead re-measure of the rebuilt `web/dist`), **605 104 B under the 50 000 000 rule**. Mobile

@@ -1,20 +1,8 @@
-Traceback (most recent call last):
-  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/manifest_v3.py", line 346, in <module>
-    sys.exit(main())
-             ~~~~^^
-  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/manifest_v3.py", line 338, in main
-    assert man["lightmap_encoding"]["rgbm_range"], "lightmap_encoding.rgbm_range lost in the carry"
-           ~~~^^^^^^^^^^^^^^^^^^^^^
-KeyError: 'lightmap_encoding'
 [manifest_v3] backdrop UV cross-check: 10/10 meshes carry the baked layout (worst distinct-UV match 1.00000, V-flipped on 10/10)
-[manifest_v3] uv1_in_glb true for 61/62 material sets
-[manifest_v3] /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/manifest.json 1563235 B; 62 material sets, 181 textures, 0 jobs missing
-[manifest_v3] gate2 resident 600.73 MB, ktx2 32057134 B; projected total 1263.57 MB against 1200 MB
-[manifest_v3]   arch      maps= 45 resident=  179.85 MB ktx2=          0 B bake=  2036.2 s
-[manifest_v3]   backdrop  maps= 25 resident=   33.25 MB ktx2=    8778774 B bake=    98.9 s
-[manifest_v3]   ground    maps= 12 resident=   47.96 MB ktx2=          0 B bake=   192.8 s
-[manifest_v3]   orn       maps= 99 resident=  339.67 MB ktx2=          0 B bake=  1640.7 s
-Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
-
-Blender quit
-blender_run.sh: pid 96775 exited rc=0 after 2 s (max 900)
+[manifest_v3] uv1_in_glb true for 62/62 material sets
+[manifest_v3] /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/manifest.json 1752884 B; 62 material sets, 181 textures, 0 jobs missing
+[manifest_v3] gate2 resident 600.73 MB, ktx2 330978190 B; projected total 1263.57 MB against 1200 MB
+[manifest_v3]   arch      maps= 45 resident=  179.85 MB ktx2=   72661979 B bake=  2036.2 s
+[manifest_v3]   backdrop  maps= 25 resident=   33.25 MB ktx2=   11002831 B bake=    98.9 s
+[manifest_v3]   ground    maps= 12 resident=   47.96 MB ktx2=   24071848 B bake=   192.8 s
+[manifest_v3]   orn       maps= 99 resident=  339.67 MB ktx2=  199963172 B bake=  1640.7 s
