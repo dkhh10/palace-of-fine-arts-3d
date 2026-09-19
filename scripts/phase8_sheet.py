@@ -2,9 +2,9 @@
 """Phase 8 before/after comparison sheet (no Blender, no Chrome, no GPU).
 
     python3 scripts/phase8_sheet.py            # hero composite + tiles (cam01)
-    python3 scripts/phase8_sheet.py --stations  # gate7 vs gate10, cam02-06, one 960 px composite each
+    python3 scripts/phase8_sheet.py --stations  # gate7 vs gate12, cam02-06, one 960 px composite each
 
-Row A: viewer hero BEFORE (gate7_cam01) vs AFTER (gate10_cam01).
+Row A: viewer hero BEFORE (gate7_cam01) vs AFTER (gate12_cam01).
 Row B: Cycles 4K hero BEFORE (phase5_v2) vs AFTER (renders/final/hero_cam01_3840x2160_128spp.png).
   The Phase 8 4K re-render had not landed when this script was written (the file on disk is still
   byte-identical to the preserved phase5_v2 copy - see docs/status.md 2026-09-19 "4K hero render
@@ -157,7 +157,7 @@ def build_hero_sheet():
     TILES_DIR.mkdir(parents=True, exist_ok=True)
 
     viewer_before = WEB / "gate7_cam01.png"
-    viewer_after = WEB / "gate10_cam01.png"
+    viewer_after = WEB / "gate12_cam01.png"
 
     cycles_before_path = CYCLES_BEFORE
     cycles_after_path = CYCLES_AFTER
@@ -180,8 +180,8 @@ def build_hero_sheet():
                 [(f"VIEWER BEFORE  gate7_cam01.png  ({_mtime(viewer_before)})", True),
                  ("deploy 7, pre-Phase 8", False)])
     va = _panel(_im(viewer_after), col_w,
-                [(f"VIEWER AFTER  gate10_cam01.png  ({_mtime(viewer_after)})", True),
-                 ("deploy 10, post-Phase 8", False)])
+                [(f"VIEWER AFTER  gate12_cam01.png  ({_mtime(viewer_after)})", True),
+                 ("deploy 12, post-Phase 8 (final)", False)])
     row1 = _row([vb, va])
 
     cb_label = f"CYCLES BEFORE  phase5_v2/hero_cam01_3840x2160_128spp.png  ({_mtime(cycles_before_path)})"
@@ -214,7 +214,7 @@ def build_hero_sheet():
     # --- full-resolution tiles ---------------------------------------------------
     sources = {
         "viewer_before_gate7_cam01": viewer_before,
-        "viewer_after_gate10_cam01": viewer_after,
+        "viewer_after_gate12_cam01": viewer_after,
         "cycles_before_phase5v2": cycles_before_path,
         "cycles_after_hero": (cycles_after_path if cycles_after_path.exists() else cycles_before_path),
     }
@@ -246,14 +246,14 @@ def build_stations():
     col_w = 480
     for st in STATIONS:
         before = WEB / f"gate7_{st}.png"
-        after = WEB / f"gate10_{st}.png"
+        after = WEB / f"gate12_{st}.png"
         if not before.exists() or not after.exists():
             print(f"skip {st}: missing {before if not before.exists() else after}")
             continue
         vb = _panel(_im(before), col_w,
                     [(f"BEFORE  gate7_{st}.png  ({_mtime(before)})", True), ("deploy 7, pre-Phase 8", False)])
         va = _panel(_im(after), col_w,
-                    [(f"AFTER  gate10_{st}.png  ({_mtime(after)})", True), ("deploy 10, post-Phase 8", False)])
+                    [(f"AFTER  gate12_{st}.png  ({_mtime(after)})", True), ("deploy 12, post-Phase 8 (final)", False)])
         row = _row([vb, va])
         header = _label_bar(row.width, [(f"Phase 8 before / after - station {st}", True)], height=26, bg=(0, 0, 0))
         sheet = _stack_rows([header, row])
