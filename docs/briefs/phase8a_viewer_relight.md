@@ -15,3 +15,7 @@ Rules: check `pgrep -fl "MacOS/Blender|headless"` is empty and export/out/bake_q
 Commit after each step with the attribution lines. Write web/README.md "Phase 8a relight" (the maths, the switch, before/after tables, the composite path) and
 docs/briefs/phase8a_relight_report.md (< 60 lines). Report < 15 lines: the adopted value, the eight boxes before/after vs reference, hard-edge and level per box,
 the tile finding, perf, commit ids.
+Carries from docs/reviews/phase8_viewer_r3_review.md (after the relight is measured, each its own commit, none may change a pixel of the relit frames unless stated):
+review r3 items 3 (eager path: albedo and translucency can take different wraps — one sampler rule for both), 4 (cull radius/centre recorded but unused: test the
+sphere, not the origin), 5 (the main.js "must match" comment vs the post chain's quads), 6 (commit the item-c CIELAB script); r2 carry 6 (the band samples `c2` at weight 0 —
+drop the four wasted taps; measure the frame cost same-session, it is allowed to be faster) and 5b (`rows` > 4 silently truncated: warn). Report which you did.
