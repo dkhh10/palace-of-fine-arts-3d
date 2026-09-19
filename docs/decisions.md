@@ -863,3 +863,10 @@ constant becomes 902 000, which is what "+~105 k accepted" meant; the gate is ne
 8b-B measured: 2K + coverage 0.15 gives crossings 7.65 / 6.98 / 8.54 at cam01/02/05 (Cycles 11.73 / 7.76 / 15.89) with the boxes holding; at 100 % the
 station-2 crown is still a mass ("no sampling of a 162 px frame puts branches back"). Before the band atlas (13 min GPU, +128 MB, three-team lockstep) a free
 A/B runs: the LOD2 far-tree mesh set (vertex-AO lit, already in tier 2) at 60 / 120 / all distances on desktop, same session, tiles vs Cycles.
+
+## 2026-09-19 · 8b decision 2: the band atlas goes ahead (after the LOD2-mesh A/B fell short)
+The free A/B (web/README.md "Phase 8 far-tree A/B", f0ad577): the LOD2 far-tree set at 60 / 120 / all distances costs nothing (inside +3 ms same-session, -244 MB
+resident) but reads as a faceted polygon skeleton at 100 m with the colonnade visible through it — hero crown leaf share 4.0 % vs the reference's 22.2 % (the 2K
+card 24.5 %); its crossings score is an artefact of isolated leaf cards. Nothing adopted. Decision: the band atlas per docs/briefs/phase8b_band_atlas.md (12 az x 3 el
+at 341 px, 4096x1024, ~13 min GPU, +128 MB, +13 MB tier 1; bake -> export -> viewer in lockstep under one contract), sequenced after the 8a export sync so the
+shrub and column improvements deploy first. If the band atlas does not put branch structure in the station-2 tile, the crown stays a residual and Phase 8 closes.
