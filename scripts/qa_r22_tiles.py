@@ -130,16 +130,13 @@ def cmd_gate():
     name, head, box = ORBIT[0]
     panels.append(_stack([(_im(WEB / f"gate7_orbit_{head}.png").crop(box), f"gate7_orbit {name}"),
                           (_im(WEB / f"{CUR}_orbit_{head}.png").crop(box), f"{CUR}_orbit  (8e)")]))
-    h = max(p.height for p in panels)
-    panels = [p if p.height == h else
-              p.resize((max(1, round(p.width * h / p.height)), h), Image.LANCZOS) for p in panels]
-    w = sum(p.width for p in panels) + 12 * (len(panels) - 1)
-    sheet = Image.new("RGB", (w, h), (18, 18, 18))
-    x = 0
-    for p in panels:
-        sheet.paste(p, (x, 0))
-        x += p.width + 12
-    sheet = sheet.resize((960, max(1, round(960 * h / w))), Image.LANCZOS)
+    # 2 x 2, every panel scaled to the same width so nothing is cropped and nothing is tiny
+    cw = 474
+    panels = [p.resize((cw, max(1, round(p.height * cw / p.width))), Image.LANCZOS) for p in panels]
+    rh = [max(panels[0].height, panels[1].height), max(panels[2].height, panels[3].height)]
+    sheet = Image.new("RGB", (cw * 2 + 12, rh[0] + rh[1] + 12), (18, 18, 18))
+    for i, p in enumerate(panels):
+        sheet.paste(p, ((i % 2) * (cw + 12), 0 if i < 2 else rh[0] + 12))
     out = WEB / f"{CUR}_gate.png"
     sheet.save(out)
     print(out, sheet.size)

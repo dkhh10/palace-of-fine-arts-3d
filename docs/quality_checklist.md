@@ -989,3 +989,19 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 5. **A cost can be negative.** The band replaced the 2K albedo atlases: +8.4 MB in, -9.3 MB out, resident byte-identical (same 4 M texels), medians 0.3-4.2 ms
    *faster* than gate8 at every station, and station 3's QA-20 perf flag clears (+3.1 -> +0.1 vs the idle baseline).
 6. **Scores.** Desktop 01 **3.89** · 02 **3.31** · 03 2.75 · 04 2.88 · 05 **3.12** · 06 **2.95**; mobile unchanged at 3.2 / 3.3 / 2.4 / 2.7 / 2.8 / 2.5.
+
+## QA round 22 (Phase 8 items 8a / 8a-3, 8d, 8e + the viewer fix round, live URL, tag `gate10`, 2026-09-19) — **8a NOT CLOSED · 8d BLOCKER · 8e CLOSED · fix round VERIFIED**
+1. **A preview harness proves a direction, not a delivery.** 8d's Eevee before/after promised the hero band's luma sd would rise 0.159 -> 0.177; on the
+   delivered frame it *fell* 0.156 -> 0.153 and the hf did not move, while cam06 reached ~15 % of its saturation target and ~5 % of its luma target.
+   Re-measure every preview claim on the shipped frame before calling an item closed.
+2. **Replacing a flat thing with a flat thing is not a fix.** The R2 tree belt (6 986 tris over ~120 crowns = ~58 tris each) swapped a pale wall with dark
+   panels for hard-edged untextured faceted spikes in every intercolumniation at cam01 / 02 / 05 and in the reflection. The colour metrics improved; the
+   tiles got worse. The tile review overrides the numeric boxes, as the 2026-09-10 gate rule says.
+3. **A fix closes only the asset it touched.** 8a-3 scaled the LOD2 shrub cards and shore bands at 1 and 5 now read as lit-and-shaded bushes — cam03 sees the
+   LOD1 walk-in set at 8 m and is pixel-for-pixel the same cut-outs. Name the asset, not the defect, when scoping.
+4. **Measure the delivered frame at its own resolution.** `qa_r13_probe.rgb` resizes every input to 1920x1080, so QA 19's mobile-orbit statistics were read
+   off 1170x2532 portrait frames squashed to landscape. Read natively; the 8e result (run p90 29.5 -> 22.7 px, coverage 1.02-1.23x, no thinning) only
+   appears when you do.
+5. **A cull is verifiable to the triangle.** The fix round claimed -1 410 000 at the hero and -2 020 000 at cam06; the delivered frames say -1 395 080 and
+   -2 010 552, with every 1440p median equal or faster and the hero at 35.5 fps. A claim with a number attached is a claim QA can settle in one command.
+6. **Scores.** Desktop 01 **3.81** · 02 **3.14** · 03 2.75 · 04 2.88 · 05 3.12 · 06 **3.03**; mobile 3.2 / 3.22 / 2.44 / 2.7 / 2.88 / 2.58.
