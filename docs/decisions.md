@@ -889,3 +889,14 @@ coverage, dense LOD2 shrubs, detail projection dominant (8c CLOSED by QA 20). Pr
 (leaf share moved at 1/8 boxes; re-scope), the env_shrubs LOD1 walk-in set drawn at every station (+1.12 M tris; viewer/export bug), resident() omitting the impostor
 atlases, the 100 % dot-grid check on the band, willow highlight clipping, 8d backdrop, 8e mobile card scale, the closing comparison sheet with a new 4K Cycles hero.
 Plan: docs/briefs/phase8_next_session.md. Every merge this session was reviewed except two documented lead-verified deltas (export wire pass; export band block).
+
+## 2026-09-19 · QA 21 (f264b69) on deploy 9: 8b CLOSED — the band atlas is the shipped far-tree look
+Crossings per 100 px cam01/02/05: gate8 7.99 / 6.97 / 8.53 -> gate9 11.97 / 7.35 / 11.67 (Cycles 11.73 / 7.76 / 15.89); hero crown hard-edge 4.73 % (ref 4.94),
+leaf share 23.4 % (ref 22.2); the station-2 crown tile at 100 % has limbs, needle clumps and sky between the masses (the contract's acceptance). The QA-20 ordered dot
+grid is gone from every crown body at share 0.10 (lattice index above control at 3/10 boxes, was 8/10); a new residual: a 1-2 px period-2 dotted rim on far-crown
+silhouettes at stations 2 and 5 at 100 %, share-independent (the viewer's sweep shows 1 and 5 byte-identical across share 0-0.40) — owner VIEWER, not blocking.
+Willows: no flat highlight (0 px over 240 in six frames), so the `PFA_BAND_RANGE=band` re-bake is not needed. Scores 3.89 / 3.31 / 2.75 / 2.88 / 3.12 / 2.95
+(+0.11 / +0.06 / 0 / 0 / +0.06 / +0.06); mobile byte-identical to gate8m. Payload 46 877 329 B desktop / 46 807 348 B mobile before the first frame (the export's
+49.4 / 47.6 MB are the planned tier 0). Perf 32.5 / 33.5 / 38.0 / 24.8 / 30.3 / 36.1 ms, faster than gate8 at every station; QA-20's station-3 flag clears. Resident
+sidecar 1 862.9 MB; corrected estimate ~1 978 MB until the counter fix (viewer fix round). Lead viewed the sheet: the station-2 crown is still softer than Cycles
+(a residual of the 341 px frame, accepted by decision 2: "if the band does not put structure in the tile the crown stays a residual" — it did, so 8b closes).
