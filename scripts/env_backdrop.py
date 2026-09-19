@@ -348,8 +348,15 @@ BELT_TRI_CAP = 6986
 
 
 def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=()):
-    """A two-row canopy belt along the hall's east face: 80-tri lobed crowns (env_city's far-canopy mesh) in
-    MAT_backdrop_forest, so it joins the existing backdrop_forest export group and adds no new group."""
+    """A canopy belt along the hall's concave east face: 80-tri lobed crowns (env_city's far-canopy mesh) in
+    MAT_backdrop_forest, so it joins the existing backdrop_forest export group and adds no new group.
+
+    Measured placement (docs/briefs/phase8d_analysis.md + the Gate 1 geometry): the hall's east face stands at
+    r = 47.8-110.8 m from the rotunda and its nearest patch is x -17.5..34.2, y -54.6..-43.8, z -0.4..16.7.  The
+    belt stands 5-11 m in front of that face -- against the hall, not out in the palace grounds -- with the offset
+    alternating so the silhouette has depth, and every crown is tested against the hall footprint and the
+    colonnade roof polygons before it is planted.  One pass, closest-packed: the screen has to be continuous or
+    the wall shows between the crowns exactly as it shows between the columns today."""
     import env_city
     coll = SUB["ENV_backdrop"]
     m_forest = L.mat("MAT_backdrop_forest")
@@ -360,23 +367,21 @@ def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=
     n = len(poly)
 
     def blocked(x, y):
-        if hall_field.signed(x, y) > -4.0 and hall_field.signed(x, y) < 4.0:
-            return True                                  # too close to the wall to stand
-        if hall_field.signed(x, y) < 0.0:
-            return True                                  # inside the hall
-        if math.hypot(x, y) < 62.0:
-            return True                                  # the palace's own grounds: ENV_trees owns those
+        if hall_field.signed(x, y) < 3.0:
+            return True                                  # inside the hall, or hard against its wall
+        if math.hypot(x, y) < 34.0:
+            return True                                  # the rotunda's own platform
         for cp in colonnade_polys:
-            for (dx, dy) in ((0, 0), (3.0, 0), (-3.0, 0), (0, 3.0), (0, -3.0)):
+            for (dx, dy) in ((0.0, 0.0), (3.0, 0.0), (-3.0, 0.0), (0.0, 3.0), (0.0, -3.0)):
                 if L.point_in_poly(x + dx, y + dy, cp):
                     return True
         return False
 
     # even arc-length sampling across the east-facing edges, so the spacing does not jump at every OSM corner
-    STEP = 3.8
+    STEP = 2.8
     items = {k: [] for k in src}
     carry = 0.0
-    placed = row1 = 0
+    placed = skipped = 0
     tris = 0
     for i in range(n):
         a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
@@ -395,29 +400,25 @@ def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=
         u = carry
         while u < seg:
             base = a + d * u
+            idx = placed + skipped
             u += STEP
-            for row in (0, 1):
-                if row and (placed % 2):
-                    continue
-                if tris + max(tris_of.values()) > BELT_TRI_CAP:
-                    break
-                off = rnd.uniform(7.5, 10.0) if row == 0 else rnd.uniform(15.0, 18.5)
-                jitter = rnd.uniform(-1.4, 1.4)
-                p = base + nrm * off + d * jitter
-                if blocked(p.x, p.y):
-                    continue
-                k = rnd.choice((0, 0, 1, 1, 2, 3))
-                rx = rnd.uniform(3.4, 5.4) * (0.82 if k == 3 else 1.0)
-                h = rnd.uniform(12.0, 19.0)
-                rz = h * 0.46
-                z0 = terrain_height(p.x, p.y)
-                cz = z0 + rz + rnd.uniform(0.6, 2.4)
-                items[k].append(((p.x, p.y, cz), rnd.uniform(0, math.tau),
-                                 (rx, rx * rnd.uniform(0.82, 1.18), rz)))
-                tris += tris_of[k]
-                placed += 1
-                if row:
-                    row1 += 1
+            if tris + max(tris_of.values()) > BELT_TRI_CAP:
+                skipped += 1
+                continue
+            off = (5.4 if idx % 2 else 9.2) + rnd.uniform(-1.1, 1.1)
+            p = base + nrm * off + d * rnd.uniform(-1.0, 1.0)
+            if blocked(p.x, p.y):
+                skipped += 1
+                continue
+            k = rnd.choice((0, 0, 1, 1, 2, 3))
+            rx = rnd.uniform(3.6, 5.6) * (0.80 if k == 3 else 1.0)
+            h = rnd.uniform(12.5, 19.5)
+            rz = h * 0.46
+            z0 = terrain_height(p.x, p.y)
+            items[k].append(((p.x, p.y, z0 + rz + rnd.uniform(0.6, 2.4)), rnd.uniform(0.0, math.tau),
+                             (rx, rx * rnd.uniform(0.82, 1.18), rz)))
+            tris += tris_of[k]
+            placed += 1
         carry = u - seg
     nobj = 0
     for k, tr in items.items():
@@ -428,8 +429,8 @@ def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=
     for me in src.values():
         if me.users == 0:
             bpy.data.meshes.remove(me)
-    print(f"[env_backdrop] hall tree belt: {placed} crowns ({row1} in the second row) in {nobj} objects, "
-          f"{tris:,} tris (cap {BELT_TRI_CAP:,})")
+    print(f"[env_backdrop] hall tree belt: {placed} crowns in {nobj} objects, {tris:,} tris "
+          f"(cap {BELT_TRI_CAP:,}, {skipped} sample points rejected)")
     return tris
 
 
