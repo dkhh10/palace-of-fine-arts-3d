@@ -838,3 +838,8 @@ apply the clumping at LOD2 (zero triangles) plus the densification `card 3.30 / 
 800 k ENV budget = +13 %, accepted for the hero; the viewer's frame cost is measured after export). Two harness bugs fixed on the way (env_preview --lod, the
 qa_r13 reference root in worktrees). Then: master rebuild + master_delivery, ENV re-export (env groups, shrub LOD1, instance irradiance join by translation),
 tiers, deploy, QA 20 measuring the shrub boxes against the reference photo.
+Correction after review (docs/reviews/phase8_env_r1_review.md, MERGE WITH FIXES): the script-measured placed counts after the LOD2 change are LOD0 2 420 864 /
+LOD1 1 012 912 / LOD2 238 032 (renders/logs/p8a_build_lod2.log); the report's LOD0/LOD1 placed figures were hand-multiplied. Unique LOD0 is unchanged to the
+triangle; placed LOD0 moves slightly because far placements draw the LOD1 mesh. Instance scale moved for cap-bound shrubs (REAL_H over narrower cards) with the
+sightline cap still holding; keys, positions, rotations and the count (1 379) are untouched. Carries: sorted() source keys past 9 sources, dead `--lod2 clump` arg,
+env_p8_boxes hardcoded root, qa_r13 worktree fallback; the blend committed twice on the branch (not squashed).
