@@ -51,8 +51,12 @@ refused (143 hits at the hero, i.e. `tDiffuse`/`envMap` no longer double-billed)
 `BufferAttribute`. New keys: `texture_bytes_by_kind`, `render_target_textures_skipped`,
 `geometry_bytes_before_dedup`, `info_memory`, `counted_vs_renderer`.
 
-**Figure of record, hero:** geometry 261.5 → **114.5**, textures 1 157.6 → **1 255.6**, targets 443.8,
-**total 1 862.9 → 1 814.2 MB (−48.7)**. The +98.0 MB of texture: impostor atlases **67.1** (never
+**Figure of record, hero:** geometry 261.2 → **114.5** (−146.7), textures 1 157.6 → **1 255.6**,
+targets 443.8, **total 1 862.9 → 1 814.2 MB (−48.7)**. **1 814.2 is BEFORE review r3 finding 2**
+(`pfaLmAtlasB`, the second lightmap atlas, was written straight into `shader.uniforms` inside
+`onBeforeCompile` where a `MeshStandardMaterial` has no `.uniforms` for the walk to find; the patch now
+records it on `userData.pfaUniformTextures` and it is billed as `patch uniform`). **Re-read the hero
+figure from the deploy-10 capture sidecar** — no Chrome was run for that fix, and it can only go up. The +98.0 MB of texture: impostor atlases **67.1** (never
 counted), sheen/clearcoat/transmission slots **25.2**, `pfaTrnMap` **5.6**, LUT **0.07**. 67.1 MB =
 16 × 4 194 304 texels × 1 B (ASTC 4x4), so band (4096x1024) and 2K octahedral (2048x2048) cost exactly
 the same — `?impband=0` measures 1 814.2 too. `?tier=mobile`: **547.9 MB** (was 563.5); of its 236.4 MB

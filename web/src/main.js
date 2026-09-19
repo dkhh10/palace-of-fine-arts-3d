@@ -2159,6 +2159,10 @@ function residentBytes() {
 		for ( const k of MAT_SLOTS ) addTex( m[ k ], by );
 		// the detail layer's maps are custom uniforms, not material slots, but they are resident
 		if ( m.userData && m.userData.pfaDetailTextures ) for ( const t of m.userData.pfaDetailTextures ) addTex( t, 'detail uniform' );
+		// every texture an onBeforeCompile patch binds into `shader.uniforms`, recorded by the patch
+		// itself (`patchBakedMaterial`'s `pfaLmAtlasB`): a MeshStandardMaterial has no `.uniforms`, so
+		// the walk below cannot see them and only the record can (review r3 finding 2).
+		if ( m.userData && m.userData.pfaUniformTextures ) for ( const t of m.userData.pfaUniformTextures ) addTex( t, 'patch uniform' );
 		// every ShaderMaterial / patched-material uniform that holds a texture (the impostor `atlas`,
 		// the water, anything a later round adds)
 		if ( m.uniforms ) for ( const [ name, u ] of Object.entries( m.uniforms ) )

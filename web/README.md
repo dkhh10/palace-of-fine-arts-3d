@@ -1208,11 +1208,22 @@ shows as a missing row and not as a smaller total), `render_target_textures_skip
 
 | | pre-8b `resident()` | restated | Δ |
 |---|---|---|---|
-| geometry | 261.5 MB | **114.5** | −147.0 (shared vertex buffers billed once per geometry) |
+| geometry | 261.2 MB | **114.5** | −146.7 (shared vertex buffers billed once per geometry) |
 | instance matrices | 0.3 | 0.3 | 0 |
 | textures | 1 157.6 | **1 255.6** | **+98.0** |
 | render targets | 443.8 | 443.8 | 0 |
 | **total** | **1 862.9 MB** | **1 814.2 MB** | **−48.7** |
+
+(261.2 is `gate9_perf.json`'s own `geometry_bytes` = 261 214 822 and `p8b_b_old.json`'s
+`geometry_bytes_before_dedup`; the row reconciles with the 1 862.9 beside it — review r3 finding 1.)
+
+**`1 814.2 MB` is the figure BEFORE review r3 finding 2**, which was applied after this capture:
+`patchBakedMaterial` wrote the second lightmap atlas `pfaLmAtlasB` straight into `shader.uniforms`
+inside `onBeforeCompile`, where a `MeshStandardMaterial` has no `.uniforms` for the by-type walk to
+find — the same class of miss as the impostor atlases. The patch now records every texture it binds
+on `mat.userData.pfaUniformTextures` and the counter bills it under the kind `patch uniform`. **The
+hero figure of record is to be re-read from the deploy-10 capture sidecar** (no Chrome was run for
+this fix), and it can only go up from 1 814.2.
 
 The +98.0 MB of texture, by kind:
 
@@ -2306,8 +2317,8 @@ round", item b.
 | `geometry_bytes` | vertex and index buffers, **one entry per `BufferAttribute`** — chunked geometries share theirs |
 | `geometry_bytes_before_dedup` | the same under the pre-8b per-geometry rule, kept so a restatement can be audited |
 | `instance_matrix_bytes` | `InstancedMesh.instanceMatrix` |
-| `texture_bytes` | one entry per `texture.source`; compressed from the mip data, uncompressed as w*h*bpp (x4/3 with mipmaps). Reached through material slots, **every `uniforms` entry whose value `isTexture`** (the impostor atlases, the translucency maps, the LUT), the post chain, `scene.background` and `scene.environment` |
-| `texture_bytes_by_kind` | that sum split by what the texture was reached THROUGH — audit this, not just the total: a family that stops being billed shows as a missing row |
+| `texture_bytes` | one entry per `texture.source`; compressed from the mip data, uncompressed as w*h*bpp (x4/3 with mipmaps). Reached through material slots, **every `uniforms` entry whose value `isTexture`** (the impostor atlases, the translucency maps, the LUT), **`userData.pfaUniformTextures`** (what an `onBeforeCompile` patch binds, e.g. the slot path's second lightmap atlas — a `MeshStandardMaterial` has no `.uniforms` for the walk to find, so the patch must record it), the post chain, `scene.background` and `scene.environment` |
+| `texture_bytes_by_kind` | that sum split by what the texture was reached THROUGH (`material slot`, `uniform <name>`, `patch uniform`, `detail uniform`, `post <name>`, `scene.background` / `scene.environment`) — audit this, not just the total: a family that stops being billed shows as a missing row |
 | `render_target_bytes` / `render_targets` | w*h*bpp*(1+samples): the resolve plus the multisample buffer, per target |
 | `render_target_textures_skipped` | hits on a texture that IS a render target's own (the composer's `tDiffuse`, a material's `envMap`), refused so they are billed once |
 | `textures` / `texture_sources` / `textures_sharing_a_source` | texture objects reached / distinct GPU uploads / clones that share a source |
