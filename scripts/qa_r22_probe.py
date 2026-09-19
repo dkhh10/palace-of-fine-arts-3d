@@ -170,11 +170,38 @@ def _runs(mask_row_stack):
     return np.concatenate(out) if out else np.zeros(0)
 
 
+# Crown boxes on the DELIVERED close-orbit frames, picked on the gate10/gate7 pair at 100 % (the
+# QA-19 boxes are whole-crown structure boxes and contain no background, so a run measured in them
+# spans the box).  Every box here is a sunlit leaf mass over a dark or blue background; boxes whose
+# background is the gold stone wall were rejected (the mask cannot separate blade from wall there).
+BLADE_BOXES = [
+    ("h253 crown R", "h02530", (700, 634, 1080, 944)),
+    ("h253 crown L", "h02530", (0, 792, 422, 1478)),
+    ("h253 crown mid", "h02530", (420, 900, 900, 1350)),
+    ("h215 crown L", "h02150", (158, 1056, 607, 1478)),
+    ("h215 crown mid", "h02150", (200, 1150, 700, 1500)),
+    ("h215 crown lowL", "h02150", (0, 1267, 300, 1531)),
+]
+
+
+def _rgb_native(path):
+    """Read a frame at its own resolution.  `qa_r13_probe.rgb` resizes everything to 1920x1080,
+    which silently squashes the 1170x2532 portrait orbit frames -- QA 19's orbit statistics were
+    measured on that squashed raster; every number below is read natively instead."""
+    from PIL import Image
+    return np.asarray(Image.open(str(path)).convert("RGB"), dtype=np.float64)
+
+
 def _leaf_mask(crop):
-    """Opaque foliage inside a crown box: not sky.  Sky in these frames is blue-dominant and bright
-    (B > R by a clear margin); a leaf blade is gold / dark green / black."""
-    r, g, b = crop[..., 0].astype(np.int16), crop[..., 1].astype(np.int16), crop[..., 2].astype(np.int16)
-    return ~((b > r + 10) & ((crop @ P.LUMA) > 60))
+    """A sunlit leaf blade as drawn: gold (R well above B), saturated and not in deep shade.  This
+    is the thing alphaMode MASK leaves behind and the thing QA 19 called a '~40 px duotone blade'."""
+    r = crop[..., 0].astype(np.int16)
+    b = crop[..., 2].astype(np.int16)
+    lum = crop @ P.LUMA
+    mx = crop.max(2).astype(np.float32)
+    mn = crop.min(2).astype(np.float32)
+    sat = np.where(mx > 1e-6, (mx - mn) / np.maximum(mx, 1e-6), 0.0)
+    return (r > b + 30) & (sat > 0.35) & (lum > 50)
 
 
 def cmd_orbit():
@@ -189,15 +216,15 @@ def cmd_orbit():
           f"{ORB_PREV} -> {ORB} ==")
     print(f"{'crown box':16s} {'heading':8s} {'frame':8s} {'cover %':>8s} {'runs':>8s} "
           f"{'p50':>6s} {'p90':>6s} {'p99':>6s} {'max':>6s} {'mean lum':>9s}")
-    for name, tag7, box in P19.ORBIT_BOXES:
-        head = tag7.split("_h0")[-1]
+    p90s = []
+    for name, head, box in BLADE_BOXES:
         base = {}
-        for lbl, tg in (("gate7", tag7), ("gate10", f"{ORB}_h0{head}")):
+        for lbl, tg in (("gate7", f"{ORB_PREV}_{head}"), ("gate10", f"{ORB}_{head}")):
             p = WEB / f"{tg}.png"
             if not p.exists():
                 print(f"{name:16s} MISSING {p.name}")
                 continue
-            a = P.rgb(str(p))
+            a = _rgb_native(p)
             x0, y0, x1, y1 = box
             crop = a[y0:y1, x0:x1]
             m = _leaf_mask(crop)
@@ -212,9 +239,17 @@ def cmd_orbit():
             c7, c10 = base["gate7"][0], base["gate10"][0]
             p7 = float(np.percentile(base["gate7"][1], 90))
             p10 = float(np.percentile(base["gate10"][1], 90))
+            p90s.append((name, p7, p10, c10 / max(c7, 1e-6)))
             print(f"{'':16s} {'':8s} {'delta':8s} coverage {c10 / max(c7, 1e-6):.3f}x, "
                   f"run p90 {p7:.1f} -> {p10:.1f} px ({p10 - p7:+.1f})")
-    print("-- the structure statistics QA 19 recorded on the same boxes, for continuity:")
+    if p90s:
+        print(f"-- run p90 mean {np.mean([r[1] for r in p90s]):.1f} -> "
+              f"{np.mean([r[2] for r in p90s]):.1f} px; boxes at or under the 25 px target: "
+              f"{sum(1 for r in p90s if r[2] <= 25)}/{len(p90s)} (before "
+              f"{sum(1 for r in p90s if r[1] <= 25)}/{len(p90s)}); "
+              f"coverage min {min(r[3] for r in p90s):.3f}x max {max(r[3] for r in p90s):.3f}x "
+              f"(< 1.00x would be thinning)")
+    print("-- the structure statistics QA 19 recorded on its own (whole-crown) boxes, for continuity:")
     P19.cmd_orbit()
     for tag in (ORB,):
         d = json.loads((WEB / f"{tag}.json").read_text())
