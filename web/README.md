@@ -931,6 +931,29 @@ bake. `impostors.band` in the manifest drives it and `?impband=0` keeps the octa
   341 px frames a texel is ~2.2 screen px at station 2 instead of 4.5, so it is to be re-swept on the
   REAL atlas — the fixture's content is upscaled 2K and would fit a meaningless number.
 
+### What the baked sidecar says, and what the viewer does with it
+
+`export/out/gate3/band/band.json` (16 atlases, `levelCount: 1` — no mips, so the sampler stays on
+`LinearFilter` with `generateMipmaps: false` and never relies on LOD selection):
+
+* **`azimuth0_deg` is 180 and `azimuth0_blender_dir` is (1, 0, 0)** — the same heading written two
+  ways, 90° apart in the shader's own xy, because the degrees are CLAUDE.md's compass (clockwise
+  from north, north = −X) and the shader works in Blender xy. **The lookup therefore measures from
+  the VECTOR**, and the compass degrees are converted only when a manifest gives no vector. Reading
+  the number in the wrong frame would have rotated 127 trees and still rendered a plausible tree.
+  The sidecar's four cardinals are pinned in the test: (1,0,0) → column 0, −Y → 3, −X → 6, +Y → 9.
+* **Rows 0/20/40° counted from the BOTTOM** (`row_order`, the octahedral convention), elevation
+  measured to the BILLBOARD CENTRE — which is exactly what `vDirBlender` already is.
+* **The six stations see the far crowns from BELOW** (bake: median −2.3 to −3.5°, min −18°), so
+  every station clamps to row 0 and only the aerial reaches rows 1-2. Pinned at −0.5/−2.3/−3.5/−9/−18.
+* **`range` equals the octahedral range** per prototype (`range_same_as_octahedral: true`), so the
+  one `range` uniform decodes both atlases and nothing in the decode changes.
+* **Highlight clipping, from the sidecar itself.** The band was shipped at the octahedral range
+  while its own p99.9 is higher: ×1.05-1.34 on twelve prototypes, ×1.46-1.72 on two eucalypts and
+  **×3.06/×3.17 on the two willows**. Clipped body texels: median 0.49 %, 0.40-0.70 % on most,
+  **1.62 % on willow_s11 and willow_s37**. So flat highlights, if any show, will show on the willows
+  first — the 10-minute re-bake is the lever.
+
 ### The fixture, and what it proves
 
 `web/tools/p8_band_fixture.py` re-lays the baked 2K octahedral frames as the contract's 12x3 grid
