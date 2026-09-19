@@ -784,6 +784,88 @@ set's brightness against the atlas card, surfaced by C's S3 pass, is a new item 
 far-tree mesh lighting.
 
 
+## Phase 8b — the far-tree card under magnification (`?impcov=`), 2026-09-19
+
+The bake engineer's analysis (`docs/briefs/phase8b_bake_analysis.md`) and the lead's 8b decision
+(`docs/decisions.md`): at station 2 the crown that fills the frame is an 81 px inner atlas frame
+stretched over 736 screen px — **one 1K texel covers 9.1 screen px at 1080p** — and 93-100 % of the
+covered crown-top texels are `0 < a < 1`. `fwidth( a )` is the alpha change per SCREEN PIXEL, so
+under that magnification Phase 7's ramp is ~9x too narrow, saturates, and the alpha test is a binary
+mask again: a texel at `a = 0.45` paints 81 solid screen px. Silhouette crossings per 100 screen px
+(the atlas probe's own measure, `export/p8_atlas_probe.py viewer`): Cycles 7.76, the viewer 2.40.
+
+`?impcov=magLo,magHi,share[,ramp]`, **default on at `1,2,0.15,1`**, `?impcov=0` restores Phase 7.
+Two halves, neither touching the atlas, the colour or the interior term:
+
+* **the ramp, scaled by the magnification.** `fwidth( a ) * mag` is the alpha change across one ATLAS
+  TEXEL (mag = screen px per texel, measured per fragment from the derivatives of the frame uv), so
+  the cut resolves over exactly one texel's worth of screen pixels — the finest edge the data
+  honestly carries — and closes back onto Phase 7 at mag = 1. A flat canopy interior has
+  `fwidth ~ 0`, so this half can never dither a crown. On its own it is nearly a no-op: cam02
+  crossings 2.92 → 3.64, cam01 5.73 → 5.67.
+* **the coverage share.** The ramp recovers the EDGE, not the AMOUNT of sky; for that the straight
+  alpha is spent as the covered fraction of its texel's footprint, `mix( ramp, a, share )`. With a
+  multisampled target the fraction goes to the hardware coverage mask; with none (`?leafsoft=0`,
+  `?impedge=0|premul`, an un-multisampled canvas) a 4x4 Bayer cell spends it spatially — the ordered
+  dither is the FALLBACK, not the mechanism. Both paths report themselves in the boot note.
+
+### The share, swept (stations 1, 2, 5, `web/tools/p7.sh desk <tag> impcov=1,2,<share>`)
+
+Crossings per 100 screen px in the crown box `lum < 40` (`<60` in brackets), Cycles in the last row:
+
+| share | cam01 | cam02 | cam02 foliage % | cam01 box c/e | cam02 box c/e | cam02 box level |
+|---|---|---|---|---|---|---|
+| 0 (Phase 7) | 5.73 (7.95) | 2.92 (2.44) | 77.07 | 0.532 | 0.397 | 1.04x |
+| ramp only | 5.67 (7.79) | 3.64 (2.68) | 75.92 | 0.536 | 0.390 | 1.07x |
+| 0.10 | 5.80 (8.23) | 5.29 (3.55) | 75.06 | 0.542 | 0.392 | 1.09x |
+| **0.15** | **6.55 (9.31)** | **6.82 (4.24)** | **74.19** | **0.550** | **0.398** | **1.10x** |
+| 0.20 | 8.00 (10.77) | 8.46 (5.01) | 73.31 | 0.564 | 0.406 | 1.11x |
+| 0.25 | 8.96 (11.68) | 10.21 (5.95) | 72.35 | 0.572 | 0.412 | 1.13x |
+| 0.50 | 13.22 (15.53) | 13.94 (7.94) | 68.52 | 0.612 | 0.439 | 1.19x |
+| 1.00 | 15.01 (17.76) | 16.79 (9.80) | 61.62 | 0.678 | 0.487 | 1.30x |
+| **Cycles** | **11.73 (12.00)** | **7.76 (5.34)** | **72.26** | 0.852 | 0.364 | 1.00x |
+
+**0.15 adopted**: the largest share at which every QA-17 crown box's centre/edge holds against
+Phase 7 (cam02 0.398 against 0.397, cam05 0.908 against 0.912, cam01 0.550 against 0.532 — toward
+the reference's 0.852) and every whole-frame luma stays within 0.007x (cam01 0.927x → 0.929x and
+cam05 0.976x → 0.979x move TOWARD the reference; cam02 1.052x → 1.059x away). At the hero every box
+number improves — leaf % 25.2 → 22.9 against the reference's 22.2, p10 0.894x → 0.902x, level
+0.94x → 0.95x. Above 0.15 the station-2 crossings overshoot and the crown-BOX level walks off.
+
+### What this does not fix, measured and reported rather than fitted
+
+* **The structure is not in the 1K atlas.** Spending the whole alpha (share 1) reaches the crossings
+  target at the hero (11.88 against Cycles' 11.73 in the first, pre-dithered form) and overshoots at
+  station 2 (13.6-16.8 against 7.76), but the 100 % tiles show a HALFTONE: at 9 screen px per texel a
+  fragment's alpha is constant across a 9x9 block, so spending it — through a Bayer cell or through a
+  4-sample coverage mask — manufactures sub-texel structure the bake never had, at the wrong
+  frequency. **The tiles overrode the metric** (CLAUDE.md gate rule), which is why the shipped share
+  is 0.15 and not the value that hits the number. A faint dot texture remains visible at 200 % where
+  a crown crosses a bright wall; at 100 % it is subtle. `renders/web/960/p8ship_crown_tile.jpg`
+  (full-res `renders/web/tiles/p8ship/p8ship_crown_tile.png`) is the required tile sheet, Cycles |
+  Phase 7 | shipped, at the three QA-17 crown boxes.
+* **The other half of the 8b decision is the 2K atlas** (export, tier 1): it halves the texel to 4.5
+  screen px and carries 3.28 crossings of its own against the 1K frame's 2.40. The share is to be
+  re-swept on it — a finer texel makes the same share both more honest and less visible.
+* **A true alpha-blended impostor** would spend the same fraction with no dot texture at all, but it
+  means the transparent queue, sorting and no depth write for 127 cards: out of scope here, logged
+  for the lead.
+
+### Reproducing
+
+```
+web/tools/p7.sh desk p8base impcov=0        # the Phase 7 frame
+web/tools/p7.sh desk p8ship                 # the shipped default
+python3 export/p8_atlas_probe.py viewer p8base p8ship --stations 1,2,5
+PFA_VIEWER_WEB=renders/web python3 $PFA_MAIN_ROOT/scripts/qa_p7_probe.py crown p8base p8ship
+python3 web/tools/r3_crown_tile.py --tag p8ship --prev p8base --boxes crown
+```
+`?impcov=0` against the Phase 7 capture: MAE 0.0000-0.0006 / 255 and 0.00-0.007 % of pixels changed,
+which is the water's own frame-to-frame drift, not the switch. `node web/test/impostor_cov_test.mjs`
+covers the parser, the fallback's dependence on the real target (including `?impedge=premul`, where
+three writes no coverage mask on a multisampled target), and the shader's preprocessor branches.
+
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set
