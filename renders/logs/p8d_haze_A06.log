@@ -1,0 +1,10 @@
+00:00.411  blend            | Read blend: "/tmp/p8d_scratch.blend"
+01:50.806  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/renders/tmp/haze_A_cam06.png'
+[haze_check] delivery look as found: view_transform='AgX' look='AgX - High Contrast' exposure=-2.8331
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[haze_check] A (as merged) cam06 32 spp -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/renders/tmp/haze_A_cam06.png in 108.8s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 3796 exited rc=0 after 112 s (max 1200)
