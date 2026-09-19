@@ -2470,6 +2470,57 @@ blade). A deterministic golden-ratio v offset per card keeps neighbouring cards 
 boundary at the same height; the offset is v-only for the same reason (averaged over u offsets the coverage
 falls to the full-width mean, 0.35 against 0.56 on the cypress).
 
+**r2 review (`docs/reviews/phase8_export_r2_review.md`, findings 1, 2, 4, 5) — what changed after it.**
+
+* *Finding 1 — the table now comes from committed code.* `p8e_leaf_probe.py` grew an anisotropic mode:
+  `card_alpha(tex, u_win, ku, kv, w_px, h_px, v_off)` (the card's own wrapped UV window box-averaged to its
+  drawing-buffer samples = the mip the GPU picks), `run_width` beside `thickness`, `solve_cutoff`, and
+  `cards(factors=…, solve_for=…)`. `python3 export/p8e_leaf_probe.py` prints the table below.
+* *Finding 1 — the willow figure was wrong, and so was the precision of "0.96-1.00x".* The coverage ratio is
+  a MEAN over the per-card v offsets; per card it runs **0.81-1.19** (the offset chooses which 2.5 periods a
+  card shows), mean 0.96-1.02 over the seven species. The reviewer's willow 0.93x is one offset inside that
+  spread, not a contradiction. The crowns carry 1 000-3 000 cards each, so the mean is what the crown shows.
+* *Finding 4 — the "other roots are inside 0-1" claim is now a check.* `leaf_uv_range()` decodes
+  `TEXCOORD_0` of every `MAT_leaf_*` primitive out of the WRITTEN glTF and its .bin (UV accessors carry no
+  min/max), reports it in `gltf.leaf_uv_range`, and **asserts ⊂ [0,1] whenever the set is not tiled** — i.e.
+  on every walk-up export. Measured now: walk-up 0.0000-1.0000 over 674 164 verts, far -1.7498-1.7500.
+* *Finding 5 — an unknown species no longer raises.* `UV_TILE_V.get(sp, UV_TILE_V_DEFAULT=1.0)`: a species
+  with no entry is exported untiled and named in `gltf.uv_tiling.species_not_tiled`, so an 8d backdrop tree
+  reaching this set costs a report line, not a gate-1 traceback.
+
+**Finding 2 — the substantive one: kv shrinks THICKNESS, not WIDTH.** Re-measured with `run_width` (p90 of
+the horizontal run of the cut mask), per species at 40 m, in capture px:
+
+| species (card px) | shipped k=1 | kv 2.5 | iso k=2, cutoff unchanged | iso k=2 + cutoff (`iso_cut`) |
+|---|---|---|---|---|
+| broadleaf (40x47) | 35.7 / 19.7 / 1.00 | 36.2 / 11.2 / 0.98 | 16.9 / 10.3 / **0.76** | **18.4 / 8.4 / 0.93** |
+| cypress (27x71) | 26.7 / 18.7 / 1.00 | 26.7 / 14.0 / 1.00 | 18.6 / 12.5 / **0.68** | 23.9 / 14.0 / 0.99 |
+| cypress_column (24x64) | 23.9 / 16.9 / 1.00 | 23.9 / 14.0 / 0.99 | 18.3 / 11.7 / **0.68** | 21.1 / 12.2 / 1.00 |
+| eucalyptus (31x74) | 30.6 / 18.7 / 1.00 | 30.9 / 14.0 / 0.99 | 20.1 / 13.1 / **0.66** | 25.3 / 14.0 / 1.00 |
+| pine (22x64) | 22.5 / 17.8 / 1.00 | 22.5 / 12.2 / 1.00 | 18.3 / 13.1 / **0.66** | 22.5 / 12.2 / 1.03 |
+| redwood (21x52) | 21.1 / 15.9 / 1.00 | 21.1 / 11.2 / 0.96 | 15.4 / 10.3 / **0.62** | 19.7 / 10.3 / 0.97 |
+| willow (12x67) | 12.6 / 11.2 / 1.00 | 12.6 / 11.2 / 0.99 | 12.6 / 11.2 / 0.98 | 12.6 / 11.2 / 1.07 |
+
+(run width p90 / thickness p90 / coverage ratio. `iso_cut` cutoffs, one per MATERIAL because that is what a
+glTF material carries, solved so the mean ratio over the species sharing it is 1.00: `MAT_leaf_broadleaf`
+0.50 -> **0.27**, `MAT_leaf_cypress` 0.45 -> **0.21**, `MAT_leaf_eucalyptus` 0.50 -> **0.10**,
+`MAT_leaf_pine` 0.42 -> **0.12**.)
+
+Two things the table settles. **(a) A blade's width at 40 m IS its card's width** for every species but the
+broadleaf: the cards are 12-31 px wide and no mip can break a mask inside them, so cypress/pine/willow are
+already at or under QA 19's "~40 px" and nothing in UV space moves them. **(b) The species QA looked at is
+the broadleaf** (TREEFAR_000 / _001 at 36.7 / 38.5 m, cards 40 px), and only a widened u window narrows it —
+35.7 -> 18.4 px — at the cost of coverage, which the lowered cut buys back. At the mobile WALK-UP distance
+(2.5 m, near-native mip, where a lower cut only adds the painted leaves' antialiased rims) `iso_cut` measures
+0.82-1.03x of today's coverage, so it does not fatten the close-up cards either.
+
+**Recommendation: `iso_cut` (ku 2.0, kv 3.0, per-material cutoff).** It is the only variant that moves the
+metric QA named while holding the crown's leaf area, and it subsumes the kv win (thickness 8.4-14.0 px).
+`UV_TILE_MODE` selects it (`kv25` is what shipped, `off` disables; `PFA_UV_TILE_MODE=` overrides for an A/B).
+**The shipped `env_trees.glb` is still `kv25`** — the code is committed, the asset is not re-exported. The
+re-export is `trees_far.py` (30 s of Blender, measured) + `gltf_pack.sh --trees` (1 s, the KTX2 are cached)
++ the six-file copy to MAIN: **about one minute of Blender**, no GPU.
+
 **The sampler.** The tiled v leaves 0-1, and the shipped leaf samplers are `CLAMP_TO_EDGE` (Blender writes
 33071 for an image node set to EXTEND), which would smear the edge texel over every tile past the first. The
 script patches `wrapS/wrapT = REPEAT` into the written `env_trees.gltf` — not into the blend: `MAT_leaf_*` and

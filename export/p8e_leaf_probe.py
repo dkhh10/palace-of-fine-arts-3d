@@ -195,42 +195,133 @@ def box_alpha(path, size, u=UV_U):
     return np.array([[a[np.ix_(yy, xx)].mean() for xx in xs] for yy in ys], np.float32)
 
 
-def blob(tex, u_win, w_px, h_px):
-    """The blade the alpha cut leaves when the card is w_px x h_px on screen: box-downsample the
-    ALPHA of the sampled strip to exactly that many samples (the mip the GPU picks), cut it at the
-    material's alphaCutoff, and measure the surviving blob."""
-    from PIL import Image
-    a = np.asarray(Image.open(find(f"assets/textures/foliage/{tex}.png")), np.float32)[..., 3] / 255.0
-    w = a.shape[1]
-    a = a[:, int((0.5 - u_win / 2) * w):int((0.5 + u_win / 2) * w)]
-    ys = np.array_split(np.arange(a.shape[0]), max(2, int(round(h_px))))
-    xs = np.array_split(np.arange(a.shape[1]), max(2, int(round(w_px))))
-    ds = np.array([[a[np.ix_(y, x)].mean() for x in xs] for y in ys], np.float32)
-    mask = ds > CUTOFF[tex]
-    th = thickness(mask, max_iter=80)
-    return dict(p90=None if th is None else th["px_p90"], max=None if th is None else th["px_max"],
-                coverage=round(float(mask.mean()), 3))
+_ALPHA = {}
 
 
-def cards(dist_m=40.0, factors=(1, 1.5, 2, 2.5, 3)):
-    """The doc's table: what one card of each species measures on screen at `dist_m`, and what the
-    blade would measure with a UV scale k (the card then shows k x k tiles of the cluster)."""
+def leaf_alpha(tex):
+    if tex not in _ALPHA:
+        from PIL import Image
+        _ALPHA[tex] = np.asarray(Image.open(find(f"assets/textures/foliage/{tex}.png")),
+                                 np.float32)[..., 3] / 255.0
+    return _ALPHA[tex]
+
+
+def card_alpha(tex, u_win, ku, kv, w_px, h_px, v_off=0.0):
+    """The alpha a card of `w_px` x `h_px` screen samples actually reads, for a UV scale (ku, kv).
+
+    The card's UV window is the species' centred u strip, widened by ku, and kv periods of v, WRAPPED
+    (the shipped samplers are REPEAT, and the textures fade to alpha 0 at their rim, so a tile boundary
+    is seamless). Box-averaging the source alpha over each screen sample IS the mip the GPU picks -
+    that is the whole point: at 20-30 texels per pixel the painted leaves are gone and what is left is
+    what the alpha cut hardens into a blade.
+    """
+    a = leaf_alpha(tex)
+    h, w = a.shape
+    ncol, nrow = max(2, int(round(w_px))), max(2, int(round(h_px)))
+    u0, u1 = 0.5 - u_win * ku / 2, 0.5 + u_win * ku / 2
+    us = ((np.linspace(u0, u1, ncol + 1)[:-1]) % 1.0 * w).astype(int)
+    vs = ((np.linspace(v_off, v_off + kv, nrow + 1)[:-1]) % 1.0 * h).astype(int)
+    du = max(1, int((u1 - u0) * w / ncol))
+    dv = max(1, int(kv * h / nrow))
+    out = np.empty((nrow, ncol), np.float32)
+    for i, v in enumerate(vs):
+        rows = np.arange(v, v + dv) % h
+        for j, u in enumerate(us):
+            out[i, j] = a[np.ix_(rows, np.arange(u, u + du) % w)].mean()
+    return out
+
+
+def run_width(mask):
+    """p90 of the HORIZONTAL run length of the cut mask, in the same px as the grid.
+
+    The complement of `thickness`: QA 19 said the blades read "~40 px WIDE", and a v-only tiling
+    shortens a blade without narrowing it (review r2 finding 2). Thickness alone cannot see that.
+    """
+    runs = []
+    for row in mask:
+        n = 0
+        for v in row:
+            if v:
+                n += 1
+            elif n:
+                runs.append(n)
+                n = 0
+        if n:
+            runs.append(n)
+    if not runs:
+        return None
+    return dict(px_p50=float(np.percentile(runs, 50)), px_p90=float(np.percentile(runs, 90)),
+                px_max=float(max(runs)), runs=len(runs))
+
+
+def blade(tex, u_win, ku, kv, w_px, h_px, cutoff=None, v_offs=(0.0, 0.37, 0.71)):
+    """Coverage, thickness and run width of the cut mask, averaged over `v_offs` (the per-card offset
+    the export applies). `cutoff` overrides the material's own alphaCutoff (the k+cutoff variant)."""
+    cut = CUTOFF[tex] if cutoff is None else cutoff
+    cov, th90, thmax, rw90, rwmax = [], [], [], [], []
+    for vo in v_offs:
+        m = card_alpha(tex, u_win, ku, kv, w_px, h_px, v_off=vo) > cut
+        t, r = thickness(m, max_iter=80), run_width(m)
+        cov.append(float(m.mean()))
+        th90.append(t["px_p90"] if t else 0.0)
+        thmax.append(t["px_max"] if t else 0.0)
+        rw90.append(r["px_p90"] if r else 0.0)
+        rwmax.append(r["px_max"] if r else 0.0)
+    f = lambda xs: round(float(np.mean(xs)) / DPR, 1)      # noqa: E731  grid px -> capture px
+    return dict(cutoff=round(cut, 3), coverage=round(float(np.mean(cov)), 3),
+                thickness_p90_px=f(th90), thickness_max_px=f(thmax),
+                run_width_p90_px=f(rw90), run_width_max_px=f(rwmax))
+
+
+def solve_cutoff(tex, u_win, ku, kv, w_px, h_px, target_cov, lo=0.02, hi=0.99, iters=18):
+    """The alphaCutoff at which (ku, kv) reproduces `target_cov` - the shipped crown's leaf area.
+    Coverage falls monotonically with the cut, so a bisection is exact enough at 3 decimals."""
+    for _ in range(iters):
+        mid = 0.5 * (lo + hi)
+        c = blade(tex, u_win, ku, kv, w_px, h_px, cutoff=mid, v_offs=(0.0, 0.37))["coverage"]
+        if c > target_cov:
+            lo = mid
+        else:
+            hi = mid
+    return round(0.5 * (lo + hi), 3)
+
+
+def card_px(dist_m=40.0):
+    """(species -> (w_px, h_px) of ONE card in the DRAWING BUFFER at `dist_m`, u window, texture)."""
     place = json.loads(find("export/out/gate3/trees_far/placements.json").read_text())["placements"]
     sc = {}
     for p in place:
         sp = p["prototype"].split("ENV_tree_")[1].rsplit("_s", 1)[0]
         sc.setdefault(sp, []).append(p["scale"])
     ppm = px_per_m(dist_m)
-    rows = []
+    out = {}
     for sp, (w, h, uw, tex) in CARD.items():
         s = float(np.median(sc[sp]))
-        wm, hm = w * s, h * s
-        r = dict(species=sp, tex=tex, scale_median=round(s, 3), card_m=[round(wm, 3), round(hm, 3)],
-                 card_px=[round(wm * ppm, 1), round(hm * ppm, 1)], dist_m=dist_m, k={})
-        for k in factors:
-            b = blob(tex, uw, wm * ppm * DPR / k, hm * ppm * DPR / k)
-            r["k"][str(k)] = dict(p90_px=round(b["p90"] / DPR, 1), max_px=round(b["max"] / DPR, 1),
-                                  coverage=b["coverage"])
+        out[sp] = dict(scale_median=round(s, 3), card_m=[round(w * s, 3), round(h * s, 3)],
+                       card_px=[round(w * s * ppm, 1), round(h * s * ppm, 1)],
+                       buf_px=[w * s * ppm * DPR, h * s * ppm * DPR], u_win=uw, tex=tex)
+    return out
+
+
+def cards(dist_m=40.0, factors=((1, 1), (1, 1.5), (1, 2.5), (1, 3), (2, 2)), solve_for=((2, 2),)):
+    """The README's table, from code: per species, what one card measures on screen at `dist_m` and
+    what the blade measures under each (ku, kv). `solve_for` adds, for those factors, the variant whose
+    alphaCutoff is lowered until the coverage matches the shipped k = 1 one (review r2 finding 2)."""
+    rows = []
+    for sp, g in card_px(dist_m).items():
+        wpx, hpx = g["buf_px"]
+        base = blade(g["tex"], g["u_win"], 1, 1, wpx, hpx)
+        r = dict(species=sp, tex=g["tex"], scale_median=g["scale_median"], card_m=g["card_m"],
+                 card_px=g["card_px"], dist_m=dist_m, u_win=g["u_win"], k={})
+        for ku, kv in factors:
+            b = blade(g["tex"], g["u_win"], ku, kv, wpx, hpx)
+            b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3)
+            r["k"][f"{ku},{kv}"] = b
+        for ku, kv in solve_for:
+            cut = solve_cutoff(g["tex"], g["u_win"], ku, kv, wpx, hpx, base["coverage"])
+            b = blade(g["tex"], g["u_win"], ku, kv, wpx, hpx, cutoff=cut)
+            b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3)
+            r["k"][f"{ku},{kv}+cut"] = b
         rows.append(r)
     return rows
 
@@ -263,13 +354,16 @@ def main():
         print(f"{r['heading']:>5} {r['obj']:>12} {r['species']:>10} {r['dist_m']:>6.1f} "
               f"{r['px_per_m']:>7.1f} {r['card_m']:>7.3f} {r['card_px']:>8.1f} {r['crown_px']:>9.1f}")
     card_rows = cards()
-    print(f"\n{'species':16s}{'card m WxH':>13}{'card px@40m':>12} | "
-          + " | ".join(f"k={k}: p90/max/cov" for k in card_rows[0]["k"]))
+    print("\nPer species at 40 m: run width p90 / thickness p90 / coverage ratio (cutoff), "
+          "in capture px. ku,kv = the UV scale; +cut = the cutoff solved to hold the coverage.")
+    print("%-16s%13s%12s | " % ("species", "card m WxH", "card px")
+          + " | ".join("%-22s" % f"ku,kv={k}" for k in card_rows[0]["k"]))
     for r in card_rows:
         wm, hm = r["card_m"]
         wp, hp = r["card_px"]
         print("%-16s%13s%12s | " % (r["species"], "%.2fx%.2f" % (wm, hm), "%.0fx%.0f" % (wp, hp))
-              + " | ".join("%5.0f/%4.0f/%.2f" % (v["p90_px"], v["max_px"], v["coverage"])
+              + " | ".join("%5.1f /%5.1f /%.2f (%.2f)" % (v["run_width_p90_px"], v["thickness_p90_px"],
+                                                          v["coverage_ratio"], v["cutoff"])
                            for v in r["k"].values()))
     boxes = json.loads(Path(sys.argv[1]).read_text()) if len(sys.argv) > 1 else BOXES
     pix = pixels(boxes) if boxes else []
