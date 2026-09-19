@@ -394,7 +394,10 @@ export function reduceReflectionSet( scene, water, camera, { orn = true, backdro
 		// compromise the 6b plan asks for ("water without the planar Reflector") without giving the
 		// lagoon a black surface or needing a second water shader.
 		const isOrn = ! all && orn && /^WEB_glb_orn(_|$)/.test( rootOf( o ) );
-		const isBackdrop = ! all && backdrop && /MAT_EXP_ENVBD__MAT_backdrop_/.test( name );
+		// Phase 8d renamed the far-ground slot-0 material MAT_lawn -> MAT_backdrop_lawn; the far ground stays IN the
+		// reflection as it was before the rename (else a sky strip shows at the reflected horizon). Only the
+		// vertical backdrop masses, roofs, glazing and the backdrop forest leave it, exactly the pre-8d set.
+		const isBackdrop = ! all && backdrop && /MAT_EXP_ENVBD__MAT_backdrop_(?!lawn)/.test( name );
 		if ( all && o !== water ) { o.layers.set( REFLECT_EXCLUDE_LAYER ); out.excluded ++; return; }
 		if ( ! isOrn && ! isBackdrop ) { out.kept ++; return; }
 		o.layers.set( REFLECT_EXCLUDE_LAYER );        // off layer 0, so the reflection camera misses it
