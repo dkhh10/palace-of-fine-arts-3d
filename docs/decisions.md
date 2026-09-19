@@ -889,3 +889,52 @@ coverage, dense LOD2 shrubs, detail projection dominant (8c CLOSED by QA 20). Pr
 (leaf share moved at 1/8 boxes; re-scope), the env_shrubs LOD1 walk-in set drawn at every station (+1.12 M tris; viewer/export bug), resident() omitting the impostor
 atlases, the 100 % dot-grid check on the band, willow highlight clipping, 8d backdrop, 8e mobile card scale, the closing comparison sheet with a new 4K Cycles hero.
 Plan: docs/briefs/phase8_next_session.md. Every merge this session was reviewed except two documented lead-verified deltas (export wire pass; export band block).
+
+## 2026-09-19 · QA 21 (f264b69) on deploy 9: 8b CLOSED — the band atlas is the shipped far-tree look
+Crossings per 100 px cam01/02/05: gate8 7.99 / 6.97 / 8.53 -> gate9 11.97 / 7.35 / 11.67 (Cycles 11.73 / 7.76 / 15.89); hero crown hard-edge 4.73 % (ref 4.94),
+leaf share 23.4 % (ref 22.2); the station-2 crown tile at 100 % has limbs, needle clumps and sky between the masses (the contract's acceptance). The QA-20 ordered dot
+grid is gone from every crown body at share 0.10 (lattice index above control at 3/10 boxes, was 8/10); a new residual: a 1-2 px period-2 dotted rim on far-crown
+silhouettes at stations 2 and 5 at 100 %, share-independent (the viewer's sweep shows 1 and 5 byte-identical across share 0-0.40) — owner VIEWER, not blocking.
+Willows: no flat highlight (0 px over 240 in six frames), so the `PFA_BAND_RANGE=band` re-bake is not needed. Scores 3.89 / 3.31 / 2.75 / 2.88 / 3.12 / 2.95
+(+0.11 / +0.06 / 0 / 0 / +0.06 / +0.06); mobile byte-identical to gate8m. Payload 46 877 329 B desktop / 46 807 348 B mobile before the first frame (the export's
+49.4 / 47.6 MB are the planned tier 0). Perf 32.5 / 33.5 / 38.0 / 24.8 / 30.3 / 36.1 ms, faster than gate8 at every station; QA-20's station-3 flag clears. Resident
+sidecar 1 862.9 MB; corrected estimate ~1 978 MB until the counter fix (viewer fix round). Lead viewed the sheet: the station-2 crown is still softer than Cycles
+(a residual of the 341 px frame, accepted by decision 2: "if the band does not put structure in the tile the crown stays a residual" — it did, so 8b closes).
+
+## 2026-09-19 · 8a decision 2 (re-scope): the shrub gap is the cards' flat warm shading — viewer-only directional relight; the leaf-green share becomes a report figure
+The analysis (docs/briefs/phase8a_rescope_analysis.md, 9707e98; evidence renders/qa_comparisons/p8a_rescope_boxes_viewer_vs_cycles.jpg, viewed by the lead): at all
+eight QA-17 shrub boxes the gap is colour, not coverage (the card footprint is already 1.04-3.6x the reference's leaf share) and not species (same mix, all LOD2).
+The viewer strips the cards' sun diffuse and adds one warm per-placement irradiance with no cosine (G/R 0.774): an albedo of hue 100° renders at hue 54 under that flat
+light and at 130 under the same bake's darkest decile — the reference's dark green bushes with gold rims are modelled light and shade; ours are one sun-gold value.
+Decision: option B — split the flat card irradiance into a sun term (N·L on the card normal + clump shadow, sun vector and colour from the manifest) and a sky term,
+`?cardsun=` with 0 restoring today; web/src/foliage.js only; 0 GPU, 0 MB, no bake, no master rebuild, no export, no frozen MAT_ change (option E rejected: the reference
+IS the Cycles render of those materials, so a re-tint moves target and measurement together). Predicted leaf/ref 1.32 / 1.89 / 0.64 / 0.75 / 0.96 / 1.92 / 0.71 / 1.60
+(today 0.86 / 0.82 / 0.64 / 0.85 / 0.31 / 1.13 / 0.54 / 1.76); constraints held: level (QA 17's closed item) and the hard-edge share (the crude simulation triples it; the
+per-fragment N·L must be measured). Riders accepted: the env_shrubs walk-in bug is fixed first (viewer fix round, in flight); 8a closes on the tiles at 1/3/5 with the
+leaf-green share reported, not gated (1 % of red moves it 2-9 % relative). Sequenced after the viewer fix round (same Chrome, same file).
+
+## 2026-09-19 · 8d decision: R1 (low-frequency backdrop materials) + R2 (a tree belt on the hall's east face, ≤ 6 986 tris) go; R3 (tiled facade atlas, new UV0) deferred
+The analysis (docs/briefs/phase8d_analysis.md, phase8d-env 7553f31): the backdrop is 1.1-4.7 % of the hero frame (the N-colonnade hall wall 21 204 px, of which the 102
+glazed bays are 8 120 px = QA's "dark rectangles") and 35-40 % of cam06; backdrop_forest is visible at cam06 only. Root cause measured: the Gate 2 backdrop bake gives
+0.79 texels/m on backdrop_building while the hall wall is 146-154 m away = 7 px/m on screen, so every texel spans 9 px and any detail averages to a flat field; a 2048
+bake buys 1.58 texels/m and cannot fix it. Ref 169 at 100 % shows no lit wall behind the north colonnade at all: a dark tree belt and deep shade in every intercolumniation.
+Pin window (binding): the backdrop groups sit inside env_so_far, so a backdrop delta of -5 900 … +6 986 tris keeps near 20 / far 127 byte-identical at CLASS_BUDGET
+902 000. Decision: R1 — MAT_backdrop_building/_skylight/_roof/_forest/_lawn carry only low-frequency signal (bakeable distance haze toward the sky, per-building albedo
+spread, a shaded desaturated hall face with the glazed-bay contrast dropped; targets cam06 top-row luma 0.435 -> ~0.80, sat 0.387 -> ~0.10, hero wall sat 0.654 -> ~0.43);
+R2 — a tree belt on the hall's east face capped at 6 986 tris (~120 crowns) so the pin holds; R3 deferred; rejected: viewer-side fog (Cycles would not see it), Sapling
+LOD2 backdrop trees (+1 M tris), band-atlas billboards for the backdrop (three-team lockstep, forces the budget constant). These change frozen MAT_backdrop_* materials in
+assets/materials.blend and assets/environment.blend: covered by the user's Phase 8 approval of item 8d ("backdrop city blocks and trees"), reported to the user before the
+build starts. Export scope: Gate 1 re-run to prove the pin, Gate 2 re-bake of the changed backdrop groups only, manifests, tiers, verify; no Gate 3. GPU ≤ 25 min previews
++ 8-15 min bake. The build starts when Blender is free (after the viewer fix round releases Chrome).
+
+## 2026-09-19 · 8e decision: the mobile leaf blades are a mip artefact — export-only UV scale k = 2.0 (willow 1.5) on the far-tree leaf cards; no material touched
+The analysis (docs/briefs/phase8e_analysis.md, phase8e-export ff852f8; probe export/p8e_leaf_probe.py): at the mobile orbit (86.9 px/m at 40 m) a far-tree card is one
+quad carrying a centred strip of the 1024 px cluster texture; the painted leaves are 4-10 px and plausible, but at 20-30 texels/px the mip merges them and alphaMode MASK
+re-hardens them into blades of p90 17-22 px / max 22-28 px — QA 19's "~40 px duotone blades", reproduced from texture and geometry alone (plausible clump 9-13 px).
+The scale is Sapling's leaf scale x trees_far.thin_and_grow CARD_SCALE_MAX 1.6 x placement scale; scripts/env_trees.py _lod2_cards is not the source (trees_far.py
+rebuilds from _LOD1). Decision: a UV scale k about each card's own UV centre on leaf faces only, in export/trees_far.py between thin_and_grow and join, gated to the
+'far' set, with a deterministic per-card offset; alpha coverage is invariant (0.45-0.61 at every k), no vertex moves (vertex_ao.npz and the instance rows hold);
+k = 2.0 for broadleaf, cypress, cypress_column, eucalyptus, pine, redwood, 1.5 for willow (lands p90 <= 11 px / max <= 14 px; 2.5 is the next step). Dependencies: the eight
+leaf samplers in env_trees.gltf go CLAMP_TO_EDGE -> REPEAT by a JSON patch on the written gltf (no MAT_leaf_* or albedo texture touched); the viewer's runtime translucency
+map follows the albedo sampler's wrap mode instead of a hard-coded ClampToEdge (one line, given to the viewer fix round as item (d)). env_trees.glb is tier 2 / glb_lazy
+and only the mobile tier draws it (desktop draws env_trees_lod1.glb); tier 0 must stay byte-identical. Part 1 runs when Blender is free.

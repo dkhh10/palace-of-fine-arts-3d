@@ -1,6 +1,6 @@
 # Token usage summary (from Claude Code transcripts)
 
-Generated 2026-09-19T13:09:46Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (14 main sessions, 201 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
+Generated 2026-09-19T16:08:10Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (15 main sessions, 201 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
 
 Also in this folder: `daily.json` and `sessions_all.json` are raw `ccusage` exports (account-wide, every project, its own price table; `sessions_all.json` has no project field, which is why this script exists). `make_timeline.py` renders `docs/timeline.html` from `sessions.json`.
 
@@ -20,11 +20,11 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 | model | requests | input k | output k | thinking k (of output) | cache write 1h k | cache write 5m k | cache read k | cost USD |
 |---|---|---|---|---|---|---|---|---|
 | claude-opus-5 | 16088 | 32 | 10,768 | 4,647 | 0 | 122,293 | 3,111,359 | 2,589.37 |
-| claude-fable-5-1 | 2500 | 60 | 2,423 | 795 | 11,326 | 11,613 | 604,446 | 644.57 |
+| claude-fable-5-1 | 2520 | 61 | 2,435 | 798 | 11,963 | 11,613 | 611,901 | 659.74 |
 | claude-sonnet-5 | 100 | 0 | 54 | 28 | 0 | 492 | 7,376 | 3.24 |
 | <synthetic> | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0.00 |
 
-**Grand total nominal cost: $3,237.18**
+**Grand total nominal cost: $3,252.35**
 
 ## Sessions
 
@@ -43,7 +43,8 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 | 11 | 87d95e57 | 2026-09-16T11:51 | 2026-09-16T15:45 | 3.89 | 181 | 12 | 217.93 | opus-5 199, fable-5-1 19 |
 | 12 | 5b1d192d | 2026-09-16T20:31 | 2026-09-17T06:56 | 10.41 | 167 | 11 | 179.50 | opus-5 154, fable-5-1 25 |
 | 13 | 4133edbe | 2026-09-17T06:56 | 2026-09-17T11:12 | 4.27 | 149 | 18 | 259.54 | opus-5 239, fable-5-1 18, sonnet-5 2 |
-| 14 | 3ada03f9 | 2026-09-17T21:16 | 2026-09-19T13:08 | 39.87 | 318 | 21 | 449.05 | opus-5 377, fable-5-1 71 |
+| 14 | 3ada03f9 | 2026-09-17T21:16 | 2026-09-19T16:07 | 42.84 | 330 | 21 | 462.95 | opus-5 377, fable-5-1 85 |
+| 15 | a87300f7 | 2026-09-19T16:07 | 2026-09-19T16:08 | 0.01 | 7 | 0 | 1.27 | fable-5-1 1 |
 
 ## Cross-check: Claude Code internal cost-state per session
 
@@ -64,7 +65,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 11 87d95e57 | 293.52 | 5.3 | 1.14 | 4532/434 | 217.93 |
 | 12 5b1d192d | 258.74 | 6.39 | 3.02 | 5425/341 | 179.50 |
 | 13 4133edbe | 338.31 | 6.03 | 0.99 | 4989/669 | 259.54 |
-| total | 3,489.85 | | | | 3,237.18 |
+| total | 3,489.85 | | | | 3,252.35 |
 
 ## Daily nominal cost (this project only, UTC)
 
@@ -79,7 +80,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 2026-09-16 | 453.91 | 54.95 | 398.97 | -0.00 |
 | 2026-09-17 | 325.17 | 37.70 | 285.13 | 2.34 |
 | 2026-09-18 | 203.96 | 28.91 | 175.05 | -0.00 |
-| 2026-09-19 | 241.14 | 38.79 | 202.34 | 0.00 |
+| 2026-09-19 | 256.31 | 53.96 | 202.34 | 0.00 |
 
 ## Subagents per session (by model, count and cost)
 
@@ -97,6 +98,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 - Session 12 (5b1d192d): 11 x opus-5 ($154). Types: {'general-purpose': 11}
 - Session 13 (4133edbe): 16 x opus-5 ($239); 2 x sonnet-5 ($2). Types: {'general-purpose': 18}
 - Session 14 (3ada03f9): 20 x opus-5 ($377); 1 x sonnet-5 ($0). Types: {'general-purpose': 21}
+- Session 15 (a87300f7): . Types: {}
 
 ## Agents dispatched by role (subagent transcripts, classified from their spawn descriptions)
 
@@ -116,9 +118,10 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 12 | - | - | - | - | - | - | 1 ($7) | 3 ($6) | - | 7 ($141) | 11 ($154) |
 | 13 | 1 ($1) | - | - | - | - | - | 2 ($19) | 3 ($7) | - | 12 ($215) | 18 ($241) |
 | 14 | - | - | - | - | 1 ($10) | - | 4 ($37) | 7 ($20) | - | 9 ($311) | 21 ($378) |
+| 15 | - | - | - | - | - | - | - | - | - | - | 0 ($0) |
 | all | 5 ($25) | 12 ($126) | 9 ($126) | 12 ($246) | 13 ($309) | 16 ($418) | 26 ($214) | 65 ($143) | 2 ($6) | 41 ($1190) | 201 ($2804) |
 
-Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $25, session 13 $18, session 14 $71.
+Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $25, session 13 $18, session 14 $85, session 15 $1.
 
 ## Subagent list (cost >= $5)
 
