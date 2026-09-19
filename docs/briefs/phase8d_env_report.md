@@ -95,7 +95,26 @@ darker than ref 169's belt; its variance moved the right way, and the rest is li
    ground — no floating crowns, and no trunks to pay for: the pin leaves 86 triangles) and by its **top** (11–16 m
    above local ground, hard-capped at `HALL_EAVE + 0.2 = 15.7` m in world z, i.e. 4.3 m below the 20.0 m roof crest
    and 1.0 m below the 16.7 m parapet, so undulating terrain cannot push a crown over the roofline). Triangle count
-   and the cap logic are untouched.
+   and the cap logic are untouched: the rebuild lands on **89 crowns / 6 900 tris** again, ENV LOD0/1/2 and object
+   count identical to the pre-fix build. Before/after at 960 px (floating vs grounded, plus two 100 % crops):
+   `renders/qa_comparisons/phase8d_belt_grounded_960.jpg` — the gaps under the crowns at the hero and through the
+   cam05 arch are closed, and the hall roofline now shows above the belt as it does in ref 169.
+
+**Two load-state traps found while making finding 1's check trustworthy** (both would have produced false
+positives, and did on the first two runs): `img.size` is `(0, 0)` until Blender loads an image, so a freshly BUILT
+file and a file just opened from disk disagree on it; and `//`-relative texture paths resolve against whichever
+blend is open, so the git copy must be written *beside* the new one (`assets/_pre8d_materials.blend`) or every
+textured material reports as changed. `scripts/mat_hash_diff.py` now hashes packed data or the file on disk
+instead of pixels, ignores `img.size`, degrades to the path string when a texture is missing, and carries a
+`--no-images` switch to isolate a texture change from a node change. Self-test (same file twice) is clean:
+42/42 materials and 8/8 node groups unchanged. Final result, full strength:
+
+```
+materials  added ['MAT_backdrop_lawn']  removed []  unchanged 34
+           changed ['MAT_backdrop_asphalt', 'MAT_backdrop_building', 'MAT_backdrop_forest', 'MAT_backdrop_hill',
+                    'MAT_backdrop_roof', 'MAT_backdrop_roof_tile', 'MAT_backdrop_skylight']
+node_groups added [] removed [] changed [] unchanged 8
+```
 5. **Finding 5 (rename fan-out)** goes to the export engineer and the viewer, as the lead directed; **finding 4 of
    the review's own numbering (the Cycles far-field GI check of `HAZE_TINT`)** goes on the delivery checklist for the
    4K hero. Neither is actioned here.

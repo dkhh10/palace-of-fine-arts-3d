@@ -1,7 +1,8 @@
 """Material blast-radius check: hash every material AND every shared node group in two .blend files and diff.
 
     blender --background --python scripts/mat_hash_diff.py -- <old.blend> <new.blend> [--json <out.json>]
-    # the "old" file usually comes out of git:  git show <ref>:assets/materials.blend > /tmp/old_materials.blend
+    # the "old" file comes out of git, and must be written BESIDE the new one (its `//textures/...` paths are
+    # relative to whatever blend is open):  git show <ref>:assets/materials.blend > assets/_old_materials.blend
 
 Written for Phase 8d, where the brief allows exactly one block of `scripts/mat_build.py` (the MAT_backdrop_*
 materials) to change and every other MAT_ must be provably untouched.  Review r2 finding 1: an earlier throwaway
@@ -20,6 +21,8 @@ line as well as on each consumer.  Exit code is 0 always: this is a report, the 
 """
 import bpy, sys, json, hashlib
 
+NO_IMAGES = False          # --no-images: ignore image pixel content (isolates a texture change from a node change)
+
 
 def _socket_values(node):
     out = []
@@ -35,16 +38,44 @@ def _socket_values(node):
 
 
 def _image_sig(img):
+    """Content signature that does NOT depend on whether Blender has lazily loaded the image yet.
+
+    The first version hashed `img.pixels`, which is only populated once the image is loaded: a freshly BUILT file
+    has every image loaded, a file just opened from disk does not, so 26 materials came back "changed" when the
+    only difference was load state.  Packed data and the file on disk are both load-independent, so those come
+    first and the pixel buffer is the fallback for generated images only.
+    """
     if img is None:
         return "none"
-    parts = [img.name, tuple(img.size), img.source, len(img.packed_files or ())]
+    if NO_IMAGES:
+        return img.name
+    # NB: img.size is (0, 0) until Blender loads the image, so it is load state, not content, and must not be
+    # hashed -- that alone reported 26 false "changed" materials when the only difference was that a freshly BUILT
+    # file has its images loaded and a file just opened from disk does not.
+    parts = [img.name, img.source, img.colorspace_settings.name, img.alpha_mode]
     try:
-        if img.has_data and img.size[0] * img.size[1] <= 4096 * 4096:
+        pf = img.packed_file
+        if pf is not None and pf.data:
+            parts.append("packed:" + hashlib.sha1(pf.data).hexdigest()[:16])
+        elif img.filepath:
+            # `//` is relative to the blend that is open, so the two files being compared must sit in the same
+            # directory or every relative texture resolves somewhere different.  If the file is not there we fall
+            # back to the path string (equal on both sides) rather than to an error tag, which would otherwise
+            # report every textured material as changed for a reason that has nothing to do with the material.
+            fp = bpy.path.abspath(img.filepath)
+            try:
+                with open(fp, "rb") as fh:
+                    parts.append("file:" + hashlib.sha1(fh.read()).hexdigest()[:16])
+            except OSError:
+                parts.append("nofile:" + img.filepath.replace("//", ""))
+        elif img.has_data:
             buf = bytearray(len(img.pixels) * 4)
             img.pixels.foreach_get(memoryview(buf).cast("f"))
-            parts.append(hashlib.sha1(bytes(buf)).hexdigest()[:16])
+            parts.append("pix:" + hashlib.sha1(bytes(buf)).hexdigest()[:16])
+        else:
+            parts.append("nodata")
     except Exception as e:
-        parts.append(f"nopix:{e.__class__.__name__}")
+        parts.append(f"err:{e.__class__.__name__}")
     return repr(tuple(parts))
 
 
@@ -107,8 +138,12 @@ def diff(old, new, what):
 
 
 def main():
+    global NO_IMAGES
     argv = sys.argv[sys.argv.index("--") + 1:]
+    NO_IMAGES = "--no-images" in argv
     a, b = argv[0], argv[1]
+    if NO_IMAGES:
+        print("[mat_hash_diff] --no-images: image pixel content ignored")
     print(f"[mat_hash_diff] old = {a}")
     print(f"[mat_hash_diff] new = {b}")
     om, og = load(a)

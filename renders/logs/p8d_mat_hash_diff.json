@@ -1,0 +1,26 @@
+{
+ "old": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/_pre8d_materials.blend",
+ "new": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend",
+ "materials": {
+  "added": [
+   "MAT_backdrop_lawn"
+  ],
+  "removed": [],
+  "changed": [
+   "MAT_backdrop_asphalt",
+   "MAT_backdrop_building",
+   "MAT_backdrop_forest",
+   "MAT_backdrop_hill",
+   "MAT_backdrop_roof",
+   "MAT_backdrop_roof_tile",
+   "MAT_backdrop_skylight"
+  ],
+  "unchanged": 34
+ },
+ "node_groups": {
+  "added": [],
+  "removed": [],
+  "changed": [],
+  "unchanged": 8
+ }
+}
