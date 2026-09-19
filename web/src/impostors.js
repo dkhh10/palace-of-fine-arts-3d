@@ -542,6 +542,51 @@ export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 }
 
 /**
+ * The band atlas's own lookup, in JS — the REFERENCE the fragment shader mirrors line for line.
+ * It exists so the selection can be tested without a GPU (`web/test/impostor_band_test.mjs` pins
+ * both this and the GLSL that mirrors it), and so the convention is written down once:
+ *
+ *   direction   `dir` is tree -> camera in BLENDER Z-up, exactly what the vertex shader hands over.
+ *   azimuth     `atan2( x, y )`: 0 along +Y, growing toward +X, which is CLOCKWISE SEEN FROM ABOVE
+ *               (looking down -z, x runs right and y up). Column 0 sits at `azimuth0Deg`.
+ *   columns     `columns` of them at 360 / columns degrees; the last blends back into the first.
+ *   elevation   `asin( z )`, matched to the NEAREST of `elevationsDeg` — no blend between rows.
+ *
+ * @returns {{ col0:number, col1:number, f:number, row:number, azDeg:number, elDeg:number }}
+ */
+export function bandSelect( dir, { columns = 12, rows = 3, azimuth0Deg = 0, elevationsDeg = [ 0, 20, 40 ] } = {} ) {
+	const [ x, y, z ] = dir;
+	const len = Math.hypot( x, y, z ) || 1;
+	const dz = z / len;
+	const azDeg = Math.atan2( x / len, y / len ) * 180 / Math.PI;
+	const elDeg = Math.asin( Math.min( Math.max( dz, - 1 ), 1 ) ) * 180 / Math.PI;
+	const step = 360 / columns;
+	let cf = ( azDeg - azimuth0Deg ) / step;
+	cf -= Math.floor( cf / columns ) * columns;            // wrap into [0, columns), negatives too
+	const col0 = Math.floor( cf ) % columns;
+	const f = cf - Math.floor( cf );
+	const col1 = ( col0 + 1 ) % columns;
+	let row = 0, best = Infinity;
+	for ( let r = 0; r < rows; r ++ ) {
+		const d = Math.abs( elDeg - ( elevationsDeg[ r ] ?? 0 ) );
+		if ( d < best ) { best = d; row = r; }
+	}
+	return { col0, col1, f, row, azDeg, elDeg };
+}
+
+/**
+ * The band frame's uv for a cell and a point inside it — the same expression `frameUv` uses in the
+ * shader, with the atlas as ( width, height ) and `rowOrigin` saying which end row 0 is.
+ */
+export function bandFrameUv( col, row, f, geom ) {
+	const { framePx, gutterPx, innerPx, atlasW, atlasH, rowOrigin = 'bottom' } = geom;
+	const px = col * framePx + gutterPx + Math.min( Math.max( f[ 0 ], 0 ), 1 ) * innerPx;
+	const py = row * framePx + gutterPx + Math.min( Math.max( f[ 1 ], 0 ), 1 ) * innerPx;
+	return [ ( px + 0.5 ) / atlasW,
+		rowOrigin === 'top' ? ( py + 0.5 ) / atlasH : 1 - ( py + 0.5 ) / atlasH ];
+}
+
+/**
  * Phase 8b item 3 — the BAND ATLAS, `?impband=`.  `"0"` / `"off"` keeps the octahedral path (the 2K
  * variant included) byte for byte; anything else is the default, which is ON wherever the manifest
  * carries `impostors.band` for that prototype.  The contract is docs/briefs/phase8b_band_atlas.md:
