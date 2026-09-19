@@ -2429,3 +2429,96 @@ export/sync_main.sh
 
 `manifest_v2.py` is the step that is easy to skip and expensive to skip: without it `glb.per_class` keeps
 the previous pack's numbers and Gate 5's triangle check fails against them.
+
+## Phase 8e — the mobile far-tree leaf-card scale (2026-09-19, export engineer, branch `phase8e-export`)
+
+QA 19 finding 4(a): on the mobile close orbit the far crowns' leaves read as "~40 px wide gold/black duotone
+blades" at 37 m. Analysis and the numbers: `docs/briefs/phase8e_analysis.md`, probe `export/p8e_leaf_probe.py`
+(CPU; no Blender, no Chrome) — it re-derives the orbit camera's px/m from `renders/web/gate7_orbit_cam.json`
+(fov 40 deg VERTICAL, canvas 1170x2532, dpr 0.712 → 86.9 px/m at 40 m), reads the card geometry and UV windows
+out of `export/out/gate1/env_trees.gltf`, and predicts the blade from the foliage albedo's own mip.
+
+**What the defect is.** One far-tree card is ONE quad carrying a centred vertical strip of the whole 1024 px
+cluster texture (u 0.18-0.85 by species, v 0-1; one texture tile = 0.88-1.02 m of prototype world, 0.54-0.85 m
+as placed). The painted leaves are 0.05-0.11 m — 4-10 px at 40 m, plausible — but at 20-30 texels per screen
+pixel the mip merges them and `alphaMode MASK` re-hardens the mush into blades of 17-22 px (p90) / 22-28 px
+(max), against 9-13 px for a believable foliage clump. It is a mip-and-cut defect, not a card-size defect.
+
+**The lever (this change).** `trees_far.py` scales each leaf card's UVs about its own UV centre after
+`thin_and_grow` and before `join`, so a card samples the cluster k times over; `SETS['far'].uv_tile` gates it
+to the far set (the walk-up set is what DESKTOP draws). No vertex is added, moved or removed, so
+`out/gate3/trees_far/vertex_ao.npz` (POINT domain, by index, `topology_rev` 2) and the instance rows are
+untouched — `verify_glb` reports the same 254 rows, 127 placements and 1 007 775 drawn triangles.
+
+**Why (ku, kv) = (1.0, 2.5) and not the isotropic 2.0 the analysis recommended.** The analysis assumed the
+alpha coverage — the share of the card the cut leaves opaque, i.e. the crown's leaf area — is invariant under
+the scale. Measured per species at 40 m, as (coverage vs today) / blade p90 / blade max:
+
+| | coverage | blade p90 | blade max |
+|---|---|---|---|
+| shipped (k=1) | 1.00x | 17-22 px | 22-28 px |
+| isotropic k=2 | **0.62-0.76x** | 10-13 px | 14-17 px |
+| ku=1.0, kv=2.5 (shipped here) | **0.96-1.00x** | 11-14 px | 14-20 px |
+| ku=1.0, kv=3.0 | 0.97-1.03x | 8-13 px | 11-17 px |
+
+The card's u window is the cluster's DENSE CORE and widening it pulls in the radially faded rim; v is free
+because the card's v window is the full texture height, so k periods of it average exactly what one period
+averages. The isotropic form would have thinned every far crown by a third — the 6c see-through defect Phase 7
+exists to undo — as a silent side effect of a leaf-size fix. kv=3.0 is the next step if QA still reads the
+leaves large; a u factor is not. Willow is 1.5 (its cards are 0.14 m wide, 12 px at 40 m: no kv changes its
+blade). A deterministic golden-ratio v offset per card keeps neighbouring cards from stacking the same tile
+boundary at the same height; the offset is v-only for the same reason (averaged over u offsets the coverage
+falls to the full-width mean, 0.35 against 0.56 on the cypress).
+
+**The sampler.** The tiled v leaves 0-1, and the shipped leaf samplers are `CLAMP_TO_EDGE` (Blender writes
+33071 for an image node set to EXTEND), which would smear the edge texel over every tile past the first. The
+script patches `wrapS/wrapT = REPEAT` into the written `env_trees.gltf` — not into the blend: `MAT_leaf_*` and
+its textures are frozen, and `master_delivery.blend` is opened read-only. A sampler shared with a non-leaf
+texture would be cloned rather than patched (here sampler 1 is the 8 leaf albedo/normal maps and nothing else);
+the script asserts that no other texture's sampler moved. gltfpack then omits `wrapS/wrapT` because REPEAT is
+the glTF default — that is what `env_trees.glb` ships, and `GLTFLoader` reads it as `RepeatWrapping`.
+
+**Route: patch `env_trees.glb` alone; the leaf materials are NOT renamed.** The two alternatives both fail:
+* patching every glb that shares the leaf material names would have to touch `gate5/groups/env_t0.glb` and
+  `m_env_t0.glb`, which carry `MAT_leaf_cypress` and `MAT_leaf_eucalyptus` and are **tier 0** — that file set
+  must stay byte-identical;
+* giving the re-scaled cards their own material names loses the tinted albedo altogether:
+  `applyFoliageTextures` does `if ( ! mats.length ) { out.missing.push( name ); continue; }` BEFORE
+  `albedoMaps[ name ] = aTex`, so a name that exists only in a lazily loaded root is registered for the
+  translucency map and never for the albedo. It would also duplicate 4 albedo + 4 translucency KTX2 textures
+  (~8-10 MB of GPU memory on the mobile tier, which is already at 561.9 MB resident).
+
+It is safe to leave every other root at clamp **because their leaf UVs are all inside 0-1** (decoded from
+`env.gltf` and `env_trees_lod1.gltf`: u 0.075-0.925 / 0.31-0.69 / 0.29-0.71 / 0.3-0.7, v 0-1), so REPEAT and
+CLAMP are the same sampler for them.
+
+**ONE VIEWER LINE IS STILL NEEDED (not this branch's file).** The tinted albedo and the translucency map are
+ONE texture object shared by every root using that material name. `applyFoliageAlbedo` re-wraps both from the
+lazy root's own sampler (8b item d, a610c6b) — so `env_trees.glb`'s REPEAT wins — but it sets `needsUpdate`
+only on the translucency map. In three r186 `setTexture2D` applies the sampler parameters **only inside
+`uploadTexture`**, i.e. only when `texture.version` has advanced, so a wrap change on an albedo that has
+already been uploaded (the eager near-tree leaf materials in `env_t0`/`env_t2` draw first) never reaches the
+GPU. `t.needsUpdate = true` beside the existing `t.wrapS = old.wrapS` closes it.
+
+**Cost.** `env_trees.glb` 3 699 324 -> 3 856 412 B (+157 088, +4.2 %), tier 2, `glb_lazy`, mobile-only in
+practice (`device.js`: mobile `walkupMesh: '0'`, `farTreeMesh: 45`; desktop leaves `walkupMesh` null and draws
+`env_trees_lod1.glb`, falling back to this file only if that glb 404s or fails the join). The growth is the UV
+stream: gltfpack quantises TEXCOORD_0 over the file's own range, and the tiled v widens it 3.5x
+(`KHR_texture_transform` v scale 16.003 -> 56.010), which costs entropy and takes the UV step from ~0.25 to
+~0.87 texels of a 1024 px map — still sub-texel, and ~0.02 px on screen at 40 m. Tier 0 is untouched and
+byte-identical; no other glb changed.
+
+**Stale after this change:** `out/gate5/manifest*.json` still advertise `trees.far_mesh.bytes` /
+`files[].bytes` = 3 699 324 for this file (the progress readout only). `python3 export/tiers.py --no-pack`
+refreshes both without repacking a group; it was deliberately NOT run here, because it rewrites both manifests
+and this branch's contract was that nothing but `env_trees.glb` changes.
+
+```
+# reproduce (CPU only for the probe; the export is one Blender, no GPU)
+python3 export/p8e_leaf_probe.py                                     # the measurement + export/out/p8e/leaf_probe.json
+scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend --python export/trees_far.py
+export/gltf_pack.sh --trees                                          # toktx (cached) + gltfpack + verify_glb
+cp export/out/gate1/{env_trees.glb,env_trees.gltf,env_trees.bin,env_trees_ktx2.gltf,trees_far.json,verify_glb.json} <MAIN>/export/out/gate1/
+cp export/out/gate3/trees_far/{topology.json,trees_far_lod2.blend}     <MAIN>/export/out/gate3/trees_far/
+(cd web && npm test)
+```
