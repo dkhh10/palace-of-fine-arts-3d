@@ -99,8 +99,25 @@ const MIN_HALF_M = 0.25;           // m, the smallest half-extent an ellipsoid n
  * contrast moves; `low` darkens the bottom of a cluster (`pfaCrownD.y`), which is what the shrub and
  * reed CARD clusters want and a tree crown does not.
  */
-export const CROWN_INTERIOR = { str: 0.30, low: 0.0, gamma: 1.0, gain: 1.05, trn: 0.85, sun: 0.50 };
-export const CARD_INTERIOR = { str: 0.20, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0, sun: 0.30 };
+/**
+ * PHASE 7 ITEM B — `floor`, the smallest fraction of its own unoccluded light a foliage fragment may
+ * keep.  The three terms above stack multiplicatively on the same fragment (depth into the crown,
+ * depth below its top, and the sun's path through it), and at the deep end they reached
+ * ( 1 - 0.30 - 0.50 ) * 1.05 = 0.21 of the light - darker INSIDE than the Cycles reference, which is
+ * QA 17 residual 2: the hero crown's p10 at 0.57x of the reference's, its centre/edge moving away
+ * from it, and near-black blotches at 100 % where the terms coincide.  A floor bounds the product
+ * without touching the shape of any one term, so the interior/rim read QA 17 credited (cam02
+ * centre/edge 0.393 against the reference's 0.364) is kept and only its DEPTH is limited.
+ * MEASURED at the stations: all three of QA 17's crown boxes are ATLAS crowns, so a mesh-side floor
+ * moves 0.005-0.012 % of the pixels there (cam01/02/05, MAE 0.0004-0.0012 / 255).  It is set to the
+ * same 0.35 the atlas side adopted, because the same stack is what a crown shows at the 3 m walk-in
+ * and in the mobile close orbit, and it is bounded there by the same rule rather than by a second
+ * number.  The shrub / reed CARD clusters keep floor 0: their level is QA 17's one CLOSED foliage
+ * item (frame-normalised 0.91-1.47x of the reference) and a floor would only push it further up.
+ * `?crownint=str,low,gamma,gain,trn,sun,floor`, `?cardint=` the same.
+ */
+export const CROWN_INTERIOR = { str: 0.30, low: 0.0, gamma: 1.0, gain: 1.05, trn: 0.85, sun: 0.50, floor: 0.35 };
+export const CARD_INTERIOR = { str: 0.20, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0, sun: 0.30, floor: 0.0 };
 /** How much of the radius the crown-bend is faded in over: 0 = bend everywhere (round-16b). */
 export const NORMAL_GATE = 0.45;
 /** LOD bias on the cut-out fetch: the shrub / reed cards, then the tree leaf cards (?foliagebias=). */
@@ -121,23 +138,24 @@ export const CARD_ENV = 0.3;
 export const CARD_MIP_BIAS = 0.8;
 export const LEAF_MIP_BIAS = 0.0;
 
-/** `"str[,low[,gamma[,gain[,trn[,sun]]]]]"` (or an object) over a default, every field clamped. */
+/** `"str[,low[,gamma[,gain[,trn[,sun[,floor]]]]]]"` (or an object) over a default, all clamped. */
 export function parseInterior( v, dflt ) {
 	const d = { ...dflt };
 	if ( v === null || v === undefined || v === '' ) return d;
 	if ( typeof v === 'object' ) Object.assign( d, v );
 	else {
 		const s = String( v ).trim().toLowerCase();
-		if ( s === '0' || s === 'off' ) return { str: 0, low: 0, gamma: 1, gain: 1, trn: 0, sun: 0 };
+		if ( s === '0' || s === 'off' ) return { str: 0, low: 0, gamma: 1, gain: 1, trn: 0, sun: 0, floor: 0 };
 		if ( s === '1' || s === 'on' ) return { ...dflt };
 		const p = s.split( ',' ).map( ( x ) => parseFloat( x ) );
-		const keys = [ 'str', 'low', 'gamma', 'gain', 'trn', 'sun' ];
+		const keys = [ 'str', 'low', 'gamma', 'gain', 'trn', 'sun', 'floor' ];
 		for ( let i = 0; i < keys.length; i ++ ) if ( Number.isFinite( p[ i ] ) ) d[ keys[ i ] ] = p[ i ];
 	}
 	const cl = ( x, lo, hi, f ) => ( Number.isFinite( x ) ? Math.min( Math.max( x, lo ), hi ) : f );
 	return { str: cl( d.str, 0, 1, dflt.str ), low: cl( d.low, 0, 1, dflt.low ),
 		gamma: cl( d.gamma, 0.1, 8, dflt.gamma ), gain: cl( d.gain, 0.25, 4, dflt.gain ),
-		trn: cl( d.trn, 0, 1, dflt.trn ), sun: cl( d.sun, 0, 1, dflt.sun ) };
+		trn: cl( d.trn, 0, 1, dflt.trn ), sun: cl( d.sun, 0, 1, dflt.sun ),
+		floor: cl( d.floor, 0, 1, dflt.floor === undefined ? 0 : dflt.floor ) };
 }
 
 /** True where the interior term would do nothing at all (so the program is left unpatched). */
@@ -334,8 +352,9 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		pfaMipBias: { value: bias },
 		pfaInterior: { value: new THREE.Vector4( it ? it.str : 0, it ? it.low : 0,
 			it ? it.gamma : 1, it ? it.gain : 1 ) },
-		// (the translucent lobe's share of the occlusion, the sun-path term's strength)
-		pfaInteriorB: { value: new THREE.Vector2( it ? it.trn : 0, it ? it.sun : 0 ) },
+		// (the translucent lobe's share of the occlusion, the sun-path term's strength, Phase 7's floor)
+		pfaInteriorB: { value: new THREE.Vector3( it ? it.trn : 0, it ? it.sun : 0,
+			it ? ( it.floor || 0 ) : 0 ) },
 		pfaTrnFac: { value: trn },
 		// 6c round 2: export item D's per-texel translucency FACTOR (materials.foliage), which already
 		// includes the Phase 5 constant - `pfaTrnFac` then carries only the ?leaftrn scale.
@@ -414,7 +433,7 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 				+ '\t\tvPfaCrownD = vec3( pfaCrownD.xy, clamp( pfaPath * 0.5, 0.0, 1.0 ) );\n\t}',
 				'interior varying write' );
 			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
-				'#include <common>\nvarying vec3 vPfaCrownD;\nuniform vec4 pfaInterior;\nuniform vec2 pfaInteriorB;',
+				'#include <common>\nvarying vec3 vPfaCrownD;\nuniform vec4 pfaInterior;\nuniform vec3 pfaInteriorB;',
 				'interior varyings (fragment)' );
 			// BEFORE `lights_fragment_end`, and it has to scale BOTH halves of the frame's light,
 			// because they are finished at different points in the chunk chain:
@@ -433,6 +452,10 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 				+ '\t\tvec3 pfaD = clamp( vPfaCrownD, 0.0, 1.0 );\n'
 				+ '\t\tpfaOcc = clamp( ( 1.0 - pfaInterior.x * pow( pfaD.x, pfaInterior.z ) - pfaInterior.y * pfaD.y\n'
 				+ '\t\t\t- pfaInteriorB.y * pfaD.z ) * pfaInterior.w, 0.0, 4.0 );\n'
+				// PHASE 7 ITEM B: the floor on the STACK of the three darkening terms.  Applied after
+				// `gain`, so it bounds what the fragment actually keeps, and only from below, so no
+				// fragment that was already bright enough moves at all.
+				+ '\t\tpfaOcc = max( pfaOcc, pfaInteriorB.z );\n'
 				+ '\t\tirradiance *= pfaOcc;\n\t\tiblIrradiance *= pfaOcc;\n\t\tradiance *= pfaOcc;\n'
 				+ '\t\treflectedLight.directDiffuse *= pfaOcc;\n\t\treflectedLight.directSpecular *= pfaOcc;\n\t}\n'
 				+ '\t#include <lights_fragment_end>', 'crown interior occlusion' );
@@ -514,7 +537,7 @@ export function applyFoliage( o ) {
 		( Number.isFinite( v ) ? Math.min( Math.max( v, lo ), hi ) : dflt );
 	const bend = num( o.normalBlend, 0.5, 0, 1 );
 	const trnScale = num( o.trnScale, 1.0, 0, 8 );
-	const meshDist = ( o.meshDist === Infinity ) ? Infinity : num( o.meshDist, 40, 0, 1e6 );
+	const meshDist = ( o.meshDist === Infinity ) ? Infinity : num( o.meshDist, 80, 0, 1e6 );   // Phase 7 C
 	const fadeBand = num( o.fadeBand, 5, 0.01, 1e5 );
 	// range x scale: the whole decode of COLOR_0 into scene-linear irradiance, from the manifest.
 	const vertexIrrScale = num( o.vertexIrrScale, 0, 0, 1e9 );

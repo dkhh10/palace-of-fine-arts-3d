@@ -83,3 +83,14 @@ renders/web/gate5*_cam0*.png
 renders/web/gate5.png
 renders/web/gate5b_cam06.png
 renders/web/gate5_perf1440*.png
+
+# Phase 7: full-resolution viewer captures and the orbit frames stay out of the tree; the 960 px
+# composites under renders/web/960/ are what is committed (CLAUDE.md image rule).  The perf JSONs are
+# small and ARE committed - they are the evidence for the item C A/B.
+renders/web/p7*.png
+# the per-capture sidecars are ~210 kB each and fully regenerable; the perf JSONs are the evidence
+renders/web/p7*_shot.json
+renders/web/p7*_cam.json
+renders/web/p7net_6c.json
+renders/web/p7net_p7.json
+!renders/web/960/*

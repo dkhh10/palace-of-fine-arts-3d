@@ -31,6 +31,30 @@
 // the octahedral cell's triangle.  The samples are STRAIGHT alpha, so they are combined the only way
 // straight alpha may be: rgb = sum( w * rgb * a ) / sum( w * a ), a = sum( w * a ).  Blending the
 // colour without the alpha weight would drag the silhouette's colour in from the transparent gutter.
+//
+// PHASE 7 ITEM A — THE CARD EDGE (QA 17 residual 3: "a pale halo reads around the crowns", and the
+// jagged dithered silhouette in the user's desktop capture).  Two independent defects, two fixes,
+// both on the SAMPLING side and neither touching the atlas (it is tier-0 payload):
+//
+//   1. THE HALO is the hardware's own bilinear filter.  `encode.albedo` is STRAIGHT alpha, so a
+//      texel that is fully transparent still carries an rgb, and the bake wrote a pale one there.
+//      GL_LINEAR interpolates rgb and a independently, so at the silhouette the fetched rgb is
+//      (1-t)*leaf + t*pale while the fetched a is only partly reduced: dividing by that alpha does
+//      NOT recover the leaf colour, because the contamination happened INSIDE one fetch, before any
+//      alpha weight could be applied.  The only correct filter for straight alpha is to weight each
+//      TEXEL by its own alpha, which means doing the bilinear by hand: four texel-centre taps per
+//      frame, premultiplied, summed with the barycentric weight, divided by the summed alpha at the
+//      end.  That is the same formula the frame blend already uses, pushed down one level - twelve
+//      taps instead of three, and the transparent gutter can no longer tint a silhouette texel.
+//      `?impedge=` turns it off (`0`) and back on (`1`, the default).
+//   2. THE JAGGED SILHOUETTE is the hard `a < alphaTest` cut.  The atlas carries no mips on purpose
+//      (a mip would blend across frames), so at the hero a far card is MINIFIED and its alpha steps
+//      0 -> 1 between neighbouring pixels.  The composer's target is `samples: 4`, so the fix is the
+//      one the leaf cards already use: alpha-to-coverage with three's own analytic ramp,
+//      `cov = saturate( ( a - alphaTest ) / fwidth( a ) + 0.5 )`, written into gl_FragColor.a.  The
+//      cutoff is unchanged - what changes is that the boundary pixel now resolves across the four
+//      MSAA samples instead of snapping.  `fwidth` widens the ramp exactly where the card is
+//      minified, which is where the aliasing is, and closes it again at station 2's magnification.
 import * as THREE from 'three';
 import { b2t } from './blenderCamera.js';
 
@@ -84,8 +108,8 @@ const fragmentShader = /* glsl */`
 	uniform float grid, framePx, innerPx, gutterPx, atlasPx;
 	uniform float alphaTest;
 	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv
-	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV)
-	uniform vec2 pfaImpInterior;
+	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV, Phase 7 floor)
+	uniform vec3 pfaImpInterior;
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
 	uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
@@ -115,6 +139,23 @@ const fragmentShader = /* glsl */`
 	}
 
 	vec4 sampleFrame( vec2 cell, vec2 f ) { return texture2D( atlas, frameUv( cell, f ) ); }
+
+	#ifdef PFA_IMP_PREMUL
+	// Phase 7 item A1.  The CONTINUOUS TEXEL COORDINATE of frameUv, so the bilinear can be done by
+	// hand.  A texel of index i has uv = ( i + 0.5 ) / atlasPx, and frameUv's v is flipped
+	// ( uv.y = 1 - ( pyFromBottom + 0.5 ) / atlasPx ), so the data-space row index is
+	// atlasPx - 1 - pyFromBottom.  Both axes then read as plain indices, and floor / fract give the
+	// four neighbours and their weights the same way GL_LINEAR would.
+	vec2 frameTexel( vec2 cell, vec2 f ) {
+		vec2 g = clamp( f, 0.0, 1.0 );
+		float px = cell.x * framePx + gutterPx + g.x * innerPx;
+		float pyFromBottom = cell.y * framePx + gutterPx + g.y * innerPx;
+		return vec2( px, atlasPx - 1.0 - pyFromBottom );
+	}
+	// One texel, exactly: the sampler is GL_LINEAR, and a fetch at a texel CENTRE returns that texel
+	// with weights ( 1, 0 ), so no NEAREST sampler and no second texture object is needed.
+	vec4 texelAt( vec2 i ) { return texture2D( atlas, ( i + 0.5 ) / atlasPx ); }
+	#endif
 
 	void main() {
 		// THE EXACT COMPLEMENT OF THE MESH TEST (round-1 review, blocker 1).  The mesh keeps
@@ -152,14 +193,58 @@ const fragmentShader = /* glsl */`
 			w = vec3( fr.x + fr.y - 1.0, 1.0 - fr.x, 1.0 - fr.y );
 		}
 
+		float a;
+		vec3 rgb;
+		#ifdef PFA_IMP_PREMUL
+		// Phase 7 item A1: ONE premultiplied reconstruction over the three frames' twelve texels.
+		// Every tap's weight is ( barycentric x bilinear x its own alpha ), which is the only filter
+		// straight-alpha data may be resampled with; the hardware's per-channel LINEAR is what put
+		// the pale gutter into the silhouette.
+		{
+			vec3 acc = vec3( 0.0 );
+			float accA = 0.0;
+			vec2 tc[ 3 ];
+			tc[ 0 ] = frameTexel( c0, vQuadUv );
+			tc[ 1 ] = frameTexel( c1, vQuadUv );
+			tc[ 2 ] = frameTexel( c2, vQuadUv );
+			for ( int k = 0; k < 3; k ++ ) {
+				vec2 t = tc[ k ];
+				vec2 i0 = floor( t );
+				vec2 fr2 = t - i0;
+				float wk = ( k == 0 ) ? w.x : ( ( k == 1 ) ? w.y : w.z );
+				vec4 t00 = texelAt( i0 );
+				vec4 t10 = texelAt( i0 + vec2( 1.0, 0.0 ) );
+				vec4 t01 = texelAt( i0 + vec2( 0.0, 1.0 ) );
+				vec4 t11 = texelAt( i0 + vec2( 1.0, 1.0 ) );
+				vec4 bw = vec4( ( 1.0 - fr2.x ) * ( 1.0 - fr2.y ), fr2.x * ( 1.0 - fr2.y ),
+				                ( 1.0 - fr2.x ) * fr2.y, fr2.x * fr2.y ) * wk;
+				vec4 av = vec4( t00.a, t10.a, t01.a, t11.a ) * bw;
+				accA += av.x + av.y + av.z + av.w;
+				acc += av.x * t00.rgb + av.y * t10.rgb + av.z * t01.rgb + av.w * t11.rgb;
+			}
+			a = accA;
+			rgb = acc / max( accA, 1e-4 );
+		}
+		#else
 		vec4 s0 = sampleFrame( c0, vQuadUv );
 		vec4 s1 = sampleFrame( c1, vQuadUv );
 		vec4 s2 = sampleFrame( c2, vQuadUv );
 
 		// STRAIGHT alpha: weight the colour by its own alpha or the gutter bleeds into the silhouette
-		float a = w.x * s0.a + w.y * s1.a + w.z * s2.a;
+		a = w.x * s0.a + w.y * s1.a + w.z * s2.a;
+		rgb = ( w.x * s0.a * s0.rgb + w.y * s1.a * s1.rgb + w.z * s2.a * s2.rgb ) / max( a, 1e-4 );
+		#endif
+
+		// Phase 7 item A2: the cutoff is unchanged; only its RESOLUTION changes.  fwidth( a ) has
+		// to be taken before any discard that depends on it, so the coverage is computed first and
+		// the fragment is dropped only when it covers no sample at all.
+		#ifdef PFA_IMP_A2C
+		float pfaCov = clamp( ( a - alphaTest ) / max( fwidth( a ), 1e-4 ) + 0.5, 0.0, 1.0 );
+		if ( pfaCov <= 0.0 ) discard;
+		#else
+		float pfaCov = 1.0;
 		if ( a < alphaTest ) discard;
-		vec3 rgb = ( w.x * s0.a * s0.rgb + w.y * s1.a * s1.rgb + w.z * s2.a * s2.rgb ) / max( a, 1e-4 );
+		#endif
 
 		// manifest.impostors.encode.albedo: gamma2 at the prototype's own range, LINEAR oetf
 		vec3 lin = rgb * rgb * range;
@@ -190,10 +275,16 @@ const fragmentShader = /* glsl */`
 			                    sampleFrame( c0, clamp( vQuadUv - vec2( rr, 0.0 ), 0.0, 1.0 ) ).a ),
 			               min( sampleFrame( c0, clamp( vQuadUv + vec2( 0.0, rr ), 0.0, 1.0 ) ).a,
 			                    sampleFrame( c0, clamp( vQuadUv - vec2( 0.0, rr ), 0.0, 1.0 ) ).a ) );
-			lin *= 1.0 - pfaImpInterior.x * smoothstep( 0.25, 0.95, e );
+			// PHASE 7 ITEM B — THE FLOOR.  pfaImpInterior.z is the smallest fraction of its own
+			// radiance a crown pixel may keep, so the enclosure term can deepen the interior without
+			// any population going near-black (QA 17 residual 2: the hero crown's p10 at 0.57x of the
+			// Cycles reference's, and the blotches the lead's tiles found at station 5).  It is a
+			// floor on the FACTOR, not a clamp on the result, so a dark tree stays dark relative to a
+			// bright one and only the depth of the darkening is bounded.
+			lin *= max( 1.0 - pfaImpInterior.x * smoothstep( 0.25, 0.95, e ), pfaImpInterior.z );
 		}
 
-		if ( debugMode == 1 ) { gl_FragColor = vec4( s0.rgb, 1.0 ); return; }
+		if ( debugMode == 1 ) { gl_FragColor = vec4( rgb, 1.0 ); return; }
 		if ( debugMode == 2 ) { gl_FragColor = vec4( vec3( a ), 1.0 ); return; }
 		if ( debugMode == 3 ) { gl_FragColor = vec4( c0 / ( grid - 1.0 ), 0.0, 1.0 ); return; }
 		if ( debugMode == 4 ) { gl_FragColor = vec4( vQuadUv, 0.0, 1.0 ); return; }
@@ -206,25 +297,56 @@ const fragmentShader = /* glsl */`
 		lin = mix( lin, fogColor, clamp( fogCap * ( 1.0 - exp( - fogK * mist ) ), 0.0, 1.0 ) );
 		#endif
 
-		gl_FragColor = vec4( lin, 1.0 );
+		// With alpha-to-coverage the alpha channel IS the coverage mask; with it off it is 1 and the
+		// material is an ordinary opaque alpha-tested one, exactly as before.
+		gl_FragColor = vec4( lin, pfaCov );
 	}
 `;
 
-/** The atlas crown's interior term: `"str[,radius]"`, "0" / "off", or null for the default. */
+/** The atlas crown's interior term: `"str[,radius[,floor]]"`, "0" / "off", or null for the default. */
 // MEASURED, not chosen (6c round 3, the sweep in web/README.md): at 0.90 / 0.015 the cam02 crown
 // box lands on the reference's centre/edge (0.364 against 0.364) and the cam05 crown on its
 // range/mean within 0.073, with every crown box's LEVEL inside 0.9-1.1x of the reference.
-export const IMP_INTERIOR = [ 0.90, 0.015 ];
+// PHASE 7 ITEM B adds the third field, the FLOOR on that term's factor.  SWEPT at 0 / 0.25 / 0.30 /
+// 0.35 / 0.40 / 0.55 over stations 1, 2 and 5 (the table is in web/README.md "Phase 7").  0.35 is
+// adopted: the hero crown's p10 returns from 0.564x of the Cycles reference's to 0.894x (the brief
+// asks for >= 0.8x) and its centre/edge from 0.468 to 0.532 against the reference's 0.852, while
+// cam02's centre/edge holds at 0.397 - the ~0.39 QA 17 credited - which 0.40 would push to 0.406.
+// Measured, and true of every one of the three QA-17 crown boxes: they are all ATLAS crowns, so this
+// floor is the whole of item B at the stations (foliage.js' mesh-side floor moves 0.01 % of pixels).
+export const IMP_INTERIOR = [ 0.90, 0.015, 0.35 ];
 export function parseImpInterior( v ) {
 	const d = [ ...IMP_INTERIOR ];
 	if ( v === null || v === undefined || v === '' ) return d;
 	const s = String( v ).trim().toLowerCase();
-	if ( s === '0' || s === 'off' ) return [ 0, d[ 1 ] ];
+	if ( s === '0' || s === 'off' ) return [ 0, d[ 1 ], d[ 2 ] ];
 	if ( s === '1' || s === 'on' ) return d;
 	const p = s.split( ',' ).map( ( x ) => parseFloat( x ) );
 	if ( Number.isFinite( p[ 0 ] ) ) d[ 0 ] = Math.min( Math.max( p[ 0 ], 0 ), 1 );
 	if ( Number.isFinite( p[ 1 ] ) ) d[ 1 ] = Math.min( Math.max( p[ 1 ], 0.002 ), 0.4 );
+	if ( Number.isFinite( p[ 2 ] ) ) d[ 2 ] = Math.min( Math.max( p[ 2 ], 0 ), 1 );
 	return d;
+}
+
+/**
+ * Phase 7 item A — the card-edge treatment, `?impedge=`.  `"premul"` / `"a2c"` pick one half,
+ * `"both"` / `"1"` / null both (the default), `"0"` / `"off"` neither (the 6c path, byte-identical).
+ * Alpha-to-coverage is only ever asked for when the target is multisampled: without MSAA the
+ * coverage mask has one sample and the ramp would quantise back to the hard cut it replaces.
+ */
+export const IMP_EDGE = { premul: true, a2c: true };
+export function parseImpEdge( v, msaa = true ) {
+	let d = { ...IMP_EDGE }, unknown = null;
+	const s = ( v === null || v === undefined ) ? '' : String( v ).trim().toLowerCase();
+	if ( s === '0' || s === 'off' || s === 'none' ) d = { premul: false, a2c: false };
+	else if ( s === 'premul' ) d = { premul: true, a2c: false };
+	else if ( s === 'a2c' ) d = { premul: false, a2c: true };
+	else if ( s === 'both' || s === '1' || s === 'on' || s === '' ) d = { ...IMP_EDGE };
+	// Round-1 review 7: a typo used to fall back to `both` in silence, which reads in a capture as
+	// "the A/B did nothing" rather than as "the A/B never ran".  It still falls back - a bad switch
+	// must never take the frame with it - but it says so.
+	else unknown = s;
+	return { premul: d.premul, a2c: d.a2c && !! msaa, a2cAsked: d.a2c, msaa: !! msaa, unknown };
 }
 
 /**
@@ -232,15 +354,20 @@ export function parseImpInterior( v ) {
  * @returns {{ group:THREE.Group|null, report:object }}
  */
 export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
-	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null } ) {
-	// 6c round 3: (strength, radius in frame UV).  `?impint=` — see the fragment shader.
+	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null,
+	edge = null, msaa = false, leafSoft = true } ) {
+	// 6c round 3: (strength, radius in frame UV, Phase 7 floor).  `?impint=` — see the fragment shader.
 	const impInterior = parseImpInterior( interior );
+	// Phase 7 item A: `?impedge=` — see the header.
+	const impEdge = parseImpEdge( edge, msaa );
 	const report = { prototypes: 0, instances: 0, nearInstances: 0, drawCalls: 0, skipped: [], bytes: 0,
 		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0,
 		atlas2k: false, atlas2kMissing: [], modulated: 0,
 		// the atlas geometry that ACTUALLY draws, so the summary can never name the 1K one while the
 		// 2K variant is on screen (round-1 review 5)
-		interior: { strength: impInterior[ 0 ], radius_uv: impInterior[ 1 ] },
+		interior: { strength: impInterior[ 0 ], radius_uv: impInterior[ 1 ], floor: impInterior[ 2 ] },
+		edge: { premultiplied: impEdge.premul, alphaToCoverage: impEdge.a2c,
+			alphaToCoverageAsked: impEdge.a2cAsked, msaa: impEdge.msaa },
 		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
 	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
@@ -281,6 +408,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 	for ( const [ key, list ] of byProto ) {
 		const p = impostors.prototypes[ key ];
 		const defines = fog ? { PFA_FOG: '' } : {};
+		if ( impEdge.premul ) defines.PFA_IMP_PREMUL = '';
+		if ( impEdge.a2c ) defines.PFA_IMP_A2C = '';
 		// 2K only where BOTH the variant geometry and this prototype's 2K texture exist.
 		const use2k = !! ( v2k && p.albedo2k );
 		if ( atlas2k && ! use2k && ! report.atlas2kMissing.includes( key ) ) report.atlas2kMissing.push( key );
@@ -296,7 +425,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			atlasPx: { value: geom.atlasPx },
 			alphaTest: { value: ALPHA_TEST },
 			debugMode: { value: debug },
-			pfaImpInterior: { value: new THREE.Vector2( impInterior[ 0 ], impInterior[ 1 ] ) },
+			pfaImpInterior: { value: new THREE.Vector3( impInterior[ 0 ], impInterior[ 1 ], impInterior[ 2 ] ) },
 			pfaMeshDist: switchUniforms ? switchUniforms.pfaMeshDist : { value: 1e9 },
 			pfaFadeBand: switchUniforms ? switchUniforms.pfaFadeBand : { value: 1 },
 		};
@@ -309,6 +438,10 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			vertexShader, fragmentShader, uniforms, defines,
 			transparent: false,            // alpha TEST, so they write depth and need no sorting
 			depthWrite: true, depthTest: true, side: THREE.DoubleSide,
+			// Phase 7 item A2: opaque queue, opaque depth, and the coverage mask resolved by the
+			// target's own four samples.  three reads this flag straight into
+			// gl.SAMPLE_ALPHA_TO_COVERAGE, so nothing else about the draw changes.
+			alphaToCoverage: impEdge.a2c,
 		} );
 		const g = geo.clone();
 		const im = new THREE.InstancedMesh( g, mat, list.length );
@@ -399,6 +532,15 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `${( report.bytes / 1048576 ).toFixed( 1 )} MB declared`
 			+ ( report.normalDepthLoaded ? `, ${report.normalDepthLoaded} normal+depth atlas(es) loaded (?impnd=1)`
 				: ', normal+depth NOT loaded (the manifest says nothing samples it while unlit holds)' ) );
+		// Round-1 review 6: `?leafsoft=0` is folded into the msaa flag upstream, so the honest reason
+		// for a refusal is that switch when it was given, and the target only otherwise.
+		const a2cWhy = leafSoft ? 'no multisampled target' : '?leafsoft=0';
+		if ( impEdge.unknown !== null ) note( `?impedge=${impEdge.unknown} is not a value `
+			+ `(0 | premul | a2c | both): using both, the default` );
+		note( `impostor edge (Phase 7 A): premultiplied 12-tap reconstruction ${impEdge.premul ? 'ON' : 'off'}, `
+			+ `alpha-to-coverage ${impEdge.a2c ? 'ON' : ( impEdge.a2cAsked ? `asked but OFF (${a2cWhy})` : 'off' )}`
+			+ ` (?impedge=0|premul|a2c|both); interior floor ${impInterior[ 2 ].toFixed( 2 )} of the card's own `
+			+ `radiance (?impint=str,radius,floor)` );
 		if ( report.missingPrototypes.length )
 			note( `impostors: ${report.missingPrototypes.length} prototype(s) in trees.far have no atlas: ${report.missingPrototypes.join( ', ' )}` );
 		if ( report.skipped.length ) note( `impostors: ${report.skipped.length} far tree(s) skipped` );

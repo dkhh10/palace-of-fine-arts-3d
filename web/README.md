@@ -544,6 +544,246 @@ the specular `envMap` of the 77 baked materials:
 
 Not shipped. The switch stays, and this is the standing lead on the olive cast.
 
+## Phase 7 — the foliage look (viewer side), 2026-09-19
+
+Four items, all viewer-side, all measured in this session against the Cycles references QA 17 used
+(`scripts/qa_p7_probe.py`, which imports `scripts/qa_r16_probe.py` from the MAIN checkout so a Phase 7
+number and a QA 17 number are the same measure). Every capture is `web/tools/p7.sh`, manifest
+`/assets/gate5/manifest.json`, `tiers=all`, gate4 settings, desktop tier unless it says mobile.
+Nothing under `export/`, `assets/` or `master*.blend` was touched, and the tier-0 payload is unchanged:
+no new texture, no new file, no manifest change.
+
+**Every Phase 7 term has an off switch, and with all four off the frame is the 6c frame**: captured
+both ways, `?impedge=0&impint=0.90,0.015,0&crownint=0.30,0,1,1.05,0.85,0.50,0&treemesh=40` against the
+6c build itself reads MAE 0.0001 / 0.0000 / 0.0005 out of 255 at cam01 / cam02 / cam05.
+
+### A — the impostor card edge (`?impedge=`, default `both`)
+
+Two defects, two independent fixes, both on the sampling side (QA 17 residual 3 and the jagged
+silhouettes in the user's desktop capture):
+
+* **the pale halo** is the hardware bilinear filter. `impostors.encode.albedo` is STRAIGHT alpha, so a
+  fully transparent texel still carries an rgb and the bake wrote a pale one; `GL_LINEAR` mixes rgb and
+  alpha independently, so the contamination happens INSIDE one fetch and dividing by the fetched alpha
+  cannot undo it. The reconstruction is therefore done by hand: four texel-centre taps per frame, each
+  weighted by its own alpha and by the frame's barycentric weight, twelve taps summed premultiplied and
+  divided by the summed alpha once at the end. Same formula as the frame blend, one level further down.
+* **the jagged silhouette** is the hard `a < alphaTest` cut on an atlas that carries no mips (a mip
+  would blend across frames), so a minified card steps 0 → 1 between neighbouring pixels.
+  Alpha-to-coverage with three's own analytic ramp, `saturate((a - alphaTest)/fwidth(a) + 0.5)`, written
+  into `gl_FragColor.a`, resolved by the composer target's four samples. The cutoff is unchanged.
+
+Every equivalence and engagement number below is reproducible from the captures with
+`python3 scripts/qa_p7_probe.py diff <tagA> <tagB>` (the exact invocations are in that file's docstring;
+re-capture first with `web/tools/p7.sh`, the full-resolution PNGs are gitignored).
+
+Measured in QA 17's own crown boxes, A ALONE (floors off, `p7base` → `p7a`), reference in brackets:
+
+| crown box | hard-edge % | halo ring % | halo dL (ring − background, /255) |
+|---|---|---|---|
+| 01 hero shore crown | 3.70 → **3.34** (4.94) | 37.39 → 37.67 (15.00) | −2.06 → **−2.65** (−39.30) |
+| 02 fill tree | 1.54 → **1.48** (2.29) | 18.10 → 18.55 (23.49) | −0.72 → **−0.98** (−1.72) |
+| 05 lawn tree | 6.03 → **5.20** (6.30) | 29.00 → 30.23 (17.75) | −9.76 → **−9.99** (−23.28) |
+
+and with item B's floor on top (the shipped default, `p7six_6c` → `p7six`): hard-edge 3.70 → 3.32,
+1.54 → 1.47, 6.03 → 5.04; halo dL −2.06 → −6.83, −0.72 → −2.44, −9.76 → −14.58. The halo RING share
+barely moves because that ring is mostly other foliage at these boxes; what moves is its level relative
+to the background, which is the halo itself, and it moves toward the reference at all three boxes.
+Both switches report themselves in the boot note: an unrecognised `?impedge=` value says so before
+falling back to `both`, and a refused alpha-to-coverage names the right reason (`?leafsoft=0` when that
+is what turned it off, the target's samples otherwise) — round-1 review 6 and 7. One caveat from the
+same finding: `?impedge=0` restores the 6c frame exactly, but `?impdebug=1` (the raw-sample debug view)
+shows the RECONSTRUCTED rgb either way, because that is what the shader now computes; the debug path is
+not part of the equivalence claim.
+
+Both halves are verified to ENGAGE rather than assumed (three has to honour `alphaToCoverage` on a
+raw ShaderMaterial for the second one to do anything): `?impedge=premul` against `both` differs on
+0.60-3.10 % of the pixels at cam01/02/05 (that difference is the coverage resolve, at the silhouette)
+and `?impedge=a2c` against `both` on 4.95-6.97 % (that is the premultiplied reconstruction, inside the
+crown). The canvas context is opaque (`alpha` unset, so false), so writing a coverage into
+`gl_FragColor.a` cannot leak the page background through an edge.
+
+The boxes understate this: the defect is at the FAR cards against the sky, which no QA-17 box covers.
+`renders/web/960/p7_A_edge.jpg` (two 200 % crops of the hero's far-tree band, before and after) is where
+it is visible — the stair-stepped silhouettes with a whitish fringe become soft edges with the leaf
+colour carried to the boundary. `renders/web/960/p7_A_cam02_crown.jpg` is the required 100 % tile pair
+of the station-2 crown (full-res `renders/web/tiles/p7_cam02_crown_100.png`); at that magnification the
+card is not minified and the pair differs only slightly, which is the expected result and is why the
+far band is shown beside it.
+
+### B — the floor on the stacked crown darkening (`?impint=str,radius,FLOOR`, `?crownint=…,FLOOR`)
+
+QA 17 residual 2: the three darkening terms (`impint` enclosure, `crownint` depth, the sun path)
+multiply on the same fragment and reached 0.10 (atlas) and 0.21 (mesh) of the light. A floor bounds the
+product from below without changing the shape of any one term. **Measured first: all three of QA 17's
+crown boxes are ATLAS crowns** — a mesh-side floor of 0.45 changes 0.005-0.012 % of the pixels at
+cam01/02/05 (MAE 0.0004-0.0012 / 255), so the atlas floor is the whole of item B at the stations.
+
+Swept on the atlas floor, stations 1, 2, 5 (reference = 1.000x):
+
+| floor | hero crown p10 | hero c/e (ref 0.852) | hero level | cam02 c/e (ref 0.364) | cam05 crown level | cam05 frame luma |
+|---|---|---|---|---|---|---|
+| 0 (6c) | 0.564x | 0.467 | 0.91x | 0.364 | 1.06x | 0.970x |
+| 0.25 | 0.754x | 0.501 | 0.93x | 0.380 | 1.07x | 0.973x |
+| 0.30 | 0.824x | 0.516 | 0.93x | 0.388 | 1.08x | 0.974x |
+| **0.35** | **0.894x** | **0.532** | **0.94x** | **0.397** | **1.09x** | **0.976x** |
+| 0.40 | 0.963x | 0.548 | 0.95x | 0.406 | 1.09x | 0.977x |
+| 0.55 | 1.155x | 0.599 | 0.97x | 0.436 | 1.11x | 0.981x |
+
+**0.35 adopted.** It is the smallest value that clears the brief's `>= 0.8x` on the hero crown's p10 with
+margin while cam02's centre/edge holds at 0.397 — the ~0.39 QA 17 credited — which 0.40 would push to
+0.406. The mesh-side floor is set to the same 0.35 (it bounds the same stack at the 3 m walk-in and in
+the mobile close orbit, where no station measures it); the shrub / reed CARD clusters keep floor 0,
+because their level is QA 17's one CLOSED foliage item and a floor would only push it further up.
+
+**Station 5's frame does not return to 1.00x and cannot by this lever.** It goes 0.970x → 0.976x, and
+even at floor 0.55 — where every crown box overshoots the reference — it stops at 0.981x. The remaining
+2 % of that frame is not foliage. Reported, not fitted.
+
+No regression elsewhere: cam03 1.622x → 1.623x, cam04 1.113x → 1.113x, cam06 0.975x → 0.978x,
+cam01 0.924x → 0.927x, cam02 1.049x → 1.052x (all against the same references).
+
+### C — the mesh switch distance A/B (same session, 2560x1440, 120 frames after 24 of warmup)
+
+Stations 1-6 back to back, one Chrome session per pass, the default repeated LAST as the drift control,
+exactly as `docs/perf_ab_6c.md`. **Pass 1 is the brief's own table** (`treemesh` 40/60/80 with
+`fartreemesh` 12/30/60):
+
+| station | def 40/12 | 60/30 | 80/60 | def2 | 60/30 − mean(def) | 80/60 − mean(def) | drift (def − def2) |
+|---|---|---|---|---|---|---|---|
+| 1 hero | 30.50 | 30.40 | 30.80 | 30.60 | −0.15 | **+0.25** | −0.10 |
+| 2 | 34.30 | 34.60 | 34.30 | 36.90 | −1.00 | −1.30 | −2.60 |
+| 3 | 34.70 | 35.10 | 35.10 | 35.30 | +0.10 | +0.10 | −0.60 |
+| 4 | 23.30 | 23.60 | 23.40 | 24.10 | −0.10 | −0.30 | −0.80 |
+| 5 | 32.70 | 31.60 | 32.20 | 32.60 | −1.05 | −0.45 | +0.10 |
+| 6 | 34.90 | 34.20 | 35.30 | 34.30 | −0.40 | +0.70 | +0.60 |
+
+Draw calls and triangles are IDENTICAL at every station in all four passes (hero 335 draws / 5.25 M
+tris; cam03 351 / 5.98 M), and resident memory is 1861.3 MB in all four. Two facts explain that:
+**`?fartreemesh=` is inert in the shipped manifest** — `trees.walkup_mesh` replaces `trees.far_mesh`, and
+the walk-up set switches on `?walkupmesh=` / its own `draw_within_m` (15 m), which the sidecars confirm
+(`farTrees.meshDist` stays 15 at every setting while `foliage.meshDist` follows `?treemesh=`) — and
+**no near tree is within 80 m of any of the six station cameras**, so `?treemesh=` changes nothing
+there either.
+
+So the live lever was A/B'd in the same shape, `treemesh` 40/60/80 with **`walkupmesh` 15/30/60**:
+
+| station | S1 15 m | S2 30 m | S3 60 m | S1b | S2 − mean(S1) | S3 − mean(S1) | drift |
+|---|---|---|---|---|---|---|---|
+| 1 hero | 30.50 | 31.20 | 33.10 | 32.10 | −0.10 | **+1.80** | −1.60 |
+| 2 | 35.30 | 36.50 | 39.70 | 35.20 | +1.25 | +4.45 | +0.10 |
+| 3 | 35.40 | 37.40 | 41.70 | 36.40 | +1.50 | +5.80 | −1.00 |
+| 4 | 23.50 | 23.80 | 24.10 | 23.80 | +0.15 | +0.45 | −0.30 |
+| 5 | 32.60 | 31.90 | 34.40 | 35.70 | −2.25 | +0.25 | −3.10 |
+| 6 | 34.30 | 34.60 | 34.80 | 37.80 | −1.45 | −1.25 | −3.50 |
+
+Triangles at the hero 5.25 M → 6.02 M → 6.61 M, at cam02 5.23 M → 7.00 M → 8.73 M; draws 335 → 339 →
+355 and 329 → 353 → 381; resident 1861.3 MB at every setting (the geometry is resident whatever the
+draw radius, so the +100 MB half of the rule is never the binding one).
+
+**Adopted: `treemesh` 80 (up from 40). NOT adopted: any change to the far-tree switch.** The hero
+passes the +3.0 ms rule at S3 (+1.80 ms against a −1.60 ms drift control), but the rule is a ceiling,
+not a reason to ship a worse frame, and S3 is measurably worse: at `walkupmesh=60` the cam02 fill-tree
+crown goes from 1.04x to **1.97x** of the Cycles reference's level and the whole cam02 frame from
+1.052x to 1.105x — the walk-up LOD1 set is lit brighter than the atlas card it replaces, which is an
+open lighting mismatch and not something to widen. At `walkupmesh=30` the frame is byte-identical to
+the default at all three measured stations (the extra chunks are submitted and then dissolved away by
+the crossfade) while costing 1.8 M triangles at cam02 — paying for nothing. 80 m on the near trees
+costs nothing at any station and is what the WALKER gets: a mesh crown out to 80 m instead of a
+magnified 85 px atlas frame. Both rejected settings stay one query away
+(`?walkupmesh=30`, `?walkupmesh=60`, `?treemesh=40`).
+
+Cost of A + B themselves, measured the same way (6c look by query, Phase 7 default, 6c again):
+
+| station | 6c look | Phase 7 (A + B) | 6c again | P7 − mean(6c) | drift | gl.finish 6c → P7 |
+|---|---|---|---|---|---|---|
+| 1 hero | 30.70 | 30.40 | 31.30 | **−0.60** | −0.60 | 3.4 → 3.4 |
+| 2 | 34.10 | 34.60 | 34.10 | +0.50 | +0.00 | 3.3 → 3.3 |
+| 3 | 34.60 | 34.80 | 34.70 | +0.15 | −0.10 | 3.6 → 3.6 |
+| 4 | 23.40 | 23.80 | 23.60 | +0.30 | −0.20 | 0.9 → 0.8 |
+| 5 | 32.10 | 32.00 | 31.70 | +0.10 | +0.40 | 3.2 → 3.3 |
+| 6 | 33.60 | 34.50 | 34.90 | +0.25 | −1.30 | 3.5 → 3.7 |
+
+Twelve taps instead of three costs nothing measurable: every delta is inside its own drift control and
+the `gl.finish` render cost is unchanged to 0.1 ms at five stations of six. The cards are a small part
+of the frame and the dissolve/alpha-test discards still run first.
+
+### D — the mobile tier (`web/src/device.js` `TIER_SETTINGS.mobile`)
+
+6b made every tree on a phone an impostor at every distance; the user's close orbit is what that looks
+like from three crown-widths away. **The orbit frame was diagnosed placement by placement before
+anything was changed** (camera position from `__pfaOrbit`'s own formula, tree positions from
+`trees.far_mesh.placements[].loc`, frustum from the capture's fov and aspect): at heading 253° the three
+crowns in shot are far-tree placements `ENV_treeboard_000 / _116 / _090` at **36.7 / 37.6 / 39.7 m**, at
+heading 215° it is `ENV_treeboard_117` at **37.4 m**, and the nearest genuine NEAR tree
+(`ENV_tree_*_LOD1`, which is all `treeMesh` governs) is **127.6 m** away. So `treeMesh` could never have
+been the lever for that frame: every crown the user photographed is an atlas card drawn at ~37 m, and
+the lever is the FAR-tree mesh radius, which was 10 m.
+
+Changed, with the desktop value in brackets:
+`treeMesh` `'0'` → **`'25'`** (80), `shrubLod` `0` → **`25`** (30), `farTreeLight` `'0'` → **`'near'`**
+(the far-tree loader has to run at all for any far-tree mesh to exist), `walkupMesh` `'0'` → **`'0'`**
+— the LOD2 far set (127 k unique tris) rather than the walk-up LOD1 one (472 k), which is the same
+feature at the same radius for a quarter of the memory — `farTreeMesh` → **45 m** (12), which covers the
+37-40 m the shore stance actually looks at, and the atlas darkening eased to `impInt`
+**`'0.45,0.015,0.55'`** (strength halved from 0.90, floor raised from 0.35) for the cards that remain.
+Every one of these is still overridable by query.
+
+| | 6c mobile | Phase 7 mobile | delta |
+|---|---|---|---|
+| resident | 499.7 MB | **561.9 MB** | +62.2 (ceiling 700) |
+| downloaded (the whole load) | 61.49 MB | **65.61 MB** | +4.12 |
+| of that, before the first frame | 52.36 MB | **52.36 MB** | **+0.00** |
+| — texture / render target / geometry | 204.8 / 237.4 / 57.5 | 204.8 / 237.4 / **119.6** | all of it geometry |
+| draws at station 1 | 278 | 340 | +62 |
+| triangles at station 1 | 2.74 M | 4.17 M | +1.43 M |
+| Mac render cost at the orbit (gl.finish, proxy only) | 2.50 ms | 3.40 ms | +0.90 |
+| presented frame time at 1170x2532 | 16.70 ms (vsync) | 16.70 ms (vsync) | — |
+
+Stations 2-6 after: 366 / 4.67 M, 388 / 4.87 M, 206 / 2.43 M, 315 / 3.68 M, 350 / 4.08 M. Raising the
+far radius from 10 m to 45 m changes only two of the six station frames — cam02 +1.16 % whole-frame luma
+on 3.52 % of its pixels, cam03 +0.31 % on 0.81 % — because the LOD2 set carries vertex AO where the
+walk-up LOD1 set does not; the other four are byte-identical.
+
+**The extra bytes are tier 2, not tier 0** (round-1 review 3). Measured with `screenshot.mjs --net` on
+both configurations, `renders/web/p7net_{6c,p7}_net.json`: `bytes_before_first_frame` is *identical* to
+the byte — 52 356 936 in each, over the same 376 requests — because `trees.far_mesh` and `shrubs.lod1`
+are both `load: lazy` in the manifest and are fetched after `window.__pfaReadyAt`. Only `bytes_total`
+moves, 67.24 → 71.37 MB on the wire (uncompressed, off the local server; the 50 MB budget is written in
+post-Brotli CDN bytes, which is a different figure this capture does not produce). So the Phase 7 mobile
+change cannot move the initial-payload definition of done. For the record, the REJECTED walk-up
+configuration downloaded 69.56 MB (+8.06) — twice the shipped set's extra bytes for the same radius.
+
+Memory, attributed by measurement on the same orbit fixture: LOD1 shrubs **+1.7 MB**, near-tree meshes
+**0** (that geometry is already in the mobile payload and was simply never drawn), the LOD2 far-tree set
+**+62.2 MB**, the walk-up LOD1 set (rejected) **+188.3 MB**. Taking the LOD2 set is what pays for the
+45 m radius: 561.9 MB leaves 138 MB under the ceiling where the walk-up set left 10 MB.
+
+**The fix is a geometry change, not a shading one, and the 100 % tile is the evidence**
+(`renders/web/tiles/p7_D_mobile_crown_100.png`, 960 px copy `renders/web/960/p7_D_mobile_crown_tile.jpg`):
+the same crown at 37 m is a featureless dark-green blob as a card and shows individual leaf cards,
+branches and sky through the canopy as a mesh. The competing hypothesis — that alpha-to-coverage at the
+mobile pixel ratio (0.711: a 1170x2532 CSS canvas on an 832x1802 drawing buffer, the 1.5 M pixel cap)
+was fogging the leaf cards — was tested on the same tile once the meshes were drawing and is ruled out:
+`?leafsoft=0` differs on 20.4 % of the tile at MAE 3.3/255 and has MORE hard edges (4.96 % against
+4.08 %), with both showing the same leaf structure. Alpha-to-coverage stays on.
+
+Captures: `renders/web/960/p7_D_mobile_orbit.jpg` (both headings, 6c → the walk-up attempt → the shipped
+LOD2 at 45 m) and `renders/web/960/p7_D_mobile_stations.jpg` (the six stations after).
+
+The orbit fixture is `web/tools/p7.sh orbit`: `__pfaOrbit` around the rotunda centre at 80 m, height
+5 m, headings 253° (the hero's own bearing, from its world matrix) and 215°. 80 m and not 30: 30 m from
+the WORLD ORIGIN is inside the colonnade with no tree in shot, while 80 m stands the camera where the
+user's screenshot stands — about 30 m out from the building's own edge.
+
+### What Phase 7 did not touch
+
+The shrub / reed card STRUCTURE (QA 17 residual 1, owner export), the far-tree tops' own alpha
+(residual 4, owner bake/export), `MAT_reeds` (residual 5) and everything in residual 6. The walk-up
+set's brightness against the atlas card, surfaced by C's S3 pass, is a new item for whoever owns the
+far-tree mesh lighting.
+
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set
