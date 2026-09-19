@@ -931,6 +931,78 @@ bake. `impostors.band` in the manifest drives it and `?impband=0` keeps the octa
   341 px frames a texel is ~2.2 screen px at station 2 instead of 4.5, so it is to be re-swept on the
   REAL atlas — the fixture's content is upscaled 2K and would fit a meaningless number.
 
+### What the baked sidecar says, and what the viewer does with it
+
+`export/out/gate3/band/band.json` (16 atlases, `levelCount: 1` — no mips, so the sampler stays on
+`LinearFilter` with `generateMipmaps: false` and never relies on LOD selection):
+
+* **`azimuth0_deg` is 180 and `azimuth0_blender_dir` is (1, 0, 0)** — the same heading written two
+  ways, 90° apart in the shader's own xy, because the degrees are CLAUDE.md's compass (clockwise
+  from north, north = −X) and the shader works in Blender xy. **The lookup therefore measures from
+  the VECTOR**, and the compass degrees are converted only when a manifest gives no vector. Reading
+  the number in the wrong frame would have rotated 127 trees and still rendered a plausible tree.
+  The sidecar's four cardinals are pinned in the test: (1,0,0) → column 0, −Y → 3, −X → 6, +Y → 9.
+* **Rows 0/20/40° counted from the BOTTOM** (`row_order`, the octahedral convention), elevation
+  measured to the BILLBOARD CENTRE — which is exactly what `vDirBlender` already is.
+* **The six stations see the far crowns from BELOW** (bake: median −2.3 to −3.5°, min −18°), so
+  every station clamps to row 0 and only the aerial reaches rows 1-2. Pinned at −0.5/−2.3/−3.5/−9/−18.
+* **`range` equals the octahedral range** per prototype (`range_same_as_octahedral: true`), so the
+  one `range` uniform decodes both atlases and nothing in the decode changes.
+* **Highlight clipping, from the sidecar itself.** The band was shipped at the octahedral range
+  while its own p99.9 is higher: ×1.05-1.34 on twelve prototypes, ×1.46-1.72 on two eucalypts and
+  **×3.06/×3.17 on the two willows**. Clipped body texels: median 0.49 %, 0.40-0.70 % on most,
+  **1.62 % on willow_s11 and willow_s37**. So flat highlights, if any show, will show on the willows
+  first — the 10-minute re-bake is the lever.
+
+### The real atlas (2026-09-19) — ADOPTED as the default
+
+Boot log, desktop tier, MAIN's synced gate5, no query:
+
+```
+impostor BAND atlas (Phase 8b) on 16/16 prototype(s): 12 azimuth x 3 elevation frames of 341 px
+(inner 325, gutter 8) on a 4096x1024 atlas; azimuth 0 = Blender dir (1.000, 0.000) = compass 180 deg,
+from azimuth0_blender_dir, clockwise seen from above, elevation rows 0/20/40 deg from row 0 at the
+bottom; two-azimuth linear blend, nearest elevation row (?impband=0 reverts)
+impostors: 145 tree(s) ... 12x3 band frames at 341 px on a 4096x1024 atlas, two-azimuth linear
+blend, alpha test 0.33 ... 16/16 atlas(es) loaded, 8.4 MB declared
+```
+
+**The tile is why it is adopted.** `renders/web/tiles/p9band/p9band_cam02_crown_100.png` (960 px
+`renders/web/960/p9band_cam02_crown.jpg`), Cycles | 2K + 0.15 | band 0 | band 0.10 | band 0.25: the
+2K card is the familiar soft blob; the band crown has **limbs, twiggy edges and sky between the
+branch masses**. At the hero, 200 % (`p9band_cam01_crown_200.png`), the crown reads as leaf clumps
+against the balustrade and **the residual dot texture is gone** — the share never engages there.
+
+| capture | crossings cam01 / 02 / 05 | cam01 leaf % (22.2) | cam01 c/e (0.852) | cam02 c/e (0.364) | cam02 level (1.00x) | cam05 c/e (0.960) |
+|---|---|---|---|---|---|---|
+| 2K + 0.15 | 7.99 / 6.97 / 8.53 | 24.1 | 0.566 | 0.434 | 1.09x | 0.910 |
+| band, share 0 | 11.97 / 5.90 / 11.66 | 23.4 | 0.581 | 0.429 | 1.08x | 0.926 |
+| **band, share 0.10** | **11.97 / 7.35 / 11.67** | **23.4** | **0.581** | **0.432** | **1.11x** | **0.926** |
+| band, share 0.25 | 11.97 / 10.19 / 11.68 | 23.4 | 0.581 | 0.446 | 1.14x | 0.926 |
+| Cycles | 11.73 / 7.76 / 15.89 | 22.2 | 0.852 | 0.364 | 1.00x | 0.960 |
+
+**The share now only engages at station 2.** With 341 px frames a texel is about a screen pixel at
+the hero and at station 5, so those two are BYTE-IDENTICAL across the whole sweep (0 / 0.10 / 0.15 /
+0.25 / 0.40) — the resolution alone puts the hero on the reference (11.97 against 11.73). **0.10 is
+adopted** (`IMP_COV.shareBand`): it lands station 2's crossings on the reference (7.35 against 7.76,
+from 5.90 at share 0) for the smallest box movement.
+
+**Cost: none measurable.** 1440p, 120 frames after 24 of warmup, stations 1-6, one session with the
+2K default repeated LAST: 2K **36.30 ms** → band **34.00** → 2K again **32.55**. The drift (−3.75 ms)
+is larger than the difference, so the band sits inside it. Resident is **identical at 1862.9 MB** —
+4096x1024 and 2048x2048 are the same 4 M texels — and the declared payload is *smaller*, 8.4 MB
+against 9.3 MB. Six stations against `?impband=0`: whole-frame luma within 0.006x everywhere, moving
+TOWARD the reference at cam01 (0.930x → 0.933x) and cam05 (0.979x → 0.985x); cam04 is untouched to
+the byte (no far tree in frame); 11-17 % of pixels change at the other five, which is the far-tree
+band itself.
+
+**The willow highlight note.** The bake shipped every band atlas at the OCTAHEDRAL range while the
+band's own p99.9 is higher: ×1.05-1.34 on twelve prototypes, ×1.46-1.72 on two eucalypts and
+**×3.06 / ×3.17 on the two willows**, whose clipped body texels are **1.62 %** against a 0.49 %
+median. Nothing flat is visible in the station tiles (no willow fills a QA crown box), so this is
+reported, not fixed — if a willow crown shows flat highlights at the water's edge in a later round,
+the 10-minute re-bake at the band's own range is the lever.
+
 ### The fixture, and what it proves
 
 `web/tools/p8_band_fixture.py` re-lays the baked 2K octahedral frames as the contract's 12x3 grid
@@ -971,15 +1043,15 @@ repeated LAST as the drift control** (`web/tools/p8_perf_table.py`):
 
 | setting | median frame ms (6 stations) | worst station | draws | tris | resident MB |
 |---|---|---|---|---|---|
-| default (first) | 31.85 | 36.00 | 355 | 5.98 M | 3550.1 |
-| LOD2 @ 60 m | 30.75 (−1.10) | 36.70 | 399 | 6.36 M | 3306.2 (−243.9) |
-| LOD2 @ 120 m | 31.95 (+0.10) | 37.30 | 439 | 6.59 M | 3306.2 (−243.9) |
-| LOD2 all | 34.40 (+2.55) | 40.60 | 575 | 7.21 M | 3306.2 (−243.9) |
-| **default (repeated last)** | **36.75 (+4.90)** | 40.20 | 355 | 5.98 M | 3550.1 |
+| default (first) | 31.85 | 36.00 | 355 | 5.98 M | 1861.3 |
+| LOD2 @ 60 m | 30.75 (−1.10) | 36.70 | 399 | 6.36 M | 1733.4 (−127.9) |
+| LOD2 @ 120 m | 31.95 (+0.10) | 37.30 | 439 | 6.59 M | 1733.4 (−127.9) |
+| LOD2 all | 34.40 (+2.55) | 40.60 | 575 | 7.21 M | 1733.4 (−127.9) |
+| **default (repeated last)** | **36.75 (+4.90)** | 40.20 | 355 | 5.98 M | 1861.3 |
 
 **The drift is bigger than every delta**: the same default measured 31.85 ms first and 36.75 ms last,
 so against a drift-corrected baseline all three LOD2 settings are at or below the default. Memory goes
-DOWN 244 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
+DOWN 127.9 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
 
 Crossings per 100 screen px (lum < 40) and the QA-17 boxes, 1920x1080, cam01 / cam02 / cam05:
 

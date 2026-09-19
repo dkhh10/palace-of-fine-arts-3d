@@ -1081,6 +1081,24 @@ export function normaliseManifest( raw, baseUrl ) {
 						columns: b.columns ?? b.azimuths ?? 12, rows: b.rows ?? ( Array.isArray( b.elevations_deg ) ? b.elevations_deg.length : 3 ) };
 					const bad = Object.entries( g ).filter( ( [ , x ] ) => typeof x !== 'number' || ! ( x > 0 ) ).map( ( [ k ] ) => k );
 					if ( typeof b.azimuth0_deg !== 'number' ) bad.push( 'azimuth0_deg' );
+					// COLUMN 0'S HEADING, as a direction and not as a number in somebody's convention.
+					// The sidecar states BOTH: `azimuth0_blender_dir` (1,0,0) and `azimuth0_deg` 180,
+					// the latter in CLAUDE.md's compass (clockwise from north, north = -X, east = +Y),
+					// so the degrees alone are 90 deg away from this file's atan2(x, y). The vector
+					// wins wherever it is given; the degrees are converted only as a fallback.
+					const a0raw = b.azimuth0_blender_dir || b.azimuth0_dir || null;
+					let a0 = null;
+					if ( Array.isArray( a0raw ) && a0raw.length >= 2
+						&& Number.isFinite( a0raw[ 0 ] ) && Number.isFinite( a0raw[ 1 ] ) ) {
+						const l = Math.hypot( a0raw[ 0 ], a0raw[ 1 ] );
+						if ( l > 1e-6 ) a0 = [ a0raw[ 0 ] / l, a0raw[ 1 ] / l ];
+					}
+					if ( ! a0 && typeof b.azimuth0_deg === 'number' ) {
+						// compass phi -> Blender xy: north = -X, east = +Y, clockwise
+						const phi = b.azimuth0_deg * Math.PI / 180;
+						a0 = [ - Math.cos( phi ), Math.sin( phi ) ];
+					}
+					if ( ! a0 ) bad.push( 'azimuth0_blender_dir' );
 					const el = Array.isArray( b.elevations_deg ) ? b.elevations_deg.map( Number ) : null;
 					if ( ! el || el.length !== g.rows || el.some( ( x ) => ! isFinite( x ) ) ) bad.push( 'elevations_deg' );
 					if ( bad.length ) { g3notes.push( `impostors.band ignored: missing or invalid ${bad.join( ', ' )}` ); return null; }
@@ -1094,17 +1112,38 @@ export function normaliseManifest( raw, baseUrl ) {
 						const t = key ? resolveTexture( key ) : null;
 						const url = t ? t.url : ( key && /\.(ktx2|png)$/i.test( key ) ? resolveUrl( baseUrl, `${dir}${key}` ) : null );
 						if ( ! url ) { missingTex ++; continue; }
-						bp[ name ] = { albedo: url,
+						// THE RANGE IS THE BAND'S OWN.  Today the bake ships every band atlas at the
+						// octahedral range and asserts `range_same_as_octahedral: true` per prototype,
+						// but a re-bake at the band's own range (PFA_BAND_RANGE=band) would change
+						// this number and nothing else - decoding it with the octahedral constant
+						// would silently darken or blow out every crown. So: take the band's range
+						// when it states one, and refuse the prototype when it states neither a range
+						// nor that the octahedral one still applies.
+						const bandRange = Number.isFinite( e && e.range ) ? e.range : null;
+						const sameRange = ( e && e.range_same_as_octahedral === true )
+							|| ( ! e || e.range_same_as_octahedral === undefined ) && b.range_source === 'octahedral';
+						if ( bandRange === null && ! sameRange ) {
+							g3notes.push( `impostors.band: ${name} states neither its own range nor `
+								+ 'range_same_as_octahedral - it keeps the octahedral atlas rather than '
+								+ 'decode at a range nothing verified' );
+							continue;
+						}
+						bp[ name ] = { albedo: url, range: bandRange,
 							bytes: ( t && t.meta && t.meta.bytes ) || ( e && e.bytes ) || 0,
 							crownSphere: ( e && ( e.crown_sphere_m ?? e.crownSphere ) ) ?? null };
 					}
 					if ( missingTex ) g3notes.push( `impostors.band: ${missingTex} prototype(s) name an atlas key that is not in textures.gate3.files` );
 					if ( ! Object.keys( bp ).length ) { g3notes.push( 'impostors.band ignored: no prototype resolved to a band atlas' ); return null; }
-					return { ...g, azimuth0Deg: b.azimuth0_deg, elevationsDeg: el,
+					return { ...g, azimuth0Deg: b.azimuth0_deg, azimuth0Dir: a0,
+						azimuth0From: ( Array.isArray( a0raw ) ? 'azimuth0_blender_dir' : 'azimuth0_deg (compass)' ),
+						elevationsDeg: el,
 						// The row the bake wrote first.  The octahedral atlases are KTXorientation rd
 						// (data row 0 = the TOP) and the viewer flips for them; the band sidecar says
 						// which end row 0 is, and "bottom" is the octahedral convention.
-						rowOrigin: ( String( b.row_origin || 'bottom' ).toLowerCase() === 'top' ) ? 'top' : 'bottom',
+						// `row_origin` if the export names it, else the sidecar's own `row_order`
+						// sentence, which says "counted from the BOTTOM of the image".
+						rowOrigin: ( String( b.row_origin || '' ).trim().toLowerCase() === 'top'
+							|| ( ! b.row_origin && /from the top/i.test( String( b.row_order || '' ) ) ) ) ? 'top' : 'bottom',
 						note: b.note || null, prototypes: bp, count: Object.keys( bp ).length };
 				} )(),
 				prototypes: protos, count: Object.keys( protos ).length };

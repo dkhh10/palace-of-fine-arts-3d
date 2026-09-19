@@ -16,14 +16,19 @@ const close = ( a, b, eps = 1e-6 ) => Math.abs( a - b ) <= eps;
 
 // The contract's own geometry: 12 x 3 frames of 341 px on 4096 x 1024, gutter 8 (the octahedral
 // rule doubled), inner 325.
+// THE REAL SIDECAR'S VALUES (export/out/gate3/band/band.json): azimuth 0 is the Blender view
+// direction (1, 0, 0), which CLAUDE.md's compass calls 180 deg, and the two are 90 deg apart in
+// this file's xy - which is exactly why the lookup measures from the VECTOR.
 const GEOM = { framePx: 341, gutterPx: 8, innerPx: 325, atlasW: 4096, atlasH: 1024,
-	columns: 12, rows: 3, azimuth0Deg: 0, elevationsDeg: [ 0, 20, 40 ], rowOrigin: 'bottom' };
-// A tree -> camera direction in BLENDER Z-up at a given azimuth (deg, clockwise from +Y seen from
-// above) and elevation (deg above the horizon). This is the inverse of what bandSelect does, so a
-// round trip through both is a real test of the convention and not of one formula twice.
+	columns: 12, rows: 3, azimuth0Dir: [ 1, 0 ], azimuth0Deg: 180,
+	elevationsDeg: [ 0, 20, 40 ], rowOrigin: 'bottom' };
+// A tree -> camera direction in BLENDER Z-up at `azDeg` CLOCKWISE FROM COLUMN 0 seen from above and
+// `elDeg` above the horizon, written the way band.json writes it: cell i faces
+// d_xy = ( cos( 30 i ), - sin( 30 i ) ). Deriving the direction this way and the column the other
+// way round is a real test of the convention, not of one formula twice.
 function dirAt( azDeg, elDeg ) {
 	const az = azDeg * Math.PI / 180, el = elDeg * Math.PI / 180;
-	return [ Math.sin( az ) * Math.cos( el ), Math.cos( az ) * Math.cos( el ), Math.sin( el ) ];
+	return [ Math.cos( az ) * Math.cos( el ), - Math.sin( az ) * Math.cos( el ), Math.sin( el ) ];
 }
 
 // ---- 1. the azimuth-0 convention ---------------------------------------------------------------
@@ -31,23 +36,27 @@ function dirAt( azDeg, elDeg ) {
 	const s = bandSelect( dirAt( 0, 0 ), GEOM );
 	check( s.col0 === 0 && close( s.f, 0 ) && s.row === 0,
 		`azimuth0 looks at column 0 exactly (got ${s.col0} + ${s.f.toFixed( 3 )}, row ${s.row})` );
-	// +Y is azimuth 0 by construction, so the direction itself must come back as 0 deg
-	check( close( bandSelect( [ 0, 1, 0 ], GEOM ).azDeg, 0 ), '+Y (Blender) is azimuth 0' );
-	// CLOCKWISE SEEN FROM ABOVE: from +Y the next column is toward +X, not toward -X.
-	check( close( bandSelect( [ 1, 0, 0 ], GEOM ).azDeg, 90 ), '+X is azimuth +90 (clockwise from above)' );
-	check( close( bandSelect( [ - 1, 0, 0 ], GEOM ).azDeg, - 90 ), '-X is azimuth -90' );
+	// the sidecar's own four cardinal cases: (1,0,0) is cell 0 and azimuth grows +X -> -Y -> -X -> +Y
+	check( bandSelect( [ 1, 0, 0 ], GEOM ).col0 === 0 && close( bandSelect( [ 1, 0, 0 ], GEOM ).azDeg, 0 ),
+		'the sidecar\'s azimuth0_blender_dir (1,0,0) IS column 0' );
+	check( bandSelect( [ 0, - 1, 0 ], GEOM ).col0 === 3, '-Y is column 3 (90 deg clockwise from above)' );
+	check( bandSelect( [ - 1, 0, 0 ], GEOM ).col0 === 6, '-X is column 6' );
+	check( bandSelect( [ 0, 1, 0 ], GEOM ).col0 === 9, '+Y is column 9' );
+	// the compass fallback must land on the same heading as the vector, or a manifest that omits
+	// the vector would rotate every tree by 90 deg
+	const viaDeg = bandSelect( [ 1, 0, 0 ], { ...GEOM, azimuth0Dir: null } );
+	check( viaDeg.col0 === 0 && close( viaDeg.f, 0, 1e-9 ),
+		'azimuth0_deg 180 (compass) converts to the same heading as the vector' );
 	// one column step clockwise must land ON column 1 - written as "the weight that ends up on
 	// column 1 is 1", because atan2's round trip puts the boundary at f = 0.9999999 as often as at 0
 	const one = bandSelect( dirAt( 30, 0 ), GEOM );
 	const onCol1 = ( one.col0 === 1 ) ? 1 - one.f : ( one.col1 === 1 ? one.f : 0 );
 	check( onCol1 > 0.9999, `30 deg clockwise is column 1, not column 11 (weight on column 1 ${onCol1.toFixed( 6 )})` );
-	// a non-zero azimuth0 shifts the columns and nothing else
-	const g45 = { ...GEOM, azimuth0Deg: 45 };
-	check( bandSelect( dirAt( 45, 0 ), g45 ).col0 === 0 && close( bandSelect( dirAt( 45, 0 ), g45 ).f, 0 ),
-		'azimuth0_deg = 45: the 45 deg heading is column 0' );
-	const shifted = bandSelect( dirAt( 0, 0 ), g45 );
-	check( shifted.col0 === 10 && shifted.col1 === 11 && close( shifted.f, 0.5 ),
-		'azimuth0_deg = 45: +Y is -45 deg, which wraps to 315 and blends columns 10 and 11' );
+	// another column-0 heading shifts the columns and nothing else
+	const gY = { ...GEOM, azimuth0Dir: [ 0, 1 ] };
+	check( bandSelect( [ 0, 1, 0 ], gY ).col0 === 0, 'a column-0 heading of +Y puts +Y in column 0' );
+	check( bandSelect( [ 1, 0, 0 ], gY ).col0 === 3,
+		'and (1,0,0) is then 90 deg clockwise of it, column 3' );
 }
 
 // ---- 2. the two-azimuth blend and the wrap ------------------------------------------------------
@@ -84,9 +93,12 @@ function dirAt( azDeg, elDeg ) {
 	check( bandSelect( dirAt( 0, 35 ), GEOM ).row === 2, '35 deg -> row 2' );
 	check( bandSelect( dirAt( 0, 80 ), GEOM ).row === 2, 'above the top row it stays on the top row' );
 	check( bandSelect( dirAt( 0, - 10 ), GEOM ).row === 0, 'below the horizon it stays on row 0' );
-	// the stations look at the crowns from 0-15 deg: they must all land on rows 0 or 1
-	for ( const e of [ 0, 3, 7, 12, 15 ] )
-		check( bandSelect( dirAt( 123, e ), GEOM ).row <= 1, `a station elevation of ${e} deg uses row 0 or 1` );
+	// MEASURED BY THE BAKE: the six stations see the far crowns at NEGATIVE elevation (median -2.3
+	// to -3.5 deg, min -18), so every station must clamp to row 0 and only the aerial reaches 1-2.
+	for ( const e of [ - 0.5, - 2.3, - 3.5, - 9, - 18 ] )
+		check( bandSelect( dirAt( 123, e ), GEOM ).row === 0, `a station elevation of ${e} deg uses row 0` );
+	for ( const e of [ 0, 3, 9 ] )
+		check( bandSelect( dirAt( 123, e ), GEOM ).row === 0, `${e} deg above the horizon still uses row 0` );
 }
 
 // ---- 4. the layout arithmetic -------------------------------------------------------------------
@@ -107,6 +119,10 @@ function dirAt( azDeg, elDeg ) {
 	// row_origin: top is the same arithmetic without the flip
 	const top = bandFrameUv( 0, 0, [ 0, 0 ], { ...GEOM, rowOrigin: 'top' } );
 	check( close( top[ 1 ], ( 8 + 0.5 ) / 1024 ), 'row_origin "top" drops the v flip and nothing else' );
+	// the row origin is matched EXACTLY, not by substring: "bottom-to-top" is a bottom-origin
+	// sentence and must not read as "top" (phase8_viewer_r2_review carry)
+	const bt = bandFrameUv( 0, 0, [ 0, 0 ], { ...GEOM, rowOrigin: 'bottom-to-top' } );
+	check( close( bt[ 1 ], 1 - ( 8 + 0.5 ) / 1024 ), 'a row origin that merely CONTAINS "top" is not "top"' );
 }
 
 // ---- 5. the GLSL mirrors this, textually --------------------------------------------------------
@@ -128,21 +144,31 @@ function dirAt( azDeg, elDeg ) {
 	check( mat.uniforms.framePx.value === 341 && mat.uniforms.innerPx.value === 325
 		&& mat.uniforms.gutterPx.value === 8, 'the frame geometry comes from the block, not from the octahedral one' );
 	check( mat.uniforms.pfaBand.value.x === 12 && mat.uniforms.pfaBand.value.y === 3
-		&& close( mat.uniforms.pfaBand.value.z, 0 ), 'columns, rows and azimuth0 reach the shader' );
+		&& close( mat.uniforms.pfaBand.value.z, 180 ),
+	'columns, rows and the compass degrees (for the log only) reach the shader' );
+	check( ! /pfaBand\.z/.test( mat.fragmentShader.split( 'void main()' )[ 1 ] ),
+		'and the lookup never reads that degree' );
 	check( close( mat.uniforms.pfaBandEl.value.y, 20 * Math.PI / 180 ),
 		'the elevations reach the shader in RADIANS' );
 	check( mat.uniforms.rowFromTop.value === 0, 'row_origin "bottom" keeps the octahedral v flip' );
 	check( close( mat.uniforms.pfaImpCov.value.z, IMP_COV.shareBand ),
 		'the band draws with its own swept coverage share' );
 	const src = mat.fragmentShader;
-	check( /atan\( d.x, d.y \) - pfaBand.z/.test( src ),
-		'the shader measures azimuth as atan2(x, y) from azimuth0 — the same convention as bandSelect' );
+	check( /float cth = pfaBandA0.x \* d.x \+ pfaBandA0.y \* d.y;/.test( src )
+		&& /float sth = pfaBandA0.y \* d.x - pfaBandA0.x \* d.y;/.test( src )
+		&& /atan\( sth, cth \)/.test( src ),
+	'the shader measures the angle from column 0\'s own heading, as bandSelect does' );
+	check( close( mat.uniforms.pfaBandA0.value.x, 1 ) && close( mat.uniforms.pfaBandA0.value.y, 0 ),
+		'and that heading reaches it as a vector, not as a degree' );
 	check( /cf = cf - floor\( cf \/ cols \) \* cols;/.test( src ), 'the shader wraps the column the same way' );
+	check( /float i0 = min\( floor\( cf \), cols - 1.0 \);/.test( src ),
+		'and clamps i0 to the last column, which rounding can otherwise step past' );
 	check( /w = vec3\( 1.0 - f, f, 0.0 \);/.test( src ), 'two columns, linear in angle, the third weight 0' );
 	check( /asin\( clamp\( d.z, -1.0, 1.0 \) \)/.test( src ), 'elevation is asin(z), clamped' );
-	check( notes.some( ( m ) => /BAND atlas \(Phase 8b\)/.test( m ) && /azimuth 0 at 0 deg/.test( m )
-		&& /clockwise seen from above/.test( m ) && /elevation rows 0\/20\/40 deg/.test( m ) ),
-	'the boot log states the convention it is drawing with' );
+	check( notes.some( ( m ) => /BAND atlas \(Phase 8b\)/.test( m ) && /1\.000, 0\.000/.test( m )
+		&& /compass 180 deg/.test( m ) && /clockwise seen from above/.test( m )
+		&& /elevation rows 0\/20\/40 deg/.test( m ) && /row 0 at the bottom/.test( m ) ),
+	'the boot log ASSERTS the convention it is drawing with: the heading, its compass value and the row origin' );
 	check( report.band.prototypes === 1 && report.band.available === true,
 		'the report counts the prototypes the band covers' );
 }
