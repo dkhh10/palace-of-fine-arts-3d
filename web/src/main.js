@@ -127,6 +127,8 @@ const CFG = {
 	cardInt: qs.get( 'cardint' ),
 	leafGate: qs.has( 'leafgate' ) ? parseFloat( qs.get( 'leafgate' ) ) : undefined,
 	impInt: qs.get( 'impint' ),
+	// Phase 7 item A — the impostor card edge: 0 | premul | a2c | both (default both).
+	impEdge: qs.get( 'impedge' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
@@ -1075,6 +1077,9 @@ async function setupFoliageAndImpostors() {
 			impostors: manifest.gate3.impostors, far: treesFar, near: nearEntries, note,
 			normalDepth: CFG.impNormalDepth, debug: CFG.impDebug,
 			atlas2k: CFG.imp2k, interior: CFG.impInt,
+			// Phase 7 item A: the card-edge treatment, and whether a multisampled target exists for
+			// its alpha-to-coverage half (the same `msaa` the leaf cards were given).
+			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false,
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
