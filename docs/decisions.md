@@ -965,3 +965,14 @@ The review (docs/reviews/phase8_export_r2_review.md) showed kv-only shrinks blad
 0.12) gives width 18.4 / 23.9 / 21.1 / 25.3 / 22.5 / 19.7 / 12.6 px at coverage 0.93-1.07x, and 0.82-1.03x at the 2.5 m mobile walk-up (no fattening close up). A blade's
 width at 40 m is its card's width for every species but the broadleaf, whose 40 px card is the crown in the user's orbit frames (35.7 -> 18.4 px). Adopted: `iso_cut` as
 UV_TILE_MODE default (`kv25` and `off` kept for the A/B). Re-export ≈ 1 min of Blender, no GPU, in the next Blender window; the shipped env_trees.glb is kv 2.5 until then.
+
+## 2026-09-19 · 8a relight built (phase8a-viewer fffb153): adopted as default; the remaining shrub defect is the cards' magnified leaf texture — routed to the export (8a-3)
+Option B shipped as `?cardsun=0.6,0.8,0.35,0.9,0.38,1,3,1` (sun share with |N·L| — the one-sided cosine made the level view-dependent, backlit station 2 fell to 0.85x —
+times a clump/self-shadow term, sky share, redistributed around the scene mean so g = 1 returns the baked value; `?cardsun=0` byte-identical to today). Eight boxes: level
+held (0.972-1.012 vs a 3 % budget), hard-edge within ±0.2 points and no box newly across the reference, leaf/ref unchanged within 0.02x (reported, not gated), hue toward
+the reference at station 2 only. Perf inside the noise (three paired 1440p runs). Lead viewed the tiles: at the hero the relit and today's frames are hard to tell apart;
+at 3 and 5 the cards read lit-and-shaded but the dominant defect is the shrub cards' leaf texture magnified to 20-40 px "leaves" with black gaps where Cycles has a dense
+small-leaved bush — the far-tree mip defect on a different asset. Decision: merge the relight (small, safe, no cost); the shrub closure moves to an export-side per-card UV
+scale with solved cutoffs (8a-3; analysis by the 8e engineer, then decide, tier-0 impact reported). Carries r3-3/4/5/6 and r2-5b/6 closed on the branch. New caveat: the
+planar water reflector is not session-reproducible (34 % of cam01 pixels below the waterline differ between captures of the same build) — viewer-vs-viewer pixel claims at
+water stations need an A/A mask (web/README.md).
