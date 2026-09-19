@@ -38,6 +38,7 @@ def find(name):
 # The bake engineer's instance_irradiance.json schema ids this writer accepts. /2 adds a `prototypes`
 # block (per-prototype E_bake for the impostor modulation, decisions.md 2026-09-17) on top of /1 and
 # changes no field read here.
+IRR_JOIN_TOL_M = 0.02   # the world-location join grid; also the residual tolerance below
 IRR_SCHEMAS = ("pfa-phase6/gate4-instance-irradiance/1", "pfa-phase6/gate4-instance-irradiance/2")
 
 
@@ -64,20 +65,35 @@ def trees_lighting_block(tf):
     irr = json.loads(ip.read_text())
     assert irr.get("schema") in IRR_SCHEMAS, \
         f"trees_far irr schema {irr.get('schema')!r}, expected one of {sorted(IRR_SCHEMAS)}"
-    rows = {pl["object"]: pl for m in irr["meshes"].values() for pl in m["placements"]}
+    # 8d r2 / review r5 finding 2: the join is BY WORLD LOCATION, which is what the bake file itself
+    # declares its key to be ("key": "WORLD TRANSLATION ... the object name is a label"). Joining by the
+    # TREEFAR_### label was only ever incidentally right: the belt's 39 trees interleave into a name-sorted
+    # list, which re-pointed 87 of the 127 existing labels, so a name join now silently mismatches trees.
+    # A 0.02 m grid on the rounded location is exact here - no two far trees are within 0.2 m of each other
+    # (asserted below) - and it is the same tolerance the residual check uses.
+    def _key(loc):
+        return tuple(round(float(v) / IRR_JOIN_TOL_M) for v in loc)
+    rows = {}
+    for m in irr["meshes"].values():
+        for pl in m["placements"]:
+            k = _key(pl["loc"])
+            assert k not in rows, (f"two baked far-tree rows share the {IRR_JOIN_TOL_M} m location cell "
+                                   f"{k}: {rows[k]['object']} and {pl['object']} - the world-location join "
+                                   f"is not unique and the bake must be re-keyed")
+            rows[k] = pl
     per, missing, worst = [], [], 0.0
     for pl in tf["placements"]:
-        r = rows.get(pl["object"])
+        r = rows.get(_key(pl["loc"]))
         if r is None:
             missing.append(pl["object"])
             continue
-        # the bake keys on WORLD TRANSLATION and carries the object name only as a label; assert the two
-        # agree so a re-baked file in a different order cannot be joined by name alone.
         worst = max(worst, max(abs(float(a_) - float(b_)) for a_, b_ in zip(r["loc"], pl["loc"])))
         per.append(dict(index=pl["index"], object=pl["object"], prototype=pl["prototype"],
                         loc=pl["loc"], rgb=r["rgb"], cov=r.get("cov")))
-    assert not missing, (f"trees_far/instance_irradiance.json has no row for {missing[:4]} "
-                         f"({len(missing)} of {len(tf['placements'])}): re-run the bake's join")
+    assert not missing, (f"trees_far/instance_irradiance.json has no row at the world location of "
+                         f"{missing[:4]} ({len(missing)} of {len(tf['placements'])}): the per-placement "
+                         f"irradiance bake has not been run for these trees - re-run trees_far_set.py, the "
+                         f"tfirr_* jobs and trees_far_compose.py")
     assert worst < 0.02, (f"trees_far/instance_irradiance.json row locations differ from trees_far.json by "
                           f"up to {worst:.4f} m - the two were built from different placements")
     return dict(
@@ -931,6 +947,23 @@ def main():
         tf_glb = next((q for q in (g3.GATE1_OUT / "env_trees.glb",
                                    g3.MAIN_ROOT / "export" / "out" / "gate1" / "env_trees.glb")
                        if q.exists()), None)
+        # review r5 finding 1/3: THE GUARD THAT WOULD HAVE CAUGHT THE BLOCKER. manifest_v4 ran before
+        # trees_far.py was re-run for the belt, so the manifest advertised 127 placements against a
+        # 166-instance glb and the viewer's join would have failed and dropped the whole far-tree layer.
+        # The count and the billboard identity are now tied to the export set, and the glb may not be
+        # older than the report that describes it.
+        assert len(tf["placements"]) == len(man["tree_far"]), (
+            f"trees_far.json has {len(tf['placements'])} placements and the export set "
+            f"{len(man['tree_far'])} far trees - re-run export/trees_far.py AND "
+            f"PFA_TREES_SET=walkup export/trees_far.py BEFORE manifest_v4")
+        _bad = [i for i, pl in enumerate(tf["placements"])
+                if pl["billboard"] != man["tree_far"][i]["billboard"]]
+        assert not _bad, (f"trees_far.json placement {_bad[:4]} name a different billboard than the export "
+                          f"set's tree_far row of the same index - the two were built from different lists")
+        if tf_glb is not None and tf_p.exists():
+            assert tf_glb.stat().st_mtime >= tf_p.stat().st_mtime - 1, (
+                f"{tf_glb.name} is older than {tf_p.name} - the glb was not re-packed after the last "
+                f"trees_far.py run (export/gltf_pack.sh --trees)")
         man["trees"] = dict(far_mesh=dict(
             glb="env_trees.glb",
             bytes=(tf_glb.stat().st_size if tf_glb else None),

@@ -130,9 +130,12 @@ def thickness(mask, max_iter=40):
                 px_max=float(2 * d.max()), pixels=int(mask.sum()))
 
 
-# The crowns the geometry pass says are the nearest ones in the two orbit frames (TREEFAR_117 willow
-# 37.4 m and TREEFAR_001 broadleaf 38.5 m at heading 215; TREEFAR_000 broadleaf 36.7 m and
-# TREEFAR_116 willow 37.7 m at heading 253), plus a 130 m cypress as the far control.  The LIT mask
+# The crowns the geometry pass says are the nearest ones in the two orbit frames: at heading 215 a willow
+# at 37.4 m and a broadleaf at 38.5 m, at heading 253 a broadleaf at 36.7 m and a willow at 37.7 m, plus a
+# 130 m cypress as the far control. The box NAMES carry the TREEFAR_### ids those trees had when the boxes
+# were drawn (r1, pre-belt); 8d's hall-east belt interleaved 39 new names into the name-sorted far list and
+# re-pointed 87 of the 127 ids, so treat the id in a box name as a label, not a reference - the geometry
+# pass recomputes every distance from the placements, so the measurements are unaffected.  The LIT mask
 # over-reads wherever warm stone or the shore band is behind the crown; the DARK half is clean.
 BOXES = [
     dict(name="willow_117_37m_h215", file="gate7_orbit_h02150.png", box=[60, 1000, 600, 1740]),

@@ -654,6 +654,14 @@ def main():
     # checked against the manifest the placements were read from.
     assert len(placements) == len(far), \
         f"{len(placements)} placements for {len(far)} far rows - every far tree must be placed"
+    # r5 finding 6: and `far` itself is pinned against the EXPORT SET, not against itself, so a manifest
+    # left behind by an earlier run cannot quietly shrink this block.
+    _eset = next((q for q in (g1.OUT / "export_set.json", g0.MAIN_ROOT / "export/out/gate1/export_set.json")
+                  if q.exists()), None)
+    if _eset is not None:
+        _want = json.loads(_eset.read_text())["tree_rule"]["far_billboards"]
+        assert len(far) == _want, (f"the manifest has {len(far)} far trees and export_set.json "
+                                   f"{_want} - manifest_v4 has not been re-run for this export set")
 
     # ---- THE PLACED MESH, IN WORLD SPACE, AGAINST THE IMPOSTOR QUAD (per row).
     # This is the check the export did not have: `no.location` was right all along, but the mesh under it

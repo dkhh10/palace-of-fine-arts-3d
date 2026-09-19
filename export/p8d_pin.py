@@ -7,9 +7,13 @@ anything the Gate 2 PBR bakes, the Gate 3 lightmaps, the impostor atlases or the
 addressed by. What is pinned, from the brief and docs/decisions.md "8a export gate":
 
   * uv1 groups / atlas tiles / coverage and uv2 meshes and lightmap slots - identical (the bakes' UV space)
-  * near trees 20 / far billboards 127, and the near and far LISTS identical in content AND order (the
-    billboard index is the impostor atlas' key and the instance rows' order)
-  * ARCH and ORN placed triangles identical; ENV placed = MAIN + 6 900 (the belt) and nothing else
+  * the tree counts AT THEIR CURRENT VALUES (r2, the hall-east belt): trees 186, far billboards 166,
+    LOD2 blobs 85, near 20 - and the near list identical in content and order
+  * the far list is NOT compared by position: `bpy.data.objects` is name-sorted, so the belt's 39 names
+    interleave and re-point 87 of the 127 existing TREEFAR_### ids. What is checked is that the 127
+    existing rows survive with their content and their relative order, that exactly the belt's 39 rows are
+    new, and that every new tree resolves to an ALREADY BAKED impostor prototype
+  * ARCH and ORN placed triangles identical; ENV placed = MAIN - 6 822 (-6 900 icospheres +78 billboards)
   * the lawn group renamed lawn -> backdrop_lawn, with no `..._lawn` group left behind
 
 CPU only: it reads two export_set.json files. The glb byte-identity check (arch/orn/ground) runs after the
@@ -76,9 +80,12 @@ def pin(a, b, out):
     # the interleave itself, recorded rather than assumed: where the new rows landed
     out["far_interleave"] = dict(
         first_new_index=next((i for i, r in enumerate(fb) if key(r) in belt_names), None),
-        billboard_reindexed=sum(1 for i, r in enumerate(fb)
-                                if key(r) not in belt_names and i < len(fa) and
-                                fa[i].get("billboard") != r.get("billboard")),
+        # r5 finding 5: compare each EXISTING tree's billboard id BY THE TREE, not by list position -
+        # position is exactly what the interleave changes, so the old form compared a row with whatever
+        # happened to sit at its index and counted 0. Measured this way: 87 of the 127.
+        billboard_reindexed=sum(1 for r in old_rows
+                                if next((q for q in fa if key(q) == key(r)), {}).get("billboard")
+                                != r.get("billboard")),
         note="bpy.data.objects is name-sorted, so the belt names interleave and every TREEFAR_### index "
              "after the first new name shifts; the impostor atlas and the instance rows are keyed by "
              "PROTOTYPE and by row POSITION within the re-dumped order, both regenerated in this chain, "

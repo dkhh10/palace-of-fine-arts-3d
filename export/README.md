@@ -2420,7 +2420,8 @@ node web/tools/instance_rows.mjs <W>/export/out/gate1/env.glb        <W>/export/
 node web/tools/instance_rows.mjs <W>/export/out/gate1/env_shrubs.glb <W>/export/out/gate3/instance_rows_shrub_lod1.json
 python3 export/gate4_instance_order.py && PFA_ORDER_SET=shrub_lod1 python3 export/gate4_instance_order.py
 python3 export/verify_glb.py && python3 export/gate4_order_selftest.py
-python3 export/manifest_v2.py && python3 export/manifest_v4.py && python3 export/budget_doc.py
+python3 export/manifest_v2.py && python3 export/manifest_v3.py && python3 export/manifest_v4.py \
+  && python3 export/budget_doc.py            # v2 -> v3 -> v4: v3 asserts the carry v2 writes
 export/sync_main.sh                       # gate1 + gate3 MUST reach MAIN before the next line
 python3 export/tiers.py && python3 export/tiers.py --mobile && python3 export/tiers.py --no-pack
 python3 export/verify_glb.py --gate5 && (cd <MAIN>/web && node test/tiers_test.mjs)
@@ -2602,9 +2603,10 @@ scripts/blender_run.sh 1800 -- --background --python export/gate2_set.py
 rm export/out/gate2/bake/ENVBD__backdrop_{building,skylight,roof,roof_tile,forest,hill}.json \
    export/out/gate2/bake/ENVBD__lawn.json export/out/gate2/tex_ktx2/gate2_ENVBD__lawn_*.ktx2
 export/bake_queue.sh --gate2 start                         # GPU; 7 jobs, 52.7 s
-export/gltf_pack.sh --gate2                                # rm -rf's tex_ktx2: restore MAIN's other maps after
+export/gltf_pack.sh --gate2                                # r4 fix: it now replaces only what it re-encodes
 cp export/out/gate2/backdrop_uv1.npz export/out/gate2/backdrop_uv1_shipped.npz   # see below
-python3 export/manifest_v3.py
+# manifest_v2 FIRST: manifest_v3 asserts the `lightmap_encoding` carry that v2 writes (r2 correction)
+python3 export/manifest_v2.py && python3 export/manifest_v3.py
 scripts/blender_run.sh 1200 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
 export/gltf_pack.sh --gate1 ; python3 export/p8d_pin.py --glbs
 scripts/blender_run.sh 900 -- --background <MAIN>/master_delivery.blend --python export/shrub_lod1.py
@@ -2719,3 +2721,20 @@ normal (`gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal`, hero order -0.00019) no
 the geometry contributed +112. `budget_doc` line 288 is back to 99 640 / 11.0 % with the belt named as far
 billboards. arch / orn / ground glbs byte-identical to MAIN; `verify_glb` PASS, `--gate5` PASS desktop and
 mobile, `tiers_test` green, `name_sweep` PASS, `npm test` all passed (three r186).
+
+### r2 follow-ups (review r5, all closed here)
+
+* **`CLASS_BUDGET["ENV"]` stays at 902 000** (the 8a gate's value). The belt SPENDS 6 822 fewer triangles
+  than the icospheres it replaced - 895 052 placed against 902 000 - so the constant needed no decision;
+  it is stated here because r2 changed the placed number and the review asked for the line.
+* **The far-tree counts are now checked in three places at once** (`verify_glb --gate5` check 5): the export
+  set's `tree_rule.far_billboards`, `trees.far_mesh.placements` / `walkup_mesh.count`, and the per-placement
+  lighting rows. Every pair but that one was already checked, which is how the r2 manifest shipped 127
+  placements against a 166-instance glb.
+* **`manifest_v4` joins the per-placement irradiance BY WORLD LOCATION**, which is what
+  `instance_irradiance.json` says its key is ("the object name is a label"). The name join was only
+  incidentally right: the belt's interleave re-pointed 87 of the 127 `TREEFAR_###` ids.
+* **A `TREEFAR_###` id is not a stable reference.** Anything that quotes one - a probe box, a diagnostic, a
+  review note - must be re-read against the current `tree_far` list. `p8e_leaf_probe.py`'s orbit boxes name
+  the trees they measured at the r1 ids; the geometry pass in that probe recomputes them from the
+  placements, so its table is unaffected, but the box LABELS are r1 names.
