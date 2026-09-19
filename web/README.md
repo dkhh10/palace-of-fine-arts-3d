@@ -1376,6 +1376,187 @@ Covered by `web/test/foliage_lazy_test.mjs` §8: a clamped albedo gives a clampe
 (today), a REPEAT albedo gives a REPEAT one (8e), a lazily loaded root re-wraps both, and the
 shared-texture conflict is reported rather than silent.
 
+## Phase 8a — the shrub/reed card relight (`?cardsun=`), 2026-09-19
+
+Option B of `docs/briefs/phase8a_rescope_analysis.md`, decided in `docs/decisions.md`
+("8a decision 2 (re-scope)"). Viewer only: `web/src/foliage.js`, no bake, no export, no MB, no frozen
+material touched. Implemented and measured in one session
+(stage 1 the shader and its unit tests, stage 2 the captures below).
+
+### What was wrong
+
+The LOD2 shrub / reed cards carry no direct sun diffuse at all (`specularOnlySun`) and take instead
+**one baked scene-linear irradiance per placement, added with no cosine**
+(`materials.js`: `irradiance += vPfaInstIrr * scale`). Every texel of every card in a clump therefore
+stands in the same warm light — front and back, sunward side and lee. Measured over the 1 379
+placements the mean is `[ 1.83 1.42 1.36 ]`, G/R 0.774, and `MAT_shrub`'s albedo (hue 100°) renders at
+hue 54 under it; the **same bake's darkest decile** renders that albedo at hue 130. The Cycles
+reference is dark green bushes with gold sunlit rims and deep shadow between them; ours is one flat
+sun-gold mass at the same places and the same sizes. The green the leaf metric wants is already in the
+scene — in the shade the cards never get. Coverage is not the constraint (the card footprint is
+1.04–3.6× the reference's leaf share at all eight QA-17 boxes) and neither is species.
+
+### The maths
+
+Per fragment, with `E` = the placement's flat baked irradiance (the vec3 above):
+
+| step | expression | what it is |
+|---|---|---|
+| sun chroma | `ŝ = pfaSunIrr / luma( pfaSunIrr )`, then `ŝ = mix( 1, ŝ, chroma )` | the **manifest** sun (`LIGHT_sun` `[1.0 0.607 0.0]`, the same uniform three's own direct term uses) at unit luma; `mix` keeps luma exactly 1 because luma is linear |
+| sun share | `f = min( share, 0.98 / max( ŝ ) )` | the sun's share of `E`'s **level**; the clamp keeps the sky share `1 − f·ŝ` ≥ 0.02 in every channel |
+| cosine | `c = mix( N·L, \|N·L\|, two )`, then `nl = clamp( ( c + wrap ) / ( 1 + wrap ), 0, 1 )` | `N` is the shading normal (view space, normal map in it, already flipped toward the camera on a double-sided card). `two = 1` (adopted) uses **\|N·L\|**: a card is a stand-in for a bush VOLUME whose baked irradiance is two-sided, so what decides its sun term is how its plane sits to the SUN, not which side the camera is on — with the one-sided cosine a backlit station is uniformly dark (station 2 measured 0.85x of its level). `wrap` softens the terminator so a per-card constant does not become a hard edge |
+| clump | `clump = 1 − shade · clamp( vPfaCrownD.z, 0, 1 )` | the sun's path through the cluster sphere — the **same vertex term the crown-interior occlusion already computes** (0 on the sunward surface, 1 deep), so inner and lee cards fall back to the sky share. With `?cardint=0` there is no such varying and the factor degenerates to a literal 1 |
+| relative | `g = clamp( nl · clump / mean, 0, cap )` | the sun term relative to its own scene mean |
+| result | `E' = E · max( 0, 1 + amt · f · ŝ · ( g − 1 ) )` | |
+
+Three properties, and they are the reason for that shape:
+
+1. **`?cardsun=0` is today, byte for byte.** At `amt = 0` the program is not patched at all (the test
+   asserts not one 8a token reaches either stage, and the program cache key carries the bit).
+2. **It is a redistribution, not a gain.** At `g = 1` the factor is exactly `1` in every channel, and
+   the factor is affine in `g` below the cap, so `mean( factor ) = factor( mean g )`: a box whose cards
+   average `g = 1` keeps its level **exactly**. The level error of a box is
+   `amt · f · ŝ · ( mean_box( g ) − 1 )`, which is the whole of QA 17's one closed shrub item in one
+   line. `mean` is therefore the single number that must be measured against the captures, and it
+   is (below): 0.38, with `amt` 0.6 chosen by the same constraint.
+3. **The shade chroma is derived, not invented.** With the manifest sun, `ŝ = [ 1.546 0.939 0.0 ]` at
+   `chroma = 1`, and the sky share it leaves (`1 − f·ŝ`) is blue-green — the direction of the bake's
+   own darkest decile `[ 0.68 1.02 2.05 ]`. The adopted `chroma` is **1.0** (the manifest sun itself):
+   the level, not the chroma, turned out to be the binding constraint, so the hue is taken at full
+   strength and the AMOUNT is what was dialled back. At `chroma = 0` the term is a pure level
+   modulation with no hue rotation at all.
+
+At `amt = 1`, the manifest sun and the analysis' first parameter set (share 0.55, wrap 0.5,
+shade 0.6, mean 0.45, chroma 0.65 — the numbers the shipped default was tuned away from), a fully
+sunward card reads `[1.911 1.645 1.235]×` its
+flat value (G/R 0.861, B/R 0.647 — a gold rim) and a lee card `[0.255 0.472 0.807]×` (G/R 1.851,
+B/R 3.168 — dark, green and cool); a card lit exactly at the mean reads `[1.000 1.000 1.000]×`. That is
+the whole effect: the same light, redistributed. (`cardSunFactor` in `src/foliage.js` is the JS mirror of the GLSL and the spec the shader is
+tested against; the two are asserted together in `test/foliage_cardsun_test.mjs`.)
+
+### The switch
+
+`?cardsun=amt[,share[,wrap[,shade[,mean[,chroma[,cap[,two]]]]]]]` — `0` / `off` = today's look,
+`on` = the adopted default. **Adopted: `0.6, 0.8, 0.35, 0.9, 0.38, 1, 3, 1`** (measured below).
+
+| field | default | range | what it does |
+|---|---|---|---|
+| `amt` | **0.6** | 0–1 | how much of the relight is mixed in; 0 leaves the program unpatched |
+| `share` | 0.8 | 0–0.98 | the sun's share of the baked level |
+| `wrap` | 0.35 | 0–4 | wrap-diffuse softening of the terminator (the hard-edge knob) |
+| `shade` | 0.9 | 0–1 | how much of the sun term the clump path removes |
+| `mean` | 0.38 | 0.02–4 | the scene mean of `nl · clump` the term is normalised by — the level knob |
+| `chroma` | 1.0 | 0–1 | how far the sun chroma is taken toward the manifest's (1) or neutral (0) |
+| `cap` | 3 | 1–8 | ceiling on `g`, so a card far above the mean cannot blow out |
+| `two` | 1 | 0–1 | 1 = \|N·L\| (the card's plane against the sun, both faces alike), 0 = the one-sided cosine |
+
+Runtime evidence (r4 review 4): `applyFoliage` prints one `note()` line — the parameter string, how
+many card materials took it, and which were skipped for having no per-placement irradiance — or
+"card relight OFF (?cardsun=0)"; the same three fields (`cardSun`, `cardSunMaterials`,
+`cardSunSkipped`) are in `__pfaInfo().foliage`, so a capture sidecar and a committed log both say
+whether a card was relit. **The desktop and mobile logs committed with this branch predate that
+line**; the mobile re-capture the review asks for is pending the GPU.
+
+It reaches the **lazily loaded** glbs too: `applyFoliage` runs again for `env_trees.glb` and
+`env_shrubs.glb` from `foliageLazy`, whose option bag does not carry this flag, so the pass reads
+`?cardsun=` from the page once (`cardSunFromLocation`) unless the caller passes `cardSun` explicitly.
+A shrub must not be relit differently because of which file it arrived in. The report carries
+`cardSun`, `cardSunMaterials` and `cardSunSkipped` (a card material with no per-placement irradiance is
+named, never patched).
+
+### Stage 2 — what the captures say (2026-09-19, same session, bake queue idle, no Blender alive)
+
+Local `web/dist` against the MAIN checkout's `export/out/gate5`, headless Chrome through
+`scripts/chrome_run.sh`, 1920x1080, stations 1, 2, 3, 5, 6, the gate-9 query set. `ref` is the Phase 5
+**Cycles** frame at that station. Probe `scripts/p8a_relight_boxes.py` (new), tiles
+`web/tools/p8a_tiles.py` (new); numbers in `renders/web/p8a_boxes.txt|json`.
+
+| box | leaf/ref 0 -> adopted (ref) | hard% 0 -> adopted (ref) | level (fn) vs cardsun 0 | leaf hue 0 -> adopted (ref) |
+|---|---|---|---|---|
+| 01 shore shrub/reed | 0.86 -> 0.85 | 3.70 -> 3.82 (1.77) | 1.003 | 54.4 -> 54.4 (63.0) |
+| 01 shore shrub S | 0.82 -> 0.82 | 6.06 -> 5.93 (3.38) | 1.005 | 57.5 -> 57.5 (58.9) |
+| 02 shrub/reed shore | 0.64 -> 0.64 | 9.44 -> 9.64 (3.44) | **0.972** | 71.6 -> **75.7** (90.3) |
+| 02 reed clump SE | 0.85 -> 0.85 | 1.73 -> 1.81 (1.57) | 1.008 | 53.5 -> 53.5 (63.7) |
+| 05 shrub/reed shore | 0.31 -> 0.31 | 4.29 -> 4.27 (4.30) | 1.012 | 55.3 -> 55.3 (61.1) |
+| 05 shrub/reed W | 1.13 -> 1.13 | 8.00 -> 7.90 (4.06) | 1.002 | 58.8 -> 58.8 (58.3) |
+| 03 shrub cards | 0.54 -> 0.52 | 4.85 -> 4.99 (1.48) | 1.005 | 67.2 -> 66.2 (70.9) |
+| 06 shore planting | 1.76 -> 1.76 | 0.52 -> 0.53 (0.20) | 1.000 | 50.1 -> 50.1 (52.1) |
+
+* **The level holds** (the constraint, QA 17's one closed shrub item): the worst box is 0.972x of
+  cardsun 0 against a 3 % budget. `amt` and `mean` were set BY this: the same shape at `amt = 1`
+  reads 0.952x at station 2, `mean` 0.45 with the ONE-sided cosine 0.854x.
+* **The hard-edge share does not take any new box above the reference.** Seven of the eight are
+  already above it at cardsun 0 (a standing QA-16 item, not 8a's); the eighth — 05 shore — stays at
+  4.27 % against the reference's 4.30 %. The movement against cardsun 0 is -0.13 to +0.20 pp.
+* **The leaf-green share is unchanged** (+-0.02x), as the re-scope predicted it would be for any
+  change this size. The leaf HUE moves toward the reference at station 2 (+4.1 deg of an 18.7 deg
+  gap) and 1.0 deg away at station 3.
+* Sweep for the record, station-2 level / its leaf hue: `1,0.8,0.35,0.9,0.38,1,3,1` 0.952 / 77.9;
+  `1,0.8,0.05,0.9,0.30,1,3,1` 0.943 / 79.1; `1,0.8,0.05,0.9,0.45,1,3,1` 0.888 / 90.1 — the
+  reference's own hue, at three times the level budget. The metric can be reached; the level says no.
+
+**The tiles, and the finding that matters** (100 %, Cycles / cardsun 0 / adopted, stations 1, 3, 5 —
+`renders/web/tiles/p8a/`, sheet `renders/web/960/p8a_tiles.jpg`). At station 1 the three panels are
+hard to tell apart. At stations 3 and 5 the relit cards do read as lit-and-shaded rather than one
+flat gold — but the dominant defect in both panels is the one QA 19 found on the far trees: **the
+shrub cards' leaf texture is magnified**, single "leaves" of 20-40 px with black gaps between them,
+where the Cycles reference has a dense small-leaved bush. No shading term fixes a texture drawn four
+times too large; the shrub/reed cards want the 8e export fix (the per-card UV scale `k`).
+
+**Performance** (1440p, the hero, three paired same-session runs): cardsun 0 median frame
+27.5 / 29.3 / 29.9 ms, adopted 29.4 / 28.4 / 28.9 ms, GPU cost median 3.1-3.3 ms in both — inside the
+run-to-run noise, and the adopted build is the faster of the pair in two of the three. Resident bytes
+and draw calls identical (1 814.2 MB, 317 draws). The mobile tier at station 1 loads and draws with
+no shader-patch error (312 draws). The default is confirmed to equal the measured parameter string:
+a capture with no `?cardsun=` differs from `?cardsun=0.6,0.8,0.35,0.9,0.38,1,3,1` on 0.000-0.007 %
+of pixels, which is the scene's own animated dressing, not the shader.
+
+### A capture caveat this round measured — the water is not deterministic between sessions
+
+Two captures of the SAME bundle, same query, `t=0`, differ on **34.2 % of cam01** and 13.3 % of cam05,
+max 200/255 — and every differing pixel is **below the waterline**. The planar Reflector's frame is
+not reproducible session to session, so any viewer-vs-viewer comparison at a water station must mask
+it: take an A/A control (two captures of one build) and read the test difference only on the pixels
+the control calls stable. Above the waterline the same pair is identical. Every pixel-neutrality
+claim about the impostor band was stated on that masked basis and is retracted anyway (see r2-6
+above: those captures were served a stale bundle). The QA-17 box metrics and the whole of the 8a
+relight measurement are unaffected — they were taken before the impostor edit, from bundles that
+built (`da66b1e` parses; the break is `f099e0c`) — but a future "no pixel moved" claim that ignores
+the water will be wrong by a third of the hero frame, and one that ignores the build's exit code
+will be wrong by the whole change.
+
+### Carries taken in this branch (review r3 / r2, each its own commit)
+
+* **r3 3** — `applyFoliageTextures`: one sampler rule for BOTH maps in the eager path (the albedo
+  took the last material of a name, the translucency the first); `albedoWrap` joins `trnWrap`.
+* **r3 4** — `buildDistanceCull`: `pad` = the mesh radius for a non-instanced batch, 0 for an
+  instanced one, so a single-row site-spanning mesh is tested as a SPHERE, not at its origin.
+* **r3 5** — the `__pfaTrisByGroup` note: "must match" -> "must match WITHIN the post chain's
+  full-screen quads", with the measured 4 952 550 vs 4 952 588 / 301 vs 317 in the comment.
+* **r3 6** — item c's CIELAB measurement is now `scripts/p8b_c_cielab.py`; it reproduces the Cycles
+  and viewer columns exactly and shows that the photo column cannot be reproduced from the tree (the
+  box set used on ref_062 was never recorded).
+* **r2 5b** — `impostors.band.rows > 4` now warns instead of being silently truncated by `pfaBandEl`.
+* **r2 6** — the band's third frame is dropped at COMPILE time (`PFA_FRAMES`), 4 texel fetches per
+  band fragment. The per-fragment form (`if ( wk <= 0.0 ) continue;`) is rejected on the spec, not on
+  a measurement: `texelAt` is an implicit-LOD `texture2D` and GLSL ES 1.0 §8.7 leaves its derivatives
+  undefined inside divergent control flow. **RETRACTED (r4 review 1-2): the capture and frame-cost
+  numbers this carry first quoted are void.** The commit that introduced it put backticks inside the
+  GLSL template literal, so `vite build` exited 1 (verified afterwards on the committed blob) and
+  every capture taken after that edit was served the PREVIOUS bundle — both sides of the A/B, and
+  both sides of the stash/pop perf pair, were the same binary. The change is unverified on the GPU;
+  it needs one A/B capture at stations 1-6 and one paired 1440p run when Chrome is free. What does
+  stand is the A/A control below (two captures of one bundle), which is a property of the captures.
+
+### 8e dependency (one-line fix, pixel-neutral today)
+
+`applyFoliageAlbedo` copied the root's sampler onto the shared tinted albedo (`t.wrapS = old.wrapS`)
+but never set `t.needsUpdate`. three r186 applies sampler parameters only inside `uploadTexture`, so on
+a texture the eager near-tree pass has already uploaded (at the glb's clamp) the copy never reached the
+GPU. When 8e ships `env_trees.glb` with REPEAT leaf samplers, the albedo would have kept clamping while
+the translucency map beside it — which has always had the line — re-wrapped. Fixed in
+`src/foliageLazy.js`; every foliage sampler is clamp today, so no pixel moves now.
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set

@@ -1,0 +1,25 @@
+== cam02 CIELAB (D65), boxes light_r16_measure.BOXES['02'] ==
+box            frame           L*      a*      b*      C*    h_ab  b*(mean)     R-B
+shade_pier     cycles       22.52   10.06   -5.01   11.24   333.5     -4.68     1.8
+               photo        49.42   11.61   14.10   18.26    50.5     13.98    50.7
+               viewer       27.56    8.27   -2.72    8.71   341.8     -2.43     4.9
+shade_pier_r   cycles       28.93    8.24  -18.34   20.11   294.2    -19.31   -35.8
+               photo        59.18   11.66   13.22   17.63    48.6     13.19    51.1
+               viewer       33.50    5.62  -10.97   12.32   297.1    -11.73   -21.2
+shade_arch     cycles       22.99    7.32   -3.28    8.03   335.9     -3.06     1.6
+               photo        17.72    3.47    7.49    8.26    65.1      7.87    20.2
+               viewer       30.80    5.80    0.19    5.80     1.9      0.45     7.6
+shade_frieze   cycles       30.11    2.28   12.25   12.46    79.5     13.27    30.1
+               photo        39.45    3.31   10.50   11.01    72.5     10.33    28.1
+               viewer       32.21    1.90   11.44   11.60    80.6     11.94    27.3
+sunlit_pier    cycles       68.57    1.23   31.82   31.84    87.8     32.64    77.3
+               photo        59.87   10.76   15.20   18.62    54.7     15.06    53.6
+               viewer       75.00    0.93   31.45   31.46    88.3     31.41    76.6
+sky            cycles       70.43   -3.41  -25.26   25.49   262.3    -25.26   -82.2
+               photo        89.34   -8.32  -16.02   18.05   242.6    -16.02   -66.0
+               viewer       69.95   -3.44  -25.57   25.80   262.3    -25.57   -83.3
+
+  b* > 0 is warm stone; the item-c defect is b* going NEGATIVE (blue-violet) in the shade.
+  The acceptance the report proposed for the upstream fix: b* >= +5, h_ab 40-80 deg,
+  R-B >= +10 on the three shade boxes, with shade_frieze held at +11.4 +- 1.5.
+  wrote renders/web/p8b_c_cielab.json

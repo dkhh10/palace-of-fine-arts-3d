@@ -1,0 +1,31 @@
+== the eight QA-17 shrub boxes, ?cardsun= captures vs the Cycles reference (baseline p8a_cs0) ==
+box                    tag           leaf%   /ref  hard%    ref     lum   /ref     fn   /base    hue    sat
+01 shore shrub/reed    ref           17.9%  1.00x  1.77%  1.77%    56.6  1.00x  1.00x  0.674x   63.0  0.683
+                       p8a_cs0       15.4%  0.86x  3.70%  1.77%    78.4  1.39x  1.48x  1.000x   54.4  0.524
+                       p8a_adopt     15.2%  0.85x  3.82%  1.77%    78.6  1.39x  1.49x  1.003x   54.4  0.522
+01 shore shrub S       ref           13.6%  1.00x  3.38%  3.38%    93.6  1.00x  1.00x  0.828x   58.9  0.891
+                       p8a_cs0       11.2%  0.82x  6.06%  3.38%   105.5  1.13x  1.21x  1.000x   57.5  0.778
+                       p8a_adopt     11.2%  0.82x  5.93%  3.38%   106.1  1.13x  1.21x  1.005x   57.5  0.778
+02 shrub/reed shore    ref           88.6%  1.00x  3.44%  3.44%    47.3  1.00x  1.00x  0.885x   90.3  0.585
+                       p8a_cs0       56.6%  0.64x  9.44%  3.44%    56.5  1.19x  1.13x  1.000x   71.6  0.636
+                       p8a_adopt     56.9%  0.64x  9.64%  3.44%    54.9  1.16x  1.10x  0.972x   75.7  0.613
+02 reed clump SE       ref           24.9%  1.00x  1.57%  1.57%    48.2  1.00x  1.00x  0.893x   63.7  0.426
+                       p8a_cs0       21.1%  0.85x  1.73%  1.57%    57.1  1.18x  1.12x  1.000x   53.5  0.296
+                       p8a_adopt     21.1%  0.85x  1.81%  1.57%    57.5  1.19x  1.13x  1.008x   53.5  0.296
+05 shrub/reed shore    ref           33.4%  1.00x  4.30%  4.30%    92.3  1.00x  1.00x  0.928x   61.1  0.934
+                       p8a_cs0       10.4%  0.31x  4.29%  4.30%    97.9  1.06x  1.08x  1.000x   55.3  0.517
+                       p8a_adopt     10.4%  0.31x  4.27%  4.30%    99.2  1.07x  1.09x  1.012x   55.3  0.511
+05 shrub/reed W        ref           20.1%  1.00x  4.06%  4.06%   104.9  1.00x  1.00x  1.009x   58.3  0.938
+                       p8a_cs0       22.7%  1.13x  8.00%  4.06%   102.4  0.98x  0.99x  1.000x   58.8  0.949
+                       p8a_adopt     22.6%  1.13x  7.90%  4.06%   102.7  0.98x  0.99x  1.002x   58.8  0.949
+03 shrub cards         ref           26.5%  1.00x  1.48%  1.48%    40.8  1.00x  1.00x  1.122x   70.9  0.834
+                       p8a_cs0       14.2%  0.54x  4.85%  1.48%    58.9  1.44x  0.89x  1.000x   67.2  0.396
+                       p8a_adopt     13.7%  0.52x  4.99%  1.48%    59.2  1.45x  0.90x  1.005x   66.2  0.391
+06 shore planting      ref           20.0%  1.00x  0.20%  0.20%    76.7  1.00x  1.00x  0.935x   52.1  0.412
+                       p8a_cs0       35.4%  1.76x  0.52%  0.20%    80.4  1.05x  1.07x  1.000x   50.1  0.287
+                       p8a_adopt     35.3%  1.76x  0.53%  0.20%    80.4  1.05x  1.07x  1.000x   50.1  0.287
+
+  /base on `fn` is the LEVEL constraint: 1.000 +- 0.03 at every box.
+  hard% must not rise above the reference's column where it is already below it.
+  leaf%/ref is REPORTED (8a decision 2: 1 % of red moves it 2-9 % relative).
+  wrote renders/web/p8a_boxes.json

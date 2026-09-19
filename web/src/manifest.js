@@ -1101,6 +1101,16 @@ export function normaliseManifest( raw, baseUrl ) {
 					if ( ! a0 ) bad.push( 'azimuth0_blender_dir' );
 					const el = Array.isArray( b.elevations_deg ) ? b.elevations_deg.map( Number ) : null;
 					if ( ! el || el.length !== g.rows || el.some( ( x ) => ! isFinite( x ) ) ) bad.push( 'elevations_deg' );
+					// r2 review 5b: the viewer carries the band's elevations in `pfaBandEl`, a vec4,
+					// and the shader's row search is `for ( r < 4 )`.  A band with more than four rows
+					// is therefore TRUNCATED to its first four - silently, until now: the extra rows
+					// simply never win the search and the top of the band samples the wrong elevation.
+					// It is a manifest the viewer cannot serve, not a manifest it can round off, so it
+					// says so instead of drawing something plausible.
+					if ( g.rows > 4 ) g3notes.push( `impostors.band rows ${g.rows} > 4: the viewer's `
+						+ 'elevation uniform is a vec4 and the shader searches four rows, so rows 5+ are '
+						+ 'IGNORED (the band will sample the wrong elevation above row 4) — re-bake the '
+						+ 'band with at most four elevations, or the atlas and the viewer disagree' );
 					if ( bad.length ) { g3notes.push( `impostors.band ignored: missing or invalid ${bad.join( ', ' )}` ); return null; }
 					// Per prototype: the band albedo only.  A prototype the band does not carry keeps
 					// the octahedral atlas, exactly as a missing albedo_2k does.

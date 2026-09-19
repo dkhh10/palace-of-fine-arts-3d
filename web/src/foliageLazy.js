@@ -113,7 +113,13 @@ export function buildDistanceCull( root, { chunk = null, limit } ) {
 			else _row.setFromMatrixPosition( mesh.matrixWorld );
 			rows[ i * 3 ] = _row.x; rows[ i * 3 + 1 ] = _row.y; rows[ i * 3 + 2 ] = _row.z;
 		}
-		if ( s ) batches.push( { mesh, centre: s.center.clone(), radius: rad, rows } );
+		// r3 review 4: for an InstancedMesh the rows ARE the placements and `CULL_MARGIN_M` covers the
+		// crown around each one, so the row test is exact enough.  A NON-instanced mesh has ONE row -
+		// its object origin - and a site-spanning one (a merged group, a chunk that was not split)
+		// would be hidden while its geometry is still on screen.  Its own bounding radius is the pad
+		// that makes the test a SPHERE test instead of an origin test.
+		if ( s ) batches.push( { mesh, centre: s.center.clone(), radius: rad, rows,
+			pad: mesh.isInstancedMesh ? 0 : rad } );
 		stats.drawCalls ++;
 		const idx = mesh.geometry.index;
 		stats.tris += ( idx ? idx.count : mesh.geometry.getAttribute( 'position' ).count ) / 3
@@ -124,12 +130,14 @@ export function buildDistanceCull( root, { chunk = null, limit } ) {
 		const lim = limit();
 		// A non-finite or absurd limit must never hide the set: fall back to "everything visible".
 		if ( ! Number.isFinite( lim ) ) { for ( const b of batches ) b.mesh.visible = true; return batches.length; }
-		const lim2 = lim * lim;
 		const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
 		let on = 0;
 		for ( const b of batches ) {
 			let near = false;
 			const r = b.rows;
+			// the batch's own limit: `lim` for the instanced sets, `lim + radius` where one row has
+			// to stand for a whole mesh (r3 review 4)
+			const l = lim + ( b.pad || 0 ), lim2 = l * l;
 			for ( let i = 0; i < r.length; i += 3 ) {
 				const dx = r[ i ] - cx, dy = r[ i + 1 ] - cy, dz = r[ i + 2 ] - cz;
 				if ( dx * dx + dy * dy + dz * dz <= lim2 ) { near = true; break; }
@@ -264,7 +272,18 @@ export function applyFoliageAlbedo( root, maps, note = () => {}, trnMaps = null 
 			seen.add( mat.uuid );
 			const old = mat.map;
 			if ( old ) {
+				// 8e DEPENDENCY (lead, Phase 8a), GATED (r4 review 5).  three r186 applies sampler
+				// state only inside `uploadTexture`, so a wrap written after the first upload never
+				// reaches the GPU: the eager near-tree pass uploads this ONE shared albedo at the
+				// glb's clamp, and when env_trees.glb arrives with 8e's REPEAT leaf samplers the
+				// copy below would be silently ignored.  But `needsUpdate` bumps `source.version`,
+				// so setting it unconditionally re-uploads the whole multi-MB shared atlas for every
+				// lazily loaded root — today, always, since the wrap it copies is the same clamp
+				// every time.  So: copy first, and ask for the re-upload only when the sampler
+				// actually changed.
+				const reup = t.wrapS !== old.wrapS || t.wrapT !== old.wrapT || t.channel !== old.channel;
 				t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.channel = old.channel;
+				if ( reup ) t.needsUpdate = true;
 				// PHASE 8b ITEM D — the translucency FACTOR map is sampled with these same leaf-card
 				// UVs, so it takes this root's sampler exactly as the albedo does.  Without this the
 				// trn map kept whatever the FIRST pass (env.glb) set, and 8e's REPEAT samplers on
@@ -279,8 +298,12 @@ export function applyFoliageAlbedo( root, maps, note = () => {}, trnMaps = null 
 							+ `(${old.wrapS}/${old.wrapT}) disagrees with ${tr.userData.pfaWrapFrom}'s `
 							+ `(${tr.wrapS}/${tr.wrapT}); the albedo and translucency maps are SHARED, so `
 							+ 'both roots now use this one — the export must patch the samplers together' );
-					tr.wrapS = old.wrapS; tr.wrapT = old.wrapT;
-					tr.needsUpdate = true;
+					// the same gate as the albedo above (r4 review 5: this line has always had the
+					// same property — an unconditional re-upload of a shared texture per root)
+					if ( tr.wrapS !== old.wrapS || tr.wrapT !== old.wrapT ) {
+						tr.wrapS = old.wrapS; tr.wrapT = old.wrapT;
+						tr.needsUpdate = true;
+					}
 					tr.userData.pfaWrapFrom = root.name || 'a lazily loaded glb';
 				}
 			}
@@ -933,12 +956,21 @@ export async function applyFoliageTextures( o ) {
 		// clamped translucency map would then smear its edge texel across every tile while the albedo
 		// tiled correctly, and the defect would read as a translucency artefact, not as a wrap bug.
 		// Today's shipped samplers are all clamp, so this changes no pixel on the current assets.
+		// r3 review 3: ONE sampler rule for BOTH maps.  The albedo replacement and the translucency
+		// factor are one texture object each per material NAME, shared by every material that carries
+		// it, and they are sampled with the same UVs - so the wrap has to be decided once, here, and
+		// written to both.  Before this the translucency took `srcMaps[0]` (the FIRST material of the
+		// name) while the albedo took `mat.map` inside the per-material loop (the LAST one won), so
+		// two eager materials of one name that disagreed about wrap ended with albedo REPEAT and
+		// translucency CLAMP - the exact mis-serve item d exists to prevent - and the note that fired
+		// described only the translucency's choice.
 		const srcMaps = mats.map( ( m ) => m.map ).filter( Boolean );
 		const wrapS = srcMaps.length ? srcMaps[ 0 ].wrapS : THREE.ClampToEdgeWrapping;
 		const wrapT = srcMaps.length ? srcMaps[ 0 ].wrapT : THREE.ClampToEdgeWrapping;
 		if ( srcMaps.some( ( t ) => t.wrapS !== wrapS || t.wrapT !== wrapT ) )
-			note( `foliage translucency ${name}: this material's own albedo samplers disagree about wrap; `
-				+ `taking the first (${wrapS}/${wrapT})` );
+			note( `foliage textures ${name}: this material's own albedo samplers disagree about wrap; `
+				+ `the first (${wrapS}/${wrapT}) is used for BOTH the tinted albedo and the `
+				+ 'translucency factor — the export must patch the samplers of one material name together' );
 		if ( tTex ) {
 			tTex.colorSpace = THREE.NoColorSpace;          // a factor, not a colour
 			tTex.wrapS = wrapS; tTex.wrapT = wrapT;
@@ -955,8 +987,9 @@ export async function applyFoliageTextures( o ) {
 			if ( aTex ) {
 				const old = mat.map;
 				aTex.colorSpace = THREE.SRGBColorSpace;
-				aTex.wrapS = old ? old.wrapS : THREE.ClampToEdgeWrapping;
-				aTex.wrapT = old ? old.wrapT : THREE.ClampToEdgeWrapping;
+				// the SAME decision the translucency map above took, not this material's own
+				aTex.wrapS = wrapS;
+				aTex.wrapT = wrapT;
 				aTex.anisotropy = Math.max( aTex.anisotropy || 1, 8 );
 				aTex.channel = old ? old.channel : 0;
 				aTex.needsUpdate = true;
@@ -964,7 +997,12 @@ export async function applyFoliageTextures( o ) {
 				mat.needsUpdate = true;
 			}
 		}
-		if ( aTex ) { out.albedo ++; out.materials.push( name ); albedoMaps[ name ] = aTex; }
+		if ( aTex ) {
+			aTex.userData.pfaWrapFrom = srcMaps.length ? 'the first pass (the env.glb samplers)' : null;
+			out.albedoWrap = out.albedoWrap || {};
+			out.albedoWrap[ name ] = [ wrapS, wrapT, srcMaps.length ? 'from the glb albedo sampler' : 'no albedo in the glb: clamp' ];
+			out.albedo ++; out.materials.push( name ); albedoMaps[ name ] = aTex;
+		}
 	}
 	out.trnMaps = trnMaps;
 	out.albedoMaps = albedoMaps;

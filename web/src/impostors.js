@@ -216,6 +216,20 @@ const fragmentShader = /* glsl */`
 	// One texel, exactly: the sampler is GL_LINEAR, and a fetch at a texel CENTRE returns that texel
 	// with weights ( 1, 0 ), so no NEAREST sampler and no second texture object is needed.
 	vec4 texelAt( vec2 i ) { return texture2D( atlas, ( i + 0.5 ) / atlasWH ); }
+	// r2 review 6: how many frames the reconstruction below actually blends.  The octahedral lookup
+	// is barycentric over THREE frames; the band blends TWO along the azimuth and takes the nearest
+	// elevation row, so its third weight is always 0 and its taps were pure waste.  It has to be a
+	// COMPILE-TIME count and not a per-fragment 'w.z > 0.0' test: 'texelAt' is an implicit-LOD
+	// texture2D, and an implicit-LOD fetch inside divergent control flow has undefined derivatives
+	// (GLSL ES 1.0 s8.7), so the mip choice would be undefined on exactly the fragments it skipped.
+	// NO BACKTICKS ANYWHERE IN THIS LITERAL: it is a JS template string, and r4 review 1 is what
+	// one backtick in a GLSL comment costs (the module stopped parsing and the viewer stopped
+	// building, for four commits).
+	#ifdef PFA_IMP_BAND
+	const int PFA_FRAMES = 2;
+	#else
+	const int PFA_FRAMES = 3;
+	#endif
 	#endif
 
 	void main() {
@@ -272,7 +286,12 @@ const fragmentShader = /* glsl */`
 			}
 			c0 = vec2( i0, best );
 			c1 = vec2( i1, best );
-			c2 = c1;                                      // unused: its weight is 0
+			// r2 review 6: the band blends TWO frames.  c2 is set so the shared code below has a
+			// defined third frame and its weight is 0; the taps that would read it - four texel
+			// fetches per band fragment in the premul path, one sampleFrame in the straight one,
+			// all multiplied by zero - are dropped at COMPILE time (PFA_FRAMES), never by a
+			// per-fragment test (r4 review 3: there is no wk <= 0.0 test in this file).
+			c2 = c1;
 			w = vec3( 1.0 - f, f, 0.0 );
 		}
 		#else
@@ -315,8 +334,10 @@ const fragmentShader = /* glsl */`
 			vec2 tc[ 3 ];
 			tc[ 0 ] = frameTexel( c0, vQuadUv );
 			tc[ 1 ] = frameTexel( c1, vQuadUv );
+			#ifndef PFA_IMP_BAND
 			tc[ 2 ] = frameTexel( c2, vQuadUv );
-			for ( int k = 0; k < 3; k ++ ) {
+			#endif
+			for ( int k = 0; k < PFA_FRAMES; k ++ ) {
 				vec2 t = tc[ k ];
 				vec2 i0 = floor( t );
 				vec2 fr2 = t - i0;
@@ -337,7 +358,12 @@ const fragmentShader = /* glsl */`
 		#else
 		vec4 s0 = sampleFrame( c0, vQuadUv );
 		vec4 s1 = sampleFrame( c1, vQuadUv );
+		// r2 review 6 again: on the band path w.z is 0 and this fetch was multiplied out below.
+		#ifdef PFA_IMP_BAND
+		vec4 s2 = vec4( 0.0 );
+		#else
 		vec4 s2 = sampleFrame( c2, vQuadUv );
+		#endif
 
 		// STRAIGHT alpha: weight the colour by its own alpha or the gutter bleeds into the silhouette
 		a = w.x * s0.a + w.y * s1.a + w.z * s2.a;

@@ -2035,7 +2035,10 @@ window.__pfaInfo = () => ( {
 		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials,
 		cardMipBias: foliageReport.cardMipBias, leafMipBias: foliageReport.leafMipBias,
 		cardEnv: foliageReport.cardEnv, cardEnvMaterials: foliageReport.cardEnvMaterials,
-		cardEnvAlready: foliageReport.cardEnvAlready },
+		cardEnvAlready: foliageReport.cardEnvAlready,
+		// r4 review 4: the Phase 8a card relight, so a capture sidecar says whether it was on
+		cardSun: foliageReport.cardSun, cardSunMaterials: foliageReport.cardSunMaterials,
+		cardSunSkipped: foliageReport.cardSunSkipped },
 	shrubLod: shrubLodReport,
 	impostorModulation: impModReport,
 	reflectionSet,
@@ -2290,7 +2293,12 @@ window.__pfaTrisByGroup = () => {
 		total_tris: groups.reduce( ( a, g ) => a + g.tris, 0 ),
 		total_draws: groups.reduce( ( a, g ) => a + g.draws, 0 ),
 		info_tris: renderer.info.render.triangles, info_draws: renderer.info.render.calls,
-		note: 'one frame, hooked per submission; info_* is renderer.info for the SAME frame and must match',
+		// r3 review 5: it CANNOT match exactly, and a later agent must not chase the difference.
+		// The hook counts scene-graph submissions; renderer.info for the same frame also counts the
+		// post chain's full-screen quads (2 triangles each) and their draw calls, which are not in
+		// the scene at all.  Measured at station 1: 4 952 550 vs 4 952 588 tris, 301 vs 317 draws.
+		note: 'one frame, hooked per submission; info_* is renderer.info for the SAME frame and must '
+			+ 'match WITHIN the post chain\'s full-screen quads, which are not in the scene graph',
 	};
 };
 window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {

@@ -102,3 +102,7 @@ renders/web/*_cam.json
 # composite under renders/web/960/ are committed, the full-resolution frames are regenerable.
 renders/web/p8b_*.png
 !renders/web/960/*
+
+# Phase 8a — the ?cardsun= captures and the sweep; the 960 px composites under renders/web/ are
+# what is committed (CLAUDE.md image rule), the full-resolution frames are regenerable.
+renders/web/p8a_*.png
