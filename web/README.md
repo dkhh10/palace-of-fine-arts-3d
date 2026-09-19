@@ -585,6 +585,13 @@ and with item B's floor on top (the shipped default, `p7six_6c` → `p7six`): ha
 1.54 → 1.47, 6.03 → 5.04; halo dL −2.06 → −6.83, −0.72 → −2.44, −9.76 → −14.58. The halo RING share
 barely moves because that ring is mostly other foliage at these boxes; what moves is its level relative
 to the background, which is the halo itself, and it moves toward the reference at all three boxes.
+Both halves are verified to ENGAGE rather than assumed (three has to honour `alphaToCoverage` on a
+raw ShaderMaterial for the second one to do anything): `?impedge=premul` against `both` differs on
+0.60-3.10 % of the pixels at cam01/02/05 (that difference is the coverage resolve, at the silhouette)
+and `?impedge=a2c` against `both` on 4.95-6.97 % (that is the premultiplied reconstruction, inside the
+crown). The canvas context is opaque (`alpha` unset, so false), so writing a coverage into
+`gl_FragColor.a` cannot leak the page background through an edge.
+
 The boxes understate this: the defect is at the FAR cards against the sky, which no QA-17 box covers.
 `renders/web/960/p7_A_edge.jpg` (two 200 % crops of the hero's far-tree band, before and after) is where
 it is visible — the stair-stepped silhouettes with a whitish fringe become soft edges with the leaf
