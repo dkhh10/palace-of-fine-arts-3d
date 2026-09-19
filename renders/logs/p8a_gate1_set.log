@@ -1,14 +1,14 @@
-00:00.430  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+00:00.663  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
 Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
-Info: Deleted 4879 data-block(s)
+Info: Deleted 4875 data-block(s)
 Info: No orphaned data-blocks to purge
 Info: No orphaned data-blocks to purge
 Info: Saved copy as "gate1_set.blend"
-Info: Deleted 198 data-block(s)
+Info: Deleted 202 data-block(s)
 Info: No orphaned data-blocks to purge
 Info: No orphaned data-blocks to purge
 Info: Saved copy as "gate1_bake.blend"
-[gate0] STEP gate1_export_set wall_s=153.3 gate1_set.blend=205888686B gate1_bake.blend=118144108B export_set.json=1258398B manifest.json=1339670B placed=2844512 arch=949382 orn=1099192 env=795938 unique=932087 objects=2540 meshes=139 batches=149 near_trees=15 far_trees=132 removed=9664
-[gate1] totals {"placed_tris": {"ARCH": 949382, "ORN": 1099192, "ENV": 795938}, "placed_total": 2844512, "unique_tris": {"ARCH": 351374, "ORN": 112897, "ENV": 467816}, "unique_total": 932087, "objects": {"ARCH": 564, "ORN": 436, "ENV": 1540}, "unique_meshes": 139, "budget": {"ARCH": 1100000, "ORN": 1100000, "ENV": 800000}, "budget_total": 3000000, "draw_call_batches": 149}
-[gate1] tree rule {"trees_total": 147, "within_radius": 77, "near_exported": 15, "far_billboards": 132, "lod2_blob_objects": 46, "lod2_blob_within_radius": 28, "thin_fraction": 0.5, "near_tris_budget": 296894, "near_tris_used": 292862, "cut": "the near list is the `within_radius` set truncated by the ENV budget, closest to the walk first; the remainder joins the impostor list (docs/briefs/phase6_plan.md section 4b, user's decision)"}
-blender_run.sh: pid 49708 exited rc=0 after 155 s (max 2400)
+[gate0] STEP gate1_export_set wall_s=140.0 gate1_set.blend=210982839B gate1_bake.blend=118144108B export_set.json=1259354B manifest.json=1338663B placed=2943548 arch=949382 orn=1099192 env=894974 unique=1010947 objects=2540 meshes=143 batches=157 near_trees=20 far_trees=127 removed=9664
+[gate1] totals {"placed_tris": {"ARCH": 949382, "ORN": 1099192, "ENV": 894974}, "placed_total": 2943548, "unique_tris": {"ARCH": 351374, "ORN": 112897, "ENV": 546676}, "unique_total": 1010947, "objects": {"ARCH": 564, "ORN": 436, "ENV": 1540}, "unique_meshes": 143, "budget": {"ARCH": 1100000, "ORN": 1100000, "ENV": 902000}, "budget_total": 3000000, "draw_call_batches": 157}
+[gate1] tree rule {"trees_total": 147, "within_radius": 77, "near_exported": 20, "far_billboards": 127, "lod2_blob_objects": 46, "lod2_blob_within_radius": 28, "thin_fraction": 0.5, "near_tris_budget": 398894, "near_tris_used": 391908, "cut": "the near list is the `within_radius` set truncated by the ENV budget, closest to the walk first; the remainder joins the impostor list (docs/briefs/phase6_plan.md section 4b, user's decision)"}
+blender_run.sh: pid 50906 exited rc=0 after 144 s (max 2400)
