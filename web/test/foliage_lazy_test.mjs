@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process';
 import { normaliseManifest } from '../src/manifest.js';
 import { irradianceRatio, applyFoliage, farTreeIrradiance, RATIO_RULES, ratioRules } from '../src/foliage.js';
 import { lazyUrlCandidates, loadFarTrees, markShrubLodRows, prototypeEbake,
-	loadFarTreeLighting } from '../src/foliageLazy.js';
+	loadFarTreeLighting, buildDistanceCull } from '../src/foliageLazy.js';
 import { buildImpostors } from '../src/impostors.js';
 
 let fails = 0;
@@ -334,6 +334,64 @@ function makeRoot() {
 	const c0 = raw.trees.far_mesh.color0 || {};
 	info( `COLOR_0: present=${c0.present} topology_rev=${c0.topology_rev} range=${c0.range} encode="${String( c0.encode ).slice( 0, 60 )}"` );
 	ok( true, 'E_bake and COLOR_0 presence reported' );
+}
+
+// ---------------------------------------------------------------- 7. the distance cull (Phase 8b a)
+{
+	// Two instanced batches: one at the origin, one 200 m away.  A limit of 40 m must keep the first
+	// and hide the second, and a limit past both must keep both - the whole contract of the CPU cull
+	// the shrub LOD1 set was missing (QA 20 §2).
+	const root = new THREE.Object3D();
+	const geo = new THREE.BoxGeometry( 1, 1, 1 );      // 12 triangles
+	const mk = ( name, x ) => {
+		const m = new THREE.InstancedMesh( geo, new THREE.MeshBasicMaterial(), 4 );
+		m.name = name;
+		for ( let i = 0; i < 4; i ++ ) m.setMatrixAt( i, new THREE.Matrix4().makeTranslation( x + i, 0, 0 ) );
+		m.instanceMatrix.needsUpdate = true;
+		root.add( m );
+		return m;
+	};
+	const near = mk( 'near', 0 ), far = mk( 'far', 200 );
+	root.updateMatrixWorld( true );
+	let lim = 40;
+	const cull = buildDistanceCull( root, { chunk: null, limit: () => lim } );
+	ok( cull.stats.batches === 2, `two batches registered (${cull.stats.batches})` );
+	ok( cull.stats.tris === 96, `8 boxes x 12 tris = 96 placed triangles (${cull.stats.tris})` );
+	const cam = new THREE.PerspectiveCamera();
+	cam.position.set( 0, 0, 0 );
+	let on = cull.update( cam );
+	ok( near.visible === true && far.visible === false && on === 1,
+		`at the origin with a 40 m limit only the near batch is submitted (on=${on})` );
+	cam.position.set( 200, 0, 0 );
+	on = cull.update( cam );
+	ok( near.visible === false && far.visible === true && on === 1,
+		`200 m away it is the other way round (on=${on})` );
+	lim = 1000;
+	on = cull.update( cam );
+	ok( near.visible === true && far.visible === true && on === 2, `a limit past both keeps both (on=${on})` );
+	// a limit that is not a number must never hide geometry
+	lim = NaN;
+	cam.position.set( 0, 0, 0 );
+	on = cull.update( cam );
+	ok( near.visible === true && far.visible === true && on === 2, 'a non-finite limit draws everything' );
+	// and chunking a site-spanning batch tightens it: 4 rows over 200 m split into regional chunks
+	const root2 = new THREE.Object3D();
+	const wide = new THREE.InstancedMesh( geo, new THREE.MeshBasicMaterial(), 8 );
+	wide.name = 'wide';
+	for ( let i = 0; i < 8; i ++ ) wide.setMatrixAt( i, new THREE.Matrix4().makeTranslation( i * 40, 0, 0 ) );
+	wide.instanceMatrix.needsUpdate = true;
+	root2.add( wide );
+	root2.updateMatrixWorld( true );
+	const c2 = buildDistanceCull( root2, { chunk: { minRadius: 12, minCount: 2, maxDepth: 3, gain: 0.95, budget: 128 },
+		limit: () => 40 } );
+	info( `chunking: ${c2.stats.split} batch(es) split into ${c2.stats.chunks}, +${c2.stats.added} draw call(s), `
+		+ `${c2.stats.batches} batch(es), ${c2.stats.tris} placed tris` );
+	ok( c2.stats.batches > 1, 'the site-spanning batch was split, so the cull has spatial granularity' );
+	ok( c2.stats.tris === 96, `and no triangle was gained or lost by the split (${c2.stats.tris})` );
+	const cam2 = new THREE.PerspectiveCamera();
+	cam2.position.set( 0, 0, 0 );
+	const on2 = c2.update( cam2 );
+	ok( on2 < c2.stats.batches, `at one end of it ${on2} of ${c2.stats.batches} chunk(s) are submitted` );
 }
 
 console.log( fails ? `${fails} FAILURES` : 'all foliage-lazy checks passed' );

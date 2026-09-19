@@ -147,6 +147,10 @@ const CFG = {
 	imp2k: qs.get( 'imp2k' ) !== '0',                   // the 2K impostor atlas variant on desktop
 	// undefined = "not asked", so the manifest's own dist_m still wins; an explicit value always does
 	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : undefined,   // LOD1 within this many metres
+	// Phase 8b item a: the CPU-side distance cull on the shrub/reed LOD1 set.  "0" restores the
+	// pre-8b behaviour (the whole set submitted at every station, the dissolve doing the work in the
+	// fragment shader) for the A/B; a number is the chunking budget in ADDED draw calls.
+	shrubCull: qs.get( 'shrubcull' ),
 	// 6c round 2, the two lazily loaded glbs and the foliage material textures
 	farTreeLight: ( qs.get( 'fartreelight' ) || 'near' ).toLowerCase(),   // near | probe | 0
 	shrubEnv: qs.has( 'shrubenv' ) ? parseFloat( qs.get( 'shrubenv' ) ) : undefined,  // env term on the LOD1 shrubs
@@ -358,6 +362,7 @@ let composer, lutPass, water, manifest, stations, sunLight, billboards = null, p
 let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
 let foliageReport = null, shrubLodReport = null, skySphereIntegral = null, impModReport = null;
 let farTreeReport = null, shrubLod1Report = null, foliageTexReport = null, farTreeUpdate = null;
+let shrubLodUpdate = null;     // Phase 8b item a: the shrub LOD1 set's own per-frame distance cull
 let farTreeLighting = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
@@ -1227,8 +1232,9 @@ async function loadLazyFoliage() {
 	renderFrame();
 	await new Promise( ( r ) => requestAnimationFrame( r ) );
 	try {
-		shrubLod1Report = await loadShrubLod1( { ...common, envScale: CFG.shrubEnv,
+		shrubLod1Report = await loadShrubLod1( { ...common, envScale: CFG.shrubEnv, cull: CFG.shrubCull,
 			dist: shrubLodReport ? shrubLodReport.dist : 30, mode: CFG.shrubLod === 0 ? '0' : 'on' } );
+		if ( shrubLod1Report && shrubLod1Report.update ) shrubLodUpdate = shrubLod1Report.update;
 	} catch ( e ) { note( `shrub/reed LOD1 FAILED: ${e.message}` ); shrubLod1Report = { errors: [ e.message ] }; }
 	if ( farTreeUpdate ) farTreeUpdate( camera );
 	renderFrame();
@@ -1915,6 +1921,9 @@ function renderFrame() {
 	// whole bounding sphere is beyond it is hidden before three sees it.  254 instance rows x ~8 k
 	// tris would otherwise be vertex-shaded every frame for fragments the dissolve throws away.
 	if ( farTreeUpdate ) farTreeUpdate( camera );
+	// Phase 8b item a: the same for the shrub/reed LOD1 set, which until this round was submitted in
+	// full at every station (QA 20 §2) although its dissolve discards every fragment beyond 25/30 m.
+	if ( shrubLodUpdate ) shrubLodUpdate( camera );
 	if ( billboards && camera.position.distanceToSquared( _lastCamPos ) > 1e-6 ) {
 		aimBillboards( billboards, camera );
 		_lastCamPos.copy( camera.position );
@@ -2153,6 +2162,59 @@ function residentBytes() {
 			+ 'mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer',
 	};
 }
+/**
+ * PHASE 8b ITEM A — which group pays for the frame's triangles.
+ *
+ * `renderer.info.render` gives the frame's TOTAL submitted triangles and draw calls; it cannot say
+ * which glb they came from, and QA 20 had to infer `env_shrubs.glb`'s +463 922 from the difference
+ * between two gates.  This renders ONE frame with a counting hook on every mesh (three calls
+ * `onBeforeRender` exactly once per actual submission, so the water Reflector's second pass is
+ * counted too, and a mesh the frustum or a `visible = false` rejected is not), attributes each
+ * submission to the scene-level ancestor it hangs under, and removes the hooks again.  It costs
+ * nothing when it is not called, and its total is checked against `renderer.info` by the caller.
+ */
+window.__pfaTrisByGroup = () => {
+	const hooked = [], tally = new Map();
+	const label = ( o ) => {
+		let n = o;
+		while ( n.parent && n.parent !== scene ) n = n.parent;
+		return n.name || n.type || '(unnamed)';
+	};
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		const name = label( o );
+		const had = Object.prototype.hasOwnProperty.call( o, 'onBeforeRender' );
+		const prev = o.onBeforeRender;
+		o.onBeforeRender = function ( r, s, cam, geo, mat, grp ) {
+			prev.call( this, r, s, cam, geo, mat, grp );
+			const g = geo || this.geometry;
+			const idx = g.index;
+			// a material GROUP submits only its own index range; otherwise the whole geometry
+			const count = ( grp && Number.isFinite( grp.count ) )
+				? Math.min( grp.count, idx ? idx.count : g.getAttribute( 'position' ).count )
+				: ( idx ? idx.count : g.getAttribute( 'position' ).count );
+			const t = tally.get( name ) || { tris: 0, draws: 0, meshes: new Set() };
+			t.tris += count / 3 * ( this.isInstancedMesh ? this.count : 1 );
+			t.draws ++;
+			t.meshes.add( this.uuid );
+			tally.set( name, t );
+		};
+		hooked.push( [ o, had, prev ] );
+	} );
+	try { renderFrame(); } finally {
+		for ( const [ o, had, prev ] of hooked ) { if ( had ) o.onBeforeRender = prev; else delete o.onBeforeRender; }
+	}
+	const groups = [ ...tally.entries() ]
+		.map( ( [ group, t ] ) => ( { group, tris: Math.round( t.tris ), draws: t.draws, meshes: t.meshes.size } ) )
+		.sort( ( a, b ) => b.tris - a.tris );
+	return {
+		groups,
+		total_tris: groups.reduce( ( a, g ) => a + g.tris, 0 ),
+		total_draws: groups.reduce( ( a, g ) => a + g.draws, 0 ),
+		info_tris: renderer.info.render.triangles, info_draws: renderer.info.render.calls,
+		note: 'one frame, hooked per submission; info_* is renderer.info for the SAME frame and must match',
+	};
+};
 window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	const t = [];
 	let last = performance.now();

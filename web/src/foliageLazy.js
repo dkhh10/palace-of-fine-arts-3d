@@ -67,6 +67,82 @@ function walkupDist( o, block ) {
 const NEAR_LIGHT_MAX_M = 220;     // the site is 250 x 166 m: beyond this "the nearest crown" is meaningless
 
 /**
+ * PHASE 8b ITEM A — the CPU side of a distance switch, shared by the far-tree meshes and the
+ * shrub/reed LOD1 set.
+ *
+ * Both sets are drawn by a fragment dissolve (`pfaSwitchDist` / `pfaSwitchSign`): beyond the switch
+ * distance every fragment is discarded.  A discard costs the whole vertex shader and the whole
+ * rasterisation first, and `renderer.info` counts the SUBMITTED triangle either way, so a set that
+ * is invisible at a station is still paid for in full there.  QA 20 measured exactly that on
+ * `env_shrubs.glb`: +463 922 triangles per pass at every station, +1.12 M per frame at the five
+ * water stations (the planar Reflector draws the scene a second time), on mobile too.
+ *
+ * The cure is pure culling — nothing about WHAT is drawn changes, only whether it is submitted:
+ *   1. `chunkInstancedMeshes` splits a site-spanning EXT_mesh_gpu_instancing batch into regional
+ *      InstancedMeshes, each with a bounding sphere three's frustum test can bite on;
+ *   2. per frame, a batch whose every ROW is beyond the switch limit is hidden outright.
+ * The test is per ROW and not against the batch's bounding sphere, because a chunk scattered over
+ * 60 m has a 30 m radius and `distance - radius` is small almost everywhere, so the batch would be
+ * submitted at every station anyway.  A few hundred rows is nothing to test per frame.
+ *
+ * @param {THREE.Object3D} root    the loaded glb scene
+ * @param {object|null} o.chunk    chunkInstancedMeshes options, or null to skip the split
+ * @param {function} o.limit       () => metres; a row nearer than this keeps its batch visible
+ * @returns {{stats:object, update:function, batches:Array}}
+ */
+export function buildDistanceCull( root, { chunk = null, limit } ) {
+	const stats = { chunks: 0, split: 0, added: 0, batches: 0, drawCalls: 0, tris: 0 };
+	if ( chunk ) {
+		const ch = chunkInstancedMeshes( root, chunk );
+		stats.chunks = ch.chunks; stats.split = ch.split; stats.added = ch.added;
+	}
+	const batches = [];
+	const _row = new THREE.Vector3();
+	root.traverse( ( mesh ) => {
+		if ( ! mesh.isMesh ) return;
+		mesh.frustumCulled = true;
+		if ( ! mesh.geometry.boundingSphere ) mesh.geometry.computeBoundingSphere();
+		if ( mesh.isInstancedMesh ) mesh.computeBoundingSphere();
+		const s = ( mesh.isInstancedMesh ? mesh.boundingSphere : mesh.geometry.boundingSphere );
+		const n = mesh.isInstancedMesh ? mesh.count : 1;
+		const rows = new Float32Array( n * 3 );
+		const rad = ( s ? s.radius : 0 );
+		for ( let i = 0; i < n; i ++ ) {
+			if ( mesh.isInstancedMesh ) _row.setFromMatrixPosition(
+				_m4.fromArray( mesh.instanceMatrix.array, i * 16 ).premultiply( mesh.matrixWorld ) );
+			else _row.setFromMatrixPosition( mesh.matrixWorld );
+			rows[ i * 3 ] = _row.x; rows[ i * 3 + 1 ] = _row.y; rows[ i * 3 + 2 ] = _row.z;
+		}
+		if ( s ) batches.push( { mesh, centre: s.center.clone(), radius: rad, rows } );
+		stats.drawCalls ++;
+		const idx = mesh.geometry.index;
+		stats.tris += ( idx ? idx.count : mesh.geometry.getAttribute( 'position' ).count ) / 3
+			* ( mesh.isInstancedMesh ? mesh.count : 1 );
+	} );
+	stats.batches = batches.length;
+	const update = ( camera ) => {
+		const lim = limit();
+		// A non-finite or absurd limit must never hide the set: fall back to "everything visible".
+		if ( ! Number.isFinite( lim ) ) { for ( const b of batches ) b.mesh.visible = true; return batches.length; }
+		const lim2 = lim * lim;
+		const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+		let on = 0;
+		for ( const b of batches ) {
+			let near = false;
+			const r = b.rows;
+			for ( let i = 0; i < r.length; i += 3 ) {
+				const dx = r[ i ] - cx, dy = r[ i + 1 ] - cy, dz = r[ i + 2 ] - cz;
+				if ( dx * dx + dy * dy + dz * dz <= lim2 ) { near = true; break; }
+			}
+			b.mesh.visible = near;
+			if ( near ) on ++;
+		}
+		return on;
+	};
+	return { stats, update, batches };
+}
+
+/**
  * Where a lazily loaded file may be.  The 6c manifest blocks name `env_trees.glb` / `env_shrubs.glb`
  * with no directory and `out/gate3/foliage/tex_ktx2` with the OUT root still in it, while every other
  * path in the manifest is relative to the manifest itself (`../gate1/env.glb`, `../gate0/lut...`).
@@ -592,62 +668,22 @@ export async function loadFarTrees( o ) {
 	// its own bounding sphere (so three's frustum test bites) and the per-frame test below hides any
 	// chunk whose whole sphere is beyond the switch distance.  Both are pure culling: nothing about
 	// what is drawn changes, only whether it is submitted.
-	const ch = chunkInstancedMeshes( root, { minRadius: 12, minCount: 2, maxDepth: 3, gain: 0.95, budget: 256 } );
-	out.chunks = ch.chunks; out.split = ch.split; out.added = ch.added;
-	const batches = [];
-	const _row = new THREE.Vector3();
-	root.traverse( ( mesh ) => {
-		if ( ! mesh.isMesh ) return;
-		mesh.frustumCulled = true;
-		if ( ! mesh.geometry.boundingSphere ) mesh.geometry.computeBoundingSphere();
-		if ( mesh.isInstancedMesh ) mesh.computeBoundingSphere();
-		const s = ( mesh.isInstancedMesh ? mesh.boundingSphere : mesh.geometry.boundingSphere );
-		// The test below is against each ROW's own trunk, not the batch's bounding sphere: a chunk of
-		// trees scattered over 60 m has a 30 m radius, so `distance - radius` is small almost
-		// everywhere and the batch would be submitted at every station (measured: 0.93 M triangles
-		// drawn for fragments the 12 m dissolve throws away).  254 rows is nothing to test per frame.
-		const n = mesh.isInstancedMesh ? mesh.count : 1;
-		const rows = new Float32Array( n * 3 );
-		const rad = ( s ? s.radius : 0 );
-		for ( let i = 0; i < n; i ++ ) {
-			if ( mesh.isInstancedMesh ) _row.setFromMatrixPosition(
-				_m4.fromArray( mesh.instanceMatrix.array, i * 16 ).premultiply( mesh.matrixWorld ) );
-			else _row.setFromMatrixPosition( mesh.matrixWorld );
-			rows[ i * 3 ] = _row.x; rows[ i * 3 + 1 ] = _row.y; rows[ i * 3 + 2 ] = _row.z;
-		}
-		if ( s ) batches.push( { mesh, centre: s.center.clone(), radius: rad, rows } );
-		out.drawCalls ++;
-		const idx = mesh.geometry.index;
-		out.tris += ( idx ? idx.count : mesh.geometry.getAttribute( 'position' ).count ) / 3
-			* ( mesh.isInstancedMesh ? mesh.count : 1 );
-	} );
 	const shared = o.foliageReport ? o.foliageReport.shared.uniforms : null;
-	out.update = ( camera ) => {
+	const cull = buildDistanceCull( root, {
+		chunk: { minRadius: 12, minCount: 2, maxDepth: 3, gain: 0.95, budget: 256 },
 		// the FAR trees' own distance, not the shared (near-tree) one - otherwise 1.0 M triangles are
-		// submitted out to 40 m for fragments the dissolve throws away at 12
-		const d = farDist;
-		const band = shared && shared.pfaFadeBand ? shared.pfaFadeBand.value : 5;
+		// submitted out to 40 m for fragments the dissolve throws away at 12.
 		// + CULL_MARGIN_M because the WATER draws the scene a second time from the mirrored camera,
 		// which stands a few metres further from a tree than this one does.  Without the margin a tree
 		// right at the switch could be culled for the main camera while the reflection's own dissolve
 		// wanted to draw it - and its impostor, being the exact complement, would not draw either.
-		const lim = d + band + CULL_MARGIN_M;
-		let on = 0;
-		const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
-		const lim2 = lim * lim;
-		for ( const b of batches ) {
-			let near = false;
-			const r = b.rows;
-			for ( let i = 0; i < r.length; i += 3 ) {
-				const dx = r[ i ] - cx, dy = r[ i + 1 ] - cy, dz = r[ i + 2 ] - cz;
-				if ( dx * dx + dy * dy + dz * dz <= lim2 ) { near = true; break; }
-			}
-			b.mesh.visible = near;
-			if ( near ) on ++;
-		}
-		return on;
-	};
-	out.batches = batches.length;
+		limit: () => farDist + ( shared && shared.pfaFadeBand ? shared.pfaFadeBand.value : 5 ) + CULL_MARGIN_M,
+	} );
+	const ch = cull.stats;
+	out.chunks = ch.chunks; out.split = ch.split; out.added = ch.added;
+	out.drawCalls = ch.drawCalls; out.tris = ch.tris;
+	out.update = cull.update;
+	out.batches = ch.batches;
 	root.visible = true;
 	out.wall_s = ( performance.now() - t0 ) / 1000;
 	note( `far-tree meshes: ${out.glb.split( '/' ).pop()} in ${out.wall_s.toFixed( 2 )} s — `
@@ -755,6 +791,34 @@ export async function loadShrubLod1( o ) {
 	};
 	out.lod1Materials = setSwitch( fol, 1 );
 
+	// PHASE 8b ITEM A — the CPU side of that switch.  Until this round the LOD1 set had only the
+	// fragment dissolve above: every one of its 463 922 triangles was submitted at every station and
+	// in the water's mirrored pass as well, for fragments that are discarded the moment the walker is
+	// more than `dist` metres away (QA 20 §2, +1.12 M triangles per frame at the five water stations).
+	// `?shrubcull=0` restores that behaviour for the A/B; `?shrubcull=<n>` tunes the chunk budget.
+	if ( o.cull !== '0' ) {
+		const budget = Number.isFinite( parseFloat( o.cull ) ) ? Math.max( 0, parseFloat( o.cull ) ) : 128;
+		const cull = buildDistanceCull( root, {
+			// minRadius 12 m: a shrub batch tighter than that is already local enough to frustum-cull.
+			// The budget is the ADDED draw calls over the whole set, and it is half the far trees' 256
+			// because the shore band is 25 meshes of ~55 k triangles, not 254 rows of 8 k.
+			chunk: budget > 0 ? { minRadius: 12, minCount: 2, maxDepth: 3, gain: 0.95, budget } : null,
+			// the shrub set's OWN switch distance (25 m mobile / 30 m desktop), the shared fade band,
+			// and the same CULL_MARGIN_M the far trees take for the water's mirrored camera.
+			limit: () => dist + ( o.foliageReport && o.foliageReport.shared.uniforms.pfaFadeBand
+				? o.foliageReport.shared.uniforms.pfaFadeBand.value : ( Number.isFinite( o.fadeBand ) ? o.fadeBand : 5 ) )
+				+ CULL_MARGIN_M,
+		} );
+		out.chunks = cull.stats.chunks; out.split = cull.stats.split; out.added = cull.stats.added;
+		out.batches = cull.stats.batches; out.drawCalls = cull.stats.drawCalls; out.tris = cull.stats.tris;
+		out.update = cull.update;
+		out.cullBudget = budget;
+	} else {
+		note( 'shrub/reed LOD1: the distance CULL is off (?shrubcull=0) — the whole LOD1 set is submitted '
+			+ 'at every station and the dissolve throws its fragments away beyond the switch' );
+		out.update = null;
+	}
+
 	// the env.glb LOD2 cards: beyond `dist` (sign -1).  The per-ROW mask for the three meshes with no
 	// LOD1 was written before the first foliage pass (`markShrubLodRows`), because the attribute has to
 	// be declared when the program is built; here only the uniforms move.
@@ -778,7 +842,10 @@ export async function loadShrubLod1( o ) {
 	note( `shrub/reed LOD1: ${out.glb.split( '/' ).pop()} in ${out.wall_s.toFixed( 2 )} s — `
 		+ `${out.lod1Rows}/${block.placements} placement(s) over ${out.lod1Nodes} node(s) on their own baked irradiance, `
 		+ `LOD1 within ${dist} m on ${out.lod1Materials} material(s), the env.glb cards beyond it on ${out.lod2Materials}`
-		+ ( out.masked ? `, ${out.masked} of them carrying the per-row mask for the placements with no LOD1` : '' ) );
+		+ ( out.masked ? `, ${out.masked} of them carrying the per-row mask for the placements with no LOD1` : '' )
+		+ ( out.update ? `; ${Math.round( out.tris / 1000 )} k placed tris in ${out.batches} batch(es) `
+			+ `(${out.split} split into ${out.chunks}, +${out.added} draw calls), culled per frame beyond `
+			+ `${dist} m + band + ${CULL_MARGIN_M} m (?shrubcull=)` : '' ) );
 	return out;
 }
 
