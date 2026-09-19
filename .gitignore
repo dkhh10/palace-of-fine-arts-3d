@@ -97,3 +97,8 @@ renders/web/p7net_p7.json
 
 # Phase 8: a capture's camera sidecar carries no measurement (the perf jsons do), and one is 200 kB.
 renders/web/*_cam.json
+
+# Phase 8b fix round (item a's A/B frames, item c's flag sweep): the perf JSONs and the 960 px
+# composite under renders/web/960/ are committed, the full-resolution frames are regenerable.
+renders/web/p8b_*.png
+!renders/web/960/*

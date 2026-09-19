@@ -78,6 +78,13 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	const instIrr = typeof opts.instanceIrradiance === 'number' ? opts.instanceIrradiance : null;
 	if ( mat.userData.pfaPatched ) return mat;
 	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr, instIrr };
+	// PHASE 8b ITEM B, review r3 finding 2.  The SLOT path writes `pfaLmAtlasB` straight into
+	// `shader.uniforms` inside onBeforeCompile, where nothing can reach it: a MeshStandardMaterial has
+	// no `.uniforms` of its own, so `residentBytes()` walked past the second lightmap atlas exactly as
+	// it used to walk past the impostor atlases.  Every texture a patch binds is recorded here instead,
+	// at patch time and again at compile time with the value the shader actually got.
+	mat.userData.pfaUniformTextures = mat.userData.pfaUniformTextures || [];
+	if ( slot && opts.atlasB ) mat.userData.pfaUniformTextures.push( opts.atlasB );
 	if ( vertexIrr !== null ) mat.vertexColors = true;         // so three declares vColor for us
 
 	const prevCompile = mat.onBeforeCompile;
@@ -147,7 +154,12 @@ export function patchBakedMaterial( mat, opts = {} ) {
 				'instance-irradiance varyings (fragment)' );
 		}
 		if ( slot ) {
-			shader.uniforms.pfaLmAtlasB = { value: opts.atlasB || mat.lightMap };
+			const atlasB = opts.atlasB || mat.lightMap;
+			shader.uniforms.pfaLmAtlasB = { value: atlasB };
+			// ... and again with what the shader actually got: `mat.lightMap` may have been attached
+			// after the patch, and a texture that is never recorded is a texture that is never billed.
+			const rec = mat.userData.pfaUniformTextures || ( mat.userData.pfaUniformTextures = [] );
+			if ( atlasB && ! rec.includes( atlasB ) ) rec.push( atlasB );
 			shader.vertexShader = once( shader.vertexShader, '#include <common>',
 				'#include <common>\nattribute vec3 pfaSlot;\nattribute float pfaSlotB;\n'
 				+ 'varying vec3 vPfaSlot;\nvarying float vPfaSlotB;', 'slot attributes' );

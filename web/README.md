@@ -990,7 +990,9 @@ from 5.90 at share 0) for the smallest box movement.
 **Cost: none measurable.** 1440p, 120 frames after 24 of warmup, stations 1-6, one session with the
 2K default repeated LAST: 2K **36.30 ms** → band **34.00** → 2K again **32.55**. The drift (−3.75 ms)
 is larger than the difference, so the band sits inside it. Resident is **identical at 1862.9 MB** —
-4096x1024 and 2048x2048 are the same 4 M texels — and the declared payload is *smaller*, 8.4 MB
+4096x1024 and 2048x2048 are the same 4 M texels — (**RESTATED**: 1862.9 MB was the figure `resident()`
+reported before Phase 8b item b; the same scene is **1814.2 MB** under the corrected counter, and the
+"identical" claim is confirmed there too — see "Phase 8b fix round", item b) — and the declared payload is *smaller*, 8.4 MB
 against 9.3 MB. Six stations against `?impband=0`: whole-frame luma within 0.006x everywhere, moving
 TOWARD the reference at cam01 (0.930x → 0.933x) and cam05 (0.979x → 0.985x); cam04 is untouched to
 the byte (no far tree in frame); 11-17 % of pixels change at the other five, which is the far-tree
@@ -1052,6 +1054,9 @@ repeated LAST as the drift control** (`web/tools/p8_perf_table.py`):
 **The drift is bigger than every delta**: the same default measured 31.85 ms first and 36.75 ms last,
 so against a drift-corrected baseline all three LOD2 settings are at or below the default. Memory goes
 DOWN 127.9 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
+(The resident column is the pre-8b counter: it missed every texture held in a custom uniform and
+billed a shared vertex buffer once per geometry. The DIFFERENCES stand — both errors are the same at
+every row — but the levels do not; see "Phase 8b fix round", item b.)
 
 Crossings per 100 screen px (lum < 40) and the QA-17 boxes, 1920x1080, cam01 / cam02 / cam05:
 
@@ -1102,6 +1107,274 @@ Regression, six stations at 1920x1080, `p8cbase` (`?detailproj=objxy`) against `
 Every station is touched (the layer is on every baked material) but only cam03 moves materially, and
 its whole-frame luma moves TOWARD the reference. No other station's luma changes by more than
 0.001x.
+
+## Phase 8b fix round (QA 20 carries), 2026-09-19
+
+Three items from `docs/briefs/phase8b_viewer_fix.md`. Everything below is measured on this Mac
+through `scripts/chrome_run.sh`, bake queue idle, no Blender alive.
+
+### a — `env_shrubs.glb` was drawn in full at every station (`?shrubcull=`)
+
+**Cause.** The shrub/reed LOD1 set has always had only the *fragment* half of its distance switch:
+`loadShrubLod1` sets `pfaSwitchDist` / `pfaSwitchSign` on the 25 materials, and beyond 25 m (mobile) /
+30 m (desktop) the dissolve discards every fragment. A discard still pays the whole vertex shader and
+the whole rasterisation, and `renderer.info` counts the submitted triangle either way. The *CPU* half
+— split the site-spanning batches, then hide per frame any batch whose every row is beyond the limit —
+was written for the far-tree meshes in 6c round 2 (`loadFarTrees`) and never for the shrubs.
+
+`shrubLod` reporting `lod1: 0, source: null, asked: false` is a red herring: that is `applyShrubLod`,
+the idle path that reads a `raw.shrub_lod` block the manifest does not carry. The switch the scene
+actually runs is set by `loadShrubLod1`, and it was working — in the fragment shader only.
+
+**Measured, not inferred.** `window.__pfaTrisByGroup()` (new) renders one frame with a counting hook on
+every mesh and attributes the frame's submitted triangles and draw calls to the scene-level group; its
+total is checked against `renderer.info` for the same frame. Per-station rows land in the perf JSON
+with `web/tools/screenshot.mjs --groups` (and `web/tools/p7.sh` now passes `--`-flags through).
+
+At the hero, before: `WEB_glb_env_shrubs` **2 024 352 triangles in 50 draws** (25 meshes x the water
+Reflector's second pass) of the frame's 6 361 468 — i.e. **1 012 176 per pass**, the whole LOD1 set, at
+*every* station including cam06 where the nearest shrub is over 100 m away. `?shrubcull=0` reproduces
+the gate9 triangle counts to the unit, so the A/B is exact.
+
+**Fix.** The far-tree chunk-and-cull extracted verbatim into `buildDistanceCull( root, { chunk, limit } )`
+(`web/src/foliageLazy.js`) and applied to the shrub LOD1 set at its own distance + the shared fade band
++ `CULL_MARGIN_M` (10 m, for the water's mirrored camera). `shrubLodUpdate` runs in `renderFrame()`
+beside `farTreeUpdate`.
+
+Switches: **`?shrubcull=0`** restores the pre-8b behaviour for the A/B; `?shrubcull=<n>` sets the
+chunking budget in ADDED draw calls (default **48**).
+
+2560x1440, desktop tier, gate4 settings, 120 frames after 24 of warmup, **interleaved A/C/A/C in one
+session** (A = `?shrubcull=0`, C = the default):
+
+| station | before ms (A/A, mean) | after ms (C/C, mean) | Δ ms | before tris | after tris | Δ tris | draws | shrub tris before → after |
+|---|---|---|---|---|---|---|---|---|
+| 1 lagoon_hero | 32.40 / 29.40 **30.90** | 28.40 / 30.20 **29.30** | −1.60 | 6 361 468 | 4 952 588 | **−1 408 880** | 335 → **317** | 2 024 352 → 615 472 |
+| 2 lagoon_ne | 34.80 / 34.80 **34.80** | 32.40 / 33.70 **33.05** | −1.75 | 6 344 584 | 5 510 136 | −834 448 | 329 → 341 | 2 024 352 → 1 189 904 |
+| 3 colonnade_walk | 38.90 / 39.80 **39.35** | 35.80 / 37.20 **36.50** | −2.85 | 7 111 092 | 6 030 448 | −1 080 644 | 351 → **343** | 2 024 352 → 943 708 |
+| 4 rotunda_ceiling | 26.60 / 24.80 **25.70** | 26.60 / 27.00 **26.80** | +1.10 | 3 293 588 | 2 961 488 | −332 100 | 184 → 197 | 1 012 176 → 680 076 |
+| 5 south_lawn | 30.60 / 30.40 **30.50** | 30.10 / 31.00 **30.55** | +0.05 | 6 125 874 | 4 928 054 | −1 197 820 | 320 → **308** | 2 024 352 → 826 532 |
+| 6 aerial | 34.10 / 33.40 **33.75** | 31.10 / 33.40 **32.25** | −1.50 | 6 729 552 | 4 705 200 | **−2 024 352** | 355 → **305** | 2 024 352 → **0** |
+
+`?tier=mobile`, same pass (shrub switch 25 m, so a little tighter):
+
+| station | before tris | after tris | Δ tris | draws | shrub tris before → after |
+|---|---|---|---|---|---|
+| 1 | 5 287 688 | 3 679 600 | −1 608 088 | 340 → 312 | 2 024 352 → 416 264 |
+| 2 | 5 766 920 | 4 817 332 | −949 588 | 362 → 370 | 2 024 352 → 1 074 764 |
+| 3 | 5 994 432 | 4 913 788 | −1 080 644 | 388 → 380 | 2 024 352 → 943 708 |
+| 4 | 2 972 140 | 2 630 650 | −341 490 | 201 → 213 | 1 012 176 → 670 686 |
+| 5 | 4 793 572 | 3 595 752 | −1 197 820 | 313 → 301 | 2 024 352 → 826 532 |
+| 6 | 5 172 900 | 3 148 548 | −2 024 352 | 348 → **298** | 2 024 352 → **0** |
+
+Mobile frame times sat at the 16.6 ms vsync floor in every pass, before and after, so there is no ms
+signal there; the triangle and draw counts are the claim.
+
+**Read the milliseconds carefully.** This session's own drift is larger than the effect: an A-vs-A
+repeat moved by up to **7.8 ms** at a station. **The triangle and draw counts are deterministic and are
+what this item claims**; the −2.85..+1.10 ms column is reported, not relied on.
+
+**The chunk budget was swept.** 128 (the first default) cuts 0.40 M more triangles at the hero but adds
+**+53 draws at cam02**, and two interleaved B/C pairs put it at or above 48 at four of the six
+stations — the extra draw calls cost roughly what the triangles save. 48 is adopted: every station is
+within 13 draws of its pre-8b figure and three are below it.
+
+**Pixel parity.** The six desktop stations before vs after: cam02/03/04 differ by **0 pixels**; cam01 by
+7, cam05 by 5, cam06 by 122 of 2 073 600 — and an A-vs-A repeat of cam06 differs by **134**, so even
+that is run-to-run noise. Whole-frame mean luma is identical to five decimals at all six. This is pure
+culling, as designed.
+
+### b — `resident()` never counted the impostor atlases (the figure of record, restated)
+
+**Cause.** `residentBytes()` in `web/src/main.js` reached a texture through exactly eight
+`MeshStandardMaterial` slots. Every texture held in a **custom uniform** was therefore billed by
+nothing — the 16 impostor albedo atlases (`uniform atlas`, 1K then 2K then the 4096x1024 band), the
+foliage translucency factor maps, the AgX LUT. A second, opposite error sat beside it: geometry was
+billed **per geometry object**, and `chunkGeometry` gives every chunk a `BufferGeometry` that *shares*
+its vertex buffers with the source, so the split factor inflated the geometry figure.
+
+**Fix.** Textures are now reached by TYPE, never by a list of names: every `uniforms` entry on a
+material (and on a `pfaFoliage` patch) whose value `isTexture`, plus the post chain's passes, plus
+`scene.background` / `scene.environment`, plus the widened standard slot list. Textures that belong to
+a render target are collected FIRST and skipped, so the composer's `tDiffuse` and a material's `envMap`
+cannot be billed twice (143 such hits at the hero). Geometry is summed one entry per `BufferAttribute`.
+
+The sidecar gains `texture_bytes_by_kind` (what each family costs, so a family that stops being billed
+shows as a missing row and not as a smaller total), `render_target_textures_skipped`,
+`geometry_bytes_before_dedup` (the pre-8b rule, kept so this restatement is auditable),
+`info_memory` and `counted_vs_renderer` (the renderer's own allocation counts, as the cross-check).
+
+**Old vs new at the hero** (2560x1440, desktop, gate5 manifest, band atlas default):
+
+| | pre-8b `resident()` | restated | Δ |
+|---|---|---|---|
+| geometry | 261.2 MB | **114.5** | −146.7 (shared vertex buffers billed once per geometry) |
+| instance matrices | 0.3 | 0.3 | 0 |
+| textures | 1 157.6 | **1 255.6** | **+98.0** |
+| render targets | 443.8 | 443.8 | 0 |
+| **total** | **1 862.9 MB** | **1 814.2 MB** | **−48.7** |
+
+(261.2 is `gate9_perf.json`'s own `geometry_bytes` = 261 214 822 and `p8b_b_old.json`'s
+`geometry_bytes_before_dedup`; the row reconciles with the 1 862.9 beside it — review r3 finding 1.)
+
+**`1 814.2 MB` is the figure BEFORE review r3 finding 2**, which was applied after this capture:
+`patchBakedMaterial` wrote the second lightmap atlas `pfaLmAtlasB` straight into `shader.uniforms`
+inside `onBeforeCompile`, where a `MeshStandardMaterial` has no `.uniforms` for the by-type walk to
+find — the same class of miss as the impostor atlases. The patch now records every texture it binds
+on `mat.userData.pfaUniformTextures` and the counter bills it under the kind `patch uniform`. **The
+hero figure of record is to be re-read from the deploy-10 capture sidecar** (no Chrome was run for
+this fix), and it can only go up from 1 814.2.
+
+The +98.0 MB of texture, by kind:
+
+| kind | textures | MB | counted before 8b? |
+|---|---|---|---|
+| material slot | 257 | 1 082.1 | partly — the 8 old slots; sheen / clearcoat / transmission maps (+25.2 MB) were not |
+| `scene.background` (sky equirect 4096x2048 RGBA16F) | 1 | 67.1 | yes |
+| **`uniform atlas` (the 16 impostor atlases)** | **16** | **67.1** | **NO** |
+| detail uniform | 12 | 33.6 | yes |
+| **`uniform pfaTrnMap` (foliage translucency)** | **4** | **5.6** | **NO** |
+| **`uniform lut` (AgX High Contrast 32³)** | **1** | **0.07** | **NO** |
+
+67.1 MB is 16 atlases x 4 194 304 texels x 1 B/texel (ASTC 4x4 = 8 bits/texel): **the band (4096x1024)
+and the 2K octahedral (2048x2048) cost exactly the same**, which is why `?impband=0` measures
+1 814.2 MB too — the "resident identical across the 1K → 2K swap" claim at line 992 was right about the
+*equality* and wrong about the *number*.
+
+`?tier=mobile` at the hero: **547.9 MB** restated (geometry 73.8, textures 236.4 — of which the impostor
+atlases are 5.6 and `scene.background` **67.1**, i.e. the full-size sky equirect is 28 % of the mobile
+texture budget — render targets 237.4), against 563.5 MB under the old counter. Still far under the
+700 MB ceiling.
+
+Item a's chunking costs **0 MB**: 261.2 → 265.4 MB under the old per-geometry rule, 114.5 → 114.5 MB
+under the correct one — the chunks share every vertex buffer and carry only their own slice of the
+instanced attributes.
+
+`counted_vs_renderer` reads **355 reached / 314 allocated**: more texture objects are *held* than the
+renderer has uploaded, because a texture is uploaded on first bind. The figure is what the page holds,
+which is the honest budget number on a unified-memory Mac; the count is the tripwire that says a family
+has stopped being reached.
+
+`web/tools/p8_perf_table.py`'s `resident_mb()` reads `total_bytes` (phase8_viewer_r2_review finding 2,
+already applied on this branch): the 3 553.3 MB and 3 550.1 MB in the two Phase 8 tables above were that
+script summing every `*_bytes` key including `total_bytes` itself.
+
+### c — the blue-violet shaded stone at desktop cam02 (QA 20 residual 6): MEASURED, NOT A VIEWER FAULT
+
+**Finding, in one line: the Phase 5 Cycles reference is MORE blue-violet than the viewer at every
+shaded box on cam02's camera-facing face. No viewer-side encoding or decoding error was found, so
+nothing was implemented; the proposal is below.**
+
+Boxes: `scripts/light_r16_measure.py` `BOXES["02"]`, read in their own 1280x720 frame. Parity
+reference: `renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png` (what
+`scripts/qa_r13_probe.py REF_R14` designates for station 2). Rubric target: `reference/photos/raw/
+ref_062_…jpg`, the photo the station was built from, measured on the same face. Chroma is CIELAB
+a*/b*, D65, from sRGB; `h_ab = atan2(b*, a*)`; warm stone is `b*` POSITIVE, the defect is `b*`
+NEGATIVE. Sheet: `renders/web/p8b_c_cam02_shade_sheet.png` (960 px .jpg beside it).
+
+| box | viewer b* | Cycles b* | photo b* | viewer h_ab | Cycles h_ab | photo h_ab | viewer R−B | Cycles R−B | photo R−B |
+|---|---|---|---|---|---|---|---|---|---|
+| shade_pier | **−2.73** | −5.01 | **+10.89** | 341.8 | 333.5 | 66.1 | +4.9 | +1.8 | +29.9 |
+| shade_pier_r | **−10.97** | −18.35 | **+10.99** | 297.1 | 294.2 | 47.3 | −21.2 | −35.8 | +41.0 |
+| shade_arch | **+0.19** | −3.29 | **+5.33** | 1.8 | 335.8 | 61.7 | +7.6 | +1.6 | +15.1 |
+| shade_frieze (control, warm in all three) | +11.44 | +12.24 | +11.07 | 80.6 | 79.5 | 75.2 | +27.3 | +30.1 | +27.9 |
+
+At all three defective boxes the viewer is **warmer than Cycles** — Δb* +2.28 / +7.38 / +3.48 — i.e.
+the delivered frame is already closer to the photograph than the frozen render it is meant to match.
+The gap that remains is the gap Cycles itself has: Δb* photo − Cycles = **+15.9 / +29.3 / +8.6**.
+
+**The colour pipeline is verified neutral on this very frame.** Two controls in the same capture:
+
+| control | viewer | Cycles | Δ |
+|---|---|---|---|
+| `sky` (camera-ray sky through the LUT) | L* 70.0, a* −3.44, b* −25.58 | L* 70.4, a* −3.41, b* −25.27 | **Δa* 0.03, Δb* 0.31** |
+| `shade_frieze` (warm shaded stone) | b* +11.44, h 80.6 | b* +12.24, h 79.5 | Δb* 0.80, Δh 1.1° |
+| `sunlit_pier` (chroma, not level) | b* +31.44, h 88.3 | b* +31.81, h 87.8 | Δb* 0.37, Δh 0.5° |
+
+A LUT, an exposure or a colour-space error would move those too. They do not move. What does differ
+is LEVEL: the viewer runs 1.07-1.33x brighter than Cycles at every stone box (sky 0.99x) — the shade
+is lifted, which lowers C* everywhere. That is the known parity gap, not a tint.
+
+**Where the tint enters, by switching one flag at a time** (cam02, 1920x1080, desktop, this branch;
+`shade_pier_r` shown, the strongest box):
+
+| setting | b* | h_ab | R−B | reading |
+|---|---|---|---|---|
+| base (the delivered look) | −10.97 | 297.1 | −21.2 | — |
+| `?probe=0` (irradiance probe / sky-branch equirect OFF) | **−10.94** | 297.2 | −21.1 | **nothing** — the probe is exonerated at every shaded box (it moves `sunlit_pier` b* +31.44 → +27.12 and nothing else) |
+| `?lut=0` (no AgX LUT at all) | **−11.15** | 296.6 | −22.1 | **the hue does not move** — the LUT is exonerated; it moves sky (b* −25.6 → −43.9) and `sunlit_pier`, as a tone map must |
+| `?probespec=1` | −10.69 | 299.7 | −20.0 | marginal, warmer |
+| `?post=none` (mist + bloom off) | −15.25 | 290.6 | −32.2 | **the post chain is WARMING the shade by Δb* +4.3 toward the reference, and `post=none` moves the viewer TOWARD Cycles (−18.35)** |
+| `?lighting=direct` (sun + sky IBL, bake bypassed) | −16.02 | 308.7 | −28.2 | far worse; at `shade_pier` b* −2.73 → **−24.88**, R−B +4.9 → −45.7 — **the direct sky fill is where the violet lives, and the bake is what already tames it** |
+
+(`?lmscale=0` produced a frame byte-identical to base, i.e. that override does not reach these
+materials on this manifest. Reported, not relied on; the `lighting=direct` row makes the same point
+more strongly.)
+
+So the tint is in the SOURCE — the Phase 5 lighting/materials the bake and the Cycles reference both
+read — and the viewer's own stages each either leave it alone (probe, LUT) or reduce it (post, bake).
+This is QA-08-2 / QA-09-6, opened in round 08 and never closed: "in Cycles all four shaded boxes on
+the camera-facing face are violet, hue 268 / 235 / 250 / 351 at negative R−B". It is the same defect,
+on the same face, with the same sign.
+
+**Proposal (for the lead and the user — NOT implemented here).**
+
+1. **Recommended: change nothing in the viewer and carry it.** Any viewer-side chroma correction on
+   the shaded stone would be a departure from the frozen Phase 5 look, would break the station-2
+   parity score it is measured against, and would have to be approved in `docs/decisions.md` first.
+   The viewer already beats its own reference here.
+2. **The only correct fix is upstream, owner LIGHTING / MATERIALS**: the NNE sky-fill on the
+   camera-facing rotunda face, then a re-bake of the rotunda lightmaps. Acceptance, measurable with
+   `web/tools`-side numbers above: `shade_pier`, `shade_pier_r`, `shade_arch` at **b* ≥ +5** and
+   **h_ab in 40-80°** with **R−B ≥ +10**, `shade_frieze` held at b* +11.4 ± 1.5 and the hero's shaded
+   attic unmoved. That is a Phase 5 asset change under the CLAUDE.md freeze: `docs/decisions.md`
+   entry plus the user's approval before any work starts.
+3. **If the user wants the delivered web frame warmer without a re-bake**, the cheapest honest lever
+   already in the viewer is the post chain, which is measured above as worth Δb* +4.3 at
+   `shade_pier_r`; a stronger mist would buy more and cost frame contrast everywhere. Still a look
+   change, still an approval.
+
+The `gate9m` mobile frame cannot be read with these boxes: it is 1170x2532 portrait and the fixture
+is a 16:9 frame, so every box lands on different content (`shade_frieze` falls on open sky). A mobile
+number for this defect needs a 16:9 `?tier=mobile` capture.
+
+### d — the translucency map's wrap mode follows the albedo's glTF sampler (Phase 8e prep)
+
+Added by the lead after items a-c. **No pixel changes on today's assets** — every shipped leaf sampler
+is `ClampToEdge`, which is what the code hard-coded — so this is wiring for Phase 8e, not a fix.
+
+**What was wrong.** `applyFoliageTextures` set `tTex.wrapS = tTex.wrapT = THREE.ClampToEdgeWrapping`
+on the per-texel translucency FACTOR map, while the tinted albedo beside it already took its wrap
+from the glTF material's own sampler (`mat.map.wrapS/wrapT`). The two maps are sampled with the SAME
+leaf-card UVs. Phase 8e scales those UVs by k = 2.0 (willow 1.5) on `env_trees.glb` and patches that
+glb's leaf samplers to `REPEAT`: the albedo would then tile and the translucency map would smear its
+edge texel across every tile, and the defect would read as a translucency artefact rather than as a
+wrap bug.
+
+**What it does now.** The translucency map takes `wrapS` / `wrapT` from the albedo texture of the
+material it belongs to — neither clamp nor repeat is hard-coded anywhere. `applyFoliageTextures().trnWrap`
+records the wrap and where it came from, and the boot log names the modes taken.
+
+**One thing the lead should know before 8e ships.** `applyFoliageTextures` runs on the scene as it
+stands before the lazy glbs arrive, i.e. on `env.glb`'s samplers; the lazily loaded roots then re-wrap
+the **shared** albedo texture from their own sampler (`applyFoliageAlbedo`, unchanged behaviour since
+6c round 2). The translucency map now follows on those roots too — but **both maps are one texture
+object shared by every root that uses that material name**, so if 8e patches `env_trees.glb` to REPEAT
+and leaves the same material name on `env.glb` at clamp, the last root loaded wins for both. The
+viewer now says so in the boot log ("…the albedo and translucency maps are SHARED, so both roots now
+use this one — the export must patch the samplers together") instead of failing silently. **The export
+should patch the samplers of every glb that carries a leaf material, or give the re-scaled cards their
+own material name.**
+
+**Verified pixel-neutral.** Six desktop stations, pre-d vs post-d: 61-233 differing pixels of
+2 073 600 — and a SAME-BUILD control capture of the same six stations differs by 61-228, with cam02
+(130 px, max 79), cam03 (61, max 22) and cam04 (143, max 36) **identical between the two comparisons**.
+The boot log confirms why: `translucency wrap taken from the glb albedo sampler(s): 1001/1001`
+(1001 = `ClampToEdgeWrapping`) on all 8 leaf materials — exactly what was hard-coded.
+
+Covered by `web/test/foliage_lazy_test.mjs` §8: a clamped albedo gives a clamped translucency map
+(today), a REPEAT albedo gives a REPEAT one (8e), a lazily loaded root re-wraps both, and the
+shared-texture conflict is reported rather than silent.
 
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
@@ -1915,7 +2188,8 @@ Same session, 2560x1440, gate4 perf settings, stations 1-6 (median presented fra
 | delta | +1.90 | -2.00 | +0.30 | -0.70 | +1.70 | -0.40 | 0 |
 
 Non-monotonic and inside the session drift the 6c A/B already measured; draws, triangles and
-resident bytes are identical at every station.
+resident bytes are identical at every station. (Resident levels here are the pre-8b counter; see
+"Phase 8b fix round", item b, for the restated figure.)
 
 ## Deploying
 
@@ -2028,6 +2302,32 @@ One reporting difference to expect against a pre-6b capture: `patchedMaterials` 
 tiered load (87 against 65 at the hero), because the Gate 3 pass runs again at each tier and by then
 chunking has split the instanced meshes into more of them.  `lightmapsApplied` (16) and every
 rendered pixel are unchanged.
+
+### `resident` — the schema, restated in Phase 8b item b
+
+`info.resident` is the viewer's own byte sum for what the page holds on the GPU.  **Any figure
+captured before 2026-09-19 is on the old counter and is not comparable in LEVEL** (differences within
+one capture still are): it billed no texture held in a custom uniform and billed a shared vertex
+buffer once per geometry.  The hero went 1 862.9 MB → **1 814.2 MB** on restating; see "Phase 8b fix
+round", item b.
+
+| key | what it is |
+|---|---|
+| `total_bytes` | `geometry_bytes + instance_matrix_bytes + texture_bytes + render_target_bytes`. **THE figure of record.** MB = bytes / 1e6. |
+| `geometry_bytes` | vertex and index buffers, **one entry per `BufferAttribute`** — chunked geometries share theirs |
+| `geometry_bytes_before_dedup` | the same under the pre-8b per-geometry rule, kept so a restatement can be audited |
+| `instance_matrix_bytes` | `InstancedMesh.instanceMatrix` |
+| `texture_bytes` | one entry per `texture.source`; compressed from the mip data, uncompressed as w*h*bpp (x4/3 with mipmaps). Reached through material slots, **every `uniforms` entry whose value `isTexture`** (the impostor atlases, the translucency maps, the LUT), **`userData.pfaUniformTextures`** (what an `onBeforeCompile` patch binds, e.g. the slot path's second lightmap atlas — a `MeshStandardMaterial` has no `.uniforms` for the walk to find, so the patch must record it), the post chain, `scene.background` and `scene.environment` |
+| `texture_bytes_by_kind` | that sum split by what the texture was reached THROUGH (`material slot`, `uniform <name>`, `patch uniform`, `detail uniform`, `post <name>`, `scene.background` / `scene.environment`) — audit this, not just the total: a family that stops being billed shows as a missing row |
+| `render_target_bytes` / `render_targets` | w*h*bpp*(1+samples): the resolve plus the multisample buffer, per target |
+| `render_target_textures_skipped` | hits on a texture that IS a render target's own (the composer's `tDiffuse`, a material's `envMap`), refused so they are billed once |
+| `textures` / `texture_sources` / `textures_sharing_a_source` | texture objects reached / distinct GPU uploads / clones that share a source |
+| `info_memory`, `counted_vs_renderer` | `renderer.info.memory` as the cross-check. "355 reached / 314 allocated" is normal — a texture is uploaded on first bind — but `textures` far BELOW the renderer's count means a family is going unbilled |
+
+`window.__pfaTrisByGroup()` (Phase 8b item a) is the matching tool for the frame: it renders one frame
+with a counting hook on every mesh and returns the submitted triangles and draw calls per scene-level
+group, with `renderer.info`'s own totals for the same frame beside them.  `screenshot.mjs --groups`
+writes it per station into the perf JSON.
 
 
 ## Run

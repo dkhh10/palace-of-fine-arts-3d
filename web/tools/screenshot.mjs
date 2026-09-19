@@ -30,6 +30,8 @@
 //                     evidence for "ground clamp, cannot walk into the lagoon" (Gate 4 item 5).
 //   --loading MS      shoot the loading screen MS after navigation, before waiting for __pfaReady
 //   --shots 0         measure only, write no PNGs (the performance pass)
+//   --groups          add `tris_by_group` to each station's row: the frame's submitted triangles and
+//                     draw calls attributed to the scene-level group (window.__pfaTrisByGroup)
 //   --perf PATH       write the per-station performance JSON (frame time, GPU cost, draws, tris, bytes)
 //   --breakdown N     item 6: split each presented frame into the JS spent in renderFrame() and the
 //                     gap to the next rAF, per station, and report the composer passes and whether
@@ -65,6 +67,7 @@ function args() {
 	for ( let i = 0; i < a.length; i ++ ) {
 		const k = a[ i ].replace( /^--/, '' );
 		if ( k === 'dev' ) { o.dev = true; continue; }
+		if ( k === 'groups' ) { o.groups = true; continue; }
 		const v = a[ ++ i ];
 		if ( k === 'query' ) o.query.push( v ); else o[ k ] = v;
 	}
@@ -285,6 +288,10 @@ try {
 			cost = await page.evaluate( ( n ) => window.__pfaRenderCost( n ), Math.min( frames, 60 ) );
 		}
 		const i = await page.evaluate( () => window.__pfaInfo() );
+		// Phase 8b item a: which GROUP pays for the frame's triangles (one extra frame, hooks removed
+		// again).  Off unless asked for, so every existing capture keeps its own frame count.
+		const groups = o.groups !== undefined
+			? await page.evaluate( () => ( window.__pfaTrisByGroup ? window.__pfaTrisByGroup() : null ) ) : null;
 		const row = {
 			station: st, name, size: [ W, H ], file: takeShots ? file : null,
 			frame_ms: stats && { median: stats.median, mean: stats.mean, p95: stats.p95, min: stats.min, max: stats.max, frames: stats.frames },
@@ -293,6 +300,7 @@ try {
 			fps_uncapped: cost ? 1000 / cost.median : null,
 			draw_calls: i.render.calls, triangles: i.render.triangles, programs: i.render.programs ?? null,
 			info_memory: i.memory, resident: i.resident,
+			tris_by_group: groups,
 		};
 		perStation.push( row );
 		if ( takeShots ) written[ written.length - 1 ] = { ...written[ written.length - 1 ], draws: row.draw_calls, tris: row.triangles };

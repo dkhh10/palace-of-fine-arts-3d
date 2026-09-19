@@ -147,6 +147,10 @@ const CFG = {
 	imp2k: qs.get( 'imp2k' ) !== '0',                   // the 2K impostor atlas variant on desktop
 	// undefined = "not asked", so the manifest's own dist_m still wins; an explicit value always does
 	shrubLod: qs.has( 'shrublod' ) ? parseFloat( qs.get( 'shrublod' ) ) : undefined,   // LOD1 within this many metres
+	// Phase 8b item a: the CPU-side distance cull on the shrub/reed LOD1 set.  "0" restores the
+	// pre-8b behaviour (the whole set submitted at every station, the dissolve doing the work in the
+	// fragment shader) for the A/B; a number is the chunking budget in ADDED draw calls.
+	shrubCull: qs.get( 'shrubcull' ),
 	// 6c round 2, the two lazily loaded glbs and the foliage material textures
 	farTreeLight: ( qs.get( 'fartreelight' ) || 'near' ).toLowerCase(),   // near | probe | 0
 	shrubEnv: qs.has( 'shrubenv' ) ? parseFloat( qs.get( 'shrubenv' ) ) : undefined,  // env term on the LOD1 shrubs
@@ -358,6 +362,7 @@ let composer, lutPass, water, manifest, stations, sunLight, billboards = null, p
 let impostorGroup = null, impostorReport = null, probeTarget = null, probeReport = null, reflectionSet = null;
 let foliageReport = null, shrubLodReport = null, skySphereIntegral = null, impModReport = null;
 let farTreeReport = null, shrubLod1Report = null, foliageTexReport = null, farTreeUpdate = null;
+let shrubLodUpdate = null;     // Phase 8b item a: the shrub LOD1 set's own per-frame distance cull
 let farTreeLighting = null;
 let diffusePmremTarget = null, glossyEnv = null, envRotation = new THREE.Euler();
 let gate3Report = null;
@@ -1227,8 +1232,9 @@ async function loadLazyFoliage() {
 	renderFrame();
 	await new Promise( ( r ) => requestAnimationFrame( r ) );
 	try {
-		shrubLod1Report = await loadShrubLod1( { ...common, envScale: CFG.shrubEnv,
+		shrubLod1Report = await loadShrubLod1( { ...common, envScale: CFG.shrubEnv, cull: CFG.shrubCull,
 			dist: shrubLodReport ? shrubLodReport.dist : 30, mode: CFG.shrubLod === 0 ? '0' : 'on' } );
+		if ( shrubLod1Report && shrubLod1Report.update ) shrubLodUpdate = shrubLod1Report.update;
 	} catch ( e ) { note( `shrub/reed LOD1 FAILED: ${e.message}` ); shrubLod1Report = { errors: [ e.message ] }; }
 	if ( farTreeUpdate ) farTreeUpdate( camera );
 	renderFrame();
@@ -1915,6 +1921,9 @@ function renderFrame() {
 	// whole bounding sphere is beyond it is hidden before three sees it.  254 instance rows x ~8 k
 	// tris would otherwise be vertex-shaded every frame for fragments the dissolve throws away.
 	if ( farTreeUpdate ) farTreeUpdate( camera );
+	// Phase 8b item a: the same for the shrub/reed LOD1 set, which until this round was submitted in
+	// full at every station (QA 20 §2) although its dissolve discards every fragment beyond 25/30 m.
+	if ( shrubLodUpdate ) shrubLodUpdate( camera );
 	if ( billboards && camera.position.distanceToSquared( _lastCamPos ) > 1e-6 ) {
 		aimBillboards( billboards, camera );
 		_lastCamPos.copy( camera.position );
@@ -2087,72 +2096,203 @@ function residentBytes() {
 	let geometry = 0, texture = 0, instanceMatrices = 0;
 	let sharedTextures = 0;
 	const formats = {};
-	// Per SOURCE, not per texture object: two Texture clones that share `texture.source` are ONE
-	// upload on the GPU (three refcounts the WebGLTexture per source + sampler cache key), so counting
-	// them twice would report memory the card never spent.  `textures` still counts the objects.
-	const addTex = ( t ) => {
-		if ( ! t || texs.has( t ) ) return;
-		texs.add( t );
-		const src = t.source || t;
-		if ( sources.has( src ) ) { sharedTextures ++; return; }
-		sources.add( src );
-		const f = formatName( t );
-		formats[ f ] = ( formats[ f ] || 0 ) + 1;
-		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
-			for ( const m of t.mipmaps ) texture += m.data.byteLength;       // compressed (KTX2)
-		} else if ( t.image && t.image.width ) {
-			const bpp = ( t.type === THREE.FloatType ) ? 16 : ( t.type === THREE.HalfFloatType ? 8 : 4 );
-			texture += t.image.width * t.image.height * bpp * ( t.generateMipmaps ? 4 / 3 : 1 );
-		}
-	};
-	scene.traverse( ( o ) => {
-		if ( ! o.isMesh ) return;
-		if ( ! geos.has( o.geometry ) ) {
-			geos.add( o.geometry );
-			for ( const a of Object.values( o.geometry.attributes ) ) geometry += a.array.byteLength;
-			if ( o.geometry.index ) geometry += o.geometry.index.array.byteLength;
-		}
-		if ( o.isInstancedMesh ) instanceMatrices += o.instanceMatrix.array.byteLength;
-		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) {
-			if ( ! m ) continue;
-			for ( const k of [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap' ] ) addTex( m[ k ] );
-			// the detail layer's maps are custom uniforms, not material slots, but they are resident
-			if ( m.userData.pfaDetailTextures ) for ( const t of m.userData.pfaDetailTextures ) addTex( t );
-		}
-	} );
-	if ( scene.background && scene.background.isTexture ) addTex( scene.background );
-	// scene.environment IS pmremTarget.texture and has an image, so addTex would bill the cubeUV
-	// here AND addRT would bill the identical bytes below (review finding 1): count it once, as a
-	// render target.
-	const pmremTextures = [ pmremTarget, diffusePmremTarget ].filter( Boolean ).map( t => t.texture );
-	if ( scene.environment && ! pmremTextures.includes( scene.environment ) ) addTex( scene.environment );
 	// Render targets dominate the GPU-memory figure at 1440p and carry no `image`, so addTex() sees
 	// nothing: count them explicitly.  A HalfFloat RGBA target is 8 B/px, and three allocates an extra
 	// multisampled renderbuffer of samples x that size when `samples` > 0.
-	const rts = [];
+	// They are collected FIRST so their own `texture` can be excluded from the texture sum: the post
+	// chain's `tDiffuse` uniform and a material's `envMap` point straight at a target's texture, and
+	// billing them again would double-count 38 MB of composer buffer and the whole PMREM cubeUV
+	// (Phase 8b item b: the wider uniform walk is what made this reachable at all).
+	const rts = [], rtTextures = new Set();
 	const addRT = ( rt, what ) => {
 		if ( ! rt ) return;
 		const w = rt.width, h = rt.height, n = rt.samples || 0;
 		const bpp = rt.texture && rt.texture.type === THREE.FloatType ? 16
 			: ( rt.texture && rt.texture.type === THREE.HalfFloatType ? 8 : 4 );
+		for ( const t of ( Array.isArray( rt.textures ) ? rt.textures : [ rt.texture ] ) ) if ( t ) rtTextures.add( t );
+		if ( rt.depthTexture ) rtTextures.add( rt.depthTexture );
 		rts.push( { what, size: [ w, h ], samples: n, bytes: Math.round( w * h * bpp * ( 1 + n ) ) } );
 	};
 	if ( composer ) { addRT( composer.renderTarget1, 'composer.renderTarget1' ); addRT( composer.renderTarget2, 'composer.renderTarget2' ); }
 	if ( water && water.getRenderTarget ) addRT( water.getRenderTarget(), 'water.Reflector' );
 	if ( pmremTarget ) addRT( pmremTarget, 'PMREM cubeUV (glossy, specular)' );
 	if ( diffusePmremTarget ) addRT( diffusePmremTarget, 'PMREM cubeUV (diffuse, irradiance)' );
+	// Per SOURCE, not per texture object: two Texture clones that share `texture.source` are ONE
+	// upload on the GPU (three refcounts the WebGLTexture per source + sampler cache key), so counting
+	// them twice would report memory the card never spent.  `textures` still counts the objects.
+	// PHASE 8b ITEM B.  `by` is what the texture was reached THROUGH, so the figure can be audited
+	// per kind - and so a regression that stops billing a whole family (what happened to the impostor
+	// atlases for three phases) shows up as a missing row and not as a silently smaller total.
+	const byKind = {};
+	let rtSkipped = 0;
+	const addTex = ( t, by = 'material slot' ) => {
+		if ( ! t || ! t.isTexture || texs.has( t ) ) return;
+		if ( rtTextures.has( t ) ) { rtSkipped ++; return; }   // already billed as a render target
+		texs.add( t );
+		const src = t.source || t;
+		if ( sources.has( src ) ) { sharedTextures ++; return; }
+		sources.add( src );
+		const f = formatName( t );
+		formats[ f ] = ( formats[ f ] || 0 ) + 1;
+		let b = 0;
+		if ( t.mipmaps && t.mipmaps.length && t.mipmaps[ 0 ].data ) {
+			for ( const m of t.mipmaps ) b += m.data.byteLength;             // compressed (KTX2)
+		} else if ( t.image && t.image.width ) {
+			const bpp = ( t.type === THREE.FloatType ) ? 16 : ( t.type === THREE.HalfFloatType ? 8 : 4 );
+			b = t.image.width * t.image.height * bpp * ( t.generateMipmaps ? 4 / 3 : 1 );
+		}
+		texture += b;
+		const k = byKind[ by ] || ( byKind[ by ] = { textures: 0, bytes: 0 } );
+		k.textures ++; k.bytes += b;
+	};
+	// THE BUG QA 20 §3 FOUND: only the eight MeshStandardMaterial slots below were ever billed, so
+	// every texture a CUSTOM UNIFORM holds was invisible to this figure - the 16 impostor albedo
+	// atlases (1K, then 2K, then the 4096x1024 band), the LUT, the water's maps.  A ShaderMaterial
+	// keeps them in `uniforms`, so they are read from there by type and never by name: a uniform
+	// added by a later round is billed the day it appears, with no list to keep in step.
+	const MAT_SLOTS = [ 'map', 'lightMap', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap',
+		'emissiveMap', 'alphaMap', 'bumpMap', 'displacementMap', 'envMap', 'specularMap',
+		'clearcoatMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap', 'sheenColorMap',
+		'sheenRoughnessMap', 'transmissionMap', 'thicknessMap', 'iridescenceMap', 'anisotropyMap' ];
+	const addMaterial = ( m, by ) => {
+		if ( ! m ) return;
+		for ( const k of MAT_SLOTS ) addTex( m[ k ], by );
+		// the detail layer's maps are custom uniforms, not material slots, but they are resident
+		if ( m.userData && m.userData.pfaDetailTextures ) for ( const t of m.userData.pfaDetailTextures ) addTex( t, 'detail uniform' );
+		// every texture an onBeforeCompile patch binds into `shader.uniforms`, recorded by the patch
+		// itself (`patchBakedMaterial`'s `pfaLmAtlasB`): a MeshStandardMaterial has no `.uniforms`, so
+		// the walk below cannot see them and only the record can (review r3 finding 2).
+		if ( m.userData && m.userData.pfaUniformTextures ) for ( const t of m.userData.pfaUniformTextures ) addTex( t, 'patch uniform' );
+		// every ShaderMaterial / patched-material uniform that holds a texture (the impostor `atlas`,
+		// the water, anything a later round adds)
+		if ( m.uniforms ) for ( const [ name, u ] of Object.entries( m.uniforms ) )
+			if ( u && u.value && u.value.isTexture ) addTex( u.value, `uniform ${name}` );
+		// a material patched through onBeforeCompile keeps its uniform objects on userData
+		const pf = m.userData && m.userData.pfaFoliage;
+		if ( pf && pf.uniforms ) for ( const [ name, u ] of Object.entries( pf.uniforms ) )
+			if ( u && u.value && u.value.isTexture ) addTex( u.value, `uniform ${name}` );
+	};
+	// One entry per ATTRIBUTE, not per geometry: `chunkGeometry` (QA-11d-1 / Phase 8b item a) gives
+	// each chunk a BufferGeometry of its own that SHARES every vertex buffer with the source and
+	// carries only its own slice of the instanced attributes.  Billing per geometry counted those
+	// shared buffers once per chunk and inflated the geometry figure by the split factor.
+	const attrs = new Set();
+	let geometryNaive = 0;            // the pre-8b rule, kept so the restatement can be audited
+	const addGeometry = ( g ) => {
+		if ( ! g || geos.has( g ) ) return;
+		geos.add( g );
+		for ( const a of Object.values( g.attributes ) ) {
+			geometryNaive += a.array.byteLength;
+			if ( attrs.has( a ) ) continue;
+			attrs.add( a );
+			geometry += a.array.byteLength;
+		}
+		if ( g.index ) {
+			geometryNaive += g.index.array.byteLength;
+			if ( ! attrs.has( g.index ) ) { attrs.add( g.index ); geometry += g.index.array.byteLength; }
+		}
+	};
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		addGeometry( o.geometry );
+		if ( o.isInstancedMesh ) instanceMatrices += o.instanceMatrix.array.byteLength;
+		for ( const m of ( Array.isArray( o.material ) ? o.material : [ o.material ] ) ) addMaterial( m, 'material slot' );
+	} );
+	// The post chain is not in the scene graph, so nothing above reaches the LUT (a 32^3 3D texture)
+	// or a bloom pass's own maps.
+	if ( composer && composer.passes ) for ( const pass of composer.passes ) {
+		addMaterial( pass.material, 'post pass' );
+		if ( pass.uniforms ) for ( const [ name, u ] of Object.entries( pass.uniforms ) )
+			if ( u && u.value && u.value.isTexture ) addTex( u.value, `post ${name}` );
+		if ( pass.fsQuad && pass.fsQuad._mesh ) addMaterial( pass.fsQuad._mesh.material, 'post pass' );
+	}
+	if ( scene.background && scene.background.isTexture ) addTex( scene.background, 'scene.background' );
+	// scene.environment IS pmremTarget.texture, which `rtTextures` now holds, so addTex refuses it
+	// on its own (review finding 1, kept as one rule instead of two).
+	if ( scene.environment ) addTex( scene.environment, 'scene.environment' );
 	const rtBytes = rts.reduce( ( a, r ) => a + r.bytes, 0 );
+	// The renderer's OWN counts, as the cross-check: three increments these per allocated WebGL
+	// object, so a sum that misses a family shows as `textures` far below `info.memory.textures`
+	// (which is exactly how the impostor atlases went unbilled for three phases).
+	const info = renderer.info.memory;
 	return {
 		geometry_bytes: Math.round( geometry ), instance_matrix_bytes: Math.round( instanceMatrices ),
+		// what the same scene came to under the pre-8b per-geometry rule; the gap is the vertex
+		// buffers that chunks and glTF primitives SHARE and that were billed once per geometry
+		geometry_bytes_before_dedup: Math.round( geometryNaive ),
 		texture_bytes: Math.round( texture ), geometries: geos.size, textures: texs.size,
 		texture_sources: sources.size, textures_sharing_a_source: sharedTextures, texture_formats: formats,
+		texture_bytes_by_kind: byKind, render_target_textures_skipped: rtSkipped,
 		render_target_bytes: rtBytes, render_targets: rts,
+		info_memory: { geometries: info.geometries, textures: info.textures },
+		// `textures` counts texture OBJECTS the scene reaches; renderer.info.memory.textures counts
+		// GPU allocations, which includes the render targets' own attachments and every PMREM mip
+		// target, so the two are not expected to be equal - only for neither to be far above.
+		counted_vs_renderer: `${texs.size} reached / ${info.textures} allocated by the renderer`,
 		total_bytes: Math.round( geometry + instanceMatrices + texture ) + rtBytes,
 		note: 'viewer-side sum, ONE ENTRY PER texture.source (clones that share a source are one GPU '
-			+ 'upload); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
-			+ 'mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample buffer',
+			+ 'upload) and ONE ENTRY PER BufferAttribute (chunked geometries share their vertex '
+			+ 'buffers); compressed textures from their mip data, uncompressed as w*h*4 (x4/3 with '
+			+ 'mipmaps), render targets as w*h*bpp*(1+samples) for the resolve plus the multisample '
+			+ 'buffer.  Textures are reached through material slots, through EVERY ShaderMaterial / '
+			+ 'patched uniform that holds one (Phase 8b item b: the impostor atlases live in a custom '
+			+ '`atlas` uniform and were billed by nothing before this round), through the post chain '
+			+ 'and through scene.background / scene.environment.',
 	};
 }
+/**
+ * PHASE 8b ITEM A — which group pays for the frame's triangles.
+ *
+ * `renderer.info.render` gives the frame's TOTAL submitted triangles and draw calls; it cannot say
+ * which glb they came from, and QA 20 had to infer `env_shrubs.glb`'s +463 922 from the difference
+ * between two gates.  This renders ONE frame with a counting hook on every mesh (three calls
+ * `onBeforeRender` exactly once per actual submission, so the water Reflector's second pass is
+ * counted too, and a mesh the frustum or a `visible = false` rejected is not), attributes each
+ * submission to the scene-level ancestor it hangs under, and removes the hooks again.  It costs
+ * nothing when it is not called, and its total is checked against `renderer.info` by the caller.
+ */
+window.__pfaTrisByGroup = () => {
+	const hooked = [], tally = new Map();
+	const label = ( o ) => {
+		let n = o;
+		while ( n.parent && n.parent !== scene ) n = n.parent;
+		return n.name || n.type || '(unnamed)';
+	};
+	scene.traverse( ( o ) => {
+		if ( ! o.isMesh ) return;
+		const name = label( o );
+		const had = Object.prototype.hasOwnProperty.call( o, 'onBeforeRender' );
+		const prev = o.onBeforeRender;
+		o.onBeforeRender = function ( r, s, cam, geo, mat, grp ) {
+			prev.call( this, r, s, cam, geo, mat, grp );
+			const g = geo || this.geometry;
+			const idx = g.index;
+			// a material GROUP submits only its own index range; otherwise the whole geometry
+			const count = ( grp && Number.isFinite( grp.count ) )
+				? Math.min( grp.count, idx ? idx.count : g.getAttribute( 'position' ).count )
+				: ( idx ? idx.count : g.getAttribute( 'position' ).count );
+			const t = tally.get( name ) || { tris: 0, draws: 0, meshes: new Set() };
+			t.tris += count / 3 * ( this.isInstancedMesh ? this.count : 1 );
+			t.draws ++;
+			t.meshes.add( this.uuid );
+			tally.set( name, t );
+		};
+		hooked.push( [ o, had, prev ] );
+	} );
+	try { renderFrame(); } finally {
+		for ( const [ o, had, prev ] of hooked ) { if ( had ) o.onBeforeRender = prev; else delete o.onBeforeRender; }
+	}
+	const groups = [ ...tally.entries() ]
+		.map( ( [ group, t ] ) => ( { group, tris: Math.round( t.tris ), draws: t.draws, meshes: t.meshes.size } ) )
+		.sort( ( a, b ) => b.tris - a.tris );
+	return {
+		groups,
+		total_tris: groups.reduce( ( a, g ) => a + g.tris, 0 ),
+		total_draws: groups.reduce( ( a, g ) => a + g.draws, 0 ),
+		info_tris: renderer.info.render.triangles, info_draws: renderer.info.render.calls,
+		note: 'one frame, hooked per submission; info_* is renderer.info for the SAME frame and must match',
+	};
+};
 window.__pfaFrameStats = ( n = 120 ) => new Promise( ( resolve ) => {
 	const t = [];
 	let last = performance.now();
