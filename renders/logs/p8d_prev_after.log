@@ -1,0 +1,14 @@
+00:20.653  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/renders/previews/environment/20260919_191105_01_lagoon_hero_8dafter.png'
+00:34.996  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/renders/previews/environment/20260919_191105_05_south_lawn_8dafter.png'
+00:43.901  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/renders/previews/environment/20260919_191105_06_aerial_8dafter.png'
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[common] rendered 20260919_191105_01_lagoon_hero_8dafter.png in 19.3s
+[common] rendered 20260919_191105_05_south_lawn_8dafter.png in 14.3s
+[common] rendered 20260919_191105_06_aerial_8dafter.png in 8.9s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 86477 exited rc=0 after 44 s (max 900)

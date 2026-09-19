@@ -1,0 +1,120 @@
+# Phase 8d PART 1 — backdrop build report (env builder, 2026-09-19, branch `phase8d-env`)
+
+Scope built: R1 (the MAT_backdrop_* rework) and R2 (the hall's tree belt). R3 deferred as decided.
+Files touched: `scripts/mat_build.py` (MAT_backdrop_* block only), `scripts/env_backdrop.py`, `scripts/env_city.py`,
+and the two assets they rebuild (`assets/materials.blend`, `assets/environment.blend`). `export/` untouched, master not rebuilt.
+
+## 1. Materials — verified by a node-graph diff, not by eye
+`scripts/mat_hash_diff.py` (committed; raw log in `renders/logs/`) hashes every material's node graph — node kinds,
+unlinked input values, link topology, the shared `PFA_*` node groups it references *transitively*, and its image
+datablocks by pixel hash — plus every node group in the file on its own line, in the pre-change `materials.blend`
+(from git) and the rebuilt one:
+
+```
+added:     ['MAT_backdrop_lawn']
+removed:   []
+changed:   ['MAT_backdrop_asphalt', 'MAT_backdrop_building', 'MAT_backdrop_forest',
+            'MAT_backdrop_hill', 'MAT_backdrop_roof', 'MAT_backdrop_roof_tile', 'MAT_backdrop_skylight']
+unchanged: 34
+```
+No MAT_ outside the backdrop block moved. What changed in each:
+
+| material | change |
+|---|---|
+| `MAT_backdrop_building` | albedo C(0.568, 0.545, 0.120) (saturation **0.79**) → C(0.452, 0.424, 0.318) (**0.30**); grey drift colour to match. Then lot spread ±19 % at 13 m + block drift at 90 m, the palace shadow, and distance haze. |
+| `MAT_backdrop_skylight` | the hero's "dark rectangles": albedo ×2.4 (C(0.072,0.080,0.092)→C(0.196,0.202,0.208)), roughness 0.14→0.46, specular 0.75→0.28, coat off. |
+| `MAT_backdrop_roof` / `_roof_tile` | lot spread (22 % / 20 %) + haze; roof also takes the palace shadow. |
+| `MAT_backdrop_forest` | albedo ×1.55 and the gap-shadow depth 0.66→0.55 (round 5 took it down 45 % against a bright yellow canopy; with the haze doing that job the only thing left was turning the un-hazed masses — the new belt at 150 m — into black holes), + haze from 210 m. |
+| `MAT_backdrop_hill` / `_asphalt` | haze only (hills 900–2600 m, asphalt from 200 m). |
+| `MAT_backdrop_lawn` | **new.** The far-field ground (23.2 km² at 0.18 texels/m). It exists for one reason: the palace's own `MAT_lawn` — the turf the hero and cam05 stand on — must not move. ~~and because Gate 1 groups a multi-material mesh by slot 0, so this is also what the far roads, gravel and soil read as~~ **corrected after review r2 finding 2:** slot 0 decides only which export *group* the merged mesh joins; `export/gate2_set.py:211-233` restores the per-polygon material of every merged ENV mesh from `env_poly_src.npz` before the albedo bake, so the gravel, asphalt and soil still bake as themselves. The street-grey and bare-soil mixes were therefore double-painting the Marina Green and are now gated to the 700–950 m stand-in band at half amplitude. |
+
+All three new terms are fixed functions of world position, so the Gate 2 DIFFUSE-colour bake reproduces them exactly
+and the end-of-Phase-8 Cycles hero sees them too. The three mechanisms they answer (measured in `phase8d_analysis.md`):
+0.79 texels/m makes anything finer than 1.3 m unbakeable; the Gate 1 merge of 640 objects makes Object Info → Random
+constant so every per-object term collapses; and `sunLight.castShadow = false` + no backdrop lightmap means the hall is
+drawn fully sunlit unless the shade is in the albedo.
+
+## 2. Geometry — the tree belt, and the export pin
+`ENV_backdrop_hall_belt_0..3`: **89 crowns, 6 900 triangles** against the **6 986** cap, one closest-packed row
+(2.8 m spacing, offset alternating 5.4 / 9.2 m ± 1.1 m from the hall's concave east face, crowns 12.5–19.5 m tall),
+each tested against the hall footprint and the colonnade roof polygons; 3 sample points rejected. They carry
+`MAT_backdrop_forest`, so they join the existing `backdrop_forest` export group — **no new group**.
+
+Per-group triangles in `assets/environment.blend`, before → after (same inventory rule Gate 1 groups by, slot-0 material):
+
+| group | before | after |
+|---|---|---|
+| `backdrop_forest` | 99 640 (6 obj) | **106 540 (10 obj)** |
+| `lawn` → `backdrop_lawn` | 5 882 (MAT_lawn) | 5 882 (MAT_backdrop_lawn) |
+| building / roof / roof_tile / skylight / hill / door / bird / lamp | 33 696 / 5 927 / 1 380 / 1 236 / 880 / 12 / 2 268 / 816 | unchanged |
+| backdrop total | 151 739 | **158 639 (+6 900)** |
+
+ENV objects 5 925 → 5 929. **+6 900 ≤ 6 986**, so `tree_allow` still leaves the same 20 near trees fitting and no
+21st (cheapest candidate 12 892), i.e. **near 20 / far 127 stay byte-identical with `CLASS_BUDGET["ENV"]` at 902 000**
+and no impostor re-bake. The `lawn` group is renamed `backdrop_lawn` (same 3 objects, same 5 882 tris, so
+`env_so_far` does not move) — the export will see a renamed group mesh and Gate 2 bake job, not a new one.
+
+## 3. Previews (Eevee, 1280x720, `env_preview` harness, cams 01/05/06)
+`renders/qa_comparisons/phase8d_env_before_after_960.jpg` — before | after, three stations plus two 100 % crops.
+Caveat on the numbers: this harness is AgX **Base** Contrast at −0.8 EV with a placeholder sun, not the delivery look,
+so only the before→after direction transfers, not the absolute values.
+
+| box | luma | saturation | luma sd |
+|---|---|---|---|
+| hero, N-colonnade band | 0.303 → 0.269 | 0.457 → 0.452 | 0.159 → **0.177** |
+| hero, S-colonnade band | 0.324 → 0.297 | 0.545 → 0.532 | 0.172 → 0.171 |
+| cam05 backdrop band | 0.440 → 0.419 | 0.551 → 0.543 | 0.188 → **0.202** |
+| cam06 backdrop city | 0.298 → 0.303 | 0.282 → **0.137** | 0.083 → 0.079 |
+| cam06 far field | 0.203 → 0.206 | 0.308 → **0.264** | 0.123 → 0.105 |
+
+The 100 % crops are the real result: at the hero every intercolumniation that held a pale olive wall with dark glazed
+panels now holds a dark, varied tree mass with light through the gaps, which is what ref 169 shows there; at cam06 the
+saturated green-olive city slabs are pale hazed grey.
+
+**Two honest limits.** (a) Saturation is the defect that moved (cam06 −51 %); luminance did not, because the albedo
+came down as the haze went up. ref 105's 0.82 luma / 0.073 saturation is 1–3 km of air, while our cam06 band is
+200–700 m, so matching it exactly would be wrong physics — and real aerial perspective is light *added* to the view,
+which an albedo (max 1.0) cannot reach and the albedo bake would not carry anyway. (b) The hero band is now slightly
+darker than ref 169's belt; its variance moved the right way, and the rest is lighting's, not the backdrop's.
+
+## 4. Review r2 (`docs/reviews/phase8_env_r2_review.md`, MERGE WITH FIXES) — what was applied
+1. **Finding 1.** The throwaway `/tmp/matdiff.py` is committed as `scripts/mat_hash_diff.py` and now also hashes
+   `bpy.data.node_groups` (each group on its own diff line *and* transitively inside every consumer's hash) and each
+   material's image datablocks by pixel content, closing the hole where a change inside a shared `PFA_*` group or a
+   repacked texture would have reported every consumer as "unchanged". Raw log committed beside this report.
+2. **Finding 2.** The slot-0 premise was wrong (see the table above): comments corrected in `env_city.py:167` and
+   `mat_build.build_backdrop_lawn`, and the street-grey (0.75 → 0.38) and bare-soil (0.60 → 0.30) mixes are now
+   multiplied by a stand-in gate that is 0 inside 700 m and 1 beyond 950 m. Inside the modelled city the material is
+   low-saturation mown grass and nothing else; the drift survives only on the two far-ground planes, which are
+   single-material and stand in for the un-modelled city past 720 m.
+3. **Finding 3.** The palace shadow gains the cross-wind gate: `lat = |0.879·wx − 0.477·wy|`, full penumbra to 150 m
+   lateral (the colonnade spans r 37–115 m either side of the sun direction) and gone by 220 m, so houses hundreds of
+   metres off the shadow axis no longer take up to 52 % albedo shade.
+4. **Finding 4 (geometry).** The belt crowns are no longer placed by their centre. Each source cluster's own local z
+   extent is measured at build time and every crown is placed by its **underside** (0.25–0.90 m *below* the local
+   ground — no floating crowns, and no trunks to pay for: the pin leaves 86 triangles) and by its **top** (11–16 m
+   above local ground, hard-capped at `HALL_EAVE + 0.2 = 15.7` m in world z, i.e. 4.3 m below the 20.0 m roof crest
+   and 1.0 m below the 16.7 m parapet, so undulating terrain cannot push a crown over the roofline). Triangle count
+   and the cap logic are untouched: the rebuild lands on **89 crowns / 6 900 tris** again, ENV LOD0/1/2 and object
+   count identical to the pre-fix build. Before/after at 960 px (floating vs grounded, plus two 100 % crops):
+   `renders/qa_comparisons/phase8d_belt_grounded_960.jpg` — the gaps under the crowns at the hero and through the
+   cam05 arch are closed, and the hall roofline now shows above the belt as it does in ref 169.
+
+**Two load-state traps found while making finding 1's check trustworthy** (both would have produced false
+positives, and did on the first two runs): `img.size` is `(0, 0)` until Blender loads an image, so a freshly BUILT
+file and a file just opened from disk disagree on it; and `//`-relative texture paths resolve against whichever
+blend is open, so the git copy must be written *beside* the new one (`assets/_pre8d_materials.blend`) or every
+textured material reports as changed. `scripts/mat_hash_diff.py` now hashes packed data or the file on disk
+instead of pixels, ignores `img.size`, degrades to the path string when a texture is missing, and carries a
+`--no-images` switch to isolate a texture change from a node change. Self-test (same file twice) is clean:
+42/42 materials and 8/8 node groups unchanged. Final result, full strength:
+
+```
+materials  added ['MAT_backdrop_lawn']  removed []  unchanged 34
+           changed ['MAT_backdrop_asphalt', 'MAT_backdrop_building', 'MAT_backdrop_forest', 'MAT_backdrop_hill',
+                    'MAT_backdrop_roof', 'MAT_backdrop_roof_tile', 'MAT_backdrop_skylight']
+node_groups added [] removed [] changed [] unchanged 8
+```
+5. **Finding 5 (rename fan-out)** goes to the export engineer and the viewer, as the lead directed; **finding 4 of
+   the review's own numbering (the Cycles far-field GI check of `HAZE_TINT`)** goes on the delivery checklist for the
+   4K hero. Neither is actioned here.

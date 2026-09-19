@@ -1,0 +1,391 @@
+{
+ "cam01": {
+  "w": 960,
+  "h": 540,
+  "total": 518400,
+  "counts": {
+   "arch": 95770,
+   "bd:backdrop_building": 15285,
+   "bd:backdrop_door_green": 432,
+   "bd:backdrop_roof": 473,
+   "bd:backdrop_skylight": 7850,
+   "bd:bird_white": 129,
+   "ground": 7036,
+   "orn": 14803,
+   "water_plane": 184601,
+   "sky": 192021
+  },
+  "bd_tiles": {
+   "r1c1": 178,
+   "r1c2": 35,
+   "r1c3": 547,
+   "r2c1": 9979,
+   "r2c2": 3074,
+   "r2c3": 10356
+  },
+  "bd_boxes_1920": {
+   "bd:backdrop_building": [
+    0,
+    524,
+    1898,
+    670,
+    61140
+   ],
+   "bd:backdrop_door_green": [
+    944,
+    612,
+    974,
+    664,
+    1728
+   ],
+   "bd:backdrop_roof": [
+    914,
+    484,
+    1848,
+    546,
+    1892
+   ],
+   "bd:backdrop_skylight": [
+    0,
+    530,
+    1854,
+    632,
+    31400
+   ],
+   "bd:bird_white": [
+    428,
+    476,
+    1492,
+    694,
+    516
+   ]
+  },
+  "backdrop_px": 24169,
+  "backdrop_pct": 4.662
+ },
+ "cam02": {
+  "w": 960,
+  "h": 540,
+  "total": 518400,
+  "counts": {
+   "arch": 207993,
+   "bd:backdrop_building": 12427,
+   "bd:backdrop_door_green": 107,
+   "bd:backdrop_forest": 4765,
+   "bd:backdrop_hill": 484,
+   "bd:backdrop_roof": 319,
+   "bd:backdrop_skylight": 1448,
+   "bd:bird_white": 455,
+   "bd:lamp_post": 14,
+   "bd:lawn": 71,
+   "ground": 14938,
+   "orn": 28905,
+   "water_plane": 29845,
+   "sky": 216629
+  },
+  "bd_tiles": {
+   "r1c1": 43,
+   "r1c2": 0,
+   "r1c3": 0,
+   "r2c1": 7234,
+   "r2c2": 670,
+   "r2c3": 12143
+  },
+  "bd_boxes_1920": {
+   "bd:backdrop_building": [
+    0,
+    660,
+    1914,
+    952,
+    49708
+   ],
+   "bd:backdrop_door_green": [
+    1586,
+    832,
+    1614,
+    846,
+    428
+   ],
+   "bd:backdrop_forest": [
+    0,
+    826,
+    390,
+    932,
+    19060
+   ],
+   "bd:backdrop_hill": [
+    0,
+    830,
+    368,
+    868,
+    1936
+   ],
+   "bd:backdrop_roof": [
+    146,
+    692,
+    1676,
+    884,
+    1276
+   ],
+   "bd:backdrop_skylight": [
+    792,
+    682,
+    1900,
+    892,
+    5792
+   ],
+   "bd:bird_white": [
+    0,
+    496,
+    1386,
+    1008,
+    1820
+   ],
+   "bd:lamp_post": [
+    180,
+    900,
+    184,
+    934,
+    56
+   ],
+   "bd:lawn": [
+    116,
+    928,
+    322,
+    932,
+    284
+   ]
+  },
+  "backdrop_px": 20090,
+  "backdrop_pct": 3.875
+ },
+ "cam03": {
+  "w": 960,
+  "h": 540,
+  "total": 518400,
+  "counts": {
+   "arch": 419843,
+   "bd:backdrop_building": 275,
+   "bd:backdrop_hill": 1,
+   "bd:backdrop_roof": 25,
+   "bd:backdrop_skylight": 95,
+   "bd:bird_white": 46,
+   "ground": 69663,
+   "orn": 14379,
+   "water_plane": 4886,
+   "sky": 9187
+  },
+  "bd_tiles": {
+   "r1c1": 0,
+   "r1c2": 25,
+   "r1c3": 0,
+   "r2c1": 0,
+   "r2c2": 416,
+   "r2c3": 1
+  },
+  "bd_boxes_1920": {
+   "bd:backdrop_building": [
+    926,
+    558,
+    980,
+    638,
+    1100
+   ],
+   "bd:backdrop_hill": [
+    998,
+    598,
+    998,
+    598,
+    4
+   ],
+   "bd:backdrop_roof": [
+    926,
+    534,
+    964,
+    536,
+    100
+   ],
+   "bd:backdrop_skylight": [
+    926,
+    564,
+    980,
+    612,
+    380
+   ],
+   "bd:bird_white": [
+    868,
+    672,
+    1280,
+    680,
+    184
+   ]
+  },
+  "backdrop_px": 442,
+  "backdrop_pct": 0.085
+ },
+ "cam04": {
+  "w": 960,
+  "h": 540,
+  "total": 518400,
+  "counts": {
+   "arch": 430649,
+   "orn": 21838,
+   "sky": 65913
+  },
+  "bd_tiles": {
+   "r1c1": 0,
+   "r1c2": 0,
+   "r1c3": 0,
+   "r2c1": 0,
+   "r2c2": 0,
+   "r2c3": 0
+  },
+  "bd_boxes_1920": {},
+  "backdrop_px": 0,
+  "backdrop_pct": 0.0
+ },
+ "cam05": {
+  "w": 960,
+  "h": 540,
+  "total": 518400,
+  "counts": {
+   "arch": 183379,
+   "bd:backdrop_building": 13618,
+   "bd:backdrop_roof": 2127,
+   "bd:backdrop_skylight": 5686,
+   "bd:bird_white": 310,
+   "ground": 9637,
+   "orn": 28976,
+   "water_plane": 70711,
+   "sky": 203956
+  },
+  "bd_tiles": {
+   "r1c1": 0,
+   "r1c2": 0,
+   "r1c3": 0,
+   "r2c1": 7389,
+   "r2c2": 3740,
+   "r2c3": 10612
+  },
+  "bd_boxes_1920": {
+   "bd:backdrop_building": [
+    6,
+    672,
+    1912,
+    890,
+    54472
+   ],
+   "bd:backdrop_roof": [
+    422,
+    654,
+    1918,
+    694,
+    8508
+   ],
+   "bd:backdrop_skylight": [
+    10,
+    694,
+    1908,
+    830,
+    22744
+   ],
+   "bd:bird_white": [
+    290,
+    644,
+    1786,
+    922,
+    1240
+   ]
+  },
+  "backdrop_px": 21741,
+  "backdrop_pct": 4.194
+ },
+ "cam06": {
+  "w": 960,
+  "h": 540,
+  "total": 518400,
+  "counts": {
+   "arch": 112266,
+   "bd:backdrop_building": 50776,
+   "bd:backdrop_door_green": 222,
+   "bd:backdrop_forest": 42068,
+   "bd:backdrop_roof": 68899,
+   "bd:backdrop_skylight": 5742,
+   "bd:bird_white": 102,
+   "bd:lamp_post": 11,
+   "bd:lawn": 41076,
+   "ground": 110588,
+   "orn": 12864,
+   "water_plane": 73786,
+   "sky": 0
+  },
+  "bd_tiles": {
+   "r1c1": 52252,
+   "r1c2": 42549,
+   "r1c3": 83157,
+   "r2c1": 60,
+   "r2c2": 98,
+   "r2c3": 30780
+  },
+  "bd_boxes_1920": {
+   "bd:backdrop_building": [
+    0,
+    0,
+    1918,
+    1078,
+    203104
+   ],
+   "bd:backdrop_door_green": [
+    1272,
+    486,
+    1288,
+    542,
+    888
+   ],
+   "bd:backdrop_forest": [
+    0,
+    0,
+    1918,
+    466,
+    168272
+   ],
+   "bd:backdrop_roof": [
+    0,
+    0,
+    1918,
+    886,
+    275596
+   ],
+   "bd:backdrop_skylight": [
+    380,
+    332,
+    1804,
+    928,
+    22968
+   ],
+   "bd:bird_white": [
+    54,
+    594,
+    1206,
+    998,
+    408
+   ],
+   "bd:lamp_post": [
+    86,
+    470,
+    90,
+    496,
+    44
+   ],
+   "bd:lawn": [
+    0,
+    0,
+    1918,
+    448,
+    164304
+   ]
+  },
+  "backdrop_px": 208896,
+  "backdrop_pct": 40.296
+ }
+}

@@ -1,0 +1,16 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend"
+00:01.910  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend"
+[mat_hash_diff] old = /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend
+[mat_hash_diff] new = /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend
+[mat_hash_diff] materials added:     []
+[mat_hash_diff] materials removed:   []
+[mat_hash_diff] materials changed:   []
+[mat_hash_diff] materials unchanged: 42
+[mat_hash_diff] node_groups added:     []
+[mat_hash_diff] node_groups removed:   []
+[mat_hash_diff] node_groups changed:   []
+[mat_hash_diff] node_groups unchanged: 8
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 93285 exited rc=0 after 4 s (max 600)

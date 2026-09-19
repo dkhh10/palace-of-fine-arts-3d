@@ -1069,8 +1069,12 @@ def build_concrete_family():
         "Patches": 0.0, "Edge Wear": 0.5, "Edge Radius": 0.03, "Recess Dirt": 0.7, "Recess Distance": 0.25, "Cavity": 0.60,
         "Roughness": 0.8, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0})
     # exhibition hall / distant massing: buff stucco, coarse
+    # Phase 8d: the albedo was C(0.568, 0.545, 0.120) -- saturation 0.79, and it rendered the hero's N-colonnade
+    # wall at display saturation 0.654 against ref 169's 0.431 and cam06's city field at 0.387 against ref 105's
+    # 0.073.  A 0.79-saturation yellow cannot land anywhere near a hazed city however it is lit, so the albedo
+    # comes down to saturation 0.30 (buff stucco, not olive) and `backdrop_atmosphere` adds the distance haze.
     concrete_material("MAT_backdrop_building", "concrete_wall_008", 11.0, {
-        "Base Color": C(0.568, 0.545, 0.120), "Grey Color": C(0.425, 0.382, 0.148), "Grey Drift": 0.30,
+        "Base Color": C(0.452, 0.424, 0.318), "Grey Color": C(0.372, 0.352, 0.286), "Grey Drift": 0.30,
         "Grey Below Z": 1.0, "Grey Above Z": 6.0, "Tone Variation": 0.24, "Block Size": 3.0, "Blotch Size": 3.2,
         "Drift Size": 11.0, "Algae": 0.0,
         "Detail Strength": 0.7, "Streaks": 0.8, "Streak Scale": 5.0, "Streak Length": 8.0,
@@ -1439,13 +1443,18 @@ def build_extra_env():
     N = t.geometry().outputs["Normal"]
     crowns = t.voronoi(W, 1.0 / 9.0, feature="SMOOTH_F1", randomness=1.0)
     cr = t.sepxyz(crowns.outputs["Color"])[0]
-    c = t.mix(cr, C(0.0140, 0.0235, 0.0150), C(0.0305, 0.0440, 0.0280))
+    # Phase 8d: x1.55 on the canopy albedo.  Round 5 took it down 45 % because the 250-450 m canopy read bright
+    # and yellow; with the distance haze now doing that job (backdrop_atmosphere, r0 210 m) the only thing the
+    # low albedo still does is turn the two masses that carry NO haze -- the hall's tree belt at 150 m and the
+    # nearest Presidio crowns -- into black holes, where ref 105 measures the tree masses at lum 120-152/255 and
+    # ref 169's belt behind the colonnade is dark green with structure, not black.
+    c = t.mix(cr, C(0.0217, 0.0364, 0.0233), C(0.0473, 0.0682, 0.0434))
     # gaps: the shaded flanks and the holes between crowns. Two scales (whole crowns, 3 m branch clumps) so the mass
     # never reads as one lit plane, plus a downward bias -- the underside of a canopy is always the dark part.
     gap = t.maximum(t.maprange(crowns.outputs["Distance"], 0.55, 0.10, 0.0, 1.0),
                     t.maprange(t.noise(W, 0.33, detail=3, rough=0.65), 0.52, 0.30, 0.0, 1.0))
     gap = t.clamp01(t.add(t.mul(gap, 0.8), t.mul(t.maprange(t.sepxyz(N)[2], 0.35, -0.2, 0.0, 1.0), 0.35)))
-    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.66)))
+    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.55)))
     haze = t.maprange(t.noise(W, 0.02, detail=2), 0.35, 0.65, 0.88, 1.12)
     c = t.vscale(c, haze)
     normal = t.bump(t.add(crowns.outputs["Distance"], t.mul(t.noise(W, 0.8, detail=3), 0.4)), strength=0.7, distance=0.6, normal=N)
@@ -1686,12 +1695,17 @@ def build_backdrop_details():
     t = Tree(m.node_tree)
     W = t.geometry().outputs["Position"]
     N = t.geometry().outputs["Normal"]
+    # Phase 8d: QA 17's "flat olive field with dark rectangular panels" at the hero r2c1 IS this material -- the
+    # hall's 102 glazed bays are 8 120 of the hero's 21 204 backdrop px.  The viewer has no real-time shadow
+    # (main.js: sunLight.castShadow = false) and the backdrop carries no lightmap, so a dark glazing albedo reads
+    # as a row of black slots cut in a sunlit wall, which is not what a 150 m glazed bay looks like in ref 169:
+    # there it is barely darker than the plaster and it scatters.  Albedo up 2.4x, gloss and coat off.
     dirt = t.maprange(t.noise(W, 1.6, detail=3, rough=0.6), 0.3, 0.75, 0.0, 1.0)
-    c = t.mix(dirt, C(0.072, 0.080, 0.092), C(0.15, 0.144, 0.122))
-    rough = t.add(0.14, t.mul(dirt, 0.30))
+    c = t.mix(dirt, C(0.196, 0.202, 0.208), C(0.310, 0.300, 0.276))
+    rough = t.add(0.46, t.mul(dirt, 0.26))
     normal = t.bump(t.mul(t.noise(W, 6.0, detail=2), 0.4), strength=0.2, distance=0.008, normal=N)
-    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.75,
-                                     "Coat Weight": 0.25, "Coat Roughness": 0.12, "Normal": normal}).outputs[0])
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.28,
+                                     "Coat Weight": 0.0, "Normal": normal}).outputs[0])
     ML.finish(m)
     # the hall's green door on the rotunda axis (visible through the central arch in the hero): old semi-gloss
     # park-service green paint on wood, chalked and streaked, with a dull bronze push-plate zone at object z 1.0-1.2
@@ -1714,6 +1728,150 @@ def build_backdrop_details():
     t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.5,
                                      "Metallic": t.mul(plate, 0.7), "Normal": normal}).outputs[0])
     ML.finish(m)
+
+
+# =============================================================================== Phase 8d: the backdrop's air
+# Three things make the exported backdrop read as flat saturated cardboard, all measured in
+# docs/briefs/phase8d_analysis.md, none of them fixable with a bigger bake:
+#   1. TEXEL DENSITY.  The Gate 2 backdrop bake puts 1 170 168 m2 of MAT_backdrop_building on one 1024 atlas =
+#      0.79 texels/m, while the hall wall is 146-154 m from the hero = 7.0 px/m on screen.  One texel spans nine
+#      screen pixels, so nothing finer than 1.3 m survives; only LOW-FREQUENCY signal is worth authoring here.
+#   2. THE MERGE.  Gate 1 joins 640 backdrop objects per source material into ONE mesh, so Object Info -> Random
+#      is constant over the whole city and every per-object hue/value term collapses to a single value.  Spread
+#      driven by WORLD POSITION survives the merge and the bake (a 14 m lot = 11 texels).
+#   3. NO SHADOW.  The viewer sets sunLight.castShadow = false and the backdrop groups carry no lightmap, so the
+#      exhibition hall is drawn fully sunlit even though a 7.4 deg sun behind a 20 m colonnade leaves its whole
+#      lower wall in shade in ref 169.  The shade has to be in the albedo or it does not exist.
+# `backdrop_atmosphere` post-processes a finished MAT_backdrop_* material: lot spread, then the palace's own
+# shadow, then aerial perspective by horizontal distance from the rotunda.  It is a fixed function of world
+# position, so the Gate 2 DIFFUSE-colour bake reproduces it exactly, and Cycles sees it too (the 4K hero).
+# CEILING, stated honestly: real aerial perspective is scattered light ADDED to the view; an albedo can only
+# reach 1.0.  ref 105's city sits at display luma 0.82 where ours renders 0.435; hazing the albedo to ~0.72 gets
+# most of the way and cannot get all of it without an emissive term the albedo bake would not carry.
+HAZE_TINT = C(0.780, 0.762, 0.724)      # bay morning haze: warm, near-neutral, bright
+SUN_AZ_8D = 118.5                       # the delivery sun (light_calibrate / env_preview), el 7.4 deg
+
+
+def _principled_of(mat):
+    for n in mat.node_tree.nodes:
+        if n.bl_idname == "ShaderNodeBsdfPrincipled":
+            return n
+    return None
+
+
+def backdrop_atmosphere(name, r0=140.0, r1=760.0, amount=0.85, tint=None, lots=0.0, lot_scale=14.0,
+                        hue_spread=0.018, shade=0.0, rough_to=0.96, spec_to=0.04):
+    """Add lot spread + palace shade + distance haze to an existing MAT_backdrop_* material."""
+    m = bpy.data.materials.get(name)
+    if m is None:
+        print(f"[mat_build] backdrop_atmosphere: {name} missing")
+        return
+    b = _principled_of(m)
+    if b is None:
+        print(f"[mat_build] backdrop_atmosphere: {name} has no Principled BSDF")
+        return
+    t = Tree(m.node_tree)
+    W = t.geometry().outputs["Position"]
+    wx, wy, wz = t.sepxyz(W)
+
+    def src(inp):
+        sk = b.inputs[inp]
+        if sk.is_linked:
+            return sk.links[0].from_socket
+        v = sk.default_value
+        if hasattr(v, "__len__"):
+            return t.rgb(tuple(v)[:3])
+        return float(v)
+
+    c = src("Base Color")
+    if lots:
+        lot = t.maprange(t.noise(W, 1.0 / lot_scale, detail=2, rough=0.5), 0.22, 0.78, 1.0 - lots, 1.0 + lots)
+        block = t.maprange(t.noise(t.vadd(W, (57.0, 13.0, 0.0)), 1.0 / 90.0, detail=2), 0.30, 0.70,
+                           1.0 - lots * 0.45, 1.0 + lots * 0.45)
+        c = t.vscale(c, t.mul(lot, block))
+        if hue_spread:
+            c = t.hsv(c, hue=t.maprange(t.noise(t.vadd(W, (31.0, 17.0, 5.0)), 1.0 / lot_scale, detail=1),
+                                        0.28, 0.72, 0.5 - hue_spread, 0.5 + hue_spread))
+    if shade:
+        # the palace's shadow: the sun is at compass az 118.5 (= world direction (+0.477 south, +0.879 east)),
+        # elevation 7.4 deg, so the shadow runs to the north-west and a 22 m attic shades everything below
+        # z = 22 - 0.130 * u, where u is the distance downwind of the rotunda.  Gated to 12-230 m so the shore
+        # planting (u < 12) and the far city (u > 230, which the palace cannot reach) are untouched.
+        u = t.add(t.mul(wx, -0.477), t.mul(wy, -0.879))
+        inside = t.maprange(t.sub(t.sub(22.0, t.mul(u, 0.130)), wz), -2.0, 2.0, 0.0, 1.0)
+        gate = t.mul(t.smoothstep(u, 12.0, 30.0), t.maprange(u, 150.0, 230.0, 1.0, 0.0))
+        # ACROSS the shadow too (review r2 finding 3): this material also covers the Marina / Cow Hollow house
+        # field out to 460 m, and without a lateral gate a house 300 m off the axis took up to 52 % albedo shade,
+        # which reads as a band painted across the city instead of a shadow behind the palace.  The caster is
+        # ~150 m of colonnade across the sun direction (ARCH_colonnade_* spans r 37-115 m either side), so the
+        # penumbra is full out to 150 m lateral and gone by 220 m.
+        lat = t.absval(t.sub(t.mul(wx, 0.879), t.mul(wy, 0.477)))
+        gate = t.mul(gate, t.maprange(lat, 150.0, 220.0, 1.0, 0.0))
+        sh = t.mul(t.mul(inside, gate), shade)
+        c = t.vscale(c, t.sub(1.0, sh))
+        c = t.hsv(c, sat=t.sub(1.0, t.mul(sh, 0.85)))
+    r = t.vmath("LENGTH", t.combxyz(wx, wy, 0.0))
+    haze = t.mul(t.maprange(r, r0, r1, 0.0, 1.0, interp="SMOOTHSTEP"), amount)
+    t.link(t.mix(haze, c, tint if tint is not None else HAZE_TINT), b.inputs["Base Color"])
+    t.link(t.mixf(haze, src("Roughness"), rough_to), b.inputs["Roughness"])
+    try:
+        t.link(t.mixf(haze, src("Specular IOR Level"), spec_to), b.inputs["Specular IOR Level"])
+    except KeyError:
+        pass
+    ML.finish(m)
+
+
+def build_backdrop_lawn():
+    """MAT_backdrop_lawn -- the far-field ground from 178 m out (ENV_backdrop_far_ground / _under_ground and slot 0
+    of ENV_backdrop_city_ground).  It exists for ONE reason: the palace's own MAT_lawn must not move.  That one is
+    the foreground turf the hero and cam05 stand on, tuned in Phase 4; this is 23 161 982 m2 of Marina / Presidio
+    ground at 0.18 texels/m and has nothing to do with it.
+
+    Review r2 finding 2 corrects what an earlier version of this comment claimed.  Slot 0 decides only which export
+    GROUP a merged backdrop mesh joins; it does NOT decide what the mesh bakes as.  `export/gate2_set.py:211-233`
+    rebuilds the per-polygon material assignment on every merged ENV mesh from `env_poly_src.npz` (KD-tree on world
+    polygon centres) BEFORE the albedo bake, precisely so "the gravel paths, soil and asphalt would otherwise bake
+    as lawn".  So the roads, gravel and soil of ENV_backdrop_city_ground already bake as themselves, and painting
+    street-grey and bare-soil on top of them here greyed the Marina Green twice -- the washed-out mid-ground in the
+    8d aerial.  What this material actually shades after the restore is (a) the genuine lawn polygons of the city
+    ground and (b) the two far-ground planes, which are single-material and run from r 355 m out to 2 600 m, i.e.
+    they stand in for everything past the modelled city (which stops at 720 m).  The grey/soil drift therefore
+    survives only OUTSIDE 700-950 m, at half its old amplitude; inside that it is low-saturation mown grass."""
+    m = ML.new_material("MAT_backdrop_lawn")
+    t = Tree(m.node_tree)
+    W = t.geometry().outputs["Position"]
+    N = t.geometry().outputs["Normal"]
+    wx, wy, _wz = t.sepxyz(W)
+    # the stand-in band: 0 over the modelled city (where gate2 restores the real road/soil materials), 1 beyond it
+    standin = t.smoothstep(t.vmath("LENGTH", t.combxyz(wx, wy, 0.0)), 700.0, 950.0)
+    dry = t.maprange(t.noise(W, 1.0 / 38.0, detail=3, rough=0.55), 0.38, 0.66, 0.0, 1.0)      # watered / dry
+    c = t.mix(dry, C(0.082, 0.112, 0.052), C(0.152, 0.148, 0.092))
+    street = t.maprange(t.noise(t.vadd(W, (19.0, 71.0, 0.0)), 1.0 / 16.0, detail=3, rough=0.6), 0.60, 0.78, 0.0, 1.0)
+    c = t.mix(t.mul(t.mul(street, 0.38), standin), c, C(0.062, 0.060, 0.058))                  # far city, unmodelled
+    soil = t.maprange(t.noise(t.vadd(W, (5.0, 41.0, 0.0)), 1.0 / 26.0, detail=3), 0.70, 0.84, 0.0, 1.0)
+    c = t.mix(t.mul(t.mul(soil, 0.30), standin), c, C(0.118, 0.086, 0.058))                    # ditto, bare ground
+    c = t.vscale(c, t.maprange(t.noise(W, 1.0 / 5.0, detail=3), 0.3, 0.7, 0.88, 1.12))
+    rough = t.add(0.93, t.mul(t.sub(t.noise(W, 0.5, detail=2), 0.5), 0.08))
+    t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.12,
+                                     "Normal": N}).outputs[0])
+    ML.finish(m)
+
+
+def apply_backdrop_atmosphere():
+    """Every MAT_backdrop_* material, with the distance band each one actually occupies (ENV's own numbers:
+    houses 178-620 m, hall 120-200 m, forest 190-1600 m, hills 1200-2600 m)."""
+    # the exhibition hall AND the whole Marina / Cow Hollow house field share this material, so it carries both
+    # the lot spread (the merge kills the per-object version) and the palace shade (only the hall is inside it).
+    backdrop_atmosphere("MAT_backdrop_building", r0=150.0, r1=720.0, amount=0.86, lots=0.19, lot_scale=13.0, shade=0.52)
+    backdrop_atmosphere("MAT_backdrop_roof", r0=150.0, r1=720.0, amount=0.86, lots=0.22, lot_scale=13.0, shade=0.45)
+    backdrop_atmosphere("MAT_backdrop_roof_tile", r0=180.0, r1=720.0, amount=0.84, lots=0.20, lot_scale=11.0)
+    backdrop_atmosphere("MAT_backdrop_skylight", r0=150.0, r1=720.0, amount=0.80, shade=0.45)
+    backdrop_atmosphere("MAT_backdrop_asphalt", r0=200.0, r1=720.0, amount=0.80, lots=0.10, lot_scale=40.0, hue_spread=0.0)
+    backdrop_atmosphere("MAT_backdrop_lawn", r0=200.0, r1=760.0, amount=0.82, lots=0.10, lot_scale=60.0, hue_spread=0.0)
+    # the canopy: the belt on the hall's east face is at 150 m and must stay dark (ref 169), the Presidio ridge at
+    # 690-1600 m must not.  r0 = 210 keeps the belt out of the haze entirely.
+    backdrop_atmosphere("MAT_backdrop_forest", r0=210.0, r1=1500.0, amount=0.82, lots=0.14, lot_scale=26.0, hue_spread=0.012)
+    backdrop_atmosphere("MAT_backdrop_hill", r0=900.0, r1=2600.0, amount=0.92, lots=0.08, lot_scale=180.0, hue_spread=0.0)
 
 
 def build_misc():
@@ -1760,7 +1918,9 @@ def build_all_materials():
     bark_material("MAT_bark_cypress", "chinese_cedar_bark", C(0.20, 0.15, 0.11), 24.0, tile=1.6, rough=0.9, bump=0.7, stringy=0.4)
     bark_material("MAT_bark_eucalyptus", "bark_bluegum", C(0.40, 0.35, 0.29), 25.0, tile=1.82, rough=0.75, bump=0.5)
     build_ground()
+    build_backdrop_lawn()
     build_misc()
+    apply_backdrop_atmosphere()          # Phase 8d: must run last -- it post-processes finished materials
 
 
 build_all_materials()

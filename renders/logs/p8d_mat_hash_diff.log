@@ -1,0 +1,17 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/_pre8d_materials.blend"
+00:01.888  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend"
+[mat_hash_diff] old = /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/_pre8d_materials.blend
+[mat_hash_diff] new = /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend
+[mat_hash_diff] materials added:     ['MAT_backdrop_lawn']
+[mat_hash_diff] materials removed:   []
+[mat_hash_diff] materials changed:   ['MAT_backdrop_asphalt', 'MAT_backdrop_building', 'MAT_backdrop_forest', 'MAT_backdrop_hill', 'MAT_backdrop_roof', 'MAT_backdrop_roof_tile', 'MAT_backdrop_skylight']
+[mat_hash_diff] materials unchanged: 34
+[mat_hash_diff] node_groups added:     []
+[mat_hash_diff] node_groups removed:   []
+[mat_hash_diff] node_groups changed:   []
+[mat_hash_diff] node_groups unchanged: 8
+[mat_hash_diff] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/renders/logs/p8d_mat_hash_diff.json
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 93354 exited rc=0 after 4 s (max 900)
