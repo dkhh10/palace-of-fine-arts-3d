@@ -903,6 +903,51 @@ covers the parser, the fallback's dependence on the real target (including `?imp
 three writes no coverage mask on a multisampled target), and the shader's preprocessor branches.
 
 
+## Phase 8 far-tree A/B — the LOD2 mesh set against the 2K card, 2026-09-19 (evidence only, not adopted)
+
+The lever is live, no re-wiring: `?walkupmesh=0` takes the **LOD2 far set** (`trees.far_mesh`, the one
+mobile draws, vertex-AO lit) instead of the desktop default's walk-up LOD1 set, and `?fartreemesh=<m>`
+is that set's switch distance — it IS `DEVICE.settings.farTreeMesh` (the tier field, 45 m on mobile).
+The field is finite-only, so "all distances" is `?fartreemesh=100000`. Desktop default: the walk-up
+LOD1 set within 15 m, the 2K impostor card beyond.
+
+One session, gate4 settings, 2560x1440, 120 frames after 24 of warmup, stations 1-6, **the default
+repeated LAST as the drift control** (`web/tools/p8_perf_table.py`):
+
+| setting | median frame ms (6 stations) | worst station | draws | tris | resident MB |
+|---|---|---|---|---|---|
+| default (first) | 31.85 | 36.00 | 355 | 5.98 M | 3550.1 |
+| LOD2 @ 60 m | 30.75 (−1.10) | 36.70 | 399 | 6.36 M | 3306.2 (−243.9) |
+| LOD2 @ 120 m | 31.95 (+0.10) | 37.30 | 439 | 6.59 M | 3306.2 (−243.9) |
+| LOD2 all | 34.40 (+2.55) | 40.60 | 575 | 7.21 M | 3306.2 (−243.9) |
+| **default (repeated last)** | **36.75 (+4.90)** | 40.20 | 355 | 5.98 M | 3550.1 |
+
+**The drift is bigger than every delta**: the same default measured 31.85 ms first and 36.75 ms last,
+so against a drift-corrected baseline all three LOD2 settings are at or below the default. Memory goes
+DOWN 244 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
+
+Crossings per 100 screen px (lum < 40) and the QA-17 boxes, 1920x1080, cam01 / cam02 / cam05:
+
+| setting | crossings | cam01 leaf % (ref 22.2) | cam02 box level (ref 1.00x) | cam05 leaf % (ref 9.4) |
+|---|---|---|---|---|
+| 2K card + 0.15 (default) | 7.64 / 6.97 / 8.54 | 24.5 | 1.10x | 20.8 |
+| LOD2 @ 60 m | 11.66 / 14.96 / 8.54 | **4.0** | **1.84x** | 20.8 |
+| LOD2 @ 120 m | 12.15 / 14.96 / 10.44 | 3.9 | 1.84x | **0.6** |
+| LOD2 all | 12.15 / 14.95 / 10.87 | 3.9 | 1.84x | 0.6 |
+| Cycles | 11.73 / 7.76 / 15.89 | 22.2 | 1.00x | 9.4 |
+
+**The metric likes it and the tiles reject it.** `renders/web/tiles/p8lod/p8lod_cam02_crown_100.png`
+(960 px `renders/web/960/p8lod_cam02_crown.jpg`) and `…/p8lod_cam01_crown_200.png`: at station 2 the
+LOD2 tree is a sparse skeleton of oversized yellow leaf cards on bare branches, 1.84x the reference's
+level, with the colonnade visible straight through it; at the hero its crown is nearly bare (leaf
+4.0 % against the reference's 22.2 %); at 120 m (cam05) it all but disappears, 0.6 %. Its crossings
+score is high for the wrong reason — isolated leaf cards against a bright background cross the
+threshold constantly. **At 100 m it reads as a faceted polygon tree, not as twigs.**
+
+So: every setting is within +3 ms of the same-session default and none costs memory, but none of them
+is a better crown than the 2K card at any station. Nothing adopted — the lead decides between this,
+the band atlas and stopping.
+
 ## Phase 8c item A — the detail layer's projection default (`?detailproj=`), 2026-09-19
 
 The export's texel analysis (`docs/briefs/phase8c_export_analysis.md`): cam03's column banding is the
