@@ -1,7 +1,8 @@
 # Phase 8b viewer fix round — report (branch `phase8b-viewer`, 2026-09-19)
 
-Brief: `docs/briefs/phase8b_viewer_fix.md`. Full detail, every table and every `?` switch:
-`web/README.md` → "Phase 8b fix round (QA 20 carries)". Tests green (`npm test`, 12 suites).
+Brief: `docs/briefs/phase8b_viewer_fix.md`, plus item **d** added by the lead mid-round. Full detail,
+every table and every `?` switch: `web/README.md` → "Phase 8b fix round (QA 20 carries)".
+Tests green (`npm test`, 12 suites).
 No deploy, no Blender, nothing under `export/` touched. Chrome only through `scripts/chrome_run.sh`,
 bake queue `idle` and `pgrep -fl "MacOS/Blender|headless"` empty before every run.
 
@@ -127,6 +128,34 @@ leaves it alone or reduces it. This is **QA-08-2 / QA-09-6**, opened in round 08
 `gate9m` cannot be read with these boxes: 1170x2532 portrait against a 16:9 fixture, so every box lands
 on different content (`shade_frieze` falls on open sky). A mobile number needs a 16:9 `?tier=mobile`
 capture.
+
+## d — translucency map wrap follows the albedo's glTF sampler (added by the lead; Phase 8e prep)
+
+**No pixel change on today's assets** (every shipped leaf sampler is clamp, which is what was
+hard-coded). `applyFoliageTextures` set `tTex.wrapS = tTex.wrapT = ClampToEdge` on the per-texel
+translucency FACTOR map while the tinted albedo beside it already took the glTF material's own
+sampler; the two are sampled with the SAME leaf-card UVs, so 8e's k = 2.0 (willow 1.5) UV scale plus
+REPEAT samplers on `env_trees.glb` would tile the albedo and smear the trn map's edge texel.
+Now the trn map copies `wrapS` / `wrapT` from the albedo texture — neither mode hard-coded — and
+`trnWrap` in the report plus the boot log name what was taken.
+
+**One thing to know before 8e ships.** `applyFoliageTextures` runs on `env.glb`'s samplers, before the
+lazy glbs arrive; the lazy roots then re-wrap the **shared** albedo from their own sampler
+(`applyFoliageAlbedo`, behaviour unchanged since 6c round 2), and the trn map now follows there too.
+But both maps are **one texture object shared by every root using that material name**, so if 8e
+patches `env_trees.glb` to REPEAT and leaves the same material name on `env.glb` at clamp, the last
+root loaded wins for both. The viewer now says so in the boot log instead of failing silently.
+**Export action: patch the samplers of every glb carrying a leaf material, or give the re-scaled cards
+their own material name.**
+
+**Verified pixel-neutral.** Six desktop stations, pre-d vs post-d: 61-233 differing pixels of
+2 073 600 — and a SAME-BUILD control capture of the same six stations differs by 61-228, with cam02
+(130 px, max 79), cam03 (61, max 22) and cam04 (143, max 36) **identical between the two comparisons**.
+The boot log confirms why: `translucency wrap taken from the glb albedo sampler(s): 1001/1001`
+(1001 = `ClampToEdgeWrapping`) on all 8 leaf materials — exactly what was hard-coded.
+
+Tested: `web/test/foliage_lazy_test.mjs` §8 (clamp → clamp, REPEAT → REPEAT, lazy root re-wraps both,
+the shared-texture conflict is reported).
 
 ## Carried / not done
 

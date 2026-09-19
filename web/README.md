@@ -1327,6 +1327,44 @@ The `gate9m` mobile frame cannot be read with these boxes: it is 1170x2532 portr
 is a 16:9 frame, so every box lands on different content (`shade_frieze` falls on open sky). A mobile
 number for this defect needs a 16:9 `?tier=mobile` capture.
 
+### d — the translucency map's wrap mode follows the albedo's glTF sampler (Phase 8e prep)
+
+Added by the lead after items a-c. **No pixel changes on today's assets** — every shipped leaf sampler
+is `ClampToEdge`, which is what the code hard-coded — so this is wiring for Phase 8e, not a fix.
+
+**What was wrong.** `applyFoliageTextures` set `tTex.wrapS = tTex.wrapT = THREE.ClampToEdgeWrapping`
+on the per-texel translucency FACTOR map, while the tinted albedo beside it already took its wrap
+from the glTF material's own sampler (`mat.map.wrapS/wrapT`). The two maps are sampled with the SAME
+leaf-card UVs. Phase 8e scales those UVs by k = 2.0 (willow 1.5) on `env_trees.glb` and patches that
+glb's leaf samplers to `REPEAT`: the albedo would then tile and the translucency map would smear its
+edge texel across every tile, and the defect would read as a translucency artefact rather than as a
+wrap bug.
+
+**What it does now.** The translucency map takes `wrapS` / `wrapT` from the albedo texture of the
+material it belongs to — neither clamp nor repeat is hard-coded anywhere. `applyFoliageTextures().trnWrap`
+records the wrap and where it came from, and the boot log names the modes taken.
+
+**One thing the lead should know before 8e ships.** `applyFoliageTextures` runs on the scene as it
+stands before the lazy glbs arrive, i.e. on `env.glb`'s samplers; the lazily loaded roots then re-wrap
+the **shared** albedo texture from their own sampler (`applyFoliageAlbedo`, unchanged behaviour since
+6c round 2). The translucency map now follows on those roots too — but **both maps are one texture
+object shared by every root that uses that material name**, so if 8e patches `env_trees.glb` to REPEAT
+and leaves the same material name on `env.glb` at clamp, the last root loaded wins for both. The
+viewer now says so in the boot log ("…the albedo and translucency maps are SHARED, so both roots now
+use this one — the export must patch the samplers together") instead of failing silently. **The export
+should patch the samplers of every glb that carries a leaf material, or give the re-scaled cards their
+own material name.**
+
+**Verified pixel-neutral.** Six desktop stations, pre-d vs post-d: 61-233 differing pixels of
+2 073 600 — and a SAME-BUILD control capture of the same six stations differs by 61-228, with cam02
+(130 px, max 79), cam03 (61, max 22) and cam04 (143, max 36) **identical between the two comparisons**.
+The boot log confirms why: `translucency wrap taken from the glb albedo sampler(s): 1001/1001`
+(1001 = `ClampToEdgeWrapping`) on all 8 leaf materials — exactly what was hard-coded.
+
+Covered by `web/test/foliage_lazy_test.mjs` §8: a clamped albedo gives a clamped translucency map
+(today), a REPEAT albedo gives a REPEAT one (8e), a lazily loaded root re-wraps both, and the
+shared-texture conflict is reported rather than silent.
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set

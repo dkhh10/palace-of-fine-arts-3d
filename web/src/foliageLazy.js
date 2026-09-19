@@ -252,7 +252,7 @@ export function prototypeEbake( lit ) {
  * material NAMES with the same untinted source card, so they take the same replacement here - one
  * material must not look different because of which file it was loaded from.
  */
-export function applyFoliageAlbedo( root, maps, note = () => {} ) {
+export function applyFoliageAlbedo( root, maps, note = () => {}, trnMaps = null ) {
 	let n = 0;
 	if ( ! maps ) return n;
 	const seen = new Set();
@@ -263,7 +263,27 @@ export function applyFoliageAlbedo( root, maps, note = () => {} ) {
 			if ( ! t || seen.has( mat.uuid ) ) continue;
 			seen.add( mat.uuid );
 			const old = mat.map;
-			if ( old ) { t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.channel = old.channel; }
+			if ( old ) {
+				t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.channel = old.channel;
+				// PHASE 8b ITEM D — the translucency FACTOR map is sampled with these same leaf-card
+				// UVs, so it takes this root's sampler exactly as the albedo does.  Without this the
+				// trn map kept whatever the FIRST pass (env.glb) set, and 8e's REPEAT samplers on
+				// env_trees.glb would tile the albedo while the trn map clamped.
+				const tr = trnMaps && trnMaps[ mat.name ];
+				if ( tr ) {
+					// Both maps are ONE texture object shared by every root that uses this material
+					// name, so two roots with different samplers cannot both be served: say so rather
+					// than let the later root silently re-wrap the earlier one.
+					if ( ( tr.wrapS !== old.wrapS || tr.wrapT !== old.wrapT ) && tr.userData.pfaWrapFrom )
+						note( `foliage textures: ${mat.name}'s sampler in ${root.name} `
+							+ `(${old.wrapS}/${old.wrapT}) disagrees with ${tr.userData.pfaWrapFrom}'s `
+							+ `(${tr.wrapS}/${tr.wrapT}); the albedo and translucency maps are SHARED, so `
+							+ 'both roots now use this one — the export must patch the samplers together' );
+					tr.wrapS = old.wrapS; tr.wrapT = old.wrapT;
+					tr.needsUpdate = true;
+					tr.userData.pfaWrapFrom = root.name || 'a lazily loaded glb';
+				}
+			}
 			mat.map = t;
 			mat.needsUpdate = true;
 			n ++;
@@ -363,7 +383,7 @@ export async function loadFarTrees( o ) {
 			if ( obj && obj.isObject3D && a && typeof a.nodes === 'number' ) obj.userData.pfaGltfNode = a.nodes;
 	}
 	dequantizeUvs( root, { note, enabled: o.uvDequant !== false } );
-	applyFoliageAlbedo( root, o.albedoMaps, note );
+	applyFoliageAlbedo( root, o.albedoMaps, note, o.trnMaps );
 	scene.add( root );
 	root.updateMatrixWorld( true );
 
@@ -726,7 +746,7 @@ export async function loadShrubLod1( o ) {
 			if ( obj && obj.isObject3D && a && typeof a.nodes === 'number' ) obj.userData.pfaGltfNode = a.nodes;
 	}
 	dequantizeUvs( root, { note, enabled: o.uvDequant !== false } );
-	applyFoliageAlbedo( root, o.albedoMaps, note );
+	applyFoliageAlbedo( root, o.albedoMaps, note, o.trnMaps );
 	scene.add( root );
 	root.updateMatrixWorld( true );
 
@@ -862,7 +882,9 @@ export async function loadShrubLod1( o ) {
  */
 export async function applyFoliageTextures( o ) {
 	const { manifest, loadTexture, note = () => {} } = o;
-	const out = { size: null, albedo: 0, translucency: 0, normals: 0, materials: [], missing: [], bytes: 0 };
+	const out = { size: null, albedo: 0, translucency: 0, normals: 0, materials: [], missing: [], bytes: 0,
+		// item d: the wrap each translucency map took, and where it came from
+		trnWrap: {} };
 	const fol = manifest.raw && manifest.raw.materials && manifest.raw.materials.foliage;
 	if ( ! fol || ! fol.materials ) { note( 'foliage textures: no materials.foliage in the manifest (export item D)' ); return out; }
 	if ( o.mode === '0' ) { note( 'foliage textures OFF (?foliagetex=0): the cards keep the glb\'s untinted source texture' ); return out; }
@@ -904,9 +926,24 @@ export async function applyFoliageTextures( o ) {
 		let aTex = null, tTex = null;
 		if ( alb ) aTex = await fetchOne( alb, `foliage albedo ${name}` );
 		if ( trn ) tTex = await fetchOne( trn, `foliage translucency ${name}` );
+		// PHASE 8b ITEM D (lead) — the translucency map is sampled with the SAME leaf-card UVs as the
+		// albedo it is derived from, so it must take the albedo's own glTF SAMPLER wrap mode and not a
+		// hard-coded one (neither clamp, which it was, nor repeat).  Phase 8e scales the leaf-card UVs
+		// by k = 2.0 (willow 1.5) on env_trees.glb and patches that glb's leaf samplers to REPEAT: a
+		// clamped translucency map would then smear its edge texel across every tile while the albedo
+		// tiled correctly, and the defect would read as a translucency artefact, not as a wrap bug.
+		// Today's shipped samplers are all clamp, so this changes no pixel on the current assets.
+		const srcMaps = mats.map( ( m ) => m.map ).filter( Boolean );
+		const wrapS = srcMaps.length ? srcMaps[ 0 ].wrapS : THREE.ClampToEdgeWrapping;
+		const wrapT = srcMaps.length ? srcMaps[ 0 ].wrapT : THREE.ClampToEdgeWrapping;
+		if ( srcMaps.some( ( t ) => t.wrapS !== wrapS || t.wrapT !== wrapT ) )
+			note( `foliage translucency ${name}: this material's own albedo samplers disagree about wrap; `
+				+ `taking the first (${wrapS}/${wrapT})` );
 		if ( tTex ) {
 			tTex.colorSpace = THREE.NoColorSpace;          // a factor, not a colour
-			tTex.wrapS = tTex.wrapT = THREE.ClampToEdgeWrapping;
+			tTex.wrapS = wrapS; tTex.wrapT = wrapT;
+			tTex.userData.pfaWrapFrom = srcMaps.length ? 'the first pass (the env.glb samplers)' : null;
+			out.trnWrap[ name ] = [ wrapS, wrapT, srcMaps.length ? 'from the glb albedo sampler' : 'no albedo in the glb: clamp' ];
 			tTex.anisotropy = Math.max( tTex.anisotropy || 1, 8 );
 			tTex.needsUpdate = true;
 			if ( Array.isArray( tint ) && tint.length === 3 ) tTex.userData.pfaTint = tint;
@@ -931,8 +968,12 @@ export async function applyFoliageTextures( o ) {
 	}
 	out.trnMaps = trnMaps;
 	out.albedoMaps = albedoMaps;
+	// item d: one line naming the wrap modes taken, so an 8e sampler change is visible in the boot log
+	const wraps = [ ...new Set( Object.values( out.trnWrap ).map( ( w ) => `${w[ 0 ]}/${w[ 1 ]}` ) ) ];
 	note( `foliage textures (materials.foliage, ${out.size} px): ${out.albedo} tinted albedo(s) and `
 		+ `${out.translucency} translucency factor map(s) on ${out.materials.join( ', ' )}`
+		+ ( wraps.length ? `; translucency wrap taken from the glb albedo sampler(s): ${wraps.join( ', ' )} `
+			+ `(${THREE.ClampToEdgeWrapping} = clamp, ${THREE.RepeatWrapping} = repeat)` : '' )
 		+ ( out.missing.length ? `; ${out.missing.length} declared material(s) not in the scene: ${out.missing.join( ', ' )}` : '' ) );
 	return out;
 }
