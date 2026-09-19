@@ -1025,3 +1025,20 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 6. **When the reference set is regenerated, keep it at full resolution.** Only the 960 px JPEG copies of the Phase 8 Cycles references survived
    (PNGs gitignored, the worktree gone), so this round's parity is measured at 960 px on both sides and no sharpness claim can be made from them.
 7. **Scores.** Desktop 01 **3.97** · 02 **3.22** · 03 **2.83** · 04 2.88 · 05 **3.20** · 06 3.03; mobile **3.32 / 3.30 / 2.52 / 2.70 / 2.96 / 2.58**.
+
+## QA round 24 (verification of the far-tree irradiance re-key, live URL, tag `gate12`, 2026-09-19) — **BLOCKER CLOSED; no open blocker in Phase 8**
+1. **A revert is verified on the delivered frames, box by box, against the same reference the regression was measured with.** Nine of the ten
+   far-crown boxes return to within 3 % of gate10 (seven to three decimals), the mean deviation from the Phase 8 Cycles set goes 6.7 -> 9.7 ->
+   **6.3 %**, and the one box that does not return moves *toward* the reference. "The bake was re-keyed" is not the evidence; these numbers are.
+2. **Reverting a photometric change reverts the metrics it confounded — and only those.** 8e's blade p90 returns to 22.7 px and 5/6 boxes under
+   target, each box to the pixel, with coverage 0.991-1.000x. That the *same six numbers* come back confirms round 23's reading that the rise was
+   brightness widening a thresholded run, not geometry.
+3. **What does not revert tells you the attribution was wrong.** The shrub hard-edge rise stayed (5.95 / 7.12 % against gate10's 2.78 / 5.73)
+   while the luma it was blamed on went all the way back. One round's cause can be another round's coincidence: re-attribute in writing, to the
+   belt that actually changed, and carry it with an owner.
+4. **Hold the rest of the frame to a byte rule.** Station 4 bit-identical, seven of nine architecture boxes bit-identical, MAE 0.00-0.44 % at every
+   station, payload -5 105 B, resident and draw calls identical to the digit. A one-item fix that leaves that trail needs no argument.
+5. **Identical geometry with slower frames is a measurement, not a regression.** Draws, triangles, programs and 1 814.2 MB resident matched gate11
+   exactly while the 1440p medians read up to +5.4 ms — the machine had just finished a 4K Cycles render. Say so, do not charge it, and re-take
+   the number on an idle machine.
+6. **Scores.** Desktop 01 **4.01** · 02 **3.30** · 03 2.83 · 04 2.88 · 05 **3.28** · 06 **3.07**; mobile **3.40 / 3.38 / 2.52 / 2.70 / 3.04 / 2.62**.
