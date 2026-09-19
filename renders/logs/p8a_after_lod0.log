@@ -1,0 +1,18 @@
+00:00.317  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/assets/environment.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/scripts/env_preview.py:69: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+00:12.530  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_124748_01_lagoon_hero_p8a_after_lod0.png'
+00:21.593  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_124748_02_lagoon_ne_threequarter_p8a_after_lod0.png'
+00:31.517  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_124748_05_south_lawn_p8a_after_lod0.png'
+[common] rendered 20260919_124748_01_lagoon_hero_p8a_after_lod0.png in 11.6s
+[common] rendered 20260919_124748_02_lagoon_ne_threequarter_p8a_after_lod0.png in 9.0s
+[common] rendered 20260919_124748_05_south_lawn_p8a_after_lod0.png in 9.9s
+[env_preview] wrote:
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_124748_01_lagoon_hero_p8a_after_lod0.png
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_124748_02_lagoon_ne_threequarter_p8a_after_lod0.png
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_124748_05_south_lawn_p8a_after_lod0.png
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 43219 exited rc=0 after 32 s (max 900)
