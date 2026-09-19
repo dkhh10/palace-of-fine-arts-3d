@@ -1,0 +1,14 @@
+00:00.529  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+Info: Deleted 4884 data-block(s)
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: Saved copy as "gate1_set.blend"
+Info: Deleted 202 data-block(s)
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: Saved copy as "gate1_bake.blend"
+[gate0] STEP gate1_export_set wall_s=128.9 gate1_set.blend=211326459B gate1_bake.blend=118144108B export_set.json=1259423B manifest.json=1338722B placed=2950448 arch=949382 orn=1099192 env=901874 unique=1017847 objects=2540 meshes=143 batches=157 near_trees=20 far_trees=127 removed=9668
+[gate1] totals {"placed_tris": {"ARCH": 949382, "ORN": 1099192, "ENV": 901874}, "placed_total": 2950448, "unique_tris": {"ARCH": 351374, "ORN": 112897, "ENV": 553576}, "unique_total": 1017847, "objects": {"ARCH": 564, "ORN": 436, "ENV": 1540}, "unique_meshes": 143, "budget": {"ARCH": 1100000, "ORN": 1100000, "ENV": 902000}, "budget_total": 3000000, "draw_call_batches": 157}
+[gate1] tree rule {"trees_total": 147, "within_radius": 77, "near_exported": 20, "far_billboards": 127, "lod2_blob_objects": 46, "lod2_blob_within_radius": 28, "thin_fraction": 0.5, "near_tris_budget": 391994, "near_tris_used": 391908, "cut": "the near list is the `within_radius` set truncated by the ENV budget, closest to the walk first; the remainder joins the impostor list (docs/briefs/phase6_plan.md section 4b, user's decision)"}
+blender_run.sh: pid 95784 exited rc=0 after 131 s (max 2400)
