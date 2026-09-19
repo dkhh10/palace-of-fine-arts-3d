@@ -1206,6 +1206,17 @@ def shrub_stats():
     `blender --background --python scripts/env_build.py -- --shrub-stats` -- no site, no save. The 8a cap is
     "the whole LOD1 shrub set under 2x its current unique triangles", which is what the LOD1 column measures.
     """
+    # `--lod2=card,cover,blade,sub[,clump]` costs an ALTERNATIVE LOD2 without changing the build: the web
+    # export ships the LOD2 shrub mesh for all 1 379 placements (export/gate1_set.py "# shrubs at LOD2"), so
+    # this is the only lever that reaches the viewer, and the lead needs its triangle price.
+    for a in ARGS:
+        if a.startswith("--lod2="):
+            v = a.split("=", 1)[1].split(",")
+            SHRUB_LOD[2] = dict(card=float(v[0]), cover=float(v[1]), blade=float(v[2]), sub=int(v[3]))
+            if len(v) > 4 and v[4] == "clump":
+                globals()["CLUMP_LODS"] = (0, 1, 2)
+                globals()["TUFT_LODS"] = (0, 1, 2)
+            print(f"[shrub-stats] LOD2 override: {SHRUB_LOD[2]} clump={CLUMP_LODS}")
     src = shrub_sources()
     tot = {0: 0, 1: 0, 2: 0}
     print(f"{'source':14s} {'LOD0':>8s} {'LOD1':>8s} {'LOD2':>8s}   {'cards L0':>8s} {'cards L1':>8s} "

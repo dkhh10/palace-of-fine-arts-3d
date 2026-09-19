@@ -11,15 +11,14 @@ Frames: the `--local --lod=1` ENV previews written by scripts/env_preview.py (12
 `p8a_before` / `p8a_after`, against the QA-17 reference frames (the Phase 5 Cycles hero at station 1, the
 round-13 Cycles frames at 2, 3, 5).
 
-RESOLUTION.  qa_r13_probe.rgb() resizes every frame to 1920x1080, so a 1280x720 preview is UPSCALED and its
-edges are softened -- which would flatter `hard%` against a native-1920 reference.  Every frame here therefore
-goes through the same pipeline: resized to the preview's native 1280x720 first, then to 1920x1080, so the box
-coordinates stay QA-17's and the three columns are measured on identical resolution treatment.  The reference
-at its native 1920 is printed as a fourth column for context only.
-
-The preview look (env_preview's placeholder sun + sky, AgX Base Contrast, exposure -0.8) is not the Phase 5
-master look, so the reference columns are a target to move TOWARD, not an equality test; the decision metric
-is before -> after, measured identically.
+RESOLUTION and LOOK -- read before trusting a column.  Frames go through qa_r13_probe.rgb()'s own rule (LANCZOS
+to 1920x1080 and nothing else), which reproduces every QA-17 reference number exactly; see `norm`.  Two
+consequences: the 1280x720 previews are UPSCALED, so their `hard%` reads several times low against a native-1920
+Cycles reference; and env_preview's look (placeholder sun + sky, AgX Base Contrast, exposure -0.8) is not the
+Phase 5 master look and is olive enough that the leaf mask also catches lit stone, so the previews' `leaf%` runs
+about 1.7x the reference across the seven boxes.  The reference column is therefore a DIRECTION, not an equality
+test, and the decision metric is before -> after, measured identically.  The viewer numbers QA scores are taken
+on the exported build, not here.
 
     python3 scripts/env_p8_boxes.py                        # table
     python3 scripts/env_p8_boxes.py --sheet                # table + renders/qa_comparisons/p8a_shrubs_*.jpg
@@ -39,7 +38,6 @@ P = P17.P
 ROOT = Path(__file__).resolve().parent.parent
 PREV = ROOT / "renders/previews/environment"
 OUT = ROOT / "renders/qa_comparisons"
-NATIVE = (1280, 720)          # the preview resolution every frame is normalised to
 AT = P.AT                     # (1920, 1080), the coordinate space of the QA-17 boxes
 # renders/previews/qa/ (the QA reference frames) lives in the MAIN checkout only, like reference/.
 MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
@@ -162,6 +160,37 @@ def sheet(rows, before_tag, after_tag):
     return written
 
 
+def frames_sheet(before_tag, after_tag):
+    """One 960 px sheet: the whole before / after frame at each of the four stations, box drawn on."""
+    from PIL import ImageDraw
+    OUT.mkdir(parents=True, exist_ok=True)
+    w = 480
+    rows = []
+    for st in (1, 2, 3, 5):
+        pair = []
+        for lbl, p in (("before", preview(before_tag, st)), ("after", preview(after_tag, st))):
+            im = Image.fromarray(norm(p).astype(np.uint8))
+            d = ImageDraw.Draw(im)
+            for name, s, box, why in BOXES:
+                if s == st:
+                    d.rectangle(box, outline=(255, 240, 90), width=3)
+            im = im.resize((w, int(round(im.height * w / im.width))), Image.LANCZOS)
+            ImageDraw.Draw(im).text((6, 4), f"cam{st:02d} {lbl}", fill=(255, 245, 120))
+            pair.append(im)
+        rows.append(pair)
+    H = sum(r[0].height for r in rows)
+    sh = Image.new("RGB", (2 * w, H), (18, 18, 18))
+    y = 0
+    for a, b in rows:
+        sh.paste(a, (0, y))
+        sh.paste(b, (w, y))
+        y += a.height
+    p = OUT / "p8a_shrubs_frames.jpg"
+    sh.save(p, quality=86)
+    print("[env_p8_boxes] wrote", p)
+    return p
+
+
 if __name__ == "__main__":
     argv = sys.argv[1:]
     bt, at = "p8a_before", "p8a_after"
@@ -173,3 +202,4 @@ if __name__ == "__main__":
     rows = table(bt, at)
     if "--sheet" in argv:
         sheet(rows, bt, at)
+        frames_sheet(bt, at)
