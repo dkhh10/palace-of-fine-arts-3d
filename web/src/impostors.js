@@ -447,7 +447,14 @@ export function parseImpEdge( v, msaa = true ) {
  * which sets the coverage quantum the ordered dither works against; with no alpha-to-coverage mask
  * to write into, the quantum is 1 and the dither is the binary fallback.
  */
-export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0, share: 0.0, ramp: 1.0 };
+// SWEPT, not chosen (web/README.md "Phase 8b"): share 0 / 0.1 / 0.15 / 0.2 / 0.25 / 0.5 / 1 at
+// stations 1, 2 and 5.  0.15 is the largest share at which every QA-17 crown box's centre/edge
+// holds against Phase 7 (cam02 0.398 against 0.397, cam05 0.908 against 0.912, cam01 0.550 against
+// 0.532 - toward the reference's 0.852) and every whole-frame luma stays within 0.007x, while the
+// station-2 crown's silhouette crossings go 2.92 -> 6.82 per 100 screen px against Cycles' 7.76 and
+// its foliage share 77.1 -> 74.2 % against Cycles' 72.3 %.  Above it the crossings overshoot
+// (0.25 -> 10.2, 1.0 -> 16.8) and the crown-box level walks off (1.04x -> 1.13x, 1.29x).
+export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0, share: 0.15, ramp: 1.0 };
 export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 	const d = { ...IMP_COV };
 	let unknown = null;
