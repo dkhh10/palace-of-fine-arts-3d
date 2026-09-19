@@ -110,7 +110,8 @@ def main():
         out[p] = dict(
             albedo=bc.key(p), file=bc.ktx_name(p), png=png.name,
             png_bytes=png.stat().st_size, ktx2_bytes=(ktx.stat().st_size if ktx.exists() else None),
-            range=r["range"], range_same_as_octahedral=True, range_band_p999=r["range_band_p999"],
+            range=r["range"], range_same_as_octahedral=r["range_same_as_octahedral"],
+            range_band_p999=r["range_band_p999"],
             clipped_body_texels=r["clipped_body_texels"], body_texels=r["body_texels"],
             clipped_body_pct=round(100.0 * r["clipped_body_texels"] / max(r["body_texels"], 1), 3),
             crown_sphere_m=sphere, radius_m=r["radius_m"], centre_z_m=r["centre_z_m"],

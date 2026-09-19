@@ -9,7 +9,9 @@ own size, and the same 2K frame nearest-upscaled x2 to the band's crown size for
 Top row: colour through the delivery LUT (AgX High Contrast at -2.8331399 EV) over mid grey, straight
 alpha. Bottom row: the alpha channel alone - the silhouette the viewer actually resolves.
 
-Writes renders/qa_comparisons/p8b_band_<short>.jpg (960 px, committed) in the MAIN checkout.
+Writes renders/qa_comparisons/p8b_band_<short>.jpg (960 px) in THIS checkout, so it is committed on
+the bake branch; `--main` writes into the MAIN checkout instead (do not leave an untracked copy there: it
+blocks the lead's merge).
 """
 import argparse
 import json
@@ -83,6 +85,7 @@ def up2(a):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--proto", default="ENV_tree_broadleaf_s53_LOD1")
+    ap.add_argument("--main", action="store_true", help="write into the MAIN checkout instead")
     args = ap.parse_args()
     p = args.proto
     man = json.loads((MAIN / "export/out/gate3/manifest.json").read_text())
@@ -124,7 +127,7 @@ def main():
                 d.text((x, ytop + im.shape[0] + 4), labels[k], fill=(200, 200, 200))
         d.text((12, ytop - 14), "colour (delivery LUT, straight alpha over grey)" if yrow == 0
                else "alpha (coverage, as baked: no threshold, no dilate)", fill=(150, 200, 150))
-    out = MAIN / "renders" / "qa_comparisons" / f"p8b_band_{short}.jpg"
+    out = (MAIN if args.main else bc.ROOT) / "renders" / "qa_comparisons" / f"p8b_band_{short}.jpg"
     out.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(out, quality=92)
     print(f"[band] {out} {out.stat().st_size} B  band cell ({i},{j}) az {az:.1f} el {el:.1f} "

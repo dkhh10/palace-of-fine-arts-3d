@@ -145,7 +145,16 @@ rng_octa = float(bc.manifest_impostors()["prototypes"][PROTO]["range"])
 body = alb[..., 3] > 0.5
 rng_band = (float(max(np.percentile(alb[body][:, :3], 99.9) * 1.1, 1e-3))
             if bool(body.any()) else g3.pick_range(alb[..., :3]))
-rng = rng_octa                      # ship at the published range: one constant decodes both atlases
+# Ship at the PUBLISHED octahedral range: one constant decodes both atlases, so the band is a pure
+# texture swap for the viewer and a wrong-constant mix-up (a 20-200 % brightness error on every far tree)
+# is impossible. The band's own p99.9 is 1.04-3.2x higher - its 36 views are all at 0-40 deg elevation,
+# where the crown is sunlit, while the octahedral p99.9 is diluted by the 108 views that look at the
+# underside - so the published range clips 0.18-1.62 % of the opaque-crown texels instead of the
+# octahedral rule's 0.1 %. Measured cost at the worst (willow_s11, 1.62 %): a texel that should read
+# linear 18.6 lands at 5.9, which through the delivery LUT is display 244.5 -> 209.6 of 255 on those
+# texels. `PFA_BAND_RANGE=band` re-bakes at the band's own p99.9 instead (10 min for the 16); the viewer
+# must then read `range` from the band block, which is why it is not the default.
+rng = rng_band if os.environ.get("PFA_BAND_RANGE", "octa").lower() == "band" else rng_octa
 enc = np.concatenate([g3.gamma2_encode(alb[..., :3], rng),
                       np.round(np.clip(alb[..., 3], 0, 1) * 255.0).astype(np.uint8)[..., None]], axis=-1)
 p = bc.BAND_OUT / bc.png_name(PROTO)
@@ -161,7 +170,7 @@ rec.update(
                 pad_px=[bc.PAD_X, bc.PAD_Y], elevations_deg=list(bc.ELEV_DEG),
                 azimuth0_blender_dir=list(bc.AZIMUTH0_BLENDER_DIR)),
     range=rng, range_octahedral=rng_octa, range_band_p999=round(rng_band, 6),
-    range_same_as_octahedral=True,
+    range_same_as_octahedral=(rng == rng_octa),
     clipped_body_texels=int((alb[body][:, :3] > rng).sum()) if bool(body.any()) else 0,
     body_texels=int(body.sum()),
     radius_m=round(float(radius), 4), centre=[round(float(v), 4) for v in centre],
