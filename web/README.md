@@ -1504,6 +1504,34 @@ no shader-patch error (312 draws). The default is confirmed to equal the measure
 a capture with no `?cardsun=` differs from `?cardsun=0.6,0.8,0.35,0.9,0.38,1,3,1` on 0.000-0.007 %
 of pixels, which is the scene's own animated dressing, not the shader.
 
+### A capture caveat this round measured — the water is not deterministic between sessions
+
+Two captures of the SAME build, same query, `t=0`, differ on **34.2 % of cam01** and 13.3 % of cam05,
+max 200/255 — and every differing pixel is **below the waterline**. The planar Reflector's frame is
+not reproducible session to session, so any viewer-vs-viewer comparison at a water station must mask
+it: take an A/A control (two captures of one build) and read the test difference only on the pixels
+the control calls stable. Above the waterline the same pair is identical. Every pixel-neutrality
+claim in this branch is stated on that masked basis; the QA-17 box metrics are unaffected (the shrub
+boxes are shore, not water), but a future "no pixel moved" claim that ignores this will be wrong by a
+third of the hero frame.
+
+### Carries taken in this branch (review r3 / r2, each its own commit)
+
+* **r3 3** — `applyFoliageTextures`: one sampler rule for BOTH maps in the eager path (the albedo
+  took the last material of a name, the translucency the first); `albedoWrap` joins `trnWrap`.
+* **r3 4** — `buildDistanceCull`: `pad` = the mesh radius for a non-instanced batch, 0 for an
+  instanced one, so a single-row site-spanning mesh is tested as a SPHERE, not at its origin.
+* **r3 5** — the `__pfaTrisByGroup` note: "must match" -> "must match WITHIN the post chain's
+  full-screen quads", with the measured 4 952 550 vs 4 952 588 / 301 vs 317 in the comment.
+* **r3 6** — item c's CIELAB measurement is now `scripts/p8b_c_cielab.py`; it reproduces the Cycles
+  and viewer columns exactly and shows that the photo column cannot be reproduced from the tree (the
+  box set used on ref_062 was never recorded).
+* **r2 5b** — `impostors.band.rows > 4` now warns instead of being silently truncated by `pfaBandEl`.
+* **r2 6** — the band's third frame is dropped at COMPILE time (`PFA_FRAMES`), 4 texel fetches per
+  band fragment. The obvious per-fragment `if ( wk <= 0.0 ) continue;` is **not** pixel-neutral:
+  `texelAt` is an implicit-LOD fetch and divergent control flow makes its derivatives undefined
+  (measured: 1.18 % of cam01's stable pixels moved, max 196). Frame cost unchanged within the noise.
+
 ### 8e dependency (one-line fix, pixel-neutral today)
 
 `applyFoliageAlbedo` copied the root's sampler onto the shared tinted albedo (`t.wrapS = old.wrapS`)
