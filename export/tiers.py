@@ -290,6 +290,21 @@ def rebase_gate3_paths(man, keep_albedo_2k=False):
                             "directory name is deliberately not a path any more, so a deploy walker "
                             "cannot pick it up as a candidate.")
     imp = man.get("impostors") or {}
+    # 8b: the band atlas is DESKTOP ONLY (the brief's "mobile stays on the octahedral 1 K"). Removing
+    # the block, rather than leaving it and publishing nothing, is what keeps the mobile plan honest:
+    # web/src/manifest.js turns the band path on merely because the manifest carries `impostors.band`,
+    # so a block with no files behind it would send the mobile viewer after 16 unpublished atlases.
+    if not keep_albedo_2k:
+        dropped_band = imp.pop("band", None)
+        if dropped_band:
+            # The texture table goes with the block: an entry for a file this variant never publishes
+            # is a url `resolveTexture` can hand out and the plan cannot back.
+            bkeys = [(v.get("albedo") if isinstance(v, dict) else v)
+                     for v in (dropped_band.get("prototypes") or {}).values()]
+            g3files = man.get("textures", {}).get("gate3", {}).get("files") or {}
+            gone = sum(1 for k in bkeys if k and g3files.pop(k, None))
+            note_move("impostors.band", f"{dropped_band.get('count')} atlases + {gone} "
+                                        f"textures.gate3.files entries, desktop only")
     v2 = imp.get("variant_2k")
     if isinstance(v2, dict):
         drop_keys = ("normal_depth_2k",) if keep_albedo_2k else ("albedo_2k", "normal_depth_2k")
@@ -301,11 +316,18 @@ def rebase_gate3_paths(man, keep_albedo_2k=False):
         if dropped_2k:
             note_move("impostors.prototypes[*].{%s}" % ",".join(drop_keys), f"{dropped_2k} keys")
             v2["note"] = (v2.get("note", "") + " " + (
-                "The 2 K ALBEDO is published in tier 1 (8b, docs/decisions.md 2026-09-19) and the "
-                "viewer draws it by default (`?imp2k=0` reverts); tier 0 keeps the half-resolution "
-                "ETC1S stand-in of the 1 K twin, byte for byte. `normal_depth_2k` is still removed: "
-                "web/src/impostors.js only loads the 1 K normal-depth, so naming the 2 K one here "
-                "would be payload nothing fetches."
+                "The 2 K ALBEDO is published in tier 1 (8b, docs/decisions.md 2026-09-19); tier 0 "
+                "keeps the half-resolution ETC1S stand-in of the 1 K twin, byte for byte. "
+                "`normal_depth_2k` is still removed: web/src/impostors.js only loads the 1 K "
+                "normal-depth, so naming the 2 K one here would be payload nothing fetches. "
+                "STAND-IN OWNERSHIP: a prototype has exactly ONE tier-0 stand-in file and "
+                "`tiers.lowres.files` names it once, because manifest.js keys `upgradeOf` by the "
+                "stand-in url and `lowresFor` by the full url and tiers_test asserts the two are the "
+                "same size. The entry is filed under whichever key the viewer DRAWS by default - the "
+                "band atlas when `impostors.band` is present, otherwise this 2 K albedo. The keys "
+                "that lose it (the 1 K always, the 2 K once the band ships) are still published at "
+                "tier 1 and are fetched from their own tier by `?imp2k=0` / `?impband=0`; those "
+                "reverts simply do not get a first-frame stand-in."
                 if keep_albedo_2k else
                 "The 2 K texture keys are removed from this manifest: the 1 K set is what ships, and "
                 "naming the 2 K files here made every deploy walker treat them as part of the "
@@ -400,6 +422,32 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             pub.reasons.add(f"impostor2k:{k2}")
             files[p2] = pub
             imp_2k[k2] = k1
+    # Phase 8b, the BAND atlas (docs/briefs/phase8b_band_atlas.md).  `resolve_files` already put the
+    # 16 atlases in the universe; what is decided here is which key owns the prototype's ONE tier-0
+    # stand-in file.  There is only one stand-in per prototype - the half-resolution ETC1S copy of the
+    # 1 K octahedral albedo - and `tiers.lowres.files` may name it once, because web/src/manifest.js
+    # keys `upgradeOf` by the stand-in url while keying `lowresFor` by the full url, so two entries on
+    # one stand-in collide in the first map and not the second (web/test/tiers_test.mjs asserts the two
+    # are the same size).  The owner is therefore whatever the viewer DRAWS by default, which the band
+    # takes over from the 2 K: stand-in -> band atlas.  The 1 K and 2 K octahedral albedos stay
+    # published at tier 1 with no stand-in of their own, for `?impband=0` / `?imp2k=0`.
+    imp_band = {}                    # band albedo key -> the 1 K key whose tier-0 stand-in it takes
+    if mobile:
+        # Desktop only. `resolve_files` reads the un-rebased manifest, which still carries the block,
+        # so the atlases have to leave the universe here or `unpublished` would list them - and the
+        # mobile manifest's own `impostors.band` is removed in `rebase_gate3_paths`.
+        for p_ in [p_ for p_, q in files.items() if q.kind == "impostor_band"]:
+            del files[p_]
+    if not mobile:
+        bandp = ((man.get("impostors") or {}).get("band") or {}).get("prototypes") or {}
+        for proto, v in bandp.items():
+            kb = v.get("albedo") if isinstance(v, dict) else v
+            k1 = ((man["impostors"]["prototypes"].get(proto) or {}).get("albedo")
+                  if proto in man["impostors"]["prototypes"] else None)
+            if kb and k1:
+                imp_band[kb] = k1
+        for kb, k1 in imp_band.items():
+            imp_2k = {k2: kk for k2, kk in imp_2k.items() if kk != k1}   # the band outranks the 2 K
     idx = G.material_index(man)
     hero_mats, hero_keys = gate5_tex.tier0_texture_keys(man, vis)
     hero_tex = {k for k, _ in hero_keys}
@@ -433,7 +481,11 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                 tex_order[e["texture"]] = min(tex_order.get(e["texture"], 99), key_order)
 
     man5 = json.loads(json.dumps(man))
-    rebased = rebase_gate3_paths(man5, keep_albedo_2k=bool(imp_2k))
+    # `keep_albedo_2k` is the VARIANT, not "did anything land in imp_2k": 8b's band takes the stand-in
+    # away from every 2 K key, so `imp_2k` empties on desktop once all 16 prototypes have a band, and
+    # keying off it stripped `albedo_2k` AND `impostors.band` from the desktop manifest while the 16
+    # band atlases were still being published - dead payload and a viewer with no band block.
+    rebased = rebase_gate3_paths(man5, keep_albedo_2k=not mobile)
     entries = []
     base = out
     lr = json.loads((out / "lowres.json").read_text()) if (out / "lowres.json").exists() else {}
@@ -481,6 +533,13 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                               "half-resolution ETC1S copy", key=pub.key, px=px)
         elif pub.kind in ("lightmap", "lightmap_atlas"):
             put(rel, 1, kind, "the baked light; tier 0 ships none", key=pub.key, px=px)
+        elif pub.kind == "impostor_band":
+            # 8b: tier 1, sharing the prototype's 1 K octahedral stand-in (see `imp_band` above).
+            # Mobile never reaches here - `impostors.band` is removed from the mobile manifest.
+            put(rel, 1, kind,
+                "the 12x3 band atlas the viewer draws by default when the manifest carries "
+                "impostors.band (?impband=0 reverts to the octahedral 2 K); tier 0 keeps the "
+                "prototype's 1 K octahedral half-resolution ETC1S stand-in", key=pub.key, px=px)
         elif pub.kind == "impostor":
             if pub.key in imp_2k:
                 put(rel, 1, kind,
@@ -528,6 +587,8 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         # pairing symmetric without a second ETC1S encode, so tier 0 stays byte-identical, and the 1 K
         # file stays published at tier 1 for `?imp2k=0`.  The FILE is the same file either way.
         key_2k = {k1: k2 for k2, k1 in imp_2k.items()}
+        key_2k.update({k1: kb for kb, k1 in imp_band.items()})   # 8b: the band owns the stand-in
+        g3f = man["textures"]["gate3"]["files"]
         for keys, kind_lo in kinds_lo:
             for k in sorted(keys):
                 f = lowres / f"{k}.ktx2"
@@ -535,9 +596,15 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                 if not f.exists() or pk in lowres_files:
                     continue
                 rel = G.pub_rel(f, base)
+                # `px` describes the FILE this row publishes - the half-resolution copy of `k` - not
+                # the key it is filed under.  Left None it falls through to the resident estimate's
+                # own lookup, which reads the width of `pk`: on a re-keyed row that is the 2 K (and
+                # now the 4096 band) atlas, and `impostor_lo` was counted at 111.8 MB instead of 44.8
+                # (docs/reviews/phase8_export_r1_review.md).  Pinned here from `k`.
+                px = lr_px.get(k) or (g3f.get(k) or {}).get("w")
                 put(rel, 0, kind_lo, "half-resolution ETC1S copy, upgraded in tier 1",
-                    key=pk, px=lr_px.get(k))
-                lowres_files[pk] = dict(path=rel, bytes=f.stat().st_size, px=lr_px.get(k))
+                    key=pk, px=px)
+                lowres_files[pk] = dict(path=rel, bytes=f.stat().st_size, px=px)
 
     # A group's own external textures (`-tr`) get the group's tier: published once, whichever groups
     # reach them, at the EARLIEST tier that needs them.  Read back out of the packed glb, never guessed.
@@ -743,14 +810,22 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         if e["kind"] == "mobile_lo":
             continue          # published for the other variant; this viewer never uploads it
         px = e.get("px")
+        g2 = man["textures"]["gate2"]["files"].get(e.get("key") or "")
+        g3 = man["textures"]["gate3"]["files"].get(e.get("key") or "")
+        tab = g2 or g3 or {}
         if not px:
-            g2 = man["textures"]["gate2"]["files"].get(e.get("key") or "")
-            g3 = man["textures"]["gate3"]["files"].get(e.get("key") or "")
-            px = (g2 or g3 or {}).get("w")
+            px = tab.get("w")
         if not px:
             continue
         cls = e["kind"].split(":")[0].replace("_half", "")
-        res[cls] += resident_mb(px)
+        # 8b: the band atlas is 4096x1024 and carries NO mips, so px*px with a mip chain would count
+        # it four times over (358 MB instead of 67). A row whose own `px` was pinned above describes a
+        # half-resolution copy, not the table entry, so it keeps the square+mips assumption; only a
+        # row that IS the table entry takes the table's height and mip flag.
+        if not e.get("px") and tab.get("h") and tab.get("h") != px:
+            res[cls] += px * tab["h"] * (4 / 3 if tab.get("mips") else 1.0) / 1e6
+        else:
+            res[cls] += resident_mb(px)
     res_total = round(sum(res.values()), 1)
 
     man5["schema"] = "pfa-phase6/5"

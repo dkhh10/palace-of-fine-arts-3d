@@ -239,6 +239,14 @@ def resolve_files(man, base=None):
             if key in g3["files"]:
                 add(os.path.join(g3["ktx2_dir"], g3["files"][key]["path"]), "impostor",
                     f"impostor:{proto}:{slot}", key=key)
+    # Phase 8b: the band atlases (`impostors.band`), one per prototype, replacing the albedo lookup.
+    # Their `path` in textures.gate3.files is relative to that table's own ktx2_dir and steps out of
+    # it (`../band/...`), which os.path.join + normpath resolve exactly as the viewer's joinDir does.
+    for proto, v in ((man.get("impostors") or {}).get("band") or {}).get("prototypes", {}).items():
+        key = v.get("albedo") if isinstance(v, dict) else v
+        if key in g3["files"]:
+            add(os.path.join(g3["ktx2_dir"], g3["files"][key]["path"]), "impostor_band",
+                f"impostor_band:{proto}", key=key)
     fol = man["materials"].get("foliage") or {}
     fdir = (fol.get("dir") or "").replace("out/gate3/", "")
     if fdir and (base / fdir).is_dir():

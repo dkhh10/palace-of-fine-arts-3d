@@ -1,0 +1,3 @@
+[tiers] mobile: t0 46.5 MB / 235 files, t1 5.6 MB / 58 files, t2 9.4 MB / 48 files; total 61.5 MB; resident est 306 MB
+[tiers] mobile: first frame = tier 0 46.49 MB + boot 1.10 MB + headers 39 kB = 47.63 MB on the wire, within the 49.5 MB target
+[tiers] mobile: 0 files over the 25 MiB cap -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-export/export/out/gate5/manifest_mobile.json

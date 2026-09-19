@@ -622,6 +622,77 @@ def main():
         note=("46 of the 127 far trees were exported against an LOD2 blob; every impostor is baked from the "
               "LOD1 mesh, which is why prototype_map exists and why there are 16 atlases, not 25."))
 
+    # ------------------------------------------------------------ impostors.band (Phase 8b)
+    # The band atlas: 12 azimuths x 3 elevations of 341 px frames on a 4096x1024 atlas per prototype,
+    # replacing the ALBEDO LOOKUP ONLY (docs/briefs/phase8b_band_atlas.md).  Every constant here is
+    # COPIED from the bake's own sidecar `out/gate3/band/band.json` and none of it is re-derived:
+    # `azimuth0_deg` alone decides which way 127 cards face, and a value computed twice is a value
+    # that can disagree with itself.  The block is written whole or not at all, which is also how
+    # web/src/manifest.js reads it.
+    bj = next((q for q in (g3.OUT / "band" / "band.json",
+                           g3.MAIN_ROOT / "export" / "out" / "gate3" / "band" / "band.json")
+               if q.exists()), None)
+    if bj is not None:
+        band = json.loads(bj.read_text())
+        assert band.get("schema") == "pfa-phase8b/band-atlas/1", f"band.json schema {band.get('schema')!r}"
+        bdir = bj.parent
+        # The atlases live beside tex_ktx2, not in it, so their `path` is relative to
+        # `textures.gate3.ktx2_dir` and the viewer's joinDir resolves the `..` as a URL.
+        bprotos, band_bytes, band_missing = {}, 0, []
+        for name, p in sorted((band.get("prototypes") or {}).items()):
+            key, fn = p["albedo"], p["file"]
+            f = bdir / fn
+            if not f.exists():
+                band_missing.append(key)
+                continue
+            files[key] = dict(path=f"../band/{fn}", w=int(band["atlas_px"][0]), h=int(band["atlas_px"][1]),
+                              map="impostor_band", colorspace="linear", encode="gamma2",
+                              bytes=f.stat().st_size, mips=False,
+                              resident_mb=g3.resident_mb(band["atlas_px"][0], band["atlas_px"][1],
+                                                         "gamma2", False))
+            band_bytes += f.stat().st_size
+            bprotos[name] = {k: p[k] for k in ("albedo", "file", "range", "range_same_as_octahedral",
+                                               "crown_sphere_m", "radius_m", "centre_z_m", "ktx2_bytes")
+                             if k in p}
+            bprotos[name]["bytes"] = f.stat().st_size
+        if band_missing:
+            print(f"[manifest_v4] impostors.band: {len(band_missing)} atlas(es) named in band.json are not "
+                  f"on disk: {band_missing[:3]}", flush=True)
+        if bprotos:
+            man["impostors"]["band"] = dict(
+                dir="../gate3/band",
+                columns=int(band["grid_az"]), rows=int(band["grid_el"]),
+                # every one of these is band.json's own value, copied
+                **{k: band[k] for k in ("mapping", "atlas_px", "frame_px", "gutter_px", "inner_px",
+                                        "pad_px", "azimuth0_deg", "azimuth0_convention",
+                                        "azimuth0_blender_dir", "azimuth0_octahedral_frame",
+                                        "azimuth_step_deg", "azimuth_dir", "elevations_deg",
+                                        "elevation_datum", "row_order", "cell_dirs_blender",
+                                        "octahedral_nearest_frame", "frame_lookup", "frame_uv",
+                                        "encode", "ktx2", "lighting", "unlit", "instance_rotation",
+                                        "placement", "placement_note", "samples", "prototype_map")
+                   if k in band},
+                row_origin="bottom",
+                range_source="octahedral",
+                range_note=("`range` per prototype EQUALS impostors.prototypes[p].range, so one constant "
+                            "decodes both atlases; band.json asserts it per prototype in "
+                            "`range_same_as_octahedral`."),
+                replaces=("the ALBEDO lookup only. normal_depth, the irradiance modulation, the darkening "
+                          "floor and `placement` are the octahedral block's, unchanged - band.json's "
+                          "`placement_note` records that the band frames the same bounding sphere at the "
+                          "same ortho scale."),
+                tier_note=("tier 1, with the prototype's 1 K OCTAHEDRAL half-resolution ETC1S copy as the "
+                           "tier-0 stand-in: the first frame draws the 1 K octahedral and tier 1 upgrades "
+                           "straight to the band. `?impband=0` falls back to the octahedral 2 K, which is "
+                           "published at tier 1 with no stand-in of its own."),
+                source=dict(sidecar=str(bj), schema=band.get("schema"),
+                            generator=band.get("generator"), bytes=band_bytes),
+                prototypes=bprotos, count=len(bprotos))
+            print(f"[manifest_v4] impostors.band: {len(bprotos)} atlas(es), {band_bytes} B, "
+                  f"{band['grid_az']}x{band['grid_el']} frames of {band['frame_px']} px on "
+                  f"{band['atlas_px'][0]}x{band['atlas_px'][1]}, azimuth0 {band['azimuth0_deg']} deg",
+                  flush=True)
+
     # ------------------------------------------------------------ probe + sky.diffuse
     pr = rec("probe_hero")
     if pr:
@@ -672,8 +743,13 @@ def main():
     b = man["budget"]
     carried = {k: v for k, v in b["resident_mb"].items()
                if k not in ("total", "lightmaps_own_map", "lightmap_slot_atlases", "tree_impostor_atlases")}
+    band_mb = res(lambda k, f: f["map"] == "impostor_band")
     gate3 = dict(gate3_lightmaps_own=own_mb, gate3_lightmap_slot_atlases=atlas_mb,
                  gate3_tree_impostors=imp_mb, gate3_probe_cube=probe_mb, gate3_sky_diffuse=sky_mb)
+    if band_mb:
+        # 8b: the band atlases are a tier-1 ADDITION, not a replacement - the octahedral pair stays
+        # published for `?impband=0` / `?imp2k=0`, so both sit in the reservation.
+        gate3["gate3_tree_band_atlases"] = band_mb
     total = round(sum(carried.values()) + sum(gate3.values()), 2)
     b["resident_mb"] = dict(**carried, **gate3, total=total)
     b["gate3_reservation_mb"] = 459.0
