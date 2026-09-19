@@ -578,6 +578,26 @@ def main():
                          roundtrip_albedo=r["files"]["albedo_1024"]["roundtrip"])
         imp_bytes += protos[p]["bytes"]
     ship = g3.IMP_SHIP_PX
+    # 8d r2: the Gate 3 impostor set was built from the far list AS IT WAS, so a prototype that is new to
+    # the far block (the 39 hall-belt trees brought three: cypress_column_s2 / _s31 and pine_s29, at
+    # _LOD2) has no key in `impostor_prototype_map` and the viewer's join would fall through. Extend it
+    # here with gate3_set.py's own rule - "an impostor is always the LOD1 prototype" - and assert the
+    # target is one of the ALREADY BAKED prototypes, so nothing is re-baked. Recorded, never silent.
+    proto_map_full = dict(setj["impostor_prototype_map"])
+    proto_map_added = {}
+    for _t in setj["tree_far_list"]:
+        _p = _t["prototype"]
+        if _p in proto_map_full:
+            continue
+        _q = _p[:-5] + "_LOD1" if _p.endswith("_LOD2") else _p
+        assert _q in protos, (f"far tree prototype {_p!r} maps to {_q!r}, which has no baked impostor "
+                              f"atlas - that would need an atlas bake, which is not in scope")
+        proto_map_full[_p] = _q
+        proto_map_added[_p] = _q
+    if proto_map_added:
+        print(f"[manifest_v4] impostors.prototype_map extended with {len(proto_map_added)} key(s) new to "
+              f"the far block: {proto_map_added}")
+
     scale = ship / float(g3.IMP_ATLAS_PX)
     man["impostors"] = dict(
         mapping="octahedral", grid=g3.IMP_GRID,
@@ -616,7 +636,8 @@ def main():
                    "ENV_tree_willow_s37_LOD1 and -0.7183 m on ENV_tree_willow_s11_LOD1 (fronds that hang "
                    "below the trunk base and are buried in the Phase 5 scene). Dividing by bbox_m[2] there "
                    "made those two impostors 19 % / 6 % too small and lifted them off their trunks."),
-        prototype_map=setj["impostor_prototype_map"],
+        prototype_map=proto_map_full,
+        prototype_map_added=proto_map_added,
         prototypes=protos,
         billboards="join on tree_far[i].prototype through prototype_map",
         note=("46 of the 127 far trees were exported against an LOD2 blob; every impostor is baked from the "

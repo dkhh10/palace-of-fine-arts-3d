@@ -86,10 +86,22 @@ def pin(a, b, out):
     # every new tree must resolve to an already-baked impostor prototype (no atlas re-bake in scope)
     man = json.loads((MAIN / "export/out/gate3/manifest.json").read_text())
     pmap = man["impostors"]["prototype_map"]
-    unresolved = sorted({r["prototype"] for r in new_rows if r["prototype"] not in pmap
-                         and r["prototype"] not in man["impostors"]["prototypes"]})
-    ok &= eq("prototype_map resolves every new far tree", [], unresolved, expect=[])
-    out["new_prototypes"] = sorted({r["prototype"] for r in new_rows})
+    baked = set(man["impostors"]["prototypes"])
+    # gate3_set.py's own rule, verbatim: an impostor is always the LOD1 prototype. The Gate 3 map was
+    # built from the PREVIOUS far list, so a prototype that is new to the far block is simply absent from
+    # it; what matters is that the rule lands on a prototype that is already BAKED (no atlas re-bake).
+    rule = lambda p: p[:-5] + "_LOD1" if p.endswith("_LOD2") else p
+    new_protos = sorted({r["prototype"] for r in new_rows})
+    unresolved = sorted(p for p in new_protos if rule(p) not in baked)
+    ok &= eq("every new far tree resolves to a BAKED impostor prototype", [], unresolved, expect=[])
+    out["new_prototypes"] = dict(
+        prototypes=new_protos,
+        resolved={p: rule(p) for p in new_protos},
+        missing_from_gate3_map=sorted(p for p in new_protos if p not in pmap),
+        note="the Gate 3 manifest's prototype_map predates the belt, so the keys listed in "
+             "missing_from_gate3_map are absent from it; manifest_v4 extends the map with gate3_set's own "
+             "_LOD2 -> _LOD1 rule and asserts the target is one of the 16 baked prototypes, so no atlas "
+             "and no impostor blend is re-baked.")
     ok &= eq("tree_near_list (order and content)", a["tree_near_list"], b["tree_near_list"])
     for cls in ("ARCH", "ORN"):
         ok &= eq(f"placed_tris.{cls}", a["totals"]["placed_tris"][cls], b["totals"]["placed_tris"][cls])
