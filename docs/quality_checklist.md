@@ -974,3 +974,18 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
    **4.76 to 1.39** (reference 1.60) with grain and pores back at 100 %. Measure the cause before buying resolution.
 6. **Scores.** Desktop 01 3.78 · 02 3.25 · **03 2.75** · 04 2.88 · 05 3.06 · **06 2.89**; mobile 3.2 / 3.3 / 2.4 / 2.7 / 2.8 / 2.5. The hero holds because
    its two real gains and its one new artefact are in the same frame.
+
+## QA round 21 (Phase 8 item 8b, the band atlas on the live URL, tag `gate9`, 2026-09-19) — **8b CLOSED**
+1. **Resolution fixes what a sampling trick only disguises.** Round 20's coverage share bought crossings and paid with an ordered dot grid on every crown.
+   The band atlas (12 az x 3 el at 341 px) takes cam01 from 7.99 to **11.97** against Cycles' 11.73 — *and* the grid measures away: the lattice index falls
+   from 8/10 boxes above their Cycles control to **3/10**, and at 300 % the hero's roof-line crowns are clean. Buy the data before buying the filter.
+2. **A defect is closed only where it was seen.** The grid is gone from every crown *body*; a period-2 **rim** one to two pixels deep survives at stations 2
+   and 5, and the share cannot touch it (the viewer's own sweep records 1 and 5 byte-identical across share 0 to 0.40). Name the surviving mechanism, or the
+   next round spends the wrong lever on it.
+3. **A risk flagged by the bake is not a defect until the delivered frame shows it.** The willows' 1.62 % clipped texels move p99 by 0.2/255 and produce
+   **0 pixels over 240** anywhere in six frames: the 10-minute `PFA_BAND_RANGE=band` re-bake is not spent. Measure the tail on the frame, not in the atlas.
+4. **"Byte-identical" is a claim to verify, not to quote.** The export said tier-mobile was untouched; MAE 0.00000 and max |d| 0 at all six stations say so —
+   and therefore the mobile scores must not move either.
+5. **A cost can be negative.** The band replaced the 2K albedo atlases: +8.4 MB in, -9.3 MB out, resident byte-identical (same 4 M texels), medians 0.3-4.2 ms
+   *faster* than gate8 at every station, and station 3's QA-20 perf flag clears (+3.1 -> +0.1 vs the idle baseline).
+6. **Scores.** Desktop 01 **3.89** · 02 **3.31** · 03 2.75 · 04 2.88 · 05 **3.12** · 06 **2.95**; mobile unchanged at 3.2 / 3.3 / 2.4 / 2.7 / 2.8 / 2.5.
