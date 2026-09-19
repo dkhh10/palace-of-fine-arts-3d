@@ -938,3 +938,14 @@ k = 2.0 for broadleaf, cypress, cypress_column, eucalyptus, pine, redwood, 1.5 f
 leaf samplers in env_trees.gltf go CLAMP_TO_EDGE -> REPEAT by a JSON patch on the written gltf (no MAT_leaf_* or albedo texture touched); the viewer's runtime translucency
 map follows the albedo sampler's wrap mode instead of a hard-coded ClampToEdge (one line, given to the viewer fix round as item (d)). env_trees.glb is tier 2 / glb_lazy
 and only the mobile tier draws it (desktop draws env_trees_lod1.glb); tier 0 must stay byte-identical. Part 1 runs when Blender is free.
+
+## 2026-09-19 · Viewer fix round (phase8b-viewer a610c6b): the cam02 blue-violet shade is the Phase 5 lighting, not a viewer fault — deferred to the user
+Item (a): the env_shrubs LOD1 walk-in set never had a CPU distance cull (only the shader switch, since 6c r2), so it drew 2.02 M tris per frame at every station including the
+aerial; a chunk cull with budget 48 (`?shrubcull=0` restores) removes 1.41 M at the hero and 2.02 M at cam06 with pixel parity (0-7 px differ at 1-5; 122 at cam06 vs a
+134-px A-vs-A control). Item (b): resident() reached textures through eight material slots only and billed chunked geometry per object; rewritten by type with render targets
+excluded — figure of record at the hero 1 814.2 MB (was 1 862.9: geometry 261.5 -> 114.5, textures 1 157.6 -> 1 255.6, of which the impostor atlases 67.1 were never
+counted), mobile 547.9 MB (28 % of it the 67.1 MB sky equirect — a 6b lever, noted). Item (c): measured in Lab at the QA-17 shaded-stone boxes, the Phase 5 Cycles
+reference is MORE blue-violet than the viewer (b* shade_pier -5.01 vs the viewer's -2.73; the photo +10.89); the probe, sky equirect and LUT are exonerated by flag sweeps;
+the source is the direct NNE sky fill in the Phase 5 lighting (QA-08-2 / QA-09-6, never closed). The viewer is at parity; a fix is upstream (sky fill + rotunda lightmap
+re-bake), a Phase 5 look change with a full lightmap chain. Lead's recommendation: NOT in Phase 8 — the closing comparison is viewer-vs-Cycles and Cycles-vs-photo, and this
+moves both; the user decides whether it becomes a later item. Item (d): the translucency map copies the albedo's glTF sampler wrap (eager and lazy roots) for 8e.
