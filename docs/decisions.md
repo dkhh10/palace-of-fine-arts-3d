@@ -926,3 +926,15 @@ LOD2 backdrop trees (+1 M tris), band-atlas billboards for the backdrop (three-t
 assets/materials.blend and assets/environment.blend: covered by the user's Phase 8 approval of item 8d ("backdrop city blocks and trees"), reported to the user before the
 build starts. Export scope: Gate 1 re-run to prove the pin, Gate 2 re-bake of the changed backdrop groups only, manifests, tiers, verify; no Gate 3. GPU ≤ 25 min previews
 + 8-15 min bake. The build starts when Blender is free (after the viewer fix round releases Chrome).
+
+## 2026-09-19 · 8e decision: the mobile leaf blades are a mip artefact — export-only UV scale k = 2.0 (willow 1.5) on the far-tree leaf cards; no material touched
+The analysis (docs/briefs/phase8e_analysis.md, phase8e-export ff852f8; probe export/p8e_leaf_probe.py): at the mobile orbit (86.9 px/m at 40 m) a far-tree card is one
+quad carrying a centred strip of the 1024 px cluster texture; the painted leaves are 4-10 px and plausible, but at 20-30 texels/px the mip merges them and alphaMode MASK
+re-hardens them into blades of p90 17-22 px / max 22-28 px — QA 19's "~40 px duotone blades", reproduced from texture and geometry alone (plausible clump 9-13 px).
+The scale is Sapling's leaf scale x trees_far.thin_and_grow CARD_SCALE_MAX 1.6 x placement scale; scripts/env_trees.py _lod2_cards is not the source (trees_far.py
+rebuilds from _LOD1). Decision: a UV scale k about each card's own UV centre on leaf faces only, in export/trees_far.py between thin_and_grow and join, gated to the
+'far' set, with a deterministic per-card offset; alpha coverage is invariant (0.45-0.61 at every k), no vertex moves (vertex_ao.npz and the instance rows hold);
+k = 2.0 for broadleaf, cypress, cypress_column, eucalyptus, pine, redwood, 1.5 for willow (lands p90 <= 11 px / max <= 14 px; 2.5 is the next step). Dependencies: the eight
+leaf samplers in env_trees.gltf go CLAMP_TO_EDGE -> REPEAT by a JSON patch on the written gltf (no MAT_leaf_* or albedo texture touched); the viewer's runtime translucency
+map follows the albedo sampler's wrap mode instead of a hard-coded ClampToEdge (one line, given to the viewer fix round as item (d)). env_trees.glb is tier 2 / glb_lazy
+and only the mobile tier draws it (desktop draws env_trees_lod1.glb); tier 0 must stay byte-identical. Part 1 runs when Blender is free.
