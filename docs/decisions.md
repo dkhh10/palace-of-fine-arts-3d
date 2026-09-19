@@ -784,3 +784,15 @@ distances at the hero (treemesh 40 -> 60 / 80, fartreemesh 12 -> 30 / 60): adopt
 (D) mobile tier: near-tree meshes within ~25 m, the walk-up set within ~10 m, LOD1 shrubs inside that radius, impostor darkening eased; resident must stay < 700 MB,
 triangles reported; (E) the shrub card density (export, Blender) is DEFERRED unless A-D leave it as the obvious fault. One QA round (QA 19) on the URL closes it.
 Branch phase7-viewer; brief docs/briefs/phase7_viewer.md; the 6c look switches remain available for A/Bs.
+
+## 2026-09-19 · Phase 7 viewer merged (91f08b4): the adopted foliage defaults and why
+Desktop: (A) impostor edge — premultiplied 12-tap atlas reconstruction + alpha-to-coverage with an fwidth ramp (`?impedge=`, `0` restores 6c byte-for-byte);
+QA-17 crown boxes: hard-edge share down at all three, the halo ring dL toward the reference at all three. (B) crown darkening floor 0.35 on the atlas and the
+mesh crowns: hero crown p10 0.564x -> 0.894x of Cycles, cam02 centre/edge held at 0.397 (ref 0.364); station 5's frame reaches 0.976x and cannot reach 1.00 by
+this lever (carry). (C) same-session switch-distance A/B: `?fartreemesh=` is inert in the shipped manifest (the live lever is `?walkupmesh=`); treemesh 80
+adopted (free at every station); the walk-up mesh set at 60 m passes +3 ms but over-brightens the cam02 fill tree to 1.97x the Cycles level — the walk-up LOD1 set
+is lit brighter than the card it replaces (new item, owner far-tree mesh lighting / export) — so the far-tree switch stays at 15 m on desktop. A+B cost -0.6 ms
+at the hero. Mobile: (D) the user's close-up crowns were far-tree cards at 37-40 m (the far-tree mesh radius was 10 m; `treeMesh` governs only the 18 near trees,
+nearest 128 m away): new tier field farTreeMesh 45 on mobile, walkupMesh 0 (the LOD2 set, which carries vertex AO and does not over-brighten), LOD1 shrubs 25 m,
+impostor darkening eased; resident 561.9 MB (ceiling 700), station 1 340 draws / 4.17 M tris, download +4.1 MB in tier 2, tier 0 unchanged to the byte. The
+alpha-to-coverage-at-0.71-ratio hypothesis was tested and ruled out. Review r1 MERGE WITH FIXES, all applied. Shrub card density (export) remains deferred.
