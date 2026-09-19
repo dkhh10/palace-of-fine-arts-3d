@@ -17,3 +17,8 @@ the tier-0 delta and the first-frame wire bytes (must stay <= 50 000 000); verif
 against MAIN before sync: list every changed file with its reason; then sync_main. Report < 15 lines: the pin report, the bake numbers, the tier-0 and first-frame deltas,
 the list of changed files, the water.js reflection-set question for the viewer (the far-ground group now matches /MAT_EXP_ENVBD__MAT_backdrop_/ and drops out of the
 reflection set at reflSet 'both' — state what the hero reflection loses), commit ids. Never deploy.
+ADDED 2026-09-19 (8a-3, decisions.md "8a-3 decision"): the same chain applies the shrub-card UV scale from docs/briefs/phase8a3_shrub_cards_analysis.md — k = 2.0 on
+MAT_shrub / MAT_shrub_light / MAT_shrub_dry LOD2 cards, k = 1.0 on MAT_reeds, LOD1 walk-in set unchanged, samplers REPEAT in BOTH env.gltf and env_shrubs.gltf (every root
+agrees, so no viewer change); coverage is neutral by construction (measure and report it anyway, 0.95-1.09x expected); tier-0 delta ~4 kB is accepted and reported against
+the 50 000 000 first-frame rule. This is a tier-0 change: the pin report must still show uv1/instance rows/impostor placements byte-identical (a UV0 scale on the shrub cards
+touches none of them); env_t0.glb changes by the backdrop and the shrub UVs only — list its byte delta separately.

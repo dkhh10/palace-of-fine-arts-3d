@@ -976,3 +976,12 @@ small-leaved bush — the far-tree mip defect on a different asset. Decision: me
 scale with solved cutoffs (8a-3; analysis by the 8e engineer, then decide, tier-0 impact reported). Carries r3-3/4/5/6 and r2-5b/6 closed on the branch. New caveat: the
 planar water reflector is not session-reproducible (34 % of cam01 pixels below the waterline differ between captures of the same build) — viewer-vs-viewer pixel claims at
 water stations need an A/A mask (web/README.md).
+
+## 2026-09-19 · 8a-3 decision: shrub-card UV scale k = 2 (reeds 1.0) on the LOD2 set, riding the 8d export chain — tier 0 moves by ~4 kB
+The analysis (docs/briefs/phase8a3_shrub_cards_analysis.md, phase8e-export 24eb45e): the magnified shrub "leaves" are env.glb's LOD2 cards (tier 0, env_t0.glb), not the
+LOD1 walk-in set; the LOD2 card is exactly 2x the LOD1 card on the same texture, blobs 21.7-23.8 px wide at the 25 m LOD switch and 15.4 px at 54 m while the painted leaves
+are 0.6-2.3 px and gone to the mip. The cards sample the whole texture, so an isotropic k only repeats it: coverage neutral (0.95-1.09x), no cutoff solve. k = 2 halves the
+blob (23.8 -> 16.4 px at 25 m, 15.4 -> 7.0 at 54 m) and makes the 25 m LOD switch invisible (LOD2 tile 0.215-0.255 m vs the LOD1 card 0.21-0.26 m); k = 3-4 aliases at
+54 m+; reeds stay at 1.0 (k > 1 erodes the 1-5 px blades to nothing). Samplers REPEAT in env.gltf and env_shrubs.gltf together (no shared-texture wrap race, no viewer
+change). Cost: rides the ENV chain (export_set -> gate1 -> pack -> manifests -> tiers) with 8d; ~4 kB over the ENV set against 606 224 B first-frame headroom. Accepted.
+8e exported: iso_cut env_trees.glb 3 768 500 B (+1.9 % over pre-8e), tier 0 untouched, verify PASS, synced to MAIN.
