@@ -346,6 +346,14 @@ def build_houses(SUB, site):
 # 902 000 and no impostor re-bake.  BELT_TRI_CAP is that number; the planter stops when it is reached.
 BELT_TRI_CAP = 6986
 
+# QA 22 (docs/qa_round_22.md section 2, docs/decisions.md 2026-09-19) REJECTED the crowns this planter makes: at
+# 100 % the 89 lobed icospheres are hard-edged untextured faceted shards in every intercolumniation at cam01,
+# cam02 and cam05, reflected in the lagoon - 58 triangles a crown and it looks it.  The belt is rebuilt from the
+# real tree prototypes through the far-tree path in `env_trees.hall_belt` (belt r2), which is where it stays.
+# This code is left behind the flag, off, because it is the only record of the measured placement geometry the
+# tree belt inherits (the east-face edge walk, the offsets, the hall-and-colonnade keep-out); nothing calls it.
+BELT_ICOSPHERE = False
+
 
 def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=()):
     """A canopy belt along the hall's concave east face: 80-tri lobed crowns (env_city's far-canopy mesh) in
@@ -518,7 +526,8 @@ def build_all(SUB, terrain_height, site, hall_poly, lagoon_field, hall_field=Non
     if hall_field is None:
         hall_field = L.PolyField(hall_poly, cell=10.0)
     build_hall(SUB, hall_poly, hall_field)
-    build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys)
+    if BELT_ICOSPHERE:                       # QA 22: off. The belt is `env_trees.hall_belt` now (belt r2).
+        build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys)
     build_houses(SUB, site)
     build_landscape(SUB, terrain_height)
     import env_city
