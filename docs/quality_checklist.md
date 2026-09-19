@@ -938,3 +938,20 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 ## Gate rule added 2026-09-18 (lead, after the bare staging URL drew the test scene)
 - Every QA round against a deployed host captures the BARE URL (no query string) at the hero in addition to the parameterised stations; the manifest note in the boot
   log must name the delivery manifest and the glb count must equal the plan's; the test-scene fallback on a bare URL is a blocker regardless of every other metric.
+
+## QA round 19 (Phase 7, the foliage look on the live URL, tag `gate7`, 2026-09-19) — PHASE 7 DONE WITH RESIDUALS
+1. **The two defects that opened the phase are closed on the tiles.** Desktop: at 800 % the one-pixel pale fringe along every impostor silhouette is gone and
+   the binary edge steps are resolved; the shore crowns' near-black blotches are gone (hero crown p10 **0.564x -> 0.894x** of Cycles, the brief's >= 0.8x).
+   Mobile: the close-orbit crowns at 37-40 m are meshes with branches and sky through them, `farTrees.meshDist` 45 m live, near-black share 0.00-4.47 % (the
+   4.47 % is a shaded trunk, not a card core).
+2. **The one acceptance metric that misses:** station 5's whole frame is **0.976x** of the reference against the required 1.00 +- 0.01; the branch's own sweep
+   shows the lever tops out at 0.981x, so the remaining 2 % is not foliage. Recorded as residual 1, not as a blocker.
+3. **No regression.** 0 of 11 architecture boxes move more than 3 % (max 1.006x); 4 of 14 foliage boxes move, all intended; cam04 bit-identical; MAE against
+   the Cycles reference falls at four stations and is unchanged at two. Perf inside +3 ms at every station against the idle cold pass with identical draws,
+   triangles and programs; desktop resident 1 861.3 MB unchanged; mobile resident 561.9 MB against the 700 ceiling.
+4. **Payload rule held:** 46 811 106 B before the first frame over the same 320 requests (the +2 202 B over round 18b is the rebuilt JS bundle); tier 0 carries
+   the same asset files; the mobile +4.13 MB is lazy tier 2. Name sweep 0 over both manifests.
+5. **Scores.** Desktop 01 3.78 · 02 3.25 · 03 2.63 · 04 2.88 · **05 3.06** · 06 2.83 (only station 5's Lighting mood moves, 2.5 -> 3.0). Mobile 3.2 / 3.3 / 2.3
+   / 2.7 / 2.8 / 2.4 from 2.9 / 3.0 / 2.3 / 2.7 / 2.5 / 2.4, the water half of that move being the 6d reflection fix rather than Phase 7.
+6. **Rule restated for later rounds:** a "before" capture must be on the same deployment as the change being judged. `gate5cm` predates the 6d mobile
+   reflection, so the mobile before/after deltas in this round bundle two changes and are reported as such rather than credited to one.
