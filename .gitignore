@@ -106,3 +106,7 @@ renders/web/p8b_*.png
 # Phase 8a — the ?cardsun= captures and the sweep; the 960 px composites under renders/web/ are
 # what is committed (CLAUDE.md image rule), the full-resolution frames are regenerable.
 renders/web/p8a_*.png
+
+# Phase 8 comparison sheet (scripts/phase8_sheet.py): full-resolution 100% tile crops are
+# regenerable from the source renders + boxes.json; only the 960 px composites are committed.
+renders/qa_comparisons/phase8_tiles/
