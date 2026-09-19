@@ -1443,13 +1443,18 @@ def build_extra_env():
     N = t.geometry().outputs["Normal"]
     crowns = t.voronoi(W, 1.0 / 9.0, feature="SMOOTH_F1", randomness=1.0)
     cr = t.sepxyz(crowns.outputs["Color"])[0]
-    c = t.mix(cr, C(0.0140, 0.0235, 0.0150), C(0.0305, 0.0440, 0.0280))
+    # Phase 8d: x1.55 on the canopy albedo.  Round 5 took it down 45 % because the 250-450 m canopy read bright
+    # and yellow; with the distance haze now doing that job (backdrop_atmosphere, r0 210 m) the only thing the
+    # low albedo still does is turn the two masses that carry NO haze -- the hall's tree belt at 150 m and the
+    # nearest Presidio crowns -- into black holes, where ref 105 measures the tree masses at lum 120-152/255 and
+    # ref 169's belt behind the colonnade is dark green with structure, not black.
+    c = t.mix(cr, C(0.0217, 0.0364, 0.0233), C(0.0473, 0.0682, 0.0434))
     # gaps: the shaded flanks and the holes between crowns. Two scales (whole crowns, 3 m branch clumps) so the mass
     # never reads as one lit plane, plus a downward bias -- the underside of a canopy is always the dark part.
     gap = t.maximum(t.maprange(crowns.outputs["Distance"], 0.55, 0.10, 0.0, 1.0),
                     t.maprange(t.noise(W, 0.33, detail=3, rough=0.65), 0.52, 0.30, 0.0, 1.0))
     gap = t.clamp01(t.add(t.mul(gap, 0.8), t.mul(t.maprange(t.sepxyz(N)[2], 0.35, -0.2, 0.0, 1.0), 0.35)))
-    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.66)))
+    c = t.vscale(c, t.sub(1.0, t.mul(gap, 0.55)))
     haze = t.maprange(t.noise(W, 0.02, detail=2), 0.35, 0.65, 0.88, 1.12)
     c = t.vscale(c, haze)
     normal = t.bump(t.add(crowns.outputs["Distance"], t.mul(t.noise(W, 0.8, detail=3), 0.4)), strength=0.7, distance=0.6, normal=N)

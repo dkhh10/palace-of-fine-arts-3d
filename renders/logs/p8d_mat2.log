@@ -1,0 +1,11 @@
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[mat_build] projection: albedo tint (1.0383, 1.013, 0.7582, 1.0), weight 0.6, maps [1920, 1080]
+[mat_build] 42 materials, 8 node groups, 46 images, 175 test objects
+Info: Saved as "materials.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-env/assets/materials.blend
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 86880 exited rc=0 after 4 s (max 900)
