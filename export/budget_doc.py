@@ -9,13 +9,21 @@ Re-run it after every later step; it is idempotent.
 """
 import json
 import os
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "export" / "out" / "gate1"
 DOC = ROOT / "docs" / "briefs" / "phase6_budget.md"
-BUDGET = {"ARCH": 1_100_000, "ORN": 1_100_000, "ENV": 800_000}
-TOTAL_BUDGET = 3_000_000
+# 8a: these used to be a second copy of the same numbers, and when the lead raised the ENV budget for the
+# densified LOD2 shrubs (gate1_common.CLASS_BUDGET, 800 000 -> 902 000) this file went on printing 800 000
+# and a headroom of -94 974 against a run that was in fact 7 026 UNDER budget. One source of truth: the
+# constants the export set is actually cut against.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gate1_common as g1  # noqa: E402
+
+BUDGET = dict(g1.CLASS_BUDGET)
+TOTAL_BUDGET = g1.TOTAL_BUDGET
 # Apple GPU ASTC 4x4 = 8 bpp = 1 byte/texel, x1.334 for the full mip chain.
 BYTES_PER_TEXEL = 1.0
 MIP = 4.0 / 3.0

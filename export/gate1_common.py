@@ -144,7 +144,13 @@ UV1_FINE_MARGIN_GROUPS = {
 # lifted the pin (2026-09-15) because they are being re-baked with the split.
 UV1_LEGACY_PACK = set()
 
-CLASS_BUDGET = {"ARCH": 1_100_000, "ORN": 1_100_000, "ENV": 800_000}
+# ENV 800 000 -> 902 000 (lead, 8a, 2026-09-19).  The 8a decision accepted "+~105 k against the frozen
+# 800 k ENV budget = +13 %, accepted for the hero" for the densified LOD2 shrubs, but the constant was
+# never raised, so `tree_allow = CLASS_BUDGET[ENV] - env_so_far - shrub_est - 2*len(tree_rows)` took the
+# +102 152 out of the NEAR-TREE allowance instead: near_exported 20 -> 15 and far_billboards 127 -> 132,
+# which re-indexes the impostor placements and would force a GPU re-bake 8a forbids.  +102 152 is exactly
+# the shrub increase, so the near list, the far list and the impostor placements stay as they were.
+CLASS_BUDGET = {"ARCH": 1_100_000, "ORN": 1_100_000, "ENV": 902_000}
 TOTAL_BUDGET = 3_000_000
 
 
