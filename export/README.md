@@ -2763,3 +2763,50 @@ The bake needs two files `sync_main.sh` deliberately does not copy - `gate3_bake
 `gate3_imp.blend` (67 MB) - plus `trees_far/ao` and `trees_far/ebake`; they were APFS-cloned read-only
 from the **phase6-bake** worktree, which is also what keeps the new rows in the same scene and rig as the
 127 that were already there. `trees_far_compose.py` and `trees_far_set.py` no longer hard-code 127.
+
+## QA 23 — the far-tree irradiance goes back to 6c for the 127, the belt keeps the r2 bake (2026-09-19)
+
+QA 23 measured what `docs/decisions.md` predicted: the r2 re-bake brightened every crown read against a
+background by **4-16 %**, 7 of 10 boxes moving AWAY from the Phase 8 Cycles references, and the 8e blade
+margin was lost photometrically rather than geometrically. The fix is `export/p8d_irr_restore.py` (CPU
+only, no Blender, no GPU):
+
+* **The 127 existing far trees go back to their 6c values.** Source: the 6c file itself,
+  `<phase6-bake worktree>/export/out/gate3/trees_far/instance_irradiance.json`, generated
+  **2026-09-17T10:16:23**, 127 rows, md5 `11212fbcc3bbe8482f5396f8a8f9917b`, untouched since the 6c bake.
+  The deploy-10 manifest was checked and **rejected as a source**: its lighting block is the r2 one
+  (generated 2026-09-19T22:47:28) and all 127 rows differ.
+* **The 39 hall-belt trees keep the r2 bake** - they have no 6c value, and re-baking them alone would need
+  the GPU that is on the 4K hero.
+* Joined **by world location** on the same 0.02 m grid `manifest_v4` uses, because the belt's name-sorted
+  interleave re-pointed 87 of the 127 `TREEFAR_###` labels. Every per-mesh and per-file statistic is
+  recomputed from the merged rows, each row carries a `source` field (`6c` / `8d-r2`), and `rows_source`
+  in the file records the counts, both source md5s and why the deploy copy was not used.
+* **The two populations, as the impostor path applies them** (`clamp(E_placement / E_bake, 0, 4)`,
+  strength 1.0, reported as luminance): **6c n=127 median 0.9415** (p10 0.2394, p90 1.3476);
+  **belt n=39 median 0.2424** (p10 0.0798, p90 1.7596). The belt's low median is its position: the hall's
+  east face is in shade for most of the day. File `lum_mean` 2.897442 -> **2.012746**.
+* Chain re-run: manifest v2 -> v3 -> v4, tiers x3, `verify_glb --gate5` PASS desktop and mobile (far-tree
+  counts 166/166/166/166 on both), `tiers_test` green, `npm test` all passed. Tier 0 unchanged at
+  **48 139 115**; first frame 49 273 775 -> **49 273 819** (+44 B, the manifest's own size), **726 181 B
+  under the 50 000 000 rule**. Only the gate3 / gate5 manifests and the irradiance JSON changed.
+
+### Recorded, not fixed: cam03 draws the belt trees as meshes (QA 23 residual)
+
+**What governs it.** On desktop the viewer loads the WALK-UP set (`device.js` leaves `walkupMesh` null), so
+the distance is `trees.walkup_mesh.draw_within_m` = **15 m** (`WALKUP_DIST_M` in `foliageLazy.js:57`), plus
+the fade band (5 m) and `CULL_MARGIN_M`, and it is applied **per CHUNK** by `buildDistanceCull`
+(`chunk: {minRadius: 12, minCount: 2, maxDepth: 3, budget: 256}`) - a chunk is submitted whole if any part
+of it is inside the limit. The belt stands 4.5 m apart along the hall's east face and **3 of its 39 trees
+are within 15 m of cam03** (nearest 6.5 m, median 96.7 m), so the chunks those three sit in are submitted
+with their neighbours: that is the +1.3 M triangles and +28 draws QA measured. On mobile the far set is
+used instead (`farTreeMesh` 45 m), where the same rule applies to 7 934-triangle meshes.
+
+**What a billboard-only rule for HB-tagged trees would cost.** Tag the 39 rows in `tree_far` (the belt
+report already carries the HB tag) and skip them in `trees_far.py` for BOTH sets: they would always draw as
+impostor quads. Saves at most **39 x 29 747 = 1.16 M** submitted triangles on desktop (**0.31 M** on
+mobile) and 78 instance rows (~28 draws when chunked); `env_trees.glb` and `env_trees_lod1.glb` each lose
+39 rows (~1.2 kB each). The cost is the close-up: a walker beside a belt tree - and cam03 stands 6.5 m from
+the nearest one - would see a magnified impostor card instead of a mesh, which is the defect Phase 7 fixed
+for the other far trees. A per-row rule ("HB trees are meshes only within 8 m") would need the viewer to
+carry a per-row distance, which it does not today.
