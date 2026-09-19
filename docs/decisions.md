@@ -999,3 +999,11 @@ probe's defaults print the shipped mode; an unknown species must export at k = 1
 baseline (no v offset, no REPEAT). 8a-3 corrections from the same review, binding on the chain: the instance rows are re-dumped (instance_rows.mjs x2, gate4_instance_order
 x2, gate5_instance_rows) or manifest_v4's glb_bytes asserts abort; MAT_shrub_dry's LOD2/LOD1 ratio is 0.89x wide / 1.77x tall, so it takes ku 1 / kv 2 (shrub / shrub_light
 keep k = 2, reeds 1.0); coverage neutrality is measured per material, not claimed by construction.
+
+## 2026-09-19 · 8d export chain DONE (phase8d-export 1aa1abc): pin held 21/21; backdrop re-baked in 53 s GPU; tier 0 +312 B; shrub UV scale coverage 0.98-1.08x
+Pin: uv1 groups/tiles/coverage, uv2 meshes, lightmap slots identical to MAIN; near 20 / far 127 identical in content and order; ENV placed 894 974 -> 901 874 (+6 900 exactly);
+arch/orn/ground glbs byte-identical after the pack. Gate 2: 7 backdrop jobs, zero clipped albedo/roughness, stale ENVBD__lawn purged. Tier 0 48 269 972 -> 48 270 284 B
+(+312, env_t0 only); first frame 49 394 896 B (605 104 under the rule); mobile 47 630 546. Shrub tiling at the shipped factors: MAT_shrub 1.08x / shrub_light 1.07x /
+shrub_dry (ku 1 kv 2) 0.98x / reeds 1.00x coverage at the 25 m switch, blobs 21.7 -> 16.9 px. Three chain traps fixed (GATE1_BLEND_DIR default, the npz path, the --gate2
+tex_ktx2 wipe). Lead decision on the reflection: the renamed far-ground group (slot-0 material MAT_backdrop_lawn) matched water.js' backdrop exclusion and would have left
+the reflection, putting a sky strip at the reflected horizon — fixed on main (1efdf56) with `backdrop_(?!lawn)` so the reflection set is exactly the pre-8d set.
