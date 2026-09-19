@@ -20,9 +20,11 @@
 // the dequantisation of the quantised positions into the instance matrices, so the shader's
 // `position` is not metres and `instanceMatrix` is placement AND dequantisation in one.  The layer
 // is therefore tiled in WORLD space at the same tile size, with Blender's xy = three's (x, -z):
-//   `objxy`     (default) the manifest's plane, so a vertical face takes the same vertical streaking
-//               Phase 5 gives it;
-//   `dominant`  the axis-aligned plane most facing the surface, so a wall samples an unsmeared tile.
+//   `objxy`     the manifest's plane, so a vertical face takes the same vertical streaking Phase 5
+//               gives it - and, measured by the export at Phase 8c, 15 texels/m down a column shaft
+//               against 948 across it, which is cam03's banding;
+//   `dominant`  (THE DEFAULT since Phase 8c item A) the axis-aligned plane most facing the surface,
+//               so a shaft or a wall samples an unsmeared tile.
 // World space also breaks the "one atlas per shared mesh" repetition for free: each placement of a
 // shared mesh samples a different part of the tile.
 import * as THREE from 'three';
@@ -302,7 +304,7 @@ export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
  * Attach the detail layer to every material the manifest names.
  * @returns {Promise<object>} report
  */
-export async function applyDetail( { scene, detail, loadTexture, note, projection = 'objxy', strength = 1.0, normalScale = 1.0, lodBias = 0.0, gain = 1.0, debug = 0, synthetic = false } ) {
+export async function applyDetail( { scene, detail, loadTexture, note, projection = 'dominant', strength = 1.0, normalScale = 1.0, lodBias = 0.0, gain = 1.0, debug = 0, synthetic = false } ) {
 	const report = { projection, strength, normal_scale: normalScale, sets_loaded: 0, materials: 0, textures: 0, bytes: 0,
 		means: {},
 		by_set: {}, unmatched_rules: [], applied: [], failed: [], empty: [], fallbacks: [], stats: {} };

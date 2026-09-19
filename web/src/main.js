@@ -99,7 +99,11 @@ const CFG = {
 	chunk: qs.get( 'chunk' ),                           // "minRadius[,maxDepth[,gain[,budget]]]" 
 	lutFloat: qs.get( 'lutfloat' ) !== '0',             // 0 forces the 8-bit LUT (no-OES_texture_float_linear path)
 	detail: qs.has( 'detail' ) ? parseFloat( qs.get( 'detail' ) ) : 1.0,   // QA-12-1 detail layer strength, 0 = off
-	detailProj: qs.get( 'detailproj' ) || 'objxy',      // objxy (the manifest's plane) | dominant
+	// Phase 8c item A (export's texel analysis, docs/briefs/phase8c_export_analysis.md): the detail
+	// layer's objxy plane streaks DOWN a column shaft - 15 texels/m vertically against 948
+	// horizontally - which is cam03's column banding.  `dominant` samples the axis-aligned plane
+	// most facing the surface, so a shaft takes an unsmeared tile.  The url still overrides.
+	detailProj: qs.get( 'detailproj' ) || 'dominant',   // dominant (default) | objxy (the manifest's plane)
 	detailNormal: qs.has( 'detailnormal' ) ? parseFloat( qs.get( 'detailnormal' ) ) : 1.0,  // detail normal scale (1 = the map's own slope)
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)

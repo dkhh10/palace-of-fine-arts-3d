@@ -903,6 +903,34 @@ covers the parser, the fallback's dependence on the real target (including `?imp
 three writes no coverage mask on a multisampled target), and the shader's preprocessor branches.
 
 
+## Phase 8c item A — the detail layer's projection default (`?detailproj=`), 2026-09-19
+
+The export's texel analysis (`docs/briefs/phase8c_export_analysis.md`): cam03's column banding is the
+detail layer's `objxy` plane streaking DOWN the shaft — **15 texels/m vertically against 948
+horizontally**. The lever already existed; the default is now **`dominant`** (the axis-aligned plane
+most facing the surface), and `?detailproj=objxy` restores the Phase 5-7 plane.
+
+100 % tile, the near right column at cam03, Cycles | objxy | dominant:
+`renders/web/tiles/p8cproj/p8cproj_cam03_column_100.png` (960 px
+`renders/web/960/p8cproj_cam03_column.jpg`). The smear is gone and the shaft carries its grain and
+pores again; no flute-to-flute seam is visible at 100 %, so the triplanar blend was NOT needed
+(it stays available as future work if a seam ever shows on a curved face).
+
+Regression, six stations at 1920x1080, `p8cbase` (`?detailproj=objxy`) against `p8cproj` (default):
+
+| station | MAE /255 | pixels > 2/255 | frame luma objxy → dominant (ref) |
+|---|---|---|---|
+| cam01 | 0.20 | 2.9 % | 0.929x → 0.929x |
+| cam02 | 0.34 | 5.1 % | 1.058x → 1.058x |
+| **cam03** | **2.26** | **40.9 %** | **1.626x → 1.619x** |
+| cam04 | 0.37 | 5.9 % | 1.113x → 1.113x |
+| cam05 | 0.37 | 6.4 % | 0.979x → 0.979x |
+| cam06 | 0.08 | 0.8 % | 0.979x → 0.979x |
+
+Every station is touched (the layer is on every baked material) but only cam03 moves materially, and
+its whole-frame luma moves TOWARD the reference. No other station's luma changes by more than
+0.001x.
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set
