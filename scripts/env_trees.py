@@ -565,7 +565,7 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
 # 16.9 m point on the wall: the belt reads as just touching the parapet line, which is what the photograph shows.
 # The cap binds on most draws, so the realised heights run 12.0-16.x m (reported per build).
 HALL_BELT_TOP_Z = 16.0
-HALL_BELT_STEP = 5.5          # metres of face per tree: closest packing that is still trees, not a hedge
+HALL_BELT_STEP = 6.5          # metres of face per tree: closest packing that is still trees, not a hedge
 # Species read off ref 169's two bands at 100 %: dark Monterey cypress dominant, blue-gum eucalyptus and Monterey
 # pine mixed through it, a few narrow columnar cypress, redwood for the darkest verticals.  Willow and broadleaf
 # are the SHORE trees and are deliberately absent here.  Every species/seed in `SEEDS` has a baked impostor
@@ -601,7 +601,7 @@ def hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys=()):
         return False
 
     out = []
-    carry = 0.0
+    last = None                   # last tree actually planted: the spacing is measured on the offset curve
     idx = skipped = 0
     # the species mix is DEALT from a shuffled deck, not drawn independently: 29 independent draws left one
     # eucalyptus out of the whole belt (measured, first build), which is not the mix ref 169 reads.
@@ -613,21 +613,30 @@ def hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys=()):
         d = b - a
         seg = d.length
         if seg < 1.0:
-            carry = 0.0
             continue
         d = d / seg
         nrm = Vector((d.y, -d.x))                        # outward on the concave east face (as build_hall uses it)
         mid = (a + b) / 2
         to_origin = (Vector((0.0, 0.0)) - mid).normalized()
         if nrm.dot(to_origin) <= 0.20 or mid.length > 175.0:
-            carry = 0.0
             continue
-        u = carry
+        # The walk is FINE (1 m) and the spacing test is on the OFFSET curve, not on the hall polygon: stepping
+        # 5.5 m along the polygon and then pushing each sample 6.5-11 m outward stretches the gaps wherever the
+        # face turns away from the belt, and that is where the first build left them - measured with
+        # `scripts/env_belt_probe.py`, the hall's south-east arm showed through 20.4 % of the rays that get past
+        # the colonnade in the hero's frame-left band, at 10-16 m gaps between trees.  Measuring from the last
+        # tree actually PLANTED also keeps the density across a rejected sample.
+        u = 0.0
         while u < seg:
             base = a + d * u
-            u += HALL_BELT_STEP
+            u += 1.0
             off = (6.5 if idx % 2 else 11.0) + rnd.uniform(-1.3, 1.3)
             p = base + nrm * off + d * rnd.uniform(-1.8, 1.8)
+            # spacing along the FACE (project onto the local tangent), not the straight-line distance: the
+            # offsets alternate 6.5 / 11 m, so a 3-D test counts the 4.5 m zig-zag as progress and plants three
+            # times as many trees as asked (88 for a 5.5 m step, measured).
+            if last is not None and (p - last).dot(d) < HALL_BELT_STEP:
+                continue
             idx += 1
             if blocked(p.x, p.y):
                 skipped += 1
@@ -643,7 +652,7 @@ def hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys=()):
                 skipped += 1
                 continue
             out.append((sp, p.x, p.y, h, "HB hall east-face belt (8d r2)"))
-        carry = u - seg
+            last = p
     hs = [e[3] for e in out]
     print(f"[env_trees] hall east-face belt: {len(out)} far trees, {skipped} sample points rejected, "
           f"heights {min(hs):.1f}-{max(hs):.1f} m (top capped at {HALL_BELT_TOP_Z} m world z), "
