@@ -132,7 +132,7 @@ const CFG = {
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
-	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (default 40)
+	treeMesh: qs.get( 'treemesh' ),                     // metres | inf | never  (Phase 7 default 80)
 	treeFade: qs.has( 'treefade' ) ? parseFloat( qs.get( 'treefade' ) ) : 5,
 	imp2k: qs.get( 'imp2k' ) !== '0',                   // the 2K impostor atlas variant on desktop
 	// undefined = "not asked", so the manifest's own dist_m still wins; an explicit value always does
@@ -216,6 +216,7 @@ if ( MOBILE ) {
 	set( 'fartreelight', 'farTreeLight', s.farTreeLight );
 	set( 'shrublod', 'shrubLod', s.shrubLod );
 	set( 'walkupmesh', 'walkupMesh', s.walkupMesh );
+	set( 'impint', 'impInt', s.impInt );
 	set( 'imp2k', 'imp2k', s.imp2k );
 	set( 'reflset', 'reflSet', s.reflSet );
 	set( 'reflres', 'reflRes', 'half' );
@@ -993,7 +994,14 @@ async function setupFoliageAndImpostors() {
 	{
 		const t = ( CFG.treeMesh || '' ).toLowerCase();
 		const meshDist = ( t === 'inf' || t === 'never' ) ? Infinity
-			: ( CFG.treeMesh !== null && CFG.treeMesh !== '' && isFinite( parseFloat( CFG.treeMesh ) ) ? parseFloat( CFG.treeMesh ) : 40 );
+			// PHASE 7 ITEM C: 80 m, up from 6c's 40.  Measured over stations 1-6 at 2560x1440, same
+			// session, 120 frames after 24 of warmup, against a repeat of the 40 m default as the
+			// drift control: 40 / 60 / 80 give IDENTICAL draw calls and triangle counts at every one
+			// of the six stations (every near tree is beyond 80 m of every station camera) and the
+			// hero medians sit inside the pass-to-pass drift (web/README.md "Phase 7").  It costs
+			// nothing at the stations and it is what the WALKER gets: a mesh crown out to 80 m
+			// instead of a magnified 85 px atlas frame.
+			: ( CFG.treeMesh !== null && CFG.treeMesh !== '' && isFinite( parseFloat( CFG.treeMesh ) ) ? parseFloat( CFG.treeMesh ) : 80 );
 		const trnArg = ( CFG.leafTrn || '' ).toLowerCase();
 		const trnShrubs = trnArg === 'shrubs' || trnArg === '1s';
 		const trnScale = trnShrubs ? 1 : ( CFG.leafTrn !== null && isFinite( parseFloat( CFG.leafTrn ) ) ? parseFloat( CFG.leafTrn ) : 1 );
@@ -1176,7 +1184,7 @@ async function loadLazyFoliage() {
 		trnShrubs: foliageReport ? foliageReport.trnShrubs : false,
 		trnMaps: foliageTexReport ? foliageTexReport.trnMaps : null,
 		albedoMaps: foliageTexReport ? foliageTexReport.albedoMaps : null,
-		meshDist: foliageReport ? foliageReport.meshDist : 40,
+		meshDist: foliageReport ? foliageReport.meshDist : 80,
 		fadeBand: foliageReport ? foliageReport.fadeBand : 5,
 		uvDequant: CFG.uvDequant,
 		scale: manifest.gate3 ? manifest.gate3.scale : Math.PI,

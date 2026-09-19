@@ -77,16 +77,25 @@ export function chooseTier( { gl, env, query } ) {
  *  is a row here and nothing else.  `maxDrawingBufferPx` is the cap the pixel ratio is solved for. */
 export const TIER_SETTINGS = {
 	desktop: { manifest: null, maxDrawingBufferPx: null, post: null, water: null,
-		treeMesh: null, farTreeLight: null, shrubLod: null, imp2k: null, reflSet: null, foliageTex: null },
+		treeMesh: null, farTreeLight: null, shrubLod: null, walkupMesh: null, impInt: null,
+		imp2k: null, reflSet: null, foliageTex: null },
 	mobile: {
 		manifest: 'manifest_mobile.json',   // resolved against the desktop manifest's own url
 		maxDrawingBufferPx: 1.5e6,          // 1500x1000; the iPhone 16 Pro's own panel is 1179x2556
 		post: 'none',                       // the LUT display pass is not part of ?post and still runs
 		water: 'sky',                       // the planar Reflector draws the SKY only (no second scene pass)
-		treeMesh: '0',                      // every tree is its impostor, near ones included
-		farTreeLight: '0',                  // and the far-tree MESH glb is never fetched
-		shrubLod: 0,                        // LOD2 cards only: no env_shrubs.glb either
-		walkupMesh: '0',                    // no walk-up LOD1 tree set
+		// PHASE 7 ITEM D.  6b made every tree on a phone an impostor at EVERY distance, and the
+		// user's close orbit is what that looks like from three crown-widths away: flat cut-outs with
+		// black cores, because an 85 px atlas frame magnified onto a 30 m card has no silhouette and
+		// no interior left.  The three near tiers are turned back on, each with a radius small enough
+		// that only what the walker is standing among is a mesh:
+		treeMesh: '25',                     // near-tree meshes within 25 m (desktop 40)
+		walkupMesh: '10',                   // the walk-up LOD1 set within 10 m (desktop 15)
+		farTreeLight: 'near',               // ... which needs the far-tree loader to run at all
+		shrubLod: 25,                       // LOD1 shrubs inside the same radius (desktop 30)
+		// and the atlas darkening is eased where a card is now only ever seen from further away
+		// (?impint=str,radius,floor; the desktop default is 0.90,0.015,0.35).
+		impInt: '0.45,0.015,0.55',
 		imp2k: false,                       // the 1K impostor atlas
 		reflSet: 'both',   // 6d: was 'all' (sky only); 'both' keeps ARCH, ground, near ENV and impostors, drops ORN and backdrop, at the half-res target
 		foliageTex: '1024',

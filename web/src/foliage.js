@@ -537,7 +537,7 @@ export function applyFoliage( o ) {
 		( Number.isFinite( v ) ? Math.min( Math.max( v, lo ), hi ) : dflt );
 	const bend = num( o.normalBlend, 0.5, 0, 1 );
 	const trnScale = num( o.trnScale, 1.0, 0, 8 );
-	const meshDist = ( o.meshDist === Infinity ) ? Infinity : num( o.meshDist, 40, 0, 1e6 );
+	const meshDist = ( o.meshDist === Infinity ) ? Infinity : num( o.meshDist, 80, 0, 1e6 );   // Phase 7 C
 	const fadeBand = num( o.fadeBand, 5, 0.01, 1e5 );
 	// range x scale: the whole decode of COLOR_0 into scene-linear irradiance, from the manifest.
 	const vertexIrrScale = num( o.vertexIrrScale, 0, 0, 1e9 );
