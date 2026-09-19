@@ -13,6 +13,16 @@ Sources (read-only):
 
 Usage:
   python3 export/p8_atlas_probe.py [--atlas-dir DIR] [--out DIR] [--crops]
+
+Phase 8b item A (the viewer side) adds a second mode, which puts the SAME crossings metric on a
+VIEWER capture, so "Cycles 7.76 / atlas 2.40" and "the viewer before / after" are one measure:
+
+  python3 export/p8_atlas_probe.py viewer p8base p8cov [--stations 1,2] [--web renders/web]
+
+`<tag>_cam0N.png` is the file every gate script writes (web/tools/p7.sh desk <tag> impcov=0).  The
+box at station 2 is impostor_diag_ref's own crown box - the box the 2.40 was measured in - and at
+station 1 the QA-17 hero crown box; the Cycles reference for each station is read from MAIN and
+measured identically, never written.
 """
 import argparse, json, os, sys
 import numpy as np
@@ -112,6 +122,89 @@ def blend3(atlas, px, col, row):
     Equal weights is the cell centre - the worst case for a silhouette, and the honest average."""
     cells = [(col, row), (min(col + 1, GRID - 1), row), (col, min(row + 1, GRID - 1))]
     return np.mean([frame_alpha(atlas, px, c, r) for c, r in cells], axis=0)
+
+
+# ---------------------------------------------------------------- the viewer capture (item A)
+# The Cycles reference frame per station, in MAIN (a worktree has no renders/previews).
+VIEWER_REF = {
+    1: os.path.join(MAIN, "renders/previews/qa/round10b_01_lagoon_hero_cycles.png"),
+    2: os.path.join(MAIN, "renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png"),
+    5: os.path.join(MAIN, "renders/previews/qa/round13_05_south_lawn_cycles.png"),
+}
+# Station 2's box is impostor_diag_ref's own (read from the json, never pasted); 1 and 5 are QA 17's
+# crown boxes (web/tools/r3_crown_tile.py CROWN), which Phase 7 measured and QA 17 scored.
+VIEWER_BOX = {1: (760, 545, 1000, 690), 5: (300, 580, 500, 870)}
+
+
+def crown_crossings(rgb, box, thresholds=(40, 60)):
+    """The atlas probe's crossings metric on a RENDERED frame, inside `box`.
+
+    Identical to `transitions_per_100px` on the Cycles reference: foliage is dark (sRGB ~18 in
+    diag_ref's foliage_p80) and every gap - sky, backlit leaf, the pale colonnade behind - is
+    brighter, so `lum < thr` is the foliage mask and its row-wise crossings per 100 screen px is the
+    silhouette's detail density.  Two thresholds, because one of them alone would be a fitted number.
+    """
+    x0, y0, x1, y1 = box
+    crop = rgb[y0:y1, x0:x1].astype(np.float32)
+    lum = crop @ np.array([0.2126, 0.7152, 0.0722])
+    out = {"box": [x0, y0, x1, y1], "lum_mean": round(float(lum.mean()), 2),
+           "lum_p10": round(float(np.percentile(lum, 10)), 1),
+           "lum_p90": round(float(np.percentile(lum, 90)), 1)}
+    for thr in thresholds:
+        out[f"crossings_per_100px_lum_lt_{thr}"] = transitions_per_100px(lum < thr, 1.0)
+        out[f"foliage_pct_lum_lt_{thr}"] = round(float((lum < thr).mean()) * 100, 2)
+    return out
+
+
+def load_frame(path):
+    img = Image.open(path).convert("RGB")
+    if img.size != (1920, 1080):
+        img = img.resize((1920, 1080), Image.LANCZOS)
+    return np.asarray(img)
+
+
+def cmd_viewer(argv):
+    ap = argparse.ArgumentParser(prog="p8_atlas_probe.py viewer")
+    ap.add_argument("tags", nargs="+", help="capture tags, e.g. p8base p8cov")
+    ap.add_argument("--web", default=os.path.join(ROOT, "renders", "web"))
+    ap.add_argument("--gate3", default=os.path.join(MAIN, "export/out/gate3"))
+    ap.add_argument("--stations", default="1,2")
+    ap.add_argument("--out", default=None)
+    a = ap.parse_args(argv)
+
+    ref_box = json.load(open(os.path.join(a.gate3, "impostor_diag_ref.json")))["box"]
+    boxes = dict(VIEWER_BOX)
+    boxes[2] = tuple(ref_box)
+    report, rows = {"boxes": {}}, []
+    for st in [int(s) for s in a.stations.split(",") if s.strip()]:
+        box = boxes[st]
+        per = {}
+        for tag in list(a.tags) + ["cycles"]:
+            p = VIEWER_REF[st] if tag == "cycles" else os.path.join(a.web, f"{tag}_cam{st:02d}.png")
+            if not os.path.exists(p):
+                print(f"  (missing: {p})", file=sys.stderr)
+                continue
+            per[tag] = crown_crossings(load_frame(p), box)
+            rows.append((st, tag, per[tag]))
+        report["boxes"][f"cam{st:02d}"] = {"box": list(box), "frames": per}
+
+    w = max(len(t) for _, t, _ in rows) if rows else 8
+    print("== crown silhouette crossings per 100 screen px (the atlas probe's own measure) ==")
+    print(f"{'station':8s} {'frame':{w}s} {'<40':>7s} {'<60':>7s} {'foliage%<40':>12s} "
+          f"{'lum mean':>9s} {'p10':>7s} {'p90':>7s}")
+    last = None
+    for st, tag, r in rows:
+        print(f"{'cam%02d' % st if st != last else '':8s} {tag:{w}s} "
+              f"{r['crossings_per_100px_lum_lt_40']:7.2f} {r['crossings_per_100px_lum_lt_60']:7.2f} "
+              f"{r['foliage_pct_lum_lt_40']:11.2f}% {r['lum_mean']:9.2f} {r['lum_p10']:7.1f} {r['lum_p90']:7.1f}")
+        last = st
+
+    out = a.out or os.path.join(ROOT, "export", "out", "p8")
+    os.makedirs(out, exist_ok=True)
+    name = "p8_viewer_" + "_".join(a.tags) + ".json"
+    with open(os.path.join(out, name), "w") as fh:
+        json.dump(report, fh, indent=1)
+    print(f"\n-> {os.path.join(out, name)}")
 
 
 def main():
@@ -221,4 +314,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "viewer":
+        cmd_viewer(sys.argv[2:])
+    else:
+        main()
