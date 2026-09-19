@@ -843,7 +843,9 @@ number improves — leaf % 25.2 → 22.9 against the reference's 22.2, p10 0.894
   is 0.15 and not the value that hits the number. A faint dot texture remains visible at 200 % where
   a crown crosses a bright wall; at 100 % it is subtle. `renders/web/960/p8ship_crown_tile.jpg`
   (full-res `renders/web/tiles/p8ship/p8ship_crown_tile.png`) is the required tile sheet, Cycles |
-  Phase 7 | shipped, at the three QA-17 crown boxes.
+  Phase 7 | shipped, at the three QA-17 crown boxes; `renders/web/960/p8cov_crown_tile.jpg` is the
+  rejected first form beside it, where the halftone is unmistakable, and
+  `renders/web/960/p8s02_crown_tile.jpg` the share-0.20 step above the shipped one.
 * **The other half of the 8b decision is the 2K atlas** (export, tier 1): it halves the texel to 4.5
   screen px and carries 3.28 crossings of its own against the 1K frame's 2.40. The share is to be
   re-swept on it — a finer texel makes the same share both more honest and less visible.
