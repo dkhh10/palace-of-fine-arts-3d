@@ -23,6 +23,7 @@ def main():
     cam = a[a.index("--cam") + 1]
     out = a[a.index("--out") + 1]
     samples = int(a[a.index("--samples") + 1]) if "--samples" in a else 32
+    seed = int(a[a.index("--seed") + 1]) if "--seed" in a else None
     assert os.path.abspath(blend) != os.path.abspath(
         os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "master_delivery.blend")), \
         "render a scratch copy, never master_delivery.blend itself"
@@ -40,6 +41,10 @@ def main():
     scene.cycles.use_adaptive_sampling = False       # fixed samples: every reference spends the same everywhere
     scene.cycles.samples = samples
     assert scene.cycles.device == "GPU" and scene.cycles.denoiser == "OPENIMAGEDENOISE"
+    if seed is not None:
+        # a second seed is the NOISE FLOOR control: the same scene, the same settings, a different sampling
+        # sequence, so MAE(seed 0, seed 1) is what 32 spp + OIDN costs before any scene change is counted.
+        scene.cycles.seed = seed
     cams = [o for o in bpy.data.objects if o.type == "CAMERA" and f"_qa_{cam}_" in o.name]
     assert len(cams) == 1, [o.name for o in bpy.data.objects if o.type == "CAMERA"]
     scene.camera = cams[0]

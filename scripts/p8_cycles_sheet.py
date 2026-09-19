@@ -55,8 +55,17 @@ def stats(a, box):
     return float(lum.mean()), float(sat.mean()), float(lum.std())
 
 
+MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+
+
+def in_main(p):
+    """The Phase 5 reference renders live in the MAIN checkout only (renders/previews/qa is not in a worktree)."""
+    p = Path(p)
+    return p if p.exists() else MAIN / p.relative_to(ROOT)
+
+
 def main():
-    p5 = {st: P13.REF_R14[st][0] for st in range(1, 7)}
+    p5 = {st: in_main(P13.REF_R14[st][0]) for st in range(1, 7)}
     p8 = {st: OUT / f"cam{st:02d}_1080_32spp.png" for st in range(1, 7)}
     missing = [st for st in p8 if not p8[st].exists()]
     if missing:
