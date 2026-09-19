@@ -853,6 +853,41 @@ number improves — leaf % 25.2 → 22.9 against the reference's 22.2, p10 0.894
   means the transparent queue, sorting and no depth write for 127 cards: out of scope here, logged
   for the lead.
 
+### Deliverable B — the 2K atlases (export re-sync, 2026-09-19)
+
+Boot log, desktop tier, `tiers=all`: `impostor atlas: 2K variant on 16/16 prototype(s)` and
+`... 12x12 octahedral frames at 170 px on a 2048 px atlas (the 2K variant, ?imp2k=0 reverts) ...
+16/16 atlas(es) loaded, 9.3 MB declared`. The manifest publishes each `albedo_2k` with the 1K file as
+its tier-0 stand-in (`tiers.lowres.files[..._albedo_2048].path` is the 1024 ktx2, `full` the 2048
+one), so the first frame draws the 1K bytes and tier 1 upgrades them; `?imp2k=0` still keeps the 1K
+geometry AND the 1K file. Albedo only — no 2K normal+depth, which nothing samples while `unlit` holds.
+
+The 2K atlas is worth more than the coverage share, and it costs nothing at the sampling side:
+
+| capture | cam01 | cam02 | cam05 | cam02 box c/e | cam02 box level |
+|---|---|---|---|---|---|
+| 1K, Phase 7 | 5.73 | 2.92 | 6.51 | 0.397 | 1.04x |
+| 1K, share 0.15 (Phase 8b as shipped) | 6.55 | 6.82 | 7.05 | 0.398 | 1.10x |
+| 2K, coverage off | 7.33 | 3.87 | 8.27 | 0.427 | 1.05x |
+| **2K, share 0.15 (the default now)** | **7.65** | **6.98** | **8.54** | **0.430** | **1.10x** |
+| 2K, share 0.25 | 9.10 | 9.63 | 9.12 | 0.439 | 1.12x |
+| 2K, share 0.40 | 10.80 | 11.72 | 9.69 | — | — |
+| Cycles | 11.73 | 7.76 | 15.89 | 0.364 | 1.00x |
+
+**The share stays at 0.15.** At 2K one texel is 4.5 screen px, so the dot texture is finer, but the
+200 % hero tile (`renders/web/tiles/p8k2/p8k2_cam01_crown_200.png`) shows it plainly at 0.25 and as a
+halftone at 0.40, while station 2 overshoots Cycles' 7.76 from 0.25 up. 0.15 keeps station 2 just
+under the reference (6.98) and every box where the 1K default had it.
+
+**Plainly, for the lead: at 100 % the station-2 crown is still a MASS next to Cycles.**
+`renders/web/tiles/p8k2/p8k2_cam02_crown_100.png` (960 px `renders/web/960/p8k2_cam02_crown.jpg`),
+Cycles | Phase 7 1K | 1K + 0.15 | 2K + 0.15 | 2K + 0.25: the reference is twigs and branches with sky
+between them; the 2K card is a softer, more broken-up blob with the colonnade showing through in
+places. 2K + coverage moves the numbers (crossings 2.92 → 6.98 at station 2, 5.73 → 7.65 at the hero)
+and the silhouette reads better, but no sampling of a 162 px frame can put branches back. What is
+left is the band-atlas stretch (12 az x 3 el at 341 px, 13 min GPU, 128 MB, +13 MB payload) from the
+bake engineer's option 4 — the lead's call.
+
 ### Reproducing
 
 ```
