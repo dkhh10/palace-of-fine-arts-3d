@@ -393,6 +393,27 @@ function makeRoot() {
 	cam2.position.set( 0, 0, 0 );
 	const on2 = c2.update( cam2 );
 	ok( on2 < c2.stats.batches, `at one end of it ${on2} of ${c2.stats.batches} chunk(s) are submitted` );
+
+	// r3 review 4: a NON-instanced, site-spanning mesh has one row - its ORIGIN - so the test has to
+	// be against its SPHERE or it is hidden while its geometry is on screen.  The plane below is
+	// 100 m wide with its origin at x = 0; a camera 45 m away with a 40 m limit is outside the origin
+	// test and well inside the geometry.
+	const root3 = new THREE.Object3D();
+	const plane = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100 ), new THREE.MeshBasicMaterial() );
+	plane.name = 'wide_single';
+	root3.add( plane );
+	root3.updateMatrixWorld( true );
+	const c3 = buildDistanceCull( root3, { chunk: null, limit: () => 40 } );
+	const cam3 = new THREE.PerspectiveCamera();
+	cam3.position.set( 45, 0, 0 );
+	const on3 = c3.update( cam3 );
+	ok( plane.visible === true && on3 === 1,
+		`a single-row mesh is tested at lim + its radius (${c3.batches[ 0 ].radius.toFixed( 1 )} m), not at its origin` );
+	cam3.position.set( 200, 0, 0 );
+	c3.update( cam3 );
+	ok( plane.visible === false, 'and it is still hidden when the whole sphere is beyond the limit' );
+	ok( c3.batches[ 0 ].pad > 0 && c2.batches[ 0 ].pad === 0,
+		'the pad is the mesh radius for a single-row mesh and 0 for an instanced batch' );
 }
 
 // ------------------------------------------- 8. the translucency map's wrap mode (Phase 8b item d)
@@ -450,6 +471,34 @@ function makeRoot() {
 	ok( r.albedoMaps.MAT_leaf_clamped.wrapS === THREE.RepeatWrapping,
 		'... and the albedo took the same wrap (unchanged behaviour)' );
 	ok( warned === 1, `the shared-texture conflict is REPORTED, not silent (${warned} note)` );
+
+	// r3 review 3: ONE sampler rule for BOTH maps in the EAGER path.  Two materials of the SAME name
+	// disagreeing about wrap used to give the albedo the LAST one (the per-material loop) and the
+	// translucency the FIRST one (srcMaps[0]) — albedo REPEAT, trn CLAMP, on one pair of UVs.
+	const scene2 = new THREE.Object3D();
+	const mk2 = ( wrapS ) => {
+		const mat = new THREE.MeshStandardMaterial();
+		mat.name = 'MAT_leaf_split';
+		mat.map = fake( wrapS, wrapS );
+		scene2.add( new THREE.Mesh( new THREE.PlaneGeometry(), mat ) );
+		return mat;
+	};
+	const first = mk2( THREE.ClampToEdgeWrapping ), last = mk2( THREE.RepeatWrapping );
+	const man2 = { baseUrl: 'https://example.invalid/x/', raw: { materials: { foliage: { dir: 'tex', sizes: [ 1024 ],
+		materials: { MAT_leaf_split: { albedo: { 1024: 'a3' }, translucency_map: { 1024: 't3' } } } } } } };
+	let disagreed = 0;
+	const r2 = await applyFoliageTextures( { manifest: man2, loadTexture, scene: scene2, mode: '1024',
+		note: ( m ) => { if ( /disagree/.test( m ) ) disagreed ++; } } );
+	ok( r2.albedoMaps.MAT_leaf_split.wrapS === r2.trnMaps.MAT_leaf_split.wrapS
+		&& r2.albedoMaps.MAT_leaf_split.wrapT === r2.trnMaps.MAT_leaf_split.wrapT,
+	'eager path: the albedo and the translucency map end on the SAME wrap' );
+	ok( r2.albedoMaps.MAT_leaf_split.wrapS === THREE.ClampToEdgeWrapping,
+		'... the first material\'s, the one the note names (not the last material of the loop)' );
+	ok( last.map === r2.albedoMaps.MAT_leaf_split && first.map === r2.albedoMaps.MAT_leaf_split,
+		'... and both materials of that name carry the one shared albedo' );
+	ok( disagreed === 1, `the disagreement is reported once, for both maps (${disagreed} note)` );
+	ok( r2.albedoWrap && r2.albedoWrap.MAT_leaf_split[ 0 ] === THREE.ClampToEdgeWrapping,
+		'the albedo wrap is in the report beside trnWrap' );
 }
 
 console.log( fails ? `${fails} FAILURES` : 'all foliage-lazy checks passed' );
