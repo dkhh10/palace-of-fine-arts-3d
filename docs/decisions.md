@@ -882,3 +882,10 @@ the sky carries an ordered dot grid at 100 % (share 0.15 on 2K) — the band pas
 for the grid before the band ships as closed. Resident: `resident()` never counted the impostor atlases (~+67 MB unbilled in every Phase 6-8 memory figure) —
 correct the counter (viewer) and restate. Station 3 perf +3.1 ms vs gate7 (drift caveat; re-measure same-session after the shrub-set bug). Scores desktop
 3.78 / 3.25 / 2.75 / 2.88 / 3.06 / 2.89; mobile 3.2 / 3.3 / 2.4 / 2.7 / 2.8 / 2.5. Blue-violet shaded stone visible on desktop cam02 too (carry).
+
+## 2026-09-19 · SESSION 7 CLOSES mid-Phase 8 (context past the restart threshold) — what is live, what is proven, what is next
+Live (deploy 9): band-atlas impostors (default, share 0.10; hero crossings 11.97 vs Cycles 11.73, station-2 crown with limbs and sky), 2K atlases with alpha as
+coverage, dense LOD2 shrubs, detail projection dominant (8c CLOSED by QA 20). Proven but not yet QA'd on the URL: the band (gate9 capture on disk). Open: 8a not closed
+(leaf share moved at 1/8 boxes; re-scope), the env_shrubs LOD1 walk-in set drawn at every station (+1.12 M tris; viewer/export bug), resident() omitting the impostor
+atlases, the 100 % dot-grid check on the band, willow highlight clipping, 8d backdrop, 8e mobile card scale, the closing comparison sheet with a new 4K Cycles hero.
+Plan: docs/briefs/phase8_next_session.md. Every merge this session was reviewed except two documented lead-verified deltas (export wire pass; export band block).
