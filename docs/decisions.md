@@ -991,3 +991,11 @@ The branch did not parse (backticks inside the GLSL template literal in impostor
 the fix is three lines; from now on every builder pastes the suite count into the commit message. Finding 7: the relight brief said the hard-edge share "must not rise above
 the reference at any box"; seven of eight boxes were already above it before the relight (a standing QA-16 item), so the engineer measured "no box newly crosses, 05 shore
 stays below" (largest move +0.20 points). Accepted: the constraint is "no new crossing and no box moves more than 0.3 points", logged here so QA 22 scores it that way.
+
+## 2026-09-19 · 8e merged (7b59637 export, review r3 7e17b26): correction — the shipped `iso_cut` is ku 2.0 / kv 3.0 (anisotropic), not isotropic k = 2
+The r3 review measured the shipped mode at 43.5 vs 65.4 texels/px; the "8e decision 2" entry's "isotropic k = 2" is amended to ku 2.0 / kv 3.0 with the per-material
+cutoffs 0.27 / 0.21 / 0.10 / 0.12; the width/coverage numbers stand (re-measured by the reviewer exactly). Fixes carried into the 8d export chain (no shipped bytes): the
+probe's defaults print the shipped mode; an unknown species must export at k = 1 (untiled) rather than the global ku 2 without a solved cutoff; `off` becomes a true
+baseline (no v offset, no REPEAT). 8a-3 corrections from the same review, binding on the chain: the instance rows are re-dumped (instance_rows.mjs x2, gate4_instance_order
+x2, gate5_instance_rows) or manifest_v4's glb_bytes asserts abort; MAT_shrub_dry's LOD2/LOD1 ratio is 0.89x wide / 1.77x tall, so it takes ku 1 / kv 2 (shrub / shrub_light
+keep k = 2, reeds 1.0); coverage neutrality is measured per material, not claimed by construction.
