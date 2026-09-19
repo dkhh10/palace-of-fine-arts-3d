@@ -900,3 +900,29 @@ Willows: no flat highlight (0 px over 240 in six frames), so the `PFA_BAND_RANGE
 49.4 / 47.6 MB are the planned tier 0). Perf 32.5 / 33.5 / 38.0 / 24.8 / 30.3 / 36.1 ms, faster than gate8 at every station; QA-20's station-3 flag clears. Resident
 sidecar 1 862.9 MB; corrected estimate ~1 978 MB until the counter fix (viewer fix round). Lead viewed the sheet: the station-2 crown is still softer than Cycles
 (a residual of the 341 px frame, accepted by decision 2: "if the band does not put structure in the tile the crown stays a residual" — it did, so 8b closes).
+
+## 2026-09-19 · 8a decision 2 (re-scope): the shrub gap is the cards' flat warm shading — viewer-only directional relight; the leaf-green share becomes a report figure
+The analysis (docs/briefs/phase8a_rescope_analysis.md, 9707e98; evidence renders/qa_comparisons/p8a_rescope_boxes_viewer_vs_cycles.jpg, viewed by the lead): at all
+eight QA-17 shrub boxes the gap is colour, not coverage (the card footprint is already 1.04-3.6x the reference's leaf share) and not species (same mix, all LOD2).
+The viewer strips the cards' sun diffuse and adds one warm per-placement irradiance with no cosine (G/R 0.774): an albedo of hue 100° renders at hue 54 under that flat
+light and at 130 under the same bake's darkest decile — the reference's dark green bushes with gold rims are modelled light and shade; ours are one sun-gold value.
+Decision: option B — split the flat card irradiance into a sun term (N·L on the card normal + clump shadow, sun vector and colour from the manifest) and a sky term,
+`?cardsun=` with 0 restoring today; web/src/foliage.js only; 0 GPU, 0 MB, no bake, no master rebuild, no export, no frozen MAT_ change (option E rejected: the reference
+IS the Cycles render of those materials, so a re-tint moves target and measurement together). Predicted leaf/ref 1.32 / 1.89 / 0.64 / 0.75 / 0.96 / 1.92 / 0.71 / 1.60
+(today 0.86 / 0.82 / 0.64 / 0.85 / 0.31 / 1.13 / 0.54 / 1.76); constraints held: level (QA 17's closed item) and the hard-edge share (the crude simulation triples it; the
+per-fragment N·L must be measured). Riders accepted: the env_shrubs walk-in bug is fixed first (viewer fix round, in flight); 8a closes on the tiles at 1/3/5 with the
+leaf-green share reported, not gated (1 % of red moves it 2-9 % relative). Sequenced after the viewer fix round (same Chrome, same file).
+
+## 2026-09-19 · 8d decision: R1 (low-frequency backdrop materials) + R2 (a tree belt on the hall's east face, ≤ 6 986 tris) go; R3 (tiled facade atlas, new UV0) deferred
+The analysis (docs/briefs/phase8d_analysis.md, phase8d-env 7553f31): the backdrop is 1.1-4.7 % of the hero frame (the N-colonnade hall wall 21 204 px, of which the 102
+glazed bays are 8 120 px = QA's "dark rectangles") and 35-40 % of cam06; backdrop_forest is visible at cam06 only. Root cause measured: the Gate 2 backdrop bake gives
+0.79 texels/m on backdrop_building while the hall wall is 146-154 m away = 7 px/m on screen, so every texel spans 9 px and any detail averages to a flat field; a 2048
+bake buys 1.58 texels/m and cannot fix it. Ref 169 at 100 % shows no lit wall behind the north colonnade at all: a dark tree belt and deep shade in every intercolumniation.
+Pin window (binding): the backdrop groups sit inside env_so_far, so a backdrop delta of -5 900 … +6 986 tris keeps near 20 / far 127 byte-identical at CLASS_BUDGET
+902 000. Decision: R1 — MAT_backdrop_building/_skylight/_roof/_forest/_lawn carry only low-frequency signal (bakeable distance haze toward the sky, per-building albedo
+spread, a shaded desaturated hall face with the glazed-bay contrast dropped; targets cam06 top-row luma 0.435 -> ~0.80, sat 0.387 -> ~0.10, hero wall sat 0.654 -> ~0.43);
+R2 — a tree belt on the hall's east face capped at 6 986 tris (~120 crowns) so the pin holds; R3 deferred; rejected: viewer-side fog (Cycles would not see it), Sapling
+LOD2 backdrop trees (+1 M tris), band-atlas billboards for the backdrop (three-team lockstep, forces the budget constant). These change frozen MAT_backdrop_* materials in
+assets/materials.blend and assets/environment.blend: covered by the user's Phase 8 approval of item 8d ("backdrop city blocks and trees"), reported to the user before the
+build starts. Export scope: Gate 1 re-run to prove the pin, Gate 2 re-bake of the changed backdrop groups only, manifests, tiers, verify; no Gate 3. GPU ≤ 25 min previews
++ 8-15 min bake. The build starts when Blender is free (after the viewer fix round releases Chrome).
