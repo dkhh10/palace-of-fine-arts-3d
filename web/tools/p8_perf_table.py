@@ -14,9 +14,16 @@ W = Path(__file__).resolve().parents[2] / "renders" / "web"
 
 
 def resident_mb(s):
+    """The station's own total, in MB as __pfaInfo reports it.
+
+    Summing every `*_bytes` key double-counted: the block already carries `total_bytes` beside its
+    parts, so the old sum was the total twice over, and it divided by 1048576 where the viewer's own
+    figures are MB = bytes / 1e6 (phase8_viewer_r2_review 2)."""
     r = s.get("resident") or {}
-    b = sum(v for k, v in r.items() if k.endswith("_bytes") and isinstance(v, (int, float)))
-    return b / 1048576.0
+    t = r.get("total_bytes")
+    if not isinstance(t, (int, float)):
+        t = sum(v for k, v in r.items() if k.endswith("_bytes") and isinstance(v, (int, float)))
+    return t / 1e6
 
 
 def main():

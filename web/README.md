@@ -989,7 +989,7 @@ from 5.90 at share 0) for the smallest box movement.
 
 **Cost: none measurable.** 1440p, 120 frames after 24 of warmup, stations 1-6, one session with the
 2K default repeated LAST: 2K **36.30 ms** → band **34.00** → 2K again **32.55**. The drift (−3.75 ms)
-is larger than the difference, so the band sits inside it. Resident is **identical at 3553.3 MB** —
+is larger than the difference, so the band sits inside it. Resident is **identical at 1862.9 MB** —
 4096x1024 and 2048x2048 are the same 4 M texels — and the declared payload is *smaller*, 8.4 MB
 against 9.3 MB. Six stations against `?impband=0`: whole-frame luma within 0.006x everywhere, moving
 TOWARD the reference at cam01 (0.930x → 0.933x) and cam05 (0.979x → 0.985x); cam04 is untouched to
@@ -1043,15 +1043,15 @@ repeated LAST as the drift control** (`web/tools/p8_perf_table.py`):
 
 | setting | median frame ms (6 stations) | worst station | draws | tris | resident MB |
 |---|---|---|---|---|---|
-| default (first) | 31.85 | 36.00 | 355 | 5.98 M | 3550.1 |
-| LOD2 @ 60 m | 30.75 (−1.10) | 36.70 | 399 | 6.36 M | 3306.2 (−243.9) |
-| LOD2 @ 120 m | 31.95 (+0.10) | 37.30 | 439 | 6.59 M | 3306.2 (−243.9) |
-| LOD2 all | 34.40 (+2.55) | 40.60 | 575 | 7.21 M | 3306.2 (−243.9) |
-| **default (repeated last)** | **36.75 (+4.90)** | 40.20 | 355 | 5.98 M | 3550.1 |
+| default (first) | 31.85 | 36.00 | 355 | 5.98 M | 1861.3 |
+| LOD2 @ 60 m | 30.75 (−1.10) | 36.70 | 399 | 6.36 M | 1733.4 (−127.9) |
+| LOD2 @ 120 m | 31.95 (+0.10) | 37.30 | 439 | 6.59 M | 1733.4 (−127.9) |
+| LOD2 all | 34.40 (+2.55) | 40.60 | 575 | 7.21 M | 1733.4 (−127.9) |
+| **default (repeated last)** | **36.75 (+4.90)** | 40.20 | 355 | 5.98 M | 1861.3 |
 
 **The drift is bigger than every delta**: the same default measured 31.85 ms first and 36.75 ms last,
 so against a drift-corrected baseline all three LOD2 settings are at or below the default. Memory goes
-DOWN 244 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
+DOWN 127.9 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
 
 Crossings per 100 screen px (lum < 40) and the QA-17 boxes, 1920x1080, cam01 / cam02 / cam05:
 

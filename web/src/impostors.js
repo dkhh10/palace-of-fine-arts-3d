@@ -256,8 +256,8 @@ const fragmentShader = /* glsl */`
 			float cstep = 6.2831853 / cols;
 			float cf = atan( sth, cth ) / cstep;
 			cf = cf - floor( cf / cols ) * cols;          // wrap into [0, cols), negatives included
-			float i0 = floor( cf );
-			float f = cf - i0;
+			float i0 = min( floor( cf ), cols - 1.0 );   // cf can reach cols through rounding
+			float f = clamp( cf - i0, 0.0, 1.0 );
 			float i1 = ( i0 + 1.0 >= cols ) ? 0.0 : i0 + 1.0;   // the last column wraps to the first
 			// ELEVATION: the NEAREST row, no blend (the contract). The rows' angles are pfaBandEl,
 			// in radians, and the stations look at the crowns from 0-15 deg.
@@ -728,7 +728,9 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		else if ( use2k ) report.drawnGeom = { framePx: geom.framePx, atlasPx: geom.atlasPx, innerPx: geom.innerPx };
 		const uniforms = {
 			atlas: { value: null },
-			range: { value: p.range },
+			// the band's own range when it states one (a re-bake may), the octahedral one otherwise
+			range: { value: ( useBand && Number.isFinite( bandBlock.prototypes[ key ].range ) )
+				? bandBlock.prototypes[ key ].range : p.range },
 			grid: { value: impostors.grid },
 			framePx: { value: geom.framePx },
 			innerPx: { value: geom.innerPx },

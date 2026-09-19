@@ -119,6 +119,10 @@ function dirAt( azDeg, elDeg ) {
 	// row_origin: top is the same arithmetic without the flip
 	const top = bandFrameUv( 0, 0, [ 0, 0 ], { ...GEOM, rowOrigin: 'top' } );
 	check( close( top[ 1 ], ( 8 + 0.5 ) / 1024 ), 'row_origin "top" drops the v flip and nothing else' );
+	// the row origin is matched EXACTLY, not by substring: "bottom-to-top" is a bottom-origin
+	// sentence and must not read as "top" (phase8_viewer_r2_review carry)
+	const bt = bandFrameUv( 0, 0, [ 0, 0 ], { ...GEOM, rowOrigin: 'bottom-to-top' } );
+	check( close( bt[ 1 ], 1 - ( 8 + 0.5 ) / 1024 ), 'a row origin that merely CONTAINS "top" is not "top"' );
 }
 
 // ---- 5. the GLSL mirrors this, textually --------------------------------------------------------
@@ -157,6 +161,8 @@ function dirAt( azDeg, elDeg ) {
 	check( close( mat.uniforms.pfaBandA0.value.x, 1 ) && close( mat.uniforms.pfaBandA0.value.y, 0 ),
 		'and that heading reaches it as a vector, not as a degree' );
 	check( /cf = cf - floor\( cf \/ cols \) \* cols;/.test( src ), 'the shader wraps the column the same way' );
+	check( /float i0 = min\( floor\( cf \), cols - 1.0 \);/.test( src ),
+		'and clamps i0 to the last column, which rounding can otherwise step past' );
 	check( /w = vec3\( 1.0 - f, f, 0.0 \);/.test( src ), 'two columns, linear in angle, the third weight 0' );
 	check( /asin\( clamp\( d.z, -1.0, 1.0 \) \)/.test( src ), 'elevation is asin(z), clamped' );
 	check( notes.some( ( m ) => /BAND atlas \(Phase 8b\)/.test( m ) && /1\.000, 0\.000/.test( m )

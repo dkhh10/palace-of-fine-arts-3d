@@ -1112,7 +1112,23 @@ export function normaliseManifest( raw, baseUrl ) {
 						const t = key ? resolveTexture( key ) : null;
 						const url = t ? t.url : ( key && /\.(ktx2|png)$/i.test( key ) ? resolveUrl( baseUrl, `${dir}${key}` ) : null );
 						if ( ! url ) { missingTex ++; continue; }
-						bp[ name ] = { albedo: url,
+						// THE RANGE IS THE BAND'S OWN.  Today the bake ships every band atlas at the
+						// octahedral range and asserts `range_same_as_octahedral: true` per prototype,
+						// but a re-bake at the band's own range (PFA_BAND_RANGE=band) would change
+						// this number and nothing else - decoding it with the octahedral constant
+						// would silently darken or blow out every crown. So: take the band's range
+						// when it states one, and refuse the prototype when it states neither a range
+						// nor that the octahedral one still applies.
+						const bandRange = Number.isFinite( e && e.range ) ? e.range : null;
+						const sameRange = ( e && e.range_same_as_octahedral === true )
+							|| ( ! e || e.range_same_as_octahedral === undefined ) && b.range_source === 'octahedral';
+						if ( bandRange === null && ! sameRange ) {
+							g3notes.push( `impostors.band: ${name} states neither its own range nor `
+								+ 'range_same_as_octahedral - it keeps the octahedral atlas rather than '
+								+ 'decode at a range nothing verified' );
+							continue;
+						}
+						bp[ name ] = { albedo: url, range: bandRange,
 							bytes: ( t && t.meta && t.meta.bytes ) || ( e && e.bytes ) || 0,
 							crownSphere: ( e && ( e.crown_sphere_m ?? e.crownSphere ) ) ?? null };
 					}
@@ -1126,7 +1142,7 @@ export function normaliseManifest( raw, baseUrl ) {
 						// which end row 0 is, and "bottom" is the octahedral convention.
 						// `row_origin` if the export names it, else the sidecar's own `row_order`
 						// sentence, which says "counted from the BOTTOM of the image".
-						rowOrigin: ( /top/.test( String( b.row_origin || '' ).toLowerCase() )
+						rowOrigin: ( String( b.row_origin || '' ).trim().toLowerCase() === 'top'
 							|| ( ! b.row_origin && /from the top/i.test( String( b.row_order || '' ) ) ) ) ? 'top' : 'bottom',
 						note: b.note || null, prototypes: bp, count: Object.keys( bp ).length };
 				} )(),
