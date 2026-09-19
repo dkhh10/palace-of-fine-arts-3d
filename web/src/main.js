@@ -216,6 +216,7 @@ if ( MOBILE ) {
 	set( 'fartreelight', 'farTreeLight', s.farTreeLight );
 	set( 'shrublod', 'shrubLod', s.shrubLod );
 	set( 'walkupmesh', 'walkupMesh', s.walkupMesh );
+	set( 'fartreemesh', 'farTreeMesh', s.farTreeMesh );
 	set( 'impint', 'impInt', s.impInt );
 	set( 'imp2k', 'imp2k', s.imp2k );
 	set( 'reflset', 'reflSet', s.reflSet );

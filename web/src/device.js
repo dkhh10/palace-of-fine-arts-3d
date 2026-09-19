@@ -77,7 +77,8 @@ export function chooseTier( { gl, env, query } ) {
  *  is a row here and nothing else.  `maxDrawingBufferPx` is the cap the pixel ratio is solved for. */
 export const TIER_SETTINGS = {
 	desktop: { manifest: null, maxDrawingBufferPx: null, post: null, water: null,
-		treeMesh: null, farTreeLight: null, shrubLod: null, walkupMesh: null, impInt: null,
+		treeMesh: null, farTreeLight: null, shrubLod: null, walkupMesh: null, farTreeMesh: null,
+		impInt: null,
 		imp2k: null, reflSet: null, foliageTex: null },
 	mobile: {
 		manifest: 'manifest_mobile.json',   // resolved against the desktop manifest's own url
@@ -89,8 +90,17 @@ export const TIER_SETTINGS = {
 		// black cores, because an 85 px atlas frame magnified onto a 30 m card has no silhouette and
 		// no interior left.  The three near tiers are turned back on, each with a radius small enough
 		// that only what the walker is standing among is a mesh:
-		treeMesh: '25',                     // near-tree meshes within 25 m (desktop 40)
-		walkupMesh: '10',                   // the walk-up LOD1 set within 10 m (desktop 15)
+		treeMesh: '25',                     // near-tree meshes within 25 m (desktop 80)
+		// The far-tree mesh set, which is what a walker at the shore actually looks at: MEASURED on
+		// the orbit fixture, every crown in the user's screenshot is a far-tree placement and the
+		// nearest is 36.7 m (heading 253) / 37.4 m (heading 215); the nearest NEAR tree
+		// (ENV_tree_*_LOD1) is 127.6 m away and contributes nothing, so `treeMesh` above cannot be
+		// the lever for that frame.  `walkupMesh: '0'` takes the LOD2 set (127 k unique tris)
+		// instead of the walk-up LOD1 one (472 k): the same feature at the same radius for a quarter
+		// of the resident memory - 561.9 MB against 689.7, measured - which is what pays for the
+		// radius below.
+		walkupMesh: '0',                    // the LOD2 far set, not the walk-up LOD1 one (lead, Phase 7)
+		farTreeMesh: 45,                    // ... drawn within 45 m, which covers the shore stance (desktop 12)
 		farTreeLight: 'near',               // ... which needs the far-tree loader to run at all
 		shrubLod: 25,                       // LOD1 shrubs inside the same radius (desktop 30)
 		// and the atlas darkening is eased where a card is now only ever seen from further away

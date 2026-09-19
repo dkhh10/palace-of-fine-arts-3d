@@ -700,35 +700,54 @@ of the frame and the dissolve/alpha-test discards still run first.
 ### D — the mobile tier (`web/src/device.js` `TIER_SETTINGS.mobile`)
 
 6b made every tree on a phone an impostor at every distance; the user's close orbit is what that looks
-like from three crown-widths away. Changed, with the desktop value in brackets:
-`treeMesh` `'0'` → **`'25'`** (40), `walkupMesh` `'0'` → **`'10'`** (15), `shrubLod` `0` → **`25`** (30),
-`farTreeLight` `'0'` → **`'near'`** (the far-tree loader has to run at all for the walk-up set to exist),
-and the atlas darkening eased to `impInt` **`'0.45,0.015,0.55'`** — strength halved from 0.90 and the
-floor raised from 0.35, because a card on the phone is now only ever seen from further out.
-`?tier=mobile` at 1170x2532, and every one of these is still overridable by query.
+like from three crown-widths away. **The orbit frame was diagnosed placement by placement before
+anything was changed** (camera position from `__pfaOrbit`'s own formula, tree positions from
+`trees.far_mesh.placements[].loc`, frustum from the capture's fov and aspect): at heading 253° the three
+crowns in shot are far-tree placements `ENV_treeboard_000 / _116 / _090` at **36.7 / 37.6 / 39.7 m**, at
+heading 215° it is `ENV_treeboard_117` at **37.4 m**, and the nearest genuine NEAR tree
+(`ENV_tree_*_LOD1`, which is all `treeMesh` governs) is **127.6 m** away. So `treeMesh` could never have
+been the lever for that frame: every crown the user photographed is an atlas card drawn at ~37 m, and
+the lever is the FAR-tree mesh radius, which was 10 m.
+
+Changed, with the desktop value in brackets:
+`treeMesh` `'0'` → **`'25'`** (80), `shrubLod` `0` → **`25`** (30), `farTreeLight` `'0'` → **`'near'`**
+(the far-tree loader has to run at all for any far-tree mesh to exist), `walkupMesh` `'0'` → **`'0'`**
+— the LOD2 far set (127 k unique tris) rather than the walk-up LOD1 one (472 k), which is the same
+feature at the same radius for a quarter of the memory — `farTreeMesh` → **45 m** (12), which covers the
+37-40 m the shore stance actually looks at, and the atlas darkening eased to `impInt`
+**`'0.45,0.015,0.55'`** (strength halved from 0.90, floor raised from 0.35) for the cards that remain.
+Every one of these is still overridable by query.
 
 | | 6c mobile | Phase 7 mobile | delta |
 |---|---|---|---|
-| resident | 499.7 MB | **689.7 MB** | +190.0 (ceiling 700) |
-| — texture / render target / geometry | 204.8 / 237.4 / 57.5 | 204.8 / 237.4 / **247.5** | all of it geometry |
-| draws at station 1 | 278 | 328 | +50 |
-| triangles at station 1 | 2.74 M | 3.84 M | +1.10 M |
-| Mac render cost at the orbit (gl.finish, proxy only) | 2.50 ms | 3.20 ms | +0.70 |
+| resident | 499.7 MB | **561.9 MB** | +62.2 (ceiling 700) |
+| — texture / render target / geometry | 204.8 / 237.4 / 57.5 | 204.8 / 237.4 / **119.6** | all of it geometry |
+| draws at station 1 | 278 | 340 | +62 |
+| triangles at station 1 | 2.74 M | 4.17 M | +1.43 M |
+| Mac render cost at the orbit (gl.finish, proxy only) | 2.50 ms | 3.40 ms | +0.90 |
 | presented frame time at 1170x2532 | 16.70 ms (vsync) | 16.70 ms (vsync) | — |
 
-Stations 2-6 after: 326 / 3.84 M, 344 / 4.52 M, 184 / 2.07 M, 315 / 3.68 M, 350 / 4.08 M.
+Stations 2-6 after: 366 / 4.67 M, 388 / 4.87 M, 206 / 2.43 M, 315 / 3.68 M, 350 / 4.08 M. Raising the
+far radius from 10 m to 45 m changes only two of the six station frames — cam02 +1.16 % whole-frame luma
+on 3.52 % of its pixels, cam03 +0.31 % on 0.81 % — because the LOD2 set carries vertex AO where the
+walk-up LOD1 set does not; the other four are byte-identical.
 
-**The memory is the one number with no headroom: 689.7 MB against the 700 MB ceiling.** Attributed by
-measurement, on the same orbit fixture: the LOD1 shrubs cost **+1.7 MB**, the near-tree meshes cost
-**0** (that geometry is already in the mobile payload and was simply never drawn), and the walk-up LOD1
-tree set costs **+188.3 MB** — it is 472 k unique triangles and all of it is resident however small the
-draw radius. The LOD2 far-tree set is the same feature at the same radius for a quarter of the memory:
-`?walkupmesh=0` measures **561.9 MB** (+62.2 MB), and it is one field in `TIER_SETTINGS.mobile` if the
-lead wants the headroom back. The brief asked for the walk-up set within ~10 m and it fits, so it ships.
+Memory, attributed by measurement on the same orbit fixture: LOD1 shrubs **+1.7 MB**, near-tree meshes
+**0** (that geometry is already in the mobile payload and was simply never drawn), the LOD2 far-tree set
+**+62.2 MB**, the walk-up LOD1 set (rejected) **+188.3 MB**. Taking the LOD2 set is what pays for the
+45 m radius: 561.9 MB leaves 138 MB under the ceiling where the walk-up set left 10 MB.
 
-Captures: `renders/web/960/p7_D_mobile_orbit.jpg` (the close orbit, both headings, before and after —
-black-cored cut-outs become crowns with an interior, and the shore band gains the LOD1 shrubs) and
-`renders/web/960/p7_D_mobile_stations.jpg` (the six stations after).
+**The fix is a geometry change, not a shading one, and the 100 % tile is the evidence**
+(`renders/web/tiles/p7_D_mobile_crown_100.png`, 960 px copy `renders/web/960/p7_D_mobile_crown_tile.jpg`):
+the same crown at 37 m is a featureless dark-green blob as a card and shows individual leaf cards,
+branches and sky through the canopy as a mesh. The competing hypothesis — that alpha-to-coverage at the
+mobile pixel ratio (0.711: a 1170x2532 CSS canvas on an 832x1802 drawing buffer, the 1.5 M pixel cap)
+was fogging the leaf cards — was tested on the same tile once the meshes were drawing and is ruled out:
+`?leafsoft=0` differs on 20.4 % of the tile at MAE 3.3/255 and has MORE hard edges (4.96 % against
+4.08 %), with both showing the same leaf structure. Alpha-to-coverage stays on.
+
+Captures: `renders/web/960/p7_D_mobile_orbit.jpg` (both headings, 6c → the walk-up attempt → the shipped
+LOD2 at 45 m) and `renders/web/960/p7_D_mobile_stations.jpg` (the six stations after).
 
 The orbit fixture is `web/tools/p7.sh orbit`: `__pfaOrbit` around the rotunda centre at 80 m, height
 5 m, headings 253° (the hero's own bearing, from its world matrix) and 215°. 80 m and not 30: 30 m from
