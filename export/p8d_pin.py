@@ -132,7 +132,12 @@ def pin(a, b, out):
 
 
 def glbs():
-    """After the pack: arch / orn / ground glbs byte-identical to MAIN, env / env_shrubs expected to move."""
+    """After the pack: arch / orn / ground glbs byte-identical to MAIN, env / env_shrubs expected to move.
+
+    r5 finding 7: this comparison is only meaningful BEFORE `export/sync_main.sh` copies the worktree over
+    MAIN - afterwards every row reads `identical: true` by construction. Each row therefore carries the
+    mtime of both sides and whether MAIN was already in sync, so a stale record cannot be read as a pass.
+    """
     out = {}
     for name in ("arch.glb", "orn.glb", "ground.glb", "env.glb", "env_shrubs.glb", "env_trees.glb",
                  "env_trees_lod1.glb"):
@@ -141,9 +146,15 @@ def glbs():
             out[name] = "missing"
             continue
         out[name] = dict(bytes_main=q.stat().st_size, bytes_new=p.stat().st_size,
-                         identical=sha(p) == sha(q))
+                         identical=sha(p) == sha(q),
+                         mtime_main=int(q.stat().st_mtime), mtime_new=int(p.stat().st_mtime),
+                         main_is_newer_or_equal=q.stat().st_mtime >= p.stat().st_mtime)
     pinned = ("arch.glb", "orn.glb", "ground.glb")
     ok = all(isinstance(out[n], dict) and out[n]["identical"] for n in pinned)
+    synced = all(isinstance(v, dict) and v["identical"] for v in out.values())
+    out["_note"] = ("every row identical: MAIN has already been synced from this worktree, so this run "
+                    "proves nothing - re-read the record taken before the sync"
+                    ) if synced else "taken against an un-synced MAIN: the comparison is meaningful"
     print(json.dumps(out, indent=1))
     print(f"[p8d_pin] glbs {'PASS' if ok else 'FAIL'}: {', '.join(pinned)} must be byte-identical")
     return ok, out
