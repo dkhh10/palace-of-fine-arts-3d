@@ -164,7 +164,11 @@ def build_ground(SUB, terrain_height, clear):
     gravel sidewalks on every street, the Presidio forest floor and the open Marina Green / Crissy lawn.
     One mesh, five materials."""
     coll = SUB["ENV_backdrop"]
-    mats_lib = [L.mat("MAT_lawn"), L.mat("MAT_gravel_path"), L.mat("MAT_backdrop_asphalt"),
+    # Phase 8d: slot 0 is MAT_backdrop_lawn, not the palace's MAT_lawn.  Two reasons: this is 23 km2 of Marina /
+    # Presidio ground at 0.18 texels/m and has nothing to do with the foreground turf the hero stands on, and
+    # export/gate1_set.py groups a multi-material backdrop mesh by SLOT 0 alone -- so in the viewer this one
+    # material is what the roads, gravel and soil below all read as (Cycles still shades each face correctly).
+    mats_lib = [L.mat("MAT_backdrop_lawn"), L.mat("MAT_gravel_path"), L.mat("MAT_backdrop_asphalt"),
                 L.mat("MAT_soil"), L.mat("MAT_backdrop_hill")]
     LAWN, GRAVEL, ASPHALT, SOIL, DRY = 0, 1, 2, 3, 4
     rnd = random.Random(1207)

@@ -332,12 +332,114 @@ def build_houses(SUB, site):
     print(f"[env_backdrop] houses: {count} buildings within 460 m, separate objects with pitched roofs")
 
 
+# ----------------------------------------------------------------------------- Phase 8d: the hall's tree belt
+# ref 169 at 100 % (renders/qa_comparisons/phase8d_hero_wall_viewer_over_ref169.jpg): behind the north colonnade
+# the photograph has NO lit wall -- a dark tree belt and deep shade fill every intercolumniation, and the
+# exhibition hall shows only as a roof line above it.  We drew a continuous sunlit olive field with 102 dark
+# glazed bays across 21 204 hero pixels (docs/briefs/phase8d_analysis.md).  This plants the belt that is
+# actually there, on the hall's concave east face, between the hall and the colonnade.
+#
+# BUDGET.  The backdrop groups sit inside `env_so_far` in export/gate1_set.py, so every triangle added here comes
+# out of `tree_allow` and can re-cut the near/far tree split.  The slack is near_tris_budget 398 894 -
+# near_tris_used 391 908 = 6 986 triangles; the cheapest tree that could be pulled into the near list costs
+# 12 892.  Staying at or under 6 986 keeps near 20 / far 127 byte-identical with CLASS_BUDGET["ENV"] untouched at
+# 902 000 and no impostor re-bake.  BELT_TRI_CAP is that number; the planter stops when it is reached.
+BELT_TRI_CAP = 6986
+
+
+def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=()):
+    """A two-row canopy belt along the hall's east face: 80-tri lobed crowns (env_city's far-canopy mesh) in
+    MAT_backdrop_forest, so it joins the existing backdrop_forest export group and adds no new group."""
+    import env_city
+    coll = SUB["ENV_backdrop"]
+    m_forest = L.mat("MAT_backdrop_forest")
+    rnd = random.Random(8004)
+    src = {k: env_city._canopy_mesh(f"ENV_src_hallbelt_{k}", 80 + k, lobes=4 if k < 3 else 3) for k in range(4)}
+    tris_of = {k: len(me.polygons) for k, me in src.items()}
+    poly = L.ensure_ccw(hall_poly)
+    n = len(poly)
+
+    def blocked(x, y):
+        if hall_field.signed(x, y) > -4.0 and hall_field.signed(x, y) < 4.0:
+            return True                                  # too close to the wall to stand
+        if hall_field.signed(x, y) < 0.0:
+            return True                                  # inside the hall
+        if math.hypot(x, y) < 62.0:
+            return True                                  # the palace's own grounds: ENV_trees owns those
+        for cp in colonnade_polys:
+            for (dx, dy) in ((0, 0), (3.0, 0), (-3.0, 0), (0, 3.0), (0, -3.0)):
+                if L.point_in_poly(x + dx, y + dy, cp):
+                    return True
+        return False
+
+    # even arc-length sampling across the east-facing edges, so the spacing does not jump at every OSM corner
+    STEP = 3.8
+    items = {k: [] for k in src}
+    carry = 0.0
+    placed = row1 = 0
+    tris = 0
+    for i in range(n):
+        a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
+        d = b - a
+        seg = d.length
+        if seg < 1.0:
+            carry = 0.0
+            continue
+        d = d / seg
+        nrm = Vector((d.y, -d.x))                        # outward on the concave east face (as build_hall uses it)
+        mid = (a + b) / 2
+        to_origin = (Vector((0.0, 0.0)) - mid).normalized()
+        if nrm.dot(to_origin) <= 0.20 or mid.length > 175.0:
+            carry = 0.0
+            continue
+        u = carry
+        while u < seg:
+            base = a + d * u
+            u += STEP
+            for row in (0, 1):
+                if row and (placed % 2):
+                    continue
+                if tris + max(tris_of.values()) > BELT_TRI_CAP:
+                    break
+                off = rnd.uniform(7.5, 10.0) if row == 0 else rnd.uniform(15.0, 18.5)
+                jitter = rnd.uniform(-1.4, 1.4)
+                p = base + nrm * off + d * jitter
+                if blocked(p.x, p.y):
+                    continue
+                k = rnd.choice((0, 0, 1, 1, 2, 3))
+                rx = rnd.uniform(3.4, 5.4) * (0.82 if k == 3 else 1.0)
+                h = rnd.uniform(12.0, 19.0)
+                rz = h * 0.46
+                z0 = terrain_height(p.x, p.y)
+                cz = z0 + rz + rnd.uniform(0.6, 2.4)
+                items[k].append(((p.x, p.y, cz), rnd.uniform(0, math.tau),
+                                 (rx, rx * rnd.uniform(0.82, 1.18), rz)))
+                tris += tris_of[k]
+                placed += 1
+                if row:
+                    row1 += 1
+        carry = u - seg
+    nobj = 0
+    for k, tr in items.items():
+        if not tr:
+            continue
+        L.join_instances(f"ENV_backdrop_hall_belt_{k}", src[k], tr, coll, m_forest)
+        nobj += 1
+    for me in src.values():
+        if me.users == 0:
+            bpy.data.meshes.remove(me)
+    print(f"[env_backdrop] hall tree belt: {placed} crowns ({row1} in the second row) in {nobj} objects, "
+          f"{tris:,} tris (cap {BELT_TRI_CAP:,})")
+    return tris
+
+
 # ----------------------------------------------------------------------------- Presidio ridge, hills, far ground, bay
 def build_landscape(SUB, terrain_height):
     coll = SUB["ENV_backdrop"]
     m_forest = L.mat("MAT_backdrop_forest")
     m_hill = L.mat("MAT_backdrop_hill")
-    m_lawn = L.mat("MAT_lawn")
+    # Phase 8d: the far field gets MAT_backdrop_lawn, not the palace's MAT_lawn -- see mat_build.build_backdrop_lawn
+    m_lawn = L.mat("MAT_backdrop_lawn")
     m_water = L.mat("MAT_water_lagoon")
     # far ground: annulus from the terrain edge (+-360) out to 2.5 km, flat at lawn level
     verts, faces = [], []
@@ -400,6 +502,7 @@ def build_all(SUB, terrain_height, site, hall_poly, lagoon_field, hall_field=Non
     if hall_field is None:
         hall_field = L.PolyField(hall_poly, cell=10.0)
     build_hall(SUB, hall_poly, hall_field)
+    build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys)
     build_houses(SUB, site)
     build_landscape(SUB, terrain_height)
     import env_city
