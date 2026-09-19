@@ -22,7 +22,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
-EXPECT_ENV_DELTA = 6900
+# r2 (the hall-east belt): the ENV delta is a NET of two movements the belt report states - the four
+# icosphere belt objects leave backdrop_forest (-6 900 placed tris) and 39 far-tree billboards arrive
+# (+78, two triangles each). 901 874 -> 895 052.
+EXPECT_ENV_DELTA = -6822
+EXPECT_FAR = 166            # 127 + 39 belt trees
+EXPECT_NEAR = 20            # unchanged, same order
+EXPECT_TREES_TOTAL = 186    # 147 + 39
+EXPECT_LOD2_BLOB = 85       # 46 + 39: the belt trees' LOD2 blobs are in the source set too
+BELT_JSON = "docs/phase8d_belt_r2_trees.json"
 
 
 def sha(p):
@@ -41,14 +49,56 @@ def pin(a, b, out):
               "lightmap_slots", "lightmap_assets", "uv_missing_counts", "meshes_not_single_material"):
         ok &= eq(k, a.get(k), b.get(k))
     ta, tb = a["tree_rule"], b["tree_rule"]
-    for k in ("trees_total", "within_radius", "near_exported", "far_billboards", "lod2_blob_objects",
-              "near_tris_used"):
+    # r2: these three MOVE by the belt, by an amount the belt report states; the rest still pin.
+    for k, want in (("trees_total", EXPECT_TREES_TOTAL), ("far_billboards", EXPECT_FAR),
+                    ("lod2_blob_objects", EXPECT_LOD2_BLOB), ("near_exported", EXPECT_NEAR)):
+        ok &= eq(f"tree_rule.{k}", ta.get(k), tb.get(k), expect=want)
+    for k in ("within_radius", "near_tris_used"):
         ok &= eq(f"tree_rule.{k}", ta.get(k), tb.get(k))
-    ok &= eq("tree_far_list (order and content)", a["tree_far_list"], b["tree_far_list"])
+    # THE FAR LIST. r2 appends 39 rows, but `bpy.data.objects` is name-sorted, so the exporter's own
+    # order INTERLEAVES them among the existing ones and every TREEFAR_### index after the first belt
+    # name shifts. What must hold is therefore not "the first 127 rows are byte-identical" but: the SET
+    # of existing rows is unchanged, their relative order is unchanged, and the new rows are exactly the
+    # 39 the belt report names (docs/phase8d_belt_r2_trees.json). All three are checked.
+    fa, fb = a["tree_far_list"], b["tree_far_list"]
+    key = lambda r: r.get("source_tree") or r.get("billboard")
+    belt = json.loads((MAIN / BELT_JSON).read_text())
+    belt_names = {t["lod1_object"] for t in (belt if isinstance(belt, list) else belt["trees"])}
+    old_rows = [r for r in fb if key(r) not in belt_names]
+    new_rows = [r for r in fb if key(r) in belt_names]
+    ok &= eq("far list: the 127 existing rows survive, in order, with their content",
+             [{k: v for k, v in r.items() if k != "billboard"} for r in fa],
+             [{k: v for k, v in r.items() if k != "billboard"} for r in old_rows])
+    ok &= eq("far list: exactly the belt's 39 rows are new", len(belt_names), len(new_rows),
+             expect=len(belt_names))
+    ok &= eq("far list: every new row is a belt tree", sorted(belt_names),
+             sorted(key(r) for r in new_rows), expect=sorted(belt_names))
+    # the interleave itself, recorded rather than assumed: where the new rows landed
+    out["far_interleave"] = dict(
+        first_new_index=next((i for i, r in enumerate(fb) if key(r) in belt_names), None),
+        billboard_reindexed=sum(1 for i, r in enumerate(fb)
+                                if key(r) not in belt_names and i < len(fa) and
+                                fa[i].get("billboard") != r.get("billboard")),
+        note="bpy.data.objects is name-sorted, so the belt names interleave and every TREEFAR_### index "
+             "after the first new name shifts; the impostor atlas and the instance rows are keyed by "
+             "PROTOTYPE and by row POSITION within the re-dumped order, both regenerated in this chain, "
+             "so the shift is safe - but any diagnostic that quoted a TREEFAR_### index must be re-read.")
+    # every new tree must resolve to an already-baked impostor prototype (no atlas re-bake in scope)
+    man = json.loads((MAIN / "export/out/gate3/manifest.json").read_text())
+    pmap = man["impostors"]["prototype_map"]
+    unresolved = sorted({r["prototype"] for r in new_rows if r["prototype"] not in pmap
+                         and r["prototype"] not in man["impostors"]["prototypes"]})
+    ok &= eq("prototype_map resolves every new far tree", [], unresolved, expect=[])
+    out["new_prototypes"] = sorted({r["prototype"] for r in new_rows})
     ok &= eq("tree_near_list (order and content)", a["tree_near_list"], b["tree_near_list"])
     for cls in ("ARCH", "ORN"):
         ok &= eq(f"placed_tris.{cls}", a["totals"]["placed_tris"][cls], b["totals"]["placed_tris"][cls])
     da = b["totals"]["placed_tris"]["ENV"] - a["totals"]["placed_tris"]["ENV"]
+    out["env_arithmetic"] = dict(
+        main=a["totals"]["placed_tris"]["ENV"], new=b["totals"]["placed_tris"]["ENV"], delta=da,
+        expected=EXPECT_ENV_DELTA,
+        terms="backdrop_forest loses the four icosphere belt objects (-6 900) and 39 far-tree billboards "
+              "arrive at 2 tris each (+78): -6 822 net, 901 874 -> 895 052")
     ok &= eq("placed_tris.ENV delta", da, da, expect=EXPECT_ENV_DELTA)
     # the lawn rename, seen through the derived export names
     def groups(doc, needle):
