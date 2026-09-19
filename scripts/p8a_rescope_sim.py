@@ -184,6 +184,64 @@ def cmd_solve():
     print("   reference and L stays near 1.00x is the one to build.")
 
 
+# --------------------------------------------------------------------------- 3b. directional relight
+def shade_chroma():
+    """The chromatic direction of CARD SHADE, from the export's own bake: the ratio between the
+    colour a card takes under the darkest decile of the baked irradiance and the colour it takes
+    under the mean, normalised to equal luma so only the HUE/SATURATION rotation is left."""
+    import p8a_rescope_terms as T  # noqa: E402
+    import json
+    d = json.loads(T.IRR.read_text())
+    a = np.array([x["rgb"] for e in d["meshes"].values() for x in e["placements"]], dtype=np.float64)
+    lum = a @ P.LUMA
+    lo = a[lum <= np.percentile(lum, 10)].mean(0)
+    mu = a.mean(0)
+    lo = lo / max(float(lo @ P.LUMA), 1e-9)
+    mu = mu / max(float(mu @ P.LUMA), 1e-9)
+    return lo / mu                     # per-channel, luma-neutral
+
+
+def lv_relight(crop, m, f, dark=0.55, chroma=None):
+    """PUT THE SUN BACK ON A NORMAL. The flat per-placement irradiance is redistributed: the
+    fraction `f` of the card pixels that read darkest today go to SHADE (darkened by `dark` and
+    rotated by the bake's own shade chroma), the rest take the light that shade gave up, so the
+    card set's mean luma is preserved and the box's level does not move."""
+    out = crop.copy()
+    if m.sum() == 0:
+        return out
+    c = crop[m]
+    k = shade_chroma() if chroma is None else chroma
+    lum = c @ P.LUMA
+    thr = np.percentile(lum, 100.0 * f)
+    sh = lum <= thr
+    new = c.copy()
+    new[sh] = c[sh] * dark * k
+    lost = float((c[sh] @ P.LUMA).sum() - (new[sh] @ P.LUMA).sum())
+    sun = ~sh
+    if sun.sum():
+        gain = 1.0 + lost / max(float((c[sun] @ P.LUMA).sum()), 1e-9)
+        new[sun] = c[sun] * gain
+    out[m] = np.clip(new, 0, 255)
+    return out
+
+
+def cmd_relight():
+    print("== the directional-relight lever: the same light, redistributed into sun and shade ==")
+    print(f"   shade chroma from the bake (luma-neutral): {np.round(shade_chroma(), 3)}")
+    print(f"{'box':22s} {'now':>6s} {'ref':>6s} " +
+          " ".join(f"{'f='+str(f):>22s}" for f in (0.3, 0.45, 0.6)))
+    for name, st, cur, pv, rf, m in _boxes():
+        l0, h0, v0 = metrics(cur)
+        lr, hr, vr = metrics(rf)
+        cells = []
+        for f in (0.3, 0.45, 0.6):
+            lf, hd, lv = metrics(lv_relight(cur, m, f))
+            cells.append(f"{lf:5.1f}% {lf/max(lr,1e-6):4.2f}x h{hd:5.2f} L{lv/max(vr,1e-6):4.2f}x")
+        print(f"{name:22s} {l0:5.1f}% {lr:5.1f}% " + " ".join(f"{c:>22s}" for c in cells))
+    print("\n-- dark = 0.55 of the flat value in shade; the light removed is given back to the sunlit")
+    print("   half, so the box LEVEL (QA 17's one closed shrub item) is held by construction.")
+
+
 # --------------------------------------------------------------------------- 4. the fitted gain
 def cmd_fit():
     """One number for the whole band: the per-channel gain that maps OUR card pixels' mean onto the
@@ -254,11 +312,11 @@ def cmd_global():
 
 
 def main():
-    cmds = {"spread": cmd_spread, "levers": cmd_levers, "solve": cmd_solve,
+    cmds = {"spread": cmd_spread, "levers": cmd_levers, "solve": cmd_solve, "relight": cmd_relight,
             "fit": cmd_fit, "global": cmd_global}
     for a in (sys.argv[1:] or ["all"]):
         if a == "all":
-            for f in (cmd_spread, cmd_fit, cmd_solve, cmd_global, cmd_levers):
+            for f in (cmd_spread, cmd_fit, cmd_relight, cmd_solve, cmd_global, cmd_levers):
                 f()
                 print()
         elif a in cmds:
