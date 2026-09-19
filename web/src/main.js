@@ -136,6 +136,9 @@ const CFG = {
 	// Phase 8b item A — the atlas alpha spent as COVERAGE where a texel is bigger than a screen
 	// pixel: 0 | 1 | magLo[,magHi] (default on, handover 1 -> 2 screen px per texel).
 	impCov: qs.get( 'impcov' ),
+	// Phase 8b item 3 — the 12 x 3 BAND atlas in place of the octahedral frames, wherever the
+	// manifest carries `impostors.band`: 0 reverts to the octahedral (2K) path.
+	impBand: qs.get( 'impband' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
@@ -1104,6 +1107,8 @@ async function setupFoliageAndImpostors() {
 			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false, leafSoft: CFG.leafSoft,
 			// Phase 8b item A: alpha as coverage under magnification, and the quantum it dithers to.
 			coverage: CFG.impCov, samples: msaaSamples,
+			// Phase 8b item 3: the band block is the MANIFEST's; the switch only says whether to use it.
+			band: { block: manifest.gate3.impostors.band || null, switch: CFG.impBand },
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
@@ -2027,7 +2032,7 @@ window.__pfaInfo = () => ( {
 		interior: impostorReport.interior,
 		// Phase 7 item A / Phase 8b item A, so a capture can be told apart from its A/B without
 		// reading the boot log: what the card edge and the coverage path actually did.
-		edge: impostorReport.edge, coverage: impostorReport.coverage },
+		edge: impostorReport.edge, coverage: impostorReport.coverage, band: impostorReport.band },
 	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
 		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
 		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, aoAlphaForced: farTreeReport.aoAlphaForced || 0,

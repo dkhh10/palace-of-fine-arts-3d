@@ -1067,6 +1067,46 @@ export function normaliseManifest( raw, baseUrl ) {
 					if ( bad.length ) { g3notes.push( `impostors variant_2k ignored: missing ${bad.join( ', ' )}` ); return null; }
 					return g;
 				} )(),
+				// PHASE 8b — THE BAND ATLAS (`impostors.band`, docs/briefs/phase8b_band_atlas.md).  A
+				// 12 azimuth x 3 elevation grid of 341 px frames on a 4096x1024 atlas, replacing the
+				// ALBEDO LOOKUP ONLY.  Read whole or not at all, for the same reason variant_2k is:
+				// every field goes straight into the frame lookup, and `azimuth0_deg` decides which
+				// way every card faces - a default there would rotate 127 trees silently.
+				band: ( () => {
+					const b = impRaw.band;
+					if ( ! b ) return null;
+					const ap = Array.isArray( b.atlas_px ) ? b.atlas_px : [ b.atlas_px, b.atlas_px ];
+					const g = { framePx: b.frame_px, gutterPx: b.gutter_px, innerPx: b.inner_px,
+						atlasW: ap[ 0 ], atlasH: ap[ 1 ],
+						columns: b.columns ?? b.azimuths ?? 12, rows: b.rows ?? ( Array.isArray( b.elevations_deg ) ? b.elevations_deg.length : 3 ) };
+					const bad = Object.entries( g ).filter( ( [ , x ] ) => typeof x !== 'number' || ! ( x > 0 ) ).map( ( [ k ] ) => k );
+					if ( typeof b.azimuth0_deg !== 'number' ) bad.push( 'azimuth0_deg' );
+					const el = Array.isArray( b.elevations_deg ) ? b.elevations_deg.map( Number ) : null;
+					if ( ! el || el.length !== g.rows || el.some( ( x ) => ! isFinite( x ) ) ) bad.push( 'elevations_deg' );
+					if ( bad.length ) { g3notes.push( `impostors.band ignored: missing or invalid ${bad.join( ', ' )}` ); return null; }
+					// Per prototype: the band albedo only.  A prototype the band does not carry keeps
+					// the octahedral atlas, exactly as a missing albedo_2k does.
+					const dir = b.dir ? `${String( b.dir ).replace( /\/$/, '' )}/` : '';
+					const bp = {};
+					let missingTex = 0;
+					for ( const [ name, e ] of Object.entries( b.prototypes || {} ) ) {
+						const key = typeof e === 'string' ? e : ( e && ( e.albedo || e.key ) );
+						const t = key ? resolveTexture( key ) : null;
+						const url = t ? t.url : ( key && /\.(ktx2|png)$/i.test( key ) ? resolveUrl( baseUrl, `${dir}${key}` ) : null );
+						if ( ! url ) { missingTex ++; continue; }
+						bp[ name ] = { albedo: url,
+							bytes: ( t && t.meta && t.meta.bytes ) || ( e && e.bytes ) || 0,
+							crownSphere: ( e && ( e.crown_sphere_m ?? e.crownSphere ) ) ?? null };
+					}
+					if ( missingTex ) g3notes.push( `impostors.band: ${missingTex} prototype(s) name an atlas key that is not in textures.gate3.files` );
+					if ( ! Object.keys( bp ).length ) { g3notes.push( 'impostors.band ignored: no prototype resolved to a band atlas' ); return null; }
+					return { ...g, azimuth0Deg: b.azimuth0_deg, elevationsDeg: el,
+						// The row the bake wrote first.  The octahedral atlases are KTXorientation rd
+						// (data row 0 = the TOP) and the viewer flips for them; the band sidecar says
+						// which end row 0 is, and "bottom" is the octahedral convention.
+						rowOrigin: ( String( b.row_origin || 'bottom' ).toLowerCase() === 'top' ) ? 'top' : 'bottom',
+						note: b.note || null, prototypes: bp, count: Object.keys( bp ).length };
+				} )(),
 				prototypes: protos, count: Object.keys( protos ).length };
 		}
 		const probeRaw = pick( raw, 'probe' ) || null;

@@ -138,11 +138,21 @@ const vertexShader = /* glsl */`
 const fragmentShader = /* glsl */`
 	uniform sampler2D atlas;
 	uniform float range;             // the prototype's own gamma-2 range
-	uniform float grid, framePx, innerPx, gutterPx, atlasPx;
+	uniform float grid, framePx, innerPx, gutterPx;
+	// Phase 8b: the atlas is no longer always square.  atlasWH is ( width, height ) in texels - the
+	// octahedral atlases pass ( atlas_px, atlas_px ), the band atlas ( 4096, 1024 ) - and rowFromTop
+	// says which end of the image the manifest's row 0 is (0 = the octahedral convention, counted
+	// from the BOTTOM, which is what the v flip below exists for).
+	uniform vec2 atlasWH;
+	uniform float rowFromTop;
 	uniform float alphaTest;
 	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage
 	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV, Phase 7 floor)
 	uniform vec3 pfaImpInterior;
+	// Phase 8b band atlas — ( columns, rows, azimuth0 in radians, unused ) and the rows' elevations
+	// in radians (up to four; only the first 'rows' of them are read).
+	uniform vec4 pfaBand;
+	uniform vec4 pfaBandEl;
 	// Phase 8b — ( magLo, magHi, coverage quantum q, gamma on the coverage ).  See the header.
 	uniform vec4 pfaImpCov;
 	#ifdef PFA_FOG
@@ -180,27 +190,30 @@ const fragmentShader = /* glsl */`
 	vec2 frameUv( vec2 cell, vec2 f ) {
 		vec2 g = clamp( f, 0.0, 1.0 );
 		float px = cell.x * framePx + gutterPx + g.x * innerPx;
-		float pyFromBottom = cell.y * framePx + gutterPx + g.y * innerPx;
-		return vec2( ( px + 0.5 ) / atlasPx, 1.0 - ( pyFromBottom + 0.5 ) / atlasPx );
+		float py = cell.y * framePx + gutterPx + g.y * innerPx;
+		// rowFromTop = 0: the manifest counts rows from the BOTTOM while the data is top-down, so v
+		// is flipped (the octahedral path, unchanged).  rowFromTop = 1: row 0 IS the first data row.
+		return vec2( ( px + 0.5 ) / atlasWH.x,
+			mix( 1.0 - ( py + 0.5 ) / atlasWH.y, ( py + 0.5 ) / atlasWH.y, rowFromTop ) );
 	}
 
 	vec4 sampleFrame( vec2 cell, vec2 f ) { return texture2D( atlas, frameUv( cell, f ) ); }
 
 	#ifdef PFA_IMP_PREMUL
 	// Phase 7 item A1.  The CONTINUOUS TEXEL COORDINATE of frameUv, so the bilinear can be done by
-	// hand.  A texel of index i has uv = ( i + 0.5 ) / atlasPx, and frameUv's v is flipped
-	// ( uv.y = 1 - ( pyFromBottom + 0.5 ) / atlasPx ), so the data-space row index is
-	// atlasPx - 1 - pyFromBottom.  Both axes then read as plain indices, and floor / fract give the
+	// hand.  A texel of index i has uv = ( i + 0.5 ) / atlasWH, and frameUv's v is flipped when the
+	// rows are counted from the bottom, so the data-space row index is atlasWH.y - 1 - py.
+	// Both axes then read as plain indices, and floor / fract give the
 	// four neighbours and their weights the same way GL_LINEAR would.
 	vec2 frameTexel( vec2 cell, vec2 f ) {
 		vec2 g = clamp( f, 0.0, 1.0 );
 		float px = cell.x * framePx + gutterPx + g.x * innerPx;
-		float pyFromBottom = cell.y * framePx + gutterPx + g.y * innerPx;
-		return vec2( px, atlasPx - 1.0 - pyFromBottom );
+		float py = cell.y * framePx + gutterPx + g.y * innerPx;
+		return vec2( px, mix( atlasWH.y - 1.0 - py, py, rowFromTop ) );
 	}
 	// One texel, exactly: the sampler is GL_LINEAR, and a fetch at a texel CENTRE returns that texel
 	// with weights ( 1, 0 ), so no NEAREST sampler and no second texture object is needed.
-	vec4 texelAt( vec2 i ) { return texture2D( atlas, ( i + 0.5 ) / atlasPx ); }
+	vec4 texelAt( vec2 i ) { return texture2D( atlas, ( i + 0.5 ) / atlasWH ); }
 	#endif
 
 	void main() {
@@ -212,6 +225,49 @@ const fragmentShader = /* glsl */`
 		// never the invisible one: with ?treemesh=inf the mesh side draws everything and this side's
 		// vPfaFade is 0, where { hash > 1 } must keep NOTHING.
 		if ( vPfaFade < 0.9995 && pfaHash( gl_FragCoord.xy ) < 1.0 - vPfaFade ) discard;
+		// The cells this fragment samples and their weights.  BOTH paths fill these three, so
+		// everything below - the premultiplied reconstruction, the interior term, the coverage -
+		// is shared and neither path has its own copy of it.  The octahedral path uses all three
+		// (the cell triangle, barycentric); the band path uses two (the azimuths either side) and
+		// leaves the third at weight 0.
+		vec2 c0, c1, c2;
+		vec3 w;
+		#ifdef PFA_IMP_BAND
+		// PHASE 8b — THE BAND ATLAS.  Columns are azimuth, rows elevation; the contract is
+		// docs/briefs/phase8b_band_atlas.md and every number comes from manifest.impostors.band.
+		//
+		// AZIMUTH.  vDirBlender is tree -> camera in Blender Z-up.  Seen from above (down -z) the
+		// x axis runs right and y up, so an angle measured atan2( x, y ) grows from +Y toward +X,
+		// which IS "clockwise seen from above" - the sidecar's own convention.  Column 0 sits at
+		// pfaBand.z (azimuth0_deg, in radians here), so the column coordinate is the difference
+		// over the column step, wrapped into [0, columns).
+		{
+			vec3 d = normalize( vDirBlender );
+			float az = atan( d.x, d.y ) - pfaBand.z;
+			float cols = pfaBand.x;
+			float cstep = 6.2831853 / cols;
+			float cf = az / cstep;
+			cf = cf - floor( cf / cols ) * cols;          // wrap into [0, cols), negatives included
+			float i0 = floor( cf );
+			float f = cf - i0;
+			float i1 = ( i0 + 1.0 >= cols ) ? 0.0 : i0 + 1.0;   // the last column wraps to the first
+			// ELEVATION: the NEAREST row, no blend (the contract). The rows' angles are pfaBandEl,
+			// in radians, and the stations look at the crowns from 0-15 deg.
+			float el = asin( clamp( d.z, -1.0, 1.0 ) );
+			float best = 0.0, bestD = 1e9;
+			for ( int r = 0; r < 4; r ++ ) {
+				if ( float( r ) >= pfaBand.y ) break;
+				float e = ( r == 0 ) ? pfaBandEl.x : ( ( r == 1 ) ? pfaBandEl.y
+					: ( ( r == 2 ) ? pfaBandEl.z : pfaBandEl.w ) );
+				float dd = abs( el - e );
+				if ( dd < bestD ) { bestD = dd; best = float( r ); }
+			}
+			c0 = vec2( i0, best );
+			c1 = vec2( i1, best );
+			c2 = c1;                                      // unused: its weight is 0
+			w = vec3( 1.0 - f, f, 0.0 );
+		}
+		#else
 		// manifest.impostors.frame_lookup, verbatim
 		vec3 d = normalize( vDirBlender );
 		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );
@@ -226,8 +282,6 @@ const fragmentShader = /* glsl */`
 		gi = min( gi, vec2( grid - 2.0 ) );
 
 		// the three frames around the direction: the cell's triangle, barycentric
-		vec2 c0, c1, c2;
-		vec3 w;
 		if ( fr.x + fr.y < 1.0 ) {
 			c0 = gi; c1 = gi + vec2( 1.0, 0.0 ); c2 = gi + vec2( 0.0, 1.0 );
 			w = vec3( 1.0 - fr.x - fr.y, fr.x, fr.y );
@@ -238,6 +292,7 @@ const fragmentShader = /* glsl */`
 			c0 = gi + vec2( 1.0, 1.0 ); c1 = gi + vec2( 0.0, 1.0 ); c2 = gi + vec2( 1.0, 0.0 );
 			w = vec3( fr.x + fr.y - 1.0, 1.0 - fr.x, 1.0 - fr.y );
 		}
+		#endif
 
 		float a;
 		vec3 rgb;
@@ -454,7 +509,11 @@ export function parseImpEdge( v, msaa = true ) {
 // station-2 crown's silhouette crossings go 2.92 -> 6.82 per 100 screen px against Cycles' 7.76 and
 // its foliage share 77.1 -> 74.2 % against Cycles' 72.3 %.  Above it the crossings overshoot
 // (0.25 -> 10.2, 1.0 -> 16.8) and the crown-box level walks off (1.04x -> 1.13x, 1.29x).
-export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0, share: 0.15, ramp: 1.0 };
+export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0, share: 0.15, ramp: 1.0,
+	// Phase 8b band atlas: 341 px frames make a texel ~2.2 screen px at station 2 instead of 4.5,
+	// so the share has to be swept again on the real atlas (docs/briefs/phase8b_band_atlas.md).
+	// Until that bake lands it stays at the octahedral value, and the boot note says which is in use.
+	shareBand: 0.15 };
 export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 	const d = { ...IMP_COV };
 	let unknown = null;
@@ -483,12 +542,27 @@ export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 }
 
 /**
+ * Phase 8b item 3 — the BAND ATLAS, `?impband=`.  `"0"` / `"off"` keeps the octahedral path (the 2K
+ * variant included) byte for byte; anything else is the default, which is ON wherever the manifest
+ * carries `impostors.band` for that prototype.  The contract is docs/briefs/phase8b_band_atlas.md:
+ * 12 azimuth columns x 3 elevation rows of 341 px frames on a 4096x1024 atlas, azimuth 0 at the
+ * sidecar's `azimuth0_deg` and increasing clockwise seen from above, rows at `elevations_deg`.
+ * Every one of those numbers is READ, never assumed - a wrong azimuth0 rotates 127 trees in silence.
+ */
+export function parseImpBand( v ) {
+	const s = ( v === null || v === undefined ) ? '' : String( v ).trim().toLowerCase();
+	if ( s === '0' || s === 'off' || s === 'none' ) return { on: false, unknown: null };
+	if ( s === '' || s === '1' || s === 'on' ) return { on: true, unknown: null };
+	return { on: true, unknown: s };
+}
+
+/**
  * One InstancedMesh per prototype, built from `manifest.gate3.impostors` and `manifest.trees.far`.
  * @returns {{ group:THREE.Group|null, report:object }}
  */
 export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
 	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null,
-	edge = null, msaa = false, leafSoft = true, coverage = null, samples = 0 } ) {
+	edge = null, msaa = false, leafSoft = true, coverage = null, samples = 0, band = null } ) {
 	// 6c round 3: (strength, radius in frame UV, Phase 7 floor).  `?impint=` — see the fragment shader.
 	const impInterior = parseImpInterior( interior );
 	// Phase 7 item A: `?impedge=` — see the header.
@@ -496,6 +570,12 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 	// Phase 8b item A: `?impcov=`.  The quantum follows the edge switch's own a2c, not the target
 	// alone: with `?impedge=premul` there is no coverage mask to write into even on an MSAA target.
 	const impCov = parseImpCov( coverage, { a2c: impEdge.a2c, samples: samples || 4 } );
+	// Phase 8b item 3: `?impband=`.  The block is the manifest's; the switch only says whether to
+	// use it.  `coverage` being explicit in the url wins over the band's own swept share.
+	const impBand = parseImpBand( band && band.switch );
+	const bandBlock = ( impBand.on && band && band.block && band.block.count ) ? band.block : null;
+	const covExplicit = !! ( coverage !== null && coverage !== undefined && String( coverage ).trim() !== ''
+		&& String( coverage ).split( ',' ).length > 2 );
 	const report = { prototypes: 0, instances: 0, nearInstances: 0, drawCalls: 0, skipped: [], bytes: 0,
 		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0,
 		atlas2k: false, atlas2kMissing: [], modulated: 0,
@@ -506,7 +586,13 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			alphaToCoverageAsked: impEdge.a2cAsked, msaa: impEdge.msaa },
 		coverage: { on: impCov.on, magLo: impCov.magLo, magHi: impCov.magHi, share: impCov.share,
 			ramp: impCov.ramp, samples: impCov.samples, orderedDither: impCov.dither },
-		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx } };
+		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx },
+		band: { asked: impBand.on, available: !! ( band && band.block && band.block.count ),
+			prototypes: 0, missing: [], unknown: impBand.unknown,
+			geometry: bandBlock ? { framePx: bandBlock.framePx, innerPx: bandBlock.innerPx,
+				gutterPx: bandBlock.gutterPx, atlasPx: [ bandBlock.atlasW, bandBlock.atlasH ],
+				columns: bandBlock.columns, rows: bandBlock.rows, azimuth0Deg: bandBlock.azimuth0Deg,
+				elevationsDeg: bandBlock.elevationsDeg, rowOrigin: bandBlock.rowOrigin } : null } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
 	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
 	if ( ! far.length ) return { group: null, report };
@@ -549,11 +635,22 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		if ( impEdge.premul ) defines.PFA_IMP_PREMUL = '';
 		if ( impEdge.a2c ) defines.PFA_IMP_A2C = '';
 		if ( impCov.on ) defines.PFA_IMP_COV = '';
+		// Phase 8b item 3: the band atlas REPLACES the albedo lookup for this prototype - its own
+		// frame geometry, its own texture, its own selection - and leaves every lighting term alone.
+		// A prototype the band does not carry keeps the octahedral path, exactly as a missing 2K
+		// texture does; the two are never mixed inside one material.
+		const useBand = !! ( bandBlock && bandBlock.prototypes[ key ] );
+		if ( bandBlock && ! useBand && ! report.band.missing.includes( key ) ) report.band.missing.push( key );
+		if ( useBand ) { defines.PFA_IMP_BAND = ''; report.band.prototypes ++; }
 		// 2K only where BOTH the variant geometry and this prototype's 2K texture exist.
-		const use2k = !! ( v2k && p.albedo2k );
-		if ( atlas2k && ! use2k && ! report.atlas2kMissing.includes( key ) ) report.atlas2kMissing.push( key );
-		const geom = use2k ? v2k : impostors;
-		if ( use2k ) report.drawnGeom = { framePx: geom.framePx, atlasPx: geom.atlasPx, innerPx: geom.innerPx };
+		const use2k = ! useBand && !! ( v2k && p.albedo2k );
+		if ( atlas2k && ! useBand && ! use2k && ! report.atlas2kMissing.includes( key ) ) report.atlas2kMissing.push( key );
+		const geom = useBand ? { framePx: bandBlock.framePx, innerPx: bandBlock.innerPx,
+			gutterPx: bandBlock.gutterPx, atlasPx: bandBlock.atlasW }
+			: ( use2k ? v2k : impostors );
+		if ( useBand ) report.drawnGeom = { framePx: geom.framePx, atlasPx: [ bandBlock.atlasW, bandBlock.atlasH ],
+			innerPx: geom.innerPx, mapping: 'band' };
+		else if ( use2k ) report.drawnGeom = { framePx: geom.framePx, atlasPx: geom.atlasPx, innerPx: geom.innerPx };
 		const uniforms = {
 			atlas: { value: null },
 			range: { value: p.range },
@@ -561,11 +658,24 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			framePx: { value: geom.framePx },
 			innerPx: { value: geom.innerPx },
 			gutterPx: { value: geom.gutterPx },
-			atlasPx: { value: geom.atlasPx },
+			// ( width, height ) in texels: square for the octahedral atlases, 4096 x 1024 for the band.
+			atlasWH: { value: new THREE.Vector2( useBand ? bandBlock.atlasW : geom.atlasPx,
+				useBand ? bandBlock.atlasH : geom.atlasPx ) },
+			// which end of the image the manifest's row 0 is; 0 = counted from the bottom, as the
+			// octahedral atlases are, which is the v flip frameUv has always done.
+			rowFromTop: { value: ( useBand && bandBlock.rowOrigin === 'top' ) ? 1 : 0 },
+			// ( columns, rows, azimuth0 in RADIANS, unused ) and the rows' elevations in radians.
+			pfaBand: { value: new THREE.Vector4( useBand ? bandBlock.columns : 0,
+				useBand ? bandBlock.rows : 0,
+				useBand ? bandBlock.azimuth0Deg * Math.PI / 180 : 0, 0 ) },
+			pfaBandEl: { value: new THREE.Vector4(
+				...[ 0, 1, 2, 3 ].map( ( i ) => ( useBand && Number.isFinite( bandBlock.elevationsDeg[ i ] ) )
+					? bandBlock.elevationsDeg[ i ] * Math.PI / 180 : 0 ) ) },
 			alphaTest: { value: ALPHA_TEST },
 			debugMode: { value: debug },
 			pfaImpInterior: { value: new THREE.Vector3( impInterior[ 0 ], impInterior[ 1 ], impInterior[ 2 ] ) },
-			pfaImpCov: { value: new THREE.Vector4( impCov.magLo, impCov.magHi, impCov.share, impCov.ramp ) },
+			pfaImpCov: { value: new THREE.Vector4( impCov.magLo, impCov.magHi,
+				( useBand && ! covExplicit ) ? IMP_COV.shareBand : impCov.share, impCov.ramp ) },
 			pfaMeshDist: switchUniforms ? switchUniforms.pfaMeshDist : { value: 1e9 },
 			pfaFadeBand: switchUniforms ? switchUniforms.pfaFadeBand : { value: 1 },
 		};
@@ -623,6 +733,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		g.setAttribute( 'iIrr', new THREE.InstancedBufferAttribute( irr, 3 ) );
 		im.userData.pfaImpostor = { prototype: key, instances: list.length, near: nearHere, range: p.range,
 			radius_m: p.radius, height_above_base_m: p.heightAboveBase, centre_z_m: p.centreZ, atlas2k: use2k,
+			band: useBand,
 			// 6c round 2: gltfpack drops node names, so the id (the billboard name) is the only key that
 			// joins a row of this batch to a placement of the lazily loaded env_trees.glb.
 			ids: list.map( ( t ) => t.id || null ) };
@@ -634,7 +745,9 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 
 		// A manifest with no declared 2K byte count must KEEP the 1K figure, not subtract it (carry 6).
 		if ( use2k ) { report.atlas2k = true; if ( p.bytes2k ) report.bytes += p.bytes2k - ( p.bytes || 0 ); }
-		pending.push( loadTexture( use2k ? p.albedo2k : p.albedo ).then( ( tex ) => {
+		if ( useBand ) { const bb = bandBlock.prototypes[ key ].bytes; if ( bb ) report.bytes += bb - ( p.bytes || 0 ); }
+		const albedoUrl = useBand ? bandBlock.prototypes[ key ].albedo : ( use2k ? p.albedo2k : p.albedo );
+		pending.push( loadTexture( albedoUrl ).then( ( tex ) => {
 			if ( ! tex ) { note( `impostor ${key}: albedo atlas failed to load` ); return; }
 			// The atlas holds LINEAR radiance behind a gamma-2 code, not sRGB: the decode is in the
 			// shader, so the sampler must not decode anything.
@@ -663,6 +776,21 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `(6c C2): they dissolve into their mesh inside the switch distance and the mesh dissolves into them beyond it` );
 		if ( atlas2k ) note( `impostor atlas: 2K variant on ${report.atlas2k ? report.prototypes - report.atlas2kMissing.length : 0}/${report.prototypes} prototype(s)`
 			+ ( report.atlas2kMissing.length ? `; 1K kept on ${report.atlas2kMissing.join( ', ' )} (no albedo_2k in the manifest)` : '' ) );
+		if ( report.band.unknown !== null && report.band.unknown !== undefined )
+			note( `?impband=${report.band.unknown} is not a value (0 | 1): using 1, the default` );
+		if ( report.band.available ) {
+			const g = report.band.geometry;
+			note( report.band.prototypes
+				? `impostor BAND atlas (Phase 8b) on ${report.band.prototypes}/${report.prototypes} prototype(s): `
+					+ `${g.columns} azimuth x ${g.rows} elevation frames of ${g.framePx} px `
+					+ `(inner ${g.innerPx}, gutter ${g.gutterPx}) on a ${g.atlasPx[ 0 ]}x${g.atlasPx[ 1 ]} atlas; `
+					+ `azimuth 0 at ${g.azimuth0Deg} deg, clockwise seen from above, `
+					+ `elevation rows ${g.elevationsDeg.join( '/' )} deg from row 0 at the ${g.rowOrigin}; `
+					+ `two-azimuth linear blend, nearest elevation row`
+					+ ( report.band.missing.length ? `; the octahedral atlas is kept on ${report.band.missing.join( ', ' )}` : '' )
+					+ ' (?impband=0 reverts)'
+				: 'impostor band atlas: the manifest carries one but ?impband=0 — the octahedral path draws' );
+		}
 		note( `impostors: ${report.instances} tree(s) (${report.instances - report.nearInstances} far + ${report.nearInstances} near) `
 			+ `over ${report.prototypes} prototype(s), `
 			+ `${report.drawCalls} draw call(s), ${impostors.grid}x${impostors.grid} octahedral frames `
@@ -683,9 +811,11 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `radiance (?impint=str,radius,floor)` );
 		if ( impCov.unknown !== null ) note( `?impcov=${impCov.unknown} is not a value `
 			+ `(0 | 1 | magLo[,magHi]): using the default` );
+		const shareInForce = ( report.band.prototypes && ! covExplicit ) ? IMP_COV.shareBand : impCov.share;
 		note( `impostor alpha as COVERAGE (Phase 8b): ${impCov.on ? 'ON' : 'off'}`
 			+ ( impCov.on ? `, ramp = ${impCov.ramp} x the alpha change per atlas texel above `
-				+ `${impCov.magLo}->${impCov.magHi} screen px per texel, raw-coverage share ${impCov.share}, `
+				+ `${impCov.magLo}->${impCov.magHi} screen px per texel, raw-coverage share ${shareInForce}`
+				+ ( shareInForce !== impCov.share ? ' (the band atlas\'s own)' : '' ) + ', '
 				+ ( impCov.dither ? 'spent by the ordered dither (no coverage mask)'
 					: `resolved by the ${impCov.samples}-sample coverage mask` ) : '' )
 			+ ` (?impcov=0 restores Phase 7)` );
