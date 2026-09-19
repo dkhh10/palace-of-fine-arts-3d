@@ -108,10 +108,16 @@ const MIN_HALF_M = 0.25;           // m, the smallest half-extent an ellipsoid n
  * from it, and near-black blotches at 100 % where the terms coincide.  A floor bounds the product
  * without touching the shape of any one term, so the interior/rim read QA 17 credited (cam02
  * centre/edge 0.393 against the reference's 0.364) is kept and only its DEPTH is limited.
- * Swept at the hero, 2 and 5 (web/README.md "Phase 7"); `?crownint=str,low,gamma,gain,trn,sun,floor`.
+ * MEASURED at the stations: all three of QA 17's crown boxes are ATLAS crowns, so a mesh-side floor
+ * moves 0.005-0.012 % of the pixels there (cam01/02/05, MAE 0.0004-0.0012 / 255).  It is set to the
+ * same 0.35 the atlas side adopted, because the same stack is what a crown shows at the 3 m walk-in
+ * and in the mobile close orbit, and it is bounded there by the same rule rather than by a second
+ * number.  The shrub / reed CARD clusters keep floor 0: their level is QA 17's one CLOSED foliage
+ * item (frame-normalised 0.91-1.47x of the reference) and a floor would only push it further up.
+ * `?crownint=str,low,gamma,gain,trn,sun,floor`, `?cardint=` the same.
  */
-export const CROWN_INTERIOR = { str: 0.30, low: 0.0, gamma: 1.0, gain: 1.05, trn: 0.85, sun: 0.50, floor: 0.45 };
-export const CARD_INTERIOR = { str: 0.20, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0, sun: 0.30, floor: 0.45 };
+export const CROWN_INTERIOR = { str: 0.30, low: 0.0, gamma: 1.0, gain: 1.05, trn: 0.85, sun: 0.50, floor: 0.35 };
+export const CARD_INTERIOR = { str: 0.20, low: 0.30, gamma: 1.0, gain: 1.0, trn: 1.0, sun: 0.30, floor: 0.0 };
 /** How much of the radius the crown-bend is faded in over: 0 = bend everywhere (round-16b). */
 export const NORMAL_GATE = 0.45;
 /** LOD bias on the cut-out fetch: the shrub / reed cards, then the tree leaf cards (?foliagebias=). */

@@ -307,11 +307,14 @@ const fragmentShader = /* glsl */`
 // MEASURED, not chosen (6c round 3, the sweep in web/README.md): at 0.90 / 0.015 the cam02 crown
 // box lands on the reference's centre/edge (0.364 against 0.364) and the cam05 crown on its
 // range/mean within 0.073, with every crown box's LEVEL inside 0.9-1.1x of the reference.
-// PHASE 7 ITEM B adds the third field, the FLOOR on that term's factor.  Swept at the hero,
-// station 2 and station 5 (web/README.md "Phase 7"): 0.40 is the smallest value that takes the hero
-// crown's p10 back over 0.8x of the Cycles reference's while cam02's centre/edge stays within QA
-// 17's credited 0.03 of the reference and station 5's frame luma returns to 1.00x.
-export const IMP_INTERIOR = [ 0.90, 0.015, 0.40 ];
+// PHASE 7 ITEM B adds the third field, the FLOOR on that term's factor.  SWEPT at 0 / 0.25 / 0.30 /
+// 0.35 / 0.40 / 0.55 over stations 1, 2 and 5 (the table is in web/README.md "Phase 7").  0.35 is
+// adopted: the hero crown's p10 returns from 0.564x of the Cycles reference's to 0.894x (the brief
+// asks for >= 0.8x) and its centre/edge from 0.468 to 0.532 against the reference's 0.852, while
+// cam02's centre/edge holds at 0.397 - the ~0.39 QA 17 credited - which 0.40 would push to 0.406.
+// Measured, and true of every one of the three QA-17 crown boxes: they are all ATLAS crowns, so this
+// floor is the whole of item B at the stations (foliage.js' mesh-side floor moves 0.01 % of pixels).
+export const IMP_INTERIOR = [ 0.90, 0.015, 0.35 ];
 export function parseImpInterior( v ) {
 	const d = [ ...IMP_INTERIOR ];
 	if ( v === null || v === undefined || v === '' ) return d;
