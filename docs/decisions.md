@@ -1053,3 +1053,10 @@ verification capture at 1/2/5 + orbit. New non-blocking residuals: the belt cove
 (+1.3 M tris, +28 draws, 35.1 -> 38.6 ms — the belt is within the mesh distance from that station; EXPORT/VIEWER); cam06's R1 colour under-delivery stands (record).
 cam05 crossings 10.80 -> 9.37 decomposed to the belt backing (background share 75.6 -> 79.6 % at flat level), not a crown change. Payload 46 761 417 B desktop / 46 824 683
 mobile; perf 28.2 / 32.6 / 38.6 / 26.2 / 29.7 / 32.3 ms; resident 1 814.2 / 550.3 MB. Parity caveat: the Phase 8 Cycles refs survive at 960 px only (PNGs gitignored).
+
+## 2026-09-19 · Phase 8 4K Cycles hero rendered (renders/final/hero_cam01_3840x2160_128spp.png, 128 spp fixed, 1 468 s) — lead's six-tile pass: no defect
+Rendered from master_delivery.blend rebuilt 21:58 (belt r2, R1 materials, 8a/8b/8c/8e are viewer/export items and do not appear in Cycles). Wall time 1 468 s vs the Phase 5
+probe's time on the same settings (the belt's +1.5 M LOD0 tris). Tile pass at 100 % (3 x 2 of 3840x2160): r1c1/r1c3 sky and entablature clean (a gull in r1c3); r1c2 rotunda,
+relief panels, capitals and both vault openings open to the far side; r2c1 the north colonnade with the tree belt reading as dark crowns and trunks between the columns,
+the hall roof pale above; r2c2 the shore band and the reflection breaking into streaks; r2c3 the south colonnade with crowns behind. No filled opening, plain cylinder,
+seam, z-fighting or shard. The Phase 5 v2 renders are preserved in renders/final/phase5_v2/ for the comparison sheet (scripts/phase8_sheet.py, after = gate12).
