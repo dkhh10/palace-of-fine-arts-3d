@@ -252,10 +252,15 @@ def build_groups(cls, vis, order, out, man, cap, log, prefix=None, lowres_dir=No
     return recs
 
 
-def rebase_gate3_paths(man):
+def rebase_gate3_paths(man, keep_albedo_2k=False):
     """v4's paths are relative to out/gate3; v5 lives in out/gate5, so the gate3-relative ones are
     rewritten.  Everything already written as `../gate0/...`, `../gate1/...` or `../gate2/...` is a
-    sibling path and is left alone.  Recorded in `tiers.path_rebase` - never a silent rewrite."""
+    sibling path and is left alone.  Recorded in `tiers.path_rebase` - never a silent rewrite.
+
+    `keep_albedo_2k` (desktop, 8b) keeps `impostors.prototypes[*].albedo_2k`, because that variant is
+    now published in tier 1.  `normal_depth_2k` is still removed on BOTH variants: web/src/impostors.js
+    only ever loads `p.normalDepth` (the 1 K map), so naming the 2 K one would be payload nothing
+    fetches and a deploy walker would carry it."""
     moved = []
 
     def note_move(where, was):
@@ -287,16 +292,24 @@ def rebase_gate3_paths(man):
     imp = man.get("impostors") or {}
     v2 = imp.get("variant_2k")
     if isinstance(v2, dict):
+        drop_keys = ("normal_depth_2k",) if keep_albedo_2k else ("albedo_2k", "normal_depth_2k")
         dropped_2k = 0
         for proto in (imp.get("prototypes") or {}).values():
-            for k in ("albedo_2k", "normal_depth_2k"):
+            for k in drop_keys:
                 if proto.pop(k, None):
                     dropped_2k += 1
         if dropped_2k:
-            note_move("impostors.prototypes[*].{albedo,normal_depth}_2k", f"{dropped_2k} keys")
-            v2["note"] = (v2.get("note", "") + " The 2 K texture keys are removed from this manifest: "
-                          "the 1 K set is what ships, and naming the 2 K files here made every deploy "
-                          "walker treat them as part of the payload.").strip()
+            note_move("impostors.prototypes[*].{%s}" % ",".join(drop_keys), f"{dropped_2k} keys")
+            v2["note"] = (v2.get("note", "") + " " + (
+                "The 2 K ALBEDO is published in tier 1 (8b, docs/decisions.md 2026-09-19) and the "
+                "viewer draws it by default (`?imp2k=0` reverts); tier 0 keeps the half-resolution "
+                "ETC1S stand-in of the 1 K twin, byte for byte. `normal_depth_2k` is still removed: "
+                "web/src/impostors.js only loads the 1 K normal-depth, so naming the 2 K one here "
+                "would be payload nothing fetches."
+                if keep_albedo_2k else
+                "The 2 K texture keys are removed from this manifest: the 1 K set is what ships, and "
+                "naming the 2 K files here made every deploy walker treat them as part of the "
+                "payload.")).strip()
     for blk, key in ((man["trees"].get("far_mesh"), "trees.far_mesh.glb"),
                      (man["trees"].get("walkup_mesh"), "trees.walkup_mesh.glb"),
                      (man["shrubs"].get("lod1"), "shrubs.lod1.glb")):
@@ -365,6 +378,28 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
     loaded foliage glbs, and reports the ASTC-rule resident estimate per class."""
     mobile = variant == "mobile"
     files = G.resolve_files(man)
+    # 8b (docs/decisions.md 2026-09-19, "ship the baked 2K impostor atlases in tier 1").  The 2 K
+    # albedo atlases have been on disk since Gate 3 and web/src/impostors.js asks for them BY DEFAULT
+    # (`imp2k` is on unless `?imp2k=0`), but `rebase_gate3_paths` stripped the `albedo_2k` keys, so
+    # every far tree has drawn the 1 K atlas since the 6b tiering.  Desktop publishes them in TIER 1,
+    # beside the 1 K twin the `?imp2k=0` revert still needs; tier 0 is untouched - it keeps the same
+    # half-resolution ETC1S stand-in, which `imp_2k_lowres` below points at the 2 K file as well, so
+    # the first frame shows the stand-in and tier 1 upgrades straight to what the viewer draws.
+    imp_2k = {}                      # 2 K albedo key -> the 1 K key whose tier-0 stand-in it shares
+    if not mobile:
+        g3t = man["textures"]["gate3"]
+        for proto in ((man.get("impostors") or {}).get("prototypes") or {}).values():
+            k2, k1 = proto.get("albedo_2k"), proto.get("albedo")
+            if not k2 or not k1 or k2 not in g3t["files"]:
+                continue
+            p2 = os.path.normpath(os.path.join(str(G.GATE3), g3t["ktx2_dir"],
+                                               g3t["files"][k2]["path"]))
+            if not os.path.exists(p2):
+                continue
+            pub = files.get(p2) or G.Pub(p2, "impostor", k2)
+            pub.reasons.add(f"impostor2k:{k2}")
+            files[p2] = pub
+            imp_2k[k2] = k1
     idx = G.material_index(man)
     hero_mats, hero_keys = gate5_tex.tier0_texture_keys(man, vis)
     hero_tex = {k for k, _ in hero_keys}
@@ -398,7 +433,7 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                 tex_order[e["texture"]] = min(tex_order.get(e["texture"], 99), key_order)
 
     man5 = json.loads(json.dumps(man))
-    rebased = rebase_gate3_paths(man5)
+    rebased = rebase_gate3_paths(man5, keep_albedo_2k=bool(imp_2k))
     entries = []
     base = out
     lr = json.loads((out / "lowres.json").read_text()) if (out / "lowres.json").exists() else {}
@@ -447,8 +482,13 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
         elif pub.kind in ("lightmap", "lightmap_atlas"):
             put(rel, 1, kind, "the baked light; tier 0 ships none", key=pub.key, px=px)
         elif pub.kind == "impostor":
-            put(rel, 0 if mobile else 1, kind,
-                "the far trees are drawn from these atlases", key=pub.key, px=px)
+            if pub.key in imp_2k:
+                put(rel, 1, kind,
+                    "the 2 K far-tree atlas the viewer draws by default (8b; ?imp2k=0 reverts to the "
+                    "1 K twin); tier 0 keeps the half-resolution ETC1S stand-in", key=pub.key, px=px)
+            else:
+                put(rel, 0 if mobile else 1, kind,
+                    "the far trees are drawn from these atlases", key=pub.key, px=px)
         elif pub.kind == "foliage":
             put(rel, 1, kind, "tinted leaf cards", key=pub.key, px=px)
         elif pub.kind == "gate1tex":
@@ -531,6 +571,16 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             pub = next((p_ for p_, q in files.items() if q.key == k), None)
             if pub:
                 v["full"] = G.pub_rel(pub, base)
+        # 8b: the 2 K albedo keys reuse the 1 K twin's tier-0 stand-in.  Written AFTER the loop above
+        # so `lowres.files[<1k key>].full` still names the 1 K file (the `?imp2k=0` path) while the
+        # LAST entry that claims this stand-in - and therefore the one web/src/manifest.js keeps in
+        # `upgradeOf` - is the 2 K file the viewer draws by default.
+        for k2, k1 in sorted(imp_2k.items()):
+            lo = lowres_files.get(k1)
+            full = next((G.pub_rel(p_, base) for p_, q in files.items() if q.key == k2), None)
+            if lo and full:
+                lowres_files[k2] = dict(path=lo["path"], bytes=lo["bytes"], px=lo.get("px"),
+                                        full=full)
     seen, uniq = set(), []
     for e in sorted(entries, key=lambda e: (e["tier"], e["order"], e["path"])):
         if e["path"] in seen:
