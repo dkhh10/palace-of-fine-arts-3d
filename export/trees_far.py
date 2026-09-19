@@ -159,8 +159,8 @@ UV_TILE = SET.get("uv_tile", False)
 #   iso_cut (below)      18.4 /  8.4 / 0.93   euc 25.3/14.0      0.27/0.21/0.10/0.12
 # `iso_cut` holds the coverage to 0.93-1.07x at 40 m and 0.82-1.03x at 2.5 m (the mobile walk-up, where
 # the mip is near-native and a lower cut only adds the painted leaves' antialiased rims, measured, not
-# assumed). THE SHIPPED env_trees.glb IS STILL `kv25`: this switch is the lead's to call, and the asset
-# follows on the next export (about one minute of Blender).
+# assumed). `iso_cut` IS WHAT env_trees.glb NOW SHIPS (lead's call, exported 2026-09-19: 3 768 500 B);
+# `kv25` is the first 8e export, kept so the A/B is one string (`PFA_UV_TILE_MODE=kv25`).
 UV_TILE_MODE = os.environ.get("PFA_UV_TILE_MODE", "iso_cut")
 UV_TILE_MODES = {
     # the 8e decision as first shipped: v-only, coverage-neutral, thickness only

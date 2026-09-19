@@ -2517,9 +2517,14 @@ the broadleaf** (TREEFAR_000 / _001 at 36.7 / 38.5 m, cards 40 px), and only a w
 **Recommendation: `iso_cut` (ku 2.0, kv 3.0, per-material cutoff).** It is the only variant that moves the
 metric QA named while holding the crown's leaf area, and it subsumes the kv win (thickness 8.4-14.0 px).
 `UV_TILE_MODE` selects it (`kv25` is what shipped, `off` disables; `PFA_UV_TILE_MODE=` overrides for an A/B).
-**The shipped `env_trees.glb` is still `kv25`** — the code is committed, the asset is not re-exported. The
-re-export is `trees_far.py` (30 s of Blender, measured) + `gltf_pack.sh --trees` (1 s, the KTX2 are cached)
-+ the six-file copy to MAIN: **about one minute of Blender**, no GPU.
+**`iso_cut` is what `env_trees.glb` now ships** (the lead called it the same evening; `trees_far.py` 30 s of
+Blender + `gltf_pack.sh --trees` 1 s + the copy to MAIN, no GPU). The export carries the numbers: mode
+`iso_cut`, `gltf.uv_tiling.leaf_cutoff` `{broadleaf 0.50 -> 0.27, cypress 0.45 -> 0.21, eucalyptus 0.50 ->
+0.10, pine 0.42 -> 0.12}`, `gltf.leaf_uv_range` -2.0000..2.0000 over 167 876 verts, `species_not_tiled` {},
+and `verify_glb` unchanged at 254 rows / 127 placements / 1 007 775 drawn tris / COLOR_0 32/32.
+**`env_trees_lod1.glb` (desktop) still carries the Phase 5 cuts 0.42-0.50 and UVs 0.0000-1.0000** — the
+alphaCutoff override, like the sampler patch, reaches this one glTF only. `PFA_UV_TILE_MODE=kv25` re-exports
+the first variant if QA prefers it.
 
 **The sampler.** The tiled v leaves 0-1, and the shipped leaf samplers are `CLAMP_TO_EDGE` (Blender writes
 33071 for an image node set to EXTEND), which would smear the edge texel over every tile past the first. The
@@ -2551,12 +2556,14 @@ only on the translucency map. In three r186 `setTexture2D` applies the sampler p
 already been uploaded (the eager near-tree leaf materials in `env_t0`/`env_t2` draw first) never reaches the
 GPU. `t.needsUpdate = true` beside the existing `t.wrapS = old.wrapS` closes it.
 
-**Cost.** `env_trees.glb` 3 699 324 -> 3 856 412 B (+157 088, +4.2 %), tier 2, `glb_lazy`, mobile-only in
+**Cost.** `env_trees.glb` 3 699 324 -> 3 856 412 B as `kv25` (+4.2 %) and **-> 3 768 500 B as `iso_cut`**
+(+69 176 over the pre-8e file, **+1.9 %**; the u tiling widens the u range but the lower cut removes mask
+detail, so the meshopt UV stream costs less than `kv25`'s), tier 2, `glb_lazy`, mobile-only in
 practice (`device.js`: mobile `walkupMesh: '0'`, `farTreeMesh: 45`; desktop leaves `walkupMesh` null and draws
 `env_trees_lod1.glb`, falling back to this file only if that glb 404s or fails the join). The growth is the UV
 stream: gltfpack quantises TEXCOORD_0 over the file's own range, and the tiled v widens it 3.5x
-(`KHR_texture_transform` v scale 16.003 -> 56.010), which costs entropy and takes the UV step from ~0.25 to
-~0.87 texels of a 1024 px map — still sub-texel, and ~0.02 px on screen at 40 m. Tier 0 is untouched and
+(`KHR_texture_transform` v scale 16.003 -> 56.010 as `kv25`, 64.011 as `iso_cut`), which costs entropy and
+takes the UV step from ~0.25 to ~0.87 (`kv25`) / ~1.0 (`iso_cut`) texels of a 1024 px map — still sub-texel, and ~0.02 px on screen at 40 m. Tier 0 is untouched and
 byte-identical; no other glb changed.
 
 **Stale after this change, and why it stays stale:** `out/gate5/manifest.json` still advertises

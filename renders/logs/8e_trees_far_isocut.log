@@ -1,0 +1,68 @@
+00:00.335  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[gate0] STEP trees_far:meshes wall_s=13.7  prototypes=16 tris=126997 worst=8020
+[gate0] STEP trees_far:placements wall_s=0.2  placements=127 worst_crown_top_dev_mm=891.8
+[gate0] STEP trees_far:color0:far wall_s=0.0  meshes=16
+INFO Draco is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_draco_bridge.dylib
+INFO MeshOptimizer is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_meshopt_bridge.dylib
+19:48:05 | INFO: Starting glTF 2.0 export
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_broadleaf_s53_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_broadleaf_s19_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_s41_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_s3_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_s17_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_column_s31_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_cypress_column_s2_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_eucalyptus_s5_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_eucalyptus_s23_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_eucalyptus_s61_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:05 | INFO: Primitives created: 2
+19:48:05 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_pine_s7_LOD1
+19:48:05 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:06 | INFO: Primitives created: 2
+19:48:06 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_pine_s29_LOD1
+19:48:06 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:06 | INFO: Primitives created: 2
+19:48:06 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_redwood_s43_LOD1
+19:48:06 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:06 | INFO: Primitives created: 2
+19:48:06 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_redwood_s13_LOD1
+19:48:06 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:06 | INFO: Primitives created: 2
+19:48:06 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_willow_s11_LOD1
+19:48:06 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:06 | INFO: Primitives created: 2
+19:48:06 | INFO: Extracting primitive: EXPM_treefar_ENV_tree_willow_s37_LOD1
+19:48:06 | WARNING: The active Vertex Color will not be exported, as it is not used in the node tree of the material
+19:48:06 | INFO: Primitives created: 2
+19:48:06 | INFO: Finished glTF 2.0 export in 1.1870181560516357 s
+
+[gate0] STEP trees_far:gltf wall_s=1.5 env_trees.gltf=72626B bytes=72626 nodes=127
+Info: Deleted 2832 data-block(s)
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: Saved copy as "trees_far_lod2.blend"
+[gate0] STEP trees_far:hand_off_blend wall_s=12.2 trees_far_lod2.blend=38486285B bytes=38486285
+[trees_far] 16 prototypes 7856-8020 tris, 127 placements -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8e-export/export/out/gate1/trees_far.json
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 92333 exited rc=0 after 30 s (max 300)
