@@ -8,7 +8,7 @@ live in ENV_trees (hidden).
 Standalone test (renders a line-up of every species against the sky):
     blender --background --python scripts/env_trees.py -- --lineup
 """
-import bpy, bmesh, sys, os, math, random, time
+import bpy, bmesh, sys, os, math, random, time, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import env_lib as L
@@ -537,6 +537,130 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
                     if run_left <= 0.0:
                         gap_left = rnd.uniform(*gap)
                 carry = max(0.0, t - arc)
+    return out
+
+
+# ----------------------------------------------------------- Phase 8d belt r2: the hall's east-face tree belt
+# ref 169 at 100 % (the registered N and S bands, `qa_r22_probe.REF_XF`): behind BOTH colonnades the photograph has
+# no lit wall - a dark, soft tree mass fills every intercolumniation from the shrub line up to roughly the
+# architrave, and the exhibition hall shows only as a roof line above it.  8d R2 answered that with 89 lobed
+# icospheres in MAT_backdrop_forest; QA 22 rejected them at 100 % as faceted untextured shards (docs/qa_round_22.md
+# section 2), and the lead's decision (docs/decisions.md 2026-09-19) is to rebuild the belt out of the REAL tree
+# prototypes through the far-tree path: every belt tree is an ordinary ENV_tree_* placement whose LOD0 object
+# carries the LOD1 mesh and whose LOD1 object carries the LOD2 mesh (the `far` + `light` flags in `build_all`,
+# exactly what the E2/E3 back screen rows do), so the export sees it as a far tree, gives it a 2-triangle
+# billboard and an impostor from the 16 already-baked prototypes - no atlas re-bake.
+#
+# Placement geometry is inherited MEASURED from `env_backdrop.build_hall_belt` (which stays in the file behind
+# `BELT_ICOSPHERE = False` as that measurement's record): an even arc-length walk along the hall's east-facing
+# edges, the offset alternating so the silhouette has depth, and the hall footprint / rotunda platform /
+# colonnade roof / gallery walk keep-outs.  What changes: the step is a tree's spacing, not a crown's (25-45
+# trees instead of 89 blobs), and every tree stands on the ground on its own trunk.
+#
+# HEIGHT.  Heights are drawn 12-19 m and then capped by the TOP in world z at HALL_BELT_TOP_Z = 16.0 m, which is
+# 4.0 m below the hall's 20.0 m roof crest (env_backdrop HALL_EAVE 15.5 + HALL_RISE 4.5) and 0.7 m below its
+# 16.7 m parapet top, so the roof line always shows above the belt as it does in ref 169 - and the cap is in
+# WORLD z, so undulating terrain cannot push a crown over the roof.  The belt stands 6-12 m in FRONT of the hall
+# face, i.e. ~140-144 m from the hero against the face's ~150 m, so a 16.0 m top subtends the same angle as a
+# 16.9 m point on the wall: the belt reads as just touching the parapet line, which is what the photograph shows.
+# The cap binds on most draws, so the realised heights run 12.0-16.x m (reported per build).
+HALL_BELT_TOP_Z = 16.0
+# 4.5 m of face per tree, measured up from 6.5: at 6.5 the crowns stand clear of each other at the hero and the
+# hall wall reads through the LOD1 foliage between them (the leaf density at LOD1 is 0.42 of LOD0's, so a crown is
+# see-through even where the ray probe counts it as a hit).  At 4.5 m the two offset rows overlap and the belt
+# reads as one mass with light through the gaps, which is what ref 169 shows.
+HALL_BELT_STEP = 4.5
+# Species read off ref 169's two bands at 100 %: dark Monterey cypress dominant, blue-gum eucalyptus and Monterey
+# pine mixed through it, a few narrow columnar cypress, redwood for the darkest verticals.  Willow and broadleaf
+# are the SHORE trees and are deliberately absent here.  Every species/seed in `SEEDS` has a baked impostor
+# (the 16 of `export/out/gate3/gate3_set.json`), so the prototype_map resolves whatever this plants.
+HALL_BELT_MIX = (("cypress",) * 5 + ("eucalyptus",) * 3 + ("pine",) * 2
+                 + ("cypress_column",) * 2 + ("redwood",) * 2)
+
+
+def hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys=()):
+    """The belt of real far trees along the exhibition hall's concave east face (Phase 8d belt r2).
+
+    Returns plan entries `(species, x, y, height_m, note)` tagged `HB`, which `build_all` appends AFTER every
+    relief pass and the gallery gate: the belt is measured against the hall, not composed against the frame, and
+    appending it last leaves every existing tree's position, RNG draw, name and LOD byte-identical.
+    """
+    if hall_field is None:
+        hall_field = L.PolyField(L.ensure_ccw(hall_poly), cell=10.0)
+    poly = L.ensure_ccw(hall_poly)
+    n = len(poly)
+    rnd = random.Random(8104)
+
+    def blocked(x, y):
+        if hall_field.signed(x, y) < 3.0:
+            return True                                  # inside the hall, or hard against its wall
+        if math.hypot(x, y) < 34.0:
+            return True                                  # the rotunda's own platform
+        if not L.gallery_clear(x, y):
+            return True                                  # never on the colonnade walk
+        for cp in colonnade_polys:
+            for (dx, dy) in ((0.0, 0.0), (3.0, 0.0), (-3.0, 0.0), (0.0, 3.0), (0.0, -3.0)):
+                if L.point_in_poly(x + dx, y + dy, cp):
+                    return True
+        return False
+
+    out = []
+    last = None                   # last tree actually planted: the spacing is measured on the offset curve
+    idx = skipped = 0
+    # the species mix is DEALT from a shuffled deck, not drawn independently: 29 independent draws left one
+    # eucalyptus out of the whole belt (measured, first build), which is not the mix ref 169 reads.
+    deck = list(HALL_BELT_MIX)
+    rnd.shuffle(deck)
+    deck_i = 0
+    for i in range(n):
+        a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
+        d = b - a
+        seg = d.length
+        if seg < 1.0:
+            continue
+        d = d / seg
+        nrm = Vector((d.y, -d.x))                        # outward on the concave east face (as build_hall uses it)
+        mid = (a + b) / 2
+        to_origin = (Vector((0.0, 0.0)) - mid).normalized()
+        if nrm.dot(to_origin) <= 0.20 or mid.length > 175.0:
+            continue
+        # The walk is FINE (1 m) and the spacing test is on the OFFSET curve, not on the hall polygon: stepping
+        # 5.5 m along the polygon and then pushing each sample 6.5-11 m outward stretches the gaps wherever the
+        # face turns away from the belt, and that is where the first build left them - measured with
+        # `scripts/env_belt_probe.py`, the hall's south-east arm showed through 20.4 % of the rays that get past
+        # the colonnade in the hero's frame-left band, at 10-16 m gaps between trees.  Measuring from the last
+        # tree actually PLANTED also keeps the density across a rejected sample.
+        u = 0.0
+        while u < seg:
+            base = a + d * u
+            u += 1.0
+            off = (6.5 if idx % 2 else 11.0) + rnd.uniform(-1.3, 1.3)
+            p = base + nrm * off + d * rnd.uniform(-1.8, 1.8)
+            # spacing along the FACE (project onto the local tangent), not the straight-line distance: the
+            # offsets alternate 6.5 / 11 m, so a 3-D test counts the 4.5 m zig-zag as progress and plants three
+            # times as many trees as asked (88 for a 5.5 m step, measured).
+            if last is not None and (p - last).dot(d) < HALL_BELT_STEP:
+                continue
+            idx += 1
+            if blocked(p.x, p.y):
+                skipped += 1
+                continue
+            if deck_i >= len(deck):
+                rnd.shuffle(deck)
+                deck_i = 0
+            sp = deck[deck_i]
+            deck_i += 1
+            z0 = terrain_height(p.x, p.y) - 0.15         # `build_all` grounds a tree at terrain - 0.15
+            h = min(rnd.uniform(12.0, 19.0), HALL_BELT_TOP_Z - z0)
+            if h < 8.0:                                  # ground this high would make it a bush, not a belt
+                skipped += 1
+                continue
+            out.append((sp, p.x, p.y, h, "HB hall east-face belt (8d r2)"))
+            last = p
+    hs = [e[3] for e in out]
+    print(f"[env_trees] hall east-face belt: {len(out)} far trees, {skipped} sample points rejected, "
+          f"heights {min(hs):.1f}-{max(hs):.1f} m (top capped at {HALL_BELT_TOP_Z} m world z), "
+          f"step {HALL_BELT_STEP} m")
     return out
 
 
@@ -1194,9 +1318,16 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
             gated.append(e)
         print(f"[env_trees] gallery keep-out ({L.GALLERY_KEEPOUT} m): {len(plan)} -> {len(gated)} trees")
         plan = gated
+        # Phase 8d belt r2, LAST: the hall's east-face belt is appended after every relief pass and after the
+        # gallery gate.  It is placed against the HALL by measurement (see `hall_belt`), not composed against a
+        # frame band, and it must not shift a single existing tree: appending it here leaves the relief passes'
+        # inputs, their RNG streams, and the placement loop's own draw order for trees 0..N-1 exactly as they
+        # were.  Its own keep-outs (hall, podium ring, gallery walk, colonnade roofs) are inside `hall_belt`.
+        plan = plan + hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys)
     rnd = random.Random(77)
     counts = {}
     per_species_idx = {}
+    belt_rows = []
     for i, (sp, x, y, h, note) in enumerate(plan):
         seeds = [s for (s2, s) in lib.keys() if s2 == sp]
         if not seeds:
@@ -1214,7 +1345,9 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
         # E2/E3 back screen rows always do (they stand 100-140 m behind the wings and are half occluded by row E1).
         cam_d = min([math.hypot(x - cx, y - cy) for (cx, cy) in CAM_XY], default=1e9)
         far = cam_d > FAR_RADIUS or note.startswith(("H", "E2", "E3"))
-        light = note.startswith("E2") or note.startswith("E3")           # back screen rows: LOD2 mesh for LOD1
+        # back screen rows AND the 8d hall belt: LOD2 mesh for LOD1, i.e. the export's far-tree path (billboard +
+        # baked impostor) and LOD1 geometry for the Cycles LOD0 at 140-150 m.
+        light = note.startswith(("E2", "E3", "HB"))
         n = per_species_idx.get(sp, 0)
         per_species_idx[sp] = n + 1
         rot = rnd.uniform(0, 2 * math.pi)
@@ -1242,9 +1375,46 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
             o.hide_render = lod != 0
             o.hide_viewport = lod != 1
             lod_colls[lod].objects.link(o)
+            if lod == 1 and str(note).startswith("HB"):
+                # the export reads the _LOD1 OBJECT and keys its impostor on that object's MESH name
+                # (`gate1_set.py` tree rows -> `prototype`), so that is what this row records.
+                belt_rows.append(dict(name=o.name, lod1_object=o.name, prototype=me.name, species=sp, seed=seed,
+                                      location=[round(x, 3), round(y, 3), round(z, 3)],
+                                      scale=[round(sx, 4), round(sy, 4), round(sz, 4)],
+                                      rotation_z_deg=round(math.degrees(rot), 2), height_m=round(h, 2),
+                                      note=note))
         counts[sp] = counts.get(sp, 0) + 1
     print(f"[env_trees] placed {sum(counts.values())} trees {counts} in {time.time() - t0:.0f}s")
+    if belt_rows:
+        write_belt_manifest(belt_rows)
     return plan
+
+
+# Phase 8d belt r2, item 5 of the brief: the far-tree rows the viewer will gain, in a form the export can diff.
+# `prototype` is the LOD1 object's mesh name, which is exactly the key `export/gate1_set.py` puts on a far tree and
+# `impostors.prototype_map` resolves to one of the 16 baked atlases.
+BELT_MANIFEST = common.ROOT / "docs" / "phase8d_belt_r2_trees.json"
+
+
+def write_belt_manifest(rows):
+    protos = {}
+    species = {}
+    for r in rows:
+        protos[r["prototype"]] = protos.get(r["prototype"], 0) + 1
+        species[r["species"]] = species.get(r["species"], 0) + 1
+    doc = dict(
+        what="Phase 8d belt r2: the tree belt on the exhibition hall's east face, placed by env_trees.hall_belt "
+             "and appended to the planting plan after every relief pass. Every row is an ordinary far tree: its "
+             "_LOD1 object carries the _LOD2 mesh, so the export gives it a 2-triangle billboard and an impostor.",
+        source="scripts/env_trees.py (hall_belt + build_all)",
+        count=len(rows), species=species, prototypes=protos,
+        top_cap_world_z=HALL_BELT_TOP_Z, step_m=HALL_BELT_STEP,
+        prototype_key="the _LOD1 object's mesh name = export/gate1_set.py far-tree `prototype`; "
+                      "impostors.prototype_map maps the _LOD2 name onto the baked _LOD1 atlas",
+        trees=sorted(rows, key=lambda r: r["name"]))
+    BELT_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    BELT_MANIFEST.write_text(json.dumps(doc, indent=1))
+    print(f"[env_trees] hall belt manifest: {len(rows)} trees, {len(protos)} prototypes -> {BELT_MANIFEST}")
 
 
 # ----------------------------------------------------------------------------- standalone line-up test

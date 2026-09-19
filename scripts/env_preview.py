@@ -259,6 +259,12 @@ if __name__ == "__main__":
     engine = "EEVEE"
     local = "--local" in args
     master = "--master" in args
+    for i, a in enumerate(args):
+        if a == "--env":
+            # render a DIFFERENT environment.blend (a before-state pulled out of git, say) with everything else
+            # identical: Phase 8d belt r2 uses it for the before/after crops.
+            common.ASSET_FILES["ENV"] = common.Path(args[i + 1])
+            print("[env_preview] ENV from", args[i + 1])
     lod = 0
     res = (1280, 720)
     for a in args:
