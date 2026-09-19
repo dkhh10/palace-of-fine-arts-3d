@@ -955,3 +955,22 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
    / 2.7 / 2.8 / 2.4 from 2.9 / 3.0 / 2.3 / 2.7 / 2.5 / 2.4, the water half of that move being the 6d reflection fix rather than Phase 7.
 6. **Rule restated for later rounds:** a "before" capture must be on the same deployment as the change being judged. `gate5cm` predates the 6d mobile
    reflection, so the mobile before/after deltas in this round bundle two changes and are reported as such rather than credited to one.
+
+## QA round 20 (Phase 8 items 8a / 8b part 1 / 8c on the live URL, tag `gate8`, 2026-09-19) — 8c CLOSED, 8a NOT CLOSED, 8b measured
+1. **A lever that cannot be measured on the build that ships has to be measured after export, and the export can reach one box only.** 8a's densification
+   moved the hero's shore band (leaf-green 0.62x -> **0.84x** of the reference) and left the other four half-share boxes where they were (05 shore **0.29x**,
+   03 cards 0.54x, 02 shore 0.65x). 56-95 % of the pixels in every shrub box changed and at 100 % only one band looks different: **pixel change is not look
+   change**, and the tile decides.
+2. **A budget exception must be priced in DRAWN triangles, not placed ones.** The accepted "+~105 k placed" cost **+~560 k rendered triangles per pass**
+   (+1.12 M per frame at the five water stations, identical on mobile) because the LOD1 walk-in shrub set is submitted in full every pass although
+   `shrubLod` reports `lod1: 0, source: null`. Price the exception against `renderer.info.render.triangles` at the stations before accepting it.
+3. **A sampling trick that manufactures structure the data does not have shows up as a pattern.** The 2K atlas plus coverage share 0.15 improves every
+   crossings number (2.92 -> 6.97 at station 2) and paints a **regular ordered dot grid** on every far-tree crown seen against the sky, visible at 100 % on
+   the delivered hero. The tiles override the metric (gate rule, 2026-09-10) and this is recorded as a new defect, not as a win.
+4. **A memory figure is only as good as what it traverses.** `resident()` bills textures reachable from material slots; the impostor atlas is a custom
+   uniform, so ~32-89 MB of atlas has been absent from every GPU-memory number quoted in Phases 6-8 — `texture_bytes` was byte-identical across a 1K -> 2K
+   swap of 16 atlases. Any resident claim must name what its traversal can and cannot see.
+5. **A projection default is worth more than a re-bake.** 8c cost 0 bytes, 0 bake and 0 tier change and took the near shaft's banding anisotropy from
+   **4.76 to 1.39** (reference 1.60) with grain and pores back at 100 %. Measure the cause before buying resolution.
+6. **Scores.** Desktop 01 3.78 · 02 3.25 · **03 2.75** · 04 2.88 · 05 3.06 · **06 2.89**; mobile 3.2 / 3.3 / 2.4 / 2.7 / 2.8 / 2.5. The hero holds because
+   its two real gains and its one new artefact are in the same frame.
