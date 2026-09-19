@@ -149,10 +149,12 @@ const fragmentShader = /* glsl */`
 	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage
 	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV, Phase 7 floor)
 	uniform vec3 pfaImpInterior;
-	// Phase 8b band atlas — ( columns, rows, azimuth0 in radians, unused ) and the rows' elevations
-	// in radians (up to four; only the first 'rows' of them are read).
+	// Phase 8b band atlas — ( columns, rows, azimuth0 in COMPASS degrees for the log, unused ), the
+	// rows' elevations in radians (up to four; only the first 'rows' of them are read), and column
+	// 0's own heading as a unit xy vector in Blender space, which is what the lookup measures from.
 	uniform vec4 pfaBand;
 	uniform vec4 pfaBandEl;
+	uniform vec2 pfaBandA0;
 	// Phase 8b — ( magLo, magHi, the RAW-COVERAGE SHARE, the RAMP scale ).  See the header.
 	uniform vec4 pfaImpCov;
 	#ifdef PFA_FOG
@@ -236,17 +238,23 @@ const fragmentShader = /* glsl */`
 		// PHASE 8b — THE BAND ATLAS.  Columns are azimuth, rows elevation; the contract is
 		// docs/briefs/phase8b_band_atlas.md and every number comes from manifest.impostors.band.
 		//
-		// AZIMUTH.  vDirBlender is tree -> camera in Blender Z-up.  Seen from above (down -z) the
-		// x axis runs right and y up, so an angle measured atan2( x, y ) grows from +Y toward +X,
-		// which IS "clockwise seen from above" - the sidecar's own convention.  Column 0 sits at
-		// pfaBand.z (azimuth0_deg, in radians here), so the column coordinate is the difference
-		// over the column step, wrapped into [0, columns).
+		// AZIMUTH.  vDirBlender is tree -> camera in Blender Z-up, and the column coordinate is the
+		// angle from COLUMN 0'S OWN HEADING over the column step, wrapped into [0, columns).
 		{
 			vec3 d = normalize( vDirBlender );
-			float az = atan( d.x, d.y ) - pfaBand.z;
+			// THE ANGLE IS MEASURED FROM THE SIDECAR'S OWN COLUMN-0 DIRECTION, never from a degree
+			// convention: band.json states azimuth0_deg in COMPASS degrees (clockwise from north,
+			// 180 = +X) while this shader works in Blender xy, and a 90 deg reading error there
+			// would rotate 127 trees and still render a plausible tree.  pfaBandA0 is that heading
+			// as a unit xy vector, so what is computed here is the signed angle from it, CLOCKWISE
+			// seen from above (+X -> -Y -> -X -> +Y), which is the sidecar's azimuth_dir:
+			//   c = a0 . d_xy,  s = a0.y * d.x - a0.x * d.y,  theta = atan2( s, c )
+			// Both are bilinear in d.xy, so the missing xy normalisation cancels in the ratio.
+			float cth = pfaBandA0.x * d.x + pfaBandA0.y * d.y;
+			float sth = pfaBandA0.y * d.x - pfaBandA0.x * d.y;
 			float cols = pfaBand.x;
 			float cstep = 6.2831853 / cols;
-			float cf = az / cstep;
+			float cf = atan( sth, cth ) / cstep;
 			cf = cf - floor( cf / cols ) * cols;          // wrap into [0, cols), negatives included
 			float i0 = floor( cf );
 			float f = cf - i0;
@@ -549,21 +557,36 @@ export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
  * both this and the GLSL that mirrors it), and so the convention is written down once:
  *
  *   direction   `dir` is tree -> camera in BLENDER Z-up, exactly what the vertex shader hands over.
- *   azimuth     `atan2( x, y )`: 0 along +Y, growing toward +X, which is CLOCKWISE SEEN FROM ABOVE
- *               (looking down -z, x runs right and y up). Column 0 sits at `azimuth0Deg`.
+ *   azimuth     the signed angle from COLUMN 0'S OWN HEADING (`azimuth0Dir`, Blender xy, straight
+ *               out of the sidecar's `azimuth0_blender_dir`), measured CLOCKWISE SEEN FROM ABOVE:
+ *               +X -> -Y -> -X -> +Y, which is band.json's `azimuth_dir`. A compass `azimuth0Deg`
+ *               is converted (north = -X, east = +Y) only when no vector is given - the real
+ *               sidecar says 180 deg AND (1, 0, 0), and those are 90 deg apart in this file's xy.
  *   columns     `columns` of them at 360 / columns degrees; the last blends back into the first.
  *   elevation   `asin( z )`, matched to the NEAREST of `elevationsDeg` — no blend between rows.
  *
  * @returns {{ col0:number, col1:number, f:number, row:number, azDeg:number, elDeg:number }}
  */
-export function bandSelect( dir, { columns = 12, rows = 3, azimuth0Deg = 0, elevationsDeg = [ 0, 20, 40 ] } = {} ) {
+export function bandSelect( dir, { columns = 12, rows = 3, azimuth0Dir = null, azimuth0Deg = 0,
+	elevationsDeg = [ 0, 20, 40 ] } = {} ) {
 	const [ x, y, z ] = dir;
 	const len = Math.hypot( x, y, z ) || 1;
 	const dz = z / len;
-	const azDeg = Math.atan2( x / len, y / len ) * 180 / Math.PI;
 	const elDeg = Math.asin( Math.min( Math.max( dz, - 1 ), 1 ) ) * 180 / Math.PI;
+	// Column 0's heading. The manifest resolves it to a vector; a compass degree is converted the
+	// one way CLAUDE.md allows (north = -X, east = +Y, clockwise) and never guessed at.
+	let a0 = azimuth0Dir;
+	if ( ! a0 ) {
+		const phi = azimuth0Deg * Math.PI / 180;
+		a0 = [ - Math.cos( phi ), Math.sin( phi ) ];
+	}
+	const al = Math.hypot( a0[ 0 ], a0[ 1 ] ) || 1;
+	const ax = a0[ 0 ] / al, ay = a0[ 1 ] / al;
+	// the signed angle from a0 to d_xy, CLOCKWISE seen from above (+X -> -Y -> -X -> +Y)
+	const cth = ax * x + ay * y, sth = ay * x - ax * y;
+	const azDeg = Math.atan2( sth, cth ) * 180 / Math.PI;
 	const step = 360 / columns;
-	let cf = ( azDeg - azimuth0Deg ) / step;
+	let cf = azDeg / step;
 	cf -= Math.floor( cf / columns ) * columns;            // wrap into [0, columns), negatives too
 	const col0 = Math.floor( cf ) % columns;
 	const f = cf - Math.floor( cf );
@@ -639,6 +662,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			geometry: bandBlock ? { framePx: bandBlock.framePx, innerPx: bandBlock.innerPx,
 				gutterPx: bandBlock.gutterPx, atlasPx: [ bandBlock.atlasW, bandBlock.atlasH ],
 				columns: bandBlock.columns, rows: bandBlock.rows, azimuth0Deg: bandBlock.azimuth0Deg,
+				azimuth0Dir: bandBlock.azimuth0Dir, azimuth0From: bandBlock.azimuth0From,
 				elevationsDeg: bandBlock.elevationsDeg, rowOrigin: bandBlock.rowOrigin } : null } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
 	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
@@ -712,9 +736,13 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			// octahedral atlases are, which is the v flip frameUv has always done.
 			rowFromTop: { value: ( useBand && bandBlock.rowOrigin === 'top' ) ? 1 : 0 },
 			// ( columns, rows, azimuth0 in RADIANS, unused ) and the rows' elevations in radians.
+			// .z is the sidecar's compass degrees, carried for the debug view and the log only: the
+			// LOOKUP measures from pfaBandA0, never from this number.
 			pfaBand: { value: new THREE.Vector4( useBand ? bandBlock.columns : 0,
-				useBand ? bandBlock.rows : 0,
-				useBand ? bandBlock.azimuth0Deg * Math.PI / 180 : 0, 0 ) },
+				useBand ? bandBlock.rows : 0, useBand ? bandBlock.azimuth0Deg : 0, 0 ) },
+			pfaBandA0: { value: new THREE.Vector2(
+				useBand && bandBlock.azimuth0Dir ? bandBlock.azimuth0Dir[ 0 ] : 1,
+				useBand && bandBlock.azimuth0Dir ? bandBlock.azimuth0Dir[ 1 ] : 0 ) },
 			pfaBandEl: { value: new THREE.Vector4(
 				...[ 0, 1, 2, 3 ].map( ( i ) => ( useBand && Number.isFinite( bandBlock.elevationsDeg[ i ] ) )
 					? bandBlock.elevationsDeg[ i ] * Math.PI / 180 : 0 ) ) },
@@ -831,7 +859,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 				? `impostor BAND atlas (Phase 8b) on ${report.band.prototypes}/${report.prototypes} prototype(s): `
 					+ `${g.columns} azimuth x ${g.rows} elevation frames of ${g.framePx} px `
 					+ `(inner ${g.innerPx}, gutter ${g.gutterPx}) on a ${g.atlasPx[ 0 ]}x${g.atlasPx[ 1 ]} atlas; `
-					+ `azimuth 0 at ${g.azimuth0Deg} deg, clockwise seen from above, `
+					+ `azimuth 0 = Blender dir (${g.azimuth0Dir.map( ( v ) => v.toFixed( 3 ) ).join( ', ' )}) `
+					+ `= compass ${g.azimuth0Deg} deg, from ${g.azimuth0From}, clockwise seen from above, `
 					+ `elevation rows ${g.elevationsDeg.join( '/' )} deg from row 0 at the ${g.rowOrigin}; `
 					+ `two-azimuth linear blend, nearest elevation row`
 					+ ( report.band.missing.length ? `; the octahedral atlas is kept on ${report.band.missing.join( ', ' )}` : '' )

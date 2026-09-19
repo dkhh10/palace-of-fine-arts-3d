@@ -41,7 +41,8 @@ COLUMNS, ROWS = 12, 3
 FRAME, GUTTER = 341, 8
 INNER = FRAME - 2 * GUTTER
 ATLAS_W, ATLAS_H = 4096, 1024
-AZIMUTH0_DEG = 0.0
+AZIMUTH0_DEG = 180.0          # COMPASS (clockwise from north), the real sidecar's value
+AZIMUTH0_DIR = [1.0, 0.0, 0.0]  # ... which is the Blender view direction +X
 ELEVATIONS_DEG = [0.0, 20.0, 40.0]
 SRC_GRID, SRC_FRAME, SRC_GUTTER = 12, 170, 4
 SRC_INNER = SRC_FRAME - 2 * SRC_GUTTER
@@ -65,10 +66,10 @@ def octa_cell(d):
 
 
 def dir_of(az_deg, el_deg):
-    """The band's own convention: azimuth clockwise from +Y seen from above, elevation above the
-    horizon, in BLENDER Z-up — the inverse of the shader's atan2(x, y) / asin(z)."""
+    """band.json's own convention: cell i faces d_xy = (cos(30 i), -sin(30 i)) in BLENDER Z-up, i.e.
+    the angle is measured CLOCKWISE SEEN FROM ABOVE from column 0's heading (1, 0, 0)."""
     az, el = math.radians(az_deg), math.radians(el_deg)
-    return (math.sin(az) * math.cos(el), math.cos(az) * math.cos(el), math.sin(el))
+    return (math.cos(az) * math.cos(el), -math.sin(az) * math.cos(el), math.sin(el))
 
 
 def src_block(img, col, row):
@@ -86,7 +87,7 @@ def build_atlas(src_png):
     out = Image.new("RGBA", (ATLAS_W, ATLAS_H), (0, 0, 0, 0))
     for j, el in enumerate(ELEVATIONS_DEG):
         for i in range(COLUMNS):
-            az = AZIMUTH0_DEG + i * (360.0 / COLUMNS)
+            az = i * (360.0 / COLUMNS)   # from column 0's heading, not from north
             col, row = octa_cell(dir_of(az, el))
             cell = src_block(img, col, row).resize((INNER, INNER), Image.LANCZOS)
             # rows from the BOTTOM, as the sidecar declares (row_origin "bottom")
@@ -128,7 +129,11 @@ def main():
                "note": "FIXTURE re-laid from the 2K octahedral frames; content is 2K, layout is the contract",
                "atlas_px": [ATLAS_W, ATLAS_H], "frame_px": FRAME, "gutter_px": GUTTER, "inner_px": INNER,
                "columns": COLUMNS, "rows": ROWS, "azimuth0_deg": AZIMUTH0_DEG,
-               "azimuth_direction": "clockwise seen from above (atan2(x, y) in Blender Z-up)",
+               "azimuth0_blender_dir": AZIMUTH0_DIR,
+               "azimuth0_convention": "azimuth 0 is the view direction (1,0,0) in Blender Z-up, which "
+                                      "CLAUDE.md's compass calls 180 deg; cell i faces "
+                                      "(cos(30 i), -sin(30 i))",
+               "azimuth_direction": "clockwise seen from above",
                "elevations_deg": ELEVATIONS_DEG, "row_origin": "bottom", "prototypes": {}}
     made = []
     for name in protos:
@@ -198,7 +203,8 @@ def main():
     files = man["textures"]["gate3"]["files"]
     band_block = {k: v for k, v in sidecar.items()
                   if k in ("atlas_px", "frame_px", "gutter_px", "inner_px", "columns", "rows",
-                           "azimuth0_deg", "elevations_deg", "row_origin", "note")}
+                           "azimuth0_deg", "azimuth0_blender_dir", "azimuth0_convention",
+                           "elevations_deg", "row_origin", "note")}
     band_block["synthetic"] = True
     band_block["prototypes"] = {}
     for name, _, st in made:
