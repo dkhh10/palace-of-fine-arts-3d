@@ -4,6 +4,8 @@
 # root, with PFA_MAIN_ROOT pointing at the MAIN checkout (the assets are served from its export/out):
 #
 #   web/tools/p7.sh desk  <tag> [extra k=v ...]   stations 1,2,5 at 1920x1080, DESKTOP tier
+# Extra arguments are viewer query parameters (`k=v`); an argument starting with `--` is handed to
+# screenshot.mjs itself (e.g. `--groups` for the per-group triangle breakdown).
 #   web/tools/p7.sh six   <tag> [extra k=v ...]   stations 1-6   at 1920x1080, DESKTOP tier
 #   web/tools/p7.sh perf  <tag> [extra k=v ...]   the 2560x1440 measure-only pass (120 frames, warmup 24)
 #   web/tools/p7.sh mob   <tag> [extra k=v ...]   stations 1-6 at 1170x2532, ?tier=mobile
@@ -32,7 +34,11 @@ ORBIT=${PFA_ORBIT:-0,0,0:80:5:253,215}
 
 QUERY=(--query "manifest=$MANIFEST" --query tiers=all --query t=0 --query billboards=0 --query treeboards=0
        --query lighting=baked --query post=all --query probe=1 --query impostors=1 --query water=1)
-for kv in "$@"; do QUERY+=(--query "$kv"); done
+# `k=v` is a viewer query parameter; anything starting with `--` is passed to screenshot.mjs
+# verbatim (e.g. `--groups`), so a flag no longer becomes a nonsense query key.
+for kv in "$@"; do
+	case "$kv" in --*) QUERY+=("$kv") ;; *) QUERY+=(--query "$kv") ;; esac
+done
 
 guard() {
 	ST=$(cat "$MAIN/export/out/bake_queue/status.json" 2>/dev/null || echo '{"state":"absent"}')

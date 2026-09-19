@@ -797,11 +797,15 @@ export async function loadShrubLod1( o ) {
 	// more than `dist` metres away (QA 20 §2, +1.12 M triangles per frame at the five water stations).
 	// `?shrubcull=0` restores that behaviour for the A/B; `?shrubcull=<n>` tunes the chunk budget.
 	if ( o.cull !== '0' ) {
-		const budget = Number.isFinite( parseFloat( o.cull ) ) ? Math.max( 0, parseFloat( o.cull ) ) : 128;
+		const budget = Number.isFinite( parseFloat( o.cull ) ) ? Math.max( 0, parseFloat( o.cull ) ) : 48;
 		const cull = buildDistanceCull( root, {
 			// minRadius 12 m: a shrub batch tighter than that is already local enough to frustum-cull.
-			// The budget is the ADDED draw calls over the whole set, and it is half the far trees' 256
-			// because the shore band is 25 meshes of ~55 k triangles, not 254 rows of 8 k.
+			// The budget is the ADDED draw calls over the whole set.  SWEPT same-session against 128
+			// (web/README.md "Phase 8b fix round"): 128 cuts 0.4 M more triangles at the hero but adds
+			// 41 draw calls at cam02, and interleaved B/C pairs put its frame time at or above 48's at
+			// four of the six stations - the extra draw calls cost what the triangles save.  48 keeps
+			// every station's draw count within 13 of the pre-8b figure and still cuts 0.33-2.02 M
+			// triangles per frame.
 			chunk: budget > 0 ? { minRadius: 12, minCount: 2, maxDepth: 3, gain: 0.95, budget } : null,
 			// the shrub set's OWN switch distance (25 m mobile / 30 m desktop), the shared fade band,
 			// and the same CULL_MARGIN_M the far trees take for the water's mirrored camera.
