@@ -356,13 +356,26 @@ def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=
     belt stands 5-11 m in front of that face -- against the hall, not out in the palace grounds -- with the offset
     alternating so the silhouette has depth, and every crown is tested against the hall footprint and the
     colonnade roof polygons before it is planted.  One pass, closest-packed: the screen has to be continuous or
-    the wall shows between the crowns exactly as it shows between the columns today."""
+    the wall shows between the crowns exactly as it shows between the columns today.  Each crown is placed by its
+    own measured z extent: underside 0.25-0.90 m below the local ground (no floating crowns, no trunks to pay for)
+    and top 11-16 m above it, hard-capped at the hall's 15.7 m cornice line in world z."""
     import env_city
     coll = SUB["ENV_backdrop"]
     m_forest = L.mat("MAT_backdrop_forest")
     rnd = random.Random(8004)
     src = {k: env_city._canopy_mesh(f"ENV_src_hallbelt_{k}", 80 + k, lobes=4 if k < 3 else 3) for k in range(4)}
     tris_of = {k: len(me.polygons) for k, me in src.items()}
+    # measured, not assumed: each crown cluster's own local z extent, so a crown can be placed by its UNDERSIDE and
+    # its TOP instead of by its centre (review r2 finding 4 -- the first version put the centre at
+    # z0 + rz + 0.6..2.4, which left every crown floating 0.6-2.4 m over the ground with no trunk under it, and let
+    # the tallest ones reach ~22 m, over the hall's own 20 m roof crest).  89 trunks are not affordable: the pin
+    # leaves 86 triangles.  So the crowns are sunk instead -- a belt of foliage meeting the shrub line, which is
+    # what ref 169 shows behind the colonnade, at zero extra triangles.
+    zext = {k: (min(v.co.z for v in me.vertices), max(v.co.z for v in me.vertices)) for k, me in src.items()}
+    # tops stay under the hall's cornice line in WORLD z, so undulating terrain cannot push one over the roof:
+    # HALL_EAVE + 0.2 = 15.7, which is 4.3 m below the 20.0 m roof crest (HALL_EAVE + HALL_RISE) and 1.0 m below
+    # the 16.7 m parapet top (HALL_EAVE + 0.5 + 0.7).  ref 169 shows exactly that: the hall roofline above the belt.
+    top_limit_world = HALL_EAVE + 0.2
     poly = L.ensure_ccw(hall_poly)
     n = len(poly)
 
@@ -412,10 +425,12 @@ def build_hall_belt(SUB, hall_poly, hall_field, terrain_height, colonnade_polys=
                 continue
             k = rnd.choice((0, 0, 1, 1, 2, 3))
             rx = rnd.uniform(3.6, 5.6) * (0.80 if k == 3 else 1.0)
-            h = rnd.uniform(12.5, 19.5)
-            rz = h * 0.46
             z0 = terrain_height(p.x, p.y)
-            items[k].append(((p.x, p.y, z0 + rz + rnd.uniform(0.6, 2.4)), rnd.uniform(0.0, math.tau),
+            sink = rnd.uniform(0.25, 0.90)                       # underside this far BELOW the local ground
+            top = min(rnd.uniform(11.0, 16.0), top_limit_world - z0)
+            zmin, zmax = zext[k]
+            rz = max(1.0, (top + sink) / (zmax - zmin))
+            items[k].append(((p.x, p.y, z0 - sink - zmin * rz), rnd.uniform(0.0, math.tau),
                              (rx, rx * rnd.uniform(0.82, 1.18), rz)))
             tris += tris_of[k]
             placed += 1

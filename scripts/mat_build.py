@@ -1800,6 +1800,13 @@ def backdrop_atmosphere(name, r0=140.0, r1=760.0, amount=0.85, tint=None, lots=0
         u = t.add(t.mul(wx, -0.477), t.mul(wy, -0.879))
         inside = t.maprange(t.sub(t.sub(22.0, t.mul(u, 0.130)), wz), -2.0, 2.0, 0.0, 1.0)
         gate = t.mul(t.smoothstep(u, 12.0, 30.0), t.maprange(u, 150.0, 230.0, 1.0, 0.0))
+        # ACROSS the shadow too (review r2 finding 3): this material also covers the Marina / Cow Hollow house
+        # field out to 460 m, and without a lateral gate a house 300 m off the axis took up to 52 % albedo shade,
+        # which reads as a band painted across the city instead of a shadow behind the palace.  The caster is
+        # ~150 m of colonnade across the sun direction (ARCH_colonnade_* spans r 37-115 m either side), so the
+        # penumbra is full out to 150 m lateral and gone by 220 m.
+        lat = t.absval(t.sub(t.mul(wx, 0.879), t.mul(wy, 0.477)))
+        gate = t.mul(gate, t.maprange(lat, 150.0, 220.0, 1.0, 0.0))
         sh = t.mul(t.mul(inside, gate), shade)
         c = t.vscale(c, t.sub(1.0, sh))
         c = t.hsv(c, sat=t.sub(1.0, t.mul(sh, 0.85)))
@@ -1816,22 +1823,33 @@ def backdrop_atmosphere(name, r0=140.0, r1=760.0, amount=0.85, tint=None, lots=0
 
 def build_backdrop_lawn():
     """MAT_backdrop_lawn -- the far-field ground from 178 m out (ENV_backdrop_far_ground / _under_ground and slot 0
-    of ENV_backdrop_city_ground).  It exists because the palace's own MAT_lawn must not move: that one is the
-    foreground turf the hero and cam05 stand on, tuned in Phase 4.  This one is 23 161 982 m2 of Marina / Presidio
-    ground at 0.18 texels/m, and in the VIEWER it is also what the roads, gravel and soil read as: Gate 1 groups a
-    multi-material mesh by slot 0, so ENV_backdrop_city_ground's five materials collapse to this one downstream
-    (Cycles still shades each face with its own).  So: mown grass as the base, with low-frequency grey street and
-    dry/soil drift mixed in at the block scale, and no saturated green anywhere."""
+    of ENV_backdrop_city_ground).  It exists for ONE reason: the palace's own MAT_lawn must not move.  That one is
+    the foreground turf the hero and cam05 stand on, tuned in Phase 4; this is 23 161 982 m2 of Marina / Presidio
+    ground at 0.18 texels/m and has nothing to do with it.
+
+    Review r2 finding 2 corrects what an earlier version of this comment claimed.  Slot 0 decides only which export
+    GROUP a merged backdrop mesh joins; it does NOT decide what the mesh bakes as.  `export/gate2_set.py:211-233`
+    rebuilds the per-polygon material assignment on every merged ENV mesh from `env_poly_src.npz` (KD-tree on world
+    polygon centres) BEFORE the albedo bake, precisely so "the gravel paths, soil and asphalt would otherwise bake
+    as lawn".  So the roads, gravel and soil of ENV_backdrop_city_ground already bake as themselves, and painting
+    street-grey and bare-soil on top of them here greyed the Marina Green twice -- the washed-out mid-ground in the
+    8d aerial.  What this material actually shades after the restore is (a) the genuine lawn polygons of the city
+    ground and (b) the two far-ground planes, which are single-material and run from r 355 m out to 2 600 m, i.e.
+    they stand in for everything past the modelled city (which stops at 720 m).  The grey/soil drift therefore
+    survives only OUTSIDE 700-950 m, at half its old amplitude; inside that it is low-saturation mown grass."""
     m = ML.new_material("MAT_backdrop_lawn")
     t = Tree(m.node_tree)
     W = t.geometry().outputs["Position"]
     N = t.geometry().outputs["Normal"]
+    wx, wy, _wz = t.sepxyz(W)
+    # the stand-in band: 0 over the modelled city (where gate2 restores the real road/soil materials), 1 beyond it
+    standin = t.smoothstep(t.vmath("LENGTH", t.combxyz(wx, wy, 0.0)), 700.0, 950.0)
     dry = t.maprange(t.noise(W, 1.0 / 38.0, detail=3, rough=0.55), 0.38, 0.66, 0.0, 1.0)      # watered / dry
     c = t.mix(dry, C(0.082, 0.112, 0.052), C(0.152, 0.148, 0.092))
     street = t.maprange(t.noise(t.vadd(W, (19.0, 71.0, 0.0)), 1.0 / 16.0, detail=3, rough=0.6), 0.60, 0.78, 0.0, 1.0)
-    c = t.mix(t.mul(street, 0.75), c, C(0.062, 0.060, 0.058))                                  # asphalt / paving grey
+    c = t.mix(t.mul(t.mul(street, 0.38), standin), c, C(0.062, 0.060, 0.058))                  # far city, unmodelled
     soil = t.maprange(t.noise(t.vadd(W, (5.0, 41.0, 0.0)), 1.0 / 26.0, detail=3), 0.70, 0.84, 0.0, 1.0)
-    c = t.mix(t.mul(soil, 0.6), c, C(0.118, 0.086, 0.058))                                     # bare yards
+    c = t.mix(t.mul(t.mul(soil, 0.30), standin), c, C(0.118, 0.086, 0.058))                    # ditto, bare ground
     c = t.vscale(c, t.maprange(t.noise(W, 1.0 / 5.0, detail=3), 0.3, 0.7, 0.88, 1.12))
     rough = t.add(0.93, t.mul(t.sub(t.noise(W, 0.5, detail=2), 0.5), 0.08))
     t.output(surface=t.principled(**{"Base Color": c, "Roughness": rough, "Specular IOR Level": 0.12,

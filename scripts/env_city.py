@@ -164,10 +164,11 @@ def build_ground(SUB, terrain_height, clear):
     gravel sidewalks on every street, the Presidio forest floor and the open Marina Green / Crissy lawn.
     One mesh, five materials."""
     coll = SUB["ENV_backdrop"]
-    # Phase 8d: slot 0 is MAT_backdrop_lawn, not the palace's MAT_lawn.  Two reasons: this is 23 km2 of Marina /
-    # Presidio ground at 0.18 texels/m and has nothing to do with the foreground turf the hero stands on, and
-    # export/gate1_set.py groups a multi-material backdrop mesh by SLOT 0 alone -- so in the viewer this one
-    # material is what the roads, gravel and soil below all read as (Cycles still shades each face correctly).
+    # Phase 8d: slot 0 is MAT_backdrop_lawn, not the palace's MAT_lawn -- this is 23 km2 of Marina / Presidio
+    # ground at 0.18 texels/m and has nothing to do with the foreground turf the hero and cam05 stand on, which
+    # stays frozen.  Slot 0 decides only which export GROUP the merged mesh joins: export/gate2_set.py:211-233
+    # restores the per-polygon material of every merged ENV mesh from env_poly_src.npz before the albedo bake, so
+    # the gravel, asphalt and soil below still bake as themselves (review r2 finding 2).
     mats_lib = [L.mat("MAT_backdrop_lawn"), L.mat("MAT_gravel_path"), L.mat("MAT_backdrop_asphalt"),
                 L.mat("MAT_soil"), L.mat("MAT_backdrop_hill")]
     LAWN, GRAVEL, ASPHALT, SOIL, DRY = 0, 1, 2, 3, 4

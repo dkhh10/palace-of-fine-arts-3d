@@ -5,8 +5,10 @@ Files touched: `scripts/mat_build.py` (MAT_backdrop_* block only), `scripts/env_
 and the two assets they rebuild (`assets/materials.blend`, `assets/environment.blend`). `export/` untouched, master not rebuilt.
 
 ## 1. Materials — verified by a node-graph diff, not by eye
-`/tmp/matdiff.py` hashes every material's node graph (node kinds + unlinked input values + link topology) in the
-pre-change `materials.blend` (from git) and the rebuilt one:
+`scripts/mat_hash_diff.py` (committed; raw log in `renders/logs/`) hashes every material's node graph — node kinds,
+unlinked input values, link topology, the shared `PFA_*` node groups it references *transitively*, and its image
+datablocks by pixel hash — plus every node group in the file on its own line, in the pre-change `materials.blend`
+(from git) and the rebuilt one:
 
 ```
 added:     ['MAT_backdrop_lawn']
@@ -24,7 +26,7 @@ No MAT_ outside the backdrop block moved. What changed in each:
 | `MAT_backdrop_roof` / `_roof_tile` | lot spread (22 % / 20 %) + haze; roof also takes the palace shadow. |
 | `MAT_backdrop_forest` | albedo ×1.55 and the gap-shadow depth 0.66→0.55 (round 5 took it down 45 % against a bright yellow canopy; with the haze doing that job the only thing left was turning the un-hazed masses — the new belt at 150 m — into black holes), + haze from 210 m. |
 | `MAT_backdrop_hill` / `_asphalt` | haze only (hills 900–2600 m, asphalt from 200 m). |
-| `MAT_backdrop_lawn` | **new.** The far-field ground (23.2 km² at 0.18 texels/m). It exists so the palace's own `MAT_lawn` — the turf the hero stands on — does not move, and because Gate 1 groups a multi-material backdrop mesh by **slot 0 alone**, so in the viewer this one material is also what the far roads, gravel and soil read as (Cycles still shades each face with its own). |
+| `MAT_backdrop_lawn` | **new.** The far-field ground (23.2 km² at 0.18 texels/m). It exists for one reason: the palace's own `MAT_lawn` — the turf the hero and cam05 stand on — must not move. ~~and because Gate 1 groups a multi-material mesh by slot 0, so this is also what the far roads, gravel and soil read as~~ **corrected after review r2 finding 2:** slot 0 decides only which export *group* the merged mesh joins; `export/gate2_set.py:211-233` restores the per-polygon material of every merged ENV mesh from `env_poly_src.npz` before the albedo bake, so the gravel, asphalt and soil still bake as themselves. The street-grey and bare-soil mixes were therefore double-painting the Marina Green and are now gated to the 700–950 m stand-in band at half amplitude. |
 
 All three new terms are fixed functions of world position, so the Gate 2 DIFFUSE-colour bake reproduces them exactly
 and the end-of-Phase-8 Cycles hero sees them too. The three mechanisms they answer (measured in `phase8d_analysis.md`):
@@ -74,3 +76,26 @@ came down as the haze went up. ref 105's 0.82 luma / 0.073 saturation is 1–3 k
 200–700 m, so matching it exactly would be wrong physics — and real aerial perspective is light *added* to the view,
 which an albedo (max 1.0) cannot reach and the albedo bake would not carry anyway. (b) The hero band is now slightly
 darker than ref 169's belt; its variance moved the right way, and the rest is lighting's, not the backdrop's.
+
+## 4. Review r2 (`docs/reviews/phase8_env_r2_review.md`, MERGE WITH FIXES) — what was applied
+1. **Finding 1.** The throwaway `/tmp/matdiff.py` is committed as `scripts/mat_hash_diff.py` and now also hashes
+   `bpy.data.node_groups` (each group on its own diff line *and* transitively inside every consumer's hash) and each
+   material's image datablocks by pixel content, closing the hole where a change inside a shared `PFA_*` group or a
+   repacked texture would have reported every consumer as "unchanged". Raw log committed beside this report.
+2. **Finding 2.** The slot-0 premise was wrong (see the table above): comments corrected in `env_city.py:167` and
+   `mat_build.build_backdrop_lawn`, and the street-grey (0.75 → 0.38) and bare-soil (0.60 → 0.30) mixes are now
+   multiplied by a stand-in gate that is 0 inside 700 m and 1 beyond 950 m. Inside the modelled city the material is
+   low-saturation mown grass and nothing else; the drift survives only on the two far-ground planes, which are
+   single-material and stand in for the un-modelled city past 720 m.
+3. **Finding 3.** The palace shadow gains the cross-wind gate: `lat = |0.879·wx − 0.477·wy|`, full penumbra to 150 m
+   lateral (the colonnade spans r 37–115 m either side of the sun direction) and gone by 220 m, so houses hundreds of
+   metres off the shadow axis no longer take up to 52 % albedo shade.
+4. **Finding 4 (geometry).** The belt crowns are no longer placed by their centre. Each source cluster's own local z
+   extent is measured at build time and every crown is placed by its **underside** (0.25–0.90 m *below* the local
+   ground — no floating crowns, and no trunks to pay for: the pin leaves 86 triangles) and by its **top** (11–16 m
+   above local ground, hard-capped at `HALL_EAVE + 0.2 = 15.7` m in world z, i.e. 4.3 m below the 20.0 m roof crest
+   and 1.0 m below the 16.7 m parapet, so undulating terrain cannot push a crown over the roofline). Triangle count
+   and the cap logic are untouched.
+5. **Finding 5 (rename fan-out)** goes to the export engineer and the viewer, as the lead directed; **finding 4 of
+   the review's own numbering (the Cycles far-field GI check of `HAZE_TINT`)** goes on the delivery checklist for the
+   4K hero. Neither is actioned here.
