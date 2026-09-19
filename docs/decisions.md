@@ -817,3 +817,14 @@ memory/tier cost), then bake/encode; (8d) backdrop city blocks and trees (cam06)
 shaded-stone blue-violet tint on mobile (viewer). One builder on the GPU at a time (ENV previews, bakes, encodes); CPU analyses run alongside; Chrome never
 while Blender is alive. Each item closes with one QA round on the URL; the phase closes with a comparison sheet: viewer hero before (gate7) / after, Cycles
 4K hero before (Phase 5 v2) / after (a new render on the changed master), and the reference photo. Budget: the user accepts multi-session; on a usage limit stop.
+
+## 2026-09-19 · 8b decision: ship the baked 2K impostor atlases in tier 1 and sample alpha as coverage — zero GPU time
+The bake engineer's analysis (docs/briefs/phase8b_bake_analysis.md, 6072db3): the crown's bounding sphere maps onto 81 inner px at 1K / 162 at 2K while the station-2
+crown is 736 px across at 1080p (one 1K texel = 9 screen px); silhouette crossings per 100 screen px: Cycles 7.76, 1K 2.40, 2K 3.28; the bake's leaf density is right
+(21.8 per 100 texels). Nothing thresholds alpha in the bake or compose; 93-100 % of covered crown-top texels are semi-transparent and the viewer's ALPHA_TEST 0.33 plus
+a saturated a2c ramp under magnification paints them solid — the "pale opaque mass". Since the 6b tiering, tiers.py has stripped the already-baked 2K keys, so the
+viewer has drawn 1K atlases (a 6b regression of the 6c look, unnoticed because the QA parity baseline round16c was captured on the same 1K path... to be confirmed by
+the export when it restores them). Decision: (1) export names the 2K albedo/normdepth atlases in tier 1 with the 1K as the tier-0 lowres stand-in (tier 0 unchanged
+to the byte; +6.4 MB in tier 1; mobile stays 1K); (2) the viewer samples atlas alpha as coverage under magnification (dither / a2c fed by the atlas alpha, no
+binary cut) — `?impcov=` switch, 0 restores. Rejected: 4K atlas (54 min GPU, 512 MB), compose-side remap (eats the silhouette). Stretch, only if 1+2 miss the
+station-2 crossings target: a 12x3 band atlas at 341 px frames (13 min GPU, 128 MB, +13 MB).
