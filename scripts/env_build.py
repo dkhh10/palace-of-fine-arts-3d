@@ -566,9 +566,25 @@ BLADE_W = 0.05             # grass / reed blade width (m)
 # 8-15 px, so 1300 leaf cards buy nothing. Leaf COVERAGE (n_cards * card^2) is what makes the silhouette read, so
 # each step keeps the coverage and multiplies the card size instead: cards get k x wider and k^2 x fewer.
 #   LOD0 full, LOD1 ~2.2 x cards (~21 % of the tris), LOD2 ~4.5 x cards (~5 %) on a coarser core.
+#
+# PHASE 8a (QA 17 section 3 / section 4: "still broad flat angular cards at stations 1, 2, 3 and 5", leaf-green
+# pixel share ~0.5 x the reference at five boxes). That rule -- keep the coverage, make the cards k x wider and
+# k^2 x fewer -- is exactly what produces a blade: at LOD1 an 8.5 cm leaf became an 18.7 cm quad and a 4.5 cm
+# reed blade an 7.8 cm strap. The coverage argument holds for a silhouette seen at 8-15 px; it fails at the 3 m
+# and 8 m stations, and the even scatter of big quads is what reads as "angular cut-out lobes".
+#   LOD1 now runs a 1.65 x card at full coverage (1.87 x the cards, 25 % narrower) and a 0.75 blade factor
+#   (2.3 x the blades, 33 % narrower), which lands the whole unique LOD1 set at 1.83 x its round-02 triangles,
+#   inside the 2 x cap the 8a brief sets. LOD2 keeps its round-02 numbers: it is the mobile / far set.
 SHRUB_LOD = {0: dict(card=1.00, cover=1.00, blade=1.00, sub=2),
-             1: dict(card=2.20, cover=0.95, blade=0.33, sub=2),
+             1: dict(card=1.65, cover=1.00, blade=0.75, sub=2),
              2: dict(card=4.50, cover=0.85, blade=0.12, sub=1)}
+# Cards are emitted in CLUMPS at several scales at these LODs (structure, not count: at LOD0 the card total is
+# unchanged, so LOD0 keeps its triangle count exactly and only the distribution changes). LOD2 keeps the even
+# scatter so its meshes stay byte-for-byte what the web export ships.
+CLUMP_LODS = (0, 1)
+CLUMP_N = (4, 9)                              # cards per clump
+CLUMP_SIZES = (0.58, 0.82, 1.05, 1.38)        # the several leaf scales; mean square = 1.00, so coverage is kept
+TUFT_LODS = (0, 1)                            # blade clumps: tufts of 4-8 blades instead of an even fan
 # a shrub farther than this from every QA camera renders its LOD1 mesh even at LOD0 (LOD2 beyond 2 x)
 SHRUB_FAR = 80.0
 
@@ -595,6 +611,27 @@ def _card(verts, faces, cx, cy, cz, w, h, angle, tilt):
     faces.append([b, b + 1, b + 2, b + 3])
 
 
+def _leaf_clump(verts, faces, rnd, cx, cy, cz, nx, ny, card, n, spread):
+    """Phase 8a: one leaf clump -- `n` cards of several scales fanned about (cx, cy, cz) with a shared dominant
+    orientation and a spread of tilts, pushed a little along the surface normal (nx, ny).
+
+    A clump gives the silhouette lobes and fine edges where an even scatter of single quads of one size gives
+    flat angular cut-outs (QA 17 section 4, stations 1, 2, 3 and 5). Card COUNT is the caller's; this only
+    decides where the cards go and how big each one is, so the triangle total is untouched at a given count."""
+    a0 = rnd.uniform(0.0, math.pi)
+    t0 = rnd.uniform(-0.9, 0.9)
+    for _ in range(n):
+        s = CLUMP_SIZES[rnd.randrange(len(CLUMP_SIZES))] * rnd.uniform(0.88, 1.14)
+        out = rnd.uniform(0.0, spread)
+        _card(verts, faces,
+              cx + rnd.gauss(0.0, spread) + nx * out,
+              cy + rnd.gauss(0.0, spread) + ny * out,
+              max(0.0, cz + rnd.gauss(0.0, spread * 0.8)),
+              card * s, card * 1.25 * s * rnd.uniform(0.85, 1.35),
+              (a0 + rnd.gauss(0.0, 0.85)) % math.pi,
+              max(-1.45, min(1.45, t0 + rnd.gauss(0.0, 0.55))))
+
+
 def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="mound", cover=1.5, lod=0):
     """Mounded evergreen bush (pittosporum / mahonia): a dark inner blob wrapped in a shell of small leaf cards.
     `form='upright'` gives the coarser, more open mahonia habit (cards clustered on a few upright sprays)."""
@@ -615,6 +652,7 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="m
     bm.free()
     area = 2 * math.pi * radius * (0.6 * radius + 0.4 * height)
     n_cards = max(40, int(cover * area / (card * card * 1.25 * 0.53)))
+    clumped = lod in CLUMP_LODS
     if form == "upright":
         n_stems = rnd.randint(5, 9)
         stems = []
@@ -623,24 +661,38 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="m
             rr = radius * rnd.uniform(0.0, 0.6)
             lean = rnd.uniform(0.05, 0.35)
             stems.append((math.cos(a) * rr, math.sin(a) * rr, a, lean, height * rnd.uniform(0.7, 1.15)))
-        for _ in range(n_cards):
+        done = 0
+        while done < n_cards:
             sx, sy, sa, lean, sh = stems[rnd.randrange(n_stems)]
             t = rnd.uniform(0.25, 1.0) ** 0.55
             cz = t * sh
             spread = radius * 0.38 * (0.3 + t)
             cx = sx + math.cos(sa) * lean * cz + rnd.uniform(-spread, spread)
             cy = sy + math.sin(sa) * lean * cz + rnd.uniform(-spread, spread)
-            _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.75, 1.25), card * 1.25 * rnd.uniform(0.8, 1.4),
-                  rnd.uniform(0, math.pi), rnd.uniform(-1.1, 1.1))
+            if clumped:
+                n = min(rnd.randint(*CLUMP_N), n_cards - done)
+                _leaf_clump(verts, faces, rnd, cx, cy, cz, math.cos(sa), math.sin(sa), card, n, card * 0.85)
+                done += n
+            else:
+                _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.75, 1.25),
+                      card * 1.25 * rnd.uniform(0.8, 1.4), rnd.uniform(0, math.pi), rnd.uniform(-1.1, 1.1))
+                done += 1
     else:
-        for _ in range(n_cards):
+        done = 0
+        while done < n_cards:
             u = rnd.uniform(0, 2 * math.pi)
             zt = rnd.uniform(0.02, 1.0) ** 0.55
             rr = math.sqrt(max(0.0, 1.0 - zt * zt)) * radius * rnd.uniform(0.80, 1.12)
             cx, cy = math.cos(u) * rr, math.sin(u) * rr
             cz = zt * height * rnd.uniform(0.80, 1.05)
-            _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.7, 1.2), card * 1.25 * rnd.uniform(0.85, 1.45),
-                  rnd.uniform(0, math.pi), rnd.uniform(-1.2, 1.2))
+            if clumped:
+                n = min(rnd.randint(*CLUMP_N), n_cards - done)
+                _leaf_clump(verts, faces, rnd, cx, cy, cz, math.cos(u), math.sin(u), card, n, card * 0.75)
+                done += n
+            else:
+                _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.7, 1.2),
+                      card * 1.25 * rnd.uniform(0.85, 1.45), rnd.uniform(0, math.pi), rnd.uniform(-1.2, 1.2))
+                done += 1
     me = bpy.data.meshes.new(name)
     me.from_pydata([tuple(v) for v in verts], [], faces)
     me.update()
@@ -662,12 +714,24 @@ def make_blade_clump(name, seed, height=1.1, blades=60, width=BLADE_W, arch=0.35
     width = width / max(0.2, step["blade"]) ** 0.5 if lod else width
     rnd = random.Random(seed)
     verts, faces = [], []
+    # Phase 8a: at LOD0/LOD1 the blades come in tufts of 4-8 that share an origin and a lean direction, so a
+    # clump reads as several fans crossing rather than one even spray of straps (QA 17 section 4, cam02 r2c1).
+    tufted = lod in TUFT_LODS
+    tuft = (0.0, 0.0, 0.0, 0)          # ox, oy, lean azimuth, blades left in this tuft
     for _ in range(blades):
         a = rnd.uniform(0, math.pi)
         w = width * rnd.uniform(0.6, 1.15)
         h = height * rnd.uniform(0.5, 1.35)
         ox, oy = rnd.uniform(-spread, spread), rnd.uniform(-spread, spread)
         la = rnd.uniform(0, 2 * math.pi)
+        if tufted:
+            if tuft[3] <= 0:
+                tuft = (rnd.uniform(-spread, spread), rnd.uniform(-spread, spread),
+                        rnd.uniform(0, 2 * math.pi), rnd.randint(4, 8))
+            ox = tuft[0] + rnd.gauss(0.0, spread * 0.22)
+            oy = tuft[1] + rnd.gauss(0.0, spread * 0.22)
+            la = tuft[2] + rnd.gauss(0.0, 0.6)
+            tuft = (tuft[0], tuft[1], tuft[2], tuft[3] - 1)
         lean = arch * rnd.uniform(0.4, 1.6)
         lx, ly = math.cos(la) * h * lean, math.sin(la) * h * lean
         dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2

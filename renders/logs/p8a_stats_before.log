@@ -1,0 +1,35 @@
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+source             LOD0     LOD1     LOD2   cards L0 cards L1 card cm L1
+agap0               420      138       48          0        0       0.0
+agap1               420      138       48          0        0       0.0
+agap2               420      138       48          0        0       0.0
+big0              5,838    1,210      260       2879      565      29.7
+big1              9,204    1,870      402       4562      895      29.7
+big2             13,338    2,682      576       6629     1301      29.7
+big3              6,544    1,348      290       3232      634      29.7
+maho0             1,008      262      100        464       91      23.1
+maho1             1,566      372      100        743      146      23.1
+maho2             2,254      506      110       1087      213      23.1
+pitto0            1,130      286      100        525      103      18.7
+pitto1            1,952      446      100        936      183      18.7
+pitto2            2,768      606      132       1344      263      18.7
+pitto3            3,502      752      162       1711      336      18.7
+pitto4            4,976    1,040      224       2448      480      18.7
+pitto5            5,866    1,214      262       2893      567      18.7
+pitto6            8,900    1,810      390       4410      865      18.7
+pitto7            5,240    1,092      236       2580      506      18.7
+pitto8            2,656      584      128       1288      252      18.7
+reed0               324      108       36          0        0       0.0
+reed1               324      108       36          0        0       0.0
+reed2               324      108       36          0        0       0.0
+twig0               280       92       32          0        0       0.0
+twig1               280       92       32          0        0       0.0
+twig2               280       92       32          0        0       0.0
+TOTAL            79,814   17,094    3,920   (25 sources)
+[shrub-stats] unique LOD1 triangles: 17,094
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 41251 exited rc=0 after 1 s (max 600)
