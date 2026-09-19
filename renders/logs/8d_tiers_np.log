@@ -1,0 +1,3 @@
+[tiers] desktop: t0 48.3 MB / 219 files, t1 509.1 MB / 320 files, t2 58.3 MB / 50 files; total 615.6 MB; resident est 1249 MB
+[tiers] desktop: first frame = tier 0 48.24 MB + boot 1.12 MB + headers 36 kB = 49.39 MB on the wire, within the 49.5 MB target (moved 31 placeholder maps out, 1.74 MB)
+[tiers] desktop: 0 files over the 25 MiB cap -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate5/manifest.json

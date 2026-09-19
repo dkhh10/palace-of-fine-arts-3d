@@ -2587,3 +2587,72 @@ cp export/out/gate1/{env_trees.glb,env_trees.gltf,env_trees.bin,env_trees_ktx2.g
 cp export/out/gate3/trees_far/{topology.json,trees_far_lod2.blend}     <MAIN>/export/out/gate3/trees_far/
 (cd web && npm test)
 ```
+
+## Phase 8d — the ENV re-export after the backdrop rebuild, with 8a-3 riding it (2026-09-19, export engineer)
+
+Chain, in the order it actually has to run (the brief's order put the Gate 2 bake second; `gltf_gate1` cannot
+run before it, because it loads `backdrop_uv1.npz` onto the export set and asserts the loop counts):
+
+```sh
+export PFA_GATE1_BLEND_DIR="$PWD/export/out/gate1"        # else Gate 2 reads the phase6-export worktree
+scripts/blender_run.sh 2400 -- --background <MAIN>/master_delivery.blend --python export/export_set.py -- --gate1
+python3 export/p8d_pin.py                                  # THE PIN. Stop here if it fails.
+scripts/blender_run.sh 1800 -- --background --python export/gate2_probe.py
+scripts/blender_run.sh 1800 -- --background --python export/gate2_set.py
+rm export/out/gate2/bake/ENVBD__backdrop_{building,skylight,roof,roof_tile,forest,hill}.json \
+   export/out/gate2/bake/ENVBD__lawn.json export/out/gate2/tex_ktx2/gate2_ENVBD__lawn_*.ktx2
+export/bake_queue.sh --gate2 start                         # GPU; 7 jobs, 52.7 s
+export/gltf_pack.sh --gate2                                # rm -rf's tex_ktx2: restore MAIN's other maps after
+cp export/out/gate2/backdrop_uv1.npz export/out/gate2/backdrop_uv1_shipped.npz   # see below
+python3 export/manifest_v3.py
+scripts/blender_run.sh 1200 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
+export/gltf_pack.sh --gate1 ; python3 export/p8d_pin.py --glbs
+scripts/blender_run.sh 900 -- --background <MAIN>/master_delivery.blend --python export/shrub_lod1.py
+export/gltf_pack.sh --shrubs
+node web/tools/instance_rows.mjs <W>/export/out/gate1/env.glb        <W>/export/out/gate3/instance_rows.json
+node web/tools/instance_rows.mjs <W>/export/out/gate1/env_shrubs.glb <W>/export/out/gate3/instance_rows_shrub_lod1.json
+python3 export/gate4_instance_order.py && PFA_ORDER_SET=shrub_lod1 python3 export/gate4_instance_order.py
+python3 export/gate5_instance_rows.py && python3 export/gate4_order_selftest.py && python3 export/verify_glb.py
+python3 export/manifest_v2.py && python3 export/manifest_v4.py && python3 export/budget_doc.py
+export/sync_main.sh && python3 export/tiers.py && python3 export/tiers.py --mobile && python3 export/tiers.py --no-pack
+python3 export/verify_glb.py --gate5 && (cd web && node test/tiers_test.mjs) && python3 export/name_sweep.py
+export/sync_main.sh
+```
+
+**The pin** (`export/p8d_pin.py`, CPU, exit 1 on failure, record in `out/gate1/p8d_pin.json`): 21 checks, all
+green — uv1 groups 52 / atlas tiles / coverage / min 0.0876, uv2 meshes 66, lightmap slots and assets,
+`uv_missing` 10/0, near trees 20, far billboards 127 with both lists identical in content **and order**, ARCH
+949 382 and ORN 1 099 192 placed unchanged, ENV placed 894 974 -> 901 874 = **+6 900**, and the lawn group
+renamed with nothing stale left. After the pack, `--glbs`: **arch.glb, orn.glb, ground.glb byte-identical**.
+
+**Three traps this chain walked into, all now fixed in code or documented:**
+1. `gate2_common.GATE1_BLEND_DIR` defaults to the **phase6-export** worktree. Every Gate 2 step needs
+   `PFA_GATE1_BLEND_DIR`, or the bake is built from another branch's geometry.
+2. `gltf_gate1.py` read `backdrop_uv1.npz` from a hard-coded MAIN path — now local-then-MAIN, like every
+   other hand-off. Its loop-count assert is what caught it (297 480 vs 318 180 loops on backdrop_forest).
+3. `gltf_pack.sh --gate2` starts with `rm -rf tex_ktx2`, so in a worktree that has no `tex/` PNGs it leaves
+   only the maps it just encoded (36 of 203). Restore MAIN's others (`rsync -a --ignore-existing`) **before**
+   `manifest_v3`, or the manifest is written against a partial texture set.
+
+**`backdrop_uv1_shipped.npz` was promoted** (it is the canary that the shipped backdrop textures and the
+shipped UV1 agree). Measured before promoting: of the ten backdrop meshes only **backdrop_forest** differs in
+UV SET (297 480 -> 318 180 loops: the belt) and only **backdrop_building** differs per loop while its UV set
+is unchanged (the 640-object merge order moved, the atlas did not); the lawn rename is bit-identical
+(`allclose` on the arrays); the other seven are untouched. Both meshes that moved were re-baked this round,
+so nothing ships against a stale layout.
+
+**8a-3, measured per material** (not claimed): `MAT_shrub` ku2/kv2 on 1 196 cards, `MAT_shrub_light` ku2/kv2
+on 1 822, `MAT_shrub_dry` **ku1/kv2** on 284 (its LOD2 card is 0.89x wide / 1.77x tall against its LOD1 card,
+so an isotropic 2 would have halved its leaf width the wrong way — review r3 finding 7), `MAT_reeds`
+untouched. Coverage at the shipped factors, from `p8e_leaf_probe.py --shrubs`: shrub **1.08x** / shrub_light
+**1.07x** / shrub_dry **1.01x** at the 25 m LOD switch and 1.00x / 1.00x / 1.03x at 54 m. Samplers went REPEAT
+in `env.gltf` for those three materials only (cloned, because sampler 1 is shared with the tree leaf cards)
+and in `env_shrubs.gltf` to match, so the one shared runtime albedo cannot be re-wrapped to CLAMP.
+
+**Cost.** `env_t0.glb` **2 172 384 -> 2 172 696 B (+312)** — the only tier-0 geometry change; tier 0 total
+48 269 972 -> **48 270 284 (+312)**; first frame on the wire 49 393 776 -> **49 394 896 (+1 120**, the +312
+plus the boot-overhead re-measure of the rebuilt `web/dist`), **605 104 B under the 50 000 000 rule**. Mobile
+tier 0 +312, first frame 47 630 546. `env_t2.glb` 6 787 864 -> 6 956 512 (+168 648: the belt and the shrub
+UVs), `env.glb` 38 181 724 -> 38 348 124, `env_shrubs.glb` 668 352 -> 668 388, and the manifests now carry
+8e's `env_trees.glb` at 3 768 500 (the refresh that rode with this chain). `verify_glb` PASS, `--gate5` PASS
+desktop and mobile, `tiers_test` all green, `name_sweep` PASS (127 exempt treeboards, 0 to explain).
