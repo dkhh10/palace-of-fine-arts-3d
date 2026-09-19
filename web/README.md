@@ -990,7 +990,9 @@ from 5.90 at share 0) for the smallest box movement.
 **Cost: none measurable.** 1440p, 120 frames after 24 of warmup, stations 1-6, one session with the
 2K default repeated LAST: 2K **36.30 ms** → band **34.00** → 2K again **32.55**. The drift (−3.75 ms)
 is larger than the difference, so the band sits inside it. Resident is **identical at 1862.9 MB** —
-4096x1024 and 2048x2048 are the same 4 M texels — and the declared payload is *smaller*, 8.4 MB
+4096x1024 and 2048x2048 are the same 4 M texels — (**RESTATED**: 1862.9 MB was the figure `resident()`
+reported before Phase 8b item b; the same scene is **1814.2 MB** under the corrected counter, and the
+"identical" claim is confirmed there too — see "Phase 8b fix round", item b) — and the declared payload is *smaller*, 8.4 MB
 against 9.3 MB. Six stations against `?impband=0`: whole-frame luma within 0.006x everywhere, moving
 TOWARD the reference at cam01 (0.930x → 0.933x) and cam05 (0.979x → 0.985x); cam04 is untouched to
 the byte (no far tree in frame); 11-17 % of pixels change at the other five, which is the far-tree
@@ -1052,6 +1054,9 @@ repeated LAST as the drift control** (`web/tools/p8_perf_table.py`):
 **The drift is bigger than every delta**: the same default measured 31.85 ms first and 36.75 ms last,
 so against a drift-corrected baseline all three LOD2 settings are at or below the default. Memory goes
 DOWN 127.9 MB (the walk-up LOD1 glb is not loaded). **Cost is not what decides this.**
+(The resident column is the pre-8b counter: it missed every texture held in a custom uniform and
+billed a shared vertex buffer once per geometry. The DIFFERENCES stand — both errors are the same at
+every row — but the levels do not; see "Phase 8b fix round", item b.)
 
 Crossings per 100 screen px (lum < 40) and the QA-17 boxes, 1920x1080, cam01 / cam02 / cam05:
 
@@ -1102,6 +1107,146 @@ Regression, six stations at 1920x1080, `p8cbase` (`?detailproj=objxy`) against `
 Every station is touched (the layer is on every baked material) but only cam03 moves materially, and
 its whole-frame luma moves TOWARD the reference. No other station's luma changes by more than
 0.001x.
+
+## Phase 8b fix round (QA 20 carries), 2026-09-19
+
+Three items from `docs/briefs/phase8b_viewer_fix.md`. Everything below is measured on this Mac
+through `scripts/chrome_run.sh`, bake queue idle, no Blender alive.
+
+### a — `env_shrubs.glb` was drawn in full at every station (`?shrubcull=`)
+
+**Cause.** The shrub/reed LOD1 set has always had only the *fragment* half of its distance switch:
+`loadShrubLod1` sets `pfaSwitchDist` / `pfaSwitchSign` on the 25 materials, and beyond 25 m (mobile) /
+30 m (desktop) the dissolve discards every fragment. A discard still pays the whole vertex shader and
+the whole rasterisation, and `renderer.info` counts the submitted triangle either way. The *CPU* half
+— split the site-spanning batches, then hide per frame any batch whose every row is beyond the limit —
+was written for the far-tree meshes in 6c round 2 (`loadFarTrees`) and never for the shrubs.
+
+`shrubLod` reporting `lod1: 0, source: null, asked: false` is a red herring: that is `applyShrubLod`,
+the idle path that reads a `raw.shrub_lod` block the manifest does not carry. The switch the scene
+actually runs is set by `loadShrubLod1`, and it was working — in the fragment shader only.
+
+**Measured, not inferred.** `window.__pfaTrisByGroup()` (new) renders one frame with a counting hook on
+every mesh and attributes the frame's submitted triangles and draw calls to the scene-level group; its
+total is checked against `renderer.info` for the same frame. Per-station rows land in the perf JSON
+with `web/tools/screenshot.mjs --groups` (and `web/tools/p7.sh` now passes `--`-flags through).
+
+At the hero, before: `WEB_glb_env_shrubs` **2 024 352 triangles in 50 draws** (25 meshes x the water
+Reflector's second pass) of the frame's 6 361 468 — i.e. **1 012 176 per pass**, the whole LOD1 set, at
+*every* station including cam06 where the nearest shrub is over 100 m away. `?shrubcull=0` reproduces
+the gate9 triangle counts to the unit, so the A/B is exact.
+
+**Fix.** The far-tree chunk-and-cull extracted verbatim into `buildDistanceCull( root, { chunk, limit } )`
+(`web/src/foliageLazy.js`) and applied to the shrub LOD1 set at its own distance + the shared fade band
++ `CULL_MARGIN_M` (10 m, for the water's mirrored camera). `shrubLodUpdate` runs in `renderFrame()`
+beside `farTreeUpdate`.
+
+Switches: **`?shrubcull=0`** restores the pre-8b behaviour for the A/B; `?shrubcull=<n>` sets the
+chunking budget in ADDED draw calls (default **48**).
+
+2560x1440, desktop tier, gate4 settings, 120 frames after 24 of warmup, **interleaved A/C/A/C in one
+session** (A = `?shrubcull=0`, C = the default):
+
+| station | before ms (A/A, mean) | after ms (C/C, mean) | Δ ms | before tris | after tris | Δ tris | draws | shrub tris before → after |
+|---|---|---|---|---|---|---|---|---|
+| 1 lagoon_hero | 32.40 / 29.40 **30.90** | 28.40 / 30.20 **29.30** | −1.60 | 6 361 468 | 4 952 588 | **−1 408 880** | 335 → **317** | 2 024 352 → 615 472 |
+| 2 lagoon_ne | 34.80 / 34.80 **34.80** | 32.40 / 33.70 **33.05** | −1.75 | 6 344 584 | 5 510 136 | −834 448 | 329 → 341 | 2 024 352 → 1 189 904 |
+| 3 colonnade_walk | 38.90 / 39.80 **39.35** | 35.80 / 37.20 **36.50** | −2.85 | 7 111 092 | 6 030 448 | −1 080 644 | 351 → **343** | 2 024 352 → 943 708 |
+| 4 rotunda_ceiling | 26.60 / 24.80 **25.70** | 26.60 / 27.00 **26.80** | +1.10 | 3 293 588 | 2 961 488 | −332 100 | 184 → 197 | 1 012 176 → 680 076 |
+| 5 south_lawn | 30.60 / 30.40 **30.50** | 30.10 / 31.00 **30.55** | +0.05 | 6 125 874 | 4 928 054 | −1 197 820 | 320 → **308** | 2 024 352 → 826 532 |
+| 6 aerial | 34.10 / 33.40 **33.75** | 31.10 / 33.40 **32.25** | −1.50 | 6 729 552 | 4 705 200 | **−2 024 352** | 355 → **305** | 2 024 352 → **0** |
+
+`?tier=mobile`, same pass (shrub switch 25 m, so a little tighter):
+
+| station | before tris | after tris | Δ tris | draws | shrub tris before → after |
+|---|---|---|---|---|---|
+| 1 | 5 287 688 | 3 679 600 | −1 608 088 | 340 → 312 | 2 024 352 → 416 264 |
+| 2 | 5 766 920 | 4 817 332 | −949 588 | 362 → 370 | 2 024 352 → 1 074 764 |
+| 3 | 5 994 432 | 4 913 788 | −1 080 644 | 388 → 380 | 2 024 352 → 943 708 |
+| 4 | 2 972 140 | 2 630 650 | −341 490 | 201 → 213 | 1 012 176 → 670 686 |
+| 5 | 4 793 572 | 3 595 752 | −1 197 820 | 313 → 301 | 2 024 352 → 826 532 |
+| 6 | 5 172 900 | 3 148 548 | −2 024 352 | 348 → **298** | 2 024 352 → **0** |
+
+Mobile frame times sat at the 16.6 ms vsync floor in every pass, before and after, so there is no ms
+signal there; the triangle and draw counts are the claim.
+
+**Read the milliseconds carefully.** This session's own drift is larger than the effect: an A-vs-A
+repeat moved by up to **7.8 ms** at a station. **The triangle and draw counts are deterministic and are
+what this item claims**; the −2.85..+1.10 ms column is reported, not relied on.
+
+**The chunk budget was swept.** 128 (the first default) cuts 0.40 M more triangles at the hero but adds
+**+53 draws at cam02**, and two interleaved B/C pairs put it at or above 48 at four of the six
+stations — the extra draw calls cost roughly what the triangles save. 48 is adopted: every station is
+within 13 draws of its pre-8b figure and three are below it.
+
+**Pixel parity.** The six desktop stations before vs after: cam02/03/04 differ by **0 pixels**; cam01 by
+7, cam05 by 5, cam06 by 122 of 2 073 600 — and an A-vs-A repeat of cam06 differs by **134**, so even
+that is run-to-run noise. Whole-frame mean luma is identical to five decimals at all six. This is pure
+culling, as designed.
+
+### b — `resident()` never counted the impostor atlases (the figure of record, restated)
+
+**Cause.** `residentBytes()` in `web/src/main.js` reached a texture through exactly eight
+`MeshStandardMaterial` slots. Every texture held in a **custom uniform** was therefore billed by
+nothing — the 16 impostor albedo atlases (`uniform atlas`, 1K then 2K then the 4096x1024 band), the
+foliage translucency factor maps, the AgX LUT. A second, opposite error sat beside it: geometry was
+billed **per geometry object**, and `chunkGeometry` gives every chunk a `BufferGeometry` that *shares*
+its vertex buffers with the source, so the split factor inflated the geometry figure.
+
+**Fix.** Textures are now reached by TYPE, never by a list of names: every `uniforms` entry on a
+material (and on a `pfaFoliage` patch) whose value `isTexture`, plus the post chain's passes, plus
+`scene.background` / `scene.environment`, plus the widened standard slot list. Textures that belong to
+a render target are collected FIRST and skipped, so the composer's `tDiffuse` and a material's `envMap`
+cannot be billed twice (143 such hits at the hero). Geometry is summed one entry per `BufferAttribute`.
+
+The sidecar gains `texture_bytes_by_kind` (what each family costs, so a family that stops being billed
+shows as a missing row and not as a smaller total), `render_target_textures_skipped`,
+`geometry_bytes_before_dedup` (the pre-8b rule, kept so this restatement is auditable),
+`info_memory` and `counted_vs_renderer` (the renderer's own allocation counts, as the cross-check).
+
+**Old vs new at the hero** (2560x1440, desktop, gate5 manifest, band atlas default):
+
+| | pre-8b `resident()` | restated | Δ |
+|---|---|---|---|
+| geometry | 261.5 MB | **114.5** | −147.0 (shared vertex buffers billed once per geometry) |
+| instance matrices | 0.3 | 0.3 | 0 |
+| textures | 1 157.6 | **1 255.6** | **+98.0** |
+| render targets | 443.8 | 443.8 | 0 |
+| **total** | **1 862.9 MB** | **1 814.2 MB** | **−48.7** |
+
+The +98.0 MB of texture, by kind:
+
+| kind | textures | MB | counted before 8b? |
+|---|---|---|---|
+| material slot | 257 | 1 082.1 | partly — the 8 old slots; sheen / clearcoat / transmission maps (+25.2 MB) were not |
+| `scene.background` (sky equirect 4096x2048 RGBA16F) | 1 | 67.1 | yes |
+| **`uniform atlas` (the 16 impostor atlases)** | **16** | **67.1** | **NO** |
+| detail uniform | 12 | 33.6 | yes |
+| **`uniform pfaTrnMap` (foliage translucency)** | **4** | **5.6** | **NO** |
+| **`uniform lut` (AgX High Contrast 32³)** | **1** | **0.07** | **NO** |
+
+67.1 MB is 16 atlases x 4 194 304 texels x 1 B/texel (ASTC 4x4 = 8 bits/texel): **the band (4096x1024)
+and the 2K octahedral (2048x2048) cost exactly the same**, which is why `?impband=0` measures
+1 814.2 MB too — the "resident identical across the 1K → 2K swap" claim at line 992 was right about the
+*equality* and wrong about the *number*.
+
+`?tier=mobile` at the hero: **547.9 MB** restated (geometry 73.8, textures 236.4 — of which the impostor
+atlases are 5.6 and `scene.background` **67.1**, i.e. the full-size sky equirect is 28 % of the mobile
+texture budget — render targets 237.4), against 563.5 MB under the old counter. Still far under the
+700 MB ceiling.
+
+Item a's chunking costs **0 MB**: 261.2 → 265.4 MB under the old per-geometry rule, 114.5 → 114.5 MB
+under the correct one — the chunks share every vertex buffer and carry only their own slice of the
+instanced attributes.
+
+`counted_vs_renderer` reads **355 reached / 314 allocated**: more texture objects are *held* than the
+renderer has uploaded, because a texture is uploaded on first bind. The figure is what the page holds,
+which is the honest budget number on a unified-memory Mac; the count is the tripwire that says a family
+has stopped being reached.
+
+`web/tools/p8_perf_table.py`'s `resident_mb()` reads `total_bytes` (phase8_viewer_r2_review finding 2,
+already applied on this branch): the 3 553.3 MB and 3 550.1 MB in the two Phase 8 tables above were that
+script summing every `*_bytes` key including `total_bytes` itself.
 
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
@@ -1915,7 +2060,8 @@ Same session, 2560x1440, gate4 perf settings, stations 1-6 (median presented fra
 | delta | +1.90 | -2.00 | +0.30 | -0.70 | +1.70 | -0.40 | 0 |
 
 Non-monotonic and inside the session drift the 6c A/B already measured; draws, triangles and
-resident bytes are identical at every station.
+resident bytes are identical at every station. (Resident levels here are the pre-8b counter; see
+"Phase 8b fix round", item b, for the restated figure.)
 
 ## Deploying
 
@@ -2028,6 +2174,32 @@ One reporting difference to expect against a pre-6b capture: `patchedMaterials` 
 tiered load (87 against 65 at the hero), because the Gate 3 pass runs again at each tier and by then
 chunking has split the instanced meshes into more of them.  `lightmapsApplied` (16) and every
 rendered pixel are unchanged.
+
+### `resident` — the schema, restated in Phase 8b item b
+
+`info.resident` is the viewer's own byte sum for what the page holds on the GPU.  **Any figure
+captured before 2026-09-19 is on the old counter and is not comparable in LEVEL** (differences within
+one capture still are): it billed no texture held in a custom uniform and billed a shared vertex
+buffer once per geometry.  The hero went 1 862.9 MB → **1 814.2 MB** on restating; see "Phase 8b fix
+round", item b.
+
+| key | what it is |
+|---|---|
+| `total_bytes` | `geometry_bytes + instance_matrix_bytes + texture_bytes + render_target_bytes`. **THE figure of record.** MB = bytes / 1e6. |
+| `geometry_bytes` | vertex and index buffers, **one entry per `BufferAttribute`** — chunked geometries share theirs |
+| `geometry_bytes_before_dedup` | the same under the pre-8b per-geometry rule, kept so a restatement can be audited |
+| `instance_matrix_bytes` | `InstancedMesh.instanceMatrix` |
+| `texture_bytes` | one entry per `texture.source`; compressed from the mip data, uncompressed as w*h*bpp (x4/3 with mipmaps). Reached through material slots, **every `uniforms` entry whose value `isTexture`** (the impostor atlases, the translucency maps, the LUT), the post chain, `scene.background` and `scene.environment` |
+| `texture_bytes_by_kind` | that sum split by what the texture was reached THROUGH — audit this, not just the total: a family that stops being billed shows as a missing row |
+| `render_target_bytes` / `render_targets` | w*h*bpp*(1+samples): the resolve plus the multisample buffer, per target |
+| `render_target_textures_skipped` | hits on a texture that IS a render target's own (the composer's `tDiffuse`, a material's `envMap`), refused so they are billed once |
+| `textures` / `texture_sources` / `textures_sharing_a_source` | texture objects reached / distinct GPU uploads / clones that share a source |
+| `info_memory`, `counted_vs_renderer` | `renderer.info.memory` as the cross-check. "355 reached / 314 allocated" is normal — a texture is uploaded on first bind — but `textures` far BELOW the renderer's count means a family is going unbilled |
+
+`window.__pfaTrisByGroup()` (Phase 8b item a) is the matching tool for the frame: it renders one frame
+with a counting hook on every mesh and returns the submitted triangles and draw calls per scene-level
+group, with `renderer.info`'s own totals for the same frame beside them.  `screenshot.mjs --groups`
+writes it per station into the perf JSON.
 
 
 ## Run
