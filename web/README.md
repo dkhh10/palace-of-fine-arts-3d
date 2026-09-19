@@ -954,6 +954,55 @@ bake. `impostors.band` in the manifest drives it and `?impband=0` keeps the octa
   **1.62 % on willow_s11 and willow_s37**. So flat highlights, if any show, will show on the willows
   first — the 10-minute re-bake is the lever.
 
+### The real atlas (2026-09-19) — ADOPTED as the default
+
+Boot log, desktop tier, MAIN's synced gate5, no query:
+
+```
+impostor BAND atlas (Phase 8b) on 16/16 prototype(s): 12 azimuth x 3 elevation frames of 341 px
+(inner 325, gutter 8) on a 4096x1024 atlas; azimuth 0 = Blender dir (1.000, 0.000) = compass 180 deg,
+from azimuth0_blender_dir, clockwise seen from above, elevation rows 0/20/40 deg from row 0 at the
+bottom; two-azimuth linear blend, nearest elevation row (?impband=0 reverts)
+impostors: 145 tree(s) ... 12x3 band frames at 341 px on a 4096x1024 atlas, two-azimuth linear
+blend, alpha test 0.33 ... 16/16 atlas(es) loaded, 8.4 MB declared
+```
+
+**The tile is why it is adopted.** `renders/web/tiles/p9band/p9band_cam02_crown_100.png` (960 px
+`renders/web/960/p9band_cam02_crown.jpg`), Cycles | 2K + 0.15 | band 0 | band 0.10 | band 0.25: the
+2K card is the familiar soft blob; the band crown has **limbs, twiggy edges and sky between the
+branch masses**. At the hero, 200 % (`p9band_cam01_crown_200.png`), the crown reads as leaf clumps
+against the balustrade and **the residual dot texture is gone** — the share never engages there.
+
+| capture | crossings cam01 / 02 / 05 | cam01 leaf % (22.2) | cam01 c/e (0.852) | cam02 c/e (0.364) | cam02 level (1.00x) | cam05 c/e (0.960) |
+|---|---|---|---|---|---|---|
+| 2K + 0.15 | 7.99 / 6.97 / 8.53 | 24.1 | 0.566 | 0.434 | 1.09x | 0.910 |
+| band, share 0 | 11.97 / 5.90 / 11.66 | 23.4 | 0.581 | 0.429 | 1.08x | 0.926 |
+| **band, share 0.10** | **11.97 / 7.35 / 11.67** | **23.4** | **0.581** | **0.432** | **1.11x** | **0.926** |
+| band, share 0.25 | 11.97 / 10.19 / 11.68 | 23.4 | 0.581 | 0.446 | 1.14x | 0.926 |
+| Cycles | 11.73 / 7.76 / 15.89 | 22.2 | 0.852 | 0.364 | 1.00x | 0.960 |
+
+**The share now only engages at station 2.** With 341 px frames a texel is about a screen pixel at
+the hero and at station 5, so those two are BYTE-IDENTICAL across the whole sweep (0 / 0.10 / 0.15 /
+0.25 / 0.40) — the resolution alone puts the hero on the reference (11.97 against 11.73). **0.10 is
+adopted** (`IMP_COV.shareBand`): it lands station 2's crossings on the reference (7.35 against 7.76,
+from 5.90 at share 0) for the smallest box movement.
+
+**Cost: none measurable.** 1440p, 120 frames after 24 of warmup, stations 1-6, one session with the
+2K default repeated LAST: 2K **36.30 ms** → band **34.00** → 2K again **32.55**. The drift (−3.75 ms)
+is larger than the difference, so the band sits inside it. Resident is **identical at 3553.3 MB** —
+4096x1024 and 2048x2048 are the same 4 M texels — and the declared payload is *smaller*, 8.4 MB
+against 9.3 MB. Six stations against `?impband=0`: whole-frame luma within 0.006x everywhere, moving
+TOWARD the reference at cam01 (0.930x → 0.933x) and cam05 (0.979x → 0.985x); cam04 is untouched to
+the byte (no far tree in frame); 11-17 % of pixels change at the other five, which is the far-tree
+band itself.
+
+**The willow highlight note.** The bake shipped every band atlas at the OCTAHEDRAL range while the
+band's own p99.9 is higher: ×1.05-1.34 on twelve prototypes, ×1.46-1.72 on two eucalypts and
+**×3.06 / ×3.17 on the two willows**, whose clipped body texels are **1.62 %** against a 0.49 %
+median. Nothing flat is visible in the station tiles (no willow fills a QA crown box), so this is
+reported, not fixed — if a willow crown shows flat highlights at the water's edge in a later round,
+the 10-minute re-bake at the band's own range is the lever.
+
 ### The fixture, and what it proves
 
 `web/tools/p8_band_fixture.py` re-lays the baked 2K octahedral frames as the contract's 12x3 grid

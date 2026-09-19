@@ -520,10 +520,14 @@ export function parseImpEdge( v, msaa = true ) {
 // its foliage share 77.1 -> 74.2 % against Cycles' 72.3 %.  Above it the crossings overshoot
 // (0.25 -> 10.2, 1.0 -> 16.8) and the crown-box level walks off (1.04x -> 1.13x, 1.29x).
 export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0, share: 0.15, ramp: 1.0,
-	// Phase 8b band atlas: 341 px frames make a texel ~2.2 screen px at station 2 instead of 4.5,
-	// so the share has to be swept again on the real atlas (docs/briefs/phase8b_band_atlas.md).
-	// Until that bake lands it stays at the octahedral value, and the boot note says which is in use.
-	shareBand: 0.15 };
+	// Phase 8b band atlas, SWEPT ON THE REAL ATLAS (web/README.md "the real atlas"): 0 / 0.10 / 0.15
+	// / 0.25 / 0.40 at stations 1, 2 and 5.  The share only ever engages where a texel is bigger than
+	// a screen pixel, and with 341 px frames that is station 2 alone - stations 1 and 5 are
+	// byte-identical across the whole sweep.  0.10 puts station 2's crossings on the Cycles reference
+	// (7.35 against 7.76, from 5.90 at share 0) for the smallest box movement: centre/edge 0.432
+	// against the 2K path's 0.434 and the box level 1.11x against 1.09x.  0.25 and 0.40 overshoot
+	// the crossings (10.19, 11.26) and push the level to 1.14x.
+	shareBand: 0.10 };
 export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 	const d = { ...IMP_COV };
 	let unknown = null;
