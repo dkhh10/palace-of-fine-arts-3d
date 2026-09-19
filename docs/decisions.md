@@ -774,3 +774,13 @@ reflection, station 6's bay is water again. Cost: 278 / 265 / 300 draws against 
 at 16.7 ms so the phone's own frame rate is judged from the user's walk recording (owed). The station HUD prints shift_y to two decimals. Deployed (deploy 6).
 The merged phase6b worktrees were removed (branches kept). Remaining residuals stand as listed under "6b DONE WITH RESIDUALS"; no further polish is scheduled
 until the user says whether the 4.0 hero target (Phase 5 / 6c backlog) is still the goal.
+
+## 2026-09-19 · PHASE 7 APPROVED by the user (foliage look, desktop far trees + mobile near trees) — reopens the 6c-frozen foliage look
+The user's two screenshots on the live site (desktop hero: jagged dithered far-tree silhouettes, black-blotched crowns, flat shrub clusters; iPhone close orbit:
+flat impostor cut-outs with black cores because the mobile tier draws every tree as an impostor) and the lead's recommendation. Scope, all viewer-side and measured
+same-session: (A) impostor alpha edge softening (premultiplied alpha / mip bias / alpha-to-coverage) — QA 17 residual 3; (B) a floor on the stacked crown darkening
+(impint + crownint + sun path) so no crown goes near-black and station 5's frame returns to 1.00x — QA 17 residual 2; (C) a same-session A/B of the mesh switch
+distances at the hero (treemesh 40 -> 60 / 80, fartreemesh 12 -> 30 / 60): adopt the largest that stays within +3 ms of the current default and +100 MB resident;
+(D) mobile tier: near-tree meshes within ~25 m, the walk-up set within ~10 m, LOD1 shrubs inside that radius, impostor darkening eased; resident must stay < 700 MB,
+triangles reported; (E) the shrub card density (export, Blender) is DEFERRED unless A-D leave it as the obvious fault. One QA round (QA 19) on the URL closes it.
+Branch phase7-viewer; brief docs/briefs/phase7_viewer.md; the 6c look switches remain available for A/Bs.

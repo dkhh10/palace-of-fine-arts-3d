@@ -928,3 +928,6 @@ Evidence closed by the lead: mobile walk on the URL (24 probes, lowest ground -0
 ## 2026-09-18 · SESSION 6 FINAL STOP STATE — PROJECT DELIVERED THROUGH 6d
 main = this commit, clean; no Blender, no Chrome; live site deploy 6 at https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev. Open decision for the user only: whether the 4.0 hero target (Phase 5 / 6c backlog in Blender + export) is still the goal; nothing else is scheduled.
 Burn (list rates): session 6 (3ada03f9) 207.54   opus-5 175, fable-5-1 32 — Phase 6 to date ≈ ,290 + this session; project grand total ≈ ,789 + this session.
+
+## 2026-09-19 · SESSION 7 (same lead session continues) — PHASE 7 approved: foliage look
+User approved the lead's recommendation after two live-site screenshots (desktop far trees jagged/black-cored; iPhone close-up impostors flat). Scope in decisions.md "PHASE 7 APPROVED"; brief docs/briefs/phase7_viewer.md; branch phase7-viewer dispatched (Opus high). Shrub density (export) deferred. Then: review -> merge -> deploy -> captures (desktop 6, mobile 6 + close orbit) -> QA 19.
