@@ -1,0 +1,225 @@
+[shot] http://127.0.0.1:60527/?station=1&size=1920x1080&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest_mobile.json&tiers=all&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1&tier=mobile
+[page] [pfa] device tier: mobile (query) — ?tier=mobile; gl ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version), max texture 16384, astc true etc2 true s3tc true bptc true, dpr 1, screen 800x600, touch 0
+[page] [pfa] mobile render settings: treeMesh=25, farTreeLight=near, shrubLod=25, walkupMesh=0, farTreeMesh=45, impInt=0.45,0.015,0.55, imp2k=false, reflSet=both, reflRes=half; the planar reflection draws the reduced set (?reflset=both) (no second scene pass), the drawing buffer is capped at 1.5 M pixels
+[page] Failed to load resource: the server responded with a status of 404 (Not Found)
+[page] [pfa] mobile asset set: http://127.0.0.1:60527/assets/gate5/manifest_mobile.json
+[page] [pfa] manifest tiers: 52 low-resolution stand-in(s) in tex_lo — half-resolution ETC1S: measured smaller AND lower RMS than quarter-res UASTC on 5 of 6 sampled maps (export/out/gate5/lowres.json `probe`)
+[page] [pfa] manifest tiers: boot overhead 1.1 MB (the manifest, the KTX2 transcoder and the bundle) counted into tier 0
+[page] [pfa] manifest tiers: 3 tier(s), tier 0 46.5 MB in 235 file(s) (declared), tier 1 5.6 MB in 58 file(s) (declared), tier 2 9.4 MB in 48 file(s) (declared)
+[page] [pfa] 7 glbs, loaded in manifest order: arch:m_arch_t0.glb, ground:m_ground_t0.glb, orn:m_orn_t0.glb, env:m_env_t0.glb, arch:m_arch_t2.glb, orn:m_orn_t2.glb, env:m_env_t2.glb
+[page] [pfa] stations not in scripts/qa_cameras.py, indexed after 6: CAM_flythrough
+[page] [pfa] exposure: the LUT says exposure_applied_by "viewer (multiply linear by 2^exposure_ev before the shaper)", multiplier 2^-2.8331 = 0.14033
+[page] [pfa] sun: travel direction [-0.473,-0.872,-0.128] -> light placed opposite
+[page] [pfa] lightmap reservations for the Gate 3 bake, no texture yet: 988 mode "slot", 16 mode "asset", 1536 mode "none"
+[page] [pfa] materials.detail: 5 tiling set(s), 15 maps, 18 glb material rule(s) + 15 source-material rule(s), mode "object_space_tiled", bump distance 0.015 m
+[page] [pfa] detail: 3 merged group(s) list more than one source material, the first is used: MAT_EXP_ENVBD__MAT_lawn: MAT_gravel_path + MAT_soil -> gravelly_sand; MAT_EXP_ENV__ENV_ground_colonnade_walk: MAT_paving_stone + MAT_paving_stone_worn -> concrete_wall_007; MAT_EXP_ENV__ENV_terrain_ground: MAT_gravel_path + MAT_soil -> gravelly_sand
+[page] [pfa] 181 texture key(s) redirected to the file THIS variant's plan publishes (the texture tables spell the other variant's paths)
+[page] [pfa] materials: 62 set(s), 181 textures, 67 constant map(s) shipped as a factor, 33 map(s) already in the glb (in_glb, nothing loaded), 11.9 MB declared, mode "pbr"
+[page] [pfa] manifest v4 lightmaps: 16 own map(s) ready of 16; 988 per-instance slot(s) over 5 atlas(es); scale 3.14159
+[page] [pfa] manifest v4 impostors: 16 prototype(s), 12x12 octahedral frames at 85 px on a 1024 px atlas
+[page] [pfa] manifest pfa-phase6/5 at http://127.0.0.1:60527/assets/gate5/manifest_mobile.json
+[page] [pfa] uv2_relay_status.json: 7 asset(s) checked against the packed glbs, 0 flag(s) flipped; 16 own map(s) usable, 0 blocked, 0 on the frozen layout
+[page] [pfa] lighting mode: baked (?lighting override) — lightmaps carry the diffuse, sun and env are specular-only
+[page] [pfa] materials mode: pbr — 62 manifest texture set(s), 181 maps; manifest declares "pbr"
+[page] [pfa] foliage + impostors run at tier 2 (last env group tier 2, impostor atlases tier 0)
+[page] [pfa] load tiers: 3 declared, streaming up to all (?tiers=all); glbs tier 0: arch+ground+orn+env, tier 2: arch+orn+env; declared bytes 0=46.5 MB, 1=5.6 MB, 2=9.4 MB
+[page] [pfa] load plan: 154 files, 34.6 MB (sky.camera 3.6, sky.glossy 3.7, sky.diffuse 2.1, lut 7.4, glb:arch 2.3, glb:ground 2.0, glb:orn 1.1, glb:env 2.2, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.2, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.0, tex:roughness 0.0, tex:map 0.0, tex:roughness 0.0, tex:normal 0.0, tex:map 0.0, tex:roughness 0.0, tex:map 0.0, tex:roughness 0.0, tex:map 0.0, tex:roughness 0.0, tex:map 0.2, tex:roughness 0.0, tex:normal 0.0, tex:map 0.0, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.2, tex:roughness 0.0, tex:normal 0.0, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.1, tex:roughness 0.0, tex:normal 0.0, tex:map 0.2, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1, tex:map 0.1, tex:roughness 0.0, tex:normal 0.1)
+[page] [pfa] tier 0 denominator 47.6 MB from the manifest (tiers.bytes[0] 46.5 + boot overhead 1.1); the viewer's own HEAD plan summed 34.6 MB, which is not what gets fetched
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] [pfa] sky background sky_camera_4096x2048.hdr 4096x2048, rotation 90 deg
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] [pfa] PMREM specular environment from sky_glossy_4096x2048.hdr
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] [pfa] sky diffuse integral / L dw = 33.665, 38.253, 213.742 (the sky half of the irradiance the impostor atlases were baked under)
+[page] [pfa] PMREM diffuse environment from sky_diffuse_1024x512.hdr (irradiance for everything without a lightmap; QA-12b-1)
+[page] [pfa] sun: three direction 0.473,0.128,-0.872, irradiance 67.31939697265625, specular only
+[page] [pfa] water plane at y = -1.3 (WATER_Z -1.3), planar Reflector 512x512 (?reflres=half), reflection gather 0.003 / saturation 1, ripple 8 waves 1.20-0.034 m, murk 0.2353, 0.3523, 0.3166 (derived; ?watermurkgain=1), grazing cap 6
+[page] [pfa] post mist: COMP_golden_hour airlight cap 0.25 * (1 - exp(-k 5 * mist)), mist = LINEAR over 20..2020 m along the view ray (extinction length 400 m), haze [5.32, 3.74, 1.96], from manifest compositor.mist
+[page] [pfa] post bloom: threshold 12.827 (scene-linear; manifest 6.4136 x 2), strength 0.05000000074505806, radius 0.6000000238418579, mip chain from 1920x1080 (?bloomres=full)
+[page] [pfa] LUT texel type FloatType (OES_texture_float_linear) — extension present
+[page] [pfa] LUT lut_agx_high_contrast_65.cube size 65 shaper log2 [-12.47393, 4.026069] pivot 0.18
+[page] [pfa] post vignette: 0.07999999821186066 in linear, before the transform
+[page] [pfa] quality preset 'look': bloom full-res, Reflector half-res target, reflection set both
+[page] [pfa] post chain: mist + bloom + vignette (?post=all)
+[page] [pfa] display: tone mapping OFF, exposure x0.14033, LUT on
+[page] [pfa] station 1 CAM_qa_01_lagoon_hero
+  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)
+  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]
+  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]
+  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000
+[page] [pfa] lightMapIntensity = lightmap_scale 3.14159
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 46 uv set(s) on 23 geometr(ies), 16 material transform(s) neutralised, scale 13.139..15.986, +3.42 MB
+[page] [pfa] glb m_arch_t0.glb (arch) 2.3 MB in 0.07 s: 23 meshes, 12 instanced (504 instances), 416560 placed tris, 16 materials
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 8 uv set(s) on 4 geometr(ies), 4 material transform(s) neutralised, scale 8.407..15.987, +3.23 MB
+[page] [pfa] glb m_ground_t0.glb (ground) 2.0 MB in 0.02 s: 4 meshes, 0 instanced (0 instances), 113043 placed tris, 4 materials
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 54 uv set(s) on 27 geometr(ies), 27 material transform(s) neutralised, scale 11.313..15.936, +1.13 MB
+[page] [pfa] glb m_orn_t0.glb (orn) 1.1 MB in 0.07 s: 27 meshes, 27 instanced (402 instances), 640711 placed tris, 27 materials
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 36 uv set(s) on 36 geometr(ies), 14 material transform(s) neutralised, scale 6.081..16.004, +1.37 MB
+[page] [pfa] glb m_env_t0.glb (env) 2.2 MB in 0.03 s: 36 meshes, 29 instanced (1475 instances), 387129 placed tris, 14 materials
+[page] [pfa] 97 ENV_treeboard_* stand-ins hidden (?treeboards=0)
+[page] [pfa] gate4 instance irradiance [m_env_t0]: 1368/1368 placement(s) over 24/24 glb node(s), 24 material(s) cloned and patched, 6 with cov == 0 left on the probe
+[page] [pfa] gate4 instance irradiance: 1368/1368 placement(s) over 24 node(s) in 1 group(s) [m_env_t0 1368], 24 material(s) patched, 6 with cov == 0 left on the probe
+[page] [pfa] gate3 UV2 census: 54 mesh(es) carry TEXCOORD_1 (921 placements), 36 do not (1386 placements)
+[page] [pfa] gate3 lightmaps: 0/16 own map(s), 0/988 instance slot(s), 6 material(s) cloned; match error <= 0.189 m
+[page] [pfa] gate3 own maps NOT applied: ENV_terrain_ground, ARCH_rotunda_concrete_ochre_merged, ARCH_site_concrete_podium_merged, ENV_lagoon_bed, ARCH_colonnade_south_concrete_colonnade_merged, ARCH_colonnade_north_concrete_colonnade_merged, ARCH_site_paving_merged, ARCH_rotunda_concrete_inner_merged, ARCH_rotunda_plaster_ceiling_rib_merged, ARCH_rotunda_drum_band_merged, ENV_ground_colonnade_walk, ARCH_rotunda_concrete_podium_merged, ARCH_rotunda_dome_membrane_merged, ENV_riprap_merged, ARCH_rotunda_plaster_ceiling_merged, ARCH_rotunda_column_tan_inner_merged
+[page] [pfa] gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)
+[page] [pfa] gate3: 54 lightmap(s) deferred to a later load tier (max tier now 0): gate3_lmatlas_arch_inst_0+gate3_lmatlas_arch_inst_1 @1, gate3_lmatlas_arch_inst_0 @1, ARCH_colonnade_north_concrete_colonnade_merged @1, gate3_lmatlas_arch_inst_1 @1, ARCH_colonnade_south_concrete_colonnade_merged @1, gate3_lmatlas_arch_inst_1+gate3_lmatlas_arch_inst_2 @1 …. Those materials stay on the environment path until their tier lands.
+[page] [pfa] gate3 vertex irradiance: 6 COLOR_0 primitive(s), 12 placement(s), decoded at the ONE global range 44.25656 x scale 3.14159 read from manifest lightmaps.vertex_irradiance.range; the export derived it as uv2_relay_status.json vertex_irradiance_range_global = the max over all 14 near-tree meshes in vertex_irradiance.npz; gltfpack's shared buffers are harmless at one range
+[page] [pfa] instance chunking (QA-11d-1): 16 of 29 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 48 regional batches, +32 draw calls when every chunk is in frame
+[page] [pfa] 61 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 "borrow a neighbour's lightmap" stand-in is off at Gate 3
+[page] [pfa] 30 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch
+[page] [pfa] pbr: 22 of 22 scene materials textured from 14 of 62 manifest sets, 66 maps, 22.0 MB resident in 42 file(s) [42 RGB_ETC2_Format], requested nearest first (MAT_EXP_ARCH_rotunda__MAT_concrete_podium 64.9 m, MAT_EXP_ARCH_site__MAT_concrete_podium 28.7 m, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre 59.1 m …)
+[page] [pfa] pbr: factors applied to 22 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] detail (QA-12-1): 21 material(s) on 2 tiling set(s) (concrete_wall_007 x13, concrete_wall_008 x8), 6 textures, 3.1 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 5 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_site__MAT_paving
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [pfa] pbr: 4 of 4 scene materials textured from 4 of 62 manifest sets, 12 maps, 6.3 MB resident in 12 file(s) [12 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENV__ENV_lagoon_bed 0 m, MAT_EXP_ENV__ENV_ground_colonnade_walk 0 m, MAT_EXP_ENV__riprap 0 m …)
+[page] [pfa] pbr: factors applied to 4 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] detail (QA-12-1): 3 material(s) on 3 tiling set(s) (concrete_wall_007 x1, rock_boulder_dry x1, gravelly_sand x1), 9 textures, 2.6 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 15 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [pfa] pbr: 27 of 27 scene materials textured from 27 of 62 manifest sets, 81 maps, 37.2 MB resident in 81 file(s) [81 RGB_ETC2_Format], requested nearest first (MAT_EXP_ORN__ORN_urn_v1_LOD0_a_a_a 73.7 m, MAT_EXP_ORN__ORN_capital_rotunda_v2_LOD0_a 79.3 m, MAT_EXP_ORN__ORN_capital_rotunda_v1_LOD0_a 79.3 m …)
+[page] [pfa] pbr: factors applied to 27 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving
+[page] [pfa] pbr: 5 of 35 scene materials textured from 5 of 62 manifest sets, 11 maps, 1.9 MB resident in 11 file(s) [11 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENVBD__MAT_backdrop_building 0 m, MAT_EXP_ENVBD__MAT_backdrop_roof 0 m, MAT_EXP_ENVBD__MAT_bird_white 0 m …)
+[page] [pfa] pbr: factors applied to 5 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] pbr: 30 material(s) with NO texture set, left as exported: MAT_shrub_light, MAT_shrub_dry, MAT_shrub_dry, MAT_shrub_dry, MAT_shrub_dry, MAT_shrub_light, MAT_shrub_dry, MAT_shrub_light, MAT_shrub_dry, MAT_shrub, MAT_reeds, MAT_shrub …
+[page] [pfa] detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving
+[page] [pfa] pbr textures in 0.37 s; 52 superseded texture(s) disposed, 0.0 MB freed
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] RGBELoader has been deprecated. Please use HDRLoader instead.
+[page] [pfa] probe env: 6 x 512 px HDR cube from CAM_qa_01_lagoon_hero convolved to irradiance in 0.09 s; PMREM read back at 5 point(s), 4 carrying energy (verified non-black); faces 15220279.0/14174575.0/16682134.0/13403637.0/15810468.0/13729954.0
+[page] [pfa] probe env: 15 own map(s) and 39 slot atlas(es) are DEFERRED to a later load tier, not failed; the probe lights their surfaces until the tier lands
+[page] [pfa] probe env applied to 59 material(s) with no baked light of their own (6 lightmapped or vertex-lit, 24 already had an envMap, 1 not MeshStandard): MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre …
+[page] [pfa] probe env is a SINGLE-POINT approximation taken at the hero station, and the manifest's own probe.use says it is not the diffuse environment; this use of it is the lead's QA-13-1 call and applies only to surfaces with no baked light. ?probe=0 restores the sky-diffuse path.
+[page] [pfa] water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)
+[page] [pfa] reflection draw set reduced: 34 mesh(es) excluded (30 ORN, 4 backdrop), 89 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.
+[page] [pfa] ready in 1.59 s: 46.7 MB loaded of 58.6 MB planned (plan 0.06 s, sky 0.55 s, lut 0.06 s, glb 0.72 s) — TIER 0 of 3
+[page] THREE.Texture: Unable to serialize Texture.
+[page] THREE.Texture: Unable to serialize Texture.
+[page] THREE.Texture: Unable to serialize Texture.
+[page] [pfa] gate3 UV2 census: 76 mesh(es) carry TEXCOORD_1 (921 placements), 46 do not (1386 placements)
+[page] [pfa] gate3 lightmaps: 15/16 own map(s), 906/988 instance slot(s), 1 material(s) cloned; match error <= 0.189 m
+[page] [pfa] gate3 own maps NOT applied: ARCH_site_paving_merged
+[page] [pfa] gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)
+[page] [pfa] gate3 instance irradiance postponed: env.glb is in a later load tier
+[page] [pfa] 14 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 "borrow a neighbour's lightmap" stand-in is off at Gate 3
+[page] [pfa] 54 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch
+[page] [pfa] tier 1 in 0.40 s: 3.8 MB, 0 glb(s)
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 12 uv set(s) on 6 geometr(ies), 5 material transform(s) neutralised, scale 15.150..15.961, +0.07 MB
+[page] [pfa] glb m_arch_t2.glb (arch) 0.1 MB in 0.01 s: 6 meshes, 5 instanced (48 instances), 31874 placed tris, 5 materials
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 12 uv set(s) on 6 geometr(ies), 6 material transform(s) neutralised, scale 12.138..15.963, +0.18 MB
+[page] [pfa] glb m_orn_t2.glb (orn) 0.2 MB in 0.02 s: 6 meshes, 5 instanced (33 instances), 41252 placed tris, 6 materials
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 19 uv set(s) on 19 geometr(ies), 17 material transform(s) neutralised, scale 6.081..16.004, +4.70 MB
+[page] [pfa] glb m_env_t2.glb (env) 6.8 MB in 0.07 s: 19 meshes, 6 instanced (48 instances), 394802 placed tris, 17 materials
+[page] [pfa] 30 ENV_treeboard_* stand-ins hidden (?treeboards=0)
+[page] [pfa] gate4 instance irradiance [m_env_t2]: 8/8 placement(s) over 1/1 glb node(s), 1 material(s) cloned and patched, 1 with cov == 0 left on the probe
+[page] [pfa] gate4 instance irradiance: 8/8 placement(s) over 1 node(s) in 1 group(s) [m_env_t2 8], 1 material(s) patched, 1 with cov == 0 left on the probe
+[page] [pfa] gate3 UV2 census: 88 mesh(es) carry TEXCOORD_1 (1004 placements), 64 do not (1417 placements)
+[page] [pfa] gate3 lightmaps: 16/16 own map(s), 988/988 instance slot(s), 0 material(s) cloned; match error <= 0.189 m
+[page] [pfa] gate3 near misses: 1 own asset(s) and 0 instance(s) had a mesh with NO TEXCOORD_1 inside the match tolerance (env.glb carries none at all). The asset is left unclaimed for a mesh that can carry it: ENV_terrain_ground (a mesh 0.08 m away carries no TEXCOORD_1)
+[page] [pfa] gate3 vertex irradiance: 10 COLOR_0 primitive(s), 16 placement(s), decoded at the ONE global range 44.25656 x scale 3.14159 read from manifest lightmaps.vertex_irradiance.range; the export derived it as uv2_relay_status.json vertex_irradiance_range_global = the max over all 14 near-tree meshes in vertex_irradiance.npz; gltfpack's shared buffers are harmless at one range
+[page] [pfa] instance chunking (QA-11d-1): 16 of 29 site-spanning batches (bounding radius >= 30 m, depth 2, gain 0.8) split into 48 regional batches, +32 draw calls when every chunk is in frame
+[page] [pfa] 31 material(s) with no Gate 3 lightmap stay on the environment path (diffuse irradiance from sky.diffuse); the Gate 0 "borrow a neighbour's lightmap" stand-in is off at Gate 3
+[page] [pfa] 22 baked material(s) take specular from the GLOSSY sky PMREM (material.envMap); the scene environment stays the DIFFUSE branch
+[page] [pfa] pbr: 5 of 5 scene materials textured from 5 of 62 manifest sets, 15 maps, 7.9 MB resident in 15 file(s) [15 RGB_ETC2_Format], requested nearest first (MAT_EXP_ARCH_rotunda__MAT_concrete_podium 76.7 m, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner 85 m, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade 115.7 m …)
+[page] [pfa] pbr: factors applied to 5 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] detail (QA-12-1): 5 material(s) on 2 tiling set(s) (concrete_wall_007 x3, concrete_wall_008 x2), 6 textures, 3.1 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 13 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [pfa] pbr: 6 of 6 scene materials textured from 6 of 62 manifest sets, 18 maps, 7.3 MB resident in 18 file(s) [18 RGB_ETC2_Format], requested nearest first (MAT_EXP_ORN__ORN_frieze_rinceau_return_v2_LOD0_a 84 m, MAT_EXP_ORN__ORN_urn_v2_LOD0_a_a_a 73.7 m, MAT_EXP_ORN__ORN_urn_v3_LOD0_a_a_a 75.7 m …)
+[page] [pfa] pbr: factors applied to 6 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] detail (QA-12-1): 0 material(s) on 0 tiling set(s) (), 0 textures, 0.0 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 18 manifest rule(s) match no scene material: MAT_EXP_ENVBD__MAT_lawn, MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving
+[page] [pfa] pbr: 5 of 18 scene materials textured from 5 of 62 manifest sets, 13 maps, 2.3 MB resident in 13 file(s) [13 RGB_ETC2_Format], requested nearest first (MAT_EXP_ENVBD__MAT_backdrop_hill 0 m, MAT_EXP_ENVBD__MAT_backdrop_roof_tile 0 m, MAT_EXP_ENVBD__MAT_backdrop_forest 0 m …)
+[page] [pfa] pbr: factors applied to 5 material(s) before any download, 0 of them finished by their factors alone (constant maps)
+[page] [pfa] pbr: 13 material(s) with NO texture set, left as exported: MAT_bark_cypress, MAT_leaf_cypress, MAT_shrub_light, MAT_bark_eucalyptus, MAT_leaf_eucalyptus, MAT_bark_cypress, MAT_leaf_pine, MAT_shrub_light, MAT_shrub_dry, MAT_bark_cypress, MAT_leaf_cypress, MAT_leaf_pine …
+[page] [pfa] detail (QA-12-1): 1 material(s) on 1 tiling set(s) (gravelly_sand x1), 3 textures, 0.5 MB, projection dominant (world space, Blender xy = three x,-z), strength 1, normal scale 1, lod bias -2, gain 1
+[page] [pfa] detail: 17 manifest rule(s) match no scene material: MAT_EXP_ENV__ENV_ground_colonnade_walk, MAT_EXP_ENV__ENV_terrain_ground, MAT_EXP_ENV__riprap, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_north__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade, MAT_EXP_ARCH_colonnade_south__MAT_concrete_colonnade__merged, MAT_EXP_ARCH_rotunda__MAT_column_rose, MAT_EXP_ARCH_rotunda__MAT_column_tan_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_inner, MAT_EXP_ARCH_rotunda__MAT_concrete_ochre, MAT_EXP_ARCH_rotunda__MAT_concrete_podium, MAT_EXP_ARCH_rotunda__MAT_drum_band, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling, MAT_EXP_ARCH_rotunda__MAT_plaster_ceiling_rib, MAT_EXP_ARCH_site__MAT_concrete_podium, MAT_EXP_ARCH_site__MAT_paving
+[page] [pfa] pbr textures in 0.27 s; 16 superseded texture(s) disposed, 0.0 MB freed
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [.WebGL-0x13c000dae00] GL_INVALID_OPERATION: glGenerateMipmap: Texture format does not support mipmap generation.
+[page] [pfa] pbr tier 2: 1/1 map(s) upgraded (1 from the factor alone, 0 from a low-resolution stand-in), 0.2 MB
+[page] [pfa] far-tree lighting: inline in the manifest (pfa-phase6/gate4-instance-irradiance/2), 127 placement row(s), 16 prototype E_bake value(s)
+[page] [pfa] foliage textures (materials.foliage, 1024 px): 8 tinted albedo(s) and 8 translucency factor map(s) on MAT_leaf_broadleaf, MAT_leaf_cypress, MAT_leaf_eucalyptus, MAT_leaf_pine, MAT_reeds, MAT_shrub, MAT_shrub_dry, MAT_shrub_light; translucency wrap taken from the glb albedo sampler(s): 1001/1001 (1001 = clamp, 1000 = repeat)
+[page] [pfa] shrub/reed LOD: 44 placement(s) over 2 node(s) have no LOD1 (EXPM_ENV_src_maho2_LOD2.001, EXPM_ENV_src_pitto5_LOD2.001, EXPM_ENV_src_reed1_LOD2.001) and are masked OUT of the switch — their card draws at every distance
+[page] [pfa] foliage: 11 bark cluster(s) re-crowned so trunk and canopy cross the LOD distance together (max move 7.52 m)
+[page] [pfa] foliage: 53 geometr(ies) clustered into 60 crown(s), normals bent 0.50 toward the crown centre on 9 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 9 leaf + 27 card + 7 bark material(s) patched, 36 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 18 near-tree unit(s) found, LOD switch at 25 m + 5 m fade
+[page] [pfa] foliage: environment lobe x0.3 on 27 card material(s) (?cardenv=, shared with ?shrubenv= so the LOD switch cannot change a shrub's level)
+[page] [pfa] foliage interior: 36 material(s) darkened by depth into their own cluster — crowns (str 0.30 low 0.00 gamma 1.00 gain 1.05 trn 0.85 sun 0.50), cards (str 0.20 low 0.30 gamma 1.00 gain 1.00 trn 1.00 sun 0.30); crown-bend gated above r 0.45 of the cluster half-extent (?leafgate=, ?crownint=, ?cardint=)
+[page] [pfa] shrub/reed LOD: no LOD1 set in the manifest (export item E) — every card stays on the shipped LOD2, switch distance 25 m is wired and idle (?shrublod=)
+[page] [pfa] far-tree impostor modulation: 127/127 placement(s) joined by location (0 unmatched), mode full, strength 1, clamp 4, zero-channel fallback 1 (from trees.far_mesh.lighting.impostor)
+[page] [pfa] near-tree impostors: 18/18 unit(s) matched a prototype by species + aspect (cypress_column_s2 x6, eucalyptus_s61 x6, broadleaf_s53 x1, pine_s7 x5)
+[page] [pfa] impostor irradiance modulation: mode full, E_bake 16 per-prototype value(s) from the bake, per prototype (16 value(s)); 127 far + 18 near placement(s) modulated
+[page] [pfa] impostors: 145/145 placement(s) carry an E_placement / E_bake modulation (?impmod=0 reverts); the rest draw the atlas radiance unchanged
+[page] [pfa] impostors: 18 of them are NEAR trees that also have a mesh (6c C2): they dissolve into their mesh inside the switch distance and the mesh dissolves into them beyond it
+[page] [pfa] impostors: 145 tree(s) (127 far + 18 near) over 16 prototype(s), 16 draw call(s), 12x12 octahedral frames at 85 px on a 1024 px atlas, 3-frame barycentric blend, alpha test 0.33, unlit (the atlas is baked radiance); 16/16 atlas(es) loaded, 1.5 MB declared, normal+depth NOT loaded (the manifest says nothing samples it while unlit holds)
+[page] [pfa] impostor edge (Phase 7 A): premultiplied 12-tap reconstruction ON, alpha-to-coverage ON (?impedge=0|premul|a2c|both); interior floor 0.55 of the card's own radiance (?impint=str,radius,floor)
+[page] [pfa] impostor alpha as COVERAGE (Phase 8b): ON, ramp = 1 x the alpha change per atlas texel above 1->2 screen px per texel, raw-coverage share 0.15, resolved by the 4-sample coverage mask (?impcov=0 restores Phase 7)
+[page] [pfa] water surface takes the COMP_golden_hour airlight too (it is a ShaderMaterial, so three's fog chunk cannot)
+[page] [pfa] reflection draw set reduced: 43 mesh(es) excluded (36 ORN, 7 backdrop), 127 kept (ARCH, ground, water-adjacent ENV, impostors, sky). ?reflset=full restores them.
+[page] [pfa] tier 2 in 0.85 s: 11.1 MB, 3 glb(s)
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 32 uv set(s) on 32 geometr(ies), 6 material transform(s) neutralised, scale 6.081..147.958, +1.72 MB
+[page] [pfa] foliage textures: MAT_leaf_broadleaf's sampler in WEB_glb_env_trees (1000/1000) disagrees with the first pass (the env.glb samplers)'s (1001/1001); the albedo and translucency maps are SHARED, so both roots now use this one — the export must patch the samplers together
+[page] [pfa] foliage textures: MAT_leaf_cypress's sampler in WEB_glb_env_trees (1000/1000) disagrees with the first pass (the env.glb samplers)'s (1001/1001); the albedo and translucency maps are SHARED, so both roots now use this one — the export must patch the samplers together
+[page] [pfa] foliage textures: MAT_leaf_eucalyptus's sampler in WEB_glb_env_trees (1000/1000) disagrees with the first pass (the env.glb samplers)'s (1001/1001); the albedo and translucency maps are SHARED, so both roots now use this one — the export must patch the samplers together
+[page] [pfa] foliage textures: MAT_leaf_pine's sampler in WEB_glb_env_trees (1000/1000) disagrees with the first pass (the env.glb samplers)'s (1001/1001); the albedo and translucency maps are SHARED, so both roots now use this one — the export must patch the samplers together
+[page] [pfa] foliage textures: the tinted albedo on 4 material(s) of WEB_glb_env_trees
+[page] [pfa] far-tree meshes: placement check OK over 127 placement(s) — trunk offset max 0.721 m (median 0.186), base offset max 3.271 m, mesh bbox centre vs impostor quad centre max 0.73 m (median 0.254)
+[page] [pfa] foliage: 16 bark cluster(s) re-crowned so trunk and canopy cross the LOD distance together (max move 6.76 m)
+[page] [pfa] foliage: 32 geometr(ies) clustered into 32 crown(s), normals bent 0.50 toward the crown centre on 16 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 4 leaf + 0 card + 2 bark material(s) patched, 4 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 127 near-tree unit(s) found, LOD switch at 45 m + 5 m fade
+[page] [pfa] foliage: environment lobe x0.3 on 0 card material(s) (?cardenv=, shared with ?shrubenv= so the LOD switch cannot change a shrub's level)
+[page] [pfa] foliage interior: 4 material(s) darkened by depth into their own cluster — crowns (str 0.30 low 0.00 gamma 1.00 gain 1.05 trn 0.85 sun 0.50), cards (str 0.20 low 0.30 gamma 1.00 gain 1.00 trn 1.00 sun 0.30); crown-bend gated above r 0.45 of the cluster half-extent (?leafgate=, ?crownint=, ?cardint=)
+[page] [pfa] far-tree impostor modulation: 127/127 placement(s) joined by location (0 unmatched), mode full, strength 1, clamp 4, zero-channel fallback 1 (from trees.far_mesh.lighting.impostor)
+[page] [pfa] far-tree impostors: 127 placement(s) over 16 batch(es) now fade to a MESH (iNear = 1), 127 re-lit by E_placement / E_bake
+[page] [pfa] far-tree meshes: env_trees.glb in 0.09 s — 254/254 instance row(s) joined to 127/127 placement(s) by translation (<= 0.05 m), 1008 k placed tris in 142 batch(es) (26 split into 136); lighting from trees.far_mesh.lighting (the bake, per placement) on 254 row(s); vertex AO present (gamma2 x range 1.000000)
+[page] [pfa] uv dequantisation (gltfpack KHR_texture_transform -> attribute): 25 uv set(s) on 25 geometr(ies), 4 material transform(s) neutralised, scale 16.004..16.004, +0.49 MB
+[page] [pfa] foliage textures: the tinted albedo on 4 material(s) of WEB_glb_env_shrubs
+[page] [pfa] shrub/reed LOD1 irradiance: 1376/1376 placement(s) over 25/25 glb node(s), 25 material(s) cloned and patched, 7 with cov == 0 left on the probe
+[page] [pfa] shrub/reed LOD1: environment term x0.3 on 25 material(s) (?shrubenv=)
+[page] [pfa] foliage: 25 geometr(ies) clustered into 25 crown(s), normals bent 0.50 toward the crown centre on 0 mesh(es) (shrub/reed cards at 0.00: the normal only drives their specular); 0 leaf + 25 card + 0 bark material(s) patched, 25 on alphaToCoverage (MSAA target); translucency x1 from the Phase 5 constants (shrub/reed cards excluded: their diffuse is the direction-independent baked placement irradiance); 0 near-tree unit(s) found, LOD switch at 25 m + 5 m fade
+[page] [pfa] foliage: environment lobe x0.3 on 0 card material(s), 25 already scaled by an earlier pass and LEFT ALONE (?cardenv=, shared with ?shrubenv= so the LOD switch cannot change a shrub's level)
+[page] [pfa] foliage interior: 25 material(s) darkened by depth into their own cluster — crowns (str 0.30 low 0.00 gamma 1.00 gain 1.05 trn 0.85 sun 0.50), cards (str 0.20 low 0.30 gamma 1.00 gain 1.00 trn 1.00 sun 0.30); crown-bend gated above r 0.45 of the cluster half-extent (?leafgate=, ?crownint=, ?cardint=)
+[page] [pfa] shrub/reed LOD1: env_shrubs.glb in 0.02 s — 1376/1376 placement(s) over 25 node(s) on their own baked irradiance, LOD1 within 25 m on 25 material(s), the env.glb cards beyond it on 24, 2 of them carrying the per-row mask for the placements with no LOD1; 1012 k placed tris in 73 batch(es) (7 split into 55, +48 draw calls), culled per frame beyond 25 m + band + 10 m (?shrubcull=)
+[page] [pfa] lazy foliage done in 0.18 s
+[page] [pfa] tiers complete: 0:46.7 MB/1.6 s, 1:3.8 MB/0.4 s, 2:11.1 MB/0.9 s; 66.1 MB total
+[shot] load tiers complete (__pfaTiersReady) after 3.9 s
+[shot] lazy foliage loaded (__pfaLazyReady)
+[page] [pfa] station 1 CAM_qa_01_lagoon_hero
+  source           rotation_euler  (look-at cross-check max element diff 1.63e-7)
+  world matrix     [-0.99021, -0.00000, 0.13962, 0.00000, -0.00000, 1.00000, -0.00000, 0.00000, -0.13962, -0.00000, -0.99021, 0.00000, -14.10000, 1.30000, -100.00000, 1.00000]
+  projection       [1.11111, 0.00000, 0.00000, 0.00000, 0.00000, 1.97531, 0.00000, 0.00000, 0.00000, 0.21333, -1.00004, -1.00000, 0.00000, 0.00000, -0.20000, 0.00000]
+  fov(v) 53.702 deg  aspect 1.77778  near 0.10000000149011612  far 5000
+[shot] station 1 CAM_qa_01_lagoon_hero: frame - ms, gpu - ms, draws 312, tris 3679600
+[shot] wrote /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8a-viewer/renders/web/p8a_mobile.png (1871 kB) station 1 draws 312 tris 3679600
+[shot] pfa-phase6/5 lighting baked materials pbr lightmaps 16/87, pbr 74/117 materials, 192 files, 84.9 MB, 43 unmatched
+[shot] detail 1 materials, 1 sets, 3 textures, 0.5 MB, projection dominant, strength 1
+[shot] resident 547.9 MB (tex 236.4, rt 237.4, geo 74.1) {"RGB_ETC2_Format":264,"RGBAFormat (uncompressed)":3,"RGBA_ETC2_EAC_Format":24}
+[shot] loaded 66.1 MB of 84.3 MB planned in 1.59 s (sky 0.55, lut 0.06, glb 0.72)
+[shot] done in 4.7 s
+chrome_run.sh: pid 90098 exited rc=0 after 5 s (max 900)

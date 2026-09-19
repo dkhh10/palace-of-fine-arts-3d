@@ -157,7 +157,8 @@ export const LEAF_MIP_BIAS = 0.0;
  *     s^   = mix( 1, s^, chroma )                 `chroma` dials it toward neutral; luma stays 1
  *     f    = min( share, 0.98 / max( s^ ) )       the sun's share of E's level; clamped so the sky
  *                                                 share ( 1 - f*s^ ) stays >= 0.02 in every channel
- *     nl   = clamp( ( dot( N, L ) + wrap ) / ( 1 + wrap ), 0, 1 )      N = the shading normal
+ *     c    = mix( dot( N, L ), abs( dot( N, L ) ), two )              N = the shading normal
+ *     nl   = clamp( ( c + wrap ) / ( 1 + wrap ), 0, 1 )
  *     clump= 1 - shade * clamp( vPfaCrownD.z, 0, 1 )                   the sun's path through the
  *                                                 cluster sphere, the same vertex term the interior
  *                                                 occlusion uses: 0 on the sunward surface, 1 deep -
@@ -179,11 +180,17 @@ export const LEAF_MIP_BIAS = 0.0;
  *      blue-green - the direction of the bake's own darkest decile ([ 0.68 1.02 2.05 ], §2).
  *      `chroma` 0.65 lands that ratio near the measured one; 1.0 is the raw manifest sun.
  *
- * `?cardsun=amt[,share[,wrap[,shade[,mean[,chroma[,cap]]]]]]`, `?cardsun=0` / `off` = today.
- * The default `amt` is 0 until the stage-2 captures adopt a value (this comment is the record).
+ * `?cardsun=amt[,share[,wrap[,shade[,mean[,chroma[,cap[,two]]]]]]]`, `?cardsun=0` / `off` = today.
+ * ADOPTED 2026-09-19 from the stage-2 captures (web/README.md "Phase 8a", the eight QA-17 boxes at
+ * stations 1, 2, 3, 5, 6): `0.6, 0.8, 0.35, 0.9, 0.38, 1, 3, 1`.  `mean` 0.38 and `amt` 0.6 are the
+ * two numbers the LEVEL constraint set: at these the frame-normalised level moves by at most 2.8 %
+ * at any of the eight boxes (the budget is 3 %; the binding box is station 2's shore at 0.972x),
+ * while the same shape at amt 1 took it to 0.952x and `mean` 0.45 with the ONE-sided cosine took it
+ * to 0.85x.  `two = 1` is why the level is stable across stations at all.
  */
-export const CARD_SUN = { amt: 0, share: 0.55, wrap: 0.5, shade: 0.6, mean: 0.45, chroma: 0.65, cap: 2.5 };
-export const CARD_SUN_KEYS = [ 'amt', 'share', 'wrap', 'shade', 'mean', 'chroma', 'cap' ];
+export const CARD_SUN = { amt: 0.6, share: 0.8, wrap: 0.35, shade: 0.9, mean: 0.38, chroma: 1.0,
+	cap: 3, two: 1 };
+export const CARD_SUN_KEYS = [ 'amt', 'share', 'wrap', 'shade', 'mean', 'chroma', 'cap', 'two' ];
 
 /** `"str[,low[,gamma[,gain[,trn[,sun[,floor]]]]]]"` (or an object) over a default, all clamped. */
 export function parseInterior( v, dflt ) {
@@ -228,7 +235,7 @@ export function parseCardSun( v, dflt = CARD_SUN ) {
 	return { amt: cl( d.amt, 0, 1, dflt.amt ), share: cl( d.share, 0, 0.98, dflt.share ),
 		wrap: cl( d.wrap, 0, 4, dflt.wrap ), shade: cl( d.shade, 0, 1, dflt.shade ),
 		mean: cl( d.mean, 0.02, 4, dflt.mean ), chroma: cl( d.chroma, 0, 1, dflt.chroma ),
-		cap: cl( d.cap, 1, 8, dflt.cap ) };
+		cap: cl( d.cap, 1, 8, dflt.cap ), two: cl( d.two, 0, 1, dflt.two ) };
 }
 
 /** True where the relight would do nothing at all (so the program is left BYTE-IDENTICAL to today). */
@@ -250,7 +257,8 @@ export function cardSunFactor( cs, sunColor, nDotL, clumpDepth = 0 ) {
 	let sh = lum > 1e-6 ? sunColor.map( ( x ) => x / lum ) : [ 1, 1, 1 ];
 	sh = sh.map( ( x ) => 1 + c.chroma * ( x - 1 ) );
 	const f = Math.min( c.share, 0.98 / Math.max( sh[ 0 ], sh[ 1 ], sh[ 2 ], 1e-6 ) );
-	const nl = Math.min( Math.max( ( nDotL + c.wrap ) / ( 1 + c.wrap ), 0 ), 1 );
+	const cos = nDotL + c.two * ( Math.abs( nDotL ) - nDotL );
+	const nl = Math.min( Math.max( ( cos + c.wrap ) / ( 1 + c.wrap ), 0 ), 1 );
 	const clump = 1 - c.shade * Math.min( Math.max( clumpDepth, 0 ), 1 );
 	const g = Math.min( Math.max( nl * clump / Math.max( c.mean, 1e-3 ), 0 ), c.cap );
 	return sh.map( ( x ) => Math.max( 0, 1 + c.amt * f * x * ( g - 1 ) ) );
@@ -491,7 +499,8 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		// PHASE 8a — the card relight (see CARD_SUN).  amt / share / wrap / shade, then mean / chroma / cap.
 		pfaCardSun: { value: new THREE.Vector4( cs ? cs.amt : 0, cs ? cs.share : 0,
 			cs ? cs.wrap : 0, cs ? cs.shade : 0 ) },
-		pfaCardSunB: { value: new THREE.Vector3( cs ? cs.mean : 1, cs ? cs.chroma : 0, cs ? cs.cap : 1 ) },
+		pfaCardSunB: { value: new THREE.Vector4( cs ? cs.mean : 1, cs ? cs.chroma : 0,
+			cs ? cs.cap : 1, cs ? cs.two : 0 ) },
 	};
 	mat.userData.pfaFoliage = { trn, tint, frontSub, fade, dist, band, sign, trnMap: !! trnMap, switchMask,
 		interior: it, mipBias: bias, cardSun: cs, uniforms: u };
@@ -632,7 +641,7 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 			// with no per-placement irradiance), the throw is caught below and reported, and the
 			// material compiles exactly as it does today.
 			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
-				'#include <common>\nuniform vec4 pfaCardSun;\nuniform vec3 pfaCardSunB;'
+				'#include <common>\nuniform vec4 pfaCardSun;\nuniform vec4 pfaCardSunB;'
 				// the sun's direction and colour come from the manifest, through the SHARED uniforms
 				// the whole foliage pass already owns; declared here only where the translucent lobe
 				// (the other consumer) has not declared them already.
@@ -655,7 +664,14 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 					+ '\t\tvec3 pfaSunL = normalize( ( viewMatrix * vec4( pfaSunDir, 0.0 ) ).xyz );\n'
 					// `normal` is the shading normal: view space, the normal map in it, and already
 					// flipped toward the camera on a DOUBLE_SIDED card.
-					+ '\t\tfloat pfaCardNL = clamp( ( dot( normal, pfaSunL ) + pfaCardSun.z )\n'
+					// `two` = 1 uses |N.L|: a card is a stand-in for a bush VOLUME and its baked
+					// irradiance is two-sided, so what decides its sun term is how its plane sits to
+					// the SUN, not which side the camera is on.  At 0 the term is the one-sided
+					// cosine (lit only where the visible face turns toward the sun), which makes a
+					// backlit station uniformly dark - measured at station 2, level 0.85x.
+					+ '\t\tfloat pfaCardC = dot( normal, pfaSunL );\n'
+					+ '\t\tpfaCardC = mix( pfaCardC, abs( pfaCardC ), pfaCardSunB.w );\n'
+					+ '\t\tfloat pfaCardNL = clamp( ( pfaCardC + pfaCardSun.z )\n'
 					+ '\t\t\t/ ( 1.0 + pfaCardSun.z ), 0.0, 1.0 );\n'
 					+ `\t\tfloat pfaCardClump = 1.0 - pfaCardSun.w * ${depth};\n`
 					+ '\t\tfloat pfaCardG = clamp( pfaCardNL * pfaCardClump / max( pfaCardSunB.x, 1e-3 ),\n'
