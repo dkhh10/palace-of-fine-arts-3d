@@ -1041,3 +1041,15 @@ Lead decision: accepted as a correction of the 6c mismatch, NOT re-baked; QA 23 
 belt trees at cam02/cam05 which ship at median 0.24 modulation) and any brightness regression is a blocker with the fix being a re-key to the 6c bodies. First frame
 49 273 775 B (726 225 under the rule); tier 0 48 139 115. Carries: env_trees_lod1 mtime guard, stale 127/254/46 statements inside the delivered manifests, the grid-key
 half-cell brittleness, a test pinning the far count to export_set.json.
+
+## 2026-09-19 · QA 23 (8d775ae) on deploy 11: 8d CLOSED — all five Phase 8 art items closed on the tiles; one blocker left, the far-tree irradiance re-key
+8d: at 100 % the shards are gone at 1/2/3/5 and in the reflection — real crowns with sky gaps and trunks under the roofline; parity vs the Phase 8 Cycles refs improves at
+every band (hero N MAE 11.24 -> 9.62 %) and the QA-22 residual reverses (band sd 0.153 -> 0.165, hf 0.1306 -> 0.1440, toward ref 169). Scores 3.97 / 3.22 / 2.83 / 2.88 /
+3.20 / 3.03 (hero +0.16 vs QA 22, +0.08 vs QA 21: the best hero score of the project); mobile 3.32 / 3.30 / 2.52 / 2.70 / 2.96 / 2.58. 8a closed with the cam03 lighting
+residual (leaf share 0.92x, reported); 8e closed (2.5 m walk-up delivered, no fattening); fix round verified. Blocker, by the rule set at the chain r2 merge: the far-tree
+irradiance re-bake brightened every crown read against a background by +4-16 % (7/10 boxes away from the Cycles refs; dark cores lost; the 8e blade p90 22.7 -> 25.2 px
+purely photometric). Fix: the 127 existing rows return to their 6c values, the 39 belt rows keep the r2 bake (export, CPU if the rows are recoverable), then deploy 12 and a
+verification capture at 1/2/5 + orbit. New non-blocking residuals: the belt covers less pale backdrop than Cycles (ENV); cam03 draws the 39 belt trees as LOD2 meshes
+(+1.3 M tris, +28 draws, 35.1 -> 38.6 ms — the belt is within the mesh distance from that station; EXPORT/VIEWER); cam06's R1 colour under-delivery stands (record).
+cam05 crossings 10.80 -> 9.37 decomposed to the belt backing (background share 75.6 -> 79.6 % at flat level), not a crown change. Payload 46 761 417 B desktop / 46 824 683
+mobile; perf 28.2 / 32.6 / 38.6 / 26.2 / 29.7 / 32.3 ms; resident 1 814.2 / 550.3 MB. Parity caveat: the Phase 8 Cycles refs survive at 960 px only (PNGs gitignored).
