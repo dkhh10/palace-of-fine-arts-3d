@@ -1022,3 +1022,11 @@ Parity: 8d moves the viewer away from the frozen Phase 5 Cycles references at th
 from the Phase 8 master (1080p, 32 spp fixed, delivery look — the haze-check script's settings) after the belt fix, and QA 23 measures parity against those; the Phase 5
 references remain the record of the frozen look for the architecture boxes (which did not move: MAE rises only where the backdrop is). cam05 crown crossings 11.67 -> 10.80
 is the belt's brighter backing, same root cause. Scores 3.81 / 3.14 / 2.75 / 2.88 / 3.12 / 3.03; mobile 3.2 / 3.22 / 2.44 / 2.7 / 2.88 / 2.58.
+
+## 2026-09-19 · 8a-4 decision: no export change for cam03 — 8a CLOSED WITH A RESIDUAL (the cam03 bush interior is a lighting carry, not a card-scale defect)
+The analysis (docs/briefs/phase8a4_lod1_shrubs_analysis.md, 16882b0): at cam03 the nearest LOD1 row in frame is 17.3 m, cards 5-13 px wide, a painted leaf 0.4-0.9 px —
+sub-pixel, nothing to de-magnify; grain median 2.0 / p90 4.0 px in both the viewer and Cycles. What differs is light: bush body luma 0.142 vs Cycles 0.058 (2.4x), dark
+share 0.062 vs 0.248 (no dark core), a gold cast g-r -0.030 vs +0.003; the column shade at the same station is 2.55x, the far shore 1.78x — the bush carries cam03's own
+missing deep shade (carried since Phase 6, QA-21 residual) plus ~1.3x of its own. A UV scale would halve a blob that already matches the reference and break the LOD-switch
+match that is in frame at cam03. Decision: 8a closes on the tiles at 1 and 5 with the cam03 interior darkness logged as a lighting residual (owner VIEWER/LIGHTING, with
+the cam03 deep-shade carry); the 3 m walk-in option (k = 2 on shrub / shrub_light, +16 kB tier 2) is recorded, not taken — no station shows it.
