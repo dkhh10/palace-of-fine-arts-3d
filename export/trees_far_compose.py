@@ -180,7 +180,10 @@ def main():
     order = [d["object"] for d in places["placements"]]
     absent = [o for o in order if o not in got]
     assert not absent, f"{len(absent)} placements never baked, first: {absent[:5]}"
-    assert len(got) == len(order) == 127, f"{len(got)} baked, {len(order)} planned"
+    # r5 finding 4: not a fixed 127 - the far list grows with the scene (the 8d belt took it to 166).
+    # What has to hold is that every PLANNED placement was baked; the count is reported and is checked
+    # against the export set by manifest_v4.
+    assert len(got) == len(order), f"{len(got)} baked, {len(order)} planned"
 
     meshes, all_rgb = {}, []
     for obj in order:

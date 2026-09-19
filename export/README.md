@@ -2420,7 +2420,8 @@ node web/tools/instance_rows.mjs <W>/export/out/gate1/env.glb        <W>/export/
 node web/tools/instance_rows.mjs <W>/export/out/gate1/env_shrubs.glb <W>/export/out/gate3/instance_rows_shrub_lod1.json
 python3 export/gate4_instance_order.py && PFA_ORDER_SET=shrub_lod1 python3 export/gate4_instance_order.py
 python3 export/verify_glb.py && python3 export/gate4_order_selftest.py
-python3 export/manifest_v2.py && python3 export/manifest_v4.py && python3 export/budget_doc.py
+python3 export/manifest_v2.py && python3 export/manifest_v3.py && python3 export/manifest_v4.py \
+  && python3 export/budget_doc.py            # v2 -> v3 -> v4: v3 asserts the carry v2 writes
 export/sync_main.sh                       # gate1 + gate3 MUST reach MAIN before the next line
 python3 export/tiers.py && python3 export/tiers.py --mobile && python3 export/tiers.py --no-pack
 python3 export/verify_glb.py --gate5 && (cd <MAIN>/web && node test/tiers_test.mjs)
@@ -2602,9 +2603,10 @@ scripts/blender_run.sh 1800 -- --background --python export/gate2_set.py
 rm export/out/gate2/bake/ENVBD__backdrop_{building,skylight,roof,roof_tile,forest,hill}.json \
    export/out/gate2/bake/ENVBD__lawn.json export/out/gate2/tex_ktx2/gate2_ENVBD__lawn_*.ktx2
 export/bake_queue.sh --gate2 start                         # GPU; 7 jobs, 52.7 s
-export/gltf_pack.sh --gate2                                # rm -rf's tex_ktx2: restore MAIN's other maps after
+export/gltf_pack.sh --gate2                                # r4 fix: it now replaces only what it re-encodes
 cp export/out/gate2/backdrop_uv1.npz export/out/gate2/backdrop_uv1_shipped.npz   # see below
-python3 export/manifest_v3.py
+# manifest_v2 FIRST: manifest_v3 asserts the `lightmap_encoding` carry that v2 writes (r2 correction)
+python3 export/manifest_v2.py && python3 export/manifest_v3.py
 scripts/blender_run.sh 1200 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
 export/gltf_pack.sh --gate1 ; python3 export/p8d_pin.py --glbs
 scripts/blender_run.sh 900 -- --background <MAIN>/master_delivery.blend --python export/shrub_lod1.py
@@ -2670,3 +2672,94 @@ tier 0 +312, first frame 47 630 546. `env_t2.glb` 6 787 864 -> 6 956 512 (+168 6
 UVs), `env.glb` 38 181 724 -> 38 348 124, `env_shrubs.glb` 668 352 -> 668 388, and the manifests now carry
 8e's `env_trees.glb` at 3 768 500 (the refresh that rode with this chain). `verify_glb` PASS, `--gate5` PASS
 desktop and mobile, `tiers_test` all green, `name_sweep` PASS (127 exempt treeboards, 0 to explain).
+
+## Phase 8d r2 — the hall-east belt (2026-09-19, export engineer, branch `phase8d-export2`)
+
+The four icosphere belt objects left `backdrop_forest` and 39 ordinary far trees took their place on the hall's
+east face. Chain as r1 (the `PFA_GATE1_BLEND_DIR` export, the pin first, Gate 2 only for what moved) with four
+differences, all of them recorded in code:
+
+1. **The pin moved on purpose, and says so.** `p8d_pin.py` pins `trees_total` **186**, `far_billboards` **166**,
+   `lod2_blob_objects` **85**, `near_exported` **20**, and `EXPECT_ENV_DELTA` **-6 822** (= -6 900 icospheres
+   +78 billboards, ENV placed 901 874 -> **895 052**). Everything else still pins to MAIN and did: uv1 groups
+   52 / tiles / coverage / min 0.0876, uv2 66, lightmap slots and assets, `within_radius` 77,
+   `near_tris_used` 391 908, ARCH 949 382, ORN 1 099 192, the near list in order.
+2. **The far-row re-sort is an INTERLEAVE, not an append.** `bpy.data.objects` is name-sorted, so the belt names
+   land among the existing ones and every `TREEFAR_###` index after the first of them shifts. The pin therefore
+   checks the invariant instead of the byte order: the 127 existing rows survive with their content and their
+   relative order (the billboard id is excluded from that comparison - it is what shifts), exactly 39 rows are
+   new, and every new row is a name from `docs/phase8d_belt_r2_trees.json`. `p8d_pin.json` records where the
+   interleave starts and how many billboards were re-indexed. **Any diagnostic that quoted a `TREEFAR_###`
+   index must be re-read against the new list**; the atlas joins by PROTOTYPE and the instance rows by position
+   in the re-dumped order, both regenerated here, so nothing else depends on the index.
+3. **Three prototypes are new to the far block** (`ENV_tree_cypress_column_s2_LOD2`, `_s31_LOD2`,
+   `ENV_tree_pine_s29_LOD2`): the Gate 3 `impostor_prototype_map` was built from the previous far list and has
+   no key for them. `manifest_v4` now extends the map with `gate3_set.py`'s own rule (an impostor is always the
+   LOD1 prototype), **asserts the target is an already-baked prototype**, prints what it added and records it as
+   `impostors.prototype_map_added`. No atlas and no impostor blend is re-baked.
+4. **Vertex AO: nothing to bake and nothing stood in.** The far block builds one LOD2 mesh per IMPOSTOR
+   PROTOTYPE; the belt added placements, not prototypes, so the run reports `prototypes=16`, **COLOR_0 16/16**
+   attached from the existing `vertex_ao.npz` at `topology_rev` 2, no refusal. `trees_far.py`'s hard-coded
+   `== 127` assert is replaced by the invariant that matters (every far row gets a placement).
+
+**Gate 2 was one job.** Comparing the fresh `backdrop_uv1.npz` with the shipped one, `backdrop_forest` is the
+only mesh whose UV SET changed (318 180 -> 297 480 loops); every other backdrop group is identical, so only
+`ENVBD__backdrop_forest` was purged and re-baked (5.2 s: albedo max 0.824, roughness max 0.953, no clipping,
+coverage 0.150-0.283). The r4 fix held: `gltf_pack --gate2` **kept 186 existing maps** and replaced 17.
+
+**Chain-order correction:** `manifest_v3` asserts the `lightmap_encoding` carry that `manifest_v2` writes, so
+the order is **v2 -> v3 -> v4**; the r1 listing had v3 first and only worked because a stale gate1 manifest
+still carried it. Both far-tree sets must be re-run together (`trees_far.py` and `PFA_TREES_SET=walkup`), or
+`verify_glb` fails the walk-up/far row comparison - which is exactly what caught it here.
+
+**Bytes.** `env.glb` 38 348 124 -> **38 180 924**; `env_trees.glb` 3 768 500 -> 3 769 736 and
+`env_trees_lod1.glb` 7 642 344 -> 7 643 580 (166 placements each, 332 rows, COLOR_0 32/32, walk-up order
+matches); `env_t2`/`m_env_t2` 6 956 448 -> **6 789 444**; `env_t0`/`m_env_t0` 2 172 696 -> 2 172 808 (+112).
+Tier 0 **48 270 284 -> 48 139 115 (-131 169)** and the first frame **49 395 053 -> 49 270 952 (-124 101)**,
+**729 048 B under the 50 000 000 rule** - the -131 281 of it is the tier-0 trim solver dropping one more ORN
+normal (`gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal`, hero order -0.00019) now that the boot overhead grew;
+the geometry contributed +112. `budget_doc` line 288 is back to 99 640 / 11.0 % with the belt named as far
+billboards. arch / orn / ground glbs byte-identical to MAIN; `verify_glb` PASS, `--gate5` PASS desktop and
+mobile, `tiers_test` green, `name_sweep` PASS, `npm test` all passed (three r186).
+
+### r2 follow-ups (review r5, all closed here)
+
+* **`CLASS_BUDGET["ENV"]` stays at 902 000** (the 8a gate's value). The belt SPENDS 6 822 fewer triangles
+  than the icospheres it replaced - 895 052 placed against 902 000 - so the constant needed no decision;
+  it is stated here because r2 changed the placed number and the review asked for the line.
+* **The far-tree counts are now checked in three places at once** (`verify_glb --gate5` check 5): the export
+  set's `tree_rule.far_billboards`, `trees.far_mesh.placements` / `walkup_mesh.count`, and the per-placement
+  lighting rows. Every pair but that one was already checked, which is how the r2 manifest shipped 127
+  placements against a 166-instance glb.
+* **`manifest_v4` joins the per-placement irradiance BY WORLD LOCATION**, which is what
+  `instance_irradiance.json` says its key is ("the object name is a label"). The name join was only
+  incidentally right: the belt's interleave re-pointed 87 of the 127 `TREEFAR_###` ids.
+* **A `TREEFAR_###` id is not a stable reference.** Anything that quotes one - a probe box, a diagnostic, a
+  review note - must be re-read against the current `tree_far` list. `p8e_leaf_probe.py`'s orbit boxes name
+  the trees they measured at the r1 ids; the geometry pass in that probe recomputes them from the
+  placements, so its table is unaffected, but the box LABELS are r1 names.
+
+### r5 blockers closed (the far-tree manifest and the per-placement irradiance)
+
+**Blocker 1 - the manifest advertised 127 against a 166-instance glb.** `manifest_v4` had run before
+`trees_far.py`, so `trees.far_mesh.placements`, `walkup_mesh.placements.count` and the per-placement
+lighting rows were all the pre-belt 127; `foliageLazy` would have failed the join and dropped the whole
+far-tree mesh layer, walk-up set included. All three now read **166**, and three guards make the class of
+bug unshippable: `manifest_v4` asserts `len(trees_far.json placements) == len(tree_far)` plus the
+billboard identity row by row and refuses a glb older than the report; `verify_glb --gate5` gained check 5,
+which compares `tree_rule.far_billboards`, `far_mesh.placements`, `walkup_mesh.placements.count` and the
+lighting rows **in one place** (every pair but that one was already checked); `web/test/foliage_lazy_test.mjs`
+takes the count from the manifest (`FAR_N`) instead of the literal 127 / 254 it used to assert.
+
+**Blocker 2 - the per-placement irradiance could not be regenerated.** `instance_irradiance.json` declares
+its key as WORLD TRANSLATION ("the object name is a label"), but `manifest_v4` joined it by the
+`TREEFAR_###` label, and the belt's interleave re-pointed 87 of the 127 ids while 39 had no row at all.
+Two changes: the join is by world location on a 0.02 m grid, with a uniqueness assert on the cell; and the
+39 belt rows were **baked, not stood in**. Price, measured from the 6c records (554 s for 127 placements =
+4.36 s each): 166 x 4.36 = **~12 min**, under the lead's 15-minute rule. Actual: four `tfirr_*` jobs,
+**199.1 + 189.5 + 198.5 + 192.2 = 779 s = 13.0 min** of GPU, 4.69 s per placement, all rc=0;
+`trees_far_compose.py` then wrote **166 placements, lum 0.1369-6.0972, 0 zero placements, 16/16 E_bake**.
+The bake needs two files `sync_main.sh` deliberately does not copy - `gate3_bake.blend` (315 MB) and
+`gate3_imp.blend` (67 MB) - plus `trees_far/ao` and `trees_far/ebake`; they were APFS-cloned read-only
+from the **phase6-bake** worktree, which is also what keeps the new rows in the same scene and rig as the
+127 that were already there. `trees_far_compose.py` and `trees_far_set.py` no longer hard-code 127.

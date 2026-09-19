@@ -4,7 +4,8 @@
 // all plain JS, and `loadFarTrees` takes its glb through an injected `loadGlb`.  The synthetic glb is
 // built from the manifest's own placement table, exactly as gltfpack emits it (one instanced node per
 // prototype per material, rows in the manifest's order), so the POSITIONAL JOIN is tested on the real
-// 127 placements and the real 254 rows.
+// placements and the real rows. The COUNT comes from the manifest too (`FAR_N` below): it was 127 at 6c
+// and 166 after 8d's hall-east belt, and a literal here would fail every time the scene gains a tree.
 import * as THREE from 'three';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -104,10 +105,14 @@ if ( ! fs.existsSync( MANIFEST ) ) {
 }
 const raw = JSON.parse( fs.readFileSync( MANIFEST, 'utf8' ) );
 const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' );
+// THE FAR-TREE COUNT COMES FROM THE MANIFEST, never from a literal: 127 at 6c, 166 after 8d's hall-east
+// belt. A hard-coded count here fails every time the scene gains a far tree and says nothing about the
+// join it is meant to test (the rows are `2 * FAR_N`: bark + leaf per tree).
+const FAR_N = raw.trees.far_mesh.placements.length;
 
 // The synthetic glb, exactly as gltfpack emits it: one instanced node per prototype per material,
-// rows in the manifest order.  Both tree sets (far_mesh and walkup_mesh) are the SAME 254 rows over
-// the SAME 127 placements, so one builder serves both.
+// rows in the manifest order.  Both tree sets (far_mesh and walkup_mesh) are the SAME 2 x FAR_N rows over
+// the SAME placements, so one builder serves both.
 function makeRoot() {
 		const fm = raw.trees && raw.trees.far_mesh;
 		const placements = fm.placements;
@@ -164,7 +169,7 @@ function makeRoot() {
 		( m ) => notesL.push( m ) );
 	info( notesL.join( '\n      ' ) );
 	if ( lit ) {
-		ok( Array.isArray( lit.rows ) && lit.rows.length === 127, `lighting normalised to ${lit.rows && lit.rows.length} rows` );
+		ok( Array.isArray( lit.rows ) && lit.rows.length === FAR_N, `lighting normalised to ${lit.rows && lit.rows.length} rows (manifest says ${FAR_N})` );
 		ok( lit.prototypes && Object.keys( lit.prototypes ).length === 16,
 			`${lit.prototypes ? Object.keys( lit.prototypes ).length : 0} prototype E_bake values` );
 		const e = prototypeEbake( lit );
@@ -195,16 +200,17 @@ function makeRoot() {
 	info( notes.filter( ( n ) => n.startsWith( 'far-tree' ) ).join( '\n      ' ) );
 	ok( rep.error === null, `join clean (${rep.error || 'no error'})` );
 	info( `placement check: ${JSON.stringify( rep.placementCheck )}` );
-	ok( rep.placementCheck && rep.placementCheck.compared === 127,
+	ok( rep.placementCheck && rep.placementCheck.compared === FAR_N,
 		`every placement compared against its impostor quad (${rep.placementCheck && rep.placementCheck.compared})` );
 	ok( rep.placementCheck && rep.placementCheck.over_tolerance === 0,
 		`no mesh stands away from its impostor (${rep.placementCheck && rep.placementCheck.over_tolerance} over tolerance)` );
-	ok( rep.rows === 254 && rep.joined === 254, `254/254 instance rows joined (${rep.joined}/${rep.rows})` );
-	ok( rep.placements === 127, `127 placements declared (${rep.placements})` );
+	ok( rep.rows === 2 * FAR_N && rep.joined === 2 * FAR_N,
+		`${2 * FAR_N}/${2 * FAR_N} instance rows joined (${rep.joined}/${rep.rows})` );
+	ok( rep.placements === FAR_N, `${FAR_N} placements declared (${rep.placements})` );
 	ok( !! rep.update, 'a per-frame distance cull was returned' );
 	// the impostor side must now know these trees have a mesh
-	ok( rep.impostors && rep.impostors.placements === 127,
-		`127 impostor rows flipped to iNear = 1 (${rep.impostors && rep.impostors.placements})` );
+	ok( rep.impostors && rep.impostors.placements === FAR_N,
+		`${FAR_N} impostor rows flipped to iNear = 1 (${rep.impostors && rep.impostors.placements})` );
 	// and the cull must hide a batch the camera is nowhere near
 	const cam = new THREE.PerspectiveCamera();
 	cam.position.set( 5000, 0, 5000 );
@@ -240,12 +246,12 @@ function makeRoot() {
 			? { scene: makeRoot(), parser: null, userData: {} } : Promise.reject( new Error( '404' ) ) );
 		const up = await loadFarTrees( { ...common, loadGlb: serve( w.glb ) } );
 		ok( up.set === 'walkup_mesh', `the walk-up set is chosen when the block is present (${up.set})` );
-		ok( up.error === null && up.rows === 254 && up.joined === 254,
+		ok( up.error === null && up.rows === 2 * FAR_N && up.joined === 2 * FAR_N,
 			`the walk-up glb joins on far_mesh's own placements (${up.joined}/${up.rows}, ${up.error || 'no error'})` );
-		ok( up.placements === 127, `127 placements resolved through placements.same_as (${up.placements})` );
+		ok( up.placements === FAR_N, `${FAR_N} placements resolved through placements.same_as (${up.placements})` );
 		ok( up.meshDist === ( w.draw_within_m || 15 ),
 			`the block's own draw_within_m is the switch distance (${up.meshDist} m)` );
-		ok( up.lit === 254, `every row lit from far_mesh.lighting (${up.lit}/254)` );
+		ok( up.lit === 2 * FAR_N, `every row lit from far_mesh.lighting (${up.lit}/${2 * FAR_N})` );
 		// and with only the LOD2 glb on the wire it must fall back rather than lose every mesh
 		const scene2 = new THREE.Scene();
 		const built2 = buildImpostors( { impostors: manifest.gate3.impostors, far: manifest.treesFar,
@@ -253,7 +259,7 @@ function makeRoot() {
 		if ( built2.group ) scene2.add( built2.group );
 		const back = await loadFarTrees( { ...common, scene: scene2, impostorGroup: built2.group,
 			loadGlb: serve( 'env_trees.glb' ) } );
-		ok( back.walkupFellBack === true && back.set === 'far_mesh' && back.joined === 254,
+		ok( back.walkupFellBack === true && back.set === 'far_mesh' && back.joined === 2 * FAR_N,
 			`a missing walk-up glb falls back to the LOD2 set (${back.set}, fellBack=${back.walkupFellBack})` );
 		// ?walkupmesh=0 is the A/B and must not even look for the file
 		const scene3 = new THREE.Scene();
@@ -304,7 +310,7 @@ function makeRoot() {
 		const j = JSON.parse( fs.readFileSync( f, 'utf8' ) );
 		const rows = [];
 		for ( const rec of Object.values( j.meshes || {} ) ) for ( const r of rec.placements || [] ) rows.push( r );
-		ok( rows.length === 127, `${rows.length} rows flattened out of meshes[*].placements (expected 127)` );
+		ok( rows.length === FAR_N, `${rows.length} rows flattened out of meshes[*].placements (expected ${FAR_N})` );
 		const eb = prototypeEbake( { prototypes: j.prototypes } );
 		ok( eb && Object.keys( eb ).length === 16, `${eb ? Object.keys( eb ).length : 0} prototype E_bake values (expected 16)` );
 		const impBlock = ( ( ( raw.trees || {} ).far_mesh || {} ).lighting || {} ).impostor || null;
@@ -314,7 +320,7 @@ function makeRoot() {
 		for ( const mode of [ 'full', 'chroma' ] ) {
 			const notes = [];
 			const out = farTreeIrradiance( manifest.treesFar, raw2, mode, ( m ) => notes.push( m ) );
-			ok( out.applied === 127, `mode ${mode}: ${out.applied}/127 placements modulated (${out.unmatched} unmatched)` );
+			ok( out.applied === FAR_N, `mode ${mode}: ${out.applied}/${FAR_N} placements modulated (${out.unmatched} unmatched)` );
 			const v = [ ...out.byIndex.values() ];
 			const mx = Math.max( ...v.flat() ), mn = Math.min( ...v.flat() );
 			const rr2 = ratioRules( raw2 );

@@ -211,7 +211,11 @@ def main():
                            # the export's own measure of how far the reduced crown's bbox centre sits from
                            # the impostor axis: the reduction's, not the placement's
                            placed_xy_offset_m=row.get("placed_xy_offset_m")))
-    assert len(placed) == 127, f"{len(placed)} placements"
+    # r5 finding 4: the count comes from the manifest's own far list, not from a literal (the 8d belt took
+    # it 127 -> 166). Every far row must be placed in the irradiance blend, or the bake would silently
+    # cover only part of the set.
+    assert len(placed) == len(man["tree_far"]), \
+        f"{len(placed)} placements for {len(man['tree_far'])} far rows in the manifest"
     rep["irr"] = dict(blend=IRR_BLEND.name, placements=len(placed), templates_hidden=len(added),
                       source_trees_hidden=len(hidden_src), source_trees_missing=missing_src,
                       billboards_hidden=len(boards),

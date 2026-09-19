@@ -612,6 +612,37 @@ def verify_gate5(out_dir, variant="desktop"):
                    f"{missing_tex[:3]}")
     rep["group_textures"] = sum(len(g["textures"]) for g in groups)
 
+    # 5. review r5 finding 3: THE FAR-TREE COUNTS MUST AGREE ACROSS THE THREE PLACES THAT STATE THEM.
+    # `tree_rule.far_billboards` (the export set), `trees.far_mesh.placements` / `walkup_mesh.count` (what
+    # the viewer joins against) and the per-placement lighting rows are written by different steps, and in
+    # the 8d belt round manifest_v4 ran before trees_far.py, so the manifest advertised 127 against a
+    # 166-instance glb - the viewer's join would have failed and dropped the whole far-tree mesh layer.
+    # Every pair but that one was already checked; this closes the triangle.
+    tr = (man.get("assets_meta") or {}).get("tree_rule") or man.get("tree_rule")
+    want_far = (tr or {}).get("far_billboards")
+    if want_far is None and man.get("tree_far") is not None:
+        want_far = len(man["tree_far"])
+    trees = man.get("trees") or {}
+    def _n(v):
+        # a placement block is either the list itself or `{count, same_as}` (the walk-up set states it
+        # by reference so the two can never disagree)
+        if isinstance(v, list):
+            return len(v)
+        if isinstance(v, dict):
+            return v.get("count")
+        return None
+    far_mesh = trees.get("far_mesh") or {}
+    counts = dict(tree_far_rows=(len(man["tree_far"]) if man.get("tree_far") is not None else None),
+                  far_billboards=want_far,
+                  far_mesh_placements=_n(far_mesh.get("placements")),
+                  walkup_count=_n((trees.get("walkup_mesh") or {}).get("placements")),
+                  lighting_rows=_n((((far_mesh.get("lighting") or {}).get("mesh")) or {}).get("placements")))
+    rep["far_tree_counts"] = counts
+    seen_counts = {k: v for k, v in counts.items() if v}
+    if len(set(seen_counts.values())) > 1:
+        bad.append(f"the far-tree counts disagree: {seen_counts} - trees_far.py (both sets) and "
+                   f"manifest_v4 were not run against the same export set")
+
     # 4. the per-file cap
     over = [(e["path"], e["bytes"]) for e in man["files"] if (e["bytes"] or 0) > cap]
     if over:
