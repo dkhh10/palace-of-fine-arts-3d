@@ -1,0 +1,64 @@
+00:00.320  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[gate0] STEP shrub_lod1:meshes wall_s=0.1  meshes=25 tris=31268
+[gate0] STEP shrub_lod1:placements wall_s=1.5  placements=1376 worst_m=1.946671
+INFO Draco is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_draco_bridge.dylib
+INFO MeshOptimizer is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_meshopt_bridge.dylib
+20:24:06 | INFO: Starting glTF 2.0 export
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_agap0_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_agap1_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_agap2_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_big0_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_big1_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_big2_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_big3_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_maho0_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_maho1_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_maho2_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto0_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto1_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto2_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto3_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto4_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto5_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto6_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto7_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_pitto8_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_reed0_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_reed1_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_reed2_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_twig0_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_twig1_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Extracting primitive: EXPM_ENV_src_twig2_LOD1
+20:24:06 | INFO: Primitives created: 1
+20:24:06 | INFO: Finished glTF 2.0 export in 0.5769758224487305 s
+
+[gate0] STEP shrub_lod1:gltf wall_s=1.6 env_shrubs.gltf=399608B bytes=399608 nodes=1376
+[shrub_lod1] 25 meshes 208-4950 tris, 1376 placements, 1012176 placed tris against the LOD2 set's 237296 (4.3x) -> env_shrubs.gltf
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 97051 exited rc=0 after 5 s (max 900)

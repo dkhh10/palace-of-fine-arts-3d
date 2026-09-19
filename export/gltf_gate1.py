@@ -111,7 +111,12 @@ if not probe_path.exists():
 # geometry and nothing may ship.
 step = g0.Step("gltf_gate1:backdrop_uv1")
 import numpy as np  # noqa: E402
-npz_path = g1.MAIN_ROOT / "export" / "out" / "gate2" / "backdrop_uv1.npz"
+# LOCAL THEN MAIN, like every other hand-off read in this chain (8d: the Gate 2 bake that carries the
+# renamed backdrop_lawn group and the belt's new loops runs in THIS worktree, and a hard-coded MAIN path
+# silently pinned the export to the previous set's loop counts - the assert below caught it, loudly).
+npz_path = next((q for q in (g1.OUT.parent / "gate2" / "backdrop_uv1.npz",
+                             g1.MAIN_ROOT / "export" / "out" / "gate2" / "backdrop_uv1.npz")
+                 if q.exists()), g1.MAIN_ROOT / "export" / "out" / "gate2" / "backdrop_uv1.npz")
 backdrop_uv = {}
 if npz_path.exists():
     z = np.load(str(npz_path))

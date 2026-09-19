@@ -285,9 +285,11 @@ def main():
     a("4. **Materials are neutral grey** (one per atlas group, plus an 8x8 grey base-colour probe so "
       "TEXCOORD_0 reaches every glb) except the foliage, which keeps its original bark/leaf materials so the "
       "silhouette check has the leaf alpha. PBR lands at Gate 2 on UV1.")
-    a("5. `ENV_backdropgroup_backdrop_forest` is 99 640 triangles of backdrop canopy, 12.6 % of the whole ENV "
-      "budget, and it is never closer than the far shore — the cheapest remaining ENV saving if the lead "
-      "wants more near trees.")
+    # 8d (docs/reviews/phase8_env_r2_review.md): the group absorbed the hall-belt trees (+6 900 tris), so it
+    # is no longer only the far shore - the belt stands on the hall's east face, ~150 m from the hero.
+    a("5. `ENV_backdropgroup_backdrop_forest` is 106 540 triangles of backdrop canopy, 11.8 % of the whole "
+      "ENV budget, and nothing in it is closer than ~150 m (the hall-belt trees 8d merged into it) — the "
+      "cheapest remaining ENV saving if the lead wants more near trees.")
     DOC.parent.mkdir(parents=True, exist_ok=True)
     DOC.write_text("\n".join(L) + "\n")
     print(f"[budget_doc] wrote {DOC} ({os.path.getsize(DOC)} B, {len(L)} lines)")

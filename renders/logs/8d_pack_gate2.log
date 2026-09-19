@@ -1,0 +1,44 @@
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_building_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_building_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_building_roughness.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_forest_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_forest_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_forest_roughness.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_hill_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_hill_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_hill_roughness.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_lawn_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_lawn_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_lawn_roughness.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_roof_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_roof_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_roof_roughness.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_roof_tile_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_roof_tile_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_roof_tile_roughness.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_skylight_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_skylight_normal.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_skylight_roughness.png to 16 bits.
+
+[gate2] STEP toktx_uastc wall_s=37 files=36 bytes=36624KiB
+[gate2] STEP toktx_etc1s wall_s=0 files=0 bytes=0KiB sample="ARCH_colonnade_north__concrete_colonnade ARCH_colonnade_south__concrete_colonnade ARCH_rotunda__column_tan_inner ARCH_rotunda__concrete_inner ARCH_rotunda__concrete_ochre ARCH_rotunda__concrete_podium ARCH_rotunda__plaster_ceiling ARCH_rotunda__plaster_ceiling_rib"
