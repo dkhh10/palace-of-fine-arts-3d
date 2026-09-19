@@ -519,15 +519,25 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
                 f"{cls}: the building itself, already under the cap", key=cls)
         detail_keys = {pub.key for pub in files.values() if pub.kind == "detail" and pub.key}
         kinds_lo = [(hero_tex, "gate2_lo"), (imp_keys, "impostor_lo"), (detail_keys, "detail_lo")]
+        # 8b: an impostor albedo whose 2 K variant is published is the stand-in for the 2 K KEY, so it
+        # is emitted under that key.  web/src/manifest.js keys `upgradeOf` by the stand-in url and
+        # `lowresFor` by the full url, and web/test/tiers_test.mjs asserts the two are the same size;
+        # leaving this row on the 1 K key put the 1 K file and the stand-in in one `byKeyAll` group,
+        # which adds a `lowresFor` entry for the 1 K file that `upgradeOf` cannot mirror (the stand-in
+        # url is already taken by the 2 K pair) - 230 stand-ins against 214 pairs.  Re-keying makes the
+        # pairing symmetric without a second ETC1S encode, so tier 0 stays byte-identical, and the 1 K
+        # file stays published at tier 1 for `?imp2k=0`.  The FILE is the same file either way.
+        key_2k = {k1: k2 for k2, k1 in imp_2k.items()}
         for keys, kind_lo in kinds_lo:
             for k in sorted(keys):
                 f = lowres / f"{k}.ktx2"
-                if not f.exists() or k in lowres_files:
+                pk = key_2k.get(k, k)
+                if not f.exists() or pk in lowres_files:
                     continue
                 rel = G.pub_rel(f, base)
                 put(rel, 0, kind_lo, "half-resolution ETC1S copy, upgraded in tier 1",
-                    key=k, px=lr_px.get(k))
-                lowres_files[k] = dict(path=rel, bytes=f.stat().st_size, px=lr_px.get(k))
+                    key=pk, px=lr_px.get(k))
+                lowres_files[pk] = dict(path=rel, bytes=f.stat().st_size, px=lr_px.get(k))
 
     # A group's own external textures (`-tr`) get the group's tier: published once, whichever groups
     # reach them, at the EARLIEST tier that needs them.  Read back out of the packed glb, never guessed.
@@ -571,16 +581,9 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             pub = next((p_ for p_, q in files.items() if q.key == k), None)
             if pub:
                 v["full"] = G.pub_rel(pub, base)
-        # 8b: the 2 K albedo keys reuse the 1 K twin's tier-0 stand-in.  Written AFTER the loop above
-        # so `lowres.files[<1k key>].full` still names the 1 K file (the `?imp2k=0` path) while the
-        # LAST entry that claims this stand-in - and therefore the one web/src/manifest.js keeps in
-        # `upgradeOf` - is the 2 K file the viewer draws by default.
-        for k2, k1 in sorted(imp_2k.items()):
-            lo = lowres_files.get(k1)
-            full = next((G.pub_rel(p_, base) for p_, q in files.items() if q.key == k2), None)
-            if lo and full:
-                lowres_files[k2] = dict(path=lo["path"], bytes=lo["bytes"], px=lo.get("px"),
-                                        full=full)
+        # 8b: nothing special is needed for the 2 K impostor albedos here - their stand-in row is
+        # already emitted under the 2 K key above, so the loop just above resolves `full` to the 2 K
+        # file through `files` exactly as it does for every other key.
     seen, uniq = set(), []
     for e in sorted(entries, key=lambda e: (e["tier"], e["order"], e["path"])):
         if e["path"] in seen:
