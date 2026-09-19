@@ -140,8 +140,8 @@ const fragmentShader = /* glsl */`
 	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage
 	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV, Phase 7 floor)
 	uniform vec3 pfaImpInterior;
-	// Phase 8b — ( magLo, magHi, coverage quantum q ).  See the header.
-	uniform vec3 pfaImpCov;
+	// Phase 8b — ( magLo, magHi, coverage quantum q, gamma on the coverage ).  See the header.
+	uniform vec4 pfaImpCov;
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
 	uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
@@ -300,7 +300,16 @@ const fragmentShader = /* glsl */`
 		// test it.  The quantum q is the target's own coverage step, so the ordered dither carries
 		// exactly what the samples cannot (q = 1 without MSAA makes this the binary fallback).
 		float q = max( pfaImpCov.z, 1e-3 );
-		float covMag = clamp( floor( clamp( a, 0.0, 1.0 ) / q + pfaBayer4( gl_FragCoord.xy ) ) * q, 0.0, 1.0 );
+		// THE GAMMA, and why a coverage needs one.  What reaches this line is not one texel's alpha:
+		// it is the 12-tap premultiplied reconstruction of three blended frames, which is a LOW-PASS
+		// of the alpha field.  Spending that smoothed value as coverage admits sky over the whole
+		// width of the smoothing, not only where the bake found a gap - the crown's interior lightens
+		// and its level walks away from the reference.  pow() restores the contrast the
+		// reconstruction took out without moving either end: 0 stays sky, 1 stays solid, and the
+		// partial texels in between - which are 93-100 % of the covered crown - keep more of
+		// themselves.  1.0 is the raw coverage; the shipped value is swept, never chosen.
+		float covA = pow( clamp( a, 0.0, 1.0 ), pfaImpCov.w );
+		float covMag = clamp( floor( covA / q + pfaBayer4( gl_FragCoord.xy ) ) * q, 0.0, 1.0 );
 		pfaCov = mix( pfaCov, covMag, magT );
 		#ifndef PFA_IMP_A2C
 		// No coverage mask to write into: the alpha channel of an opaque material is ignored, so the
@@ -426,7 +435,7 @@ export function parseImpEdge( v, msaa = true ) {
  * which sets the coverage quantum the ordered dither works against; with no alpha-to-coverage mask
  * to write into, the quantum is 1 and the dither is the binary fallback.
  */
-export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0 };
+export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0, gamma: 1.0 };
 export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 	const d = { ...IMP_COV };
 	let unknown = null;
@@ -442,12 +451,14 @@ export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
 			d.magLo = Math.min( Math.max( p[ 0 ], 0.25 ), 64 );
 			d.magHi = Number.isFinite( p[ 1 ] ) ? Math.min( Math.max( p[ 1 ], 0.25 ), 64 ) : d.magLo * 2;
 			if ( d.magHi <= d.magLo ) d.magHi = d.magLo * 1.0001;
+			if ( Number.isFinite( p[ 2 ] ) ) d.gamma = Math.min( Math.max( p[ 2 ], 0.05 ), 4 );
 		}
 	}
 	// The quantum is what the hardware can resolve: 1/samples through the coverage mask, 1 (binary,
 	// ordered-dithered) when no mask is written.  A target claiming 1 sample is not multisampled.
 	const n = ( a2c && Number.isFinite( samples ) && samples > 1 ) ? Math.round( samples ) : 1;
-	return { on: d.on, magLo: d.magLo, magHi: d.magHi, quant: 1 / n, samples: n, dither: n === 1, unknown };
+	return { on: d.on, magLo: d.magLo, magHi: d.magHi, gamma: d.gamma,
+		quant: 1 / n, samples: n, dither: n === 1, unknown };
 }
 
 /**
@@ -472,7 +483,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		interior: { strength: impInterior[ 0 ], radius_uv: impInterior[ 1 ], floor: impInterior[ 2 ] },
 		edge: { premultiplied: impEdge.premul, alphaToCoverage: impEdge.a2c,
 			alphaToCoverageAsked: impEdge.a2cAsked, msaa: impEdge.msaa },
-		coverage: { on: impCov.on, magLo: impCov.magLo, magHi: impCov.magHi,
+		coverage: { on: impCov.on, magLo: impCov.magLo, magHi: impCov.magHi, gamma: impCov.gamma,
 			quant: impCov.quant, samples: impCov.samples, orderedDither: impCov.dither },
 		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
@@ -533,7 +544,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			alphaTest: { value: ALPHA_TEST },
 			debugMode: { value: debug },
 			pfaImpInterior: { value: new THREE.Vector3( impInterior[ 0 ], impInterior[ 1 ], impInterior[ 2 ] ) },
-			pfaImpCov: { value: new THREE.Vector3( impCov.magLo, impCov.magHi, impCov.quant ) },
+			pfaImpCov: { value: new THREE.Vector4( impCov.magLo, impCov.magHi, impCov.quant, impCov.gamma ) },
 			pfaMeshDist: switchUniforms ? switchUniforms.pfaMeshDist : { value: 1e9 },
 			pfaFadeBand: switchUniforms ? switchUniforms.pfaFadeBand : { value: 1 },
 		};
@@ -653,6 +664,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `(0 | 1 | magLo[,magHi]): using the default` );
 		note( `impostor alpha as COVERAGE (Phase 8b): ${impCov.on ? 'ON' : 'off'}`
 			+ ( impCov.on ? `, handover ${impCov.magLo}->${impCov.magHi} screen px per atlas texel, `
+				+ `gamma ${impCov.gamma}, `
 				+ `quantum 1/${impCov.samples} (${impCov.dither ? 'ordered dither, no coverage mask'
 					: `${impCov.samples}-sample coverage mask + ordered dither of the remainder` })` : '' )
 			+ ` (?impcov=0 restores Phase 7)` );

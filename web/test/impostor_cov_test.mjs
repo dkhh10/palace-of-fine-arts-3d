@@ -11,7 +11,7 @@
 //      `#endif` or a `pfaBayer4` behind the wrong guard is a black canvas in Chrome and nothing at
 //      all in node), and `?impcov=0` leaves the Phase 7 source byte-identical.
 import * as THREE from 'three';
-import { buildImpostors, parseImpCov, ALPHA_TEST } from '../src/impostors.js';
+import { buildImpostors, parseImpCov, IMP_COV, ALPHA_TEST } from '../src/impostors.js';
 
 let fails = 0;
 const check = ( ok, msg ) => { if ( ! ok ) fails ++; console.log( `${ok ? 'PASS' : 'FAIL'}  ${msg}` ); };
@@ -60,7 +60,12 @@ async function build( opts ) {
 const b = await build( { edge: null, msaa: true, samples: 4, coverage: null } );
 check( 'PFA_IMP_COV' in b.mat.defines, 'default: PFA_IMP_COV is defined' );
 check( b.mat.uniforms.pfaImpCov.value.x === 1 && b.mat.uniforms.pfaImpCov.value.y === 2
-	&& b.mat.uniforms.pfaImpCov.value.z === 0.25, 'the uniform carries (magLo, magHi, quantum)' );
+	&& b.mat.uniforms.pfaImpCov.value.z === 0.25 && b.mat.uniforms.pfaImpCov.value.w === IMP_COV.gamma,
+'the uniform carries (magLo, magHi, quantum, gamma)' );
+const gam = parseImpCov( '1,2,0.45', { a2c: true, samples: 4 } );
+check( gam.gamma === 0.45 && gam.magLo === 1 && gam.magHi === 2, 'the third field is the coverage gamma' );
+check( parseImpCov( '1,2,9', { a2c: true, samples: 4 } ).gamma === 4, 'the gamma is clamped, never NaN' );
+check( parseImpCov( null, { a2c: true, samples: 4 } ).gamma === IMP_COV.gamma, 'the default gamma is the shipped one' );
 check( b.report.coverage.on && b.report.coverage.samples === 4 && b.report.coverage.orderedDither === false,
 	'the report states the coverage path, for __pfaInfo and the gate' );
 check( /alpha as COVERAGE \(Phase 8b\): ON/.test( b.notes ) && /quantum 1\/4/.test( b.notes ),
@@ -98,6 +103,8 @@ check( SRC.indexOf( '#ifdef PFA_IMP_COV' ) < defAt, 'and its declaration sits in
 // the Phase 7 contract: the cutoff itself is untouched
 check( ALPHA_TEST === 0.33, 'the alpha test is unchanged at 0.33' );
 check( /pfaCov = mix\( pfaCov, covMag, magT \)/.test( SRC ), 'the two paths are mixed by the magnification' );
+check( /pow\( clamp\( a, 0.0, 1.0 \), pfaImpCov.w \)/.test( SRC ), 'the gamma is applied to the coverage, not to the colour' );
+check( ! /lin \*= pow/.test( SRC ), 'and nothing in the colour path changed' );
 
 // The same preprocessor pass the GPU would do, so a branch that never compiles here is caught.
 function preprocess( src, defines ) {
