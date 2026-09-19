@@ -843,3 +843,13 @@ LOD1 1 012 912 / LOD2 238 032 (renders/logs/p8a_build_lod2.log); the report's LO
 triangle; placed LOD0 moves slightly because far placements draw the LOD1 mesh. Instance scale moved for cap-bound shrubs (REAL_H over narrower cards) with the
 sightline cap still holding; keys, positions, rotations and the count (1 379) are untouched. Carries: sorted() source keys past 9 sources, dead `--lod2 clump` arg,
 env_p8_boxes hardcoded root, qa_r13 worktree fallback; the blend committed twice on the branch (not squashed).
+
+## 2026-09-19 · 8c decision: the column banding is the detail layer's projection, not the bake — flip `?detailproj` to `dominant` (free); 8b deviations accepted
+Export analysis (docs/briefs/phase8c_export_analysis.md, 4a9125b): cam03 resolves 960 px/m at 1 m against 77 texels/m on the near colonnade atlas (12.4:1 = the
+blur) and 8.8 texels/m on the merged entablature mass (110:1); the shaft UV is not stretched (1.11); the vertical BANDING is the detail tiling map's objxy
+projection on a vertical shaft (15.2 texels/m vertical vs 948 horizontal: every detail texel is a streak the column's full 11.2 m); KTX2 is a measured no-op.
+Decision: the shipped `?detailproj=dominant` becomes the default (0 MB, 0 bake; one QA capture round since every station is touched); reserve a triplanar blend
+in detail.js if the tile still bands; a 4K re-bake of the two south sets (+75.5 MB resident, +26 MB tier 2, ~20 min queue, still 6.2:1) only if the hero still
+reads flat. Rejected: UV re-layout (forces gate1 -> gate3 -> gate5 re-runs, no gain on the merged mass), a finer detail map (already 1.05 mm/texel).
+8b export (b4ef4af): the 2K impostor ALBEDO atlases are published at tier 1 (+9.72 MB; the 1K stays published for `?imp2k=0`), the 1K ETC1S stand-in at tier 0;
+tier-0 files byte-identical; the 2K normdepth stays stripped because the viewer has no code path for it. Both deviations accepted.
