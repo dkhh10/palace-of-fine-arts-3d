@@ -1,0 +1,21 @@
+00:00.727  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/assets/environment.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/scripts/env_preview.py:69: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+00:14.143  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_01_lagoon_hero_p8a_before.png'
+00:20.846  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_02_lagoon_ne_threequarter_p8a_before.png'
+00:30.763  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_03_colonnade_walk_p8a_before.png'
+00:37.786  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_05_south_lawn_p8a_before.png'
+[common] rendered 20260919_123308_01_lagoon_hero_p8a_before.png in 12.3s
+[common] rendered 20260919_123308_02_lagoon_ne_threequarter_p8a_before.png in 6.6s
+[common] rendered 20260919_123308_03_colonnade_walk_p8a_before.png in 9.9s
+[common] rendered 20260919_123308_05_south_lawn_p8a_before.png in 7.0s
+[env_preview] wrote:
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_01_lagoon_hero_p8a_before.png
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_02_lagoon_ne_threequarter_p8a_before.png
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_03_colonnade_walk_p8a_before.png
+  /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-env/renders/previews/environment/20260919_123308_05_south_lawn_p8a_before.png
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 39976 exited rc=0 after 39 s (max 1200)

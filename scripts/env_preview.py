@@ -20,6 +20,11 @@ def build_scene(local=False, lod=0):
         for obj in bpy.data.objects:
             if obj.name.startswith("ENV_tree_") and "_LOD" in obj.name and obj.name.split("_")[-2].isdigit():
                 obj.hide_render = not obj.name.endswith(f"_LOD{lod}")
+            # Phase 8a: the shrub/reed cards carry the same _LOD suffix and are saved with hide_render set for
+            # LOD0 only. The viewer (and every QA-17 shrub box) renders LOD1, so --local --lod=N must switch them
+            # too, or a "LOD1 preview" silently measures the LOD0 cards.
+            elif obj.name.startswith("ENV_shrub_") and "_LOD" in obj.name:
+                obj.hide_render = not obj.name.endswith(f"_LOD{lod}")
         env = bpy.data.collections.get("ENV")
     else:
         bpy.ops.wm.read_homefile(use_empty=True)

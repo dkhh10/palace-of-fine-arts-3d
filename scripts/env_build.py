@@ -566,9 +566,32 @@ BLADE_W = 0.05             # grass / reed blade width (m)
 # 8-15 px, so 1300 leaf cards buy nothing. Leaf COVERAGE (n_cards * card^2) is what makes the silhouette read, so
 # each step keeps the coverage and multiplies the card size instead: cards get k x wider and k^2 x fewer.
 #   LOD0 full, LOD1 ~2.2 x cards (~21 % of the tris), LOD2 ~4.5 x cards (~5 %) on a coarser core.
+#
+# PHASE 8a (QA 17 section 3 / section 4: "still broad flat angular cards at stations 1, 2, 3 and 5", leaf-green
+# pixel share ~0.5 x the reference at five boxes). That rule -- keep the coverage, make the cards k x wider and
+# k^2 x fewer -- is exactly what produces a blade: at LOD1 an 8.5 cm leaf became an 18.7 cm quad and a 4.5 cm
+# reed blade an 7.8 cm strap. The coverage argument holds for a silhouette seen at 8-15 px; it fails at the 3 m
+# and 8 m stations, and the even scatter of big quads is what reads as "angular cut-out lobes".
+#   LOD1 now runs a 1.65 x card at full coverage (1.87 x the cards, 25 % narrower) and a 0.75 blade factor
+#   (2.3 x the blades, 33 % narrower), which lands the whole unique LOD1 set at 1.83 x its round-02 triangles,
+#   inside the 2 x cap the 8a brief sets.
+#
+# LOD2 IS THE LEVER (lead's decision, 2026-09-19, after the 8a report). `export/gate1_set.py` ("# shrubs at
+# LOD2, shared mesh per prototype") ships the LOD2 mesh for all 1 379 placements while taking the placed _LOD1
+# object's transform, so every station -- the hero's shore band at 80-160 m included -- draws LOD2, and a LOD1
+# change alone reaches only the Cycles renders and the Blender viewport. LOD2 therefore takes both the clump
+# emitter (free) and a densification to card 3.30 / cover 0.85 / blade 0.24: a 28 cm leaf card instead of 38 cm.
+# The +105 k placed triangles break the Gate 1 ENV freeze of 800 k; the lead accepted the exception and the
+# viewer measures the frame cost after export.
 SHRUB_LOD = {0: dict(card=1.00, cover=1.00, blade=1.00, sub=2),
-             1: dict(card=2.20, cover=0.95, blade=0.33, sub=2),
-             2: dict(card=4.50, cover=0.85, blade=0.12, sub=1)}
+             1: dict(card=1.65, cover=1.00, blade=0.75, sub=2),
+             2: dict(card=3.30, cover=0.85, blade=0.24, sub=1)}
+# Cards are emitted in CLUMPS at several scales at these LODs (structure, not count: at a given card count the
+# triangle total is untouched, which is why LOD0 keeps its count exactly and only the distribution changes).
+CLUMP_LODS = (0, 1, 2)
+CLUMP_N = (4, 9)                              # cards per clump
+CLUMP_SIZES = (0.58, 0.82, 1.05, 1.38)        # the several leaf scales; mean square = 1.00, so coverage is kept
+TUFT_LODS = (0, 1, 2)                         # blade clumps: tufts of 4-8 blades instead of an even fan
 # a shrub farther than this from every QA camera renders its LOD1 mesh even at LOD0 (LOD2 beyond 2 x)
 SHRUB_FAR = 80.0
 
@@ -595,6 +618,27 @@ def _card(verts, faces, cx, cy, cz, w, h, angle, tilt):
     faces.append([b, b + 1, b + 2, b + 3])
 
 
+def _leaf_clump(verts, faces, rnd, cx, cy, cz, nx, ny, card, n, spread):
+    """Phase 8a: one leaf clump -- `n` cards of several scales fanned about (cx, cy, cz) with a shared dominant
+    orientation and a spread of tilts, pushed a little along the surface normal (nx, ny).
+
+    A clump gives the silhouette lobes and fine edges where an even scatter of single quads of one size gives
+    flat angular cut-outs (QA 17 section 4, stations 1, 2, 3 and 5). Card COUNT is the caller's; this only
+    decides where the cards go and how big each one is, so the triangle total is untouched at a given count."""
+    a0 = rnd.uniform(0.0, math.pi)
+    t0 = rnd.uniform(-0.9, 0.9)
+    for _ in range(n):
+        s = CLUMP_SIZES[rnd.randrange(len(CLUMP_SIZES))] * rnd.uniform(0.88, 1.14)
+        out = rnd.uniform(0.0, spread)
+        _card(verts, faces,
+              cx + rnd.gauss(0.0, spread) + nx * out,
+              cy + rnd.gauss(0.0, spread) + ny * out,
+              max(0.0, cz + rnd.gauss(0.0, spread * 0.8)),
+              card * s, card * 1.25 * s * rnd.uniform(0.85, 1.35),
+              (a0 + rnd.gauss(0.0, 0.85)) % math.pi,
+              max(-1.45, min(1.45, t0 + rnd.gauss(0.0, 0.55))))
+
+
 def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="mound", cover=1.5, lod=0):
     """Mounded evergreen bush (pittosporum / mahonia): a dark inner blob wrapped in a shell of small leaf cards.
     `form='upright'` gives the coarser, more open mahonia habit (cards clustered on a few upright sprays)."""
@@ -615,6 +659,7 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="m
     bm.free()
     area = 2 * math.pi * radius * (0.6 * radius + 0.4 * height)
     n_cards = max(40, int(cover * area / (card * card * 1.25 * 0.53)))
+    clumped = lod in CLUMP_LODS
     if form == "upright":
         n_stems = rnd.randint(5, 9)
         stems = []
@@ -623,24 +668,38 @@ def make_shrub_mesh(name, seed, radius=0.8, height=0.9, card=SHRUB_CARD, form="m
             rr = radius * rnd.uniform(0.0, 0.6)
             lean = rnd.uniform(0.05, 0.35)
             stems.append((math.cos(a) * rr, math.sin(a) * rr, a, lean, height * rnd.uniform(0.7, 1.15)))
-        for _ in range(n_cards):
+        done = 0
+        while done < n_cards:
             sx, sy, sa, lean, sh = stems[rnd.randrange(n_stems)]
             t = rnd.uniform(0.25, 1.0) ** 0.55
             cz = t * sh
             spread = radius * 0.38 * (0.3 + t)
             cx = sx + math.cos(sa) * lean * cz + rnd.uniform(-spread, spread)
             cy = sy + math.sin(sa) * lean * cz + rnd.uniform(-spread, spread)
-            _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.75, 1.25), card * 1.25 * rnd.uniform(0.8, 1.4),
-                  rnd.uniform(0, math.pi), rnd.uniform(-1.1, 1.1))
+            if clumped:
+                n = min(rnd.randint(*CLUMP_N), n_cards - done)
+                _leaf_clump(verts, faces, rnd, cx, cy, cz, math.cos(sa), math.sin(sa), card, n, card * 0.85)
+                done += n
+            else:
+                _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.75, 1.25),
+                      card * 1.25 * rnd.uniform(0.8, 1.4), rnd.uniform(0, math.pi), rnd.uniform(-1.1, 1.1))
+                done += 1
     else:
-        for _ in range(n_cards):
+        done = 0
+        while done < n_cards:
             u = rnd.uniform(0, 2 * math.pi)
             zt = rnd.uniform(0.02, 1.0) ** 0.55
             rr = math.sqrt(max(0.0, 1.0 - zt * zt)) * radius * rnd.uniform(0.80, 1.12)
             cx, cy = math.cos(u) * rr, math.sin(u) * rr
             cz = zt * height * rnd.uniform(0.80, 1.05)
-            _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.7, 1.2), card * 1.25 * rnd.uniform(0.85, 1.45),
-                  rnd.uniform(0, math.pi), rnd.uniform(-1.2, 1.2))
+            if clumped:
+                n = min(rnd.randint(*CLUMP_N), n_cards - done)
+                _leaf_clump(verts, faces, rnd, cx, cy, cz, math.cos(u), math.sin(u), card, n, card * 0.75)
+                done += n
+            else:
+                _card(verts, faces, cx, cy, cz, card * rnd.uniform(0.7, 1.2),
+                      card * 1.25 * rnd.uniform(0.85, 1.45), rnd.uniform(0, math.pi), rnd.uniform(-1.2, 1.2))
+                done += 1
     me = bpy.data.meshes.new(name)
     me.from_pydata([tuple(v) for v in verts], [], faces)
     me.update()
@@ -662,12 +721,24 @@ def make_blade_clump(name, seed, height=1.1, blades=60, width=BLADE_W, arch=0.35
     width = width / max(0.2, step["blade"]) ** 0.5 if lod else width
     rnd = random.Random(seed)
     verts, faces = [], []
+    # Phase 8a: at LOD0/LOD1 the blades come in tufts of 4-8 that share an origin and a lean direction, so a
+    # clump reads as several fans crossing rather than one even spray of straps (QA 17 section 4, cam02 r2c1).
+    tufted = lod in TUFT_LODS
+    tuft = (0.0, 0.0, 0.0, 0)          # ox, oy, lean azimuth, blades left in this tuft
     for _ in range(blades):
         a = rnd.uniform(0, math.pi)
         w = width * rnd.uniform(0.6, 1.15)
         h = height * rnd.uniform(0.5, 1.35)
         ox, oy = rnd.uniform(-spread, spread), rnd.uniform(-spread, spread)
         la = rnd.uniform(0, 2 * math.pi)
+        if tufted:
+            if tuft[3] <= 0:
+                tuft = (rnd.uniform(-spread, spread), rnd.uniform(-spread, spread),
+                        rnd.uniform(0, 2 * math.pi), rnd.randint(4, 8))
+            ox = tuft[0] + rnd.gauss(0.0, spread * 0.22)
+            oy = tuft[1] + rnd.gauss(0.0, spread * 0.22)
+            la = tuft[2] + rnd.gauss(0.0, 0.6)
+            tuft = (tuft[0], tuft[1], tuft[2], tuft[3] - 1)
         lean = arch * rnd.uniform(0.4, 1.6)
         lx, ly = math.cos(la) * h * lean, math.sin(la) * h * lean
         dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
@@ -732,30 +803,15 @@ def make_twig_shrub_mesh(name, seed, radius=0.7, height=1.2, twigs=70, lod=0):
     return me
 
 
-def build_shrubs():
-    """Shore planting per reference sheet s6: pittosporum mounds (dark), mahonia (upright, coarser), agapanthus
-    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through.
 
-    Round 02 fixes:
-      * QA-02-18 "a regular row of near-identical dark pom-poms": 9 mound seeds instead of 4, three material
-        families across them (MAT_shrub / MAT_shrub_light / MAT_shrub_dry) so the belt carries a hue spread, a
-        2.4:1 instance size spread, no two neighbours drawn from the same source mesh, and dry reeds / twigs
-        seeded into the peninsula belt (they were only used past r = 50 m) for the warm dry fraction.
-      * QA-02-13 "the shrub band hides the podium and its Greek-key band": every shrub inside r = 54 m of the
-        rotunda is clamped to 1.2 m tall.
-      * performance: every source mesh is built at three LODs and each placement becomes three objects, like the
-        trees, so ENV_LOD1 no longer carries the full-density cards; shrubs past SHRUB_FAR from every QA camera
-        render their LOD1 mesh even at LOD0.
+
+# ----------------------------------------------------------------------------- the shrub source meshes
+def shrub_sources():
+    """The 28 shrub / reed / twig source meshes, each at LOD0, LOD1 and LOD2.
+
+    Extracted from build_shrubs() in Phase 8a so the triangle budget can be measured without building the
+    whole site: `blender --background --python scripts/env_build.py -- --shrub-stats`.
     """
-    log("shrubs + grasses + reeds")
-    coll = SUB["ENV_shrubs"]
-    rnd = random.Random(23)
-    # QA-04-4 (round 6): the radius clamp is gone.  ROSTRA_R 54 m / ROSTRA_H_RANGE 0.42-1.20 m was round 03's
-    # answer to QA-03-13 and it is what made the hero shoreline "a bare pale quay with 0.5-1 m dot shrubs and an
-    # exposed podium base".  The cap is now `band_sightline_cap` (see the top of this file): per instance, the
-    # height of the ray from each hero camera's eye to the bottom of the podium's Greek-key course.  On the hero
-    # shoreline it comes out at 3.2-3.7 m, which is ref 169's own mound height, and it still guarantees the band.
-
     # (key, material(s), {lod: mesh}, nominal height) - meshes are shared by every instance of that key
     src = {}
 
@@ -788,6 +844,33 @@ def build_shrubs():
     for i in range(3):
         add(f"twig{i}", ("MAT_shrub_dry", "MAT_reeds"), make_twig_shrub_mesh, 0.9 + 0.25 * i, seed=350 + i,
             radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i, twigs=70)
+    return src
+
+def build_shrubs():
+    """Shore planting per reference sheet s6: pittosporum mounds (dark), mahonia (upright, coarser), agapanthus
+    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through.
+
+    Round 02 fixes:
+      * QA-02-18 "a regular row of near-identical dark pom-poms": 9 mound seeds instead of 4, three material
+        families across them (MAT_shrub / MAT_shrub_light / MAT_shrub_dry) so the belt carries a hue spread, a
+        2.4:1 instance size spread, no two neighbours drawn from the same source mesh, and dry reeds / twigs
+        seeded into the peninsula belt (they were only used past r = 50 m) for the warm dry fraction.
+      * QA-02-13 "the shrub band hides the podium and its Greek-key band": every shrub inside r = 54 m of the
+        rotunda is clamped to 1.2 m tall.
+      * performance: every source mesh is built at three LODs and each placement becomes three objects, like the
+        trees, so ENV_LOD1 no longer carries the full-density cards; shrubs past SHRUB_FAR from every QA camera
+        render their LOD1 mesh even at LOD0.
+    """
+    log("shrubs + grasses + reeds")
+    coll = SUB["ENV_shrubs"]
+    rnd = random.Random(23)
+    # QA-04-4 (round 6): the radius clamp is gone.  ROSTRA_R 54 m / ROSTRA_H_RANGE 0.42-1.20 m was round 03's
+    # answer to QA-03-13 and it is what made the hero shoreline "a bare pale quay with 0.5-1 m dot shrubs and an
+    # exposed podium base".  The cap is now `band_sightline_cap` (see the top of this file): per instance, the
+    # height of the ray from each hero camera's eye to the bottom of the podium's Greek-key course.  On the hero
+    # shoreline it comes out at 3.2-3.7 m, which is ref 169's own mound height, and it still guarantees the band.
+
+    src = shrub_sources()
 
     # the clamp below has to work on the mesh's real z extent, not on the nominal height the factory was asked
     # for: round 03's "1.2 m" shrubs measured 1.87 m in the file because the mound meshes overshoot their nominal
@@ -858,8 +941,9 @@ def build_shrubs():
             last = key
             put(key, x, y, dz=dz, s=s)
 
-    MOUNDS = tuple(f"pitto{i}" for i in range(len(MOUND_SPEC)))
-    BIG = tuple(f"big{i}" for i in range(len(BIG_SPEC)))
+    # (the source specs live in shrub_sources(); the key families are read back off it so the two cannot drift)
+    MOUNDS = tuple(sorted(k for k in src if k.startswith("pitto")))
+    BIG = tuple(sorted(k for k in src if k.startswith("big")))
     LOWMOUNDS = ("pitto0", "pitto1", "pitto2", "pitto3", "pitto5", "pitto8")
     MAHONIA = ("maho0", "maho1", "maho2")
     AGAP = ("agap0", "agap1", "agap2")
@@ -1123,7 +1207,43 @@ def build_lamp_posts(paths):
 
 
 # ----------------------------------------------------------------------------- main
+def shrub_stats():
+    """Phase 8a triangle budget: the unique source-mesh triangles of the whole shrub set, per LOD.
+
+    `blender --background --python scripts/env_build.py -- --shrub-stats` -- no site, no save. The 8a cap is
+    "the whole LOD1 shrub set under 2x its current unique triangles", which is what the LOD1 column measures.
+    """
+    # `--lod2=card,cover,blade,sub[,clump]` costs an ALTERNATIVE LOD2 without changing the build: the web
+    # export ships the LOD2 shrub mesh for all 1 379 placements (export/gate1_set.py "# shrubs at LOD2"), so
+    # this is the only lever that reaches the viewer, and the lead needs its triangle price.
+    for a in ARGS:
+        if a.startswith("--lod2="):
+            v = a.split("=", 1)[1].split(",")
+            SHRUB_LOD[2] = dict(card=float(v[0]), cover=float(v[1]), blade=float(v[2]), sub=int(v[3]))
+            if len(v) > 4 and v[4] == "clump":
+                globals()["CLUMP_LODS"] = (0, 1, 2)
+                globals()["TUFT_LODS"] = (0, 1, 2)
+            print(f"[shrub-stats] LOD2 override: {SHRUB_LOD[2]} clump={CLUMP_LODS}")
+    src = shrub_sources()
+    tot = {0: 0, 1: 0, 2: 0}
+    print(f"{'source':14s} {'LOD0':>8s} {'LOD1':>8s} {'LOD2':>8s}   {'cards L0':>8s} {'cards L1':>8s} "
+          f"{'card cm L1':>10s}")
+    for key in sorted(src):
+        lods = src[key][1]
+        t = {lod: sum(len(p.vertices) - 2 for p in lods[lod].polygons) for lod in (0, 1, 2)}
+        for lod in (0, 1, 2):
+            tot[lod] += t[lod]
+        print(f"{key:14s} {t[0]:8,d} {t[1]:8,d} {t[2]:8,d}   "
+              f"{lods[0].get('cards', 0):8d} {lods[1].get('cards', 0):8d} "
+              f"{100.0 * lods[1].get('card_m', 0.0):9.1f}")
+    print(f"{'TOTAL':14s} {tot[0]:8,d} {tot[1]:8,d} {tot[2]:8,d}   ({len(src)} sources)")
+    print(f"[shrub-stats] unique LOD1 triangles: {tot[1]:,}")
+
+
 def main():
+    if "--shrub-stats" in ARGS:
+        shrub_stats()
+        return
     terrain, paths = build_terrain()
     build_paving()
     build_water()

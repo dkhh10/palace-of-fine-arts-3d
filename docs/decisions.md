@@ -828,3 +828,28 @@ the export when it restores them). Decision: (1) export names the 2K albedo/norm
 to the byte; +6.4 MB in tier 1; mobile stays 1K); (2) the viewer samples atlas alpha as coverage under magnification (dither / a2c fed by the atlas alpha, no
 binary cut) — `?impcov=` switch, 0 restores. Rejected: 4K atlas (54 min GPU, 512 MB), compose-side remap (eats the silhouette). Stretch, only if 1+2 miss the
 station-2 crossings target: a 12x3 band atlas at 341 px frames (13 min GPU, 128 MB, +13 MB).
+
+## 2026-09-19 · 8a decision: the shrub lever is LOD2 — clumped AND densified; the Gate 1 ENV placed-triangle budget gets a logged exception
+The ENV builder (docs/briefs/phase8a_env_report.md, 496d880): the web export draws the LOD2 shrub set for all 1 379 placements at the stations (the 6c LOD1 set is
+the walk-in only), so the QA-17 shrub boxes at 80-160 m measure LOD2 and the brief's LOD1-only change could not move them; the ENV preview harness cannot measure
+the boxes either (its olive look saturates the leaf mask, the 1280 -> 1920 upscale destroys the hard-edge share) — the measurement comes from the viewer capture
+after export. Delivered: a clump emitter (4-9 cards at four leaf scales, tufted blades), LOD1 unique 17 094 -> 31 268 (1.83x), LOD0 / LOD2 unchanged. Decision:
+apply the clumping at LOD2 (zero triangles) plus the densification `card 3.30 / cover 0.85 / blade 0.24` (unique 3 920 -> ~6 948, placed +~105 k against the frozen
+800 k ENV budget = +13 %, accepted for the hero; the viewer's frame cost is measured after export). Two harness bugs fixed on the way (env_preview --lod, the
+qa_r13 reference root in worktrees). Then: master rebuild + master_delivery, ENV re-export (env groups, shrub LOD1, instance irradiance join by translation),
+tiers, deploy, QA 20 measuring the shrub boxes against the reference photo.
+Correction after review (docs/reviews/phase8_env_r1_review.md, MERGE WITH FIXES): the script-measured placed counts after the LOD2 change are LOD0 2 420 864 /
+LOD1 1 012 912 / LOD2 238 032 (renders/logs/p8a_build_lod2.log); the report's LOD0/LOD1 placed figures were hand-multiplied. Unique LOD0 is unchanged to the
+triangle; placed LOD0 moves slightly because far placements draw the LOD1 mesh. Instance scale moved for cap-bound shrubs (REAL_H over narrower cards) with the
+sightline cap still holding; keys, positions, rotations and the count (1 379) are untouched. Carries: sorted() source keys past 9 sources, dead `--lod2 clump` arg,
+env_p8_boxes hardcoded root, qa_r13 worktree fallback; the blend committed twice on the branch (not squashed).
+
+## 2026-09-19 · 8c decision: the column banding is the detail layer's projection, not the bake — flip `?detailproj` to `dominant` (free); 8b deviations accepted
+Export analysis (docs/briefs/phase8c_export_analysis.md, 4a9125b): cam03 resolves 960 px/m at 1 m against 77 texels/m on the near colonnade atlas (12.4:1 = the
+blur) and 8.8 texels/m on the merged entablature mass (110:1); the shaft UV is not stretched (1.11); the vertical BANDING is the detail tiling map's objxy
+projection on a vertical shaft (15.2 texels/m vertical vs 948 horizontal: every detail texel is a streak the column's full 11.2 m); KTX2 is a measured no-op.
+Decision: the shipped `?detailproj=dominant` becomes the default (0 MB, 0 bake; one QA capture round since every station is touched); reserve a triplanar blend
+in detail.js if the tile still bands; a 4K re-bake of the two south sets (+75.5 MB resident, +26 MB tier 2, ~20 min queue, still 6.2:1) only if the hero still
+reads flat. Rejected: UV re-layout (forces gate1 -> gate3 -> gate5 re-runs, no gain on the merged mass), a finer detail map (already 1.05 mm/texel).
+8b export (b4ef4af): the 2K impostor ALBEDO atlases are published at tier 1 (+9.72 MB; the 1K stays published for `?imp2k=0`), the 1K ETC1S stand-in at tier 0;
+tier-0 files byte-identical; the 2K normdepth stays stripped because the viewer has no code path for it. Both deviations accepted.
