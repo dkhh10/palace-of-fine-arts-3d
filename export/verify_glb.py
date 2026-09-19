@@ -623,13 +623,20 @@ def verify_gate5(out_dir, variant="desktop"):
     if want_far is None and man.get("tree_far") is not None:
         want_far = len(man["tree_far"])
     trees = man.get("trees") or {}
+    def _n(v):
+        # a placement block is either the list itself or `{count, same_as}` (the walk-up set states it
+        # by reference so the two can never disagree)
+        if isinstance(v, list):
+            return len(v)
+        if isinstance(v, dict):
+            return v.get("count")
+        return None
+    far_mesh = trees.get("far_mesh") or {}
     counts = dict(tree_far_rows=(len(man["tree_far"]) if man.get("tree_far") is not None else None),
                   far_billboards=want_far,
-                  far_mesh_placements=len(((trees.get("far_mesh") or {}).get("placements")) or [])
-                  if (trees.get("far_mesh") or {}).get("placements") is not None else None,
-                  walkup_count=(trees.get("walkup_mesh") or {}).get("count"),
-                  lighting_rows=len((((man.get("lightmaps") or {}).get("trees_far") or {})
-                                     .get("mesh") or {}).get("placements") or []) or None)
+                  far_mesh_placements=_n(far_mesh.get("placements")),
+                  walkup_count=_n((trees.get("walkup_mesh") or {}).get("placements")),
+                  lighting_rows=_n((((far_mesh.get("lighting") or {}).get("mesh")) or {}).get("placements")))
     rep["far_tree_counts"] = counts
     seen_counts = {k: v for k, v in counts.items() if v}
     if len(set(seen_counts.values())) > 1:

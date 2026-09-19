@@ -2738,3 +2738,28 @@ mobile, `tiers_test` green, `name_sweep` PASS, `npm test` all passed (three r186
   review note - must be re-read against the current `tree_far` list. `p8e_leaf_probe.py`'s orbit boxes name
   the trees they measured at the r1 ids; the geometry pass in that probe recomputes them from the
   placements, so its table is unaffected, but the box LABELS are r1 names.
+
+### r5 blockers closed (the far-tree manifest and the per-placement irradiance)
+
+**Blocker 1 - the manifest advertised 127 against a 166-instance glb.** `manifest_v4` had run before
+`trees_far.py`, so `trees.far_mesh.placements`, `walkup_mesh.placements.count` and the per-placement
+lighting rows were all the pre-belt 127; `foliageLazy` would have failed the join and dropped the whole
+far-tree mesh layer, walk-up set included. All three now read **166**, and three guards make the class of
+bug unshippable: `manifest_v4` asserts `len(trees_far.json placements) == len(tree_far)` plus the
+billboard identity row by row and refuses a glb older than the report; `verify_glb --gate5` gained check 5,
+which compares `tree_rule.far_billboards`, `far_mesh.placements`, `walkup_mesh.placements.count` and the
+lighting rows **in one place** (every pair but that one was already checked); `web/test/foliage_lazy_test.mjs`
+takes the count from the manifest (`FAR_N`) instead of the literal 127 / 254 it used to assert.
+
+**Blocker 2 - the per-placement irradiance could not be regenerated.** `instance_irradiance.json` declares
+its key as WORLD TRANSLATION ("the object name is a label"), but `manifest_v4` joined it by the
+`TREEFAR_###` label, and the belt's interleave re-pointed 87 of the 127 ids while 39 had no row at all.
+Two changes: the join is by world location on a 0.02 m grid, with a uniqueness assert on the cell; and the
+39 belt rows were **baked, not stood in**. Price, measured from the 6c records (554 s for 127 placements =
+4.36 s each): 166 x 4.36 = **~12 min**, under the lead's 15-minute rule. Actual: four `tfirr_*` jobs,
+**199.1 + 189.5 + 198.5 + 192.2 = 779 s = 13.0 min** of GPU, 4.69 s per placement, all rc=0;
+`trees_far_compose.py` then wrote **166 placements, lum 0.1369-6.0972, 0 zero placements, 16/16 E_bake**.
+The bake needs two files `sync_main.sh` deliberately does not copy - `gate3_bake.blend` (315 MB) and
+`gate3_imp.blend` (67 MB) - plus `trees_far/ao` and `trees_far/ebake`; they were APFS-cloned read-only
+from the **phase6-bake** worktree, which is also what keeps the new rows in the same scene and rig as the
+127 that were already there. `trees_far_compose.py` and `trees_far_set.py` no longer hard-code 127.
