@@ -54,7 +54,7 @@ async function build( opts ) {
 	} );
 	await report.promise;
 	const mat = group.children[ 0 ].material;
-	return { report, mat, notes: notes.join( '\n' ) };
+	return { report, mat, group, notes: notes.join( '\n' ) };
 }
 
 const b = await build( { edge: null, msaa: true, samples: 4, coverage: null } );
@@ -86,6 +86,32 @@ check( /ordered dither \(no coverage mask\)/.test( noMsaa.notes ), 'the fallback
 const premulOnly = await build( { edge: 'premul', msaa: true, samples: 4, coverage: null } );
 check( premulOnly.mat.alphaToCoverage === false && premulOnly.report.coverage.orderedDither === true,
 	'?impedge=premul on an MSAA target: no mask is written, so the dither takes over' );
+
+// ---- 2b. Phase 8b deliverable B: the 2K variant, ahead of the export landing its keys ----------
+// The viewer must DRAW the 2K geometry when the manifest carries a per-prototype `albedo_2k` and the
+// `variant_2k` block, and keep the 1K where it does not - the coverage path then sees half the
+// magnification with no change of its own, because `mag` is measured per fragment from innerPx.
+const IMP2K = {
+	...IMPOSTORS,
+	variant2k: { atlasPx: 2048, framePx: 170, gutterPx: 4, innerPx: 162 },
+	prototypes: { P: { ...IMPOSTORS.prototypes.P, albedo2k: 'a2k.ktx2', bytes2k: 4 },
+		Q: { albedo: 'q.ktx2', range: 2, radius: 5, heightAboveBase: 10, centreZ: 5, bytes: 1 } },
+};
+const FAR2 = [ ...FAR, { prototype: 'Q', id: 't2', height: 10, base: [ 10, 0, 0 ] } ];
+const k2 = await build( { impostors: IMP2K, far: FAR2, atlas2k: true, msaa: true, samples: 4 } );
+check( k2.report.atlas2k === true, '2K: the report says the 2K variant is drawn' );
+check( k2.report.drawnGeom.atlasPx === 2048 && k2.report.drawnGeom.innerPx === 162,
+	'2K: the DRAWN geometry is the 2K one, read from variant_2k and never scaled by hand' );
+check( k2.report.atlas2kMissing.includes( 'Q' ), '2K: a prototype with no albedo_2k is named, not silently 1K' );
+check( /2K variant on 1\/2 prototype\(s\)/.test( k2.notes ) && /1K kept on Q/.test( k2.notes ),
+	'2K: the boot note says which prototypes got it' );
+const k1 = await build( { impostors: IMP2K, far: FAR2, atlas2k: false, msaa: true, samples: 4 } );
+check( k1.report.atlas2k === false && k1.report.drawnGeom.atlasPx === 1024,
+	'?imp2k=0 keeps the 1K atlas and says so' );
+// the coverage uniform is independent of the atlas: the magnification is measured in the shader
+check( k2.mat.uniforms.pfaImpCov.value.z === IMP_COV.share
+	&& k2.mat.uniforms.innerPx.value === 162,
+	'2K: the coverage share is unchanged and innerPx (which sets the measured magnification) follows the atlas' );
 
 // ---- 3. the shader compiles, in every define combination ---------------------------------------
 // A headless WebGL context is not available, so the program is built by three's own shader chain
