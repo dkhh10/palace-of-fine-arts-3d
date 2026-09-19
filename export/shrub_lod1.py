@@ -36,6 +36,7 @@ import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import foliage_uv as fuv  # noqa: E402
 import gate0_common as g0  # noqa: E402
 import gate1_common as g1  # noqa: E402
 import read_alpha  # noqa: E402
@@ -201,7 +202,13 @@ def main():
         alpha_mats[m.get("name")] = dict(cutoff=cut, texture=uri, reason=why)
     assert not alpha_missing, (f"{gltf_p.name}: {alpha_missing} have an alpha-carrying baseColorTexture and "
                                f"no recognised cut chain - a card that ships OPAQUE is a solid rectangle")
-    if alpha_mats:
+    # 8a-3: the LOD1 walk-in cards are NOT scaled (they are the reference the LOD2 set is being brought
+    # back to), but their samplers must agree with env.gltf's: the runtime tinted albedo is ONE texture
+    # shared by every root that uses the material name, and applyFoliageAlbedo re-wraps it from whichever
+    # root loaded last - so a CLAMP here would smear env.glb's tiled cards. Same patch, same assertions.
+    wrap_patch = fuv.patch_samplers(doc, [m for m, f in fuv.SHRUB_TILE.items() if f != (1.0, 1.0)],
+                                    gltf_p.name)
+    if alpha_mats or wrap_patch:
         gltf_p.write_text(json.dumps(doc))
         doc = json.loads(gltf_p.read_text())
     # ---- the placement check that can fail: the EXPORTED node translations, per row. This crosses the
@@ -238,6 +245,7 @@ def main():
         centre_delta_note="placements[].centre_delta_m is the LOD1 translation against the Gate 1 asset's "
                           "`location_blender` (the LOD2 object's BBOX CENTRE, gate1_set.py): different "
                           "meshes, so it is 0.22-1.95 m by construction and is reported, never asserted")
+    rep["shrub_wrap_patch"] = wrap_patch
     rep["gltf"] = dict(path=gltf_p.name, bytes=gltf_p.stat().st_size, nodes=len(doc.get("nodes", [])),
                        meshes=len(doc.get("meshes", [])),
                        materials=[m.get("name") for m in doc.get("materials", [])],

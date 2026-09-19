@@ -18,6 +18,7 @@ import json
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import foliage_uv as fuv  # noqa: E402
 import gate0_common as g0  # noqa: E402
 import gate1_common as g1  # noqa: E402
 
@@ -422,6 +423,36 @@ for name, a in setjson["assets"].items():
     else:
         sets["env"].append(ob)
 
+# ---------------------------------------------------------------- 8a-3: the LOD2 shrub cards' UV scale
+# docs/briefs/phase8a3_shrub_cards_analysis.md + docs/decisions.md "8a-3 decision": env.glb's LOD2 shrub
+# cards are exactly the magnified twin of env_shrubs.glb's LOD1 cards on the same texture (blobs 21.7-23.8
+# px wide at the 25 m `shrubLod` switch), so each card is made to sample its texture (ku, kv) times over -
+# per material, from the MEASURED LOD2/LOD1 ratio (export/foliage_uv.py SHRUB_TILE; review r3 finding 7).
+# UV0 only: no vertex moves, UV1 (the lightmap) is not touched, and the instance rows and impostor
+# placements the pin report checks cannot see it. The LOD1 walk-in set (export/shrub_lod1.py) is NOT
+# scaled - that is the whole point, the two sets are meant to paint the same leaf size at the switch.
+# One mesh datablock is instanced by many objects, so the tiling is applied ONCE per datablock.
+shrub_uv = dict(factors={k: list(v) for k, v in fuv.SHRUB_TILE.items()}, meshes={}, materials={})
+_seen_me = set()
+for ob in sets["env"]:
+    me = getattr(ob, "data", None)
+    if me is None or me.name in _seen_me or not getattr(me, "materials", None):
+        continue
+    _seen_me.add(me.name)
+    st = fuv.tile_cards(me, fuv.SHRUB_TILE)
+    if not st:
+        continue
+    shrub_uv["meshes"][me.name] = st
+    for mat, d in st.items():
+        agg = shrub_uv["materials"].setdefault(mat, dict(ku=d["ku"], kv=d["kv"], cards=0, meshes=0))
+        agg["cards"] += d["cards"]
+        agg["meshes"] += 1
+        agg["uv_after"] = d["uv_after"]
+report["shrub_uv_tiling"] = shrub_uv
+print(f"[gltf_gate1] 8a-3 shrub cards tiled: "
+      + ", ".join(f"{m} ku{d['ku']:.0f}/kv{d['kv']:.0f} {d['cards']} cards in {d['meshes']} meshes"
+                  for m, d in sorted(shrub_uv["materials"].items())))
+
 want = dict(export_format="GLTF_SEPARATE", use_selection=True, export_yup=True, export_apply=True,
             export_tangents=True, export_normals=True, export_texcoords=True, export_materials="EXPORT",
             export_image_format="AUTO", export_keep_originals=False, export_cameras=False,
@@ -454,6 +485,18 @@ for cls, objs in sets.items():
     path = g1.OUT / f"{cls}.gltf"
     bpy.ops.export_scene.gltf(filepath=str(path), **base_kwargs)
     doc = json.loads(path.read_text())
+    # 8a-3: REPEAT for the tiled shrub cards' textures, in env.gltf only, cloning any sampler shared with
+    # a texture outside the tiled set (in env.gltf sampler 1 is shared with the LOD2 tree leaf cards -
+    # review r3 finding 9 - which must NOT be re-wrapped by a shrub fix).
+    if cls == "env":
+        tiled = [m for m, f in fuv.SHRUB_TILE.items() if f != (1.0, 1.0)]
+        wrap = fuv.patch_samplers(doc, tiled, path.name)
+        report["shrub_uv_tiling"]["wrap_patch"] = wrap
+        report["shrub_uv_tiling"]["uv_range"] = {
+            m: fuv.leaf_uv_range(doc, path, prefix=m) for m in sorted(fuv.SHRUB_TILE)}
+        if wrap:
+            path.write_text(json.dumps(doc))
+            doc = json.loads(path.read_text())
     tris = sum(setjson["assets"][o.name]["tris"] for o in objs if o.name in setjson["assets"])
     report["classes"][cls] = dict(path=path.name, bytes=path.stat().st_size, objects=len(objs),
                                   placed_tris=tris, meshes=len(doc.get("meshes", [])),
