@@ -966,3 +966,7 @@ phase8-viewer 100d959 MERGED (3e3f3b7; review r2 fixes: band range read per prot
 ## 2026-09-19 · SESSION 7 STOP STATE — mid-Phase 8; resume from docs/briefs/phase8_next_session.md
 Live: deploy 9 at https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev. main = this commit (+ the gate9 capture commit if it landed). No Blender, no Chrome after the capture, bake queue idle. Closed: 8c. Improved, not closed: 8b (band live, QA 21 owed), 8a (re-scope). Open: 8d, 8e, the walk-in shrub-set bug, resident counter, comparison sheet.
 Burn (list rates): sessions 6-7 (3ada03f9) 449.05   opus-5 377, fable-5-1 71; Phase 6-8 to date ≈ ,290 + this session; project grand total ≈ ,789 + this session.
+
+## 2026-09-19 · SESSION 8 START — Phase 8 resumed from docs/briefs/phase8_next_session.md
+main clean at 7300fa4; no Blender, no Chrome; bake queue idle (16/16, band). Burn at start (list rates, docs/usage/usage_from_transcripts.py): session 7 (3ada03f9) closed at 462.95 USD (opus-5 377, fable-5-1 85); this session (a87300f7) 1.17 at start.
+Dispatched: QA 21 on gate9 (Opus xhigh, CPU, docs/briefs/qa_round_21.md); viewer fix round on phase8b-viewer (Opus high, Chrome only, docs/briefs/phase8b_viewer_fix.md: walk-in shrub set, resident counter, cam02 tint); 8a re-scope analysis on phase8a-rescope (Opus high, CPU, docs/briefs/phase8a_rescope.md). Next: QA 21 verdict to the user; review + merge the viewer fixes -> deploy 10 -> capture -> QA 22; 8a decision on the analysis.
