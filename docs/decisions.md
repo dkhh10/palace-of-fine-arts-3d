@@ -1007,3 +1007,18 @@ arch/orn/ground glbs byte-identical after the pack. Gate 2: 7 backdrop jobs, zer
 shrub_dry (ku 1 kv 2) 0.98x / reeds 1.00x coverage at the 25 m switch, blobs 21.7 -> 16.9 px. Three chain traps fixed (GATE1_BLEND_DIR default, the npz path, the --gate2
 tex_ktx2 wipe). Lead decision on the reflection: the renamed far-ground group (slot-0 material MAT_backdrop_lawn) matched water.js' backdrop exclusion and would have left
 the reflection, putting a sky strip at the reflected horizon — fixed on main (1efdf56) with `backdrop_(?!lawn)` so the reflection set is exactly the pre-8d set.
+
+## 2026-09-19 · QA 22 (234977b) on deploy 10: 8e CLOSED, fix round VERIFIED, 8a closed at 1/5 but not at cam03, 8d NOT CLOSED (blocker: the belt) — hero 3.89 -> 3.81
+8d: at 100 % the R2 belt (89 icosphere crowns at subdivision 1, 6 900 tris) is a row of hard-edged untextured faceted shards in every intercolumniation at the hero, cam02 and
+cam05, reflected in the lagoon — it replaced a flat wall with flat spikes (lead viewed the sheet: agreed). R1 moved the right way but reached ~15 % of the cam06 saturation
+target. Decision (belt r2): the belt is rebuilt from the real tree prototypes through the far-tree path in scripts/env_trees.py (the "back screen rows" mechanism: Sapling
+species meshes — LOD2 for Cycles at 150 m, band-atlas impostors of the same prototypes in the viewer), placed along the hall's east face where ref 169 shows the dark belt;
+the icosphere belt objects are removed. The export pin will move on purpose: far billboards 127 -> 127 + N and the instance rows re-dump; no atlas re-bake because the
+prototypes are already baked (the prototype_map must resolve every new tree); CLASS_BUDGET['ENV'] moves by exactly the placed delta the export measures. The 4K hero render
+started on the faceted belt was killed (obsolete). 8a: closed on the tiles at stations 1 and 5 (lit-and-shaded small-leaved bushes; the 25 m LOD switch invisible); at
+cam03 the LOD1 walk-in set (env_shrubs.glb, tier 2) still shows magnified leaves — 8a-4: the export measures the LOD1 cards at 3 m and applies the same UV-scale
+treatment if warranted (tier 2 only). 8e closed (blade run p90 29.5 -> 22.7 px, 5/6 boxes <= 25, coverage 1.02-1.23x); the 2.5 m walk-up frame is captured with gate11.
+Parity: 8d moves the viewer away from the frozen Phase 5 Cycles references at the backdrop boxes by design. Decision: the six Cycles station references are re-rendered
+from the Phase 8 master (1080p, 32 spp fixed, delivery look — the haze-check script's settings) after the belt fix, and QA 23 measures parity against those; the Phase 5
+references remain the record of the frozen look for the architecture boxes (which did not move: MAE rises only where the backdrop is). cam05 crown crossings 11.67 -> 10.80
+is the belt's brighter backing, same root cause. Scores 3.81 / 3.14 / 2.75 / 2.88 / 3.12 / 3.03; mobile 3.2 / 3.22 / 2.44 / 2.7 / 2.88 / 2.58.
