@@ -934,8 +934,9 @@ def build_shrubs():
             last = key
             put(key, x, y, dz=dz, s=s)
 
-    MOUNDS = tuple(f"pitto{i}" for i in range(len(MOUND_SPEC)))
-    BIG = tuple(f"big{i}" for i in range(len(BIG_SPEC)))
+    # (the source specs live in shrub_sources(); the key families are read back off it so the two cannot drift)
+    MOUNDS = tuple(sorted(k for k in src if k.startswith("pitto")))
+    BIG = tuple(sorted(k for k in src if k.startswith("big")))
     LOWMOUNDS = ("pitto0", "pitto1", "pitto2", "pitto3", "pitto5", "pitto8")
     MAHONIA = ("maho0", "maho1", "maho2")
     AGAP = ("agap0", "agap1", "agap2")

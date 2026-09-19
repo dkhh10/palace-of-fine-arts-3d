@@ -45,7 +45,19 @@ AT = P.AT                     # (1920, 1080), the coordinate space of the QA-17 
 MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
 
 
+P.select_round("17")
+# qa_r13_probe builds REF_R14 with `if _p.exists()` against ITS OWN root -- in a worktree the round-13 Cycles
+# frames are not there, so the table silently fell back to the round-09 frames and the reference column stopped
+# being QA 17's (cam02's leaf share read 71.5 % where QA measured 88.6 %). Resolve every reference in MAIN.
+R13 = {2: "02_lagoon_ne_threequarter", 3: "03_colonnade_walk", 4: "04_rotunda_ceiling",
+       5: "05_south_lawn", 6: "06_aerial"}
+
+
 def ref_path(st):
+    if st in R13:
+        p = MAIN / f"renders/previews/qa/round13_{R13[st]}_cycles.png"
+        if p.exists():
+            return p
     p = Path(P.REF[st][0])
     if p.exists():
         return p
@@ -67,11 +79,17 @@ def preview(tag, st):
     return hits[-1]
 
 
-def norm(path, native=True):
-    """Load -> (optionally) the preview's native 1280x720 -> the box space 1920x1080. LANCZOS throughout."""
+def norm(path):
+    """qa_r13_probe.rgb()'s own rule: LANCZOS to the 1920x1080 box space, nothing else.
+
+    A first version normalised every frame DOWN to the preview's 1280x720 first, to equalise the resolution
+    treatment. It has to be recorded as wrong: averaging 1920 -> 1280 destroys the leaf mask wherever the leaf
+    is fine against a warm background -- the cam02 reed clump's reference leaf share fell from QA 17's 24.9 %
+    to 2.0 % -- so the reference column stopped being the number QA measured. Keeping QA's own pipeline means
+    the 1280x720 previews are UPSCALED and their `hard%` reads low against a native-1920 reference; before and
+    after are upscaled identically, so the before -> after column is sound and the reference column is a
+    direction, not an equality test."""
     im = Image.open(path).convert("RGB")
-    if native and im.size != NATIVE:
-        im = im.resize(NATIVE, Image.LANCZOS)
     if im.size != AT:
         im = im.resize(AT, Image.LANCZOS)
     return np.asarray(im, dtype=np.float64)
@@ -80,7 +98,7 @@ def norm(path, native=True):
 def table(before_tag, after_tag):
     rows = []
     print("== Phase 8a: QA-17 shrub/reed boxes on the ENV LOD1 Eevee previews ==")
-    print(f"   before = {before_tag}   after = {after_tag}   (all frames normalised to {NATIVE} then {AT})")
+    print(f"   before = {before_tag}   after = {after_tag}   (frames LANCZOS to {AT}, qa_r13_probe.rgb rule)")
     print()
     print(f"{'box':22s} {'leaf% bef':>9s} {'leaf% aft':>9s} {'ref':>7s} {'aft/ref':>8s}   "
           f"{'hard% bef':>9s} {'hard% aft':>9s} {'ref':>7s}   {'lum bef':>8s} {'lum aft':>8s}")
