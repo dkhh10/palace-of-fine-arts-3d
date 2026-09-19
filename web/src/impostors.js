@@ -55,6 +55,36 @@
 //      cutoff is unchanged - what changes is that the boundary pixel now resolves across the four
 //      MSAA samples instead of snapping.  `fwidth` widens the ramp exactly where the card is
 //      minified, which is where the aliasing is, and closes it again at station 2's magnification.
+//
+// PHASE 8b ITEM A — THE CARD UNDER MAGNIFICATION (`?impcov=`, default on).  The bake engineer's
+// measurement (docs/briefs/phase8b_bake_analysis.md): at station 2 the crown that fills the frame is
+// an 81 px inner frame stretched over 736 screen px, so ONE atlas texel covers 9.1 screen px at
+// 1080p; 93-100 % of the covered crown-top texels are `0 < a < 1`, and only 0.0-0.7 % are opaque.
+// Under that magnification `fwidth( a )` is ~1/10 of a texel step, so the Phase 7 ramp SATURATES and
+// the alpha test is back to a binary mask: a texel at `a = 0.45` paints 81 solid screen px where 45 %
+// of them should be sky.  Silhouette crossings per 100 screen px: Cycles 7.76, the viewer 2.40.
+//
+// The fix is to read the straight alpha for what the bake wrote - the FRACTION OF THAT TEXEL'S
+// FOOTPRINT the foliage covers - and to spend it as coverage instead of testing it:
+//
+//   mag      screen px per atlas texel, from the screen-space derivatives of the texel coordinate
+//            (`1 / max( |ddx t|, |ddy t| )`), so it is measured, never assumed from the station.
+//   magT     0 at `magLo` (a texel is one pixel or smaller: the card is minified and the Phase 7
+//            ramp is the right answer), 1 at `magHi`.  The two paths are mixed by it, so nothing
+//            changes where Phase 7 was already correct.
+//   coverage `a` itself, ordered-dithered to the target's coverage quantum: `floor( a / q + bayer )
+//            * q`, q = 1/samples with alpha-to-coverage on the multisampled target, q = 1 without.
+//            The dither PRESERVES THE LOCAL MEAN either way, so with MSAA the four samples carry the
+//            fraction and the 4x4 Bayer cell carries what does not fit in them, and with MSAA off
+//            (`?leafsoft=0`, `?impedge=0|premul`, a non-multisampled canvas) the same line is the
+//            plain ordered-dither fallback the brief asks for.  It is a fixed spatial pattern, so a
+//            screenshot is byte-identical twice running, exactly as the LOD dissolve's hash is.
+//
+// The ramp is NOT widened by hand instead: scaling `fwidth( a )` by the magnification would still
+// read one alpha value per fragment and could only move the cut, not spend the fraction (option 5 of
+// the analysis: raising the cut to 0.70 buys 2.40 -> 3.54 and eats 5 % of the silhouette).  Nothing
+// about the colour changes - the premultiplied 12-tap reconstruction and the interior term are
+// untouched, and `?impcov=0` restores the Phase 7 frame.
 import * as THREE from 'three';
 import { b2t } from './blenderCamera.js';
 
@@ -107,9 +137,11 @@ const fragmentShader = /* glsl */`
 	uniform float range;             // the prototype's own gamma-2 range
 	uniform float grid, framePx, innerPx, gutterPx, atlasPx;
 	uniform float alphaTest;
-	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv
+	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage
 	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV, Phase 7 floor)
 	uniform vec3 pfaImpInterior;
+	// Phase 8b — ( magLo, magHi, coverage quantum q ).  See the header.
+	uniform vec3 pfaImpCov;
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
 	uniform float fogNear, fogFar, fogCap, fogK, fogIntensity;
@@ -123,6 +155,17 @@ const fragmentShader = /* glsl */`
 	// The mesh side's dither, verbatim (foliage.js): a purely spatial hash, so the crossfade is a
 	// fixed pattern and a screenshot is byte-identical twice running.
 	float pfaHash( vec2 p ) { return fract( 52.9829189 * fract( dot( p, vec2( 0.06711056, 0.00583715 ) ) ) ); }
+
+	#ifdef PFA_IMP_COV
+	// Phase 8b: the ordered dither.  A 4x4 Bayer cell, built the way it is defined - the recursive
+	// M_2n = 4 * M_n( x/2, y/2 ) + M_2( x, y ) with M_2 = [ [ 0, 2 ], [ 3, 1 ] ] - so it is the real
+	// matrix and not a hash: a fixed screen-space pattern, and a screenshot repeats byte for byte.
+	float pfaBayer2( vec2 p ) { return mod( 2.0 * p.y + 3.0 * p.x, 4.0 ); }
+	float pfaBayer4( vec2 p ) {
+		vec2 i = floor( mod( p, 4.0 ) );
+		return ( 4.0 * pfaBayer2( floor( i * 0.5 ) ) + pfaBayer2( i ) + 0.5 ) / 16.0;
+	}
+	#endif
 
 	// manifest.impostors.frame_uv, with f clamped and sampled at texel centres.
 	//
@@ -240,11 +283,34 @@ const fragmentShader = /* glsl */`
 		// the fragment is dropped only when it covers no sample at all.
 		#ifdef PFA_IMP_A2C
 		float pfaCov = clamp( ( a - alphaTest ) / max( fwidth( a ), 1e-4 ) + 0.5, 0.0, 1.0 );
-		if ( pfaCov <= 0.0 ) discard;
 		#else
-		float pfaCov = 1.0;
-		if ( a < alphaTest ) discard;
+		float pfaCov = ( a < alphaTest ) ? 0.0 : 1.0;
 		#endif
+
+		#ifdef PFA_IMP_COV
+		// Phase 8b item A.  How many SCREEN px one atlas texel covers, measured: vQuadUv spans the
+		// frame's inner region, so the texel coordinate is innerPx * vQuadUv and its screen-space
+		// derivative is texels-per-pixel.  Both fragment axes, worst case, so an oblique card is
+		// judged by its tighter axis and never over-smeared.
+		vec2 duQ = vec2( dFdx( vQuadUv.x ), dFdy( vQuadUv.x ) );
+		vec2 dvQ = vec2( dFdx( vQuadUv.y ), dFdy( vQuadUv.y ) );
+		float pfaMag = 1.0 / max( innerPx * max( length( duQ ), length( dvQ ) ), 1e-6 );
+		float magT = clamp( ( pfaMag - pfaImpCov.x ) / max( pfaImpCov.y - pfaImpCov.x, 1e-4 ), 0.0, 1.0 );
+		// The straight alpha IS the covered fraction of that texel's footprint: spend it, do not
+		// test it.  The quantum q is the target's own coverage step, so the ordered dither carries
+		// exactly what the samples cannot (q = 1 without MSAA makes this the binary fallback).
+		float q = max( pfaImpCov.z, 1e-3 );
+		float covMag = clamp( floor( clamp( a, 0.0, 1.0 ) / q + pfaBayer4( gl_FragCoord.xy ) ) * q, 0.0, 1.0 );
+		pfaCov = mix( pfaCov, covMag, magT );
+		#ifndef PFA_IMP_A2C
+		// No coverage mask to write into: the alpha channel of an opaque material is ignored, so the
+		// mixed value has to come back to a per-PIXEL decision.  Both sides of the mix are already
+		// binary here, so this only rounds the transition band.
+		pfaCov = step( 0.5, pfaCov );
+		#endif
+		#endif
+
+		if ( pfaCov <= 0.0 ) discard;
 
 		// manifest.impostors.encode.albedo: gamma2 at the prototype's own range, LINEAR oetf
 		vec3 lin = rgb * rgb * range;
@@ -288,6 +354,8 @@ const fragmentShader = /* glsl */`
 		if ( debugMode == 2 ) { gl_FragColor = vec4( vec3( a ), 1.0 ); return; }
 		if ( debugMode == 3 ) { gl_FragColor = vec4( c0 / ( grid - 1.0 ), 0.0, 1.0 ); return; }
 		if ( debugMode == 4 ) { gl_FragColor = vec4( vQuadUv, 0.0, 1.0 ); return; }
+		// Phase 8b: the coverage the fragment will actually spend, as grey.  ?impdebug=5
+		if ( debugMode == 5 ) { gl_FragColor = vec4( vec3( pfaCov ), 1.0 ); return; }
 
 		#ifdef PFA_FOG
 		// COMP_golden_hour's airlight, the same form postChain.js patches into three's fog chunk:
@@ -350,16 +418,52 @@ export function parseImpEdge( v, msaa = true ) {
 }
 
 /**
+ * Phase 8b item A — alpha as COVERAGE under magnification, `?impcov=`.  `"0"` / `"off"` restores the
+ * Phase 7 frame exactly; `"1"` / `"on"` / null is the default; `"lo[,hi]"` sets the magnification
+ * band in SCREEN PX PER ATLAS TEXEL over which the Phase 7 ramp hands over to the coverage path
+ * (default 1 -> 2: a texel that covers one pixel or less is minified and keeps Phase 7's ramp, one
+ * that covers two or more is magnified and spends its alpha).  `samples` is the target's MSAA count,
+ * which sets the coverage quantum the ordered dither works against; with no alpha-to-coverage mask
+ * to write into, the quantum is 1 and the dither is the binary fallback.
+ */
+export const IMP_COV = { on: true, magLo: 1.0, magHi: 2.0 };
+export function parseImpCov( v, { a2c = false, samples = 4 } = {} ) {
+	const d = { ...IMP_COV };
+	let unknown = null;
+	const s = ( v === null || v === undefined ) ? '' : String( v ).trim().toLowerCase();
+	if ( s === '0' || s === 'off' || s === 'none' ) d.on = false;
+	else if ( s === '1' || s === 'on' || s === '' ) { /* the default */ }
+	else {
+		const p = s.split( ',' ).map( ( x ) => parseFloat( x ) );
+		// Round-1 review 7's rule, kept: a typo must never take the frame with it AND must never be
+		// silent - it falls back to the default and says which value was not understood.
+		if ( ! Number.isFinite( p[ 0 ] ) ) unknown = s;
+		else {
+			d.magLo = Math.min( Math.max( p[ 0 ], 0.25 ), 64 );
+			d.magHi = Number.isFinite( p[ 1 ] ) ? Math.min( Math.max( p[ 1 ], 0.25 ), 64 ) : d.magLo * 2;
+			if ( d.magHi <= d.magLo ) d.magHi = d.magLo * 1.0001;
+		}
+	}
+	// The quantum is what the hardware can resolve: 1/samples through the coverage mask, 1 (binary,
+	// ordered-dithered) when no mask is written.  A target claiming 1 sample is not multisampled.
+	const n = ( a2c && Number.isFinite( samples ) && samples > 1 ) ? Math.round( samples ) : 1;
+	return { on: d.on, magLo: d.magLo, magHi: d.magHi, quant: 1 / n, samples: n, dither: n === 1, unknown };
+}
+
+/**
  * One InstancedMesh per prototype, built from `manifest.gate3.impostors` and `manifest.trees.far`.
  * @returns {{ group:THREE.Group|null, report:object }}
  */
 export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
 	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null,
-	edge = null, msaa = false, leafSoft = true } ) {
+	edge = null, msaa = false, leafSoft = true, coverage = null, samples = 0 } ) {
 	// 6c round 3: (strength, radius in frame UV, Phase 7 floor).  `?impint=` — see the fragment shader.
 	const impInterior = parseImpInterior( interior );
 	// Phase 7 item A: `?impedge=` — see the header.
 	const impEdge = parseImpEdge( edge, msaa );
+	// Phase 8b item A: `?impcov=`.  The quantum follows the edge switch's own a2c, not the target
+	// alone: with `?impedge=premul` there is no coverage mask to write into even on an MSAA target.
+	const impCov = parseImpCov( coverage, { a2c: impEdge.a2c, samples: samples || 4 } );
 	const report = { prototypes: 0, instances: 0, nearInstances: 0, drawCalls: 0, skipped: [], bytes: 0,
 		unmappedPrototypes: [], missingPrototypes: [], textures: 0, normalDepthLoaded: 0,
 		atlas2k: false, atlas2kMissing: [], modulated: 0,
@@ -368,6 +472,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		interior: { strength: impInterior[ 0 ], radius_uv: impInterior[ 1 ], floor: impInterior[ 2 ] },
 		edge: { premultiplied: impEdge.premul, alphaToCoverage: impEdge.a2c,
 			alphaToCoverageAsked: impEdge.a2cAsked, msaa: impEdge.msaa },
+		coverage: { on: impCov.on, magLo: impCov.magLo, magHi: impCov.magHi,
+			quant: impCov.quant, samples: impCov.samples, orderedDither: impCov.dither },
 		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx } };
 	if ( ! impostors || ! impostors.count ) return { group: null, report };
 	far = [ ...( Array.isArray( far ) ? far : [] ), ...( Array.isArray( near ) ? near : [] ) ];
@@ -410,6 +516,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		const defines = fog ? { PFA_FOG: '' } : {};
 		if ( impEdge.premul ) defines.PFA_IMP_PREMUL = '';
 		if ( impEdge.a2c ) defines.PFA_IMP_A2C = '';
+		if ( impCov.on ) defines.PFA_IMP_COV = '';
 		// 2K only where BOTH the variant geometry and this prototype's 2K texture exist.
 		const use2k = !! ( v2k && p.albedo2k );
 		if ( atlas2k && ! use2k && ! report.atlas2kMissing.includes( key ) ) report.atlas2kMissing.push( key );
@@ -426,6 +533,7 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			alphaTest: { value: ALPHA_TEST },
 			debugMode: { value: debug },
 			pfaImpInterior: { value: new THREE.Vector3( impInterior[ 0 ], impInterior[ 1 ], impInterior[ 2 ] ) },
+			pfaImpCov: { value: new THREE.Vector3( impCov.magLo, impCov.magHi, impCov.quant ) },
 			pfaMeshDist: switchUniforms ? switchUniforms.pfaMeshDist : { value: 1e9 },
 			pfaFadeBand: switchUniforms ? switchUniforms.pfaFadeBand : { value: 1 },
 		};
@@ -541,6 +649,13 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			+ `alpha-to-coverage ${impEdge.a2c ? 'ON' : ( impEdge.a2cAsked ? `asked but OFF (${a2cWhy})` : 'off' )}`
 			+ ` (?impedge=0|premul|a2c|both); interior floor ${impInterior[ 2 ].toFixed( 2 )} of the card's own `
 			+ `radiance (?impint=str,radius,floor)` );
+		if ( impCov.unknown !== null ) note( `?impcov=${impCov.unknown} is not a value `
+			+ `(0 | 1 | magLo[,magHi]): using the default` );
+		note( `impostor alpha as COVERAGE (Phase 8b): ${impCov.on ? 'ON' : 'off'}`
+			+ ( impCov.on ? `, handover ${impCov.magLo}->${impCov.magHi} screen px per atlas texel, `
+				+ `quantum 1/${impCov.samples} (${impCov.dither ? 'ordered dither, no coverage mask'
+					: `${impCov.samples}-sample coverage mask + ordered dither of the remainder` })` : '' )
+			+ ` (?impcov=0 restores Phase 7)` );
 		if ( report.missingPrototypes.length )
 			note( `impostors: ${report.missingPrototypes.length} prototype(s) in trees.far have no atlas: ${report.missingPrototypes.join( ', ' )}` );
 		if ( report.skipped.length ) note( `impostors: ${report.skipped.length} far tree(s) skipped` );

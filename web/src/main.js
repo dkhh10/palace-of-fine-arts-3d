@@ -129,6 +129,9 @@ const CFG = {
 	impInt: qs.get( 'impint' ),
 	// Phase 7 item A — the impostor card edge: 0 | premul | a2c | both (default both).
 	impEdge: qs.get( 'impedge' ),
+	// Phase 8b item A — the atlas alpha spent as COVERAGE where a texel is bigger than a screen
+	// pixel: 0 | 1 | magLo[,magHi] (default on, handover 1 -> 2 screen px per texel).
+	impCov: qs.get( 'impcov' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
@@ -975,6 +978,7 @@ async function setupProbeEnv() {
  * in tier 0 and from streamTiers() when it is not.
  */
 async function setupFoliageAndImpostors() {
+	let msaaSamples = 0;                 // Phase 8b: the target's MSAA count, measured below
 	// 6c round 2: the bake's far-tree lighting (a few kB, inline or a sidecar json).  Fetched HERE,
 	// not with the lazy glb, because the impostors are built below and their modulation mode depends
 	// on whether E_bake has been measured.
@@ -1009,8 +1013,13 @@ async function setupFoliageAndImpostors() {
 		// alphaToCoverage is only worth asking for when the target this draws into is multisampled:
 		// the composer's is `samples: 4` and so is the Reflector's, and with ?post=none the canvas
 		// itself is `antialias: true`.
-		const msaa = CFG.leafSoft && ( ( composer && composer.renderTarget1 && composer.renderTarget1.samples > 0 )
-			|| renderer.getContext().getParameter( renderer.getContext().SAMPLES ) > 0 );
+		const targetSamples = ( composer && composer.renderTarget1 && composer.renderTarget1.samples > 0 )
+			? composer.renderTarget1.samples
+			: renderer.getContext().getParameter( renderer.getContext().SAMPLES );
+		const msaa = CFG.leafSoft && targetSamples > 0;
+		// Phase 8b: the coverage quantum the impostors dither against is the TARGET'S own sample
+		// count, read here with the flag rather than assumed to be four.
+		msaaSamples = msaa ? targetSamples : 0;
 		const vi = manifest.gate3 && manifest.gate3.vertexIrradiance;
 		const vertexIrrScale = ( vi && vi.range > 0 && ! vi.rangeConflict ) ? vi.range * manifest.gate3.scale : 0;
 		// 6c round 2, BEFORE the patch: export item D's tinted albedo and per-texel translucency
@@ -1089,6 +1098,8 @@ async function setupFoliageAndImpostors() {
 			// Phase 7 item A: the card-edge treatment, and whether a multisampled target exists for
 			// its alpha-to-coverage half (the same `msaa` the leaf cards were given).
 			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false, leafSoft: CFG.leafSoft,
+			// Phase 8b item A: alpha as coverage under magnification, and the quantum it dithers to.
+			coverage: CFG.impCov, samples: msaaSamples,
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
 			// the same mist the rest of the scene got, as plain uniforms (a ShaderMaterial gets no
 			// automatic fog) - so the far trees recede with everything else when ?post has mist on
@@ -2009,7 +2020,10 @@ window.__pfaInfo = () => ( {
 		// round-1 review 5: the three 6c defaults the info block was missing
 		atlas2k: impostorReport.atlas2k, atlasGeometry: impostorReport.drawnGeom,
 		nearInstances: impostorReport.nearInstances, modulated: impostorReport.modulated,
-		interior: impostorReport.interior },
+		interior: impostorReport.interior,
+		// Phase 7 item A / Phase 8b item A, so a capture can be told apart from its A/B without
+		// reading the boot log: what the card edge and the coverage path actually did.
+		edge: impostorReport.edge, coverage: impostorReport.coverage },
 	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
 		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
 		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, aoAlphaForced: farTreeReport.aoAlphaForced || 0,
