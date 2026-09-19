@@ -836,11 +836,19 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 					+ ' (?impband=0 reverts)'
 				: 'impostor band atlas: the manifest carries one but ?impband=0 — the octahedral path draws' );
 		}
+		// The mapping this line names has to be the one that DRAWS: a summary saying "octahedral"
+		// while the band is on screen is how a capture gets scored against the wrong path.
+		const bandDraws = report.band.prototypes > 0;
+		const g = report.band.geometry;
+		const mapping = bandDraws
+			? `${g.columns}x${g.rows} band frames at ${g.framePx} px on a ${g.atlasPx[ 0 ]}x${g.atlasPx[ 1 ]} atlas, `
+				+ 'two-azimuth linear blend'
+			: `${impostors.grid}x${impostors.grid} octahedral frames at ${report.drawnGeom.framePx} px on a `
+				+ `${report.drawnGeom.atlasPx} px atlas, 3-frame barycentric blend`;
 		note( `impostors: ${report.instances} tree(s) (${report.instances - report.nearInstances} far + ${report.nearInstances} near) `
 			+ `over ${report.prototypes} prototype(s), `
-			+ `${report.drawCalls} draw call(s), ${impostors.grid}x${impostors.grid} octahedral frames `
-			+ `at ${report.drawnGeom.framePx} px on a ${report.drawnGeom.atlasPx} px atlas`
-			+ ( report.atlas2k ? ' (the 2K variant, ?imp2k=0 reverts)' : '' ) + ', 3-frame barycentric blend, '
+			+ `${report.drawCalls} draw call(s), ${mapping}`
+			+ ( report.atlas2k ? ' (the 2K variant, ?imp2k=0 reverts)' : '' ) + ', '
 			+ `alpha test ${ALPHA_TEST}, unlit (the atlas is baked radiance); ${report.textures}/${report.prototypes} atlas(es) loaded, `
 			+ `${( report.bytes / 1048576 ).toFixed( 1 )} MB declared`
 			+ ( report.normalDepthLoaded ? `, ${report.normalDepthLoaded} normal+depth atlas(es) loaded (?impnd=1)`

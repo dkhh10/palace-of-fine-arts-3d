@@ -903,6 +903,58 @@ covers the parser, the fallback's dependence on the real target (including `?imp
 three writes no coverage mask on a multisampled target), and the shader's preprocessor branches.
 
 
+## Phase 8b item 3 — the BAND atlas sampling path (`?impband=`), 2026-09-19
+
+The contract is `docs/briefs/phase8b_band_atlas.md`; this is the viewer half, ready for the real
+bake. `impostors.band` in the manifest drives it and `?impband=0` keeps the octahedral (2K) path.
+
+* **Read, never assumed.** The block is taken whole or refused: `frame_px`, `gutter_px`, `inner_px`,
+  `atlas_px [4096, 1024]`, `columns`, `rows`, `azimuth0_deg`, `elevations_deg`, `row_origin`, and a
+  per-prototype band albedo. A missing or non-numeric field is named in the boot log and the
+  prototype keeps its octahedral atlas — a defaulted `azimuth0_deg` would rotate 127 trees in silence.
+* **Selection.** Azimuth is `atan2( d.x, d.y ) - azimuth0` on the tree→camera direction in Blender
+  Z-up, which grows from +Y toward +X = clockwise seen from above; the column coordinate is that over
+  360/columns, wrapped, and the TWO neighbouring columns are blended linearly in angle (the last
+  wraps into the first). The elevation row is the NEAREST of `elevations_deg` — no blend. The
+  stations look at the crowns from 0-15°, so they use rows 0 and 1.
+* **Everything else is shared.** Both paths fill the same three cells + weights, so the Phase 7
+  premultiplied 12-tap reconstruction (8 taps here, the third weight being 0), the Phase 8b coverage
+  ramp and share, the interior enclosure term and its floor, the E_placement/E_bake modulation and
+  the mist are one copy of the code. The band replaces the ALBEDO LOOKUP and nothing else.
+* **The atlas geometry is now (width, height) plus a row origin**, so one sampler serves a square
+  octahedral atlas and a 4096x1024 band. The octahedral path passes `(atlas_px, atlas_px)` and
+  `rowFromTop = 0` and is unchanged.
+* **The coverage share for the band** is its own constant (`IMP_COV.shareBand`, 0.15 today). At
+  341 px frames a texel is ~2.2 screen px at station 2 instead of 4.5, so it is to be re-swept on the
+  REAL atlas — the fixture's content is upscaled 2K and would fit a meaningless number.
+
+### The fixture, and what it proves
+
+`web/tools/p8_band_fixture.py` re-lays the baked 2K octahedral frames as the contract's 12x3 grid
+(341 px frames, gutter 8, inner 325, rows from the bottom), writes `band.json` and a patched asset
+MIRROR (symlinks to MAIN's `export/out`, `gate5/manifest.json` replaced, band rows at tier 1 with the
+1K octahedral as the tier-0 stand-in). Nothing in MAIN is written. 16 prototypes in 11 s, 0.6-0.9 MB
+per atlas.
+
+```
+python3 web/tools/p8_band_fixture.py
+PFA_ASSETS=$PWD/export/out/p8/band_fixture/assets web/tools/p7.sh desk p8bandfix
+```
+
+Boot log, desktop tier: `impostor BAND atlas (Phase 8b) on 16/16 prototype(s): 12 azimuth x 3
+elevation frames of 341 px (inner 325, gutter 8) on a 4096x1024 atlas; azimuth 0 at 0 deg, clockwise
+seen from above, elevation rows 0/20/40 deg from row 0 at the bottom; two-azimuth linear blend,
+nearest elevation row`, and the summary line now names the mapping that DRAWS (`12x3 band frames …,
+two-azimuth linear blend`). No page errors, 16/16 atlases loaded, 9.6 MB declared.
+
+The fixture's CONTENT is the 2K content, so the tile is a path check, not a look check:
+`renders/web/960/p8bandfix_cam02_crown.jpg` (full-res `renders/web/tiles/p8bandfix/`) shows an
+upright, coherent crown beside the 2K octahedral one — the layout, the v flip and the frame
+selection are right. Crossings move as expected for a different (nearest-frame, two-column) blend:
+cam02 6.98 → 8.72, cam01 7.65 → 7.80. `node web/test/impostor_band_test.mjs` pins the convention,
+the wrap, the blend, the nearest row, the layout arithmetic in both row origins, and the GLSL lines
+that mirror `bandSelect`.
+
 ## Phase 8 far-tree A/B — the LOD2 mesh set against the 2K card, 2026-09-19 (evidence only, not adopted)
 
 The lever is live, no re-wiring: `?walkupmesh=0` takes the **LOD2 far set** (`trees.far_mesh`, the one
