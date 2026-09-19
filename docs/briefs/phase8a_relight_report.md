@@ -39,7 +39,7 @@ the one-sided cosine took the backlit station-2 shore to 0.85x on its own.
   `1,0.8,0.05,0.9,0.30,1,3,1` 0.943 / 79.1; `1,0.8,0.05,0.9,0.45,1,3,1` 0.888 / 90.1 (the
   reference's hue, at three times the level budget); the one-sided cosine 0.854.
 
-## The tiles (100 %, `renders/web/tiles/p8a/`, contact sheet `renders/web/p8a_tiles_960.jpg`)
+## The tiles (100 %, `renders/web/tiles/p8a/`, contact sheet `renders/web/960/p8a_tiles.jpg`)
 
 Cycles / cardsun 0 / adopted, stations 1, 3, 5. **The relight does what it says and it is not what
 the shore band needs.** Station 1: the three panels are hard to tell apart at 100 %. Stations 3 and
@@ -60,6 +60,6 @@ bytes and draws identical (1 814.2 MB, 317). Mobile tier at station 1 (`manifest
 ## Evidence
 
 `renders/web/p8a_{cs0,adopt}_cam0N.png`, the sweep `p8a_{cs05,cs1,two1,twostrong,v30,v45,half,soft,
-a6,b7}_cam0N.png`, `p8a_boxes.txt|json`, `p8a_hero_pair_960.jpg`, `p8a_tiles_960.jpg`,
+a6,b7}_cam0N.png`, `p8a_boxes.txt|json`, `960/p8a_hero_pair.jpg`, `960/p8a_tiles.jpg`,
 `p8a_perf*_perf.json`, `renders/logs/p8a_*.log`. New probes: `scripts/p8a_relight_boxes.py`,
 `web/tools/p8a_tiles.py`.

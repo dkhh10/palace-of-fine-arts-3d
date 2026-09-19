@@ -1489,7 +1489,7 @@ Local `web/dist` against the MAIN checkout's `export/out/gate5`, headless Chrome
   reference's own hue, at three times the level budget. The metric can be reached; the level says no.
 
 **The tiles, and the finding that matters** (100 %, Cycles / cardsun 0 / adopted, stations 1, 3, 5 —
-`renders/web/tiles/p8a/`, sheet `renders/web/p8a_tiles_960.jpg`). At station 1 the three panels are
+`renders/web/tiles/p8a/`, sheet `renders/web/960/p8a_tiles.jpg`). At station 1 the three panels are
 hard to tell apart. At stations 3 and 5 the relit cards do read as lit-and-shaded rather than one
 flat gold — but the dominant defect in both panels is the one QA 19 found on the far trees: **the
 shrub cards' leaf texture is magnified**, single "leaves" of 20-40 px with black gaps between them,
