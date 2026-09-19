@@ -807,3 +807,13 @@ unchanged by decision (EXPORT, Blender); (3) the crown floor overshoots where it
 or per-prototype floor, VIEWER); (4) station 5's frame stays 0.976x (not foliage; carried from 6c); (5) mobile: LOD2 leaf cards read too large at 37 m and the shaded
 colonnade stone reads blue-violet (present since 6c on mobile; EXPORT card scale / VIEWER probe tint); (6) the walk-up LOD1 set is lit brighter than the impostor
 it replaces (far-tree mesh lighting, EXPORT/BAKE). Phase 7 stops here per the one-round rule; the next foliage step, if any, is the export/Blender work in (1), (2), (5).
+
+## 2026-09-19 · PHASE 8 APPROVED by the user: the five remaining art items, in hero-impact order, then a before/after
+The user: "finish those as well and show me the difference once it's done". Items and owners: (8a) shrub/reed card density — ENV builder in Blender
+(assets/environment.blend LOD1 card meshes, placements unchanged) -> master rebuild -> master_delivery -> export shrub LOD1 + albedo + tiers -> deploy -> QA;
+(8b) far-tree impostor atlas alpha at the crown tops (sky through twigs) — bake engineer, analysis first (CPU), then re-compose/re-bake through the bake queue;
+(8c) column concrete texel budget at cam03 (blurred/banded at 1 m) — export engineer, analysis first (CPU: texel density per near asset, the 2K set and its
+memory/tier cost), then bake/encode; (8d) backdrop city blocks and trees (cam06) — ENV builder after 8a; (8e) mobile LOD2 leaf-card scale (export) and the
+shaded-stone blue-violet tint on mobile (viewer). One builder on the GPU at a time (ENV previews, bakes, encodes); CPU analyses run alongside; Chrome never
+while Blender is alive. Each item closes with one QA round on the URL; the phase closes with a comparison sheet: viewer hero before (gate7) / after, Cycles
+4K hero before (Phase 5 v2) / after (a new render on the changed master), and the reference photo. Budget: the user accepts multi-session; on a usage limit stop.
