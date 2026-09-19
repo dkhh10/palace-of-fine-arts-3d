@@ -1060,3 +1060,10 @@ probe's time on the same settings (the belt's +1.5 M LOD0 tris). Tile pass at 10
 relief panels, capitals and both vault openings open to the far side; r2c1 the north colonnade with the tree belt reading as dark crowns and trunks between the columns,
 the hall roof pale above; r2c2 the shore band and the reflection breaking into streaks; r2c3 the south colonnade with crowns behind. No filled opening, plain cylinder,
 seam, z-fighting or shard. The Phase 5 v2 renders are preserved in renders/final/phase5_v2/ for the comparison sheet (scripts/phase8_sheet.py, after = gate12).
+
+## 2026-09-19 · QA 24 (b683412): the far-tree re-key VERIFIED — PHASE 8 CLOSED (all five art items, no open blocker); hero 4.01
+127 existing crowns back within 3 % of gate10 at 9/10 boxes (the mover goes toward Cycles), mean deviation from the Cycles refs 6.3 % (was 6.7 pre-re-bake, 9.7 after),
+dark cores back; the 39 belt rows keep the r2 bake and read as sky-gapped crowns, not cut-outs; 8e blade p90 back to 22.7 px (5/6 <= 25); regression MAE <= 0.44 %
+everywhere, station 4 bit-identical; crossings cam02 7.33 (Cycles 7.76), cam05 12.28. Scores 4.01 / 3.30 / 2.83 / 2.88 / 3.28 / 3.07; mobile 3.40 / 3.38 / 2.52 / 2.70 / 3.04 /
+2.62. Phase 8 closes here per the user's approval ("finish those as well and show me the difference"): the difference is docs/delivery.md "Phase 8" and
+renders/qa_comparisons/phase8_before_after_960.jpg. Anything further (the carried residuals) is a new phase for the user to open.
