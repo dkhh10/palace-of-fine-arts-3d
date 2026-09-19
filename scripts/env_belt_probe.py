@@ -81,6 +81,12 @@ def run(bands, env=None):
         belt_hits = 0
         total = 0
         wall = []          # world hit points on the hall wall/roof: where the belt is still missing
+        cmap = {"BELT tree": (40, 200, 60), "tree": (20, 110, 40), "shrub": (120, 180, 60),
+                "hall wall": (255, 40, 40), "hall roof": (255, 150, 0), "ICOSPHERE belt": (255, 0, 255),
+                "palace": (210, 200, 170), "other:capital": (180, 170, 150), "other:colonnade": (150, 140, 120),
+                "sky": (120, 180, 255), "city/backdrop": (255, 255, 0), "ground": (90, 70, 50)}
+        iw, ih = (x1 - x0) // STEP, (y1 - y0) // STEP
+        buf = [0.0] * (iw * ih * 4)          # Blender's own image writer: bpy has no PIL
         for py in range(y0, y1, STEP):
             for px in range(x0, x1, STEP):
                 d = Vector(((px + 0.5 - cx) / f_px, -(py + 0.5 - cy) / f_px, -1.0)).normalized()
@@ -96,7 +102,18 @@ def run(bands, env=None):
                 total += 1
                 if c.startswith("hall"):
                     wall.append((px, loc.x, loc.y, loc.z))
-        print(f"\n[belt_probe] cam{st:02d} band {key} box {(x0, y0, x1, y1)}  {total} rays")
+                ix, iy = (px - x0) // STEP, (py - y0) // STEP
+                if ix < iw and iy < ih:
+                    r, g, bl = cmap.get(c, (255, 255, 255))
+                    o = ((ih - 1 - iy) * iw + ix) * 4      # Blender images are bottom-up
+                    buf[o:o + 4] = [(r / 255.0) ** 2.2, (g / 255.0) ** 2.2, (bl / 255.0) ** 2.2, 1.0]
+        out = f"/tmp/belt_probe_class_{key}.png"
+        bi = bpy.data.images.new(f"class_{key}", iw, ih, alpha=True)
+        bi.pixels = buf
+        bi.filepath_raw = out
+        bi.file_format = "PNG"
+        bi.save()
+        print(f"\n[belt_probe] cam{st:02d} band {key} box {(x0, y0, x1, y1)}  {total} rays  class map -> {out}")
         blocked = sum(v for c, v in hist.items() if c in ("palace", "other:capital", "other:colonnade"))
         through = max(1, total - blocked)
         for c, v in sorted(hist.items(), key=lambda kv: -kv[1]):

@@ -565,7 +565,11 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
 # 16.9 m point on the wall: the belt reads as just touching the parapet line, which is what the photograph shows.
 # The cap binds on most draws, so the realised heights run 12.0-16.x m (reported per build).
 HALL_BELT_TOP_Z = 16.0
-HALL_BELT_STEP = 6.5          # metres of face per tree: closest packing that is still trees, not a hedge
+# 4.5 m of face per tree, measured up from 6.5: at 6.5 the crowns stand clear of each other at the hero and the
+# hall wall reads through the LOD1 foliage between them (the leaf density at LOD1 is 0.42 of LOD0's, so a crown is
+# see-through even where the ray probe counts it as a hit).  At 4.5 m the two offset rows overlap and the belt
+# reads as one mass with light through the gaps, which is what ref 169 shows.
+HALL_BELT_STEP = 4.5
 # Species read off ref 169's two bands at 100 %: dark Monterey cypress dominant, blue-gum eucalyptus and Monterey
 # pine mixed through it, a few narrow columnar cypress, redwood for the darkest verticals.  Willow and broadleaf
 # are the SHORE trees and are deliberately absent here.  Every species/seed in `SEEDS` has a baked impostor

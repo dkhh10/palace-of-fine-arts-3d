@@ -266,6 +266,45 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 128 | cypress | -133 | 3 | 24 | E3 screen behind the colonnade |
 | 129 | redwood | -131 | -4 | 21 | E3 screen behind the colonnade |
 | 130 | redwood | -128 | -10 | 21 | E3 screen behind the colonnade |
+| 131 | redwood | 87 | 11 | 17 | HB hall east-face belt (8d r2) |
+| 132 | cypress | 84 | 6 | 14 | HB hall east-face belt (8d r2) |
+| 133 | cypress | 81 | 2 | 17 | HB hall east-face belt (8d r2) |
+| 134 | cypress | 78 | -4 | 17 | HB hall east-face belt (8d r2) |
+| 135 | pine | 75 | -8 | 14 | HB hall east-face belt (8d r2) |
+| 136 | cypress_column | 67 | -9 | 17 | HB hall east-face belt (8d r2) |
+| 137 | eucalyptus | 66 | -16 | 13 | HB hall east-face belt (8d r2) |
+| 138 | redwood | 58 | -16 | 14 | HB hall east-face belt (8d r2) |
+| 139 | cypress_column | 58 | -25 | 13 | HB hall east-face belt (8d r2) |
+| 140 | eucalyptus | 48 | -26 | 16 | HB hall east-face belt (8d r2) |
+| 141 | cypress | 46 | -32 | 16 | HB hall east-face belt (8d r2) |
+| 142 | pine | 39 | -31 | 15 | HB hall east-face belt (8d r2) |
+| 143 | eucalyptus | 36 | -36 | 17 | HB hall east-face belt (8d r2) |
+| 144 | cypress | 30 | -35 | 17 | HB hall east-face belt (8d r2) |
+| 145 | pine | 26 | -41 | 16 | HB hall east-face belt (8d r2) |
+| 146 | cypress | 20 | -38 | 15 | HB hall east-face belt (8d r2) |
+| 147 | cypress_column | 17 | -44 | 15 | HB hall east-face belt (8d r2) |
+| 148 | cypress | 10 | -42 | 13 | HB hall east-face belt (8d r2) |
+| 149 | cypress_column | 6 | -46 | 17 | HB hall east-face belt (8d r2) |
+| 150 | cypress | 0 | -41 | 14 | HB hall east-face belt (8d r2) |
+| 151 | eucalyptus | -6 | -46 | 17 | HB hall east-face belt (8d r2) |
+| 152 | eucalyptus | -11 | -42 | 16 | HB hall east-face belt (8d r2) |
+| 153 | redwood | -16 | -46 | 14 | HB hall east-face belt (8d r2) |
+| 154 | pine | -21 | -43 | 17 | HB hall east-face belt (8d r2) |
+| 155 | cypress | -28 | -46 | 13 | HB hall east-face belt (8d r2) |
+| 156 | cypress | -34 | -39 | 17 | HB hall east-face belt (8d r2) |
+| 157 | eucalyptus | -39 | -42 | 13 | HB hall east-face belt (8d r2) |
+| 158 | redwood | -44 | -38 | 17 | HB hall east-face belt (8d r2) |
+| 159 | pine | -51 | -38 | 15 | HB hall east-face belt (8d r2) |
+| 160 | cypress_column | -54 | -33 | 13 | HB hall east-face belt (8d r2) |
+| 161 | cypress | -62 | -35 | 15 | HB hall east-face belt (8d r2) |
+| 162 | cypress | -63 | -28 | 13 | HB hall east-face belt (8d r2) |
+| 163 | pine | -70 | -28 | 16 | HB hall east-face belt (8d r2) |
+| 164 | redwood | -73 | -23 | 17 | HB hall east-face belt (8d r2) |
+| 165 | eucalyptus | -78 | -23 | 17 | HB hall east-face belt (8d r2) |
+| 166 | cypress_column | -82 | -20 | 13 | HB hall east-face belt (8d r2) |
+| 167 | redwood | -83 | -14 | 17 | HB hall east-face belt (8d r2) |
+| 168 | cypress | -88 | -13 | 15 | HB hall east-face belt (8d r2) |
+| 169 | cypress | -92 | -6 | 14 | HB hall east-face belt (8d r2) |
 <!-- PLAN_TABLE_END -->
 
 ## Polish round 1 (QA round 02 defects) — 2026-09-07

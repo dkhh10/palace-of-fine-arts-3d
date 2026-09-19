@@ -1,30 +1,30 @@
 {
  "what": "Phase 8d belt r2: the tree belt on the exhibition hall's east face, placed by env_trees.hall_belt and appended to the planting plan after every relief pass. Every row is an ordinary far tree: its _LOD1 object carries the _LOD2 mesh, so the export gives it a 2-triangle billboard and an impostor.",
  "source": "scripts/env_trees.py (hall_belt + build_all)",
- "count": 28,
+ "count": 39,
  "species": {
-  "redwood": 4,
-  "cypress": 10,
-  "pine": 4,
-  "cypress_column": 4,
-  "eucalyptus": 6
+  "redwood": 6,
+  "cypress": 14,
+  "pine": 6,
+  "cypress_column": 6,
+  "eucalyptus": 7
  },
  "prototypes": {
-  "ENV_tree_redwood_s43_LOD2": 1,
-  "ENV_tree_cypress_s3_LOD2": 4,
-  "ENV_tree_cypress_s17_LOD2": 2,
+  "ENV_tree_redwood_s43_LOD2": 3,
+  "ENV_tree_cypress_s3_LOD2": 7,
+  "ENV_tree_cypress_s17_LOD2": 3,
   "ENV_tree_cypress_s41_LOD2": 4,
-  "ENV_tree_pine_s29_LOD2": 3,
+  "ENV_tree_pine_s29_LOD2": 4,
   "ENV_tree_cypress_column_s2_LOD2": 3,
   "ENV_tree_eucalyptus_s61_LOD2": 4,
   "ENV_tree_redwood_s13_LOD2": 3,
-  "ENV_tree_cypress_column_s31_LOD2": 1,
-  "ENV_tree_pine_s7_LOD2": 1,
-  "ENV_tree_eucalyptus_s23_LOD2": 1,
+  "ENV_tree_cypress_column_s31_LOD2": 3,
+  "ENV_tree_pine_s7_LOD2": 2,
+  "ENV_tree_eucalyptus_s23_LOD2": 2,
   "ENV_tree_eucalyptus_s5_LOD2": 1
  },
  "top_cap_world_z": 16.0,
- "step_m": 6.5,
+ "step_m": 4.5,
  "prototype_key": "the _LOD1 object's mesh name = export/gate1_set.py far-tree `prototype`; impostors.prototype_map maps the _LOD2 name onto the baked _LOD1 atlas",
  "trees": [
   {
@@ -34,17 +34,17 @@
    "species": "cypress",
    "seed": 3,
    "location": [
-    83.163,
-    3.142,
-    -0.603
+    83.592,
+    6.305,
+    -0.613
    ],
    "scale": [
-    0.4411,
-    0.4772,
-    0.46
+    0.5099,
+    0.5516,
+    0.5317
    ],
    "rotation_z_deg": 350.17,
-   "height_m": 12.2,
+   "height_m": 14.11,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -54,17 +54,17 @@
    "species": "cypress",
    "seed": 17,
    "location": [
-    78.825,
-    -2.723,
-    -0.606
+    80.669,
+    2.151,
+    -0.597
    ],
    "scale": [
-    0.5033,
-    0.526,
-    0.6584
+    0.5126,
+    0.5358,
+    0.6706
    ],
    "rotation_z_deg": 335.86,
-   "height_m": 16.29,
+   "height_m": 16.6,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -74,17 +74,17 @@
    "species": "cypress",
    "seed": 41,
    "location": [
-    70.358,
-    -6.108,
-    -0.622
+    77.848,
+    -4.183,
+    -0.612
    ],
    "scale": [
-    0.5718,
-    0.6126,
-    0.6323
+    0.602,
+    0.6449,
+    0.6657
    ],
    "rotation_z_deg": 276.02,
-   "height_m": 15.78,
+   "height_m": 16.61,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -94,17 +94,17 @@
    "species": "cypress",
    "seed": 3,
    "location": [
-    29.152,
-    -39.509,
-    -0.726
+    46.093,
+    -31.93,
+    -0.605
    ],
    "scale": [
-    0.5827,
-    0.728,
-    0.6576
+    0.5617,
+    0.7018,
+    0.6339
    ],
    "rotation_z_deg": 217.23,
-   "height_m": 16.73,
+   "height_m": 16.12,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -114,17 +114,17 @@
    "species": "cypress",
    "seed": 3,
    "location": [
-    8.531,
-    -41.294,
-    -0.752
+    30.479,
+    -34.887,
+    -0.751
    ],
    "scale": [
-    0.6224,
-    0.5726,
-    0.5262
+    0.7477,
+    0.6878,
+    0.632
    ],
    "rotation_z_deg": 90.59,
-   "height_m": 13.94,
+   "height_m": 16.75,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -134,37 +134,37 @@
    "species": "cypress",
    "seed": 41,
    "location": [
-    -30.207,
-    -44.218,
-    -0.681
+    20.273,
+    -37.892,
+    -0.748
    ],
    "scale": [
-    0.6144,
-    0.6488,
-    0.5931
+    0.6125,
+    0.5335,
+    0.5985
    ],
-   "rotation_z_deg": 305.13,
-   "height_m": 16.68,
+   "rotation_z_deg": 93.59,
+   "height_m": 14.84,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_cypress_39_LOD1",
    "lod1_object": "ENV_tree_cypress_39_LOD1",
-   "prototype": "ENV_tree_cypress_s41_LOD2",
+   "prototype": "ENV_tree_cypress_s17_LOD2",
    "species": "cypress",
-   "seed": 41,
+   "seed": 17,
    "location": [
-    -74.787,
-    -25.22,
-    -0.585
+    10.487,
+    -41.547,
+    -0.756
    ],
    "scale": [
-    0.644,
-    0.5919,
-    0.6334
+    0.5116,
+    0.5308,
+    0.4791
    ],
-   "rotation_z_deg": 45.72,
-   "height_m": 15.9,
+   "rotation_z_deg": 218.63,
+   "height_m": 12.73,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -174,57 +174,137 @@
    "species": "cypress",
    "seed": 3,
    "location": [
-    -79.207,
-    -17.353,
-    -0.579
+    0.318,
+    -41.011,
+    -0.756
    ],
    "scale": [
-    0.5944,
-    0.5971,
-    0.6897
+    0.5206,
+    0.5124,
+    0.5603
    ],
-   "rotation_z_deg": 320.92,
-   "height_m": 16.51,
+   "rotation_z_deg": 60.86,
+   "height_m": 14.3,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_cypress_41_LOD1",
    "lod1_object": "ENV_tree_cypress_41_LOD1",
-   "prototype": "ENV_tree_cypress_s17_LOD2",
+   "prototype": "ENV_tree_cypress_s41_LOD2",
    "species": "cypress",
-   "seed": 17,
+   "seed": 41,
    "location": [
-    -86.618,
-    -13.915,
-    -0.592
+    -28.24,
+    -45.525,
+    -0.686
    ],
    "scale": [
-    0.6658,
-    0.5113,
-    0.6695
+    0.5257,
+    0.4832,
+    0.517
    ],
-   "rotation_z_deg": 207.03,
-   "height_m": 16.59,
+   "rotation_z_deg": 45.72,
+   "height_m": 12.98,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_cypress_42_LOD1",
    "lod1_object": "ENV_tree_cypress_42_LOD1",
+   "prototype": "ENV_tree_cypress_s3_LOD2",
+   "species": "cypress",
+   "seed": 3,
+   "location": [
+    -33.604,
+    -39.06,
+    -0.706
+   ],
+   "scale": [
+    0.5978,
+    0.6006,
+    0.6937
+   ],
+   "rotation_z_deg": 320.92,
+   "height_m": 16.61,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_cypress_43_LOD1",
+   "lod1_object": "ENV_tree_cypress_43_LOD1",
    "prototype": "ENV_tree_cypress_s41_LOD2",
    "species": "cypress",
    "seed": 41,
    "location": [
-    -93.688,
-    -7.863,
-    -0.597
+    -61.615,
+    -34.888,
+    -0.592
    ],
    "scale": [
-    0.6029,
-    0.5885,
-    0.6355
+    0.5769,
+    0.4711,
+    0.5732
    ],
-   "rotation_z_deg": 210.62,
-   "height_m": 16.6,
+   "rotation_z_deg": 1.08,
+   "height_m": 15.09,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_cypress_44_LOD1",
+   "lod1_object": "ENV_tree_cypress_44_LOD1",
+   "prototype": "ENV_tree_cypress_s3_LOD2",
+   "species": "cypress",
+   "seed": 3,
+   "location": [
+    -63.487,
+    -27.606,
+    -0.565
+   ],
+   "scale": [
+    0.4696,
+    0.44,
+    0.4987
+   ],
+   "rotation_z_deg": 21.56,
+   "height_m": 12.95,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_cypress_45_LOD1",
+   "lod1_object": "ENV_tree_cypress_45_LOD1",
+   "prototype": "ENV_tree_cypress_s3_LOD2",
+   "species": "cypress",
+   "seed": 3,
+   "location": [
+    -88.122,
+    -12.738,
+    -0.595
+   ],
+   "scale": [
+    0.5026,
+    0.6924,
+    0.6347
+   ],
+   "rotation_z_deg": 328.18,
+   "height_m": 15.31,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_cypress_46_LOD1",
+   "lod1_object": "ENV_tree_cypress_46_LOD1",
+   "prototype": "ENV_tree_cypress_s17_LOD2",
+   "species": "cypress",
+   "seed": 17,
+   "location": [
+    -92.278,
+    -6.431,
+    -0.594
+   ],
+   "scale": [
+    0.5187,
+    0.4606,
+    0.5746
+   ],
+   "rotation_z_deg": 224.31,
+   "height_m": 14.25,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -234,17 +314,17 @@
    "species": "cypress_column",
    "seed": 2,
    "location": [
-    59.388,
-    -14.52,
-    -0.75
+    66.828,
+    -8.512,
+    -0.609
    ],
    "scale": [
-    0.496,
-    0.5497,
-    0.5967
+    0.4919,
+    0.5451,
+    0.5917
    ],
    "rotation_z_deg": 44.11,
-   "height_m": 16.75,
+   "height_m": 16.61,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -254,57 +334,97 @@
    "species": "cypress_column",
    "seed": 31,
    "location": [
-    43.162,
-    -34.218,
-    -0.626
+    57.671,
+    -24.835,
+    -0.564
    ],
    "scale": [
-    0.6165,
-    0.5689,
-    0.6062
+    0.4911,
+    0.4532,
+    0.4829
    ],
    "rotation_z_deg": 66.48,
-   "height_m": 16.12,
+   "height_m": 12.84,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_cypress_column_08_LOD1",
    "lod1_object": "ENV_tree_cypress_column_08_LOD1",
-   "prototype": "ENV_tree_cypress_column_s2_LOD2",
+   "prototype": "ENV_tree_cypress_column_s31_LOD2",
    "species": "cypress_column",
-   "seed": 2,
+   "seed": 31,
    "location": [
-    -4.42,
-    -42.612,
-    -0.754
+    16.517,
+    -44.244,
+    -0.753
    ],
    "scale": [
-    0.5472,
-    0.4766,
-    0.5347
+    0.5019,
+    0.5971,
+    0.6451
    ],
-   "rotation_z_deg": 93.59,
-   "height_m": 14.63,
+   "rotation_z_deg": 334.76,
+   "height_m": 15.33,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_cypress_column_09_LOD1",
    "lod1_object": "ENV_tree_cypress_column_09_LOD1",
+   "prototype": "ENV_tree_cypress_column_s31_LOD2",
+   "species": "cypress_column",
+   "seed": 31,
+   "location": [
+    5.536,
+    -46.118,
+    -0.744
+   ],
+   "scale": [
+    0.644,
+    0.68,
+    0.6216
+   ],
+   "rotation_z_deg": 305.13,
+   "height_m": 16.74,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_cypress_column_10_LOD1",
+   "lod1_object": "ENV_tree_cypress_column_10_LOD1",
    "prototype": "ENV_tree_cypress_column_s2_LOD2",
    "species": "cypress_column",
    "seed": 2,
    "location": [
-    -36.319,
-    -39.477,
-    -0.68
+    -53.576,
+    -33.026,
+    -0.609
    ],
    "scale": [
-    0.4482,
-    0.4412,
-    0.4824
+    0.4001,
+    0.3693,
+    0.4356
    ],
-   "rotation_z_deg": 60.86,
-   "height_m": 14.28,
+   "rotation_z_deg": 224.15,
+   "height_m": 12.51,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_cypress_column_11_LOD1",
+   "lod1_object": "ENV_tree_cypress_column_11_LOD1",
+   "prototype": "ENV_tree_cypress_column_s2_LOD2",
+   "species": "cypress_column",
+   "seed": 2,
+   "location": [
+    -81.884,
+    -19.504,
+    -0.579
+   ],
+   "scale": [
+    0.5101,
+    0.4644,
+    0.4623
+   ],
+   "rotation_z_deg": 315.01,
+   "height_m": 13.2,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -314,17 +434,17 @@
    "species": "eucalyptus",
    "seed": 61,
    "location": [
-    57.125,
-    -22.757,
-    -0.566
+    65.879,
+    -16.472,
+    -0.597
    ],
    "scale": [
-    0.4767,
-    0.5396,
-    0.4569
+    0.3751,
+    0.4247,
+    0.3596
    ],
    "rotation_z_deg": 179.7,
-   "height_m": 16.57,
+   "height_m": 13.04,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -334,17 +454,17 @@
    "species": "eucalyptus",
    "seed": 61,
    "location": [
-    34.071,
-    -33.3,
-    -0.756
+    47.937,
+    -25.988,
+    -0.637
    ],
    "scale": [
-    0.5107,
-    0.4419,
-    0.5096
+    0.4784,
+    0.4139,
+    0.4774
    ],
    "rotation_z_deg": 232.4,
-   "height_m": 16.76,
+   "height_m": 15.7,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -354,17 +474,17 @@
    "species": "eucalyptus",
    "seed": 61,
    "location": [
-    15.798,
-    -43.036,
-    -0.758
+    36.204,
+    -36.354,
+    -0.713
    ],
    "scale": [
-    0.5041,
-    0.5241,
-    0.5135
+    0.5027,
+    0.5227,
+    0.5121
    ],
    "rotation_z_deg": 91.24,
-   "height_m": 16.76,
+   "height_m": 16.71,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -374,57 +494,77 @@
    "species": "eucalyptus",
    "seed": 23,
    "location": [
-    2.242,
-    -46.497,
-    -0.749
+    -5.993,
+    -46.4,
+    -0.751
    ],
    "scale": [
-    0.3389,
-    0.4433,
-    0.394
+    0.3811,
+    0.4543,
+    0.4684
    ],
-   "rotation_z_deg": 271.67,
-   "height_m": 15.03,
+   "rotation_z_deg": 295.72,
+   "height_m": 16.75,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_eucalyptus_36_LOD1",
    "lod1_object": "ENV_tree_eucalyptus_36_LOD1",
-   "prototype": "ENV_tree_eucalyptus_s5_LOD2",
+   "prototype": "ENV_tree_eucalyptus_s61_LOD2",
    "species": "eucalyptus",
-   "seed": 5,
+   "seed": 61,
    "location": [
-    -14.107,
-    -46.115,
-    -0.741
+    -11.278,
+    -41.737,
+    -0.739
    ],
    "scale": [
-    0.3482,
-    0.4142,
-    0.4476
+    0.469,
+    0.4084,
+    0.4873
    ],
-   "rotation_z_deg": 334.76,
-   "height_m": 14.61,
+   "rotation_z_deg": 28.65,
+   "height_m": 16.47,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_eucalyptus_37_LOD1",
    "lod1_object": "ENV_tree_eucalyptus_37_LOD1",
-   "prototype": "ENV_tree_eucalyptus_s61_LOD2",
+   "prototype": "ENV_tree_eucalyptus_s23_LOD2",
    "species": "eucalyptus",
-   "seed": 61,
+   "seed": 23,
    "location": [
-    -50.37,
-    -34.655,
-    -0.622
+    -39.425,
+    -42.067,
+    -0.645
    ],
    "scale": [
-    0.4734,
-    0.4122,
-    0.4919
+    0.3822,
+    0.2936,
+    0.3844
    ],
-   "rotation_z_deg": 28.65,
-   "height_m": 16.62,
+   "rotation_z_deg": 207.03,
+   "height_m": 13.35,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_eucalyptus_38_LOD1",
+   "lod1_object": "ENV_tree_eucalyptus_38_LOD1",
+   "prototype": "ENV_tree_eucalyptus_s5_LOD2",
+   "species": "eucalyptus",
+   "seed": 5,
+   "location": [
+    -78.418,
+    -22.52,
+    -0.583
+   ],
+   "scale": [
+    0.5031,
+    0.4762,
+    0.469
+   ],
+   "rotation_z_deg": 43.35,
+   "height_m": 16.58,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -434,17 +574,17 @@
    "species": "pine",
    "seed": 29,
    "location": [
-    68.745,
-    -13.818,
-    -0.609
+    74.928,
+    -7.697,
+    -0.625
    ],
    "scale": [
-    0.5374,
-    0.5623,
-    0.536
+    0.5301,
+    0.5546,
+    0.5287
    ],
    "rotation_z_deg": 101.78,
-   "height_m": 14.62,
+   "height_m": 14.42,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -454,17 +594,17 @@
    "species": "pine",
    "seed": 7,
    "location": [
-    21.497,
-    -38.005,
-    -0.743
+    39.037,
+    -31.297,
+    -0.732
    ],
    "scale": [
-    0.44,
-    0.4537,
-    0.5138
+    0.5397,
+    0.5565,
+    0.6302
    ],
    "rotation_z_deg": 349.47,
-   "height_m": 12.49,
+   "height_m": 15.32,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -474,37 +614,77 @@
    "species": "pine",
    "seed": 29,
    "location": [
-    -45.95,
-    -40.96,
-    -0.623
+    26.21,
+    -41.003,
+    -0.719
    ],
    "scale": [
-    0.4832,
-    0.5761,
-    0.5939
+    0.5192,
+    0.6792,
+    0.6036
    ],
-   "rotation_z_deg": 295.72,
-   "height_m": 15.04,
+   "rotation_z_deg": 271.67,
+   "height_m": 16.3,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_pine_17_LOD1",
    "lod1_object": "ENV_tree_pine_17_LOD1",
+   "prototype": "ENV_tree_pine_s7_LOD2",
+   "species": "pine",
+   "seed": 7,
+   "location": [
+    -20.967,
+    -42.924,
+    -0.743
+   ],
+   "scale": [
+    0.6886,
+    0.7131,
+    0.6866
+   ],
+   "rotation_z_deg": 298.64,
+   "height_m": 16.74,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_pine_18_LOD1",
+   "lod1_object": "ENV_tree_pine_18_LOD1",
    "prototype": "ENV_tree_pine_s29_LOD2",
    "species": "pine",
    "seed": 29,
    "location": [
-    -60.316,
-    -33.481,
-    -0.587
+    -50.712,
+    -37.767,
+    -0.606
    ],
    "scale": [
-    0.4634,
-    0.5258,
-    0.5139
+    0.6035,
+    0.5206,
+    0.5607
    ],
-   "rotation_z_deg": 234.47,
-   "height_m": 13.94,
+   "rotation_z_deg": 114.57,
+   "height_m": 15.09,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_pine_19_LOD1",
+   "lod1_object": "ENV_tree_pine_19_LOD1",
+   "prototype": "ENV_tree_pine_s29_LOD2",
+   "species": "pine",
+   "seed": 29,
+   "location": [
+    -70.362,
+    -27.633,
+    -0.578
+   ],
+   "scale": [
+    0.5582,
+    0.6824,
+    0.564
+   ],
+   "rotation_z_deg": 304.23,
+   "height_m": 15.62,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -534,37 +714,37 @@
    "species": "redwood",
    "seed": 13,
    "location": [
-    47.127,
-    -26.575,
-    -0.644
+    58.303,
+    -16.264,
+    -0.677
    ],
    "scale": [
-    0.5479,
-    0.6147,
-    0.5016
+    0.4872,
+    0.5466,
+    0.446
    ],
    "rotation_z_deg": 113.13,
-   "height_m": 15.7,
+   "height_m": 13.96,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
    "name": "ENV_tree_redwood_28_LOD1",
    "lod1_object": "ENV_tree_redwood_28_LOD1",
-   "prototype": "ENV_tree_redwood_s13_LOD2",
+   "prototype": "ENV_tree_redwood_s43_LOD2",
    "species": "redwood",
-   "seed": 13,
+   "seed": 43,
    "location": [
-    -21.135,
-    -41.214,
-    -0.743
+    -16.488,
+    -46.367,
+    -0.739
    ],
    "scale": [
-    0.554,
-    0.5748,
-    0.5189
+    0.4453,
+    0.5053,
+    0.4939
    ],
-   "rotation_z_deg": 218.63,
-   "height_m": 15.25,
+   "rotation_z_deg": 234.47,
+   "height_m": 14.22,
    "note": "HB hall east-face belt (8d r2)"
   },
   {
@@ -574,17 +754,57 @@
    "species": "redwood",
    "seed": 13,
    "location": [
-    -64.76,
-    -25.485,
-    -0.604
+    -43.558,
+    -37.863,
+    -0.639
    ],
    "scale": [
-    0.5759,
-    0.5963,
-    0.5741
+    0.5446,
+    0.5315,
+    0.574
    ],
-   "rotation_z_deg": 298.64,
-   "height_m": 16.6,
+   "rotation_z_deg": 210.62,
+   "height_m": 16.64,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_redwood_30_LOD1",
+   "lod1_object": "ENV_tree_redwood_30_LOD1",
+   "prototype": "ENV_tree_redwood_s13_LOD2",
+   "species": "redwood",
+   "seed": 13,
+   "location": [
+    -72.594,
+    -22.758,
+    -0.588
+   ],
+   "scale": [
+    0.4894,
+    0.5287,
+    0.5939
+   ],
+   "rotation_z_deg": 252.49,
+   "height_m": 16.51,
+   "note": "HB hall east-face belt (8d r2)"
+  },
+  {
+   "name": "ENV_tree_redwood_31_LOD1",
+   "lod1_object": "ENV_tree_redwood_31_LOD1",
+   "prototype": "ENV_tree_redwood_s43_LOD2",
+   "species": "redwood",
+   "seed": 43,
+   "location": [
+    -82.766,
+    -13.745,
+    -0.581
+   ],
+   "scale": [
+    0.5952,
+    0.6493,
+    0.6107
+   ],
+   "rotation_z_deg": 53.7,
+   "height_m": 16.58,
    "note": "HB hall east-face belt (8d r2)"
   }
  ]
