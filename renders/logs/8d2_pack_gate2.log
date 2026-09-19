@@ -1,0 +1,7 @@
+[gate2] KTX2 kept 186 existing map(s), replacing 17 from /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_forest_albedo.png to 16 bits.
+
+toktx warning! Rescaling 16-bit image in /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate2/tex/gate2_ENVBD__backdrop_forest_roughness.png to 16 bits.
+
+[gate2] STEP toktx_uastc wall_s=25 files=17 bytes=328808KiB
+[gate2] STEP toktx_etc1s wall_s=0 files=0 bytes=5760KiB sample="ARCH_colonnade_north__concrete_colonnade ARCH_colonnade_south__concrete_colonnade ARCH_rotunda__column_tan_inner ARCH_rotunda__concrete_inner ARCH_rotunda__concrete_ochre ARCH_rotunda__concrete_podium ARCH_rotunda__plaster_ceiling ARCH_rotunda__plaster_ceiling_rib"

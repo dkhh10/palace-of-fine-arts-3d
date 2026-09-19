@@ -585,7 +585,8 @@ def main():
     # target is one of the ALREADY BAKED prototypes, so nothing is re-baked. Recorded, never silent.
     proto_map_full = dict(setj["impostor_prototype_map"])
     proto_map_added = {}
-    for _t in setj["tree_far_list"]:
+    _far_list = json.loads((g3.GATE1_OUT / "export_set.json").read_text())["tree_far_list"]
+    for _t in _far_list:
         _p = _t["prototype"]
         if _p in proto_map_full:
             continue

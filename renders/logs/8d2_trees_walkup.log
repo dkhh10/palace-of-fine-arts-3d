@@ -1,0 +1,47 @@
+00:00.323  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[gate0] STEP trees_far:meshes wall_s=7.0  prototypes=16 tris=472626 worst=29984
+[gate0] STEP trees_far:placements wall_s=0.3  placements=166 worst_crown_top_dev_mm=38.6
+[gate0] STEP trees_far:color0:walkup wall_s=0.0  meshes=0
+INFO Draco is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_draco_bridge.dylib
+INFO MeshOptimizer is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_meshopt_bridge.dylib
+22:14:10 | INFO: Starting glTF 2.0 export
+22:14:10 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_broadleaf_s53_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_broadleaf_s19_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_cypress_s41_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_cypress_s3_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_cypress_s17_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_cypress_column_s31_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_cypress_column_s2_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_eucalyptus_s5_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_eucalyptus_s23_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_eucalyptus_s61_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_pine_s7_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_pine_s29_LOD1
+22:14:11 | INFO: Primitives created: 2
+22:14:11 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_redwood_s43_LOD1
+22:14:12 | INFO: Primitives created: 2
+22:14:12 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_redwood_s13_LOD1
+22:14:12 | INFO: Primitives created: 2
+22:14:12 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_willow_s11_LOD1
+22:14:12 | INFO: Primitives created: 2
+22:14:12 | INFO: Extracting primitive: EXPM_treewalk_ENV_tree_willow_s37_LOD1
+22:14:12 | INFO: Primitives created: 2
+22:14:12 | INFO: Finished glTF 2.0 export in 1.6348891258239746 s
+
+[gate0] STEP trees_far:gltf wall_s=2.5 env_trees_lod1.gltf=68676B bytes=68676 nodes=166
+[trees_far:walkup] 16 prototypes 25604-29984 tris, 166 placements, 68676 B glTF -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate1/trees_far_lod1.json
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 10648 exited rc=0 after 11 s (max 900)

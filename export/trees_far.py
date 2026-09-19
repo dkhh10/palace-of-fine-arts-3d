@@ -1,5 +1,5 @@
-"""Phase 6c item A: a real MESH for each of the 16 far-tree prototypes, instanced at the 127
-`tree_far` placements, as its own lazily loaded glb. TWO SETS, one code path (`SETS` / `PFA_TREES_SET`):
+"""Phase 6c item A: a real MESH for each of the 16 far-tree prototypes, instanced at every
+`tree_far` placement (127 at 6c, 166 after the 8d belt), as its own lazily loaded glb. TWO SETS, one code path (`SETS` / `PFA_TREES_SET`):
 
     # item A - the far set, 8 k per prototype, with the item-B vertex AO: env_trees.glb
     scripts/blender_run.sh 900 -- --background master_delivery.blend --python export/trees_far.py
@@ -649,7 +649,11 @@ def main():
                                loc=[round(float(v), 4) for v in row["trunk_base"]],
                                scale=round(s, 6), height_m=row["height_m"],
                                walk_dist_m=row["walk_dist_m"]))
-    assert len(placements) == len(far) == 127, f"{len(placements)} placements, expected 127"
+    # 8d r2: the far list grows with the scene (the hall-east belt took it 127 -> 166). What has to hold
+    # is that EVERY far row got a placement here, not a fixed count; the count itself is reported and
+    # checked against the manifest the placements were read from.
+    assert len(placements) == len(far), \
+        f"{len(placements)} placements for {len(far)} far rows - every far tree must be placed"
 
     # ---- THE PLACED MESH, IN WORLD SPACE, AGAINST THE IMPOSTOR QUAD (per row).
     # This is the check the export did not have: `no.location` was right all along, but the mesh under it
@@ -690,7 +694,7 @@ def main():
         rule="s = tree_far[i].height_m / impostors.prototypes[p].height_above_base_m, translation = "
              "trunk_base, rotation ignored - manifest `impostors.placement`, verbatim",
         translation=("asserted AFTER the export: every env_trees.gltf node translation against "
-                     "to_gltf(trunk_base) = (x, z, -y), and every node scale against s, on all 127 rows "
+                     "to_gltf(trunk_base) = (x, z, -y), and every node scale against s, on every row "
                      "(`gltf_translation_check` below). The in-Blender assert this replaces compared "
                      "`no.location` with the value it had just been assigned and could not fail."),
         worst_crown_top_deviation_m=round(worst_dev, 4),
