@@ -297,6 +297,36 @@ def instance_lod1_block(base):
 
 def main():
     man = json.loads((g3.GATE2_OUT / "manifest.json").read_text())
+    # `glb.per_class` is carried through from Gate 2, which froze it when the Gate 2 chain last ran, so
+    # it describes the glbs as they were THEN.  It is not decoration: export/verify_glb.py --gate5
+    # checks the triangles the tier groups draw against `placed_tris` here, so a re-packed class fails
+    # that check against a stale number (8a: the densified LOD2 shrubs took env from 679 779 to 781 931
+    # drawn while this still said 679 779, and `bytes` had been stale since the QA-12-1 env re-pack -
+    # 35 797 240 against a 38 119 568 B file on disk - without anything noticing).  The authority is the
+    # Gate 1 manifest beside the glbs themselves, read local-then-MAIN like every other hand-off here.
+    g1m = next((q for q in (g3.GATE1_OUT / "manifest.json",
+                            g3.MAIN_ROOT / "export" / "out" / "gate1" / "manifest.json") if q.exists()),
+               None)
+    glb_refresh = []
+    if g1m is not None:
+        cur = json.loads(g1m.read_text()).get("glb", {}).get("per_class", {})
+        for cls, now in cur.items():
+            was = (man.get("glb", {}).get("per_class", {}) or {}).get(cls)
+            if not isinstance(was, dict):
+                continue
+            moved = {k: [was.get(k), now.get(k)] for k in ("bytes", "placed_tris", "objects", "meshes")
+                     if k in now and was.get(k) != now.get(k)}
+            if moved:
+                glb_refresh.append(dict(cls=cls, **moved))
+            was.update({k: v for k, v in now.items() if k != "path"})
+    if glb_refresh:
+        man.setdefault("glb", {})["per_class_refreshed_from_gate1"] = dict(
+            source=str(g1m), changed=glb_refresh,
+            why="Gate 2 froze these when it last ran; verify_glb --gate5 checks the tier groups' drawn "
+                "triangles against placed_tris, so they follow the glbs on disk.")
+        print(f"[manifest_v4] glb.per_class refreshed from {g1m}: "
+              + ", ".join(f"{r['cls']} " + " ".join(f"{k} {v[0]}->{v[1]}" for k, v in r.items()
+                                                    if k != "cls") for r in glb_refresh), flush=True)
     setj = json.loads((g3.OUT / "gate3_set.json").read_text())
     comp = json.loads((g3.OUT / "compose.json").read_text()) if (g3.OUT / "compose.json").exists() else {}
     # export/gate3_encode.py is the authoritative encode (range = the map's own max, error in stops).

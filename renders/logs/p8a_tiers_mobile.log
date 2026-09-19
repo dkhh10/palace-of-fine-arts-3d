@@ -1,0 +1,11 @@
+[gate5tex] tier0 normals etc1s /2 qlevel 32: 46 files, 2.52 MB, 33 s wall
+[tiers] m_arch_t0: 515 nodes, 2.33 MB, 14 external textures, hero 13.19 % (tier 0)
+[tiers] m_arch_t2: 49 nodes, 0.08 MB, 5 external textures, hero 0.00 % (tier 2)
+[tiers] m_ground_t0: 4 nodes, 1.96 MB, 4 external textures, hero 36.17 % (tier 0)
+[tiers] m_orn_t0: 402 nodes, 1.13 MB, 54 external textures, hero 2.32 % (tier 0)
+[tiers] m_orn_t2: 34 nodes, 0.18 MB, 12 external textures, hero 0.00 % (tier 2)
+[tiers] m_env_t0: 1476 nodes, 2.17 MB, 24 external textures, hero 12.31 % (tier 0)
+[tiers] m_env_t2: 60 nodes, 6.79 MB, 24 external textures, hero 0.00 % (tier 2)
+[tiers] mobile: t0 46.5 MB / 235 files, t1 5.6 MB / 58 files, t2 9.4 MB / 48 files; total 61.5 MB; resident est 306 MB
+[tiers] mobile: first frame = tier 0 46.49 MB + boot 1.10 MB + headers 39 kB = 47.62 MB on the wire, within the 49.5 MB target
+[tiers] mobile: 0 files over the 25 MiB cap -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8-export/export/out/gate5/manifest_mobile.json

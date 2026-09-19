@@ -2377,3 +2377,55 @@ export/sync_main.sh
     in `instance_order_groups.json.unmatched`: a merged plain node has no per-instance row, so their
     irradiance cannot be keyed and they fall back to the probe, as the seven fully enclosed cards
     already do. 1 376 of 1 379 placements keyed.
+
+## Phase 8a — the ENV re-export at the raised budget (2026-09-19, export engineer, branch `phase8-export`)
+
+**`gate1_common.CLASS_BUDGET["ENV"]` is 902 000, not 800 000.** The 8a decision accepted "+~105 k against
+the frozen 800 k ENV budget = +13 %, accepted for the hero" for the densified LOD2 shrubs, but nothing
+raised the constant, so `tree_allow = CLASS_BUDGET[ENV] - env_so_far - shrub_est - 2*len(tree_rows)` paid
+for the shrubs out of the NEAR-TREE allowance instead: `near_exported` 20 → 15, `far_billboards` 127 → 132.
+That re-indexes the impostor placements across five species and would force an impostor re-bake. At 902 000
+(+102 152, exactly the shrub increase) `tree_far_list` and `tree_near_list` come back byte-identical, ENV
+lands at 894 974 placed with 7 026 spare, and the only figure that moves in `tree_rule` is
+`near_tris_budget` 399 046 → 398 894. `export/budget_doc.py` now imports the constants from
+`gate1_common` instead of keeping a second copy of them, which is why it printed 800 000 and a headroom of
+−94 974 against a run that was under budget.
+
+**Two things a class re-pack silently invalidated, both fixed here.**
+
+1. **`glb.per_class` was frozen at Gate 2.** `manifest_v4.py` carried the block out of
+   `out/gate2/manifest.json`, so it described the glbs as they were when the Gate 2 chain last ran — and
+   `verify_glb.py --gate5` checks the triangles the tier groups draw against its `placed_tris`. Every
+   class's `bytes` had been stale since the QA-12-1 re-pack (arch 3 589 032, orn 154 065 360, env
+   35 797 240, ground 1 238 288 against 4 613 040 / 154 253 424 / 38 181 724 / 1 959 104 on disk) and
+   nothing noticed, because only env's triangle count ever moved. `manifest_v4.py` now refreshes
+   `glb.per_class` from the Gate 1 manifest beside the glbs and records what changed in
+   `glb.per_class_refreshed_from_gate1`.
+2. **Gate 5 reads MAIN, not the worktree.** `gate5_common.GATE1/GATE3` resolve to `PFA_MAIN_ROOT`
+   deliberately ("the bake branch's files arrive in MAIN via sync"), so `tiers.py`'s group builder reads
+   `MAIN/export/out/gate1/<cls>_ktx2.gltf`. A gate5 run before `sync_main.sh` rebuilds the groups from the
+   PREVIOUS class glb and they come out byte-identical — which is exactly what it looks like when nothing
+   changed. **Sync gate1 and gate3 to MAIN before running `tiers.py`**, and check the group bytes moved.
+
+**The chain, in the order it has to run** (no GPU, no bakes; the 33 ORN normal/AO maps in `out/gate1/tex`
+are unchanged and are copied in rather than re-baked — `orn.bin` and `orn.glb` come back byte-identical):
+
+```sh
+scripts/blender_run.sh 2400 -- --background <MAIN>/master_delivery.blend --python export/export_set.py -- --gate1
+scripts/blender_run.sh  900 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
+export/gltf_pack.sh --gate1
+scripts/blender_run.sh  900 -- --background <MAIN>/master_delivery.blend --python export/shrub_lod1.py
+export/gltf_pack.sh --shrubs
+node web/tools/instance_rows.mjs <W>/export/out/gate1/env.glb        <W>/export/out/gate3/instance_rows.json
+node web/tools/instance_rows.mjs <W>/export/out/gate1/env_shrubs.glb <W>/export/out/gate3/instance_rows_shrub_lod1.json
+python3 export/gate4_instance_order.py && PFA_ORDER_SET=shrub_lod1 python3 export/gate4_instance_order.py
+python3 export/verify_glb.py && python3 export/gate4_order_selftest.py
+python3 export/manifest_v2.py && python3 export/manifest_v4.py && python3 export/budget_doc.py
+export/sync_main.sh                       # gate1 + gate3 MUST reach MAIN before the next line
+python3 export/tiers.py && python3 export/tiers.py --mobile && python3 export/tiers.py --no-pack
+python3 export/verify_glb.py --gate5 && (cd <MAIN>/web && node test/tiers_test.mjs)
+export/sync_main.sh
+```
+
+`manifest_v2.py` is the step that is easy to skip and expensive to skip: without it `glb.per_class` keeps
+the previous pack's numbers and Gate 5's triangle check fails against them.
