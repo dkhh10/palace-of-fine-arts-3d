@@ -1,0 +1,4449 @@
+{
+ "generated": "2026-09-19T18:56:11.537Z",
+ "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev?station=1&size=1170x2532&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=all&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1&tier=mobile",
+ "size": [
+  1170,
+  2532
+ ],
+ "time_to_first_frame_s": 9.86,
+ "first_frame_from": "the page (window.__pfaReadyAt)",
+ "time_to_all_tiers_s": 15.331,
+ "bytes_before_first_frame": 46810129,
+ "bytes_total": 67260548,
+ "bytes_by_kind": {
+  "other": 1748,
+  "js": 371707,
+  "json": 476383,
+  "ktx2": 23842686,
+  "hdr": 15647309,
+  "cube": 7416990,
+  "glb": 19249404,
+  "wasm": 254321
+ },
+ "requests_before_first_frame": 376,
+ "requests_n": 479,
+ "viewer_tiers": {
+  "present": true,
+  "count": 3,
+  "max": null,
+  "now": 2,
+  "streaming": false,
+  "done": true,
+  "tier0_planned_bytes": 47619562,
+  "per_tier": [
+   {
+    "tier": 0,
+    "wall_s": 9.535199999928475,
+    "bytes": 46685337,
+    "planned": 47619562,
+    "glbs": 4
+   },
+   {
+    "tier": 1,
+    "wall_s": 0.46,
+    "bytes": 3784633,
+    "planned": 5556749,
+    "glbs": 0
+   },
+   {
+    "tier": 2,
+    "wall_s": 3.8817999999523165,
+    "bytes": 12169823,
+    "planned": 10498761,
+    "glbs": 3
+   }
+  ],
+  "declared_bytes": {
+   "0": 46517118,
+   "1": 5556749,
+   "2": 10498761
+  },
+  "oversize": [],
+  "deferred_lightmaps": 0,
+  "upgrades": [
+   {
+    "tier": 1,
+    "candidates": 0,
+    "upgraded": 0,
+    "from_lo": 0,
+    "from_factor": 0,
+    "bytes": 0,
+    "failed": 0,
+    "maxTier": 1,
+    "glb_textures": 0,
+    "glb_textures_remaining": 0
+   },
+   {
+    "tier": 2,
+    "candidates": 1,
+    "upgraded": 1,
+    "from_lo": 0,
+    "from_factor": 1,
+    "bytes": 174776,
+    "failed": 0,
+    "maxTier": 2,
+    "glb_textures": 0,
+    "glb_textures_remaining": 0
+   }
+  ],
+  "failures": [],
+  "lowres_remaining": [],
+  "lowres_etc_textures": null,
+  "lowres_etc_names": [],
+  "lowres_substituted": 128,
+  "texture_sharing": {
+   "urls": 298,
+   "shared_users": 80,
+   "bytes_saved_estimate": 51206712
+  },
+  "stub": null,
+  "error": null
+ },
+ "viewer_device": {
+  "tier": "mobile",
+  "from": "query",
+  "reasons": [
+   "?tier=mobile"
+  ],
+  "gl": {
+   "maxTextureSize": 16384,
+   "astc": true,
+   "etc2": true,
+   "bptc": true,
+   "s3tc": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+   "vendor": "Google Inc. (Apple)",
+   "webgl2": true
+  },
+  "env": {
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+   "maxTouchPoints": 0,
+   "deviceMemoryGb": 16,
+   "hardwareConcurrency": 8,
+   "devicePixelRatio": 1,
+   "screen": [
+    800,
+    600
+   ]
+  },
+  "pixelRatio": 0.7115752728268533,
+  "drawingBufferPx": 1498432
+ },
+ "viewer_bytes": {
+  "loaded": 67076681,
+  "planned": 85263481
+ },
+ "requests": [
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/?station=1&size=1170x2532&hud=0&manifest=%2Fassets%2Fgate5%2Fmanifest.json&tiers=all&t=0&billboards=0&treeboards=0&lighting=baked&post=all&probe=1&impostors=1&water=1&tier=mobile",
+   "status": 200,
+   "mime": "text/html",
+   "bytes": 1269,
+   "start_s": 0,
+   "end_s": 0.085,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/index-BMRH0VmI.js",
+   "status": 200,
+   "mime": "text/javascript",
+   "bytes": 354731,
+   "start_s": 0.088,
+   "end_s": 0.277,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/favicon.ico",
+   "status": 404,
+   "mime": "text/plain",
+   "bytes": 479,
+   "start_s": 0.326,
+   "end_s": 0.355,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/manifest.json",
+   "status": 200,
+   "mime": "application/json",
+   "bytes": 242678,
+   "start_s": 0.324,
+   "end_s": 0.468,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/manifest_mobile.json",
+   "status": 200,
+   "mime": "application/json",
+   "bytes": 228957,
+   "start_s": 0.481,
+   "end_s": 0.757,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/uv2_relay_status.json",
+   "status": 200,
+   "mime": "application/json",
+   "bytes": 4748,
+   "start_s": 0.785,
+   "end_s": 0.82,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.871,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.824,
+   "end_s": 0.871,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.824,
+   "end_s": 0.872,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.87,
+   "end_s": 0.902,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.871,
+   "end_s": 0.904,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.872,
+   "end_s": 0.905,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate0/sky_glossy_4096x2048.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 0,
+   "start_s": 0.822,
+   "end_s": 0.914,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate0/sky_camera_4096x2048.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 0,
+   "start_s": 0.822,
+   "end_s": 0.937,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.902,
+   "end_s": 0.938,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.939,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.903,
+   "end_s": 0.94,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate0/lut_agx_high_contrast_65.cube",
+   "status": 200,
+   "mime": null,
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.94,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.905,
+   "end_s": 0.942,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/sky_diffuse_1024x512.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.942,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.943,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.914,
+   "end_s": 0.947,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_env_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.955,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.956,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.824,
+   "end_s": 0.956,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_orn_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.957,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_arch_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.957,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.824,
+   "end_s": 0.957,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_ground_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 0,
+   "start_s": 0.823,
+   "end_s": 0.958,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.937,
+   "end_s": 0.976,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.938,
+   "end_s": 0.978,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.939,
+   "end_s": 0.979,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.939,
+   "end_s": 0.979,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.938,
+   "end_s": 0.98,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.942,
+   "end_s": 0.981,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.943,
+   "end_s": 0.981,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.942,
+   "end_s": 0.981,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.947,
+   "end_s": 0.988,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.957,
+   "end_s": 0.989,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.957,
+   "end_s": 0.992,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.957,
+   "end_s": 0.993,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.958,
+   "end_s": 0.993,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.975,
+   "end_s": 1.009,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.978,
+   "end_s": 1.011,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.956,
+   "end_s": 1.015,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.979,
+   "end_s": 1.016,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.955,
+   "end_s": 1.016,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.98,
+   "end_s": 1.017,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.978,
+   "end_s": 1.017,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.956,
+   "end_s": 1.017,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.981,
+   "end_s": 1.018,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.98,
+   "end_s": 1.021,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.98,
+   "end_s": 1.025,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.989,
+   "end_s": 1.025,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.988,
+   "end_s": 1.026,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.992,
+   "end_s": 1.026,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.992,
+   "end_s": 1.027,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 0.992,
+   "end_s": 1.03,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.009,
+   "end_s": 1.04,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.01,
+   "end_s": 1.042,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.015,
+   "end_s": 1.047,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.016,
+   "end_s": 1.048,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.016,
+   "end_s": 1.05,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.016,
+   "end_s": 1.051,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.017,
+   "end_s": 1.051,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__bird_white_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.017,
+   "end_s": 1.052,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__bird_white_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.018,
+   "end_s": 1.052,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.026,
+   "end_s": 1.061,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.026,
+   "end_s": 1.062,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.026,
+   "end_s": 1.062,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.029,
+   "end_s": 1.066,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.039,
+   "end_s": 1.069,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.041,
+   "end_s": 1.072,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__riprap_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.047,
+   "end_s": 1.08,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.02,
+   "end_s": 1.08,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__riprap_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.047,
+   "end_s": 1.081,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__riprap_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.05,
+   "end_s": 1.084,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.025,
+   "end_s": 1.084,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.051,
+   "end_s": 1.089,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.05,
+   "end_s": 1.09,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.051,
+   "end_s": 1.091,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.052,
+   "end_s": 1.092,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.061,
+   "end_s": 1.092,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.062,
+   "end_s": 1.093,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.062,
+   "end_s": 1.096,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.025,
+   "end_s": 1.098,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.069,
+   "end_s": 1.099,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.066,
+   "end_s": 1.099,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.072,
+   "end_s": 1.103,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.079,
+   "end_s": 1.114,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.084,
+   "end_s": 1.117,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.081,
+   "end_s": 1.119,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.084,
+   "end_s": 1.12,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.08,
+   "end_s": 1.121,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.09,
+   "end_s": 1.125,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.089,
+   "end_s": 1.125,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.093,
+   "end_s": 1.131,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.092,
+   "end_s": 1.132,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.091,
+   "end_s": 1.135,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.096,
+   "end_s": 1.135,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.099,
+   "end_s": 1.139,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.099,
+   "end_s": 1.14,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.098,
+   "end_s": 1.141,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.103,
+   "end_s": 1.141,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.114,
+   "end_s": 1.151,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.117,
+   "end_s": 1.153,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.119,
+   "end_s": 1.155,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.121,
+   "end_s": 1.158,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.119,
+   "end_s": 1.158,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.125,
+   "end_s": 1.162,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.125,
+   "end_s": 1.162,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.131,
+   "end_s": 1.167,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.092,
+   "end_s": 1.168,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.134,
+   "end_s": 1.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.132,
+   "end_s": 1.173,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.153,
+   "end_s": 1.187,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.155,
+   "end_s": 1.188,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.158,
+   "end_s": 1.189,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.139,
+   "end_s": 1.196,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.14,
+   "end_s": 1.201,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.135,
+   "end_s": 1.203,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.141,
+   "end_s": 1.204,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.15,
+   "end_s": 1.206,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.141,
+   "end_s": 1.21,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.158,
+   "end_s": 1.218,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.162,
+   "end_s": 1.22,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.168,
+   "end_s": 1.227,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.172,
+   "end_s": 1.229,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.167,
+   "end_s": 1.23,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.173,
+   "end_s": 1.233,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.162,
+   "end_s": 1.233,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.204,
+   "end_s": 1.236,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.203,
+   "end_s": 1.237,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.205,
+   "end_s": 1.239,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.21,
+   "end_s": 1.242,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.189,
+   "end_s": 1.248,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.218,
+   "end_s": 1.25,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.22,
+   "end_s": 1.251,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.196,
+   "end_s": 1.251,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.187,
+   "end_s": 1.256,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.188,
+   "end_s": 1.257,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.227,
+   "end_s": 1.259,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.229,
+   "end_s": 1.259,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.23,
+   "end_s": 1.261,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.201,
+   "end_s": 1.265,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.248,
+   "end_s": 1.28,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.249,
+   "end_s": 1.281,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.251,
+   "end_s": 1.285,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.251,
+   "end_s": 1.285,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.256,
+   "end_s": 1.291,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.233,
+   "end_s": 1.291,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.257,
+   "end_s": 1.292,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.258,
+   "end_s": 1.293,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.236,
+   "end_s": 1.296,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.258,
+   "end_s": 1.296,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.239,
+   "end_s": 1.298,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.242,
+   "end_s": 1.299,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.233,
+   "end_s": 1.301,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.261,
+   "end_s": 1.302,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 0,
+   "start_s": 1.236,
+   "end_s": 1.308,
+   "failed": "net::ERR_ABORTED"
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate0/sky_camera_4096x2048.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 3591317,
+   "start_s": 1.307,
+   "end_s": 2.249,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate0/sky_glossy_4096x2048.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 3662297,
+   "start_s": 2.497,
+   "end_s": 2.892,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/sky_diffuse_1024x512.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 2097963,
+   "start_s": 3.149,
+   "end_s": 3.362,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate0/lut_agx_high_contrast_65.cube",
+   "status": 200,
+   "mime": null,
+   "bytes": 7416990,
+   "start_s": 3.403,
+   "end_s": 4.053,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_arch_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 2329764,
+   "start_s": 4.132,
+   "end_s": 4.346,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/uv1_probe_grey.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1043,
+   "start_s": 4.352,
+   "end_s": 4.383,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/basis/basis_transcoder.js",
+   "status": 200,
+   "mime": "text/javascript",
+   "bytes": 16976,
+   "start_s": 4.384,
+   "end_s": 4.42,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/basis/basis_transcoder.wasm",
+   "status": 200,
+   "mime": "application/wasm",
+   "bytes": 254321,
+   "start_s": 4.385,
+   "end_s": 4.444,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_ground_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 1957886,
+   "start_s": 4.585,
+   "end_s": 4.77,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_orn_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 1135425,
+   "start_s": 4.792,
+   "end_s": 4.914,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_attic_figure_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 145952,
+   "start_s": 4.919,
+   "end_s": 4.987,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_rosette_ceiling_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44859,
+   "start_s": 4.922,
+   "end_s": 5.09,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_rosette_ceiling_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46262,
+   "start_s": 4.922,
+   "end_s": 5.092,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_keystone_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48054,
+   "start_s": 4.921,
+   "end_s": 5.094,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_keystone_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47514,
+   "start_s": 4.921,
+   "end_s": 5.094,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_keystone_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47895,
+   "start_s": 4.921,
+   "end_s": 5.096,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_frieze_rinceau_return_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 66579,
+   "start_s": 4.921,
+   "end_s": 5.119,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_attic_panel_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 145062,
+   "start_s": 4.919,
+   "end_s": 5.127,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_attic_panel_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 144211,
+   "start_s": 4.92,
+   "end_s": 5.128,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_frieze_rinceau_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76166,
+   "start_s": 4.921,
+   "end_s": 5.131,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_frieze_rinceau_return_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76121,
+   "start_s": 4.921,
+   "end_s": 5.133,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_frieze_rinceau_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76888,
+   "start_s": 4.921,
+   "end_s": 5.133,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_maiden_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 104137,
+   "start_s": 4.922,
+   "end_s": 5.174,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_winged_figure_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 105901,
+   "start_s": 4.921,
+   "end_s": 5.174,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_colonnade_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 160920,
+   "start_s": 4.92,
+   "end_s": 5.176,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_maiden_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 108159,
+   "start_s": 4.921,
+   "end_s": 5.179,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_maiden_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 111920,
+   "start_s": 4.922,
+   "end_s": 5.179,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_urn_niche_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 111003,
+   "start_s": 4.922,
+   "end_s": 5.18,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_drum_band_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 120840,
+   "start_s": 4.92,
+   "end_s": 5.184,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_corner_scroll_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128089,
+   "start_s": 4.921,
+   "end_s": 5.188,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_colonnade_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 160802,
+   "start_s": 4.92,
+   "end_s": 5.189,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_urn_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128767,
+   "start_s": 4.922,
+   "end_s": 5.192,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_inner_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 162800,
+   "start_s": 4.92,
+   "end_s": 5.194,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_colonnade_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 162153,
+   "start_s": 4.92,
+   "end_s": 5.195,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_rotunda_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 169070,
+   "start_s": 4.92,
+   "end_s": 5.195,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_rotunda_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 168071,
+   "start_s": 4.92,
+   "end_s": 5.198,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_capital_rotunda_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 168892,
+   "start_s": 4.92,
+   "end_s": 5.198,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_env_t0.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 2173462,
+   "start_s": 5.218,
+   "end_s": 5.427,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/reeds_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27693,
+   "start_s": 5.436,
+   "end_s": 5.473,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/leaves_shrub.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 79195,
+   "start_s": 5.436,
+   "end_s": 5.481,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/leaves_shrub_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47688,
+   "start_s": 5.436,
+   "end_s": 5.484,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/needles_cypress_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 30304,
+   "start_s": 5.436,
+   "end_s": 5.495,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/chinese_cedar_bark_rough_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 19487,
+   "start_s": 5.436,
+   "end_s": 5.499,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/reeds.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 78290,
+   "start_s": 5.435,
+   "end_s": 5.514,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/leaves_eucalyptus_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29681,
+   "start_s": 5.437,
+   "end_s": 5.52,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/needles_cypress.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 66887,
+   "start_s": 5.436,
+   "end_s": 5.529,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/leaves_eucalyptus.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48840,
+   "start_s": 5.437,
+   "end_s": 5.529,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/bark_bluegum_rough_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 63723,
+   "start_s": 5.437,
+   "end_s": 5.535,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/bark_bluegum_disp_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 69176,
+   "start_s": 5.437,
+   "end_s": 5.537,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/chinese_cedar_bark_diff_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 165599,
+   "start_s": 5.436,
+   "end_s": 5.55,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/chinese_cedar_bark_disp_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 134030,
+   "start_s": 5.436,
+   "end_s": 5.551,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/bark_bluegum_diff_2k.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 177318,
+   "start_s": 5.437,
+   "end_s": 5.553,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 118530,
+   "start_s": 5.633,
+   "end_s": 5.682,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 138542,
+   "start_s": 5.633,
+   "end_s": 5.696,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 149294,
+   "start_s": 5.633,
+   "end_s": 5.696,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36942,
+   "start_s": 5.686,
+   "end_s": 5.724,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44409,
+   "start_s": 5.699,
+   "end_s": 5.735,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 40421,
+   "start_s": 5.699,
+   "end_s": 5.738,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2647,
+   "start_s": 5.725,
+   "end_s": 5.753,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__concrete_podium_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2465,
+   "start_s": 5.737,
+   "end_s": 5.768,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_ochre_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 14396,
+   "start_s": 5.739,
+   "end_s": 5.773,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 122279,
+   "start_s": 5.754,
+   "end_s": 5.794,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 123759,
+   "start_s": 5.769,
+   "end_s": 5.813,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 114363,
+   "start_s": 5.775,
+   "end_s": 5.819,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37832,
+   "start_s": 5.798,
+   "end_s": 5.831,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38471,
+   "start_s": 5.817,
+   "end_s": 5.851,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 35452,
+   "start_s": 5.823,
+   "end_s": 5.855,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2685,
+   "start_s": 5.832,
+   "end_s": 5.86,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade__merged_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2553,
+   "start_s": 5.853,
+   "end_s": 5.881,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_rose_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4729,
+   "start_s": 5.857,
+   "end_s": 5.886,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 154818,
+   "start_s": 5.862,
+   "end_s": 5.906,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 141196,
+   "start_s": 5.883,
+   "end_s": 5.93,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 99409,
+   "start_s": 5.888,
+   "end_s": 5.933,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45925,
+   "start_s": 5.911,
+   "end_s": 5.95,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42306,
+   "start_s": 5.935,
+   "end_s": 5.969,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 30542,
+   "start_s": 5.937,
+   "end_s": 5.971,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_rib_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2272,
+   "start_s": 5.952,
+   "end_s": 5.983,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__concrete_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2128,
+   "start_s": 5.971,
+   "end_s": 6.003,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__column_tan_inner_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 5873,
+   "start_s": 5.972,
+   "end_s": 6.004,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 81157,
+   "start_s": 6.006,
+   "end_s": 6.048,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 66334,
+   "start_s": 6.006,
+   "end_s": 6.055,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 140025,
+   "start_s": 6.005,
+   "end_s": 6.061,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27565,
+   "start_s": 6.054,
+   "end_s": 6.088,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 25862,
+   "start_s": 6.06,
+   "end_s": 6.094,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 39719,
+   "start_s": 6.067,
+   "end_s": 6.099,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__drum_band_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1940,
+   "start_s": 6.09,
+   "end_s": 6.123,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__dome_membrane_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4350,
+   "start_s": 6.096,
+   "end_s": 6.128,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_rotunda__plaster_ceiling_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 1916,
+   "start_s": 6.101,
+   "end_s": 6.133,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 96880,
+   "start_s": 6.126,
+   "end_s": 6.166,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 98059,
+   "start_s": 6.13,
+   "end_s": 6.173,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 30217,
+   "start_s": 6.229,
+   "end_s": 6.263,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 30268,
+   "start_s": 6.229,
+   "end_s": 6.264,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_south__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 10128,
+   "start_s": 6.264,
+   "end_s": 6.296,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_colonnade_north__concrete_colonnade_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 9370,
+   "start_s": 6.265,
+   "end_s": 6.296,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_concrete_wall_007_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 139101,
+   "start_s": 6.304,
+   "end_s": 6.384,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_concrete_wall_007_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41812,
+   "start_s": 6.389,
+   "end_s": 6.47,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_concrete_wall_007_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 77413,
+   "start_s": 6.473,
+   "end_s": 6.536,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_concrete_wall_008_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 130578,
+   "start_s": 6.541,
+   "end_s": 6.618,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_concrete_wall_008_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 15730,
+   "start_s": 6.626,
+   "end_s": 6.695,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_concrete_wall_008_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 34666,
+   "start_s": 6.699,
+   "end_s": 6.769,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27489,
+   "start_s": 6.833,
+   "end_s": 6.872,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 163322,
+   "start_s": 6.833,
+   "end_s": 6.884,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__riprap_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 174350,
+   "start_s": 6.833,
+   "end_s": 6.892,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 7581,
+   "start_s": 6.875,
+   "end_s": 6.908,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48253,
+   "start_s": 6.888,
+   "end_s": 6.921,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__riprap_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48263,
+   "start_s": 6.895,
+   "end_s": 6.932,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_lagoon_bed_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3502,
+   "start_s": 6.909,
+   "end_s": 6.939,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_ground_colonnade_walk_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29543,
+   "start_s": 6.923,
+   "end_s": 6.953,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__riprap_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27411,
+   "start_s": 6.934,
+   "end_s": 6.965,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128582,
+   "start_s": 6.941,
+   "end_s": 6.984,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 9945,
+   "start_s": 6.989,
+   "end_s": 7.021,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENV__ENV_terrain_ground_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2650,
+   "start_s": 7.023,
+   "end_s": 7.054,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_rock_boulder_dry_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48482,
+   "start_s": 7.066,
+   "end_s": 7.136,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_rock_boulder_dry_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48759,
+   "start_s": 7.139,
+   "end_s": 7.222,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_rock_boulder_dry_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36340,
+   "start_s": 7.226,
+   "end_s": 7.295,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_gravelly_sand_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46558,
+   "start_s": 7.299,
+   "end_s": 7.365,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_gravelly_sand_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 24221,
+   "start_s": 7.368,
+   "end_s": 7.434,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/detail_gravelly_sand_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29211,
+   "start_s": 7.439,
+   "end_s": 7.512,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 138064,
+   "start_s": 7.529,
+   "end_s": 7.592,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 180234,
+   "start_s": 7.529,
+   "end_s": 7.63,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 178402,
+   "start_s": 7.529,
+   "end_s": 7.632,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41639,
+   "start_s": 7.601,
+   "end_s": 7.642,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48119,
+   "start_s": 7.637,
+   "end_s": 7.672,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47887,
+   "start_s": 7.638,
+   "end_s": 7.676,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 103007,
+   "start_s": 7.644,
+   "end_s": 7.688,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 131257,
+   "start_s": 7.674,
+   "end_s": 7.716,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 132535,
+   "start_s": 7.678,
+   "end_s": 7.735,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76759,
+   "start_s": 7.691,
+   "end_s": 7.747,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 170038,
+   "start_s": 7.72,
+   "end_s": 7.774,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 56668,
+   "start_s": 7.738,
+   "end_s": 7.784,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26862,
+   "start_s": 7.75,
+   "end_s": 7.788,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46120,
+   "start_s": 7.78,
+   "end_s": 7.817,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46699,
+   "start_s": 7.785,
+   "end_s": 7.822,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 60441,
+   "start_s": 7.79,
+   "end_s": 7.826,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 118454,
+   "start_s": 7.819,
+   "end_s": 7.859,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37961,
+   "start_s": 7.826,
+   "end_s": 7.862,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 57363,
+   "start_s": 7.828,
+   "end_s": 7.871,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 68198,
+   "start_s": 7.864,
+   "end_s": 7.899,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47572,
+   "start_s": 7.873,
+   "end_s": 7.921,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 176518,
+   "start_s": 7.863,
+   "end_s": 7.928,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 24421,
+   "start_s": 7.903,
+   "end_s": 7.935,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38239,
+   "start_s": 7.924,
+   "end_s": 7.954,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53895,
+   "start_s": 7.937,
+   "end_s": 7.972,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47493,
+   "start_s": 7.933,
+   "end_s": 7.976,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 177362,
+   "start_s": 7.955,
+   "end_s": 8.002,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_figure_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 94133,
+   "start_s": 7.978,
+   "end_s": 8.042,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 157624,
+   "start_s": 7.975,
+   "end_s": 8.043,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 48373,
+   "start_s": 8.008,
+   "end_s": 8.05,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 177073,
+   "start_s": 8.046,
+   "end_s": 8.094,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44271,
+   "start_s": 8.049,
+   "end_s": 8.098,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_rotunda_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 132599,
+   "start_s": 8.051,
+   "end_s": 8.118,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_niche_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 105340,
+   "start_s": 8.1,
+   "end_s": 8.14,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47835,
+   "start_s": 8.101,
+   "end_s": 8.143,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 135000,
+   "start_s": 8.123,
+   "end_s": 8.166,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 169269,
+   "start_s": 8.144,
+   "end_s": 8.208,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_inner_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 131844,
+   "start_s": 8.145,
+   "end_s": 8.213,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 39130,
+   "start_s": 8.171,
+   "end_s": 8.22,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45789,
+   "start_s": 8.215,
+   "end_s": 8.25,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 170132,
+   "start_s": 8.217,
+   "end_s": 8.27,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_winged_figure_v1_LOD0_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 67237,
+   "start_s": 8.221,
+   "end_s": 8.279,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_corner_scroll_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 109737,
+   "start_s": 8.252,
+   "end_s": 8.297,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46174,
+   "start_s": 8.276,
+   "end_s": 8.311,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55408,
+   "start_s": 8.283,
+   "end_s": 8.315,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55556,
+   "start_s": 8.302,
+   "end_s": 8.335,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47126,
+   "start_s": 8.317,
+   "end_s": 8.358,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 121755,
+   "start_s": 8.313,
+   "end_s": 8.358,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46058,
+   "start_s": 8.337,
+   "end_s": 8.369,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_keystone_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38223,
+   "start_s": 8.36,
+   "end_s": 8.39,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36974,
+   "start_s": 8.371,
+   "end_s": 8.408,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 162697,
+   "start_s": 8.362,
+   "end_s": 8.417,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 79400,
+   "start_s": 8.426,
+   "end_s": 8.461,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 74525,
+   "start_s": 8.428,
+   "end_s": 8.468,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 44894,
+   "start_s": 8.431,
+   "end_s": 8.474,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26848,
+   "start_s": 8.463,
+   "end_s": 8.492,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26369,
+   "start_s": 8.471,
+   "end_s": 8.5,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_drum_band_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 107299,
+   "start_s": 8.475,
+   "end_s": 8.516,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 63623,
+   "start_s": 8.493,
+   "end_s": 8.526,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 59156,
+   "start_s": 8.501,
+   "end_s": 8.533,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53919,
+   "start_s": 8.52,
+   "end_s": 8.551,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 148030,
+   "start_s": 8.529,
+   "end_s": 8.57,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 150238,
+   "start_s": 8.536,
+   "end_s": 8.595,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 45609,
+   "start_s": 8.552,
+   "end_s": 8.602,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41876,
+   "start_s": 8.575,
+   "end_s": 8.608,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36359,
+   "start_s": 8.604,
+   "end_s": 8.638,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42075,
+   "start_s": 8.601,
+   "end_s": 8.638,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 84980,
+   "start_s": 8.61,
+   "end_s": 8.647,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 81179,
+   "start_s": 8.64,
+   "end_s": 8.694,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 173324,
+   "start_s": 8.639,
+   "end_s": 8.695,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 172765,
+   "start_s": 8.651,
+   "end_s": 8.709,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47088,
+   "start_s": 8.699,
+   "end_s": 8.748,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 167352,
+   "start_s": 8.696,
+   "end_s": 8.749,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46713,
+   "start_s": 8.713,
+   "end_s": 8.754,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128202,
+   "start_s": 8.75,
+   "end_s": 8.79,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46311,
+   "start_s": 8.754,
+   "end_s": 8.794,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v1_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128663,
+   "start_s": 8.756,
+   "end_s": 8.804,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 143536,
+   "start_s": 8.794,
+   "end_s": 8.838,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_capital_colonnade_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 128078,
+   "start_s": 8.796,
+   "end_s": 8.848,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41507,
+   "start_s": 8.844,
+   "end_s": 8.881,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_maiden_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 81062,
+   "start_s": 8.884,
+   "end_s": 8.921,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41846,
+   "start_s": 8.942,
+   "end_s": 8.975,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 38353,
+   "start_s": 8.942,
+   "end_s": 8.978,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__bird_white_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 19880,
+   "start_s": 8.942,
+   "end_s": 8.98,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_building_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36773,
+   "start_s": 8.978,
+   "end_s": 9.011,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__bird_white_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 7476,
+   "start_s": 8.981,
+   "end_s": 9.013,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 12636,
+   "start_s": 8.981,
+   "end_s": 9.014,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 39300,
+   "start_s": 9.013,
+   "end_s": 9.049,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 31451,
+   "start_s": 9.015,
+   "end_s": 9.051,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_skylight_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46638,
+   "start_s": 9.052,
+   "end_s": 9.088,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41572,
+   "start_s": 9.053,
+   "end_s": 9.09,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2834,
+   "start_s": 9.093,
+   "end_s": 9.129,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/probe/gate3_probe_hero_ny.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 1049259,
+   "start_s": 9.163,
+   "end_s": 9.54,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/probe/gate3_probe_hero_px.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 1049276,
+   "start_s": 9.162,
+   "end_s": 9.704,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/probe/gate3_probe_hero_nx.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 1049288,
+   "start_s": 9.163,
+   "end_s": 9.704,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/probe/gate3_probe_hero_pz.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 1049294,
+   "start_s": 9.163,
+   "end_s": 9.704,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/probe/gate3_probe_hero_nz.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 1049325,
+   "start_s": 9.163,
+   "end_s": 9.704,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate3/probe/gate3_probe_hero_py.hdr",
+   "status": 200,
+   "mime": null,
+   "bytes": 1049290,
+   "start_s": 9.163,
+   "end_s": 9.704,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_column_tan_inner_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 98297,
+   "start_s": 9.874,
+   "end_s": 9.965,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lmatlas_arch_inst_2_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 76919,
+   "start_s": 9.874,
+   "end_s": 9.967,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_drum_band_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28778,
+   "start_s": 9.875,
+   "end_s": 10.002,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_plaster_ceiling_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 63626,
+   "start_s": 9.875,
+   "end_s": 10.011,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ENV_lagoon_bed_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29501,
+   "start_s": 9.876,
+   "end_s": 10.011,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_dome_membrane_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 50241,
+   "start_s": 9.875,
+   "end_s": 10.028,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_concrete_inner_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80292,
+   "start_s": 9.874,
+   "end_s": 10.029,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_colonnade_south_concrete_colonnade_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 120236,
+   "start_s": 9.874,
+   "end_s": 10.054,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_colonnade_north_concrete_colonnade_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 122696,
+   "start_s": 9.874,
+   "end_s": 10.056,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_concrete_podium_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 90078,
+   "start_s": 9.874,
+   "end_s": 10.07,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_concrete_ochre_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 117225,
+   "start_s": 9.874,
+   "end_s": 10.087,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_rotunda_plaster_ceiling_rib_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 158477,
+   "start_s": 9.875,
+   "end_s": 10.097,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_site_concrete_podium_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 121160,
+   "start_s": 9.875,
+   "end_s": 10.11,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ENV_ground_colonnade_walk_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 164781,
+   "start_s": 9.876,
+   "end_s": 10.117,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ENV_riprap_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 206546,
+   "start_s": 9.876,
+   "end_s": 10.141,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ENV_terrain_ground_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 272822,
+   "start_s": 9.876,
+   "end_s": 10.168,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lmatlas_orn_1_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 424826,
+   "start_s": 9.876,
+   "end_s": 10.217,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lmatlas_arch_inst_1_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 463731,
+   "start_s": 9.874,
+   "end_s": 10.223,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lmatlas_arch_inst_0_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 454238,
+   "start_s": 9.875,
+   "end_s": 10.224,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lmatlas_orn_0_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 651619,
+   "start_s": 9.876,
+   "end_s": 10.238,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_arch_t2.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 80763,
+   "start_s": 10.514,
+   "end_s": 10.595,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_orn_t2.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 175722,
+   "start_s": 10.605,
+   "end_s": 10.688,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_finial_v1_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27337,
+   "start_s": 10.69,
+   "end_s": 10.757,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_rosette_ceiling_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 47150,
+   "start_s": 10.69,
+   "end_s": 10.769,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_attic_panel_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 142704,
+   "start_s": 10.689,
+   "end_s": 10.773,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_frieze_rinceau_return_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 65465,
+   "start_s": 10.69,
+   "end_s": 10.782,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_urn_v2_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 129085,
+   "start_s": 10.69,
+   "end_s": 10.789,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/orn_urn_v3_ao.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 127929,
+   "start_s": 10.69,
+   "end_s": 10.789,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/groups/m_env_t2.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 6957863,
+   "start_s": 10.812,
+   "end_s": 11.429,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/needles_pine_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 29009,
+   "start_s": 11.445,
+   "end_s": 11.507,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/leaves_broadleaf.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 40847,
+   "start_s": 11.444,
+   "end_s": 11.51,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/leaves_broadleaf_nrm.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 19243,
+   "start_s": 11.444,
+   "end_s": 11.512,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/needles_pine.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 62277,
+   "start_s": 11.445,
+   "end_s": 11.521,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_lm_ARCH_site_paving_merged_gamma2.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 34813,
+   "start_s": 11.56,
+   "end_s": 11.618,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__paving_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 65416,
+   "start_s": 11.685,
+   "end_s": 11.76,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__paving_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 25568,
+   "start_s": 11.762,
+   "end_s": 11.822,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ARCH_site__paving_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2166,
+   "start_s": 11.824,
+   "end_s": 11.886,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 69393,
+   "start_s": 11.952,
+   "end_s": 12.023,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 147373,
+   "start_s": 11.952,
+   "end_s": 12.04,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 148964,
+   "start_s": 11.952,
+   "end_s": 12.047,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 24067,
+   "start_s": 12.026,
+   "end_s": 12.091,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42266,
+   "start_s": 12.043,
+   "end_s": 12.103,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42527,
+   "start_s": 12.05,
+   "end_s": 12.106,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_frieze_rinceau_return_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 69178,
+   "start_s": 12.093,
+   "end_s": 12.164,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v2_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 121452,
+   "start_s": 12.115,
+   "end_s": 12.186,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_urn_v3_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 120229,
+   "start_s": 12.115,
+   "end_s": 12.227,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53988,
+   "start_s": 12.167,
+   "end_s": 12.23,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v3_LOD0_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 174063,
+   "start_s": 12.191,
+   "end_s": 12.275,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36734,
+   "start_s": 12.231,
+   "end_s": 12.295,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46360,
+   "start_s": 12.232,
+   "end_s": 12.297,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v3_LOD0_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46348,
+   "start_s": 12.279,
+   "end_s": 12.34,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_rosette_ceiling_v2_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 50996,
+   "start_s": 12.299,
+   "end_s": 12.357,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 33116,
+   "start_s": 12.297,
+   "end_s": 12.364,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_attic_panel_v3_LOD0_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 148501,
+   "start_s": 12.342,
+   "end_s": 12.417,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ORN__ORN_finial_v1_LOD0_a_a_a_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28229,
+   "start_s": 12.371,
+   "end_s": 12.445,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_forest_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 16185,
+   "start_s": 12.464,
+   "end_s": 12.547,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_hill_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 32633,
+   "start_s": 12.464,
+   "end_s": 12.552,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_lawn_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 725670,
+   "start_s": 12.465,
+   "end_s": 12.569,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_hill_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 9095,
+   "start_s": 12.555,
+   "end_s": 12.631,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_forest_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 23052,
+   "start_s": 12.548,
+   "end_s": 12.64,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate2/tex_ktx2/gate2_ENVBD__backdrop_lawn_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 244969,
+   "start_s": 12.587,
+   "end_s": 12.644,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_tile_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36669,
+   "start_s": 12.632,
+   "end_s": 12.698,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_forest_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4242,
+   "start_s": 12.641,
+   "end_s": 12.703,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__lamp_post_albedo.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 5122,
+   "start_s": 12.649,
+   "end_s": 12.704,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_tile_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 12199,
+   "start_s": 12.699,
+   "end_s": 12.762,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__lamp_post_roughness.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4237,
+   "start_s": 12.705,
+   "end_s": 12.766,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__lamp_post_metallic.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 3556,
+   "start_s": 12.767,
+   "end_s": 12.834,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_roof_tile_normal.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 4163,
+   "start_s": 12.764,
+   "end_s": 12.834,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate2_ENVBD__backdrop_door_green_metallic.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 2259,
+   "start_s": 12.879,
+   "end_s": 12.944,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_broadleaf_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 40211,
+   "start_s": 12.948,
+   "end_s": 13.014,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_broadleaf_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27838,
+   "start_s": 13.016,
+   "end_s": 13.074,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_cypress_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 64633,
+   "start_s": 13.076,
+   "end_s": 13.139,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_cypress_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 28653,
+   "start_s": 13.142,
+   "end_s": 13.21,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_eucalyptus_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 46806,
+   "start_s": 13.213,
+   "end_s": 13.283,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_eucalyptus_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 27257,
+   "start_s": 13.289,
+   "end_s": 13.349,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_pine_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 61239,
+   "start_s": 13.356,
+   "end_s": 13.437,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_leaf_pine_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 26650,
+   "start_s": 13.443,
+   "end_s": 13.503,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_reeds_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 79452,
+   "start_s": 13.506,
+   "end_s": 13.58,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_reeds_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 36305,
+   "start_s": 13.583,
+   "end_s": 13.643,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_shrub_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80114,
+   "start_s": 13.645,
+   "end_s": 13.711,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_shrub_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 41314,
+   "start_s": 13.714,
+   "end_s": 13.784,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_shrub_dry_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80909,
+   "start_s": 13.79,
+   "end_s": 13.86,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_shrub_dry_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 37936,
+   "start_s": 13.863,
+   "end_s": 13.94,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_shrub_light_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 80681,
+   "start_s": 13.942,
+   "end_s": 14.008,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/foliage_MAT_shrub_light_translu_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42489,
+   "start_s": 14.012,
+   "end_s": 14.077,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_broadleaf_s19_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 56415,
+   "start_s": 14.193,
+   "end_s": 14.263,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_redwood_s43_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 52497,
+   "start_s": 14.194,
+   "end_s": 14.266,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_broadleaf_s53_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 56047,
+   "start_s": 14.193,
+   "end_s": 14.284,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_pine_s7_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53947,
+   "start_s": 14.194,
+   "end_s": 14.289,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_redwood_s13_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53253,
+   "start_s": 14.195,
+   "end_s": 14.299,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_eucalyptus_s23_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53129,
+   "start_s": 14.194,
+   "end_s": 14.306,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_column_s31_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 43499,
+   "start_s": 14.194,
+   "end_s": 14.314,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_s41_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 51479,
+   "start_s": 14.193,
+   "end_s": 14.32,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_pine_s29_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55934,
+   "start_s": 14.194,
+   "end_s": 14.322,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_s17_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53676,
+   "start_s": 14.194,
+   "end_s": 14.322,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_s3_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 52100,
+   "start_s": 14.193,
+   "end_s": 14.323,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_willow_s37_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 58355,
+   "start_s": 14.195,
+   "end_s": 14.326,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_eucalyptus_s5_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 55358,
+   "start_s": 14.194,
+   "end_s": 14.329,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_eucalyptus_s61_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 53245,
+   "start_s": 14.194,
+   "end_s": 14.329,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_willow_s11_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 60995,
+   "start_s": 14.195,
+   "end_s": 14.331,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate5/tex_lo/gate3_imp_ENV_tree_cypress_column_s2_LOD1_albedo_1024.ktx2",
+   "status": 200,
+   "mime": "image/ktx2",
+   "bytes": 42203,
+   "start_s": 14.194,
+   "end_s": 14.331,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate1/env_trees.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 3769471,
+   "start_s": 14.405,
+   "end_s": 15.369,
+   "failed": null
+  },
+  {
+   "url": "https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev/assets/gate1/env_shrubs.glb",
+   "status": 200,
+   "mime": "model/gltf-binary",
+   "bytes": 669048,
+   "start_s": 15.484,
+   "end_s": 15.595,
+   "failed": null
+  }
+ ]
+}
