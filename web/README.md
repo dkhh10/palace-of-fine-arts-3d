@@ -1248,6 +1248,85 @@ has stopped being reached.
 already applied on this branch): the 3 553.3 MB and 3 550.1 MB in the two Phase 8 tables above were that
 script summing every `*_bytes` key including `total_bytes` itself.
 
+### c — the blue-violet shaded stone at desktop cam02 (QA 20 residual 6): MEASURED, NOT A VIEWER FAULT
+
+**Finding, in one line: the Phase 5 Cycles reference is MORE blue-violet than the viewer at every
+shaded box on cam02's camera-facing face. No viewer-side encoding or decoding error was found, so
+nothing was implemented; the proposal is below.**
+
+Boxes: `scripts/light_r16_measure.py` `BOXES["02"]`, read in their own 1280x720 frame. Parity
+reference: `renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png` (what
+`scripts/qa_r13_probe.py REF_R14` designates for station 2). Rubric target: `reference/photos/raw/
+ref_062_…jpg`, the photo the station was built from, measured on the same face. Chroma is CIELAB
+a*/b*, D65, from sRGB; `h_ab = atan2(b*, a*)`; warm stone is `b*` POSITIVE, the defect is `b*`
+NEGATIVE. Sheet: `renders/web/p8b_c_cam02_shade_sheet.png` (960 px .jpg beside it).
+
+| box | viewer b* | Cycles b* | photo b* | viewer h_ab | Cycles h_ab | photo h_ab | viewer R−B | Cycles R−B | photo R−B |
+|---|---|---|---|---|---|---|---|---|---|
+| shade_pier | **−2.73** | −5.01 | **+10.89** | 341.8 | 333.5 | 66.1 | +4.9 | +1.8 | +29.9 |
+| shade_pier_r | **−10.97** | −18.35 | **+10.99** | 297.1 | 294.2 | 47.3 | −21.2 | −35.8 | +41.0 |
+| shade_arch | **+0.19** | −3.29 | **+5.33** | 1.8 | 335.8 | 61.7 | +7.6 | +1.6 | +15.1 |
+| shade_frieze (control, warm in all three) | +11.44 | +12.24 | +11.07 | 80.6 | 79.5 | 75.2 | +27.3 | +30.1 | +27.9 |
+
+At all three defective boxes the viewer is **warmer than Cycles** — Δb* +2.28 / +7.38 / +3.48 — i.e.
+the delivered frame is already closer to the photograph than the frozen render it is meant to match.
+The gap that remains is the gap Cycles itself has: Δb* photo − Cycles = **+15.9 / +29.3 / +8.6**.
+
+**The colour pipeline is verified neutral on this very frame.** Two controls in the same capture:
+
+| control | viewer | Cycles | Δ |
+|---|---|---|---|
+| `sky` (camera-ray sky through the LUT) | L* 70.0, a* −3.44, b* −25.58 | L* 70.4, a* −3.41, b* −25.27 | **Δa* 0.03, Δb* 0.31** |
+| `shade_frieze` (warm shaded stone) | b* +11.44, h 80.6 | b* +12.24, h 79.5 | Δb* 0.80, Δh 1.1° |
+| `sunlit_pier` (chroma, not level) | b* +31.44, h 88.3 | b* +31.81, h 87.8 | Δb* 0.37, Δh 0.5° |
+
+A LUT, an exposure or a colour-space error would move those too. They do not move. What does differ
+is LEVEL: the viewer runs 1.07-1.33x brighter than Cycles at every stone box (sky 0.99x) — the shade
+is lifted, which lowers C* everywhere. That is the known parity gap, not a tint.
+
+**Where the tint enters, by switching one flag at a time** (cam02, 1920x1080, desktop, this branch;
+`shade_pier_r` shown, the strongest box):
+
+| setting | b* | h_ab | R−B | reading |
+|---|---|---|---|---|
+| base (the delivered look) | −10.97 | 297.1 | −21.2 | — |
+| `?probe=0` (irradiance probe / sky-branch equirect OFF) | **−10.94** | 297.2 | −21.1 | **nothing** — the probe is exonerated at every shaded box (it moves `sunlit_pier` b* +31.44 → +27.12 and nothing else) |
+| `?lut=0` (no AgX LUT at all) | **−11.15** | 296.6 | −22.1 | **the hue does not move** — the LUT is exonerated; it moves sky (b* −25.6 → −43.9) and `sunlit_pier`, as a tone map must |
+| `?probespec=1` | −10.69 | 299.7 | −20.0 | marginal, warmer |
+| `?post=none` (mist + bloom off) | −15.25 | 290.6 | −32.2 | **the post chain is WARMING the shade by Δb* +4.3 toward the reference, and `post=none` moves the viewer TOWARD Cycles (−18.35)** |
+| `?lighting=direct` (sun + sky IBL, bake bypassed) | −16.02 | 308.7 | −28.2 | far worse; at `shade_pier` b* −2.73 → **−24.88**, R−B +4.9 → −45.7 — **the direct sky fill is where the violet lives, and the bake is what already tames it** |
+
+(`?lmscale=0` produced a frame byte-identical to base, i.e. that override does not reach these
+materials on this manifest. Reported, not relied on; the `lighting=direct` row makes the same point
+more strongly.)
+
+So the tint is in the SOURCE — the Phase 5 lighting/materials the bake and the Cycles reference both
+read — and the viewer's own stages each either leave it alone (probe, LUT) or reduce it (post, bake).
+This is QA-08-2 / QA-09-6, opened in round 08 and never closed: "in Cycles all four shaded boxes on
+the camera-facing face are violet, hue 268 / 235 / 250 / 351 at negative R−B". It is the same defect,
+on the same face, with the same sign.
+
+**Proposal (for the lead and the user — NOT implemented here).**
+
+1. **Recommended: change nothing in the viewer and carry it.** Any viewer-side chroma correction on
+   the shaded stone would be a departure from the frozen Phase 5 look, would break the station-2
+   parity score it is measured against, and would have to be approved in `docs/decisions.md` first.
+   The viewer already beats its own reference here.
+2. **The only correct fix is upstream, owner LIGHTING / MATERIALS**: the NNE sky-fill on the
+   camera-facing rotunda face, then a re-bake of the rotunda lightmaps. Acceptance, measurable with
+   `web/tools`-side numbers above: `shade_pier`, `shade_pier_r`, `shade_arch` at **b* ≥ +5** and
+   **h_ab in 40-80°** with **R−B ≥ +10**, `shade_frieze` held at b* +11.4 ± 1.5 and the hero's shaded
+   attic unmoved. That is a Phase 5 asset change under the CLAUDE.md freeze: `docs/decisions.md`
+   entry plus the user's approval before any work starts.
+3. **If the user wants the delivered web frame warmer without a re-bake**, the cheapest honest lever
+   already in the viewer is the post chain, which is measured above as worth Δb* +4.3 at
+   `shade_pier_r`; a stronger mist would buy more and cost frame contrast everywhere. Still a look
+   change, still an approval.
+
+The `gate9m` mobile frame cannot be read with these boxes: it is 1170x2532 portrait and the fixture
+is a 16:9 frame, so every box lands on different content (`shade_frieze` falls on open sky). A mobile
+number for this defect needs a 16:9 `?tier=mobile` capture.
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set
