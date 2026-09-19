@@ -1376,6 +1376,114 @@ Covered by `web/test/foliage_lazy_test.mjs` §8: a clamped albedo gives a clampe
 (today), a REPEAT albedo gives a REPEAT one (8e), a lazily loaded root re-wraps both, and the
 shared-texture conflict is reported rather than silent.
 
+## Phase 8a — the shrub/reed card relight (`?cardsun=`), 2026-09-19
+
+Option B of `docs/briefs/phase8a_rescope_analysis.md`, decided in `docs/decisions.md`
+("8a decision 2 (re-scope)"). Viewer only: `web/src/foliage.js`, no bake, no export, no MB, no frozen
+material touched. **Stage 1 (this section) is the implementation and its unit tests; the measured
+numbers below are filled by the stage-2 captures, which need the GPU.**
+
+### What was wrong
+
+The LOD2 shrub / reed cards carry no direct sun diffuse at all (`specularOnlySun`) and take instead
+**one baked scene-linear irradiance per placement, added with no cosine**
+(`materials.js`: `irradiance += vPfaInstIrr * scale`). Every texel of every card in a clump therefore
+stands in the same warm light — front and back, sunward side and lee. Measured over the 1 379
+placements the mean is `[ 1.83 1.42 1.36 ]`, G/R 0.774, and `MAT_shrub`'s albedo (hue 100°) renders at
+hue 54 under it; the **same bake's darkest decile** renders that albedo at hue 130. The Cycles
+reference is dark green bushes with gold sunlit rims and deep shadow between them; ours is one flat
+sun-gold mass at the same places and the same sizes. The green the leaf metric wants is already in the
+scene — in the shade the cards never get. Coverage is not the constraint (the card footprint is
+1.04–3.6× the reference's leaf share at all eight QA-17 boxes) and neither is species.
+
+### The maths
+
+Per fragment, with `E` = the placement's flat baked irradiance (the vec3 above):
+
+| step | expression | what it is |
+|---|---|---|
+| sun chroma | `ŝ = pfaSunIrr / luma( pfaSunIrr )`, then `ŝ = mix( 1, ŝ, chroma )` | the **manifest** sun (`LIGHT_sun` `[1.0 0.607 0.0]`, the same uniform three's own direct term uses) at unit luma; `mix` keeps luma exactly 1 because luma is linear |
+| sun share | `f = min( share, 0.98 / max( ŝ ) )` | the sun's share of `E`'s **level**; the clamp keeps the sky share `1 − f·ŝ` ≥ 0.02 in every channel |
+| cosine | `nl = clamp( ( N·L + wrap ) / ( 1 + wrap ), 0, 1 )` | `N` is the shading normal (view space, normal map in it, already flipped toward the camera on a double-sided card); `wrap` softens the terminator so a per-card constant does not become a hard edge |
+| clump | `clump = 1 − shade · clamp( vPfaCrownD.z, 0, 1 )` | the sun's path through the cluster sphere — the **same vertex term the crown-interior occlusion already computes** (0 on the sunward surface, 1 deep), so inner and lee cards fall back to the sky share. With `?cardint=0` there is no such varying and the factor degenerates to a literal 1 |
+| relative | `g = clamp( nl · clump / mean, 0, cap )` | the sun term relative to its own scene mean |
+| result | `E' = E · max( 0, 1 + amt · f · ŝ · ( g − 1 ) )` | |
+
+Three properties, and they are the reason for that shape:
+
+1. **`?cardsun=0` is today, byte for byte.** At `amt = 0` the program is not patched at all (the test
+   asserts the fragment *and* vertex source are identical to an unpatched run, and the program cache
+   key carries the bit).
+2. **It is a redistribution, not a gain.** At `g = 1` the factor is exactly `1` in every channel, and
+   the factor is affine in `g` below the cap, so `mean( factor ) = factor( mean g )`: a box whose cards
+   average `g = 1` keeps its level **exactly**. The level error of a box is
+   `amt · f · ŝ · ( mean_box( g ) − 1 )`, which is the whole of QA 17's one closed shrub item in one
+   line. `mean` is therefore the single number that must be measured against the captures (stage 2).
+3. **The shade chroma is derived, not invented.** With the manifest sun, `ŝ = [ 1.546 0.939 0.0 ]` at
+   `chroma = 1`, and the sky share it leaves (`1 − f·ŝ`) is blue-green — the direction of the bake's
+   own darkest decile `[ 0.68 1.02 2.05 ]`. Normalised, the measured ratio sits at `chroma ≈ 0.5–0.8`;
+   the default is **0.65**. At `chroma = 0` the term is a pure level modulation with no hue rotation.
+
+At the defaults, `amt = 1` and the manifest sun, a fully sunward card reads `[1.911 1.645 1.235]×` its
+flat value (G/R 0.861, B/R 0.647 — a gold rim) and a lee card `[0.255 0.472 0.807]×` (G/R 1.851,
+B/R 3.168 — dark, green and cool); a card lit exactly at the mean reads `[1.000 1.000 1.000]×`. That is
+the whole effect: the same light, redistributed. (`cardSunFactor` in `src/foliage.js` is the JS mirror of the GLSL and the spec the shader is
+tested against; the two are asserted together in `test/foliage_cardsun_test.mjs`.)
+
+### The switch
+
+`?cardsun=amt[,share[,wrap[,shade[,mean[,chroma[,cap]]]]]]` — `0` / `off` = today's look,
+`on` = the full amount at the defaults.
+
+| field | default | range | what it does |
+|---|---|---|---|
+| `amt` | **0** (until stage 2 adopts a value) | 0–1 | how much of the relight is mixed in; 0 leaves the program unpatched |
+| `share` | 0.55 | 0–0.98 | the sun's share of the baked level (the analysis' 55/45 split) |
+| `wrap` | 0.5 | 0–4 | wrap-diffuse softening of the terminator |
+| `shade` | 0.6 | 0–1 | how much of the sun term the clump path removes |
+| `mean` | 0.45 | 0.02–4 | the scene mean of `nl · clump` the term is normalised by — the level knob |
+| `chroma` | 0.65 | 0–1 | how far the sun chroma is taken toward the manifest's (1) or neutral (0) |
+| `cap` | 2.5 | 1–8 | ceiling on `g`, so a card far above the mean cannot blow out |
+
+It reaches the **lazily loaded** glbs too: `applyFoliage` runs again for `env_trees.glb` and
+`env_shrubs.glb` from `foliageLazy`, whose option bag does not carry this flag, so the pass reads
+`?cardsun=` from the page once (`cardSunFromLocation`) unless the caller passes `cardSun` explicitly.
+A shrub must not be relit differently because of which file it arrived in. The report carries
+`cardSun`, `cardSunMaterials` and `cardSunSkipped` (a card material with no per-placement irradiance is
+named, never patched).
+
+### Before / after — to be filled by stage 2
+
+Same-session captures at stations 1, 2, 3, 5 through `web/tools/screenshot.mjs`
+(`scripts/chrome_run.sh`, bake queue idle, no Blender alive), then `scripts/p8a_rescope_boxes.py` on
+the eight QA-17 boxes at `cardsun` 0 / 0.5 / adopted, against the Phase 5 Cycles frames.
+
+| box | leaf/ref today | leaf/ref relit | hard-edge today | relit | ref | level/ref today | relit |
+|---|---|---|---|---|---|---|---|
+| 01 shore shrub/reed | 0.86 | _stage 2_ | | | | 1.39 | |
+| 01 shore shrub S | 0.82 | | | | | 1.13 | |
+| 02 shrub/reed shore | 0.64 | | | | | 1.19 | |
+| 02 reed clump SE | 0.85 | | | | | 1.18 | |
+| 05 shrub/reed shore | 0.31 | | | | | 1.06 | |
+| 05 shrub/reed W | 1.13 | | | | | 0.98 | |
+| 03 shrub cards | 0.54 | | | | | 1.44 | |
+| 06 shore planting | 1.76 | | | | | 1.05 | |
+
+Constraints (from the brief): the **level** must hold within 3 % of today at the boxes and the
+**hard-edge share** must not rise above the reference at any box; the leaf-green share is *reported*,
+not gated (1 % of red moves it 2–9 % relative). The composite path is the 100 % shore-band tiles at
+stations 1, 3 and 5, Cycles | today | relit, plus the hero at 960 px:
+`renders/web/p8a/<station>_cardsun{0,adopted}.png` → `renders/qa_comparisons/p8a_relight_tiles.jpg`.
+
+### 8e dependency (one-line fix, pixel-neutral today)
+
+`applyFoliageAlbedo` copied the root's sampler onto the shared tinted albedo (`t.wrapS = old.wrapS`)
+but never set `t.needsUpdate`. three r186 applies sampler parameters only inside `uploadTexture`, so on
+a texture the eager near-tree pass has already uploaded (at the glb's clamp) the copy never reached the
+GPU. When 8e ships `env_trees.glb` with REPEAT leaf samplers, the albedo would have kept clamping while
+the translucency map beside it — which has always had the line — re-wrapped. Fixed in
+`src/foliageLazy.js`; every foliage sampler is clamp today, so no pixel moves now.
+
 ## QA notes — read before scoring (Phase 6c / QA 17, round 3)
 
 ### Round 3 of the 6c pass — the crown interior, the card level and the walk-up set

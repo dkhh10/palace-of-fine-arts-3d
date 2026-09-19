@@ -265,6 +265,13 @@ export function applyFoliageAlbedo( root, maps, note = () => {}, trnMaps = null 
 			const old = mat.map;
 			if ( old ) {
 				t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.channel = old.channel;
+				// 8e DEPENDENCY (lead, Phase 8a).  three r186 applies sampler state only inside
+				// `uploadTexture`, so a wrap written after the first upload never reaches the GPU:
+				// the eager near-tree pass uploads this ONE shared albedo at the glb's clamp, and
+				// when env_trees.glb arrives with 8e's REPEAT leaf samplers the copy above would be
+				// silently ignored.  The translucency map beside it has always had this line.
+				// Pixel-neutral on today's assets (every foliage sampler is clamp today).
+				t.needsUpdate = true;
 				// PHASE 8b ITEM D — the translucency FACTOR map is sampled with these same leaf-card
 				// UVs, so it takes this root's sampler exactly as the albedo does.  Without this the
 				// trn map kept whatever the FIRST pass (env.glb) set, and 8e's REPEAT samplers on

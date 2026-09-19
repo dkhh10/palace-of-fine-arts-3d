@@ -138,6 +138,53 @@ export const CARD_ENV = 0.3;
 export const CARD_MIP_BIAS = 0.8;
 export const LEAF_MIP_BIAS = 0.0;
 
+/**
+ * PHASE 8a — THE SHRUB / REED CARD RELIGHT (`?cardsun=`).
+ *
+ * What it changes.  The cards carry no direct sun diffuse at all (`specularOnlySun`) and get instead
+ * ONE baked scene-linear irradiance per PLACEMENT, added with no cosine (materials.js,
+ * `irradiance += vPfaInstIrr * scale`).  Every texel of every card in a clump therefore stands in the
+ * same warm light, front and back, sunward side and lee: the measured mean over the 1 379 placements
+ * is [ 1.83 1.42 1.36 ], G/R 0.774, and an albedo of hue 100 deg renders at hue 54 under it
+ * (docs/briefs/phase8a_rescope_analysis.md §2).  The Cycles reference of the same materials is dark
+ * green bushes with gold sunlit rims; the same green is inside the SAME bake, in the shade our cards
+ * never get.  This term splits that one number into a sun share and a sky share and gives the sun
+ * share a direction, without adding any light.
+ *
+ * The maths, per fragment (E = the placement's flat baked irradiance, the vec3 above):
+ *
+ *     s^   = pfaSunIrr / luma( pfaSunIrr )        the MANIFEST sun's chroma at unit luma
+ *     s^   = mix( 1, s^, chroma )                 `chroma` dials it toward neutral; luma stays 1
+ *     f    = min( share, 0.98 / max( s^ ) )       the sun's share of E's level; clamped so the sky
+ *                                                 share ( 1 - f*s^ ) stays >= 0.02 in every channel
+ *     nl   = clamp( ( dot( N, L ) + wrap ) / ( 1 + wrap ), 0, 1 )      N = the shading normal
+ *     clump= 1 - shade * clamp( vPfaCrownD.z, 0, 1 )                   the sun's path through the
+ *                                                 cluster sphere, the same vertex term the interior
+ *                                                 occlusion uses: 0 on the sunward surface, 1 deep -
+ *                                                 so inner and lee cards fall back to the sky share
+ *     g    = clamp( nl * clump / mean, 0, cap )   the sun term RELATIVE to its own scene mean
+ *     E'   = E * max( 0, 1 + amt * f * s^ * ( g - 1 ) )
+ *
+ * Three properties, and they are the reason for the shape:
+ *   1. `amt = 0` is not patched in at all, so `?cardsun=0` is today's program and today's pixels,
+ *      byte for byte (the test asserts the un-patched source).
+ *   2. `g = 1` - a card lit exactly at the scene mean - returns E EXACTLY, in every channel.  The
+ *      term is a REDISTRIBUTION around the mean, not a gain: the level (QA 17's one closed shrub
+ *      item) is held by construction wherever the box's mean g is 1, and the level error of a box is
+ *      exactly `amt * f * s^ * ( mean_box( g ) - 1 )`.  `mean` is the one number that has to be
+ *      measured against the captures; it is swept in stage 2 and the level is checked at the eight
+ *      QA-17 boxes.
+ *   3. The shade chroma is DERIVED, not invented: with the manifest's sun [ 1.0 0.607 0.0 ] the sun
+ *      share is s^ = [ 1.546 0.939 0.0 ] at chroma 1 and the sky share it leaves is 1 - f*s^, i.e.
+ *      blue-green - the direction of the bake's own darkest decile ([ 0.68 1.02 2.05 ], §2).
+ *      `chroma` 0.65 lands that ratio near the measured one; 1.0 is the raw manifest sun.
+ *
+ * `?cardsun=amt[,share[,wrap[,shade[,mean[,chroma[,cap]]]]]]`, `?cardsun=0` / `off` = today.
+ * The default `amt` is 0 until the stage-2 captures adopt a value (this comment is the record).
+ */
+export const CARD_SUN = { amt: 0, share: 0.55, wrap: 0.5, shade: 0.6, mean: 0.45, chroma: 0.65, cap: 2.5 };
+export const CARD_SUN_KEYS = [ 'amt', 'share', 'wrap', 'shade', 'mean', 'chroma', 'cap' ];
+
 /** `"str[,low[,gamma[,gain[,trn[,sun[,floor]]]]]]"` (or an object) over a default, all clamped. */
 export function parseInterior( v, dflt ) {
 	const d = { ...dflt };
@@ -162,6 +209,70 @@ export function parseInterior( v, dflt ) {
 const interiorOff = ( it ) => ! it
 	|| ( it.str <= 0 && it.low <= 0 && it.sun <= 0 && Math.abs( it.gain - 1 ) < 1e-6 );
 
+/** `"amt[,share[,wrap[,shade[,mean[,chroma[,cap]]]]]]"` (or an object) over CARD_SUN, all clamped. */
+export function parseCardSun( v, dflt = CARD_SUN ) {
+	const d = { ...dflt };
+	if ( v === null || v === undefined || v === '' ) return d;
+	if ( typeof v === 'object' ) Object.assign( d, v );
+	else if ( typeof v === 'number' ) d.amt = v;
+	else {
+		const s = String( v ).trim().toLowerCase();
+		if ( s === 'off' ) return { ...dflt, amt: 0 };
+		if ( s === 'on' ) return { ...dflt, amt: dflt.amt > 0 ? dflt.amt : 1 };
+		const p = s.split( ',' ).map( ( x ) => parseFloat( x ) );
+		for ( let i = 0; i < CARD_SUN_KEYS.length; i ++ )
+			if ( Number.isFinite( p[ i ] ) ) d[ CARD_SUN_KEYS[ i ] ] = p[ i ];
+	}
+	// Round-1 review 3 again: a bad switch falls back to its DEFAULT, never to NaN.
+	const cl = ( x, lo, hi, f ) => ( Number.isFinite( x ) ? Math.min( Math.max( x, lo ), hi ) : f );
+	return { amt: cl( d.amt, 0, 1, dflt.amt ), share: cl( d.share, 0, 0.98, dflt.share ),
+		wrap: cl( d.wrap, 0, 4, dflt.wrap ), shade: cl( d.shade, 0, 1, dflt.shade ),
+		mean: cl( d.mean, 0.02, 4, dflt.mean ), chroma: cl( d.chroma, 0, 1, dflt.chroma ),
+		cap: cl( d.cap, 1, 8, dflt.cap ) };
+}
+
+/** True where the relight would do nothing at all (so the program is left BYTE-IDENTICAL to today). */
+export const cardSunOff = ( cs ) => ! cs || ! ( cs.amt > 0 );
+
+/** The per-placement irradiance scale `patchBakedMaterial` put on this material, or null. */
+export const instIrrOf = ( mat ) => ( mat && mat.userData && mat.userData.pfaPatched
+	&& mat.userData.pfaPatched.instIrr !== undefined ? mat.userData.pfaPatched.instIrr : null );
+
+/**
+ * The JS mirror of the GLSL above, and the SPEC the shader is tested against: the per-fragment
+ * factor on the flat baked irradiance.  `sunColor` is the manifest sun ([r,g,b], the pfaSunIrr
+ * uniform), `nDotL` the cosine on the shading normal and `clumpDepth` the vPfaCrownD.z sun path.
+ * @returns {number[]} the rgb factor; [1,1,1] is today's look.
+ */
+export function cardSunFactor( cs, sunColor, nDotL, clumpDepth = 0 ) {
+	const c = parseCardSun( cs );
+	const lum = 0.2126 * sunColor[ 0 ] + 0.7152 * sunColor[ 1 ] + 0.0722 * sunColor[ 2 ];
+	let sh = lum > 1e-6 ? sunColor.map( ( x ) => x / lum ) : [ 1, 1, 1 ];
+	sh = sh.map( ( x ) => 1 + c.chroma * ( x - 1 ) );
+	const f = Math.min( c.share, 0.98 / Math.max( sh[ 0 ], sh[ 1 ], sh[ 2 ], 1e-6 ) );
+	const nl = Math.min( Math.max( ( nDotL + c.wrap ) / ( 1 + c.wrap ), 0 ), 1 );
+	const clump = 1 - c.shade * Math.min( Math.max( clumpDepth, 0 ), 1 );
+	const g = Math.min( Math.max( nl * clump / Math.max( c.mean, 1e-3 ), 0 ), c.cap );
+	return sh.map( ( x ) => Math.max( 0, 1 + c.amt * f * x * ( g - 1 ) ) );
+}
+
+/**
+ * `?cardsun=` read from the page, ONCE.  `applyFoliage` is called again for every lazily loaded glb
+ * (env_trees, env_shrubs) from `foliageLazy`, which does not carry this flag in its option bag, and
+ * a shrub card must not be relit differently because of which file it arrived in.  An explicit
+ * `o.cardSun` always wins (the tests pass one).
+ */
+let cardSunQuery;
+export function cardSunFromLocation() {
+	if ( cardSunQuery !== undefined ) return cardSunQuery;
+	cardSunQuery = null;
+	try {
+		if ( typeof window !== 'undefined' && window.location )
+			cardSunQuery = new URLSearchParams( window.location.search ).get( 'cardsun' );
+	} catch ( e ) { cardSunQuery = null; }
+	return cardSunQuery;
+}
+
 /** Shader-patch failures, surfaced instead of thrown: onBeforeCompile runs at the first render. */
 export const shaderErrors = [];
 export function recordShaderError( where, e ) {
@@ -177,6 +288,14 @@ function once( src, needle, replacement, what ) {
 	const n = src.split( needle ).length - 1;
 	if ( n !== 1 ) throw new Error( `foliage patch "${what}": expected 1 occurrence, found ${n}` );
 	return src.replace( needle, replacement );
+}
+
+/** `once` for a pattern: the replacement is a function of the single match. */
+function onceRe( src, re, make, what ) {
+	const m = src.match( new RegExp( re.source, re.flags.includes( 'g' ) ? re.flags : re.flags + 'g' ) );
+	const n = m ? m.length : 0;
+	if ( n !== 1 ) throw new Error( `foliage patch "${what}": expected 1 occurrence, found ${n}` );
+	return src.replace( re, ( ...args ) => make( ...args ) );
 }
 
 // ---------------------------------------------------------------- crown clustering
@@ -344,9 +463,12 @@ const HASH_GLSL = /* glsl */`
  * translucent mix (materials with a Phase 5 constant and `frontSub` resolved by the caller).
  */
 function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, band, sign = 1,
-	trnMap = null, switchMask = false, interior = null, mipBias = 0 } ) {
+	trnMap = null, switchMask = false, interior = null, mipBias = 0, cardSun = null } ) {
 	if ( mat.userData.pfaFoliage ) return false;
 	const it = interiorOff( interior ) ? null : interior;
+	// PHASE 8a: `null` where the relight is off, and then the program is NOT patched at all - that is
+	// what makes `?cardsun=0` byte-identical to today rather than merely numerically equal.
+	const cs = cardSunOff( cardSun ) ? null : cardSun;
 	const bias = Number.isFinite( mipBias ) && mipBias > 0 ? Math.min( mipBias, 4 ) : 0;
 	const u = {
 		pfaMipBias: { value: bias },
@@ -366,9 +488,13 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		pfaSwitchDist: { value: Number.isFinite( dist ) ? dist : 1e9 },
 		pfaSwitchBand: { value: Math.max( band, 1e-3 ) },
 		pfaSwitchSign: { value: sign },
+		// PHASE 8a — the card relight (see CARD_SUN).  amt / share / wrap / shade, then mean / chroma / cap.
+		pfaCardSun: { value: new THREE.Vector4( cs ? cs.amt : 0, cs ? cs.share : 0,
+			cs ? cs.wrap : 0, cs ? cs.shade : 0 ) },
+		pfaCardSunB: { value: new THREE.Vector3( cs ? cs.mean : 1, cs ? cs.chroma : 0, cs ? cs.cap : 1 ) },
 	};
 	mat.userData.pfaFoliage = { trn, tint, frontSub, fade, dist, band, sign, trnMap: !! trnMap, switchMask,
-		interior: it, mipBias: bias, uniforms: u };
+		interior: it, mipBias: bias, cardSun: cs, uniforms: u };
 	const prev = mat.onBeforeCompile;
 	mat.onBeforeCompile = function ( shader, renderer ) {
 		if ( prev ) prev.call( this, shader, renderer );
@@ -498,6 +624,48 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 				+ '\t\t\t* ( pfaTrnTint * pfaBack - pfaFrontSub * pfaFront );\n\t}',
 				'translucent mix' );
 		}
+		if ( cs ) {
+			// PHASE 8a — THE CARD RELIGHT.  This patch REWRITES the line `patchBakedMaterial` appended
+			// to `lights_fragment_maps` (`irradiance += vPfaInstIrr * <scale>;`), so it runs on the
+			// shader the BAKED patch has already produced: `prev.call` above is that patch, and
+			// materials.js is not touched by Phase 8a.  If the line is not there (a card material
+			// with no per-placement irradiance), the throw is caught below and reported, and the
+			// material compiles exactly as it does today.
+			shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
+				'#include <common>\nuniform vec4 pfaCardSun;\nuniform vec3 pfaCardSunB;'
+				// the sun's direction and colour come from the manifest, through the SHARED uniforms
+				// the whole foliage pass already owns; declared here only where the translucent lobe
+				// (the other consumer) has not declared them already.
+				+ ( trn > 0 ? '' : '\nuniform vec3 pfaSunDir;\nuniform vec3 pfaSunIrr;' ),
+				'card relight uniforms' );
+			// `vPfaCrownD.z` is the sun's path through this vertex's cluster sphere (0 on the sunward
+			// surface, 1 deep), written by the interior patch above; with `?cardint=0` there is no
+			// such varying and the clump term degenerates to 1 - every card takes the pure cosine.
+			const depth = it ? 'clamp( vPfaCrownD.z, 0.0, 1.0 )' : '0.0';
+			shader.fragmentShader = onceRe( shader.fragmentShader,
+				/irradiance \+= vPfaInstIrr \* ([0-9.]+);/,
+				( _m, c ) => '{\n'
+					+ `\t\tvec3 pfaE = vPfaInstIrr * ${c};\n`
+					+ '\t\tfloat pfaSunLum = dot( pfaSunIrr, vec3( 0.2126, 0.7152, 0.0722 ) );\n'
+					+ '\t\tvec3 pfaSunC = pfaSunLum > 1e-6 ? pfaSunIrr / pfaSunLum : vec3( 1.0 );\n'
+					+ '\t\tpfaSunC = mix( vec3( 1.0 ), pfaSunC, pfaCardSunB.y );\n'
+					// the sky share is 1 - f * s^ and may not go negative in any channel
+					+ '\t\tfloat pfaShare = min( pfaCardSun.y,\n'
+					+ '\t\t\t0.98 / max( max( pfaSunC.r, pfaSunC.g ), max( pfaSunC.b, 1e-6 ) ) );\n'
+					+ '\t\tvec3 pfaSunL = normalize( ( viewMatrix * vec4( pfaSunDir, 0.0 ) ).xyz );\n'
+					// `normal` is the shading normal: view space, the normal map in it, and already
+					// flipped toward the camera on a DOUBLE_SIDED card.
+					+ '\t\tfloat pfaCardNL = clamp( ( dot( normal, pfaSunL ) + pfaCardSun.z )\n'
+					+ '\t\t\t/ ( 1.0 + pfaCardSun.z ), 0.0, 1.0 );\n'
+					+ `\t\tfloat pfaCardClump = 1.0 - pfaCardSun.w * ${depth};\n`
+					+ '\t\tfloat pfaCardG = clamp( pfaCardNL * pfaCardClump / max( pfaCardSunB.x, 1e-3 ),\n'
+					+ '\t\t\t0.0, pfaCardSunB.z );\n'
+					// the redistribution: at pfaCardG == 1 this is exactly the flat term, in every channel
+					+ '\t\tirradiance += pfaE * max( vec3( 0.0 ),\n'
+					+ '\t\t\tvec3( 1.0 ) + pfaCardSun.x * pfaShare * pfaSunC * ( pfaCardG - 1.0 ) );\n'
+					+ '\t}',
+				'card relight (the per-placement irradiance line)' );
+		}
 		} catch ( e ) { recordShaderError( `material ${mat.name || '(unnamed)'}`, e ); }
 	};
 	const prevKey = mat.customProgramCacheKey;
@@ -506,7 +674,9 @@ function patchFoliageMaterial( mat, { shared, trn, tint, frontSub, fade, dist, b
 		// `pfaInterior` and `pfaTrnOcc` are uniforms; only WHETHER the interior is patched in is a
 		// program difference, so one bit is all the key needs.
 		return `${prevKey ? prevKey.call( this ) : ''}|fol:${trn.toFixed( 3 )}:${frontSub}:${fade ? 1 : 0}`
-			+ `:${trnMap ? 1 : 0}:${switchMask ? 1 : 0}:${it ? 1 : 0}:${bias > 0 ? 1 : 0}`;
+			+ `:${trnMap ? 1 : 0}:${switchMask ? 1 : 0}:${it ? 1 : 0}:${bias > 0 ? 1 : 0}`
+			// 8a: the relight's numbers are UNIFORMS; only whether it is patched in is a program bit.
+			+ `:${cs ? 1 : 0}`;
 	};
 	mat.needsUpdate = true;
 	return true;
@@ -557,6 +727,10 @@ export function applyFoliage( o ) {
 	// PMREM lobe (with KHR_materials_sheen, which is an environment lobe too) hands every one of them
 	// a sky highlight the Cycles reference's hundred separate leaves never get.
 	const cardEnv = num( o.cardEnv, CARD_ENV, 0, 4 );
+	// `?cardsun=` — PHASE 8a, the shrub / reed cards' directional relight (see CARD_SUN for the maths).
+	// An explicit option wins; otherwise the page's own query string, so the lazily loaded glbs
+	// (env_trees, env_shrubs) are relit exactly like the eager ones without a second switch.
+	const cardSun = parseCardSun( o.cardSun !== undefined ? o.cardSun : cardSunFromLocation(), CARD_SUN );
 	// `?foliagebias=` — the LOD bias on the cut-out fetch.  "cardBias" alone, or "cardBias,leafBias".
 	const biases = String( o.mipBias === undefined || o.mipBias === null ? '' : o.mipBias ).split( ',' );
 	const cardMip = num( parseFloat( biases[ 0 ] ), CARD_MIP_BIAS, 0, 4 );
@@ -566,7 +740,8 @@ export function applyFoliage( o ) {
 		trnShrubs: !! o.trnShrubs, msaa: !! o.msaa, skipped: [], vertexIrrScale, cardNormalBlend: cardBend,
 		trnMapped: 0, byMesh: new Map(), recrown: null,
 		interior, cardInterior, normalGate, interiorMaterials: 0, cardMipBias: cardMip, leafMipBias: leafMip,
-		cardEnv, cardEnvMaterials: 0, cardEnvAlready: 0 };
+		cardEnv, cardEnvMaterials: 0, cardEnvAlready: 0,
+		cardSun, cardSunMaterials: 0, cardSunSkipped: [] };
 	// 6c round 2: a lazily loaded glb (env_trees, env_shrubs) is a SECOND applyFoliage call, and its
 	// materials must share the FIRST call's uniform objects - the impostor dissolve reads the same
 	// pfaMeshDist / pfaFadeBand, and two copies would drift the moment a flag moved one of them.
@@ -640,6 +815,10 @@ export function applyFoliage( o ) {
 				// axis), so it is left alone; leaves take the crown term, cards their own.
 				interior: leaf ? interior : ( card ? cardInterior : null ),
 				mipBias: leaf ? leafMip : ( card ? cardMip : 0 ),
+				// The relight rewrites the per-placement irradiance line, so it is only offered to a
+				// CARD material that actually has one (patchBakedMaterial has already run on every
+				// one that does: `applyInstanceIrradiance` precedes `applyFoliage` in both paths).
+				cardSun: ( card && instIrrOf( mat ) !== null ) ? cardSun : null,
 				// The trees switch to their impostor at `meshDist`; the shrub/reed cards have no
 				// second LOD until export item E lands, so they are patched with the SAME shader and
 				// an infinite distance, and `applyShrubLod` only has to move a uniform.
@@ -663,6 +842,10 @@ export function applyFoliage( o ) {
 			}
 			if ( o.msaa && mat.alphaTest > 0 ) { mat.alphaToCoverage = true; report.softened ++; }
 			if ( mat.userData.pfaFoliage && mat.userData.pfaFoliage.interior ) report.interiorMaterials ++;
+			if ( card && ! cardSunOff( cardSun ) ) {
+				if ( instIrrOf( mat ) !== null ) report.cardSunMaterials ++;
+				else report.cardSunSkipped.push( mat.name || '(unnamed)' );
+			}
 			if ( leaf ) report.leafMaterials ++; else if ( card ) report.cardMaterials ++; else report.barkMaterials ++;
 		}
 	}
