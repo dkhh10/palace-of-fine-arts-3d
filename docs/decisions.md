@@ -985,3 +985,9 @@ blob (23.8 -> 16.4 px at 25 m, 15.4 -> 7.0 at 54 m) and makes the 25 m LOD switc
 54 m+; reeds stay at 1.0 (k > 1 erodes the 1-5 px blades to nothing). Samplers REPEAT in env.gltf and env_shrubs.gltf together (no shared-texture wrap race, no viewer
 change). Cost: rides the ENV chain (export_set -> gate1 -> pack -> manifests -> tiers) with 8d; ~4 kB over the ENV set against 606 224 B first-frame headroom. Accepted.
 8e exported: iso_cut env_trees.glb 3 768 500 B (+1.9 % over pre-8e), tier 0 untouched, verify PASS, synced to MAIN.
+
+## 2026-09-19 · Relight review r4 (47a3aec): DO NOT MERGE until the build blocker is fixed; the hard-edge constraint's reframing accepted in writing
+The branch did not parse (backticks inside the GLSL template literal in impostors.js from the r2-6 carry), so four commits' "npm test green" claims after it were false —
+the fix is three lines; from now on every builder pastes the suite count into the commit message. Finding 7: the relight brief said the hard-edge share "must not rise above
+the reference at any box"; seven of eight boxes were already above it before the relight (a standing QA-16 item), so the engineer measured "no box newly crosses, 05 shore
+stays below" (largest move +0.20 points). Accepted: the constraint is "no new crossing and no box moves more than 0.3 points", logged here so QA 22 scores it that way.
