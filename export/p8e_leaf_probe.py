@@ -322,12 +322,42 @@ def card_px(dist_m=40.0):
     return out
 
 
-def cards(dist_m=40.0, factors=((1, 1), (1, 1.5), (1, 2.5), (1, 3), (2, 2)), solve_for=((2, 2),)):
+def shipped_factors(mode=None):
+    """The (ku, kv) the CURRENT mode exports, per species, out of export/foliage_uv.py - so this probe
+    prints what ships instead of a hand-typed pair (review r3 finding 1)."""
+    import foliage_uv as fuv
+    m = fuv.UV_TILE_MODES[mode or os.environ.get("PFA_UV_TILE_MODE", "iso_cut")]
+    return m["u"], m["v"], m["cutoff"]
+
+
+def cards(dist_m=40.0, factors=((1, 1), (1, 2.5), (2, 2)), solve_for=("shipped",)):
     """The README's table, from code: per species, what one card measures on screen at `dist_m` and
-    what the blade measures under each (ku, kv). `solve_for` adds, for those factors, the variant whose
-    alphaCutoff is lowered until the coverage matches the shipped k = 1 one (review r2 finding 2)."""
+    what the blade measures under each (ku, kv). `solve_for` adds the variant whose alphaCutoff is solved
+    for coverage; `"shipped"` means the mode's own (ku, kv) with its cutoff solved PER MATERIAL, which is
+    what the asset carries (review r3 finding 1: the default output must be the shipped configuration)."""
+    ku_by_sp, kv_by_sp, mode_cut = shipped_factors()
+    geom = card_px(dist_m)
+    # the per-MATERIAL solve, over the species that share each texture (broadleaf+willow, pine+redwood)
+    by_tex = {}
+    for sp, g in geom.items():
+        by_tex.setdefault(g["tex"], []).append(sp)
+    shipped_cut = {}
+    for tex, sps in by_tex.items():
+        ku = ku_by_sp.get(sps[0], 1.0)
+        kv = kv_by_sp.get(sps[0], 1.0)
+        if (ku, kv) == (1.0, 1.0):
+            shipped_cut[tex] = CUTOFF[tex]
+            continue
+        base = {sp: blade(tex, geom[sp]["u_win"], 1, 1, *geom[sp]["buf_px"])["coverage"] for sp in sps}
+        lo, hi = 0.02, 0.99
+        for _ in range(18):
+            mid = 0.5 * (lo + hi)
+            r = [blade(tex, geom[sp]["u_win"], ku, kv, *geom[sp]["buf_px"], cutoff=mid,
+                       v_offs=(0.0, 0.37))["coverage"] / base[sp] for sp in sps]
+            lo, hi = (mid, hi) if float(np.mean(r)) > 1.0 else (lo, mid)
+        shipped_cut[tex] = round(0.5 * (lo + hi), 3)
     rows = []
-    for sp, g in card_px(dist_m).items():
+    for sp, g in geom.items():
         wpx, hpx = g["buf_px"]
         base = blade(g["tex"], g["u_win"], 1, 1, wpx, hpx)
         r = dict(species=sp, tex=g["tex"], scale_median=g["scale_median"], card_m=g["card_m"],
@@ -336,11 +366,18 @@ def cards(dist_m=40.0, factors=((1, 1), (1, 1.5), (1, 2.5), (1, 3), (2, 2)), sol
             b = blade(g["tex"], g["u_win"], ku, kv, wpx, hpx)
             b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3)
             r["k"][f"{ku},{kv}"] = b
-        for ku, kv in solve_for:
-            cut = solve_cutoff(g["tex"], g["u_win"], ku, kv, wpx, hpx, base["coverage"])
+        for what in solve_for:
+            if what == "shipped":
+                ku, kv = ku_by_sp.get(sp, 1.0), kv_by_sp.get(sp, 1.0)
+                cut = shipped_cut[g["tex"]]
+                label = f"SHIPPED {ku},{kv}"
+            else:
+                ku, kv = what
+                cut = solve_cutoff(g["tex"], g["u_win"], ku, kv, wpx, hpx, base["coverage"])
+                label = f"{ku},{kv}+cut"
             b = blade(g["tex"], g["u_win"], ku, kv, wpx, hpx, cutoff=cut)
             b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3)
-            r["k"][f"{ku},{kv}+cut"] = b
+            r["k"][label] = b
         rows.append(r)
     return rows
 
@@ -348,23 +385,28 @@ def cards(dist_m=40.0, factors=((1, 1), (1, 1.5), (1, 2.5), (1, 3), (2, 2)), sol
 def shrubs(cases=(("LOD2", "cam05_south_lawn(35mm)", 25.0), ("LOD2", "cam05_south_lawn(35mm)", 54.0),
                   ("LOD2", "cam03_colonnade_walk(18mm)", 25.0), ("LOD2", "cam03_colonnade_walk(18mm)", 54.0),
                   ("LOD1", "cam05_south_lawn(35mm)", 3.0)),
-           factors=(1, 2, 3, 4)):
+           factors=None):
     """8a item 3: the same measurement on the SHRUB cards. Their UV window is the whole texture, so an
     isotropic k is coverage-neutral by construction (it repeats what the card already samples) - no
     cutoff solve is needed, unlike the trees."""
+    # the SHIPPED per-material (ku, kv) from export/foliage_uv.py, so this prints the asset's own factors
+    import foliage_uv as fuv
     rows = []
     for lod, station, dist in cases:
         ppm = STATION_PPM_1M[station] / dist
         for mat, (w, h, tex, sc) in SHRUB_CARD[lod].items():
             wp, hp = w * sc * ppm, h * sc * ppm
             base = blade(tex, 1.0, 1, 1, wp, hp)
-            r = dict(lod=lod, station=station, dist_m=dist, material=mat, tex=tex,
+            shipped = fuv.SHRUB_TILE.get(mat, (1.0, 1.0)) if lod == "LOD2" else (1.0, 1.0)
+            r = dict(lod=lod, station=station, dist_m=dist, material=mat, tex=tex, shipped=list(shipped),
                      card_m=[round(w * sc, 3), round(h * sc, 3)], card_px=[round(wp, 1), round(hp, 1)],
                      k={})
-            for k in factors:
-                b = blade(tex, 1.0, k, k, wp, hp)
+            fac = factors if factors is not None else ((1, 1), tuple(shipped), (2, 2), (3, 3))
+            for k in fac:
+                ku, kv = (k, k) if not isinstance(k, tuple) else k
+                b = blade(tex, 1.0, ku, kv, wp, hp)
                 b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3) if base["coverage"] else None
-                r["k"][str(k)] = b
+                r["k"][f"{ku},{kv}"] = b
             rows.append(r)
     return rows
 

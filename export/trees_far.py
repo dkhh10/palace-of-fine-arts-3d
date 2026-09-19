@@ -65,6 +65,7 @@ import numpy as np
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import foliage_uv as fuv  # noqa: E402
 import gate0_common as g0  # noqa: E402
 import gate1_common as g1  # noqa: E402
 import read_alpha  # noqa: E402  (cut_chain / png_has_alpha; the discovery run is guarded by __main__)
@@ -162,34 +163,29 @@ UV_TILE = SET.get("uv_tile", False)
 # assumed). `iso_cut` IS WHAT env_trees.glb NOW SHIPS (lead's call, exported 2026-09-19: 3 768 500 B);
 # `kv25` is the first 8e export, kept so the A/B is one string (`PFA_UV_TILE_MODE=kv25`).
 UV_TILE_MODE = os.environ.get("PFA_UV_TILE_MODE", "iso_cut")
-UV_TILE_MODES = {
-    # the 8e decision as first shipped: v-only, coverage-neutral, thickness only
-    "kv25": dict(u=1.0, v={"broadleaf": 2.5, "cypress": 2.5, "cypress_column": 2.5, "eucalyptus": 2.5,
-                           "pine": 2.5, "redwood": 2.5, "willow": 1.5}, cutoff={}),
-    # r2 finding 2: the width fix. One cutoff per MATERIAL, solved so the mean coverage ratio over the
-    # species sharing it is 1.00 (broadleaf+willow share MAT_leaf_broadleaf, pine+redwood MAT_leaf_pine).
-    "iso_cut": dict(u=2.0, v=dict.fromkeys(
-        ("broadleaf", "cypress", "cypress_column", "eucalyptus", "pine", "redwood", "willow"), 3.0),
-        cutoff={"MAT_leaf_broadleaf": 0.27, "MAT_leaf_cypress": 0.21,
-                "MAT_leaf_eucalyptus": 0.10, "MAT_leaf_pine": 0.12}),
-    "off": dict(u=1.0, v={}, cutoff={}),
-}
-assert UV_TILE_MODE in UV_TILE_MODES, f"PFA_UV_TILE_MODE={UV_TILE_MODE!r}, expected {sorted(UV_TILE_MODES)}"
-UV_TILE_U = UV_TILE_MODES[UV_TILE_MODE]["u"]
-UV_TILE_V = UV_TILE_MODES[UV_TILE_MODE]["v"]
+# The ku/kv/cutoff tables live in export/foliage_uv.py, which the ENV shrub export and the CPU probe
+# import too, so `python3 export/p8e_leaf_probe.py` prints the mode that actually ships (review r3
+# finding 1) and there is one place where a mode is defined.
+assert UV_TILE_MODE in fuv.UV_TILE_MODES, \
+    f"PFA_UV_TILE_MODE={UV_TILE_MODE!r}, expected {sorted(fuv.UV_TILE_MODES)}"
+MODE = fuv.UV_TILE_MODES[UV_TILE_MODE]
+# r3 finding 3: ku is PER SPECIES like kv. A species with no entry is exported UNTILED at (1.0, 1.0) and
+# named in the report - never at the global ku 2.0, which would widen its u window off the dense core at
+# the unmodified Phase 5 cutoff (the 0.62-0.76x crown thinning this mode exists to avoid). 8d adds
+# backdrop and hall-belt trees, so this is the likeliest next trip.
+UV_TILE_U, UV_TILE_V = MODE["u"], MODE["v"]
+UV_TILE_DEFAULT = (1.0, 1.0)
 # The leaf alphaCutoff this glTF ships, overriding the blend's own cut chain for the tiled cards only.
 # Frozen materials: nothing is written back to master_delivery.blend, and env.glb / env_trees_lod1.glb
-# (desktop) keep the Phase 5 cuts 0.42-0.50.
-LEAF_CUTOFF = UV_TILE_MODES[UV_TILE_MODE]["cutoff"]
-# A species with no entry is NOT tiled (factor 1.0) and is named in the report: 8d adds backdrop trees,
-# and a new ENV_tree_* reaching this set must not be an opaque KeyError in the gate-1 export.
-UV_TILE_V_DEFAULT = 1.0
-# A deterministic per-card offset along v, so that neighbouring cards do not stack the same tile boundary at
-# the same height. v only, for the same reason as above: a u offset walks the window off the dense core
-# (measured: averaged over u offsets the coverage falls to the full-width mean, 0.35 against 0.56 on the
-# cypress). The sequence is the golden-ratio one on the card's index in `components` order - the same order
-# the thinning strides through - so it is reproducible and needs nothing stored.
-UV_TILE_V_OFFSET = 0.6180339887498949
+# (desktop) keep the Phase 5 cuts 0.42-0.50. An unlisted MAT_leaf_* keeps its Phase 5 cut, which is only
+# safe because an unlisted SPECIES is also untiled (above) - asserted in the tiling call.
+LEAF_CUTOFF = MODE["cutoff"]
+# r3 finding 4: `off` is a TRUE baseline - no scale, no per-card v offset, no REPEAT patch, no cutoff
+# patch - so `PFA_UV_TILE_MODE=off` reproduces the pre-8e asset.
+UV_TILE_V_OFFSET_ON = MODE["v_offset"]
+UV_TILE_WRAP = MODE["wrap"]
+UV_TILE = UV_TILE and (bool(UV_TILE_U) or bool(UV_TILE_V) or UV_TILE_WRAP)
+UV_TILE_V_OFFSET = fuv.V_OFFSET
 CROWN_TOP_TOL_REL = 0.08   # LOD2 crown top vs the impostor quad's top, as a fraction of the tallest far tree
 PLACE_TOL_M = 0.001        # exported glTF node translation vs to_gltf(trunk_base), per row
 ANCHOR_TOL_M = 0.02        # reconstructed prototype bbox/radius vs the manifest's own impostor numbers
@@ -397,38 +393,13 @@ def thin_and_grow(me, target_tris, scale_max, protect_below=None):
                                "kept only so the two can be compared")
 
 
-def leaf_uv_range(doc, gltf_p):
-    """min/max of TEXCOORD_0 over every primitive of a MAT_leaf_* material, read back out of the
-    WRITTEN glTF and its .bin (the accessors carry no min/max for UVs, so the buffer is decoded)."""
-    leaf_mats = {i for i, m in enumerate(doc.get("materials", []))
-                 if (m.get("name") or "").startswith("MAT_leaf")}
-    bufs = [(gltf_p.parent / b["uri"]).read_bytes() for b in doc.get("buffers", []) if b.get("uri")]
-    lo, hi, n = math.inf, -math.inf, 0
-    for me in doc.get("meshes", []):
-        for pr in me.get("primitives", []):
-            if pr.get("material") not in leaf_mats or "TEXCOORD_0" not in pr.get("attributes", {}):
-                continue
-            a = doc["accessors"][pr["attributes"]["TEXCOORD_0"]]
-            bv = doc["bufferViews"][a["bufferView"]]
-            assert a["componentType"] == 5126 and a["type"] == "VEC2", a
-            stride = bv.get("byteStride") or 8
-            off = bv.get("byteOffset", 0) + a.get("byteOffset", 0)
-            raw = bufs[bv["buffer"]]
-            uv = np.frombuffer(raw, "<f4", count=a["count"] * (stride // 4),
-                               offset=off).reshape(-1, stride // 4)[:, :2]
-            lo, hi, n = min(lo, float(uv.min())), max(hi, float(uv.max())), n + a["count"]
-    if not n:
-        return None
-    return dict(min=round(lo, 4), max=round(hi, 4), verts=n)
-
-
 def species_of(proto):
     """`ENV_tree_cypress_column_s2_LOD1` -> `cypress_column`: the key UV_TILE_V is written in."""
     assert proto.startswith("ENV_tree_"), proto
     return proto[len("ENV_tree_"):].rsplit("_s", 1)[0]
 
 
-def tile_card_uvs(me, ku, kv, leaf_slots):
+def tile_card_uvs(me, ku, kv, leaf_slots, v_offset=True):
     """PHASE 8e. Scale every LEAF card's UVs about its own UV centre by (ku, kv) and give it a
     deterministic v offset, so the card shows kv stacked copies of the cluster instead of one.
 
@@ -451,7 +422,7 @@ def tile_card_uvs(me, ku, kv, leaf_slots):
         loops = [lp for f in c for lp in f.loops]
         cu = sum(lp[uvl].uv.x for lp in loops) / len(loops)
         cv = sum(lp[uvl].uv.y for lp in loops) / len(loops)
-        ov = (i * UV_TILE_V_OFFSET) % 1.0
+        ov = (i * UV_TILE_V_OFFSET) % 1.0 if v_offset else 0.0
         for lp in loops:
             uv = lp[uvl].uv
             before.append((uv.x, uv.y))
@@ -464,7 +435,8 @@ def tile_card_uvs(me, ku, kv, leaf_slots):
     me.update()
     b = np.array(before) if before else np.zeros((1, 2))
     a = np.array(after) if after else np.zeros((1, 2))
-    return dict(uv_tile_u=ku, uv_tile_v=kv, cards_tiled=tiled, components_skipped=skipped,
+    return dict(uv_tile_u=ku, uv_tile_v=kv, v_offset=bool(v_offset),
+                cards_tiled=tiled, components_skipped=skipped,
                 uv_before=[round(float(v), 4) for v in (b.min(0)[0], b.max(0)[0], b.min(0)[1], b.max(0)[1])],
                 uv_after=[round(float(v), 4) for v in (a.min(0)[0], a.max(0)[0], a.min(0)[1], a.max(0)[1])],
                 uv_note="u_min u_max v_min v_max; the tiled v range leaves 0-1 by design and is served by "
@@ -598,13 +570,17 @@ def main():
             leaf_slots = {i for i, m in enumerate(materials) if m and m.name.startswith("MAT_leaf")}
             assert leaf_slots, f"{p}: no MAT_leaf_* material slot to tile"
             sp = species_of(p)
-            kv = UV_TILE_V.get(sp, UV_TILE_V_DEFAULT)
-            if sp not in UV_TILE_V:
+            known = sp in UV_TILE_U and sp in UV_TILE_V
+            ku, kv = (UV_TILE_U[sp], UV_TILE_V[sp]) if known else UV_TILE_DEFAULT
+            if not known:
                 untiled_species[sp] = untiled_species.get(sp, 0) + 1
-            uvt = tile_card_uvs(cards, UV_TILE_U, kv, leaf_slots)
+            uvt = tile_card_uvs(cards, ku, kv, leaf_slots,
+                                v_offset=UV_TILE_V_OFFSET_ON and known)
             uvt["species"] = sp
-            uvt["species_known"] = sp in UV_TILE_V
-            assert uvt["cards_tiled"] > 0, f"{p}: the UV tiling matched no leaf card"
+            uvt["species_known"] = known
+            assert known or (ku, kv) == (1.0, 1.0), \
+                f"{p}: species {sp!r} is not in mode {UV_TILE_MODE!r} and must export untiled"
+            assert uvt["cards_tiled"] > 0 or not known, f"{p}: the UV tiling matched no leaf card"
         me, mesh_repaired = join(branch, cards, f"{MESH_PREFIX}{p}", materials)
         # the mesh origin becomes the impostor's own axis at the trunk-base plane, so a placement is exactly
         # `location = trunk_base, scale = s` - and the EXPORTED node translation is then to_gltf(trunk_base)
@@ -859,7 +835,7 @@ def main():
     # Widening the u window (ku > 1) is what narrows a blade, and it costs coverage; the cut bought it
     # back. Per MATERIAL, because that is what a glTF material carries, and in this glTF only.
     cutoff_patch = {}
-    if UV_TILE and LEAF_CUTOFF:
+    if UV_TILE and UV_TILE_WRAP and LEAF_CUTOFF:
         for m in doc.get("materials", []):
             want = LEAF_CUTOFF.get(m.get("name"))
             if want is None:
@@ -870,57 +846,15 @@ def main():
             m["alphaCutoff"] = want
         assert len(cutoff_patch) == len(LEAF_CUTOFF), \
             f"{gltf_p.name}: patched {sorted(cutoff_patch)} of {sorted(LEAF_CUTOFF)}"
-    REPEAT, CLAMP = 10497, 33071
+    # ---- PHASE 8e: REPEAT samplers on the leaf maps, this glTF only (export/foliage_uv.py does the
+    # patch: it clones a sampler shared with any texture outside the tiled set, never patches it, and
+    # asserts that nothing else moved). `off` skips it, so that mode is the pre-8e asset.
     wrap_patch = None
-    if UV_TILE:
-        leaf_tex = set()
-        for m in doc.get("materials", []):
-            if not (m.get("name") or "").startswith("MAT_leaf"):
-                continue
-            pbr = m.get("pbrMetallicRoughness") or {}
-            for t in (pbr.get("baseColorTexture"), pbr.get("metallicRoughnessTexture"),
-                      m.get("normalTexture"), m.get("occlusionTexture"), m.get("emissiveTexture")):
-                if t is not None and t.get("index") is not None:
-                    leaf_tex.add(int(t["index"]))
-        assert leaf_tex, f"{gltf_p.name}: no MAT_leaf_* texture to patch"
-        samplers = doc.setdefault("samplers", [])
-        texs_doc = doc.get("textures", [])
-        # A sampler shared with a NON-leaf texture is cloned instead of patched, so the bark's wrap mode
-        # cannot be changed by a leaf-card fix.
-        shared = {tx.get("sampler") for i, tx in enumerate(texs_doc) if i not in leaf_tex}
-        # what every OTHER texture sampled with, so the assert below is against a recorded value
-        others_before = {i: (tx.get("sampler"),
-                             dict(samplers[tx["sampler"]]) if tx.get("sampler") is not None else None)
-                         for i, tx in enumerate(texs_doc) if i not in leaf_tex}
-        clones, patched, cloned = {}, [], []
-        for ti in sorted(leaf_tex):
-            tx = texs_doc[ti]
-            si = tx.get("sampler")
-            if si is not None and si not in shared:
-                samplers[si].update(wrapS=REPEAT, wrapT=REPEAT)
-                patched.append(si)
-            else:
-                if si not in clones:
-                    base = dict(samplers[si]) if si is not None else {}
-                    base.update(wrapS=REPEAT, wrapT=REPEAT)
-                    samplers.append(base)
-                    clones[si] = len(samplers) - 1
-                tx["sampler"] = clones[si]
-                cloned.append((si, clones[si]))
-        for ti in sorted(leaf_tex):
-            s = samplers[texs_doc[ti]["sampler"]]
-            assert s.get("wrapS") == REPEAT and s.get("wrapT") == REPEAT, \
-                f"{gltf_p.name}: texture {ti} did not take the REPEAT sampler ({s})"
-        for i, (si, was) in others_before.items():
-            now = dict(samplers[texs_doc[i]["sampler"]]) if texs_doc[i].get("sampler") is not None else None
-            assert texs_doc[i].get("sampler") == si and now == was, \
-                f"{gltf_p.name}: non-leaf texture {i} changed sampler ({si} {was} -> " \
-                f"{texs_doc[i].get('sampler')} {now}); the bark must keep its own wrap"
-        wrap_patch = dict(leaf_textures=sorted(leaf_tex), samplers_patched=sorted(set(patched)),
-                          samplers_cloned=[list(c) for c in cloned], samplers_total=len(samplers),
-                          wrap=REPEAT, was=CLAMP,
-                          note="wrapS/wrapT REPEAT on every texture of a MAT_leaf_* material in this glTF "
-                               "alone; a sampler shared with a non-leaf texture is cloned, never patched")
+    if UV_TILE and UV_TILE_WRAP:
+        leaf_mats = [m.get("name") for m in doc.get("materials", [])
+                     if (m.get("name") or "").startswith("MAT_leaf")]
+        assert leaf_mats, f"{gltf_p.name}: no MAT_leaf_* material to patch"
+        wrap_patch = fuv.patch_samplers(doc, leaf_mats, gltf_p.name)
     if alpha_mats or wrap_patch or cutoff_patch:
         gltf_p.write_text(json.dumps(doc))
         doc = json.loads(gltf_p.read_text())
@@ -928,7 +862,7 @@ def main():
     # prose. The NON-tiled set is what desktop draws and what lets the REPEAT patch above stay a no-op
     # for env.glb / env_trees_lod1.glb; if a future Sapling change or a new prototype ever leaves 0-1
     # there, it must fail here rather than smear in a viewer nobody is watching.
-    uv_range = leaf_uv_range(doc, gltf_p)
+    uv_range = fuv.leaf_uv_range(doc, gltf_p)
     if not UV_TILE:
         assert uv_range and uv_range["min"] >= -1e-4 and uv_range["max"] <= 1 + 1e-4, \
             (f"{gltf_p.name}: leaf TEXCOORD_0 is {uv_range} - the {SET_NAME} set is not UV-tiled, so its "

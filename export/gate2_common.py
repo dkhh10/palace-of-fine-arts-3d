@@ -34,8 +34,14 @@ UV2 = g0.UV2
 
 # The frozen Gate 1 blends live in the export engineer's worktree and are never synced (325 MB).
 # PFA_GATE1_BLEND_DIR overrides; the default is the phase6-export worktree beside this one.
-GATE1_BLEND_DIR = Path(os.environ.get(
-    "PFA_GATE1_BLEND_DIR", str(MAIN_ROOT / ".claude" / "worktrees" / "phase6-export" / "export" / "out" / "gate1")))
+# r4 finding 2: LOCAL THEN MAIN, never another worktree. This used to default to the phase6-export
+# worktree, so a Gate 2 run in any other checkout baked THAT branch's geometry; it failed loudly in the 8d
+# chain only because a mesh had been renamed (a geometry-only change would have baked silently). The
+# checkout this file lives in wins when it has a Gate 1 blend; MAIN is the fallback; PFA_GATE1_BLEND_DIR
+# still overrides both.
+_LOCAL_G1 = Path(__file__).resolve().parents[1] / "export" / "out" / "gate1"
+_DEFAULT_G1 = _LOCAL_G1 if (_LOCAL_G1 / "gate1_set.blend").exists() else (MAIN_ROOT / "export" / "out" / "gate1")
+GATE1_BLEND_DIR = Path(os.environ.get("PFA_GATE1_BLEND_DIR", str(_DEFAULT_G1)))
 SET_BLEND = GATE1_BLEND_DIR / "gate1_set.blend"
 BAKE_BLEND = GATE1_BLEND_DIR / "gate1_bake.blend"
 EXPORT_SET_JSON = GATE1_OUT / "export_set.json"       # synced copy in this worktree / MAIN

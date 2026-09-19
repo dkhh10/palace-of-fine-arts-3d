@@ -1,0 +1,11 @@
+00:00.322  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/out/gate1/gate1_set.blend"
+Traceback (most recent call last):
+  File "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase8d-export/export/gltf_gate1.py", line 122, in <module>
+    assert arr.shape == (len(me.loops), 2), \
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: EXPM_ENV_backdropgroup_backdrop_forest: Gate 2 wrote 297480 loop UVs, the Gate 1 mesh has 318180 loops
+[gate0] STEP gltf_gate1:materials wall_s=0.1  with_maps=33 grey_only=0
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 96796 exited rc=0 after 2 s (max 1200)
