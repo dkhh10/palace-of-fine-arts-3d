@@ -198,6 +198,21 @@ function build( cardSun ) {
 	ok( on.report.cardSunMaterials === 1 && on.report.cardSunSkipped.length === 0,
 		`the report counts the relit card materials (${on.report.cardSunMaterials})` );
 	ok( on.report.cardSun.amt === 0.8, 'the report carries the parsed switch' );
+
+	// r4 review 4: the relight must leave RUNTIME evidence, or a committed capture log cannot say
+	// whether a card was ever relit (and the mobile check cannot say it either).
+	const lines = [];
+	const sc = cardScene();
+	patchBakedMaterial( sc.mat, { instanceIrradiance: Math.PI, noEnvDiffuse: false, specularOnlySun: true } );
+	applyFoliage( { scene: sc.scene, sun: sunLight, cardSun: '0.6', note: ( m ) => lines.push( m ) } );
+	const lit = lines.find( ( m ) => /card relight/.test( m ) );
+	ok( !! lit && /ON/.test( lit ) && /0\.6,/.test( lit ) && /1 card material/.test( lit ),
+		`note(): the relight names its parameters and how many materials took it — "${lit}"` );
+	const offLines = [];
+	const sc2 = cardScene();
+	patchBakedMaterial( sc2.mat, { instanceIrradiance: Math.PI, noEnvDiffuse: false, specularOnlySun: true } );
+	applyFoliage( { scene: sc2.scene, sun: sunLight, cardSun: 0, note: ( m ) => offLines.push( m ) } );
+	ok( offLines.some( ( m ) => /card relight OFF/.test( m ) ), 'note(): and it says so when it is off' );
 }
 {
 	// ?cardint=0: no interior varying, so the clump term degenerates instead of failing to compile

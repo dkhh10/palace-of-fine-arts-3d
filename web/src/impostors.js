@@ -219,9 +219,12 @@ const fragmentShader = /* glsl */`
 	// r2 review 6: how many frames the reconstruction below actually blends.  The octahedral lookup
 	// is barycentric over THREE frames; the band blends TWO along the azimuth and takes the nearest
 	// elevation row, so its third weight is always 0 and its taps were pure waste.  It has to be a
-	// COMPILE-TIME count and not a `w.z > 0.0` test: `texelAt` is an implicit-LOD fetch, and an
-	// implicit-LOD fetch inside divergent control flow has undefined derivatives - measured, it
-	// corrupts the mip choice on 0.4-34.5 % of the frame at stations 1-6.
+	// COMPILE-TIME count and not a per-fragment 'w.z > 0.0' test: 'texelAt' is an implicit-LOD
+	// texture2D, and an implicit-LOD fetch inside divergent control flow has undefined derivatives
+	// (GLSL ES 1.0 s8.7), so the mip choice would be undefined on exactly the fragments it skipped.
+	// NO BACKTICKS ANYWHERE IN THIS LITERAL: it is a JS template string, and r4 review 1 is what
+	// one backtick in a GLSL comment costs (the module stopped parsing and the viewer stopped
+	// building, for four commits).
 	#ifdef PFA_IMP_BAND
 	const int PFA_FRAMES = 2;
 	#else
@@ -283,11 +286,11 @@ const fragmentShader = /* glsl */`
 			}
 			c0 = vec2( i0, best );
 			c1 = vec2( i1, best );
-			// r2 review 6: the band blends TWO frames.  `c2` is set so the shared code below has a
-			// defined third frame, its weight is 0, and the taps that would read it are skipped
-			// (`wk <= 0.0` below) - four texel fetches per band fragment in the premul path and one
-			// sampleFrame in the straight one, all of them multiplied by zero.  They are dropped at
-			// COMPILE time (PFA_FRAMES), never by a per-fragment test.
+			// r2 review 6: the band blends TWO frames.  c2 is set so the shared code below has a
+			// defined third frame and its weight is 0; the taps that would read it - four texel
+			// fetches per band fragment in the premul path, one sampleFrame in the straight one,
+			// all multiplied by zero - are dropped at COMPILE time (PFA_FRAMES), never by a
+			// per-fragment test (r4 review 3: there is no wk <= 0.0 test in this file).
 			c2 = c1;
 			w = vec3( 1.0 - f, f, 0.0 );
 		}

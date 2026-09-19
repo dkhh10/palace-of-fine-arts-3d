@@ -2035,7 +2035,10 @@ window.__pfaInfo = () => ( {
 		normalGate: foliageReport.normalGate, interiorMaterials: foliageReport.interiorMaterials,
 		cardMipBias: foliageReport.cardMipBias, leafMipBias: foliageReport.leafMipBias,
 		cardEnv: foliageReport.cardEnv, cardEnvMaterials: foliageReport.cardEnvMaterials,
-		cardEnvAlready: foliageReport.cardEnvAlready },
+		cardEnvAlready: foliageReport.cardEnvAlready,
+		// r4 review 4: the Phase 8a card relight, so a capture sidecar says whether it was on
+		cardSun: foliageReport.cardSun, cardSunMaterials: foliageReport.cardSunMaterials,
+		cardSunSkipped: foliageReport.cardSunSkipped },
 	shrubLod: shrubLodReport,
 	impostorModulation: impModReport,
 	reflectionSet,

@@ -472,6 +472,32 @@ function makeRoot() {
 		'... and the albedo took the same wrap (unchanged behaviour)' );
 	ok( warned === 1, `the shared-texture conflict is REPORTED, not silent (${warned} note)` );
 
+	// r4 review 5: `needsUpdate` bumps source.version, i.e. a full re-upload of a shared multi-MB
+	// atlas.  It must be asked for only when the sampler ACTUALLY changed - which today, with every
+	// foliage sampler clamped, means never.
+	const alb = r.albedoMaps.MAT_leaf_clamped;
+	const same = new THREE.Object3D();
+	same.name = 'WEB_glb_same_wrap';
+	const sm = new THREE.MeshStandardMaterial();
+	sm.name = 'MAT_leaf_clamped';
+	sm.map = fake( alb.wrapS, alb.wrapT );
+	sm.map.channel = alb.channel;
+	same.add( new THREE.Mesh( new THREE.PlaneGeometry(), sm ) );
+	const v0 = alb.source.version, tv0 = r.trnMaps.MAT_leaf_clamped.source.version;
+	applyFoliageAlbedo( same, r.albedoMaps, () => {}, r.trnMaps );
+	ok( alb.source.version === v0 && r.trnMaps.MAT_leaf_clamped.source.version === tv0,
+		'a lazy root with the SAME sampler forces no re-upload of the shared albedo or trn map' );
+	ok( sm.map === alb, '... and it still gets the shared tinted albedo' );
+	const other = new THREE.Object3D();
+	other.name = 'WEB_glb_other_wrap';
+	const om = new THREE.MeshStandardMaterial();
+	om.name = 'MAT_leaf_clamped';
+	om.map = fake( alb.wrapS === THREE.RepeatWrapping ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping,
+		alb.wrapT );
+	other.add( new THREE.Mesh( new THREE.PlaneGeometry(), om ) );
+	applyFoliageAlbedo( other, r.albedoMaps, () => {}, r.trnMaps );
+	ok( alb.source.version > v0, 'a root whose sampler DIFFERS does force the re-upload (8e needs it)' );
+
 	// r3 review 3: ONE sampler rule for BOTH maps in the EAGER path.  Two materials of the SAME name
 	// disagreeing about wrap used to give the albedo the LAST one (the per-material loop) and the
 	// translucency the FIRST one (srcMaps[0]) — albedo REPEAT, trn CLAMP, on one pair of UVs.

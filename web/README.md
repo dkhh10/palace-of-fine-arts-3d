@@ -1450,6 +1450,13 @@ tested against; the two are asserted together in `test/foliage_cardsun_test.mjs`
 | `cap` | 3 | 1–8 | ceiling on `g`, so a card far above the mean cannot blow out |
 | `two` | 1 | 0–1 | 1 = \|N·L\| (the card's plane against the sun, both faces alike), 0 = the one-sided cosine |
 
+Runtime evidence (r4 review 4): `applyFoliage` prints one `note()` line — the parameter string, how
+many card materials took it, and which were skipped for having no per-placement irradiance — or
+"card relight OFF (?cardsun=0)"; the same three fields (`cardSun`, `cardSunMaterials`,
+`cardSunSkipped`) are in `__pfaInfo().foliage`, so a capture sidecar and a committed log both say
+whether a card was relit. **The desktop and mobile logs committed with this branch predate that
+line**; the mobile re-capture the review asks for is pending the GPU.
+
 It reaches the **lazily loaded** glbs too: `applyFoliage` runs again for `env_trees.glb` and
 `env_shrubs.glb` from `foliageLazy`, whose option bag does not carry this flag, so the pass reads
 `?cardsun=` from the page once (`cardSunFromLocation`) unless the caller passes `cardSun` explicitly.
@@ -1506,14 +1513,17 @@ of pixels, which is the scene's own animated dressing, not the shader.
 
 ### A capture caveat this round measured — the water is not deterministic between sessions
 
-Two captures of the SAME build, same query, `t=0`, differ on **34.2 % of cam01** and 13.3 % of cam05,
+Two captures of the SAME bundle, same query, `t=0`, differ on **34.2 % of cam01** and 13.3 % of cam05,
 max 200/255 — and every differing pixel is **below the waterline**. The planar Reflector's frame is
 not reproducible session to session, so any viewer-vs-viewer comparison at a water station must mask
 it: take an A/A control (two captures of one build) and read the test difference only on the pixels
 the control calls stable. Above the waterline the same pair is identical. Every pixel-neutrality
-claim in this branch is stated on that masked basis; the QA-17 box metrics are unaffected (the shrub
-boxes are shore, not water), but a future "no pixel moved" claim that ignores this will be wrong by a
-third of the hero frame.
+claim about the impostor band was stated on that masked basis and is retracted anyway (see r2-6
+above: those captures were served a stale bundle). The QA-17 box metrics and the whole of the 8a
+relight measurement are unaffected — they were taken before the impostor edit, from bundles that
+built (`da66b1e` parses; the break is `f099e0c`) — but a future "no pixel moved" claim that ignores
+the water will be wrong by a third of the hero frame, and one that ignores the build's exit code
+will be wrong by the whole change.
 
 ### Carries taken in this branch (review r3 / r2, each its own commit)
 
@@ -1528,9 +1538,15 @@ third of the hero frame.
   box set used on ref_062 was never recorded).
 * **r2 5b** — `impostors.band.rows > 4` now warns instead of being silently truncated by `pfaBandEl`.
 * **r2 6** — the band's third frame is dropped at COMPILE time (`PFA_FRAMES`), 4 texel fetches per
-  band fragment. The obvious per-fragment `if ( wk <= 0.0 ) continue;` is **not** pixel-neutral:
-  `texelAt` is an implicit-LOD fetch and divergent control flow makes its derivatives undefined
-  (measured: 1.18 % of cam01's stable pixels moved, max 196). Frame cost unchanged within the noise.
+  band fragment. The per-fragment form (`if ( wk <= 0.0 ) continue;`) is rejected on the spec, not on
+  a measurement: `texelAt` is an implicit-LOD `texture2D` and GLSL ES 1.0 §8.7 leaves its derivatives
+  undefined inside divergent control flow. **RETRACTED (r4 review 1-2): the capture and frame-cost
+  numbers this carry first quoted are void.** The commit that introduced it put backticks inside the
+  GLSL template literal, so `vite build` exited 1 (verified afterwards on the committed blob) and
+  every capture taken after that edit was served the PREVIOUS bundle — both sides of the A/B, and
+  both sides of the stash/pop perf pair, were the same binary. The change is unverified on the GPU;
+  it needs one A/B capture at stations 1-6 and one paired 1440p run when Chrome is free. What does
+  stand is the A/A control below (two captures of one bundle), which is a property of the captures.
 
 ### 8e dependency (one-line fix, pixel-neutral today)
 

@@ -57,6 +57,18 @@ adopted build is the faster of the pair in two of three), well inside the +1 ms 
 bytes and draws identical (1 814.2 MB, 317). Mobile tier at station 1 (`manifest_mobile.json`,
 `tier=mobile`): loads and draws, no shader-patch error, 312 draws.
 
+## Correction (r4 review 1-2, 2026-09-19)
+
+The r2-6 carry commit (`f099e0c`) left backticks inside `impostors.js`'s GLSL template literal: the
+module stopped parsing, `npm test` could not start and `vite build` exited 1 for four commits. Two
+consequences, both corrected here and nowhere else in this report: (a) the "npm test green" lines in
+those four commit messages were false — the suite is green again at this fix, 510 PASS / 0 FAIL over
+12 suites, and `node --check` now runs over every changed module; (b) every capture taken after that
+edit was served the PREVIOUS bundle, so the r2-6 pixel and frame-cost numbers are **retracted** — the
+band change is unverified on the GPU and needs one A/B capture plus one paired 1440p run. **Nothing
+in the sections above is affected**: every 8a relight capture, box table, tile and perf number was
+taken before that edit, from bundles that built.
+
 ## Evidence
 
 `renders/web/p8a_{cs0,adopt}_cam0N.png`, the sweep `p8a_{cs05,cs1,two1,twostrong,v30,v45,half,soft,

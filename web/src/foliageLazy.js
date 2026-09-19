@@ -272,14 +272,18 @@ export function applyFoliageAlbedo( root, maps, note = () => {}, trnMaps = null 
 			seen.add( mat.uuid );
 			const old = mat.map;
 			if ( old ) {
+				// 8e DEPENDENCY (lead, Phase 8a), GATED (r4 review 5).  three r186 applies sampler
+				// state only inside `uploadTexture`, so a wrap written after the first upload never
+				// reaches the GPU: the eager near-tree pass uploads this ONE shared albedo at the
+				// glb's clamp, and when env_trees.glb arrives with 8e's REPEAT leaf samplers the
+				// copy below would be silently ignored.  But `needsUpdate` bumps `source.version`,
+				// so setting it unconditionally re-uploads the whole multi-MB shared atlas for every
+				// lazily loaded root — today, always, since the wrap it copies is the same clamp
+				// every time.  So: copy first, and ask for the re-upload only when the sampler
+				// actually changed.
+				const reup = t.wrapS !== old.wrapS || t.wrapT !== old.wrapT || t.channel !== old.channel;
 				t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.channel = old.channel;
-				// 8e DEPENDENCY (lead, Phase 8a).  three r186 applies sampler state only inside
-				// `uploadTexture`, so a wrap written after the first upload never reaches the GPU:
-				// the eager near-tree pass uploads this ONE shared albedo at the glb's clamp, and
-				// when env_trees.glb arrives with 8e's REPEAT leaf samplers the copy above would be
-				// silently ignored.  The translucency map beside it has always had this line.
-				// Pixel-neutral on today's assets (every foliage sampler is clamp today).
-				t.needsUpdate = true;
+				if ( reup ) t.needsUpdate = true;
 				// PHASE 8b ITEM D — the translucency FACTOR map is sampled with these same leaf-card
 				// UVs, so it takes this root's sampler exactly as the albedo does.  Without this the
 				// trn map kept whatever the FIRST pass (env.glb) set, and 8e's REPEAT samplers on
@@ -294,8 +298,12 @@ export function applyFoliageAlbedo( root, maps, note = () => {}, trnMaps = null 
 							+ `(${old.wrapS}/${old.wrapT}) disagrees with ${tr.userData.pfaWrapFrom}'s `
 							+ `(${tr.wrapS}/${tr.wrapT}); the albedo and translucency maps are SHARED, so `
 							+ 'both roots now use this one — the export must patch the samplers together' );
-					tr.wrapS = old.wrapS; tr.wrapT = old.wrapT;
-					tr.needsUpdate = true;
+					// the same gate as the albedo above (r4 review 5: this line has always had the
+					// same property — an unconditional re-upload of a shared texture per root)
+					if ( tr.wrapS !== old.wrapS || tr.wrapT !== old.wrapT ) {
+						tr.wrapS = old.wrapS; tr.wrapT = old.wrapT;
+						tr.needsUpdate = true;
+					}
 					tr.userData.pfaWrapFrom = root.name || 'a lazily loaded glb';
 				}
 			}

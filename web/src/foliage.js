@@ -178,7 +178,10 @@ export const LEAF_MIP_BIAS = 0.0;
  *   3. The shade chroma is DERIVED, not invented: with the manifest's sun [ 1.0 0.607 0.0 ] the sun
  *      share is s^ = [ 1.546 0.939 0.0 ] at chroma 1 and the sky share it leaves is 1 - f*s^, i.e.
  *      blue-green - the direction of the bake's own darkest decile ([ 0.68 1.02 2.05 ], §2).
- *      `chroma` 0.65 lands that ratio near the measured one; 1.0 is the raw manifest sun.
+ *      `chroma` 0.5-0.8 lands that ratio on the measured one; the ADOPTED value is 1.0 (the raw
+ *      manifest sun), because the stage-2 captures found the LEVEL and not the chroma to be the
+ *      binding constraint, so the hue is taken at full strength and the AMOUNT is what was dialled
+ *      back.  At `chroma = 0` the term is a pure level modulation with no hue rotation at all.
  *
  * `?cardsun=amt[,share[,wrap[,shade[,mean[,chroma[,cap[,two]]]]]]]`, `?cardsun=0` / `off` = today.
  * ADOPTED 2026-09-19 from the stage-2 captures (web/README.md "Phase 8a", the eight QA-17 boxes at
@@ -216,7 +219,7 @@ export function parseInterior( v, dflt ) {
 const interiorOff = ( it ) => ! it
 	|| ( it.str <= 0 && it.low <= 0 && it.sun <= 0 && Math.abs( it.gain - 1 ) < 1e-6 );
 
-/** `"amt[,share[,wrap[,shade[,mean[,chroma[,cap]]]]]]"` (or an object) over CARD_SUN, all clamped. */
+/** `"amt[,share[,wrap[,shade[,mean[,chroma[,cap[,two]]]]]]]"` (or an object) over CARD_SUN, clamped. */
 export function parseCardSun( v, dflt = CARD_SUN ) {
 	const d = { ...dflt };
 	if ( v === null || v === undefined || v === '' ) return d;
@@ -975,6 +978,17 @@ export function applyFoliage( o ) {
 	note( `foliage: environment lobe x${cardEnv} on ${report.cardEnvMaterials} card material(s)`
 		+ ( report.cardEnvAlready ? `, ${report.cardEnvAlready} already scaled by an earlier pass and LEFT ALONE` : '' )
 		+ ' (?cardenv=, shared with ?shrubenv= so the LOD switch cannot change a shrub\'s level)' );
+	// r4 review 4: the relight has to leave RUNTIME evidence.  A committed capture log (desktop or
+	// mobile) must show whether a card was relit and with what, or a later round cannot tell an
+	// adopted default from a flag that never reached the page.
+	note( cardSunOff( cardSun )
+		? 'foliage: shrub/reed card relight OFF (?cardsun=0) — the cards keep the flat per-placement '
+			+ 'irradiance, and their shader is the pre-8a program'
+		: `foliage: shrub/reed card relight ON, ?cardsun=${CARD_SUN_KEYS.map( ( k ) => cardSun[ k ] ).join( ',' )} `
+			+ `(amt,share,wrap,shade,mean,chroma,cap,two) on ${report.cardSunMaterials} card material(s)`
+			+ ( report.cardSunSkipped.length
+				? `; ${report.cardSunSkipped.length} card material(s) have no per-placement irradiance and were `
+					+ `NOT relit: ${report.cardSunSkipped.slice( 0, 4 ).join( ', ' )}` : '' ) );
 	note( `foliage interior: ${report.interiorMaterials} material(s) darkened by depth into their own cluster — `
 		+ `crowns (${fmt( interior )}), cards (${fmt( cardInterior )}); crown-bend gated above `
 		+ `r ${normalGate.toFixed( 2 )} of the cluster half-extent (?leafgate=, ?crownint=, ?cardint=)` );
