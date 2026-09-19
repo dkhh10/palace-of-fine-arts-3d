@@ -732,30 +732,15 @@ def make_twig_shrub_mesh(name, seed, radius=0.7, height=1.2, twigs=70, lod=0):
     return me
 
 
-def build_shrubs():
-    """Shore planting per reference sheet s6: pittosporum mounds (dark), mahonia (upright, coarser), agapanthus
-    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through.
 
-    Round 02 fixes:
-      * QA-02-18 "a regular row of near-identical dark pom-poms": 9 mound seeds instead of 4, three material
-        families across them (MAT_shrub / MAT_shrub_light / MAT_shrub_dry) so the belt carries a hue spread, a
-        2.4:1 instance size spread, no two neighbours drawn from the same source mesh, and dry reeds / twigs
-        seeded into the peninsula belt (they were only used past r = 50 m) for the warm dry fraction.
-      * QA-02-13 "the shrub band hides the podium and its Greek-key band": every shrub inside r = 54 m of the
-        rotunda is clamped to 1.2 m tall.
-      * performance: every source mesh is built at three LODs and each placement becomes three objects, like the
-        trees, so ENV_LOD1 no longer carries the full-density cards; shrubs past SHRUB_FAR from every QA camera
-        render their LOD1 mesh even at LOD0.
+
+# ----------------------------------------------------------------------------- the shrub source meshes
+def shrub_sources():
+    """The 28 shrub / reed / twig source meshes, each at LOD0, LOD1 and LOD2.
+
+    Extracted from build_shrubs() in Phase 8a so the triangle budget can be measured without building the
+    whole site: `blender --background --python scripts/env_build.py -- --shrub-stats`.
     """
-    log("shrubs + grasses + reeds")
-    coll = SUB["ENV_shrubs"]
-    rnd = random.Random(23)
-    # QA-04-4 (round 6): the radius clamp is gone.  ROSTRA_R 54 m / ROSTRA_H_RANGE 0.42-1.20 m was round 03's
-    # answer to QA-03-13 and it is what made the hero shoreline "a bare pale quay with 0.5-1 m dot shrubs and an
-    # exposed podium base".  The cap is now `band_sightline_cap` (see the top of this file): per instance, the
-    # height of the ray from each hero camera's eye to the bottom of the podium's Greek-key course.  On the hero
-    # shoreline it comes out at 3.2-3.7 m, which is ref 169's own mound height, and it still guarantees the band.
-
     # (key, material(s), {lod: mesh}, nominal height) - meshes are shared by every instance of that key
     src = {}
 
@@ -788,6 +773,33 @@ def build_shrubs():
     for i in range(3):
         add(f"twig{i}", ("MAT_shrub_dry", "MAT_reeds"), make_twig_shrub_mesh, 0.9 + 0.25 * i, seed=350 + i,
             radius=0.5 + 0.2 * i, height=0.9 + 0.25 * i, twigs=70)
+    return src
+
+def build_shrubs():
+    """Shore planting per reference sheet s6: pittosporum mounds (dark), mahonia (upright, coarser), agapanthus
+    clumps at the water, dry reeds and leafless twig shrubs. Clustered with gaps so rip-rap and lawn show through.
+
+    Round 02 fixes:
+      * QA-02-18 "a regular row of near-identical dark pom-poms": 9 mound seeds instead of 4, three material
+        families across them (MAT_shrub / MAT_shrub_light / MAT_shrub_dry) so the belt carries a hue spread, a
+        2.4:1 instance size spread, no two neighbours drawn from the same source mesh, and dry reeds / twigs
+        seeded into the peninsula belt (they were only used past r = 50 m) for the warm dry fraction.
+      * QA-02-13 "the shrub band hides the podium and its Greek-key band": every shrub inside r = 54 m of the
+        rotunda is clamped to 1.2 m tall.
+      * performance: every source mesh is built at three LODs and each placement becomes three objects, like the
+        trees, so ENV_LOD1 no longer carries the full-density cards; shrubs past SHRUB_FAR from every QA camera
+        render their LOD1 mesh even at LOD0.
+    """
+    log("shrubs + grasses + reeds")
+    coll = SUB["ENV_shrubs"]
+    rnd = random.Random(23)
+    # QA-04-4 (round 6): the radius clamp is gone.  ROSTRA_R 54 m / ROSTRA_H_RANGE 0.42-1.20 m was round 03's
+    # answer to QA-03-13 and it is what made the hero shoreline "a bare pale quay with 0.5-1 m dot shrubs and an
+    # exposed podium base".  The cap is now `band_sightline_cap` (see the top of this file): per instance, the
+    # height of the ray from each hero camera's eye to the bottom of the podium's Greek-key course.  On the hero
+    # shoreline it comes out at 3.2-3.7 m, which is ref 169's own mound height, and it still guarantees the band.
+
+    src = shrub_sources()
 
     # the clamp below has to work on the mesh's real z extent, not on the nominal height the factory was asked
     # for: round 03's "1.2 m" shrubs measured 1.87 m in the file because the mound meshes overshoot their nominal
@@ -1123,7 +1135,32 @@ def build_lamp_posts(paths):
 
 
 # ----------------------------------------------------------------------------- main
+def shrub_stats():
+    """Phase 8a triangle budget: the unique source-mesh triangles of the whole shrub set, per LOD.
+
+    `blender --background --python scripts/env_build.py -- --shrub-stats` -- no site, no save. The 8a cap is
+    "the whole LOD1 shrub set under 2x its current unique triangles", which is what the LOD1 column measures.
+    """
+    src = shrub_sources()
+    tot = {0: 0, 1: 0, 2: 0}
+    print(f"{'source':14s} {'LOD0':>8s} {'LOD1':>8s} {'LOD2':>8s}   {'cards L0':>8s} {'cards L1':>8s} "
+          f"{'card cm L1':>10s}")
+    for key in sorted(src):
+        lods = src[key][1]
+        t = {lod: sum(len(p.vertices) - 2 for p in lods[lod].polygons) for lod in (0, 1, 2)}
+        for lod in (0, 1, 2):
+            tot[lod] += t[lod]
+        print(f"{key:14s} {t[0]:8,d} {t[1]:8,d} {t[2]:8,d}   "
+              f"{lods[0].get('cards', 0):8d} {lods[1].get('cards', 0):8d} "
+              f"{100.0 * lods[1].get('card_m', 0.0):9.1f}")
+    print(f"{'TOTAL':14s} {tot[0]:8,d} {tot[1]:8,d} {tot[2]:8,d}   ({len(src)} sources)")
+    print(f"[shrub-stats] unique LOD1 triangles: {tot[1]:,}")
+
+
 def main():
+    if "--shrub-stats" in ARGS:
+        shrub_stats()
+        return
     terrain, paths = build_terrain()
     build_paving()
     build_water()
