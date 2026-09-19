@@ -853,3 +853,20 @@ in detail.js if the tile still bands; a 4K re-bake of the two south sets (+75.5 
 reads flat. Rejected: UV re-layout (forces gate1 -> gate3 -> gate5 re-runs, no gain on the merged mass), a finer detail map (already 1.05 mm/texel).
 8b export (b4ef4af): the 2K impostor ALBEDO atlases are published at tier 1 (+9.72 MB; the 1K stays published for `?imp2k=0`), the 1K ETC1S stand-in at tier 0;
 tier-0 files byte-identical; the 2K normdepth stays stripped because the viewer has no code path for it. Both deviations accepted.
+
+## 2026-09-19 · 8a export gate: the UV1 pin held; CLASS_BUDGET['ENV'] raised 800 000 -> 902 000 so the accepted shrub overage is not taken from the near trees
+export_set --gate1 in the worktree reproduced MAIN's uv1 coverage/tiles/groups, uv2 meshes and lightmap slots exactly (Gate 2 bakes and Gate 3 lightmaps stay
+valid). But with the ENV budget constant unchanged the allocator took the +102 152 LOD2 shrub triangles out of the near-tree allowance: near trees 20 -> 15, far
+impostors 127 -> 132, the billboard list re-indexed (would have forced instance rows/order and possibly an impostor re-bake). Decision: option (b) — the
+constant becomes 902 000, which is what "+~105 k accepted" meant; the gate is near 20 / far 127 / impostor placements byte-identical, then the chain runs.
+8c-A applied by the viewer (detailproj dominant default): cam03's vertical smear becomes grain and pores, no flute seam, other stations unchanged (MAE <= 0.37/255).
+8b-B measured: 2K + coverage 0.15 gives crossings 7.65 / 6.98 / 8.54 at cam01/02/05 (Cycles 11.73 / 7.76 / 15.89) with the boxes holding; at 100 % the
+station-2 crown is still a mass ("no sampling of a 162 px frame puts branches back"). Before the band atlas (13 min GPU, +128 MB, three-team lockstep) a free
+A/B runs: the LOD2 far-tree mesh set (vertex-AO lit, already in tier 2) at 60 / 120 / all distances on desktop, same session, tiles vs Cycles.
+
+## 2026-09-19 · 8b decision 2: the band atlas goes ahead (after the LOD2-mesh A/B fell short)
+The free A/B (web/README.md "Phase 8 far-tree A/B", f0ad577): the LOD2 far-tree set at 60 / 120 / all distances costs nothing (inside +3 ms same-session, -244 MB
+resident) but reads as a faceted polygon skeleton at 100 m with the colonnade visible through it — hero crown leaf share 4.0 % vs the reference's 22.2 % (the 2K
+card 24.5 %); its crossings score is an artefact of isolated leaf cards. Nothing adopted. Decision: the band atlas per docs/briefs/phase8b_band_atlas.md (12 az x 3 el
+at 341 px, 4096x1024, ~13 min GPU, +128 MB, +13 MB tier 1; bake -> export -> viewer in lockstep under one contract), sequenced after the 8a export sync so the
+shrub and column improvements deploy first. If the band atlas does not put branch structure in the station-2 tile, the crown stays a residual and Phase 8 closes.
