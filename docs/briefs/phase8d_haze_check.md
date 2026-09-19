@@ -6,14 +6,13 @@
 and sign-mixed (sampling noise), no double-darkening. Nothing applied, nothing proposed.
 
 **Method.** `scripts/p8d_haze_check.py` on a **scratch copy** of `master_delivery.blend` (deleted after; master and
-master_delivery never touched). Delivery look as found and asserted: `AgX` / `AgX - High Contrast` / exposure
-−2.8331. Cycles GPU, 1920x1080, **32 spp, adaptive sampling OFF**, `time_limit 0` so A and B spend the same samples
-on every pixel, OIDN as `light_presets.apply_final_cycles`. 100–109 s per frame, four frames.
-**A** = as merged. **B** = the three added terms bypassed (haze mix on Base Color / Roughness / Specular, the
-per-lot spread, the palace shadow). The bypass is structural and **asserted at every step**, aborting if the graph
-is not what it expects; it neutralised `{haze: 24, scale: 10, hsv: 7}` over **8 materials**, exactly what
-`apply_backdrop_atmosphere`'s arguments predict. The 8d *base colours* stay in **both** variants — the question is
-about the added terms only.
+master_delivery never touched). Delivery look as found and asserted: `AgX` / `AgX - High Contrast` / −2.8331 EV.
+Cycles GPU, 1920x1080, **32 spp, adaptive OFF**, `time_limit 0` so A and B spend the same samples on every pixel,
+OIDN per `light_presets.apply_final_cycles`; 100–109 s per frame, four frames. **A** = as merged; **B** = the three
+added terms bypassed (haze mix on Base Color / Roughness / Specular, the per-lot spread, the palace shadow). The
+bypass is structural and **asserted at every step**, aborting if the graph is not what it expects: it neutralised
+`{haze: 24, scale: 10, hsv: 7}` over **8 materials**, exactly what `apply_backdrop_atmosphere`'s arguments predict.
+The 8d *base colours* stay in **both** variants — the question is about the added terms only.
 
 ## cam01 hero — luma B (terms off) → A (as merged)
 
@@ -37,12 +36,10 @@ colonnade shadow, so the albedo shade term has nothing left to darken.
 
 ## cam06 aerial — the term doing its job, on the backdrop only
 
-| box | luma B → A | Δ | sat B → A |
-|---|---|---|---|
-| whole frame | 0.3910 → 0.3943 | +0.86 % | 0.350 → 0.349 |
-| top row `0 0 1920 360` | 0.4236 → 0.4339 | **+2.43 %** | 0.290 → 0.285 |
-| top-left `0 0 640 240` | 0.4276 → 0.4479 | **+4.75 %** | 0.269 → 0.263 |
-| r1c3 `1280 0 1920 360` | 0.3723 → 0.3824 | +2.70 % | 0.336 → 0.333 |
+Luma B → A: whole frame 0.3910 → 0.3943 (+0.86 %); top row `0 0 1920 360` 0.4236 → 0.4339 (**+2.43 %**); top-left
+`0 0 640 240` 0.4276 → 0.4479 (**+4.75 %**); r1c3 `1280 0 1920 360` 0.3723 → 0.3824 (+2.70 %). Saturation falls
+slightly in each (0.290 → 0.285, 0.269 → 0.263, 0.336 → 0.333). The lift lands where it was aimed and no
+architecture box is in these frames.
 
 ## Is the backdrop change visible at 4K in the hero?
 
