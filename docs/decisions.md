@@ -949,3 +949,11 @@ reference is MORE blue-violet than the viewer (b* shade_pier -5.01 vs the viewer
 the source is the direct NNE sky fill in the Phase 5 lighting (QA-08-2 / QA-09-6, never closed). The viewer is at parity; a fix is upstream (sky fill + rotunda lightmap
 re-bake), a Phase 5 look change with a full lightmap chain. Lead's recommendation: NOT in Phase 8 — the closing comparison is viewer-vs-Cycles and Cycles-vs-photo, and this
 moves both; the user decides whether it becomes a later item. Item (d): the translucency map copies the albedo's glTF sampler wrap (eager and lazy roots) for 8e.
+
+## 2026-09-19 · 8e built (phase8e-export eed90be): vertical-only UV scale kv = 2.5 (willow 1.5), ku = 1.0 — the isotropic k = 2 would have thinned every far crown by a third
+Measured per species at 40 m: an isotropic k = 2 keeps only 0.62-0.76x of the crown's alpha coverage because the card's u window is the cluster texture's dense core and
+widening it pulls in the faded rim; ku = 1 / kv = 2.5 keeps coverage at 0.96-1.00x for the same blade size (p90 11-14 px, max 14-20 px, against 17-22 / 22-28 shipped;
+kv = 3.0 is the next step, a u factor is not). Accepted as the decision in place of the analysis' k = 2.0. Route: env_trees.glb's leaf samplers patched to REPEAT, materials
+not renamed (renaming loses the tinted albedo in applyFoliageTextures and duplicates ~8-10 MB on mobile); the tier-0 env_t0 glbs carry the same materials and stay at
+clamp, which is a no-op because every leaf UV there is inside 0-1 (decoded). Block 3 699 324 -> 3 856 412 B (+4.2 %, the UV stream); tier 0 byte-identical; instance rows,
+walk-up order and vertex AO unchanged. One viewer dependency (albedo needsUpdate beside the wrap copy) given to the phase8a-viewer engineer.
