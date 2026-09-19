@@ -168,7 +168,26 @@ def pixels(boxes):
 # the card's screen size, apply the material's alphaCutoff, and measure the surviving blob width -
 # that is the blade QA measured, predicted from the texture alone.
 CUTOFF = {"leaves_broadleaf": 0.5, "needles_cypress": 0.45,
-          "leaves_eucalyptus": 0.5, "needles_pine": 0.42}
+          "leaves_eucalyptus": 0.5, "needles_pine": 0.42,
+          # the shrub/reed cards (env.glb LOD2 + env_shrubs.glb LOD1), read from those glbs' materials
+          "leaves_shrub": 0.5, "reeds": 0.5}
+# ---------------------------------------------------------------- 8a item 3: the shrub / reed cards
+# Card W x H in PROTOTYPE metres and the median instance scale, measured the same way as CARD above but
+# on export/out/gate1/{env,env_shrubs}.gltf and export/out/gate3/instance_rows{,_shrub_lod1}.json. The
+# UV window is the WHOLE texture (u 0-1, v 0-1) for every one of them, unlike the trees' centred strip.
+SHRUB_CARD = {
+    "LOD2": {"MAT_shrub": (0.33, 0.43, "leaves_shrub", 1.13),
+             "MAT_shrub_light": (0.34, 0.46, "leaves_shrub", 1.10),
+             "MAT_shrub_dry": (0.08, 0.39, "leaves_shrub", 1.19),
+             "MAT_reeds": (0.06, 0.23, "reeds", 1.08)},
+    "LOD1": {"MAT_shrub": (0.16, 0.21, "leaves_shrub", 1.13),
+             "MAT_shrub_light": (0.17, 0.23, "leaves_shrub", 1.10),
+             "MAT_shrub_dry": (0.09, 0.22, "leaves_shrub", 1.19),
+             "MAT_reeds": (0.03, 0.23, "reeds", 1.08)}}
+# px per metre at 1 m for the two stations the relight tiles named, from scripts/qa_cameras.py's lens on
+# a 36 mm sensor at 1920x1080 (gate7_cam.json `perStation.size`): px/m = H / (2 d tan(vfov/2)), and
+# tan(vfov/2) = (18/lens) * (1080/1920).
+STATION_PPM_1M = {"cam03_colonnade_walk(18mm)": 960.0, "cam05_south_lawn(35mm)": 1866.6}
 UV_U = (0.075, 0.925)
 # Measured off export/out/gate1/env_trees.gltf (positions + UVs decoded from env_trees.bin, one card =
 # 2 tris / 4 verts): the card's world W x H in PROTOTYPE space and the u window it samples.  v is 0-1
@@ -326,6 +345,30 @@ def cards(dist_m=40.0, factors=((1, 1), (1, 1.5), (1, 2.5), (1, 3), (2, 2)), sol
     return rows
 
 
+def shrubs(cases=(("LOD2", "cam05_south_lawn(35mm)", 25.0), ("LOD2", "cam05_south_lawn(35mm)", 54.0),
+                  ("LOD2", "cam03_colonnade_walk(18mm)", 25.0), ("LOD2", "cam03_colonnade_walk(18mm)", 54.0),
+                  ("LOD1", "cam05_south_lawn(35mm)", 3.0)),
+           factors=(1, 2, 3, 4)):
+    """8a item 3: the same measurement on the SHRUB cards. Their UV window is the whole texture, so an
+    isotropic k is coverage-neutral by construction (it repeats what the card already samples) - no
+    cutoff solve is needed, unlike the trees."""
+    rows = []
+    for lod, station, dist in cases:
+        ppm = STATION_PPM_1M[station] / dist
+        for mat, (w, h, tex, sc) in SHRUB_CARD[lod].items():
+            wp, hp = w * sc * ppm, h * sc * ppm
+            base = blade(tex, 1.0, 1, 1, wp, hp)
+            r = dict(lod=lod, station=station, dist_m=dist, material=mat, tex=tex,
+                     card_m=[round(w * sc, 3), round(h * sc, 3)], card_px=[round(wp, 1), round(hp, 1)],
+                     k={})
+            for k in factors:
+                b = blade(tex, 1.0, k, k, wp, hp)
+                b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3) if base["coverage"] else None
+                r["k"][str(k)] = b
+            rows.append(r)
+    return rows
+
+
 def texture(sizes=(53, 40, 26, 20, 13, 9, 6)):
     out = []
     for name, cut in CUTOFF.items():
@@ -343,6 +386,22 @@ def texture(sizes=(53, 40, 26, 20, 13, 9, 6)):
 
 
 def main():
+    if "--shrubs" in sys.argv:
+        rows = shrubs()
+        print("Shrub / reed cards: run width p90 / thickness p90 / coverage ratio, capture px, "
+              "isotropic UV scale k (the window is already the whole texture, so k is coverage-neutral)")
+        for r in rows:
+            print("%-6s %-26s %5.1f m %-16s card %5.1fx%5.1f px | " % (
+                r["lod"], r["station"], r["dist_m"], r["material"], *r["card_px"])
+                + " | ".join("k=%s %5.1f/%4.1f/%s" % (k, v["run_width_p90_px"], v["thickness_p90_px"],
+                                                      ("%.2f" % v["coverage"]) if k == "1"
+                                                      else ("%.2fx" % v["coverage_ratio"]))
+                             for k, v in r["k"].items()))
+        out = ROOT / "export/out/p8e"
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "shrub_probe.json").write_text(json.dumps(dict(cards=SHRUB_CARD, rows=rows), indent=1))
+        print(f"[p8e] wrote {out / 'shrub_probe.json'}")
+        return
     rows = geometry()
     outdir = ROOT / "export/out/p8e"
     outdir.mkdir(parents=True, exist_ok=True)
