@@ -174,3 +174,19 @@ Residual 1 of the 6b list is closed pending the phone's own frame rate from the 
 - Safari-engine desktop render: WebKit 26.6 (Playwright's WebKit build; Safari.app itself could not be captured — screen recording is not granted to the terminal and
   safaridriver needs the user's password) at 1920x1080 after 120 s draws the full 6c look with the reflection and the formatted HUD, matching the Chrome capture —
   renders/web/user/webkit26_hero_1920x1080_20260918.jpg. A Safari.app screenshot by the user would be a confirmation, not a requirement.
+
+# Phase 7 — foliage look on the live site (lead, 2026-09-19; QA 19: PHASE 7 DONE WITH RESIDUALS, 6253d32; decisions.md "PHASE 7 DONE WITH RESIDUALS")
+Live: https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev (deploy 7). What changed (viewer only, 91f08b4): premultiplied impostor edge reconstruction + alpha-to-coverage; a 0.35 floor on the stacked crown darkening;
+near-tree mesh switch 80 m; mobile far-tree meshes within 45 m, LOD1 shrubs within 25 m, LOD2 walk-up set, eased impostor darkening.
+| item | before (gate5b/c) | after (gate7) |
+|---|---|---|
+| hero crown p10 vs Cycles | 0.564x | 0.894x |
+| cam02 crown centre/edge (ref 0.364) | 0.368 | 0.397 |
+| desktop scores 01-06 | 3.78 / 3.25 / 2.63 / 2.88 / 2.94 / 2.83 | 3.78 / 3.25 / 2.63 / 2.88 / 3.06 / 2.83 |
+| mobile scores 01-06 | 2.9 / 3.0 / 2.3 / 2.7 / 2.5 / 2.4 | 3.2 / 3.3 / 2.3 / 2.7 / 2.8 / 2.4 |
+| mobile resident | 499.7 MB | 561.9 MB (ceiling 700) |
+| desktop first frame on the URL | 46 808 904 B | 46 811 106 B |
+| desktop 1440p vs idle baseline | — | +0.8 / +0.1 / +1.0 / +2.0 / +2.7 / +2.2 ms |
+Known issues (owners): 1. far-tree cards opaque where Cycles shows sky through twigs (bake/export: atlas alpha). 2. shrub/reed card density (export, Blender; deferred).
+3. crown floor overshoot at cam02/cam05 (viewer). 4. station 5 frame 0.976x (carried). 5. mobile LOD2 leaf cards too large at 37 m; shaded colonnade blue-violet on mobile
+(export / viewer). 6. walk-up LOD1 set lit brighter than its impostor (export/bake). Every earlier residual not named here stands.

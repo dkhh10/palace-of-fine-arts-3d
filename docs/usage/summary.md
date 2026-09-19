@@ -1,6 +1,6 @@
 # Token usage summary (from Claude Code transcripts)
 
-Generated 2026-09-18T21:33:58Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (14 main sessions, 188 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
+Generated 2026-09-19T07:57:13Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (14 main sessions, 191 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
 
 Also in this folder: `daily.json` and `sessions_all.json` are raw `ccusage` exports (account-wide, every project, its own price table; `sessions_all.json` has no project field, which is why this script exists). `make_timeline.py` renders `docs/timeline.html` from `sessions.json`.
 
@@ -19,12 +19,12 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 
 | model | requests | input k | output k | thinking k (of output) | cache write 1h k | cache write 5m k | cache read k | cost USD |
 |---|---|---|---|---|---|---|---|---|
-| claude-opus-5 | 14673 | 29 | 10,461 | 4,576 | 0 | 114,795 | 2,815,768 | 2,387.02 |
-| claude-fable-5-1 | 2374 | 58 | 2,324 | 772 | 10,355 | 11,613 | 545,415 | 605.40 |
+| claude-opus-5 | 14955 | 30 | 10,504 | 4,584 | 0 | 115,702 | 2,866,183 | 2,418.97 |
+| claude-fable-5-1 | 2409 | 59 | 2,353 | 780 | 10,757 | 11,613 | 558,978 | 618.32 |
 | claude-sonnet-5 | 100 | 0 | 54 | 28 | 0 | 492 | 7,376 | 3.24 |
 | <synthetic> | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0.00 |
 
-**Grand total nominal cost: $2,995.66**
+**Grand total nominal cost: $3,040.53**
 
 ## Sessions
 
@@ -43,7 +43,7 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 | 11 | 87d95e57 | 2026-09-16T11:51 | 2026-09-16T15:45 | 3.89 | 181 | 12 | 217.93 | opus-5 199, fable-5-1 19 |
 | 12 | 5b1d192d | 2026-09-16T20:31 | 2026-09-17T06:56 | 10.41 | 167 | 11 | 179.50 | opus-5 154, fable-5-1 25 |
 | 13 | 4133edbe | 2026-09-17T06:56 | 2026-09-17T11:12 | 4.27 | 149 | 18 | 259.54 | opus-5 239, fable-5-1 18, sonnet-5 2 |
-| 14 | 3ada03f9 | 2026-09-17T21:16 | 2026-09-18T21:33 | 24.28 | 189 | 8 | 207.54 | opus-5 175, fable-5-1 32 |
+| 14 | 3ada03f9 | 2026-09-17T21:16 | 2026-09-19T07:56 | 34.66 | 226 | 11 | 252.41 | opus-5 207, fable-5-1 45 |
 
 ## Cross-check: Claude Code internal cost-state per session
 
@@ -64,7 +64,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 11 87d95e57 | 293.52 | 5.3 | 1.14 | 4532/434 | 217.93 |
 | 12 5b1d192d | 258.74 | 6.39 | 3.02 | 5425/341 | 179.50 |
 | 13 4133edbe | 338.31 | 6.03 | 0.99 | 4989/669 | 259.54 |
-| total | 3,489.85 | | | | 2,995.66 |
+| total | 3,489.85 | | | | 3,040.53 |
 
 ## Daily nominal cost (this project only, UTC)
 
@@ -78,7 +78,8 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 2026-09-15 | 521.86 | 54.86 | 467.00 | 0.00 |
 | 2026-09-16 | 453.91 | 54.95 | 398.97 | -0.00 |
 | 2026-09-17 | 325.17 | 37.70 | 285.13 | 2.34 |
-| 2026-09-18 | 203.58 | 28.53 | 175.05 | -0.00 |
+| 2026-09-18 | 203.96 | 28.91 | 175.05 | -0.00 |
+| 2026-09-19 | 44.50 | 12.55 | 31.95 | 0.00 |
 
 ## Subagents per session (by model, count and cost)
 
@@ -95,7 +96,7 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 - Session 11 (87d95e57): 12 x opus-5 ($199). Types: {'general-purpose': 12}
 - Session 12 (5b1d192d): 11 x opus-5 ($154). Types: {'general-purpose': 11}
 - Session 13 (4133edbe): 16 x opus-5 ($239); 2 x sonnet-5 ($2). Types: {'general-purpose': 18}
-- Session 14 (3ada03f9): 7 x opus-5 ($175); 1 x sonnet-5 ($0). Types: {'general-purpose': 8}
+- Session 14 (3ada03f9): 10 x opus-5 ($207); 1 x sonnet-5 ($0). Types: {'general-purpose': 11}
 
 ## Agents dispatched by role (subagent transcripts, classified from their spawn descriptions)
 
@@ -114,10 +115,10 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 11 | - | - | - | - | - | 1 ($103) | 2 ($17) | 7 ($21) | - | 2 ($57) | 12 ($199) |
 | 12 | - | - | - | - | - | - | 1 ($7) | 3 ($6) | - | 7 ($141) | 11 ($154) |
 | 13 | 1 ($1) | - | - | - | - | - | 2 ($19) | 3 ($7) | - | 12 ($215) | 18 ($241) |
-| 14 | - | - | - | - | - | - | 2 ($18) | 2 ($5) | - | 4 ($152) | 8 ($176) |
-| all | 5 ($25) | 12 ($126) | 9 ($126) | 12 ($246) | 12 ($299) | 16 ($418) | 24 ($196) | 60 ($127) | 2 ($6) | 36 ($1031) | 188 ($2601) |
+| 14 | - | - | - | - | - | - | 3 ($24) | 3 ($7) | - | 5 ($177) | 11 ($208) |
+| all | 5 ($25) | 12 ($126) | 9 ($126) | 12 ($246) | 12 ($299) | 16 ($418) | 25 ($201) | 61 ($129) | 2 ($6) | 37 ($1055) | 191 ($2633) |
 
-Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $25, session 13 $18, session 14 $32.
+Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $25, session 13 $18, session 14 $45.
 
 ## Subagent list (cost >= $5)
 
@@ -228,5 +229,7 @@ Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, s
 | 13 | ab1172b84 | general-purpose | opus-5 | 09-17T10:16 | 09-17T10:26 | 41 | 7,641 | 5.77 | Delta review phase6-viewer r3 |
 | 14 | a315c5315 | general-purpose | opus-5 | 09-18T15:01 | 09-18T17:25 | 139 | 172,887 | 107.84 | 6b viewer: progressive load + deploy |
 | 14 | a7e959e61 | general-purpose | opus-5 | 09-18T15:01 | 09-18T17:09 | 62 | 60,804 | 42.24 | 6b export: tiers + mobile manifest |
+| 14 | a27cf99ae | general-purpose | opus-5 | 09-19T06:52 | 09-19T07:39 | 20 | 39,561 | 24.21 | Phase 7 viewer: foliage look |
 | 14 | aba2901e8 | general-purpose | opus-5 | 09-18T17:22 | 09-18T17:48 | 70 | 15,446 | 10.96 | QA round 18b: closing 6b round |
 | 14 | ad5ef488d | general-purpose | opus-5 | 09-18T16:49 | 09-18T17:06 | 21 | 11,004 | 7.44 | QA round 18: Gate 5 on the URL |
+| 14 | ae3782120 | general-purpose | opus-5 | 09-19T07:44 | 09-19T07:56 | 18 | 8,326 | 5.58 | QA round 19: Phase 7 closing |

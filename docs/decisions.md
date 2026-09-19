@@ -796,3 +796,14 @@ at the hero. Mobile: (D) the user's close-up crowns were far-tree cards at 37-40
 nearest 128 m away): new tier field farTreeMesh 45 on mobile, walkupMesh 0 (the LOD2 set, which carries vertex AO and does not over-brighten), LOD1 shrubs 25 m,
 impostor darkening eased; resident 561.9 MB (ceiling 700), station 1 340 draws / 4.17 M tris, download +4.1 MB in tier 2, tier 0 unchanged to the byte. The
 alpha-to-coverage-at-0.71-ratio hypothesis was tested and ruled out. Review r1 MERGE WITH FIXES, all applied. Shrub card density (export) remains deferred.
+
+## 2026-09-19 · PHASE 7 DONE WITH RESIDUALS (QA 19, 6253d32) — the user's two foliage defects are closed on the live site
+Desktop: the jagged/dithered far-tree silhouettes and the near-black crown blotches are gone at 100 % (hero crown p10 0.894x of Cycles, cam02 centre/edge 0.397 held,
+halo toward the reference at all three boxes); scores 3.78 / 3.25 / 2.63 / 2.88 / 3.06 / 2.83 (station 5 +0.12). Mobile: crowns at 37-40 m are meshes with branches and
+sky through them; resident 561.9 MB; scores 3.2 / 3.3 / 2.3 / 2.7 / 2.8 / 2.4 (from 2.9 / 3.0 / 2.3 / 2.7 / 2.5 / 2.4). Perf inside +3 ms at every station vs the
+idle baseline; payload 46 811 106 B before the first frame (+2.2 kB of bundle, no new tier-0 asset). Residuals, owners: (1) far-tree cards are pale opaque masses where
+Cycles shows sky through the twigs — now the dominant far-tree fault (QA 17 residual 4; atlas alpha at the crown top, BAKE/EXPORT); (2) shrub/reed card density
+unchanged by decision (EXPORT, Blender); (3) the crown floor overshoots where it was not fitted (cam02 crown p10 2.49x, cam05 1.30x of the reference; a per-station
+or per-prototype floor, VIEWER); (4) station 5's frame stays 0.976x (not foliage; carried from 6c); (5) mobile: LOD2 leaf cards read too large at 37 m and the shaded
+colonnade stone reads blue-violet (present since 6c on mobile; EXPORT card scale / VIEWER probe tint); (6) the walk-up LOD1 set is lit brighter than the impostor
+it replaces (far-tree mesh lighting, EXPORT/BAKE). Phase 7 stops here per the one-round rule; the next foliage step, if any, is the export/Blender work in (1), (2), (5).
