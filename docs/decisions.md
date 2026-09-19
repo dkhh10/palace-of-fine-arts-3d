@@ -957,3 +957,11 @@ kv = 3.0 is the next step, a u factor is not). Accepted as the decision in place
 not renamed (renaming loses the tinted albedo in applyFoliageTextures and duplicates ~8-10 MB on mobile); the tier-0 env_t0 glbs carry the same materials and stay at
 clamp, which is a no-op because every leaf UV there is inside 0-1 (decoded). Block 3 699 324 -> 3 856 412 B (+4.2 %, the UV stream); tier 0 byte-identical; instance rows,
 walk-up order and vertex AO unchanged. One viewer dependency (albedo needsUpdate beside the wrap copy) given to the phase8a-viewer engineer.
+
+## 2026-09-19 · 8e decision 2: isotropic k = 2 with per-material alpha cutoffs solved for coverage (`iso_cut`) replaces the vertical-only kv 2.5
+The review (docs/reviews/phase8_export_r2_review.md) showed kv-only shrinks blade thickness, not width, and QA 19's complaint was width. Measured at 40 m (probe committed,
+911af2d): kv 2.5 leaves run width p90 at 36.2 / 26.7 / 23.9 / 30.9 / 22.5 / 21.1 / 12.6 px (unchanged from k = 1); isotropic k = 2 halves it but drops coverage to
+0.62-0.76x; isotropic k = 2 with the leaf materials' alphaCutoff solved per material (broadleaf 0.50 -> 0.27, cypress 0.45 -> 0.21, eucalyptus 0.50 -> 0.10, pine 0.42 ->
+0.12) gives width 18.4 / 23.9 / 21.1 / 25.3 / 22.5 / 19.7 / 12.6 px at coverage 0.93-1.07x, and 0.82-1.03x at the 2.5 m mobile walk-up (no fattening close up). A blade's
+width at 40 m is its card's width for every species but the broadleaf, whose 40 px card is the crown in the user's orbit frames (35.7 -> 18.4 px). Adopted: `iso_cut` as
+UV_TILE_MODE default (`kv25` and `off` kept for the A/B). Re-export ≈ 1 min of Blender, no GPU, in the next Blender window; the shipped env_trees.glb is kv 2.5 until then.
