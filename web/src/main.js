@@ -407,7 +407,15 @@ function setupTiers() {
 	let envTier = 0, impTier = 0;
 	for ( const g of manifest.glbs ) if ( g.cls === 'env' ) envTier = Math.max( envTier, g.tier );
 	const protos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.prototypes ) || {};
-	for ( const p of Object.values( protos ) ) impTier = Math.max( impTier, tierOf( p.albedo ), tierOf( p.normalDepth ) );
+	// albedo2k and the band atlas count: the 2K variant and the band are tier-1 files whose tier-0
+	// stand-in is the 1K atlas, so leaving them out made "the impostor pass waits for its atlases"
+	// true only by accident of the 1K rows (phase8_viewer_r1_review carry).
+	const bandProtos = ( manifest.gate3 && manifest.gate3.impostors && manifest.gate3.impostors.band
+		&& manifest.gate3.impostors.band.prototypes ) || {};
+	for ( const p of Object.values( protos ) )
+		impTier = Math.max( impTier, tierOf( p.albedo ), tierOf( p.normalDepth ),
+			p.albedo2k ? tierOf( p.albedo2k ) : 0 );
+	for ( const b of Object.values( bandProtos ) ) impTier = Math.max( impTier, tierOf( b.albedo ) );
 	sceneCompletionTier = Math.max( envTier, impTier );
 	const pf = manifest.gate3 && manifest.gate3.probe ? manifest.gate3.probe.faces : null;
 	probeTier = pf ? Math.max( ...pf.map( ( u ) => tierOf( u ) ) ) : 0;

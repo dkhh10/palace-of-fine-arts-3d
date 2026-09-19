@@ -94,3 +94,6 @@ renders/web/p7*_cam.json
 renders/web/p7net_6c.json
 renders/web/p7net_p7.json
 !renders/web/960/*
+
+# Phase 8: a capture's camera sidecar carries no measurement (the perf jsons do), and one is 200 kB.
+renders/web/*_cam.json

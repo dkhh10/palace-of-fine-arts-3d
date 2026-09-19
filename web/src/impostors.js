@@ -153,7 +153,7 @@ const fragmentShader = /* glsl */`
 	// in radians (up to four; only the first 'rows' of them are read).
 	uniform vec4 pfaBand;
 	uniform vec4 pfaBandEl;
-	// Phase 8b — ( magLo, magHi, coverage quantum q, gamma on the coverage ).  See the header.
+	// Phase 8b — ( magLo, magHi, the RAW-COVERAGE SHARE, the RAMP scale ).  See the header.
 	uniform vec4 pfaImpCov;
 	#ifdef PFA_FOG
 	uniform vec3 fogColor;
@@ -498,9 +498,11 @@ export function parseImpEdge( v, msaa = true ) {
  * Phase 7 frame exactly; `"1"` / `"on"` / null is the default; `"lo[,hi]"` sets the magnification
  * band in SCREEN PX PER ATLAS TEXEL over which the Phase 7 ramp hands over to the coverage path
  * (default 1 -> 2: a texel that covers one pixel or less is minified and keeps Phase 7's ramp, one
- * that covers two or more is magnified and spends its alpha).  `samples` is the target's MSAA count,
- * which sets the coverage quantum the ordered dither works against; with no alpha-to-coverage mask
- * to write into, the quantum is 1 and the dither is the binary fallback.
+ * that covers two or more is magnified and spends its alpha).  A third field is the RAW-COVERAGE
+ * SHARE mixed into the magnification-scaled ramp and a fourth scales that ramp's width, so
+ * `?impcov=1,2,0.25` is "hand over between 1 and 2 px per texel, spend a quarter of the alpha".
+ * `samples` is the target's MSAA count: it only decides WHERE the fraction is spent - the hardware
+ * coverage mask when one is written, the ordered dither when none is.
  */
 // SWEPT, not chosen (web/README.md "Phase 8b"): share 0 / 0.1 / 0.15 / 0.2 / 0.25 / 0.5 / 1 at
 // stations 1, 2 and 5.  0.15 is the largest share at which every QA-17 crown box's centre/edge

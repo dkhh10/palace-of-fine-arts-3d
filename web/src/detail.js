@@ -305,6 +305,13 @@ export function patchDetailMaterial( mat, tex, rule, opts = {} ) {
  * @returns {Promise<object>} report
  */
 export async function applyDetail( { scene, detail, loadTexture, note, projection = 'dominant', strength = 1.0, normalScale = 1.0, lodBias = 0.0, gain = 1.0, debug = 0, synthetic = false } ) {
+	// A typo must never take the frame with it AND must never be silent: an unrecognised
+	// ?detailproj= reads in a capture as "the A/B did nothing" rather than "the A/B never ran"
+	// (round-1 review 7, the same rule ?impedge= and ?impcov= follow).
+	if ( projection !== 'dominant' && projection !== 'objxy' ) {
+		note( `?detailproj=${projection} is not a value (dominant | objxy): using dominant, the default` );
+		projection = 'dominant';
+	}
 	const report = { projection, strength, normal_scale: normalScale, sets_loaded: 0, materials: 0, textures: 0, bytes: 0,
 		means: {},
 		by_set: {}, unmatched_rules: [], applied: [], failed: [], empty: [], fallbacks: [], stats: {} };

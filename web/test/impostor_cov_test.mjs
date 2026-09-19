@@ -173,8 +173,10 @@ for ( const combo of [ {}, { PFA_IMP_COV: '' }, { PFA_IMP_COV: '', PFA_IMP_A2C: 
 	}
 	check( new Set( names ).size === names.length,
 		`${name}: no declaration shadows another in main's scope (${names.length} declarations)` );
-	// the dither is the fallback: it may only appear where no coverage mask is written
-	check( ! p.includes( 'pfaBayer4( gl_FragCoord' ) || ! p.includes( '#define PFA_IMP_A2C' ),
+	// The dither is the FALLBACK: it may only survive the preprocessor where no coverage mask is
+	// written. The define is not in the source (three prepends it), so the combination is the truth
+	// — testing the string made this assertion pass for every combination, which is no test at all.
+	check( ! p.includes( 'pfaBayer4( gl_FragCoord' ) || ! ( 'PFA_IMP_A2C' in combo ),
 		`${name}: the ordered dither is the no-mask fallback` );
 	check( p.includes( 'gl_FragColor = vec4( lin, pfaCov );' ), `${name}: the coverage reaches the output` );
 	// no define combination may leave `a` unassigned or assigned twice
