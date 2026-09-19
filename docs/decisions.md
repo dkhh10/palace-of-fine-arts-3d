@@ -828,3 +828,13 @@ the export when it restores them). Decision: (1) export names the 2K albedo/norm
 to the byte; +6.4 MB in tier 1; mobile stays 1K); (2) the viewer samples atlas alpha as coverage under magnification (dither / a2c fed by the atlas alpha, no
 binary cut) — `?impcov=` switch, 0 restores. Rejected: 4K atlas (54 min GPU, 512 MB), compose-side remap (eats the silhouette). Stretch, only if 1+2 miss the
 station-2 crossings target: a 12x3 band atlas at 341 px frames (13 min GPU, 128 MB, +13 MB).
+
+## 2026-09-19 · 8a decision: the shrub lever is LOD2 — clumped AND densified; the Gate 1 ENV placed-triangle budget gets a logged exception
+The ENV builder (docs/briefs/phase8a_env_report.md, 496d880): the web export draws the LOD2 shrub set for all 1 379 placements at the stations (the 6c LOD1 set is
+the walk-in only), so the QA-17 shrub boxes at 80-160 m measure LOD2 and the brief's LOD1-only change could not move them; the ENV preview harness cannot measure
+the boxes either (its olive look saturates the leaf mask, the 1280 -> 1920 upscale destroys the hard-edge share) — the measurement comes from the viewer capture
+after export. Delivered: a clump emitter (4-9 cards at four leaf scales, tufted blades), LOD1 unique 17 094 -> 31 268 (1.83x), LOD0 / LOD2 unchanged. Decision:
+apply the clumping at LOD2 (zero triangles) plus the densification `card 3.30 / cover 0.85 / blade 0.24` (unique 3 920 -> ~6 948, placed +~105 k against the frozen
+800 k ENV budget = +13 %, accepted for the hero; the viewer's frame cost is measured after export). Two harness bugs fixed on the way (env_preview --lod, the
+qa_r13 reference root in worktrees). Then: master rebuild + master_delivery, ENV re-export (env groups, shrub LOD1, instance irradiance join by translation),
+tiers, deploy, QA 20 measuring the shrub boxes against the reference photo.
