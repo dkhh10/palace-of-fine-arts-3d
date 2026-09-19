@@ -110,3 +110,6 @@ renders/web/p8a_*.png
 # Phase 8 comparison sheet (scripts/phase8_sheet.py): full-resolution 100% tile crops are
 # regenerable from the source renders + boxes.json; only the 960 px composites are committed.
 renders/qa_comparisons/phase8_tiles/
+# Phase 8 Cycles station references: the 1080p PNGs are 8-9 MB each and regenerable from
+# scripts/p8_cycles_refs.py; the 960 px copies and the composite beside them are committed.
+renders/qa_comparisons/cycles_p8/*.png
