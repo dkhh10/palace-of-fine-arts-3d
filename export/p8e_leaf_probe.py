@@ -385,23 +385,28 @@ def cards(dist_m=40.0, factors=((1, 1), (1, 2.5), (2, 2)), solve_for=("shipped",
 def shrubs(cases=(("LOD2", "cam05_south_lawn(35mm)", 25.0), ("LOD2", "cam05_south_lawn(35mm)", 54.0),
                   ("LOD2", "cam03_colonnade_walk(18mm)", 25.0), ("LOD2", "cam03_colonnade_walk(18mm)", 54.0),
                   ("LOD1", "cam05_south_lawn(35mm)", 3.0)),
-           factors=(1, 2, 3, 4)):
+           factors=None):
     """8a item 3: the same measurement on the SHRUB cards. Their UV window is the whole texture, so an
     isotropic k is coverage-neutral by construction (it repeats what the card already samples) - no
     cutoff solve is needed, unlike the trees."""
+    # the SHIPPED per-material (ku, kv) from export/foliage_uv.py, so this prints the asset's own factors
+    import foliage_uv as fuv
     rows = []
     for lod, station, dist in cases:
         ppm = STATION_PPM_1M[station] / dist
         for mat, (w, h, tex, sc) in SHRUB_CARD[lod].items():
             wp, hp = w * sc * ppm, h * sc * ppm
             base = blade(tex, 1.0, 1, 1, wp, hp)
-            r = dict(lod=lod, station=station, dist_m=dist, material=mat, tex=tex,
+            shipped = fuv.SHRUB_TILE.get(mat, (1.0, 1.0)) if lod == "LOD2" else (1.0, 1.0)
+            r = dict(lod=lod, station=station, dist_m=dist, material=mat, tex=tex, shipped=list(shipped),
                      card_m=[round(w * sc, 3), round(h * sc, 3)], card_px=[round(wp, 1), round(hp, 1)],
                      k={})
-            for k in factors:
-                b = blade(tex, 1.0, k, k, wp, hp)
+            fac = factors if factors is not None else ((1, 1), tuple(shipped), (2, 2), (3, 3))
+            for k in fac:
+                ku, kv = (k, k) if not isinstance(k, tuple) else k
+                b = blade(tex, 1.0, ku, kv, wp, hp)
                 b["coverage_ratio"] = round(b["coverage"] / base["coverage"], 3) if base["coverage"] else None
-                r["k"][str(k)] = b
+                r["k"][f"{ku},{kv}"] = b
             rows.append(r)
     return rows
 

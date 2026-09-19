@@ -2644,8 +2644,11 @@ so nothing ships against a stale layout.
 **8a-3, measured per material** (not claimed): `MAT_shrub` ku2/kv2 on 1 196 cards, `MAT_shrub_light` ku2/kv2
 on 1 822, `MAT_shrub_dry` **ku1/kv2** on 284 (its LOD2 card is 0.89x wide / 1.77x tall against its LOD1 card,
 so an isotropic 2 would have halved its leaf width the wrong way — review r3 finding 7), `MAT_reeds`
-untouched. Coverage at the shipped factors, from `p8e_leaf_probe.py --shrubs`: shrub **1.08x** / shrub_light
-**1.07x** / shrub_dry **1.01x** at the 25 m LOD switch and 1.00x / 1.00x / 1.03x at 54 m. Samplers went REPEAT
+untouched. Coverage **at the shipped factors**, from `p8e_leaf_probe.py --shrubs` (it now reads `SHRUB_TILE`, so its
+default columns are the asset's own): at cam05's 25 m LOD switch shrub **1.08x** (blob 21.7 -> 16.9 px),
+shrub_light **1.07x** (23.8 -> 16.4), shrub_dry at ku1/kv2 **0.98x** (9.8 -> 9.4), reeds 1.00x untouched;
+at 54 m 1.00x (15.4 -> 7.0) / 1.00x (15.4 -> 7.0) / 1.03x (4.2 -> 4.2) / 1.00x; at cam03's 25 m 0.99x /
+0.99x / 1.05x / 1.00x. So the three tiled materials land in **0.98-1.08x**, and nothing was taken on trust. Samplers went REPEAT
 in `env.gltf` for those three materials only (cloned, because sampler 1 is shared with the tree leaf cards)
 and in `env_shrubs.gltf` to match, so the one shared runtime albedo cannot be re-wrapped to CLAMP.
 
