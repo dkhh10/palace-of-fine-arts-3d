@@ -565,7 +565,7 @@ def redwood_screen(colonnade_polys, hall_poly, hall_field=None):
 # 16.9 m point on the wall: the belt reads as just touching the parapet line, which is what the photograph shows.
 # The cap binds on most draws, so the realised heights run 12.0-16.x m (reported per build).
 HALL_BELT_TOP_Z = 16.0
-HALL_BELT_STEP = 7.0          # metres of face per tree: closest packing that is still trees, not a hedge
+HALL_BELT_STEP = 5.5          # metres of face per tree: closest packing that is still trees, not a hedge
 # Species read off ref 169's two bands at 100 %: dark Monterey cypress dominant, blue-gum eucalyptus and Monterey
 # pine mixed through it, a few narrow columnar cypress, redwood for the darkest verticals.  Willow and broadleaf
 # are the SHORE trees and are deliberately absent here.  Every species/seed in `SEEDS` has a baked impostor
@@ -603,6 +603,11 @@ def hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys=()):
     out = []
     carry = 0.0
     idx = skipped = 0
+    # the species mix is DEALT from a shuffled deck, not drawn independently: 29 independent draws left one
+    # eucalyptus out of the whole belt (measured, first build), which is not the mix ref 169 reads.
+    deck = list(HALL_BELT_MIX)
+    rnd.shuffle(deck)
+    deck_i = 0
     for i in range(n):
         a, b = Vector(poly[i]), Vector(poly[(i + 1) % n])
         d = b - a
@@ -627,7 +632,11 @@ def hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys=()):
             if blocked(p.x, p.y):
                 skipped += 1
                 continue
-            sp = HALL_BELT_MIX[rnd.randrange(len(HALL_BELT_MIX))]
+            if deck_i >= len(deck):
+                rnd.shuffle(deck)
+                deck_i = 0
+            sp = deck[deck_i]
+            deck_i += 1
             z0 = terrain_height(p.x, p.y) - 0.15         # `build_all` grounds a tree at terrain - 0.15
             h = min(rnd.uniform(12.0, 19.0), HALL_BELT_TOP_Z - z0)
             if h < 8.0:                                  # ground this high would make it a bush, not a belt
