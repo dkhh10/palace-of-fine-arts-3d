@@ -1240,6 +1240,21 @@ above), so `gate12m` byte-identity is *expected to break* and has to be re-measu
 means `?impq=0` restores the Phase 8b **coverage path**, not the Phase 8b commit byte for byte. The
 wording is now that, in the README, `impostors.js`, `main.js` and the test.
 
+### Carries out of this section (r1 review 8-14) — listed, not built
+
+Findings 1-7 of `docs/reviews/phase9_viewer_r1_review.md` are closed in the branch. These stay open;
+each line is the correction itself, so nothing above is left standing on a wrong number.
+
+| # | carry | where it bites |
+|---|---|---|
+| 8 | The fix reaches the **impostor** materials only. `foliage.js:862` turns `alphaToCoverage` on for every near-tree / card MASK material on the same 4x target, and those write the hardware mask **unquantised**. | Out of scope for QA 21's far crowns — but if the capture still shows a rim on a *near* leaf card, that is where it comes from. |
+| 9 | `pfaCovQ` is the COMPOSER's sample count (`main.js:1040`), and the same material also draws into the planar reflection; `water.js:302` builds the Reflector **without** `multisample`, taking three's own default of 4. The two agree by coincidence of two independent defaults and **nothing asserts it**. | A finer reflection target (8) stays exact; a coarser one (2) puts the reflection back on today's behaviour, never worse. The hardening is one line — pass `multisample: 4`, or take the min of the two — and is not taken here. |
+| 10 | The **discard boundary moved**: `quantise( 0.124 ) = 0` (`impostor_rim_test.mjs:70`), so a sub-⅛ fringe fragment is dropped instead of lighting one sample somewhere in the 2x2 — a silhouette erosion of up to half a sample. | The hero's crossings figure (cam01 11.97 against Cycles' 11.73, QA 21 §1) is precisely a silhouette-crossing count, so the capture window owes `export/p8_atlas_probe.py viewer` on cam01, not only the rim index and the MAE. |
+| 11 | **Cost line, corrected.** The dither's levels are `N + 1` **per pixel** (5 at `N = 4`) spread over a 2x2 block, roughly 17 across the block; the "`2N + 1`" above is derived nowhere and should be read as "more levels, spatially". And "0.02 of a step" is `impostor_rim_test.mjs:115-117`'s **0.02 in coverage units**, i.e. 0.08 of a 0.25 step. | Doc only; no number the fix rests on changes. |
+| 12 | **The elimination list is one term short.** The other genuinely per-pixel term in this shader is the LOD-dissolve `pfaHash( gl_FragCoord.xy )` discard (`impostors.js:305`). It is ruled out twice by the data — a hash is not an ordered period-2 pattern, and `vPfaFade` is 1 on every far crown at a station, so the discard is skipped — but it was not named. | And the competing mechanism the offline model *assumes* away: `dFdx`/`dFdy` are taken to be coarse (per-quad), while ES 3.0 permits a **fine** per-pixel implementation. If the rim survives the capture, that is the next suspect, and `p9v_rim.py` hard-codes the coarse model. |
+| 13 | **Report nit.** With no mask `parseImpQuant` returns `samples: 0`, so an explicit `?impq=0` on a non-MSAA target prints "not asked" rather than "off"; and `report.quantise.samples` carries the target's count even when the switch is off. | A sidecar or gate must read `__pfaInfo.impostors.quantise.on`, **not** `.samples`. |
+| 14 | **Process.** The five r1 commits carry `Co-Authored-By: Claude Fable 5.1` while the Phase 6 casting puts the viewer builder on Opus 5. | For the lead to confirm; the mechanism argument is the deliverable, so which model produced it matters. r2's commits (this round) are Opus 5. |
+
 ## Phase 8b fix round (QA 20 carries), 2026-09-19
 
 Three items from `docs/briefs/phase8b_viewer_fix.md`. Everything below is measured on this Mac
