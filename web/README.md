@@ -973,6 +973,13 @@ blend, alpha test 0.33 ... 16/16 atlas(es) loaded, 8.4 MB declared
 branch masses**. At the hero, 200 % (`p9band_cam01_crown_200.png`), the crown reads as leaf clumps
 against the balustrade and **the residual dot texture is gone** — the share never engages there.
 
+**The scripts behind the two tables below** (phase8_viewer_r2_review carry 6b: they named none).
+The crossings and the crown boxes are `export/p8_atlas_probe.py viewer <tagA> <tagB>` read against
+`renders/previews/qa/round13_0N_*_cycles.png`; the perf line and the resident figure are
+`web/tools/p8_perf_table.py <tag>_perf.json` over the `*_perf.json` sidecars `web/tools/screenshot.mjs`
+writes. `resident_mb()` reads `total_bytes` (it used to sum every `*_bytes` key, `total_bytes`
+included, which is the 3553.3 / 1862.9 double count r2 finding 2 caught).
+
 | capture | crossings cam01 / 02 / 05 | cam01 leaf % (22.2) | cam01 c/e (0.852) | cam02 c/e (0.364) | cam02 level (1.00x) | cam05 c/e (0.960) |
 |---|---|---|---|---|---|---|
 | 2K + 0.15 | 7.99 / 6.97 / 8.53 | 24.1 | 0.566 | 0.434 | 1.09x | 0.910 |
@@ -1107,6 +1114,151 @@ Regression, six stations at 1920x1080, `p8cbase` (`?detailproj=objxy`) against `
 Every station is touched (the layer is on every baked material) but only cam03 moves materially, and
 its whole-frame luma moves TOWARD the reference. No other station's luma changes by more than
 0.001x.
+
+## Phase 9 item 1 — the dotted rim on the far-crown silhouettes (`?impq=`), 2026-09-20
+
+QA 21 item 1 / residual 1, carried through QA 24 ("back at its gate10 level"): a **period-2, one-to-
+two-pixel dotted rim** on the far-crown silhouettes against the sky at stations 2 and 5 at 100 %
+(tiles `gate9_cam02_r1c3`, `sky_05_left_crown`, `z6_05_left` at 600 %), which the coverage share
+cannot reach — QA 21 §2c records stations 1 and 5 as byte-identical across share 0 / 0.10 / 0.15 /
+0.25 / 0.40, so no share value touches it.
+
+**The measure.** `web/tools/p9v_rim.py` (no Chrome, no Blender, no GPU). The **checkerboard index**
+is the projection of a box's high-pass residual on the `(x + y)` parity sign over its rim pixels
+only, divided by that residual's rms: 0 = no screen-space checkerboard, 1 = a pure one. It is the
+same number in all three parts of the argument, so the capture, the re-implementation and the model
+are directly comparable.
+
+### 1. What the delivered frames say (`gate12`, 1920x1080)
+
+| box | rim px | checkerboard index | amplitude / box contrast |
+|---|---|---|---|
+| 05 left crown (sky behind) | 2330 | **0.264** | 0.028 |
+| 02 right cypress (sky behind) | 1710 | **0.369** | 0.043 |
+| 01 hero crown (**building** behind, control) | 2998 | 0.080 | 0.008 |
+
+A checkerboard locked to the **screen** grid, twice the control's amplitude at station 5 and four
+times it at station 2 — not to the atlas, the card or the silhouette.
+
+### 2. It is not anything this viewer computes
+
+`p9v_rim.py` re-implements the whole fragment path over the **real 4096x1024 band-atlas texels**
+(`export/out/gate3/band/band_ENV_tree_cypress_column_s2_LOD1_albedo_4096.png`): the premultiplied
+8-tap reconstruction, `fwidth` on the 2x2 quad, the Phase 7 ramp, the Phase 8b magnification ramp
+and the share. The `pfaCov` the shader hands over scores **0.004** minified (0.5 screen px per
+texel, the station-5 regime, `magT = 0`) and **0.007** magnified (2.2 px per texel, station 2,
+`magT = 1`). It cannot score more: every derivative in that path is a per-**quad** quantity, so it
+is constant across the 2x2 a period-2 checkerboard alternates within. The other candidates go the
+same way — the atlas carries **no mips** (`generateMipmaps = false`, `LinearFilter`, anisotropy 1),
+and the 4x4 Bayer cell is the **no-mask fallback** and is not even compiled when a mask is written
+(the `gate12` boot note: `resolved by the 4-sample coverage mask`).
+
+### 3. What is left, and what it costs
+
+The hardware's alpha-to-coverage mask. GL ES 3.0 §15.1.3 ("Multisample Fragment Operations") derives
+a temporary coverage value from alpha in an implementation-dependent way, and says of that algorithm:
+"The algorithm can and probably should be different at different pixel locations." A dither is not a
+driver bug here; it is the behaviour the specification invites. (An earlier draft of this section put
+a paraphrase in quotation marks — r1 review finding 4; the sentence above is the spec's own.) Push
+the same smooth `pfaCov` through masks that take that invitation and one that does not:
+
+| regime | no dither | 2x2 dither | 1/8-step dither | **after the fix** |
+|---|---|---|---|---|
+| minified, 0.5 px/texel (station 5) | 0.062 | 0.383 | 0.156 | **0.062** |
+| magnified, 2.2 px/texel (station 2) | 0.016 | 0.480 | 0.401 | **0.016** |
+
+The dithered models **bracket the 0.264 and 0.369 measured**; the undithered one sits at the
+control's level. That is the mechanism, and it explains §2c exactly: the two stations are in
+different shader branches (`magT` 0 and 1) and show the same rim, because the stage that makes it is
+downstream of both.
+
+### The fix, and why it is arithmetic rather than a taste call
+
+```glsl
+pfaCov = floor( pfaCov * pfaCovQ + 0.5 ) / pfaCovQ;   // pfaCovQ = the TARGET's sample count
+```
+
+A mask of the form `popcount = floor( cov * N + d( x, y ) )`, `d` in [0,1) — a **per-pixel scalar
+offset** — returns exactly `cov * N` when `cov * N` is an integer, whatever `d` is. `N` is a power of
+two and `1/N` is exact in binary floating point, so the product lands on the integer rather than near
+it. **The scope of that, stated honestly** (r1 review finding 3): it covers every dither of the
+modelled *offset family*, and all three models in the table above are members of that one family, so
+part 3's "after the fix" column is **arithmetic, not evidence**. A spec-legal per-(pixel, sample)
+threshold table that is not a uniform offset would not be made location-independent by a ladder
+point. **The capture is what decides**, and it is owed below.
+
+* **Cost:** the edge resolves in `N + 1` levels instead of the dither's `2N + 1` — terracing on a
+  fractal needle edge, where the ordered checkerboard was the visible defect. The mean coverage of
+  an edge is preserved to under 0.02 of a step, and no fragment moves by more than half a step
+  (1/8 at `N = 4`).
+* **Scope:** asked for where a coverage mask is actually written (`a2c` **and** `samples > 1`) **and**
+  the Phase 8b coverage path is the one drawing. With no mask (`?leafsoft=0`, `?impedge=0|premul`)
+  the ordered Bayer cell has already made the coverage 0 or 1 — both ladder points — so those paths
+  are untouched by construction, and `?impcov=0` turns the quantiser off with everything else Phase
+  8b added, so it still restores the Phase 7 frame exactly (r1 review finding 5).
+* **The MOBILE tier is quantised too, and its frames will change** (r1 review finding 2 corrected an
+  earlier claim here that they would not). `main.js:685` builds the composer with `samples: 4`
+  **unconditionally** — mobile's `post: 'none'` only empties the pass chain — and `device.js`'s
+  `TIER_SETTINGS.mobile` overrides neither `leafSoft` nor `impEdge`, so mobile is a 4x target with a
+  mask and gets the define. **QA 21 §4's "mobile byte-identical to the previous capture" invariant
+  does not hold for this change and must not be read as a regression**; `?tier=mobile` is in the
+  owed capture below.
+* **One assumption, stated:** `pfaCovQ` is the COMPOSER's sample count, and the same material also
+  draws into the planar reflection. Both are 4 today, but **by coincidence of two independent
+  defaults** and nothing asserts it (carry 9 below): `main.js:1040` reads the composer's, and
+  `water.js:302` builds the Reflector without `multisample`, taking three's own default. A ladder
+  point of 4 is also one of 8, so a finer reflection target stays exact; a *coarser* one (2) would
+  put the reflection back on today's behaviour — never worse than it, but worth re-reading if the
+  Reflector's sample count ever changes.
+* **Nothing else moves.** The cutoff (0.33), the premultiplied reconstruction, the interior term,
+  the share and the whole colour path are byte-identical. `?impq=0` is the Phase 8b **coverage
+  path** — see the carry below for the one thing it does not revert.
+* **What may change at stations 1, 3, 4 and 6:** only pixels whose coverage was fractional, by at
+  most half a step of coverage each. The regression rule is MAE <= 0.5 %; the capture has not been
+  taken yet (see below).
+
+**Tests:** `web/test/impostor_rim_test.mjs` — the ladder is exhaustively d-free at `N` = 2 / 4 / 8
+against 64 dither phases (and off the ladder it demonstrably is not), a synthetic ramp's
+checkerboard index goes 0.875 dithered → 0.003 quantised (the undithered mask's own score), and the
+define / uniform / report / boot note follow the target's own sample count with the shader
+preprocessing in every define combination.
+
+**NOT YET CAPTURED.** The GPU was held by the lead's renders and then the lighting round for the
+whole of this build, and Chrome never runs beside Blender. The rim counts above are `gate12`
+(before); the after-capture at stations 2 and 5, and the regression MAE at 1, 3, 4 and 6, are owed
+as soon as the lead grants a window: `scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs`
+into `renders/web/p9v_cam0N.png`, then **`python3 web/tools/p9v_rim.py ab gate12 p9v`** — ONE rim
+mask, taken from the BEFORE frame and applied unchanged to both sides, so the two columns differ only
+by what the fix did (r1 review finding 6); re-deriving the mask per frame would move the rim-pixel
+count for two reasons at once. The probe refuses any frame that is not 1920x1080, and
+`python3 web/tools/p9v_rim.py selftest` proves both of those on synthetic frames, without a capture.
+**`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
+above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
+Every frame's sidecar now states for itself whether the quantiser was on —
+`__pfaInfo.impostors.quantise` (r1 review finding 1) — so the A/B is self-attesting and needs no boot
+log; read `.on`, **not** `.samples`, which carries the target's ladder either way (carry 13).
+
+**One thing `?impq=0` does not revert** (r1 review finding 7). The same branch replaced
+`normalize( vDirBlender )` with the guarded `pfaViewDir( … )` at both atlas lookups,
+**unconditionally**, and no switch reverts it. It is provably inert on every non-degenerate fragment
+— it is `normalize(v)` verbatim there, pinned by three checks in `impostor_rim_test.mjs` — but it
+means `?impq=0` restores the Phase 8b **coverage path**, not the Phase 8b commit byte for byte. The
+wording is now that, in the README, `impostors.js`, `main.js` and the test.
+
+### Carries out of this section (r1 review 8-14) — listed, not built
+
+Findings 1-7 of `docs/reviews/phase9_viewer_r1_review.md` are closed in the branch. These stay open;
+each line is the correction itself, so nothing above is left standing on a wrong number.
+
+| # | carry | where it bites |
+|---|---|---|
+| 8 | The fix reaches the **impostor** materials only. `foliage.js:862` turns `alphaToCoverage` on for every near-tree / card MASK material on the same 4x target, and those write the hardware mask **unquantised**. | Out of scope for QA 21's far crowns — but if the capture still shows a rim on a *near* leaf card, that is where it comes from. |
+| 9 | `pfaCovQ` is the COMPOSER's sample count (`main.js:1040`), and the same material also draws into the planar reflection; `water.js:302` builds the Reflector **without** `multisample`, taking three's own default of 4. The two agree by coincidence of two independent defaults and **nothing asserts it**. | A finer reflection target (8) stays exact; a coarser one (2) puts the reflection back on today's behaviour, never worse. The hardening is one line — pass `multisample: 4`, or take the min of the two — and is not taken here. |
+| 10 | The **discard boundary moved**: `quantise( 0.124 ) = 0` (`impostor_rim_test.mjs:70`), so a sub-⅛ fringe fragment is dropped instead of lighting one sample somewhere in the 2x2 — a silhouette erosion of up to half a sample. | The hero's crossings figure (cam01 11.97 against Cycles' 11.73, QA 21 §1) is precisely a silhouette-crossing count, so the capture window owes `export/p8_atlas_probe.py viewer` on cam01, not only the rim index and the MAE. |
+| 11 | **Cost line, corrected.** The dither's levels are `N + 1` **per pixel** (5 at `N = 4`) spread over a 2x2 block, roughly 17 across the block; the "`2N + 1`" above is derived nowhere and should be read as "more levels, spatially". And "0.02 of a step" is `impostor_rim_test.mjs:115-117`'s **0.02 in coverage units**, i.e. 0.08 of a 0.25 step. | Doc only; no number the fix rests on changes. |
+| 12 | **The elimination list is one term short.** The other genuinely per-pixel term in this shader is the LOD-dissolve `pfaHash( gl_FragCoord.xy )` discard (`impostors.js:305`). It is ruled out twice by the data — a hash is not an ordered period-2 pattern, and `vPfaFade` is 1 on every far crown at a station, so the discard is skipped — but it was not named. | And the competing mechanism the offline model *assumes* away: `dFdx`/`dFdy` are taken to be coarse (per-quad), while ES 3.0 permits a **fine** per-pixel implementation. If the rim survives the capture, that is the next suspect, and `p9v_rim.py` hard-codes the coarse model. |
+| 13 | **Report nit.** With no mask `parseImpQuant` returns `samples: 0`, so an explicit `?impq=0` on a non-MSAA target prints "not asked" rather than "off"; and `report.quantise.samples` carries the target's count even when the switch is off. | A sidecar or gate must read `__pfaInfo.impostors.quantise.on`, **not** `.samples`. |
+| 14 | **Process.** The five r1 commits carry `Co-Authored-By: Claude Fable 5.1` while the Phase 6 casting puts the viewer builder on Opus 5. | For the lead to confirm; the mechanism argument is the deliverable, so which model produced it matters. six of r2's seven commits are Opus 5; 486518e (findings 1 and 5) is Fable 5.1. |
 
 ## Phase 8b fix round (QA 20 carries), 2026-09-19
 
@@ -2533,6 +2685,9 @@ shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (transl
 `shrubs` to include the cards), `?leafsoft=0` (no alphaToCoverage), `?treemesh=` (metres, or `inf`:
 mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
 `?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
+`?impq=0` (Phase 9 item 1: stop snapping the impostor coverage to the target's sample ladder before
+the alpha-to-coverage mask — the Phase 8b coverage path, dotted rim included; `?impcov=0` turns it
+off too, so that still restores Phase 7),
 `?fartreelight=near|probe|0` (what lights the 127 far-tree MESHES until the bake ships their
 irradiance; `0` suppresses the meshes entirely and every far tree stays its impostor — inert once the
 bake's block is in the manifest, which is the shipped case),

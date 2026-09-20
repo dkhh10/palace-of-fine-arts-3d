@@ -88,6 +88,52 @@
 // repeating byte for byte in a screenshot.  Nothing
 // about the colour changes - the premultiplied 12-tap reconstruction and the interior term are
 // untouched, and `?impcov=0` restores the Phase 7 frame.
+//
+// PHASE 9 ITEM 1 - THE DOTTED RIM (QA 21 item 1 / residual 1, `?impq=`, default on).  A period-2,
+// one-to-two-pixel dotted rim survives on the far-crown silhouettes against the sky at stations 2
+// and 5, and the coverage share cannot reach it (QA 21 §2c: stations 1 and 5 are byte-identical
+// across share 0 / 0.10 / 0.15 / 0.25 / 0.40).  MEASURED, not guessed - `web/tools/p9v_rim.py`:
+//
+//   1. On the delivered gate12 frames the rim's high-pass residual projects on the ( x + y ) parity
+//      sign with a `checkerboard index` of 0.264 (cam05 left crown) and 0.369 (cam02 right cypress)
+//      against 0.080 on the control crown that has a BUILDING behind it instead of sky.  So the rim
+//      is a checkerboard locked to the SCREEN grid, not to the atlas, the card or the silhouette.
+//   2. Re-implement everything above - the premultiplied 8-tap reconstruction over the real
+//      4096x1024 band atlas texels, fwidth on the 2x2 quad, the Phase 7 ramp, the magnification
+//      ramp and the share - and the `pfaCov` this shader hands over scores 0.004 (minified, the
+//      station-5 regime, magT = 0) and 0.007 (magnified, station 2, magT = 1).  NOTHING this file
+//      computes carries a period-2 term, and it cannot: every derivative here is a per-QUAD
+//      quantity, so it is constant across the 2x2 the checkerboard alternates within.
+//   3. That leaves one stage.  The atlas has no mips (`generateMipmaps = false`, `LinearFilter`,
+//      anisotropy 1) so no mip is dithered; the 4x4 Bayer cell is the NO-MASK fallback and is not
+//      even compiled here (the gate12 boot note: `resolved by the 4-sample coverage mask`).  What
+//      is left is the hardware's alpha-to-coverage mask.  GL ES 3.0 s15.1.3 derives the temporary
+//      coverage value from alpha in an implementation-dependent way and says of that algorithm, in
+//      as many words: "The algorithm can and probably should be different at different pixel
+//      locations."  A dither is the behaviour the spec invites, not a driver bug.  (r1 review 4: an
+//      earlier draft quoted a paraphrase; the sentence above is the spec's own.)  Push the same
+//      smooth pfaCov through a mask that
+//      does and one that does not: the dithered models score 0.16-0.48 (bracketing the 0.264 and
+//      0.369 measured), the undithered one 0.016-0.062 (the control's level).
+//
+// THE FIX.  Snap the coverage to the target's OWN sample ladder before the mask sees it:
+//     pfaCov = floor( pfaCov * N + 0.5 ) / N,  N = the target's sample count.
+// A mask of the form popcount = floor( cov * N + d( x, y ) ), d in [0,1) - a per-PIXEL SCALAR
+// OFFSET - returns exactly cov * N when cov * N is an integer, whatever d is, so the resolve is
+// parity-free under every dither OF THAT FAMILY.  N is a power of two and 1/N is exact in binary
+// floating point, so `cov * N` lands on the integer, not near it.  The scope, stated honestly
+// (r1 review 3): all three models measured above are members of that one offset family, so their
+// "after the fix" column is arithmetic, not evidence; a spec-legal per-(pixel, sample) threshold
+// table that is NOT a uniform offset would not be made location-independent by a ladder point.
+// The capture is what decides.  The cost is that the edge
+// resolves in N + 1 levels instead of the dither's 2N + 1: terracing on a fractal needle edge,
+// where the ordered checkerboard was the visible defect.  It is asked for only where a coverage
+// mask is actually written (a2c AND samples > 1 - never on the Bayer fallback, whose output is
+// already 0 or 1), it moves no colour, and `?impq=0` restores the Phase 8b COVERAGE PATH - not the
+// Phase 8b commit byte for byte, because the same branch also replaced normalize( vDirBlender ) with
+// the guarded pfaViewDir() at both lookups unconditionally (r1 review 7).  That guard is provably
+// inert on every non-degenerate fragment - it is normalize(v) verbatim there - but no switch reverts
+// it, so the honest claim is the coverage path.
 import * as THREE from 'three';
 import { b2t } from './blenderCamera.js';
 
@@ -146,7 +192,13 @@ const fragmentShader = /* glsl */`
 	uniform vec2 atlasWH;
 	uniform float rowFromTop;
 	uniform float alphaTest;
-	uniform int debugMode;           // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage
+	// Phase 9 item 1 - the target's OWN sample count, the ladder the coverage is snapped to.  It is
+	// read from the render target (main.js msaaSamples), never assumed to be four, and the
+	// statement that uses it is behind PFA_IMP_QUANT so ?impq=0 is the Phase 8b coverage PATH
+	// (r1 review 7: not the Phase 8b commit byte for byte - pfaViewDir is unconditional).
+	// NO BACKTICKS IN THIS LITERAL (r4 review 1, and it bit again here).
+	uniform float pfaCovQ;
+	uniform int debugMode;          // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage
 	// 6c round 3 — the atlas crown's own interior. (strength, radius in frame UV, Phase 7 floor)
 	uniform vec3 pfaImpInterior;
 	// Phase 8b band atlas — ( columns, rows, azimuth0 in COMPASS degrees for the log, unused ), the
@@ -181,6 +233,16 @@ const fragmentShader = /* glsl */`
 		return ( 4.0 * pfaBayer2( floor( i * 0.5 ) ) + pfaBayer2( i ) + 0.5 ) / 16.0;
 	}
 	#endif
+
+	// r2 review 4 (carried to Phase 9): a camera standing EXACTLY on a billboard centre makes
+	// vDirBlender the zero vector, and normalize( vec3( 0 ) ) is 0/0 = NaN in GLSL ES.  Both lookups
+	// below feed that straight into their frame selection: the octahedral one divides by
+	// |x|+|y|+|z| = 0 as well, the band one hands NaN to atan and to the elevation search, and a NaN
+	// cell index is a hardware-clamped fetch of whatever texel the clamp lands on.  It is not a
+	// regression - the octahedral path has had it since Gate 3 - but it is one dot product to close,
+	// and normalize() itself is UNTOUCHED on every non-degenerate fragment, so no pixel that renders
+	// today changes.  The fallback is column 0's own heading, i.e. the frame the tree faces.
+	vec3 pfaViewDir( vec3 v ) { return ( dot( v, v ) > 0.0 ) ? normalize( v ) : vec3( 1.0, 0.0, 0.0 ); }
 
 	// manifest.impostors.frame_uv, with f clamped and sampled at texel centres.
 	//
@@ -255,7 +317,7 @@ const fragmentShader = /* glsl */`
 		// AZIMUTH.  vDirBlender is tree -> camera in Blender Z-up, and the column coordinate is the
 		// angle from COLUMN 0'S OWN HEADING over the column step, wrapped into [0, columns).
 		{
-			vec3 d = normalize( vDirBlender );
+			vec3 d = pfaViewDir( vDirBlender );
 			// THE ANGLE IS MEASURED FROM THE SIDECAR'S OWN COLUMN-0 DIRECTION, never from a degree
 			// convention: band.json states azimuth0_deg in COMPASS degrees (clockwise from north,
 			// 180 = +X) while this shader works in Blender xy, and a 90 deg reading error there
@@ -296,7 +358,7 @@ const fragmentShader = /* glsl */`
 		}
 		#else
 		// manifest.impostors.frame_lookup, verbatim
-		vec3 d = normalize( vDirBlender );
+		vec3 d = pfaViewDir( vDirBlender );
 		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );
 		vec2 o = ( n.z >= 0.0 )
 			? vec2( n.x, n.y )
@@ -418,6 +480,16 @@ const fragmentShader = /* glsl */`
 		// screen-space pattern, so a screenshot repeats byte for byte.
 		pfaCov = step( pfaBayer4( gl_FragCoord.xy ), pfaCov );
 		#endif
+		#endif
+
+		#ifdef PFA_IMP_QUANT
+		// PHASE 9 ITEM 1 - THE DOTTED RIM.  The header carries the measurement; the statement is
+		// this one line.  Snapping to the target's own ladder makes popcount = floor( cov * N + d )
+		// independent of the mask's pixel-position dither d, which is the only stage in this whole
+		// path that can produce a period-2 checkerboard (every derivative above is per-QUAD).  It
+		// runs AFTER the coverage block and BEFORE the discard, so a fragment whose coverage rounds
+		// to zero is dropped rather than drawn at zero samples - and the colour is untouched.
+		pfaCov = floor( pfaCov * pfaCovQ + 0.5 ) / pfaCovQ;
 		#endif
 
 		if ( pfaCov <= 0.0 ) discard;
@@ -642,6 +714,42 @@ export function bandFrameUv( col, row, f, geom ) {
 }
 
 /**
+ * Phase 9 item 1 — the coverage QUANTISER, `?impq=`.  `"0"` / `"off"` restores the Phase 8b
+ * coverage path; anything else (or nothing) is the default, ON wherever a hardware coverage mask is
+ * actually written AND the Phase 8b coverage path is the one drawing.  Two guards, both of them
+ * load-bearing:
+ *
+ *   `a2c` + `samples`   with no mask (`?leafsoft=0`, `?impedge=0|premul`, an un-multisampled canvas)
+ *                       the ordered Bayer cell has already made the coverage 0 or 1, both of them
+ *                       ladder points, so snapping is a no-op AND would be asked of a path that
+ *                       never had the defect.  `samples` is the TARGET's own count, read from the
+ *                       render target, so an 8x or 2x target snaps to its own ladder and never to a
+ *                       four assumed here.
+ *   `coverage`          r1 review 5: `?impcov=0` is documented in three places as restoring the
+ *                       PHASE 7 frame, and it has to keep doing exactly that.  So the quantiser
+ *                       rides on the Phase 8b path and `?impcov=0` turns it off with everything
+ *                       else Phase 8b added.  It costs nothing that ships: `?impcov=` is on by
+ *                       default, so the delivered frame is quantised and only the A/B is affected.
+ *
+ * `why` names the guard that refused, so the boot note can say "off" and "not asked, because …"
+ * rather than one word for four different states.
+ * @returns {{ on:boolean, samples:number, unknown:(string|null), why:(string|null) }}
+ */
+export function parseImpQuant( v, { a2c = false, samples = 4, coverage = true } = {} ) {
+	const s = ( v === null || v === undefined ) ? '' : String( v ).trim().toLowerCase();
+	const n = ( a2c && Number.isFinite( samples ) && samples > 1 ) ? Math.round( samples ) : 0;
+	let on = true, unknown = null;
+	if ( s === '0' || s === 'off' || s === 'none' ) on = false;
+	else if ( s === '' || s === '1' || s === 'on' ) { /* the default */ }
+	// Round-1 review 7's rule, as everywhere in this file: a typo falls back to the default and says so.
+	else unknown = s;
+	const why = ! on ? 'asked off (?impq=0)'
+		: ( n <= 1 ? 'no coverage mask is written, so the ordered dither already spends the fraction as 0 or 1'
+			: ( ! coverage ? 'the Phase 8b coverage path is off (?impcov=0), which restores the Phase 7 frame' : null ) );
+	return { on: on && n > 1 && !! coverage, samples: n, unknown, why };
+}
+
+/**
  * Phase 8b item 3 — the BAND ATLAS, `?impband=`.  `"0"` / `"off"` keeps the octahedral path (the 2K
  * variant included) byte for byte; anything else is the default, which is ON wherever the manifest
  * carries `impostors.band` for that prototype.  The contract is docs/briefs/phase8b_band_atlas.md:
@@ -662,7 +770,8 @@ export function parseImpBand( v ) {
  */
 export function buildImpostors( { impostors, far, near = [], loadTexture, note = () => {}, fog = null,
 	normalDepth = false, debug = 0, atlas2k = false, switchUniforms = null, interior = null,
-	edge = null, msaa = false, leafSoft = true, coverage = null, samples = 0, band = null } ) {
+	edge = null, msaa = false, leafSoft = true, coverage = null, samples = 0, band = null,
+	quantise = null } ) {
 	// 6c round 3: (strength, radius in frame UV, Phase 7 floor).  `?impint=` — see the fragment shader.
 	const impInterior = parseImpInterior( interior );
 	// Phase 7 item A: `?impedge=` — see the header.
@@ -673,6 +782,10 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 	// Phase 8b item 3: `?impband=`.  The block is the manifest's; the switch only says whether to
 	// use it.  `coverage` being explicit in the url wins over the band's own swept share.
 	const impBand = parseImpBand( band && band.switch );
+	// Phase 9 item 1: `?impq=`.  Same guard as the coverage quantum - the edge switch's own a2c and
+	// the TARGET's sample count, so it is asked for only where a hardware mask is written.
+	const impQuant = parseImpQuant( quantise, { a2c: impEdge.a2c, samples: samples || 4,
+		coverage: impCov.on } );
 	const bandBlock = ( impBand.on && band && band.block && band.block.count ) ? band.block : null;
 	const covExplicit = !! ( coverage !== null && coverage !== undefined && String( coverage ).trim() !== ''
 		&& String( coverage ).split( ',' ).length > 2 );
@@ -686,6 +799,11 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 			alphaToCoverageAsked: impEdge.a2cAsked, msaa: impEdge.msaa },
 		coverage: { on: impCov.on, magLo: impCov.magLo, magHi: impCov.magHi, share: impCov.share,
 			ramp: impCov.ramp, samples: impCov.samples, orderedDither: impCov.dither },
+		// Phase 9 item 1 - the coverage quantiser and the ladder it snaps to
+		quantise: { on: impQuant.on, samples: impQuant.samples, unknown: impQuant.unknown,
+			// r1 review 13: read `.on`, never `.samples` — the ladder the TARGET offers is reported
+			// whether or not the switch took it.  `why` names the guard that refused.
+			why: impQuant.why },
 		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx },
 		band: { asked: impBand.on, available: !! ( band && band.block && band.block.count ),
 			prototypes: 0, missing: [], unknown: impBand.unknown,
@@ -736,6 +854,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		if ( impEdge.premul ) defines.PFA_IMP_PREMUL = '';
 		if ( impEdge.a2c ) defines.PFA_IMP_A2C = '';
 		if ( impCov.on ) defines.PFA_IMP_COV = '';
+		// Phase 9 item 1: only where a coverage mask is written (the parser already checked that).
+		if ( impQuant.on ) defines.PFA_IMP_QUANT = '';
 		// Phase 8b item 3: the band atlas REPLACES the albedo lookup for this prototype - its own
 		// frame geometry, its own texture, its own selection - and leaves every lighting term alone.
 		// A prototype the band does not carry keeps the octahedral path, exactly as a missing 2K
@@ -779,6 +899,9 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 				...[ 0, 1, 2, 3 ].map( ( i ) => ( useBand && Number.isFinite( bandBlock.elevationsDeg[ i ] ) )
 					? bandBlock.elevationsDeg[ i ] * Math.PI / 180 : 0 ) ) },
 			alphaTest: { value: ALPHA_TEST },
+			// Phase 9 item 1 - the target's own sample ladder; 0 where no mask is written, in which
+			// case PFA_IMP_QUANT is not defined either and the uniform is never read.
+			pfaCovQ: { value: impQuant.on ? impQuant.samples : 0 },
 			debugMode: { value: debug },
 			pfaImpInterior: { value: new THREE.Vector3( impInterior[ 0 ], impInterior[ 1 ], impInterior[ 2 ] ) },
 			pfaImpCov: { value: new THREE.Vector4( impCov.magLo, impCov.magHi,
@@ -935,6 +1058,15 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 				+ ( impCov.dither ? 'spent by the ordered dither (no coverage mask)'
 					: `resolved by the ${impCov.samples}-sample coverage mask` ) : '' )
 			+ ` (?impcov=0 restores Phase 7)` );
+		if ( impQuant.unknown !== null ) note( `?impq=${impQuant.unknown} is not a value `
+			+ `(0 | 1): using 1, the default` );
+		note( `impostor coverage QUANTISER (Phase 9 item 1, the dotted rim): `
+			+ ( impQuant.on
+				? `ON, snapped to the target's own ${impQuant.samples}-sample ladder before the mask, `
+					+ 'so the mask of the modelled offset family stops depending on the pixel position '
+					+ '(?impq=0 restores the Phase 8b coverage path)'
+				// r1 review 13: four states, four reasons - "off" used to cover all of them.
+				: `off — ${impQuant.why}` ) );
 		if ( report.missingPrototypes.length )
 			note( `impostors: ${report.missingPrototypes.length} prototype(s) in trees.far have no atlas: ${report.missingPrototypes.join( ', ' )}` );
 		if ( report.skipped.length ) note( `impostors: ${report.skipped.length} far tree(s) skipped` );

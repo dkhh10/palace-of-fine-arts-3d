@@ -139,6 +139,10 @@ const CFG = {
 	// Phase 8b item 3 — the 12 x 3 BAND atlas in place of the octahedral frames, wherever the
 	// manifest carries `impostors.band`: 0 reverts to the octahedral (2K) path.
 	impBand: qs.get( 'impband' ),
+	// Phase 9 item 1 — the coverage QUANTISER that takes the period-2 dotted rim off the far-crown
+	// silhouettes (QA 21 item 1): 0 restores the Phase 8b coverage path (r1 review 7: not the Phase
+	// 8b commit byte for byte - the unconditional pfaViewDir guard came in on the same branch).
+	impQuant: qs.get( 'impq' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
@@ -1120,6 +1124,8 @@ async function setupFoliageAndImpostors() {
 			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false, leafSoft: CFG.leafSoft,
 			// Phase 8b item A: alpha as coverage under magnification, and the quantum it dithers to.
 			coverage: CFG.impCov, samples: msaaSamples,
+			// Phase 9 item 1: the coverage quantiser, on the SAME sample count the mask uses.
+			quantise: CFG.impQuant,
 			// Phase 8b item 3: the band block is the MANIFEST's; the switch only says whether to use it.
 			band: { block: manifest.gate3.impostors.band || null, switch: CFG.impBand },
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
@@ -2052,7 +2058,11 @@ window.__pfaInfo = () => ( {
 		interior: impostorReport.interior,
 		// Phase 7 item A / Phase 8b item A, so a capture can be told apart from its A/B without
 		// reading the boot log: what the card edge and the coverage path actually did.
-		edge: impostorReport.edge, coverage: impostorReport.coverage, band: impostorReport.band },
+		edge: impostorReport.edge, coverage: impostorReport.coverage, band: impostorReport.band,
+		// Phase 9 item 1 (phase9_viewer_r1_review finding 1): without this the owed ?impq A/B is not
+		// self-attesting - a capture sidecar could not say whether the quantiser was on.  Read `.on`,
+		// not `.samples`: the ladder the target offers is reported either way.
+		quantise: impostorReport.quantise },
 	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
 		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
 		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, aoAlphaForced: farTreeReport.aoAlphaForced || 0,
