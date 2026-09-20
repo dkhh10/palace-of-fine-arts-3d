@@ -3099,3 +3099,80 @@ renders -- 2 minutes instead of the ~50 of a `light_build -> lead_build -> phase
 
 The rebuild is 210x closer to BEFORE than two seeds of the identical scene are to each other: the shortcut is exact,
 and the noise floor 2.91 MAE is the control every delta below is read against.
+
+### 29.2 The photo column of the acceptance is not reproducible, and the reproducible one says the same thing
+
+`scripts/p8b_c_cielab.py`'s docstring already records it: the published photo column (+10.89 / +10.99 / +5.33 /
++11.07) came from a box set placed on ref 062 itself that was never written down.  Re-measured with the cam02
+fixture resampled onto ref 062 -- the only reproducible placement in the tree -- the photograph reads
+
+| box | shade_pier | shade_pier_r | shade_arch | shade_frieze | soffit_l | soffit_r |
+|---|---|---|---|---|---|---|
+| photo b* | +14.10 | +13.22 | +7.49 | +10.50 | +12.83 | +7.93 |
+| BEFORE b* | -4.68 | -18.20 | -3.12 | **+12.82** | +13.87 | +14.99 |
+
+Two things follow.  The direction of the brief is confirmed by a reproducible number (the photograph's shaded
+rotunda stone is warm, b* +7 to +14 on every box).  And the SHAPE of the defect is not what the brief assumes:
+in the photograph the shaded shafts are WARMER than the frieze (+14.1 / +13.2 against +10.5), while in the render
+they are 17.5 and 31.0 b* COLDER than it.  The render's error is not a uniform blue offset on the shaded stone --
+it is a 15-30 b* SPREAD between shaded boxes that the photograph does not have.
+
+### 29.3 The socket-shape probes: every weight already ships at its narrowest, so every shape change adds tint
+
+Six single-socket probes at the shipped tint (cam02, 32 spp, the same scratch copy; b* per box):
+
+| candidate | change | shade_pier | shade_pier_r | shade_arch | shade_frieze | soffit_l | soffit_r |
+|---|---|---|---|---|---|---|---|
+| BEFORE / base | -- | -4.68 | -18.20 | -3.12 | +12.82 | +13.87 | +14.99 |
+| `tintoff` | tint = (1,1,1) | +20.30 | +16.06 | +18.99 | +34.85 | +22.30 | +24.74 |
+| `b38` | tint_b 70 -> 38 | +4.70 | -7.13 | +5.13 | +21.47 | +17.38 | +18.95 |
+| `pa10b138` | antisun_p 3 -> 10, tint_b 138 | +2.16 | -17.02 | +3.58 | +22.58 | +19.37 | +20.47 |
+| `as0` | antisun 1.0 -> 0.0 | -27.01 | -33.00 | -31.08 | -19.29 | +0.12 | -3.05 |
+| `ap1` | antisun_p 3 -> 1 | -16.71 | -26.60 | -17.07 | -3.52 | +6.48 | +5.72 |
+| `hp2` | horizon_p 6 -> 2 | -21.28 | -34.18 | -18.25 | -1.91 | +8.87 | +9.50 |
+| `hz05` | horizon 1.0 -> 0.5 | -25.08 | -37.15 | -22.48 | -5.87 | +8.09 | +8.46 |
+| `db15` | diffuse_boost 2.5 -> 1.5 | +0.98 | -12.92 | +0.90 | +13.27 | +16.61 | +17.79 |
+
+Read it in one line: **every weight socket already ships at the shape that puts the LEAST tint on the scene**
+(antisun 1.0 at p 3, horizon 1.0 at p 6 -- both weights only ever subtract from a full-strength tint), so every
+probe that broadens a weight makes the violet WORSE, by 12 to 20 b*.  A shape change is not a way to take tint
+off the shafts; it is only a way to redistribute what is left, and the redistribution is what matters.
+
+`db15` is the exception worth naming: dropping the diffuse boost warms the shafts +5.7 b* and moves the frieze
++0.45, because the shafts are sky-lit and the frieze carries warm bounce -- but it costs 17-23 % of the shade's
+luminance, which no hold on cam01/03/04 can absorb.
+
+### 29.4 The dose model, fitted and validated, and what it proves cannot be done
+
+Every candidate is one number per box: the mix factor `f` the box's own sky hemisphere sees, so that the blue
+channel of the light reaching it is multiplied by `mult = 1 + f*(B-1)` for a tint blue `B`.  Fitting
+`b* = c - k*ln(mult)` to the three tint levels already measured (B = 70, 38, 1; `c` is the measured B = 1 frame,
+so only `k` is fitted) gives, for the SHIPPED shape and for `as0`:
+
+| box | c (tint off) | k | f (shipped) | f (antisun 0) |
+|---|---|---|---|---|
+| shade_pier | 20.30 | 35.1 | 0.0150 | 0.0413 |
+| shade_pier_r | 16.06 | 27.4 | 0.0361 | 0.0724 |
+| shade_arch | 18.99 | 31.0 | 0.0151 | 0.0584 |
+| shade_frieze | 34.85 | 36.9 | 0.0118 | 0.0484 |
+| soffit_l / soffit_r | 22.30 / 24.74 | 20.7 / 24.0 | 0.0073 / 0.0073 | 0.0278 / 0.0316 |
+
+Validation: the model run backwards reproduces BEFORE (frieze pinned at +12.9 -> B = 69.7, pier -4.6, pier_r
+-18.1, arch -3.0, against the measured -4.68 / -18.20 / -3.12).
+
+The acceptance asks for the frieze inside 11.4 +- 1.5 AND every shade box at b* >= +5.  Pinning the frieze pins
+the dose scale, and what the shade boxes then read depends ONLY on the ratio f_box / f_frieze:
+
+| shape | f_pier/f_frieze | f_pier_r/f_frieze | pier at frieze = +12.9 | pier_r | arch |
+|---|---|---|---|---|---|
+| shipped (antisun 1, p 3) | 1.27 | 3.05 | **-4.6** | -18.1 | -3.0 |
+| antisun_p 1 | 1.02 | 2.05 | -0.9 | -10.8 | -2.2 |
+| **antisun 0 (uniform azimuth)** | **0.85** | **1.50** | **+1.8** | -5.7 | -2.2 |
+
+`antisun = 0` is the best shape in the whole socket space -- it is the only one that puts MORE tint on the frieze
+than on the shafts -- and even it lands the shafts at +1.8 / -5.7 / -2.2 against the required +5.  To reach +5 on
+`shade_pier_r` with the frieze held, f_pier_r/f_frieze would have to fall to 0.56: a factor of 5.5 the wrong way
+from what the shipped shape does and 2.7 from the best shape that exists.  **The brief's item 1 is unreachable
+from the diffuse sockets, and the reason is 29.2: the render's spread between shaded boxes is a property of how
+much warm bounce each box receives, not of the sky's colour, so a sky lever cannot close it.**  What the sky
+lever CAN do is take the tint off all of them together, which is the trade the rest of this section measures.
