@@ -1187,6 +1187,11 @@ therefore stops depending on the pixel under every dither, not just the one mode
 * **Scope:** asked for only where a coverage mask is actually written (`a2c` **and** `samples > 1`).
   With no mask the ordered Bayer cell has already made the coverage 0 or 1 — both ladder points — so
   the mobile tier and `?leafsoft=0` are untouched by construction.
+* **One assumption, stated:** `pfaCovQ` is the COMPOSER's sample count, and the same material also
+  draws into the planar reflection. Both are `samples: 4` today (main.js reads the composer's; the
+  Reflector is built at 4), and a ladder point of 4 is also one of 8, so a finer reflection target
+  would still be exact. A *coarser* one (2) would put the reflection back on today's behaviour —
+  never worse than it, but worth re-reading if the Reflector's sample count ever changes.
 * **Nothing else moves.** The cutoff (0.33), the premultiplied reconstruction, the interior term,
   the share and the whole colour path are byte-identical. `?impq=0` is the Phase 8b program.
 * **What may change at stations 1, 3, 4 and 6:** only pixels whose coverage was fractional, by at
