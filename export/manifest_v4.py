@@ -42,7 +42,7 @@ IRR_JOIN_TOL_M = 0.02   # the world-location join grid; also the residual tolera
 IRR_SCHEMAS = ("pfa-phase6/gate4-instance-irradiance/1", "pfa-phase6/gate4-instance-irradiance/2")
 
 
-def trees_lighting_block(tf):
+def trees_lighting_block(tf, man=None):
     """`trees.far_mesh.lighting`: the far trees' per-placement irradiance and, for the IMPOSTORS, the
     per-prototype `E_bake` the atlas frame is divided by.
 
@@ -55,6 +55,13 @@ def trees_lighting_block(tf):
     BOTH SIDES OF THAT RATIO ARE RAW. `lightmaps.scale` (pi) is applied to NEITHER - scaling only the
     numerator would make every impostor pi times too bright. This writer therefore copies the numbers
     through verbatim and does not rescale, round or re-order them.
+
+    PHASE 9 item 1: A ROW IS WRITTEN FOR EVERY `tree_far` TREE, not only for the ones that got a mesh. The
+    billboard-only rule (export/belt_rule.py) leaves 17 / 35 tagged rows with no mesh placement, and the
+    IMPOSTOR consumer above is exactly the one those rows still need: `farTreeIrradiance` joins this list to
+    `tree_far` BY LOCATION, so a list cut down to the mesh placements would drop the modulation of the very
+    trees that are now impostors at every distance - the belt, whose median E_placement / E_bake is 0.2424,
+    would draw about four times too bright. Each row therefore carries `mesh: true|false`.
     """
     ip = next((q for q in (g3.OUT / "trees_far" / "instance_irradiance.json",
                            g3.MAIN_ROOT / "export/out/gate3/trees_far/instance_irradiance.json")
@@ -81,17 +88,28 @@ def trees_lighting_block(tf):
                                    f"{k}: {rows[k]['object']} and {pl['object']} - the world-location join "
                                    f"is not unique and the bake must be re-keyed")
             rows[k] = pl
+    # every far tree, mesh or not: the mesh placements first, then the billboard-only rows, both in
+    # `tree_far` index order so the list reads in the same order as every other far-tree list in the file.
+    want = ([dict(pl, mesh=True) for pl in tf["placements"]]
+            + [dict(b, object=f"TREEFAR_{b['index']:03d}", mesh=False)
+               for b in tf.get("billboard_only", [])])
+    want.sort(key=lambda d: d["index"])
+    if man is not None and man.get("tree_far") is not None:
+        assert len(want) == len(man["tree_far"]), (
+            f"the far-tree lighting list would carry {len(want)} rows ({len(tf['placements'])} meshes + "
+            f"{len(tf.get('billboard_only', []))} billboard-only) against {len(man['tree_far'])} tree_far "
+            f"trees - every far tree needs an impostor irradiance row, mesh or not")
     per, missing, worst = [], [], 0.0
-    for pl in tf["placements"]:
+    for pl in want:
         r = rows.get(_key(pl["loc"]))
         if r is None:
             missing.append(pl["object"])
             continue
         worst = max(worst, max(abs(float(a_) - float(b_)) for a_, b_ in zip(r["loc"], pl["loc"])))
         per.append(dict(index=pl["index"], object=pl["object"], prototype=pl["prototype"],
-                        loc=pl["loc"], rgb=r["rgb"], cov=r.get("cov")))
+                        loc=pl["loc"], rgb=r["rgb"], cov=r.get("cov"), mesh=pl["mesh"]))
     assert not missing, (f"trees_far/instance_irradiance.json has no row at the world location of "
-                         f"{missing[:4]} ({len(missing)} of {len(tf['placements'])}): the per-placement "
+                         f"{missing[:4]} ({len(missing)} of {len(want)}): the per-placement "
                          f"irradiance bake has not been run for these trees - re-run trees_far_set.py, the "
                          f"tfirr_* jobs and trees_far_compose.py")
     assert worst < 0.02, (f"trees_far/instance_irradiance.json row locations differ from trees_far.json by "
@@ -101,6 +119,12 @@ def trees_lighting_block(tf):
         units=irr.get("units"), encoding=irr.get("encoding"), scale_applied="none (raw, see `ratio`)",
         range_global=irr.get("range_global"),
         mesh=dict(how="COLOR_0 (vertex AO, gamma2 - see `color0`) x placements[].rgb for that tree",
+                  rows_are="EVERY tree_far tree, in tree_far index order; `mesh` says whether this tree "
+                           "also has an instance row in the far-tree glbs (Phase 9 billboard-only rule). "
+                           "The MESH consumer uses the `mesh: true` rows; the IMPOSTOR consumer "
+                           "(farTreeIrradiance, joined by location) needs all of them.",
+                  with_mesh=sum(1 for d in per if d["mesh"]),
+                  billboard_only=sum(1 for d in per if not d["mesh"]),
                   placements=per),
         impostor=dict(
             # `how` is a formula, so every symbol in it has to be IN the manifest: a viewer that only reads
@@ -952,14 +976,21 @@ def main():
         # 166-instance glb and the viewer's join would have failed and dropped the whole far-tree layer.
         # The count and the billboard identity are now tied to the export set, and the glb may not be
         # older than the report that describes it.
-        assert len(tf["placements"]) == len(man["tree_far"]), (
-            f"trees_far.json has {len(tf['placements'])} placements and the export set "
-            f"{len(man['tree_far'])} far trees - re-run export/trees_far.py AND "
+        # PHASE 9 item 1: the far set may leave TAGGED rows without a mesh (export/belt_rule.py), so the
+        # count that has to close is placements + billboard_only, and the billboard identity is checked
+        # through each placement's own `index` instead of its position in the list.
+        _tf_bo = tf.get("billboard_only", [])
+        assert len(tf["placements"]) + len(_tf_bo) == len(man["tree_far"]), (
+            f"trees_far.json has {len(tf['placements'])} placements + {len(_tf_bo)} billboard-only rows "
+            f"and the export set {len(man['tree_far'])} far trees - re-run export/trees_far.py AND "
             f"PFA_TREES_SET=walkup export/trees_far.py BEFORE manifest_v4")
-        _bad = [i for i, pl in enumerate(tf["placements"])
-                if pl["billboard"] != man["tree_far"][i]["billboard"]]
-        assert not _bad, (f"trees_far.json placement {_bad[:4]} name a different billboard than the export "
+        _bad = [pl["index"] for pl in tf["placements"] + _tf_bo
+                if pl["billboard"] != man["tree_far"][pl["index"]]["billboard"]]
+        assert not _bad, (f"trees_far.json row {_bad[:4]} names a different billboard than the export "
                           f"set's tree_far row of the same index - the two were built from different lists")
+        assert [pl["index"] for pl in tf["placements"]] == sorted(pl["index"] for pl in tf["placements"]), \
+            "trees_far.json placements are not in tree_far index order - the cross-set subsequence check " \
+            "and the positional join both depend on that order"
         if tf_glb is not None and tf_p.exists():
             assert tf_glb.stat().st_mtime >= tf_p.stat().st_mtime - 1, (
                 f"{tf_glb.name} is older than {tf_p.name} - the glb was not re-packed after the last "
@@ -995,7 +1026,21 @@ def main():
                   "(Blender (x, y, z) -> glTF (x, z, -y)), because gltfpack drops node names."),
             color0=(dict(tf["color0"], present=True) if tf.get("color0", {}).get("source")
                     else dict(present=False, note=tf["color0"].get("note"))),
-            lighting=trees_lighting_block(tf),
+            lighting=trees_lighting_block(tf, man),
+            billboard_only=dict(
+                count=len(_tf_bo),
+                rule=(tf.get("billboard_only_rule") or {}).get("rule"),
+                radius_m=(tf.get("billboard_only_rule") or {}).get("radius_m"),
+                draw_within_m=(tf.get("billboard_only_rule") or {}).get("draw_within_m"),
+                tag=(tf.get("billboard_only_rule") or {}).get("tag"),
+                note=("these tree_far rows have NO instance row in this glb and are the impostor at EVERY "
+                      "distance. Their impostors must still be MODULATED: `lighting.mesh.placements` "
+                      "carries a row for them with `mesh: false`, and the viewer must set iIrr for them "
+                      "while leaving iNear at 0."),
+                rows=[dict(index=b["index"], billboard=b["billboard"], source_tree=b["source_tree"],
+                           prototype=b["prototype"], loc=b["loc"], height_m=b["height_m"],
+                           nearest_station=b.get("nearest_station"),
+                           nearest_station_m=b.get("nearest_station_m")) for b in _tf_bo]),
             unique_tris=sum(v["tris"] for v in tf["prototypes"].values()),
             placed_tris=tf["gltf"]["placed_tris"],
             source="export/trees_far.py + export/gltf_pack.sh --trees",
@@ -1016,14 +1061,28 @@ def main():
             tw_glb = next((q for q in (g3.GATE1_OUT / "env_trees_lod1.glb",
                                        g3.MAIN_ROOT / "export" / "out" / "gate1" / "env_trees_lod1.glb")
                            if q.exists()), None)
-            # the placements are not repeated here ON PURPOSE. They are the same 127 rows as
-            # `trees.far_mesh.placements`, in the same order, and that is asserted twice - pre-pack, node
-            # name and translation against env_trees.gltf (trees_far.py `instance_order_check`), and
-            # post-pack, node-for-node row counts and materials (verify_glb `trees_lod1_order_check`). A
-            # second copy of the list in this file could only ever disagree with the first.
-            assert len(tw["placements"]) == len(tf["placements"]), \
-                (f"the walk-up set has {len(tw['placements'])} placements and the far set "
-                 f"{len(tf['placements'])}: they are not the same rows")
+            # PHASE 9 item 1. The two sets no longer hold the same rows: the billboard-only radius is
+            # each set's OWN viewer draw distance, and the walk-up set is drawn at 15 m against the far
+            # set's 45 m, so it keeps fewer tagged rows. Its rows are a SUBSET of the far set's, asserted
+            # here by index and, on the geometry, twice more - pre-pack, node name and translation against
+            # env_trees.gltf (trees_far.py `instance_order_check`), and post-pack, node-for-node row counts
+            # and materials (verify_glb `trees_lod1_order_check`).
+            # While the two sets DO hold the same rows the list is still stated by reference, exactly as
+            # before, because a second copy could only ever disagree with the first; only when they differ
+            # is the walk-up list written out, which is a shape `web/src/foliageLazy.js` already reads
+            # (`Array.isArray( w.placements ) ? w.placements : ... same_as`).
+            _tw_bo = tw.get("billboard_only", [])
+            assert len(tw["placements"]) + len(_tw_bo) == len(man["tree_far"]), \
+                (f"the walk-up set has {len(tw['placements'])} placements + {len(_tw_bo)} billboard-only "
+                 f"rows against {len(man['tree_far'])} far trees")
+            _tw_idx = [pl["index"] for pl in tw["placements"]]
+            _tf_idx = [pl["index"] for pl in tf["placements"]]
+            assert _tw_idx == sorted(_tw_idx), "the walk-up placements are not in tree_far index order"
+            assert set(_tw_idx) <= set(_tf_idx), (
+                f"the walk-up set places rows the far set does not: "
+                f"{sorted(set(_tw_idx) - set(_tf_idx))[:4]} - the walk-up glb is drawn at the SHORTER "
+                f"distance, so its rows must be a subset of the far set's")
+            _same_rows = _tw_idx == _tf_idx
             man["trees"]["walkup_mesh"] = dict(
                 glb="env_trees_lod1.glb",
                 bytes=(tw_glb.stat().st_size if tw_glb else None),
@@ -1036,13 +1095,36 @@ def main():
                                  src_tris=v["src_tris"], card_scale=v["reduction"]["card_scale"],
                                  cards=[v["reduction"]["cards_kept"], v["reduction"]["cards_before"]])
                             for k, v in sorted(tw["prototypes"].items())],
-                placements=dict(
+                placements=(dict(
                     count=len(tw["placements"]),
                     same_as="trees.far_mesh.placements",
                     note="identical rows in identical order - read them from far_mesh; they are not "
                          "repeated here so the two can never disagree",
                     verified_pre_pack=tw["gltf"].get("instance_order_check"),
-                    verified_post_pack="verify_glb.py trees_lod1_order_check"),
+                    verified_post_pack="verify_glb.py trees_lod1_order_check") if _same_rows else
+                    [dict(index=pl["index"], prototype=pl["prototype"], mesh=pl["mesh"],
+                          loc=pl["loc"], scale=pl["scale"], height_m=pl["height_m"],
+                          source_tree=pl["source_tree"], billboard=pl["billboard"],
+                          walk_dist_m=pl["walk_dist_m"]) for pl in tw["placements"]]),
+                placements_note=(None if _same_rows else
+                                 "a SUBSET of trees.far_mesh.placements, in the same order: this set is "
+                                 "drawn within draw_within_m (15 m) and the far set within 45 m, so the "
+                                 "Phase 9 billboard-only rule leaves it fewer tagged rows. The rows that "
+                                 "ARE here are byte-for-byte the far set's, and their per-placement "
+                                 "irradiance is still read from trees.far_mesh.lighting by location."),
+                billboard_only=dict(
+                    count=len(_tw_bo),
+                    rule=(tw.get("billboard_only_rule") or {}).get("rule"),
+                    radius_m=(tw.get("billboard_only_rule") or {}).get("radius_m"),
+                    draw_within_m=(tw.get("billboard_only_rule") or {}).get("draw_within_m"),
+                    tag=(tw.get("billboard_only_rule") or {}).get("tag"),
+                    note=("these tree_far rows have NO instance row in env_trees_lod1.glb. On desktop, "
+                          "which loads this set, they are the impostor at every distance and their iIrr "
+                          "must still come from trees.far_mesh.lighting (rows with `mesh: false`)."),
+                    rows=[dict(index=b["index"], billboard=b["billboard"], source_tree=b["source_tree"],
+                               prototype=b["prototype"], loc=b["loc"], height_m=b["height_m"],
+                               nearest_station=b.get("nearest_station"),
+                               nearest_station_m=b.get("nearest_station_m")) for b in _tw_bo]),
                 join=("the same positional join as far_mesh, and the same result: 32 meshes and 254 rows "
                       "for 127 trees, node for node. A row's placement - and therefore its entry in "
                       "far_mesh.lighting's per-placement irradiance - is found by matching the "
