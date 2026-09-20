@@ -1175,10 +1175,14 @@ downstream of both.
 pfaCov = floor( pfaCov * pfaCovQ + 0.5 ) / pfaCovQ;   // pfaCovQ = the TARGET's sample count
 ```
 
-A mask of the permitted form `popcount = floor( cov * N + d( x, y ) )`, `d` in [0,1), returns exactly
-`cov * N` when `cov * N` is an integer — **whatever `d` is**. `N` is a power of two and `1/N` is
-exact in binary floating point, so the product lands on the integer rather than near it. The mask
-therefore stops depending on the pixel under every dither, not just the one modelled above.
+A mask of the form `popcount = floor( cov * N + d( x, y ) )`, `d` in [0,1) — a **per-pixel scalar
+offset** — returns exactly `cov * N` when `cov * N` is an integer, whatever `d` is. `N` is a power of
+two and `1/N` is exact in binary floating point, so the product lands on the integer rather than near
+it. **The scope of that, stated honestly** (r1 review finding 3): it covers every dither of the
+modelled *offset family*, and all three models in the table above are members of that one family, so
+part 3's "after the fix" column is **arithmetic, not evidence**. A spec-legal per-(pixel, sample)
+threshold table that is not a uniform offset would not be made location-independent by a ladder
+point. **The capture is what decides**, and it is owed below.
 
 * **Cost:** the edge resolves in `N + 1` levels instead of the dither's `2N + 1` — terracing on a
   fractal needle edge, where the ordered checkerboard was the visible defect. The mean coverage of

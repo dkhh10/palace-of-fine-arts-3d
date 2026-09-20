@@ -115,10 +115,14 @@
 //
 // THE FIX.  Snap the coverage to the target's OWN sample ladder before the mask sees it:
 //     pfaCov = floor( pfaCov * N + 0.5 ) / N,  N = the target's sample count.
-// A mask of the permitted form popcount = floor( cov * N + d( x, y ) ), d in [0,1), returns exactly
-// cov * N when cov * N is an integer, whatever d is - so the mask stops depending on the pixel and
-// the resolve is parity-free under EVERY dither.  N is a power of two and 1/N is exact in binary
-// floating point, so `cov * N` lands on the integer, not near it.  The cost is that the edge
+// A mask of the form popcount = floor( cov * N + d( x, y ) ), d in [0,1) - a per-PIXEL SCALAR
+// OFFSET - returns exactly cov * N when cov * N is an integer, whatever d is, so the resolve is
+// parity-free under every dither OF THAT FAMILY.  N is a power of two and 1/N is exact in binary
+// floating point, so `cov * N` lands on the integer, not near it.  The scope, stated honestly
+// (r1 review 3): all three models measured above are members of that one offset family, so their
+// "after the fix" column is arithmetic, not evidence; a spec-legal per-(pixel, sample) threshold
+// table that is NOT a uniform offset would not be made location-independent by a ladder point.
+// The capture is what decides.  The cost is that the edge
 // resolves in N + 1 levels instead of the dither's 2N + 1: terracing on a fractal needle edge,
 // where the ordered checkerboard was the visible defect.  It is asked for only where a coverage
 // mask is actually written (a2c AND samples > 1 - never on the Bayer fallback, whose output is
