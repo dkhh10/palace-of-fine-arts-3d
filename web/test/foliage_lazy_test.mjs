@@ -105,17 +105,30 @@ if ( ! fs.existsSync( MANIFEST ) ) {
 }
 const raw = JSON.parse( fs.readFileSync( MANIFEST, 'utf8' ) );
 const manifest = normaliseManifest( raw, 'http://x/assets/gate3/manifest.json' );
-// THE FAR-TREE COUNT COMES FROM THE MANIFEST, never from a literal: 127 at 6c, 166 after 8d's hall-east
+// THE FAR-TREE COUNTS COME FROM THE MANIFEST, never from a literal: 127 at 6c, 166 after 8d's hall-east
 // belt. A hard-coded count here fails every time the scene gains a far tree and says nothing about the
 // join it is meant to test (the rows are `2 * FAR_N`: bark + leaf per tree).
+//
+// PHASE 9 ITEM 1 SPLIT THEM IN THREE. The billboard-only rule leaves some TAGGED `tree_far` rows with no
+// instance row, and it uses each set's own viewer draw distance, so:
+//   TREE_N  every far tree - what the IMPOSTOR side covers (`farTreeIrradiance`, the lighting list)
+//   FAR_N   the far set's mesh placements        (<= TREE_N)
+//   WALK_N  the walk-up set's mesh placements    (<= FAR_N; `same_as` still means "the far set's")
+// While no row is excluded all three are equal and every assertion below reads exactly as it did before.
+const TREE_N = Array.isArray( raw.tree_far ) ? raw.tree_far.length : raw.trees.far_mesh.placements.length;
 const FAR_N = raw.trees.far_mesh.placements.length;
+const WALK_N = ( () => {
+	const w = raw.trees && raw.trees.walkup_mesh;
+	if ( ! w ) return FAR_N;
+	return Array.isArray( w.placements ) ? w.placements.length : FAR_N;
+} )();
 
 // The synthetic glb, exactly as gltfpack emits it: one instanced node per prototype per material,
-// rows in the manifest order.  Both tree sets (far_mesh and walkup_mesh) are the SAME 2 x FAR_N rows over
-// the SAME placements, so one builder serves both.
-function makeRoot() {
+// rows in the manifest order.  One builder serves both tree sets: pass the set's own placement list, or
+// nothing for far_mesh's.  Since Phase 9 the walk-up set may carry FEWER rows (a subset, same order).
+function makeRoot( list = null ) {
 		const fm = raw.trees && raw.trees.far_mesh;
-		const placements = fm.placements;
+		const placements = list || fm.placements;
 		// one instanced node per prototype per material, gltfpack-style, rows in manifest order
 		const byProto = new Map();
 		for ( const p of placements ) {
@@ -169,7 +182,9 @@ function makeRoot() {
 		( m ) => notesL.push( m ) );
 	info( notesL.join( '\n      ' ) );
 	if ( lit ) {
-		ok( Array.isArray( lit.rows ) && lit.rows.length === FAR_N, `lighting normalised to ${lit.rows && lit.rows.length} rows (manifest says ${FAR_N})` );
+		// one row per FAR TREE, not per mesh placement: the impostor of a billboard-only row still needs
+		// its E_placement, and losing it is what would make the belt draw ~4x too bright
+		ok( Array.isArray( lit.rows ) && lit.rows.length === TREE_N, `lighting normalised to ${lit.rows && lit.rows.length} rows (the manifest has ${TREE_N} far trees, ${FAR_N} of them with a mesh)` );
 		ok( lit.prototypes && Object.keys( lit.prototypes ).length === 16,
 			`${lit.prototypes ? Object.keys( lit.prototypes ).length : 0} prototype E_bake values` );
 		const e = prototypeEbake( lit );
@@ -242,23 +257,31 @@ function makeRoot() {
 		const common = { scene, manifest, sun, note: () => {}, impostorGroup: built.group,
 			foliageReport: null, probeTexture: null, scale: manifest.gate3.scale, mode: 'near',
 			impMode: 'full', meshDist: 40, fadeBand: 5, uvDequant: false };
+		// the walk-up glb carries THIS set's rows: far_mesh's when the block says `same_as`, its own
+		// (a subset, same order) when Phase 9's billboard-only rule left it fewer
+		const wPlace = Array.isArray( w.placements ) ? w.placements : raw.trees.far_mesh.placements;
 		const serve = ( name ) => async ( url ) => ( url.endsWith( `/${name}` )
-			? { scene: makeRoot(), parser: null, userData: {} } : Promise.reject( new Error( '404' ) ) );
+			? { scene: makeRoot( wPlace ), parser: null, userData: {} } : Promise.reject( new Error( '404' ) ) );
 		const up = await loadFarTrees( { ...common, loadGlb: serve( w.glb ) } );
 		ok( up.set === 'walkup_mesh', `the walk-up set is chosen when the block is present (${up.set})` );
-		ok( up.error === null && up.rows === 2 * FAR_N && up.joined === 2 * FAR_N,
-			`the walk-up glb joins on far_mesh's own placements (${up.joined}/${up.rows}, ${up.error || 'no error'})` );
-		ok( up.placements === FAR_N, `${FAR_N} placements resolved through placements.same_as (${up.placements})` );
+		ok( up.error === null && up.rows === 2 * WALK_N && up.joined === 2 * WALK_N,
+			`the walk-up glb joins on its own placement list (${up.joined}/${up.rows}, ${up.error || 'no error'})` );
+		ok( up.placements === WALK_N,
+			`${WALK_N} placement(s) resolved (${up.placements}) - ${Array.isArray( w.placements )
+				? 'from the block\'s own list' : 'through placements.same_as'}` );
+		ok( WALK_N <= FAR_N, `the walk-up rows are a subset of the far set's (${WALK_N} <= ${FAR_N})` );
 		ok( up.meshDist === ( w.draw_within_m || 15 ),
 			`the block's own draw_within_m is the switch distance (${up.meshDist} m)` );
-		ok( up.lit === 2 * FAR_N, `every row lit from far_mesh.lighting (${up.lit}/${2 * FAR_N})` );
+		ok( up.lit === 2 * WALK_N, `every row lit from far_mesh.lighting (${up.lit}/${2 * WALK_N})` );
 		// and with only the LOD2 glb on the wire it must fall back rather than lose every mesh
 		const scene2 = new THREE.Scene();
 		const built2 = buildImpostors( { impostors: manifest.gate3.impostors, far: manifest.treesFar,
 			near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
 		if ( built2.group ) scene2.add( built2.group );
+		const serveFar = ( name ) => async ( url ) => ( url.endsWith( `/${name}` )
+			? { scene: makeRoot(), parser: null, userData: {} } : Promise.reject( new Error( '404' ) ) );
 		const back = await loadFarTrees( { ...common, scene: scene2, impostorGroup: built2.group,
-			loadGlb: serve( 'env_trees.glb' ) } );
+			loadGlb: serveFar( 'env_trees.glb' ) } );
 		ok( back.walkupFellBack === true && back.set === 'far_mesh' && back.joined === 2 * FAR_N,
 			`a missing walk-up glb falls back to the LOD2 set (${back.set}, fellBack=${back.walkupFellBack})` );
 		// ?walkupmesh=0 is the A/B and must not even look for the file
@@ -267,9 +290,68 @@ function makeRoot() {
 			near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
 		if ( built3.group ) scene3.add( built3.group );
 		const off = await loadFarTrees( { ...common, scene: scene3, impostorGroup: built3.group,
-			walkup: '0', loadGlb: serve( 'env_trees.glb' ) } );
+			walkup: '0', loadGlb: serveFar( 'env_trees.glb' ) } );
 		ok( off.set === 'far_mesh' && ! off.walkupFellBack && off.meshDist === 12,
 			`?walkupmesh=0 is the LOD2 set at 12 m (${off.set}, ${off.meshDist} m)` );
+	}
+}
+
+// ---------------------------------------------------------------- 4c. a BILLBOARD-ONLY row (Phase 9)
+// export/belt_rule.py leaves some TAGGED tree_far rows with no instance row in a set's glb. Two things
+// must then hold, and the second is the one that silently breaks: the row's IMPOSTOR must stay drawn at
+// every distance (it is never flipped to iNear = 1, because there is no mesh to fade into), AND it must
+// still be MODULATED by E_placement / E_bake - the belt stands in the hall's shade at a median ratio of
+// 0.2424, so an unmodulated impostor draws about four times too bright. The modulation comes from
+// `trees.far_mesh.lighting`, which carries a row per FAR TREE, not per mesh placement.
+{
+	const fm0 = raw.trees && raw.trees.far_mesh;
+	if ( ! fm0 || ! Array.isArray( fm0.placements ) || fm0.placements.length < 2 ) {
+		info( 'no trees.far_mesh placements: the billboard-only checks are skipped' );
+	} else {
+		const raw2 = JSON.parse( JSON.stringify( raw ) );
+		delete raw2.trees.walkup_mesh;                       // the far set, so one glb answers
+		const place2 = raw2.trees.far_mesh.placements;
+		const dropped = place2.pop();                        // the last row becomes billboard-only
+		raw2.trees.far_mesh.billboard_only = { count: 1, tag: 'HB',
+			rows: [ { index: dropped.index, billboard: dropped.billboard, loc: dropped.loc } ] };
+		const manifest2 = normaliseManifest( raw2, 'http://x/assets/gate3/manifest.json' );
+		const scene = new THREE.Scene();
+		const sun = new THREE.DirectionalLight( 0xffffff, 1 );
+		sun.position.set( 1, 1, 1 );
+		const built = buildImpostors( { impostors: manifest2.gate3.impostors, far: manifest2.treesFar,
+			near: [], note: () => {}, loadTexture: () => Promise.resolve( null ), atlas2k: false } );
+		if ( built.group ) scene.add( built.group );
+		const rep = await loadFarTrees( { scene, manifest: manifest2, sun, note: () => {},
+			impostorGroup: built.group, foliageReport: null, probeTexture: null,
+			scale: manifest2.gate3.scale, mode: 'near', impMode: 'full', meshDist: 40, fadeBand: 5,
+			uvDequant: false,
+			loadGlb: async ( url ) => ( url.endsWith( '/env_trees.glb' )
+				? { scene: makeRoot( place2 ), parser: null, userData: {} }
+				: Promise.reject( new Error( '404' ) ) ) } );
+		ok( rep.error === null && rep.placements === FAR_N - 1,
+			`the set loads with the row dropped (${rep.placements} placements, ${rep.error || 'no error'})` );
+		ok( rep.rows === 2 * ( FAR_N - 1 ) && rep.joined === rep.rows,
+			`every remaining instance row still joins (${rep.joined}/${rep.rows})` );
+		ok( rep.impostors && rep.impostors.placements === FAR_N - 1,
+			`the billboard-only row's impostor is NOT flipped to iNear = 1 `
+			+ `(${rep.impostors && rep.impostors.placements} of ${FAR_N} flipped)` );
+		// THE HAND-OFF, in a number: `activateImpostorMeshes` only ever sees the rows foliageLazy put in
+		// `byId`, and foliageLazy builds byId from the MESH placements, so today the billboard-only row's
+		// impostor is neither flipped (right) nor re-lit (wrong).
+		info( `viewer hand-off: ${rep.impostors && rep.impostors.modulated} of ${TREE_N} impostor row(s) `
+			+ 're-lit by E_placement / E_bake; the billboard-only row is not among them, because '
+			+ 'foliageLazy builds its byId from the mesh placements. The manifest carries that row\'s '
+			+ 'lighting entry (`mesh: false`) - the viewer fix is to set irr without near.' );
+		// and the modulation the row must keep: the lighting list is per far tree and was not cut
+		const notes = [];
+		const mod = farTreeIrradiance( manifest2.treesFar, raw2, 'full', ( m ) => notes.push( m ) );
+		ok( mod.applied === TREE_N && mod.byIndex.has( dropped.index ),
+			`the billboard-only row keeps its E_placement / E_bake (${mod.applied}/${TREE_N} modulated, `
+			+ `row ${dropped.index} ${mod.byIndex.has( dropped.index ) ? 'present' : 'MISSING'})` );
+		// the manifest's own bookkeeping: mesh rows + billboard-only = every far tree
+		const bo = ( raw.trees.far_mesh.billboard_only || {} ).count || 0;
+		ok( FAR_N + bo === TREE_N,
+			`the shipped manifest closes: ${FAR_N} mesh placement(s) + ${bo} billboard-only = ${TREE_N} far trees` );
 	}
 }
 
@@ -310,7 +392,9 @@ function makeRoot() {
 		const j = JSON.parse( fs.readFileSync( f, 'utf8' ) );
 		const rows = [];
 		for ( const rec of Object.values( j.meshes || {} ) ) for ( const r of rec.placements || [] ) rows.push( r );
-		ok( rows.length === FAR_N, `${rows.length} rows flattened out of meshes[*].placements (expected ${FAR_N})` );
+		// the bake covers every far tree (trees_far_set.py iterates the manifest, not the mesh set), which
+		// is exactly why a billboard-only row keeps its impostor modulation
+		ok( rows.length === TREE_N, `${rows.length} rows flattened out of meshes[*].placements (expected ${TREE_N} far trees)` );
 		const eb = prototypeEbake( { prototypes: j.prototypes } );
 		ok( eb && Object.keys( eb ).length === 16, `${eb ? Object.keys( eb ).length : 0} prototype E_bake values (expected 16)` );
 		const impBlock = ( ( ( raw.trees || {} ).far_mesh || {} ).lighting || {} ).impostor || null;
@@ -320,7 +404,7 @@ function makeRoot() {
 		for ( const mode of [ 'full', 'chroma' ] ) {
 			const notes = [];
 			const out = farTreeIrradiance( manifest.treesFar, raw2, mode, ( m ) => notes.push( m ) );
-			ok( out.applied === FAR_N, `mode ${mode}: ${out.applied}/${FAR_N} placements modulated (${out.unmatched} unmatched)` );
+			ok( out.applied === TREE_N, `mode ${mode}: ${out.applied}/${TREE_N} far tree(s) modulated (${out.unmatched} unmatched)` );
 			const v = [ ...out.byIndex.values() ];
 			const mx = Math.max( ...v.flat() ), mn = Math.min( ...v.flat() );
 			const rr2 = ratioRules( raw2 );
