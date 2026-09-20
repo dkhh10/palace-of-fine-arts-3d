@@ -139,6 +139,9 @@ const CFG = {
 	// Phase 8b item 3 — the 12 x 3 BAND atlas in place of the octahedral frames, wherever the
 	// manifest carries `impostors.band`: 0 reverts to the octahedral (2K) path.
 	impBand: qs.get( 'impband' ),
+	// Phase 9 item 1 — the coverage QUANTISER that takes the period-2 dotted rim off the far-crown
+	// silhouettes (QA 21 item 1): 0 restores the Phase 8b frame.
+	impQuant: qs.get( 'impq' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards
 	leafSoft: qs.get( 'leafsoft' ) !== '0',             // alphaToCoverage on the MASK cutoffs
@@ -1120,6 +1123,8 @@ async function setupFoliageAndImpostors() {
 			edge: CFG.impEdge, msaa: foliageReport ? foliageReport.msaa : false, leafSoft: CFG.leafSoft,
 			// Phase 8b item A: alpha as coverage under magnification, and the quantum it dithers to.
 			coverage: CFG.impCov, samples: msaaSamples,
+			// Phase 9 item 1: the coverage quantiser, on the SAME sample count the mask uses.
+			quantise: CFG.impQuant,
 			// Phase 8b item 3: the band block is the MANIFEST's; the switch only says whether to use it.
 			band: { block: manifest.gate3.impostors.band || null, switch: CFG.impBand },
 			switchUniforms: foliageReport ? foliageReport.shared.uniforms : null,
