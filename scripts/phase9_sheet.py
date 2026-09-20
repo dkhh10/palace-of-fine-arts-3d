@@ -166,6 +166,9 @@ def build_hero_sheet():
 
     viewer_before = WEB / f"{BEFORE_GATE}_cam01.png"
     viewer_after = WEB / f"{AFTER_GATE}_cam01.png"
+    for _p in (viewer_before, viewer_after):
+        if not _p.exists():
+            sys.exit(f"run --check: {_p} missing")
 
     cycles_before_path = CYCLES_BEFORE
     cycles_after_path = CYCLES_AFTER
@@ -289,6 +292,8 @@ def check_inputs():
 if __name__ == "__main__":
     if "--after-gate" in sys.argv:
         i = sys.argv.index("--after-gate")
+        if i + 1 >= len(sys.argv):
+            sys.exit("--after-gate needs a value")
         AFTER_GATE = sys.argv[i + 1]
         del sys.argv[i:i + 2]
 
