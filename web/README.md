@@ -1184,9 +1184,18 @@ therefore stops depending on the pixel under every dither, not just the one mode
   fractal needle edge, where the ordered checkerboard was the visible defect. The mean coverage of
   an edge is preserved to under 0.02 of a step, and no fragment moves by more than half a step
   (1/8 at `N = 4`).
-* **Scope:** asked for only where a coverage mask is actually written (`a2c` **and** `samples > 1`).
-  With no mask the ordered Bayer cell has already made the coverage 0 or 1 — both ladder points — so
-  the mobile tier and `?leafsoft=0` are untouched by construction.
+* **Scope:** asked for where a coverage mask is actually written (`a2c` **and** `samples > 1`) **and**
+  the Phase 8b coverage path is the one drawing. With no mask (`?leafsoft=0`, `?impedge=0|premul`)
+  the ordered Bayer cell has already made the coverage 0 or 1 — both ladder points — so those paths
+  are untouched by construction, and `?impcov=0` turns the quantiser off with everything else Phase
+  8b added, so it still restores the Phase 7 frame exactly (r1 review finding 5).
+* **The MOBILE tier is quantised too, and its frames will change** (r1 review finding 2 corrected an
+  earlier claim here that they would not). `main.js:685` builds the composer with `samples: 4`
+  **unconditionally** — mobile's `post: 'none'` only empties the pass chain — and `device.js`'s
+  `TIER_SETTINGS.mobile` overrides neither `leafSoft` nor `impEdge`, so mobile is a 4x target with a
+  mask and gets the define. **QA 21 §4's "mobile byte-identical to the previous capture" invariant
+  does not hold for this change and must not be read as a regression**; `?tier=mobile` is in the
+  owed capture below.
 * **One assumption, stated:** `pfaCovQ` is the COMPOSER's sample count, and the same material also
   draws into the planar reflection. Both are `samples: 4` today (main.js reads the composer's; the
   Reflector is built at 4), and a ladder point of 4 is also one of 8, so a finer reflection target
@@ -1209,6 +1218,8 @@ whole of this build, and Chrome never runs beside Blender. The rim counts above 
 (before); the after-capture at stations 2 and 5, and the regression MAE at 1, 3, 4 and 6, are owed
 as soon as the lead grants a window: `scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs`
 into `renders/web/p9v_cam0N.png`, then `python3 web/tools/p9v_rim.py capture` with the tag swapped.
+**`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
+above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
 
 ## Phase 8b fix round (QA 20 carries), 2026-09-19
 
