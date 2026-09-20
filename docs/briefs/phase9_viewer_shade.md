@@ -9,6 +9,16 @@ cam03's column shade is 2.55x Cycles (viewer p10 38-40 vs Cycles 7.3). The light
 environment PMREM specular applied without occlusion (carries all the viewer's blue) and the sun DirectionalLight's specular applied unshadowed (the warm
 remainder). The post chain is ~0 on the near column.
 
+## Item 0 — the export hand-off that gates the belt-rule ship (added 2026-09-20 after the export report; ships in the SAME deploy as the rule)
+docs/briefs/phase9_export_report.md item 3 and export/README.md "THE ONE HAND-OFF THAT GATES THE SHIP": web/src/foliageLazy.js builds its
+impostor complement from the MESH placements, so a billboard-only belt row (35 on desktop, 17 on mobile) never gets `iIrr` and would draw ~4x too
+bright (median E_placement/E_bake 0.2424). Fix: set `irr` for a row with no mesh placement, leave `near` at 0; `trees.far_mesh.lighting.mesh.placements`
+carries every far tree with a `mesh` flag and `trees.<set>.billboard_only` names the excluded rows. The contract test is web/test/foliage_lazy_test.mjs
+section 4c (it prints the hand-off). Its own commit, first.
+
+## Viewer carries from docs/reviews/phase9_viewer_r2_review.md (2 and 3), if cheap: p9v_rim.py boxes_for's aspect claim; the ?tier=mobile owed
+measure is a whole-frame MAE against gate12m (the rim guard refuses 1170x2532 by design). Otherwise leave them tabled.
+
 ## Build
 1. **Manifest constants** (export/manifest_v4.py, its own commit): `sky.open_irradiance_over_pi = [R,G,B]` = the upper-hemisphere cosine-weighted mean
    radiance of the shipped sky_diffuse EXR (B.6 measured (2.196, 3.432, 11.256) on the current one — that is your test fixture, not a constant), and
