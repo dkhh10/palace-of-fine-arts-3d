@@ -107,9 +107,12 @@
 //   3. That leaves one stage.  The atlas has no mips (`generateMipmaps = false`, `LinearFilter`,
 //      anisotropy 1) so no mip is dithered; the 4x4 Bayer cell is the NO-MASK fallback and is not
 //      even compiled here (the gate12 boot note: `resolved by the 4-sample coverage mask`).  What
-//      is left is the hardware's alpha-to-coverage mask, and GL ES 3.0 s15.1.3 says in as many
-//      words that its bits `are not necessarily... a function of the sample location` and may
-//      depend on the PIXEL location - a dither.  Push the same smooth pfaCov through a mask that
+//      is left is the hardware's alpha-to-coverage mask.  GL ES 3.0 s15.1.3 derives the temporary
+//      coverage value from alpha in an implementation-dependent way and says of that algorithm, in
+//      as many words: "The algorithm can and probably should be different at different pixel
+//      locations."  A dither is the behaviour the spec invites, not a driver bug.  (r1 review 4: an
+//      earlier draft quoted a paraphrase; the sentence above is the spec's own.)  Push the same
+//      smooth pfaCov through a mask that
 //      does and one that does not: the dithered models score 0.16-0.48 (bracketing the 0.264 and
 //      0.369 measured), the undithered one 0.016-0.062 (the control's level).
 //

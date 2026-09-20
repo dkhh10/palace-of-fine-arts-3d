@@ -1155,9 +1155,12 @@ and the 4x4 Bayer cell is the **no-mask fallback** and is not even compiled when
 
 ### 3. What is left, and what it costs
 
-The hardware's alpha-to-coverage mask. GL ES 3.0 s15.1.3 says its bits "are not necessarily … a
-function of the sample location" and may depend on the **pixel** location: a dither. Push the same
-smooth `pfaCov` through masks that do and one that does not:
+The hardware's alpha-to-coverage mask. GL ES 3.0 §15.1.3 ("Multisample Fragment Operations") derives
+a temporary coverage value from alpha in an implementation-dependent way, and says of that algorithm:
+"The algorithm can and probably should be different at different pixel locations." A dither is not a
+driver bug here; it is the behaviour the specification invites. (An earlier draft of this section put
+a paraphrase in quotation marks — r1 review finding 4; the sentence above is the spec's own.) Push
+the same smooth `pfaCov` through masks that take that invitation and one that does not:
 
 | regime | no dither | 2x2 dither | 1/8-step dither | **after the fix** |
 |---|---|---|---|---|
