@@ -1,0 +1,12 @@
+00:00.326  blend            | Read blend: "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/d073013c-4713-429a-8691-ae0ba83b882e/scratchpad/r19_scratch.blend"
+00:49.849  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/renders/previews/lighting/r19_eevee_before_03.png'
+[r19] look as found: 'AgX' / 'AgX - High Contrast' / -2.8331  world='WORLD_golden_hour'
+[r19] sockets: tint=[1.0, 0.65, 70.0] antisun_p=3.0 horizon_p=6.0 sunside=[1.0, 1.0, 0.0] sunside_p=3.0 diffuse_boost=2.5
+[light_presets] vault emitters for EEVEE: 2 lights, x6.0 + 21 m cutoff
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[r19] eevee CAM_qa_03_colonnade_walk 32 spp -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/renders/previews/lighting/r19_eevee_before_03.png in 48.7s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 94144 exited rc=0 after 50 s (max 600)
