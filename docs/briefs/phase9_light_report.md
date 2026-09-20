@@ -30,12 +30,14 @@ hue 41.2 -> 41.3 (+0.1 deg); sunlit_attic -0.5 % / -1.1 deg; columns -1.0 % / -0
 0.185 (window 0.22-0.32 was already missed before this round, unchanged in kind); sky_top/sky_left identical.
 
 **3. Stations 3 and 4 HOLD: cam03 8/8, cam04 6/6** boxes inside the same 3 % / 2 deg. cam03 near_column lum 33.5
--> 33.4, flute_band 33.3 -> 33.2 (the colonnade's deep shade does not open up); cam04 coffer_field 52.0 -> 51.9,
+-> 33.4, flute_band 33.2 -> 33.2 (the colonnade's deep shade does not open up); cam04 coffer_field 52.1 -> 51.9,
 vault_soffit_e 33.6 -> 33.5.
 
 **4. Eevee cost:** cam02 36.9 s -> 34.4 s, cam03 48.7 s -> 34.7 s (1280x720 preview, same machine, GPU idle).
 No cost: the shipped world builds FEWER nodes (the anti-sun weight branch is gone at amount 0).
 
+AFTER station frames (960 px): `renders/previews/lighting/r19_ship_0{1,2,3,4}_960.jpg` (the 1920x1080 PNGs beside them are
+left uncommitted at 8 MB each).
 Sheet: `renders/qa_comparisons/lighting_r19_shade_960.jpg` (cam02 BEFORE / AFTER / ref 062 crops of the four
 shaded boxes, plus the hero attic and columns BEFORE / AFTER).
 Winning knob values: `SKY_DIFFUSE_TINT = (1.0, 0.75, 8.0)`, `SKY_DIFFUSE_TINT_ANTISUN = 0.0`. Everything else

@@ -3216,3 +3216,39 @@ Three findings the table carries:
    h_ab by 2.6 deg (82.6 against 80) -- they were inside the window before the fix, at 75.5 / 76.0, and they leave
    it because the sky lever moves every shaded box together.  `shade_frieze` ends at +23.31 against its
    9.9-12.9 window, which 29.4 shows is not a tuning miss but the structural consequence of holding the shafts.
+
+### 29.6 The full chain, and the trap that nearly invalidated it
+
+The shortcut's winner was re-measured the long way -- `light_build` -> `scripts/lead_build.sh` (build_master +
+the Eevee probe bake, which logged the new world: `tint (1.0, 0.75, 8.0), antisun 0.00`) -> `phase5_deliver.sh 1b`
+-> `p8_cycles_refs.py` on a scratch copy -- and it reproduces the shortcut to the second decimal on every cam02
+box (+11.26 / +5.29 / +8.80 / +23.31 / +18.74 / +20.06) with cam01 at MAE 0.99 against the BEFORE frame, a third
+of the 2.91 noise floor.  Holds: cam01 12/12, cam03 8/8, cam04 6/6 boxes inside 3 % luma and 2 deg hue.
+
+**The trap, recorded because it cost a wasted station set and it will catch the next agent.**  MAIN's
+`master_delivery.blend` is PACKED (280 MB, `PFA_PACK=1`); a worktree's `phase5_deliver.sh 1b` produces an UNPACKED
+one (164 MB) whose image paths are relative (`//assets/textures/...`).  Copy that to a scratchpad OUTSIDE the
+worktree and every texture silently fails to load -- Cycles prints `WARNING Image file ... does not exist` and
+renders the untextured albedo, which is BRIGHTER: cam01 came back +67 % on the shaded attic, MAE 31.8, and looked
+for all the world like a lighting regression.  Either pack the copy or keep the scratch copy in the worktree root
+(what this round did: `r19_ship_scratch.blend` beside `master_delivery.blend`, deleted afterwards).  The check
+that catches it in one line is `grep -c 'does not exist' <render log>` -- it must be 0.
+
+Eevee preview cost (1280x720, same machine, GPU otherwise idle): cam02 36.9 s -> 34.4 s, cam03 48.7 s -> 34.7 s.
+The shipped world builds FEWER nodes than the one it replaces (at `antisun = 0` `make_sky_world` does not build
+the anti-sun weight branch at all), so the round is free in both engines.
+
+### 29.7 Checkpoint / what a later round should know
+
+- SHIPPED: `SKY_DIFFUSE_TINT = (1.0, 0.75, 8.0)`, `SKY_DIFFUSE_TINT_ANTISUN = 0.0`.  Nothing else moved; the
+  camera and glossy branches are byte-identical, so the Phase 6 camera/glossy equirects and the AgX LUT do not
+  need re-baking -- only the lightmaps do.  Read back from the rebuilt file, not asserted.
+- STILL OPEN, and NOT a lighting defect: `shade_frieze` +23.31 against its 9.9-12.9 control window, and
+  `soffit_l` / `soffit_r` at h_ab 82.6 against a 40-80 window they were inside before this round.  Both follow
+  from the same fact (29.2, 29.4): the sky lever moves every shaded box together, and what the render gets wrong
+  at station 2 is the SPREAD between shaded boxes, which is warm interreflection and the shafts' own a* (2.4-2.6
+  against the photograph's 10.2 -- the columns are not rosy enough).  A materials round, not a lighting one.
+- The `light_r19_*` tools are reusable: `sweep.py` patches only `make_sky_world` arguments on a scratch copy
+  (2 min per candidate instead of ~50), `measure.py` carries the CIELAB columns and checks the acceptance in code,
+  `sheet.py` writes the 960 px composite.  The dose model in 29.4 predicted every candidate in this round to
+  within 1.5 b* and is worth fitting again before spending renders.
