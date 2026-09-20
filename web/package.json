@@ -10,7 +10,7 @@
     "shot": "../scripts/chrome_run.sh 600 -- node tools/screenshot.mjs",
     "stations": "python3 tools/dump_stations.py",
     "stations:check": "python3 tools/dump_stations.py --check",
-    "test": "node test/camera_test.mjs && node test/manifest_test.mjs && node test/tiers_test.mjs && node test/pbr_test.mjs && node test/gate3_test.mjs && node test/uv_dequant_test.mjs && node test/walk_test.mjs && node test/post_probe_test.mjs && node test/foliage_lazy_test.mjs && node test/foliage_cardsun_test.mjs && node test/impostor_cov_test.mjs && node test/impostor_band_test.mjs && node test/impostor_rim_test.mjs && node test/detail_proj_test.mjs"
+    "test": "node test/camera_test.mjs && node test/manifest_test.mjs && node test/tiers_test.mjs && node test/pbr_test.mjs && node test/gate3_test.mjs && node test/uv_dequant_test.mjs && node test/walk_test.mjs && node test/post_probe_test.mjs && node test/foliage_lazy_test.mjs && node test/foliage_cardsun_test.mjs && node test/impostor_cov_test.mjs && node test/impostor_band_test.mjs && node test/impostor_rim_test.mjs && node test/detail_proj_test.mjs && node test/spec_gate_test.mjs"
   },
   "dependencies": {
     "three": "0.186.0"

@@ -96,12 +96,17 @@ export function applyGate3Lightmaps( o ) {
 	// material without a baked map already does, instead of being patched specular-only and rendering
 	// black while it waits.  The pass is re-run when that tier lands (it re-plans from scratch and is
 	// idempotent: a material it cloned last time is already the mesh's own, so nothing clones twice).
+	// Phase 9 (B.6): the specular gate's constants, or null.  It reaches ONLY the two lightmap patches
+	// below — a material without a lightmap has no visibility to read and is left untouched.
+	const specGate = o.specGate || null;
 	const tierOf = o.tierOf || ( () => 0 );
 	const maxTier = o.maxTier ?? Infinity;
 	const report = {
 		deferred: [], maxTier,
 		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {}, nearMiss: {} },
 		slots: { instances: 0, matched: 0, applied: 0, single: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
+		specGate: specGate ? { openSkyB: specGate.openSkyB, skyRedOverBlue: specGate.skyRedOverBlue,
+			sunIrrOverPi: specGate.sunIrrOverPi } : null,
 		materialsCloned: 0, texturesRequested: 0, texturesLoaded: 0, texturesFailed: [],
 		meshesSeen: 0, instancedMeshesSeen: 0,
 		// the UV2 census: a lightmap can only attach to a mesh that carries TEXCOORD_1, and gltfpack
@@ -237,7 +242,7 @@ export function applyGate3Lightmaps( o ) {
 			const lm = gate3.ownMaps[ p.name ];
 			const t = tierOf( lm.url );
 			if ( t > maxTier ) { report.deferred.push( { kind: 'own', name: p.name, url: lm.url, tier: t } ); continue; }
-			patchBakedMaterial( p.material, { lightMapEncoding: encOf( lm.encode ), range: lm.range, flipV } );
+			patchBakedMaterial( p.material, { lightMapEncoding: encOf( lm.encode ), range: lm.range, flipV, specGate } );
 			pending.push( fetch( lm.url ).then( ( t ) => {
 				if ( ! t ) return;
 				attachLightMap( p.material, t, gate3.scale );
@@ -263,7 +268,7 @@ export function applyGate3Lightmaps( o ) {
 			pending.push( Promise.all( [ fetch( a.url ), b ? fetch( b.url ) : Promise.resolve( null ) ] ).then( ( [ ta, tb ] ) => {
 				if ( ! ta ) return;
 				// The patch must know the second sampler before the program is built.
-				patchBakedMaterial( mat, { lightMapEncoding: encOf( a.encode ), range: a.range, slot: true, atlasB: tb || ta, flipV } );
+				patchBakedMaterial( mat, { lightMapEncoding: encOf( a.encode ), range: a.range, slot: true, atlasB: tb || ta, flipV, specGate } );
 				attachLightMap( mat, ta, gate3.scale );
 				if ( tb ) { tb.flipY = false; tb.colorSpace = THREE.NoColorSpace; tb.needsUpdate = true; }
 				mat.needsUpdate = true;
