@@ -140,7 +140,8 @@ const CFG = {
 	// manifest carries `impostors.band`: 0 reverts to the octahedral (2K) path.
 	impBand: qs.get( 'impband' ),
 	// Phase 9 item 1 — the coverage QUANTISER that takes the period-2 dotted rim off the far-crown
-	// silhouettes (QA 21 item 1): 0 restores the Phase 8b frame.
+	// silhouettes (QA 21 item 1): 0 restores the Phase 8b coverage path (r1 review 7: not the Phase
+	// 8b commit byte for byte - the unconditional pfaViewDir guard came in on the same branch).
 	impQuant: qs.get( 'impq' ),
 	foliageBias: qs.get( 'foliagebias' ),   // LOD bias on the cut-out fetch: "card[,leaf]"
 	leafTrn: qs.get( 'leaftrn' ),                       // scale, or "shrubs" to include the cards

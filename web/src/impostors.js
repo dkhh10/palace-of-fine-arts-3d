@@ -129,7 +129,11 @@
 // resolves in N + 1 levels instead of the dither's 2N + 1: terracing on a fractal needle edge,
 // where the ordered checkerboard was the visible defect.  It is asked for only where a coverage
 // mask is actually written (a2c AND samples > 1 - never on the Bayer fallback, whose output is
-// already 0 or 1), it moves no colour, and `?impq=0` restores the Phase 8b frame exactly.
+// already 0 or 1), it moves no colour, and `?impq=0` restores the Phase 8b COVERAGE PATH - not the
+// Phase 8b commit byte for byte, because the same branch also replaced normalize( vDirBlender ) with
+// the guarded pfaViewDir() at both lookups unconditionally (r1 review 7).  That guard is provably
+// inert on every non-degenerate fragment - it is normalize(v) verbatim there - but no switch reverts
+// it, so the honest claim is the coverage path.
 import * as THREE from 'three';
 import { b2t } from './blenderCamera.js';
 
@@ -190,7 +194,8 @@ const fragmentShader = /* glsl */`
 	uniform float alphaTest;
 	// Phase 9 item 1 - the target's OWN sample count, the ladder the coverage is snapped to.  It is
 	// read from the render target (main.js msaaSamples), never assumed to be four, and the
-	// statement that uses it is behind PFA_IMP_QUANT so ?impq=0 is the Phase 8b program.
+	// statement that uses it is behind PFA_IMP_QUANT so ?impq=0 is the Phase 8b coverage PATH
+	// (r1 review 7: not the Phase 8b commit byte for byte - pfaViewDir is unconditional).
 	// NO BACKTICKS IN THIS LITERAL (r4 review 1, and it bit again here).
 	uniform float pfaCovQ;
 	uniform int debugMode;          // 0 off, 1 raw sample, 2 alpha, 3 frame cell, 4 quad uv, 5 coverage

@@ -1209,7 +1209,8 @@ point. **The capture is what decides**, and it is owed below.
   would still be exact. A *coarser* one (2) would put the reflection back on today's behaviour —
   never worse than it, but worth re-reading if the Reflector's sample count ever changes.
 * **Nothing else moves.** The cutoff (0.33), the premultiplied reconstruction, the interior term,
-  the share and the whole colour path are byte-identical. `?impq=0` is the Phase 8b program.
+  the share and the whole colour path are byte-identical. `?impq=0` is the Phase 8b **coverage
+  path** — see the carry below for the one thing it does not revert.
 * **What may change at stations 1, 3, 4 and 6:** only pixels whose coverage was fractional, by at
   most half a step of coverage each. The regression rule is MAE <= 0.5 %; the capture has not been
   taken yet (see below).
@@ -1231,6 +1232,13 @@ count for two reasons at once. The probe refuses any frame that is not 1920x1080
 `python3 web/tools/p9v_rim.py selftest` proves both of those on synthetic frames, without a capture.
 **`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
 above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
+
+**One thing `?impq=0` does not revert** (r1 review finding 7). The same branch replaced
+`normalize( vDirBlender )` with the guarded `pfaViewDir( … )` at both atlas lookups,
+**unconditionally**, and no switch reverts it. It is provably inert on every non-degenerate fragment
+— it is `normalize(v)` verbatim there, pinned by three checks in `impostor_rim_test.mjs` — but it
+means `?impq=0` restores the Phase 8b **coverage path**, not the Phase 8b commit byte for byte. The
+wording is now that, in the README, `impostors.js`, `main.js` and the test.
 
 ## Phase 8b fix round (QA 20 carries), 2026-09-19
 
@@ -2658,7 +2666,8 @@ shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (transl
 mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
 `?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
 `?impq=0` (Phase 9 item 1: stop snapping the impostor coverage to the target's sample ladder before
-the alpha-to-coverage mask — the Phase 8b frame, dotted rim included),
+the alpha-to-coverage mask — the Phase 8b coverage path, dotted rim included; `?impcov=0` turns it
+off too, so that still restores Phase 7),
 `?fartreelight=near|probe|0` (what lights the 127 far-tree MESHES until the bake ships their
 irradiance; `0` suppresses the meshes entirely and every far tree stays its impostor — inert once the
 bake's block is in the manifest, which is the shipped case),

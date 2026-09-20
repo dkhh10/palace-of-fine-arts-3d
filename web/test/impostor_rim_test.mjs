@@ -122,7 +122,7 @@ check( parseImpQuant( null, mask4 ).on === true, 'default on a 4x target with a 
 check( parseImpQuant( null, mask4 ).samples === 4, 'and it snaps to the TARGET\'s four samples' );
 check( parseImpQuant( null, { a2c: true, samples: 8 } ).samples === 8, 'an 8x target snaps to eight, not to an assumed four' );
 for ( const v of [ '0', 'off', 'none', 'OFF' ] )
-	check( parseImpQuant( v, mask4 ).on === false, `?impq=${v} restores the Phase 8b frame` );
+	check( parseImpQuant( v, mask4 ).on === false, `?impq=${v} restores the Phase 8b coverage path` );
 for ( const v of [ '1', 'on', '' ] ) check( parseImpQuant( v, mask4 ).on === true, `?impq=${v} is the default` );
 const typo = parseImpQuant( 'yes', mask4 );
 check( typo.on === true && typo.unknown === 'yes', 'a typo falls back to the default AND says so' );
