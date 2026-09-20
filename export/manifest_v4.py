@@ -348,17 +348,39 @@ def main():
                             g3.MAIN_ROOT / "export" / "out" / "gate1" / "manifest.json") if q.exists()),
                None)
     glb_refresh = []
+    stale = []
     if g1m is not None:
         cur = json.loads(g1m.read_text()).get("glb", {}).get("per_class", {})
         for cls, now in cur.items():
             was = (man.get("glb", {}).get("per_class", {}) or {}).get(cls)
             if not isinstance(was, dict):
+                # review r1 finding 4: a class Gate 1 knows about and Gate 2 does not is NOT refreshed
+                # here, so say so rather than dropping it on the floor.
+                stale.append(dict(cls=cls, side="gate1_only",
+                                  why="in the Gate 1 manifest but not in Gate 2's glb.per_class, so "
+                                      "nothing carries it into this manifest"))
                 continue
             moved = {k: [was.get(k), now.get(k)] for k in ("bytes", "placed_tris", "objects", "meshes")
                      if k in now and was.get(k) != now.get(k)}
             if moved:
                 glb_refresh.append(dict(cls=cls, **moved))
             was.update({k: v for k, v in now.items() if k != "path"})
+        # review r1 finding 4, the case that fails SILENTLY and is the dangerous one: a class frozen into
+        # Gate 2's per_class that the Gate 1 manifest beside the glbs no longer names keeps its Gate 2
+        # numbers untouched and ships them, and verify_glb --gate5 then checks the tier groups against a
+        # number nothing on disk backs. It is not an error here (a class can legitimately leave the export
+        # set) but it must never be silent.
+        for cls, was in sorted((man.get("glb", {}).get("per_class", {}) or {}).items()):
+            if cls not in cur and isinstance(was, dict):
+                stale.append(dict(cls=cls, side="gate2_only",
+                                  bytes=was.get("bytes"), placed_tris=was.get("placed_tris"),
+                                  why="carried unchanged from Gate 2: the Gate 1 manifest beside the glbs "
+                                      "does not name this class, so nothing on disk backs these numbers"))
+    if stale:
+        man.setdefault("glb", {})["per_class_not_refreshed"] = stale
+        for r in stale:
+            print(f"[manifest_v4] WARN glb.per_class[{r['cls']}] not refreshed ({r['side']}): {r['why']}",
+                  flush=True)
     if glb_refresh:
         man.setdefault("glb", {})["per_class_refreshed_from_gate1"] = dict(
             source=str(g1m), changed=glb_refresh,
