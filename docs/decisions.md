@@ -1083,3 +1083,25 @@ phase9_bake_analysis.md) prices the lightmap chain the lighting change forces an
 term, specular sun, post) before any re-bake is scheduled, so the one re-bake of the phase carries both fixes if the cam03 fix is bake-side. BEFORE frames = the
 six full-size Cycles refs the lead renders now from the Phase 8 master_delivery (housekeeping item 4, same renders). Viewer (dotted rim) and export (belt
 billboard rule) start on CPU in parallel; the ENV aerial-blocks round waits for the bake analysis so the builder cap (4) and the one-GPU rule hold.
+
+## 2026-09-20 · Phase 9 item 1: the belt's billboard-only rule is per SET, measured against the QA stations — the export pin gains four numbers, the export set moves none
+QA 23 residual 3 / QA 24 item 3: cam03 submits **+1 301 870 triangles and +28 draws** because three of the 39 hall-east belt trees (8d r2, tag HB) stand inside
+`buildDistanceCull`'s limit and a batch is submitted whole as soon as one row is inside. Measured at the cam03 station (81.0, 12.04, 1.7 / 18 mm / 16:9), of the
+three inside 15 m **two are in frame**: `ENV_tree_cypress_33` at 6.5 m fills ndc x [-2.27, 0.10] and the whole frame height, `ENV_tree_cypress_34` at 10.4 m fills
+x [-1.74, -0.38]; `ENV_tree_redwood_26` at 6.6 m is behind the camera plane. At 1920 px that is one 1 K impostor texel (81 inner px per frame) at **17.9 and 11.9
+screen px** — the magnified-card defect Phase 7 built the walk-up set to cure. So option (a), billboard-only for all 39, is **rejected**; option (b) as written —
+"outside every station's walkable reach" — is **empty**, because all 39 belt trees stand 0.2-7.3 m from a walkable surface (`walk_dist_m`), so that phrase cannot
+discriminate. **Chosen: (b) re-cut against the stations, per set.** A tagged row keeps its mesh only if its trunk base is within that SET's own viewer draw
+distance + the 5 m fade band of a QA station eye — beyond it the fragment dissolve discards every fragment, so no station can ever see the mesh. Walk-up (desktop,
+15 + 5 = 20 m): 4 rows kept, 35 billboard-only, **4 937 933 -> 3 890 782 placed tris (-1 047 151, -21.2 %)**, rows 166 -> 131. Far (mobile, 45 + 5 = 50 m): 22
+kept, 17 billboard-only, **1 317 097 -> 1 182 338 (-134 759, -10.2 %)**, rows 166 -> 149. The two sets therefore hold different rows for the first time, walk-up a
+subset of far; `foliageLazy` already reads an explicit `walkup_mesh.placements` array, so that needs no viewer change. Option (c), a per-row mesh distance, is
+**not taken**: `pfaSwitchDist` is a shared uniform and a per-row distance would need a per-instance attribute in the dissolve as well as in the cull.
+**What the pin says.** The EXPORT SET does not move: `tree_rule` stays 186 trees / 166 far billboards / 85 LOD2 blobs / 20 near, ENV placed stays 895 052, and
+arch/orn/ground stay byte-identical — a billboard-only row keeps its billboard, its impostor frame and its per-placement irradiance, and loses only its instance
+row in the two far-tree MESH glbs. `p8d_pin.py` therefore gains four pins downstream of the export set (`trees_far[far|walkup].placements` 149 / 131,
+`billboard_only` 17 / 35, `placed_tris` 1 182 338 / 3 890 782, and the subset relation), so a moved station, a changed belt or a changed `draw_within_m` is a
+decision rather than a surprise. **One hand-off gates the ship: the viewer must modulate a billboard-only row's impostor.** `foliageLazy` builds its impostor
+complement from the MESH placements, so a row without one gets neither `iNear = 1` (right) nor `iIrr` (wrong): the belt's median E_placement / E_bake is 0.2424,
+so those crowns would draw about four times too bright and QA 23's fix would be undone. The manifest keeps a lighting row for every `tree_far` tree (`mesh: false`
+on the excluded ones) and names them in `trees.<set>.billboard_only`; `web/test/foliage_lazy_test.mjs` section 4c holds the contract.
