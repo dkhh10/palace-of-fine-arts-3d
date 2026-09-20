@@ -1072,3 +1072,14 @@ renders/qa_comparisons/phase8_before_after_960.jpg. Anything further (the carrie
 Scope and order in docs/briefs/phase9_next_session.md: one lighting round for station 3's deep shade and station 2's blue-violet shade (a Phase 5 lighting change — this
 entry records the user's approval; the lead reports before it starts), the aerial city blocks (8d R3), the belt/far-tree small items, housekeeping, then a new 4K hero and
 sheet. Multi-session accepted; stop on a usage limit.
+
+## 2026-09-20 · Phase 9 session 9 start: the lighting round is station 2 only in Cycles; station 3 is a chain gap, decomposed before anyone builds
+Reading the carries before writing the briefs: cam02's blue-violet shade is a Cycles-vs-photo defect (Cycles b* -5.0 / -18.4 / -3.3 vs the photo +10.9 / +11.0 /
++5.3, phase8b_viewer_fix_report item c) and is the LIGHTING change the user approved (docs/briefs/phase9_light.md: acceptance b* >= +5 / h_ab 40-80 / R-B >= +10,
+shade_frieze +11.4 +- 1.5, hero and stations 3/4 held within 3 % luma / 2 deg hue of the BEFORE frames plus the 32-spp noise floor). cam03's missing deep shade is
+the opposite kind: Cycles HAS the shade (p10 7.3) and the viewer does not (p10 38-40, column shade 2.55x; QA-14-2, phase8a4 §2) — a bake/viewer chain gap that no
+round has decomposed by term. So the plan's item 1 splits: the lighting agent changes Cycles for station 2 and HOLDS station 3; the bake engineer (CPU, docs/briefs/
+phase9_bake_analysis.md) prices the lightmap chain the lighting change forces and decomposes cam03's excess per term (lightmap texels vs Cycles diffuse, probe/sky
+term, specular sun, post) before any re-bake is scheduled, so the one re-bake of the phase carries both fixes if the cam03 fix is bake-side. BEFORE frames = the
+six full-size Cycles refs the lead renders now from the Phase 8 master_delivery (housekeeping item 4, same renders). Viewer (dotted rim) and export (belt
+billboard rule) start on CPU in parallel; the ENV aerial-blocks round waits for the bake analysis so the builder cap (4) and the one-GPU rule hold.
