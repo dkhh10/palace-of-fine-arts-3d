@@ -153,7 +153,7 @@ def mesh_rows(out):
         out["checks"].append(dict(name=name, ok=bool(ok), main=va, new=vb, expected=expect))
         return ok
 
-    ok, seen = True, {}
+    ok, seen, idx = True, {}, {}
     for set_name, rel in (("far", "export/out/gate1/trees_far.json"),
                           ("walkup", "export/out/gate1/trees_far_lod1.json")):
         p = ROOT / rel
@@ -167,6 +167,10 @@ def mesh_rows(out):
         seen[set_name] = dict(placements=n, billboard_only=nb,
                               placed_tris=d.get("gltf", {}).get("placed_tris"),
                               radius_m=(d.get("billboard_only_rule") or {}).get("radius_m"))
+        idx[set_name] = (frozenset(pl["index"] for pl in d["placements"]),
+                         frozenset(b["index"] for b in d.get("billboard_only", [])))
+        ok &= eq(f"trees_far[{set_name}] indices are distinct and close on tree_far", EXPECT_FAR,
+                 len(idx[set_name][0] | idx[set_name][1]), expect=EXPECT_FAR)
         ok &= eq(f"trees_far[{set_name}].placements", None, n, expect=EXPECT_MESH_ROWS[set_name])
         ok &= eq(f"trees_far[{set_name}].billboard_only", None, nb,
                  expect=EXPECT_BILLBOARD_ONLY[set_name])
@@ -174,8 +178,18 @@ def mesh_rows(out):
                  expect=EXPECT_PLACED_TRIS[set_name])
         ok &= eq(f"trees_far[{set_name}] rows close against tree_far", EXPECT_FAR, n + nb, expect=EXPECT_FAR)
     if "far" in seen and "walkup" in seen:
-        ok &= eq("the walk-up rows are a subset of the far set's", True,
+        # the real relation, by ROW INDEX and not by count: the set drawn at the SHORTER distance may
+        # place fewer rows but never one the longer-reaching set dropped, which is what makes the
+        # cross-set order check in verify_glb a subsequence rather than an equality.
+        extra = sorted(idx["walkup"][0] - idx["far"][0])
+        ok &= eq("the walk-up placed rows are a subset of the far set's, by index", [],
+                 extra, expect=[])
+        missing = sorted(idx["far"][1] - idx["walkup"][1])
+        ok &= eq("every row the far set drops is dropped by the walk-up set too", [],
+                 missing, expect=[])
+        ok &= eq("the walk-up rows are a subset of the far set's, by count", True,
                  seen["walkup"]["placements"] <= seen["far"]["placements"], expect=True)
+        seen["walkup"]["extra_rows_vs_far"] = extra
     out["mesh_rows"] = seen
     return ok
 

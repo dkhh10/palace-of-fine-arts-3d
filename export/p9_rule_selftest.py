@@ -17,6 +17,7 @@ pattern for the far-tree counts. CPU only: no Blender, no GPU, nothing written.
 import copy
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -50,10 +51,35 @@ def synth(man, belt, eyes, set_name, real):
                walk_dist_m=man["tree_far"][i]["walk_dist_m"],
                nearest_station=excl[i][0], nearest_station_m=round(excl[i][1], 2))
           for i in sorted(excl)]
-    d = dict(real, placements=keep, billboard_only=bo,
+    # trees_far.py re-states `gltf.placed_tris` after the rule, so the synthetic report must too or the
+    # pin would be fed the PRE-rule triangle count and could not be exercised against its own expectation.
+    per = {k: v["tris"] for k, v in (real.get("prototypes") or {}).items()}
+    g = dict(real.get("gltf") or {})
+    if per and g.get("placed_tris") is not None:
+        g["placed_tris"] = g["placed_tris"] - sum(per[pmap[man["tree_far"][i]["prototype"]]] for i in excl)
+    d = dict(real, placements=keep, billboard_only=bo, gltf=g,
              billboard_only_rule=dict(tag=br.BELT_TAG, radius_m=r,
                                       draw_within_m=br.DRAW_WITHIN_M[set_name], rule="(selftest)"))
     return d
+
+
+def run_pin(reports, root):
+    """`p8d_pin.mesh_rows` against reports written under `root` -> (overall ok, {check name: ok})."""
+    import p8d_pin as pin
+    g1 = Path(root) / "export/out/gate1"
+    g1.mkdir(parents=True, exist_ok=True)
+    for set_name, rel in (("far", "trees_far.json"), ("walkup", "trees_far_lod1.json")):
+        if set_name in reports:
+            (g1 / rel).write_text(json.dumps(reports[set_name]))
+        elif (g1 / rel).exists():
+            (g1 / rel).unlink()
+    was, pin.ROOT = pin.ROOT, Path(root)
+    try:
+        out = dict(checks=[])
+        good = pin.mesh_rows(out)
+    finally:
+        pin.ROOT = was
+    return good, {c["name"]: c["ok"] for c in out["checks"]}
 
 
 def main():
@@ -138,6 +164,39 @@ def main():
     m["trees"]["walkup_mesh"].pop("billboard_only")
     _c, b = vg.far_tree_counts(m)
     ok(not b, f"the pre-rule shape (166 / 166 / same_as, no billboard_only) still passes - {b}")
+
+    print("export/p8d_pin.mesh_rows - the shipped numbers, then the drifts it has to catch")
+    with tempfile.TemporaryDirectory() as td:
+        good_pin, names = run_pin(reports, td)
+        ok(good_pin, f"the rule's own two reports pass every pin ({len(names)} checks)")
+        ok(any("subset of the far set's, by index" in k for k in names),
+           "the pin really compares row INDICES across the sets, not just their counts")
+
+        def neg(what, mutate, check_substr):
+            r = copy.deepcopy(reports)
+            mutate(r)
+            g, ns = run_pin(r, td)
+            hit = any(check_substr in k and not v for k, v in ns.items())
+            ok(not g and hit, f"{what}: the pin FAILs, and on `...{check_substr}`")
+
+        neg("a walk-up row goes missing", lambda r: r["walkup"]["placements"].pop(),
+            "walkup].placements")
+        neg("the walk-up set places a row the far set dropped",
+            lambda r: (r["walkup"]["placements"].append(dict(r["far"]["billboard_only"][0])),
+                       r["walkup"]["billboard_only"].__delitem__(
+                           next(j for j, b in enumerate(r["walkup"]["billboard_only"])
+                                if b["index"] == r["far"]["billboard_only"][0]["index"]))),
+            "subset of the far set's, by index")
+        neg("the far set drops a row the walk-up set still places",
+            lambda r: (r["far"]["billboard_only"].append(dict(r["far"]["placements"].pop(0))),),
+            "subset of the far set's, by index")
+        neg("the placed triangles drift while the row counts hold",
+            lambda r: r["far"]["gltf"].__setitem__("placed_tris",
+                                                   r["far"]["gltf"]["placed_tris"] - 1),
+            "far].placed_tris")
+        g, ns = run_pin({k: v for k, v in reports.items() if k != "walkup"}, td)
+        ok(not g and not ns.get("trees_far[walkup] rows", True),
+           "a report that has not been written yet is REPORTED, never silently passed")
 
     print(f"[p9_selftest] {TOTAL - len(FAILS)}/{TOTAL} checks behaved"
           + (f" - {len(FAILS)} FAILURE(S)" if FAILS else ""))
