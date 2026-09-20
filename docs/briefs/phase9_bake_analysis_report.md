@@ -3,6 +3,10 @@ Bake engineer, branch `phase9-bake`, 2026-09-20. CPU only: no Blender run, no ba
 Every number below is measured from files already on disk (`export/out/gate3/bake/*.json`, the archival EXRs in the
 `phase6-bake` worktree, the shipped KTX2, the manifest, the frames named in the brief) by
 `export/p9_shade_terms.py` (committed on this branch) or by the one-line probes quoted beside it.
+*Provenance note (review r1 fix 3):* the script does not read the bake JSON (A.1's wall times were summed by a one-line probe over
+`export/out/gate3/bake/*.json`, reproduced exactly by the review), and B.3's equirect means and B.6's decile table / sky constants have no
+committed producer here. The constants (2.196, 3.432, 11.256) and 21.428 are NOT to be hard-coded in the viewer: per docs/decisions.md
+(session 10) `export/manifest_v4.py` re-derives them from the shipped sky_diffuse EXR and the sun energy on every manifest run.
 
 ---
 

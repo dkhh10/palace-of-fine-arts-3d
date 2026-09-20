@@ -17,13 +17,15 @@ The comparison is additive on purpose: a multiplicative error (albedo, lightmap 
 move the SUNLIT boxes too, and they are within 4-7 %.
 """
 import argparse, json, subprocess, sys, tempfile
+import os
 from pathlib import Path
 
+os.environ.setdefault("OPENCV_IO_ENABLE_OPENEXR", "1")   # must precede any cv2 import (review r1 fix 1)
 import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = Path("/Users/dk/Projects/3d render blender 3rd attempt building")
+MAIN = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))  # review r1 fix 2
 BAKE_WT = MAIN/".claude/worktrees/phase6-bake"          # the archival EXRs live here only
 CUBE = MAIN/"export/out/gate0/lut_agx_high_contrast_65.cube"
 MANIFEST = MAIN/"export/out/gate3/manifest.json"
