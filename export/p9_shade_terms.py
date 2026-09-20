@@ -145,7 +145,7 @@ CYCLES = "renders/qa_comparisons/cycles_p8/cam03_1080_32spp.png"
 
 def cmd_boxes(args):
     L = Lut()
-    V = np.asarray(Image.open(MAIN/VIEWER).convert("RGB"), float)
+    V = np.asarray(Image.open(Path(args.viewer) if args.viewer else MAIN/VIEWER).convert("RGB"), float)
     C = np.asarray(Image.open(MAIN/(args.cycles or CYCLES)).convert("RGB"), float)
     rng = np.random.default_rng(0)
     out = {}
@@ -203,6 +203,7 @@ if __name__ == "__main__":
     ap.add_argument("--boxes", action="store_true")
     ap.add_argument("--post", action="store_true")
     ap.add_argument("--cycles", default=None)
+    ap.add_argument("--viewer", default=None, help="viewer frame to measure (absolute or cwd-relative); default MAIN/renders/web/gate12_cam03.png")
     ap.add_argument("--out", default="/tmp/p9_shade_terms.json")
     a = ap.parse_args()
     if a.lightmaps: cmd_lightmaps(a)
