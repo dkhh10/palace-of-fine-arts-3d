@@ -645,7 +645,22 @@ def main():
         atlas_px=ship, frame_px=int(g3.IMP_FRAME_PX * scale), gutter_px=int(g3.IMP_GUTTER_PX * scale),
         inner_px=int(g3.IMP_INNER_PX * scale),
         variant_2k=dict(atlas_px=g3.IMP_ATLAS_PX, frame_px=g3.IMP_FRAME_PX, gutter_px=g3.IMP_GUTTER_PX,
-                        inner_px=g3.IMP_INNER_PX, note="on disk; the budget lever is which of the two is loaded"),
+                        inner_px=g3.IMP_INNER_PX,
+                        note=("on disk; the budget lever is which of the two is loaded"),
+                        tier0_stand_in=(
+                            "THE 1 K TWIN HAS NO TIER-0 STAND-IN OF ITS OWN, on purpose (review r1 "
+                            "finding 2). There is exactly ONE half-resolution ETC1S copy per prototype, "
+                            "and `tiers.lowres.files` may name it ONCE: web/src/manifest.js keys "
+                            "`upgradeOf` by the stand-in url and `lowresFor` by the full url, so two "
+                            "entries on one stand-in collide in the first map and not the second, and "
+                            "web/test/tiers_test.mjs asserts the two are the same size. The stand-in is "
+                            "therefore filed under whatever the viewer DRAWS BY DEFAULT - the band "
+                            "atlas, else the 2 K - and the 1 K and 2 K octahedral albedos stay published "
+                            "at tier 1 with no stand-in. Consequence: `?imp2k=0` / `?impband=0` are "
+                            "TIER-1 reverts. They show the default's stand-in until tier 1 lands and "
+                            "then swap to the 1 K file; they are A/B levers, not a first-frame path. "
+                            "Re-adding a row for the 1 K key would break the 1:1 pairing tiers_test "
+                            "checks, so it is not done."),),
         encode=dict(albedo=("gamma2 on RGB at the prototype's own `range` (rgb = t.rgb * t.rgb * range, "
                             "LINEAR oetf, NOT sRGB), straight (un-premultiplied) alpha in A"),
                     normal_depth=("rgb = world normal * 0.5 + 0.5 (Blender Z-up); A is depth about the "
