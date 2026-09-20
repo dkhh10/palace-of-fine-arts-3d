@@ -2819,19 +2819,29 @@ rides the lead's lighting chain. The command list is at the bottom of this secti
 
 ### What was measured first (CPU, no Blender)
 
-`export/belt_rule.py` is the rule and its own analysis: `python3 export/belt_rule.py` prints the table and
-exits non-zero if an invariant breaks. From the cam03 station (81.0, 12.04, 1.7, target 0/0/9.2, 18 mm on
-36 mm, 16:9), of the three belt trees inside 15 m **two are actually in frame**:
+`export/belt_rule.py` is the rule AND its own analysis, so neither is prose that can age:
+`python3 export/belt_rule.py` prints the per-set table, `python3 export/belt_rule.py --frustum` prints the
+cam03 table below; both exit non-zero if an invariant breaks. The station, the lens, the sensor, the crown
+sizes and `inner_px` are all read from the gate3 manifest — nothing in the table is typed in. From the cam03
+station (81.0, 12.04, 1.7, 18 mm on 36 mm, 16:9 — a 90° horizontal field), of the three belt trees whose
+trunk base is inside 15 m **two are actually in frame**:
 
-| `tree_far` | tree | d to eye | in frustum | ndc x | ndc y | crown on screen | impostor texel |
+| `tree_far` | tree | d to crown (trunk, xy) | in frustum | ndc x | ndc y | crown on screen | impostor texel |
 |---|---|---|---|---|---|---|---|
-| 40 | `ENV_tree_cypress_33_LOD1` | **7.1 m** (5.9 xy) | **yes** | -2.27 .. **+0.10** | -1.81 .. 4.42 | 10.7 x 13.4 m, full frame height | **17.9 px** |
-| 147 | `ENV_tree_redwood_26_LOD1` | 8.2 m (6.1 xy) | **no** — behind the camera plane (max z +0.2 m) | – | – | – | – |
-| 41 | `ENV_tree_cypress_34_LOD1` | **11.8 m** (10.1 xy) | **yes** | -1.74 .. **-0.38** | -0.85 .. 3.03 | 11.8 x 17.6 m, full frame height | **11.9 px** |
+| 40 | `ENV_tree_cypress_33_LOD1` | **7.1 m** (6.5, 5.9 xy) | **yes** | -2.27 .. **+0.10** | -1.81 .. 4.42 | 10.7 x 13.4 m, 1 435 px wide | **17.7 px** |
+| 147 | `ENV_tree_redwood_26_LOD1` | 8.2 m (6.6, 6.1 xy) | **no** — only one corner clears the near plane (+0.2 m) and it projects to ndc x -27.8 | – | – | – | – |
+| 41 | `ENV_tree_cypress_34_LOD1` | **11.8 m** (10.4, 10.1 xy) | **yes** | -1.74 .. **-0.38** | -0.85 .. 3.03 | 11.8 x 17.6 m, 956 px wide | **11.8 px** |
+
+Two readings the table depends on. "d to crown" is the eye-to-**crown-centre** distance, because that is
+where a card is quoted; the rule itself measures the **trunk base** (the second number), which is the row's
+`trunk_base` and the only position the export knows. And cypress_33's crown centre is 0.9 m *behind* the eye
+plane while the tree is in frame: at 6.5 m a 13.4 m crown straddles the camera, and the near half of it
+(corners to +5.7 m) is what draws. So "in frustum" is the ndc box of the corners that clear the near plane,
+never a centre-point test — a centre test calls cypress_33 invisible and would have justified option (a).
 
 "impostor texel" = the atlas's 81 inner px per frame (1 K, `impostors.frame_px` 85 / `inner_px` 81) spread
 over the crown's screen width at 1920 px wide, i.e. what a magnified card would show there. The 8e card
-table's believable band is 9-13 px for a foliage CLUMP at 40 m; 17.9 px of a single octahedral frame across
+table's believable band is 9-13 px for a foliage CLUMP at 40 m; 17.7 px of a single octahedral frame across
 the left half of the hero colonnade frame is the defect Phase 7 built the walk-up set to cure.
 
 So **(a) billboard-only for all 39 is rejected** (it puts those two cards in cam03's frame), and **(b) as
@@ -2885,7 +2895,10 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
 
 * **`export/belt_rule.py` (new)** — the rule, with no `bpy`, so it can be measured and regression-tested on
   CPU. `trees_far.py` imports it and asserts its own `SET["draw_within_m"]` against `DRAW_WITHIN_M`, so the
-  analysis and the export can never place different rows.
+  analysis and the export can never place different rows. `--frustum` is the cam03 measurement above, and it
+  carries the invariant that decides the whole question: **no belt row that is in a station's frame may be
+  billboard-only in either set**. Move a station, re-cut the belt, change a lens or change a
+  `draw_within_m`, and this run FAILs by name instead of shipping a magnified card into the frame.
 * **`export/trees_far.py`** — tagged rows outside the radius are skipped; `placements + billboard_only ==
   tree_far` replaces the old equality; the two `zip(placements, far)` loops zip against the kept rows;
   `TREEFAR_###` is still the `tree_far` index, so every downstream key is unchanged. The **cross-set order
@@ -2925,8 +2938,9 @@ checkout.
 
 ```sh
 export PFA_GATE1_BLEND_DIR="$PWD/export/out/gate1"
-python3 export/belt_rule.py && python3 export/p9_rule_selftest.py   # CPU: the table, the invariants, the
-                                                                 # manifest/verify readers - all first
+python3 export/belt_rule.py && python3 export/belt_rule.py --frustum \
+    && python3 export/p9_rule_selftest.py                        # CPU: the two tables, the invariants,
+                                                                 # the manifest/verify readers - all first
 scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend --python export/trees_far.py
 PFA_TREES_SET=walkup scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend \
     --python export/trees_far.py

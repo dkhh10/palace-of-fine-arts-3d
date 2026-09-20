@@ -1101,8 +1101,10 @@ Validation: the four cam03 flag captures (B.5) before the gating build, then the
 QA 23 residual 3 / QA 24 item 3: cam03 submits **+1 301 870 triangles and +28 draws** because three of the 39 hall-east belt trees (8d r2, tag HB) stand inside
 `buildDistanceCull`'s limit and a batch is submitted whole as soon as one row is inside. Measured at the cam03 station (81.0, 12.04, 1.7 / 18 mm / 16:9), of the
 three inside 15 m **two are in frame**: `ENV_tree_cypress_33` at 6.5 m fills ndc x [-2.27, 0.10] and the whole frame height, `ENV_tree_cypress_34` at 10.4 m fills
-x [-1.74, -0.38]; `ENV_tree_redwood_26` at 6.6 m is behind the camera plane. At 1920 px that is one 1 K impostor texel (81 inner px per frame) at **17.9 and 11.9
-screen px** — the magnified-card defect Phase 7 built the walk-up set to cure. So option (a), billboard-only for all 39, is **rejected**; option (b) as written —
+x [-1.74, -0.38]; `ENV_tree_redwood_26` at 6.6 m clears the near plane by one corner only, which projects to ndc x -27.8, so it is out of frame. At 1920 px that is
+one 1 K impostor texel (81 inner px per frame) at **17.7 and 11.8 screen px** — the magnified-card defect Phase 7 built the walk-up set to cure. The table is
+computed, not recorded: `python3 export/belt_rule.py --frustum` re-derives it from the manifest's own station, lens and crown sizes and FAILs if any in-frame belt
+row is ever billboard-only. So option (a), billboard-only for all 39, is **rejected**; option (b) as written —
 "outside every station's walkable reach" — is **empty**, because all 39 belt trees stand 0.2-7.3 m from a walkable surface (`walk_dist_m`), so that phrase cannot
 discriminate. **Chosen: (b) re-cut against the stations, per set.** A tagged row keeps its mesh only if its trunk base is within that SET's own viewer draw
 distance + the 5 m fade band of a QA station eye — beyond it the fragment dissolve discards every fragment, so no station can ever see the mesh. Walk-up (desktop,
