@@ -3067,3 +3067,35 @@ them. 4 **done** -- the r17 interior-fill comment now quotes the shipped row (36
 5 **done** -- the dead second frame-count check in `light_flythrough.schedule` is removed. 6 carried (tracked
 binaries: this round deletes its superseded frames before committing and keeps nine). 7 **done** --
 `light_r17_sweep` refuses `gal<0` unless it is the last case. 8 carried, the lead's file.
+
+## 29. Round 19 — the violet NNE face after the shade fill went off (QA-08-2 / QA-09-6)
+
+Brief `docs/briefs/phase9_light.md`. BEFORE = the lead's Phase 9 station references, `scripts/p8_cycles_refs.py` on a
+scratch copy of the shipped `master_delivery.blend`, 1920x1080, 32 spp fixed, adaptive off, OIDN, the delivery look
+(`renders/qa_comparisons/cycles_p8/cam0N_1080_32spp.png`).  Measured with `scripts/light_r19_measure.py`, whose
+CIELAB columns are `scripts/p8b_c_cielab.py`'s method (per-pixel sRGB -> Lab, averaged over the box).
+
+### 29.0 The brief's premise is out of date, and that changes the whole round
+
+The brief names `LIGHT_shade_fill` (az 25, el 2, colour (0.03, 0.02, 1.00), "70 W/m2 in Cycles") as the violet.  It
+was, in round 17 (notes 27.3).  **It has been OFF in both engines since the lead's commit `f40d0e7` (2026-09-10,
+QA-10-2): `energy` 49 -> 0, `energy_eevee` 38.5 -> 0.**  The world the delivered file carries, read back from its own
+sockets by `light_r19_sweep.py`, is `tint=[1.0, 0.65, 70.0] antisun_p=3.0 horizon_p=6.0 sunside=[1.0, 1.0, 0.0]
+sunside_p=3.0 diffuse_boost=2.5`, and no shade-fill lamp.  So the violet that is left is `SKY_DIFFUSE_TINT` alone --
+which is exactly what round 17 predicted would be left when the lamp was rotated off the face (27.3, the `faz` case).
+
+### 29.1 The shortcut that made a 6-candidate sweep affordable, and its control
+
+A candidate only changes arguments of `light_calibrate.make_sky_world`.  `light_r19_sweep.py` therefore rebuilds the
+world of a SCRATCH COPY of master_delivery from the sockets the file itself carries, applies the candidate, and
+renders -- 2 minutes instead of the ~50 of a `light_build -> lead_build -> phase5_deliver` chain.  The control is the
+`base` candidate: the same rebuild with nothing changed.
+
+| control | MAE vs BEFORE | max px |
+|---|---|---|
+| `base` cam02 (world rebuilt, no change) | **0.0138** | 2 |
+| `base` cam01 (world rebuilt, no change) | **0.0121** | 2 |
+| **noise floor** cam01 `--seed 1` vs seed 0 | **2.9056** | 111 |
+
+The rebuild is 210x closer to BEFORE than two seeds of the identical scene are to each other: the shortcut is exact,
+and the noise floor 2.91 MAE is the control every delta below is read against.

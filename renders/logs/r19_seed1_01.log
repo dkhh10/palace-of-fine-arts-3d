@@ -1,0 +1,12 @@
+00:00.442  blend            | Read blend: "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/d073013c-4713-429a-8691-ae0ba83b882e/scratchpad/r19_scratch.blend"
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/scripts/p8_cycles_refs.py:34: DeprecationWarning: 'Scene.use_nodes' is expected to be removed in Blender 6.0
+  f"exposure={vs.exposure:.4f}  compositor={scene.use_nodes}")
+01:46.838  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/renders/previews/lighting/r19_seed1_01.png'
+[p8refs] delivery look as found: view_transform='AgX' look='AgX - High Contrast' exposure=-2.8331  compositor=True
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[p8refs] CAM_qa_01_lagoon_hero 32 spp fixed -> /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/renders/previews/lighting/r19_seed1_01.png in 105.0s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 66308 exited rc=0 after 107 s (max 1200)
