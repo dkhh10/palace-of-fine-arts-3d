@@ -1025,3 +1025,7 @@ gate12 CAPTURED + committed (aee019c; 0 page errors). QA 24 dispatched (docs/bri
 Live: deploy 12 at https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev. main = this commit, clean; no Blender, no Chrome; bake queue idle; no phase8 worktrees. QA 24 (b683412): all five art items closed, no open blocker, hero 4.01 / 3.30 / 2.83 / 2.88 / 3.28 / 3.07, mobile 3.40 at the hero. Deliverables in docs/delivery.md "Phase 8" (sheet renders/qa_comparisons/phase8_before_after_960.jpg + phase8_tiles/ + phase8_stations/; new 4K hero renders/final/hero_cam01_3840x2160_128spp.png, v2 preserved). Carried residuals listed there; nothing scheduled — the user opens the next phase, if any.
 Burn (list rates): session 8 (a87300f7)  377.08 USD ( opus-5 347, fable-5-1 29 ); session 7 final 474.88 (opus-5 377, fable-5-1 97).
 2026-09-20 · Phase 9 approved by the user (all carried residuals); plan docs/briefs/phase9_next_session.md; nothing dispatched — the next session starts it.
+
+## 2026-09-20 · SESSION 9 START — PHASE 9 (lead, Fable 5.1)
+Checks: no Blender/Chrome; main clean at b53906d; bake queue idle (109/109). Burn at start (list rates): session 8 (a87300f7) final 386.71 USD (opus-5 347, fable-5-1 39); session 9 (d073013c) 0.92.
+Next: item 1 lighting round (stations 3 + 2) — analysis first (QA-17 hero boxes before/after in Cycles), report to the user before the lighting change starts.
