@@ -9,10 +9,15 @@ fills them and it never invents a number - every value comes from a bake record,
 """
 import hashlib
 import json
+import math
 import os
 import sys
 import time
 from pathlib import Path
+
+# OpenCV refuses EXR unless this is set BEFORE cv2 is imported (phase9-bake review r1 finding 1).  cv2 is
+# imported lazily, inside sky_open_irradiance_over_pi(), so setting it here is early enough.
+os.environ.setdefault("OPENCV_IO_ENABLE_OPENEXR", "1")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gate3_common as g3  # noqa: E402
@@ -334,6 +339,122 @@ def instance_lod1_block(base):
         nodes_note=("read exactly as the LOD2 `nodes`: an ordered [mesh, count, offset] list per node with a "
                     "running cursor, `gltf_node` indexing env_shrubs.glb's own nodes array."),
         meshes=meshes)
+
+
+# ---------------------------------------------------------------- the two specular-gate constants
+# docs/briefs/phase9_bake_analysis_report.md B.6.  The viewer's specular path is neither shadowed nor
+# occluded (three.js has no specular occlusion and the sun DirectionalLight casts no shadow map), which
+# is the whole of station 3's 2.55x column shade.  The lightmap already measures both visibilities:
+#   skyVis = lightmap.b / sky.open_irradiance_over_pi.b          (LIGHT_sun has ZERO blue, so a texel's
+#   sunVis = (lightmap.r - (openSky.r/openSky.b)*lightmap.b)      blue channel IS the sky's own share)
+#            / sun.irradiance_over_pi
+# BOTH constants are in the BAKE's units - Cycles' colour-off diffuse pass, i.e. irradiance/pi - which is
+# what a lightmap texel decodes to BEFORE `lightmaps.scale` (pi) is applied as lightMapIntensity.  The
+# viewer divides the decoded texel by that scale again before it compares (web/src/materials.js), so the
+# two sides of every ratio are in one unit.  Neither value is ever hard-coded in the viewer: both are
+# re-derived here on every manifest run, so the lighting re-bake's new sky_diffuse and new sun energy
+# feed straight through with no viewer change.
+SKY_OPEN_IRR_SCHEMA = "upper-hemisphere cosine-weighted mean radiance = E_open / pi"
+
+
+def sky_open_irradiance_over_pi(path):
+    """(rgb, meta) for the equirect at `path`, or (None, reason).
+
+    E_open = integral over the UPPER hemisphere of L(w) cos(theta) dw, and this returns E_open / pi,
+    the cosine-weighted mean radiance.  For an equirect of H rows, row j is theta = (j+0.5)/H*pi and
+    dw = sin(theta) dtheta dphi, so
+
+        E/pi = sum_over_upper_rows( L * cos(theta) * sin(theta) ) * 2*pi / (H*W)
+
+    which integrates a uniform L = 1 to exactly 1.0 (asserted below on every run, so a wrong weight or a
+    flipped row order cannot ship silently).  The rotation and u_offset the viewer applies to the sky are
+    rotations about the pole and do not change a hemisphere mean, so they are not applied here.
+    """
+    if path is None or not Path(path).exists():
+        return None, f"no sky_diffuse equirect on disk ({path})"
+    try:
+        import numpy as np
+    except Exception as e:                                        # pragma: no cover - numpy is a hard dep
+        return None, f"numpy unavailable ({e})"
+    img = err = None
+    try:
+        import cv2                    # EXR needs OPENCV_IO_ENABLE_OPENEXR=1 BEFORE the import (set above)
+        bgr = cv2.imread(str(path), cv2.IMREAD_UNCHANGED | cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+        if bgr is not None and bgr.ndim == 3 and bgr.shape[2] >= 3:
+            img, reader = bgr[:, :, :3][:, :, ::-1].astype(np.float64), f"cv2 {cv2.__version__}"
+        else:
+            err = f"cv2 returned {None if bgr is None else bgr.shape} for {Path(path).name}"
+    except Exception as e:
+        err = f"cv2: {e}"
+    if img is None:
+        try:
+            import imageio.v3 as iio
+            img = np.asarray(iio.imread(str(path)))[:, :, :3].astype(np.float64)
+            reader = "imageio.v3"
+        except Exception as e:
+            return None, f"no float-EXR reader ({err}; imageio: {e})"
+    h, w, _ = img.shape
+    th = (np.arange(h) + 0.5) / h * np.pi
+    wt = np.where(th < np.pi / 2, np.cos(th) * np.sin(th), 0.0)
+    k = 2 * np.pi / (h * w)
+    unit = float(wt.sum() * w * k)
+    assert abs(unit - 1.0) < 1e-4, f"hemisphere quadrature integrates a uniform sky to {unit}, not 1.0"
+    rgb = (img * wt[:, None, None]).sum(axis=(0, 1)) * k
+    return [round(float(v), 6) for v in rgb], dict(
+        file=Path(path).name, w=w, h=h, reader=reader, method=SKY_OPEN_IRR_SCHEMA,
+        quadrature_unit_check=round(unit, 8),
+        upper_half_solid_angle_mean=[round(float(v), 6) for v in
+                                     (img * np.sin(th)[:, None, None] * (th < np.pi / 2)[:, None, None]
+                                      ).sum(axis=(0, 1)) / max(float((np.sin(th) * (th < np.pi / 2)).sum() * w), 1e-9)])
+
+
+def spec_gate_constants(man, sk, audit):
+    """Write `sky.open_irradiance_over_pi` and `sun.irradiance_over_pi` into `man` (B.6).
+
+    Both are re-derived, never carried: the sky one from the shipped equirect itself, the sun one from
+    the manifest's own `sun.energy_w_m2` - which is exactly the number the viewer's DirectionalLight is
+    built with (`manifest.sun.irradiance`), so the gate's denominator can never drift from the light it
+    gates - cross-checked against the scene audit's LIGHT_sun energy.
+    """
+    exr = find((sk or {}).get("exr") or "") if sk else None
+    rgb, meta = sky_open_irradiance_over_pi(exr)
+    if rgb is None:
+        man["sky"]["open_irradiance_over_pi"] = None
+        man["sky"]["open_irradiance_over_pi_missing"] = (
+            f"{meta}. The viewer's specular gate (web/src/materials.js) needs this constant and falls "
+            f"back to the ungated Phase 8 path without it.")
+        print(f"[gate3] WARNING: sky.open_irradiance_over_pi is null - {meta}", file=sys.stderr)
+    else:
+        man["sky"]["open_irradiance_over_pi"] = rgb
+        man["sky"]["open_irradiance_over_pi_source"] = dict(
+            **meta, units="W/m^2/sr (scene-linear), the BAKE's units - a lightmap texel BEFORE lightmaps.scale",
+            use=("web/src/materials.js: skyVis = clamp(lightmapIrradiance.b / this[2], 0, 1) scales the IBL "
+                 "specular, and this[0]/this[2] removes the sky's own share of red from sunVis. Measured on "
+                 "the SHIPPED equirect, so a re-baked sky feeds it with no viewer change."))
+        print(f"[gate3] sky.open_irradiance_over_pi = {rgb} from {meta['file']} "
+              f"({meta['w']}x{meta['h']}, {meta['method']})")
+    e = man.get("sun", {}).get("energy_w_m2")
+    if not isinstance(e, (int, float)) or not e > 0:
+        man.setdefault("sun", {})["irradiance_over_pi"] = None
+        man["sun"]["irradiance_over_pi_missing"] = f"sun.energy_w_m2 is {e!r}"
+        print(f"[gate3] WARNING: sun.irradiance_over_pi is null - sun.energy_w_m2 is {e!r}", file=sys.stderr)
+        return
+    audit_e = None
+    for lt in ((audit or {}).get("bake", {}).get("lights") or []):
+        if lt.get("name") == "LIGHT_sun":
+            audit_e = lt.get("energy")
+    assert audit_e is None or abs(audit_e - e) < 1e-2, (
+        f"sun.energy_w_m2 {e} disagrees with scene_audit.json's LIGHT_sun energy {audit_e}: the manifest "
+        f"was not rebuilt after the lighting change")
+    man["sun"]["irradiance_over_pi"] = round(e / math.pi, 6)
+    man["sun"]["irradiance_over_pi_source"] = dict(
+        from_key="sun.energy_w_m2", energy_w_m2=e, scene_audit_energy=audit_e,
+        method="energy_w_m2 / pi", units="W/m^2/sr, the same units as sky.open_irradiance_over_pi",
+        use=("web/src/materials.js: sunVis = clamp((lightmapIrradiance.r - skyRedOverBlue*lightmapIrradiance.b) "
+             "/ this, 0, 1) scales reflectedLight.directSpecular. It is the sun's direct irradiance/pi at "
+             "dotNL = 1, i.e. the value a fully sun-facing, unshadowed lightmap texel reaches."))
+    print(f"[gate3] sun.irradiance_over_pi = {man['sun']['irradiance_over_pi']} "
+          f"({e} W/m^2 / pi; scene_audit {audit_e})")
 
 
 def main():
@@ -817,6 +938,10 @@ def main():
                                      use=("PMREM source for IRRADIANCE only (scene.environment / diffuse). "
                                           "sky.glossy stays the specular PMREM and sky.camera the background. "
                                           "Anything with a lightmap or a baked impostor takes no term from it."))
+
+    # ------------------------------------------------------------ the viewer's specular gate (B.6)
+    audit_p = find("scene_audit.json")
+    spec_gate_constants(man, sk, json.loads(audit_p.read_text()) if audit_p else None)
 
     # ------------------------------------------------------------ textures.gate3 + budget
     man["textures"]["gate3"] = dict(

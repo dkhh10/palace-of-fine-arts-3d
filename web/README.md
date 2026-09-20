@@ -1115,6 +1115,118 @@ Every station is touched (the layer is on every baked material) but only cam03 m
 its whole-frame luma moves TOWARD the reference. No other station's luma changes by more than
 0.001x.
 
+## Phase 9 item 2 — the specular gate (`?specgate=`), 2026-09-20
+
+Station 3's column shade renders at **2.55x Cycles** (viewer p10 38-40 against Cycles 7.3). The bake
+analysis (`docs/briefs/phase9_bake_analysis_report.md` Part B, decision `docs/decisions.md`
+2026-09-20) decomposed it on files already on disk and found the diffuse side correct: the shipped
+lightmap matches the Cycles diffuse pass at **0.997x** (B.2, measured through the UASTC KTX2 for the
+first time) and the post chain contributes **~0** on the near column (B.5). The whole excess is the
+viewer's **specular** path, which is neither occluded nor shadowed:
+
+* `main.js:assignSpecularEnv` gives every patched material the glossy sky PMREM at
+  `envMapIntensity = 1`, and three.js has **no specular occlusion** — a shaft inside the colonnade
+  reflects the whole open sky. That term carries **all** of the viewer's blue there (B.3: Cycles
+  reads B < 0.003 in all four shade boxes, the viewer 0.2397).
+* The sun `DirectionalLight` is specular-only with `castShadow = false` — the shadows are in the
+  lightmap, but only for the **diffuse** term, because `materials.js` deletes `directDiffuse` and
+  keeps `directSpecular`. So a shaft in deep shade with `dotNL > 0` takes the same specular lobe as
+  one in full sun (B.4: a two-basis solve closes all three channels to 2 % as **63 % unshadowed sun
+  specular / 37 % unoccluded sky specular**).
+
+**The gate.** `LIGHT_sun` ships at `(1, 0.607324, 0)` — **zero blue** — so a lightmap texel's blue
+channel *is* the sky's own contribution at that point, and its red, less the sky's red share, is the
+sun's. Inside the same `lights_fragment_maps` patch that already deletes the env diffuse:
+
+```glsl
+float pfaSkyVis = 1.0;                                   // declared outside every #if
+float pfaSunVis = 1.0;
+...
+vec3 pfaLmPi = lightMapIrradiance / lightMapIntensity;   // back to the BAKE's irradiance/pi units
+pfaSkyVis = clamp( pfaLmPi.b / <sky.open_irradiance_over_pi[2]>, 0.0, 1.0 );
+pfaSunVis = clamp( ( pfaLmPi.r - <r/b> * pfaLmPi.b ) / <sun.irradiance_over_pi>, 0.0, 1.0 );
+...
+radiance += iblRadiance * pfaSkyVis;                     // the IBL specular
+reflectedLight.directSpecular *= pfaSunVis;              // the sun, after every RE_Direct has run
+```
+
+**Units — the one way this goes wrong silently.** The manifest's two constants are in the **bake's**
+units: Cycles' colour-off diffuse pass is irradiance/pi, which is what a lightmap texel decodes to
+*before* `lightmaps.scale` (pi) is applied as `lightMapIntensity` (three divides by pi again inside
+`BRDF_Lambert`). The shader therefore divides the live uniform back out before it forms either ratio.
+Skipping that division is a **3.142x** error in both visibilities and still renders a picture;
+`web/test/spec_gate_test.mjs` drives the reference implementation with a shader-side value and pins
+exactly that factor. Dividing by the **uniform**, rather than folding pi into the constants, is also
+what keeps `?lmscale=` honest — the gate follows whatever scale the material actually got, and a
+`lightMapIntensity` of 0 leaves both visibilities at 1.
+
+**The constants are never in the viewer.** `export/manifest_v4.py` writes them on every run:
+`sky.open_irradiance_over_pi` is the upper-hemisphere **cosine-weighted mean radiance** of the shipped
+`sky_diffuse` equirect (= E_open / pi), read off the EXR with a quadrature asserted, every run, to
+integrate a uniform sky to 1.0; `sun.irradiance_over_pi` is `sun.energy_w_m2 / pi` taken from the
+manifest's own energy — the same number the `DirectionalLight` is built with, so the denominator can
+never drift from the light it gates. Measured on the current artefacts:
+**(2.195763, 3.432181, 11.255903)** and **21.42843**, against B.6's (2.196, 3.432, 11.256) and 21.428.
+The lighting re-bake feeds new values through with **no viewer change**. If either is missing the gate
+is OFF, the viewer keeps the Phase 8 specular and `__pfaInfo().notes` says why.
+
+**Where it reaches.** Only the two lightmap call sites in `lightmaps.js` (the own maps and the ORN
+slot atlases) pass `specGate`. A material with no lightmap has no visibility to read, so the
+impostors, the water, the backdrop, the foliage cards and both irradiance paths (near-tree `COLOR_0`,
+per-placement shrub/reed) are untouched — `spec_gate_test.mjs` §5 pins that.
+
+**Checked against the B.6 decile table** (the colonnade's own lightmap EXR, by luminance decile):
+
+| lightmap luma band | mean R G B | skyVis | sunVis |
+|---|---|---|---|
+| p0-10 deep shade | 0.051 0.051 0.088 | **0.0078** | **0.0016** |
+| p10-25 | 0.244 0.237 0.404 | 0.0359 | 0.0077 |
+| p25-50 | 0.568 0.544 0.951 | 0.0845 | 0.0178 |
+| p50-75 half-open | 1.076 1.145 3.622 | 0.3218 | 0.0172 |
+| p75-95 sky-exposed | 3.190 3.035 9.128 | 0.8109 | 0.0658 |
+| p95-100 sunlit | 16.334 11.130 1.604 | 0.1425 | **0.7477** |
+
+`sunVis` stays under 0.07 everywhere but the top decile — the shade bands are gated to a few per cent
+of the sun lobe they take today — and the sunlit band's 0.7477 is its own `dotNL`, which is what the
+gate is meant to leave alone. `skyVis` rises monotonically with the sky the texel sees and then falls
+at p95-100, correctly: a sunlit face is not a sky-exposed one.
+
+Predicted at `near_column` (B.6): the env term falls from 0.10-0.23 to ~0.005 and the sun term from
+0.284 to ~0.001, so the viewer goes from (0.940, 0.659, 0.240) to **~(0.51, 0.31, 0.02)** against
+Cycles' (0.488, 0.290, 0.000) — **1.93x -> ~1.05x in R**, with the sunlit boxes moving <= 4 %.
+
+**`?specgate=0`** restores the Phase 8 path. Not approximately: with the gate off the patch emits no
+GLSL and **no cache-key term**, so the fragment shader, the vertex shader and the program cache key
+are character-for-character what Phase 8 compiled and the two share one program. `spec_gate_test.mjs`
+§4 asserts all three. The sidecar reports what the material actually compiled in, not what the url
+asked for: `__pfaInfo().gate3.specGate` is `{openSkyB, skyRedOverBlue, sunIrrOverPi}` or `null`.
+
+### The chain, run on this branch (2026-09-20)
+
+No bake, no KTX2 encode, no pack, no deploy — the export set does not move and the lead runs the real
+chain with the lighting re-bake.  `export/out` lives only in MAIN, so it was mirrored into this
+worktree **read-only** (directory symlinks for `gate0/1/2`, per-file symlinks for `gate3` with a real
+`manifest.json`, real copies of the `gate5` json beside symlinked `groups/` and `tex_lo/`) and
+`PFA_MAIN_ROOT` pointed at the worktree, so every write landed here.  MAIN's `export/out` was verified
+untouched afterwards (`find -newer`, 0 files).
+
+| step | result |
+|---|---|
+| `python3 export/manifest_v4.py` | `sky.open_irradiance_over_pi = [2.195763, 3.432181, 11.255903]`, `sun.irradiance_over_pi = 21.42843` (67.31939697265625 / pi; `scene_audit` 67.319) |
+| `python3 export/tiers.py --no-pack` / `--mobile --no-pack` | desktop t0 48.1 MB / 218 files (first frame 49.28 MB on the wire, under the 49.5 MB target), mobile t0 46.5 MB / 235 files (47.64 MB) — **both manifests carry the two constants with no tiers.py change** |
+| `python3 export/verify_glb.py --gate5` (+ `--mobile`) | PASS / PASS, assets 2579/2579, arch 0.9981x / env 1.0x / ground 1.0x / orn 0.9984x Gate 3 |
+| `node web/test/tiers_test.mjs` | all tier checks passed |
+| `python3 export/name_sweep.py` | PASS, 2579 objects, 166 exempt, 0 to explain |
+| `cd web && npm test` | **690 checks, 0 failures** (564 of them with no `export/out` on disk at all) |
+| `cd web && npm run build` | clean, index 1 216.75 kB / 350.39 kB gzipped |
+
+Payload: the two constants and their provenance blocks cost **+1 338 B raw / +682 B gzipped** on the
+desktop manifest and **+719 B gzipped** on the mobile one — the manifest is in the boot overhead, not
+in tier 0, and tier 0 did not move.
+
+`tiers.py --no-pack` was used rather than the full `tiers.py` because nothing about the geometry or the
+textures changes here; the groups and the ETC1S set on disk are the ones the assignment reads.
+
 ## Phase 9 item 1 — the dotted rim on the far-crown silhouettes (`?impq=`), 2026-09-20
 
 QA 21 item 1 / residual 1, carried through QA 24 ("back at its gate10 level"): a **period-2, one-to-
@@ -1234,6 +1346,10 @@ count for two reasons at once. The probe refuses any frame that is not 1920x1080
 `python3 web/tools/p9v_rim.py selftest` proves both of those on synthetic frames, without a capture.
 **`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
 above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
+**The mobile measure is a whole-frame MAE against `renders/web/gate12m_cam0N.png`, not the rim index**
+(r2 review carry 3): `p9v_rim.py` refuses any frame that is not 1920x1080 BY DESIGN — the rim is a
+per-pixel, period-2 phenomenon and its boxes are absolute rectangles — and the mobile frames are
+1170x2532, so the tool can say nothing about them and must not be asked to.
 Every frame's sidecar now states for itself whether the quantiser was on —
 `__pfaInfo.impostors.quantise` (r1 review finding 1) — so the A/B is self-attesting and needs no boot
 log; read `.on`, **not** `.samples`, which carries the target's ladder either way (carry 13).
@@ -2685,6 +2801,8 @@ shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (transl
 `shrubs` to include the cards), `?leafsoft=0` (no alphaToCoverage), `?treemesh=` (metres, or `inf`:
 mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
 `?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
+`?specgate=0` (Phase 9 item 2: turn the specular gate OFF and restore the Phase 8 ungated specular
+path exactly — no GLSL, no cache-key term, the same program; the A/B for the station-3 shade fix),
 `?impq=0` (Phase 9 item 1: stop snapping the impostor coverage to the target's sample ladder before
 the alpha-to-coverage mask — the Phase 8b coverage path, dotted rim included; `?impcov=0` turns it
 off too, so that still restores Phase 7),

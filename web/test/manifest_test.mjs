@@ -72,5 +72,44 @@ for ( const gate of [ 'gate1', 'gate0' ] ) {
 			`${tag}: orn_slots ${JSON.stringify( m.ornSlots )}` );
 	}
 }
+
+// --- the two specular-gate constants, as export/manifest_v4.py writes them ----------------------
+// docs/briefs/phase9_bake_analysis_report.md B.6.  These are SCHEMA checks on the raw manifests, not
+// on the viewer's reading of them: a wrong shape here makes the gate silently wrong at both ends, and
+// the viewer can only fall back to the ungated Phase 8 path (which is the station-3 defect itself).
+// Both are re-derived by manifest_v4 on every run, so a re-baked sky or a re-energised sun feeds them
+// with no viewer change - which is exactly why the SHAPE, not the value, is what is pinned.
+for ( const [ gate, rel ] of [ [ 'gate3', 'export/out/gate3/manifest.json' ],
+	[ 'gate5 desktop', 'export/out/gate5/manifest.json' ],
+	[ 'gate5 mobile', 'export/out/gate5/manifest_mobile.json' ] ] ) {
+	const f = path.join( MAIN, rel );
+	if ( ! existsSync( f ) ) { console.log( `      ${gate}: no manifest at ${f}, skipped` ); continue; }
+	const raw = JSON.parse( readFileSync( f ) );
+	const sky = raw.sky && raw.sky.open_irradiance_over_pi;
+	const sun = raw.sun && raw.sun.irradiance_over_pi;
+	if ( sky === undefined && sun === undefined ) {
+		console.log( `      ${gate}: no spec-gate constants yet (export/manifest_v4.py has not been re-run `
+			+ `into this manifest; tiers.py carries them from gate3), skipped` );
+		continue;
+	}
+	check( Array.isArray( sky ) && sky.length === 3 && sky.every( v => typeof v === 'number' && isFinite( v ) && v > 0 ),
+		`${gate}: sky.open_irradiance_over_pi is 3 finite positive numbers (${JSON.stringify( sky )})` );
+	// LIGHT_sun ships at (1, 0.607, 0) — zero blue — so the open sky's blue is the largest channel by a
+	// wide margin and its red/blue ratio is what sunVis subtracts.  A manifest where that is not true is
+	// not this scene's sky, and the gate would read the sun's own light as sky.
+	if ( Array.isArray( sky ) && sky.length === 3 )
+		check( sky[ 2 ] > sky[ 1 ] && sky[ 1 ] > sky[ 0 ] && sky[ 0 ] / sky[ 2 ] < 0.5,
+			`${gate}: the open sky is blue-dominant, r/b = ${( sky[ 0 ] / sky[ 2 ] ).toFixed( 4 )}` );
+	check( typeof sun === 'number' && isFinite( sun ) && sun > 0, `${gate}: sun.irradiance_over_pi = ${sun}` );
+	if ( typeof sun === 'number' && typeof ( raw.sun || {} ).energy_w_m2 === 'number' )
+		check( Math.abs( sun - raw.sun.energy_w_m2 / Math.PI ) < 1e-5,
+			`${gate}: sun.irradiance_over_pi is energy_w_m2 / pi (${raw.sun.energy_w_m2} / pi)` );
+	// sunVis reads the RED channel, after subtracting the sky's own red share.  For that to separate
+	// "sunlit" from "open to the sky" at all, the sun's red at dotNL = 1 has to dominate the open sky's
+	// red: 21.43 against 2.196 here, 9.8x.  Below ~4x the two bands overlap and the gate is guesswork.
+	if ( Array.isArray( sky ) && typeof sun === 'number' )
+		check( sun > 4 * sky[ 0 ], `${gate}: sun/pi ${sun.toFixed( 3 )} dominates the open sky's red `
+			+ `${sky[ 0 ].toFixed( 3 )} (${( sun / sky[ 0 ] ).toFixed( 1 )}x), so sunVis separates the two bands` );
+}
 console.log( fails ? `${fails} FAILURES` : 'all manifest checks passed' );
 process.exit( fails ? 1 : 0 );

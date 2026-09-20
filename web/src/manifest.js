@@ -559,6 +559,16 @@ export function normaliseManifest( raw, baseUrl ) {
 	// mean |delta| over five sky boxes of 33.1 / 1.5 / 19.0 / 21.4 of 255.
 	const skyRotationDeg = def( pick( sky, 'rotation_deg', 'rotation' ), 90,
 		'sky.rotation_deg (+90 about Y; measured against the Cycles frame, 1.5/255)' );
+	// Phase 9 (B.6): the OPEN-SKY irradiance/pi — the upper-hemisphere cosine-weighted mean radiance of
+	// the same sky_diffuse equirect, written by export/manifest_v4.py on every run.  It is the
+	// denominator of the viewer's specular gate, in the BAKE's units.  No default: without it the gate
+	// is off and the viewer keeps the ungated Phase 8 specular, which is a stated fallback, not a guess.
+	const skyOpenRaw = pick( sky, 'open_irradiance_over_pi', 'open_irradiance_over_pi_rgb' ) || null;
+	const skyOpenIrradianceOverPi = Array.isArray( skyOpenRaw ) && skyOpenRaw.length === 3
+		&& skyOpenRaw.every( v => Number.isFinite( Number( v ) ) && Number( v ) > 0 ) ? skyOpenRaw.map( Number ) : null;
+	if ( ! skyOpenIrradianceOverPi ) notes.push( `sky.open_irradiance_over_pi absent or malformed `
+		+ `(${JSON.stringify( skyOpenRaw )}): the specular gate is OFF and the viewer keeps the ungated `
+		+ `Phase 8 specular. Re-run export/manifest_v4.py.` );
 
 	// --- sun (specular only; the diffuse is in the lightmaps) ----------------------------------
 	// The manifest's `direction_blender` / `direction_gltf` is the direction the light TRAVELS, so the
@@ -584,7 +594,16 @@ export function normaliseManifest( raw, baseUrl ) {
 		irradiance: def( pick( sunRaw, 'energy_w_m2', 'irradiance', 'strength', 'energy' ), 67.3, 'sun.irradiance (W/m2, Phase 5 LIGHT_sun)' ),
 		color: pick( sunRaw, 'color', 'colour' ) || [ 1, 1, 1 ],
 		angleDeg: pick( sunRaw, 'angle_deg' ) ?? ( pick( sunRaw, 'angle_rad' ) !== undefined ? pick( sunRaw, 'angle_rad' ) * 180 / Math.PI : 0.526 ),
+		// B.6: the sun's direct irradiance/pi at dotNL = 1 — the specular gate's sun denominator, in the
+		// bake's units.  manifest_v4 derives it from the SAME `energy_w_m2` that becomes `irradiance`
+		// above, so the gate can never be denominated in a different sun from the light it gates.
+		irradianceOverPi: ( () => {
+			const v = Number( pick( sunRaw, 'irradiance_over_pi' ) );
+			return Number.isFinite( v ) && v > 0 ? v : null;
+		} )(),
 	};
+	if ( ! sun.irradianceOverPi ) notes.push( `sun.irradiance_over_pi absent or malformed: the specular `
+		+ `gate is OFF and the viewer keeps the ungated Phase 8 specular. Re-run export/manifest_v4.py.` );
 
 	// --- lightmaps -----------------------------------------------------------------------------
 	// ONE RGBM range for every lightmap path (schema: textures.<key>.rgbm_range, 64 at Gate 0).
@@ -1252,7 +1271,8 @@ export function normaliseManifest( raw, baseUrl ) {
 		instancing: pick( raw, 'instancing' ) || null,
 		schema: pick( raw, 'schema' ) || null,
 		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
-		sky: { camera: skyCamera, glossy: skyGlossy, diffuse: skyDiffuse, rotationDeg: skyRotationDeg },
+		sky: { camera: skyCamera, glossy: skyGlossy, diffuse: skyDiffuse, rotationDeg: skyRotationDeg,
+			openIrradianceOverPi: skyOpenIrradianceOverPi },
 		frameSize: pick( raw, 'frame', 'render.frame' ) || { width: 1280, height: 720 },
 	};
 	if ( ! glbs.length ) notes.push( 'no glb in the manifest: test scene only' );

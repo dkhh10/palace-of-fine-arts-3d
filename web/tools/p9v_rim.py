@@ -50,7 +50,14 @@ MAG_LO, MAG_HI, RAMP = 1.0, 2.0, 1.0
 # a 960 px copy or a mobile capture would print plausible numbers for the WRONG pixels - and the rim
 # is a per-pixel, period-2 phenomenon that no resample carries anyway.  Every frame this tool opens
 # is therefore asserted against FRAME (`_frame`), and BOXES are DERIVED from it rather than written
-# out: change FRAME alone and the rectangles follow, in proportion, to the same crowns.
+# out.
+#
+# `boxes_for` is a RESAMPLE lever, not a re-aim (r2 review carry 2).  It follows the crowns only while
+# the CAMERA is unchanged - i.e. for a 1920x1080 frame rescaled to another pixel count at the same 16:9
+# aspect.  At a different aspect the viewer's own camera aspect changes with the canvas, so a crown
+# does not move affinely with its rectangle and the scaled box lands somewhere else; the 1170x2532
+# mobile frames are exactly that case, which is why `_frame` refuses every frame where `boxes_for` is
+# not the identity.  To measure another aspect, re-read the boxes there - do not scale these.
 FRAME = (1080, 1920)
 
 # QA 21 §2b's two boxes, plus a control crown with a building behind it instead of sky, stated in the

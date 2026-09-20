@@ -23,7 +23,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { makeStationCamera, stationMatrix, b2t, matrixMaxDiff } from './blenderCamera.js';
 import { normaliseManifest, applyUv2RelayStatus, tierForUrl, WATER_Z } from './manifest.js';
 import { probeGl, probeEnv, chooseTier, pixelRatioFor, TIER_SETTINGS } from './device.js';
-import { patchBakedMaterial, attachLightMap } from './materials.js';
+import { patchBakedMaterial, attachLightMap, specGateFrom } from './materials.js';
 import { LUTDisplayPass, makeLUT } from './lutPass.js';
 import { makeWater, reduceReflectionSet } from './water.js';
 import { makeWalk } from './walk.js';
@@ -108,6 +108,10 @@ const CFG = {
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
 	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
+	// Phase 9 (docs/briefs/phase9_bake_analysis_report.md B.6): gate the two SPECULAR terms by the sky
+	// and sun visibility the lightmap already carries.  `?specgate=0` is the A/B — it restores the
+	// Phase 8 path exactly (no GLSL, no cache-key term, the same program).
+	specGate: qs.get( 'specgate' ) !== '0',
 	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
@@ -1562,8 +1566,20 @@ async function afterGeometry( newRoots, tier ) {
 		if ( iiSplit && ! tier ) note( `gate4 instance irradiance SKIPPED: ${iiGlb} ships as ${envGroups} tier groups and the `
 			+ `manifest carries no per-group node indices (lightmaps.instance_irradiance.groups) — the shrub and reed `
 			+ `placements stay on the probe` );
+		// B.6 specular gate.  Built from the manifest's own two constants, never from a literal; null
+		// (no constants, or ?specgate=0) leaves every material on the Phase 8 path.
+		const specGate = CFG.specGate
+			? specGateFrom( manifest.sky.openIrradianceOverPi, manifest.sun.irradianceOverPi ) : null;
+		if ( ! tier ) note( specGate
+			? `spec gate ON: skyVis = lightmap.b / ${specGate.openSkyB.toFixed( 4 )}, `
+				+ `sunVis = (lightmap.r - ${specGate.skyRedOverBlue.toFixed( 4 )} * lightmap.b) / `
+				+ `${specGate.sunIrrOverPi.toFixed( 4 )}, both in irradiance/pi (the decoded texel divided by `
+				+ `lightMapIntensity); IBL specular x skyVis, sun directSpecular x sunVis`
+			: `spec gate OFF (${CFG.specGate ? 'the manifest carries no sky.open_irradiance_over_pi / '
+				+ 'sun.irradiance_over_pi' : '?specgate=0'}): the Phase 8 ungated specular path` );
 		const report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
+			specGate,
 			vertexIrr: CFG.vertexIrr, instIrr: iiHere ? CFG.instIrr : '0', shrubCov: CFG.shrubCov,
 			tierOf, maxTier: tier, skipIrradiance: ! newRoots.length,
 			instanceGroups: iiHere ? instanceGroups : [],
@@ -1990,7 +2006,10 @@ window.__pfaInfo = () => ( {
 	lightmapScale, rgbmRange: manifest ? manifest.rgbmRange : null,
 	gate3: gate3Report && { own: gate3Report.own, slots: gate3Report.slots,
 		materialsCloned: gate3Report.materialsCloned, texturesRequested: gate3Report.texturesRequested,
-		texturesLoaded: gate3Report.texturesLoaded, texturesFailed: gate3Report.texturesFailed },
+		texturesLoaded: gate3Report.texturesLoaded, texturesFailed: gate3Report.texturesFailed,
+		// B.6: the constants the gate ACTUALLY compiled in, so a capture proves which path it took
+		// rather than which flag was on the url.  null = the Phase 8 ungated specular.
+		specGate: gate3Report.specGate },
 	skyDiffuse: manifest ? !! manifest.sky.diffuse : null,
 	shaperPivot: lutPass ? lutPass.uniforms.shaperPivot.value : null,
 	skyRotationDeg: manifest ? manifest.sky.rotationDeg : null,

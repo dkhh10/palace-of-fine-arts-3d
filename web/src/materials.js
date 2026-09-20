@@ -25,6 +25,60 @@
 // meshes whose instances straddle two (colonnade astragals, rotunda columns, ORN drum band).
 import * as THREE from 'three';
 
+// SPECULAR GATE (Phase 9, docs/briefs/phase9_bake_analysis_report.md B.6, decisions.md 2026-09-20).
+// The two terms above leave the DIFFUSE side correct and the SPECULAR side ungated: three.js has no
+// specular occlusion, so a shaft deep inside the colonnade reflects the whole open sky, and this sun
+// casts no shadow map, so the same shaft takes the full specular lobe.  Measured at station 3 that is
+// the entire shade excess — an additive (+0.45, +0.35, +0.24) scene-linear veil, 63 % unshadowed sun
+// specular / 37 % unoccluded sky specular, on a lightmap that is itself right to 0.3 %.
+//
+// The lightmap already carries both visibilities, because LIGHT_sun ships at (1, 0.607, 0) — ZERO
+// blue — so a texel's blue channel IS the sky's own contribution at that point:
+//     skyVis = lightmap.b / openSky.b                                  scales the IBL specular
+//     sunVis = (lightmap.r - (openSky.r/openSky.b)*lightmap.b) / sunIrrOverPi   scales directSpecular
+// UNITS, which is where this goes wrong if it goes wrong at all.  `lightMapIrradiance` in the chunk
+// below is the decoded texel TIMES `lightMapIntensity` (= manifest `lightmaps.scale`, pi), because
+// three divides by pi again in BRDF_Lambert.  The manifest's two constants are in the BAKE's units —
+// Cycles' colour-off diffuse pass, irradiance/pi — so the scale is divided back out before either
+// ratio is formed.  Dividing by the live uniform, rather than folding pi into the constants, is what
+// keeps `?lmscale=` honest: the gate follows whatever scale the material actually got.
+const SPEC_GATE_DECLS = 'float pfaSkyVis = 1.0;\n\tfloat pfaSunVis = 1.0;\n';
+const IBL_RADIANCE_LINE = 'radiance += iblRadiance;';
+
+/**
+ * The compiled-in constants, or null when the manifest does not carry them (then nothing is gated and
+ * the viewer keeps the Phase 8 path).  NEVER defaulted to a guess: a wrong denominator here is a
+ * wrong specular everywhere, and silently.
+ * @param {number[]} openSky manifest `sky.open_irradiance_over_pi`, scene-linear irradiance/pi
+ * @param {number} sunIrrOverPi manifest `sun.irradiance_over_pi`
+ */
+export function specGateFrom( openSky, sunIrrOverPi ) {
+	const s = Array.isArray( openSky ) ? openSky.map( Number ) : null;
+	const n = Number( sunIrrOverPi );
+	if ( ! s || s.length !== 3 || ! s.every( v => Number.isFinite( v ) && v > 0 ) ) return null;
+	if ( ! Number.isFinite( n ) || n <= 0 ) return null;
+	return { openSky: s, openSkyB: s[ 2 ], skyRedOverBlue: s[ 0 ] / s[ 2 ], sunIrrOverPi: n };
+}
+
+/** The reference implementation of the gate, in the BAKE's units (irradiance/pi).  `specGateGlsl`
+ *  below is generated to compute exactly this; web/test/spec_gate_test.mjs checks both against the
+ *  B.6 decile table and checks that the emitted GLSL carries these same three constants. */
+export function specGateEval( lmOverPi, g ) {
+	if ( ! g ) return { skyVis: 1, sunVis: 1 };
+	const [ r, , b ] = lmOverPi;
+	const cl = ( v ) => Math.min( 1, Math.max( 0, v ) );
+	return { skyVis: cl( b / g.openSkyB ), sunVis: cl( ( r - g.skyRedOverBlue * b ) / g.sunIrrOverPi ) };
+}
+
+/** GLSL for the gate, to be inserted directly after the lightmap decode line. */
+export function specGateGlsl( g ) {
+	return '\n\t\tif ( lightMapIntensity > 1e-6 ) {                      // PFA specular gate (B.6)\n'
+		+ '\t\t\tvec3 pfaLmPi = lightMapIrradiance / lightMapIntensity;   // back to the bake\'s irradiance/pi\n'
+		+ `\t\t\tpfaSkyVis = clamp( pfaLmPi.b / ${g.openSkyB.toFixed( 6 )}, 0.0, 1.0 );\n`
+		+ `\t\t\tpfaSunVis = clamp( ( pfaLmPi.r - ${g.skyRedOverBlue.toFixed( 6 )} * pfaLmPi.b ) `
+		+ `/ ${g.sunIrrOverPi.toFixed( 6 )}, 0.0, 1.0 );\n\t\t}`;
+}
+
 const DIRECT_DIFFUSE_LINE =
 	'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseContribution ) * ( 1.0 - F );';
 const IBL_IRRADIANCE_LINE = 'iblIrradiance += getIBLIrradiance( geometryNormal );';
@@ -51,7 +105,8 @@ function once( src, needle, replacement, what ) {
  * @param {THREE.MeshStandardMaterial} mat
  * @param {{ specularOnlySun?:boolean, noEnvDiffuse?:boolean, lightMapEncoding?:string,
  *           rgbmMaxRange?:number, range?:number, slot?:boolean, atlasB?:THREE.Texture|null,
- *           flipV?:boolean, vertexIrradiance?:number, instanceIrradiance?:number }} opts
+ *           flipV?:boolean, vertexIrradiance?:number, instanceIrradiance?:number,
+ *           specGate?:{openSkyB:number,skyRedOverBlue:number,sunIrrOverPi:number}|null }} opts
  */
 export function patchBakedMaterial( mat, opts = {} ) {
 	const specularOnlySun = opts.specularOnlySun !== false;
@@ -76,8 +131,15 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	// irradiance; where it is 0 the probe path is untouched, which is the contract the manifest states.
 	// The value passed in is lightmaps.scale (pi), so the shader constant is the whole decode.
 	const instIrr = typeof opts.instanceIrradiance === 'number' ? opts.instanceIrradiance : null;
+	// The B.6 specular gate.  Only the two LIGHTMAP call sites in lightmaps.js pass it: a material with
+	// no lightmap (impostors, water, backdrop, foliage cards, the vertex/instance irradiance paths) has
+	// no `lightMapIrradiance` to read a visibility from, so it is left exactly as it was.  `null` (the
+	// default, and what `?specgate=0` forces) emits no GLSL and no cache-key term at all, so the Phase 8
+	// program is reproduced character for character.
+	const gate = opts.specGate || null;
 	if ( mat.userData.pfaPatched ) return mat;
-	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr, instIrr };
+	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr, instIrr,
+		specGate: gate ? { openSkyB: gate.openSkyB, skyRedOverBlue: gate.skyRedOverBlue, sunIrrOverPi: gate.sunIrrOverPi } : null };
 	// PHASE 8b ITEM B, review r3 finding 2.  The SLOT path writes `pfaLmAtlasB` straight into
 	// `shader.uniforms` inside onBeforeCompile, where nothing can reach it: a MeshStandardMaterial has
 	// no `.uniforms` of its own, so `residentBytes()` walked past the second lightmap atlas exactly as
@@ -105,7 +167,7 @@ export function patchBakedMaterial( mat, opts = {} ) {
 				'vertex-irradiance colour tint removed' );
 		}
 		const decode = decodeGlsl( enc, maxRange );
-		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV || vertexIrr !== null || instIrr !== null ) {
+		if ( noEnvDiffuse || decode !== LM_DECODE_LINE || slot || flipV || vertexIrr !== null || instIrr !== null || gate ) {
 			let maps = THREE.ShaderChunk.lights_fragment_maps;
 			if ( instIrr !== null ) {
 				maps = once( maps, IBL_IRRADIANCE_LINE,
@@ -138,6 +200,19 @@ export function patchBakedMaterial( mat, opts = {} ) {
 				// gamma2 per mesh: v = c*c*range, then irradiance = v * lightmaps.scale (pi).
 				// Both factors are folded into the constant below.
 				maps += `\n\tirradiance += vColor.rgb * vColor.rgb * ${vertexIrr.toFixed( 6 )};`;
+			}
+			if ( gate ) {
+				// The two visibilities are computed where the decoded texel is in scope (inside the
+				// chunk's `#ifdef USE_LIGHTMAP`), and applied where each term is: `radiance` is the IBL
+				// specular, accumulated a few lines below inside the env block, and
+				// `reflectedLight.directSpecular` is already complete here — lights_fragment_begin ran
+				// every RE_Direct before this chunk, and lights_fragment_end only adds INDIRECT specular
+				// afterwards, from `radiance`.  Both declarations sit outside every #if, so a program
+				// compiled without USE_LIGHTMAP or without USE_ENVMAP keeps 1.0 and is unchanged.
+				maps = SPEC_GATE_DECLS + once( maps, decode, decode + specGateGlsl( gate ), 'spec gate' );
+				maps = once( maps, IBL_RADIANCE_LINE, 'radiance += iblRadiance * pfaSkyVis;',
+					'spec gate: IBL specular occlusion' );
+				maps += '\n\treflectedLight.directSpecular *= pfaSunVis;   // PFA: the sun casts no shadow map';
 			}
 			shader.fragmentShader = once( shader.fragmentShader,
 				'#include <lights_fragment_maps>', maps, 'lights_fragment_maps include' );
@@ -173,7 +248,10 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	};
 	const prevKey = mat.customProgramCacheKey;
 	mat.customProgramCacheKey = function () {
-		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}:${vertexIrr === null ? 'n' : vertexIrr.toFixed( 6 )}:${instIrr === null ? 'n' : instIrr.toFixed( 6 )}`;
+		// The gate's term is APPENDED only when the gate is on, so `?specgate=0` reproduces the Phase 8
+		// key character for character and shares its program.
+		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}:${vertexIrr === null ? 'n' : vertexIrr.toFixed( 6 )}:${instIrr === null ? 'n' : instIrr.toFixed( 6 )}`
+			+ ( gate ? `|sg:${gate.openSkyB.toFixed( 6 )}:${gate.skyRedOverBlue.toFixed( 6 )}:${gate.sunIrrOverPi.toFixed( 6 )}` : '' );
 	};
 	mat.needsUpdate = true;
 	return mat;
