@@ -1067,3 +1067,8 @@ dark cores back; the 39 belt rows keep the r2 bake and read as sky-gapped crowns
 everywhere, station 4 bit-identical; crossings cam02 7.33 (Cycles 7.76), cam05 12.28. Scores 4.01 / 3.30 / 2.83 / 2.88 / 3.28 / 3.07; mobile 3.40 / 3.38 / 2.52 / 2.70 / 3.04 /
 2.62. Phase 8 closes here per the user's approval ("finish those as well and show me the difference"): the difference is docs/delivery.md "Phase 8" and
 renders/qa_comparisons/phase8_before_after_960.jpg. Anything further (the carried residuals) is a new phase for the user to open.
+
+## 2026-09-20 · PHASE 9 APPROVED by the user ("I would like everything to get finished eventually"): all carried residuals, in hero-impact order
+Scope and order in docs/briefs/phase9_next_session.md: one lighting round for station 3's deep shade and station 2's blue-violet shade (a Phase 5 lighting change — this
+entry records the user's approval; the lead reports before it starts), the aerial city blocks (8d R3), the belt/far-tree small items, housekeeping, then a new 4K hero and
+sheet. Multi-session accepted; stop on a usage limit.
