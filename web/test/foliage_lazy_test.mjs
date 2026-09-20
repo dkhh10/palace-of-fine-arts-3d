@@ -335,13 +335,18 @@ function makeRoot( list = null ) {
 		ok( rep.impostors && rep.impostors.placements === FAR_N - 1,
 			`the billboard-only row's impostor is NOT flipped to iNear = 1 `
 			+ `(${rep.impostors && rep.impostors.placements} of ${FAR_N} flipped)` );
-		// THE HAND-OFF, in a number: `activateImpostorMeshes` only ever sees the rows foliageLazy put in
-		// `byId`, and foliageLazy builds byId from the MESH placements, so today the billboard-only row's
-		// impostor is neither flipped (right) nor re-lit (wrong).
-		info( `viewer hand-off: ${rep.impostors && rep.impostors.modulated} of ${TREE_N} impostor row(s) `
-			+ 're-lit by E_placement / E_bake; the billboard-only row is not among them, because '
-			+ 'foliageLazy builds its byId from the mesh placements. The manifest carries that row\'s '
-			+ 'lighting entry (`mesh: false`) - the viewer fix is to set irr without near.' );
+		// REPORTING, NOT LIGHTING (export review r1 finding 2). `activateImpostorMeshes` only ever sees the
+		// rows foliageLazy put in `byId`, and foliageLazy builds byId from the MESH placements, so its
+		// `modulated` counter skips the billboard-only row. That row's `iIrr` is written at BUILD time by
+		// `buildImpostors` from `treesFar[i].irr`, which main.js fills for the WHOLE list - so in the app
+		// the row is modulated and activateImpostorMeshes would only re-write the same value. This harness
+		// builds its impostors WITHOUT `irr` (main.js never does), so the number below is the harness's,
+		// not the viewer's, and no viewer change is required.
+		info( `harness counter: ${rep.impostors && rep.impostors.modulated} of ${TREE_N} impostor row(s) `
+			+ 're-lit by activateImpostorMeshes (this harness builds its impostors without `irr`; in the '
+			+ 'app main.js has already written iIrr for all of them at build time). In the viewer this '
+			+ 'counter reads the loaded set\'s MESH row count while main.js\'s own modulation line still '
+			+ `reads ${TREE_N} of ${TREE_N} - which is the number a capture must show.` );
 		// and the modulation the row must keep: the lighting list is per far tree and was not cut
 		const notes = [];
 		const mod = farTreeIrradiance( manifest2.treesFar, raw2, 'full', ( m ) => notes.push( m ) );

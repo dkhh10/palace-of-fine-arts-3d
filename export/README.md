@@ -2876,20 +2876,34 @@ turning round on the spot.
 leaves cam03 and follows the path along the hall's east face comes within a few metres of one of the 35
 excluded trees and sees the magnified card. That is the price of (b) and it is what (c) would buy back.
 
-### THE ONE HAND-OFF THAT GATES THE SHIP — the viewer must re-light a billboard-only impostor
+### A billboard-only impostor stays modulated — NO viewer change required
 
-`foliageLazy.js` builds its impostor complement from the MESH placements
-(`placements.find( q => q.billboard === t.id )`, then `activateImpostorMeshes`). A row with no mesh
-placement therefore gets neither `iNear = 1` — **right**, its impostor must never fade out — nor `iIrr`,
-which is **wrong**: it loses the QA-23 `E_placement / E_bake` modulation, and the belt's median ratio is
-**0.2424** (it stands in the hall's shade), so those 35 crowns would draw about **four times too bright** and
-QA 23's fix would be undone. **Do not ship the rule before this lands.** Everything the fix needs is already
-in the manifest: `trees.far_mesh.lighting.mesh.placements` carries a row for **every** `tree_far` tree with a
-`mesh: true|false` flag (`with_mesh` / `billboard_only` counts beside it), and `trees.<set>.billboard_only`
-names the excluded rows with their billboard id and location. The viewer change is to set `irr` for a row
-that has no mesh placement while leaving `near` at 0.
+*(Review r1 finding 2. This section previously read "THE ONE HAND-OFF THAT GATES THE SHIP — the viewer must
+re-light a billboard-only impostor". That was wrong, and it is corrected here rather than deleted, because
+the wrong version is quoted in `docs/decisions.md` and in the round's report.)*
+
+`iIrr` is written at **build** time, not by the lazy pass. `main.js` runs `farTreeIrradiance` over **all**
+`manifest.treesFar`, joined to `trees.far_mesh.lighting` **by location** (`foliage.js` — never by mesh
+placement), and passes the result into `buildImpostors`, which writes `iIrr` per instance (`impostors.js`).
+So a billboard-only row keeps its QA-23 `E_placement / E_bake` modulation for as long as **that list** keeps
+its row — which `manifest_v4.trees_lighting_block` guarantees (one row per `tree_far` tree, `mesh: false` on
+the excluded ones, `with_mesh` / `billboard_only` counts beside it), and `verify_glb.far_tree_counts` and
+`p9_rule_selftest` both fail if it is ever cut down to the mesh placements. `foliageLazy.js` builds its
+impostor complement from the MESH placements (`placements.find( q => q.billboard === t.id )`, then
+`activateImpostorMeshes`), so a billboard-only row is correctly never flipped to `iNear = 1`, and
+`activateImpostorMeshes` simply never re-writes a value the row already has.
+
+**What to expect in the counters** (this is reporting, not lighting): `main.js`'s own line —
+`far-tree impostor modulation: N/N placement(s) joined by location` — must still read **166 / 166**, and
+`impModReport.far` stays 166. `activateImpostorMeshes`' `… re-lit by E_placement / E_bake` drops from 166 to
+the loaded set's mesh row count, **131 on desktop** (`env_trees_lod1.glb`) and **149 on mobile**
+(`env_trees.glb`), as does its `N placement(s) … now fade to a MESH`. A capture whose far-tree modulation
+line falls below 166 is a real defect; a `re-lit` count of 131 / 149 is the rule working. The deploy is
+**not** gated on a viewer change.
 `web/test/foliage_lazy_test.mjs` section 4c holds the contract: it drops one placement and asserts the
-impostor is NOT flipped, that the lighting row survives, and it reports the missing `iIrr` as the hand-off.
+impostor is NOT flipped and that the lighting row survives, and it `ok`s that `farTreeIrradiance` still
+modulates the dropped row. Its `info` line describes the **harness** — that test builds its impostors
+without `irr`, which main.js never does — and not the viewer.
 
 ### What changed, and the invariants that had to be re-cut
 
@@ -2915,7 +2929,8 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
   here while `trees_far_set.py` asserted the full count, so the next bake would have died —
   **`belt_rule.topology_problems` / `check_topology`** is now the single contract the writer, the reader and
   `p9_rule_selftest.py` all call, and `p9_rule_selftest` fails on exactly that mismatch.
-* **`export/manifest_v4.py`** — the lighting list is per FAR TREE, not per mesh placement (see the hand-off);
+* **`export/manifest_v4.py`** — the lighting list is per FAR TREE, not per mesh placement (it is what keeps
+  a billboard-only impostor modulated, above);
   the count assert closes on `placements + billboard_only`; the billboard identity is checked through each
   row's own `index` instead of its position; both sets carry a `billboard_only` block; and the walk-up
   placements are written out **as a list** now that the two sets differ — a shape `foliageLazy` already

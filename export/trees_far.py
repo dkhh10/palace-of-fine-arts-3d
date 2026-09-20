@@ -243,13 +243,18 @@ DECIMATE_VG_FACTOR = 1.0   # Decimate `vertex_group_factor`
 # blown up to 17.9 and 11.9 SCREEN pixels - the magnified-card defect Phase 7 built the walk-up set to
 # cure. Those two, and the two other rows inside the radius, keep their meshes.
 #
-# WHAT THE VIEWER MUST DO WITH A BILLBOARD-ONLY ROW (hand-off, not done here). `foliageLazy.js` builds its
-# impostor complement from the MESH placements (`placements.find( q => q.billboard === t.id )`, then
-# `activateImpostorMeshes`), so a row with no mesh placement gets neither `iNear = 1` - which is right, its
-# impostor must never fade out - nor `iIrr`, which is WRONG: it would lose the QA-23 E_placement / E_bake
-# modulation and the belt (median ratio 0.2424, it stands in the hall's shade) would draw ~4x too bright.
-# The manifest keeps a lighting row for ALL `tree_far` trees (manifest_v4 `trees_lighting_block`) and names
-# the excluded rows in `trees.<set>.billboard_only`, so the viewer fix is to set `irr` without `near`.
+# WHAT THE VIEWER DOES WITH A BILLBOARD-ONLY ROW: NOTHING NEW (review r1 finding 2 - an earlier version of
+# this note called it a hand-off that gates the ship, and it is not). `iIrr` is written at BUILD time, not
+# by the lazy pass: `main.js` runs `farTreeIrradiance` over ALL `manifest.treesFar`, joined BY LOCATION to
+# `trees.far_mesh.lighting` (`foliage.js`, never by mesh placement), and hands the result to
+# `buildImpostors`, which writes `iIrr` per instance (`impostors.js`). A billboard-only row therefore keeps
+# its QA-23 E_placement / E_bake modulation as long as THAT list keeps its row - which is exactly what
+# manifest_v4 `trees_lighting_block` guarantees (one row per `tree_far` tree, `mesh: false` on the excluded
+# ones, and `trees.<set>.billboard_only` names them). `foliageLazy.js` builds its impostor complement from
+# the MESH placements (`placements.find( q => q.billboard === t.id )`, then `activateImpostorMeshes`), so a
+# billboard-only row is correctly never flipped to `iNear = 1`, and `activateImpostorMeshes` simply never
+# re-writes the value it already has. What changes is REPORTING: its `re-lit` counter reads the set's mesh
+# row count (131 desktop / 149 mobile) instead of 166, while main.js's own line still says 166 of 166.
 # The rule itself lives in `export/belt_rule.py`, which imports no bpy, so it can be measured and
 # self-tested on CPU (`python3 export/belt_rule.py`) instead of only inside a Blender run.
 BELT_TAG = br.BELT_TAG
@@ -811,11 +816,14 @@ def main():
               f"({FADE_BAND_M} m) of a QA station eye; beyond that the fragment dissolve discards every "
               f"fragment, so no station can ever see the mesh and the row ships as its impostor alone"),
         excluded_tris=sum(protos_out[b["prototype"]]["tris"] for b in billboard_only),
-        viewer_hand_off=("a billboard-only row has no mesh placement, so foliageLazy.js's impostor "
-                         "complement skips it: it correctly keeps iNear = 0 but also loses iIrr, the "
-                         "QA-23 E_placement / E_bake modulation. `trees.far_mesh.lighting` still carries a "
-                         "row for every tree_far tree and `billboard_only` names the excluded ones, so the "
-                         "viewer fix is to set irr without near."))
+        viewer_change=("NONE (review r1 finding 2). A billboard-only row has no mesh placement, so "
+                       "foliageLazy.js's impostor complement skips it and it correctly keeps iNear = 0. It "
+                       "does NOT lose iIrr: main.js runs farTreeIrradiance over all manifest.treesFar, "
+                       "joined to trees.far_mesh.lighting BY LOCATION, and buildImpostors writes iIrr at "
+                       "BUILD time, before any lazy load. The modulation therefore survives as long as the "
+                       "lighting list keeps a row for every tree_far tree, which manifest_v4 asserts. Only "
+                       "activateImpostorMeshes' `re-lit` counter changes, from 166 to this set's mesh row "
+                       "count; main.js's own modulation line still reads 166 of 166."))
     rep["placement_check"] = dict(
         rule="s = tree_far[i].height_m / impostors.prototypes[p].height_above_base_m, translation = "
              "trunk_base, rotation ignored - manifest `impostors.placement`, verbatim",

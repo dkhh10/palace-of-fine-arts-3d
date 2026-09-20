@@ -1116,7 +1116,12 @@ subset of far; `foliageLazy` already reads an explicit `walkup_mesh.placements` 
 arch/orn/ground stay byte-identical — a billboard-only row keeps its billboard, its impostor frame and its per-placement irradiance, and loses only its instance
 row in the two far-tree MESH glbs. `p8d_pin.py` therefore gains four pins downstream of the export set (`trees_far[far|walkup].placements` 149 / 131,
 `billboard_only` 17 / 35, `placed_tris` 1 182 338 / 3 890 782, and the subset relation), so a moved station, a changed belt or a changed `draw_within_m` is a
-decision rather than a surprise. **One hand-off gates the ship: the viewer must modulate a billboard-only row's impostor.** `foliageLazy` builds its impostor
-complement from the MESH placements, so a row without one gets neither `iNear = 1` (right) nor `iIrr` (wrong): the belt's median E_placement / E_bake is 0.2424,
-so those crowns would draw about four times too bright and QA 23's fix would be undone. The manifest keeps a lighting row for every `tree_far` tree (`mesh: false`
-on the excluded ones) and names them in `trees.<set>.billboard_only`; `web/test/foliage_lazy_test.mjs` section 4c holds the contract.
+decision rather than a surprise. **No viewer change is required, and the deploy is not gated on one** (corrected 2026-09-20, export r1 review finding 2; the first version of this
+entry said the opposite). `iIrr` is written at BUILD time: `main.js` runs `farTreeIrradiance` over ALL `manifest.treesFar`, joined to `trees.far_mesh.lighting`
+BY LOCATION (never by mesh placement), and `buildImpostors` writes it per instance — so a billboard-only row keeps its E_placement / E_bake modulation as long as
+that lighting list keeps its row, which `manifest_v4` guarantees (one row per `tree_far` tree, `mesh: false` on the excluded ones, named in
+`trees.<set>.billboard_only`) and `verify_glb` / `p9_rule_selftest` both fail on. `foliageLazy` builds its impostor complement from the MESH placements, so such a
+row is correctly never flipped to `iNear = 1` and `activateImpostorMeshes` merely never re-writes a value it already has. What moves is REPORTING: that function's
+`re-lit` counter reads the loaded set's mesh row count (131 desktop / 149 mobile) instead of 166, while main.js's own modulation line must still read 166 of 166 —
+a capture below 166 there is a real defect. `web/test/foliage_lazy_test.mjs` section 4c holds the contract; its `info` line describes the harness, which builds
+impostors without `irr`, not the viewer.

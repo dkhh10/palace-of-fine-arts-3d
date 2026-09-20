@@ -59,9 +59,10 @@ def trees_lighting_block(tf, man=None):
     PHASE 9 item 1: A ROW IS WRITTEN FOR EVERY `tree_far` TREE, not only for the ones that got a mesh. The
     billboard-only rule (export/belt_rule.py) leaves 17 / 35 tagged rows with no mesh placement, and the
     IMPOSTOR consumer above is exactly the one those rows still need: `farTreeIrradiance` joins this list to
-    `tree_far` BY LOCATION, so a list cut down to the mesh placements would drop the modulation of the very
-    trees that are now impostors at every distance - the belt, whose median E_placement / E_bake is 0.2424,
-    would draw about four times too bright. Each row therefore carries `mesh: true|false`.
+    `tree_far` BY LOCATION - never by mesh placement - and `buildImpostors` writes the result into `iIrr` at
+    build time. So this list, and nothing in the viewer, is what keeps a billboard-only row modulated (review
+    r1 finding 2): cut it down to the mesh placements and the belt, whose median E_placement / E_bake is
+    0.2424, would draw about four times too bright. Each row therefore carries `mesh: true|false`.
     """
     ip = next((q for q in (g3.OUT / "trees_far" / "instance_irradiance.json",
                            g3.MAIN_ROOT / "export/out/gate3/trees_far/instance_irradiance.json")
