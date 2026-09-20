@@ -1084,6 +1084,19 @@ term, specular sun, post) before any re-bake is scheduled, so the one re-bake of
 six full-size Cycles refs the lead renders now from the Phase 8 master_delivery (housekeeping item 4, same renders). Viewer (dotted rim) and export (belt
 billboard rule) start on CPU in parallel; the ENV aerial-blocks round waits for the bake analysis so the builder cap (4) and the one-GPU rule hold.
 
+## 2026-09-20 · Phase 9 session 10: station 3's viewer shade excess is fixed viewer-side, by specular gating on the lightmap's own sky and sun visibility (zero GPU)
+The bake analysis (docs/briefs/phase9_bake_analysis_report.md Part B, phase9-bake fbdbed9) decomposed cam03's 2.55x column shade by term on files already on
+disk: the lightmap texels match Cycles diffuse at 0.997x (term 1, not the term), the post chain is ~0 on the near column (term 4), and the whole excess is the
+viewer's specular path — the environment PMREM specular applied unoccluded (all of the viewer's blue) plus the sun DirectionalLight's specular applied
+unshadowed (the warm remainder). Three options priced: (a) viewer-side — scale the IBL specular by skyVis = lightmap.b / open-sky irradiance/π and the sun
+specular by sunVis = (lightmap.r − 0.1951·lightmap.b) / sun irradiance/π, both already carried by the lightmap because LIGHT_sun has zero blue; predicted
+near_column 1.93x -> ~1.05x, sunlit boxes move <= 4 %, cost 0 GPU and ~20 min CPU (manifest constants + tiers + verify + build + deploy); (b) bake-side — a real
+specular-occlusion / sun-visibility map pair: 6 h 10 m GPU (Part A rows 1-3) plus a second texture set the 1 200 MB line cannot carry; (c) open
+assets/lighting.blend at station 3 — rejected, Cycles' cam03 shade is the reference (p10 7.3) and is held by the lighting acceptance. **Adopted: (a).**
+The two constants are computed by export/manifest_v4.py from the shipped sky_diffuse EXR (upper-hemisphere cosine-weighted mean) and the sun's energy at
+manifest time, never hard-coded in the viewer, so the lighting re-bake's new sky_diffuse feeds them automatically. Brief: docs/briefs/phase9_viewer_shade.md.
+Validation: the four cam03 flag captures (B.5) before the gating build, then the gated build at all six stations, hero parity first; QA reads the tiles.
+
 ## 2026-09-20 · Phase 9 item 1: the belt's billboard-only rule is per SET, measured against the QA stations — the export pin gains four numbers, the export set moves none
 QA 23 residual 3 / QA 24 item 3: cam03 submits **+1 301 870 triangles and +28 draws** because three of the 39 hall-east belt trees (8d r2, tag HB) stand inside
 `buildDistanceCull`'s limit and a batch is submitted whole as soon as one row is inside. Measured at the cam03 station (81.0, 12.04, 1.7 / 18 mm / 16:9), of the
