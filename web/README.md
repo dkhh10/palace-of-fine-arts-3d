@@ -1201,6 +1201,32 @@ are character-for-character what Phase 8 compiled and the two share one program.
 §4 asserts all three. The sidecar reports what the material actually compiled in, not what the url
 asked for: `__pfaInfo().gate3.specGate` is `{openSkyB, skyRedOverBlue, sunIrrOverPi}` or `null`.
 
+### The chain, run on this branch (2026-09-20)
+
+No bake, no KTX2 encode, no pack, no deploy — the export set does not move and the lead runs the real
+chain with the lighting re-bake.  `export/out` lives only in MAIN, so it was mirrored into this
+worktree **read-only** (directory symlinks for `gate0/1/2`, per-file symlinks for `gate3` with a real
+`manifest.json`, real copies of the `gate5` json beside symlinked `groups/` and `tex_lo/`) and
+`PFA_MAIN_ROOT` pointed at the worktree, so every write landed here.  MAIN's `export/out` was verified
+untouched afterwards (`find -newer`, 0 files).
+
+| step | result |
+|---|---|
+| `python3 export/manifest_v4.py` | `sky.open_irradiance_over_pi = [2.195763, 3.432181, 11.255903]`, `sun.irradiance_over_pi = 21.42843` (67.31939697265625 / pi; `scene_audit` 67.319) |
+| `python3 export/tiers.py --no-pack` / `--mobile --no-pack` | desktop t0 48.1 MB / 218 files (first frame 49.28 MB on the wire, under the 49.5 MB target), mobile t0 46.5 MB / 235 files (47.64 MB) — **both manifests carry the two constants with no tiers.py change** |
+| `python3 export/verify_glb.py --gate5` (+ `--mobile`) | PASS / PASS, assets 2579/2579, arch 0.9981x / env 1.0x / ground 1.0x / orn 0.9984x Gate 3 |
+| `node web/test/tiers_test.mjs` | all tier checks passed |
+| `python3 export/name_sweep.py` | PASS, 2579 objects, 166 exempt, 0 to explain |
+| `cd web && npm test` | **690 checks, 0 failures** (564 of them with no `export/out` on disk at all) |
+| `cd web && npm run build` | clean, index 1 216.75 kB / 350.39 kB gzipped |
+
+Payload: the two constants and their provenance blocks cost **+1 338 B raw / +682 B gzipped** on the
+desktop manifest and **+719 B gzipped** on the mobile one — the manifest is in the boot overhead, not
+in tier 0, and tier 0 did not move.
+
+`tiers.py --no-pack` was used rather than the full `tiers.py` because nothing about the geometry or the
+textures changes here; the groups and the ETC1S set on disk are the ones the assignment reads.
+
 ## Phase 9 item 1 — the dotted rim on the far-crown silhouettes (`?impq=`), 2026-09-20
 
 QA 21 item 1 / residual 1, carried through QA 24 ("back at its gate10 level"): a **period-2, one-to-
@@ -2771,6 +2797,8 @@ shrub/reed cards, default 0 — measured, see the 6c notes), `?leaftrn=` (transl
 `shrubs` to include the cards), `?leafsoft=0` (no alphaToCoverage), `?treemesh=` (metres, or `inf`:
 mesh within it, impostor beyond), `?treefade=` (crossfade metres), `?shrublod=` (LOD1 within it),
 `?imp2k=0` (the 1K impostor atlas), `?impmod=chroma|full|0`, `?impbake=r,g,b` (E_bake by hand),
+`?specgate=0` (Phase 9 item 2: turn the specular gate OFF and restore the Phase 8 ungated specular
+path exactly — no GLSL, no cache-key term, the same program; the A/B for the station-3 shade fix),
 `?impq=0` (Phase 9 item 1: stop snapping the impostor coverage to the target's sample ladder before
 the alpha-to-coverage mask — the Phase 8b coverage path, dotted rim included; `?impcov=0` turns it
 off too, so that still restores Phase 7),
