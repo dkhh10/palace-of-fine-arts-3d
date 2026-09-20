@@ -2898,7 +2898,15 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
   placements are written out **as a list** now that the two sets differ — a shape `foliageLazy` already
   reads (`Array.isArray( w.placements ) ? w.placements : ... same_as`), so **no viewer change is needed for
   the placements**. While the sets do hold the same rows the block still says `same_as`, exactly as before.
-* **`export/verify_glb.py`** — check 5 becomes a per-set identity (`mesh rows + billboard-only = far trees`)
+* **`export/p9_rule_selftest.py` (new)** — the CPU negative suite for all of it, in the pattern of
+  `gate4_order_selftest.py`: it builds the two reports the rule WOULD write (the real ones minus the
+  excluded rows), pushes them through `manifest_v4.trees_lighting_block` and `verify_glb.far_tree_counts`,
+  and asserts the five ways of getting it wrong are each reported — a vanished mesh row, an inflated
+  billboard-only count, a lighting list cut down to the mesh placements, a walk-up row the far set does not
+  have, and an export set that disagrees with the manifest — plus that the PRE-rule shape
+  (166 / 166 / `same_as`, no `billboard_only`) still passes unchanged. 16/16 today.
+* **`export/verify_glb.py`** — the far-tree count block is factored out as `far_tree_counts(man)` so the
+  suite above can feed it bad data; check 5 becomes a per-set identity (`mesh rows + billboard-only = far trees`)
   plus the nesting (`walkup <= far`) and the lighting list at one row per far tree;
   `trees_lod1_order_check` accepts fewer rows per node on the walk-up side, never more, and still requires
   the same node sequence and materials.
@@ -2917,7 +2925,8 @@ checkout.
 
 ```sh
 export PFA_GATE1_BLEND_DIR="$PWD/export/out/gate1"
-python3 export/belt_rule.py                                      # CPU: the table + the invariants, first
+python3 export/belt_rule.py && python3 export/p9_rule_selftest.py   # CPU: the table, the invariants, the
+                                                                 # manifest/verify readers - all first
 scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend --python export/trees_far.py
 PFA_TREES_SET=walkup scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend \
     --python export/trees_far.py

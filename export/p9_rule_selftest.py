@@ -1,0 +1,148 @@
+"""PHASE 9 item 1 — the billboard-only rule, end to end, on CPU.
+
+    python3 export/p9_rule_selftest.py        # exit 0 = every case behaved
+
+`export/trees_far.py` runs only inside Blender, so the rule it applies and the manifest it feeds could
+otherwise be exercised only by a full export. This builds the two `trees_far*.json` reports the rule WOULD
+write - the real reports with the excluded rows removed and a `billboard_only` list added, exactly as
+trees_far.py assembles them - and pushes them through the two readers that consume them:
+
+  * `manifest_v4.trees_lighting_block`, which must return ONE ROW PER FAR TREE (not per mesh placement),
+    because the impostor of a billboard-only row still needs its E_placement / E_bake;
+  * `verify_glb.far_tree_counts`, which must accept the new shape and REJECT every way of getting it wrong.
+
+The Gate 4 order check has the same kind of negative suite (`export/gate4_order_selftest.py`); this is that
+pattern for the far-tree counts. CPU only: no Blender, no GPU, nothing written.
+"""
+import copy
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import belt_rule as br       # noqa: E402
+import manifest_v4 as m4     # noqa: E402
+import verify_glb as vg      # noqa: E402
+
+FAILS = []
+TOTAL = 0
+
+
+def ok(cond, what):
+    global TOTAL
+    TOTAL += 1
+    print(f"  {'ok  ' if cond else 'FAIL'} {what}")
+    if not cond:
+        FAILS.append(what)
+
+
+def synth(man, belt, eyes, set_name, real):
+    """the report trees_far.py would write for `set_name`, from the real one plus the rule."""
+    r, excl = br.select(man, belt, eyes, br.DRAW_WITHIN_M[set_name])
+    keep = [pl for pl in real["placements"] if pl["index"] not in excl]
+    pmap = man["impostors"]["prototype_map"]
+    bo = [dict(index=i, tag=br.BELT_TAG, billboard=man["tree_far"][i]["billboard"],
+               source_tree=man["tree_far"][i]["source_tree"],
+               prototype=pmap[man["tree_far"][i]["prototype"]],
+               source_prototype=man["tree_far"][i]["prototype"],
+               loc=[round(float(v), 4) for v in man["tree_far"][i]["trunk_base"]],
+               height_m=man["tree_far"][i]["height_m"],
+               walk_dist_m=man["tree_far"][i]["walk_dist_m"],
+               nearest_station=excl[i][0], nearest_station_m=round(excl[i][1], 2))
+          for i in sorted(excl)]
+    d = dict(real, placements=keep, billboard_only=bo,
+             billboard_only_rule=dict(tag=br.BELT_TAG, radius_m=r,
+                                      draw_within_m=br.DRAW_WITHIN_M[set_name], rule="(selftest)"))
+    return d
+
+
+def main():
+    man, man_p = br.read_manifest()
+    belt, _bp, _doc = br.belt_indices(man)
+    eyes = br.station_eyes(man)
+    reports = {}
+    for set_name, rel in (("far", "export/out/gate1/trees_far.json"),
+                          ("walkup", "export/out/gate1/trees_far_lod1.json")):
+        p = br.pick(rel)
+        if p is None:
+            print(f"[p9_selftest] {rel} not found - run the export first", file=sys.stderr)
+            return 2
+        reports[set_name] = synth(man, belt, eyes, set_name, json.loads(p.read_text()))
+    tf, tw = reports["far"], reports["walkup"]
+    n = len(man["tree_far"])
+    print(f"[p9_selftest] {man_p}\n[p9_selftest] far {len(tf['placements'])} + "
+          f"{len(tf['billboard_only'])}, walk-up {len(tw['placements'])} + {len(tw['billboard_only'])}, "
+          f"of {n} far trees")
+
+    print("the lighting block")
+    blk = m4.trees_lighting_block(tf, man)
+    per = blk["mesh"]["placements"]
+    ok(len(per) == n, f"one row per FAR TREE, not per mesh placement ({len(per)} of {n})")
+    ok(blk["mesh"]["with_mesh"] == len(tf["placements"])
+       and blk["mesh"]["billboard_only"] == len(tf["billboard_only"]),
+       f"the two populations are counted ({blk['mesh']['with_mesh']} + {blk['mesh']['billboard_only']})")
+    ok(sorted(d["index"] for d in per) == list(range(n)), "every tree_far index is covered exactly once")
+    ok([d["index"] for d in per] == sorted(d["index"] for d in per), "the rows are in tree_far order")
+    bo_idx = {b["index"] for b in tf["billboard_only"]}
+    ok(all(d["mesh"] is (d["index"] not in bo_idx) for d in per), "`mesh` is true exactly for the placed rows")
+    ok(all(isinstance(d.get("rgb"), list) and len(d["rgb"]) == 3 for d in per),
+       "every row - billboard-only included - carries an rgb, which is the whole point")
+
+    print("the set relations")
+    fi = [p["index"] for p in tf["placements"]]
+    wi = [p["index"] for p in tw["placements"]]
+    ok(set(wi) <= set(fi), f"the walk-up rows are a subset of the far set's ({len(wi)} <= {len(fi)})")
+    ok(wi == sorted(wi) and fi == sorted(fi), "both lists are in tree_far index order")
+    ok(bo_idx <= belt and {b['index'] for b in tw['billboard_only']} <= belt,
+       "only TAGGED rows are ever excluded")
+
+    print("verify_glb.far_tree_counts - the good shape, then every way of breaking it")
+    good = dict(tree_far=man["tree_far"], tree_rule=dict(far_billboards=n), trees=dict(
+        far_mesh=dict(placements=[dict(index=i) for i in fi],
+                      billboard_only=dict(count=len(tf["billboard_only"])),
+                      lighting=dict(mesh=dict(placements=[dict(index=i) for i in range(n)]))),
+        walkup_mesh=dict(placements=[dict(index=i) for i in wi],
+                         billboard_only=dict(count=len(tw["billboard_only"])))))
+    counts, bad = vg.far_tree_counts(good)
+    ok(not bad, f"the shipped shape passes ({counts['far_mesh_placements']} + "
+                f"{counts['far_mesh_billboard_only']} = {counts['tree_far_rows']}) - {bad}")
+
+    cases = []
+
+    def case(name, mutate, needle):
+        m = copy.deepcopy(good)
+        mutate(m)
+        _c, b = vg.far_tree_counts(m)
+        hit = any(needle in x for x in b)
+        cases.append((name, hit, b))
+        ok(hit, f"{name}: reported {(b[0][:95] if b else 'NOTHING')}")
+
+    case("a mesh row vanishes with no billboard-only row to match",
+         lambda m: m["trees"]["far_mesh"]["placements"].pop(), "mesh placements +")
+    case("the billboard-only count is inflated",
+         lambda m: m["trees"]["far_mesh"].__setitem__("billboard_only", dict(count=99)), "mesh placements +")
+    case("the lighting list is cut down to the mesh placements",
+         lambda m: m["trees"]["far_mesh"]["lighting"]["mesh"].__setitem__(
+             "placements", [dict(index=i) for i in fi]), "per-placement irradiance row")
+    case("the walk-up set places a row the far set does not",
+         lambda m: (m["trees"]["walkup_mesh"]["placements"].extend(
+             [dict(index=-1)] * (len(fi) - len(wi) + 1)),
+             m["trees"]["walkup_mesh"].__setitem__("billboard_only", dict(count=0))), "subset of the far")
+    case("the export set and the manifest disagree about the far list",
+         lambda m: m.__setitem__("tree_rule", dict(far_billboards=n - 1)), "disagree")
+    # and the shape that shipped BEFORE this rule must still pass unchanged
+    m = copy.deepcopy(good)
+    m["trees"]["far_mesh"]["placements"] = [dict(index=i) for i in range(n)]
+    m["trees"]["far_mesh"].pop("billboard_only")
+    m["trees"]["walkup_mesh"]["placements"] = dict(count=n, same_as="trees.far_mesh.placements")
+    m["trees"]["walkup_mesh"].pop("billboard_only")
+    _c, b = vg.far_tree_counts(m)
+    ok(not b, f"the pre-rule shape (166 / 166 / same_as, no billboard_only) still passes - {b}")
+
+    print(f"[p9_selftest] {TOTAL - len(FAILS)}/{TOTAL} checks behaved"
+          + (f" - {len(FAILS)} FAILURE(S)" if FAILS else ""))
+    return 1 if FAILS else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
