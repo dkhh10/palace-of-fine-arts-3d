@@ -1204,10 +1204,12 @@ point. **The capture is what decides**, and it is owed below.
   does not hold for this change and must not be read as a regression**; `?tier=mobile` is in the
   owed capture below.
 * **One assumption, stated:** `pfaCovQ` is the COMPOSER's sample count, and the same material also
-  draws into the planar reflection. Both are `samples: 4` today (main.js reads the composer's; the
-  Reflector is built at 4), and a ladder point of 4 is also one of 8, so a finer reflection target
-  would still be exact. A *coarser* one (2) would put the reflection back on today's behaviour —
-  never worse than it, but worth re-reading if the Reflector's sample count ever changes.
+  draws into the planar reflection. Both are 4 today, but **by coincidence of two independent
+  defaults** and nothing asserts it (carry 9 below): `main.js:1040` reads the composer's, and
+  `water.js:302` builds the Reflector without `multisample`, taking three's own default. A ladder
+  point of 4 is also one of 8, so a finer reflection target stays exact; a *coarser* one (2) would
+  put the reflection back on today's behaviour — never worse than it, but worth re-reading if the
+  Reflector's sample count ever changes.
 * **Nothing else moves.** The cutoff (0.33), the premultiplied reconstruction, the interior term,
   the share and the whole colour path are byte-identical. `?impq=0` is the Phase 8b **coverage
   path** — see the carry below for the one thing it does not revert.
@@ -1232,6 +1234,9 @@ count for two reasons at once. The probe refuses any frame that is not 1920x1080
 `python3 web/tools/p9v_rim.py selftest` proves both of those on synthetic frames, without a capture.
 **`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
 above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
+Every frame's sidecar now states for itself whether the quantiser was on —
+`__pfaInfo.impostors.quantise` (r1 review finding 1) — so the A/B is self-attesting and needs no boot
+log; read `.on`, **not** `.samples`, which carries the target's ladder either way (carry 13).
 
 **One thing `?impq=0` does not revert** (r1 review finding 7). The same branch replaced
 `normalize( vDirBlender )` with the guarded `pfaViewDir( … )` at both atlas lookups,
