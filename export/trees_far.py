@@ -65,6 +65,7 @@ import numpy as np
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import belt_rule as br  # noqa: E402
 import foliage_uv as fuv  # noqa: E402
 import gate0_common as g0  # noqa: E402
 import gate1_common as g1  # noqa: E402
@@ -90,6 +91,10 @@ SETS = {
         card_scale_max=1.6,       # 1/sqrt(keep) capped: seen from ~3 m, not only at 40 m
         gltf_name="env_trees", mesh_prefix="EXPM_treefar_",
         uv_tile=True,             # PHASE 8e: the leaf-card UV tiling below, this set only
+        # PHASE 9: the distance the VIEWER draws this set at, which is what the billboard-only rule
+        # below measures against. The far set is what MOBILE loads (device.js `walkupMesh: '0'`,
+        # `farTreeMesh: 45`), so a far row can be a mesh out to 45 m + the fade band.
+        draw_within_m=45.0,
         color0=True, hand_off=True, report="trees_far.json", order_against=None),
     "walkup": dict(
         # 30 k is the brief's budget. The source _LOD1 meshes are 25.6 k-45.2 k triangles, so this is a
@@ -107,6 +112,11 @@ SETS = {
         # picks trees.walkup_mesh), and 8e is a mobile item: desktop's cards keep their UVs inside 0-1, which
         # is also what lets the REPEAT sampler patch on env_trees.glb be a no-op for every other root.
         uv_tile=False,
+        # PHASE 9: desktop draws THIS set and `trees.walkup_mesh.draw_within_m` is 15 m
+        # (manifest_v4.py, `WALKUP_DIST_M` in web/src/foliageLazy.js), so a walk-up row can be a mesh
+        # out to 15 m + the fade band - a third of the far set's reach, which is why the two sets
+        # keep a different number of belt rows.
+        draw_within_m=15.0,
         # no vertex AO: the brief gives the viewer's interior term the job, and there is no bake for this
         # topology (the AO npz is addressed by vertex index against the `far` meshes' revision).
         color0=False, hand_off=False, report="trees_far_lod1.json", order_against="env_trees"),
@@ -211,6 +221,39 @@ TOPOLOGY_REV = 2
 # move. Wider bands cost more (5 m: +1 304 on the control) for no further gain.
 BASE_BAND_M = 1.0
 DECIMATE_VG_FACTOR = 1.0   # Decimate `vertex_group_factor`
+
+# ---------------------------------------------------------------- PHASE 9 item 1: BILLBOARD-ONLY ROWS
+# QA 23 residual 3 / QA 24 item 3: cam03 submits +1 301 870 triangles and +28 draw calls because THREE of
+# the 39 hall-east belt trees (8d r2, note tag HB) stand within the viewer's batch-cull limit of the
+# station, and `buildDistanceCull` submits a batch whole as soon as ONE of its rows is inside. The belt is
+# a backdrop planting on the hall's east face: 36 of the 39 are never a mesh at any station, so they are
+# paying for a close-up nobody takes.
+#
+# THE RULE, per set: a TAGGED row keeps its mesh only if some QA station could actually DRAW it as a mesh -
+# trunk base within `SET["draw_within_m"] + FADE_BAND_M` of a station eye. Every other tagged row is
+# BILLBOARD-ONLY: it stays in `tree_far` and keeps its impostor, and simply gets no instance row in this
+# set's glb. The radius is the set's own draw distance because the two sets are drawn at different ones
+# (desktop walk-up 15 m, mobile far 45 m), so they legitimately keep different numbers of belt rows and the
+# walk-up rows are a SUBSET of the far rows (`instance_order_check` below checks exactly that).
+#
+# WHY NOT ALL 39 (the README's own "billboard-only for the HB rows" pricing). Measured from the cam03
+# station (81.0, 12.04, 1.7), 18 mm on 36 mm, 16:9: `ENV_tree_cypress_33` stands 6.5 m from the eye and
+# fills ndc x [-2.27, 0.10] and the whole frame height, `ENV_tree_cypress_34` 10.4 m away fills
+# x [-1.74, -0.38]. At 1920 px wide that is one impostor atlas texel (81 inner px per frame, 1 K atlas)
+# blown up to 17.9 and 11.9 SCREEN pixels - the magnified-card defect Phase 7 built the walk-up set to
+# cure. Those two, and the two other rows inside the radius, keep their meshes.
+#
+# WHAT THE VIEWER MUST DO WITH A BILLBOARD-ONLY ROW (hand-off, not done here). `foliageLazy.js` builds its
+# impostor complement from the MESH placements (`placements.find( q => q.billboard === t.id )`, then
+# `activateImpostorMeshes`), so a row with no mesh placement gets neither `iNear = 1` - which is right, its
+# impostor must never fade out - nor `iIrr`, which is WRONG: it would lose the QA-23 E_placement / E_bake
+# modulation and the belt (median ratio 0.2424, it stands in the hall's shade) would draw ~4x too bright.
+# The manifest keeps a lighting row for ALL `tree_far` trees (manifest_v4 `trees_lighting_block`) and names
+# the excluded rows in `trees.<set>.billboard_only`, so the viewer fix is to set `irr` without `near`.
+# The rule itself lives in `export/belt_rule.py`, which imports no bpy, so it can be measured and
+# self-tested on CPU (`python3 export/belt_rule.py`) instead of only inside a Blender run.
+BELT_TAG = br.BELT_TAG
+FADE_BAND_M = br.FADE_BAND_M
 
 
 
@@ -482,6 +525,12 @@ def main():
     protos = sorted(imp["prototypes"])
     far = man["tree_far"]
     assert len(protos) == 16, f"{len(protos)} impostor prototypes, expected 16"
+    # PHASE 9 item 1: the tag and the stations the billboard-only rule measures against
+    belt, belt_p, belt_doc = br.belt_indices(man)
+    eyes = br.station_eyes(man)
+    assert br.DRAW_WITHIN_M[SET_NAME] == SET["draw_within_m"], (
+        f"belt_rule.DRAW_WITHIN_M[{SET_NAME!r}] is {br.DRAW_WITHIN_M[SET_NAME]} and this set says "
+        f"{SET['draw_within_m']} - the analysis and the export would place different rows")
 
     rep = dict(schema=SCHEMA, generated=time.strftime("%Y-%m-%dT%H:%M:%S"),
                generator="export/trees_far.py", source_blend=bpy.data.filepath,
@@ -622,10 +671,26 @@ def main():
     rep["prototypes"] = protos_out
     rep["lod2_objects_rejected"] = rejected
 
-    # ---------------------------------------------------------------- the 127 placements
+    # ---------------------------------------------------------------- the placements
+    # PHASE 9 item 1: a TAGGED row (HB, the 8d hall-east belt) is placed only if a QA station could draw it
+    # as a mesh at all - see the BILLBOARD-ONLY ROWS note at the top of this file. Everything else is
+    # untouched, and the row INDEX is still the `tree_far` index, so `TREEFAR_###` names, the manifest
+    # placements' `index` and the cross-set order check all stay keyed to the same list.
     step = g0.Step("trees_far:placements")
-    placements, worst_dev = [], 0.0
+    keep_radius_m = float(SET["draw_within_m"]) + FADE_BAND_M
+    placements, far_kept, billboard_only, worst_dev = [], [], [], 0.0
     for i, row in enumerate(far):
+        if i in belt:
+            s_name, s_d = br.nearest_station(eyes, row["trunk_base"])
+            if s_d > keep_radius_m:
+                billboard_only.append(dict(
+                    index=i, tag=BELT_TAG, billboard=row["billboard"], source_tree=row["source_tree"],
+                    prototype=proto_map[row["prototype"]], source_prototype=row["prototype"],
+                    loc=[round(float(v), 4) for v in row["trunk_base"]],
+                    height_m=row["height_m"], walk_dist_m=row["walk_dist_m"],
+                    nearest_station=s_name, nearest_station_m=round(s_d, 2)))
+                continue
+            # a tagged row inside the radius falls through and is placed like any other
         p = proto_map[row["prototype"]]
         ref = imp["prototypes"][p]
         s = float(row["height_m"]) / float(ref["height_above_base_m"])
@@ -643,17 +708,28 @@ def main():
         # translation is asserted after the glTF is written, against the EXPORTED node - which is the only
         # place the exporter's Z-up -> Y-up swap and its float32 round trip can actually go wrong.
         worst_dev = max(worst_dev, abs(top - want))
-        placements.append(dict(index=i, object=no.name, prototype=p, mesh=me.name,
-                               source_prototype=row["prototype"], source_tree=row["source_tree"],
-                               billboard=row["billboard"],
-                               loc=[round(float(v), 4) for v in row["trunk_base"]],
-                               scale=round(s, 6), height_m=row["height_m"],
-                               walk_dist_m=row["walk_dist_m"]))
+        pl = dict(index=i, object=no.name, prototype=p, mesh=me.name,
+                  source_prototype=row["prototype"], source_tree=row["source_tree"],
+                  billboard=row["billboard"],
+                  loc=[round(float(v), 4) for v in row["trunk_base"]],
+                  scale=round(s, 6), height_m=row["height_m"],
+                  walk_dist_m=row["walk_dist_m"])
+        if i in belt:
+            pl["tag"] = BELT_TAG
+            pl["nearest_station"], _d = br.nearest_station(eyes, row["trunk_base"])
+            pl["nearest_station_m"] = round(_d, 2)
+        placements.append(pl)
+        far_kept.append(row)
     # 8d r2: the far list grows with the scene (the hall-east belt took it 127 -> 166). What has to hold
     # is that EVERY far row got a placement here, not a fixed count; the count itself is reported and
     # checked against the manifest the placements were read from.
-    assert len(placements) == len(far), \
-        f"{len(placements)} placements for {len(far)} far rows - every far tree must be placed"
+    assert len(placements) + len(billboard_only) == len(far), (
+        f"{len(placements)} placements + {len(billboard_only)} billboard-only rows for {len(far)} far rows "
+        f"- every far tree must be either placed or explicitly excluded")
+    assert {pl["index"] for pl in placements}.isdisjoint({b["index"] for b in billboard_only}), \
+        "a far row is both placed and billboard-only"
+    assert all(b["index"] in belt for b in billboard_only), \
+        "only a TAGGED row may be billboard-only: an untagged far tree lost its mesh"
     # r5 finding 6: and `far` itself is pinned against the EXPORT SET, not against itself, so a manifest
     # left behind by an earlier run cannot quietly shrink this block.
     _eset = next((q for q in (g1.OUT / "export_set.json", g0.MAIN_ROOT / "export/out/gate1/export_set.json")
@@ -669,7 +745,7 @@ def main():
     # Nothing here is derived from `no.location`; it is the evaluated world bounding box of the geometry.
     bpy.context.view_layer.update()
     worst_xy, worst_xy_row, worst_top, worst_top_row = 0.0, None, 0.0, None
-    for pl, row in zip(placements, far):
+    for pl, row in zip(placements, far_kept):
         no = bpy.data.objects[pl["object"]]
         cs = [no.matrix_world @ Vector(c) for c in no.bound_box]
         bx = [min(c[k] for c in cs) for k in range(3)], [max(c[k] for c in cs) for k in range(3)]
@@ -696,8 +772,26 @@ def main():
     tallest = max(float(r["height_m"]) for r in far)
     assert worst_dev < CROWN_TOP_TOL_REL * tallest, \
         f"worst crown-top deviation {worst_dev:.3f} m over {CROWN_TOP_TOL_REL:.0%} of {tallest:.1f} m"
-    step.done(placements=len(placements), worst_crown_top_dev_mm=round(worst_dev * 1000, 1))
+    step.done(placements=len(placements), billboard_only=len(billboard_only),
+              worst_crown_top_dev_mm=round(worst_dev * 1000, 1))
     rep["placements"] = placements
+    rep["billboard_only"] = billboard_only
+    rep["billboard_only_rule"] = dict(
+        tag=BELT_TAG, tagged_rows=len(belt), placed=len(belt) - len(billboard_only),
+        excluded=len(billboard_only), far_rows=len(far), placements=len(placements),
+        radius_m=keep_radius_m, draw_within_m=float(SET["draw_within_m"]), fade_band_m=FADE_BAND_M,
+        stations={k: [round(v, 3) for v in e] for k, e in sorted(eyes.items())},
+        tag_source=str(belt_p), tag_source_count=int(belt_doc["count"]),
+        rule=(f"a row tagged {BELT_TAG!r} keeps its mesh only if its trunk base is within "
+              f"draw_within_m ({SET['draw_within_m']} m, this set's own viewer distance) + the fade band "
+              f"({FADE_BAND_M} m) of a QA station eye; beyond that the fragment dissolve discards every "
+              f"fragment, so no station can ever see the mesh and the row ships as its impostor alone"),
+        excluded_tris=sum(protos_out[b["prototype"]]["tris"] for b in billboard_only),
+        viewer_hand_off=("a billboard-only row has no mesh placement, so foliageLazy.js's impostor "
+                         "complement skips it: it correctly keeps iNear = 0 but also loses iIrr, the "
+                         "QA-23 E_placement / E_bake modulation. `trees.far_mesh.lighting` still carries a "
+                         "row for every tree_far tree and `billboard_only` names the excluded ones, so the "
+                         "viewer fix is to set irr without near."))
     rep["placement_check"] = dict(
         rule="s = tree_far[i].height_m / impostors.prototypes[p].height_above_base_m, translation = "
              "trunk_base, rotation ignored - manifest `impostors.placement`, verbatim",
@@ -888,7 +982,7 @@ def main():
     assert len(nodes) == len(placements), \
         f"{gltf_p.name} has {len(nodes)} mesh nodes, the export placed {len(placements)}"
     worst_t, worst_s, worst_row = 0.0, 0.0, None
-    for pl, row in zip(placements, far):
+    for pl, row in zip(placements, far_kept):
         nd = nodes.get(pl["object"])
         assert nd is not None, f"{gltf_p.name} has no node named {pl['object']!r}"
         want_t = to_gltf(row["trunk_base"])
@@ -921,24 +1015,44 @@ def main():
         odoc = json.loads(op.read_text())
         orows = [n for n in odoc.get("nodes", []) if "mesh" in n]
         mrows = [nodes[pl["object"]] for pl in placements]
-        assert len(orows) == len(mrows), \
-            f"{gltf_p.name} has {len(mrows)} mesh nodes, {op.name} has {len(orows)}"
-        worst_o, worst_o_row = 0.0, None
-        for i, (a, b) in enumerate(zip(orows, mrows)):
-            assert a.get("name") == b.get("name"), (
-                f"row {i}: {op.name} has node {a.get('name')!r}, {gltf_p.name} has {b.get('name')!r} - "
-                f"the two sets are not in the same instance order and the placement rows cannot be reused")
+        # PHASE 9 item 1: the two sets no longer hold the SAME rows. The billboard-only radius is each
+        # set's own draw distance (walk-up 15 m, far 45 m), so the walk-up set keeps FEWER belt rows and
+        # its rows are a SUBSEQUENCE of the far set's. That is the invariant the viewer needs - it joins a
+        # row to a placement by translation, and it reads its placement list from THIS set's own manifest
+        # block - plus the one it cannot check: a row that is in both sets must stand in the same place
+        # and in the same relative order. Equality would be the stronger claim, and it is asserted whenever
+        # neither set excluded anything.
+        opos = {n.get("name"): i for i, n in enumerate(orows)}
+        assert len(mrows) <= len(orows), \
+            f"{gltf_p.name} has {len(mrows)} mesh nodes, {op.name} only {len(orows)} - this set is the subset"
+        worst_o, worst_o_row, last = 0.0, None, -1
+        for i, b in enumerate(mrows):
+            nm = b.get("name")
+            j = opos.get(nm)
+            assert j is not None, (
+                f"row {i}: {gltf_p.name} has node {nm!r}, which {op.name} does not - this set placed a row "
+                f"the other one dropped, so the two billboard-only rules disagree about which rows exist")
+            assert j > last, (
+                f"row {i}: {nm!r} is at position {j} in {op.name} but the previous row was at {last} - the "
+                f"two sets are not in the same instance order and the placement rows cannot be reused")
+            last = j
+            a = orows[j]
             d = max(abs(float(x) - float(y))
                     for x, y in zip(a.get("translation", (0, 0, 0)), b.get("translation", (0, 0, 0))))
             if d > worst_o:
-                worst_o, worst_o_row = d, a.get("name")
+                worst_o, worst_o_row = d, nm
         assert worst_o < PLACE_TOL_M, (
             f"{gltf_p.name}: worst translation difference against {op.name} is {worst_o * 1000:.3f} mm on "
             f"{worst_o_row}")
-        order_check = dict(against=op.name, rows=len(mrows),
+        order_check = dict(against=op.name, rows=len(mrows), rows_other=len(orows),
+                           subset=len(mrows) < len(orows),
+                           only_in_other=sorted(set(opos) - {n.get("name") for n in mrows}),
                            worst_translation_delta_m=round(worst_o, 6), worst_row=worst_o_row,
-                           rule="node name and translation, row by row, against the other set's glTF - the "
-                                "positional join is the only key that survives gltfpack -mi")
+                           rule="every node of this set is a node of the other set's glTF, in the same "
+                                "relative order and at the same translation; this set may hold FEWER rows "
+                                "(its billboard-only radius is its own draw distance) but never a row the "
+                                "other set does not have - the positional join is the only key that "
+                                "survives gltfpack -mi")
     # ---- COLOR_0 MUST BE THE AO, AND IT IS CHECKED IN THE DATA, NOT BY NAME.
     # These meshes carry exactly ONE colour layer ('irradiance'), but the exporter writes TWO attributes:
     # a CONSTANT WHITE COLOR_0 (unsigned byte, from the material side) and the real layer as COLOR_1
@@ -1043,7 +1157,8 @@ def main():
         (g1.OUT / SET["report"]).write_text(json.dumps(rep, indent=1) + "\n")
         print(f"[trees_far:{SET_NAME}] {len(protos_out)} prototypes "
               f"{min(v['tris'] for v in protos_out.values())}-"
-              f"{max(v['tris'] for v in protos_out.values())} tris, {len(placements)} placements, "
+              f"{max(v['tris'] for v in protos_out.values())} tris, {len(placements)} placements "
+              f"(+{len(billboard_only)} {BELT_TAG} rows billboard-only beyond {keep_radius_m:.0f} m), "
               f"{gltf_p.stat().st_size} B glTF -> {g1.OUT / SET['report']}")
         return
     step = g0.Step("trees_far:hand_off_blend")
@@ -1077,6 +1192,13 @@ def main():
                                  "index, so an npz baked against this blend is only valid while this value "
                                  "is unchanged; export/trees_far.py refuses to attach across a change.",
                 lod2_objects_rejected=rejected,
+                billboard_only=billboard_only,
+                billboard_only_rule=rep["billboard_only_rule"],
+                billboard_only_note=("these `tree_far` rows have NO mesh in this set (Phase 9 item 1) and "
+                                     "therefore no entry in `placements` below. The per-placement "
+                                     "irradiance bake still covers every `tree_far` row - trees_far_set.py "
+                                     "iterates the manifest, not this list - which is what keeps the "
+                                     "impostors of the excluded rows modulated."),
                 anchor_note=("`anchor` is the point in PROTOTYPE WORLD SPACE that this export subtracts "
                              "from the mesh, so that a placement is exactly `location = trunk_base, "
                              "scale = s`. It is the impostor's own axis: the prototype bbox XY centre at "
@@ -1114,7 +1236,8 @@ def main():
     (g1.OUT / SET["report"]).write_text(json.dumps(rep, indent=1) + "\n")
     print(f"[trees_far] {len(protos_out)} prototypes "
           f"{min(v['tris'] for v in protos_out.values())}-{max(v['tris'] for v in protos_out.values())} tris, "
-          f"{len(placements)} placements -> {g1.OUT / SET['report']}")
+          f"{len(placements)} placements (+{len(billboard_only)} {BELT_TAG} rows billboard-only beyond "
+          f"{keep_radius_m:.0f} m) -> {g1.OUT / SET['report']}")
 
 
 if __name__ == "__main__":
