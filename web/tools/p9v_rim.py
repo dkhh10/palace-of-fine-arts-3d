@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Phase 9 item 1 — the dotted rim on the far-crown silhouettes (QA 21 item 1), proved WITHOUT a GPU.
 
-    python3 web/tools/p9v_rim.py            # the whole argument, all three parts
-    python3 web/tools/p9v_rim.py capture    # part 1 only (the delivered frames)
+    python3 web/tools/p9v_rim.py                   # the whole argument, all three parts
+    python3 web/tools/p9v_rim.py capture           # part 1 only, on renders/web/gate12_cam0N.png
+    python3 web/tools/p9v_rim.py capture p9v       # part 1 on another capture tag (the AFTER frames)
 
 Three parts, in the order the argument runs:
 
@@ -224,6 +225,7 @@ def part2and3(measured):
 
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "all"
-    m = part1()
+    tag = sys.argv[2] if len(sys.argv) > 2 else "gate12"
+    m = part1(tag)
     if what != "capture":
         part2and3(m)
