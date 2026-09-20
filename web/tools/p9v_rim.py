@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Phase 9 item 1 — the dotted rim on the far-crown silhouettes (QA 21 item 1), proved WITHOUT a GPU.
 
-    python3 web/tools/p9v_rim.py                   # the whole argument, all three parts
-    python3 web/tools/p9v_rim.py capture           # part 1 only, on renders/web/gate12_cam0N.png
-    python3 web/tools/p9v_rim.py capture p9v       # part 1 on another capture tag (the AFTER frames)
+    python3 web/tools/p9v_rim.py                     # the whole argument, all three parts
+    python3 web/tools/p9v_rim.py capture             # part 1 only, on renders/web/gate12_cam0N.png
+    python3 web/tools/p9v_rim.py capture p9v         # part 1 on another capture tag (the AFTER frames)
+    python3 web/tools/p9v_rim.py ab gate12 p9v       # the A/B: ONE rim mask, from the BEFORE frame
+    python3 web/tools/p9v_rim.py selftest            # the frame guard and the A/B, no GPU, no capture
 
 Three parts, in the order the argument runs:
 
@@ -20,11 +22,14 @@ Three parts, in the order the argument runs:
    computes carries a period-2 term, and the ordered 4x4 Bayer fallback is not even compiled when a
    coverage mask is written (the gate12 boot note says `resolved by the 4-sample coverage mask`).
 
-3. THE ONLY STAGE LEFT is the hardware's alpha-to-coverage mask.  GL ES 3.0 s15.1.3 lets the mask
-   `be a function of the pixel location`, i.e. dither.  Push the same smooth pfaCov through three
-   models of it - no dither, a 2x2 dither, and a 1/8-step dither - and compare the checkerboard
-   index with part 1's measurement.  Then push it through the FIX (quantise pfaCov to the target's
-   own sample ladder before the mask sees it) under the same dither models.
+3. THE ONLY STAGE LEFT is the hardware's alpha-to-coverage mask.  GL ES 3.0 s15.1.3 says of the
+   algorithm that turns alpha into coverage: "The algorithm can and probably should be different at
+   different pixel locations" - i.e. dither.  Push the same smooth pfaCov through three models of it
+   - no dither, a 2x2 dither, and a 1/8-step dither - and compare the checkerboard index with part
+   1's measurement.  Then push it through the FIX (quantise pfaCov to the target's own sample ladder
+   before the mask sees it) under the same dither models.  All three models are per-pixel scalar
+   OFFSETS, so their "after the fix" column is arithmetic, not evidence (r1 review 3): the capture
+   is what decides, and `ab` below is how it is scored.
 """
 import sys
 from pathlib import Path
@@ -41,10 +46,30 @@ INNER_PX = 325.0
 SHARE = 0.10
 MAG_LO, MAG_HI, RAMP = 1.0, 2.0, 1.0
 
-# QA 21 §2b's two boxes, plus a control crown with a building behind it instead of sky.
-BOXES = [("05 left crown  (sky behind, QA 21)", 5, (0, 480, 200, 640)),
-         ("02 right cypress (sky behind, QA 21)", 2, (1700, 370, 1900, 660)),
-         ("01 hero crown  (building behind, control)", 1, (760, 545, 1000, 690))]
+# THE FRAME THE BOXES WERE READ IN (h, w).  r1 review 6: the boxes below are absolute rectangles, so
+# a 960 px copy or a mobile capture would print plausible numbers for the WRONG pixels - and the rim
+# is a per-pixel, period-2 phenomenon that no resample carries anyway.  Every frame this tool opens
+# is therefore asserted against FRAME (`_frame`), and BOXES are DERIVED from it rather than written
+# out: change FRAME alone and the rectangles follow, in proportion, to the same crowns.
+FRAME = (1080, 1920)
+
+# QA 21 §2b's two boxes, plus a control crown with a building behind it instead of sky, stated in the
+# 1920x1080 delivery frame they were measured in.
+FRAME_REF = (1080, 1920)
+BOXES_REF = [("05 left crown  (sky behind, QA 21)", 5, (0, 480, 200, 640)),
+             ("02 right cypress (sky behind, QA 21)", 2, (1700, 370, 1900, 660)),
+             ("01 hero crown  (building behind, control)", 1, (760, 545, 1000, 690))]
+
+
+def boxes_for(frame):
+    """BOXES_REF scaled from FRAME_REF into `frame` (h, w).  Identity at the delivery resolution."""
+    sx, sy = frame[1] / FRAME_REF[1], frame[0] / FRAME_REF[0]
+    return [(label, st, (int(round(x0 * sx)), int(round(y0 * sy)),
+                         int(round(x1 * sx)), int(round(y1 * sy))))
+            for label, st, (x0, y0, x1, y1) in BOXES_REF]
+
+
+BOXES = boxes_for(FRAME)
 
 
 def lum(a):
@@ -69,6 +94,10 @@ def checker_index(L, mask, x0=0, y0=0):
 
 
 def rim_mask(L, band=2):
+    """The partly covered pixels that touch sky.  For an A/B this is derived ONCE, from the BEFORE
+    frame, and then REUSED on the after frame (r1 review 6): re-deriving it per frame scores a
+    different pixel set on each side, so the rim-pixel count would move for two reasons at once and
+    neither column would mean what it says."""
     sky_l, leaf_l = np.percentile(L, 98), np.percentile(L, 2)
     sky = L > leaf_l + 0.90 * (sky_l - leaf_l)
     leaf = L < leaf_l + 0.35 * (sky_l - leaf_l)
@@ -79,18 +108,46 @@ def rim_mask(L, band=2):
     return d & ~sky & ~leaf, sky_l - leaf_l
 
 
-def part1(tag="gate12"):
-    print(f"1. THE CAPTURE — the rim on the delivered frames ({tag}, 1920x1080)\n")
+def _box(tag, st, box, caps=None):
+    """The luminance inside one box of one capture, with the frame size ASSERTED (r1 review 6)."""
+    p = (caps or CAPS) / f"{tag}_cam0{st}.png"
+    a = np.asarray(Image.open(p).convert("RGB")).astype(np.float64)
+    if a.shape[:2] != FRAME:
+        raise SystemExit(f"{p.name} is {a.shape[1]}x{a.shape[0]}, not {FRAME[1]}x{FRAME[0]}: the "
+                         f"boxes are delivery-frame rectangles and the rim is a per-pixel, period-2 "
+                         f"pattern that no resample carries. Capture at {FRAME[1]}x{FRAME[0]}.")
+    x0, y0, x1, y1 = box
+    return lum(a[y0:y1, x0:x1])
+
+
+def part1(tag="gate12", caps=None):
+    print(f"1. THE CAPTURE — the rim on the delivered frames ({tag}, {FRAME[1]}x{FRAME[0]})\n")
     print(f"   {'box':44s} {'rim px':>7s} {'chk index':>10s} {'chk amp':>8s} {'contrast':>9s} {'amp/contrast':>13s}")
     out = {}
     for label, st, box in BOXES:
-        a = np.asarray(Image.open(CAPS / f"{tag}_cam0{st}.png").convert("RGB")).astype(np.float64)
-        x0, y0, x1, y1 = box
-        L = lum(a[y0:y1, x0:x1])
+        L = _box(tag, st, box, caps)
         m, contrast = rim_mask(L)
-        idx, amp, n = checker_index(L, m, x0, y0)
+        idx, amp, n = checker_index(L, m, box[0], box[1])
         print(f"   {label:44s} {n:7d} {idx:10.3f} {amp:8.2f} {contrast:9.1f} {amp / contrast:13.4f}")
         out[label] = idx
+    return out
+
+
+def part_ab(before, after, caps=None):
+    """The A/B the capture round owes.  ONE rim mask, derived from the BEFORE frame and applied
+    unchanged to both, so the two columns differ only by what the fix did (r1 review 6)."""
+    print(f"THE A/B — one rim mask, derived from {before} and applied to both\n")
+    print(f"   {'box':44s} {'rim px':>7s} {'chk ' + before:>13s} {'chk ' + after:>13s} {'MAE/255':>8s}")
+    out = {}
+    for label, st, box in BOXES:
+        b = _box(before, st, box, caps)
+        a = _box(after, st, box, caps)
+        m, _contrast = rim_mask(b)                 # ONE mask, from the baseline
+        ib, _amp, n = checker_index(b, m, box[0], box[1])
+        ia, _amp, _n = checker_index(a, m, box[0], box[1])
+        mae = float(np.abs(a - b).mean())
+        print(f"   {label:44s} {n:7d} {ib:13.3f} {ia:13.3f} {mae:8.3f}")
+        out[label] = (n, ib, ia, mae)
     return out
 
 
@@ -223,9 +280,72 @@ def part2and3(measured):
         print(f"      {k:44s} {v:.3f}")
 
 
+def _synth(dirp, tag, dither):
+    """Three synthetic frames at the delivery size: sky, a dark crown filling the left half of each
+    box, and a two-pixel rim between them that is either period-2 dithered or flat."""
+    for _label, st, (x0, y0, x1, y1) in BOXES:
+        a = np.full((FRAME[0], FRAME[1], 3), 200.0)
+        xm = (x0 + x1) // 2
+        a[y0:y1, x0:xm] = 20.0
+        ys, xs = np.mgrid[y0:y1, xm:xm + 2]
+        rim = np.full(xs.shape, 110.0)
+        if dither:
+            rim += 30.0 * (1 - 2 * ((xs + ys) % 2))
+        a[y0:y1, xm:xm + 2] = rim[..., None]
+        Image.fromarray(a.astype(np.uint8)).save(dirp / f"{tag}_cam0{st}.png")
+
+
+def selftest():
+    """r1 review 6, proved without a capture: the frame guard fires, the boxes are derived from
+    FRAME, and the A/B scores ONE mask on both sides."""
+    import tempfile
+    ok = True
+
+    def check(name, cond):
+        nonlocal ok
+        ok = ok and bool(cond)
+        print(f"   {'PASS' if cond else 'FAIL'}  {name}")
+
+    print("SELFTEST — the frame guard and the A/B\n")
+    check("BOXES are derived from FRAME and are identity at the delivery size",
+          [b[2] for b in BOXES] == [b[2] for b in BOXES_REF])
+    check("halving FRAME halves the rectangles",
+          boxes_for((FRAME_REF[0] // 2, FRAME_REF[1] // 2))[0][2] == (0, 240, 100, 320))
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        _synth(d, "before", dither=True)
+        _synth(d, "after", dither=False)
+        # the guard: a 960 px copy of a real box must be refused, not scored
+        small = Image.open(d / "before_cam05.png").resize((960, 540))
+        small.save(d / "small_cam05.png")
+        try:
+            _box("small", 5, BOXES[0][2], caps=d)
+            check("a 960x540 frame is refused", False)
+        except SystemExit as e:
+            check("a 960x540 frame is refused", "960x540" in str(e))
+        ab = part_ab("before", "after", caps=d)
+        same = part_ab("before", "before", caps=d)
+        for label, st, _box_ in BOXES:
+            n, ib, ia, mae = ab[label]
+            sn, sib, sia, smae = same[label]
+            check(f"cam0{st}: the rim mask is the same pixel set on both sides", n == sn and n >= 50)
+            check(f"cam0{st}: a frame against itself scores equal and MAE 0", sib == sia and smae == 0.0)
+            check(f"cam0{st}: the dithered rim scores above the flat one ({ib:.3f} > {ia:.3f})",
+                  ib > ia + 0.1)
+            check(f"cam0{st}: and the two frames do differ (MAE {mae:.2f})", mae > 0)
+    print("\n   all passed" if ok else "\n   FAILURES above")
+    return 0 if ok else 1
+
+
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "all"
-    tag = sys.argv[2] if len(sys.argv) > 2 else "gate12"
-    m = part1(tag)
-    if what != "capture":
-        part2and3(m)
+    if what == "selftest":
+        sys.exit(selftest())
+    elif what == "ab":
+        if len(sys.argv) < 4:
+            raise SystemExit("usage: p9v_rim.py ab <before tag> <after tag>")
+        part_ab(sys.argv[2], sys.argv[3])
+    else:
+        m = part1(sys.argv[2] if len(sys.argv) > 2 else "gate12")
+        if what != "capture":
+            part2and3(m)

@@ -1224,7 +1224,11 @@ preprocessing in every define combination.
 whole of this build, and Chrome never runs beside Blender. The rim counts above are `gate12`
 (before); the after-capture at stations 2 and 5, and the regression MAE at 1, 3, 4 and 6, are owed
 as soon as the lead grants a window: `scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs`
-into `renders/web/p9v_cam0N.png`, then `python3 web/tools/p9v_rim.py capture` with the tag swapped.
+into `renders/web/p9v_cam0N.png`, then **`python3 web/tools/p9v_rim.py ab gate12 p9v`** — ONE rim
+mask, taken from the BEFORE frame and applied unchanged to both sides, so the two columns differ only
+by what the fix did (r1 review finding 6); re-deriving the mask per frame would move the rim-pixel
+count for two reasons at once. The probe refuses any frame that is not 1920x1080, and
+`python3 web/tools/p9v_rim.py selftest` proves both of those on synthetic frames, without a capture.
 **`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
 above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
 
