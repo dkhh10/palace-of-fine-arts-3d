@@ -1029,3 +1029,5 @@ Burn (list rates): session 8 (a87300f7)  377.08 USD ( opus-5 347, fable-5-1 29 )
 ## 2026-09-20 · SESSION 9 START — PHASE 9 (lead, Fable 5.1)
 Checks: no Blender/Chrome; main clean at b53906d; bake queue idle (109/109). Burn at start (list rates): session 8 (a87300f7) final 386.71 USD (opus-5 347, fable-5-1 39); session 9 (d073013c) 0.92.
 Next: item 1 lighting round (stations 3 + 2) — analysis first (QA-17 hero boxes before/after in Cycles), report to the user before the lighting change starts.
+2026-09-20 08:20 · Dispatch: BEFORE refs rendering (lead, bg loop, cycles_p8/cam0N_1080_32spp.png; marker .p9_refs_done when done). Briefs committed (24d492c): phase9-light (Opus high, GPU after the marker), phase9-bake (Opus xhigh, CPU: chain pricing + cam03 decomposition), phase9-viewer (Opus high, CPU: dotted rim), phase9-export (Opus high, CPU: belt billboard rule). ENV aerial blocks waits for the bake analysis (cap 4).
+Next: review each report; grant the GPU to the lighting agent at the marker; schedule the re-bake chain from the bake analysis.
