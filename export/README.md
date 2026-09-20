@@ -2950,7 +2950,15 @@ export/sync_main.sh
 ```
 
 Expected after it: `env_trees.glb` and `env_trees_lod1.glb` both smaller (17 / 35 fewer instance rows,
-~1.2 kB each, the meshes themselves unchanged); **tier 0 untouched** — neither tree glb is in it; `env_t2`
-smaller by the same rows; `verify_glb` and `--gate5` PASS on desktop and mobile with far-tree counts
-`149 + 17 = 166` and `131 + 35 = 166` and `lighting_rows 166`. **The viewer's `iIrr` fix must be in the same
-deploy.**
+~1.2 kB each, the meshes themselves unchanged); **no tree glb is in tier 0**; `env_t2` smaller by the same
+rows; `verify_glb` and `--gate5` PASS on desktop and mobile with far-tree counts `149 + 17 = 166` and
+`131 + 35 = 166` and `lighting_rows 166`.
+
+**The one thing that does grow is the manifest**, which IS in the first frame: the walk-up placements stop
+being a `same_as` reference and become a 131-row list, the two `billboard_only` blocks arrive, and every
+lighting row gains its `mesh` flag. Measured on the shipped gate5 manifest by replaying the rule on it:
+**2 141 481 -> 2 189 980 B raw (+48 499)**, and on the wire, which is what the 50 MB rule counts,
+**230 224 -> 236 390 B gzipped (+6 166)** — **0.8 % of the 726 181 B of headroom** the last deploy had. An
+index-only subset shape would save most of that and cost a viewer change; at 6 kB it is not worth one.
+
+**The viewer's `iIrr` fix must be in the same deploy.**
