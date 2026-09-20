@@ -1346,6 +1346,10 @@ count for two reasons at once. The probe refuses any frame that is not 1920x1080
 `python3 web/tools/p9v_rim.py selftest` proves both of those on synthetic frames, without a capture.
 **`?tier=mobile` stations 1-6 are owed in the same window**: mobile is quantised too (see the bullet
 above), so `gate12m` byte-identity is *expected to break* and has to be re-measured, not re-asserted.
+**The mobile measure is a whole-frame MAE against `renders/web/gate12m_cam0N.png`, not the rim index**
+(r2 review carry 3): `p9v_rim.py` refuses any frame that is not 1920x1080 BY DESIGN — the rim is a
+per-pixel, period-2 phenomenon and its boxes are absolute rectangles — and the mobile frames are
+1170x2532, so the tool can say nothing about them and must not be asked to.
 Every frame's sidecar now states for itself whether the quantiser was on —
 `__pfaInfo.impostors.quantise` (r1 review finding 1) — so the A/B is self-attesting and needs no boot
 log; read `.on`, **not** `.samples`, which carries the target's ladder either way (carry 13).
