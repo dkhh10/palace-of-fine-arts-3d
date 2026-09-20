@@ -22,6 +22,7 @@ pack, in p8d_pin.py --glbs.
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,15 @@ EXPECT_NEAR = 20            # unchanged, same order
 EXPECT_TREES_TOTAL = 186    # 147 + 39
 EXPECT_LOD2_BLOB = 85       # 46 + 39: the belt trees' LOD2 blobs are in the source set too
 BELT_JSON = "docs/phase8d_belt_r2_trees.json"
+# PHASE 9 item 1. The EXPORT SET does not move: `tree_rule` still says 186 trees / 166 far billboards and
+# ENV placed is still 895 052, because a billboard-only row keeps its billboard and its impostor and loses
+# only its instance row in the far-tree MESH glbs. What moves is downstream of the export set, so it is
+# pinned here rather than inferred: the two mesh sets' row counts, at the values export/belt_rule.py
+# computes from the manifest's own stations. A change to a station, to the belt, or to either set's
+# `draw_within_m` moves these and must be a decision, not a surprise.
+EXPECT_MESH_ROWS = dict(far=149, walkup=131)          # of 166 tree_far rows
+EXPECT_BILLBOARD_ONLY = dict(far=17, walkup=35)       # the HB rows beyond that set's radius
+EXPECT_PLACED_TRIS = dict(far=1182338, walkup=3890782)  # was 1 317 097 / 4 937 933
 
 
 def sha(p):
@@ -131,6 +141,59 @@ def pin(a, b, out):
     return ok
 
 
+def mesh_rows(out):
+    """PHASE 9 item 1: the two far-tree MESH sets' row counts, pinned at the rule's own values.
+
+    Read from the two `trees_far*.json` reports rather than recomputed, so this pins WHAT SHIPPED. The
+    rule that produced them is `export/belt_rule.py`, which has its own CPU self-test; what this adds is
+    that the numbers cannot drift silently between export rounds. Both reports are optional - the pin runs
+    before the far-tree sets in the chain - and a missing one is reported, never silently passed."""
+    def eq(name, va, vb, expect=None):
+        ok = (va == vb) if expect is None else (vb == expect)
+        out["checks"].append(dict(name=name, ok=bool(ok), main=va, new=vb, expected=expect))
+        return ok
+
+    ok, seen, idx = True, {}, {}
+    for set_name, rel in (("far", "export/out/gate1/trees_far.json"),
+                          ("walkup", "export/out/gate1/trees_far_lod1.json")):
+        p = ROOT / rel
+        if not p.exists():
+            out["checks"].append(dict(name=f"trees_far[{set_name}] rows", ok=False, main=None,
+                                      new=f"{rel} not written yet", expected=EXPECT_MESH_ROWS[set_name]))
+            ok = False
+            continue
+        d = json.loads(p.read_text())
+        n, nb = len(d["placements"]), len(d.get("billboard_only", []))
+        seen[set_name] = dict(placements=n, billboard_only=nb,
+                              placed_tris=d.get("gltf", {}).get("placed_tris"),
+                              radius_m=(d.get("billboard_only_rule") or {}).get("radius_m"))
+        idx[set_name] = (frozenset(pl["index"] for pl in d["placements"]),
+                         frozenset(b["index"] for b in d.get("billboard_only", [])))
+        ok &= eq(f"trees_far[{set_name}] indices are distinct and close on tree_far", EXPECT_FAR,
+                 len(idx[set_name][0] | idx[set_name][1]), expect=EXPECT_FAR)
+        ok &= eq(f"trees_far[{set_name}].placements", None, n, expect=EXPECT_MESH_ROWS[set_name])
+        ok &= eq(f"trees_far[{set_name}].billboard_only", None, nb,
+                 expect=EXPECT_BILLBOARD_ONLY[set_name])
+        ok &= eq(f"trees_far[{set_name}].placed_tris", None, seen[set_name]["placed_tris"],
+                 expect=EXPECT_PLACED_TRIS[set_name])
+        ok &= eq(f"trees_far[{set_name}] rows close against tree_far", EXPECT_FAR, n + nb, expect=EXPECT_FAR)
+    if "far" in seen and "walkup" in seen:
+        # the real relation, by ROW INDEX and not by count: the set drawn at the SHORTER distance may
+        # place fewer rows but never one the longer-reaching set dropped, which is what makes the
+        # cross-set order check in verify_glb a subsequence rather than an equality.
+        extra = sorted(idx["walkup"][0] - idx["far"][0])
+        ok &= eq("the walk-up placed rows are a subset of the far set's, by index", [],
+                 extra, expect=[])
+        missing = sorted(idx["far"][1] - idx["walkup"][1])
+        ok &= eq("every row the far set drops is dropped by the walk-up set too", [],
+                 missing, expect=[])
+        ok &= eq("the walk-up rows are a subset of the far set's, by count", True,
+                 seen["walkup"]["placements"] <= seen["far"]["placements"], expect=True)
+        seen["walkup"]["extra_rows_vs_far"] = extra
+    out["mesh_rows"] = seen
+    return ok
+
+
 def glbs():
     """After the pack: arch / orn / ground glbs byte-identical to MAIN, env / env_shrubs expected to move.
 
@@ -167,13 +230,24 @@ def main():
         rec = json.loads(outp.read_text()) if outp.exists() else {}
         rec["glbs"] = out
         rec["glbs_ok"] = ok
+        rec["glbs_generated"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+        rec.pop("glbs_note", None)
         outp.write_text(json.dumps(rec, indent=1))
         return 0 if ok else 1
     a = json.loads((MAIN / "export/out/gate1/export_set.json").read_text())
     b = json.loads((ROOT / "export/out/gate1/export_set.json").read_text())
-    out = dict(main=str(MAIN / "export/out/gate1/export_set.json"), checks=[])
+    out = dict(main=str(MAIN / "export/out/gate1/export_set.json"), checks=[],
+               generated=time.strftime("%Y-%m-%dT%H:%M:%S"))
     ok = pin(a, b, out)
+    ok &= mesh_rows(out)
     out["ok"] = bool(ok)
+    # review r6 item 7: the `glbs` block belongs to a PACK, and this run is before one. Whatever a
+    # previous round left in the file describes glbs that no longer exist, so it is dropped rather than
+    # carried - `--glbs` writes a fresh one, stamped, after the pack.
+    out["glbs"] = None
+    out["glbs_ok"] = None
+    out["glbs_note"] = ("not taken: `python3 export/p8d_pin.py --glbs` fills this in AFTER "
+                        "export/gltf_pack.sh, and only a record written after that pack means anything")
     outp.write_text(json.dumps(out, indent=1))
     for c in out["checks"]:
         mark = "ok  " if c["ok"] else "FAIL"

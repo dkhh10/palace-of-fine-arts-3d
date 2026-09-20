@@ -133,7 +133,9 @@ def trees_lod1_order_check(out, bad):
     """Phase 6c round 3 item 2: `env_trees_lod1.glb` (the walk-up set) against `env_trees.glb`.
 
     The brief's requirement is that the viewer reuses env_trees.glb's placement rows and its per-placement
-    irradiance for the walk-up glb, so the two files have to present the SAME rows in the SAME order.
+    irradiance for the walk-up glb, so the two files have to present their rows in the SAME order - and,
+    since Phase 9's billboard-only rule, the walk-up set's rows are a SUBSET of the far set's (it is drawn
+    within 15 m against the far set's 45 m, so it keeps fewer of the tagged belt rows).
     `export/trees_far.py` asserts that before the pack, node name by node name and translation by
     translation, against the other set's glTF. What this adds is the only part gltfpack can still break: the
     pack groups placements into `EXT_mesh_gpu_instancing` buffers in its own order and drops the names, so a
@@ -168,15 +170,20 @@ def trees_lod1_order_check(out, bad):
             o.append((n, tuple(mats)))
         return o
 
+    # PHASE 9 item 1: the walk-up set is drawn within 15 m and the far set within 45 m, so the
+    # billboard-only rule (export/belt_rule.py) leaves the walk-up glb FEWER rows. The node SEQUENCE and
+    # the materials still have to match one for one - that is what says gltfpack did not re-segment or
+    # re-order the meshes - but a node's row count may now be lower on the walk-up side, never higher.
     ra, rb = rows(ad), rows(bd)
     if len(ra) != len(rb):
         bad.append(f"env_trees_lod1.glb has {len(rb)} instanced nodes, env_trees.glb has {len(ra)} - "
                    f"gltfpack segmented the rows differently and the placement rows cannot be reused")
     else:
         for i, (x, y) in enumerate(zip(ra, rb)):
-            if x[0] != y[0]:
-                bad.append(f"env_trees_lod1.glb node {i} has {y[0]} instance rows, env_trees.glb has "
-                           f"{x[0]} - the per-placement irradiance would land on the wrong tree")
+            if y[0] > x[0]:
+                bad.append(f"env_trees_lod1.glb node {i} has {y[0]} instance rows, env_trees.glb only "
+                           f"{x[0]} - the walk-up set is drawn at the shorter distance, so it can never "
+                           f"place a row the far set does not")
                 break
             if x[1] != y[1]:
                 bad.append(f"env_trees_lod1.glb node {i} draws material {y[1]}, env_trees.glb draws "
@@ -185,12 +192,85 @@ def trees_lod1_order_check(out, bad):
     return dict(glb="env_trees_lod1.glb", against="env_trees.glb",
                 instanced_nodes=[len(ra), len(rb)],
                 rows=[sum(n for n, _ in ra), sum(n for n, _ in rb)],
+                rows_per_node_equal=(ra == rb),
                 meshes=[len(ad.get("meshes", [])), len(bd.get("meshes", []))],
                 structure_matches=not any("env_trees_lod1.glb node" in x or
                                           "instanced nodes" in x for x in bad),
                 translations="asserted pre-pack in export/trees_far.py `instance_order_check` (node name "
                              "and translation, row by row, against env_trees.gltf); the packed rows are "
                              "meshopt-encoded and only the viewer's loader can decode them")
+
+
+def far_tree_counts(man):
+    """-> (counts, failures). THE FAR-TREE COUNTS MUST CLOSE IN EVERY PLACE THAT STATES THEM.
+
+    `tree_rule.far_billboards` (the export set), `trees.far_mesh.placements` / `walkup_mesh.placements`
+    (what the viewer joins against) and the per-placement lighting rows are written by different steps, and
+    in the 8d belt round manifest_v4 ran before trees_far.py, so the manifest advertised 127 against a
+    166-instance glb - the viewer's join would have failed and dropped the whole far-tree mesh layer
+    (review r5 finding 3).
+
+    PHASE 9 item 1: the two mesh sets may now leave TAGGED rows without an instance row
+    (export/belt_rule.py), so "all five numbers are equal" is no longer the invariant. What must hold is an
+    IDENTITY per set - mesh rows + billboard-only rows = the far list - plus the nesting of the two sets,
+    and the lighting list, which stays at one row per far tree because the impostors of the excluded rows
+    still need their E_placement.
+    """
+    bad = []
+    tr = (man.get("assets_meta") or {}).get("tree_rule") or man.get("tree_rule")
+    want_far = (tr or {}).get("far_billboards")
+    if want_far is None and man.get("tree_far") is not None:
+        want_far = len(man["tree_far"])
+    trees = man.get("trees") or {}
+
+    def _n(v):
+        # a placement block is either the list itself or `{count, same_as}` (the walk-up set states it
+        # by reference while the two sets hold the same rows)
+        if isinstance(v, list):
+            return len(v)
+        if isinstance(v, dict):
+            return v.get("count")
+        return None
+
+    def _bo(block):
+        b = block.get("billboard_only")
+        if isinstance(b, dict):
+            return b.get("count") or 0
+        if isinstance(b, list):
+            return len(b)
+        return 0
+
+    far_mesh = trees.get("far_mesh") or {}
+    walkup = trees.get("walkup_mesh") or {}
+    counts = dict(tree_far_rows=(len(man["tree_far"]) if man.get("tree_far") is not None else None),
+                  far_billboards=want_far,
+                  far_mesh_placements=_n(far_mesh.get("placements")),
+                  far_mesh_billboard_only=_bo(far_mesh),
+                  walkup_count=_n(walkup.get("placements")),
+                  walkup_billboard_only=_bo(walkup),
+                  lighting_rows=_n((((far_mesh.get("lighting") or {}).get("mesh")) or {}).get("placements")))
+    base = {counts["tree_far_rows"], counts["far_billboards"]} - {None}
+    if len(base) > 1:
+        bad.append(f"tree_far has {counts['tree_far_rows']} rows and tree_rule.far_billboards is "
+                   f"{counts['far_billboards']} - the export set and the manifest disagree")
+    want = counts["far_billboards"] or counts["tree_far_rows"]
+    for name, n, nb in (("far_mesh", counts["far_mesh_placements"], counts["far_mesh_billboard_only"]),
+                        ("walkup_mesh", counts["walkup_count"], counts["walkup_billboard_only"])):
+        if n is None:
+            continue
+        if want is not None and n + nb != want:
+            bad.append(f"trees.{name}: {n} mesh placements + {nb} billboard-only rows != {want} far trees "
+                       f"- trees_far.py and manifest_v4 were not run against the same export set")
+    if counts["lighting_rows"] is not None and want is not None and counts["lighting_rows"] != want:
+        bad.append(f"trees.far_mesh.lighting carries {counts['lighting_rows']} rows against {want} far "
+                   f"trees - every far tree needs a per-placement irradiance row, mesh or not, or the "
+                   f"impostors of the billboard-only rows lose their E_placement / E_bake modulation")
+    if (counts["walkup_count"] is not None and counts["far_mesh_placements"] is not None
+            and counts["walkup_count"] > counts["far_mesh_placements"]):
+        bad.append(f"the walk-up set has {counts['walkup_count']} placements against the far set's "
+                   f"{counts['far_mesh_placements']} - it is drawn at the SHORTER distance, so its rows "
+                   f"must be a subset of the far set's")
+    return counts, bad
 
 
 def extra_glb_check(out, bad, name, report_name, maker):
@@ -612,36 +692,11 @@ def verify_gate5(out_dir, variant="desktop"):
                    f"{missing_tex[:3]}")
     rep["group_textures"] = sum(len(g["textures"]) for g in groups)
 
-    # 5. review r5 finding 3: THE FAR-TREE COUNTS MUST AGREE ACROSS THE THREE PLACES THAT STATE THEM.
-    # `tree_rule.far_billboards` (the export set), `trees.far_mesh.placements` / `walkup_mesh.count` (what
-    # the viewer joins against) and the per-placement lighting rows are written by different steps, and in
-    # the 8d belt round manifest_v4 ran before trees_far.py, so the manifest advertised 127 against a
-    # 166-instance glb - the viewer's join would have failed and dropped the whole far-tree mesh layer.
-    # Every pair but that one was already checked; this closes the triangle.
-    tr = (man.get("assets_meta") or {}).get("tree_rule") or man.get("tree_rule")
-    want_far = (tr or {}).get("far_billboards")
-    if want_far is None and man.get("tree_far") is not None:
-        want_far = len(man["tree_far"])
-    trees = man.get("trees") or {}
-    def _n(v):
-        # a placement block is either the list itself or `{count, same_as}` (the walk-up set states it
-        # by reference so the two can never disagree)
-        if isinstance(v, list):
-            return len(v)
-        if isinstance(v, dict):
-            return v.get("count")
-        return None
-    far_mesh = trees.get("far_mesh") or {}
-    counts = dict(tree_far_rows=(len(man["tree_far"]) if man.get("tree_far") is not None else None),
-                  far_billboards=want_far,
-                  far_mesh_placements=_n(far_mesh.get("placements")),
-                  walkup_count=_n((trees.get("walkup_mesh") or {}).get("placements")),
-                  lighting_rows=_n((((far_mesh.get("lighting") or {}).get("mesh")) or {}).get("placements")))
+    # 5. THE FAR-TREE COUNTS. Factored out so it can be exercised with bad data
+    # (`export/p9_rule_selftest.py`); the checks are only ever run against good data otherwise.
+    counts, far_bad = far_tree_counts(man)
     rep["far_tree_counts"] = counts
-    seen_counts = {k: v for k, v in counts.items() if v}
-    if len(set(seen_counts.values())) > 1:
-        bad.append(f"the far-tree counts disagree: {seen_counts} - trees_far.py (both sets) and "
-                   f"manifest_v4 were not run against the same export set")
+    bad.extend(far_bad)
 
     # 4. the per-file cap
     over = [(e["path"], e["bytes"]) for e in man["files"] if (e["bytes"] or 0) > cap]

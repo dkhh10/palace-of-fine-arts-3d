@@ -2810,3 +2810,223 @@ mobile) and 78 instance rows (~28 draws when chunked); `env_trees.glb` and `env_
 the nearest one - would see a magnified impostor card instead of a mesh, which is the defect Phase 7 fixed
 for the other far trees. A per-row rule ("HB trees are meshes only within 8 m") would need the viewer to
 carry a per-row distance, which it does not today.
+
+## Phase 9 item 1 — the belt's billboard-only rule, per set (2026-09-20, export engineer, branch `phase9-export`)
+
+This closes QA 23 residual 3 / QA 24 item 3 (`cam03 draws the belt trees as meshes`, recorded two sections
+up). **Nothing here has been run**: the rule is implemented and self-tested on CPU, and the export re-run
+rides the lead's lighting chain. The command list is at the bottom of this section.
+
+### What was measured first (CPU, no Blender)
+
+`export/belt_rule.py` is the rule AND its own analysis, so neither is prose that can age:
+`python3 export/belt_rule.py` prints the per-set table, `python3 export/belt_rule.py --frustum` prints the
+cam03 table below; both exit non-zero if an invariant breaks. The station, the lens, the sensor, the crown
+sizes and `inner_px` are all read from the gate3 manifest — nothing in the table is typed in. From the cam03
+station (81.0, 12.04, 1.7, 18 mm on 36 mm, 16:9 — a 90° horizontal field), of the three belt trees whose
+trunk base is inside 15 m **two are actually in frame**:
+
+| `tree_far` | tree | d to crown (trunk, xy) | in frustum | ndc x | ndc y | crown on screen | impostor texel |
+|---|---|---|---|---|---|---|---|
+| 40 | `ENV_tree_cypress_33_LOD1` | **7.1 m** (6.5, 5.9 xy) | **yes** | -2.27 .. **+0.10** | -1.81 .. 4.42 | 10.7 x 13.4 m, 1 435 px wide | **17.7 px** |
+| 147 | `ENV_tree_redwood_26_LOD1` | 8.2 m (6.6, 6.1 xy) | **no** — only one corner clears the near plane (+0.2 m) and it projects to ndc x -27.8 | – | – | – | – |
+| 41 | `ENV_tree_cypress_34_LOD1` | **11.8 m** (10.4, 10.1 xy) | **yes** | -1.74 .. **-0.38** | -0.85 .. 3.03 | 11.8 x 17.6 m, 956 px wide | **11.8 px** |
+
+Two readings the table depends on. "d to crown" is the eye-to-**crown-centre** distance, because that is
+where a card is quoted; the rule itself measures the **trunk base** (the second number), which is the row's
+`trunk_base` and the only position the export knows. And cypress_33's crown centre is 0.9 m *behind* the eye
+plane while the tree is in frame: at 6.5 m a 13.4 m crown straddles the camera, and the near half of it
+(corners to +5.7 m) is what draws. So "in frustum" is the ndc box of the corners that clear the near plane,
+never a centre-point test — a centre test calls cypress_33 invisible and would have justified option (a).
+
+"impostor texel" = the atlas's 81 inner px per frame (1 K, `impostors.frame_px` 85 / `inner_px` 81) spread
+over the crown's screen width at 1920 px wide, i.e. what a magnified card would show there. The 8e card
+table's believable band is 9-13 px for a foliage CLUMP at 40 m; 17.7 px of a single octahedral frame across
+the left half of the hero colonnade frame is the defect Phase 7 built the walk-up set to cure.
+
+So **(a) billboard-only for all 39 is rejected** (it puts those two cards in cam03's frame), and **(b) as
+the brief worded it — "outside every station's walkable reach" — is empty**: every one of the 39 belt trees
+is **0.2-7.3 m from a walkable surface** (`walk_dist_m`, median 3.5), so walk distance cannot discriminate.
+**(c) a per-row mesh distance is not taken here**: the dissolve's `pfaSwitchDist` is a shared uniform, so a
+per-row distance needs a per-instance attribute in the shader as well as in `buildDistanceCull` — that is a
+viewer change, and it is written down as one rather than half-built here.
+
+### The rule that shipped, and what it saves
+
+**A row tagged `HB` keeps its mesh only if its trunk base is within that SET's own viewer draw distance plus
+the 5 m fade band of a QA station eye.** Beyond that the fragment dissolve discards every fragment, so no
+station can ever see the mesh and the row is its impostor at every distance. The radius is per set because
+the two sets are drawn at different distances, which is the whole point:
+
+| set | glb | drawn within | radius | tagged rows kept | billboard-only | placed tris | rows |
+|---|---|---|---|---|---|---|---|
+| walk-up (**desktop**) | `env_trees_lod1.glb` | 15 m | **20 m** | 4 | **35** | 4 937 933 -> **3 890 782** (**-1 047 151**, -21.2 %) | 166 -> **131** |
+| far (**mobile**) | `env_trees.glb` | 45 m | **50 m** | 22 | **17** | 1 317 097 -> **1 182 338** (**-134 759**, -10.2 %) | 166 -> **149** |
+
+Against QA 23's measurement (`cam03 6 044 248 -> 7 346 118, +1 301 870, draws 343 -> 371`), the desktop rule
+removes **1 047 151 of the 1 301 870** submitted triangles at cam03, about **24 of the 28** draws; mobile
+(4.92 -> 5.22 M, draws 380 -> 424) loses **134 759** and about 19 draws. The four rows desktop keeps are the
+only belt trees any station can see as meshes: cypress_33 6.5 m, redwood_26 6.6 m, cypress_34 10.4 m,
+cypress_35 16.7 m, all at cam03. The rule is deliberately conservative about WHICH station: it is a sphere
+about each eye, not a frustum test, so six of the far set's 22 keeps are cam04 (the rotunda ceiling camera,
+which looks straight up) at 43-50 m. A frustum test would drop them; a sphere is what survives a walker
+turning round on the spot.
+
+**Recorded, not fixed: a free walker.** The viewer's walk is not confined to the stations, so a walker who
+leaves cam03 and follows the path along the hall's east face comes within a few metres of one of the 35
+excluded trees and sees the magnified card. That is the price of (b) and it is what (c) would buy back.
+
+### A billboard-only impostor stays modulated — NO viewer change required
+
+*(Review r1 finding 2. This section previously read "THE ONE HAND-OFF THAT GATES THE SHIP — the viewer must
+re-light a billboard-only impostor". That was wrong, and it is corrected here rather than deleted, because
+the wrong version is quoted in `docs/decisions.md` and in the round's report.)*
+
+`iIrr` is written at **build** time, not by the lazy pass. `main.js` runs `farTreeIrradiance` over **all**
+`manifest.treesFar`, joined to `trees.far_mesh.lighting` **by location** (`foliage.js` — never by mesh
+placement), and passes the result into `buildImpostors`, which writes `iIrr` per instance (`impostors.js`).
+So a billboard-only row keeps its QA-23 `E_placement / E_bake` modulation for as long as **that list** keeps
+its row — which `manifest_v4.trees_lighting_block` guarantees (one row per `tree_far` tree, `mesh: false` on
+the excluded ones, `with_mesh` / `billboard_only` counts beside it), and `verify_glb.far_tree_counts` and
+`p9_rule_selftest` both fail if it is ever cut down to the mesh placements. `foliageLazy.js` builds its
+impostor complement from the MESH placements (`placements.find( q => q.billboard === t.id )`, then
+`activateImpostorMeshes`), so a billboard-only row is correctly never flipped to `iNear = 1`, and
+`activateImpostorMeshes` simply never re-writes a value the row already has.
+
+**What to expect in the counters** (this is reporting, not lighting): `main.js`'s own line —
+`far-tree impostor modulation: N/N placement(s) joined by location` — must still read **166 / 166**, and
+`impModReport.far` stays 166. `activateImpostorMeshes`' `… re-lit by E_placement / E_bake` drops from 166 to
+the loaded set's mesh row count, **131 on desktop** (`env_trees_lod1.glb`) and **149 on mobile**
+(`env_trees.glb`), as does its `N placement(s) … now fade to a MESH`. A capture whose far-tree modulation
+line falls below 166 is a real defect; a `re-lit` count of 131 / 149 is the rule working. The deploy is
+**not** gated on a viewer change.
+`web/test/foliage_lazy_test.mjs` section 4c holds the contract: it drops one placement and asserts the
+impostor is NOT flipped and that the lighting row survives, and it `ok`s that `farTreeIrradiance` still
+modulates the dropped row. Its `info` line describes the **harness** — that test builds its impostors
+without `irr`, which main.js never does — and not the viewer.
+
+### What changed, and the invariants that had to be re-cut
+
+* **`export/belt_rule.py` (new)** — the rule, with no `bpy`, so it can be measured and regression-tested on
+  CPU. `trees_far.py` imports it and asserts its own `SET["draw_within_m"]` against `DRAW_WITHIN_M`, so the
+  analysis and the export can never place different rows. `--frustum` is the cam03 measurement above, and it
+  carries the invariant that decides the whole question: **no belt row that is in a station's frame may be
+  billboard-only in either set**. Move a station, re-cut the belt, change a lens or change a
+  `draw_within_m`, and this run FAILs by name instead of shipping a magnified card into the frame.
+* **`export/trees_far.py`** — a tagged row outside the radius gets no instance row in the glb;
+  `placements + billboard_only == tree_far` replaces the old equality; the `zip(placements, far)` loop that
+  writes the glTF zips against the kept rows; `TREEFAR_###` is still the `tree_far` index, so every
+  downstream key is unchanged. The **cross-set order check becomes a subsequence contract**: every node of
+  this set must be a node of the other set's glTF, in the same relative order and at the same translation,
+  and this set may hold fewer rows but never one the other does not have.
+* **`topology.json` still carries EVERY far row** (review r1 finding 1). It is the list
+  `export/trees_far_set.py` builds the per-placement irradiance blend from, and that bake covers all 166
+  rows because a billboard-only row's impostor is modulated by `E_placement / E_bake` like any other.
+  An excluded row is therefore written with `has_mesh: false` and the same `object`, `scale`, `loc` and
+  independently computed `placed_bbox_*` as a placed one: its object is built by the same code and linked
+  into `EXP_TREEFAR_BILLBOARD_ONLY`, a collection the glTF export does not select. The glb's rows are the
+  `has_mesh: true` subset (`mesh_placements`, 149 / 131). The rule's first cut wrote the mesh rows alone
+  here while `trees_far_set.py` asserted the full count, so the next bake would have died —
+  **`belt_rule.topology_problems` / `check_topology`** is now the single contract the writer, the reader and
+  `p9_rule_selftest.py` all call, and `p9_rule_selftest` fails on exactly that mismatch.
+* **`export/manifest_v4.py`** — the lighting list is per FAR TREE, not per mesh placement (it is what keeps
+  a billboard-only impostor modulated, above);
+  the count assert closes on `placements + billboard_only`; the billboard identity is checked through each
+  row's own `index` instead of its position; both sets carry a `billboard_only` block; and the walk-up
+  placements are written out **as a list** now that the two sets differ — a shape `foliageLazy` already
+  reads (`Array.isArray( w.placements ) ? w.placements : ... same_as`), so **no viewer change is needed for
+  the placements**. While the sets do hold the same rows the block still says `same_as`, exactly as before.
+* **`export/p9_rule_selftest.py` (new)** — the CPU negative suite for all of it, in the pattern of
+  `gate4_order_selftest.py`: it builds the two reports the rule WOULD write (the real ones minus the
+  excluded rows, `gltf.placed_tris` re-stated as `trees_far.py` re-states it), and pushes them through all
+  **three** readers that consume them — `manifest_v4.trees_lighting_block`, `verify_glb.far_tree_counts`
+  and `p8d_pin.mesh_rows`. It asserts the five ways of getting the manifest wrong are each reported — a
+  vanished mesh row, an inflated billboard-only count, a lighting list cut down to the mesh placements, a
+  walk-up row the far set does not have, and an export set that disagrees with the manifest — plus the five
+  ways of getting the PIN wrong (a missing walk-up row, a walk-up row the far set dropped, a far drop the
+  walk-up set still places, a `placed_tris` drift with the counts intact, and a report not written yet),
+  plus that the PRE-rule shape (166 / 166 / `same_as`, no `billboard_only`) still passes unchanged.
+  Since r1 finding 1 it also holds **the irradiance-topology contract** (`belt_rule.topology_problems`): the
+  shape `trees_far.py` writes passes, and eight mutations are each reported by name — the blocker itself (only
+  the mesh rows written), a billboard-only row with no `scale` or no `object`, a missing `placed_bbox_*`, a
+  row flagged neither way, rows out of `tree_far` order, a duplicated index, and a `has_mesh` count that
+  disagrees with the set's own placement list. **34/34 today.**
+* **`export/verify_glb.py`** — the far-tree count block is factored out as `far_tree_counts(man)` so the
+  suite above can feed it bad data; check 5 becomes a per-set identity (`mesh rows + billboard-only = far trees`)
+  plus the nesting (`walkup <= far`) and the lighting list at one row per far tree;
+  `trees_lod1_order_check` accepts fewer rows per node on the walk-up side, never more, and still requires
+  the same node sequence and materials.
+* **`export/p8d_pin.py`** — the export set does **not** move (`tree_rule` 186 / 166 / 85 / 20, ENV placed
+  895 052, arch/orn/ground byte-identical): a billboard-only row keeps its billboard, its impostor frame and
+  its irradiance row, and loses only an instance row in the mesh glbs. Four pins are added downstream of the
+  export set: `trees_far[far|walkup].placements` **149 / 131**, `billboard_only` **17 / 35**, `placed_tris`
+  **1 182 338 / 3 890 782**, and the subset relation — which is checked **by row index, not by count**: the
+  walk-up placed rows must be a subset of the far set's and every row the far set drops must be dropped by
+  the walk-up set too, so a set that placed the wrong 131 rows cannot pass on the count alone. 13 pins in
+  all. Run against MAIN's pre-rule reports the pin FAILs on exactly those six numbers, which is the delta.
+
+### The chain the lead runs (after the lighting re-bake, NOT run here)
+
+Both far-tree sets must be re-run **together** and in this order (`walkup` reads `env_trees.gltf` for its
+order check), then everything that states a far-tree count. `<W>` = this worktree, `<MAIN>` = the main
+checkout.
+
+```sh
+export PFA_GATE1_BLEND_DIR="$PWD/export/out/gate1"
+python3 export/belt_rule.py && python3 export/belt_rule.py --frustum \
+    && python3 export/p9_rule_selftest.py                        # CPU: the two tables, the invariants,
+                                                                 # the manifest/verify readers - all first
+scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend --python export/trees_far.py
+PFA_TREES_SET=walkup scripts/blender_run.sh 1200 -- --background <MAIN>/master_delivery.blend \
+    --python export/trees_far.py
+export/gltf_pack.sh --trees                                      # env_trees.glb
+export/gltf_pack.sh --trees-lod1                                 # env_trees_lod1.glb
+python3 export/p8d_pin.py                                        # THE PIN (149/131, 17/35, the tri counts)
+node web/tools/instance_rows.mjs <W>/export/out/gate1/env_trees.glb \
+     <W>/export/out/gate3/instance_rows_trees_far.json
+node web/tools/instance_rows.mjs <W>/export/out/gate1/env_trees_lod1.glb \
+     <W>/export/out/gate3/instance_rows_trees_far_lod1.json
+python3 export/gate4_instance_order.py && PFA_ORDER_SET=shrub_lod1 python3 export/gate4_instance_order.py
+python3 export/gate4_order_selftest.py && python3 export/verify_glb.py
+python3 export/manifest_v2.py && python3 export/manifest_v3.py && python3 export/manifest_v4.py
+python3 export/budget_doc.py
+export/sync_main.sh && python3 export/tiers.py && python3 export/tiers.py --mobile \
+    && python3 export/tiers.py --no-pack
+python3 export/verify_glb.py --gate5 && python3 export/verify_glb.py --gate5 --mobile
+(cd web && npm test) && (cd web && node test/tiers_test.mjs) && python3 export/name_sweep.py
+python3 export/p8d_pin.py --glbs                                 # after the pack, never before
+export/sync_main.sh
+```
+
+Expected after it: `env_trees.glb` and `env_trees_lod1.glb` both smaller (17 / 35 fewer instance rows,
+~1.2 kB each, the meshes themselves unchanged); **no tree glb is in tier 0**; `env_t2` smaller by the same
+rows; `verify_glb` and `--gate5` PASS on desktop and mobile with far-tree counts `149 + 17 = 166` and
+`131 + 35 = 166` and `lighting_rows 166`.
+
+**The one thing that does grow is the manifest**, which IS in the first frame: the walk-up placements stop
+being a `same_as` reference and become a 131-row list, the two `billboard_only` blocks arrive, and every
+lighting row gains its `mesh` flag. Measured on the shipped gate5 manifest by replaying the rule on it:
+**2 141 481 -> 2 189 980 B raw (+48 499)**, and on the wire, which is what the 50 MB rule counts,
+**230 224 -> 236 390 B gzipped (+6 166)** — **0.8 % of the 726 181 B of headroom** the last deploy had. An
+index-only subset shape would save most of that and cost a viewer change; at 6 kB it is not worth one.
+
+**No viewer change ships with it** (review r1 finding 2, verified against main's `web/src`): `iIrr` is written
+at build time over the whole `treesFar` list, so a billboard-only impostor stays modulated. In the capture,
+main.js's far-tree modulation line must still read **166 / 166**; `activateImpostorMeshes`' `re-lit` count
+reads **131** on desktop and **149** on mobile, which is the rule working, not a regression.
+
+### Carried out of the r1 review (`docs/reviews/phase9_export_r1_review.md`), not fixed in the r2 fix round
+
+* **Carry 3 — `export/belt_rule.py`'s `--frustum` invariant is unfalsifiable at today's numbers.**
+  `frustum_rows` scans only the belt rows within `FRUSTUM_WITHIN_M = 15 m` of cam03's eye, while exclusion
+  needs more than 20 m (walk-up) / 50 m (far) from EVERY eye, so the FAIL at the end of `_frustum_main` can
+  never fire from that scan. The reviewer checked it: at scan radius 20 and 50 there are 0 in-frame excluded
+  rows; unbounded, 34 / 17, all correctly beyond the draw distance. It does still catch a rule that stops
+  honouring proximity. Fix: scan to `max(DRAW_WITHIN_M) + FADE_BAND_M`, FAIL only inside the set's own
+  radius, and call the check cam03-only here rather than "a station's frame". Left tabled because it changes
+  what the printed table measures and so needs its own round.
+* **Carry 5 — one key, two types.** `export/manifest_v4.py`'s `dict(pl, mesh=True)` makes
+  `trees.far_mesh.lighting.mesh.placements[].mesh` a **bool**, while `trees.walkup_mesh.placements[].mesh` is
+  the mesh-name **string**. Fix: name the flag `has_mesh` (which is what `topology.json` now calls it). Left
+  tabled because it is a shipped manifest key with readers in the viewer, the self-test and this file, so the
+  rename is a co-ordinated change, not a one-line one.

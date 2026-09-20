@@ -4,9 +4,10 @@
 
 CPU only (it opens and saves blends; nothing is rendered). Writes, under export/out/gate3/trees_far/:
 
-  trees_far_irr.blend     gate3_bake.blend with the export's 16 LOD2 prototype meshes placed at the 127
-                          `tree_far` placements
-                          and the 127 `source_tree` objects hidden from render - i.e. the scene as it ships
+  trees_far_irr.blend     gate3_bake.blend with the export's 16 LOD2 prototype meshes placed at EVERY
+                          `tree_far` row of `topology.json` - the billboard-only rows (`has_mesh: false`,
+                          Phase 9 item 1) included, because their impostors are modulated by this bake too -
+                          and the `source_tree` objects hidden from render, i.e. the scene as it ships
                           once the far trees are meshes. That is the geometry the mesh path's `_IRRADIANCE`
                           and vertex AO belong to.
 
@@ -40,6 +41,7 @@ import time
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import belt_rule as br         # noqa: E402
 import gate0_common as g0      # noqa: E402
 import gate3_common as g3      # noqa: E402
 
@@ -101,8 +103,14 @@ def main():
     protos = sorted(topo["prototypes"])
     assert len(protos) == 16, f"{len(protos)} prototypes in topology.json"
     mesh_of = {p: topo["prototypes"][p]["mesh"] for p in protos}
+    # review r1 finding 1: the file must carry a row for EVERY `tree_far` row - a billboard-only row's
+    # impostor is modulated by this very bake - with the fields the placement below reads on each one.
+    # Checked by the writer's own function, so a topology.json written by an older trees_far.py FAILS here
+    # by name instead of half-way through the placement loop.
+    topo_rows = br.check_topology(topo, len(man["tree_far"]), where=str(TF / "topology.json"))
     rep = dict(generated=time.strftime("%Y-%m-%dT%H:%M:%S"), generator="export/trees_far_set.py",
-               prototypes=len(protos), placements=len(topo["placements"]))
+               prototypes=len(protos), placements=len(topo_rows),
+               mesh_placements=sum(1 for r in topo_rows if r.get("has_mesh")))
 
     # ---------------------------------------------------------------- 1. the anchor, and the nursery
     # THE ANCHOR IS THE EXPORT'S AND IS READ, NEVER RECOMPUTED (review r2 finding 1, lead's decision).
@@ -170,7 +178,7 @@ def main():
     # placement error.
     BBOX_TOL, Z_TOL = 0.005, 0.05          # topology.json rounds its bboxes to 4 dp
     placed, worst_bbox, worst_z = [], 0.0, 0.0
-    for row in topo["placements"]:
+    for row in topo_rows:
         p = row["prototype"]
         s = float(row["scale"])
         me = got[mesh_of[p]].data

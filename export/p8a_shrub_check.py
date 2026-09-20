@@ -92,6 +92,9 @@ def main():
         with open(out_path, "w") as f:
             json.dump(rep, f, indent=1)
         print(f"[p8a-check] wrote {out_path}", flush=True)
+    # review r1 finding 3: it printed FAIL and exited 0, so it could never stop a chain. In a
+    # `blender --background --python` run SystemExit propagates and Blender exits with this code.
+    sys.exit(0 if ok else 1)
 
 
 main()

@@ -17,9 +17,28 @@ import numpy as np
 CTYPE = {5120: 'i1', 5121: 'u1', 5122: 'i2', 5123: 'u2', 5125: 'u4', 5126: 'f4'}
 NCOMP = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}
 
-# cam03 (scripts/qa_cameras.py) - Blender world, Z-up
-CAM03 = dict(name='CAM_qa_03_colonnade_walk', loc=(81.0, 12.04, 1.7), lens=18.0, sensor=36.0)
+# cam03 - Blender world, Z-up. READ FROM THE MANIFEST'S OWN `stations` BLOCK (`station()` below), which is
+# what `scripts/qa_cameras.py` exported: this file used to carry a hand copy of that camera's numbers, and a
+# hand copy of a camera the lead owns will drift (review r1 finding 3). The literal survives only as the
+# fallback for a manifest too old to carry `stations`, and it says so when it is used.
+CAM03_NAME = 'CAM_qa_03_colonnade_walk'
+CAM03_FALLBACK = dict(name=CAM03_NAME, loc=(81.0, 12.04, 1.7), lens=18.0, sensor=36.0)
 RES = (1920, 1080)
+
+
+def station(man, name=CAM03_NAME, fallback=None):
+    """The station as the export shipped it, else the literal above with a warning."""
+    fallback = fallback or CAM03_FALLBACK
+    st = ((man or {}).get('stations') or {}).get(name)
+    if not st or 'location' not in st:
+        print(f"[texel] WARNING: the manifest carries no stations[{name!r}]; falling back to this "
+              f"script's hard-coded copy {fallback['loc']} / {fallback['lens']} mm, which may have drifted "
+              f"from scripts/qa_cameras.py", file=sys.stderr)
+        return dict(fallback, source='hard-coded fallback')
+    return dict(name=name, loc=tuple(float(v) for v in st['location']),
+                lens=float(st.get('lens_mm', fallback['lens'])),
+                sensor=float(st.get('sensor_width_mm', fallback['sensor'])),
+                source='manifest stations')
 
 
 def blender_to_gltf(p):
@@ -178,7 +197,9 @@ def detail_projection_density(g, mesh_idx, tile_m, px, mode='objxy'):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--root', default='/Users/dk/Projects/3d render blender 3rd attempt building')
+    ap.add_argument('--root', default=os.environ.get(
+        'PFA_MAIN_ROOT', '/Users/dk/Projects/3d render blender 3rd attempt building'),
+        help='the checkout to read export/out from (default $PFA_MAIN_ROOT, else the main checkout)')
     ap.add_argument('--radius', type=float, default=5.0)
     ap.add_argument('--json', default=None)
     args = ap.parse_args()
@@ -186,6 +207,7 @@ def main():
 
     man = json.load(open(os.path.join(R, 'export/out/gate5/manifest.json')))
     sets = man['materials']['sets']
+    CAM03 = station(man)
     cam = np.array(blender_to_gltf(CAM03['loc']))
     px_per_m_1m = RES[0] * CAM03['lens'] / CAM03['sensor']   # at d = 1 m
 
