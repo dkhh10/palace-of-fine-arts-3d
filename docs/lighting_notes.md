@@ -3176,3 +3176,43 @@ from what the shipped shape does and 2.7 from the best shape that exists.  **The
 from the diffuse sockets, and the reason is 29.2: the render's spread between shaded boxes is a property of how
 much warm bounce each box receives, not of the sky's colour, so a sky lever cannot close it.**  What the sky
 lever CAN do is take the tint off all of them together, which is the trade the rest of this section measures.
+
+### 29.5 The sweep that found the ship: the dome has to be shared before the blue can be cut
+
+Once 29.4 showed the frieze could not be held, the objective was re-stated in the only terms that are not
+self-contradictory: **hold the hero exactly (its 12 boxes within 3 % of luma and 2 deg of hue -- it is the
+delivery image), and from the candidates that do, take the one that puts the station-2 shaded stone closest to
+the photograph.**  Every row below is the world-patch shortcut on the same scratch copy of master_delivery,
+1920x1080, 32 spp fixed, OIDN; cam02 b* per box and the cam01 hold.
+
+| candidate | sockets | pier | pier_r | arch | frieze | sof_l | sof_r | hero hold | photo MAE(b*) |
+|---|---|---|---|---|---|---|---|---|---|
+| BEFORE | tint (1,0.65,70) antisun 1.0 | -4.68 | -18.20 | -3.12 | +12.82 | +13.87 | +14.99 | -- | 11.87 |
+| `b38` | tint_b 38 | +4.70 | -7.13 | +5.13 | +21.47 | +17.38 | +18.95 | **12/12** | 9.78 |
+| `as0b18` | antisun 0, b 18 | +1.38 | -5.39 | -1.81 | **+11.26** | +14.52 | +14.74 | 7/12 (attic hue -4.6) | 8.32 |
+| `as0b12` | antisun 0, b 12 | +6.87 | +0.45 | +4.03 | +17.72 | +16.93 | +17.78 | 10/12 (attic hue -2.2) | 7.9 |
+| `as0b8` | antisun 0, b 8 | +11.06 | +5.01 | +8.55 | +22.86 | +18.69 | +19.99 | 11/12 (attic lum -3.1 %) | 7.10 |
+| `as0g1b12` | + tint_g 1.00, b 12 | +7.56 | +1.42 | +4.86 | +19.32 | +17.11 | +18.06 | **12/12** | 7.37 |
+| `as0g1b8` | + tint_g 1.00, b 8 | +11.75 | +5.98 | +9.39 | +24.44 | +18.86 | +20.27 | **12/12** | 7.30 |
+| `as0g80b6` | + tint_g 0.80, b 6 | +13.64 | +7.97 | +11.41 | +26.45 | +19.69 | +21.30 | **12/12** | 7.64 |
+| `as0g80b8` | + tint_g 0.80, b 8 | +11.35 | +5.42 | +8.91 | +23.54 | +18.76 | +20.10 | **12/12** | 7.19 |
+| **`as0g75b8` SHIPPED** | **tint (1,0.75,8), antisun 0** | **+11.26** | **+5.29** | **+8.80** | +23.31 | +18.74 | +20.06 | **12/12** | **7.16** |
+| photo (ref 062, cam02 fixture) | -- | +14.10 | +13.22 | +7.49 | +10.50 | +12.83 | +7.93 | -- | 0 |
+
+Three findings the table carries:
+
+1. **The anti-sun weight was aiming the tint at the wrong building.**  Fitted per box (29.4's method), the hero's
+   shaded attic sees mix factor f = 0.0069 at `antisun = 1.0` while cam02's `shade_pier_r` sees 0.0361: the tint
+   that exists FOR the hero's attic lands 5.2x harder on the station-2 shafts.  At `antisun = 0.0` the same two
+   read 0.0733 and 0.0724 -- the dome is shared -- and the tint blue then buys the hero the same shade colour at
+   b 8 that it needed b 70 to buy through the weight.  That is the whole round in one sentence.
+2. **`tint_g` is a real socket, not a rounding.**  Under a whole-dome tint the 0.65 green multiplier stops being
+   confined to the anti-sun horizon band and reaches every shaded surface: at g 0.65 it costs the hero's shaded
+   attic 3.1 % of luminance (the hold is 3.0 %), and at g 1.00 it lets cam02's `shade_pier_r` run to h_ab 89.3
+   (the window ends at 80).  0.75 is the only value measured to satisfy both, at attic lum -2.4 % and h_ab 79.7.
+3. **The shipped point passes the brief's item 1 on three of its five boxes and fails the control.**
+   `shade_pier` +11.26 (h_ab 62.1, R-B +32.8), `shade_pier_r` +5.29 (79.7, +10.0) and `shade_arch` +8.80 (64.7,
+   +24.5) meet b* >= +5, h_ab 40-80 and R-B >= +10 in full.  `soffit_l` / `soffit_r` meet b* and R-B and overshoot
+   h_ab by 2.6 deg (82.6 against 80) -- they were inside the window before the fix, at 75.5 / 76.0, and they leave
+   it because the sky lever moves every shaded box together.  `shade_frieze` ends at +23.31 against its
+   9.9-12.9 window, which 29.4 shows is not a tuning miss but the structural consequence of holding the shafts.
