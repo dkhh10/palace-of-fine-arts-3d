@@ -2913,11 +2913,15 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
   the placements**. While the sets do hold the same rows the block still says `same_as`, exactly as before.
 * **`export/p9_rule_selftest.py` (new)** — the CPU negative suite for all of it, in the pattern of
   `gate4_order_selftest.py`: it builds the two reports the rule WOULD write (the real ones minus the
-  excluded rows), pushes them through `manifest_v4.trees_lighting_block` and `verify_glb.far_tree_counts`,
-  and asserts the five ways of getting it wrong are each reported — a vanished mesh row, an inflated
-  billboard-only count, a lighting list cut down to the mesh placements, a walk-up row the far set does not
-  have, and an export set that disagrees with the manifest — plus that the PRE-rule shape
-  (166 / 166 / `same_as`, no `billboard_only`) still passes unchanged. 16/16 today.
+  excluded rows, `gltf.placed_tris` re-stated as `trees_far.py` re-states it), and pushes them through all
+  **three** readers that consume them — `manifest_v4.trees_lighting_block`, `verify_glb.far_tree_counts`
+  and `p8d_pin.mesh_rows`. It asserts the five ways of getting the manifest wrong are each reported — a
+  vanished mesh row, an inflated billboard-only count, a lighting list cut down to the mesh placements, a
+  walk-up row the far set does not have, and an export set that disagrees with the manifest — plus the five
+  ways of getting the PIN wrong (a missing walk-up row, a walk-up row the far set dropped, a far drop the
+  walk-up set still places, a `placed_tris` drift with the counts intact, and a report not written yet),
+  plus that the PRE-rule shape (166 / 166 / `same_as`, no `billboard_only`) still passes unchanged.
+  **23/23 today.**
 * **`export/verify_glb.py`** — the far-tree count block is factored out as `far_tree_counts(man)` so the
   suite above can feed it bad data; check 5 becomes a per-set identity (`mesh rows + billboard-only = far trees`)
   plus the nesting (`walkup <= far`) and the lighting list at one row per far tree;
@@ -2927,8 +2931,10 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
   895 052, arch/orn/ground byte-identical): a billboard-only row keeps its billboard, its impostor frame and
   its irradiance row, and loses only an instance row in the mesh glbs. Four pins are added downstream of the
   export set: `trees_far[far|walkup].placements` **149 / 131**, `billboard_only` **17 / 35**, `placed_tris`
-  **1 182 338 / 3 890 782**, and the subset relation. Run against MAIN's pre-rule reports the pin FAILs on
-  exactly those six numbers, which is the delta.
+  **1 182 338 / 3 890 782**, and the subset relation — which is checked **by row index, not by count**: the
+  walk-up placed rows must be a subset of the far set's and every row the far set drops must be dropped by
+  the walk-up set too, so a set that placed the wrong 131 rows cannot pass on the count alone. 13 pins in
+  all. Run against MAIN's pre-rule reports the pin FAILs on exactly those six numbers, which is the delta.
 
 ### The chain the lead runs (after the lighting re-bake, NOT run here)
 
