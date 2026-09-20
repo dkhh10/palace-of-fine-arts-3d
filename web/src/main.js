@@ -2057,7 +2057,11 @@ window.__pfaInfo = () => ( {
 		interior: impostorReport.interior,
 		// Phase 7 item A / Phase 8b item A, so a capture can be told apart from its A/B without
 		// reading the boot log: what the card edge and the coverage path actually did.
-		edge: impostorReport.edge, coverage: impostorReport.coverage, band: impostorReport.band },
+		edge: impostorReport.edge, coverage: impostorReport.coverage, band: impostorReport.band,
+		// Phase 9 item 1 (phase9_viewer_r1_review finding 1): without this the owed ?impq A/B is not
+		// self-attesting - a capture sidecar could not say whether the quantiser was on.  Read `.on`,
+		// not `.samples`: the ladder the target offers is reported either way.
+		quantise: impostorReport.quantise },
 	farTrees: farTreeReport && { glb: farTreeReport.glb, rows: farTreeReport.rows, joined: farTreeReport.joined,
 		placements: farTreeReport.placements, lit: farTreeReport.lit, litFrom: farTreeReport.litFrom,
 		ao: farTreeReport.ao, aoEncode: farTreeReport.aoEncode, aoAlphaForced: farTreeReport.aoAlphaForced || 0,

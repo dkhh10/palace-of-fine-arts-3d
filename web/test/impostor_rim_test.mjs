@@ -130,6 +130,19 @@ check( parseImpQuant( null, { a2c: false, samples: 4 } ).on === false,
 	'no alpha-to-coverage: nothing to quantise, the ordered dither already emits 0 or 1' );
 check( parseImpQuant( null, { a2c: true, samples: 1 } ).on === false,
 	'a 1-sample target is not multisampled: off' );
+// r1 review 5: ?impcov=0 is documented in three places as restoring the PHASE 7 frame, so the
+// quantiser rides on the Phase 8b coverage path and goes off with it.
+check( parseImpQuant( null, { a2c: true, samples: 4, coverage: false } ).on === false,
+	'?impcov=0: the quantiser goes off with the Phase 8b coverage path, so Phase 7 is restored exactly' );
+check( /impcov=0/.test( parseImpQuant( null, { a2c: true, samples: 4, coverage: false } ).why ),
+	'and `why` names that guard, not a generic "off"' );
+// r1 review 13: four refusals, four reasons.
+check( /asked off/.test( parseImpQuant( '0', mask4 ).why ), '?impq=0 says it was asked off' );
+check( /no coverage mask/.test( parseImpQuant( null, { a2c: false, samples: 4 } ).why ),
+	'no mask says so, rather than reading as "off"' );
+check( parseImpQuant( null, mask4 ).why === null, 'and an ON quantiser has no refusal reason' );
+check( parseImpQuant( '0', mask4 ).samples === 4,
+	'report.quantise.samples is the TARGET\'s ladder even when the switch is off: a sidecar must read .on' );
 
 const IMPOSTORS = {
 	count: 1, grid: 12, atlasPx: 1024, framePx: 85, innerPx: 81, gutterPx: 2,
@@ -156,17 +169,25 @@ check( /coverage QUANTISER \(Phase 9 item 1, the dotted rim\): ON/.test( on.note
 	&& /4-sample ladder/.test( on.notes ), 'the boot note names it and the ladder' );
 
 const off = await build( { edge: null, msaa: true, samples: 4, coverage: null, quantise: '0' } );
-check( ! ( 'PFA_IMP_QUANT' in off.mat.defines ), '?impq=0: the define is gone (the Phase 8b program)' );
+check( ! ( 'PFA_IMP_QUANT' in off.mat.defines ), '?impq=0: the define is gone (the Phase 8b coverage path)' );
 check( off.mat.uniforms.pfaCovQ.value === 0, 'and the uniform is zero, so a stale value cannot leak in' );
 check( off.mat.fragmentShader === on.mat.fragmentShader, 'the source is one string: only the defines differ' );
 check( off.mat.alphaToCoverage === on.mat.alphaToCoverage && on.mat.alphaToCoverage === true,
 	'the coverage mask itself is untouched either way' );
 check( /coverage QUANTISER[^\n]*off/.test( off.notes ), '?impq=0 says so in the boot note' );
 
+const covOff = await build( { edge: null, msaa: true, samples: 4, coverage: '0', quantise: null } );
+check( ! ( 'PFA_IMP_QUANT' in covOff.mat.defines ) && ! ( 'PFA_IMP_COV' in covOff.mat.defines ),
+	'?impcov=0 builds the Phase 7 program: neither the coverage path NOR the quantiser (r1 review 5)' );
+check( covOff.mat.uniforms.pfaCovQ.value === 0, '?impcov=0: and pfaCovQ is zero' );
+check( /QUANTISER[^\n]*off — the Phase 8b coverage path is off/.test( covOff.notes ),
+	'?impcov=0: the boot note says WHICH guard refused' );
+
 const noMask = await build( { edge: null, msaa: false, samples: 0, coverage: null, quantise: null } );
 check( ! ( 'PFA_IMP_QUANT' in noMask.mat.defines ),
 	'no coverage mask: the quantiser is not compiled (the Bayer fallback already emits 0 or 1)' );
-check( /coverage QUANTISER[^\n]*not asked/.test( noMask.notes ), 'and the boot note says WHY, not just that' );
+check( /coverage QUANTISER[^\n]*no coverage mask is written/.test( noMask.notes ),
+	'and the boot note says WHY, not just that' );
 const premulOnly = await build( { edge: 'premul', msaa: true, samples: 4, coverage: null, quantise: null } );
 check( ! ( 'PFA_IMP_QUANT' in premulOnly.mat.defines ),
 	'?impedge=premul on an MSAA target writes no mask, so the quantiser stays off' );

@@ -702,17 +702,28 @@ export function bandFrameUv( col, row, f, geom ) {
 }
 
 /**
- * Phase 9 item 1 — the coverage QUANTISER, `?impq=`.  `"0"` / `"off"` restores the Phase 8b frame
- * exactly; anything else (or nothing) is the default, ON wherever a hardware coverage mask is
- * actually written. The header carries the measurement that makes it the fix; what matters here is
- * the GUARD: with no mask (`?leafsoft=0`, `?impedge=0|premul`, an un-multisampled canvas) the
- * ordered Bayer cell has already made the coverage 0 or 1, both of them ladder points, so snapping
- * is a no-op AND would be asked of a path that never had the defect. `samples` is the TARGET's own
- * count, read from the render target, so an 8x or 2x target snaps to its own ladder and never to a
- * four assumed here.
- * @returns {{ on:boolean, samples:number, unknown:(string|null) }}
+ * Phase 9 item 1 — the coverage QUANTISER, `?impq=`.  `"0"` / `"off"` restores the Phase 8b
+ * coverage path; anything else (or nothing) is the default, ON wherever a hardware coverage mask is
+ * actually written AND the Phase 8b coverage path is the one drawing.  Two guards, both of them
+ * load-bearing:
+ *
+ *   `a2c` + `samples`   with no mask (`?leafsoft=0`, `?impedge=0|premul`, an un-multisampled canvas)
+ *                       the ordered Bayer cell has already made the coverage 0 or 1, both of them
+ *                       ladder points, so snapping is a no-op AND would be asked of a path that
+ *                       never had the defect.  `samples` is the TARGET's own count, read from the
+ *                       render target, so an 8x or 2x target snaps to its own ladder and never to a
+ *                       four assumed here.
+ *   `coverage`          r1 review 5: `?impcov=0` is documented in three places as restoring the
+ *                       PHASE 7 frame, and it has to keep doing exactly that.  So the quantiser
+ *                       rides on the Phase 8b path and `?impcov=0` turns it off with everything
+ *                       else Phase 8b added.  It costs nothing that ships: `?impcov=` is on by
+ *                       default, so the delivered frame is quantised and only the A/B is affected.
+ *
+ * `why` names the guard that refused, so the boot note can say "off" and "not asked, because …"
+ * rather than one word for four different states.
+ * @returns {{ on:boolean, samples:number, unknown:(string|null), why:(string|null) }}
  */
-export function parseImpQuant( v, { a2c = false, samples = 4 } = {} ) {
+export function parseImpQuant( v, { a2c = false, samples = 4, coverage = true } = {} ) {
 	const s = ( v === null || v === undefined ) ? '' : String( v ).trim().toLowerCase();
 	const n = ( a2c && Number.isFinite( samples ) && samples > 1 ) ? Math.round( samples ) : 0;
 	let on = true, unknown = null;
@@ -720,7 +731,10 @@ export function parseImpQuant( v, { a2c = false, samples = 4 } = {} ) {
 	else if ( s === '' || s === '1' || s === 'on' ) { /* the default */ }
 	// Round-1 review 7's rule, as everywhere in this file: a typo falls back to the default and says so.
 	else unknown = s;
-	return { on: on && n > 1, samples: n, unknown };
+	const why = ! on ? 'asked off (?impq=0)'
+		: ( n <= 1 ? 'no coverage mask is written, so the ordered dither already spends the fraction as 0 or 1'
+			: ( ! coverage ? 'the Phase 8b coverage path is off (?impcov=0), which restores the Phase 7 frame' : null ) );
+	return { on: on && n > 1 && !! coverage, samples: n, unknown, why };
 }
 
 /**
@@ -758,7 +772,8 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 	const impBand = parseImpBand( band && band.switch );
 	// Phase 9 item 1: `?impq=`.  Same guard as the coverage quantum - the edge switch's own a2c and
 	// the TARGET's sample count, so it is asked for only where a hardware mask is written.
-	const impQuant = parseImpQuant( quantise, { a2c: impEdge.a2c, samples: samples || 4 } );
+	const impQuant = parseImpQuant( quantise, { a2c: impEdge.a2c, samples: samples || 4,
+		coverage: impCov.on } );
 	const bandBlock = ( impBand.on && band && band.block && band.block.count ) ? band.block : null;
 	const covExplicit = !! ( coverage !== null && coverage !== undefined && String( coverage ).trim() !== ''
 		&& String( coverage ).split( ',' ).length > 2 );
@@ -773,7 +788,10 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		coverage: { on: impCov.on, magLo: impCov.magLo, magHi: impCov.magHi, share: impCov.share,
 			ramp: impCov.ramp, samples: impCov.samples, orderedDither: impCov.dither },
 		// Phase 9 item 1 - the coverage quantiser and the ladder it snaps to
-		quantise: { on: impQuant.on, samples: impQuant.samples, unknown: impQuant.unknown },
+		quantise: { on: impQuant.on, samples: impQuant.samples, unknown: impQuant.unknown,
+			// r1 review 13: read `.on`, never `.samples` — the ladder the TARGET offers is reported
+			// whether or not the switch took it.  `why` names the guard that refused.
+			why: impQuant.why },
 		drawnGeom: { framePx: impostors.framePx, atlasPx: impostors.atlasPx, innerPx: impostors.innerPx },
 		band: { asked: impBand.on, available: !! ( band && band.block && band.block.count ),
 			prototypes: 0, missing: [], unknown: impBand.unknown,
@@ -1033,10 +1051,10 @@ export function buildImpostors( { impostors, far, near = [], loadTexture, note =
 		note( `impostor coverage QUANTISER (Phase 9 item 1, the dotted rim): `
 			+ ( impQuant.on
 				? `ON, snapped to the target's own ${impQuant.samples}-sample ladder before the mask, `
-					+ 'so the mask stops depending on the pixel position (?impq=0 restores Phase 8b)'
-				: ( impQuant.samples > 1 ? 'off (?impq=0)'
-					: 'not asked: no coverage mask is written, so the ordered dither already spends '
-						+ 'the fraction as 0 or 1' ) ) );
+					+ 'so the mask of the modelled offset family stops depending on the pixel position '
+					+ '(?impq=0 restores the Phase 8b coverage path)'
+				// r1 review 13: four states, four reasons - "off" used to cover all of them.
+				: `off — ${impQuant.why}` ) );
 		if ( report.missingPrototypes.length )
 			note( `impostors: ${report.missingPrototypes.length} prototype(s) in trees.far have no atlas: ${report.missingPrototypes.join( ', ' )}` );
 		if ( report.skipped.length ) note( `impostors: ${report.skipped.length} far tree(s) skipped` );
