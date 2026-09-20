@@ -213,6 +213,32 @@ for ( const combo of [ {}, { PFA_IMP_QUANT: '' }, { PFA_IMP_COV: '', PFA_IMP_A2C
 		`${name}: the quantiser and the ordered-dither fallback are never both compiled` );
 }
 
+// ---- 5. the carried review findings -------------------------------------------------------------
+// phase8_viewer_r2_review finding 4, carried through r3 ("open, correctly left"): a camera exactly on
+// a billboard centre makes vDirBlender zero and normalize() NaN, which reaches BOTH frame lookups.
+check( /vec3 pfaViewDir\( vec3 v \) \{ return \( dot\( v, v \) > 0\.0 \) \? normalize\( v \) : vec3\( 1\.0, 0\.0, 0\.0 \); \}/.test( SRC ),
+	'r2 carry 4: the degenerate view direction has a guard' );
+check( ! /normalize\( vDirBlender \)/.test( SRC ) && ( SRC.match( /pfaViewDir\( vDirBlender \)/g ) || [] ).length === 2,
+	'r2 carry 4: and BOTH lookups (band and octahedral) go through it' );
+check( SRC.indexOf( 'vec3 pfaViewDir' ) < SRC.indexOf( 'pfaViewDir( vDirBlender )' ),
+	'r2 carry 4: declared before it is called' );
+// the guard must not touch a non-degenerate direction: normalize() is still what runs there.
+const viewDir = ( v ) => ( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] ) > 0
+	? v.map( ( c ) => c / Math.hypot( ...v ) ) : [ 1, 0, 0 ];
+check( viewDir( [ 0, 0, 0 ] ).every( Number.isFinite ), 'r2 carry 4: the zero vector returns a finite direction' );
+check( Math.abs( Math.hypot( ...viewDir( [ 3, -4, 0 ] ) ) - 1 ) < 1e-12, 'r2 carry 4: and a real one is still unit length' );
+
+// phase8_viewer_r2_review finding 6a: the band branch must not fetch its zero-weight third frame.
+check( /const int PFA_FRAMES = 2;/.test( SRC ) && /const int PFA_FRAMES = 3;/.test( SRC ),
+	'r2 carry 6a: the frame count is a COMPILE-time constant, 2 on the band path and 3 on the octahedral' );
+{
+	const band = preprocess( SRC, { PFA_IMP_BAND: '', PFA_IMP_PREMUL: '', PFA_IMP_COV: '', PFA_IMP_A2C: '', PFA_IMP_QUANT: '' } );
+	check( ! /tc\[ 2 \] = frameTexel/.test( band ), 'r2 carry 6a: the band path builds no third texel coordinate' );
+	check( ! /vec4 s2 = sampleFrame/.test( band ), 'r2 carry 6a: and takes no third frame sample' );
+	const octa = preprocess( SRC, { PFA_IMP_PREMUL: '', PFA_IMP_COV: '', PFA_IMP_A2C: '', PFA_IMP_QUANT: '' } );
+	check( /tc\[ 2 \] = frameTexel/.test( octa ), 'r2 carry 6a: the octahedral path still builds all three' );
+}
+
 check( THREE.REVISION >= '186'.slice( 0, 3 ), `three r${THREE.REVISION}` );
 console.log( fails ? `\n${fails} FAILED` : '\nall passed' );
 process.exit( fails ? 1 : 0 );

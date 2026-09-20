@@ -222,6 +222,16 @@ const fragmentShader = /* glsl */`
 	}
 	#endif
 
+	// r2 review 4 (carried to Phase 9): a camera standing EXACTLY on a billboard centre makes
+	// vDirBlender the zero vector, and normalize( vec3( 0 ) ) is 0/0 = NaN in GLSL ES.  Both lookups
+	// below feed that straight into their frame selection: the octahedral one divides by
+	// |x|+|y|+|z| = 0 as well, the band one hands NaN to atan and to the elevation search, and a NaN
+	// cell index is a hardware-clamped fetch of whatever texel the clamp lands on.  It is not a
+	// regression - the octahedral path has had it since Gate 3 - but it is one dot product to close,
+	// and normalize() itself is UNTOUCHED on every non-degenerate fragment, so no pixel that renders
+	// today changes.  The fallback is column 0's own heading, i.e. the frame the tree faces.
+	vec3 pfaViewDir( vec3 v ) { return ( dot( v, v ) > 0.0 ) ? normalize( v ) : vec3( 1.0, 0.0, 0.0 ); }
+
 	// manifest.impostors.frame_uv, with f clamped and sampled at texel centres.
 	//
 	// THE V FLIP.  The manifest counts the row "from the BOTTOM" and f.y likewise, but the atlases
@@ -295,7 +305,7 @@ const fragmentShader = /* glsl */`
 		// AZIMUTH.  vDirBlender is tree -> camera in Blender Z-up, and the column coordinate is the
 		// angle from COLUMN 0'S OWN HEADING over the column step, wrapped into [0, columns).
 		{
-			vec3 d = normalize( vDirBlender );
+			vec3 d = pfaViewDir( vDirBlender );
 			// THE ANGLE IS MEASURED FROM THE SIDECAR'S OWN COLUMN-0 DIRECTION, never from a degree
 			// convention: band.json states azimuth0_deg in COMPASS degrees (clockwise from north,
 			// 180 = +X) while this shader works in Blender xy, and a 90 deg reading error there
@@ -336,7 +346,7 @@ const fragmentShader = /* glsl */`
 		}
 		#else
 		// manifest.impostors.frame_lookup, verbatim
-		vec3 d = normalize( vDirBlender );
+		vec3 d = pfaViewDir( vDirBlender );
 		vec3 n = d / ( abs( d.x ) + abs( d.y ) + abs( d.z ) );
 		vec2 o = ( n.z >= 0.0 )
 			? vec2( n.x, n.y )
