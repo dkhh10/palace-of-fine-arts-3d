@@ -209,6 +209,64 @@ def _frustum_main():
     return 0 if ok else 1
 
 
+# ---------------------------------------------------------------------------------------------------
+# THE IRRADIANCE-TOPOLOGY CONTRACT (review r1 finding 1).
+#
+# `export/out/gate3/trees_far/topology.json` is the ONLY list `export/trees_far_set.py` places the
+# per-placement irradiance bake from, and that bake must cover EVERY `tree_far` row: a billboard-only row
+# keeps its impostor, and the impostor is modulated by E_placement / E_bake like any other. So the file
+# carries one row per far tree with `has_mesh: true|false`, and an excluded row needs the same fields a
+# placed one does (`object`, `scale`, `loc`, `placed_bbox_*`) or the bake cannot build it.
+#
+# The check lives here, with no bpy, so the writer (trees_far.py, inside Blender), the reader
+# (trees_far_set.py, inside Blender) and the CPU self-test all assert THE SAME function. When the rule
+# first shipped, trees_far.py wrote only the 149 mesh rows and trees_far_set.py asserted 166 - prose in
+# both files claimed the opposite and nothing failed until a bake was attempted.
+# ---------------------------------------------------------------------------------------------------
+TOPOLOGY_ROW_KEYS = ("index", "object", "prototype", "scale", "loc", "has_mesh",
+                     "placed_bbox_min", "placed_bbox_max")
+
+
+def topology_problems(rows, n_far, n_mesh=None):
+    """Everything wrong with a `topology.json` `placements` list, as strings; `[]` = the contract holds.
+
+    `n_far` is the manifest's `tree_far` row count, `n_mesh` (optional) the set's mesh placement count."""
+    if not isinstance(rows, list):
+        return [f"`placements` is {type(rows).__name__}, not a list"]
+    bad = []
+    if len(rows) != n_far:
+        bad.append(f"{len(rows)} placement row(s) for {n_far} `tree_far` row(s) - the per-placement "
+                   f"irradiance bake places EVERY far row from this list, billboard-only rows included")
+    idx = [r.get("index") for r in rows]
+    if any(not isinstance(v, int) for v in idx):
+        bad.append("a row carries no integer `index`")
+    elif len(set(idx)) != len(idx):
+        bad.append("two rows share an `index`")
+    elif idx != sorted(idx):
+        bad.append("the rows are not in `tree_far` index order")
+    elif len(rows) == n_far and idx != list(range(n_far)):
+        bad.append(f"the indices are not 0..{n_far - 1} - a far row is missing and another is duplicated")
+    miss = {}
+    for r in rows:
+        for k in TOPOLOGY_ROW_KEYS:
+            if r.get(k) is None:
+                miss.setdefault(k, []).append(r.get("index"))
+    for k, who in sorted(miss.items()):
+        bad.append(f"{len(who)} row(s) carry no `{k}` (index {who[:3]}) - the bake reads it on every row, "
+                   f"placed or not")
+    if n_mesh is not None:
+        got = sum(1 for r in rows if r.get("has_mesh"))
+        if got != n_mesh:
+            bad.append(f"{got} row(s) flagged `has_mesh` against {n_mesh} mesh placement(s) in this set")
+    return bad
+
+
+def check_topology(topo, n_far, n_mesh=None, where="topology.json"):
+    bad = topology_problems((topo or {}).get("placements"), n_far, n_mesh)
+    assert not bad, f"{where} breaks the irradiance-topology contract: " + "; ".join(bad)
+    return topo["placements"]
+
+
 def select(man, belt, eyes, draw_within_m):
     """-> (keep_radius_m, {index: (station, distance)} for the EXCLUDED rows).
 

@@ -122,6 +122,57 @@ def main():
     ok(bo_idx <= belt and {b['index'] for b in tw['billboard_only']} <= belt,
        "only TAGGED rows are ever excluded")
 
+    print("the irradiance topology (review r1 finding 1)")
+    # `topology.json` is what export/trees_far_set.py builds the per-placement irradiance blend from, and
+    # that bake covers EVERY far row - a billboard-only row's impostor is modulated by it like any other.
+    # The rule's first cut wrote only the mesh rows here, which made the next bake die on its own
+    # `len(placed) == len(tree_far)` assert. `belt_rule.topology_problems` is the one contract the writer,
+    # the reader and this test all call; the synthetic file below is the shape trees_far.py now writes.
+    def topo_row(i, has_mesh):
+        t = man["tree_far"][i]
+        p = man["impostors"]["prototype_map"][t["prototype"]]
+        s = float(t["height_m"]) / float(man["impostors"]["prototypes"][p]["height_above_base_m"])
+        loc = [round(float(v), 4) for v in t["trunk_base"]]
+        return dict(index=i, object=f"TREEFAR_{i:03d}", prototype=p, mesh=f"MESH_{p}", scale=round(s, 6),
+                    has_mesh=has_mesh, loc=loc, height_m=t["height_m"], walk_dist_m=t["walk_dist_m"],
+                    source_tree=t["source_tree"],
+                    placed_bbox_min=[loc[0] - 1.0, loc[1] - 1.0, loc[2]],
+                    placed_bbox_max=[loc[0] + 1.0, loc[1] + 1.0, loc[2] + float(t["height_m"])])
+    fbo = {b["index"] for b in tf["billboard_only"]}
+    good_topo = dict(placements=[topo_row(i, i not in fbo) for i in range(n)])
+    ok(not br.topology_problems(good_topo["placements"], n, len(tf["placements"])),
+       f"the shape trees_far.py writes passes ({n} rows, {n - len(fbo)} with a mesh) - "
+       f"{br.topology_problems(good_topo['placements'], n, len(tf['placements']))}")
+    ok(br.check_topology(good_topo, n) is good_topo["placements"], "check_topology returns the rows")
+
+    def tcase(name, mutate, needle, n_mesh=None):
+        rows = copy.deepcopy(good_topo["placements"])
+        mutate(rows)
+        b = br.topology_problems(rows, n, n_mesh)
+        ok(any(needle in x for x in b), f"{name}: reported {(b[0][:95] if b else 'NOTHING')}")
+
+    # THE REGRESSION ITSELF: the file carries the mesh rows alone, as the first cut of the rule wrote it
+    tcase("only the mesh rows are written (the r1 blocker)",
+          lambda r: r.__setitem__(slice(None), [x for x in r if x["has_mesh"]]),
+          "irradiance bake places EVERY far row")
+    tcase("a billboard-only row carries no `scale`",
+          lambda r: next(x for x in r if not x["has_mesh"]).pop("scale"), "no `scale`")
+    tcase("a billboard-only row carries no `object`",
+          lambda r: next(x for x in r if not x["has_mesh"]).pop("object"), "no `object`")
+    tcase("a row carries no placed bbox",
+          lambda r: r[0].pop("placed_bbox_max"), "no `placed_bbox_max`")
+    tcase("a row is not flagged either way",
+          lambda r: r[0].pop("has_mesh"), "no `has_mesh`")
+    tcase("the rows are written in a different order",
+          lambda r: r.reverse(), "index order")
+    tcase("one far row is written twice and another dropped",
+          lambda r: r.__setitem__(5, dict(r[6])), "share an `index`")
+    tcase("the mesh count disagrees with the set's own placement list",
+          lambda r: r, "flagged `has_mesh`", n_mesh=len(tf["placements"]) + 1)
+    # and the contract is not vacuous: it fails with a different tree_far length
+    ok(br.topology_problems(good_topo["placements"], n + 1),
+       "a topology written against a different far list FAILs")
+
     print("verify_glb.far_tree_counts - the good shape, then every way of breaking it")
     good = dict(tree_far=man["tree_far"], tree_rule=dict(far_billboards=n), trees=dict(
         far_mesh=dict(placements=[dict(index=i) for i in fi],

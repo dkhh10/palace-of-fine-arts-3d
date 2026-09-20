@@ -678,19 +678,24 @@ def main():
     # placements' `index` and the cross-set order check all stay keyed to the same list.
     step = g0.Step("trees_far:placements")
     keep_radius_m = float(SET["draw_within_m"]) + FADE_BAND_M
+    # r1 finding 1: EVERY far row gets a topology row, placed or not. `topo_rows` is all of them and
+    # `placements` is the subset that gets an instance row in this set's glb; both hold THE SAME dicts, so
+    # the world-bbox loop below fills `placed_bbox_*` on all of them at once. The excluded rows must carry
+    # `object`, `scale` and their own `placed_bbox_*` because the per-placement irradiance bake
+    # (export/trees_far_set.py) places every `tree_far` row from `topology.json` - the impostor of a
+    # billboard-only row is modulated by that bake exactly like a placed one. Their objects are built here
+    # by the same code and linked OUTSIDE `exp`, which is the collection the glTF export selects, so they
+    # are measured but never shipped.
+    exc = bpy.data.collections.new("EXP_TREEFAR_BILLBOARD_ONLY")
+    bpy.context.scene.collection.children.link(exc)
+    topo_rows, topo_src = [], []
     placements, far_kept, billboard_only, worst_dev = [], [], [], 0.0
     for i, row in enumerate(far):
+        has_mesh, s_name, s_d = True, None, None
         if i in belt:
             s_name, s_d = br.nearest_station(eyes, row["trunk_base"])
-            if s_d > keep_radius_m:
-                billboard_only.append(dict(
-                    index=i, tag=BELT_TAG, billboard=row["billboard"], source_tree=row["source_tree"],
-                    prototype=proto_map[row["prototype"]], source_prototype=row["prototype"],
-                    loc=[round(float(v), 4) for v in row["trunk_base"]],
-                    height_m=row["height_m"], walk_dist_m=row["walk_dist_m"],
-                    nearest_station=s_name, nearest_station_m=round(s_d, 2)))
-                continue
-            # a tagged row inside the radius falls through and is placed like any other
+            has_mesh = s_d <= keep_radius_m
+            # a tagged row inside the radius is placed like any other
         p = proto_map[row["prototype"]]
         ref = imp["prototypes"][p]
         s = float(row["height_m"]) / float(ref["height_above_base_m"])
@@ -698,7 +703,7 @@ def main():
         no = bpy.data.objects.new(f"TREEFAR_{i:03d}", me)
         no.location = Vector(row["trunk_base"])
         no.scale = (s, s, s)
-        exp.objects.link(no)
+        (exp if has_mesh else exc).objects.link(no)
         # the transform IS the impostor's (translation trunk_base, uniform s). What is worth measuring is
         # how far the LOD2 crown top then lands from the impostor quad's top, trunk_base.z + height_m.
         top = float(row["trunk_base"][2]) + protos_out[p]["height_above_base_m"] * s
@@ -708,7 +713,7 @@ def main():
         # translation is asserted after the glTF is written, against the EXPORTED node - which is the only
         # place the exporter's Z-up -> Y-up swap and its float32 round trip can actually go wrong.
         worst_dev = max(worst_dev, abs(top - want))
-        pl = dict(index=i, object=no.name, prototype=p, mesh=me.name,
+        pl = dict(index=i, object=no.name, prototype=p, mesh=me.name, has_mesh=has_mesh,
                   source_prototype=row["prototype"], source_tree=row["source_tree"],
                   billboard=row["billboard"],
                   loc=[round(float(v), 4) for v in row["trunk_base"]],
@@ -716,10 +721,22 @@ def main():
                   walk_dist_m=row["walk_dist_m"])
         if i in belt:
             pl["tag"] = BELT_TAG
-            pl["nearest_station"], _d = br.nearest_station(eyes, row["trunk_base"])
-            pl["nearest_station_m"] = round(_d, 2)
-        placements.append(pl)
-        far_kept.append(row)
+            pl["nearest_station"], pl["nearest_station_m"] = s_name, round(s_d, 2)
+        topo_rows.append(pl)
+        topo_src.append(row)
+        if has_mesh:
+            placements.append(pl)
+            far_kept.append(row)
+        else:
+            # the report's own excluded list, built from the row that was just measured so `object` and
+            # `scale` cannot drift from `topology.json`'s
+            billboard_only.append(dict(
+                index=i, tag=BELT_TAG, object=no.name, billboard=row["billboard"],
+                source_tree=row["source_tree"],
+                prototype=p, source_prototype=row["prototype"],
+                loc=[round(float(v), 4) for v in row["trunk_base"]], scale=round(s, 6),
+                height_m=row["height_m"], walk_dist_m=row["walk_dist_m"],
+                nearest_station=s_name, nearest_station_m=round(s_d, 2)))
     # 8d r2: the far list grows with the scene (the hall-east belt took it 127 -> 166). What has to hold
     # is that EVERY far row got a placement here, not a fixed count; the count itself is reported and
     # checked against the manifest the placements were read from.
@@ -745,7 +762,9 @@ def main():
     # Nothing here is derived from `no.location`; it is the evaluated world bounding box of the geometry.
     bpy.context.view_layer.update()
     worst_xy, worst_xy_row, worst_top, worst_top_row = 0.0, None, 0.0, None
-    for pl, row in zip(placements, far_kept):
+    # over EVERY row, placed or billboard-only (r1 finding 1): `topology.json` publishes `placed_bbox_*`
+    # for all of them, and trees_far_set.py asserts the bake's own placement against those numbers.
+    for pl, row in zip(topo_rows, topo_src):
         no = bpy.data.objects[pl["object"]]
         cs = [no.matrix_world @ Vector(c) for c in no.bound_box]
         bx = [min(c[k] for c in cs) for k in range(3)], [max(c[k] for c in cs) for k in range(3)]
@@ -772,7 +791,12 @@ def main():
     tallest = max(float(r["height_m"]) for r in far)
     assert worst_dev < CROWN_TOP_TOL_REL * tallest, \
         f"worst crown-top deviation {worst_dev:.3f} m over {CROWN_TOP_TOL_REL:.0%} of {tallest:.1f} m"
-    step.done(placements=len(placements), billboard_only=len(billboard_only),
+    # r1 finding 1: the list `topology.json` is about to carry covers EVERY far row and carries the fields
+    # the irradiance bake reads on each one - checked by the same function export/trees_far_set.py runs on
+    # the file it opens, so the writer and the reader can never disagree about the shape again.
+    _bad = br.topology_problems(topo_rows, len(far), len(placements))
+    assert not _bad, "the irradiance-topology contract: " + "; ".join(_bad)
+    step.done(placements=len(placements), billboard_only=len(billboard_only), topology_rows=len(topo_rows),
               worst_crown_top_dev_mm=round(worst_dev * 1000, 1))
     rep["placements"] = placements
     rep["billboard_only"] = billboard_only
@@ -1194,11 +1218,22 @@ def main():
                 lod2_objects_rejected=rejected,
                 billboard_only=billboard_only,
                 billboard_only_rule=rep["billboard_only_rule"],
-                billboard_only_note=("these `tree_far` rows have NO mesh in this set (Phase 9 item 1) and "
-                                     "therefore no entry in `placements` below. The per-placement "
-                                     "irradiance bake still covers every `tree_far` row - trees_far_set.py "
-                                     "iterates the manifest, not this list - which is what keeps the "
-                                     "impostors of the excluded rows modulated."),
+                billboard_only_note=("these `tree_far` rows get NO instance row in this set's glb (Phase 9 "
+                                     "item 1). They DO have a row in `placements` below, flagged "
+                                     "`has_mesh: false` and carrying the same `object`, `scale`, `loc` and "
+                                     "`placed_bbox_*` as a placed row: `placements` is the list "
+                                     "export/trees_far_set.py builds the per-placement irradiance blend "
+                                     "from, and that bake must cover EVERY `tree_far` row, because the "
+                                     "impostor of an excluded row is modulated by E_placement / E_bake like "
+                                     "any other (review r1 finding 1 - this list used to hold the mesh rows "
+                                     "alone and the bake asserted the full count). The shipped glb's rows "
+                                     "are `placements` filtered by `has_mesh`, and their count is "
+                                     "`mesh_placements` below."),
+                placements_note=("one row per `tree_far` row, in `tree_far` index order, `has_mesh` false on "
+                                 "the billboard-only ones. The contract is asserted by "
+                                 "`export/belt_rule.topology_problems`, which the writer, "
+                                 "export/trees_far_set.py and export/p9_rule_selftest.py all call."),
+                mesh_placements=len(placements),
                 anchor_note=("`anchor` is the point in PROTOTYPE WORLD SPACE that this export subtracts "
                              "from the mesh, so that a placement is exactly `location = trunk_base, "
                              "scale = s`. It is the impostor's own axis: the prototype bbox XY centre at "
@@ -1211,7 +1246,7 @@ def main():
                                 "anchor": v["anchor_check"]["anchor"],
                                 "anchor_check": v["anchor_check"]}
                             for k, v in protos_out.items()},
-                placements=placements)
+                placements=topo_rows)
     (OUT3 / "topology.json").write_text(json.dumps(topo, indent=1) + "\n")
 
     # strip the file down to the 16 prototype objects so the bake opens something small

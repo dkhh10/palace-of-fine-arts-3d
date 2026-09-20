@@ -2899,12 +2899,22 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
   carries the invariant that decides the whole question: **no belt row that is in a station's frame may be
   billboard-only in either set**. Move a station, re-cut the belt, change a lens or change a
   `draw_within_m`, and this run FAILs by name instead of shipping a magnified card into the frame.
-* **`export/trees_far.py`** — tagged rows outside the radius are skipped; `placements + billboard_only ==
-  tree_far` replaces the old equality; the two `zip(placements, far)` loops zip against the kept rows;
-  `TREEFAR_###` is still the `tree_far` index, so every downstream key is unchanged. The **cross-set order
-  check becomes a subsequence contract**: every node of this set must be a node of the other set's glTF, in
-  the same relative order and at the same translation, and this set may hold fewer rows but never one the
-  other does not have.
+* **`export/trees_far.py`** — a tagged row outside the radius gets no instance row in the glb;
+  `placements + billboard_only == tree_far` replaces the old equality; the `zip(placements, far)` loop that
+  writes the glTF zips against the kept rows; `TREEFAR_###` is still the `tree_far` index, so every
+  downstream key is unchanged. The **cross-set order check becomes a subsequence contract**: every node of
+  this set must be a node of the other set's glTF, in the same relative order and at the same translation,
+  and this set may hold fewer rows but never one the other does not have.
+* **`topology.json` still carries EVERY far row** (review r1 finding 1). It is the list
+  `export/trees_far_set.py` builds the per-placement irradiance blend from, and that bake covers all 166
+  rows because a billboard-only row's impostor is modulated by `E_placement / E_bake` like any other.
+  An excluded row is therefore written with `has_mesh: false` and the same `object`, `scale`, `loc` and
+  independently computed `placed_bbox_*` as a placed one: its object is built by the same code and linked
+  into `EXP_TREEFAR_BILLBOARD_ONLY`, a collection the glTF export does not select. The glb's rows are the
+  `has_mesh: true` subset (`mesh_placements`, 149 / 131). The rule's first cut wrote the mesh rows alone
+  here while `trees_far_set.py` asserted the full count, so the next bake would have died —
+  **`belt_rule.topology_problems` / `check_topology`** is now the single contract the writer, the reader and
+  `p9_rule_selftest.py` all call, and `p9_rule_selftest` fails on exactly that mismatch.
 * **`export/manifest_v4.py`** — the lighting list is per FAR TREE, not per mesh placement (see the hand-off);
   the count assert closes on `placements + billboard_only`; the billboard identity is checked through each
   row's own `index` instead of its position; both sets carry a `billboard_only` block; and the walk-up
@@ -2921,7 +2931,11 @@ impostor is NOT flipped, that the lighting row survives, and it reports the miss
   ways of getting the PIN wrong (a missing walk-up row, a walk-up row the far set dropped, a far drop the
   walk-up set still places, a `placed_tris` drift with the counts intact, and a report not written yet),
   plus that the PRE-rule shape (166 / 166 / `same_as`, no `billboard_only`) still passes unchanged.
-  **23/23 today.**
+  Since r1 finding 1 it also holds **the irradiance-topology contract** (`belt_rule.topology_problems`): the
+  shape `trees_far.py` writes passes, and eight mutations are each reported by name — the blocker itself (only
+  the mesh rows written), a billboard-only row with no `scale` or no `object`, a missing `placed_bbox_*`, a
+  row flagged neither way, rows out of `tree_far` order, a duplicated index, and a `has_mesh` count that
+  disagrees with the set's own placement list. **34/34 today.**
 * **`export/verify_glb.py`** — the far-tree count block is factored out as `far_tree_counts(man)` so the
   suite above can feed it bad data; check 5 becomes a per-set identity (`mesh rows + billboard-only = far trees`)
   plus the nesting (`walkup <= far`) and the lighting list at one row per far tree;
