@@ -236,12 +236,13 @@ DECIMATE_VG_FACTOR = 1.0   # Decimate `vertex_group_factor`
 # (desktop walk-up 15 m, mobile far 45 m), so they legitimately keep different numbers of belt rows and the
 # walk-up rows are a SUBSET of the far rows (`instance_order_check` below checks exactly that).
 #
-# WHY NOT ALL 39 (the README's own "billboard-only for the HB rows" pricing). Measured from the cam03
-# station (81.0, 12.04, 1.7), 18 mm on 36 mm, 16:9: `ENV_tree_cypress_33` stands 6.5 m from the eye and
-# fills ndc x [-2.27, 0.10] and the whole frame height, `ENV_tree_cypress_34` 10.4 m away fills
-# x [-1.74, -0.38]. At 1920 px wide that is one impostor atlas texel (81 inner px per frame, 1 K atlas)
-# blown up to 17.9 and 11.9 SCREEN pixels - the magnified-card defect Phase 7 built the walk-up set to
-# cure. Those two, and the two other rows inside the radius, keep their meshes.
+# WHY NOT ALL 39 (the README's own "billboard-only for the HB rows" pricing). `python3 export/belt_rule.py
+# --frustum` measures it from the cam03 station, which it reads from the manifest along with the lens and
+# the crown sizes (r1 finding 4: the station was hand-copied here and the numbers were rounded by hand, and
+# both aged): of the three belt rows inside the walk-up draw distance, TWO are in frame, and one 1 K
+# impostor atlas texel is blown up to 17.7 and 11.8 SCREEN pixels at 1920 px wide - the magnified-card
+# defect Phase 7 built the walk-up set to cure. Those two, and the two other rows inside the radius, keep
+# their meshes. Run the script for the per-row table; nothing here restates it.
 #
 # WHAT THE VIEWER DOES WITH A BILLBOARD-ONLY ROW: NOTHING NEW (review r1 finding 2 - an earlier version of
 # this note called it a hand-off that gates the ship, and it is not). `iIrr` is written at BUILD time, not

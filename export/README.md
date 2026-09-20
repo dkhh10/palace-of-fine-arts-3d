@@ -3010,4 +3010,23 @@ lighting row gains its `mesh` flag. Measured on the shipped gate5 manifest by re
 **230 224 -> 236 390 B gzipped (+6 166)** — **0.8 % of the 726 181 B of headroom** the last deploy had. An
 index-only subset shape would save most of that and cost a viewer change; at 6 kB it is not worth one.
 
-**The viewer's `iIrr` fix must be in the same deploy.**
+**No viewer change ships with it** (review r1 finding 2, verified against main's `web/src`): `iIrr` is written
+at build time over the whole `treesFar` list, so a billboard-only impostor stays modulated. In the capture,
+main.js's far-tree modulation line must still read **166 / 166**; `activateImpostorMeshes`' `re-lit` count
+reads **131** on desktop and **149** on mobile, which is the rule working, not a regression.
+
+### Carried out of the r1 review (`docs/reviews/phase9_export_r1_review.md`), not fixed in the r2 fix round
+
+* **Carry 3 — `export/belt_rule.py`'s `--frustum` invariant is unfalsifiable at today's numbers.**
+  `frustum_rows` scans only the belt rows within `FRUSTUM_WITHIN_M = 15 m` of cam03's eye, while exclusion
+  needs more than 20 m (walk-up) / 50 m (far) from EVERY eye, so the FAIL at the end of `_frustum_main` can
+  never fire from that scan. The reviewer checked it: at scan radius 20 and 50 there are 0 in-frame excluded
+  rows; unbounded, 34 / 17, all correctly beyond the draw distance. It does still catch a rule that stops
+  honouring proximity. Fix: scan to `max(DRAW_WITHIN_M) + FADE_BAND_M`, FAIL only inside the set's own
+  radius, and call the check cam03-only here rather than "a station's frame". Left tabled because it changes
+  what the printed table measures and so needs its own round.
+* **Carry 5 — one key, two types.** `export/manifest_v4.py`'s `dict(pl, mesh=True)` makes
+  `trees.far_mesh.lighting.mesh.placements[].mesh` a **bool**, while `trees.walkup_mesh.placements[].mesh` is
+  the mesh-name **string**. Fix: name the flag `has_mesh` (which is what `topology.json` now calls it). Left
+  tabled because it is a shipped manifest key with readers in the viewer, the self-test and this file, so the
+  rename is a co-ordinated change, not a one-line one.
