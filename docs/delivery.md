@@ -226,3 +226,40 @@ Known issues (owners): 1. far-tree cards opaque where Cycles shows sky through t
 cam03 deep shade / bush interior (LIGHTING); far-crown dotted rim (VIEWER); belt pale-backdrop cover and the shrub hard-edge rise 5.95 / 7.12 % (ENV); cam03 belt meshes
 (EXPORT/VIEWER); cam06 faceted city (ENV, R3 deferred); the cam02 blue-violet Phase 5 shade (user's call); 1440p medians drift up to +5 ms between sessions (re-take idle);
 water reflector not session-reproducible (A/A mask rule); the Phase 8 Cycles refs survive at 960 px only.
+
+# Phase 9 — everything carried, finished (lead, 2026-09-21; QA 25 a228268: PHASE 9 GATE PASSED, hero 4.05, no open blocker; decisions.md 2026-09-20/21). [deploy 14 / QA 26 / hero wall time filled at the close]
+## Deliverables
+- Live site deploy 13: https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev (version 201908ca). First frame on the wire 49.30 MB desktop / 47.32 mobile
+  (rule 50 MB); resident 1 814.1 MB; 0 page errors; name sweep 0 hits over 738 + 341 manifest rows; belt frustum invariant PASS. Deploy 14 (the ENV R3 tiles) follows: [filled at the close].
+- Phase 9 before/after sheet: renders/qa_comparisons/phase9_before_after_960.jpg (scripts/phase9_sheet.py; viewer hero deploy 12 vs deploy 13/14; Cycles 4K hero Phase 8 vs Phase 9; ref 169),
+  station pairs renders/qa_comparisons/phase9_stations/, tiles renders/qa_comparisons/phase9_tiles/. New 4K Cycles hero renders/final/hero_cam01_3840x2160_128spp.png
+  (128 spp fixed, [wall s]; lead tile pass [result]); the Phase 8 hero preserved in renders/final/phase8/. Phase 9 Cycles station references (1080p / 32 spp) at
+  renders/qa_comparisons/cycles_p9/960/; QA gate sheet renders/web/gate13_gate.png.
+- master.blend / master_delivery.blend rebuilt twice (r19 lighting; ENV R3 tiles); every lightmap re-baked (87 jobs, 0 failures, 455 min, 0 clipped pixels); the export chain
+  regenerated every web asset (export/README.md "Phase 9"); scripts/build_master.py APPENDS (no --link): a before/after needs two lead_build.sh runs.
+## What changed, per item (scores hero 4.01 -> 4.05; stations 3.30 / 2.83 / 2.88 / 3.28 / 3.07 -> 3.51 / 3.08 / 3.05 / 3.24 / 3.07; mobile 3.40 -> 3.44 at the hero)
+- Lighting (station 2's blue-violet shaded stone, QA-08-2): the mechanism was not the NNE shade-fill lamp (0 W since f40d0e7) but the world's diffuse tint; SKY_DIFFUSE_TINT
+  (1.0, 0.65, 70.0) -> (1.0, 0.75, 8.0), anti-sun weight 1 -> 0, diffuse sockets only. Cycles shafts b* -4.7 / -18.2 / -3.1 -> +11.3 / +5.3 / +8.8 (photo +10.9 / +11.0 / +5.3);
+  hero 12/12, cam03 7/7, cam04 6/6 held at the noise floor. The frieze (+23.3 vs 9.9-12.9) and soffits (h_ab 82.6 vs 80) overshoot: proven structural (the shafts' a* 2.5 vs the
+  photo's 10.2 is a materials property) and shipped on the user's decision. In the viewer after the re-bake: station 2 mean |b* − photo| 10.34 -> 6.85. CLOSED with residual.
+- Station 3's deep shade (QA-21 carry): decomposed by term on disk — the lightmap matched Cycles at 0.997x; the whole 2.55x excess was the viewer's unoccluded specular
+  (environment PMREM + unshadowed sun). Fixed viewer-side, zero GPU: skyVis = lightmap blue / the unoccluded sky irradiance for the surface's own normal (a 40-lobe fit of the
+  shipped sky, written by manifest_v4), sunVis = (lightmap red − sky share) / (sun irradiance/π · dotNL); ?specgate=0/1 keep the Phase 8 and round-1 paths. near_column 1.80x ->
+  1.38x, blue closed, frame p10 37.5 -> 13.3 (Cycles 6.1). Residual: the remaining 1.4x red is not in either specular term (bake/materials).
+- Far-crown dotted rim (QA 21): the impostor mask's own alpha-to-coverage pixel dither; coverage quantised to the sample ladder. Rim index 0.264 -> 0.043 at 5, 0.369 -> 0.058 at 2. CLOSED.
+- Belt trees at cam03 (+1.3 M tris): a billboard-only rule — an HB-tagged row keeps its mesh only within its set's draw distance + 5 m of a QA station; walk-up 4 kept / 35 billboard-only
+  (−1 047 151 tris), far 22 / 17; the --frustum invariant fails by name if any in-frame belt row ever goes billboard-only. No viewer change was needed (all far trees are lit at build). CLOSED.
+- Aerial city blocks (8d R3): four tileable gain maps (facade 64 texels/m, roof, mission tile 8.10 x 7.92 m, canopy) on a per-face UV0 in tile units over 1 291 backdrop meshes,
+  multiplied after the atmosphere term; cam06 city hf +11.6 / +24.3 / +20.3 % (Cycles +27.6 %), ENV tri delta 0. The belt cover measured OVER the photo (no crown added); the shrub
+  hard-edge rise is the belt behind them (positions md5-identical). In the viewer: [deploy 14 / QA 26, filled at the close].
+- Review carries closed across viewer, export and bake (docs/reviews/phase9_*): 12 branches merged, every one reviewed; the far-tree irradiance restore patch retired (all 166 rows one population).
+## Process notes worth keeping
+- The bake queue's resume rule skips any job whose record file exists: a re-bake must archive the old records first (done: export/out/gate3/bake/bake_p8_backup). The A.2 probe
+  (3 jobs, 321 s) showed the slot atlases move too (p50 0.18 stops, 1.8x the floor), so the full chain ran; the shipped bake had been dated Sep 15-16, so this caught up every
+  lighting round since.
+- gate3_relay_check must run before manifest_v4 (it writes the COLOR_0 range v4 copies); the README chain now says so; web/test/gate3_test.mjs caught the stale range.
+- A viewer constant derived from the sky (open irradiance, lobes) must be re-derived by the manifest on every bake, never hard-coded: the r19 tint halved the open-sky blue (11.26 -> 5.82).
+## Known issues (owners), carried
+Station 2 frieze/soffit over-warm and the shafts' a* deficit (MATERIALS; accepted residual); cam03 near_column 1.4x red (BAKE/MATERIALS); far-crown deviation 7.5 -> 9.6 % at two
+boxes after the full far-tree re-bake (BAKE/EXPORT; QA 23 residual 1 partially re-opened); cam05 shade p10 −5.9 % vs Cycles with the gate on (VIEWER; ungated +6.8 %); frame rate
+22-37 fps at the stations, never measured idle (perf re-take); cam01/cam05 backdrop bands −1..3 % hf after R3 (ENV, named); the 4.3x hf gap to the photo at cam06 is the R1 ceiling.
