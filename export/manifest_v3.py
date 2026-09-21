@@ -95,24 +95,53 @@ def backdrop_uv_matches(gltf_have):
         n = m.get("name")
         if n not in z.files or not m["primitives"]:
             continue
-        acc = d["accessors"][m["primitives"][0]["attributes"]["TEXCOORD_0"]]
-        if acc.get("componentType") != 5126:            # a quantised export is not comparable this way
-            continue
-        bv = d["bufferViews"][acc["bufferView"]]
-        uri = d["buffers"][bv["buffer"]].get("uri")
-        if not uri:
-            continue
-        if uri not in bins:
-            bins[uri] = (gp.parent / uri).read_bytes()
-        off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
-        a = np.frombuffer(bins[uri], dtype=np.float32, count=acc["count"] * 2, offset=off).reshape(-1, 2)
+        attrs = m["primitives"][0].get("attributes", {})
+
+        def uv_set(which):
+            """The float32 UV array of TEXCOORD_<which>, or None when the set is absent/quantised."""
+            if which not in attrs:
+                return None
+            acc = d["accessors"][attrs[which]]
+            if acc.get("componentType") != 5126:        # a quantised export is not comparable this way
+                return None
+            bv = d["bufferViews"][acc["bufferView"]]
+            uri = d["buffers"][bv["buffer"]].get("uri")
+            if not uri:
+                return None
+            if uri not in bins:
+                bins[uri] = (gp.parent / uri).read_bytes()
+            off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+            return np.frombuffer(bins[uri], dtype=np.float32, count=acc["count"] * 2, offset=off).reshape(-1, 2)
+
+        # Phase 9: the ENV build inserted the tile UV ("UVMap", world metres / tile) at layer 0, so the
+        # BAKED layout moves to TEXCOORD_1.  Which set carries it is never assumed - every set present is
+        # scored against the npz and the best one wins, so a swap of the two is a loud failure here and
+        # `texcoord` in the manifest is read back rather than asserted.
         b = z[n]
-        sg = {(round(float(x), 5), round(float(y), 5)) for x, y in a}
         sd = {(round(float(x), 5), round(float(y), 5)) for x, y in b}
         sf = {(round(float(x), 5), round(float(1.0 - y), 5)) for x, y in b}
-        direct, flip = len(sg & sd) / len(sg), len(sg & sf) / len(sg)
-        out[n] = dict(distinct_uv_gltf=len(sg), match_direct=round(direct, 5), match_v_flipped=round(flip, 5),
-                      v_flipped=flip > direct, match=round(max(direct, flip), 5))
+        scored = {}
+        for i in (0, 1, 2):
+            a = uv_set(f"TEXCOORD_{i}")
+            if a is None:
+                continue
+            sg = {(round(float(x), 5), round(float(y), 5)) for x, y in a}
+            direct, flip = len(sg & sd) / len(sg), len(sg & sf) / len(sg)
+            span = float(max(a[:, 0].max() - a[:, 0].min(), a[:, 1].max() - a[:, 1].min()))
+            scored[i] = dict(distinct_uv_gltf=len(sg), match_direct=round(direct, 5),
+                             match_v_flipped=round(flip, 5), v_flipped=flip > direct,
+                             match=round(max(direct, flip), 5), uv_span=round(span, 3))
+        if not scored:
+            continue
+        best = max(scored, key=lambda i: scored[i]["match"])
+        out[n] = dict(scored[best])
+        out[n]["texcoord"] = best
+        out[n]["sets_in_glb"] = sorted(scored)
+        # the tile UV is the OTHER set, and it is recognisable on its own terms: it runs in tile units, so
+        # its span is many tiles wide where a packed bake atlas can never leave [0,1].
+        other = [i for i in scored if i != best]
+        out[n]["tile_texcoord"] = other[0] if len(other) == 1 else None
+        out[n]["tile_uv_span"] = scored[other[0]]["uv_span"] if len(other) == 1 else None
         out[n]["ok"] = out[n]["match"] >= 0.999
     return out
 
@@ -198,6 +227,28 @@ def main():
                                            "the viewer loads nothing for it")
             entry["normal"]["replaces_gate1"] = Path(job["gate1_normal"]).stem
         sets[job["group"]] = entry
+
+    # ------------------------------------------------- Phase 9: the backdrop gain tiles and their UV set
+    # `export/p9_bd_tiles.py` encodes four REPEAT-sampled, Non-Color gain images the viewer multiplies over
+    # the baked backdrop albedo (docs/briefs/phase9_env_report.md "Export hand-off").  They are NOT bake
+    # products, so they carry no `job`/`bake_s`/`stats`; every consumer downstream reads only
+    # path/w/h/map/colorspace/cls/bytes/resident_mb, and `bytes` keeps the gate2 totals and the resident
+    # budget honest.  The block below is the only place the four rows and their constants enter the chain.
+    bd_tiles = None
+    bd_path = OUT / "p9_backdrop_tiles.json"
+    if bd_path.exists():
+        bd_tiles = json.loads(bd_path.read_text())
+        for key, row in sorted(bd_tiles["files"].items()):
+            files[key] = dict(path=row["path"], w=row["w"], h=row["h"], map=row["map"],
+                              colorspace=row["colorspace"], cls=row["cls"], job=None,
+                              bytes=row["bytes"], etc1s_bytes=None,
+                              resident_mb=resident_mb(row["w"]),
+                              png_bytes=row.get("png_bytes"), encode=row.get("encode"),
+                              source="export/p9_bd_tiles.py")
+            per_cls.setdefault(row["cls"], dict(maps=0, resident_mb=0.0, ktx2_bytes=0, bake_s=0.0))
+            per_cls[row["cls"]]["maps"] += 1
+            per_cls[row["cls"]]["resident_mb"] += resident_mb(row["w"])
+            per_cls[row["cls"]]["ktx2_bytes"] += row["bytes"] or 0
 
     for c in per_cls:
         per_cls[c]["resident_mb"] = round(per_cls[c]["resident_mb"], 2)
@@ -319,10 +370,86 @@ def main():
         bad = sorted(k for k, v in uvchk.items() if not v["ok"])
         flipped = sum(1 for v in uvchk.values() if v["v_flipped"])
         worst = min(v["match"] for v in uvchk.values())
+        tc = sorted({v["texcoord"] for v in uvchk.values()})
         print(f"[manifest_v3] backdrop UV cross-check: {len(uvchk) - len(bad)}/{len(uvchk)} meshes carry the "
-              f"baked layout (worst distinct-UV match {worst:.5f}, V-flipped on {flipped}/{len(uvchk)})"
-              + (f"; MISMATCH {bad}" if bad else ""))
+              f"baked layout at TEXCOORD_{'/'.join(str(i) for i in tc)} (worst distinct-UV match {worst:.5f}, "
+              f"V-flipped on {flipped}/{len(uvchk)})" + (f"; MISMATCH {bad}" if bad else ""))
         assert not bad, f"env.gltf carries a different UV1 than the backdrop textures were baked against: {bad}"
+        # Phase 9: the set is MIXED by design. The eight MAT_backdrop_* merges carry the ENV tile UV at
+        # TEXCOORD_0 and their bake atlas at 1; `bird_white` and `lamp_post` are merged by the same Gate 1
+        # rule but take no gain tile and keep the atlas at 0. So the index is stated per MESH here and per
+        # material SET below - never once for "the backdrop".
+        if bd_tiles:
+            spans = {k: v["tile_uv_span"] for k, v in uvchk.items() if v.get("tile_texcoord") == 0}
+            assert spans, "no backdrop mesh carries a second UV set: the Gate 1 export lost the tile UV"
+            wide = {k: s for k, s in spans.items() if (s or 0) > 1.5}
+            assert wide, ("no backdrop merge's TEXCOORD_0 leaves a single tile, so it is a packed atlas, "
+                          f"not the tile UV - the two sets are swapped: {spans}")
+            print(f"[manifest_v3] backdrop tile UV at TEXCOORD_0 on {len(spans)} merge(s), span "
+                  f"{min(wide.values()):.2f}-{max(wide.values()):.2f} tiles on {len(wide)} of them")
+            for k, v in uvchk.items():
+                assert v["texcoord"] == (1 if k in spans else 0), (
+                    f"{k}: the baked layout is at TEXCOORD_{v['texcoord']} but its tile UV is "
+                    f"{'present' if k in spans else 'absent'} - the two sets are swapped")
+    # ------------------------------------------------- which UV set the Gate 2 maps ride, per material
+    # The viewer hard-coded TEXCOORD_0 for every PBR map until Phase 9 (web/src/pbr.js `t.channel = 0`).
+    # Now that the backdrop merges carry the tile UV at layer 0, their baked maps ride TEXCOORD_1 and the
+    # rest of the scene still rides TEXCOORD_0, so the index travels per set - READ BACK from the shipped
+    # glTF by the cross-check above, never asserted.
+    mesh_tc = {m: v["texcoord"] for m, v in (uvchk or {}).items()}
+    for _n, _s in sets.items():
+        _s["texcoord"] = 0
+    for _jid, _job in jobs.items():
+        _n = _job["group"]
+        if _n not in sets:
+            continue
+        _vals = {mesh_tc[m] for m in _job["meshes"] if m in mesh_tc}
+        assert len(_vals) <= 1, f"{_n}: its meshes put the bake atlas on different TEXCOORDs: {sorted(_vals)}"
+        if _vals:
+            sets[_n]["texcoord"] = _vals.pop()
+    bd_tc = 1 if any(v == 1 for v in mesh_tc.values()) else 0
+    man["materials"]["texcoord_source"] = (
+        "per set: the glTF UV set the Gate 2 maps ride. `materials.uv` names the scene default; a set's "
+        "own `texcoord` wins. Derived from backdrop_uv_crosscheck, which scores every TEXCOORD_n in "
+        "env.gltf against the layout the bake used.")
+    n_tc1 = sum(1 for _s in sets.values() if _s["texcoord"] == 1)
+    print(f"[manifest_v3] texcoord 1 on {n_tc1}/{len(sets)} material sets (the backdrop merges), 0 on the rest")
+
+    # ------------------------------------------------- the backdrop gain tiles (Phase 9)
+    if bd_tiles:
+        by_src = {}
+        for _n, _s in sets.items():
+            sm = _s.get("src_material")
+            for m_ in ([sm] if isinstance(sm, str) else list(sm or [])):
+                by_src.setdefault(m_, _n)
+        groups, unmatched = {}, []
+        for src, g in sorted(bd_tiles["groups"].items()):
+            name = by_src.get(src)
+            if not name:
+                unmatched.append(src)
+                continue
+            assert int(sets[name].get("texcoord", 0)) == 1, (
+                f"{name} wears a gain tile on TEXCOORD_0, so its baked maps must be on TEXCOORD_1; the "
+                f"shipped glTF says {sets[name].get('texcoord')}")
+            groups[name] = dict(g, src_material=src)
+        assert not unmatched, (f"the backdrop tile groups name source materials with no Gate 2 set: "
+                               f"{unmatched} (known: {sorted(by_src)[:12]})")
+        man["backdrop_tiles"] = dict(
+            schema=bd_tiles["schema"], generator=bd_tiles["generator"],
+            uv=dict(tile="TEXCOORD_0", baked=f"TEXCOORD_{bd_tc}"),
+            wrap="repeat", colorspace="linear", apply=bd_tiles["apply"],
+            groups=groups,
+            files={k: dict(key=k, w=v["w"], h=v["h"], bytes=v["bytes"], encode=v["encode"],
+                           lo_bytes=v["lo"]["bytes"], lo_px=v["lo"]["px"])
+                   for k, v in sorted(bd_tiles["files"].items())},
+            bytes=bd_tiles["bytes"], lo_bytes=bd_tiles["lo_bytes"],
+            note="each key is a row in textures.gate2.files, so it resolves through the same ktx2_dir and "
+                 "the same tier plan as every other texture. The image is Non-Color: it must NOT be "
+                 "sRGB-decoded. The UVs are already divided by the tile size - wrap REPEAT and no texture "
+                 "transform. A material with no entry here takes no gain (gain = 1).")
+        print(f"[manifest_v3] backdrop tiles: {len(groups)} group(s), {len(bd_tiles['files'])} texture(s), "
+              f"{bd_tiles['bytes']} B + {bd_tiles['lo_bytes']} B half-res")
+
     n_uv = sum(1 for v in sets.values() if v["uv1_in_glb"])
     print(f"[manifest_v3] uv1_in_glb true for {n_uv}/{len(sets)} material sets")
 

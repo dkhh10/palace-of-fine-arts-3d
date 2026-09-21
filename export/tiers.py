@@ -77,8 +77,15 @@ GLTFPACK = str(G.MAIN / "tools/bin/gltfpack")
 # where a simplifier would move the shoreline, so neither is simplified.  Which of the two routes each
 # class took is recorded per group as `lod_route`.
 MOBILE_SIMPLIFY = dict(arch=0.5, orn=0.5)
+# -vtf on env, Phase 9 (review r1 blocker 1): THESE are the glbs the viewer fetches - gltf_pack.sh only
+# packs gate1/env.glb, which nothing ships. gltfpack quantises every texcoord stream of a mesh on ONE
+# shared UV box, so with the backdrop's tile UV at TEXCOORD_0 (hundreds of tiles wide) the [0,1] bake
+# atlas at TEXCOORD_1 came out of this pack with ~8.5 of its 4096 steps in U (measured on the shipped
+# env_t0.glb: MAT_EXP_ENVBD__MAT_backdrop_building under one KHR_texture_transform at scale 483.89 x
+# 162.12). Float texcoords remove the shared box and the transform with it. The flag must stay in step
+# with gltf_pack.sh's env line; web/test/backdrop_tiles_test.mjs checks the SHIPPED groups for it.
 PACK_FLAGS = dict(arch=["-cc", "-mi", "-vpf", "-km", "-kv", "-tr"],
-                  env=["-cc", "-mi", "-vpf", "-km", "-kv", "-vc", "16", "-tr"],
+                  env=["-cc", "-mi", "-vpf", "-km", "-kv", "-vtf", "-vc", "16", "-tr"],
                   orn=["-cc", "-mi", "-kv", "-tr"],
                   ground=["-cc", "-mi", "-kv", "-tr"])
 
@@ -525,6 +532,14 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             put(rel, 0 if (mobile and hero) else 1 if hero else 2, kind,
                 "hero material" if hero else "not seen from the hero",
                 order_key=tex_order.get(pub.key, 99), key=pub.key, px=px)
+        elif pub.kind == "backdrop_tile":
+            # Tier 1, not 0: the backdrop IS in the hero frame, but the gain is a MODULATION of an albedo
+            # that tier 0 already draws (gain = 1 until the tile lands), and tier 0 has ~0.2 MB of headroom
+            # against the 49.5 MB target. All four together are 0.60 MB and they arrive with the full-
+            # resolution backdrop albedo they multiply, in the same tier, which is the pairing that matters.
+            # On mobile `mobile_swap` above has already substituted the half-resolution copy.
+            put(rel, 1, kind, "backdrop gain tile: modulates the tier-1 backdrop albedo it ships beside",
+                order_key=tex_order.get(pub.key, 50), key=pub.key, px=px)
         elif pub.kind == "detail":
             # The viewer tiles these in object space over every concrete and ground surface and binds
             # them at boot (web/src/detail.js), so at full resolution they were an unlabelled 23.3 MB

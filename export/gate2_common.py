@@ -141,7 +141,35 @@ def smart_uv1(objs, angle_limit=1.15, island_margin=0.004):
     """
     import bpy
     for ob in objs:
-        if ob.data.uv_layers.get(UV1) is None:
+        lay = ob.data.uv_layers.get(UV1)
+        # PHASE 9 GUARD (export engineer, branch phase9-backdrop-export). The ENV build authors a TILE UV
+        # on every backdrop mesh, in world metres / tile size, and it is ALSO called "UVMap" - the join in
+        # gate1_set.py carries it into these merges. `smart_uv1` only creates a layer when none exists, so
+        # a re-bake would smart-project ON TOP of the tile UV: the bake atlas would overwrite it and the
+        # four gain tiles would be sampled at atlas coordinates. That is silent in every number the bake
+        # reports, so it stops here instead. The fix when this fires: bake to a second layer (the Gate 1
+        # relay calls it "UVBake" and ships it as TEXCOORD_1 - export/gltf_gate1.py `UV1_BAKE`) and hand
+        # THAT layer's loops over in backdrop_uv1.npz.
+        if lay is not None and len(ob.data.loops):
+            import numpy as _np
+            _a = _np.empty(len(ob.data.loops) * 2, dtype=_np.float32)
+            try:
+                lay.uv.foreach_get("vector", _a)
+            except (AttributeError, TypeError):
+                lay.data.foreach_get("uv", _a)
+            _a = _a.reshape(-1, 2)
+            _span = float(max(_a[:, 0].max() - _a[:, 0].min(), _a[:, 1].max() - _a[:, 1].min()))
+            # review r1 carry 4: the span alone cannot do this job (backdrop_door_green's tile UV spans
+            # 0.941), so the layer the Gate 1 relay appends is the primary tell and the span is the backup.
+            assert ob.data.uv_layers.get("UVBake") is None, (
+                f"{ob.name} carries a 'UVBake' layer, so its '{UV1}' is the Phase 9 backdrop TILE UV and "
+                f"smart_uv1 would bake over it. Bake to 'UVBake' (TEXCOORD_1) and hand THAT layer over "
+                f"in backdrop_uv1.npz.")
+            assert _span <= 1.5, (
+                f"{ob.name}: its '{UV1}' spans {_span:.2f} UV units - that is the Phase 9 backdrop TILE UV, "
+                f"not a packed bake layout, and smart_uv1 would bake over it. Bake to a second layer "
+                f"('UVBake', TEXCOORD_1) and hand that one over in backdrop_uv1.npz.")
+        if lay is None:
             ob.data.uv_layers.new(name=UV1)
         ob.data.uv_layers[UV1].active = True
         ob.data.uv_layers[UV1].active_render = True

@@ -261,8 +261,17 @@ if [ "$1" = "--gate1" ]; then
     # way). arch / env / ground therefore take -kv from Gate 3 on. orn deliberately does NOT: -kv would also
     # restore the ORN meshes' own COLOR_0, which three.js multiplies into base colour, and that is a look
     # change for the lead to decide (it also blocks the ORN slot-atlas lightmap - reported, not fixed here).
+    # -vtf (float texture coordinates), env only, Phase 9: gltfpack quantises EVERY texcoord stream of a
+    # mesh on ONE shared UV bounding box (measured on a two-set test glb: a mesh with TEXCOORD_0 spanning
+    # 0..300 and TEXCOORD_1 spanning 0..1 came back with a single KHR_texture_transform of scale 4801, so
+    # the [0,1] set kept 14 of its 4096 steps). The backdrop merges now carry the ENV tile UV in TILE
+    # UNITS at TEXCOORD_0 and the 1 K bake atlas at TEXCOORD_1, so the shared box is hundreds of tiles
+    # wide and the atlas would be quantised to tens of texels. Float texcoords remove the shared box, the
+    # transform and the viewer's dequantisation step in one - and meshopt packs them SMALLER than the
+    # normalised shorts plus the transform: measured on this same env_ktx2.gltf, 36 990 836 -> 36 781 772 B
+    # (-209 064). Only env carries two UV sets with different ranges; arch/orn/ground stay byte-identical.
     EXTRA=()
-    [ "$cls" = env ] && EXTRA=(-vpf -km)
+    [ "$cls" = env ] && EXTRA=(-vpf -km -vtf)
     [ "$cls" = arch ] && EXTRA=(-vpf -km)   # QA-12-1 re-pack: same flags as env, named materials kept
     # a class gets -kv exactly when its .gltf carries an attribute the manifest owns (TEXCOORD_1 for a
     # lightmap, COLOR_0 for the near-tree irradiance), so a class that has none is packed byte-identically.

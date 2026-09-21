@@ -222,6 +222,14 @@ def resolve_files(man, base=None):
     for key, v in (g2.get("detail_files") or {}).items():
         add(os.path.join(g2["ktx2_dir"], (v.get("path") if isinstance(v, dict) else None) or key + ".ktx2"),
             "detail", f"detail:{key}", key=key)
+    # Phase 9 backdrop gain tiles: they are rows of textures.gate2.files like any other texture, but NO
+    # material set names them (they ride their own uniform, not a glTF slot), so the material walk above
+    # cannot see them and without this they would be published nowhere.
+    for grp, v in ((man.get("backdrop_tiles") or {}).get("groups") or {}).items():
+        key = v.get("texture")
+        if key in g2["files"]:
+            add(os.path.join(g2["ktx2_dir"], g2["files"][key]["path"]), "backdrop_tile",
+                f"backdrop_tile:{grp}", key=key)
     for a, v in man["lightmaps"]["assets"].items():
         if a == "_gate1_layout" or "textures" not in v:
             continue

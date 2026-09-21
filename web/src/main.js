@@ -40,6 +40,7 @@ import { chunkInstancedMeshes } from './chunking.js';
 import { applyPbrSets, upgradePbrSets, upgradeGlbTextures, pbrPlan, formatName, texBytes, collectTextures, disposeOrphans } from './pbr.js';
 import { applyDetail } from './detail.js';
 import { applyGate3Lightmaps } from './lightmaps.js';
+import { applyBackdropTiles } from './backdropTiles.js';
 
 const qs = new URLSearchParams( location.search );
 // ?quality is compared ONCE, lowercased, and an unknown value is rejected rather than echoed as a
@@ -108,6 +109,8 @@ const CFG = {
 	detailTest: qs.get( 'detailtest' ),                 // "noise": a synthetic stand-in set (diagnostic)
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
 	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
+	// Phase 9: the ENV backdrop gain tiles. 1 = as the Cycles material, 0 = off (the A/B the QA round scores)
+	bdTiles: qs.has( 'bdtiles' ) ? parseFloat( qs.get( 'bdtiles' ) ) : 1.0,
 	// Phase 9 (docs/briefs/phase9_bake_analysis_report.md B.6): gate the two SPECULAR terms by the sky
 	// and sun visibility the lightmap already carries.  Default = ROUND 2 (E0 for the surface's own
 	// normal, sunVis divided by dotNL).  `?specgate=0` restores the Phase 8 path exactly (no GLSL, no
@@ -473,7 +476,7 @@ const glbReport = [];
 const uvDequantReport = [];
 const glbRoots = [];
 let chunkStats = null;
-let materialsMode = 'grey', pbrReport = null, detailReport = null;
+let materialsMode = 'grey', pbrReport = null, detailReport = null, backdropTileReport = null;
 
 /** baked  = the Gate 0/3 path: lightmaps carry the diffuse, so the sun and the environment are
  *           stripped to their specular terms (materials.js).
@@ -861,6 +864,14 @@ async function streamTiers() {
 				const glbUp = await upgradeGlbTextures( { scene, maxTier: t, note, loadTexture: loadAnyTexture,
 					upgradeOf: manifest.tiers ? manifest.tiers.upgradeOf : null } );
 				if ( up.upgraded || glbUp.upgraded ) disposeOrphans( scene, beforeTex );
+				// Phase 9: the backdrop gain tiles are tier 1, and a tier that brings no new env root
+				// never reaches applyMaterialPasses - sweep the whole scene here instead.  Idempotent.
+				if ( CFG.bdTiles > 0 && manifest.backdropTiles ) {
+					const bdRep = await applyBackdropTiles( { scene, backdropTiles: manifest.backdropTiles,
+						sets: manifest.materials.sets, loadTexture: loadAnyTexture, note, maxTier: t,
+						strength: CFG.bdTiles } );
+					if ( bdRep.materials ) backdropTileReport = bdRep;
+				}
 				tierState.lowresRemaining = glbUp.remaining;
 				tierState.upgrades = [ ...( tierState.upgrades || [] ), { tier: t, ...up, failed: up.failed.length,
 					glb_textures: glbUp.upgraded, glb_textures_remaining: glbUp.remaining.length } ];
@@ -1687,6 +1698,20 @@ async function applyMaterialPasses( roots, tier ) {
 			note( `detail layer OFF (?detail=${CFG.detail}); the manifest carries ${Object.keys( manifest.materials.detail.sets ).length} tiling set(s)` );
 		}
 	}
+	// Phase 9: the backdrop gain tiles ride ON TOP of the baked albedo the pass above just attached,
+	// so they run after it and again at every tier (the four tiles are tier 1; the call is idempotent -
+	// an already-patched material only swaps its texture).
+	if ( CFG.bdTiles > 0 && manifest.backdropTiles ) {
+		for ( const root of roots ) {
+			const rep = await applyBackdropTiles( { scene: root, backdropTiles: manifest.backdropTiles,
+				sets: manifest.materials.sets, loadTexture: loadAnyTexture, note, maxTier: tier,
+				strength: CFG.bdTiles } );
+			if ( rep.materials ) backdropTileReport = rep;
+		}
+		if ( backdropTileReport && backdropTileReport.patched ) renderFrame();
+	} else if ( manifest.backdropTiles && ! tier ) {
+		note( `backdrop gain tiles OFF (?bdtiles=${CFG.bdTiles}); the manifest carries ${manifest.backdropTiles.count} group(s)` );
+	}
 	// A replaced Gate 1 map (the ORN normals) is unreachable but still on the GPU: free it.
 	const freed = disposeOrphans( scene, texturesBeforePbr );
 	if ( pbrReport ) pbrReport.disposed = freed;
@@ -2112,6 +2137,7 @@ window.__pfaInfo = () => ( {
 	walk: walk ? { ...walk.state } : null,
 	materialsMode,
 	pbr: pbrReport,
+	backdrop_tiles: backdropTileReport,
 	detail: detailReport,
 	notes: log.slice(),
 } );

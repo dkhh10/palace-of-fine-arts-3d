@@ -3017,3 +3017,49 @@ the two must agree and today they do not.
 `WEB_far_tree_billboard_<prototype>` with `userData.pfaPlaceholder = 'gate3_tree_impostor'`. It is used
 ONLY when the impostors are unavailable or `?impostors=0`: when they build, the placeholders are not
 created at all, so a capture can never show a grey card and the name sweep stays clean.
+
+## Phase 9: the backdrop gain tiles (`web/src/backdropTiles.js`)
+
+The ENV city blocks read as flat pale boxes at cam06 because the baked backdrop atlas is 0.79 texels/m. The
+Phase 9 round authored four tileable gain images at 32-64 texels/m and a per-face **tile UV** on the backdrop
+meshes; the viewer multiplies the gain over the baked albedo, per fragment, exactly as the Cycles material
+does (`export/README.md` "Phase 9 — the backdrop gain tiles"):
+
+```
+haze   = smoothstep(r0, r1, length(worldPos.xz)) * amount    // glTF Y-up: the Blender XY plane
+amp    = 2 * strength * (1 - (1 - keep) * haze)
+albedo = bakedAlbedo * (1 + (tile - 0.5) * amp)
+```
+
+The gain is mean-1.0 (the images measure 0.5050), so it cannot move a group's mean albedo — it adds variance.
+Constants per group come from `manifest.backdrop_tiles.groups`, keyed by the **glb material name**
+(`MAT_EXP_ENVBD__MAT_backdrop_building` 1.25 / 0.70 / 150-720 m x 0.86, `_roof` 1.15, `_roof_tile` 1.10 at
+180-720 x 0.84, `_forest` 1.20 at 210-1500 x 0.82). `?bdtiles=0` turns the layer off, `?bdtiles=0.5` halves
+it; anything else is the A/B the QA round scores.
+
+**The two UV sets, and the only way this can go wrong.** `env.glb` now carries **TEXCOORD_0 = the tile UV**
+(already divided by the tile size: wrap REPEAT, no texture transform) and **TEXCOORD_1 = the baked atlas**,
+because the ENV build inserted its layer at index 0. Two consequences in this codebase:
+
+* `pbr.js` no longer hard-codes `t.channel = 0`. It reads `manifest.materials.sets[*].texcoord`, which the
+  export writes per set (**1 on the 8 backdrop merges, 0 on the other 54**), and reports both the per-channel
+  counts and any texture two sets want on *different* channels — three's `channel` is a property of the
+  texture, so that would otherwise be silent.
+* the tile UV is read from the **`uv` attribute** in the vertex patch, not from three's `vUv`: with the baked
+  maps on channel 1 three declares no `vUv` varying at all, while `attribute vec2 uv` is in every vertex
+  prefix.
+
+`checkUvContract()` runs on every load and **refuses to patch anything** if the manifest's two indices
+disagree with the sets' `texcoord` — a swap would sample a 1 K packed atlas at 64 tiles per metre and read in
+a capture as "the tiles did nothing" rather than as an error. `web/test/backdrop_tiles_test.mjs` (in
+`npm test`) pins all of it: the manifest parse, the swapped case, the compiled shader, the amplitude
+arithmetic, and the shipped `env.gltf` / `env.glb` themselves (two UV sets; TEXCOORD_0 in tile units;
+TEXCOORD_1 filling [0,1]; and, on the four **published** groups `env_t0` / `env_t2` / `m_env_t0` /
+`m_env_t2`, both sets **float** with no `KHR_texture_transform` left for `uvDequant.js` to apply to the
+wrong set — `gltfpack -vtf` has to be in `tiers.PACK_FLAGS["env"]`, not only in `gltf_pack.sh`, because
+those groups are what the viewer fetches).
+
+The four textures are **tier 1** (597 927 B desktop; 92 479 B of half-resolution ETC1S on mobile), so the
+first frame is unchanged in kind: until they land the gain is 1.0 and the backdrop is exactly what tier 0
+drew. `applyBackdropTiles` runs after every material pass and once per tier, and is idempotent — an
+already-patched material only swaps its texture.
