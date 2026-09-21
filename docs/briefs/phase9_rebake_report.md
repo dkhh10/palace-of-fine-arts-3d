@@ -237,8 +237,33 @@ design), `instance_irradiance.json` **166 placements, lum 0.1392-5.6361, mean 2.
 16/16 `E_bake`**. Its `generator` is now `export/trees_far_compose.py` alone and it carries **no
 `rows_source` block** - one population, which is the A.4 decision landing in the file. (Shipped file before:
 lum 0.1369-4.2566, mean 2.0127, generator "trees_far_compose.py + p8d_irr_restore.py".)
-`trees_far_ratio_check` verdict **PASS**, luminance_scale 1.4877; the `b_over_g_check` FAIL is the
-pre-existing reported-not-decided metric (review r2 finding 6), unchanged in kind.
+`trees_far_ratio_check` — **re-run against this round's reference after r1 review finding 3.** The first run
+PASSed against `impostor_diag_ref.json` as it stood on disk, whose source is
+`renders/previews/qa/round13_02_lagoon_ne_threequarter_cycles.png` (2026-09-17, **pre-r19**) — the same
+old-world-reference defect this report retires `p8d_irr_restore.py` for, so that number could not stand as
+this round's far-tree evidence. Both sides were regenerated for Phase 9 (outputs written to the scratchpad
+and this worktree, nothing into `export/out`):
+* `imp_diag_atlas.py` on the **re-baked** atlas: `ENV_tree_broadleaf_s53_LOD1` cam02 frame (1,7) hue 95.7,
+  B/G **0.499** (the shipped Sep-17 frame read 1.356 — the re-bake alone removed most of the impostor's blue);
+* `imp_diag_ref.py --ref renders/qa_comparisons/cycles_p9/cam02_1080_32spp.png` (converted to 8-bit in the
+  scratchpad: that reader takes 8-bit PNGs and the p9 renders are 16-bit; the data is the same
+  display-referred frame).
+
+| metric | before | after modulation | p9 target | verdict |
+|---|---|---|---|---|
+| display **hue** (the deciding metric) | 87.9 deg | **67.9 deg** | 50.7 deg | **PASS**, 53.8 % of the gap closed, no overshoot |
+| display B/G (reported, not decided on) | 0.4722 | 0.0 | 0.449 | FAIL, as before — a ratio of a ~1/255 blue |
+| luminance_scale | — | **1.5568** | — | (was 1.4877 against the old reference and the old atlas) |
+
+`ratio` for TREEFAR_000 is [1.7034, 1.5795, 0.4995], `E_bake` [3.057, 2.203, 1.649], `E_placement`
+[5.208, 3.480, 0.824]. Record: `docs/briefs/phase9_ratio_check_p9.json`, which now also carries a `sources`
+block naming the atlas, the reference JSON and the reference PNG, so the file can never again claim a
+provenance it does not have. The `b_over_g_check` and `overshoot` notes used to hard-code 1.267 / 0.648 /
+0.041; they are f-strings over the computed values now.
+
+**Still open (r1 review finding 4, a carry to QA, not closed here):** this is ONE placement. The population
+mean luminance moved 2.0127 -> 2.6885 (+33.6 %) and the modulation is applied at runtime at strength 1.0, so
+QA must re-score the far-tree crown boxes against the p9 references before the far trees are called good.
 
 **The glbs.** `env.glb` had to be re-exported and re-packed, which A.3 does not say: its `COLOR_0` is the
 near-tree irradiance the `vc_00/vc_01` jobs re-bake, and the global range moved **44.25655746 ->
