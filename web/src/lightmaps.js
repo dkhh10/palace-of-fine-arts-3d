@@ -105,8 +105,10 @@ export function applyGate3Lightmaps( o ) {
 		deferred: [], maxTier,
 		own: { matched: 0, applied: 0, blockedNoUv2InGlb: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, assets: {}, nearMiss: {} },
 		slots: { instances: 0, matched: 0, applied: 0, single: 0, noUv2Attribute: 0, unmatched: 0, maxMatchError_m: 0, meshes: [] },
-		specGate: specGate ? { openSkyB: specGate.openSkyB, skyRedOverBlue: specGate.skyRedOverBlue,
-			sunIrrOverPi: specGate.sunIrrOverPi } : null,
+		specGate: specGate ? { mode: specGate.mode, openSkyB: specGate.openSkyB,
+			skyRedOverBlue: specGate.skyRedOverBlue, sunIrrOverPi: specGate.sunIrrOverPi,
+			...( specGate.mode === 'r2' ? { lobes: specGate.lobes.length, floor: specGate.floor,
+				zenithB: specGate.zenithB, sunDir: specGate.sunDir } : {} ) } : null,
 		materialsCloned: 0, texturesRequested: 0, texturesLoaded: 0, texturesFailed: [],
 		meshesSeen: 0, instancedMeshesSeen: 0,
 		// the UV2 census: a lightmap can only attach to a mesh that carries TEXCOORD_1, and gltfpack
