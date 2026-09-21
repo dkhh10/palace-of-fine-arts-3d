@@ -96,6 +96,12 @@ mobile; `tiers_test` all green; `name_sweep` PASS.
 | mobile before | 46 187 845 | 47.32 MB | — |
 | mobile **after** | 46 312 049 | **47 450 506 B = 47.45 MB** | **tier 1, 92 479 B** (tex_lo) |
 
+Resident (GPU) cost of the four tiles: **3.32 MB** (1.33 + 1.33 + 0.33 + 0.33, the budget doc's
+`px² x 1 B x 4/3` rule for ASTC 4x4 + mips); the backdrop class reads 36.57 MB resident with them in.
+`manifest_v3`'s projected total prints 1266.89 MB against its 1200 MB line — that projection was already
+over before this round and the print is informational, not an assert; the number the viewer pays,
+`tiers.resident_estimate_mb`, is **1256 MB desktop / 312 MB mobile**.
+
 The +0.11 MB in the first frame is **not** the tiles — they are tier 1 — it is `env_t0.glb` 1.84 → 1.97 MB,
 the second UV set on the backdrop merges. The four `tex_lo` copies are also named in the DESKTOP plan as
 `mobile_only` rows, so a deploy built from `manifest.json` carries them.
