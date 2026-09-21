@@ -28,7 +28,13 @@ OUT = os.path.join(ROOT, "assets", "textures", "backdrop")
 TILES = {
     "bd_facade":   (1024, (16.0, 13.2)),   # 4 bays x 4 storeys: bay 4.0 m, storey 3.3 m
     "bd_roof":     (512,  (16.0, 16.0)),   # flat roof: gravel, seams, roof furniture
-    "bd_rooftile": (512,  (8.0, 8.0)),     # mission tile: 0.33 m courses, 0.30 m pans
+    # TILEABILITY (review r1 fix-now 1).  This was 8.0 x 8.0 m, which is 26.67 pans of 0.30 m across u and
+    # 24.24 courses of 0.33 m up v -- the phase did not close, and the wrap carried |d| 0.149 V / 0.116 H against
+    # an interior of 0.020 / 0.014, i.e. a hard line every 8 m on every mission-tile roof.  The pitches are the
+    # real ones (a mission pan is ~0.30 m, a course ~0.33 m), so the TILE moves to the nearest integer multiple
+    # of each: 27 pans x 24 courses.  `seam()` below is the check; `env_p9_uv0.TILE` carries the same numbers,
+    # and because UV0 is stored pre-divided, THAT is what actually changes on the mesh.
+    "bd_rooftile": (512,  (8.10, 7.92)),   # mission tile: 27 pans of 0.30 m (u) x 24 courses of 0.33 m (v)
     "bd_canopy":   (1024, (24.0, 24.0)),   # leaf mass: 4-12 m crowns, 0.8 m clumps
 }
 
@@ -251,9 +257,41 @@ def make_canopy():
     return save("bd_canopy", rgbv)
 
 
+def seam(name):
+    """Review r1 fix-now 1's own measure: the wrap edges must look like ordinary interior neighbours.
+
+    `wrap V` = mean |row 0 - row res-1| (the pair that becomes adjacent when the tile repeats vertically),
+    `wrap H` = the same for the first and last column; `interior` = the mean over every neighbouring row / column
+    pair inside the image.  A tileable image has wrap / interior of order 1; `bd_rooftile` measured 0.149 V and
+    0.116 H against an interior of 0.004-0.013 because 8.0 m is 24.24 courses of 0.33 m and 26.67 pans of 0.30 m,
+    i.e. the phase did not close and every 8 m of roof carried a hard line.
+    """
+    a = np.asarray(Image.open(os.path.join(OUT, name + ".png")).convert("RGB"), dtype=np.float64) / 255.0
+    a = a.mean(axis=2)
+    wv = float(np.abs(a[0] - a[-1]).mean())
+    wh = float(np.abs(a[:, 0] - a[:, -1]).mean())
+    dv = np.abs(a[1:] - a[:-1]).mean(axis=1)      # one value per interior row pair
+    dh = np.abs(a[:, 1:] - a[:, :-1]).mean(axis=0)
+    iv, ih = float(dv.mean()), float(dh.mean())
+    res, (tu, tv) = TILES[name]
+    # Two comparisons, because an image with designed hard edges (a storey line, a course butt, a felt seam) has
+    # a wrap that SHOULD look like one of them.  vs the mean says "is there an edge here at all"; vs the interior
+    # maximum says "is this edge unlike every edge the image already contains".  A wrap above the interior max is
+    # a seam; a wrap inside the interior population is one more of the image's own lines.
+    print(f"[env_p9_tiles] seam {name:12s} tile {tu} x {tv} m")
+    for lbl, w, d in (("V", wv, dv), ("H", wh, dh)):
+        mx = float(d.max())
+        verdict = "SEAM" if w > mx * 1.02 else "ok"
+        print(f"               wrap {lbl} {w:.4f}  = {w / max(d.mean(), 1e-9):5.2f}x interior mean {d.mean():.4f}"
+              f",  {w / max(mx, 1e-9):4.2f}x interior max {mx:.4f}  -> {verdict}")
+    return wv, wh, iv, ih
+
+
 if __name__ == "__main__":
     make_facade()
     make_roof()
     make_rooftile()
     make_canopy()
     print(f"[env_p9_tiles] wrote 4 tiles into {OUT}")
+    for n in TILES:
+        seam(n)

@@ -36,7 +36,7 @@ OWNER_KEY = "PFA_p9_uv0"
 TILE = {
     "MAT_backdrop_building":  (16.0, 13.2),
     "MAT_backdrop_roof":      (16.0, 16.0),
-    "MAT_backdrop_roof_tile": (8.0, 8.0),
+    "MAT_backdrop_roof_tile": (8.10, 7.92),   # 27 pans x 24 courses -- review r1 fix-now 1, see env_p9_tiles
     "MAT_backdrop_forest":    (24.0, 24.0),
 }
 TILE_DEFAULT = (16.0, 16.0)      # lawn / hill / skylight / door: they get the layer so the Gate-1 join stays

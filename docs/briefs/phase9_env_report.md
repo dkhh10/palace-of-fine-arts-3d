@@ -31,7 +31,7 @@ Branch `phase9-env`, worktree `.claude/worktrees/phase9-env`, from main 711b63b.
 |---|---|---|---|---|---|---|
 | `bd_facade.png` | 1024² | 16.0 x 13.2 (4 bays x 4 storeys: bay 4.0 m, storey 3.3 m) | **64.0 x 77.6** | 0.128 | MAT_backdrop_building | 1.25 / 0.70 |
 | `bd_roof.png` | 512² | 16.0 x 16.0 | 32.0 | 0.109 | MAT_backdrop_roof | 1.15 / 0.70 |
-| `bd_rooftile.png` | 512² | 8.0 x 8.0 | 64.0 | 0.094 | MAT_backdrop_roof_tile | 1.10 / 0.70 |
+| `bd_rooftile.png` | 512² | **8.10 x 7.92** (27 pans of 0.30 m x 24 courses of 0.33 m) | 63.2 x 64.6 | 0.095 | MAT_backdrop_roof_tile | 1.10 / 0.70 |
 | `bd_canopy.png` | 1024² | 24.0 x 24.0 | 42.7 | 0.115 | MAT_backdrop_forest | 1.20 / 0.70 |
 
 Texel density on the facades seen from the hero is **64 x 77.6 texels/m**, against the brief's >= 8 and against
@@ -39,21 +39,47 @@ the Gate-2 bake's 0.79. UV0 per face: `|nz| >= 0.5` -> planar world XY; otherwis
 horizontal tangent (the street), v = height above the object's own base, plus a name-hashed phase per object so
 neighbouring blocks do not line their storeys up. 1 291 meshes, 406 495 loops, **UV1 untouched**.
 
-RESULTS (Eevee 1920x1080 from the rebuilt master, `scripts/env_p9_probe.py`, QA-22 boxes and definitions):
+**Tileability (review r1 fix-now 1).** `python3 scripts/env_p9_tiles.py` now ends with `seam()`, the reviewer's own
+measure: the mean |Δ| between the first and last row (V) / column (H) — the pair the repeat makes adjacent —
+against every interior neighbouring pair. Two comparisons, because an image with designed hard edges (a storey
+line, a course butt, a felt seam) *should* have a wrap that looks like one of them: **vs the interior mean** says
+whether there is an edge at all, **vs the interior maximum** says whether it is unlike every edge the image
+already contains. A wrap above the interior max is a seam.
+
+`bd_rooftile` was 8.0 x 8.0 m = 26.67 pans of 0.30 m and 24.24 courses of 0.33 m — the phase did not close:
+
+| tile | wrap V | / interior max | wrap H | / interior max | verdict |
+|---|---|---|---|---|---|
+| bd_rooftile **8.0 x 8.0 (before)** | 0.1491 | **1.12x** | 0.1158 | **5.11x** | **SEAM both axes** |
+| bd_rooftile **8.10 x 7.92 (shipped)** | 0.1235 | 0.91x | **0.0039** | 0.17x | ok |
+| bd_facade 16.0 x 13.2 | 0.1749 | 0.38x | 0.1479 | 0.57x | ok (its own storey / pier lines) |
+| bd_roof 16.0 x 16.0 | 0.1826 | 0.92x | 0.1514 | 1.00x | ok (its own felt seams) |
+| bd_canopy 24.0 x 24.0 | 0.0029 | 0.13x | 0.0013 | 0.03x | ok (seamless by construction) |
+
+The pitches are the real ones (a mission pan is ~0.30 m, a course ~0.33 m), so the **tile** moved to the nearest
+integer multiple of each rather than the pitch moving. The shipped V wrap of 0.1235 is not a seam: it sits inside
+the interior course-line population (24 interior row pairs run 0.051-0.1363), i.e. the wrap **is** a course line,
+which is what a course line should look like. Texel density 64.0 -> **63.2 x 64.6**, still 8x the brief's floor.
+**Because UV0 is stored pre-divided, the tile size lives on the mesh**: `env_p9_uv0.TILE["MAT_backdrop_roof_tile"]`
+moved 8.0/8.0 -> 8.10/7.92 and `assets/environment.blend` was rebuilt. Nothing else in the chain changes —
+`assets/materials.blend` is untouched (the material never sees a tile size) and the ENV tri delta is still 0.
+
+RESULTS — re-measured on the **shipped** tiles after the fix-1 re-tile (Eevee 1920x1080 from the rebuilt
+master, `scripts/env_p9_probe.py`, QA-22 boxes and definitions):
 
 | box | st | before | after | Δ | cycles p9 | photo |
 |---|---|---|---|---|---|---|
-| **06 top row** hf | 6 | 0.0319 | **0.0358** | **+12.2 %** | 0.0274 | 0.1547 |
+| **06 top row** hf | 6 | 0.0319 | **0.0356** | **+11.6 %** | 0.0274 | 0.1547 |
 | 06 top row luma / sat | 6 | 0.484 / 0.297 | 0.480 / 0.301 | -0.004 / +0.005 | 0.401 / 0.365 | 0.788 / 0.094 |
-| **06 city r1c3** hf | 6 | 0.0239 | **0.0298** | **+24.5 %** | 0.0147 | 0.0728 |
+| **06 city r1c3** hf | 6 | 0.0239 | **0.0297** | **+24.3 %** | 0.0147 | 0.0728 |
 | 06 city r1c3 lum sd | 6 | 0.124 | 0.126 | +0.002 | 0.086 | 0.111 |
-| **06 far field** hf | 6 | 0.0261 | **0.0317** | **+21.5 %** | 0.0211 | 0.1967 |
+| **06 far field** hf | 6 | 0.0261 | **0.0314** | **+20.3 %** | 0.0211 | 0.1967 |
 | 06 far field lum sd | 6 | 0.102 | 0.105 | +0.003 | 0.073 | 0.153 |
 | 06 far lawn hf | 6 | 0.0503 | 0.0514 | +2.2 % | 0.0603 | 0.2190 |
 | 01 N-colonnade band hf | 1 | 0.0506 | 0.0491 | **-3.0 %** | 0.0970 | 0.2027 |
 | 01 N-colonnade band luma / sat | 1 | 0.195 / 0.666 | 0.193 / 0.676 | -0.002 / **+0.010** | 0.238 / 0.695 | 0.337 / 0.395 |
 | 01 S-colonnade band hf | 1 | 0.0923 | 0.0911 | -1.3 % | 0.1137 | 0.2338 |
-| 05 backdrop band hf | 5 | 0.0801 | 0.0787 | -1.7 % | 0.0997 | — |
+| 05 backdrop band hf | 5 | 0.0801 | 0.0786 | -1.9 % | 0.0997 | — |
 
 **Sheet: `renders/qa_comparisons/env_p9_r3_sheet.jpg`** — row 1 cam06 whole frame, **row 2 the cam06 city band at
 100 %**, row 3 cam01; left before, right after. At 100 % the blocks carry a bay/storey grid, sills, string courses
@@ -150,6 +176,8 @@ REPEAT and nothing else.
 
 * Images (`assets/textures/backdrop/`, 8-bit RGB PNG, **Non-Color / raw**, wrap REPEAT, mipmaps on):
   `bd_facade.png` 1024² (2.0 MB raw), `bd_roof.png` 512², `bd_rooftile.png` 512², `bd_canopy.png` 1024².
+  All four are tileable under `env_p9_tiles.seam()`; **`bd_rooftile`'s world tile is 8.10 x 7.92 m, not square** —
+  it does not matter to the exporter (UV0 is pre-divided) but it matters if anyone re-derives the UV.
   KTX2 candidates: UASTC for `bd_facade`, ETC1S is enough for the other three.
 * UV layer: `"UVMap"`, **layer 0**, on all 1 291 `ENV_backdrop_*` meshes. It survives Gate 1 unchanged —
   `gate1_set.py:804` excludes `kind == "backdrop"` from the UV1 atlas groups (so the layer-dropping loop at
