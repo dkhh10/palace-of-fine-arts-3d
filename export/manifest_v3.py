@@ -375,29 +375,39 @@ def main():
               f"baked layout at TEXCOORD_{'/'.join(str(i) for i in tc)} (worst distinct-UV match {worst:.5f}, "
               f"V-flipped on {flipped}/{len(uvchk)})" + (f"; MISMATCH {bad}" if bad else ""))
         assert not bad, f"env.gltf carries a different UV1 than the backdrop textures were baked against: {bad}"
-        # Phase 9: one index for all of them, or the per-set `texcoord` below would be a lie for some.
-        assert len(tc) == 1, f"the backdrop merges disagree on which TEXCOORD carries the baked layout: {tc}"
-        # ... and when the tile UV ships, it must be the OTHER set and must run in tile units. A swap of
-        # the two sets fails here: the baked layout would be found at 0 and the [0,1] atlas span at 1.
+        # Phase 9: the set is MIXED by design. The eight MAT_backdrop_* merges carry the ENV tile UV at
+        # TEXCOORD_0 and their bake atlas at 1; `bird_white` and `lamp_post` are merged by the same Gate 1
+        # rule but take no gain tile and keep the atlas at 0. So the index is stated per MESH here and per
+        # material SET below - never once for "the backdrop".
         if bd_tiles:
-            assert tc == [1], ("the backdrop tile UV ships, so the baked atlas must be TEXCOORD_1 and the "
-                               f"tile UV TEXCOORD_0; the baked layout was found at TEXCOORD_{tc[0]}")
             spans = {k: v["tile_uv_span"] for k, v in uvchk.items() if v.get("tile_texcoord") == 0}
             assert spans, "no backdrop mesh carries a second UV set: the Gate 1 export lost the tile UV"
-            thin = sorted(k for k, s in spans.items() if (s or 0) <= 1.5)
+            wide = {k: s for k, s in spans.items() if (s or 0) > 1.5}
+            assert wide, ("no backdrop merge's TEXCOORD_0 leaves a single tile, so it is a packed atlas, "
+                          f"not the tile UV - the two sets are swapped: {spans}")
             print(f"[manifest_v3] backdrop tile UV at TEXCOORD_0 on {len(spans)} merge(s), span "
-                  f"{min(v for v in spans.values() if v is not None):.2f}-"
-                  f"{max(v for v in spans.values() if v is not None):.2f} tiles")
-            assert not thin, ("these backdrop merges' TEXCOORD_0 never leaves one tile, so it is a packed "
-                              f"atlas, not the tile UV - the two sets are swapped: {thin}")
+                  f"{min(wide.values()):.2f}-{max(wide.values()):.2f} tiles on {len(wide)} of them")
+            for k, v in uvchk.items():
+                assert v["texcoord"] == (1 if k in spans else 0), (
+                    f"{k}: the baked layout is at TEXCOORD_{v['texcoord']} but its tile UV is "
+                    f"{'present' if k in spans else 'absent'} - the two sets are swapped")
     # ------------------------------------------------- which UV set the Gate 2 maps ride, per material
     # The viewer hard-coded TEXCOORD_0 for every PBR map until Phase 9 (web/src/pbr.js `t.channel = 0`).
     # Now that the backdrop merges carry the tile UV at layer 0, their baked maps ride TEXCOORD_1 and the
     # rest of the scene still rides TEXCOORD_0, so the index travels per set - READ BACK from the shipped
     # glTF by the cross-check above, never asserted.
-    bd_tc = sorted({v["texcoord"] for v in uvchk.values()})[0] if uvchk else 0
+    mesh_tc = {m: v["texcoord"] for m, v in (uvchk or {}).items()}
     for _n, _s in sets.items():
-        _s["texcoord"] = bd_tc if _s.get("cls") == "backdrop" else 0
+        _s["texcoord"] = 0
+    for _jid, _job in jobs.items():
+        _n = _job["group"]
+        if _n not in sets:
+            continue
+        _vals = {mesh_tc[m] for m in _job["meshes"] if m in mesh_tc}
+        assert len(_vals) <= 1, f"{_n}: its meshes put the bake atlas on different TEXCOORDs: {sorted(_vals)}"
+        if _vals:
+            sets[_n]["texcoord"] = _vals.pop()
+    bd_tc = 1 if any(v == 1 for v in mesh_tc.values()) else 0
     man["materials"]["texcoord_source"] = (
         "per set: the glTF UV set the Gate 2 maps ride. `materials.uv` names the scene default; a set's "
         "own `texcoord` wins. Derived from backdrop_uv_crosscheck, which scores every TEXCOORD_n in "
@@ -418,6 +428,9 @@ def main():
             if not name:
                 unmatched.append(src)
                 continue
+            assert int(sets[name].get("texcoord", 0)) == 1, (
+                f"{name} wears a gain tile on TEXCOORD_0, so its baked maps must be on TEXCOORD_1; the "
+                f"shipped glTF says {sets[name].get('texcoord')}")
             groups[name] = dict(g, src_material=src)
         assert not unmatched, (f"the backdrop tile groups name source materials with no Gate 2 set: "
                                f"{unmatched} (known: {sorted(by_src)[:12]})")

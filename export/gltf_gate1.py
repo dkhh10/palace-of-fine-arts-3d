@@ -131,13 +131,16 @@ backdrop_uv = {}
 backdrop_bake_layer = {}
 
 
-def _uv_span(me, lay):
+def _uv_read(me, lay):
     a = np.empty(len(me.loops) * 2, dtype=np.float32)
     try:
         lay.uv.foreach_get("vector", a)
     except (AttributeError, TypeError):
         lay.data.foreach_get("uv", a)
-    a = a.reshape(-1, 2)
+    return a.reshape(-1, 2)
+
+
+def _uv_span(a):
     return float(max(a[:, 0].max() - a[:, 0].min(), a[:, 1].max() - a[:, 1].min()))
 
 
@@ -152,15 +155,17 @@ if npz_path.exists():
         tile = me.uv_layers.get(g1.UV1)
         target = g1.UV1
         if tile is not None and len(me.loops):
-            # It is only the tile UV if it RUNS IN TILE UNITS. A packed [0,1] layout sitting at layer 0
-            # would mean something else wrote a bake atlas there, and appending a second one silently is
-            # how a glb ends up sampling the wrong set - fail instead.
-            span = _uv_span(me, tile)
-            assert span > 1.5, (f"{mn} already carries a '{g1.UV1}' whose UV span is {span:.3f} - that is a "
-                                f"packed atlas, not the Phase 9 tile UV, and this relay will not append a "
-                                f"second bake layer behind it")
-            target = UV1_BAKE
-            backdrop_bake_layer[mn] = dict(tile_uv_span=round(span, 3))
+            # Is the layer already here the BAKE layout, or something else?  Compared against the npz
+            # itself rather than guessed: the loop order is the same mesh's, so an already-relayed mesh
+            # (a re-run) matches to the float and is overwritten in place, while anything that does NOT
+            # match is a layout this relay does not own - the Phase 9 tile UV - and is left alone.
+            # A span test cannot do this job: the door group is one cube and its tile UV spans 0.94.
+            cur = _uv_read(me, tile)
+            same = cur.shape == arr.shape and bool(np.allclose(cur, arr, atol=1e-5))
+            if not same:
+                target = UV1_BAKE
+                backdrop_bake_layer[mn] = dict(tile_uv_span=round(_uv_span(cur), 3),
+                                               max_delta_vs_bake=round(float(np.abs(cur - arr).max()), 5))
         lay = me.uv_layers.get(target) or me.uv_layers.new(name=target)
         try:
             lay.uv.foreach_set("vector", arr.reshape(-1))
@@ -177,17 +182,34 @@ if npz_path.exists():
                                v=[round(float(arr[:, 1].min()), 5), round(float(arr[:, 1].max()), 5)])
         if mn in backdrop_bake_layer:
             backdrop_bake_layer[mn].update(texcoord=names.index(target))
+for _m, _v in sorted(backdrop_uv.items()):
+    print(f"[gltf_gate1] backdrop {_m}: layers {_v['uv_layers']} bake->{_v['layer']} "
+          f"TEXCOORD_{_v['texcoord']} loops {_v['loops']}"
+          + (f" tile span {backdrop_bake_layer[_m]['tile_uv_span']}" if _m in backdrop_bake_layer else " NO TILE UV"))
+# The set is MIXED by design: the eight MAT_backdrop_* merges carry the ENV tile UV and put the bake
+# atlas at TEXCOORD_1; `bird_white` and `lamp_post` are merged by the same Gate 1 rule but use their own
+# materials, get no gain tile, and keep the atlas at TEXCOORD_0. What must hold is the RULE, per mesh:
+# a tile UV present <=> the bake atlas at 1, and no tile UV <=> the bake atlas at 0. The manifest then
+# states the index per MATERIAL SET, which is what the viewer reads.
+_wrong = [m for m, v in backdrop_uv.items()
+          if v["texcoord"] != (1 if m in backdrop_bake_layer else 0)]
+assert not _wrong, f"these backdrop merges put the bake atlas on the wrong TEXCOORD: {_wrong}"
+if backdrop_bake_layer:
+    _wide = [m for m, v in backdrop_bake_layer.items() if v["tile_uv_span"] > 1.5]
+    assert _wide, ("no backdrop merge's layer-0 UV leaves a single tile - that is not the ENV tile UV. "
+                   f"spans: { {m: v['tile_uv_span'] for m, v in backdrop_bake_layer.items()} }")
 _tc = sorted({v["texcoord"] for v in backdrop_uv.values()}) if backdrop_uv else []
-assert len(_tc) <= 1, f"the backdrop merges put the bake atlas on different TEXCOORDs: {_tc}"
 report["backdrop_uv1"] = dict(source=str(npz_path), meshes=backdrop_uv, count=len(backdrop_uv),
                               bake_layer=(UV1_BAKE if backdrop_bake_layer else g1.UV1),
-                              bake_texcoord=(_tc[0] if _tc else None),
+                              bake_texcoord=(_tc[0] if len(_tc) == 1 else _tc),
+                              bake_texcoord_by_mesh={m: v["texcoord"] for m, v in sorted(backdrop_uv.items())},
                               tile_uv_meshes=len(backdrop_bake_layer),
                               note="Phase 9: when the ENV tile UV is present it keeps layer 0 (TEXCOORD_0) "
                                    "and the Gate 2 bake atlas is appended as a second layer (TEXCOORD_1). "
                                    "With no tile UV the atlas stays on layer 0, as it did before Phase 9.")
 step.done(meshes=len(backdrop_uv), source=npz_path.name if npz_path.exists() else "MISSING",
-          bake_texcoord=(_tc[0] if _tc else "n/a"), with_tile_uv=len(backdrop_bake_layer))
+          bake_texcoord=("/".join(str(i) for i in _tc) if _tc else "n/a"),
+          with_tile_uv=len(backdrop_bake_layer))
 
 # ---------------------------------------------------------------- Gate 3 hand-off 1: the re-laid UV2
 # Gate 1's UV2 on seven merged masses is margin-dominated (the south colonnade packs 0.0095 of its 2K map =
