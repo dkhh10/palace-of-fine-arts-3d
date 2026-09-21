@@ -532,3 +532,7 @@ def build_all(SUB, terrain_height, site, hall_poly, lagoon_field, hall_field=Non
     build_landscape(SUB, terrain_height)
     import env_city
     env_city.build_all(SUB, terrain_height, lagoon_field, hall_field, colonnade_polys)
+    # Phase 9 / 8d R3: UV0 in tile units for the tiled facade / roof / canopy detail (scripts/env_p9_tiles.py).
+    # Must run LAST -- every backdrop object has to exist, and Gate 1 joins them per material by UV layer NAME.
+    import env_p9_uv0
+    env_p9_uv0.apply()
