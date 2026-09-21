@@ -1042,3 +1042,23 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
    exactly while the 1440p medians read up to +5.4 ms — the machine had just finished a 4K Cycles render. Say so, do not charge it, and re-take
    the number on an idle machine.
 6. **Scores.** Desktop 01 **4.01** · 02 **3.30** · 03 2.83 · 04 2.88 · 05 **3.28** · 06 **3.07**; mobile **3.40 / 3.38 / 2.52 / 2.70 / 3.04 / 2.62**.
+
+## QA round 25 (the Phase 9 gate on deploy 13, tag `gate13`, 2026-09-21) — **GATE PASSED; hero 4.05, no blocker**
+1. **A look change is only shipped once it is read back out of the delivered frame, in the units it was specified in.** Station 2's
+   acceptance was written in b\* / h_ab / R-B on named boxes; the same boxes on the deployed frame give -2.7 -> **+10.4**, -11.2 ->
+   **+4.5**, +0.2 -> **+9.0**, tracking the re-rendered Cycles master within 0.9 b\*. That — not "the re-bake ran" — is what closes a
+   defect that had been open since QA-08-2.
+2. **When the whole scene changes, a fixed 0.5 % regression budget measures nothing.** This round re-baked every lightmap and gated the
+   specular at every station, so no pixel is "outside the changed boxes". Score the *direction* instead: all six stations moved toward
+   the new Cycles references, five of six toward the old ones, and the architecture boxes landed on their reference (`columns` 113.5 vs
+   114.3, `vault field` 60.3 vs 60.6).
+3. **Re-score a carried defect against the AFTER reference, and check whether the reference moved.** The far crowns' deviation went
+   7.5 -> 9.6 %, and because `cycles_p9 / cycles_p8` is 0.970-0.998x on those boxes the reference did *not* move — so the rise is the
+   viewer's. Two boxes, not nine as in QA 23: name the width as well as the direction, and it stays a residual rather than a blocker.
+4. **The tiles keep finding what no box is pointed at.** 36 tiles at 100 % gave the faceted aerial backdrop and the lagoon moiré at
+   station 6, the flat pale backdrop slabs behind the colonnade at 1 / 2 / 5, and the violet column shafts — none of which any metric in
+   this round's brief covers. Conversely a tile defect can be exonerated by one measurement: those shafts read b\* -1.02 in the viewer
+   against -1.52 in Cycles, so the viewer is faithful and the fault is the master's.
+5. **A frustum rule is cheaper than a viewer capture.** `export/belt_rule.py --frustum` re-derives from the manifest which belt rows are
+   in frame at cam03 and FAILs if an in-frame row is billboard-only — the whole "no magnified card" gate check, with no GPU.
+6. **Scores.** Desktop 01 **4.05** · 02 **3.51** · 03 **3.08** · 04 **3.05** · 05 **3.24** · 06 3.07; mobile **3.44 / 3.59 / 2.77 / 2.87 / 3.00 / 2.62**.
