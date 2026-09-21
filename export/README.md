@@ -826,9 +826,20 @@ scripts/blender_run.sh 1200 -- --background --python export/gate3_probe.py    # 
 scripts/blender_run.sh 1800 -- --background --python export/gate3_set.py      # gate3_bake.blend + gate3_imp.blend + bake_jobs.json
 export/bake_queue.sh --gate3 start                                            # detached: one Blender per job, 1800 s each
 export/gate3_pack.sh                                                          # KTX2 (lossless RGBM8 + gamma-2 UASTC) + .hdr
+python3 export/gate3_relay_check.py                                           # MUST precede manifest_v4 - see below
 python3 export/manifest_v4.py                                                 # manifest v4, schema pfa-phase6/4
 export/sync_main.sh                                                           # copy out/ to the MAIN checkout (no --delete)
 ```
+
+**`gate3_relay_check.py` runs BEFORE `manifest_v4.py`, always.** The relay is what reads the near-tree
+`COLOR_0` back out of `env.glb` and writes `uv2_relay_status.json`'s `vertex_irradiance_range_global`;
+`manifest_v4.py` copies that number into `lightmaps.vertex_irradiance.range`, and the viewer decodes
+`irradiance = COLOR_0^2 * range * lightmap_scale` with it. Run v4 first and the manifest keeps the PREVIOUS
+round's range while the glb carries the new codes, i.e. every near tree is decoded at the wrong scale.
+Measured in Phase 9: the re-baked vertex irradiance moved the global range **44.25655746 -> 35.12940979**
+(a 1.26x error on all 14 near trees), the first pass ran v4 before the relay and
+`web/test/gate3_test.mjs:146` caught it - "one global range 44.25655746 ... (1 distinct)" against the
+relay's 35.12940979. The fix is to re-run `manifest_v4.py` after the relay; nothing else has to be redone.
 
 | file | what it writes |
 |---|---|
@@ -1413,8 +1424,15 @@ Not fixed here: carries 6, 7, 8, 9, 10, 13 and 14 stand as the review lists them
 scripts/blender_run.sh 900 -- --background export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
 export/gltf_pack.sh --gate1            # KTX2 + the four glbs + verify_glb
 python3 export/gate3_relay_check.py    # reads the attributes BACK out -> out/gate3/uv2_relay_status.json
+python3 export/manifest_v4.py          # AFTER the relay: it copies the COLOR_0 range the relay just measured
 export/sync_main.sh
 ```
+
+`manifest_v4.py` belongs at the end of this block and not before `gate3_relay_check.py`: the relay writes
+`uv2_relay_status.json`'s `vertex_irradiance_range_global` and v4 copies it into
+`lightmaps.vertex_irradiance.range`. On a round that re-bakes the near-tree irradiance the number moves
+(Phase 9: 44.25655746 -> 35.12940979) and a manifest written before the relay decodes every near tree at the
+old scale. `web/test/gate3_test.mjs:146` is the check that catches it.
 
 14. **The blocker this gate found: `gltfpack` was stripping `TEXCOORD_1` out of every glb.** gltfpack removes
     any vertex attribute no material references, and **nothing in a glb references UV2** — the lightmaps are
