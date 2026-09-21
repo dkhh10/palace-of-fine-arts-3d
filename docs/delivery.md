@@ -233,7 +233,7 @@ water reflector not session-reproducible (A/A mask rule); the Phase 8 Cycles ref
   (rule 50 MB); resident 1 814.1 MB; 0 page errors; name sweep 0 hits over 738 + 341 manifest rows; belt frustum invariant PASS. Deploy 14 (the ENV R3 tiles) follows: [filled at the close].
 - Phase 9 before/after sheet: renders/qa_comparisons/phase9_before_after_960.jpg (scripts/phase9_sheet.py; viewer hero deploy 12 vs deploy 13/14; Cycles 4K hero Phase 8 vs Phase 9; ref 169),
   station pairs renders/qa_comparisons/phase9_stations/, tiles renders/qa_comparisons/phase9_tiles/. New 4K Cycles hero renders/final/hero_cam01_3840x2160_128spp.png
-  (128 spp fixed, [wall s]; lead tile pass [result]); the Phase 8 hero preserved in renders/final/phase8/. Phase 9 Cycles station references (1080p / 32 spp) at
+  (128 spp fixed, 1 453 s, peak RSS 5.4 GB; lead tile pass clean: no filled opening, no flat face, no plain cylinder, no seam; one note for QA 26 — a thin dark band above the right colonnade entablature at 4K); the Phase 8 hero preserved in renders/final/phase8/. Phase 9 Cycles station references (1080p / 32 spp) at
   renders/qa_comparisons/cycles_p9/960/; QA gate sheet renders/web/gate13_gate.png.
 - master.blend / master_delivery.blend rebuilt twice (r19 lighting; ENV R3 tiles); every lightmap re-baked (87 jobs, 0 failures, 455 min, 0 clipped pixels); the export chain
   regenerated every web asset (export/README.md "Phase 9"); scripts/build_master.py APPENDS (no --link): a before/after needs two lead_build.sh runs.
