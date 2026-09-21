@@ -352,6 +352,19 @@ const G2 = specGateFrom( OPEN_SKY, SUN_IRR_PI, { lobes: UNIFORM_LOBES, floorFrac
 	const k0 = mk( null ), k1 = mk( G ), k2 = mk( G2 );
 	check( k0 !== k1 && k1 !== k2 && k0 !== k2, `off / round 1 / round 2 take three different program keys` );
 	check( k2.includes( '|sg2:' ) && k1.includes( '|sg:' ), `the round-2 key is tagged sg2 (${k2.split( '|' ).pop()})` );
+	// the SLOT path patches `#include <common>` too (its second atlas sampler), and 988 ornament
+	// instances take it: both substitutions have to survive each other.
+	{
+		const q = new THREE.MeshStandardMaterial(); q.lightMap = new THREE.Texture();
+		patchBakedMaterial( q, { lightMapEncoding: 'gamma2', range: 44.409718, slot: true,
+			atlasB: new THREE.Texture(), specGate: G2 } );
+		const s = freshShader();
+		let e2 = null;
+		try { q.onBeforeCompile( s, null ); } catch ( e ) { e2 = e; }
+		check( ! e2 && /uniform sampler2D pfaLmAtlasB/.test( s.fragmentShader )
+			&& /vec2 pfaSkyE0/.test( s.fragmentShader ) && /pfaSlotUv/.test( s.fragmentShader ),
+			`the slot atlas path takes the gate too (the 988 ornament instances)${e2 ? `: ${e2.message}` : ''}` );
+	}
 	const k2b = mk( specGateFrom( OPEN_SKY, SUN_IRR_PI,
 		{ lobes: UNIFORM_LOBES.map( ( l, i ) => i === 3 ? [ l[ 0 ], l[ 1 ], l[ 2 ], l[ 3 ], l[ 4 ], l[ 5 ] * 1.5 ] : l ),
 			floorFrac: 0.05, sunDir: SUN_DIR } ) );
