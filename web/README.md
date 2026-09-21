@@ -1201,6 +1201,104 @@ are character-for-character what Phase 8 compiled and the two share one program.
 §4 asserts all three. The sidecar reports what the material actually compiled in, not what the url
 asked for: `__pfaInfo().gate3.specGate` is `{openSkyB, skyRedOverBlue, sunIrrOverPi}` or `null`.
 
+## Phase 9 item 2, ROUND 2 — the gate's sunlit end (`?specgate=1` is round 1), 2026-09-21
+
+The six-station capture (`docs/briefs/phase9_viewer_capture_report.md` B) measured round 1 above:
+station 3 went the right way (near_column R **1.93x -> 1.45x**, blue closed, frame p10 37.5 -> 11.9
+against Cycles' 6.1) but **the 0.5 % parity budget outside shade was met at no station** (0.67-6.59 %)
+and **cam05 regressed** (p10 64.3 -> 55.2 against Cycles' 64.9). Two normalisation errors, both at
+the sunlit end, and both structural rather than a tuning question (`docs/decisions.md` 2026-09-21):
+
+1. **`skyVis` divided by the open sky of an UPWARD-facing surface.** `11.256` is
+   `E_open(+Z)/pi`. A vertical wall never sees more than half the sky, and under this sky an *east*
+   wall — the face the colonnade turns to the morning sun — sees **2.50**, so a wall with nothing in
+   front of it read `skyVis = 2.50/11.256 = 0.22` and lost 78 % of an IBL specular term Cycles keeps.
+2. **`sunVis` was multiplied into a term that already carries `dotNL`.** `(lm.r - k*lm.b)/sunIrrOverPi`
+   *is* `sunVis * dotNL`, and it scaled `reflectedLight.directSpecular`, which three builds as
+   `irradiance = dotNL * lightColor` (`RE_Direct_Physical`). The sun's highlight was darkened by
+   `dotNL` twice — on an east wall at `dotNL 0.872`, by 13 % even when nothing shadowed it.
+
+**Round 2.** `E0(n)` — the unoccluded sky irradiance/pi **for the surface's own world normal** —
+replaces the constant, and `sunVis` is divided by `dotNL`:
+
+```glsl
+vec3 pfaWN   = inverseTransformDirection( geometryNormal, viewMatrix );   // three world axes
+vec2 pfaE0   = pfaSkyE0( pfaWN );                       // (r, b) of E0(n)/pi, from the sky lobes
+float pfaDen = max( pfaE0.y, <floor_frac * E0(zenith).b> );
+pfaSkyVis    = clamp( pfaLmPi.b / pfaDen, 0.0, 1.0 );
+float pfaNL  = max( dot( pfaWN, <sun.toSunBlender -> b2t> ), 0.05 );
+pfaSunVis    = clamp( ( pfaLmPi.r - ( pfaE0.x / pfaDen ) * pfaLmPi.b )
+                      / ( <sun.irradiance_over_pi> * pfaNL ), 0.0, 1.0 );
+```
+
+The identity that matters: on a surface that is **fully open and fully sunlit**, `lm.b` IS `E0(n).b`
+and `lm.r` IS `sunIrrOverPi*dotNL + E0(n).r`, so **both gates read exactly 1.0 at any orientation** —
+the gate becomes transparent where it must be, which is the whole parity problem. `spec_gate_test.mjs`
+§8 asserts that at five normals under a uniform-sky fixture. The sky's red share subtracted from
+`lm.r` is `E0(n).r/E0(n).b`, not the constant 0.195: on an east wall this sky is **2.5x red over
+blue** near the horizon, and subtracting 0.195 there would leave the sky's own warmth in the sun's
+channel.
+
+**Why lobes and not SH9.** The brief asked for an SH9 probe. `manifest_v4.py` writes one
+(`sky.diffuse_sh9`, three's `SphericalHarmonics3` order and scale — `spec_gate_test.mjs` §10e checks
+it against three's own `getIrradianceAt`) **and does not use it**: this sky is a near-horizon glow
+that puts **50 % of its blue flux inside 2.3 % of the sphere**, and the 9-coefficient irradiance is
+**1.228x** the quadrature at the zenith, **1.273x** on an east wall, p95 **41 %** over the sphere, and
+negative on downward normals. A denominator 25 % too large throws away 25 % of the env specular on
+exactly the sunlit walls this round exists to give back. `sky.diffuse_lobes` instead ships **40 delta
+lobes** (`E0(n)/pi = sum max(dot(n,d),0) * rgb`) from a deterministic equal-flux 5x8 partition,
+Lloyd-refined, with per-channel intensities that preserve each cluster's first moment:
+
+| | zenith vs the quadrature | east wall | blue error over the sphere (p50 / p95 / max) |
+|---|---|---|---|
+| SH9 | 1.228x | 1.273x | 1.6 % / 41.5 % / 73.2 % |
+| 40 lobes | **1.0057x** | **0.982x** | **0.53 % / 2.99 % / 5.85 %** |
+
+(measured on the deploy-12 `sky_diffuse_1024x512.exr`; on the re-baked r19 sky, whose open blue falls
+from 11.256 to 5.825, the same fitter gives zenith 1.013x and p50/p95 **0.58 % / 1.31 %**.)
+
+**The lobe count is one constant** (`SKY_LOBE_BANDS` x `SKY_LOBE_SECTORS` in `manifest_v4.py`), and it
+buys accuracy linearly in fragment ALU. Measured on both skies, zenith ratio / blue p95:
+
+| partition | lobes | deploy-12 sky | r19 re-bake |
+|---|---|---|---|
+| 5x8 (shipped) | 40 | 1.0057x / 3.0 % | 1.0130x / 1.3 % |
+| 6x8 | 48 | 1.0049x / 2.3 % | 1.0095x / 1.2 % |
+| 8x8 | 64 | 1.0029x / 1.9 % | 1.0066x / 0.9 % |
+| 8x12 | 96 | 1.0012x / 1.1 % | 1.0034x / 0.6 % |
+
+40 ships because the residual is immaterial where it lands: `skyVis` off by 3 % is 3 % of an env
+specular term that is itself ~5 % of a sunlit pixel — 0.15 %, an order below the 0.5 % parity budget —
+while 64 lobes would add ~60 % to the gate's ALU on every lightmapped fragment, and **this branch
+could not measure a frame time** (no Chrome; the bake queue owns the GPU). The unit checks therefore
+bound the zenith at **2 %** and assert the fit's p50/p95 separately; if the capture shows the sunlit
+stations still short, raising the partition is a one-line change with no viewer edit.
+
+**The floor.** A downward normal's `E0.b` is ~0.02 against the zenith's 11.26, and `lm.b / E0(n).b`
+there divides two near-zero numbers — a soffit deep in the colonnade would read as *fully*
+sky-exposed, which is the defect the gate exists to remove. The denominator is floored at
+`floor_frac` (0.05) of `E0(zenith).b`, which biases downward faces **closed**: they reflect the dark
+lower hemisphere anyway. The value is in the manifest, not the shader, so it is tunable without a
+viewer change.
+
+**Axes.** The lobes are built directly in three's world axes: the equirect's own mapping is
+`sky.mapping` (row 0 = zenith, `u = 0.5 + atan2(bx, by)/360`, verified at gate0 to 0.026° against the
+sun's azimuth), and Blender -> three is `(X, Y, Z) = (bx, bz, -by)` (`blenderCamera.js b2t`). So the
+model does **not** depend on `sky.rotation_deg`, which is only how the viewer spins the same equirect
+into the same place. A diagnostic `?skyrot=` that moves the environment does **not** move the gate.
+
+**`?specgate=`** now has three positions: `0` = the Phase 8 path (no GLSL, no cache-key term, one
+shared program — §4 still asserts it character for character); `1` = round 1 as deployed on
+2026-09-20, kept for the A/B against that capture set; anything else (the default) = round 2. The
+three take three different program cache keys, and `__pfaInfo().gate3.specGate` reports `mode` plus
+the constants the material actually compiled in.
+
+**Cost.** 40 dot products and two multiply-adds per lightmapped fragment, no texture, no uniform: the
+lobes are compiled into the program, so a re-baked sky changes the cache key and recompiles. The
+manifest grows **+9 734 B raw / +3 201 B gzipped** (desktop; +3 143 B mobile) for all three blocks,
+which is boot overhead, not tier 0: first frame on the wire 49.28 MB, unchanged within the target.
+`manifest_v4.py` takes 12.6 s instead of 0.5 s (the quadrature reference for the check table).
+
 ### The chain, run on this branch (2026-09-20)
 
 No bake, no KTX2 encode, no pack, no deploy — the export set does not move and the lead runs the real

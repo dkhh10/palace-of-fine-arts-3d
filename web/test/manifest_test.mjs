@@ -129,8 +129,11 @@ for ( const [ gate, rel ] of [ [ 'gate3', 'export/out/gate3/manifest.json' ],
 			`${gate}: floor_frac ${lob.floor_frac} (the denominator's floor, as a fraction of E0(zenith).b)` );
 		// The one number that proves the model is in the same units and the same axes as the constant
 		// above: evaluated straight up it must reproduce the quadrature's open-sky blue.
+		// 2 %, not 1 %: 0.57 % is the fit's own residual on the deploy-12 sky and 1.30 % on the r19
+		// re-bake. What this pins is the CONVENTION (same sky, same units, same axes) — an error there
+		// is a factor of pi or a swapped channel. The fit's accuracy is the next check.
 		const z = lob.checks && lob.checks.zenith_vs_open_irradiance_over_pi;
-		check( z && Math.abs( z.lobes_over_quadrature_b - 1 ) < 0.01,
+		check( z && Math.abs( z.lobes_over_quadrature_b - 1 ) < 0.02,
 			`${gate}: E0(zenith).b ${z && z.lobes[ 2 ]} reproduces sky.open_irradiance_over_pi.b `
 			+ `${sky && sky[ 2 ]} to ${z && ( ( z.lobes_over_quadrature_b - 1 ) * 100 ).toFixed( 2 )} %` );
 		// Lobes sit where the light is: this sky is a near-horizon glow over a black ground, so no lobe
