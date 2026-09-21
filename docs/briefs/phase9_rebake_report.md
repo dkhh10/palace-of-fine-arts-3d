@@ -306,5 +306,10 @@ onto itself and its last loop runs `cp -f <f> <same f>`, which `cp` refuses ("ar
 turns into rc 1. Nothing it would copy is missing - the whole chain wrote MAIN's `export/out` directly, which
 is the reason for running there.
 
+**Merge hygiene (r1 review finding 9).** MAIN's working tree held a byte-identical **uncommitted** copy of
+`export/manifest_v2.py` (I edited MAIN's copy to unblock the chain and committed the same content here); the
+lead discarded it with `git checkout -- export/manifest_v2.py` before merging. The committed version on this
+branch is the only one.
+
 **Left for the lead: deploy.** Nothing in this round deployed, and no Chrome was started. The web build is in
 `web/dist`; `export/out/gate5` carries the two manifests, the tier groups and both `verify_gate5_*.json`.
