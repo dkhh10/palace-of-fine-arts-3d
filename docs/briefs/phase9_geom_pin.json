@@ -1,0 +1,187 @@
+{
+ "shipped": "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/e93f113b-973d-4713-b410-e47f45434fd6/scratchpad/shipped/gate3_manifest_shipped.json",
+ "set": "export/out/gate1/export_set.json",
+ "checks": [
+  {
+   "name": "totals.placed_tris.ARCH",
+   "ok": true,
+   "shipped": 949382,
+   "new": 949382
+  },
+  {
+   "name": "totals.unique_tris.ARCH",
+   "ok": true,
+   "shipped": 351374,
+   "new": 351374
+  },
+  {
+   "name": "totals.objects.ARCH",
+   "ok": true,
+   "shipped": 564,
+   "new": 564
+  },
+  {
+   "name": "totals.placed_tris.ORN",
+   "ok": true,
+   "shipped": 1099192,
+   "new": 1099192
+  },
+  {
+   "name": "totals.unique_tris.ORN",
+   "ok": true,
+   "shipped": 112897,
+   "new": 112897
+  },
+  {
+   "name": "totals.objects.ORN",
+   "ok": true,
+   "shipped": 436,
+   "new": 436
+  },
+  {
+   "name": "totals.placed_tris.ENV",
+   "ok": true,
+   "shipped": 895052,
+   "new": 895052
+  },
+  {
+   "name": "totals.unique_tris.ENV",
+   "ok": true,
+   "shipped": 546682,
+   "new": 546682
+  },
+  {
+   "name": "totals.objects.ENV",
+   "ok": true,
+   "shipped": 1579,
+   "new": 1579
+  },
+  {
+   "name": "totals.placed_total",
+   "ok": true,
+   "shipped": 2943626,
+   "new": 2943626
+  },
+  {
+   "name": "totals.unique_total",
+   "ok": true,
+   "shipped": 1010953,
+   "new": 1010953
+  },
+  {
+   "name": "totals.unique_meshes",
+   "ok": true,
+   "shipped": 146,
+   "new": 146
+  },
+  {
+   "name": "tree_rule.trees_total",
+   "ok": true,
+   "shipped": 186,
+   "new": 186
+  },
+  {
+   "name": "tree_rule.within_radius",
+   "ok": true,
+   "shipped": 77,
+   "new": 77
+  },
+  {
+   "name": "tree_rule.near_exported",
+   "ok": true,
+   "shipped": 20,
+   "new": 20
+  },
+  {
+   "name": "tree_rule.far_billboards",
+   "ok": true,
+   "shipped": 166,
+   "new": 166
+  },
+  {
+   "name": "tree_rule.lod2_blob_objects",
+   "ok": true,
+   "shipped": 85,
+   "new": 85
+  },
+  {
+   "name": "tree_rule.lod2_blob_within_radius",
+   "ok": true,
+   "shipped": 67,
+   "new": 67
+  },
+  {
+   "name": "tree_rule.near_tris_used",
+   "ok": true,
+   "shipped": 391908,
+   "new": 391908
+  },
+  {
+   "name": "tree_near list (names, in order)",
+   "ok": true,
+   "shipped_n": 20,
+   "new_n": 20
+  },
+  {
+   "name": "tree_far list (content and order)",
+   "ok": true,
+   "shipped_n": 166,
+   "new_n": 166
+  },
+  {
+   "name": "assets: the same object set",
+   "ok": true,
+   "shipped_n": 2579,
+   "new_n": 2579
+  },
+  {
+   "name": "meshes: the same mesh set",
+   "ok": true,
+   "shipped_n": 146,
+   "new_n": 146
+  },
+  {
+   "name": "assets: every object keeps its mesh",
+   "ok": true,
+   "shipped_n": 0,
+   "new_n": 0
+  },
+  {
+   "name": "uv1 atlas tiles: the same groups",
+   "ok": true,
+   "shipped_n": 5,
+   "new_n": 5
+  },
+  {
+   "name": "uv1 coverage min",
+   "ok": true,
+   "shipped": 0.0876,
+   "new": 0.0876
+  },
+  {
+   "name": "uv1 per-group coverage",
+   "ok": true,
+   "shipped_n": 52,
+   "new_n": 52
+  },
+  {
+   "name": "uv2 meshes",
+   "ok": true,
+   "shipped": 66,
+   "new": 66
+  },
+  {
+   "name": "lightmap slots (pools, counts, atlases)",
+   "ok": true,
+   "shipped_n": 2,
+   "new_n": 2
+  },
+  {
+   "name": "lightmap own-map assets: the same names",
+   "ok": true,
+   "shipped_n": 16,
+   "new_n": 16
+  }
+ ],
+ "ok": true
+}
