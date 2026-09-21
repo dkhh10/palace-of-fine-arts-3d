@@ -159,6 +159,12 @@ def smart_uv1(objs, angle_limit=1.15, island_margin=0.004):
                 lay.data.foreach_get("uv", _a)
             _a = _a.reshape(-1, 2)
             _span = float(max(_a[:, 0].max() - _a[:, 0].min(), _a[:, 1].max() - _a[:, 1].min()))
+            # review r1 carry 4: the span alone cannot do this job (backdrop_door_green's tile UV spans
+            # 0.941), so the layer the Gate 1 relay appends is the primary tell and the span is the backup.
+            assert ob.data.uv_layers.get("UVBake") is None, (
+                f"{ob.name} carries a 'UVBake' layer, so its '{UV1}' is the Phase 9 backdrop TILE UV and "
+                f"smart_uv1 would bake over it. Bake to 'UVBake' (TEXCOORD_1) and hand THAT layer over "
+                f"in backdrop_uv1.npz.")
             assert _span <= 1.5, (
                 f"{ob.name}: its '{UV1}' spans {_span:.2f} UV units - that is the Phase 9 backdrop TILE UV, "
                 f"not a packed bake layout, and smart_uv1 would bake over it. Bake to a second layer "
