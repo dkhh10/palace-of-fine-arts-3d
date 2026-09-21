@@ -1,4 +1,20 @@
-"""QA 23 fix: put the 127 EXISTING far trees back on their 6c irradiance, keep the belt's 39 on the r2 bake.
+"""RETIRED 2026-09-21 (Phase 9 re-bake, A.4). DO NOT RUN. Kept only as the record of what it did.
+
+The Phase 9 chain re-bakes **all 166** far-tree placements in one `tfirr_00..03` set, at one scene state, in
+the r19 world - which is A.4's "all or none" rule taken on the "all" side, because the world moved and a
+partial set cannot be mixed with it. After that bake `export/out/gate3/trees_far/instance_irradiance.json`
+holds ONE population and needs no join, so this script has nothing legitimate left to do: its 6c source
+(2026-09-17, md5 11212fbc..., a world whose diffuse-sky blue is 2.64x the current one - measured this round,
+per-channel mean B 11.4928 -> 4.3453) would paste values from one lighting state into a file describing
+another, which is the exact defect it was written to prevent, inverted.
+
+The QA-23 evidence it rested on does not carry either: "7 of 10 crown boxes moved AWAY from the Phase 8
+Cycles references" was measured against references rendered in the OLD world. This round re-renders all six
+(renders/qa_comparisons/cycles_p9/), so the comparison basis moves with the bake instead of standing still.
+
+Original docstring follows.
+
+QA 23 fix: put the 127 EXISTING far trees back on their 6c irradiance, keep the belt's 39 on the r2 bake.
 
     python3 export/p8d_irr_restore.py [--check]      # CPU only: no Blender, no GPU
 
@@ -35,6 +51,13 @@ SIXC = MAIN / ".claude/worktrees/phase6-bake/export/out/gate3/trees_far/instance
 CUR = ROOT / "export/out/gate3/trees_far/instance_irradiance.json"
 JOIN_TOL_M = 0.02                      # the grid manifest_v4 joins on
 LUM = (0.2126, 0.7152, 0.0722)
+
+
+def _retired():
+    raise SystemExit(
+        "export/p8d_irr_restore.py is RETIRED (Phase 9 A.4): the far-tree irradiance is now one population "
+        "baked in the r19 world. Running it would mix two lighting states in one file. "
+        "Set PFA_IRR_RESTORE_I_KNOW=1 only if you are deliberately reproducing the Phase 8 file.")
 
 
 def md5(p):
@@ -77,6 +100,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="report the two populations and write nothing")
     a = ap.parse_args()
+    if os.environ.get("PFA_IRR_RESTORE_I_KNOW") != "1":
+        _retired()
     cur = json.loads(CUR.read_text())
     six = json.loads(SIXC.read_text())
     assert cur["schema"] == six["schema"], (cur["schema"], six["schema"])

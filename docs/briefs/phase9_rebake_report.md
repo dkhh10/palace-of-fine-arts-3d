@@ -140,7 +140,40 @@ on a dome at 7.4 deg sun elevation it moves a great deal).
 
 ## 2. The chain
 
-(filled in below)
+**Armed at 07:25:22, 87 jobs.** Manifest of record: `docs/briefs/phase9_chain_jobs.json` (a copy of
+`export/out/gate3/p9_chain_jobs.json`), which lists every id on both sides.
+
+**How the Phase 8 records were cleared, so no resume-skip can keep a Sep-15 map.**
+1. All **109** Phase 8 records were archived first, by APFS clone, to `export/out/gate3/bake_p8_backup`; the
+   arming script asserts that directory holds exactly 109 before it deletes anything.
+2. `gate3_instance_jobs.py --jobs 4 --force` re-added `inst_irr_00..03` and deleted their four records
+   (that is what `--force` does).
+3. Every remaining chain id had its record in `export/out/gate3/bake/` **deleted: 83 files**. Chain = 87 ids;
+   the other four were the `inst_irr` records already removed in step 2.
+4. Records **left in place on purpose**, so the queue skips them: the 16 `tfao_*` (A.1 row 9 - `world =
+   GATE3_ao_white`, `rig.lights = 0`, no rig in the job at all) and the 2 `lmg1_*` gate1-layout diagnostics
+   (A.1 row 10, retired). **18 skips.** 22 records remain in `bake/`: those 18 plus the four
+   `inst_probe` / `inst_split*` diagnostics, which are not in `bake_jobs.json` and are never visited.
+The three probe jobs are inside the chain and re-run with it (321 s), so every shipped map comes out of one
+queue run at one scene state. `status.json` was moved aside so the run's record is its own; `STOP` removed;
+`PFA_BAKE_DIFFUSE_WORLD` unset.
+
+*(The lead requested a queue stop at one point while reading the log's `skip ... (already done)` lines, then
+removed the STOP file before any job boundary. Confirmed here: no `STOP` file, no `stopped` state, and every
+job the run has recorded carries `rc 0`.)*
+
+**The QA-23 far-tree rule and `p8d_irr_restore.py`: decided, and the script is RETIRED.**
+A.4 allows only "all 166 or none", and none is not available because the world moved: the `tfeb_*` divisor
+and the `imp_*` atlases are both re-baked, so `E_placement` must be measured in the same rig. All 166
+placements are therefore in one `tfirr_00..03` set (`override_scope.objects = 166`), one scene state, no
+join and no `rows_source` block - `trees_far_compose.py` writes the file from the bake alone.
+`export/p8d_irr_restore.py` is retired in the same change: a banner at the top and a hard guard in `main()`
+(`PFA_IRR_RESTORE_I_KNOW=1` to override) that names the reason. Running it after this chain would paste the
+6c values (2026-09-17, md5 `11212fbc...`) - baked in a world whose **diffuse-sky blue is 2.64x the current
+one**, measured this round - into a file describing the r19 world, i.e. the exact defect it was written to
+prevent, inverted. Its QA-23 evidence does not carry either: "7 of 10 crown boxes moved away from the Phase 8
+Cycles references" was measured against references rendered in the OLD world, and step 0 re-rendered all six
+at the r19 state, so the comparison basis now moves with the bake.
 
 ## 3. The export / pack chain
 
