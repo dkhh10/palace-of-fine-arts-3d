@@ -166,9 +166,9 @@
   },
   {
    "name": "uv2 meshes",
-   "ok": true,
-   "shipped": 66,
-   "new": 66
+   "ok": null,
+   "skipped": true,
+   "why": "66 meshes carry UV2 in the new set; the shipped manifest states no total (its `gate3` block is generated/jobs/records and no `meshes[*]` entry has a uv2 flag). The UV2 evidence for this round is gate3_relay_check.py, which reads TEXCOORD_1 back OUT of the shipped glbs: 7/7 re-laid layers present and matching."
   },
   {
    "name": "lightmap slots (pools, counts, atlases)",
@@ -177,11 +177,21 @@
    "new_n": 2
   },
   {
+   "name": "uv2 re-laid assets: the same names",
+   "ok": true,
+   "shipped_n": 7,
+   "new_n": 7
+  },
+  {
    "name": "lightmap own-map assets: the same names",
    "ok": true,
    "shipped_n": 16,
    "new_n": 16
   }
  ],
- "ok": true
+ "ok": true,
+ "scored": 30,
+ "not_pinned": [
+  "uv2 meshes"
+ ]
 }

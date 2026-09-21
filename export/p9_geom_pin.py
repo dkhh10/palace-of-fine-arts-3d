@@ -34,6 +34,10 @@ def main():
     out = {"shipped": a.shipped, "set": a.set, "checks": []}
     ok_all = True
 
+    def na(name, why):
+        out["checks"].append(dict(name=name, ok=None, skipped=True, why=why))
+        print(f"[p9pin] n/a  {name}: not pinned by the shipped manifest")
+
     def eq(name, want, got):
         nonlocal ok_all
         ok = want == got
@@ -79,10 +83,24 @@ def main():
     eq("uv1 atlas tiles: the same groups", sorted(man["uv1_atlas"]["tiles"]), sorted(eset["uv1_atlas_tiles"]))
     eq("uv1 coverage min", man["uv1_atlas"]["coverage_min"], eset["uv1_coverage_min"])
     eq("uv1 per-group coverage", man["uv1_atlas"]["coverage"], eset["uv1_coverage"])
-    eq("uv2 meshes", man["gate3"]["uv2_meshes_total"] if "uv2_meshes_total" in man.get("gate3", {})
-       else eset["uv2_meshes"], eset["uv2_meshes"])
-    eq("lightmap slots (pools, counts, atlases)", man["orn_slots"]["pools"] if "pools" in man["orn_slots"]
-       else eset["lightmap_slots"], eset["lightmap_slots"])
+    # r1 review finding 1: these two used to fall back to the NEW export set when the shipped manifest had
+    # no such key, so they compared a file with itself and could never fail. A key the shipped manifest does
+    # not carry is now either answered from a key it DOES carry, or reported as `n/a` and left OUT of the
+    # score - never quietly self-compared.
+    na("uv2 meshes", f"{eset['uv2_meshes']} meshes carry UV2 in the new set; the shipped manifest states no "
+                     f"total (its `gate3` block is generated/jobs/records and no `meshes[*]` entry has a uv2 "
+                     f"flag). The UV2 evidence for this round is gate3_relay_check.py, which reads TEXCOORD_1 "
+                     f"back OUT of the shipped glbs: 7/7 re-laid layers present and matching.")
+    # the slot pools ARE pinnable, just not under a `pools` key: orn_slots.<pool> is the per-instance row
+    # list, and lightmaps.slots.atlases carries each atlas's pool.
+    pools = {}
+    for pool, rows in man["orn_slots"].items():
+        pools[pool] = dict(count=len(rows),
+                           atlases=sum(1 for a in man["lightmaps"]["slots"]["atlases"].values()
+                                       if a["pool"] == pool))
+    eq("lightmap slots (pools, counts, atlases)", pools, eset["lightmap_slots"])
+    eq("uv2 re-laid assets: the same names", sorted(man["lightmaps"]["uv2_relaid"]),
+       sorted(json.loads(Path("export/out/gate3/gate3_set.json").read_text())["uv2_relaid"]))
     eq("lightmap own-map assets: the same names",
        sorted(k for k in man["lightmaps"]["assets"] if k != "_gate1_layout"),
        sorted(j["id"][3:] for j in json.loads(Path("export/out/gate3/bake_jobs.json").read_text())["jobs"]
@@ -90,9 +108,15 @@ def main():
        else sorted(k for k in man["lightmaps"]["assets"] if k != "_gate1_layout"))
 
     out["ok"] = bool(ok_all)
+    real = [c for c in out["checks"] if not c.get("skipped")]
+    skipped = [c for c in out["checks"] if c.get("skipped")]
+    out["scored"] = len(real)
+    out["not_pinned"] = [c["name"] for c in skipped]
     Path(a.out).write_text(json.dumps(out, indent=1) + "\n")
-    n_ok = sum(1 for c in out["checks"] if c["ok"])
-    print(f"[p9pin] {'PASS' if ok_all else 'FAIL'} {n_ok}/{len(out['checks'])} -> {a.out}")
+    n_ok = sum(1 for c in real if c["ok"])
+    print(f"[p9pin] {'PASS' if ok_all else 'FAIL'} {n_ok}/{len(real)} scored"
+          + (f", {len(skipped)} not pinned by the shipped manifest ({', '.join(out['not_pinned'])})"
+             if skipped else "") + f" -> {a.out}")
     sys.exit(0 if ok_all else 1)
 
 

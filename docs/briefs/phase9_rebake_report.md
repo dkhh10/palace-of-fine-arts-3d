@@ -56,7 +56,7 @@ from `sync_main.sh`), so both had to be built here regardless.
 | `gltf_pack.sh --trees` / `--trees-lod1` | CPU | `env_trees.glb` 3 769 236 B, `env_trees_lod1.glb` 7 642 536 B |
 | `verify_glb.py` | CPU | **PASS** — every placed triangle in `export_set.json` is drawn by the glb |
 | `p8d_pin.py` | CPU | **11 of 13**, including all ten far-tree pins and the by-index subset relation |
-| `p9_geom_pin.py` (new) | CPU | **PASS 30/30** against the DEPLOYED manifest |
+| `p9_geom_pin.py` (new) | CPU | **PASS 30/30 scored**, 1 n/a (see the r1-review note below) |
 | `gate2_probe.py`, `gate2_set.py` | 2 + 5 s | `gate2_bake.blend` rebuilt from the r19 `gate1_set.blend` |
 | `gate3_probe.py`, `gate3_set.py` | 7 + 21 s | `gate3_bake.blend`, `gate3_imp.blend`, 65 jobs |
 | world read-back on `gate3_bake.blend` | 600 s cap | see below |
@@ -69,9 +69,22 @@ instrument: it compares MAIN's `export_set.json` with the worktree's and asserts
 one file and those two checks can never fire again. `export/p9_geom_pin.py` asks the question this round
 actually needs — does the set the lightmaps will be baked against still describe the geometry the SHIPPED
 manifest and glbs carry? — against a snapshot of the deployed `export/out/gate3/manifest.json`:
-**PASS 30/30** (totals per class, `tree_rule`, both tree lists by content and order, 2 579 objects and 146
-meshes each keeping its mesh, uv1 atlas tiles and per-group coverage, uv2 meshes 66, the slot pools, the 16
+**PASS** (totals per class, `tree_rule`, both tree lists by content and order, 2 579 objects and 146 meshes
+each keeping its mesh, uv1 atlas tiles and per-group coverage, the slot pools, the re-laid UV2 names, the 16
 own-map names). Record: `docs/briefs/phase9_geom_pin.json`.
+
+**r1 review finding 1, fixed.** The first version reported "30/30", but two of those checks fell back to the
+NEW export set when the shipped manifest had no matching key, so they compared a file with itself and could
+never fail: **the real score was 28/30**. Both are closed:
+* *slot pools* - pinnable after all, just not under a `pools` key. The counts now come from the manifest's own
+  `orn_slots.<pool>` row lists (orn 436, arch_inst 552) and the atlas counts from `lightmaps.slots.atlases`
+  grouped by `pool` (2 and 3). Real comparison, **passes**.
+* *uv2 meshes 66* - the shipped manifest states no total (`gate3` is generated/jobs/records and no `meshes[*]`
+  entry carries a uv2 flag), so it is now reported **`n/a`, with its reason, and left out of the score**
+  instead of self-comparing. The UV2 evidence for this round is `gate3_relay_check.py`, which reads
+  TEXCOORD_1 back out of the shipped glbs (7/7).
+A new real check replaces it: `lightmaps.uv2_relaid` against `gate3_set.json`'s own `uv2_relaid` list - the
+seven re-laid asset names, **equal**. Score now **30/30 scored, 1 n/a**, and a missing key can no longer pass.
 
 **The r19 world is inside the bake blend — read back, not asserted.**
 `sky_diffuse_tint [1.0, 0.75, 8.0]`, `sky_diffuse_tint_antisun 0.0`, `sky_camera_boost 2.1`,
@@ -237,8 +250,8 @@ before/after hashes are the evidence). Both far-tree sets were re-run after `ver
 
 **Rows, order, verification.** `instance_rows.mjs` x4 (env 1 565, shrubs 1 376, trees_far 298, walkup 262),
 `gate4_instance_order` x2, `gate5_instance_rows`, `gate4_order_selftest`, `verify_glb` **PASS**.
-`p8d_pin` 36 ok with the same two 8d delta checks that cannot fire (section 0b); `p9_geom_pin` **PASS 30/30**
-again after the whole chain.
+`p8d_pin` 36 ok with the same two 8d delta checks that cannot fire (section 0b); `p9_geom_pin` **PASS**
+again after the whole chain (30/30 scored, 1 n/a, after the r1 fix in section 0b).
 
 **Manifests and tiers.** `manifest_v2` -> `v3` -> `v4`, `budget_doc`, `gate3_relay_check`, then **`manifest_v4`
 a second time** - the README's Gate 3 hand-off order, which the first pass got wrong: `gate3_relay_check`
