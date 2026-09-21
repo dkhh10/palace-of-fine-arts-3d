@@ -13,7 +13,10 @@ UV values are already divided by the tile size, so the image is sampled with wra
 Phase is per object, not global: u starts at the object's own bbox corner and v at its own base, plus a stable
 name-hashed jitter, so neighbouring buildings do not line their storeys up into one continuous grid.
 
-The layer is called "UVMap" and it is layer 0, so it lands on TEXCOORD_0.  One shared name across all 1 291
+The layer is called "UVMap" and on today's backdrop (every mesh has an empty `uv_layers`) it lands at index 0,
+i.e. TEXCOORD_0.  It is only ever written when this script authored it (mesh custom property `PFA_p9_uv0`); a mesh
+that already carries a UV map of its own is skipped, and a mesh with other layers gets the tile map APPENDED with
+a warning rather than having its own map deleted.  One shared name across all 1 291
 objects is required: `export/gate1_set.py:583` joins the backdrop per source material and Blender's join matches
 UV layers by NAME.
 
@@ -26,6 +29,8 @@ import numpy as np
 import bpy
 
 UV_NAME = "UVMap"
+# stamped on every mesh this script writes, so a re-run refreshes its own layer and never touches anybody else's
+OWNER_KEY = "PFA_p9_uv0"
 
 # metres per tile -- must match scripts/env_p9_tiles.py TILES
 TILE = {
@@ -44,7 +49,9 @@ def _jitter(name):
 
 
 def lay_uv0(objects):
-    """Add/refresh `UV_NAME` as layer 0 on every mesh in `objects`.  Returns (n_objects, n_loops)."""
+    """Add/refresh the `UV_NAME` layer this script owns on every mesh in `objects`.  On a mesh with no UV layers
+    it lands at index 0 (TEXCOORD_0), which is the whole backdrop today; on a mesh that already has layers it is
+    appended with a warning and nothing of theirs is removed.  Returns (n_objects, n_loops)."""
     n_obj = n_loop = 0
     for ob in objects:
         me = ob.data
@@ -53,12 +60,23 @@ def lay_uv0(objects):
         mat = me.materials[0].name if me.materials else ""
         tu, tv = TILE.get(mat, TILE_DEFAULT)
 
+        # OWNERSHIP (review r1 fix-now 3).  The earlier version deleted layer 0 until "UVMap" was first, which is
+        # correct only while every backdrop mesh ships with an empty `uv_layers` -- it would have destroyed the
+        # real map of any future backdrop-material mesh that carries one (an impostor, a leaf card).  This script
+        # now writes ONLY a layer it authored, stamped on the mesh, and never removes anyone else's.
         lay = me.uv_layers.get(UV_NAME)
+        if lay is not None and me.get(OWNER_KEY) != UV_NAME:
+            print(f"[env_p9_uv0] skipped {ob.name}: it already carries a '{UV_NAME}' this script did not author")
+            continue
         if lay is None:
+            if me.uv_layers:
+                # cannot insert at index 0 through the API without removing the others, and removing them is the
+                # bug being fixed.  Append instead and say so loudly: the tile map is then NOT TEXCOORD_0 and the
+                # exporter has to be told which index it landed on.
+                print(f"[env_p9_uv0] WARNING {ob.name}: {len(me.uv_layers)} existing UV layer(s) kept, "
+                      f"'{UV_NAME}' appended at index {len(me.uv_layers)} -- NOT TEXCOORD_0, tell the exporter")
             lay = me.uv_layers.new(name=UV_NAME, do_init=False)
-        # keep it as layer 0 (TEXCOORD_0); anything else would have to be re-indexed at export
-        while me.uv_layers[0].name != UV_NAME and len(me.uv_layers) > 1:
-            me.uv_layers.remove(me.uv_layers[0])
+        me[OWNER_KEY] = UV_NAME
         lay = me.uv_layers[UV_NAME]
         if not me.polygons:          # empty mesh: it still needs the layer so the Gate-1 join stays consistent
             n_obj += 1
@@ -129,10 +147,9 @@ def backdrop_objects():
         in_coll = coll is not None and ob.name in coll.all_objects
         if not (in_coll or any(m.startswith("MAT_backdrop_") for m in mats)):
             continue
-        # SAFETY: this function REPLACES layer 0 with a world projection.  That is right for the backdrop (every
-        # one of its 1 291 meshes ships with an empty `uv_layers`, verified) and wrong for anything that carries
-        # a real UV -- a leaf card, an impostor billboard.  If a future object lands in ENV_backdrop with its own
-        # UV and a non-backdrop material, leave it alone rather than destroy its mapping.
+        # SELECTION SAFETY: an object that is in ENV_backdrop but does NOT use a backdrop material, and already
+        # carries a UV map, is none of this script's business -- skip it before `lay_uv0` even looks at it.
+        # (`lay_uv0` also refuses to write a "UVMap" it did not author; this is the outer, cheaper guard.)
         if ob.data.uv_layers and not any(m.startswith("MAT_backdrop_") for m in mats):
             print(f"[env_p9_uv0] skipped {ob.name}: has a UV layer and no MAT_backdrop_ material")
             continue
