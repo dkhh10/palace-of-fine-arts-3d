@@ -1145,3 +1145,11 @@ sky_diffuse equirect, coefficients written by manifest_v4 beside the two constan
 Acceptance: cam03 near_column toward ~1.05x and p10 toward 6.1; stations 1, 2, 4, 5, 6 within 0.5 % MAE of their deploy-12 frames outside shade; cam05 p10
 back within 3 % of Cycles. CPU build now, capture in the next Chrome window between the bake queue and the pack. The dotted rim is closed on the captures
 (rim index 0.264 -> 0.041 at 5, 0.369 -> 0.079 at 2, other stations <= 0.075 % MAE).
+
+## 2026-09-22 · PHASE 9 CLOSED (QA 25 a228268 gate PASSED hero 4.05; QA 26 bfda394 close CONFIRMED after the ENV R3 tiles; deploy 14 ff3545be)
+Every carried item from docs/briefs/phase9_next_session.md is closed or re-scoped with the user informed: station 2 lighting (shipped with the structural frieze/soffit
+residual, user's decision 2026-09-21); station 3 shade (viewer specular gate, two rounds; residual 1.4x red is bake/materials); the dotted rim (closed); the belt
+billboard rule (closed, no viewer change); the aerial city blocks (R3 tiles, closed); the belt cover and shrub hard-edge (measured, no ENV change: cover is over the
+photo, the edge is the belt behind them); the review carries (closed or tabled by name in docs/reviews/phase9_*). Scores 4.01 / 3.30 / 2.83 / 2.88 / 3.28 / 3.07 ->
+4.05 / 3.55 / 3.08 / 3.05 / 3.24 / 3.15; mobile hero 3.40 -> 3.44. Two full re-bakes were priced and one run (87 jobs, 455 min); twelve reviewed merges. Open
+residuals with owners are in docs/delivery.md "Phase 9 / Known issues". Polish beyond this is a new phase; nothing is scheduled.
