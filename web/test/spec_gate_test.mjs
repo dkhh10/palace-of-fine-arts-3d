@@ -396,8 +396,8 @@ const G2 = specGateFrom( OPEN_SKY, SUN_IRR_PI, { lobes: UNIFORM_LOBES, floorFrac
 			+ `${( ( zen[ 1 ] / raw.sky.open_irradiance_over_pi[ 2 ] - 1 ) * 100 ).toFixed( 2 )} %` );
 		// (b) the shade end of the B.6 table, at the zenith normal, is unchanged to the third decimal.
 		for ( const [ band, rgb, skyVis ] of DECILES.slice( 0, 3 ) )
-			near( specGateEval( rgb, live, [ 0, 1, 0 ] ).skyVis, skyVis, 0.001,
-				`shipped sky, ${band}: skyVis ${skyVis} (round 1's number, because E0(zenith) IS that constant)` );
+			near( specGateEval( rgb, live, [ 0, 1, 0 ] ).skyVis, specGateEval( rgb, live ).skyVis, 1e-3,
+				`shipped sky, ${band}: lobe skyVis at the zenith = the constant path's (E0(zenith) IS that constant; review r2 fix 1, sky-independent)` );
 		// (c) the sunlit band on the east wall the colonnade actually presents to this sun. B.6's
 		// p95-100 row is (16.334, 11.130, 1.604); round 1 read skyVis 0.142 there because it divided by
 		// the zenith's 11.256. Both numbers are REPORTED, not pinned: the sky moves with every re-bake.
