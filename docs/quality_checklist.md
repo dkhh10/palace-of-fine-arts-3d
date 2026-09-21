@@ -1062,3 +1062,16 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 5. **A frustum rule is cheaper than a viewer capture.** `export/belt_rule.py --frustum` re-derives from the manifest which belt rows are
    in frame at cam03 and FAILs if an in-frame row is billboard-only — the whole "no magnified card" gate check, with no GPU.
 6. **Scores.** Desktop 01 **4.05** · 02 **3.51** · 03 **3.08** · 04 **3.05** · 05 **3.24** · 06 3.07; mobile **3.44 / 3.59 / 2.77 / 2.87 / 3.00 / 2.62**.
+
+## QA round 26 (the ENV R3 backdrop tiles on deploy 14, tag `gate14`, 2026-09-22) — **PHASE 9 CLOSE CONFIRMED; hero 4.05**
+1. **A reference can go stale, and then parity measures the reference.** Station 6's MAE against `cycles_p9` rose 7.065 -> 7.306 while the
+   frame improved: those refs were rendered before ENV R3 and the ENV round had already measured the same +27.6 % hf in the Cycles master.
+   Before scoring a station as a regression, check whether the reference contains the change being scored.
+2. **"Reads as texture, not as a lattice" is measurable.** The QA-21 grid index falling (-9.86 -> -10.14) while the high-pass std rises
+   (8.06 -> 8.86) is exactly "more detail, no more order" — the number that separates a tile that works from a repeat.
+3. **A dark sliver at 4K is not automatically a 4K defect.** Sampling the same world pixel in the 4K hero, the Cycles ref and both deploys
+   gave (57,43,24) / (56,43,24) / (73,75,81) / (74,77,83): a shaded surface present in every renderer since before the round, not a hole,
+   not new. Four numbers settled what a tile could only raise.
+4. **Byte-close is a gate check, not a formality.** Stations 3 and 4 moved 0.001 % / 0.000 % and station 4 not at all — which is what lets
+   the round leave their carried defects unre-scored and keeps the gate short.
+5. **Scores.** Desktop 01 **4.05** · 02 **3.55** · 03 3.08 · 04 3.05 · 05 3.24 · 06 **3.15**; mobile **3.44 / 3.63 / 2.77 / 2.87 / 3.00 / 2.70**.
