@@ -85,9 +85,58 @@ reads the attributes back **out of the shipped glbs**: 7/7 re-laid UV2 layers an
 present and matching. So the new lightmaps land on the UV2 the deployed glbs already carry and **no glb has
 to be re-exported or re-packed** (A.3's premise, verified rather than assumed).
 
-## 1. The A.2 probe
+## 1. The A.2 probe — three jobs, 321 s, and the verdict is **FULL CHAIN**
 
-(filled in below)
+Selection is the queue's own documented force mechanism (A.4): the three records were deleted, the other 98
+kept, so `bake_queue.sh --gate3` skipped 98 and baked exactly these three. `PFA_BAKE_DIFFUSE_WORLD` left
+**unset**, matching the shipped bake's `diffuse_world: false`. All three rc=0; the records read back
+`world WORLD_golden_hour`, `diffuse_world false`, `lights 20`.
+
+| job | wall | new min / max / mean | clipped px |
+|---|---|---|---|
+| `sky_diffuse` | 3.0 s | 0.000762 / 327.371 / 2.819 | n/a (equirect, no range) |
+| `lm_ARCH_rotunda_dome_membrane_merged` | 109.0 s | 0.0 / 33.474 / 3.692 (range 64) | **0** (0.0 %) |
+| `slot_arch_inst_1_06` | 209.0 s | per-slot, composed later | n/a |
+
+**The `sky.diffuse` equirect, per channel** (both `.hdr` files, 512x1024; the `.exr` pair is written by
+Blender's own EXR writer and is not readable by `gate3_common.read_exr32`, so the HDR is the comparison and
+the record stats are the control): whole sphere **R x1.0112, G x0.9473, B x0.3781**; upper hemisphere
+**x1.0111 / x0.9483 / x0.3794**. Mean 5.2203 -> 2.8047; per-channel mean B **11.4928 -> 4.3453**. That is the
+r19 knob and nothing else: red and green stand still, blue loses **1.40 stops**.
+
+**The two bake targets, against the SHIPPED bake** (`export/p9_probe_cmp.py`; floor = the shipped texture's
+own encode error, B.2: **p50 0.015-0.097, p99 0.097-1.077 stops**):
+
+| map | band | texels | ratio (lum) | MAE | p50 | p99 | max | ratio R / G / B |
+|---|---|---|---|---|---|---|---|---|
+| dome own map | all | 2 069 550 | 0.5447 | **0.8856** | **1.0175** | 2.0280 | 7.986 | 1.008 / 0.982 / **0.414** |
+| | shaded (<= p20) | 413 910 | 0.8448 | 0.3035 | 0.0836 | 1.0910 | 7.986 | 1.007 / 0.981 / 0.650 |
+| | lit (>= p80) | 413 911 | 0.2730 | 1.8677 | 1.8674 | 2.0738 | 2.249 | 1.064 / 1.028 / **0.273** |
+| `slot_arch_inst_1_06` | all | 446 458 | 0.8445 | **0.5104** | **0.1782** | 2.7267 | 17.277 | 0.999 / 0.972 / **0.622** |
+| | shaded | 89 293 | 0.9849 | 0.5929 | 0.1841 | 4.8901 | 17.071 | 1.053 / 1.002 / 0.781 |
+| | lit | 89 292 | 0.9057 | 0.3265 | 0.0254 | 2.4046 | 3.589 | 1.000 / 0.975 / 0.596 |
+
+Per-decile mean ratio of the dome map, deciles of the OLD luminance:
+0.895 / 0.805 / 0.758 / 0.752 / 0.729 / 0.719 / 0.672 / 0.415 / 0.289 / **0.260** — the brightest decile,
+which on a dome at sun elevation 7.36 deg is SKY-lit rather than sun-lit, loses 1.94 stops.
+Slot batch: 1.276 / 0.961 / 0.919 / 0.911 / 0.860 / 0.757 / 0.673 / 0.638 / 0.816 / 0.961.
+
+**Verdict: the FULL chain.** Both classes move far above the floor, and they move for the same measured
+reason - the diffuse sky's blue at 0.378x reaches every bake through the same path:
+* own maps: p50 **1.0175 stops** = 10x to 68x the floor's p50 band, MAE 0.886 stops, blue at 0.414x;
+* slot atlases: p50 **0.1782 stops**, still **1.8x above the top of the floor's p50 band (0.097)**, MAE
+  0.510 stops, blue at 0.622x, and 0.596x on the sunlit texels. A.2's "likely case" - slots dominated by
+  local bounce and therefore unmoved - **does not hold**: the ornament niches see the sky too.
+So neither the "ship the old bake" option (3 jobs) nor the "reduced" option (44 jobs, the 27 slot atlases
+skipped) is defensible. The chain is rows 1-8 + 11 + 12 of A.1, **87 jobs, 26 670 s = 7 h 24 m**, of which
+the probe already did 3 (321 s).
+
+**One thing the probe found that the brief did not anticipate.** The shipped Gate 3 bake is dated
+**2026-09-15T22:28 - 2026-09-16**, so it does not only predate r19: it predates every lighting round since.
+The 0.378x blue is the whole accumulated distance between the world the deployed lightmaps were baked in and
+the world `master_delivery.blend` carries today, not the r19 step alone. The chain is a catch-up, which is
+also why the sunlit deciles move at all (a diffuse-socket change cannot move a sun-lit texel; a sky-lit one
+on a dome at 7.4 deg sun elevation it moves a great deal).
 
 ## 2. The chain
 
