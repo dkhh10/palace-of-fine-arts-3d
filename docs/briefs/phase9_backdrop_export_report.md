@@ -170,3 +170,81 @@ Changed: `export/manifest_v3.py`, `export/gate5_common.py`, `export/tiers.py`, `
 * **carried, not fixed** — `export/p9_geom_pin.py` was not re-run (it needs a `--shipped` reference this
   round did not produce). Geometry is covered instead by the six byte-identical glbs and the unchanged placed
   triangle counts.
+
+## Capture (lead's window)
+
+Captured by the capture engineer on this branch at **2b2c551** (the `-vtf` re-pack; an earlier window on 28c618b was
+discarded because the shipped env groups still carried quantised UV). `(cd web && npm run build)` rc 0, then two
+six-station sessions through `scripts/chrome_run.sh 900 -- node web/tools/screenshot.mjs --stations 1-6 --size 1920x1080
+--frames 0` with the gate5 look query (`manifest=/assets/gate5/manifest.json tiers=all t=0 billboards=0 treeboards=0
+lighting=baked post=all probe=1 impostors=1 water=1`): `renders/web/round26_bdtiles_on_cam0N.png` and, adding
+`--query bdtiles=0`, `round26_bdtiles_off_cam0N.png`. No Blender ran (checked in its own shell command — the guard in
+screenshot.mjs matches the invoking shell's argv, so the literal process name must stay out of the run's command line).
+
+**Boot state.** ON: `backdrop tiles: 4 group(s), 0.60 MB, tile UV TEXCOORD_0, baked atlas TEXCOORD_1`, patched 2 + 2
+materials over the tiers (0.44 + 0.16 MB). OFF: `backdrop gain tiles OFF (?bdtiles=0); the manifest carries 4 group(s)`.
+`pageErrors: []` both. The env groups no longer appear in the `uv dequantisation` lines (the `-vtf` sets are float);
+resident 1688.2 MB, 145 files / 132.5 MB, draws and triangles identical per station.
+
+### cam06 hf, ON vs OFF, against the ENV round's Eevee deltas (`qa_r22_probe.BACKDROP`)
+
+| box | hf OFF | hf ON | Δ viewer | Δ ENV Eevee | cycles r09 | photo (ref105) |
+|---|---|---|---|---|---|---|
+| 06 top row | 0.0405 | **0.0470** | **+16.0 %** | +11.6 % | 0.0237 | 0.1409 |
+| 06 city r1c3 | 0.0240 | **0.0327** | **+36.7 %** | +24.3 % | 0.0174 | 0.1103 |
+| 06 far field | 0.0240 | **0.0329** | **+37.2 %** | +20.3 % | 0.0231 | — |
+| 06 far lawn | 0.0845 | 0.0862 | +1.9 % | +2.2 % | 0.0394 | — |
+
+### The named cam01 / cam05 regression does not reproduce in the viewer
+
+| band | hf OFF → ON | Δ viewer | Δ ENV Eevee | Δ sat viewer | Δ sat Eevee |
+|---|---|---|---|---|---|
+| 01 N-colonnade | 0.1365 → 0.1368 | **+0.2 %** | -3.0 % | +0.0004 | +0.010 |
+| 01 S-colonnade | 0.1714 → 0.1719 | +0.3 % | -1.3 % | +0.0007 | — |
+| 05 backdrop band | 0.1248 → 0.1252 | +0.3 % | -1.9 % | +0.0007 | +0.018 |
+
+The shader's `(t - 0.5)` term is exactly mean-1.0, so the PNGs' +0.005 AgX-compensation lift — the cause of the Eevee
+loss — never reaches the frame. Nothing to fix viewer-side.
+
+### Whole-frame MAE ON vs OFF, and where the pixels moved
+
+| st | MAE (0-255) | MAE % | px > 1/255 | changed rows / cols (5-95 pct) | what is there |
+|---|---|---|---|---|---|
+| 1 | 0.152 | 0.060 % | 2.14 % | y 549-841 | backdrop band (524-670) + its water reflection |
+| 2 | 0.080 | 0.032 % | 0.64 % | y 718-893, x 1409-1708 | the one backdrop patch in frame |
+| 3 | 0.0015 | **0.001 %** | 0.02 % | y 535-772, x 840-981 | backdrop slivers between the columns |
+| 4 | 0.0000 | **0.000 %** | 0.00 % | — | no backdrop pixels (rotunda interior) |
+| 5 | 0.115 | 0.045 % | 1.18 % | y 669-1070 | backdrop band (654-786) + reflection |
+| 6 | 1.666 | 0.653 % | 22.94 % | y 17-777 | the aerial's city / far field — the target |
+
+Stations 3 and 4 sit at 0.001 % / 0.000 % against the brief's 0.5 %; elsewhere only backdrop pixels and their water
+reflections move. **Seam** (`qa_r22_probe seam`): the grid index falls with the gain on at every cam06 box
+(city r1c3 -9.82 → -10.14, far field -9.13 → -9.71, top row -8.66 → -8.92) while hp std rises (8.16 → 8.86,
+7.24 → 8.05, 10.08 → 10.54) — added detail, no new lattice.
+
+### Against gate13 (deploy 13), above the waterline
+
+| st | MAE ON vs gate13 | MAE OFF vs gate13 | luma ratio OFF |
+|---|---|---|---|
+| 1 | 0.231 | 0.187 | 0.9999x |
+| 2 | 0.089 | 0.027 | 1.0002x |
+| 3 | 0.0018 | 0.0015 | 1.0000x |
+| 4 | 0.000 | 0.000 | 1.0000x |
+| 5 | 0.114 | 0.061 | 1.0004x |
+| 6 | 3.083 | **0.913** | **1.0048x** |
+
+With the gain off the new assets reproduce gate13 to 0.9 MAE / +0.5 % luma on cam06 and to <= 0.19 elsewhere
+(city r1c3: luma 0.424 vs 0.423, sat 0.337 vs 0.338, hf 0.0240 vs 0.0237). The whole cam06 change is therefore the
+gain, not the re-export. (The discarded 28c618b window measured 6.81 MAE / +4.6 % luma here — that drift was the
+quantised env UV, and the `-vtf` re-pack removed it.)
+
+### The 100 % look
+
+`renders/web/960/round26_city_band_100_off_on.jpg` and `round26_city_r1c3_100_off_on.jpg` (plus
+`round26_city_r1c3_100_gate13_off.jpg` for the OFF-vs-gate13 control): at the aerial's distance the tiles read as
+**facade and roof texture — window and bay rows, storey lines, roof courses on blocks that were flat gradient slabs —
+not as noise or moiré**, and no repeat lattice is visible at 100 %.
+
+960 px copies committed under `renders/web/960/round26_*`; full-size PNGs stay gitignored. Re-running the probes needs
+MAIN's frames linked into the worktree (`renders/web/gate13_cam0N.png`, `renders/previews/qa/round10b_01_*`,
+`reference/photos/raw`; all removed again after this round) and `qa_r22_probe`'s `CUR`/`PREV` repointed at the two tags.
