@@ -1,0 +1,4051 @@
+{
+ "generated": "2026-09-21T22:29:33",
+ "active_gap_s": 180,
+ "windows": [
+  {
+   "key": "g0",
+   "label": "Gate 0 vertical slice",
+   "start": "2026-09-15 09:43",
+   "end": "2026-09-15 11:50",
+   "citation": "first prompt 07:43Z (11484ff4) -> 70bfe73 Gate 0 merged 11:50",
+   "wall_h": 2.12,
+   "agent_work_h": 1.95,
+   "gpu_no_agent_h": 0.0,
+   "gpu_busy_total_h": 1.6,
+   "waiting_on_user_h": 0.1,
+   "idle_h": 0.07,
+   "before_start_h": 0.0,
+   "requests": 436,
+   "output_tokens": 541209,
+   "thinking_tokens": 224549,
+   "cache_read_tokens": 86855839,
+   "cache_write_tokens": 3052105,
+   "cost_usd": 78.25,
+   "cost_by_role": {
+    "lead": 14.41,
+    "bake engineer": 26.82,
+    "viewer engineer": 31.55,
+    "code reviewer": 5.46
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 14.41,
+    "claude-opus-5": 63.84
+   },
+   "subagents": 4,
+   "subagent_hours_sum": 3.37,
+   "lead_thread_span_h": 2.09,
+   "waits_h_by_role_kind": {
+    "lead | waiting on agents": 0.76,
+    "lead | idle until user returned": 0.27,
+    "viewer engineer | idle until user returned": 0.19,
+    "bake engineer | idle until user returned": 0.13,
+    "lead | waiting on user": 0.12
+   }
+  },
+  {
+   "key": "g1",
+   "label": "Gate 1 geometry freeze",
+   "start": "2026-09-15 11:50",
+   "end": "2026-09-15 16:58",
+   "citation": "70bfe73 -> 57addb8 QA 11d GATE 1 PASS",
+   "wall_h": 5.13,
+   "agent_work_h": 5.08,
+   "gpu_no_agent_h": 0.05,
+   "gpu_busy_total_h": 2.97,
+   "waiting_on_user_h": 0.0,
+   "idle_h": 0.0,
+   "before_start_h": 0.0,
+   "requests": 989,
+   "output_tokens": 1020877,
+   "thinking_tokens": 412370,
+   "cache_read_tokens": 190382429,
+   "cache_write_tokens": 9867478,
+   "cost_usd": 176.06,
+   "cost_by_role": {
+    "lead": 16.77,
+    "QA critic": 28.97,
+    "export engineer": 70.77,
+    "code reviewer": 10.8,
+    "viewer engineer": 19.26,
+    "materials": 29.5
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 16.77,
+    "claude-opus-5": 159.29
+   },
+   "subagents": 11,
+   "subagent_hours_sum": 10.22,
+   "lead_thread_span_h": 4.87,
+   "waits_h_by_role_kind": {
+    "lead | waiting on agents": 1.87,
+    "export engineer | idle until user returned": 1.23,
+    "lead | idle until user returned": 0.9,
+    "materials | other wait": 0.67,
+    "viewer engineer | idle until user returned": 0.15,
+    "materials | idle until user returned": 0.13
+   }
+  },
+  {
+   "key": "g2",
+   "label": "Gate 2 material bake",
+   "start": "2026-09-15 16:58",
+   "end": "2026-09-15 21:55",
+   "citation": "57addb8 -> 19412e4 QA 12b GATE 2 PASS",
+   "wall_h": 4.95,
+   "agent_work_h": 4.4,
+   "gpu_no_agent_h": 0.55,
+   "gpu_busy_total_h": 4.7,
+   "waiting_on_user_h": 0.0,
+   "idle_h": 0.0,
+   "before_start_h": 0.0,
+   "requests": 826,
+   "output_tokens": 891074,
+   "thinking_tokens": 351534,
+   "cache_read_tokens": 245919827,
+   "cache_write_tokens": 10517436,
+   "cost_usd": 201.96,
+   "cost_by_role": {
+    "lead": 16.24,
+    "viewer engineer": 76.55,
+    "QA critic": 11.67,
+    "export engineer": 21.89,
+    "code reviewer": 6.26,
+    "bake engineer": 69.35
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 16.24,
+    "claude-opus-5": 185.72
+   },
+   "subagents": 8,
+   "subagent_hours_sum": 13.1,
+   "lead_thread_span_h": 4.73,
+   "waits_h_by_role_kind": {
+    "export engineer | idle until user returned": 2.17,
+    "viewer engineer | idle until user returned": 1.79,
+    "lead | waiting on agents": 1.73,
+    "bake engineer | other wait": 1.64,
+    "lead | idle until user returned": 0.61,
+    "bake engineer | idle until user returned": 0.57,
+    "viewer engineer | other wait": 0.16
+   }
+  },
+  {
+   "key": "g3",
+   "label": "Gate 3 lightmap bake",
+   "start": "2026-09-15 21:55",
+   "end": "2026-09-16 15:09",
+   "citation": "19412e4 -> f8c9002 QA 13 lightmaps accepted",
+   "wall_h": 17.23,
+   "agent_work_h": 9.5,
+   "gpu_no_agent_h": 0.03,
+   "gpu_busy_total_h": 7.7,
+   "waiting_on_user_h": 3.23,
+   "idle_h": 4.47,
+   "before_start_h": 0.0,
+   "requests": 1125,
+   "output_tokens": 1140390,
+   "thinking_tokens": 458709,
+   "cache_read_tokens": 195121870,
+   "cache_write_tokens": 18547294,
+   "cost_usd": 258.66,
+   "cost_by_role": {
+    "lead": 33.87,
+    "bake engineer": 107.85,
+    "QA critic": 9.62,
+    "code reviewer": 17.37,
+    "export engineer": 34.93,
+    "viewer engineer": 55.01
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 33.87,
+    "claude-opus-5": 224.79
+   },
+   "subagents": 12,
+   "subagent_hours_sum": 12.36,
+   "lead_thread_span_h": 17.21,
+   "waits_h_by_role_kind": {
+    "lead | waiting on agents": 8.18,
+    "lead | idle until user returned": 4.25,
+    "export engineer | idle until user returned": 0.41,
+    "code reviewer | gpu wait": 0.08,
+    "viewer engineer | other wait": 0.07,
+    "QA critic | gpu wait": 0.06,
+    "code reviewer | other wait": 0.06
+   }
+  },
+  {
+   "key": "g4",
+   "label": "Gate 4 viewer (6a)",
+   "start": "2026-09-16 15:09",
+   "end": "2026-09-17 01:23",
+   "citation": "f8c9002 -> 212ca27 QA 15 parity",
+   "wall_h": 10.23,
+   "agent_work_h": 4.68,
+   "gpu_no_agent_h": 0.0,
+   "gpu_busy_total_h": 2.5,
+   "waiting_on_user_h": 0.0,
+   "idle_h": 5.55,
+   "before_start_h": 0.0,
+   "requests": 1438,
+   "output_tokens": 881274,
+   "thinking_tokens": 280482,
+   "cache_read_tokens": 313656170,
+   "cache_write_tokens": 11684059,
+   "cost_usd": 253.8,
+   "cost_by_role": {
+    "lead": 21.91,
+    "bake engineer": 44.07,
+    "code reviewer": 22.66,
+    "export engineer": 30.38,
+    "QA critic": 14.55,
+    "viewer engineer": 120.23
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 21.91,
+    "claude-opus-5": 231.89,
+    "<synthetic>": 0.0
+   },
+   "subagents": 17,
+   "subagent_hours_sum": 14.81,
+   "lead_thread_span_h": 10.15,
+   "waits_h_by_role_kind": {
+    "lead | waiting on agents": 3.23,
+    "bake engineer | idle until user returned": 1.0,
+    "viewer engineer | other wait": 0.85,
+    "bake engineer | other wait": 0.57,
+    "lead | idle until user returned": 0.52,
+    "export engineer | other wait": 0.51,
+    "viewer engineer | idle until user returned": 0.45,
+    "export engineer | idle until user returned": 0.26
+   }
+  },
+  {
+   "key": "6c",
+   "label": "6c foliage pass",
+   "start": "2026-09-17 01:23",
+   "end": "2026-09-17 12:56",
+   "citation": "212ca27 -> 47a2f7e QA 17 6c closed",
+   "wall_h": 11.55,
+   "agent_work_h": 5.2,
+   "gpu_no_agent_h": 0.0,
+   "gpu_busy_total_h": 4.03,
+   "waiting_on_user_h": 5.77,
+   "idle_h": 0.58,
+   "before_start_h": 0.0,
+   "requests": 2176,
+   "output_tokens": 1644375,
+   "thinking_tokens": 600903,
+   "cache_read_tokens": 438533451,
+   "cache_write_tokens": 9458724,
+   "cost_usd": 321.59,
+   "cost_by_role": {
+    "lead": 34.66,
+    "QA critic": 18.74,
+    "code reviewer": 32.55,
+    "bake engineer": 38.3,
+    "export engineer": 65.69,
+    "analysis/mechanical": 1.85,
+    "viewer engineer": 129.81
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 34.66,
+    "claude-opus-5": 285.08,
+    "claude-sonnet-5": 1.85
+   },
+   "subagents": 22,
+   "subagent_hours_sum": 10.7,
+   "lead_thread_span_h": 11.53,
+   "waits_h_by_role_kind": {
+    "lead | idle until user returned": 7.8,
+    "lead | waiting on agents": 1.95,
+    "export engineer | idle until user returned": 0.63,
+    "viewer engineer | idle until user returned": 0.41,
+    "bake engineer | idle until user returned": 0.28,
+    "analysis/mechanical | other wait": 0.15,
+    "lead | waiting on user": 0.06,
+    "viewer engineer | other wait": 0.05
+   }
+  },
+  {
+   "key": "6b",
+   "label": "6b web deployment (+6d)",
+   "start": "2026-09-17 12:56",
+   "end": "2026-09-19 00:00",
+   "citation": "47a2f7e -> 98ab252 QA 18b (19:48) -> d40a125 6d (23:06) -> session 6 final stop",
+   "wall_h": 35.07,
+   "agent_work_h": 3.48,
+   "gpu_no_agent_h": 0.0,
+   "gpu_busy_total_h": 1.43,
+   "waiting_on_user_h": 20.78,
+   "idle_h": 10.8,
+   "before_start_h": 0.0,
+   "requests": 1074,
+   "output_tokens": 460445,
+   "thinking_tokens": 110948,
+   "cache_read_tokens": 313348141,
+   "cache_write_tokens": 6154785,
+   "cost_usd": 208.78,
+   "cost_by_role": {
+    "lead": 32.75,
+    "code reviewer": 6.57,
+    "viewer engineer": 107.84,
+    "analysis/mechanical": 0.5,
+    "export engineer": 42.24,
+    "QA critic": 18.88
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 32.75,
+    "claude-opus-5": 175.53,
+    "claude-sonnet-5": 0.5
+   },
+   "subagents": 9,
+   "subagent_hours_sum": 5.73,
+   "lead_thread_span_h": 34.59,
+   "waits_h_by_role_kind": {
+    "lead | waiting on user": 17.56,
+    "lead | idle until user returned": 3.47,
+    "lead | waiting on agents": 2.58,
+    "export engineer | idle until user returned": 0.85,
+    "viewer engineer | idle until user returned": 0.3,
+    "viewer engineer | other wait": 0.28,
+    "viewer engineer | waiting on user": 0.09,
+    "export engineer | other wait": 0.08
+   }
+  },
+  {
+   "key": "p7",
+   "label": "Phase 7 foliage look",
+   "start": "2026-09-19 00:00",
+   "end": "2026-09-19 09:56",
+   "citation": "user prompt 08:43 -> 6253d32 QA 19",
+   "wall_h": 9.93,
+   "agent_work_h": 1.15,
+   "gpu_no_agent_h": 0.03,
+   "gpu_busy_total_h": 0.87,
+   "waiting_on_user_h": 8.72,
+   "idle_h": 0.03,
+   "before_start_h": 0.0,
+   "requests": 311,
+   "output_tokens": 69584,
+   "thinking_tokens": 15288,
+   "cache_read_tokens": 62598921,
+   "cache_write_tokens": 1292506,
+   "cost_usd": 44.07,
+   "cost_by_role": {
+    "lead": 12.55,
+    "viewer engineer": 24.21,
+    "code reviewer": 2.16,
+    "QA critic": 5.16
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 12.55,
+    "claude-opus-5": 31.53
+   },
+   "subagents": 3,
+   "subagent_hours_sum": 1.07,
+   "lead_thread_span_h": 1.01,
+   "waits_h_by_role_kind": {
+    "lead | idle until user returned": 8.78,
+    "lead | waiting on agents": 0.91
+   }
+  },
+  {
+   "key": "p8",
+   "label": "Phase 8 (beyond Phase 6, same day)",
+   "start": "2026-09-19 09:56",
+   "end": "2026-09-20 00:00",
+   "citation": "6253d32 -> end of 09-19",
+   "wall_h": 14.07,
+   "agent_work_h": 8.57,
+   "gpu_no_agent_h": 0.17,
+   "gpu_busy_total_h": 3.18,
+   "waiting_on_user_h": 2.45,
+   "idle_h": 2.88,
+   "before_start_h": 0.0,
+   "requests": 3432,
+   "output_tokens": 1418953,
+   "thinking_tokens": 505348,
+   "cache_read_tokens": 862014942,
+   "cache_write_tokens": 19812654,
+   "cost_usd": 599.45,
+   "cost_by_role": {
+    "lead": 80.53,
+    "code reviewer": 47.96,
+    "analysis/mechanical": 295.04,
+    "QA critic": 34.43,
+    "bake engineer": 7.9,
+    "export engineer": 9.7,
+    "viewer engineer": 75.57,
+    "lighting": 24.0,
+    "other": 24.32
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 80.53,
+    "claude-opus-5": 518.01,
+    "claude-sonnet-5": 0.92
+   },
+   "subagents": 31,
+   "subagent_hours_sum": 21.4,
+   "lead_thread_span_h": 14.04,
+   "waits_h_by_role_kind": {
+    "lead | idle until user returned": 10.86,
+    "analysis/mechanical | idle until user returned": 5.31,
+    "lead | waiting on agents": 4.57,
+    "other | idle until user returned": 1.14,
+    "viewer engineer | other wait": 0.77,
+    "viewer engineer | idle until user returned": 0.43,
+    "lighting | idle until user returned": 0.17,
+    "analysis/mechanical | other wait": 0.08
+   }
+  }
+ ],
+ "days": {
+  "2026-09-15": {
+   "wall_h": 24.0,
+   "agent_work_h": 13.57,
+   "gpu_no_agent_h": 0.6,
+   "gpu_busy_total_h": 11.27,
+   "waiting_on_user_h": 0.1,
+   "idle_h": 0.07,
+   "before_start_h": 9.67,
+   "requests": 2370,
+   "output_tokens": 2632493,
+   "thinking_tokens": 1070282,
+   "cache_read_tokens": 545868662,
+   "cache_write_tokens": 26625493,
+   "cost_usd": 495.26,
+   "cost_by_role": {
+    "lead": 54.86,
+    "viewer engineer": 127.37,
+    "QA critic": 41.24,
+    "export engineer": 92.66,
+    "code reviewer": 22.52,
+    "bake engineer": 127.11,
+    "materials": 29.5
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 54.86,
+    "claude-opus-5": 440.4,
+    "<synthetic>": 0.0
+   },
+   "cost_by_activity": {
+    "viewing images": 26.17,
+    "reasoning and reporting": 18.64,
+    "reading files and logs": 85.29,
+    "running scripts": 151.58,
+    "waiting on tools": 138.38,
+    "editing files": 62.92,
+    "coordination": 12.28
+   },
+   "output_by_activity": {
+    "viewing images": 160747,
+    "reasoning and reporting": 19319,
+    "reading files and logs": 312721,
+    "running scripts": 852866,
+    "waiting on tools": 564693,
+    "editing files": 670245,
+    "coordination": 51902
+   },
+   "subagents_started": 21,
+   "human_prompts": 29
+  },
+  "2026-09-16": {
+   "wall_h": 24.0,
+   "agent_work_h": 10.72,
+   "gpu_no_agent_h": 0.03,
+   "gpu_busy_total_h": 7.65,
+   "waiting_on_user_h": 3.23,
+   "idle_h": 10.02,
+   "before_start_h": 0.0,
+   "requests": 2105,
+   "output_tokens": 1766724,
+   "thinking_tokens": 645616,
+   "cache_read_tokens": 414285888,
+   "cache_write_tokens": 23376102,
+   "cost_usd": 416.16,
+   "cost_by_role": {
+    "lead": 50.25,
+    "bake engineer": 113.14,
+    "code reviewer": 36.4,
+    "export engineer": 51.3,
+    "viewer engineer": 148.4,
+    "QA critic": 16.67
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 50.25,
+    "claude-opus-5": 365.91,
+    "<synthetic>": 0.0
+   },
+   "cost_by_activity": {
+    "reading files and logs": 91.35,
+    "running scripts": 97.58,
+    "waiting on tools": 114.26,
+    "coordination": 3.56,
+    "editing files": 70.32,
+    "reasoning and reporting": 24.26,
+    "viewing images": 14.83
+   },
+   "output_by_activity": {
+    "reading files and logs": 357890,
+    "running scripts": 505724,
+    "waiting on tools": 233305,
+    "coordination": 30184,
+    "editing files": 521415,
+    "reasoning and reporting": 28762,
+    "viewing images": 89444
+   },
+   "subagents_started": 22,
+   "human_prompts": 30
+  },
+  "2026-09-17": {
+   "wall_h": 24.0,
+   "agent_work_h": 6.78,
+   "gpu_no_agent_h": 0.0,
+   "gpu_busy_total_h": 4.67,
+   "waiting_on_user_h": 6.37,
+   "idle_h": 10.85,
+   "before_start_h": 0.0,
+   "requests": 2568,
+   "output_tokens": 1749035,
+   "thinking_tokens": 618937,
+   "cache_read_tokens": 515801580,
+   "cache_write_tokens": 13605921,
+   "cost_usd": 389.53,
+   "cost_by_role": {
+    "lead": 42.4,
+    "analysis/mechanical": 2.35,
+    "QA critic": 26.11,
+    "code reviewer": 36.17,
+    "bake engineer": 46.15,
+    "export engineer": 79.7,
+    "viewer engineer": 156.66
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 42.4,
+    "claude-sonnet-5": 2.35,
+    "claude-opus-5": 344.79
+   },
+   "cost_by_activity": {
+    "reading files and logs": 115.91,
+    "running scripts": 119.35,
+    "waiting on tools": 46.15,
+    "coordination": 8.81,
+    "editing files": 61.44,
+    "reasoning and reporting": 17.1,
+    "viewing images": 20.77
+   },
+   "output_by_activity": {
+    "reading files and logs": 341369,
+    "running scripts": 556556,
+    "waiting on tools": 151018,
+    "coordination": 52960,
+    "editing files": 541648,
+    "reasoning and reporting": 19993,
+    "viewing images": 85491
+   },
+   "subagents_started": 24,
+   "human_prompts": 32
+  },
+  "2026-09-18": {
+   "wall_h": 24.0,
+   "agent_work_h": 3.28,
+   "gpu_no_agent_h": 0.0,
+   "gpu_busy_total_h": 1.35,
+   "waiting_on_user_h": 20.18,
+   "idle_h": 0.53,
+   "before_start_h": 0.0,
+   "requests": 1025,
+   "output_tokens": 432388,
+   "thinking_tokens": 104854,
+   "cache_read_tokens": 308499343,
+   "cache_write_tokens": 5954091,
+   "cost_usd": 203.96,
+   "cost_by_role": {
+    "lead": 28.91,
+    "code reviewer": 6.57,
+    "viewer engineer": 107.84,
+    "export engineer": 42.24,
+    "QA critic": 18.4
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 28.91,
+    "claude-opus-5": 175.05
+   },
+   "cost_by_activity": {
+    "running scripts": 65.9,
+    "waiting on tools": 22.77,
+    "coordination": 3.92,
+    "reading files and logs": 36.17,
+    "reasoning and reporting": 14.27,
+    "editing files": 51.35,
+    "viewing images": 9.57
+   },
+   "output_by_activity": {
+    "running scripts": 15305,
+    "waiting on tools": 27547,
+    "coordination": 26926,
+    "reading files and logs": 25119,
+    "reasoning and reporting": 14664,
+    "editing files": 295618,
+    "viewing images": 27209
+   },
+   "subagents_started": 7,
+   "human_prompts": 13
+  },
+  "2026-09-19": {
+   "wall_h": 24.0,
+   "agent_work_h": 9.72,
+   "gpu_no_agent_h": 0.2,
+   "gpu_busy_total_h": 4.05,
+   "waiting_on_user_h": 11.17,
+   "idle_h": 2.92,
+   "before_start_h": 0.0,
+   "requests": 3743,
+   "output_tokens": 1488537,
+   "thinking_tokens": 520636,
+   "cache_read_tokens": 924613863,
+   "cache_write_tokens": 21105160,
+   "cost_usd": 643.53,
+   "cost_by_role": {
+    "lead": 93.07,
+    "code reviewer": 50.13,
+    "viewer engineer": 99.78,
+    "analysis/mechanical": 295.04,
+    "QA critic": 39.59,
+    "bake engineer": 7.9,
+    "export engineer": 9.7,
+    "lighting": 24.0,
+    "other": 24.32
+   },
+   "cost_by_model": {
+    "claude-fable-5-1": 93.07,
+    "claude-opus-5": 549.54,
+    "claude-sonnet-5": 0.92
+   },
+   "cost_by_activity": {
+    "reading files and logs": 203.36,
+    "reasoning and reporting": 42.77,
+    "viewing images": 37.66,
+    "waiting on tools": 74.28,
+    "coordination": 11.58,
+    "editing files": 96.92,
+    "running scripts": 176.95
+   },
+   "output_by_activity": {
+    "reading files and logs": 250133,
+    "reasoning and reporting": 26639,
+    "viewing images": 121493,
+    "waiting on tools": 110089,
+    "coordination": 50481,
+    "editing files": 546054,
+    "running scripts": 383648
+   },
+   "subagents_started": 33,
+   "human_prompts": 43
+  }
+ },
+ "documented_gpu": [
+  [
+   "2026-09-15 12:27",
+   "2026-09-15 14:03",
+   "Gate 1 ORN slot-bake queue, 33 jobs, 5 766 s (status.md l.578; launch = export engineer background command 10:27Z)"
+  ],
+  [
+   "2026-09-15 22:10",
+   "2026-09-16 04:40",
+   "Gate 3 lightmap queue, 65 jobs in 6 h 30 m, detached overnight (status.md l.644/648)"
+  ]
+ ],
+ "hand_gaps": [
+  [
+   "2026-09-15 00:00",
+   "2026-09-15 09:43",
+   "before",
+   "Phase 6 had not started (first prompt 09:43)"
+  ],
+  [
+   "2026-09-16 05:34",
+   "2026-09-16 08:48",
+   "user",
+   "restart required by the 350k-context rule; lead stopped at the checkpoint (status.md l.644) and the user restarted at 08:48 (\"why do you ask me to restart?\")"
+  ],
+  [
+   "2026-09-16 09:31",
+   "2026-09-16 13:51",
+   "idle",
+   "user left 09:19 (\"leave in 10 mins\"); resume procedure written (status.md l.668); session 3 opened 13:51"
+  ],
+  [
+   "2026-09-16 17:31",
+   "2026-09-16 22:31",
+   "idle",
+   "user left 17:28; stop state written (status.md l.808); session 4 opened 22:31"
+  ],
+  [
+   "2026-09-17 01:26",
+   "2026-09-17 07:10",
+   "user",
+   "6a final judgement delivered 01:23; open for the user: default preset and the iPhone (status.md \"Open for the user\"); user returned 07:10 (\"what should i do now?\")"
+  ],
+  [
+   "2026-09-17 08:21",
+   "2026-09-17 08:56",
+   "idle",
+   "user left 08:16; session 5 opened 08:56"
+  ],
+  [
+   "2026-09-17 13:00",
+   "2026-09-17 23:16",
+   "idle",
+   "user left 12:54 (QA 17 in flight, told to finish); session 6 opened 23:16"
+  ],
+  [
+   "2026-09-18 19:51",
+   "2026-09-18 20:42",
+   "user",
+   "6b done 19:48; owed from the user: Safari screenshot + iPhone walk (status.md l.918); user reported the test-scene defect from the phone ~20:42"
+  ],
+  [
+   "2026-09-18 21:01",
+   "2026-09-18 22:59",
+   "user",
+   "post-close fix deployed 20:43; still owed from the user: phone evidence; user returned 22:59 (\"what else needs to get done?\")"
+  ],
+  [
+   "2026-09-18 23:35",
+   "2026-09-19 08:43",
+   "user",
+   "final stop state: \"Open decision for the user only\" (status.md l.928); user returned 08:43 with the two foliage defects"
+  ],
+  [
+   "2026-09-19 09:58",
+   "2026-09-19 12:25",
+   "user",
+   "Phase 7 closed 09:56; nothing scheduled, the user decides (status.md l.941); user returned 12:25 (\"Is the job completed or what's next?\")"
+  ]
+ ],
+ "scores": {
+  "phase5_10b": [
+   3.61,
+   2.94,
+   2.56,
+   2.81,
+   3.06,
+   2.67
+  ],
+  "phase5_parity_baseline": [
+   3.67,
+   2.94,
+   2.56,
+   2.81,
+   3.06,
+   2.67
+  ],
+  "g1_qa11_geometry_only": [
+   3.5,
+   3.0,
+   2.6,
+   3.0,
+   2.9,
+   2.8
+  ],
+  "g3_qa13": [
+   3.39,
+   2.69,
+   2.69,
+   2.31,
+   2.89,
+   2.33
+  ],
+  "g4_qa14": [
+   3.61,
+   2.94,
+   2.56,
+   2.88,
+   2.83,
+   2.56
+  ],
+  "g4_qa15": [
+   3.72,
+   3.0,
+   2.56,
+   2.88,
+   2.94,
+   2.83
+  ],
+  "6c_qa17": [
+   3.78,
+   3.25,
+   2.63,
+   2.88,
+   2.94,
+   2.83
+  ],
+  "6b_qa18b_desktop": [
+   3.78,
+   3.25,
+   2.63,
+   2.88,
+   2.94,
+   2.83
+  ],
+  "6b_qa18b_mobile": [
+   2.9,
+   3.0,
+   2.3,
+   2.7,
+   2.5,
+   2.4
+  ],
+  "p7_qa19_desktop": [
+   3.78,
+   3.25,
+   2.63,
+   2.88,
+   3.06,
+   2.83
+  ],
+  "p7_qa19_mobile": [
+   3.2,
+   3.3,
+   2.3,
+   2.7,
+   2.8,
+   2.4
+  ]
+ },
+ "week": {
+  "window": [
+   "2026-09-15 00:00",
+   "2026-09-20 00:00"
+  ],
+  "wall_h": 120.0,
+  "agent_work_h": 44.07,
+  "gpu_no_agent_h": 0.83,
+  "gpu_busy_total_h": 28.98,
+  "waiting_on_user_h": 41.05,
+  "idle_h": 24.38,
+  "before_start_h": 9.67,
+  "requests": 11811,
+  "input_tokens": 46882,
+  "output_tokens": 8069177,
+  "thinking_tokens": 2960325,
+  "cache_read_tokens": 2709069336,
+  "cache_write_tokens": 90666767,
+  "cost_usd": 2148.43,
+  "by_role": {
+   "viewer engineer": {
+    "requests": 3040,
+    "output": 1969377,
+    "thinking": 650215,
+    "cache_read": 905409364,
+    "cache_write": 22093097,
+    "cost_usd": 640.05
+   },
+   "analysis/mechanical": {
+    "requests": 1283,
+    "output": 404828,
+    "thinking": 159535,
+    "cache_read": 458567049,
+    "cache_write": 9838614,
+    "cost_usd": 297.39
+   },
+   "bake engineer": {
+    "requests": 1053,
+    "output": 1095434,
+    "thinking": 421189,
+    "cache_read": 210260787,
+    "cache_write": 25881232,
+    "cost_usd": 294.28
+   },
+   "export engineer": {
+    "requests": 1510,
+    "output": 1027965,
+    "thinking": 369832,
+    "cache_read": 335516887,
+    "cache_write": 13139281,
+    "cost_usd": 275.59
+   },
+   "lead": {
+    "requests": 1285,
+    "output": 1024130,
+    "thinking": 272933,
+    "cache_read": 344798295,
+    "cache_write": 6591026,
+    "cost_usd": 269.48
+   },
+   "code reviewer": {
+    "requests": 1670,
+    "output": 1194270,
+    "thinking": 599144,
+    "cache_read": 170327807,
+    "cache_write": 5881188,
+    "cost_usd": 151.79
+   },
+   "QA critic": {
+    "requests": 1454,
+    "output": 991719,
+    "thinking": 326492,
+    "cache_read": 189558835,
+    "cache_write": 3587801,
+    "cost_usd": 142.01
+   },
+   "materials": {
+    "requests": 146,
+    "output": 184720,
+    "thinking": 99178,
+    "cache_read": 26666267,
+    "cache_write": 1847633,
+    "cost_usd": 29.5
+   },
+   "other": {
+    "requests": 210,
+    "output": 74798,
+    "thinking": 32955,
+    "cache_read": 33381581,
+    "cache_write": 1141373,
+    "cost_usd": 24.32
+   },
+   "lighting": {
+    "requests": 160,
+    "output": 101936,
+    "thinking": 28852,
+    "cache_read": 34582464,
+    "cache_write": 665522,
+    "cost_usd": 24.0
+   }
+  },
+  "by_model": {
+   "claude-opus-5": {
+    "requests": 10414,
+    "output": 7006855,
+    "thinking": 2671628,
+    "cache_read": 2355991018,
+    "cache_write": 83586740,
+    "cost_usd": 1875.69
+   },
+   "claude-fable-5-1": {
+    "requests": 1283,
+    "output": 1024130,
+    "thinking": 272933,
+    "cache_read": 344798295,
+    "cache_write": 6591026,
+    "cost_usd": 269.48
+   },
+   "claude-sonnet-5": {
+    "requests": 112,
+    "output": 38192,
+    "thinking": 15764,
+    "cache_read": 8280023,
+    "cache_write": 489001,
+    "cost_usd": 3.26
+   },
+   "<synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "by_activity": {
+   "running scripts": {
+    "requests": 3406,
+    "output": 2314099,
+    "thinking": 915295,
+    "cache_read": 826197783,
+    "cache_write": 20912998,
+    "cost_usd": 611.36
+   },
+   "reading files and logs": {
+    "requests": 3520,
+    "output": 1287232,
+    "thinking": 833017,
+    "cache_read": 619358882,
+    "cache_write": 29470824,
+    "cost_usd": 532.07
+   },
+   "waiting on tools": {
+    "requests": 1444,
+    "output": 1086652,
+    "thinking": 402823,
+    "cache_read": 428937215,
+    "cache_write": 25149549,
+    "cost_usd": 395.85
+   },
+   "editing files": {
+    "requests": 1820,
+    "output": 2574980,
+    "thinking": 510257,
+    "cache_read": 429945396,
+    "cache_write": 9892323,
+    "cost_usd": 342.95
+   },
+   "reasoning and reporting": {
+    "requests": 563,
+    "output": 109377,
+    "thinking": 21591,
+    "cache_read": 173005537,
+    "cache_write": 2697398,
+    "cost_usd": 117.04
+   },
+   "viewing images": {
+    "requests": 828,
+    "output": 484384,
+    "thinking": 237406,
+    "cache_read": 167669132,
+    "cache_write": 1655721,
+    "cost_usd": 109.0
+   },
+   "coordination": {
+    "requests": 230,
+    "output": 212453,
+    "thinking": 39936,
+    "cache_read": 63955391,
+    "cache_write": 887954,
+    "cost_usd": 40.16
+   }
+  },
+  "by_day": {
+   "2026-09-19": {
+    "requests": 3743,
+    "output": 1488537,
+    "thinking": 520636,
+    "cache_read": 924613863,
+    "cache_write": 21105160,
+    "cost_usd": 643.53
+   },
+   "2026-09-15": {
+    "requests": 2370,
+    "output": 2632493,
+    "thinking": 1070282,
+    "cache_read": 545868662,
+    "cache_write": 26625493,
+    "cost_usd": 495.26
+   },
+   "2026-09-16": {
+    "requests": 2105,
+    "output": 1766724,
+    "thinking": 645616,
+    "cache_read": 414285888,
+    "cache_write": 23376102,
+    "cost_usd": 416.16
+   },
+   "2026-09-17": {
+    "requests": 2568,
+    "output": 1749035,
+    "thinking": 618937,
+    "cache_read": 515801580,
+    "cache_write": 13605921,
+    "cost_usd": 389.53
+   },
+   "2026-09-18": {
+    "requests": 1025,
+    "output": 432388,
+    "thinking": 104854,
+    "cache_read": 308499343,
+    "cache_write": 5954091,
+    "cost_usd": 203.96
+   }
+  },
+  "by_role_model": {
+   "viewer engineer | claude-opus-5": {
+    "requests": 3040,
+    "output": 1969377,
+    "thinking": 650215,
+    "cache_read": 905409364,
+    "cache_write": 22093097,
+    "cost_usd": 640.05
+   },
+   "analysis/mechanical | claude-opus-5": {
+    "requests": 1208,
+    "output": 375975,
+    "thinking": 146685,
+    "cache_read": 453094148,
+    "cache_write": 9453821,
+    "cost_usd": 295.04
+   },
+   "bake engineer | claude-opus-5": {
+    "requests": 1053,
+    "output": 1095434,
+    "thinking": 421189,
+    "cache_read": 210260787,
+    "cache_write": 25881232,
+    "cost_usd": 294.28
+   },
+   "export engineer | claude-opus-5": {
+    "requests": 1510,
+    "output": 1027965,
+    "thinking": 369832,
+    "cache_read": 335516887,
+    "cache_write": 13139281,
+    "cost_usd": 275.59
+   },
+   "lead | claude-fable-5-1": {
+    "requests": 1283,
+    "output": 1024130,
+    "thinking": 272933,
+    "cache_read": 344798295,
+    "cache_write": 6591026,
+    "cost_usd": 269.48
+   },
+   "code reviewer | claude-opus-5": {
+    "requests": 1670,
+    "output": 1194270,
+    "thinking": 599144,
+    "cache_read": 170327807,
+    "cache_write": 5881188,
+    "cost_usd": 151.79
+   },
+   "QA critic | claude-opus-5": {
+    "requests": 1454,
+    "output": 991719,
+    "thinking": 326492,
+    "cache_read": 189558835,
+    "cache_write": 3587801,
+    "cost_usd": 142.01
+   },
+   "materials | claude-opus-5": {
+    "requests": 146,
+    "output": 184720,
+    "thinking": 99178,
+    "cache_read": 26666267,
+    "cache_write": 1847633,
+    "cost_usd": 29.5
+   },
+   "lighting | claude-opus-5": {
+    "requests": 160,
+    "output": 101936,
+    "thinking": 28852,
+    "cache_read": 34582464,
+    "cache_write": 665522,
+    "cost_usd": 24.0
+   },
+   "other | claude-opus-5": {
+    "requests": 173,
+    "output": 65459,
+    "thinking": 30041,
+    "cache_read": 30574459,
+    "cache_write": 1037165,
+    "cost_usd": 23.41
+   },
+   "analysis/mechanical | claude-sonnet-5": {
+    "requests": 75,
+    "output": 28853,
+    "thinking": 12850,
+    "cache_read": 5472901,
+    "cache_write": 384793,
+    "cost_usd": 2.35
+   },
+   "other | claude-sonnet-5": {
+    "requests": 37,
+    "output": 9339,
+    "thinking": 2914,
+    "cache_read": 2807122,
+    "cache_write": 104208,
+    "cost_usd": 0.92
+   },
+   "lead | <synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "by_role_activity": {
+   "viewer engineer | running scripts": {
+    "requests": 997,
+    "output": 711914,
+    "thinking": 239482,
+    "cache_read": 321585910,
+    "cache_write": 3746713,
+    "cost_usd": 202.02
+   },
+   "viewer engineer | reading files and logs": {
+    "requests": 749,
+    "output": 248446,
+    "thinking": 155271,
+    "cache_read": 170720219,
+    "cache_write": 9383894,
+    "cost_usd": 150.23
+   },
+   "viewer engineer | waiting on tools": {
+    "requests": 528,
+    "output": 317706,
+    "thinking": 96322,
+    "cache_read": 176410820,
+    "cache_write": 5387162,
+    "cost_usd": 129.82
+   },
+   "bake engineer | waiting on tools": {
+    "requests": 236,
+    "output": 260213,
+    "thinking": 106690,
+    "cache_read": 48877925,
+    "cache_write": 13419195,
+    "cost_usd": 114.82
+   },
+   "analysis/mechanical | reading files and logs": {
+    "requests": 481,
+    "output": 82982,
+    "thinking": 54431,
+    "cache_read": 175536376,
+    "cache_write": 4077482,
+    "cost_usd": 114.13
+   },
+   "viewer engineer | editing files": {
+    "requests": 506,
+    "output": 580030,
+    "thinking": 109071,
+    "cache_read": 142000830,
+    "cache_write": 2978935,
+    "cost_usd": 104.12
+   },
+   "export engineer | running scripts": {
+    "requests": 578,
+    "output": 342663,
+    "thinking": 133005,
+    "cache_read": 149116252,
+    "cache_write": 3347359,
+    "cost_usd": 104.05
+   },
+   "analysis/mechanical | running scripts": {
+    "requests": 380,
+    "output": 140248,
+    "thinking": 57282,
+    "cache_read": 125585982,
+    "cache_write": 3525328,
+    "cost_usd": 87.18
+   },
+   "bake engineer | running scripts": {
+    "requests": 311,
+    "output": 298550,
+    "thinking": 136649,
+    "cache_read": 68079081,
+    "cache_write": 6754231,
+    "cost_usd": 83.72
+   },
+   "code reviewer | reading files and logs": {
+    "requests": 937,
+    "output": 474864,
+    "thinking": 332904,
+    "cache_read": 83712124,
+    "cache_write": 4159835,
+    "cost_usd": 79.74
+   },
+   "lead | reasoning and reporting": {
+    "requests": 316,
+    "output": 77190,
+    "thinking": 18636,
+    "cache_read": 93997522,
+    "cache_write": 2373055,
+    "cost_usd": 74.89
+   },
+   "export engineer | reading files and logs": {
+    "requests": 410,
+    "output": 130380,
+    "thinking": 85105,
+    "cache_read": 64871405,
+    "cache_write": 4357485,
+    "cost_usd": 62.93
+   },
+   "lead | editing files": {
+    "requests": 295,
+    "output": 333340,
+    "thinking": 63312,
+    "cache_read": 83744135,
+    "cache_write": 1067116,
+    "cost_usd": 59.0
+   },
+   "export engineer | editing files": {
+    "requests": 282,
+    "output": 407919,
+    "thinking": 95896,
+    "cache_read": 59656589,
+    "cache_write": 1987162,
+    "cost_usd": 52.45
+   },
+   "analysis/mechanical | waiting on tools": {
+    "requests": 181,
+    "output": 34304,
+    "thinking": 11810,
+    "cache_read": 88167391,
+    "cache_write": 1083668,
+    "cost_usd": 50.9
+   },
+   "bake engineer | reading files and logs": {
+    "requests": 271,
+    "output": 120138,
+    "thinking": 76834,
+    "cache_read": 38857165,
+    "cache_write": 3879135,
+    "cost_usd": 46.68
+   },
+   "export engineer | waiting on tools": {
+    "requests": 186,
+    "output": 132963,
+    "thinking": 53304,
+    "cache_read": 46010313,
+    "cache_write": 3170696,
+    "cost_usd": 46.15
+   },
+   "QA critic | running scripts": {
+    "requests": 457,
+    "output": 270690,
+    "thinking": 104087,
+    "cache_read": 61925429,
+    "cache_write": 995455,
+    "cost_usd": 43.96
+   },
+   "bake engineer | editing files": {
+    "requests": 187,
+    "output": 400994,
+    "thinking": 96646,
+    "cache_read": 40179528,
+    "cache_write": 1769719,
+    "cost_usd": 41.18
+   },
+   "QA critic | viewing images": {
+    "requests": 444,
+    "output": 251602,
+    "thinking": 132963,
+    "cache_read": 60160411,
+    "cache_write": 692081,
+    "cost_usd": 40.7
+   },
+   "code reviewer | running scripts": {
+    "requests": 448,
+    "output": 336204,
+    "thinking": 154974,
+    "cache_read": 51040038,
+    "cache_write": 962903,
+    "cost_usd": 39.95
+   },
+   "viewer engineer | viewing images": {
+    "requests": 183,
+    "output": 97742,
+    "thinking": 48580,
+    "cache_read": 61055229,
+    "cache_write": 266484,
+    "cost_usd": 34.64
+   },
+   "lead | coordination": {
+    "requests": 203,
+    "output": 207662,
+    "thinking": 38253,
+    "cache_read": 55457822,
+    "cache_write": 433675,
+    "cost_usd": 32.95
+   },
+   "analysis/mechanical | editing files": {
+    "requests": 162,
+    "output": 129718,
+    "thinking": 26608,
+    "cache_read": 45417893,
+    "cache_write": 1039450,
+    "cost_usd": 32.26
+   },
+   "lead | running scripts": {
+    "requests": 112,
+    "output": 76221,
+    "thinking": 35521,
+    "cache_read": 23536615,
+    "cache_write": 1094489,
+    "cost_usd": 31.61
+   },
+   "QA critic | reading files and logs": {
+    "requests": 372,
+    "output": 90450,
+    "thinking": 45720,
+    "cache_read": 37289261,
+    "cache_write": 1533048,
+    "cost_usd": 30.49
+   },
+   "lead | reading files and logs": {
+    "requests": 131,
+    "output": 80541,
+    "thinking": 44382,
+    "cache_read": 22826065,
+    "cache_write": 825866,
+    "cost_usd": 26.28
+   },
+   "lead | waiting on tools": {
+    "requests": 156,
+    "output": 182626,
+    "thinking": 49841,
+    "cache_read": 43855044,
+    "cache_write": 304948,
+    "cost_usd": 26.23
+   },
+   "QA critic | editing files": {
+    "requests": 160,
+    "output": 377027,
+    "thinking": 43670,
+    "cache_read": 26200839,
+    "cache_write": 334914,
+    "cost_usd": 24.62
+   },
+   "code reviewer | editing files": {
+    "requests": 174,
+    "output": 312241,
+    "thinking": 70895,
+    "cache_read": 22381830,
+    "cache_write": 402683,
+    "cost_usd": 21.52
+   },
+   "lead | viewing images": {
+    "requests": 72,
+    "output": 66550,
+    "thinking": 22988,
+    "cache_read": 21381092,
+    "cache_write": 491877,
+    "cost_usd": 18.53
+   },
+   "viewer engineer | reasoning and reporting": {
+    "requests": 69,
+    "output": 12986,
+    "thinking": 1356,
+    "cache_read": 31496816,
+    "cache_write": 88977,
+    "cost_usd": 16.63
+   },
+   "materials | waiting on tools": {
+    "requests": 46,
+    "output": 66594,
+    "thinking": 40995,
+    "cache_read": 9279852,
+    "cache_write": 1111198,
+    "cost_usd": 13.25
+   },
+   "lighting | reading files and logs": {
+    "requests": 62,
+    "output": 14297,
+    "thinking": 8048,
+    "cache_read": 11433028,
+    "cache_write": 464067,
+    "cost_usd": 8.97
+   },
+   "lighting | running scripts": {
+    "requests": 50,
+    "output": 56861,
+    "thinking": 15692,
+    "cache_read": 11823136,
+    "cache_write": 100246,
+    "cost_usd": 7.96
+   },
+   "other | reading files and logs": {
+    "requests": 76,
+    "output": 19618,
+    "thinking": 11803,
+    "cache_read": 10327286,
+    "cache_write": 436718,
+    "cost_usd": 7.88
+   },
+   "materials | running scripts": {
+    "requests": 39,
+    "output": 62918,
+    "thinking": 31951,
+    "cache_read": 7534633,
+    "cache_write": 342043,
+    "cost_usd": 7.48
+   },
+   "export engineer | reasoning and reporting": {
+    "requests": 36,
+    "output": 5899,
+    "thinking": 960,
+    "cache_read": 12283671,
+    "cache_write": 46288,
+    "cost_usd": 6.58
+   },
+   "code reviewer | waiting on tools": {
+    "requests": 58,
+    "output": 62429,
+    "thinking": 35561,
+    "cache_read": 5904237,
+    "cache_write": 270689,
+    "cost_usd": 6.21
+   },
+   "analysis/mechanical | reasoning and reporting": {
+    "requests": 34,
+    "output": 3603,
+    "thinking": 639,
+    "cache_read": 11940706,
+    "cache_write": 40877,
+    "cost_usd": 6.16
+   },
+   "other | waiting on tools": {
+    "requests": 30,
+    "output": 16429,
+    "thinking": 5991,
+    "cache_read": 5924296,
+    "cache_write": 332231,
+    "cost_usd": 5.45
+   },
+   "bake engineer | reasoning and reporting": {
+    "requests": 31,
+    "output": 4774,
+    "thinking": 0,
+    "cache_read": 9771890,
+    "cache_write": 40037,
+    "cost_usd": 5.26
+   },
+   "materials | reading files and logs": {
+    "requests": 31,
+    "output": 25516,
+    "thinking": 18519,
+    "cache_read": 3785953,
+    "cache_write": 353294,
+    "cost_usd": 4.74
+   },
+   "analysis/mechanical | viewing images": {
+    "requests": 34,
+    "output": 12532,
+    "thinking": 7790,
+    "cache_read": 7545082,
+    "cache_write": 52946,
+    "cost_usd": 4.42
+   },
+   "other | editing files": {
+    "requests": 29,
+    "output": 8552,
+    "thinking": 1409,
+    "cache_read": 4367946,
+    "cache_write": 272729,
+    "cost_usd": 3.94
+   },
+   "code reviewer | reasoning and reporting": {
+    "requests": 47,
+    "output": 2819,
+    "thinking": 0,
+    "cache_read": 6618776,
+    "cache_write": 67168,
+    "cost_usd": 3.8
+   },
+   "other | running scripts": {
+    "requests": 34,
+    "output": 17830,
+    "thinking": 6652,
+    "cache_read": 5970707,
+    "cache_write": 44231,
+    "cost_usd": 3.44
+   },
+   "lighting | waiting on tools": {
+    "requests": 21,
+    "output": 12816,
+    "thinking": 2257,
+    "cache_read": 4360030,
+    "cache_write": 68141,
+    "cost_usd": 2.93
+   },
+   "other | viewing images": {
+    "requests": 35,
+    "output": 12311,
+    "thinking": 7100,
+    "cache_read": 5372533,
+    "cache_write": 51218,
+    "cost_usd": 2.92
+   },
+   "lighting | editing files": {
+    "requests": 17,
+    "output": 12233,
+    "thinking": 1284,
+    "cache_read": 4474678,
+    "cache_write": 23302,
+    "cost_usd": 2.69
+   },
+   "viewer engineer | coordination": {
+    "requests": 8,
+    "output": 553,
+    "thinking": 133,
+    "cache_read": 2139540,
+    "cache_write": 240932,
+    "cost_usd": 2.59
+   },
+   "bake engineer | viewing images": {
+    "requests": 16,
+    "output": 9953,
+    "thinking": 4370,
+    "cache_read": 4103443,
+    "cache_write": 16898,
+    "cost_usd": 2.41
+   },
+   "analysis/mechanical | coordination": {
+    "requests": 11,
+    "output": 1441,
+    "thinking": 975,
+    "cache_read": 4373619,
+    "cache_write": 18863,
+    "cost_usd": 2.34
+   },
+   "QA critic | reasoning and reporting": {
+    "requests": 19,
+    "output": 1378,
+    "thinking": 0,
+    "cache_read": 3835588,
+    "cache_write": 30682,
+    "cost_usd": 2.14
+   },
+   "materials | viewing images": {
+    "requests": 16,
+    "output": 14842,
+    "thinking": 6135,
+    "cache_read": 2786386,
+    "cache_write": 17305,
+    "cost_usd": 1.87
+   },
+   "export engineer | viewing images": {
+    "requests": 14,
+    "output": 7414,
+    "thinking": 1099,
+    "cache_read": 2777496,
+    "cache_write": 41466,
+    "cost_usd": 1.83
+   },
+   "export engineer | coordination": {
+    "requests": 4,
+    "output": 727,
+    "thinking": 463,
+    "cache_read": 801161,
+    "cache_write": 188825,
+    "cost_usd": 1.6
+   },
+   "materials | editing files": {
+    "requests": 8,
+    "output": 12926,
+    "thinking": 1466,
+    "cache_read": 1521128,
+    "cache_write": 16313,
+    "cost_usd": 1.19
+   },
+   "lighting | viewing images": {
+    "requests": 8,
+    "output": 5725,
+    "thinking": 1571,
+    "cache_read": 1816658,
+    "cache_write": 7536,
+    "cost_usd": 1.1
+   },
+   "other | reasoning and reporting": {
+    "requests": 6,
+    "output": 58,
+    "thinking": 0,
+    "cache_read": 1418813,
+    "cache_write": 4246,
+    "cost_usd": 0.7
+   },
+   "code reviewer | viewing images": {
+    "requests": 6,
+    "output": 5713,
+    "thinking": 4810,
+    "cache_read": 670802,
+    "cache_write": 17910,
+    "cost_usd": 0.59
+   },
+   "materials | reasoning and reporting": {
+    "requests": 3,
+    "output": 666,
+    "thinking": 0,
+    "cache_read": 966821,
+    "cache_write": 3838,
+    "cost_usd": 0.52
+   },
+   "materials | coordination": {
+    "requests": 3,
+    "output": 1258,
+    "thinking": 112,
+    "cache_read": 791494,
+    "cache_write": 3642,
+    "cost_usd": 0.45
+   },
+   "lighting | reasoning and reporting": {
+    "requests": 2,
+    "output": 4,
+    "thinking": 0,
+    "cache_read": 674934,
+    "cache_write": 2230,
+    "cost_usd": 0.35
+   },
+   "bake engineer | coordination": {
+    "requests": 1,
+    "output": 812,
+    "thinking": 0,
+    "cache_read": 391755,
+    "cache_write": 2017,
+    "cost_usd": 0.23
+   },
+   "QA critic | waiting on tools": {
+    "requests": 2,
+    "output": 572,
+    "thinking": 52,
+    "cache_read": 147307,
+    "cache_write": 1621,
+    "cost_usd": 0.1
+   }
+  },
+  "subagents": 107,
+  "subagents_by_role": {
+   "code reviewer": 46,
+   "viewer engineer": 13,
+   "analysis/mechanical": 8,
+   "export engineer": 9,
+   "QA critic": 19,
+   "bake engineer": 8,
+   "materials": 1,
+   "lighting": 1,
+   "other": 2
+  },
+  "subagents_by_model": {
+   "claude-opus-5": 103,
+   "claude-sonnet-5": 4
+  },
+  "human_prompts": 147,
+  "images_viewed_requests": 828,
+  "wait_hours_by_kind_all_agents": {
+   "idle until user returned": 65.14,
+   "waiting on agents": 25.76,
+   "waiting on user": 17.83,
+   "other wait": 5.94,
+   "gpu wait": 0.17
+  },
+  "lead_sessions": [
+   "11484ff4-f14d-4be5-a9c2-1075c9191459",
+   "3ada03f9-fea6-41d6-8a2e-0db788998458",
+   "4133edbe-4bf8-4b01-90d1-dc3de87973da",
+   "52e90d0f-93f3-45bb-a7d5-394f6faa187e",
+   "5b1d192d-a631-4751-ade3-cb99597bd8f5",
+   "6460c313-5668-4669-b492-8fb279bb75e2",
+   "797d734e-5b99-4e23-9ac7-980cef04e419",
+   "87d95e57-98c0-4c4c-a708-4de25b276c70",
+   "a87300f7-e975-5e1a-bab6-eb7e7465cfd1",
+   "c47a8492-be20-4aa4-a385-e9e0be0c34ea"
+  ]
+ },
+ "phase5": {
+  "window": [
+   "2026-09-06 12:00",
+   "2026-09-10 16:00"
+  ],
+  "wall_h": 100.0,
+  "agent_work_h": 42.17,
+  "gpu_no_agent_h": 4.78,
+  "gpu_busy_total_h": 33.48,
+  "waiting_on_user_h": 0.1,
+  "idle_h": 52.95,
+  "before_start_h": 0.0,
+  "requests": 9099,
+  "input_tokens": 53462,
+  "output_tokens": 6228180,
+  "thinking_tokens": 2925757,
+  "cache_read_tokens": 1581993250,
+  "cache_write_tokens": 67387821,
+  "cost_usd": 1482.62,
+  "by_role": {
+   "lighting": {
+    "requests": 1573,
+    "output": 1095251,
+    "thinking": 555401,
+    "cache_read": 272047114,
+    "cache_write": 18383798,
+    "cost_usd": 283.81
+   },
+   "QA critic": {
+    "requests": 1910,
+    "output": 848633,
+    "thinking": 347032,
+    "cache_read": 389413616,
+    "cache_write": 5849791,
+    "cost_usd": 261.51
+   },
+   "lead": {
+    "requests": 851,
+    "output": 848326,
+    "thinking": 229446,
+    "cache_read": 188866937,
+    "cache_write": 5999049,
+    "cost_usd": 209.83
+   },
+   "materials": {
+    "requests": 974,
+    "output": 814235,
+    "thinking": 421543,
+    "cache_read": 176786795,
+    "cache_write": 12610853,
+    "cost_usd": 201.88
+   },
+   "environment": {
+    "requests": 1087,
+    "output": 776045,
+    "thinking": 379972,
+    "cache_read": 202654638,
+    "cache_write": 9333841,
+    "cost_usd": 184.39
+   },
+   "architecture": {
+    "requests": 828,
+    "output": 613927,
+    "thinking": 343872,
+    "cache_read": 129783150,
+    "cache_write": 4533761,
+    "cost_usd": 113.09
+   },
+   "ornament": {
+    "requests": 618,
+    "output": 372258,
+    "thinking": 181526,
+    "cache_read": 114442676,
+    "cache_write": 4838181,
+    "cost_usd": 108.44
+   },
+   "code reviewer": {
+    "requests": 1106,
+    "output": 690554,
+    "thinking": 392564,
+    "cache_read": 91625192,
+    "cache_write": 4138710,
+    "cost_usd": 88.95
+   },
+   "analysis/mechanical": {
+    "requests": 61,
+    "output": 69647,
+    "thinking": 26470,
+    "cache_read": 7302532,
+    "cache_write": 1272618,
+    "cost_usd": 21.23
+   },
+   "phase 5 prep": {
+    "requests": 74,
+    "output": 82808,
+    "thinking": 39956,
+    "cache_read": 7963657,
+    "cache_write": 268376,
+    "cost_usd": 6.38
+   },
+   "other": {
+    "requests": 17,
+    "output": 16496,
+    "thinking": 7975,
+    "cache_read": 1106943,
+    "cache_write": 158843,
+    "cost_usd": 3.09
+   }
+  },
+  "by_model": {
+   "claude-opus-5": {
+    "requests": 7634,
+    "output": 4658301,
+    "thinking": 2349028,
+    "cache_read": 1267834022,
+    "cache_write": 49668057,
+    "cost_usd": 1060.88
+   },
+   "claude-fable-5-1": {
+    "requests": 1414,
+    "output": 1544954,
+    "thinking": 561743,
+    "cache_read": 312256003,
+    "cache_write": 17612391,
+    "cost_usd": 420.84
+   },
+   "claude-sonnet-5": {
+    "requests": 25,
+    "output": 24925,
+    "thinking": 14986,
+    "cache_read": 1903225,
+    "cache_write": 107373,
+    "cost_usd": 0.9
+   },
+   "<synthetic>": {
+    "requests": 26,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "by_activity": {
+   "reading files and logs": {
+    "requests": 3307,
+    "output": 1362409,
+    "thinking": 960506,
+    "cache_read": 495089600,
+    "cache_write": 19038768,
+    "cost_usd": 432.85
+   },
+   "running scripts": {
+    "requests": 1754,
+    "output": 1344336,
+    "thinking": 584806,
+    "cache_read": 306673457,
+    "cache_write": 17194973,
+    "cost_usd": 319.28
+   },
+   "waiting on tools": {
+    "requests": 1412,
+    "output": 949226,
+    "thinking": 473585,
+    "cache_read": 264234547,
+    "cache_write": 14285975,
+    "cost_usd": 262.81
+   },
+   "editing files": {
+    "requests": 1099,
+    "output": 1429458,
+    "thinking": 350022,
+    "cache_read": 205405710,
+    "cache_write": 10203766,
+    "cost_usd": 222.72
+   },
+   "viewing images": {
+    "requests": 1075,
+    "output": 887513,
+    "thinking": 529109,
+    "cache_read": 210424692,
+    "cache_write": 4172063,
+    "cost_usd": 166.19
+   },
+   "reasoning and reporting": {
+    "requests": 300,
+    "output": 99495,
+    "thinking": 14786,
+    "cache_read": 63241635,
+    "cache_write": 1470425,
+    "cost_usd": 40.96
+   },
+   "coordination": {
+    "requests": 152,
+    "output": 155743,
+    "thinking": 12943,
+    "cache_read": 36923609,
+    "cache_write": 1021851,
+    "cost_usd": 37.79
+   }
+  },
+  "by_day": {
+   "2026-09-07": {
+    "requests": 3043,
+    "output": 1636479,
+    "thinking": 739455,
+    "cache_read": 642925155,
+    "cache_write": 20525661,
+    "cost_usd": 534.99
+   },
+   "2026-09-09": {
+    "requests": 3247,
+    "output": 2129291,
+    "thinking": 1075430,
+    "cache_read": 452473685,
+    "cache_write": 16525893,
+    "cost_usd": 385.84
+   },
+   "2026-09-08": {
+    "requests": 1809,
+    "output": 1515470,
+    "thinking": 715252,
+    "cache_read": 340118573,
+    "cache_write": 22634946,
+    "cost_usd": 366.39
+   },
+   "2026-09-10": {
+    "requests": 803,
+    "output": 656137,
+    "thinking": 274893,
+    "cache_read": 126801084,
+    "cache_write": 4978505,
+    "cost_usd": 137.65
+   },
+   "2026-09-06": {
+    "requests": 197,
+    "output": 290803,
+    "thinking": 120727,
+    "cache_read": 19674753,
+    "cache_write": 2722816,
+    "cost_usd": 57.75
+   }
+  },
+  "by_role_model": {
+   "lighting | claude-opus-5": {
+    "requests": 1519,
+    "output": 1045232,
+    "thinking": 530163,
+    "cache_read": 263310835,
+    "cache_write": 17357622,
+    "cost_usd": 266.29
+   },
+   "QA critic | claude-opus-5": {
+    "requests": 1737,
+    "output": 647197,
+    "thinking": 250975,
+    "cache_read": 366264064,
+    "cache_write": 4296448,
+    "cost_usd": 226.18
+   },
+   "lead | claude-fable-5-1": {
+    "requests": 836,
+    "output": 848326,
+    "thinking": 229446,
+    "cache_read": 188866937,
+    "cache_write": 5999049,
+    "cost_usd": 209.83
+   },
+   "environment | claude-opus-5": {
+    "requests": 1030,
+    "output": 676376,
+    "thinking": 340914,
+    "cache_read": 187925753,
+    "cache_write": 8295699,
+    "cost_usd": 162.73
+   },
+   "materials | claude-opus-5": {
+    "requests": 899,
+    "output": 739552,
+    "thinking": 381754,
+    "cache_read": 156073420,
+    "cache_write": 9795890,
+    "cost_usd": 157.76
+   },
+   "code reviewer | claude-opus-5": {
+    "requests": 1106,
+    "output": 690554,
+    "thinking": 392564,
+    "cache_read": 91625192,
+    "cache_write": 4138710,
+    "cost_usd": 88.95
+   },
+   "architecture | claude-opus-5": {
+    "requests": 754,
+    "output": 509879,
+    "thinking": 281126,
+    "cache_read": 105268046,
+    "cache_write": 3251395,
+    "cost_usd": 85.71
+   },
+   "ornament | claude-opus-5": {
+    "requests": 540,
+    "output": 291628,
+    "thinking": 146562,
+    "cache_read": 91306280,
+    "cache_write": 2371290,
+    "cost_usd": 67.77
+   },
+   "materials | claude-fable-5-1": {
+    "requests": 72,
+    "output": 74683,
+    "thinking": 39789,
+    "cache_read": 20713375,
+    "cache_write": 2814963,
+    "cost_usd": 44.12
+   },
+   "ornament | claude-fable-5-1": {
+    "requests": 76,
+    "output": 80630,
+    "thinking": 34964,
+    "cache_read": 23136396,
+    "cache_write": 2466891,
+    "cost_usd": 40.67
+   },
+   "QA critic | claude-fable-5-1": {
+    "requests": 173,
+    "output": 201436,
+    "thinking": 96057,
+    "cache_read": 23149552,
+    "cache_write": 1553343,
+    "cost_usd": 35.33
+   },
+   "architecture | claude-fable-5-1": {
+    "requests": 72,
+    "output": 104048,
+    "thinking": 62746,
+    "cache_read": 24515104,
+    "cache_write": 1282366,
+    "cost_usd": 27.38
+   },
+   "environment | claude-fable-5-1": {
+    "requests": 55,
+    "output": 99669,
+    "thinking": 39058,
+    "cache_read": 14728885,
+    "cache_write": 1038142,
+    "cost_usd": 21.66
+   },
+   "analysis/mechanical | claude-fable-5-1": {
+    "requests": 60,
+    "output": 69647,
+    "thinking": 26470,
+    "cache_read": 7302532,
+    "cache_write": 1272618,
+    "cost_usd": 21.23
+   },
+   "lighting | claude-fable-5-1": {
+    "requests": 53,
+    "output": 50019,
+    "thinking": 25238,
+    "cache_read": 8736279,
+    "cache_write": 1026176,
+    "cost_usd": 17.53
+   },
+   "phase 5 prep | claude-opus-5": {
+    "requests": 49,
+    "output": 57883,
+    "thinking": 24970,
+    "cache_read": 6060432,
+    "cache_write": 161003,
+    "cost_usd": 5.48
+   },
+   "other | claude-fable-5-1": {
+    "requests": 17,
+    "output": 16496,
+    "thinking": 7975,
+    "cache_read": 1106943,
+    "cache_write": 158843,
+    "cost_usd": 3.09
+   },
+   "phase 5 prep | claude-sonnet-5": {
+    "requests": 25,
+    "output": 24925,
+    "thinking": 14986,
+    "cache_read": 1903225,
+    "cache_write": 107373,
+    "cost_usd": 0.9
+   },
+   "lead | <synthetic>": {
+    "requests": 15,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   },
+   "lighting | <synthetic>": {
+    "requests": 1,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   },
+   "analysis/mechanical | <synthetic>": {
+    "requests": 1,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   },
+   "architecture | <synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   },
+   "environment | <synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   },
+   "materials | <synthetic>": {
+    "requests": 3,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   },
+   "ornament | <synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "by_role_activity": {
+   "QA critic | reading files and logs": {
+    "requests": 846,
+    "output": 157747,
+    "thinking": 87884,
+    "cache_read": 209024281,
+    "cache_write": 1773010,
+    "cost_usd": 122.62
+   },
+   "lighting | waiting on tools": {
+    "requests": 392,
+    "output": 290381,
+    "thinking": 176924,
+    "cache_read": 74217566,
+    "cache_write": 5937576,
+    "cost_usd": 83.72
+   },
+   "lighting | running scripts": {
+    "requests": 357,
+    "output": 248116,
+    "thinking": 89190,
+    "cache_read": 67078629,
+    "cache_write": 5422444,
+    "cost_usd": 73.54
+   },
+   "lighting | reading files and logs": {
+    "requests": 487,
+    "output": 218273,
+    "thinking": 161503,
+    "cache_read": 66750383,
+    "cache_write": 3868710,
+    "cost_usd": 65.59
+   },
+   "code reviewer | reading files and logs": {
+    "requests": 795,
+    "output": 395807,
+    "thinking": 279594,
+    "cache_read": 60207852,
+    "cache_write": 3343182,
+    "cost_usd": 60.9
+   },
+   "environment | running scripts": {
+    "requests": 313,
+    "output": 230419,
+    "thinking": 89466,
+    "cache_read": 67439017,
+    "cache_write": 2831955,
+    "cost_usd": 57.61
+   },
+   "materials | running scripts": {
+    "requests": 192,
+    "output": 207427,
+    "thinking": 108742,
+    "cache_read": 36774294,
+    "cache_write": 4304508,
+    "cost_usd": 54.0
+   },
+   "lead | editing files": {
+    "requests": 200,
+    "output": 298834,
+    "thinking": 51205,
+    "cache_read": 47352033,
+    "cache_write": 1335527,
+    "cost_usd": 53.53
+   },
+   "materials | reading files and logs": {
+    "requests": 308,
+    "output": 140196,
+    "thinking": 101219,
+    "cache_read": 41842361,
+    "cache_write": 3690130,
+    "cost_usd": 50.7
+   },
+   "QA critic | running scripts": {
+    "requests": 382,
+    "output": 235997,
+    "thinking": 98996,
+    "cache_read": 61650762,
+    "cache_write": 1317963,
+    "cost_usd": 45.51
+   },
+   "environment | reading files and logs": {
+    "requests": 323,
+    "output": 161830,
+    "thinking": 121148,
+    "cache_read": 46876205,
+    "cache_write": 2187121,
+    "cost_usd": 43.95
+   },
+   "lighting | editing files": {
+    "requests": 218,
+    "output": 255368,
+    "thinking": 81338,
+    "cache_read": 39794010,
+    "cache_write": 2636498,
+    "cost_usd": 42.8
+   },
+   "materials | waiting on tools": {
+    "requests": 197,
+    "output": 162238,
+    "thinking": 94750,
+    "cache_read": 40675219,
+    "cache_write": 1975046,
+    "cost_usd": 40.5
+   },
+   "lead | running scripts": {
+    "requests": 94,
+    "output": 79845,
+    "thinking": 39666,
+    "cache_read": 16921833,
+    "cache_write": 1589194,
+    "cost_usd": 40.03
+   },
+   "lead | coordination": {
+    "requests": 147,
+    "output": 155537,
+    "thinking": 12943,
+    "cache_read": 35574020,
+    "cache_write": 1018845,
+    "cost_usd": 37.09
+   },
+   "materials | editing files": {
+    "requests": 149,
+    "output": 188107,
+    "thinking": 50984,
+    "cache_read": 28917599,
+    "cache_write": 2075328,
+    "cost_usd": 33.81
+   },
+   "environment | waiting on tools": {
+    "requests": 184,
+    "output": 121305,
+    "thinking": 59138,
+    "cache_read": 33285578,
+    "cache_write": 2139059,
+    "cost_usd": 33.39
+   },
+   "QA critic | waiting on tools": {
+    "requests": 236,
+    "output": 69790,
+    "thinking": 20312,
+    "cache_read": 43609189,
+    "cache_write": 1330542,
+    "cost_usd": 33.3
+   },
+   "QA critic | viewing images": {
+    "requests": 282,
+    "output": 181101,
+    "thinking": 107356,
+    "cache_read": 45700729,
+    "cache_write": 526143,
+    "cost_usd": 31.88
+   },
+   "architecture | reading files and logs": {
+    "requests": 264,
+    "output": 145169,
+    "thinking": 110860,
+    "cache_read": 30376291,
+    "cache_write": 1246207,
+    "cost_usd": 29.83
+   },
+   "ornament | reading files and logs": {
+    "requests": 153,
+    "output": 70440,
+    "thinking": 55772,
+    "cache_read": 21363819,
+    "cache_write": 1554765,
+    "cost_usd": 28.58
+   },
+   "QA critic | editing files": {
+    "requests": 142,
+    "output": 200146,
+    "thinking": 32285,
+    "cache_read": 24351968,
+    "cache_write": 876924,
+    "cost_usd": 25.69
+   },
+   "ornament | waiting on tools": {
+    "requests": 145,
+    "output": 70083,
+    "thinking": 28873,
+    "cache_read": 30733581,
+    "cache_write": 892650,
+    "cost_usd": 25.67
+   },
+   "ornament | viewing images": {
+    "requests": 140,
+    "output": 92916,
+    "thinking": 56491,
+    "cache_read": 30747964,
+    "cache_write": 826325,
+    "cost_usd": 25.08
+   },
+   "architecture | viewing images": {
+    "requests": 163,
+    "output": 151484,
+    "thinking": 102110,
+    "cache_read": 33733017,
+    "cache_write": 460872,
+    "cost_usd": 23.6
+   },
+   "lead | reading files and logs": {
+    "requests": 90,
+    "output": 53253,
+    "thinking": 29756,
+    "cache_read": 15288188,
+    "cache_write": 843548,
+    "cost_usd": 23.38
+   },
+   "environment | editing files": {
+    "requests": 118,
+    "output": 133811,
+    "thinking": 34749,
+    "cache_read": 24676801,
+    "cache_write": 1117513,
+    "cost_usd": 22.64
+   },
+   "materials | viewing images": {
+    "requests": 116,
+    "output": 114023,
+    "thinking": 65095,
+    "cache_read": 26036238,
+    "cache_write": 558444,
+    "cost_usd": 21.5
+   },
+   "environment | viewing images": {
+    "requests": 130,
+    "output": 121864,
+    "thinking": 74611,
+    "cache_read": 26053358,
+    "cache_write": 541234,
+    "cost_usd": 21.34
+   },
+   "lead | waiting on tools": {
+    "requests": 75,
+    "output": 135575,
+    "thinking": 46140,
+    "cache_read": 15489859,
+    "cache_write": 529190,
+    "cost_usd": 21.26
+   },
+   "lead | reasoning and reporting": {
+    "requests": 161,
+    "output": 29371,
+    "thinking": 3804,
+    "cache_read": 37115587,
+    "cache_write": 509592,
+    "cost_usd": 20.98
+   },
+   "architecture | editing files": {
+    "requests": 109,
+    "output": 111119,
+    "thinking": 38692,
+    "cache_read": 19007359,
+    "cache_write": 1080492,
+    "cost_usd": 20.35
+   },
+   "architecture | waiting on tools": {
+    "requests": 118,
+    "output": 75937,
+    "thinking": 36563,
+    "cache_read": 18751172,
+    "cache_write": 1333596,
+    "cost_usd": 19.75
+   },
+   "architecture | running scripts": {
+    "requests": 159,
+    "output": 120919,
+    "thinking": 55231,
+    "cache_read": 24684649,
+    "cache_write": 399191,
+    "cost_usd": 17.75
+   },
+   "ornament | running scripts": {
+    "requests": 97,
+    "output": 80153,
+    "thinking": 30019,
+    "cache_read": 17155453,
+    "cache_write": 742167,
+    "cost_usd": 15.26
+   },
+   "lighting | viewing images": {
+    "requests": 102,
+    "output": 74974,
+    "thinking": 46287,
+    "cache_read": 20029603,
+    "cache_write": 243247,
+    "cost_usd": 14.17
+   },
+   "lead | viewing images": {
+    "requests": 84,
+    "output": 95911,
+    "thinking": 45932,
+    "cache_read": 21125417,
+    "cache_write": 173153,
+    "cost_usd": 13.56
+   },
+   "ornament | editing files": {
+    "requests": 71,
+    "output": 56789,
+    "thinking": 10371,
+    "cache_read": 11378630,
+    "cache_write": 812345,
+    "cost_usd": 12.51
+   },
+   "analysis/mechanical | viewing images": {
+    "requests": 34,
+    "output": 32578,
+    "thinking": 22036,
+    "cache_read": 4605891,
+    "cache_write": 703649,
+    "cost_usd": 11.58
+   },
+   "code reviewer | running scripts": {
+    "requests": 130,
+    "output": 115754,
+    "thinking": 62428,
+    "cache_read": 12212411,
+    "cache_write": 381318,
+    "cost_usd": 11.38
+   },
+   "code reviewer | editing files": {
+    "requests": 71,
+    "output": 108312,
+    "thinking": 29137,
+    "cache_read": 7058324,
+    "cache_write": 189632,
+    "cost_usd": 7.42
+   },
+   "analysis/mechanical | reading files and logs": {
+    "requests": 8,
+    "output": 1700,
+    "thinking": 310,
+    "cache_read": 598091,
+    "cache_write": 376324,
+    "cost_usd": 4.94
+   },
+   "environment | reasoning and reporting": {
+    "requests": 15,
+    "output": 6668,
+    "thinking": 860,
+    "cache_read": 3131479,
+    "cache_write": 514383,
+    "cost_usd": 4.85
+   },
+   "code reviewer | waiting on tools": {
+    "requests": 52,
+    "output": 20813,
+    "thinking": 9789,
+    "cache_read": 5766811,
+    "cache_write": 95546,
+    "cost_usd": 4.0
+   },
+   "lighting | reasoning and reporting": {
+    "requests": 17,
+    "output": 8139,
+    "thinking": 159,
+    "cache_read": 4176923,
+    "cache_write": 275323,
+    "cost_usd": 3.99
+   },
+   "code reviewer | reasoning and reporting": {
+    "requests": 43,
+    "output": 38039,
+    "thinking": 8595,
+    "cache_read": 4611942,
+    "cache_write": 113714,
+    "cost_usd": 3.97
+   },
+   "analysis/mechanical | running scripts": {
+    "requests": 16,
+    "output": 10967,
+    "thinking": 3624,
+    "cache_read": 1413062,
+    "cache_write": 161057,
+    "cost_usd": 2.92
+   },
+   "QA critic | reasoning and reporting": {
+    "requests": 22,
+    "output": 3852,
+    "thinking": 199,
+    "cache_read": 5076687,
+    "cache_write": 25209,
+    "cost_usd": 2.52
+   },
+   "other | viewing images": {
+    "requests": 10,
+    "output": 10891,
+    "thinking": 6170,
+    "cache_read": 782012,
+    "cache_write": 124108,
+    "cost_usd": 2.29
+   },
+   "phase 5 prep | reading files and logs": {
+    "requests": 31,
+    "output": 17510,
+    "thinking": 12440,
+    "cache_read": 2709844,
+    "cache_write": 140346,
+    "cost_usd": 2.13
+   },
+   "phase 5 prep | editing files": {
+    "requests": 18,
+    "output": 50418,
+    "thinking": 20302,
+    "cache_read": 2145482,
+    "cache_write": 43941,
+    "cost_usd": 2.02
+   },
+   "architecture | reasoning and reporting": {
+    "requests": 15,
+    "output": 9299,
+    "thinking": 416,
+    "cache_read": 3230662,
+    "cache_write": 13403,
+    "cost_usd": 1.81
+   },
+   "analysis/mechanical | editing files": {
+    "requests": 2,
+    "output": 24402,
+    "thinking": 500,
+    "cache_read": 685488,
+    "cache_write": 31588,
+    "cost_usd": 1.79
+   },
+   "materials | reasoning and reporting": {
+    "requests": 12,
+    "output": 2244,
+    "thinking": 753,
+    "cache_read": 2541084,
+    "cache_write": 7397,
+    "cost_usd": 1.37
+   },
+   "ornament | reasoning and reporting": {
+    "requests": 12,
+    "output": 1877,
+    "thinking": 0,
+    "cache_read": 3063229,
+    "cache_write": 9929,
+    "cost_usd": 1.35
+   },
+   "phase 5 prep | waiting on tools": {
+    "requests": 13,
+    "output": 3104,
+    "thinking": 1096,
+    "cache_read": 1705572,
+    "cache_write": 52770,
+    "cost_usd": 1.23
+   },
+   "code reviewer | viewing images": {
+    "requests": 14,
+    "output": 11771,
+    "thinking": 3021,
+    "cache_read": 1610463,
+    "cache_write": 14888,
+    "cost_usd": 1.19
+   },
+   "phase 5 prep | running scripts": {
+    "requests": 10,
+    "output": 11770,
+    "thinking": 6118,
+    "cache_read": 1108717,
+    "cache_write": 29844,
+    "cost_usd": 0.88
+   },
+   "environment | coordination": {
+    "requests": 4,
+    "output": 148,
+    "thinking": 0,
+    "cache_read": 1192200,
+    "cache_write": 2576,
+    "cost_usd": 0.62
+   },
+   "other | running scripts": {
+    "requests": 4,
+    "output": 2969,
+    "thinking": 1326,
+    "cache_read": 234630,
+    "cache_write": 15332,
+    "cost_usd": 0.4
+   },
+   "other | reading files and logs": {
+    "requests": 2,
+    "output": 484,
+    "thinking": 20,
+    "cache_read": 52285,
+    "cache_write": 15425,
+    "cost_usd": 0.23
+   },
+   "other | editing files": {
+    "requests": 1,
+    "output": 2152,
+    "thinking": 459,
+    "cache_read": 38016,
+    "cache_write": 3978,
+    "cost_usd": 0.17
+   },
+   "phase 5 prep | reasoning and reporting": {
+    "requests": 2,
+    "output": 6,
+    "thinking": 0,
+    "cache_read": 294042,
+    "cache_write": 1475,
+    "cost_usd": 0.12
+   },
+   "code reviewer | coordination": {
+    "requests": 1,
+    "output": 58,
+    "thinking": 0,
+    "cache_read": 157389,
+    "cache_write": 430,
+    "cost_usd": 0.08
+   },
+   "analysis/mechanical | reasoning and reporting": {
+    "requests": 1,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "subagents": 114,
+  "subagents_by_role": {
+   "code reviewer": 43,
+   "lighting": 14,
+   "QA critic": 16,
+   "ornament": 7,
+   "architecture": 10,
+   "environment": 9,
+   "materials": 9,
+   "phase 5 prep": 2,
+   "analysis/mechanical": 3,
+   "other": 1
+  },
+  "subagents_by_model": {
+   "claude-opus-5": 100,
+   "claude-sonnet-5": 1,
+   "claude-fable-5-1": 13
+  },
+  "human_prompts": 141,
+  "images_viewed_requests": 1075,
+  "wait_hours_by_kind_all_agents": {
+   "idle until user returned": 95.2,
+   "waiting on agents": 18.53,
+   "gpu wait": 1.26,
+   "waiting on user": 0.12,
+   "other wait": 0.07
+  },
+  "lead_sessions": [
+   "1e741676-2c03-408f-ad81-3c89163dc6dc",
+   "747b5259-4cdc-4348-91ec-d5118dafc070",
+   "797d734e-5b99-4e23-9ac7-980cef04e419",
+   "c1c6cc77-a14f-41d8-8244-bb28bec7b13a",
+   "db75376f-0874-434f-b644-8a5e35d22392",
+   "f6551679-3526-4133-8d7f-26b25592ac0c"
+  ]
+ },
+ "phase6_only_15_18": {
+  "window": [
+   "2026-09-15 00:00",
+   "2026-09-19 00:00"
+  ],
+  "wall_h": 96.0,
+  "agent_work_h": 34.35,
+  "gpu_no_agent_h": 0.63,
+  "gpu_busy_total_h": 24.93,
+  "waiting_on_user_h": 29.88,
+  "idle_h": 21.47,
+  "before_start_h": 9.67,
+  "requests": 8068,
+  "input_tokens": 33924,
+  "output_tokens": 6580640,
+  "thinking_tokens": 2439689,
+  "cache_read_tokens": 1784455473,
+  "cache_write_tokens": 69561607,
+  "cost_usd": 1504.91,
+  "by_role": {
+   "viewer engineer": {
+    "requests": 2421,
+    "output": 1833240,
+    "thinking": 619645,
+    "cache_read": 760476919,
+    "cache_write": 18268583,
+    "cost_usd": 540.27
+   },
+   "bake engineer": {
+    "requests": 977,
+    "output": 1058969,
+    "thinking": 416673,
+    "cache_read": 199026420,
+    "cache_write": 25662492,
+    "cost_usd": 286.39
+   },
+   "export engineer": {
+    "requests": 1409,
+    "output": 994851,
+    "thinking": 359691,
+    "cache_read": 320701118,
+    "cache_write": 12905876,
+    "cost_usd": 265.9
+   },
+   "lead": {
+    "requests": 954,
+    "output": 749054,
+    "thinking": 200012,
+    "cache_read": 231048885,
+    "cache_write": 4050112,
+    "cost_usd": 176.41
+   },
+   "QA critic": {
+    "requests": 1010,
+    "output": 841824,
+    "thinking": 281122,
+    "cache_read": 131668400,
+    "cache_write": 2484788,
+    "cost_usd": 102.42
+   },
+   "code reviewer": {
+    "requests": 1076,
+    "output": 889129,
+    "thinking": 450518,
+    "cache_read": 109394563,
+    "cache_write": 3957330,
+    "cost_usd": 101.67
+   },
+   "materials": {
+    "requests": 146,
+    "output": 184720,
+    "thinking": 99178,
+    "cache_read": 26666267,
+    "cache_write": 1847633,
+    "cost_usd": 29.5
+   },
+   "analysis/mechanical": {
+    "requests": 75,
+    "output": 28853,
+    "thinking": 12850,
+    "cache_read": 5472901,
+    "cache_write": 384793,
+    "cost_usd": 2.35
+   }
+  },
+  "by_model": {
+   "claude-opus-5": {
+    "requests": 7039,
+    "output": 5802733,
+    "thinking": 2226827,
+    "cache_read": 1547933687,
+    "cache_write": 65126702,
+    "cost_usd": 1326.15
+   },
+   "claude-fable-5-1": {
+    "requests": 952,
+    "output": 749054,
+    "thinking": 200012,
+    "cache_read": 231048885,
+    "cache_write": 4050112,
+    "cost_usd": 176.41
+   },
+   "claude-sonnet-5": {
+    "requests": 75,
+    "output": 28853,
+    "thinking": 12850,
+    "cache_read": 5472901,
+    "cache_write": 384793,
+    "cost_usd": 2.35
+   },
+   "<synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "by_activity": {
+   "running scripts": {
+    "requests": 2382,
+    "output": 1930451,
+    "thinking": 755837,
+    "cache_read": 574931484,
+    "cache_write": 15343908,
+    "cost_usd": 434.41
+   },
+   "reading files and logs": {
+    "requests": 2224,
+    "output": 1037099,
+    "thinking": 679237,
+    "cache_read": 336566617,
+    "cache_write": 21184109,
+    "cost_usd": 328.71
+   },
+   "waiting on tools": {
+    "requests": 1122,
+    "output": 976563,
+    "thinking": 367540,
+    "cache_read": 309275023,
+    "cache_write": 23180204,
+    "cost_usd": 321.56
+   },
+   "editing files": {
+    "requests": 1273,
+    "output": 2028926,
+    "thinking": 403572,
+    "cache_read": 301090948,
+    "cache_write": 6462523,
+    "cost_usd": 246.03
+   },
+   "reasoning and reporting": {
+    "requests": 403,
+    "output": 82738,
+    "thinking": 15138,
+    "cache_read": 118450933,
+    "cache_write": 1513533,
+    "cost_usd": 74.27
+   },
+   "viewing images": {
+    "requests": 493,
+    "output": 362891,
+    "thinking": 189841,
+    "cache_read": 102632992,
+    "cache_write": 1121548,
+    "cost_usd": 71.34
+   },
+   "coordination": {
+    "requests": 171,
+    "output": 161972,
+    "thinking": 28524,
+    "cache_read": 41507476,
+    "cache_write": 755782,
+    "cost_usd": 28.58
+   }
+  },
+  "by_day": {
+   "2026-09-15": {
+    "requests": 2370,
+    "output": 2632493,
+    "thinking": 1070282,
+    "cache_read": 545868662,
+    "cache_write": 26625493,
+    "cost_usd": 495.26
+   },
+   "2026-09-16": {
+    "requests": 2105,
+    "output": 1766724,
+    "thinking": 645616,
+    "cache_read": 414285888,
+    "cache_write": 23376102,
+    "cost_usd": 416.16
+   },
+   "2026-09-17": {
+    "requests": 2568,
+    "output": 1749035,
+    "thinking": 618937,
+    "cache_read": 515801580,
+    "cache_write": 13605921,
+    "cost_usd": 389.53
+   },
+   "2026-09-18": {
+    "requests": 1025,
+    "output": 432388,
+    "thinking": 104854,
+    "cache_read": 308499343,
+    "cache_write": 5954091,
+    "cost_usd": 203.96
+   }
+  },
+  "by_role_model": {
+   "viewer engineer | claude-opus-5": {
+    "requests": 2421,
+    "output": 1833240,
+    "thinking": 619645,
+    "cache_read": 760476919,
+    "cache_write": 18268583,
+    "cost_usd": 540.27
+   },
+   "bake engineer | claude-opus-5": {
+    "requests": 977,
+    "output": 1058969,
+    "thinking": 416673,
+    "cache_read": 199026420,
+    "cache_write": 25662492,
+    "cost_usd": 286.39
+   },
+   "export engineer | claude-opus-5": {
+    "requests": 1409,
+    "output": 994851,
+    "thinking": 359691,
+    "cache_read": 320701118,
+    "cache_write": 12905876,
+    "cost_usd": 265.9
+   },
+   "lead | claude-fable-5-1": {
+    "requests": 952,
+    "output": 749054,
+    "thinking": 200012,
+    "cache_read": 231048885,
+    "cache_write": 4050112,
+    "cost_usd": 176.41
+   },
+   "QA critic | claude-opus-5": {
+    "requests": 1010,
+    "output": 841824,
+    "thinking": 281122,
+    "cache_read": 131668400,
+    "cache_write": 2484788,
+    "cost_usd": 102.42
+   },
+   "code reviewer | claude-opus-5": {
+    "requests": 1076,
+    "output": 889129,
+    "thinking": 450518,
+    "cache_read": 109394563,
+    "cache_write": 3957330,
+    "cost_usd": 101.67
+   },
+   "materials | claude-opus-5": {
+    "requests": 146,
+    "output": 184720,
+    "thinking": 99178,
+    "cache_read": 26666267,
+    "cache_write": 1847633,
+    "cost_usd": 29.5
+   },
+   "analysis/mechanical | claude-sonnet-5": {
+    "requests": 75,
+    "output": 28853,
+    "thinking": 12850,
+    "cache_read": 5472901,
+    "cache_write": 384793,
+    "cost_usd": 2.35
+   },
+   "lead | <synthetic>": {
+    "requests": 2,
+    "output": 0,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 0,
+    "cost_usd": 0.0
+   }
+  },
+  "by_role_activity": {
+   "viewer engineer | running scripts": {
+    "requests": 776,
+    "output": 672806,
+    "thinking": 232255,
+    "cache_read": 261854320,
+    "cache_write": 3110296,
+    "cost_usd": 167.19
+   },
+   "viewer engineer | reading files and logs": {
+    "requests": 582,
+    "output": 231432,
+    "thinking": 147569,
+    "cache_read": 137208383,
+    "cache_write": 8319666,
+    "cost_usd": 126.39
+   },
+   "viewer engineer | waiting on tools": {
+    "requests": 478,
+    "output": 308823,
+    "thinking": 93438,
+    "cache_read": 167640255,
+    "cache_write": 4928281,
+    "cost_usd": 122.35
+   },
+   "bake engineer | waiting on tools": {
+    "requests": 229,
+    "output": 260151,
+    "thinking": 106690,
+    "cache_read": 47973119,
+    "cache_write": 13383376,
+    "cost_usd": 114.14
+   },
+   "export engineer | running scripts": {
+    "requests": 569,
+    "output": 342519,
+    "thinking": 133005,
+    "cache_read": 147528890,
+    "cache_write": 3329056,
+    "cost_usd": 103.14
+   },
+   "viewer engineer | editing files": {
+    "requests": 400,
+    "output": 520364,
+    "thinking": 102669,
+    "cache_read": 119131446,
+    "cache_write": 1433760,
+    "cost_usd": 81.54
+   },
+   "bake engineer | running scripts": {
+    "requests": 289,
+    "output": 298357,
+    "thinking": 136649,
+    "cache_read": 64148932,
+    "cache_write": 6697018,
+    "cost_usd": 81.39
+   },
+   "export engineer | reading files and logs": {
+    "requests": 372,
+    "output": 129214,
+    "thinking": 84930,
+    "cache_read": 60607623,
+    "cache_write": 4275687,
+    "cost_usd": 60.26
+   },
+   "code reviewer | reading files and logs": {
+    "requests": 615,
+    "output": 379283,
+    "thinking": 266015,
+    "cache_read": 54438787,
+    "cache_write": 2900578,
+    "cost_usd": 54.84
+   },
+   "export engineer | editing files": {
+    "requests": 258,
+    "output": 381537,
+    "thinking": 86345,
+    "cache_read": 55831254,
+    "cache_write": 1949165,
+    "cost_usd": 49.64
+   },
+   "bake engineer | reading files and logs": {
+    "requests": 244,
+    "output": 119866,
+    "thinking": 76834,
+    "cache_read": 36089065,
+    "cache_write": 3787913,
+    "cost_usd": 44.72
+   },
+   "export engineer | waiting on tools": {
+    "requests": 168,
+    "output": 132754,
+    "thinking": 53304,
+    "cache_read": 43080678,
+    "cache_write": 3111018,
+    "cost_usd": 44.3
+   },
+   "lead | reasoning and reporting": {
+    "requests": 229,
+    "output": 56253,
+    "thinking": 12783,
+    "cache_read": 61566359,
+    "cache_write": 1280603,
+    "cost_usd": 43.87
+   },
+   "lead | editing files": {
+    "requests": 206,
+    "output": 222514,
+    "thinking": 42070,
+    "cache_read": 52969080,
+    "cache_write": 887100,
+    "cost_usd": 42.15
+   },
+   "bake engineer | editing files": {
+    "requests": 170,
+    "output": 365263,
+    "thinking": 92130,
+    "cache_read": 37148607,
+    "cache_write": 1738216,
+    "cost_usd": 38.57
+   },
+   "QA critic | running scripts": {
+    "requests": 327,
+    "output": 254747,
+    "thinking": 95329,
+    "cache_read": 43221296,
+    "cache_write": 712887,
+    "cost_usd": 32.44
+   },
+   "QA critic | viewing images": {
+    "requests": 293,
+    "output": 203662,
+    "thinking": 117844,
+    "cache_read": 38498226,
+    "cache_write": 508086,
+    "cost_usd": 27.52
+   },
+   "viewer engineer | viewing images": {
+    "requests": 121,
+    "output": 87161,
+    "thinking": 42225,
+    "cache_read": 45722221,
+    "cache_write": 163131,
+    "cost_usd": 26.06
+   },
+   "code reviewer | running scripts": {
+    "requests": 257,
+    "output": 225092,
+    "thinking": 94495,
+    "cache_read": 30086950,
+    "cache_write": 540744,
+    "cost_usd": 24.05
+   },
+   "lead | coordination": {
+    "requests": 155,
+    "output": 158622,
+    "thinking": 27816,
+    "cache_read": 37383526,
+    "cache_write": 320366,
+    "cost_usd": 23.71
+   },
+   "QA critic | reading files and logs": {
+    "requests": 260,
+    "output": 77245,
+    "thinking": 39714,
+    "cache_read": 27165782,
+    "cache_write": 1006300,
+    "cost_usd": 21.81
+   },
+   "lead | waiting on tools": {
+    "requests": 128,
+    "output": 144854,
+    "thinking": 38065,
+    "cache_read": 34595635,
+    "cache_write": 250402,
+    "cost_usd": 20.93
+   },
+   "QA critic | editing files": {
+    "requests": 115,
+    "output": 304299,
+    "thinking": 28183,
+    "cache_read": 19927422,
+    "cache_write": 234247,
+    "cost_usd": 19.04
+   },
+   "lead | running scripts": {
+    "requests": 96,
+    "output": 65746,
+    "thinking": 29770,
+    "cache_read": 18520190,
+    "cache_write": 500343,
+    "cost_usd": 17.95
+   },
+   "lead | reading files and logs": {
+    "requests": 99,
+    "output": 62426,
+    "thinking": 35735,
+    "cache_read": 15566639,
+    "cache_write": 406157,
+    "cost_usd": 15.16
+   },
+   "viewer engineer | reasoning and reporting": {
+    "requests": 56,
+    "output": 12101,
+    "thinking": 1356,
+    "cache_read": 26780754,
+    "cache_write": 72517,
+    "cost_usd": 14.15
+   },
+   "code reviewer | editing files": {
+    "requests": 113,
+    "output": 215969,
+    "thinking": 50591,
+    "cache_read": 14287503,
+    "cache_write": 198980,
+    "cost_usd": 13.79
+   },
+   "materials | waiting on tools": {
+    "requests": 46,
+    "output": 66594,
+    "thinking": 40995,
+    "cache_read": 9279852,
+    "cache_write": 1111198,
+    "cost_usd": 13.25
+   },
+   "lead | viewing images": {
+    "requests": 41,
+    "output": 38639,
+    "thinking": 13773,
+    "cache_read": 10447456,
+    "cache_write": 405141,
+    "cost_usd": 12.66
+   },
+   "materials | running scripts": {
+    "requests": 39,
+    "output": 62918,
+    "thinking": 31951,
+    "cache_read": 7534633,
+    "cache_write": 342043,
+    "cost_usd": 7.48
+   },
+   "export engineer | reasoning and reporting": {
+    "requests": 34,
+    "output": 5060,
+    "thinking": 960,
+    "cache_read": 11845792,
+    "cache_write": 43631,
+    "cost_usd": 6.32
+   },
+   "code reviewer | waiting on tools": {
+    "requests": 54,
+    "output": 60743,
+    "thinking": 34607,
+    "cache_read": 5559314,
+    "cache_write": 264747,
+    "cost_usd": 5.95
+   },
+   "bake engineer | reasoning and reporting": {
+    "requests": 30,
+    "output": 4675,
+    "thinking": 0,
+    "cache_read": 9539382,
+    "cache_write": 38480,
+    "cost_usd": 5.13
+   },
+   "materials | reading files and logs": {
+    "requests": 31,
+    "output": 25516,
+    "thinking": 18519,
+    "cache_read": 3785953,
+    "cache_write": 353294,
+    "cost_usd": 4.74
+   },
+   "code reviewer | reasoning and reporting": {
+    "requests": 33,
+    "output": 2340,
+    "thinking": 0,
+    "cache_read": 4584586,
+    "cache_write": 48362,
+    "cost_usd": 2.65
+   },
+   "viewer engineer | coordination": {
+    "requests": 8,
+    "output": 553,
+    "thinking": 133,
+    "cache_read": 2139540,
+    "cache_write": 240932,
+    "cost_usd": 2.59
+   },
+   "bake engineer | viewing images": {
+    "requests": 14,
+    "output": 9845,
+    "thinking": 4370,
+    "cache_read": 3735560,
+    "cache_write": 15472,
+    "cost_usd": 2.21
+   },
+   "materials | viewing images": {
+    "requests": 16,
+    "output": 14842,
+    "thinking": 6135,
+    "cache_read": 2786386,
+    "cache_write": 17305,
+    "cost_usd": 1.87
+   },
+   "export engineer | coordination": {
+    "requests": 4,
+    "output": 727,
+    "thinking": 463,
+    "cache_read": 801161,
+    "cache_write": 188825,
+    "cost_usd": 1.6
+   },
+   "QA critic | reasoning and reporting": {
+    "requests": 13,
+    "output": 1299,
+    "thinking": 0,
+    "cache_read": 2708367,
+    "cache_write": 21647,
+    "cost_usd": 1.52
+   },
+   "materials | editing files": {
+    "requests": 8,
+    "output": 12926,
+    "thinking": 1466,
+    "cache_read": 1521128,
+    "cache_write": 16313,
+    "cost_usd": 1.19
+   },
+   "analysis/mechanical | reading files and logs": {
+    "requests": 21,
+    "output": 12117,
+    "thinking": 9921,
+    "cache_read": 1704385,
+    "cache_write": 134514,
+    "cost_usd": 0.8
+   },
+   "analysis/mechanical | running scripts": {
+    "requests": 29,
+    "output": 8266,
+    "thinking": 2383,
+    "cache_read": 2036273,
+    "cache_write": 111521,
+    "cost_usd": 0.77
+   },
+   "export engineer | viewing images": {
+    "requests": 4,
+    "output": 3040,
+    "thinking": 684,
+    "cache_read": 1005720,
+    "cache_write": 8494,
+    "cost_usd": 0.63
+   },
+   "analysis/mechanical | waiting on tools": {
+    "requests": 17,
+    "output": 2072,
+    "thinking": 389,
+    "cache_read": 998863,
+    "cache_write": 129561,
+    "cost_usd": 0.54
+   },
+   "materials | reasoning and reporting": {
+    "requests": 3,
+    "output": 666,
+    "thinking": 0,
+    "cache_read": 966821,
+    "cache_write": 3838,
+    "cost_usd": 0.52
+   },
+   "materials | coordination": {
+    "requests": 3,
+    "output": 1258,
+    "thinking": 112,
+    "cache_read": 791494,
+    "cache_write": 3642,
+    "cost_usd": 0.45
+   },
+   "code reviewer | viewing images": {
+    "requests": 4,
+    "output": 5702,
+    "thinking": 4810,
+    "cache_read": 437423,
+    "cache_write": 3919,
+    "cost_usd": 0.39
+   },
+   "bake engineer | coordination": {
+    "requests": 1,
+    "output": 812,
+    "thinking": 0,
+    "cache_read": 391755,
+    "cache_write": 2017,
+    "cost_usd": 0.23
+   },
+   "analysis/mechanical | editing files": {
+    "requests": 3,
+    "output": 6054,
+    "thinking": 118,
+    "cache_read": 274508,
+    "cache_write": 4742,
+    "cost_usd": 0.13
+   },
+   "analysis/mechanical | reasoning and reporting": {
+    "requests": 5,
+    "output": 344,
+    "thinking": 39,
+    "cache_read": 458872,
+    "cache_write": 4455,
+    "cost_usd": 0.11
+   },
+   "QA critic | waiting on tools": {
+    "requests": 2,
+    "output": 572,
+    "thinking": 52,
+    "cache_read": 147307,
+    "cache_write": 1621,
+    "cost_usd": 0.1
+   }
+  },
+  "subagents": 74,
+  "subagents_by_role": {
+   "code reviewer": 32,
+   "viewer engineer": 10,
+   "analysis/mechanical": 3,
+   "export engineer": 8,
+   "QA critic": 13,
+   "bake engineer": 7,
+   "materials": 1
+  },
+  "subagents_by_model": {
+   "claude-opus-5": 71,
+   "claude-sonnet-5": 3
+  },
+  "human_prompts": 104,
+  "images_viewed_requests": 493,
+  "wait_hours_by_kind_all_agents": {
+   "idle until user returned": 38.45,
+   "waiting on agents": 20.29,
+   "waiting on user": 17.83,
+   "other wait": 5.09,
+   "gpu wait": 0.17
+  },
+  "lead_sessions": [
+   "11484ff4-f14d-4be5-a9c2-1075c9191459",
+   "3ada03f9-fea6-41d6-8a2e-0db788998458",
+   "4133edbe-4bf8-4b01-90d1-dc3de87973da",
+   "52e90d0f-93f3-45bb-a7d5-394f6faa187e",
+   "5b1d192d-a631-4751-ade3-cb99597bd8f5",
+   "6460c313-5668-4669-b492-8fb279bb75e2",
+   "797d734e-5b99-4e23-9ac7-980cef04e419",
+   "87d95e57-98c0-4c4c-a708-4de25b276c70",
+   "c47a8492-be20-4aa4-a385-e9e0be0c34ea"
+  ]
+ },
+ "lead_sessions_week": [
+  {
+   "sid": "11484ff4",
+   "start": "09-15 09:43",
+   "end": "09-15 09:43",
+   "requests": 2,
+   "first15min_cache_write": 29246,
+   "first15min_cost": 0.64,
+   "lead_cost": 0.64,
+   "max_context_tokens": 58583
+  },
+  {
+   "sid": "3ada03f9",
+   "start": "09-17 23:16",
+   "end": "09-19 21:15",
+   "requests": 329,
+   "first15min_cache_write": 96279,
+   "first15min_cost": 3.46,
+   "lead_cost": 96.99,
+   "max_context_tokens": 601028
+  },
+  {
+   "sid": "4133edbe",
+   "start": "09-17 08:56",
+   "end": "09-17 12:59",
+   "requests": 146,
+   "first15min_cache_write": 115807,
+   "first15min_cost": 4.82,
+   "lead_cost": 18.43,
+   "max_context_tokens": 312754
+  },
+  {
+   "sid": "52e90d0f",
+   "start": "09-15 10:18",
+   "end": "09-15 10:19",
+   "requests": 3,
+   "first15min_cache_write": 35114,
+   "first15min_cost": 0.82,
+   "lead_cost": 0.82,
+   "max_context_tokens": 63174
+  },
+  {
+   "sid": "5b1d192d",
+   "start": "09-16 22:31",
+   "end": "09-17 08:20",
+   "requests": 122,
+   "first15min_cache_write": 77359,
+   "first15min_cost": 2.79,
+   "lead_cost": 25.21,
+   "max_context_tokens": 326601
+  },
+  {
+   "sid": "6460c313",
+   "start": "09-15 09:49",
+   "end": "09-16 08:48",
+   "requests": 315,
+   "first15min_cache_write": 139543,
+   "first15min_cost": 5.4,
+   "lead_cost": 68.76,
+   "max_context_tokens": 557659
+  },
+  {
+   "sid": "797d734e",
+   "start": "09-10 14:11",
+   "end": "09-15 09:42",
+   "requests": 42,
+   "first15min_cache_write": 218378,
+   "first15min_cost": 8.0,
+   "lead_cost": 29.89,
+   "max_context_tokens": 336267
+  },
+  {
+   "sid": "87d95e57",
+   "start": "09-16 13:51",
+   "end": "09-16 17:30",
+   "requests": 128,
+   "first15min_cache_write": 53202,
+   "first15min_cost": 1.71,
+   "lead_cost": 19.33,
+   "max_context_tokens": 339147
+  },
+  {
+   "sid": "a87300f7",
+   "start": "09-19 18:07",
+   "end": "09-20 08:10",
+   "requests": 203,
+   "first15min_cache_write": 94475,
+   "first15min_cost": 3.52,
+   "lead_cost": 38.94,
+   "max_context_tokens": 441957
+  },
+  {
+   "sid": "c47a8492",
+   "start": "09-16 08:49",
+   "end": "09-16 09:30",
+   "requests": 45,
+   "first15min_cache_write": 74822,
+   "first15min_cost": 2.51,
+   "lead_cost": 5.07,
+   "max_context_tokens": 133324
+  }
+ ],
+ "reviews": [
+  {
+   "file": "phase6_bake_gate0_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 5,
+   "lines": 41
+  },
+  {
+   "file": "phase6_bake_gate2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 4,
+   "lines": 39
+  },
+  {
+   "file": "phase6_bake_gate3_r2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 2,
+   "lines": 90
+  },
+  {
+   "file": "phase6_bake_gate3_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 6,
+   "lines": 115
+  },
+  {
+   "file": "phase6_bake_gate4_instance_review.md",
+   "verdict": "MERGE AFTER FIXES",
+   "fix_now_mentions": 1,
+   "lines": 94
+  },
+  {
+   "file": "phase6_export_gate1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 6,
+   "lines": 46
+  },
+  {
+   "file": "phase6_export_gate3_r3_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 5,
+   "lines": 71
+  },
+  {
+   "file": "phase6_export_gate3_r4_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 4,
+   "lines": 62
+  },
+  {
+   "file": "phase6_export_gate3_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 6,
+   "lines": 101
+  },
+  {
+   "file": "phase6_export_gate4_r5_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 2,
+   "lines": 82
+  },
+  {
+   "file": "phase6_viewer_gate0_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 5,
+   "lines": 44
+  },
+  {
+   "file": "phase6_viewer_gate1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 3,
+   "lines": 39
+  },
+  {
+   "file": "phase6_viewer_gate2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 5,
+   "lines": 17
+  },
+  {
+   "file": "phase6_viewer_gate4_r5_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 3,
+   "lines": 116
+  },
+  {
+   "file": "phase6_viewer_gate4_r5b_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 2,
+   "lines": 106
+  },
+  {
+   "file": "phase6_viewer_gate4_r6_review.md",
+   "verdict": "MERGE BLOCKED",
+   "fix_now_mentions": 7,
+   "lines": 97
+  },
+  {
+   "file": "phase6_viewer_gate4_r7_review.md",
+   "verdict": "MERGE AFTER FIXES",
+   "fix_now_mentions": 3,
+   "lines": 94
+  },
+  {
+   "file": "phase6_viewer_gate4_r7b_review.md",
+   "verdict": "MERGE AFTER FIXES",
+   "fix_now_mentions": 6,
+   "lines": 96
+  },
+  {
+   "file": "phase6b_export_r1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 4,
+   "lines": 43
+  },
+  {
+   "file": "phase6b_export_r2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 3,
+   "lines": 38
+  },
+  {
+   "file": "phase6b_viewer_r1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 5,
+   "lines": 51
+  },
+  {
+   "file": "phase6c_bake_r1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 6,
+   "lines": 25
+  },
+  {
+   "file": "phase6c_bake_r2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 6,
+   "lines": 25
+  },
+  {
+   "file": "phase6c_bake_r2b_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 4,
+   "lines": 21
+  },
+  {
+   "file": "phase6c_export_r1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 4,
+   "lines": 44
+  },
+  {
+   "file": "phase6c_export_r2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 4,
+   "lines": 14
+  },
+  {
+   "file": "phase6c_export_r3_review.md",
+   "verdict": "MERGE",
+   "fix_now_mentions": 0,
+   "lines": 15
+  },
+  {
+   "file": "phase6c_viewer_r1_review.md",
+   "verdict": "SEND BACK",
+   "fix_now_mentions": 5,
+   "lines": 49
+  },
+  {
+   "file": "phase6c_viewer_r2_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 6,
+   "lines": 39
+  },
+  {
+   "file": "phase6c_viewer_r3_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 3,
+   "lines": 34
+  },
+  {
+   "file": "phase7_viewer_r1_review.md",
+   "verdict": "MERGE WITH FIXES",
+   "fix_now_mentions": 3,
+   "lines": 43
+  }
+ ],
+ "review_verdicts": {
+  "MERGE WITH FIXES": 25,
+  "MERGE AFTER FIXES": 3,
+  "MERGE BLOCKED": 1,
+  "MERGE": 1,
+  "SEND BACK": 1
+ },
+ "qa_rounds": [
+  {
+   "file": "qa_round_11.md",
+   "title": "# QA round 11 \u2014 Phase 6 **Gate 1** (geometry freeze in the viewer), 2026-09-15. **GATE 1: FAIL.**",
+   "lines": 178
+  },
+  {
+   "file": "qa_round_11b.md",
+   "title": "# QA round 11b \u2014 Phase 6 **Gate 1** re-check after the two blockers, 2026-09-15. **GATE 1: FAIL.**",
+   "lines": 82
+  },
+  {
+   "file": "qa_round_11c.md",
+   "title": "# QA round 11c \u2014 Phase 6 **Gate 1**, third check, 2026-09-15. **GATE 1: FAIL.**",
+   "lines": 79
+  },
+  {
+   "file": "qa_round_11d.md",
+   "title": "# QA round 11d \u2014 Phase 6 **Gate 1**, fourth check, 2026-09-15. **GATE 1: PASS.**",
+   "lines": 87
+  },
+  {
+   "file": "qa_round_12.md",
+   "title": "# QA round 12 \u2014 Phase 6 **Gate 2**: the baked PBR set alone, 2026-09-15. **GATE 2: FAIL** (one row).",
+   "lines": 123
+  },
+  {
+   "file": "qa_round_12b.md",
+   "title": "# QA round 12b \u2014 Phase 6 **Gate 2** re-check after QA-12-1, 2026-09-15. **GATE 2: PASS**",
+   "lines": 120
+  },
+  {
+   "file": "qa_round_13.md",
+   "title": "# QA round 13 \u2014 Phase 6 **Gate 3, the lightmaps alone**, 2026-09-16. **LIGHTMAPS ACCEPTED, one re-bake**",
+   "lines": 105
+  },
+  {
+   "file": "qa_round_14.md",
+   "title": "# QA round 14 \u2014 Phase 6 **Gate 4, the viewer proper**, 2026-09-16. **ONE MORE ROUND** (no blocker)",
+   "lines": 154
+  },
+  {
+   "file": "qa_round_15.md",
+   "title": "# QA round 15 \u2014 Phase 6 **Gate 4, round two**, 2026-09-17. **6a PARITY REACHED** (45 fps still not met)",
+   "lines": 107
+  },
+  {
+   "file": "qa_round_16.md",
+   "title": "# QA round 16 \u2014 Phase **6c, the foliage gate**, round one of two, 2026-09-17. Verdict: **ONE MORE ROUND**",
+   "lines": 145
+  },
+  {
+   "file": "qa_round_17.md",
+   "title": "# QA round 17 \u2014 Phase **6c, the foliage gate**, round two of two, 2026-09-17. Verdict: **6c CLOSED WITH RESIDUALS**",
+   "lines": 174
+  },
+  {
+   "file": "qa_round_18.md",
+   "title": "# QA round 18 \u2014 Phase **6b, Gate 5: the staging deployment**. Verdict: **ONE FIX ROUND** (one blocker, on mobile)",
+   "lines": 119
+  },
+  {
+   "file": "qa_round_18b.md",
+   "title": "# QA round 18b \u2014 Phase **6b, the Gate 5 fix round** (the closing 6b round). Verdict: **6b DONE WITH RESIDUALS**",
+   "lines": 96
+  },
+  {
+   "file": "qa_round_19.md",
+   "title": "# QA round 19 \u2014 Phase **7, the foliage look on the live URL** (the closing Phase 7 round), 2026-09-19. Verdict: **PHASE 7 DONE WITH RESIDUALS**",
+   "lines": 108
+  }
+ ],
+ "commits_by_day": {
+  "2026-09-15": {
+   "all_branches": 198,
+   "rework_words": 47,
+   "merges_into_main": 19
+  },
+  "2026-09-16": {
+   "all_branches": 187,
+   "rework_words": 50,
+   "merges_into_main": 12
+  },
+  "2026-09-17": {
+   "all_branches": 153,
+   "rework_words": 46,
+   "merges_into_main": 13
+  },
+  "2026-09-18": {
+   "all_branches": 78,
+   "rework_words": 22,
+   "merges_into_main": 9
+  },
+  "2026-09-19": {
+   "all_branches": 253,
+   "rework_words": 64,
+   "merges_into_main": 29
+  }
+ },
+ "commits_phase5": {
+  "all_branches": 792,
+  "rework_words": 150,
+  "merges_into_main": 75
+ },
+ "cost_per_point": [
+  {
+   "step": "g1",
+   "from": "phase5_10b",
+   "to": "g1_qa11_geometry_only",
+   "hero_delta": -0.11,
+   "mean6_delta": 0.025,
+   "cost_usd": 176.06,
+   "usd_per_hero_point": null,
+   "usd_per_mean6_point": 7042
+  },
+  {
+   "step": "g3",
+   "from": "g1_qa11_geometry_only",
+   "to": "g3_qa13",
+   "hero_delta": -0.11,
+   "mean6_delta": -0.25,
+   "cost_usd": 460.62,
+   "usd_per_hero_point": null,
+   "usd_per_mean6_point": null
+  },
+  {
+   "step": "g4",
+   "from": "g3_qa13",
+   "to": "g4_qa15",
+   "hero_delta": 0.33,
+   "mean6_delta": 0.271,
+   "cost_usd": 253.8,
+   "usd_per_hero_point": 769,
+   "usd_per_mean6_point": 937
+  },
+  {
+   "step": "6c",
+   "from": "g4_qa15",
+   "to": "6c_qa17",
+   "hero_delta": 0.06,
+   "mean6_delta": 0.064,
+   "cost_usd": 321.59,
+   "usd_per_hero_point": 5360,
+   "usd_per_mean6_point": 5025
+  },
+  {
+   "step": "6b",
+   "from": "6c_qa17",
+   "to": "6b_qa18b_desktop",
+   "hero_delta": 0.0,
+   "mean6_delta": 0.0,
+   "cost_usd": 208.78,
+   "usd_per_hero_point": null,
+   "usd_per_mean6_point": null
+  },
+  {
+   "step": "p7",
+   "from": "6b_qa18b_desktop",
+   "to": "p7_qa19_desktop",
+   "hero_delta": 0.0,
+   "mean6_delta": 0.02,
+   "cost_usd": 44.07,
+   "usd_per_hero_point": null,
+   "usd_per_mean6_point": 2204
+  }
+ ],
+ "no_agent_gaps_week": [
+  {
+   "start": "09-15 00:00",
+   "end": "09-15 09:40",
+   "hours": 9.67,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-16 05:34",
+   "end": "09-16 08:48",
+   "hours": 3.23,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-16 09:31",
+   "end": "09-16 13:51",
+   "hours": 4.33,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-16 17:31",
+   "end": "09-16 22:31",
+   "hours": 5.0,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-17 01:26",
+   "end": "09-17 07:10",
+   "hours": 5.73,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-17 08:21",
+   "end": "09-17 08:56",
+   "hours": 0.58,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-17 13:00",
+   "end": "09-17 23:16",
+   "hours": 10.27,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-17 23:24",
+   "end": "09-18 16:57",
+   "hours": 17.55,
+   "ended_by_human_prompt": false,
+   "lead_last_asked": false,
+   "lead_last_tools": [
+    "AskUserQuestion"
+   ],
+   "gpu_running": false
+  },
+  {
+   "start": "09-18 19:51",
+   "end": "09-18 20:42",
+   "hours": 0.85,
+   "ended_by_human_prompt": false,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-18 21:01",
+   "end": "09-18 22:59",
+   "hours": 1.97,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-18 23:35",
+   "end": "09-19 08:43",
+   "hours": 9.13,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-19 09:58",
+   "end": "09-19 12:25",
+   "hours": 2.45,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  },
+  {
+   "start": "09-19 15:13",
+   "end": "09-19 17:35",
+   "hours": 2.37,
+   "ended_by_human_prompt": true,
+   "lead_last_asked": false,
+   "lead_last_tools": [],
+   "gpu_running": false
+  }
+ ]
+}

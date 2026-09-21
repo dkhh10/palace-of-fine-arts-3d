@@ -1,6 +1,6 @@
 # Token usage summary (from Claude Code transcripts)
 
-Generated 2026-09-19T22:00:25Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (15 main sessions, 221 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
+Generated 2026-09-21T20:29:25Z by `docs/usage/usage_from_transcripts.py` from `/Users/dk/.claude/projects/-Users-dk-Projects-3d-render-blender-3rd-attempt-building` (18 main sessions, 254 subagent transcripts). Usage is deduplicated by API message id. Tokens in thousands (k) unless stated.
 
 Also in this folder: `daily.json` and `sessions_all.json` are raw `ccusage` exports (account-wide, every project, its own price table; `sessions_all.json` has no project field, which is why this script exists). `make_timeline.py` renders `docs/timeline.html` from `sessions.json`.
 
@@ -19,12 +19,12 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 
 | model | requests | input k | output k | thinking k (of output) | cache write 1h k | cache write 5m k | cache read k | cost USD |
 |---|---|---|---|---|---|---|---|---|
-| claude-opus-5 | 18048 | 36 | 11,665 | 5,021 | 0 | 133,255 | 3,623,825 | 2,936.56 |
-| claude-fable-5-1 | 2709 | 64 | 2,605 | 846 | 12,904 | 11,613 | 660,734 | 699.35 |
-| claude-sonnet-5 | 137 | 0 | 63 | 31 | 0 | 596 | 10,183 | 4.16 |
-| <synthetic> | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0.00 |
+| claude-opus-5 | 20522 | 41 | 12,084 | 5,101 | 0 | 142,776 | 4,043,126 | 3,216.22 |
+| claude-fable-5-1 | 3061 | 73 | 2,910 | 943 | 15,036 | 11,613 | 745,020 | 778.38 |
+| claude-sonnet-5 | 152 | 0 | 72 | 31 | 0 | 694 | 11,318 | 4.71 |
+| <synthetic> | 30 | 0 | 0 | 0 | 0 | 0 | 0 | 0.00 |
 
-**Grand total nominal cost: $3,640.07**
+**Grand total nominal cost: $3,999.31**
 
 ## Sessions
 
@@ -44,7 +44,10 @@ Source: claude-api skill pricing table (cached 2026-06-24). Cache write = 2x inp
 | 12 | 5b1d192d | 2026-09-16T20:31 | 2026-09-17T06:56 | 10.41 | 167 | 11 | 179.50 | opus-5 154, fable-5-1 25 |
 | 13 | 4133edbe | 2026-09-17T06:56 | 2026-09-17T11:12 | 4.27 | 149 | 18 | 259.54 | opus-5 239, fable-5-1 18, sonnet-5 2 |
 | 14 | 3ada03f9 | 2026-09-17T21:16 | 2026-09-19T19:15 | 45.98 | 333 | 21 | 474.88 | opus-5 377, fable-5-1 97 |
-| 15 | a87300f7 | 2026-09-19T16:07 | 2026-09-19T22:00 | 5.88 | 231 | 20 | 377.08 | opus-5 347, fable-5-1 29 |
+| 15 | a87300f7 | 2026-09-19T16:07 | 2026-09-20T06:10 | 14.06 | 242 | 20 | 387.06 | opus-5 347, fable-5-1 39 |
+| 16 | d073013c | 2026-09-20T06:10 | 2026-09-20T07:44 | 1.58 | 71 | 5 | 56.26 | opus-5 49, fable-5-1 7 |
+| 17 | e93f113b | 2026-09-20T07:45 | 2026-09-21T20:01 | 36.27 | 243 | 28 | 279.27 | opus-5 231, fable-5-1 48 |
+| 18 | 6cfdbe19 | 2026-09-21T20:08 | 2026-09-21T20:29 | 0.34 | 62 | 0 | 13.71 | fable-5-1 14 |
 
 ## Cross-check: Claude Code internal cost-state per session
 
@@ -65,7 +68,10 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 11 87d95e57 | 293.52 | 5.3 | 1.14 | 4532/434 | 217.93 |
 | 12 5b1d192d | 258.74 | 6.39 | 3.02 | 5425/341 | 179.50 |
 | 13 4133edbe | 338.31 | 6.03 | 0.99 | 4989/669 | 259.54 |
-| total | 3,489.85 | | | | 3,640.07 |
+| 14 3ada03f9 | 643.60 | 9.68 | 1.68 | 10589/1084 | 474.88 |
+| 16 d073013c | 83.09 | 1.86 | 0.44 | 467/1 | 56.26 |
+| 17 e93f113b | 378.02 | 7.24 | 2.06 | 6738/933 | 279.27 |
+| total | 4,594.56 | | | | 3,999.31 |
 
 ## Daily nominal cost (this project only, UTC)
 
@@ -80,7 +86,9 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 2026-09-16 | 453.91 | 54.95 | 398.97 | -0.00 |
 | 2026-09-17 | 325.17 | 37.70 | 285.13 | 2.34 |
 | 2026-09-18 | 203.96 | 28.91 | 175.05 | -0.00 |
-| 2026-09-19 | 644.03 | 93.58 | 549.54 | 0.91 |
+| 2026-09-19 | 644.47 | 94.01 | 549.54 | 0.92 |
+| 2026-09-20 | 143.70 | 24.96 | 118.19 | 0.55 |
+| 2026-09-21 | 215.10 | 53.63 | 161.46 | 0.00 |
 
 ## Subagents per session (by model, count and cost)
 
@@ -99,6 +107,9 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 - Session 13 (4133edbe): 16 x opus-5 ($239); 2 x sonnet-5 ($2). Types: {'general-purpose': 18}
 - Session 14 (3ada03f9): 20 x opus-5 ($377); 1 x sonnet-5 ($0). Types: {'general-purpose': 21}
 - Session 15 (a87300f7): 19 x opus-5 ($347); 1 x sonnet-5 ($1). Types: {'general-purpose': 20}
+- Session 16 (d073013c): 4 x opus-5 ($36); 1 x <synthetic>,opus-5 ($13). Types: {'general-purpose': 5}
+- Session 17 (e93f113b): 27 x opus-5 ($231); 1 x sonnet-5 ($1). Types: {'general-purpose': 27, 'Explore': 1}
+- Session 18 (6cfdbe19): . Types: {}
 
 ## Agents dispatched by role (subagent transcripts, classified from their spawn descriptions)
 
@@ -119,9 +130,12 @@ Claude Code keeps its own running tally in the transcript (`cost-state` rows, it
 | 13 | 1 ($1) | - | - | - | - | - | 2 ($19) | 3 ($7) | - | 12 ($215) | 18 ($241) |
 | 14 | - | - | - | - | 1 ($10) | - | 4 ($37) | 7 ($20) | - | 9 ($311) | 21 ($378) |
 | 15 | - | - | - | - | - | 1 ($24) | - | 7 ($26) | - | 12 ($298) | 20 ($348) |
-| all | 5 ($25) | 12 ($126) | 9 ($126) | 12 ($246) | 13 ($309) | 17 ($442) | 26 ($214) | 72 ($168) | 2 ($6) | 53 ($1488) | 221 ($3152) |
+| 16 | - | - | - | - | - | 1 ($4) | - | 1 ($2) | - | 3 ($42) | 5 ($49) |
+| 17 | - | - | - | - | 1 ($38) | 1 ($16) | 2 ($14) | 9 ($23) | - | 15 ($140) | 28 ($231) |
+| 18 | - | - | - | - | - | - | - | - | - | - | 0 ($0) |
+| all | 5 ($25) | 12 ($126) | 9 ($126) | 12 ($246) | 14 ($347) | 19 ($462) | 28 ($228) | 82 ($193) | 2 ($6) | 71 ($1671) | 254 ($3432) |
 
-Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $25, session 13 $18, session 14 $97, session 15 $29.
+Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, session 3 $48, session 4 $37, session 5 $60, session 6 $30, session 7 $1, session 8 $69, session 9 $1, session 10 $5, session 11 $19, session 12 $25, session 13 $18, session 14 $97, session 15 $39, session 16 $7, session 17 $48, session 18 $14.
 
 ## Subagent list (cost >= $5)
 
@@ -251,3 +265,18 @@ Lead (main thread) cost per session, same rates: session 1 $33, session 2 $16, s
 | 15 | a1c7d613f | general-purpose | opus-5 | 09-19T16:10 | 09-19T16:23 | 27 | 9,533 | 6.64 | QA 21 on gate9 capture |
 | 15 | a48964764 | general-purpose | opus-5 | 09-19T21:23 | 09-19T21:36 | 28 | 7,425 | 5.58 | QA 23 on gate11 capture |
 | 15 | ace92e560 | general-purpose | opus-5 | 09-19T20:51 | 09-19T21:05 | 57 | 6,165 | 5.44 | Delta review chain r2 fixes |
+| 16 | a4ea7aa98 | general-purpose | opus-5 | 09-20T06:18 | 09-20T07:10 | 2 | 31,776 | 17.94 | Phase 9 export belt rule (CPU) |
+| 16 | a22b6e5a0 | general-purpose | <synthetic>,opus-5 | 09-20T06:18 | 09-20T07:10 | 14 | 19,937 | 13.37 | Phase 9 viewer dotted rim (CPU) |
+| 16 | a2d92d06d | general-purpose | opus-5 | 09-20T06:18 | 09-20T06:46 | 1 | 18,384 | 11.00 | Phase 9 bake analysis (CPU) |
+| 17 | ac38f97c4 | general-purpose | opus-5 | 09-21T04:51 | 09-21T16:02 | 24 | 52,395 | 39.14 | Phase 9 re-bake chain (GPU) |
+| 17 | ae4e07420 | general-purpose | opus-5 | 09-21T16:09 | 09-21T17:18 | 37 | 66,587 | 38.46 | ENV aerial-blocks round (Blender) |
+| 17 | a59829f04 | general-purpose | opus-5 | 09-21T17:18 | 09-21T18:16 | 36 | 47,319 | 29.26 | Backdrop export + viewer round |
+| 17 | a8dec1a80 | general-purpose | opus-5 | 09-21T04:51 | 09-21T05:35 | 57 | 29,617 | 18.19 | Viewer shade r2 build (CPU) |
+| 17 | a9bd5a191 | general-purpose | opus-5 | 09-20T07:49 | 09-20T09:24 | 4 | 15,384 | 15.94 | Lighting round 19, corrected premise |
+| 17 | ad9150efa | general-purpose | opus-5 | 09-20T08:27 | 09-20T08:50 | 26 | 23,242 | 13.94 | Viewer shade: specular gating build |
+| 17 | a06e637e1 | general-purpose | opus-5 | 09-21T16:09 | 09-21T16:28 | 42 | 10,796 | 7.78 | QA round 25 gate on deploy 13 |
+| 17 | abc5a8531 | general-purpose | opus-5 | 09-20T08:10 | 09-20T08:22 | 20 | 11,541 | 7.33 | Export r2: review blocker and fix-now |
+| 17 | abda29b01 | general-purpose | opus-5 | 09-21T18:28 | 09-21T18:44 | 25 | 8,989 | 6.34 | QA round 26 on deploy 14 |
+| 17 | a1ed14712 | general-purpose | opus-5 | 09-20T07:50 | 09-20T08:01 | 23 | 9,562 | 6.30 | Finish and report phase9-export |
+| 17 | a140d5dbb | general-purpose | opus-5 | 09-21T18:02 | 09-21T18:20 | 2 | 9,208 | 5.62 | Backdrop tiles capture (Chrome) |
+| 17 | a75b08dec | general-purpose | opus-5 | 09-20T09:26 | 09-20T09:40 | 9 | 8,552 | 5.33 | Viewer capture window (Chrome) |

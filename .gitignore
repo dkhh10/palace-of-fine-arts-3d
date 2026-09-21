@@ -115,3 +115,4 @@ renders/qa_comparisons/phase9_tiles/
 # scripts/p8_cycles_refs.py; the 960 px copies and the composite beside them are committed.
 renders/qa_comparisons/cycles_p8/*.png
 renders/qa_comparisons/cycles_p9/*.png
+docs/usage/turns_all.json

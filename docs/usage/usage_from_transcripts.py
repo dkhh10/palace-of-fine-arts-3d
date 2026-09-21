@@ -220,3 +220,179 @@ for i, s in enumerate(sessions, 1):
         L.append(f'| {i} | {e["agent"][:9]} | {e["agentType"]} | {",".join(x.replace("claude-","").replace("-20251001","") for x in e["models"])} | {(e["first"] or "")[5:16]} | {(e["last"] or "")[5:16]} | {k(outk)} | {k(crk)} | {e["cost_usd"]:,.2f} | {(e["description"] or "")[:60]} |')
 open(os.path.join(os.path.dirname(__file__), 'summary.md'), 'w').write('\n'.join(L) + '\n')
 print('\n'.join(L[:40]))
+
+# ---------------------------------------------------------------------------------------------
+# Per-turn detail (added 2026-09-21 for the Phase 6 retrospective, docs/retrospective_phase6.md).
+# Everything above is unchanged and still runs first. This block only runs with `--turns OUT.json
+# [--since YYYY-MM-DD] [--until YYYY-MM-DD]` and writes one record per API request (deduplicated by
+# message id, same rule as scan()) for the lead thread and every subagent, plus every tool call with
+# its wall duration, every human prompt (timestamp and length only, never the text) and per-agent
+# metadata. Activity is a heuristic classification of what the request was for (see classify_activity);
+# its limits are stated in the retrospective, not hidden here.
+# ---------------------------------------------------------------------------------------------
+IMAGE_EXT = ('.png', '.jpg', '.jpeg', '.webp', '.gif')
+GPU_LAUNCH = re.compile(r'(?<![\w/.-])(scripts/|\./)?(blender_run\.sh|chrome_run\.sh)\s+\d+\s+--|bake_queue\.sh\s+--gate|web/tools/gate\d[a-z]?\.sh|node\s+\S*screenshot\.mjs|MacOS/Blender\s+--background', re.I)
+GPU_RUN = re.compile(r'(?<![\w/.-])(scripts/|\./)?(blender_run\.sh|chrome_run\.sh)\s+\d+|bake_queue\.sh\s+--|web/tools/gate\d[a-z]?\.sh|screenshot\.mjs|MacOS/Blender\s+--background|blender\s+--background|node .*screenshot', re.I)
+READ_ONLY = re.compile(r'^\s*(cd [^&]*&&\s*)?(cat|head|tail|grep|rg|sed -n|ls|wc|find|stat|du|git (log|status|diff|show|branch|ls-files)|python3 -c "import json;\s*print|jq|pgrep|file)\b')
+EDIT_CMD = re.compile(r'cat\s*>>?\s*[^|]|sed -i|applypatch|git (add|commit|merge|checkout -b|rebase|cherry-pick)|tee ', re.I)
+WAIT_CMD = re.compile(r'status\.json|pgrep|sleep \d|wait\b|blender_run\.sh|chrome_run\.sh|tail -f|watchdog', re.I)
+
+def classify_activity(tools, image_in, cmds):
+    """tools: list of tool names in the assistant message; image_in: the request carried an image
+    (a tool result with an image block preceded it); cmds: Bash/Monitor command strings.
+    Priority: viewing images > waiting > editing files > coordination > reading > running > reasoning."""
+    if image_in or any(t == 'Read' and c.lower().endswith(IMAGE_EXT) for t, c in cmds if t == 'Read'):
+        return 'viewing images'
+    names = set(tools)
+    bash = [c for t, c in cmds if t in ('Bash', 'Monitor')]
+    if 'Monitor' in names or any(GPU_RUN.search(c) for c in bash) or any(WAIT_CMD.search(c) and len(c) < 400 for c in bash):
+        return 'waiting on tools'
+    if names & {'Edit', 'Write', 'MultiEdit', 'NotebookEdit'} or any(EDIT_CMD.search(c) for c in bash):
+        return 'editing files'
+    if names & {'Agent', 'SendMessage', 'AskUserQuestion', 'TaskStop'}:
+        return 'coordination'
+    if 'Read' in names or any(READ_ONLY.search(c) for c in bash):
+        return 'reading files and logs'
+    if names:
+        return 'running scripts'
+    return 'reasoning and reporting'
+
+def role_of_agent(desc):
+    d = (desc or '').lower()
+    if d.startswith('code review') or d.startswith('review') or 'delta review' in d or ' review' in d[:30]: return 'code reviewer'
+    if 'qa round' in d or 'critic' in d or d.startswith('qa '): return 'QA critic'
+    if 'bake' in d: return 'bake engineer'
+    if 'export' in d or 'env:' in d or ' env ' in d: return 'export engineer'
+    if 'viewer' in d: return 'viewer engineer'
+    if 'materials' in d or 'mat r' in d or d.startswith('mat '): return 'materials'
+    if 'perf' in d or 'research' in d or 'analysis' in d or 'inventory' in d or 'sonnet' in d or 'crop' in d or 'catalog' in d: return 'analysis/mechanical'
+    for k, pat in (('lighting', 'light'), ('architecture', 'arch'), ('environment', 'env'), ('ornament', 'orn'), ('phase 5 prep', 'flythrough'), ('phase 5 prep', 'deliver')):
+        if pat in d: return k
+    return 'other'
+
+def turn_records(path, sid, agent, role, model_hint):
+    """One record per deduplicated API request + tool calls + human prompts for one transcript."""
+    seen = {}; order = []
+    pending = {}   # tool_use id -> (ts, name, cmd)
+    tool_calls = []; prompts = []; notifications = []; launches = []
+    last_result_had_image = False
+    with open(path, 'r', errors='replace') as f:
+        for line in f:
+            try: o = json.loads(line)
+            except Exception: continue
+            t = o.get('type'); ts = o.get('timestamp')
+            if t == 'user':
+                m = o.get('message') or {}; cc = m.get('content')
+                had_image = False; is_result = False
+                if isinstance(cc, list):
+                    for c in cc:
+                        if not isinstance(c, dict): continue
+                        if c.get('type') == 'tool_result':
+                            is_result = True
+                            inner = c.get('content')
+                            if isinstance(inner, list) and any(isinstance(x, dict) and x.get('type') == 'image' for x in inner):
+                                had_image = True
+                            tid = c.get('tool_use_id')
+                            if tid in pending:
+                                s, name, cmd = pending.pop(tid)
+                                try:
+                                    dur = (datetime.datetime.fromisoformat(ts.replace('Z', '+00:00')) - datetime.datetime.fromisoformat(s.replace('Z', '+00:00'))).total_seconds()
+                                except Exception: dur = None
+                                tool_calls.append({'sid': sid, 'agent': agent, 'role': role, 'tool': name, 'start': s, 'end': ts,
+                                                   'dur_s': dur, 'gpu': bool(GPU_RUN.search(cmd or '')), 'cmd_head': (cmd or '')[:120]})
+                        elif c.get('type') == 'image':
+                            had_image = True
+                if is_result:
+                    last_result_had_image = had_image
+                elif not o.get('isMeta'):
+                    txt = cc if isinstance(cc, str) else (cc[0].get('text', '') if isinstance(cc, list) and cc and isinstance(cc[0], dict) and cc[0].get('type') == 'text' else '')
+                    kind = (o.get('origin') or {}).get('kind') if isinstance(o.get('origin'), dict) else None
+                    if txt.startswith('<task-notification') or kind == 'task-notification':
+                        notifications.append(ts)
+                    if txt and not txt.startswith('<task-notification') and not txt.startswith('<local-command') and not txt.startswith('<command-') and kind not in ('peer', 'task-notification') and 'Subagent hand-back' not in txt[:300]:
+                        prompts.append({'sid': sid, 'agent': agent, 'ts': ts, 'chars': len(txt), 'image': had_image})
+                    last_result_had_image = had_image
+                continue
+            if t != 'assistant': continue
+            m = o.get('message') or {}
+            u = m.get('usage')
+            mid = m.get('id') or o.get('requestId') or o.get('uuid')
+            tools = []; cmds = []; thinking_chars = 0; text_chars = 0; asks = False
+            for c in m.get('content') or []:
+                if not isinstance(c, dict): continue
+                if c.get('type') == 'tool_use':
+                    tools.append(c.get('name'))
+                    inp = c.get('input') or {}
+                    cmd = inp.get('command') or inp.get('file_path') or inp.get('description') or ''
+                    cmds.append((c.get('name'), cmd if isinstance(cmd, str) else ''))
+                    if c.get('id'): pending[c['id']] = (ts, c.get('name'), inp.get('command') or '')
+                    if c.get('name') == 'Bash' and GPU_LAUNCH.search(inp.get('command') or ''):
+                        mm = re.search(r'(?:blender_run|chrome_run)\.sh\s+(\d+)', inp.get('command') or '')
+                        launches.append({'ts': ts, 'background': bool(inp.get('run_in_background')), 'max_s': int(mm.group(1)) if mm else None,
+                                         'cmd_head': re.sub(r'\s+', ' ', inp.get('command') or '')[:140]})
+                elif c.get('type') == 'thinking': thinking_chars += len(c.get('thinking') or '')
+                elif c.get('type') == 'text':
+                    text_chars += len(c.get('text') or '')
+                    if '?' in (c.get('text') or '')[-600:]: asks = True
+            rec = seen.get(mid)
+            if rec is None:
+                rec = {'sid': sid, 'agent': agent, 'role': role, 'model': m.get('model', model_hint or 'unknown'), 'ts': ts,
+                       'input': 0, 'output': 0, 'cw5m': 0, 'cw1h': 0, 'cread': 0, 'thinking': 0,
+                       'tools': [], 'cmds': [], 'image_in': last_result_had_image, 'thinking_chars': 0, 'text_chars': 0}
+                seen[mid] = rec; order.append(mid)
+            # streaming writes several rows per message: merge the content blocks, keep the max usage
+            rec['tools'] += tools; rec['cmds'] += cmds; rec['thinking_chars'] += thinking_chars; rec['text_chars'] += text_chars
+            rec['asks'] = rec.get('asks', False) or asks
+            rec['last_cmd'] = (cmds[-1][1] if cmds else rec.get('last_cmd', ''))[:160]
+            if u:
+                cc = u.get('cache_creation') or {}
+                cand = {'input': u.get('input_tokens', 0) or 0, 'output': u.get('output_tokens', 0) or 0,
+                        'cw5m': cc.get('ephemeral_5m_input_tokens', 0) or (0 if cc else (u.get('cache_creation_input_tokens', 0) or 0)),
+                        'cw1h': cc.get('ephemeral_1h_input_tokens', 0) or 0, 'cread': u.get('cache_read_input_tokens', 0) or 0,
+                        'thinking': ((u.get('output_tokens_details') or {}).get('thinking_tokens', 0) or 0)}
+                if cand['output'] >= rec['output']:
+                    rec.update(cand)
+    out = []
+    for mid in order:
+        r = seen[mid]
+        r['activity'] = classify_activity(r['tools'], r['image_in'], r['cmds'])
+        r['cost_usd'] = cost(r['model'], r) or 0.0
+        r['tools'] = sorted(set(x for x in r['tools'] if x))
+        del r['cmds']
+        out.append(r)
+    return out, tool_calls, prompts, {'notifications': notifications, 'launches': launches}
+
+def write_turns(out_path, since=None, until=None):
+    turns = []; calls = []; prompts = []; agents = []
+    for main in sorted(glob.glob(os.path.join(PROJ, '*.jsonl'))):
+        sid = os.path.basename(main)[:-6]
+        tr, tc, pr, ex = turn_records(main, sid, 'lead', 'lead', None)
+        first = min((r['ts'] for r in tr if r['ts']), default=None); last = max((r['ts'] for r in tr if r['ts']), default=None)
+        if since and last and last[:10] < since: continue
+        if until and first and first[:10] > until: continue
+        agents.append({'sid': sid, 'agent': 'lead', 'role': 'lead', 'model': (tr[0]['model'] if tr else None), 'description': 'lead thread', 'first': first, 'last': last, 'requests': len(tr), **ex})
+        turns += tr; calls += tc; prompts += pr
+        for sa in sorted(glob.glob(os.path.join(PROJ, sid, 'subagents', '*.jsonl'))):
+            meta = {}
+            mp = sa[:-6] + '.meta.json'
+            if os.path.exists(mp):
+                try: meta = json.load(open(mp))
+                except Exception: meta = {}
+            aid = os.path.basename(sa)[6:-6]
+            role = role_of_agent(meta.get('description'))
+            tr, tc, pr, ex = turn_records(sa, sid, aid, role, meta.get('model'))
+            agents.append({'sid': sid, 'agent': aid, 'role': role, 'model': (tr[0]['model'] if tr else meta.get('model')), 'description': meta.get('description'),
+                           'first': min((r['ts'] for r in tr if r['ts']), default=None), 'last': max((r['ts'] for r in tr if r['ts']), default=None), 'requests': len(tr), **ex})
+            turns += tr; calls += tc; prompts += pr
+    def inwin(ts): return ts and (not since or ts[:10] >= since) and (not until or ts[:10] <= until)
+    turns = [r for r in turns if inwin(r['ts'])]; calls = [c for c in calls if inwin(c['start'])]; prompts = [p for p in prompts if inwin(p['ts'])]
+    json.dump({'generated': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'since': since, 'until': until, 'rates': out['rates_usd_per_mtok'],
+               'activity_rule': 'priority: viewing images > waiting on tools > editing files > coordination > reading files and logs > running scripts > reasoning and reporting; one activity per API request; thinking tokens carried separately',
+               'agents': agents, 'turns': turns, 'tool_calls': calls, 'human_prompts': prompts}, open(out_path, 'w'))
+    print(f'turns: {len(turns)} requests, {len(calls)} tool calls, {len(prompts)} human prompts, {len(agents)} agents -> {out_path}')
+
+if '--turns' in sys.argv:
+    a = sys.argv; i = a.index('--turns')
+    since = a[a.index('--since') + 1] if '--since' in a else None
+    until = a[a.index('--until') + 1] if '--until' in a else None
+    write_turns(a[i + 1], since, until)
