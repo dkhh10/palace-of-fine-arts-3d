@@ -3048,3 +3048,90 @@ reads **131** on desktop and **149** on mobile, which is the rule working, not a
   the mesh-name **string**. Fix: name the flag `has_mesh` (which is what `topology.json` now calls it). Left
   tabled because it is a shipped manifest key with readers in the viewer, the self-test and this file, so the
   rename is a co-ordinated change, not a one-line one.
+
+## Phase 9 — the backdrop gain tiles, and the two UV sets they cost (2026-09-21, export engineer, branch `phase9-backdrop-export`)
+
+The ENV round (`docs/briefs/phase9_env_report.md` "Export hand-off") added four tileable, mean-0.505 gain
+images and a per-face **UV0 in tile units** on the 1 291 `ENV_backdrop_*` meshes. They cannot ride the baked
+1 K backdrop atlas — that atlas is 0.79 texels/m on the facades and the tile is 64 — so they ship as their
+own REPEAT-sampled, **Non-Color** textures and the viewer multiplies them over the baked albedo:
+
+```
+haze   = smoothstep(r0, r1, length(worldPos.xz)) * amount     // glTF Y-up: the Blender XY plane
+amp    = 2 * strength * (1 - (1 - keep) * haze)
+albedo = bakedAlbedo * (1 + (tile - 0.5) * amp)               // per channel, after <map_fragment>
+```
+
+### What ships, and where each piece enters the chain
+
+| piece | file | note |
+|---|---|---|
+| the four KTX2 | `export/p9_bd_tiles.py` -> `out/gate2/tex_ktx2/p9_bd_*.ktx2` | `bd_facade` UASTC 402 862 B, `bd_roof` / `bd_rooftile` / `bd_canopy` ETC1S 37 968 / 42 948 / 114 149 B = **597 927 B** |
+| the half-resolution copies | same script -> `out/gate5/tex_lo/p9_bd_*.ktx2` | 92 479 B; `tiers.py --mobile`'s `mobile_swap()` takes them **by existence**, no tier code knows their names |
+| the manifest rows | `manifest_v3.py` | ordinary `textures.gate2.files` rows (`map: "gain"`, `colorspace: "linear"`, `cls: "backdrop"`), so they resolve and tier like every other texture |
+| the constants | `manifest_v3.py` -> `backdrop_tiles` | per **glb material name**: `texture`, `strength`, `keep`, `r0`, `r1`, `amount`, plus `uv: {tile, baked}` |
+| publication | `gate5_common.py` | no material SET names these keys (they ride their own uniform), so the material walk cannot see them - one explicit loop over `backdrop_tiles.groups` |
+| the tier | `tiers.py`, kind `backdrop_tile` | **tier 1**, beside the backdrop albedo it modulates. Tier 0 had 0.2 MB of headroom and the gain is 1.0 until the tile lands |
+| the gate | `verify_glb.py --gate5` | every group published (or `tex_lo`-backed) and on disk, `colorspace linear`, tile at TEXCOORD_0, set `texcoord` 1 |
+
+`toktx` measurements (`p9_bd_tiles.py --measure`, decoded back through `p8c_ktx2_compare.py`): shipped
+rmse/255 facade **0.261**, roof 1.667, rooftile 2.710, canopy 1.712; the UASTC alternatives are 0.396 /
+0.569 / 0.395 at 3-8x the bytes. A gain error of 2.7/255 is 2.3 % of albedo at strength 1.10.
+
+### The two UV sets — and the two traps between them
+
+`env_p9_uv0` names its tile layer **"UVMap"**, which is `gate0_common.UV1`, the same name the Gate 2 backdrop
+atlas relay writes to. `gate1_set.py` joins the backdrop per material and Blender's join matches UV layers by
+name, so the layer that reaches `gltf_gate1.py` IS the tile UV.
+
+1. **`gltf_gate1.py` would have written the atlas over it** and shipped one UV set again. It now appends the
+   atlas as a second layer (`UV1_BAKE = "UVBake"`) whenever what is already there is **not** the npz layout —
+   compared against the npz array itself, not guessed from a UV span: `backdrop_door_green` is one cube and
+   its tile UV spans **0.941**, which a span test rejects. Layer order is TEXCOORD order, so the glb ships
+   **TEXCOORD_0 = tile, TEXCOORD_1 = bake atlas**. The grey UV1 probe moves to the bake layer on those
+   materials so the glb's own `texCoord` agrees with the manifest set's.
+   The set is **mixed by design**: `bird_white` and `lamp_post` are merged by the same Gate 1 rule, take no
+   gain tile and keep the atlas at TEXCOORD_0. The index is therefore per MATERIAL SET
+   (`materials.sets[*].texcoord`, **1 on 8 of 62**), read back by `manifest_v3`'s cross-check, which scores
+   every `TEXCOORD_n` in `env.gltf` against `backdrop_uv1_shipped.npz` (10/10 at match **1.00000**, V-flipped)
+   and fails if a tile-bearing merge's atlas is anywhere but 1.
+2. **gltfpack quantises EVERY texcoord stream of a mesh on ONE shared UV box.** Measured on a two-set test
+   glb: TEXCOORD_0 spanning 0..300 and TEXCOORD_1 spanning 0..1 came back with a single
+   `KHR_texture_transform` of scale **4801**, i.e. the [0,1] set kept **14 of its 4096 steps**. With tile
+   spans of 8-326 tiles that would have quantised the bake atlas to tens of texels. **env therefore takes
+   `-vtf`** (float texcoords) beside its existing `-vpf`: no shared box, no transform, and nothing for
+   `web/src/uvDequant.js` to apply to the wrong set. On the same `env_ktx2.gltf` it also packs *smaller*
+   (36 990 836 -> 36 781 772 B); with the second UV set actually present, `env.glb` is
+   36 990 836 -> **38 560 908 B (+1 570 072)**.
+3. **A future Gate 2 backdrop re-bake is the remaining hazard.** `gate2_common.smart_uv1` only creates UV1
+   when none exists, so it would smart-project on top of the tile UV and the bake would be silent about it.
+   It now carries a hard assert (span > 1.5) naming the fix: bake to `"UVBake"` and hand THAT layer over in
+   `backdrop_uv1.npz`.
+
+### The chain as run, and what it cost
+
+Run with the worktree's `export/out` symlinked to MAIN's, so every script wrote MAIN directly (`ROOT == MAIN`,
+the re-bake round's arrangement; `sync_main.sh` is a self-copy there and is skipped).
+
+```sh
+scripts/blender_run.sh 2400 -- --background <MAIN>/master_delivery.blend --python export/export_set.py -- --gate1
+scripts/blender_run.sh 1800 -- --background <MAIN>/export/out/gate1/gate1_set.blend --python export/gltf_gate1.py
+export/gltf_pack.sh --gate1
+node web/tools/instance_rows.mjs <MAIN>/export/out/gate1/env.glb <MAIN>/export/out/gate3/instance_rows.json
+python3 export/gate4_instance_order.py && python3 export/gate5_instance_rows.py
+python3 export/gate4_order_selftest.py && python3 export/verify_glb.py
+python3 export/manifest_v2.py && python3 export/manifest_v3.py && python3 export/manifest_v4.py
+python3 export/budget_doc.py && python3 export/gate3_relay_check.py && python3 export/manifest_v4.py
+python3 export/tiers.py && python3 export/tiers.py --mobile && python3 export/tiers.py --no-pack
+python3 export/verify_glb.py --gate5 && (cd web && node test/tiers_test.mjs) && python3 export/name_sweep.py
+python3 export/p8d_pin.py --glbs
+```
+
+`export_set.py --gate1` 136 s; `toktx` 179 s / 85 files. **`arch.glb`, `orn.glb`, `ground.glb`,
+`env_trees.glb`, `env_trees_lod1.glb` and `env_shrubs.glb` are byte-identical across the re-export**
+(sha256 before and after; `p8d_pin --glbs` PASS beside it). Only `env.glb` moved. Placed triangles ARCH
+949 382 / ORN 1 099 192 / ENV 895 052, unchanged.
+
+**Payload.** Desktop first frame **49.30 -> 49.39 MB** on the wire (tier 0 48.13 -> 48.24 MB, all of it
+`env_t0` 1.84 -> 1.97 MB, the second UV set), against the 49.5 MB target — 606 315 B under the 50 MB rule.
+Mobile 47.32 -> **47.45 MB**. The four tiles themselves are **tier 1**: 597 927 B desktop, 92 479 B mobile.
