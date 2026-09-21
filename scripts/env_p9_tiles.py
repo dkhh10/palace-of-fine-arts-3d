@@ -155,14 +155,17 @@ def make_facade():
         v[:, x0:x0 + w] = np.clip(v[:, x0:x0 + w] * 0.0 + 0.36, 0, 1)
         v[:, x0 + w:x0 + 3 * w] = 0.62
 
-    v = normalise(v)
+    # FACADE FLOOR (round 4).  Rounds 2-3 clipped to [0.12, 0.92]: at strength 1.25 the darkest window texel
+    # gives gain 0.10, which lands the hall's east wall in AgX's toe and FLATTENS it -- the hero band's hf went
+    # DOWN 0.0015 while cam06's went up.  A floor of 0.26 keeps the bay/storey rhythm and takes min gain to 0.4.
+    v = normalise(v, lo=0.26, hi=0.86)
     # windows cool the gain: the hero wall band measures saturation 0.654 against ref 169's 0.431, and a quarter
     # of its pixels are glass.  Luma is held (the R loss is matched by the B gain at Rec.709 weights).
     # round 3: the tint was R x0.90 / B x1.16, which multiplied an ochre albedo into a BLUE one and raised the
     # hero band's saturation 0.666 -> 0.676 where the photograph wants 0.395.  Cut to a quarter.
     rgbv = np.dstack([v * (1.0 - 0.030 * cool), v * (1.0 - 0.005 * cool), v * (1.0 + 0.045 * cool)])
     for c in range(3):
-        rgbv[..., c] = normalise(rgbv[..., c])
+        rgbv[..., c] = normalise(rgbv[..., c], lo=0.26, hi=0.86)
     return save("bd_facade", rgbv)
 
 

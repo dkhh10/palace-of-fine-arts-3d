@@ -21,7 +21,6 @@ Called from `env_backdrop.build_all` (so a full `env_build.py` reproduces it) an
 existing assets/environment.blend:
     scripts/blender_run.sh 300 -- --background --python scripts/env_p9_uv0.py
 """
-import math
 import hashlib
 import numpy as np
 import bpy
@@ -129,6 +128,13 @@ def backdrop_objects():
         mats = [m.name for m in ob.data.materials if m]
         in_coll = coll is not None and ob.name in coll.all_objects
         if not (in_coll or any(m.startswith("MAT_backdrop_") for m in mats)):
+            continue
+        # SAFETY: this function REPLACES layer 0 with a world projection.  That is right for the backdrop (every
+        # one of its 1 291 meshes ships with an empty `uv_layers`, verified) and wrong for anything that carries
+        # a real UV -- a leaf card, an impostor billboard.  If a future object lands in ENV_backdrop with its own
+        # UV and a non-backdrop material, leave it alone rather than destroy its mapping.
+        if ob.data.uv_layers and not any(m.startswith("MAT_backdrop_") for m in mats):
+            print(f"[env_p9_uv0] skipped {ob.name}: has a UV layer and no MAT_backdrop_ material")
             continue
         seen.add(ob.name)
         out.append(ob)

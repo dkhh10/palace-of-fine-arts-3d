@@ -92,30 +92,28 @@ def table():
 
 
 def sheet(rows):
-    """One 960 px composite: the three stations before / after, plus the hero band at 100 %."""
-    panels = []
-    for st in (1, 5, 6):
-        for tag in ("before", "after"):
-            p = PREV / f"p9r3_{tag}_cam{st:02d}.png"
-            if p.exists():
-                im = Image.open(p).convert("RGB").resize((470, 264), Image.LANCZOS)
-                panels.append((f"cam{st:02d} {tag}", im))
-    # the hero band at 100 % (the 8d target box), before / after, side by side
-    crops = []
-    for tag in ("before", "after"):
-        p = PREV / f"p9r3_{tag}_cam01.png"
-        if p.exists():
-            crops.append(Image.open(p).convert("RGB").crop((0, 524, 640, 670)))
-    sh_h = 264 * ((len(panels) + 1) // 2) + (150 if crops else 0)
-    out = Image.new("RGB", (960, sh_h + 10), (18, 18, 18))
-    for i, (_lbl, im) in enumerate(panels):
-        out.paste(im, ((i % 2) * 480 + 5, (i // 2) * 264 + 5))
-    for i, c in enumerate(crops):
-        out.paste(c.resize((470, 107), Image.LANCZOS), (i * 480 + 5, 264 * ((len(panels) + 1) // 2) + 10))
+    """One 960 px composite.  Row 1: cam06 whole frame before / after (the station 8d R3 is for).  Row 2: the
+    cam06 city band at 100 % (x 300-940, y 0-200) -- the facades, roofs and canopy the tile actually reaches.
+    Row 3: cam01 whole frame, the station where the R2 belt already covers the hall wall."""
     OUT.mkdir(parents=True, exist_ok=True)
+    out = Image.new("RGB", (960, 800), (18, 18, 18))
+    ims = {}
+    for st in (1, 6):
+        for tag in ("before", "after"):
+            fp = PREV / f"p9r3_{tag}_cam{st:02d}.png"
+            if fp.exists():
+                ims[(st, tag)] = Image.open(fp).convert("RGB")
+    for i, tag in enumerate(("before", "after")):
+        im = ims.get((6, tag))
+        if im:
+            out.paste(im.resize((470, 264), Image.LANCZOS), (i * 480 + 5, 5))
+            out.paste(im.crop((300, 0, 940, 200)).resize((470, 147), Image.LANCZOS), (i * 480 + 5, 274))
+        im = ims.get((1, tag))
+        if im:
+            out.paste(im.resize((470, 264), Image.LANCZOS), (i * 480 + 5, 426))
     fp = OUT / "env_p9_r3_sheet.jpg"
-    out.save(fp, quality=88)
-    print(f"[env_p9_probe] {fp}")
+    out.save(fp, quality=90)
+    print(f"[env_p9_probe] {fp}  (rows: cam06 frame | cam06 city band 100 % | cam01 frame; left before, right after)")
     return fp
 
 

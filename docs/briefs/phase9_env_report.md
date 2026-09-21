@@ -3,7 +3,8 @@ Branch `phase9-env`, worktree `.claude/worktrees/phase9-env`, from main 711b63b.
 
 ## Files
 * `scripts/env_p9_tiles.py` (new) — generates the four tileable **gain** maps into `assets/textures/backdrop/`
-  (numpy, project-owned / CC0, nothing fetched). Mean of every channel is exactly 0.5 by construction.
+  (numpy, project-owned / CC0, nothing fetched). Every channel mean is exactly **0.505** by construction:
+  0.500 would be mean-preserving in linear albedo, but AgX is concave there and rendered ~1 % dark (measured).
 * `scripts/env_p9_uv0.py` (new) — lays UV0 (`"UVMap"`, layer 0 = TEXCOORD_0) on the backdrop, per face, in **tile
   units**. Called last from `env_backdrop.build_all`; also runnable standalone to patch an existing ENV file.
 * `scripts/env_p9_preview.py` (new) — Eevee 1920x1080 previews of cam01/05/06 from the rebuilt master.
@@ -39,7 +40,47 @@ neighbouring blocks do not line their storeys up. 1 291 meshes, 406 495 loops, *
 
 RESULTS (Eevee 1920x1080 from the rebuilt master, `scripts/env_p9_probe.py`, QA-22 boxes and definitions):
 
-<!-- RESULTS -->
+| box | st | before | after | Δ | cycles p9 | photo |
+|---|---|---|---|---|---|---|
+| **06 top row** hf | 6 | 0.0319 | **0.0358** | **+12.2 %** | 0.0274 | 0.1547 |
+| 06 top row luma / sat | 6 | 0.484 / 0.297 | 0.480 / 0.301 | -0.004 / +0.005 | 0.401 / 0.365 | 0.788 / 0.094 |
+| **06 city r1c3** hf | 6 | 0.0239 | **0.0298** | **+24.5 %** | 0.0147 | 0.0728 |
+| 06 city r1c3 lum sd | 6 | 0.124 | 0.126 | +0.002 | 0.086 | 0.111 |
+| **06 far field** hf | 6 | 0.0261 | **0.0317** | **+21.5 %** | 0.0211 | 0.1967 |
+| 06 far field lum sd | 6 | 0.102 | 0.105 | +0.003 | 0.073 | 0.153 |
+| 06 far lawn hf | 6 | 0.0503 | 0.0514 | +2.2 % | 0.0603 | 0.2190 |
+| 01 N-colonnade band hf | 1 | 0.0506 | 0.0491 | **-3.0 %** | 0.0970 | 0.2027 |
+| 01 N-colonnade band luma / sat | 1 | 0.195 / 0.666 | 0.193 / 0.676 | -0.002 / **+0.010** | 0.238 / 0.695 | 0.337 / 0.395 |
+| 01 S-colonnade band hf | 1 | 0.0923 | 0.0911 | -1.3 % | 0.1137 | 0.2338 |
+| 05 backdrop band hf | 5 | 0.0801 | 0.0787 | -1.7 % | 0.0997 | — |
+
+**Sheet: `renders/qa_comparisons/env_p9_r3_sheet.jpg`** — row 1 cam06 whole frame, **row 2 the cam06 city band at
+100 %**, row 3 cam01; left before, right after. At 100 % the blocks carry a bay/storey grid, sills, string courses
+and roof furniture where they were pale untextured boxes. That is the qualitative half of the acceptance and it
+is the clearest thing in the sheet.
+
+**Cycles sees it** (`scripts/env_p9_cycles.py`, the same master rendered twice with only the tile PNGs swapped
+for flat 0.505 stand-ins — master.blend reads them from disk, so no second build is needed; cam06 city band,
+640x200 border, 24 spp): **hf 0.0225 -> 0.0287, +27.6 %**, luma 0.441 -> 0.440, sat 0.284 -> 0.287, and
+**33.5 % of the band's pixels move by more than 4 levels**. The phase's 4K Cycles hero will carry the tile.
+
+**What did NOT go the right way, stated plainly.** At cam01 and cam05 the backdrop bands lose 1-3 % of their hf
+and gain 0.010-0.018 saturation, against a photograph that wants *more* hf and *less* saturation. Cause: in those
+boxes the backdrop is a minority of the pixels (the hero band is 21 204 backdrop px in a 93 440 px box, and the
+R2 belt covers most of the hall wall), so the tile only modulates thin slivers between columns, while the gain's
+1 % AgX darkening applies to all of them — AgX then reads the slightly darker pixels as more saturated. Four
+rounds were spent on this: amplitude up (round 2), a +0.005 mean lift to cancel the AgX concavity (round 3,
+recovered 0.001 luma), and a raised tile floor to stop the darkest window texels crushing in the AgX toe (round 4,
+moved cam01 by 0.0000). **It is a property of modulating a small minority of a box's pixels, not of the tile**,
+and I stopped rather than trade cam06's +12-25 % away for it.
+
+**The honest ceiling.** cam06's hf is 0.0358 against the photograph's 0.1547. R1 named this ceiling for luma
+("an albedo can only reach 1.0"); the same applies here — ref 105's city is at luma 0.79 / sat 0.09, a tonal
+regime an albedo-side change cannot reach, and hf at that level is partly a *consequence* of the level. R3 buys
+the structure; the remaining 4.3x is not an ENV-side number.
+
+**Pin: ENV tri delta is 0.** LOD0 15 444 910 / LOD1 5 298 928 / LOD2 833 874, 6 042 objects — identical before
+and after (`renders/logs/p9_env_build{1..5}.log`). No object renamed, none added, none removed. UV1 untouched.
 
 ## Item 2 — the belt cover and the shrub hard edge
 The QA-24 residuals are stated **viewer vs Cycles**. The brief's question is a different one — *is the belt's

@@ -1,0 +1,10 @@
+00:00.824  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-env/master.blend"
+00:18.818  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-env/renders/previews/environment/p9r3_cycAfter_cam06.png'
+[common] set_lod viewport=LOD1 render=LOD1: 6568 objects, 6 collections
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[env_p9_cycles] p9r3_cycAfter_cam06.png 24 spp in 18.1s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 28615 exited rc=0 after 20 s (max 1500)
