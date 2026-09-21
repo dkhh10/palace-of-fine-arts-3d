@@ -35,6 +35,56 @@ lighting agent's own shipped-chain number for the hero (`docs/briefs/phase9_ligh
 Files: `renders/qa_comparisons/cycles_p9/cam0N_1080_32spp.png` (8.5 MB each, gitignored via the new
 `.gitignore` line) + `960/cam0N_960.jpg` (committed) + marker `.p9_refs_done`.
 
+## 0b. Prep — the gate chain that has to run before any bake, and where it ran
+
+**Where.** Everything runs in the MAIN checkout, so the bakes write MAIN's `export/out` directly (the brief's
+rule) and no `sync_main.sh` hop can desynchronise the working blends from the manifests. The worktree
+`.claude/worktrees/phase9-rebake` holds only scripts and docs.
+
+**Why a gate chain at all.** `gate3_bake.blend` inherits its WORLD from `gate2_bake.blend`, which inherits it
+from `gate1_set.blend`, which `export_set.py --gate1` reads out of `master_delivery.blend`. A lighting change
+therefore only reaches the bake if those three are regenerated; `docs/briefs/phase9_bake_analysis_report.md`
+A.3 lists `export_set.py --gate1` but not `gate2_set.py`, and without it the bake would have used the
+**Sep 15** world. Neither `gate1_set.blend` nor `gate2_bake.blend` existed in MAIN at all (both are excluded
+from `sync_main.sh`), so both had to be built here regardless.
+
+| step | wall | result |
+|---|---|---|
+| `belt_rule.py` + `--frustum` + `p9_rule_selftest.py` | CPU | **34/34 checks behaved** |
+| `export_set.py --gate1` | 143 s | ARCH 949 382 / ORN 1 099 192 / ENV 895 052 placed tris; tree_rule 186 / 166 / 85 / 20 |
+| `trees_far.py` far, then `PFA_TREES_SET=walkup` | 30 + 11 s | far **149 placements + 17 billboard-only**, 1 182 338 tris; walk-up **131 + 35**, 3 890 782 tris |
+| `gltf_pack.sh --trees` / `--trees-lod1` | CPU | `env_trees.glb` 3 769 236 B, `env_trees_lod1.glb` 7 642 536 B |
+| `verify_glb.py` | CPU | **PASS** — every placed triangle in `export_set.json` is drawn by the glb |
+| `p8d_pin.py` | CPU | **11 of 13**, including all ten far-tree pins and the by-index subset relation |
+| `p9_geom_pin.py` (new) | CPU | **PASS 30/30** against the DEPLOYED manifest |
+| `gate2_probe.py`, `gate2_set.py` | 2 + 5 s | `gate2_bake.blend` rebuilt from the r19 `gate1_set.blend` |
+| `gate3_probe.py`, `gate3_set.py` | 7 + 21 s | `gate3_bake.blend`, `gate3_imp.blend`, 65 jobs |
+| world read-back on `gate3_bake.blend` | 600 s cap | see below |
+| `gate3_relay_check.py` | CPU | **PASS** — 7 re-laid UV2 layers + 14 COLOR_0 attributes are in the SHIPPED glbs |
+| `trees_far_set.py` | 1 s | `trees_far_irr.blend`, **166 placements**, 36 jobs -> 101 in the queue file |
+
+**The two `p8d_pin.py` checks that do not pass are not findings.** `p8d_pin.py` is a Phase 8d DELTA
+instrument: it compares MAIN's `export_set.json` with the worktree's and asserts the one-time 8d movement
+(`EXPECT_ENV_DELTA = -6822`, "exactly the belt's 39 rows are new"). MAIN is itself post-8d, so both sides are
+one file and those two checks can never fire again. `export/p9_geom_pin.py` asks the question this round
+actually needs — does the set the lightmaps will be baked against still describe the geometry the SHIPPED
+manifest and glbs carry? — against a snapshot of the deployed `export/out/gate3/manifest.json`:
+**PASS 30/30** (totals per class, `tree_rule`, both tree lists by content and order, 2 579 objects and 146
+meshes each keeping its mesh, uv1 atlas tiles and per-group coverage, uv2 meshes 66, the slot pools, the 16
+own-map names). Record: `docs/briefs/phase9_geom_pin.json`.
+
+**The r19 world is inside the bake blend — read back, not asserted.**
+`sky_diffuse_tint [1.0, 0.75, 8.0]`, `sky_diffuse_tint_antisun 0.0`, `sky_camera_boost 2.1`,
+`sky_camera_saturation 1.2`, `sky_glossy_boost 4.2`, `sky_glossy_saturation 0.9`, `sky_diffuse_boost 2.5`,
+`sky_strength_lighting 0.8`, sun az 118.4931 / el 7.3572, `lights = 20`, world `WORLD_golden_hour`. Every
+value matches the lighting agent's hand-off list exactly.
+
+**UV2 did not move.** `gate3_set.py` re-laid the same 7 assets to the same coverages the shipped manifest
+carries (0.12071 / 0.11552 / 0.20723 / 0.21954 / 0.34247 / 0.72795 / 0.11408) and `gate3_relay_check.py`
+reads the attributes back **out of the shipped glbs**: 7/7 re-laid UV2 layers and 14/14 COLOR_0 attributes
+present and matching. So the new lightmaps land on the UV2 the deployed glbs already carry and **no glb has
+to be re-exported or re-packed** (A.3's premise, verified rather than assumed).
+
 ## 1. The A.2 probe
 
 (filled in below)
