@@ -53,8 +53,18 @@ def main():
             if k not in g0m:
                 continue
             if k == "view":
-                # the colour pipeline is frozen: the two files must agree or every parity score is wrong
-                assert abs(g0m["view"]["exposure_ev"] - man["view"]["exposure_ev"]) < 1e-6, \
+                # the colour pipeline is frozen: the two files must agree or every parity score is wrong.
+                # The tolerance is PHYSICAL, not float noise. `light_presets.apply_look` takes the exposure
+                # from LIGHT_sun's 18 % card calibration plus `light_build.EXPOSURE_BIAS`, so a lighting
+                # round that changes the world re-measures the calibration and the value moves in its last
+                # digits: Phase 9 r19 gave -2.833136558532715 against Gate 0's -2.8331398963928223, a
+                # difference of 3.34e-6 EV = a linear factor of 1.0000023, which is ~14 float32 ulps at 2.83
+                # and four orders of magnitude below the 65^3 LUT's own quantisation. The old 1e-6 bound was
+                # tighter than the number can be represented, so it failed on a difference that cannot be
+                # seen. 1e-3 EV (0.07 % linear) is the bound `scripts/p8_cycles_refs.py` already asserts the
+                # delivery exposure to, and it still catches any real exposure change (the smallest ever
+                # shipped was 0.25 EV).
+                assert abs(g0m["view"]["exposure_ev"] - man["view"]["exposure_ev"]) < 1e-3, \
                     f"exposure differs: gate0 {g0m['view']['exposure_ev']} vs gate1 {man['view']['exposure_ev']}"
                 assert g0m["view"]["look"] == man["view"]["look"], "look differs between the gates"
                 continue
@@ -63,7 +73,7 @@ def main():
         man["colour_source"] = dict(gate0_manifest=str(g0p), carried=carried,
                                     note="LUT, sky equirects, compositor values and the two reference frames "
                                          "are Gate 0's, unchanged: same master_delivery.blend, same view "
-                                         "transform, look and exposure (asserted).")
+                                         "transform, look and exposure (asserted to 1e-3 EV).")
     else:
         man["colour_source"] = dict(gate0_manifest=None, carried=[],
                                     note="Gate 0 manifest not found; LUT/sky/compositor/reference are MISSING")
