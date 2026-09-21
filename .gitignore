@@ -114,3 +114,4 @@ renders/qa_comparisons/phase9_tiles/
 # Phase 8 Cycles station references: the 1080p PNGs are 8-9 MB each and regenerable from
 # scripts/p8_cycles_refs.py; the 960 px copies and the composite beside them are committed.
 renders/qa_comparisons/cycles_p8/*.png
+renders/qa_comparisons/cycles_p9/*.png
