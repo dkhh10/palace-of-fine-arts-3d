@@ -1772,12 +1772,29 @@ def _principled_of(mat):
 # AFTER this, so the lot spread, the palace's shade and the distance haze wash the tile out with distance exactly
 # as they wash the albedo -- which is the reference's own behaviour (ref 105's city is hazed almost to white).
 #
-# name -> (tile image, strength).  Tile sizes live in scripts/env_p9_tiles.py and env_p9_uv0.py and must match.
+# MEASURED, then corrected (renders/logs/p9_env_prev_{before,after}.log, first pass).  Applying the gain BEFORE
+# `backdrop_atmosphere` put it where the haze eats it: the Marina houses cam06 sees are 506 m out, the haze there
+# replaces 58.5 % of the albedo with the flat HAZE_TINT, and the measured hf gain over the whole first pass was
+# +0.0002 at cam06 and +0.0016 at cam01 -- i.e. nothing.  The photograph does not behave that way: ref 105's city
+# is hazed to luma 0.79 / sat 0.09 and STILL measures hf 0.155 against our 0.033.  Real aerial perspective adds
+# light, it does not erase structure, and R1's albedo-side haze (the only kind a diffuse bake can carry) over-
+# attenuates the high frequencies.  So the tile gain is applied AFTER the haze, with its own gentler rolloff:
+# `keep` is the fraction of the amplitude that survives full haze.  The gain is still mean-1.0, so every R1 mean
+# (luma, saturation, the lot spread, the palace's shade) is untouched -- only the variance around them moves.
+#
+# name -> (tile image, strength, keep)
 BACKDROP_TILES = {
-    "MAT_backdrop_building":  ("bd_facade", 1.00),
-    "MAT_backdrop_roof":      ("bd_roof", 0.60),
-    "MAT_backdrop_roof_tile": ("bd_rooftile", 0.70),
-    "MAT_backdrop_forest":    ("bd_canopy", 0.85),
+    "MAT_backdrop_building":  ("bd_facade", 1.10, 0.55),
+    "MAT_backdrop_roof":      ("bd_roof", 0.75, 0.55),
+    "MAT_backdrop_roof_tile": ("bd_rooftile", 0.80, 0.55),
+    "MAT_backdrop_forest":    ("bd_canopy", 1.00, 0.60),
+}
+# the haze band each material occupies -- must match apply_backdrop_atmosphere()
+BACKDROP_HAZE = {
+    "MAT_backdrop_building":  (150.0, 720.0, 0.86),
+    "MAT_backdrop_roof":      (150.0, 720.0, 0.86),
+    "MAT_backdrop_roof_tile": (180.0, 720.0, 0.84),
+    "MAT_backdrop_forest":    (210.0, 1500.0, 0.82),
 }
 BACKDROP_TILE_DIR = ML.TEX_DIR / "backdrop"
 
@@ -1797,8 +1814,12 @@ def _tile_image(stem):
     return img
 
 
-def backdrop_tile_detail(name, stem, strength, uv_map="UVMap"):
-    """Multiply an existing MAT_backdrop_* albedo by the mean-1.0 gain of a tiled image on UV0."""
+def backdrop_tile_detail(name, stem, strength, keep=0.55, uv_map="UVMap"):
+    """Multiply an existing MAT_backdrop_* albedo by the mean-1.0 gain of a tiled image on UV0.
+
+    Runs AFTER `backdrop_atmosphere`, so `base` is the hazed colour; the gain's amplitude is rolled off by the
+    same haze curve but only down to `keep`, which is what leaves structure in the far city (see BACKDROP_TILES).
+    """
     m = bpy.data.materials.get(name)
     if m is None:
         print(f"[mat_build] backdrop_tile_detail: {name} missing")
@@ -1815,7 +1836,13 @@ def backdrop_tile_detail(name, stem, strength, uv_map="UVMap"):
     tex.extension = "REPEAT"
     tex.label = f"{stem} (UV0 tile)"
     t.link(uv.outputs["UV"], tex.inputs["Vector"])
-    gain = t.vadd(t.vscale(t.vmath("SUBTRACT", tex.outputs["Color"], (0.5, 0.5, 0.5)), 2.0 * strength),
+    r0, r1, amount = BACKDROP_HAZE.get(name, (150.0, 720.0, 0.86))
+    W = t.geometry().outputs["Position"]
+    wx, wy, _wz = t.sepxyz(W)
+    rad = t.vmath("LENGTH", t.combxyz(wx, wy, 0.0))
+    haze = t.mul(t.maprange(rad, r0, r1, 0.0, 1.0, interp="SMOOTHSTEP"), amount)
+    amp = t.mul(2.0 * strength, t.sub(1.0, t.mul(haze, 1.0 - keep)))
+    gain = t.vadd(t.vscale(t.vmath("SUBTRACT", tex.outputs["Color"], (0.5, 0.5, 0.5)), amp),
                   (1.0, 1.0, 1.0))
     sk = b.inputs["Base Color"]
     if sk.is_linked:
@@ -1827,8 +1854,8 @@ def backdrop_tile_detail(name, stem, strength, uv_map="UVMap"):
 
 
 def apply_backdrop_tiles():
-    for name, (stem, strength) in sorted(BACKDROP_TILES.items()):
-        backdrop_tile_detail(name, stem, strength)
+    for name, (stem, strength, keep) in sorted(BACKDROP_TILES.items()):
+        backdrop_tile_detail(name, stem, strength, keep)
     print(f"[mat_build] backdrop UV0 tiles applied to {len(BACKDROP_TILES)} materials")
 
 
@@ -1993,8 +2020,8 @@ def build_all_materials():
     build_ground()
     build_backdrop_lawn()
     build_misc()
-    apply_backdrop_tiles()               # Phase 9 / 8d R3: the UV0 tile gain, BEFORE the haze so the haze eats it
-    apply_backdrop_atmosphere()          # Phase 8d: must run last -- it post-processes finished materials
+    apply_backdrop_atmosphere()          # Phase 8d: lot spread, palace shade, distance haze
+    apply_backdrop_tiles()               # Phase 9 / 8d R3: the mean-1.0 UV0 tile gain, ON TOP of the hazed albedo
 
 
 build_all_materials()
