@@ -1125,3 +1125,23 @@ row is correctly never flipped to `iNear = 1` and `activateImpostorMeshes` merel
 `re-lit` counter reads the loaded set's mesh row count (131 desktop / 149 mobile) instead of 166, while main.js's own modulation line must still read 166 of 166 —
 a capture below 166 there is a real defect. `web/test/foliage_lazy_test.mjs` section 4c holds the contract; its `info` line describes the harness, which builds
 impostors without `irr`, not the viewer.
+
+## 2026-09-21 · Phase 9: the round-19 lighting ships with a structural residual (user's decision), and the cam03 specular gate gets a second round
+Lighting r19 (phase9-light, merged fed0138) moved the world's diffuse tint from (1.0, 0.65, 70.0) to (1.0, 0.75, 8.0) and the anti-sun weight from 1.0 to 0,
+diffuse sockets only. Station 2's shafts meet all three targets (b* +11.3 / +5.3 / +8.8, h_ab 62-80, R-B +10..+33; mean |b* − photo| 11.9 -> 7.2); the hero
+holds 12/12, cam03 7/7, cam04 6/6 at the noise floor. Two holds fail: shade_frieze +23.3 against its 9.9-12.9 window and the soffits' h_ab 82.6 against 80.
+The agent's dose model (notes 29.4) shows the shafts cannot reach +5 while the frieze is pinned: the render's spread between cam02's shaded boxes is warm
+interreflection plus the shafts' a* (2.5 against the photo's 10.2), a materials/ARCH property, so no diffuse-socket point satisfies both. Options put to the
+user: ship, an intermediate point, or hold. **User: ship it.** The frieze/soffit overshoot is logged as a known structural residual (owner: materials, a later
+phase); the re-bake chain starts on this point (probe first, per the bake analysis A.2). Camera/glossy branches and the LUT are untouched, so only lightmaps
+re-bake. cam03 hold is 7/7 (review r1 fix 1: light_r17_measure has seven cam03 boxes).
+The cam03 specular gate (phase9-viewer-shade, merged b60699c) measured on deploy-12 assets (docs/briefs/phase9_viewer_capture_report.md): near_column
+1.93x -> 1.45x in R (B.6 predicted ~1.05x), blue closed, cam03 p10 37.5 -> 11.9 (Cycles 6.1); the cam03 flag frames confirm B.5 to the channel (post -0.012 R,
+probe 0). But the parity budget outside shade (0.5 % MAE) is met at no station (0.67-6.59 %) and cam05 regresses (p10 64.3 -> 55.2 against Cycles 64.9): the
+gate darkens the sunlit stations. Two normalisation errors, both at the sunlit end: skyVis divides the texel's blue by the open-sky irradiance of an
+UPWARD-facing surface, so a vertical wall that sees its whole half-sky reads ~0.5 and a sunlit east wall ~0.14; and sunVis ≈ dotNL multiplies a directSpecular
+term that already carries dotNL. **Decision: a viewer round 2 — normalise skyVis by the unoccluded sky irradiance for the surface's own normal (SH9 of the
+sky_diffuse equirect, coefficients written by manifest_v4 beside the two constants) and divide sunVis by max(dotNL, ε); ?specgate=0 stays the Phase 8 path.**
+Acceptance: cam03 near_column toward ~1.05x and p10 toward 6.1; stations 1, 2, 4, 5, 6 within 0.5 % MAE of their deploy-12 frames outside shade; cam05 p10
+back within 3 % of Cycles. CPU build now, capture in the next Chrome window between the bake queue and the pack. The dotted rim is closed on the captures
+(rim index 0.264 -> 0.041 at 5, 0.369 -> 0.079 at 2, other stations <= 0.075 % MAE).
