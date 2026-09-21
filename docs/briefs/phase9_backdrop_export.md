@@ -6,6 +6,11 @@ section "Export hand-off" IN FULL (the node table, per-group constants, the UV0 
 export/README.md "Phase 9" (the chain the lead runs; the backdrop class in the Gate 1/2 set), docs/briefs/phase9_rebake_report.md section 3 (the pack chain as
 last run: the manifests now carry sky.diffuse_lobes etc. — do not lose them; run manifest_v4 last, after gate3_relay_check, per the README order).
 
+## UV index change (ENV review r1 fix 2, cross-owner; yours to land)
+The ENV round inserted UV0 "UVMap" at index 0 on the 1 291 backdrop meshes, so in env.glb the BAKED backdrop atlas (albedo/lightmap UV, formerly TEXCOORD_0)
+now lands at TEXCOORD_1 and the tile UV at TEXCOORD_0. The viewer's backdrop material currently indexes the atlas at set 0: change it (or pin the sets by
+name in the manifest and read them by role), with a test that fails if the two sets are swapped. State both indices in the report.
+
 ## What ships
 The four gain PNGs (assets/textures/backdrop/*.png, mean 0.505, tileable) as REPEAT-sampled, Non-Color KTX2 on TEXCOORD_0 (UV0 is pre-divided into tile
 units — NO texture transform), multiplied over the baked backdrop albedo/lightmap in the viewer exactly as Cycles does:
