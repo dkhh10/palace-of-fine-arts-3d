@@ -1,0 +1,421 @@
+{
+ "blend_in": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/master_delivery.blend",
+ "blend_out": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase9-light/master_delivery.blend",
+ "cameras": [
+  "CAM_flythrough",
+  "CAM_qa_01_lagoon_hero",
+  "CAM_qa_02_lagoon_ne_threequarter",
+  "CAM_qa_03_colonnade_walk",
+  "CAM_qa_04_rotunda_ceiling",
+  "CAM_qa_05_south_lawn",
+  "CAM_qa_06_aerial"
+ ],
+ "cameras_unchanged": true,
+ "datablocks_after": {
+  "actions": {
+   "linked": 0,
+   "local": 2
+  },
+  "cameras": {
+   "linked": 0,
+   "local": 7
+  },
+  "collections": {
+   "linked": 0,
+   "local": 61
+  },
+  "curves": {
+   "linked": 0,
+   "local": 1
+  },
+  "images": {
+   "linked": 0,
+   "local": 91
+  },
+  "lightprobes": {
+   "linked": 0,
+   "local": 2
+  },
+  "lights": {
+   "linked": 0,
+   "local": 20
+  },
+  "materials": {
+   "linked": 0,
+   "local": 73
+  },
+  "meshes": {
+   "linked": 0,
+   "local": 2654
+  },
+  "node_groups": {
+   "linked": 0,
+   "local": 10
+  },
+  "objects": {
+   "linked": 0,
+   "local": 9808
+  },
+  "scenes": {
+   "linked": 0,
+   "local": 1
+  },
+  "screens": {
+   "linked": 0,
+   "local": 11
+  },
+  "window_managers": {
+   "linked": 0,
+   "local": 1
+  },
+  "workspaces": {
+   "linked": 0,
+   "local": 11
+  },
+  "worlds": {
+   "linked": 0,
+   "local": 1
+  }
+ },
+ "datablocks_before": {
+  "actions": {
+   "linked": 0,
+   "local": 2
+  },
+  "cameras": {
+   "linked": 0,
+   "local": 7
+  },
+  "collections": {
+   "linked": 0,
+   "local": 61
+  },
+  "curves": {
+   "linked": 0,
+   "local": 1
+  },
+  "images": {
+   "linked": 0,
+   "local": 113
+  },
+  "lightprobes": {
+   "linked": 0,
+   "local": 2
+  },
+  "lights": {
+   "linked": 0,
+   "local": 20
+  },
+  "materials": {
+   "linked": 0,
+   "local": 73
+  },
+  "meshes": {
+   "linked": 0,
+   "local": 2654
+  },
+  "node_groups": {
+   "linked": 0,
+   "local": 10
+  },
+  "objects": {
+   "linked": 0,
+   "local": 9808
+  },
+  "scenes": {
+   "linked": 0,
+   "local": 1
+  },
+  "screens": {
+   "linked": 0,
+   "local": 11
+  },
+  "window_managers": {
+   "linked": 0,
+   "local": 1
+  },
+  "workspaces": {
+   "linked": 0,
+   "local": 11
+  },
+  "worlds": {
+   "linked": 0,
+   "local": 1
+  }
+ },
+ "datablocks_total_after": 12754,
+ "datablocks_total_before": 12776,
+ "file_size_bytes_after": 164239328,
+ "file_size_bytes_before": 164238065,
+ "file_size_mb_after": 164.2,
+ "gates": {
+  "cameras_unchanged": true,
+  "reopen_under_60s": true,
+  "size_under_1_5gb": true,
+  "viewport_preset": true
+ },
+ "images": {
+  "external_after": 89,
+  "external_before": 111,
+  "external_bytes_after": 117275933,
+  "external_list": [
+   {
+    "mb": 4.53,
+    "name": "TEX_forest_ground_04_diff.001",
+    "path": "//assets/textures/polyhaven/forest_ground_04/forest_ground_04_diff_2k.jpg"
+   },
+   {
+    "mb": 4.47,
+    "name": "ORN_attic_panel_v2_nrm.png",
+    "path": "//assets/textures/orn/ORN_attic_panel_v2_nrm.png"
+   },
+   {
+    "mb": 4.45,
+    "name": "ORN_attic_panel_v3_nrm.png",
+    "path": "//assets/textures/orn/ORN_attic_panel_v3_nrm.png"
+   },
+   {
+    "mb": 4.4,
+    "name": "TEX_gravelly_sand_diff.001",
+    "path": "//assets/textures/polyhaven/gravelly_sand/gravelly_sand_diff_2k.jpg"
+   },
+   {
+    "mb": 4.32,
+    "name": "ORN_attic_panel_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_attic_panel_v1_nrm.png"
+   },
+   {
+    "mb": 3.51,
+    "name": "TEX_bark_bluegum_diff.001",
+    "path": "//assets/textures/polyhaven/bark_bluegum/bark_bluegum_diff_2k.jpg"
+   },
+   {
+    "mb": 3.44,
+    "name": "TEX_rock_boulder_dry_diff.001",
+    "path": "//assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_diff_2k.jpg"
+   },
+   {
+    "mb": 2.99,
+    "name": "TEX_chinese_cedar_bark_diff.001",
+    "path": "//assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_diff_2k.jpg"
+   },
+   {
+    "mb": 2.93,
+    "name": "TEX_concrete_wall_007_diff.005",
+    "path": "//assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_diff_2k.jpg"
+   },
+   {
+    "mb": 2.71,
+    "name": "TEX_rock_boulder_dry_rough.001",
+    "path": "//assets/textures/polyhaven/rock_boulder_dry/rock_boulder_dry_rough_2k.jpg"
+   },
+   {
+    "mb": 2.67,
+    "name": "TEX_concrete_wall_008_diff.007",
+    "path": "//assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_diff_2k.jpg"
+   },
+   {
+    "mb": 2.51,
+    "name": "TEX_forest_ground_04_rough.001",
+    "path": "//assets/textures/polyhaven/forest_ground_04/forest_ground_04_rough_2k.jpg"
+   },
+   {
+    "mb": 2.36,
+    "name": "TEX_concrete_wall_007_rough.005",
+    "path": "//assets/textures/polyhaven/concrete_wall_007/concrete_wall_007_rough_2k.jpg"
+   },
+   {
+    "mb": 2.1,
+    "name": "ORN_urn_v2_nrm.png",
+    "path": "//assets/textures/orn/ORN_urn_v2_nrm.png"
+   },
+   {
+    "mb": 2.1,
+    "name": "ORN_urn_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_urn_v1_nrm.png"
+   },
+   {
+    "mb": 2.08,
+    "name": "ORN_urn_v3_nrm.png",
+    "path": "//assets/textures/orn/ORN_urn_v3_nrm.png"
+   },
+   {
+    "mb": 2.06,
+    "name": "ORN_attic_figure_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_attic_figure_v1_nrm.png"
+   },
+   {
+    "mb": 1.85,
+    "name": "ORN_capital_colonnade_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_colonnade_v1_nrm.png"
+   },
+   {
+    "mb": 1.83,
+    "name": "ORN_capital_colonnade_v3_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_colonnade_v3_nrm.png"
+   },
+   {
+    "mb": 1.83,
+    "name": "TEX_gravelly_sand_rough.001",
+    "path": "//assets/textures/polyhaven/gravelly_sand/gravelly_sand_rough_2k.jpg"
+   },
+   {
+    "mb": 1.82,
+    "name": "ORN_capital_colonnade_v2_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_colonnade_v2_nrm.png"
+   },
+   {
+    "mb": 1.82,
+    "name": "ORN_capital_inner_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_inner_v1_nrm.png"
+   },
+   {
+    "mb": 1.81,
+    "name": "ORN_maiden_v2_nrm.png",
+    "path": "//assets/textures/orn/ORN_maiden_v2_nrm.png"
+   },
+   {
+    "mb": 1.81,
+    "name": "ORN_maiden_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_maiden_v1_nrm.png"
+   },
+   {
+    "mb": 1.75,
+    "name": "ORN_winged_figure_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_winged_figure_v1_nrm.png"
+   },
+   {
+    "mb": 1.73,
+    "name": "ORN_capital_rotunda_v2_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_rotunda_v2_nrm.png"
+   },
+   {
+    "mb": 1.72,
+    "name": "ORN_capital_rotunda_v1_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_rotunda_v1_nrm.png"
+   },
+   {
+    "mb": 1.71,
+    "name": "ORN_capital_rotunda_v3_nrm.png",
+    "path": "//assets/textures/orn/ORN_capital_rotunda_v3_nrm.png"
+   },
+   {
+    "mb": 1.46,
+    "name": "ORN_maiden_v3_nrm.png",
+    "path": "//assets/textures/orn/ORN_maiden_v3_nrm.png"
+   },
+   {
+    "mb": 1.46,
+    "name": "TEX_concrete_wall_008_rough.007",
+    "path": "//assets/textures/polyhaven/concrete_wall_008/concrete_wall_008_rough_2k.jpg"
+   },
+   {
+    "mb": 1.45,
+    "name": "TEX_foliage_needles_cypress_nrm.001",
+    "path": "//assets/textures/foliage/needles_cypress_nrm.png"
+   },
+   {
+    "mb": 1.4,
+    "name": "TEX_foliage_needles_cypress.001",
+    "path": "//assets/textures/foliage/needles_cypress.png"
+   },
+   {
+    "mb": 1.37,
+    "name": "TEX_foliage_leaves_shrub_nrm.001",
+    "path": "//assets/textures/foliage/leaves_shrub_nrm.png"
+   },
+   {
+    "mb": 1.32,
+    "name": "TEX_bark_bluegum_rough.001",
+    "path": "//assets/textures/polyhaven/bark_bluegum/bark_bluegum_rough_2k.jpg"
+   },
+   {
+    "mb": 1.27,
+    "name": "TEX_gravelly_sand_disp.001",
+    "path": "//assets/textures/polyhaven/gravelly_sand/gravelly_sand_disp_2k.jpg"
+   },
+   {
+    "mb": 1.25,
+    "name": "TEX_PFA_photo_ratio.011",
+    "path": "//assets/textures/projection/PFA_photo_ratio.png"
+   },
+   {
+    "mb": 1.22,
+    "name": "TEX_foliage_needles_pine_nrm.001",
+    "path": "//assets/textures/foliage/needles_pine_nrm.png"
+   },
+   {
+    "mb": 1.18,
+    "name": "TEX_foliage_leaves_shrub.001",
+    "path": "//assets/textures/foliage/leaves_shrub.png"
+   },
+   {
+    "mb": 1.13,
+    "name": "TEX_chinese_cedar_bark_disp.001",
+    "path": "//assets/textures/polyhaven/chinese_cedar_bark/chinese_cedar_bark_disp_2k.jpg"
+   },
+   {
+    "mb": 1.09,
+    "name": "TEX_foliage_needles_pine.001",
+    "path": "//assets/textures/foliage/needles_pine.png"
+   }
+  ],
+  "generated": 2,
+  "linked_external": [],
+  "missing": [],
+  "packed_after": 0,
+  "packed_before": 0,
+  "total": 91
+ },
+ "linked_ids_by_type": {},
+ "linked_libraries": [],
+ "lod": {
+  "hidden_lod0": 2196,
+  "hidden_lod2": 2185,
+  "objects": 6568,
+  "render_lod": 0,
+  "viewport_visible": 2187
+ },
+ "lod_not_writable": [],
+ "objects": 9808,
+ "objects_by_type": {
+  "CAMERA": 7,
+  "CURVE": 1,
+  "EMPTY": 443,
+  "LIGHT": 20,
+  "LIGHT_PROBE": 2,
+  "MESH": 9335
+ },
+ "open_s": 1.771,
+ "pack": {
+  "estimated_bytes": 117275933,
+  "estimated_size_after": 281513998,
+  "packed_bytes": 0,
+  "packed_count": 0,
+  "requested": false,
+  "skipped_reason": null
+ },
+ "pack_requested": false,
+ "peak_rss_mb": 1670.3,
+ "purge_passes": [
+  22,
+  0
+ ],
+ "purged_by_type": {
+  "images": 22
+ },
+ "purged_total": 22,
+ "render_lod": 0,
+ "reopen_limit_s": 60.0,
+ "reopen_s": 0.943,
+ "script": "phase5_cleanup.py",
+ "viewport_preset": {
+  "applied": true,
+  "engine": "BLENDER_EEVEE",
+  "error": null,
+  "light_threshold": 0.01,
+  "taa_samples": 8,
+  "use_raytracing": false
+ },
+ "when": "20260920_105418"
+}

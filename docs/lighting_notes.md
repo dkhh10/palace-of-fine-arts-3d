@@ -3067,3 +3067,188 @@ them. 4 **done** -- the r17 interior-fill comment now quotes the shipped row (36
 5 **done** -- the dead second frame-count check in `light_flythrough.schedule` is removed. 6 carried (tracked
 binaries: this round deletes its superseded frames before committing and keeps nine). 7 **done** --
 `light_r17_sweep` refuses `gal<0` unless it is the last case. 8 carried, the lead's file.
+
+## 29. Round 19 — the violet NNE face after the shade fill went off (QA-08-2 / QA-09-6)
+
+Brief `docs/briefs/phase9_light.md`. BEFORE = the lead's Phase 9 station references, `scripts/p8_cycles_refs.py` on a
+scratch copy of the shipped `master_delivery.blend`, 1920x1080, 32 spp fixed, adaptive off, OIDN, the delivery look
+(`renders/qa_comparisons/cycles_p8/cam0N_1080_32spp.png`).  Measured with `scripts/light_r19_measure.py`, whose
+CIELAB columns are `scripts/p8b_c_cielab.py`'s method (per-pixel sRGB -> Lab, averaged over the box).
+
+### 29.0 The brief's premise is out of date, and that changes the whole round
+
+The brief names `LIGHT_shade_fill` (az 25, el 2, colour (0.03, 0.02, 1.00), "70 W/m2 in Cycles") as the violet.  It
+was, in round 17 (notes 27.3).  **It has been OFF in both engines since the lead's commit `f40d0e7` (2026-09-10,
+QA-10-2): `energy` 49 -> 0, `energy_eevee` 38.5 -> 0.**  The world the delivered file carries, read back from its own
+sockets by `light_r19_sweep.py`, is `tint=[1.0, 0.65, 70.0] antisun_p=3.0 horizon_p=6.0 sunside=[1.0, 1.0, 0.0]
+sunside_p=3.0 diffuse_boost=2.5`, and no shade-fill lamp.  So the violet that is left is `SKY_DIFFUSE_TINT` alone --
+which is exactly what round 17 predicted would be left when the lamp was rotated off the face (27.3, the `faz` case).
+
+### 29.1 The shortcut that made a 6-candidate sweep affordable, and its control
+
+A candidate only changes arguments of `light_calibrate.make_sky_world`.  `light_r19_sweep.py` therefore rebuilds the
+world of a SCRATCH COPY of master_delivery from the sockets the file itself carries, applies the candidate, and
+renders -- 2 minutes instead of the ~50 of a `light_build -> lead_build -> phase5_deliver` chain.  The control is the
+`base` candidate: the same rebuild with nothing changed.
+
+| control | MAE vs BEFORE | max px |
+|---|---|---|
+| `base` cam02 (world rebuilt, no change) | **0.0138** | 2 |
+| `base` cam01 (world rebuilt, no change) | **0.0121** | 2 |
+| **noise floor** cam01 `--seed 1` vs seed 0 | **2.9056** | 111 |
+
+The rebuild is 210x closer to BEFORE than two seeds of the identical scene are to each other: the shortcut is exact,
+and the noise floor 2.91 MAE is the control every delta below is read against.
+
+### 29.2 The photo column of the acceptance is not reproducible, and the reproducible one says the same thing
+
+`scripts/p8b_c_cielab.py`'s docstring already records it: the published photo column (+10.89 / +10.99 / +5.33 /
++11.07) came from a box set placed on ref 062 itself that was never written down.  Re-measured with the cam02
+fixture resampled onto ref 062 -- the only reproducible placement in the tree -- the photograph reads
+
+| box | shade_pier | shade_pier_r | shade_arch | shade_frieze | soffit_l | soffit_r |
+|---|---|---|---|---|---|---|
+| photo b* | +14.10 | +13.22 | +7.49 | +10.50 | +12.83 | +7.93 |
+| BEFORE b* | -4.68 | -18.20 | -3.12 | **+12.82** | +13.87 | +14.99 |
+
+Two things follow.  The direction of the brief is confirmed by a reproducible number (the photograph's shaded
+rotunda stone is warm, b* +7 to +14 on every box).  And the SHAPE of the defect is not what the brief assumes:
+in the photograph the shaded shafts are WARMER than the frieze (+14.1 / +13.2 against +10.5), while in the render
+they are 17.5 and 31.0 b* COLDER than it.  The render's error is not a uniform blue offset on the shaded stone --
+it is a 15-30 b* SPREAD between shaded boxes that the photograph does not have.
+
+### 29.3 The socket-shape probes: every weight already ships at its narrowest, so every shape change adds tint
+
+Six single-socket probes at the shipped tint (cam02, 32 spp, the same scratch copy; b* per box):
+
+| candidate | change | shade_pier | shade_pier_r | shade_arch | shade_frieze | soffit_l | soffit_r |
+|---|---|---|---|---|---|---|---|
+| BEFORE / base | -- | -4.68 | -18.20 | -3.12 | +12.82 | +13.87 | +14.99 |
+| `tintoff` | tint = (1,1,1) | +20.30 | +16.06 | +18.99 | +34.85 | +22.30 | +24.74 |
+| `b38` | tint_b 70 -> 38 | +4.70 | -7.13 | +5.13 | +21.47 | +17.38 | +18.95 |
+| `pa10b138` | antisun_p 3 -> 10, tint_b 138 | +2.16 | -17.02 | +3.58 | +22.58 | +19.37 | +20.47 |
+| `as0` | antisun 1.0 -> 0.0 | -27.01 | -33.00 | -31.08 | -19.29 | +0.12 | -3.05 |
+| `ap1` | antisun_p 3 -> 1 | -16.71 | -26.60 | -17.07 | -3.52 | +6.48 | +5.72 |
+| `hp2` | horizon_p 6 -> 2 | -21.28 | -34.18 | -18.25 | -1.91 | +8.87 | +9.50 |
+| `hz05` | horizon 1.0 -> 0.5 | -25.08 | -37.15 | -22.48 | -5.87 | +8.09 | +8.46 |
+| `db15` | diffuse_boost 2.5 -> 1.5 | +0.98 | -12.92 | +0.90 | +13.27 | +16.61 | +17.79 |
+
+Read it in one line: **every weight socket already ships at the shape that puts the LEAST tint on the scene**
+(antisun 1.0 at p 3, horizon 1.0 at p 6 -- both weights only ever subtract from a full-strength tint), so every
+probe that broadens a weight makes the violet WORSE, by 12 to 20 b*.  A shape change is not a way to take tint
+off the shafts; it is only a way to redistribute what is left, and the redistribution is what matters.
+
+`db15` is the exception worth naming: dropping the diffuse boost warms the shafts +5.7 b* and moves the frieze
++0.45, because the shafts are sky-lit and the frieze carries warm bounce -- but it costs 17-23 % of the shade's
+luminance, which no hold on cam01/03/04 can absorb.
+
+### 29.4 The dose model, fitted and validated, and what it proves cannot be done
+
+Every candidate is one number per box: the mix factor `f` the box's own sky hemisphere sees, so that the blue
+channel of the light reaching it is multiplied by `mult = 1 + f*(B-1)` for a tint blue `B`.  Fitting
+`b* = c - k*ln(mult)` to the three tint levels already measured (B = 70, 38, 1; `c` is the measured B = 1 frame,
+so only `k` is fitted) gives, for the SHIPPED shape and for `as0`:
+
+| box | c (tint off) | k | f (shipped) | f (antisun 0) |
+|---|---|---|---|---|
+| shade_pier | 20.30 | 35.1 | 0.0150 | 0.0413 |
+| shade_pier_r | 16.06 | 27.4 | 0.0361 | 0.0724 |
+| shade_arch | 18.99 | 31.0 | 0.0151 | 0.0584 |
+| shade_frieze | 34.85 | 36.9 | 0.0118 | 0.0484 |
+| soffit_l / soffit_r | 22.30 / 24.74 | 20.7 / 24.0 | 0.0073 / 0.0073 | 0.0278 / 0.0316 |
+
+Validation: the model run backwards reproduces BEFORE (frieze pinned at +12.9 -> B = 69.7, pier -4.6, pier_r
+-18.1, arch -3.0, against the measured -4.68 / -18.20 / -3.12).
+
+The acceptance asks for the frieze inside 11.4 +- 1.5 AND every shade box at b* >= +5.  Pinning the frieze pins
+the dose scale, and what the shade boxes then read depends ONLY on the ratio f_box / f_frieze:
+
+| shape | f_pier/f_frieze | f_pier_r/f_frieze | pier at frieze = +12.9 | pier_r | arch |
+|---|---|---|---|---|---|
+| shipped (antisun 1, p 3) | 1.27 | 3.05 | **-4.6** | -18.1 | -3.0 |
+| antisun_p 1 | 1.02 | 2.05 | -0.9 | -10.8 | -2.2 |
+| **antisun 0 (uniform azimuth)** | **0.85** | **1.50** | **+1.8** | -5.7 | -2.2 |
+
+`antisun = 0` is the best shape in the whole socket space -- it is the only one that puts MORE tint on the frieze
+than on the shafts -- and even it lands the shafts at +1.8 / -5.7 / -2.2 against the required +5.  To reach +5 on
+`shade_pier_r` with the frieze held, f_pier_r/f_frieze would have to fall to 0.56: a factor of 5.5 the wrong way
+from what the shipped shape does and 2.7 from the best shape that exists.  **The brief's item 1 is unreachable
+from the diffuse sockets, and the reason is 29.2: the render's spread between shaded boxes is a property of how
+much warm bounce each box receives, not of the sky's colour, so a sky lever cannot close it.**  What the sky
+lever CAN do is take the tint off all of them together, which is the trade the rest of this section measures.
+
+### 29.5 The sweep that found the ship: the dome has to be shared before the blue can be cut
+
+Once 29.4 showed the frieze could not be held, the objective was re-stated in the only terms that are not
+self-contradictory: **hold the hero exactly (its 12 boxes within 3 % of luma and 2 deg of hue -- it is the
+delivery image), and from the candidates that do, take the one that puts the station-2 shaded stone closest to
+the photograph.**  Every row below is the world-patch shortcut on the same scratch copy of master_delivery,
+1920x1080, 32 spp fixed, OIDN; cam02 b* per box and the cam01 hold.
+
+| candidate | sockets | pier | pier_r | arch | frieze | sof_l | sof_r | hero hold | photo MAE(b*) |
+|---|---|---|---|---|---|---|---|---|---|
+| BEFORE | tint (1,0.65,70) antisun 1.0 | -4.68 | -18.20 | -3.12 | +12.82 | +13.87 | +14.99 | -- | 11.87 |
+| `b38` | tint_b 38 | +4.70 | -7.13 | +5.13 | +21.47 | +17.38 | +18.95 | **12/12** | 9.78 |
+| `as0b18` | antisun 0, b 18 | +1.38 | -5.39 | -1.81 | **+11.26** | +14.52 | +14.74 | 7/12 (attic hue -4.6) | 8.32 |
+| `as0b12` | antisun 0, b 12 | +6.87 | +0.45 | +4.03 | +17.72 | +16.93 | +17.78 | 10/12 (attic hue -2.2) | 7.9 |
+| `as0b8` | antisun 0, b 8 | +11.06 | +5.01 | +8.55 | +22.86 | +18.69 | +19.99 | 11/12 (attic lum -3.1 %) | 7.10 |
+| `as0g1b12` | + tint_g 1.00, b 12 | +7.56 | +1.42 | +4.86 | +19.32 | +17.11 | +18.06 | **12/12** | 7.37 |
+| `as0g1b8` | + tint_g 1.00, b 8 | +11.75 | +5.98 | +9.39 | +24.44 | +18.86 | +20.27 | **12/12** | 7.30 |
+| `as0g80b6` | + tint_g 0.80, b 6 | +13.64 | +7.97 | +11.41 | +26.45 | +19.69 | +21.30 | **12/12** | 7.64 |
+| `as0g80b8` | + tint_g 0.80, b 8 | +11.35 | +5.42 | +8.91 | +23.54 | +18.76 | +20.10 | **12/12** | 7.19 |
+| **`as0g75b8` SHIPPED** | **tint (1,0.75,8), antisun 0** | **+11.26** | **+5.29** | **+8.80** | +23.31 | +18.74 | +20.06 | **12/12** | **7.16** |
+| photo (ref 062, cam02 fixture) | -- | +14.10 | +13.22 | +7.49 | +10.50 | +12.83 | +7.93 | -- | 0 |
+
+Three findings the table carries:
+
+1. **The anti-sun weight was aiming the tint at the wrong building.**  Fitted per box (29.4's method), the hero's
+   shaded attic sees mix factor f = 0.0069 at `antisun = 1.0` while cam02's `shade_pier_r` sees 0.0361: the tint
+   that exists FOR the hero's attic lands 5.2x harder on the station-2 shafts.  At `antisun = 0.0` the same two
+   read 0.0733 and 0.0724 -- the dome is shared -- and the tint blue then buys the hero the same shade colour at
+   b 8 that it needed b 70 to buy through the weight.  That is the whole round in one sentence.
+2. **`tint_g` is a real socket, not a rounding.**  Under a whole-dome tint the 0.65 green multiplier stops being
+   confined to the anti-sun horizon band and reaches every shaded surface: at g 0.65 it costs the hero's shaded
+   attic 3.1 % of luminance (the hold is 3.0 %), and at g 1.00 it lets cam02's `shade_pier_r` run to h_ab 89.3
+   (the window ends at 80).  0.75 is the only value measured to satisfy both, at attic lum -2.4 % and h_ab 79.7.
+3. **The shipped point passes the brief's item 1 on three of its five boxes and fails the control.**
+   `shade_pier` +11.26 (h_ab 62.1, R-B +32.8), `shade_pier_r` +5.29 (79.7, +10.0) and `shade_arch` +8.80 (64.7,
+   +24.5) meet b* >= +5, h_ab 40-80 and R-B >= +10 in full.  `soffit_l` / `soffit_r` meet b* and R-B and overshoot
+   h_ab by 2.6 deg (82.6 against 80) -- they were inside the window before the fix, at 75.5 / 76.0, and they leave
+   it because the sky lever moves every shaded box together.  `shade_frieze` ends at +23.31 against its
+   9.9-12.9 window, which 29.4 shows is not a tuning miss but the structural consequence of holding the shafts.
+
+### 29.6 The full chain, and the trap that nearly invalidated it
+
+The shortcut's winner was re-measured the long way -- `light_build` -> `scripts/lead_build.sh` (build_master +
+the Eevee probe bake, which logged the new world: `tint (1.0, 0.75, 8.0), antisun 0.00`) -> `phase5_deliver.sh 1b`
+-> `p8_cycles_refs.py` on a scratch copy -- and it reproduces the shortcut to the second decimal on every cam02
+box (+11.26 / +5.29 / +8.80 / +23.31 / +18.74 / +20.06) with cam01 at MAE 0.99 against the BEFORE frame, a third
+of the 2.91 noise floor.  Holds: cam01 12/12, cam03 7/7, cam04 6/6 boxes inside 3 % luma and 2 deg hue.
+
+**The trap, recorded because it cost a wasted station set and it will catch the next agent.**  MAIN's
+`master_delivery.blend` is PACKED (280 MB, `PFA_PACK=1`); a worktree's `phase5_deliver.sh 1b` produces an UNPACKED
+one (164 MB) whose image paths are relative (`//assets/textures/...`).  Copy that to a scratchpad OUTSIDE the
+worktree and every texture silently fails to load -- Cycles prints `WARNING Image file ... does not exist` and
+renders the untextured albedo, which is BRIGHTER: cam01 came back +67 % on the shaded attic, MAE 31.8, and looked
+for all the world like a lighting regression.  Either pack the copy or keep the scratch copy in the worktree root
+(what this round did: `r19_ship_scratch.blend` beside `master_delivery.blend`, deleted afterwards).  The check
+that catches it in one line is `grep -c 'does not exist' <render log>` -- it must be 0.
+
+Eevee preview cost (1280x720, same machine, GPU otherwise idle): cam02 36.9 s -> 34.4 s, cam03 48.7 s -> 34.7 s.
+The shipped world builds FEWER nodes than the one it replaces (at `antisun = 0` `make_sky_world` does not build
+the anti-sun weight branch at all), so the round is free in both engines.
+
+### 29.7 Checkpoint / what a later round should know
+
+- SHIPPED: `SKY_DIFFUSE_TINT = (1.0, 0.75, 8.0)`, `SKY_DIFFUSE_TINT_ANTISUN = 0.0`.  Nothing else moved; the
+  camera and glossy branches are byte-identical, so the Phase 6 camera/glossy equirects and the AgX LUT do not
+  need re-baking -- only the lightmaps do.  Read back from the rebuilt file, not asserted.
+- STILL OPEN, and NOT a lighting defect: `shade_frieze` +23.31 against its 9.9-12.9 control window, and
+  `soffit_l` / `soffit_r` at h_ab 82.6 against a 40-80 window they were inside before this round.  Both follow
+  from the same fact (29.2, 29.4): the sky lever moves every shaded box together, and what the render gets wrong
+  at station 2 is the SPREAD between shaded boxes, which is warm interreflection and the shafts' own a* (2.4-2.6
+  against the photograph's 10.2 -- the columns are not rosy enough).  A materials round, not a lighting one.
+- The `light_r19_*` tools are reusable: `sweep.py` patches only `make_sky_world` arguments on a scratch copy
+  (2 min per candidate instead of ~50), `measure.py` carries the CIELAB columns and checks the acceptance in code,
+  `sheet.py` writes the 960 px composite.  The dose model in 29.4 predicted every candidate in this round to
+  within 1.5 b* and is worth fitting again before spending renders.

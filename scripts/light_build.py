@@ -122,7 +122,26 @@ SKY_DIFFUSE_BOOST = 2.50           # ROUND 12 (QA-05-1): 1.00 -> 2.50. Round 11'
                                    # saturation and 9.7 R-B against a budget of 0.02 / 5, and it drives the shade hue
                                    # the WRONG way, 43.1 -> 44.8, because the extra sky lands on the sunlit plaza and
                                    # comes back warm). Kept, measured, at 1.00, so the next round does not re-sweep it.
-SKY_DIFFUSE_TINT = (1.0, 0.65, 70.0)  # ROUND 16 (QA-08-3): b 40.0 -> 70.0. Not a new idea, a COUNTERWEIGHT: the
+SKY_DIFFUSE_TINT = (1.0, 0.75, 8.0)   # ROUND 19 (QA-08-2 / QA-09-6): (1.0, 0.65, 70.0) -> (1.0, 0.75, 8.0), together
+                                   # with SKY_DIFFUSE_TINT_ANTISUN 1.0 -> 0.0 below. The two move as ONE knob and must
+                                   # not be read apart: dropping the anti-sun weight spreads the tint over the whole
+                                   # dome, so the same blue on a shaded wall now costs b 8 where it cost b 70 through
+                                   # the weight. Station 2's NNE rotunda face rendered blue-violet (b* -4.68 /
+                                   # -18.20 / -3.12 on shade_pier / shade_pier_r / shade_arch, against a photograph
+                                   # that reads +14.10 / +13.22 / +7.49); it now reads +11.26 / +5.29 / +8.80, every
+                                   # one inside the brief's b* >= +5, h_ab 40-80, R-B >= +10. The hero holds 12/12
+                                   # boxes (shaded attic lum -2.4 %, hue +0.1 deg; the 32 spp + OIDN noise floor is
+                                   # MAE 2.91). g 0.65 -> 0.75 is not cosmetic: under a whole-dome tint the green
+                                   # multiplier reaches every shaded surface instead of only the anti-sun horizon,
+                                   # and at 0.65 it cost the hero's shaded attic 3.1 % of luminance (the hold is 3 %)
+                                   # while at 1.00 it pushed cam02's shade_pier_r to h_ab 89.3 (the window ends at
+                                   # 80). 0.75 is the only value measured to satisfy both. Swept in
+                                   # docs/lighting_notes.md 29; the acceptance's shade_frieze control does NOT hold
+                                   # (+12.82 -> +23.31 against a 9.9-12.9 window) and 29.4 proves with a fitted dose
+                                   # model that no diffuse socket can hold it while the shafts come warm: the spread
+                                   # between cam02's shaded boxes is set by how much warm bounce each receives, not
+                                   # by the sky's colour. Round 16's text follows.
+                                   # ROUND 16 (QA-08-3): b 40.0 -> 70.0. Not a new idea, a COUNTERWEIGHT: the
                                    # sun-side socket below takes the sky's blue off the sunlit stone, and the
                                    # ~9 % of the shaded attic's light that has bounced off sunlit stone first
                                    # loses its blue with it, which drove the hero's shaded attic hue 34.6 -> 36.8,
@@ -149,13 +168,31 @@ SKY_DIFFUSE_TINT_HORIZON = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 
                                    # the zenith an up-facing surface samples. Without it the lagoon's diffuse (murk)
                                    # term takes the whole tint and the near-water box goes to saturation 0.457
                                    # against QA's 0.22-0.32 window. See docs/lighting_notes.md 21.9.
-SKY_DIFFUSE_TINT_ANTISUN = 1.0     # ROUND 12 (QA-05-1), new socket, SHIPPED AT 1.0 (fully anti-sun weighted). 0 = SKY_DIFFUSE_TINT is applied to the whole
+SKY_DIFFUSE_TINT_ANTISUN = 0.0     # ROUND 19 (QA-08-2 / QA-09-6): 1.0 -> 0.0, the whole-dome tint. Read with the
+                                   # SKY_DIFFUSE_TINT comment above -- the pair is one knob. WHY THE SOCKET ROUND 12
+                                   # added is now switched off: the weight is not neutral about WHICH shaded surface
+                                   # gets the blue. Measured as the mix factor each box's own hemisphere sees
+                                   # (docs/lighting_notes.md 29.4), at antisun 1.0 the hero's shaded attic sees
+                                   # f = 0.0069 while cam02's shade_pier_r sees 0.0361 -- the tint that exists FOR
+                                   # the hero's attic lands 5.2x harder on the station-2 shafts, which is exactly
+                                   # QA-08-2. At antisun 0.0 the same two read 0.0733 and 0.0724, i.e. the dome is
+                                   # shared, and the tint blue can then be cut from 70 to 8 with the hero unmoved.
+                                   # The anti-sun half of the dome IS the blue part at a 7.8 deg sun, so this is a
+                                   # loss of physical shape; the sweep kept it as long as it could (antisun_p 1,
+                                   # horizon_p 2, horizon 0.5 were all measured, all made the violet worse by 12-20
+                                   # b*, table in 29.3) and 0.0 is the only shape in the socket space that puts more
+                                   # tint on the hero's attic than on the station-2 shafts. Round 12's text follows.
+                                   # ROUND 12 (QA-05-1), new socket, SHIPPED AT 1.0 (fully anti-sun weighted). 0 = SKY_DIFFUSE_TINT is applied to the whole
                                    # dome; 1 = it is applied in proportion to how far the ray points AWAY from the sun
                                    # (weight 0.5 + 0.5 * Incoming.sun_direction). A shaded face samples the anti-sun
                                    # half of the dome and a sunlit face the sun half, so this is the only sky lever
                                    # that can blue the shade without bluing the sunlit stone beside it -- see
                                    # docs/lighting_notes.md 21.6 for the measured separation.
-SKY_DIFFUSE_TINT_ANTISUN_P = 3.0   # ROUND 14 (QA-06-2), new socket. Exponent on the anti-sun weight
+SKY_DIFFUSE_TINT_ANTISUN_P = 3.0   # ROUND 19: INERT since SKY_DIFFUSE_TINT_ANTISUN went to 0.0 -- make_sky_world
+                                   # builds the anti-sun branch only when the amount is > 0, so this value is not in
+                                   # the shipped node tree. Kept at its round-14 value so that restoring the weight
+                                   # restores the shape it was swept at. Round 14's text follows.
+                                   # ROUND 14 (QA-06-2), new socket. Exponent on the anti-sun weight
                                    # w = (0.5 + 0.5 * Incoming.sun)^p. Round 12 shipped the anti-sun and horizon
                                    # weights at 1.0 -- their maximum AMOUNT -- and then had no lever left when the
                                    # same tint that fixed the hero's shaded attic flooded every up-facing surface in
