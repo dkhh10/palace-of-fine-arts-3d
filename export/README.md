@@ -3141,7 +3141,7 @@ python3 export/p8d_pin.py --glbs
 949 382 / ORN 1 099 192 / ENV 895 052, unchanged.
 
 **Payload**, after the r1 fix (both packs on `-vtf`). Desktop tier 0 **48 164 618 B**, first frame
-**49 314 019 B = 49.31 MB** on the wire — *under* the pre-round 49.39 MB, because the trim moved 32
+**49 314 019 B = 49.31 MB** on the wire — under the r1 quantised pack's 49.39 MB and ~36 kB over the pre-round 49.30 MB (review r2 fix 1), because the trim moved 32
 placeholder maps out instead of 29; 185 981 B of headroom to the 49.5 MB target and 685 981 B to the 50 MB
 rule. Mobile tier 0 **46 542 733 B**, first frame **47 681 185 B = 47.68 MB** (mobile has no placeholder
 trim, so its env groups' growth shows). The four tiles themselves are **tier 1**: 597 927 B desktop,
