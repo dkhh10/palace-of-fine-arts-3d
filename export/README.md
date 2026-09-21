@@ -3099,10 +3099,18 @@ name, so the layer that reaches `gltf_gate1.py` IS the tile UV.
    glb: TEXCOORD_0 spanning 0..300 and TEXCOORD_1 spanning 0..1 came back with a single
    `KHR_texture_transform` of scale **4801**, i.e. the [0,1] set kept **14 of its 4096 steps**. With tile
    spans of 8-326 tiles that would have quantised the bake atlas to tens of texels. **env therefore takes
-   `-vtf`** (float texcoords) beside its existing `-vpf`: no shared box, no transform, and nothing for
-   `web/src/uvDequant.js` to apply to the wrong set. On the same `env_ktx2.gltf` it also packs *smaller*
-   (36 990 836 -> 36 781 772 B); with the second UV set actually present, `env.glb` is
-   36 990 836 -> **38 560 908 B (+1 570 072)**.
+   `-vtf`** (float texcoords) beside its existing `-vpf`, in **BOTH** packs: `gltf_pack.sh`'s env line for
+   `gate1/env.glb`, and **`tiers.PACK_FLAGS["env"]`** for `gate5/groups/env_t0.glb`, `env_t2.glb` and their
+   `m_*` twins — which are the files the viewer actually fetches. Review r1 blocker 1 was exactly that
+   second pack being missed: measured on the group as it shipped before the fix, and reproduced by
+   re-packing it without the flag, `MAT_EXP_ENVBD__MAT_backdrop_building` came back under one
+   `KHR_texture_transform` at scale **483.92**, leaving the [0,1] bake atlas **8.5 of its 4096 steps in U**
+   (~120 atlas texels per step) with both sets as normalised shorts. With the flag on both packs there is
+   no shared box and no transform, so `web/src/uvDequant.js` has nothing to apply to either set (it skips
+   the mesh) and the atlas keeps full float precision. On the same `env_ktx2.gltf` the flag also packs
+   *smaller* (36 990 836 -> 36 781 772 B); with the second UV set actually present, `env.glb` is
+   36 990 836 -> **38 560 908 B (+1 570 072)** and the shipped groups `env_t0` 2 172 696 -> 2 196 928 B,
+   `env_t2` 6 956 512 -> 7 149 836 B.
 3. **A future Gate 2 backdrop re-bake is the remaining hazard.** `gate2_common.smart_uv1` only creates UV1
    when none exists, so it would smart-project on top of the tile UV and the bake would be silent about it.
    It now carries a hard assert (span > 1.5) naming the fix: bake to `"UVBake"` and hand THAT layer over in
@@ -3132,6 +3140,9 @@ python3 export/p8d_pin.py --glbs
 (sha256 before and after; `p8d_pin --glbs` PASS beside it). Only `env.glb` moved. Placed triangles ARCH
 949 382 / ORN 1 099 192 / ENV 895 052, unchanged.
 
-**Payload.** Desktop first frame **49.30 -> 49.39 MB** on the wire (tier 0 48.13 -> 48.24 MB, all of it
-`env_t0` 1.84 -> 1.97 MB, the second UV set), against the 49.5 MB target — 606 315 B under the 50 MB rule.
-Mobile 47.32 -> **47.45 MB**. The four tiles themselves are **tier 1**: 597 927 B desktop, 92 479 B mobile.
+**Payload**, after the r1 fix (both packs on `-vtf`). Desktop tier 0 **48 164 618 B**, first frame
+**49 314 019 B = 49.31 MB** on the wire — *under* the pre-round 49.39 MB, because the trim moved 32
+placeholder maps out instead of 29; 185 981 B of headroom to the 49.5 MB target and 685 981 B to the 50 MB
+rule. Mobile tier 0 **46 542 733 B**, first frame **47 681 185 B = 47.68 MB** (mobile has no placeholder
+trim, so its env groups' growth shows). The four tiles themselves are **tier 1**: 597 927 B desktop,
+92 479 B mobile.

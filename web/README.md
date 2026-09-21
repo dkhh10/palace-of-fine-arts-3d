@@ -3054,8 +3054,10 @@ disagree with the sets' `texcoord` — a swap would sample a 1 K packed atlas at
 a capture as "the tiles did nothing" rather than as an error. `web/test/backdrop_tiles_test.mjs` (in
 `npm test`) pins all of it: the manifest parse, the swapped case, the compiled shader, the amplitude
 arithmetic, and the shipped `env.gltf` / `env.glb` themselves (two UV sets; TEXCOORD_0 in tile units;
-TEXCOORD_1 filling [0,1]; both sets **float** in the packed glb, i.e. `gltfpack -vtf`, and no
-`KHR_texture_transform` left for `uvDequant.js` to apply to the wrong set).
+TEXCOORD_1 filling [0,1]; and, on the four **published** groups `env_t0` / `env_t2` / `m_env_t0` /
+`m_env_t2`, both sets **float** with no `KHR_texture_transform` left for `uvDequant.js` to apply to the
+wrong set — `gltfpack -vtf` has to be in `tiers.PACK_FLAGS["env"]`, not only in `gltf_pack.sh`, because
+those groups are what the viewer fetches).
 
 The four textures are **tier 1** (597 927 B desktop; 92 479 B of half-resolution ETC1S on mobile), so the
 first frame is unchanged in kind: until they land the gain is 1.0 and the backdrop is exactly what tier 0

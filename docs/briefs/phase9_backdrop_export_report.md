@@ -53,16 +53,24 @@ are merged by the same Gate 1 rule, take no gain tile and keep the atlas at TEXC
 2. **`pbr.js`** — `t.channel = 0` became `t.channel = set.texCoord` in both `applyPbrSets` and
    `upgradePbrSets`, plus a report of the per-channel counts and of any texture two sets want on different
    channels (three's `channel` is a property of the texture, so that would be silent).
-3. **`gltf_pack.sh`** — env takes **`-vtf`**. gltfpack quantises every texcoord stream of a mesh on ONE
-   shared UV box: measured on a purpose-built two-set glb, a 0..300 set and a 0..1 set came back under a
-   single `KHR_texture_transform` of scale **4801**, leaving the [0,1] set **14 of its 4096 steps**. With
-   tile spans of 8-326 tiles that would have quantised the bake atlas to tens of texels.
+3. **`gltf_pack.sh` AND `tiers.PACK_FLAGS["env"]`** — env takes **`-vtf`** in both packs. gltfpack
+   quantises every texcoord stream of a mesh on ONE shared UV box: measured on a purpose-built two-set
+   glb, a 0..300 set and a 0..1 set came back under a single `KHR_texture_transform` of scale **4801**,
+   leaving the [0,1] set **14 of its 4096 steps**. Review r1 blocker 1: the first round put the flag only
+   on `gltf_pack.sh`, which builds `gate1/env.glb` — **not a shipped file**. The viewer fetches
+   `gate5/groups/env_t0.glb`, `env_t2.glb` and the `m_*` twins, re-packed by `tiers.pack()`, and those
+   came out with both sets as normalised shorts under one transform at scale **483.92** = **8.5 of 4096
+   steps** for the bake atlas (reproduced here by re-packing the fixed group without the flag; the
+   reviewer measured 483.89 on the file as it shipped). With the flag on both packs there is no shared
+   box and no transform, so `uvDequant.js` skips the mesh and the atlas keeps full float precision.
 
 **The test that fails if the two are swapped**: `web/test/backdrop_tiles_test.mjs`, in `npm test`. It pins the
 manifest parse, the swapped case (`checkUvContract` reports it and `applyBackdropTiles` then patches
 **nothing**), the compiled shader, the amplitude arithmetic, the shipped `env.gltf` (two sets; TEXCOORD_0 in
 tile units on 7 of 8 merges; TEXCOORD_1 filling [0,1] on 8/8), the packed `env.glb` (both sets float, no
-transform left) and both shipped gate5 manifests. Export side, the same swap fails twice more:
+transform left — on the four PUBLISHED groups `env_t0` / `env_t2` / `m_env_t0` / `m_env_t2`, not on the
+`gate1/env.glb` intermediate the first round checked) and both shipped gate5 manifests.
+`verify_glb --gate5` now reads the same accessors (`backdrop_tiles.group_primitives_float` 8/8). Export side, the same swap fails twice more:
 `manifest_v3`'s cross-check (10/10 meshes match the bake npz at **1.00000**, V-flipped) and
 `verify_glb --gate5`. `gate2_common.smart_uv1` carries a hard assert so a future backdrop re-bake cannot
 smart-project on top of the tile UV.
@@ -91,10 +99,10 @@ mobile; `tiers_test` all green; `name_sweep` PASS.
 
 | | tier 0 | first frame on the wire | the four tiles |
 |---|---|---|---|
-| desktop before | 48 128 039 | 49.30 MB | — |
-| desktop **after** | 48 243 816 | **49 393 685 B = 49.39 MB** (target 49.5, rule 50.0) | **tier 1, 597 927 B** |
-| mobile before | 46 187 845 | 47.32 MB | — |
-| mobile **after** | 46 312 049 | **47 450 506 B = 47.45 MB** | **tier 1, 92 479 B** (tex_lo) |
+| desktop before the round | 48 128 039 | 49.30 MB | — |
+| desktop **after the r1 fix** | **48 164 618** | **49 314 019 B = 49.31 MB** (target 49.5, rule 50.0) | **tier 1, 597 927 B** |
+| mobile before the round | 46 187 845 | 47.32 MB | — |
+| mobile **after the r1 fix** | **46 542 733** | **47 681 185 B = 47.68 MB** | **tier 1, 92 479 B** (tex_lo) |
 
 Resident (GPU) cost of the four tiles: **3.32 MB** (1.33 + 1.33 + 0.33 + 0.33, the budget doc's
 `px² x 1 B x 4/3` rule for ASTC 4x4 + mips); the backdrop class reads 36.57 MB resident with them in.
@@ -102,9 +110,12 @@ Resident (GPU) cost of the four tiles: **3.32 MB** (1.33 + 1.33 + 0.33 + 0.33, t
 over before this round and the print is informational, not an assert; the number the viewer pays,
 `tiers.resident_estimate_mb`, is **1256 MB desktop / 312 MB mobile**.
 
-The +0.11 MB in the first frame is **not** the tiles — they are tier 1 — it is `env_t0.glb` 1.84 → 1.97 MB,
-the second UV set on the backdrop merges. The four `tex_lo` copies are also named in the DESKTOP plan as
-`mobile_only` rows, so a deploy built from `manifest.json` carries them.
+The first frame is **not** paying for the tiles — they are tier 1. Desktop ends 79 666 B *below* the
+first (quantised) pack and 185 981 B under the 49.5 MB target: `env_t0.glb` grew 2 172 696 → 2 196 928 B
+with the float UVs, and the tier-0 trim moved 32 placeholder maps out instead of 29. Mobile has no such
+trim, so its +230 679 B is the group growth (`m_env_t0` / `m_env_t2` are byte-identical to their desktop
+twins). The four `tex_lo` copies are also named in the DESKTOP plan as `mobile_only` rows, so a deploy
+built from `manifest.json` carries them.
 
 ## 6. What I could NOT measure, and the commands that do it
 
