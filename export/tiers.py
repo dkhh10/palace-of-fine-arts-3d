@@ -77,8 +77,15 @@ GLTFPACK = str(G.MAIN / "tools/bin/gltfpack")
 # where a simplifier would move the shoreline, so neither is simplified.  Which of the two routes each
 # class took is recorded per group as `lod_route`.
 MOBILE_SIMPLIFY = dict(arch=0.5, orn=0.5)
+# -vtf on env, Phase 9 (review r1 blocker 1): THESE are the glbs the viewer fetches - gltf_pack.sh only
+# packs gate1/env.glb, which nothing ships. gltfpack quantises every texcoord stream of a mesh on ONE
+# shared UV box, so with the backdrop's tile UV at TEXCOORD_0 (hundreds of tiles wide) the [0,1] bake
+# atlas at TEXCOORD_1 came out of this pack with ~8.5 of its 4096 steps in U (measured on the shipped
+# env_t0.glb: MAT_EXP_ENVBD__MAT_backdrop_building under one KHR_texture_transform at scale 483.89 x
+# 162.12). Float texcoords remove the shared box and the transform with it. The flag must stay in step
+# with gltf_pack.sh's env line; web/test/backdrop_tiles_test.mjs checks the SHIPPED groups for it.
 PACK_FLAGS = dict(arch=["-cc", "-mi", "-vpf", "-km", "-kv", "-tr"],
-                  env=["-cc", "-mi", "-vpf", "-km", "-kv", "-vc", "16", "-tr"],
+                  env=["-cc", "-mi", "-vpf", "-km", "-kv", "-vtf", "-vc", "16", "-tr"],
                   orn=["-cc", "-mi", "-kv", "-tr"],
                   ground=["-cc", "-mi", "-kv", "-tr"])
 
