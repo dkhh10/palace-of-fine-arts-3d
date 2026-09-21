@@ -110,6 +110,46 @@ for ( const [ gate, rel ] of [ [ 'gate3', 'export/out/gate3/manifest.json' ],
 	if ( Array.isArray( sky ) && typeof sun === 'number' )
 		check( sun > 4 * sky[ 0 ], `${gate}: sun/pi ${sun.toFixed( 3 )} dominates the open sky's red `
 			+ `${sky[ 0 ].toFixed( 3 )} (${( sun / sky[ 0 ] ).toFixed( 1 )}x), so sunVis separates the two bands` );
+
+	// --- round 2: E0(n), the open-sky irradiance/pi for the surface's OWN normal --------------
+	// The constant above is the denominator for an UPWARD-facing surface only; round 1 used it for every
+	// normal, so unoccluded walls read skyVis 0.14-0.5 and lost their IBL specular at the sunlit
+	// stations (capture report B). `sky.diffuse_lobes` resolves it per normal.
+	const lob = raw.sky && raw.sky.diffuse_lobes;
+	if ( ! lob ) {
+		console.log( `      ${gate}: no sky.diffuse_lobes yet (re-run export/manifest_v4.py), skipped` );
+	} else {
+		check( lob.basis === 'delta_lobes_v1' && Array.isArray( lob.lobes ) && lob.lobes.length >= 8
+			&& lob.lobes.length === lob.count,
+			`${gate}: sky.diffuse_lobes ${lob.count} x delta_lobes_v1` );
+		check( lob.lobes.every( l => Array.isArray( l ) && l.length === 6 && l.every( v => typeof v === 'number' && isFinite( v ) )
+			&& Math.abs( Math.hypot( l[ 0 ], l[ 1 ], l[ 2 ] ) - 1 ) < 1e-4 && l[ 3 ] >= 0 && l[ 4 ] >= 0 && l[ 5 ] >= 0 ),
+			`${gate}: every lobe is [unit direction, non-negative rgb]` );
+		check( typeof lob.floor_frac === 'number' && lob.floor_frac > 0 && lob.floor_frac < 0.5,
+			`${gate}: floor_frac ${lob.floor_frac} (the denominator's floor, as a fraction of E0(zenith).b)` );
+		// The one number that proves the model is in the same units and the same axes as the constant
+		// above: evaluated straight up it must reproduce the quadrature's open-sky blue.
+		// 2 %, not 1 %: 0.57 % is the fit's own residual on the deploy-12 sky and 1.30 % on the r19
+		// re-bake. What this pins is the CONVENTION (same sky, same units, same axes) — an error there
+		// is a factor of pi or a swapped channel. The fit's accuracy is the next check.
+		const z = lob.checks && lob.checks.zenith_vs_open_irradiance_over_pi;
+		check( z && Math.abs( z.lobes_over_quadrature_b - 1 ) < 0.02,
+			`${gate}: E0(zenith).b ${z && z.lobes[ 2 ]} reproduces sky.open_irradiance_over_pi.b `
+			+ `${sky && sky[ 2 ]} to ${z && ( ( z.lobes_over_quadrature_b - 1 ) * 100 ).toFixed( 2 )} %` );
+		// Lobes sit where the light is: this sky is a near-horizon glow over a black ground, so no lobe
+		// may point down (E0 would then be non-zero for a soffit's normal) and the blue must dominate.
+		check( lob.lobes.every( l => l[ 1 ] > - 0.05 ), `${gate}: no lobe points below the horizon` );
+		const errs = lob.checks && lob.checks.blue_rel_err_on_normals_above_minus_15deg;
+		check( errs && errs.lobes.p95 < 0.06 && errs.lobes.p50 < 0.02,
+			`${gate}: blue error vs the quadrature p50 ${errs && errs.lobes.p50} / p95 ${errs && errs.lobes.p95} `
+			+ `(SH9, which is why it is not the denominator: p95 ${errs && errs.sh9.p95})` );
+		// The SH9 block is the brief's mechanism, written for the record and NOT used: assert it says so,
+		// so nothing downstream ever picks it up as a denominator by mistake.
+		check( Array.isArray( raw.sky.diffuse_sh9 ) && raw.sky.diffuse_sh9.length === 9
+			&& raw.sky.diffuse_sh9.every( c => Array.isArray( c ) && c.length === 3 )
+			&& raw.sky.diffuse_sh9_source && raw.sky.diffuse_sh9_source.used_by_the_viewer === false,
+			`${gate}: sky.diffuse_sh9 is 9 RGB coefficients, marked not-used-by-the-viewer` );
+	}
 }
 console.log( fails ? `${fails} FAILURES` : 'all manifest checks passed' );
 process.exit( fails ? 1 : 0 );
