@@ -230,8 +230,8 @@ water reflector not session-reproducible (A/A mask rule); the Phase 8 Cycles ref
 # Phase 9 — everything carried, finished (lead, 2026-09-21; QA 25 a228268: PHASE 9 GATE PASSED, hero 4.05, no open blocker; decisions.md 2026-09-20/21). [deploy 14 / QA 26 / hero wall time filled at the close]
 ## Deliverables
 - Live site deploy 13: https://pfa-walkthrough.3d-render-blender-3rd-attempt-building.workers.dev (version 201908ca). First frame on the wire 49.30 MB desktop / 47.32 mobile
-  (rule 50 MB); resident 1 814.1 MB; 0 page errors; name sweep 0 hits over 738 + 341 manifest rows; belt frustum invariant PASS. Deploy 14 (the ENV R3 tiles) follows: [filled at the close].
-- Phase 9 before/after sheet: renders/qa_comparisons/phase9_before_after_960.jpg (scripts/phase9_sheet.py; viewer hero deploy 12 vs deploy 13/14; Cycles 4K hero Phase 8 vs Phase 9; ref 169),
+  (rule 50 MB); resident 1 814.1 MB; 0 page errors; name sweep 0 hits over 738 + 341 manifest rows; belt frustum invariant PASS. Deploy 14 (the ENV R3 tiles): version ff3545be, 15 new files; first frame 49.31 MB desktop / 47.68 mobile; 0 page errors at gate14; the tiled aerial blocks verified ON vs OFF (docs/briefs/phase9_backdrop_export_report.md "Capture"): cam06 city hf +16 / +37 / +37 %, stations 3 and 4 unmoved, only backdrop pixels and their reflections move elsewhere.
+- Phase 9 before/after sheet: renders/qa_comparisons/phase9_before_after_960.jpg (scripts/phase9_sheet.py --after-gate gate14; viewer hero deploy 12 vs deploy 14; Cycles 4K hero Phase 8 vs Phase 9; ref 169),
   station pairs renders/qa_comparisons/phase9_stations/, tiles renders/qa_comparisons/phase9_tiles/. New 4K Cycles hero renders/final/hero_cam01_3840x2160_128spp.png
   (128 spp fixed, 1 453 s, peak RSS 5.4 GB; lead tile pass clean: no filled opening, no flat face, no plain cylinder, no seam; one note for QA 26 — a thin dark band above the right colonnade entablature at 4K); the Phase 8 hero preserved in renders/final/phase8/. Phase 9 Cycles station references (1080p / 32 spp) at
   renders/qa_comparisons/cycles_p9/960/; QA gate sheet renders/web/gate13_gate.png.
@@ -251,7 +251,7 @@ water reflector not session-reproducible (A/A mask rule); the Phase 8 Cycles ref
   (−1 047 151 tris), far 22 / 17; the --frustum invariant fails by name if any in-frame belt row ever goes billboard-only. No viewer change was needed (all far trees are lit at build). CLOSED.
 - Aerial city blocks (8d R3): four tileable gain maps (facade 64 texels/m, roof, mission tile 8.10 x 7.92 m, canopy) on a per-face UV0 in tile units over 1 291 backdrop meshes,
   multiplied after the atmosphere term; cam06 city hf +11.6 / +24.3 / +20.3 % (Cycles +27.6 %), ENV tri delta 0. The belt cover measured OVER the photo (no crown added); the shrub
-  hard-edge rise is the belt behind them (positions md5-identical). In the viewer: [deploy 14 / QA 26, filled at the close].
+  hard-edge rise is the belt behind them (positions md5-identical). In the viewer (deploy 14): the tiles read as facade and roof texture at 100 %, no repeat lattice; the ENV-predicted cam01/cam05 regression does not reproduce (the gain has no mean lift). QA 26: [verdict filled at the close].
 - Review carries closed across viewer, export and bake (docs/reviews/phase9_*): 12 branches merged, every one reviewed; the far-tree irradiance restore patch retired (all 166 rows one population).
 ## Process notes worth keeping
 - The bake queue's resume rule skips any job whose record file exists: a re-bake must archive the old records first (done: export/out/gate3/bake/bake_p8_backup). The A.2 probe
