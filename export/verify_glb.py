@@ -728,8 +728,30 @@ def verify_gate5(out_dir, variant="desktop"):
             if mset is not None and int(mset.get("texcoord", 0)) != 1:
                 bd_bad.append(f"{name}: materials set texcoord {mset.get('texcoord')} but the tile rides "
                               f"TEXCOORD_0 - the two UV sets are swapped")
+        # ... and the GROUPS the viewer fetches, not just the manifest rows (review r1 blocker 2).
+        # gltfpack quantises every texcoord stream of a mesh on ONE shared box, so without -vtf the
+        # backdrop's many-tile TEXCOORD_0 leaves the [0,1] bake atlas ~8 of its 4096 steps.
+        q_bad, q_prims = [], 0
+        for g in groups:
+            if g.get("cls") != "env":
+                continue
+            gj = json.loads(_glb_json_chunk(_pub(out, g["path"]).read_bytes()))
+            bd_i = {i for i, m in enumerate(gj.get("materials", []))
+                    if "MAT_EXP_ENVBD__MAT_backdrop_" in (m.get("name") or "")}
+            for me in gj.get("meshes", []):
+                for pr in me["primitives"]:
+                    if pr.get("material") not in bd_i:
+                        continue
+                    q_prims += 1
+                    a = pr["attributes"]
+                    if any(a.get(k) is None or gj["accessors"][a[k]].get("componentType") != 5126
+                           for k in ("TEXCOORD_0", "TEXCOORD_1")):
+                        q_bad.append(f"{g['id']}: a backdrop primitive's UV sets are not float (-vtf)")
+                        break
+        bad.extend(sorted(set(q_bad)))
         rep["backdrop_tiles"] = dict(groups=len(bdt["groups"]), published=bd_files,
-                                     bytes=bdt.get("bytes"), uv=bdt.get("uv"))
+                                     bytes=bdt.get("bytes"), uv=bdt.get("uv"),
+                                     group_primitives_float=q_prims - len(set(q_bad)))
         bad.extend(bd_bad)
 
     # 4. the per-file cap

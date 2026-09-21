@@ -190,27 +190,40 @@ if ( ! fs.existsSync( gltfPath ) ) {
 	if ( worst.length ) console.log( `      ${worst.slice( 0, 6 ).join( ' | ' )}` );
 }
 
-if ( ! fs.existsSync( glbPath ) ) {
-	console.log( `SKIP  env.glb quantisation check: ${glbPath} is not on disk` );
+// The PUBLISHED groups, not gate1/env.glb (review r1 blocker 2: that file is an intermediate - the
+// viewer fetches gate5/groups/env_t0.glb and env_t2.glb, and their m_* twins, which `tiers.pack()`
+// re-packs with ITS own flags). They are meshopt-compressed, so only the accessors are read: both UV
+// sets must be float (gltfpack -vtf) and no KHR_texture_transform may survive for uvDequant.js to
+// apply to the wrong set. Without the flag the two sets share one quantisation box and the [0,1] bake
+// atlas keeps ~8 of its 4096 steps.
+const GROUPS = [ 'env_t0', 'env_t2', 'm_env_t0', 'm_env_t2' ]
+	.map( ( g ) => [ g, path.join( MAIN, 'export/out/gate5/groups', `${g}.glb` ) ] )
+	.filter( ( [ , f ] ) => fs.existsSync( f ) );
+if ( ! GROUPS.length ) {
+	console.log( `SKIP  published env group quantisation check: no ${path.join( MAIN, 'export/out/gate5/groups' )}/env_t*.glb on disk` );
 } else {
-	const buf = fs.readFileSync( glbPath );
-	const gltf = JSON.parse( buf.subarray( 20, 20 + buf.readUInt32LE( 12 ) ).toString( 'utf8' ) );
-	const bdMat = new Set( gltf.materials.map( ( m, i ) => [ m.name, i ] ).filter( ( [ n ] ) => BD_RE.test( n ) ).map( ( [ , i ] ) => i ) );
-	let prims = 0, float = 0, xf = 0;
-	for ( const mesh of gltf.meshes ) for ( const pr of mesh.primitives ) {
-		if ( ! bdMat.has( pr.material ) ) continue;
-		prims ++;
-		const a = pr.attributes;
-		const sets = [ a.TEXCOORD_0, a.TEXCOORD_1 ].filter( ( x ) => x !== undefined );
-		if ( sets.length === 2 && sets.every( ( i ) => gltf.accessors[ i ].componentType === 5126 ) ) float ++;
-		const t = ( ( gltf.materials[ pr.material ] || {} ).pbrMetallicRoughness || {} ).baseColorTexture;
-		if ( t && t.extensions && t.extensions.KHR_texture_transform ) xf ++;
+	for ( const [ name, f ] of GROUPS ) {
+		const buf = fs.readFileSync( f );
+		const gltf = JSON.parse( buf.subarray( 20, 20 + buf.readUInt32LE( 12 ) ).toString( 'utf8' ) );
+		const bdMat = new Set( gltf.materials.map( ( m, i ) => [ m.name, i ] ).filter( ( [ n ] ) => BD_RE.test( n ) ).map( ( [ , i ] ) => i ) );
+		let prims = 0, float = 0, xf = 0, worstScale = 1;
+		for ( const mesh of gltf.meshes ) for ( const pr of mesh.primitives ) {
+			if ( ! bdMat.has( pr.material ) ) continue;
+			prims ++;
+			const a = pr.attributes;
+			const sets = [ a.TEXCOORD_0, a.TEXCOORD_1 ];
+			if ( sets.every( ( x ) => x !== undefined && gltf.accessors[ x ].componentType === 5126 ) ) float ++;
+			const t = ( ( gltf.materials[ pr.material ] || {} ).pbrMetallicRoughness || {} ).baseColorTexture;
+			const x = t && t.extensions && t.extensions.KHR_texture_transform;
+			if ( x ) { xf ++; worstScale = Math.max( worstScale, ...( x.scale || [ 1, 1 ] ) ); }
+		}
+		check( prims > 0, `${name}: carries backdrop primitives (${prims})` );
+		check( float === prims,
+			`${name}: both UV sets are FLOAT (${float}/${prims}) - gltfpack -vtf in tiers.PACK_FLAGS, so the `
+			+ `many-tile TEXCOORD_0 cannot drag the bake atlas onto its own quantisation box` );
+		check( xf === 0, `${name}: no KHR_texture_transform survives (${xf} material(s), worst scale `
+			+ `${worstScale.toFixed( 2 )} = ${Math.round( 4096 / worstScale )} of 4096 steps left to the atlas)` );
 	}
-	check( prims > 0, `env.glb carries backdrop primitives (${prims})` );
-	check( float === prims,
-		`both UV sets are FLOAT in the packed glb (${float}/${prims}) - gltfpack -vtf, so the many-tile `
-		+ `TEXCOORD_0 cannot drag the bake atlas onto its own quantisation box` );
-	check( xf === 0, `and no KHR_texture_transform is left to apply to the wrong set (${xf} material(s) carry one)` );
 }
 
 // ---- 6. the SHIPPED manifests, both variants (skipped when they are not there) ----------------
