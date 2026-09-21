@@ -199,6 +199,74 @@ prevent, inverted. Its QA-23 evidence does not carry either: "7 of 10 crown boxe
 Cycles references" was measured against references rendered in the OLD world, and step 0 re-rendered all six
 at the r19 state, so the comparison basis now moves with the bake.
 
-## 3. The export / pack chain
+## 3. The export / pack chain — all green, STOPPED BEFORE DEPLOY
 
-(filled in below)
+Run in MAIN with `PFA_MAIN_ROOT` and `PFA_GATE1_BLEND_DIR` set to MAIN, `PFA_BAKE_DIFFUSE_WORLD` unset.
+
+**Composers and encode.** `gate3_compose` 23.9 s (5 slot atlases + vertex irradiance: 14 meshes, 347 840
+verts, float32 unencoded, 775 931 B). `gate3_encode` 49.9 s, **23 maps, 0 clipped pixels against range**, and
+every range re-picked from the map's own maximum - all 23 came down from their power-of-two first pass:
+
+| widest five | max | range (1st pass) | mean | clipped | gamma2 p99 |
+|---|---|---|---|---|---|
+| `lmg1_ARCH_rotunda_concrete_ochre_merged` | 48.233 | 48.233 (64) | 0.632 | 0 | 0.0514 st |
+| `lmg1_ARCH_colonnade_south_...` | 43.706 | 43.706 (64) | 0.421 | 0 | 0.0593 st |
+| `lmatlas_orn_1` | 36.825 | 36.825 (64) | 1.345 | 0 | 0.0512 st |
+| `lm_ARCH_rotunda_concrete_ochre_merged` | 35.997 | 35.997 (64) | 1.013 | 0 | 0.0506 st |
+| `lmatlas_arch_inst_0` | 35.414 | 35.414 (64) | 0.670 | 0 | 0.0569 st |
+
+narrowest five: `lm_ENV_ground_colonnade_walk` 10.632 (16), `lm_ARCH_rotunda_plaster_ceiling_merged` 16.584
+(32), `lm_ENV_terrain_ground` 19.417 (32), `lm_ENV_lagoon_bed` 22.846 (32), `lm_ARCH_site_paving_merged`
+24.134 (32). `gate3_pack` (toktx): **110 files, 463 820 KiB**.
+
+**Far trees.** `trees_far_compose`: `vertex_ao.npz` 683 480 B unchanged (the 16 `tfao_*` were skipped by
+design), `instance_irradiance.json` **166 placements, lum 0.1392-5.6361, mean 2.6885, 0 zero placements,
+16/16 `E_bake`**. Its `generator` is now `export/trees_far_compose.py` alone and it carries **no
+`rows_source` block** - one population, which is the A.4 decision landing in the file. (Shipped file before:
+lum 0.1369-4.2566, mean 2.0127, generator "trees_far_compose.py + p8d_irr_restore.py".)
+`trees_far_ratio_check` verdict **PASS**, luminance_scale 1.4877; the `b_over_g_check` FAIL is the
+pre-existing reported-not-decided metric (review r2 finding 6), unchanged in kind.
+
+**The glbs.** `env.glb` had to be re-exported and re-packed, which A.3 does not say: its `COLOR_0` is the
+near-tree irradiance the `vc_00/vc_01` jobs re-bake, and the global range moved **44.25655746 ->
+35.12940979**. `env.glb` 38 180 924 -> **36 990 836 B**. **`arch.glb`, `orn.glb` and `ground.glb` are
+byte-identical across the re-export** - sha256 taken before `gltf_gate1.py` and again after the pack, and
+`p8d_pin.py --glbs` PASS beside it (that run is a self-comparison in MAIN and proves nothing on its own; the
+before/after hashes are the evidence). Both far-tree sets were re-run after `vertex_ao.npz` was rewritten:
+`env_trees.glb` 3 769 236 B (149 + 17), `env_trees_lod1.glb` 7 642 536 B (131 + 35).
+
+**Rows, order, verification.** `instance_rows.mjs` x4 (env 1 565, shrubs 1 376, trees_far 298, walkup 262),
+`gate4_instance_order` x2, `gate5_instance_rows`, `gate4_order_selftest`, `verify_glb` **PASS**.
+`p8d_pin` 36 ok with the same two 8d delta checks that cannot fire (section 0b); `p9_geom_pin` **PASS 30/30**
+again after the whole chain.
+
+**Manifests and tiers.** `manifest_v2` -> `v3` -> `v4`, `budget_doc`, `gate3_relay_check`, then **`manifest_v4`
+a second time** - the README's Gate 3 hand-off order, which the first pass got wrong: `gate3_relay_check`
+writes the COLOR_0 range and v4 has to read it afterwards, and `web/test/gate3_test.mjs` caught the stale
+44.2566 exactly as designed. Final manifest: `textures.gate3` 126 files, missing 0, resident 1 119.17 MB,
+`lightmaps.vertex_irradiance.range` **35.12940979**, `in_glb` true.
+
+**The three constants the viewer's round-2 gate needs are in BOTH gate5 manifests** (desktop and mobile):
+`sky.open_irradiance_over_pi` **[2.196605, 3.361092, 5.824768]**, `sky.diffuse_lobes` present
+(`delta_lobes_v1`, **40 lobes**), `sun.irradiance_over_pi` **21.428439**. Against B.6's shipped
+(2.196, 3.432, 11.256): red unchanged, green -2.1 %, **blue 11.256 -> 5.825**, which is the same
+0.52x the sky.diffuse equirect measured - the re-derivation is working on the new bake, not on a carry.
+
+**Tiers and the payload.** `tiers.py` x3 PASS, 0 files over the 25 MiB cap.
+Desktop first frame **49.30 MB on the wire** (tier 0 48.13 + boot 1.14 + headers 37 kB), within the 49.5 MB
+target, 28 placeholder maps moved out (1.52 MB); mobile **47.32 MB** (tier 0 46.16 + boot 1.12 + headers
+39 kB). Tier bytes desktop 48 156 004 / 507 872 054 / 57 200 066, mobile 46 187 845 / 5 556 749 / 9 470 985.
+`verify_glb --gate5` desktop **PASS, fail: []** and `--gate5 --mobile` **PASS, fail: []**, far-tree counts
+166 / 166 / 149 + 17 / 131 + 35.
+
+**Suites.** `npm test` **rc 0, 771 PASS** (walk, post/probe, foliage-lazy, spec-gate all pass),
+`web/test/tiers_test.mjs` **all tier checks passed**, `export/name_sweep.py` **PASS**,
+`npm run build` **rc 0** (dist built, 178 ms).
+
+**One step skipped, on purpose:** `export/sync_main.sh`. With `ROOT == MAIN` every rsync in it is a directory
+onto itself and its last loop runs `cp -f <f> <same f>`, which `cp` refuses ("are identical") and `set -e`
+turns into rc 1. Nothing it would copy is missing - the whole chain wrote MAIN's `export/out` directly, which
+is the reason for running there.
+
+**Left for the lead: deploy.** Nothing in this round deployed, and no Chrome was started. The web build is in
+`web/dist`; `export/out/gate5` carries the two manifests, the tier groups and both `verify_gate5_*.json`.
