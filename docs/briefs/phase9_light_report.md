@@ -29,7 +29,7 @@ the photograph has no such spread (shafts +14.1/+13.2 vs frieze +10.5). Hand-off
 hue 41.2 -> 41.3 (+0.1 deg); sunlit_attic -0.5 % / -1.1 deg; columns -1.0 % / -0.8 deg; near-water sat 0.193 ->
 0.185 (window 0.22-0.32 was already missed before this round, unchanged in kind); sky_top/sky_left identical.
 
-**3. Stations 3 and 4 HOLD: cam03 8/8, cam04 6/6** boxes inside the same 3 % / 2 deg. cam03 near_column lum 33.5
+**3. Stations 3 and 4 HOLD: cam03 7/7, cam04 6/6** boxes inside the same 3 % / 2 deg. cam03 near_column lum 33.5
 -> 33.4, flute_band 33.2 -> 33.2 (the colonnade's deep shade does not open up); cam04 coffer_field 52.1 -> 51.9,
 vault_soffit_e 33.6 -> 33.5.
 

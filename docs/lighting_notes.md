@@ -3223,7 +3223,7 @@ The shortcut's winner was re-measured the long way -- `light_build` -> `scripts/
 the Eevee probe bake, which logged the new world: `tint (1.0, 0.75, 8.0), antisun 0.00`) -> `phase5_deliver.sh 1b`
 -> `p8_cycles_refs.py` on a scratch copy -- and it reproduces the shortcut to the second decimal on every cam02
 box (+11.26 / +5.29 / +8.80 / +23.31 / +18.74 / +20.06) with cam01 at MAE 0.99 against the BEFORE frame, a third
-of the 2.91 noise floor.  Holds: cam01 12/12, cam03 8/8, cam04 6/6 boxes inside 3 % luma and 2 deg hue.
+of the 2.91 noise floor.  Holds: cam01 12/12, cam03 7/7, cam04 6/6 boxes inside 3 % luma and 2 deg hue.
 
 **The trap, recorded because it cost a wasted station set and it will catch the next agent.**  MAIN's
 `master_delivery.blend` is PACKED (280 MB, `PFA_PACK=1`); a worktree's `phase5_deliver.sh 1b` produces an UNPACKED
