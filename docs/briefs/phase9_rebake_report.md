@@ -158,6 +158,30 @@ The three probe jobs are inside the chain and re-run with it (321 s), so every s
 queue run at one scene state. `status.json` was moved aside so the run's record is its own; `STOP` removed;
 `PFA_BAKE_DIFFUSE_WORLD` unset.
 
+**The run: 87 jobs, 0 failures, 27 300 s = 455 min wall (07:25:23 -> 15:00:34).** A.1 priced it at 26 670 s;
+the run came in **+2.4 %**. Every one of the 87 records reads `rc 0`, `world WORLD_golden_hour`,
+`diffuse_world false`, `lights 20` - one world, one scene state, no resume, no forced job. Longest jobs:
+`lm_ENV_ground_colonnade_walk` 1 380.9 s, `lm_ARCH_rotunda_column_tan_inner_merged` 1 167.8 s,
+`lm_ARCH_rotunda_plaster_ceiling_merged` 1 157.3 s.
+
+**Per-asset min / max / clipped (CLAUDE.md Phase 6).** 17 of the 87 records carry map statistics at bake time
+(the 16 own maps and `sky_diffuse`); the slot, impostor, vertex, proto and instance kinds get theirs at the
+compose / encode pass, reported in section 3. **Clipped pixels against the encode range: 0 across all 17.**
+Worst / widest five by maximum:
+
+| asset | range | min | max | mean | clipped |
+|---|---|---|---|---|---|
+| `sky_diffuse` (equirect) | n/a | 0.000762 | 327.371 | 2.819 | n/a |
+| `lm_ARCH_rotunda_concrete_ochre_merged` | 64 | 0.0 | 35.997 | 1.013 | 0 |
+| `lm_ARCH_colonnade_north_concrete_colonnade_merged` | 64 | 0.0 | 33.626 | 0.877 | 0 |
+| `lm_ARCH_rotunda_dome_membrane_merged` | 64 | 0.0 | 33.474 | 3.692 | 0 |
+| `lm_ARCH_colonnade_south_concrete_colonnade_merged` | 64 | 0.0 | 33.472 | 0.571 | 0 |
+
+and the five with the least headroom used: `lm_ENV_ground_colonnade_walk` 10.632 of 16,
+`lm_ARCH_rotunda_plaster_ceiling_merged` 16.584 of 32, `lm_ENV_terrain_ground` 19.417 of 32,
+`lm_ENV_lagoon_bed` 22.846 of 32, `lm_ARCH_site_paving_merged` 24.134 of 32. `gate3_encode.py` re-picks each
+range from the map's own maximum, so these are the pre-encode figures and section 3 carries the shipped ones.
+
 *(The lead requested a queue stop at one point while reading the log's `skip ... (already done)` lines, then
 removed the STOP file before any job boundary. Confirmed here: no `STOP` file, no `stopped` state, and every
 job the run has recorded carries `rc 0`.)*
