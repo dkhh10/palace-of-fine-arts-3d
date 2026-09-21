@@ -1,0 +1,121 @@
+{
+ "test": "review r1 finding 6: one placement, before the other 15 E_bake jobs",
+ "prototype": "ENV_tree_broadleaf_s53_LOD1",
+ "placement": "TREEFAR_000",
+ "dist_m": 40.19,
+ "frame": {
+  "col": 1,
+  "row": 7
+ },
+ "E_bake": [
+  3.057412,
+  2.202983,
+  1.649286
+ ],
+ "E_bake_cov": 0.9488,
+ "E_bake_job": "tfeb_ENV_tree_broadleaf_s53_LOD1",
+ "E_placement": [
+  5.208086,
+  3.479662,
+  0.823758
+ ],
+ "E_placement_cov": 0.9825,
+ "E_placement_job": "tfirr_00",
+ "ratio": [
+  1.7034,
+  1.5795,
+  0.4995
+ ],
+ "ratio_bg": 0.3162,
+ "crown_before": [
+  0.18757,
+  0.26735,
+  0.13337
+ ],
+ "crown_after": [
+  0.31951,
+  0.42229,
+  0.06661
+ ],
+ "hue_before": 95.7,
+ "hue_after": 77.3,
+ "hue_target": 43.1,
+ "display_before_srgb8": [
+  22.6,
+  30.0,
+  14.2
+ ],
+ "display_after_srgb8": [
+  38.9,
+  44.8,
+  0.0
+ ],
+ "display_b_over_g_before": 0.4722,
+ "display_b_over_g_after": 0.0,
+ "display_b_over_g_target": 0.449,
+ "display_hue_before": 87.9,
+ "display_hue_after": 67.9,
+ "display_hue_target": 50.7,
+ "linear_b_over_g_before": 0.4989,
+ "linear_b_over_g_after": 0.1577,
+ "linear_b_over_g_reference_inverse_srgb": 0.37,
+ "lut": "export/out/gate0/lut_agx_high_contrast_65.cube",
+ "lut_exposure_ev": -2.83314,
+ "verdict_metric": "display hue closure (all three channels), through the delivery LUT",
+ "hue_closure": {
+  "verdict": "PASS",
+  "before": 87.9,
+  "after": 67.9,
+  "target": 50.7,
+  "pct_of_gap_closed": 53.8,
+  "at_k": 86.1,
+  "overshoot": false,
+  "note": "THE VERDICT IS COMPUTED ON THIS METRIC. Hue uses all three channels; display B/G does not survive the modulation, because the display blue lands at ~1/255. On hue the FULL ratio closes the gap without overshooting and beats the partial strength k."
+ },
+ "b_over_g_check": {
+  "verdict": "FAIL (overshoots; not the metric the verdict uses)",
+  "before": 0.4722,
+  "after": 0.0,
+  "target": 0.449,
+  "pct_of_gap_closed": 2036.3,
+  "note": "kept visible on purpose (review r2 finding 6): the raw ratio takes display B/G from 0.4722 past the target 0.4490 to 0.0000. It is a ratio of a near-black channel, which is why it is reported and not decided on - but it is not hidden. (These three numbers used to be hard-coded at 1.267 / 0.648 / 0.041, which went stale the moment the atlas or the reference was re-baked - phase9-rebake r1 review.)"
+ },
+ "overshoot": {
+  "distance_before": 0.0232,
+  "distance_after": 0.449,
+  "note": "the full ratio takes the display B/G past the reference: E_placement is the mean over the WHOLE crown volume, interior vertices included, while the atlas frame shows only the sky-facing outer shell, which in the scene keeps far more sky than the volume mean does. The reference's own foliage_p80 crop biases the target blue-UP as well (review r1 finding 9), so the true target is below 0.4490 and the real overshoot is smaller than it looks - but it is there."
+ },
+ "partial_strength": {
+  "k": 0.0324,
+  "applied": "atlas_frame * (E_placement / E_bake) ** k, per channel",
+  "display_b_over_g": 0.449,
+  "display_srgb8": [
+   23.1,
+   30.4,
+   13.6
+  ],
+  "display_hue": 86.1,
+  "note": "the exponent that lands the display B/G on the reference; the lead sets the shipped value"
+ },
+ "gap_before": 0.0232,
+ "moved": 0.4722,
+ "moved_pct_of_gap": 2036.3,
+ "r_over_g_before": 0.7016,
+ "r_over_g_after": 0.7566,
+ "r_over_g_target": 1.2474,
+ "luminance_scale": 1.5568,
+ "verdict": "PASS",
+ "strength_shipped": {
+  "strength": 1.0,
+  "clamp": 4.0,
+  "zero_channel_fallback": 1.0,
+  "where": "docs/decisions.md 2026-09-17 'E_placement/E_bake validated on one placement'",
+  "note": "the raw per-channel ratio, no exponent; k = 0.0324 was measured on THIS run and NOT taken (it lands the hue at 86.1 deg against the reference 50.7). Every figure here and in instance_irradiance.json's `ratio.strength_decision` comes from this file."
+ },
+ "note": "Judged DISPLAY-referred, through the delivery LUT, because the reference is a display PNG. PASS = the display HUE closes at least half the gap to the reference without overshooting past it; display B/G is reported beside it and fails. The reference is impostor_diag_ref.json foliage_p80, a fixed quantile (review r1 finding 9).",
+ "sources": {
+  "atlas": "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/e93f113b-973d-4713-b410-e47f45434fd6/scratchpad/impostor_diag_atlas_p9.json",
+  "reference": "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/e93f113b-973d-4713-b410-e47f45434fd6/scratchpad/impostor_diag_ref_p9.json",
+  "reference_png": "/private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/e93f113b-973d-4713-b410-e47f45434fd6/scratchpad/cycles_p9_cam02_8bit.png"
+ }
+}

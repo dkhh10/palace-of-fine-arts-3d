@@ -1,0 +1,177 @@
+{
+ "new_dir": "/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate3/tex",
+ "old_dir": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/tex",
+ "ext": ".exr",
+ "keys": [
+  {
+   "key": "gate3_lm_ARCH_rotunda_dome_membrane_merged",
+   "new": "/Users/dk/Projects/3d render blender 3rd attempt building/export/out/gate3/tex/gate3_lm_ARCH_rotunda_dome_membrane_merged.exr",
+   "old": "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake/export/out/gate3/tex/gate3_lm_ARCH_rotunda_dome_membrane_merged.exr",
+   "shape_new": [
+    2048,
+    2048,
+    3
+   ],
+   "shape_old": [
+    2048,
+    2048,
+    3
+   ],
+   "coverage": {
+    "total_px": 4194304,
+    "covered_px": 2069550,
+    "covered_pct": 49.3419,
+    "old_only_px": 438,
+    "new_only_px": 707
+   },
+   "px_new": {
+    "min": 0.0,
+    "max": 33.474174,
+    "mean": 3.691559,
+    "mean_nonzero": 7.479391,
+    "p99": 24.732594,
+    "total_px": 4194304
+   },
+   "px_old": {
+    "min": 0.0,
+    "max": 51.245995,
+    "mean": 5.34702,
+    "mean_nonzero": 10.834833,
+    "p99": 41.17989,
+    "total_px": 4194304
+   },
+   "thresholds": {
+    "old_p20": 13.242772,
+    "old_p80": 29.91865
+   },
+   "all": {
+    "texels": 2069550,
+    "ratio_lum_mean": 0.544705,
+    "ratio_rgb_mean": [
+     1.007612,
+     0.982206,
+     0.414301
+    ],
+    "stops_mae": 0.885608,
+    "stops_p50": 1.017517,
+    "stops_p99": 2.027984,
+    "stops_max": 7.985507,
+    "lum_mean_old": 21.531462,
+    "lum_mean_new": 11.7283
+   },
+   "shaded": {
+    "texels": 413910,
+    "ratio_lum_mean": 0.84479,
+    "ratio_rgb_mean": [
+     1.007188,
+     0.980848,
+     0.649916
+    ],
+    "stops_mae": 0.303465,
+    "stops_p50": 0.083607,
+    "stops_p99": 1.091002,
+    "stops_max": 7.985507,
+    "lum_mean_old": 10.94131,
+    "lum_mean_new": 9.243112
+   },
+   "lit": {
+    "texels": 413911,
+    "ratio_lum_mean": 0.272958,
+    "ratio_rgb_mean": [
+     1.064185,
+     1.027638,
+     0.27282
+    ],
+    "stops_mae": 1.86771,
+    "stops_p50": 1.867359,
+    "stops_p99": 2.073812,
+    "stops_max": 2.249095,
+    "lum_mean_old": 36.011864,
+    "lum_mean_new": 9.82971
+   },
+   "deciles": [
+    {
+     "decile": 1,
+     "lo": 0.0,
+     "hi": 11.165445,
+     "texels": 206955,
+     "ratio": 0.894589,
+     "stops_mae": 0.214832
+    },
+    {
+     "decile": 2,
+     "lo": 11.165445,
+     "hi": 13.242772,
+     "texels": 206955,
+     "ratio": 0.805325,
+     "stops_mae": 0.392098
+    },
+    {
+     "decile": 3,
+     "lo": 13.242772,
+     "hi": 15.335469,
+     "texels": 206955,
+     "ratio": 0.757519,
+     "stops_mae": 0.514347
+    },
+    {
+     "decile": 4,
+     "lo": 15.335469,
+     "hi": 17.568348,
+     "texels": 206954,
+     "ratio": 0.75196,
+     "stops_mae": 0.547554
+    },
+    {
+     "decile": 5,
+     "lo": 17.568348,
+     "hi": 19.837011,
+     "texels": 206955,
+     "ratio": 0.728709,
+     "stops_mae": 0.615253
+    },
+    {
+     "decile": 6,
+     "lo": 19.837011,
+     "hi": 22.301099,
+     "texels": 206956,
+     "ratio": 0.718703,
+     "stops_mae": 0.655444
+    },
+    {
+     "decile": 7,
+     "lo": 22.301099,
+     "hi": 25.118668,
+     "texels": 206955,
+     "ratio": 0.671584,
+     "stops_mae": 0.778407
+    },
+    {
+     "decile": 8,
+     "lo": 25.118668,
+     "hi": 29.91865,
+     "texels": 206955,
+     "ratio": 0.414823,
+     "stops_mae": 1.402724
+    },
+    {
+     "decile": 9,
+     "lo": 29.91865,
+     "hi": 35.803579,
+     "texels": 206955,
+     "ratio": 0.288943,
+     "stops_mae": 1.790905
+    },
+    {
+     "decile": 10,
+     "lo": 35.803579,
+     "hi": 51.245995,
+     "texels": 206955,
+     "ratio": 0.259555,
+     "stops_mae": 1.944516
+    }
+   ]
+  }
+ ],
+ "missing": []
+}

@@ -29,6 +29,7 @@ reference without overshooting past it. Display B/G is reported beside it with i
 FAILS - the raw ratio takes it past the target - because after modulation the display blue is ~1/255 and B/G
 is then a ratio of a near-black channel. The lead ships strength 1.0 (the raw ratio) on the hue evidence.
 """
+import argparse
 import json
 import os
 from pathlib import Path
@@ -38,7 +39,12 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 MAIN = Path(os.environ.get("PFA_MAIN_ROOT", "/Users/dk/Projects/3d render blender 3rd attempt building"))
+# local-then-MAIN, the hand-off convention the rest of export/ uses (gate3_relay_check.py, trees_far_set.py):
+# this is a read-only CPU check, so it must be runnable from a worktree that carries the script but not the
+# 2 GB of gitignored bake output.
 OUT = ROOT / "export" / "out" / "gate3"
+if not (OUT / "bake").is_dir():
+    OUT = MAIN / "export" / "out" / "gate3"
 TF = OUT / "trees_far"
 REC = OUT / "bake"
 PROTO = "ENV_tree_broadleaf_s53_LOD1"
@@ -100,9 +106,20 @@ def hue_deg(rgb):
 
 
 def main():
-    atlas = json.loads((OUT / "impostor_diag_atlas.json").read_text())["prototypes"][PROTO]
+    # r1 review finding 3: the reference and the atlas were hard-wired to the files in out/gate3, which on a
+    # re-bake round are whatever the LAST diagnostic run left there - for Phase 9 that was a Sep-17,
+    # PRE-r19 reference (renders/previews/qa/round13_02_*_cycles.png). Measuring this round's impostor
+    # against a frame rendered in the old world is the same defect this project retired
+    # export/p8d_irr_restore.py for. All three paths are now arguments; the defaults are unchanged.
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--atlas", default=str(OUT / "impostor_diag_atlas.json"))
+    ap.add_argument("--ref", default=str(OUT / "impostor_diag_ref.json"))
+    ap.add_argument("--out", default=str(TF / "ratio_check.json"))
+    a = ap.parse_args()
+    atlas = json.loads(Path(a.atlas).read_text())["prototypes"][PROTO]
     frame = atlas["2048"]["cam02_frame"]
-    ref = json.loads((OUT / "impostor_diag_ref.json").read_text())["foliage_p80"]
+    ref_all = json.loads(Path(a.ref).read_text())
+    ref = ref_all["foliage_p80"]
     eb = json.loads((REC / f"tfeb_{PROTO}.json").read_text())["items"][0]
 
     ep = None
@@ -184,18 +201,20 @@ def main():
             verdict="PASS" if bg_passed else "FAIL (overshoots; not the metric the verdict uses)",
             before=round(dbg_before, 4), after=round(dbg_after, 4), target=round(bg_target, 4),
             pct_of_gap_closed=round(100.0 * float(moved) / gap, 1) if gap else None,
-            note=("kept visible on purpose (review r2 finding 6): the raw ratio takes display B/G from "
-                  "1.267 past 0.648 to 0.041. It is a ratio of a near-black channel, which is why it is "
-                  "reported and not decided on - but it is not hidden.")),
+            note=(f"kept visible on purpose (review r2 finding 6): the raw ratio takes display B/G from "
+                  f"{dbg_before:.4f} past the target {bg_target:.4f} to {dbg_after:.4f}. It is a ratio of a "
+                  f"near-black channel, which is why it is reported and not decided on - but it is not "
+                  f"hidden. (These three numbers used to be hard-coded at 1.267 / 0.648 / 0.041, which went "
+                  f"stale the moment the atlas or the reference was re-baked - phase9-rebake r1 review.)")),
         overshoot=dict(
             distance_before=round(abs(dbg_before - bg_target), 4),
             distance_after=round(abs(dbg_after - bg_target), 4),
-            note=("the full ratio takes the display B/G past the reference: E_placement is the mean over the "
-                  "WHOLE crown volume, interior vertices included, while the atlas frame shows only the "
-                  "sky-facing outer shell, which in the scene keeps far more sky than the volume mean does. "
-                  "The reference's own foliage_p80 crop biases the target blue-UP as well (review r1 "
-                  "finding 9), so the true target is below 0.648 and the real overshoot is smaller than it "
-                  "looks - but it is there.")),
+            note=(f"the full ratio takes the display B/G past the reference: E_placement is the mean over the "
+                  f"WHOLE crown volume, interior vertices included, while the atlas frame shows only the "
+                  f"sky-facing outer shell, which in the scene keeps far more sky than the volume mean does. "
+                  f"The reference's own foliage_p80 crop biases the target blue-UP as well (review r1 "
+                  f"finding 9), so the true target is below {bg_target:.4f} and the real overshoot is smaller than it "
+                  f"looks - but it is there.")),
         partial_strength=dict(
             k=round(float(k), 4),
             applied="atlas_frame * (E_placement / E_bake) ** k, per channel",
@@ -222,7 +241,8 @@ def main():
               "PASS = the display HUE closes at least half the gap to the reference without overshooting "
               "past it; display B/G is reported beside it and fails. The reference is "
               "impostor_diag_ref.json foliage_p80, a fixed quantile (review r1 finding 9)."))
-    (TF / "ratio_check.json").write_text(json.dumps(out, indent=1) + "\n")
+    out["sources"] = dict(atlas=a.atlas, reference=a.ref, reference_png=ref_all.get("ref"))
+    Path(a.out).write_text(json.dumps(out, indent=1) + "\n")
     for k in ("E_bake", "E_placement", "ratio", "crown_before", "crown_after",
               "linear_b_over_g_before", "linear_b_over_g_after",
               "display_before_srgb8", "display_after_srgb8",
