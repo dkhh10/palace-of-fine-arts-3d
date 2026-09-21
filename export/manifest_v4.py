@@ -357,6 +357,30 @@ def instance_lod1_block(base):
 SKY_OPEN_IRR_SCHEMA = "upper-hemisphere cosine-weighted mean radiance = E_open / pi"
 
 
+def read_equirect(path):
+    """(float64 HxWx3 RGB, reader) for the equirect at `path`, or (None, reason)."""
+    if path is None or not Path(path).exists():
+        return None, f"no sky_diffuse equirect on disk ({path})"
+    try:
+        import numpy as np
+    except Exception as e:                                        # pragma: no cover - numpy is a hard dep
+        return None, f"numpy unavailable ({e})"
+    img = err = None
+    try:
+        import cv2                    # EXR needs OPENCV_IO_ENABLE_OPENEXR=1 BEFORE the import (set above)
+        bgr = cv2.imread(str(path), cv2.IMREAD_UNCHANGED | cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+        if bgr is not None and bgr.ndim == 3 and bgr.shape[2] >= 3:
+            return bgr[:, :, :3][:, :, ::-1].astype(np.float64), f"cv2 {cv2.__version__}"
+        err = f"cv2 returned {None if bgr is None else bgr.shape} for {Path(path).name}"
+    except Exception as e:
+        err = f"cv2: {e}"
+    try:
+        import imageio.v3 as iio
+        return np.asarray(iio.imread(str(path)))[:, :, :3].astype(np.float64), "imageio.v3"
+    except Exception as e:
+        return None, f"no float-EXR reader ({err}; imageio: {e})"
+
+
 def sky_open_irradiance_over_pi(path):
     """(rgb, meta) for the equirect at `path`, or (None, reason).
 
@@ -370,42 +394,262 @@ def sky_open_irradiance_over_pi(path):
     flipped row order cannot ship silently).  The rotation and u_offset the viewer applies to the sky are
     rotations about the pole and do not change a hemisphere mean, so they are not applied here.
     """
-    if path is None or not Path(path).exists():
-        return None, f"no sky_diffuse equirect on disk ({path})"
-    try:
-        import numpy as np
-    except Exception as e:                                        # pragma: no cover - numpy is a hard dep
-        return None, f"numpy unavailable ({e})"
-    img = err = None
-    try:
-        import cv2                    # EXR needs OPENCV_IO_ENABLE_OPENEXR=1 BEFORE the import (set above)
-        bgr = cv2.imread(str(path), cv2.IMREAD_UNCHANGED | cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
-        if bgr is not None and bgr.ndim == 3 and bgr.shape[2] >= 3:
-            img, reader = bgr[:, :, :3][:, :, ::-1].astype(np.float64), f"cv2 {cv2.__version__}"
-        else:
-            err = f"cv2 returned {None if bgr is None else bgr.shape} for {Path(path).name}"
-    except Exception as e:
-        err = f"cv2: {e}"
+    img, reader = read_equirect(path)
     if img is None:
-        try:
-            import imageio.v3 as iio
-            img = np.asarray(iio.imread(str(path)))[:, :, :3].astype(np.float64)
-            reader = "imageio.v3"
-        except Exception as e:
-            return None, f"no float-EXR reader ({err}; imageio: {e})"
+        return None, reader
+    import numpy as np
     h, w, _ = img.shape
     th = (np.arange(h) + 0.5) / h * np.pi
     wt = np.where(th < np.pi / 2, np.cos(th) * np.sin(th), 0.0)
     k = 2 * np.pi / (h * w)
     unit = float(wt.sum() * w * k)
     assert abs(unit - 1.0) < 1e-4, f"hemisphere quadrature integrates a uniform sky to {unit}, not 1.0"
+    upper = float((np.sin(th) * (th < np.pi / 2)).sum() * w)
+    upper_mean = (img * np.sin(th)[:, None, None] * (th < np.pi / 2)[:, None, None]
+                  ).sum(axis=(0, 1)) / max(upper, 1e-9)
+    lower_mean = (img * np.sin(th)[:, None, None] * (th >= np.pi / 2)[:, None, None]
+                  ).sum(axis=(0, 1)) / max(float((np.sin(th) * (th >= np.pi / 2)).sum() * w), 1e-9)
+    # r1 review finding 1: the unit assert is symmetric in row index, so it does NOT catch a vertically
+    # flipped EXR.  This does: row 0 is the zenith by the manifest's own `sky.mapping`, and this sky is
+    # a bright dome over a near-black ground (5.74 against 0.06 today).
+    assert float(upper_mean.sum()) > float(lower_mean.sum()), (
+        f"the equirect's top half ({upper_mean.round(4).tolist()}) is not brighter than its bottom "
+        f"({lower_mean.round(4).tolist()}): row 0 is not the zenith, so every direction here is flipped")
     rgb = (img * wt[:, None, None]).sum(axis=(0, 1)) * k
     return [round(float(v), 6) for v in rgb], dict(
         file=Path(path).name, w=w, h=h, reader=reader, method=SKY_OPEN_IRR_SCHEMA,
         quadrature_unit_check=round(unit, 8),
-        upper_half_solid_angle_mean=[round(float(v), 6) for v in
-                                     (img * np.sin(th)[:, None, None] * (th < np.pi / 2)[:, None, None]
-                                      ).sum(axis=(0, 1)) / max(float((np.sin(th) * (th < np.pi / 2)).sum() * w), 1e-9)])
+        upper_half_solid_angle_mean=[round(float(v), 6) for v in upper_mean],
+        lower_half_solid_angle_mean=[round(float(v), 6) for v in lower_mean])
+
+
+# ------------------------------------------------- E0(n): the open-sky irradiance for a GIVEN normal
+# Round 1 of the gate divided every texel's blue by the open-sky irradiance/pi of an UPWARD-facing
+# surface (11.256).  A vertical wall never sees more than half the sky and an east wall under this sky
+# much less than that, so fully unoccluded walls read skyVis 0.14-0.5 and lose most of their IBL
+# specular, which Cycles keeps: the 0.5 % parity budget was missed at every station and cam05 regressed
+# (docs/briefs/phase9_viewer_capture_report.md B).  Round 2 normalises by E0(n)/pi for the surface's own
+# world normal, which makes the ratio exactly 1.0 on an unoccluded surface of ANY orientation.
+#
+# HOW E0(n) IS REPRESENTED, and why not SH9.  The brief asked for SH9.  Measured on the shipped
+# sky_diffuse (below, and written into the manifest as `sky.diffuse_sh9` + its error block): this sky is
+# a near-horizon glow that puts 50 % of its blue flux in 2.3 % of the sphere, and the 9-coefficient
+# irradiance approximation is 23 % high at the zenith, 27 % high on an east wall and 58 % high at the
+# sun's azimuth - it also goes NEGATIVE on downward normals.  A denominator 25 % too large is 25 % of
+# the env specular thrown away on exactly the sunlit walls this round exists to give back.  So the
+# viewer evaluates a set of DELTA LOBES instead: the sphere is split into `SKY_LOBE_BANDS` x
+# `SKY_LOBE_SECTORS` clusters of roughly equal flux (deterministic, no RNG), Lloyd-refined on the
+# radiance-weighted centroid, and each cluster becomes one direction with a per-channel intensity that
+# preserves the cluster's FIRST MOMENT (I_ch = (integral L_ch w dw) . d).  Then
+#     E0(n)/pi = sum_i max( dot( n, d_i ), 0 ) * rgb_i
+# is exact wherever a cluster is wholly above the normal's horizon and errs only where the cutoff plane
+# slices a cluster.  Measured at 40 lobes: zenith within 0.6 %, the six axis normals within 1.3 %, blue
+# p50 0.5 % / p95 2.8 % over the sphere - a tenth of SH9's error for ~40 dot products a fragment.
+SKY_LOBE_BANDS, SKY_LOBE_SECTORS = 5, 8
+# The denominator's floor, as a fraction of E0(zenith).b.  A downward-facing normal sees almost no sky
+# (E0(down).b is 0.02 against the zenith's 11.26), so `lm.b / E0(n).b` there divides two near-zero
+# numbers and would read a soffit deep in the colonnade as FULLY sky-exposed - the exact defect this
+# gate exists to remove.  Flooring the denominator biases those faces closed, which is the safe
+# direction: a face that looks down reflects the dark lower hemisphere anyway.
+SKY_LOBE_FLOOR_FRAC = 0.05
+SKY_SH9_SCHEMA = ("three.js SphericalHarmonics3 / shGetIrradianceAt convention: the RADIANCE projection "
+                  "L_lm = integral L(w) Y_lm(w) dw in the order [Y00, Y1-1(y), Y10(z), Y11(x), xy, yz, "
+                  "3z^2-1, xz, x^2-y^2], so E(n) = shGetIrradianceAt(n, these) and E(n)/pi is the "
+                  "bake's unit")
+
+
+def _equirect_dirs(np, h, w):
+    """(directions, solid angles) for every texel, in three.js world axes (Y up).
+
+    The file's mapping is the manifest's own `sky.mapping`, measured by gate0 (the sun's azimuth
+    reproduces to 0.026 deg): row j is theta from the ZENITH, column i is u = 0.5 + atan2(bx, by)/360 in
+    BLENDER axes.  three's axes are (X, Y, Z) = (bx, bz, -by) - `web/src/blenderCamera.js b2t`, the swap
+    the whole viewer uses - so the model is built directly in the axes the shader's world normal is in.
+    It therefore does not depend on `sky.rotation_deg`, which is only how the viewer spins the same
+    equirect into that same place (a diagnostic `?skyrot=` that moves the environment does NOT move this
+    model - stated in web/README.md).
+    """
+    th = (np.arange(h) + 0.5) / h * np.pi
+    psi = ((np.arange(w) + 0.5) / w - 0.5) * 2 * np.pi
+    bx = np.sin(th)[:, None] * np.sin(psi)[None, :]
+    by = np.sin(th)[:, None] * np.cos(psi)[None, :]
+    bz = np.repeat(np.cos(th)[:, None], w, axis=1)
+    dirs = np.stack([bx, bz, -by], axis=-1)
+    dw = np.repeat((np.sin(th) * (np.pi / h) * (2 * np.pi / w))[:, None], w, axis=1)
+    return dirs, dw
+
+
+def _exact_irradiance_over_pi(np, img, dirs, dw, normals):
+    """The reference E(n)/pi = integral L max(dot(n,w),0) dw / pi, by direct quadrature, chunked."""
+    D = dirs.reshape(-1, 3)
+    LW = img.reshape(-1, 3) * dw.reshape(-1, 1)
+    out = []
+    for i in range(0, len(normals), 16):
+        c = np.clip(D @ np.asarray(normals[i:i + 16]).T, 0.0, None)       # (px, k)
+        out.append(c.T @ LW / math.pi)
+    return np.concatenate(out, axis=0)
+
+
+def sky_sh9(np, img, dirs, dw):
+    """The 9 three.js SphericalHarmonics3 coefficients (radiance projection) of the equirect."""
+    x, y, z = dirs[..., 0], dirs[..., 1], dirs[..., 2]
+    basis = [np.full(x.shape, 0.282095), 0.488603 * y, 0.488603 * z, 0.488603 * x,
+             1.092548 * x * y, 1.092548 * y * z, 0.315392 * (3 * z * z - 1), 1.092548 * x * z,
+             0.546274 * (x * x - y * y)]
+    return np.array([[float((img[:, :, ch] * b * dw).sum()) for ch in range(3)] for b in basis])
+
+
+def sh9_irradiance(np, sh, n):
+    """three.js `shGetIrradianceAt` verbatim (ShaderChunk/lights_pars_begin + SphericalHarmonics3)."""
+    x, y, z = n
+    return (sh[0] * 0.886227 + sh[1] * (2.0 * 0.511664 * y) + sh[2] * (2.0 * 0.511664 * z)
+            + sh[3] * (2.0 * 0.511664 * x) + sh[4] * (2.0 * 0.429043 * x * y)
+            + sh[5] * (2.0 * 0.429043 * y * z) + sh[6] * (0.743125 * z * z - 0.247708)
+            + sh[7] * (2.0 * 0.429043 * x * z) + sh[8] * (0.429043 * (x * x - y * y)))
+
+
+def _lobe_seeds(np, dirs, flux, bands, sectors):
+    """Deterministic seed directions: `bands` elevation bands of equal flux, each cut into `sectors`
+    azimuth sectors of equal flux, each seed the flux-weighted mean direction of its cell."""
+    h, w = flux.shape
+    rows = np.cumsum(flux.sum(axis=1)) / max(float(flux.sum()), 1e-30)
+    rb = [0] + [int(np.searchsorted(rows, (k + 1) / bands)) for k in range(bands)]
+    rb[-1] = h
+    seeds = []
+    for k in range(bands):
+        j0, j1 = rb[k], max(rb[k + 1], rb[k] + 1)
+        cols = np.cumsum(flux[j0:j1].sum(axis=0)) / max(float(flux[j0:j1].sum()), 1e-30)
+        cb = [0] + [int(np.searchsorted(cols, (m + 1) / sectors)) for m in range(sectors)]
+        cb[-1] = w
+        for m in range(sectors):
+            i0, i1 = cb[m], max(cb[m + 1], cb[m] + 1)
+            f = flux[j0:j1, i0:i1]
+            v = (dirs[j0:j1, i0:i1] * f[..., None]).sum(axis=(0, 1))
+            if np.linalg.norm(v) > 1e-12:
+                seeds.append(v / np.linalg.norm(v))
+    return np.array(seeds)
+
+
+def sky_diffuse_lobes(np, img, dirs, dw, bands=SKY_LOBE_BANDS, sectors=SKY_LOBE_SECTORS, lloyd=100):
+    """[[dx, dy, dz, r, g, b], ...] with E0(n)/pi = sum max(dot(n,d),0) * rgb.  Fully deterministic."""
+    D = dirs.reshape(-1, 3)
+    LW = img.reshape(-1, 3) * dw.reshape(-1, 1)
+    flux = (img.sum(axis=2) * dw)
+    f = flux.reshape(-1)
+    cen = _lobe_seeds(np, dirs, flux, bands, sectors)
+    for _ in range(lloyd):                      # Lloyd on the sphere, flux-weighted centroids
+        a = np.argmax(D @ cen.T, axis=1)
+        new = cen.copy()
+        for j in range(len(cen)):
+            m = a == j
+            if not m.any():
+                continue
+            v = (D[m] * f[m, None]).sum(axis=0)
+            if np.linalg.norm(v) > 1e-12:
+                new[j] = v / np.linalg.norm(v)
+        if np.allclose(new, cen, atol=1e-12):
+            cen = new
+            break
+        cen = new
+    a = np.argmax(D @ cen.T, axis=1)
+    lobes = []
+    for j in range(len(cen)):
+        m = a == j
+        if not m.any():
+            continue
+        v = (D[m] * f[m, None]).sum(axis=0)
+        if np.linalg.norm(v) <= 1e-12:
+            continue
+        d = v / np.linalg.norm(v)
+        # first-moment-preserving intensity, per channel, in the BAKE's unit (irradiance/pi)
+        rgb = (LW[m].T @ D[m]) @ d / math.pi
+        if float(np.maximum(rgb, 0).sum()) <= 1e-9:
+            continue
+        lobes.append([round(float(q), 6) for q in d] + [round(float(max(q, 0.0)), 6) for q in rgb])
+    return lobes
+
+
+def lobe_irradiance_over_pi(np, lobes, n):
+    """The viewer's own evaluation, in python: E0(n)/pi from the lobe list."""
+    out = np.zeros(3)
+    for lb in lobes:
+        c = lb[0] * n[0] + lb[1] * n[1] + lb[2] * n[2]
+        if c > 0:
+            out += c * np.array(lb[3:6])
+    return out
+
+
+def sky_directional_model(path, open_rgb):
+    """(block, sh9) for `sky.diffuse_lobes` / `sky.diffuse_sh9`, or (None, reason)."""
+    img, reader = read_equirect(path)
+    if img is None:
+        return None, reader
+    import numpy as np
+    h, w, _ = img.shape
+    dirs, dw = _equirect_dirs(np, h, w)
+    sh = sky_sh9(np, img, dirs, dw)
+    lobes = sky_diffuse_lobes(np, img, dirs, dw)
+    # the checks: named normals, then a deterministic Fibonacci set for the percentiles
+    named = [("zenith (+Z blender, up)", [0.0, 1.0, 0.0]),
+             ("east wall (+Y blender, toward the lagoon)", [0.0, 0.0, -1.0]),
+             ("west wall (-Y blender)", [0.0, 0.0, 1.0]),
+             ("north wall (-X blender)", [-1.0, 0.0, 0.0]),
+             ("south wall (+X blender)", [1.0, 0.0, 0.0]),
+             ("nadir (down)", [0.0, -1.0, 0.0])]
+    ex = _exact_irradiance_over_pi(np, img, dirs, dw, [n for _, n in named])
+    ref = []
+    for (name, n), e in zip(named, ex):
+        lb = lobe_irradiance_over_pi(np, lobes, n)
+        s = sh9_irradiance(np, sh, n) / math.pi
+        ref.append(dict(normal=name, n=n, exact=[round(float(v), 6) for v in e],
+                        lobes=[round(float(v), 6) for v in lb],
+                        lobes_over_exact_b=round(float(lb[2] / max(e[2], 1e-9)), 5),
+                        sh9=[round(float(v), 6) for v in s],
+                        sh9_over_exact_b=round(float(s[2] / max(e[2], 1e-9)), 5)))
+    m = 256
+    fib = []
+    for i in range(m):                                     # deterministic Fibonacci sphere
+        yv = 1.0 - 2.0 * (i + 0.5) / m
+        r = math.sqrt(max(0.0, 1.0 - yv * yv))
+        a = math.pi * (1.0 + 5.0 ** 0.5) * i
+        fib.append([math.cos(a) * r, yv, math.sin(a) * r])
+    exf = _exact_irradiance_over_pi(np, img, dirs, dw, fib)
+    keep = [i for i, n in enumerate(fib) if n[1] > -0.25]   # the normals a building actually has
+    err_l, err_s = [], []
+    for i in keep:
+        e = max(float(exf[i][2]), 0.5)
+        err_l.append(abs(float(lobe_irradiance_over_pi(np, lobes, fib[i])[2]) - float(exf[i][2])) / e)
+        err_s.append(abs(float(sh9_irradiance(np, sh, fib[i])[2]) / math.pi - float(exf[i][2])) / e)
+    pct = lambda v, q: round(float(np.percentile(np.array(v), q)), 5)                     # noqa: E731
+    zen = ref[0]
+    block = dict(
+        basis="delta_lobes_v1", count=len(lobes),
+        eval="E0_over_pi(n) = sum_i max( dot( n, lobes[i].xyz ), 0 ) * lobes[i].rgb",
+        axes=("three.js world axes, Y up: d = (bx, bz, -by) from the Blender axes the equirect is "
+              "written in (web/src/blenderCamera.js b2t). Independent of sky.rotation_deg."),
+        units="irradiance/pi (W/m^2/sr), the BAKE's units - the same as sky.open_irradiance_over_pi",
+        floor_frac=SKY_LOBE_FLOOR_FRAC,
+        floor_note=("the viewer divides by max(E0(n).b, floor_frac * E0(zenith).b): a downward normal's "
+                    "E0.b is ~0.002 of the zenith's, and lm.b/E0.b there would read a soffit as fully "
+                    "sky-exposed"),
+        use=("web/src/materials.js: skyVis = clamp(lm.b / max(E0(n).b, floor), 0, 1) scales the IBL "
+             "specular, and E0(n).r / E0(n).b is the sky's own red share removed from sunVis. Both "
+             "re-derived here on every run, so a re-baked sky feeds them with no viewer change."),
+        source=dict(file=Path(path).name, w=w, h=h, reader=reader,
+                    partition=f"{SKY_LOBE_BANDS} elevation bands x {SKY_LOBE_SECTORS} azimuth sectors "
+                              f"of equal flux, Lloyd-refined, deterministic (no RNG)",
+                    intensity="per channel, preserves the cluster's first moment: I = (int L w dw) . d"),
+        checks=dict(reference_normals=ref,
+                    zenith_vs_open_irradiance_over_pi=dict(
+                        lobes=zen["lobes"], quadrature=open_rgb, exact=zen["exact"],
+                        lobes_over_quadrature_b=round(float(zen["lobes"][2] / max((open_rgb or [1, 1, 1])[2], 1e-9)), 5)),
+                    blue_rel_err_on_normals_above_minus_15deg=dict(
+                        n=len(keep), lobes=dict(p50=pct(err_l, 50), p95=pct(err_l, 95),
+                                                max=round(float(max(err_l)), 5)),
+                        sh9=dict(p50=pct(err_s, 50), p95=pct(err_s, 95), max=round(float(max(err_s)), 5)),
+                        note="|model - quadrature| / max(quadrature, 0.5), blue channel")),
+        lobes=lobes)
+    return block, sh
 
 
 def spec_gate_constants(man, sk, audit):
@@ -433,6 +677,34 @@ def spec_gate_constants(man, sk, audit):
                  "the SHIPPED equirect, so a re-baked sky feeds it with no viewer change."))
         print(f"[gate3] sky.open_irradiance_over_pi = {rgb} from {meta['file']} "
               f"({meta['w']}x{meta['h']}, {meta['method']})")
+    # round 2: the same equirect, resolved per NORMAL (the round-1 defect: see the block comment above)
+    block, sh = (None, "sky.open_irradiance_over_pi is null") if rgb is None \
+        else sky_directional_model(exr, rgb)
+    if block is None:
+        man["sky"]["diffuse_lobes"] = None
+        man["sky"]["diffuse_lobes_missing"] = (
+            f"{sh}. The viewer's specular gate falls back to the round-1 constant denominator "
+            f"(sky.open_irradiance_over_pi), which is right only for an upward-facing surface.")
+        print(f"[gate3] WARNING: sky.diffuse_lobes is null - {sh}", file=sys.stderr)
+    else:
+        man["sky"]["diffuse_lobes"] = block
+        man["sky"]["diffuse_sh9"] = [[round(float(v), 6) for v in c] for c in sh]
+        man["sky"]["diffuse_sh9_source"] = dict(
+            method=SKY_SH9_SCHEMA, file=block["source"]["file"],
+            used_by_the_viewer=False,
+            why=("the brief's mechanism, measured and kept for the record: on THIS sky (50 % of the "
+                 "blue flux inside 2.3 % of the sphere) the 9-coefficient irradiance is "
+                 f"{block['checks']['reference_normals'][0]['sh9_over_exact_b']:.3f}x the quadrature at "
+                 f"the zenith and "
+                 f"{block['checks']['reference_normals'][1]['sh9_over_exact_b']:.3f}x on an east wall, "
+                 "and it goes negative on downward normals, so sky.diffuse_lobes is the denominator "
+                 "the viewer uses. Both blocks are re-derived on every run."))
+        ck = block["checks"]["blue_rel_err_on_normals_above_minus_15deg"]
+        print(f"[gate3] sky.diffuse_lobes = {block['count']} lobes from {block['source']['file']}; "
+              f"zenith {block['checks']['reference_normals'][0]['lobes'][2]:.4f} vs quadrature "
+              f"{rgb[2]:.4f} ({block['checks']['zenith_vs_open_irradiance_over_pi']['lobes_over_quadrature_b']:.4f}x); "
+              f"blue rel err p50 {ck['lobes']['p50']:.4f} p95 {ck['lobes']['p95']:.4f} "
+              f"(SH9 p50 {ck['sh9']['p50']:.4f} p95 {ck['sh9']['p95']:.4f})")
     e = man.get("sun", {}).get("energy_w_m2")
     if not isinstance(e, (int, float)) or not e > 0:
         man.setdefault("sun", {})["irradiance_over_pi"] = None
@@ -443,12 +715,20 @@ def spec_gate_constants(man, sk, audit):
     for lt in ((audit or {}).get("bake", {}).get("lights") or []):
         if lt.get("name") == "LIGHT_sun":
             audit_e = lt.get("energy")
-    assert audit_e is None or abs(audit_e - e) < 1e-2, (
-        f"sun.energy_w_m2 {e} disagrees with scene_audit.json's LIGHT_sun energy {audit_e}: the manifest "
-        f"was not rebuilt after the lighting change")
+    # r1 review finding 5: this used to be an assert, and a stale scene_audit.json found through MAIN
+    # aborted the WHOLE manifest write - although the audit never changes the value written, which comes
+    # from the manifest's own sun.energy_w_m2 (the very number the viewer's DirectionalLight is built
+    # with).  It is a loud warning, recorded in the manifest, so the re-bake chain cannot be stopped by
+    # a stale sidecar and cannot hide a real disagreement either.
+    stale = audit_e is not None and abs(audit_e - e) >= 1e-2
+    if stale:
+        print(f"[gate3] WARNING: sun.energy_w_m2 {e} disagrees with scene_audit.json's LIGHT_sun energy "
+              f"{audit_e}: one of the two was not rebuilt after the lighting change. The gate uses "
+              f"{e} (the light's own value); recorded as sun.irradiance_over_pi_source.scene_audit_stale.",
+              file=sys.stderr)
     man["sun"]["irradiance_over_pi"] = round(e / math.pi, 6)
     man["sun"]["irradiance_over_pi_source"] = dict(
-        from_key="sun.energy_w_m2", energy_w_m2=e, scene_audit_energy=audit_e,
+        from_key="sun.energy_w_m2", energy_w_m2=e, scene_audit_energy=audit_e, scene_audit_stale=stale,
         method="energy_w_m2 / pi", units="W/m^2/sr, the same units as sky.open_irradiance_over_pi",
         use=("web/src/materials.js: sunVis = clamp((lightmapIrradiance.r - skyRedOverBlue*lightmapIrradiance.b) "
              "/ this, 0, 1) scales reflectedLight.directSpecular. It is the sun's direct irradiance/pi at "
