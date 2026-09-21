@@ -213,5 +213,29 @@ if ( ! fs.existsSync( glbPath ) ) {
 	check( xf === 0, `and no KHR_texture_transform is left to apply to the wrong set (${xf} material(s) carry one)` );
 }
 
+// ---- 6. the SHIPPED manifests, both variants (skipped when they are not there) ----------------
+// The fixtures above prove the code; this proves the file the viewer will actually fetch - including the
+// mobile plan's redirect of every tile key to its half-resolution copy under tex_lo/.
+for ( const [ variant, file ] of [ [ 'desktop', 'manifest.json' ], [ 'mobile', 'manifest_mobile.json' ] ] ) {
+	const p5 = path.join( MAIN, 'export/out/gate5', file );
+	if ( ! fs.existsSync( p5 ) ) { console.log( `SKIP  shipped ${variant} manifest: ${p5} is not on disk` ); continue; }
+	const real = normaliseManifest( JSON.parse( fs.readFileSync( p5, 'utf8' ) ), `https://x/assets/gate5/${file}` );
+	const bd = real.backdropTiles;
+	check( !! bd && bd.count === 4, `${variant}: four backdrop groups in the shipped manifest (got ${bd ? bd.count : 'none'})` );
+	if ( ! bd ) continue;
+	check( bd.missing === 0, `${variant}: every tile key resolves to a file (${bd.missing} unresolved)` );
+	check( bd.tileChannel === 0 && bd.bakedChannel === 1, `${variant}: tile UV 0, baked atlas 1` );
+	check( checkUvContract( bd, real.materials.sets ).length === 0,
+		`${variant}: the UV contract holds against the real material sets` );
+	const tc1 = Object.values( real.materials.sets ).filter( ( s ) => s.texCoord === 1 ).length;
+	check( tc1 === 8, `${variant}: texcoord 1 on the 8 backdrop merges, 0 on the rest (got ${tc1})` );
+	const urls = Object.values( bd.groups ).map( ( g ) => g.url );
+	const lo = urls.filter( ( u ) => /tex_lo\//.test( u ) ).length;
+	check( variant === 'mobile' ? lo === 4 : lo === 0,
+		`${variant}: ${lo}/4 tiles served from tex_lo (mobile halves them, desktop does not)` );
+	check( Object.values( bd.groups ).every( ( g ) => g.tier === 1 ),
+		`${variant}: all four are tier 1, so the first frame does not pay for them` );
+}
+
 console.log( fails ? `${fails} FAILURES` : 'all backdrop-tile checks passed' );
 process.exit( fails ? 1 : 0 );
