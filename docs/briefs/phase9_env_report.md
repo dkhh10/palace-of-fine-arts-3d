@@ -8,8 +8,9 @@ Branch `phase9-env`, worktree `.claude/worktrees/phase9-env`, from main 711b63b.
 * `scripts/env_p9_uv0.py` (new) — lays UV0 (`"UVMap"`, layer 0 = TEXCOORD_0) on the backdrop, per face, in **tile
   units**. Called last from `env_backdrop.build_all`; also runnable standalone to patch an existing ENV file.
 * `scripts/env_p9_preview.py` (new) — Eevee 1920x1080 previews of cam01/05/06 from the rebuilt master.
-* `scripts/env_p9_probe.py` (new) — the measurement table; re-uses `qa_r22_probe._bd` / `BACKDROP` (QA's own
-  definitions) and adds the item-2 belt table.
+* `scripts/env_p9_probe.py` (new) — the measurement tables (`--sheet`, `--belt`, `--all`); re-uses
+  `qa_r22_probe._bd` / `BACKDROP` (QA's own definitions) and adds the item-2 belt table.
+* `scripts/env_p9_shrubhash.py` (new) — the item-2 shrub-placement hash, so that claim is reproducible.
 * `scripts/mat_build.py` — `BACKDROP_TILES` / `BACKDROP_HAZE`, `backdrop_tile_detail()`, `apply_backdrop_tiles()`
   (MAT_backdrop_* block only, the 8d precedent).
 * `scripts/env_backdrop.py` — one call to `env_p9_uv0.apply()` at the end of `build_all`.
@@ -87,14 +88,23 @@ The QA-24 residuals are stated **viewer vs Cycles**. The brief's question is a d
 cover in Blender under the photograph's?* — and station 1 is the only station with a photo registration
 (`env_r8_fit.REF_XF`), so it is the only place it can be answered with a number.
 
-`python3 scripts/env_p9_probe.py` -> `belt()`, the QA-23 `BELT` boxes, Cycles p8 -> Cycles p9 -> ref 169:
+`python3 scripts/env_p9_probe.py --belt`, the QA-23 `BELT` boxes, Cycles p8 -> Cycles p9 -> ref 169, printed:
 
-| box | cyc_p8 luma | cyc_p9 luma | photo luma | cyc_p9 dark<0.20 | photo dark<0.20 |
-|---|---|---|---|---|---|
-| 01 belt N (r2c1) | 0.274 | **0.271** | **0.350** | **50.1 %** | **30.4 %** |
-| 01 belt S | 0.420 | 0.418 | 0.521 | 24.4 % | 12.0 % |
-| 02 belt band R | 0.264 | 0.260 | — (no registration) | 62.9 % | — |
-| 05 belt band | 0.484 | 0.481 | — (no registration) | 15.9 % | — |
+```
+== item 2: the belt bands in Cycles, p8 -> p9, against the photograph where one is registered ==
+box                  st frame       luma     sat      hf  lum sd   dark%
+01 belt N (r2c1)      1 cyc_p8     0.274   0.667  0.0961   0.191  48.98%
+                        cyc_p9     0.271   0.667  0.0965   0.190  50.09%
+                        photo      0.350   0.377  0.2100   0.219  30.36%
+01 belt S             1 cyc_p8     0.420   0.763  0.1121   0.245  24.08%
+                        cyc_p9     0.418   0.759  0.1128   0.245  24.43%
+                        photo      0.521   0.538  0.2449   0.261  12.02%
+02 belt band R        2 cyc_p8     0.264   0.598  0.0696   0.246  61.37%
+                        cyc_p9     0.260   0.606  0.0688   0.247  62.93%
+05 belt band          5 cyc_p8     0.484   0.704  0.0912   0.242  15.37%
+                        cyc_p9     0.481   0.701  0.0921   0.243  15.85%
+```
+(stations 2 and 5 have no photo registration, so they carry no photo row.)
 
 **The belt's Cycles cover is OVER the photograph's, not under it** — 0.271 against 0.350 and a dark share of
 50.1 % against 30.4 % at the hero band, 24.4 % against 12.0 % at the south band. The brief's conditional
@@ -118,9 +128,17 @@ wording is the right diagnosis — the edges rose because **the belt stands behi
 local contrast at an unchanged silhouette. There is nothing to restore. Residual stays with the belt's
 brightness (BAKE), not with ENV placement.
 
-**Shrub-position hash (measured, `/tmp/shrubhash.py` over both files):**
-`10f9f5f:assets/environment.blend` (pre-belt) and the current one both give **4 137 shrub/reed objects,
-md5 `748f334363711ebd75565d0fd4526498`** over `name|x,y,z`. Bit-identical placement. Nothing to restore.
+**Shrub-position hash — reproducible** (`scripts/env_p9_shrubhash.py`, committed after review r1 carry 5):
+
+```
+git show 10f9f5f:assets/environment.blend > /tmp/env_prebelt.blend
+scripts/blender_run.sh 600 -- --background --python scripts/env_p9_shrubhash.py -- \
+    /tmp/env_prebelt.blend assets/environment.blend
+[env_p9_shrubhash] /tmp/env_prebelt.blend: 4137 shrub/reed objects, md5 748f334363711ebd75565d0fd4526498
+[env_p9_shrubhash] .../assets/environment.blend: 4137 shrub/reed objects, md5 748f334363711ebd75565d0fd4526498
+[env_p9_shrubhash] IDENTICAL across 2 files
+```
+Bit-identical placement pre-belt and now. Nothing to restore.
 
 ## Export hand-off (export engineer)
 The tiled UV0 **cannot ride the baked 1K UV1 atlas** — that atlas is 0.79 texels/m on the facades and the tile is

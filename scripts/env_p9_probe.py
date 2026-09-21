@@ -10,8 +10,10 @@ Columns:
   cyc_p9   renders/qa_comparisons/cycles_p9/cam<NN>_1080_32spp.png (the Phase 9 Cycles reference)
   photo    ref 169 registered to cam01 by env_r8_fit.REF_XF (stations 1) / ref 105 (station 6)
 
-    python3 scripts/env_p9_probe.py               # table
-    python3 scripts/env_p9_probe.py --sheet       # table + renders/qa_comparisons/env_p9_r3_sheet.jpg
+    python3 scripts/env_p9_probe.py               # the item-1 backdrop table
+    python3 scripts/env_p9_probe.py --sheet       # + renders/qa_comparisons/env_p9_r3_sheet.jpg
+    python3 scripts/env_p9_probe.py --belt        # the item-2 belt table (Cycles p8 -> p9 -> photo)
+    python3 scripts/env_p9_probe.py --all         # both
 """
 import sys
 from pathlib import Path
@@ -117,12 +119,6 @@ def sheet(rows):
     return fp
 
 
-if __name__ == "__main__":
-    rows = table()
-    if "--sheet" in sys.argv:
-        sheet(rows)
-
-
 # ------------------------------------------------------------------------------- item 2: the belt
 # The QA-24 residuals are stated viewer-vs-Cycles (`docs/qa_round_24.md` items 2 and 4).  The brief's question is
 # a different one: is the belt's cover in BLENDER under the PHOTOGRAPH's?  Station 1 is the only station with a
@@ -171,3 +167,18 @@ def photo_src(st, box):
         x0, y0, x1, y1 = box
         return im[int(y0 * sy + dy):int(y1 * sy + dy), int(x0 * sx + dx):int(x1 * sx + dx)]
     return None
+
+
+# ------------------------------------------------------------------------------- entry point
+# Review r1 fix-now 4: this guard used to sit above `belt()`, so `python3 scripts/env_p9_probe.py` never printed
+# the item-2 table the report quotes.  It is the LAST thing in the file now, and `--belt` runs that table on its own.
+if __name__ == "__main__":
+    if "--belt" in sys.argv:
+        belt()
+    else:
+        rows = table()
+        if "--sheet" in sys.argv:
+            sheet(rows)
+        if "--all" in sys.argv:
+            print()
+            belt()
