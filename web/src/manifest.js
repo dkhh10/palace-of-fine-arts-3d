@@ -778,6 +778,12 @@ export function normaliseManifest( raw, baseUrl ) {
 			job: entry.job ?? null, cls: entry.cls ?? null, srcMaterial: entry.src_material ?? null,
 			size: entry.size ?? null, uv: matRoot.uv ?? entry.uv ?? src.uv ?? 'TEXCOORD_0',
 			wrap: entry.wrap ?? src.wrap ?? null,
+			// Phase 9: WHICH glTF UV set this set's maps ride.  `materials.uv` is the scene default and
+			// stayed TEXCOORD_0; the backdrop merges now carry the tile UV at layer 0, so their baked
+			// maps are at TEXCOORD_1 and the manifest states it per set (read back from the shipped
+			// glTF by manifest_v3's cross-check).  Absent = 0, which is every pre-Phase-9 manifest.
+			texCoord: Number.isFinite( entry.texcoord ) ? entry.texcoord
+				: ( Number.isFinite( entry.texCoord ) ? entry.texCoord : 0 ),
 		};
 		for ( const [ slot, aliases ] of Object.entries( MAP_KEYS ) ) {
 			let v;
@@ -941,6 +947,53 @@ export function normaliseManifest( raw, baseUrl ) {
 		if ( unresolvedKeys.length ) notes.push( `${unresolvedKeys.length} texture key(s) not in textures.gate2.files or the Gate 1 list, skipped: ${[ ...new Set( unresolvedKeys ) ].slice( 0, 6 ).join( ', ' )}` );
 	} else if ( materialsMode ) {
 		notes.push( `materials.mode "${materialsMode}" but no per-material texture set was recognised` );
+	}
+
+	// --- Phase 9: the backdrop gain tiles (manifest `backdrop_tiles`) ---------------------------
+	// Four REPEAT-sampled, Non-Color images the viewer multiplies over the BAKED backdrop albedo, on
+	// TEXCOORD_0 (the ENV build's per-face UV, already divided by the tile size - no transform), with
+	// the per-group constants the Cycles material used:
+	//     albedo *= 1 + (tile - 0.5) * 2 * strength * (1 - (1 - keep) * haze)
+	//     haze    = smoothstep(r0, r1, length(worldPos.xz)) * amount
+	// The keys are ordinary `textures.gate2.files` rows, so they resolve and tier like any other map.
+	let backdropTiles = null;
+	const bdRaw = pick( raw, 'backdrop_tiles' );
+	if ( bdRaw && typeof bdRaw === 'object' && bdRaw.groups && typeof bdRaw.groups === 'object' ) {
+		const groups = {};
+		let bdBytes = 0, bdMissing = 0;
+		for ( const [ name, g ] of Object.entries( bdRaw.groups ) ) {
+			if ( ! g || typeof g !== 'object' || ! g.texture ) continue;
+			const res = resolveTexture( g.texture );
+			if ( ! res ) { bdMissing ++; continue; }
+			const meta = res.meta || {};
+			const planRow = planRowFor( g.texture, res.url );
+			const bytes = meta.bytes ?? ( planRow && planRow.bytes ) ?? null;
+			if ( bytes ) bdBytes += bytes;
+			groups[ name ] = {
+				name, key: g.texture, url: res.url, bytes,
+				tier: planRow ? planRow.tier : tierForUrl( tiers, res.url, 0 ),
+				strength: Number( g.strength ) || 0, keep: Number.isFinite( g.keep ) ? Number( g.keep ) : 1,
+				r0: Number( g.r0 ) || 0, r1: Number( g.r1 ) || 0,
+				amount: Number.isFinite( g.amount ) ? Number( g.amount ) : 0,
+				srcMaterial: g.src_material ?? null,
+			};
+		}
+		// The UV set the BAKED atlas rides, stated once here and asserted against `materials.sets[*]
+		// .texCoord` by the viewer's own check: a swap of the two sets is the failure mode this whole
+		// block exists to make loud (the tile UV would sample the 1 K atlas and vice versa).
+		const uvBaked = ( bdRaw.uv && bdRaw.uv.baked ) || 'TEXCOORD_1';
+		const uvTile = ( bdRaw.uv && bdRaw.uv.tile ) || 'TEXCOORD_0';
+		backdropTiles = {
+			groups, count: Object.keys( groups ).length, bytes: bdBytes, missing: bdMissing,
+			uvTile, uvBaked,
+			tileChannel: /_(\d)$/.test( uvTile ) ? parseInt( uvTile.match( /_(\d)$/ )[ 1 ], 10 ) : 0,
+			bakedChannel: /_(\d)$/.test( uvBaked ) ? parseInt( uvBaked.match( /_(\d)$/ )[ 1 ], 10 ) : 1,
+			wrap: bdRaw.wrap || 'repeat', colorspace: bdRaw.colorspace || 'linear',
+			apply: bdRaw.apply || null,
+		};
+		notes.push( `backdrop tiles: ${backdropTiles.count} group(s), ${( bdBytes / 1e6 ).toFixed( 2 )} MB, `
+			+ `tile UV ${uvTile}, baked atlas ${uvBaked}`
+			+ ( bdMissing ? `, ${bdMissing} texture key(s) unresolved` : '' ) );
 	}
 
 
@@ -1276,6 +1329,7 @@ export function normaliseManifest( raw, baseUrl ) {
 	const out = {
 		tiers,
 		raw, baseUrl, glb, glbs, stations, lut, exposure, sun, lightmaps, notes, rgbmRange, lightmapScale, materials,
+		backdropTiles,
 		treesFar, treesNearCount: Array.isArray( nearRaw ) ? nearRaw.length : 0, ornSlots, gate3,
 		// `assets` is the identity the glb lost: gltfpack -mi drops every node and mesh name, so the
 		// only way back from a drawn mesh to a manifest asset is its world bounding-box CENTRE

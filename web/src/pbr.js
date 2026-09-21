@@ -122,7 +122,12 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 		colourspace_conflicts: [], formats: {}, failed: [],
 		factored, constant_only: constantOnly, flat_normal_constant: [],
 		without_uv1: work.filter( j => j.set.uv1InGlb === false ).map( j => j.material.name ),
+		// Phase 9: the sets whose maps ride a UV set other than TEXCOORD_0, and any texture two sets want
+		// on DIFFERENT sets - three.js' `channel` is a property of the texture, so that would be silent.
+		texcoord: work.reduce( ( a, j ) => { const c = j.set.texCoord | 0; a[ c ] = ( a[ c ] || 0 ) + 1; return a; }, {} ),
+		texcoord_conflicts: [],
 	};
+	const chOf = new Map();                       // url -> the UV set the first user asked for
 	// One GPU upload per file: a texture used by several materials is SHARED, never cloned (a clone
 	// of a CompressedTexture has its own uuid and three uploads the mips a second time).
 	const cache = new Map();                      // url -> Promise<THREE.Texture>
@@ -158,7 +163,13 @@ export async function applyPbrSets( { scene, camera, sets, loadTexture, note, on
 				if ( claimed && csOf.get( entry.url ) !== want )
 					report.colourspace_conflicts.push( { url: entry.url, first: csOf.get( entry.url ), then: want } );
 				if ( ! claimed ) t.colorSpace = want;
-				t.channel = 0;                            // UV1 = glTF TEXCOORD_0
+				// Phase 9: the UV set is the SET's, not a constant.  Blender's UV1 is glTF TEXCOORD_0
+				// everywhere except the backdrop merges, whose TEXCOORD_0 is now the ENV tile UV and whose
+				// baked maps ride TEXCOORD_1 (manifest `materials.sets[*].texcoord`, read back from the glTF).
+				if ( chOf.has( entry.url ) && chOf.get( entry.url ) !== ( set.texCoord | 0 ) )
+					report.texcoord_conflicts.push( { url: entry.url, first: chOf.get( entry.url ), then: set.texCoord | 0 } );
+				else chOf.set( entry.url, set.texCoord | 0 );
+				t.channel = set.texCoord | 0;
 				if ( set.wrap === 'repeat' ) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
 				t.anisotropy = Math.max( t.anisotropy || 1, 8 );
 				t.needsUpdate = true;
@@ -427,7 +438,7 @@ export async function upgradePbrSets( { scene, maxTier, loadTexture, note, concu
 			try {
 				const t = await get( j.pick.url );
 				t.colorSpace = j.pick.srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-				t.channel = 0;
+				t.channel = j.set.texCoord | 0;                 // as applyPbrSets: the set states its UV index
 				if ( j.set.wrap === 'repeat' ) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
 				t.anisotropy = Math.max( t.anisotropy || 1, 8 );
 				t.needsUpdate = true;

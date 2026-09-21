@@ -525,6 +525,14 @@ def assign_and_write(man, vis, order, out, groups, cap, lowres, imp_keys, varian
             put(rel, 0 if (mobile and hero) else 1 if hero else 2, kind,
                 "hero material" if hero else "not seen from the hero",
                 order_key=tex_order.get(pub.key, 99), key=pub.key, px=px)
+        elif pub.kind == "backdrop_tile":
+            # Tier 1, not 0: the backdrop IS in the hero frame, but the gain is a MODULATION of an albedo
+            # that tier 0 already draws (gain = 1 until the tile lands), and tier 0 has ~0.2 MB of headroom
+            # against the 49.5 MB target. All four together are 0.60 MB and they arrive with the full-
+            # resolution backdrop albedo they multiply, in the same tier, which is the pairing that matters.
+            # On mobile `mobile_swap` above has already substituted the half-resolution copy.
+            put(rel, 1, kind, "backdrop gain tile: modulates the tier-1 backdrop albedo it ships beside",
+                order_key=tex_order.get(pub.key, 50), key=pub.key, px=px)
         elif pub.kind == "detail":
             # The viewer tiles these in object space over every concrete and ground surface and binds
             # them at boot (web/src/detail.js), so at full resolution they were an unlabelled 23.3 MB
