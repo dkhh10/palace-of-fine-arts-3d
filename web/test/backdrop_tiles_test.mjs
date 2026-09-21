@@ -130,78 +130,83 @@ near( gain( 1.0, 1.25, 0.7, 1 ), 1.875, 1e-9, 'and the far haze keeps 70 % of th
 near( ( gain( 1.0, 1.25, 0.7, 1 ) - 1 ) / ( gain( 1.0, 1.25, 0.7, 0 ) - 1 ), 0.7, 1e-9,
 	'`keep` IS the ratio: amp varies by 30 % across the whole haze range, never more' );
 
-// ---- 5. env.glb on disk (skipped when it is not there) ----------------------------------------
+// ---- 5. the shipped export on disk (skipped when it is not there) ----------------------------
+// TWO files, because they answer two different questions and neither can answer the other's:
+//   * env.gltf + env.bin are what the Blender export WROTE - plain float32, readable here, so the UV
+//     LAYOUT can be measured directly (which set is the tile UV, which is the packed bake atlas);
+//   * env.glb is what the viewer FETCHES - meshopt-compressed, so its buffers cannot be read without
+//     a decoder, but its accessors' componentType still says whether gltfpack requantised the two
+//     sets on one shared box. That is the `-vtf` contract, and it is the whole reason for the flag.
 const MAIN = process.env.PFA_MAIN_ROOT || '/Users/dk/Projects/3d render blender 3rd attempt building';
+const gltfPath = path.join( MAIN, 'export/out/gate1/env.gltf' );
 const glbPath = path.join( MAIN, 'export/out/gate1/env.glb' );
+const BD_RE = /MAT_EXP_ENVBD__MAT_backdrop_/;
+
+if ( ! fs.existsSync( gltfPath ) ) {
+	console.log( `SKIP  env.gltf UV-layout measurement: ${gltfPath} is not on disk` );
+} else {
+	const gltf = JSON.parse( fs.readFileSync( gltfPath, 'utf8' ) );
+	const bins = new Map();
+	const bdMat = new Set( gltf.materials.map( ( m, i ) => [ m.name, i ] ).filter( ( [ n ] ) => BD_RE.test( n ) ).map( ( [ , i ] ) => i ) );
+	const span = ( accIdx ) => {
+		const acc = gltf.accessors[ accIdx ];
+		if ( acc.componentType !== 5126 ) return null;         // this file is written unquantised
+		const bv = gltf.bufferViews[ acc.bufferView ];
+		const uri = gltf.buffers[ bv.buffer ].uri;
+		if ( ! uri ) return null;
+		if ( ! bins.has( uri ) ) bins.set( uri, fs.readFileSync( path.join( path.dirname( gltfPath ), decodeURIComponent( uri ) ) ) );
+		const buf = bins.get( uri );
+		const off = ( bv.byteOffset || 0 ) + ( acc.byteOffset || 0 );
+		let lo = [ Infinity, Infinity ], hi = [ - Infinity, - Infinity ];
+		for ( let i = 0; i < acc.count; i ++ ) for ( const c of [ 0, 1 ] ) {
+			const v = buf.readFloatLE( off + ( i * 2 + c ) * 4 );
+			if ( v < lo[ c ] ) lo[ c ] = v;
+			if ( v > hi[ c ] ) hi[ c ] = v;
+		}
+		return { u: hi[ 0 ] - lo[ 0 ], v: hi[ 1 ] - lo[ 1 ], min: lo, max: hi };
+	};
+	let checked = 0, twoSets = 0, tileWide = 0, atlasFills = 0;
+	const worst = [];
+	for ( const mesh of gltf.meshes ) for ( const pr of mesh.primitives ) {
+		if ( ! bdMat.has( pr.material ) ) continue;
+		checked ++;
+		const a = pr.attributes;
+		if ( a.TEXCOORD_0 === undefined || a.TEXCOORD_1 === undefined ) { worst.push( `${mesh.name}: sets ${Object.keys( a ).filter( k => /TEXCOORD/.test( k ) )}` ); continue; }
+		twoSets ++;
+		const s0 = span( a.TEXCOORD_0 ), s1 = span( a.TEXCOORD_1 );
+		if ( s0 && Math.max( s0.u, s0.v ) > 1.5 ) tileWide ++;
+		else worst.push( `${mesh.name}: TEXCOORD_0 spans ${s0 ? Math.max( s0.u, s0.v ).toFixed( 3 ) : '?'} - not tile units` );
+		if ( s1 && Math.max( s1.u, s1.v ) <= 1.05 && Math.max( s1.u, s1.v ) >= 0.5 ) atlasFills ++;
+		else worst.push( `${mesh.name}: TEXCOORD_1 spans ${s1 ? Math.max( s1.u, s1.v ).toFixed( 3 ) : '?'} - not a packed [0,1] atlas` );
+	}
+	check( checked > 0, `env.gltf carries backdrop primitives (${checked})` );
+	check( twoSets === checked, `every backdrop primitive carries TWO UV sets (${twoSets}/${checked})` );
+	check( twoSets > 0 && tileWide === twoSets, `TEXCOORD_0 spans more than one tile on all of them (${tileWide}/${twoSets}) - it IS the tile UV` );
+	check( twoSets > 0 && atlasFills === twoSets, `TEXCOORD_1 fills [0,1] without leaving it on all of them (${atlasFills}/${twoSets}) - it IS the packed bake atlas` );
+	if ( worst.length ) console.log( `      ${worst.slice( 0, 6 ).join( ' | ' )}` );
+}
+
 if ( ! fs.existsSync( glbPath ) ) {
-	console.log( `SKIP  env.glb UV-set measurement: ${glbPath} is not on disk` );
+	console.log( `SKIP  env.glb quantisation check: ${glbPath} is not on disk` );
 } else {
 	const buf = fs.readFileSync( glbPath );
-	const jsonLen = buf.readUInt32LE( 12 );
-	const gltf = JSON.parse( buf.subarray( 20, 20 + jsonLen ).toString( 'utf8' ) );
-	const binOff = 20 + jsonLen + 8;
-	const bdMat = new Set( gltf.materials.map( ( m, i ) => [ m.name, i ] )
-		.filter( ( [ n ] ) => /MAT_EXP_ENVBD__MAT_backdrop_/.test( n ) ).map( ( [ , i ] ) => i ) );
-	const read = ( accIdx ) => {
-		const acc = gltf.accessors[ accIdx ];
-		const bv = gltf.bufferViews[ acc.bufferView ];
-		const off = binOff + ( bv.byteOffset || 0 ) + ( acc.byteOffset || 0 );
-		const n = acc.count * 2;
-		const stride = bv.byteStride || 0;
-		const out = new Float32Array( n );
-		if ( acc.componentType === 5126 && ( ! stride || stride === 8 ) ) {
-			for ( let i = 0; i < n; i ++ ) out[ i ] = buf.readFloatLE( off + i * 4 );
-			return out;
-		}
-		// gltfpack quantises UVs to unsigned shorts with a KHR_mesh_quantization scale in the node/mat
-		if ( acc.componentType === 5123 ) {
-			for ( let i = 0; i < acc.count; i ++ ) {
-				const b = off + i * ( stride || 4 );
-				out[ i * 2 ] = buf.readUInt16LE( b ); out[ i * 2 + 1 ] = buf.readUInt16LE( b + 2 );
-			}
-			return out;
-		}
-		return null;
-	};
-	// the material's KHR_texture_transform, when the file still carries one: gltfpack's shared-box
-	// quantisation. With -vtf (this round) there is none and the UVs are already metres-per-tile.
-	const xfOf = ( matIdx ) => {
-		const t = ( ( gltf.materials[ matIdx ] || {} ).pbrMetallicRoughness || {} ).baseColorTexture;
-		const x = t && t.extensions && t.extensions.KHR_texture_transform;
-		return x ? { scale: x.scale || [ 1, 1 ], offset: x.offset || [ 0, 0 ] } : { scale: [ 1, 1 ], offset: [ 0, 0 ] };
-	};
-	let checked = 0, twoSets = 0, tileWide = 0, atlasInUnit = 0;
-	for ( const mesh of gltf.meshes ) {
-		for ( const pr of mesh.primitives ) {
-			if ( ! bdMat.has( pr.material ) ) continue;
-			checked ++;
-			const a = pr.attributes;
-			if ( a.TEXCOORD_0 !== undefined && a.TEXCOORD_1 !== undefined ) twoSets ++;
-			// the accessor min/max are authoritative and survive quantisation: the tile UV runs in tile
-			// units over a whole city block, the packed bake atlas cannot leave [0,1].
-			const span = ( which ) => {
-				if ( a[ which ] === undefined ) return null;
-				const acc = gltf.accessors[ a[ which ] ];
-				if ( ! acc.min || ! acc.max ) { const v = read( a[ which ] ); if ( ! v ) return null;
-					let lo = Infinity, hi = - Infinity;
-					for ( let i = 0; i < v.length; i ++ ) { if ( v[ i ] < lo ) lo = v[ i ]; if ( v[ i ] > hi ) hi = v[ i ]; }
-					return hi - lo; }
-				return Math.max( acc.max[ 0 ] - acc.min[ 0 ], acc.max[ 1 ] - acc.min[ 1 ] );
-			};
-			const xf = xfOf( pr.material );
-			const s0raw = span( 'TEXCOORD_0' ), s1raw = span( 'TEXCOORD_1' );
-			const s0 = s0raw === null ? null : s0raw * xf.scale[ 0 ];
-			const s1 = s1raw === null ? null : s1raw * xf.scale[ 0 ];
-			if ( s0 !== null && s0 > 1.5 ) tileWide ++;
-			// the packed bake atlas fills its square: inside [0,1] AND not collapsed into a sliver,
-			// which is what a shared-box quantisation of a many-tile UV0 would leave of it.
-			if ( s1 !== null && s1 <= 1.05 && s1 >= 0.5 ) atlasInUnit ++;
-		}
+	const gltf = JSON.parse( buf.subarray( 20, 20 + buf.readUInt32LE( 12 ) ).toString( 'utf8' ) );
+	const bdMat = new Set( gltf.materials.map( ( m, i ) => [ m.name, i ] ).filter( ( [ n ] ) => BD_RE.test( n ) ).map( ( [ , i ] ) => i ) );
+	let prims = 0, float = 0, xf = 0;
+	for ( const mesh of gltf.meshes ) for ( const pr of mesh.primitives ) {
+		if ( ! bdMat.has( pr.material ) ) continue;
+		prims ++;
+		const a = pr.attributes;
+		const sets = [ a.TEXCOORD_0, a.TEXCOORD_1 ].filter( ( x ) => x !== undefined );
+		if ( sets.length === 2 && sets.every( ( i ) => gltf.accessors[ i ].componentType === 5126 ) ) float ++;
+		const t = ( ( gltf.materials[ pr.material ] || {} ).pbrMetallicRoughness || {} ).baseColorTexture;
+		if ( t && t.extensions && t.extensions.KHR_texture_transform ) xf ++;
 	}
-	check( checked > 0, `env.glb carries backdrop primitives (${checked})` );
-	check( twoSets === checked, `every backdrop primitive carries TWO UV sets (${twoSets}/${checked})` );
-	check( tileWide === checked, `TEXCOORD_0 spans more than one tile on all of them (${tileWide}/${checked}) — it is the tile UV` );
-	check( atlasInUnit === checked, `TEXCOORD_1 fills [0,1] without leaving it on all of them (${atlasInUnit}/${checked}) — it is the packed bake atlas, at full precision` );
+	check( prims > 0, `env.glb carries backdrop primitives (${prims})` );
+	check( float === prims,
+		`both UV sets are FLOAT in the packed glb (${float}/${prims}) - gltfpack -vtf, so the many-tile `
+		+ `TEXCOORD_0 cannot drag the bake atlas onto its own quantisation box` );
+	check( xf === 0, `and no KHR_texture_transform is left to apply to the wrong set (${xf} material(s) carry one)` );
 }
 
 console.log( fails ? `${fails} FAILURES` : 'all backdrop-tile checks passed' );
