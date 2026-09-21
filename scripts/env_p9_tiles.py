@@ -67,7 +67,14 @@ def fbm(res, cells, rng, octaves=3, rough=0.5):
     return out / tot
 
 
-def normalise(a, mean=0.5, lo=0.06, hi=0.96):
+# MEAN_GAIN: the tiles are normalised to 0.505, not 0.500.  A mean-1.0 multiplicative gain is mean-preserving in
+# LINEAR albedo, but AgX is concave there, so the render came out 1 % dark (round 2: -0.005 luma at every box) and
+# AgX read the darker pixels as more saturated (+0.005 to +0.018).  A +0.005 lift on the tile mean is a +1.0 %
+# lift on the gain at amp 2.0, which is what the measurement says the transfer costs.
+MEAN_GAIN = 0.505
+
+
+def normalise(a, mean=MEAN_GAIN, lo=0.12, hi=0.92):
     """Shift/clip so the channel mean is `mean` and nothing leaves [lo, hi] (gain stays positive)."""
     a = a.astype(np.float64)
     for _ in range(6):
@@ -101,7 +108,7 @@ def make_facade():
     v += (fbm(res, 8, rng, 3, 0.55) - 0.5) * 0.070
     v += (fbm(res, 48, rng, 2, 0.5) - 0.5) * 0.045
 
-    cool = np.zeros((res, res))          # >0 = push the gain cool (windows), used on R/B below
+    cool = np.zeros((res, res))  # noqa: E501          # >0 = push the gain cool (windows), used on R/B below
 
     # y is row 0 = top of the image = top of the tile.  v of the UV grows with world z, and PNG row 0 is v=1 in
     # Blender's image space, so "row 0 = top" is consistent with storeys stacking upward.
@@ -151,7 +158,9 @@ def make_facade():
     v = normalise(v)
     # windows cool the gain: the hero wall band measures saturation 0.654 against ref 169's 0.431, and a quarter
     # of its pixels are glass.  Luma is held (the R loss is matched by the B gain at Rec.709 weights).
-    rgbv = np.dstack([v * (1.0 - 0.10 * cool), v * (1.0 - 0.015 * cool), v * (1.0 + 0.16 * cool)])
+    # round 3: the tint was R x0.90 / B x1.16, which multiplied an ochre albedo into a BLUE one and raised the
+    # hero band's saturation 0.666 -> 0.676 where the photograph wants 0.395.  Cut to a quarter.
+    rgbv = np.dstack([v * (1.0 - 0.030 * cool), v * (1.0 - 0.005 * cool), v * (1.0 + 0.045 * cool)])
     for c in range(3):
         rgbv[..., c] = normalise(rgbv[..., c])
     return save("bd_facade", rgbv)
@@ -162,21 +171,23 @@ def make_roof():
     res, (tu, tv) = TILES["bd_roof"]
     rng = np.random.default_rng(9302)
     v = np.full((res, res), 0.50)
-    v += (fbm(res, 6, rng, 3, 0.6) - 0.5) * 0.16          # resurfacing patches / ponding
-    v += (fbm(res, 64, rng, 2, 0.5) - 0.5) * 0.10         # gravel grain (~0.25 m)
+    # R3 round 2: the first cut had channel sd 0.064, half the facade's, and cam06 gives the flat roofs
+    # 259 656 px -- the largest single backdrop group in the frame.  Contrast raised to land near 0.10.
+    v += (fbm(res, 6, rng, 3, 0.6) - 0.5) * 0.26          # resurfacing patches / ponding
+    v += (fbm(res, 64, rng, 2, 0.5) - 0.5) * 0.16         # gravel grain (~0.25 m)
     # felt seams every 3 m
     per = max(4, int(round(res * 3.0 / tu)))
-    v[::per, :] *= 0.72
-    v[:, ::per] *= 0.78
+    v[::per, :] *= 0.62
+    v[:, ::per] *= 0.70
     # roof furniture: penthouses, vents, ducts -- with the shadow each one throws.  This is what stops cam06's
     # 259 656 roof pixels reading as one poster-flat field.
-    for _ in range(7):
+    for _ in range(11):
         w = int(rng.uniform(1.0, 3.5) / tu * res)
         h = int(rng.uniform(1.0, 2.8) / tv * res)
         x = rng.integers(0, res - w - 1); y = rng.integers(0, res - h - 1)
-        v[y:y + h, x:x + w] = rng.uniform(0.56, 0.66)                        # lit top
+        v[y:y + h, x:x + w] = rng.uniform(0.62, 0.76)                        # lit top
         sh = max(2, res // 160)
-        v[y + h:y + h + sh + h // 4, x + sh:x + w + sh] = rng.uniform(0.30, 0.38)   # cast shadow
+        v[y + h:y + h + sh + h // 4, x + sh:x + w + sh] = rng.uniform(0.20, 0.30)   # cast shadow
         v[y:y + max(1, h // 8), x:x + w] = 0.72                              # coping highlight
     v = normalise(v)
     return save("bd_roof", np.dstack([v, v, v]))
@@ -230,7 +241,7 @@ def make_canopy():
     v = normalise(v)
     # the shaded gaps go cool, the lit tops warm: ref 105's tree masses sit at saturation 0.04-0.13, so this is a
     # small move, but it is the difference between a mass and a flat green card.
-    warm = np.clip((v - 0.5) * 2.0, -1, 1)
+    warm = np.clip((v - MEAN_GAIN) * 2.0, -1, 1)
     rgbv = np.dstack([v * (1.0 + 0.06 * warm), v, v * (1.0 - 0.05 * warm)])
     for c in range(3):
         rgbv[..., c] = normalise(rgbv[..., c])

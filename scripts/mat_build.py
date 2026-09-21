@@ -1783,11 +1783,16 @@ def _principled_of(mat):
 # (luma, saturation, the lot spread, the palace's shade) is untouched -- only the variance around them moves.
 #
 # name -> (tile image, strength, keep)
+# Round 2 amplitudes.  Round 1 (post-haze, strengths 1.10/0.75/0.80/1.00, keep 0.55) moved cam06's top-row hf
+# +5.3 %, city r1c3 +8.4 %, far field +10.7 % -- real, but the photograph wants 4.6x, so the amplitude goes to
+# the arithmetic ceiling: `strength` is capped by the tile's darkest texel, because gain = 1 + (tex-0.5)*2*strength
+# must stay positive or the map stops being mean-1.0.  With the round-2 tiles clipped to [0.12, 0.92] the worst
+# deviation is 0.38, so 2*strength <= 2.6 (min gain 0.01) and the values below keep min gain >= 0.10.
 BACKDROP_TILES = {
-    "MAT_backdrop_building":  ("bd_facade", 1.10, 0.55),
-    "MAT_backdrop_roof":      ("bd_roof", 0.75, 0.55),
-    "MAT_backdrop_roof_tile": ("bd_rooftile", 0.80, 0.55),
-    "MAT_backdrop_forest":    ("bd_canopy", 1.00, 0.60),
+    "MAT_backdrop_building":  ("bd_facade", 1.25, 0.70),
+    "MAT_backdrop_roof":      ("bd_roof", 1.15, 0.70),
+    "MAT_backdrop_roof_tile": ("bd_rooftile", 1.10, 0.70),
+    "MAT_backdrop_forest":    ("bd_canopy", 1.20, 0.70),
 }
 # the haze band each material occupies -- must match apply_backdrop_atmosphere()
 BACKDROP_HAZE = {
