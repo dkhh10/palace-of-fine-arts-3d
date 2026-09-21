@@ -569,6 +569,19 @@ export function normaliseManifest( raw, baseUrl ) {
 	if ( ! skyOpenIrradianceOverPi ) notes.push( `sky.open_irradiance_over_pi absent or malformed `
 		+ `(${JSON.stringify( skyOpenRaw )}): the specular gate is OFF and the viewer keeps the ungated `
 		+ `Phase 8 specular. Re-run export/manifest_v4.py.` );
+	// Phase 9 round 2: the same sky resolved for the surface's OWN normal.  The constant above is the
+	// open sky for an UPWARD-facing surface only, and using it for every normal cost the sunlit stations
+	// their IBL specular (docs/briefs/phase9_viewer_capture_report.md B).  `sky.diffuse_lobes` is 40
+	// delta lobes with E0(n)/pi = sum max(dot(n, d), 0) * rgb, in three.js world axes and in the bake's
+	// units, re-derived by manifest_v4 on every run.  No default and no guessed lobe: without this block
+	// the round-2 gate does not build and the viewer says so.
+	const lobesRaw = pick( sky, 'diffuse_lobes' ) || null;
+	const skyDiffuseLobes = lobesRaw && Array.isArray( lobesRaw.lobes ) && lobesRaw.basis === 'delta_lobes_v1'
+		&& lobesRaw.lobes.length >= 8 && Number( lobesRaw.floor_frac ) > 0
+		? { lobes: lobesRaw.lobes, floorFrac: Number( lobesRaw.floor_frac ), count: lobesRaw.lobes.length } : null;
+	if ( ! skyDiffuseLobes ) notes.push( `sky.diffuse_lobes absent or malformed: the round-2 specular `
+		+ `gate (E0 for the surface's own normal) is unavailable; ?specgate=1 still builds round 1. `
+		+ `Re-run export/manifest_v4.py.` );
 
 	// --- sun (specular only; the diffuse is in the lightmaps) ----------------------------------
 	// The manifest's `direction_blender` / `direction_gltf` is the direction the light TRAVELS, so the
@@ -1272,7 +1285,7 @@ export function normaliseManifest( raw, baseUrl ) {
 		schema: pick( raw, 'schema' ) || null,
 		waterZ: def( pick( raw, 'water.viewer_y', 'water.water_z', 'water_z', 'waterZ', 'scene.water_z' ), WATER_Z, 'water_z' ),
 		sky: { camera: skyCamera, glossy: skyGlossy, diffuse: skyDiffuse, rotationDeg: skyRotationDeg,
-			openIrradianceOverPi: skyOpenIrradianceOverPi },
+			openIrradianceOverPi: skyOpenIrradianceOverPi, diffuseLobes: skyDiffuseLobes },
 		frameSize: pick( raw, 'frame', 'render.frame' ) || { width: 1280, height: 720 },
 	};
 	if ( ! glbs.length ) notes.push( 'no glb in the manifest: test scene only' );

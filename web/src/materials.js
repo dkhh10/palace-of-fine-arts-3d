@@ -34,16 +34,39 @@ import * as THREE from 'three';
 //
 // The lightmap already carries both visibilities, because LIGHT_sun ships at (1, 0.607, 0) — ZERO
 // blue — so a texel's blue channel IS the sky's own contribution at that point:
-//     skyVis = lightmap.b / openSky.b                                  scales the IBL specular
-//     sunVis = (lightmap.r - (openSky.r/openSky.b)*lightmap.b) / sunIrrOverPi   scales directSpecular
+//     skyVis = lightmap.b / E0(n).b                                        scales the IBL specular
+//     sunVis = (lightmap.r - (E0(n).r/E0(n).b)*lightmap.b)
+//              / (sunIrrOverPi * max(dotNL, 0.05))                         scales directSpecular
 // UNITS, which is where this goes wrong if it goes wrong at all.  `lightMapIrradiance` in the chunk
 // below is the decoded texel TIMES `lightMapIntensity` (= manifest `lightmaps.scale`, pi), because
-// three divides by pi again in BRDF_Lambert.  The manifest's two constants are in the BAKE's units —
+// three divides by pi again in BRDF_Lambert.  The manifest's constants are in the BAKE's units —
 // Cycles' colour-off diffuse pass, irradiance/pi — so the scale is divided back out before either
-// ratio is formed.  Dividing by the live uniform, rather than folding pi into the constants, is what
-// keeps `?lmscale=` honest: the gate follows whatever scale the material actually got.
+// ratio is formed.  The division is by the live uniform rather than a folded-in pi, so the gate
+// follows whatever scale the material actually got.
+//
+// ROUND 2 (decisions.md 2026-09-21), after the six-station capture measured round 1:
+//   1. `E0(n)` REPLACES the constant `openSky`.  Round 1 divided every texel's blue by the open-sky
+//      irradiance of an UPWARD-facing surface (11.256).  A vertical wall never sees more than half the
+//      sky and an east wall under this sky much less, so fully unoccluded walls read skyVis 0.14-0.5
+//      and lost most of their IBL specular, which Cycles keeps: the 0.5 % parity budget outside shade
+//      was missed at all six stations (0.67-6.59 %) and cam05 regressed (p10 64.3 -> 55.2 against
+//      Cycles' 64.9).  `E0(n)` is the same sky resolved for the surface's OWN world normal, so an
+//      unoccluded surface of any orientation reads exactly 1.0.  It is evaluated from the manifest's
+//      `sky.diffuse_lobes` (40 delta lobes; the brief's SH9 is 23-58 % high on this near-horizon sky
+//      and is written to the manifest for the record only — manifest_v4.py says why, with numbers).
+//   2. `sunVis` is DIVIDED BY dotNL.  (lm.r - k*lm.b)/sunIrrOverPi is sunVis*dotNL, and it multiplied
+//      `reflectedLight.directSpecular`, which already carries dotNL (three's RE_Direct: irradiance =
+//      dotNL * lightColor) — so the sun's specular was darkened by dotNL twice.  dotNL is taken from
+//      the same geometry normal against the manifest's own sun direction, and floored at 0.05 so a
+//      grazing face cannot amplify.
+//   3. The sky's red share removed from lm.r is `E0(n).r / E0(n).b`, not the constant 0.195: under
+//      this sky an east wall's unoccluded sky is 2.5x RED-over-blue, and subtracting 0.195 there would
+//      leave the sky's own warmth in the sun's channel.
+// `?specgate=1` keeps round 1 reachable for the A/B; `?specgate=0` is the Phase 8 path.
 const SPEC_GATE_DECLS = 'float pfaSkyVis = 1.0;\n\tfloat pfaSunVis = 1.0;\n';
 const IBL_RADIANCE_LINE = 'radiance += iblRadiance;';
+
+const cl01 = ( v ) => Math.min( 1, Math.max( 0, v ) );
 
 /**
  * The compiled-in constants, or null when the manifest does not carry them (then nothing is gated and
@@ -51,32 +74,108 @@ const IBL_RADIANCE_LINE = 'radiance += iblRadiance;';
  * wrong specular everywhere, and silently.
  * @param {number[]} openSky manifest `sky.open_irradiance_over_pi`, scene-linear irradiance/pi
  * @param {number} sunIrrOverPi manifest `sun.irradiance_over_pi`
+ * @param {{lobes?:number[][], floorFrac?:number, sunDir?:number[]}} [opts] manifest
+ *        `sky.diffuse_lobes` + the unit direction TOWARD the sun in three world axes.  Absent (or
+ *        `mode: 'r1'`) builds the ROUND 1 gate, which is only right for an upward-facing surface.
  */
-export function specGateFrom( openSky, sunIrrOverPi ) {
+export function specGateFrom( openSky, sunIrrOverPi, opts = null ) {
 	const s = Array.isArray( openSky ) ? openSky.map( Number ) : null;
 	const n = Number( sunIrrOverPi );
 	if ( ! s || s.length !== 3 || ! s.every( v => Number.isFinite( v ) && v > 0 ) ) return null;
 	if ( ! Number.isFinite( n ) || n <= 0 ) return null;
-	return { openSky: s, openSkyB: s[ 2 ], skyRedOverBlue: s[ 0 ] / s[ 2 ], sunIrrOverPi: n };
+	const r1 = { mode: 'r1', openSky: s, openSkyB: s[ 2 ], skyRedOverBlue: s[ 0 ] / s[ 2 ], sunIrrOverPi: n };
+	if ( ! opts || opts.mode === 'r1' ) return r1;
+	// round 2 needs BOTH halves of its own inputs; without them it is not round 1 by default, because
+	// round 1's sunlit end is the defect this round exists to fix.  Gate OFF is the stated fallback.
+	const lobes = Array.isArray( opts.lobes ) ? opts.lobes.map( l => Array.from( l, Number ) ) : null;
+	const sun = Array.isArray( opts.sunDir ) ? Array.from( opts.sunDir, Number ) : null;
+	const ff = Number( opts.floorFrac );
+	if ( ! lobes || lobes.length < 8
+		|| ! lobes.every( l => l.length === 6 && l.every( Number.isFinite )
+			&& Math.abs( Math.hypot( l[ 0 ], l[ 1 ], l[ 2 ] ) - 1 ) < 1e-3
+			&& l[ 3 ] >= 0 && l[ 4 ] >= 0 && l[ 5 ] >= 0 ) ) return null;
+	if ( ! sun || sun.length !== 3 || ! sun.every( Number.isFinite )
+		|| Math.abs( Math.hypot( ...sun ) - 1 ) > 1e-3 ) return null;
+	if ( ! Number.isFinite( ff ) || ! ( ff > 0 ) || ff >= 0.5 ) return null;
+	const zenithB = skyE0OverPi( lobes, [ 0, 1, 0 ] )[ 1 ];
+	if ( ! ( zenithB > 0 ) ) return null;
+	return { ...r1, mode: 'r2', lobes, sunDir: sun, floorFrac: ff, floor: ff * zenithB, zenithB };
+}
+
+/** `E0(n)/pi` — the UNOCCLUDED sky irradiance/pi for a world normal (three axes), as (r, b).  The
+ *  shader's `pfaSkyE0` is generated to compute exactly this. */
+export function skyE0OverPi( lobes, n ) {
+	let r = 0, b = 0;
+	for ( let i = 0; i < lobes.length; i ++ ) {
+		const l = lobes[ i ];
+		const c = l[ 0 ] * n[ 0 ] + l[ 1 ] * n[ 1 ] + l[ 2 ] * n[ 2 ];
+		if ( c > 0 ) { r += c * l[ 3 ]; b += c * l[ 5 ]; }
+	}
+	return [ r, b ];
 }
 
 /** The reference implementation of the gate, in the BAKE's units (irradiance/pi).  `specGateGlsl`
  *  below is generated to compute exactly this; web/test/spec_gate_test.mjs checks both against the
- *  B.6 decile table and checks that the emitted GLSL carries these same three constants. */
-export function specGateEval( lmOverPi, g ) {
+ *  B.6 decile table and checks that the emitted GLSL carries these same constants.
+ *  @param {number[]} lmOverPi the decoded texel divided by lightMapIntensity
+ *  @param {number[]} [normal] the surface's WORLD normal (three axes) — required by round 2 */
+export function specGateEval( lmOverPi, g, normal = null ) {
 	if ( ! g ) return { skyVis: 1, sunVis: 1 };
 	const [ r, , b ] = lmOverPi;
-	const cl = ( v ) => Math.min( 1, Math.max( 0, v ) );
-	return { skyVis: cl( b / g.openSkyB ), sunVis: cl( ( r - g.skyRedOverBlue * b ) / g.sunIrrOverPi ) };
+	if ( g.mode !== 'r2' )
+		return { skyVis: cl01( b / g.openSkyB ), sunVis: cl01( ( r - g.skyRedOverBlue * b ) / g.sunIrrOverPi ) };
+	const n = normal || [ 0, 1, 0 ];
+	const [ e0r, e0b ] = skyE0OverPi( g.lobes, n );
+	const den = Math.max( e0b, g.floor );
+	const nl = Math.max( g.sunDir[ 0 ] * n[ 0 ] + g.sunDir[ 1 ] * n[ 1 ] + g.sunDir[ 2 ] * n[ 2 ], 0.05 );
+	return { skyVis: cl01( b / den ), sunVis: cl01( ( r - ( e0r / den ) * b ) / ( g.sunIrrOverPi * nl ) ),
+		e0: [ e0r, e0b ], dotNL: nl };
+}
+
+/** GLSL for `pfaSkyE0`, inserted after `#include <common>` in the fragment shader (round 2 only). */
+export function specGateCommonGlsl( g ) {
+	if ( ! g || g.mode !== 'r2' ) return '';
+	const f = ( v ) => v.toFixed( 6 );
+	return '\n// PFA specular gate (round 2): the UNOCCLUDED sky irradiance/pi for a world normal, as\n'
+		+ '// (r, b).  40 delta lobes from the manifest\'s sky.diffuse_lobes — the same sky_diffuse\n'
+		+ '// equirect the PMREM is built from, resolved per normal instead of per scene.\n'
+		+ `const vec3 pfaSunDirW = vec3( ${g.sunDir.map( f ).join( ', ' )} );   // TOWARD the sun, three axes\n`
+		+ 'vec2 pfaSkyE0( const in vec3 n ) {\n\tvec2 e = vec2( 0.0 );\n'
+		+ g.lobes.map( l => `\te += max( dot( n, vec3( ${f( l[ 0 ] )}, ${f( l[ 1 ] )}, ${f( l[ 2 ] )} ) ), 0.0 )`
+			+ ` * vec2( ${f( l[ 3 ] )}, ${f( l[ 5 ] )} );\n` ).join( '' )
+		+ '\treturn e;\n}\n';
 }
 
 /** GLSL for the gate, to be inserted directly after the lightmap decode line. */
 export function specGateGlsl( g ) {
-	return '\n\t\tif ( lightMapIntensity > 1e-6 ) {                      // PFA specular gate (B.6)\n'
+	if ( g.mode !== 'r2' )
+		return '\n\t\tif ( lightMapIntensity > 1e-6 ) {                      // PFA specular gate (B.6)\n'
+			+ '\t\t\tvec3 pfaLmPi = lightMapIrradiance / lightMapIntensity;   // back to the bake\'s irradiance/pi\n'
+			+ `\t\t\tpfaSkyVis = clamp( pfaLmPi.b / ${g.openSkyB.toFixed( 6 )}, 0.0, 1.0 );\n`
+			+ `\t\t\tpfaSunVis = clamp( ( pfaLmPi.r - ${g.skyRedOverBlue.toFixed( 6 )} * pfaLmPi.b ) `
+			+ `/ ${g.sunIrrOverPi.toFixed( 6 )}, 0.0, 1.0 );\n\t\t}`;
+	return '\n\t\tif ( lightMapIntensity > 1e-6 ) {                      // PFA specular gate (round 2)\n'
 		+ '\t\t\tvec3 pfaLmPi = lightMapIrradiance / lightMapIntensity;   // back to the bake\'s irradiance/pi\n'
-		+ `\t\t\tpfaSkyVis = clamp( pfaLmPi.b / ${g.openSkyB.toFixed( 6 )}, 0.0, 1.0 );\n`
-		+ `\t\t\tpfaSunVis = clamp( ( pfaLmPi.r - ${g.skyRedOverBlue.toFixed( 6 )} * pfaLmPi.b ) `
-		+ `/ ${g.sunIrrOverPi.toFixed( 6 )}, 0.0, 1.0 );\n\t\t}`;
+		+ '\t\t\tvec3 pfaWN = inverseTransformDirection( geometryNormal, viewMatrix );\n'
+		+ '\t\t\tvec2 pfaE0 = pfaSkyE0( pfaWN );                          // the open sky for THIS normal\n'
+		+ `\t\t\tfloat pfaDen = max( pfaE0.y, ${g.floor.toFixed( 6 )} );        // a soffit's E0.b is ~0\n`
+		+ '\t\t\tpfaSkyVis = clamp( pfaLmPi.b / pfaDen, 0.0, 1.0 );\n'
+		+ '\t\t\tfloat pfaNL = max( dot( pfaWN, pfaSunDirW ), 0.05 );     // directSpecular already has dotNL\n'
+		+ '\t\t\tpfaSunVis = clamp( ( pfaLmPi.r - ( pfaE0.x / pfaDen ) * pfaLmPi.b ) '
+		+ `/ ( ${g.sunIrrOverPi.toFixed( 6 )} * pfaNL ), 0.0, 1.0 );\n\t\t}`;
+}
+
+/** A short, stable digest of the round-2 constants, for the program cache key. */
+export function specGateKey( g ) {
+	if ( ! g ) return '';
+	if ( g.mode !== 'r2' )
+		return `|sg:${g.openSkyB.toFixed( 6 )}:${g.skyRedOverBlue.toFixed( 6 )}:${g.sunIrrOverPi.toFixed( 6 )}`;
+	let h = 0x811c9dc5;
+	for ( const c of `${g.lobes.map( l => l.map( v => v.toFixed( 6 ) ).join( ',' ) ).join( ';' )}` ) {
+		h ^= c.charCodeAt( 0 ); h = Math.imul( h, 0x01000193 ) >>> 0;
+	}
+	return `|sg2:${g.floor.toFixed( 6 )}:${g.sunIrrOverPi.toFixed( 6 )}:${g.sunDir.map( v => v.toFixed( 4 ) ).join( ',' )}`
+		+ `:${g.lobes.length}:${h.toString( 16 )}`;
 }
 
 const DIRECT_DIFFUSE_LINE =
@@ -139,7 +238,9 @@ export function patchBakedMaterial( mat, opts = {} ) {
 	const gate = opts.specGate || null;
 	if ( mat.userData.pfaPatched ) return mat;
 	mat.userData.pfaPatched = { specularOnlySun, noEnvDiffuse, enc, maxRange, slot, flipV, vertexIrr, instIrr,
-		specGate: gate ? { openSkyB: gate.openSkyB, skyRedOverBlue: gate.skyRedOverBlue, sunIrrOverPi: gate.sunIrrOverPi } : null };
+		specGate: gate ? { mode: gate.mode, openSkyB: gate.openSkyB, skyRedOverBlue: gate.skyRedOverBlue,
+			sunIrrOverPi: gate.sunIrrOverPi,
+			...( gate.mode === 'r2' ? { lobes: gate.lobes.length, floor: gate.floor, sunDir: gate.sunDir } : {} ) } : null };
 	// PHASE 8b ITEM B, review r3 finding 2.  The SLOT path writes `pfaLmAtlasB` straight into
 	// `shader.uniforms` inside onBeforeCompile, where nothing can reach it: a MeshStandardMaterial has
 	// no `.uniforms` of its own, so `residentBytes()` walked past the second lightmap atlas exactly as
@@ -201,6 +302,12 @@ export function patchBakedMaterial( mat, opts = {} ) {
 				// Both factors are folded into the constant below.
 				maps += `\n\tirradiance += vColor.rgb * vColor.rgb * ${vertexIrr.toFixed( 6 )};`;
 			}
+			if ( gate && gate.mode === 'r2' ) {
+				// `pfaSkyE0` and the sun direction are file-scope in the fragment shader, so they are
+				// declared once beside `inverseTransformDirection`'s own chunk and not per call site.
+				shader.fragmentShader = once( shader.fragmentShader, '#include <common>',
+					`#include <common>${specGateCommonGlsl( gate )}`, 'spec gate: E0(n) lobes' );
+			}
 			if ( gate ) {
 				// The two visibilities are computed where the decoded texel is in scope (inside the
 				// chunk's `#ifdef USE_LIGHTMAP`), and applied where each term is: `radiance` is the IBL
@@ -251,7 +358,7 @@ export function patchBakedMaterial( mat, opts = {} ) {
 		// The gate's term is APPENDED only when the gate is on, so `?specgate=0` reproduces the Phase 8
 		// key character for character and shares its program.
 		return `${prevKey ? prevKey.call( this ) : ''}|pfa:${specularOnlySun ? 1 : 0}${noEnvDiffuse ? 1 : 0}:${enc}:${maxRange}:${slot ? 1 : 0}:${flipV ? 1 : 0}:${vertexIrr === null ? 'n' : vertexIrr.toFixed( 6 )}:${instIrr === null ? 'n' : instIrr.toFixed( 6 )}`
-			+ ( gate ? `|sg:${gate.openSkyB.toFixed( 6 )}:${gate.skyRedOverBlue.toFixed( 6 )}:${gate.sunIrrOverPi.toFixed( 6 )}` : '' );
+			+ specGateKey( gate );
 	};
 	mat.needsUpdate = true;
 	return mat;

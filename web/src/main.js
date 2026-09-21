@@ -109,9 +109,11 @@ const CFG = {
 	detailBias: qs.has( 'detailbias' ) ? parseFloat( qs.get( 'detailbias' ) ) : - 2.0,  // detail mip footprint shrink (log2)
 	detailGain: qs.has( 'detailgain' ) ? parseFloat( qs.get( 'detailgain' ) ) : 1.0,    // contrast gain on the detail ratio
 	// Phase 9 (docs/briefs/phase9_bake_analysis_report.md B.6): gate the two SPECULAR terms by the sky
-	// and sun visibility the lightmap already carries.  `?specgate=0` is the A/B — it restores the
-	// Phase 8 path exactly (no GLSL, no cache-key term, the same program).
-	specGate: qs.get( 'specgate' ) !== '0',
+	// and sun visibility the lightmap already carries.  Default = ROUND 2 (E0 for the surface's own
+	// normal, sunVis divided by dotNL).  `?specgate=0` restores the Phase 8 path exactly (no GLSL, no
+	// cache-key term, the same program); `?specgate=1` is the round-1 gate as deployed on 2026-09-20,
+	// kept for the A/B against that capture set.
+	specGate: qs.get( 'specgate' ) === '0' ? 'off' : ( qs.get( 'specgate' ) === '1' ? 'r1' : 'r2' ),
 	lmFlip: qs.get( 'lmflip' ) === '1',                 // diagnostic: flip the lightmap V (UV origin test)
 	lmEnc: qs.get( 'lmenc' ) || null,                   // diagnostic: force the lightmap decode (gamma2|linear|rgbm8)
 	uvDequant: qs.get( 'uvdq' ) !== '0',                // undo gltfpack's texcoord quantisation (default on)
@@ -1566,17 +1568,29 @@ async function afterGeometry( newRoots, tier ) {
 		if ( iiSplit && ! tier ) note( `gate4 instance irradiance SKIPPED: ${iiGlb} ships as ${envGroups} tier groups and the `
 			+ `manifest carries no per-group node indices (lightmaps.instance_irradiance.groups) — the shrub and reed `
 			+ `placements stay on the probe` );
-		// B.6 specular gate.  Built from the manifest's own two constants, never from a literal; null
-		// (no constants, or ?specgate=0) leaves every material on the Phase 8 path.
-		const specGate = CFG.specGate
-			? specGateFrom( manifest.sky.openIrradianceOverPi, manifest.sun.irradianceOverPi ) : null;
-		if ( ! tier ) note( specGate
-			? `spec gate ON: skyVis = lightmap.b / ${specGate.openSkyB.toFixed( 4 )}, `
-				+ `sunVis = (lightmap.r - ${specGate.skyRedOverBlue.toFixed( 4 )} * lightmap.b) / `
-				+ `${specGate.sunIrrOverPi.toFixed( 4 )}, both in irradiance/pi (the decoded texel divided by `
-				+ `lightMapIntensity); IBL specular x skyVis, sun directSpecular x sunVis`
-			: `spec gate OFF (${CFG.specGate ? 'the manifest carries no sky.open_irradiance_over_pi / '
-				+ 'sun.irradiance_over_pi' : '?specgate=0'}): the Phase 8 ungated specular path` );
+		// B.6 specular gate.  Built from the manifest's own constants, never from a literal; null
+		// (no constants, or ?specgate=0) leaves every material on the Phase 8 path.  The round-2 gate
+		// also needs the sun's direction in THREE's axes — the same `toSunBlender` the DirectionalLight
+		// above was placed with, through the same `b2t`, so the gate's dotNL is the light's own dotNL.
+		const toSun = b2t( ...manifest.sun.toSunBlender ).normalize();
+		const specGate = CFG.specGate === 'off' ? null
+			: specGateFrom( manifest.sky.openIrradianceOverPi, manifest.sun.irradianceOverPi,
+				CFG.specGate === 'r1' ? { mode: 'r1' }
+					: { ...( manifest.sky.diffuseLobes || {} ), sunDir: toSun.toArray() } );
+		if ( ! tier ) note( ! specGate
+			? `spec gate OFF (${CFG.specGate === 'off' ? '?specgate=0'
+				: 'the manifest carries no sky.open_irradiance_over_pi / sun.irradiance_over_pi'
+					+ ( CFG.specGate === 'r2' ? ' / sky.diffuse_lobes' : '' )}): the Phase 8 ungated specular path`
+			: specGate.mode === 'r2'
+				? `spec gate ON (round 2): skyVis = lightmap.b / max(E0(n).b, ${specGate.floor.toFixed( 4 )}), `
+					+ `sunVis = (lightmap.r - (E0(n).r/E0(n).b) * lightmap.b) / (${specGate.sunIrrOverPi.toFixed( 4 )} `
+					+ `* max(dotNL, 0.05)), all in irradiance/pi (the decoded texel divided by lightMapIntensity); `
+					+ `E0(n) from ${specGate.lobes.length} sky lobes (zenith b ${specGate.zenithB.toFixed( 3 )}), `
+					+ `sun toward [${toSun.toArray().map( v => v.toFixed( 3 ) )}]; IBL specular x skyVis, `
+					+ `sun directSpecular x sunVis`
+				: `spec gate ON (round 1, ?specgate=1): skyVis = lightmap.b / ${specGate.openSkyB.toFixed( 4 )}, `
+					+ `sunVis = (lightmap.r - ${specGate.skyRedOverBlue.toFixed( 4 )} * lightmap.b) / `
+					+ `${specGate.sunIrrOverPi.toFixed( 4 )}, both in irradiance/pi` );
 		const report = applyGate3Lightmaps( {
 			scene, gate3: manifest.gate3, assets: manifest.assets, note, flipV: CFG.lmFlip, encodeOverride: CFG.lmEnc,
 			specGate,
