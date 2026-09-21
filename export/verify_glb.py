@@ -698,6 +698,40 @@ def verify_gate5(out_dir, variant="desktop"):
     rep["far_tree_counts"] = counts
     bad.extend(far_bad)
 
+    # 4b. PHASE 9: the backdrop gain tiles, and the two UV sets they depend on.
+    #     Every group the manifest names must be published like any other texture, AND the manifest must
+    #     state the two UV indices as DIFFERENT sets with the tile at 0. A swap is invisible in bytes and
+    #     in every count above; it is a city sampled at 64 tiles per metre off a 1 K packed atlas.
+    bdt = man.get("backdrop_tiles")
+    if bdt:
+        bd_bad, bd_files = [], 0
+        g2f = man["textures"]["gate2"]["files"]
+        tile_i, baked_i = bdt["uv"].get("tile"), bdt["uv"].get("baked")
+        if tile_i != "TEXCOORD_0" or baked_i != "TEXCOORD_1":
+            bd_bad.append(f"backdrop_tiles.uv is tile={tile_i} baked={baked_i}, expected TEXCOORD_0 / TEXCOORD_1")
+        for name, g in sorted(bdt["groups"].items()):
+            key = g.get("texture")
+            row = g2f.get(key)
+            if not row:
+                bd_bad.append(f"{name}: tile key {key} is not a textures.gate2.files row")
+                continue
+            rel = os.path.normpath(os.path.join(man["textures"]["gate2"]["ktx2_dir"], row["path"]))
+            if rel not in published and key not in lo_of:
+                bd_bad.append(f"{name}: {rel} is published in no tier and has no {lo_dir} twin")
+            elif rel in published and not _pub(out, rel).exists():
+                bd_bad.append(f"{name}: {rel} is published but not on disk")
+            else:
+                bd_files += 1
+            if row.get("colorspace") != "linear":
+                bd_bad.append(f"{key}: colorspace {row.get('colorspace')!r} - a gain map is Non-Color")
+            mset = man["materials"]["sets"].get(name)
+            if mset is not None and int(mset.get("texcoord", 0)) != 1:
+                bd_bad.append(f"{name}: materials set texcoord {mset.get('texcoord')} but the tile rides "
+                              f"TEXCOORD_0 - the two UV sets are swapped")
+        rep["backdrop_tiles"] = dict(groups=len(bdt["groups"]), published=bd_files,
+                                     bytes=bdt.get("bytes"), uv=bdt.get("uv"))
+        bad.extend(bd_bad)
+
     # 4. the per-file cap
     over = [(e["path"], e["bytes"]) for e in man["files"] if (e["bytes"] or 0) > cap]
     if over:
