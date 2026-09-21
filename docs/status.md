@@ -1089,5 +1089,5 @@ Open residuals (docs/delivery.md Phase 9): frieze/soffit over-warm + shaft a* (M
 Burn (list rates): session 10 (e93f113b) 270.08 USD so far at 18:44 (opus-5 231, fable-5-1 39; the rest of the evening not yet in the transcript index); session 9 final 56.26; session 8 final 387.06.
 
 ## 2026-09-21 ~23:00 · Retrospective of Phase 6 delivered on branch analysis/retro (lead, Fable 5.1; read-only elsewhere)
-Merged nothing. Delivered: docs/phase6_story.html (self-contained, 1.9 MB), docs/retrospective_phase6.md, docs/usage/phase6_audit.py (+ .json/.md), make_phase6_story.py, and  in usage_from_transcripts.py. Burn this session $19.92 nominal, no subagents.
+Merged nothing. Delivered: docs/phase6_story.html (self-contained, 1.9 MB), docs/retrospective_phase6.md, docs/usage/phase6_audit.py (+ .json/.md), make_phase6_story.py, and the `--turns` mode in usage_from_transcripts.py. Burn this session $19.92 nominal, no subagents.
 Next: the user reads the page and the audit; the ten CLAUDE.md proposals in the audit §8 wait for the user's decision; nothing in flight.

@@ -360,7 +360,7 @@ who was asked questions after leaving. Phase 5's waits were the machine's; Phase
 ## 10. This audit's own burn
 
 Session 6cfdbe19 (Fable 5.1 at high effort, no subagents, no Sonnet helpers, no Blender, no Chrome): $19.92 nominal at list rates for the
-whole session up to the final burn run (, row 6cfdbe19; 2026-09-21 22:08 to about 23:00 local). Sonnet helpers
+whole session up to the final burn run (`docs/usage/summary.md`, row 6cfdbe19; 2026-09-21 22:08 to about 23:00 local). Sonnet helpers
 were not used: the two mechanical jobs (image crops, contact sheet) were cheaper as one shell loop each than as briefs. In "weekly points"
 the figure is unmeasurable for the reason given in section 6.3; on the rough 09-09 calibration it would be about one to two points against
 the four allowed.
