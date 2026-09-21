@@ -45,10 +45,10 @@ def h1(x): return f'{x:.1f}'
 SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948']
 SERIES_D = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767']
 
-def stacked_hbars(rows, series, title, unit='', width=360, fmt=lambda v: f'{v:g}', total_label=True, note=''):
+def stacked_hbars(rows, series, title, unit='', width=360, fmt=lambda v: f'{v:g}', total_label=True, note='', lab_w=74):
     """rows: [(label, [v1..vn])]; series: names. Inline SVG with legend, 2 px gaps, direct labels on segments >= 12 % of the row max, table fallback."""
     n = len(series); maxv = max(sum(v) for _, v in rows) or 1
-    lab_w = 74; bar_h = 22; gap = 8; top = 22 + 16 * ((n + 2) // 3); hgt = top + len(rows) * (bar_h + gap) + 8
+    bar_h = 22; gap = 8; top = 22 + 16 * ((n + 2) // 3); hgt = top + len(rows) * (bar_h + gap) + 8
     out = [f'<figure class="viz"><figcaption>{esc(title)}</figcaption>',
            f'<svg viewBox="0 0 {width} {hgt}" width="100%" role="img" aria-label="{esc(title)}">']
     # legend
@@ -200,9 +200,9 @@ body.append(daycard('Monday 15 September', 'Gates 0, 1 and 2 in one day: 12 hour
     f'{st} entries of 15 Sep, {qa(11)} to {qa("11d")}, {qa(12)}, {qa("12b")}, commits 70bfe73, 57addb8, 19412e4.'))
 body.append(daycard('Tuesday 16 September', 'The light bake, a forced restart, and the viewer gets its light',
     f'Finish the overnight light bake (65 jobs), review it, wire the baked light into the viewer, score it (Gate 3), then the viewer proper: fog, bloom, water, far trees as flat pictures, walking (Gate 4).',
-    f'The bake finished at 04:40 with every map usable but one. The critic accepted the lightmaps: the hero frame landed at 97 % of the render\'s brightness. Gate 4 round one closed the two biggest lighting defects.',
+    f'The bake finished before dawn (6.5 hours) with every map usable but one. The critic accepted the lightmaps: the hero frame landed at 97 % of the render\'s brightness. Gate 4 round one closed the two biggest lighting defects.',
     f'The packer had silently stripped the second set of texture coordinates from every file since Gate 1, so the baked light could not attach; found only now and re-packed. The dark hero turned out to be a rounding of those coordinates the viewer had to undo. The rotunda ceiling map was black (its surfaces faced inward) and was re-baked. A merge was blocked because the reflection probe had never been uploaded, so a "closed" defect was reopened and re-measured.',
-    f'The lead hit its own context limit at 05:34 and had to stop; the user restarted it at 08:48 (3.2 h). The user left twice (09:19 and 17:28) with the next steps written down: {h1(D("2026-09-16")["idle_h"])} h idle. Graphics chip {h1(D("2026-09-16")["gpu_busy_total_h"])} h.',
+    f'The lead had passed its own context limit and asked for a restart at 05:34; the user restarted it at 08:48 (3.2 h). The user left twice (09:19 and 17:28) with the next steps written down: {h1(D("2026-09-16")["idle_h"])} h idle. Graphics chip {h1(D("2026-09-16")["gpu_busy_total_h"])} h.',
     costline('2026-09-16'),
     f'{st} entries of 16 Sep, {qa(13)}, {qa(14)}, {dec} entries "Gate 3 hand-off" and "Gate 4 round 5", commits f8c9002, cc14323.'))
 body.append(daycard('Wednesday 17 September', 'Parity reached at 01:23; then the foliage pass the user asked for',
@@ -234,7 +234,7 @@ body.append(stacked_hbars(gate_rows, ['agent working', 'chip busy, unwatched', '
 def gate(title, img_html, s1, s2, proof, cost, scores):
     return f'<h3>{title}</h3>{img_html}<p>{s1} {s2}</p><p class="proof">Cost {cost}. {scores} Proof: {proof}</p>'
 body.append(gate('Gate 0, the vertical slice (15 Sep 09:43 to 11:50)', f'<figure class="plain"><img src="{IMG["g0"]}" alt="Gate 0 pair: viewer, Cycles, difference"><figcaption>One column and one capital: viewer (left), Blender render (middle), difference (right).</figcaption></figure>',
-    'Before scaling up, the whole pipeline was run on one column and one capital, and the viewer\'s picture was compared with a Blender render of the same slice: position matched to the pixel, brightness to 1 %.',
+    'Before scaling up, the whole pipeline was run on one column and one capital, and the viewer\'s picture was compared with a Blender render of the same slice: position matched to the pixel, the sky\'s brightness to 1 % and the lit column to within 8 %.',
     'It was hard because the viewer had to reproduce Blender\'s exact colour treatment (a 65-step colour cube baked from Blender itself) before any comparison meant anything.',
     f'<a href="../renders/web/gate0_pair.png">gate0_pair.png</a>, {dec} "Gate 0 verdict", commit 70bfe73.', money(gate_cost['g0']), 'No station scores at this gate.'))
 body.append(gate('Gate 1, geometry freeze (15 Sep 11:50 to 16:58)', slider(IMG['g1_view'], IMG['g1_cycles'], 'viewer, grey geometry', 'Blender render', 'cmp-g1'),
@@ -295,7 +295,7 @@ body.append(stacked_hbars([('Phase 6', [round(v) for _, v in role_rows])], role_
 body.append('<details><summary>The detail: by day, by model, by activity, and the limits of this attribution</summary>')
 body.append(stacked_hbars(cost_by_day, ['nominal USD'], 'By day (whole week)', '', fmt=lambda v: f'{v:,.0f}', total_label=False))
 body.append(stacked_hbars([('Phase 6', [round(P6['by_model'].get(m, {}).get('cost_usd', 0)) for m in ['claude-opus-5', 'claude-fable-5-1', 'claude-sonnet-5']])], ['Opus 5 (builders, critics, reviewers)', 'Fable 5.1 (the lead)', 'Sonnet 5 (helpers)'], 'By model', '', fmt=lambda v: f'{v:,.0f}'))
-body.append(stacked_hbars([(ACT_NAMES.get(k, k), [round(v['cost_usd'])]) for k, v in act.items()], ['nominal USD'], 'By what the request was doing (Phase 6)', '', fmt=lambda v: f'{v:,.0f}', total_label=False,
+body.append(stacked_hbars([(ACT_NAMES.get(k, k), [round(v['cost_usd'])]) for k, v in act.items()], ['nominal USD'], 'By what the request was doing (Phase 6)', '', fmt=lambda v: f'{v:,.0f}', total_label=False, lab_w=182,
                           note='One label per request by a fixed priority (pictures > waiting > editing > coordination > reading > running > thinking). A fifth of the money went to turns whose job was to check whether a job had finished.'))
 body.append(f'''<p class="note"><b>Limits.</b> These are list-price dollars computed from the transcripts, not an invoice; the subscription's weekly meter is not recorded anywhere.
 Claude Code's own running tally for the same sessions is 8 to 30 % higher because it prices small side calls the transcripts do not carry. A request that did two things is
