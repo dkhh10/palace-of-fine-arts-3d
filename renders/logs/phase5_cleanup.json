@@ -30,7 +30,7 @@
   },
   "images": {
    "linked": 0,
-   "local": 91
+   "local": 95
   },
   "lightprobes": {
    "linked": 0,
@@ -96,7 +96,7 @@
   },
   "images": {
    "linked": 0,
-   "local": 113
+   "local": 117
   },
   "lightprobes": {
    "linked": 0,
@@ -143,11 +143,11 @@
    "local": 1
   }
  },
- "datablocks_total_after": 12754,
- "datablocks_total_before": 12776,
- "file_size_bytes_after": 280989260,
- "file_size_bytes_before": 164232173,
- "file_size_mb_after": 281.0,
+ "datablocks_total_after": 12758,
+ "datablocks_total_before": 12780,
+ "file_size_bytes_after": 284182462,
+ "file_size_bytes_before": 166366371,
+ "file_size_mb_after": 284.2,
  "gates": {
   "cameras_unchanged": true,
   "reopen_under_60s": true,
@@ -156,15 +156,15 @@
  },
  "images": {
   "external_after": 0,
-  "external_before": 111,
+  "external_before": 115,
   "external_bytes_after": 0,
   "external_list": [],
   "generated": 2,
   "linked_external": [],
   "missing": [],
-  "packed_after": 89,
+  "packed_after": 93,
   "packed_before": 0,
-  "total": 91
+  "total": 95
  },
  "linked_ids_by_type": {},
  "linked_libraries": [],
@@ -185,17 +185,17 @@
   "LIGHT_PROBE": 2,
   "MESH": 9335
  },
- "open_s": 1.041,
+ "open_s": 1.443,
  "pack": {
-  "estimated_bytes": 117275933,
-  "estimated_size_after": 281508106,
-  "packed_bytes": 117275933,
-  "packed_count": 89,
+  "estimated_bytes": 118335219,
+  "estimated_size_after": 284701590,
+  "packed_bytes": 118335219,
+  "packed_count": 93,
   "requested": true,
   "skipped_reason": null
  },
  "pack_requested": true,
- "peak_rss_mb": 2014.5,
+ "peak_rss_mb": 2019.7,
  "purge_passes": [
   22,
   0
@@ -206,7 +206,7 @@
  "purged_total": 22,
  "render_lod": 0,
  "reopen_limit_s": 60.0,
- "reopen_s": 0.845,
+ "reopen_s": 1.042,
  "script": "phase5_cleanup.py",
  "viewport_preset": {
   "applied": true,
@@ -216,5 +216,5 @@
   "taa_samples": 8,
   "use_raytracing": false
  },
- "when": "20260921_064935"
+ "when": "20260921_191922"
 }
