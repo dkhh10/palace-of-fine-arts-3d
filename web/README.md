@@ -1293,6 +1293,34 @@ shared program — §4 still asserts it character for character); `1` = round 1 
 three take three different program cache keys, and `__pfaInfo().gate3.specGate` reports `mode` plus
 the constants the material actually compiled in.
 
+**What this predicts, before the capture** (computed offline from the shipped lobes, the B.6 decile
+table and each face's own normal; `skyVis / sunVis`, round 1 -> round 2):
+
+| face (three normal) | E0 (r, b) | dotNL | unoccluded + sunlit | B.6 p0-10 deep shade |
+|---|---|---|---|---|
+| hero attic, east-facing (0,0,-1) | 6.21 / 2.46 | 0.872 | 0.218 / 1.00 -> **1.00 / 1.00** | 0.008 / 0.002 -> 0.036 / 0.000 |
+| cam03 near column, toward the station (0.989, 0, -0.147) | 4.70 / 5.44 | 0.596 | 0.483 / 0.766 -> **1.00 / 1.00** | 0.008 / 0.002 -> 0.016 / 0.000 |
+| south-facing (1,0,0) | 4.04 / 7.06 | 0.473 | 0.628 / 0.597 -> **1.00 / 1.00** | 0.008 / 0.002 -> 0.013 / 0.000 |
+| upward — paving, cornice tops (0,1,0) | 2.23 / 11.32 | 0.128 | 1.00 / **0.129** -> 1.00 / 1.00 | 0.008 / 0.002 -> 0.008 / 0.012 |
+| north-facing (-1,0,0) | 1.49 / 29.65 | <= 0 | 1.00 / 0.00 -> 1.00 / 1.00 | 0.008 / 0.002 -> 0.003 / 0.044 |
+
+So the sunlit stations get their specular back where round 1 took it: an unoccluded east wall
+recovers 4.6x of its IBL specular, a south wall 1.6x, and **the paving and every upward face recover
+7.7x of the sun's highlight** (round 1 multiplied it by its own `dotNL`, 0.129 straight up). Faces
+that see MORE sky than an upward one — north and west here — were already clamped at 1.0 in round 1
+and do not move. In the deep-shade bands both gates stay under 0.05 on every face that can take a sun
+highlight at all (`dotNL > 0`); the 0.044 on a north face is `dotNL` floored at 0.05 on a face whose
+true `dotNL` is negative, where three's `directSpecular` is already zero.
+
+**cam03's `near_column` is NOT expected to move much.** Its own face is gated to `skyVis 0.016 /
+sunVis 0.000` — both still ~0, as in round 1 — so the R excess that survived round 1 (1.45x against
+Cycles, where B.6 predicted 1.05x) is **not** in either specular term and this round does not address
+it. What should move at station 3 is the rest of the frame: the sunlit colonnade and paving come back
+up, so expect the frame p10 to rise a little from 11.9 (the shaded east/south faces keep 1.6-4.6x
+more env specular than round 1 — 0.004 scene-linear on a shade pixel) while the whole-frame MAE
+against `gate12` falls. Finding the remaining warm excess at the near column is the next question,
+and it is a bake/material one, not this gate's.
+
 **Cost.** 40 dot products and two multiply-adds per lightmapped fragment, no texture, no uniform: the
 lobes are compiled into the program, so a re-baked sky changes the cache key and recompiles. The
 manifest grows **+9 734 B raw / +3 201 B gzipped** (desktop; +3 143 B mobile) for all three blocks,
