@@ -12,6 +12,7 @@ p{margin:10px 0}.lede{font-size:1.15rem;color:var(--ink2)}.kicker{color:var(--mu
 .cmp input{width:100%;margin:6px 0 0;height:36px;accent-color:var(--acc)}.tag{position:absolute;top:8px;background:rgba(0,0,0,.6);color:#fff;font-size:.8rem;padding:2px 8px;border-radius:6px;pointer-events:none}.tl{left:8px}.tr{right:8px}
 .side{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.side figure,figure.plain{margin:0}.side img,figure.plain img{width:100%;height:auto;border-radius:8px;display:block}.side figcaption,figure.plain figcaption,.viz figcaption{font-size:.85rem;color:var(--ink2);margin-top:4px}
 .viz{margin:20px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}.viz figcaption{font-weight:600;color:var(--ink);margin:0 0 6px}.viz svg text{fill:var(--ink);font-size:11px}.viz svg .lg{fill:var(--ink2)}.viz svg .lb{fill:var(--ink2)}.viz svg .dl{fill:#fff;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.85rem;color:var(--ink2);margin:2px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}.legend .s0{background:var(--s0)}.legend .s1{background:var(--s1)}.legend .s2{background:var(--s2)}.legend .s3{background:var(--s3)}.legend .s4{background:var(--s4)}.legend .s5{background:var(--s5)}.legend .s6{background:var(--s6)}.legend .s7{background:var(--s7)}
 .viz svg .s0{fill:var(--s0)}.viz svg .s1{fill:var(--s1)}.viz svg .s2{fill:var(--s2)}.viz svg .s3{fill:var(--s3)}.viz svg .s4{fill:var(--s4)}.viz svg .s5{fill:var(--s5)}.viz svg .s6{fill:var(--s6)}.viz svg .s7{fill:var(--s7)}
 details{margin:8px 0}summary{cursor:pointer;color:var(--acc)}table{border-collapse:collapse;width:100%;font-size:.88rem;margin:8px 0}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--ink2);font-weight:600}
 .day{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}.day h3{margin:0 0 6px}.day dl{margin:0}.day dt{font-weight:600;margin-top:8px;color:var(--ink2);font-size:.9rem}.day dd{margin:2px 0 0}
@@ -60,50 +61,47 @@ specialists: what the baker produced, the exporter packed, and the viewer read h
 texture is up, how coordinates are rounded, which name a tree is filed under), and every mismatch was found one step later, by looking at the
 pictures, and sent back. The audit counts the loops: four rounds to pass Gate 1, two for Gate 2, two re-bakes, two bake re-runs for the trees,
 six web deployments.</p><h2>The week, day by day</h2><figure class="viz"><figcaption>Where each day&#x27;s 24 hours went (hours)</figcaption>
-<svg viewBox="0 0 360 212" width="100%" role="img" aria-label="Where each day&#x27;s 24 hours went (hours)">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">agent working</text>
-<rect x="124" y="6" width="10" height="10" rx="2" class="s1"/><text x="138" y="15" class="lg">graphics chip busy, nobody watching</text>
-<rect x="244" y="6" width="10" height="10" rx="2" class="s2"/><text x="258" y="15" class="lg">blocked on the user</text>
-<rect x="4" y="22" width="10" height="10" rx="2" class="s3"/><text x="18" y="31" class="lg">idle, user away</text>
-<text x="68" y="69" text-anchor="end" class="lb">Sep 15</text>
-<rect x="74.0" y="54" width="135.1" height="22" rx="3" class="s0"><title>Sep 15: agent working 13.6 h</title></rect>
-<text x="141.6" y="69" text-anchor="middle" class="dl">13.6</text>
-<rect x="211.1" y="54" width="4.0" height="22" rx="3" class="s1"><title>Sep 15: graphics chip busy, nobody watching 0.6 h</title></rect>
-<rect x="217.2" y="54" width="0.5" height="22" rx="3" class="s2"><title>Sep 15: blocked on the user 0.1 h</title></rect>
-<rect x="218.2" y="54" width="95.8" height="22" rx="3" class="s3"><title>Sep 15: idle, user away 9.7 h</title></rect>
-<text x="266.1" y="69" text-anchor="middle" class="dl">9.7</text>
-<text x="320.0" y="69" class="lb">24 h</text>
-<text x="68" y="99" text-anchor="end" class="lb">Sep 16</text>
-<rect x="74.0" y="84" width="105.9" height="22" rx="3" class="s0"><title>Sep 16: agent working 10.7 h</title></rect>
-<text x="126.9" y="99" text-anchor="middle" class="dl">10.7</text>
-<rect x="181.9" y="84" width="30.3" height="22" rx="3" class="s2"><title>Sep 16: blocked on the user 3.2 h</title></rect>
-<rect x="214.2" y="84" width="98.8" height="22" rx="3" class="s3"><title>Sep 16: idle, user away 10 h</title></rect>
-<text x="263.6" y="99" text-anchor="middle" class="dl">10</text>
-<text x="319.0" y="99" class="lb">23.9 h</text>
-<text x="68" y="129" text-anchor="end" class="lb">Sep 17</text>
-<rect x="74.0" y="114" width="66.6" height="22" rx="3" class="s0"><title>Sep 17: agent working 6.8 h</title></rect>
-<text x="107.3" y="129" text-anchor="middle" class="dl">6.8</text>
-<rect x="142.6" y="114" width="62.5" height="22" rx="3" class="s2"><title>Sep 17: blocked on the user 6.4 h</title></rect>
-<text x="173.8" y="129" text-anchor="middle" class="dl">6.4</text>
-<rect x="207.1" y="114" width="106.9" height="22" rx="3" class="s3"><title>Sep 17: idle, user away 10.8 h</title></rect>
-<text x="260.6" y="129" text-anchor="middle" class="dl">10.8</text>
-<text x="320.0" y="129" class="lb">24 h</text>
-<text x="68" y="159" text-anchor="end" class="lb">Sep 18</text>
-<rect x="74.0" y="144" width="31.3" height="22" rx="3" class="s0"><title>Sep 18: agent working 3.3 h</title></rect>
-<rect x="107.3" y="144" width="201.7" height="22" rx="3" class="s2"><title>Sep 18: blocked on the user 20.2 h</title></rect>
-<text x="208.1" y="159" text-anchor="middle" class="dl">20.2</text>
-<rect x="311.0" y="144" width="3.0" height="22" rx="3" class="s3"><title>Sep 18: idle, user away 0.5 h</title></rect>
-<text x="320.0" y="159" class="lb">24 h</text>
-<text x="68" y="189" text-anchor="end" class="lb">Sep 19</text>
-<rect x="74.0" y="174" width="95.8" height="22" rx="3" class="s0"><title>Sep 19: agent working 9.7 h</title></rect>
-<text x="121.9" y="189" text-anchor="middle" class="dl">9.7</text>
-<rect x="171.8" y="174" width="0.5" height="22" rx="3" class="s1"><title>Sep 19: graphics chip busy, nobody watching 0.2 h</title></rect>
-<rect x="173.8" y="174" width="110.9" height="22" rx="3" class="s2"><title>Sep 19: blocked on the user 11.2 h</title></rect>
-<text x="229.3" y="189" text-anchor="middle" class="dl">11.2</text>
-<rect x="286.8" y="174" width="27.2" height="22" rx="3" class="s3"><title>Sep 19: idle, user away 2.9 h</title></rect>
-<text x="320.0" y="189" class="lb">24 h</text>
+<div class="legend"><span><i class="s0"></i>agent working</span><span><i class="s1"></i>chip busy, nobody watching</span><span><i class="s2"></i>blocked on the user</span><span><i class="s3"></i>idle, user away</span></div>
+<svg viewBox="0 0 360 160" width="100%" role="img" aria-label="Where each day&#x27;s 24 hours went (hours)">
+<text x="68" y="21" text-anchor="end" class="lb">Sep 15</text>
+<rect x="74.0" y="6" width="135.1" height="22" rx="3" class="s0"><title>Sep 15: agent working 13.6 h</title></rect>
+<text x="141.6" y="21" text-anchor="middle" class="dl">13.6</text>
+<rect x="211.1" y="6" width="4.0" height="22" rx="3" class="s1"><title>Sep 15: chip busy, nobody watching 0.6 h</title></rect>
+<rect x="217.2" y="6" width="0.5" height="22" rx="3" class="s2"><title>Sep 15: blocked on the user 0.1 h</title></rect>
+<rect x="218.2" y="6" width="95.8" height="22" rx="3" class="s3"><title>Sep 15: idle, user away 9.7 h</title></rect>
+<text x="266.1" y="21" text-anchor="middle" class="dl">9.7</text>
+<text x="320.0" y="21" class="lb">24 h</text>
+<text x="68" y="51" text-anchor="end" class="lb">Sep 16</text>
+<rect x="74.0" y="36" width="105.9" height="22" rx="3" class="s0"><title>Sep 16: agent working 10.7 h</title></rect>
+<text x="126.9" y="51" text-anchor="middle" class="dl">10.7</text>
+<rect x="181.9" y="36" width="30.3" height="22" rx="3" class="s2"><title>Sep 16: blocked on the user 3.2 h</title></rect>
+<rect x="214.2" y="36" width="98.8" height="22" rx="3" class="s3"><title>Sep 16: idle, user away 10 h</title></rect>
+<text x="263.6" y="51" text-anchor="middle" class="dl">10</text>
+<text x="319.0" y="51" class="lb">23.9 h</text>
+<text x="68" y="81" text-anchor="end" class="lb">Sep 17</text>
+<rect x="74.0" y="66" width="66.6" height="22" rx="3" class="s0"><title>Sep 17: agent working 6.8 h</title></rect>
+<text x="107.3" y="81" text-anchor="middle" class="dl">6.8</text>
+<rect x="142.6" y="66" width="62.5" height="22" rx="3" class="s2"><title>Sep 17: blocked on the user 6.4 h</title></rect>
+<text x="173.8" y="81" text-anchor="middle" class="dl">6.4</text>
+<rect x="207.1" y="66" width="106.9" height="22" rx="3" class="s3"><title>Sep 17: idle, user away 10.8 h</title></rect>
+<text x="260.6" y="81" text-anchor="middle" class="dl">10.8</text>
+<text x="320.0" y="81" class="lb">24 h</text>
+<text x="68" y="111" text-anchor="end" class="lb">Sep 18</text>
+<rect x="74.0" y="96" width="31.3" height="22" rx="3" class="s0"><title>Sep 18: agent working 3.3 h</title></rect>
+<rect x="107.3" y="96" width="201.7" height="22" rx="3" class="s2"><title>Sep 18: blocked on the user 20.2 h</title></rect>
+<text x="208.1" y="111" text-anchor="middle" class="dl">20.2</text>
+<rect x="311.0" y="96" width="3.0" height="22" rx="3" class="s3"><title>Sep 18: idle, user away 0.5 h</title></rect>
+<text x="320.0" y="111" class="lb">24 h</text>
+<text x="68" y="141" text-anchor="end" class="lb">Sep 19</text>
+<rect x="74.0" y="126" width="95.8" height="22" rx="3" class="s0"><title>Sep 19: agent working 9.7 h</title></rect>
+<text x="121.9" y="141" text-anchor="middle" class="dl">9.7</text>
+<rect x="171.8" y="126" width="0.5" height="22" rx="3" class="s1"><title>Sep 19: chip busy, nobody watching 0.2 h</title></rect>
+<rect x="173.8" y="126" width="110.9" height="22" rx="3" class="s2"><title>Sep 19: blocked on the user 11.2 h</title></rect>
+<text x="229.3" y="141" text-anchor="middle" class="dl">11.2</text>
+<rect x="286.8" y="126" width="27.2" height="22" rx="3" class="s3"><title>Sep 19: idle, user away 2.9 h</title></rect>
+<text x="320.0" y="141" class="lb">24 h</text>
 </svg>
-<details class="tbl"><summary>table view</summary><table><tr><th></th><th>agent working</th><th>graphics chip busy, nobody watching</th><th>blocked on the user</th><th>idle, user away</th><th>total</th></tr><tr><td>Sep 15</td><td>13.6 h</td><td>0.6 h</td><td>0.1 h</td><td>9.7 h</td><td>24 h</td></tr><tr><td>Sep 16</td><td>10.7 h</td><td>0 h</td><td>3.2 h</td><td>10 h</td><td>23.9 h</td></tr><tr><td>Sep 17</td><td>6.8 h</td><td>0 h</td><td>6.4 h</td><td>10.8 h</td><td>24 h</td></tr><tr><td>Sep 18</td><td>3.3 h</td><td>0 h</td><td>20.2 h</td><td>0.5 h</td><td>24 h</td></tr><tr><td>Sep 19</td><td>9.7 h</td><td>0.2 h</td><td>11.2 h</td><td>2.9 h</td><td>24 h</td></tr></table></details>
+<details class="tbl"><summary>table view</summary><table><tr><th></th><th>agent working</th><th>chip busy, nobody watching</th><th>blocked on the user</th><th>idle, user away</th><th>total</th></tr><tr><td>Sep 15</td><td>13.6 h</td><td>0.6 h</td><td>0.1 h</td><td>9.7 h</td><td>24 h</td></tr><tr><td>Sep 16</td><td>10.7 h</td><td>0 h</td><td>3.2 h</td><td>10 h</td><td>23.9 h</td></tr><tr><td>Sep 17</td><td>6.8 h</td><td>0 h</td><td>6.4 h</td><td>10.8 h</td><td>24 h</td></tr><tr><td>Sep 18</td><td>3.3 h</td><td>0 h</td><td>20.2 h</td><td>0.5 h</td><td>24 h</td></tr><tr><td>Sep 19</td><td>9.7 h</td><td>0.2 h</td><td>11.2 h</td><td>2.9 h</td><td>24 h</td></tr></table></details>
 <p class="note">Priority when things overlap: agent work first, then the graphics chip, then user waits. "Idle" on 15 Sep is the morning before the first prompt. Source: phase6_audit.py, per-day table.</p>
 </figure><div class="day"><h3>Monday 15 September</h3><p class="note">Gates 0, 1 and 2 in one day: 12 hours of near-continuous work</p><dl>
 <dt>Attempted</dt><dd>Build the pipeline end to end on one column and one capital (Gate 0); simplify every object and prove the geometry matches (Gate 1); bake colours and surface into images (Gate 2). Three specialists (bake, export, viewer), a critic and a code reviewer per merge.</dd><dt>Worked</dt><dd>All three gates passed the same day, each branch merged (folded into the main code) after a code review. The vertical slice matched the render to within one pixel of position. The full scene came in at 2.84 million triangles against a 3 million budget. The user made the three scale-up decisions ("go") within seven minutes of being asked.</dd><dt>Failed and redone</dt><dd>Gate 1 failed three times before passing: a backdrop material with an invalid texture slot made 151 000 triangles vanish, three sculpted panels were torn by a bad simplifier, 127 placeholder tree boards hid the building, then 1 379 shrubs were drawn at the world origin. Gate 2 failed once (7 of 12 stone materials shipped without their bump detail), then the replacement detail maps shipped empty, then too faint; three fixes in one evening.</dd><dt>Waiting</dt><dd>Graphics chip 11.3 h busy (ornament bake queue 1.6 h at noon, material bakes in the afternoon), always with an agent polling it. The user was needed for 7 minutes. The overnight light bake started at 22:10.</dd><dt>Cost</dt><dd>13.6 agent-hours, $495 nominal (23 % of the week's $2,148), 21 agents dispatched.</dd></dl><p class="proof">Proof: <a href="status.md">status.md</a> entries of 15 Sep, <a href="qa_round_11.md">QA 11</a> to <a href="qa_round_11d.md">QA 11d</a>, <a href="qa_round_12.md">QA 12</a>, <a href="qa_round_12b.md">QA 12b</a>, commits 70bfe73, 57addb8, 19412e4.</p></div><div class="day"><h3>Tuesday 16 September</h3><p class="note">The light bake, a forced restart, and the viewer gets its light</p><dl>
@@ -111,55 +109,52 @@ six web deployments.</p><h2>The week, day by day</h2><figure class="viz"><figcap
 <dt>Attempted</dt><dd>Finish Gate 4 (water with real ripples, per-bush lighting), declare the desktop viewer at parity with the render (6a), then a two-round pass on trees and shrubs (6c) because the user found them wrong at close range.</dd><dt>Worked</dt><dd>The critic scored every station within 0.5 of its render score, none below 2.5: the viewer was at parity. The foliage pass gave the tree crowns interiors and brought the shrubs down to the reference brightness.</dd><dt>Failed and redone</dt><dd>The user opened the delivered viewer and saw the test scene: the page's default settings were still the Gate 0 development ones. The per-bush light bake had to be run twice (the first used an opaque stand-in that brightened everything by 64 %). The tree bake and the tree export anchored trees at different points, up to 3.4 m apart; far trees were placed 300 m off; both redone.</dd><dt>Waiting</dt><dd>Blocked on the user 6.4 h (the 01:23 result waited until 07:10 for a reader). User away 10.8 h, including 12:54 to 23:16 with QA 17 finishing on its own.</dd><dt>Cost</dt><dd>6.8 agent-hours, $390 nominal (18 % of the week's $2,148), 24 agents dispatched.</dd></dl><p class="proof">Proof: <a href="qa_round_15.md">QA 15</a>, <a href="qa_round_16.md">QA 16</a>, <a href="qa_round_17.md">QA 17</a>, <a href="decisions.md">decisions.md</a> "FINAL JUDGEMENT OF 6a" and "Delivery defect found by the user", commits 212ca27, 5e1fffa, 47a2f7e.</p></div><div class="day"><h3>Thursday 18 September</h3><p class="note">The web deployment, a phone that showed the wrong scene, and a 17-hour question</p><dl>
 <dt>Attempted</dt><dd>Split the 640 MB of assets into three download tiers so the first picture arrives under 50 MB; build a halved set for the iPhone; deploy to a free host; score it on the live address (6b).</dd><dt>Worked</dt><dd>Published to the web host ("deployed") at 18:41. First frame 46.8 MB, three tiers stream the rest, no file over the host's 25 MB cap. The phone tier draws the whole scene in 500 MB of memory. The user's iPhone 16 Pro showed the hero scene at 20:59.</dd><dt>Failed and redone</dt><dd>The phone version had no building: its seven geometry files were in neither publish list (found by the critic, fixed, redeployed). The phone canvas filled only 70 % of the screen. The bare address drew the test scene on the user's phone because the default asset path pointed at an unpublished folder (fixed, deploy 5). Then a sixth deploy so the phone's water reflects the building.</dd><dt>Waiting</dt><dd>Blocked on the user 20.2 h: the lead had asked its three deployment questions (which iPhone, which host, whether a low-resolution first look is acceptable) at 23:24 the night before, ten hours after the user had left, and got the answer at 16:57. Agents worked 3.3 h.</dd><dt>Cost</dt><dd>3.3 agent-hours, $204 nominal (9 % of the week's $2,148), 7 agents dispatched.</dd></dl><p class="proof">Proof: <a href="qa_round_18.md">QA 18</a>, <a href="qa_round_18b.md">QA 18b</a>, <a href="decisions.md">decisions.md</a> entries "6b" and "Post-close fix", commits 900a846, 98ab252, 1c4b0f5, d40a125, deploy logs renders/logs/6b_deploy_1..6.log.</p></div><div class="day"><h3>Friday 19 September</h3><p class="note">Phase 7: the trees the user saw on the phone; then the next phase starts</p><dl>
 <dt>Attempted</dt><dd>The user sent two screenshots at 08:47: far trees jagged and black-cored on the desktop, close trees flat on the phone. One viewer round on the live site, then a score.</dd><dt>Worked</dt><dd>Both defects closed on the desktop and on the phone by 09:56; the mobile score rose from 2.9 to 3.2 on the hero. Payload unchanged.</dd><dt>Failed and redone</dt><dd>Nothing redone inside Phase 7. Phase 8 (five further art items) started at 12:25 the same day and is outside this page, but it is inside the same week and budget: $599 more that day.</dd><dt>Waiting</dt><dd>Blocked on the user 11.2 h (overnight until 08:43, then 09:58 to 12:25 after Phase 7 closed).</dd><dt>Cost</dt><dd>9.7 agent-hours, $644 nominal (30 % of the week's $2,148), 33 agents dispatched. Of this, Phase 7 itself: $44.</dd></dl><p class="proof">Proof: <a href="qa_round_19.md">QA 19</a>, <a href="decisions.md">decisions.md</a> "PHASE 7 APPROVED" and "PHASE 7 DONE WITH RESIDUALS", commits 91f08b4, 6253d32, user screenshots renders/web/user/phase7_*.png.</p></div><h2>Each gate: before and after at the hero viewpoint</h2><p>Every gate ends with a critic's report and a full-resolution tile review. Each slider shows the same viewpoint; the left image is the viewer.</p><figure class="viz"><figcaption>Wall clock per gate (hours)</figcaption>
-<svg viewBox="0 0 360 302" width="100%" role="img" aria-label="Wall clock per gate (hours)">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">agent working</text>
-<rect x="124" y="6" width="10" height="10" rx="2" class="s1"/><text x="138" y="15" class="lg">chip busy, unwatched</text>
-<rect x="244" y="6" width="10" height="10" rx="2" class="s2"/><text x="258" y="15" class="lg">blocked on the user</text>
-<rect x="4" y="22" width="10" height="10" rx="2" class="s3"/><text x="18" y="31" class="lg">idle</text>
-<text x="68" y="69" text-anchor="end" class="lb">Gate 0</text>
-<rect x="74.0" y="54" width="11.1" height="22" rx="3" class="s0"><title>Gate 0: agent working 1.9 h</title></rect>
-<rect x="87.1" y="54" width="0.5" height="22" rx="3" class="s2"><title>Gate 0: blocked on the user 0.1 h</title></rect>
-<rect x="87.8" y="54" width="0.5" height="22" rx="3" class="s3"><title>Gate 0: idle 0.1 h</title></rect>
-<text x="92.5" y="69" class="lb">2.1 h</text>
-<text x="68" y="99" text-anchor="end" class="lb">Gate 1</text>
-<rect x="74.0" y="84" width="33.2" height="22" rx="3" class="s0"><title>Gate 1: agent working 5.1 h</title></rect>
-<text x="90.6" y="99" text-anchor="middle" class="dl">5.1</text>
-<rect x="109.2" y="84" width="0.5" height="22" rx="3" class="s1"><title>Gate 1: chip busy, unwatched 0.1 h</title></rect>
-<text x="113.9" y="99" class="lb">5.2 h</text>
-<text x="68" y="129" text-anchor="end" class="lb">Gate 2</text>
-<rect x="74.0" y="114" width="28.3" height="22" rx="3" class="s0"><title>Gate 2: agent working 4.4 h</title></rect>
-<rect x="104.3" y="114" width="2.1" height="22" rx="3" class="s1"><title>Gate 2: chip busy, unwatched 0.6 h</title></rect>
-<text x="112.5" y="129" class="lb">5 h</text>
-<text x="68" y="159" text-anchor="end" class="lb">Gate 3</text>
-<rect x="74.0" y="144" width="63.5" height="22" rx="3" class="s0"><title>Gate 3: agent working 9.5 h</title></rect>
-<text x="105.7" y="159" text-anchor="middle" class="dl">9.5</text>
-<rect x="139.5" y="144" width="20.1" height="22" rx="3" class="s2"><title>Gate 3: blocked on the user 3.2 h</title></rect>
-<rect x="161.6" y="144" width="29.0" height="22" rx="3" class="s3"><title>Gate 3: idle 4.5 h</title></rect>
-<text x="196.6" y="159" class="lb">17.2 h</text>
-<text x="68" y="189" text-anchor="end" class="lb">Gate 4</text>
-<rect x="74.0" y="174" width="30.4" height="22" rx="3" class="s0"><title>Gate 4: agent working 4.7 h</title></rect>
-<rect x="106.4" y="174" width="35.9" height="22" rx="3" class="s3"><title>Gate 4: idle 5.5 h</title></rect>
-<text x="124.4" y="189" text-anchor="middle" class="dl">5.5</text>
-<text x="148.3" y="189" class="lb">10.2 h</text>
-<text x="68" y="219" text-anchor="end" class="lb">Foliage</text>
-<rect x="74.0" y="204" width="33.9" height="22" rx="3" class="s0"><title>Foliage: agent working 5.2 h</title></rect>
-<text x="90.9" y="219" text-anchor="middle" class="dl">5.2</text>
-<rect x="109.9" y="204" width="38.0" height="22" rx="3" class="s2"><title>Foliage: blocked on the user 5.8 h</title></rect>
-<text x="128.8" y="219" text-anchor="middle" class="dl">5.8</text>
-<rect x="149.8" y="204" width="2.1" height="22" rx="3" class="s3"><title>Foliage: idle 0.6 h</title></rect>
-<text x="158.0" y="219" class="lb">11.6 h</text>
-<text x="68" y="249" text-anchor="end" class="lb">Web</text>
-<rect x="74.0" y="234" width="22.1" height="22" rx="3" class="s0"><title>Web: agent working 3.5 h</title></rect>
-<rect x="98.1" y="234" width="141.4" height="22" rx="3" class="s2"><title>Web: blocked on the user 20.8 h</title></rect>
-<text x="168.8" y="249" text-anchor="middle" class="dl">20.8</text>
-<rect x="241.5" y="234" width="72.5" height="22" rx="3" class="s3"><title>Web: idle 10.8 h</title></rect>
-<text x="277.8" y="249" text-anchor="middle" class="dl">10.8</text>
-<text x="320.0" y="249" class="lb">35.1 h</text>
-<text x="68" y="279" text-anchor="end" class="lb">Phase 7</text>
-<rect x="74.0" y="264" width="5.6" height="22" rx="3" class="s0"><title>Phase 7: agent working 1.1 h</title></rect>
-<rect x="81.6" y="264" width="58.0" height="22" rx="3" class="s2"><title>Phase 7: blocked on the user 8.7 h</title></rect>
-<text x="110.6" y="279" text-anchor="middle" class="dl">8.7</text>
-<text x="145.6" y="279" class="lb">9.8 h</text>
+<div class="legend"><span><i class="s0"></i>agent working</span><span><i class="s1"></i>chip busy, unwatched</span><span><i class="s2"></i>blocked on the user</span><span><i class="s3"></i>idle</span></div>
+<svg viewBox="0 0 360 250" width="100%" role="img" aria-label="Wall clock per gate (hours)">
+<text x="68" y="21" text-anchor="end" class="lb">Gate 0</text>
+<rect x="74.0" y="6" width="11.1" height="22" rx="3" class="s0"><title>Gate 0: agent working 1.9 h</title></rect>
+<rect x="87.1" y="6" width="0.5" height="22" rx="3" class="s2"><title>Gate 0: blocked on the user 0.1 h</title></rect>
+<rect x="87.8" y="6" width="0.5" height="22" rx="3" class="s3"><title>Gate 0: idle 0.1 h</title></rect>
+<text x="92.5" y="21" class="lb">2.1 h</text>
+<text x="68" y="51" text-anchor="end" class="lb">Gate 1</text>
+<rect x="74.0" y="36" width="33.2" height="22" rx="3" class="s0"><title>Gate 1: agent working 5.1 h</title></rect>
+<text x="90.6" y="51" text-anchor="middle" class="dl">5.1</text>
+<rect x="109.2" y="36" width="0.5" height="22" rx="3" class="s1"><title>Gate 1: chip busy, unwatched 0.1 h</title></rect>
+<text x="113.9" y="51" class="lb">5.2 h</text>
+<text x="68" y="81" text-anchor="end" class="lb">Gate 2</text>
+<rect x="74.0" y="66" width="28.3" height="22" rx="3" class="s0"><title>Gate 2: agent working 4.4 h</title></rect>
+<rect x="104.3" y="66" width="2.1" height="22" rx="3" class="s1"><title>Gate 2: chip busy, unwatched 0.6 h</title></rect>
+<text x="112.5" y="81" class="lb">5 h</text>
+<text x="68" y="111" text-anchor="end" class="lb">Gate 3</text>
+<rect x="74.0" y="96" width="63.5" height="22" rx="3" class="s0"><title>Gate 3: agent working 9.5 h</title></rect>
+<text x="105.7" y="111" text-anchor="middle" class="dl">9.5</text>
+<rect x="139.5" y="96" width="20.1" height="22" rx="3" class="s2"><title>Gate 3: blocked on the user 3.2 h</title></rect>
+<rect x="161.6" y="96" width="29.0" height="22" rx="3" class="s3"><title>Gate 3: idle 4.5 h</title></rect>
+<text x="196.6" y="111" class="lb">17.2 h</text>
+<text x="68" y="141" text-anchor="end" class="lb">Gate 4</text>
+<rect x="74.0" y="126" width="30.4" height="22" rx="3" class="s0"><title>Gate 4: agent working 4.7 h</title></rect>
+<rect x="106.4" y="126" width="35.9" height="22" rx="3" class="s3"><title>Gate 4: idle 5.5 h</title></rect>
+<text x="124.4" y="141" text-anchor="middle" class="dl">5.5</text>
+<text x="148.3" y="141" class="lb">10.2 h</text>
+<text x="68" y="171" text-anchor="end" class="lb">Foliage</text>
+<rect x="74.0" y="156" width="33.9" height="22" rx="3" class="s0"><title>Foliage: agent working 5.2 h</title></rect>
+<text x="90.9" y="171" text-anchor="middle" class="dl">5.2</text>
+<rect x="109.9" y="156" width="38.0" height="22" rx="3" class="s2"><title>Foliage: blocked on the user 5.8 h</title></rect>
+<text x="128.8" y="171" text-anchor="middle" class="dl">5.8</text>
+<rect x="149.8" y="156" width="2.1" height="22" rx="3" class="s3"><title>Foliage: idle 0.6 h</title></rect>
+<text x="158.0" y="171" class="lb">11.6 h</text>
+<text x="68" y="201" text-anchor="end" class="lb">Web</text>
+<rect x="74.0" y="186" width="22.1" height="22" rx="3" class="s0"><title>Web: agent working 3.5 h</title></rect>
+<rect x="98.1" y="186" width="141.4" height="22" rx="3" class="s2"><title>Web: blocked on the user 20.8 h</title></rect>
+<text x="168.8" y="201" text-anchor="middle" class="dl">20.8</text>
+<rect x="241.5" y="186" width="72.5" height="22" rx="3" class="s3"><title>Web: idle 10.8 h</title></rect>
+<text x="277.8" y="201" text-anchor="middle" class="dl">10.8</text>
+<text x="320.0" y="201" class="lb">35.1 h</text>
+<text x="68" y="231" text-anchor="end" class="lb">Phase 7</text>
+<rect x="74.0" y="216" width="5.6" height="22" rx="3" class="s0"><title>Phase 7: agent working 1.1 h</title></rect>
+<rect x="81.6" y="216" width="58.0" height="22" rx="3" class="s2"><title>Phase 7: blocked on the user 8.7 h</title></rect>
+<text x="110.6" y="231" text-anchor="middle" class="dl">8.7</text>
+<text x="145.6" y="231" class="lb">9.8 h</text>
 </svg>
 <details class="tbl"><summary>table view</summary><table><tr><th></th><th>agent working</th><th>chip busy, unwatched</th><th>blocked on the user</th><th>idle</th><th>total</th></tr><tr><td>Gate 0</td><td>1.9 h</td><td>0 h</td><td>0.1 h</td><td>0.1 h</td><td>2.1 h</td></tr><tr><td>Gate 1</td><td>5.1 h</td><td>0.1 h</td><td>0 h</td><td>0 h</td><td>5.2 h</td></tr><tr><td>Gate 2</td><td>4.4 h</td><td>0.6 h</td><td>0 h</td><td>0 h</td><td>5 h</td></tr><tr><td>Gate 3</td><td>9.5 h</td><td>0 h</td><td>3.2 h</td><td>4.5 h</td><td>17.2 h</td></tr><tr><td>Gate 4</td><td>4.7 h</td><td>0 h</td><td>0 h</td><td>5.5 h</td><td>10.2 h</td></tr><tr><td>Foliage</td><td>5.2 h</td><td>0 h</td><td>5.8 h</td><td>0.6 h</td><td>11.6 h</td></tr><tr><td>Web</td><td>3.5 h</td><td>0 h</td><td>20.8 h</td><td>10.8 h</td><td>35.1 h</td></tr><tr><td>Phase 7</td><td>1.1 h</td><td>0 h</td><td>8.7 h</td><td>0 h</td><td>9.8 h</td></tr></table></details>
 <p class="note">Gate windows run from one verdict commit to the next; "Web" spans 17 Sep 12:56 to 19 Sep 00:00 and holds the 17.6-hour question. Source: phase6_audit.py, per-window table.</p>
@@ -207,114 +202,105 @@ six web deployments.</p><h2>The week, day by day</h2><figure class="viz"><figcap
 <p class="note">Scores are the critic's per-viewpoint averages on the 5-point rubric. The viewer was scored against Blender renders of the same viewpoints, not against the photograph, so "3.78 versus 3.61" means "as good as the render, plus the water and trees it improved", not "closer to a photo". The 21 Sep column is from <a href="qa_round_25.md">QA 25</a>, outside this week.</p>
 <h3>Was the definition of done met?</h3>
 <div class="verdict"><p><b>Mostly, with two honest gaps.</b> The desktop viewer reached parity with the render at all six viewpoints (met), reflects the rotunda, clamps the walk to the ground, shows a loading bar, and its speed and memory were measured (met), but it runs at 35 not 45 frames per second (target missed, documented). The web version loads under 50 MB, streams the rest, and passed a scoring round on the live address (met). The phone version loads on the user's iPhone 16 Pro (met by the user's screenshot); that it <i>walks</i> on the phone was only tested on the Mac in phone mode (not evidenced). Safari on macOS was tested through a WebKit engine build, not Safari itself (not evidenced). The rule that the critic also scores against the photograph was not followed. Full table: <a href="retrospective_phase6.md">the audit</a>, section 5.</p></div><h2>What the week cost, in one picture</h2><p class="big">$1,505 nominal for Phase 6 (15 to 18 Sep), $2,148 for the whole week including Phase 7 and the start of Phase 8.</p><figure class="viz"><figcaption>Who spent it (Phase 6, nominal dollars at list prices)</figcaption>
-<svg viewBox="0 0 360 108" width="100%" role="img" aria-label="Who spent it (Phase 6, nominal dollars at list prices)">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">viewer builders</text>
-<rect x="124" y="6" width="10" height="10" rx="2" class="s1"/><text x="138" y="15" class="lg">light bakers</text>
-<rect x="244" y="6" width="10" height="10" rx="2" class="s2"/><text x="258" y="15" class="lg">exporters</text>
-<rect x="4" y="22" width="10" height="10" rx="2" class="s3"/><text x="18" y="31" class="lg">the lead</text>
-<rect x="124" y="22" width="10" height="10" rx="2" class="s4"/><text x="138" y="31" class="lg">critics</text>
-<rect x="244" y="22" width="10" height="10" rx="2" class="s5"/><text x="258" y="31" class="lg">code reviewers</text>
-<rect x="4" y="38" width="10" height="10" rx="2" class="s6"/><text x="18" y="47" class="lg">materials</text>
-<rect x="124" y="38" width="10" height="10" rx="2" class="s7"/><text x="138" y="47" class="lg">helpers</text>
-<text x="68" y="85" text-anchor="end" class="lb">Phase 6</text>
-<rect x="74.0" y="70" width="84.9" height="22" rx="3" class="s0"><title>Phase 6: viewer builders 540</title></rect>
-<text x="116.4" y="85" text-anchor="middle" class="dl">540</text>
-<rect x="160.9" y="70" width="44.0" height="22" rx="3" class="s1"><title>Phase 6: light bakers 286</title></rect>
-<text x="182.9" y="85" text-anchor="middle" class="dl">286</text>
-<rect x="206.9" y="70" width="40.8" height="22" rx="3" class="s2"><title>Phase 6: exporters 266</title></rect>
-<text x="227.3" y="85" text-anchor="middle" class="dl">266</text>
-<rect x="249.7" y="70" width="26.3" height="22" rx="3" class="s3"><title>Phase 6: the lead 176</title></rect>
-<rect x="278.0" y="70" width="14.4" height="22" rx="3" class="s4"><title>Phase 6: critics 102</title></rect>
-<rect x="294.4" y="70" width="14.4" height="22" rx="3" class="s5"><title>Phase 6: code reviewers 102</title></rect>
-<rect x="310.9" y="70" width="2.8" height="22" rx="3" class="s6"><title>Phase 6: materials 30</title></rect>
-<rect x="315.7" y="70" width="0.5" height="22" rx="3" class="s7"><title>Phase 6: helpers 2</title></rect>
-<text x="320.0" y="85" class="lb">1,504</text>
+<div class="legend"><span><i class="s0"></i>viewer builders</span><span><i class="s1"></i>light bakers</span><span><i class="s2"></i>exporters</span><span><i class="s3"></i>the lead</span><span><i class="s4"></i>critics</span><span><i class="s5"></i>code reviewers</span><span><i class="s6"></i>materials</span><span><i class="s7"></i>helpers</span></div>
+<svg viewBox="0 0 360 40" width="100%" role="img" aria-label="Who spent it (Phase 6, nominal dollars at list prices)">
+<text x="68" y="21" text-anchor="end" class="lb">Phase 6</text>
+<rect x="74.0" y="6" width="84.9" height="22" rx="3" class="s0"><title>Phase 6: viewer builders 540</title></rect>
+<text x="116.4" y="21" text-anchor="middle" class="dl">540</text>
+<rect x="160.9" y="6" width="44.0" height="22" rx="3" class="s1"><title>Phase 6: light bakers 286</title></rect>
+<text x="182.9" y="21" text-anchor="middle" class="dl">286</text>
+<rect x="206.9" y="6" width="40.8" height="22" rx="3" class="s2"><title>Phase 6: exporters 266</title></rect>
+<text x="227.3" y="21" text-anchor="middle" class="dl">266</text>
+<rect x="249.7" y="6" width="26.3" height="22" rx="3" class="s3"><title>Phase 6: the lead 176</title></rect>
+<rect x="278.0" y="6" width="14.4" height="22" rx="3" class="s4"><title>Phase 6: critics 102</title></rect>
+<rect x="294.4" y="6" width="14.4" height="22" rx="3" class="s5"><title>Phase 6: code reviewers 102</title></rect>
+<rect x="310.9" y="6" width="2.8" height="22" rx="3" class="s6"><title>Phase 6: materials 30</title></rect>
+<rect x="315.7" y="6" width="0.5" height="22" rx="3" class="s7"><title>Phase 6: helpers 2</title></rect>
+<text x="320.0" y="21" class="lb">1,504</text>
 </svg>
 <details class="tbl"><summary>table view</summary><table><tr><th></th><th>viewer builders</th><th>light bakers</th><th>exporters</th><th>the lead</th><th>critics</th><th>code reviewers</th><th>materials</th><th>helpers</th><th>total</th></tr><tr><td>Phase 6</td><td>540</td><td>286</td><td>266</td><td>176</td><td>102</td><td>102</td><td>30</td><td>2</td><td>1,504</td></tr></table></details>
 <p class="note">8,068 AI requests by 74 agents and 6 lead sessions; 6.6 million words-worth of output tokens, 1.78 billion re-read from cache. A token is roughly three quarters of a word; the price of re-reading cached context is a tenth or less of new text, which is why 96 % of all tokens are cache reads and only a fifth of the cost.</p>
 </figure><details><summary>The detail: by day, by model, by activity, and the limits of this attribution</summary><figure class="viz"><figcaption>By day (whole week)</figcaption>
-<svg viewBox="0 0 360 196" width="100%" role="img" aria-label="By day (whole week)">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">nominal USD</text>
-<text x="68" y="53" text-anchor="end" class="lb">Sep 15</text>
-<rect x="74.0" y="38" width="184.0" height="22" rx="3" class="s0"><title>Sep 15: nominal USD 495</title></rect>
-<text x="166.0" y="53" text-anchor="middle" class="dl">495</text>
-<text x="68" y="83" text-anchor="end" class="lb">Sep 16</text>
-<rect x="74.0" y="68" width="154.3" height="22" rx="3" class="s0"><title>Sep 16: nominal USD 416</title></rect>
-<text x="151.2" y="83" text-anchor="middle" class="dl">416</text>
-<text x="68" y="113" text-anchor="end" class="lb">Sep 17</text>
-<rect x="74.0" y="98" width="144.6" height="22" rx="3" class="s0"><title>Sep 17: nominal USD 390</title></rect>
-<text x="146.3" y="113" text-anchor="middle" class="dl">390</text>
-<text x="68" y="143" text-anchor="end" class="lb">Sep 18</text>
-<rect x="74.0" y="128" width="74.7" height="22" rx="3" class="s0"><title>Sep 18: nominal USD 204</title></rect>
-<text x="111.3" y="143" text-anchor="middle" class="dl">204</text>
-<text x="68" y="173" text-anchor="end" class="lb">Sep 19</text>
-<rect x="74.0" y="158" width="240.0" height="22" rx="3" class="s0"><title>Sep 19: nominal USD 644</title></rect>
-<text x="194.0" y="173" text-anchor="middle" class="dl">644</text>
+
+<svg viewBox="0 0 360 160" width="100%" role="img" aria-label="By day (whole week)">
+<text x="68" y="21" text-anchor="end" class="lb">Sep 15</text>
+<rect x="74.0" y="6" width="184.0" height="22" rx="3" class="s0"><title>Sep 15: nominal USD 495</title></rect>
+<text x="166.0" y="21" text-anchor="middle" class="dl">495</text>
+<text x="68" y="51" text-anchor="end" class="lb">Sep 16</text>
+<rect x="74.0" y="36" width="154.3" height="22" rx="3" class="s0"><title>Sep 16: nominal USD 416</title></rect>
+<text x="151.2" y="51" text-anchor="middle" class="dl">416</text>
+<text x="68" y="81" text-anchor="end" class="lb">Sep 17</text>
+<rect x="74.0" y="66" width="144.6" height="22" rx="3" class="s0"><title>Sep 17: nominal USD 390</title></rect>
+<text x="146.3" y="81" text-anchor="middle" class="dl">390</text>
+<text x="68" y="111" text-anchor="end" class="lb">Sep 18</text>
+<rect x="74.0" y="96" width="74.7" height="22" rx="3" class="s0"><title>Sep 18: nominal USD 204</title></rect>
+<text x="111.3" y="111" text-anchor="middle" class="dl">204</text>
+<text x="68" y="141" text-anchor="end" class="lb">Sep 19</text>
+<rect x="74.0" y="126" width="240.0" height="22" rx="3" class="s0"><title>Sep 19: nominal USD 644</title></rect>
+<text x="194.0" y="141" text-anchor="middle" class="dl">644</text>
 </svg>
 <details class="tbl"><summary>table view</summary><table><tr><th></th><th>nominal USD</th><th>total</th></tr><tr><td>Sep 15</td><td>495</td><td>495</td></tr><tr><td>Sep 16</td><td>416</td><td>416</td></tr><tr><td>Sep 17</td><td>390</td><td>390</td></tr><tr><td>Sep 18</td><td>204</td><td>204</td></tr><tr><td>Sep 19</td><td>644</td><td>644</td></tr></table></details>
 </figure><figure class="viz"><figcaption>By model</figcaption>
-<svg viewBox="0 0 360 76" width="100%" role="img" aria-label="By model">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">Opus 5 (builders, critics, reviewers)</text>
-<rect x="124" y="6" width="10" height="10" rx="2" class="s1"/><text x="138" y="15" class="lg">Fable 5.1 (the lead)</text>
-<rect x="244" y="6" width="10" height="10" rx="2" class="s2"/><text x="258" y="15" class="lg">Sonnet 5 (helpers)</text>
-<text x="68" y="53" text-anchor="end" class="lb">Phase 6</text>
-<rect x="74.0" y="38" width="211.4" height="22" rx="3" class="s0"><title>Phase 6: Opus 5 (builders, critics, reviewers) 1,326</title></rect>
-<text x="179.7" y="53" text-anchor="middle" class="dl">1,326</text>
-<rect x="287.4" y="38" width="26.3" height="22" rx="3" class="s1"><title>Phase 6: Fable 5.1 (the lead) 176</title></rect>
-<rect x="315.7" y="38" width="0.5" height="22" rx="3" class="s2"><title>Phase 6: Sonnet 5 (helpers) 2</title></rect>
-<text x="320.0" y="53" class="lb">1,504</text>
+<div class="legend"><span><i class="s0"></i>Opus 5 (builders, critics, reviewers)</span><span><i class="s1"></i>Fable 5.1 (the lead)</span><span><i class="s2"></i>Sonnet 5 (helpers)</span></div>
+<svg viewBox="0 0 360 40" width="100%" role="img" aria-label="By model">
+<text x="68" y="21" text-anchor="end" class="lb">Phase 6</text>
+<rect x="74.0" y="6" width="211.4" height="22" rx="3" class="s0"><title>Phase 6: Opus 5 (builders, critics, reviewers) 1,326</title></rect>
+<text x="179.7" y="21" text-anchor="middle" class="dl">1,326</text>
+<rect x="287.4" y="6" width="26.3" height="22" rx="3" class="s1"><title>Phase 6: Fable 5.1 (the lead) 176</title></rect>
+<rect x="315.7" y="6" width="0.5" height="22" rx="3" class="s2"><title>Phase 6: Sonnet 5 (helpers) 2</title></rect>
+<text x="320.0" y="21" class="lb">1,504</text>
 </svg>
 <details class="tbl"><summary>table view</summary><table><tr><th></th><th>Opus 5 (builders, critics, reviewers)</th><th>Fable 5.1 (the lead)</th><th>Sonnet 5 (helpers)</th><th>total</th></tr><tr><td>Phase 6</td><td>1,326</td><td>176</td><td>2</td><td>1,504</td></tr></table></details>
 </figure><figure class="viz"><figcaption>By what the request was doing (Phase 6)</figcaption>
-<svg viewBox="0 0 360 256" width="100%" role="img" aria-label="By what the request was doing (Phase 6)">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">nominal USD</text>
-<text x="176" y="53" text-anchor="end" class="lb">running scripts</text>
-<rect x="182.0" y="38" width="132.0" height="22" rx="3" class="s0"><title>running scripts: nominal USD 434</title></rect>
-<text x="248.0" y="53" text-anchor="middle" class="dl">434</text>
-<text x="176" y="83" text-anchor="end" class="lb">reading files and logs</text>
-<rect x="182.0" y="68" width="99.6" height="22" rx="3" class="s0"><title>reading files and logs: nominal USD 329</title></rect>
-<text x="231.8" y="83" text-anchor="middle" class="dl">329</text>
-<text x="176" y="113" text-anchor="end" class="lb">checking whether jobs finished</text>
-<rect x="182.0" y="98" width="97.4" height="22" rx="3" class="s0"><title>checking whether jobs finished: nominal USD 322</title></rect>
-<text x="230.7" y="113" text-anchor="middle" class="dl">322</text>
-<text x="176" y="143" text-anchor="end" class="lb">writing code and notes</text>
-<rect x="182.0" y="128" width="74.0" height="22" rx="3" class="s0"><title>writing code and notes: nominal USD 246</title></rect>
-<text x="219.0" y="143" text-anchor="middle" class="dl">246</text>
-<text x="176" y="173" text-anchor="end" class="lb">thinking and reporting</text>
-<rect x="182.0" y="158" width="20.8" height="22" rx="3" class="s0"><title>thinking and reporting: nominal USD 74</title></rect>
-<text x="176" y="203" text-anchor="end" class="lb">looking at pictures</text>
-<rect x="182.0" y="188" width="19.9" height="22" rx="3" class="s0"><title>looking at pictures: nominal USD 71</title></rect>
-<text x="176" y="233" text-anchor="end" class="lb">briefing and messaging agents</text>
-<rect x="182.0" y="218" width="7.0" height="22" rx="3" class="s0"><title>briefing and messaging agents: nominal USD 29</title></rect>
+
+<svg viewBox="0 0 360 220" width="100%" role="img" aria-label="By what the request was doing (Phase 6)">
+<text x="176" y="21" text-anchor="end" class="lb">running scripts</text>
+<rect x="182.0" y="6" width="132.0" height="22" rx="3" class="s0"><title>running scripts: nominal USD 434</title></rect>
+<text x="248.0" y="21" text-anchor="middle" class="dl">434</text>
+<text x="176" y="51" text-anchor="end" class="lb">reading files and logs</text>
+<rect x="182.0" y="36" width="99.6" height="22" rx="3" class="s0"><title>reading files and logs: nominal USD 329</title></rect>
+<text x="231.8" y="51" text-anchor="middle" class="dl">329</text>
+<text x="176" y="81" text-anchor="end" class="lb">checking whether jobs finished</text>
+<rect x="182.0" y="66" width="97.4" height="22" rx="3" class="s0"><title>checking whether jobs finished: nominal USD 322</title></rect>
+<text x="230.7" y="81" text-anchor="middle" class="dl">322</text>
+<text x="176" y="111" text-anchor="end" class="lb">writing code and notes</text>
+<rect x="182.0" y="96" width="74.0" height="22" rx="3" class="s0"><title>writing code and notes: nominal USD 246</title></rect>
+<text x="219.0" y="111" text-anchor="middle" class="dl">246</text>
+<text x="176" y="141" text-anchor="end" class="lb">thinking and reporting</text>
+<rect x="182.0" y="126" width="20.8" height="22" rx="3" class="s0"><title>thinking and reporting: nominal USD 74</title></rect>
+<text x="176" y="171" text-anchor="end" class="lb">looking at pictures</text>
+<rect x="182.0" y="156" width="19.9" height="22" rx="3" class="s0"><title>looking at pictures: nominal USD 71</title></rect>
+<text x="176" y="201" text-anchor="end" class="lb">briefing and messaging agents</text>
+<rect x="182.0" y="186" width="7.0" height="22" rx="3" class="s0"><title>briefing and messaging agents: nominal USD 29</title></rect>
 </svg>
 <details class="tbl"><summary>table view</summary><table><tr><th></th><th>nominal USD</th><th>total</th></tr><tr><td>running scripts</td><td>434</td><td>434</td></tr><tr><td>reading files and logs</td><td>329</td><td>329</td></tr><tr><td>checking whether jobs finished</td><td>322</td><td>322</td></tr><tr><td>writing code and notes</td><td>246</td><td>246</td></tr><tr><td>thinking and reporting</td><td>74</td><td>74</td></tr><tr><td>looking at pictures</td><td>71</td><td>71</td></tr><tr><td>briefing and messaging agents</td><td>29</td><td>29</td></tr></table></details>
 <p class="note">One label per request by a fixed priority (pictures > waiting > editing > coordination > reading > running > thinking). A fifth of the money went to turns whose job was to check whether a job had finished.</p>
 </figure><p class="note"><b>Limits.</b> These are list-price dollars computed from the transcripts, not an invoice; the subscription's weekly meter is not recorded anywhere.
 Claude Code's own running tally for the same sessions is 8 to 30 % higher because it prices small side calls the transcripts do not carry. A request that did two things is
-counted once. Thinking tokens (2.4 million) are inside every bar. See <a href="retrospective_phase6.md">the audit</a>, section 2.</p></details><h2>This week against the build week</h2><figure class="viz"><figcaption>Same measures, same scripts</figcaption><svg viewBox="0 0 360 296" width="100%" role="img" aria-label="Same measures, same scripts">
-<rect x="4" y="6" width="10" height="10" rx="2" class="s0"/><text x="18" y="15" class="lg">build week (6 to 10 Sep)</text>
-<rect x="174" y="6" width="10" height="10" rx="2" class="s1"/><text x="188" y="15" class="lg">Phase 6 (15 to 18 Sep)</text>
-<text x="114" y="42" text-anchor="end" class="lb">wall clock, h</text>
-<rect x="120" y="24" width="133.3" height="14" rx="3" class="s0"><title>wall clock, h build week (6 to 10 Sep): 100</title></rect><text x="257.3" y="35" class="lb">100</text>
-<rect x="120" y="40" width="128.0" height="14" rx="3" class="s1"><title>wall clock, h Phase 6 (15 to 18 Sep): 96</title></rect><text x="252.0" y="51" class="lb">96</text>
-<text x="114" y="80" text-anchor="end" class="lb">agent work, h</text>
-<rect x="120" y="62" width="56.0" height="14" rx="3" class="s0"><title>agent work, h build week (6 to 10 Sep): 42</title></rect><text x="180.0" y="73" class="lb">42</text>
-<rect x="120" y="78" width="45.3" height="14" rx="3" class="s1"><title>agent work, h Phase 6 (15 to 18 Sep): 34</title></rect><text x="169.3" y="89" class="lb">34</text>
-<text x="114" y="118" text-anchor="end" class="lb">chip busy, h</text>
-<rect x="120" y="100" width="44.0" height="14" rx="3" class="s0"><title>chip busy, h build week (6 to 10 Sep): 33</title></rect><text x="168.0" y="111" class="lb">33</text>
-<rect x="120" y="116" width="33.3" height="14" rx="3" class="s1"><title>chip busy, h Phase 6 (15 to 18 Sep): 25</title></rect><text x="157.3" y="127" class="lb">25</text>
-<text x="114" y="156" text-anchor="end" class="lb">blocked on user, h</text>
-<rect x="120" y="138" width="1.0" height="14" rx="3" class="s0"><title>blocked on user, h build week (6 to 10 Sep): 0</title></rect><text x="124.0" y="149" class="lb">0</text>
-<rect x="120" y="154" width="40.0" height="14" rx="3" class="s1"><title>blocked on user, h Phase 6 (15 to 18 Sep): 30</title></rect><text x="164.0" y="165" class="lb">30</text>
-<text x="114" y="194" text-anchor="end" class="lb">idle, h</text>
-<rect x="120" y="176" width="70.7" height="14" rx="3" class="s0"><title>idle, h build week (6 to 10 Sep): 53</title></rect><text x="194.7" y="187" class="lb">53</text>
-<rect x="120" y="192" width="41.3" height="14" rx="3" class="s1"><title>idle, h Phase 6 (15 to 18 Sep): 31</title></rect><text x="165.3" y="203" class="lb">31</text>
-<text x="114" y="232" text-anchor="end" class="lb">agents</text>
-<rect x="120" y="214" width="152.0" height="14" rx="3" class="s0"><title>agents build week (6 to 10 Sep): 114</title></rect><text x="276.0" y="225" class="lb">114</text>
-<rect x="120" y="230" width="98.7" height="14" rx="3" class="s1"><title>agents Phase 6 (15 to 18 Sep): 74</title></rect><text x="222.7" y="241" class="lb">74</text>
-<text x="114" y="270" text-anchor="end" class="lb">cost, $ x 10</text>
-<rect x="120" y="252" width="197.3" height="14" rx="3" class="s0"><title>cost, $ x 10 build week (6 to 10 Sep): 148</title></rect><text x="321.3" y="263" class="lb">148</text>
-<rect x="120" y="268" width="200.0" height="14" rx="3" class="s1"><title>cost, $ x 10 Phase 6 (15 to 18 Sep): 150</title></rect><text x="324.0" y="279" class="lb">150</text>
+counted once. Thinking tokens (2.4 million) are inside every bar. See <a href="retrospective_phase6.md">the audit</a>, section 2.</p></details><h2>This week against the build week</h2><figure class="viz"><figcaption>Same measures, same scripts</figcaption>
+<div class="legend"><span><i class="s0"></i>build week (6 to 10 Sep)</span><span><i class="s1"></i>Phase 6 (15 to 18 Sep)</span></div>
+<svg viewBox="0 0 360 278" width="100%" role="img" aria-label="Same measures, same scripts">
+<text x="114" y="24" text-anchor="end" class="lb">wall clock, h</text>
+<rect x="120" y="6" width="133.3" height="14" rx="3" class="s0"><title>wall clock, h build week (6 to 10 Sep): 100</title></rect><text x="257.3" y="17" class="lb">100</text>
+<rect x="120" y="22" width="128.0" height="14" rx="3" class="s1"><title>wall clock, h Phase 6 (15 to 18 Sep): 96</title></rect><text x="252.0" y="33" class="lb">96</text>
+<text x="114" y="62" text-anchor="end" class="lb">agent work, h</text>
+<rect x="120" y="44" width="56.0" height="14" rx="3" class="s0"><title>agent work, h build week (6 to 10 Sep): 42</title></rect><text x="180.0" y="55" class="lb">42</text>
+<rect x="120" y="60" width="45.3" height="14" rx="3" class="s1"><title>agent work, h Phase 6 (15 to 18 Sep): 34</title></rect><text x="169.3" y="71" class="lb">34</text>
+<text x="114" y="100" text-anchor="end" class="lb">chip busy, h</text>
+<rect x="120" y="82" width="44.0" height="14" rx="3" class="s0"><title>chip busy, h build week (6 to 10 Sep): 33</title></rect><text x="168.0" y="93" class="lb">33</text>
+<rect x="120" y="98" width="33.3" height="14" rx="3" class="s1"><title>chip busy, h Phase 6 (15 to 18 Sep): 25</title></rect><text x="157.3" y="109" class="lb">25</text>
+<text x="114" y="138" text-anchor="end" class="lb">blocked on user, h</text>
+<rect x="120" y="120" width="1.0" height="14" rx="3" class="s0"><title>blocked on user, h build week (6 to 10 Sep): 0</title></rect><text x="124.0" y="131" class="lb">0</text>
+<rect x="120" y="136" width="40.0" height="14" rx="3" class="s1"><title>blocked on user, h Phase 6 (15 to 18 Sep): 30</title></rect><text x="164.0" y="147" class="lb">30</text>
+<text x="114" y="176" text-anchor="end" class="lb">idle, h</text>
+<rect x="120" y="158" width="70.7" height="14" rx="3" class="s0"><title>idle, h build week (6 to 10 Sep): 53</title></rect><text x="194.7" y="169" class="lb">53</text>
+<rect x="120" y="174" width="41.3" height="14" rx="3" class="s1"><title>idle, h Phase 6 (15 to 18 Sep): 31</title></rect><text x="165.3" y="185" class="lb">31</text>
+<text x="114" y="214" text-anchor="end" class="lb">agents</text>
+<rect x="120" y="196" width="152.0" height="14" rx="3" class="s0"><title>agents build week (6 to 10 Sep): 114</title></rect><text x="276.0" y="207" class="lb">114</text>
+<rect x="120" y="212" width="98.7" height="14" rx="3" class="s1"><title>agents Phase 6 (15 to 18 Sep): 74</title></rect><text x="222.7" y="223" class="lb">74</text>
+<text x="114" y="252" text-anchor="end" class="lb">cost, $ x 10</text>
+<rect x="120" y="234" width="197.3" height="14" rx="3" class="s0"><title>cost, $ x 10 build week (6 to 10 Sep): 148</title></rect><text x="321.3" y="245" class="lb">148</text>
+<rect x="120" y="250" width="200.0" height="14" rx="3" class="s1"><title>cost, $ x 10 Phase 6 (15 to 18 Sep): 150</title></rect><text x="324.0" y="261" class="lb">150</text>
 </svg><details class="tbl"><summary>table view</summary><table><tr><th></th><th>build week (6 to 10 Sep)</th><th>Phase 6 (15 to 18 Sep)</th></tr><tr><td>wall clock, h</td><td>100</td><td>96</td></tr><tr><td>agent work, h</td><td>42</td><td>34</td></tr><tr><td>chip busy, h</td><td>33</td><td>25</td></tr><tr><td>blocked on user, h</td><td>0</td><td>30</td></tr><tr><td>idle, h</td><td>53</td><td>31</td></tr><tr><td>agents</td><td>114</td><td>74</td></tr><tr><td>cost, $ x 10</td><td>148</td><td>150</td></tr></table></details>
 <p class="note">Cost shown in tens of dollars so it fits one axis. The build week lost its hours to renders killed by a watchdog and three flat polish rounds; this week lost them to hand-off defects found one gate late and to questions asked after the user had left.</p></figure><p>Both weeks cost about the same nominal money ($1,483 against $1,505) and both took about four working days. The build week bought a
 score of 3.61 from nothing; this week bought the same score in a medium that runs on a phone. Per point of score gained it was expensive

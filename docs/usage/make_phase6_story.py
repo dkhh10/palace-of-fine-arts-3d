@@ -48,13 +48,9 @@ SERIES_D = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#
 def stacked_hbars(rows, series, title, unit='', width=360, fmt=lambda v: f'{v:g}', total_label=True, note='', lab_w=74):
     """rows: [(label, [v1..vn])]; series: names. Inline SVG with legend, 2 px gaps, direct labels on segments >= 12 % of the row max, table fallback."""
     n = len(series); maxv = max(sum(v) for _, v in rows) or 1
-    bar_h = 22; gap = 8; top = 22 + 16 * ((n + 2) // 3); hgt = top + len(rows) * (bar_h + gap) + 8
-    out = [f'<figure class="viz"><figcaption>{esc(title)}</figcaption>',
+    bar_h = 22; gap = 8; top = 6; hgt = top + len(rows) * (bar_h + gap) + 4
+    out = [f'<figure class="viz"><figcaption>{esc(title)}</figcaption>', legend(series),
            f'<svg viewBox="0 0 {width} {hgt}" width="100%" role="img" aria-label="{esc(title)}">']
-    # legend
-    for i, s in enumerate(series):
-        x = 4 + (i % 3) * (width // 3); y = 6 + (i // 3) * 16
-        out.append(f'<rect x="{x}" y="{y}" width="10" height="10" rx="2" class="s{i}"/><text x="{x + 14}" y="{y + 9}" class="lg">{esc(s)}</text>')
     y = top
     for label, vals in rows:
         x = lab_w; tot = sum(vals)
@@ -73,6 +69,10 @@ def stacked_hbars(rows, series, title, unit='', width=360, fmt=lambda v: f'{v:g}
     if note: out.append(f'<p class="note">{note}</p>')
     out.append('</figure>')
     return '\n'.join(out)
+
+def legend(series):
+    if len(series) < 2: return ''
+    return '<div class="legend">' + ''.join(f'<span><i class="s{i}"></i>{esc(x)}</span>' for i, x in enumerate(series)) + '</div>'
 
 def slider(a_src, b_src, a_lab, b_lab, sid):
     return f'''<div class="cmp" id="{sid}">
@@ -117,6 +117,7 @@ p{margin:10px 0}.lede{font-size:1.15rem;color:var(--ink2)}.kicker{color:var(--mu
 .cmp input{width:100%;margin:6px 0 0;height:36px;accent-color:var(--acc)}.tag{position:absolute;top:8px;background:rgba(0,0,0,.6);color:#fff;font-size:.8rem;padding:2px 8px;border-radius:6px;pointer-events:none}.tl{left:8px}.tr{right:8px}
 .side{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.side figure,figure.plain{margin:0}.side img,figure.plain img{width:100%;height:auto;border-radius:8px;display:block}.side figcaption,figure.plain figcaption,.viz figcaption{font-size:.85rem;color:var(--ink2);margin-top:4px}
 .viz{margin:20px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}.viz figcaption{font-weight:600;color:var(--ink);margin:0 0 6px}.viz svg text{fill:var(--ink);font-size:11px}.viz svg .lg{fill:var(--ink2)}.viz svg .lb{fill:var(--ink2)}.viz svg .dl{fill:#fff;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.85rem;color:var(--ink2);margin:2px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}.legend .s0{background:var(--s0)}.legend .s1{background:var(--s1)}.legend .s2{background:var(--s2)}.legend .s3{background:var(--s3)}.legend .s4{background:var(--s4)}.legend .s5{background:var(--s5)}.legend .s6{background:var(--s6)}.legend .s7{background:var(--s7)}
 .viz svg .s0{fill:var(--s0)}.viz svg .s1{fill:var(--s1)}.viz svg .s2{fill:var(--s2)}.viz svg .s3{fill:var(--s3)}.viz svg .s4{fill:var(--s4)}.viz svg .s5{fill:var(--s5)}.viz svg .s6{fill:var(--s6)}.viz svg .s7{fill:var(--s7)}
 details{margin:8px 0}summary{cursor:pointer;color:var(--acc)}table{border-collapse:collapse;width:100%;font-size:.88rem;margin:8px 0}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--ink2);font-weight:600}
 .day{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}.day h3{margin:0 0 6px}.day dl{margin:0}.day dt{font-weight:600;margin-top:8px;color:var(--ink2);font-size:.9rem}.day dd{margin:2px 0 0}
@@ -189,7 +190,7 @@ D = lambda d: DAYS[d]
 def costline(d, extra=''):
     v = D(d); return f'{h1(v["agent_work_h"])} agent-hours, {money(v["cost_usd"])} nominal ({share(v["cost_usd"])} of the week\'s {money(wkcost)}), {v["subagents_started"]} agents dispatched.{extra}'
 body.append('<h2>The week, day by day</h2>')
-body.append(stacked_hbars(day_rows, ['agent working', 'graphics chip busy, nobody watching', 'blocked on the user', 'idle, user away'], 'Where each day\'s 24 hours went (hours)', ' h', fmt=lambda v: f'{v:g}',
+body.append(stacked_hbars(day_rows, ['agent working', 'chip busy, nobody watching', 'blocked on the user', 'idle, user away'], 'Where each day\'s 24 hours went (hours)', ' h', fmt=lambda v: f'{v:g}',
                           note='Priority when things overlap: agent work first, then the graphics chip, then user waits. "Idle" on 15 Sep is the morning before the first prompt. Source: phase6_audit.py, per-day table.'))
 body.append(daycard('Monday 15 September', 'Gates 0, 1 and 2 in one day: 12 hours of near-continuous work',
     f'Build the pipeline end to end on one column and one capital (Gate 0); simplify every object and prove the geometry matches (Gate 1); bake colours and surface into images (Gate 2). Three specialists (bake, export, viewer), a critic and a code reviewer per merge.',
@@ -306,9 +307,8 @@ body.append('<h2>This week against the build week</h2>')
 cmp_rows = [('wall clock, h', [round(P5['wall_h']), round(P6['wall_h'])]), ('agent work, h', [round(P5['agent_work_h']), round(P6['agent_work_h'])]), ('chip busy, h', [round(P5['gpu_busy_total_h']), round(P6['gpu_busy_total_h'])]),
             ('blocked on user, h', [round(P5['waiting_on_user_h']), round(P6['waiting_on_user_h'])]), ('idle, h', [round(P5['idle_h']), round(P6['idle_h'] + 9.7)]), ('agents', [P5['subagents'], P6['subagents']]), ('cost, $ x 10', [round(P5['cost_usd'] / 10), round(P6['cost_usd'] / 10)])]
 def paired(rows, series, title, note=''):
-    width = 360; lab_w = 120; bar_h = 14; maxv = max(max(v) for _, v in rows) or 1; top = 24; hgt = top + len(rows) * (2 * bar_h + 10) + 6
-    out = [f'<figure class="viz"><figcaption>{esc(title)}</figcaption><svg viewBox="0 0 {width} {hgt}" width="100%" role="img" aria-label="{esc(title)}">']
-    for i, s in enumerate(series): out.append(f'<rect x="{4 + i * 170}" y="6" width="10" height="10" rx="2" class="s{i}"/><text x="{18 + i * 170}" y="15" class="lg">{esc(s)}</text>')
+    width = 360; lab_w = 120; bar_h = 14; maxv = max(max(v) for _, v in rows) or 1; top = 6; hgt = top + len(rows) * (2 * bar_h + 10) + 6
+    out = [f'<figure class="viz"><figcaption>{esc(title)}</figcaption>', legend(series), f'<svg viewBox="0 0 {width} {hgt}" width="100%" role="img" aria-label="{esc(title)}">']
     y = top
     for label, vals in rows:
         out.append(f'<text x="{lab_w - 6}" y="{y + bar_h + 4}" text-anchor="end" class="lb">{esc(label)}</text>')
