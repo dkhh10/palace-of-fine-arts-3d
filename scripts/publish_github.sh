@@ -13,7 +13,7 @@ rm -rf "$WORK"; mkdir -p "$WORK"
 git clone --quiet --no-local --bare "$SRC" "$WORK/src.git"
 cd "$WORK/src.git"
 # drop refs that are not branches or tags (remote-tracking, notes) so filter-repo sees only what we publish
-git for-each-ref --format='%(refname)' refs/ | grep -v -E '^refs/(heads|tags)/' | xargs -r -n1 git update-ref -d
+(git for-each-ref --format='%(refname)' refs/ | grep -v -E '^refs/(heads|tags)/' || true) | while read -r ref; do git update-ref -d "$ref"; done
 # the personal address is read from the local history, never written into this script
 OLD_EMAIL="${PFA_OLD_EMAIL:-$(git -C "$SRC" log -1 --format=%ae main)}"
 NEW_EMAIL="${PFA_NEW_EMAIL:-dkhh10@users.noreply.github.com}"
