@@ -147,6 +147,22 @@ table) because it prices Haiku side calls the transcripts do not carry. (5) The 
 `summary.md` (same deduplication by message id); the per-window split assigns a request to the window containing its timestamp, so a
 subagent that straddled a gate boundary is split, not whole.
 
+
+### 2.5 Cache misses, and what the output became (added 2026-09-23 after the user's follow-up; `docs/usage/phase6_examples.py`, `phase6_lines.sh`)
+
+A subagent's prompt cache lives five minutes, the lead's one hour. A request that arrives after the cache has expired re-writes its whole
+context at the premium price. In Phase 6, **155 requests re-wrote more than 100k tokens each, $343, 23 % of the phase.** By role: bake
+engineers 74 requests, $148, **52 % of everything the bake role cost** (they watched hour-long bakes with ten-minute sleeps, so every poll
+was a miss: a 267-token "is it done?" cost $2.21 on 09-16 02:08 against $0.17 for the same poll on a warm cache); export engineers 31 / $64
+/ 24 %; viewer engineers 39 / $86 / 16 %; the lead 5 / $36 / 21 % (the largest single request of the week, $6.18, was the lead resuming at
+22:59 on 09-18 after the evening away, 306k tokens re-written to answer "what else needs to get done?").
+
+What the output tokens were: 37 % thinking (API counter), 61 % tool arguments (code, shell commands, briefs), 2 % prose (by character count
+of the visible remainder). What they became, lines added on all branches 09-15 to 09-18 (`phase6_lines.sh`): export and pack scripts
+19,329; viewer JavaScript 10,995; bake scripts 6,142; viewer tools and tests 4,917; critic probes 3,807; reviews 1,841; briefs 1,841; QA
+reports 1,569; status, decisions, delivery and tech notes 1,143; plus 821,558 lines of generated JSON sidecars under renders/ (capture
+metadata, not written by a model).
+
 ## 3. Retry loops and rework
 
 | loop | count | where | cost of the extra rounds |
@@ -288,7 +304,7 @@ report states the measurement; the lead's summaries were not used as evidence.
   at 20:10 (61311f0). For the Phase 6 week the entries carry no times at all, which is why this audit uses commit times.
 - **Who reads the reviews.** Carries accumulated: 9 + 8 + 7 + 9 per review by Gate 3; most were closed by later work only by chance.
 
-## 7. Three findings not asked for
+## 7. Findings not asked for (three asked, one added later)
 
 1. **The user's own words show a mismatch between availability and the process.** Eight of the 26 substantive user messages in the week are
    "I have to leave in 10 minutes" or "what should I do now". The process assumes a user who signs off gates; the user was present for
@@ -301,6 +317,10 @@ report states the measurement; the lead's summaries were not used as evidence.
    step wherever the frame's own defect was fixed on the web side (water, foliage). Against the photograph, which is what CLAUDE.md asked,
    the parity ceiling written in `docs/briefs/phase6_plan.md` §4b ("a viewer cannot score above the render it is baked from") should have
    held. The 3.78 is real as a parity number and should not be read as a photoreal score.
+
+4. **(Found after the user's follow-up, 2026-09-23.) A quarter of the phase's cost was cache misses.** 155 requests that re-wrote their
+   whole context because a subagent had slept past its five-minute cache, or the lead came back after an hour: $343 of $1,505. The
+   bake role, whose job was to wait, spent half of its money on the waiting itself (§2.5).
 
 ## 8. Proposed changes to CLAUDE.md (at most ten, with evidence)
 
@@ -321,8 +341,9 @@ report states the measurement; the lead's summaries were not used as evidence.
    two anchors, the missing mobile paths, three tautological asserts (§3, §6.1).
 6. **Gate 0 exercises the packer and the exporter on every attribute the pipeline will later rely on** (UV2, COLOR_0, node names, material
    merging, alpha modes), not only the look. Evidence: all five gltfpack/exporter surprises were discoverable on the 62k-triangle slice.
-7. **Long GPU jobs are watched by a notification, not by an agent.** The bake queue writes its completion into a file the harness watches;
-   no agent turn is spent polling. Evidence: 21 % of spend on "waiting on tools" turns; the $108 overnight bake engineer.
+7. **Long GPU jobs are watched by a notification, not by an agent; any poll loop sleeps under five minutes or ends the turn.** The bake
+   queue writes its completion into a file the harness watches; no agent turn is spent polling, and no subagent sleeps past its own cache
+   lifetime. Evidence: 21 % of spend on "waiting on tools" turns; 155 cache-miss requests for $343 (§2.5), 52 % of the bake role's cost.
 8. **Archive generated run records at every gate** (`export/out/bake_queue/status.json` and the compose/encode records copied to
    `docs/runs/<gate>/`). Evidence: the Phase 6 bake records no longer exist (§6.1).
 

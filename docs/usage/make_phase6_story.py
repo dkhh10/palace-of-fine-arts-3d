@@ -10,6 +10,7 @@ H = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.d
 A = json.load(open(os.path.join(H, 'phase6_audit.json')))
 P6 = A['phase6_only_15_18']; WK = A['week']; P5 = A['phase5']; DAYS = A['days']; WIN = {w['key']: w for w in A['windows']}
 SC = A['scores']
+EX = json.load(open(os.path.join(H, 'phase6_examples.json')))
 
 # ---------------------------------------------------------------- images (same crops as the audit's contact sheet)
 def jpg(im, w=960, q=72):
@@ -122,7 +123,7 @@ p{margin:10px 0}.lede{font-size:1.15rem;color:var(--ink2)}.kicker{color:var(--mu
 details{margin:8px 0}summary{cursor:pointer;color:var(--acc)}table{border-collapse:collapse;width:100%;font-size:.88rem;margin:8px 0}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--ink2);font-weight:600}
 .day{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}.day h3{margin:0 0 6px}.day dl{margin:0}.day dt{font-weight:600;margin-top:8px;color:var(--ink2);font-size:.9rem}.day dd{margin:2px 0 0}
 .g{border-bottom:1px dotted var(--acc);cursor:help;position:relative}.g .gl{display:none;position:absolute;left:0;top:1.5em;z-index:5;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:8px;font-size:.85rem;line-height:1.4;width:min(280px,80vw)}.g:hover .gl,.g:focus .gl{display:block}
-.proof{font-size:.85rem;color:var(--mut)}.proof a{color:var(--acc)}.verdict{border-left:4px solid var(--acc);padding:8px 14px;background:var(--card);border-radius:0 10px 10px 0}
+code{font-size:.82rem;word-break:break-all}.proof{font-size:.85rem;color:var(--mut)}.proof a{color:var(--acc)}.verdict{border-left:4px solid var(--acc);padding:8px 14px;background:var(--card);border-radius:0 10px 10px 0}
 .note{font-size:.85rem;color:var(--ink2)}.big{font-size:2.2rem;font-weight:700;line-height:1.1;margin:8px 0}.ok{color:#008300}.half{color:#c98500}.no{color:#e34948}
 a{color:var(--acc)}.glossary dt{font-weight:600;margin-top:10px}.glossary dd{margin:2px 0 0}
 '''
@@ -181,6 +182,41 @@ specialists: what the baker produced, the exporter packed, and the viewer read h
 texture is up, how coordinates are rounded, which name a tree is filed under), and every mismatch was found one step later, by looking at the
 pictures, and sent back. The audit counts the loops: four rounds to pass Gate 1, two for Gate 2, two re-bakes, two bake re-runs for the trees,
 six web deployments.</p>''')
+
+# ---- who the agents are
+def rolecard(name, model, n, cost, does, example, produces):
+    return (f'<div class="day"><h3>{name} <span class="note">({model}; {n} in Phase 6, {money(cost)})</span></h3><dl><dt>What it does</dt><dd>{does}</dd>'
+            f'<dt>One real task from the week</dt><dd>{example}</dd><dt>What it leaves behind</dt><dd>{produces}</dd></dl></div>')
+R = P6['by_role']; nR = P6['subagents_by_role']
+body.append('<h2>Who the agents are, and what each one actually does</h2>'
+            '<p>Every agent is the same kind of thing: one AI conversation that reads files, runs commands and writes files, in a private copy of the project (a "worktree", so agents cannot overwrite each other). '
+            'The job title only sets what it is briefed to do, which tools it may touch, and which model runs it. The lead is the one conversation you talk to; everything else is dispatched by it with a written brief.</p>')
+body.append(rolecard('The lead', 'Fable 5.1', '6 sessions', R['lead']['cost_usd'],
+    'Reads status.md and the last reports, writes a brief per task (a text file the agent starts from), dispatches agents, watches the bake queue, rebuilds the Blender master file, takes the six screenshots, merges reviewed branches, and writes the status, decisions and delivery notes. It writes no build code beyond 20-line fixes.',
+    'On 17 Sep at 09:28 one request dispatched three agents for the foliage pass (bake, export, viewer), each with a brief pointing at docs/briefs/phase6c_*.md: 2,463 output tokens, most of them the three briefs, $0.34.',
+    'docs/briefs (28 Phase 6 briefs), docs/status.md, docs/decisions.md (81 entries in the week), docs/delivery.md, the merge commits.'))
+body.append(rolecard('Viewer builder', 'Opus 5, high effort', nR.get('viewer engineer', 0), R['viewer engineer']['cost_usd'],
+    'Writes the web application in JavaScript with the three.js library: code that downloads the packed model files, builds materials from the baked images, applies the colour treatment, draws the water reflection, fog and bloom, handles walking and the six camera presets, streams the download tiers, plus a screenshot tool that captures the six viewpoints the same way every time. It also measures: frame times, memory, and pixel boxes against the render.',
+    'On 17 Sep at 09:41 one request wrote the foliage module (leaf shader with bent normals and translucency, the near-tree switch, impostor modulation): 12,487 output tokens in a single file write, $0.40.',
+    'web/src/*.js (the viewer), web/tools/*.sh and *.mjs (captures), web/test (207 tests by the foliage pass), renders/web/round*_cam0N.png (captures), web/README.md.'))
+body.append(rolecard('Light baker', 'Opus 5, extra-high effort', nR.get('bake engineer', 0), R['bake engineer']['cost_usd'],
+    'Writes and runs the Blender scripts that compute images from the model: lightmaps (light and shadow per surface), material maps (colour, roughness, bumps), the reflection probe, the sky, the tree impostors. Each is a headless Blender job on the graphics chip, run one at a time through a queue script with a status file, and verified afterwards (value ranges, clipped pixels, coverage). It also diagnoses defects in the maps, such as the black ceiling that turned out to be inverted surfaces.',
+    'On 16 Sep at 00:19 one request wrote the queue worker script that ran the 65 overnight lightmap jobs: 16,131 output tokens, $0.52. Then it polled the queue for eight hours.',
+    'export/bake_*.py, export/bake_queue.sh, export/out/gate3/*.exr and *.ktx2 (the images, not committed), the manifest entries that say how to decode them, export/README.md.'))
+body.append(rolecard('Exporter', 'Opus 5, high effort', nR.get('export engineer', 0), R['export engineer']['cost_usd'],
+    'Turns the Blender model into web files: chooses which objects ship, simplifies each mesh to its triangle budget, lays out the texture coordinates the bakes need, writes glTF files, packs them with gltfpack and the textures with toktx, and writes the manifests that tell the viewer what exists (later, the download tiers and the phone variant). It writes the checks that the packed files still carry what was put in.',
+    'On 15 Sep at 12:08 one request wrote the Gate 1 export-set builder, 692 lines of Python, in one go: 21,167 output tokens, $0.63. It was the most expensive single request of the week.',
+    'export/export_set.py, gate*_set.py, gltf_pack.sh, tiers.py, verify_glb.py, export/out/*.glb and manifest.json (not committed), docs/briefs/phase6_budget.md.'))
+body.append(rolecard('Critic', 'Opus 5, extra-high effort', nR.get('QA critic', 0), R['QA critic']['cost_usd'],
+    'Takes the six captured viewpoints, cuts the hero into six full-resolution tiles and looks at each, writes a probe script that measures pixel boxes (brightness, hue, saturation, grain) against the render, runs the name sweep, and writes the round report with a verdict, scores per viewpoint, and one owner per defect. It never runs Blender or the browser.',
+    'On 16 Sep at 16:48 one request, right after viewing a tile, wrote the 247-line measurement probe for round 13: 7,451 output tokens, $0.24. The whole round cost $9.59.',
+    'docs/qa_round_11 to 19 (13 reports in Phase 6), scripts/qa_r1N_probe.py, renders/web/round1N_gate.png (the composite).'))
+body.append(rolecard('Code reviewer', 'Opus 5', nR.get('code reviewer', 0), R['code reviewer']['cost_usd'],
+    'Reads the difference between a branch and main, runs nothing heavier than a test, and writes a review with numbered findings: fix now, or carry. The lead merges only after the fix-now items are closed. Cheap ($2 to $7 each) and the source of most of the bugs caught in the week.',
+    'On 16 Sep at 17:11 one request read the viewer diff for the impostor round and reasoned about it: 7,065 output tokens of which 6,913 were thinking, $0.25. That review found the swapped blend weights.',
+    'docs/reviews/phase6_*_review.md (32 in Phase 6).'))
+body.append('<p class="note">Also in the week: one materials agent (the dome cap and coffer material round in Blender, ' + money(R.get('materials', {}).get('cost_usd', 0)) +
+            ') and three Sonnet helpers for mechanical passes (' + money(R.get('analysis/mechanical', {}).get('cost_usd', 0)) + ').</p>')
 
 # ---- the week day by day
 def daycard(title, sub, attempted, worked, failed, waiting, cost_line, proof):
@@ -301,6 +337,37 @@ body.append(stacked_hbars([(ACT_NAMES.get(k, k), [round(v['cost_usd'])]) for k, 
 body.append(f'''<p class="note"><b>Limits.</b> These are list-price dollars computed from the transcripts, not an invoice; the subscription's weekly meter is not recorded anywhere.
 Claude Code's own running tally for the same sessions is 8 to 30 % higher because it prices small side calls the transcripts do not carry. A request that did two things is
 counted once. Thinking tokens ({P6['thinking_tokens']/1e6:.1f} million) are inside every bar. See {retro}, section 2.</p></details>''')
+
+# ---- inside one request
+def excard(e):
+    u = e['usage']
+    parts = [('context re-read from cache', u['cache_read']), ('context newly written', u['cache_write']), ('thinking', u['thinking']), ('visible output', u['output'] - u['thinking'])]
+    bar = stacked_hbars([('tokens', [v for _, v in parts])], [n for n, _ in parts], e['title'], '', fmt=lambda v: f'{v:,.0f}', total_label=False)
+    tool = '<dt>Tool call</dt><dd><code>' + esc(e['tool']) + '</code></dd>' if e['tool'] else ''
+    text = '<dt>What it wrote (first lines)</dt><dd>' + esc(e['text']) + '</dd>' if e['text'] else ''
+    cost = money(u['cost']) if u['cost'] >= 1 else '$%.2f' % u['cost']
+    return ('<div class="day">' + bar + '<dl><dt>Who, when</dt><dd>' + esc(e['role']) + ' on ' + esc(e['model']) + ', ' + esc(e['when']) + '; cost ' + cost + '</dd>' + tool + text +
+            '<dt>Thinking</dt><dd>' + f"{u['thinking']:,}" + ' tokens, billed as output; the text of thinking is not stored in the transcript, only its size.</dd></dl></div>')
+sp = EX['output_split_share']; cm = EX['cache_misses']
+body.append('<h2>Inside one request: what the tokens are</h2>'
+            '<p>An agent works in a loop: it sends everything it has seen so far (the brief, every file it read, every result) plus one new instruction, and gets back a reply that ends in either a tool call or a message. '
+            'Each trip is one request and is billed in tokens (about three quarters of a word each). Three kinds of tokens are in every request:</p><ul>'
+            f"<li><b>Context re-read.</b> The whole conversation so far goes in again, every time. In Phase 6 the typical request re-read {EX['median_cache_read']:,} tokens (about 140 pages). Because it is unchanged, it comes from a cache at a tenth or less of the price of new text.</li>"
+            '<li><b>Context newly written.</b> Whatever is new since the last request (a file just read, a command result, a picture) is written into the cache once, at a premium.</li>'
+            f"<li><b>Output.</b> What the model produces: its private reasoning (\"thinking\"), the prose you read, and the arguments of the tool it calls, which is where the code, the shell commands and the briefs live. The typical request produced {EX['median_output']:,} output tokens and cost ${EX['median_cost']:.2f}.</li></ul>")
+body.append(stacked_hbars([('output', [round(sp['thinking']), round(sp['tool arguments (code, commands, briefs)']), round(sp['prose'])])], ['thinking', 'code, commands and briefs (tool arguments)', 'prose you read'],
+                          'What the output tokens of Phase 6 were (share, %)', ' %', fmt=lambda v: f'{v:g}', total_label=False,
+                          note='Thinking from the API counter; the visible remainder split between tool arguments and prose by character count. Source: phase6_examples.py.'))
+body.append('<p><b>What those tokens became.</b> Lines added to the project on all branches over the four days (docs/usage/phase6_lines.sh): 19,300 in the export and packing scripts, 11,000 in the viewer JavaScript, 6,100 in the bake scripts, 4,900 in the viewer tools and tests, 3,800 in the critic probes, 1,800 each in reviews and briefs, 1,600 in QA reports, 1,100 in the status, decisions and delivery notes. About 55,000 lines that a person could read, plus 820,000 lines of machine-generated capture metadata.</p>')
+body.append('<p>Almost none of what the agents produce is prose for a person. Three fifths is code, shell commands and briefs; a third is reasoning that nobody reads. Here are real requests from the week, one per kind of work, with their exact counts.</p>')
+for e in EX['examples']:
+    if e['kind'] not in ('cache_miss_poll', 'cache_expiry'): body.append(excard(e))
+body.append('<h3>The expensive kind of nothing: cache misses</h3>'
+            '<p>A subagent\'s cache lives five minutes; the lead\'s, one hour. A poll that sleeps ten minutes and then asks "is the bake done?" comes back to a cold cache and re-writes its entire context at the premium price. '
+            f"The same 267-token question then costs two dollars instead of a few cents. In Phase 6, {cm['all']['count']} requests re-wrote more than 100 000 tokens each: {money(cm['all']['cost'])}, {cm['all']['share_of_role_cost']} % of the phase. "
+            f"For the light bakers it was {cm['bake engineer']['share_of_role_cost']} % of everything they cost, because they watched hour-long bakes with ten-minute sleeps.</p>")
+for e in EX['examples']:
+    if e['kind'] in ('cache_miss_poll', 'cache_expiry'): body.append(excard(e))
 
 # ---- compare with phase 5
 body.append('<h2>This week against the build week</h2>')

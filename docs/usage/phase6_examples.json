@@ -1,0 +1,355 @@
+{
+ "examples": [
+  {
+   "kind": "reasoning",
+   "title": "The lead answers \"what do you recommend?\" on the three scale-up decisions",
+   "when": "15 Sep 11:55",
+   "role": "lead",
+   "agent": "lead",
+   "model": "fable-5-1",
+   "activity": "reasoning and reporting",
+   "usage": {
+    "input": 2,
+    "output": 1688,
+    "thinking": 825,
+    "cache_read": 277295,
+    "cache_write": 1069,
+    "cost": 0.17512375
+   },
+   "tools": [],
+   "tool": "",
+   "thinking": "",
+   "text": "My recommendation, taking \"impressive but fluid\" as the brief: **1. Ornament: option (c), instancing with a 256 px per-instance lightmap slot.** The capitals, maidens and urns are what make the building read as carved rather than extruded, and their sun-to-shade turn is the single strongest depth cue in the hero frame. Option (b) flattens every capital to the sky average; option (a) costs 29 h of GPU and 4.3 GB for n...",
+   "thinking_chars": 0,
+   "text_chars": 2348,
+   "tool_chars": 0
+  },
+  {
+   "kind": "editing",
+   "title": "The export engineer writes the Gate 1 export-set builder in one go",
+   "when": "15 Sep 12:08",
+   "role": "export engineer",
+   "agent": "Gate 1 export engineer (Opus high)",
+   "model": "opus-5",
+   "activity": "editing files",
+   "usage": {
+    "input": 2,
+    "output": 21167,
+    "thinking": 6106,
+    "cache_read": 142376,
+    "cache_write": 5179,
+    "cost": 0.63274175
+   },
+   "tools": [
+    "Write"
+   ],
+   "tool": "Write .claude/worktrees/phase6-export/export/gate1_set.py (692 lines)",
+   "thinking": "",
+   "text": "Now the main Gate 1 export set builder.",
+   "thinking_chars": 0,
+   "text_chars": 39,
+   "tool_chars": 35772
+  },
+  {
+   "kind": "reading",
+   "title": "A code reviewer reads a branch diff and reasons about it",
+   "when": "16 Sep 15:11",
+   "role": "code reviewer",
+   "agent": "Review viewer impostors + fixes",
+   "model": "opus-5",
+   "activity": "reading files and logs",
+   "usage": {
+    "input": 2,
+    "output": 7065,
+    "thinking": 6913,
+    "cache_read": 54444,
+    "cache_write": 7284,
+    "cost": 0.249382
+   },
+   "tools": [
+    "Bash"
+   ],
+   "tool": "Bash: cd \"/Users/dk/Projects/3d render blender 3rd attempt building\" && git diff 0b08a6b 08e9262 -- web/src/manifest.js web/src/main.js .gitignore",
+   "thinking": "",
+   "text": "",
+   "thinking_chars": 0,
+   "text_chars": 0,
+   "tool_chars": 212
+  },
+  {
+   "kind": "viewing",
+   "title": "The Gate 3 critic looks at a picture and writes what it measured",
+   "when": "17 Sep 11:01",
+   "role": "QA critic",
+   "agent": "QA round 16 critic",
+   "model": "opus-5",
+   "activity": "viewing images",
+   "usage": {
+    "input": 2,
+    "output": 4387,
+    "thinking": 3622,
+    "cache_read": 138057,
+    "cache_write": 12376,
+    "cost": 0.2560635
+   },
+   "tools": [
+    "Bash",
+    "Bash"
+   ],
+   "tool": "Bash: cd \"/Users/dk/Projects/3d render blender 3rd attempt building\" && python3 - <<'EOF' import json from pathlib import Path V=Path(\".claude/worktrees/phase6-viewer/renders/web\") d=json.load(open(V/\"round16b_perf.json\")) pri...",
+   "thinking": "",
+   "text": "Tiles reviewed. Now the measurements , let me check the sidecars and build the round-16 probe.",
+   "thinking_chars": 0,
+   "text_chars": 94,
+   "tool_chars": 1368
+  },
+  {
+   "kind": "waiting",
+   "title": "A bake engineer polls the bake queue",
+   "when": "15 Sep 17:56",
+   "role": "bake engineer",
+   "agent": "Gate 2 bake engineer r2 (Opus xhigh)",
+   "model": "opus-5",
+   "activity": "waiting on tools",
+   "usage": {
+    "input": 2,
+    "output": 390,
+    "thinking": 0,
+    "cache_read": 310031,
+    "cache_write": 600,
+    "cost": 0.1685255
+   },
+   "tools": [
+    "Bash"
+   ],
+   "tool": "Bash: cd \"/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake\" && until python3 -c \" import json,sys d=json.load(open('export/out/bake_queue/status.json')) sys.exit(0 if d['state'] in ('idle...",
+   "thinking": "",
+   "text": "31/60, no failures. The ORN bakes confirm the selected-to-active path: cages match Gate 1 exactly (attic figure 0.0098 m, attic panel v1 0.0636 m) and the normal maps carry real relief (std 0.056\u20130.165 vs 0.009 for the material-bump-only ARCH maps). Roughly 30 minutes left.",
+   "thinking_chars": 0,
+   "text_chars": 274,
+   "tool_chars": 407
+  },
+  {
+   "kind": "coordination",
+   "title": "The lead dispatches three agents for the foliage pass",
+   "when": "17 Sep 07:28",
+   "role": "lead",
+   "agent": "lead",
+   "model": "fable-5-1",
+   "activity": "coordination",
+   "usage": {
+    "input": 32,
+    "output": 2463,
+    "thinking": 0,
+    "cache_read": 285964,
+    "cache_write": 7432,
+    "cost": 0.343601
+   },
+   "tools": [
+    "Agent",
+    "Agent",
+    "Agent"
+   ],
+   "tool": "Agent: 6c bake: impostor diagnosis, tree AO | brief: You are the Phase 6c bake engineer (Opus 5, xhigh effort) on the Palace of Fine Arts Blender/three.js project. Your brief is `docs/briefs/phase6c_bake.md` in th...",
+   "thinking": "",
+   "text": "",
+   "thinking_chars": 0,
+   "text_chars": 0,
+   "tool_chars": 5914
+  },
+  {
+   "kind": "running",
+   "title": "The export engineer runs a check script and finds the anchor bug",
+   "when": "17 Sep 09:40",
+   "role": "export engineer",
+   "agent": "6c export engineer round 2",
+   "model": "opus-5",
+   "activity": "running scripts",
+   "usage": {
+    "input": 2,
+    "output": 6959,
+    "thinking": 6503,
+    "cache_read": 204906,
+    "cache_write": 2904,
+    "cost": 0.294588
+   },
+   "tools": [
+    "Bash"
+   ],
+   "tool": "Bash: cd \"/Users/dk/Projects/3d render blender 3rd attempt building\" && python3 -c \" import json, math m=json.load(open('export/out/gate3/manifest.json')); imp=m['impostors'] print(f\\\"{'prototype':34s} {'bboxXY/2 diag':>13s} {...",
+   "thinking": "",
+   "text": "Confirmed the anchor bug , and I've found a second, subtler problem it creates. Let me verify the correct anchor against the impostor's own recorded geometry first.",
+   "thinking_chars": 0,
+   "text_chars": 164,
+   "tool_chars": 657
+  },
+  {
+   "kind": "reporting",
+   "title": "A subagent hands its final report back to the lead",
+   "when": "17 Sep 09:44",
+   "role": "viewer engineer",
+   "agent": "6c viewer engineer round 2",
+   "model": "opus-5",
+   "activity": "reasoning and reporting",
+   "usage": {
+    "input": 2,
+    "output": 1367,
+    "thinking": 979,
+    "cache_read": 382705,
+    "cache_write": 2800,
+    "cost": 0.2430375
+   },
+   "tools": [],
+   "tool": "",
+   "thinking": "",
+   "text": "Waiting on the two preconditions (bake idle \u2713, COLOR_0 in the re-packed `env_trees.glb` , not yet). The blocking wait is running in the background; everything else is done and committed. Progress so far: - **Review blocker fixed and proved**: the mesh/impostor dissolve now partitions `[0,1)` exactly (mesh discards `hash >= vPfaFade`, impostor `hash < 1 - vPfaFade`), checked numerically and against both shader strings...",
+   "thinking_chars": 0,
+   "text_chars": 932,
+   "tool_chars": 0
+  },
+  {
+   "kind": "cache_miss_poll",
+   "title": "The same poll after the 5-minute cache has expired: the whole context is written again",
+   "when": "16 Sep 02:08",
+   "role": "bake engineer",
+   "agent": "Gate 3 bake engineer r3 (Opus xhigh)",
+   "model": "opus-5",
+   "activity": "waiting on tools",
+   "usage": {
+    "input": 2,
+    "output": 267,
+    "thinking": 0,
+    "cache_read": 0,
+    "cache_write": 353143,
+    "cost": 2.21382875
+   },
+   "tools": [
+    "Bash"
+   ],
+   "tool": "Bash: cd \"/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase6-bake\" && end=$(( $(date +%s) + 575 )); until [ \"$(python3 -c \"import json;print(json.load(open('export/out/bake_queue/status.json'))[...",
+   "thinking": "",
+   "text": "",
+   "thinking_chars": 0,
+   "text_chars": 0,
+   "tool_chars": 420
+  },
+  {
+   "kind": "cache_expiry",
+   "title": "The lead resumes after an evening away: the whole context is re-written into the cache",
+   "when": "18 Sep 22:59",
+   "role": "lead",
+   "agent": "lead",
+   "model": "fable-5-1",
+   "activity": "reasoning and reporting",
+   "usage": {
+    "input": 2,
+    "output": 1074,
+    "thinking": 347,
+    "cache_read": 23148,
+    "cache_write": 305966,
+    "cost": 6.178827
+   },
+   "tools": [],
+   "tool": "",
+   "thinking": "",
+   "text": "Nothing is required. The project is delivered against every definition of done you set: the Phase 5 Blender deliverables, the 6a local viewer at parity, 6c closed by the two-round rule, and 6b live with one clean QA round. What remains falls into three groups, in order of value. **Owed evidence, yours, five minutes** 1. A 30 s walk on the iPhone, screen-recorded, ideally in landscape. It confirms the walk controls an...",
+   "thinking_chars": 0,
+   "text_chars": 2048,
+   "tool_chars": 0
+  }
+ ],
+ "output_split_tokens": {
+  "thinking": 2439025,
+  "prose": 115122,
+  "tool arguments (code, commands, briefs)": 4023363
+ },
+ "output_split_share": {
+  "thinking": 37.1,
+  "prose": 1.8,
+  "tool arguments (code, commands, briefs)": 61.2
+ },
+ "output_split_by_role": {
+  "lead": {
+   "thinking": 27,
+   "prose": 8,
+   "tool arguments (code, commands, briefs)": 65
+  },
+  "viewer engineer": {
+   "thinking": 34,
+   "prose": 1,
+   "tool arguments (code, commands, briefs)": 65
+  },
+  "QA critic": {
+   "thinking": 33,
+   "prose": 0,
+   "tool arguments (code, commands, briefs)": 66
+  },
+  "export engineer": {
+   "thinking": 36,
+   "prose": 1,
+   "tool arguments (code, commands, briefs)": 63
+  },
+  "code reviewer": {
+   "thinking": 51,
+   "prose": 0,
+   "tool arguments (code, commands, briefs)": 49
+  },
+  "bake engineer": {
+   "thinking": 39,
+   "prose": 1,
+   "tool arguments (code, commands, briefs)": 60
+  },
+  "materials": {
+   "thinking": 54,
+   "prose": 1,
+   "tool arguments (code, commands, briefs)": 45
+  },
+  "analysis/mechanical": {
+   "thinking": 45,
+   "prose": 5,
+   "tool arguments (code, commands, briefs)": 51
+  }
+ },
+ "cache_misses": {
+  "lead": {
+   "count": 5,
+   "cost": 35.87,
+   "share_of_role_cost": 21,
+   "tokens": 1783906
+  },
+  "viewer engineer": {
+   "count": 39,
+   "cost": 86.4,
+   "share_of_role_cost": 16,
+   "tokens": 13721874
+  },
+  "export engineer": {
+   "count": 31,
+   "cost": 63.64,
+   "share_of_role_cost": 24,
+   "tokens": 10057587
+  },
+  "bake engineer": {
+   "count": 74,
+   "cost": 147.64,
+   "share_of_role_cost": 52,
+   "tokens": 23397027
+  },
+  "materials": {
+   "count": 6,
+   "cost": 9.83,
+   "share_of_role_cost": 33,
+   "tokens": 1542805
+  },
+  "all": {
+   "count": 155,
+   "cost": 343.37,
+   "share_of_role_cost": 23,
+   "tokens": 50503199
+  }
+ },
+ "requests": 8058,
+ "median_cache_read": 184676,
+ "median_output": 391,
+ "median_cost": 0.13
+}
