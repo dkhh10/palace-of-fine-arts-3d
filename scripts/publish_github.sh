@@ -14,12 +14,11 @@ git clone --quiet --no-local --bare "$SRC" "$WORK/src.git"
 cd "$WORK/src.git"
 # drop refs that are not branches or tags (remote-tracking, notes) so filter-repo sees only what we publish
 git for-each-ref --format='%(refname)' refs/ | grep -v -E '^refs/(heads|tags)/' | xargs -r -n1 git update-ref -d
-cat > "$WORK/mailmap" <<'EOF'
-dk <dkhh10@users.noreply.github.com> <dkhh10@users.noreply.github.com>
-EOF
-cat > "$WORK/replace.txt" <<'EOF'
-dkhh10@users.noreply.github.com==>dkhh10@users.noreply.github.com
-EOF
+# the personal address is read from the local history, never written into this script
+OLD_EMAIL="${PFA_OLD_EMAIL:-$(git -C "$SRC" log -1 --format=%ae main)}"
+NEW_EMAIL="${PFA_NEW_EMAIL:-dkhh10@users.noreply.github.com}"
+printf 'dk <%s> <%s>\n' "$NEW_EMAIL" "$OLD_EMAIL" > "$WORK/mailmap"
+printf '%s==>%s\n' "$OLD_EMAIL" "$NEW_EMAIL" > "$WORK/replace.txt"
 git filter-repo --force \
   --path-glob '*.blend' --invert-paths \
   --strip-blobs-bigger-than 2M \

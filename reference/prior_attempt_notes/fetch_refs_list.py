@@ -1,5 +1,5 @@
 import json, urllib.request, urllib.parse, sys, time
-UA = "PalaceRefBot/1.0 (dkhh10@users.noreply.github.com) research"
+UA = "PalaceRefBot/1.0 (github.com/dkhh10) research"
 API = "https://commons.wikimedia.org/w/api.php"
 def get(params):
     params = dict(params, format="json")
