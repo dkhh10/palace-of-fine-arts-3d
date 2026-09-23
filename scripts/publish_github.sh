@@ -25,6 +25,7 @@ git filter-repo --force \
   --mailmap "$WORK/mailmap" \
   --replace-text "$WORK/replace.txt"
 git remote add origin "$REMOTE"
-git push --force --all origin
+# only main and the tags are public: every agent branch is merged into main (checked 2026-09-23, none had unique commits)
+git push --force origin main
 git push --force --tags origin
-echo "pushed $(git for-each-ref refs/heads | wc -l | tr -d ' ') branches to $REMOTE; pack $(git count-objects -vH | awk '/size-pack/{print $2, $3}')"
+echo "pushed main + tags to $REMOTE; pack $(git count-objects -vH | awk '/size-pack/{print $2, $3}')"
