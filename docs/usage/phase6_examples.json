@@ -1,4 +1,89 @@
 {
+ "concentration": {
+  "requests": 8058,
+  "total_cost": 1497.65,
+  "mean_cost": 0.186,
+  "top8": [
+   {
+    "cost": 10.6,
+    "role": "lead",
+    "when": "16 Sep 08:48",
+    "output": 453,
+    "cache_write": 528407,
+    "cache_read": 29250
+   },
+   {
+    "cost": 10.37,
+    "role": "lead",
+    "when": "16 Sep 05:33",
+    "output": 1007,
+    "cache_write": 515603,
+    "cache_read": 29250
+   },
+   {
+    "cost": 6.18,
+    "role": "lead",
+    "when": "18 Sep 22:59",
+    "output": 1074,
+    "cache_write": 305966,
+    "cache_read": 23148
+   },
+   {
+    "cost": 4.51,
+    "role": "lead",
+    "when": "17 Sep 07:17",
+    "output": 72,
+    "cache_write": 224839,
+    "cache_read": 28275
+   },
+   {
+    "cost": 4.5,
+    "role": "viewer engineer",
+    "when": "18 Sep 19:07",
+    "output": 3,
+    "cache_write": 718058,
+    "cache_read": 15325
+   },
+   {
+    "cost": 4.43,
+    "role": "viewer engineer",
+    "when": "18 Sep 18:52",
+    "output": 3,
+    "cache_write": 707947,
+    "cache_read": 15325
+   },
+   {
+    "cost": 4.21,
+    "role": "lead",
+    "when": "17 Sep 07:10",
+    "output": 547,
+    "cache_write": 209091,
+    "cache_read": 23148
+   },
+   {
+    "cost": 4.18,
+    "role": "viewer engineer",
+    "when": "18 Sep 18:34",
+    "output": 5,
+    "cache_write": 667264,
+    "cache_read": 15325
+   }
+  ],
+  "top1pct_share": 15,
+  "top10pct_share": 38,
+  "under_025_count": 7036,
+  "under_025_cost": 879,
+  "most_expensive_warm": {
+   "cost": 2.07,
+   "role": "lead",
+   "when": "18 Sep 16:58",
+   "output": 1824
+  },
+  "largest_output": {
+   "cost": 0.63,
+   "output": 21167
+  }
+ },
  "examples": [
   {
    "kind": "reasoning",

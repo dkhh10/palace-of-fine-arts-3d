@@ -134,7 +134,15 @@ for r in ALL:
         m = miss[r['role']]; m['count'] += 1; m['cost'] += r['usage']['cost']; m['tokens'] += r['usage']['cache_write']
 MISS = {k: {'count': v['count'], 'cost': round(v['cost'], 2), 'share_of_role_cost': round(100 * v['cost'] / (rolecost[k] or 1)), 'tokens': v['tokens']} for k, v in miss.items()}
 MISS['all'] = {'count': sum(v['count'] for v in miss.values()), 'cost': round(sum(v['cost'] for v in miss.values()), 2), 'share_of_role_cost': round(100 * sum(v['cost'] for v in miss.values()) / (sum(rolecost.values()) or 1)), 'tokens': sum(v['tokens'] for v in miss.values())}
-OUT = {'examples': EX, 'output_split_tokens': {k: int(v) for k, v in comp.items()}, 'output_split_share': {k: round(100 * v / tot, 1) for k, v in comp.items()},
+rs = sorted(ALL, key=lambda r: -r['usage']['cost']); tot_cost = sum(r['usage']['cost'] for r in rs) or 1
+warm = [r for r in rs if r['usage']['cache_write'] <= 100000]
+CONC = {'requests': len(rs), 'total_cost': round(tot_cost, 2), 'mean_cost': round(tot_cost / len(rs), 3),
+        'top8': [{'cost': round(r['usage']['cost'], 2), 'role': r['role'], 'when': loc(r['ts']), 'output': r['usage']['output'], 'cache_write': r['usage']['cache_write'], 'cache_read': r['usage']['cache_read']} for r in rs[:8]],
+        'top1pct_share': round(100 * sum(r['usage']['cost'] for r in rs[:len(rs) // 100]) / tot_cost), 'top10pct_share': round(100 * sum(r['usage']['cost'] for r in rs[:len(rs) // 10]) / tot_cost),
+        'under_025_count': sum(1 for r in rs if r['usage']['cost'] < 0.25), 'under_025_cost': round(sum(r['usage']['cost'] for r in rs if r['usage']['cost'] < 0.25)),
+        'most_expensive_warm': {'cost': round(warm[0]['usage']['cost'], 2), 'role': warm[0]['role'], 'when': loc(warm[0]['ts']), 'output': warm[0]['usage']['output']},
+        'largest_output': {'cost': round(max(rs, key=lambda r: r['usage']['output'])['usage']['cost'], 2), 'output': max(r['usage']['output'] for r in rs)}}
+OUT = {'concentration': CONC, 'examples': EX, 'output_split_tokens': {k: int(v) for k, v in comp.items()}, 'output_split_share': {k: round(100 * v / tot, 1) for k, v in comp.items()},
        'output_split_by_role': {role: {k: round(100 * v / (sum(c.values()) or 1)) for k, v in c.items()} for role, c in comp_role.items()},
        'cache_misses': MISS, 'requests': len(ALL), 'median_cache_read': sorted(r['usage']['cache_read'] for r in ALL)[len(ALL) // 2], 'median_output': sorted(r['usage']['output'] for r in ALL)[len(ALL) // 2],
        'median_cost': round(sorted(r['usage']['cost'] for r in ALL)[len(ALL) // 2], 3)}

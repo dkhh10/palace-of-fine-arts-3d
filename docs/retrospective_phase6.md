@@ -157,6 +157,12 @@ was a miss: a 267-token "is it done?" cost $2.21 on 09-16 02:08 against $0.17 fo
 / 24 %; viewer engineers 39 / $86 / 16 %; the lead 5 / $36 / 21 % (the largest single request of the week, $6.18, was the lead resuming at
 22:59 on 09-18 after the evening away, 306k tokens re-written to answer "what else needs to get done?").
 
+How the $1,505 is distributed (2026-09-23 correction: the page had called the $0.63 export-set request "the most expensive of the week"; it
+was the largest by output, 21,167 tokens): 8,066 requests at a mean of $0.19, median $0.13; 7,041 requests under $0.25 sum to $880; the most
+expensive 1 % carries 15 % of the cost, the top 10 % carries 38 %. The eight most expensive requests were all cold-cache re-writes: the top two
+$10.60 and $10.37 by the lead on 09-16 (03:33Z, 06:48Z) with a 528k-token context, the session that had passed the 350k rule (§5.3); the most
+expensive warm-cache request was $2.07 (lead, 09-18 16:58, 1,824 output tokens).
+
 What the output tokens were: 37 % thinking (API counter), 61 % tool arguments (code, shell commands, briefs), 2 % prose (by character count
 of the visible remainder). What they became, lines added on all branches 09-15 to 09-18 (`phase6_lines.sh`): export and pack scripts
 19,329; viewer JavaScript 10,995; bake scripts 6,142; viewer tools and tests 4,917; critic probes 3,807; reviews 1,841; briefs 1,841; QA
