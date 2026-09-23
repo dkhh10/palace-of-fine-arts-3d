@@ -11,6 +11,7 @@ A = json.load(open(os.path.join(H, 'phase6_audit.json')))
 P6 = A['phase6_only_15_18']; WK = A['week']; P5 = A['phase5']; DAYS = A['days']; WIN = {w['key']: w for w in A['windows']}
 SC = A['scores']
 EX = json.load(open(os.path.join(H, 'phase6_examples.json')))
+CA = json.load(open(os.path.join(H, 'cache_analysis.json')))
 
 # ---------------------------------------------------------------- images (same crops as the audit's contact sheet)
 def jpg(im, w=960, q=72):
@@ -363,13 +364,18 @@ body.append(f"<p><b>How {money(C['total_cost'])} adds up from requests that cost
             f"The eight most expensive requests of the phase were not the productive ones: every one was a context re-write after a cold cache, the top two at {money(C['top8'][0]['cost'])} and {money(C['top8'][1]['cost'])}, both by the lead on 16 Sep with a 528,000-token context, producing {C['top8'][0]['output']:,} and {C['top8'][1]['output']:,} output tokens. "
             f"The most expensive request on a warm cache cost {money(C['most_expensive_warm']['cost'])}. The request that produced the most ({C['largest_output']['output']:,} tokens, a whole 692-line script) cost ${C['largest_output']['cost']:.2f}.</p>")
 body.append('<p><b>What those tokens became.</b> Lines added to the project on all branches over the four days (docs/usage/phase6_lines.sh): 19,300 in the export and packing scripts, 11,000 in the viewer JavaScript, 6,100 in the bake scripts, 4,900 in the viewer tools and tests, 3,800 in the critic probes, 1,800 each in reviews and briefs, 1,600 in QA reports, 1,100 in the status, decisions and delivery notes. About 55,000 lines that a person could read, plus 820,000 lines of machine-generated capture metadata.</p>')
-body.append('<p>Almost none of what the agents produce is prose for a person. Three fifths is code, shell commands and briefs; a third is reasoning that nobody reads. Here are real requests from the week, one per kind of work, with their exact counts.</p>')
+body.append('<p>Almost none of what the agents produce is prose for a person. Three fifths is code, shell commands and briefs; a third is reasoning that nobody reads. Here are real requests from the week, one per kind of work, with their exact counts. '
+            'The thinking itself cannot be shown: the transcript stores each thinking block as an empty string with a signature, so only its size survives. What can be quoted is the visible reasoning the agent wrote before or after its tool call, and those excerpts are below, unedited apart from length.</p>')
 for e in EX['examples']:
     if e['kind'] not in ('cache_miss_poll', 'cache_expiry'): body.append(excard(e))
+c6 = CA['phase6 (09-15..18)']; call = CA['whole project']; r6 = c6['roles']
 body.append('<h3>The expensive kind of nothing: cache misses</h3>'
-            '<p>A subagent\'s cache lives five minutes; the lead\'s, one hour. A poll that sleeps ten minutes and then asks "is the bake done?" comes back to a cold cache and re-writes its entire context at the premium price. '
-            f"The same 267-token question then costs two dollars instead of a few cents. In Phase 6, {cm['all']['count']} requests re-wrote more than 100 000 tokens each: {money(cm['all']['cost'])}, {cm['all']['share_of_role_cost']} % of the phase. "
-            f"For the light bakers it was {cm['bake engineer']['share_of_role_cost']} % of everything they cost, because they watched hour-long bakes with ten-minute sleeps.</p>")
+            '<p><b>What the cache is.</b> Nothing restarts and no agent loses its memory. The model provider keeps the front part of each conversation (everything already sent) in a short-lived store, so the next request can re-read it at about a tenth of the price of new text instead of sending it as new. '
+            'Each request that hits the store extends its life. In this project, every specialist agent ran with the five-minute lifetime and the lead ran with the one-hour lifetime (visible in the transcripts: the specialists\' cache writes are all five-minute writes, the lead\'s are all one-hour writes). '
+            'When the gap between two requests exceeds the lifetime, the store is empty, and the whole conversation is written into it again at the premium rate (1.25 times the price of new text for the five-minute store, 2 times for the one-hour store) before the reply is produced.</p>'
+            f"<p><b>What it cost.</b> In Phase 6, {c6['misses']} requests met an empty store and re-wrote their whole context (a miss = a request that wrote more than 20,000 tokens while reading almost none). Those re-writes cost {money(c6['miss_write_cost'])}; had the same context been read warm they would have cost about {money(c6['miss_write_cost'] - c6['extra_vs_warm'])}, so the premium was {money(c6['extra_vs_warm'])}, {c6['extra_share_pct']} % of the phase. "
+            f"For the light bakers it was {r6['bake engineer']['extra_share_of_role_cost_pct']} % of everything they cost, because they watched hour-long bakes with ten-minute sleeps and every poll came back to a cold store. Across the whole project the premium is {money(call['extra_vs_warm'])} of {money(call['total_cost'])}, {call['extra_share_pct']} %.</p>"
+            f"<p><b>What a longer lifetime would have done.</b> Replaying the same conversations with the same gaps: with the one-hour store for every agent the phase would have cost about {money(c6['simulated_same_gaps']['1 h']['cost'])} instead of {money(c6['total_cost'])} ({c6['simulated_same_gaps']['1 h']['misses']} misses instead of {c6['misses']}); with the five-minute store for every agent including the lead, about {money(c6['simulated_same_gaps']['5 min']['cost'])}. Project-wide the one-hour store everywhere comes to about {money(call['simulated_same_gaps']['1 h']['cost'])} against {money(call['total_cost'])}. The cheaper fix is not to poll: sleep under five minutes, or let the job wake the agent. Source: docs/usage/cache_analysis.py.</p>")
 for e in EX['examples']:
     if e['kind'] in ('cache_miss_poll', 'cache_expiry'): body.append(excard(e))
 

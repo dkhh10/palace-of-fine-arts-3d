@@ -1,0 +1,455 @@
+{
+ "phase6 (09-15..18)": {
+  "roles": {
+   "viewer engineer": {
+    "requests": 2421,
+    "cache_write_5m_M": 18.27,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 760.5,
+    "cost": 540.27,
+    "misses": 40,
+    "miss_tokens_M": 13.76,
+    "miss_write_cost": 86.01,
+    "extra_vs_warm": 79.13,
+    "extra_share_of_role_cost_pct": 15
+   },
+   "bake engineer": {
+    "requests": 977,
+    "cache_write_5m_M": 25.66,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 199.0,
+    "cost": 286.39,
+    "misses": 78,
+    "miss_tokens_M": 23.56,
+    "miss_write_cost": 147.25,
+    "extra_vs_warm": 135.47,
+    "extra_share_of_role_cost_pct": 47
+   },
+   "export engineer": {
+    "requests": 1409,
+    "cache_write_5m_M": 12.91,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 320.7,
+    "cost": 265.9,
+    "misses": 35,
+    "miss_tokens_M": 10.22,
+    "miss_write_cost": 63.85,
+    "extra_vs_warm": 58.75,
+    "extra_share_of_role_cost_pct": 22
+   },
+   "lead": {
+    "requests": 952,
+    "cache_write_5m_M": 0.0,
+    "cache_write_1h_M": 4.05,
+    "cache_read_M": 231.0,
+    "cost": 176.41,
+    "misses": 6,
+    "miss_tokens_M": 2.06,
+    "miss_write_cost": 41.24,
+    "extra_vs_warm": 40.72,
+    "extra_share_of_role_cost_pct": 23
+   },
+   "QA critic": {
+    "requests": 1010,
+    "cache_write_5m_M": 2.48,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 131.7,
+    "cost": 102.42,
+    "misses": 0,
+    "miss_tokens_M": 0.0,
+    "miss_write_cost": 0,
+    "extra_vs_warm": 0,
+    "extra_share_of_role_cost_pct": 0
+   },
+   "code reviewer": {
+    "requests": 1076,
+    "cache_write_5m_M": 3.96,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 109.4,
+    "cost": 101.67,
+    "misses": 1,
+    "miss_tokens_M": 0.04,
+    "miss_write_cost": 0.23,
+    "extra_vs_warm": 0.22,
+    "extra_share_of_role_cost_pct": 0
+   },
+   "materials": {
+    "requests": 146,
+    "cache_write_5m_M": 1.85,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 26.7,
+    "cost": 29.5,
+    "misses": 6,
+    "miss_tokens_M": 1.54,
+    "miss_write_cost": 9.64,
+    "extra_vs_warm": 8.87,
+    "extra_share_of_role_cost_pct": 30
+   },
+   "analysis/mechanical": {
+    "requests": 75,
+    "cache_write_5m_M": 0.38,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 5.5,
+    "cost": 2.35,
+    "misses": 4,
+    "miss_tokens_M": 0.2,
+    "miss_write_cost": 0.5,
+    "extra_vs_warm": 0.46,
+    "extra_share_of_role_cost_pct": 20
+   }
+  },
+  "total_cost": 1504.91,
+  "misses": 170,
+  "miss_write_cost": 348.73,
+  "extra_vs_warm": 323.61,
+  "extra_share_pct": 21.5,
+  "simulated_same_gaps": {
+   "5 min": {
+    "cost": 1822.55,
+    "misses": 335
+   },
+   "1 h": {
+    "cost": 1338.83,
+    "misses": 91
+   }
+  }
+ },
+ "phase5 (09-06..10)": {
+  "roles": {
+   "lighting": {
+    "requests": 1572,
+    "cache_write_5m_M": 18.38,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 272.0,
+    "cost": 283.81,
+    "misses": 76,
+    "miss_tokens_M": 14.93,
+    "miss_write_cost": 97.84,
+    "extra_vs_warm": 90.56,
+    "extra_share_of_role_cost_pct": 32
+   },
+   "QA critic": {
+    "requests": 1910,
+    "cache_write_5m_M": 5.85,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 389.4,
+    "cost": 261.51,
+    "misses": 20,
+    "miss_tokens_M": 2.48,
+    "miss_write_cost": 20.26,
+    "extra_vs_warm": 19.21,
+    "extra_share_of_role_cost_pct": 7
+   },
+   "lead": {
+    "requests": 846,
+    "cache_write_5m_M": 0.0,
+    "cache_write_1h_M": 6.31,
+    "cache_read_M": 191.7,
+    "cost": 218.35,
+    "misses": 17,
+    "miss_tokens_M": 4.11,
+    "miss_write_cost": 82.2,
+    "extra_vs_warm": 81.17,
+    "extra_share_of_role_cost_pct": 37
+   },
+   "materials": {
+    "requests": 971,
+    "cache_write_5m_M": 12.61,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 176.8,
+    "cost": 201.88,
+    "misses": 41,
+    "miss_tokens_M": 10.29,
+    "miss_write_cost": 79.44,
+    "extra_vs_warm": 74.91,
+    "extra_share_of_role_cost_pct": 37
+   },
+   "environment": {
+    "requests": 1085,
+    "cache_write_5m_M": 9.33,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 202.7,
+    "cost": 184.39,
+    "misses": 33,
+    "miss_tokens_M": 6.77,
+    "miss_write_cost": 45.82,
+    "extra_vs_warm": 42.57,
+    "extra_share_of_role_cost_pct": 23
+   },
+   "architecture": {
+    "requests": 826,
+    "cache_write_5m_M": 4.53,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 129.8,
+    "cost": 113.09,
+    "misses": 10,
+    "miss_tokens_M": 2.21,
+    "miss_write_cost": 18.34,
+    "extra_vs_warm": 17.42,
+    "extra_share_of_role_cost_pct": 15
+   },
+   "ornament": {
+    "requests": 616,
+    "cache_write_5m_M": 4.84,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 114.4,
+    "cost": 108.44,
+    "misses": 9,
+    "miss_tokens_M": 3.09,
+    "miss_write_cost": 31.69,
+    "extra_vs_warm": 30.64,
+    "extra_share_of_role_cost_pct": 28
+   },
+   "code reviewer": {
+    "requests": 1106,
+    "cache_write_5m_M": 4.14,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 91.6,
+    "cost": 88.95,
+    "misses": 3,
+    "miss_tokens_M": 0.2,
+    "miss_write_cost": 1.24,
+    "extra_vs_warm": 1.14,
+    "extra_share_of_role_cost_pct": 1
+   },
+   "analysis/mechanical": {
+    "requests": 60,
+    "cache_write_5m_M": 1.27,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 7.3,
+    "cost": 21.23,
+    "misses": 5,
+    "miss_tokens_M": 0.63,
+    "miss_write_cost": 7.89,
+    "extra_vs_warm": 7.73,
+    "extra_share_of_role_cost_pct": 36
+   },
+   "phase 5 prep": {
+    "requests": 74,
+    "cache_write_5m_M": 0.27,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 8.0,
+    "cost": 6.38,
+    "misses": 1,
+    "miss_tokens_M": 0.04,
+    "miss_write_cost": 0.11,
+    "extra_vs_warm": 0.1,
+    "extra_share_of_role_cost_pct": 2
+   },
+   "other": {
+    "requests": 17,
+    "cache_write_5m_M": 0.16,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 1.1,
+    "cost": 3.09,
+    "misses": 0,
+    "miss_tokens_M": 0.0,
+    "miss_write_cost": 0,
+    "extra_vs_warm": 0,
+    "extra_share_of_role_cost_pct": 0
+   }
+  },
+  "total_cost": 1491.13,
+  "misses": 215,
+  "miss_write_cost": 384.83,
+  "extra_vs_warm": 365.45,
+  "extra_share_pct": 24.5,
+  "simulated_same_gaps": {
+   "5 min": {
+    "cost": 1742.91,
+    "misses": 420
+   },
+   "1 h": {
+    "cost": 1400.02,
+    "misses": 145
+   }
+  }
+ },
+ "whole project": {
+  "roles": {
+   "viewer engineer": {
+    "requests": 3579,
+    "cache_write_5m_M": 23.49,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 993.3,
+    "cost": 695.63,
+    "misses": 52,
+    "miss_tokens_M": 16.81,
+    "miss_write_cost": 105.04,
+    "extra_vs_warm": 96.64,
+    "extra_share_of_role_cost_pct": 14
+   },
+   "lead": {
+    "requests": 2484,
+    "cache_write_5m_M": 0.0,
+    "cache_write_1h_M": 15.04,
+    "cache_read_M": 622.0,
+    "cost": 567.61,
+    "misses": 31,
+    "miss_tokens_M": 9.31,
+    "miss_write_cost": 186.23,
+    "extra_vs_warm": 183.9,
+    "extra_share_of_role_cost_pct": 32
+   },
+   "QA critic": {
+    "requests": 3516,
+    "cache_write_5m_M": 9.84,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 598.8,
+    "cost": 417.64,
+    "misses": 26,
+    "miss_tokens_M": 2.72,
+    "miss_write_cost": 21.76,
+    "extra_vs_warm": 20.59,
+    "extra_share_of_role_cost_pct": 5
+   },
+   "bake engineer": {
+    "requests": 1386,
+    "cache_write_5m_M": 28.14,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 281.0,
+    "cost": 344.43,
+    "misses": 85,
+    "miss_tokens_M": 25.2,
+    "miss_write_cost": 157.53,
+    "extra_vs_warm": 144.93,
+    "extra_share_of_role_cost_pct": 42
+   },
+   "export engineer": {
+    "requests": 2010,
+    "cache_write_5m_M": 14.56,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 430.0,
+    "cost": 333.51,
+    "misses": 38,
+    "miss_tokens_M": 10.67,
+    "miss_write_cost": 66.68,
+    "extra_vs_warm": 61.35,
+    "extra_share_of_role_cost_pct": 18
+   },
+   "lighting": {
+    "requests": 1876,
+    "cache_write_5m_M": 20.67,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 326.6,
+    "cost": 328.05,
+    "misses": 87,
+    "miss_tokens_M": 16.56,
+    "miss_write_cost": 108.04,
+    "extra_vs_warm": 99.94,
+    "extra_share_of_role_cost_pct": 30
+   },
+   "analysis/mechanical": {
+    "requests": 1343,
+    "cache_write_5m_M": 11.11,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 465.9,
+    "cost": 318.62,
+    "misses": 31,
+    "miss_tokens_M": 8.43,
+    "miss_write_cost": 55.9,
+    "extra_vs_warm": 51.9,
+    "extra_share_of_role_cost_pct": 16
+   },
+   "code reviewer": {
+    "requests": 3235,
+    "cache_write_5m_M": 11.5,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 311.3,
+    "cost": 276.99,
+    "misses": 15,
+    "miss_tokens_M": 0.61,
+    "miss_write_cost": 3.8,
+    "extra_vs_warm": 3.5,
+    "extra_share_of_role_cost_pct": 1
+   },
+   "materials": {
+    "requests": 1117,
+    "cache_write_5m_M": 14.46,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 203.5,
+    "cost": 231.38,
+    "misses": 47,
+    "miss_tokens_M": 11.83,
+    "miss_write_cost": 89.09,
+    "extra_vs_warm": 83.78,
+    "extra_share_of_role_cost_pct": 36
+   },
+   "environment": {
+    "requests": 1336,
+    "cache_write_5m_M": 10.01,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 269.2,
+    "cost": 222.85,
+    "misses": 34,
+    "miss_tokens_M": 7.09,
+    "miss_write_cost": 47.79,
+    "extra_vs_warm": 44.38,
+    "extra_share_of_role_cost_pct": 20
+   },
+   "architecture": {
+    "requests": 826,
+    "cache_write_5m_M": 4.53,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 129.8,
+    "cost": 113.09,
+    "misses": 10,
+    "miss_tokens_M": 2.21,
+    "miss_write_cost": 18.34,
+    "extra_vs_warm": 17.42,
+    "extra_share_of_role_cost_pct": 15
+   },
+   "ornament": {
+    "requests": 616,
+    "cache_write_5m_M": 4.84,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 114.4,
+    "cost": 108.44,
+    "misses": 9,
+    "miss_tokens_M": 3.09,
+    "miss_write_cost": 31.69,
+    "extra_vs_warm": 30.64,
+    "extra_share_of_role_cost_pct": 28
+   },
+   "other": {
+    "requests": 338,
+    "cache_write_5m_M": 1.66,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 46.2,
+    "cost": 34.94,
+    "misses": 7,
+    "miss_tokens_M": 0.9,
+    "miss_write_cost": 5.29,
+    "extra_vs_warm": 4.87,
+    "extra_share_of_role_cost_pct": 14
+   },
+   "phase 5 prep": {
+    "requests": 74,
+    "cache_write_5m_M": 0.27,
+    "cache_write_1h_M": 0.0,
+    "cache_read_M": 8.0,
+    "cost": 6.38,
+    "misses": 1,
+    "miss_tokens_M": 0.04,
+    "miss_write_cost": 0.11,
+    "extra_vs_warm": 0.1,
+    "extra_share_of_role_cost_pct": 2
+   }
+  },
+  "total_cost": 3999.55,
+  "misses": 473,
+  "miss_write_cost": 897.28,
+  "extra_vs_warm": 843.93,
+  "extra_share_pct": 21.1,
+  "simulated_same_gaps": {
+   "5 min": {
+    "cost": 4786.03,
+    "misses": 941
+   },
+   "1 h": {
+    "cost": 3731.3,
+    "misses": 316
+   }
+  }
+ }
+}

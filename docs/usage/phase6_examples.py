@@ -114,7 +114,7 @@ for kind, ts, role, title in PICK:
         if n == 'SendMessage': tool = 'SendMessage to ' + head(str(i.get('to', '')), 30) + ': ' + head(i.get('message') or i.get('content') or '', 160); break
         if n == 'Read': tool = 'Read ' + os.path.relpath(i.get('file_path', ''), ROOT); break
     EX.append({'kind': kind, 'title': title, 'when': loc(r['ts']), 'role': r['role'], 'agent': r['agent'], 'model': (r['model'] or '').replace('claude-', ''), 'activity': r['activity'],
-               'usage': r['usage'], 'tools': [n for n, _ in r['tools']], 'tool': tool, 'thinking': head(r['thinking'], 420), 'text': head(r['text'], 420),
+               'usage': r['usage'], 'tools': [n for n, _ in r['tools']], 'tool': tool, 'thinking': head(r['thinking'], 420), 'text': head(r['text'], 1100),
                'thinking_chars': len(r['thinking']), 'text_chars': len(r['text']), 'tool_chars': sum(len(json.dumps(i)) for _, i in r['tools'])})
 # ---- how output splits between thinking, prose and tool arguments (code, commands), by characters, whole Phase 6
 # thinking text is not stored in the transcripts (only its token count), so: thinking share = thinking tokens / output tokens,

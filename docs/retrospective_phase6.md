@@ -150,12 +150,19 @@ subagent that straddled a gate boundary is split, not whole.
 
 ### 2.5 Cache misses, and what the output became (added 2026-09-23 after the user's follow-up; `docs/usage/phase6_examples.py`, `phase6_lines.sh`)
 
-A subagent's prompt cache lives five minutes, the lead's one hour. A request that arrives after the cache has expired re-writes its whole
-context at the premium price. In Phase 6, **155 requests re-wrote more than 100k tokens each, $343, 23 % of the phase.** By role: bake
-engineers 74 requests, $148, **52 % of everything the bake role cost** (they watched hour-long bakes with ten-minute sleeps, so every poll
-was a miss: a 267-token "is it done?" cost $2.21 on 09-16 02:08 against $0.17 for the same poll on a warm cache); export engineers 31 / $64
-/ 24 %; viewer engineers 39 / $86 / 16 %; the lead 5 / $36 / 21 % (the largest single request of the week, $6.18, was the lead resuming at
-22:59 on 09-18 after the evening away, 306k tokens re-written to answer "what else needs to get done?").
+A subagent's prompt cache lives five minutes, the lead's one hour (the transcripts show only `ephemeral_5m` writes for the Opus
+subagents and only `ephemeral_1h` writes for the Fable lead). A request that arrives after the cache has expired re-writes its whole context
+at the premium price (1.25x the input rate for the 5-minute store, 2x for the 1-hour store, against 0.1x for a warm read). Counting a miss
+as a request that wrote more than 20k tokens while reading under 20 % of that (`docs/usage/cache_analysis.py`, `cache_analysis.json`):
+**Phase 6 had 170 misses, re-written for $349, of which $324 (21.5 % of the phase) is the premium over a warm read.** By role: bake
+engineers 78 misses, $135 premium, **47 % of everything the bake role cost** (they watched hour-long bakes with ten-minute sleeps, so every
+poll was a miss: a 267-token "is it done?" cost $2.21 on 09-16 02:08 against $0.17 for the same poll on a warm cache); export engineers
+35 / $59 / 22 %; viewer engineers 40 / $79 / 15 %; the lead 6 / $41 / 23 % (its two largest requests, $10.60 and $10.37, re-wrote a 528k
+context on 09-16). Critics and reviewers, which never wait, had none. Project-wide: 473 misses, $844 premium, 21 % of $4,000.
+Replaying the same conversations with the same gaps under a one-hour store for every agent gives about $1,339 for Phase 6 instead of
+$1,505 (91 misses instead of 170) and $3,731 project-wide instead of $4,000; under a five-minute store for everyone including the lead,
+$1,823. The same replay for Phase 5: 215 misses, $365 premium (24.5 %), the lighting agents 32 % of their cost. The earlier figure on the
+page (155 misses, $343, "52 %") used a cruder rule (any write over 100k) and is superseded by these.
 
 How the $1,505 is distributed (2026-09-23 correction: the page had called the $0.63 export-set request "the most expensive of the week"; it
 was the largest by output, 21,167 tokens): 8,066 requests at a mean of $0.19, median $0.13; 7,041 requests under $0.25 sum to $880; the most
@@ -324,9 +331,9 @@ report states the measurement; the lead's summaries were not used as evidence.
    the parity ceiling written in `docs/briefs/phase6_plan.md` §4b ("a viewer cannot score above the render it is baked from") should have
    held. The 3.78 is real as a parity number and should not be read as a photoreal score.
 
-4. **(Found after the user's follow-up, 2026-09-23.) A quarter of the phase's cost was cache misses.** 155 requests that re-wrote their
-   whole context because a subagent had slept past its five-minute cache, or the lead came back after an hour: $343 of $1,505. The
-   bake role, whose job was to wait, spent half of its money on the waiting itself (§2.5).
+4. **(Found after the user's follow-up, 2026-09-23.) A quarter of the phase's cost was cache misses.** 170 requests that re-wrote their
+   whole context because a subagent had slept past its five-minute cache, or the lead came back after an hour: a $324 premium on
+   $1,505, and $844 on the $4,000 project. The bake role, whose job was to wait, spent 47 % of its money on the waiting itself (§2.5).
 
 ## 8. Proposed changes to CLAUDE.md (at most ten, with evidence)
 
@@ -349,7 +356,7 @@ report states the measurement; the lead's summaries were not used as evidence.
    merging, alpha modes), not only the look. Evidence: all five gltfpack/exporter surprises were discoverable on the 62k-triangle slice.
 7. **Long GPU jobs are watched by a notification, not by an agent; any poll loop sleeps under five minutes or ends the turn.** The bake
    queue writes its completion into a file the harness watches; no agent turn is spent polling, and no subagent sleeps past its own cache
-   lifetime. Evidence: 21 % of spend on "waiting on tools" turns; 155 cache-miss requests for $343 (§2.5), 52 % of the bake role's cost.
+   lifetime. Evidence: 21 % of spend on "waiting on tools" turns; 170 cache misses with a $324 premium (§2.5), 47 % of the bake role's cost; a one-hour cache for subagents would have saved about $166 in Phase 6 on the same gaps.
 8. **Archive generated run records at every gate** (`export/out/bake_queue/status.json` and the compose/encode records copied to
    `docs/runs/<gate>/`). Evidence: the Phase 6 bake records no longer exist (§6.1).
 

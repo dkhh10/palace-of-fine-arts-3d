@@ -104,7 +104,7 @@
    "tools": [],
    "tool": "",
    "thinking": "",
-   "text": "My recommendation, taking \"impressive but fluid\" as the brief: **1. Ornament: option (c), instancing with a 256 px per-instance lightmap slot.** The capitals, maidens and urns are what make the building read as carved rather than extruded, and their sun-to-shade turn is the single strongest depth cue in the hero frame. Option (b) flattens every capital to the sky average; option (a) costs 29 h of GPU and 4.3 GB for n...",
+   "text": "My recommendation, taking \"impressive but fluid\" as the brief: **1. Ornament: option (c), instancing with a 256 px per-instance lightmap slot.** The capitals, maidens and urns are what make the building read as carved rather than extruded, and their sun-to-shade turn is the single strongest depth cue in the hero frame. Option (b) flattens every capital to the sky average; option (a) costs 29 h of GPU and 4.3 GB for no visible gain at hero distance (a capital is 68 px wide at 4K). Option (c) keeps the contrast for 3.3 h of bakes and 451 MB on desktop, and it stays fluid because the geometry is still instanced (198 k unique triangles, ~13 draw calls for all 436 placements). Mobile gets (b) at 1K as its fallback. **2. Trees: impostors beyond 25 m of the walkable area, thinned LOD1 for the ~20 trees you can walk up to.** This is the decision that decides both goals at once. Leaf cards as shipped are 3.3 M triangles of alpha-tested overdraw, which is exactly what makes a fanless M2 stutter at 1440p, and they still look flat because there is no translucency. Impostors are a few hundred qua...",
    "thinking_chars": 0,
    "text_chars": 2348,
    "tool_chars": 0
@@ -287,7 +287,7 @@
    "tools": [],
    "tool": "",
    "thinking": "",
-   "text": "Waiting on the two preconditions (bake idle \u2713, COLOR_0 in the re-packed `env_trees.glb` , not yet). The blocking wait is running in the background; everything else is done and committed. Progress so far: - **Review blocker fixed and proved**: the mesh/impostor dissolve now partitions `[0,1)` exactly (mesh discards `hash >= vPfaFade`, impostor `hash < 1 - vPfaFade`), checked numerically and against both shader strings...",
+   "text": "Waiting on the two preconditions (bake idle \u2713, COLOR_0 in the re-packed `env_trees.glb` , not yet). The blocking wait is running in the background; everything else is done and committed. Progress so far: - **Review blocker fixed and proved**: the mesh/impostor dissolve now partitions `[0,1)` exactly (mesh discards `hash >= vPfaFade`, impostor `hash < 1 - vPfaFade`), checked numerically and against both shader strings in a new node test. - **Items 1\u20133 coded and unit-tested** (`web/src/foliageLazy.js`, 194 PASS in `npm test`), plus the lead's placement gate, which on the shipped `env_trees.glb` reports **127/127 meshes over tolerance, worst trunk offset 905.1 m** , the export defect the lead warned about, caught automatically, meshes not drawn, impostors kept. - The bake's `instance_irradiance.json` is already proved end to end: 127/127 joined, 16/16 `E_bake`, ratios 0.027\u20132.048 in `full` mode, nothing on the 4.0 clamp.",
    "thinking_chars": 0,
    "text_chars": 932,
    "tool_chars": 0
@@ -337,7 +337,7 @@
    "tools": [],
    "tool": "",
    "thinking": "",
-   "text": "Nothing is required. The project is delivered against every definition of done you set: the Phase 5 Blender deliverables, the 6a local viewer at parity, 6c closed by the two-round rule, and 6b live with one clean QA round. What remains falls into three groups, in order of value. **Owed evidence, yours, five minutes** 1. A 30 s walk on the iPhone, screen-recorded, ideally in landscape. It confirms the walk controls an...",
+   "text": "Nothing is required. The project is delivered against every definition of done you set: the Phase 5 Blender deliverables, the 6a local viewer at parity, 6c closed by the two-round rule, and 6b live with one clean QA round. What remains falls into three groups, in order of value. **Owed evidence, yours, five minutes** 1. A 30 s walk on the iPhone, screen-recorded, ideally in landscape. It confirms the walk controls and the frame rate on the device; the screenshot only proves loading. 2. One Safari screenshot at the hero on the Mac. Every desktop capture so far is headless Chrome, so no Safari claim exists yet. **Residuals worth a small follow-on phase, if you want the phone experience to match the desktop** 3. The mobile water reflects nothing, so the lagoon is a flat gradient and station 6 goes near-black. A reduced reflection set on the mobile Reflector is a small viewer change, then one mobile recapture and a QA look. This is the one I would do. 4. Portrait framing: the building sits small and centred. A portrait sensor fit per station is a design choice more than a fix. 5. Cosmeti...",
    "thinking_chars": 0,
    "text_chars": 2048,
    "tool_chars": 0
