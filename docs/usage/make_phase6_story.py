@@ -39,6 +39,9 @@ for k, p, w in [('g0', 'renders/web/gate0_pair.png', 960), ('g3_before', 'render
                 ('gate5cm', 'renders/web/960/gate5cm_cam01.jpg', 442), ('gate7m', 'renders/web/960/gate7m_cam01.jpg', 442), ('iphone', 'renders/web/user/iphone16pro_hero_portrait_20260918.jpg', 442),
                 ('p5hero', 'renders/final/v2/hero_cam01_3840x2160.png', 960), ('ref169', 'reference/photos/raw/ref_169_main_Palace_of_Fine_Arts_16794p.jpg', 960)]:
     IMG[k], _ = jpg(Image.open(os.path.join(ROOT, p)), w)
+# the prologue slider needs the photo in the render's framing: panel 2 of the Phase 5 comparison sheet is ref 169 aligned to cam01
+_sheet = Image.open(os.path.join(ROOT, 'renders/final/v2/final_hero_vs_ref169.png'))
+IMG['ref169_aligned'], _ = jpg(_sheet.crop((1920, 0, 3840, 1080)), 960)
 
 # ---------------------------------------------------------------- helpers
 def esc(s): return html.escape(str(s))
@@ -115,7 +118,7 @@ CSS = '''
 main{max-width:720px;margin:0 auto;padding:0 16px 64px}h1{font-size:2rem;line-height:1.15;margin:40px 0 8px}h2{font-size:1.45rem;margin:48px 0 12px;line-height:1.2}h3{font-size:1.1rem;margin:28px 0 8px}
 p{margin:10px 0}.lede{font-size:1.15rem;color:var(--ink2)}.kicker{color:var(--mut);font-size:.9rem;text-transform:uppercase;letter-spacing:.06em}
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.tile b{display:block;font-size:1.6rem;line-height:1.1}.tile span{color:var(--ink2);font-size:.9rem}
-.cmp{margin:16px 0}.cmp-wrap{position:relative;overflow:hidden;border-radius:10px;background:#000}.cmp-wrap img{display:block;width:100%;height:auto}.cmp-top{position:absolute;inset:0}.cmp-line{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);pointer-events:none}
+.cmp{margin:16px 0}.cmp-wrap{position:relative;overflow:hidden;border-radius:10px;background:#000}.cmp-wrap img{display:block;width:100%;height:auto}.cmp-top{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.cmp-line{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);pointer-events:none}
 .cmp input{width:100%;margin:6px 0 0;height:36px;accent-color:var(--acc)}.tag{position:absolute;top:8px;background:rgba(0,0,0,.6);color:#fff;font-size:.8rem;padding:2px 8px;border-radius:6px;pointer-events:none}.tl{left:8px}.tr{right:8px}
 .side{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.side figure,figure.plain{margin:0}.side img,figure.plain img{width:100%;height:auto;border-radius:8px;display:block}.side figcaption,figure.plain figcaption,.viz figcaption{font-size:.85rem;color:var(--ink2);margin-top:4px}
 .viz{margin:20px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}.viz figcaption{font-weight:600;color:var(--ink);margin:0 0 6px}.viz svg text{fill:var(--ink);font-size:11px}.viz svg .lg{fill:var(--ink2)}.viz svg .lb{fill:var(--ink2)}.viz svg .dl{fill:#fff;font-weight:600}
@@ -151,8 +154,8 @@ body.append(f'''<h2>Prologue: what existed on 10 September</h2>
 <p>Phases 0 to 5 (6 to 10 September) built the palace in {G('Blender', 'free 3D modelling software; the model lives in a single .blend file')}:
 the rotunda, the colonnades, the sculpture, trees and water, lit at golden hour, then {G('rendered', 'computed into a still picture by simulating light; one 4K frame of this scene takes 25 to 70 minutes on the Mac')}
 from the classic viewpoint across the lagoon (the "hero" view). The work was done by AI agents: one lead session that plans, briefs and merges, and specialist agents it dispatches for a task each; a critic agent scored the result against a photograph on a 5-point rubric, where 5 means "hard to tell from a photo". Drag the handle to compare.</p>
-{slider(IMG['p5hero'], IMG['ref169'], 'Cycles render, 10 Sep', 'reference photo', 'cmp-prologue')}
-<p class="note">Reference photo: <a href="https://commons.wikimedia.org/wiki/File:Palace_of_Fine_Arts_(16794p).jpg">Palace of Fine Arts (16794p)</a> by Rhododendrites, Wikimedia Commons, CC BY-SA 4.0. Every other photograph this project measured against is listed with author and licence in reference/photos/ATTRIBUTION.md.</p>
+{slider(IMG['p5hero'], IMG['ref169_aligned'], 'Cycles render, 10 Sep', 'reference photo, aligned', 'cmp-prologue')}
+<p class="note">Reference photo: <a href="https://commons.wikimedia.org/wiki/File:Palace_of_Fine_Arts_(16794p).jpg">Palace of Fine Arts (16794p)</a> by Rhododendrites, Wikimedia Commons, CC BY-SA 4.0, warped into the render\'s framing for the comparison. Every other photograph this project measured against is listed with author and licence in reference/photos/ATTRIBUTION.md.</p>
 <div class="tiles">
 <div class="tile"><b>3.61 / 5</b><span>hero score on 10 Sep, where 5 is "hard to tell from a photo"</span></div>
 <div class="tile"><b>{money(p5cost)}</b><span>nominal spend of the five build days, at list prices</span></div>
