@@ -152,6 +152,7 @@ body.append(f'''<h2>Prologue: what existed on 10 September</h2>
 the rotunda, the colonnades, the sculpture, trees and water, lit at golden hour, then {G('rendered', 'computed into a still picture by simulating light; one 4K frame of this scene takes 25 to 70 minutes on the Mac')}
 from the classic viewpoint across the lagoon (the "hero" view). The work was done by AI agents: one lead session that plans, briefs and merges, and specialist agents it dispatches for a task each; a critic agent scored the result against a photograph on a 5-point rubric, where 5 means "hard to tell from a photo". Drag the handle to compare.</p>
 {slider(IMG['p5hero'], IMG['ref169'], 'Cycles render, 10 Sep', 'reference photo', 'cmp-prologue')}
+<p class="note">Reference photo: <a href="https://commons.wikimedia.org/wiki/File:Palace_of_Fine_Arts_(16794p).jpg">Palace of Fine Arts (16794p)</a> by Rhododendrites, Wikimedia Commons, CC BY-SA 4.0. Every other photograph this project measured against is listed with author and licence in reference/photos/ATTRIBUTION.md.</p>
 <div class="tiles">
 <div class="tile"><b>3.61 / 5</b><span>hero score on 10 Sep, where 5 is "hard to tell from a photo"</span></div>
 <div class="tile"><b>{money(p5cost)}</b><span>nominal spend of the five build days, at list prices</span></div>

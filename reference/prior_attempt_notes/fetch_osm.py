@@ -11,7 +11,7 @@ q = '''[out:json][timeout:60];
   relation(around:400,37.80290,-122.44860)["natural"="water"];
 );
 out geom tags;'''
-req = urllib.request.Request("https://overpass-api.de/api/interpreter", data=urllib.parse.urlencode({"data": q}).encode(), headers={"User-Agent": "PalaceRefBot/1.0 (dkhh10@users.noreply.github.com)"})
+req = urllib.request.Request("https://overpass-api.de/api/interpreter", data=urllib.parse.urlencode({"data": q}).encode(), headers={"User-Agent": "PalaceRefBot/1.0 (github.com/dkhh10)"})
 d = json.load(urllib.request.urlopen(req, timeout=120))
 json.dump(d, open("refs/_osm.json", "w"))
 print(len(d["elements"]), "elements")
