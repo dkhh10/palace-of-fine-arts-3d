@@ -1091,3 +1091,7 @@ Burn (list rates): session 10 (e93f113b) 270.08 USD so far at 18:44 (opus-5 231,
 ## 2026-09-21 ~23:00 · Retrospective of Phase 6 delivered on branch analysis/retro (lead, Fable 5.1; read-only elsewhere)
 Merged nothing. Delivered: docs/phase6_story.html (self-contained, 1.9 MB), docs/retrospective_phase6.md, docs/usage/phase6_audit.py (+ .json/.md), make_phase6_story.py, and the `--turns` mode in usage_from_transcripts.py. Burn this session $19.92 nominal, no subagents.
 Next: the user reads the page and the audit; the ten CLAUDE.md proposals in the audit §8 wait for the user's decision; nothing in flight.
+
+## 2026-09-23 · PUBLISHED TO GITHUB: https://github.com/dkhh10/palace-of-fine-arts-3d (lead, Fable 5.1)
+Merged analysis/retro into main (fast-forward). Added README, LICENSE (MIT, code), LICENSE-IMAGES.md (CC BY-SA 4.0), reference/photos/ATTRIBUTION.md (author + licence for all 209 Commons photos, fetched by fetch_attribution.py), the photo credit on docs/phase6_story.html; scrubbed the personal email from three fetch scripts; .claude/, .wrangler/ and renders/logs/*.jsonl ignored.
+Public copy = scripts/publish_github.sh (fresh bare clone, git-filter-repo: no .blend, no blob over 2 MB, author email -> GitHub noreply, email scrubbed from history; force-push all branches). The working repository keeps its full history. Big files (six .blend, master_delivery.blend, two 4K heroes, flythrough) are a GitHub Release, assets-v1. Re-publish after new commits by re-running the script.
