@@ -1,0 +1,41 @@
+/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/scripts/build_master.py:118: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if base is None or base.get("placeholder") or not base.use_nodes or "normal_map" not in src_obj.keys():
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+Info: No orphaned data-blocks to purge
+[build_master] 442 sockets, 0 at the origin (should be 0)
+[build_master] ornament instanced: {'attic_figure': 8, 'attic_panel': 8, 'capital_colonnade': 114, 'capital_inner': 8, 'capital_rotunda': 16, 'drum_band': 105, 'finial': 9, 'frieze_run': 24, 'inner_figure': 8, 'keystone': 24, 'maiden': 48, 'rosette_ceiling': 24, 'urn': 40} skipped: {'archivolt_run': 8, 'frieze_run': 102}
+[build_master] instances at the origin: 0 (should be 0) []
+[build_master] materials: 41 library materials appended, 41 placeholders remapped
+[common] set_lod viewport=LOD1 render=LOD0: 6577 objects, 6 collections
+[build_master] flythrough frame range 1-1224 @ 24 fps (scene camera stays the hero)
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[light_presets] vault emitters for EEVEE: 2 lights, x6.0 + 21 m cutoff
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[build_master] viewport (LOD1) triangles ~12.63 M; objects 9817
+Info: Saved as "master.blend"
+[build_master] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/master.blend (173 MB); assets: ['ARCH', 'ENV', 'LIGHT', 'ORN']
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 25199 exited rc=0 after 30 s (max 1800)
+00:00.397  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/master.blend"
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[light_probes] baking with the PHYSICAL vault rig (QA-04-1): the probe volumes must hold the scene's real indirect light, not the Eevee render-time override
+[light_probes] bake world WORLD_bake_lighting_only: diffuse branch of 'WORLD_golden_hour' on every ray (strength 0.800 x boost 2.50, tint (1.0, 0.75, 8.0), antisun 0.00, horizon 1.00, exponents 3.0 / 6.0, sunside (1.0, 1.0, 0.0)^3.0)
+[light_probes] bake {'FINISHED'} in 8.2s for ['LIGHTPROBE_rotunda', 'LIGHTPROBE_colonnade']
+[light_probes]   LIGHTPROBE_rotunda: baked (grid 20x20x14)
+[light_probes]   LIGHTPROBE_colonnade: baked (grid 48x20x6)
+[light_presets] vault emitters for EEVEE: 2 lights, x6.0 + 21 m cutoff
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[light_probes] restored: engine BLENDER_EEVEE, world WORLD_golden_hour, vault rig EEVEE override
+Info: Saved as "master.blend"
+[light_probes] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/master.blend
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 2, total unfreed memory 0.125168 MB
+blender_run.sh: pid 25215 exited rc=0 after 10 s (max 2400)

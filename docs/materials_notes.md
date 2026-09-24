@@ -2255,3 +2255,10 @@ the attic reliefs are ORN meshes without UVBake -- the phase's residual). Then `
   0.77, see above. (5) Jamb box moved 3.3 deg of hue toward ref (column pixels). (6) Column hue -10 is a shift toward
   magenta; cam06's shaded shafts read mauve-violet in before AND after, QA should look. (7) Eevee water murk unchanged
   (WATER_MURK_EEVEE): Cycles and Eevee lagoon colours diverge a little more; the web export's water is its own.
+
+### Phase 10 r2 — review corrections (lead, 2026-09-24; docs/reviews/phase10_water_r2_review.md fix-now 1-3)
+1. Dark gaps: the water change itself, not the brighter foliage, did most of the loss (dark-gap share 15.6 -> 9.5 % in the y2 case before any leaf change; final 6.3 %
+   vs ref 16.2 %). The "dark gaps" half of the reflection-breakup target moved AWAY from ref; the streak-length half moved toward it.
+2. Column shafts: the fixed shaft-crop row reads sat 0.681 vs ref 0.599 (fails); the pass reported above is on the colour-threshold mask, whose pixel set moves with the tint.
+3. Near-water sat 0.191 is a pass -> fail regression on a box whose own ref value is 0.229. The 0.143 quoted for the hand-off is the RIPPLES box, so it does not support
+   lowering the near-water floor; the window stands.

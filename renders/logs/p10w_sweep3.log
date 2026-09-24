@@ -1,0 +1,19 @@
+00:00.357  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/master.blend"
+[p10w] master 9817 objects; look AgX/AgX - High Contrast/-2.8331
+01:20.855  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_sweep_x1.png'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[p10w] p10w_sweep_x1.png 64 spp {'aniso': 0.8, 'amp': 2.0, 'wscale': 1.4, 'fine': 0.5, 'murk': ((0.14, 0.17, 0.045), (0.16, 0.19, 0.055)), 'gain': 0.7} 79.6s
+02:35.544  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_sweep_x2.png'
+[p10w] p10w_sweep_x2.png 64 spp {'aniso': 0.8, 'amp': 2.0, 'wscale': 1.4, 'fine': 0.5, 'murk': ((0.14, 0.17, 0.045), (0.16, 0.19, 0.055)), 'gain': 0.7, 'far': 0.21} 74.7s
+03:06.353  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_sweep_h1.png'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[p10w] p10w_sweep_h1.png 32 spp {'sat': 0.55, 'grade': (2.6, 2.8, 3.4), 'trb': 0.6, 'spec': 0.4} 30.5s
+03:34.628  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_sweep_h2.png'
+[p10w] p10w_sweep_h2.png 32 spp {'sat': 0.55, 'grade': (2.6, 2.8, 3.4), 'trb': 0.6, 'spec': 0.4} 28.3s
+[p10w] done sweep in 214.3s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 26183 exited rc=0 after 215 s (max 900)

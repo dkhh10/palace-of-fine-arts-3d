@@ -1,0 +1,19 @@
+00:00.369  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/master.blend"
+[p10w] master 9817 objects; look AgX/AgX - High Contrast/-2.8331
+03:39.343  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_after_cam01_64.png'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[p10w] p10w_after_cam01_64.png 64 spp  218.1s
+04:48.177  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_after_cam05_32.png'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[p10w] p10w_after_cam05_32.png 32 spp  68.5s
+05:48.799  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/renders/previews/materials/p10w_after_cam06_32.png'
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[p10w] p10w_after_cam06_32.png 32 spp  60.4s
+[p10w] done accept in 348.5s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 26701 exited rc=0 after 350 s (max 1500)
