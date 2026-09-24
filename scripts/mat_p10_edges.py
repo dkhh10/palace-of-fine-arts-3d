@@ -2,6 +2,7 @@
 
     .venv-p10/bin/python scripts/mat_p10_edges.py check  <depthdir> [--sheet out.jpg]   # median edge offset per photo
     .venv-p10/bin/python scripts/mat_p10_edges.py refine <depthdir>                      # 7-DOF world correction
+    .venv-p10/bin/python scripts/mat_p10_edges.py cams   <depthdir>                      # per-camera rotation + focal
 
 Model edges: pixels of the Position pass (mat_p10_depth.py, ARCH LOD0 rendered from the recovered camera) where the
 surface jumps (depth step > 0.25 m + 1 % of depth, or silhouette against the sky) or creases (normal turn > 35 deg).
@@ -152,5 +153,41 @@ if __name__ == "__main__":
               f"shift {np.round(p[4:7], 3)} m")
         (C.WORK / "refine.json").write_text(json.dumps(dict(p=p.tolist(), before=meds, after=meds2)))
         res = res2
+    if cmd == "cams":
+        # per camera: rotation about its centre (3) + focal scale (1), truncated chamfer + a prior (0.5 deg, 3 %).
+        # Kept only when the camera's median offset drops.  Written to work/refine_cams.json (mat_p10_align cameras).
+        out, rows = {}, []
+        rng = np.random.default_rng(0)
+        for k, c, E, img, ed, dt in data:
+            Es = E[rng.choice(len(E), min(6000, len(E)), replace=False)]
+            K0 = np.asarray(c["K"]); R0 = np.asarray(c["R"]); t0 = np.asarray(c["t"])
+            def cam_of(q):
+                dR = Rot.from_rotvec(q[:3]).as_matrix()
+                cc = dict(c); K = K0.copy(); K[0, 0] *= math.exp(q[3]); K[1, 1] *= math.exp(q[3])
+                cc["K"] = K; cc["R"] = dR @ R0; cc["t"] = dR @ t0
+                return cc
+            def dist_of(q, X):
+                uv, z = C.project(X, cam_of(q))
+                H, W = dt.shape
+                ok = (z > 0) & (uv[:, 0] > 2) & (uv[:, 1] > 2) & (uv[:, 0] < W - 2) & (uv[:, 1] < H - 2)
+                d = np.full(len(X), 12.0); d[ok] = sample(dt, uv[ok])
+                return d, ok
+            def fun(q):
+                d, _ = dist_of(q, Es)
+                prior = [q[0] / math.radians(0.5), q[1] / math.radians(0.5), q[2] / math.radians(0.5), q[3] / 0.03]
+                return np.concatenate([np.minimum(d, 12.0) / math.sqrt(len(d)), 1.0 * np.array(prior)])
+            sol = least_squares(fun, np.zeros(4), diff_step=1e-3, x_scale=[1e-3, 1e-3, 1e-3, 1e-2])
+            d0, ok0 = dist_of(np.zeros(4), E); d1, ok1 = dist_of(sol.x, E)
+            m0, m1 = float(np.median(d0[ok0])), float(np.median(d1[ok1]))
+            keep = m1 < m0
+            if keep:
+                out[c["file"]] = dict(rotvec=sol.x[:3].tolist(), fscale=float(math.exp(sol.x[3])))
+            rows.append((k, m0, m1 if keep else m0, np.degrees(np.linalg.norm(sol.x[:3])), math.exp(sol.x[3]), keep))
+        (C.WORK / "refine_cams.json").write_text(json.dumps(out, indent=1))
+        a = np.array([(r[1], r[2]) for r in rows])
+        for r in rows:
+            print(f"[edges] cam {r[0]:2d}: {r[1]:.2f} -> {r[2]:.2f} px  rot {r[3]:.3f} deg  f x{r[4]:.4f}  {'kept' if r[5] else 'rejected'}")
+        print(f"[edges] per-camera refine: median of per-photo medians {np.median(a[:, 0]):.2f} -> {np.median(a[:, 1]):.2f} px "
+              f"over {len(rows)} photos; photos <= 4 px {int((a[:, 1] <= 4).sum())}")
     if "--sheet" in sys.argv:
         sheet(data, res, sys.argv[sys.argv.index("--sheet") + 1])
