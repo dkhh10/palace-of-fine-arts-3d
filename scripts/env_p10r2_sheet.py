@@ -8,7 +8,9 @@ Row 1  cam 01 at 100 % around the willow box (x 0.33-0.51, y 0.40-0.68; box in y
 Row 2  the index pass (own-pixel alpha, env_p10r2_mask.py) over ref 169: before (red) | after (red; the P10R2_ADD pale crown orange) | ref's
        hand-segmented willow (cyan) | after silhouette classes (blue column in front, green in-plane stone, red side-arch
        opening, magenta drum; the hero-arch count is in the caption).
-Row 3  cam 02 full frame at 960 px: Eevee before | after.
+Row 3  second hero-shore willow (-2.6,45.9) 8.5 -> 4.0 m (lead item): Eevee before | Eevee after | its own pixels
+       before (magenta) | after (magenta), over ref 169; wider crop (x 0.33-0.56) so the central arch is in it.
+Row 4  cam 02 full frame at 960 px: Eevee before | after.
 """
 import json
 import sys
@@ -79,15 +81,29 @@ def main():
             labelled(crop(overlay(ref, rm, (0, 255, 255))), f"ref willow polygon: box {sr[0]:.1f} %  top row {sr[1]:.0f}"),
             labelled(crop(silim), f"AFTER classes: hero arch {js['hero_arch_opening_px']}  drum {js['drum_px']}  "
                                   f"side arch {js['side_arch_opening_px']} px")]
+    global CROP
+    crop1 = CROP
+    CROP = (int(0.35 * W), int(0.40 * H), int(0.53 * W), int(0.68 * H))
+    mo = {k: WB.load_mask(P / f"p10r2_{k}_mask_other.png") for k in ("after3", "w2")}
+    so = {k: WB.box_stats(v)[0] for k, v in mo.items()}
+    jw = json.loads((P / "p10r2_w2_mask.json").read_text())["silhouette"]["other"]
+    jb = json.loads((P / "p10r2_after3_mask.json").read_text())["silhouette"]["other"]
+    row3 = [labelled(crop(rgb(P / "p10r2_after_cam01.png")), "Eevee BEFORE 2nd willow (-2.6,45.9) 8.5 m"),
+            labelled(crop(rgb(P / "p10r2_w2_cam01.png")), "Eevee AFTER 2nd willow 4.0 m"),
+            labelled(crop(overlay(ref, mo["after3"], (255, 0, 255))),
+                     f"2nd willow BEFORE: box {so['after3']:.1f} %  hero arch {jb['hero_arch_opening_px']} px"),
+            labelled(crop(overlay(ref, mo["w2"], (255, 0, 255))),
+                     f"2nd willow AFTER: box {so['w2']:.1f} %  hero arch {jw['hero_arch_opening_px']}  drum {jw['drum_px']}")]
+    CROP = crop1
     c2 = [labelled(rgb(P / f"p10r2_{t}_cam02.png").resize((960, 540), Image.Resampling.LANCZOS), f"cam 02 Eevee {t.upper()}")
           for t in ("before", "after")]
     cw, ch = row1[0].size
     width = max(4 * cw + 3 * GAP, 2 * 960 + GAP)
-    sheet = Image.new("RGB", (width, 2 * ch + 540 + 2 * GAP + 22), (24, 24, 24))
+    sheet = Image.new("RGB", (width, 3 * ch + 540 + 3 * GAP + 22), (24, 24, 24))
     ImageDraw.Draw(sheet).text((6, 4), "ENV p10r2 - hero-shore willow to ref 169's box (cam 01 x 0.39-0.47, y 0.45-0.62; "
                                         "own pixels = Cycles holdout alpha, LOD0)", fill=(255, 255, 255))
     y = 22
-    for row in (row1, row2):
+    for row in (row1, row2, row3):
         for i, im in enumerate(row):
             sheet.paste(im, (i * (cw + GAP), y))
         y += ch + GAP
