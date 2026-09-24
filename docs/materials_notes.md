@@ -2169,3 +2169,89 @@ Sheets: `renders/qa_comparisons/mat_p10_sheet.png`, `renders/qa_comparisons/mat_
 4. `scripts/build_master.py`, then `mat_p10_depth.py -- --out work/depth_master --scale 0.5 --clip 12 --hide ENV_backdrop,ENV_terrain --cams <usable>`
 5. `mat_p10_project.py` -> `mat_p10_texture.py` -> `mat_p10_integrate.py -- --weight 0.6 --col-sat 0.8 --col-hue -6 --save` (on materials.blend)
 6. `scripts/lead_build.sh`; `mat_p10_render.py -- --tag before --atlas-off` and `--tag after`; `mat_r9_measure.py hero/seam`; `mat_p10_sheet.py`.
+
+## Phase 10 r2 (materials builder, 2026-09-24; brief docs/briefs/phase10_water.md incl. its three addenda) -- water, foliage colour, column tint
+
+Measured on this worktree's rebuilt master (`scripts/lead_build.sh`, 9817 objects), hero Cycles 1920x1080, BEFORE 32 spp /
+AFTER 64 spp, p8_cycles_refs recipe (adaptive off, OIDN, AgX High Contrast -2.8331 asserted), `scripts/mat_p10w_sweep.py`.
+All numbers: `scripts/mat_p10w_measure.py` (lum / hue / sat / R-B; ref 169 by `mat_projection.warp_ref169` for stone and
+water, by `env_p10_boxes.ref_frame` for foliage -- both measured, none quoted). BEFORE = mat_build + integrate --weight 0,
+i.e. the library as merged minus the 0.6 atlas. Note the before is NOT round 10b: ENV p10 r1/r2's new trees are in the
+mirror (near water 124.8 on cycles_p9 -> 108.2 now) and the w2 willow move opened the arch (reflection R-B +29 -> +24).
+
+| hero box | before | after | ref 169 | hold / window | closer to ref? |
+|---|---|---|---|---|---|
+| water reflection 900 760 1020 840 | 118.4 / 49.0 / .194 / +23.9 | **119.9 / 48.0 / .384 / +50.1** | 162.1 / 33.8 / .403 / +77.2 | R-B >= 35 **pass** (was fail); lum 124-208 **fail** (+1.5, not dimmed); hue 25-45 fail (49.0 -> 48.0) | yes, all four |
+| reflection texture Lx / Ly / aspect / aniso | 12.1 / 0.97 / 12.4 / 10.6 | **6.4 / 1.06 / 6.1 / 1.94** | 7.9 / 1.12 / 7.05 / 2.36 | brief: toward ref | yes, all four |
+| reflection cv / dark share | 0.309 / 15.9 % | 0.277 / 6.3 % | 0.312 / 16.2 % | -- | **no** (the brighter foliage now fills the mirror's dark gaps; sweep y2 before the leaf change: 0.303 / 9.5 %) |
+| near water 1150 1000 1450 1050 | 108.2 / 204.4 / .229 | **119.0 / 195.5 / .191** | 103.6 / 187.4 / .229 | lum 79-131 pass; hue 185-200 **pass** (was fail); sat .22-.32 **fail** (was pass) | hue yes, lum no, sat no |
+| ripples 1100 960 1500 1060 | 106.9 / 202.0 / .176 / -20.5 | 117.9 / 186.3 / .133 / -16.3 | 103.1 / 177.9 / .143 / -14.7 | R-B -26+-10 pass | hue, sat, R-B yes; lum no |
+| lagoon flank 100 900 400 960 | 162.3 / 209.3 | 161.4 / 207.9 | 151.8 / 200.1 | 114-190, hue <= 210 pass | yes (slightly) |
+| sunlit attic / shaded attic / entablature / vault field | 187.1/36.9/.513 · 120.1/41.3/.686 · 119.0/38.2/.769 · 60.0/39.5/.676 | 187.2/36.9/.512 · 120.3/41.3/.687 · 119.3/38.2/.768 · 60.3/39.5/.676 | 189.5/40.0/.590 · 120.0/30.4/.449 · 134.5/32.4/.611 · 45.4/5.9/.328 | +-2 / +-2 / +-.02 held | unchanged (<= 0.4 lum) |
+| jamb 872 400 892 480 | 52.7 / 30.2 / .614 | 57.9 / 26.9 / .504 | 95.4 / 22.3 / .469 | hold hue 24 +-2: **moved 3.3 deg** (it holds column pixels) | yes, all three |
+| **column shafts** (QA mask) | 73.5 / 28.9 / .700 | **104.2 / 28.6 / .614** | 96.8 / 24.8 / .585 | hue +-4 **pass**, sat +-.04 **pass** (was fail) | lum yes (-23.3 -> +7.4), hue yes, sat yes |
+| conifer mass (box 1s non-sky px, RGB / luma601 / B/G) | (63,57,17) 54.1 / .29 | **(116,105,37) 100.3 / .35** | (114,109,84) 107.9 / .77 | luma +-15 **pass**; B/G +-.15 **fail** | yes both |
+| willow leaf px (box 2) | (63,61,12) 56.1 / .20 | (84,81,27) 75.8 / .33 | (174,159,85) 155.1 / .53 | -- | yes |
+| NE box 1 dark / sky % | 23.6 / 45.8 | 17.3 / 45.6 | 15.2 / 34.8 | ENV acceptance +-5 | dark yes (now within 5) |
+| **willow box 2 dark %** (decisions.md 2026-09-24 re-measure) | 38.2 (this master) | **29.1** | 8.9 | round-1 before **28.4** | 0.7 points WORSE than the round-1 before; 9.1 better than this master's before |
+| cam05 lagoon band (0.35 .86 .75 .99, 1280x720) | 103.1 / 43.3 / .790 | 110.2 / 44.6 / .795 | -- | sat >= .25 pass | -- |
+| cam06 lagoon 60 380 340 500 | 107.3 / 44.6 / .142 | 107.6 / 54.8 / .202 | -- | not black pass | -- |
+
+ref 169's own open-water boxes: near water 103.6 / hue 187.4 / sat 0.229 (inside the window, 0.009 above its sat floor);
+ripples 103.1 / 177.9 / 0.143 (below the window on hue and sat); flank 151.8 / 200.1 / 0.250. **Hand-off to the lead:**
+the photo's open water is less saturated than the 0.22 floor wherever it is not the near box (ripples 0.143); a sat floor
+of ~0.15-0.18 would describe ref 169; not retargeted here.
+
+### What was changed (scripts/mat_build.py; values in the comments with their sweep tables)
+- `MAT_water_lagoon`: `WATER_ANISO_X` 0.36 -> 0.8 (ripple nearly isotropic: on the ground an isotropic ripple is already
+  an 8:1 horizontal streak in the image, ref's aspect is 7.05, the 2.8x X stretch made it 14); new wind-wave layer
+  `WATER_WAVE_*` (1 octave, scale 1.8, amp 3.5, band 10-16 -> 80-160 m) that carries the pitch; `WATER_FINE` 0.5 (0.3 m
+  ripple and capillaries halved inside that band -- they averaged stone and sky within a pixel); murk (0.155,0.160,0.095)/
+  (0.175,0.180,0.110) -> green-olive (0.140,0.170,0.045)/(0.160,0.190,0.055) and `WATER_MURK_GAIN` near end 0.15 -> 0.70.
+  `WATER_GLOSS_MIX`, the tint, transmission, volume, Eevee murk: unchanged. The Eevee branch shares the new normal.
+- Leaves: `leaf_material` gains a grade (`LEAF_SAT` Hue/Sat, `LEAF_GRADE` RGB gain, neutral by default). Conifers
+  (cypress, pine): sat x0.35, gain (2.9, 3.4, 3.3), translucent B 0.5 -> 0.8, Specular IOR level -> 0.55, sheen 0.15 -> 0.3.
+  Broadleaf (willows + ENV's broadleaf): sat x0.55, gain (3.0, 3.0, 2.8), translucent B 0.4 -> 0.7, spec 0.45, sheen 0.25.
+- `MAT_column_rose`: albedo x1.22 (`COL_VALUE`, Base / Grey / Wash colours).
+- **Why the conifer B/G target is not met (a finding for the lead):** sweep case j1 (sat x0.20, gain (2.6,3.4,7.0))
+  measured 103.7 / B/G **0.66** -- inside both targets -- and was the first acceptance frame; it needs a BLUE albedo
+  (cypress linear 0.21/0.30/0.53), and cam06 showed those conifers lavender-violet from above. With any albedo that keeps
+  B < G (cases m1, m2, shipped) the golden sun holds the box at B/G 0.33-0.37. The ref's 0.77 is sky-lit shade, haze and
+  mixed sky/needle edge pixels; it is a lighting / atmosphere quantity at this sun, not an albedo one.
+
+### Sweep table (bordered hero frames on one open master; water rows 740-1080 at 64 spp; windows at 32 spp)
+| case | settings | refl lum / R-B | Lx / aspect / aniso / cv / dark | near hue / sat |
+|---|---|---|---|---|
+| w0 | shipped | 118.3 / +24.0 | 12.0 / 14.1 / 11.5 / .309 / 15.6 % | 204.3 / .228 |
+| w1 | aniso 1.0 | 120.3 / +24.0 | 6.1 / 7.2 / 5.7 / .225 / 5.6 % | 205.9 / .242 |
+| w2 | w1 + olive murk (0.17,0.15,0.055) gain .45 | 121.9 / +24.9 | 5.9 / 6.9 / 5.8 / .219 / 5.0 % | 203.3 / .222 |
+| w3 | aniso .6 + olive murk gain .45 | 121.4 / +23.7 | 10.6 / 12.3 / 8.4 / .265 / 9.7 % | 201.1 / .205 |
+| v1-v4 | aniso .8, wave 1-2 @1.4, green-olive murk gain .8 (v3 far slope .24, v4 aniso .36) | 117-123 / +26..+44 | v2: 7.7 / 8.1 / 3.7 / .221 / 4.2 % | 198.1 / .208 |
+| x1 / x2 | v2 + fine .5, green murk gain .7 (x2 far .21) | 127.4 / +14.6; 124.6 / +21.2 | x1: 11.5 / 8.6 / 3.5 / .318 / 15.7 % | 197.2 / .212 |
+| y1 / **y2** | fine .5, wave 3.5 @1.4 far .21 / **@1.8** | 115.9 / +43.0; **116.9 / +47.0** | y2: 6.9 / 6.3 / 2.25 / .303 / 9.5 % | 197.2 / .212 |
+| foliage | f1-f3, g1-g4, h1-h2, j1-j2, m1-m2 (conifer luma / B/G) | f0 53 / .27; g3 114 / .56; j1 103 / .65 (lavender cam06); m2 103 / .37 | -- | -- |
+| column | c1 hue -4 sat .70 val 1.35: 98.7 / 28.9 / .580; k1 hue -10: 110.4 / 28.7 / .617; k3 sat .66 val 1.45: 115 / 28.8 / .587 | -- | -- | -- |
+The QA column mask (hue < 32, sat > .30) changes membership with the tint: on the before's fixed pixel set k1 reads
+85.0 / 25.4 / .544, so the hue-window pass on the mask is partly selection; the ref mask holds 55 k px, ours ~8-12 k.
+
+### Rebuild recipe
+`scripts/blender_run.sh 900 -- --background --python scripts/mat_build.py`, then
+`scripts/blender_run.sh 600 -- --background assets/materials.blend --python scripts/mat_p10_integrate.py -- --weight 0 --col-sat 0.68 --col-hue -10 --save`
+(atlas weight 0 = exact no-op, `--r9-removal tied` default; the atlas effect would be confined to the column shafts --
+the attic reliefs are ORN meshes without UVBake -- the phase's residual). Then `scripts/lead_build.sh`.
+
+### Budget, files, open
+- Textures: none added. Nodes: water +1 noise (1 octave) and ~12 math/value nodes (no new closures); 2 nodes per leaf material.
+- GPU spent (over the brief's "four water cases, one hero"): before hero 32 spp 120 s; 5 sweep passes -- 12 water bands
+  (~75 s each), 14 foliage windows + 4 small cam05/06 (one pass of 4 was a wasted re-run from a set-selection bug, ~5 min),
+  7 column windows; two acceptance sets (hero 64 spp 218 s + cam05/06 ~130 s each, the first rejected for the lavender
+  conifers); before cam05/06 126 s. About 45 min of GPU in total.
+- Files: scripts/mat_build.py, scripts/mat_p10w_{measure,sweep,sheet}.py, assets/materials.blend,
+  renders/previews/materials/p10w_{before,after}_cam0{1,5,6}_*.png, renders/qa_comparisons/mat_p10w_sheet.png.
+- Open / for review: (1) reflection lum 119.9 < 124 and hue 48 > 45 -- the flat mirror sees our SHADED lower rotunda
+  where ref 169's is sunlit (round 8's probe); lighting / ENV shadow, not the water. (2) Near-water sat 0.191 < 0.22,
+  the price of hue 204 -> 195.5 (lead's call; see the window hand-off). (3) Box 2 dark 29.1 vs the round-1 28.4: by
+  decisions.md 2026-09-24 that is "still worse" by 0.7 -- the lead decides whether ENV reverts. (4) Conifer B/G 0.35 vs
+  0.77, see above. (5) Jamb box moved 3.3 deg of hue toward ref (column pixels). (6) Column hue -10 is a shift toward
+  magenta; cam06's shaded shafts read mauve-violet in before AND after, QA should look. (7) Eevee water murk unchanged
+  (WATER_MURK_EEVEE): Cycles and Eevee lagoon colours diverge a little more; the web export's water is its own.
