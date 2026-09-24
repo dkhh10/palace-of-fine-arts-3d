@@ -34,3 +34,11 @@ sat 0.658 (ref 0.585 +-0.04). Sweep at most three settings (start weight 0.4 / c
 enough for the boxes), keep the one that lands both inside the window with the column lum still moving toward ref (96.8; was 73.7 -> 82.3), and state the hold table.
 You own mat_p10_integrate.py's arguments only, not its logic; do not touch the atlases. Note in the report that the atlas effect is confined to the column shafts
 (the attic reliefs are ORN meshes without UVBake): that is the phase's residual, not yours.
+
+## Superseded 2026-09-24 (lead, after the final review and the held-out test): the projection ships at weight 0
+The registration failed its held-out test (median 20.4 px; 40 of the 43 cameras behind the east shore: assets/textures/projection2/evidence/). The atlas is
+NOT to be raised above weight 0. Your third item becomes: after `mat_build.py`, run `scripts/mat_p10_integrate.py -- --weight 0 --col-sat S --col-hue H --save`
+(weight 0 is an exact no-op for the atlas and round-9 removal; `--r9-removal tied` default) and treat the column tint as a plain retune: land the column shafts
+inside ref 169's window (hue +-4 deg, sat +-0.04 of 0.585; the round-1 sheet's shaft box: before 73.7 / 28.8 / 0.701, ref 96.8 / 24.8 / 0.585) with the tint
+arguments and, if needed, the column material's own albedo value (MAT_column_rose, scripts/mat_build.py), never the atlas. The round-10b hold table otherwise
+stands; state per box whether you are closer to ref. Materials rebuild recipe for the report: mat_build.py, then mat_p10_integrate.py with the final arguments.

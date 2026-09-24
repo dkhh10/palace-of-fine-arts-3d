@@ -1390,6 +1390,15 @@ _UVPROJ = Path(__file__).resolve().parent / "arch_uvproj.py"
 exec(compile(_UVPROJ.read_text(), str(_UVPROJ), "exec"),
      {"__name__": "arch_uvproj", "__file__": str(_UVPROJ), "__builtins__": __builtins__})
 
+# Phase 10 r1 post-step (decisions.md 2026-09-24, review part 1 finding 7): the `UVBake` atlas layer, the same pattern
+# as arch_uvproj.py above. It runs its own overlap / order / hash checks; the hook refuses to save when any failed, so a
+# rebuild can never silently drop or re-lay the layer the committed PFA_p10_* atlases were projected into.
+_UVBAKE = Path(__file__).resolve().parent / "arch_uvbake.py"
+_uvb = {"__name__": "arch_uvbake", "__file__": str(_UVBAKE), "__builtins__": __builtins__}
+exec(compile(_UVBAKE.read_text(), str(_UVBAKE), "exec"), _uvb)
+if _uvb.get("fails"):
+    raise SystemExit(f"[arch] arch_uvbake.py: {_uvb['fails']} check(s) failed, architecture.blend NOT saved")
+
 if SAVE:
     common.save_blend(common.ASSETS / "architecture.blend")
 
