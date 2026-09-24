@@ -49,6 +49,25 @@ COLUMN = [   # tag, hue deg, sat, value  (a Hue/Saturation node after PFA_column
     ("c2", -4.0, 0.60, 1.60),
     ("c3", -3.0, 0.55, 1.90),
 ]
+# ---- sweep 2 (after reading sweep 1, docs/materials_notes.md "Phase 10 r2"): generic dict cases -------------------
+GO_A, GO_B = (0.150, 0.160, 0.050), (0.170, 0.180, 0.060)          # green-olive murk
+WATER2 = [
+    ("v1", dict(aniso=0.8, amp=1.0, wscale=1.4, murk=(GO_A, GO_B), gain=0.8)),
+    ("v2", dict(aniso=0.8, amp=2.0, wscale=1.4, murk=(GO_A, GO_B), gain=0.8)),
+    ("v3", dict(aniso=0.8, amp=2.0, wscale=1.4, murk=(GO_A, GO_B), gain=0.8, far=0.24)),
+    ("v4", dict(aniso=0.36, amp=2.0, wscale=1.4, murk=(GO_A, GO_B), gain=0.8)),
+]
+FOLIAGE2 = [  # sat, grade, translucent B, Specular IOR Level, Roughness (None = keep), Sheen Weight
+    ("g1", dict(sat=0.35, grade=(3.0, 3.0, 4.5), trb=0.9, spec=0.6)),
+    ("g2", dict(sat=0.35, grade=(3.0, 3.0, 4.5), trb=0.9, spec=0.6, sheen=0.5)),
+    ("g3", dict(sat=0.25, grade=(3.6, 3.6, 6.0), trb=0.9, spec=0.6, sheen=0.5)),
+    ("g4", dict(sat=0.25, grade=(3.6, 3.6, 6.0), trb=1.0, spec=1.0, rough=0.4, sheen=0.8)),
+]
+COLUMN2 = [("k1", -10.0, 0.70, 1.35), ("k2", -14.0, 0.72, 1.35), ("k3", -10.0, 0.66, 1.45)]
+SET2 = "--set" in args and args[args.index("--set") + 1] == "2"
+if SET2:
+    COLUMN = COLUMN2
+
 if "--water" in args:          # optional override: --water tag:aniso:far:gain[:olive]  (repeatable)
     WATER = []
     for i, a in enumerate(args):
@@ -129,7 +148,42 @@ elif JOBS == "small":          # cam05 / cam06 only (used for the BEFORE pair)
         render(scene, f"p10w_before{TAG}_{nm}_32.png")
 else:
     parts = args[args.index("--parts") + 1].split(",") if "--parts" in args else ["water", "foliage", "column"]
-    if "water" in parts:
+    if "water" in parts and SET2:
+        w = local("MAT_water_lagoon")
+        nm = lambda n: node(w, n)
+        mk = nm("WATER_MURK"); a_in, b_in = rgba_inputs(mk)
+        setup(scene, HERO, 1920, 1080, 64, WATER_BAND)
+        for tag, c in WATER2:
+            nm("WATER_ANISO_X").outputs[0].default_value = c.get("aniso", 0.36)
+            nm("WATER_BUMP_DIST").inputs["To Max"].default_value = c.get("far", 0.170)
+            nm("WATER_WAVE_AMP").outputs[0].default_value = c.get("amp", 0.0)
+            nm("WATER_WAVE_SCALE").outputs[0].default_value = c.get("wscale", 1.4)
+            nm("WATER_WAVE_ANISO").outputs[0].default_value = c.get("waniso", 0.8)
+            nm("WATER_MURK_GAIN").inputs["To Min"].default_value = c.get("gain", 0.15)
+            if "murk" in c:
+                a_in.default_value = (*c["murk"][0], 1.0); b_in.default_value = (*c["murk"][1], 1.0)
+            render(scene, f"p10w_sweep{TAG}_{tag}.png", str(c))
+    if "foliage" in parts and SET2:
+        mats = [local(n) for n in LEAVES]
+        base = {}
+        for m in mats:
+            bs = next(n for n in m.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+            tr = next(n for n in m.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfTranslucent")
+            trm = tr.inputs["Color"].links[0].from_node
+            base[m.name] = (bs, trm, tuple(trm.inputs[1].default_value), bs.inputs["Specular IOR Level"].default_value,
+                            bs.inputs["Roughness"].default_value, bs.inputs["Sheen Weight"].default_value)
+        setup(scene, HERO, 1920, 1080, 32, FOLIAGE_WIN)
+        for tag, c in FOLIAGE2:
+            for m in mats:
+                bs, trm, tr0, sp0, ro0, sh0 = base[m.name]
+                node(m, "LEAF_SAT").outputs[0].default_value = c["sat"]
+                node(m, "LEAF_GRADE").outputs[0].default_value = (*c["grade"], 1.0)
+                trm.inputs[1].default_value = (tr0[0], tr0[1], c.get("trb", tr0[2]))
+                bs.inputs["Specular IOR Level"].default_value = c.get("spec", sp0)
+                bs.inputs["Roughness"].default_value = c.get("rough", ro0)
+                bs.inputs["Sheen Weight"].default_value = c.get("sheen", sh0)
+            render(scene, f"p10w_sweep{TAG}_{tag}.png", str(c))
+    if "water" in parts and not SET2:
         w = local("MAT_water_lagoon")
         an, bd, mk, gn = (node(w, "WATER_ANISO_X"), node(w, "WATER_BUMP_DIST"), node(w, "WATER_MURK"),
                           node(w, "WATER_MURK_GAIN"))
@@ -145,7 +199,7 @@ else:
             render(scene, f"p10w_sweep{TAG}_{tag}.png", f"aniso {aniso} far {far} murk {ca or 'shipped'} gain {gain}")
         an.outputs[0].default_value = 0.36; bd.inputs["To Max"].default_value = 0.170
         a_in.default_value, b_in.default_value = a0, b0; gn.inputs["To Min"].default_value = 0.15
-    if "foliage" in parts:
+    if "foliage" in parts and not SET2:
         mats = [local(n) for n in LEAVES]
         setup(scene, HERO, 1920, 1080, 32, FOLIAGE_WIN)
         for tag, sat, grade in FOLIAGE:
