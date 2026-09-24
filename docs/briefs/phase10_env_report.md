@@ -36,3 +36,7 @@ In progress (items 1-3 "after" numbers, the sheet, the Cycles hero). Resume exac
    (cam01 100 % crops before / after / ref, cam02 + cam05 full at 960). cam02: the new columns appear at x 0.04-0.36.
 5. Final report < 20 lines into this file + the reply.
 Never use /usr/bin/python3 (Xcode stub); /opt/homebrew/bin/python3.13 has numpy + PIL.
+- Note: docs/phase8d_belt_r2_trees.json changed only in `scale` (e.g. 0.5099 -> 0.5067): bigger leaf cards raise the
+  measured prototype height (cypress s3 LOD0 25.3 -> 25.5 m), and the instance scale = planted height / prototype
+  height, so every planted height is unchanged; no position, seed or rotation moved. docs/environment_notes.md gained
+  the 2 P10 rows in the auto-written PLAN table. The Blender running at checkpoint time (arch_uvbake.py) is NOT ours.
