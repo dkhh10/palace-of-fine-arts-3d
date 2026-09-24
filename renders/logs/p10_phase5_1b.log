@@ -1,0 +1,24 @@
+00:00.389  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+00:04.946  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend"
+[phase5_cleanup] opened master_delivery.blend in 1.13s (174 MB, 9817 objects, scene 'PalaceOfFineArts')
+[phase5_cleanup] no linked libraries (master.blend is built by APPEND; build_master.py --link would add them)
+Info: Deleted 22 data-block(s)
+Info: No orphaned data-blocks to purge
+[phase5_cleanup] purged 22 orphan data-blocks in 2 passes (12791 -> 12769 total)
+    images                      119 ->     97  (-22)
+[phase5_cleanup] packed 95 images, 120.4 MB of texture data
+[common] set_lod viewport=LOD1 render=LOD0: 6577 objects, 6 collections
+[light_presets] vault emitters for EEVEE: 2 lights, x6.0 + 21 m cutoff
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[phase5_cleanup] apply_viewport_eevee: engine=BLENDER_EEVEE taa=8 light_threshold=0.009999999776482582 raytracing=False
+[phase5_cleanup] 7 camera stations unchanged
+Info: Saved as "master_delivery.blend"
+[phase5_cleanup] saved /Users/dk/Projects/3d render blender 3rd attempt building/master_delivery.blend (293.2 MB; was 173.6 MB)
+[phase5_cleanup] re-open of master_delivery.blend: 0.96s (PASS, limit 60s) -- 9817 objects, engine BLENDER_EEVEE
+[phase5_cleanup] wrote renders/logs/phase5_cleanup.json
+[phase5_cleanup] reopen_s=0.96 size_mb=293.2 purged=22 packed_count=95 packed_bytes=120402140 objects=9817 libraries=0 peak_rss_mb=2085
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 28617 exited rc=0 after 6 s (max 600)
+[phase5_deliver] step 1b (cleanup -> master_delivery.blend; steps 2-6 now render it) wall 6s -- log renders/logs/phase5_1b.log
